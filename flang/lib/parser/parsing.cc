@@ -64,7 +64,7 @@ void Parsing::Prescan(const std::string &path, Options options) {
 }
 
 void Parsing::DumpCookedChars(std::ostream &out) const {
-  UserState userState;
+  UserState userState{cooked_};
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm).set_userState(&userState);
   while (std::optional<const char *> p{parseState.GetNextChar()}) {
@@ -79,7 +79,7 @@ void Parsing::DumpParsingLog(std::ostream &out) const {
 }
 
 void Parsing::Parse() {
-  UserState userState;
+  UserState userState{cooked_};
   userState.set_instrumentedParse(options_.instrumentedParse).set_log(&log_);
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm)
@@ -87,7 +87,7 @@ void Parsing::Parse() {
       .set_warnOnNonstandardUsage(options_.isStrictlyStandard)
       .set_warnOnDeprecatedUsage(options_.isStrictlyStandard)
       .set_userState(&userState);
-  parseTree_ = program.Parse(&parseState);
+  parseTree_ = program.Parse(parseState);
   CHECK(
       !parseState.anyErrorRecovery() || parseState.messages().AnyFatalError());
   consumedWholeFile_ = parseState.IsAtEnd();

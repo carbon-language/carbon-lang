@@ -11,12 +11,12 @@ On success, it may return some semantic value to its caller.
 In C++ terms, a parser is any instance of a class that
 1. has a `constexpr` default constructor,
 1. defines a type named `resultType`, and
-1. provides a function (`const` member or `static`) that accepts a pointer to a
+1. provides a function (`const` member or `static`) that accepts a reference to a
 `ParseState` as its argument and returns a `std::optional<resultType>` as a
 result, with the presence or absence of a value in the `std::optional<>`
 signifying success or failure, respectively.
 ```
-std::optional<resultType> Parse(ParseState *) const;
+std::optional<resultType> Parse(ParseState &) const;
 ```
 The `resultType` of a parser is typically the class type of some particular
 node type in the parse tree.

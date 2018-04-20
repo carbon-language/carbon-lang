@@ -14,10 +14,15 @@
 namespace Fortran {
 namespace parser {
 
+class CookedSource;
 class ParsingLog;
 
 class UserState {
 public:
+  explicit UserState(const CookedSource &cooked) : cooked_{cooked} {}
+
+  const CookedSource &cooked() const { return cooked_; }
+
   ParsingLog *log() const { return log_; }
   UserState &set_log(ParsingLog *log) {
     log_ = log;
@@ -60,6 +65,8 @@ public:
   }
 
 private:
+  const CookedSource &cooked_;
+
   ParsingLog *log_{nullptr};
   bool instrumentedParse_{false};
 

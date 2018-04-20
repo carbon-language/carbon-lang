@@ -21,14 +21,16 @@ public:
   constexpr DebugParser(const DebugParser &) = default;
   constexpr DebugParser(const char *str, std::size_t n)
     : str_{str}, length_{n} {}
-  std::optional<Success> Parse(ParseState *state) const {
-    const CookedSource &cooked{state->messages().cooked()};
-    if (auto context = state->context()) {
-      context->Emit(std::cout, cooked);
+  std::optional<Success> Parse(ParseState &state) const {
+    if (auto ustate = state.userState()) {
+      const CookedSource &cooked{ustate->cooked()};
+      if (auto context = state.context()) {
+        context->Emit(std::cout, cooked);
+      }
+      Provenance p{cooked.GetProvenance(state.GetLocation()).start()};
+      cooked.allSources().Identify(std::cout, p, "", true);
+      std::cout << "   parser debug: " << std::string{str_, length_} << "\n\n";
     }
-    Provenance p{cooked.GetProvenance(state->GetLocation()).start()};
-    cooked.allSources().Identify(std::cout, p, "", true);
-    std::cout << "   parser debug: " << std::string{str_, length_} << "\n\n";
     return {Success{}};
   }
 

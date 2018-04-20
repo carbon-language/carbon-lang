@@ -28,14 +28,14 @@ public:
   using resultType = const char *;
   constexpr AnyOfChars(const AnyOfChars &) = default;
   constexpr AnyOfChars(SetOfChars set) : set_{set} {}
-  std::optional<const char *> Parse(ParseState *state) const {
-    if (std::optional<const char *> at{state->PeekAtNextChar()}) {
+  std::optional<const char *> Parse(ParseState &state) const {
+    if (std::optional<const char *> at{state.PeekAtNextChar()}) {
       if (set_.Has(**at)) {
-        state->UncheckedAdvance();
+        state.UncheckedAdvance();
         return at;
       }
     }
-    state->Say(MessageExpectedText{set_});
+    state.Say(MessageExpectedText{set_});
     return {};
   }
 
@@ -54,12 +54,12 @@ constexpr auto digit = "0123456789"_ch;
 constexpr struct Space {
   using resultType = Success;
   constexpr Space() {}
-  static std::optional<Success> Parse(ParseState *state) {
-    while (std::optional<const char *> p{state->PeekAtNextChar()}) {
+  static std::optional<Success> Parse(ParseState &state) {
+    while (std::optional<const char *> p{state.PeekAtNextChar()}) {
       if (**p != ' ') {
         break;
       }
-      state->UncheckedAdvance();
+      state.UncheckedAdvance();
     }
     return {Success{}};
   }
@@ -67,11 +67,11 @@ constexpr struct Space {
 
 // Skips a space that in free form requires a warning if it precedes a
 // character that could begin an identifier or keyword.  Always succeeds.
-inline void MissingSpace(ParseState *state) {
-  if (!state->inFixedForm()) {
-    state->set_anyConformanceViolation();
-    if (state->warnOnNonstandardUsage()) {
-      state->Say("expected space"_err_en_US);
+inline void MissingSpace(ParseState &state) {
+  if (!state.inFixedForm()) {
+    state.set_anyConformanceViolation();
+    if (state.warnOnNonstandardUsage()) {
+      state.Say("expected space"_err_en_US);
     }
   }
 }
@@ -79,11 +79,11 @@ inline void MissingSpace(ParseState *state) {
 constexpr struct SpaceCheck {
   using resultType = Success;
   constexpr SpaceCheck() {}
-  static std::optional<Success> Parse(ParseState *state) {
-    if (std::optional<const char *> p{state->PeekAtNextChar()}) {
+  static std::optional<Success> Parse(ParseState &state) {
+    if (std::optional<const char *> p{state.PeekAtNextChar()}) {
       char ch{**p};
       if (ch == ' ') {
-        state->UncheckedAdvance();
+        state.UncheckedAdvance();
         return space.Parse(state);
       }
       if (IsLegalInIdentifier(ch)) {
@@ -112,9 +112,9 @@ public:
     : str_{str}, bytes_{n}, mandatoryFreeFormSpace_{mandatory} {}
   constexpr TokenStringMatch(const char *str, bool mandatory)
     : str_{str}, mandatoryFreeFormSpace_{mandatory} {}
-  std::optional<Success> Parse(ParseState *state) const {
+  std::optional<Success> Parse(ParseState &state) const {
     space.Parse(state);
-    const char *start{state->GetLocation()};
+    const char *start{state.GetLocation()};
     const char *p{str_};
     std::optional<const char *> at;  // initially empty
     for (std::size_t j{0}; j < bytes_ && *p != '\0'; ++j, ++p) {
@@ -143,7 +143,7 @@ public:
       } else if (**at == ToLowerCaseLetter(*p)) {
         at.reset();
       } else {
-        state->Say(start, MessageExpectedText{str_, bytes_});
+        state.Say(start, MessageExpectedText{str_, bytes_});
         return {};
       }
     }
@@ -205,15 +205,15 @@ struct CharLiteralChar {
     bool wasEscaped;
   };
   using resultType = Result;
-  static std::optional<Result> Parse(ParseState *state) {
-    auto at = state->GetLocation();
+  static std::optional<Result> Parse(ParseState &state) {
+    auto at = state.GetLocation();
     std::optional<const char *> och{nextCh.Parse(state)};
     if (!och.has_value()) {
       return {};
     }
     char ch{**och};
     if (ch == '\n') {
-      state->Say(at, "unclosed character constant"_err_en_US);
+      state.Say(at, "unclosed character constant"_err_en_US);
       return {};
     }
     if (ch != '\\') {
@@ -224,7 +224,7 @@ struct CharLiteralChar {
     }
     ch = **och;
     if (ch == '\n') {
-      state->Say(at, "unclosed character constant"_err_en_US);
+      state.Say(at, "unclosed character constant"_err_en_US);
       return {};
     }
     if (std::optional<char> escChar{BackslashEscapeValue(ch)}) {
@@ -253,7 +253,7 @@ struct CharLiteralChar {
         }
       }
     } else {
-      state->Say(at, "bad escaped character"_en_US);
+      state.Say(at, "bad escaped character"_en_US);
     }
     return {Result::Escaped(ch)};
   }
@@ -261,7 +261,7 @@ struct CharLiteralChar {
 
 template<char quote> struct CharLiteral {
   using resultType = std::string;
-  static std::optional<std::string> Parse(ParseState *state) {
+  static std::optional<std::string> Parse(ParseState &state) {
     std::string str;
     static constexpr auto nextch = attempt(CharLiteralChar{});
     while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
@@ -277,13 +277,13 @@ template<char quote> struct CharLiteral {
   }
 };
 
-static bool IsNonstandardUsageOk(ParseState *state) {
-  if (state->strictConformance()) {
+static bool IsNonstandardUsageOk(ParseState &state) {
+  if (state.strictConformance()) {
     return false;
   }
-  state->set_anyConformanceViolation();
-  if (state->warnOnNonstandardUsage()) {
-    state->Say("nonstandard usage"_en_US);
+  state.set_anyConformanceViolation();
+  if (state.warnOnNonstandardUsage()) {
+    state.Say("nonstandard usage"_en_US);
   }
   return true;
 }
@@ -293,7 +293,7 @@ static bool IsNonstandardUsageOk(ParseState *state) {
 // BOZX markers to appear as suffixes.
 struct BOZLiteral {
   using resultType = std::uint64_t;
-  static std::optional<std::uint64_t> Parse(ParseState *state) {
+  static std::optional<std::uint64_t> Parse(ParseState &state) {
     std::optional<int> shift;
     auto baseChar = [&shift](char ch) -> bool {
       switch (ch) {
@@ -306,7 +306,7 @@ struct BOZLiteral {
     };
 
     space.Parse(state);
-    const char *start{state->GetLocation()};
+    const char *start{state.GetLocation()};
     std::optional<const char *> at{nextCh.Parse(state)};
     if (!at.has_value()) {
       return {};
@@ -354,7 +354,7 @@ struct BOZLiteral {
     }
 
     if (content.empty()) {
-      state->Say(start, "no digit in BOZ literal"_err_en_US);
+      state.Say(start, "no digit in BOZ literal"_err_en_US);
       return {};
     }
 
@@ -362,13 +362,13 @@ struct BOZLiteral {
     for (auto digit : content) {
       digit = HexadecimalDigitValue(digit);
       if ((digit >> *shift) > 0) {
-        state->Say(start, "bad digit in BOZ literal"_err_en_US);
+        state.Say(start, "bad digit in BOZ literal"_err_en_US);
         return {};
       }
       std::uint64_t was{value};
       value <<= *shift;
       if ((value >> *shift) != was) {
-        state->Say(start, "excessive digits in BOZ literal"_err_en_US);
+        state.Say(start, "excessive digits in BOZ literal"_err_en_US);
         return {};
       }
       value |= digit;
@@ -380,7 +380,7 @@ struct BOZLiteral {
 // Unsigned decimal digit string; no space skipping
 struct DigitString {
   using resultType = std::uint64_t;
-  static std::optional<std::uint64_t> Parse(ParseState *state) {
+  static std::optional<std::uint64_t> Parse(ParseState &state) {
     static constexpr auto getDigit = attempt(digit);
     std::optional<const char *> firstDigit{getDigit.Parse(state)};
     if (!firstDigit.has_value()) {
@@ -400,7 +400,7 @@ struct DigitString {
       value += digitValue;
     }
     if (overflow) {
-      state->Say(*firstDigit, "overflow in decimal literal"_err_en_US);
+      state.Say(*firstDigit, "overflow in decimal literal"_err_en_US);
     }
     return {value};
   }
@@ -408,15 +408,15 @@ struct DigitString {
 
 constexpr struct SkipDigitString {
   using resultType = Success;
-  static std::optional<Success> Parse(ParseState *state) {
-    if (std::optional<const char *> ch1{state->PeekAtNextChar()}) {
+  static std::optional<Success> Parse(ParseState &state) {
+    if (std::optional<const char *> ch1{state.PeekAtNextChar()}) {
       if (IsDecimalDigit(**ch1)) {
-        state->UncheckedAdvance();
-        while (std::optional<const char *> p{state->PeekAtNextChar()}) {
+        state.UncheckedAdvance();
+        while (std::optional<const char *> p{state.PeekAtNextChar()}) {
           if (!IsDecimalDigit(**p)) {
             break;
           }
-          state->UncheckedAdvance();
+          state.UncheckedAdvance();
         }
         return {Success{}};
       }
@@ -427,14 +427,14 @@ constexpr struct SkipDigitString {
 
 struct DigitStringAsPositive {
   using resultType = std::int64_t;
-  static std::optional<std::int64_t> Parse(ParseState *state) {
-    Location at{state->GetLocation()};
+  static std::optional<std::int64_t> Parse(ParseState &state) {
+    Location at{state.GetLocation()};
     std::optional<std::uint64_t> x{DigitString{}.Parse(state)};
     if (!x.has_value()) {
       return {};
     }
     if (*x > std::numeric_limits<std::int64_t>::max()) {
-      state->Say(at, "overflow in positive decimal literal"_err_en_US);
+      state.Say(at, "overflow in positive decimal literal"_err_en_US);
     }
     std::int64_t value = *x;
     return {value};
@@ -443,14 +443,14 @@ struct DigitStringAsPositive {
 
 struct SignedDigitString {
   using resultType = std::int64_t;
-  static std::optional<std::int64_t> Parse(ParseState *state) {
-    std::optional<const char *> sign{state->PeekAtNextChar()};
+  static std::optional<std::int64_t> Parse(ParseState &state) {
+    std::optional<const char *> sign{state.PeekAtNextChar()};
     if (!sign.has_value()) {
       return {};
     }
     bool negate{**sign == '-'};
     if (negate || **sign == '+') {
-      state->UncheckedAdvance();
+      state.UncheckedAdvance();
     }
     std::optional<std::uint64_t> x{DigitString{}.Parse(state)};
     if (!x.has_value()) {
@@ -461,7 +461,7 @@ struct SignedDigitString {
       limit = -(limit + 1);
     }
     if (*x > limit) {
-      state->Say(*sign, "overflow in signed decimal literal"_err_en_US);
+      state.Say(*sign, "overflow in signed decimal literal"_err_en_US);
     }
     std::int64_t value = *x;
     return {negate ? -value : value};
@@ -471,14 +471,14 @@ struct SignedDigitString {
 // Legacy feature: Hollerith literal constants
 struct HollerithLiteral {
   using resultType = std::string;
-  static std::optional<std::string> Parse(ParseState *state) {
+  static std::optional<std::string> Parse(ParseState &state) {
     space.Parse(state);
-    const char *start{state->GetLocation()};
+    const char *start{state.GetLocation()};
     std::optional<std::uint64_t> charCount{DigitString{}.Parse(state)};
     if (!charCount || *charCount < 1) {
       return {};
     }
-    static const auto letterH = "h"_ch;
+    static constexpr auto letterH = "h"_ch;
     std::optional<const char *> h{letterH.Parse(state)};
     if (!h.has_value()) {
       return {};
@@ -486,18 +486,18 @@ struct HollerithLiteral {
     std::string content;
     for (auto j = *charCount; j-- > 0;) {
       int bytes{1};
-      const char *p{state->GetLocation()};
-      if (state->encoding() == Encoding::EUC_JP) {
+      const char *p{state.GetLocation()};
+      if (state.encoding() == Encoding::EUC_JP) {
         std::optional<int> chBytes{EUC_JPCharacterBytes(p)};
         if (!chBytes.has_value()) {
-          state->Say(start, "bad EUC_JP characters in Hollerith"_err_en_US);
+          state.Say(start, "bad EUC_JP characters in Hollerith"_err_en_US);
           return {};
         }
         bytes = *chBytes;
-      } else if (state->encoding() == Encoding::UTF8) {
+      } else if (state.encoding() == Encoding::UTF8) {
         std::optional<int> chBytes{UTF8CharacterBytes(p)};
         if (!chBytes.has_value()) {
-          state->Say(start, "bad UTF-8 characters in Hollerith"_err_en_US);
+          state.Say(start, "bad UTF-8 characters in Hollerith"_err_en_US);
           return {};
         }
         bytes = *chBytes;
@@ -505,7 +505,7 @@ struct HollerithLiteral {
       if (bytes == 1) {
         std::optional<const char *> at{nextCh.Parse(state)};
         if (!at.has_value() || !isprint(**at)) {
-          state->Say(
+          state.Say(
               start, "insufficient or bad characters in Hollerith"_err_en_US);
           return {};
         }
@@ -526,8 +526,8 @@ struct HollerithLiteral {
 struct ConsumedAllInputParser {
   using resultType = Success;
   constexpr ConsumedAllInputParser() {}
-  static std::optional<Success> Parse(ParseState *state) {
-    if (state->IsAtEnd()) {
+  static std::optional<Success> Parse(ParseState &state) {
+    if (state.IsAtEnd()) {
       return {Success{}};
     }
     return {};
@@ -538,8 +538,8 @@ template<char goal> struct SkipPast {
   using resultType = Success;
   constexpr SkipPast() {}
   constexpr SkipPast(const SkipPast &) {}
-  static std::optional<Success> Parse(ParseState *state) {
-    while (std::optional<const char *> p{state->GetNextChar()}) {
+  static std::optional<Success> Parse(ParseState &state) {
+    while (std::optional<const char *> p{state.GetNextChar()}) {
       if (**p == goal) {
         return {Success{}};
       }
@@ -552,12 +552,12 @@ template<char goal> struct SkipTo {
   using resultType = Success;
   constexpr SkipTo() {}
   constexpr SkipTo(const SkipTo &) {}
-  static std::optional<Success> Parse(ParseState *state) {
-    while (std::optional<const char *> p{state->PeekAtNextChar()}) {
+  static std::optional<Success> Parse(ParseState &state) {
+    while (std::optional<const char *> p{state.PeekAtNextChar()}) {
       if (**p == goal) {
         return {Success{}};
       }
-      state->UncheckedAdvance();
+      state.UncheckedAdvance();
     }
     return {};
   }
@@ -582,8 +582,8 @@ inline constexpr auto optionalListBeforeColons(const PA &p) {
 // Compiler directives can switch the parser between fixed and free form.
 constexpr struct FormDirectivesAndEmptyLines {
   using resultType = Success;
-  static std::optional<Success> Parse(ParseState *state) {
-    if (UserState * ustate{state->userState()}) {
+  static std::optional<Success> Parse(ParseState &state) {
+    if (UserState * ustate{state.userState()}) {
       if (ParsingLog * log{ustate->log()}) {
         if (!ustate->instrumentedParse()) {
           // Save memory; zap the parsing log before each statement, unless
@@ -592,19 +592,19 @@ constexpr struct FormDirectivesAndEmptyLines {
         }
       }
     }
-    while (std::optional<const char *> at{state->PeekAtNextChar()}) {
+    while (std::optional<const char *> at{state.PeekAtNextChar()}) {
       if (**at == '\n') {
-        state->UncheckedAdvance();
+        state.UncheckedAdvance();
       } else if (**at == '!') {
         static const char fixed[] = "!dir$ fixed\n", free[] = "!dir$ free\n";
         static constexpr std::size_t fixedBytes{sizeof fixed - 1};
         static constexpr std::size_t freeBytes{sizeof free - 1};
-        std::size_t remain{state->BytesRemaining()};
+        std::size_t remain{state.BytesRemaining()};
         if (remain >= fixedBytes && std::memcmp(*at, fixed, fixedBytes) == 0) {
-          state->set_inFixedForm(true).UncheckedAdvance(fixedBytes);
+          state.set_inFixedForm(true).UncheckedAdvance(fixedBytes);
         } else if (remain >= freeBytes &&
             std::memcmp(*at, free, freeBytes) == 0) {
-          state->set_inFixedForm(false).UncheckedAdvance(freeBytes);
+          state.set_inFixedForm(false).UncheckedAdvance(freeBytes);
         } else {
           break;
         }

@@ -77,6 +77,9 @@ public:
   const Messages &messages() const { return messages_; }
   Messages &messages() { return messages_; }
 
+  const Message::Context &context() const { return context_; }
+  Message::Context &context() { return context_; }
+
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
   void set_anyErrorRecovery() { anyErrorRecovery_ = true; }
 

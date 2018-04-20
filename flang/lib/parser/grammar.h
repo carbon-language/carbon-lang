@@ -9,6 +9,7 @@
 
 #include "basic-parsers.h"
 #include "characters.h"
+#include "debug-parser.h"
 #include "parse-tree.h"
 #include "token-parsers.h"
 #include "user-state.h"
@@ -37,14 +38,14 @@ namespace parser {
 template<typename A> struct Parser {
   using resultType = A;
   constexpr Parser() {}
-  static inline std::optional<A> Parse(ParseState *);
+  static inline std::optional<A> Parse(ParseState &);
 };
 
 #define TYPE_PARSER(pexpr) \
   template<> \
   inline std::optional<typename decltype(pexpr)::resultType> \
-  Parser<typename decltype(pexpr)::resultType>::Parse(ParseState *state) { \
-    static const auto parser = (pexpr); \
+  Parser<typename decltype(pexpr)::resultType>::Parse(ParseState &state) { \
+    static constexpr auto parser = (pexpr); \
     return parser.Parse(state); \
   }
 
@@ -383,8 +384,8 @@ constexpr auto scalarIntConstantExpr = scalar(intConstantExpr);
 // This is the top-level production for the Fortran language.
 struct StartNewSubprogram {
   using resultType = Success;
-  static std::optional<Success> Parse(ParseState *state) {
-    if (auto ustate = state->userState()) {
+  static std::optional<Success> Parse(ParseState &state) {
+    if (auto ustate = state.userState()) {
       ustate->NewSubprogram();
     }
     return {Success{}};
@@ -507,10 +508,10 @@ TYPE_PARSER(construct<ActionStmt>{}(indirect(Parser<AllocateStmt>{})) ||
 struct CapturedLabelDoStmt {
   static constexpr auto parser = statement(indirect(Parser<LabelDoStmt>{}));
   using resultType = Statement<Indirection<LabelDoStmt>>;
-  static std::optional<resultType> Parse(ParseState *state) {
+  static std::optional<resultType> Parse(ParseState &state) {
     auto result = parser.Parse(state);
     if (result) {
-      if (auto ustate = state->userState()) {
+      if (auto ustate = state.userState()) {
         ustate->NewDoLabel(std::get<Label>(result->statement->t));
       }
     }
@@ -521,10 +522,10 @@ struct CapturedLabelDoStmt {
 struct EndDoStmtForCapturedLabelDoStmt {
   static constexpr auto parser = statement(indirect(endDoStmt));
   using resultType = Statement<Indirection<EndDoStmt>>;
-  static std::optional<resultType> Parse(ParseState *state) {
+  static std::optional<resultType> Parse(ParseState &state) {
     if (auto enddo = parser.Parse(state)) {
       if (enddo->label.has_value()) {
-        if (auto ustate = state->userState()) {
+        if (auto ustate = state.userState()) {
           if (!ustate->InNonlabelDoConstruct() &&
               ustate->IsDoLabel(enddo->label.value())) {
             return enddo;
@@ -1538,9 +1539,9 @@ TYPE_CONTEXT_PARSER("designator"_en_US,
 
 constexpr struct OldStructureComponentName {
   using resultType = Name;
-  static std::optional<Name> Parse(ParseState *state) {
+  static std::optional<Name> Parse(ParseState &state) {
     if (std::optional<Name> n{name.Parse(state)}) {
-      if (const auto *user = state->userState()) {
+      if (const auto *user = state.userState()) {
         if (user->IsOldStructureComponent(n->source)) {
           return n;
         }
@@ -1787,10 +1788,10 @@ constexpr auto level1Expr = construct<Expr>{}(construct<Expr::DefinedUnary>{}(
 constexpr struct MultOperand {
   using resultType = Expr;
   constexpr MultOperand() {}
-  static std::optional<Expr> Parse(ParseState *);
+  static std::optional<Expr> Parse(ParseState &);
 } multOperand;
 
-std::optional<Expr> MultOperand::Parse(ParseState *state) {
+std::optional<Expr> MultOperand::Parse(ParseState &state) {
   std::optional<Expr> result{level1Expr.Parse(state)};
   if (result) {
     static constexpr auto op = attempt("**"_tok);
@@ -1810,7 +1811,7 @@ std::optional<Expr> MultOperand::Parse(ParseState *state) {
 constexpr struct AddOperand {
   using resultType = Expr;
   constexpr AddOperand() {}
-  static std::optional<Expr> Parse(ParseState *state) {
+  static std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{multOperand.Parse(state)};
     if (result) {
       std::function<Expr(Expr &&)> multiply{[&result](Expr &&right) {
@@ -1841,7 +1842,7 @@ constexpr struct AddOperand {
 constexpr struct Level2Expr {
   using resultType = Expr;
   constexpr Level2Expr() {}
-  static std::optional<Expr> Parse(ParseState *state) {
+  static std::optional<Expr> Parse(ParseState &state) {
     static constexpr auto unary =
         "+" >> construct<Expr>{}(construct<Expr::UnaryPlus>{}(addOperand)) ||
         "-" >> construct<Expr>{}(construct<Expr::Negate>{}(addOperand)) ||
@@ -1872,7 +1873,7 @@ constexpr struct Level2Expr {
 constexpr struct Level3Expr {
   using resultType = Expr;
   constexpr Level3Expr() {}
-  static std::optional<Expr> Parse(ParseState *state) {
+  static std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{level2Expr.Parse(state)};
     if (result) {
       std::function<Expr(Expr &&)> concat{[&result](Expr &&right) {
@@ -1895,7 +1896,7 @@ constexpr struct Level3Expr {
 constexpr struct Level4Expr {
   using resultType = Expr;
   constexpr Level4Expr() {}
-  static std::optional<Expr> Parse(ParseState *state) {
+  static std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{level3Expr.Parse(state)};
     if (result) {
       std::function<Expr(Expr &&)> lt{[&result](Expr &&right) {
@@ -1940,10 +1941,10 @@ constexpr struct Level4Expr {
 constexpr struct AndOperand {
   using resultType = Expr;
   constexpr AndOperand() {}
-  static std::optional<Expr> Parse(ParseState *);
+  static std::optional<Expr> Parse(ParseState &);
 } andOperand;
 
-std::optional<Expr> AndOperand::Parse(ParseState *state) {
+std::optional<Expr> AndOperand::Parse(ParseState &state) {
   static constexpr auto op = attempt(".NOT."_tok);
   int complements{0};
   while (op.Parse(state)) {
@@ -1964,7 +1965,7 @@ std::optional<Expr> AndOperand::Parse(ParseState *state) {
 constexpr struct OrOperand {
   using resultType = Expr;
   constexpr OrOperand() {}
-  static std::optional<Expr> Parse(ParseState *state) {
+  static std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{andOperand.Parse(state)};
     if (result) {
       std::function<Expr(Expr &&)> logicalAnd{[&result](Expr &&right) {
@@ -1985,7 +1986,7 @@ constexpr struct OrOperand {
 static constexpr struct EquivOperand {
   using resultType = Expr;
   constexpr EquivOperand() {}
-  static std::optional<Expr> Parse(ParseState *state) {
+  static std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{orOperand.Parse(state)};
     if (result) {
       std::function<Expr(Expr &&)> logicalOr{[&result](Expr &&right) {
@@ -2007,7 +2008,7 @@ static constexpr struct EquivOperand {
 constexpr struct Level5Expr {
   using resultType = Expr;
   constexpr Level5Expr() {}
-  static std::optional<Expr> Parse(ParseState *state) {
+  static std::optional<Expr> Parse(ParseState &state) {
     std::optional<Expr> result{equivOperand.Parse(state)};
     if (result) {
       std::function<Expr(Expr &&)> eqv{[&result](Expr &&right) {
@@ -2033,7 +2034,7 @@ constexpr struct Level5Expr {
 
 // R1022 expr -> [expr defined-binary-op] level-5-expr
 // Defined binary operators associate leftwards.
-template<> std::optional<Expr> Parser<Expr>::Parse(ParseState *state) {
+template<> std::optional<Expr> Parser<Expr>::Parse(ParseState &state) {
   std::optional<Expr> result{level5Expr.Parse(state)};
   if (result) {
     std::function<Expr(DefinedOpName &&, Expr &&)> defBinOp{
@@ -2260,8 +2261,8 @@ TYPE_PARSER("END CRITICAL" >> construct<EndCriticalStmt>{}(maybe(name)))
 // R1120 do-stmt -> nonlabel-do-stmt | label-do-stmt
 constexpr struct EnterNonlabelDoConstruct {
   using resultType = Success;
-  static std::optional<Success> Parse(ParseState *state) {
-    if (auto ustate = state->userState()) {
+  static std::optional<Success> Parse(ParseState &state) {
+    if (auto ustate = state.userState()) {
       ustate->EnterNonlabelDoConstruct();
     }
     return {Success{}};
@@ -2270,8 +2271,8 @@ constexpr struct EnterNonlabelDoConstruct {
 
 constexpr struct LeaveDoConstruct {
   using resultType = Success;
-  static std::optional<Success> Parse(ParseState *state) {
-    if (auto ustate = state->userState()) {
+  static std::optional<Success> Parse(ParseState &state) {
+    if (auto ustate = state.userState()) {
       ustate->LeaveDoConstruct();
     }
     return {Success{}};
@@ -3567,11 +3568,11 @@ TYPE_PARSER(construct<StructureStmt>{}("STRUCTURE /" >> name / "/", pure(true),
 
 constexpr struct StructureComponents {
   using resultType = DataComponentDefStmt;
-  static std::optional<DataComponentDefStmt> Parse(ParseState *state) {
+  static std::optional<DataComponentDefStmt> Parse(ParseState &state) {
     static constexpr auto stmt = Parser<DataComponentDefStmt>{};
     std::optional<DataComponentDefStmt> defs{stmt.Parse(state)};
     if (defs.has_value()) {
-      if (auto ustate = state->userState()) {
+      if (auto ustate = state.userState()) {
         for (const auto &decl : std::get<std::list<ComponentDecl>>(defs->t)) {
           ustate->NoteOldStructureComponent(std::get<Name>(decl.t).source);
         }

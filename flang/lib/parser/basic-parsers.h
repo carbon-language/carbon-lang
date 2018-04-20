@@ -5,7 +5,7 @@
 // type definition and member (or static) function:
 //
 //   using resultType = ...;
-//   std::optional<resultType> Parse(ParseState *) const;
+//   std::optional<resultType> Parse(ParseState &) const;
 //
 // which either returns a value to signify a successful recognition or else
 // returns {} to signify failure.  On failure, the state cannot be assumed
@@ -38,8 +38,8 @@ public:
   using resultType = A;
   constexpr FailParser(const FailParser &) = default;
   constexpr explicit FailParser(MessageFixedText t) : text_{t} {}
-  std::optional<A> Parse(ParseState *state) const {
-    state->Say(text_);
+  std::optional<A> Parse(ParseState &state) const {
+    state.Say(text_);
     return {};
   }
 
@@ -60,7 +60,7 @@ public:
   using resultType = A;
   constexpr PureParser(const PureParser &) = default;
   constexpr explicit PureParser(A &&x) : value_(std::move(x)) {}
-  std::optional<A> Parse(ParseState *) const { return {value_}; }
+  std::optional<A> Parse(ParseState &) const { return {value_}; }
 
 private:
   const A value_;
@@ -77,16 +77,16 @@ public:
   using resultType = typename A::resultType;
   constexpr BacktrackingParser(const BacktrackingParser &) = default;
   constexpr BacktrackingParser(const A &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    Messages messages{std::move(state->messages())};
-    ParseState backtrack{*state};
+  std::optional<resultType> Parse(ParseState &state) const {
+    Messages messages{std::move(state.messages())};
+    ParseState backtrack{state};
     std::optional<resultType> result{parser_.Parse(state)};
     if (result.has_value()) {
-      messages.Annex(state->messages());
-      state->messages() = std::move(messages);
+      messages.Annex(state.messages());
+      state.messages() = std::move(messages);
     } else {
-      *state = std::move(backtrack);
-      state->messages() = std::move(messages);
+      state = std::move(backtrack);
+      state.messages() = std::move(messages);
     }
     return result;
   }
@@ -106,10 +106,10 @@ public:
   using resultType = Success;
   constexpr NegatedParser(const NegatedParser &) = default;
   constexpr NegatedParser(const PA &p) : parser_{p} {}
-  std::optional<Success> Parse(ParseState *state) const {
-    ParseState forked{*state};
+  std::optional<Success> Parse(ParseState &state) const {
+    ParseState forked{state};
     forked.set_deferMessages(true);
-    if (parser_.Parse(&forked)) {
+    if (parser_.Parse(forked)) {
       return {};
     }
     return {Success{}};
@@ -130,10 +130,10 @@ public:
   using resultType = Success;
   constexpr LookAheadParser(const LookAheadParser &) = default;
   constexpr LookAheadParser(const PA &p) : parser_{p} {}
-  std::optional<Success> Parse(ParseState *state) const {
-    ParseState forked{*state};
+  std::optional<Success> Parse(ParseState &state) const {
+    ParseState forked{state};
     forked.set_deferMessages(true);
-    if (parser_.Parse(&forked).has_value()) {
+    if (parser_.Parse(forked).has_value()) {
       return {Success{}};
     }
     return {};
@@ -155,10 +155,10 @@ public:
   constexpr MessageContextParser(const MessageContextParser &) = default;
   constexpr MessageContextParser(MessageFixedText t, const PA &p)
     : text_{t}, parser_{p} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    state->PushContext(text_);
+  std::optional<resultType> Parse(ParseState &state) const {
+    state.PushContext(text_);
     std::optional<resultType> result{parser_.Parse(state)};
-    state->PopContext();
+    state.PopContext();
     return result;
   }
 
@@ -181,7 +181,7 @@ public:
   using resultType = typename PB::resultType;
   constexpr SequenceParser(const SequenceParser &) = default;
   constexpr SequenceParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (pa_.Parse(state)) {
       return pb_.Parse(state);
     }
@@ -204,7 +204,7 @@ public:
   constexpr InvertedSequenceParser(const InvertedSequenceParser &) = default;
   constexpr InvertedSequenceParser(const PA &pa, const PB &pb)
     : pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
       if (pb_.Parse(state)) {
         return ax;
@@ -232,36 +232,36 @@ public:
   static_assert(std::is_same_v<resultType, typename PB::resultType>);
   constexpr AlternativeParser(const AlternativeParser &) = default;
   constexpr AlternativeParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    Messages messages{std::move(state->messages())};
-    ParseState backtrack{*state};
+  std::optional<resultType> Parse(ParseState &state) const {
+    Messages messages{std::move(state.messages())};
+    ParseState backtrack{state};
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
-      messages.Annex(state->messages());
-      state->messages() = std::move(messages);
+      messages.Annex(state.messages());
+      state.messages() = std::move(messages);
       return ax;
     }
-    ParseState paState{std::move(*state)};
-    *state = std::move(backtrack);
+    ParseState paState{std::move(state)};
+    state = std::move(backtrack);
     if (std::optional<resultType> bx{pb_.Parse(state)}) {
-      messages.Annex(state->messages());
-      state->messages() = std::move(messages);
+      messages.Annex(state.messages());
+      state.messages() = std::move(messages);
       return bx;
     }
     // Both alternatives failed.  Retain the state (and messages) from the
     // alternative parse that went the furthest.
     auto paEnd = paState.GetLocation();
-    auto pbEnd = state->GetLocation();
+    auto pbEnd = state.GetLocation();
     if (paEnd > pbEnd) {
       messages.Annex(paState.messages());
-      *state = std::move(paState);
+      state = std::move(paState);
     } else if (paEnd < pbEnd) {
-      messages.Annex(state->messages());
+      messages.Annex(state.messages());
     } else {
       // It's a tie.
-      paState.messages().Incorporate(state->messages());
+      paState.messages().Incorporate(state.messages());
       messages.Annex(paState.messages());
     }
-    state->messages() = std::move(messages);
+    state.messages() = std::move(messages);
     return {};
   }
 
@@ -294,34 +294,34 @@ public:
   static_assert(std::is_same_v<resultType, typename PB::resultType>);
   constexpr RecoveryParser(const RecoveryParser &) = default;
   constexpr RecoveryParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    bool originallyDeferred{state->deferMessages()};
-    ParseState backtrack{*state};
-    if (!originallyDeferred && state->messages().empty() &&
-        !state->anyErrorRecovery()) {
-      state->set_deferMessages(true);
+  std::optional<resultType> Parse(ParseState &state) const {
+    bool originallyDeferred{state.deferMessages()};
+    ParseState backtrack{state};
+    if (!originallyDeferred && state.messages().empty() &&
+        !state.anyErrorRecovery()) {
+      state.set_deferMessages(true);
       if (std::optional<resultType> ax{pa_.Parse(state)}) {
-        if (!state->anyDeferredMessages() && !state->anyErrorRecovery()) {
-          state->set_deferMessages(false);
+        if (!state.anyDeferredMessages() && !state.anyErrorRecovery()) {
+          state.set_deferMessages(false);
           return ax;
         }
       }
-      *state = backtrack;
+      state = backtrack;
     }
-    Messages messages{std::move(state->messages())};
+    Messages messages{std::move(state.messages())};
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
-      messages.Annex(state->messages());
-      state->messages() = std::move(messages);
+      messages.Annex(state.messages());
+      state.messages() = std::move(messages);
       return ax;
     }
-    messages.Annex(state->messages());
-    *state = std::move(backtrack);
-    state->set_deferMessages(true);
+    messages.Annex(state.messages());
+    state = std::move(backtrack);
+    state.set_deferMessages(true);
     std::optional<resultType> bx{pb_.Parse(state)};
-    state->messages() = std::move(messages);
-    state->set_deferMessages(originallyDeferred);
+    state.messages() = std::move(messages);
+    state.set_deferMessages(originallyDeferred);
     if (bx.has_value()) {
-      state->set_anyErrorRecovery();
+      state.set_anyErrorRecovery();
     }
     return bx;
   }
@@ -346,15 +346,15 @@ public:
   using resultType = std::list<paType>;
   constexpr ManyParser(const ManyParser &) = default;
   constexpr ManyParser(const PA &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     resultType result;
-    auto at = state->GetLocation();
+    auto at = state.GetLocation();
     while (std::optional<paType> x{parser_.Parse(state)}) {
       result.emplace_back(std::move(*x));
-      if (state->GetLocation() <= at) {
+      if (state.GetLocation() <= at) {
         break;  // no forward progress, don't loop
       }
-      at = state->GetLocation();
+      at = state.GetLocation();
     }
     return {std::move(result)};
   }
@@ -378,12 +378,12 @@ public:
   using resultType = std::list<paType>;
   constexpr SomeParser(const SomeParser &) = default;
   constexpr SomeParser(const PA &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    auto start = state->GetLocation();
+  std::optional<resultType> Parse(ParseState &state) const {
+    auto start = state.GetLocation();
     if (std::optional<paType> first{parser_.Parse(state)}) {
       resultType result;
       result.emplace_back(std::move(*first));
-      if (state->GetLocation() > start) {
+      if (state.GetLocation() > start) {
         result.splice(result.end(), *many(parser_).Parse(state));
       }
       return {std::move(result)};
@@ -405,10 +405,10 @@ public:
   using resultType = Success;
   constexpr SkipManyParser(const SkipManyParser &) = default;
   constexpr SkipManyParser(const PA &parser) : parser_{parser} {}
-  std::optional<Success> Parse(ParseState *state) const {
-    for (auto at = state->GetLocation();
-         parser_.Parse(state) && state->GetLocation() > at;
-         at = state->GetLocation()) {
+  std::optional<Success> Parse(ParseState &state) const {
+    for (auto at = state.GetLocation();
+         parser_.Parse(state) && state.GetLocation() > at;
+         at = state.GetLocation()) {
     }
     return {Success{}};
   }
@@ -429,7 +429,7 @@ public:
   using resultType = Success;
   constexpr SkipManyFastParser(const SkipManyFastParser &) = default;
   constexpr SkipManyFastParser(const PA &parser) : parser_{parser} {}
-  std::optional<Success> Parse(ParseState *state) const {
+  std::optional<Success> Parse(ParseState &state) const {
     while (parser_.Parse(state)) {
     }
     return {Success{}};
@@ -452,7 +452,7 @@ public:
   using resultType = std::optional<paType>;
   constexpr MaybeParser(const MaybeParser &) = default;
   constexpr MaybeParser(const PA &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (resultType result{parser_.Parse(state)}) {
       return {std::move(result)};
     }
@@ -475,7 +475,7 @@ public:
   using resultType = typename PA::resultType;
   constexpr DefaultedParser(const DefaultedParser &) = default;
   constexpr DefaultedParser(const PA &p) : parser_{p} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     std::optional<std::optional<resultType>> ax{maybe(parser_).Parse(state)};
     CHECK(ax.has_value());  // maybe() always succeeds
     if (ax.value().has_value()) {
@@ -519,7 +519,7 @@ public:
   constexpr Apply1(const Apply1 &) = default;
   constexpr Apply1(funcType function, const PA &parser)
     : function_{function}, parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<paType> ax{parser_.Parse(state)}) {
       return {function_(std::move(*ax))};
     }
@@ -546,7 +546,7 @@ public:
   Apply1Functor(const Apply1Functor &) = default;
   Apply1Functor(const funcType &functor, const PA &parser)
     : functor_{functor}, parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<paType> ax{parser_.Parse(state)}) {
       return {functor_(std::move(*ax))};
     }
@@ -571,7 +571,7 @@ public:
   constexpr Apply1Mem(const Apply1Mem &) = default;
   constexpr Apply1Mem(funcType function, const PA &pa)
     : function_{function}, pa_{pa} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     std::optional<resultType> result{pa_.Parse(state)};
     if (result) {
       ((*result).*function_)();
@@ -600,7 +600,7 @@ public:
   constexpr Apply2(const Apply2 &) = default;
   constexpr Apply2(funcType function, const PA &pa, const PB &pb)
     : function_{function}, pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<paType> ax{pa_.Parse(state)}) {
       if (std::optional<pbType> bx{pb_.Parse(state)}) {
         return {function_(std::move(*ax), std::move(*bx))};
@@ -632,7 +632,7 @@ public:
   Apply2Functor(const Apply2Functor &) = default;
   Apply2Functor(const funcType &function, const PA &pa, const PB &pb)
     : function_{function}, pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<paType> ax{pa_.Parse(state)}) {
       if (std::optional<pbType> bx{pb_.Parse(state)}) {
         return {function_(std::move(*ax), std::move(*bx))};
@@ -663,7 +663,7 @@ public:
   constexpr Apply2Mem(const Apply2Mem &) = default;
   constexpr Apply2Mem(funcType function, const PA &pa, const PB &pb)
     : function_{function}, pa_{pa}, pb_{pb} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<resultType> result{pa_.Parse(state)}) {
       if (std::optional<pbType> bx{pb_.Parse(state)}) {
         ((*result).*function_)(std::move(*bx));
@@ -696,7 +696,7 @@ public:
   constexpr Apply3(const Apply3 &) = default;
   constexpr Apply3(funcType function, const PA &pa, const PB &pb, const PC &pc)
     : function_{function}, pa_{pa}, pb_{pb}, pc_{pc} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<paType> ax{pa_.Parse(state)}) {
       if (std::optional<pbType> bx{pb_.Parse(state)}) {
         if (std::optional<pcType> cx{pc_.Parse(state)}) {
@@ -733,7 +733,7 @@ public:
   constexpr Apply3Mem(
       funcType function, const PA &pa, const PB &pb, const PC &pc)
     : function_{function}, pa_{pa}, pb_{pb}, pc_{pc} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<resultType> result{pa_.Parse(state)}) {
       if (std::optional<pbType> bx{pb_.Parse(state)}) {
         if (std::optional<pcType> cx{pc_.Parse(state)}) {
@@ -772,7 +772,7 @@ public:
   constexpr Apply4(
       funcType function, const PA &pa, const PB &pb, const PC &pc, const PD &pd)
     : function_{function}, pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<paType> ax{pa_.Parse(state)}) {
       if (std::optional<pbType> bx{pb_.Parse(state)}) {
         if (std::optional<pcType> cx{pc_.Parse(state)}) {
@@ -814,7 +814,7 @@ public:
   constexpr Apply4Mem(
       funcType function, const PA &pa, const PB &pb, const PC &pc, const PD &pd)
     : function_{function}, pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     if (std::optional<resultType> result{pa_.Parse(state)}) {
       if (std::optional<pbType> bx{pb_.Parse(state)}) {
         if (std::optional<pcType> cx{pc_.Parse(state)}) {
@@ -853,7 +853,7 @@ template<class T> struct construct {
 
   using resultType = T;
   constexpr construct(const construct &) = default;
-  std::optional<T> Parse(ParseState *state) const { return {T{}}; }
+  std::optional<T> Parse(ParseState &state) const { return {T{}}; }
 
   constexpr construct operator()() const { return *this; }
 
@@ -862,7 +862,7 @@ template<class T> struct construct {
     using resultType = T;
     constexpr Construct1(const Construct1 &) = default;
     constexpr explicit Construct1(const PA &parser) : parser_{parser} {}
-    std::optional<T> Parse(ParseState *state) const {
+    std::optional<T> Parse(ParseState &state) const {
       if (auto ax = parser_.Parse(state)) {
         return {T(std::move(*ax))};
       }
@@ -883,7 +883,7 @@ template<class T> struct construct {
     using resultType = T;
     constexpr Construct2(const Construct2 &) = default;
     constexpr Construct2(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
-    std::optional<T> Parse(ParseState *state) const {
+    std::optional<T> Parse(ParseState &state) const {
       if (auto ax = pa_.Parse(state)) {
         if (auto bx = pb_.Parse(state)) {
           return {T{std::move(*ax), std::move(*bx)}};
@@ -908,7 +908,7 @@ template<class T> struct construct {
     constexpr Construct3(const Construct3 &) = default;
     constexpr Construct3(const PA &pa, const PB &pb, const PC &pc)
       : pa_{pa}, pb_{pb}, pc_{pc} {}
-    std::optional<resultType> Parse(ParseState *state) const {
+    std::optional<resultType> Parse(ParseState &state) const {
       if (auto ax = pa_.Parse(state)) {
         if (auto bx = pb_.Parse(state)) {
           if (auto cx = pc_.Parse(state)) {
@@ -938,7 +938,7 @@ template<class T> struct construct {
     constexpr Construct4(const Construct4 &) = default;
     constexpr Construct4(const PA &pa, const PB &pb, const PC &pc, const PD &pd)
       : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
-    std::optional<resultType> Parse(ParseState *state) const {
+    std::optional<resultType> Parse(ParseState &state) const {
       if (auto ax = pa_.Parse(state)) {
         if (auto bx = pb_.Parse(state)) {
           if (auto cx = pc_.Parse(state)) {
@@ -973,7 +973,7 @@ template<class T> struct construct {
     constexpr Construct5(
         const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe)
       : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe} {}
-    std::optional<resultType> Parse(ParseState *state) const {
+    std::optional<resultType> Parse(ParseState &state) const {
       if (auto ax = pa_.Parse(state)) {
         if (auto bx = pb_.Parse(state)) {
           if (auto cx = pc_.Parse(state)) {
@@ -1012,7 +1012,7 @@ template<class T> struct construct {
     constexpr Construct6(const PA &pa, const PB &pb, const PC &pc, const PD &pd,
         const PE &pe, const PF &pf)
       : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe}, pf_{pf} {}
-    std::optional<resultType> Parse(ParseState *state) const {
+    std::optional<resultType> Parse(ParseState &state) const {
       if (auto ax = pa_.Parse(state)) {
         if (auto bx = pb_.Parse(state)) {
           if (auto cx = pc_.Parse(state)) {
@@ -1059,8 +1059,8 @@ public:
   constexpr explicit StatePredicateGuardParser(
       bool (*predicate)(const ParseState &))
     : predicate_{predicate} {}
-  std::optional<Success> Parse(ParseState *state) const {
-    if (predicate_(*state)) {
+  std::optional<Success> Parse(ParseState &state) const {
+    if (predicate_(state)) {
       return {Success{}};
     }
     return {};
@@ -1088,7 +1088,7 @@ public:
   constexpr NonemptySeparated(const NonemptySeparated &) = default;
   constexpr NonemptySeparated(const PA &p, const PB &sep)
     : parser_{p}, separator_{sep} {}
-  std::optional<resultType> Parse(ParseState *state) const {
+  std::optional<resultType> Parse(ParseState &state) const {
     return applyFunction(prepend<paType>, parser_, many(separator_ >> parser_))
         .Parse(state);
   }
@@ -1103,22 +1103,22 @@ inline constexpr auto nonemptySeparated(const PA &p, const PB &sep) {
   return NonemptySeparated<PA, PB>{p, sep};
 }
 
-// If f is a function of type void (*f)(ParseState *), then
+// If f is a function of type void (*f)(ParseState &), then
 // StateUpdateParser{f} is a parser that always succeeds, possibly with
 // side effects on the parsing state.
 class StateUpdateParser {
 public:
   using resultType = Success;
   constexpr StateUpdateParser(const StateUpdateParser &) = default;
-  constexpr StateUpdateParser(void (*function)(ParseState *))
+  constexpr StateUpdateParser(void (*function)(ParseState &))
     : function_{function} {}
-  std::optional<Success> Parse(ParseState *state) const {
+  std::optional<Success> Parse(ParseState &state) const {
     function_(state);
     return {Success{}};
   }
 
 private:
-  void (*const function_)(ParseState *);
+  void (*const function_)(ParseState &);
 };
 
 // If a is a parser with some result type A, and f is a function of A&& that
@@ -1133,7 +1133,7 @@ public:
   using resultType = T;
   constexpr BoundMoveParser(const BoundMoveParser &) = default;
   constexpr BoundMoveParser(const PA &pa, funcType f) : pa_{pa}, f_{f} {}
-  std::optional<T> Parse(ParseState *state) const {
+  std::optional<T> Parse(ParseState &state) const {
     if (std::optional<paType> ax{pa_.Parse(state)}) {
       return f_(std::move(*ax)).Parse(state);
     }
@@ -1164,7 +1164,7 @@ inline constexpr auto operator>>=(
 template<bool pass> struct FixedParser {
   using resultType = Success;
   constexpr FixedParser() {}
-  static constexpr std::optional<Success> Parse(ParseState *) {
+  static constexpr std::optional<Success> Parse(ParseState &) {
     if (pass) {
       return {Success{}};
     }
@@ -1181,11 +1181,11 @@ constexpr FixedParser<false> cut;
 constexpr struct NextCh {
   using resultType = const char *;
   constexpr NextCh() {}
-  std::optional<const char *> Parse(ParseState *state) const {
-    if (std::optional<const char *> result{state->GetNextChar()}) {
+  std::optional<const char *> Parse(ParseState &state) const {
+    if (std::optional<const char *> result{state.GetNextChar()}) {
       return result;
     }
-    state->Say("end of file"_err_en_US);
+    state.Say("end of file"_err_en_US);
     return {};
   }
 } nextCh;
@@ -1198,16 +1198,16 @@ public:
   using resultType = typename PA::resultType;
   constexpr NonstandardParser(const NonstandardParser &) = default;
   constexpr NonstandardParser(const PA &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    if (state->strictConformance()) {
+  std::optional<resultType> Parse(ParseState &state) const {
+    if (state.strictConformance()) {
       return {};
     }
-    auto at = state->GetLocation();
+    auto at = state.GetLocation();
     auto result = parser_.Parse(state);
     if (result.has_value()) {
-      state->set_anyConformanceViolation();
-      if (state->warnOnNonstandardUsage()) {
-        state->Say(at, "nonstandard usage"_en_US);
+      state.set_anyConformanceViolation();
+      if (state.warnOnNonstandardUsage()) {
+        state.Say(at, "nonstandard usage"_en_US);
       }
     }
     return result;
@@ -1229,16 +1229,16 @@ public:
   using resultType = typename PA::resultType;
   constexpr DeprecatedParser(const DeprecatedParser &) = default;
   constexpr DeprecatedParser(const PA &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    if (state->strictConformance()) {
+  std::optional<resultType> Parse(ParseState &state) const {
+    if (state.strictConformance()) {
       return {};
     }
-    auto at = state->GetLocation();
+    auto at = state.GetLocation();
     auto result = parser_.Parse(state);
     if (result) {
-      state->set_anyConformanceViolation();
-      if (state->warnOnDeprecatedUsage()) {
-        state->Say(at, "deprecated usage"_en_US);
+      state.set_anyConformanceViolation();
+      if (state.warnOnDeprecatedUsage()) {
+        state.Say(at, "deprecated usage"_en_US);
       }
     }
     return result;
@@ -1258,11 +1258,11 @@ public:
   using resultType = typename PA::resultType;
   constexpr SourcedParser(const SourcedParser &) = default;
   constexpr SourcedParser(const PA &parser) : parser_{parser} {}
-  std::optional<resultType> Parse(ParseState *state) const {
-    const char *start{state->GetLocation()};
+  std::optional<resultType> Parse(ParseState &state) const {
+    const char *start{state.GetLocation()};
     auto result = parser_.Parse(state);
     if (result.has_value()) {
-      result->source = CharBlock{start, state->GetLocation()};
+      result->source = CharBlock{start, state.GetLocation()};
     }
     return result;
   }
@@ -1278,8 +1278,8 @@ template<typename PA> inline constexpr auto sourced(const PA &parser) {
 constexpr struct GetUserState {
   using resultType = UserState *;
   constexpr GetUserState() {}
-  static std::optional<resultType> Parse(ParseState *state) {
-    return {state->userState()};
+  static std::optional<resultType> Parse(ParseState &state) {
+    return {state.userState()};
   }
 } getUserState;
 }  // namespace parser
