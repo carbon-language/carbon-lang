@@ -388,7 +388,7 @@ bool SectionChunk::hasData() const {
 }
 
 uint32_t SectionChunk::getOutputCharacteristics() const {
-  return Header->Characteristics & PermMask;
+  return Header->Characteristics & (PermMask | TypeMask);
 }
 
 bool SectionChunk::isCOMDAT() const {

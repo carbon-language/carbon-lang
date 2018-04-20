@@ -237,7 +237,8 @@ void OutputSection::addChunk(Chunk *C) {
 }
 
 void OutputSection::setPermissions(uint32_t C) {
-  Header.Characteristics = C & PermMask;
+  Header.Characteristics &= ~PermMask;
+  Header.Characteristics |= C;
 }
 
 void OutputSection::merge(OutputSection *Other) {
