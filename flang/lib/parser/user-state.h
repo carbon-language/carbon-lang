@@ -11,6 +11,7 @@
 #include "parse-tree.h"
 #include <cinttypes>
 #include <optional>
+#include <ostream>
 #include <set>
 #include <unordered_set>
 
@@ -26,6 +27,12 @@ public:
   explicit UserState(const CookedSource &cooked) : cooked_{cooked} {}
 
   const CookedSource &cooked() const { return cooked_; }
+
+  std::ostream *debugOutput() const { return debugOutput_; }
+  UserState &set_debugOutput(std::ostream *out) {
+    debugOutput_ = out;
+    return *this;
+  }
 
   ParsingLog *log() const { return log_; }
   UserState &set_log(ParsingLog *log) {
@@ -70,6 +77,8 @@ public:
 
 private:
   const CookedSource &cooked_;
+
+  std::ostream *debugOutput_{nullptr};
 
   ParsingLog *log_{nullptr};
   bool instrumentedParse_{false};

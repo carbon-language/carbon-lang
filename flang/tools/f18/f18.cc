@@ -162,7 +162,7 @@ std::string CompileFortran(
     parsing.DumpCookedChars(std::cout);
     return {};
   }
-  parsing.Parse();
+  parsing.Parse(&std::cout);
   if (options.instrumentedParse) {
     parsing.DumpParsingLog(std::cout);
     return {};

@@ -4,8 +4,6 @@
 // Implements the parser with syntax "(YOUR MESSAGE HERE)"_debug for use
 // in temporary modifications to the grammar intended for tracing the
 // flow of the parsers.  Not to be used in production.
-// When this feature is in use for temporary debugging, be sure to
-// compile and link debug-parser.cc.
 
 #include "basic-parsers.h"
 #include "parse-state.h"

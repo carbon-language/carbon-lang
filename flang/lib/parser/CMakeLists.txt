@@ -2,7 +2,7 @@ add_library(FortranParser
   char-buffer.cc
   char-set.cc
   characters.cc
-# debug-parser.cc  # not to be used in production, it uses std::cout
+  debug-parser.cc
   idioms.cc
   instrumented-parser.cc
   message.cc

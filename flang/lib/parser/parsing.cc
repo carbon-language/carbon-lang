@@ -78,9 +78,11 @@ void Parsing::DumpParsingLog(std::ostream &out) const {
   log_.Dump(out, cooked_);
 }
 
-void Parsing::Parse() {
+void Parsing::Parse(std::ostream *out) {
   UserState userState{cooked_};
-  userState.set_instrumentedParse(options_.instrumentedParse).set_log(&log_);
+  userState.set_debugOutput(out)
+      .set_instrumentedParse(options_.instrumentedParse)
+      .set_log(&log_);
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm)
       .set_encoding(options_.encoding)

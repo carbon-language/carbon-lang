@@ -45,7 +45,7 @@ public:
   void DumpCookedChars(std::ostream &) const;
   void DumpProvenance(std::ostream &) const;
   void DumpParsingLog(std::ostream &) const;
-  void Parse();
+  void Parse(std::ostream *debugOutput = nullptr);
   void ClearLog();
 
   void Identify(std::ostream &o, const char *at, const std::string &prefix,

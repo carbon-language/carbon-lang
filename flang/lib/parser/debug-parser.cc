@@ -1,5 +1,6 @@
 #include "debug-parser.h"
-#include <iostream>
+#include "user-state.h"
+#include <ostream>
 #include <string>
 
 namespace Fortran {
@@ -7,13 +8,15 @@ namespace parser {
 
 std::optional<Success> DebugParser::Parse(ParseState &state) const {
   if (auto ustate = state.userState()) {
-    const CookedSource &cooked{ustate->cooked()};
-    if (auto context = state.context()) {
-      context->Emit(std::cout, cooked);
+    if (auto out = ustate->debugOutput()) {
+      const CookedSource &cooked{ustate->cooked()};
+      if (auto context = state.context()) {
+        context->Emit(*out, cooked);
+      }
+      Provenance p{cooked.GetProvenance(state.GetLocation()).start()};
+      cooked.allSources().Identify(*out, p, "", true);
+      *out << "   parser debug: " << std::string{str_, length_} << "\n\n";
     }
-    Provenance p{cooked.GetProvenance(state.GetLocation()).start()};
-    cooked.allSources().Identify(std::cout, p, "", true);
-    std::cout << "   parser debug: " << std::string{str_, length_} << "\n\n";
   }
   return {Success{}};
 }
