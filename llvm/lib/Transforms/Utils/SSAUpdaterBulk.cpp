@@ -90,7 +90,8 @@ Value *SSAUpdaterBulk::computeValueAt(BasicBlock *BB, RewriteInfo &R,
 static void
 ComputeLiveInBlocks(const SmallPtrSetImpl<BasicBlock *> &UsingBlocks,
                     const SmallPtrSetImpl<BasicBlock *> &DefBlocks,
-                    SmallPtrSetImpl<BasicBlock *> &LiveInBlocks) {
+                    SmallPtrSetImpl<BasicBlock *> &LiveInBlocks,
+                    PredIteratorCache &PredCache) {
   // To determine liveness, we must iterate through the predecessors of blocks
   // where the def is live.  Blocks are added to the worklist if we need to
   // check their predecessors.  Start with all the using blocks.
@@ -110,7 +111,7 @@ ComputeLiveInBlocks(const SmallPtrSetImpl<BasicBlock *> &UsingBlocks,
     // Since the value is live into BB, it is either defined in a predecessor or
     // live into it to.  Add the preds to the worklist unless they are a
     // defining block.
-    for (BasicBlock *P : predecessors(BB)) {
+    for (BasicBlock *P : PredCache.get(BB)) {
       // The value is not live into a predecessor if it defines the value.
       if (DefBlocks.count(P))
         continue;
@@ -147,7 +148,7 @@ void SSAUpdaterBulk::RewriteAllUses(DominatorTree *DT,
 
     SmallVector<BasicBlock *, 32> IDFBlocks;
     SmallPtrSet<BasicBlock *, 32> LiveInBlocks;
-    ComputeLiveInBlocks(UsingBlocks, DefBlocks, LiveInBlocks);
+    ComputeLiveInBlocks(UsingBlocks, DefBlocks, LiveInBlocks, PredCache);
     IDF.resetLiveInBlocks();
     IDF.setLiveInBlocks(LiveInBlocks);
     IDF.calculate(IDFBlocks);
