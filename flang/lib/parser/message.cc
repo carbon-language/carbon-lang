@@ -38,8 +38,8 @@ MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
 }
 
 void Message::Incorporate(Message &that) {
-  if (provenance_ == that.provenance_ &&
-      cookedSourceLocation_ == that.cookedSourceLocation_ &&
+  if (provenanceRange_.start() == that.provenanceRange_.start() &&
+      cookedSourceRange_.begin() == that.cookedSourceRange_.begin() &&
       !expected_.empty()) {
     expected_ = expected_.Union(that.expected_);
   }
@@ -89,21 +89,21 @@ std::string Message::ToString() const {
   return s;
 }
 
-Provenance Message::Emit(
+ProvenanceRange Message::Emit(
     std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
-  Provenance provenance{provenance_};
-  if (cookedSourceLocation_ != nullptr) {
-    provenance = cooked.GetProvenance(cookedSourceLocation_).start();
+  ProvenanceRange provenanceRange{provenanceRange_};
+  if (cookedSourceRange_.begin() != nullptr) {
+    provenanceRange = cooked.GetProvenance(cookedSourceRange_);
   }
-  if (!context_ || context_->Emit(o, cooked, false) != provenance) {
-    cooked.allSources().Identify(o, provenance, "", echoSourceLine);
+  if (!context_ || context_->Emit(o, cooked, false) != provenanceRange) {
+    cooked.allSources().Identify(o, provenanceRange, "", echoSourceLine);
   }
   o << "   ";
   if (isFatal_) {
     o << "ERROR: ";
   }
   o << ToString() << '\n';
-  return provenance;
+  return provenanceRange;
 }
 
 void Messages::Incorporate(Messages &that) {

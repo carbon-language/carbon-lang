@@ -1192,7 +1192,8 @@ public:
     if (result.has_value()) {
       state.set_anyConformanceViolation();
       if (state.warnOnNonstandardUsage()) {
-        state.Say(at, "nonstandard usage"_en_US);
+        state.Say(
+            CharBlock{at, state.GetLocation()}, "nonstandard usage"_en_US);
       }
     }
     return result;
@@ -1223,7 +1224,7 @@ public:
     if (result) {
       state.set_anyConformanceViolation();
       if (state.warnOnDeprecatedUsage()) {
-        state.Say(at, "deprecated usage"_en_US);
+        state.Say(CharBlock{at, state.GetLocation()}, "deprecated usage"_en_US);
       }
     }
     return result;

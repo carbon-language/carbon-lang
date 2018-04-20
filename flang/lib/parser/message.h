@@ -100,38 +100,40 @@ public:
   Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
 
-  // TODO: Change these to cover ranges of provenance
-  Message(Provenance p, MessageFixedText t)
-    : provenance_{p}, fixedText_{t.str()},
+  Message(ProvenanceRange pr, MessageFixedText t)
+    : provenanceRange_{pr}, fixedText_{t.str()},
       fixedBytes_{t.size()}, isFatal_{t.isFatal()} {}
-  Message(Provenance p, MessageFormattedText &&s)
-    : provenance_{p}, string_{s.MoveString()}, isFatal_{s.isFatal()} {}
-  Message(Provenance p, MessageExpectedText t)
-    : provenance_{p}, fixedText_{t.str()}, fixedBytes_{t.size()},
+  Message(ProvenanceRange pr, MessageFormattedText &&s)
+    : provenanceRange_{pr}, string_{s.MoveString()}, isFatal_{s.isFatal()} {}
+  Message(ProvenanceRange pr, MessageExpectedText t)
+    : provenanceRange_{pr}, fixedText_{t.str()}, fixedBytes_{t.size()},
       isExpected_{true}, expected_{t.set()}, isFatal_{true} {}
 
-  Message(const char *csl, MessageFixedText t)
-    : cookedSourceLocation_{csl}, fixedText_{t.str()},
+  Message(CharBlock csr, MessageFixedText t)
+    : cookedSourceRange_{csr}, fixedText_{t.str()},
       fixedBytes_{t.size()}, isFatal_{t.isFatal()} {}
-  Message(const char *csl, MessageFormattedText &&s)
-    : cookedSourceLocation_{csl}, string_{s.MoveString()}, isFatal_{
-                                                               s.isFatal()} {}
-  Message(const char *csl, MessageExpectedText t)
-    : cookedSourceLocation_{csl}, fixedText_{t.str()}, fixedBytes_{t.size()},
+  Message(CharBlock csr, MessageFormattedText &&s)
+    : cookedSourceRange_{csr}, string_{s.MoveString()}, isFatal_{s.isFatal()} {}
+  Message(CharBlock csr, MessageExpectedText t)
+    : cookedSourceRange_{csr}, fixedText_{t.str()}, fixedBytes_{t.size()},
       isExpected_{true}, expected_{t.set()}, isFatal_{true} {}
 
   bool operator<(const Message &that) const {
-    if (cookedSourceLocation_ != nullptr) {
-      return cookedSourceLocation_ < that.cookedSourceLocation_;
-    } else if (that.cookedSourceLocation_ != nullptr) {
+    if (cookedSourceRange_.begin() != nullptr) {
+      return cookedSourceRange_.begin() < that.cookedSourceRange_.begin();
+    } else if (that.cookedSourceRange_.begin() != nullptr) {
       return false;
     } else {
-      return provenance_ < that.provenance_;
+      return provenanceRange_.start() < that.provenanceRange_.start();
     }
   }
 
-  Provenance provenance() const { return provenance_; }
-  const char *cookedSourceLocation() const { return cookedSourceLocation_; }
+  ProvenanceRange provenanceRange() const { return provenanceRange_; }
+  Provenance provenance() const { return provenanceRange_.start(); }
+  CharBlock cookedSourceRange() const { return cookedSourceRange_; }
+  const char *cookedSourceLocation() const {
+    return cookedSourceRange_.begin();
+  }
   Context context() const { return context_; }
   Message &set_context(Message *c) {
     context_ = c;
@@ -141,12 +143,12 @@ public:
 
   void Incorporate(Message &);
   std::string ToString() const;
-  Provenance Emit(
+  ProvenanceRange Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 
 private:
-  Provenance provenance_;
-  const char *cookedSourceLocation_{nullptr};
+  ProvenanceRange provenanceRange_;
+  CharBlock cookedSourceRange_;
   const char *fixedText_{nullptr};
   std::size_t fixedBytes_{0};
   bool isExpected_{false};

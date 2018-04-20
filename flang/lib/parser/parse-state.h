@@ -149,25 +149,25 @@ public:
   void Say(MessageFormattedText &&t) { return Say(p_, std::move(t)); }
   void Say(MessageExpectedText &&t) { return Say(p_, std::move(t)); }
 
-  void Say(const char *at, MessageFixedText t) {
+  void Say(CharBlock range, MessageFixedText t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(at, t).set_context(context_.get());
+      messages_.Say(range, t).set_context(context_.get());
     }
   }
-  void Say(const char *at, MessageFormattedText &&t) {
+  void Say(CharBlock range, MessageFormattedText &&t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(at, std::move(t)).set_context(context_.get());
+      messages_.Say(range, std::move(t)).set_context(context_.get());
     }
   }
-  void Say(const char *at, MessageExpectedText &&t) {
+  void Say(CharBlock range, MessageExpectedText &&t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(at, std::move(t)).set_context(context_.get());
+      messages_.Say(range, std::move(t)).set_context(context_.get());
     }
   }
 

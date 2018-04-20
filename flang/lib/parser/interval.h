@@ -25,6 +25,9 @@ public:
   bool operator==(const Interval &that) const {
     return start_ == that.start_ && size_ == that.size_;
   }
+  bool operator!=(const Interval &that) const {
+    return start_ != that.start_ || size_ != that.size_;
+  }
 
   const A &start() const { return start_; }
   std::size_t size() const { return size_; }

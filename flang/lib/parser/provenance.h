@@ -1,6 +1,7 @@
 #ifndef FORTRAN_PARSER_PROVENANCE_H_
 #define FORTRAN_PARSER_PROVENANCE_H_
 
+#include "char-block.h"
 #include "char-buffer.h"
 #include "idioms.h"
 #include "interval.h"
@@ -115,7 +116,7 @@ public:
   bool IsValid(ProvenanceRange range) const {
     return range.size() > 0 && range_.Contains(range);
   }
-  void Identify(std::ostream &, Provenance, const std::string &prefix,
+  void Identify(std::ostream &, ProvenanceRange, const std::string &prefix,
       bool echoSourceLine = false) const;
   const SourceFile *GetSourceFile(
       Provenance, std::size_t *offset = nullptr) const;
@@ -178,9 +179,13 @@ public:
   bool IsValid(const char *p) const {
     return p >= &data_.front() && p <= &data_.back() + 1;
   }
+  bool IsValid(CharBlock range) const {
+    return range.empty() ||
+        (IsValid(range.begin()) && IsValid(range.end() - 1));
+  }
   bool IsValid(Provenance p) const { return allSources_.IsValid(p); }
 
-  ProvenanceRange GetProvenance(const char *) const;
+  ProvenanceRange GetProvenance(CharBlock) const;
 
   void Put(const char *data, std::size_t bytes) { buffer_.Put(data, bytes); }
   void Put(char ch) { buffer_.Put(&ch, 1); }

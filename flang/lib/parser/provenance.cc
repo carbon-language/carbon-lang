@@ -128,15 +128,15 @@ ProvenanceRange AllSources::AddCompilerInsertion(std::string text) {
   return covers;
 }
 
-void AllSources::Identify(std::ostream &o, Provenance at,
+void AllSources::Identify(std::ostream &o, ProvenanceRange range,
     const std::string &prefix, bool echoSourceLine) const {
-  CHECK(IsValid(at));
+  CHECK(IsValid(range));
   static const std::string indented{prefix + "  "};
-  const Origin &origin{MapToOrigin(at)};
+  const Origin &origin{MapToOrigin(range.start())};
   std::visit(
       visitors{
           [&](const Inclusion &inc) {
-            std::size_t offset{origin.covers.MemberOffset(at)};
+            std::size_t offset{origin.covers.MemberOffset(range.start())};
             std::pair<int, int> pos{inc.source.FindOffsetLineAndColumn(offset)};
             o << prefix << "at line " << pos.first << ", column " << pos.second;
             if (echoSourceLine) {
@@ -152,6 +152,7 @@ void AllSources::Identify(std::ostream &o, Provenance at,
                 o << (ch == '\t' ? '\t' : ' ');
               }
               o << "^\n" << prefix;
+              // TODO mark a wider range
             } else {
               o << ' ';
             }
@@ -173,7 +174,8 @@ void AllSources::Identify(std::ostream &o, Provenance at,
               o << prefix << "and expanded to\n"
                 << indented << "  " << mac.expansion << '\n'
                 << indented << "  ";
-              for (std::size_t j{0}; origin.covers.OffsetMember(j) < at; ++j) {
+              for (std::size_t j{0};
+                   origin.covers.OffsetMember(j) < range.start(); ++j) {
                 o << (mac.expansion[j] == '\t' ? '\t' : ' ');
               }
               o << "^\n";
@@ -275,8 +277,12 @@ const AllSources::Origin &AllSources::MapToOrigin(Provenance at) const {
   return origin_[low];
 }
 
-ProvenanceRange CookedSource::GetProvenance(const char *at) const {
-  return provenanceMap_.Map(at - &data_[0]);
+ProvenanceRange CookedSource::GetProvenance(CharBlock cookedRange) const {
+  ProvenanceRange range{provenanceMap_.Map(cookedRange.begin() - &data_[0])};
+  if (cookedRange.size() < range.size()) {
+    return {range.start(), cookedRange.size()};
+  }
+  return range;
 }
 
 void CookedSource::Marshal() {
