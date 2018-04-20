@@ -12,7 +12,7 @@
 # FIXME: llvm-readobj currently does not understand files with .pdata merged
 # into .rdata. But we can at least check that the section headers look correct.
 #
-# HEADER-MERGE: ExceptionTableRVA: 0x2000
+# HEADER-MERGE: ExceptionTableRVA: 0x2004
 # HEADER-MERGE-NEXT: ExceptionTableSize: 0x30
 # HEADER-MERGE: Name: .rdata
 # HEADER-MERGE-NEXT: VirtualSize: 0x34
