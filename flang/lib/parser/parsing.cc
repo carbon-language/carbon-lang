@@ -80,9 +80,7 @@ void Parsing::DumpParsingLog(std::ostream &out) const {
 
 void Parsing::Parse() {
   UserState userState;
-  if (options_.instrumentedParse || true /*pmk*/) {
-    userState.set_log(&log_);
-  }
+  userState.set_instrumentedParse(options_.instrumentedParse).set_log(&log_);
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm)
       .set_encoding(options_.encoding)
@@ -96,6 +94,8 @@ void Parsing::Parse() {
   messages_.Annex(parseState.messages());
   finalRestingPlace_ = parseState.GetLocation();
 }
+
+void Parsing::ClearLog() { log_.clear(); }
 
 bool Parsing::ForTesting(std::string path, std::ostream &err) {
   Prescan(path, Options{});

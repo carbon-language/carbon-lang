@@ -19,7 +19,16 @@ class ParsingLog;
 class UserState {
 public:
   ParsingLog *log() const { return log_; }
-  void set_log(ParsingLog *log) { log_ = log; }
+  UserState &set_log(ParsingLog *log) {
+    log_ = log;
+    return *this;
+  }
+
+  bool instrumentedParse() const { return instrumentedParse_; }
+  UserState &set_instrumentedParse(bool yes) {
+    instrumentedParse_ = yes;
+    return *this;
+  }
 
   void NewSubprogram() {
     doLabels_.clear();
@@ -35,6 +44,7 @@ public:
     return nonlabelDoConstructNestingDepth_ > 0;
   }
   void NewDoLabel(Label label) { doLabels_.insert(label); }
+
   void EnterNonlabelDoConstruct() { ++nonlabelDoConstructNestingDepth_; }
   void LeaveDoConstruct() {
     if (nonlabelDoConstructNestingDepth_ > 0) {
@@ -50,10 +60,13 @@ public:
   }
 
 private:
+  ParsingLog *log_{nullptr};
+  bool instrumentedParse_{false};
+
   std::unordered_set<Label> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
+
   std::set<CharBlock> oldStructureComponents_;
-  ParsingLog *log_{nullptr};
 };
 }  // namespace parser
 }  // namespace Fortran

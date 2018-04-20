@@ -14,9 +14,13 @@ namespace parser {
 
 class ParsingLog {
 public:
-  bool Fails(const char *at, const MessageFixedText &tag, Messages &);
-  void Note(
-      const char *at, const MessageFixedText &tag, bool pass, const Messages &);
+  ParsingLog() {}
+
+  void clear();
+
+  bool Fails(const char *at, const MessageFixedText &tag, ParseState &);
+  void Note(const char *at, const MessageFixedText &tag, bool pass,
+      const ParseState &);
   void Dump(std::ostream &, const CookedSource &) const;
 
 private:
@@ -25,6 +29,7 @@ private:
       Entry() {}
       bool pass{true};
       int count{0};
+      bool deferred{false};
       Messages messages;
     };
     std::map<MessageFixedText, Entry> perTag;
@@ -42,12 +47,12 @@ public:
     if (UserState * ustate{state->userState()}) {
       if (ParsingLog * log{ustate->log()}) {
         const char *at{state->GetLocation()};
-        if (log->Fails(at, tag_, state->messages())) {
+        if (log->Fails(at, tag_, *state)) {
           return {};
         }
         Messages messages{std::move(state->messages())};
         std::optional<resultType> result{parser_.Parse(state)};
-        log->Note(at, tag_, result.has_value(), state->messages());
+        log->Note(at, tag_, result.has_value(), *state);
         messages.Annex(state->messages());
         state->messages() = std::move(messages);
         return result;

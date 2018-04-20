@@ -157,12 +157,7 @@ private:
 };
 
 class Messages {
-  using listType = std::forward_list<Message>;
-
 public:
-  using iterator = listType::iterator;
-  using const_iterator = listType::const_iterator;
-
   Messages() {}
   Messages(Messages &&that) : messages_{std::move(that.messages_)} {
     if (!messages_.empty()) {
@@ -182,16 +177,9 @@ public:
   }
 
   bool empty() const { return messages_.empty(); }
-  iterator begin() { return messages_.begin(); }
-  iterator end() { return messages_.end(); }
-  const_iterator begin() const { return messages_.cbegin(); }
-  const_iterator end() const { return messages_.cend(); }
-  const_iterator cbegin() const { return messages_.cbegin(); }
-  const_iterator cend() const { return messages_.cend(); }
 
-  Message &Put(Message &&m) {
+  void Put(Message &&m) {
     last_ = messages_.emplace_after(last_, std::move(m));
-    return *last_;
   }
 
   template<typename... A> Message &Say(A &&... args) {
@@ -216,8 +204,9 @@ public:
   bool AnyFatalError() const;
 
 private:
+  using listType = std::forward_list<Message>;
   listType messages_;
-  iterator last_{messages_.before_begin()};
+  listType::iterator last_{messages_.before_begin()};
 };
 }  // namespace parser
 }  // namespace Fortran

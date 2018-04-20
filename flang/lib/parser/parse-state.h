@@ -74,6 +74,7 @@ public:
     return *this;
   }
 
+  const Messages &messages() const { return messages_; }
   Messages &messages() { return messages_; }
 
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
@@ -125,6 +126,7 @@ public:
   }
 
   bool anyDeferredMessages() const { return anyDeferredMessages_; }
+  void set_anyDeferredMessages(bool yes) { anyDeferredMessages_ = yes; }
 
   const char *GetLocation() const { return p_; }
 

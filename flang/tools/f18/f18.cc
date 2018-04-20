@@ -134,6 +134,8 @@ std::string RelocatableName(const DriverOptions &driver, std::string path) {
   return relo;
 }
 
+int exitStatus{EXIT_SUCCESS};
+
 std::string CompileFortran(
     std::string path, Fortran::parser::Options options, DriverOptions &driver) {
   if (!driver.forcedForm) {
@@ -149,7 +151,8 @@ std::string CompileFortran(
       (driver.warningsAreErrors || parsing.messages().AnyFatalError())) {
     std::cerr << driver.prefix << "could not scan " << path << '\n';
     parsing.messages().Emit(std::cerr, parsing.cooked(), driver.prefix);
-    exit(EXIT_FAILURE);
+    exitStatus = EXIT_FAILURE;
+    return {};
   }
   if (driver.dumpProvenance) {
     parsing.DumpProvenance(std::cout);
@@ -164,17 +167,20 @@ std::string CompileFortran(
     parsing.DumpParsingLog(std::cout);
     return {};
   }
+  parsing.ClearLog();
   parsing.messages().Emit(std::cerr, parsing.cooked(), driver.prefix);
   if (!parsing.consumedWholeFile()) {
     std::cerr << "f18 parser FAIL; final position: ";
     parsing.Identify(std::cerr, parsing.finalRestingPlace(), "   ");
-    exit(EXIT_FAILURE);
+    exitStatus = EXIT_FAILURE;
+    return {};
   }
   if ((!parsing.messages().empty() &&
           (driver.warningsAreErrors || parsing.messages().AnyFatalError())) ||
       !parsing.parseTree().has_value()) {
     std::cerr << driver.prefix << "could not parse " << path << '\n';
-    exit(EXIT_FAILURE);
+    exitStatus = EXIT_FAILURE;
+    return {};
   }
   if (driver.measureTree) {
     MeasureParseTree(*parsing.parseTree());
@@ -374,10 +380,10 @@ int main(int argc, char *const argv[]) {
           << "  -v -c -o -I -D -U    have their usual meanings\n"
           << "  -help                print this again\n"
           << "Other options are passed through to the compiler.\n";
-      return EXIT_SUCCESS;
+      return exitStatus;
     } else if (arg == "-V") {
       std::cerr << "\nf18 compiler (under development)\n";
-      return EXIT_SUCCESS;
+      return exitStatus;
     } else {
       driver.pgf90Args.push_back(arg);
       if (arg == "-v") {
@@ -399,7 +405,7 @@ int main(int argc, char *const argv[]) {
     driver.measureTree = true;
     driver.dumpUnparse = true;
     CompileFortran("-", options, driver);
-    return EXIT_SUCCESS;
+    return exitStatus;
   }
   for (const auto &path : fortranSources) {
     std::string relo{CompileFortran(path, options, driver)};
@@ -416,5 +422,5 @@ int main(int argc, char *const argv[]) {
   if (!relocatables.empty()) {
     Link(relocatables, driver);
   }
-  return EXIT_SUCCESS;
+  return exitStatus;
 }

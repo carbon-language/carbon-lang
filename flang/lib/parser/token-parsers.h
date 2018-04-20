@@ -583,6 +583,15 @@ inline constexpr auto optionalListBeforeColons(const PA &p) {
 constexpr struct FormDirectivesAndEmptyLines {
   using resultType = Success;
   static std::optional<Success> Parse(ParseState *state) {
+    if (UserState * ustate{state->userState()}) {
+      if (ParsingLog * log{ustate->log()}) {
+        if (!ustate->instrumentedParse()) {
+          // Save memory; zap the parsing log before each statement, unless
+          // we're logging the whole parse for debugging.
+          log->clear();
+        }
+      }
+    }
     while (std::optional<const char *> at{state->PeekAtNextChar()}) {
       if (**at == '\n') {
         state->UncheckedAdvance();

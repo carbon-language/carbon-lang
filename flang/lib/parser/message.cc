@@ -115,8 +115,9 @@ void Messages::Incorporate(Messages &that) {
 }
 
 void Messages::Copy(const Messages &that) {
-  for (const Message &m : that) {
-    Put(Message{m});
+  for (const Message &m : that.messages_) {
+    Message copy{m};
+    Put(std::move(copy));
   }
 }
 

@@ -46,6 +46,7 @@ public:
   void DumpProvenance(std::ostream &) const;
   void DumpParsingLog(std::ostream &) const;
   void Parse();
+  void ClearLog();
 
   void Identify(std::ostream &o, const char *at, const std::string &prefix,
       bool echoSourceLine = false) const {
