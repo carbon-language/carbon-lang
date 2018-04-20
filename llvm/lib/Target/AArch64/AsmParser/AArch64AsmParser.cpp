@@ -3722,7 +3722,7 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
   case Match_InvalidMemoryIndexed3SImm4:
     return Error(Loc, "index must be a multiple of 3 in range [-24, 21].");
   case Match_InvalidMemoryIndexed4SImm4:
-    return Error(Loc, "index must be a multiple of 3 in range [-32, 28].");
+    return Error(Loc, "index must be a multiple of 4 in range [-32, 28].");
   case Match_InvalidMemoryIndexedSImm9:
     return Error(Loc, "index must be an integer in range [-256, 255].");
   case Match_InvalidMemoryIndexedSImm10:
