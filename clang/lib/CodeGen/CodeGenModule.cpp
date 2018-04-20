@@ -571,8 +571,7 @@ void CodeGenModule::Release() {
   if (DebugInfo)
     DebugInfo->finalize();
 
-  if (getCodeGenOpts().EmitVersionIdentMetadata)
-    EmitVersionIdentMetadata();
+  EmitVersionIdentMetadata();
 
   EmitTargetMetadata();
 }
