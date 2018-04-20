@@ -126,7 +126,7 @@ ComputeLiveInBlocks(const SmallPtrSetImpl<BasicBlock *> &UsingBlocks,
 /// requested uses update.
 void SSAUpdaterBulk::RewriteAllUses(DominatorTree *DT,
                                     SmallVectorImpl<PHINode *> *InsertedPHIs) {
-  for (auto P : Rewrites) {
+  for (auto &P : Rewrites) {
     // Compute locations for new phi-nodes.
     // For that we need to initialize DefBlocks from definitions in R.Defines,
     // UsingBlocks from uses in R.Uses, then compute LiveInBlocks, and then use
@@ -138,12 +138,12 @@ void SSAUpdaterBulk::RewriteAllUses(DominatorTree *DT,
                  << R.Uses.size() << " use(s)\n");
 
     SmallPtrSet<BasicBlock *, 2> DefBlocks;
-    for (auto Def : R.Defines)
+    for (auto &Def : R.Defines)
       DefBlocks.insert(Def.first);
     IDF.setDefiningBlocks(DefBlocks);
 
     SmallPtrSet<BasicBlock *, 2> UsingBlocks;
-    for (auto U : R.Uses)
+    for (Use *U : R.Uses)
       UsingBlocks.insert(getUserBB(U));
 
     SmallVector<BasicBlock *, 32> IDFBlocks;
@@ -155,7 +155,7 @@ void SSAUpdaterBulk::RewriteAllUses(DominatorTree *DT,
 
     // We've computed IDF, now insert new phi-nodes there.
     SmallVector<PHINode *, 4> InsertedPHIsForVar;
-    for (auto FrontierBB : IDFBlocks) {
+    for (auto *FrontierBB : IDFBlocks) {
       IRBuilder<> B(FrontierBB, FrontierBB->begin());
       PHINode *PN = B.CreatePHI(R.Ty, 0, R.Name);
       R.Defines[FrontierBB] = PN;
