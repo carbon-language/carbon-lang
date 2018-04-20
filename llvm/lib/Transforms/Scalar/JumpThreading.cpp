@@ -1992,7 +1992,6 @@ bool JumpThreadingPass::ThreadEdge(BasicBlock *BB,
   // PHI insertion, of which we are prepared to do, clean these up now.
   SSAUpdaterBulk SSAUpdate;
 
-  unsigned VarNum = 0;
   for (Instruction &I : *BB) {
     SmallVector<Use*, 16> UsesToRename;
 
@@ -2014,7 +2013,7 @@ bool JumpThreadingPass::ThreadEdge(BasicBlock *BB,
     // If there are no uses outside the block, we're done with this instruction.
     if (UsesToRename.empty())
       continue;
-    SSAUpdate.AddVariable(VarNum, I.getName(), I.getType());
+    unsigned VarNum = SSAUpdate.AddVariable(I.getName(), I.getType());
 
     // We found a use of I outside of BB - we need to rename all uses of I that
     // are outside its block to be uses of the appropriate PHI node etc.
@@ -2022,7 +2021,6 @@ bool JumpThreadingPass::ThreadEdge(BasicBlock *BB,
     SSAUpdate.AddAvailableValue(VarNum, NewBB, ValueMapping[&I]);
     for (auto *U : UsesToRename)
       SSAUpdate.AddUse(VarNum, U);
-    VarNum++;
   }
 
   // Ok, NewBB is good to go.  Update the terminator of PredBB to jump to
