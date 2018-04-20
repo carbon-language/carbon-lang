@@ -40,13 +40,11 @@ void lld::wasm::markLive() {
   SmallVector<InputChunk *, 256> Q;
 
   auto Enqueue = [&](Symbol *Sym) {
-    if (!Sym)
+    if (!Sym || Sym->isLive())
       return;
-    InputChunk *Chunk = Sym->getChunk();
-    if (!Chunk || Chunk->Live)
-      return;
-    Chunk->Live = true;
-    Q.push_back(Chunk);
+    Sym->markLive();
+    if (InputChunk *Chunk = Sym->getChunk())
+      Q.push_back(Chunk);
   };
 
   // Add GC root symbols.
