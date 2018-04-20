@@ -4,13 +4,13 @@
 // Implements the parser with syntax "(YOUR MESSAGE HERE)"_debug for use
 // in temporary modifications to the grammar intended for tracing the
 // flow of the parsers.  Not to be used in production.
+// When this feature is in use for temporary debugging, be sure to
+// compile and link debug-parser.cc.
 
 #include "basic-parsers.h"
 #include "parse-state.h"
 #include <cstddef>
-#include <iostream>
 #include <optional>
-#include <string>
 
 namespace Fortran {
 namespace parser {
@@ -21,18 +21,7 @@ public:
   constexpr DebugParser(const DebugParser &) = default;
   constexpr DebugParser(const char *str, std::size_t n)
     : str_{str}, length_{n} {}
-  std::optional<Success> Parse(ParseState &state) const {
-    if (auto ustate = state.userState()) {
-      const CookedSource &cooked{ustate->cooked()};
-      if (auto context = state.context()) {
-        context->Emit(std::cout, cooked);
-      }
-      Provenance p{cooked.GetProvenance(state.GetLocation()).start()};
-      cooked.allSources().Identify(std::cout, p, "", true);
-      std::cout << "   parser debug: " << std::string{str_, length_} << "\n\n";
-    }
-    return {Success{}};
-  }
+  std::optional<Success> Parse(ParseState &) const;
 
 private:
   const char *const str_;
