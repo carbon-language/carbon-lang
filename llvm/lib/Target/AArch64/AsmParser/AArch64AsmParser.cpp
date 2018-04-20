@@ -3823,6 +3823,22 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
         ComputeAvailableFeatures(STI->getFeatureBits()));
     return Error(Loc, "unrecognized instruction mnemonic" + Suggestion);
   }
+  case Match_InvalidGPR64shifted8:
+    return Error(Loc, "register must be x0..x30 or xzr, without shift");
+  case Match_InvalidGPR64shifted16:
+    return Error(Loc, "register must be x0..x30 or xzr, with required shift 'lsl #1'");
+  case Match_InvalidGPR64shifted32:
+    return Error(Loc, "register must be x0..x30 or xzr, with required shift 'lsl #2'");
+  case Match_InvalidGPR64shifted64:
+    return Error(Loc, "register must be x0..x30 or xzr, with required shift 'lsl #3'");
+  case Match_InvalidGPR64NoXZRshifted8:
+    return Error(Loc, "register must be x0..x30 without shift");
+  case Match_InvalidGPR64NoXZRshifted16:
+    return Error(Loc, "register must be x0..x30 with required shift 'lsl #1'");
+  case Match_InvalidGPR64NoXZRshifted32:
+    return Error(Loc, "register must be x0..x30 with required shift 'lsl #2'");
+  case Match_InvalidGPR64NoXZRshifted64:
+    return Error(Loc, "register must be x0..x30 with required shift 'lsl #3'");
   case Match_InvalidSVEPattern:
     return Error(Loc, "invalid predicate pattern");
   case Match_InvalidSVEPredicateAnyReg:
@@ -4268,6 +4284,14 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidLabel:
   case Match_InvalidComplexRotationEven:
   case Match_InvalidComplexRotationOdd:
+  case Match_InvalidGPR64shifted8:
+  case Match_InvalidGPR64shifted16:
+  case Match_InvalidGPR64shifted32:
+  case Match_InvalidGPR64shifted64:
+  case Match_InvalidGPR64NoXZRshifted8:
+  case Match_InvalidGPR64NoXZRshifted16:
+  case Match_InvalidGPR64NoXZRshifted32:
+  case Match_InvalidGPR64NoXZRshifted64:
   case Match_InvalidSVEPredicateAnyReg:
   case Match_InvalidSVEPattern:
   case Match_InvalidSVEPredicateBReg:
