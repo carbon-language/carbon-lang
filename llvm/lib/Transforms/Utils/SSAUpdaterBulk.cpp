@@ -61,7 +61,7 @@ void SSAUpdaterBulk::AddUse(unsigned Var, Use *U) {
   assert(Rewrites.find(Var) != Rewrites.end() && "Should add variable first!");
   DEBUG(dbgs() << "SSAUpdater: Var=" << Var << ": added a use" << *U->get()
                << " in " << getUserBB(U)->getName() << "\n");
-  Rewrites[Var].Uses.insert(U);
+  Rewrites[Var].Uses.push_back(U);
 }
 
 /// Return true if the SSAUpdater already has a value for the specified variable
@@ -171,7 +171,10 @@ void SSAUpdaterBulk::RewriteAllUses(DominatorTree *DT,
     }
 
     // Rewrite actual uses with the inserted definitions.
-    for (auto U : R.Uses) {
+    SmallPtrSet<Use *, 4> ProcessedUses;
+    for (Use *U : R.Uses) {
+      if (!ProcessedUses.insert(U).second)
+        continue;
       Value *V = computeValueAt(getUserBB(U), R, DT);
       Value *OldVal = U->get();
       // Notify that users of the existing value that it is being replaced.
