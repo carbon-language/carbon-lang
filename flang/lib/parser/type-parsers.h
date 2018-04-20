@@ -2,6 +2,7 @@
 #define FORTRAN_PARSER_TYPE_PARSERS_H_
 
 #include "basic-parsers.h"
+#include "instrumented-parser.h"
 #include "parse-tree.h"
 #include <optional>
 

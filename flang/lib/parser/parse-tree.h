@@ -16,7 +16,6 @@
 #include "indirection.h"
 #include "message.h"
 #include "provenance.h"
-#include "user-state.h"
 #include <cinttypes>
 #include <list>
 #include <optional>

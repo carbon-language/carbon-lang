@@ -8,6 +8,7 @@
 
 #include "basic-parsers.h"
 #include "char-block.h"
+#include "parse-tree.h"
 #include <cinttypes>
 #include <optional>
 #include <set>
@@ -79,10 +80,22 @@ private:
   std::set<CharBlock> oldStructureComponents_;
 };
 
+// Definitions of parser classes that manipulate the UserState.
 struct StartNewSubprogram {
   using resultType = Success;
   static std::optional<Success> Parse(ParseState &);
 };
+
+struct CapturedLabelDoStmt {
+  using resultType = Statement<Indirection<LabelDoStmt>>;
+  static std::optional<resultType> Parse(ParseState &);
+};
+
+struct EndDoStmtForCapturedLabelDoStmt {
+  using resultType = Statement<Indirection<EndDoStmt>>;
+  static std::optional<resultType> Parse(ParseState &);
+};
+
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_USER_STATE_H_

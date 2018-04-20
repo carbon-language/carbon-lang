@@ -8,7 +8,9 @@
 #include "char-set.h"
 #include "characters.h"
 #include "idioms.h"
+#include "instrumented-parser.h"
 #include "provenance.h"
+#include "type-parsers.h"
 #include <cstddef>
 #include <cstring>
 #include <functional>
@@ -523,10 +525,10 @@ struct HollerithLiteral {
   }
 };
 
-struct ConsumedAllInputParser {
+constexpr struct ConsumedAllInputParser {
   using resultType = Success;
   constexpr ConsumedAllInputParser() {}
-  static std::optional<Success> Parse(ParseState &state) {
+  static inline std::optional<Success> Parse(ParseState &state) {
     if (state.IsAtEnd()) {
       return {Success{}};
     }
@@ -615,6 +617,24 @@ constexpr struct FormDirectivesAndEmptyLines {
     return {Success{}};
   }
 } skipEmptyLines;
+
+// R602 underscore -> _
+constexpr auto underscore = "_"_ch;
+
+// R516 keyword -> name
+// R601 alphanumeric-character -> letter | digit | underscore
+// R603 name -> letter [alphanumeric-character]...
+// N.B. Don't accept an underscore if it is immediately followed by a
+// quotation mark, so that kindParameter_"character literal" is parsed properly.
+// PGI and ifort accept '$' in identifiers, even as the initial character.
+// Cray and gfortran accept '$', but not as the first character.
+// Cray accepts '@' as well.
+constexpr auto otherIdChar = underscore / !"'\""_ch || extension("$@"_ch);
+constexpr auto nonDigitIdChar = letter || otherIdChar;
+constexpr auto rawName = nonDigitIdChar >> many(nonDigitIdChar || digit);
+TYPE_PARSER(space >> sourced(attempt(rawName) >> construct<Name>{}))
+constexpr auto keyword = construct<Keyword>{}(name);
+
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_
