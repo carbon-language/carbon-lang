@@ -96,6 +96,25 @@ struct EndDoStmtForCapturedLabelDoStmt {
   static std::optional<resultType> Parse(ParseState &);
 };
 
+struct EnterNonlabelDoConstruct {
+  using resultType = Success;
+  static std::optional<Success> Parse(ParseState &);
+};
+
+struct LeaveDoConstruct {
+  using resultType = Success;
+  static std::optional<Success> Parse(ParseState &);
+};
+
+struct OldStructureComponentName {
+  using resultType = Name;
+  static std::optional<Name> Parse(ParseState &);
+};
+
+struct StructureComponents {
+  using resultType = DataComponentDefStmt;
+  static std::optional<DataComponentDefStmt> Parse(ParseState &);
+};
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_USER_STATE_H_

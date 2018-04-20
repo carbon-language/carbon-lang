@@ -44,5 +44,43 @@ EndDoStmtForCapturedLabelDoStmt::Parse(ParseState &state) {
   return {};
 }
 
+std::optional<Success> EnterNonlabelDoConstruct::Parse(ParseState &state) {
+  if (auto ustate = state.userState()) {
+    ustate->EnterNonlabelDoConstruct();
+  }
+  return {Success{}};
+}
+
+std::optional<Success> LeaveDoConstruct::Parse(ParseState &state) {
+  if (auto ustate = state.userState()) {
+    ustate->LeaveDoConstruct();
+  }
+  return {Success{}};
+}
+
+std::optional<Name> OldStructureComponentName::Parse(ParseState &state) {
+  if (std::optional<Name> n{name.Parse(state)}) {
+    if (const auto *ustate = state.userState()) {
+      if (ustate->IsOldStructureComponent(n->source)) {
+        return n;
+      }
+    }
+  }
+  return {};
+}
+
+std::optional<DataComponentDefStmt> StructureComponents::Parse(
+    ParseState &state) {
+  static constexpr auto stmt = Parser<DataComponentDefStmt>{};
+  std::optional<DataComponentDefStmt> defs{stmt.Parse(state)};
+  if (defs.has_value()) {
+    if (auto ustate = state.userState()) {
+      for (const auto &decl : std::get<std::list<ComponentDecl>>(defs->t)) {
+        ustate->NoteOldStructureComponent(std::get<Name>(decl.t).source);
+      }
+    }
+  }
+  return defs;
+}
 }  // namespace parser
 }  // namespace Fortran

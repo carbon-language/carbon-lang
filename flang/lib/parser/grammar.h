@@ -327,8 +327,6 @@ TYPE_PARSER(construct<ActionStmt>{}(indirect(Parser<AllocateStmt>{})) ||
 // END DO statements appear only at the ends of do-constructs that begin
 // with a nonlabel-do-stmt, so care must be taken to recognize this case and
 // essentially treat them like CONTINUE statements.
-constexpr CapturedLabelDoStmt capturedLabelDoStmt;
-constexpr EndDoStmtForCapturedLabelDoStmt endDoStmtForCapturedLabelDoStmt;
 
 // R514 executable-construct ->
 //        action-stmt | associate-construct | block-construct |
@@ -342,8 +340,8 @@ constexpr auto executableConstruct =
     construct<ExecutableConstruct>{}(indirect(Parser<CaseConstruct>{})) ||
     construct<ExecutableConstruct>{}(indirect(Parser<ChangeTeamConstruct>{})) ||
     construct<ExecutableConstruct>{}(indirect(Parser<CriticalConstruct>{})) ||
-    construct<ExecutableConstruct>{}(capturedLabelDoStmt) ||
-    construct<ExecutableConstruct>{}(endDoStmtForCapturedLabelDoStmt) ||
+    construct<ExecutableConstruct>{}(CapturedLabelDoStmt{}) ||
+    construct<ExecutableConstruct>{}(EndDoStmtForCapturedLabelDoStmt{}) ||
     construct<ExecutableConstruct>{}(indirect(Parser<DoConstruct>{})) ||
     construct<ExecutableConstruct>{}(indirect(Parser<IfConstruct>{})) ||
     construct<ExecutableConstruct>{}(indirect(Parser<SelectRankConstruct>{})) ||
@@ -1313,23 +1311,9 @@ TYPE_PARSER(construct<CommonBlockObject>{}(name, maybe(arraySpec)))
 TYPE_CONTEXT_PARSER("designator"_en_US,
     construct<Designator>{}(substring) || construct<Designator>{}(dataRef))
 
-constexpr struct OldStructureComponentName {
-  using resultType = Name;
-  static inline std::optional<Name> Parse(ParseState &state) {
-    if (std::optional<Name> n{name.Parse(state)}) {
-      if (const auto *user = state.userState()) {
-        if (user->IsOldStructureComponent(n->source)) {
-          return n;
-        }
-      }
-    }
-    return {};
-  }
-} oldStructureComponentName;
-
 constexpr auto percentOrDot = "%"_tok ||
     // legacy VAX extension for RECORD field access
-    extension("."_tok / lookAhead(oldStructureComponentName));
+    extension("."_tok / lookAhead(OldStructureComponentName{}));
 
 // R902 variable -> designator | function-reference
 // This production appears to be left-recursive in the grammar via
@@ -2035,30 +2019,10 @@ TYPE_PARSER("END CRITICAL" >> construct<EndCriticalStmt>{}(maybe(name)))
 
 // R1119 do-construct -> do-stmt block end-do
 // R1120 do-stmt -> nonlabel-do-stmt | label-do-stmt
-constexpr struct EnterNonlabelDoConstruct {
-  using resultType = Success;
-  static inline std::optional<Success> Parse(ParseState &state) {
-    if (auto ustate = state.userState()) {
-      ustate->EnterNonlabelDoConstruct();
-    }
-    return {Success{}};
-  }
-} enterNonlabelDoConstruct;
-
-constexpr struct LeaveDoConstruct {
-  using resultType = Success;
-  static inline std::optional<Success> Parse(ParseState &state) {
-    if (auto ustate = state.userState()) {
-      ustate->LeaveDoConstruct();
-    }
-    return {Success{}};
-  }
-} leaveDoConstruct;
-
 TYPE_CONTEXT_PARSER("DO construct"_en_US,
     construct<DoConstruct>{}(
-        statement(Parser<NonLabelDoStmt>{}) / enterNonlabelDoConstruct, block,
-        statement(endDoStmt) / leaveDoConstruct))
+        statement(Parser<NonLabelDoStmt>{}) / EnterNonlabelDoConstruct{}, block,
+        statement(endDoStmt) / LeaveDoConstruct{}))
 
 // R1125 concurrent-header ->
 //         ( [integer-type-spec ::] concurrent-control-list
@@ -3342,23 +3306,7 @@ TYPE_PARSER(construct<StructureStmt>{}("STRUCTURE /" >> name / "/", pure(true),
     construct<StructureStmt>{}(
         "STRUCTURE" >> name, pure(false), defaulted(cut >> many(entityDecl))))
 
-constexpr struct StructureComponents {
-  using resultType = DataComponentDefStmt;
-  static inline std::optional<DataComponentDefStmt> Parse(ParseState &state) {
-    static constexpr auto stmt = Parser<DataComponentDefStmt>{};
-    std::optional<DataComponentDefStmt> defs{stmt.Parse(state)};
-    if (defs.has_value()) {
-      if (auto ustate = state.userState()) {
-        for (const auto &decl : std::get<std::list<ComponentDecl>>(defs->t)) {
-          ustate->NoteOldStructureComponent(std::get<Name>(decl.t).source);
-        }
-      }
-    }
-    return defs;
-  }
-} structureComponents;
-
-TYPE_PARSER(construct<StructureField>{}(statement(structureComponents)) ||
+TYPE_PARSER(construct<StructureField>{}(statement(StructureComponents{})) ||
     construct<StructureField>{}(indirect(Parser<Union>{})) ||
     construct<StructureField>{}(indirect(Parser<StructureDef>{})))
 
