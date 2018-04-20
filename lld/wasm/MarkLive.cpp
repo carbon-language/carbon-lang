@@ -22,6 +22,7 @@
 #include "MarkLive.h"
 #include "Config.h"
 #include "InputChunks.h"
+#include "InputGlobal.h"
 #include "SymbolTable.h"
 #include "Symbols.h"
 
@@ -102,9 +103,15 @@ void lld::wasm::markLive() {
       for (InputChunk *C : Obj->Segments)
         if (!C->Live)
           message("removing unused section " + toString(C));
+      for (InputGlobal *G : Obj->Globals)
+        if (!G->Live)
+          message("removing unused section " + toString(G));
     }
     for (InputChunk *C : Symtab->SyntheticFunctions)
       if (!C->Live)
         message("removing unused section " + toString(C));
+    for (InputGlobal *G : Symtab->SyntheticGlobals)
+      if (!G->Live)
+        message("removing unused section " + toString(G));
   }
 }
