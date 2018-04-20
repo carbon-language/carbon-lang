@@ -1109,6 +1109,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   parseMerge(".idata=.rdata");
   parseMerge(".didat=.rdata");
   parseMerge(".edata=.rdata");
+  parseMerge(".bss=.data");
 
   // Handle /section
   for (auto *Arg : Args.filtered(OPT_section))
