@@ -12,7 +12,7 @@
 #include "debug-parser.h"
 #include "parse-tree.h"
 #include "token-parsers.h"
-#include "type-parser.h"
+#include "type-parsers.h"
 #include "user-state.h"
 #include <cinttypes>
 #include <cstdio>
