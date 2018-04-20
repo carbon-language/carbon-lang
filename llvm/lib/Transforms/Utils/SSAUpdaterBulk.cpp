@@ -178,6 +178,7 @@ void SSAUpdaterBulk::RewriteAllUses(DominatorTree *DT,
         continue;
       Value *V = computeValueAt(getUserBB(U), R, DT);
       Value *OldVal = U->get();
+      assert(OldVal && "Invalid use!");
       // Notify that users of the existing value that it is being replaced.
       if (OldVal != V && OldVal->hasValueHandle())
         ValueHandleBase::ValueIsRAUWd(OldVal, V);
