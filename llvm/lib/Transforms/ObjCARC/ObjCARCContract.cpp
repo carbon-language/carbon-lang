@@ -75,13 +75,12 @@ namespace {
     SmallPtrSet<CallInst *, 8> StoreStrongCalls;
 
     /// Returns true if we eliminated Inst.
-    bool
-    tryToPeepholeInstruction(Function &F, Instruction *Inst,
-                             inst_iterator &Iter,
-                             SmallPtrSetImpl<Instruction *> &DepInsts,
-                             SmallPtrSetImpl<const BasicBlock *> &Visited,
-                             bool &TailOkForStoreStrong,
-                             DenseMap<BasicBlock *, ColorVector> &BlockColors);
+    bool tryToPeepholeInstruction(
+        Function &F, Instruction *Inst, inst_iterator &Iter,
+        SmallPtrSetImpl<Instruction *> &DepInsts,
+        SmallPtrSetImpl<const BasicBlock *> &Visited,
+        bool &TailOkForStoreStrong,
+        const DenseMap<BasicBlock *, ColorVector> &BlockColors);
 
     bool optimizeRetainCall(Function &F, Instruction *Retain);
 
@@ -431,7 +430,7 @@ bool ObjCARCContract::tryToPeepholeInstruction(
   SmallPtrSetImpl<Instruction *> &DependingInsts,
   SmallPtrSetImpl<const BasicBlock *> &Visited,
   bool &TailOkForStoreStrongs,
-  DenseMap<BasicBlock *, ColorVector> &BlockColors) {
+  const DenseMap<BasicBlock *, ColorVector> &BlockColors) {
     // Only these library routines return their argument. In particular,
     // objc_retainBlock does not necessarily return its argument.
   ARCInstKind Class = GetBasicARCInstKind(Inst);
