@@ -1048,27 +1048,11 @@ template<class T> struct construct {
   }
 };
 
-// If f is a function of type bool (*f)(const ParseState &), then
-// StatePredicateGuardParser{f} is a parser that succeeds when f() is true
-// and fails otherwise.  The state is preserved.
-class StatePredicateGuardParser {
-public:
-  using resultType = Success;
-  constexpr StatePredicateGuardParser(
-      const StatePredicateGuardParser &) = default;
-  constexpr explicit StatePredicateGuardParser(
-      bool (*predicate)(const ParseState &))
-    : predicate_{predicate} {}
-  std::optional<Success> Parse(ParseState &state) const {
-    if (predicate_(state)) {
-      return {Success{}};
-    }
-    return {};
-  }
-
-private:
-  bool (*const predicate_)(const ParseState &);
-};
+// For a parser p, indirect(p) returns a parser that builds an indirect
+// reference to p's return type.
+template<typename PA> inline constexpr auto indirect(const PA &p) {
+  return construct<Indirection<typename PA::resultType>>{}(p);
+}
 
 // If a and b are parsers, then nonemptySeparated(a, b) returns a parser
 // that succeeds if a does.  If a succeeds, it then applies many(b >> a).
