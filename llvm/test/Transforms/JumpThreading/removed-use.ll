@@ -27,7 +27,7 @@ bb6:
   ret void
 }
 
-; CHECK-LABEL: bar@
+; CHECK-LABEL: @bar
 ; Just check that we don't crash on this test.
 define void @bar(i1 %p) {
 entry:
