@@ -1,3 +1,5 @@
+; REQUIRES: asserts
+
 ; RUN: llvm-as < %s > %t1.bc
 
 ; Try to save statistics to file.
