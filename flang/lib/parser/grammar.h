@@ -259,16 +259,7 @@ constexpr auto scalarIntConstantExpr = scalar(intConstantExpr);
 
 // R501 program -> program-unit [program-unit]...
 // This is the top-level production for the Fortran language.
-struct StartNewSubprogram {
-  using resultType = Success;
-  static std::optional<Success> Parse(ParseState &state) {
-    if (auto ustate = state.userState()) {
-      ustate->NewSubprogram();
-    }
-    return {Success{}};
-  }
-} startNewSubprogram;
-
+constexpr StartNewSubprogram startNewSubprogram;
 TYPE_PARSER(
     construct<Program>{}(
         // statements consume only trailing noise; consume leading noise here.

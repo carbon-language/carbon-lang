@@ -6,8 +6,10 @@
 // parse tree construction so as to avoid any need for representing
 // state in static data.
 
+#include "basic-parsers.h"
 #include "char-block.h"
 #include <cinttypes>
+#include <optional>
 #include <set>
 #include <unordered_set>
 
@@ -16,6 +18,7 @@ namespace parser {
 
 class CookedSource;
 class ParsingLog;
+class ParseState;
 
 class UserState {
 public:
@@ -74,6 +77,11 @@ private:
   int nonlabelDoConstructNestingDepth_{0};
 
   std::set<CharBlock> oldStructureComponents_;
+};
+
+struct StartNewSubprogram {
+  using resultType = Success;
+  static std::optional<Success> Parse(ParseState &);
 };
 }  // namespace parser
 }  // namespace Fortran

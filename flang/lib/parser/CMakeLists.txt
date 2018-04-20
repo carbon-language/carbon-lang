@@ -13,4 +13,5 @@ add_library(FortranParser
   source.cc
   token-sequence.cc
   unparse.cc
+  user-state.cc
 )

@@ -16,6 +16,7 @@
 
 #include "char-block.h"
 #include "idioms.h"
+#include "indirection.h"
 #include "message.h"
 #include "parse-state.h"
 #include "provenance.h"
