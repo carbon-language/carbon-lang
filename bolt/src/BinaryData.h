@@ -56,9 +56,12 @@ protected:
   /// Alignment of this data.
   uint16_t Alignment{1};
 
+  /// Symbol flags (same as llvm::SymbolRef::Flags)
+  unsigned Flags{0};
+
   /// Output section for this data if it has been moved from the original
   /// section.
-  std::string OutputSection;
+  BinarySection *OutputSection{nullptr};
   /// The offset of this symbol in the output section.  This is different
   /// from \p Address - Section.getAddress() when the data has been reordered.
   uint64_t OutputOffset{0};
@@ -79,22 +82,14 @@ protected:
     return BD;
   }
 
-  BinaryData *getAtomicRoot() {
-    auto *BD = this;
-    while (!BD->isAtomic() && BD->Parent)
-      BD = BD->Parent;
-    return BD;
-  }
-
-  uint64_t computeOutputOffset() const;
-
 public:
   BinaryData(BinaryData &&) = default;
   BinaryData(StringRef Name,
              uint64_t Address,
              uint64_t Size,
              uint16_t Alignment,
-             BinarySection &Section);
+             BinarySection &Section,
+             unsigned Flags = 0);
   virtual ~BinaryData() { }
 
   virtual bool isJumpTable() const { return false; }
@@ -150,15 +145,20 @@ public:
 
   uint64_t getAddress() const { return Address; }
   uint64_t getEndAddress() const { return Address + Size; }
+  uint64_t getOffset() const;
   uint64_t getSize() const { return Size; }
   uint16_t getAlignment() const { return Alignment; }
-  uint64_t getOutputOffset() const { return OutputOffset; }
-  uint64_t getOutputSize() const { return Size; }
 
   BinarySection &getSection() { return *Section; }
   const BinarySection &getSection() const { return *Section; }
   StringRef getSectionName() const;
-  StringRef getOutputSection() const { return OutputSection; }
+
+  BinarySection &getOutputSection() { return *OutputSection; }
+  const BinarySection &getOutputSection() const { return *OutputSection; }
+  StringRef getOutputSectionName() const;
+  uint64_t getOutputAddress() const;
+  uint64_t getOutputOffset() const { return OutputOffset; }
+  uint64_t getOutputSize() const { return Size; }
 
   bool isMoved() const;
   bool containsAddress(uint64_t Address) const {
@@ -180,6 +180,13 @@ public:
     return BD;
   }
 
+  BinaryData *getAtomicRoot() {
+    auto *BD = this;
+    while (!BD->isAtomic() && BD->Parent)
+      BD = BD->Parent;
+    return BD;
+  }
+
   const BinaryData *getAtomicRoot() const {
     auto *BD = this;
     while (!BD->isAtomic() && BD->Parent)
@@ -187,10 +194,20 @@ public:
     return BD;
   }
 
+  bool isAncestorOf(const BinaryData *BD) const {
+    return Parent && (Parent == BD || Parent->isAncestorOf(BD));
+  }
+
   void setIsMoveable(bool Flag) { IsMoveable = Flag; }
-  void setOutputOffset(uint64_t Offset) { OutputOffset = Offset; }
-  void setOutputSection(StringRef Name) { OutputSection = Name; }
   void setSection(BinarySection &NewSection);
+  void setOutputSection(BinarySection &NewSection) {
+    OutputSection = &NewSection;
+  }
+  void setOutputOffset(uint64_t Offset) { OutputOffset = Offset; }
+  void setOutputLocation(BinarySection &NewSection, uint64_t NewOffset) {
+    setOutputSection(NewSection);
+    setOutputOffset(NewOffset);
+  }
 
   virtual void printBrief(raw_ostream &OS) const;
   virtual void print(raw_ostream &OS) const;

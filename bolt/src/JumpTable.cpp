@@ -86,7 +86,7 @@ void JumpTable::updateOriginal() {
                  << Twine::utohexstr(Offset) << " for symbol "
                  << Entry->getName() << " with addend "
                  << Twine::utohexstr(RelAddend) << '\n');
-    getSection().addRelocation(Offset, Entry, RelType, RelAddend);
+    getOutputSection().addRelocation(Offset, Entry, RelType, RelAddend);
     Offset += EntrySize;
   }
 }

@@ -1231,6 +1231,9 @@ public:
     PCRelativeRelocationOffsets.emplace(Address - getAddress());
   }
 
+  /// Get data used by this function.
+  std::set<BinaryData *> dataUses(bool OnlyHot) const;
+
   /// Return internal section name for this function.
   StringRef getCodeSectionName() const {
     return StringRef(CodeSectionName);

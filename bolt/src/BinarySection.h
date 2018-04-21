@@ -29,10 +29,14 @@ using namespace object;
 
 namespace bolt {
 
+class BinaryContext;
+class BinaryData;
+
 /// A class to manage binary sections that also manages related relocations.
 class BinarySection {
   friend class BinaryContext;
 
+  BinaryContext &BC;          // Owning BinaryContext
   const std::string Name;     // Section name
   const SectionRef Section;   // SectionRef (may be null)
   StringRef Contents;         // input section contents
@@ -53,14 +57,17 @@ class BinarySection {
   RelocationSetType PendingRelocations;
 
   // Output info
-  bool IsFinalized{false};    // Has this section had output information
-                              // finalized?
-  uint64_t FileAddress{0};    // Section address for the rewritten binary.
-  uint64_t OutputSize{0};     // Section size in the rewritten binary.
-  uint64_t FileOffset{0};     // File offset in the rewritten binary file.
-  StringRef OutputContents;   // Rewritten section contents.
-  unsigned SectionID{-1u};    // Unique ID used for address mapping.
-                              // Set by ExecutableFileMemoryManager.
+  bool IsFinalized{false};         // Has this section had output information
+                                   // finalized?
+  std::string OutputName;          // Output section name (if the section has
+                                   // been renamed)
+  uint64_t FileAddress{0};         // Section address for the rewritten binary.
+  uint64_t OutputSize{0};          // Section size in the rewritten binary.
+  uint64_t FileOffset{0};          // File offset in the rewritten binary file.
+  StringRef OutputContents;        // Rewritten section contents.
+  unsigned SectionID{-1u};         // Unique ID used for address mapping.
+                                   // Set by ExecutableFileMemoryManager.
+  mutable bool IsReordered{false}; // Have the contents been reordered?
 
   // non-copyable
   BinarySection(const BinarySection &) = delete;
@@ -85,7 +92,12 @@ class BinarySection {
     return Contents;
   }
 
-  // Set output info for this section.
+  /// Get the set of relocations refering to data in this section that
+  /// has been reordered.  The relocation offsets will be modified to
+  /// reflect the new data locations.
+  std::set<Relocation> reorderRelocations(bool Inplace) const;
+
+  /// Set output info for this section.
   void update(uint8_t *NewData,
               uint64_t NewSize,
               unsigned NewAlignment,
@@ -93,18 +105,41 @@ class BinarySection {
               unsigned NewELFFlags,
               bool NewIsLocal) {
     assert(NewAlignment > 0 && "section alignment must be > 0");
-    OutputSize = NewSize;
     Alignment = NewAlignment;
     ELFType = NewELFType;
     ELFFlags = NewELFFlags;
     IsLocal = NewIsLocal || StringRef(Name).startswith(".local.");
+    OutputSize = NewSize;
     OutputContents = StringRef(reinterpret_cast<const char*>(NewData),
                                NewData ? NewSize : 0);
     IsFinalized = true;
   }
 public:
-  explicit BinarySection(SectionRef Section, bool IsLocal = false)
-    : Name(getName(Section)),
+  /// Copy a section.
+  explicit BinarySection(BinaryContext &BC,
+                         StringRef Name,
+                         const BinarySection &Section,
+                         bool IsLocal = false)
+    : BC(BC),
+      Name(Name),
+      Section(Section.getSectionRef()),
+      Contents(Section.getContents()),
+      Address(Section.getAddress()),
+      Size(Section.getSize()),
+      Alignment(Section.getAlignment()),
+      ELFType(Section.getELFType()),
+      ELFFlags(Section.getELFFlags()),
+      IsLocal(IsLocal || StringRef(Name).startswith(".local.")),
+      Relocations(Section.Relocations),
+      PendingRelocations(Section.PendingRelocations),
+      OutputName(Name) {
+  }
+
+  BinarySection(BinaryContext &BC,
+                SectionRef Section,
+                bool IsLocal = false)
+    : BC(BC),
+      Name(getName(Section)),
       Section(Section),
       Contents(getContents(Section)),
       Address(Section.getAddress()),
@@ -113,18 +148,20 @@ public:
       ELFType(ELFSectionRef(Section).getType()),
       ELFFlags(ELFSectionRef(Section).getFlags()),
       IsLocal(IsLocal || StringRef(Name).startswith(".local.")),
-      OutputSize(0) {
+      OutputName(Name) {
   }
 
   // TODO: pass Data as StringRef/ArrayRef? use StringRef::copy method.
-  BinarySection(StringRef Name,
+  BinarySection(BinaryContext &BC,
+                StringRef Name,
                 uint8_t *Data,
                 uint64_t Size,
                 unsigned Alignment,
                 unsigned ELFType,
                 unsigned ELFFlags,
                 bool IsLocal)
-    : Name(Name),
+    : BC(BC),
+      Name(Name),
       Contents(reinterpret_cast<const char*>(Data), Data ? Size : 0),
       Address(0),
       Size(Size),
@@ -133,6 +170,7 @@ public:
       ELFFlags(ELFFlags),
       IsLocal(IsLocal || Name.startswith(".local.")),
       IsFinalized(true),
+      OutputName(Name),
       OutputSize(Size),
       OutputContents(Contents) {
     assert(Alignment > 0 && "section alignment must be > 0");
@@ -218,6 +256,7 @@ public:
     return (ELFFlags & ELF::SHF_ALLOC);
   }
   bool isLocal() const { return IsLocal; }
+  bool isReordered() const { return IsReordered; }
   unsigned getELFType() const { return ELFType; }
   unsigned getELFFlags() const { return ELFFlags; }
 
@@ -307,6 +346,7 @@ public:
 
   bool isFinalized() const { return IsFinalized; }
   void setIsFinalized() { IsFinalized = true; }
+  StringRef getOutputName() const { return OutputName; }
   uint64_t getOutputSize() const { return OutputSize; }
   uint8_t *getOutputData() {
     return reinterpret_cast<uint8_t *>(const_cast<char *>(getOutputContents().data()));
@@ -339,6 +379,14 @@ public:
     assert(!hasValidSectionID() && "trying to set section id twice");
     SectionID = ID;
   }
+  void setOutputName(StringRef Name) {
+    OutputName = Name;
+  }
+
+  /// Reorder the contents of this section according to /p Order.  If
+  /// /p Inplace is true, the entire contents of the section is reordered,
+  /// otherwise the new contents contain only the reordered data.
+  void reorderContents(const std::vector<BinaryData *> &Order, bool Inplace);
 
   void print(raw_ostream &OS) const;
 };

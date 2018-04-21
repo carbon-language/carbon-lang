@@ -83,6 +83,7 @@ extern cl::OptionCategory AggregatorCategory;
 
 extern cl::opt<MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
+extern cl::list<std::string> ReorderData;
 
 static cl::opt<bool>
 ForceToDataRelocations("force-data-relocations",
@@ -91,6 +92,16 @@ ForceToDataRelocations("force-data-relocations",
   cl::Hidden,
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
+
+// Note: enabling this is liable to make things break.
+static cl::opt<bool>
+AllowSectionRelocations("allow-section-relocations",
+  cl::desc("allow reordering of data referenced by section relocations "
+           "(experimental)"),
+  cl::init(false),
+  cl::Hidden,
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintCacheMetrics("print-cache-metrics",
@@ -172,6 +183,19 @@ FunctionPadSpec("pad-funcs",
 cl::opt<bool>
 HotText("hot-text",
   cl::desc("hot text symbols support (relocation mode)"),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+HotData("hot-data",
+  cl::desc("hot data symbols support (relocation mode)"),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+UpdateEnd("update-end",
+  cl::desc("update the _end symbol to point to the end of all data sections"),
+  cl::init(true),
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
@@ -500,12 +524,24 @@ void check_error(std::error_code EC, StringRef Message) {
 }
 
 namespace {
+
 std::string uniquifyName(BinaryContext &BC, std::string NamePrefix) {
   unsigned LocalID = 1;
   while (BC.getBinaryDataByName(NamePrefix + std::to_string(LocalID)))
     ++LocalID;
   return NamePrefix + std::to_string(LocalID);
 }
+
+bool refersToReorderedSection(ErrorOr<BinarySection &> Section) {
+  auto Itr = std::find_if(opts::ReorderData.begin(),
+                          opts::ReorderData.end(),
+                          [&](const std::string &SectionName) {
+                            return (Section &&
+                                    Section->getName() == SectionName);
+                          });
+  return Itr != opts::ReorderData.end();
+}
+
 }
 
 uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
@@ -1210,13 +1246,15 @@ void RewriteInstance::discoverFileObjects() {
     uint64_t NextAddress = getNextAddress(ISym);
     uint64_t TentativeSize = !SymbolSize ? NextAddress - Address : SymbolSize;
     uint64_t SymbolAlignment = Symbol.getAlignment();
+    unsigned SymbolFlags = Symbol.getFlags();
 
     auto registerName = [&](uint64_t FinalSize) {
       // Register names even if it's not a function, e.g. for an entry point.
-      BC->registerNameAtAddress(UniqueName, Address, FinalSize, SymbolAlignment);
+      BC->registerNameAtAddress(UniqueName, Address, FinalSize,
+                                SymbolAlignment, SymbolFlags);
       if (!AlternativeName.empty())
         BC->registerNameAtAddress(AlternativeName, Address, FinalSize,
-                                  SymbolAlignment);
+                                  SymbolAlignment, SymbolFlags);
     };
 
     section_iterator Section =
@@ -1679,6 +1717,15 @@ BinaryFunction *RewriteInstance::createBinaryFunction(
   return BF;
 }
 
+ArrayRef<uint8_t> RewriteInstance::getLSDAData() {
+  return ArrayRef<uint8_t>(LSDASection->getData(),
+                           LSDASection->getContents().size());
+}
+
+uint64_t RewriteInstance::getLSDAAddress() {
+  return LSDASection->getAddress();
+}
+
 void RewriteInstance::readSpecialSections() {
   NamedRegionTimer T("readSpecialSections", "read special sections",
                      TimerGroupName, TimerGroupDesc, opts::TimeRewrite);
@@ -1689,27 +1736,9 @@ void RewriteInstance::readSpecialSections() {
   for (const auto &Section : InputFile->sections()) {
     StringRef SectionName;
     check_error(Section.getName(SectionName), "cannot get section name");
-    StringRef SectionContents;
-    ArrayRef<uint8_t> SectionData;
-    if (ELFSectionRef(Section).getType() != ELF::SHT_NOBITS) {
-      check_error(Section.getContents(SectionContents),
-                  "cannot get section contents");
-      SectionData = ArrayRef<uint8_t>(
-          reinterpret_cast<const uint8_t *>(SectionContents.data()),
-          Section.getSize());
-    }
-
-    if (SectionName == ".gcc_except_table") {
-      LSDAData = SectionData;
-      LSDAAddress = Section.getAddress();
-    } else if (SectionName == ".debug_loc") {
-      DebugLocSize = Section.getSize();
-    } else if (SectionName == ".rela.text") {
-      HasTextRelocations = true;
-    }
 
     // Only register sections with names.
-    if (!getSectionName(Section).empty()) {
+    if (!SectionName.empty()) {
       BC->registerSection(Section);
       DEBUG(dbgs() << "BOLT-DEBUG: registering section " << SectionName
                    << " @ 0x" << Twine::utohexstr(Section.getAddress()) << ":0x"
@@ -1717,6 +1746,15 @@ void RewriteInstance::readSpecialSections() {
                    << "\n");
     }
   }
+
+  HasTextRelocations = (bool)BC->getUniqueSectionByName(".rela.text");
+  LSDASection = BC->getUniqueSectionByName(".gcc_except_table");
+  EHFrameSection = BC->getUniqueSectionByName(".eh_frame");
+  GdbIndexSection = BC->getUniqueSectionByName(".gdb_index");
+  PLTSection = BC->getUniqueSectionByName(".plt");
+  GOTPLTSection = BC->getUniqueSectionByName(".got.plt");
+  PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
+  RelaPLTSection = BC->getUniqueSectionByName(".rela.plt");
 
   if (opts::PrintSections) {
     outs() << "BOLT-INFO: Sections from original binary:\n";
@@ -1727,13 +1765,6 @@ void RewriteInstance::readSpecialSections() {
     outs() << "BOLT-INFO: Sections:\n";
     BC->printSections(outs());
   }
-
-  EHFrameSection = BC->getUniqueSectionByName(".eh_frame");
-  GdbIndexSection = BC->getUniqueSectionByName(".gdb_index");
-  PLTSection = BC->getUniqueSectionByName(".plt");
-  GOTPLTSection = BC->getUniqueSectionByName(".got.plt");
-  PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
-  RelaPLTSection = BC->getUniqueSectionByName(".rela.plt");
 
   if (opts::RelocationMode == cl::BOU_TRUE && !HasTextRelocations) {
     errs() << "BOLT-ERROR: relocations against code are missing from the input "
@@ -2055,8 +2086,11 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     const auto Address = SymbolAddress + Addend;
     const bool ForceRelocation =
       (opts::HotText && (SymbolName == "__hot_start" ||
-                         SymbolName == "__hot_end"))
-      || Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE;
+                         SymbolName == "__hot_end")) ||
+      (opts::HotData && (SymbolName == "__hot_data_start" ||
+                         SymbolName == "__hot_data_end")) ||
+      SymbolName == "_end" ||
+      Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE;
 
     DEBUG(
        dbgs() << "BOLT-DEBUG: ";
@@ -2090,7 +2124,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         ContainingBF->addPCRelativeRelocationAddress(Rel.getOffset());
       }
       DEBUG(dbgs() << "BOLT-DEBUG: not creating PC-relative relocation at 0x"
-                   << Twine::utohexstr(Rel.getOffset())
+                   << Twine::utohexstr(Rel.getOffset()) << " for " << SymbolName
                    << "\n");
       continue;
     }
@@ -2103,6 +2137,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     }
 
     const bool IsToCode = RefSection && RefSection->isText();
+    const bool IsSectionRelocation =
+      (cantFail(Rel.getSymbol()->getType()) == SymbolRef::ST_Debug);
 
     // Occasionally we may see a reference past the last byte of the function
     // typically as a result of __builtin_unreachable(). Check it here.
@@ -2121,9 +2157,9 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     } else if (ReferencedBF) {
       RefFunctionOffset = Address - ReferencedBF->getAddress();
       DEBUG(dbgs() << "  referenced function " << *ReferencedBF;
-            if (Address != ReferencedBF->getAddress())
-              dbgs() << " at offset 0x"
-                     << Twine::utohexstr(RefFunctionOffset);
+            if (Address != ReferencedBF->getAddress()) {
+              dbgs() << " at offset 0x" << Twine::utohexstr(RefFunctionOffset);
+            }
             dbgs() << '\n');
       if (RefFunctionOffset) {
         ReferencedSymbol =
@@ -2150,20 +2186,94 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         Addend = 0;
       }
 
-      if (auto *BD = BC->getBinaryDataContainingAddress(SymbolAddress)) {
+      // This function makes sure that symbols referenced by ambiguous
+      // relocations are marked as unmoveable.  For now, if a section
+      // relocation points at the boundary between two symbols then
+      // those symbols are marked as unmoveable.
+      auto markAmbiguousRelocations = [&](BinaryData *BD) {
+        if (Address == BD->getAddress()) {
+          BD = BD->getAtomicRoot();
+          DEBUG(if (BD->isMoveable()) {
+            dbgs() << "BOLT-DEBUG: setting " << *BD << " as unmoveable "
+                   << "due to ambiguous relocation (0x"
+                   << Twine::utohexstr(Address) << ") @ 0x"
+                   << Twine::utohexstr(Rel.getOffset()) << "\n";
+          });
+          BD->setIsMoveable(false);
+
+          // set previous symbol as unmoveable
+          auto *Prev = BC->getBinaryDataContainingAddress(Address-1);
+          if (Prev && Prev->getEndAddress() == BD->getAddress()) {
+            Prev = Prev->getAtomicRoot();
+            DEBUG(if (Prev->isMoveable()) {
+              dbgs() << "BOLT-DEBUG: setting " << *Prev << " as unmoveable "
+                     << "due to ambiguous relocation (0x"
+                     << Twine::utohexstr(Address) << ") @ 0x"
+                     << Twine::utohexstr(Rel.getOffset()) << "\n";
+            });
+            Prev->setIsMoveable(false);
+          }
+        }
+
+        if (Address == BD->getEndAddress()) {
+          BD = BD->getAtomicRoot();
+          DEBUG(if (BD->isMoveable()) {
+            dbgs() << "BOLT-DEBUG: setting " << *BD << " as unmoveable "
+                   << "due to ambiguous relocation (0x"
+                   << Twine::utohexstr(Address) << ") @ 0x"
+                   << Twine::utohexstr(Rel.getOffset()) << "\n";
+          });
+          BD->setIsMoveable(false);
+
+          // set next symbol as unmoveable
+          auto *Next = BC->getBinaryDataContainingAddress(BD->getEndAddress());
+          if (Next && Next->getAddress() == BD->getEndAddress()) {
+            Next = Next->getAtomicRoot();
+            DEBUG(if (Next->isMoveable()) {
+              dbgs() << "BOLT-DEBUG: setting " << *Next << " as unmoveable "
+                     << "due to ambiguous relocation (0x"
+                     << Twine::utohexstr(Address) << ") @ 0x"
+                     << Twine::utohexstr(Rel.getOffset()) << "\n";
+            });
+            Next->setIsMoveable(false);
+          }
+        }
+      };
+
+      // If we are allowing section relocations, we assign relocations
+      // that are pointing to the end of a symbol to that symbol rather
+      // than the following symbol.
+      const auto IncludeEnd =
+        opts::AllowSectionRelocations && IsSectionRelocation;
+
+      if (auto *BD = BC->getBinaryDataContainingAddress(SymbolAddress,
+                                                        IncludeEnd)) {
+        assert(!IncludeEnd ||
+               (BD == BC->getBinaryDataContainingAddress(SymbolAddress) ||
+                !BC->getBinaryDataContainingAddress(SymbolAddress) ||
+                (IsSectionRelocation && BD->getEndAddress() ==
+                 BC->getBinaryDataContainingAddress(SymbolAddress)->getAddress())));
+
         // Note: this assertion is trying to check sanity of BinaryData objects
         // but AArch64 has inferred and incomplete object locations coming from
         // GOT/TLS or any other non-trivial relocation (that requires creation
         // of sections and whose symbol address is not really what should be
         // encoded in the instruction). So we essentially disabled this check
         // for AArch64 and live with bogus names for objects.
-        assert(IsAArch64 ||
-               cantFail(Rel.getSymbol()->getType()) == SymbolRef::ST_Debug ||
-               BD->nameStartsWith(SymbolName) ||
-               BD->nameStartsWith("PG" + SymbolName) ||
-               ((BD->nameStartsWith("ANONYMOUS")) &&
-                (BD->getSectionName().startswith(".plt") ||
-                 BD->getSectionName().endswith(".plt"))));
+        assert((IsAArch64 ||
+                IsSectionRelocation ||
+                BD->nameStartsWith(SymbolName) ||
+                BD->nameStartsWith("PG" + SymbolName) ||
+                (BD->nameStartsWith("ANONYMOUS") &&
+                 (BD->getSectionName().startswith(".plt") ||
+                  BD->getSectionName().endswith(".plt")))) &&
+               "BOLT symbol names of all non-section relocations must match "
+               "up with symbol names referenced in the relocation");
+
+        if (!opts::AllowSectionRelocations && IsSectionRelocation) {
+          markAmbiguousRelocations(BD);
+        }
+
         ReferencedSymbol = BD->getSymbol();
         Addend += (SymbolAddress - BD->getAddress());
         SymbolAddress = BD->getAddress();
@@ -2172,14 +2282,15 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         auto Symbol = *Rel.getSymbol();
         // These are mostly local data symbols but undefined symbols
         // in relocation sections can get through here too, from .plt.
-        assert(IsAArch64 ||
-               cantFail(Symbol.getType()) == SymbolRef::ST_Debug ||
-               BC->getSectionForAddress(SymbolAddress)
-                   ->getName()
-                   .startswith(".plt"));
+        assert((IsAArch64 ||
+                IsSectionRelocation ||
+                BC->getSectionNameForAddress(SymbolAddress)->startswith(".plt"))
+               && "known symbols should not resolve to anonymous locals");
+
         const uint64_t SymbolSize =
             IsAArch64 ? 0 : ELFSymbolRef(Symbol).getSize();
         const uint64_t SymbolAlignment = IsAArch64 ? 1 : Symbol.getAlignment();
+        const unsigned SymbolFlags = Symbol.getFlags();
 
         if (cantFail(Symbol.getType()) != SymbolRef::ST_Debug) {
           std::string Name;
@@ -2194,12 +2305,19 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
           ReferencedSymbol = BC->registerNameAtAddress(Name,
                                                        SymbolAddress,
                                                        SymbolSize,
-                                                       SymbolAlignment);
+                                                       SymbolAlignment,
+                                                       SymbolFlags);
         } else {
           ReferencedSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress,
                                                          SymbolSize,
                                                          SymbolAlignment,
-                                                         "SYMBOLat");
+                                                         "SYMBOLat",
+                                                         SymbolFlags);
+        }
+
+        if (!opts::AllowSectionRelocations && IsSectionRelocation) {
+          auto *BD = BC->getBinaryDataByName(ReferencedSymbol->getName());
+          markAmbiguousRelocations(BD);
         }
       }
     }
@@ -2223,6 +2341,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
 
     if (IsFromCode) {
       if (ReferencedBF || ForceRelocation || IsAArch64 ||
+          refersToReorderedSection(RefSection) ||
           (opts::ForceToDataRelocations && checkMaxDataRelocations())) {
         ContainingBF->addRelocation(Rel.getOffset(),
                                     ReferencedSymbol,
@@ -2235,7 +2354,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       }
     } else if (IsToCode) {
       BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType(), Addend);
-    } else if (opts::ForceToDataRelocations && checkMaxDataRelocations()) {
+    } else if (refersToReorderedSection(RefSection) ||
+               (opts::ForceToDataRelocations && checkMaxDataRelocations())) {
       BC->addRelocation(Rel.getOffset(),
                         ReferencedSymbol,
                         Rel.getType(),
@@ -2441,7 +2561,7 @@ void RewriteInstance::disassembleFunctions() {
 
     // Parse LSDA.
     if (Function.getLSDAAddress() != 0)
-      Function.parseLSDA(LSDAData, LSDAAddress);
+      Function.parseLSDA(getLSDAData(), getLSDAAddress());
 
     if (!Function.buildCFG())
       continue;
@@ -2746,6 +2866,11 @@ void RewriteInstance::emitFunctions() {
     emitDataSection(Streamer.get(), *EHFrameSection, ".eh_frame_old");
   }
 
+  // Update _end if needed.
+  if (opts::UpdateEnd) {
+    Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("_end"));
+  }
+
   Streamer->Finish();
 
   //////////////////////////////////////////////////////////////////////////////
@@ -2767,8 +2892,12 @@ void RewriteInstance::emitFunctions() {
   auto Resolver = orc::createLegacyLookupResolver(
       [&](const std::string &Name) -> JITSymbol {
         DEBUG(dbgs() << "BOLT: looking for " << Name << "\n");
-        if (auto *I = BC->getBinaryDataByName(Name))
-          return JITSymbol(I->getAddress(), JITSymbolFlags());
+        if (auto *I = BC->getBinaryDataByName(Name)) {
+          const uint64_t Address = I->isMoved() && !I->isJumpTable()
+                                 ? I->getOutputAddress()
+                                 : I->getAddress();
+          return JITSymbol(Address, JITSymbolFlags());
+        }
         return JITSymbol(nullptr);
       },
       [](Error Err) { cantFail(std::move(Err), "lookup failed"); });
@@ -2817,6 +2946,11 @@ void RewriteInstance::emitFunctions() {
 }
 
 void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
+  mapTextSections(Key);
+  mapDataSections(Key);
+}
+  
+void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
   NewTextSectionStartAddress = NextAvailableAddress;
   if (BC->HasRelocations) {
     auto TextSection = BC->getUniqueSectionByName(".text");
@@ -2882,14 +3016,12 @@ void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
       if (opts::JumpTables == JTS_BASIC) {
         for (auto &JTI : Function.JumpTables) {
           auto *JT = JTI.second;
-          auto Section = BC->getUniqueSectionByName(JT->getOutputSection());
-          assert(Section && "cannot find section for jump table");
-          JT->setSection(*Section);
-          Section->setFileAddress(JT->getAddress());
-          DEBUG(dbgs() << "BOLT-DEBUG: mapping " << Section->getName()
+          auto &Section = JT->getOutputSection();
+          Section.setFileAddress(JT->getAddress());
+          DEBUG(dbgs() << "BOLT-DEBUG: mapping " << Section.getName()
                        << " to 0x" << Twine::utohexstr(JT->getAddress())
                        << '\n');
-          OLT->mapSectionAddress(Key, Section->getSectionID(),
+          OLT->mapSectionAddress(Key, Section.getSectionID(),
                                  JT->getAddress());
         }
       }
@@ -2948,7 +3080,9 @@ void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
         getFileOffsetForAddress(NewTextSectionStartAddress));
     }
   }
+}
 
+void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
   // Map special sections to their addresses in the output image.
   // These are the sections that we generate via MCStreamer.
   // The order is important.
@@ -2964,6 +3098,8 @@ void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
     DEBUG(dbgs() << "BOLT: mapping section " << SectionName << " (0x"
                  << Twine::utohexstr(Section->getAllocAddress())
                  << ") to 0x" << Twine::utohexstr(NextAvailableAddress)
+                 << ":0x" << Twine::utohexstr(NextAvailableAddress +
+                                              Section->getOutputSize())
                  << '\n');
 
     OLT->mapSectionAddress(Key, Section->getSectionID(), NextAvailableAddress);
@@ -3096,8 +3232,8 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
 
 void RewriteInstance::emitDataSection(MCStreamer *Streamer,
                                       const BinarySection &Section,
-                                      StringRef Name) {
-  StringRef SectionName = !Name.empty() ? Name : Section.getName();
+                                      StringRef NewName) {
+  StringRef SectionName = !NewName.empty() ? NewName : Section.getName();
   StringRef SectionContents = Section.getContents();
   auto *ELFSection = BC->Ctx->getELFSection(SectionName,
                                             Section.getELFType(),
@@ -3106,36 +3242,41 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer,
   Streamer->SwitchSection(ELFSection);
   Streamer->EmitValueToAlignment(Section.getAlignment());
 
+  if (BC->HasRelocations && opts::HotData && Section.isReordered())
+    Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_data_start"));
+  
   DEBUG(dbgs() << "BOLT-DEBUG: emitting "
                << (Section.isAllocatable() ? "" : "non-")
                << "allocatable data section " << SectionName << '\n');
 
   if (!Section.hasRelocations()) {
     Streamer->EmitBytes(SectionContents);
-    return;
+  } else {
+    uint64_t SectionOffset = 0;
+    for (auto &Relocation : Section.relocations()) {
+      assert(Relocation.Offset < SectionContents.size() && "overflow detected");
+      if (SectionOffset < Relocation.Offset) {
+        Streamer->EmitBytes(
+                            SectionContents.substr(SectionOffset,
+                                                   Relocation.Offset - SectionOffset));
+        SectionOffset = Relocation.Offset;
+      }
+      DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
+            << Relocation.Symbol->getName() << " at offset 0x"
+            << Twine::utohexstr(Relocation.Offset)
+            << " with size "
+            << Relocation::getSizeForType(Relocation.Type) << '\n');
+      auto RelocationSize = Relocation.emit(Streamer);
+      SectionOffset += RelocationSize;
+    }
+    assert(SectionOffset <= SectionContents.size() && "overflow error");
+    if (SectionOffset < SectionContents.size()) {
+      Streamer->EmitBytes(SectionContents.substr(SectionOffset));
+    }
   }
 
-  uint64_t SectionOffset = 0;
-  for (auto &Relocation : Section.relocations()) {
-    assert(Relocation.Offset < Section.getSize() && "overflow detected");
-    if (SectionOffset < Relocation.Offset) {
-      Streamer->EmitBytes(
-         SectionContents.substr(SectionOffset,
-            Relocation.Offset - SectionOffset));
-      SectionOffset = Relocation.Offset;
-    }
-    DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "
-                 << Relocation.Symbol->getName() << " at offset 0x"
-                 << Twine::utohexstr(Relocation.Offset)
-                 << " with size "
-                 << Relocation::getSizeForType(Relocation.Type) << '\n');
-    auto RelocationSize = Relocation.emit(Streamer);
-    SectionOffset += RelocationSize;
-  }
-  assert(SectionOffset <= SectionContents.size() && "overflow error");
-  if (SectionOffset < SectionContents.size()) {
-    Streamer->EmitBytes(SectionContents.substr(SectionOffset));
-  }
+  if (BC->HasRelocations && opts::HotData && Section.isReordered())
+    Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_data_end"));
 }
 
 void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
@@ -3145,7 +3286,9 @@ void RewriteInstance::emitDataSections(MCStreamer *Streamer) {
 
     StringRef SectionName = Section.getName();
     assert(SectionName != ".eh_frame" && "should not emit .eh_frame as data");
-    auto EmitName = OrgSecPrefix + std::string(SectionName);
+    std::string EmitName = Section.isReordered()
+      ? std::string(Section.getOutputName())
+      : OrgSecPrefix + std::string(SectionName);
     emitDataSection(Streamer, Section, EmitName);
   }
 }
@@ -3473,9 +3616,11 @@ void RewriteInstance::addBoltInfoSection() {
 // optional because for reference updating in the symbol table we only need the
 // map of input to output indices, not the real output section list.
 template <typename ELFT, typename ELFShdrTy>
-std::vector<uint32_t>
-RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
-                                   std::vector<ELFShdrTy> *OutputSections) {
+std::vector<uint32_t> RewriteInstance::getOutputSections(
+   ELFObjectFile<ELFT> *File,
+   std::vector<ELFShdrTy> *OutputSections,
+   std::map<std::string, uint32_t> *SectionNameMap
+) {
   auto *Obj = File->getELFFile();
   auto Sections = cantFail(Obj->sections());
 
@@ -3507,15 +3652,19 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
     if (!(Section.sh_flags & ELF::SHF_ALLOC))
       continue;
 
-    NewSectionIndex[std::distance(Sections.begin(), &Section)] =
-      CurIndex++;
+    StringRef SectionName =
+        cantFail(Obj->getSectionName(&Section), "cannot get section name");
+
+    if (SectionNameMap && !SectionNameMap->count(SectionName)) {
+      (*SectionNameMap)[SectionName] = CurIndex;
+    }
+    const auto OldIdx = std::distance(Sections.begin(), &Section);
+    assert(NewSectionIndex[OldIdx] == 0);
+    NewSectionIndex[OldIdx] = CurIndex++;
 
     // If only computing the map, we're done with this iteration
     if (!OutputSections)
       continue;
-
-    StringRef SectionName =
-        cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
     auto NewSection = Section;
     if (SectionName == ".bss") {
@@ -3539,38 +3688,65 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
     NewTextSectionIndex = CurIndex;
   }
 
-  // Process entries for all new allocatable sections.
+  // Process entries for all new allocatable sections.  Make sure
+  // allocatable sections follow the same order as in mapDataSections so
+  // that the section indices are consistent.
+  std::vector<const BinarySection *> AllocatableSections;
+  std::vector<std::string> SectionNames = { ".eh_frame",
+                                            ".gcc_except_table",
+                                            ".rodata",
+                                            ".rodata.cold" };
+  for (const auto &SectionName : SectionNames) {
+    auto Section = BC->getUniqueSectionByName(SectionName);
+    if (Section && Section->isFinalized()) {
+      AllocatableSections.push_back(&*Section);
+    }
+  }
   for (auto &Section : BC->allocatableSections()) {
     if (!Section.isFinalized())
       continue;
 
+    if (std::find_if(AllocatableSections.begin(),
+                     AllocatableSections.end(),
+                     [&Section](const BinarySection *BSec) {
+                       return BSec == &Section;
+                     }) == AllocatableSections.end()) {
+      AllocatableSections.push_back(&Section);
+    }
+  }
+  
+  for (const auto *Section : AllocatableSections) {
     // Ignore function sections.
-    if (Section.getFileAddress() < NewTextSegmentAddress) {
+    if (Section->getFileAddress() < NewTextSegmentAddress) {
       if (opts::Verbosity)
         outs() << "BOLT-INFO: not writing section header for existing section "
-               << Section.getName() << '\n';
+               << Section->getName() << '\n';
       continue;
     }
 
+    if (SectionNameMap) {
+      (*SectionNameMap)[Section->getName()] = CurIndex;
+    }
     ++CurIndex;
+
     // If only computing the map, we're done with this iteration
     if (!OutputSections)
       continue;
 
     if (opts::Verbosity >= 1)
       outs() << "BOLT-INFO: writing section header for "
-             << Section.getName() << '\n';
+             << Section->getName() << '\n';
     ELFShdrTy NewSection;
-    NewSection.sh_name = SHStrTab.getOffset(Section.getName());
+    NewSection.sh_name = SHStrTab.getOffset(Section->getName());
     NewSection.sh_type = ELF::SHT_PROGBITS;
-    NewSection.sh_addr = Section.getFileAddress();
-    NewSection.sh_offset = Section.getFileOffset();
-    NewSection.sh_size = Section.getOutputSize();
+    NewSection.sh_addr = Section->getFileAddress();
+    NewSection.sh_offset = Section->getFileOffset();
+    NewSection.sh_size = Section->getOutputSize();
     NewSection.sh_entsize = 0;
-    NewSection.sh_flags = Section.getELFFlags();
+    NewSection.sh_flags = Section->getELFFlags();
     NewSection.sh_link = 0;
     NewSection.sh_info = 0;
-    NewSection.sh_addralign = Section.getAlignment();
+    NewSection.sh_addralign = Section->getAlignment();
     OutputSections->emplace_back(NewSection);
   }
 
@@ -3587,15 +3763,19 @@ RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
     if (Section.sh_type == ELF::SHT_RELA)
       continue;
 
-    NewSectionIndex[std::distance(Sections.begin(), &Section)] =
-      CurIndex++;
+    StringRef SectionName =
+        cantFail(Obj->getSectionName(&Section), "cannot get section name");
+
+    if (SectionNameMap && !SectionNameMap->count(SectionName)) {
+      (*SectionNameMap)[SectionName] = CurIndex;
+    }
+    const auto OldIdx = std::distance(Sections.begin(), &Section);
+    assert(NewSectionIndex[OldIdx] == 0);
+    NewSectionIndex[OldIdx] = CurIndex++;
 
     // If only computing the map, we're done with this iteration
     if (!OutputSections)
       continue;
-
-    StringRef SectionName =
-        cantFail(Obj->getSectionName(&Section), "cannot get section name");
 
     auto BSec = BC->getUniqueSectionByName(SectionName);
     assert(BSec && "missing section info for non-allocatable section");
@@ -3724,15 +3904,25 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
   // Compute a preview of how section indices will change after rewriting, so
   // we can properly update the symbol table.
+  std::map<std::string, uint32_t> SectionNameMap;
   auto NewSectionIndex =
-      getOutputSections(File, (std::vector<Elf_Shdr> *)nullptr);
+    getOutputSections(File, (std::vector<Elf_Shdr> *)nullptr, &SectionNameMap);
 
-  auto updateSymbolTable = [&](bool PatchExisting, const Elf_Shdr *Section,
-                               std::function<void(size_t, const char *, size_t)>
-                               Write,
-                               std::function<size_t(StringRef)> AddToStrTab) {
+  DEBUG(dbgs() << "BOLT-DEBUG: SectionNameMap:\n";
+        for (auto &Entry : SectionNameMap) {
+          dbgs() << "BOLT-DEBUG: " << Entry.first << " -> "
+                 << Entry.second << "\n";
+        });
+
+  auto updateSymbolTable =
+    [&](bool PatchExisting,
+        const Elf_Shdr *Section,
+        std::function<void(size_t, const char *, size_t)>
+        Write,
+        std::function<size_t(StringRef)> AddToStrTab) {
     auto StringSection = cantFail(Obj->getStringTableForSymtab(*Section));
     unsigned IsHotTextUpdated = 0;
+    unsigned IsHotDataUpdated = 0;
 
     std::map<const BinaryFunction *, uint64_t> IslandSizes;
     auto getConstantIslandSize = [&IslandSizes](const BinaryFunction *BF) {
@@ -3806,9 +3996,34 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
                 sizeof(CodeMarkSym));
         }
       } else {
-        if (NewSymbol.st_shndx < ELF::SHN_LORESERVE) {
-          NewSymbol.st_shndx = NewSectionIndex[NewSymbol.st_shndx];
+        uint32_t OldSectionIndex = NewSymbol.st_shndx;
+        auto *BD = !Function ? BC->getBinaryDataAtAddress(NewSymbol.st_value)
+                             : nullptr;
+        if (BD && BD->isMoved() && !BD->isJumpTable()) {
+          assert((!BD->getSize() ||
+                  !NewSymbol.st_size ||
+                  NewSymbol.st_size == BD->getSize()) &&
+                 "sizes must match");
+
+          auto &OutputSection = BD->getOutputSection();
+
+          assert(SectionNameMap.count(OutputSection.getName()));
+          DEBUG(dbgs() << "BOLT-DEBUG: moving " << BD->getName() << " from "
+                       << *BC->getSectionNameForAddress(NewSymbol.st_value)
+                       << " (" << NewSymbol.st_shndx << ") to "
+                       << OutputSection.getName() << " ("
+                       << SectionNameMap[OutputSection.getName()] << ")\n");
+          OldSectionIndex = ELF::SHN_LORESERVE;
+          NewSymbol.st_shndx = SectionNameMap[OutputSection.getName()];
+
+          // TODO: use getNewValueForSymbol()?
+          NewSymbol.st_value = BD->getOutputAddress();
         }
+
+        if (OldSectionIndex < ELF::SHN_LORESERVE) {
+          NewSymbol.st_shndx = NewSectionIndex[OldSectionIndex];
+        }
+
         // Detect local syms in the text section that we didn't update
         // and were preserved by the linker to support relocations against
         // .text (t15274167). Remove then from the symtab.
@@ -3834,20 +4049,31 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
         }
       }
 
-      if (opts::HotText) {
-        auto updateSymbolValue = [&](const StringRef Name) {
-          NewSymbol.st_value = getNewValueForSymbol(Name);
-          NewSymbol.st_shndx = ELF::SHN_ABS;
-          outs() << "BOLT-INFO: setting " << Name << " to 0x"
-                 << Twine::utohexstr(NewSymbol.st_value) << '\n';
-          ++IsHotTextUpdated;
-          return true;
-        };
+      auto SymbolName = Symbol.getName(StringSection);
+      assert(SymbolName && "cannot get symbol name");
 
-        auto SymbolName =
-            cantFail(Symbol.getName(StringSection), "cannot get symbol name");
-        if (SymbolName == "__hot_start" || SymbolName == "__hot_end")
-          updateSymbolValue(SymbolName);
+      auto updateSymbolValue = [&](const StringRef Name, unsigned &IsUpdated) {
+        NewSymbol.st_value = getNewValueForSymbol(Name);
+        NewSymbol.st_shndx = ELF::SHN_ABS;
+        outs() << "BOLT-INFO: setting " << Name << " to 0x"
+               << Twine::utohexstr(NewSymbol.st_value) << '\n';
+        ++IsUpdated;
+        return true;
+      };
+
+      if (opts::HotText && (*SymbolName == "__hot_start" ||
+                            *SymbolName == "__hot_end"))
+        updateSymbolValue(*SymbolName, IsHotTextUpdated);
+
+      if (opts::HotData && (*SymbolName == "__hot_data_start" ||
+                            *SymbolName == "__hot_data_end"))
+        updateSymbolValue(*SymbolName, IsHotDataUpdated);
+
+      if (opts::UpdateEnd && *SymbolName == "_end") {
+        NewSymbol.st_value = getNewValueForSymbol(*SymbolName);
+        NewSymbol.st_shndx = ELF::SHN_ABS;
+        outs() << "BOLT-INFO: setting " << *SymbolName << " to 0x"
+               << Twine::utohexstr(NewSymbol.st_value) << '\n';
       }
 
       Write((&Symbol - cantFail(Obj->symbols(Section)).begin()) *
@@ -3857,23 +4083,32 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
     assert((!IsHotTextUpdated || IsHotTextUpdated == 2) &&
            "either none or both __hot_start/__hot_end symbols were expected");
+    assert((!IsHotDataUpdated || IsHotDataUpdated == 2) &&
+           "either none or both __hot_data_start/__hot_data_end symbols were expected");
+
+    auto addSymbol = [&](const std::string &Name) {
+      Elf_Sym Symbol;
+      Symbol.st_value = getNewValueForSymbol(Name);
+      Symbol.st_shndx = ELF::SHN_ABS;
+      Symbol.st_name = AddToStrTab(Name);
+      Symbol.st_size = 0;
+      Symbol.st_other = 0;
+      Symbol.setBindingAndType(ELF::STB_WEAK, ELF::STT_NOTYPE);
+
+      outs() << "BOLT-INFO: setting " << Name << " to 0x"
+             << Twine::utohexstr(Symbol.st_value) << '\n';
+
+      Write(0, reinterpret_cast<const char *>(&Symbol), sizeof(Symbol));
+    };
+
     if (opts::HotText && !IsHotTextUpdated && !PatchExisting) {
-      auto addSymbol = [&](const std::string &Name) {
-        Elf_Sym Symbol;
-        Symbol.st_value = getNewValueForSymbol(Name);
-        Symbol.st_shndx = ELF::SHN_ABS;
-        Symbol.st_name = AddToStrTab(Name);
-        Symbol.st_size = 0;
-        Symbol.st_other = 0;
-        Symbol.setBindingAndType(ELF::STB_WEAK, ELF::STT_NOTYPE);
-
-        outs() << "BOLT-INFO: setting " << Name << " to 0x"
-               << Twine::utohexstr(Symbol.st_value) << '\n';
-
-        Write(0, reinterpret_cast<const char *>(&Symbol), sizeof(Symbol));
-      };
       addSymbol("__hot_start");
       addSymbol("__hot_end");
+    }
+
+    if (opts::HotData && !IsHotDataUpdated && !PatchExisting) {
+      addSymbol("__hot_data_start");
+      addSymbol("__hot_data_end");
     }
   };
 
@@ -3886,7 +4121,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     }
   }
   assert(DynSymSection && "no dynamic symbol table found");
-  updateSymbolTable(/*patch existing table?*/ true, DynSymSection,
+  updateSymbolTable(/*patch existing table?*/ true,
+                    DynSymSection,
                     [&](size_t Offset, const char *Buf, size_t Size) {
                       Out->os().pwrite(Buf, Size,
                                        DynSymSection->sh_offset + Offset);
@@ -3914,10 +4150,12 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   auto SecName = cantFail(Obj->getSectionName(SymTabSection));
   auto StrSecName = cantFail(Obj->getSectionName(StrTabSection));
 
-  updateSymbolTable(/*patch existing table?*/false, SymTabSection,
+  updateSymbolTable(/*patch existing table?*/ false,
+                    SymTabSection,
                     [&](size_t Offset, const char *Buf, size_t Size) {
                       NewContents.append(Buf, Size);
-                    }, [&](StringRef Str) {
+                    },
+                    [&](StringRef Str) {
                       size_t Idx = NewStrTab.size();
                       NewStrTab.append(Str.data(), Str.size());
                       NewStrTab.append(1, '\0');
@@ -4152,7 +4390,7 @@ void RewriteInstance::rewriteFile() {
       if (opts::JumpTables == JTS_BASIC) {
         for (auto &JTI : Function.JumpTables) {
           auto *JT = JTI.second;
-          auto &Section = JT->getSection();
+          auto &Section = JT->getOutputSection();
           Section.setFileOffset(getFileOffsetForAddress(JT->getAddress()));
           assert(Section.getFileOffset() && "no matching offset in file");
           OS.pwrite(reinterpret_cast<const char*>(Section.getOutputData()),
@@ -4254,7 +4492,6 @@ void RewriteInstance::rewriteFile() {
 
   if (BC->HasRelocations) {
     patchELFRelaPLT();
-
     patchELFGOT();
   }
 

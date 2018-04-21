@@ -20,6 +20,7 @@
 #include "Passes/PLTCall.h"
 #include "Passes/RegReAssign.h"
 #include "Passes/ReorderFunctions.h"
+#include "Passes/ReorderData.h"
 #include "Passes/StokeInfo.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -426,6 +427,10 @@ void BinaryFunctionPassManager::runAllPasses(
       opts::SimplifyConditionalTailCalls);
 
   Manager.registerPass(llvm::make_unique<AlignerPass>());
+
+  // Perform reordering on data contained in one or more sections using
+  // memory profiling data.
+  Manager.registerPass(llvm::make_unique<ReorderData>());
 
   // This pass should always run last.*
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));

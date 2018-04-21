@@ -99,7 +99,8 @@ namespace bolt {
 ///
 class IndirectCallPromotion : public BinaryFunctionPass {
   using BasicBlocksVector = std::vector<std::unique_ptr<BinaryBasicBlock>>;
-  using MethodInfoType = std::pair<std::vector<uint64_t>, std::vector<MCInst *>>;
+  using MethodInfoType = std::pair<std::vector<std::pair<MCSymbol *, uint64_t>>,
+                                   std::vector<MCInst *>>;
   using JumpTableInfoType = std::vector<std::pair<uint64_t, uint64_t>>;
   using SymTargetsType = std::vector<std::pair<MCSymbol *, uint64_t>>;
   struct Location {
@@ -207,11 +208,11 @@ class IndirectCallPromotion : public BinaryFunctionPass {
                                        MCInst &Inst,
                                        MCInst *&TargetFetchInst) const;
 
-  MethodInfoType maybeGetVtableAddrs(BinaryContext &BC,
-                                     BinaryFunction &Function,
-                                     BinaryBasicBlock *BB,
-                                     MCInst &Inst,
-                                     const SymTargetsType &SymTargets) const;
+  MethodInfoType maybeGetVtableSyms(BinaryContext &BC,
+                                    BinaryFunction &Function,
+                                    BinaryBasicBlock *BB,
+                                    MCInst &Inst,
+                                    const SymTargetsType &SymTargets) const;
 
   std::vector<std::unique_ptr<BinaryBasicBlock>>
   rewriteCall(BinaryContext &BC,

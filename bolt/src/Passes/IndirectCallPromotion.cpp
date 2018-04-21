@@ -392,7 +392,7 @@ IndirectCallPromotion::maybeGetHotJumpTableTargets(
       // Deal with bad/stale data
       if (!MI.Addr.Name.startswith("JUMP_TABLE/" + Function.getNames().front()))
         return JumpTableInfoType();
-      Index = MI.Addr.Offset / JT->EntrySize;
+      Index = (MI.Addr.Offset - (ArrayStart - JT->getAddress())) / JT->EntrySize;
     } else {
       Index = (MI.Addr.Offset - ArrayStart) / JT->EntrySize;
     }
@@ -539,7 +539,7 @@ IndirectCallPromotion::findCallTargetSymbols(
 }
 
 IndirectCallPromotion::MethodInfoType
-IndirectCallPromotion::maybeGetVtableAddrs(
+IndirectCallPromotion::maybeGetVtableSyms(
    BinaryContext &BC,
    BinaryFunction &Function,
    BinaryBasicBlock *BB,
@@ -547,7 +547,7 @@ IndirectCallPromotion::maybeGetVtableAddrs(
    const SymTargetsType &SymTargets
 ) const {
   const auto *MemData = Function.getMemData();
-  std::vector<uint64_t> VtableAddrs;
+  std::vector<std::pair<MCSymbol *, uint64_t>> VtableSyms;
   std::vector<MCInst *> MethodFetchInsns;
   unsigned VtableReg, MethodReg;
   uint64_t MethodOffset;
@@ -637,13 +637,16 @@ IndirectCallPromotion::maybeGetVtableAddrs(
   for (size_t I = 0; I < SymTargets.size(); ++I) {
     auto Itr = MethodToVtable.find(SymTargets[I].first);
     if (Itr != MethodToVtable.end()) {
-      VtableAddrs.push_back(Itr->second);
-    } else {
-      // Give up if we can't find the vtable for a method.
-      DEBUG_VERBOSE(1, dbgs() << "BOLT-INFO: ICP can't find vtable for "
-                              << SymTargets[I].first->getName() << "\n");
-      return MethodInfoType();
+      if (auto *BD = BC.getBinaryDataContainingAddress(Itr->second)) {
+        const uint64_t Addend = Itr->second - BD->getAddress();
+        VtableSyms.push_back(std::make_pair(BD->getSymbol(), Addend));
+        continue;
+      }
     }
+    // Give up if we can't find the vtable for a method.
+    DEBUG_VERBOSE(1, dbgs() << "BOLT-INFO: ICP can't find vtable for "
+                            << SymTargets[I].first->getName() << "\n");
+    return MethodInfoType();
   }
 
   // Make sure the vtable reg is not clobbered by the argument passing code
@@ -656,7 +659,7 @@ IndirectCallPromotion::maybeGetVtableAddrs(
     }
   }
 
-  return MethodInfoType(VtableAddrs, MethodFetchInsns);
+  return MethodInfoType(VtableSyms, MethodFetchInsns);
 }
 
 std::vector<std::unique_ptr<BinaryBasicBlock>>
@@ -1345,11 +1348,11 @@ void IndirectCallPromotion::runOnFunctions(
         MethodInfoType MethodInfo;
 
         if (!IsJumpTable) {
-          MethodInfo = maybeGetVtableAddrs(BC,
-                                           Function,
-                                           BB,
-                                           Inst,
-                                           SymTargets);
+          MethodInfo = maybeGetVtableSyms(BC,
+                                          Function,
+                                          BB,
+                                          Inst,
+                                          SymTargets);
           TotalMethodLoadsEliminated += MethodInfo.first.empty() ? 0 : 1;
           DEBUG(dbgs() << "BOLT-INFO: ICP "
                        << (!MethodInfo.first.empty() ? "found" : "did not find")

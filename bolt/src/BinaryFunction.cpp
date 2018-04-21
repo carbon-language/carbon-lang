@@ -3461,10 +3461,12 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
     } else {
       MCSection *HotSection, *ColdSection;
       if (opts::JumpTables == JTS_BASIC) {
-        std::string Name = JT.Labels[0]->getName().str();
+        std::string Name = ".local." + JT.Labels[0]->getName().str();
         std::replace(Name.begin(), Name.end(), '/', '.');
-        JT.setOutputSection(".local." + Name);
-        HotSection = BC.Ctx->getELFSection(JT.getOutputSection(),
+        JT.setOutputSection(BC.registerOrUpdateSection(Name,
+                                                       ELF::SHT_PROGBITS,
+                                                       ELF::SHF_ALLOC));
+        HotSection = BC.Ctx->getELFSection(Name,
                                            ELF::SHT_PROGBITS,
                                            ELF::SHF_ALLOC);
         ColdSection = HotSection;
@@ -3689,6 +3691,28 @@ MCInst *BinaryFunction::getInstructionAtOffset(uint64_t Offset) {
   }
 }
 
+std::set<BinaryData *> BinaryFunction::dataUses(bool OnlyHot) const {
+  std::set<BinaryData *> Uses;
+  for (auto *BB : BasicBlocks) {
+    if (OnlyHot && BB->isCold())
+      continue;
+
+    for (const auto &Inst : *BB) {
+      if (auto Mem =
+            BC.MIB->tryGetAnnotationAs<uint64_t>(Inst, "MemDataOffset")) {
+        for (auto &MI : getMemData()->getMemInfoRange(Mem.get())) {
+          if (auto *BD = MI.Addr.IsSymbol
+                ? BC.getBinaryDataByName(MI.Addr.Name)
+                : BC.getBinaryDataContainingAddress(MI.Addr.Offset)) {
+            Uses.insert(BD);
+          }
+        }
+      }
+    }
+  }
+  return Uses;
+}
+  
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
       const DWARFDebugLoc::LocationList &InputLL,
       BaseAddress BaseAddr) const {

@@ -47,6 +47,7 @@ void BinaryData::merge(const BinaryData *Other) {
   Names.insert(Names.end(), Other->Names.begin(), Other->Names.end());
   Symbols.insert(Symbols.end(), Other->Symbols.begin(), Other->Symbols.end());
   MemData.insert(MemData.end(), Other->MemData.begin(), Other->MemData.end());
+  Flags |= Other->Flags;
   if (!Size)
     Size = Other->Size;
 }
@@ -63,19 +64,27 @@ StringRef BinaryData::getSectionName() const {
   return getSection().getName();
 }
 
-uint64_t BinaryData::computeOutputOffset() const {
+StringRef BinaryData::getOutputSectionName() const {
+  return getOutputSection().getName();
+}
+
+uint64_t BinaryData::getOutputAddress() const {
+  assert(OutputSection->getFileAddress());
+  return OutputSection->getFileAddress() + OutputOffset;
+}
+
+uint64_t BinaryData::getOffset() const {
   return Address - getSection().getAddress();
 }
 
 void BinaryData::setSection(BinarySection &NewSection) {
+  if (OutputSection == Section)
+    OutputSection = &NewSection;
   Section = &NewSection;
-  if (OutputSection.empty())
-    OutputSection = getSection().getName();
 }
 
 bool BinaryData::isMoved() const {
-  return (computeOutputOffset() != OutputOffset ||
-          OutputSection != getSectionName());
+  return (getOffset() != OutputOffset || OutputSection != Section);
 }
 
 void BinaryData::print(raw_ostream &OS) const {
@@ -106,7 +115,8 @@ void BinaryData::printBrief(raw_ostream &OS) const {
 
   OS << ", 0x" << Twine::utohexstr(getAddress())
      << ":0x" << Twine::utohexstr(getEndAddress())
-     << "/" << getSize();
+     << "/" << getSize() << "/" << getAlignment()
+     << "/0x" << Twine::utohexstr(Flags);
 
   if (opts::Verbosity > 1) {
     for (auto &MI : memData()) {
@@ -121,12 +131,14 @@ BinaryData::BinaryData(StringRef Name,
                        uint64_t Address,
                        uint64_t Size,
                        uint16_t Alignment,
-                       BinarySection &Section)
+                       BinarySection &Section,
+                       unsigned Flags)
 : Names({Name}),
   Section(&Section),
   Address(Address),
   Size(Size),
   Alignment(Alignment),
-  OutputSection(Section.getName()),
-  OutputOffset(computeOutputOffset())
+  Flags(Flags),
+  OutputSection(&Section),
+  OutputOffset(getOffset())
 { }

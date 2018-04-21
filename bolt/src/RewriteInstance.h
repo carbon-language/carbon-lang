@@ -183,6 +183,8 @@ public:
                            std::vector<const BinaryFunction *> FunctionStack);
 
   /// Map all sections to their final addresses.
+  void mapTextSections(orc::VModuleKey ObjectsHandle);
+  void mapDataSections(orc::VModuleKey ObjectsHandle);
   void mapFileSections(orc::VModuleKey ObjectsHandle);
 
   /// Update output object's values based on the final \p Layout.
@@ -316,12 +318,14 @@ private:
   ELF_FUNCTION(finalizeSectionStringTable);
 
   /// Get a list of all the sections to include in the output binary along
-  /// with a map of input to output indices.
+  /// with a map of input to output indices.  Optionally produce a mapping
+  /// of section name to new section index in /p OutputSectionNameMap.
   template <typename ELFT,
             typename ELFShdrTy = typename ELFObjectFile<ELFT>::Elf_Shdr>
-  std::vector<uint32_t>
-  getOutputSections(ELFObjectFile<ELFT> *File,
-                    std::vector<ELFShdrTy> *OutputSections);
+  std::vector<uint32_t> getOutputSections(
+     ELFObjectFile<ELFT> *File,
+     std::vector<ELFShdrTy> *OutputSections = nullptr,
+     std::map<std::string, uint32_t> *OutputSectionNameMap = nullptr);
 
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
@@ -389,6 +393,11 @@ public:
   };
 
 private:
+  /// Get the contents of the LSDA section for this binary.
+  ArrayRef<uint8_t> getLSDAData();
+
+  /// Get the mapped address of the LSDA section for this binary.
+  uint64_t getLSDAAddress();
 
   static const char TimerGroupName[];
 
@@ -471,8 +480,7 @@ private:
   uint64_t NewTextSectionIndex{0};
 
   /// Exception handling and stack unwinding information in this binary.
-  ArrayRef<uint8_t> LSDAData;
-  uint64_t LSDAAddress{0};
+  ErrorOr<BinarySection &> LSDASection{std::errc::bad_address};
   const llvm::DWARFDebugFrame *EHFrame{nullptr};
   ErrorOr<BinarySection &> EHFrameSection{std::errc::bad_address};
 
@@ -503,9 +511,6 @@ private:
   /// Keep track of functions we fail to write in the binary. We need to avoid
   /// rewriting CFI info for these functions.
   std::vector<uint64_t> FailedAddresses;
-
-  /// Size of the .debug_loc section in input.
-  uint32_t DebugLocSize{0};
 
   /// Keep track of which functions didn't fit in their original space in the
   /// last emission, so that we may either decide to split or not optimize them.

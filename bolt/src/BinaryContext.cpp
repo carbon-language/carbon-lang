@@ -160,10 +160,22 @@ void BinaryContext::updateObjectNesting(BinaryDataMapType::iterator GAI) {
   }
 }
 
+iterator_range<BinaryContext::binary_data_iterator>
+BinaryContext::getSubBinaryData(BinaryData *BD) {
+  auto Start = std::next(BinaryDataMap.find(BD->getAddress()));
+  auto End = Start;
+  while (End != BinaryDataMap.end() &&
+         BD->isAncestorOf(End->second)) {
+    ++End;
+  }
+  return make_range(Start, End);
+}
+
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
                                                  uint64_t Size,
                                                  uint16_t Alignment,
-                                                 Twine Prefix) {
+                                                 Twine Prefix,
+                                                 unsigned Flags) {
   auto Itr = BinaryDataMap.find(Address);
   if (Itr != BinaryDataMap.end()) {
     assert(Itr->second->getSize() == Size || !Size);
@@ -172,13 +184,14 @@ MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
 
   std::string Name = (Prefix + "0x" + Twine::utohexstr(Address)).str();
   assert(!GlobalSymbols.count(Name) && "created name is not unique");
-  return registerNameAtAddress(Name, Address, Size, Alignment);
+  return registerNameAtAddress(Name, Address, Size, Alignment, Flags);
 }
 
 MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
                                                uint64_t Address,
                                                uint64_t Size,
-                                               uint16_t Alignment) {
+                                               uint16_t Alignment,
+                                               unsigned Flags) {
   auto SectionOrErr = getSectionForAddress(Address);
   auto &Section = SectionOrErr ? SectionOrErr.get() : absoluteSection();
   auto GAI = BinaryDataMap.find(Address);
@@ -188,7 +201,8 @@ MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
                         Address,
                         Size,
                         Alignment ? Alignment : 1,
-                        Section);
+                        Section,
+                        Flags);
   } else {
     BD = GAI->second;
   }
@@ -237,7 +251,7 @@ BinaryContext::getBinaryDataContainingAddressImpl(uint64_t Address,
                                                   bool BestFit) const {
   auto NI = BinaryDataMap.lower_bound(Address);
   auto End = BinaryDataMap.end();
-  if ((NI != End && Address == NI->first) ||
+  if ((NI != End && Address == NI->first && !IncludeEnd) ||
       (NI-- != BinaryDataMap.begin())) {
     if (NI->second->containsAddress(Address) ||
         (IncludeEnd && NI->second->getEndAddress() == Address)) {
@@ -445,6 +459,7 @@ void BinaryContext::assignMemData() {
 
   // Map of sections (or heap/stack) to count/size.
   std::map<StringRef, uint64_t> Counts;
+  std::map<StringRef, uint64_t> JumpTableCounts;
 
   uint64_t TotalCount = 0;
   for (auto &Entry : DR.getAllFuncsMemData()) {
@@ -454,6 +469,9 @@ void BinaryContext::assignMemData() {
       if (BD) {
         BD->getAtomicRoot()->addMemData(MI);
         Counts[BD->getSectionName()] += MI.Count;
+        if (BD->getAtomicRoot()->isJumpTable()) {
+          JumpTableCounts[BD->getSectionName()] += MI.Count;
+        }
       } else {
         Counts["Heap/stack"] += MI.Count;
       }
@@ -468,6 +486,11 @@ void BinaryContext::assignMemData() {
       const auto Count = Entry.second;
       outs() << "BOLT-INFO:   " << Section << " = " << Count
              << format(" (%.1f%%)\n", 100.0*Count/TotalCount);
+      if (JumpTableCounts.count(Section) != 0) {
+        const auto JTCount = JumpTableCounts[Section];
+        outs() << "BOLT-INFO:     jump tables = " << JTCount
+               << format(" (%.1f%%)\n", 100.0*JTCount/Count);
+      }
     }
     outs() << "BOLT-INFO: Total memory events: " << TotalCount << "\n";
   }
@@ -832,7 +855,15 @@ BinarySection &BinaryContext::registerSection(BinarySection *Section) {
 }
 
 BinarySection &BinaryContext::registerSection(SectionRef Section) {
-  return registerSection(new BinarySection(Section));
+  return registerSection(new BinarySection(*this, Section));
+}
+
+BinarySection &
+BinaryContext::registerSection(StringRef SectionName,
+                               const BinarySection &OriginalSection) {
+  return registerSection(new BinarySection(*this,
+                                           SectionName,
+                                           OriginalSection));
 }
 
 BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
@@ -857,7 +888,7 @@ BinarySection &BinaryContext::registerOrUpdateSection(StringRef Name,
     return *Section;
   }
 
-  return registerSection(new BinarySection(Name, Data, Size, Alignment,
+  return registerSection(new BinarySection(*this, Name, Data, Size, Alignment,
                                            ELFType, ELFFlags, IsLocal));
 }
 

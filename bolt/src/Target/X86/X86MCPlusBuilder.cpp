@@ -2857,8 +2857,8 @@ public:
 
   ICPdata indirectCallPromotion(
     const MCInst &CallInst,
-    const std::vector<std::pair<MCSymbol *,uint64_t>> &Targets,
-    const std::vector<uint64_t> &VtableAddrs,
+    const std::vector<std::pair<MCSymbol *, uint64_t>> &Targets,
+    const std::vector<std::pair<MCSymbol *, uint64_t>> &VtableSyms,
     const std::vector<MCInst *> &MethodFetchInsns,
     const bool MinimizeCodeSize,
     MCContext *Ctx
@@ -2876,8 +2876,8 @@ public:
 
     unsigned FuncAddrReg = X86::R10;
 
-    const bool LoadElim = !VtableAddrs.empty();
-    assert((!LoadElim || VtableAddrs.size() == Targets.size()) &&
+    const bool LoadElim = !VtableSyms.empty();
+    assert((!LoadElim || VtableSyms.size() == Targets.size()) &&
            "There must be a vtable entry for every method "
            "in the targets vector.");
 
@@ -2978,14 +2978,21 @@ public:
         }
 
         // Target address.
-        if (Targets[i].first && !LoadElim) {
-          Compare.addOperand(
-            MCOperand::createExpr(
-              MCSymbolRefExpr::create(Targets[i].first,
-                                      MCSymbolRefExpr::VK_None,
-                                      *Ctx)));
+        if (Targets[i].first || LoadElim) {
+          const auto *Sym = LoadElim ? VtableSyms[i].first : Targets[i].first;
+          const auto Addend = LoadElim ? VtableSyms[i].second : 0;
+
+          const MCExpr *Expr = MCSymbolRefExpr::create(Sym, *Ctx);
+
+          if (Addend) {
+            Expr = MCBinaryExpr::createAdd(Expr,
+                                           MCConstantExpr::create(Addend, *Ctx),
+                                           *Ctx);
+          }
+
+          Compare.addOperand(MCOperand::createExpr(Expr));
         } else {
-          const auto Addr = LoadElim ? VtableAddrs[i] : Targets[i].second;
+          const auto Addr = Targets[i].second;
           // Immediate address is out of sign extended 32 bit range.
           if (int64_t(Addr) != int64_t(int32_t(Addr))) {
             return ICPdata();

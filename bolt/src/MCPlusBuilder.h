@@ -1502,8 +1502,8 @@ public:
   using ICPdata = std::vector<std::pair<MCSymbol*, std::vector<MCInst>>>;
   virtual ICPdata indirectCallPromotion(
     const MCInst &CallInst,
-    const std::vector<std::pair<MCSymbol *,uint64_t>>& Targets,
-    const std::vector<uint64_t> &VtableAddrs,
+    const std::vector<std::pair<MCSymbol *, uint64_t>> &Targets,
+    const std::vector<std::pair<MCSymbol *, uint64_t>> &VtableSyms,
     const std::vector<MCInst *> &MethodFetchInsns,
     const bool MinimizeCodeSize,
     MCContext *Ctx

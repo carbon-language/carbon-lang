@@ -325,12 +325,15 @@ public:
 
   /// Iterate over all BinaryData associated with the given \p Section.
   iterator_range<FilteredBinaryDataConstIterator>
-  getBinaryDataForSection(StringRef SectionName) const {
-    auto Begin = BinaryDataMap.begin();
-    auto End = BinaryDataMap.end();
+  getBinaryDataForSection(const BinarySection &Section) const {
+    auto Begin = BinaryDataMap.lower_bound(Section.getAddress());
+    if (Begin != BinaryDataMap.begin()) {
+      --Begin;
+    }
+    auto End = BinaryDataMap.upper_bound(Section.getEndAddress());
     auto pred =
-      [&SectionName](const binary_data_const_iterator &Itr) -> bool {
-        return Itr->second->getSection().getName() == SectionName;
+      [&Section](const binary_data_const_iterator &Itr) -> bool {
+        return Itr->second->getSection() == Section;
       };
     return make_range(FilteredBinaryDataConstIterator(pred, Begin, End),
                       FilteredBinaryDataConstIterator(pred, End, End));
@@ -338,15 +341,21 @@ public:
 
   /// Iterate over all BinaryData associated with the given \p Section.
   iterator_range<FilteredBinaryDataIterator>
-  getBinaryDataForSection(StringRef SectionName) {
-    auto Begin = BinaryDataMap.begin();
-    auto End = BinaryDataMap.end();
-    auto pred = [&SectionName](const binary_data_iterator &Itr) -> bool {
-      return Itr->second->getSection().getName() == SectionName;
+  getBinaryDataForSection(BinarySection &Section) {
+    auto Begin = BinaryDataMap.lower_bound(Section.getAddress());
+    if (Begin != BinaryDataMap.begin()) {
+      --Begin;
+    }
+    auto End = BinaryDataMap.upper_bound(Section.getEndAddress());
+    auto pred = [&Section](const binary_data_iterator &Itr) -> bool {
+      return Itr->second->getSection() == Section;
     };
     return make_range(FilteredBinaryDataIterator(pred, Begin, End),
                       FilteredBinaryDataIterator(pred, End, End));
   }
+
+  /// Iterate over all the sub-symbols of /p BD (if any).
+  iterator_range<binary_data_iterator> getSubBinaryData(BinaryData *BD);
 
   /// Clear the global symbol address -> name(s) map.
   void clearBinaryData() {
@@ -365,18 +374,21 @@ public:
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address,
                                     uint64_t Size,
                                     uint16_t Alignment,
-                                    Twine Prefix);
+                                    Twine Prefix,
+                                    unsigned Flags = 0);
 
   /// Register a symbol with \p Name at a given \p Address and \p Size.
   MCSymbol *registerNameAtAddress(StringRef Name,
                                   uint64_t Address,
                                   BinaryData* BD);
 
-  /// Register a symbol with \p Name at a given \p Address and \p Size.
+  /// Register a symbol with \p Name at a given \p Address, \p Size and
+  /// /p Flags.  See llvm::SymbolRef::Flags for definition of /p Flags.
   MCSymbol *registerNameAtAddress(StringRef Name,
                                   uint64_t Address,
                                   uint64_t Size,
-                                  uint16_t Alignment);
+                                  uint16_t Alignment,
+                                  unsigned Flags = 0);
 
   /// Return BinaryData registered at a given \p Address or nullptr if no
   /// global symbol was registered at the location.
@@ -440,6 +452,10 @@ public:
   /// Register information about the given \p Section so we can look up
   /// sections by address.
   BinarySection &registerSection(SectionRef Section);
+
+  /// Register a copy of /p OriginalSection under a different name.
+  BinarySection &registerSection(StringRef SectionName,
+                                 const BinarySection &OriginalSection);
 
   /// Register or update the information for the section with the given
   /// /p Name.  If the section already exists, the information in the
