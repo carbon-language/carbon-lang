@@ -309,6 +309,10 @@ def : WriteRes<WriteMicrocoded, [SKXPort0156]> { let Latency = 100; } // def Wri
 // Fence instructions.
 def : WriteRes<WriteFence,  [SKXPort23, SKXPort4]>;
 
+// Load/store MXCSR.
+def : WriteRes<WriteLDMXCSR, [SKXPort0,SKXPort23,SKXPort0156]> { let Latency = 7; let NumMicroOps = 3; let ResourceCycles = [1,1,1]; }
+def : WriteRes<WriteSTMXCSR, [SKXPort4,SKXPort5,SKXPort237]> { let Latency = 2; let NumMicroOps = 3; let ResourceCycles = [1,1,1]; }
+
 // Nop, not very useful expect it provides a model for nops!
 def : WriteRes<WriteNop, []>;
 
@@ -1371,7 +1375,6 @@ def: InstRW<[SKXWriteResGroup24], (instregex "EXTRACTPSmr",
                                              "PEXTRDmr",
                                              "PEXTRQmr",
                                              "PEXTRWmr",
-                                             "STMXCSR",
                                              "VEXTRACTPSZmr(b?)",
                                              "VEXTRACTPSmr",
                                              "VPEXTRBZmr(b?)",
@@ -1381,8 +1384,7 @@ def: InstRW<[SKXWriteResGroup24], (instregex "EXTRACTPSmr",
                                              "VPEXTRQZmr(b?)",
                                              "VPEXTRQmr",
                                              "VPEXTRWZmr(b?)",
-                                             "VPEXTRWmr",
-                                             "VSTMXCSR")>;
+                                             "VPEXTRWmr")>;
 
 def SKXWriteResGroup25 : SchedWriteRes<[SKXPort4,SKXPort6,SKXPort237]> {
   let Latency = 2;
@@ -3247,13 +3249,6 @@ def SKXWriteResGroup101 : SchedWriteRes<[SKXPort0,SKXPort23,SKXPort05]> {
   let ResourceCycles = [1,1,1];
 }
 def: InstRW<[SKXWriteResGroup101], (instregex "FLDCW16m")>;
-
-def SKXWriteResGroup102 : SchedWriteRes<[SKXPort0,SKXPort23,SKXPort0156]> {
-  let Latency = 7;
-  let NumMicroOps = 3;
-  let ResourceCycles = [1,1,1];
-}
-def: InstRW<[SKXWriteResGroup102], (instregex "(V?)LDMXCSR")>;
 
 def SKXWriteResGroup103 : SchedWriteRes<[SKXPort5,SKXPort23,SKXPort0156]> {
   let Latency = 7;

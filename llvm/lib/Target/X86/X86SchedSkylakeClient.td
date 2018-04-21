@@ -309,6 +309,10 @@ def : WriteRes<WriteMicrocoded, [SKLPort0156]> { let Latency = 100; } // def Wri
 // Fence instructions.
 def : WriteRes<WriteFence,  [SKLPort23, SKLPort4]>;
 
+// Load/store MXCSR.
+def : WriteRes<WriteLDMXCSR, [SKLPort0,SKLPort23,SKLPort0156]> { let Latency = 7; let NumMicroOps = 3; let ResourceCycles = [1,1,1]; }
+def : WriteRes<WriteSTMXCSR, [SKLPort4,SKLPort5,SKLPort237]> { let Latency = 2; let NumMicroOps = 3; let ResourceCycles = [1,1,1]; }
+
 // Nop, not very useful expect it provides a model for nops!
 def : WriteRes<WriteNop, []>;
 
@@ -736,8 +740,7 @@ def: InstRW<[SKLWriteResGroup24], (instregex "(V?)EXTRACTPSmr",
                                              "(V?)PEXTRBmr",
                                              "(V?)PEXTRDmr",
                                              "(V?)PEXTRQmr",
-                                             "(V?)PEXTRWmr",
-                                             "(V?)STMXCSR")>;
+                                             "(V?)PEXTRWmr")>;
 
 def SKLWriteResGroup25 : SchedWriteRes<[SKLPort4,SKLPort6,SKLPort237]> {
   let Latency = 2;
@@ -1598,13 +1601,6 @@ def SKLWriteResGroup96 : SchedWriteRes<[SKLPort0,SKLPort23,SKLPort05]> {
   let ResourceCycles = [1,1,1];
 }
 def: InstRW<[SKLWriteResGroup96], (instregex "FLDCW16m")>;
-
-def SKLWriteResGroup97 : SchedWriteRes<[SKLPort0,SKLPort23,SKLPort0156]> {
-  let Latency = 7;
-  let NumMicroOps = 3;
-  let ResourceCycles = [1,1,1];
-}
-def: InstRW<[SKLWriteResGroup97], (instregex "(V?)LDMXCSR")>;
 
 def SKLWriteResGroup98 : SchedWriteRes<[SKLPort6,SKLPort23,SKLPort0156]> {
   let Latency = 7;
