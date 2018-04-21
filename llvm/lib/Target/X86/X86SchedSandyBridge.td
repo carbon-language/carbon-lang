@@ -336,6 +336,8 @@ def: InstRW<[SBWriteResGroup2], (instregex "FDECSTP",
                                            "ST_FPrr",
                                            "ST_Frr",
                                            "VEXTRACTF128rr",
+                                           "VINSERTF128rr",
+                                           "VPERM2F128rr",
                                            "(V?)MOV64toPQIrr",
                                            "(V?)MOVDI2PDIrr")>;
 
