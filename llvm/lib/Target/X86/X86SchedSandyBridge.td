@@ -450,10 +450,8 @@ def SBWriteResGroup6 : SchedWriteRes<[SBPort015]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[SBWriteResGroup6], (instregex "MMX_MOVQ2DQrr",
-                                           "MOVDQArr", //TODO: Why are these separated from their VEX equivalent
-                                           "MOVDQUrr", // TODO: Why are these separated from their VEX equivalent
-                                           "(V?)MOVPQI2QIrr",
-                                           "(V?)MOVZPQILo2PQIrr")>;
+                                           "MOVDQArr", // TODO: Why are these separated from their VEX equivalent
+                                           "MOVDQUrr")>; // TODO: Why are these separated from their VEX equivalent
 
 def SBWriteResGroup7 : SchedWriteRes<[SBPort0]> {
   let Latency = 2;
@@ -589,9 +587,7 @@ def SBWriteResGroup21 : SchedWriteRes<[SBPort1]> {
 }
 def: InstRW<[SBWriteResGroup21], (instregex "MMX_CVTPI2PSirr",
                                             "PUSHFS64",
-                                            "(V?)CVTDQ2PS(Y?)rr",
-                                            "(V?)CVTPS2DQ(Y?)rr",
-                                            "(V?)CVTTPS2DQ(Y?)rr")>;
+                                            "(V?)CVTDQ2PS(Y?)rr")>;
 
 def SBWriteResGroup21_16i : SchedWriteRes<[SBPort1, SBPort015]> {
   let Latency = 4;
@@ -1406,8 +1402,6 @@ def: InstRW<[SBWriteResGroup90], (instregex "MMX_CVTPS2PIirm",
                                             "(V?)ADDSUBPDrm",
                                             "(V?)ADDSUBPSrm",
                                             "(V?)CVTPS2DQrm",
-                                            "(V?)CVTSI642SDrm",
-                                            "(V?)CVTSI2SDrm",
                                             "(V?)CVTTPS2DQrm",
                                             "(V?)ROUNDPDm",
                                             "(V?)ROUNDPSm",
