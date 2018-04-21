@@ -622,16 +622,7 @@ def: InstRW<[HWWriteResGroup0_2], (instregex "MOVSX(16|32|64)rm16",
                                              "MOVSX(16|32|64)rm8",
                                              "MOVZX(16|32|64)rm16",
                                              "MOVZX(16|32|64)rm8",
-                                             "PREFETCHNTA",
-                                             "PREFETCHT0",
-                                             "PREFETCHT1",
-                                             "PREFETCHT2",
-                                             "(V?)MOV64toPQIrm",
-                                             "(V?)MOVDDUPrm",
-                                             "(V?)MOVDI2PDIrm",
-                                             "(V?)MOVQI2PQIrm",
-                                             "(V?)MOVSDrm",
-                                             "(V?)MOVSSrm")>;
+                                             "(V?)MOVDDUPrm")>;
 
 def HWWriteResGroup1 : SchedWriteRes<[HWPort4,HWPort237]> {
   let Latency = 1;
@@ -703,11 +694,7 @@ def: InstRW<[HWWriteResGroup4], (instregex "MMX_MOVD64rr",
                                            "MMX_MOVD64to64rr",
                                            "MMX_MOVQ2DQrr",
                                            "(V?)MOV64toPQIrr",
-                                           "(V?)MOVAPD(Y?)rr",
-                                           "(V?)MOVAPS(Y?)rr",
                                            "(V?)MOVDI2PDIrr",
-                                           "(V?)MOVUPD(Y?)rr",
-                                           "(V?)MOVUPS(Y?)rr",
                                            "(V?)PBLENDW(Y?)rri",
                                            "(V?)PSLLDQ(Y?)ri",
                                            "(V?)PSRLDQ(Y?)ri")>;
@@ -769,10 +756,6 @@ def HWWriteResGroup9 : SchedWriteRes<[HWPort015]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[HWWriteResGroup9], (instregex "MMX_MOVQ64rr",
-                                           "(V?)MOVDQA(Y?)rr",
-                                           "(V?)MOVDQU(Y?)rr",
-                                           "(V?)MOVPQI2QIrr",
-                                           "VMOVZPQILo2PQIrr",
                                            "VPBLENDD(Y?)rri")>;
 
 def HWWriteResGroup10 : SchedWriteRes<[HWPort0156]> {
