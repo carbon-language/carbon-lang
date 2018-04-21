@@ -157,8 +157,8 @@ defm : SKXWriteResPair<WriteFCom,   [SKXPort0], 2>; // Floating point compare to
 defm : SKXWriteResPair<WriteFMul,   [SKXPort0], 5>; // Floating point multiplication.
 defm : SKXWriteResPair<WriteFDiv,   [SKXPort0], 12>; // 10-14 cycles. // Floating point division.
 defm : SKXWriteResPair<WriteFSqrt,  [SKXPort0], 15>; // Floating point square root.
-defm : SKXWriteResPair<WriteFRcp,   [SKXPort0], 5>; // Floating point reciprocal estimate.
-defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0], 5>; // Floating point reciprocal square root estimate.
+defm : SKXWriteResPair<WriteFRcp,   [SKXPort0], 4>; // Floating point reciprocal estimate.
+defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0], 4>; // Floating point reciprocal square root estimate.
 defm : SKXWriteResPair<WriteFMA,  [SKXPort015], 4>; // Fused Multiply Add.
 defm : SKXWriteResPair<WriteFSign,  [SKXPort0], 1>; // Floating point fabs/fchs.
 defm : SKXWriteResPair<WriteFLogic, [SKXPort015], 1, [1], 1, 6>; // Floating point and/or/xor logicals.
@@ -1898,29 +1898,7 @@ def: InstRW<[SKXWriteResGroup49], (instregex "MMX_PMADDUBSWrr",
                                              "MMX_PMULUDQirr",
                                              "MUL_FPrST0",
                                              "MUL_FST0r",
-                                             "MUL_FrST0",
-                                             "RCPPSr",
-                                             "RCPSSr",
-                                             "RSQRTPSr",
-                                             "RSQRTSSr",
-                                             "VRCP14PDZ128r",
-                                             "VRCP14PDZ256r",
-                                             "VRCP14PSZ128r",
-                                             "VRCP14PSZ256r",
-                                             "VRCP14SDrr",
-                                             "VRCP14SSrr",
-                                             "VRCPPSYr",
-                                             "VRCPPSr",
-                                             "VRCPSSr",
-                                             "VRSQRT14PDZ128r",
-                                             "VRSQRT14PDZ256r",
-                                             "VRSQRT14PSZ128r",
-                                             "VRSQRT14PSZ256r",
-                                             "VRSQRT14SDrr",
-                                             "VRSQRT14SSrr",
-                                             "VRSQRTPSYr",
-                                             "VRSQRTPSr",
-                                             "VRSQRTSSr")>;
+                                             "MUL_FrST0")>;
 
 def SKXWriteResGroup50 : SchedWriteRes<[SKXPort015]> {
   let Latency = 4;

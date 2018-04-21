@@ -2116,11 +2116,7 @@ def: InstRW<[HWWriteResGroup89], (instregex "(V?)PCMPGTQ(Y?)rr",
                                             "(V?)PMULHUW(Y?)rr",
                                             "(V?)PMULHW(Y?)rr",
                                             "(V?)PMULLW(Y?)rr",
-                                            "(V?)PMULUDQ(Y?)rr",
-                                            "(V?)RCPPSr",
-                                            "(V?)RCPSSr",
-                                            "(V?)RSQRTPSr",
-                                            "(V?)RSQRTSSr")>;
+                                            "(V?)PMULUDQ(Y?)rr")>;
 
 def HWWriteResGroup90 : SchedWriteRes<[HWPort01]> {
   let Latency = 5;
