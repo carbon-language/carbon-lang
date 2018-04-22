@@ -126,7 +126,7 @@ def : WriteRes<WriteLEA, [SBPort15]>;
 defm : SBWriteResPair<WriteBitScan, [SBPort1], 3, [1], 1, 5>;
 defm : SBWriteResPair<WriteLZCNT,   [SBPort1], 3, [1], 1, 5>;
 defm : SBWriteResPair<WriteTZCNT,   [SBPort1], 3, [1], 1, 5>;
-defm : SBWriteResPair<WritePOPCNT,  [SBPort1], 3, [1], 1, 5>;
+defm : SBWriteResPair<WritePOPCNT,  [SBPort1], 3, [1], 1, 6>;
 
 // BMI1 BEXTR, BMI2 BZHI
 // NOTE: These don't exist on Sandy Bridge. Ports are guesses.
@@ -1392,7 +1392,6 @@ def SBWriteResGroup90 : SchedWriteRes<[SBPort1,SBPort23]> {
 }
 def: InstRW<[SBWriteResGroup90], (instregex "MMX_CVTPS2PIirm",
                                             "MMX_CVTTPS2PIirm",
-                                            "POPCNT(16|32|64)rm",
                                             "(V?)ADDPDrm",
                                             "(V?)ADDPSrm",
                                             "(V?)ADDSDrm",
