@@ -3081,8 +3081,8 @@ declare <8 x i32> @llvm.x86.avx2.phadd.d(<8 x i32>, <8 x i32>) nounwind readnone
 define <16 x i16> @test_phaddsw(<16 x i16> %a0, <16 x i16> %a1, <16 x i16> *%a2) {
 ; GENERIC-LABEL: test_phaddsw:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vphaddsw %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
-; GENERIC-NEXT:    vphaddsw (%rdi), %ymm0, %ymm0 # sched: [8:1.00]
+; GENERIC-NEXT:    vphaddsw %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; GENERIC-NEXT:    vphaddsw (%rdi), %ymm0, %ymm0 # sched: [6:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_phaddsw:
@@ -3210,8 +3210,8 @@ declare <8 x i32> @llvm.x86.avx2.phsub.d(<8 x i32>, <8 x i32>) nounwind readnone
 define <16 x i16> @test_phsubsw(<16 x i16> %a0, <16 x i16> %a1, <16 x i16> *%a2) {
 ; GENERIC-LABEL: test_phsubsw:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vphsubsw %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
-; GENERIC-NEXT:    vphsubsw (%rdi), %ymm0, %ymm0 # sched: [8:1.00]
+; GENERIC-NEXT:    vphsubsw %ymm1, %ymm0, %ymm0 # sched: [1:0.50]
+; GENERIC-NEXT:    vphsubsw (%rdi), %ymm0, %ymm0 # sched: [6:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_phsubsw:
