@@ -164,7 +164,7 @@ defm : SKXWriteResPair<WriteFSign,  [SKXPort0], 1>; // Floating point fabs/fchs.
 defm : SKXWriteResPair<WriteFLogic, [SKXPort015], 1, [1], 1, 6>; // Floating point and/or/xor logicals.
 defm : SKXWriteResPair<WriteFShuffle,  [SKXPort5],  1>; // Floating point vector shuffles.
 defm : SKXWriteResPair<WriteFVarShuffle,  [SKXPort5],  1>; // Floating point vector variable shuffles.
-defm : SKXWriteResPair<WriteFBlend,  [SKXPort015],  1>; // Floating point vector blends.
+defm : SKXWriteResPair<WriteFBlend, [SKXPort015], 1, [1], 1, 6>; // Floating point vector blends.
 defm : SKXWriteResPair<WriteFVarBlend, [SKXPort015], 2, [2], 2, 6>; // Fp vector variable blends.
 
 // FMA Scheduling helper class.
@@ -182,7 +182,7 @@ defm : SKXWriteResPair<WriteVecIMul,  [SKXPort0],   5>; // Vector integer multip
 defm : SKXWriteResPair<WritePMULLD,   [SKXPort015], 10, [2], 2, 6>; // Vector integer multiply.
 defm : SKXWriteResPair<WriteShuffle,  [SKXPort5],  1>; // Vector shuffles.
 defm : SKXWriteResPair<WriteVarShuffle,  [SKXPort5],  1>; // Vector variable shuffles.
-defm : SKXWriteResPair<WriteBlend,  [SKXPort15],  1>; // Vector blends.
+defm : SKXWriteResPair<WriteBlend, [SKXPort5], 1, [1], 1, 6>; // Vector blends.
 defm : SKXWriteResPair<WriteVarBlend, [SKXPort015], 2, [2], 2, 6>; // Vector variable blends.
 defm : SKXWriteResPair<WriteMPSAD,  [SKXPort5], 4, [2], 2, 6>; // Vector MPSAD.
 defm : SKXWriteResPair<WritePSADBW, [SKXPort5], 3, [1,1], 1, 6>; // Vector PSADBW.
@@ -406,7 +406,6 @@ def: InstRW<[SKXWriteResGroup3], (instregex "COMP_FST0r",
                                             "MMX_MOVD64to64rr",
                                             "MOV64toPQIrr",
                                             "MOVDI2PDIrr",
-                                            "PBLENDWrri",
                                             "PSLLDQri",
                                             "PSRLDQri",
                                             "UCOM_FPr",
@@ -415,8 +414,6 @@ def: InstRW<[SKXWriteResGroup3], (instregex "COMP_FST0r",
                                             "VMOV64toPQIrr",
                                             "VMOVDI2PDIZrr",
                                             "VMOVDI2PDIrr",
-                                            "VPBLENDWYrri",
-                                            "VPBLENDWrri",
                                             "VPSLLDQYri",
                                             "VPSLLDQZ128rr",
                                             "VPSLLDQZ256rr",
@@ -2516,7 +2513,6 @@ def: InstRW<[SKXWriteResGroup92], (instregex "INSERTPSrm",
                                              "PACKUSDWrm",
                                              "PACKUSWBrm",
                                              "PALIGNRrmi",
-                                             "PBLENDWrmi",
                                              "PSHUFBrm",
                                              "PSHUFDmi",
                                              "PSHUFHWmi",
@@ -2549,7 +2545,6 @@ def: InstRW<[SKXWriteResGroup92], (instregex "INSERTPSrm",
                                              "VPACKUSWBrm",
                                              "VPALIGNRZ128rmi(b?)",
                                              "VPALIGNRrmi",
-                                             "VPBLENDWrmi",
                                              "VPBROADCASTBZ128m(b?)",
                                              "VPBROADCASTBrm",
                                              "VPBROADCASTWZ128m(b?)",
@@ -2808,9 +2803,7 @@ def SKXWriteResGroup95 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKXWriteResGroup95], (instregex "BLENDPDrmi",
-                                             "BLENDPSrmi",
-                                             "PADDBrm",
+def: InstRW<[SKXWriteResGroup95], (instregex "PADDBrm",
                                              "PADDDrm",
                                              "PADDQrm",
                                              "PADDWrm",
@@ -2820,8 +2813,6 @@ def: InstRW<[SKXWriteResGroup95], (instregex "BLENDPDrmi",
                                              "PSUBWrm",
                                              "VBLENDMPDZ128rm(b?)",
                                              "VBLENDMPSZ128rm(b?)",
-                                             "VBLENDPDrmi",
-                                             "VBLENDPSrmi",
                                              "VBROADCASTI32X2Z128m(b?)",
                                              "VBROADCASTSSZ128m(b?)",
                                              "VINSERTF128rm",

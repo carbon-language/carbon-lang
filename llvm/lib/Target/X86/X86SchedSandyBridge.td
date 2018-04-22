@@ -168,7 +168,7 @@ defm : SBWriteResPair<WriteVecIMul,  [SBPort0], 5>;
 defm : SBWriteResPair<WritePMULLD,   [SBPort0], 5, [1], 1, 6>; // TODO this is probably wrong for 256/512-bit for the "generic" model
 defm : SBWriteResPair<WriteShuffle,  [SBPort5], 1>;
 defm : SBWriteResPair<WriteVarShuffle,  [SBPort15], 1>;
-defm : SBWriteResPair<WriteBlend,   [SBPort15], 1>;
+defm : SBWriteResPair<WriteBlend,   [SBPort15], 1, [1], 1, 6>;
 defm : SBWriteResPair<WriteVarBlend, [SBPort15], 2, [2], 2, 6>;
 defm : SBWriteResPair<WriteMPSAD, [SBPort0, SBPort15], 7, [1,2], 3, 6>;
 defm : SBWriteResPair<WritePSADBW,  [SBPort0], 5>;
@@ -1012,7 +1012,6 @@ def: InstRW<[SBWriteResGroup59], (instregex "MMX_PADDQirm",
                                             "(V?)PALIGNRrmi",
                                             "(V?)PAVGBrm",
                                             "(V?)PAVGWrm",
-                                            "(V?)PBLENDWrmi",
                                             "(V?)PCMPEQBrm",
                                             "(V?)PCMPEQDrm",
                                             "(V?)PCMPEQQrm",

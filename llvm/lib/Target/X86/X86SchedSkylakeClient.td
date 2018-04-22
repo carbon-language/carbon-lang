@@ -164,7 +164,7 @@ defm : SKLWriteResPair<WriteFSign,   [SKLPort0], 1>; // Floating point fabs/fchs
 defm : SKLWriteResPair<WriteFLogic, [SKLPort015], 1, [1], 1, 6>; // Floating point and/or/xor logicals.
 defm : SKLWriteResPair<WriteFShuffle,  [SKLPort5],  1>; // Floating point vector shuffles.
 defm : SKLWriteResPair<WriteFVarShuffle,  [SKLPort5],  1>; // Floating point vector shuffles.
-defm : SKLWriteResPair<WriteFBlend,  [SKLPort015],  1>; // Floating point vector blends.
+defm : SKLWriteResPair<WriteFBlend,  [SKLPort015], 1, [1], 1, 6>; // Floating point vector blends.
 defm : SKLWriteResPair<WriteFVarBlend, [SKLPort015], 2, [2], 2, 6>; // Fp vector variable blends.
 
 // FMA Scheduling helper class.
@@ -182,7 +182,7 @@ defm : SKLWriteResPair<WriteVecIMul,  [SKLPort0],   5>; // Vector integer multip
 defm : SKLWriteResPair<WritePMULLD,   [SKLPort01], 10, [2], 2, 6>;
 defm : SKLWriteResPair<WriteShuffle,  [SKLPort5],  1>; // Vector shuffles.
 defm : SKLWriteResPair<WriteVarShuffle,  [SKLPort5],  1>; // Vector shuffles.
-defm : SKLWriteResPair<WriteBlend,  [SKLPort15],  1>; // Vector blends.
+defm : SKLWriteResPair<WriteBlend,  [SKLPort5], 1, [1], 1, 6>; // Vector blends.
 defm : SKLWriteResPair<WriteVarBlend,  [SKLPort015], 2, [2], 2, 6>; // Vector variable blends.
 defm : SKLWriteResPair<WriteMPSAD,  [SKLPort5], 4, [2], 2, 6>; // Vector MPSAD.
 defm : SKLWriteResPair<WritePSADBW, [SKLPort5], 3>; // Vector PSADBW.
@@ -364,7 +364,6 @@ def: InstRW<[SKLWriteResGroup3], (instregex "COMP_FST0r",
                                             "UCOM_Fr",
                                             "(V?)MOV64toPQIrr",
                                             "(V?)MOVDI2PDIrr",
-                                            "(V?)PBLENDW(Y?)rri",
                                             "(V?)PSLLDQ(Y?)ri",
                                             "(V?)PSRLDQ(Y?)ri")>;
 
@@ -1339,7 +1338,6 @@ def: InstRW<[SKLWriteResGroup88], (instregex "(V?)INSERTPSrm",
                                              "(V?)PACKUSDWrm",
                                              "(V?)PACKUSWBrm",
                                              "(V?)PALIGNRrmi",
-                                             "(V?)PBLENDWrmi",
                                              "VPBROADCASTBrm",
                                              "VPBROADCASTWrm",
                                              "VPERMILPDmi",
@@ -1436,9 +1434,7 @@ def SKLWriteResGroup91 : SchedWriteRes<[SKLPort23,SKLPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKLWriteResGroup91], (instregex "(V?)BLENDPDrmi",
-                                             "(V?)BLENDPSrmi",
-                                             "(V?)INSERTF128rm",
+def: InstRW<[SKLWriteResGroup91], (instregex "(V?)INSERTF128rm",
                                              "(V?)INSERTI128rm",
                                              "(V?)MASKMOVPDrm",
                                              "(V?)MASKMOVPSrm",
