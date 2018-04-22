@@ -538,8 +538,8 @@ int main(int argc, char **argv, char * const *envp) {
   if (RemoteMCJIT) {
 #ifndef LLVM_ON_UNIX
     WithColor::warning(errs(), argv[0])
-        << "host does not support external remote targets.\n" WithColor::note()
-        << "defaulting to local execution\n";
+        << "host does not support external remote targets.\n";
+    WithColor::note() << "defaulting to local execution\n";
     return -1;
 #else
     if (ChildExecPath.empty()) {
