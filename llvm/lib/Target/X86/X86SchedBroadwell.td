@@ -168,7 +168,7 @@ defm : BWWriteResPair<WriteFLogic,    [BWPort5],  1>; // Floating point and/or/x
 defm : BWWriteResPair<WriteFShuffle,  [BWPort5],  1>; // Floating point vector shuffles.
 defm : BWWriteResPair<WriteFVarShuffle,  [BWPort5],  1>; // Floating point vector variable shuffles.
 defm : BWWriteResPair<WriteFBlend,  [BWPort015],  1>; // Floating point vector blends.
-defm : BWWriteResPair<WriteFVarBlend,  [BWPort5], 2, [2]>; // Fp vector variable blends.
+defm : BWWriteResPair<WriteFVarBlend,  [BWPort5], 2, [2], 2, 5>; // Fp vector variable blends.
 
 // FMA Scheduling helper class.
 // class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
@@ -186,7 +186,7 @@ defm : BWWriteResPair<WritePMULLD,   [BWPort0], 10, [2], 2, 5>; // PMULLD
 defm : BWWriteResPair<WriteShuffle,  [BWPort5],  1>; // Vector shuffles.
 defm : BWWriteResPair<WriteVarShuffle, [BWPort5],  1>; // Vector variable shuffles.
 defm : BWWriteResPair<WriteBlend,  [BWPort15],  1>; // Vector blends.
-defm : BWWriteResPair<WriteVarBlend,  [BWPort5], 2, [2]>; // Vector variable blends.
+defm : BWWriteResPair<WriteVarBlend,  [BWPort5], 2, [2], 2, 5>; // Vector variable blends.
 defm : BWWriteResPair<WriteMPSAD,  [BWPort0, BWPort5], 7, [1, 2], 3, 5>; // Vector MPSAD.
 defm : BWWriteResPair<WritePSADBW,  [BWPort0],   5>; // Vector PSADBW.
 
@@ -470,13 +470,7 @@ def BWWriteResGroup11 : SchedWriteRes<[BWPort5]> {
   let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
-def: InstRW<[BWWriteResGroup11], (instregex "BLENDVPDrr0",
-                                            "BLENDVPSrr0",
-                                            "MMX_PINSRWrr",
-                                            "PBLENDVBrr0",
-                                            "VBLENDVPD(Y?)rr",
-                                            "VBLENDVPS(Y?)rr",
-                                            "VPBLENDVB(Y?)rr",
+def: InstRW<[BWWriteResGroup11], (instregex "MMX_PINSRWrr",
                                             "(V?)PINSRBrr",
                                             "(V?)PINSRDrr",
                                             "(V?)PINSRQrr",
@@ -1340,17 +1334,11 @@ def BWWriteResGroup79 : SchedWriteRes<[BWPort5,BWPort23]> {
   let NumMicroOps = 3;
   let ResourceCycles = [2,1];
 }
-def: InstRW<[BWWriteResGroup79], (instregex "BLENDVPDrm0",
-                                            "BLENDVPSrm0",
-                                            "MMX_PACKSSDWirm",
+def: InstRW<[BWWriteResGroup79], (instregex "MMX_PACKSSDWirm",
                                             "MMX_PACKSSWBirm",
                                             "MMX_PACKUSWBirm",
-                                            "PBLENDVBrm0",
-                                            "VBLENDVPDrm",
-                                            "VBLENDVPSrm",
                                             "VMASKMOVPDrm",
                                             "VMASKMOVPSrm",
-                                            "VPBLENDVBrm",
                                             "VPMASKMOVDrm",
                                             "VPMASKMOVQrm")>;
 

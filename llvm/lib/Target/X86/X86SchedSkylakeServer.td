@@ -165,7 +165,7 @@ defm : SKXWriteResPair<WriteFLogic, [SKXPort015], 1, [1], 1, 6>; // Floating poi
 defm : SKXWriteResPair<WriteFShuffle,  [SKXPort5],  1>; // Floating point vector shuffles.
 defm : SKXWriteResPair<WriteFVarShuffle,  [SKXPort5],  1>; // Floating point vector variable shuffles.
 defm : SKXWriteResPair<WriteFBlend,  [SKXPort015],  1>; // Floating point vector blends.
-defm : SKXWriteResPair<WriteFVarBlend,  [SKXPort5], 2, [2]>; // Fp vector variable blends.
+defm : SKXWriteResPair<WriteFVarBlend, [SKXPort015], 2, [2], 2, 6>; // Fp vector variable blends.
 
 // FMA Scheduling helper class.
 // class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
@@ -183,7 +183,7 @@ defm : SKXWriteResPair<WritePMULLD,   [SKXPort015], 10, [2], 2, 6>; // Vector in
 defm : SKXWriteResPair<WriteShuffle,  [SKXPort5],  1>; // Vector shuffles.
 defm : SKXWriteResPair<WriteVarShuffle,  [SKXPort5],  1>; // Vector variable shuffles.
 defm : SKXWriteResPair<WriteBlend,  [SKXPort15],  1>; // Vector blends.
-defm : SKXWriteResPair<WriteVarBlend,  [SKXPort5], 2, [2]>; // Vector variable blends.
+defm : SKXWriteResPair<WriteVarBlend, [SKXPort015], 2, [2], 2, 6>; // Vector variable blends.
 defm : SKXWriteResPair<WriteMPSAD,  [SKXPort5], 4, [2], 2, 6>; // Vector MPSAD.
 defm : SKXWriteResPair<WritePSADBW, [SKXPort5], 3, [1,1], 1, 6>; // Vector PSADBW.
 
@@ -1080,21 +1080,6 @@ def: InstRW<[SKXWriteResGroup15], (instregex "CMOV(A|BE)(16|32|64)rr",
                                              "ROR(8|16|32|64)r1",
                                              "ROR(8|16|32|64)ri",
                                              "SET(A|BE)r")>;
-
-def SKXWriteResGroup16 : SchedWriteRes<[SKXPort015]> {
-  let Latency = 2;
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def: InstRW<[SKXWriteResGroup16], (instregex "BLENDVPDrr0",
-                                             "BLENDVPSrr0",
-                                             "PBLENDVBrr0",
-                                             "VBLENDVPDYrr",
-                                             "VBLENDVPDrr",
-                                             "VBLENDVPSYrr",
-                                             "VBLENDVPSrr",
-                                             "VPBLENDVBYrr",
-                                             "VPBLENDVBrr")>;
 
 def SKXWriteResGroup17 : SchedWriteRes<[SKXPort0156]> {
   let Latency = 2;
@@ -3567,19 +3552,6 @@ def: InstRW<[SKXWriteResGroup121], (instregex "VANDNPDYrm",
                                               "VXORPSYrm",
                                               "VXORPSZ256rm(b?)",
                                               "VXORPSZrm(b?)")>;
-
-def SKXWriteResGroup122 : SchedWriteRes<[SKXPort23,SKXPort015]> {
-  let Latency = 8;
-  let NumMicroOps = 3;
-  let ResourceCycles = [1,2];
-}
-def: InstRW<[SKXWriteResGroup122], (instregex "BLENDVPDrm0",
-                                              "BLENDVPSrm0",
-                                              "PBLENDVBrm0",
-                                              "VBLENDVPDrm",
-                                              "VBLENDVPSrm",
-                                              "VPBLENDVBYrm",
-                                              "VPBLENDVBrm")>;
 
 def SKXWriteResGroup123 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort23]> {
   let Latency = 8;

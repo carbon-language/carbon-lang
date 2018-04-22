@@ -1670,7 +1670,7 @@ define <32 x i8> @test_pblendvb(<32 x i8> %a0, <32 x i8> %a1, <32 x i8> %a2, <32
 ; GENERIC-LABEL: test_pblendvb:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vpblendvb %ymm2, %ymm1, %ymm0, %ymm0 # sched: [2:1.00]
-; GENERIC-NEXT:    vpblendvb %ymm3, (%rdi), %ymm0, %ymm0 # sched: [7:1.00]
+; GENERIC-NEXT:    vpblendvb %ymm3, (%rdi), %ymm0, %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pblendvb:

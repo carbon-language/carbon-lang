@@ -167,7 +167,7 @@ defm : HWWriteResPair<WriteFVarShuffle,  [HWPort5],  1>;
 defm : HWWriteResPair<WriteFBlend,  [HWPort015],  1>;
 defm : HWWriteResPair<WriteFShuffle256,  [HWPort5],  3>;
 defm : HWWriteResPair<WriteFVarShuffle256,  [HWPort5],  3>;
-defm : HWWriteResPair<WriteFVarBlend,  [HWPort5], 2, [2]>;
+defm : HWWriteResPair<WriteFVarBlend,  [HWPort5], 2, [2], 2, 6>;
 
 // Vector integer operations.
 def  : WriteRes<WriteVecStore,       [HWPort237, HWPort4]>;
@@ -184,7 +184,7 @@ defm : HWWriteResPair<WriteVarShuffle,  [HWPort5],  1>;
 defm : HWWriteResPair<WriteBlend,  [HWPort15],  1>;
 defm : HWWriteResPair<WriteShuffle256,  [HWPort5],  3>;
 defm : HWWriteResPair<WriteVarShuffle256,  [HWPort5],  3>;
-defm : HWWriteResPair<WriteVarBlend,  [HWPort5], 2, [2]>;
+defm : HWWriteResPair<WriteVarBlend,  [HWPort5], 2, [2], 2, 6>;
 defm : HWWriteResPair<WriteVarVecShift,  [HWPort0, HWPort5], 2, [2, 1]>;
 defm : HWWriteResPair<WriteMPSAD,  [HWPort0, HWPort5], 7, [1, 2], 3, 6>;
 defm : HWWriteResPair<WritePSADBW, [HWPort0], 5>;
@@ -1226,13 +1226,7 @@ def HWWriteResGroup27 : SchedWriteRes<[HWPort5]> {
   let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
-def: InstRW<[HWWriteResGroup27], (instregex "BLENDVPDrr0",
-                                            "BLENDVPSrr0",
-                                            "MMX_PINSRWrr",
-                                            "PBLENDVBrr0",
-                                            "VBLENDVPD(Y?)rr",
-                                            "VBLENDVPS(Y?)rr",
-                                            "VPBLENDVB(Y?)rr",
+def: InstRW<[HWWriteResGroup27], (instregex "MMX_PINSRWrr",
                                             "(V?)PINSRBrr",
                                             "(V?)PINSRDrr",
                                             "(V?)PINSRQrr",
@@ -1337,14 +1331,8 @@ def HWWriteResGroup36 : SchedWriteRes<[HWPort5,HWPort23]> {
   let NumMicroOps = 3;
   let ResourceCycles = [2,1];
 }
-def: InstRW<[HWWriteResGroup36], (instregex "BLENDVPDrm0",
-                                            "BLENDVPSrm0",
-                                            "PBLENDVBrm0",
-                                            "VBLENDVPDrm",
-                                            "VBLENDVPSrm",
-                                            "VMASKMOVPDrm",
+def: InstRW<[HWWriteResGroup36], (instregex "VMASKMOVPDrm",
                                             "VMASKMOVPSrm",
-                                            "VPBLENDVBrm",
                                             "VPMASKMOVDrm",
                                             "VPMASKMOVQrm")>;
 
