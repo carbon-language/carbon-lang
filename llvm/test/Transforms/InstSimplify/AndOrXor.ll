@@ -11,8 +11,7 @@ define i8 @and0(i8 %x) {
 
 define <2 x i8> @and0_vec_undef_elt(<2 x i8> %x) {
 ; CHECK-LABEL: @and0_vec_undef_elt(
-; CHECK-NEXT:    [[R:%.*]] = and <2 x i8> [[X:%.*]], <i8 undef, i8 0>
-; CHECK-NEXT:    ret <2 x i8> [[R]]
+; CHECK-NEXT:    ret <2 x i8> zeroinitializer
 ;
   %r = and <2 x i8> %x, <i8 undef, i8 0>
   ret <2 x i8> %r
