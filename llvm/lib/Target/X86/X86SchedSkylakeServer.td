@@ -3057,18 +3057,6 @@ def: InstRW<[SKXWriteResGroup116], (instregex "ROUNDPDr",
                                               "VROUNDPDYr",
                                               "VROUNDPSYr")>;
 
-def SKXWriteResGroup116_2 : SchedWriteRes<[SKXPort015]> {
-  let Latency = 10;
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def: InstRW<[SKXWriteResGroup116_2], (instregex "PMULLDrr",
-                                                "VPMULLDYrr",
-                                                "VPMULLDZ128rr",
-                                                "VPMULLDZ256rr",
-                                                "VPMULLDZrr",
-                                                "VPMULLDrr")>;
-
 def SKXWriteResGroup117 : SchedWriteRes<[SKXPort0,SKXPort23]> {
   let Latency = 8;
   let NumMicroOps = 2;
@@ -4607,15 +4595,6 @@ def: InstRW<[SKXWriteResGroup186], (instregex "ROUNDPDm",
                                               "VROUNDPSm",
                                               "VROUNDSDm",
                                               "VROUNDSSm")>;
-
-def SKXWriteResGroup186_2 : SchedWriteRes<[SKXPort23,SKXPort015]> {
-  let Latency = 16;
-  let NumMicroOps = 3;
-  let ResourceCycles = [1,2];
-}
-def: InstRW<[SKXWriteResGroup186_2], (instregex "PMULLDrm",
-                                                "VPMULLDZ128rm(b?)",
-                                                "VPMULLDrm")>;
 
 def SKXWriteResGroup187 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort23]> {
   let Latency = 14;
