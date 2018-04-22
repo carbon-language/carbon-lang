@@ -556,8 +556,8 @@ def : InstRW<[HWWriteFXTRACT], (instregex "FXTRACT")>;
 // Horizontal add/sub  instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : HWWriteResPair<WriteFHAdd,   [HWPort1, HWPort5], 5, [1, 2], 3>;
-defm : HWWriteResPair<WritePHAdd,  [HWPort1, HWPort5], 3, [1, 2], 3>;
+defm : HWWriteResPair<WriteFHAdd,  [HWPort1, HWPort5], 5, [1,2], 3, 6>;
+defm : HWWriteResPair<WritePHAdd, [HWPort5, HWPort15], 3, [2,1], 3, 6>;
 
 //=== Floating Point XMM and YMM Instructions ===//
 
@@ -1574,19 +1574,6 @@ def: InstRW<[HWWriteResGroup55], (instregex "VPSLLVD(Y?)rr",
                                             "VPSRAVD(Y?)rr",
                                             "VPSRLVD(Y?)rr")>;
 
-def HWWriteResGroup56 : SchedWriteRes<[HWPort5,HWPort15]> {
-  let Latency = 3;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[HWWriteResGroup56], (instregex "MMX_PH(ADD|SUB)(D|SW|W)rr",
-                                            "(V?)PHADDD(Y?)rr",
-                                            "(V?)PHADDSW(Y?)rr",
-                                            "(V?)PHADDW(Y?)rr",
-                                            "(V?)PHSUBD(Y?)rr",
-                                            "(V?)PHSUBSW(Y?)rr",
-                                            "(V?)PHSUBW(Y?)rr")>;
-
 def HWWriteResGroup57 : SchedWriteRes<[HWPort5,HWPort0156]> {
   let Latency = 3;
   let NumMicroOps = 3;
@@ -2080,16 +2067,6 @@ def HWWriteResGroup95 : SchedWriteRes<[HWPort1,HWPort06,HWPort0156]> {
   let ResourceCycles = [1,1,1];
 }
 def: InstRW<[HWWriteResGroup95], (instrs IMUL32r, MUL32r, MULX32rr)>;
-
-def HWWriteResGroup96 : SchedWriteRes<[HWPort1,HWPort5,HWPort23]> {
-  let Latency = 11;
-  let NumMicroOps = 4;
-  let ResourceCycles = [1,2,1];
-}
-def: InstRW<[HWWriteResGroup96], (instregex "(V?)HADDPDrm",
-                                            "(V?)HADDPSrm",
-                                            "(V?)HSUBPDrm",
-                                            "(V?)HSUBPSrm")>;
 
 def HWWriteResGroup96_1 : SchedWriteRes<[HWPort1,HWPort5,HWPort23]> {
   let Latency = 12;

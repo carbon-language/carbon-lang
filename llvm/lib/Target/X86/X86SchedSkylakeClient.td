@@ -320,7 +320,7 @@ def : WriteRes<WriteNop, []>;
 // Horizontal add/sub  instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : SKLWriteResPair<WriteFHAdd,   [SKLPort1], 3>;
+defm : SKLWriteResPair<WriteFHAdd, [SKLPort5,SKLPort01], 6, [2,1], 3, 6>;
 defm : SKLWriteResPair<WritePHAdd,  [SKLPort15], 1>;
 
 // Remaining instrs.
@@ -1235,16 +1235,6 @@ def SKLWriteResGroup76 : SchedWriteRes<[SKLPort23,SKLPort0156]> {
 }
 def: InstRW<[SKLWriteResGroup76], (instrs POP16r, POP32r, POP64r)>;
 def: InstRW<[SKLWriteResGroup76], (instregex "POP(16|32|64)rmr")>;
-
-def SKLWriteResGroup77 : SchedWriteRes<[SKLPort5,SKLPort01]> {
-  let Latency = 6;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[SKLWriteResGroup77], (instregex "(V?)HADDPD(Y?)rr",
-                                             "(V?)HADDPS(Y?)rr",
-                                             "(V?)HSUBPD(Y?)rr",
-                                             "(V?)HSUBPS(Y?)rr")>;
 
 def SKLWriteResGroup78 : SchedWriteRes<[SKLPort5,SKLPort01]> {
   let Latency = 6;
@@ -2162,16 +2152,6 @@ def SKLWriteResGroup158 : SchedWriteRes<[SKLPort0,SKLFPDivider]> {
   let ResourceCycles = [1,6];
 }
 def: InstRW<[SKLWriteResGroup158], (instregex "VSQRTPSYr")>;
-
-def SKLWriteResGroup159 : SchedWriteRes<[SKLPort5,SKLPort01,SKLPort23]> {
-  let Latency = 12;
-  let NumMicroOps = 4;
-  let ResourceCycles = [2,1,1];
-}
-def: InstRW<[SKLWriteResGroup159], (instregex "(V?)HADDPDrm",
-                                              "(V?)HADDPSrm",
-                                              "(V?)HSUBPDrm",
-                                              "(V?)HSUBPSrm")>;
 
 def SKLWriteResGroup160 : SchedWriteRes<[SKLPort0,SKLPort5,SKLPort23,SKLPort01]> {
   let Latency = 12;

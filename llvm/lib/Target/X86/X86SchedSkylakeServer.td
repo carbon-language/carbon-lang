@@ -320,7 +320,7 @@ def : WriteRes<WriteNop, []>;
 // Horizontal add/sub  instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : SKXWriteResPair<WriteFHAdd,   [SKXPort1], 3>;
+defm : SKXWriteResPair<WriteFHAdd, [SKXPort5,SKXPort015], 6, [2,1], 3, 6>;
 defm : SKXWriteResPair<WritePHAdd,  [SKXPort15], 1>;
 
 // Remaining instrs.
@@ -2415,21 +2415,9 @@ def SKXWriteResGroup82 : SchedWriteRes<[SKXPort5,SKXPort015]> {
   let ResourceCycles = [2,1];
 }
 def: InstRW<[SKXWriteResGroup82], (instregex "CVTSI642SSrr",
-                                             "HADDPDrr",
-                                             "HADDPSrr",
-                                             "HSUBPDrr",
-                                             "HSUBPSrr",
                                              "VCVTSI642SSrr",
                                              "VCVTSI642SSZrr",
-                                             "VCVTUSI642SSZrr",
-                                             "VHADDPDYrr",
-                                             "VHADDPDrr",
-                                             "VHADDPSYrr",
-                                             "VHADDPSrr",
-                                             "VHSUBPDYrr",
-                                             "VHSUBPDrr",
-                                             "VHSUBPSYrr",
-                                             "VHSUBPSrr")>;
+                                             "VCVTUSI642SSZrr")>;
 
 def SKXWriteResGroup83 : SchedWriteRes<[SKXPort1,SKXPort06,SKXPort0156]> {
   let Latency = 6;
@@ -4537,16 +4525,6 @@ def: InstRW<[SKXWriteResGroup177], (instregex "VCVTPS2QQZrm(b?)",
                                               "VCVTPS2UQQZrm(b?)",
                                               "VCVTTPS2QQZrm(b?)",
                                               "VCVTTPS2UQQZrm(b?)")>;
-
-def SKXWriteResGroup178 : SchedWriteRes<[SKXPort5,SKXPort23,SKXPort015]> {
-  let Latency = 12;
-  let NumMicroOps = 4;
-  let ResourceCycles = [2,1,1];
-}
-def: InstRW<[SKXWriteResGroup178], (instregex "(V?)HADDPDrm",
-                                              "(V?)HADDPSrm",
-                                              "(V?)HSUBPDrm",
-                                              "(V?)HSUBPSrm")>;
 
 def SKXWriteResGroup179 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort23,SKXPort015]> {
   let Latency = 12;
