@@ -141,10 +141,10 @@ def  : WriteRes<WriteFMove,        [SBPort5]>;
 defm : SBWriteResPair<WriteFAdd,   [SBPort1], 3>;
 defm : SBWriteResPair<WriteFCmp,   [SBPort1], 3, [1], 1, 6>;
 defm : SBWriteResPair<WriteFCom,   [SBPort1], 3>;
-defm : SBWriteResPair<WriteFMul,   [SBPort0], 5>;
+defm : SBWriteResPair<WriteFMul,   [SBPort0], 5, [1], 1, 6>;
 defm : SBWriteResPair<WriteFDiv,   [SBPort0], 24>;
-defm : SBWriteResPair<WriteFRcp,   [SBPort0], 5>;
-defm : SBWriteResPair<WriteFRsqrt, [SBPort0], 5>;
+defm : SBWriteResPair<WriteFRcp,   [SBPort0], 5, [1], 1, 6>;
+defm : SBWriteResPair<WriteFRsqrt, [SBPort0], 5, [1], 1, 6>;
 defm : SBWriteResPair<WriteFSqrt,  [SBPort0], 14>;
 defm : SBWriteResPair<WriteCvtF2I, [SBPort1], 3>;
 defm : SBWriteResPair<WriteCvtI2F, [SBPort1], 4>;
@@ -1561,16 +1561,8 @@ def SBWriteResGroup104 : SchedWriteRes<[SBPort0,SBPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SBWriteResGroup104], (instregex "(V?)MULPDrm",
-                                             "(V?)MULPSrm",
-                                             "(V?)MULSDrm",
-                                             "(V?)MULSSrm",
-                                             "(V?)PCMPGTQrm",
-                                             "(V?)PHMINPOSUWrm",
-                                             "(V?)RCPPSm",
-                                             "(V?)RCPSSm",
-                                             "(V?)RSQRTPSm",
-                                             "(V?)RSQRTSSm")>;
+def: InstRW<[SBWriteResGroup104], (instregex "(V?)PCMPGTQrm",
+                                             "(V?)PHMINPOSUWrm")>;
 
 def SBWriteResGroup106 : SchedWriteRes<[SBPort1,SBPort23]> {
   let Latency = 11;

@@ -1695,11 +1695,7 @@ def: InstRW<[BWWriteResGroup115], (instregex "MMX_PMADDUBSWrm",
                                              "(V?)PHMINPOSUWrm",
                                              "(V?)PMADDUBSWrm",
                                              "(V?)PMADDWDrm",
-                                             "(V?)PSADBWrm",
-                                             "(V?)RCPPSm",
-                                             "(V?)RCPSSm",
-                                             "(V?)RSQRTPSm",
-                                             "(V?)RSQRTSSm")>;
+                                             "(V?)PSADBWrm")>;
 
 def BWWriteResGroup116 : SchedWriteRes<[BWPort01,BWPort23]> {
   let Latency = 10;

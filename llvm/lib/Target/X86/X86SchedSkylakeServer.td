@@ -157,8 +157,8 @@ defm : SKXWriteResPair<WriteFCom,   [SKXPort0], 2>; // Floating point compare to
 defm : SKXWriteResPair<WriteFMul,   [SKXPort0], 5>; // Floating point multiplication.
 defm : SKXWriteResPair<WriteFDiv,   [SKXPort0], 12>; // 10-14 cycles. // Floating point division.
 defm : SKXWriteResPair<WriteFSqrt,  [SKXPort0], 15>; // Floating point square root.
-defm : SKXWriteResPair<WriteFRcp,   [SKXPort0], 4>; // Floating point reciprocal estimate.
-defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0], 4>; // Floating point reciprocal square root estimate.
+defm : SKXWriteResPair<WriteFRcp,   [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal estimate.
+defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal square root estimate.
 defm : SKXWriteResPair<WriteFMA,  [SKXPort015], 4>; // Fused Multiply Add.
 defm : SKXWriteResPair<WriteFSign,  [SKXPort0], 1>; // Floating point fabs/fchs.
 defm : SKXWriteResPair<WriteFLogic, [SKXPort015], 1, [1], 1, 6>; // Floating point and/or/xor logicals.
@@ -3819,24 +3819,6 @@ def SKXWriteResGroup146 : SchedWriteRes<[SKXPort1,SKXPort6,SKXPort23,SKXPort0156
 }
 def: InstRW<[SKXWriteResGroup146], (instregex "LAR(16|32|64)rm",
                                               "LSL(16|32|64)rm")>;
-
-def SKXWriteResGroup147 : SchedWriteRes<[SKXPort0,SKXPort23]> {
-  let Latency = 10;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[SKXWriteResGroup147], (instregex "RCPPSm",
-                                              "RSQRTPSm",
-                                              "VRCP14PDZ128m(b?)",
-                                              "VRCP14PSZ128m(b?)",
-                                              "VRCP14SDrm(b?)",
-                                              "VRCP14SSrm(b?)",
-                                              "VRCPPSm",
-                                              "VRSQRT14PDZ128m(b?)",
-                                              "VRSQRT14PSZ128m(b?)",
-                                              "VRSQRT14SDrm(b?)",
-                                              "VRSQRT14SSrm(b?)",
-                                              "VRSQRTPSm")>;
 
 def SKXWriteResGroup148 : SchedWriteRes<[SKXPort5,SKXPort23]> {
   let Latency = 10;
