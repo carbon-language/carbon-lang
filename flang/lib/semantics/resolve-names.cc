@@ -179,6 +179,9 @@ public:
   bool isImplicitNoneType() const {
     return implicitRules().isImplicitNoneType();
   }
+  bool isImplicitNoneExternal() const {
+    return implicitRules().isImplicitNoneExternal();
+  }
 
 protected:
   void PushScope();
@@ -392,6 +395,28 @@ public:
     }
   }
 
+  void Post(const parser::ProcedureDesignator &x) {
+    if (const auto *name = std::get_if<parser::Name>(&x.u)) {
+      Symbol &symbol{MakeSymbol(*name)};
+      if (symbol.has<UnknownDetails>()) {
+        if (isImplicitNoneExternal() && !symbol.attrs().test(Attr::EXTERNAL)) {
+          Say(*name,
+              "'%s' is an external procedure without the EXTERNAL"
+              " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
+        }
+        symbol.attrs().set(Attr::EXTERNAL);
+        symbol.set_details(SubprogramDetails{});
+      } else if (!symbol.has<SubprogramDetails>()) {
+        auto *details = symbol.detailsIf<EntityDetails>();
+        if (!details || !details->isArray()) {
+          Say(*name,
+              "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
+          Say(symbol.name(), "Declaration of '%s'"_en_US);
+        }
+      }
+    }
+  }
+
 private:
   // Stack of containing scopes; memory referenced is owned by parent scopes
   std::stack<Scope *, std::list<Scope *>> scopes_;
@@ -421,7 +446,9 @@ private:
       const auto pair = CurrScope().try_emplace(name.source, attrs, details);
       CHECK(pair.second);  // name was not found, so must be able to add
       return pair.first->second;
-    } else if (symbol.has<UnknownDetails>()) {
+    }
+    symbol.add_occurrence(name.source);
+    if (symbol.has<UnknownDetails>()) {
       // update the existing symbol
       symbol.attrs() |= attrs;
       symbol.set_details(details);
@@ -441,7 +468,7 @@ private:
   Symbol &MakeSymbol(const parser::Name &name, D &&details) {
     return MakeSymbol(name, Attrs(), details);
   }
-  Symbol &MakeSymbol(const parser::Name &name, Attrs attrs) {
+  Symbol &MakeSymbol(const parser::Name &name, Attrs attrs = Attrs{}) {
     return MakeSymbol(name, attrs, UnknownDetails());
   }
   void DeclareEntity(const parser::Name &, Attrs);
@@ -766,12 +793,6 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
       case ImplicitNoneNameSpec::External:
         implicitRules().set_isImplicitNoneExternal(true);
         ++sawExternal;
-        // TODO:
-        // C894 If IMPLICIT NONE with an implicit-none-spec of EXTERNAL
-        // appears within a scoping unit, the  name of an external or dummy
-        // procedure in that scoping unit or in a contained subprogram or
-        // BLOCK  construct shall have an explicit interface or be explicitly
-        // declared to have the EXTERNAL attribute.
         break;
       case ImplicitNoneNameSpec::Type:
         prevImplicitNoneType_ = currStmtSource();

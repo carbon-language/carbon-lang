@@ -62,9 +62,34 @@ public:
     return true;
   }
 
+  void Post(parser::Variable &x) {
+    ConvertFunctionRef(x);
+  }
+
+  void Post(parser::Expr &x) {
+    ConvertFunctionRef(x);
+  }
+
 private:
   const symbolMap &symbols_;
   std::list<stmtFuncType> stmtFuncsToConvert;
+
+  // For T = Variable or Expr, if x has a function reference that really
+  // should be an array element reference (i.e. the name occurs in an
+  // entity declaration, convert it.
+  template<typename T> void ConvertFunctionRef(T & x) {
+    auto *funcRef =
+        std::get_if<parser::Indirection<parser::FunctionReference>>(&x.u);
+    if (!funcRef) {
+      return;
+    }
+    parser::Name *name = std::get_if<parser::Name>(
+        &std::get<parser::ProcedureDesignator>((*funcRef)->v.t).u);
+    if (!name || !name->symbol || !name->symbol->has<EntityDetails>()) {
+      return;
+    }
+    x.u = parser::Indirection{(*funcRef)->ConvertToArrayElementRef()};
+  }
 };
 
 static void CollectSymbols(Scope &scope, symbolMap &symbols) {

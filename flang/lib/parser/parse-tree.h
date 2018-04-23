@@ -3057,7 +3057,11 @@ struct Call {
   TUPLE_CLASS_BOILERPLATE(Call);
   std::tuple<ProcedureDesignator, std::list<ActualArgSpec>> t;
 };
-WRAPPER_CLASS(FunctionReference, Call);
+
+struct FunctionReference {
+  WRAPPER_CLASS_BOILERPLATE(FunctionReference, Call);
+  Designator ConvertToArrayElementRef();
+};
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
 WRAPPER_CLASS(CallStmt, Call);

@@ -47,19 +47,53 @@ Expr::Expr(Designator &&x) : u{Indirection<Designator>(std::move(x))} {}
 Expr::Expr(FunctionReference &&x)
   : u{Indirection<FunctionReference>(std::move(x))} {}
 
+static Designator MakeArrayElementRef(Name &name, std::list<Expr> &subscripts) {
+  ArrayElement arrayElement{name, std::list<SectionSubscript>{}};
+  for (Expr &expr : subscripts) {
+    arrayElement.subscripts.push_back(
+        SectionSubscript{Scalar{Integer{Indirection{std::move(expr)}}}});
+  }
+  return Designator{DataRef{Indirection{std::move(arrayElement)}}};
+}
+
+Designator FunctionReference::ConvertToArrayElementRef() {
+  auto &name = std::get<parser::Name>(std::get<ProcedureDesignator>(v.t).u);
+  std::list<Expr> args;
+  for (auto &arg : std::get<std::list<ActualArgSpec>>(v.t)) {
+    std::visit(
+        visitors{
+            [&](Indirection<Expr> &y) { args.push_back(std::move(*y)); },
+            [&](Indirection<Variable> &y) {
+              args.push_back(std::visit(
+                  visitors{
+                      [&](Indirection<Designator> &z) {
+                        return Expr{std::move(*z)};
+                      },
+                      [&](Indirection<FunctionReference> &z) {
+                        return Expr{std::move(*z)};
+                      },
+                  },
+                  y->u));
+            },
+            [&](auto &) { CHECK(!"unexpected kind of ActualArg"); },
+        },
+        std::get<ActualArg>(arg.t).u);
+  }
+  return MakeArrayElementRef(name, args);
+}
+
 // R1544 stmt-function-stmt
 // Convert this stmt-function-stmt to an array element assignment statement.
 Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
   auto &funcName = std::get<Name>(t);
   auto &funcArgs = std::get<std::list<Name>>(t);
   auto &funcExpr = std::get<Scalar<Expr>>(t).thing;
-  ArrayElement arrayElement{funcName, std::list<SectionSubscript>{}};
+  std::list<Expr> subscripts;
   for (Name &arg : funcArgs) {
-    arrayElement.subscripts.push_back(SectionSubscript{
-        Scalar{Integer{Indirection{Expr{Indirection{Designator{arg}}}}}}});
+    subscripts.push_back(Expr{Indirection{Designator{arg}}});
   }
-  auto &&variable = Variable{
-      Indirection{Designator{DataRef{Indirection{std::move(arrayElement)}}}}};
+  auto &&variable =
+      Variable{Indirection{MakeArrayElementRef(funcName, subscripts)}};
   return Statement{std::nullopt,
       ActionStmt{Indirection{
           AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
