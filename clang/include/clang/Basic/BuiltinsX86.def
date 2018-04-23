@@ -643,12 +643,6 @@ TARGET_BUILTIN(__builtin_ia32_vcvtph2ps256, "V8fV8s", "", "f16c")
 TARGET_BUILTIN(__builtin_ia32_rdrand16_step, "UiUs*", "", "rdrnd")
 TARGET_BUILTIN(__builtin_ia32_rdrand32_step, "UiUi*", "", "rdrnd")
 
-// FSGSBASE
-TARGET_BUILTIN(__builtin_ia32_rdfsbase32, "Ui", "", "fsgsbase")
-TARGET_BUILTIN(__builtin_ia32_rdgsbase32, "Ui", "", "fsgsbase")
-TARGET_BUILTIN(__builtin_ia32_wrfsbase32, "vUi", "", "fsgsbase")
-TARGET_BUILTIN(__builtin_ia32_wrgsbase32, "vUi", "", "fsgsbase")
-
 // FXSR
 TARGET_BUILTIN(__builtin_ia32_fxrstor, "vv*", "", "fxsr")
 TARGET_BUILTIN(__builtin_ia32_fxsave, "vv*", "", "fxsr")
