@@ -83,7 +83,7 @@ private:
     if (!funcRef) {
       return;
     }
-    auto *name = std::get_if<parser::Name>(
+    parser::Name *name = std::get_if<parser::Name>(
         &std::get<parser::ProcedureDesignator>((*funcRef)->v.t).u);
     if (!name || !name->symbol || !name->symbol->has<EntityDetails>()) {
       return;
