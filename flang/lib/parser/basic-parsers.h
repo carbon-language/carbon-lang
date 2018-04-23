@@ -1088,54 +1088,6 @@ inline constexpr auto nonemptySeparated(const PA &p, const PB &sep) {
   return NonemptySeparated<PA, PB>{p, sep};
 }
 
-// If f is a function of type void (*f)(ParseState &), then
-// StateUpdateParser{f} is a parser that always succeeds, possibly with
-// side effects on the parsing state.
-class StateUpdateParser {
-public:
-  using resultType = Success;
-  constexpr StateUpdateParser(const StateUpdateParser &) = default;
-  constexpr StateUpdateParser(void (*function)(ParseState &))
-    : function_{function} {}
-  std::optional<Success> Parse(ParseState &state) const {
-    function_(state);
-    return {Success{}};
-  }
-
-private:
-  void (*const function_)(ParseState &);
-};
-
-// If a is a parser with some result type A, and f is a function of A&& that
-// returns another parser, then a >>= f returns a parser that succeeds
-// when a does so and then f(ax) also does so; the final result is that of
-// applying the parser that was returned by f(ax).
-template<typename PA, typename T> class BoundMoveParser {
-  using paType = typename PA::resultType;
-  using funcType = T (*)(paType &&);
-
-public:
-  using resultType = T;
-  constexpr BoundMoveParser(const BoundMoveParser &) = default;
-  constexpr BoundMoveParser(const PA &pa, funcType f) : pa_{pa}, f_{f} {}
-  std::optional<T> Parse(ParseState &state) const {
-    if (std::optional<paType> ax{pa_.Parse(state)}) {
-      return f_(std::move(*ax)).Parse(state);
-    }
-    return {};
-  }
-
-private:
-  const PA pa_;
-  const funcType f_;
-};
-
-template<typename PA, typename T>
-inline constexpr auto operator>>=(
-    const PA &pa, T (*f)(typename PA::resultType &&)) {
-  return BoundMoveParser<PA, T>(pa, f);
-}
-
 // ok is a parser that always succeeds.  It is useful when a parser
 // must discard its result in order to be compatible in type with other
 // parsers in an alternative, e.g. "x >> ok || y >> ok" is type-safe even
@@ -1260,14 +1212,6 @@ private:
 template<typename PA> inline constexpr auto sourced(const PA &parser) {
   return SourcedParser<PA>{parser};
 }
-
-constexpr struct GetUserState {
-  using resultType = UserState *;
-  constexpr GetUserState() {}
-  static std::optional<resultType> Parse(ParseState &state) {
-    return {state.userState()};
-  }
-} getUserState;
 }  // namespace parser
 }  // namespace Fortran
 #endif  // FORTRAN_PARSER_BASIC_PARSERS_H_
