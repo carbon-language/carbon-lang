@@ -215,7 +215,8 @@ struct CharLiteralChar {
     }
     char ch{**och};
     if (ch == '\n') {
-      state.Say(at, "unclosed character constant"_err_en_US);
+      state.Say(CharBlock{at, state.GetLocation()},
+          "unclosed character constant"_err_en_US);
       return {};
     }
     if (ch != '\\') {
@@ -226,7 +227,8 @@ struct CharLiteralChar {
     }
     ch = **och;
     if (ch == '\n') {
-      state.Say(at, "unclosed character constant"_err_en_US);
+      state.Say(CharBlock{at, state.GetLocation()},
+          "unclosed character constant"_err_en_US);
       return {};
     }
     if (std::optional<char> escChar{BackslashEscapeValue(ch)}) {

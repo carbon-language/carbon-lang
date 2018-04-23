@@ -151,8 +151,20 @@ void AllSources::Identify(std::ostream &o, ProvenanceRange range,
                 char ch{text[j - 1]};
                 o << (ch == '\t' ? '\t' : ' ');
               }
-              o << "^\n" << prefix;
-              // TODO mark a wider range
+              o << '^';
+              if (range.size() > 1) {
+                auto last = range.start() + range.size() - 1;
+                if (&MapToOrigin(last) == &origin) {
+                  auto endOffset = origin.covers.MemberOffset(last);
+                  auto endPos = inc.source.FindOffsetLineAndColumn(endOffset);
+                  if (pos.first == endPos.first) {
+                    for (int j{pos.second}; j < endPos.second; ++j) {
+                      o << '^';
+                    }
+                  }
+                }
+              }
+              o << '\n' << prefix;
             } else {
               o << ' ';
             }

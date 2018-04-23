@@ -137,7 +137,7 @@ void Prescanner::Statement() {
       break;
     case LineClassification::Kind::PreprocessorDirective:
       Say("preprocessed line looks like a preprocessor directive"_en_US,
-          preprocessed->GetProvenanceRange().start());
+          preprocessed->GetProvenanceRange());
       preprocessed->ToLowerCase().Emit(&cooked_);
       break;
     case LineClassification::Kind::CompilerDirective:
@@ -176,12 +176,12 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
 
 void Prescanner::Say(Message &&message) { messages_.Put(std::move(message)); }
 
-void Prescanner::Say(MessageFixedText text, Provenance p) {
-  messages_.Put({p, text});
+void Prescanner::Say(MessageFixedText text, ProvenanceRange r) {
+  messages_.Put({r, text});
 }
 
-void Prescanner::Say(MessageFormattedText &&text, Provenance p) {
-  messages_.Put({p, std::move(text)});
+void Prescanner::Say(MessageFormattedText &&text, ProvenanceRange r) {
+  messages_.Put({r, std::move(text)});
 }
 
 void Prescanner::NextLine() {
@@ -416,7 +416,8 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
     }
     if (*at_ == '\n') {
       if (!inPreprocessorDirective_) {
-        Say("incomplete character literal"_err_en_US, GetProvenance(start));
+        Say("incomplete character literal"_err_en_US,
+            GetProvenanceRange(start, at_));
       }
       break;
     }
@@ -466,7 +467,8 @@ void Prescanner::Hollerith(TokenSequence *tokens, int count) {
   }
   if (*at_ == '\n') {
     if (!inPreprocessorDirective_) {
-      Say("incomplete Hollerith literal"_err_en_US, GetProvenance(start));
+      Say("incomplete Hollerith literal"_err_en_US,
+          GetProvenanceRange(start, at_));
     }
   } else {
     NextChar();
@@ -567,13 +569,18 @@ void Prescanner::FortranInclude(const char *firstQuote) {
     path += *p;
   }
   if (*p != quote) {
-    Say("malformed path name string"_err_en_US, GetProvenance(p));
+    Say("malformed path name string"_err_en_US,
+        GetProvenanceRange(firstQuote, p));
     return;
   }
   for (++p; *p == ' ' || *p == '\t'; ++p) {
   }
   if (*p != '\n' && *p != '!') {
-    Say("excess characters after path name"_en_US, GetProvenance(p));
+    const char *garbage{p};
+    for (; *p != '\n' && *p != '!'; ++p) {
+    }
+    Say("excess characters after path name"_en_US,
+        GetProvenanceRange(garbage, p));
   }
   std::stringstream error;
   Provenance provenance{GetProvenance(lineStart_)};

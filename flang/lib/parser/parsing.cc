@@ -24,12 +24,12 @@ void Parsing::Prescan(const std::string &path, Options options) {
   if (sourceFile == nullptr) {
     ProvenanceRange range{allSources_.AddCompilerInsertion(path)};
     MessageFormattedText msg("%s"_err_en_US, fileError.str().data());
-    messages_.Put(Message(range.start(), std::move(msg)));
+    messages_.Put(Message{range, std::move(msg)});
     return;
   }
   if (sourceFile->bytes() == 0) {
     ProvenanceRange range{allSources_.AddCompilerInsertion(path)};
-    messages_.Put(Message{range.start(), "file is empty"_err_en_US});
+    messages_.Put(Message{range, "file is empty"_err_en_US});
     return;
   }
 

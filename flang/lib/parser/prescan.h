@@ -68,8 +68,8 @@ public:
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
 
   void Say(Message &&);
-  void Say(MessageFixedText, Provenance);
-  void Say(MessageFormattedText &&, Provenance);
+  void Say(MessageFixedText, ProvenanceRange);
+  void Say(MessageFormattedText &&, ProvenanceRange);
 
 private:
   struct LineClassification {
@@ -104,6 +104,12 @@ private:
 
   Provenance GetProvenance(const char *sourceChar) const {
     return startProvenance_ + (sourceChar - start_);
+  }
+
+  ProvenanceRange GetProvenanceRange(
+      const char *first, const char *afterLast) const {
+    std::size_t bytes = afterLast - first;
+    return {startProvenance_ + (first - start_), bytes};
   }
 
   void EmitChar(TokenSequence *tokens, char ch) {

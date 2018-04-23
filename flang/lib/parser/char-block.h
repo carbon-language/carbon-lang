@@ -17,8 +17,8 @@ class CharBlock {
 public:
   CharBlock() {}
   CharBlock(const char *x, std::size_t n = 1) : interval_{x, n} {}
-  CharBlock(const char *b, const char *e)
-    : interval_{b, static_cast<std::size_t>(e - b)} {}
+  CharBlock(const char *b, const char *ep1)
+    : interval_{b, static_cast<std::size_t>(ep1 - b)} {}
   CharBlock(const std::string &s) : interval_{s.data(), s.size()} {}
   CharBlock(const CharBlock &) = default;
   CharBlock(CharBlock &&) = default;
