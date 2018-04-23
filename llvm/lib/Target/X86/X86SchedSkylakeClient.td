@@ -485,8 +485,7 @@ def SKLWriteResGroup8 : SchedWriteRes<[SKLPort15]> {
 def: InstRW<[SKLWriteResGroup8], (instregex "ANDN(32|64)rr",
                                             "BLSI(32|64)rr",
                                             "BLSMSK(32|64)rr",
-                                            "BLSR(32|64)rr",
-                                            "LEA(16|32|64)(_32)?r")>;
+                                            "BLSR(32|64)rr")>;
 
 def SKLWriteResGroup9 : SchedWriteRes<[SKLPort015]> {
   let Latency = 1;

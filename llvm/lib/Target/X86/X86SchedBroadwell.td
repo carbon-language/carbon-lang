@@ -401,8 +401,7 @@ def BWWriteResGroup7 : SchedWriteRes<[BWPort15]> {
 def: InstRW<[BWWriteResGroup7], (instregex "ANDN(32|64)rr",
                                            "BLSI(32|64)rr",
                                            "BLSMSK(32|64)rr",
-                                           "BLSR(32|64)rr",
-                                           "LEA(16|32|64)(_32)?r")>;
+                                           "BLSR(32|64)rr")>;
 
 def BWWriteResGroup8 : SchedWriteRes<[BWPort015]> {
   let Latency = 1;
