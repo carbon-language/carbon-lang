@@ -1017,6 +1017,13 @@ LLVMDIBuilderCreateArtificialType(LLVMDIBuilderRef Builder,
   return wrap(unwrap(Builder)->createArtificialType(unwrapDI<DIType>(Type)));
 }
 
+LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Builder,
+                                                  LLVMMetadataRef *Types,
+                                                  size_t Length) {
+  return wrap(
+      unwrap(Builder)->getOrCreateTypeArray({unwrap(Types), Length}).get());
+}
+
 LLVMMetadataRef
 LLVMDIBuilderCreateSubroutineType(LLVMDIBuilderRef Builder,
                                   LLVMMetadataRef File,
@@ -1071,6 +1078,18 @@ LLVMMetadataRef LLVMDIBuilderCreateParameterVariable(
                   unwrap<DIScope>(Scope), Name, ArgNo, unwrap<DIFile>(File),
                   LineNo, unwrap<DIType>(Ty), AlwaysPreserve,
                   map_from_llvmDIFlags(Flags)));
+}
+
+LLVMMetadataRef LLVMDIBuilderGetOrCreateSubrange(LLVMDIBuilderRef Builder,
+                                                 int64_t Lo, int64_t Count) {
+  return wrap(unwrap(Builder)->getOrCreateSubrange(Lo, Count));
+}
+
+LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(LLVMDIBuilderRef Builder,
+                                              LLVMMetadataRef *Data,
+                                              size_t Length) {
+  Metadata **DataValue = unwrap(Data);
+  return wrap(unwrap(Builder)->getOrCreateArray({DataValue, Length}).get());
 }
 
 LLVMMetadataRef LLVMGetSubprogram(LLVMValueRef Func) {

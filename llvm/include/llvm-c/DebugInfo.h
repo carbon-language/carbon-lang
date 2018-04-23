@@ -319,6 +319,16 @@ LLVMDIBuilderCreateDebugLocation(LLVMContextRef Ctx, unsigned Line,
                                  LLVMMetadataRef InlinedAt);
 
 /**
+ * Create a type array.
+ * \param Builder        The DIBuilder.
+ * \param Data           The type elements.
+ * \param NumElements    Number of type elements.
+ */
+LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Builder,
+                                                  LLVMMetadataRef *Data,
+                                                  size_t NumElements);
+
+/**
  * Create subroutine type.
  * \param Builder        The DIBuilder.
  * \param File            The file in which the subroutine resides.
@@ -675,6 +685,26 @@ LLVMMetadataRef LLVMDIBuilderCreateClassType(LLVMDIBuilderRef Builder,
 LLVMMetadataRef
 LLVMDIBuilderCreateArtificialType(LLVMDIBuilderRef Builder,
                                   LLVMMetadataRef Type);
+
+/**
+ * Create a descriptor for a value range.
+ * \param Builder    The DIBuilder.
+ * \param LowerBound Lower bound of the subrange, e.g. 0 for C, 1 for Fortran.
+ * \param Count      Count of elements in the subrange.
+ */
+LLVMMetadataRef LLVMDIBuilderGetOrCreateSubrange(LLVMDIBuilderRef Builder,
+                                                 int64_t LowerBound,
+                                                 int64_t Count);
+
+/**
+ * Create an array of DI Nodes.
+ * \param Builder        The DIBuilder.
+ * \param Data           The DI Node elements.
+ * \param NumElements    Number of DI Node elements.
+ */
+LLVMMetadataRef LLVMDIBuilderGetOrCreateArray(LLVMDIBuilderRef Builder,
+                                              LLVMMetadataRef *Data,
+                                              size_t NumElements);
 
 /**
  * Create a new descriptor for the specified variable which has a complex

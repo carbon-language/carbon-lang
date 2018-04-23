@@ -55,18 +55,31 @@ int llvm_test_dibuilder(void) {
     LLVMMetadataAsValue(LLVMGetModuleContext(M), StructDbgPtrTy));
 
 
-  LLVMTypeRef FooParamTys[] = { LLVMInt64Type(), LLVMInt64Type() };
-  LLVMTypeRef FooFuncTy = LLVMFunctionType(LLVMInt64Type(), FooParamTys, 2, 0);
+  LLVMTypeRef FooParamTys[] = {
+    LLVMInt64Type(),
+    LLVMInt64Type(),
+    LLVMVectorType(LLVMInt64Type(), 10),
+  };
+  LLVMTypeRef FooFuncTy = LLVMFunctionType(LLVMInt64Type(), FooParamTys, 3, 0);
   LLVMValueRef FooFunction = LLVMAddFunction(M, "foo", FooFuncTy);
   LLVMBasicBlockRef FooEntryBlock = LLVMAppendBasicBlock(FooFunction, "entry");
 
-  LLVMMetadataRef ParamTypes[] = {Int64Ty, Int64Ty};
+  LLVMMetadataRef Subscripts[] = {
+    LLVMDIBuilderGetOrCreateSubrange(DIB, 0, 10),
+  };
+  LLVMMetadataRef VectorTy =
+    LLVMDIBuilderCreateVectorType(DIB, 64 * 10, 0,
+                                  Int64Ty, Subscripts, 1);
+
+
+  LLVMMetadataRef ParamTypes[] = {Int64Ty, Int64Ty, VectorTy};
   LLVMMetadataRef FunctionTy =
-    LLVMDIBuilderCreateSubroutineType(DIB, File, ParamTypes, 2, 0);
+    LLVMDIBuilderCreateSubroutineType(DIB, File, ParamTypes, 3, 0);
   LLVMMetadataRef FunctionMetadata =
     LLVMDIBuilderCreateFunction(DIB, File, "foo", 3, "foo", 3,
                                 File, 42, FunctionTy, true, true,
                                 42, 0, false);
+
   LLVMMetadataRef FooParamLocation =
     LLVMDIBuilderCreateDebugLocation(LLVMGetGlobalContext(), 42, 0,
                                      FunctionMetadata, NULL);
@@ -84,6 +97,13 @@ int llvm_test_dibuilder(void) {
   LLVMDIBuilderInsertDeclareAtEnd(DIB, LLVMConstInt(LLVMInt64Type(), 0, false),
                                   FooParamVar2, FooParamExpression,
                                   FooParamLocation, FooEntryBlock);
+  LLVMMetadataRef FooParamVar3 =
+    LLVMDIBuilderCreateParameterVariable(DIB, FunctionMetadata, "c", 1, 3, File,
+                                         42, VectorTy, true, 0);
+  LLVMDIBuilderInsertDeclareAtEnd(DIB, LLVMConstInt(LLVMInt64Type(), 0, false),
+                                  FooParamVar3, FooParamExpression,
+                                  FooParamLocation, FooEntryBlock);
+
   LLVMSetSubprogram(FooFunction, FunctionMetadata);
 
   LLVMMetadataRef FooLexicalBlock =
