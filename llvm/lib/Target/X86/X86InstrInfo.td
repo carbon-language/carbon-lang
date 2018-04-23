@@ -892,6 +892,8 @@ def HasLAHFSAHF  : Predicate<"Subtarget->hasLAHFSAHF()">;
 def HasMWAITX    : Predicate<"Subtarget->hasMWAITX()">;
 def HasCLZERO    : Predicate<"Subtarget->hasCLZERO()">;
 def HasCLDEMOTE  : Predicate<"Subtarget->hasCLDEMOTE()">;
+def HasMOVDIRI   : Predicate<"Subtarget->hasMOVDIRI()">;
+def HasMOVDIR64B : Predicate<"Subtarget->hasMOVDIR64B()">;
 def FPStackf32   : Predicate<"!Subtarget->hasSSE1()">;
 def FPStackf64   : Predicate<"!Subtarget->hasSSE2()">;
 def HasMPX       : Predicate<"Subtarget->hasMPX()">;
@@ -2800,6 +2802,9 @@ include "X86InstrSGX.td"
 
 // System instructions.
 include "X86InstrSystem.td"
+
+// Direct Move instructions.
+include "X86InstrMovdir.td"
 
 // Compiler Pseudo Instructions and Pat Patterns
 include "X86InstrCompiler.td"

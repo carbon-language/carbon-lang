@@ -1264,6 +1264,10 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
 
   Features["ibt"] = HasLeaf7 && ((EDX >> 20) & 1);
 
+  // Direct move instruction support.
+  Features["movdiri"]         = HasLeaf7 && ((ECX >> 27) & 1);
+  Features["movdir64b"]       = HasLeaf7 && ((ECX >> 28) & 1);
+
   bool HasLeafD = MaxLevel >= 0xd &&
                   !getX86CpuIDAndInfoEx(0xd, 0x1, &EAX, &EBX, &ECX, &EDX);
 
