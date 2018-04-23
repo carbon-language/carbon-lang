@@ -1140,20 +1140,6 @@ def: InstRW<[SKLWriteResGroup70], (instregex "(V?)CVTSD2SI64rr",
                                              "(V?)CVTTSD2SI64rr",
                                              "(V?)CVTTSD2SIrr")>;
 
-def SKLWriteResGroup71 : SchedWriteRes<[SKLPort5,SKLPort23]> {
-  let Latency = 6;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[SKLWriteResGroup71], (instregex "(V?)MOVHPDrm",
-                                             "(V?)MOVHPSrm",
-                                             "(V?)MOVLPDrm",
-                                             "(V?)MOVLPSrm",
-                                             "(V?)PINSRBrm",
-                                             "(V?)PINSRDrm",
-                                             "(V?)PINSRQrm",
-                                             "(V?)PINSRWrm")>;
-
 def SKLWriteResGroup72 : SchedWriteRes<[SKLPort6,SKLPort23]> {
   let Latency = 6;
   let NumMicroOps = 2;
@@ -1742,8 +1728,6 @@ def: InstRW<[SKLWriteResGroup120], (instregex "MMX_CVTPI2PSirm",
                                               "MMX_PMULHWirm",
                                               "MMX_PMULLWirm",
                                               "MMX_PMULUDQirm",
-                                              "(V?)RCPSSm",
-                                              "(V?)RSQRTSSm",
                                               "VTESTPDYrm",
                                               "VTESTPSYrm")>;
 
