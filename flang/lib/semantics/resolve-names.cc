@@ -681,18 +681,18 @@ void MessageHandler::Say(Message &&x) { messages_.Put(std::move(x)); }
 
 void MessageHandler::Say(parser::MessageFixedText &&x) {
   CHECK(currStmtSource_);
-  messages_.Put(Message{currStmtSource_->begin(), std::move(x)});
+  messages_.Put(Message{*currStmtSource_, std::move(x)});
 }
 
 void MessageHandler::Say(parser::MessageFormattedText &&x) {
   CHECK(currStmtSource_);
-  messages_.Put(Message{currStmtSource_->begin(), std::move(x)});
+  messages_.Put(Message{*currStmtSource_, std::move(x)});
 }
 
 void MessageHandler::Say(
     const parser::CharBlock &source, parser::MessageFixedText &&msg) {
-  Say(parser::Message{source.begin(),
-      parser::MessageFormattedText{msg, source.ToString().c_str()}});
+  Say(parser::Message{
+      source, parser::MessageFormattedText{msg, source.ToString().c_str()}});
 }
 void MessageHandler::Say(
     const parser::Name &name, parser::MessageFixedText &&msg) {
