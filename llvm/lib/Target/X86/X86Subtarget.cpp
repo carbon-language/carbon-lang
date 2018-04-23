@@ -317,8 +317,6 @@ void X86Subtarget::initializeEnvironment() {
   HasMWAITX = false;
   HasCLZERO = false;
   HasCLDEMOTE = false;
-  HasMOVDIRI = false;
-  HasMOVDIR64B = false;
   HasMPX = false;
   HasSHSTK = false;
   HasIBT = false;
