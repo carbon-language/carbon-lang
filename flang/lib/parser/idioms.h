@@ -30,8 +30,8 @@ template<typename A>
 struct is_trivially_copy_constructible<optional<list<A>>> : false_type {};
 }  // namespace std
 
-using namespace std::literals::string_literals;  // enable "this is a
-                                                 // std::string"s
+// enable "this is a std::string"s with the 's' suffix
+using namespace std::literals::string_literals;
 
 namespace Fortran {
 namespace parser {
@@ -72,11 +72,6 @@ template<typename A> bool operator!(const std::optional<A> &x) {
            "CHECK(" #x ") failed at " __FILE__ "(%d)", __LINE__), \
           false))
 #endif
-
-// To make error messages more informative, wrap some type information
-// around a false compile-time value, e.g.
-//   static_assert(BadType<T>::value, "no case for type");
-template<typename A> struct BadType : std::false_type {};
 
 // User-defined type traits that default to false:
 // Invoke CLASS_TRAIT(traitName) to define a trait, then put
