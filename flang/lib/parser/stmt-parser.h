@@ -20,12 +20,10 @@ constexpr DigitString digitString;
 // R611 label -> digit [digit]...
 constexpr auto label = space >> digitString / spaceCheck;
 
-template<typename PA>
-using statementConstructor = construct<Statement<typename PA::resultType>>;
-
 template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
   return skipEmptyLines >>
-      sourced(statementConstructor<PA>{}(maybe(label), space >> p));
+      sourced(construct<Statement<typename PA::resultType>>(
+          maybe(label), space >> p));
 }
 
 constexpr auto endOfLine = "\n"_ch / skipEmptyLines ||
@@ -43,7 +41,7 @@ constexpr auto ignoredStatementPrefix = skipEmptyLines >> maybe(label) >>
 
 // Error recovery within statements: skip to the end of the line,
 // but not over an END or CONTAINS statement.
-constexpr auto errorRecovery = construct<ErrorRecovery>{};
+constexpr auto errorRecovery = construct<ErrorRecovery>();
 constexpr auto skipToEndOfLine = SkipTo<'\n'>{} >> errorRecovery;
 constexpr auto stmtErrorRecovery =
     !"END"_tok >> !"CONTAINS"_tok >> skipToEndOfLine;

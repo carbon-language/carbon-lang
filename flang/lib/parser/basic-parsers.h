@@ -847,212 +847,215 @@ inline constexpr auto applyMem(typename Apply4Mem<PA, PB, PC, PD>::funcType f,
 // As is done with function application via applyFunction() above, class
 // instance construction can also be based upon the results of successful
 // parses.  For some type T and zero or more parsers a, b, &c., the call
-// construct<T>{}(a, b, ...) returns a parser that succeeds if all of
+// construct<T>(a, b, ...) returns a parser that succeeds if all of
 // its argument parsers do so in succession, and whose result is an
 // instance of T constructed upon the values they returned.
-template<class T> struct construct {
-
+template<class T> struct Construct0 {
   using resultType = T;
-  constexpr construct(const construct &) = default;
+  constexpr Construct0() {}
+  constexpr Construct0(const Construct0 &) = default;
   std::optional<T> Parse(ParseState &state) const { return {T{}}; }
-
-  constexpr construct operator()() const { return *this; }
-
-  template<typename PA> class Construct1 {
-  public:
-    using resultType = T;
-    constexpr Construct1(const Construct1 &) = default;
-    constexpr explicit Construct1(const PA &parser) : parser_{parser} {}
-    std::optional<T> Parse(ParseState &state) const {
-      if (auto ax = parser_.Parse(state)) {
-        return {T(std::move(*ax))};
-      }
-      return {};
-    }
-
-  private:
-    const PA parser_;
-  };
-
-  template<typename PA>
-  constexpr Construct1<PA> operator()(const PA &pa) const {
-    return Construct1<PA>{pa};
-  }
-
-  template<typename PA, typename PB> class Construct2 {
-  public:
-    using resultType = T;
-    constexpr Construct2(const Construct2 &) = default;
-    constexpr Construct2(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
-    std::optional<T> Parse(ParseState &state) const {
-      if (auto ax = pa_.Parse(state)) {
-        if (auto bx = pb_.Parse(state)) {
-          return {T{std::move(*ax), std::move(*bx)}};
-        }
-      }
-      return {};
-    }
-
-  private:
-    const PA pa_;
-    const PB pb_;
-  };
-
-  template<typename PA, typename PB>
-  constexpr Construct2<PA, PB> operator()(const PA &pa, const PB &pb) const {
-    return Construct2<PA, PB>{pa, pb};
-  }
-
-  template<typename PA, typename PB, typename PC> class Construct3 {
-  public:
-    using resultType = T;
-    constexpr Construct3(const Construct3 &) = default;
-    constexpr Construct3(const PA &pa, const PB &pb, const PC &pc)
-      : pa_{pa}, pb_{pb}, pc_{pc} {}
-    std::optional<resultType> Parse(ParseState &state) const {
-      if (auto ax = pa_.Parse(state)) {
-        if (auto bx = pb_.Parse(state)) {
-          if (auto cx = pc_.Parse(state)) {
-            return {T{std::move(*ax), std::move(*bx), std::move(*cx)}};
-          }
-        }
-      }
-      return {};
-    }
-
-  private:
-    const PA pa_;
-    const PB pb_;
-    const PC pc_;
-  };
-
-  template<typename PA, typename PB, typename PC>
-  constexpr Construct3<PA, PB, PC> operator()(
-      const PA &pa, const PB &pb, const PC &pc) const {
-    return Construct3<PA, PB, PC>{pa, pb, pc};
-  }
-
-  template<typename PA, typename PB, typename PC, typename PD>
-  class Construct4 {
-  public:
-    using resultType = T;
-    constexpr Construct4(const Construct4 &) = default;
-    constexpr Construct4(const PA &pa, const PB &pb, const PC &pc, const PD &pd)
-      : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
-    std::optional<resultType> Parse(ParseState &state) const {
-      if (auto ax = pa_.Parse(state)) {
-        if (auto bx = pb_.Parse(state)) {
-          if (auto cx = pc_.Parse(state)) {
-            if (auto dx = pd_.Parse(state)) {
-              return {T{std::move(*ax), std::move(*bx), std::move(*cx),
-                  std::move(*dx)}};
-            }
-          }
-        }
-      }
-      return {};
-    }
-
-  private:
-    const PA pa_;
-    const PB pb_;
-    const PC pc_;
-    const PD pd_;
-  };
-
-  template<typename PA, typename PB, typename PC, typename PD>
-  constexpr Construct4<PA, PB, PC, PD> operator()(
-      const PA &pa, const PB &pb, const PC &pc, const PD &pd) const {
-    return Construct4<PA, PB, PC, PD>{pa, pb, pc, pd};
-  }
-
-  template<typename PA, typename PB, typename PC, typename PD, typename PE>
-  class Construct5 {
-  public:
-    using resultType = T;
-    constexpr Construct5(const Construct5 &) = default;
-    constexpr Construct5(
-        const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe)
-      : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe} {}
-    std::optional<resultType> Parse(ParseState &state) const {
-      if (auto ax = pa_.Parse(state)) {
-        if (auto bx = pb_.Parse(state)) {
-          if (auto cx = pc_.Parse(state)) {
-            if (auto dx = pd_.Parse(state)) {
-              if (auto ex = pe_.Parse(state)) {
-                return {T{std::move(*ax), std::move(*bx), std::move(*cx),
-                    std::move(*dx), std::move(*ex)}};
-              }
-            }
-          }
-        }
-      }
-      return {};
-    }
-
-  private:
-    const PA pa_;
-    const PB pb_;
-    const PC pc_;
-    const PD pd_;
-    const PE pe_;
-  };
-
-  template<typename PA, typename PB, typename PC, typename PD, typename PE>
-  constexpr Construct5<PA, PB, PC, PD, PE> operator()(const PA &pa,
-      const PB &pb, const PC &pc, const PD &pd, const PE &pe) const {
-    return Construct5<PA, PB, PC, PD, PE>{pa, pb, pc, pd, pe};
-  }
-
-  template<typename PA, typename PB, typename PC, typename PD, typename PE,
-      typename PF>
-  class Construct6 {
-  public:
-    using resultType = T;
-    constexpr Construct6(const Construct6 &) = default;
-    constexpr Construct6(const PA &pa, const PB &pb, const PC &pc, const PD &pd,
-        const PE &pe, const PF &pf)
-      : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe}, pf_{pf} {}
-    std::optional<resultType> Parse(ParseState &state) const {
-      if (auto ax = pa_.Parse(state)) {
-        if (auto bx = pb_.Parse(state)) {
-          if (auto cx = pc_.Parse(state)) {
-            if (auto dx = pd_.Parse(state)) {
-              if (auto ex = pe_.Parse(state)) {
-                if (auto fx = pf_.Parse(state)) {
-                  return {T{std::move(*ax), std::move(*bx), std::move(*cx),
-                      std::move(*dx), std::move(*ex), std::move(*fx)}};
-                }
-              }
-            }
-          }
-        }
-      }
-      return {};
-    }
-
-  private:
-    const PA pa_;
-    const PB pb_;
-    const PC pc_;
-    const PD pd_;
-    const PE pe_;
-    const PF pf_;
-  };
-
-  template<typename PA, typename PB, typename PC, typename PD, typename PE,
-      typename PF>
-  constexpr Construct6<PA, PB, PC, PD, PE, PF> operator()(const PA &pa,
-      const PB &pb, const PC &pc, const PD &pd, const PE &pe,
-      const PF &pf) const {
-    return Construct6<PA, PB, PC, PD, PE, PF>{pa, pb, pc, pd, pe, pf};
-  }
 };
+
+template<class T> constexpr Construct0<T> construct() {
+  return Construct0<T>{};
+}
+
+template<typename T, typename PA> class Construct1 {
+public:
+  using resultType = T;
+  constexpr Construct1(const Construct1 &) = default;
+  constexpr explicit Construct1(const PA &parser) : parser_{parser} {}
+  std::optional<T> Parse(ParseState &state) const {
+    if (auto ax = parser_.Parse(state)) {
+      return {T(std::move(*ax))};
+    }
+    return {};
+  }
+
+private:
+  const PA parser_;
+};
+
+template<typename T, typename PA, typename PB> class Construct2 {
+public:
+  using resultType = T;
+  constexpr Construct2(const Construct2 &) = default;
+  constexpr Construct2(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
+  std::optional<T> Parse(ParseState &state) const {
+    if (auto ax = pa_.Parse(state)) {
+      if (auto bx = pb_.Parse(state)) {
+        return {T{std::move(*ax), std::move(*bx)}};
+      }
+    }
+    return {};
+  }
+
+private:
+  const PA pa_;
+  const PB pb_;
+};
+
+template<typename T, typename PA, typename PB, typename PC> class Construct3 {
+public:
+  using resultType = T;
+  constexpr Construct3(const Construct3 &) = default;
+  constexpr Construct3(const PA &pa, const PB &pb, const PC &pc)
+    : pa_{pa}, pb_{pb}, pc_{pc} {}
+  std::optional<resultType> Parse(ParseState &state) const {
+    if (auto ax = pa_.Parse(state)) {
+      if (auto bx = pb_.Parse(state)) {
+        if (auto cx = pc_.Parse(state)) {
+          return {T{std::move(*ax), std::move(*bx), std::move(*cx)}};
+        }
+      }
+    }
+    return {};
+  }
+
+private:
+  const PA pa_;
+  const PB pb_;
+  const PC pc_;
+};
+
+template<typename T, typename PA, typename PB, typename PC, typename PD>
+class Construct4 {
+public:
+  using resultType = T;
+  constexpr Construct4(const Construct4 &) = default;
+  constexpr Construct4(const PA &pa, const PB &pb, const PC &pc, const PD &pd)
+    : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
+  std::optional<resultType> Parse(ParseState &state) const {
+    if (auto ax = pa_.Parse(state)) {
+      if (auto bx = pb_.Parse(state)) {
+        if (auto cx = pc_.Parse(state)) {
+          if (auto dx = pd_.Parse(state)) {
+            return {T{std::move(*ax), std::move(*bx), std::move(*cx),
+                std::move(*dx)}};
+          }
+        }
+      }
+    }
+    return {};
+  }
+
+private:
+  const PA pa_;
+  const PB pb_;
+  const PC pc_;
+  const PD pd_;
+};
+
+template<typename T, typename PA, typename PB, typename PC, typename PD,
+    typename PE>
+class Construct5 {
+public:
+  using resultType = T;
+  constexpr Construct5(const Construct5 &) = default;
+  constexpr Construct5(
+      const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe)
+    : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe} {}
+  std::optional<resultType> Parse(ParseState &state) const {
+    if (auto ax = pa_.Parse(state)) {
+      if (auto bx = pb_.Parse(state)) {
+        if (auto cx = pc_.Parse(state)) {
+          if (auto dx = pd_.Parse(state)) {
+            if (auto ex = pe_.Parse(state)) {
+              return {T{std::move(*ax), std::move(*bx), std::move(*cx),
+                  std::move(*dx), std::move(*ex)}};
+            }
+          }
+        }
+      }
+    }
+    return {};
+  }
+
+private:
+  const PA pa_;
+  const PB pb_;
+  const PC pc_;
+  const PD pd_;
+  const PE pe_;
+};
+
+template<typename T, typename PA, typename PB, typename PC, typename PD,
+    typename PE, typename PF>
+class Construct6 {
+public:
+  using resultType = T;
+  constexpr Construct6(const Construct6 &) = default;
+  constexpr Construct6(const PA &pa, const PB &pb, const PC &pc, const PD &pd,
+      const PE &pe, const PF &pf)
+    : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe}, pf_{pf} {}
+  std::optional<resultType> Parse(ParseState &state) const {
+    if (auto ax = pa_.Parse(state)) {
+      if (auto bx = pb_.Parse(state)) {
+        if (auto cx = pc_.Parse(state)) {
+          if (auto dx = pd_.Parse(state)) {
+            if (auto ex = pe_.Parse(state)) {
+              if (auto fx = pf_.Parse(state)) {
+                return {T{std::move(*ax), std::move(*bx), std::move(*cx),
+                    std::move(*dx), std::move(*ex), std::move(*fx)}};
+              }
+            }
+          }
+        }
+      }
+    }
+    return {};
+  }
+
+private:
+  const PA pa_;
+  const PB pb_;
+  const PC pc_;
+  const PD pd_;
+  const PE pe_;
+  const PF pf_;
+};
+
+template<typename T, typename PA>
+constexpr Construct1<T, PA> construct(const PA &parser) {
+  return Construct1<T, PA>{parser};
+}
+
+template<typename T, typename PA, typename PB>
+constexpr Construct2<T, PA, PB> construct(const PA &pa, const PB &pb) {
+  return Construct2<T, PA, PB>{pa, pb};
+}
+
+template<typename T, typename PA, typename PB, typename PC>
+constexpr Construct3<T, PA, PB, PC> construct(
+    const PA &pa, const PB &pb, const PC &pc) {
+  return Construct3<T, PA, PB, PC>{pa, pb, pc};
+}
+
+template<typename T, typename PA, typename PB, typename PC, typename PD>
+constexpr Construct4<T, PA, PB, PC, PD> construct(
+    const PA &pa, const PB &pb, const PC &pc, const PD &pd) {
+  return Construct4<T, PA, PB, PC, PD>{pa, pb, pc, pd};
+}
+
+template<typename T, typename PA, typename PB, typename PC, typename PD,
+    typename PE>
+constexpr Construct5<T, PA, PB, PC, PD, PE> construct(
+    const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe) {
+  return Construct5<T, PA, PB, PC, PD, PE>{pa, pb, pc, pd, pe};
+}
+
+template<typename T, typename PA, typename PB, typename PC, typename PD,
+    typename PE, typename PF>
+constexpr Construct6<T, PA, PB, PC, PD, PE, PF> construct(const PA &pa,
+    const PB &pb, const PC &pc, const PD &pd, const PE &pe, const PF &pf) {
+  return Construct6<T, PA, PB, PC, PD, PE, PF>{pa, pb, pc, pd, pe, pf};
+}
 
 // For a parser p, indirect(p) returns a parser that builds an indirect
 // reference to p's return type.
 template<typename PA> inline constexpr auto indirect(const PA &p) {
-  return construct<Indirection<typename PA::resultType>>{}(p);
+  return construct<Indirection<typename PA::resultType>>(p);
 }
 
 // If a and b are parsers, then nonemptySeparated(a, b) returns a parser

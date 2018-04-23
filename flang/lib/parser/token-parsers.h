@@ -574,7 +574,7 @@ template<char goal> struct SkipTo {
 //   [[, xyz] ::]     is  optionalBeforeColons(xyz)
 //   [[, xyz]... ::]  is  optionalBeforeColons(nonemptyList(xyz))
 template<typename PA> inline constexpr auto optionalBeforeColons(const PA &p) {
-  return "," >> construct<std::optional<typename PA::resultType>>{}(p) / "::" ||
+  return "," >> construct<std::optional<typename PA::resultType>>(p) / "::" ||
       ("::"_tok || !","_tok) >> defaulted(cut >> maybe(p));
 }
 template<typename PA>
@@ -634,8 +634,8 @@ constexpr auto underscore = "_"_ch;
 constexpr auto otherIdChar = underscore / !"'\""_ch || extension("$@"_ch);
 constexpr auto nonDigitIdChar = letter || otherIdChar;
 constexpr auto rawName = nonDigitIdChar >> many(nonDigitIdChar || digit);
-TYPE_PARSER(space >> sourced(attempt(rawName) >> construct<Name>{}))
-constexpr auto keyword = construct<Keyword>{}(name);
+TYPE_PARSER(space >> sourced(attempt(rawName) >> construct<Name>()))
+constexpr auto keyword = construct<Keyword>(name);
 
 }  // namespace parser
 }  // namespace Fortran

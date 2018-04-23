@@ -96,7 +96,7 @@ obtained by matching `c`.
 The following *applicative* combinators combine parsers and modify or
 collect the values that they return.
 
-* `construct<T>{}(p1, p2, ...)` matches zero or more parsers in succession,
+* `construct<T>(p1, p2, ...)` matches zero or more parsers in succession,
   collecting their results and then passing them with move semantics to a
   constructor for the type T if they all succeed.
 * `sourced(p)` matches p, and fills in its `source` data member with the
