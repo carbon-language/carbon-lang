@@ -65,9 +65,9 @@ define i64 @out64(i64 %x, i64 %y, i64 %mask) {
 define i8 @in8(i8 %x, i8 %y, i8 %mask) {
 ; CHECK-LABEL: in8:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w8, w2
-; CHECK-NEXT:    eor w0, w8, w1
+; CHECK-NEXT:    and w8, w0, w2
+; CHECK-NEXT:    bic w9, w1, w2
+; CHECK-NEXT:    orr w0, w8, w9
 ; CHECK-NEXT:    ret
   %n0 = xor i8 %x, %y
   %n1 = and i8 %n0, %mask
@@ -78,9 +78,9 @@ define i8 @in8(i8 %x, i8 %y, i8 %mask) {
 define i16 @in16(i16 %x, i16 %y, i16 %mask) {
 ; CHECK-LABEL: in16:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w8, w2
-; CHECK-NEXT:    eor w0, w8, w1
+; CHECK-NEXT:    and w8, w0, w2
+; CHECK-NEXT:    bic w9, w1, w2
+; CHECK-NEXT:    orr w0, w8, w9
 ; CHECK-NEXT:    ret
   %n0 = xor i16 %x, %y
   %n1 = and i16 %n0, %mask
@@ -91,9 +91,9 @@ define i16 @in16(i16 %x, i16 %y, i16 %mask) {
 define i32 @in32(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in32:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w8, w2
-; CHECK-NEXT:    eor w0, w8, w1
+; CHECK-NEXT:    bic w8, w1, w2
+; CHECK-NEXT:    and w9, w0, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %n0, %mask
@@ -104,9 +104,9 @@ define i32 @in32(i32 %x, i32 %y, i32 %mask) {
 define i64 @in64(i64 %x, i64 %y, i64 %mask) {
 ; CHECK-LABEL: in64:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor x8, x0, x1
-; CHECK-NEXT:    and x8, x8, x2
-; CHECK-NEXT:    eor x0, x8, x1
+; CHECK-NEXT:    bic x8, x1, x2
+; CHECK-NEXT:    and x9, x0, x2
+; CHECK-NEXT:    orr x0, x9, x8
 ; CHECK-NEXT:    ret
   %n0 = xor i64 %x, %y
   %n1 = and i64 %n0, %mask
@@ -119,9 +119,9 @@ define i64 @in64(i64 %x, i64 %y, i64 %mask) {
 define i32 @in_commutativity_0_0_1(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in_commutativity_0_0_1:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w2, w8
-; CHECK-NEXT:    eor w0, w8, w1
+; CHECK-NEXT:    bic w8, w1, w2
+; CHECK-NEXT:    and w9, w0, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %mask, %n0 ; swapped
@@ -131,9 +131,9 @@ define i32 @in_commutativity_0_0_1(i32 %x, i32 %y, i32 %mask) {
 define i32 @in_commutativity_0_1_0(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in_commutativity_0_1_0:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w8, w2
-; CHECK-NEXT:    eor w0, w1, w8
+; CHECK-NEXT:    bic w8, w1, w2
+; CHECK-NEXT:    and w9, w0, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %n0, %mask
@@ -143,9 +143,9 @@ define i32 @in_commutativity_0_1_0(i32 %x, i32 %y, i32 %mask) {
 define i32 @in_commutativity_0_1_1(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in_commutativity_0_1_1:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w2, w8
-; CHECK-NEXT:    eor w0, w1, w8
+; CHECK-NEXT:    bic w8, w1, w2
+; CHECK-NEXT:    and w9, w0, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %mask, %n0 ; swapped
@@ -155,9 +155,9 @@ define i32 @in_commutativity_0_1_1(i32 %x, i32 %y, i32 %mask) {
 define i32 @in_commutativity_1_0_0(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in_commutativity_1_0_0:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w8, w2
-; CHECK-NEXT:    eor w0, w8, w0
+; CHECK-NEXT:    bic w8, w0, w2
+; CHECK-NEXT:    and w9, w1, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %n0, %mask
@@ -167,9 +167,9 @@ define i32 @in_commutativity_1_0_0(i32 %x, i32 %y, i32 %mask) {
 define i32 @in_commutativity_1_0_1(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in_commutativity_1_0_1:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w2, w8
-; CHECK-NEXT:    eor w0, w8, w0
+; CHECK-NEXT:    bic w8, w0, w2
+; CHECK-NEXT:    and w9, w1, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %mask, %n0 ; swapped
@@ -179,9 +179,9 @@ define i32 @in_commutativity_1_0_1(i32 %x, i32 %y, i32 %mask) {
 define i32 @in_commutativity_1_1_0(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in_commutativity_1_1_0:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w8, w2
-; CHECK-NEXT:    eor w0, w0, w8
+; CHECK-NEXT:    bic w8, w0, w2
+; CHECK-NEXT:    and w9, w1, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %n0, %mask
@@ -191,9 +191,9 @@ define i32 @in_commutativity_1_1_0(i32 %x, i32 %y, i32 %mask) {
 define i32 @in_commutativity_1_1_1(i32 %x, i32 %y, i32 %mask) {
 ; CHECK-LABEL: in_commutativity_1_1_1:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    eor w8, w0, w1
-; CHECK-NEXT:    and w8, w2, w8
-; CHECK-NEXT:    eor w0, w0, w8
+; CHECK-NEXT:    bic w8, w0, w2
+; CHECK-NEXT:    and w9, w1, w2
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %n0 = xor i32 %x, %y
   %n1 = and i32 %mask, %n0 ; swapped
@@ -207,9 +207,9 @@ define i32 @in_complex_y0(i32 %x, i32 %y_hi, i32 %y_low, i32 %mask) {
 ; CHECK-LABEL: in_complex_y0:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    and w8, w1, w2
-; CHECK-NEXT:    eor w9, w0, w8
-; CHECK-NEXT:    and w9, w9, w3
-; CHECK-NEXT:    eor w0, w9, w8
+; CHECK-NEXT:    and w9, w0, w3
+; CHECK-NEXT:    bic w8, w8, w3
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %y = and i32 %y_hi, %y_low
   %n0 = xor i32 %x, %y
@@ -221,9 +221,9 @@ define i32 @in_complex_y1(i32 %x, i32 %y_hi, i32 %y_low, i32 %mask) {
 ; CHECK-LABEL: in_complex_y1:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    and w8, w1, w2
-; CHECK-NEXT:    eor w9, w0, w8
-; CHECK-NEXT:    and w9, w9, w3
-; CHECK-NEXT:    eor w0, w8, w9
+; CHECK-NEXT:    and w9, w0, w3
+; CHECK-NEXT:    bic w8, w8, w3
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %y = and i32 %y_hi, %y_low
   %n0 = xor i32 %x, %y
@@ -238,9 +238,9 @@ define i32 @in_complex_m0(i32 %x, i32 %y, i32 %m_a, i32 %m_b) {
 ; CHECK-LABEL: in_complex_m0:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    eor w8, w2, w3
-; CHECK-NEXT:    eor w9, w0, w1
-; CHECK-NEXT:    and w8, w9, w8
-; CHECK-NEXT:    eor w0, w8, w1
+; CHECK-NEXT:    bic w9, w1, w8
+; CHECK-NEXT:    and w8, w0, w8
+; CHECK-NEXT:    orr w0, w8, w9
 ; CHECK-NEXT:    ret
   %mask = xor i32 %m_a, %m_b
   %n0 = xor i32 %x, %y
@@ -252,9 +252,9 @@ define i32 @in_complex_m1(i32 %x, i32 %y, i32 %m_a, i32 %m_b) {
 ; CHECK-LABEL: in_complex_m1:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    eor w8, w2, w3
-; CHECK-NEXT:    eor w9, w0, w1
-; CHECK-NEXT:    and w8, w8, w9
-; CHECK-NEXT:    eor w0, w8, w1
+; CHECK-NEXT:    bic w9, w1, w8
+; CHECK-NEXT:    and w8, w0, w8
+; CHECK-NEXT:    orr w0, w8, w9
 ; CHECK-NEXT:    ret
   %mask = xor i32 %m_a, %m_b
   %n0 = xor i32 %x, %y
@@ -270,9 +270,9 @@ define i32 @in_complex_y0_m0(i32 %x, i32 %y_hi, i32 %y_low, i32 %m_a, i32 %m_b) 
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    and w8, w1, w2
 ; CHECK-NEXT:    eor w9, w3, w4
-; CHECK-NEXT:    eor w10, w0, w8
-; CHECK-NEXT:    and w9, w10, w9
-; CHECK-NEXT:    eor w0, w9, w8
+; CHECK-NEXT:    bic w8, w8, w9
+; CHECK-NEXT:    and w9, w0, w9
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %y = and i32 %y_hi, %y_low
   %mask = xor i32 %m_a, %m_b
@@ -286,9 +286,9 @@ define i32 @in_complex_y1_m0(i32 %x, i32 %y_hi, i32 %y_low, i32 %m_a, i32 %m_b) 
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    and w8, w1, w2
 ; CHECK-NEXT:    eor w9, w3, w4
-; CHECK-NEXT:    eor w10, w0, w8
-; CHECK-NEXT:    and w9, w10, w9
-; CHECK-NEXT:    eor w0, w8, w9
+; CHECK-NEXT:    bic w8, w8, w9
+; CHECK-NEXT:    and w9, w0, w9
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %y = and i32 %y_hi, %y_low
   %mask = xor i32 %m_a, %m_b
@@ -302,9 +302,9 @@ define i32 @in_complex_y0_m1(i32 %x, i32 %y_hi, i32 %y_low, i32 %m_a, i32 %m_b) 
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    and w8, w1, w2
 ; CHECK-NEXT:    eor w9, w3, w4
-; CHECK-NEXT:    eor w10, w0, w8
-; CHECK-NEXT:    and w9, w9, w10
-; CHECK-NEXT:    eor w0, w9, w8
+; CHECK-NEXT:    bic w8, w8, w9
+; CHECK-NEXT:    and w9, w0, w9
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %y = and i32 %y_hi, %y_low
   %mask = xor i32 %m_a, %m_b
@@ -318,9 +318,9 @@ define i32 @in_complex_y1_m1(i32 %x, i32 %y_hi, i32 %y_low, i32 %m_a, i32 %m_b) 
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    and w8, w1, w2
 ; CHECK-NEXT:    eor w9, w3, w4
-; CHECK-NEXT:    eor w10, w0, w8
-; CHECK-NEXT:    and w9, w9, w10
-; CHECK-NEXT:    eor w0, w8, w9
+; CHECK-NEXT:    bic w8, w8, w9
+; CHECK-NEXT:    and w9, w0, w9
+; CHECK-NEXT:    orr w0, w9, w8
 ; CHECK-NEXT:    ret
   %y = and i32 %y_hi, %y_low
   %mask = xor i32 %m_a, %m_b
