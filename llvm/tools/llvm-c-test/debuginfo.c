@@ -26,15 +26,25 @@ int llvm_test_dibuilder(void) {
     strlen(Filename), ".", 1);
 
   LLVMMetadataRef CompileUnit = LLVMDIBuilderCreateCompileUnit(DIB,
-      LLVMDWARFSourceLanguageC, File,"llvm-c-test", 11, 0, NULL, 0, 0,
-      NULL, 0, LLVMDWARFEmissionFull, 0, 0, 0);
+    LLVMDWARFSourceLanguageC, File, "llvm-c-test", 11, 0, NULL, 0, 0,
+    NULL, 0, LLVMDWARFEmissionFull, 0, 0, 0);
+
+  LLVMMetadataRef Module =
+    LLVMDIBuilderCreateModule(DIB, CompileUnit,
+                              "llvm-c-test", 11,
+                              "", 0,
+                              "/test/include/llvm-c-test.h", 27,
+                              "", 0);
+
+  LLVMMetadataRef NameSpace =
+    LLVMDIBuilderCreateNameSpace(DIB, Module, "NameSpace", 9, false);
 
   LLVMMetadataRef Int64Ty =
     LLVMDIBuilderCreateBasicType(DIB, "Int64", 5, 64, 0);
 
   LLVMMetadataRef StructDbgElts[] = {Int64Ty, Int64Ty, Int64Ty};
   LLVMMetadataRef StructDbgTy =
-    LLVMDIBuilderCreateStructType(DIB, CompileUnit, "MyStruct",
+    LLVMDIBuilderCreateStructType(DIB, NameSpace, "MyStruct",
     8, File, 0, 192, 0, 0, NULL, StructDbgElts, 3,
     LLVMDWARFSourceLanguageC, NULL, "MyStruct", 8);
 

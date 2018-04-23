@@ -775,6 +775,27 @@ LLVMDIBuilderCreateFile(LLVMDIBuilderRef Builder, const char *Filename,
                                           StringRef(Directory, DirectoryLen)));
 }
 
+LLVMMetadataRef
+LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope,
+                          const char *Name, size_t NameLen,
+                          const char *ConfigMacros, size_t ConfigMacrosLen,
+                          const char *IncludePath, size_t IncludePathLen,
+                          const char *ISysRoot, size_t ISysRootLen) {
+  return wrap(unwrap(Builder)->createModule(
+      unwrapDI<DIScope>(ParentScope), StringRef(Name, NameLen),
+      StringRef(ConfigMacros, ConfigMacrosLen),
+      StringRef(IncludePath, IncludePathLen),
+      StringRef(ISysRoot, ISysRootLen)));
+}
+
+LLVMMetadataRef LLVMDIBuilderCreateNameSpace(LLVMDIBuilderRef Builder,
+                                             LLVMMetadataRef ParentScope,
+                                             const char *Name, size_t NameLen,
+                                             LLVMBool ExportSymbols) {
+  return wrap(unwrap(Builder)->createNameSpace(
+      unwrapDI<DIScope>(ParentScope), StringRef(Name, NameLen), ExportSymbols));
+}
+
 LLVMMetadataRef LLVMDIBuilderCreateFunction(
     LLVMDIBuilderRef Builder, LLVMMetadataRef Scope, const char *Name,
     size_t NameLen, const char *LinkageName, size_t LinkageNameLen,
@@ -930,6 +951,18 @@ LLVMMetadataRef
 LLVMDIBuilderCreateObjectPointerType(LLVMDIBuilderRef Builder,
                                      LLVMMetadataRef Type) {
   return wrap(unwrap(Builder)->createObjectPointerType(unwrapDI<DIType>(Type)));
+}
+
+LLVMMetadataRef
+LLVMDIBuilderCreateForwardDecl(
+    LLVMDIBuilderRef Builder, unsigned Tag, const char *Name,
+    size_t NameLen, LLVMMetadataRef Scope, LLVMMetadataRef File, unsigned Line,
+    unsigned RuntimeLang, unsigned SizeInBits, unsigned AlignInBits,
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen) {
+  return wrap(unwrap(Builder)->createForwardDecl(
+                  Tag, {Name, NameLen}, unwrapDI<DIScope>(Scope),
+                  unwrapDI<DIFile>(File), Line, RuntimeLang, SizeInBits,
+                  AlignInBits, {UniqueIdentifier, UniqueIdentifierLen}));
 }
 
 LLVMMetadataRef

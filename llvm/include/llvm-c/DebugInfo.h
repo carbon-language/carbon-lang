@@ -218,6 +218,42 @@ LLVMDIBuilderCreateFile(LLVMDIBuilderRef Builder, const char *Filename,
                         size_t DirectoryLen);
 
 /**
+ * Creates a new descriptor for a module with the specified parent scope.
+ * \param Builder         The \c DIBuilder.
+ * \param ParentScope     The parent scope containing this module declaration.
+ * \param Name            Module name.
+ * \param NameLen         The length of the C string passed to \c Name.
+ * \param ConfigMacros    A space-separated shell-quoted list of -D macro
+                          definitions as they would appear on a command line.
+ * \param ConfigMacrosLen The length of the C string passed to \c ConfigMacros.
+ * \param IncludePath     The path to the module map file.
+ * \param IncludePathLen  The length of the C string passed to \c IncludePath.
+ * \param ISysRoot        The Clang system root (value of -isysroot).
+ * \param ISysRootLen     The length of the C string passed to \c ISysRoot.
+ */
+LLVMMetadataRef
+LLVMDIBuilderCreateModule(LLVMDIBuilderRef Builder, LLVMMetadataRef ParentScope,
+                          const char *Name, size_t NameLen,
+                          const char *ConfigMacros, size_t ConfigMacrosLen,
+                          const char *IncludePath, size_t IncludePathLen,
+                          const char *ISysRoot, size_t ISysRootLen);
+
+/**
+ * Creates a new descriptor for a namespace with the specified parent scope.
+ * \param Builder          The \c DIBuilder.
+ * \param ParentScope      The parent scope containing this module declaration.
+ * \param Name             NameSpace name.
+ * \param NameLen          The length of the C string passed to \c Name.
+ * \param ExportSymbols    Whether or not the namespace exports symbols, e.g.
+ *                         this is true of C++ inline namespaces.
+ */
+LLVMMetadataRef
+LLVMDIBuilderCreateNameSpace(LLVMDIBuilderRef Builder,
+                             LLVMMetadataRef ParentScope,
+                             const char *Name, size_t NameLen,
+                             LLVMBool ExportSymbols);
+
+/**
  * Create a new descriptor for the specified subprogram.
  * \param Builder         The \c DIBuilder.
  * \param Scope           Function scope.
@@ -538,14 +574,44 @@ LLVMMetadataRef
 LLVMDIBuilderCreateNullPtrType(LLVMDIBuilderRef Builder);
 
 /**
+ * Create a permanent forward-declared type.
+ * \param Builder             The DIBuilder.
+ * \param Tag                 A unique tag for this type.
+ * \param Name                Type name.
+ * \param NameLen             Length of type name.
+ * \param Scope               Type scope.
+ * \param File                File where this type is defined.
+ * \param Line                Line number where this type is defined.
+ * \param RuntimeLang         Indicates runtime version for languages like
+ *                            Objective-C.
+ * \param SizeInBits          Member size.
+ * \param AlignInBits         Member alignment.
+ * \param Flags               Flags.
+ * \param UniqueIdentifier    A unique identifier for the type.
+ * \param UniqueIdentifierLen Length of the unique identifier.
+ */
+LLVMMetadataRef LLVMDIBuilderCreateForwardDecl(
+    LLVMDIBuilderRef Builder, unsigned Tag, const char *Name,
+    size_t NameLen, LLVMMetadataRef Scope, LLVMMetadataRef File, unsigned Line,
+    unsigned RuntimeLang, unsigned SizeInBits, unsigned AlignInBits,
+    const char *UniqueIdentifier, size_t UniqueIdentifierLen);
+
+/**
  * Create a temporary forward-declared type.
- * \param Builder   The DIBuilder.
- * \param Tag       A unique tag for this type.
- * \param Name      Type name.
- * \param NameLen   Length of type name.
- * \param Scope     Type scope.
- * \param File      File where this type is defined.
- * \param Line      Line number where this type is defined.
+ * \param Builder             The DIBuilder.
+ * \param Tag                 A unique tag for this type.
+ * \param Name                Type name.
+ * \param NameLen             Length of type name.
+ * \param Scope               Type scope.
+ * \param File                File where this type is defined.
+ * \param Line                Line number where this type is defined.
+ * \param RuntimeLang         Indicates runtime version for languages like
+ *                            Objective-C.
+ * \param SizeInBits          Member size.
+ * \param AlignInBits         Member alignment.
+ * \param Flags               Flags.
+ * \param UniqueIdentifier    A unique identifier for the type.
+ * \param UniqueIdentifierLen Length of the unique identifier.
  */
 LLVMMetadataRef
 LLVMDIBuilderCreateReplaceableCompositeType(
