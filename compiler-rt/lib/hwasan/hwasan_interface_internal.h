@@ -18,7 +18,6 @@
 #include "sanitizer_common/sanitizer_internal_defs.h"
 
 extern "C" {
-
 SANITIZER_INTERFACE_ATTRIBUTE
 void __hwasan_init();
 
@@ -31,9 +30,6 @@ using __sanitizer::u64;
 using __sanitizer::u32;
 using __sanitizer::u16;
 using __sanitizer::u8;
-
-SANITIZER_INTERFACE_ATTRIBUTE
-extern uptr __hwasan_shadow_memory_dynamic_address;
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __hwasan_loadN(uptr, uptr);

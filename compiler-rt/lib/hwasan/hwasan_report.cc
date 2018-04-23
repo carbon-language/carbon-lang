@@ -14,7 +14,6 @@
 
 #include "hwasan.h"
 #include "hwasan_allocator.h"
-#include "hwasan_mapping.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"

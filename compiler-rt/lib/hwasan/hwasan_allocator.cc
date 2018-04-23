@@ -20,7 +20,6 @@
 #include "sanitizer_common/sanitizer_stackdepot.h"
 #include "hwasan.h"
 #include "hwasan_allocator.h"
-#include "hwasan_mapping.h"
 #include "hwasan_thread.h"
 #include "hwasan_poisoning.h"
 

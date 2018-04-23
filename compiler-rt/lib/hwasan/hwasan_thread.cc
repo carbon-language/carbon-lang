@@ -1,6 +1,5 @@
 
 #include "hwasan.h"
-#include "hwasan_mapping.h"
 #include "hwasan_thread.h"
 #include "hwasan_poisoning.h"
 #include "hwasan_interface_internal.h"
