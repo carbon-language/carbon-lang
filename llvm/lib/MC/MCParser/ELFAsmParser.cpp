@@ -498,16 +498,16 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
   // Set the defaults first.
   if (hasPrefix(SectionName, ".rodata.") || SectionName == ".rodata1")
     Flags |= ELF::SHF_ALLOC;
-  if (SectionName == ".fini" || SectionName == ".init" ||
+  else if (SectionName == ".fini" || SectionName == ".init" ||
       hasPrefix(SectionName, ".text."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
-  if (hasPrefix(SectionName, ".data.") || SectionName == ".data1" ||
+  else if (hasPrefix(SectionName, ".data.") || SectionName == ".data1" ||
       hasPrefix(SectionName, ".bss.") ||
       hasPrefix(SectionName, ".init_array.") ||
       hasPrefix(SectionName, ".fini_array.") ||
       hasPrefix(SectionName, ".preinit_array."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_WRITE;
-  if (hasPrefix(SectionName, ".tdata.") ||
+  else if (hasPrefix(SectionName, ".tdata.") ||
       hasPrefix(SectionName, ".tbss."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_WRITE | ELF::SHF_TLS;
 
