@@ -617,8 +617,7 @@ TYPE_CONTEXT_PARSER("TYPE statement"_en_US,
 // R728 type-attr-spec ->
 //        ABSTRACT | access-spec | BIND(C) | EXTENDS ( parent-type-name )
 TYPE_PARSER(construct<TypeAttrSpec>(construct<Abstract>("ABSTRACT"_tok)) ||
-    construct<TypeAttrSpec>(
-        construct<TypeAttrSpec::BindC>("BIND ( C )"_tok)) ||
+    construct<TypeAttrSpec>(construct<TypeAttrSpec::BindC>("BIND ( C )"_tok)) ||
     construct<TypeAttrSpec>(
         construct<TypeAttrSpec::Extends>("EXTENDS" >> parenthesized(name))) ||
     construct<TypeAttrSpec>(accessSpec))
@@ -3051,8 +3050,8 @@ TYPE_PARSER(construct<GenericSpec>(
         construct<GenericSpec::Assignment>("ASSIGNMENT ( = )"_tok)) ||
     construct<GenericSpec>(
         construct<GenericSpec::ReadFormatted>("READ ( FORMATTED )"_tok)) ||
-    construct<GenericSpec>(construct<GenericSpec::ReadUnformatted>(
-        "READ ( UNFORMATTED )"_tok)) ||
+    construct<GenericSpec>(
+        construct<GenericSpec::ReadUnformatted>("READ ( UNFORMATTED )"_tok)) ||
     construct<GenericSpec>(
         construct<GenericSpec::WriteFormatted>("WRITE ( FORMATTED )"_tok)) ||
     construct<GenericSpec>(construct<GenericSpec::WriteUnformatted>(
@@ -3141,8 +3140,7 @@ TYPE_PARSER(construct<AltReturnSpec>(star >> label))
 //         declaration-type-spec | ELEMENTAL | IMPURE | MODULE |
 //         NON_RECURSIVE | PURE | RECURSIVE
 TYPE_PARSER(construct<PrefixSpec>(declarationTypeSpec) ||
-    construct<PrefixSpec>(
-        construct<PrefixSpec::Elemental>("ELEMENTAL"_tok)) ||
+    construct<PrefixSpec>(construct<PrefixSpec::Elemental>("ELEMENTAL"_tok)) ||
     construct<PrefixSpec>(construct<PrefixSpec::Impure>("IMPURE"_tok)) ||
     construct<PrefixSpec>(construct<PrefixSpec::Module>("MODULE"_tok)) ||
     construct<PrefixSpec>(
