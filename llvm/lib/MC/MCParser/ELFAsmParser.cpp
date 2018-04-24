@@ -499,16 +499,16 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
   if (hasPrefix(SectionName, ".rodata.") || SectionName == ".rodata1")
     Flags |= ELF::SHF_ALLOC;
   else if (SectionName == ".fini" || SectionName == ".init" ||
-      hasPrefix(SectionName, ".text."))
+           hasPrefix(SectionName, ".text."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
   else if (hasPrefix(SectionName, ".data.") || SectionName == ".data1" ||
-      hasPrefix(SectionName, ".bss.") ||
-      hasPrefix(SectionName, ".init_array.") ||
-      hasPrefix(SectionName, ".fini_array.") ||
-      hasPrefix(SectionName, ".preinit_array."))
+           hasPrefix(SectionName, ".bss.") ||
+           hasPrefix(SectionName, ".init_array.") ||
+           hasPrefix(SectionName, ".fini_array.") ||
+           hasPrefix(SectionName, ".preinit_array."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_WRITE;
   else if (hasPrefix(SectionName, ".tdata.") ||
-      hasPrefix(SectionName, ".tbss."))
+           hasPrefix(SectionName, ".tbss."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_WRITE | ELF::SHF_TLS;
 
   if (getLexer().is(AsmToken::Comma)) {
