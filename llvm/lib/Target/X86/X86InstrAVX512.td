@@ -1085,14 +1085,14 @@ def VEXTRACTPSZrr : AVX512AIi8<0x17, MRMDestReg, (outs GR32:$dst),
       (ins VR128X:$src1, u8imm:$src2),
       "vextractps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
       [(set GR32:$dst, (extractelt (bc_v4i32 (v4f32 VR128X:$src1)), imm:$src2))]>,
-      EVEX, VEX_WIG, Sched<[WriteFBlend]>;
+      EVEX, VEX_WIG, Sched<[WriteVecExtract]>;
 
 def VEXTRACTPSZmr : AVX512AIi8<0x17, MRMDestMem, (outs),
       (ins f32mem:$dst, VR128X:$src1, u8imm:$src2),
       "vextractps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
       [(store (extractelt (bc_v4i32 (v4f32 VR128X:$src1)), imm:$src2),
                           addr:$dst)]>,
-      EVEX, VEX_WIG, EVEX_CD8<32, CD8VT1>, Sched<[WriteFBlendLd, WriteRMW]>;
+      EVEX, VEX_WIG, EVEX_CD8<32, CD8VT1>, Sched<[WriteVecExtractSt]>;
 
 //===---------------------------------------------------------------------===//
 // AVX-512 BROADCAST
@@ -9878,7 +9878,7 @@ multiclass avx512_extract_elt_bw_m<bits<8> opc, string OpcodeStr, SDNode OpNode,
               OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}",
               [(store (_.EltVT (trunc (OpNode (_.VT _.RC:$src1), imm:$src2))),
                        addr:$dst)]>,
-              EVEX, EVEX_CD8<_.EltSize, CD8VT1>, Sched<[WriteShuffleLd, WriteRMW]>;
+              EVEX, EVEX_CD8<_.EltSize, CD8VT1>, Sched<[WriteVecExtractSt]>;
 }
 
 multiclass avx512_extract_elt_b<string OpcodeStr, X86VectorVTInfo _> {
@@ -9888,7 +9888,7 @@ multiclass avx512_extract_elt_b<string OpcodeStr, X86VectorVTInfo _> {
                   OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                   [(set GR32orGR64:$dst,
                         (X86pextrb (_.VT _.RC:$src1), imm:$src2))]>,
-                  EVEX, TAPD, Sched<[WriteShuffle]>;
+                  EVEX, TAPD, Sched<[WriteVecExtract]>;
 
     defm NAME : avx512_extract_elt_bw_m<0x14, OpcodeStr, X86pextrb, _>, TAPD;
   }
@@ -9901,14 +9901,14 @@ multiclass avx512_extract_elt_w<string OpcodeStr, X86VectorVTInfo _> {
                   OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                   [(set GR32orGR64:$dst,
                         (X86pextrw (_.VT _.RC:$src1), imm:$src2))]>,
-                  EVEX, PD, Sched<[WriteShuffle]>;
+                  EVEX, PD, Sched<[WriteVecExtract]>;
 
     let hasSideEffects = 0 in
     def rr_REV : AVX512Ii8<0x15, MRMDestReg, (outs GR32orGR64:$dst),
                    (ins _.RC:$src1, u8imm:$src2),
                    OpcodeStr#".s\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
                    EVEX, TAPD, FoldGenData<NAME#rr>,
-                   Sched<[WriteShuffle]>;
+                   Sched<[WriteVecExtract]>;
 
     defm NAME : avx512_extract_elt_bw_m<0x15, OpcodeStr, X86pextrw, _>, TAPD;
   }
@@ -9922,7 +9922,7 @@ multiclass avx512_extract_elt_dq<string OpcodeStr, X86VectorVTInfo _,
                   OpcodeStr#"\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                   [(set GRC:$dst,
                       (extractelt (_.VT _.RC:$src1), imm:$src2))]>,
-                  EVEX, TAPD, Sched<[WriteShuffle]>;
+                  EVEX, TAPD, Sched<[WriteVecExtract]>;
 
     def mr : AVX512Ii8<0x16, MRMDestMem, (outs),
                 (ins _.ScalarMemOp:$dst, _.RC:$src1, u8imm:$src2),
@@ -9930,7 +9930,7 @@ multiclass avx512_extract_elt_dq<string OpcodeStr, X86VectorVTInfo _,
                 [(store (extractelt (_.VT _.RC:$src1),
                                     imm:$src2),addr:$dst)]>,
                 EVEX, EVEX_CD8<_.EltSize, CD8VT1>, TAPD,
-                Sched<[WriteShuffleLd, WriteRMW]>;
+                Sched<[WriteVecExtractSt]>;
   }
 }
 
@@ -9946,7 +9946,7 @@ multiclass avx512_insert_elt_m<bits<8> opc, string OpcodeStr, SDNode OpNode,
       OpcodeStr#"\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
       [(set _.RC:$dst,
           (_.VT (OpNode _.RC:$src1, (LdFrag addr:$src2), imm:$src3)))]>,
-      EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>, Sched<[WriteShuffleLd, ReadAfterLd]>;
+      EVEX_4V, EVEX_CD8<_.EltSize, CD8VT1>, Sched<[WriteVecInsertLd, ReadAfterLd]>;
 }
 
 multiclass avx512_insert_elt_bw<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -9957,7 +9957,7 @@ multiclass avx512_insert_elt_bw<bits<8> opc, string OpcodeStr, SDNode OpNode,
         OpcodeStr#"\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
         [(set _.RC:$dst,
             (OpNode _.RC:$src1, GR32orGR64:$src2, imm:$src3))]>, EVEX_4V,
-        Sched<[WriteShuffle]>;
+        Sched<[WriteVecInsert]>;
 
     defm NAME : avx512_insert_elt_m<opc, OpcodeStr, OpNode, _, LdFrag>;
   }
@@ -9971,7 +9971,7 @@ multiclass avx512_insert_elt_dq<bits<8> opc, string OpcodeStr,
         OpcodeStr#"\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
         [(set _.RC:$dst,
             (_.VT (insertelt _.RC:$src1, GRC:$src2, imm:$src3)))]>,
-        EVEX_4V, TAPD, Sched<[WriteShuffle]>;
+        EVEX_4V, TAPD, Sched<[WriteVecInsert]>;
 
     defm NAME : avx512_insert_elt_m<opc, OpcodeStr, insertelt, _,
                                     _.ScalarLdFrag>, TAPD;

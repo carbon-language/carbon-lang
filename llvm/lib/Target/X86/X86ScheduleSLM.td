@@ -164,6 +164,16 @@ defm : SLMWriteResPair<WriteBlend,  [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteMPSAD,  [SLM_FPC_RSV0],  7>;
 defm : SLMWriteResPair<WritePSADBW, [SLM_FPC_RSV0],  4>;
 
+// Vector insert/extract operations.
+defm : SLMWriteResPair<WriteVecInsert, [SLM_FPC_RSV0],  1>;
+
+def  : WriteRes<WriteVecExtract, [SLM_FPC_RSV0]>;
+def  : WriteRes<WriteVecExtractSt, [SLM_FPC_RSV0, SLM_MEC_RSV]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 2];
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Horizontal add/sub  instructions.
 ////////////////////////////////////////////////////////////////////////////////

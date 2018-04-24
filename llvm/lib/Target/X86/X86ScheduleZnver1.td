@@ -233,6 +233,19 @@ defm : ZnWriteResFpuPair<WritePSADBW,     [ZnFPU0],  3>;
 // Vector Shift Operations
 defm : ZnWriteResFpuPair<WriteVarVecShift, [ZnFPU12], 1>;
 
+// Vector insert/extract operations.
+defm : ZnWriteResFpuPair<WriteVecInsert,   [ZnFPU],   1>;
+
+def : WriteRes<WriteVecExtract, [ZnFPU12, ZnFPU2]> {
+  let Latency = 2;
+  let ResourceCycles = [1, 2];
+}
+def : WriteRes<WriteVecExtractSt, [ZnAGU, ZnFPU12, ZnFPU2]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 2, 3];
+}
+
 // MOVMSK Instructions.
 def : WriteRes<WriteFMOVMSK, [ZnFPU2]>;
 def : WriteRes<WriteVecMOVMSK, [ZnFPU2]>;
@@ -986,22 +999,6 @@ def ZnWritePMOVMSKBY : SchedWriteRes<[ZnFPU2]> {
   let ResourceCycles = [2];
 }
 def : InstRW<[ZnWritePMOVMSKBY], (instregex "(V|MMX_)?PMOVMSKBYrr")>;
-
-// PEXTR B/W/D/Q.
-// r32,x,i.
-def ZnWritePEXTRr : SchedWriteRes<[ZnFPU12, ZnFPU2]> {
-  let Latency = 2;
-  let ResourceCycles = [1, 2];
-}
-def : InstRW<[ZnWritePEXTRr], (instregex "(V?)PEXTR(B|W|D|Q)rr", "MMX_PEXTRWrr")>;
-
-def ZnWritePEXTRm : SchedWriteRes<[ZnAGU, ZnFPU12, ZnFPU2]> {
-  let Latency = 5;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1, 2, 3];
-}
-// m8,x,i.
-def : InstRW<[ZnWritePEXTRm], (instregex "(V?)PEXTR(B|W|D|Q)mr")>;
 
 // VPBROADCAST B/W.
 // x, m8/16.

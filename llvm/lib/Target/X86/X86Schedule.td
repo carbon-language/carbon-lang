@@ -117,6 +117,11 @@ defm WriteVarBlend  : X86SchedWritePair; // Vector variable blends.
 defm WritePSADBW : X86SchedWritePair; // Vector PSADBW.
 defm WriteMPSAD : X86SchedWritePair; // Vector MPSAD.
 
+// Vector insert/extract operations.
+defm WriteVecInsert : X86SchedWritePair; // Insert gpr to vector element.
+def  WriteVecExtract : SchedWrite; // Extract vector element to gpr.
+def  WriteVecExtractSt : SchedWrite; // Extract vector element and store.
+
 // MOVMSK operations.
 def WriteFMOVMSK : SchedWrite;
 def WriteVecMOVMSK : SchedWrite;
