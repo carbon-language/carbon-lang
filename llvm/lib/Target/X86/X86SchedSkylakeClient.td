@@ -1758,8 +1758,6 @@ def: InstRW<[SKLWriteResGroup122], (instregex "(V?)ADDSDrm",
                                               "(V?)MULSSrm",
                                               "(V?)SUBSDrm",
                                               "(V?)SUBSSrm")>;
-def: InstRW<[SKLWriteResGroup122],
-            (instregex "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)m")>;
 
 def SKLWriteResGroup123 : SchedWriteRes<[SKLPort23,SKLPort01]> {
   let Latency = 9;

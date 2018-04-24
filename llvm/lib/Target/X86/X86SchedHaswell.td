@@ -1946,8 +1946,7 @@ def HWWriteResGroup92_2 : SchedWriteRes<[HWPort01,HWPort23]> {
   let ResourceCycles = [1,1];
 }
 def: InstRW<[HWWriteResGroup92_2], (instregex "(V?)MULSDrm",
-                                              "(V?)MULSSrm",
-                                              "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)m")>;
+                                              "(V?)MULSSrm")>;
 
 def HWWriteResGroup93 : SchedWriteRes<[HWPort1,HWPort5]> {
   let Latency = 5;

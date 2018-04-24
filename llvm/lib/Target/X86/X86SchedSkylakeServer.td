@@ -3615,8 +3615,6 @@ def SKXWriteResGroup137 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKXWriteResGroup137],
-            (instregex "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)m")>;
 def: InstRW<[SKXWriteResGroup137], (instregex "ADDSDrm",
                                               "ADDSSrm",
                                               "CMPSDrm",

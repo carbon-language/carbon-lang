@@ -1547,15 +1547,6 @@ def BWWriteResGroup115 : SchedWriteRes<[BWPort0,BWPort23]> {
 }
 def: InstRW<[BWWriteResGroup115], (instregex "(V?)PCMPGTQrm")>;
 
-def BWWriteResGroup116 : SchedWriteRes<[BWPort01,BWPort23]> {
-  let Latency = 10;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[BWWriteResGroup116],
-            (instregex "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)m",
-                       "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)m")>;
-
 def BWWriteResGroup117 : SchedWriteRes<[BWPort1,BWPort23]> {
   let Latency = 10;
   let NumMicroOps = 3;
