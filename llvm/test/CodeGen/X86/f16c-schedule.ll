@@ -155,7 +155,7 @@ define <8 x i16> @test_vcvtps2ph_128(<4 x float> %a0, <4 x float> %a1, <4 x i16>
 ; BTVER2-LABEL: test_vcvtps2ph_128:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    vcvtps2ph $0, %xmm0, %xmm0 # sched: [3:1.00]
-; BTVER2-NEXT:    vcvtps2ph $0, %xmm1, (%rdi) # sched: [3:1.00]
+; BTVER2-NEXT:    vcvtps2ph $0, %xmm1, (%rdi) # sched: [4:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_vcvtps2ph_128:
@@ -210,7 +210,7 @@ define <8 x i16> @test_vcvtps2ph_256(<8 x float> %a0, <8 x float> %a1, <8 x i16>
 ; BTVER2-LABEL: test_vcvtps2ph_256:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    vcvtps2ph $0, %ymm0, %xmm0 # sched: [6:2.00]
-; BTVER2-NEXT:    vcvtps2ph $0, %ymm1, (%rdi) # sched: [11:2.00]
+; BTVER2-NEXT:    vcvtps2ph $0, %ymm1, (%rdi) # sched: [7:2.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_vcvtps2ph_256:

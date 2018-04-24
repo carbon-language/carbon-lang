@@ -492,7 +492,7 @@ def : InstRW<[JWriteINSERTQ], (instrs INSERTQ, INSERTQI)>;
 ////////////////////////////////////////////////////////////////////////////////
 
 def JWriteCVT3St: SchedWriteRes<[JFPU1, JSTC, JSAGU]> {
-  let Latency = 3;
+  let Latency = 4;
 }
 def : InstRW<[JWriteCVT3St], (instrs VCVTPS2PHmr)>;
 
@@ -504,7 +504,7 @@ def JWriteCVTPS2PHY: SchedWriteRes<[JFPU1, JSTC, JFPX]> {
 def : InstRW<[JWriteCVTPS2PHY], (instrs VCVTPS2PHYrr)>;
 
 def JWriteCVTPS2PHYSt: SchedWriteRes<[JFPU1, JSTC, JFPX, JSAGU]> {
-  let Latency = 11;
+  let Latency = 7;
   let ResourceCycles = [2, 2, 2, 1];
   let NumMicroOps = 3;
 }
