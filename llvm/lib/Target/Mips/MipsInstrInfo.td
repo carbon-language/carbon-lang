@@ -3030,10 +3030,10 @@ let AdditionalPredicates = [NotInMicroMips] in {
   defm : SetgtPats<GPR32, SLT, SLTu>;
   defm : SetgePats<GPR32, XORi, SLT, SLTu>;
   defm : SetgeImmPats<GPR32, XORi, SLTi, SLTiu>;
-}
 
-// bswap pattern
-def : MipsPat<(bswap GPR32:$rt), (ROTR (WSBH GPR32:$rt), 16)>;
+  // bswap pattern
+  def : MipsPat<(bswap GPR32:$rt), (ROTR (WSBH GPR32:$rt), 16)>, ISA_MIPS32R2;
+}
 
 // Load halfword/word patterns.
 let AddedComplexity = 40 in {
