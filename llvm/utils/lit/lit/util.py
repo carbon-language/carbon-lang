@@ -193,6 +193,10 @@ def which(command, paths=None):
     if paths is None:
         paths = os.environ.get('PATH', '')
 
+    # Check for absolute match first.
+    if os.path.isabs(command) and os.path.isfile(command):
+        return os.path.normpath(command)
+
     # Would be nice if Python had a lib function for this.
     if not paths:
         paths = os.defpath
