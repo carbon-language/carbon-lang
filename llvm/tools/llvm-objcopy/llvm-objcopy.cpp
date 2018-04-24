@@ -58,7 +58,7 @@ enum ID {
 #include "Opts.inc"
 #undef PREFIX
 
-static constexpr opt::OptTable::Info ObjcopyInfoTable[] = {
+static const opt::OptTable::Info ObjcopyInfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {PREFIX,          NAME,         HELPTEXT,                                    \
