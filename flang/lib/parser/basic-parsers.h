@@ -876,12 +876,6 @@ private:
   const PA parser_;
 };
 
-// TODO pmk rm
-template<class T, typename PA>
-constexpr Construct01<T, PA> constructIf(const PA &parser) {
-  return Construct01<T, PA>{parser};
-}
-
 template<typename T, typename PA> class Construct1 {
 public:
   using resultType = T;
