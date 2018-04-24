@@ -99,6 +99,8 @@ collect the values that they return.
 * `construct<T>(p1, p2, ...)` matches zero or more parsers in succession,
   collecting their results and then passing them with move semantics to a
   constructor for the type T if they all succeed.
+* `constructIf<T>(p)` matches p and then returns the default-constructed `T{}`.
+  The value of p must be the vacant `Success{}` value.
 * `sourced(p)` matches p, and fills in its `source` data member with the
   locations of the cooked character stream that it consumed
 * `applyFunction(f, p1, p2, ...)` matches one or more parsers in succession,

@@ -861,11 +861,31 @@ template<class T> constexpr Construct0<T> construct() {
   return Construct0<T>{};
 }
 
+template<class T, typename PA> struct Construct01 {
+  using resultType = T;
+  constexpr explicit Construct01(const PA &parser) : parser_{parser} {}
+  constexpr Construct01(const Construct01 &) = default;
+  std::optional<T> Parse(ParseState &state) const {
+    if (std::optional<Success>{parser_.Parse(state)}) {
+      return {T{}};
+    }
+    return {};
+  }
+
+private:
+  const PA parser_;
+};
+
+template<class T, typename PA>
+constexpr Construct01<T, PA> constructIf(const PA &parser) {
+  return Construct01<T, PA>{parser};
+}
+
 template<typename T, typename PA> class Construct1 {
 public:
   using resultType = T;
-  constexpr Construct1(const Construct1 &) = default;
   constexpr explicit Construct1(const PA &parser) : parser_{parser} {}
+  constexpr Construct1(const Construct1 &) = default;
   std::optional<T> Parse(ParseState &state) const {
     if (auto ax = parser_.Parse(state)) {
       return {T(std::move(*ax))};
@@ -877,11 +897,16 @@ private:
   const PA parser_;
 };
 
+template<typename T, typename PA>
+constexpr Construct1<T, PA> construct(const PA &parser) {
+  return Construct1<T, PA>{parser};
+}
+
 template<typename T, typename PA, typename PB> class Construct2 {
 public:
   using resultType = T;
-  constexpr Construct2(const Construct2 &) = default;
   constexpr Construct2(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
+  constexpr Construct2(const Construct2 &) = default;
   std::optional<T> Parse(ParseState &state) const {
     if (auto ax = pa_.Parse(state)) {
       if (auto bx = pb_.Parse(state)) {
@@ -896,12 +921,17 @@ private:
   const PB pb_;
 };
 
+template<typename T, typename PA, typename PB>
+constexpr Construct2<T, PA, PB> construct(const PA &pa, const PB &pb) {
+  return Construct2<T, PA, PB>{pa, pb};
+}
+
 template<typename T, typename PA, typename PB, typename PC> class Construct3 {
 public:
   using resultType = T;
-  constexpr Construct3(const Construct3 &) = default;
   constexpr Construct3(const PA &pa, const PB &pb, const PC &pc)
     : pa_{pa}, pb_{pb}, pc_{pc} {}
+  constexpr Construct3(const Construct3 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
     if (auto ax = pa_.Parse(state)) {
       if (auto bx = pb_.Parse(state)) {
@@ -919,13 +949,19 @@ private:
   const PC pc_;
 };
 
+template<typename T, typename PA, typename PB, typename PC>
+constexpr Construct3<T, PA, PB, PC> construct(
+    const PA &pa, const PB &pb, const PC &pc) {
+  return Construct3<T, PA, PB, PC>{pa, pb, pc};
+}
+
 template<typename T, typename PA, typename PB, typename PC, typename PD>
 class Construct4 {
 public:
   using resultType = T;
-  constexpr Construct4(const Construct4 &) = default;
   constexpr Construct4(const PA &pa, const PB &pb, const PC &pc, const PD &pd)
     : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
+  constexpr Construct4(const Construct4 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
     if (auto ax = pa_.Parse(state)) {
       if (auto bx = pb_.Parse(state)) {
@@ -947,15 +983,21 @@ private:
   const PD pd_;
 };
 
+template<typename T, typename PA, typename PB, typename PC, typename PD>
+constexpr Construct4<T, PA, PB, PC, PD> construct(
+    const PA &pa, const PB &pb, const PC &pc, const PD &pd) {
+  return Construct4<T, PA, PB, PC, PD>{pa, pb, pc, pd};
+}
+
 template<typename T, typename PA, typename PB, typename PC, typename PD,
     typename PE>
 class Construct5 {
 public:
   using resultType = T;
-  constexpr Construct5(const Construct5 &) = default;
   constexpr Construct5(
       const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe)
     : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe} {}
+  constexpr Construct5(const Construct5 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
     if (auto ax = pa_.Parse(state)) {
       if (auto bx = pb_.Parse(state)) {
@@ -981,14 +1023,21 @@ private:
 };
 
 template<typename T, typename PA, typename PB, typename PC, typename PD,
+    typename PE>
+constexpr Construct5<T, PA, PB, PC, PD, PE> construct(
+    const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe) {
+  return Construct5<T, PA, PB, PC, PD, PE>{pa, pb, pc, pd, pe};
+}
+
+template<typename T, typename PA, typename PB, typename PC, typename PD,
     typename PE, typename PF>
 class Construct6 {
 public:
   using resultType = T;
-  constexpr Construct6(const Construct6 &) = default;
   constexpr Construct6(const PA &pa, const PB &pb, const PC &pc, const PD &pd,
       const PE &pe, const PF &pf)
     : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe}, pf_{pf} {}
+  constexpr Construct6(const Construct6 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
     if (auto ax = pa_.Parse(state)) {
       if (auto bx = pb_.Parse(state)) {
@@ -1015,35 +1064,6 @@ private:
   const PE pe_;
   const PF pf_;
 };
-
-template<typename T, typename PA>
-constexpr Construct1<T, PA> construct(const PA &parser) {
-  return Construct1<T, PA>{parser};
-}
-
-template<typename T, typename PA, typename PB>
-constexpr Construct2<T, PA, PB> construct(const PA &pa, const PB &pb) {
-  return Construct2<T, PA, PB>{pa, pb};
-}
-
-template<typename T, typename PA, typename PB, typename PC>
-constexpr Construct3<T, PA, PB, PC> construct(
-    const PA &pa, const PB &pb, const PC &pc) {
-  return Construct3<T, PA, PB, PC>{pa, pb, pc};
-}
-
-template<typename T, typename PA, typename PB, typename PC, typename PD>
-constexpr Construct4<T, PA, PB, PC, PD> construct(
-    const PA &pa, const PB &pb, const PC &pc, const PD &pd) {
-  return Construct4<T, PA, PB, PC, PD>{pa, pb, pc, pd};
-}
-
-template<typename T, typename PA, typename PB, typename PC, typename PD,
-    typename PE>
-constexpr Construct5<T, PA, PB, PC, PD, PE> construct(
-    const PA &pa, const PB &pb, const PC &pc, const PD &pd, const PE &pe) {
-  return Construct5<T, PA, PB, PC, PD, PE>{pa, pb, pc, pd, pe};
-}
 
 template<typename T, typename PA, typename PB, typename PC, typename PD,
     typename PE, typename PF>
