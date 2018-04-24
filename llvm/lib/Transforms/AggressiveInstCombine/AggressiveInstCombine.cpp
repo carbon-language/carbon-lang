@@ -116,6 +116,10 @@ void llvm::initializeAggressiveInstCombine(PassRegistry &Registry) {
   initializeAggressiveInstCombinerLegacyPassPass(Registry);
 }
 
+void LLVMInitializeAggressiveInstCombiner(LLVMPassRegistryRef R) {
+  initializeAggressiveInstCombinerLegacyPassPass(*unwrap(R));
+}
+
 FunctionPass *llvm::createAggressiveInstCombinerPass() {
   return new AggressiveInstCombinerLegacyPass();
 }
