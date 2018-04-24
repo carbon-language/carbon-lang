@@ -194,7 +194,8 @@ defm : BWWriteResPair<WriteVarShuffle, [BWPort5],  1>; // Vector variable shuffl
 defm : BWWriteResPair<WriteBlend,  [BWPort5],  1>; // Vector blends.
 defm : BWWriteResPair<WriteVarBlend,  [BWPort5], 2, [2], 2, 5>; // Vector variable blends.
 defm : BWWriteResPair<WriteMPSAD,  [BWPort0, BWPort5], 7, [1, 2], 3, 5>; // Vector MPSAD.
-defm : BWWriteResPair<WritePSADBW,  [BWPort0],   5>; // Vector PSADBW.
+defm : BWWriteResPair<WritePSADBW,   [BWPort0],   5>; // Vector PSADBW.
+defm : BWWriteResPair<WritePHMINPOS, [BWPort0],   5>; // Vector PHMINPOS.
 
 // Vector insert/extract operations.
 def : WriteRes<WriteVecInsert, [BWPort5]> {

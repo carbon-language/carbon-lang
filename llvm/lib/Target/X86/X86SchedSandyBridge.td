@@ -173,6 +173,7 @@ defm : SBWriteResPair<WriteBlend,   [SBPort15], 1, [1], 1, 6>;
 defm : SBWriteResPair<WriteVarBlend, [SBPort15], 2, [2], 2, 6>;
 defm : SBWriteResPair<WriteMPSAD, [SBPort0, SBPort15], 7, [1,2], 3, 6>;
 defm : SBWriteResPair<WritePSADBW,  [SBPort0], 5>;
+defm : SBWriteResPair<WritePHMINPOS,  [SBPort0], 5, [1], 1, 6>;
 
 // Vector insert/extract operations.
 def : WriteRes<WriteVecInsert, [SBPort5,SBPort15]> {
@@ -1537,8 +1538,7 @@ def SBWriteResGroup104 : SchedWriteRes<[SBPort0,SBPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SBWriteResGroup104], (instregex "(V?)PCMPGTQrm",
-                                             "(V?)PHMINPOSUWrm")>;
+def: InstRW<[SBWriteResGroup104], (instregex "(V?)PCMPGTQrm")>;
 
 def SBWriteResGroup106 : SchedWriteRes<[SBPort1,SBPort23]> {
   let Latency = 11;

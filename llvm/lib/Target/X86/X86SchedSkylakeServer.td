@@ -192,6 +192,7 @@ defm : SKXWriteResPair<WriteBlend, [SKXPort5], 1, [1], 1, 6>; // Vector blends.
 defm : SKXWriteResPair<WriteVarBlend, [SKXPort015], 2, [2], 2, 6>; // Vector variable blends.
 defm : SKXWriteResPair<WriteMPSAD,  [SKXPort5], 4, [2], 2, 6>; // Vector MPSAD.
 defm : SKXWriteResPair<WritePSADBW, [SKXPort5], 3, [1,1], 1, 6>; // Vector PSADBW.
+defm : SKXWriteResPair<WritePHMINPOS, [SKXPort015], 4, [1], 1, 6>; // Vector PHMINPOS.
 
 // Vector insert/extract operations.
 def : WriteRes<WriteVecInsert, [SKXPort5]> {
@@ -1615,7 +1616,6 @@ def: InstRW<[SKXWriteResGroup50], (instregex "ADDPDrr",
                                              "MULPSrr",
                                              "MULSDrr",
                                              "MULSSrr",
-                                             "PHMINPOSUWrr",
                                              "PMADDUBSWrr",
                                              "PMADDWDrr",
                                              "PMULDQrr",
@@ -1726,7 +1726,6 @@ def: InstRW<[SKXWriteResGroup50], (instregex "ADDPDrr",
                                              "VMULSDrr",
                                              "VMULSSZrr",
                                              "VMULSSrr",
-                                             "VPHMINPOSUWrr",
                                              "VPLZCNTDZ128rr",
                                              "VPLZCNTDZ256rr",
                                              "VPLZCNTDZrr",
@@ -3893,7 +3892,6 @@ def: InstRW<[SKXWriteResGroup149], (instregex "ADDPDrm",
                                               "CVTTPS2DQrm",
                                               "MULPDrm",
                                               "MULPSrm",
-                                              "PHMINPOSUWrm",
                                               "PMADDUBSWrm",
                                               "PMADDWDrm",
                                               "PMULDQrm",
@@ -3958,7 +3956,6 @@ def: InstRW<[SKXWriteResGroup149], (instregex "ADDPDrm",
                                               "VMULPSrm",
                                               "VMULSDZrm",
                                               "VMULSSZrm",
-                                              "VPHMINPOSUWrm",
                                               "VPLZCNTDZ128rm(b?)",
                                               "VPLZCNTQZ128rm(b?)",
                                               "VPMADDUBSWZ128rm(b?)",

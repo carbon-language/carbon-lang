@@ -192,6 +192,7 @@ defm : SKLWriteResPair<WriteBlend,  [SKLPort5], 1, [1], 1, 6>; // Vector blends.
 defm : SKLWriteResPair<WriteVarBlend,  [SKLPort015], 2, [2], 2, 6>; // Vector variable blends.
 defm : SKLWriteResPair<WriteMPSAD,  [SKLPort5], 4, [2], 2, 6>; // Vector MPSAD.
 defm : SKLWriteResPair<WritePSADBW, [SKLPort5], 3>; // Vector PSADBW.
+defm : SKLWriteResPair<WritePHMINPOS, [SKLPort01], 4, [1], 1, 6>; // Vector PHMINPOS.
 
 // Vector insert/extract operations.
 def : WriteRes<WriteVecInsert, [SKLPort5]> {
@@ -927,7 +928,6 @@ def: InstRW<[SKLWriteResGroup48], (instregex "(V?)ADDPD(Y?)rr",
                                              "(V?)MULPS(Y?)rr",
                                              "(V?)MULSDrr",
                                              "(V?)MULSSrr",
-                                             "(V?)PHMINPOSUWrr",
                                              "(V?)PMADDUBSW(Y?)rr",
                                              "(V?)PMADDWD(Y?)rr",
                                              "(V?)PMULDQ(Y?)rr",
@@ -1883,7 +1883,6 @@ def: InstRW<[SKLWriteResGroup134], (instregex "(V?)ADDPDrm",
                                               "(V?)CVTTPS2DQrm",
                                               "(V?)MULPDrm",
                                               "(V?)MULPSrm",
-                                              "(V?)PHMINPOSUWrm",
                                               "(V?)PMADDUBSWrm",
                                               "(V?)PMADDWDrm",
                                               "(V?)PMULDQrm",
