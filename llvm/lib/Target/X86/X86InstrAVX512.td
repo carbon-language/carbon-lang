@@ -5585,6 +5585,7 @@ let Predicates = [HasAVX512, NoVLX] in {
 //===-------------------------------------------------------------------===//
 // Variable Bit Shifts
 //===-------------------------------------------------------------------===//
+
 multiclass avx512_var_shift<bits<8> opc, string OpcodeStr, SDNode OpNode,
                             X86FoldableSchedWrite sched, X86VectorVTInfo _> {
   let ExeDomain = _.ExeDomain in {
@@ -5754,7 +5755,6 @@ defm : avx512_var_shift_int_lowering_mb<"VPSRAVQ", v2i64x_info, [HasVLX]>;
 defm : avx512_var_shift_int_lowering_mb<"VPSRAVQ", v4i64x_info, [HasVLX]>;
 defm : avx512_var_shift_int_lowering_mb<"VPSRAVQ", v8i64_info, [HasAVX512]>;
 
-
 // Use 512bit VPROL/VPROLI version to implement v2i64/v4i64 + v4i32/v8i32 in case NoVLX.
 let Predicates = [HasAVX512, NoVLX] in {
   def : Pat<(v2i64 (rotl (v2i64 VR128X:$src1), (v2i64 VR128X:$src2))),
@@ -5860,6 +5860,7 @@ let Predicates = [HasAVX512, NoVLX] in {
 //===-------------------------------------------------------------------===//
 // 1-src variable permutation VPERMW/D/Q
 //===-------------------------------------------------------------------===//
+
 multiclass avx512_vperm_dq_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                  X86FoldableSchedWrite sched, AVX512VLVectorVTInfo _> {
   let Predicates  = [HasAVX512] in
@@ -5915,10 +5916,10 @@ defm VPERMPD : avx512_vperm_dq_sizes<0x16, "vpermpd", X86VPermv,
                                      WriteFVarShuffle256, avx512vl_f64_info>, VEX_W;
 
 defm VPERMQ : avx512_vpermi_dq_sizes<0x00, MRMSrcReg, MRMSrcMem, "vpermq",
-                             X86VPermi, WriteVarShuffle256, avx512vl_i64_info>,
+                             X86VPermi, WriteShuffle256, avx512vl_i64_info>,
                              EVEX, AVX512AIi8Base, EVEX_CD8<64, CD8VF>, VEX_W;
 defm VPERMPD : avx512_vpermi_dq_sizes<0x01, MRMSrcReg, MRMSrcMem, "vpermpd",
-                             X86VPermi, WriteFVarShuffle256, avx512vl_f64_info>,
+                             X86VPermi, WriteFShuffle256, avx512vl_f64_info>,
                              EVEX, AVX512AIi8Base, EVEX_CD8<64, CD8VF>, VEX_W;
 //===----------------------------------------------------------------------===//
 // AVX-512 - VPERMIL
@@ -5972,7 +5973,7 @@ multiclass avx512_permil<string OpcodeStr, bits<8> OpcImm, bits<8> OpcVar,
                          AVX512VLVectorVTInfo _, AVX512VLVectorVTInfo Ctrl>{
   defm NAME: avx512_permil_vec_common<OpcodeStr, OpcVar, WriteFVarShuffle, _, Ctrl>;
   defm NAME: avx512_shift_rmi_sizes<OpcImm, MRMSrcReg, MRMSrcMem, OpcodeStr,
-                                    X86VPermilpi, WriteFVarShuffle, _>,
+                                    X86VPermilpi, WriteFShuffle, _>,
                     EVEX, AVX512AIi8Base, EVEX_CD8<_.info128.EltSize, CD8VF>;
 }
 
