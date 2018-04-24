@@ -1,3 +1,4 @@
+; REQUIRES: asserts
 ; RUN: opt < %s -loop-interchange -simplifycfg -pass-remarks-output=%t \
 ; RUN:     -pass-remarks=loop-interchange -pass-remarks-missed=loop-interchange -stats -S 2>&1 \
 ; RUN:     | FileCheck -check-prefix=STATS %s
