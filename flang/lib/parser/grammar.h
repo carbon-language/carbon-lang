@@ -853,9 +853,9 @@ TYPE_CONTEXT_PARSER("array constructor"_en_US,
         "(/" >> Parser<AcSpec>{} / "/)" || bracketed(Parser<AcSpec>{})))
 
 // R770 ac-spec -> type-spec :: | [type-spec ::] ac-value-list
-TYPE_PARSER(construct<AcSpec>(maybe(indirect(typeSpec) / "::"),
-                nonemptyList(Parser<AcValue>{})) ||
-    construct<AcSpec>(indirect(typeSpec) / "::"))
+TYPE_PARSER(construct<AcSpec>(
+                maybe(typeSpec / "::"), nonemptyList(Parser<AcValue>{})) ||
+    construct<AcSpec>(typeSpec / "::"))
 
 // R773 ac-value -> expr | ac-implied-do
 TYPE_PARSER(
