@@ -27,9 +27,9 @@ vcvtps2ph   $0, %ymm0, (%rax)
 # CHECK-NEXT:  1      3     1.00                    	vcvtph2ps	%xmm0, %ymm2
 # CHECK-NEXT:  2      8     1.00    *               	vcvtph2ps	(%rax), %ymm2
 # CHECK-NEXT:  1      3     1.00                    	vcvtps2ph	$0, %xmm0, %xmm2
-# CHECK-NEXT:  3      8     1.00           *        	vcvtps2ph	$0, %xmm0, (%rax)
+# CHECK-NEXT:  1      4     1.00           *        	vcvtps2ph	$0, %xmm0, (%rax)
 # CHECK-NEXT:  1      3     1.00                    	vcvtps2ph	$0, %ymm0, %xmm2
-# CHECK-NEXT:  3      8     1.00           *        	vcvtps2ph	$0, %ymm0, (%rax)
+# CHECK-NEXT:  1      4     1.00           *        	vcvtps2ph	$0, %ymm0, (%rax)
 
 # CHECK:      Resources:
 # CHECK-NEXT: [0] - SBDivider
@@ -43,7 +43,7 @@ vcvtps2ph   $0, %ymm0, (%rax)
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]
-# CHECK-NEXT:  -      -      -     8.00   2.00    -     3.00   3.00
+# CHECK-NEXT:  -      -      -     8.00   2.00    -     2.00   2.00
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  	Instructions:
@@ -52,7 +52,7 @@ vcvtps2ph   $0, %ymm0, (%rax)
 # CHECK-NEXT:  -      -      -     1.00    -      -      -      -     	vcvtph2ps	%xmm0, %ymm2
 # CHECK-NEXT:  -      -      -     1.00    -      -     0.50   0.50   	vcvtph2ps	(%rax), %ymm2
 # CHECK-NEXT:  -      -      -     1.00    -      -      -      -     	vcvtps2ph	$0, %xmm0, %xmm2
-# CHECK-NEXT:  -      -      -     1.00   1.00    -     1.00   1.00   	vcvtps2ph	$0, %xmm0, (%rax)
+# CHECK-NEXT:  -      -      -     1.00   1.00    -     0.50   0.50   	vcvtps2ph	$0, %xmm0, (%rax)
 # CHECK-NEXT:  -      -      -     1.00    -      -      -      -     	vcvtps2ph	$0, %ymm0, %xmm2
-# CHECK-NEXT:  -      -      -     1.00   1.00    -     1.00   1.00   	vcvtps2ph	$0, %ymm0, (%rax)
+# CHECK-NEXT:  -      -      -     1.00   1.00    -     0.50   0.50   	vcvtps2ph	$0, %ymm0, (%rax)
 

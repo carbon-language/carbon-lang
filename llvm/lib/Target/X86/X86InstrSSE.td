@@ -7283,12 +7283,11 @@ multiclass f16c_ps2ph<RegisterClass RC, X86MemOperand x86memop> {
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                [(set VR128:$dst, (X86cvtps2ph RC:$src1, imm:$src2))]>,
                TAPD, VEX, Sched<[WriteCvtF2F]>;
-  let hasSideEffects = 0, mayStore = 1,
-      SchedRW = [WriteCvtF2FLd, WriteRMW] in
+  let hasSideEffects = 0, mayStore = 1 in
   def mr : Ii8<0x1D, MRMDestMem, (outs),
                (ins x86memop:$dst, RC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-               TAPD, VEX;
+               TAPD, VEX, Sched<[WriteCvtF2FSt]>;
 }
 
 let Predicates = [HasF16C, NoVLX] in {

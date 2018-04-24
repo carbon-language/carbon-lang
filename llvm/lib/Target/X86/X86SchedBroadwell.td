@@ -170,6 +170,12 @@ defm : BWWriteResPair<WriteFVarShuffle,  [BWPort5],  1>; // Floating point vecto
 defm : BWWriteResPair<WriteFBlend,  [BWPort015],  1>; // Floating point vector blends.
 defm : BWWriteResPair<WriteFVarBlend,  [BWPort5], 2, [2], 2, 5>; // Fp vector variable blends.
 
+def  : WriteRes<WriteCvtF2FSt, [BWPort1,BWPort4,BWPort237]> {
+  let Latency = 4;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1,1,1];
+}
+
 // FMA Scheduling helper class.
 // class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
 
@@ -806,8 +812,7 @@ def: InstRW<[BWWriteResGroup44], (instregex "ISTT_FP16m",
                                             "IST_F32m",
                                             "IST_FP16m",
                                             "IST_FP32m",
-                                            "IST_FP64m",
-                                            "VCVTPS2PH(Y?)mr")>;
+                                            "IST_FP64m")>;
 
 def BWWriteResGroup45 : SchedWriteRes<[BWPort0156]> {
   let Latency = 4;

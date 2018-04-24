@@ -321,6 +321,7 @@ defm : JWriteResFpuPair<WriteFVarShuffle256, [JFPU01, JFPX],  1>; // NOTE: Doesn
 defm : JWriteResFpuPair<WriteCvtF2I,       [JFPU1, JSTC], 3>; // Float -> Integer.
 defm : JWriteResFpuPair<WriteCvtI2F,       [JFPU1, JSTC], 3>; // Integer -> Float.
 defm : JWriteResFpuPair<WriteCvtF2F,       [JFPU1, JSTC], 3>; // Float -> Float size conversion.
+def  : WriteRes<WriteCvtF2FSt, [JFPU1, JSTC, JSAGU]> { let Latency = 4; }
 
 def JWriteCVTF2F : SchedWriteRes<[JFPU1, JSTC]> {
   let Latency = 7;
@@ -490,11 +491,6 @@ def : InstRW<[JWriteINSERTQ], (instrs INSERTQ, INSERTQI)>;
 ////////////////////////////////////////////////////////////////////////////////
 // F16C instructions.
 ////////////////////////////////////////////////////////////////////////////////
-
-def JWriteCVT3St: SchedWriteRes<[JFPU1, JSTC, JSAGU]> {
-  let Latency = 4;
-}
-def : InstRW<[JWriteCVT3St], (instrs VCVTPS2PHmr)>;
 
 def JWriteCVTPS2PHY: SchedWriteRes<[JFPU1, JSTC, JFPX]> {
   let Latency = 6;
