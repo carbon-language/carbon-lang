@@ -653,7 +653,7 @@ public:
   }
   void Unparse(const CommonStmt &x) {  // R873
     Word("COMMON ");
-    Walk("/", std::get<std::optional<std::optional<Name>>>(x.t), "/");
+    Walk("/", std::get<std::optional<Name>>(x.t), "/");
     Walk(std::get<std::list<CommonBlockObject>>(x.t), ", ");
     Walk(", ", std::get<std::list<CommonStmt::Block>>(x.t), ", ");
   }

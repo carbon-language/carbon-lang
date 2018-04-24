@@ -1500,8 +1500,8 @@ struct CommonStmt {
     std::tuple<std::optional<Name>, std::list<CommonBlockObject>> t;
   };
   TUPLE_CLASS_BOILERPLATE(CommonStmt);
-  std::tuple<std::optional<std::optional<Name>>,  // TODO: flatten
-      std::list<CommonBlockObject>, std::list<Block>>
+  std::tuple<std::optional<Name>, std::list<CommonBlockObject>,
+      std::list<Block>>
       t;
 };
 

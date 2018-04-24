@@ -1253,7 +1253,7 @@ TYPE_PARSER(construct<EquivalenceObject>(indirect(designator)))
 // R873 common-stmt ->
 //        COMMON [/ [common-block-name] /] common-block-object-list
 //        [[,] / [common-block-name] / common-block-object-list]...
-TYPE_PARSER(construct<CommonStmt>("COMMON" >> maybe("/" >> maybe(name) / "/"),
+TYPE_PARSER(construct<CommonStmt>("COMMON" >> defaulted("/" >> maybe(name) / "/"),
     nonemptyList(Parser<CommonBlockObject>{}),
     many(
         maybe(","_tok) >> construct<CommonStmt::Block>("/" >> maybe(name) / "/",
