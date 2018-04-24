@@ -131,10 +131,6 @@ static cl::opt<unsigned> TimelineMaxCycles(
         "Maximum number of cycles in the timeline view. Defaults to 80 cycles"),
     cl::init(80));
 
-static cl::opt<bool> PrintModeVerbose("verbose",
-                                      cl::desc("Enable verbose output"),
-                                      cl::init(false));
-
 static cl::opt<bool> AssumeNoAlias(
     "noalias",
     cl::desc("If set, it assumes that loads and stores do not alias"),
