@@ -111,6 +111,11 @@ INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(AggressiveInstCombinerLegacyPass, "aggressive-instcombine",
                     "Combine pattern based expressions", false, false)
 
+// Initialization Routines
+void llvm::initializeAggressiveInstCombine(PassRegistry &Registry) {
+  initializeAggressiveInstCombinerLegacyPassPass(Registry);
+}
+
 FunctionPass *llvm::createAggressiveInstCombinerPass() {
   return new AggressiveInstCombinerLegacyPass();
 }
