@@ -2,6 +2,7 @@
 // RUN: %clangxx -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 // REQUIRES: stable-runtime
+// XFAIL: powerpc64
 
 volatile int *null = 0;
 
