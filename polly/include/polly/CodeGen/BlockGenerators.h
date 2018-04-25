@@ -329,8 +329,8 @@ protected:
                            ValueMapT &BBMap,
                            __isl_keep isl_id_to_ast_expr *NewAccesses);
 
-  /// When statement tracing is enable, build the print instructions for
-  /// printing the current statement instance and its input scalars.
+  /// When statement tracing is enabled, build the print instructions for
+  /// printing the current statement instance.
   ///
   /// The printed output looks like:
   ///
