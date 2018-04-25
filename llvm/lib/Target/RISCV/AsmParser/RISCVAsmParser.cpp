@@ -65,7 +65,7 @@ class RISCVAsmParser : public MCTargetAsmParser {
   OperandMatchResultTy parseMemOpBaseReg(OperandVector &Operands);
   OperandMatchResultTy parseOperandWithModifier(OperandVector &Operands);
 
-  bool parseOperand(OperandVector &Operands);
+  bool parseOperand(OperandVector &Operands, bool ForceImmediate);
 
 public:
   enum RISCVMatchResultTy {
@@ -881,12 +881,15 @@ RISCVAsmParser::parseMemOpBaseReg(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
-/// Looks at a token type and creates the relevant operand
-/// from this information, adding to Operands.
-/// If operand was parsed, returns false, else true.
-bool RISCVAsmParser::parseOperand(OperandVector &Operands) {
-  // Attempt to parse token as register
-  if (parseRegister(Operands, true) == MatchOperand_Success)
+/// Looks at a token type and creates the relevant operand from this
+/// information, adding to Operands. If operand was parsed, returns false, else
+/// true. If ForceImmediate is true, no attempt will be made to parse the
+/// operand as a register, which is needed for pseudoinstructions such as
+/// call.
+bool RISCVAsmParser::parseOperand(OperandVector &Operands,
+                                  bool ForceImmediate) {
+  // Attempt to parse token as register, unless ForceImmediate.
+  if (!ForceImmediate && parseRegister(Operands, true) == MatchOperand_Success)
     return false;
 
   // Attempt to parse token as an immediate
@@ -913,7 +916,7 @@ bool RISCVAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     return false;
 
   // Parse first operand
-  if (parseOperand(Operands))
+  if (parseOperand(Operands, Name == "call"))
     return true;
 
   // Parse until end of statement, consuming commas between operands
@@ -922,7 +925,7 @@ bool RISCVAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     getLexer().Lex();
 
     // Parse next operand
-    if (parseOperand(Operands))
+    if (parseOperand(Operands, false))
       return true;
   }
 

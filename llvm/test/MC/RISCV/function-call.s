@@ -17,3 +17,23 @@ call bar
 # INSTR: auipc ra, 0
 # INSTR: jalr  ra
 # FIXUP: fixup A - offset: 0, value: bar, kind:
+
+# Ensure that calls to functions whose names coincide with register names work.
+
+call zero
+# RELOC: R_RISCV_CALL zero 0x0
+# INSTR: auipc ra, 0
+# INSTR: jalr  ra
+# FIXUP: fixup A - offset: 0, value: zero, kind:
+
+call f1
+# RELOC: R_RISCV_CALL f1 0x0
+# INSTR: auipc ra, 0
+# INSTR: jalr  ra
+# FIXUP: fixup A - offset: 0, value: f1, kind:
+
+call ra
+# RELOC: R_RISCV_CALL ra 0x0
+# INSTR: auipc ra, 0
+# INSTR: jalr  ra
+# FIXUP: fixup A - offset: 0, value: ra, kind:
