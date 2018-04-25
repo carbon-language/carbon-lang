@@ -11,7 +11,7 @@
 #if __cplusplus < 201703L
 #error this is a C++17 program
 #endif
-#if defined __GNUC__ && __GNUC__ < 7
+#if !defined(__clang__) && defined __GNUC__ && __GNUC__ < 7
 #error G++ >= 7.0 is required
 #endif
 
