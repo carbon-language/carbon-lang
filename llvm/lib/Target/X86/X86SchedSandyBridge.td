@@ -314,6 +314,8 @@ defm : SBWriteResPair<WriteShuffle256, [SBPort0],  1>;
 defm : SBWriteResPair<WriteVarShuffle256, [SBPort0],  1>;
 defm : SBWriteResPair<WriteVarVecShift, [SBPort0],  1>;
 defm : SBWriteResPair<WriteFMA, [SBPort01],  5>;
+defm : SBWriteResPair<WriteFMAS, [SBPort01],  5>;
+defm : SBWriteResPair<WriteFMAY, [SBPort01],  5>;
 
 // Remaining SNB instrs.
 

@@ -159,7 +159,9 @@ defm : SKXWriteResPair<WriteFDiv,   [SKXPort0], 12>; // 10-14 cycles. // Floatin
 defm : SKXWriteResPair<WriteFSqrt,  [SKXPort0], 15>; // Floating point square root.
 defm : SKXWriteResPair<WriteFRcp,   [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal estimate.
 defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal square root estimate.
-defm : SKXWriteResPair<WriteFMA,  [SKXPort015], 4>; // Fused Multiply Add.
+defm : SKXWriteResPair<WriteFMA,  [SKXPort015], 4, [1], 1, 6>; // Fused Multiply Add.
+defm : SKXWriteResPair<WriteFMAS, [SKXPort015], 4, [1], 1, 5>; // Fused Multiply Add (Scalar).
+defm : SKXWriteResPair<WriteFMAY, [SKXPort015], 4, [1], 1, 7>; // Fused Multiply Add (YMM/ZMM).
 defm : SKXWriteResPair<WriteFSign,  [SKXPort0], 1>; // Floating point fabs/fchs.
 defm : SKXWriteResPair<WriteFLogic, [SKXPort015], 1, [1], 1, 6>; // Floating point and/or/xor logicals.
 defm : SKXWriteResPair<WriteFShuffle,  [SKXPort5],  1>; // Floating point vector shuffles.
@@ -3770,11 +3772,6 @@ def SKXWriteResGroup149 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKXWriteResGroup149],
-          (instregex
-           "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)Z128m(b?)",
-           "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)m",
-           "VF(N)?M(ADD|SUB)(132|213|231)S(D|S)Zm")>;
 def: InstRW<[SKXWriteResGroup149], (instregex "CVTDQ2PSrm",
                                               "CVTPS2DQrm",
                                               "CVTSS2SDrm",
@@ -3932,11 +3929,6 @@ def SKXWriteResGroup161 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKXWriteResGroup161],
-          (instregex
-           "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)Ym",
-           "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)Z256m(b?)",
-           "VF(N)?M(ADD|SUB|ADDSUB|SUBADD)(132|213|231)P(D|S)Zm(b?)")>;
 def: InstRW<[SKXWriteResGroup161], (instregex "VADDPDYrm",
                                               "VADDPDZ256rm(b?)",
                                               "VADDPDZrm(b?)",
