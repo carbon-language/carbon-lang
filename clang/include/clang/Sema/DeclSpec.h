@@ -520,6 +520,8 @@ public:
 
     return cast_or_null<ConceptDeclTy>(DeclRep);
   }
+
+
   Expr *getRepAsExpr() const {
     assert(isExprRep((TST) TypeSpecType) && "DeclSpec does not store an expr");
     return ExprRep;
@@ -697,7 +699,7 @@ public:
   // This function can only be instantiated with ConceptDecl.  We made it a
   // template so that ConceptDecl only has to be defined where this is called.
   template <class ConceptDeclTy = ConceptDecl>
-  void setConceptRep(ConceptDecl *Rep) {
+  void setConceptRep(ConceptDeclTy *Rep) {
     static_assert(std::is_same<ConceptDeclTy, ConceptDecl>::value,
                   "Must only be instantiated with ConceptDecl");
     assert(isConceptSpecified() && "DeclSpec does not store a concept");
@@ -706,7 +708,7 @@ public:
            "once, and usually right after DeclRep was set to null");
     DeclRep = Rep;
   }
-  
+
   void UpdateTypeRep(ParsedType Rep) {
     assert(isTypeRep((TST) TypeSpecType));
     TypeRep = Rep;
