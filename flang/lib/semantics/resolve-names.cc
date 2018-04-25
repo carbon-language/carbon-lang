@@ -392,7 +392,7 @@ private:
   std::optional<Attr> objectDeclAttr_;
   // Set when we see a stmt function that is really an array element assignment
   bool badStmtFuncFound_{false};
-  // The location of the last AccessStmt seen, if any.
+  // The location of the last AccessStmt without access-ids, if any.
   const parser::CharBlock *prevAccessStmt_{nullptr};
   // The default access spec for this module.
   Attr defaultAccess_{Attr::PUBLIC};
