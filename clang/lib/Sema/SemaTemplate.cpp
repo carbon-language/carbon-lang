@@ -4022,18 +4022,21 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
   assert(!R.empty() && "empty lookup results when building templateid");
   assert(!R.isAmbiguous() && "ambiguous lookup when building templateid");
 
+  auto AnyDependentArguments = [&]() -> bool {
+    bool InstantiationDependent;
+    return TemplateArgs &&
+           TemplateSpecializationType::anyDependentTemplateArguments(
+               *TemplateArgs, InstantiationDependent);
+  };
+
   // In C++1y, check variable template ids.
-  bool InstantiationDependent;
-  const bool DependentArguments =
-    TemplateSpecializationType::anyDependentTemplateArguments(
-      *TemplateArgs, InstantiationDependent);
-  if (R.getAsSingle<VarTemplateDecl>() && !DependentArguments) {
+  if (R.getAsSingle<VarTemplateDecl>() && !AnyDependentArguments()) {
     return CheckVarTemplateId(SS, R.getLookupNameInfo(),
                               R.getAsSingle<VarTemplateDecl>(),
                               TemplateKWLoc, TemplateArgs);
   }
 
-  if (R.getAsSingle<ConceptDecl>() && !DependentArguments) {
+  if (R.getAsSingle<ConceptDecl>() && !AnyDependentArguments()) {
     return CheckConceptTemplateId(SS, R.getLookupNameInfo(),
                                   R.getAsSingle<ConceptDecl>(),
                                   TemplateKWLoc, TemplateArgs);
