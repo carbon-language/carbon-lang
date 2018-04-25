@@ -52,7 +52,7 @@
 
 using namespace llvm;
 
-llvm::cl::OptionCategory ViewOptions("View Options");
+static llvm::cl::OptionCategory ViewOptions("View Options");
 
 static cl::opt<std::string>
     InputFilename(cl::Positional, cl::desc("<input file>"), cl::init("-"));
