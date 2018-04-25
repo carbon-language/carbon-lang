@@ -14,6 +14,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cctype>
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
