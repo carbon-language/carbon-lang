@@ -699,7 +699,8 @@ public:
   // This function can only be instantiated with ConceptDecl.  We made it a
   // template so that ConceptDecl only has to be defined where this is called.
   template <class ConceptDeclTy = ConceptDecl>
-  void setConceptRep(ConceptDeclTy *Rep) {
+  void
+  setConceptRep(typename llvm::identity<ConceptDeclTy>::argument_type *Rep) {
     static_assert(std::is_same<ConceptDeclTy, ConceptDecl>::value,
                   "Must only be instantiated with ConceptDecl");
     assert(isConceptSpecified() && "DeclSpec does not store a concept");
