@@ -927,10 +927,18 @@ bool ResolveNamesVisitor::Pre(const parser::AccessStmt &x) {
 // Set the access specification for this name.
 void ResolveNamesVisitor::SetAccess(const parser::Name &name, Attr attr) {
   Symbol &symbol{MakeSymbol(name)};
-  if (symbol.attrs().HasAny({Attr::PUBLIC, Attr::PRIVATE})) {
-    Say(name, "The accessibility of '%s' has already been specified"_err_en_US);
+  Attrs &attrs{symbol.attrs()};
+  if (attrs.HasAny({Attr::PUBLIC, Attr::PRIVATE})) {
+    // PUBLIC/PRIVATE already set: make it a fatal error if it changed
+    Attr prev = attrs.test(Attr::PUBLIC) ? Attr::PUBLIC : Attr::PRIVATE;
+    const auto &msg = attr == prev
+        ? "The accessibility of '%s' has already been specified as %s"_en_US
+        : "The accessibility of '%s' has already been specified as %s"_err_en_US;
+    Say(Message{name.source,
+        parser::MessageFormattedText{
+            msg, name.ToString().c_str(), EnumToString(prev).c_str()}});
   } else {
-    symbol.attrs().set(attr);
+    attrs.set(attr);
   }
 }
 
