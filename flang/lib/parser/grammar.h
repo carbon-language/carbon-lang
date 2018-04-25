@@ -36,18 +36,19 @@ namespace parser {
 // R507 declaration-construct ->
 //        specification-construct | data-stmt | format-stmt |
 //        entry-stmt | stmt-function-stmt
-constexpr auto execPartLookAhead = actionStmt >> ok || "ASSOCIATE ("_tok ||
-    "BLOCK"_tok || "SELECT"_tok || "CHANGE TEAM"_sptok || "CRITICAL"_tok ||
-    "DO"_tok || "IF ("_tok || "WHERE ("_tok || "FORALL ("_tok;
+constexpr auto execPartLookAhead = first(actionStmt >> ok, "ASSOCIATE ("_tok,
+    "BLOCK"_tok, "SELECT"_tok, "CHANGE TEAM"_sptok, "CRITICAL"_tok, "DO"_tok,
+    "IF ("_tok, "WHERE ("_tok, "FORALL ("_tok);
 constexpr auto declErrorRecovery =
     errorRecoveryStart >> !execPartLookAhead >> stmtErrorRecovery;
 TYPE_CONTEXT_PARSER("declaration construct"_en_US,
-    recovery(construct<DeclarationConstruct>(specificationConstruct) ||
-            construct<DeclarationConstruct>(statement(indirect(dataStmt))) ||
-            construct<DeclarationConstruct>(statement(indirect(formatStmt))) ||
-            construct<DeclarationConstruct>(statement(indirect(entryStmt))) ||
+    recovery(
+        first(construct<DeclarationConstruct>(specificationConstruct),
+            construct<DeclarationConstruct>(statement(indirect(dataStmt))),
+            construct<DeclarationConstruct>(statement(indirect(formatStmt))),
+            construct<DeclarationConstruct>(statement(indirect(entryStmt))),
             construct<DeclarationConstruct>(
-                statement(indirect(Parser<StmtFunctionStmt>{}))),
+                statement(indirect(Parser<StmtFunctionStmt>{})))),
         construct<DeclarationConstruct>(declErrorRecovery)))
 
 // R508 specification-construct ->
@@ -55,22 +56,22 @@ TYPE_CONTEXT_PARSER("declaration construct"_en_US,
 //        parameter-stmt | procedure-declaration-stmt |
 //        other-specification-stmt | type-declaration-stmt
 TYPE_CONTEXT_PARSER("specification construct"_en_US,
-    construct<SpecificationConstruct>(indirect(Parser<DerivedTypeDef>{})) ||
-        construct<SpecificationConstruct>(indirect(Parser<EnumDef>{})) ||
+    first(construct<SpecificationConstruct>(indirect(Parser<DerivedTypeDef>{})),
+        construct<SpecificationConstruct>(indirect(Parser<EnumDef>{})),
         construct<SpecificationConstruct>(
-            statement(indirect(Parser<GenericStmt>{}))) ||
-        construct<SpecificationConstruct>(indirect(interfaceBlock)) ||
-        construct<SpecificationConstruct>(statement(indirect(parameterStmt))) ||
+            statement(indirect(Parser<GenericStmt>{}))),
+        construct<SpecificationConstruct>(indirect(interfaceBlock)),
+        construct<SpecificationConstruct>(statement(indirect(parameterStmt))),
         construct<SpecificationConstruct>(
-            statement(indirect(oldParameterStmt))) ||
+            statement(indirect(oldParameterStmt))),
         construct<SpecificationConstruct>(
-            statement(indirect(Parser<ProcedureDeclarationStmt>{}))) ||
+            statement(indirect(Parser<ProcedureDeclarationStmt>{}))),
         construct<SpecificationConstruct>(
-            statement(Parser<OtherSpecificationStmt>{})) ||
+            statement(Parser<OtherSpecificationStmt>{})),
         construct<SpecificationConstruct>(
-            statement(indirect(typeDeclarationStmt))) ||
-        construct<SpecificationConstruct>(indirect(Parser<StructureDef>{})) ||
-        construct<SpecificationConstruct>(indirect(compilerDirective)))
+            statement(indirect(typeDeclarationStmt))),
+        construct<SpecificationConstruct>(indirect(Parser<StructureDef>{})),
+        construct<SpecificationConstruct>(indirect(compilerDirective))))
 
 // R513 other-specification-stmt ->
 //        access-stmt | allocatable-stmt | asynchronous-stmt | bind-stmt |
@@ -78,27 +79,28 @@ TYPE_CONTEXT_PARSER("specification construct"_en_US,
 //        intent-stmt | intrinsic-stmt | namelist-stmt | optional-stmt |
 //        pointer-stmt | protected-stmt | save-stmt | target-stmt |
 //        volatile-stmt | value-stmt | common-stmt | equivalence-stmt
-TYPE_PARSER(construct<OtherSpecificationStmt>(indirect(Parser<AccessStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<AllocatableStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<AsynchronousStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<BindStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<CodimensionStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<ContiguousStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<DimensionStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<ExternalStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<IntentStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<IntrinsicStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<NamelistStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<OptionalStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<PointerStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<ProtectedStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<SaveStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<TargetStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<ValueStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<VolatileStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<CommonStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<EquivalenceStmt>{})) ||
-    construct<OtherSpecificationStmt>(indirect(Parser<BasedPointerStmt>{})))
+TYPE_PARSER(first(
+    construct<OtherSpecificationStmt>(indirect(Parser<AccessStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<AllocatableStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<AsynchronousStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<BindStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<CodimensionStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<ContiguousStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<DimensionStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<ExternalStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<IntentStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<IntrinsicStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<NamelistStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<OptionalStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<PointerStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<ProtectedStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<SaveStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<TargetStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<ValueStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<VolatileStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<CommonStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<EquivalenceStmt>{})),
+    construct<OtherSpecificationStmt>(indirect(Parser<BasedPointerStmt>{}))))
 
 // R604 constant ->  literal-constant | named-constant
 // Used only via R607 int-constant and R845 data-stmt-constant.
@@ -244,12 +246,12 @@ TYPE_CONTEXT_PARSER("implicit part"_en_US,
 
 // R506 implicit-part-stmt ->
 //         implicit-stmt | parameter-stmt | format-stmt | entry-stmt
-TYPE_PARSER(
-    construct<ImplicitPartStmt>(statement(indirect(Parser<ImplicitStmt>{}))) ||
-    construct<ImplicitPartStmt>(statement(indirect(parameterStmt))) ||
-    construct<ImplicitPartStmt>(statement(indirect(oldParameterStmt))) ||
-    construct<ImplicitPartStmt>(statement(indirect(formatStmt))) ||
-    construct<ImplicitPartStmt>(statement(indirect(entryStmt))))
+TYPE_PARSER(first(
+    construct<ImplicitPartStmt>(statement(indirect(Parser<ImplicitStmt>{}))),
+    construct<ImplicitPartStmt>(statement(indirect(parameterStmt))),
+    construct<ImplicitPartStmt>(statement(indirect(oldParameterStmt))),
+    construct<ImplicitPartStmt>(statement(indirect(formatStmt))),
+    construct<ImplicitPartStmt>(statement(indirect(entryStmt)))))
 
 // R512 internal-subprogram -> function-subprogram | subroutine-subprogram
 constexpr auto internalSubprogram =
@@ -274,47 +276,47 @@ TYPE_CONTEXT_PARSER("internal subprogram part"_en_US,
 //        wait-stmt | where-stmt | write-stmt | computed-goto-stmt | forall-stmt
 // R1159 continue-stmt -> CONTINUE
 // R1163 fail-image-stmt -> FAIL IMAGE
-TYPE_PARSER(construct<ActionStmt>(indirect(Parser<AllocateStmt>{})) ||
-    construct<ActionStmt>(indirect(assignmentStmt)) ||
-    construct<ActionStmt>(indirect(Parser<BackspaceStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<CallStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<CloseStmt>{})) ||
-    construct<ActionStmt>(construct<ContinueStmt>("CONTINUE"_tok)) ||
-    construct<ActionStmt>(indirect(Parser<CycleStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<DeallocateStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<EndfileStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<EventPostStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<EventWaitStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<ExitStmt>{})) ||
-    construct<ActionStmt>(construct<FailImageStmt>("FAIL IMAGE"_sptok)) ||
-    construct<ActionStmt>(indirect(Parser<FlushStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<FormTeamStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<GotoStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<IfStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<InquireStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<LockStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<NullifyStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<OpenStmt>{})) ||
-    construct<ActionStmt>(indirect(pointerAssignmentStmt)) ||
-    construct<ActionStmt>(indirect(Parser<PrintStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<ReadStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<ReturnStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<RewindStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<StopStmt>{})) ||  // & error-stop-stmt
-    construct<ActionStmt>(indirect(Parser<SyncAllStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<SyncImagesStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<SyncMemoryStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<SyncTeamStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<UnlockStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<WaitStmt>{})) ||
-    construct<ActionStmt>(indirect(whereStmt)) ||
-    construct<ActionStmt>(indirect(Parser<WriteStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<ComputedGotoStmt>{})) ||
-    construct<ActionStmt>(indirect(forallStmt)) ||
-    construct<ActionStmt>(indirect(Parser<ArithmeticIfStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<AssignStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<AssignedGotoStmt>{})) ||
-    construct<ActionStmt>(indirect(Parser<PauseStmt>{})))
+TYPE_PARSER(first(construct<ActionStmt>(indirect(Parser<AllocateStmt>{})),
+    construct<ActionStmt>(indirect(assignmentStmt)),
+    construct<ActionStmt>(indirect(Parser<BackspaceStmt>{})),
+    construct<ActionStmt>(indirect(Parser<CallStmt>{})),
+    construct<ActionStmt>(indirect(Parser<CloseStmt>{})),
+    construct<ActionStmt>(construct<ContinueStmt>("CONTINUE"_tok)),
+    construct<ActionStmt>(indirect(Parser<CycleStmt>{})),
+    construct<ActionStmt>(indirect(Parser<DeallocateStmt>{})),
+    construct<ActionStmt>(indirect(Parser<EndfileStmt>{})),
+    construct<ActionStmt>(indirect(Parser<EventPostStmt>{})),
+    construct<ActionStmt>(indirect(Parser<EventWaitStmt>{})),
+    construct<ActionStmt>(indirect(Parser<ExitStmt>{})),
+    construct<ActionStmt>(construct<FailImageStmt>("FAIL IMAGE"_sptok)),
+    construct<ActionStmt>(indirect(Parser<FlushStmt>{})),
+    construct<ActionStmt>(indirect(Parser<FormTeamStmt>{})),
+    construct<ActionStmt>(indirect(Parser<GotoStmt>{})),
+    construct<ActionStmt>(indirect(Parser<IfStmt>{})),
+    construct<ActionStmt>(indirect(Parser<InquireStmt>{})),
+    construct<ActionStmt>(indirect(Parser<LockStmt>{})),
+    construct<ActionStmt>(indirect(Parser<NullifyStmt>{})),
+    construct<ActionStmt>(indirect(Parser<OpenStmt>{})),
+    construct<ActionStmt>(indirect(pointerAssignmentStmt)),
+    construct<ActionStmt>(indirect(Parser<PrintStmt>{})),
+    construct<ActionStmt>(indirect(Parser<ReadStmt>{})),
+    construct<ActionStmt>(indirect(Parser<ReturnStmt>{})),
+    construct<ActionStmt>(indirect(Parser<RewindStmt>{})),
+    construct<ActionStmt>(indirect(Parser<StopStmt>{})),  // & error-stop-stmt
+    construct<ActionStmt>(indirect(Parser<SyncAllStmt>{})),
+    construct<ActionStmt>(indirect(Parser<SyncImagesStmt>{})),
+    construct<ActionStmt>(indirect(Parser<SyncMemoryStmt>{})),
+    construct<ActionStmt>(indirect(Parser<SyncTeamStmt>{})),
+    construct<ActionStmt>(indirect(Parser<UnlockStmt>{})),
+    construct<ActionStmt>(indirect(Parser<WaitStmt>{})),
+    construct<ActionStmt>(indirect(whereStmt)),
+    construct<ActionStmt>(indirect(Parser<WriteStmt>{})),
+    construct<ActionStmt>(indirect(Parser<ComputedGotoStmt>{})),
+    construct<ActionStmt>(indirect(forallStmt)),
+    construct<ActionStmt>(indirect(Parser<ArithmeticIfStmt>{})),
+    construct<ActionStmt>(indirect(Parser<AssignStmt>{})),
+    construct<ActionStmt>(indirect(Parser<AssignedGotoStmt>{})),
+    construct<ActionStmt>(indirect(Parser<PauseStmt>{}))))
 
 // Fortran allows the statement with the corresponding label at the end of
 // a do-construct that begins with an old-style label-do-stmt to be a
@@ -329,21 +331,21 @@ TYPE_PARSER(construct<ActionStmt>(indirect(Parser<AllocateStmt>{})) ||
 //        do-construct | if-construct | select-rank-construct |
 //        select-type-construct | where-construct | forall-construct
 constexpr auto executableConstruct =
-    construct<ExecutableConstruct>(statement(actionStmt)) ||
-    construct<ExecutableConstruct>(indirect(Parser<AssociateConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(Parser<BlockConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(Parser<CaseConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(Parser<ChangeTeamConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(Parser<CriticalConstruct>{})) ||
-    construct<ExecutableConstruct>(CapturedLabelDoStmt{}) ||
-    construct<ExecutableConstruct>(EndDoStmtForCapturedLabelDoStmt{}) ||
-    construct<ExecutableConstruct>(indirect(Parser<DoConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(Parser<IfConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(Parser<SelectRankConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(Parser<SelectTypeConstruct>{})) ||
-    construct<ExecutableConstruct>(indirect(whereConstruct)) ||
-    construct<ExecutableConstruct>(indirect(forallConstruct)) ||
-    construct<ExecutableConstruct>(indirect(compilerDirective));
+    first(construct<ExecutableConstruct>(statement(actionStmt)),
+        construct<ExecutableConstruct>(indirect(Parser<AssociateConstruct>{})),
+        construct<ExecutableConstruct>(indirect(Parser<BlockConstruct>{})),
+        construct<ExecutableConstruct>(indirect(Parser<CaseConstruct>{})),
+        construct<ExecutableConstruct>(indirect(Parser<ChangeTeamConstruct>{})),
+        construct<ExecutableConstruct>(indirect(Parser<CriticalConstruct>{})),
+        construct<ExecutableConstruct>(CapturedLabelDoStmt{}),
+        construct<ExecutableConstruct>(EndDoStmtForCapturedLabelDoStmt{}),
+        construct<ExecutableConstruct>(indirect(Parser<DoConstruct>{})),
+        construct<ExecutableConstruct>(indirect(Parser<IfConstruct>{})),
+        construct<ExecutableConstruct>(indirect(Parser<SelectRankConstruct>{})),
+        construct<ExecutableConstruct>(indirect(Parser<SelectTypeConstruct>{})),
+        construct<ExecutableConstruct>(indirect(whereConstruct)),
+        construct<ExecutableConstruct>(indirect(forallConstruct)),
+        construct<ExecutableConstruct>(indirect(compilerDirective)));
 
 // R510 execution-part-construct ->
 //        executable-construct | format-stmt | entry-stmt | data-stmt
@@ -376,13 +378,14 @@ TYPE_CONTEXT_PARSER("execution part"_en_US,
 //        int-literal-constant | real-literal-constant |
 //        complex-literal-constant | logical-literal-constant |
 //        char-literal-constant | boz-literal-constant
-TYPE_PARSER(construct<LiteralConstant>(Parser<HollerithLiteralConstant>{}) ||
-    construct<LiteralConstant>(space >> realLiteralConstant) ||
-    construct<LiteralConstant>(intLiteralConstant) ||
-    construct<LiteralConstant>(Parser<ComplexLiteralConstant>{}) ||
-    construct<LiteralConstant>(Parser<BOZLiteralConstant>{}) ||
-    construct<LiteralConstant>(charLiteralConstant) ||
-    construct<LiteralConstant>(Parser<LogicalLiteralConstant>{}))
+TYPE_PARSER(
+    first(construct<LiteralConstant>(Parser<HollerithLiteralConstant>{}),
+        construct<LiteralConstant>(space >> realLiteralConstant),
+        construct<LiteralConstant>(intLiteralConstant),
+        construct<LiteralConstant>(Parser<ComplexLiteralConstant>{}),
+        construct<LiteralConstant>(Parser<BOZLiteralConstant>{}),
+        construct<LiteralConstant>(charLiteralConstant),
+        construct<LiteralConstant>(Parser<LogicalLiteralConstant>{})))
 
 // R606 named-constant -> name
 TYPE_PARSER(construct<NamedConstant>(name))
@@ -433,24 +436,24 @@ TYPE_CONTEXT_PARSER("declaration type spec"_en_US,
 //        LOGICAL [kind-selector]
 // Extensions: DOUBLE COMPLEX, NCHARACTER, BYTE
 TYPE_CONTEXT_PARSER("intrinsic type spec"_en_US,
-    construct<IntrinsicTypeSpec>(integerTypeSpec) ||
-        construct<IntrinsicTypeSpec>(construct<IntrinsicTypeSpec::Real>(
-            "REAL" >> maybe(kindSelector))) ||
+    first(construct<IntrinsicTypeSpec>(integerTypeSpec),
+        construct<IntrinsicTypeSpec>(
+            construct<IntrinsicTypeSpec::Real>("REAL" >> maybe(kindSelector))),
         construct<IntrinsicTypeSpec>("DOUBLE PRECISION" >>
-            construct<IntrinsicTypeSpec::DoublePrecision>()) ||
+            construct<IntrinsicTypeSpec::DoublePrecision>()),
         construct<IntrinsicTypeSpec>(construct<IntrinsicTypeSpec::Complex>(
-            "COMPLEX" >> maybe(kindSelector))) ||
+            "COMPLEX" >> maybe(kindSelector))),
         construct<IntrinsicTypeSpec>(construct<IntrinsicTypeSpec::Character>(
-            "CHARACTER" >> maybe(Parser<CharSelector>{}))) ||
+            "CHARACTER" >> maybe(Parser<CharSelector>{}))),
         construct<IntrinsicTypeSpec>(construct<IntrinsicTypeSpec::Logical>(
-            "LOGICAL" >> maybe(kindSelector))) ||
+            "LOGICAL" >> maybe(kindSelector))),
         construct<IntrinsicTypeSpec>("DOUBLE COMPLEX" >>
-            extension(construct<IntrinsicTypeSpec::DoubleComplex>())) ||
+            extension(construct<IntrinsicTypeSpec::DoubleComplex>())),
         construct<IntrinsicTypeSpec>(
             extension(construct<IntrinsicTypeSpec::NCharacter>(
-                "NCHARACTER" >> maybe(Parser<LengthSelector>{})))) ||
+                "NCHARACTER" >> maybe(Parser<LengthSelector>{})))),
         extension(construct<IntrinsicTypeSpec>(construct<IntegerTypeSpec>(
-            "BYTE" >> construct<std::optional<KindSelector>>(pure(1))))))
+            "BYTE" >> construct<std::optional<KindSelector>>(pure(1)))))))
 
 // R705 integer-type-spec -> INTEGER [kind-selector]
 TYPE_PARSER(construct<IntegerTypeSpec>("INTEGER" >> maybe(kindSelector)))
@@ -1253,11 +1256,12 @@ TYPE_PARSER(construct<EquivalenceObject>(indirect(designator)))
 // R873 common-stmt ->
 //        COMMON [/ [common-block-name] /] common-block-object-list
 //        [[,] / [common-block-name] / common-block-object-list]...
-TYPE_PARSER(construct<CommonStmt>("COMMON" >> defaulted("/" >> maybe(name) / "/"),
-    nonemptyList(Parser<CommonBlockObject>{}),
-    many(
-        maybe(","_tok) >> construct<CommonStmt::Block>("/" >> maybe(name) / "/",
-                              nonemptyList(Parser<CommonBlockObject>{})))))
+TYPE_PARSER(
+    construct<CommonStmt>("COMMON" >> defaulted("/" >> maybe(name) / "/"),
+        nonemptyList(Parser<CommonBlockObject>{}),
+        many(maybe(","_tok) >>
+            construct<CommonStmt::Block>("/" >> maybe(name) / "/",
+                nonemptyList(Parser<CommonBlockObject>{})))))
 
 // R874 common-block-object -> variable-name [( array-spec )]
 TYPE_PARSER(construct<CommonBlockObject>(name, maybe(arraySpec)))

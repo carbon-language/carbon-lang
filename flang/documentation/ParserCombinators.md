@@ -62,6 +62,10 @@ They are `constexpr`, so they should be viewed as type-safe macros.
 * `p || q` succeeds if p does, otherwise running q.  The two parsers must
   have the same type, and the value returned by the first succeeding parser
   is the value of the combination.
+* `first(p1, p2, ...)` returns the value of the first parser that succeeds.
+  All of the parsers in the list must return the same type.
+  It is essentially the same as `p1 || p2 || ...` but has a slightly
+  faster implementation and may be easier to format in your code.
 * `lookAhead(p)` succeeds if p does, but doesn't modify any state.
 * `attempt(p)` succeeds if p does, safely preserving state on failure.
 * `many(p)` recognizes a greedy sequence of zero or more nonempty successes
