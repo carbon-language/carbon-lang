@@ -177,7 +177,7 @@ void Symbol::parseSymbolVersion() {
     return;
 
   // Truncate the symbol name so that it doesn't include the version string.
-  Name = {S.data(), Pos};
+  NameSize = Pos;
 
   // If this is not in this DSO, it is not a definition.
   if (!isDefined())
