@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "RISCV.h"
+#include "clang/Basic/CharInfo.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/TargetParser.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cctype>
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
@@ -57,7 +57,7 @@ static bool getExtensionVersion(const Driver &D, StringRef MArch,
   auto I = In.begin();
   auto E = In.end();
 
-  while (I != E && isdigit(*I))
+  while (I != E && isDigit(*I))
     Major.append(1, *I++);
 
   if (Major.empty())
@@ -66,7 +66,7 @@ static bool getExtensionVersion(const Driver &D, StringRef MArch,
   if (I != E && *I == 'p') {
     ++I;
 
-    while (I != E && isdigit(*I))
+    while (I != E && isDigit(*I))
       Minor.append(1, *I++);
 
     // Expected 'p' to be followed by minor version number.
@@ -161,7 +161,7 @@ static void getExtensionFeatures(const Driver &D,
     }
 
     std::string Major, Minor;
-    auto Pos = Name.find_if(std::isdigit);
+    auto Pos = Name.find_if(isDigit);
     if (Pos != StringRef::npos) {
       auto Next =  Name.substr(Pos);
       Name = Name.substr(0, Pos);
