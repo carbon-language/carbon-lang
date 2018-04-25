@@ -4,7 +4,7 @@
 
 #include "Inputs/cuda.h"
 
-// CHECK-LABEL: define void @_Z2g1i(i32 %x)
+// CHECK-LABEL: define void @_Z2g1i
 // HIP: call{{.*}}hipSetupArgument
 // HIP: call{{.*}}hipLaunchByPtr
 // CUDA: call{{.*}}cudaSetupArgument
