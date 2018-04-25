@@ -636,15 +636,18 @@ def : Pat<(brind (add GPR:$rs1, simm12:$imm12)),
           (PseudoBRIND GPR:$rs1, simm12:$imm12)>;
 
 // PseudoCALL is a pseudo instruction which will eventually expand to auipc
-// and jalr. Define AsmString because we want assembler could print "call"
-// when compile with -S. Define isCodeGenOnly = 0 because we want parser
-// could parsing assembly "call" instruction.
-let isCall = 1, Defs = [X1], isCodeGenOnly = 0,
-    hasSideEffects = 0, mayLoad = 0, mayStore = 0 in
+// and jalr while encoding. This is desirable, as an auipc+jalr pair with
+// R_RISCV_CALL and R_RISCV_RELAX relocations can be be relaxed by the linker
+// if the offset fits in a signed 21-bit immediate.
+// Define AsmString to print "call" when compile with -S flag.
+// Define isCodeGenOnly = 0 to support parsing assembly "call" instruction.
+let isCall = 1, Defs = [X1], isCodeGenOnly = 0 in
 def PseudoCALL : Pseudo<(outs), (ins bare_symbol:$func),
-                        []> {
+                        [(Call tglobaladdr:$func)]> {
   let AsmString = "call\t$func";
 }
+
+def : Pat<(Call texternalsym:$func), (PseudoCALL texternalsym:$func)>;
 
 let isCall = 1, Defs = [X1] in
 def PseudoCALLIndirect : Pseudo<(outs), (ins GPR:$rs1), [(Call GPR:$rs1)]>,
