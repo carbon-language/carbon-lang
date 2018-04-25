@@ -375,6 +375,7 @@ int main(int argc, char *const argv[]) {
           << "  -fdebug-measure-parse-tree\n"
           << "  -fdebug-dump-provenance\n"
           << "  -fdebug-dump-parse-tree\n"
+          << "  -fdebug-dump-symbols\n"
           << "  -fdebug-resolve-names\n"
           << "  -fdebug-instrumented-parse\n"
           << "  -v -c -o -I -D -U    have their usual meanings\n"
