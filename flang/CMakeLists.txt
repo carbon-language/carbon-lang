@@ -2,27 +2,37 @@ cmake_minimum_required(VERSION 3.9.0)
 
 #
 # Reminder: The normal way to set the compiler is via the CXX environment variable
-#  
-#   CXX=/opt/gcc-7.2.0/bin/g++ cmake .../f18  
 #
-# but for convenience we provide the following cmake variables to 
+#   CXX=/opt/gcc-7.2.0/bin/g++ cmake .../f18
+#
+# but for convenience we provide the following cmake variables to
 # use an existing gcc installation directory.
 #
 
-# Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI 
-if( PGI )  
-  set(GCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
+# Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI
+if( PGI )
+  set(PGIGCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
+  if(CLANG)
+    set(CLANG /home/sw/thirdparty/llvm/linux86-64/6.0-pgi2)
+    set(CMAKE_CXX_COMPILER "${CLANG}/bin/clang++")
+    set(CMAKE_CC_COMPILER "${CLANG}/bin/clang")
+    set(CMAKE_INSTALL_RPATH "${PGIGCC}/lib64")
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${PGIGCC}")
+  else()
+    set(GCC "${PGIGCC}")
+  endif()
 endif()
 
-# Pass -DGCC=... to cmake to use a specific gcc installation 
-if( GCC ) 
+# Pass -DGCC=... to cmake to use a specific gcc installation
+if( GCC )
   set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
   set(CMAKE_CC_COMPILER "${GCC}/bin/gcc")
   set(CMAKE_INSTALL_RPATH "${GCC}/lib64")
   set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
 endif()
 
-# Reminder: Setting CMAKE_CXX_COMPILER must be done before calling project() 
+# Reminder: Setting CMAKE_CXX_COMPILER must be done before calling project()
 
 project(f18 CXX)
 
@@ -31,7 +41,12 @@ if( NOT CMAKE_BUILD_TYPE )
 endif()
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+  if(PGI)
+    if(CLANG)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${PGIGCC}")
+    endif()
+  endif()
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
    set(CMAKE_CXX_FLAGS_RELEASE    "-O2 -DDEBUG")
