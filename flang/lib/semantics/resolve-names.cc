@@ -95,8 +95,9 @@ protected:
     switch (x.v) {
     case parser::AccessSpec::Kind::Public: return Attr::PUBLIC;
     case parser::AccessSpec::Kind::Private: return Attr::PRIVATE;
-    default: CRASH_NO_CASE;
     }
+    // unnecessary but g++ warns "control reaches end of non-void function"
+    parser::die("unreachable");
   }
 };
 
@@ -540,7 +541,6 @@ bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
     attrs_->set(Attr::INTENT_IN);
     attrs_->set(Attr::INTENT_OUT);
     break;
-  default: CRASH_NO_CASE;
   }
   return false;
 }
@@ -775,7 +775,6 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
         }
         ++sawType;
         break;
-      default: CRASH_NO_CASE;
       }
     }
     if (sawType > 1) {
