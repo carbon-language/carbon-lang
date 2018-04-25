@@ -38,10 +38,10 @@
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -97,20 +97,18 @@ static cl::opt<bool>
                            cl::desc("Print register file statistics"),
                            cl::init(false));
 
-static cl::opt<bool>
-    PrintDispatchStats("dispatch-stats",
-                       cl::desc("Print dispatch statistics"),
-                       cl::init(false));
+static cl::opt<bool> PrintDispatchStats("dispatch-stats",
+                                        cl::desc("Print dispatch statistics"),
+                                        cl::init(false));
 
-static cl::opt<bool>
-    PrintSchedulerStats("scheduler-stats",
-                         cl::desc("Print scheduler statistics"),
-                         cl::init(false));
+static cl::opt<bool> PrintSchedulerStats("scheduler-stats",
+                                         cl::desc("Print scheduler statistics"),
+                                         cl::init(false));
 
 static cl::opt<bool>
     PrintRetireStats("retire-stats",
-                      cl::desc("Print retire control unit statistics"),
-                      cl::init(false));
+                     cl::desc("Print retire control unit statistics"),
+                     cl::init(false));
 
 static cl::opt<bool>
     PrintResourcePressureView("resource-pressure",
