@@ -16,7 +16,7 @@
 //      -o <file>
 //
 // The target defaults to the host target.
-// The cpu defaults to 'generic'.
+// The cpu defaults to the 'native' host cpu.
 // The output defaults to standard output.
 //
 //===----------------------------------------------------------------------===//
@@ -38,6 +38,7 @@
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
@@ -69,7 +70,7 @@ static cl::opt<std::string>
 static cl::opt<std::string>
     MCPU("mcpu",
          cl::desc("Target a specific cpu type (-mcpu=help for details)"),
-         cl::value_desc("cpu-name"), cl::init("generic"));
+         cl::value_desc("cpu-name"), cl::init("native"));
 
 static cl::opt<int>
     OutputAsmVariant("output-asm-variant",
@@ -329,6 +330,10 @@ int main(int argc, char **argv) {
   MCStreamerWrapper Str(Ctx, Regions);
 
   std::unique_ptr<MCInstrInfo> MCII(TheTarget->createMCInstrInfo());
+
+  if (!MCPU.compare("native"))
+    MCPU = llvm::sys::getHostCPUName();
+
   std::unique_ptr<MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, MCPU, /* FeaturesStr */ ""));
   if (!STI->isCPUStringValid(MCPU))
