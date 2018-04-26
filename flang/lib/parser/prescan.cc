@@ -47,7 +47,6 @@ static void NormalizeCompilerDirectiveCommentMarker(TokenSequence *dir) {
 
 void Prescanner::Prescan(ProvenanceRange range) {
   AllSources &allSources{cooked_.allSources()};
-  ProvenanceRange around{allSources.GetContiguousRangeAround(range)};
   startProvenance_ = range.start();
   std::size_t offset{0};
   const SourceFile *source{allSources.GetSourceFile(startProvenance_, &offset)};

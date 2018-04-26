@@ -155,7 +155,6 @@ private:
   Messages &messages_;
   CookedSource &cooked_;
   Preprocessor &preprocessor_;
-  bool anyFatalErrors_{false};
   bool inFixedForm_{false};
   int fixedFormColumnLimit_{72};
   Encoding encoding_{Encoding::UTF8};

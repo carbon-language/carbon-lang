@@ -29,23 +29,18 @@ public:
   template<typename T> void Before(const T &) {}
   template<typename T> double Unparse(const T &);  // not void, never used
 
-  template<typename T>
-  auto Pre(const T &x) ->
-      typename std::enable_if<std::is_void_v<decltype(Unparse(x))>,
-          bool>::type {
-    // There is a local definition of Unparse() for this type.  It
-    // overrides the parse tree walker's default Walk() over the descendents.
-    Before(x);
-    Unparse(x);
-    Post(x);
-    return false;  // Walk() does not visit descendents
-  }
-  template<typename T>
-  auto Pre(const T &x) ->
-      typename std::enable_if<!std::is_void_v<decltype(Unparse(x))>,
-          bool>::type {
-    Before(x);
-    return true;  // there's no Unparse() defined here, Walk() the descendents
+  template<typename T> bool Pre(const T &x) {
+    if constexpr (std::is_void_v<decltype(Unparse(x))>) {
+      // There is a local definition of Unparse() for this type.  It
+      // overrides the parse tree walker's default Walk() over the descendents.
+      Before(x);
+      Unparse(x);
+      Post(x);
+      return false;  // Walk() does not visit descendents
+    } else {
+      Before(x);
+      return true;  // there's no Unparse() defined here, Walk() the descendents
+    }
   }
   template<typename T> void Post(const T &) {}
 

@@ -1,5 +1,5 @@
 namespace Fortran::parser {
-class Program;
+struct Program;
 }  // namespace Fortran::parser
 
 namespace Fortran::semantics {

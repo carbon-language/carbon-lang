@@ -1,7 +1,7 @@
 #include <iosfwd>
 
 namespace Fortran::parser {
-class Program;
+struct Program;
 class CookedSource;
 }  // namespace Fortran::parser
 
