@@ -211,6 +211,20 @@ bool RISCVTargetLowering::isTruncateFree(EVT SrcVT, EVT DstVT) const {
   return (SrcBits == 64 && DestBits == 32);
 }
 
+bool RISCVTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
+  // Zexts are free if they can be combined with a load.
+  if (auto *LD = dyn_cast<LoadSDNode>(Val)) {
+    EVT MemVT = LD->getMemoryVT();
+    if ((MemVT == MVT::i8 || MemVT == MVT::i16 ||
+         (Subtarget.is64Bit() && MemVT == MVT::i32)) &&
+        (LD->getExtensionType() == ISD::NON_EXTLOAD ||
+         LD->getExtensionType() == ISD::ZEXTLOAD))
+      return true;
+  }
+
+  return TargetLowering::isZExtFree(Val, VT2);
+}
+
 // Changes the condition code and swaps operands if necessary, so the SetCC
 // operation matches one of the comparisons supported directly in the RISC-V
 // ISA.
