@@ -523,7 +523,7 @@ void PassManagerBuilder::populateModulePassManager(
   if (RunPartialInlining)
     MPM.add(createPartialInliningPass());
 
-  if (!PrepareForLTO && !PrepareForThinLTO)
+  if (OptLevel > 1 && !PrepareForLTO && !PrepareForThinLTO)
     // Remove avail extern fns and globals definitions if we aren't
     // compiling an object file for later LTO. For LTO we want to preserve
     // these so they are eligible for inlining at link-time. Note if they
