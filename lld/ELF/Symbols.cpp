@@ -132,7 +132,9 @@ uint64_t Symbol::getGotPltVA() const {
 }
 
 uint64_t Symbol::getGotPltOffset() const {
-  return GotPltIndex * Target->GotPltEntrySize;
+  if (IsInIgot)
+    return PltIndex * Target->GotPltEntrySize;
+  return (PltIndex + Target->GotPltHeaderEntriesNum) * Target->GotPltEntrySize;
 }
 
 uint64_t Symbol::getPltVA() const {
