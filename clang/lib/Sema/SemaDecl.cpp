@@ -4212,12 +4212,6 @@ Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS, DeclSpec &DS,
                                  MultiTemplateParamsArg TemplateParams,
                                  bool IsExplicitInstantiation,
                                  RecordDecl *&AnonRecord) {
-
-  // We don't need to do any additional declspecifier checking on concept
-  // definitions since that should already have been done when the concept kw
-  // location was set within DS.
-  if (DS.isConceptSpecified()) return DS.getRepAsConcept();
-  
   Decl *TagD = nullptr;
   TagDecl *Tag = nullptr;
   if (DS.getTypeSpecType() == DeclSpec::TST_class ||
