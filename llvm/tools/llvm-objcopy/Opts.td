@@ -56,3 +56,8 @@ def extract_dwo : Flag<["-", "--"], "extract-dwo">,
                   HelpText<"Remove all sections that are not DWARF .dwo sections from file">;
 def localize_hidden : Flag<["-", "--"], "localize-hidden">,
                       HelpText<"Mark all symbols that have hidden or internal visibility as local">;
+defm localize_symbol : Eq<"localize-symbol">,
+                 MetaVarName<"symbol">,
+                 HelpText<"Mark <symbol> as local">;
+def L : JoinedOrSeparate<["-"], "L">,
+        Alias<localize_symbol>;

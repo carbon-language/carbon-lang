@@ -118,6 +118,7 @@ struct CopyConfig {
   std::vector<StringRef> Keep;
   std::vector<StringRef> OnlyKeep;
   std::vector<StringRef> AddSection;
+  std::vector<StringRef> LocalizeSymbol;
   bool StripAll;
   bool StripAllGNU;
   bool StripDebug;
@@ -129,6 +130,7 @@ struct CopyConfig {
 };
 
 using SectionPred = std::function<bool(const SectionBase &Sec)>;
+using SymbolPred = std::function<bool(const Symbol &Sym)>;
 
 bool IsDWOSection(const SectionBase &Sec) { return Sec.Name.endswith(".dwo"); }
 
@@ -188,13 +190,26 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
     SplitDWOToFile(Config, Reader, Config.SplitDWO, OutputElfType);
   }
 
+  SymbolPred LocalizePred = [](const Symbol &) { return false; };
+
   // Localize:
 
   if (Config.LocalizeHidden) {
-    Obj.SymbolTable->localize([](const Symbol &Sym) {
+    LocalizePred = [](const Symbol &Sym) {
       return Sym.Visibility == STV_HIDDEN || Sym.Visibility == STV_INTERNAL;
-    });
+    };
   }
+
+  if (!Config.LocalizeSymbol.empty()) {
+    LocalizePred = [LocalizePred, &Config](const Symbol &Sym) {
+      return LocalizePred(Sym) ||
+             std::find(std::begin(Config.LocalizeSymbol),
+                       std::end(Config.LocalizeSymbol),
+                       Sym.Name) != std::end(Config.LocalizeSymbol);
+    };
+  }
+
+  Obj.SymbolTable->localize(LocalizePred);
 
   SectionPred RemovePred = [](const SectionBase &) { return false; };
 
@@ -398,6 +413,8 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   Config.StripNonAlloc = InputArgs.hasArg(OBJCOPY_strip_non_alloc);
   Config.ExtractDWO = InputArgs.hasArg(OBJCOPY_extract_dwo);
   Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
+  for (auto Arg : InputArgs.filtered(OBJCOPY_localize_symbol))
+    Config.LocalizeSymbol.push_back(Arg->getValue());
 
   return Config;
 }
