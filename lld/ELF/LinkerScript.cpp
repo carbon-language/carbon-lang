@@ -1111,8 +1111,8 @@ ExprValue LinkerScript::getSymbolValue(StringRef Name, const Twine &Loc) {
     if (auto *DS = dyn_cast<Defined>(Sym))
       return {DS->Section, false, DS->Value, Loc};
     if (auto *SS = dyn_cast<SharedSymbol>(Sym))
-      if (!ErrorOnMissingSection || SS->CopyRelSec)
-        return {SS->CopyRelSec, false, 0, Loc};
+      if (!ErrorOnMissingSection)
+        return {nullptr, false, 0, Loc};
   }
 
   error(Loc + ": symbol not found: " + Name);

@@ -461,6 +461,21 @@ static std::vector<SharedSymbol *> getSymbolsAt(SharedSymbol &SS) {
   return Ret;
 }
 
+static void replaceWithDefined(Symbol &Sym, SectionBase *Sec, uint64_t Value,
+                               uint64_t Size) {
+  Symbol Old = Sym;
+  replaceSymbol<Defined>(&Sym, Sym.File, Sym.getName(), Sym.Binding,
+                         Sym.StOther, Sym.Type, Value, Size, Sec);
+  Sym.PltIndex = Old.PltIndex;
+  Sym.GotIndex = Old.GotIndex;
+  Sym.VerdefIndex = Old.VerdefIndex;
+  Sym.IsInGlobalMipsGot = Old.IsInGlobalMipsGot;
+  Sym.IsPreemptible = true;
+  Sym.ExportDynamic = true;
+  Sym.IsUsedInRegularObj = true;
+  Sym.Used = true;
+}
+
 // Reserve space in .bss or .bss.rel.ro for copy relocation.
 //
 // The copy relocation is pretty much a hack. If you use a copy relocation
@@ -522,11 +537,8 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol &SS) {
   // Look through the DSO's dynamic symbol table for aliases and create a
   // dynamic symbol for each one. This causes the copy relocation to correctly
   // interpose any aliases.
-  for (SharedSymbol *Sym : getSymbolsAt<ELFT>(SS)) {
-    Sym->CopyRelSec = Sec;
-    Sym->IsUsedInRegularObj = true;
-    Sym->Used = true;
-  }
+  for (SharedSymbol *Sym : getSymbolsAt<ELFT>(SS))
+    replaceWithDefined(*Sym, Sec, 0, Sym->Size);
 
   InX::RelaDyn->addReloc(Target->CopyRel, Sec, 0, &SS);
 }
@@ -828,10 +840,8 @@ static void processRelocAux(InputSectionBase &Sec, RelExpr Expr, RelType Type,
   }
 
   // If the symbol is undefined we already reported any relevant errors.
-  if (!Sym.isShared()) {
-    assert(Sym.isUndefined());
+  if (Sym.isUndefined())
     return;
-  }
 
   if (!canDefineSymbolInExecutable(Sym)) {
     error("cannot preempt symbol: " + toString(Sym) +
@@ -841,14 +851,13 @@ static void processRelocAux(InputSectionBase &Sec, RelExpr Expr, RelType Type,
 
   if (Sym.isObject()) {
     // Produce a copy relocation.
-    auto &SS = cast<SharedSymbol>(Sym);
-    if (!SS.CopyRelSec) {
+    if (auto *SS = dyn_cast<SharedSymbol>(&Sym)) {
       if (!Config->ZCopyreloc)
         error("unresolvable relocation " + toString(Type) +
-              " against symbol '" + toString(SS) +
+              " against symbol '" + toString(*SS) +
               "'; recompile with -fPIC or remove '-z nocopyreloc'" +
               getLocation(Sec, Sym, Offset));
-      addCopyRelSymbol<ELFT>(SS);
+      addCopyRelSymbol<ELFT>(*SS);
     }
     Sec.Relocations.push_back({Expr, Type, Offset, Addend, &Sym});
     return;
@@ -889,8 +898,10 @@ static void processRelocAux(InputSectionBase &Sec, RelExpr Expr, RelType Type,
     if (!Sym.isInPlt())
       addPltEntry<ELFT>(InX::Plt, InX::GotPlt, InX::RelaPlt, Target->PltRel,
                         Sym);
+    if (!Sym.isDefined())
+      replaceWithDefined(Sym, InX::Plt, Sym.getPltOffset(), 0);
     Sym.NeedsPltAddr = true;
-    Sec.Relocations.push_back({toPlt(Expr), Type, Offset, Addend, &Sym});
+    Sec.Relocations.push_back({Expr, Type, Offset, Addend, &Sym});
     return;
   }
 
