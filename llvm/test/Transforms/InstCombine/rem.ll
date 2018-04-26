@@ -386,6 +386,60 @@ define i32 @test19(i32 %x, i32 %y) {
   ret i32 %E
 }
 
+define i32 @test19_commutative0(i32 %x, i32 %y) {
+; CHECK-LABEL: @test19_commutative0(
+; CHECK-NEXT:    [[A:%.*]] = shl i32 1, [[X:%.*]]
+; CHECK-NEXT:    [[B:%.*]] = shl i32 1, [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = and i32 [[B]], [[A]]
+; CHECK-NEXT:    [[D:%.*]] = add i32 [[C]], [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add i32 [[D]], -1
+; CHECK-NEXT:    [[E:%.*]] = and i32 [[TMP1]], [[Y]]
+; CHECK-NEXT:    ret i32 [[E]]
+;
+  %A = shl i32 1, %x
+  %B = shl i32 1, %y
+  %C = and i32 %B, %A ; swapped
+  %D = add i32 %C, %A
+  %E = urem i32 %y, %D
+  ret i32 %E
+}
+
+define i32 @test19_commutative1(i32 %x, i32 %y) {
+; CHECK-LABEL: @test19_commutative1(
+; CHECK-NEXT:    [[A:%.*]] = shl i32 1, [[X:%.*]]
+; CHECK-NEXT:    [[B:%.*]] = shl i32 1, [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = and i32 [[A]], [[B]]
+; CHECK-NEXT:    [[D:%.*]] = add i32 [[A]], [[C]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add i32 [[D]], -1
+; CHECK-NEXT:    [[E:%.*]] = and i32 [[TMP1]], [[Y]]
+; CHECK-NEXT:    ret i32 [[E]]
+;
+  %A = shl i32 1, %x
+  %B = shl i32 1, %y
+  %C = and i32 %A, %B
+  %D = add i32 %A, %C ; swapped
+  %E = urem i32 %y, %D
+  ret i32 %E
+}
+
+define i32 @test19_commutative2(i32 %x, i32 %y) {
+; CHECK-LABEL: @test19_commutative2(
+; CHECK-NEXT:    [[A:%.*]] = shl i32 1, [[X:%.*]]
+; CHECK-NEXT:    [[B:%.*]] = shl i32 1, [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = and i32 [[B]], [[A]]
+; CHECK-NEXT:    [[D:%.*]] = add i32 [[A]], [[C]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add i32 [[D]], -1
+; CHECK-NEXT:    [[E:%.*]] = and i32 [[TMP1]], [[Y]]
+; CHECK-NEXT:    ret i32 [[E]]
+;
+  %A = shl i32 1, %x
+  %B = shl i32 1, %y
+  %C = and i32 %B, %A ; swapped
+  %D = add i32 %A, %C ; swapped
+  %E = urem i32 %y, %D
+  ret i32 %E
+}
+
 define <2 x i64> @test20(<2 x i64> %X, <2 x i1> %C) {
 ; CHECK-LABEL: @test20(
 ; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> [[C:%.*]], <2 x i64> <i64 1, i64 2>, <2 x i64> zeroinitializer
