@@ -183,6 +183,10 @@ bool RISCVTargetLowering::isLegalAddressingMode(const DataLayout &DL,
   return true;
 }
 
+bool RISCVTargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  return isInt<12>(Imm);
+}
+
 // Changes the condition code and swaps operands if necessary, so the SetCC
 // operation matches one of the comparisons supported directly in the RISC-V
 // ISA.
