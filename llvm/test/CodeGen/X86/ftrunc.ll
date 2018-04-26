@@ -356,3 +356,54 @@ define <4 x double> @trunc_signed_v4f64(<4 x double> %x) nounwind {
   ret <4 x double> %r
 }
 
+; FIXME: The attribute name is subject to change, but the fold may be
+; guarded to allow existing code to continue working based on its
+; assumptions of float->int overflow.
+
+define float @trunc_unsigned_f32_disable_via_attr(float %x) #1 {
+; SSE2-LABEL: trunc_unsigned_f32_disable_via_attr:
+; SSE2:       # %bb.0:
+; SSE2-NEXT:    cvttss2si %xmm0, %rax
+; SSE2-NEXT:    movl %eax, %eax
+; SSE2-NEXT:    xorps %xmm0, %xmm0
+; SSE2-NEXT:    cvtsi2ssq %rax, %xmm0
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: trunc_unsigned_f32_disable_via_attr:
+; SSE41:       # %bb.0:
+; SSE41-NEXT:    roundss $11, %xmm0, %xmm0
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: trunc_unsigned_f32_disable_via_attr:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vroundss $11, %xmm0, %xmm0, %xmm0
+; AVX1-NEXT:    retq
+  %i = fptoui float %x to i32
+  %r = uitofp i32 %i to float
+  ret float %r
+}
+
+define double @trunc_signed_f64_disable_via_attr(double %x) #1 {
+; SSE2-LABEL: trunc_signed_f64_disable_via_attr:
+; SSE2:       # %bb.0:
+; SSE2-NEXT:    cvttsd2si %xmm0, %rax
+; SSE2-NEXT:    xorps %xmm0, %xmm0
+; SSE2-NEXT:    cvtsi2sdq %rax, %xmm0
+; SSE2-NEXT:    retq
+;
+; SSE41-LABEL: trunc_signed_f64_disable_via_attr:
+; SSE41:       # %bb.0:
+; SSE41-NEXT:    roundsd $11, %xmm0, %xmm0
+; SSE41-NEXT:    retq
+;
+; AVX1-LABEL: trunc_signed_f64_disable_via_attr:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vroundsd $11, %xmm0, %xmm0, %xmm0
+; AVX1-NEXT:    retq
+  %i = fptosi double %x to i64
+  %r = sitofp i64 %i to double
+  ret double %r
+}
+
+attributes #1 = { nounwind "fp-cast-overflow-workaround"="true" }
+
