@@ -405,6 +405,8 @@ void MappingTraits<WasmYAML::SymbolInfo>::mapping(IO &IO,
       IO.mapOptional("Offset", Info.DataRef.Offset, 0u);
       IO.mapRequired("Size", Info.DataRef.Size);
     }
+  } else if (Info.Kind == wasm::WASM_SYMBOL_TYPE_SECTION) {
+    IO.mapRequired("Section", Info.ElementIndex);
   } else {
     llvm_unreachable("unsupported symbol kind");
   }
@@ -439,6 +441,7 @@ void ScalarEnumerationTraits<WasmYAML::SymbolKind>::enumeration(
   ECase(FUNCTION);
   ECase(DATA);
   ECase(GLOBAL);
+  ECase(SECTION);
 #undef ECase
 }
 

@@ -106,6 +106,9 @@ std::unique_ptr<WasmYAML::CustomSection> WasmDumper::dumpCustomSection(const Was
       case wasm::WASM_SYMBOL_TYPE_GLOBAL:
         Info.ElementIndex = Symbol.ElementIndex;
         break;
+      case wasm::WASM_SYMBOL_TYPE_SECTION:
+        Info.ElementIndex = Symbol.ElementIndex;
+        break;
       }
       LinkingSec->SymbolTable.emplace_back(Info);
     }

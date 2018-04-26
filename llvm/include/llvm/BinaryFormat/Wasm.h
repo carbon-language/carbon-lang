@@ -250,8 +250,9 @@ enum : unsigned {
 // Kind codes used in the custom "linking" section in the WASM_SYMBOL_TABLE
 enum WasmSymbolType : unsigned {
   WASM_SYMBOL_TYPE_FUNCTION = 0x0,
-  WASM_SYMBOL_TYPE_DATA     = 0x1,
-  WASM_SYMBOL_TYPE_GLOBAL   = 0x2,
+  WASM_SYMBOL_TYPE_DATA = 0x1,
+  WASM_SYMBOL_TYPE_GLOBAL = 0x2,
+  WASM_SYMBOL_TYPE_SECTION = 0x3,
 };
 
 const unsigned WASM_SYMBOL_BINDING_MASK       = 0x3;
