@@ -461,6 +461,11 @@ static std::vector<SharedSymbol *> getSymbolsAt(SharedSymbol &SS) {
   return Ret;
 }
 
+// When a symbol is copy relocated or we create a canonical plt entry, it is
+// effectively a defined symbol. In the case of copy relocation the symbol is
+// in .bss and in the case of a canonical plt entry it is in .plt. This function
+// replaces the existing symbol with a Defined pointing to the appropriate
+// location.
 static void replaceWithDefined(Symbol &Sym, SectionBase *Sec, uint64_t Value,
                                uint64_t Size) {
   Symbol Old = Sym;
