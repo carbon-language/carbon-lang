@@ -479,6 +479,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FMA, MVT::v2f16, Legal);
     setOperationAction(ISD::FMINNUM, MVT::v2f16, Legal);
     setOperationAction(ISD::FMAXNUM, MVT::v2f16, Legal);
+    setOperationAction(ISD::FCANONICALIZE, MVT::v2f16, Legal);
 
     // This isn't really legal, but this avoids the legalizer unrolling it (and
     // allows matching fneg (fabs x) patterns)
