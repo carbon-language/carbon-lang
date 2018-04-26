@@ -274,9 +274,20 @@ template<typename... Ps> inline constexpr auto first(const Ps &... ps) {
   return AlternativesParser<Ps...>{ps...};
 }
 
+#if !__GNUC__ || __clang__
+// Implement operator|| with first(), unless compiling with g++,
+// which can segfault at compile time and needs to continue to use
+// the original implementation of operator|| as of gcc-7.3.0.
+template<typename PA, typename PB>
+inline constexpr auto operator||(const PA &pa, const PB &pb) {
+  return first(pa, pb);
+
+}
+#else  // g++ only: original implementation
 // If a and b are parsers, then a || b returns a parser that succeeds if
 // a does so, or if a fails and b succeeds.  The result types of the parsers
 // must be the same type.  If a succeeds, b is not attempted.
+// TODO: remove this code when no longer needed
 template<typename PA, typename PB> class AlternativeParser {
 public:
   using resultType = typename PA::resultType;
@@ -323,9 +334,9 @@ private:
 
 template<typename PA, typename PB>
 inline constexpr auto operator||(const PA &pa, const PB &pb) {
-  // TODO: Implement as first(pa, pb); remove original AlternativeParser<>.
   return AlternativeParser<PA, PB>{pa, pb};
 }
+#endif // clang vs. g++ on operator|| implementations
 
 // If a and b are parsers, then recovery(a,b) returns a parser that succeeds if
 // a does so, or if a fails and b succeeds.  If a succeeds, b is not attempted.
