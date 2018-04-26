@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.9.0)
 #
 # Reminder: The normal way to set the compiler is via the CXX environment variable
 #
-#   CXX=/opt/gcc-7.2.0/bin/g++ cmake .../f18
+#   CXX=/opt/gcc-7.3.0/bin/g++ cmake .../f18
 #
 # but for convenience we provide the following cmake variables to
 # use an existing gcc installation directory.
@@ -12,12 +12,13 @@ cmake_minimum_required(VERSION 3.9.0)
 # Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI.
 # Add '-DCLANG=1' to use clang.
 if( PGI )
+  set(GCCVERS gcc-7.3.0/linux86-64/redhat)
   if(CLANG)
     # This copy on hsw3 has one-line patch to include/c++/7.3.0/variant
-    set(GCC /local/home/pklausler/gcc/gcc-7.3.0/linux86-64/redhat)
+    set(GCC /local/home/pklausler/gcc/${GCCVERS})
     set(CLANG /home/sw/thirdparty/llvm/linux86-64/6.0-pgi2)
   else()
-    set(GCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
+    set(GCC /home/sw/thirdparty/gcc/${GCCVERS})
   endif()
 endif()
 
