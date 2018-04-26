@@ -1820,7 +1820,6 @@ public:
     VarTemplate,
     AliasTemplate,
     TemplateTemplateParam,
-    Concept,
     DependentTemplate
   };
   TemplateNameKindForDiagnostics
