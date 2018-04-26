@@ -118,7 +118,8 @@ struct CopyConfig {
   std::vector<StringRef> Keep;
   std::vector<StringRef> OnlyKeep;
   std::vector<StringRef> AddSection;
-  std::vector<StringRef> LocalizeSymbol;
+  std::vector<StringRef> SymbolsToLocalize;
+  StringMap<StringRef> SymbolsToRename;
   bool StripAll;
   bool StripAllGNU;
   bool StripDebug;
@@ -130,7 +131,6 @@ struct CopyConfig {
 };
 
 using SectionPred = std::function<bool(const SectionBase &Sec)>;
-using SymbolPred = std::function<bool(const Symbol &Sym)>;
 
 bool IsDWOSection(const SectionBase &Sec) { return Sec.Name.endswith(".dwo"); }
 
@@ -190,31 +190,9 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
     SplitDWOToFile(Config, Reader, Config.SplitDWO, OutputElfType);
   }
 
-  SymbolPred LocalizePred = [](const Symbol &) { return false; };
-
-  // Localize:
-
-  if (Config.LocalizeHidden) {
-    LocalizePred = [](const Symbol &Sym) {
-      return Sym.Visibility == STV_HIDDEN || Sym.Visibility == STV_INTERNAL;
-    };
-  }
-
-  if (!Config.LocalizeSymbol.empty()) {
-    LocalizePred = [LocalizePred, &Config](const Symbol &Sym) {
-      return LocalizePred(Sym) ||
-             std::find(std::begin(Config.LocalizeSymbol),
-                       std::end(Config.LocalizeSymbol),
-                       Sym.Name) != std::end(Config.LocalizeSymbol);
-    };
-  }
-
-  Obj.SymbolTable->localize(LocalizePred);
-
   SectionPred RemovePred = [](const SectionBase &) { return false; };
 
   // Removes:
-
   if (!Config.ToRemove.empty()) {
     RemovePred = [&Config](const SectionBase &Sec) {
       return std::find(std::begin(Config.ToRemove), std::end(Config.ToRemove),
@@ -283,7 +261,6 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
     };
 
   // Explicit copies:
-
   if (!Config.OnlyKeep.empty()) {
     RemovePred = [&Config, RemovePred, &Obj](const SectionBase &Sec) {
       // Explicitly keep these sections regardless of previous removes.
@@ -335,8 +312,23 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
     }
   }
 
-  if (!Config.AddGnuDebugLink.empty()) {
+  if (!Config.AddGnuDebugLink.empty())
     Obj.addSection<GnuDebugLinkSection>(Config.AddGnuDebugLink);
+
+  if (Obj.SymbolTable) {
+    Obj.SymbolTable->updateSymbols([&](Symbol &Sym) {
+      if ((Config.LocalizeHidden &&
+           (Sym.Visibility == STV_HIDDEN || Sym.Visibility == STV_INTERNAL)) ||
+          (!Config.SymbolsToLocalize.empty() &&
+           std::find(std::begin(Config.SymbolsToLocalize),
+                     std::end(Config.SymbolsToLocalize),
+                     Sym.Name) != std::end(Config.SymbolsToLocalize)))
+        Sym.Binding = STB_LOCAL;
+
+      const auto I = Config.SymbolsToRename.find(Sym.Name);
+      if (I != Config.SymbolsToRename.end())
+        Sym.Name = I->getValue();
+    });
   }
 }
 
@@ -397,6 +389,15 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
 
   Config.SplitDWO = InputArgs.getLastArgValue(OBJCOPY_split_dwo);
   Config.AddGnuDebugLink = InputArgs.getLastArgValue(OBJCOPY_add_gnu_debuglink);
+
+  for (auto Arg : InputArgs.filtered(OBJCOPY_redefine_symbol)) {
+    if (!StringRef(Arg->getValue()).contains('='))
+      error("Bad format for --redefine-sym");
+    auto Old2New = StringRef(Arg->getValue()).split('=');
+    if (!Config.SymbolsToRename.insert(Old2New).second)
+      error("Multiple redefinition of symbol " + Old2New.first);
+  }
+
   for (auto Arg : InputArgs.filtered(OBJCOPY_remove_section))
     Config.ToRemove.push_back(Arg->getValue());
   for (auto Arg : InputArgs.filtered(OBJCOPY_keep))
@@ -414,7 +415,7 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   Config.ExtractDWO = InputArgs.hasArg(OBJCOPY_extract_dwo);
   Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
   for (auto Arg : InputArgs.filtered(OBJCOPY_localize_symbol))
-    Config.LocalizeSymbol.push_back(Arg->getValue());
+    Config.SymbolsToLocalize.push_back(Arg->getValue());
 
   return Config;
 }
