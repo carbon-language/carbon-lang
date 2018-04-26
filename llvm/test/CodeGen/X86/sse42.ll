@@ -123,19 +123,18 @@ define i1 @pcmpestri_mem_eq_i8(i8* %lhs_ptr, i32 %lhs_len, i8* %rhs_ptr, i32 %rh
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %esi
 ; X32-NEXT:    movdqu (%esi), %xmm0
-; X32-NEXT:    movdqu (%ecx), %xmm1
-; X32-NEXT:    pcmpestri $24, %xmm1, %xmm0
+; X32-NEXT:    pcmpestri $24, (%ecx), %xmm0
 ; X32-NEXT:    setae %al
 ; X32-NEXT:    popl %esi
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpestri_mem_eq_i8:
 ; X64:       # %bb.0: # %entry
+; X64-NEXT:    movq %rdx, %r8
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rdx), %xmm1
 ; X64-NEXT:    movl %esi, %eax
 ; X64-NEXT:    movl %ecx, %edx
-; X64-NEXT:    pcmpestri $24, %xmm1, %xmm0
+; X64-NEXT:    pcmpestri $24, (%r8), %xmm0
 ; X64-NEXT:    setae %al
 ; X64-NEXT:    retq
 entry:
@@ -157,19 +156,18 @@ define i32 @pcmpestri_mem_idx_i8(i8* %lhs_ptr, i32 %lhs_len, i8* %rhs_ptr, i32 %
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %esi
 ; X32-NEXT:    movdqu (%esi), %xmm0
-; X32-NEXT:    movdqu (%ecx), %xmm1
-; X32-NEXT:    pcmpestri $24, %xmm1, %xmm0
+; X32-NEXT:    pcmpestri $24, (%ecx), %xmm0
 ; X32-NEXT:    movl %ecx, %eax
 ; X32-NEXT:    popl %esi
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpestri_mem_idx_i8:
 ; X64:       # %bb.0: # %entry
+; X64-NEXT:    movq %rdx, %r8
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rdx), %xmm1
 ; X64-NEXT:    movl %esi, %eax
 ; X64-NEXT:    movl %ecx, %edx
-; X64-NEXT:    pcmpestri $24, %xmm1, %xmm0
+; X64-NEXT:    pcmpestri $24, (%r8), %xmm0
 ; X64-NEXT:    movl %ecx, %eax
 ; X64-NEXT:    retq
 entry:
@@ -380,19 +378,18 @@ define i1 @pcmpestri_mem_eq_i16(i16* %lhs_ptr, i32 %lhs_len, i16* %rhs_ptr, i32 
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %esi
 ; X32-NEXT:    movdqu (%esi), %xmm0
-; X32-NEXT:    movdqu (%ecx), %xmm1
-; X32-NEXT:    pcmpestri $25, %xmm1, %xmm0
+; X32-NEXT:    pcmpestri $25, (%ecx), %xmm0
 ; X32-NEXT:    setae %al
 ; X32-NEXT:    popl %esi
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpestri_mem_eq_i16:
 ; X64:       # %bb.0: # %entry
+; X64-NEXT:    movq %rdx, %r8
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rdx), %xmm1
 ; X64-NEXT:    movl %esi, %eax
 ; X64-NEXT:    movl %ecx, %edx
-; X64-NEXT:    pcmpestri $25, %xmm1, %xmm0
+; X64-NEXT:    pcmpestri $25, (%r8), %xmm0
 ; X64-NEXT:    setae %al
 ; X64-NEXT:    retq
 entry:
@@ -416,19 +413,18 @@ define i32 @pcmpestri_mem_idx_i16(i16* %lhs_ptr, i32 %lhs_len, i16* %rhs_ptr, i3
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %esi
 ; X32-NEXT:    movdqu (%esi), %xmm0
-; X32-NEXT:    movdqu (%ecx), %xmm1
-; X32-NEXT:    pcmpestri $25, %xmm1, %xmm0
+; X32-NEXT:    pcmpestri $25, (%ecx), %xmm0
 ; X32-NEXT:    movl %ecx, %eax
 ; X32-NEXT:    popl %esi
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpestri_mem_idx_i16:
 ; X64:       # %bb.0: # %entry
+; X64-NEXT:    movq %rdx, %r8
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rdx), %xmm1
 ; X64-NEXT:    movl %esi, %eax
 ; X64-NEXT:    movl %ecx, %edx
-; X64-NEXT:    pcmpestri $25, %xmm1, %xmm0
+; X64-NEXT:    pcmpestri $25, (%r8), %xmm0
 ; X64-NEXT:    movl %ecx, %eax
 ; X64-NEXT:    retq
 entry:
@@ -622,16 +618,14 @@ define i1 @pcmpistri_mem_eq_i8(i8* %lhs_ptr, i8* %rhs_ptr) nounwind {
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movdqu (%ecx), %xmm0
-; X32-NEXT:    movdqu (%eax), %xmm1
-; X32-NEXT:    pcmpistri $24, %xmm1, %xmm0
+; X32-NEXT:    pcmpistri $24, (%eax), %xmm0
 ; X32-NEXT:    setae %al
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpistri_mem_eq_i8:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rsi), %xmm1
-; X64-NEXT:    pcmpistri $24, %xmm1, %xmm0
+; X64-NEXT:    pcmpistri $24, (%rsi), %xmm0
 ; X64-NEXT:    setae %al
 ; X64-NEXT:    retq
 entry:
@@ -650,16 +644,14 @@ define i32 @pcmpistri_mem_idx_i8(i8* %lhs_ptr, i8* %rhs_ptr) nounwind {
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movdqu (%ecx), %xmm0
-; X32-NEXT:    movdqu (%eax), %xmm1
-; X32-NEXT:    pcmpistri $24, %xmm1, %xmm0
+; X32-NEXT:    pcmpistri $24, (%eax), %xmm0
 ; X32-NEXT:    movl %ecx, %eax
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpistri_mem_idx_i8:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rsi), %xmm1
-; X64-NEXT:    pcmpistri $24, %xmm1, %xmm0
+; X64-NEXT:    pcmpistri $24, (%rsi), %xmm0
 ; X64-NEXT:    movl %ecx, %eax
 ; X64-NEXT:    retq
 entry:
@@ -849,16 +841,14 @@ define i1 @pcmpistri_mem_eq_i16(i16* %lhs_ptr, i16* %rhs_ptr) nounwind {
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movdqu (%ecx), %xmm0
-; X32-NEXT:    movdqu (%eax), %xmm1
-; X32-NEXT:    pcmpistri $25, %xmm1, %xmm0
+; X32-NEXT:    pcmpistri $25, (%eax), %xmm0
 ; X32-NEXT:    setae %al
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpistri_mem_eq_i16:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rsi), %xmm1
-; X64-NEXT:    pcmpistri $25, %xmm1, %xmm0
+; X64-NEXT:    pcmpistri $25, (%rsi), %xmm0
 ; X64-NEXT:    setae %al
 ; X64-NEXT:    retq
 entry:
@@ -879,16 +869,14 @@ define i32 @pcmpistri_mem_idx_i16(i16* %lhs_ptr, i16* %rhs_ptr) nounwind {
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movdqu (%ecx), %xmm0
-; X32-NEXT:    movdqu (%eax), %xmm1
-; X32-NEXT:    pcmpistri $25, %xmm1, %xmm0
+; X32-NEXT:    pcmpistri $25, (%eax), %xmm0
 ; X32-NEXT:    movl %ecx, %eax
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: pcmpistri_mem_idx_i16:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    movdqu (%rdi), %xmm0
-; X64-NEXT:    movdqu (%rsi), %xmm1
-; X64-NEXT:    pcmpistri $25, %xmm1, %xmm0
+; X64-NEXT:    pcmpistri $25, (%rsi), %xmm0
 ; X64-NEXT:    movl %ecx, %eax
 ; X64-NEXT:    retq
 entry:
