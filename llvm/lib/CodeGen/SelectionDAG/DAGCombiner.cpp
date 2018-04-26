@@ -10904,6 +10904,14 @@ SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
 
 static SDValue foldFPToIntToFP(SDNode *N, SelectionDAG &DAG,
                                const TargetLowering &TLI) {
+  // This optimization is guarded by a function attribute because it may produce
+  // unexpected results. Ie, programs may be relying on the platform-specific
+  // undefined behavior when the float-to-int conversion overflows.
+  const Function &F = DAG.getMachineFunction().getFunction();
+  Attribute CastWorkaround = F.getFnAttribute("fp-cast-overflow-workaround");
+  if (CastWorkaround.getValueAsString().equals("true"))
+    return SDValue();
+
   // We only do this if the target has legal ftrunc. Otherwise, we'd likely be
   // replacing casts with a libcall.
   EVT VT = N->getValueType(0);
