@@ -183,6 +183,10 @@ bool RISCVTargetLowering::isLegalAddressingMode(const DataLayout &DL,
   return true;
 }
 
+bool RISCVTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  return isInt<12>(Imm);
+}
+
 bool RISCVTargetLowering::isLegalAddImmediate(int64_t Imm) const {
   return isInt<12>(Imm);
 }
