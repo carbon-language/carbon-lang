@@ -9,25 +9,28 @@ cmake_minimum_required(VERSION 3.9.0)
 # use an existing gcc installation directory.
 #
 
-# Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI
+# Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI.
+# Add '-DCLANG=1' to use clang.
 if( PGI )
-  set(PGIGCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
   if(CLANG)
+    # This copy on hsw3 has one-line patch to include/c++/7.3.0/variant
+    set(GCC /local/home/pklausler/gcc/gcc-7.3.0/linux86-64/redhat)
     set(CLANG /home/sw/thirdparty/llvm/linux86-64/6.0-pgi2)
-    set(CMAKE_CXX_COMPILER "${CLANG}/bin/clang++")
-    set(CMAKE_CC_COMPILER "${CLANG}/bin/clang")
-    set(CMAKE_INSTALL_RPATH "${PGIGCC}/lib64")
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${PGIGCC}")
   else()
-    set(GCC "${PGIGCC}")
+    set(GCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
   endif()
 endif()
 
 # Pass -DGCC=... to cmake to use a specific gcc installation
 if( GCC )
-  set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
-  set(CMAKE_CC_COMPILER "${GCC}/bin/gcc")
+  if (CLANG)
+    set(CMAKE_CXX_COMPILER "${CLANG}/bin/clang++")
+    set(CMAKE_CC_COMPILER "${CLANG}/bin/clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${GCC}")
+  else()
+    set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
+    set(CMAKE_CC_COMPILER "${GCC}/bin/gcc")
+  endif()
   set(CMAKE_INSTALL_RPATH "${GCC}/lib64")
   set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
 endif()
@@ -42,11 +45,9 @@ endif()
 message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-  if(PGI)
-    if(CLANG)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${PGIGCC}")
-    endif()
-  endif()
+   if(CLANG)
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${GCC}")
+   endif()
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
    set(CMAKE_CXX_FLAGS_RELEASE    "-O2 -DDEBUG")
