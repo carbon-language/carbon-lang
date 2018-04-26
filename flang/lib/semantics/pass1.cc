@@ -1738,7 +1738,7 @@ public:
 
     // Specialize from StmtClass::LabelDo to StmtClass::NonLabelDoWhile or
     // StmtClass::NonLabelDoConcurrent where applicable
-    SpecializeDoStmt( sema.stmt_index , std::get<std::optional<LoopControl>>(x.t) ); 
+    SpecializeDoStmt( sema.stmt_index , std::get<std::optional<LoopControl>>(x.t) );
 
     return true ; 
   }
@@ -1774,7 +1774,7 @@ public:
 
     // Specialize from StmtClass::LabelDo to StmtClass::LabelDoWhile or
     // StmtClass::LabelDoConcurrent where applicable
-    SpecializeDoStmt( sema.stmt_index , std::get<std::optional<LoopControl>>(x.t) ); 
+    SpecializeDoStmt( sema.stmt_index , std::get<std::optional<LoopControl>>(x.t) );
 
     return true ; 
   }
