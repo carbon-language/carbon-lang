@@ -24,6 +24,8 @@ namespace wasm {
 const char WasmMagic[] = {'\0', 'a', 's', 'm'};
 // Wasm binary format version
 const uint32_t WasmVersion = 0x1;
+// Wasm linking metadata version
+const uint32_t WasmMetadataVersion = 0x1;
 // Wasm uses a 64k page size
 const uint32_t WasmPageSize = 65536;
 
@@ -161,6 +163,7 @@ struct WasmFunctionName {
 };
 
 struct WasmLinkingData {
+  uint32_t Version;
   std::vector<WasmInitFunc> InitFunctions;
   std::vector<StringRef> Comdats;
   std::vector<WasmSymbolInfo> SymbolTable;

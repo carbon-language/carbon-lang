@@ -857,8 +857,9 @@ void WasmObjectWriter::writeLinkingMetaDataSection(
     const std::map<StringRef, std::vector<WasmComdatEntry>> &Comdats) {
   SectionBookkeeping Section;
   startCustomSection(Section, "linking");
-  SectionBookkeeping SubSection;
+  encodeULEB128(wasm::WasmMetadataVersion, getStream());
 
+  SectionBookkeeping SubSection;
   if (SymbolInfos.size() != 0) {
     startSection(SubSection, wasm::WASM_SYMBOL_TABLE);
     encodeULEB128(SymbolInfos.size(), getStream());

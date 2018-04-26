@@ -134,6 +134,7 @@ public:
 
 int WasmWriter::writeSectionContent(raw_ostream &OS, WasmYAML::LinkingSection &Section) {
   writeStringRef(Section.Name, OS);
+  encodeULEB128(Section.Version, OS);
 
   SubSectionWriter SubSection(OS);
 

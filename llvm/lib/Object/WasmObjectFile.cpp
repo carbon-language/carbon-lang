@@ -313,6 +313,14 @@ Error WasmObjectFile::parseLinkingSection(const uint8_t *Ptr,
         "Linking data must come after code section", object_error::parse_failed);
   }
 
+  LinkingData.Version = readVaruint32(Ptr);
+  if (LinkingData.Version != wasm::WasmMetadataVersion) {
+    return make_error<GenericBinaryError>(
+        "Unexpected metadata version: " + Twine(LinkingData.Version) +
+            " (Expected: " + Twine(wasm::WasmMetadataVersion) + ")",
+        object_error::parse_failed);
+  }
+
   while (Ptr < End) {
     uint8_t Type = readUint8(Ptr);
     uint32_t Size = readVaruint32(Ptr);
