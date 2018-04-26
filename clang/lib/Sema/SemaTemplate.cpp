@@ -4021,12 +4021,6 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
                               TemplateKWLoc, TemplateArgs);
   }
 
-  if (R.getAsSingle<ConceptDecl>() && !AnyDependentArguments()) {
-    return CheckConceptTemplateId(SS, R.getLookupNameInfo(),
-                                  R.getAsSingle<ConceptDecl>(),
-                                  TemplateKWLoc, TemplateArgs);
-  }
-
   // We don't want lookup warnings at this point.
   R.suppressDiagnostics();
 
