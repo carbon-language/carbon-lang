@@ -3988,6 +3988,16 @@ Sema::CheckVarTemplateId(const CXXScopeSpec &SS,
                                   /*FoundD=*/nullptr, TemplateArgs);
 }
 
+void Sema::diagnoseMissingTemplateArguments(TemplateName Name,
+                                            SourceLocation Loc) {
+  Diag(Loc, diag::err_template_missing_args)
+    << (int)getTemplateNameKindForDiagnostics(Name) << Name;
+  if (TemplateDecl *TD = Name.getAsTemplateDecl()) {
+    Diag(TD->getLocation(), diag::note_template_decl_here)
+      << TD->getTemplateParameters()->getSourceRange();
+  }
+}
+
 ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
                                      SourceLocation TemplateKWLoc,
                                      LookupResult &R,
@@ -4208,11 +4218,7 @@ bool Sema::CheckTemplateTypeArgument(TemplateTypeParmDecl *Param,
     // is a template without any arguments.
     SourceRange SR = AL.getSourceRange();
     TemplateName Name = Arg.getAsTemplateOrTemplatePattern();
-    Diag(SR.getBegin(), diag::err_template_missing_args)
-      << (int)getTemplateNameKindForDiagnostics(Name) << Name << SR;
-    if (TemplateDecl *Decl = Name.getAsTemplateDecl())
-      Diag(Decl->getLocation(), diag::note_template_decl_here);
-
+    diagnoseMissingTemplateArguments(Name, SR.getEnd());
     return true;
   }
   case TemplateArgument::Expression: {

@@ -1984,7 +1984,7 @@ def err_auto_not_allowed : Error<
   "%select{'auto'|'decltype(auto)'|'__auto_type'|"
   "use of "
   "%select{class template|function template|variable template|alias template|"
-  "template template parameter|template}2 %3 requires template arguments; "
+  "template template parameter|concept|template}2 %3 requires template arguments; "
   "argument deduction}0 not allowed "
   "%select{in function prototype"
   "|in non-static struct member|in struct member"
@@ -1998,7 +1998,7 @@ def err_auto_not_allowed : Error<
 def err_dependent_deduced_tst : Error<
   "typename specifier refers to "
   "%select{class template|function template|variable template|alias template|"
-  "template template parameter|template}0 member in %1; "
+  "template template parameter|concept|template}0 member in %1; "
   "argument deduction not allowed here">;
 def err_auto_not_allowed_var_inst : Error<
   "'auto' variable template instantiation is not allowed">;
@@ -2078,7 +2078,7 @@ def err_deduced_class_template_compound_type : Error<
   "deduced class template specialization type">;
 def err_deduced_non_class_template_specialization_type : Error<
   "%select{<error>|function template|variable template|alias template|"
-  "template template parameter|template}0 %1 requires template arguments; "
+  "template template parameter|concept|template}0 %1 requires template arguments; "
   "argument deduction only allowed for class templates">;
 def err_deduced_class_template_ctor_ambiguous : Error<
   "ambiguous deduction for template arguments of %0">;
@@ -2106,7 +2106,7 @@ def err_deduction_guide_invalid_specifier : Error<
 def err_deduction_guide_name_not_class_template : Error<
   "cannot specify deduction guide for "
   "%select{<error>|function template|variable template|alias template|"
-  "template template parameter|dependent template name}0 %1">;
+  "template template parameter|concept|dependent template name}0 %1">;
 def err_deduction_guide_wrong_scope : Error<
   "deduction guide must be declared in the same scope as template %q0">;
 def err_deduction_guide_defines_function : Error<
@@ -3991,18 +3991,16 @@ def err_template_member_noparams : Error<
   "extraneous 'template<>' in declaration of member %0">;
 def err_template_tag_noparams : Error<
   "extraneous 'template<>' in declaration of %0 %1">;
-def err_template_decl_ref : Error<
-  "cannot refer to %select{class|variable}0 template %1 without a template argument list">;
 
 // C++ Template Argument Lists
 def err_template_missing_args : Error<
   "use of "
   "%select{class template|function template|variable template|alias template|"
-  "template template parameter|template}0 %1 requires template arguments">;
+  "template template parameter|concept|template}0 %1 requires template arguments">;
 def err_template_arg_list_different_arity : Error<
   "%select{too few|too many}0 template arguments for "
   "%select{class template|function template|variable template|alias template|"
-  "template template parameter|template}1 %2">;
+  "template template parameter|concept|template}1 %2">;
 def note_template_decl_here : Note<"template is declared here">;
 def err_template_arg_must_be_type : Error<
   "template argument for template type parameter must be a type">;

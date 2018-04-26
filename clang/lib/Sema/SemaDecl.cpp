@@ -724,13 +724,7 @@ void Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
     if (isTemplateName(S, SS ? *SS : EmptySS, /*hasTemplateKeyword=*/false,
                        Name, nullptr, true, TemplateResult,
                        MemberOfUnknownSpecialization) == TNK_Type_template) {
-      TemplateName TplName = TemplateResult.get();
-      Diag(IILoc, diag::err_template_missing_args)
-        << (int)getTemplateNameKindForDiagnostics(TplName) << TplName;
-      if (TemplateDecl *TplDecl = TplName.getAsTemplateDecl()) {
-        Diag(TplDecl->getLocation(), diag::note_template_decl_here)
-          << TplDecl->getTemplateParameters()->getSourceRange();
-      }
+      diagnoseMissingTemplateArguments(TemplateResult.get(), IILoc);
       return;
     }
   }
@@ -1167,6 +1161,8 @@ Sema::getTemplateNameKindForDiagnostics(TemplateName Name) {
     return TemplateNameKindForDiagnostics::AliasTemplate;
   if (isa<TemplateTemplateParmDecl>(TD))
     return TemplateNameKindForDiagnostics::TemplateTemplateParam;
+  if (isa<ConceptDecl>(TD))
+    return TemplateNameKindForDiagnostics::Concept;
   return TemplateNameKindForDiagnostics::DependentTemplate;
 }
 
