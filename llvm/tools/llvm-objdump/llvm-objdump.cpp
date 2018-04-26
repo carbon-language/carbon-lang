@@ -917,9 +917,17 @@ static std::error_code getRelocationValueString(const WasmObjectFile *Obj,
                                                 const RelocationRef &RelRef,
                                                 SmallVectorImpl<char> &Result) {
   const wasm::WasmRelocation& Rel = Obj->getWasmRelocation(RelRef);
+  symbol_iterator SI = RelRef.getSymbol();
   std::string fmtbuf;
   raw_string_ostream fmt(fmtbuf);
-  fmt << Rel.Index << (Rel.Addend < 0 ? "" : "+") << Rel.Addend;
+  Expected<StringRef> SymNameOrErr = SI->getName();
+  if (!SymNameOrErr) {
+    fmt << Rel.Index;
+  } else {
+    StringRef SymName = *SymNameOrErr;
+    Result.append(SymName.begin(), SymName.end());
+  }
+  fmt << (Rel.Addend < 0 ? "" : "+") << Rel.Addend;
   fmt.flush();
   Result.append(fmtbuf.begin(), fmtbuf.end());
   return std::error_code();

@@ -1139,10 +1139,14 @@ uint64_t WasmObjectFile::getRelocationOffset(DataRefImpl Ref) const {
   return Rel.Offset;
 }
 
-symbol_iterator WasmObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
-  llvm_unreachable("not yet implemented");
-  SymbolRef Ref;
-  return symbol_iterator(Ref);
+symbol_iterator WasmObjectFile::getRelocationSymbol(DataRefImpl Ref) const {
+  const wasm::WasmRelocation &Rel = getWasmRelocation(Ref);
+  if (Rel.Type == wasm::R_WEBASSEMBLY_TYPE_INDEX_LEB)
+    return symbol_end();
+  DataRefImpl Sym;
+  Sym.d.a = Rel.Index;
+  Sym.d.b = 0;
+  return symbol_iterator(SymbolRef(Sym, this));
 }
 
 uint64_t WasmObjectFile::getRelocationType(DataRefImpl Ref) const {
