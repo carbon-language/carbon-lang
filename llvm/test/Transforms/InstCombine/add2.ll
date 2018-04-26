@@ -379,6 +379,39 @@ define i32 @add_or_and(i32 %x, i32 %y) {
   ret i32 %add
 }
 
+define i32 @add_or_and_commutative(i32 %x, i32 %y) {
+; CHECK-LABEL: @add_or_and_commutative(
+; CHECK-NEXT:    [[ADD:%.*]] = add i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[ADD]]
+;
+  %or = or i32 %x, %y
+  %and = and i32 %y, %x ; swapped
+  %add = add i32 %or, %and
+  ret i32 %add
+}
+
+define i32 @add_and_or(i32 %x, i32 %y) {
+; CHECK-LABEL: @add_and_or(
+; CHECK-NEXT:    [[ADD:%.*]] = add i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[ADD]]
+;
+  %or = or i32 %x, %y
+  %and = and i32 %x, %y
+  %add = add i32 %and, %or
+  ret i32 %add
+}
+
+define i32 @add_and_or_commutative(i32 %x, i32 %y) {
+; CHECK-LABEL: @add_and_or_commutative(
+; CHECK-NEXT:    [[ADD:%.*]] = add i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[ADD]]
+;
+  %or = or i32 %x, %y
+  %and = and i32 %y, %x ; swapped
+  %add = add i32 %and, %or
+  ret i32 %add
+}
+
 define i32 @add_nsw_or_and(i32 %x, i32 %y) {
 ; CHECK-LABEL: @add_nsw_or_and(
 ; CHECK-NEXT:    [[ADD:%.*]] = add nsw i32 [[X:%.*]], [[Y:%.*]]
