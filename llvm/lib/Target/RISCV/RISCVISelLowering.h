@@ -44,6 +44,8 @@ public:
                              Instruction *I = nullptr) const override;
   bool isLegalICmpImmediate(int64_t Imm) const override;
   bool isLegalAddImmediate(int64_t Imm) const override;
+  bool isTruncateFree(Type *SrcTy, Type *DstTy) const override;
+  bool isTruncateFree(EVT SrcVT, EVT DstVT) const override;
 
   // Provide custom lowering hooks for some operations.
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
