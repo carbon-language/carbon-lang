@@ -827,8 +827,7 @@ def ZnWriteFPU02 : SchedWriteRes<[ZnAGU, ZnFPU02]>
 
 // FCOMI(P) FUCOMI(P).
 // m.
-def : InstRW<[ZnWriteFPU02], (instregex "COM_FIr", "COM_FIPr", "UCOM_FIr",
-                           "UCOM_FIPr")>;
+def : InstRW<[ZnWriteFPU02], (instrs COM_FIPr, COM_FIr, UCOM_FIPr, UCOM_FIr)>;
 
 def ZnWriteFPU03 : SchedWriteRes<[ZnAGU, ZnFPU03]>
 {
