@@ -161,6 +161,17 @@ using LegalizeMutation =
     std::function<std::pair<unsigned, LLT>(const LegalityQuery &)>;
 
 namespace LegalityPredicates {
+struct TypePairAndMemSize {
+  LLT Type0;
+  LLT Type1;
+  uint64_t MemSize;
+
+  bool operator==(const TypePairAndMemSize &Other) const {
+    return Type0 == Other.Type0 && Type1 == Other.Type1 &&
+           MemSize == Other.MemSize;
+  }
+};
+
 /// True iff P0 and P1 are true.
 LegalityPredicate all(LegalityPredicate P0, LegalityPredicate P1);
 /// True iff the given type index is one of the specified types.
@@ -175,7 +186,7 @@ typePairInSet(unsigned TypeIdx0, unsigned TypeIdx1,
 /// specified type pairs.
 LegalityPredicate typePairAndMemSizeInSet(
     unsigned TypeIdx0, unsigned TypeIdx1, unsigned MMOIdx,
-    std::initializer_list<std::tuple<LLT, LLT, unsigned>> TypesAndMemSizeInit);
+    std::initializer_list<TypePairAndMemSize> TypesAndMemSizeInit);
 /// True iff the specified type index is a scalar.
 LegalityPredicate isScalar(unsigned TypeIdx);
 /// True iff the specified type index is a scalar that's narrower than the given
@@ -346,7 +357,8 @@ public:
   /// The instruction is legal when type indexes 0 and 1 along with the memory
   /// size is any type and size tuple in the given list.
   LegalizeRuleSet &legalForTypesWithMemSize(
-      std::initializer_list<std::tuple<LLT, LLT, unsigned>> TypesAndMemSize) {
+      std::initializer_list<LegalityPredicates::TypePairAndMemSize>
+          TypesAndMemSize) {
     return legalIf(LegalityPredicates::typePairAndMemSizeInSet(
         0, 1, /*MMOIdx*/ 0, TypesAndMemSize));
   }

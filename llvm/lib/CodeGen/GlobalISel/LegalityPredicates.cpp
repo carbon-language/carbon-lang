@@ -43,12 +43,11 @@ LegalityPredicate LegalityPredicates::typePairInSet(
 
 LegalityPredicate LegalityPredicates::typePairAndMemSizeInSet(
     unsigned TypeIdx0, unsigned TypeIdx1, unsigned MMOIdx,
-    std::initializer_list<std::tuple<LLT, LLT, unsigned>> TypesAndMemSizeInit) {
-  SmallVector<std::tuple<LLT, LLT, unsigned>, 4> TypesAndMemSize = TypesAndMemSizeInit;
+    std::initializer_list<TypePairAndMemSize> TypesAndMemSizeInit) {
+  SmallVector<TypePairAndMemSize, 4> TypesAndMemSize = TypesAndMemSizeInit;
   return [=](const LegalityQuery &Query) {
-    std::tuple<LLT, LLT, unsigned> Match =
-        std::make_tuple(Query.Types[TypeIdx0], Query.Types[TypeIdx1],
-                        Query.MMODescrs[MMOIdx].Size);
+    TypePairAndMemSize Match = {Query.Types[TypeIdx0], Query.Types[TypeIdx1],
+                                Query.MMODescrs[MMOIdx].Size};
     return std::find(TypesAndMemSize.begin(), TypesAndMemSize.end(), Match) !=
            TypesAndMemSize.end();
   };
