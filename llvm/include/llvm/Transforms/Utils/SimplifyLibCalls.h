@@ -161,11 +161,7 @@ private:
   Value *optimizeSPrintF(CallInst *CI, IRBuilder<> &B);
   Value *optimizeFPrintF(CallInst *CI, IRBuilder<> &B);
   Value *optimizeFWrite(CallInst *CI, IRBuilder<> &B);
-  Value *optimizeFRead(CallInst *CI, IRBuilder<> &B);
   Value *optimizeFPuts(CallInst *CI, IRBuilder<> &B);
-  Value *optimizeFGets(CallInst *CI, IRBuilder<> &B);
-  Value *optimizeFPutc(CallInst *CI, IRBuilder<> &B);
-  Value *optimizeFGetc(CallInst *CI, IRBuilder<> &B);
   Value *optimizePuts(CallInst *CI, IRBuilder<> &B);
 
   // Helper methods
