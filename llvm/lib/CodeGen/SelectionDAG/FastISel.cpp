@@ -113,11 +113,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "isel"
 
-// FIXME: Remove this when compile time issues are addressed. Do this by only
-// numbering instructions between local value map flush points instead of the
-// entire BB.
+// FIXME: Remove this after the feature has proven reliable.
 static cl::opt<bool> SinkLocalValues("fast-isel-sink-local-values",
-                                     cl::init(false), cl::Hidden,
+                                     cl::init(true), cl::Hidden,
                                      cl::desc("Sink local values in FastISel"));
 
 STATISTIC(NumFastIselSuccessIndependent, "Number of insts selected by "
