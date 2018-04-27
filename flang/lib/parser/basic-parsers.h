@@ -250,8 +250,8 @@ private:
       ParseState prevState{std::move(state)};
       state = std::move(backtrack);
       const auto &parser{std::get<J>(ps_)};
-      //      static_assert(std::is_same_v<resultType, typename
-      //      decltype(parser)::resultType>);
+      static_assert(std::is_same_v<resultType,
+          typename std::decay<decltype(parser)>::type::resultType>);
       result = parser.Parse(state);
       if (!result.has_value()) {
         auto prevEnd = prevState.GetLocation();
@@ -259,7 +259,7 @@ private:
         if (prevEnd == lastEnd) {
           prevState.messages().Incorporate(state.messages());
         }
-        if (prevEnd <= lastEnd) {
+        if (prevEnd >= lastEnd) {
           state = std::move(prevState);
         }
         ParseRest<J + 1>(result, state, backtrack);
@@ -281,7 +281,6 @@ template<typename... Ps> inline constexpr auto first(const Ps &... ps) {
 template<typename PA, typename PB>
 inline constexpr auto operator||(const PA &pa, const PB &pb) {
   return first(pa, pb);
-
 }
 #else  // g++ only: original implementation
 // If a and b are parsers, then a || b returns a parser that succeeds if
@@ -336,7 +335,7 @@ template<typename PA, typename PB>
 inline constexpr auto operator||(const PA &pa, const PB &pb) {
   return AlternativeParser<PA, PB>{pa, pb};
 }
-#endif // clang vs. g++ on operator|| implementations
+#endif  // clang vs. g++ on operator|| implementations
 
 // If a and b are parsers, then recovery(a,b) returns a parser that succeeds if
 // a does so, or if a fails and b succeeds.  If a succeeds, b is not attempted.
