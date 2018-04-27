@@ -10,15 +10,11 @@ cmake_minimum_required(VERSION 3.9.0)
 #
 
 # Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI.
-# Add '-DCLANG=1' to use clang.
+# Add '-DCLANG=1' to use clang and libc++.
 if( PGI )
-  set(GCCVERS gcc-7.3.0/linux86-64/redhat)
+  set(GCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
   if(CLANG)
-    # This copy on hsw3 has one-line patch to include/c++/7.3.0/variant
-    set(GCC /local/home/pklausler/gcc/${GCCVERS})
     set(CLANG /home/sw/thirdparty/llvm/linux86-64/6.0-pgi2)
-  else()
-    set(GCC /home/sw/thirdparty/gcc/${GCCVERS})
   endif()
 endif()
 
@@ -27,7 +23,7 @@ if( GCC )
   if (CLANG)
     set(CMAKE_CXX_COMPILER "${CLANG}/bin/clang++")
     set(CMAKE_CC_COMPILER "${CLANG}/bin/clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${GCC}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
   else()
     set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
     set(CMAKE_CC_COMPILER "${GCC}/bin/gcc")
@@ -47,7 +43,7 @@ message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    if(CLANG)
-     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --gcc-toolchain=${GCC}")
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
    endif()
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
