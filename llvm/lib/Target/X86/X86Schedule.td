@@ -102,7 +102,8 @@ class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
 
 // Horizontal Add/Sub (float and integer)
 defm WriteFHAdd  : X86SchedWritePair;
-defm WritePHAdd : X86SchedWritePair;
+defm WriteFHAddY : X86SchedWritePair; // YMM/ZMM.
+defm WritePHAdd  : X86SchedWritePair;
 
 // Vector integer operations.
 def  WriteVecLoad  : SchedWrite;

@@ -199,8 +199,9 @@ def : WriteRes<WriteVecExtractSt, [SBPort4,SBPort23,SBPort15]> {
 // Horizontal add/sub  instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : SBWriteResPair<WriteFHAdd, [SBPort1,SBPort5], 5, [1,2], 3, 6>;
-defm : SBWriteResPair<WritePHAdd, [SBPort15], 3, [3], 3, 6>;
+defm : SBWriteResPair<WriteFHAdd,  [SBPort1,SBPort5], 5, [1,2], 3, 6>;
+defm : SBWriteResPair<WriteFHAddY, [SBPort1,SBPort5], 5, [1,2], 3, 7>;
+defm : SBWriteResPair<WritePHAdd,  [SBPort15], 3, [3], 3, 6>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // String instructions.
@@ -1564,13 +1565,6 @@ def SBWriteResGroup112 : SchedWriteRes<[SBPort0,SBPort1,SBPort5]> {
   let ResourceCycles = [1,2,1];
 }
 def: InstRW<[SBWriteResGroup112], (instregex "(V?)DPPS(Y?)rri")>;
-
-def SBWriteResGroup113 : SchedWriteRes<[SBPort1,SBPort5,SBPort23]> {
-  let Latency = 12;
-  let NumMicroOps = 4;
-  let ResourceCycles = [1,2,1];
-}
-def: InstRW<[SBWriteResGroup113], (instregex "VH(ADD|SUB)(PD|PS)Yrm")>;
 
 def SBWriteResGroup114 : SchedWriteRes<[SBPort1,SBPort23]> {
   let Latency = 13;
