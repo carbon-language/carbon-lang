@@ -84,7 +84,7 @@ New Compiler Flags
 ------------------
 
 - :option:`-ffp-cast-overflow-workaround` and
-  :option:`-fnofp-cast-overflow-workaround`
+  :option:`-fno-fp-cast-overflow-workaround`
   enable (disable) a workaround for code that casts floating-point values to
   integers and back to floating-point. If the floating-point value is not
   representable in the intermediate integer type, the code is incorrect
