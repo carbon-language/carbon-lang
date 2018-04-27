@@ -75,8 +75,7 @@ void MCTargetStreamer::emitValue(const MCExpr *Value) {
 void MCTargetStreamer::emitAssignment(MCSymbol *Symbol, const MCExpr *Value) {}
 
 MCStreamer::MCStreamer(MCContext &Ctx)
-    : Context(Ctx), CurrentWinFrameInfo(nullptr),
-      UseAssemblerInfoForParsing(false) {
+    : Context(Ctx), CurrentWinFrameInfo(nullptr) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
 

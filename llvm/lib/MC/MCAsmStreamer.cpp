@@ -78,9 +78,6 @@ public:
         InstPrinter->setCommentStream(CommentStream);
   }
 
-  MCAssembler &getAssembler() { return *Assembler; }
-  MCAssembler *getAssemblerPtr() override { return Assembler.get(); }
-
   inline void EmitEOL() {
     // Dump Explicit Comments here.
     emitExplicitComments();
@@ -1659,10 +1656,10 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst,
   raw_svector_ostream VecOS(Code);
 
   // If we have no code emitter, don't emit code.
-  if (!getAssembler().getEmitterPtr())
+  if (!Assembler->getEmitterPtr())
     return;
 
-  getAssembler().getEmitter().encodeInstruction(Inst, VecOS, Fixups, STI);
+  Assembler->getEmitter().encodeInstruction(Inst, VecOS, Fixups, STI);
 
   // If we are showing fixups, create symbolic markers in the encoded
   // representation. We do this by making a per-bit map to the fixup item index,
@@ -1675,7 +1672,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst,
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     MCFixup &F = Fixups[i];
     const MCFixupKindInfo &Info =
-        getAssembler().getBackend().getFixupKindInfo(F.getKind());
+        Assembler->getBackend().getFixupKindInfo(F.getKind());
     for (unsigned j = 0; j != Info.TargetSize; ++j) {
       unsigned Index = F.getOffset() * 8 + Info.TargetOffset + j;
       assert(Index < Code.size() * 8 && "Invalid offset in fixup!");
@@ -1740,7 +1737,7 @@ void MCAsmStreamer::AddEncodingComment(const MCInst &Inst,
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     MCFixup &F = Fixups[i];
     const MCFixupKindInfo &Info =
-        getAssembler().getBackend().getFixupKindInfo(F.getKind());
+        Assembler->getBackend().getFixupKindInfo(F.getKind());
     OS << "  fixup " << char('A' + i) << " - " << "offset: " << F.getOffset()
        << ", value: " << *F.getValue() << ", kind: " << Info.Name << "\n";
   }

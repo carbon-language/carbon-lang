@@ -775,7 +775,7 @@ bool AsmParser::processIncbinFile(const std::string &Filename, int64_t Skip,
   Bytes = Bytes.drop_front(Skip);
   if (Count) {
     int64_t Res;
-    if (!Count->evaluateAsAbsolute(Res, getStreamer().getAssemblerPtr()))
+    if (!Count->evaluateAsAbsolute(Res))
       return Error(Loc, "expected absolute expression");
     if (Res < 0)
       return Warning(Loc, "negative count has no effect");
@@ -1378,8 +1378,7 @@ bool AsmParser::parseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
     Lex();
   }
 
-  // Try to constant fold it up front, if possible. Do not exploit
-  // assembler here.
+  // Try to constant fold it up front, if possible.
   int64_t Value;
   if (Res->evaluateAsAbsolute(Value))
     Res = MCConstantExpr::create(Value, getContext());
@@ -1420,7 +1419,7 @@ bool AsmParser::parseAbsoluteExpression(int64_t &Res) {
   if (parseExpression(Expr))
     return true;
 
-  if (!Expr->evaluateAsAbsolute(Res, getStreamer().getAssemblerPtr()))
+  if (!Expr->evaluateAsAbsolute(Res))
     return Error(StartLoc, "expected absolute expression");
 
   return false;
@@ -2617,8 +2616,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
         Lex();
         if (parseExpression(AbsoluteExp, EndLoc))
           return false;
-        if (!AbsoluteExp->evaluateAsAbsolute(Value,
-                                             getStreamer().getAssemblerPtr()))
+        if (!AbsoluteExp->evaluateAsAbsolute(Value))
           return Error(StrLoc, "expected absolute expression");
         const char *StrChar = StrLoc.getPointer();
         const char *EndChar = EndLoc.getPointer();
@@ -2918,9 +2916,8 @@ bool AsmParser::parseDirectiveReloc(SMLoc DirectiveLoc) {
   if (parseExpression(Offset))
     return true;
 
-  if (check(!Offset->evaluateAsAbsolute(OffsetValue,
-                                        getStreamer().getAssemblerPtr()),
-            OffsetLoc, "expression is not a constant value") ||
+  if (check(!Offset->evaluateAsAbsolute(OffsetValue), OffsetLoc,
+            "expression is not a constant value") ||
       check(OffsetValue < 0, OffsetLoc, "expression is negative") ||
       parseToken(AsmToken::Comma, "expected comma") ||
       check(getTok().isNot(AsmToken::Identifier), "expected relocation name"))
@@ -5347,7 +5344,7 @@ bool AsmParser::parseDirectiveRept(SMLoc DirectiveLoc, StringRef Dir) {
     return true;
 
   int64_t Count;
-  if (!CountExpr->evaluateAsAbsolute(Count, getStreamer().getAssemblerPtr())) {
+  if (!CountExpr->evaluateAsAbsolute(Count)) {
     return Error(CountLoc, "unexpected token in '" + Dir + "' directive");
   }
 
