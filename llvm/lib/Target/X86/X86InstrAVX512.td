@@ -4998,13 +4998,14 @@ multiclass avx512_fp_sae_packed<bits<8> opc, string OpcodeStr,
 
 multiclass avx512_fp_binop_p<bits<8> opc, string OpcodeStr, SDPatternOperator OpNode,
                              Predicate prd, X86FoldableSchedWrite sched,
+                             X86FoldableSchedWrite schedY,
                              bit IsCommutable = 0> {
   let Predicates = [prd] in {
   defm PSZ : avx512_fp_packed<opc, OpcodeStr, OpNode, v16f32_info,
-                              sched, IsCommutable>, EVEX_V512, PS,
+                              schedY, IsCommutable>, EVEX_V512, PS,
                               EVEX_CD8<32, CD8VF>;
   defm PDZ : avx512_fp_packed<opc, OpcodeStr, OpNode, v8f64_info,
-                              sched, IsCommutable>, EVEX_V512, PD, VEX_W,
+                              schedY, IsCommutable>, EVEX_V512, PD, VEX_W,
                               EVEX_CD8<64, CD8VF>;
   }
 
@@ -5014,13 +5015,13 @@ multiclass avx512_fp_binop_p<bits<8> opc, string OpcodeStr, SDPatternOperator Op
                                    sched, IsCommutable>, EVEX_V128, PS,
                                    EVEX_CD8<32, CD8VF>;
     defm PSZ256 : avx512_fp_packed<opc, OpcodeStr, OpNode, v8f32x_info,
-                                   sched, IsCommutable>, EVEX_V256, PS,
+                                   schedY, IsCommutable>, EVEX_V256, PS,
                                    EVEX_CD8<32, CD8VF>;
     defm PDZ128 : avx512_fp_packed<opc, OpcodeStr, OpNode, v2f64x_info,
                                    sched, IsCommutable>, EVEX_V128, PD, VEX_W,
                                    EVEX_CD8<64, CD8VF>;
     defm PDZ256 : avx512_fp_packed<opc, OpcodeStr, OpNode, v4f64x_info,
-                                   sched, IsCommutable>, EVEX_V256, PD, VEX_W,
+                                   schedY, IsCommutable>, EVEX_V256, PD, VEX_W,
                                    EVEX_CD8<64, CD8VF>;
   }
 }
@@ -5042,26 +5043,37 @@ multiclass avx512_fp_binop_p_sae<bits<8> opc, string OpcodeStr, SDNode OpNodeRnd
 }
 
 defm VADD : avx512_fp_binop_p<0x58, "vadd", fadd, HasAVX512,
-                              WriteFAdd, 1>,
+                              WriteFAdd, WriteFAdd, 1>,
             avx512_fp_binop_p_round<0x58, "vadd", X86faddRnd, WriteFAdd>;
-defm VMUL : avx512_fp_binop_p<0x59, "vmul", fmul, HasAVX512, WriteFMul, 1>,
+defm VMUL : avx512_fp_binop_p<0x59, "vmul", fmul, HasAVX512,
+                              WriteFMul, WriteFMul, 1>,
             avx512_fp_binop_p_round<0x59, "vmul", X86fmulRnd, WriteFMul>;
-defm VSUB : avx512_fp_binop_p<0x5C, "vsub", fsub, HasAVX512, WriteFAdd>,
+defm VSUB : avx512_fp_binop_p<0x5C, "vsub", fsub, HasAVX512,
+                              WriteFAdd, WriteFAdd>,
             avx512_fp_binop_p_round<0x5C, "vsub", X86fsubRnd, WriteFAdd>;
-defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv, HasAVX512, WriteFDiv>,
+defm VDIV : avx512_fp_binop_p<0x5E, "vdiv", fdiv, HasAVX512,
+                              WriteFDiv, WriteFDiv>,
             avx512_fp_binop_p_round<0x5E, "vdiv", X86fdivRnd, WriteFDiv>;
-defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, HasAVX512, WriteFCmp, 0>,
+defm VMIN : avx512_fp_binop_p<0x5D, "vmin", X86fmin, HasAVX512,
+                              WriteFCmp, WriteFCmp, 0>,
             avx512_fp_binop_p_sae<0x5D, "vmin", X86fminRnd, WriteFCmp>;
-defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, HasAVX512, WriteFCmp, 0>,
+defm VMAX : avx512_fp_binop_p<0x5F, "vmax", X86fmax, HasAVX512,
+                              WriteFCmp, WriteFCmp, 0>,
             avx512_fp_binop_p_sae<0x5F, "vmax", X86fmaxRnd, WriteFCmp>;
 let isCodeGenOnly = 1 in {
-  defm VMINC : avx512_fp_binop_p<0x5D, "vmin", X86fminc, HasAVX512, WriteFCmp, 1>;
-  defm VMAXC : avx512_fp_binop_p<0x5F, "vmax", X86fmaxc, HasAVX512, WriteFCmp, 1>;
+  defm VMINC : avx512_fp_binop_p<0x5D, "vmin", X86fminc, HasAVX512,
+                                 WriteFCmp, WriteFCmp, 1>;
+  defm VMAXC : avx512_fp_binop_p<0x5F, "vmax", X86fmaxc, HasAVX512,
+                                 WriteFCmp, WriteFCmp, 1>;
 }
-defm VAND  : avx512_fp_binop_p<0x54, "vand", null_frag, HasDQI,  WriteFLogic, 1>;
-defm VANDN : avx512_fp_binop_p<0x55, "vandn", null_frag, HasDQI, WriteFLogic, 0>;
-defm VOR   : avx512_fp_binop_p<0x56, "vor", null_frag, HasDQI,  WriteFLogic, 1>;
-defm VXOR  : avx512_fp_binop_p<0x57, "vxor", null_frag, HasDQI, WriteFLogic, 1>;
+defm VAND  : avx512_fp_binop_p<0x54, "vand", null_frag, HasDQI,
+                               WriteFLogic, WriteFLogicY, 1>;
+defm VANDN : avx512_fp_binop_p<0x55, "vandn", null_frag, HasDQI,
+                               WriteFLogic, WriteFLogicY, 0>;
+defm VOR   : avx512_fp_binop_p<0x56, "vor", null_frag, HasDQI,
+                               WriteFLogic, WriteFLogicY, 1>;
+defm VXOR  : avx512_fp_binop_p<0x57, "vxor", null_frag, HasDQI,
+                               WriteFLogic, WriteFLogicY, 1>;
 
 // Patterns catch floating point selects with bitcasted integer logic ops.
 multiclass avx512_fp_logical_lowering<string InstrStr, SDNode OpNode,
@@ -9860,9 +9872,9 @@ def : Pat<(vselect (v2i1 VK2WM:$mask), (v2f64 (X86VBroadcast (loadv2f64 addr:$sr
 //===----------------------------------------------------------------------===//
 
 defm VUNPCKH : avx512_fp_binop_p<0x15, "vunpckh", X86Unpckh, HasAVX512,
-                                 WriteFShuffle>;
+                                 WriteFShuffle, WriteFShuffle>;
 defm VUNPCKL : avx512_fp_binop_p<0x14, "vunpckl", X86Unpckl, HasAVX512,
-                                 WriteFShuffle>;
+                                 WriteFShuffle, WriteFShuffle>;
 
 defm VPUNPCKLBW : avx512_binop_rm_vl_b<0x60, "vpunpcklbw", X86Unpckl,
                                        WriteShuffle, HasBWI>;

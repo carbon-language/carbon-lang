@@ -166,7 +166,8 @@ defm : BWWriteResPair<WriteFMA,    [BWPort01], 5, [1], 1, 5>; // Fused Multiply 
 defm : BWWriteResPair<WriteFMAS,   [BWPort01], 5, [1], 1, 5>; // Fused Multiply Add (Scalar).
 defm : BWWriteResPair<WriteFMAY,   [BWPort01], 5, [1], 1, 6>; // Fused Multiply Add (YMM/ZMM).
 defm : BWWriteResPair<WriteFSign,     [BWPort5],  1>; // Floating point fabs/fchs.
-defm : BWWriteResPair<WriteFLogic,    [BWPort5],  1>; // Floating point and/or/xor logicals.
+defm : BWWriteResPair<WriteFLogic,    [BWPort5], 1, [1], 1, 5>; // Floating point and/or/xor logicals.
+defm : BWWriteResPair<WriteFLogicY,   [BWPort5], 1, [1], 1, 6>; // Floating point and/or/xor logicals (YMM/ZMM).
 defm : BWWriteResPair<WriteFShuffle,  [BWPort5],  1>; // Floating point vector shuffles.
 defm : BWWriteResPair<WriteFVarShuffle,  [BWPort5],  1>; // Floating point vector variable shuffles.
 defm : BWWriteResPair<WriteFBlend,  [BWPort015],  1>; // Floating point vector blends.
@@ -1090,13 +1091,7 @@ def BWWriteResGroup75 : SchedWriteRes<[BWPort5,BWPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[BWWriteResGroup75], (instregex "VANDNPDYrm",
-                                            "VANDNPSYrm",
-                                            "VANDPDYrm",
-                                            "VANDPSYrm",
-                                            "VORPDYrm",
-                                            "VORPSYrm",
-                                            "VPACKSSDWYrm",
+def: InstRW<[BWWriteResGroup75], (instregex "VPACKSSDWYrm",
                                             "VPACKSSWBYrm",
                                             "VPACKUSDWYrm",
                                             "VPACKUSWBYrm",
@@ -1123,9 +1118,7 @@ def: InstRW<[BWWriteResGroup75], (instregex "VANDNPDYrm",
                                             "VUNPCKHPDYrm",
                                             "VUNPCKHPSYrm",
                                             "VUNPCKLPDYrm",
-                                            "VUNPCKLPSYrm",
-                                            "VXORPDYrm",
-                                            "VXORPSYrm")>;
+                                            "VUNPCKLPSYrm")>;
 
 def BWWriteResGroup76 : SchedWriteRes<[BWPort23,BWPort15]> {
   let Latency = 7;

@@ -129,6 +129,25 @@ multiclass JWriteResFpuPair<X86FoldableSchedWrite SchedRW,
   }
 }
 
+multiclass JWriteResYMMPair<X86FoldableSchedWrite SchedRW,
+                            list<ProcResourceKind> ExePorts,
+                            int Lat, list<int> Res = [2], int UOps = 2> {
+  // Register variant is using a single cycle on ExePort.
+  def : WriteRes<SchedRW, ExePorts> {
+    let Latency = Lat;
+    let ResourceCycles = Res;
+    let NumMicroOps = UOps;
+  }
+
+  // Memory variant also uses 2 cycles on JLAGU and adds 5 cycles to the
+  // latency.
+  def : WriteRes<SchedRW.Folded, !listconcat([JLAGU], ExePorts)> {
+    let Latency = !add(Lat, 5);
+    let ResourceCycles = !listconcat([2], Res);
+    let NumMicroOps = UOps;
+  }
+}
+
 // A folded store needs a cycle on the SAGU for the store data.
 def : WriteRes<WriteRMW, [JSAGU]>;
 
@@ -309,6 +328,7 @@ defm : JWriteResFpuPair<WriteFDiv,         [JFPU1, JFPM], 19, [1, 19]>;
 defm : JWriteResFpuPair<WriteFSqrt,        [JFPU1, JFPM], 21, [1, 21]>;
 defm : JWriteResFpuPair<WriteFSign,        [JFPU1, JFPM],  2>;
 defm : JWriteResFpuPair<WriteFLogic,      [JFPU01, JFPX],  1>;
+defm : JWriteResYMMPair<WriteFLogicY,     [JFPU01, JFPX],  1, [2, 2], 2>;
 defm : JWriteResFpuPair<WriteFShuffle,    [JFPU01, JFPX],  1>;
 defm : JWriteResFpuPair<WriteFVarShuffle, [JFPU01, JFPX],  2, [1, 4], 3>;
 defm : JWriteResFpuPair<WriteFBlend,      [JFPU01, JFPX],  1>;
@@ -526,25 +546,6 @@ def : InstRW<[JWriteCVTPH2PSYLd], (instrs VCVTPH2PSYrm)>;
 ////////////////////////////////////////////////////////////////////////////////
 // AVX instructions.
 ////////////////////////////////////////////////////////////////////////////////
-
-def JWriteFLogicY: SchedWriteRes<[JFPU01, JFPX]> {
-  let ResourceCycles = [2, 2];
-  let NumMicroOps = 2;
-}
-def : InstRW<[JWriteFLogicY], (instrs VORPDYrr, VORPSYrr,
-                                      VXORPDYrr, VXORPSYrr,
-                                      VANDPDYrr, VANDPSYrr,
-                                      VANDNPDYrr, VANDNPSYrr)>;
-
-def JWriteFLogicYLd: SchedWriteRes<[JLAGU, JFPU01, JFPX]> {
-  let Latency = 6;
-  let ResourceCycles = [2, 2, 2];
-  let NumMicroOps = 2;
-}
-def : InstRW<[JWriteFLogicYLd, ReadAfterLd], (instrs VORPDYrm, VORPSYrm,
-                                                     VXORPDYrm, VXORPSYrm,
-                                                     VANDPDYrm, VANDPSYrm,
-                                                     VANDNPDYrm, VANDNPSYrm)>;
 
 def JWriteVDPPSY: SchedWriteRes<[JFPU1, JFPM, JFPA]> {
   let Latency = 12;

@@ -89,8 +89,9 @@ defm WriteFRsqrt : X86SchedWritePair; // Floating point reciprocal square root e
 defm WriteFMA    : X86SchedWritePair; // Fused Multiply Add.
 defm WriteFMAS   : X86SchedWritePair; // Fused Multiply Add (Scalar).
 defm WriteFMAY   : X86SchedWritePair; // Fused Multiply Add (YMM/ZMM).
-defm WriteFSign : X86SchedWritePair; // Floating point fabs/fchs.
-defm WriteFLogic : X86SchedWritePair; // Floating point and/or/xor logicals.
+defm WriteFSign  : X86SchedWritePair; // Floating point fabs/fchs.
+defm WriteFLogic  : X86SchedWritePair; // Floating point and/or/xor logicals.
+defm WriteFLogicY : X86SchedWritePair; // Floating point and/or/xor logicals (YMM/ZMM).
 defm WriteFShuffle  : X86SchedWritePair; // Floating point vector shuffles.
 defm WriteFVarShuffle  : X86SchedWritePair; // Floating point vector variable shuffles.
 defm WriteFBlend  : X86SchedWritePair; // Floating point vector blends.

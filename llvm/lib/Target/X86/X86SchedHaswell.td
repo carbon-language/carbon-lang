@@ -163,7 +163,8 @@ defm : HWWriteResPair<WriteFMA,   [HWPort01], 5, [1], 1, 6>;
 defm : HWWriteResPair<WriteFMAS,  [HWPort01], 5, [1], 1, 5>;
 defm : HWWriteResPair<WriteFMAY,  [HWPort01], 5, [1], 1, 7>;
 defm : HWWriteResPair<WriteFSign,  [HWPort0], 1>;
-defm : HWWriteResPair<WriteFLogic, [HWPort5], 1, [1], 1, 6>;
+defm : HWWriteResPair<WriteFLogic,  [HWPort5], 1, [1], 1, 6>;
+defm : HWWriteResPair<WriteFLogicY, [HWPort5], 1, [1], 1, 7>;
 defm : HWWriteResPair<WriteFShuffle,  [HWPort5],  1>;
 defm : HWWriteResPair<WriteFVarShuffle,  [HWPort5],  1>;
 defm : HWWriteResPair<WriteFBlend,  [HWPort015], 1, [1], 1, 6>;
@@ -910,13 +911,7 @@ def HWWriteResGroup13_1 : SchedWriteRes<[HWPort5,HWPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[HWWriteResGroup13_1], (instregex "VANDNPDYrm",
-                                              "VANDNPSYrm",
-                                              "VANDPDYrm",
-                                              "VANDPSYrm",
-                                              "VORPDYrm",
-                                              "VORPSYrm",
-                                              "VPACKSSDWYrm",
+def: InstRW<[HWWriteResGroup13_1], (instregex "VPACKSSDWYrm",
                                               "VPACKSSWBYrm",
                                               "VPACKUSDWYrm",
                                               "VPACKUSWBYrm",
@@ -946,9 +941,7 @@ def: InstRW<[HWWriteResGroup13_1], (instregex "VANDNPDYrm",
                                               "VUNPCKHPDYrm",
                                               "VUNPCKHPSYrm",
                                               "VUNPCKLPDYrm",
-                                              "VUNPCKLPSYrm",
-                                              "VXORPDYrm",
-                                              "VXORPSYrm")>;
+                                              "VUNPCKLPSYrm")>;
 
 def HWWriteResGroup14 : SchedWriteRes<[HWPort6,HWPort23]> {
   let Latency = 6;

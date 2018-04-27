@@ -87,6 +87,7 @@ multiclass sse12_fp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
 /// sse12_fp_packed_logical_rm - SSE 1 & 2 packed instructions class
 multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
                                       string OpcodeStr, X86MemOperand x86memop,
+                                      X86FoldableSchedWrite sched,
                                       list<dag> pat_rr, list<dag> pat_rm,
                                       bit Is2Addr = 1> {
   let isCommutable = 1, hasSideEffects = 0 in
@@ -95,14 +96,14 @@ multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        pat_rr, d>,
-       Sched<[WriteFLogic]>;
+       Sched<[sched]>;
   let hasSideEffects = 0, mayLoad = 1 in
   def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        pat_rm, d>,
-       Sched<[WriteFLogic.Folded, ReadAfterLd]>;
+       Sched<[sched.Folded, ReadAfterLd]>;
 }
 
 
@@ -2334,29 +2335,29 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                    SDNode OpNode> {
   let Predicates = [HasAVX, NoVLX] in {
   defm V#NAME#PSY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedSingle,
-        !strconcat(OpcodeStr, "ps"), f256mem,
+        !strconcat(OpcodeStr, "ps"), f256mem, WriteFLogicY,
         [], [], 0>, PS, VEX_4V, VEX_L, VEX_WIG;
 
   defm V#NAME#PDY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedDouble,
-        !strconcat(OpcodeStr, "pd"), f256mem,
+        !strconcat(OpcodeStr, "pd"), f256mem, WriteFLogicY,
         [], [], 0>, PD, VEX_4V, VEX_L, VEX_WIG;
 
   defm V#NAME#PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
-       !strconcat(OpcodeStr, "ps"), f128mem,
+       !strconcat(OpcodeStr, "ps"), f128mem, WriteFLogic,
        [], [], 0>, PS, VEX_4V, VEX_WIG;
 
   defm V#NAME#PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
-       !strconcat(OpcodeStr, "pd"), f128mem,
+       !strconcat(OpcodeStr, "pd"), f128mem, WriteFLogic,
        [], [], 0>, PD, VEX_4V, VEX_WIG;
   }
 
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
-         !strconcat(OpcodeStr, "ps"), f128mem,
+         !strconcat(OpcodeStr, "ps"), f128mem, WriteFLogic,
          [], []>, PS;
 
     defm PD : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedDouble,
-         !strconcat(OpcodeStr, "pd"), f128mem,
+         !strconcat(OpcodeStr, "pd"), f128mem, WriteFLogic,
          [], []>, PD;
   }
 }
