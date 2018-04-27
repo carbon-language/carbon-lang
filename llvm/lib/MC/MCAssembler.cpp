@@ -225,7 +225,7 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
   bool IsPCRel = getBackendPtr()->getFixupKindInfo(Fixup.getKind()).Flags &
                  MCFixupKindInfo::FKF_IsPCRel;
 
-  bool IsResolved;
+  bool IsResolved = false;
   if (IsPCRel) {
     if (Target.getSymB()) {
       IsResolved = false;
