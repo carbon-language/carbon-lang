@@ -67,3 +67,8 @@ def L : JoinedOrSeparate<["-"], "L">,
 defm globalize_symbol : Eq<"globalize-symbol">,
                        MetaVarName<"symbol">,
                        HelpText<"Mark <symbol> as global">;
+defm weaken_symbol : Eq<"weaken-symbol">,
+                       MetaVarName<"symbol">,
+                       HelpText<"Mark <symbol> as weak">;
+def W : JoinedOrSeparate<["-"], "W">,
+        Alias<weaken_symbol>;
