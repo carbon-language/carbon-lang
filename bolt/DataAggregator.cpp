@@ -419,12 +419,13 @@ bool DataAggregator::aggregate(BinaryContext &BC,
   for (auto &BFI : BFs) {
     auto &BF = BFI.second;
     if (BF.getBranchData()) {
-      BF.markProfiled();
+      const auto Flags = opts::BasicAggregation ? BinaryFunction::PF_SAMPLE
+                                                : BinaryFunction::PF_LBR;
+      BF.markProfiled(Flags);
     }
   }
 
   auto PI3 = sys::Wait(MemEventsPI, 0, true, &Error);
-
   if (PI3.ReturnCode != 0) {
     ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
       MemoryBuffer::getFileOrSTDIN(PerfMemEventsErrPath.data());
@@ -455,8 +456,9 @@ bool DataAggregator::aggregate(BinaryContext &BC,
   ParsingBuf = FileBuf->getBuffer();
   Col = 0;
   Line = 1;
-  if (parseMemEvents()) {
-    outs() << "PERF2BOLT: Failed to parse memory events\n";
+  if (const auto EC = parseMemEvents()) {
+    errs() << "PERF2BOLT: Failed to parse memory events: "
+           << EC.message() << '\n';
   }
 
   deleteTempFiles();

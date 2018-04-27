@@ -55,8 +55,6 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
   uint64_t MismatchedCalls = 0;
   uint64_t MismatchedEdges = 0;
 
-  BF.setProfileFlags(YamlBP.Header.Flags);
-
   uint64_t FunctionExecutionCount = 0;
 
   BF.setExecutionCount(YamlBF.ExecCount);
@@ -206,7 +204,7 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
   ProfileMatched &= !MismatchedBlocks && !MismatchedCalls && !MismatchedEdges;
 
   if (ProfileMatched)
-    BF.markProfiled();
+    BF.markProfiled(YamlBP.Header.Flags);
 
   if (!ProfileMatched && opts::Verbosity >= 1) {
     errs() << "BOLT-WARNING: " << MismatchedBlocks << " blocks, "

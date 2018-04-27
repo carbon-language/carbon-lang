@@ -306,7 +306,7 @@ void BinaryFunction::postProcessProfile() {
     return;
   }
 
-  if (!hasLBRProfile())
+  if (!(getProfileFlags() & PF_LBR))
     return;
 
   // Pre-sort branch data.

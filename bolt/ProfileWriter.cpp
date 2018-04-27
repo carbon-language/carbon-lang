@@ -32,7 +32,7 @@ void
 convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
   auto &BC = BF.getBinaryContext();
 
-  const auto LBRProfile = BF.hasLBRProfile();
+  const auto LBRProfile = BF.getProfileFlags() & BinaryFunction::PF_LBR;
 
   YamlBF.Name = BF.getPrintName();
   YamlBF.Id = BF.getFunctionNumber();

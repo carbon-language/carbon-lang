@@ -1496,32 +1496,16 @@ public:
   }
 
   /// Mark this function as having a valid profile.
-  void markProfiled() {
+  void markProfiled(uint16_t Flags) {
     if (ExecutionCount == COUNT_NO_PROFILE)
       ExecutionCount = 0;
+    ProfileFlags = Flags;
     ProfileMatchRatio = 1.0f;
-  }
-
-  /// Check if the function profile used LBR.
-  bool hasLBRProfile() const {
-    return ProfileFlags & PF_LBR;
-  }
-
-  /// Set status of the function profile.
-  void setHasLBRProfile(bool Value) {
-    assert(!(ProfileFlags & PF_SAMPLE) &&
-           "cannot combine LBR and samples profile");
-    ProfileFlags |= PF_LBR;
   }
 
   /// Return flags describing a profile for this function.
   uint16_t getProfileFlags() const {
     return ProfileFlags;
-  }
-
-  /// Set profile flags for the function to \p Flags.
-  void setProfileFlags(uint16_t Flags) {
-    ProfileFlags = Flags;
   }
 
   void addCFIInstruction(uint64_t Offset, MCCFIInstruction &&Inst) {
