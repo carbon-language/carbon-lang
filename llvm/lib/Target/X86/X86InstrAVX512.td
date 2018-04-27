@@ -1932,37 +1932,45 @@ multiclass WriteFVarBlendask_rmb<bits<8> opc, string OpcodeStr,
 }
 
 multiclass blendmask_dq<bits<8> opc, string OpcodeStr,
-                        X86FoldableSchedWrite sched,
+                        X86FoldableSchedWrite sched128,
+                        X86FoldableSchedWrite sched256,
                         AVX512VLVectorVTInfo VTInfo> {
-  defm Z : WriteFVarBlendask      <opc, OpcodeStr, sched, VTInfo.info512>,
-           WriteFVarBlendask_rmb  <opc, OpcodeStr, sched, VTInfo.info512>, EVEX_V512;
+  defm Z : WriteFVarBlendask      <opc, OpcodeStr, sched256, VTInfo.info512>,
+           WriteFVarBlendask_rmb  <opc, OpcodeStr, sched256, VTInfo.info512>, EVEX_V512;
 
   let Predicates = [HasVLX] in {
-    defm Z256 : WriteFVarBlendask<opc, OpcodeStr, sched, VTInfo.info256>,
-                WriteFVarBlendask_rmb<opc, OpcodeStr, sched, VTInfo.info256>, EVEX_V256;
-    defm Z128 : WriteFVarBlendask<opc, OpcodeStr, sched, VTInfo.info128>,
-                WriteFVarBlendask_rmb<opc, OpcodeStr, sched, VTInfo.info128>, EVEX_V128;
+    defm Z256 : WriteFVarBlendask<opc, OpcodeStr, sched256, VTInfo.info256>,
+                WriteFVarBlendask_rmb<opc, OpcodeStr, sched256, VTInfo.info256>, EVEX_V256;
+    defm Z128 : WriteFVarBlendask<opc, OpcodeStr, sched128, VTInfo.info128>,
+                WriteFVarBlendask_rmb<opc, OpcodeStr, sched128, VTInfo.info128>, EVEX_V128;
   }
 }
 
 multiclass blendmask_bw<bits<8> opc, string OpcodeStr,
-                        X86FoldableSchedWrite sched,
+                        X86FoldableSchedWrite sched128,
+                        X86FoldableSchedWrite sched256,
                         AVX512VLVectorVTInfo VTInfo> {
   let Predicates = [HasBWI] in
-    defm Z : WriteFVarBlendask<opc, OpcodeStr, sched, VTInfo.info512>, EVEX_V512;
+    defm Z : WriteFVarBlendask<opc, OpcodeStr, sched256, VTInfo.info512>, EVEX_V512;
 
   let Predicates = [HasBWI, HasVLX] in {
-    defm Z256 : WriteFVarBlendask<opc, OpcodeStr, sched, VTInfo.info256>, EVEX_V256;
-    defm Z128 : WriteFVarBlendask<opc, OpcodeStr, sched, VTInfo.info128>, EVEX_V128;
+    defm Z256 : WriteFVarBlendask<opc, OpcodeStr, sched256, VTInfo.info256>, EVEX_V256;
+    defm Z128 : WriteFVarBlendask<opc, OpcodeStr, sched128, VTInfo.info128>, EVEX_V128;
   }
 }
 
-defm VBLENDMPS : blendmask_dq <0x65, "vblendmps", WriteFVarBlend, avx512vl_f32_info>;
-defm VBLENDMPD : blendmask_dq <0x65, "vblendmpd", WriteFVarBlend, avx512vl_f64_info>, VEX_W;
-defm VPBLENDMD : blendmask_dq <0x64, "vpblendmd", WriteVarBlend, avx512vl_i32_info>;
-defm VPBLENDMQ : blendmask_dq <0x64, "vpblendmq", WriteVarBlend, avx512vl_i64_info>, VEX_W;
-defm VPBLENDMB : blendmask_bw <0x66, "vpblendmb", WriteVarBlend, avx512vl_i8_info>;
-defm VPBLENDMW : blendmask_bw <0x66, "vpblendmw", WriteVarBlend, avx512vl_i16_info>, VEX_W;
+defm VBLENDMPS : blendmask_dq<0x65, "vblendmps", WriteFVarBlend, WriteFVarBlendY,
+                              avx512vl_f32_info>;
+defm VBLENDMPD : blendmask_dq<0x65, "vblendmpd", WriteFVarBlend, WriteFVarBlendY,
+                              avx512vl_f64_info>, VEX_W;
+defm VPBLENDMD : blendmask_dq<0x64, "vpblendmd", WriteVarBlend, WriteVarBlend,
+                              avx512vl_i32_info>;
+defm VPBLENDMQ : blendmask_dq<0x64, "vpblendmq", WriteVarBlend, WriteVarBlend,
+                              avx512vl_i64_info>, VEX_W;
+defm VPBLENDMB : blendmask_bw<0x66, "vpblendmb", WriteVarBlend, WriteVarBlend,
+                              avx512vl_i8_info>;
+defm VPBLENDMW : blendmask_bw<0x66, "vpblendmw", WriteVarBlend, WriteVarBlend,
+                              avx512vl_i16_info>, VEX_W;
 
 //===----------------------------------------------------------------------===//
 // Compare Instructions
@@ -5967,23 +5975,26 @@ multiclass avx512_permil_vec<bits<8> OpcVar, string OpcodeStr, SDNode OpNode,
 }
 
 multiclass avx512_permil_vec_common<string OpcodeStr, bits<8> OpcVar,
-                                    X86FoldableSchedWrite sched, AVX512VLVectorVTInfo _,
+                                    X86FoldableSchedWrite sched128,
+                                    X86FoldableSchedWrite sched256,
+                                    AVX512VLVectorVTInfo _,
                                     AVX512VLVectorVTInfo Ctrl> {
   let Predicates = [HasAVX512] in {
-    defm Z    : avx512_permil_vec<OpcVar, OpcodeStr, X86VPermilpv, sched,
+    defm Z    : avx512_permil_vec<OpcVar, OpcodeStr, X86VPermilpv, sched256,
                                   _.info512, Ctrl.info512>, EVEX_V512;
   }
   let Predicates = [HasAVX512, HasVLX] in {
-    defm Z128 : avx512_permil_vec<OpcVar, OpcodeStr, X86VPermilpv, sched,
+    defm Z128 : avx512_permil_vec<OpcVar, OpcodeStr, X86VPermilpv, sched128,
                                   _.info128, Ctrl.info128>, EVEX_V128;
-    defm Z256 : avx512_permil_vec<OpcVar, OpcodeStr, X86VPermilpv, sched,
+    defm Z256 : avx512_permil_vec<OpcVar, OpcodeStr, X86VPermilpv, sched256,
                                   _.info256, Ctrl.info256>, EVEX_V256;
   }
 }
 
 multiclass avx512_permil<string OpcodeStr, bits<8> OpcImm, bits<8> OpcVar,
                          AVX512VLVectorVTInfo _, AVX512VLVectorVTInfo Ctrl>{
-  defm NAME: avx512_permil_vec_common<OpcodeStr, OpcVar, WriteFVarShuffle, _, Ctrl>;
+  defm NAME: avx512_permil_vec_common<OpcodeStr, OpcVar, WriteFVarShuffle,
+                                      WriteFVarShuffleY, _, Ctrl>;
   defm NAME: avx512_shift_rmi_sizes<OpcImm, MRMSrcReg, MRMSrcMem, OpcodeStr,
                                     X86VPermilpi, WriteFShuffle, _>,
                     EVEX, AVX512AIi8Base, EVEX_CD8<_.info128.EltSize, CD8VF>;

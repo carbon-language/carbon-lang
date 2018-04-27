@@ -145,6 +145,7 @@ defm : SLMWriteResPair<WriteFLogic, [SLM_FPC_RSV01], 1>;
 defm : SLMWriteResPair<WriteFLogicY, [SLM_FPC_RSV01], 1>;
 defm : SLMWriteResPair<WriteFShuffle, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFVarShuffle, [SLM_FPC_RSV0],  1>;
+defm : SLMWriteResPair<WriteFVarShuffleY,[SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFBlend,  [SLM_FPC_RSV0],  1>;
 def  : WriteRes<WriteCvtF2FSt, [SLM_FPC_RSV01, SLM_MEC_RSV]>;
 
@@ -278,8 +279,10 @@ def : WriteRes<WriteNop, []>;
 // AVX/FMA is not supported on that architecture, but we should define the basic
 // scheduling resources anyway.
 def  : WriteRes<WriteIMulH, [SLM_FPC_RSV0]>;
+defm : SLMWriteResPair<WriteFBlendY, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVarBlend, [SLM_FPC_RSV0], 1>;
 defm : SLMWriteResPair<WriteFVarBlend, [SLM_FPC_RSV0], 1>;
+defm : SLMWriteResPair<WriteFVarBlendY, [SLM_FPC_RSV0], 1>;
 defm : SLMWriteResPair<WriteFShuffle256, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFVarShuffle256, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteShuffle256, [SLM_FPC_RSV0],  1>;

@@ -167,8 +167,11 @@ defm : SKXWriteResPair<WriteFLogic, [SKXPort015], 1, [1], 1, 6>; // Floating poi
 defm : SKXWriteResPair<WriteFLogicY, [SKXPort015], 1, [1], 1, 7>; // Floating point and/or/xor logicals (YMM/ZMM).
 defm : SKXWriteResPair<WriteFShuffle,  [SKXPort5],  1>; // Floating point vector shuffles.
 defm : SKXWriteResPair<WriteFVarShuffle,  [SKXPort5],  1>; // Floating point vector variable shuffles.
+defm : SKXWriteResPair<WriteFVarShuffleY, [SKXPort5],  1>; // Floating point vector variable shuffles.
 defm : SKXWriteResPair<WriteFBlend, [SKXPort015], 1, [1], 1, 6>; // Floating point vector blends.
+defm : SKXWriteResPair<WriteFBlendY,[SKXPort015], 1, [1], 1, 7>; // Floating point vector blends.
 defm : SKXWriteResPair<WriteFVarBlend, [SKXPort015], 2, [2], 2, 6>; // Fp vector variable blends.
+defm : SKXWriteResPair<WriteFVarBlendY,[SKXPort015], 2, [2], 2, 7>; // Fp vector variable blends.
 
 def  : WriteRes<WriteCvtF2FSt, [SKXPort4,SKXPort5,SKXPort237,SKXPort015]> {
   let Latency = 6;
@@ -3171,8 +3174,6 @@ def: InstRW<[SKXWriteResGroup121], (instregex "VBLENDMPDZ256rm(b?)",
                                               "VBLENDMPDZrm(b?)",
                                               "VBLENDMPSZ256rm(b?)",
                                               "VBLENDMPSZrm(b?)",
-                                              "VBLENDPDYrmi",
-                                              "VBLENDPSYrmi",
                                               "VBROADCASTF32X2Z256m(b?)",
                                               "VBROADCASTF32X2Zm(b?)",
                                               "VBROADCASTF32X4Z256rm(b?)",
@@ -3529,14 +3530,6 @@ def SKXWriteResGroup139 : SchedWriteRes<[SKXPort5,SKXPort015]> {
   let ResourceCycles = [1,2];
 }
 def: InstRW<[SKXWriteResGroup139], (instregex "(V?)DPPDrri")>;
-
-def SKXWriteResGroup140 : SchedWriteRes<[SKXPort23,SKXPort015]> {
-  let Latency = 9;
-  let NumMicroOps = 3;
-  let ResourceCycles = [1,2];
-}
-def: InstRW<[SKXWriteResGroup140], (instregex "VBLENDVPDYrm",
-                                              "VBLENDVPSYrm")>;
 
 def SKXWriteResGroup141 : SchedWriteRes<[SKXPort0,SKXPort5,SKXPort23]> {
   let Latency = 9;

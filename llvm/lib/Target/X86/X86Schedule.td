@@ -94,8 +94,11 @@ defm WriteFLogic  : X86SchedWritePair; // Floating point and/or/xor logicals.
 defm WriteFLogicY : X86SchedWritePair; // Floating point and/or/xor logicals (YMM/ZMM).
 defm WriteFShuffle  : X86SchedWritePair; // Floating point vector shuffles.
 defm WriteFVarShuffle  : X86SchedWritePair; // Floating point vector variable shuffles.
+defm WriteFVarShuffleY : X86SchedWritePair; // Floating point vector variable shuffles (YMM/ZMM).
 defm WriteFBlend  : X86SchedWritePair; // Floating point vector blends.
+defm WriteFBlendY : X86SchedWritePair; // Floating point vector blends (YMM/ZMM).
 defm WriteFVarBlend  : X86SchedWritePair; // Fp vector variable blends.
+defm WriteFVarBlendY : X86SchedWritePair; // Fp vector variable blends (YMM/ZMM).
 
 // FMA Scheduling helper class.
 class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }

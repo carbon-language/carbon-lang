@@ -167,8 +167,11 @@ defm : SKLWriteResPair<WriteFLogic,  [SKLPort015], 1, [1], 1, 6>; // Floating po
 defm : SKLWriteResPair<WriteFLogicY, [SKLPort015], 1, [1], 1, 7>; // Floating point and/or/xor logicals (YMM/ZMM).
 defm : SKLWriteResPair<WriteFShuffle,  [SKLPort5],  1>; // Floating point vector shuffles.
 defm : SKLWriteResPair<WriteFVarShuffle,  [SKLPort5],  1>; // Floating point vector shuffles.
+defm : SKLWriteResPair<WriteFVarShuffleY, [SKLPort5],  1>; // Floating point vector shuffles.
 defm : SKLWriteResPair<WriteFBlend,  [SKLPort015], 1, [1], 1, 6>; // Floating point vector blends.
+defm : SKLWriteResPair<WriteFBlendY, [SKLPort015], 1, [1], 1, 7>; // Floating point vector blends.
 defm : SKLWriteResPair<WriteFVarBlend, [SKLPort015], 2, [2], 2, 6>; // Fp vector variable blends.
+defm : SKLWriteResPair<WriteFVarBlendY,[SKLPort015], 2, [2], 2, 7>; // Fp vector variable blends.
 
 def  : WriteRes<WriteCvtF2FSt, [SKLPort4,SKLPort5,SKLPort237,SKLPort01]> {
   let Latency = 6;
@@ -1626,9 +1629,7 @@ def SKLWriteResGroup110 : SchedWriteRes<[SKLPort23,SKLPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKLWriteResGroup110], (instregex "VBLENDPDYrmi",
-                                              "VBLENDPSYrmi",
-                                              "VMASKMOVPDYrm",
+def: InstRW<[SKLWriteResGroup110], (instregex "VMASKMOVPDYrm",
                                               "VMASKMOVPSYrm",
                                               "VPADDBYrm",
                                               "VPADDDYrm",
@@ -1767,14 +1768,6 @@ def SKLWriteResGroup124 : SchedWriteRes<[SKLPort5,SKLPort01]> {
   let ResourceCycles = [1,2];
 }
 def: InstRW<[SKLWriteResGroup124], (instregex "(V?)DPPDrri")>;
-
-def SKLWriteResGroup125 : SchedWriteRes<[SKLPort23,SKLPort015]> {
-  let Latency = 9;
-  let NumMicroOps = 3;
-  let ResourceCycles = [1,2];
-}
-def: InstRW<[SKLWriteResGroup125], (instregex "VBLENDVPDYrm",
-                                              "VBLENDVPSYrm")>;
 
 def SKLWriteResGroup126 : SchedWriteRes<[SKLPort0,SKLPort5,SKLPort23]> {
   let Latency = 9;
