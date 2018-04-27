@@ -236,8 +236,8 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
       const MCSymbol &SA = A->getSymbol();
       if (A->getKind() != MCSymbolRefExpr::VK_None || SA.isUndefined()) {
         IsResolved = false;
-      } else {
-        IsResolved = getWriter().isSymbolRefDifferenceFullyResolvedImpl(
+      } else if (auto *Writer = getWriterPtr()) {
+        IsResolved = Writer->isSymbolRefDifferenceFullyResolvedImpl(
             *this, SA, *DF, false, true);
       }
     }
