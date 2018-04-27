@@ -836,10 +836,6 @@ static unsigned getReloc(IntTy Begin, IntTy Size, const ArrayRef<RelTy> &Rels,
 // .eh_frame is a sequence of CIE or FDE records.
 // This function splits an input section into records and returns them.
 template <class ELFT> void EhInputSection::split() {
-  // Early exit if already split.
-  if (!Pieces.empty())
-    return;
-
   if (AreRelocsRela)
     split<ELFT>(relas<ELFT>());
   else

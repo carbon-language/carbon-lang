@@ -460,10 +460,6 @@ template <class ELFT> void EhFrameSection::addSection(InputSectionBase *C) {
   for (auto *DS : Sec->DependentSections)
     DependentSections.push_back(DS);
 
-  // .eh_frame is a sequence of CIE or FDE records. This function
-  // splits it into pieces so that we can call
-  // SplitInputSection::getSectionPiece on the section.
-  Sec->split<ELFT>();
   if (Sec->Pieces.empty())
     return;
 
@@ -2540,12 +2536,14 @@ void elf::decompressSections() {
                   [](InputSectionBase *Sec) { Sec->maybeDecompress(); });
 }
 
-void elf::splitSections() {
+template <class ELFT> void elf::splitSections() {
   // splitIntoPieces needs to be called on each MergeInputSection
   // before calling finalizeContents().
   parallelForEach(InputSections, [](InputSectionBase *Sec) {
     if (auto *S = dyn_cast<MergeInputSection>(Sec))
       S->splitIntoPieces();
+    else if (auto *Eh = dyn_cast<EhInputSection>(Sec))
+      Eh->split<ELFT>();
   });
 }
 
@@ -2701,6 +2699,11 @@ template GdbIndexSection *elf::createGdbIndex<ELF32LE>();
 template GdbIndexSection *elf::createGdbIndex<ELF32BE>();
 template GdbIndexSection *elf::createGdbIndex<ELF64LE>();
 template GdbIndexSection *elf::createGdbIndex<ELF64BE>();
+
+template void elf::splitSections<ELF32LE>();
+template void elf::splitSections<ELF32BE>();
+template void elf::splitSections<ELF64LE>();
+template void elf::splitSections<ELF64BE>();
 
 template void EhFrameSection::addSection<ELF32LE>(InputSectionBase *);
 template void EhFrameSection::addSection<ELF32BE>(InputSectionBase *);

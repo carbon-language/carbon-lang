@@ -834,7 +834,7 @@ private:
 InputSection *createInterpSection();
 MergeInputSection *createCommentSection();
 void decompressSections();
-void splitSections();
+template <class ELFT> void splitSections();
 void mergeSections();
 
 Defined *addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,

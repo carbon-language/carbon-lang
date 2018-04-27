@@ -159,10 +159,6 @@ scanEhFrameSection(EhInputSection &EH,
   if (!EH.NumRelocations)
     return;
 
-  // Unfortunately we need to split .eh_frame early since some relocations in
-  // .eh_frame keep other section alive and some don't.
-  EH.split<ELFT>();
-
   if (EH.AreRelocsRela)
     scanEhFrameSection<ELFT>(EH, EH.template relas<ELFT>(), Fn);
   else
