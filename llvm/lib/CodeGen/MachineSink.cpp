@@ -984,12 +984,12 @@ static bool aliasWithRegsInLiveIn(MachineBasicBlock &MBB, unsigned Reg,
 
 static MachineBasicBlock *
 getSingleLiveInSuccBB(MachineBasicBlock &CurBB,
-                      ArrayRef<MachineBasicBlock *> SinkableBBs, unsigned Reg,
-                      const TargetRegisterInfo *TRI) {
+                      const SmallPtrSetImpl<MachineBasicBlock *> &SinkableBBs,
+                      unsigned Reg, const TargetRegisterInfo *TRI) {
   // Try to find a single sinkable successor in which Reg is live-in.
   MachineBasicBlock *BB = nullptr;
   for (auto *SI : SinkableBBs) {
-    if (SI->isLiveIn(Reg)) {
+    if (aliasWithRegsInLiveIn(*SI, Reg, TRI)) {
       // If BB is set here, Reg is live-in to at least two sinkable successors,
       // so quit.
       if (BB)
@@ -1003,17 +1003,17 @@ getSingleLiveInSuccBB(MachineBasicBlock &CurBB,
 
   // Check if any register aliased with Reg is live-in in other successors.
   for (auto *SI : CurBB.successors()) {
-    if (SI == BB)
-      continue;
-    if (aliasWithRegsInLiveIn(*SI, Reg, TRI))
+    if (!SinkableBBs.count(SI) && aliasWithRegsInLiveIn(*SI, Reg, TRI))
       return nullptr;
   }
   return BB;
 }
 
-static MachineBasicBlock *getSingleLiveInSuccBB(
-    MachineBasicBlock &CurBB, ArrayRef<MachineBasicBlock *> SinkableBBs,
-    ArrayRef<unsigned> DefedRegsInCopy, const TargetRegisterInfo *TRI) {
+static MachineBasicBlock *
+getSingleLiveInSuccBB(MachineBasicBlock &CurBB,
+                      const SmallPtrSetImpl<MachineBasicBlock *> &SinkableBBs,
+                      ArrayRef<unsigned> DefedRegsInCopy,
+                      const TargetRegisterInfo *TRI) {
   MachineBasicBlock *SingleBB = nullptr;
   for (auto DefReg : DefedRegsInCopy) {
     MachineBasicBlock *BB =
@@ -1096,13 +1096,13 @@ bool PostRAMachineSinking::tryToSinkCopy(MachineBasicBlock &CurBB,
                                          MachineFunction &MF,
                                          const TargetRegisterInfo *TRI,
                                          const TargetInstrInfo *TII) {
-  SmallVector<MachineBasicBlock *, 2> SinkableBBs;
+  SmallPtrSet<MachineBasicBlock *, 2> SinkableBBs;
   // FIXME: For now, we sink only to a successor which has a single predecessor
   // so that we can directly sink COPY instructions to the successor without
   // adding any new block or branch instruction.
   for (MachineBasicBlock *SI : CurBB.successors())
     if (!SI->livein_empty() && SI->pred_size() == 1)
-      SinkableBBs.push_back(SI);
+      SinkableBBs.insert(SI);
 
   if (SinkableBBs.empty())
     return false;
