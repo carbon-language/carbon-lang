@@ -587,7 +587,7 @@ public:
   /// \brief Enters a new scope for capturing cleanups, all of which
   /// will be executed once the scope is exited.
   class RunCleanupsScope {
-    EHScopeStack::stable_iterator CleanupStackDepth, OldCleanupScopeDepth;
+    EHScopeStack::stable_iterator CleanupStackDepth;
     size_t LifetimeExtendedCleanupStackSize;
     bool OldDidCallStackSave;
   protected:
@@ -610,8 +610,6 @@ public:
           CGF.LifetimeExtendedCleanupStack.size();
       OldDidCallStackSave = CGF.DidCallStackSave;
       CGF.DidCallStackSave = false;
-      OldCleanupScopeDepth = CGF.CurrentCleanupScopeDepth;
-      CGF.CurrentCleanupScopeDepth = CleanupStackDepth;
     }
 
     /// \brief Exit this cleanup scope, emitting any accumulated cleanups.
@@ -637,13 +635,8 @@ public:
       CGF.PopCleanupBlocks(CleanupStackDepth, LifetimeExtendedCleanupStackSize,
                            ValuesToReload);
       PerformCleanup = false;
-      CGF.CurrentCleanupScopeDepth = OldCleanupScopeDepth;
     }
   };
-
-  // Cleanup stack depth of the RunCleanupsScope that was pushed most recently.
-  EHScopeStack::stable_iterator CurrentCleanupScopeDepth =
-      EHScopeStack::stable_end();
 
   class LexicalScope : public RunCleanupsScope {
     SourceRange Range;
@@ -1101,11 +1094,6 @@ private:
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C
   /// decls.
   DeclMapTy LocalDeclMap;
-
-  // Keep track of the cleanups for callee-destructed parameters pushed to the
-  // cleanup stack so that they can be deactivated later.
-  llvm::DenseMap<const ParmVarDecl *, EHScopeStack::stable_iterator>
-      CalleeDestructedParamCleanups;
 
   /// SizeArguments - If a ParmVarDecl had the pass_object_size attribute, this
   /// will contain a mapping from said ParmVarDecl to its implicit "object_size"
