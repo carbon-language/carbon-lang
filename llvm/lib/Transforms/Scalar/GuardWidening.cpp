@@ -335,6 +335,8 @@ GuardWideningImpl::WideningScore GuardWideningImpl::computeWideningScore(
   bool HoistingOutOfLoop = false;
 
   if (DominatingGuardLoop != DominatedGuardLoop) {
+    // Be conservative and don't widen into a sibling loop.  TODO: If the
+    // sibling is colder, we should consider allowing this.
     if (DominatingGuardLoop &&
         !DominatingGuardLoop->contains(DominatedGuardLoop))
       return WS_IllegalOrNegative;
@@ -345,6 +347,12 @@ GuardWideningImpl::WideningScore GuardWideningImpl::computeWideningScore(
   if (!isAvailableAt(DominatedGuard->getArgOperand(0), DominatingGuard))
     return WS_IllegalOrNegative;
 
+  // If the guard was conditional executed, it may never be reached
+  // dynamically.  There are two potential downsides to hoisting it out of the
+  // conditionally executed region: 1) we may spuriously deopt without need and
+  // 2) we have the extra cost of computing the guard condition in the common
+  // case.  At the moment, we really only consider the second in our heuristic
+  // here.  TODO: evaluate cost model for spurious deopt
   bool HoistingOutOfIf =
       !PDT.dominates(DominatedGuard->getParent(), DominatingGuard->getParent());
 
