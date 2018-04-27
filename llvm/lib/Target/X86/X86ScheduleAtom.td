@@ -467,10 +467,9 @@ def AtomWrite01_5 : SchedWriteRes<[AtomPort01]> {
   let Latency = 5;
   let ResourceCycles = [5];
 }
-def : InstRW<[AtomWrite01_5], (instrs FLDCW16m,
+def : InstRW<[AtomWrite01_5], (instrs FLDCW16m, ST_FP80m,
                                       MMX_EMMS)>;
-def : InstRW<[AtomWrite01_5], (instregex "ST_FP80m",
-                                         "MMX_PH(ADD|SUB)S?Wrr")>;
+def : InstRW<[AtomWrite01_5], (instregex "MMX_PH(ADD|SUB)S?Wrr")>;
 
 def AtomWrite01_6 : SchedWriteRes<[AtomPort01]> {
   let Latency = 6;

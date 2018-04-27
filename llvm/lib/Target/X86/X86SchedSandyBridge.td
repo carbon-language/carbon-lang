@@ -499,10 +499,10 @@ def SBWriteResGroup11 : SchedWriteRes<[SBPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
-def: InstRW<[SBWriteResGroup11], (instregex "SCASB",
-                                            "SCASL",
-                                            "SCASQ",
-                                            "SCASW")>;
+def: InstRW<[SBWriteResGroup11], (instrs SCASB,
+                                         SCASL,
+                                         SCASQ,
+                                         SCASW)>;
 
 def SBWriteResGroup12 : SchedWriteRes<[SBPort0,SBPort1]> {
   let Latency = 2;
@@ -801,10 +801,7 @@ def SBWriteResGroup40 : SchedWriteRes<[SBPort4,SBPort23,SBPort015]> {
   let NumMicroOps = 3;
   let ResourceCycles = [1,1,1];
 }
-def: InstRW<[SBWriteResGroup40], (instregex "STOSB",
-                                            "STOSL",
-                                            "STOSQ",
-                                            "STOSW")>;
+def: InstRW<[SBWriteResGroup40], (instrs STOSB, STOSL, STOSQ, STOSW)>;
 
 def SBWriteResGroup41 : SchedWriteRes<[SBPort5,SBPort015]> {
   let Latency = 5;
@@ -1070,8 +1067,7 @@ def SBWriteResGroup63 : SchedWriteRes<[SBPort23,SBPort015]> {
   let NumMicroOps = 3;
   let ResourceCycles = [1,2];
 }
-def: InstRW<[SBWriteResGroup63], (instregex "LODSB",
-                                            "LODSW")>;
+def: InstRW<[SBWriteResGroup63], (instrs LODSB, LODSW)>;
 
 def SBWriteResGroup64 : SchedWriteRes<[SBPort5,SBPort01,SBPort23]> {
   let Latency = 7;
@@ -1239,10 +1235,10 @@ def SBWriteResGroup83 : SchedWriteRes<[SBPort23,SBPort015]> {
   let NumMicroOps = 5;
   let ResourceCycles = [2,3];
 }
-def: InstRW<[SBWriteResGroup83], (instregex "CMPSB",
-                                            "CMPSL",
-                                            "CMPSQ",
-                                            "CMPSW")>;
+def: InstRW<[SBWriteResGroup83], (instrs CMPSB,
+                                         CMPSL,
+                                         CMPSQ,
+                                         CMPSW)>;
 
 def SBWriteResGroup84 : SchedWriteRes<[SBPort4,SBPort5,SBPort23]> {
   let Latency = 8;

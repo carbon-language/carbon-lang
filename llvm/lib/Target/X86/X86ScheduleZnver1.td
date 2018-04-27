@@ -325,7 +325,7 @@ def ZnWriteXCHGrm : SchedWriteRes<[ZnAGU, ZnALU]> {
 }
 def : InstRW<[ZnWriteXCHGrm, ReadAfterLd], (instregex "XCHG(8|16|32|64)rm")>;
 
-def : InstRW<[WriteMicrocoded], (instregex "XLAT")>;
+def : InstRW<[WriteMicrocoded], (instrs XLAT)>;
 
 // POP16.
 // r.
@@ -732,7 +732,7 @@ def : InstRW<[WriteMicrocoded], (instregex "FBSTPm")>;
 def ZnWriteFXCH : SchedWriteRes<[ZnFPU]>;
 
 // FXCHG.
-def : InstRW<[ZnWriteFXCH], (instregex "XCH_F")>;
+def : InstRW<[ZnWriteFXCH], (instrs XCH_F)>;
 
 // FILD.
 def ZnWriteFILD : SchedWriteRes<[ZnAGU, ZnFPU3]> {
@@ -1649,9 +1649,9 @@ def : InstRW<[ZnWriteRSQRTPSYLd], (instregex "VRSQRTPSYm")>;
 //-- Other instructions --//
 
 // VZEROUPPER.
-def : InstRW<[WriteMicrocoded], (instregex "VZEROUPPER")>;
+def : InstRW<[WriteMicrocoded], (instrs VZEROUPPER)>;
 
 // VZEROALL.
-def : InstRW<[WriteMicrocoded], (instregex "VZEROALL")>;
+def : InstRW<[WriteMicrocoded], (instrs VZEROALL)>;
 
 } // SchedModel
