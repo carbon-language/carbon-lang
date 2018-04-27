@@ -119,6 +119,7 @@ struct CopyConfig {
   std::vector<StringRef> OnlyKeep;
   std::vector<StringRef> AddSection;
   std::vector<StringRef> SymbolsToLocalize;
+  std::vector<StringRef> SymbolsToGlobalize;
   StringMap<StringRef> SymbolsToRename;
   bool StripAll;
   bool StripAllGNU;
@@ -320,10 +321,12 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
       if ((Config.LocalizeHidden &&
            (Sym.Visibility == STV_HIDDEN || Sym.Visibility == STV_INTERNAL)) ||
           (!Config.SymbolsToLocalize.empty() &&
-           std::find(std::begin(Config.SymbolsToLocalize),
-                     std::end(Config.SymbolsToLocalize),
-                     Sym.Name) != std::end(Config.SymbolsToLocalize)))
+           is_contained(Config.SymbolsToLocalize, Sym.Name)))
         Sym.Binding = STB_LOCAL;
+
+      if (!Config.SymbolsToGlobalize.empty() &&
+          is_contained(Config.SymbolsToGlobalize, Sym.Name))
+        Sym.Binding = STB_GLOBAL;
 
       const auto I = Config.SymbolsToRename.find(Sym.Name);
       if (I != Config.SymbolsToRename.end())
@@ -416,6 +419,8 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
   for (auto Arg : InputArgs.filtered(OBJCOPY_localize_symbol))
     Config.SymbolsToLocalize.push_back(Arg->getValue());
+  for (auto Arg : InputArgs.filtered(OBJCOPY_globalize_symbol))
+    Config.SymbolsToGlobalize.push_back(Arg->getValue());
 
   return Config;
 }
