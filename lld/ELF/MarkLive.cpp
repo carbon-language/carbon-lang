@@ -207,7 +207,7 @@ template <class ELFT> static void doGcSections() {
     // (splittable) sections, each piece of data has independent liveness bit.
     // So we explicitly tell it which offset is in use.
     if (auto *MS = dyn_cast<MergeInputSection>(Sec))
-      MS->markLiveAt(Offset);
+      MS->getSectionPiece(Offset)->Live = true;
 
     if (Sec->Live)
       return;

@@ -937,10 +937,6 @@ void MergeInputSection::splitIntoPieces() {
   OffsetMap.reserve(Pieces.size());
   for (size_t I = 0, E = Pieces.size(); I != E; ++I)
     OffsetMap[Pieces[I].InputOff] = I;
-
-  if (Config->GcSections && (Flags & SHF_ALLOC))
-    for (uint32_t Off : LiveOffsets)
-      getSectionPiece(Off)->Live = true;
 }
 
 template <class It, class T, class Compare>
