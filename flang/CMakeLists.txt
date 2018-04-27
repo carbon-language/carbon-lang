@@ -1,20 +1,6 @@
 cmake_minimum_required(VERSION 3.9.0)
 
-#
-# Reminder: The normal way to set the compiler is via the CXX environment variable
-#
-#   CXX=/opt/gcc-7.3.0/bin/g++ cmake .../f18
-#
-# but for convenience we provide the following cmake variables to
-# use an existing gcc installation directory.
-#
-
-# Pass '-DPGI=1' to cmake to use the latest gcc installation at PGI.
-if( PGI )
-  set(GCC /home/sw/thirdparty/gcc/gcc-7.3.0/linux86-64/redhat)
-endif()
-
-# Pass -DGCC=... to cmake to use a specific gcc installation
+# Pass -DGCC=... to cmake to use a specific gcc installation.
 if( GCC )
   set(CMAKE_CXX_COMPILER "${GCC}/bin/g++")
   set(CMAKE_CC_COMPILER "${GCC}/bin/gcc")
