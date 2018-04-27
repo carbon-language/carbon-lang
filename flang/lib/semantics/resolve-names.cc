@@ -644,6 +644,7 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
     return KindParamValue(std::get<std::uint64_t>(intlit.t));
   } else {
     CHECK(!"TODO: translate star-size to kind");
+    return {};  // silence compiler warning
   }
 }
 
