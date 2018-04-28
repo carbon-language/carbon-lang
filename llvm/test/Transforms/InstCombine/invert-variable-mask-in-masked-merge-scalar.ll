@@ -8,10 +8,9 @@
 
 define i4 @scalar (i4 %x, i4 %y, i4 %m) {
 ; CHECK-LABEL: @scalar(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -39,10 +38,9 @@ define i4 @in_constant_varx_mone_invmask(i4 %x, i4 %mask) {
 
 define i4 @in_constant_varx_6_invmask(i4 %x, i4 %mask) {
 ; CHECK-LABEL: @in_constant_varx_6_invmask(
-; CHECK-NEXT:    [[NOTMASK:%.*]] = xor i4 [[MASK:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[X:%.*]], 6
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[NOTMASK]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], 6
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[MASK:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %notmask = xor i4 %mask, -1
@@ -68,10 +66,9 @@ define i4 @in_constant_mone_vary_invmask(i4 %y, i4 %mask) {
 
 define i4 @in_constant_6_vary_invmask(i4 %y, i4 %mask) {
 ; CHECK-LABEL: @in_constant_6_vary_invmask(
-; CHECK-NEXT:    [[NOTMASK:%.*]] = xor i4 [[MASK:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[Y:%.*]], 6
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[NOTMASK]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[MASK:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], 6
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %notmask = xor i4 %mask, -1
@@ -92,10 +89,9 @@ declare i4 @gen4()
 
 define i4 @c_1_0_0 (i4 %x, i4 %y, i4 %m) {
 ; CHECK-LABEL: @c_1_0_0(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[Y:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -107,10 +103,9 @@ define i4 @c_1_0_0 (i4 %x, i4 %y, i4 %m) {
 
 define i4 @c_0_1_0 (i4 %x, i4 %y, i4 %m) {
 ; CHECK-LABEL: @c_0_1_0(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[Y]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -122,12 +117,11 @@ define i4 @c_0_1_0 (i4 %x, i4 %y, i4 %m) {
 
 define i4 @c_0_0_1 (i4 %m) {
 ; CHECK-LABEL: @c_0_0_1(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[X:%.*]] = call i4 @gen4()
 ; CHECK-NEXT:    [[Y:%.*]] = call i4 @gen4()
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[X]], [[Y]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[Y]], [[N1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -141,10 +135,9 @@ define i4 @c_0_0_1 (i4 %m) {
 
 define i4 @c_1_1_0 (i4 %x, i4 %y, i4 %m) {
 ; CHECK-LABEL: @c_1_1_0(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[Y:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[Y]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -156,11 +149,10 @@ define i4 @c_1_1_0 (i4 %x, i4 %y, i4 %m) {
 
 define i4 @c_1_0_1 (i4 %x, i4 %m) {
 ; CHECK-LABEL: @c_1_0_1(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[Y:%.*]] = call i4 @gen4()
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[Y]], [[X:%.*]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[Y]], [[N1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -173,11 +165,10 @@ define i4 @c_1_0_1 (i4 %x, i4 %m) {
 
 define i4 @c_0_1_1 (i4 %y, i4 %m) {
 ; CHECK-LABEL: @c_0_1_1(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[X:%.*]] = call i4 @gen4()
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[X]], [[Y:%.*]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[X]], [[N1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[Y]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -190,12 +181,11 @@ define i4 @c_0_1_1 (i4 %y, i4 %m) {
 
 define i4 @c_1_1_1 (i4 %m) {
 ; CHECK-LABEL: @c_1_1_1(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[X:%.*]] = call i4 @gen4()
 ; CHECK-NEXT:    [[Y:%.*]] = call i4 @gen4()
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[Y]], [[X]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[X]], [[N1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[Y]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %im = xor i4 %m, -1
@@ -209,10 +199,9 @@ define i4 @c_1_1_1 (i4 %m) {
 
 define i4 @commutativity_constant_varx_6_invmask(i4 %x, i4 %mask) {
 ; CHECK-LABEL: @commutativity_constant_varx_6_invmask(
-; CHECK-NEXT:    [[NOTMASK:%.*]] = xor i4 [[MASK:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[X:%.*]], 6
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[NOTMASK]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], 6
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[MASK:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[X]]
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %notmask = xor i4 %mask, -1
@@ -224,10 +213,9 @@ define i4 @commutativity_constant_varx_6_invmask(i4 %x, i4 %mask) {
 
 define i4 @commutativity_constant_6_vary_invmask(i4 %y, i4 %mask) {
 ; CHECK-LABEL: @commutativity_constant_6_vary_invmask(
-; CHECK-NEXT:    [[NOTMASK:%.*]] = xor i4 [[MASK:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[Y:%.*]], 6
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[NOTMASK]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[MASK:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], 6
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
   %notmask = xor i4 %mask, -1
@@ -247,10 +235,9 @@ declare void @use4(i4)
 
 define i4 @n_oneuse_D_is_ok (i4 %x, i4 %y, i4 %m) {
 ; CHECK-LABEL: @n_oneuse_D_is_ok(
-; CHECK-NEXT:    [[IM:%.*]] = xor i4 [[M:%.*]], -1
 ; CHECK-NEXT:    [[N0:%.*]] = xor i4 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[N1:%.*]] = and i4 [[N0]], [[IM]]
-; CHECK-NEXT:    [[R:%.*]] = xor i4 [[N1]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i4 [[N0]], [[M:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = xor i4 [[TMP1]], [[X]]
 ; CHECK-NEXT:    call void @use4(i4 [[N0]])
 ; CHECK-NEXT:    ret i4 [[R]]
 ;
