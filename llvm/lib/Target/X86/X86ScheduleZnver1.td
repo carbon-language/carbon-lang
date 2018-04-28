@@ -622,9 +622,6 @@ def : InstRW<[WriteMicrocoded], (instregex "RC(R|L)(8|16|32|64)m(i|CL)")>;
 def : InstRW<[WriteShiftLd], (instregex "S(A|H)(R|L)(8|16|32|64)m(i|1)")>;
 
 // SHRD SHLD.
-// r,r
-def : InstRW<[WriteShift], (instregex "SH(R|L)D(16|32|64)rri8")>;
-
 // m,r
 def : InstRW<[WriteShiftLd], (instregex "SH(R|L)D(16|32|64)mri8")>;
 
