@@ -194,12 +194,12 @@ bool checkIsConflictingNonsymmetric(KnowledgeStr Existing,
 
   return checkIsConflictingNonsymmetricCommon(
       Ctx.get(),
-      isl::manage(isl_union_map_from_domain(ExistingOccupied.take())),
+      isl::union_map::from_domain(ExistingOccupied),
       ExistingUnused,
-      isl::manage(isl_union_map_from_domain(ExistingWritten.take())),
-      isl::manage(isl_union_map_from_domain(ProposedOccupied.take())),
+      isl::union_map::from_domain(ExistingWritten),
+      isl::union_map::(ProposedOccupied),
       ProposedUnused,
-      isl::manage(isl_union_map_from_domain(ProposedWritten.take())));
+      isl::union_map::from_domain(ProposedWritten));
 }
 
 bool checkIsConflicting(KnowledgeStr Existing, KnowledgeStr Proposed) {

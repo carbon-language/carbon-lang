@@ -239,10 +239,9 @@ bool MaximalStaticExpander::isExpandable(
           return false;
         }
 
-        StmtReads = give(isl_union_map_union(StmtReads.take(), AccRel.take()));
+        StmtReads = StmtReads.unite(AccRel);
       } else {
-        StmtWrites =
-            give(isl_union_map_union(StmtWrites.take(), AccRel.take()));
+        StmtWrites = StmtWrites.unite(AccRel);
       }
 
       // For now, we are not able to expand MayWrite.
@@ -445,7 +444,7 @@ bool MaximalStaticExpander::runOnScop(Scop &S) {
   // Get the RAW Dependences.
   auto &DI = getAnalysis<DependenceInfo>();
   auto &D = DI.getDependences(Dependences::AL_Reference);
-  auto Dependences = isl::give(D.getDependences(Dependences::TYPE_RAW));
+  auto Dependences = isl::manage(D.getDependences(Dependences::TYPE_RAW));
 
   SmallVector<ScopArrayInfo *, 4> CurrentSAI(S.arrays().begin(),
                                              S.arrays().end());

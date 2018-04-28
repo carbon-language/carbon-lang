@@ -1263,7 +1263,7 @@ getBandNodeWithOriginDimOrder(isl::schedule_node Node) {
       (isl::set(Domain).dim(isl::dim::set) !=
        isl_schedule_node_band_n_member(Node.keep())))
     return Node;
-  Node = isl::manage(isl_schedule_node_delete(Node.take()));
+  Node = isl::manage(isl_schedule_node_delete(Node.copy()));
   auto PartialSchedulePwAff = Domain.identity_union_pw_multi_aff();
   auto PartialScheduleMultiPwAff =
       isl::multi_union_pw_aff(PartialSchedulePwAff);
@@ -1519,8 +1519,8 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   ScopsProcessed++;
   walkScheduleTreeForStatistics(S.getScheduleTree(), 0);
 
-  isl::union_map Validity = give(D.getDependences(ValidityKinds));
-  isl::union_map Proximity = give(D.getDependences(ProximityKinds));
+  isl::union_map Validity = isl::manage(D.getDependences(ValidityKinds));
+  isl::union_map Proximity = isl::manage(D.getDependences(ProximityKinds));
 
   // Simplify the dependences by removing the constraints introduced by the
   // domains. This can speed up the scheduling time significantly, as large
