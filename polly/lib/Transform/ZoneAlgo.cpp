@@ -625,12 +625,12 @@ isl::map ZoneAlgorithm::getScalarReachingDefinition(ScopStmt *Stmt) {
 }
 
 isl::map ZoneAlgorithm::getScalarReachingDefinition(isl::set DomainDef) {
-  auto DomId = give(isl_set_get_tuple_id(DomainDef.keep()));
+  auto DomId = DomainDef.get_tuple_id();
   auto *Stmt = static_cast<ScopStmt *>(isl_id_get_user(DomId.keep()));
 
   auto StmtResult = getScalarReachingDefinition(Stmt);
 
-  return give(isl_map_intersect_range(StmtResult.take(), DomainDef.take()));
+  return StmtResult.intersect_range(DomainDef);
 }
 
 isl::map ZoneAlgorithm::makeUnknownForDomain(ScopStmt *Stmt) const {
@@ -707,11 +707,10 @@ isl::map ZoneAlgorithm::makeValInst(Value *Val, ScopStmt *UserStmt, Loop *Scope,
     auto ValSet = makeValueSet(Val);
 
     // {  UserDomain[] -> llvm::Value }
-    auto ValInstSet =
-        give(isl_map_from_domain_and_range(DomainUse.take(), ValSet.take()));
+    auto ValInstSet = isl::map::from_domain_and_range(DomainUse, ValSet);
 
     // { UserDomain[] -> [UserDomain[] - >llvm::Value] }
-    auto Result = give(isl_map_reverse(isl_map_domain_map(ValInstSet.take())));
+    auto Result = ValInstSet.domain_map().reverse();
     simplify(Result);
     return Result;
   }
@@ -738,19 +737,16 @@ isl::map ZoneAlgorithm::makeValInst(Value *Val, ScopStmt *UserStmt, Loop *Scope,
     auto UserSched = getScatterFor(DomainUse);
 
     // { DomainUse[] -> DomainDef[] }
-    auto UsedInstance =
-        give(isl_map_apply_range(UserSched.take(), ReachDef.take()));
+    auto UsedInstance = UserSched.apply_range(ReachDef);
 
     // { llvm::Value }
     auto ValSet = makeValueSet(Val);
 
     // { DomainUse[] -> llvm::Value[] }
-    auto ValInstSet =
-        give(isl_map_from_domain_and_range(DomainUse.take(), ValSet.take()));
+    auto ValInstSet = isl::map::from_domain_and_range(DomainUse, ValSet);
 
     // { DomainUse[] -> [DomainDef[] -> llvm::Value]  }
-    auto Result =
-        give(isl_map_range_product(UsedInstance.take(), ValInstSet.take()));
+    auto Result = UsedInstance.range_product(ValInstSet);
 
     simplify(Result);
     return Result;
@@ -903,8 +899,7 @@ void ZoneAlgorithm::computeCommon() {
   }
 
   // { DomainWrite[] -> Element[] }
-  AllWrites =
-      give(isl_union_map_union(AllMustWrites.copy(), AllMayWrites.copy()));
+  AllWrites = AllMustWrites.unite(AllMayWrites);
 
   // { [Element[] -> Zone[]] -> DomainWrite[] }
   WriteReachDefZone =
