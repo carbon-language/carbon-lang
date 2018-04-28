@@ -952,21 +952,21 @@ defm VCVTTSD2SI64 : sse12_cvt_s<0x2C, FR64, GR64, fp_to_sint, f64mem, loadf64,
                                 XD, VEX, VEX_W, VEX_LIG;
 
 def : InstAlias<"vcvttss2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTTSS2SIrr GR32:$dst, FR32:$src), 0>;
+                (VCVTTSS2SIrr GR32:$dst, FR32:$src), 0, "att">;
 def : InstAlias<"vcvttss2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTTSS2SIrm GR32:$dst, f32mem:$src), 0>;
+                (VCVTTSS2SIrm GR32:$dst, f32mem:$src), 0, "att">;
 def : InstAlias<"vcvttsd2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTTSD2SIrr GR32:$dst, FR64:$src), 0>;
+                (VCVTTSD2SIrr GR32:$dst, FR64:$src), 0, "att">;
 def : InstAlias<"vcvttsd2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTTSD2SIrm GR32:$dst, f64mem:$src), 0>;
+                (VCVTTSD2SIrm GR32:$dst, f64mem:$src), 0, "att">;
 def : InstAlias<"vcvttss2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTTSS2SI64rr GR64:$dst, FR32:$src), 0>;
+                (VCVTTSS2SI64rr GR64:$dst, FR32:$src), 0, "att">;
 def : InstAlias<"vcvttss2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTTSS2SI64rm GR64:$dst, f32mem:$src), 0>;
+                (VCVTTSS2SI64rm GR64:$dst, f32mem:$src), 0, "att">;
 def : InstAlias<"vcvttsd2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTTSD2SI64rr GR64:$dst, FR64:$src), 0>;
+                (VCVTTSD2SI64rr GR64:$dst, FR64:$src), 0, "att">;
 def : InstAlias<"vcvttsd2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTTSD2SI64rm GR64:$dst, f64mem:$src), 0>;
+                (VCVTTSD2SI64rm GR64:$dst, f64mem:$src), 0, "att">;
 }
 // The assembler can recognize rr 64-bit instructions by seeing a rxx
 // register, but the same isn't true when only using memory operands,
@@ -983,9 +983,9 @@ defm VCVTSI642SD : sse12_vcvt_avx<0x2A, GR64, FR64, i64mem, "cvtsi2sd{q}",
 
 let Predicates = [UseAVX] in {
   def : InstAlias<"vcvtsi2ss\t{$src, $src1, $dst|$dst, $src1, $src}",
-                (VCVTSI2SSrm FR64:$dst, FR64:$src1, i32mem:$src), 0>;
+                (VCVTSI2SSrm FR64:$dst, FR64:$src1, i32mem:$src), 0, "att">;
   def : InstAlias<"vcvtsi2sd\t{$src, $src1, $dst|$dst, $src1, $src}",
-                (VCVTSI2SDrm FR64:$dst, FR64:$src1, i32mem:$src), 0>;
+                (VCVTSI2SDrm FR64:$dst, FR64:$src1, i32mem:$src), 0, "att">;
 
   def : Pat<(f32 (sint_to_fp (loadi32 addr:$src))),
             (VCVTSI2SSrm (f32 (IMPLICIT_DEF)), addr:$src)>;
@@ -1032,26 +1032,26 @@ defm CVTSI642SD : sse12_cvt_s<0x2A, GR64, FR64, sint_to_fp, i64mem, loadi64,
                       WriteCvtI2F>, XD, REX_W;
 
 def : InstAlias<"cvttss2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTTSS2SIrr GR32:$dst, FR32:$src), 0>;
+                (CVTTSS2SIrr GR32:$dst, FR32:$src), 0, "att">;
 def : InstAlias<"cvttss2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTTSS2SIrm GR32:$dst, f32mem:$src), 0>;
+                (CVTTSS2SIrm GR32:$dst, f32mem:$src), 0, "att">;
 def : InstAlias<"cvttsd2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTTSD2SIrr GR32:$dst, FR64:$src), 0>;
+                (CVTTSD2SIrr GR32:$dst, FR64:$src), 0, "att">;
 def : InstAlias<"cvttsd2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTTSD2SIrm GR32:$dst, f64mem:$src), 0>;
+                (CVTTSD2SIrm GR32:$dst, f64mem:$src), 0, "att">;
 def : InstAlias<"cvttss2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTTSS2SI64rr GR64:$dst, FR32:$src), 0>;
+                (CVTTSS2SI64rr GR64:$dst, FR32:$src), 0, "att">;
 def : InstAlias<"cvttss2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTTSS2SI64rm GR64:$dst, f32mem:$src), 0>;
+                (CVTTSS2SI64rm GR64:$dst, f32mem:$src), 0, "att">;
 def : InstAlias<"cvttsd2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTTSD2SI64rr GR64:$dst, FR64:$src), 0>;
+                (CVTTSD2SI64rr GR64:$dst, FR64:$src), 0, "att">;
 def : InstAlias<"cvttsd2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTTSD2SI64rm GR64:$dst, f64mem:$src), 0>;
+                (CVTTSD2SI64rm GR64:$dst, f64mem:$src), 0, "att">;
 
 def : InstAlias<"cvtsi2ss\t{$src, $dst|$dst, $src}",
-                (CVTSI2SSrm FR64:$dst, i32mem:$src), 0>;
+                (CVTSI2SSrm FR64:$dst, i32mem:$src), 0, "att">;
 def : InstAlias<"cvtsi2sd\t{$src, $dst|$dst, $src}",
-                (CVTSI2SDrm FR64:$dst, i32mem:$src), 0>;
+                (CVTSI2SDrm FR64:$dst, i32mem:$src), 0, "att">;
 
 // Conversion Instructions Intrinsics - Match intrinsics which expect MM
 // and/or XMM operand(s).
@@ -1202,39 +1202,39 @@ defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, i128mem, v4f32, v4i32, memopv2i64,
 
 let Predicates = [UseAVX] in {
 def : InstAlias<"vcvtss2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTSS2SIrr_Int GR32:$dst, VR128:$src), 0>;
+                (VCVTSS2SIrr_Int GR32:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"vcvtss2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTSS2SIrm_Int GR32:$dst, ssmem:$src), 0>;
+                (VCVTSS2SIrm_Int GR32:$dst, ssmem:$src), 0, "att">;
 def : InstAlias<"vcvtsd2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTSD2SIrr_Int GR32:$dst, VR128:$src), 0>;
+                (VCVTSD2SIrr_Int GR32:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"vcvtsd2si{l}\t{$src, $dst|$dst, $src}",
-                (VCVTSD2SIrm_Int GR32:$dst, sdmem:$src), 0>;
+                (VCVTSD2SIrm_Int GR32:$dst, sdmem:$src), 0, "att">;
 def : InstAlias<"vcvtss2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTSS2SI64rr_Int GR64:$dst, VR128:$src), 0>;
+                (VCVTSS2SI64rr_Int GR64:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"vcvtss2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTSS2SI64rm_Int GR64:$dst, ssmem:$src), 0>;
+                (VCVTSS2SI64rm_Int GR64:$dst, ssmem:$src), 0, "att">;
 def : InstAlias<"vcvtsd2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTSD2SI64rr_Int GR64:$dst, VR128:$src), 0>;
+                (VCVTSD2SI64rr_Int GR64:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"vcvtsd2si{q}\t{$src, $dst|$dst, $src}",
-                (VCVTSD2SI64rm_Int GR64:$dst, sdmem:$src), 0>;
+                (VCVTSD2SI64rm_Int GR64:$dst, sdmem:$src), 0, "att">;
 }
 
 def : InstAlias<"cvtss2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTSS2SIrr_Int GR32:$dst, VR128:$src), 0>;
+                (CVTSS2SIrr_Int GR32:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"cvtss2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTSS2SIrm_Int GR32:$dst, ssmem:$src), 0>;
+                (CVTSS2SIrm_Int GR32:$dst, ssmem:$src), 0, "att">;
 def : InstAlias<"cvtsd2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTSD2SIrr_Int GR32:$dst, VR128:$src), 0>;
+                (CVTSD2SIrr_Int GR32:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"cvtsd2si{l}\t{$src, $dst|$dst, $src}",
-                (CVTSD2SIrm_Int GR32:$dst, sdmem:$src), 0>;
+                (CVTSD2SIrm_Int GR32:$dst, sdmem:$src), 0, "att">;
 def : InstAlias<"cvtss2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTSS2SI64rr_Int GR64:$dst, VR128:$src), 0>;
+                (CVTSS2SI64rr_Int GR64:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"cvtss2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTSS2SI64rm_Int GR64:$dst, ssmem:$src), 0>;
+                (CVTSS2SI64rm_Int GR64:$dst, ssmem:$src), 0, "att">;
 def : InstAlias<"cvtsd2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTSD2SI64rr_Int GR64:$dst, VR128:$src), 0>;
+                (CVTSD2SI64rr_Int GR64:$dst, VR128:$src), 0, "att">;
 def : InstAlias<"cvtsd2si{q}\t{$src, $dst|$dst, $src}",
-                (CVTSD2SI64rm_Int GR64:$dst, sdmem:$src), 0>;
+                (CVTSD2SI64rm_Int GR64:$dst, sdmem:$src), 0, "att">;
 
 /// SSE 2 Only
 
@@ -1506,7 +1506,7 @@ def VCVTPD2DQrm : SDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                         (v4i32 (X86cvtp2Int (loadv2f64 addr:$src))))]>, VEX,
                       Sched<[WriteCvtF2ILd]>, VEX_WIG;
 def : InstAlias<"vcvtpd2dqx\t{$src, $dst|$dst, $src}",
-                (VCVTPD2DQrm VR128:$dst, f128mem:$src), 0>;
+                (VCVTPD2DQrm VR128:$dst, f128mem:$src), 0, "intel">;
 
 // YMM only
 def VCVTPD2DQYrr : SDI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR256:$src),
@@ -1522,7 +1522,7 @@ def VCVTPD2DQYrm : SDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
 def : InstAlias<"vcvtpd2dqy\t{$src, $dst|$dst, $src}",
                 (VCVTPD2DQYrr VR128:$dst, VR256:$src), 0>;
 def : InstAlias<"vcvtpd2dqy\t{$src, $dst|$dst, $src}",
-                (VCVTPD2DQYrm VR128:$dst, f256mem:$src), 0>;
+                (VCVTPD2DQYrm VR128:$dst, f256mem:$src), 0, "intel">;
 }
 
 def CVTPD2DQrm  : SDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
@@ -1594,7 +1594,7 @@ def VCVTTPD2DQrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                           (v4i32 (X86cvttp2si (loadv2f64 addr:$src))))]>,
                         VEX, Sched<[WriteCvtF2ILd]>, VEX_WIG;
 def : InstAlias<"vcvttpd2dqx\t{$src, $dst|$dst, $src}",
-                (VCVTTPD2DQrm VR128:$dst, f128mem:$src), 0>;
+                (VCVTTPD2DQrm VR128:$dst, f128mem:$src), 0, "intel">;
 
 // YMM only
 let Predicates = [HasAVX, NoVLX] in {
@@ -1612,7 +1612,7 @@ def VCVTTPD2DQYrm : VPDI<0xE6, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
 def : InstAlias<"vcvttpd2dqy\t{$src, $dst|$dst, $src}",
                 (VCVTTPD2DQYrr VR128:$dst, VR256:$src), 0>;
 def : InstAlias<"vcvttpd2dqy\t{$src, $dst|$dst, $src}",
-                (VCVTTPD2DQYrm VR128:$dst, f256mem:$src), 0>;
+                (VCVTTPD2DQYrm VR128:$dst, f256mem:$src), 0, "intel">;
 
 let Predicates = [HasAVX, NoVLX] in {
   let AddedComplexity = 15 in {
@@ -1764,7 +1764,7 @@ def VCVTPD2PSrm : VPDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        [(set VR128:$dst, (X86vfpround (loadv2f64 addr:$src)))]>,
                        VEX, Sched<[WriteCvtF2FLd]>, VEX_WIG;
 def : InstAlias<"vcvtpd2psx\t{$src, $dst|$dst, $src}",
-                (VCVTPD2PSrm VR128:$dst, f128mem:$src), 0>;
+                (VCVTPD2PSrm VR128:$dst, f128mem:$src), 0, "intel">;
 
 // YMM only
 let Predicates = [HasAVX, NoVLX] in {
@@ -1780,7 +1780,7 @@ def VCVTPD2PSYrm : VPDI<0x5A, MRMSrcMem, (outs VR128:$dst), (ins f256mem:$src),
 def : InstAlias<"vcvtpd2psy\t{$src, $dst|$dst, $src}",
                 (VCVTPD2PSYrr VR128:$dst, VR256:$src), 0>;
 def : InstAlias<"vcvtpd2psy\t{$src, $dst|$dst, $src}",
-                (VCVTPD2PSYrm VR128:$dst, f256mem:$src), 0>;
+                (VCVTPD2PSYrm VR128:$dst, f256mem:$src), 0, "intel">;
 
 def CVTPD2PSrr : PDI<0x5A, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                      "cvtpd2ps\t{$src, $dst|$dst, $src}",
