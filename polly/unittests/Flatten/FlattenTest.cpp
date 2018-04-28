@@ -28,8 +28,8 @@ bool checkFlatten(const char *ScheduleStr, const char *ExpectedStr) {
   isl_bool Success;
 
   {
-    auto Schedule = give(isl_union_map_read_from_str(Ctx, ScheduleStr));
-    auto Expected = give(isl_union_map_read_from_str(Ctx, ExpectedStr));
+    auto Schedule = isl::union_map(Ctx, ScheduleStr);
+    auto Expected = isl::union_map(Ctx, ExpectedStr);
 
     auto Result = flattenSchedule(std::move(Schedule));
     Success = isl_union_map_is_equal(Result.keep(), Expected.keep());
