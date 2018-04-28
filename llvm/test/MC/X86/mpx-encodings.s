@@ -13,7 +13,7 @@ bndmk (%rax), %bnd0
 bndmk 1024(%rax), %bnd1
 
 // CHECK: bndmov  %bnd2, %bnd1
-// ENCODING:  encoding: [0x66,0x0f,0x1b,0xd1]
+// ENCODING:  encoding: [0x66,0x0f,0x1a,0xca]
 bndmov %bnd2, %bnd1
 
 // CHECK: bndmov %bnd1, 1024(%r9)
