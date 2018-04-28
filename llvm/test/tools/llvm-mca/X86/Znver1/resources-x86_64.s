@@ -181,6 +181,33 @@ sarq %cl, (%rax)
 shlq %cl, (%rax)
 shrq %cl, (%rax)
 
+shldw %cl, %si, %di
+shrdw %cl, %si, %di
+shldw %cl, %si, (%rax)
+shrdw %cl, %si, (%rax)
+shldw $7, %si, %di
+shrdw $7, %si, %di
+shldw $7, %si, (%rax)
+shrdw $7, %si, (%rax)
+
+shldl %cl, %esi, %edi
+shrdl %cl, %esi, %edi
+shldl %cl, %esi, (%rax)
+shrdl %cl, %esi, (%rax)
+shldl $7, %esi, %edi
+shrdl $7, %esi, %edi
+shldl $7, %esi, (%rax)
+shrdl $7, %esi, (%rax)
+
+shldq %cl, %rsi, %rdi
+shrdq %cl, %rsi, %rdi
+shldq %cl, %rsi, (%rax)
+shrdq %cl, %rsi, (%rax)
+shldq $7, %rsi, %rdi
+shrdq $7, %rsi, %rdi
+shldq $7, %rsi, (%rax)
+shrdq $7, %rsi, (%rax)
+
 # CHECK:      Instruction Info:
 # CHECK-NEXT: [1]: #uOps
 # CHECK-NEXT: [2]: Latency
@@ -358,6 +385,30 @@ shrq %cl, (%rax)
 # CHECK-NEXT:  3      5     1.00    *      *        	sarq	%cl, (%rax)
 # CHECK-NEXT:  3      5     1.00    *      *        	shlq	%cl, (%rax)
 # CHECK-NEXT:  3      5     1.00    *      *        	shrq	%cl, (%rax)
+# CHECK-NEXT:  1      100    -                      	shldw	%cl, %si, %di
+# CHECK-NEXT:  1      100    -                      	shrdw	%cl, %si, %di
+# CHECK-NEXT:  1      100    -      *      *        	shldw	%cl, %si, (%rax)
+# CHECK-NEXT:  1      100    -      *      *        	shrdw	%cl, %si, (%rax)
+# CHECK-NEXT:  1      1     0.25                    	shldw	$7, %si, %di
+# CHECK-NEXT:  1      1     0.25                    	shrdw	$7, %si, %di
+# CHECK-NEXT:  2      5     0.50    *      *        	shldw	$7, %si, (%rax)
+# CHECK-NEXT:  2      5     0.50    *      *        	shrdw	$7, %si, (%rax)
+# CHECK-NEXT:  1      100    -                      	shldl	%cl, %esi, %edi
+# CHECK-NEXT:  1      100    -                      	shrdl	%cl, %esi, %edi
+# CHECK-NEXT:  1      100    -      *      *        	shldl	%cl, %esi, (%rax)
+# CHECK-NEXT:  1      100    -      *      *        	shrdl	%cl, %esi, (%rax)
+# CHECK-NEXT:  1      1     0.25                    	shldl	$7, %esi, %edi
+# CHECK-NEXT:  1      1     0.25                    	shrdl	$7, %esi, %edi
+# CHECK-NEXT:  2      5     0.50    *      *        	shldl	$7, %esi, (%rax)
+# CHECK-NEXT:  2      5     0.50    *      *        	shrdl	$7, %esi, (%rax)
+# CHECK-NEXT:  1      100    -                      	shldq	%cl, %rsi, %rdi
+# CHECK-NEXT:  1      100    -                      	shrdq	%cl, %rsi, %rdi
+# CHECK-NEXT:  1      100    -      *      *        	shldq	%cl, %rsi, (%rax)
+# CHECK-NEXT:  1      100    -      *      *        	shrdq	%cl, %rsi, (%rax)
+# CHECK-NEXT:  1      1     0.25                    	shldq	$7, %rsi, %rdi
+# CHECK-NEXT:  1      1     0.25                    	shrdq	$7, %rsi, %rdi
+# CHECK-NEXT:  2      5     0.50    *      *        	shldq	$7, %rsi, (%rax)
+# CHECK-NEXT:  2      5     0.50    *      *        	shrdq	$7, %rsi, (%rax)
 
 # CHECK:      Resources:
 # CHECK-NEXT: [0] - ZnAGU0
@@ -375,7 +426,7 @@ shrq %cl, (%rax)
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]
-# CHECK-NEXT: 48.00  48.00  36.00  36.00  36.00  36.00   -      -      -      -      -      -
+# CHECK-NEXT: 51.00  51.00  39.00  39.00  39.00  39.00   -      -      -      -      -      -
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   	Instructions:
@@ -547,4 +598,28 @@ shrq %cl, (%rax)
 # CHECK-NEXT: 1.00   1.00   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	sarq	%cl, (%rax)
 # CHECK-NEXT: 1.00   1.00   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shlq	%cl, (%rax)
 # CHECK-NEXT: 1.00   1.00   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shrq	%cl, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shldw	%cl, %si, %di
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shrdw	%cl, %si, %di
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shldw	%cl, %si, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shrdw	%cl, %si, (%rax)
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shldw	$7, %si, %di
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shrdw	$7, %si, %di
+# CHECK-NEXT: 0.50   0.50   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shldw	$7, %si, (%rax)
+# CHECK-NEXT: 0.50   0.50   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shrdw	$7, %si, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shldl	%cl, %esi, %edi
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shrdl	%cl, %esi, %edi
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shldl	%cl, %esi, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shrdl	%cl, %esi, (%rax)
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shldl	$7, %esi, %edi
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shrdl	$7, %esi, %edi
+# CHECK-NEXT: 0.50   0.50   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shldl	$7, %esi, (%rax)
+# CHECK-NEXT: 0.50   0.50   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shrdl	$7, %esi, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shldq	%cl, %rsi, %rdi
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shrdq	%cl, %rsi, %rdi
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shldq	%cl, %rsi, (%rax)
+# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -      -      -     	shrdq	%cl, %rsi, (%rax)
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shldq	$7, %rsi, %rdi
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shrdq	$7, %rsi, %rdi
+# CHECK-NEXT: 0.50   0.50   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shldq	$7, %rsi, (%rax)
+# CHECK-NEXT: 0.50   0.50   0.25   0.25   0.25   0.25    -      -      -      -      -      -     	shrdq	$7, %rsi, (%rax)
 
