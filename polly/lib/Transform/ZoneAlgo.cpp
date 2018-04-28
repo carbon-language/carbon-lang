@@ -227,7 +227,7 @@ static isl::map computeScalarReachingDefinition(isl::union_map Schedule,
 }
 
 isl::union_map polly::makeUnknownForDomain(isl::union_set Domain) {
-  return give(isl_union_map_from_domain(Domain.take()));
+  return isl::union_map::from_domain(Domain);
 }
 
 /// Create a domain-to-unknown value mapping.
@@ -238,7 +238,7 @@ isl::union_map polly::makeUnknownForDomain(isl::union_set Domain) {
 ///
 /// @return { Domain[] -> ValInst[] }
 static isl::map makeUnknownForDomain(isl::set Domain) {
-  return give(isl_map_from_domain(Domain.take()));
+  return isl::map::from_domain(Domain);
 }
 
 /// Return whether @p Map maps to an unknown value.
@@ -267,9 +267,8 @@ ZoneAlgorithm::ZoneAlgorithm(const char *PassName, Scop *S, LoopInfo *LI)
       Schedule(S->getSchedule()) {
   auto Domains = S->getDomains();
 
-  Schedule =
-      give(isl_union_map_intersect_domain(Schedule.take(), Domains.take()));
-  ParamSpace = give(isl_union_map_get_space(Schedule.keep()));
+  Schedule = Schedule.intersect_domain(Domains);
+  ParamSpace = Schedule.get_space();
   ScatterSpace = getScatterSpace(Schedule);
 }
 
@@ -350,7 +349,7 @@ void ZoneAlgorithm::collectIncompatibleElts(ScopStmt *Stmt,
         IncompatibleElts = IncompatibleElts.add_set(ArrayElts);
       }
 
-      Loads = give(isl_union_map_union(Loads.take(), AccRel.take()));
+      Loads = Loads.unite(AccRel);
 
       continue;
     }
@@ -382,7 +381,7 @@ void ZoneAlgorithm::collectIncompatibleElts(ScopStmt *Stmt,
       IncompatibleElts = IncompatibleElts.add_set(ArrayElts);
     }
 
-    Stores = give(isl_union_map_union(Stores.take(), AccRel.take()));
+    Stores = Stores.unite(AccRel);
   }
 }
 
@@ -393,7 +392,7 @@ void ZoneAlgorithm::addArrayReadAccess(MemoryAccess *MA) {
 
   // { DomainRead[] -> Element[] }
   auto AccRel = intersectRange(getAccessRelationFor(MA), CompatibleElts);
-  AllReads = give(isl_union_map_add_map(AllReads.take(), AccRel.copy()));
+  AllReads = AllReads.add_map(AccRel);
 
   if (LoadInst *Load = dyn_cast_or_null<LoadInst>(MA->getAccessInstruction())) {
     // { DomainRead[] -> ValInst[] }
@@ -401,15 +400,12 @@ void ZoneAlgorithm::addArrayReadAccess(MemoryAccess *MA) {
         Load, Stmt, LI->getLoopFor(Load->getParent()), Stmt->isBlockStmt());
 
     // { DomainRead[] -> [Element[] -> DomainRead[]] }
-    isl::map IncludeElement =
-        give(isl_map_curry(isl_map_domain_map(AccRel.take())));
+    isl::map IncludeElement = AccRel.domain_map().curry();
 
     // { [Element[] -> DomainRead[]] -> ValInst[] }
-    isl::map EltLoadValInst =
-        give(isl_map_apply_domain(LoadValInst.take(), IncludeElement.take()));
+    isl::map EltLoadValInst = LoadValInst.apply_domain(IncludeElement);
 
-    AllReadValInst = give(
-        isl_union_map_add_map(AllReadValInst.take(), EltLoadValInst.take()));
+    AllReadValInst = AllReadValInst.add_map(EltLoadValInst);
   }
 }
 
@@ -555,11 +551,11 @@ isl::union_map ZoneAlgorithm::computePerPHI(const ScopArrayInfo *SAI) {
 }
 
 isl::union_set ZoneAlgorithm::makeEmptyUnionSet() const {
-  return give(isl_union_set_empty(ParamSpace.copy()));
+  return isl::union_set::empty(ParamSpace);
 }
 
 isl::union_map ZoneAlgorithm::makeEmptyUnionMap() const {
-  return give(isl_union_map_empty(ParamSpace.copy()));
+  return isl::union_map::empty(ParamSpace);
 }
 
 void ZoneAlgorithm::collectCompatibleElts() {
@@ -580,9 +576,9 @@ void ZoneAlgorithm::collectCompatibleElts() {
 }
 
 isl::map ZoneAlgorithm::getScatterFor(ScopStmt *Stmt) const {
-  isl::space ResultSpace = give(isl_space_map_from_domain_and_range(
-      Stmt->getDomainSpace().release(), ScatterSpace.copy()));
-  return give(isl_union_map_extract_map(Schedule.keep(), ResultSpace.take()));
+  isl::space ResultSpace =
+      Stmt->getDomainSpace().map_from_domain_and_range(ScatterSpace);
+  return Schedule.extract_map(ResultSpace);
 }
 
 isl::map ZoneAlgorithm::getScatterFor(MemoryAccess *MA) const {
@@ -590,17 +586,15 @@ isl::map ZoneAlgorithm::getScatterFor(MemoryAccess *MA) const {
 }
 
 isl::union_map ZoneAlgorithm::getScatterFor(isl::union_set Domain) const {
-  return give(isl_union_map_intersect_domain(Schedule.copy(), Domain.take()));
+  return Schedule.intersect_domain(Domain);
 }
 
 isl::map ZoneAlgorithm::getScatterFor(isl::set Domain) const {
-  auto ResultSpace = give(isl_space_map_from_domain_and_range(
-      isl_set_get_space(Domain.keep()), ScatterSpace.copy()));
-  auto UDomain = give(isl_union_set_from_set(Domain.copy()));
+  auto ResultSpace = Domain.get_space().map_from_domain_and_range(ScatterSpace);
+  auto UDomain = isl::union_set(Domain);
   auto UResult = getScatterFor(std::move(UDomain));
   auto Result = singleton(std::move(UResult), std::move(ResultSpace));
-  assert(!Result || isl_set_is_equal(give(isl_map_domain(Result.copy())).keep(),
-                                     Domain.keep()) == isl_bool_true);
+  assert(!Result || Result.domain().is_equal(Domain) == isl_bool_true);
   return Result;
 }
 
@@ -615,7 +609,7 @@ isl::set ZoneAlgorithm::getDomainFor(MemoryAccess *MA) const {
 isl::map ZoneAlgorithm::getAccessRelationFor(MemoryAccess *MA) const {
   auto Domain = getDomainFor(MA);
   auto AccRel = MA->getLatestAccessRelation();
-  return give(isl_map_intersect_domain(AccRel.take(), Domain.take()));
+  return AccRel.intersect_domain(Domain);
 }
 
 isl::map ZoneAlgorithm::getScalarReachingDefinition(ScopStmt *Stmt) {
@@ -651,20 +645,19 @@ isl::id ZoneAlgorithm::makeValueId(Value *V) {
   if (Id.is_null()) {
     auto Name = getIslCompatibleName("Val_", V, ValueIds.size() - 1,
                                      std::string(), UseInstructionNames);
-    Id = give(isl_id_alloc(IslCtx.get(), Name.c_str(), V));
+    Id = isl::id::alloc(IslCtx.get(), Name.c_str(), V);
   }
   return Id;
 }
 
 isl::space ZoneAlgorithm::makeValueSpace(Value *V) {
-  auto Result = give(isl_space_set_from_params(ParamSpace.copy()));
-  return give(isl_space_set_tuple_id(Result.take(), isl_dim_set,
-                                     makeValueId(V).take()));
+  auto Result = ParamSpace.set_from_params();
+  return Result.set_tuple_id(isl::dim::set, makeValueId(V));
 }
 
 isl::set ZoneAlgorithm::makeValueSet(Value *V) {
   auto Space = makeValueSpace(V);
-  return give(isl_set_universe(Space.take()));
+  return isl::set::universe(Space);
 }
 
 isl::map ZoneAlgorithm::makeValInst(Value *Val, ScopStmt *UserStmt, Loop *Scope,
@@ -684,26 +677,25 @@ isl::map ZoneAlgorithm::makeValInst(Value *Val, ScopStmt *UserStmt, Loop *Scope,
   case VirtualUse::ReadOnly: {
     // The definition does not depend on the statement which uses it.
     auto ValSet = makeValueSet(Val);
-    return give(isl_map_from_domain_and_range(DomainUse.take(), ValSet.take()));
+    return isl::map::from_domain_and_range(DomainUse, ValSet);
   }
 
   case VirtualUse::Synthesizable: {
     auto *ScevExpr = VUse.getScevExpr();
-    auto UseDomainSpace = give(isl_set_get_space(DomainUse.keep()));
+    auto UseDomainSpace = DomainUse.get_space();
 
     // Construct the SCEV space.
     // TODO: Add only the induction variables referenced in SCEVAddRecExpr
     // expressions, not just all of them.
-    auto ScevId = give(isl_id_alloc(UseDomainSpace.get_ctx().get(), nullptr,
-                                    const_cast<SCEV *>(ScevExpr)));
-    auto ScevSpace =
-        give(isl_space_drop_dims(UseDomainSpace.copy(), isl_dim_set, 0, 0));
-    ScevSpace = give(
-        isl_space_set_tuple_id(ScevSpace.take(), isl_dim_set, ScevId.copy()));
+    auto ScevId = isl::manage(isl_id_alloc(
+        UseDomainSpace.get_ctx().get(), nullptr, const_cast<SCEV *>(ScevExpr)));
+
+    auto ScevSpace = UseDomainSpace.drop_dims(isl::dim::set, 0, 0);
+    ScevSpace = ScevSpace.set_tuple_id(isl::dim::set, ScevId);
 
     // { DomainUse[] -> ScevExpr[] }
-    auto ValInst = give(isl_map_identity(isl_space_map_from_domain_and_range(
-        UseDomainSpace.copy(), ScevSpace.copy())));
+    auto ValInst =
+        isl::map::identity(UseDomainSpace.map_from_domain_and_range(ScevSpace));
     return ValInst;
   }
 
