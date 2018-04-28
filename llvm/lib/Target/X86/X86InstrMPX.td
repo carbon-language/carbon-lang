@@ -21,7 +21,7 @@ let mayLoad = 1 in {
   def 32rm: I<opc, MRMSrcMem, (outs BNDR:$dst), (ins i32mem:$src),
               OpcodeStr#"\t{$src, $dst|$dst, $src}", []>,
               Requires<[HasMPX, Not64BitMode]>;
-  def 64rm: RI<opc, MRMSrcMem, (outs BNDR:$dst), (ins i64mem:$src),
+  def 64rm: I<opc, MRMSrcMem, (outs BNDR:$dst), (ins i64mem:$src),
               OpcodeStr#"\t{$src, $dst|$dst, $src}", []>,
               Requires<[HasMPX, In64BitMode]>;
 }
@@ -34,14 +34,14 @@ let mayLoad = 1 in {
   def 32rm: I<opc, MRMSrcMem, (outs), (ins  BNDR:$src1, i32mem:$src2),
               OpcodeStr#"\t{$src2, $src1|$src1, $src2}", []>,
               Requires<[HasMPX, Not64BitMode]>;
-  def 64rm: RI<opc, MRMSrcMem, (outs), (ins  BNDR:$src1, i64mem:$src2),
+  def 64rm: I<opc, MRMSrcMem, (outs), (ins  BNDR:$src1, i64mem:$src2),
               OpcodeStr#"\t{$src2, $src1|$src1, $src2}", []>,
               Requires<[HasMPX, In64BitMode]>;
 }
   def 32rr: I<opc, MRMSrcReg, (outs), (ins  BNDR:$src1, GR32:$src2),
               OpcodeStr#"\t{$src2, $src1|$src1, $src2}", []>,
               Requires<[HasMPX, Not64BitMode]>;
-  def 64rr: RI<opc, MRMSrcReg, (outs), (ins  BNDR:$src1, GR64:$src2),
+  def 64rr: I<opc, MRMSrcReg, (outs), (ins  BNDR:$src1, GR64:$src2),
               OpcodeStr#"\t{$src2, $src1|$src1, $src2}", []>,
               Requires<[HasMPX, In64BitMode]>;
 }
@@ -56,7 +56,7 @@ let mayLoad = 1 in {
 def BNDMOV32rm : I<0x1A, MRMSrcMem, (outs BNDR:$dst), (ins i64mem:$src),
                   "bndmov\t{$src, $dst|$dst, $src}", []>, PD,
                   Requires<[HasMPX, Not64BitMode]>;
-def BNDMOV64rm : RI<0x1A, MRMSrcMem, (outs BNDR:$dst), (ins i128mem:$src),
+def BNDMOV64rm : I<0x1A, MRMSrcMem, (outs BNDR:$dst), (ins i128mem:$src),
                   "bndmov\t{$src, $dst|$dst, $src}", []>, PD,
                   Requires<[HasMPX, In64BitMode]>;
 }
@@ -68,7 +68,7 @@ let mayStore = 1 in {
 def BNDMOV32mr : I<0x1B, MRMDestMem, (outs), (ins i64mem:$dst, BNDR:$src),
                   "bndmov\t{$src, $dst|$dst, $src}", []>, PD,
                   Requires<[HasMPX, Not64BitMode]>;
-def BNDMOV64mr : RI<0x1B, MRMDestMem, (outs), (ins i128mem:$dst, BNDR:$src),
+def BNDMOV64mr : I<0x1B, MRMDestMem, (outs), (ins i128mem:$dst, BNDR:$src),
                   "bndmov\t{$src, $dst|$dst, $src}", []>, PD,
                   Requires<[HasMPX, In64BitMode]>;
 
