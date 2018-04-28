@@ -786,11 +786,10 @@ def HWWriteResGroup10 : SchedWriteRes<[HWPort0156]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[HWWriteResGroup10], (instrs CBW, CWDE, CDQE)>;
+def: InstRW<[HWWriteResGroup10], (instrs LAHF, SAHF)>; // TODO: This doesn't match Agner's data
 def: InstRW<[HWWriteResGroup10], (instregex "CLC",
                                             "CMC",
-                                            "LAHF", // TODO: This doesn't match Agner's data
                                             "NOOP",
-                                            "SAHF", // TODO: This doesn't match Agner's data
                                             "SGDT64m",
                                             "SIDT64m",
                                             "SLDT64m",
@@ -842,11 +841,7 @@ def HWWriteResGroup12 : SchedWriteRes<[HWPort1,HWPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[HWWriteResGroup12], (instregex "FCOM32m",
-                                            "FCOM64m",
-                                            "FCOMP32m",
-                                            "FCOMP64m",
-                                            "MMX_CVTPI2PSirm",
+def: InstRW<[HWWriteResGroup12], (instregex "MMX_CVTPI2PSirm",
                                             "PDEP(32|64)rm",
                                             "PEXT(32|64)rm",
                                             "(V?)CMPSDrm",
@@ -875,8 +870,7 @@ def HWWriteResGroup13 : SchedWriteRes<[HWPort5,HWPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[HWWriteResGroup13], (instregex "PUNPCKLWDrm",
-                                            "(V?)INSERTPSrm",
+def: InstRW<[HWWriteResGroup13], (instregex "(V?)INSERTPSrm",
                                             "(V?)PACKSSDWrm",
                                             "(V?)PACKSSWBrm",
                                             "(V?)PACKUSDWrm",
