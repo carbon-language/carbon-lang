@@ -18,10 +18,10 @@ let SchedRW = [WriteSystem] in {
 
 multiclass mpx_bound_make<bits<8> opc, string OpcodeStr> {
 let mayLoad = 1 in {
-  def 32rm: I<opc, MRMSrcMem, (outs BNDR:$dst), (ins i32mem:$src),
+  def 32rm: I<opc, MRMSrcMem, (outs BNDR:$dst), (ins anymem:$src),
               OpcodeStr#"\t{$src, $dst|$dst, $src}", []>,
               Requires<[HasMPX, Not64BitMode]>;
-  def 64rm: I<opc, MRMSrcMem, (outs BNDR:$dst), (ins i64mem:$src),
+  def 64rm: I<opc, MRMSrcMem, (outs BNDR:$dst), (ins anymem:$src),
               OpcodeStr#"\t{$src, $dst|$dst, $src}", []>,
               Requires<[HasMPX, In64BitMode]>;
 }
@@ -31,10 +31,10 @@ defm BNDMK : mpx_bound_make<0x1B, "bndmk">, XS;
 
 multiclass mpx_bound_check<bits<8> opc, string OpcodeStr> {
 let mayLoad = 1 in {
-  def 32rm: I<opc, MRMSrcMem, (outs), (ins  BNDR:$src1, i32mem:$src2),
+  def 32rm: I<opc, MRMSrcMem, (outs), (ins  BNDR:$src1, anymem:$src2),
               OpcodeStr#"\t{$src2, $src1|$src1, $src2}", []>,
               Requires<[HasMPX, Not64BitMode]>;
-  def 64rm: I<opc, MRMSrcMem, (outs), (ins  BNDR:$src1, i64mem:$src2),
+  def 64rm: I<opc, MRMSrcMem, (outs), (ins  BNDR:$src1, anymem:$src2),
               OpcodeStr#"\t{$src2, $src1|$src1, $src2}", []>,
               Requires<[HasMPX, In64BitMode]>;
 }
@@ -72,7 +72,7 @@ def BNDMOV64mr : I<0x1B, MRMDestMem, (outs), (ins i128mem:$dst, BNDR:$src),
                   "bndmov\t{$src, $dst|$dst, $src}", []>, PD,
                   Requires<[HasMPX, In64BitMode]>;
 
-def BNDSTXmr:      I<0x1B, MRMDestMem, (outs), (ins i64mem:$dst, BNDR:$src),
+def BNDSTXmr:      I<0x1B, MRMDestMem, (outs), (ins anymem:$dst, BNDR:$src),
                     "bndstx\t{$src, $dst|$dst, $src}", []>, PS,
                     Requires<[HasMPX]>;
 }
