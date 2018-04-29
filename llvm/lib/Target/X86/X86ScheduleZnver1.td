@@ -361,14 +361,14 @@ def ZnWritePushA : SchedWriteRes<[ZnAGU]> {
 def : InstRW<[ZnWritePushA], (instregex "PUSHA(16|32)")>;
 
 //LAHF
-def : InstRW<[WriteMicrocoded], (instregex "LAHF")>;
+def : InstRW<[WriteMicrocoded], (instrs LAHF)>;
 
 // SAHF.
 def ZnWriteSAHF : SchedWriteRes<[ZnALU]> {
   let Latency = 2;
   let NumMicroOps = 2;
 }
-def : InstRW<[ZnWriteSAHF], (instregex "SAHF")>;
+def : InstRW<[ZnWriteSAHF], (instrs SAHF)>;
 
 // BSWAP.
 def ZnWriteBSwap : SchedWriteRes<[ZnALU]> {
@@ -513,7 +513,7 @@ def ZnWriteJCXZ : SchedWriteRes<[ZnALU03]>;
 def : InstRW<[ZnWriteJCXZ], (instrs JCXZ, JECXZ, JRCXZ)>;
 
 // INTO
-def : InstRW<[WriteMicrocoded], (instregex "INTO")>;
+def : InstRW<[WriteMicrocoded], (instrs INTO)>;
 
 // LOOP.
 def ZnWriteLOOP : SchedWriteRes<[ZnALU03]>;
@@ -634,7 +634,7 @@ def ZnWriteLEAVE : SchedWriteRes<[ZnALU, ZnAGU]> {
 def : InstRW<[ZnWriteLEAVE], (instregex "LEAVE")>;
 
 // PAUSE.
-def : InstRW<[WriteMicrocoded], (instregex "PAUSE")>;
+def : InstRW<[WriteMicrocoded], (instrs PAUSE)>;
 
 // RDTSC.
 def : InstRW<[WriteMicrocoded], (instregex "RDTSC")>;
@@ -1308,7 +1308,7 @@ def : InstRW<[ZnWriteCVTPS2PIr], (instregex "MMX_CVT(T?)PS2PIirr")>;
 
 // CVTPI2PD.
 // x,mm.
-def : InstRW<[ZnWriteCVTPS2PDr], (instregex "MMX_CVT(T?)PI2PDirr")>;
+def : InstRW<[ZnWriteCVTPS2PDr], (instregex "MMX_CVTPI2PDirr")>;
 
 // CVT(T)PD2PI.
 // mm,x.
