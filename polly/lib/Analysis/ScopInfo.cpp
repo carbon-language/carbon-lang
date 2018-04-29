@@ -1419,7 +1419,7 @@ getPwAff(Scop &S, BasicBlock *BB,
          bool NonNegative = false) {
   PWACtx PWAC = S.getPwAff(E, BB, NonNegative);
   InvalidDomainMap[BB] = InvalidDomainMap[BB].unite(PWAC.second);
-  return PWAC.first.take();
+  return PWAC.first.release();
 }
 
 /// Build the conditions sets for the switch @p SI in the @p Domain.
