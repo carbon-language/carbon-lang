@@ -45,9 +45,8 @@ int llvm_test_dibuilder(void) {
   LLVMMetadataRef ImportedModule =
     LLVMDIBuilderCreateImportedModuleFromModule(DIB, Module, OtherModule,
                                                 File, 42);
-  LLVMMetadataRef AliasImportedModule =
-    LLVMDIBuilderCreateImportedModuleFromAlias(DIB, Module, ImportedModule,
-                                               File, 42);
+  LLVMDIBuilderCreateImportedModuleFromAlias(DIB, Module, ImportedModule,
+                                             File, 42);
 
   LLVMMetadataRef Int64Ty =
     LLVMDIBuilderCreateBasicType(DIB, "Int64", 5, 64, 0);
