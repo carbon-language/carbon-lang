@@ -554,10 +554,7 @@ def ZnWriteALULat2Ld : SchedWriteRes<[ZnAGU, ZnALU]> {
 }
 
 // BT.
-// r,r/i.
-def : InstRW<[WriteShift], (instregex "BT(16|32|64)r(r|i8)")>;
-
-def : InstRW<[WriteShiftLd], (instregex "BT(16|32|64)mr")>;
+// m,i.
 def : InstRW<[WriteShiftLd], (instregex "BT(16|32|64)mi8")>;
 
 // BTR BTS BTC.
@@ -567,7 +564,6 @@ def ZnWriteBTRSC : SchedWriteRes<[ZnALU]> {
   let NumMicroOps = 2;
 }
 def : InstRW<[ZnWriteBTRSC], (instregex "BT(R|S|C)(16|32|64)r(r|i8)")>;
-
 
 // m,r,i.
 def ZnWriteBTRSCm : SchedWriteRes<[ZnAGU, ZnALU]> {
