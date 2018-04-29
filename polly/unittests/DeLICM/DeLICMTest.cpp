@@ -52,7 +52,7 @@ void completeLifetime(isl::union_set Universe, isl::union_map OccupiedAndKnown,
       Occupied = OccupiedAndKnown.domain();
 
     OccupiedAndKnown.foreach_map([&Known](isl::map Map) -> isl::stat {
-      if (isl_map_has_tuple_name(Map.keep(), isl_dim_out) != isl_bool_true)
+      if (!Map.has_tuple_name(isl::dim::out))
         return isl::stat::ok;
       Known = Known.add_map(Map);
       return isl::stat::ok;

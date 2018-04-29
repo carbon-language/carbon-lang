@@ -53,7 +53,7 @@ static isl_stat addNumBasicSets(__isl_take isl_set *Domain,
 /// Determine if @p PWAC is too complex to continue.
 static bool isTooComplex(PWACtx PWAC) {
   unsigned NumBasicSets = 0;
-  isl_pw_aff_foreach_piece(PWAC.first.keep(), addNumBasicSets, &NumBasicSets);
+  isl_pw_aff_foreach_piece(PWAC.first.get(), addNumBasicSets, &NumBasicSets);
   if (NumBasicSets <= MaxDisjunctionsInPwAff)
     return false;
   return true;

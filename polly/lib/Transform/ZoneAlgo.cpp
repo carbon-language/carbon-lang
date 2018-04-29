@@ -337,7 +337,7 @@ void ZoneAlgorithm::collectIncompatibleElts(ScopStmt *Stmt,
 
     if (MA->isRead()) {
       // Reject load after store to same location.
-      if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep())) {
+      if (!Stores.is_disjoint(AccRel)) {
         DEBUG(dbgs() << "Load after store of same element in same statement\n");
         OptimizationRemarkMissed R(PassName, "LoadAfterStore",
                                    MA->getAccessInstruction());
@@ -356,8 +356,7 @@ void ZoneAlgorithm::collectIncompatibleElts(ScopStmt *Stmt,
 
     // In region statements the order is less clear, eg. the load and store
     // might be in a boxed loop.
-    if (Stmt->isRegionStmt() &&
-        !isl_union_map_is_disjoint(Loads.keep(), AccRel.keep())) {
+    if (Stmt->isRegionStmt() && !Loads.is_disjoint(AccRel)) {
       DEBUG(dbgs() << "WRITE in non-affine subregion not supported\n");
       OptimizationRemarkMissed R(PassName, "StoreInSubregion",
                                  MA->getAccessInstruction());
@@ -368,8 +367,7 @@ void ZoneAlgorithm::collectIncompatibleElts(ScopStmt *Stmt,
     }
 
     // Do not allow more than one store to the same location.
-    if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep()) &&
-        !onlySameValueWrites(Stmt)) {
+    if (!Stores.is_disjoint(AccRel) && !onlySameValueWrites(Stmt)) {
       DEBUG(dbgs() << "WRITE after WRITE to same element\n");
       OptimizationRemarkMissed R(PassName, "StoreAfterStore",
                                  MA->getAccessInstruction());
@@ -570,9 +568,9 @@ void ZoneAlgorithm::collectCompatibleElts() {
   for (auto &Stmt : *S)
     collectIncompatibleElts(&Stmt, IncompatibleElts, AllElts);
 
-  NumIncompatibleArrays += isl_union_set_n_set(IncompatibleElts.keep());
+  NumIncompatibleArrays += isl_union_set_n_set(IncompatibleElts.get());
   CompatibleElts = AllElts.subtract(IncompatibleElts);
-  NumCompatibleArrays += isl_union_set_n_set(CompatibleElts.keep());
+  NumCompatibleArrays += isl_union_set_n_set(CompatibleElts.get());
 }
 
 isl::map ZoneAlgorithm::getScatterFor(ScopStmt *Stmt) const {
@@ -626,7 +624,7 @@ isl::map ZoneAlgorithm::getScalarReachingDefinition(ScopStmt *Stmt) {
 
 isl::map ZoneAlgorithm::getScalarReachingDefinition(isl::set DomainDef) {
   auto DomId = DomainDef.get_tuple_id();
-  auto *Stmt = static_cast<ScopStmt *>(isl_id_get_user(DomId.keep()));
+  auto *Stmt = static_cast<ScopStmt *>(isl_id_get_user(DomId.get()));
 
   auto StmtResult = getScalarReachingDefinition(Stmt);
 

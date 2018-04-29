@@ -768,7 +768,7 @@ private:
       auto NewAccRel = UseTarget.intersect_domain(Domain);
       simplify(NewAccRel);
 
-      assert(isl_union_map_n_map(NewAccRel.keep()) == 1);
+      assert(isl_union_map_n_map(NewAccRel.get()) == 1);
       MA->setNewAccessRelation(isl::map::from_union_map(NewAccRel));
     }
 

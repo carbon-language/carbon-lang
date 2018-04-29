@@ -160,7 +160,7 @@ isl::union_map MaximalStaticExpander::filterDependences(
     auto NewMap = Map.factor_domain();
     auto NewMapDomainId = NewMap.domain().get_tuple_id();
 
-    if (AccessDomainId.keep() != NewMapDomainId.keep())
+    if (AccessDomainId.get() != NewMapDomainId.get())
       return isl::stat::ok;
 
     // Add the corresponding map to MapDependences.
