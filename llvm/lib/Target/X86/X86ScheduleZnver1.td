@@ -395,15 +395,6 @@ def : InstRW<[WriteALULd], (instregex "(ADD|SUB)(8|16|32|64)m(r|i)",
                           "(ADD|SUB)64mi32")>;
 
 // ADC SBB.
-// r,r/i.
-def : InstRW<[WriteALU], (instregex "(ADC|SBB)(8|16|32|64)r(r|i)",
-                          "(ADC|SBB)(16|32|64)ri8",
-                          "(ADC|SBB)64ri32")>;
-
-// r,m.
-def : InstRW<[WriteALULd, ReadAfterLd],
-            (instregex "(ADC|SBB)(8|16|32|64)rm")>;
-
 // m,r/i.
 def : InstRW<[WriteALULd],
              (instregex "(ADC|SBB)(8|16|32|64)m(r|i)",
