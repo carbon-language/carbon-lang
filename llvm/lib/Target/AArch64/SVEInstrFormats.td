@@ -818,6 +818,41 @@ multiclass sve_mem_32b_gld_vs_32_unscaled<bits<4> opc, string asm,
 }
 
 
+class sve_mem_32b_gld_vi<bits<4> opc, string asm, Operand imm_ty>
+: I<(outs Z_s:$Zt), (ins PPR3bAny:$Pg, ZPR32:$Zn, imm_ty:$imm5),
+  asm, "\t$Zt, $Pg/z, [$Zn, $imm5]",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zn;
+  bits<5> Zt;
+  bits<5> imm5;
+  let Inst{31-25} = 0b1000010;
+  let Inst{24-23} = opc{3-2};
+  let Inst{22-21} = 0b01;
+  let Inst{20-16} = imm5;
+  let Inst{15}    = 0b1;
+  let Inst{14-13} = opc{1-0};
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zt;
+
+  let mayLoad = 1;
+  let Defs = !if(!eq(opc{0}, 1), [FFR], []);
+  let Uses = !if(!eq(opc{0}, 1), [FFR], []);
+}
+
+multiclass sve_mem_32b_gld_vi_32_ptrs<bits<4> opc, string asm, Operand imm_ty> {
+  def _IMM_REAL : sve_mem_32b_gld_vi<opc, asm, imm_ty>;
+
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
+                  (!cast<Instruction>(NAME # _IMM_REAL) ZPR32:$Zt, PPR3bAny:$Pg, ZPR32:$Zn, 0), 0>;
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn, $imm5]",
+                  (!cast<Instruction>(NAME # _IMM_REAL) ZPR32:$Zt, PPR3bAny:$Pg, ZPR32:$Zn, imm_ty:$imm5), 0>;
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
+                  (!cast<Instruction>(NAME # _IMM_REAL) Z_s:$Zt, PPR3bAny:$Pg, ZPR32:$Zn, 0), 1>;
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Memory - 64-bit Gather Group
 //===----------------------------------------------------------------------===//
@@ -888,4 +923,39 @@ multiclass sve_mem_64b_gld_vs2_64_unscaled<bits<4> opc, string asm> {
 
   def : InstAlias<asm # "\t$Zt, $Pg/z, [$Rn, $Zm]",
                   (!cast<Instruction>(NAME # _REAL) ZPR64:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, ZPR64ExtLSL8:$Zm), 0>;
+}
+
+class sve_mem_64b_gld_vi<bits<4> opc, string asm, Operand imm_ty>
+: I<(outs Z_d:$Zt), (ins PPR3bAny:$Pg, ZPR64:$Zn, imm_ty:$imm5),
+  asm, "\t$Zt, $Pg/z, [$Zn, $imm5]",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zn;
+  bits<5> Zt;
+  bits<5> imm5;
+  let Inst{31-25} = 0b1100010;
+  let Inst{24-23} = opc{3-2};
+  let Inst{22-21} = 0b01;
+  let Inst{20-16} = imm5;
+  let Inst{15}    = 0b1;
+  let Inst{14-13} = opc{1-0};
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zt;
+
+  let mayLoad = 1;
+  let Defs = !if(!eq(opc{0}, 1), [FFR], []);
+  let Uses = !if(!eq(opc{0}, 1), [FFR], []);
+}
+
+multiclass sve_mem_64b_gld_vi_64_ptrs<bits<4> opc, string asm, Operand imm_ty> {
+  def _IMM_REAL : sve_mem_64b_gld_vi<opc, asm, imm_ty>;
+
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
+                  (!cast<Instruction>(NAME # _IMM_REAL) ZPR64:$Zt, PPR3bAny:$Pg, ZPR64:$Zn, 0), 0>;
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn, $imm5]",
+                 (!cast<Instruction>(NAME # _IMM_REAL) ZPR64:$Zt, PPR3bAny:$Pg, ZPR64:$Zn, imm_ty:$imm5), 0>;
+  def : InstAlias<asm # "\t$Zt, $Pg/z, [$Zn]",
+                  (!cast<Instruction>(NAME # _IMM_REAL) Z_d:$Zt, PPR3bAny:$Pg, ZPR64:$Zn, 0), 1>;
 }
