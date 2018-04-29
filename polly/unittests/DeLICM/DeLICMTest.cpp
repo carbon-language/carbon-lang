@@ -193,12 +193,9 @@ bool checkIsConflictingNonsymmetric(KnowledgeStr Existing,
   auto ProposedWritten = parseSetOrNull(Ctx.get(), Proposed.WrittenStr);
 
   return checkIsConflictingNonsymmetricCommon(
-      Ctx.get(),
-      isl::union_map::from_domain(ExistingOccupied),
-      ExistingUnused,
+      Ctx.get(), isl::union_map::from_domain(ExistingOccupied), ExistingUnused,
       isl::union_map::from_domain(ExistingWritten),
-      isl::union_map::(ProposedOccupied),
-      ProposedUnused,
+      isl::union_map::from_domain(ProposedOccupied), ProposedUnused,
       isl::union_map::from_domain(ProposedWritten));
 }
 
