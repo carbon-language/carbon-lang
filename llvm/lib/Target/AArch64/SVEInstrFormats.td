@@ -27,48 +27,6 @@ def sve_pred_enum : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = SVEPatternOperand;
 }
 
-
-class SImmMulVlOperand<int Bits, int Scale> : AsmOperandClass {
-  let Name = "SImm" # Bits # "Scale" # Scale # "MulVl";
-  let DiagnosticType = "InvalidMemoryIndexed" # Scale # "SImm" # Bits;
-  let PredicateMethod = "isSImmScaled<" # Bits # ", " # Scale # ">";
-  let RenderMethod = "addImmScaledOperands<" # Scale # ">";
-}
-
-def SImm4MulVlOperand : SImmMulVlOperand<4,1>;
-def SImm4Scale2MulVlOperand : SImmMulVlOperand<4,2>;
-def SImm4Scale3MulVlOperand : SImmMulVlOperand<4,3>;
-def SImm4Scale4MulVlOperand : SImmMulVlOperand<4,4>;
-
-def simm4MulVl : Operand<i64>, ImmLeaf<i64, [{ return Imm >= -8 && Imm < 8; }]> {
-  let DecoderMethod = "DecodeSImm<4>";
-  let ParserMatchClass = SImm4MulVlOperand;
-}
-
-def simm4Scale2MulVl : Operand<i64>, ImmLeaf<i64, [{
-    return (Imm >= -16 && Imm <= 14) && ((Imm % 2) == 0x0);
-  }]> {
-  let DecoderMethod = "DecodeSImm<4>";
-  let PrintMethod = "printImmScale<2>";
-  let ParserMatchClass = SImm4Scale2MulVlOperand;
-}
-
-def simm4Scale3MulVl : Operand<i64>, ImmLeaf<i64, [{
-    return (Imm >= -24 && Imm <= 21) && ((Imm % 3) == 0x0);
-  }]> {
-  let DecoderMethod = "DecodeSImm<4>";
-  let PrintMethod = "printImmScale<3>";
-  let ParserMatchClass = SImm4Scale3MulVlOperand;
-}
-
-def simm4Scale4MulVl : Operand<i64>, ImmLeaf<i64, [{
-    return (Imm >= -32 && Imm <= 28) && ((Imm % 4) == 0x0);
-  }]> {
-  let DecoderMethod = "DecodeSImm<4>";
-  let PrintMethod = "printImmScale<4>";
-  let ParserMatchClass = SImm4Scale4MulVlOperand;
-}
-
 class SVELogicalImmOperand<int Width> : AsmOperandClass {
   let Name = "SVELogicalImm" # Width;
   let DiagnosticType = "LogicalSecondSource";
@@ -537,7 +495,7 @@ multiclass sve_int_bin_cons_shift_b_right<bits<2> opc, string asm> {
 
 class sve_mem_cst_si<bits<2> msz, bits<2> esz, string asm,
                      RegisterOperand VecList>
-: I<(outs), (ins VecList:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, simm4MulVl:$imm4),
+: I<(outs), (ins VecList:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, simm4s1:$imm4),
   asm, "\t$Zt, $Pg, [$Rn, $imm4, mul vl]",
   "",
   []>, Sched<[]> {
@@ -564,7 +522,7 @@ multiclass sve_mem_cst_si<bits<2> msz, bits<2> esz, string asm,
   def NAME : sve_mem_cst_si<msz, esz, asm, listty>;
 
   def : InstAlias<asm # "\t$Zt, $Pg, [$Rn, $imm4, mul vl]",
-                 (!cast<Instruction>(NAME) zprty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, simm4MulVl:$imm4), 0>;
+                 (!cast<Instruction>(NAME) zprty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, simm4s1:$imm4), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg, [$Rn]",
                   (!cast<Instruction>(NAME) zprty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, 0), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg, [$Rn]",
@@ -640,7 +598,7 @@ multiclass sve_int_perm_bin_perm_pp<bits<3> opc, string asm> {
 
 class sve_mem_cld_si_base<bits<4> dtype, bit nf, string asm,
                           RegisterOperand VecList>
-: I<(outs VecList:$Zt), (ins PPR3bAny:$Pg, GPR64sp:$Rn, simm4MulVl:$imm4),
+: I<(outs VecList:$Zt), (ins PPR3bAny:$Pg, GPR64sp:$Rn, simm4s1:$imm4),
   asm, "\t$Zt, $Pg/z, [$Rn, $imm4, mul vl]",
   "",
   []>, Sched<[]> {
@@ -669,7 +627,7 @@ multiclass sve_mem_cld_si_base<bits<4> dtype, bit nf, string asm,
   def : InstAlias<asm # "\t$Zt, $Pg/z, [$Rn]",
                   (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, 0), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg/z, [$Rn, $imm4, mul vl]",
-                  (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, simm4MulVl:$imm4), 0>;
+                  (!cast<Instruction>(NAME # _REAL) zprty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, simm4s1:$imm4), 0>;
   def : InstAlias<asm # "\t$Zt, $Pg/z, [$Rn]",
                   (!cast<Instruction>(NAME # _REAL) listty:$Zt, PPR3bAny:$Pg, GPR64sp:$Rn, 0), 1>;
 }
