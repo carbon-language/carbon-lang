@@ -958,6 +958,70 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
   Labels[0] = Ctx->createTempSymbol("BB0", false);
   addEntryPointAtOffset(0);
 
+  auto getOrCreateSymbolForAddress = [&](const MCInst &Instruction,
+                                         uint64_t TargetAddress,
+                                         uint64_t &SymbolAddend) {
+    if (BC.isAArch64()) {
+      // Check if this is an access to a constant island and create bookkeeping
+      // to keep track of it and emit it later as part of this function
+      if (MCSymbol *IslandSym = getOrCreateIslandAccess(TargetAddress).first) {
+        return IslandSym;
+      } else {
+        // Detect custom code written in assembly that refers to arbitrary
+        // constant islands from other functions. Write this reference so we
+        // can pull this constant island and emit it as part of this function
+        // too.
+        auto IslandIter =
+            BC.AddressToConstantIslandMap.lower_bound(TargetAddress);
+        if (IslandIter != BC.AddressToConstantIslandMap.end()) {
+          MCSymbol *IslandSym, *ColdIslandSym;
+          std::tie(IslandSym, ColdIslandSym) =
+              IslandIter->second->getOrCreateProxyIslandAccess(TargetAddress,
+                                                               this);
+          if (IslandSym) {
+            addConstantIslandDependency(IslandIter->second, IslandSym,
+                                        ColdIslandSym);
+            return IslandSym;
+          }
+        }
+      }
+    }
+
+    // Note that the address does not necessarily have to reside inside
+    // a section, it could be an absolute address too.
+    auto Section = BC.getSectionForAddress(TargetAddress);
+    if (Section && Section->isText()) {
+      if (containsAddress(TargetAddress, /*UseMaxSize=*/
+                          BC.isAArch64())) {
+        if (TargetAddress != getAddress()) {
+          // The address could potentially escape. Mark it as another entry
+          // point into the function.
+          DEBUG(dbgs() << "BOLT-DEBUG: potentially escaped address 0x"
+                       << Twine::utohexstr(TargetAddress) << " in function "
+                       << *this << '\n');
+          return addEntryPointAtOffset(TargetAddress - getAddress());
+        }
+      } else {
+        BC.InterproceduralReferences.insert(TargetAddress);
+      }
+    }
+
+    auto *BD = BC.getBinaryDataContainingAddress(TargetAddress);
+    if (BD) {
+      auto *TargetSymbol = BD->getSymbol();
+      SymbolAddend = TargetAddress - BD->getAddress();
+      return TargetSymbol;
+    }
+    // TODO: use DWARF info to get size/alignment here?
+    auto *TargetSymbol =
+        BC.getOrCreateGlobalSymbol(TargetAddress, 0, 0, "DATAat");
+    DEBUG(if (opts::Verbosity >= 2) {
+      dbgs() << "Created DATAat sym: " << TargetSymbol->getName()
+             << " in section " << BD->getSectionName() << "\n";
+    });
+    return TargetSymbol;
+  };
+
   auto handlePCRelOperand =
       [&](MCInst &Instruction, uint64_t Address, uint64_t Size) {
     uint64_t TargetAddress{0};
@@ -979,69 +1043,9 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
     }
 
-    if (BC.isAArch64()) {
-      // Check if this is an access to a constant island and create bookkeeping
-      // to keep track of it and emit it later as part of this function
-      if (MCSymbol *IslandSym = getOrCreateIslandAccess(TargetAddress).first) {
-        TargetSymbol = IslandSym;
-      } else {
-        // Detect custom code written in assembly that refers to arbitrary
-        // constant islands from other functions. Write this reference so we
-        // can pull this constant island and emit it as part of this function
-        // too.
-        auto IslandIter =
-            BC.AddressToConstantIslandMap.lower_bound(TargetAddress);
-        if (IslandIter != BC.AddressToConstantIslandMap.end()) {
-          MCSymbol *IslandSym, *ColdIslandSym;
-          std::tie(IslandSym, ColdIslandSym) =
-              IslandIter->second->getOrCreateProxyIslandAccess(TargetAddress,
-                                                               this);
-          if (IslandSym) {
-            TargetSymbol = IslandSym;
-            addConstantIslandDependency(IslandIter->second, IslandSym,
-                                        ColdIslandSym);
-          }
-        }
-      }
-    }
+    TargetSymbol =
+        getOrCreateSymbolForAddress(Instruction, TargetAddress, TargetOffset);
 
-    // Note that the address does not necessarily have to reside inside
-    // a section, it could be an absolute address too.
-    auto Section = BC.getSectionForAddress(TargetAddress);
-    // Assume AArch64's ADRP never references code - it does, but this is fixed
-    // after reading relocations. ADRP contents now are not really meaningful
-    // without its supporting relocation.
-    if (!TargetSymbol && Section && Section->isText() &&
-        (!BC.isAArch64() || !BC.MIB->isADRP(Instruction))) {
-      if (containsAddress(TargetAddress, /*UseMaxSize=*/
-                          BC.isAArch64())) {
-        if (TargetAddress != getAddress()) {
-          // The address could potentially escape. Mark it as another entry
-          // point into the function.
-          DEBUG(dbgs() << "BOLT-DEBUG: potentially escaped address 0x"
-                       << Twine::utohexstr(TargetAddress) << " in function "
-                       << *this << '\n');
-          TargetSymbol = getOrCreateLocalLabel(TargetAddress);
-          addEntryPointAtOffset(TargetAddress - getAddress());
-        }
-      } else {
-        BC.InterproceduralReferences.insert(TargetAddress);
-      }
-    }
-    if (!TargetSymbol) {
-      auto *BD = BC.getBinaryDataContainingAddress(TargetAddress);
-      if (BD) {
-        TargetSymbol = BD->getSymbol();
-        TargetOffset = TargetAddress - BD->getAddress();
-      } else {
-        // TODO: use DWARF info to get size/alignment here?
-        TargetSymbol = BC.getOrCreateGlobalSymbol(TargetAddress, 0, 0, "DATAat");
-        DEBUG(if (opts::Verbosity >= 2) {
-            dbgs() << "Created DATAat sym: " << TargetSymbol->getName()
-                   << " in section " << BD->getSectionName() << "\n";
-          });
-      }
-    }
     const MCExpr *Expr = MCSymbolRefExpr::create(TargetSymbol,
                                                  MCSymbolRefExpr::VK_None,
                                                  *BC.Ctx);
@@ -1055,6 +1059,20 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                          Expr,
                          *BC.Ctx, 0)));
     return true;
+  };
+
+  // Used to fix the target of linker-generated AArch64 stubs with no relocation
+  // info
+  auto fixStubTarget = [&](MCInst &LoadLowBits, MCInst &LoadHiBits,
+                           uint64_t Target) {
+    uint64_t Addend{0};
+    int64_t Val;
+    MCSymbol *TargetSymbol;
+    TargetSymbol = getOrCreateSymbolForAddress(LoadLowBits, Target, Addend);
+    MIB->replaceImmWithSymbol(LoadHiBits, TargetSymbol, Addend, Ctx.get(),
+                              Val, ELF::R_AARCH64_ADR_PREL_PG_HI21);
+    MIB->replaceImmWithSymbol(LoadLowBits, TargetSymbol, Addend, Ctx.get(), Val,
+                              ELF::R_AARCH64_ADD_ABS_LO12_NC);
   };
 
   uint64_t Size = 0;  // instruction size
@@ -1327,6 +1345,16 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               exit(1);
             IsSimple = false;
           }
+        }
+        // AArch64 indirect call - check for linker veneers, which lack
+        // relocations and need manual adjustments
+        MCInst *TargetHiBits, *TargetLowBits;
+        uint64_t TargetAddress;
+        if (BC.isAArch64() &&
+            MIB->matchLinkerVeneer(Instructions.begin(), Instructions.end(),
+                                   AbsoluteInstrAddr, Instruction, TargetHiBits,
+                                   TargetLowBits, TargetAddress)) {
+          fixStubTarget(*TargetLowBits, *TargetHiBits, TargetAddress);
         }
       }
     } else {
@@ -3546,7 +3574,7 @@ std::set<BinaryData *> BinaryFunction::dataUses(bool OnlyHot) const {
   }
   return Uses;
 }
-  
+
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
       const DWARFDebugLoc::LocationList &InputLL,
       BaseAddress BaseAddr) const {

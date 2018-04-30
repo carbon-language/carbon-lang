@@ -1740,6 +1740,8 @@ public:
     if (!ColdIslandSymbols.count(Symbol)) {
       ColdSymbol = BC.Ctx->getOrCreateSymbol(Symbol->getName() + ".cold");
       ColdIslandSymbols[Symbol] = ColdSymbol;
+    } else {
+      ColdSymbol = ColdIslandSymbols[Symbol];
     }
     return std::make_pair(Symbol, ColdSymbol);
   }

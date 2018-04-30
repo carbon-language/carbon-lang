@@ -1145,21 +1145,41 @@ public:
 
   virtual void createLongJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
                              MCContext *Ctx) const {
-    assert(0 && "not implemented");
+    llvm_unreachable("not implemented");
   }
 
   virtual void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
                               MCContext *Ctx) const {
-    assert(0 && "not implemented");
+    llvm_unreachable("not implemented");
+  }
+
+  /// Return true if the instruction CurInst, in combination with the recent
+  /// history of disassembled instructions supplied by [Begin, End), is a linker
+  /// generated veneer/stub that needs patching. This happens in AArch64 when
+  /// the code is large and the linker needs to generate stubs, but it does
+  /// not put any extra relocation information that could help us to easily
+  /// extract the real target. This function identifies and extract the real
+  /// target in Tgt. The instruction that loads the lower bits of the target
+  /// is put in TgtLowBits, and its pair in TgtHiBits. If the instruction in
+  /// TgtHiBits does not have an immediate operand, but an expression, then
+  /// this expression is put in TgtHiSym and Tgt only contains the lower bits.
+  virtual bool matchLinkerVeneer(InstructionIterator Begin,
+                                 InstructionIterator End,
+                                 uint64_t Address,
+                                 const MCInst &CurInst,
+                                 MCInst *&TargetHiBits,
+                                 MCInst *&TargetLowBits,
+                                 uint64_t &Target) const {
+    llvm_unreachable("not implemented");
   }
 
   virtual int getShortJmpEncodingSize() const {
-    assert(0 && "not implemented");
+    llvm_unreachable("not implemented");
     return 0;
   }
 
   virtual int getUncondBranchEncodingSize() const {
-    assert(0 && "not implemented");
+    llvm_unreachable("not implemented");
     return 0;
   }
 

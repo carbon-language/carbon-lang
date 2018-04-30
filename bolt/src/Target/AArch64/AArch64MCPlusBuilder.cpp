@@ -212,7 +212,13 @@ public:
   }
 
   bool hasPCRelOperand(const MCInst &Inst) const override {
-    if (isADR(Inst) || isADRP(Inst))
+    // ADRP is blacklisted and is an exception. Even though it has a
+    // PC-relative operand, this operand is not a complete symbol reference
+    // and BOLT shouldn't try to process it in isolation.
+    if (isADRP(Inst))
+      return false;
+
+    if (isADR(Inst))
       return true;
 
     // Look for literal addressing mode (see C1-143 ARM DDI 0487B.a)
@@ -492,8 +498,12 @@ public:
 
     // Match an ADR to load base address to be used when addressing JT targets
     auto &UsesAdd = UDChain[DefAdd];
-    assert(UsesAdd.size() > 1 && UsesAdd[1] != nullptr &&
-           UsesAdd[2] != nullptr && "Expected definition");
+    if (UsesAdd.size() <= 1 || UsesAdd[1] == nullptr || UsesAdd[2] == nullptr) {
+      // This happens when we don't have enough context about this jump table
+      // because the jumping code sequence was split in multiple basic blocks.
+      // This was observed in the wild in HHVM code (dispatchImpl).
+      return false;
+    }
     auto *DefBaseAddr = UsesAdd[1];
     assert(DefBaseAddr->getOpcode() == AArch64::ADR &&
            "Failed to match indirect branch pattern! (fragment 3)");
@@ -533,9 +543,8 @@ public:
     }
     assert(DefJTBasePage->getOpcode() == AArch64::ADRP &&
            "Failed to match jump table base page pattern! (2)");
-    assert(DefJTBasePage->getOperand(1).isExpr() &&
-           "Failed to match jump table base page pattern! (3)");
-    JumpTable = DefJTBasePage->getOperand(1).getExpr();
+    if (DefJTBasePage->getOperand(1).isExpr())
+      JumpTable = DefJTBasePage->getOperand(1).getExpr();
     return true;
   }
 
@@ -912,6 +921,71 @@ public:
     Seq.emplace_back(Inst);
   }
 
+  /// Matching pattern here is
+  ///
+  ///    ADRP  x16, imm
+  ///    ADD   x16, x16, imm
+  ///    BR    x16
+  ///
+  bool matchLinkerVeneer(InstructionIterator Begin, InstructionIterator End,
+                         uint64_t Address, const MCInst &CurInst,
+                         MCInst *&TargetHiBits, MCInst *&TargetLowBits,
+                         uint64_t &Target) const override {
+    if (CurInst.getOpcode() != AArch64::BR || !CurInst.getOperand(0).isReg() ||
+        CurInst.getOperand(0).getReg() != AArch64::X16)
+      return false;
+
+    auto I = End;
+    if (I == Begin)
+      return false;
+
+    --I;
+    Address -= 4;
+    if (I == Begin ||
+        I->getOpcode() != AArch64::ADDXri ||
+        MCPlus::getNumPrimeOperands(*I) < 3 ||
+        !I->getOperand(0).isReg() ||
+        !I->getOperand(1).isReg() ||
+        I->getOperand(0).getReg() != AArch64::X16 ||
+        I->getOperand(1).getReg() != AArch64::X16 ||
+        !I->getOperand(2).isImm())
+      return false;
+    TargetLowBits = &*I;
+    uint64_t Addr = I->getOperand(2).getImm() & 0xFFF;
+
+    --I;
+    Address -= 4;
+    if (I->getOpcode() != AArch64::ADRP ||
+        MCPlus::getNumPrimeOperands(*I) < 2 ||
+        !I->getOperand(0).isReg() ||
+        !I->getOperand(1).isImm() ||
+        I->getOperand(0).getReg() != AArch64::X16)
+      return false;
+    TargetHiBits = &*I;
+    Addr |= (Address + ((int64_t)I->getOperand(1).getImm() << 12)) &
+            0xFFFFFFFFFFFFF000ULL;
+    Target = Addr;
+    return true;
+  }
+
+  bool setOperandToSymbolRef(MCInst &Inst, int OpNum, MCSymbol *Symbol,
+                             int64_t Addend, MCContext *Ctx,
+                             uint64_t RelType) const {
+    MCOperand Operand;
+    if (!Addend) {
+      Operand = MCOperand::createExpr(getTargetExprFor(
+          Inst, MCSymbolRefExpr::create(Symbol, *Ctx), *Ctx, RelType));
+    } else {
+      Operand = MCOperand::createExpr(getTargetExprFor(
+          Inst,
+          MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, *Ctx),
+                                  MCConstantExpr::create(Addend, *Ctx), *Ctx),
+          *Ctx, RelType));
+    }
+    Inst.getOperand(OpNum) = Operand;
+    return true;
+  }
+
   bool replaceImmWithSymbol(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,
                             MCContext *Ctx, int64_t &Value,
                             uint64_t RelType) const override {
@@ -928,18 +1002,8 @@ public:
 
     Value = Inst.getOperand(ImmOpNo).getImm();
 
-    MCOperand Operand;
-    if (!Addend) {
-      Operand = MCOperand::createExpr(getTargetExprFor(
-          Inst, MCSymbolRefExpr::create(Symbol, *Ctx), *Ctx, RelType));
-    } else {
-      Operand = MCOperand::createExpr(getTargetExprFor(
-          Inst,
-          MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, *Ctx),
-                                  MCConstantExpr::create(Addend, *Ctx), *Ctx),
-          *Ctx, RelType));
-    }
-    Inst.getOperand(ImmOpNo) = Operand;
+    setOperandToSymbolRef(Inst, ImmOpNo, Symbol, Addend, Ctx, RelType);
+
     return true;
   }
 
