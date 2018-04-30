@@ -3132,7 +3132,9 @@ class CondBinaryRRF<string mnemonic, bits<16> opcode, RegisterOperand cls1,
                    RegisterOperand cls2>
   : InstRRFc<opcode, (outs cls1:$R1),
              (ins cls1:$R1src, cls2:$R2, cond4:$valid, cond4:$M3),
-             mnemonic#"$M3\t$R1, $R2", []> {
+             mnemonic#"$M3\t$R1, $R2",
+             [(set cls1:$R1, (z_select_ccmask cls2:$R2, cls1:$R1src,
+                                              cond4:$valid, cond4:$M3))]> {
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
   let CCMaskLast = 1;
@@ -4611,7 +4613,9 @@ class CompareRXYPseudo<SDPatternOperator operator, RegisterOperand cls,
 // register.
 class CondBinaryRRFPseudo<RegisterOperand cls1, RegisterOperand cls2>
   : Pseudo<(outs cls1:$R1),
-           (ins cls1:$R1src, cls2:$R2, cond4:$valid, cond4:$M3), []> {
+           (ins cls1:$R1src, cls2:$R2, cond4:$valid, cond4:$M3),
+           [(set cls1:$R1, (z_select_ccmask cls2:$R2, cls1:$R1src,
+                                            cond4:$valid, cond4:$M3))]> {
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
   let CCMaskLast = 1;
