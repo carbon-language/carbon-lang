@@ -891,7 +891,8 @@ public:
     ConstString name =
         m_delegate
             ? m_delegate->GetName()
-            : persistent_state->GetNextPersistentVariableName(*target_sp);
+            : persistent_state->GetNextPersistentVariableName(
+                  *target_sp, persistent_state->GetPersistentVariablePrefix());
 
     lldb::ExpressionVariableSP ret = persistent_state->CreatePersistentVariable(
         exe_scope, name, m_type, map.GetByteOrder(), map.GetAddressByteSize());
