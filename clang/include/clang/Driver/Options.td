@@ -1176,7 +1176,7 @@ def fthinlto_index_EQ : Joined<["-"], "fthinlto-index=">,
 def fmacro_backtrace_limit_EQ : Joined<["-"], "fmacro-backtrace-limit=">,
                                 Group<f_Group>, Flags<[DriverOption, CoreOption]>;
 def fmerge_all_constants : Flag<["-"], "fmerge-all-constants">, Group<f_Group>,
-  Flags<[CC1Option]>, HelpText<"Allow merging of constants">;
+  Flags<[CC1Option, CoreOption]>, HelpText<"Allow merging of constants">;
 def fmessage_length_EQ : Joined<["-"], "fmessage-length=">, Group<f_Group>;
 def fms_extensions : Flag<["-"], "fms-extensions">, Group<f_Group>, Flags<[CC1Option, CoreOption]>,
   HelpText<"Accept some non-standard constructs supported by the Microsoft compiler">;
