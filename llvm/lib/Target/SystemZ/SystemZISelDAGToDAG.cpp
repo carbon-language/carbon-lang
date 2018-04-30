@@ -310,6 +310,11 @@ class SystemZDAGToDAGISel : public SelectionDAGISel {
   // Try to use scatter instruction Opcode to implement store Store.
   bool tryScatter(StoreSDNode *Store, unsigned Opcode);
 
+  // Change a chain of {load; op; store} of the same value into a simple op
+  // through memory of that value, if the uses of the modified value and its
+  // address are suitable.
+  bool tryFoldLoadStoreIntoMemOperand(SDNode *Node);
+
   // Return true if Load and Store are loads and stores of the same size
   // and are guaranteed not to overlap.  Such operations can be implemented
   // using block (SS-format) instructions.
@@ -1196,6 +1201,171 @@ bool SystemZDAGToDAGISel::tryScatter(StoreSDNode *Store, unsigned Opcode) {
   return true;
 }
 
+// Check whether or not the chain ending in StoreNode is suitable for doing
+// the {load; op; store} to modify transformation.
+static bool isFusableLoadOpStorePattern(StoreSDNode *StoreNode,
+                                        SDValue StoredVal, SelectionDAG *CurDAG,
+                                        LoadSDNode *&LoadNode,
+                                        SDValue &InputChain) {
+  // Is the stored value result 0 of the operation?
+  if (StoredVal.getResNo() != 0)
+    return false;
+
+  // Are there other uses of the loaded value than the operation?
+  if (!StoredVal.getNode()->hasNUsesOfValue(1, 0))
+    return false;
+
+  // Is the store non-extending and non-indexed?
+  if (!ISD::isNormalStore(StoreNode) || StoreNode->isNonTemporal())
+    return false;
+
+  SDValue Load = StoredVal->getOperand(0);
+  // Is the stored value a non-extending and non-indexed load?
+  if (!ISD::isNormalLoad(Load.getNode()))
+    return false;
+
+  // Return LoadNode by reference.
+  LoadNode = cast<LoadSDNode>(Load);
+
+  // Is store the only read of the loaded value?
+  if (!Load.hasOneUse())
+    return false;
+
+  // Is the address of the store the same as the load?
+  if (LoadNode->getBasePtr() != StoreNode->getBasePtr() ||
+      LoadNode->getOffset() != StoreNode->getOffset())
+    return false;
+
+  // Check if the chain is produced by the load or is a TokenFactor with
+  // the load output chain as an operand. Return InputChain by reference.
+  SDValue Chain = StoreNode->getChain();
+
+  bool ChainCheck = false;
+  if (Chain == Load.getValue(1)) {
+    ChainCheck = true;
+    InputChain = LoadNode->getChain();
+  } else if (Chain.getOpcode() == ISD::TokenFactor) {
+    SmallVector<SDValue, 4> ChainOps;
+    for (unsigned i = 0, e = Chain.getNumOperands(); i != e; ++i) {
+      SDValue Op = Chain.getOperand(i);
+      if (Op == Load.getValue(1)) {
+        ChainCheck = true;
+        // Drop Load, but keep its chain. No cycle check necessary.
+        ChainOps.push_back(Load.getOperand(0));
+        continue;
+      }
+
+      // Make sure using Op as part of the chain would not cause a cycle here.
+      // In theory, we could check whether the chain node is a predecessor of
+      // the load. But that can be very expensive. Instead visit the uses and
+      // make sure they all have smaller node id than the load.
+      int LoadId = LoadNode->getNodeId();
+      for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
+             UE = UI->use_end(); UI != UE; ++UI) {
+        if (UI.getUse().getResNo() != 0)
+          continue;
+        if (UI->getNodeId() > LoadId)
+          return false;
+      }
+
+      ChainOps.push_back(Op);
+    }
+
+    if (ChainCheck)
+      // Make a new TokenFactor with all the other input chains except
+      // for the load.
+      InputChain = CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain),
+                                   MVT::Other, ChainOps);
+  }
+  if (!ChainCheck)
+    return false;
+
+  return true;
+}
+
+// Change a chain of {load; op; store} of the same value into a simple op
+// through memory of that value, if the uses of the modified value and its
+// address are suitable.
+//
+// The tablegen pattern memory operand pattern is currently not able to match
+// the case where the CC on the original operation are used.
+//
+// See the equivalent routine in X86ISelDAGToDAG for further comments.
+bool SystemZDAGToDAGISel::tryFoldLoadStoreIntoMemOperand(SDNode *Node) {
+  StoreSDNode *StoreNode = cast<StoreSDNode>(Node);
+  SDValue StoredVal = StoreNode->getOperand(1);
+  unsigned Opc = StoredVal->getOpcode();
+  SDLoc DL(StoreNode);
+
+  // Before we try to select anything, make sure this is memory operand size
+  // and opcode we can handle. Note that this must match the code below that
+  // actually lowers the opcodes.
+  EVT MemVT = StoreNode->getMemoryVT();
+  unsigned NewOpc = 0;
+  bool NegateOperand = false;
+  switch (Opc) {
+  default:
+    return false;
+  case SystemZISD::SSUBO:
+    NegateOperand = true;
+    /* fall through */
+  case SystemZISD::SADDO:
+    if (MemVT == MVT::i32)
+      NewOpc = SystemZ::ASI;
+    else if (MemVT == MVT::i64)
+      NewOpc = SystemZ::AGSI;
+    else
+      return false;
+    break;
+  case SystemZISD::USUBO:
+    NegateOperand = true;
+    /* fall through */
+  case SystemZISD::UADDO:
+    if (MemVT == MVT::i32)
+      NewOpc = SystemZ::ALSI;
+    else if (MemVT == MVT::i64)
+      NewOpc = SystemZ::ALGSI;
+    else
+      return false;
+    break;
+  }
+
+  LoadSDNode *LoadNode = nullptr;
+  SDValue InputChain;
+  if (!isFusableLoadOpStorePattern(StoreNode, StoredVal, CurDAG, LoadNode,
+                                   InputChain))
+    return false;
+
+  SDValue Operand = StoredVal.getOperand(1);
+  auto *OperandC = dyn_cast<ConstantSDNode>(Operand);
+  if (!OperandC)
+    return false;
+  auto OperandV = OperandC->getAPIntValue();
+  if (NegateOperand)
+    OperandV = -OperandV;
+  if (OperandV.getMinSignedBits() > 8)
+    return false;
+  Operand = CurDAG->getTargetConstant(OperandV, DL, MemVT);
+
+  SDValue Base, Disp;
+  if (!selectBDAddr20Only(StoreNode->getBasePtr(), Base, Disp))
+    return false;
+
+  SDValue Ops[] = { Base, Disp, Operand, InputChain };
+  MachineSDNode *Result =
+    CurDAG->getMachineNode(NewOpc, DL, MVT::i32, MVT::Other, Ops);
+
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(2);
+  MemOp[0] = StoreNode->getMemOperand();
+  MemOp[1] = LoadNode->getMemOperand();
+  Result->setMemRefs(MemOp, MemOp + 2);
+
+  ReplaceUses(SDValue(StoreNode, 0), SDValue(Result, 1));
+  ReplaceUses(SDValue(StoredVal.getNode(), 1), SDValue(Result, 0));
+  CurDAG->RemoveDeadNode(Node);
+  return true;
+}
+
 bool SystemZDAGToDAGISel::canUseBlockOperation(StoreSDNode *Store,
                                                LoadSDNode *Load) const {
   // Check that the two memory operands have the same size.
@@ -1358,6 +1528,8 @@ void SystemZDAGToDAGISel::Select(SDNode *Node) {
   }
 
   case ISD::STORE: {
+    if (tryFoldLoadStoreIntoMemOperand(Node))
+      return;
     auto *Store = cast<StoreSDNode>(Node);
     unsigned ElemBitSize = Store->getValue().getValueSizeInBits();
     if (ElemBitSize == 32) {

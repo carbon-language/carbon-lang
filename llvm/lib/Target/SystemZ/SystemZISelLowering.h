@@ -93,6 +93,19 @@ enum NodeType : unsigned {
   SDIVREM,
   UDIVREM,
 
+  // Add/subtract with overflow/carry.  These have the same operands as
+  // the corresponding standard operations, except with the carry flag
+  // replaced by a condition code value.
+  SADDO, SSUBO, UADDO, USUBO, ADDCARRY, SUBCARRY,
+
+  // Set the condition code from a boolean value in operand 0.
+  // Operand 1 is a mask of all condition-code values that may result of this
+  // operation, operand 2 is a mask of condition-code values that may result
+  // if the boolean is true.
+  // Note that this operation is always optimized away, we will never
+  // generate any code for it.
+  GET_CCMASK,
+
   // Use a series of MVCs to copy bytes from one memory location to another.
   // The operands are:
   // - the target address
@@ -548,6 +561,8 @@ private:
   SDValue lowerUMUL_LOHI(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerXALUO(SDValue Op, SelectionDAG &DAG) const;
+  SDValue lowerADDSUBCARRY(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerBITCAST(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerOR(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerCTPOP(SDValue Op, SelectionDAG &DAG) const;
@@ -590,6 +605,7 @@ private:
   SDValue combineSHIFTROT(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineBR_CCMASK(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue combineSELECT_CCMASK(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue combineGET_CCMASK(SDNode *N, DAGCombinerInfo &DCI) const;
 
   // If the last instruction before MBBI in MBB was some form of COMPARE,
   // try to replace it with a COMPARE AND BRANCH just before MBBI.

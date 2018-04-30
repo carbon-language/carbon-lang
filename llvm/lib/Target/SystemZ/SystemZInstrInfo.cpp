@@ -1191,6 +1191,36 @@ MachineInstr *SystemZInstrInfo::foldMemoryOperandImpl(
     return BuiltMI;
   }
 
+  if ((Opcode == SystemZ::ALFI && OpNum == 0 &&
+       isInt<8>((int32_t)MI.getOperand(2).getImm())) ||
+      (Opcode == SystemZ::ALGFI && OpNum == 0 &&
+       isInt<8>((int64_t)MI.getOperand(2).getImm()))) {
+    // AL(G)FI %reg, CONST -> AL(G)SI %mem, CONST
+    Opcode = (Opcode == SystemZ::ALFI ? SystemZ::ALSI : SystemZ::ALGSI);
+    MachineInstr *BuiltMI =
+        BuildMI(*InsertPt->getParent(), InsertPt, MI.getDebugLoc(), get(Opcode))
+            .addFrameIndex(FrameIndex)
+            .addImm(0)
+            .addImm((int8_t)MI.getOperand(2).getImm());
+    transferDeadCC(&MI, BuiltMI);
+    return BuiltMI;
+  }
+
+  if ((Opcode == SystemZ::SLFI && OpNum == 0 &&
+       isInt<8>((int32_t)-MI.getOperand(2).getImm())) ||
+      (Opcode == SystemZ::SLGFI && OpNum == 0 &&
+       isInt<8>((int64_t)-MI.getOperand(2).getImm()))) {
+    // SL(G)FI %reg, CONST -> AL(G)SI %mem, -CONST
+    Opcode = (Opcode == SystemZ::SLFI ? SystemZ::ALSI : SystemZ::ALGSI);
+    MachineInstr *BuiltMI =
+        BuildMI(*InsertPt->getParent(), InsertPt, MI.getDebugLoc(), get(Opcode))
+            .addFrameIndex(FrameIndex)
+            .addImm(0)
+            .addImm((int8_t)-MI.getOperand(2).getImm());
+    transferDeadCC(&MI, BuiltMI);
+    return BuiltMI;
+  }
+
   if (Opcode == SystemZ::LGDR || Opcode == SystemZ::LDGR) {
     bool Op0IsGPR = (Opcode == SystemZ::LGDR);
     bool Op1IsGPR = (Opcode == SystemZ::LDGR);

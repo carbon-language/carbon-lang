@@ -164,6 +164,18 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::SDIVREM, VT, Custom);
       setOperationAction(ISD::UDIVREM, VT, Custom);
 
+      // Support addition/subtraction with overflow.
+      setOperationAction(ISD::SADDO, VT, Custom);
+      setOperationAction(ISD::SSUBO, VT, Custom);
+
+      // Support addition/subtraction with carry.
+      setOperationAction(ISD::UADDO, VT, Custom);
+      setOperationAction(ISD::USUBO, VT, Custom);
+
+      // Support carry in as value rather than glue.
+      setOperationAction(ISD::ADDCARRY, VT, Custom);
+      setOperationAction(ISD::SUBCARRY, VT, Custom);
+
       // Lower ATOMIC_LOAD and ATOMIC_STORE into normal volatile loads and
       // stores, putting a serialization instruction after the stores.
       setOperationAction(ISD::ATOMIC_LOAD,  VT, Custom);
@@ -3204,6 +3216,99 @@ SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
                                    MVT::i64, HighOp, Low32);
 }
 
+// Lower SADDO/SSUBO/UADDO/USUBO nodes.
+SDValue SystemZTargetLowering::lowerXALUO(SDValue Op,
+                                          SelectionDAG &DAG) const {
+  SDNode *N = Op.getNode();
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  SDLoc DL(N);
+  unsigned BaseOp = 0;
+  unsigned CCValid = 0;
+  unsigned CCMask = 0;
+
+  switch (Op.getOpcode()) {
+  default: llvm_unreachable("Unknown instruction!");
+  case ISD::SADDO:
+    BaseOp = SystemZISD::SADDO;
+    CCValid = SystemZ::CCMASK_ARITH;
+    CCMask = SystemZ::CCMASK_ARITH_OVERFLOW;
+    break;
+  case ISD::SSUBO:
+    BaseOp = SystemZISD::SSUBO;
+    CCValid = SystemZ::CCMASK_ARITH;
+    CCMask = SystemZ::CCMASK_ARITH_OVERFLOW;
+    break;
+  case ISD::UADDO:
+    BaseOp = SystemZISD::UADDO;
+    CCValid = SystemZ::CCMASK_LOGICAL;
+    CCMask = SystemZ::CCMASK_LOGICAL_CARRY;
+    break;
+  case ISD::USUBO:
+    BaseOp = SystemZISD::USUBO;
+    CCValid = SystemZ::CCMASK_LOGICAL;
+    CCMask = SystemZ::CCMASK_LOGICAL_BORROW;
+    break;
+  }
+
+  SDVTList VTs = DAG.getVTList(N->getValueType(0), MVT::i32);
+  SDValue Result = DAG.getNode(BaseOp, DL, VTs, LHS, RHS);
+
+  SDValue SetCC = emitSETCC(DAG, DL, Result.getValue(1), CCValid, CCMask);
+  if (N->getValueType(1) == MVT::i1)
+    SetCC = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
+
+  return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Result, SetCC);
+}
+
+// Lower ADDCARRY/SUBCARRY nodes.
+SDValue SystemZTargetLowering::lowerADDSUBCARRY(SDValue Op,
+                                                SelectionDAG &DAG) const {
+
+  SDNode *N = Op.getNode();
+  MVT VT = N->getSimpleValueType(0);
+
+  // Let legalize expand this if it isn't a legal type yet.
+  if (!DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return SDValue();
+
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  SDValue Carry = Op.getOperand(2);
+  SDLoc DL(N);
+  unsigned BaseOp = 0;
+  unsigned CCValid = 0;
+  unsigned CCMask = 0;
+
+  switch (Op.getOpcode()) {
+  default: llvm_unreachable("Unknown instruction!");
+  case ISD::ADDCARRY:
+    BaseOp = SystemZISD::ADDCARRY;
+    CCValid = SystemZ::CCMASK_LOGICAL;
+    CCMask = SystemZ::CCMASK_LOGICAL_CARRY;
+    break;
+  case ISD::SUBCARRY:
+    BaseOp = SystemZISD::SUBCARRY;
+    CCValid = SystemZ::CCMASK_LOGICAL;
+    CCMask = SystemZ::CCMASK_LOGICAL_BORROW;
+    break;
+  }
+
+  // Set the condition code from the carry flag.
+  Carry = DAG.getNode(SystemZISD::GET_CCMASK, DL, MVT::i32, Carry,
+                      DAG.getConstant(CCValid, DL, MVT::i32),
+                      DAG.getConstant(CCMask, DL, MVT::i32));
+
+  SDVTList VTs = DAG.getVTList(VT, MVT::i32);
+  SDValue Result = DAG.getNode(BaseOp, DL, VTs, LHS, RHS, Carry);
+
+  SDValue SetCC = emitSETCC(DAG, DL, Result.getValue(1), CCValid, CCMask);
+  if (N->getValueType(1) == MVT::i1)
+    SetCC = DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
+
+  return DAG.getNode(ISD::MERGE_VALUES, DL, N->getVTList(), Result, SetCC);
+}
+
 SDValue SystemZTargetLowering::lowerCTPOP(SDValue Op,
                                           SelectionDAG &DAG) const {
   EVT VT = Op.getValueType();
@@ -4693,6 +4798,14 @@ SDValue SystemZTargetLowering::LowerOperation(SDValue Op,
     return lowerSDIVREM(Op, DAG);
   case ISD::UDIVREM:
     return lowerUDIVREM(Op, DAG);
+  case ISD::SADDO:
+  case ISD::SSUBO:
+  case ISD::UADDO:
+  case ISD::USUBO:
+    return lowerXALUO(Op, DAG);
+  case ISD::ADDCARRY:
+  case ISD::SUBCARRY:
+    return lowerADDSUBCARRY(Op, DAG);
   case ISD::OR:
     return lowerOR(Op, DAG);
   case ISD::CTPOP:
@@ -4871,6 +4984,13 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(UMUL_LOHI);
     OPCODE(SDIVREM);
     OPCODE(UDIVREM);
+    OPCODE(SADDO);
+    OPCODE(SSUBO);
+    OPCODE(UADDO);
+    OPCODE(USUBO);
+    OPCODE(ADDCARRY);
+    OPCODE(SUBCARRY);
+    OPCODE(GET_CCMASK);
     OPCODE(MVC);
     OPCODE(MVC_LOOP);
     OPCODE(NC);
@@ -5560,6 +5680,48 @@ SDValue SystemZTargetLowering::combineSELECT_CCMASK(
   return SDValue();
 }
 
+
+SDValue SystemZTargetLowering::combineGET_CCMASK(
+    SDNode *N, DAGCombinerInfo &DCI) const {
+
+  // Optimize away GET_CCMASK (SELECT_CCMASK) if the CC masks are compatible
+  auto *CCValid = dyn_cast<ConstantSDNode>(N->getOperand(1));
+  auto *CCMask = dyn_cast<ConstantSDNode>(N->getOperand(2));
+  if (!CCValid || !CCMask)
+    return SDValue();
+  int CCValidVal = CCValid->getZExtValue();
+  int CCMaskVal = CCMask->getZExtValue();
+
+  SDValue Select = N->getOperand(0);
+  if (Select->getOpcode() != SystemZISD::SELECT_CCMASK)
+    return SDValue();
+
+  auto *SelectCCValid = dyn_cast<ConstantSDNode>(Select->getOperand(2));
+  auto *SelectCCMask = dyn_cast<ConstantSDNode>(Select->getOperand(3));
+  if (!SelectCCValid || !SelectCCMask)
+    return SDValue();
+  int SelectCCValidVal = SelectCCValid->getZExtValue();
+  int SelectCCMaskVal = SelectCCMask->getZExtValue();
+
+  auto *TrueVal = dyn_cast<ConstantSDNode>(Select->getOperand(0));
+  auto *FalseVal = dyn_cast<ConstantSDNode>(Select->getOperand(1));
+  if (!TrueVal || !FalseVal)
+    return SDValue();
+  if (TrueVal->getZExtValue() != 0 && FalseVal->getZExtValue() == 0)
+    ;
+  else if (TrueVal->getZExtValue() == 0 && FalseVal->getZExtValue() != 0)
+    SelectCCMaskVal ^= SelectCCValidVal;
+  else
+    return SDValue();
+
+  if (SelectCCValidVal & ~CCValidVal)
+    return SDValue();
+  if (SelectCCMaskVal != (CCMaskVal & SelectCCValidVal))
+    return SDValue();
+
+  return Select->getOperand(4);
+}
+
 SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
                                                  DAGCombinerInfo &DCI) const {
   switch(N->getOpcode()) {
@@ -5580,6 +5742,7 @@ SDValue SystemZTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::ROTL:               return combineSHIFTROT(N, DCI);
   case SystemZISD::BR_CCMASK:   return combineBR_CCMASK(N, DCI);
   case SystemZISD::SELECT_CCMASK: return combineSELECT_CCMASK(N, DCI);
+  case SystemZISD::GET_CCMASK:  return combineGET_CCMASK(N, DCI);
   }
 
   return SDValue();

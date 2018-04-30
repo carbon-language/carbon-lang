@@ -45,6 +45,17 @@ def SDT_ZGR128Binary        : SDTypeProfile<1, 2,
                                             [SDTCisVT<0, untyped>,
                                              SDTCisInt<1>,
                                              SDTCisInt<2>]>;
+def SDT_ZBinaryWithFlags    : SDTypeProfile<2, 2,
+                                            [SDTCisInt<0>,
+                                             SDTCisVT<1, i32>,
+                                             SDTCisSameAs<0, 2>,
+                                             SDTCisSameAs<0, 3>]>;
+def SDT_ZBinaryWithCarry    : SDTypeProfile<2, 3,
+                                            [SDTCisInt<0>,
+                                             SDTCisVT<1, i32>,
+                                             SDTCisSameAs<0, 2>,
+                                             SDTCisSameAs<0, 3>,
+                                             SDTCisVT<1, i32>]>;
 def SDT_ZAtomicLoadBinaryW  : SDTypeProfile<1, 5,
                                             [SDTCisVT<0, i32>,
                                              SDTCisPtrTy<1>,
@@ -262,6 +273,12 @@ def z_smul_lohi         : SDNode<"SystemZISD::SMUL_LOHI", SDT_ZGR128Binary>;
 def z_umul_lohi         : SDNode<"SystemZISD::UMUL_LOHI", SDT_ZGR128Binary>;
 def z_sdivrem           : SDNode<"SystemZISD::SDIVREM", SDT_ZGR128Binary>;
 def z_udivrem           : SDNode<"SystemZISD::UDIVREM", SDT_ZGR128Binary>;
+def z_saddo             : SDNode<"SystemZISD::SADDO", SDT_ZBinaryWithFlags>;
+def z_ssubo             : SDNode<"SystemZISD::SSUBO", SDT_ZBinaryWithFlags>;
+def z_uaddo             : SDNode<"SystemZISD::UADDO", SDT_ZBinaryWithFlags>;
+def z_usubo             : SDNode<"SystemZISD::USUBO", SDT_ZBinaryWithFlags>;
+def z_addcarry_1        : SDNode<"SystemZISD::ADDCARRY", SDT_ZBinaryWithCarry>;
+def z_subcarry_1        : SDNode<"SystemZISD::SUBCARRY", SDT_ZBinaryWithCarry>;
 
 def z_membarrier        : SDNode<"SystemZISD::MEMBARRIER", SDTNone,
                                  [SDNPHasChain, SDNPSideEffect]>;
@@ -432,6 +449,10 @@ def z_select_ccmask
             (z_select_ccmask_1 node:$true, node:$false,
                                node:$valid, node:$mask, CC)>;
 def z_ipm : PatFrag<(ops), (z_ipm_1 CC)>;
+def z_addcarry : PatFrag<(ops node:$lhs, node:$rhs),
+                              (z_addcarry_1 node:$lhs, node:$rhs, CC)>;
+def z_subcarry : PatFrag<(ops node:$lhs, node:$rhs),
+                              (z_subcarry_1 node:$lhs, node:$rhs, CC)>;
 
 // Signed and unsigned comparisons.
 def z_scmp : PatFrag<(ops node:$a, node:$b), (z_icmp node:$a, node:$b, imm), [{
