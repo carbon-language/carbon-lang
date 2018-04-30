@@ -65,7 +65,8 @@ ClangUserExpression::ClangUserExpression(
                          options),
       m_type_system_helper(*m_target_wp.lock().get(),
                            options.GetExecutionPolicy() ==
-                               eExecutionPolicyTopLevel) {
+                               eExecutionPolicyTopLevel),
+      m_result_delegate(exe_scope.CalculateTarget()) {
   switch (m_language) {
   case lldb::eLanguageTypeC_plus_plus:
     m_allow_cxx = true;
@@ -663,10 +664,8 @@ void ClangUserExpression::ClangUserExpressionHelper::CommitPersistentDecls() {
   }
 }
 
-ClangUserExpression::ResultDelegate::ResultDelegate() {}
-
 ConstString ClangUserExpression::ResultDelegate::GetName() {
-  return m_persistent_state->GetNextPersistentVariableName();
+  return m_persistent_state->GetNextPersistentVariableName(*m_target_sp);
 }
 
 void ClangUserExpression::ResultDelegate::DidDematerialize(

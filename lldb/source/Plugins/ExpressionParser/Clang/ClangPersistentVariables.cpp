@@ -10,6 +10,7 @@
 #include "ClangPersistentVariables.h"
 
 #include "lldb/Core/Value.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Utility/DataExtractor.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/StreamString.h"
@@ -52,10 +53,11 @@ void ClangPersistentVariables::RemovePersistentVariable(
     m_next_persistent_variable_id--;
 }
 
-ConstString ClangPersistentVariables::GetNextPersistentVariableName() {
+ConstString
+ClangPersistentVariables::GetNextPersistentVariableName(Target &target) {
   char name_cstr[256];
   ::snprintf(name_cstr, sizeof(name_cstr), "$%u",
-             m_next_persistent_variable_id++);
+             target.GetNextPersistentVariableIndex());
   ConstString name(name_cstr);
   return name;
 }
