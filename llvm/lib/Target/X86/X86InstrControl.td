@@ -178,7 +178,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
                             OpSize32, Sched<[WriteJump]>;
   }
   def FARJMP64   : RI<0xFF, MRM5m, (outs), (ins opaque80mem:$dst),
-                      "ljmp{q}\t{*}$dst", []>, Sched<[WriteJump]>;
+                      "ljmp{q}\t{*}$dst", []>, Sched<[WriteJump]>, Requires<[In64BitMode]>;
 
   let AsmVariantName = "att" in
   def FARJMP16m  : I<0xFF, MRM5m, (outs), (ins opaque32mem:$dst),
