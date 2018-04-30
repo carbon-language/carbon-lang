@@ -1493,7 +1493,7 @@ defm : ZXB<z_ucmp, GR64, CLGFR>;
 
 // Memory-to-memory comparison.
 let mayLoad = 1, Defs = [CC] in {
-  defm CLC : MemorySS<"clc", 0xD5, z_clc, z_clc_loop>;
+  defm CLC : CompareMemorySS<"clc", 0xD5, z_clc, z_clc_loop>;
   def CLCL  : SideEffectBinaryMemMemRR<"clcl", 0x0F, GR128, GR128>;
   def CLCLE : SideEffectTernaryMemMemRS<"clcle", 0xA9, GR128, GR128>;
   def CLCLU : SideEffectTernaryMemMemRSY<"clclu", 0xEB8F, GR128, GR128>;
@@ -1934,16 +1934,16 @@ let isCall = 1, Defs = [CC] in
 let hasSideEffects = 1, Predicates = [FeatureTransactionalExecution] in {
   // Transaction Begin
   let mayStore = 1, usesCustomInserter = 1, Defs = [CC] in {
-    def TBEGIN : SideEffectBinarySIL<"tbegin", 0xE560, z_tbegin, imm32zx16>;
+    def TBEGIN : TestBinarySIL<"tbegin", 0xE560, z_tbegin, imm32zx16>;
     let hasNoSchedulingInfo = 1 in
-     def TBEGIN_nofloat : SideEffectBinarySILPseudo<z_tbegin_nofloat, imm32zx16>;
+     def TBEGIN_nofloat : TestBinarySILPseudo<z_tbegin_nofloat, imm32zx16>;
     def TBEGINC : SideEffectBinarySIL<"tbeginc", 0xE561,
                                       int_s390_tbeginc, imm32zx16>;
   }
 
   // Transaction End
   let Defs = [CC] in
-    def TEND : SideEffectInherentS<"tend", 0xB2F8, z_tend>;
+    def TEND : TestInherentS<"tend", 0xB2F8, z_tend>;
 
   // Transaction Abort
   let isTerminator = 1, isBarrier = 1, mayStore = 1,

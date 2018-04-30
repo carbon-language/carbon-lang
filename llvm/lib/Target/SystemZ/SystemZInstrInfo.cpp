@@ -906,6 +906,23 @@ void SystemZInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     return;
   }
 
+  // Move CC value from/to a GR32.
+  if (SrcReg == SystemZ::CC) {
+    auto MIB = BuildMI(MBB, MBBI, DL, get(SystemZ::IPM), DestReg);
+    if (KillSrc) {
+      const MachineFunction *MF = MBB.getParent();
+      const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
+      MIB->addRegisterKilled(SrcReg, TRI);
+    }
+    return;
+  }
+  if (DestReg == SystemZ::CC) {
+    BuildMI(MBB, MBBI, DL, get(SystemZ::TMLH))
+      .addReg(SrcReg, getKillRegState(KillSrc))
+      .addImm(3 << (SystemZ::IPM_CC - 16));
+    return;
+  }
+
   // Everything else needs only one instruction.
   unsigned Opcode;
   if (SystemZ::GR64BitRegClass.contains(DestReg, SrcReg))

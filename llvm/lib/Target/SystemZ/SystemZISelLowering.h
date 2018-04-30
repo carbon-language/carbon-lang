@@ -142,11 +142,11 @@ enum NodeType : unsigned {
 
   // Transaction begin.  The first operand is the chain, the second
   // the TDB pointer, and the third the immediate control field.
-  // Returns chain and glue.
+  // Returns CC value and chain.
   TBEGIN,
   TBEGIN_NOFLOAT,
 
-  // Transaction end.  Just the chain operand.  Returns chain and glue.
+  // Transaction end.  Just the chain operand.  Returns CC value and chain.
   TEND,
 
   // Create a vector constant by filling byte N of the result with bit
@@ -308,8 +308,8 @@ enum NodeType : unsigned {
   // Operand 5: the width of the field in bits (8 or 16)
   ATOMIC_CMP_SWAPW,
 
-  // Atomic compare-and-swap returning glue (condition code).
-  // Val, OUTCHAIN, glue = ATOMIC_CMP_SWAP(INCHAIN, ptr, cmp, swap)
+  // Atomic compare-and-swap returning CC value.
+  // Val, CC, OUTCHAIN = ATOMIC_CMP_SWAP(INCHAIN, ptr, cmp, swap)
   ATOMIC_CMP_SWAP,
 
   // 128-bit atomic load.
@@ -321,7 +321,7 @@ enum NodeType : unsigned {
   ATOMIC_STORE_128,
 
   // 128-bit atomic compare-and-swap.
-  // Val, OUTCHAIN, glue = ATOMIC_CMP_SWAP(INCHAIN, ptr, cmp, swap)
+  // Val, CC, OUTCHAIN = ATOMIC_CMP_SWAP(INCHAIN, ptr, cmp, swap)
   ATOMIC_CMP_SWAP_128,
 
   // Byte swapping load.
