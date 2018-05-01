@@ -3446,16 +3446,17 @@ multiclass PDI_binop_ri<bits<8> opc, Format ImmForm, string OpcodeStr,
 }
 
 multiclass PDI_binop_ri_all<bits<8> opc, Format ImmForm, string OpcodeStr,
-                            SDNode OpNode, X86FoldableSchedWrite sched> {
+                            SDNode OpNode, X86SchedWriteWidths sched> {
 let Predicates = [HasAVX, NoVLX_Or_NoBWI] in
   defm V#NAME : PDI_binop_ri<opc, ImmForm, !strconcat("v", OpcodeStr), OpNode,
-                             VR128, v16i8, sched, 0>, VEX_4V, VEX_WIG;
+                             VR128, v16i8, sched.XMM, 0>, VEX_4V, VEX_WIG;
 let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in
   defm V#NAME#Y : PDI_binop_ri<opc, ImmForm, !strconcat("v", OpcodeStr), OpNode,
-                               VR256, v32i8, sched, 0>,
+                               VR256, v32i8, sched.YMM, 0>,
                                VEX_4V, VEX_L, VEX_WIG;
 let Constraints = "$src1 = $dst" in
-  defm NAME : PDI_binop_ri<opc, ImmForm, OpcodeStr, OpNode, VR128, v16i8, sched>;
+  defm NAME : PDI_binop_ri<opc, ImmForm, OpcodeStr, OpNode, VR128, v16i8,
+                           sched.XMM>;
 }
 
 let ExeDomain = SSEPackedInt in {
@@ -3481,9 +3482,10 @@ let ExeDomain = SSEPackedInt in {
   defm PSRAD : PDI_binop_rmi_all<0xE2, 0x72, MRM4r, "psrad", X86vsra, X86vsrai,
                                  v4i32, v8i32, v4i32, WriteVecShift, NoVLX>;
 
-  defm PSLLDQ : PDI_binop_ri_all<0x73, MRM7r, "pslldq", X86vshldq, WriteVecShift>;
-  defm PSRLDQ : PDI_binop_ri_all<0x73, MRM3r, "psrldq", X86vshrdq, WriteVecShift>;
-  // PSRADQri doesn't exist in SSE[1-3].
+  defm PSLLDQ : PDI_binop_ri_all<0x73, MRM7r, "pslldq", X86vshldq,
+                                 SchedWriteShuffle>;
+  defm PSRLDQ : PDI_binop_ri_all<0x73, MRM3r, "psrldq", X86vshrdq,
+                                 SchedWriteShuffle>;
 } // ExeDomain = SSEPackedInt
 
 //===---------------------------------------------------------------------===//

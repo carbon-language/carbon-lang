@@ -10044,6 +10044,7 @@ defm VSHUFPD: avx512_shufp<"vshufpd", avx512vl_i64_info, avx512vl_f64_info>, PD,
 // AVX-512 - Byte shift Left/Right
 //===----------------------------------------------------------------------===//
 
+// FIXME: The SSE/AVX names are PSLLDQri etc. - should we add the i here as well?
 multiclass avx512_shift_packed<bits<8> opc, SDNode OpNode, Format MRMr,
                                Format MRMm, string OpcodeStr,
                                X86FoldableSchedWrite sched, X86VectorVTInfo _>{
@@ -10063,24 +10064,23 @@ multiclass avx512_shift_packed<bits<8> opc, SDNode OpNode, Format MRMr,
 
 multiclass avx512_shift_packed_all<bits<8> opc, SDNode OpNode, Format MRMr,
                                    Format MRMm, string OpcodeStr,
-                                   X86FoldableSchedWrite sched, Predicate prd>{
+                                   X86SchedWriteWidths sched, Predicate prd>{
   let Predicates = [prd] in
-    defm Z : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                 OpcodeStr, sched, v64i8_info>, EVEX_V512;
+    defm Z : avx512_shift_packed<opc, OpNode, MRMr, MRMm, OpcodeStr,
+                                 sched.ZMM, v64i8_info>, EVEX_V512;
   let Predicates = [prd, HasVLX] in {
-    defm Z256 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, sched, v32i8x_info>, EVEX_V256;
-    defm Z128 : avx512_shift_packed<opc, OpNode, MRMr, MRMm,
-                                    OpcodeStr, sched, v16i8x_info>, EVEX_V128;
+    defm Z256 : avx512_shift_packed<opc, OpNode, MRMr, MRMm, OpcodeStr,
+                                    sched.YMM, v32i8x_info>, EVEX_V256;
+    defm Z128 : avx512_shift_packed<opc, OpNode, MRMr, MRMm, OpcodeStr,
+                                    sched.XMM, v16i8x_info>, EVEX_V128;
   }
 }
 defm VPSLLDQ : avx512_shift_packed_all<0x73, X86vshldq, MRM7r, MRM7m, "vpslldq",
-                                       WriteVecShift, HasBWI>, AVX512PDIi8Base,
-                                       EVEX_4V, VEX_WIG;
+                                       SchedWriteShuffle, HasBWI>,
+                                       AVX512PDIi8Base, EVEX_4V, VEX_WIG;
 defm VPSRLDQ : avx512_shift_packed_all<0x73, X86vshrdq, MRM3r, MRM3m, "vpsrldq",
-                                       WriteVecShift, HasBWI>, AVX512PDIi8Base,
-                                       EVEX_4V, VEX_WIG;
-
+                                       SchedWriteShuffle, HasBWI>,
+                                       AVX512PDIi8Base, EVEX_4V, VEX_WIG;
 
 multiclass avx512_psadbw_packed<bits<8> opc, SDNode OpNode,
                                 string OpcodeStr, X86FoldableSchedWrite sched,

@@ -445,17 +445,7 @@ def: InstRW<[SKXWriteResGroup3], (instregex "COMP_FST0r",
                                             "VMOV64toPQIZrr",
                                             "VMOV64toPQIrr",
                                             "VMOVDI2PDIZrr",
-                                            "VMOVDI2PDIrr",
-                                            "VPSLLDQYri",
-                                            "VPSLLDQZ128rr",
-                                            "VPSLLDQZ256rr",
-                                            "VPSLLDQZrr",
-                                            "(V?)PSLLDQri",
-                                            "VPSRLDQYri",
-                                            "VPSRLDQZ128rr",
-                                            "VPSRLDQZ256rr",
-                                            "VPSRLDQZrr",
-                                            "(V?)PSRLDQri")>;
+                                            "VMOVDI2PDIrr")>;
 
 def SKXWriteResGroup4 : SchedWriteRes<[SKXPort6]> {
   let Latency = 1;

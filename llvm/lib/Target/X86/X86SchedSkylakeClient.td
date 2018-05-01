@@ -397,9 +397,7 @@ def: InstRW<[SKLWriteResGroup3], (instregex "COMP_FST0r",
                                             "UCOM_FPr",
                                             "UCOM_Fr",
                                             "(V?)MOV64toPQIrr",
-                                            "(V?)MOVDI2PDIrr",
-                                            "(V?)PSLLDQ(Y?)ri",
-                                            "(V?)PSRLDQ(Y?)ri")>;
+                                            "(V?)MOVDI2PDIrr")>;
 
 def SKLWriteResGroup4 : SchedWriteRes<[SKLPort6]> {
   let Latency = 1;
