@@ -1,3 +1,7 @@
+<!--
+Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+-->
+
 ## In brief:
 * Use *clang-format* to resolve all layout questions.
 * Where LLVM's C++ style guide is clear on usage, follow it.
