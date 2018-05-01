@@ -883,9 +883,13 @@ static BasicBlock *buildClonedLoopBlocks(
             PN.removeIncomingValue(LoopBB, /*DeletePHIIfEmpty*/ false);
 
   // Record the domtree updates for the new blocks.
-  for (auto *ClonedBB : NewBlocks)
+  SmallPtrSet<BasicBlock *, 4> SuccSet;
+  for (auto *ClonedBB : NewBlocks) {
     for (auto *SuccBB : successors(ClonedBB))
-      DTUpdates.push_back({DominatorTree::Insert, ClonedBB, SuccBB});
+      if (SuccSet.insert(SuccBB).second)
+        DTUpdates.push_back({DominatorTree::Insert, ClonedBB, SuccBB});
+    SuccSet.clear();
+  }
 
   return ClonedPH;
 }
