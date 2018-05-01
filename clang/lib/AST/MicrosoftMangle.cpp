@@ -1918,7 +1918,6 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T, Qualifiers,
     Out << "$$T";
     break;
 
-  case BuiltinType::Char8:
   case BuiltinType::Float16:
     mangleArtificalTagType(TTK_Struct, "_Float16", {"__clang"});
     break;
@@ -1927,6 +1926,7 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T, Qualifiers,
     mangleArtificalTagType(TTK_Struct, "_Half", {"__clang"});
     break;
 
+  case BuiltinType::Char8:
   case BuiltinType::Float128: {
     DiagnosticsEngine &Diags = Context.getDiags();
     unsigned DiagID = Diags.getCustomDiagID(
