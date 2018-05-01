@@ -1854,23 +1854,25 @@ let ExeDomain = SSEPackedSingle in
 defm VCMPSS : sse12_cmp_scalar<FR32, f32mem, AVXCC, X86cmps, f32, loadf32,
                  "cmp${cc}ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                  "cmpss\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
-                 WriteFCmp>, XS, VEX_4V, VEX_LIG, VEX_WIG;
+                 SchedWriteFCmp.Scl>, XS, VEX_4V, VEX_LIG, VEX_WIG;
 let ExeDomain = SSEPackedDouble in
 defm VCMPSD : sse12_cmp_scalar<FR64, f64mem, AVXCC, X86cmps, f64, loadf64,
                  "cmp${cc}sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                  "cmpsd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
-                 WriteFCmp>, // same latency as 32 bit compare
+                 SchedWriteFCmp.Scl>, // same latency as 32 bit compare
                  XD, VEX_4V, VEX_LIG, VEX_WIG;
 
 let Constraints = "$src1 = $dst" in {
   let ExeDomain = SSEPackedSingle in
   defm CMPSS : sse12_cmp_scalar<FR32, f32mem, SSECC, X86cmps, f32, loadf32,
                   "cmp${cc}ss\t{$src2, $dst|$dst, $src2}",
-                  "cmpss\t{$cc, $src2, $dst|$dst, $src2, $cc}", WriteFCmp>, XS;
+                  "cmpss\t{$cc, $src2, $dst|$dst, $src2, $cc}",
+                  SchedWriteFCmp.Scl>, XS;
   let ExeDomain = SSEPackedDouble in
   defm CMPSD : sse12_cmp_scalar<FR64, f64mem, SSECC, X86cmps, f64, loadf64,
                   "cmp${cc}sd\t{$src2, $dst|$dst, $src2}",
-                  "cmpsd\t{$cc, $src2, $dst|$dst, $src2, $cc}", WriteFCmp>, XD;
+                  "cmpsd\t{$cc, $src2, $dst|$dst, $src2, $cc}",
+                  SchedWriteFCmp.Scl>, XD;
 }
 
 multiclass sse12_cmp_scalar_int<Operand memop, Operand CC,
@@ -1894,21 +1896,21 @@ let isCodeGenOnly = 1 in {
   let ExeDomain = SSEPackedSingle in
   defm VCMPSS  : sse12_cmp_scalar_int<ssmem, AVXCC, int_x86_sse_cmp_ss,
                        "cmp${cc}ss\t{$src, $src1, $dst|$dst, $src1, $src}",
-                       WriteFCmp, sse_load_f32>, XS, VEX_4V;
+                       SchedWriteFCmp.Scl, sse_load_f32>, XS, VEX_4V;
   let ExeDomain = SSEPackedDouble in
   defm VCMPSD  : sse12_cmp_scalar_int<sdmem, AVXCC, int_x86_sse2_cmp_sd,
                        "cmp${cc}sd\t{$src, $src1, $dst|$dst, $src1, $src}",
-                       WriteFCmp, sse_load_f64>, // same latency as f32
+                       SchedWriteFCmp.Scl, sse_load_f64>, // same latency as f32
                        XD, VEX_4V;
   let Constraints = "$src1 = $dst" in {
     let ExeDomain = SSEPackedSingle in
     defm CMPSS  : sse12_cmp_scalar_int<ssmem, SSECC, int_x86_sse_cmp_ss,
                          "cmp${cc}ss\t{$src, $dst|$dst, $src}",
-                         WriteFCmp, sse_load_f32>, XS;
+                         SchedWriteFCmp.Scl, sse_load_f32>, XS;
     let ExeDomain = SSEPackedDouble in
     defm CMPSD  : sse12_cmp_scalar_int<sdmem, SSECC, int_x86_sse2_cmp_sd,
                          "cmp${cc}sd\t{$src, $dst|$dst, $src}",
-                         WriteFCmp, sse_load_f64>, XD;
+                         SchedWriteFCmp.Scl, sse_load_f64>, XD;
 }
 }
 
@@ -2028,28 +2030,28 @@ multiclass sse12_cmp_packed<RegisterClass RC, X86MemOperand x86memop,
 defm VCMPPS : sse12_cmp_packed<VR128, f128mem, AVXCC, v4f32,
                "cmp${cc}ps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                "cmpps\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
-               WriteFCmp, SSEPackedSingle, loadv4f32>, PS, VEX_4V, VEX_WIG;
+               SchedWriteFCmp.XMM, SSEPackedSingle, loadv4f32>, PS, VEX_4V, VEX_WIG;
 defm VCMPPD : sse12_cmp_packed<VR128, f128mem, AVXCC, v2f64,
                "cmp${cc}pd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                "cmppd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
-               WriteFCmp, SSEPackedDouble, loadv2f64>, PD, VEX_4V, VEX_WIG;
+               SchedWriteFCmp.XMM, SSEPackedDouble, loadv2f64>, PD, VEX_4V, VEX_WIG;
 defm VCMPPSY : sse12_cmp_packed<VR256, f256mem, AVXCC, v8f32,
                "cmp${cc}ps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                "cmpps\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
-               WriteFCmp, SSEPackedSingle, loadv8f32>, PS, VEX_4V, VEX_L, VEX_WIG;
+               SchedWriteFCmp.YMM, SSEPackedSingle, loadv8f32>, PS, VEX_4V, VEX_L, VEX_WIG;
 defm VCMPPDY : sse12_cmp_packed<VR256, f256mem, AVXCC, v4f64,
                "cmp${cc}pd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                "cmppd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}",
-               WriteFCmp, SSEPackedDouble, loadv4f64>, PD, VEX_4V, VEX_L, VEX_WIG;
+               SchedWriteFCmp.YMM, SSEPackedDouble, loadv4f64>, PD, VEX_4V, VEX_L, VEX_WIG;
 let Constraints = "$src1 = $dst" in {
   defm CMPPS : sse12_cmp_packed<VR128, f128mem, SSECC, v4f32,
                  "cmp${cc}ps\t{$src2, $dst|$dst, $src2}",
                  "cmpps\t{$cc, $src2, $dst|$dst, $src2, $cc}",
-                 WriteFCmp, SSEPackedSingle, memopv4f32>, PS;
+                 SchedWriteFCmp.XMM, SSEPackedSingle, memopv4f32>, PS;
   defm CMPPD : sse12_cmp_packed<VR128, f128mem, SSECC, v2f64,
                  "cmp${cc}pd\t{$src2, $dst|$dst, $src2}",
                  "cmppd\t{$cc, $src2, $dst|$dst, $src2, $cc}",
-                 WriteFCmp, SSEPackedDouble, memopv2f64>, PD;
+                 SchedWriteFCmp.XMM, SSEPackedDouble, memopv2f64>, PD;
 }
 
 def CommutableCMPCC : PatLeaf<(imm), [{

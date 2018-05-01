@@ -156,7 +156,8 @@ def  : WriteRes<WriteFMove,        [BWPort5]>;
 
 defm : BWWriteResPair<WriteFAdd,   [BWPort1], 3, [1], 1, 5>; // Floating point add/sub.
 defm : BWWriteResPair<WriteFAddY,  [BWPort1], 3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
-defm : BWWriteResPair<WriteFCmp,   [BWPort1], 3>; // Floating point compare.
+defm : BWWriteResPair<WriteFCmp,   [BWPort1], 3, [1], 1, 5>; // Floating point compare.
+defm : BWWriteResPair<WriteFCmpY,  [BWPort1], 3, [1], 1, 7>; // Floating point compare (YMM/ZMM).
 defm : BWWriteResPair<WriteFCom,   [BWPort1], 3>; // Floating point compare to flags.
 defm : BWWriteResPair<WriteFMul,   [BWPort0], 5>; // Floating point multiplication.
 defm : BWWriteResPair<WriteFDiv,   [BWPort0], 12>; // 10-14 cycles. // Floating point division.

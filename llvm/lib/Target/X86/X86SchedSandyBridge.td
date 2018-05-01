@@ -141,6 +141,7 @@ def  : WriteRes<WriteFMove,        [SBPort5]>;
 defm : SBWriteResPair<WriteFAdd,   [SBPort1], 3, [1], 1, 5>;
 defm : SBWriteResPair<WriteFAddY,  [SBPort1], 3, [1], 1, 7>;
 defm : SBWriteResPair<WriteFCmp,   [SBPort1], 3, [1], 1, 6>;
+defm : SBWriteResPair<WriteFCmpY,  [SBPort1], 3, [1], 1, 7>;
 defm : SBWriteResPair<WriteFCom,   [SBPort1], 3>;
 defm : SBWriteResPair<WriteFMul,   [SBPort0], 5, [1], 1, 6>;
 defm : SBWriteResPair<WriteFDiv,   [SBPort0], 24>;
@@ -1434,15 +1435,9 @@ def SBWriteResGroup101 : SchedWriteRes<[SBPort1,SBPort23]> {
 }
 def: InstRW<[SBWriteResGroup101], (instregex "(ADD|SUB|SUBR)_F(32|64)m",
                                              "ILD_F(16|32|64)m",
-                                             "VCMPPDYrmi",
-                                             "VCMPPSYrmi",
                                              "VCVTDQ2PSYrm",
                                              "VCVTPS2DQYrm",
-                                             "VCVTTPS2DQYrm",
-                                             "VMAX(C?)PDYrm",
-                                             "VMAX(C?)PSYrm",
-                                             "VMIN(C?)PDYrm",
-                                             "VMIN(C?)PSYrm")>;
+                                             "VCVTTPS2DQYrm")>;
 
 def SBWriteResGroup102 : SchedWriteRes<[SBPort0,SBPort1,SBPort23]> {
   let Latency = 10;

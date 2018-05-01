@@ -154,6 +154,7 @@ def  : WriteRes<WriteFMove,         [SKLPort015]>;
 defm : SKLWriteResPair<WriteFAdd,   [SKLPort1], 3, [1], 1, 5>; // Floating point add/sub.
 defm : SKLWriteResPair<WriteFAddY,  [SKLPort1], 3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
 defm : SKLWriteResPair<WriteFCmp,  [SKLPort01], 4, [1], 1, 6>; // Floating point compare.
+defm : SKLWriteResPair<WriteFCmpY, [SKLPort01], 4, [1], 1, 7>; // Floating point compare (YMM/ZMM).
 defm : SKLWriteResPair<WriteFCom,   [SKLPort0], 2>; // Floating point compare to flags.
 defm : SKLWriteResPair<WriteFMul,   [SKLPort0], 5>; // Floating point multiplication.
 defm : SKLWriteResPair<WriteFDiv,   [SKLPort0], 12>; // 10-14 cycles. // Floating point division.
@@ -1925,16 +1926,10 @@ def: InstRW<[SKLWriteResGroup147], (instregex "VADDPDYrm",
                                               "VADDPSYrm",
                                               "VADDSUBPDYrm",
                                               "VADDSUBPSYrm",
-                                              "VCMPPDYrmi",
-                                              "VCMPPSYrmi",
                                               "VCVTDQ2PSYrm",
                                               "VCVTPS2DQYrm",
                                               "VCVTPS2PDYrm",
                                               "VCVTTPS2DQYrm",
-                                              "VMAX(C?)PDYrm",
-                                              "VMAX(C?)PSYrm",
-                                              "VMIN(C?)PDYrm",
-                                              "VMIN(C?)PSYrm",
                                               "VMULPDYrm",
                                               "VMULPSYrm",
                                               "VPMADDUBSWYrm",

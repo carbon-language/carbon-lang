@@ -132,6 +132,7 @@ def  : WriteRes<WriteFMove,        [SLM_FPC_RSV01]>;
 defm : SLMWriteResPair<WriteFAdd,   [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteFAddY,  [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteFCmp,   [SLM_FPC_RSV1], 3>;
+defm : SLMWriteResPair<WriteFCmpY,  [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteFCom,   [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteFMul,   [SLM_FPC_RSV0, SLMFPMultiplier], 5, [1,2]>;
 defm : SLMWriteResPair<WriteFDiv,   [SLM_FPC_RSV0, SLMFPDivider], 34, [1,34]>;

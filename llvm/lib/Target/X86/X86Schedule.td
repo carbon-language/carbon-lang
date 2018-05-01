@@ -93,6 +93,7 @@ def  WriteFMove  : SchedWrite;
 defm WriteFAdd   : X86SchedWritePair; // Floating point add/sub.
 defm WriteFAddY  : X86SchedWritePair; // Floating point add/sub (YMM/ZMM).
 defm WriteFCmp   : X86SchedWritePair; // Floating point compare.
+defm WriteFCmpY  : X86SchedWritePair; // Floating point compare (YMM/ZMM).
 defm WriteFCom   : X86SchedWritePair; // Floating point compare to flags.
 defm WriteFMul   : X86SchedWritePair; // Floating point multiplication.
 defm WriteFDiv   : X86SchedWritePair; // Floating point division.
@@ -204,7 +205,7 @@ def WriteNop : SchedWrite;
 def SchedWriteFAdd
  : X86SchedWriteWidths<WriteFAdd, WriteFAdd, WriteFAddY, WriteFAddY>;
 def SchedWriteFCmp
- : X86SchedWriteWidths<WriteFCmp, WriteFCmp, WriteFCmp, WriteFCmp>;
+ : X86SchedWriteWidths<WriteFCmp, WriteFCmp, WriteFCmpY, WriteFCmpY>;
 def SchedWriteFMul
  : X86SchedWriteWidths<WriteFMul, WriteFMul, WriteFMul, WriteFMul>;
 def SchedWriteFDiv

@@ -154,6 +154,7 @@ def  : WriteRes<WriteFMove,         [SKXPort015]>;
 defm : SKXWriteResPair<WriteFAdd, [SKXPort015], 4, [1], 1, 6>; // Floating point add/sub.
 defm : SKXWriteResPair<WriteFAddY,[SKXPort015], 4, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
 defm : SKXWriteResPair<WriteFCmp, [SKXPort015], 4, [1], 1, 6>; // Floating point compare.
+defm : SKXWriteResPair<WriteFCmpY,[SKXPort015], 4, [1], 1, 7>; // Floating point compare (YMM/ZMM).
 defm : SKXWriteResPair<WriteFCom,   [SKXPort0], 2>; // Floating point compare to flags.
 defm : SKXWriteResPair<WriteFMul, [SKXPort015], 4, [1], 1, 6>; // Floating point multiplication.
 defm : SKXWriteResPair<WriteFDiv,   [SKXPort0], 12>; // 10-14 cycles. // Floating point division.
@@ -3634,9 +3635,7 @@ def SKXWriteResGroup161 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKXWriteResGroup161], (instregex "VCMPPDYrmi",
-                                              "VCMPPSYrmi",
-                                              "VCVTDQ2PDZ256rm(b?)",
+def: InstRW<[SKXWriteResGroup161], (instregex "VCVTDQ2PDZ256rm(b?)",
                                               "VCVTDQ2PDZrm(b?)",
                                               "VCVTDQ2PSYrm",
                                               "VCVTDQ2PSZ256rm(b?)",
@@ -3678,18 +3677,6 @@ def: InstRW<[SKXWriteResGroup161], (instregex "VCMPPDYrmi",
                                               "VCVTUQQ2PDZ256rm(b?)",
                                               "VCVTUQQ2PDZrm(b?)",
                                               "VCVTUQQ2PSZ256rm(b?)",
-                                              "VMAX(C?)PDYrm",
-                                              "VMAX(C?)PDZ256rm(b?)",
-                                              "VMAX(C?)PDZrm(b?)",
-                                              "VMAX(C?)PSYrm",
-                                              "VMAX(C?)PSZ256rm(b?)",
-                                              "VMAX(C?)PSZrm(b?)",
-                                              "VMIN(C?)PDYrm",
-                                              "VMIN(C?)PDZ256rm(b?)",
-                                              "VMIN(C?)PDZrm(b?)",
-                                              "VMIN(C?)PSYrm",
-                                              "VMIN(C?)PSZ256rm(b?)",
-                                              "VMIN(C?)PSZrm(b?)",
                                               "VMULPDYrm",
                                               "VMULPDZ256rm(b?)",
                                               "VMULPDZrm(b?)",
