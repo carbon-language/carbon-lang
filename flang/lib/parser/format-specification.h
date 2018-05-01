@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_FORMAT_SPECIFICATION_H_
-#define FORTRAN_FORMAT_SPECIFICATION_H_
+#ifndef FORTRAN_PARSER_FORMAT_SPECIFICATION_H_
+#define FORTRAN_PARSER_FORMAT_SPECIFICATION_H_
 
 // Represent parses of Fortran format specifications from FORMAT statements
 // and character literals in formatted I/O statements at compilation time
@@ -146,4 +146,4 @@ struct FormatSpecification {
 };
 }  // namespace format
 }  // namespace Fortran
-#endif  // FORTRAN_FORMAT_SPECIFICATION_H_
+#endif  // FORTRAN_PARSER_FORMAT_SPECIFICATION_H_

@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FLANG_SUPPORT_GET_VALUE_H
+#ifndef FORTRAN_SEMANTICS_GETVALUE_H_
+#define FORTRAN_SEMANTICS_GETVALUE_H_
 
 #undef IGNORE_optional
 #undef IGNORE_Statement
@@ -130,4 +131,4 @@
 #include "GetValue.def"
 #undef IGNORE_DefaultChar
 
-#endif
+#endif  // FORTRAN_SEMANTICS_GETVALUE_H_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FLANG_SEMA_STMT_H_
-#define FLANG_SEMA_STMT_H_
+#ifndef FORTRAN_SEMANTICS_STMT_H_
+#define FORTRAN_SEMANTICS_STMT_H_
 
 #include "../parser/parse-tree.h"
 #include <variant>
@@ -66,4 +66,4 @@ constexpr const char *StmtClassText(StmtClass sc) {
 
 }  // end of namespace Fortran::semantics
 
-#endif // of FLANG_SEMA_STMT_H_
+#endif  // FORTRAN_SEMANTICS_STMT_H_

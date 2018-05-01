@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FLANG_SEMA_STATEMENT_MAP_H
-#define FLANG_SEMA_STATEMENT_MAP_H
+#ifndef FORTRAN_SEMANTICS_STATEMENTMAP_H_
+#define FORTRAN_SEMANTICS_STATEMENTMAP_H_
 
 #include "Stmt.h"
 #include <functional>
@@ -239,4 +239,4 @@ public:
 
 }  // namespace Fortran::semantics
 
-#endif // of FLANG_SEMA_STATEMENT_MAP_H
+#endif  // FORTRAN_SEMANTICS_STATEMENTMAP_H_

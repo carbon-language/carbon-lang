@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef FORTRAN_SEMANTICS_RESOLVE_NAMES_H_
+#define FORTRAN_SEMANTICS_RESOLVE_NAMES_H_
+
 #include <iosfwd>
 
 namespace Fortran::parser {
@@ -25,3 +28,5 @@ void ResolveNames(parser::Program &, const parser::CookedSource &);
 void DumpSymbols(std::ostream &);
 
 }  // namespace Fortran::semantics
+
+#endif  // FORTRAN_SEMANTICS_RESOLVE_NAMES_H_

@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef FORTRAN_SEMANTICS_REWRITE_PARSE_TREE_H_
+#define FORTRAN_SEMANTICS_REWRITE_PARSE_TREE_H_
+
 namespace Fortran::parser {
 struct Program;
 }  // namespace Fortran::parser
@@ -19,3 +22,5 @@ struct Program;
 namespace Fortran::semantics {
 void RewriteParseTree(parser::Program &);
 }  // namespace Fortran::semantics
+
+#endif  // FORTRAN_SEMANTICS_REWRITE_PARSE_TREE_H_

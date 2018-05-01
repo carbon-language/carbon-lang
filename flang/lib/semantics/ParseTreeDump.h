@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FLANG_SEMA_PARSE_TREE_DUMP_H
-#define FLANG_SEMA_PARSE_TREE_DUMP_H
+#ifndef FORTRAN_SEMANTICS_PARSETREEDUMP_H_
+#define FORTRAN_SEMANTICS_PARSETREEDUMP_H_
 
 #include "symbol.h"
 #include "../parser/format-specification.h"
@@ -285,4 +285,4 @@ FLANG_PARSE_TREE_DUMPER_INSTANTIATE_ALL(extern)
 
 } // of namespace 
 
-#endif
+#endif  // FORTRAN_SEMANTICS_PARSETREEDUMP_H_

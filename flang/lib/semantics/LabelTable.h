@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef  FORTRAN_LABEL_TABLE_H_
-#define  FORTRAN_LABEL_TABLE_H_
+#ifndef FORTRAN_SEMANTICS_LABELTABLE_H_
+#define FORTRAN_SEMANTICS_LABELTABLE_H_
 
 #include <cassert>
 #include <stack>
@@ -103,4 +103,4 @@ public:
 
 } // of namespace Fortran::semantics
 
-#endif  // FORTRAN_LABEL_TABLE_H_
+#endif  // FORTRAN_SEMANTICS_LABELTABLE_H_

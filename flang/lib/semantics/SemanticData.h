@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_SEMA_DATA_H_
-#define FORTRAN_SEMA_DATA_H_
+#ifndef FORTRAN_SEMANTICS_SEMANTICDATA_H_
+#define FORTRAN_SEMANTICS_SEMANTICDATA_H_
 
 #include <cassert> 
 
@@ -605,4 +605,4 @@ END_SEMANTIC_DATA;
 
 } // of namespace Fortran::semantics
 
-#endif // FORTRAN_SEMA_DATA_H_
+#endif  // FORTRAN_SEMANTICS_SEMANTICDATA_H_

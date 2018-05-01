@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_ATTR_H_
-#define FORTRAN_ATTR_H_
+#ifndef FORTRAN_SEMANTICS_ATTR_H_
+#define FORTRAN_SEMANTICS_ATTR_H_
 
 #include "enum-set.h"
 #include "../parser/idioms.h"
@@ -54,4 +54,4 @@ std::ostream &operator<<(std::ostream &o, Attr attr);
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs);
 }  // namespace semantics
 }  // namespace Fortran
-#endif
+#endif  // FORTRAN_SEMANTICS_ATTR_H_

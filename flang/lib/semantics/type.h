@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_TYPE_H_
-#define FORTRAN_TYPE_H_
+#ifndef FORTRAN_SEMANTICS_TYPE_H_
+#define FORTRAN_SEMANTICS_TYPE_H_
 
 #include "attr.h"
 #include "../parser/idioms.h"
@@ -504,4 +504,4 @@ private:
 }  // namespace semantics
 }  // namespace Fortran
 
-#endif
+#endif  // FORTRAN_SEMANTICS_TYPE_H_
