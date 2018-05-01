@@ -148,13 +148,15 @@ def  : WriteRes<WriteFStore,       [HWPort237, HWPort4]>;
 def  : WriteRes<WriteFLoad,        [HWPort23]> { let Latency = 5; }
 def  : WriteRes<WriteFMove,        [HWPort5]>;
 
-defm : HWWriteResPair<WriteFAdd,   [HWPort1], 3, [1], 1, 5>;
-defm : HWWriteResPair<WriteFAddY,  [HWPort1], 3, [1], 1, 7>;
-defm : HWWriteResPair<WriteFCmp,   [HWPort1], 3, [1], 1, 6>;
-defm : HWWriteResPair<WriteFCmpY,  [HWPort1], 3, [1], 1, 7>;
-defm : HWWriteResPair<WriteFCom,   [HWPort1], 3>;
-defm : HWWriteResPair<WriteFMul,   [HWPort0], 5>;
-defm : HWWriteResPair<WriteFDiv,   [HWPort0], 12>; // 10-14 cycles.
+defm : HWWriteResPair<WriteFAdd,   [HWPort1],  3, [1], 1, 5>;
+defm : HWWriteResPair<WriteFAddY,  [HWPort1],  3, [1], 1, 7>;
+defm : HWWriteResPair<WriteFCmp,   [HWPort1],  3, [1], 1, 6>;
+defm : HWWriteResPair<WriteFCmpY,  [HWPort1],  3, [1], 1, 7>;
+defm : HWWriteResPair<WriteFCom,   [HWPort1],  3>;
+defm : HWWriteResPair<WriteFMul,   [HWPort0],  5, [1], 1, 5>;
+defm : HWWriteResPair<WriteFMulY,  [HWPort0],  5, [1], 1, 7>;
+defm : HWWriteResPair<WriteFDiv,   [HWPort0], 12, [1], 1, 5>; // 10-14 cycles.
+defm : HWWriteResPair<WriteFDivY,  [HWPort0], 12, [1], 1, 7>; // 10-14 cycles.
 defm : HWWriteResPair<WriteFRcp,   [HWPort0],  5, [1], 1, 5>;
 defm : HWWriteResPair<WriteFRcpY,  [HWPort0],  5, [1], 1, 7>;
 defm : HWWriteResPair<WriteFRsqrt, [HWPort0],  5, [1], 1, 5>;

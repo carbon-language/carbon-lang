@@ -138,22 +138,24 @@ def  : WriteRes<WriteFStore,       [SBPort23, SBPort4]>;
 def  : WriteRes<WriteFLoad,        [SBPort23]> { let Latency = 6; }
 def  : WriteRes<WriteFMove,        [SBPort5]>;
 
-defm : SBWriteResPair<WriteFAdd,   [SBPort1], 3, [1], 1, 5>;
-defm : SBWriteResPair<WriteFAddY,  [SBPort1], 3, [1], 1, 7>;
-defm : SBWriteResPair<WriteFCmp,   [SBPort1], 3, [1], 1, 6>;
-defm : SBWriteResPair<WriteFCmpY,  [SBPort1], 3, [1], 1, 7>;
-defm : SBWriteResPair<WriteFCom,   [SBPort1], 3>;
-defm : SBWriteResPair<WriteFMul,   [SBPort0], 5, [1], 1, 6>;
-defm : SBWriteResPair<WriteFDiv,   [SBPort0], 24>;
-defm : SBWriteResPair<WriteFRcp,   [SBPort0], 5, [1], 1, 6>;
-defm : SBWriteResPair<WriteFRcpY,  [SBPort0], 5, [1], 1, 7>;
-defm : SBWriteResPair<WriteFRsqrt, [SBPort0], 5, [1], 1, 6>;
-defm : SBWriteResPair<WriteFRsqrtY,[SBPort0], 5, [1], 1, 7>;
+defm : SBWriteResPair<WriteFAdd,   [SBPort1],  3, [1], 1, 5>;
+defm : SBWriteResPair<WriteFAddY,  [SBPort1],  3, [1], 1, 7>;
+defm : SBWriteResPair<WriteFCmp,   [SBPort1],  3, [1], 1, 6>;
+defm : SBWriteResPair<WriteFCmpY,  [SBPort1],  3, [1], 1, 7>;
+defm : SBWriteResPair<WriteFCom,   [SBPort1],  3>;
+defm : SBWriteResPair<WriteFMul,   [SBPort0],  5, [1], 1, 6>;
+defm : SBWriteResPair<WriteFMulY,  [SBPort0],  5, [1], 1, 7>;
+defm : SBWriteResPair<WriteFDiv,   [SBPort0], 24, [1], 1, 5>;
+defm : SBWriteResPair<WriteFDivY,  [SBPort0], 24, [1], 1, 7>;
+defm : SBWriteResPair<WriteFRcp,   [SBPort0],  5, [1], 1, 6>;
+defm : SBWriteResPair<WriteFRcpY,  [SBPort0],  5, [1], 1, 7>;
+defm : SBWriteResPair<WriteFRsqrt, [SBPort0],  5, [1], 1, 6>;
+defm : SBWriteResPair<WriteFRsqrtY,[SBPort0],  5, [1], 1, 7>;
 defm : SBWriteResPair<WriteFSqrt,  [SBPort0], 14, [1], 1, 5>;
 defm : SBWriteResPair<WriteFSqrtY, [SBPort0], 14, [1], 1, 7>;
-defm : SBWriteResPair<WriteCvtF2I, [SBPort1], 3>;
-defm : SBWriteResPair<WriteCvtI2F, [SBPort1], 4>;
-defm : SBWriteResPair<WriteCvtF2F, [SBPort1], 3>;
+defm : SBWriteResPair<WriteCvtF2I, [SBPort1],  3>;
+defm : SBWriteResPair<WriteCvtI2F, [SBPort1],  4>;
+defm : SBWriteResPair<WriteCvtF2F, [SBPort1],  3>;
 defm : SBWriteResPair<WriteFSign,    [SBPort5], 1>;
 defm : SBWriteResPair<WriteFLogic,   [SBPort5], 1, [1], 1, 6>;
 defm : SBWriteResPair<WriteFLogicY,  [SBPort5], 1, [1], 1, 7>;
@@ -1511,9 +1513,7 @@ def SBWriteResGroup111 : SchedWriteRes<[SBPort0,SBPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SBWriteResGroup111], (instregex "MUL_F(32|64)m",
-                                             "VMULPDYrm",
-                                             "VMULPSYrm")>;
+def: InstRW<[SBWriteResGroup111], (instregex "MUL_F(32|64)m")>;
 
 def SBWriteResGroup112 : SchedWriteRes<[SBPort0,SBPort1,SBPort5]> {
   let Latency = 12;

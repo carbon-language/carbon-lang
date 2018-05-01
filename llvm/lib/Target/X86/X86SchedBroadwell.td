@@ -154,13 +154,15 @@ def  : WriteRes<WriteFLoad,        [BWPort23]> { let Latency = 5; }
 def  : WriteRes<WriteFStore,       [BWPort237, BWPort4]>;
 def  : WriteRes<WriteFMove,        [BWPort5]>;
 
-defm : BWWriteResPair<WriteFAdd,   [BWPort1], 3, [1], 1, 5>; // Floating point add/sub.
-defm : BWWriteResPair<WriteFAddY,  [BWPort1], 3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
-defm : BWWriteResPair<WriteFCmp,   [BWPort1], 3, [1], 1, 5>; // Floating point compare.
-defm : BWWriteResPair<WriteFCmpY,  [BWPort1], 3, [1], 1, 7>; // Floating point compare (YMM/ZMM).
-defm : BWWriteResPair<WriteFCom,   [BWPort1], 3>; // Floating point compare to flags.
-defm : BWWriteResPair<WriteFMul,   [BWPort0], 5>; // Floating point multiplication.
-defm : BWWriteResPair<WriteFDiv,   [BWPort0], 12>; // 10-14 cycles. // Floating point division.
+defm : BWWriteResPair<WriteFAdd,   [BWPort1],  3, [1], 1, 5>; // Floating point add/sub.
+defm : BWWriteResPair<WriteFAddY,  [BWPort1],  3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
+defm : BWWriteResPair<WriteFCmp,   [BWPort1],  3, [1], 1, 5>; // Floating point compare.
+defm : BWWriteResPair<WriteFCmpY,  [BWPort1],  3, [1], 1, 7>; // Floating point compare (YMM/ZMM).
+defm : BWWriteResPair<WriteFCom,   [BWPort1],  3>; // Floating point compare to flags.
+defm : BWWriteResPair<WriteFMul,   [BWPort0],  5, [1], 1, 5>; // Floating point multiplication.
+defm : BWWriteResPair<WriteFMulY,  [BWPort0],  5, [1], 1, 7>; // Floating point multiplication (YMM/ZMM).
+defm : BWWriteResPair<WriteFDiv,   [BWPort0], 12, [1], 1, 5>; // 10-14 cycles. // Floating point division.
+defm : BWWriteResPair<WriteFDivY,  [BWPort0], 12, [1], 1, 7>; // 10-14 cycles. // Floating point division (YMM/ZMM).
 defm : BWWriteResPair<WriteFSqrt,  [BWPort0], 15, [1], 1, 5>; // Floating point square root.
 defm : BWWriteResPair<WriteFSqrtY, [BWPort0], 15, [1], 1, 7>; // Floating point square root (YMM/ZMM).
 defm : BWWriteResPair<WriteFRcp,   [BWPort0],  5, [1], 1, 5>; // Floating point reciprocal estimate.

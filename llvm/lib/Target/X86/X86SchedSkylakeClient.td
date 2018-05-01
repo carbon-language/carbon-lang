@@ -151,13 +151,15 @@ def  : WriteRes<WriteFLoad,         [SKLPort23]> { let Latency = 6; }
 def  : WriteRes<WriteFStore,        [SKLPort237, SKLPort4]>;
 def  : WriteRes<WriteFMove,         [SKLPort015]>;
 
-defm : SKLWriteResPair<WriteFAdd,   [SKLPort1], 3, [1], 1, 5>; // Floating point add/sub.
-defm : SKLWriteResPair<WriteFAddY,  [SKLPort1], 3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
-defm : SKLWriteResPair<WriteFCmp,  [SKLPort01], 4, [1], 1, 6>; // Floating point compare.
-defm : SKLWriteResPair<WriteFCmpY, [SKLPort01], 4, [1], 1, 7>; // Floating point compare (YMM/ZMM).
-defm : SKLWriteResPair<WriteFCom,   [SKLPort0], 2>; // Floating point compare to flags.
-defm : SKLWriteResPair<WriteFMul,   [SKLPort0], 5>; // Floating point multiplication.
-defm : SKLWriteResPair<WriteFDiv,   [SKLPort0], 12>; // 10-14 cycles. // Floating point division.
+defm : SKLWriteResPair<WriteFAdd,   [SKLPort1],  3, [1], 1, 5>; // Floating point add/sub.
+defm : SKLWriteResPair<WriteFAddY,  [SKLPort1],  3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
+defm : SKLWriteResPair<WriteFCmp,  [SKLPort01],  4, [1], 1, 6>; // Floating point compare.
+defm : SKLWriteResPair<WriteFCmpY, [SKLPort01],  4, [1], 1, 7>; // Floating point compare (YMM/ZMM).
+defm : SKLWriteResPair<WriteFCom,   [SKLPort0],  2>; // Floating point compare to flags.
+defm : SKLWriteResPair<WriteFMul,   [SKLPort0],  5, [1], 1, 5>; // Floating point multiplication.
+defm : SKLWriteResPair<WriteFMulY,  [SKLPort0],  5, [1], 1, 7>; // Floating point multiplication (YMM/ZMM).
+defm : SKLWriteResPair<WriteFDiv,   [SKLPort0], 12, [1], 1, 5>; // 10-14 cycles. // Floating point division.
+defm : SKLWriteResPair<WriteFDivY,  [SKLPort0], 12, [1], 1, 7>; // 10-14 cycles. // Floating point division (YMM/ZMM).
 defm : SKLWriteResPair<WriteFSqrt,  [SKLPort0], 15, [1], 1, 5>; // Floating point square root.
 defm : SKLWriteResPair<WriteFSqrtY, [SKLPort0], 15, [1], 1, 7>; // Floating point square root (YMM/ZMM).
 defm : SKLWriteResPair<WriteFRcp,   [SKLPort0], 4, [1], 1, 5>; // Floating point reciprocal estimate.

@@ -151,23 +151,25 @@ def  : WriteRes<WriteFLoad,         [SKXPort23]> { let Latency = 5; }
 def  : WriteRes<WriteFStore,        [SKXPort237, SKXPort4]>;
 def  : WriteRes<WriteFMove,         [SKXPort015]>;
 
-defm : SKXWriteResPair<WriteFAdd, [SKXPort015], 4, [1], 1, 6>; // Floating point add/sub.
-defm : SKXWriteResPair<WriteFAddY,[SKXPort015], 4, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
-defm : SKXWriteResPair<WriteFCmp, [SKXPort015], 4, [1], 1, 6>; // Floating point compare.
-defm : SKXWriteResPair<WriteFCmpY,[SKXPort015], 4, [1], 1, 7>; // Floating point compare (YMM/ZMM).
-defm : SKXWriteResPair<WriteFCom,   [SKXPort0], 2>; // Floating point compare to flags.
-defm : SKXWriteResPair<WriteFMul, [SKXPort015], 4, [1], 1, 6>; // Floating point multiplication.
-defm : SKXWriteResPair<WriteFDiv,   [SKXPort0], 12>; // 10-14 cycles. // Floating point division.
+defm : SKXWriteResPair<WriteFAdd, [SKXPort015],  4, [1], 1, 6>; // Floating point add/sub.
+defm : SKXWriteResPair<WriteFAddY,[SKXPort015],  4, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
+defm : SKXWriteResPair<WriteFCmp, [SKXPort015],  4, [1], 1, 6>; // Floating point compare.
+defm : SKXWriteResPair<WriteFCmpY,[SKXPort015],  4, [1], 1, 7>; // Floating point compare (YMM/ZMM).
+defm : SKXWriteResPair<WriteFCom,   [SKXPort0],  2>; // Floating point compare to flags.
+defm : SKXWriteResPair<WriteFMul, [SKXPort015],  4, [1], 1, 6>; // Floating point multiplication.
+defm : SKXWriteResPair<WriteFMulY,[SKXPort015],  4, [1], 1, 7>; // Floating point multiplication (YMM/ZMM).
+defm : SKXWriteResPair<WriteFDiv,   [SKXPort0], 12, [1], 1, 5>; // 10-14 cycles. // Floating point division.
+defm : SKXWriteResPair<WriteFDivY,  [SKXPort0], 12, [1], 1, 7>; // 10-14 cycles. // Floating point division (YMM/ZMM).
 defm : SKXWriteResPair<WriteFSqrt,  [SKXPort0], 15, [1], 1, 5>; // Floating point square root.
 defm : SKXWriteResPair<WriteFSqrtY, [SKXPort0], 15, [1], 1, 7>; // Floating point square root (YMM/ZMM).
-defm : SKXWriteResPair<WriteFRcp,   [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal estimate.
-defm : SKXWriteResPair<WriteFRcpY,  [SKXPort0], 4, [1], 1, 7>; // Floating point reciprocal estimate (YMM/ZMM).
-defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal square root estimate.
-defm : SKXWriteResPair<WriteFRsqrtY,[SKXPort0], 4, [1], 1, 7>; // Floating point reciprocal square root estimate (YMM/ZMM).
-defm : SKXWriteResPair<WriteFMA,  [SKXPort015], 4, [1], 1, 6>; // Fused Multiply Add.
-defm : SKXWriteResPair<WriteFMAS, [SKXPort015], 4, [1], 1, 5>; // Fused Multiply Add (Scalar).
-defm : SKXWriteResPair<WriteFMAY, [SKXPort015], 4, [1], 1, 7>; // Fused Multiply Add (YMM/ZMM).
-defm : SKXWriteResPair<WriteFSign,  [SKXPort0], 1>; // Floating point fabs/fchs.
+defm : SKXWriteResPair<WriteFRcp,   [SKXPort0],  4, [1], 1, 6>; // Floating point reciprocal estimate.
+defm : SKXWriteResPair<WriteFRcpY,  [SKXPort0],  4, [1], 1, 7>; // Floating point reciprocal estimate (YMM/ZMM).
+defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0],  4, [1], 1, 6>; // Floating point reciprocal square root estimate.
+defm : SKXWriteResPair<WriteFRsqrtY,[SKXPort0],  4, [1], 1, 7>; // Floating point reciprocal square root estimate (YMM/ZMM).
+defm : SKXWriteResPair<WriteFMA,  [SKXPort015],  4, [1], 1, 6>; // Fused Multiply Add.
+defm : SKXWriteResPair<WriteFMAS, [SKXPort015],  4, [1], 1, 5>; // Fused Multiply Add (Scalar).
+defm : SKXWriteResPair<WriteFMAY, [SKXPort015],  4, [1], 1, 7>; // Fused Multiply Add (YMM/ZMM).
+defm : SKXWriteResPair<WriteFSign,  [SKXPort0],  1>; // Floating point fabs/fchs.
 defm : SKXWriteResPair<WriteFLogic, [SKXPort015], 1, [1], 1, 6>; // Floating point and/or/xor logicals.
 defm : SKXWriteResPair<WriteFLogicY, [SKXPort015], 1, [1], 1, 7>; // Floating point and/or/xor logicals (YMM/ZMM).
 defm : SKXWriteResPair<WriteFShuffle,  [SKXPort5], 1, [1], 1, 5>; // Floating point vector shuffles.
@@ -3674,12 +3676,6 @@ def: InstRW<[SKXWriteResGroup161], (instregex "VCVTDQ2PDZ256rm(b?)",
                                               "VCVTUQQ2PDZ256rm(b?)",
                                               "VCVTUQQ2PDZrm(b?)",
                                               "VCVTUQQ2PSZ256rm(b?)",
-                                              "VMULPDYrm",
-                                              "VMULPDZ256rm(b?)",
-                                              "VMULPDZrm(b?)",
-                                              "VMULPSYrm",
-                                              "VMULPSZ256rm(b?)",
-                                              "VMULPSZrm(b?)",
                                               "VPLZCNTDZ256rm(b?)",
                                               "VPLZCNTDZrm(b?)",
                                               "VPLZCNTQZ256rm(b?)",

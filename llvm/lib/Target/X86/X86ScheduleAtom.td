@@ -208,11 +208,13 @@ defm : AtomWriteResPair<WriteFCmp,           [AtomPort0],  [AtomPort0],  5,  5, 
 defm : AtomWriteResPair<WriteFCmpY,          [AtomPort0],  [AtomPort0],  5,  5,  [5],  [5]>;
 defm : AtomWriteResPair<WriteFCom,           [AtomPort0],  [AtomPort0],  5,  5,  [5],  [5]>;
 defm : AtomWriteResPair<WriteFMul,           [AtomPort0],  [AtomPort0],  4,  4,  [4],  [4]>;
+defm : AtomWriteResPair<WriteFMulY,          [AtomPort0],  [AtomPort0],  4,  4,  [4],  [4]>;
 defm : AtomWriteResPair<WriteFRcp,           [AtomPort0],  [AtomPort0],  4,  4,  [4],  [4]>;
 defm : AtomWriteResPair<WriteFRcpY,          [AtomPort0],  [AtomPort0],  4,  4,  [4],  [4]>;
 defm : AtomWriteResPair<WriteFRsqrt,         [AtomPort0],  [AtomPort0],  4,  4,  [4],  [4]>;
 defm : AtomWriteResPair<WriteFRsqrtY,        [AtomPort0],  [AtomPort0],  4,  4,  [4],  [4]>;
 defm : AtomWriteResPair<WriteFDiv,          [AtomPort01], [AtomPort01], 34, 34, [34], [34]>;
+defm : AtomWriteResPair<WriteFDivY,         [AtomPort01], [AtomPort01], 34, 34, [34], [34]>;
 defm : AtomWriteResPair<WriteFSqrt,         [AtomPort01], [AtomPort01], 34, 34, [34], [34]>;
 defm : AtomWriteResPair<WriteFSqrtY,        [AtomPort01], [AtomPort01], 34, 34, [34], [34]>;
 defm : AtomWriteResPair<WriteFSign,          [AtomPort1],  [AtomPort1]>;

@@ -96,7 +96,9 @@ defm WriteFCmp   : X86SchedWritePair; // Floating point compare.
 defm WriteFCmpY  : X86SchedWritePair; // Floating point compare (YMM/ZMM).
 defm WriteFCom   : X86SchedWritePair; // Floating point compare to flags.
 defm WriteFMul   : X86SchedWritePair; // Floating point multiplication.
+defm WriteFMulY  : X86SchedWritePair; // Floating point multiplication (YMM/ZMM).
 defm WriteFDiv   : X86SchedWritePair; // Floating point division.
+defm WriteFDivY  : X86SchedWritePair; // Floating point division (YMM/ZMM).
 defm WriteFSqrt  : X86SchedWritePair; // Floating point square root.
 defm WriteFSqrtY : X86SchedWritePair; // Floating point square root (YMM/ZMM).
 defm WriteFRcp   : X86SchedWritePair; // Floating point reciprocal estimate.
@@ -210,9 +212,9 @@ def SchedWriteFAdd
 def SchedWriteFCmp
  : X86SchedWriteWidths<WriteFCmp, WriteFCmp, WriteFCmpY, WriteFCmpY>;
 def SchedWriteFMul
- : X86SchedWriteWidths<WriteFMul, WriteFMul, WriteFMul, WriteFMul>;
+ : X86SchedWriteWidths<WriteFMul, WriteFMul, WriteFMulY, WriteFMulY>;
 def SchedWriteFDiv
- : X86SchedWriteWidths<WriteFDiv, WriteFDiv, WriteFDiv, WriteFDiv>;
+ : X86SchedWriteWidths<WriteFDiv, WriteFDiv, WriteFDivY, WriteFDivY>;
 def SchedWriteFSqrt
  : X86SchedWriteWidths<WriteFSqrt, WriteFSqrt, WriteFSqrtY, WriteFSqrtY>;
 def SchedWriteFRcp
