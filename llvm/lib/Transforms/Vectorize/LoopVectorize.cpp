@@ -2254,6 +2254,10 @@ void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr) {
   if (Group->isReverse())
     Index += (VF - 1) * Group->getFactor();
 
+  bool InBounds = false;
+  if (auto *gep = dyn_cast<GetElementPtrInst>(Ptr->stripPointerCasts()))
+    InBounds = gep->isInBounds();
+
   for (unsigned Part = 0; Part < UF; Part++) {
     Value *NewPtr = getOrCreateScalarValue(Ptr, {Part, 0});
 
@@ -2269,6 +2273,8 @@ void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr) {
     //       A[i+2] = c;     // Member of index 2 (Current instruction)
     // Current pointer is pointed to A[i+2], adjust it to A[i].
     NewPtr = Builder.CreateGEP(NewPtr, Builder.getInt32(-Index));
+    if (InBounds)
+      cast<GetElementPtrInst>(NewPtr)->setIsInBounds(true);
 
     // Cast to the vector pointer type.
     NewPtrs.push_back(Builder.CreateBitCast(NewPtr, PtrTy));
@@ -2405,17 +2411,30 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr,
   if (isMaskRequired)
     Mask = *BlockInMask;
 
+  bool InBounds = false;
+  if (auto *gep = dyn_cast<GetElementPtrInst>(
+          getLoadStorePointerOperand(Instr)->stripPointerCasts()))
+    InBounds = gep->isInBounds();
+
   const auto CreateVecPtr = [&](unsigned Part, Value *Ptr) -> Value * {
     // Calculate the pointer for the specific unroll-part.
-    Value *PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF));
+    GetElementPtrInst *PartPtr = nullptr;
 
     if (Reverse) {
       // If the address is consecutive but reversed, then the
       // wide store needs to start at the last vector element.
-      PartPtr = Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF));
-      PartPtr = Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF));
+      PartPtr = cast<GetElementPtrInst>(
+          Builder.CreateGEP(Ptr, Builder.getInt32(-Part * VF)));
+      PartPtr->setIsInBounds(InBounds);
+      PartPtr = cast<GetElementPtrInst>(
+          Builder.CreateGEP(PartPtr, Builder.getInt32(1 - VF)));
+      PartPtr->setIsInBounds(InBounds);
       if (isMaskRequired) // Reverse of a null all-one mask is a null mask.
         Mask[Part] = reverseVector(Mask[Part]);
+    } else {
+      PartPtr = cast<GetElementPtrInst>(
+          Builder.CreateGEP(Ptr, Builder.getInt32(Part * VF)));
+      PartPtr->setIsInBounds(InBounds);
     }
 
     return Builder.CreateBitCast(PartPtr, DataTy->getPointerTo(AddressSpace));
