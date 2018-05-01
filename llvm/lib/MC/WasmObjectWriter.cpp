@@ -47,6 +47,8 @@ static std::string toString(wasm::WasmSymbolType type) {
     return "WASM_SYMBOL_TYPE_DATA";
   case wasm::WASM_SYMBOL_TYPE_SECTION:
     return "WASM_SYMBOL_TYPE_SECTION";
+  default:
+    llvm_unreachable("unexpected kind");
   }
 }
 
