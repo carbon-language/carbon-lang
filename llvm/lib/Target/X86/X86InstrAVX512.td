@@ -758,14 +758,15 @@ def VINSERTPSZrr : AVX512AIi8<0x21, MRMSrcReg, (outs VR128X:$dst),
       (ins VR128X:$src1, VR128X:$src2, u8imm:$src3),
       "vinsertps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
       [(set VR128X:$dst, (X86insertps VR128X:$src1, VR128X:$src2, imm:$src3))]>,
-      EVEX_4V, Sched<[WriteFShuffle]>;
+      EVEX_4V, Sched<[SchedWriteFShuffle.XMM]>;
 def VINSERTPSZrm: AVX512AIi8<0x21, MRMSrcMem, (outs VR128X:$dst),
       (ins VR128X:$src1, f32mem:$src2, u8imm:$src3),
       "vinsertps\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
       [(set VR128X:$dst, (X86insertps VR128X:$src1,
                           (v4f32 (scalar_to_vector (loadf32 addr:$src2))),
                           imm:$src3))]>,
-      EVEX_4V, EVEX_CD8<32, CD8VT1>, Sched<[WriteFShuffleLd, ReadAfterLd]>;
+      EVEX_4V, EVEX_CD8<32, CD8VT1>,
+      Sched<[SchedWriteFShuffle.XMM.Folded, ReadAfterLd]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3766,7 +3767,7 @@ multiclass avx512_move_scalar<string asm, SDNode OpNode,
              (ins _.RC:$src1, _.RC:$src2),
              !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set _.RC:$dst, (_.VT (OpNode _.RC:$src1, _.RC:$src2)))],
-             _.ExeDomain>, EVEX_4V, Sched<[WriteFShuffle]>;
+             _.ExeDomain>, EVEX_4V, Sched<[SchedWriteFShuffle.XMM]>;
   def rrkz : AVX512PI<0x10, MRMSrcReg, (outs _.RC:$dst),
               (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
               !strconcat(asm, "\t{$src2, $src1, $dst {${mask}} {z}|",
@@ -3774,7 +3775,7 @@ multiclass avx512_move_scalar<string asm, SDNode OpNode,
               [(set _.RC:$dst, (_.VT (X86selects _.KRCWM:$mask,
                                       (_.VT (OpNode _.RC:$src1, _.RC:$src2)),
                                       _.ImmAllZerosV)))],
-              _.ExeDomain>, EVEX_4V, EVEX_KZ, Sched<[WriteFShuffle]>;
+              _.ExeDomain>, EVEX_4V, EVEX_KZ, Sched<[SchedWriteFShuffle.XMM]>;
   let Constraints = "$src0 = $dst"  in
   def rrk : AVX512PI<0x10, MRMSrcReg, (outs _.RC:$dst),
              (ins _.RC:$src0, _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
@@ -3783,7 +3784,7 @@ multiclass avx512_move_scalar<string asm, SDNode OpNode,
              [(set _.RC:$dst, (_.VT (X86selects _.KRCWM:$mask,
                                      (_.VT (OpNode _.RC:$src1, _.RC:$src2)),
                                      (_.VT _.RC:$src0))))],
-             _.ExeDomain>, EVEX_4V, EVEX_K, Sched<[WriteFShuffle]>;
+             _.ExeDomain>, EVEX_4V, EVEX_K, Sched<[SchedWriteFShuffle.XMM]>;
   let canFoldAsLoad = 1, isReMaterializable = 1 in
   def rm : AVX512PI<0x10, MRMSrcMem, (outs _.FRC:$dst), (ins _.ScalarMemOp:$src),
              !strconcat(asm, "\t{$src, $dst|$dst, $src}"),
@@ -3977,7 +3978,8 @@ let hasSideEffects = 0 in {
                            (ins VR128X:$src1, VR128X:$src2),
                            "vmovss.s\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                            []>, XS, EVEX_4V, VEX_LIG,
-                           FoldGenData<"VMOVSSZrr">, Sched<[WriteFShuffle]>;
+                           FoldGenData<"VMOVSSZrr">,
+                           Sched<[SchedWriteFShuffle.XMM]>;
 
 let Constraints = "$src0 = $dst" in
   def VMOVSSZrrk_REV: AVX512<0x11, MRMDestReg, (outs VR128X:$dst),
@@ -3986,20 +3988,23 @@ let Constraints = "$src0 = $dst" in
                              "vmovss.s\t{$src2, $src1, $dst {${mask}}|"#
                                         "$dst {${mask}}, $src1, $src2}",
                              []>, EVEX_K, XS, EVEX_4V, VEX_LIG,
-                             FoldGenData<"VMOVSSZrrk">, Sched<[WriteFShuffle]>;
+                             FoldGenData<"VMOVSSZrrk">,
+                             Sched<[SchedWriteFShuffle.XMM]>;
 
   def VMOVSSZrrkz_REV: AVX512<0x11, MRMDestReg, (outs VR128X:$dst),
                          (ins f32x_info.KRCWM:$mask, VR128X:$src1, VR128X:$src2),
                          "vmovss.s\t{$src2, $src1, $dst {${mask}} {z}|"#
                                     "$dst {${mask}} {z}, $src1, $src2}",
                          []>, EVEX_KZ, XS, EVEX_4V, VEX_LIG,
-                         FoldGenData<"VMOVSSZrrkz">, Sched<[WriteFShuffle]>;
+                         FoldGenData<"VMOVSSZrrkz">,
+                         Sched<[SchedWriteFShuffle.XMM]>;
 
   def VMOVSDZrr_REV: AVX512<0x11, MRMDestReg, (outs VR128X:$dst),
                            (ins VR128X:$src1, VR128X:$src2),
                            "vmovsd.s\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                            []>, XD, EVEX_4V, VEX_LIG, VEX_W,
-                           FoldGenData<"VMOVSDZrr">, Sched<[WriteFShuffle]>;
+                           FoldGenData<"VMOVSDZrr">,
+                           Sched<[SchedWriteFShuffle.XMM]>;
 
 let Constraints = "$src0 = $dst" in
   def VMOVSDZrrk_REV: AVX512<0x11, MRMDestReg, (outs VR128X:$dst),
@@ -4008,7 +4013,8 @@ let Constraints = "$src0 = $dst" in
                              "vmovsd.s\t{$src2, $src1, $dst {${mask}}|"#
                                         "$dst {${mask}}, $src1, $src2}",
                              []>, EVEX_K, XD, EVEX_4V, VEX_LIG,
-                             VEX_W, FoldGenData<"VMOVSDZrrk">, Sched<[WriteFShuffle]>;
+                             VEX_W, FoldGenData<"VMOVSDZrrk">,
+                             Sched<[SchedWriteFShuffle.XMM]>;
 
   def VMOVSDZrrkz_REV: AVX512<0x11, MRMDestReg, (outs VR128X:$dst),
                               (ins f64x_info.KRCWM:$mask, VR128X:$src1,
@@ -4016,7 +4022,8 @@ let Constraints = "$src0 = $dst" in
                               "vmovsd.s\t{$src2, $src1, $dst {${mask}} {z}|"#
                                          "$dst {${mask}} {z}, $src1, $src2}",
                               []>, EVEX_KZ, XD, EVEX_4V, VEX_LIG,
-                              VEX_W, FoldGenData<"VMOVSDZrrkz">, Sched<[WriteFShuffle]>;
+                              VEX_W, FoldGenData<"VMOVSDZrrkz">,
+                              Sched<[SchedWriteFShuffle.XMM]>;
 }
 
 let Predicates = [HasAVX512] in {
@@ -5953,6 +5960,7 @@ defm VPERMQ : avx512_vpermi_dq_sizes<0x00, MRMSrcReg, MRMSrcMem, "vpermq",
 defm VPERMPD : avx512_vpermi_dq_sizes<0x01, MRMSrcReg, MRMSrcMem, "vpermpd",
                              X86VPermi, WriteFShuffle256, avx512vl_f64_info>,
                              EVEX, AVX512AIi8Base, EVEX_CD8<64, CD8VF>, VEX_W;
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - VPERMIL
 //===----------------------------------------------------------------------===//
@@ -6048,21 +6056,23 @@ defm VPSHUFB: avx512_pshufb_sizes<0x00, "vpshufb", X86pshufb, WriteVarShuffle>, 
 //===----------------------------------------------------------------------===//
 // Move Low to High and High to Low packed FP Instructions
 //===----------------------------------------------------------------------===//
+
 def VMOVLHPSZrr : AVX512PSI<0x16, MRMSrcReg, (outs VR128X:$dst),
           (ins VR128X:$src1, VR128X:$src2),
           "vmovlhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           [(set VR128X:$dst, (v4f32 (X86Movlhps VR128X:$src1, VR128X:$src2)))]>,
-          Sched<[WriteFShuffle]>, EVEX_4V;
+          Sched<[SchedWriteFShuffle.XMM]>, EVEX_4V;
 def VMOVHLPSZrr : AVX512PSI<0x12, MRMSrcReg, (outs VR128X:$dst),
           (ins VR128X:$src1, VR128X:$src2),
           "vmovhlps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
           [(set VR128X:$dst, (v4f32 (X86Movhlps VR128X:$src1, VR128X:$src2)))]>,
-          Sched<[WriteFShuffle]>, EVEX_4V;
+          Sched<[SchedWriteFShuffle.XMM]>, EVEX_4V;
 
 //===----------------------------------------------------------------------===//
 // VMOVHPS/PD VMOVLPS Instructions
 // All patterns was taken from SSS implementation.
 //===----------------------------------------------------------------------===//
+
 multiclass avx512_mov_hilo_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                   X86VectorVTInfo _> {
   let ExeDomain = _.ExeDomain in
@@ -6074,7 +6084,7 @@ multiclass avx512_mov_hilo_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
                      (OpNode _.RC:$src1,
                        (_.VT (bitconvert
                          (v2f64 (scalar_to_vector (loadf64 addr:$src2)))))))]>,
-                  Sched<[WriteFShuffleLd, ReadAfterLd]>, EVEX_4V;
+                  Sched<[SchedWriteFShuffle.XMM.Folded, ReadAfterLd]>, EVEX_4V;
 }
 
 defm VMOVHPSZ128 : avx512_mov_hilo_packed<0x16, "vmovhps", X86Movlhps,
@@ -9279,29 +9289,32 @@ multiclass avx512_common_fp_sae_packed_imm<string OpcodeStr,
 }
 
 multiclass avx512_common_3Op_rm_imm8<bits<8> opc, SDNode OpNode, string OpStr,
-                   X86FoldableSchedWrite sched, AVX512VLVectorVTInfo DestInfo,
+                   X86SchedWriteWidths sched, AVX512VLVectorVTInfo DestInfo,
                    AVX512VLVectorVTInfo SrcInfo, Predicate Pred = HasBWI> {
   let Predicates = [Pred] in {
-    defm Z    : avx512_3Op_rm_imm8<opc, OpStr, OpNode, sched, DestInfo.info512,
+    defm Z    : avx512_3Op_rm_imm8<opc, OpStr, OpNode, sched.ZMM, DestInfo.info512,
                            SrcInfo.info512>, EVEX_V512, AVX512AIi8Base, EVEX_4V;
   }
   let Predicates = [Pred, HasVLX] in {
-    defm Z128 : avx512_3Op_rm_imm8<opc, OpStr, OpNode, sched, DestInfo.info128,
+    defm Z128 : avx512_3Op_rm_imm8<opc, OpStr, OpNode, sched.XMM, DestInfo.info128,
                            SrcInfo.info128>, EVEX_V128, AVX512AIi8Base, EVEX_4V;
-    defm Z256 : avx512_3Op_rm_imm8<opc, OpStr, OpNode, sched,  DestInfo.info256,
+    defm Z256 : avx512_3Op_rm_imm8<opc, OpStr, OpNode, sched.YMM, DestInfo.info256,
                            SrcInfo.info256>, EVEX_V256, AVX512AIi8Base, EVEX_4V;
   }
 }
 
 multiclass avx512_common_3Op_imm8<string OpcodeStr, AVX512VLVectorVTInfo _,
-                                  bits<8> opc, SDNode OpNode, X86FoldableSchedWrite sched,
+                                  bits<8> opc, SDNode OpNode, X86SchedWriteWidths sched,
                                   Predicate Pred = HasAVX512> {
   let Predicates = [Pred] in {
-    defm Z    : avx512_3Op_imm8<opc, OpcodeStr, OpNode, sched, _.info512>, EVEX_V512;
+    defm Z    : avx512_3Op_imm8<opc, OpcodeStr, OpNode, sched.ZMM, _.info512>,
+                                EVEX_V512;
   }
   let Predicates = [Pred, HasVLX] in {
-    defm Z128 : avx512_3Op_imm8<opc, OpcodeStr, OpNode, sched, _.info128>, EVEX_V128;
-    defm Z256 : avx512_3Op_imm8<opc, OpcodeStr, OpNode, sched, _.info256>, EVEX_V256;
+    defm Z128 : avx512_3Op_imm8<opc, OpcodeStr, OpNode, sched.XMM, _.info128>,
+                                EVEX_V128;
+    defm Z256 : avx512_3Op_imm8<opc, OpcodeStr, OpNode, sched.YMM, _.info256>,
+                                EVEX_V256;
   }
 }
 
@@ -9523,20 +9536,20 @@ def : Pat<(v64i8 (X86SubVBroadcast (v16i8 VR128X:$src))),
                           0)>;
 }
 
-multiclass avx512_valign<string OpcodeStr, X86FoldableSchedWrite sched,
+multiclass avx512_valign<string OpcodeStr, X86SchedWriteWidths sched,
                          AVX512VLVectorVTInfo VTInfo_I> {
   defm NAME:       avx512_common_3Op_imm8<OpcodeStr, VTInfo_I, 0x03, X86VAlign, sched>,
                            AVX512AIi8Base, EVEX_4V;
 }
 
-defm VALIGND: avx512_valign<"valignd", WriteShuffle, avx512vl_i32_info>,
+defm VALIGND: avx512_valign<"valignd", SchedWriteShuffle, avx512vl_i32_info>,
                             EVEX_CD8<32, CD8VF>;
-defm VALIGNQ: avx512_valign<"valignq", WriteShuffle, avx512vl_i64_info>,
+defm VALIGNQ: avx512_valign<"valignq", SchedWriteShuffle, avx512vl_i64_info>,
                             EVEX_CD8<64, CD8VF>, VEX_W;
 
-defm VPALIGNR:   avx512_common_3Op_rm_imm8<0x0F, X86PAlignr, "vpalignr",
-                                           WriteShuffle, avx512vl_i8_info,
-                                           avx512vl_i8_info>, EVEX_CD8<8, CD8VF>;
+defm VPALIGNR: avx512_common_3Op_rm_imm8<0x0F, X86PAlignr, "vpalignr",
+                                         SchedWriteShuffle, avx512vl_i8_info,
+                                         avx512vl_i8_info>, EVEX_CD8<8, CD8VF>;
 
 // Fragments to help convert valignq into masked valignd. Or valignq/valignd
 // into vpalignr.
@@ -9656,7 +9669,7 @@ let Predicates = [HasVLX, HasBWI] in {
 }
 
 defm VDBPSADBW: avx512_common_3Op_rm_imm8<0x42, X86dbpsadbw, "vdbpsadbw",
-                WriteVecIMul, avx512vl_i16_info, avx512vl_i8_info>,
+                SchedWriteVecIMul, avx512vl_i16_info, avx512vl_i8_info>,
                 EVEX_CD8<8, CD8VF>;
 
 multiclass avx512_unary_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -9691,37 +9704,38 @@ multiclass avx512_unary_rmb<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 
 multiclass avx512_unary_rm_vl<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                              X86FoldableSchedWrite sched, AVX512VLVectorVTInfo VTInfo,
-                              Predicate prd> {
+                              X86SchedWriteWidths sched,
+                              AVX512VLVectorVTInfo VTInfo, Predicate prd> {
   let Predicates = [prd] in
-    defm Z : avx512_unary_rm<opc, OpcodeStr, OpNode, sched, VTInfo.info512>,
+    defm Z : avx512_unary_rm<opc, OpcodeStr, OpNode, sched.ZMM, VTInfo.info512>,
                              EVEX_V512;
 
   let Predicates = [prd, HasVLX] in {
-    defm Z256 : avx512_unary_rm<opc, OpcodeStr, OpNode, sched, VTInfo.info256>,
+    defm Z256 : avx512_unary_rm<opc, OpcodeStr, OpNode, sched.YMM, VTInfo.info256>,
                               EVEX_V256;
-    defm Z128 : avx512_unary_rm<opc, OpcodeStr, OpNode, sched, VTInfo.info128>,
+    defm Z128 : avx512_unary_rm<opc, OpcodeStr, OpNode, sched.XMM, VTInfo.info128>,
                               EVEX_V128;
   }
 }
 
 multiclass avx512_unary_rmb_vl<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                               X86FoldableSchedWrite sched, AVX512VLVectorVTInfo VTInfo,
+                               X86SchedWriteWidths sched, AVX512VLVectorVTInfo VTInfo,
                                Predicate prd> {
   let Predicates = [prd] in
-    defm Z : avx512_unary_rmb<opc, OpcodeStr, OpNode, sched, VTInfo.info512>,
+    defm Z : avx512_unary_rmb<opc, OpcodeStr, OpNode, sched.ZMM, VTInfo.info512>,
                               EVEX_V512;
 
   let Predicates = [prd, HasVLX] in {
-    defm Z256 : avx512_unary_rmb<opc, OpcodeStr, OpNode, sched, VTInfo.info256>,
+    defm Z256 : avx512_unary_rmb<opc, OpcodeStr, OpNode, sched.YMM, VTInfo.info256>,
                                  EVEX_V256;
-    defm Z128 : avx512_unary_rmb<opc, OpcodeStr, OpNode, sched, VTInfo.info128>,
+    defm Z128 : avx512_unary_rmb<opc, OpcodeStr, OpNode, sched.XMM, VTInfo.info128>,
                                  EVEX_V128;
   }
 }
 
 multiclass avx512_unary_rm_vl_dq<bits<8> opc_d, bits<8> opc_q, string OpcodeStr,
-                                 SDNode OpNode, X86FoldableSchedWrite sched, Predicate prd> {
+                                 SDNode OpNode, X86SchedWriteWidths sched,
+                                 Predicate prd> {
   defm Q : avx512_unary_rmb_vl<opc_q, OpcodeStr#"q", OpNode, sched,
                                avx512vl_i64_info, prd>, VEX_W;
   defm D : avx512_unary_rmb_vl<opc_d, OpcodeStr#"d", OpNode, sched,
@@ -9729,7 +9743,8 @@ multiclass avx512_unary_rm_vl_dq<bits<8> opc_d, bits<8> opc_q, string OpcodeStr,
 }
 
 multiclass avx512_unary_rm_vl_bw<bits<8> opc_b, bits<8> opc_w, string OpcodeStr,
-                                 SDNode OpNode, X86FoldableSchedWrite sched, Predicate prd> {
+                                 SDNode OpNode, X86SchedWriteWidths sched,
+                                 Predicate prd> {
   defm W : avx512_unary_rm_vl<opc_w, OpcodeStr#"w", OpNode, sched,
                               avx512vl_i16_info, prd>, VEX_WIG;
   defm B : avx512_unary_rm_vl<opc_b, OpcodeStr#"b", OpNode, sched,
@@ -9739,14 +9754,15 @@ multiclass avx512_unary_rm_vl_bw<bits<8> opc_b, bits<8> opc_w, string OpcodeStr,
 multiclass avx512_unary_rm_vl_all<bits<8> opc_b, bits<8> opc_w,
                                   bits<8> opc_d, bits<8> opc_q,
                                   string OpcodeStr, SDNode OpNode,
-                                  X86FoldableSchedWrite sched> {
+                                  X86SchedWriteWidths sched> {
   defm NAME : avx512_unary_rm_vl_dq<opc_d, opc_q, OpcodeStr, OpNode, sched,
                                     HasAVX512>,
               avx512_unary_rm_vl_bw<opc_b, opc_w, OpcodeStr, OpNode, sched,
                                     HasBWI>;
 }
 
-defm VPABS : avx512_unary_rm_vl_all<0x1C, 0x1D, 0x1E, 0x1F, "vpabs", abs, WriteVecALU>;
+defm VPABS : avx512_unary_rm_vl_all<0x1C, 0x1D, 0x1E, 0x1F, "vpabs", abs,
+                                    SchedWriteVecALU>;
 
 // VPABS: Use 512bit version to implement 128/256 bit in case NoVLX.
 let Predicates = [HasAVX512, NoVLX] in {
@@ -9786,11 +9802,11 @@ multiclass avx512_unary_lowering<string InstrStr, SDNode OpNode,
 
 // FIXME: Is there a better scheduler class for VPLZCNT?
 defm VPLZCNT    : avx512_unary_rm_vl_dq<0x44, 0x44, "vplzcnt", ctlz,
-                                        WriteVecALU, HasCDI>;
+                                        SchedWriteVecALU, HasCDI>;
 
 // FIXME: Is there a better scheduler class for VPCONFLICT?
 defm VPCONFLICT : avx512_unary_rm_vl_dq<0xC4, 0xC4, "vpconflict", X86Conflict,
-                                        WriteVecALU, HasCDI>;
+                                        SchedWriteVecALU, HasCDI>;
 
 // VPLZCNT: Use 512bit version to implement 128/256 bit in case NoVLX.
 defm : avx512_unary_lowering<"VPLZCNTQ", ctlz, avx512vl_i64_info, HasCDI>;
@@ -9802,7 +9818,7 @@ defm : avx512_unary_lowering<"VPLZCNTD", ctlz, avx512vl_i32_info, HasCDI>;
 
 // FIXME: Is there a better scheduler class for VPOPCNTD/VPOPCNTQ?
 defm VPOPCNT : avx512_unary_rm_vl_dq<0x55, 0x55, "vpopcnt", ctpop,
-                                     WriteVecALU, HasVPOPCNTDQ>;
+                                     SchedWriteVecALU, HasVPOPCNTDQ>;
 
 defm : avx512_unary_lowering<"VPOPCNTQ", ctpop, avx512vl_i64_info, HasVPOPCNTDQ>;
 defm : avx512_unary_lowering<"VPOPCNTD", ctpop, avx512vl_i32_info, HasVPOPCNTDQ>;
@@ -9810,14 +9826,17 @@ defm : avx512_unary_lowering<"VPOPCNTD", ctpop, avx512vl_i32_info, HasVPOPCNTDQ>
 //===---------------------------------------------------------------------===//
 // Replicate Single FP - MOVSHDUP and MOVSLDUP
 //===---------------------------------------------------------------------===//
+
 multiclass avx512_replicate<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                            X86FoldableSchedWrite sched> {
+                            X86SchedWriteWidths sched> {
   defm NAME:       avx512_unary_rm_vl<opc, OpcodeStr, OpNode, sched,
                                       avx512vl_f32_info, HasAVX512>, XS;
 }
 
-defm VMOVSHDUP : avx512_replicate<0x16, "vmovshdup", X86Movshdup, WriteFShuffle>;
-defm VMOVSLDUP : avx512_replicate<0x12, "vmovsldup", X86Movsldup, WriteFShuffle>;
+defm VMOVSHDUP : avx512_replicate<0x16, "vmovshdup", X86Movshdup,
+                                  SchedWriteFShuffle>;
+defm VMOVSLDUP : avx512_replicate<0x12, "vmovsldup", X86Movsldup,
+                                  SchedWriteFShuffle>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - MOVDDUP
@@ -9840,25 +9859,25 @@ multiclass avx512_movddup_128<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 
 multiclass avx512_movddup_common<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                                 X86FoldableSchedWrite sched, AVX512VLVectorVTInfo VTInfo> {
-
-  defm Z : avx512_unary_rm<opc, OpcodeStr, X86Movddup, sched, VTInfo.info512>, EVEX_V512;
+                                 X86SchedWriteWidths sched, AVX512VLVectorVTInfo VTInfo> {
+  defm Z : avx512_unary_rm<opc, OpcodeStr, X86Movddup, sched.ZMM,
+                           VTInfo.info512>, EVEX_V512;
 
   let Predicates = [HasAVX512, HasVLX] in {
-    defm Z256 : avx512_unary_rm<opc, OpcodeStr, X86Movddup, sched, VTInfo.info256>,
-                               EVEX_V256;
-    defm Z128 : avx512_movddup_128<opc, OpcodeStr, X86VBroadcast, sched, VTInfo.info128>,
-                                  EVEX_V128;
+    defm Z256 : avx512_unary_rm<opc, OpcodeStr, X86Movddup, sched.YMM,
+                                VTInfo.info256>, EVEX_V256;
+    defm Z128 : avx512_movddup_128<opc, OpcodeStr, X86VBroadcast, sched.XMM,
+                                   VTInfo.info128>, EVEX_V128;
   }
 }
 
 multiclass avx512_movddup<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                          X86FoldableSchedWrite sched> {
+                          X86SchedWriteWidths sched> {
   defm NAME:      avx512_movddup_common<opc, OpcodeStr, OpNode, sched,
                                         avx512vl_f64_info>, XD, VEX_W;
 }
 
-defm VMOVDDUP : avx512_movddup<0x12, "vmovddup", X86Movddup, WriteFShuffle>;
+defm VMOVDDUP : avx512_movddup<0x12, "vmovddup", X86Movddup, SchedWriteFShuffle>;
 
 let Predicates = [HasVLX] in {
 def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
@@ -10041,10 +10060,11 @@ defm VPINSRQZ : avx512_insert_elt_dq<0x22, "vpinsrq", v2i64x_info, GR64>, VEX_W;
 //===----------------------------------------------------------------------===//
 
 multiclass avx512_shufp<string OpcodeStr, AVX512VLVectorVTInfo VTInfo_I,
-                                                AVX512VLVectorVTInfo VTInfo_FP>{
+                        AVX512VLVectorVTInfo VTInfo_FP>{
   defm NAME: avx512_common_3Op_imm8<OpcodeStr, VTInfo_FP, 0xC6, X86Shufp,
-                        WriteFShuffle>, EVEX_CD8<VTInfo_FP.info512.EltSize, CD8VF>,
-                        AVX512AIi8Base, EVEX_4V;
+                                    SchedWriteFShuffle>,
+                                    EVEX_CD8<VTInfo_FP.info512.EltSize, CD8VF>,
+                                    AVX512AIi8Base, EVEX_4V;
 }
 
 defm VSHUFPS: avx512_shufp<"vshufps", avx512vl_i32_info, avx512vl_f32_info>, PS;
@@ -10750,7 +10770,7 @@ multiclass VBMI2_shift_var<bits<8> wOp, bits<8> dqOp, string Prefix,
 }
 
 multiclass VBMI2_shift_imm<bits<8> wOp, bits<8> dqOp, string Prefix,
-                           SDNode OpNode, X86FoldableSchedWrite sched> {
+                           SDNode OpNode, X86SchedWriteWidths sched> {
   defm W : avx512_common_3Op_rm_imm8<wOp, OpNode, Prefix##"w", sched,
              avx512vl_i16_info, avx512vl_i16_info, HasVBMI2>,
              VEX_W, EVEX_CD8<16, CD8VF>;
@@ -10763,8 +10783,8 @@ multiclass VBMI2_shift_imm<bits<8> wOp, bits<8> dqOp, string Prefix,
 // Concat & Shift
 defm VPSHLDV     : VBMI2_shift_var<0x70, 0x71, "vpshldv", X86VShldv, WriteVecIMul>;
 defm VPSHRDV     : VBMI2_shift_var<0x72, 0x73, "vpshrdv", X86VShrdv, WriteVecIMul>;
-defm VPSHLD      : VBMI2_shift_imm<0x70, 0x71, "vpshld", X86VShld, WriteVecIMul>;
-defm VPSHRD      : VBMI2_shift_imm<0x72, 0x73, "vpshrd", X86VShrd, WriteVecIMul>;
+defm VPSHLD      : VBMI2_shift_imm<0x70, 0x71, "vpshld", X86VShld, SchedWriteVecIMul>;
+defm VPSHRD      : VBMI2_shift_imm<0x72, 0x73, "vpshrd", X86VShrd, SchedWriteVecIMul>;
 
 // Compress
 defm VPCOMPRESSB : compress_by_elt_width<0x63, "vpcompressb", WriteVarShuffle256,
@@ -10829,9 +10849,9 @@ defm VPDPWSSDS  : VNNI_common<0x53, "vpdpwssds", X86Vpdpwssds, WriteVecIMul>;
 //===----------------------------------------------------------------------===//
 
 // FIXME: Is there a better scheduler class for VPOPCNTB/VPOPCNTW?
-defm VPOPCNTB : avx512_unary_rm_vl<0x54, "vpopcntb", ctpop, WriteVecALU,
+defm VPOPCNTB : avx512_unary_rm_vl<0x54, "vpopcntb", ctpop, SchedWriteVecALU,
                                    avx512vl_i8_info, HasBITALG>;
-defm VPOPCNTW : avx512_unary_rm_vl<0x54, "vpopcntw", ctpop, WriteVecALU,
+defm VPOPCNTW : avx512_unary_rm_vl<0x54, "vpopcntw", ctpop, SchedWriteVecALU,
                                    avx512vl_i16_info, HasBITALG>, VEX_W;
 
 defm : avx512_unary_lowering<"VPOPCNTB", ctpop, avx512vl_i8_info, HasBITALG>;
