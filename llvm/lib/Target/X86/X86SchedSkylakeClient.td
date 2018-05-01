@@ -165,7 +165,8 @@ defm : SKLWriteResPair<WriteFMAY,   [SKLPort01], 4, [1], 1, 7>; // Fused Multipl
 defm : SKLWriteResPair<WriteFSign,   [SKLPort0], 1>; // Floating point fabs/fchs.
 defm : SKLWriteResPair<WriteFLogic,  [SKLPort015], 1, [1], 1, 6>; // Floating point and/or/xor logicals.
 defm : SKLWriteResPair<WriteFLogicY, [SKLPort015], 1, [1], 1, 7>; // Floating point and/or/xor logicals (YMM/ZMM).
-defm : SKLWriteResPair<WriteFShuffle,  [SKLPort5],  1>; // Floating point vector shuffles.
+defm : SKLWriteResPair<WriteFShuffle,  [SKLPort5], 1, [1], 1, 5>; // Floating point vector shuffles.
+defm : SKLWriteResPair<WriteFShuffleY, [SKLPort5], 1, [1], 1, 7>; // Floating point vector shuffles (YMM/ZMM).
 defm : SKLWriteResPair<WriteFVarShuffle,  [SKLPort5],  1>; // Floating point vector shuffles.
 defm : SKLWriteResPair<WriteFVarShuffleY, [SKLPort5],  1>; // Floating point vector shuffles.
 defm : SKLWriteResPair<WriteFBlend,  [SKLPort015], 1, [1], 1, 6>; // Floating point vector blends.
@@ -1519,9 +1520,7 @@ def: InstRW<[SKLWriteResGroup108], (instregex "FCOM32m",
                                               "VPBLENDWYrmi",
                                               "VPBROADCASTBYrm",
                                               "VPBROADCASTWYrm",
-                                              "VPERMILPDYmi",
                                               "VPERMILPDYrm",
-                                              "VPERMILPSYmi",
                                               "VPERMILPSYrm",
                                               "VPMOVSXBDYrm",
                                               "VPMOVSXBQYrm",
@@ -1537,13 +1536,7 @@ def: InstRW<[SKLWriteResGroup108], (instregex "FCOM32m",
                                               "VPUNPCKLBWYrm",
                                               "VPUNPCKLDQYrm",
                                               "VPUNPCKLQDQYrm",
-                                              "VPUNPCKLWDYrm",
-                                              "VSHUFPDYrmi",
-                                              "VSHUFPSYrmi",
-                                              "VUNPCKHPDYrm",
-                                              "VUNPCKHPSYrm",
-                                              "VUNPCKLPDYrm",
-                                              "VUNPCKLPSYrm")>;
+                                              "VPUNPCKLWDYrm")>;
 
 def SKLWriteResGroup109 : SchedWriteRes<[SKLPort01,SKLPort23]> {
   let Latency = 8;

@@ -105,6 +105,7 @@ defm WriteFSign  : X86SchedWritePair; // Floating point fabs/fchs.
 defm WriteFLogic  : X86SchedWritePair; // Floating point and/or/xor logicals.
 defm WriteFLogicY : X86SchedWritePair; // Floating point and/or/xor logicals (YMM/ZMM).
 defm WriteFShuffle  : X86SchedWritePair; // Floating point vector shuffles.
+defm WriteFShuffleY : X86SchedWritePair; // Floating point vector shuffles (YMM/ZMM).
 defm WriteFVarShuffle  : X86SchedWritePair; // Floating point vector variable shuffles.
 defm WriteFVarShuffleY : X86SchedWritePair; // Floating point vector variable shuffles (YMM/ZMM).
 defm WriteFBlend  : X86SchedWritePair; // Floating point vector blends.
@@ -212,7 +213,7 @@ def SchedWriteFLogic
 
 def SchedWriteFShuffle
  : X86SchedWriteWidths<WriteFShuffle, WriteFShuffle,
-                       WriteFShuffle, WriteFShuffle>;
+                       WriteFShuffleY, WriteFShuffleY>;
 def SchedWriteFVarShuffle
  : X86SchedWriteWidths<WriteFVarShuffle, WriteFVarShuffle,
                        WriteFVarShuffleY, WriteFVarShuffleY>;

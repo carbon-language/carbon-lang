@@ -165,7 +165,8 @@ defm : HWWriteResPair<WriteFMAY,  [HWPort01], 5, [1], 1, 7>;
 defm : HWWriteResPair<WriteFSign,  [HWPort0], 1>;
 defm : HWWriteResPair<WriteFLogic,  [HWPort5], 1, [1], 1, 6>;
 defm : HWWriteResPair<WriteFLogicY, [HWPort5], 1, [1], 1, 7>;
-defm : HWWriteResPair<WriteFShuffle,  [HWPort5],  1>;
+defm : HWWriteResPair<WriteFShuffle,  [HWPort5], 1, [1], 1, 5>;
+defm : HWWriteResPair<WriteFShuffleY, [HWPort5], 1, [1], 1, 7>;
 defm : HWWriteResPair<WriteFVarShuffle,  [HWPort5], 1, [1], 1, 6>;
 defm : HWWriteResPair<WriteFVarShuffleY, [HWPort5], 1, [1], 1, 7>;
 defm : HWWriteResPair<WriteFBlend,  [HWPort015], 1, [1], 1, 6>;
@@ -900,8 +901,6 @@ def: InstRW<[HWWriteResGroup13_1], (instregex "VPACKSSDWYrm",
                                               "VPACKUSWBYrm",
                                               "VPALIGNRYrmi",
                                               "VPBLENDWYrmi",
-                                              "VPERMILPDYmi",
-                                              "VPERMILPSYmi",
                                               "VPMOVSXBDYrm",
                                               "VPMOVSXBQYrm",
                                               "VPMOVSXWQYrm",
@@ -916,13 +915,7 @@ def: InstRW<[HWWriteResGroup13_1], (instregex "VPACKSSDWYrm",
                                               "VPUNPCKLBWYrm",
                                               "VPUNPCKLDQYrm",
                                               "VPUNPCKLQDQYrm",
-                                              "VPUNPCKLWDYrm",
-                                              "VSHUFPDYrmi",
-                                              "VSHUFPSYrmi",
-                                              "VUNPCKHPDYrm",
-                                              "VUNPCKHPSYrm",
-                                              "VUNPCKLPDYrm",
-                                              "VUNPCKLPSYrm")>;
+                                              "VPUNPCKLWDYrm")>;
 
 def HWWriteResGroup14 : SchedWriteRes<[HWPort6,HWPort23]> {
   let Latency = 6;
