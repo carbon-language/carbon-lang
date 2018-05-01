@@ -151,7 +151,8 @@ def  : WriteRes<WriteFLoad,         [SKLPort23]> { let Latency = 6; }
 def  : WriteRes<WriteFStore,        [SKLPort237, SKLPort4]>;
 def  : WriteRes<WriteFMove,         [SKLPort015]>;
 
-defm : SKLWriteResPair<WriteFAdd,   [SKLPort1], 3>; // Floating point add/sub.
+defm : SKLWriteResPair<WriteFAdd,   [SKLPort1], 3, [1], 1, 5>; // Floating point add/sub.
+defm : SKLWriteResPair<WriteFAddY,  [SKLPort1], 3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
 defm : SKLWriteResPair<WriteFCmp,  [SKLPort01], 4, [1], 1, 6>; // Floating point compare.
 defm : SKLWriteResPair<WriteFCom,   [SKLPort0], 2>; // Floating point compare to flags.
 defm : SKLWriteResPair<WriteFMul,   [SKLPort0], 5>; // Floating point multiplication.

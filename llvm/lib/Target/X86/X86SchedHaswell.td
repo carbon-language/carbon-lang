@@ -148,7 +148,8 @@ def  : WriteRes<WriteFStore,       [HWPort237, HWPort4]>;
 def  : WriteRes<WriteFLoad,        [HWPort23]> { let Latency = 5; }
 def  : WriteRes<WriteFMove,        [HWPort5]>;
 
-defm : HWWriteResPair<WriteFAdd,   [HWPort1], 3>;
+defm : HWWriteResPair<WriteFAdd,   [HWPort1], 3, [1], 1, 5>;
+defm : HWWriteResPair<WriteFAddY,  [HWPort1], 3, [1], 1, 7>;
 defm : HWWriteResPair<WriteFCmp,   [HWPort1], 3, [1], 1, 6>;
 defm : HWWriteResPair<WriteFCom,   [HWPort1], 3>;
 defm : HWWriteResPair<WriteFMul,   [HWPort0], 5>;
@@ -1401,10 +1402,6 @@ def HWWriteResGroup52_1 : SchedWriteRes<[HWPort1,HWPort23]> {
 }
 def: InstRW<[HWWriteResGroup52_1], (instregex "(ADD|SUB|SUBR)_F(32|64)m",
                                               "ILD_F(16|32|64)m",
-                                              "VADDPDYrm",
-                                              "VADDPSYrm",
-                                              "VADDSUBPDYrm",
-                                              "VADDSUBPSYrm",
                                               "VCMPPDYrmi",
                                               "VCMPPSYrmi",
                                               "VCVTDQ2PSYrm",
@@ -1413,9 +1410,7 @@ def: InstRW<[HWWriteResGroup52_1], (instregex "(ADD|SUB|SUBR)_F(32|64)m",
                                               "VMAX(C?)PDYrm",
                                               "VMAX(C?)PSYrm",
                                               "VMIN(C?)PDYrm",
-                                              "VMIN(C?)PSYrm",
-                                              "VSUBPDYrm",
-                                              "VSUBPSYrm")>;
+                                              "VMIN(C?)PSYrm")>;
 
 def HWWriteResGroup53 : SchedWriteRes<[HWPort5,HWPort23]> {
   let Latency = 10;

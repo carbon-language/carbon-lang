@@ -194,6 +194,7 @@ def : WriteRes<WriteFLoad,              [ZnAGU]> { let Latency = 8; }
 defm : ZnWriteResFpuPair<WriteFHAdd,     [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFHAddY,    [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFAdd,      [ZnFPU0],  3>;
+defm : ZnWriteResFpuPair<WriteFAddY,     [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFCmp,      [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFCom,      [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WriteFBlend,    [ZnFPU01], 1>;

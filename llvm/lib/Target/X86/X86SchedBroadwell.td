@@ -154,7 +154,8 @@ def  : WriteRes<WriteFLoad,        [BWPort23]> { let Latency = 5; }
 def  : WriteRes<WriteFStore,       [BWPort237, BWPort4]>;
 def  : WriteRes<WriteFMove,        [BWPort5]>;
 
-defm : BWWriteResPair<WriteFAdd,   [BWPort1], 3>; // Floating point add/sub.
+defm : BWWriteResPair<WriteFAdd,   [BWPort1], 3, [1], 1, 5>; // Floating point add/sub.
+defm : BWWriteResPair<WriteFAddY,  [BWPort1], 3, [1], 1, 7>; // Floating point add/sub (YMM/ZMM).
 defm : BWWriteResPair<WriteFCmp,   [BWPort1], 3>; // Floating point compare.
 defm : BWWriteResPair<WriteFCom,   [BWPort1], 3>; // Floating point compare to flags.
 defm : BWWriteResPair<WriteFMul,   [BWPort0], 5>; // Floating point multiplication.
