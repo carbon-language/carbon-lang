@@ -311,7 +311,7 @@ public:
   APInt(unsigned numBits, StringRef str, uint8_t radix);
 
   /// Simply makes *this a copy of that.
-  /// @brief Copy Constructor.
+  /// Copy Constructor.
   APInt(const APInt &that) : BitWidth(that.BitWidth) {
     if (isSingleWord())
       U.VAL = that.U.VAL;
@@ -737,7 +737,7 @@ public:
     return *this;
   }
 
-  /// @brief Move assignment operator.
+  /// Move assignment operator.
   APInt &operator=(APInt &&that) {
 #ifdef _MSC_VER
     // The MSVC std::shuffle implementation still does self-assignment.

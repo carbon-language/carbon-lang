@@ -26,7 +26,7 @@ namespace CallingConv {
 
   /// A set of enums which specify the assigned numeric values for known llvm
   /// calling conventions.
-  /// @brief LLVM Calling Convention Representation
+  /// LLVM Calling Convention Representation
   enum {
     /// C - The default llvm calling convention, compatible with C.  This
     /// convention is the only calling convention that supports varargs calls.

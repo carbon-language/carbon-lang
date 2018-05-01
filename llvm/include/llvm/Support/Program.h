@@ -32,7 +32,7 @@ namespace sys {
   const char EnvPathSeparator = ';';
 #endif
 
-/// @brief This struct encapsulates information about a process.
+/// This struct encapsulates information about a process.
 struct ProcessInfo {
 #if defined(LLVM_ON_UNIX)
   typedef pid_t ProcessId;

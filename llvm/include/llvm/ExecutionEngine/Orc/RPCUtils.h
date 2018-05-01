@@ -1683,21 +1683,21 @@ private:
   uint32_t NumOutstandingCalls = 0;
 };
 
-/// @brief Convenience class for grouping RPC Functions into APIs that can be
+/// Convenience class for grouping RPC Functions into APIs that can be
 ///        negotiated as a block.
 ///
 template <typename... Funcs>
 class APICalls {
 public:
 
-  /// @brief Test whether this API contains Function F.
+  /// Test whether this API contains Function F.
   template <typename F>
   class Contains {
   public:
     static const bool value = false;
   };
 
-  /// @brief Negotiate all functions in this API.
+  /// Negotiate all functions in this API.
   template <typename RPCEndpoint>
   static Error negotiate(RPCEndpoint &R) {
     return Error::success();

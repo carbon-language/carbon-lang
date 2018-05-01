@@ -127,7 +127,7 @@ public:
   bool resultIsRememberedBlock() { return ResultIsRemembered; }
 };
 
-/// @brief Transforms the control flow graph on one single entry/exit region
+/// Transforms the control flow graph on one single entry/exit region
 /// at a time.
 ///
 /// After the transform all "If"/"Then"/"Else" style control flow looks like

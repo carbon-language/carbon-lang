@@ -29,7 +29,7 @@ namespace sys {
 
   /// This function registers signal handlers to ensure that if a signal gets
   /// delivered that the named file is removed.
-  /// @brief Remove a file if a fatal signal occurs.
+  /// Remove a file if a fatal signal occurs.
   bool RemoveFileOnSignal(StringRef Filename, std::string* ErrMsg = nullptr);
 
   /// This function removes a file from the list of files to be removed on
@@ -69,7 +69,7 @@ namespace sys {
   /// functions.  An null interrupt function pointer disables the current
   /// installed function.  Note also that the handler may be executed on a
   /// different thread on some platforms.
-  /// @brief Register a function to be called when ctrl-c is pressed.
+  /// Register a function to be called when ctrl-c is pressed.
   void SetInterruptFunction(void (*IF)());
 } // End sys namespace
 } // End llvm namespace

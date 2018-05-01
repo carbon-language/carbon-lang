@@ -689,7 +689,7 @@ static bool isMultiple(const APInt &C1, const APInt &C2, APInt &Quotient,
 /// This function implements the transforms common to both integer division
 /// instructions (udiv and sdiv). It is called by the visitors to those integer
 /// division instructions.
-/// @brief Common integer divide transforms
+/// Common integer divide transforms
 Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   bool IsSigned = I.getOpcode() == Instruction::SDiv;
@@ -1280,7 +1280,7 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
 /// This function implements the transforms common to both integer remainder
 /// instructions (urem and srem). It is called by the visitors to those integer
 /// remainder instructions.
-/// @brief Common integer remainder transforms
+/// Common integer remainder transforms
 Instruction *InstCombiner::commonIRemTransforms(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 

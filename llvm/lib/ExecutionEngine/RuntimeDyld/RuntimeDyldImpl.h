@@ -217,7 +217,7 @@ public:
   }
 };
 
-/// @brief Symbol info for RuntimeDyld.
+/// Symbol info for RuntimeDyld.
 class SymbolTableEntry {
 public:
   SymbolTableEntry() = default;

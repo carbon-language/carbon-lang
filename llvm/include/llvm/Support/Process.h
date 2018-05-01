@@ -66,7 +66,7 @@ public:
   /// This function makes the necessary calls to the operating system to
   /// prevent core files or any other kind of large memory dumps that can
   /// occur when a program fails.
-  /// @brief Prevent core file generation.
+  /// Prevent core file generation.
   static void PreventCoreFiles();
 
   /// true if PreventCoreFiles has been called, false otherwise.

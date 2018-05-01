@@ -588,16 +588,16 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BinaryOperator, Value)
 /// can be performed with code like:
 ///
 /// if (isa<CastInst>(Instr)) { ... }
-/// @brief Base class of casting instructions.
+/// Base class of casting instructions.
 class CastInst : public UnaryInstruction {
 protected:
-  /// @brief Constructor with insert-before-instruction semantics for subclasses
+  /// Constructor with insert-before-instruction semantics for subclasses
   CastInst(Type *Ty, unsigned iType, Value *S,
            const Twine &NameStr = "", Instruction *InsertBefore = nullptr)
     : UnaryInstruction(Ty, iType, S, InsertBefore) {
     setName(NameStr);
   }
-  /// @brief Constructor with insert-at-end-of-block semantics for subclasses
+  /// Constructor with insert-at-end-of-block semantics for subclasses
   CastInst(Type *Ty, unsigned iType, Value *S,
            const Twine &NameStr, BasicBlock *InsertAtEnd)
     : UnaryInstruction(Ty, iType, S, InsertAtEnd) {
@@ -610,7 +610,7 @@ public:
   /// CastOps category (Instruction::isCast(opcode) returns true). This
   /// constructor has insert-before-instruction semantics to automatically
   /// insert the new CastInst before InsertBefore (if it is non-null).
-  /// @brief Construct any of the CastInst subclasses
+  /// Construct any of the CastInst subclasses
   static CastInst *Create(
     Instruction::CastOps,    ///< The opcode of the cast instruction
     Value *S,                ///< The value to be casted (operand 0)
@@ -623,7 +623,7 @@ public:
   /// CastOps category. This constructor has insert-at-end-of-block semantics
   /// to automatically insert the new CastInst at the end of InsertAtEnd (if
   /// its non-null).
-  /// @brief Construct any of the CastInst subclasses
+  /// Construct any of the CastInst subclasses
   static CastInst *Create(
     Instruction::CastOps,    ///< The opcode for the cast instruction
     Value *S,                ///< The value to be casted (operand 0)
@@ -632,7 +632,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a ZExt or BitCast cast instruction
+  /// Create a ZExt or BitCast cast instruction
   static CastInst *CreateZExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
@@ -640,7 +640,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create a ZExt or BitCast cast instruction
+  /// Create a ZExt or BitCast cast instruction
   static CastInst *CreateZExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which operand is casted
@@ -648,7 +648,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a SExt or BitCast cast instruction
+  /// Create a SExt or BitCast cast instruction
   static CastInst *CreateSExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
@@ -656,7 +656,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create a SExt or BitCast cast instruction
+  /// Create a SExt or BitCast cast instruction
   static CastInst *CreateSExtOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which operand is casted
@@ -664,7 +664,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a BitCast AddrSpaceCast, or a PtrToInt cast instruction.
+  /// Create a BitCast AddrSpaceCast, or a PtrToInt cast instruction.
   static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which operand is casted
@@ -672,7 +672,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a BitCast, AddrSpaceCast or a PtrToInt cast instruction.
+  /// Create a BitCast, AddrSpaceCast or a PtrToInt cast instruction.
   static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
@@ -680,7 +680,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create a BitCast or an AddrSpaceCast cast instruction.
+  /// Create a BitCast or an AddrSpaceCast cast instruction.
   static CastInst *CreatePointerBitCastOrAddrSpaceCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which operand is casted
@@ -688,7 +688,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a BitCast or an AddrSpaceCast cast instruction.
+  /// Create a BitCast or an AddrSpaceCast cast instruction.
   static CastInst *CreatePointerBitCastOrAddrSpaceCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
@@ -696,7 +696,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create a BitCast, a PtrToInt, or an IntToPTr cast instruction.
+  /// Create a BitCast, a PtrToInt, or an IntToPTr cast instruction.
   ///
   /// If the value is a pointer type and the destination an integer type,
   /// creates a PtrToInt cast. If the value is an integer type and the
@@ -709,7 +709,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
+  /// Create a ZExt, BitCast, or Trunc for int -> int casts.
   static CastInst *CreateIntegerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
@@ -718,7 +718,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
+  /// Create a ZExt, BitCast, or Trunc for int -> int casts.
   static CastInst *CreateIntegerCast(
     Value *S,                ///< The integer value to be casted (operand 0)
     Type *Ty,          ///< The integer type to which operand is casted
@@ -727,7 +727,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
+  /// Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
   static CastInst *CreateFPCast(
     Value *S,                ///< The floating point value to be casted
     Type *Ty,          ///< The floating point type to cast to
@@ -735,7 +735,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
+  /// Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
   static CastInst *CreateFPCast(
     Value *S,                ///< The floating point value to be casted
     Type *Ty,          ///< The floating point type to cast to
@@ -743,7 +743,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a Trunc or BitCast cast instruction
+  /// Create a Trunc or BitCast cast instruction
   static CastInst *CreateTruncOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
@@ -751,7 +751,7 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
-  /// @brief Create a Trunc or BitCast cast instruction
+  /// Create a Trunc or BitCast cast instruction
   static CastInst *CreateTruncOrBitCast(
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which operand is casted
@@ -759,19 +759,19 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Check whether it is valid to call getCastOpcode for these types.
+  /// Check whether it is valid to call getCastOpcode for these types.
   static bool isCastable(
     Type *SrcTy, ///< The Type from which the value should be cast.
     Type *DestTy ///< The Type to which the value should be cast.
   );
 
-  /// @brief Check whether a bitcast between these types is valid
+  /// Check whether a bitcast between these types is valid
   static bool isBitCastable(
     Type *SrcTy, ///< The Type from which the value should be cast.
     Type *DestTy ///< The Type to which the value should be cast.
   );
 
-  /// @brief Check whether a bitcast, inttoptr, or ptrtoint cast between these
+  /// Check whether a bitcast, inttoptr, or ptrtoint cast between these
   /// types is valid and a no-op.
   ///
   /// This ensures that any pointer<->integer cast has enough bits in the
@@ -783,7 +783,7 @@ public:
 
   /// Returns the opcode necessary to cast Val into Ty using usual casting
   /// rules.
-  /// @brief Infer the opcode for cast operand and type
+  /// Infer the opcode for cast operand and type
   static Instruction::CastOps getCastOpcode(
     const Value *Val, ///< The value to cast
     bool SrcIsSigned, ///< Whether to treat the source as signed
@@ -795,14 +795,14 @@ public:
   /// only deals with integer source and destination types. To simplify that
   /// logic, this method is provided.
   /// @returns true iff the cast has only integral typed operand and dest type.
-  /// @brief Determine if this is an integer-only cast.
+  /// Determine if this is an integer-only cast.
   bool isIntegerCast() const;
 
   /// A lossless cast is one that does not alter the basic value. It implies
   /// a no-op cast but is more stringent, preventing things like int->float,
   /// long->double, or int->ptr.
   /// @returns true iff the cast is lossless.
-  /// @brief Determine if this is a lossless cast.
+  /// Determine if this is a lossless cast.
   bool isLosslessCast() const;
 
   /// A no-op cast is one that can be effected without changing any bits.
@@ -811,7 +811,7 @@ public:
   /// involving Integer and Pointer types. They are no-op casts if the integer
   /// is the same size as the pointer. However, pointer size varies with
   /// platform.
-  /// @brief Determine if the described cast is a no-op cast.
+  /// Determine if the described cast is a no-op cast.
   static bool isNoopCast(
     Instruction::CastOps Opcode, ///< Opcode of cast
     Type *SrcTy,         ///< SrcTy of cast
@@ -819,7 +819,7 @@ public:
     const DataLayout &DL ///< DataLayout to get the Int Ptr type from.
   );
 
-  /// @brief Determine if this cast is a no-op cast.
+  /// Determine if this cast is a no-op cast.
   ///
   /// \param DL is the DataLayout to determine pointer size.
   bool isNoopCast(const DataLayout &DL) const;
@@ -829,7 +829,7 @@ public:
   /// @returns 0 if the CastInst pair can't be eliminated, otherwise
   /// returns Instruction::CastOps value for a cast that can replace
   /// the pair, casting SrcTy to DstTy.
-  /// @brief Determine if a cast pair is eliminable
+  /// Determine if a cast pair is eliminable
   static unsigned isEliminableCastPair(
     Instruction::CastOps firstOpcode,  ///< Opcode of first cast
     Instruction::CastOps secondOpcode, ///< Opcode of second cast
@@ -841,23 +841,23 @@ public:
     Type *DstIntPtrTy  ///< Integer type corresponding to Ptr DstTy, or null
   );
 
-  /// @brief Return the opcode of this CastInst
+  /// Return the opcode of this CastInst
   Instruction::CastOps getOpcode() const {
     return Instruction::CastOps(Instruction::getOpcode());
   }
 
-  /// @brief Return the source type, as a convenience
+  /// Return the source type, as a convenience
   Type* getSrcTy() const { return getOperand(0)->getType(); }
-  /// @brief Return the destination type, as a convenience
+  /// Return the destination type, as a convenience
   Type* getDestTy() const { return getType(); }
 
   /// This method can be used to determine if a cast from S to DstTy using
   /// Opcode op is valid or not.
   /// @returns true iff the proposed cast is valid.
-  /// @brief Determine if a cast is valid without creating one.
+  /// Determine if a cast is valid without creating one.
   static bool castIsValid(Instruction::CastOps op, Value *S, Type *DstTy);
 
-  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Instruction *I) {
     return I->isCast();
   }
@@ -871,7 +871,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// This class is the base class for the comparison instructions.
-/// @brief Abstract base class of comparison instructions.
+/// Abstract base class of comparison instructions.
 class CmpInst : public Instruction {
 public:
   /// This enumeration lists the possible predicates for CmpInst subclasses.
@@ -937,7 +937,7 @@ public:
   /// the two operands.  Optionally (if InstBefore is specified) insert the
   /// instruction into a BasicBlock right before the specified instruction.
   /// The specified Instruction is allowed to be a dereferenced end iterator.
-  /// @brief Create a CmpInst
+  /// Create a CmpInst
   static CmpInst *Create(OtherOps Op,
                          Predicate predicate, Value *S1,
                          Value *S2, const Twine &Name = "",
@@ -946,21 +946,21 @@ public:
   /// Construct a compare instruction, given the opcode, the predicate and the
   /// two operands.  Also automatically insert this instruction to the end of
   /// the BasicBlock specified.
-  /// @brief Create a CmpInst
+  /// Create a CmpInst
   static CmpInst *Create(OtherOps Op, Predicate predicate, Value *S1,
                          Value *S2, const Twine &Name, BasicBlock *InsertAtEnd);
 
-  /// @brief Get the opcode casted to the right type
+  /// Get the opcode casted to the right type
   OtherOps getOpcode() const {
     return static_cast<OtherOps>(Instruction::getOpcode());
   }
 
-  /// @brief Return the predicate for this instruction.
+  /// Return the predicate for this instruction.
   Predicate getPredicate() const {
     return Predicate(getSubclassDataFromInstruction());
   }
 
-  /// @brief Set the predicate for this instruction to the specified value.
+  /// Set the predicate for this instruction to the specified value.
   void setPredicate(Predicate P) { setInstructionSubclassData(P); }
 
   static bool isFPPredicate(Predicate P) {
@@ -979,7 +979,7 @@ public:
   /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE,
   ///              OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
   /// @returns the inverse predicate for the instruction's current predicate.
-  /// @brief Return the inverse of the instruction's predicate.
+  /// Return the inverse of the instruction's predicate.
   Predicate getInversePredicate() const {
     return getInversePredicate(getPredicate());
   }
@@ -987,7 +987,7 @@ public:
   /// For example, EQ -> NE, UGT -> ULE, SLT -> SGE,
   ///              OEQ -> UNE, UGT -> OLE, OLT -> UGE, etc.
   /// @returns the inverse predicate for predicate provided in \p pred.
-  /// @brief Return the inverse of a given predicate
+  /// Return the inverse of a given predicate
   static Predicate getInversePredicate(Predicate pred);
 
   /// For example, EQ->EQ, SLE->SGE, ULT->UGT,
@@ -995,14 +995,14 @@ public:
   /// @returns the predicate that would be the result of exchanging the two
   /// operands of the CmpInst instruction without changing the result
   /// produced.
-  /// @brief Return the predicate as if the operands were swapped
+  /// Return the predicate as if the operands were swapped
   Predicate getSwappedPredicate() const {
     return getSwappedPredicate(getPredicate());
   }
 
   /// This is a static version that you can use without an instruction
   /// available.
-  /// @brief Return the predicate as if the operands were swapped.
+  /// Return the predicate as if the operands were swapped.
   static Predicate getSwappedPredicate(Predicate pred);
 
   /// For predicate of kind "is X or equal to 0" returns the predicate "is X".
@@ -1010,18 +1010,18 @@ public:
   /// does not support other kind of predicates.
   /// @returns the predicate that does not contains is equal to zero if
   /// it had and vice versa.
-  /// @brief Return the flipped strictness of predicate
+  /// Return the flipped strictness of predicate
   Predicate getFlippedStrictnessPredicate() const {
     return getFlippedStrictnessPredicate(getPredicate());
   }
 
   /// This is a static version that you can use without an instruction
   /// available.
-  /// @brief Return the flipped strictness of predicate
+  /// Return the flipped strictness of predicate
   static Predicate getFlippedStrictnessPredicate(Predicate pred);
 
   /// For example, SGT -> SGE, SLT -> SLE, ULT -> ULE, UGT -> UGE.
-  /// @brief Returns the non-strict version of strict comparisons.
+  /// Returns the non-strict version of strict comparisons.
   Predicate getNonStrictPredicate() const {
     return getNonStrictPredicate(getPredicate());
   }
@@ -1030,74 +1030,74 @@ public:
   /// available.
   /// @returns the non-strict version of comparison provided in \p pred.
   /// If \p pred is not a strict comparison predicate, returns \p pred.
-  /// @brief Returns the non-strict version of strict comparisons.
+  /// Returns the non-strict version of strict comparisons.
   static Predicate getNonStrictPredicate(Predicate pred);
 
-  /// @brief Provide more efficient getOperand methods.
+  /// Provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 
   /// This is just a convenience that dispatches to the subclasses.
-  /// @brief Swap the operands and adjust predicate accordingly to retain
+  /// Swap the operands and adjust predicate accordingly to retain
   /// the same comparison.
   void swapOperands();
 
   /// This is just a convenience that dispatches to the subclasses.
-  /// @brief Determine if this CmpInst is commutative.
+  /// Determine if this CmpInst is commutative.
   bool isCommutative() const;
 
   /// This is just a convenience that dispatches to the subclasses.
-  /// @brief Determine if this is an equals/not equals predicate.
+  /// Determine if this is an equals/not equals predicate.
   bool isEquality() const;
 
   /// @returns true if the comparison is signed, false otherwise.
-  /// @brief Determine if this instruction is using a signed comparison.
+  /// Determine if this instruction is using a signed comparison.
   bool isSigned() const {
     return isSigned(getPredicate());
   }
 
   /// @returns true if the comparison is unsigned, false otherwise.
-  /// @brief Determine if this instruction is using an unsigned comparison.
+  /// Determine if this instruction is using an unsigned comparison.
   bool isUnsigned() const {
     return isUnsigned(getPredicate());
   }
 
   /// For example, ULT->SLT, ULE->SLE, UGT->SGT, UGE->SGE, SLT->Failed assert
   /// @returns the signed version of the unsigned predicate pred.
-  /// @brief return the signed version of a predicate
+  /// return the signed version of a predicate
   static Predicate getSignedPredicate(Predicate pred);
 
   /// For example, ULT->SLT, ULE->SLE, UGT->SGT, UGE->SGE, SLT->Failed assert
   /// @returns the signed version of the predicate for this instruction (which
   /// has to be an unsigned predicate).
-  /// @brief return the signed version of a predicate
+  /// return the signed version of a predicate
   Predicate getSignedPredicate() {
     return getSignedPredicate(getPredicate());
   }
 
   /// This is just a convenience.
-  /// @brief Determine if this is true when both operands are the same.
+  /// Determine if this is true when both operands are the same.
   bool isTrueWhenEqual() const {
     return isTrueWhenEqual(getPredicate());
   }
 
   /// This is just a convenience.
-  /// @brief Determine if this is false when both operands are the same.
+  /// Determine if this is false when both operands are the same.
   bool isFalseWhenEqual() const {
     return isFalseWhenEqual(getPredicate());
   }
 
   /// @returns true if the predicate is unsigned, false otherwise.
-  /// @brief Determine if the predicate is an unsigned operation.
+  /// Determine if the predicate is an unsigned operation.
   static bool isUnsigned(Predicate predicate);
 
   /// @returns true if the predicate is signed, false otherwise.
-  /// @brief Determine if the predicate is an signed operation.
+  /// Determine if the predicate is an signed operation.
   static bool isSigned(Predicate predicate);
 
-  /// @brief Determine if the predicate is an ordered operation.
+  /// Determine if the predicate is an ordered operation.
   static bool isOrdered(Predicate predicate);
 
-  /// @brief Determine if the predicate is an unordered operation.
+  /// Determine if the predicate is an unordered operation.
   static bool isUnordered(Predicate predicate);
 
   /// Determine if the predicate is true when comparing a value with itself.
@@ -1114,7 +1114,7 @@ public:
   /// operands.
   static bool isImpliedFalseByMatchingCmp(Predicate Pred1, Predicate Pred2);
 
-  /// @brief Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ICmp ||
            I->getOpcode() == Instruction::FCmp;
@@ -1123,7 +1123,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 
-  /// @brief Create a result type for fcmp/icmp
+  /// Create a result type for fcmp/icmp
   static Type* makeCmpResultType(Type* opnd_type) {
     if (VectorType* vt = dyn_cast<VectorType>(opnd_type)) {
       return VectorType::get(Type::getInt1Ty(opnd_type->getContext()),

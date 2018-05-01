@@ -188,7 +188,7 @@ private:
 
 char RegAllocPBQP::ID = 0;
 
-/// @brief Set spill costs for each node in the PBQP reg-alloc graph.
+/// Set spill costs for each node in the PBQP reg-alloc graph.
 class SpillCosts : public PBQPRAConstraint {
 public:
   void apply(PBQPRAGraph &G) override {
@@ -212,7 +212,7 @@ public:
   }
 };
 
-/// @brief Add interference edges between overlapping vregs.
+/// Add interference edges between overlapping vregs.
 class Interference : public PBQPRAConstraint {
 private:
   using AllowedRegVecPtr = const PBQP::RegAlloc::AllowedRegVector *;

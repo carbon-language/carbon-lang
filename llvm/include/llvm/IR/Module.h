@@ -59,7 +59,7 @@ class StructType;
 /// A module maintains a GlobalValRefMap object that is used to hold all
 /// constant references to global variables in the module.  When a global
 /// variable is destroyed, it should have no entries in the GlobalValueRefMap.
-/// @brief The main container class for the LLVM Intermediate Representation.
+/// The main container class for the LLVM Intermediate Representation.
 class Module {
 /// @name Types And Enumerations
 /// @{
