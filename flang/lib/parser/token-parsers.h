@@ -647,8 +647,19 @@ constexpr auto underscore = "_"_ch;
 constexpr auto otherIdChar = underscore / !"'\""_ch || extension("$@"_ch);
 constexpr auto nonDigitIdChar = letter || otherIdChar;
 constexpr auto rawName = nonDigitIdChar >> many(nonDigitIdChar || digit);
-TYPE_PARSER(space >> sourced(attempt(rawName) >> construct<Name>()))
+TYPE_PARSER(space >> sourced(rawName >> construct<Name>()))
 constexpr auto keyword = construct<Keyword>(name);
+
+// R1003 defined-unary-op -> . letter [letter]... .
+// R1023 defined-binary-op -> . letter [letter]... .
+// R1414 local-defined-operator -> defined-unary-op | defined-binary-op
+// R1415 use-defined-operator -> defined-unary-op | defined-binary-op
+// N.B. The name of the operator is captured without the periods around it.
+constexpr auto definedOpNameChar = letter || extension("$@"_ch);
+TYPE_PARSER(space >> "."_ch >>
+    construct<DefinedOpName>(
+        sourced(some(definedOpNameChar) >> construct<Name>())) /
+        "."_ch)
 
 }  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_

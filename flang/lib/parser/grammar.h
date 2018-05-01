@@ -1345,15 +1345,6 @@ TYPE_PARSER(construct<CharLiteralConstantSubstring>(
 TYPE_PARSER(construct<SubstringRange>(
     maybe(scalarIntExpr), ":" >> maybe(scalarIntExpr)))
 
-// R1003 defined-unary-op -> . letter [letter]... .
-// R1023 defined-binary-op -> . letter [letter]... .
-// R1414 local-defined-operator -> defined-unary-op | defined-binary-op
-// R1415 use-defined-operator -> defined-unary-op | defined-binary-op
-// N.B. The name of the operator is captured without the periods around it.
-TYPE_PARSER(space >> "."_ch >>
-    construct<DefinedOpName>(sourced(some(letter) >> construct<Name>())) /
-        "."_ch)
-
 // R911 data-ref -> part-ref [% part-ref]...
 // R914 coindexed-named-object -> data-ref
 // R917 array-element -> data-ref
