@@ -1,11 +1,8 @@
 ; RUN: opt -S -O1 < %s -o %t1.ll
+; RUN: opt -S < %t1.ll -o %t2.ll
+; RUN: opt -S -simplifycfg < %t1.ll -o %t3.ll
 ;; Show that there's no difference after running another simplify CFG
-; RUN: opt -S -simplifycfg < %t1.ll -o %t2.ll
-;; Strip the BB predecessors comments because it may have different
-;; output order.
-; RUN: sed 's/; preds = .*//g' %t1.ll > %t1.strip.ll
-; RUN: sed 's/; preds = .*//g' %t2.ll > %t2.strip.ll
-; RUN: diff %t1.strip.ll %t2.strip.ll
+; RUN: diff %t2.ll %t3.ll
 
 ; Test from LoopSink pass, leaves some single-entry single-exit basic blocks.
 ; After LoopSink, we get a basic block .exit.loopexit which has one entry and
