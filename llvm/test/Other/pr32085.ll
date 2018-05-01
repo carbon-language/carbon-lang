@@ -1,6 +1,7 @@
 ; RUN: opt -S -O1 < %s -o %t1.ll
 ;; Show that there's no difference after running another simplify CFG
-; RUN: opt -S -simplifycfg < %t1.ll -o %t2.ll
+; RUN: opt -S -simplifycfg < %t1.ll -o %t2.ll 
+; RUN: sed -i 's/; preds = .*//g' %t1.ll %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
 ; Test from LoopSink pass, leaves some single-entry single-exit basic blocks.
