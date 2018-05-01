@@ -1022,7 +1022,7 @@ public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
-  /// \brief Convenience function for getting a Cast operation.
+  /// Convenience function for getting a Cast operation.
   ///
   /// \param ops The opcode for the conversion
   /// \param C  The constant to be converted
@@ -1106,7 +1106,7 @@ public:
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2,
                        unsigned Flags = 0, Type *OnlyIfReducedTy = nullptr);
 
-  /// \brief Return an ICmp or FCmp comparison operator constant expression.
+  /// Return an ICmp or FCmp comparison operator constant expression.
   ///
   /// \param OnlyIfReduced see \a getWithOperands() docs.
   static Constant *getCompare(unsigned short pred, Constant *C1, Constant *C2,

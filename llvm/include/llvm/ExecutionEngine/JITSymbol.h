@@ -311,7 +311,7 @@ private:
   virtual void anchor();
 };
 
-/// \brief Legacy symbol resolution interface.
+/// Legacy symbol resolution interface.
 class LegacyJITSymbolResolver : public JITSymbolResolver {
 public:
   /// @brief Performs lookup by, for each symbol, first calling

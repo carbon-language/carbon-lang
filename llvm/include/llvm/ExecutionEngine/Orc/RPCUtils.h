@@ -1631,7 +1631,7 @@ RPCAsyncDispatch<RPCEndpointT, Func> rpcAsyncDispatch(RPCEndpointT &Endpoint) {
   return RPCAsyncDispatch<RPCEndpointT, Func>(Endpoint);
 }
 
-/// \brief Allows a set of asynchrounous calls to be dispatched, and then
+/// Allows a set of asynchrounous calls to be dispatched, and then
 ///        waited on as a group.
 class ParallelCallGroup {
 public:
@@ -1640,7 +1640,7 @@ public:
   ParallelCallGroup(const ParallelCallGroup &) = delete;
   ParallelCallGroup &operator=(const ParallelCallGroup &) = delete;
 
-  /// \brief Make as asynchronous call.
+  /// Make as asynchronous call.
   template <typename AsyncDispatcher, typename HandlerT, typename... ArgTs>
   Error call(const AsyncDispatcher &AsyncDispatch, HandlerT Handler,
              const ArgTs &... Args) {
@@ -1669,7 +1669,7 @@ public:
     return AsyncDispatch(std::move(WrappedHandler), Args...);
   }
 
-  /// \brief Blocks until all calls have been completed and their return value
+  /// Blocks until all calls have been completed and their return value
   ///        handlers run.
   void wait() {
     std::unique_lock<std::mutex> Lock(M);

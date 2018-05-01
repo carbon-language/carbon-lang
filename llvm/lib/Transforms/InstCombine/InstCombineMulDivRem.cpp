@@ -95,7 +95,7 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC,
   return MadeChange ? V : nullptr;
 }
 
-/// \brief A helper routine of InstCombiner::visitMul().
+/// A helper routine of InstCombiner::visitMul().
 ///
 /// If C is a scalar/vector of known powers of 2, then this function returns
 /// a new scalar/vector obtained from logBase2 of C.
@@ -125,7 +125,7 @@ static Constant *getLogBase2(Type *Ty, Constant *C) {
   return ConstantVector::get(Elts);
 }
 
-/// \brief Return true if we can prove that:
+/// Return true if we can prove that:
 ///    (mul LHS, RHS)  === (mul nsw LHS, RHS)
 bool InstCombiner::willNotOverflowSignedMul(const Value *LHS,
                                             const Value *RHS,
@@ -830,7 +830,7 @@ using FoldUDivOperandCb = Instruction *(*)(Value *Op0, Value *Op1,
                                            const BinaryOperator &I,
                                            InstCombiner &IC);
 
-/// \brief Used to maintain state for visitUDivOperand().
+/// Used to maintain state for visitUDivOperand().
 struct UDivFoldAction {
   /// Informs visitUDiv() how to fold this operand.  This can be zero if this
   /// action joins two actions together.
@@ -899,7 +899,7 @@ static Instruction *foldUDivShl(Value *Op0, Value *Op1, const BinaryOperator &I,
   return LShr;
 }
 
-// \brief Recursively visits the possible right hand operands of a udiv
+// Recursively visits the possible right hand operands of a udiv
 // instruction, seeing through select instructions, to determine if we can
 // replace the udiv with something simpler.  If we find that an operand is not
 // able to simplify the udiv, we abort the entire transformation.

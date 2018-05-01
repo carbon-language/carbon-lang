@@ -726,7 +726,7 @@ class RegionInfoBase {
   BBtoRegionMap BBtoRegion;
 
 protected:
-  /// \brief Update refences to a RegionInfoT held by the RegionT managed here
+  /// Update refences to a RegionInfoT held by the RegionT managed here
   ///
   /// This is a post-move helper. Regions hold references to the owning
   /// RegionInfo object. After a move these need to be fixed.
@@ -740,7 +740,7 @@ protected:
   }
 
 private:
-  /// \brief Wipe this region tree's state without releasing any resources.
+  /// Wipe this region tree's state without releasing any resources.
   ///
   /// This is essentially a post-move helper only. It leaves the object in an
   /// assignable and destroyable state, but otherwise invalid.
@@ -968,7 +968,7 @@ public:
   //@}
 };
 
-/// \brief Analysis pass that exposes the \c RegionInfo for a function.
+/// Analysis pass that exposes the \c RegionInfo for a function.
 class RegionInfoAnalysis : public AnalysisInfoMixin<RegionInfoAnalysis> {
   friend AnalysisInfoMixin<RegionInfoAnalysis>;
 
@@ -980,7 +980,7 @@ public:
   RegionInfo run(Function &F, FunctionAnalysisManager &AM);
 };
 
-/// \brief Printer pass for the \c RegionInfo.
+/// Printer pass for the \c RegionInfo.
 class RegionInfoPrinterPass : public PassInfoMixin<RegionInfoPrinterPass> {
   raw_ostream &OS;
 
@@ -990,7 +990,7 @@ public:
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
-/// \brief Verifier pass for the \c RegionInfo.
+/// Verifier pass for the \c RegionInfo.
 struct RegionInfoVerifierPass : PassInfoMixin<RegionInfoVerifierPass> {
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };

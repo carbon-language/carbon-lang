@@ -81,7 +81,7 @@ public:
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
 
-  // \brief Returns true if this terminator relates to exception handling.
+  // Returns true if this terminator relates to exception handling.
   bool isExceptional() const {
     switch (getOpcode()) {
     case Instruction::CatchSwitch:
@@ -118,7 +118,7 @@ public:
       return idx < TermInst->getNumSuccessors();
     }
 
-    /// \brief Proxy object to allow write access in operator[]
+    /// Proxy object to allow write access in operator[]
     class SuccessorProxy {
       Self it;
 
@@ -1181,7 +1181,7 @@ public:
 
   /// Convenience accessors
 
-  /// \brief Return the outer EH-pad this funclet is nested within.
+  /// Return the outer EH-pad this funclet is nested within.
   ///
   /// Note: This returns the associated CatchSwitchInst if this FuncletPadInst
   /// is a CatchPadInst.
@@ -1217,7 +1217,7 @@ struct OperandTraits<FuncletPadInst>
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(FuncletPadInst, Value)
 
-/// \brief A lightweight accessor for an operand bundle meant to be passed
+/// A lightweight accessor for an operand bundle meant to be passed
 /// around by value.
 struct OperandBundleUse {
   ArrayRef<Use> Inputs;
@@ -1226,7 +1226,7 @@ struct OperandBundleUse {
   explicit OperandBundleUse(StringMapEntry<uint32_t> *Tag, ArrayRef<Use> Inputs)
       : Inputs(Inputs), Tag(Tag) {}
 
-  /// \brief Return true if the operand at index \p Idx in this operand bundle
+  /// Return true if the operand at index \p Idx in this operand bundle
   /// has the attribute A.
   bool operandHasAttr(unsigned Idx, Attribute::AttrKind A) const {
     if (isDeoptOperandBundle())
@@ -1237,12 +1237,12 @@ struct OperandBundleUse {
     return false;
   }
 
-  /// \brief Return the tag of this operand bundle as a string.
+  /// Return the tag of this operand bundle as a string.
   StringRef getTagName() const {
     return Tag->getKey();
   }
 
-  /// \brief Return the tag of this operand bundle as an integer.
+  /// Return the tag of this operand bundle as an integer.
   ///
   /// Operand bundle tags are interned by LLVMContextImpl::getOrInsertBundleTag,
   /// and this function returns the unique integer getOrInsertBundleTag
@@ -1251,22 +1251,22 @@ struct OperandBundleUse {
     return Tag->getValue();
   }
 
-  /// \brief Return true if this is a "deopt" operand bundle.
+  /// Return true if this is a "deopt" operand bundle.
   bool isDeoptOperandBundle() const {
     return getTagID() == LLVMContext::OB_deopt;
   }
 
-  /// \brief Return true if this is a "funclet" operand bundle.
+  /// Return true if this is a "funclet" operand bundle.
   bool isFuncletOperandBundle() const {
     return getTagID() == LLVMContext::OB_funclet;
   }
 
 private:
-  /// \brief Pointer to an entry in LLVMContextImpl::getOrInsertBundleTag.
+  /// Pointer to an entry in LLVMContextImpl::getOrInsertBundleTag.
   StringMapEntry<uint32_t> *Tag;
 };
 
-/// \brief A container for an operand bundle being viewed as a set of values
+/// A container for an operand bundle being viewed as a set of values
 /// rather than a set of uses.
 ///
 /// Unlike OperandBundleUse, OperandBundleDefT owns the memory it carries, and
@@ -1301,7 +1301,7 @@ public:
 using OperandBundleDef = OperandBundleDefT<Value *>;
 using ConstOperandBundleDef = OperandBundleDefT<const Value *>;
 
-/// \brief A mixin to add operand bundle functionality to llvm instruction
+/// A mixin to add operand bundle functionality to llvm instruction
 /// classes.
 ///
 /// OperandBundleUser uses the descriptor area co-allocated with the host User
@@ -1349,21 +1349,21 @@ using ConstOperandBundleDef = OperandBundleDefT<const Value *>;
 /// Currently operand bundle users with hung-off operands are not supported.
 template <typename InstrTy, typename OpIteratorTy> class OperandBundleUser {
 public:
-  /// \brief Return the number of operand bundles associated with this User.
+  /// Return the number of operand bundles associated with this User.
   unsigned getNumOperandBundles() const {
     return std::distance(bundle_op_info_begin(), bundle_op_info_end());
   }
 
-  /// \brief Return true if this User has any operand bundles.
+  /// Return true if this User has any operand bundles.
   bool hasOperandBundles() const { return getNumOperandBundles() != 0; }
 
-  /// \brief Return the index of the first bundle operand in the Use array.
+  /// Return the index of the first bundle operand in the Use array.
   unsigned getBundleOperandsStartIndex() const {
     assert(hasOperandBundles() && "Don't call otherwise!");
     return bundle_op_info_begin()->Begin;
   }
 
-  /// \brief Return the index of the last bundle operand in the Use array.
+  /// Return the index of the last bundle operand in the Use array.
   unsigned getBundleOperandsEndIndex() const {
     assert(hasOperandBundles() && "Don't call otherwise!");
     return bundle_op_info_end()[-1].End;
@@ -1375,7 +1375,7 @@ public:
            Idx < getBundleOperandsEndIndex();
   }
 
-  /// \brief Return the total number operands (not operand bundles) used by
+  /// Return the total number operands (not operand bundles) used by
   /// every operand bundle in this OperandBundleUser.
   unsigned getNumTotalBundleOperands() const {
     if (!hasOperandBundles())
@@ -1388,13 +1388,13 @@ public:
     return End - Begin;
   }
 
-  /// \brief Return the operand bundle at a specific index.
+  /// Return the operand bundle at a specific index.
   OperandBundleUse getOperandBundleAt(unsigned Index) const {
     assert(Index < getNumOperandBundles() && "Index out of bounds!");
     return operandBundleFromBundleOpInfo(*(bundle_op_info_begin() + Index));
   }
 
-  /// \brief Return the number of operand bundles with the tag Name attached to
+  /// Return the number of operand bundles with the tag Name attached to
   /// this instruction.
   unsigned countOperandBundlesOfType(StringRef Name) const {
     unsigned Count = 0;
@@ -1405,7 +1405,7 @@ public:
     return Count;
   }
 
-  /// \brief Return the number of operand bundles with the tag ID attached to
+  /// Return the number of operand bundles with the tag ID attached to
   /// this instruction.
   unsigned countOperandBundlesOfType(uint32_t ID) const {
     unsigned Count = 0;
@@ -1416,7 +1416,7 @@ public:
     return Count;
   }
 
-  /// \brief Return an operand bundle by name, if present.
+  /// Return an operand bundle by name, if present.
   ///
   /// It is an error to call this for operand bundle types that may have
   /// multiple instances of them on the same instruction.
@@ -1432,7 +1432,7 @@ public:
     return None;
   }
 
-  /// \brief Return an operand bundle by tag ID, if present.
+  /// Return an operand bundle by tag ID, if present.
   ///
   /// It is an error to call this for operand bundle types that may have
   /// multiple instances of them on the same instruction.
@@ -1448,7 +1448,7 @@ public:
     return None;
   }
 
-  /// \brief Return the list of operand bundles attached to this instruction as
+  /// Return the list of operand bundles attached to this instruction as
   /// a vector of OperandBundleDefs.
   ///
   /// This function copies the OperandBundeUse instances associated with this
@@ -1460,7 +1460,7 @@ public:
       Defs.emplace_back(getOperandBundleAt(i));
   }
 
-  /// \brief Return the operand bundle for the operand at index OpIdx.
+  /// Return the operand bundle for the operand at index OpIdx.
   ///
   /// It is an error to call this with an OpIdx that does not correspond to an
   /// bundle operand.
@@ -1468,7 +1468,7 @@ public:
     return operandBundleFromBundleOpInfo(getBundleOpInfoForOperand(OpIdx));
   }
 
-  /// \brief Return true if this operand bundle user has operand bundles that
+  /// Return true if this operand bundle user has operand bundles that
   /// may read from the heap.
   bool hasReadingOperandBundles() const {
     // Implementation note: this is a conservative implementation of operand
@@ -1477,7 +1477,7 @@ public:
     return hasOperandBundles();
   }
 
-  /// \brief Return true if this operand bundle user has operand bundles that
+  /// Return true if this operand bundle user has operand bundles that
   /// may write to the heap.
   bool hasClobberingOperandBundles() const {
     for (auto &BOI : bundle_op_infos()) {
@@ -1493,7 +1493,7 @@ public:
     return false;
   }
 
-  /// \brief Return true if the bundle operand at index \p OpIdx has the
+  /// Return true if the bundle operand at index \p OpIdx has the
   /// attribute \p A.
   bool bundleOperandHasAttr(unsigned OpIdx,  Attribute::AttrKind A) const {
     auto &BOI = getBundleOpInfoForOperand(OpIdx);
@@ -1501,7 +1501,7 @@ public:
     return OBU.operandHasAttr(OpIdx - BOI.Begin, A);
   }
 
-  /// \brief Return true if \p Other has the same sequence of operand bundle
+  /// Return true if \p Other has the same sequence of operand bundle
   /// tags with the same number of operands on each one of them as this
   /// OperandBundleUser.
   bool hasIdenticalOperandBundleSchema(
@@ -1513,7 +1513,7 @@ public:
                       Other.bundle_op_info_begin());
   }
 
-  /// \brief Return true if this operand bundle user contains operand bundles
+  /// Return true if this operand bundle user contains operand bundles
   /// with tags other than those specified in \p IDs.
   bool hasOperandBundlesOtherThan(ArrayRef<uint32_t> IDs) const {
     for (unsigned i = 0, e = getNumOperandBundles(); i != e; ++i) {
@@ -1525,7 +1525,7 @@ public:
   }
 
 protected:
-  /// \brief Is the function attribute S disallowed by some operand bundle on
+  /// Is the function attribute S disallowed by some operand bundle on
   /// this operand bundle user?
   bool isFnAttrDisallowedByOpBundle(StringRef S) const {
     // Operand bundles only possibly disallow readnone, readonly and argmenonly
@@ -1533,7 +1533,7 @@ protected:
     return false;
   }
 
-  /// \brief Is the function attribute A disallowed by some operand bundle on
+  /// Is the function attribute A disallowed by some operand bundle on
   /// this operand bundle user?
   bool isFnAttrDisallowedByOpBundle(Attribute::AttrKind A) const {
     switch (A) {
@@ -1559,18 +1559,18 @@ protected:
     llvm_unreachable("switch has a default case!");
   }
 
-  /// \brief Used to keep track of an operand bundle.  See the main comment on
+  /// Used to keep track of an operand bundle.  See the main comment on
   /// OperandBundleUser above.
   struct BundleOpInfo {
-    /// \brief The operand bundle tag, interned by
+    /// The operand bundle tag, interned by
     /// LLVMContextImpl::getOrInsertBundleTag.
     StringMapEntry<uint32_t> *Tag;
 
-    /// \brief The index in the Use& vector where operands for this operand
+    /// The index in the Use& vector where operands for this operand
     /// bundle starts.
     uint32_t Begin;
 
-    /// \brief The index in the Use& vector where operands for this operand
+    /// The index in the Use& vector where operands for this operand
     /// bundle ends.
     uint32_t End;
 
@@ -1579,7 +1579,7 @@ protected:
     }
   };
 
-  /// \brief Simple helper function to map a BundleOpInfo to an
+  /// Simple helper function to map a BundleOpInfo to an
   /// OperandBundleUse.
   OperandBundleUse
   operandBundleFromBundleOpInfo(const BundleOpInfo &BOI) const {
@@ -1591,7 +1591,7 @@ protected:
   using bundle_op_iterator = BundleOpInfo *;
   using const_bundle_op_iterator = const BundleOpInfo *;
 
-  /// \brief Return the start of the list of BundleOpInfo instances associated
+  /// Return the start of the list of BundleOpInfo instances associated
   /// with this OperandBundleUser.
   bundle_op_iterator bundle_op_info_begin() {
     if (!static_cast<InstrTy *>(this)->hasDescriptor())
@@ -1601,7 +1601,7 @@ protected:
     return reinterpret_cast<bundle_op_iterator>(BytesBegin);
   }
 
-  /// \brief Return the start of the list of BundleOpInfo instances associated
+  /// Return the start of the list of BundleOpInfo instances associated
   /// with this OperandBundleUser.
   const_bundle_op_iterator bundle_op_info_begin() const {
     auto *NonConstThis =
@@ -1609,7 +1609,7 @@ protected:
     return NonConstThis->bundle_op_info_begin();
   }
 
-  /// \brief Return the end of the list of BundleOpInfo instances associated
+  /// Return the end of the list of BundleOpInfo instances associated
   /// with this OperandBundleUser.
   bundle_op_iterator bundle_op_info_end() {
     if (!static_cast<InstrTy *>(this)->hasDescriptor())
@@ -1619,7 +1619,7 @@ protected:
     return reinterpret_cast<bundle_op_iterator>(BytesEnd);
   }
 
-  /// \brief Return the end of the list of BundleOpInfo instances associated
+  /// Return the end of the list of BundleOpInfo instances associated
   /// with this OperandBundleUser.
   const_bundle_op_iterator bundle_op_info_end() const {
     auto *NonConstThis =
@@ -1627,17 +1627,17 @@ protected:
     return NonConstThis->bundle_op_info_end();
   }
 
-  /// \brief Return the range [\p bundle_op_info_begin, \p bundle_op_info_end).
+  /// Return the range [\p bundle_op_info_begin, \p bundle_op_info_end).
   iterator_range<bundle_op_iterator> bundle_op_infos() {
     return make_range(bundle_op_info_begin(), bundle_op_info_end());
   }
 
-  /// \brief Return the range [\p bundle_op_info_begin, \p bundle_op_info_end).
+  /// Return the range [\p bundle_op_info_begin, \p bundle_op_info_end).
   iterator_range<const_bundle_op_iterator> bundle_op_infos() const {
     return make_range(bundle_op_info_begin(), bundle_op_info_end());
   }
 
-  /// \brief Populate the BundleOpInfo instances and the Use& vector from \p
+  /// Populate the BundleOpInfo instances and the Use& vector from \p
   /// Bundles.  Return the op_iterator pointing to the Use& one past the last
   /// last bundle operand use.
   ///
@@ -1668,7 +1668,7 @@ protected:
     return It;
   }
 
-  /// \brief Return the BundleOpInfo for the operand at index OpIdx.
+  /// Return the BundleOpInfo for the operand at index OpIdx.
   ///
   /// It is an error to call this with an OpIdx that does not correspond to an
   /// bundle operand.
@@ -1680,7 +1680,7 @@ protected:
     llvm_unreachable("Did not find operand bundle for operand!");
   }
 
-  /// \brief Return the total number of values used in \p Bundles.
+  /// Return the total number of values used in \p Bundles.
   static unsigned CountBundleInputs(ArrayRef<OperandBundleDef> Bundles) {
     unsigned Total = 0;
     for (auto &B : Bundles)

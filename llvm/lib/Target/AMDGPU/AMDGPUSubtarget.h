@@ -8,7 +8,7 @@
 //==-----------------------------------------------------------------------===//
 //
 /// \file
-/// \brief AMDGPU specific subclass of TargetSubtarget.
+/// AMDGPU specific subclass of TargetSubtarget.
 //
 //===----------------------------------------------------------------------===//
 
@@ -547,7 +547,7 @@ public:
     return HasDLInsts;
   }
 
-  /// \brief Returns the offset in bytes from the start of the input buffer
+  /// Returns the offset in bytes from the start of the input buffer
   ///        of the first explicit kernel argument.
   unsigned getExplicitKernelArgOffset(const MachineFunction &MF) const {
     return isAmdCodeObjectV2(MF) ? 0 : 36;

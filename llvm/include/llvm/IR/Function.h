@@ -181,7 +181,7 @@ public:
 
   static Intrinsic::ID lookupIntrinsicID(StringRef Name);
 
-  /// \brief Recalculate the ID for this function if it is an Intrinsic defined
+  /// Recalculate the ID for this function if it is an Intrinsic defined
   /// in llvm/Intrinsics.h.  Sets the intrinsic ID to Intrinsic::not_intrinsic
   /// if the name of this function does not match an intrinsic in that header.
   /// Note, this method does not need to be called directly, as it is called
@@ -263,7 +263,7 @@ public:
     static ProfileCount getInvalid() { return ProfileCount(-1, PCT_Invalid); }
   };
 
-  /// \brief Set the entry count for this function.
+  /// Set the entry count for this function.
   ///
   /// Entry count is the number of times this function was executed based on
   /// pgo data. \p Imports points to a set of GUIDs that needs to
@@ -276,7 +276,7 @@ public:
   void setEntryCount(uint64_t Count, ProfileCountType Type = PCT_Real,
                      const DenseSet<GlobalValue::GUID> *Imports = nullptr);
 
-  /// \brief Get the entry count for this function.
+  /// Get the entry count for this function.
   ///
   /// Entry count is the number of times the function was executed based on
   /// pgo data.
@@ -318,7 +318,7 @@ public:
     return getAttribute(AttributeList::FunctionIndex, Kind);
   }
 
-  /// \brief Return the stack alignment for the function.
+  /// Return the stack alignment for the function.
   unsigned getFnStackAlignment() const {
     if (!hasFnAttribute(Attribute::StackAlignment))
       return 0;
@@ -679,30 +679,30 @@ public:
   size_t arg_size() const { return NumArgs; }
   bool arg_empty() const { return arg_size() == 0; }
 
-  /// \brief Check whether this function has a personality function.
+  /// Check whether this function has a personality function.
   bool hasPersonalityFn() const {
     return getSubclassDataFromValue() & (1<<3);
   }
 
-  /// \brief Get the personality function associated with this function.
+  /// Get the personality function associated with this function.
   Constant *getPersonalityFn() const;
   void setPersonalityFn(Constant *Fn);
 
-  /// \brief Check whether this function has prefix data.
+  /// Check whether this function has prefix data.
   bool hasPrefixData() const {
     return getSubclassDataFromValue() & (1<<1);
   }
 
-  /// \brief Get the prefix data associated with this function.
+  /// Get the prefix data associated with this function.
   Constant *getPrefixData() const;
   void setPrefixData(Constant *PrefixData);
 
-  /// \brief Check whether this function has prologue data.
+  /// Check whether this function has prologue data.
   bool hasPrologueData() const {
     return getSubclassDataFromValue() & (1<<2);
   }
 
-  /// \brief Get the prologue data associated with this function.
+  /// Get the prologue data associated with this function.
   Constant *getPrologueData() const;
   void setPrologueData(Constant *PrologueData);
 
@@ -762,12 +762,12 @@ public:
   /// setjmp or other function that gcc recognizes as "returning twice".
   bool callsFunctionThatReturnsTwice() const;
 
-  /// \brief Set the attached subprogram.
+  /// Set the attached subprogram.
   ///
   /// Calls \a setMetadata() with \a LLVMContext::MD_dbg.
   void setSubprogram(DISubprogram *SP);
 
-  /// \brief Get the attached subprogram.
+  /// Get the attached subprogram.
   ///
   /// Calls \a getMetadata() with \a LLVMContext::MD_dbg and casts the result
   /// to \a DISubprogram.

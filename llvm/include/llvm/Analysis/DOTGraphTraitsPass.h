@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-/// \brief Default traits class for extracting a graph from an analysis pass.
+/// Default traits class for extracting a graph from an analysis pass.
 ///
 /// This assumes that 'GraphT' is 'AnalysisT *' and so just passes it through.
 template <typename AnalysisT, typename GraphT = AnalysisT *>
