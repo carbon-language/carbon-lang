@@ -1,3 +1,4 @@
+// RUN: llvm-mc -arch=amdgcn -mcpu=gfx904 -show-encoding %s | FileCheck -check-prefix=GFX9-FMAMIX %s
 // RUN: llvm-mc -arch=amdgcn -mcpu=gfx906 -show-encoding %s | FileCheck -check-prefix=GFX9-FMAMIX %s
 // RUN: not llvm-mc -arch=amdgcn -mcpu=gfx901 -show-encoding %s 2>&1 | FileCheck -check-prefix=GFX9-MADMIX-ERR %s
 
