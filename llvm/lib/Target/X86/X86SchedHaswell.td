@@ -155,9 +155,12 @@ defm : HWWriteResPair<WriteFCmpY,  [HWPort1], 3, [1], 1, 7>;
 defm : HWWriteResPair<WriteFCom,   [HWPort1], 3>;
 defm : HWWriteResPair<WriteFMul,   [HWPort0], 5>;
 defm : HWWriteResPair<WriteFDiv,   [HWPort0], 12>; // 10-14 cycles.
-defm : HWWriteResPair<WriteFRcp,   [HWPort0], 5>;
-defm : HWWriteResPair<WriteFRsqrt, [HWPort0], 5>;
-defm : HWWriteResPair<WriteFSqrt,  [HWPort0], 15>;
+defm : HWWriteResPair<WriteFRcp,   [HWPort0],  5, [1], 1, 5>;
+defm : HWWriteResPair<WriteFRcpY,  [HWPort0],  5, [1], 1, 7>;
+defm : HWWriteResPair<WriteFRsqrt, [HWPort0],  5, [1], 1, 5>;
+defm : HWWriteResPair<WriteFRsqrtY,[HWPort0],  5, [1], 1, 7>;
+defm : HWWriteResPair<WriteFSqrt,  [HWPort0], 15, [1], 1, 5>;
+defm : HWWriteResPair<WriteFSqrtY, [HWPort0], 15, [1], 1, 7>;
 defm : HWWriteResPair<WriteCvtF2I, [HWPort1], 3>;
 defm : HWWriteResPair<WriteCvtI2F, [HWPort1], 4>;
 defm : HWWriteResPair<WriteCvtF2F, [HWPort1], 3>;

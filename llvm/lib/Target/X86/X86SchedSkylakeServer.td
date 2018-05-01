@@ -158,9 +158,12 @@ defm : SKXWriteResPair<WriteFCmpY,[SKXPort015], 4, [1], 1, 7>; // Floating point
 defm : SKXWriteResPair<WriteFCom,   [SKXPort0], 2>; // Floating point compare to flags.
 defm : SKXWriteResPair<WriteFMul, [SKXPort015], 4, [1], 1, 6>; // Floating point multiplication.
 defm : SKXWriteResPair<WriteFDiv,   [SKXPort0], 12>; // 10-14 cycles. // Floating point division.
-defm : SKXWriteResPair<WriteFSqrt,  [SKXPort0], 15>; // Floating point square root.
+defm : SKXWriteResPair<WriteFSqrt,  [SKXPort0], 15, [1], 1, 5>; // Floating point square root.
+defm : SKXWriteResPair<WriteFSqrtY, [SKXPort0], 15, [1], 1, 7>; // Floating point square root (YMM/ZMM).
 defm : SKXWriteResPair<WriteFRcp,   [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal estimate.
+defm : SKXWriteResPair<WriteFRcpY,  [SKXPort0], 4, [1], 1, 7>; // Floating point reciprocal estimate (YMM/ZMM).
 defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0], 4, [1], 1, 6>; // Floating point reciprocal square root estimate.
+defm : SKXWriteResPair<WriteFRsqrtY,[SKXPort0], 4, [1], 1, 7>; // Floating point reciprocal square root estimate (YMM/ZMM).
 defm : SKXWriteResPair<WriteFMA,  [SKXPort015], 4, [1], 1, 6>; // Fused Multiply Add.
 defm : SKXWriteResPair<WriteFMAS, [SKXPort015], 4, [1], 1, 5>; // Fused Multiply Add (Scalar).
 defm : SKXWriteResPair<WriteFMAY, [SKXPort015], 4, [1], 1, 7>; // Fused Multiply Add (YMM/ZMM).
@@ -3622,13 +3625,7 @@ def SKXWriteResGroup160 : SchedWriteRes<[SKXPort0,SKXPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKXWriteResGroup160], (instregex "MUL_F(32|64)m",
-                                              "VRCP14PDZ256m(b?)",
-                                              "VRCP14PSZ256m(b?)",
-                                              "VRCPPSYm",
-                                              "VRSQRT14PDZ256m(b?)",
-                                              "VRSQRT14PSZ256m(b?)",
-                                              "VRSQRTPSYm")>;
+def: InstRW<[SKXWriteResGroup160], (instregex "MUL_F(32|64)m")>;
 
 def SKXWriteResGroup161 : SchedWriteRes<[SKXPort23,SKXPort015]> {
   let Latency = 11;

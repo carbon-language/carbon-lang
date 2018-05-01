@@ -146,8 +146,11 @@ defm : SBWriteResPair<WriteFCom,   [SBPort1], 3>;
 defm : SBWriteResPair<WriteFMul,   [SBPort0], 5, [1], 1, 6>;
 defm : SBWriteResPair<WriteFDiv,   [SBPort0], 24>;
 defm : SBWriteResPair<WriteFRcp,   [SBPort0], 5, [1], 1, 6>;
+defm : SBWriteResPair<WriteFRcpY,  [SBPort0], 5, [1], 1, 7>;
 defm : SBWriteResPair<WriteFRsqrt, [SBPort0], 5, [1], 1, 6>;
-defm : SBWriteResPair<WriteFSqrt,  [SBPort0], 14>;
+defm : SBWriteResPair<WriteFRsqrtY,[SBPort0], 5, [1], 1, 7>;
+defm : SBWriteResPair<WriteFSqrt,  [SBPort0], 14, [1], 1, 5>;
+defm : SBWriteResPair<WriteFSqrtY, [SBPort0], 14, [1], 1, 7>;
 defm : SBWriteResPair<WriteCvtF2I, [SBPort1], 3>;
 defm : SBWriteResPair<WriteCvtI2F, [SBPort1], 4>;
 defm : SBWriteResPair<WriteCvtF2F, [SBPort1], 3>;
@@ -1525,6 +1528,7 @@ def SBWriteResGroup114 : SchedWriteRes<[SBPort1,SBPort23]> {
   let ResourceCycles = [2,1];
 }
 def: InstRW<[SBWriteResGroup114], (instregex "(ADD|SUB|SUBR)_FI(16|32)m")>;
+
 def SBWriteResGroup116 : SchedWriteRes<[SBPort0,SBFPDivider]> {
   let Latency = 14;
   let NumMicroOps = 1;
