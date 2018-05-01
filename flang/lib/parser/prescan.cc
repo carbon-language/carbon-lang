@@ -37,7 +37,7 @@ Prescanner::Prescanner(const Prescanner &that)
   : messages_{that.messages_}, cooked_{that.cooked_},
     preprocessor_{that.preprocessor_}, inFixedForm_{that.inFixedForm_},
     fixedFormColumnLimit_{that.fixedFormColumnLimit_},
-    enableOldDebugLines_{that.enableOldDebugLines_},
+    encoding_{that.encoding_}, enableOldDebugLines_{that.enableOldDebugLines_},
     enableBackslashEscapesInCharLiterals_{
         that.enableBackslashEscapesInCharLiterals_},
     warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
@@ -633,19 +633,10 @@ bool Prescanner::IsNextLinePreprocessorDirective() const {
   return IsPreprocessorDirectiveLine(lineStart_);
 }
 
-void Prescanner::SkipCommentLinesAndPreprocessorDirectives() {
-  while (lineStart_ < limit_) {
-    LineClassification line{ClassifyLine(lineStart_)};
-    switch (line.kind) {
-    case LineClassification::Kind::PreprocessorDirective:
-      if (inPreprocessorDirective_) {
-        return;
-      }
-      preprocessor_.Directive(TokenizePreprocessorDirective(), this);
-      break;
-    case LineClassification::Kind::Comment: NextLine(); break;
-    default: return;
-    }
+void Prescanner::SkipCommentLines() {
+  while (lineStart_ < limit_ &&
+      ClassifyLine(lineStart_).kind == LineClassification::Kind::Comment) {
+    NextLine();
   }
 }
 
@@ -711,7 +702,7 @@ bool Prescanner::FixedFormContinuation() {
   if (*at_ == '&' && inCharLiteral_) {
     return false;
   }
-  SkipCommentLinesAndPreprocessorDirectives();
+  SkipCommentLines();
   const char *cont{FixedFormContinuationLine()};
   if (cont == nullptr) {
     return false;
@@ -732,7 +723,7 @@ bool Prescanner::FreeFormContinuation() {
   if (*p != '\n' && (inCharLiteral_ || *p != '!')) {
     return false;
   }
-  SkipCommentLinesAndPreprocessorDirectives();
+  SkipCommentLines();
   p = lineStart_;
   if (p >= limit_) {
     return false;

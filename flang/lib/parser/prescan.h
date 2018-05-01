@@ -148,7 +148,7 @@ private:
   void QuotedCharacterLiteral(TokenSequence *);
   void Hollerith(TokenSequence *, int);
   bool PadOutCharacterLiteral(TokenSequence *);
-  void SkipCommentLinesAndPreprocessorDirectives();
+  void SkipCommentLines();
   bool IsFixedFormCommentLine(const char *) const;
   bool IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
