@@ -3767,12 +3767,13 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
      << "InstructionSelector::ComplexMatcherMemFn ComplexPredicateFns[];\n"
      << "  static " << Target.getName()
      << "InstructionSelector::CustomRendererFn CustomRenderers[];\n"
-     << "bool testImmPredicate_I64(unsigned PredicateID, int64_t Imm) const "
+     << "  bool testImmPredicate_I64(unsigned PredicateID, int64_t Imm) const "
         "override;\n"
-     << "bool testImmPredicate_APInt(unsigned PredicateID, const APInt &Imm) "
+     << "  bool testImmPredicate_APInt(unsigned PredicateID, const APInt &Imm) "
         "const override;\n"
-     << "bool testImmPredicate_APFloat(unsigned PredicateID, const APFloat "
+     << "  bool testImmPredicate_APFloat(unsigned PredicateID, const APFloat "
         "&Imm) const override;\n"
+     << "  const int64_t *getMatchTable() const override;\n"
      << "#endif // ifdef GET_GLOBALISEL_TEMPORARIES_DECL\n\n";
 
   OS << "#ifdef GET_GLOBALISEL_TEMPORARIES_INIT\n"
@@ -3924,20 +3925,6 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
        << ", // " << Record->getName() << "\n";
   OS << "};\n\n";
 
-  OS << "bool " << Target.getName()
-     << "InstructionSelector::selectImpl(MachineInstr &I, CodeGenCoverage "
-        "&CoverageInfo) const {\n"
-     << "  MachineFunction &MF = *I.getParent()->getParent();\n"
-     << "  MachineRegisterInfo &MRI = MF.getRegInfo();\n"
-     << "  // FIXME: This should be computed on a per-function basis rather "
-        "than per-insn.\n"
-     << "  AvailableFunctionFeatures = computeAvailableFunctionFeatures(&STI, "
-        "&MF);\n"
-     << "  const PredicateBitset AvailableFeatures = getAvailableFeatures();\n"
-     << "  NewMIVector OutMIs;\n"
-     << "  State.MIs.clear();\n"
-     << "  State.MIs.push_back(&I);\n\n";
-
   std::stable_sort(Rules.begin(), Rules.end(), [&](const RuleMatcher &A,
                                                    const RuleMatcher &B) {
     int ScoreA = RuleMatcherScores[A.getRuleID()];
@@ -3969,16 +3956,35 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
     Rule->emit(Table);
 
   Table << MatchTable::Opcode("GIM_Reject") << MatchTable::LineBreak;
-  Table.emitDeclaration(OS);
-  OS << "  if (executeMatchTable(*this, OutMIs, State, ISelInfo, ";
-  Table.emitUse(OS);
-  OS << ", TII, MRI, TRI, RBI, AvailableFeatures, CoverageInfo)) {\n"
-     << "    return true;\n"
-     << "  }\n\n";
 
-  OS << "  return false;\n"
-     << "}\n"
-     << "#endif // ifdef GET_GLOBALISEL_IMPL\n";
+  OS << "bool " << Target.getName()
+     << "InstructionSelector::selectImpl(MachineInstr &I, CodeGenCoverage "
+        "&CoverageInfo) const {\n"
+     << "  MachineFunction &MF = *I.getParent()->getParent();\n"
+     << "  MachineRegisterInfo &MRI = MF.getRegInfo();\n"
+     << "  // FIXME: This should be computed on a per-function basis rather "
+        "than per-insn.\n"
+     << "  AvailableFunctionFeatures = computeAvailableFunctionFeatures(&STI, "
+        "&MF);\n"
+     << "  const PredicateBitset AvailableFeatures = getAvailableFeatures();\n"
+     << "  NewMIVector OutMIs;\n"
+     << "  State.MIs.clear();\n"
+     << "  State.MIs.push_back(&I);\n\n"
+     << "  if (executeMatchTable(*this, OutMIs, State, ISelInfo"
+     << ", getMatchTable(), TII, MRI, TRI, RBI, AvailableFeatures"
+     << ", CoverageInfo)) {\n"
+     << "    return true;\n"
+     << "  }\n\n"
+     << "  return false;\n"
+     << "}\n\n";
+
+  OS << "const int64_t *" << Target.getName()
+     << "InstructionSelector::getMatchTable() const {\n";
+  Table.emitDeclaration(OS);
+  OS << "  return ";
+  Table.emitUse(OS);
+  OS << ";\n}\n";
+  OS << "#endif // ifdef GET_GLOBALISEL_IMPL\n";
 
   OS << "#ifdef GET_GLOBALISEL_PREDICATES_DECL\n"
      << "PredicateBitset AvailableModuleFeatures;\n"
