@@ -124,8 +124,8 @@ define void @test_vpcmov_256(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> %a2, <4 x i
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    #APP
 ; GENERIC-NEXT:    vpcmov %ymm2, %ymm1, %ymm0, %ymm0 # sched: [1:1.00]
-; GENERIC-NEXT:    vpcmov (%rdi), %ymm1, %ymm0, %ymm0 # sched: [6:1.00]
-; GENERIC-NEXT:    vpcmov %ymm2, (%rdi), %ymm0, %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vpcmov (%rdi), %ymm1, %ymm0, %ymm0 # sched: [8:1.00]
+; GENERIC-NEXT:    vpcmov %ymm2, (%rdi), %ymm0, %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    #NO_APP
 ; GENERIC-NEXT:    vzeroupper # sched: [100:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
@@ -844,8 +844,8 @@ define void @test_vpperm(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> %a2, <2 x i64> 
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    #APP
 ; GENERIC-NEXT:    vpperm %xmm2, %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
-; GENERIC-NEXT:    vpperm (%rdi), %xmm1, %xmm0, %xmm0 # sched: [6:0.50]
-; GENERIC-NEXT:    vpperm %xmm2, (%rdi), %xmm0, %xmm0 # sched: [6:0.50]
+; GENERIC-NEXT:    vpperm (%rdi), %xmm1, %xmm0, %xmm0 # sched: [7:0.50]
+; GENERIC-NEXT:    vpperm %xmm2, (%rdi), %xmm0, %xmm0 # sched: [7:0.50]
 ; GENERIC-NEXT:    #NO_APP
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;

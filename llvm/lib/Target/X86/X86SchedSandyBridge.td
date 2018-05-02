@@ -181,9 +181,13 @@ defm : SBWriteResPair<WriteVecALU,   [SBPort1], 3>;
 defm : SBWriteResPair<WriteVecIMul,  [SBPort0], 5>;
 defm : SBWriteResPair<WritePMULLD,   [SBPort0], 5, [1], 1, 6>; // TODO this is probably wrong for 256/512-bit for the "generic" model
 defm : SBWriteResPair<WriteShuffle,  [SBPort5], 1, [1], 1, 5>;
-defm : SBWriteResPair<WriteVarShuffle,  [SBPort15], 1, [1], 1, 5>;
+defm : SBWriteResPair<WriteShuffleY, [SBPort5], 1, [1], 1, 7>;
+defm : SBWriteResPair<WriteVarShuffle,  [SBPort15], 1, [1], 1, 6>;
+defm : SBWriteResPair<WriteVarShuffleY, [SBPort15], 1, [1], 1, 7>;
 defm : SBWriteResPair<WriteBlend,   [SBPort15], 1, [1], 1, 6>;
+defm : SBWriteResPair<WriteBlendY,  [SBPort15], 1, [1], 1, 7>;
 defm : SBWriteResPair<WriteVarBlend, [SBPort15], 2, [2], 2, 6>;
+defm : SBWriteResPair<WriteVarBlendY,[SBPort15], 2, [2], 2, 7>;
 defm : SBWriteResPair<WriteMPSAD, [SBPort0, SBPort15], 7, [1,2], 3, 6>;
 defm : SBWriteResPair<WritePSADBW,  [SBPort0], 5>;
 defm : SBWriteResPair<WritePHMINPOS,  [SBPort0], 5, [1], 1, 6>;
@@ -884,6 +888,7 @@ def SBWriteResGroup51 : SchedWriteRes<[SBPort23,SBPort15]> {
 }
 def: InstRW<[SBWriteResGroup51], (instregex "MMX_PABS(B|D|W)rm",
                                             "MMX_PALIGNRrmi",
+                                            "MMX_PSHUFBrm",
                                             "MMX_PSIGN(B|D|W)rm")>;
 
 def SBWriteResGroup52 : SchedWriteRes<[SBPort23,SBPort015]> {
@@ -995,7 +1000,6 @@ def: InstRW<[SBWriteResGroup59], (instregex "MMX_PADDQirm",
                                             "(V?)PMOVZXDQrm",
                                             "(V?)PMOVZXWDrm",
                                             "(V?)PMOVZXWQrm",
-                                            "(V?)PSHUFBrm",
                                             "(V?)PSHUFDmi",
                                             "(V?)PSHUFHWmi",
                                             "(V?)PSHUFLWmi",
