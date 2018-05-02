@@ -31,6 +31,10 @@
 # include_next <stdatomic.h>
 #else
 
+#if !defined(__ALLOW_STDC_ATOMICS_IN_CXX__) && defined(__cplusplus)
+#error "<stdatomic.h> is incompatible with the C++ standard library; define __ALLOW_STDC_ATOMICS_IN_CXX__ to proceed."
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 
