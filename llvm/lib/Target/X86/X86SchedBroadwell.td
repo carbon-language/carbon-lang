@@ -1618,7 +1618,7 @@ def: InstRW<[BWWriteResGroup137_1], (instregex "(V?)SQRTSSr")>;
 def BWWriteResGroup138 : SchedWriteRes<[BWPort0,BWPort5,BWPort23]> {
   let Latency = 13;
   let NumMicroOps = 4;
-  let ResourceCycles = [1,2,1,7];
+  let ResourceCycles = [1,2,1];
 }
 def: InstRW<[BWWriteResGroup138], (instregex "VMPSADBWYrmi")>;
 
