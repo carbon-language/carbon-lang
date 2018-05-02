@@ -130,6 +130,7 @@ struct CopyConfig {
   bool StripDWO;
   bool ExtractDWO;
   bool LocalizeHidden;
+  bool Weaken;
 };
 
 using SectionPred = std::function<bool(const SectionBase &Sec)>;
@@ -334,6 +335,10 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
           Sym.Binding == STB_GLOBAL)
         Sym.Binding = STB_WEAK;
 
+      if (Config.Weaken && Sym.Binding == STB_GLOBAL &&
+          Sym.getShndx() != SHN_UNDEF)
+        Sym.Binding = STB_WEAK;
+
       const auto I = Config.SymbolsToRename.find(Sym.Name);
       if (I != Config.SymbolsToRename.end())
         Sym.Name = I->getValue();
@@ -423,6 +428,7 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   Config.StripNonAlloc = InputArgs.hasArg(OBJCOPY_strip_non_alloc);
   Config.ExtractDWO = InputArgs.hasArg(OBJCOPY_extract_dwo);
   Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
+  Config.Weaken = InputArgs.hasArg(OBJCOPY_weaken);
   for (auto Arg : InputArgs.filtered(OBJCOPY_localize_symbol))
     Config.SymbolsToLocalize.push_back(Arg->getValue());
   for (auto Arg : InputArgs.filtered(OBJCOPY_globalize_symbol))

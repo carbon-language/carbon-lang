@@ -72,3 +72,5 @@ defm weaken_symbol : Eq<"weaken-symbol">,
                        HelpText<"Mark <symbol> as weak">;
 def W : JoinedOrSeparate<["-"], "W">,
         Alias<weaken_symbol>;
+def weaken : Flag<["-", "--"], "weaken">,
+                  HelpText<"Mark all global symbols as weak">;
