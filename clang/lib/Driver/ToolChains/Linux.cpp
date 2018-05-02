@@ -429,6 +429,15 @@ std::string Linux::computeSysRoot() const {
   if (!getDriver().SysRoot.empty())
     return getDriver().SysRoot;
 
+  if (getTriple().isAndroid()) {
+    // Android toolchains typically include a sysroot at ../sysroot relative to
+    // the clang binary.
+    const StringRef ClangDir = getDriver().getInstalledDir();
+    std::string AndroidSysRootPath = (ClangDir + "/../sysroot").str();
+    if (getVFS().exists(AndroidSysRootPath))
+      return AndroidSysRootPath;
+  }
+
   if (!GCCInstallation.isValid() || !tools::isMipsArch(getTriple().getArch()))
     return std::string();
 
