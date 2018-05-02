@@ -259,8 +259,8 @@ void Prescanner::NextChar() {
     if ((inFixedForm_ && column_ > fixedFormColumnLimit_ &&
             !tabInCurrentLine_) ||
         (*at_ == '!' && !inCharLiteral_)) {
-      // Skip remainder of fixed form line due to '!' comment marker or
-      // hitting the right margin.
+      // Skip remainder of the line due to '!' comment marker or
+      // hitting the right margin in fixed form.
       while (*at_ != '\n') {
         ++at_;
       }
@@ -281,12 +281,9 @@ void Prescanner::NextChar() {
 }
 
 void Prescanner::SkipSpaces() {
-  bool wasInCharLiteral{inCharLiteral_};
-  inCharLiteral_ = false;
   while (*at_ == ' ' || *at_ == '\t') {
     NextChar();
   }
-  inCharLiteral_ = wasInCharLiteral;
 }
 
 bool Prescanner::NextToken(TokenSequence *tokens) {
@@ -438,13 +435,16 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
       // A doubled quote mark becomes a single instance of the quote character
       // in the literal (later).  There can be spaces between the quotes in
       // fixed form source.
-      EmitCharAndAdvance(tokens, quote);
+      EmitChar(tokens, quote);
+      inCharLiteral_ = false;  // for cases like print *, '...'!comment
+      NextChar();
       if (inFixedForm_ && !inPreprocessorDirective_) {
         SkipSpaces();
       }
       if (*at_ != quote) {
         break;
       }
+      inCharLiteral_ = true;
     }
   }
   inCharLiteral_ = false;
