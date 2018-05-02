@@ -1310,9 +1310,9 @@ constexpr auto percentOrDot = "%"_tok ||
 // that are NOPASS).  However, Fortran constrains the use of a variable in a
 // proc-component-ref to be a data-ref without coindices (C1027).
 // Some array element references will be misrecognized as function references.
+constexpr auto noMoreAddressing = !"("_tok >> !"["_tok >> !percentOrDot;
 TYPE_CONTEXT_PARSER("variable"_en_US,
-    construct<Variable>(
-        indirect(functionReference / !"("_ch) / !percentOrDot) ||
+    construct<Variable>(indirect(functionReference / noMoreAddressing)) ||
         construct<Variable>(indirect(designator)))
 
 // R904 logical-variable -> variable
@@ -1396,8 +1396,9 @@ constexpr auto cosubscript = scalarIntExpr;
 
 // R924 image-selector ->
 //        lbracket cosubscript-list [, image-selector-spec-list] rbracket
-TYPE_PARSER(bracketed(construct<ImageSelector>(nonemptyList(cosubscript),
-    defaulted("," >> nonemptyList(Parser<ImageSelectorSpec>{})))))
+TYPE_CONTEXT_PARSER("image selector"_en_US,
+    construct<ImageSelector>("[" >> nonemptyList(cosubscript / !"="_tok),
+        defaulted("," >> nonemptyList(Parser<ImageSelectorSpec>{})) / "]"))
 
 // R1115 team-variable -> scalar-variable
 constexpr auto teamVariable = scalar(indirect(variable));
