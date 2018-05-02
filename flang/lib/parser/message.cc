@@ -14,11 +14,13 @@
 
 #include "message.h"
 #include "char-set.h"
+#include <algorithm>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <vector>
 
 namespace Fortran::parser {
 
@@ -112,20 +114,21 @@ ProvenanceRange Message::GetProvenance(const CookedSource &cooked) const {
 void Message::Emit(
     std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
   ProvenanceRange provenanceRange{GetProvenance(cooked)};
-  bool doIdentify{true};
-  if (context_) {
-    bool sameProvenance{provenanceRange == context_->GetProvenance(cooked)};
-    context_->Emit(o, cooked, echoSourceLine && sameProvenance);
-    doIdentify = !sameProvenance;
-  }
-  if (doIdentify) {
-    cooked.allSources().Identify(o, provenanceRange, "", echoSourceLine);
-  }
-  o << "   ";
+  std::string text;
   if (isFatal_) {
-    o << "ERROR: ";
+    text += "ERROR: ";
   }
-  o << ToString() << '\n';
+  text += ToString();
+  cooked.allSources().EmitMessage(o, provenanceRange, text, echoSourceLine);
+  for (const Message *context{context_.get()}; context != nullptr;
+       context = context->context_.get()) {
+    ProvenanceRange contextProvenance{context->GetProvenance(cooked)};
+    text = "in the context: ";
+    text += context->ToString();
+    cooked.allSources().EmitMessage(o, contextProvenance, text,
+        echoSourceLine && contextProvenance != provenanceRange);
+    provenanceRange = contextProvenance;
+  }
 }
 
 void Messages::Incorporate(Messages &that) {
@@ -143,16 +146,16 @@ void Messages::Copy(const Messages &that) {
   }
 }
 
-void Messages::Emit(std::ostream &o, const CookedSource &cooked,
-    const char *prefix, bool echoSourceLines) const {
+void Messages::Emit(
+    std::ostream &o, const CookedSource &cooked, bool echoSourceLines) const {
+  std::vector<const Message *> sorted;
   for (const auto &msg : messages_) {
-    if (prefix) {
-      o << prefix;
-    }
-    if (msg.context()) {
-      o << "In the context ";
-    }
-    msg.Emit(o, cooked, echoSourceLines);
+    sorted.push_back(&msg);
+  }
+  std::sort(sorted.begin(), sorted.end(),
+      [](const Message *x, const Message *y) { return *x < *y; });
+  for (const Message *msg : sorted) {
+    msg->Emit(o, cooked, echoSourceLines);
   }
 }
 

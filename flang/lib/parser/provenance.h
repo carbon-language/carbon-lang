@@ -129,7 +129,7 @@ public:
   bool IsValid(ProvenanceRange range) const {
     return range.size() > 0 && range_.Contains(range);
   }
-  void Identify(std::ostream &, ProvenanceRange, const std::string &prefix,
+  void EmitMessage(std::ostream &, ProvenanceRange, const std::string &message,
       bool echoSourceLine = false) const;
   const SourceFile *GetSourceFile(
       Provenance, std::size_t *offset = nullptr) const;

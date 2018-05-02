@@ -75,7 +75,7 @@ void OffsetToProvenanceMappings::RemoveLastBytes(std::size_t bytes) {
 }
 
 AllSources::AllSources() : range_{1, 1} {
-  // Start the origin_ array with a dummy that has a forced provenance,
+  // Start the origin_ array with a dummy entry that has a forced provenance,
   // so that provenance offset 0 remains reserved as an uninitialized
   // value.
   origin_.emplace_back(range_, std::string{'?'});
@@ -141,25 +141,26 @@ ProvenanceRange AllSources::AddCompilerInsertion(std::string text) {
   return covers;
 }
 
-void AllSources::Identify(std::ostream &o, ProvenanceRange range,
-    const std::string &prefix, bool echoSourceLine) const {
+void AllSources::EmitMessage(std::ostream &o, ProvenanceRange range,
+    const std::string &message, bool echoSourceLine) const {
   CHECK(IsValid(range));
-  static const std::string indented{prefix + "  "};
   const Origin &origin{MapToOrigin(range.start())};
   std::visit(
       visitors{
           [&](const Inclusion &inc) {
+            o << inc.source.path();
             std::size_t offset{origin.covers.MemberOffset(range.start())};
             std::pair<int, int> pos{inc.source.FindOffsetLineAndColumn(offset)};
-            o << prefix << "at line " << pos.first << ", column " << pos.second;
+            o << ':' << pos.first << ':' << pos.second;
+            o << ": " << message << '\n';
             if (echoSourceLine) {
-              o << ":\n" << indented << "  ";
               const char *text{inc.source.content() +
                   inc.source.GetLineStartOffset(pos.first)};
+              o << "  ";
               for (const char *p{text}; *p != '\n'; ++p) {
                 o << *p;
               }
-              o << '\n' << indented << "  ";
+              o << "\n  ";
               for (int j{1}; j < pos.second; ++j) {
                 char ch{text[j - 1]};
                 o << (ch == '\t' ? '\t' : ' ');
@@ -177,28 +178,20 @@ void AllSources::Identify(std::ostream &o, ProvenanceRange range,
                   }
                 }
               }
-              o << '\n' << prefix;
-            } else {
-              o << ' ';
-            }
-            o << "in the " << (inc.isModule ? "module " : "file ")
-              << inc.source.path();
-            if (IsValid(origin.replaces)) {
-              o << (inc.isModule ? " used\n" : " included\n");
-              Identify(o, origin.replaces.start(), indented);
-            } else {
               o << '\n';
+            }
+            if (IsValid(origin.replaces)) {
+              EmitMessage(o, origin.replaces,
+                  inc.isModule ? "used here"s : "included here"s,
+                  echoSourceLine);
             }
           },
           [&](const Macro &mac) {
-            o << prefix << "in the expansion of a macro that was defined\n";
-            Identify(o, mac.definition.start(), indented, echoSourceLine);
-            o << prefix << "and called\n";
-            Identify(o, origin.replaces.start(), indented, echoSourceLine);
+            EmitMessage(o, origin.replaces, message, echoSourceLine);
+            EmitMessage(
+                o, mac.definition, "in a macro defined here", echoSourceLine);
             if (echoSourceLine) {
-              o << prefix << "and expanded to\n"
-                << indented << "  " << mac.expansion << '\n'
-                << indented << "  ";
+              o << "that expanded to:\n  " << mac.expansion << "\n  ";
               for (std::size_t j{0};
                    origin.covers.OffsetMember(j) < range.start(); ++j) {
                 o << (mac.expansion[j] == '\t' ? '\t' : ' ');
@@ -206,9 +199,7 @@ void AllSources::Identify(std::ostream &o, ProvenanceRange range,
               o << "^\n";
             }
           },
-          [&](const CompilerInsertion &ins) {
-            o << prefix << ins.text << '\n';
-          }},
+          [&](const CompilerInsertion &ins) { o << message << '\n'; }},
       origin.u);
 }
 
@@ -360,6 +351,10 @@ void AllSources::Dump(std::ostream &o) const {
                      }
                    }},
         m.u);
+    if (IsValid(m.replaces)) {
+      o << " replaces ";
+      DumpRange(o, m.replaces);
+    }
     o << '\n';
   }
 }

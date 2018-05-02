@@ -207,9 +207,8 @@ public:
 
   void Incorporate(Messages &);
   void Copy(const Messages &);
-
   void Emit(std::ostream &, const CookedSource &cooked,
-      const char *prefix = nullptr, bool echoSourceLines = true) const;
+      bool echoSourceLines = true) const;
 
   bool AnyFatalError() const;
 

@@ -164,7 +164,7 @@ std::string CompileFortran(
   if (!parsing.messages().empty() &&
       (driver.warningsAreErrors || parsing.messages().AnyFatalError())) {
     std::cerr << driver.prefix << "could not scan " << path << '\n';
-    parsing.messages().Emit(std::cerr, parsing.cooked(), driver.prefix);
+    parsing.messages().Emit(std::cerr, parsing.cooked());
     exitStatus = EXIT_FAILURE;
     return {};
   }
@@ -182,10 +182,10 @@ std::string CompileFortran(
     return {};
   }
   parsing.ClearLog();
-  parsing.messages().Emit(std::cerr, parsing.cooked(), driver.prefix);
+  parsing.messages().Emit(std::cerr, parsing.cooked());
   if (!parsing.consumedWholeFile()) {
-    std::cerr << "f18 parser FAIL; final position: ";
-    parsing.Identify(std::cerr, parsing.finalRestingPlace(), "   ");
+    parsing.EmitMessage(std::cerr, parsing.finalRestingPlace(),
+                        "parser FAIL (final position)");
     exitStatus = EXIT_FAILURE;
     return {};
   }

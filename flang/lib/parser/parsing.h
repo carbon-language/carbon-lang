@@ -61,10 +61,10 @@ public:
   void Parse(std::ostream *debugOutput = nullptr);
   void ClearLog();
 
-  void Identify(std::ostream &o, const char *at, const std::string &prefix,
+  void EmitMessage(std::ostream &o, const char *at, const std::string &message,
       bool echoSourceLine = false) const {
-    allSources_.Identify(
-        o, cooked_.GetProvenance(at).start(), prefix, echoSourceLine);
+    allSources_.EmitMessage(
+        o, cooked_.GetProvenance(at).start(), message, echoSourceLine);
   }
 
   bool ForTesting(std::string path, std::ostream &);

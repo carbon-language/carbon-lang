@@ -122,8 +122,7 @@ bool Parsing::ForTesting(std::string path, std::ostream &err) {
   Parse();
   messages_.Emit(err, cooked_);
   if (!consumedWholeFile_) {
-    err << "f18 parser FAIL; final position: ";
-    Identify(err, finalRestingPlace_, "   ");
+    EmitMessage(err, finalRestingPlace_, "parser FAIL; final position");
     return false;
   }
   if (messages_.AnyFatalError() || !parseTree_.has_value()) {

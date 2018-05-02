@@ -22,13 +22,13 @@ namespace Fortran::parser {
 std::optional<Success> DebugParser::Parse(ParseState &state) const {
   if (auto ustate = state.userState()) {
     if (auto out = ustate->debugOutput()) {
-      const CookedSource &cooked{ustate->cooked()};
-      if (auto context = state.context()) {
-        context->Emit(*out, cooked);
+      std::string note{str_, length_};
+      Message message{state.GetLocation(),
+          MessageFormattedText{"parser debug: %s"_en_US, note.data()}};
+      if (Message * context{state.context().get()}) {
+        message.set_context(context);
       }
-      Provenance p{cooked.GetProvenance(state.GetLocation()).start()};
-      cooked.allSources().Identify(*out, p, "", true);
-      *out << "   parser debug: " << std::string{str_, length_} << "\n\n";
+      message.Emit(*out, ustate->cooked(), true);
     }
   }
   return {Success{}};
