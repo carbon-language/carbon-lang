@@ -131,6 +131,7 @@ struct CopyConfig {
   bool ExtractDWO;
   bool LocalizeHidden;
   bool Weaken;
+  bool DiscardAll;
 };
 
 using SectionPred = std::function<bool(const SectionBase &Sec)>;
@@ -343,6 +344,14 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
       if (I != Config.SymbolsToRename.end())
         Sym.Name = I->getValue();
     });
+
+    Obj.SymbolTable->removeSymbols([&](const Symbol &Sym) {
+      if (Config.DiscardAll && Sym.Binding == STB_LOCAL &&
+          Sym.getShndx() != SHN_UNDEF && Sym.Type != STT_FILE &&
+          Sym.Type != STT_SECTION)
+        return true;
+      return false;
+    });
   }
 }
 
@@ -429,6 +438,7 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   Config.ExtractDWO = InputArgs.hasArg(OBJCOPY_extract_dwo);
   Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
   Config.Weaken = InputArgs.hasArg(OBJCOPY_weaken);
+  Config.DiscardAll = InputArgs.hasArg(OBJCOPY_discard_all);
   for (auto Arg : InputArgs.filtered(OBJCOPY_localize_symbol))
     Config.SymbolsToLocalize.push_back(Arg->getValue());
   for (auto Arg : InputArgs.filtered(OBJCOPY_globalize_symbol))

@@ -74,3 +74,7 @@ def W : JoinedOrSeparate<["-"], "W">,
         Alias<weaken_symbol>;
 def weaken : Flag<["-", "--"], "weaken">,
                   HelpText<"Mark all global symbols as weak">;
+def discard_all : Flag<["-", "--"], "discard-all">,
+                      HelpText<"Remove all local symbols except file and section symbols">;
+def x : Flag<["-"], "x">,
+        Alias<discard_all>;
