@@ -407,6 +407,8 @@ public:
   unsigned size() const { return NumElements; }
 };
 
+class Matcher;
+
 /// Holds the contents of a generated MatchTable to enable formatting and the
 /// necessary index tracking needed to support GIM_Try.
 class MatchTable {
@@ -419,10 +421,9 @@ class MatchTable {
   /// The currently defined labels.
   DenseMap<unsigned, unsigned> LabelMap;
   /// Tracks the sum of MatchTableRecord::NumElements as the table is built.
-  unsigned CurrentSize;
-
+  unsigned CurrentSize = 0;
   /// A unique identifier for a MatchTable label.
-  static unsigned CurrentLabelID;
+  unsigned CurrentLabelID = 0;
 
 public:
   static MatchTableRecord LineBreak;
@@ -465,7 +466,9 @@ public:
                                 MatchTableRecord::MTRF_CommaFollows);
   }
 
-  MatchTable(unsigned ID) : ID(ID), CurrentSize(0) {}
+  static MatchTable buildTable(ArrayRef<Matcher *> Rules);
+
+  MatchTable(unsigned ID = 0) : ID(ID) {}
 
   void push_back(const MatchTableRecord &Value) {
     if (Value.Flags & MatchTableRecord::MTRF_Label)
@@ -474,7 +477,7 @@ public:
     CurrentSize += Value.size();
   }
 
-  unsigned allocateLabelID() const { return CurrentLabelID++; }
+  unsigned allocateLabelID() { return CurrentLabelID++; }
 
   void defineLabel(unsigned LabelID) {
     LabelMap.insert(std::make_pair(LabelID, CurrentSize));
@@ -518,8 +521,6 @@ public:
     OS << "};\n";
   }
 };
-
-unsigned MatchTable::CurrentLabelID = 0;
 
 MatchTableRecord MatchTable::LineBreak = {
     None, "" /* Emit String */, 0 /* Elements */,
@@ -576,6 +577,14 @@ public:
   virtual void emit(MatchTable &Table) = 0;
   virtual std::unique_ptr<PredicateMatcher> forgetFirstCondition() = 0;
 };
+
+MatchTable MatchTable::buildTable(ArrayRef<Matcher *> Rules) {
+  MatchTable Table;
+  for (Matcher *Rule : Rules)
+    Rule->emit(Table);
+
+  return Table << MatchTable::Opcode("GIM_Reject") << MatchTable::LineBreak;
+}
 
 class GroupMatcher : public Matcher {
   SmallVector<std::unique_ptr<PredicateMatcher>, 8> Conditions;
@@ -2686,8 +2695,10 @@ private:
   ///   # predicate C
   /// \endverbatim
   std::vector<Matcher *> optimizeRules(
-      const std::vector<Matcher *> &Rules,
+      ArrayRef<Matcher *> Rules,
       std::vector<std::unique_ptr<GroupMatcher>> &StorageGroupMatcher);
+
+  MatchTable buildMatchTable(MutableArrayRef<RuleMatcher> Rules, bool Optimize);
 };
 
 void GlobalISelEmitter::gatherNodeEquivs() {
@@ -3644,7 +3655,7 @@ void GlobalISelEmitter::emitImmPredicates(
 }
 
 std::vector<Matcher *> GlobalISelEmitter::optimizeRules(
-    const std::vector<Matcher *> &Rules,
+    ArrayRef<Matcher *> Rules,
     std::vector<std::unique_ptr<GroupMatcher>> &StorageGroupMatcher) {
   std::vector<Matcher *> OptRules;
   // Start with a stupid grouping for now.
@@ -3673,6 +3684,23 @@ std::vector<Matcher *> GlobalISelEmitter::optimizeRules(
   }
   DEBUG(dbgs() << "NbGroup: " << NbGroup << "\n");
   return OptRules;
+}
+
+MatchTable
+GlobalISelEmitter::buildMatchTable(MutableArrayRef<RuleMatcher> Rules,
+                                   bool Optimize) {
+  std::vector<Matcher *> InputRules;
+  for (Matcher &Rule : Rules)
+    InputRules.push_back(&Rule);
+
+  if (!Optimize)
+    return MatchTable::buildTable(InputRules);
+
+  std::vector<std::unique_ptr<GroupMatcher>> StorageGroupMatcher;
+  std::vector<Matcher *> OptRules =
+      optimizeRules(InputRules, StorageGroupMatcher);
+
+  return MatchTable::buildTable(OptRules);
 }
 
 void GlobalISelEmitter::run(raw_ostream &OS) {
@@ -3941,21 +3969,6 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
     }
     return false;
   });
-  std::vector<std::unique_ptr<GroupMatcher>> StorageGroupMatcher;
-
-  std::vector<Matcher *> InputRules;
-  for (Matcher &Rule : Rules)
-    InputRules.push_back(&Rule);
-
-  std::vector<Matcher *> OptRules =
-      OptimizeMatchTable ? optimizeRules(InputRules, StorageGroupMatcher)
-                         : InputRules;
-
-  MatchTable Table(0);
-  for (Matcher *Rule : OptRules)
-    Rule->emit(Table);
-
-  Table << MatchTable::Opcode("GIM_Reject") << MatchTable::LineBreak;
 
   OS << "bool " << Target.getName()
      << "InstructionSelector::selectImpl(MachineInstr &I, CodeGenCoverage "
@@ -3978,6 +3991,7 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
      << "  return false;\n"
      << "}\n\n";
 
+  const MatchTable Table = buildMatchTable(Rules, OptimizeMatchTable);
   OS << "const int64_t *" << Target.getName()
      << "InstructionSelector::getMatchTable() const {\n";
   Table.emitDeclaration(OS);
