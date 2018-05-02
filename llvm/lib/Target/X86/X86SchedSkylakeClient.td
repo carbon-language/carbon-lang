@@ -156,8 +156,8 @@ defm : SKLWriteResPair<WriteFAddY, [SKLPort01],  4, [1], 1, 7>; // Floating poin
 defm : SKLWriteResPair<WriteFCmp,  [SKLPort01],  4, [1], 1, 6>; // Floating point compare.
 defm : SKLWriteResPair<WriteFCmpY, [SKLPort01],  4, [1], 1, 7>; // Floating point compare (YMM/ZMM).
 defm : SKLWriteResPair<WriteFCom,   [SKLPort0],  2>; // Floating point compare to flags.
-defm : SKLWriteResPair<WriteFMul,   [SKLPort0],  5, [1], 1, 5>; // Floating point multiplication.
-defm : SKLWriteResPair<WriteFMulY,  [SKLPort0],  5, [1], 1, 7>; // Floating point multiplication (YMM/ZMM).
+defm : SKLWriteResPair<WriteFMul,  [SKLPort01],  4, [1], 1, 6>; // Floating point multiplication.
+defm : SKLWriteResPair<WriteFMulY, [SKLPort01],  4, [1], 1, 7>; // Floating point multiplication (YMM/ZMM).
 defm : SKLWriteResPair<WriteFDiv,   [SKLPort0], 12, [1], 1, 5>; // 10-14 cycles. // Floating point division.
 defm : SKLWriteResPair<WriteFDivY,  [SKLPort0], 12, [1], 1, 7>; // 10-14 cycles. // Floating point division (YMM/ZMM).
 defm : SKLWriteResPair<WriteFSqrt,  [SKLPort0], 15, [1], 1, 5>; // Floating point square root.
@@ -914,10 +914,6 @@ def SKLWriteResGroup48 : SchedWriteRes<[SKLPort01]> {
 def: InstRW<[SKLWriteResGroup48], (instregex "(V?)CVTDQ2PS(Y?)rr",
                                              "(V?)CVTPS2DQ(Y?)rr",
                                              "(V?)CVTTPS2DQ(Y?)rr",
-                                             "(V?)MULPD(Y?)rr",
-                                             "(V?)MULPS(Y?)rr",
-                                             "(V?)MULSDrr",
-                                             "(V?)MULSSrr",
                                              "(V?)PMADDUBSW(Y?)rr",
                                              "(V?)PMADDWD(Y?)rr",
                                              "(V?)PMULDQ(Y?)rr",
@@ -1818,8 +1814,6 @@ def: InstRW<[SKLWriteResGroup134], (instregex "(V?)CVTDQ2PSrm",
                                               "(V?)CVTPS2DQrm",
                                               "(V?)CVTSS2SDrm",
                                               "(V?)CVTTPS2DQrm",
-                                              "(V?)MULPDrm",
-                                              "(V?)MULPSrm",
                                               "(V?)PMADDUBSWrm",
                                               "(V?)PMADDWDrm",
                                               "(V?)PMULDQrm",
@@ -1916,8 +1910,6 @@ def: InstRW<[SKLWriteResGroup147], (instregex "VCVTDQ2PSYrm",
                                               "VCVTPS2DQYrm",
                                               "VCVTPS2PDYrm",
                                               "VCVTTPS2DQYrm",
-                                              "VMULPDYrm",
-                                              "VMULPSYrm",
                                               "VPMADDUBSWYrm",
                                               "VPMADDWDYrm",
                                               "VPMULDQYrm",
