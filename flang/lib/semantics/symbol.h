@@ -49,7 +49,10 @@ public:
     : dummyArgs_{that.dummyArgs_}, result_{that.result_} {}
 
   bool isFunction() const { return result_.has_value(); }
-  const Symbol &result() const { CHECK(isFunction()); return **result_; }
+  const Symbol &result() const {
+    CHECK(isFunction());
+    return **result_;
+  }
   void set_result(Symbol &result) {
     CHECK(!result_.has_value());
     result_ = &result;
@@ -91,8 +94,8 @@ public:
   Symbol(const Scope &owner, const SourceName &name, const Attrs &attrs,
       Details &&details)
     : owner_{owner}, attrs_{attrs}, details_{std::move(details)} {
-      add_occurrence(name);
-    }
+    add_occurrence(name);
+  }
   const Scope &owner() const { return owner_; }
   const SourceName &name() const { return occurrences_.front(); }
   Attrs &attrs() { return attrs_; }
@@ -129,12 +132,8 @@ public:
     details_.swap(details);
   }
 
-  const std::list<SourceName> &occurrences() const {
-    return occurrences_;
-  }
-  void add_occurrence(const SourceName &name) {
-    occurrences_.push_back(name);
-  }
+  const std::list<SourceName> &occurrences() const { return occurrences_; }
+  void add_occurrence(const SourceName &name) { occurrences_.push_back(name); }
 
 private:
   const Scope &owner_;

@@ -233,9 +233,10 @@ DeclTypeSpec &DeclTypeSpec::operator=(const DeclTypeSpec &that) {
   return *this;
 }
 
-DeclTypeSpec::DeclTypeSpec(Category category, std::unique_ptr<DerivedTypeSpec> &&typeSpec)
-  : category_{category}, intrinsicTypeSpec_{nullptr},
-    derivedTypeSpec_{std::move(typeSpec)} {
+DeclTypeSpec::DeclTypeSpec(
+    Category category, std::unique_ptr<DerivedTypeSpec> &&typeSpec)
+  : category_{category}, intrinsicTypeSpec_{nullptr}, derivedTypeSpec_{
+                                                          std::move(typeSpec)} {
   CHECK(category == TypeDerived || category == ClassDerived);
 }
 

@@ -13,17 +13,17 @@
 // limitations under the License.
 
 #include "resolve-names.h"
-#include "rewrite-parse-tree.h"
 #include "attr.h"
+#include "rewrite-parse-tree.h"
 #include "scope.h"
 #include "symbol.h"
 #include "type.h"
 #include "../parser/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
-#include <ostream>
 #include <list>
 #include <memory>
+#include <ostream>
 #include <stack>
 
 namespace Fortran::semantics {
@@ -1262,8 +1262,6 @@ static void DumpSymbols(std::ostream &os, const Scope &scope, int indent = 0) {
   --indent;
 }
 
-void DumpSymbols(std::ostream &os) {
-  DumpSymbols(os, Scope::globalScope);
-}
+void DumpSymbols(std::ostream &os) { DumpSymbols(os, Scope::globalScope); }
 
 }  // namespace Fortran::semantics

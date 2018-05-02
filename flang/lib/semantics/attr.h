@@ -34,14 +34,11 @@ ENUM_CLASS(Attr, ABSTRACT, ALLOCATABLE, ASYNCHRONOUS, BIND_C, CONTIGUOUS,
 class Attrs : public EnumSet<Attr, Attr_enumSize> {
 private:
   using enumSetType = EnumSet<Attr, Attr_enumSize>;
+
 public:
   using enumSetType::enumSetType;
-  constexpr bool HasAny(const Attrs &x) const {
-    return !(*this & x).none();
-  }
-  constexpr bool HasAll(const Attrs &x) const {
-    return (~*this & x).none();
-  }
+  constexpr bool HasAny(const Attrs &x) const { return !(*this & x).none(); }
+  constexpr bool HasAll(const Attrs &x) const { return (~*this & x).none(); }
   // Internal error if any of these attributes are not in allowed.
   void CheckValid(const Attrs &allowed) const;
 

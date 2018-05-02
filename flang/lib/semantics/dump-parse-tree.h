@@ -28,42 +28,36 @@
 
 namespace Fortran::semantics {
 
+std::string DemangleCxxName(const char *name);
 
-std::string DemangleCxxName(const char* name) ;
-
-template <typename T> std::string GetTypeName_base() {
-  return DemangleCxxName( typeid(T).name() ) ;
+template<typename T> std::string GetTypeName_base() {
+  return DemangleCxxName(typeid(T).name());
 }
 
-template <typename T> std::string GetTypeName() {
-  return GetTypeName_base< 
-    typename std::remove_cv<
-      typename std::remove_reference<        
-        T
-        >::type
-      >::type
-    > ();   
-} 
+template<typename T> std::string GetTypeName() {
+  return GetTypeName_base<
+      typename std::remove_cv<typename std::remove_reference<T>::type>::type>();
+}
 
-// Make it usable on 
-template <typename T> std::string GetTypeName(const T &x) {
-  return GetTypeName<decltype(x)>() ;
-} 
+// Make it usable on
+template<typename T> std::string GetTypeName(const T &x) {
+  return GetTypeName<decltype(x)>();
+}
 
-// Simplify the name of some types
- 
-#define FLANG_PARSER_RENAME_TYPE( TYPE, NAME ) \
-  template <> inline std::string GetTypeName_base<TYPE>() { return NAME; }  
+  // Simplify the name of some types
 
-FLANG_PARSER_RENAME_TYPE( Fortran::parser::LoopBounds<Fortran::parser::ScalarIntConstantExpr> ,
-             "LoopBounds<Expr>")
+#define FLANG_PARSER_RENAME_TYPE(TYPE, NAME) \
+  template<> inline std::string GetTypeName_base<TYPE>() { return NAME; }
 
-FLANG_PARSER_RENAME_TYPE( Fortran::parser::LoopBounds<Fortran::parser::ScalarIntExpr> ,
-             "LoopBounds<Expr>")
+FLANG_PARSER_RENAME_TYPE(
+    Fortran::parser::LoopBounds<Fortran::parser::ScalarIntConstantExpr>,
+    "LoopBounds<Expr>")
 
+FLANG_PARSER_RENAME_TYPE(
+    Fortran::parser::LoopBounds<Fortran::parser::ScalarIntExpr>,
+    "LoopBounds<Expr>")
 
-} // end of namespace
-
+}  // namespace Fortran::semantics
 
 namespace Fortran::parser {
 
@@ -76,49 +70,46 @@ namespace Fortran::parser {
 class ParseTreeDumper {
 private:
   int indent;
-  std::ostream &out ;  
+  std::ostream &out;
   bool emptyline;
+
 public:
-  
-  ParseTreeDumper(std::ostream &out_ = std::cerr) : indent(0) , out(out_) , emptyline(false) { }
+  ParseTreeDumper(std::ostream &out_ = std::cerr)
+    : indent(0), out(out_), emptyline(false) {}
 
 private:
-
-  static bool startwith( const std::string str, const char *prefix) ;
-  static std::string cleanup(const std::string &name) ;
-
+  static bool startwith(const std::string str, const char *prefix);
+  static std::string cleanup(const std::string &name);
 
 public:
-
   void out_indent() {
-    for (int i=0;i<indent;i++) {
-      out << "| " ;
+    for (int i = 0; i < indent; i++) {
+      out << "| ";
     }
   }
 
-
-  template <typename T> bool Pre(const T &x) { 
-    if (emptyline ) {
+  template<typename T> bool Pre(const T &x) {
+    if (emptyline) {
       out_indent();
-      emptyline = false ;
+      emptyline = false;
     }
-    if ( UnionTrait<T> || WrapperTrait<T> ) {
-      out << cleanup(Fortran::semantics::GetTypeName<decltype(x)>()) << " -> "  ;
-      emptyline = false ;
+    if (UnionTrait<T> || WrapperTrait<T>) {
+      out << cleanup(Fortran::semantics::GetTypeName<decltype(x)>()) << " -> ";
+      emptyline = false;
     } else {
-      out << cleanup(Fortran::semantics::GetTypeName<decltype(x)>())    ;
-      out << "\n" ; 
-      indent++ ;
-      emptyline = true ;
-    }    
-    return true ;
+      out << cleanup(Fortran::semantics::GetTypeName<decltype(x)>());
+      out << "\n";
+      indent++;
+      emptyline = true;
+    }
+    return true;
   }
-  
-  template <typename T> void Post(const T &x) { 
-    if ( UnionTrait<T> || WrapperTrait<T> ) {
-      if (!emptyline) { 
-        out << "\n" ; 
-        emptyline = true ; 
+
+  template<typename T> void Post(const T &x) {
+    if (UnionTrait<T> || WrapperTrait<T>) {
+      if (!emptyline) {
+        out << "\n";
+        emptyline = true;
       }
     } else {
       indent--;
@@ -141,148 +132,112 @@ public:
     return true;
   }
 
-  bool Pre(const parser::Name &x) {
-    return PutName(x.ToString(), x.symbol);
-  }
+  bool Pre(const parser::Name &x) { return PutName(x.ToString(), x.symbol); }
 
-  void Post(const parser::Name &) { 
-    indent--;
-  }
+  void Post(const parser::Name &) { indent--; }
 
-  bool Pre(const std::string &x) { 
-    return PutName(x, nullptr);
-  }
-  
-  void Post(const std::string &x) { 
-    indent--;
-  }
+  bool Pre(const std::string &x) { return PutName(x, nullptr); }
 
-  bool Pre(const std::int64_t &x) { 
-    if (emptyline ) {
+  void Post(const std::string &x) { indent--; }
+
+  bool Pre(const std::int64_t &x) {
+    if (emptyline) {
       out_indent();
-      emptyline = false ;
-    }    
+      emptyline = false;
+    }
     out << "int = '" << x << "'\n";
-    indent++ ;
-    emptyline = true ;    
-    return true ;
-  }
-  
-  void Post(const std::int64_t &x) { 
-    indent--;
+    indent++;
+    emptyline = true;
+    return true;
   }
 
-  bool Pre(const std::uint64_t &x) { 
-    if (emptyline ) {
+  void Post(const std::int64_t &x) { indent--; }
+
+  bool Pre(const std::uint64_t &x) {
+    if (emptyline) {
       out_indent();
-      emptyline = false ;
-    }    
+      emptyline = false;
+    }
     out << "int = '" << x << "'\n";
-    indent++ ;
-    emptyline = true ;    
-    return true ;
+    indent++;
+    emptyline = true;
+    return true;
   }
-  
-  void Post(const std::uint64_t &x) { 
-    indent--;
-  }
+
+  void Post(const std::uint64_t &x) { indent--; }
 
   // A few types we want to ignore
 
-
-  template <typename T> bool Pre(const Fortran::parser::Statement<T> &) { 
+  template<typename T> bool Pre(const Fortran::parser::Statement<T> &) {
     return true;
   }
 
-  template <typename T> void Post(const Fortran::parser::Statement<T> &) { 
-  }
+  template<typename T> void Post(const Fortran::parser::Statement<T> &) {}
 
-  template <typename T> bool Pre(const Fortran::parser::Indirection<T> &) { 
+  template<typename T> bool Pre(const Fortran::parser::Indirection<T> &) {
     return true;
   }
 
-  template <typename T> void Post(const Fortran::parser::Indirection<T> &) { 
-  }
+  template<typename T> void Post(const Fortran::parser::Indirection<T> &) {}
 
-  template <typename T> bool Pre(const Fortran::parser::Integer<T> &) { 
+  template<typename T> bool Pre(const Fortran::parser::Integer<T> &) {
     return true;
   }
 
-  template <typename T> void Post(const Fortran::parser::Integer<T> &) { 
-  }
+  template<typename T> void Post(const Fortran::parser::Integer<T> &) {}
 
-
-  template <typename T> bool Pre(const Fortran::parser::Scalar<T> &) { 
+  template<typename T> bool Pre(const Fortran::parser::Scalar<T> &) {
     return true;
   }
 
-  template <typename T> void Post(const Fortran::parser::Scalar<T> &) { 
-  }
+  template<typename T> void Post(const Fortran::parser::Scalar<T> &) {}
 
-  template <typename... A> bool Pre(const std::tuple<A...> &) { 
-    return true;
-  }
+  template<typename... A> bool Pre(const std::tuple<A...> &) { return true; }
 
-  template <typename... A> void Post(const std::tuple<A...> &) { 
-  }
+  template<typename... A> void Post(const std::tuple<A...> &) {}
 
-  template <typename... A> bool Pre(const std::variant<A...> &) { 
-    return true;
-  }
-  
-  template <typename... A> void Post(const std::variant<A...> &) { 
-  }
+  template<typename... A> bool Pre(const std::variant<A...> &) { return true; }
 
+  template<typename... A> void Post(const std::variant<A...> &) {}
 
 public:
-  
-  
-}; 
+};
 
-
-template <typename T>
-void DumpTree(const T &x, std::ostream &out=std::cout )
-{
+template<typename T> void DumpTree(const T &x, std::ostream &out = std::cout) {
   ParseTreeDumper dumper(out);
-  Fortran::parser::Walk(x,dumper); 
+  Fortran::parser::Walk(x, dumper);
 }
 
-
-} // of namespace 
-
+}  // namespace Fortran::parser
 
 namespace Fortran::parser {
 
 // Provide a explicit instantiation for a few selected node types.
-// The goal is not to provide the instanciation of all possible 
+// The goal is not to provide the instanciation of all possible
 // types but to insure that a call to DumpTree will not cause
 // the instanciation of thousands of types.
 //
- 
 
-#define FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,TYPE) \
- MODE template void Walk(const TYPE&, Fortran::parser::ParseTreeDumper &);
+#define FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, TYPE) \
+  MODE template void Walk(const TYPE &, Fortran::parser::ParseTreeDumper &);
 
 #define FLANG_PARSE_TREE_DUMPER_INSTANTIATE_ALL(MODE) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,ProgramUnit) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,SubroutineStmt) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,ProgramStmt) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,FunctionStmt) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,ModuleStmt) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,Expr) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,ActionStmt) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,ExecutableConstruct) \
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,Block)\
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,DeclarationConstruct)\
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,SpecificationPart)\
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,OtherSpecificationStmt)\
-  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE,SpecificationConstruct)\
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, ProgramUnit) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, SubroutineStmt) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, ProgramStmt) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, FunctionStmt) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, ModuleStmt) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, Expr) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, ActionStmt) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, ExecutableConstruct) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, Block) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, DeclarationConstruct) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, SpecificationPart) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, OtherSpecificationStmt) \
+  FLANG_PARSE_TREE_DUMPER_INSTANTIATE(MODE, SpecificationConstruct)
 
+FLANG_PARSE_TREE_DUMPER_INSTANTIATE_ALL(extern)
 
-
-FLANG_PARSE_TREE_DUMPER_INSTANTIATE_ALL(extern) 
-
-
-} // of namespace 
+}  // of namespace
 
 #endif  // FORTRAN_SEMANTICS_PARSETREEDUMP_H_

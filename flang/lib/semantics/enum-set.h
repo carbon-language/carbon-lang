@@ -26,6 +26,7 @@ namespace Fortran::semantics {
 
 template<typename ENUM, std::size_t BITS> class EnumSet {
   static_assert(BITS > 0);
+
 public:
   using bitsetType = std::bitset<BITS>;
   using enumerationType = ENUM;
@@ -176,7 +177,8 @@ private:
 
 template<typename ENUM, std::size_t values>
 struct std::hash<Fortran::semantics::EnumSet<ENUM, values>> {
-  std::size_t operator()(const Fortran::semantics::EnumSet<ENUM, values> &x) const {
+  std::size_t operator()(
+      const Fortran::semantics::EnumSet<ENUM, values> &x) const {
     return std::hash(x.bitset());
   }
 };

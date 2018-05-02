@@ -76,13 +76,9 @@ public:
     return true;
   }
 
-  void Post(parser::Variable &x) {
-    ConvertFunctionRef(x);
-  }
+  void Post(parser::Variable &x) { ConvertFunctionRef(x); }
 
-  void Post(parser::Expr &x) {
-    ConvertFunctionRef(x);
-  }
+  void Post(parser::Expr &x) { ConvertFunctionRef(x); }
 
 private:
   const symbolMap &symbols_;
@@ -91,7 +87,7 @@ private:
   // For T = Variable or Expr, if x has a function reference that really
   // should be an array element reference (i.e. the name occurs in an
   // entity declaration, convert it.
-  template<typename T> void ConvertFunctionRef(T & x) {
+  template<typename T> void ConvertFunctionRef(T &x) {
     auto *funcRef =
         std::get_if<parser::Indirection<parser::FunctionReference>>(&x.u);
     if (!funcRef) {
