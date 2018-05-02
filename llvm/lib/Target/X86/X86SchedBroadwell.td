@@ -205,8 +205,8 @@ defm : BWWriteResPair<WriteVecLogicY,[BWPort015], 1, [1], 1, 6>; // Vector integ
 defm : BWWriteResPair<WriteVecShift, [BWPort0],  1>; // Vector integer shifts.
 defm : BWWriteResPair<WriteVecIMul,  [BWPort0],   5>; // Vector integer multiply.
 defm : BWWriteResPair<WritePMULLD,   [BWPort0], 10, [2], 2, 5>; // PMULLD
-defm : BWWriteResPair<WriteShuffle,  [BWPort5],  1>; // Vector shuffles.
-defm : BWWriteResPair<WriteVarShuffle, [BWPort5],  1>; // Vector variable shuffles.
+defm : BWWriteResPair<WriteShuffle,  [BWPort5], 1, [1], 1, 5>; // Vector shuffles.
+defm : BWWriteResPair<WriteVarShuffle, [BWPort5], 1, [1], 1, 5>; // Vector variable shuffles.
 defm : BWWriteResPair<WriteBlend,  [BWPort5],  1>; // Vector blends.
 defm : BWWriteResPair<WriteVarBlend,  [BWPort5], 2, [2], 2, 5>; // Vector variable blends.
 defm : BWWriteResPair<WriteMPSAD,  [BWPort0, BWPort5], 7, [1, 2], 3, 5>; // Vector MPSAD.
@@ -334,11 +334,11 @@ defm : BWWriteResPair<WriteCLMul,  [BWPort0], 5>;
 def : WriteRes<WriteSystem,     [BWPort0156]> { let Latency = 100; } // def WriteSystem : SchedWrite;
 
 // AVX2.
-defm : BWWriteResPair<WriteFShuffle256,  [BWPort5],  3>; // Fp 256-bit width vector shuffles.
-defm : BWWriteResPair<WriteFVarShuffle256,  [BWPort5],  3>; // Fp 256-bit width vector variable shuffles.
-defm : BWWriteResPair<WriteShuffle256,  [BWPort5],  3>;  // 256-bit width vector shuffles.
-defm : BWWriteResPair<WriteVarShuffle256,  [BWPort5],  3>;  // 256-bit width vector variable shuffles.
-defm : BWWriteResPair<WriteVarVecShift,  [BWPort0, BWPort5], 2, [2, 1]>; // Variable vector shifts.
+defm : BWWriteResPair<WriteFShuffle256, [BWPort5], 3, [1], 1, 7>; // Fp 256-bit width vector shuffles.
+defm : BWWriteResPair<WriteFVarShuffle256, [BWPort5], 3, [1], 1, 7>; // Fp 256-bit width vector variable shuffles.
+defm : BWWriteResPair<WriteShuffle256, [BWPort5], 3, [1], 1, 7>;  // 256-bit width vector shuffles.
+defm : BWWriteResPair<WriteVarShuffle256, [BWPort5], 3, [1], 1, 7>;  // 256-bit width vector variable shuffles.
+defm : BWWriteResPair<WriteVarVecShift, [BWPort0, BWPort5], 2, [2, 1]>; // Variable vector shifts.
 
 // Old microcoded instructions that nobody use.
 def : WriteRes<WriteMicrocoded, [BWPort0156]> { let Latency = 100; } // def WriteMicrocoded : SchedWrite;

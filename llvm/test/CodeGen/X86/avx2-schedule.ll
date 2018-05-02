@@ -523,7 +523,7 @@ define <8 x i32> @test_inserti128(<8 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) 
 ; GENERIC-LABEL: test_inserti128:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm1 # sched: [1:1.00]
-; GENERIC-NEXT:    vinserti128 $1, (%rdi), %ymm0, %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vinserti128 $1, (%rdi), %ymm0, %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    vpaddd %ymm0, %ymm1, %ymm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -2506,7 +2506,7 @@ define <4 x i64> @test_perm2i128(<4 x i64> %a0, <4 x i64> %a1, <4 x i64> *%a2) {
 ; GENERIC-LABEL: test_perm2i128:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vperm2i128 {{.*#+}} ymm1 = ymm0[2,3],ymm1[0,1] sched: [1:1.00]
-; GENERIC-NEXT:    vperm2i128 {{.*#+}} ymm0 = ymm0[2,3],mem[0,1] sched: [6:1.00]
+; GENERIC-NEXT:    vperm2i128 {{.*#+}} ymm0 = ymm0[2,3],mem[0,1] sched: [8:1.00]
 ; GENERIC-NEXT:    vpaddq %ymm0, %ymm1, %ymm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -2555,7 +2555,7 @@ define <8 x i32> @test_permd(<8 x i32> %a0, <8 x i32> %a1, <8 x i32> *%a2) {
 ; GENERIC-LABEL: test_permd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vpermd %ymm1, %ymm0, %ymm1 # sched: [1:1.00]
-; GENERIC-NEXT:    vpermd (%rdi), %ymm0, %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vpermd (%rdi), %ymm0, %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    vpaddd %ymm0, %ymm1, %ymm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -2605,7 +2605,7 @@ define <4 x double> @test_permpd(<4 x double> %a0, <4 x double> *%a1) {
 ; GENERIC-LABEL: test_permpd:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vpermpd {{.*#+}} ymm0 = ymm0[3,2,2,3] sched: [1:1.00]
-; GENERIC-NEXT:    vpermpd {{.*#+}} ymm1 = mem[0,2,2,3] sched: [6:1.00]
+; GENERIC-NEXT:    vpermpd {{.*#+}} ymm1 = mem[0,2,2,3] sched: [8:1.00]
 ; GENERIC-NEXT:    vaddpd %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -2654,7 +2654,7 @@ define <8 x float> @test_permps(<8 x i32> %a0, <8 x float> %a1, <8 x float> *%a2
 ; GENERIC-LABEL: test_permps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vpermps %ymm1, %ymm0, %ymm1 # sched: [1:1.00]
-; GENERIC-NEXT:    vpermps (%rdi), %ymm0, %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vpermps (%rdi), %ymm0, %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    vaddps %ymm0, %ymm1, %ymm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
@@ -2704,7 +2704,7 @@ define <4 x i64> @test_permq(<4 x i64> %a0, <4 x i64> *%a1) {
 ; GENERIC-LABEL: test_permq:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[3,2,2,3] sched: [1:1.00]
-; GENERIC-NEXT:    vpermq {{.*#+}} ymm1 = mem[0,2,2,3] sched: [6:1.00]
+; GENERIC-NEXT:    vpermq {{.*#+}} ymm1 = mem[0,2,2,3] sched: [8:1.00]
 ; GENERIC-NEXT:    vpaddq %ymm1, %ymm0, %ymm0 # sched: [3:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
