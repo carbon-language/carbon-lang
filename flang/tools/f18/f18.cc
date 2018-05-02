@@ -156,7 +156,7 @@ std::string CompileFortran(
     auto dot = path.rfind(".");
     if (dot != std::string::npos) {
       std::string suffix{path.substr(dot + 1)};
-      options.isFixedForm = suffix == "f" || suffix == "F";
+      options.isFixedForm = suffix == "f" || suffix == "F" || suffix == "ff";
     }
   }
   Fortran::parser::Parsing parsing;
@@ -302,9 +302,11 @@ int main(int argc, char *const argv[]) {
         driver.pgf90Args.push_back(arg);
       } else {
         std::string suffix{arg.substr(dot + 1)};
-        if (suffix == "f" || suffix == "F" || suffix == "f90" ||
-            suffix == "F90" || suffix == "cuf" || suffix == "CUF" ||
-            suffix == "f18" || suffix == "F18") {
+        if (suffix == "f" || suffix == "F" || suffix == "ff" ||
+            suffix == "f90" || suffix == "F90" || suffix == "ff90" ||
+            suffix == "f95" || suffix == "F95" || suffix == "ff95" ||
+            suffix == "cuf" || suffix == "CUF" ||
+            suffix == "f18" || suffix == "F18" || suffix == "ff18") {
           fortranSources.push_back(arg);
         } else if (suffix == "o" || suffix == "a") {
           relocatables.push_back(arg);

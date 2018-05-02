@@ -478,10 +478,6 @@ TYPE_PARSER(construct<KindSelector>(
     extension(construct<KindSelector>(
         construct<KindSelector::StarSize>("*" >> digitString / spaceCheck))))
 
-// R710 signed-digit-string -> [sign] digit-string
-// N.B. Not a complete token -- no space is skipped.
-constexpr SignedDigitString signedDigitString;
-
 // R707 signed-int-literal-constant -> [sign] int-literal-constant
 TYPE_PARSER(space >> sourced(construct<SignedIntLiteralConstant>(
                          signedDigitString, maybe(underscore >> kindParam))))
@@ -2728,6 +2724,8 @@ TYPE_CONTEXT_PARSER("INQUIRE statement"_en_US,
                 nonemptyList(outputItem)))))
 
 // R1301 format-stmt -> FORMAT format-specification
+// 13.2.1 allows spaces to appear "at any point" within a format specification
+// without effect, except of course within a character string edit descriptor.
 TYPE_CONTEXT_PARSER("FORMAT statement"_en_US,
     construct<FormatStmt>("FORMAT" >> Parser<format::FormatSpecification>{}))
 
@@ -2741,7 +2739,7 @@ constexpr auto formatItems =
     nonemptySeparated(space >> Parser<format::FormatItem>{}, maybe(","_tok));
 
 // R1306 r -> digit-string
-constexpr auto repeat = space >> digitString;
+constexpr DigitStringIgnoreSpaces repeat;
 
 // R1304 format-item ->
 //         [r] data-edit-desc | control-edit-desc | char-string-edit-desc |
@@ -2777,64 +2775,60 @@ constexpr auto mandatoryDigits = construct<std::optional<int>>("." >> width);
 //         G w [. d [E e]] | L w | A [w] | D w . d |
 //         DT [char-literal-constant] [( v-list )]
 // (part 1 of 2)
-TYPE_PARSER(
+TYPE_PARSER(construct<format::IntrinsicTypeDataEditDesc>(
+                "I" >> pure(format::IntrinsicTypeDataEditDesc::Kind::I) ||
+                    "B" >> pure(format::IntrinsicTypeDataEditDesc::Kind::B) ||
+                    "O" >> pure(format::IntrinsicTypeDataEditDesc::Kind::O) ||
+                    "Z" >> pure(format::IntrinsicTypeDataEditDesc::Kind::Z),
+                mandatoryWidth, maybe("." >> digits), noInt) ||
     construct<format::IntrinsicTypeDataEditDesc>(
-        "I"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::I) ||
-            "B"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::B) ||
-            "O"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::O) ||
-            "Z"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::Z),
-        mandatoryWidth, maybe("." >> digits), noInt) ||
-    construct<format::IntrinsicTypeDataEditDesc>(
-        "F"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::F) ||
-            "D"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::D),
+        "F" >> pure(format::IntrinsicTypeDataEditDesc::Kind::F) ||
+            "D" >> pure(format::IntrinsicTypeDataEditDesc::Kind::D),
         mandatoryWidth, mandatoryDigits, noInt) ||
-    construct<format::IntrinsicTypeDataEditDesc>("E"_ch >>
-            ("N"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::EN) ||
-                "S"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::ES) ||
-                "X"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::EX) ||
-                pure(format::IntrinsicTypeDataEditDesc::Kind::E)),
-        mandatoryWidth, mandatoryDigits, maybe("E"_ch >> digits)) ||
     construct<format::IntrinsicTypeDataEditDesc>(
-        "G"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::G),
-        mandatoryWidth, mandatoryDigits, maybe("E"_ch >> digits)) ||
+        "E" >> ("N" >> pure(format::IntrinsicTypeDataEditDesc::Kind::EN) ||
+                   "S" >> pure(format::IntrinsicTypeDataEditDesc::Kind::ES) ||
+                   "X" >> pure(format::IntrinsicTypeDataEditDesc::Kind::EX) ||
+                   pure(format::IntrinsicTypeDataEditDesc::Kind::E)),
+        mandatoryWidth, mandatoryDigits, maybe("E" >> digits)) ||
     construct<format::IntrinsicTypeDataEditDesc>(
-        "G"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::G) ||
-            "L"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::L),
+        "G" >> pure(format::IntrinsicTypeDataEditDesc::Kind::G), mandatoryWidth,
+        mandatoryDigits, maybe("E" >> digits)) ||
+    construct<format::IntrinsicTypeDataEditDesc>(
+        "G" >> pure(format::IntrinsicTypeDataEditDesc::Kind::G) ||
+            "L" >> pure(format::IntrinsicTypeDataEditDesc::Kind::L),
         mandatoryWidth, noInt, noInt) ||
     construct<format::IntrinsicTypeDataEditDesc>(
-        "A"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::A),
-        maybe(width), noInt, noInt) ||
+        "A" >> pure(format::IntrinsicTypeDataEditDesc::Kind::A), maybe(width),
+        noInt, noInt) ||
     // PGI/Intel extension: omitting width (and all else that follows)
     extension(construct<format::IntrinsicTypeDataEditDesc>(
-        "I"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::I) ||
-            ("B"_ch / !letter /* don't occlude BN & BZ */) >>
+        "I" >> pure(format::IntrinsicTypeDataEditDesc::Kind::I) ||
+            ("B"_tok / !letter /* don't occlude BN & BZ */) >>
                 pure(format::IntrinsicTypeDataEditDesc::Kind::B) ||
-            "O"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::O) ||
-            "Z"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::Z) ||
-            "F"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::F) ||
-            ("D"_ch / !letter /* don't occlude DC & DP */) >>
+            "O" >> pure(format::IntrinsicTypeDataEditDesc::Kind::O) ||
+            "Z" >> pure(format::IntrinsicTypeDataEditDesc::Kind::Z) ||
+            "F" >> pure(format::IntrinsicTypeDataEditDesc::Kind::F) ||
+            ("D"_tok / !letter /* don't occlude DT, DC, & DP */) >>
                 pure(format::IntrinsicTypeDataEditDesc::Kind::D) ||
-            "E"_ch >>
-                ("N"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::EN) ||
-                    "S"_ch >>
-                        pure(format::IntrinsicTypeDataEditDesc::Kind::ES) ||
-                    "X"_ch >>
-                        pure(format::IntrinsicTypeDataEditDesc::Kind::EX) ||
+            "E" >>
+                ("N" >> pure(format::IntrinsicTypeDataEditDesc::Kind::EN) ||
+                    "S" >> pure(format::IntrinsicTypeDataEditDesc::Kind::ES) ||
+                    "X" >> pure(format::IntrinsicTypeDataEditDesc::Kind::EX) ||
                     pure(format::IntrinsicTypeDataEditDesc::Kind::E)) ||
-            "G"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::G) ||
-            "L"_ch >> pure(format::IntrinsicTypeDataEditDesc::Kind::L),
+            "G" >> pure(format::IntrinsicTypeDataEditDesc::Kind::G) ||
+            "L" >> pure(format::IntrinsicTypeDataEditDesc::Kind::L),
         noInt, noInt, noInt)))
 
 // R1307 data-edit-desc (part 2 of 2)
 // R1312 v -> [sign] digit-string
-TYPE_PARSER("D"_ch >> "T"_ch >>
-    construct<format::DerivedTypeDataEditDesc>(
-        space >> defaulted(charLiteralConstantWithoutKind),
-        defaulted(parenthesized(nonemptyList(space >> signedDigitString)))))
+constexpr SignedDigitStringIgnoreSpaces scaleFactor;
+TYPE_PARSER(construct<format::DerivedTypeDataEditDesc>(
+    "D" >> "T"_tok >> space >> defaulted(charLiteralConstantWithoutKind),
+    defaulted(parenthesized(nonemptyList(scaleFactor)))))
 
 // R1314 k -> [sign] digit-string
-constexpr auto count = space >> DigitStringAsPositive{};
-constexpr auto scaleFactor = space >> signedDigitString;
+constexpr PositiveDigitStringIgnoreSpaces count;
 
 // R1313 control-edit-desc ->
 //         position-edit-desc | [r] / | : | sign-edit-desc | k P |
@@ -2845,47 +2839,47 @@ constexpr auto scaleFactor = space >> signedDigitString;
 // R1318 blank-interp-edit-desc -> BN | BZ
 // R1319 round-edit-desc -> RU | RD | RZ | RN | RC | RP
 // R1320 decimal-edit-desc -> DC | DP
-TYPE_PARSER(construct<format::ControlEditDesc>("T"_ch >>
-                    ("L"_ch >> pure(format::ControlEditDesc::Kind::TL) ||
-                        "R"_ch >> pure(format::ControlEditDesc::Kind::TR) ||
-                        pure(format::ControlEditDesc::Kind::T)),
+TYPE_PARSER(construct<format::ControlEditDesc>(
+                "T" >> ("L" >> pure(format::ControlEditDesc::Kind::TL) ||
+                           "R" >> pure(format::ControlEditDesc::Kind::TR) ||
+                           pure(format::ControlEditDesc::Kind::T)),
                 count) ||
     construct<format::ControlEditDesc>(count,
-        "X"_ch >> pure(format::ControlEditDesc::Kind::X) ||
-            "/"_ch >> pure(format::ControlEditDesc::Kind::Slash)) ||
+        "X" >> pure(format::ControlEditDesc::Kind::X) ||
+            "/" >> pure(format::ControlEditDesc::Kind::Slash)) ||
     construct<format::ControlEditDesc>(
-        "X"_ch >> pure(format::ControlEditDesc::Kind::X) ||
-        "/"_ch >> pure(format::ControlEditDesc::Kind::Slash)) ||
+        "X" >> pure(format::ControlEditDesc::Kind::X) ||
+        "/" >> pure(format::ControlEditDesc::Kind::Slash)) ||
     construct<format::ControlEditDesc>(
-        scaleFactor, "P"_ch >> pure(format::ControlEditDesc::Kind::P)) ||
+        scaleFactor, "P" >> pure(format::ControlEditDesc::Kind::P)) ||
     construct<format::ControlEditDesc>(
-        ":"_ch >> pure(format::ControlEditDesc::Kind::Colon)) ||
-    "S"_ch >> ("S"_ch >> construct<format::ControlEditDesc>(
-                             pure(format::ControlEditDesc::Kind::SS)) ||
-                  "P"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::SP)) ||
-                  construct<format::ControlEditDesc>(
-                      pure(format::ControlEditDesc::Kind::S))) ||
-    "B"_ch >> ("N"_ch >> construct<format::ControlEditDesc>(
-                             pure(format::ControlEditDesc::Kind::BN)) ||
-                  "Z"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::BZ))) ||
-    "R"_ch >> ("U"_ch >> construct<format::ControlEditDesc>(
-                             pure(format::ControlEditDesc::Kind::RU)) ||
-                  "D"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::RD)) ||
-                  "Z"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::RZ)) ||
-                  "N"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::RN)) ||
-                  "C"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::RC)) ||
-                  "P"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::RP))) ||
-    "D"_ch >> ("C"_ch >> construct<format::ControlEditDesc>(
-                             pure(format::ControlEditDesc::Kind::DC)) ||
-                  "P"_ch >> construct<format::ControlEditDesc>(
-                                pure(format::ControlEditDesc::Kind::DP))))
+        ":" >> pure(format::ControlEditDesc::Kind::Colon)) ||
+    "S" >> ("S" >> construct<format::ControlEditDesc>(
+                       pure(format::ControlEditDesc::Kind::SS)) ||
+               "P" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::SP)) ||
+               construct<format::ControlEditDesc>(
+                   pure(format::ControlEditDesc::Kind::S))) ||
+    "B" >> ("N" >> construct<format::ControlEditDesc>(
+                       pure(format::ControlEditDesc::Kind::BN)) ||
+               "Z" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::BZ))) ||
+    "R" >> ("U" >> construct<format::ControlEditDesc>(
+                       pure(format::ControlEditDesc::Kind::RU)) ||
+               "D" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::RD)) ||
+               "Z" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::RZ)) ||
+               "N" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::RN)) ||
+               "C" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::RC)) ||
+               "P" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::RP))) ||
+    "D" >> ("C" >> construct<format::ControlEditDesc>(
+                       pure(format::ControlEditDesc::Kind::DC)) ||
+               "P" >> construct<format::ControlEditDesc>(
+                          pure(format::ControlEditDesc::Kind::DP))))
 
 // R1401 main-program ->
 //         [program-stmt] [specification-part] [execution-part]

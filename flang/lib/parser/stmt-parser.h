@@ -22,10 +22,6 @@
 
 namespace Fortran::parser {
 
-// R711 digit-string -> digit [digit]...
-// N.B. not a token -- no space is skipped
-constexpr DigitString digitString;
-
 // statement(p) parses Statement<P> for some statement type P that is the
 // result type of the argument parser p, while also handling labels and
 // end-of-statement markers.
