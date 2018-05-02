@@ -1247,14 +1247,14 @@ def SBWriteResGroup89_2 : SchedWriteRes<[SBPort0,SBPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SBWriteResGroup89], (instregex "MMX_PMADDUBSWrm",
-                                            "MMX_PMADDWDirm",
-                                            "MMX_PMULHRSWrm",
-                                            "MMX_PMULHUWirm",
-                                            "MMX_PMULHWirm",
-                                            "MMX_PMULLWirm",
-                                            "MMX_PMULUDQirm",
-                                            "MMX_PSADBWirm")>;
+def: InstRW<[SBWriteResGroup89_2], (instregex "MMX_PMADDUBSWrm",
+                                              "MMX_PMADDWDirm",
+                                              "MMX_PMULHRSWrm",
+                                              "MMX_PMULHUWirm",
+                                              "MMX_PMULHWirm",
+                                              "MMX_PMULLWirm",
+                                              "MMX_PMULUDQirm",
+                                              "MMX_PSADBWirm")>;
 
 def SBWriteResGroup90 : SchedWriteRes<[SBPort1,SBPort23]> {
   let Latency = 9;
