@@ -390,7 +390,7 @@ def: InstRW<[SLMriteResGroup12], (instregex "(V?)SQRTSSr")>;
 def SLMriteResGroup13 : SchedWriteRes<[SLM_MEC_RSV,SLM_FPC_RSV0,SLMFPDivider]> {
   let Latency = 74;
   let NumMicroOps = 1;
-  let ResourceCycles = [1,70];
+  let ResourceCycles = [1,1,70];
 }
 def: InstRW<[SLMriteResGroup13], (instregex "(V?)SQRTPDm")>;
 
