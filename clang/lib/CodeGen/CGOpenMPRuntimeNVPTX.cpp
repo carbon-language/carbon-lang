@@ -1184,7 +1184,8 @@ void CGOpenMPRuntimeNVPTX::emitTargetOutlinedFunction(
 }
 
 CGOpenMPRuntimeNVPTX::CGOpenMPRuntimeNVPTX(CodeGenModule &CGM)
-    : CGOpenMPRuntime(CGM), CurrentExecutionMode(ExecutionMode::Unknown) {
+    : CGOpenMPRuntime(CGM, "_", "$"),
+      CurrentExecutionMode(ExecutionMode::Unknown) {
   if (!CGM.getLangOpts().OpenMPIsDevice)
     llvm_unreachable("OpenMP NVPTX can only handle device code.");
 }
