@@ -98,6 +98,7 @@ void Prescanner::Statement() {
     FortranInclude(lineStart_ + line.payloadOffset);
     NextLine();
     return;
+  case LineClassification::Kind::ConditionalCompilationDirective:
   case LineClassification::Kind::PreprocessorDirective:
     preprocessor_.Directive(TokenizePreprocessorDirective(), this);
     return;
@@ -147,6 +148,7 @@ void Prescanner::Statement() {
     case LineClassification::Kind::Include:
       FortranInclude(ppd + ppl.payloadOffset);
       break;
+    case LineClassification::Kind::ConditionalCompilationDirective:
     case LineClassification::Kind::PreprocessorDirective:
       Say("preprocessed line looks like a preprocessor directive"_en_US,
           preprocessed->GetProvenanceRange());
@@ -617,26 +619,44 @@ void Prescanner::FortranInclude(const char *firstQuote) {
   }
 }
 
-bool Prescanner::IsPreprocessorDirectiveLine(const char *start) const {
+const char *Prescanner::IsPreprocessorDirectiveLine(const char *start) const {
   const char *p{start};
   for (; *p == ' '; ++p) {
   }
   if (*p == '#') {
-    return !inFixedForm_ || p != start + 5;
+    if (inFixedForm_ && p == start + 5) {
+      return nullptr;
+    }
+  } else {
+    for (; *p == ' ' || *p == '\t'; ++p) {
+    }
+    if (*p != '#') {
+      return nullptr;
+    }
   }
-  for (; *p == ' ' || *p == '\t'; ++p) {
+  for (++p; *p == ' ' || *p == '\t'; ++p) {
   }
-  return *p == '#';
+  return p;
 }
 
 bool Prescanner::IsNextLinePreprocessorDirective() const {
-  return IsPreprocessorDirectiveLine(lineStart_);
+  return IsPreprocessorDirectiveLine(lineStart_) != nullptr;
 }
 
 void Prescanner::SkipCommentLines() {
-  while (lineStart_ < limit_ &&
-      ClassifyLine(lineStart_).kind == LineClassification::Kind::Comment) {
-    NextLine();
+  while (lineStart_ < limit_) {
+    auto lineClass = ClassifyLine(lineStart_);
+    if (lineClass.kind == LineClassification::Kind::Comment) {
+      NextLine();
+    } else if (!inPreprocessorDirective_ &&
+        lineClass.kind ==
+            LineClassification::Kind::ConditionalCompilationDirective) {
+      // Allow conditional compilation directives (e.g., #ifdef) to affect
+      // continuation lines.
+      preprocessor_.Directive(TokenizePreprocessorDirective(), this);
+    } else {
+      break;
+    }
   }
 }
 
@@ -873,8 +893,13 @@ Prescanner::LineClassification Prescanner::ClassifyLine(
   if (std::optional<std::size_t> quoteOffset{IsIncludeLine(start)}) {
     return {LineClassification::Kind::Include, *quoteOffset};
   }
-  if (IsPreprocessorDirectiveLine(start)) {
-    return {LineClassification::Kind::PreprocessorDirective};
+  if (const char *dir{IsPreprocessorDirectiveLine(start)}) {
+    if (std::memcmp(dir, "if", 2) == 0 || std::memcmp(dir, "elif", 4) == 0 ||
+        std::memcmp(dir, "else", 4) == 0 || std::memcmp(dir, "endif", 5) == 0) {
+      return {LineClassification::Kind::ConditionalCompilationDirective};
+    } else {
+      return {LineClassification::Kind::PreprocessorDirective};
+    }
   }
   return {LineClassification::Kind::Source};
 }

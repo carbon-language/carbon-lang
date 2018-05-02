@@ -88,6 +88,7 @@ private:
   struct LineClassification {
     enum class Kind {
       Comment,
+      ConditionalCompilationDirective,
       PreprocessorDirective,
       Include,
       CompilerDirective,
@@ -153,7 +154,7 @@ private:
   bool IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
   void FortranInclude(const char *quote);
-  bool IsPreprocessorDirectiveLine(const char *) const;
+  const char *IsPreprocessorDirectiveLine(const char *) const;
   const char *FixedFormContinuationLine();
   bool FixedFormContinuation();
   bool FreeFormContinuation();
