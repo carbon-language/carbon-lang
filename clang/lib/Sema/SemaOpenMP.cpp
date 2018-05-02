@@ -12305,7 +12305,14 @@ checkMappableExpressionList(Sema &SemaRef, DSAStackTy *DSAS,
     // OpenMP 4.5 [2.15.5.1, map Clause, Restrictions, C++, p.1]
     //  If the type of a list item is a reference to a type T then the type will
     //  be considered to be T for all purposes of this clause.
-    QualType Type = CurDeclaration->getType().getNonReferenceType();
+    auto I = llvm::find_if(
+        CurComponents,
+        [](const OMPClauseMappableExprCommon::MappableComponent &MC) {
+          return MC.getAssociatedDeclaration();
+        });
+    assert(I != CurComponents.end() && "Null decl on map clause.");
+    QualType Type =
+        I->getAssociatedDeclaration()->getType().getNonReferenceType();
 
     // OpenMP 4.5 [2.10.5, target update Construct, Restrictions, p.4]
     // A list item in a to or from clause must have a mappable type.
