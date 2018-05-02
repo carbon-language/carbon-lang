@@ -15,8 +15,7 @@
 #include "token-sequence.h"
 #include "characters.h"
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 void TokenSequence::clear() {
   start_.clear();
@@ -177,5 +176,5 @@ ProvenanceRange TokenSequence::GetIntervalProvenanceRange(
 ProvenanceRange TokenSequence::GetProvenanceRange() const {
   return GetIntervalProvenanceRange(0, start_.size());
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

@@ -26,8 +26,7 @@
 #include <cstddef>
 #include <set>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 class UnparseVisitor {
 public:
@@ -1857,5 +1856,5 @@ void Unparse(std::ostream &out, const Program &program, Encoding encoding,
   Walk(program, visitor);
   visitor.Done();
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

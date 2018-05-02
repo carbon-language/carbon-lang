@@ -20,8 +20,7 @@
 #include "basic-parsers.h"
 #include "token-parsers.h"
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // R711 digit-string -> digit [digit]...
 // N.B. not a token -- no space is skipped
@@ -68,6 +67,5 @@ constexpr auto executionPartErrorRecovery = errorRecoveryStart >> !"END"_tok >>
     !"CONTAINS"_tok >> !"ELSE"_tok >> !"CASE"_tok >> !"TYPE IS"_tok >>
     !"CLASS"_tok >> !"RANK"_tok >> skipBadLine;
 
-}  //  namespace parser
-}  // namespace Fortran
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_STMT_PARSER_H_

@@ -30,8 +30,7 @@
 #include <string>
 #include <variant>
 
-namespace Fortran {
-namespace format {
+namespace Fortran::format {
 
 // R1307 data-edit-desc (part 1 of 2) ->
 //         I w [. m] | B w [. m] | O w [. m] | Z w [. m] | F w . d |
@@ -144,6 +143,6 @@ struct FormatSpecification {
     : items(std::move(is)), unlimitedItems(std::move(us)) {}
   std::list<FormatItem> items, unlimitedItems;
 };
-}  // namespace format
-}  // namespace Fortran
+
+}  // namespace Fortran::format
 #endif  // FORTRAN_PARSER_FORMAT_SPECIFICATION_H_

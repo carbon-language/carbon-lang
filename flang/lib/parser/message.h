@@ -30,8 +30,7 @@
 #include <string>
 #include <utility>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // Use "..."_err_en_US and "..."_en_US literals to define the static
 // text and fatality of a message.
@@ -224,6 +223,6 @@ private:
   listType messages_;
   listType::iterator last_{messages_.before_begin()};
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_MESSAGE_H_

@@ -21,8 +21,7 @@
 #include <iostream>
 #include <string>
 
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 // All available attributes.
 ENUM_CLASS(Attr, ABSTRACT, ALLOCATABLE, ASYNCHRONOUS, BIND_C, CONTIGUOUS,
@@ -52,6 +51,6 @@ private:
 
 std::ostream &operator<<(std::ostream &o, Attr attr);
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs);
-}  // namespace semantics
-}  // namespace Fortran
+
+}  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_ATTR_H_

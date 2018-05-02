@@ -31,8 +31,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 class Prescanner;
 
@@ -98,6 +97,6 @@ private:
   std::unordered_map<CharBlock, Definition> definitions_;
   std::stack<CanDeadElseAppear> ifStack_;
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_PREPROCESSOR_H_

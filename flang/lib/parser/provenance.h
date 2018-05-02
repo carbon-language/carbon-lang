@@ -30,8 +30,7 @@
 #include <variant>
 #include <vector>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // Each character in the contiguous source stream built by the
 // prescanner corresponds to a particular character in a source file,
@@ -219,6 +218,6 @@ private:
   std::vector<char> data_;  // all of it, prescanned and preprocessed
   OffsetToProvenanceMappings provenanceMap_;
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_PROVENANCE_H_

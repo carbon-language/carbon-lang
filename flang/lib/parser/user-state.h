@@ -29,8 +29,7 @@
 #include <set>
 #include <unordered_set>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 class CookedSource;
 class ParsingLog;
@@ -138,6 +137,6 @@ struct StructureComponents {
   using resultType = DataComponentDefStmt;
   static std::optional<DataComponentDefStmt> Parse(ParseState &);
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_USER_STATE_H_

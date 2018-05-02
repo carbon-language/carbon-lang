@@ -22,8 +22,7 @@
 #include <cstddef>
 #include <functional>
 
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 template<typename ENUM, std::size_t BITS> class EnumSet {
   static_assert(BITS > 0);
@@ -172,8 +171,8 @@ public:
 private:
   bitsetType bitset_;
 };
-}  // namespace semantics
-}  // namespace Fortran
+
+}  // namespace Fortran::semantics
 
 template<typename ENUM, std::size_t values>
 struct std::hash<Fortran::semantics::EnumSet<ENUM, values>> {

@@ -29,8 +29,7 @@
 
 // TODO: Port to Windows &c.
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 static constexpr bool useMMap{true};
 static constexpr int minMapFileBytes{1};  // i.e., no minimum requirement
@@ -258,5 +257,5 @@ std::pair<int, int> SourceFile::FindOffsetLineAndColumn(std::size_t at) const {
   return {
       static_cast<int>(low + 1), static_cast<int>(at - lineStart_[low] + 1)};
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

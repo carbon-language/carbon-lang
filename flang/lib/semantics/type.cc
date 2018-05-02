@@ -17,9 +17,7 @@
 #include <iostream>
 #include <set>
 
-namespace Fortran {
-namespace semantics {
-
+namespace Fortran::semantics {
 
 std::ostream &operator<<(std::ostream &o, const IntExpr &x) {
   return x.Output(o);
@@ -327,5 +325,4 @@ DerivedTypeDefBuilder &DerivedTypeDefBuilder::sequence(bool x) {
   return *this;
 }
 
-}  // namespace semantics
-}  // namespace Fortran
+}  // namespace Fortran::semantics

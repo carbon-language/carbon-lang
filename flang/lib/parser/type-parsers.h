@@ -20,8 +20,7 @@
 #include "parse-tree.h"
 #include <optional>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // Many parsers in the grammar are defined as instances of this Parser<>
 // template class, i.e. as the anonymous sole parser for a given type.
@@ -141,6 +140,6 @@ constexpr Parser<EndSubroutineStmt> endSubroutineStmt;  // R1537
 constexpr Parser<EntryStmt> entryStmt;  // R1541
 constexpr Parser<ContainsStmt> containsStmt;  // R1543
 constexpr Parser<CompilerDirective> compilerDirective;
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_TYPE_PARSERS_H_

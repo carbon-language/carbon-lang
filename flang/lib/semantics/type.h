@@ -49,8 +49,7 @@ with kind and len parameter values provided.
 
 */
 
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 using Name = std::string;
 
@@ -501,7 +500,6 @@ private:
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };
 
-}  // namespace semantics
-}  // namespace Fortran
+}  // namespace Fortran::semantics
 
 #endif  // FORTRAN_SEMANTICS_TYPE_H_

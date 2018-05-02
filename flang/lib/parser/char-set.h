@@ -24,8 +24,7 @@
 #include <cinttypes>
 #include <string>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 struct SetOfChars {
   constexpr SetOfChars() {}
@@ -83,6 +82,6 @@ private:
   constexpr SetOfChars(std::uint64_t b) : bits_{b} {}
   std::uint64_t bits_{0};
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_CHAR_SET_H_

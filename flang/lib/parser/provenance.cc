@@ -16,8 +16,7 @@
 #include "idioms.h"
 #include <utility>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 void OffsetToProvenanceMappings::clear() { provenanceMap_.clear(); }
 
@@ -371,5 +370,5 @@ void CookedSource::Dump(std::ostream &o) const {
   o << "CookedSource::provenanceMap_:\n";
   provenanceMap_.Dump(o);
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

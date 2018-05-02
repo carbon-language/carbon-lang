@@ -17,8 +17,7 @@
 #include <ostream>
 #include <string>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 std::optional<Success> DebugParser::Parse(ParseState &state) const {
   if (auto ustate = state.userState()) {
@@ -34,5 +33,5 @@ std::optional<Success> DebugParser::Parse(ParseState &state) const {
   }
   return {Success{}};
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

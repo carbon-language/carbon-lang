@@ -27,8 +27,7 @@
 #include <utility>
 #include <vector>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // Buffers a contiguous sequence of characters that has been partitioned into
 // a sequence of preprocessing tokens with provenances.
@@ -120,6 +119,6 @@ private:
   std::vector<char> char_;
   OffsetToProvenanceMappings provenances_;
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_TOKEN_SEQUENCE_H_

@@ -22,8 +22,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 template<typename A> class Interval {
 public:
@@ -86,6 +85,6 @@ private:
   A start_;
   std::size_t size_{0};
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_INTERVAL_H_

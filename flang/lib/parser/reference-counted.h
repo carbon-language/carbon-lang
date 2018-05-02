@@ -19,8 +19,7 @@
 // reference counting object lifetimes that's lighter weight
 // than std::shared_ptr<>.  Not thread-safe.
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 template<typename A> class ReferenceCounted {
 public:
@@ -77,6 +76,6 @@ private:
 
   type *p_{nullptr};
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_REFERENCE_COUNTED_H_

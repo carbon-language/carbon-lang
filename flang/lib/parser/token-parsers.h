@@ -33,8 +33,7 @@
 #include <optional>
 #include <string>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // "xyz"_ch matches one instance of the characters x, y, or z without skipping
 // any spaces before or after.  The parser returns the location of the character
@@ -651,6 +650,5 @@ constexpr auto rawName = nonDigitIdChar >> many(nonDigitIdChar || digit);
 TYPE_PARSER(space >> sourced(attempt(rawName) >> construct<Name>()))
 constexpr auto keyword = construct<Keyword>(name);
 
-}  // namespace parser
-}  // namespace Fortran
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_

@@ -25,8 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 std::string DirectoryName(std::string path);
 std::string LocateSourceFile(
@@ -59,6 +58,6 @@ private:
   std::size_t bytes_{0};
   std::vector<std::size_t> lineStart_;
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_SOURCE_H_

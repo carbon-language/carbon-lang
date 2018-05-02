@@ -14,8 +14,7 @@
 
 #include "char-set.h"
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 std::string SetOfChars::ToString() const {
   std::string result;
@@ -29,5 +28,4 @@ std::string SetOfChars::ToString() const {
   return result;
 }
 
-}  // namespace parser
-}  // namespace Fortran
+}  // namespace Fortran::parser

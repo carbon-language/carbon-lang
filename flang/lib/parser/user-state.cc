@@ -20,8 +20,7 @@
 #include "type-parsers.h"
 #include <optional>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 std::optional<Success> StartNewSubprogram::Parse(ParseState &state) {
   if (auto ustate = state.userState()) {
@@ -96,5 +95,5 @@ std::optional<DataComponentDefStmt> StructureComponents::Parse(
   }
   return defs;
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

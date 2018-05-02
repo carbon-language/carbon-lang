@@ -28,8 +28,7 @@
 #include <sstream>
 #include <utility>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 Definition::Definition(
     const TokenSequence &repl, std::size_t firstToken, std::size_t tokens)
@@ -1008,5 +1007,5 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
   }
   return result;
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

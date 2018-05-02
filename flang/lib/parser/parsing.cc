@@ -22,8 +22,7 @@
 #include "source.h"
 #include <sstream>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 void Parsing::Prescan(const std::string &path, Options options) {
   options_ = options;
@@ -133,5 +132,5 @@ bool Parsing::ForTesting(std::string path, std::ostream &err) {
   }
   return true;
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

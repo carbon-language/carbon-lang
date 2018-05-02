@@ -31,8 +31,7 @@
 #include <string>
 #include <unordered_set>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 class Messages;
 class Preprocessor;
@@ -207,6 +206,6 @@ private:
   std::bitset<prime2> compilerDirectiveBloomFilter_;  // 128 bytes
   std::unordered_set<std::string> compilerDirectiveSentinels_;
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_PRESCAN_H_

@@ -18,8 +18,7 @@
 #include "characters.h"
 #include <iosfwd>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 struct Program;
 
@@ -27,7 +26,6 @@ struct Program;
 void Unparse(std::ostream &out, const Program &program,
     Encoding encoding = Encoding::UTF8, bool capitalizeKeywords = true);
 
-}  // namespace parser
-}  // namespace Fortran
+}  // namespace Fortran::parser
 
 #endif

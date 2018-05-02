@@ -23,8 +23,7 @@
 #include "idioms.h"
 #include <utility>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 template<typename A> class Indirection {
 public:
@@ -60,6 +59,6 @@ public:
 private:
   A *p_{nullptr};
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_INDIRECTION_H_

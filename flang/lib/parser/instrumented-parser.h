@@ -23,8 +23,7 @@
 #include <map>
 #include <ostream>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 class ParsingLog {
 public:
@@ -85,6 +84,6 @@ inline constexpr auto instrumented(
     const MessageFixedText &tag, const PA &parser) {
   return InstrumentedParser{tag, parser};
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_INSTRUMENTED_PARSER_H_

@@ -16,8 +16,7 @@
 #include <cstddef>
 #include <optional>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 std::optional<int> UTF8CharacterBytes(const char *p) {
   if ((*p & 0x80) == 0) {
@@ -82,5 +81,5 @@ std::optional<std::size_t> CountCharacters(
   }
   return {chars};
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

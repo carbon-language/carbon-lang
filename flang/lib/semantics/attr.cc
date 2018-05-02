@@ -16,8 +16,7 @@
 #include "../parser/idioms.h"
 #include <stddef.h>
 
-namespace Fortran {
-namespace semantics {
+namespace Fortran::semantics {
 
 void Attrs::CheckValid(const Attrs &allowed) const {
   if (!allowed.HasAll(*this)) {
@@ -44,5 +43,5 @@ std::ostream &operator<<(std::ostream &o, const Attrs &attrs) {
   }
   return o;
 }
-}  // namespace semantics
-}  // namespace Fortran
+
+}  // namespace Fortran::semantics

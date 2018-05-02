@@ -20,8 +20,7 @@
 #include <cstring>
 #include <string>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 std::ostream &operator<<(std::ostream &o, const MessageFixedText &t) {
   for (std::size_t j{0}; j < t.size(); ++j) {
@@ -156,5 +155,5 @@ bool Messages::AnyFatalError() const {
   }
   return false;
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

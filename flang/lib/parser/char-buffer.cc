@@ -18,8 +18,7 @@
 #include <cstddef>
 #include <cstring>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 char *CharBuffer::FreeSpace(std::size_t *n) {
   int offset{LastBlockOffset()};
@@ -53,5 +52,5 @@ void CharBuffer::Put(const char *data, std::size_t n) {
 }
 
 void CharBuffer::Put(const std::string &str) { Put(str.data(), str.size()); }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

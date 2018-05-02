@@ -18,8 +18,7 @@
 #include <map>
 #include <ostream>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 void ParsingLog::clear() { perPos_.clear(); }
 
@@ -81,5 +80,5 @@ void ParsingLog::Dump(std::ostream &o, const CookedSource &cooked) const {
     }
   }
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

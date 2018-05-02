@@ -41,8 +41,7 @@
 #include <optional>
 #include <string>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // fail<A>("..."_err_en_US) returns a parser that never succeeds.  It reports an
 // error message at the current position.  The result type is unused,
@@ -1310,6 +1309,6 @@ private:
 template<typename PA> inline constexpr auto sourced(const PA &parser) {
   return SourcedParser<PA>{parser};
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_BASIC_PARSERS_H_

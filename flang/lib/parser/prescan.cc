@@ -25,8 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 static constexpr int maxPrescannerNesting{100};
 
@@ -896,5 +895,5 @@ void Prescanner::SourceFormChange(std::string &&dir) {
     inFixedForm_ = true;
   }
 }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser

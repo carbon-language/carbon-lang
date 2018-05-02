@@ -32,8 +32,7 @@
 #include <optional>
 #include <utility>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 class UserState;
 
@@ -235,6 +234,6 @@ private:
   // reflected in the copy and move constructors defined at the top of this
   // class definition!
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_PARSE_STATE_H_

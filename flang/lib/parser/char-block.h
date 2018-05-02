@@ -24,8 +24,7 @@
 #include <string>
 #include <utility>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 class CharBlock {
 public:
@@ -78,8 +77,8 @@ private:
 
   Interval<const char *> interval_{nullptr, 0};
 };
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 
 // Specializations to enable std::unordered_map<CharBlock, ...> &c.
 template<> struct std::hash<Fortran::parser::CharBlock> {

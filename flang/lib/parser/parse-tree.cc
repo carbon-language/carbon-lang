@@ -18,8 +18,7 @@
 #include "user-state.h"
 #include <algorithm>
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // R867
 ImportStmt::ImportStmt(Kind &&k, std::list<Name> &&n)
@@ -113,5 +112,4 @@ Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
           AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
 }
 
-}  // namespace parser
-}  // namespace Fortran
+}  // namespace Fortran::parser

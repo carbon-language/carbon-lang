@@ -47,8 +47,7 @@ struct is_trivially_copy_constructible<optional<list<A>>> : false_type {};
 // enable "this is a std::string"s with the 's' suffix
 using namespace std::literals::string_literals;
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // Helper templates for combining a list of lambdas into an anonymous
 // struct for use with std::visit() on a std::variant<> sum type.
@@ -135,6 +134,6 @@ template<typename A> struct ListItemCount {
     return Fortran::parser::EnumIndexToString( \
         static_cast<int>(e), #__VA_ARGS__); \
   }
-}  // namespace parser
-}  // namespace Fortran
+
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_IDIOMS_H_

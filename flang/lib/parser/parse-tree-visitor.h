@@ -31,8 +31,7 @@
 ///
 /// visitor.Post(x) is called after visiting x.
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // Default case for visitation of non-class data members and strings
 template<typename A, typename V>
@@ -675,6 +674,5 @@ void Walk(format::IntrinsicTypeDataEditDesc &x, M &mutator) {
   }
 }
 
-}  // namespace parser
-}  // namespace Fortran
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_PARSE_TREE_VISITOR_H_
