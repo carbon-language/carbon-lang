@@ -1505,7 +1505,7 @@ public:
 
   /// Marks the declaration as alread emitted for the device code and returns
   /// true, if it was marked already, and false, otherwise.
-  bool markAsGlobalTarget(const FunctionDecl *D);
+  bool markAsGlobalTarget(GlobalDecl GD);
 
 };
 

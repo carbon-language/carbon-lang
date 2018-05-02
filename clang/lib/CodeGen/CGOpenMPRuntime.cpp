@@ -899,9 +899,6 @@ static void EmitOMPAggregateInit(CodeGenFunction &CGF, Address DestAddr,
 
 static llvm::Optional<OMPDeclareTargetDeclAttr::MapTypeTy>
 isDeclareTargetDeclaration(const ValueDecl *VD) {
-  if (const auto *MD = dyn_cast<CXXMethodDecl>(VD))
-    if (!MD->isStatic())
-      return llvm::None;
   for (const Decl *D : VD->redecls()) {
     if (!D->hasAttrs())
       continue;
@@ -7934,27 +7931,23 @@ CGOpenMPRuntime::DisableAutoDeclareTargetRAII::~DisableAutoDeclareTargetRAII() {
     CGM.getOpenMPRuntime().ShouldMarkAsGlobal = SavedShouldMarkAsGlobal;
 }
 
-bool CGOpenMPRuntime::markAsGlobalTarget(const FunctionDecl *D) {
+bool CGOpenMPRuntime::markAsGlobalTarget(GlobalDecl GD) {
   if (!CGM.getLangOpts().OpenMPIsDevice || !ShouldMarkAsGlobal)
     return true;
 
+  const auto *D = cast<FunctionDecl>(GD.getDecl());
   const FunctionDecl *FD = D->getCanonicalDecl();
   // Do not to emit function if it is marked as declare target as it was already
   // emitted.
   if (isDeclareTargetDeclaration(D)) {
     if (D->hasBody() && AlreadyEmittedTargetFunctions.count(FD) == 0) {
       if (auto *F = dyn_cast_or_null<llvm::Function>(
-              CGM.GetGlobalValue(CGM.getMangledName(D))))
+              CGM.GetGlobalValue(CGM.getMangledName(GD))))
         return !F->isDeclaration();
       return false;
     }
     return true;
   }
-
-  // Do not mark member functions except for static.
-  if (const auto *Method = dyn_cast<CXXMethodDecl>(FD))
-    if (!Method->isStatic())
-      return true;
 
   return !AlreadyEmittedTargetFunctions.insert(FD).second;
 }
