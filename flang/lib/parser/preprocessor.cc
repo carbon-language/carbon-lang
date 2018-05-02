@@ -720,7 +720,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
       14, 14,  // unary +, -
       13, 12, 12, 12, 11, 11, 10, 10,  // **, *, /, %, +, -, <<, >>
       9, 8, 7,  // &, ^, |
-      6, 6, 6, 6, 6, 6,  // relations
+      6, 6, 6, 6, 6, 6,  // relations .LT. to .GT.
       5, 4, 3, 2, 2,  // .NOT., .AND., .OR., .EQV., .NEQV.
       1, 0  // ?: and ,
   };

@@ -2755,9 +2755,10 @@ TYPE_PARSER(construct<format::FormatItem>(
 // R1302 format-specification ->
 //         ( [format-items] ) | ( [format-items ,] unlimited-format-item )
 // R1305 unlimited-format-item -> * ( format-items )
-TYPE_PARSER(parenthesized(
-    construct<format::FormatSpecification>(
-        defaulted(formatItems / ","), "*" >> parenthesized(formatItems)) ||
+// minor extension: the comma is optional before the unlimited-format-item
+TYPE_PARSER(parenthesized(construct<format::FormatSpecification>(
+                              defaulted(formatItems / maybe(","_tok)),
+                              "*" >> parenthesized(formatItems)) ||
     construct<format::FormatSpecification>(defaulted(formatItems))))
 // R1308 w -> digit-string
 // R1309 m -> digit-string

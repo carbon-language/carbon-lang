@@ -344,7 +344,7 @@ bool Prescanner::NextToken(TokenSequence *tokens) {
     preventHollerith_ = false;
   } else if (*at_ == '.') {
     char nch{EmitCharAndAdvance(tokens, '.')};
-    if (IsDecimalDigit(nch)) {
+    if (!inPreprocessorDirective_ && IsDecimalDigit(nch)) {
       while (IsDecimalDigit(EmitCharAndAdvance(tokens, *at_))) {
       }
       ExponentAndKind(tokens);
