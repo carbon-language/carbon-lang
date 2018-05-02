@@ -15,12 +15,10 @@
 
 add_library(FlangSemantics
   attr.cc
+  dump-parse-tree.cc
   resolve-names.cc
   rewrite-parse-tree.cc
   scope.cc
   symbol.cc
   type.cc
-  ParseTreeDump.cc
-  StatementMap.cc
-  pass1.cc
 )

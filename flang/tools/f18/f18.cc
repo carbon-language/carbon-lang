@@ -21,7 +21,7 @@
 #include "../../lib/parser/parsing.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
-#include "../../lib/semantics/ParseTreeDump.h"
+#include "../../lib/semantics/dump-parse-tree.h"
 #include "../../lib/semantics/resolve-names.h"
 #include <cerrno>
 #include <cstdio>

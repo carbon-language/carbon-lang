@@ -54,24 +54,9 @@ CLASS_TRAIT(WrapperTrait);
 CLASS_TRAIT(UnionTrait);
 CLASS_TRAIT(TupleTrait);
 
-//
-// An empty class to attach semantic information to each class in
-// the parse-tree. In practice, each parser-tree 'classname' shall
-// implement a member:
-//
-//    Semantic<classname> * s = nullptr;
-//
-// The actual implementation of each Sema<classname> will be provided
-// later thus allowing the parser to be build without an dependency
-// with the Sema library
-//
-
 namespace Fortran {
 namespace semantics {
 class Symbol;
-template<typename T> struct Semantic {
-  Semantic(T *) {}
-};
 }  // namespace semantics
 }  // namespace Fortran
 
@@ -82,8 +67,7 @@ template<typename T> struct Semantic {
   classname(classname &&) = default; \
   classname &operator=(classname &&) = default; \
   classname(const classname &) = delete; \
-  classname &operator=(const classname &) = delete; \
-  Fortran::semantics::Semantic<classname> *s = nullptr
+  classname &operator=(const classname &) = delete
 
 // Almost all classes in this file have no default constructor.
 #define BOILERPLATE(classname) \
@@ -100,7 +84,6 @@ template<typename T> struct Semantic {
     classname &operator=(const classname &) { return *this; }; \
     classname &operator=(classname &&) { return *this; }; \
     using EmptyTrait = std::true_type; \
-    Fortran::semantics::Semantic<classname> *s = nullptr; \
   }
 
 // Many classes below simply wrap a std::variant<> discriminated union,
@@ -1111,7 +1094,6 @@ struct DerivedTypeDef {
       std::list<Statement<ComponentDefStmt>>,
       std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>>
       t;
-  enum { STMT, PARAMS, SPEC, COMP, PROC, END };
 };
 
 // R758 component-data-source -> expr | data-target | proc-target
@@ -2163,14 +2145,12 @@ struct LoopControl {
 struct LabelDoStmt {
   TUPLE_CLASS_BOILERPLATE(LabelDoStmt);
   std::tuple<std::optional<Name>, Label, std::optional<LoopControl>> t;
-  enum { NAME, LABEL, CONTROL };
 };
 
 // R1122 nonlabel-do-stmt -> [do-construct-name :] DO [loop-control]
 struct NonLabelDoStmt {
   TUPLE_CLASS_BOILERPLATE(NonLabelDoStmt);
   std::tuple<std::optional<Name>, std::optional<LoopControl>> t;
-  enum { NAME, CONTROL };
 };
 
 // R1132 end-do-stmt -> END DO [do-construct-name]
@@ -2756,7 +2736,6 @@ struct MainProgram {
       ExecutionPart, std::optional<InternalSubprogramPart>,
       Statement<EndProgramStmt>>
       t;
-  enum { PROG, SPEC, EXEC, INTERNAL, END };
 };
 
 // R1405 module-stmt -> MODULE module-name
@@ -2789,7 +2768,6 @@ struct Module {
   std::tuple<Statement<ModuleStmt>, SpecificationPart,
       std::optional<ModuleSubprogramPart>, Statement<EndModuleStmt>>
       t;
-  enum { MOD, SPEC, INTERNAL, END };
 };
 
 // R1411 rename ->
@@ -3086,7 +3064,6 @@ struct FunctionSubprogram {
   std::tuple<Statement<FunctionStmt>, SpecificationPart, ExecutionPart,
       std::optional<InternalSubprogramPart>, Statement<EndFunctionStmt>>
       t;
-  enum { FUNC, SPEC, EXEC, INTERNAL, END };
 };
 
 // R1534 subroutine-subprogram ->
@@ -3097,7 +3074,6 @@ struct SubroutineSubprogram {
   std::tuple<Statement<SubroutineStmt>, SpecificationPart, ExecutionPart,
       std::optional<InternalSubprogramPart>, Statement<EndSubroutineStmt>>
       t;
-  enum { SUBR, SPEC, EXEC, INTERNAL, END };
 };
 
 // R1539 mp-subprogram-stmt -> MODULE PROCEDURE procedure-name
