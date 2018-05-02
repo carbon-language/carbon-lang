@@ -424,6 +424,8 @@ class MatchTable {
   unsigned CurrentSize = 0;
   /// A unique identifier for a MatchTable label.
   unsigned CurrentLabelID = 0;
+  /// Determines if the table should be instrumented for rule coverage tracking.
+  bool IsWithCoverage;
 
 public:
   static MatchTableRecord LineBreak;
@@ -466,9 +468,12 @@ public:
                                 MatchTableRecord::MTRF_CommaFollows);
   }
 
-  static MatchTable buildTable(ArrayRef<Matcher *> Rules);
+  static MatchTable buildTable(ArrayRef<Matcher *> Rules, bool WithCoverage);
 
-  MatchTable(unsigned ID = 0) : ID(ID) {}
+  MatchTable(bool WithCoverage, unsigned ID = 0)
+      : ID(ID), IsWithCoverage(WithCoverage) {}
+
+  bool isWithCoverage() const { return IsWithCoverage; }
 
   void push_back(const MatchTableRecord &Value) {
     if (Value.Flags & MatchTableRecord::MTRF_Label)
@@ -578,8 +583,9 @@ public:
   virtual std::unique_ptr<PredicateMatcher> forgetFirstCondition() = 0;
 };
 
-MatchTable MatchTable::buildTable(ArrayRef<Matcher *> Rules) {
-  MatchTable Table;
+MatchTable MatchTable::buildTable(ArrayRef<Matcher *> Rules,
+                                  bool WithCoverage) {
+  MatchTable Table(WithCoverage);
   for (Matcher *Rule : Rules)
     Rule->emit(Table);
 
@@ -2492,7 +2498,7 @@ void RuleMatcher::emit(MatchTable &Table) {
   for (const auto &MA : Actions)
     MA->emitActionOpcodes(Table, *this);
 
-  if (GenerateCoverage)
+  if (Table.isWithCoverage())
     Table << MatchTable::Opcode("GIR_Coverage") << MatchTable::IntValue(RuleID)
           << MatchTable::LineBreak;
 
@@ -2698,7 +2704,8 @@ private:
       ArrayRef<Matcher *> Rules,
       std::vector<std::unique_ptr<GroupMatcher>> &StorageGroupMatcher);
 
-  MatchTable buildMatchTable(MutableArrayRef<RuleMatcher> Rules, bool Optimize);
+  MatchTable buildMatchTable(MutableArrayRef<RuleMatcher> Rules, bool Optimize,
+                             bool WithCoverage);
 };
 
 void GlobalISelEmitter::gatherNodeEquivs() {
@@ -3688,19 +3695,19 @@ std::vector<Matcher *> GlobalISelEmitter::optimizeRules(
 
 MatchTable
 GlobalISelEmitter::buildMatchTable(MutableArrayRef<RuleMatcher> Rules,
-                                   bool Optimize) {
+                                   bool Optimize, bool WithCoverage) {
   std::vector<Matcher *> InputRules;
   for (Matcher &Rule : Rules)
     InputRules.push_back(&Rule);
 
   if (!Optimize)
-    return MatchTable::buildTable(InputRules);
+    return MatchTable::buildTable(InputRules, WithCoverage);
 
   std::vector<std::unique_ptr<GroupMatcher>> StorageGroupMatcher;
   std::vector<Matcher *> OptRules =
       optimizeRules(InputRules, StorageGroupMatcher);
 
-  return MatchTable::buildTable(OptRules);
+  return MatchTable::buildTable(OptRules, WithCoverage);
 }
 
 void GlobalISelEmitter::run(raw_ostream &OS) {
@@ -3991,7 +3998,8 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
      << "  return false;\n"
      << "}\n\n";
 
-  const MatchTable Table = buildMatchTable(Rules, OptimizeMatchTable);
+  const MatchTable Table =
+      buildMatchTable(Rules, OptimizeMatchTable, GenerateCoverage);
   OS << "const int64_t *" << Target.getName()
      << "InstructionSelector::getMatchTable() const {\n";
   Table.emitDeclaration(OS);
