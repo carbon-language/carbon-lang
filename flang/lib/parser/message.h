@@ -141,12 +141,6 @@ public:
     }
   }
 
-  ProvenanceRange provenanceRange() const { return provenanceRange_; }
-  Provenance provenance() const { return provenanceRange_.start(); }
-  CharBlock cookedSourceRange() const { return cookedSourceRange_; }
-  const char *cookedSourceLocation() const {
-    return cookedSourceRange_.begin();
-  }
   Context context() const { return context_; }
   Message &set_context(Message *c) {
     context_ = c;
@@ -156,7 +150,8 @@ public:
 
   void Incorporate(Message &);
   std::string ToString() const;
-  ProvenanceRange Emit(
+  ProvenanceRange GetProvenance(const CookedSource &) const;
+  void Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 
 private:

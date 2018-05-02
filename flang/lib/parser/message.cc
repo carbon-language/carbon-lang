@@ -102,13 +102,23 @@ std::string Message::ToString() const {
   return s;
 }
 
-ProvenanceRange Message::Emit(
-    std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
-  ProvenanceRange provenanceRange{provenanceRange_};
+ProvenanceRange Message::GetProvenance(const CookedSource &cooked) const {
   if (cookedSourceRange_.begin() != nullptr) {
-    provenanceRange = cooked.GetProvenance(cookedSourceRange_);
+    return cooked.GetProvenance(cookedSourceRange_);
   }
-  if (!context_ || context_->Emit(o, cooked, false) != provenanceRange) {
+  return provenanceRange_;
+}
+
+void Message::Emit(
+    std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
+  ProvenanceRange provenanceRange{GetProvenance(cooked)};
+  bool doIdentify{true};
+  if (context_) {
+    bool sameProvenance{provenanceRange == context_->GetProvenance(cooked)};
+    context_->Emit(o, cooked, echoSourceLine && sameProvenance);
+    doIdentify = !sameProvenance;
+  }
+  if (doIdentify) {
     cooked.allSources().Identify(o, provenanceRange, "", echoSourceLine);
   }
   o << "   ";
@@ -116,7 +126,6 @@ ProvenanceRange Message::Emit(
     o << "ERROR: ";
   }
   o << ToString() << '\n';
-  return provenanceRange;
 }
 
 void Messages::Incorporate(Messages &that) {
