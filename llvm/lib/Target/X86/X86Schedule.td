@@ -213,6 +213,8 @@ def SchedWriteFCmp
  : X86SchedWriteWidths<WriteFCmp, WriteFCmp, WriteFCmpY, WriteFCmpY>;
 def SchedWriteFMul
  : X86SchedWriteWidths<WriteFMul, WriteFMul, WriteFMulY, WriteFMulY>;
+def SchedWriteFMA
+ : X86SchedWriteWidths<WriteFMAS, WriteFMA, WriteFMAY, WriteFMAY>;
 def SchedWriteFDiv
  : X86SchedWriteWidths<WriteFDiv, WriteFDiv, WriteFDivY, WriteFDivY>;
 def SchedWriteFSqrt
