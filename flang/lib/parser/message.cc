@@ -125,6 +125,8 @@ void Message::Emit(
     ProvenanceRange contextProvenance{context->GetProvenance(cooked)};
     text = "in the context: ";
     text += context->ToString();
+    // TODO: don't echo the source lines of a context when it's the
+    // same line (or maybe just never echo source for context)
     cooked.allSources().EmitMessage(o, contextProvenance, text,
         echoSourceLine && contextProvenance != provenanceRange);
     provenanceRange = contextProvenance;
