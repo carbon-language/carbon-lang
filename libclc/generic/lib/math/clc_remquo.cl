@@ -29,6 +29,8 @@
 
 _CLC_DEF _CLC_OVERLOAD float __clc_remquo(float x, float y, __private int *quo)
 {
+    x = __clc_flush_denormal_if_not_supported(x);
+    y = __clc_flush_denormal_if_not_supported(y);
     int ux = as_int(x);
     int ax = ux & EXSIGNBIT_SP32;
     float xa = as_float(ax);
