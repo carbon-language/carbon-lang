@@ -1540,17 +1540,19 @@ def : InstRW<[ZnWriteROUNDm], (instregex "(V?)ROUND(S|P)(S|D)(Y?)m")>;
 
 // DPPS.
 // x,x,i / v,v,v,i.
-def : InstRW<[WriteMicrocoded], (instregex "(V?)DPPS(Y?)rri")>;
+def : SchedAlias<WriteDPPS,   ZnWriteMicrocoded>;
+def : SchedAlias<WriteDPPSY,  ZnWriteMicrocoded>;
 
 // x,m,i / v,v,m,i.
-def : InstRW<[WriteMicrocoded], (instregex "(V?)DPPS(Y?)rmi")>;
+def : SchedAlias<WriteDPPSLd, ZnWriteMicrocoded>;
+def : SchedAlias<WriteDPPSYLd,ZnWriteMicrocoded>;
 
 // DPPD.
 // x,x,i.
-def : InstRW<[WriteMicrocoded], (instregex "(V?)DPPDrri")>;
+def : SchedAlias<WriteDPPD,   ZnWriteMicrocoded>;
 
 // x,m,i.
-def : InstRW<[WriteMicrocoded], (instregex "(V?)DPPDrmi")>;
+def : SchedAlias<WriteDPPDLd, ZnWriteMicrocoded>;
 
 // VSQRTPS.
 // y,y.
