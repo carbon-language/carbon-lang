@@ -184,8 +184,8 @@ std::string CompileFortran(
   parsing.ClearLog();
   parsing.messages().Emit(std::cerr, parsing.cooked());
   if (!parsing.consumedWholeFile()) {
-    parsing.EmitMessage(std::cerr, parsing.finalRestingPlace(),
-                        "parser FAIL (final position)");
+    parsing.EmitMessage(
+        std::cerr, parsing.finalRestingPlace(), "parser FAIL (final position)");
     exitStatus = EXIT_FAILURE;
     return {};
   }
@@ -305,8 +305,8 @@ int main(int argc, char *const argv[]) {
         if (suffix == "f" || suffix == "F" || suffix == "ff" ||
             suffix == "f90" || suffix == "F90" || suffix == "ff90" ||
             suffix == "f95" || suffix == "F95" || suffix == "ff95" ||
-            suffix == "cuf" || suffix == "CUF" ||
-            suffix == "f18" || suffix == "F18" || suffix == "ff18") {
+            suffix == "cuf" || suffix == "CUF" || suffix == "f18" ||
+            suffix == "F18" || suffix == "ff18") {
           fortranSources.push_back(arg);
         } else if (suffix == "o" || suffix == "a") {
           relocatables.push_back(arg);

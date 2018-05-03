@@ -268,8 +268,7 @@ void Prescanner::NextChar() {
       BeginSourceLineAndAdvance();
     }
   } else {
-    if (inFixedForm_ && column_ > fixedFormColumnLimit_ &&
-        !tabInCurrentLine_) {
+    if (inFixedForm_ && column_ > fixedFormColumnLimit_ && !tabInCurrentLine_) {
       SkipToEndOfLine();
     } else if (*at_ == '!' && !inCharLiteral_) {
       SkipToEndOfLine();
