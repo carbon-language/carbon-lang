@@ -13984,6 +13984,9 @@ isMaskAndCmp0FoldingBeneficial(const Instruction &AndI) const {
   const Value *Mask = AndI.getOperand(1);
   // If the mask is suitable for andi. or andis. we should sink the and.
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(Mask)) {
+    // Can't handle constants wider than 64-bits.
+    if (CI->getBitWidth() > 64)
+      return false;
     int64_t ConstVal = CI->getZExtValue();
     return isUInt<16>(ConstVal) ||
       (isUInt<16>(ConstVal >> 16) && !(ConstVal & 0xFFFF));
