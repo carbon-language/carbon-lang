@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan %s -o %t -framework Foundation
+// RUN: %clangxx_tsan %s -o %t -framework Foundation -D__ALLOW_STDC_ATOMICS_IN_CXX__
 // RUN: %deflake %run %t 2>&1 | FileCheck %s
 
 // UNSUPPORTED: ios
