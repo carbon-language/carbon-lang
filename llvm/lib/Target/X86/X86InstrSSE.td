@@ -3396,6 +3396,7 @@ multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
                          string OpcodeStr, SDNode OpNode,
                          SDNode OpNode2, RegisterClass RC,
                          X86FoldableSchedWrite sched,
+                         X86FoldableSchedWrite schedImm,
                          ValueType DstVT, ValueType SrcVT,
                          PatFrag ld_frag, bit Is2Addr = 1> {
   // src2 is always 128-bit
@@ -3420,25 +3421,28 @@ multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
        [(set RC:$dst, (DstVT (OpNode2 RC:$src1, (i8 imm:$src2))))]>,
-       Sched<[sched]>;
+       Sched<[schedImm]>;
 }
 
 multiclass PDI_binop_rmi_all<bits<8> opc, bits<8> opc2, Format ImmForm,
                              string OpcodeStr, SDNode OpNode,
                              SDNode OpNode2, ValueType DstVT128,
                              ValueType DstVT256, ValueType SrcVT,
-                             X86SchedWriteWidths sched, Predicate prd> {
+                             X86SchedWriteWidths sched,
+                             X86SchedWriteWidths schedImm, Predicate prd> {
 let Predicates = [HasAVX, prd] in
   defm V#NAME : PDI_binop_rmi<opc, opc2, ImmForm, !strconcat("v", OpcodeStr),
-                              OpNode, OpNode2, VR128, sched.XMM, DstVT128,
-                              SrcVT, loadv2i64, 0>, VEX_4V, VEX_WIG;
+                              OpNode, OpNode2, VR128, sched.XMM, schedImm.XMM,
+                              DstVT128, SrcVT, loadv2i64, 0>, VEX_4V, VEX_WIG;
 let Predicates = [HasAVX2, prd] in
   defm V#NAME#Y : PDI_binop_rmi<opc, opc2, ImmForm, !strconcat("v", OpcodeStr),
-                                OpNode, OpNode2, VR256, sched.YMM, DstVT256,
-                                SrcVT, loadv2i64, 0>, VEX_4V, VEX_L, VEX_WIG;
+                                OpNode, OpNode2, VR256, sched.YMM, schedImm.YMM,
+                                DstVT256, SrcVT, loadv2i64, 0>, VEX_4V, VEX_L,
+                                VEX_WIG;
 let Constraints = "$src1 = $dst" in
   defm NAME : PDI_binop_rmi<opc, opc2, ImmForm, OpcodeStr, OpNode, OpNode2,
-                            VR128, sched.XMM, DstVT128, SrcVT, memopv2i64>;
+                            VR128, sched.XMM, schedImm.XMM, DstVT128, SrcVT,
+                            memopv2i64>;
 }
 
 multiclass PDI_binop_ri<bits<8> opc, Format ImmForm, string OpcodeStr,
@@ -3469,25 +3473,30 @@ let Constraints = "$src1 = $dst" in
 let ExeDomain = SSEPackedInt in {
   defm PSLLW : PDI_binop_rmi_all<0xF1, 0x71, MRM6r, "psllw", X86vshl, X86vshli,
                                  v8i16, v16i16, v8i16, SchedWriteVecShift,
-                                 NoVLX_Or_NoBWI>;
+                                 SchedWriteVecShiftImm, NoVLX_Or_NoBWI>;
   defm PSLLD : PDI_binop_rmi_all<0xF2, 0x72, MRM6r, "pslld", X86vshl, X86vshli,
-                                 v4i32, v8i32, v4i32, SchedWriteVecShift, NoVLX>;
+                                 v4i32, v8i32, v4i32, SchedWriteVecShift,
+                                 SchedWriteVecShiftImm, NoVLX>;
   defm PSLLQ : PDI_binop_rmi_all<0xF3, 0x73, MRM6r, "psllq", X86vshl, X86vshli,
-                                 v2i64, v4i64, v2i64, SchedWriteVecShift, NoVLX>;
+                                 v2i64, v4i64, v2i64, SchedWriteVecShift,
+                                 SchedWriteVecShiftImm, NoVLX>;
 
   defm PSRLW : PDI_binop_rmi_all<0xD1, 0x71, MRM2r, "psrlw", X86vsrl, X86vsrli,
                                  v8i16, v16i16, v8i16, SchedWriteVecShift,
-                                 NoVLX_Or_NoBWI>;
+                                 SchedWriteVecShiftImm, NoVLX_Or_NoBWI>;
   defm PSRLD : PDI_binop_rmi_all<0xD2, 0x72, MRM2r, "psrld", X86vsrl, X86vsrli,
-                                 v4i32, v8i32, v4i32, SchedWriteVecShift, NoVLX>;
+                                 v4i32, v8i32, v4i32, SchedWriteVecShift,
+                                 SchedWriteVecShiftImm, NoVLX>;
   defm PSRLQ : PDI_binop_rmi_all<0xD3, 0x73, MRM2r, "psrlq", X86vsrl, X86vsrli,
-                                 v2i64, v4i64, v2i64, SchedWriteVecShift, NoVLX>;
+                                 v2i64, v4i64, v2i64, SchedWriteVecShift,
+                                 SchedWriteVecShiftImm, NoVLX>;
 
   defm PSRAW : PDI_binop_rmi_all<0xE1, 0x71, MRM4r, "psraw", X86vsra, X86vsrai,
                                  v8i16, v16i16, v8i16, SchedWriteVecShift,
-                                 NoVLX_Or_NoBWI>;
+                                 SchedWriteVecShiftImm, NoVLX_Or_NoBWI>;
   defm PSRAD : PDI_binop_rmi_all<0xE2, 0x72, MRM4r, "psrad", X86vsra, X86vsrai,
-                                 v4i32, v8i32, v4i32, SchedWriteVecShift, NoVLX>;
+                                 v4i32, v8i32, v4i32, SchedWriteVecShift,
+                                 SchedWriteVecShiftImm, NoVLX>;
 
   defm PSLLDQ : PDI_binop_ri_all<0x73, MRM7r, "pslldq", X86vshldq,
                                  SchedWriteShuffle>;
