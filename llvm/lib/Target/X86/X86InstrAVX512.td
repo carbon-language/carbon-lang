@@ -9842,9 +9842,8 @@ multiclass avx512_unary_lowering<string InstrStr, SDNode OpNode,
   }
 }
 
-// FIXME: Is there a better scheduler class for VPLZCNT?
 defm VPLZCNT    : avx512_unary_rm_vl_dq<0x44, 0x44, "vplzcnt", ctlz,
-                                        SchedWriteVecALU, HasCDI>;
+                                        SchedWriteVecIMul, HasCDI>;
 
 // FIXME: Is there a better scheduler class for VPCONFLICT?
 defm VPCONFLICT : avx512_unary_rm_vl_dq<0xC4, 0xC4, "vpconflict", X86Conflict,

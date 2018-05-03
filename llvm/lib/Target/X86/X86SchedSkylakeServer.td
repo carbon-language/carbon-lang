@@ -1249,13 +1249,7 @@ def: InstRW<[SKXWriteResGroup50], (instregex "VCVTDQ2PSYrr",
                                              "VCVTUDQ2PSZrr",
                                              "VCVTUQQ2PDZ128rr",
                                              "VCVTUQQ2PDZ256rr",
-                                             "VCVTUQQ2PDZrr",
-                                             "VPLZCNTDZ128rr",
-                                             "VPLZCNTDZ256rr",
-                                             "VPLZCNTDZrr",
-                                             "VPLZCNTQZ128rr",
-                                             "VPLZCNTQZ256rr",
-                                             "VPLZCNTQZrr")>;
+                                             "VCVTUQQ2PDZrr")>;
 
 def SKXWriteResGroup51 : SchedWriteRes<[SKXPort5]> {
   let Latency = 4;
@@ -2681,9 +2675,7 @@ def: InstRW<[SKXWriteResGroup149], (instregex "CVTDQ2PSrm",
                                               "VCVTUDQ2PDZ128rm(b?)",
                                               "VCVTUDQ2PSZ128rm(b?)",
                                               "VCVTUQQ2PDZ128rm(b?)",
-                                              "VCVTUQQ2PSZ128rm(b?)",
-                                              "VPLZCNTDZ128rm(b?)",
-                                              "VPLZCNTQZ128rm(b?)")>;
+                                              "VCVTUQQ2PSZ128rm(b?)")>;
 
 def SKXWriteResGroup151 : SchedWriteRes<[SKXPort5,SKXPort23]> {
   let Latency = 10;
@@ -2807,11 +2799,7 @@ def: InstRW<[SKXWriteResGroup161], (instregex "VCVTDQ2PDZ256rm(b?)",
                                               "VCVTUDQ2PSZrm(b?)",
                                               "VCVTUQQ2PDZ256rm(b?)",
                                               "VCVTUQQ2PDZrm(b?)",
-                                              "VCVTUQQ2PSZ256rm(b?)",
-                                              "VPLZCNTDZ256rm(b?)",
-                                              "VPLZCNTDZrm(b?)",
-                                              "VPLZCNTQZ256rm(b?)",
-                                              "VPLZCNTQZrm(b?)")>;
+                                              "VCVTUQQ2PSZ256rm(b?)")>;
 
 def SKXWriteResGroup162 : SchedWriteRes<[SKXPort5,SKXPort23]> {
   let Latency = 11;
