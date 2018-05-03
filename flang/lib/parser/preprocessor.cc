@@ -759,6 +759,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
   }
 
   std::size_t tokens{token.SizeInTokens()};
+  CHECK(tokens > 0);
   if (*atToken >= tokens) {
     *error =
         Message{token.GetProvenanceRange(), "incomplete expression"_err_en_US};
@@ -993,6 +994,10 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
   }
   TokenSequence expr3{ReplaceMacros(expr2, *prescanner)};
   TokenSequence expr4{StripBlanks(expr3, 0, expr3.SizeInTokens())};
+  if (expr4.empty()) {
+    prescanner->Say("empty expression"_err_en_US, expr.GetProvenanceRange());
+    return false;
+  }
   std::size_t atToken{0};
   std::optional<Message> error;
   bool result{ExpressionValue(expr4, 0, &atToken, &error) != 0};

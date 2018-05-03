@@ -193,12 +193,12 @@ public:
     return p >= &data_.front() && p <= &data_.back() + 1;
   }
   bool IsValid(CharBlock range) const {
-    return range.empty() ||
-        (IsValid(range.begin()) && IsValid(range.end() - 1));
+    return !range.empty() && IsValid(range.begin()) && IsValid(range.end() - 1);
   }
   bool IsValid(Provenance p) const { return allSources_.IsValid(p); }
+  bool IsValid(ProvenanceRange r) const { return allSources_.IsValid(r); }
 
-  ProvenanceRange GetProvenance(CharBlock) const;
+  ProvenanceRange GetProvenanceRange(CharBlock) const;
 
   void Put(const char *data, std::size_t bytes) { buffer_.Put(data, bytes); }
   void Put(char ch) { buffer_.Put(&ch, 1); }

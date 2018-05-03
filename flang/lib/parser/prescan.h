@@ -142,6 +142,7 @@ private:
   }
 
   void LabelField(TokenSequence *);
+  void SkipToEndOfLine();
   void NextChar();
   void SkipSpaces();
   bool NextToken(TokenSequence *);

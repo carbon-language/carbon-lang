@@ -150,7 +150,7 @@ void Prescanner::Statement() {
       break;
     case LineClassification::Kind::ConditionalCompilationDirective:
     case LineClassification::Kind::PreprocessorDirective:
-      Say("preprocessed line looks like a preprocessor directive"_en_US,
+      Say("preprocessed line resembles a preprocessor directive"_en_US,
           preprocessed->GetProvenanceRange());
       preprocessed->ToLowerCase().Emit(&cooked_);
       break;
@@ -188,13 +188,18 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
   return tokens;
 }
 
-void Prescanner::Say(Message &&message) { messages_.Put(std::move(message)); }
+void Prescanner::Say(Message &&message) {
+  CHECK(cooked_.IsValid(message.GetProvenanceRange(cooked_)));
+  messages_.Put(std::move(message));
+}
 
 void Prescanner::Say(MessageFixedText text, ProvenanceRange r) {
+  CHECK(cooked_.IsValid(r));
   messages_.Put({r, text});
 }
 
 void Prescanner::Say(MessageFormattedText &&text, ProvenanceRange r) {
+  CHECK(cooked_.IsValid(r));
   messages_.Put({r, std::move(text)});
 }
 
@@ -239,10 +244,15 @@ void Prescanner::LabelField(TokenSequence *token) {
   }
 }
 
+void Prescanner::SkipToEndOfLine() {
+  while (*at_ != '\n') {
+    ++at_, ++column_;
+  }
+}
+
 void Prescanner::NextChar() {
   CHECK(*at_ != '\n');
-  ++at_;
-  ++column_;
+  ++at_, ++column_;
   if (inPreprocessorDirective_) {
     while (*at_ == '/' && at_[1] == '*') {
       char star{' '}, slash{' '};
@@ -258,14 +268,11 @@ void Prescanner::NextChar() {
       BeginSourceLineAndAdvance();
     }
   } else {
-    if ((inFixedForm_ && column_ > fixedFormColumnLimit_ &&
-            !tabInCurrentLine_) ||
-        (*at_ == '!' && !inCharLiteral_)) {
-      // Skip remainder of the line due to '!' comment marker or
-      // hitting the right margin in fixed form.
-      while (*at_ != '\n') {
-        ++at_;
-      }
+    if (inFixedForm_ && column_ > fixedFormColumnLimit_ &&
+        !tabInCurrentLine_) {
+      SkipToEndOfLine();
+    } else if (*at_ == '!' && !inCharLiteral_) {
+      SkipToEndOfLine();
     }
     while (*at_ == '\n' || *at_ == '&') {
       if (inFixedForm_) {
@@ -413,7 +420,7 @@ bool Prescanner::ExponentAndKind(TokenSequence *tokens) {
 }
 
 void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
-  const char *start{at_}, quote{*start};
+  const char *start{at_}, quote{*start}, *end{at_ + 1};
   inCharLiteral_ = true;
   const auto emit = [&](char ch) { EmitChar(tokens, ch); };
   const auto insert = [&](char ch) { EmitInsertedChar(tokens, ch); };
@@ -428,10 +435,11 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
     if (*at_ == '\n') {
       if (!inPreprocessorDirective_) {
         Say("incomplete character literal"_err_en_US,
-            GetProvenanceRange(start, at_));
+            GetProvenanceRange(start, end));
       }
       break;
     }
+    end = at_ + 1;
     NextChar();
     if (*at_ == quote && !escape) {
       // A doubled quote mark becomes a single instance of the quote character
@@ -454,11 +462,17 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence *tokens) {
 
 void Prescanner::Hollerith(TokenSequence *tokens, int count) {
   inCharLiteral_ = true;
+  CHECK(*at_ == 'h' || *at_ == 'H');
   EmitChar(tokens, 'H');
-  const char *start{at_};
+  const char *start{at_}, *end{at_ + 1};
   while (count-- > 0) {
     if (PadOutCharacterLiteral(tokens)) {
-    } else if (*at_ != '\n') {
+    } else if (*at_ == '\n') {
+      Say("incomplete Hollerith literal"_err_en_US,
+          GetProvenanceRange(start, end));
+      break;
+    } else {
+      end = at_ + 1;
       NextChar();
       EmitChar(tokens, *at_);
       // Multi-byte character encodings should count as single characters.
@@ -475,16 +489,9 @@ void Prescanner::Hollerith(TokenSequence *tokens, int count) {
       while (bytes-- > 1) {
         EmitChar(tokens, *++at_);
       }
-    } else {
-      break;
     }
   }
-  if (*at_ == '\n') {
-    if (!inPreprocessorDirective_) {
-      Say("incomplete Hollerith literal"_err_en_US,
-          GetProvenanceRange(start, at_));
-    }
-  } else {
+  if (*at_ != '\n') {
     NextChar();
   }
   inCharLiteral_ = false;

@@ -150,7 +150,7 @@ public:
 
   void Incorporate(Message &);
   std::string ToString() const;
-  ProvenanceRange GetProvenance(const CookedSource &) const;
+  ProvenanceRange GetProvenanceRange(const CookedSource &) const;
   void Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 

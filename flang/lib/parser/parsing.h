@@ -64,7 +64,7 @@ public:
   void EmitMessage(std::ostream &o, const char *at, const std::string &message,
       bool echoSourceLine = false) const {
     allSources_.EmitMessage(
-        o, cooked_.GetProvenance(at).start(), message, echoSourceLine);
+        o, cooked_.GetProvenanceRange(at).start(), message, echoSourceLine);
   }
 
   bool ForTesting(std::string path, std::ostream &);

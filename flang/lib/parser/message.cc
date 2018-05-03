@@ -104,16 +104,16 @@ std::string Message::ToString() const {
   return s;
 }
 
-ProvenanceRange Message::GetProvenance(const CookedSource &cooked) const {
+ProvenanceRange Message::GetProvenanceRange(const CookedSource &cooked) const {
   if (cookedSourceRange_.begin() != nullptr) {
-    return cooked.GetProvenance(cookedSourceRange_);
+    return cooked.GetProvenanceRange(cookedSourceRange_);
   }
   return provenanceRange_;
 }
 
 void Message::Emit(
     std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
-  ProvenanceRange provenanceRange{GetProvenance(cooked)};
+  ProvenanceRange provenanceRange{GetProvenanceRange(cooked)};
   std::string text;
   if (isFatal_) {
     text += "ERROR: ";
@@ -122,7 +122,7 @@ void Message::Emit(
   cooked.allSources().EmitMessage(o, provenanceRange, text, echoSourceLine);
   for (const Message *context{context_.get()}; context != nullptr;
        context = context->context_.get()) {
-    ProvenanceRange contextProvenance{context->GetProvenance(cooked)};
+    ProvenanceRange contextProvenance{context->GetProvenanceRange(cooked)};
     text = "in the context: ";
     text += context->ToString();
     // TODO: don't echo the source lines of a context when it's the

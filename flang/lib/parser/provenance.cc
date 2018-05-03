@@ -293,7 +293,7 @@ const AllSources::Origin &AllSources::MapToOrigin(Provenance at) const {
   return origin_[low];
 }
 
-ProvenanceRange CookedSource::GetProvenance(CharBlock cookedRange) const {
+ProvenanceRange CookedSource::GetProvenanceRange(CharBlock cookedRange) const {
   ProvenanceRange range{provenanceMap_.Map(cookedRange.begin() - &data_[0])};
   if (cookedRange.size() < range.size()) {
     return {range.start(), cookedRange.size()};
