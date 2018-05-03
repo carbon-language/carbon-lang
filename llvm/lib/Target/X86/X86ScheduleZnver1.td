@@ -100,7 +100,7 @@ def : ReadAdvance<ReadAfterLd, 4>;
 // This multiclass is for folded loads for integer units.
 multiclass ZnWriteResPair<X86FoldableSchedWrite SchedRW,
                           list<ProcResourceKind> ExePorts,
-                          int Lat, list<int> Res = [1], int UOps = 1> {
+                          int Lat, list<int> Res = [], int UOps = 1> {
   // Register variant takes 1-cycle on Execution Port.
   def : WriteRes<SchedRW, ExePorts> {
     let Latency = Lat;
@@ -112,7 +112,7 @@ multiclass ZnWriteResPair<X86FoldableSchedWrite SchedRW,
   // adds 4 cycles to the latency.
   def : WriteRes<SchedRW.Folded, !listconcat([ZnAGU], ExePorts)> {
     let Latency = !add(Lat, 4);
-    let ResourceCycles = !listconcat([1], Res);
+    let ResourceCycles = !if(!empty(Res), [], !listconcat([1], Res));
     let NumMicroOps = !add(UOps, 1);
   }
 }
@@ -120,7 +120,7 @@ multiclass ZnWriteResPair<X86FoldableSchedWrite SchedRW,
 // This multiclass is for folded loads for floating point units.
 multiclass ZnWriteResFpuPair<X86FoldableSchedWrite SchedRW,
                           list<ProcResourceKind> ExePorts,
-                          int Lat, list<int> Res = [1], int UOps = 1> {
+                          int Lat, list<int> Res = [], int UOps = 1> {
   // Register variant takes 1-cycle on Execution Port.
   def : WriteRes<SchedRW, ExePorts> {
     let Latency = Lat;
@@ -132,7 +132,7 @@ multiclass ZnWriteResFpuPair<X86FoldableSchedWrite SchedRW,
   // adds 7 cycles to the latency.
   def : WriteRes<SchedRW.Folded, !listconcat([ZnAGU], ExePorts)> {
     let Latency = !add(Lat, 7);
-    let ResourceCycles = !listconcat([1], Res);
+    let ResourceCycles = !if(!empty(Res), [], !listconcat([1], Res));
     let NumMicroOps = UOps;
   }
 }
