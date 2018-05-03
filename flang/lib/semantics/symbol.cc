@@ -19,6 +19,13 @@
 
 namespace Fortran::semantics {
 
+std::ostream &operator<<(std::ostream &os, const parser::Name &name) {
+  return os << name.ToString();
+}
+std::ostream &operator<<(std::ostream &os, const parser::CharBlock &name) {
+  return os << name.ToString();
+}
+
 void EntityDetails::set_type(const DeclTypeSpec &type) {
   CHECK(!type_);
   type_ = type;
@@ -31,18 +38,37 @@ void EntityDetails::set_shape(const ArraySpec &shape) {
   }
 }
 
+const Symbol &UseDetails::module() const {
+  // owner is a module so it must have a symbol:
+  return *symbol_->owner().symbol();
+}
+
 // The name of the kind of details for this symbol.
 // This is primarily for debugging.
-const std::string Symbol::GetDetailsName() const {
+static std::string DetailsToString(const Details &details) {
   return std::visit(
       parser::visitors{
-          [&](const UnknownDetails &x) { return "Unknown"; },
-          [&](const MainProgramDetails &x) { return "MainProgram"; },
-          [&](const ModuleDetails &x) { return "Module"; },
-          [&](const SubprogramDetails &x) { return "Subprogram"; },
-          [&](const EntityDetails &x) { return "Entity"; },
+          [&](const UnknownDetails &) { return "Unknown"; },
+          [&](const MainProgramDetails &) { return "MainProgram"; },
+          [&](const ModuleDetails &) { return "Module"; },
+          [&](const SubprogramDetails &) { return "Subprogram"; },
+          [&](const EntityDetails &) { return "Entity"; },
+          [&](const UseDetails &) { return "Use"; },
+          [&](const UseErrorDetails &) { return "UseError"; },
       },
-      details_);
+      details);
+}
+
+const std::string Symbol::GetDetailsName() const {
+  return DetailsToString(details_);
+}
+
+const Symbol &Symbol::GetUltimate() const {
+  if (const auto *details = detailsIf<UseDetails>()) {
+    return details->symbol().GetUltimate();
+  } else {
+    return *this;
+  }
 }
 
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
@@ -67,12 +93,8 @@ static std::ostream &DumpType(std::ostream &os, const Symbol &symbol) {
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
-  os << sym.name().ToString();
-  if (!sym.attrs().empty()) {
-    os << ", " << sym.attrs();
-  }
-  os << ": " << sym.GetDetailsName();
+std::ostream &operator<<(std::ostream &os, const Details &details) {
+  os << DetailsToString(details);
   std::visit(
       parser::visitors{
           [&](const UnknownDetails &x) {},
@@ -84,18 +106,36 @@ std::ostream &operator<<(std::ostream &os, const Symbol &sym) {
             for (const auto &dummy : x.dummyArgs()) {
               if (n++ > 0) os << ", ";
               DumpType(os, *dummy);
-              os << dummy->name().ToString();
+              os << dummy->name();
             }
             os << ')';
             if (x.isFunction()) {
               os << " result(";
               DumpType(os, x.result());
-              os << x.result().name().ToString() << ')';
+              os << x.result().name() << ')';
             }
           },
           [&](const EntityDetails &x) { os << x; },
+          [&](const UseDetails &x) {
+            os << " from " << x.symbol().name() << " in " << x.module().name();
+          },
+          [&](const UseErrorDetails &x) {
+            os << " uses:";
+            for (const auto &pair : x.occurrences()) {
+              os << " from " << pair.second->name() << " at " << *pair.first;
+            }
+          },
       },
-      sym.details_);
+      details);
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Symbol &symbol) {
+  os << symbol.name();
+  if (!symbol.attrs().empty()) {
+    os << ", " << symbol.attrs();
+  }
+  os << ": " << symbol.details_;
   return os;
 }
 

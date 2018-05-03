@@ -45,6 +45,11 @@ public:
   Kind kind() const { return kind_; }
   const Symbol *symbol() const { return symbol_; }
 
+  const SourceName &name() const {
+    CHECK(symbol_);  // must only be called for Scopes known to have a symbol
+    return symbol_->name();
+  }
+
   /// Make a scope nested in this one
   Scope &MakeScope(Kind kind, const Symbol *symbol = nullptr);
 

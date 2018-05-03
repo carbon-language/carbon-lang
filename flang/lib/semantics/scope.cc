@@ -28,8 +28,11 @@ Scope &Scope::MakeScope(Kind kind, const Symbol *symbol) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Scope &scope) {
-  os << Scope::EnumToString(scope.kind())
-     << " scope: " << scope.children_.size() << " children\n";
+  os << Scope::EnumToString(scope.kind()) << " scope: ";
+  if (auto *symbol = scope.symbol()) {
+    os << *symbol << ' ';
+  }
+  os << scope.children_.size() << " children\n";
   for (const auto &sym : scope.symbols_) {
     os << "  " << sym.second << "\n";
   }

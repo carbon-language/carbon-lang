@@ -34,7 +34,14 @@ class Symbol;
 
 class ModuleDetails {
 public:
+  const Scope *scope() const { return scope_; }
+  void set_scope(const Scope *scope) {
+    CHECK(!scope_);
+    scope_ = scope;
+  }
+
 private:
+  const Scope *scope_{nullptr};
 };
 
 class MainProgramDetails {
@@ -83,14 +90,50 @@ private:
   friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
 };
 
+// Record the USE of a symbol: location is where (USE statement or renaming);
+// symbol is the USEd module.
+class UseDetails {
+public:
+  UseDetails(const SourceName &location, const Symbol &symbol)
+    : location_{&location}, symbol_{&symbol} {}
+  const SourceName &location() const { return *location_; }
+  const Symbol &symbol() const { return *symbol_; }
+  const Symbol &module() const;
+
+private:
+  const SourceName *location_;
+  const Symbol *symbol_;
+};
+
+// A symbol with ambiguous use-associations. Record where they were so
+// we can report the error if it is used.
+class UseErrorDetails {
+public:
+  UseErrorDetails(const SourceName &location, const Scope &module) {
+    add_occurrence(location, module);
+  }
+
+  UseErrorDetails &add_occurrence(
+      const SourceName &location, const Scope &module) {
+    occurrences_.push_back(std::make_pair(&location, &module));
+    return *this;
+  }
+
+  using listType = std::list<std::pair<const SourceName *, const Scope *>>;
+  const listType occurrences() const { return occurrences_; };
+
+private:
+  listType occurrences_;
+};
+
 class UnknownDetails {};
+
+using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
+    SubprogramDetails, EntityDetails, UseDetails, UseErrorDetails>;
+std::ostream &operator<<(std::ostream &, const Details &);
 
 class Symbol {
 public:
-  // TODO: more kinds of details
-  using Details = std::variant<UnknownDetails, MainProgramDetails,
-      ModuleDetails, SubprogramDetails, EntityDetails>;
-
   Symbol(const Scope &owner, const SourceName &name, const Attrs &attrs,
       Details &&details)
     : owner_{owner}, attrs_{attrs}, details_{std::move(details)} {
@@ -126,14 +169,27 @@ public:
   }
 
   // Assign the details of the symbol from one of the variants.
-  // Only allowed if unknown.
+  // Only allowed in certain cases.
   void set_details(Details &&details) {
-    CHECK(has<UnknownDetails>());
+    if (has<UnknownDetails>()) {
+      // can always replace UnknownDetails
+    } else if (has<UseDetails>() &&
+        std::holds_alternative<UseErrorDetails>(details)) {
+      // can replace UseDetails with UseErrorDetails
+    } else {
+      CHECK(!"can't replace details");
+    }
     details_.swap(details);
   }
 
   const std::list<SourceName> &occurrences() const { return occurrences_; }
   void add_occurrence(const SourceName &name) { occurrences_.push_back(name); }
+
+  // Follow use-associations to get the ultimate entity.
+  const Symbol &GetUltimate() const;
+
+  bool operator==(const Symbol &that) const { return this == &that; }
+  bool operator!=(const Symbol &that) const { return this != &that; }
 
 private:
   const Scope &owner_;

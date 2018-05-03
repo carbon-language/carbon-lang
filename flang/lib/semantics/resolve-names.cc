@@ -24,6 +24,7 @@
 #include <list>
 #include <memory>
 #include <ostream>
+#include <set>
 #include <stack>
 
 namespace Fortran::semantics {
@@ -152,6 +153,8 @@ private:
 class MessageHandler {
 public:
   using Message = parser::Message;
+  using MessageFixedText = parser::MessageFixedText;
+  using MessageFormattedText = parser::MessageFormattedText;
 
   MessageHandler(parser::Messages &messages) : messages_{messages} {}
 
@@ -165,13 +168,17 @@ public:
 
   const SourceName *currStmtSource() { return currStmtSource_; }
 
-  // Emit a message associated with the current statement source.
+  // Add a message to the messages to be emitted.
   void Say(Message &&);
-  void Say(parser::MessageFixedText &&);
-  void Say(parser::MessageFormattedText &&);
-  // Emit a message about a name or source location
-  void Say(const parser::Name &, parser::MessageFixedText &&);
-  void Say(const SourceName &, parser::MessageFixedText &&);
+  // Emit a message associated with the current statement source.
+  void Say(MessageFixedText &&);
+  // Emit a message about a SourceName or parser::Name
+  void Say(const SourceName &, MessageFixedText &&);
+  void Say(const parser::Name &, MessageFixedText &&);
+  // Emit a formatted message associated with a source location.
+  void Say(const SourceName &, MessageFixedText &&, const std::string &);
+  void Say(const SourceName &, MessageFixedText &&, const SourceName &,
+      const SourceName &);
 
 private:
   // Where messages are emitted:
@@ -319,16 +326,15 @@ public:
 
   // Helpers to make a Symbol in the current scope
   template<typename D>
-  Symbol &MakeSymbol(
-      const parser::Name &name, const Attrs &attrs, D &&details) {
-    const auto &it = CurrScope().find(name.source);
+  Symbol &MakeSymbol(const SourceName &name, const Attrs &attrs, D &&details) {
+    const auto &it = CurrScope().find(name);
     auto &symbol = it->second;
     if (it == CurrScope().end()) {
-      const auto pair = CurrScope().try_emplace(name.source, attrs, details);
+      const auto pair = CurrScope().try_emplace(name, attrs, details);
       CHECK(pair.second);  // name was not found, so must be able to add
       return pair.first->second;
     }
-    symbol.add_occurrence(name.source);
+    symbol.add_occurrence(name);
     if (symbol.has<UnknownDetails>()) {
       // update the existing symbol
       symbol.attrs() |= attrs;
@@ -346,10 +352,15 @@ public:
     }
   }
   template<typename D>
+  Symbol &MakeSymbol(
+      const parser::Name &name, const Attrs &attrs, D &&details) {
+    return MakeSymbol(name.source, attrs, std::move(details));
+  }
+  template<typename D>
   Symbol &MakeSymbol(const parser::Name &name, D &&details) {
     return MakeSymbol(name, Attrs(), details);
   }
-  Symbol &MakeSymbol(const parser::Name &name, Attrs attrs = Attrs{}) {
+  Symbol &MakeSymbol(const SourceName &name, Attrs attrs = Attrs{}) {
     return MakeSymbol(name, attrs, UnknownDetails());
   }
 
@@ -366,19 +377,149 @@ public:
   using ImplicitRulesVisitor::Post;
   using ImplicitRulesVisitor::Pre;
 
-  ModuleVisitor(parser::Messages & messages) : ScopeHandler(messages) {}
+  ModuleVisitor(parser::Messages &messages) : ScopeHandler(messages) {}
 
   bool Pre(const parser::ModuleStmt &);
   void Post(const parser::EndModuleStmt &);
   bool Pre(const parser::AccessStmt &);
+
+  bool Pre(const parser::Only &x) {
+    std::visit(
+        parser::visitors{
+            [&](const parser::Indirection<parser::GenericSpec> &generic) {
+              std::visit(
+                  parser::visitors{
+                      [&](const parser::Name &name) { AddUse(name); },
+                      [](const auto &) { parser::die("TODO: GenericSpec"); },
+                  },
+                  generic->u);
+            },
+            [&](const parser::Name &name) { AddUse(name); },
+            [&](const parser::Rename &rename) {
+              std::visit(
+                  parser::visitors{
+                      [&](const parser::Rename::Names &names) {
+                        AddUse(names);
+                      },
+                      [&](const parser::Rename::Operators &ops) {
+                        parser::die("TODO: Rename::Operators");
+                      },
+                  },
+                  rename.u);
+            },
+        },
+        x.u);
+    return false;
+  }
+
+  bool Pre(const parser::Rename::Names &x) {
+    AddUse(x);
+    return false;
+  }
+
+  // Set useModuleScope_ to the Scope of the module being used.
+  bool Pre(const parser::UseStmt &x) {
+    // x.nature = UseStmt::ModuleNature::Intrinsic or Non_Intrinsic
+    const auto it = Scope::globalScope.find(x.moduleName.source);
+    if (it == Scope::globalScope.end()) {
+      Say(x.moduleName, "Module '%s' not found"_err_en_US);
+      return false;
+    }
+    const auto *details = it->second.detailsIf<ModuleDetails>();
+    if (!details) {
+      Say(x.moduleName, "'%s' is not a module"_err_en_US);
+      return false;
+    }
+    useModuleScope_ = details->scope();
+    CHECK(useModuleScope_);
+    return true;
+  }
+
+  void Post(const parser::UseStmt &x) {
+    if (const auto *list = std::get_if<std::list<parser::Rename>>(&x.u)) {
+      // Not a use-only: collect the names that were used in renames,
+      // then add a use for each public name that was not renamed.
+      std::set<SourceName> useNames;
+      for (const auto &rename : *list) {
+        std::visit(
+            parser::visitors{
+                [&](const parser::Rename::Names &names) {
+                  useNames.insert(std::get<1>(names.t).source);
+                },
+                [&](const parser::Rename::Operators &ops) {
+                  CHECK(!"TODO: Rename::Operators");
+                },
+            },
+            rename.u);
+      }
+      const SourceName &moduleName{x.moduleName.source};
+      for (const auto &pair : *useModuleScope_) {
+        const Symbol &symbol{pair.second};
+        if (symbol.attrs().test(Attr::PUBLIC) &&
+            !symbol.detailsIf<ModuleDetails>()) {
+          const SourceName &name{symbol.name()};
+          if (useNames.count(name) == 0) {
+            AddUse(moduleName, name, name);
+          }
+        }
+      }
+    }
+    useModuleScope_ = nullptr;
+  }
 
 private:
   // The default access spec for this module.
   Attr defaultAccess_{Attr::PUBLIC};
   // The location of the last AccessStmt without access-ids, if any.
   const SourceName *prevAccessStmt_{nullptr};
+  // The scope of the module during a UseStmt
+  const Scope *useModuleScope_{nullptr};
   void SetAccess(const parser::Name &, Attr);
   void ApplyDefaultAccess();
+
+  void AddUse(const parser::Rename::Names &names) {
+    const SourceName &useName{std::get<0>(names.t).source};
+    const SourceName &localName{std::get<1>(names.t).source};
+    AddUse(useName, useName, localName);
+  }
+  void AddUse(const parser::Name &useName) {
+    AddUse(useName.source, useName.source, useName.source);
+  }
+  // Record a use from useModuleScope_ of useName as localName. location is
+  // where it occurred (either the module or the rename) for error reporting.
+  void AddUse(const SourceName &location, const SourceName &localName,
+      const SourceName &useName) {
+    if (!useModuleScope_) {
+      return;  // error occurred finding module
+    }
+    const auto it = useModuleScope_->find(useName);
+    if (it == useModuleScope_->end()) {
+      Say(useName, "'%s' not found in module '%s'"_err_en_US, useName,
+          useModuleScope_->name());
+      return;
+    }
+    const Symbol &useSymbol{it->second};
+    if (useSymbol.attrs().test(Attr::PRIVATE)) {
+      Say(useName, "'%s' is PRIVATE in '%s'"_err_en_US, useName,
+          useModuleScope_->name());
+      return;
+    }
+    Symbol &localSymbol{MakeSymbol(localName, useSymbol.attrs())};
+    localSymbol.attrs() &= ~Attrs{Attr::PUBLIC, Attr::PRIVATE};
+    if (auto *details = localSymbol.detailsIf<UseDetails>()) {
+      // check for importing the same symbol again:
+      if (localSymbol.GetUltimate() != useSymbol.GetUltimate()) {
+        localSymbol.set_details(
+            UseErrorDetails{details->location(), *useModuleScope_});
+      }
+    } else if (auto *details = localSymbol.detailsIf<UseErrorDetails>()) {
+      details->add_occurrence(location, *useModuleScope_);
+    } else if (localSymbol.has<UnknownDetails>()) {
+      localSymbol.set_details(UseDetails{location, useSymbol});
+    } else {
+      CHECK(!"can't happen");
+    }
+  }
 };
 
 // Walk the parse tree and resolve names to symbols.
@@ -389,8 +530,7 @@ public:
   using ModuleVisitor::Post;
   using ModuleVisitor::Pre;
 
-  ResolveNamesVisitor(parser::Messages & messages)
-    : ModuleVisitor(messages) {}
+  ResolveNamesVisitor(parser::Messages &messages) : ModuleVisitor(messages) {}
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(const T &) { return true; }
@@ -442,7 +582,7 @@ public:
 
   void Post(const parser::ProcedureDesignator &x) {
     if (const auto *name = std::get_if<parser::Name>(&x.u)) {
-      Symbol &symbol{MakeSymbol(*name)};
+      Symbol &symbol{MakeSymbol(name->source)};
       if (symbol.has<UnknownDetails>()) {
         if (isImplicitNoneExternal() && !symbol.attrs().test(Attr::EXTERNAL)) {
           Say(*name,
@@ -500,9 +640,9 @@ void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
   for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
     auto res = map_.emplace(ch, type);
     if (!res.second && !isDefault) {
-      messages_.Say(parser::Message{lo,
-          parser::MessageFormattedText{
-              "More than one implicit type specified for '%c'"_err_en_US, ch}});
+      messages_.Say(lo,
+          "More than one implicit type specified for '%s'"_err_en_US,
+          std::string(1, ch));
     }
     if (ch == *hi) {
       break;
@@ -683,26 +823,26 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
 
 // MessageHandler implementation
 
-void MessageHandler::Say(Message &&x) { messages_.Put(std::move(x)); }
-
-void MessageHandler::Say(parser::MessageFixedText &&x) {
+void MessageHandler::Say(Message &&msg) { messages_.Put(std::move(msg)); }
+void MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
-  messages_.Put(Message{*currStmtSource_, std::move(x)});
+  Say(Message{*currStmtSource_, std::move(msg)});
 }
-
-void MessageHandler::Say(parser::MessageFormattedText &&x) {
-  CHECK(currStmtSource_);
-  messages_.Put(Message{*currStmtSource_, std::move(x)});
+void MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
+  Say(name, std::move(msg), name.ToString());
 }
-
-void MessageHandler::Say(
-    const SourceName &name, parser::MessageFixedText &&msg) {
-  Say(Message{
-      name, parser::MessageFormattedText{msg, name.ToString().c_str()}});
+void MessageHandler::Say(const parser::Name &name, MessageFixedText &&msg) {
+  Say(name.source, std::move(msg), name.ToString());
 }
-void MessageHandler::Say(
-    const parser::Name &name, parser::MessageFixedText &&msg) {
-  Say(name.source, std::move(msg));
+void MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
+    const std::string &arg1) {
+  Say(Message{location, MessageFormattedText{msg, arg1.c_str()}});
+}
+void MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
+    const SourceName &arg1, const SourceName &arg2) {
+  Say(Message{location,
+      MessageFormattedText{
+          msg, arg1.ToString().c_str(), arg2.ToString().c_str()}});
 }
 
 // ImplicitRulesVisitor implementation
@@ -737,10 +877,8 @@ bool ImplicitRulesVisitor::Pre(const parser::LetterSpec &x) {
   if (auto hiLocOpt = std::get<std::optional<parser::Location>>(x.t)) {
     hiLoc = *hiLocOpt;
     if (*hiLoc < *loLoc) {
-      Say(Message{hiLoc,
-          parser::MessageFormattedText{
-              "'%c' does not follow '%c' alphabetically"_err_en_US, *hiLoc,
-              *loLoc}});
+      Say(hiLoc, "'%s' does not follow '%s' alphabetically"_err_en_US,
+          std::string(hiLoc, 1), std::string(loLoc, 1));
       return false;
     }
   }
@@ -854,6 +992,7 @@ bool ModuleVisitor::Pre(const parser::ModuleStmt &stmt) {
   auto &symbol = MakeSymbol(name, ModuleDetails{});
   ModuleDetails &details{symbol.details<ModuleDetails>()};
   Scope &modScope = CurrScope().MakeScope(Scope::Kind::Module, &symbol);
+  details.set_scope(&modScope);
   PushScope(modScope);
   MakeSymbol(name, ModuleDetails{details});
   return false;
@@ -929,7 +1068,14 @@ bool ResolveNamesVisitor::HandleAttributeStmt(
     const auto pair = CurrScope().try_emplace(name.source, Attrs{attr});
     if (!pair.second) {
       // symbol was already there: set attribute on it
-      pair.first->second.attrs().set(attr);
+      Symbol &symbol{pair.first->second};
+      if (attr != Attr::ASYNCHRONOUS && attr != Attr::VOLATILE &&
+          symbol.has<UseDetails>()) {
+        Say(*currStmtSource(),
+            "Cannot change %s attribute on use-associated '%s'"_err_en_US,
+            EnumToString(attr), name.source);
+      }
+      symbol.attrs().set(attr);
     }
   }
   return false;
@@ -947,7 +1093,8 @@ void ResolveNamesVisitor::Post(const parser::DimensionStmt::Declaration &x) {
 }
 
 void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
-  Symbol &symbol{MakeSymbol(name, attrs)};  // TODO: check attribute consistency
+  Symbol &symbol{MakeSymbol(name.source, attrs)};
+  // TODO: check attribute consistency
   if (symbol.has<UnknownDetails>()) {
     symbol.set_details(EntityDetails());
   }
@@ -968,6 +1115,10 @@ void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
       }
       ClearArraySpec();
     }
+  } else if (UseDetails *details = symbol.detailsIf<UseDetails>()) {
+    Say(name.source,
+        "'%s' is use-associated from module '%s' and cannot be re-declared"_err_en_US,
+        name.source, details->module().name());
   } else {
     Say(name, "'%s' is already declared in this scoping unit"_err_en_US);
     Say(symbol.name(), "Previous declaration of '%s'"_en_US);
@@ -976,11 +1127,16 @@ void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
 
 bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
   Attr accessAttr = AccessSpecToAttr(std::get<parser::AccessSpec>(x.t));
+  if (CurrScope().kind() != Scope::Kind::Module) {
+    Say(*currStmtSource(),
+        "%s statement may only appear in the specification part of a module"_err_en_US,
+        EnumToString(accessAttr));
+    return false;
+  }
   const auto &accessIds = std::get<std::list<parser::AccessId>>(x.t);
   if (accessIds.empty()) {
     if (prevAccessStmt_) {
-      Say("The default accessibility of this module has already "
-          "been declared"_err_en_US);
+      Say("The default accessibility of this module has already been declared"_err_en_US);
       Say(*prevAccessStmt_, "Previous declaration"_en_US);
     }
     prevAccessStmt_ = currStmtSource();
@@ -1009,17 +1165,16 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
 
 // Set the access specification for this name.
 void ModuleVisitor::SetAccess(const parser::Name &name, Attr attr) {
-  Symbol &symbol{MakeSymbol(name)};
+  Symbol &symbol{MakeSymbol(name.source)};
   Attrs &attrs{symbol.attrs()};
   if (attrs.HasAny({Attr::PUBLIC, Attr::PRIVATE})) {
     // PUBLIC/PRIVATE already set: make it a fatal error if it changed
     Attr prev = attrs.test(Attr::PUBLIC) ? Attr::PUBLIC : Attr::PRIVATE;
-    const auto &msg = attr == prev
-        ? "The accessibility of '%s' has already been specified as %s"_en_US
-        : "The accessibility of '%s' has already been specified as %s"_err_en_US;
-    Say(Message{name.source,
-        parser::MessageFormattedText{
-            msg, name.ToString().c_str(), EnumToString(prev).c_str()}});
+    Say(name.source,
+        attr == prev
+            ? "The accessibility of '%s' has already been specified as %s"_en_US
+            : "The accessibility of '%s' has already been specified as %s"_err_en_US,
+        name.source, EnumToString(prev));
   } else {
     attrs.set(attr);
   }
@@ -1186,9 +1341,7 @@ bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
   return true;
 }
 
-void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) {
-  PopScope();
-}
+void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) { PopScope(); }
 
 const parser::Name *ResolveNamesVisitor::GetVariableName(
     const parser::DataRef &x) {
@@ -1228,14 +1381,19 @@ const parser::Name *ResolveNamesVisitor::GetVariableName(
 // If implicit types are allowed, ensure name is in the symbol table
 void ResolveNamesVisitor::CheckImplicitSymbol(const parser::Name *name) {
   if (name) {
-    if (!isImplicitNoneType()) {
-      // ensure this name is in symbol table:
-      CurrScope().try_emplace(name->source);
-    } else {
-      const auto &it = CurrScope().find(name->source);
-      if (it == CurrScope().end() || it->second.has<UnknownDetails>()) {
-        Say(*name, "No explicit type declared for '%s'"_err_en_US);
+    const auto &it = CurrScope().find(name->source);
+    if (const auto *details = it->second.detailsIf<UseErrorDetails>()) {
+      Say(*name, "Reference to '%s' is ambiguous"_err_en_US);
+      for (const auto &pair : details->occurrences()) {
+        const SourceName &location{*pair.first};
+        const SourceName &moduleName{pair.second->name()};
+        Say(location, "'%s' was use-associated from module '%s'"_en_US,
+            name->source, moduleName);
       }
+    } else if (!isImplicitNoneType()) {
+      CurrScope().try_emplace(name->source);
+    } else if (it == CurrScope().end() || it->second.has<UnknownDetails>()) {
+      Say(*name, "No explicit type declared for '%s'"_err_en_US);
     }
   }
 }
