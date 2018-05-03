@@ -139,29 +139,25 @@ while.end:                                        ; preds = %while.body, %entry
   ret i32 %c.0.lcssa
 }
 
-; The a & (a - 1) in the loop is a & (b - 1) in this code.
-; FIXME: We shouldn't emit ctpop for this.
+; The a & (a - 1) in the loop is a & (b - 1) in this code. Make sure we don't
+; convert it.
 define i32 @popcount_bad(i64 %a, i64 %b) nounwind uwtable readnone ssp {
 ; CHECK-LABEL: @popcount_bad(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = call i64 @llvm.ctpop.i64(i64 [[A:%.*]])
-; CHECK-NEXT:    [[TMP1:%.*]] = trunc i64 [[TMP0]] to i32
-; CHECK-NEXT:    [[TMP2:%.*]] = icmp eq i32 [[TMP1]], 0
-; CHECK-NEXT:    br i1 [[TMP2]], label [[WHILE_END:%.*]], label [[WHILE_BODY_PREHEADER:%.*]]
+; CHECK-NEXT:    [[TOBOOL3:%.*]] = icmp eq i64 [[A:%.*]], 0
+; CHECK-NEXT:    br i1 [[TOBOOL3]], label [[WHILE_END:%.*]], label [[WHILE_BODY_PREHEADER:%.*]]
 ; CHECK:       while.body.preheader:
 ; CHECK-NEXT:    br label [[WHILE_BODY:%.*]]
 ; CHECK:       while.body:
-; CHECK-NEXT:    [[TCPHI:%.*]] = phi i32 [ [[TMP1]], [[WHILE_BODY_PREHEADER]] ], [ [[TCDEC:%.*]], [[WHILE_BODY]] ]
 ; CHECK-NEXT:    [[C_05:%.*]] = phi i32 [ [[INC:%.*]], [[WHILE_BODY]] ], [ 0, [[WHILE_BODY_PREHEADER]] ]
 ; CHECK-NEXT:    [[A_ADDR_04:%.*]] = phi i64 [ [[AND:%.*]], [[WHILE_BODY]] ], [ [[A]], [[WHILE_BODY_PREHEADER]] ]
 ; CHECK-NEXT:    [[INC]] = add nsw i32 [[C_05]], 1
 ; CHECK-NEXT:    [[SUB:%.*]] = add i64 [[B:%.*]], -1
 ; CHECK-NEXT:    [[AND]] = and i64 [[SUB]], [[A_ADDR_04]]
-; CHECK-NEXT:    [[TCDEC]] = sub nsw i32 [[TCPHI]], 1
-; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp sle i32 [[TCDEC]], 0
+; CHECK-NEXT:    [[TOBOOL:%.*]] = icmp eq i64 [[AND]], 0
 ; CHECK-NEXT:    br i1 [[TOBOOL]], label [[WHILE_END_LOOPEXIT:%.*]], label [[WHILE_BODY]]
 ; CHECK:       while.end.loopexit:
-; CHECK-NEXT:    [[INC_LCSSA:%.*]] = phi i32 [ [[TMP1]], [[WHILE_BODY]] ]
+; CHECK-NEXT:    [[INC_LCSSA:%.*]] = phi i32 [ [[INC]], [[WHILE_BODY]] ]
 ; CHECK-NEXT:    br label [[WHILE_END]]
 ; CHECK:       while.end:
 ; CHECK-NEXT:    [[C_0_LCSSA:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[INC_LCSSA]], [[WHILE_END_LOOPEXIT]] ]
