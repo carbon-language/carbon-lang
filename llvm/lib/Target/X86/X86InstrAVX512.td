@@ -9711,7 +9711,7 @@ let Predicates = [HasVLX, HasBWI] in {
 }
 
 defm VDBPSADBW: avx512_common_3Op_rm_imm8<0x42, X86dbpsadbw, "vdbpsadbw",
-                SchedWriteVecIMul, avx512vl_i16_info, avx512vl_i8_info>,
+                SchedWritePSADBW, avx512vl_i16_info, avx512vl_i8_info>,
                 EVEX_CD8<8, CD8VF>;
 
 multiclass avx512_unary_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
