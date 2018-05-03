@@ -1392,9 +1392,9 @@ template<typename T> void DumpTree(const T &x, std::ostream &out = std::cout) {
 }  // namespace Fortran::semantics
 
 // Provide a explicit instantiation for a few selected node types.
-// The goal is not to provide the instanciation of all possible
+// The goal is not to provide the instantiation of all possible
 // types but to insure that a call to DumpTree will not cause
-// the instanciation of thousands of types.
+// the instantiation of Walk() for thousands of types.
 
 #define FORTRAN_PARSE_TREE_DUMPER_INSTANTIATE(MODE, TYPE) \
   MODE template void Fortran::parser::Walk( \
