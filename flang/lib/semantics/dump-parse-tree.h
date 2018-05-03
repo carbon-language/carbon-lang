@@ -34,14 +34,9 @@ namespace Fortran::semantics {
 //
 
 class ParseTreeDumper {
-private:
-  int indent_;
-  std::ostream &out;
-  bool emptyline;
-
 public:
-  ParseTreeDumper(std::ostream &out_ = std::cerr)
-    : indent_(0), out(out_), emptyline(false) {}
+  ParseTreeDumper(std::ostream &out = std::cerr)
+    : indent_(0), out_(out), emptyline_(false) {}
 
   // Provide a name to a parse-tree node.
   // TODO: Provide a name for the 400+ classes in the parse-tree.
@@ -1261,34 +1256,29 @@ public:
     }
   }
 
-  void out_indent() {
-    for (int i = 0; i < indent_; i++) {
-      out << "| ";
-    }
-  }
 
   template<typename T> bool Pre(const T &x) {
-    if (emptyline) {
-      out_indent();
-      emptyline = false;
+    if (emptyline_) {
+      Indent();
+      emptyline_ = false;
     }
     if (UnionTrait<T> || WrapperTrait<T>) {
-      out << GetNodeName(x) << " -> ";
-      emptyline = false;
+      out_ << GetNodeName(x) << " -> ";
+      emptyline_ = false;
     } else {
-      out << GetNodeName(x);
-      out << "\n";
+      out_ << GetNodeName(x);
+      out_ << "\n";
       indent_++;
-      emptyline = true;
+      emptyline_ = true;
     }
     return true;
   }
 
   template<typename T> void Post(const T &x) {
     if (UnionTrait<T> || WrapperTrait<T>) {
-      if (!emptyline) {
-        out << "\n";
-        emptyline = true;
+      if (!emptyline_) {
+        out_ << "\n";
+        emptyline_ = true;
       }
     } else {
       indent_--;
@@ -1296,18 +1286,18 @@ public:
   }
 
   bool PutName(const std::string &name, const semantics::Symbol *symbol) {
-    if (emptyline) {
-      out_indent();
-      emptyline = false;
+    if (emptyline_) {
+      Indent();
+      emptyline_ = false;
     }
     if (symbol) {
-      out << "symbol = " << *symbol;
+      out_ << "symbol = " << *symbol;
     } else {
-      out << "Name = '" << name << '\'';
+      out_ << "Name = '" << name << '\'';
     }
-    out << '\n';
+    out_ << '\n';
     indent_++;
-    emptyline = true;
+    emptyline_ = true;
     return true;
   }
 
@@ -1320,26 +1310,26 @@ public:
   void Post(const std::string &x) { indent_--; }
 
   bool Pre(const std::int64_t &x) {
-    if (emptyline) {
-      out_indent();
-      emptyline = false;
+    if (emptyline_) {
+      Indent();
+      emptyline_ = false;
     }
-    out << "int = '" << x << "'\n";
+    out_ << "int = '" << x << "'\n";
     indent_++;
-    emptyline = true;
+    emptyline_ = true;
     return true;
   }
 
   void Post(const std::int64_t &x) { indent_--; }
 
   bool Pre(const std::uint64_t &x) {
-    if (emptyline) {
-      out_indent();
-      emptyline = false;
+    if (emptyline_) {
+      Indent();
+      emptyline_ = false;
     }
-    out << "int = '" << x << "'\n";
+    out_ << "int = '" << x << "'\n";
     indent_++;
-    emptyline = true;
+    emptyline_ = true;
     return true;
   }
 
@@ -1378,6 +1368,20 @@ public:
   template<typename... A> bool Pre(const std::variant<A...> &) { return true; }
 
   template<typename... A> void Post(const std::variant<A...> &) {}
+
+protected:
+
+  void Indent() {
+    for (int i = 0; i < indent_; i++) {
+      out_ << "| ";
+    }
+  }
+
+private:
+  int indent_;
+  std::ostream &out_;
+  bool emptyline_;
+  
 };
 
 template<typename T> void DumpTree(const T &x, std::ostream &out = std::cout) {
