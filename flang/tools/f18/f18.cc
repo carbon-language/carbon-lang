@@ -206,7 +206,7 @@ std::string CompileFortran(
     }
   }
   if (driver.dumpParseTree) {
-    Fortran::parser::DumpTree(*parsing.parseTree());
+    Fortran::semantics::DumpTree(*parsing.parseTree());
   }
   if (driver.dumpUnparse) {
     Unparse(

@@ -22,3 +22,7 @@ add_library(FlangSemantics
   symbol.cc
   type.cc
 )
+
+target_link_libraries( FlangSemantics
+  clangBasic                    
+)

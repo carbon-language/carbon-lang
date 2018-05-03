@@ -36,7 +36,35 @@ project(f18 CXX)
 if( NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Debug )
 endif()
-message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}")
+
+message(STATUS "Build Type: ${CMAKE_BUILD_TYPE}" )
+
+find_package(Clang REQUIRED CONFIG)
+include_directories(${CLANG_INSTALL_PREFIX/include})
+message(STATUS "Found Clang in ${CLANG_INSTALL_PREFIX}")
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+# Get names for the LLVM libraries
+#
+# The full list of LLVM components can be obtained with
+#
+#   llvm-config --components
+#
+# Similarly, the (static) libraries corresponding to some
+# components (default is 'all') can be obtained with
+#
+#   llvm-config --libs --link-static [component ...]
+#
+# See also
+#  http://llvm.org/docs/CMake.html#embedding-llvm-in-your-project
+#  https://stackoverflow.com/questions/41924375/llvm-how-to-specify-all-link-libraries-as-input-to-llvm-map-components-to-libna
+#  https://stackoverflow.com/questions/33948633/how-do-i-link-when-building-with-llvm-libraries
+
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+
+llvm_map_components_to_libnames(LLVM_COMMON_LIBS support target option) 
 
 if(CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
