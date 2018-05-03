@@ -127,12 +127,14 @@ class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
 defm WriteFHAdd  : X86SchedWritePair;
 defm WriteFHAddY : X86SchedWritePair; // YMM/ZMM.
 defm WritePHAdd  : X86SchedWritePair;
+defm WritePHAddY : X86SchedWritePair; // YMM/ZMM.
 
 // Vector integer operations.
 def  WriteVecLoad  : SchedWrite;
 def  WriteVecStore : SchedWrite;
 def  WriteVecMove  : SchedWrite;
 defm WriteVecALU   : X86SchedWritePair; // Vector integer ALU op, no logicals.
+defm WriteVecALUY  : X86SchedWritePair; // Vector integer ALU op, no logicals (YMM/ZMM).
 defm WriteVecLogic : X86SchedWritePair; // Vector integer and/or/xor logicals.
 defm WriteVecLogicY: X86SchedWritePair; // Vector integer and/or/xor logicals (YMM/ZMM).
 defm WriteVecShift : X86SchedWritePair; // Vector integer shifts.
@@ -249,9 +251,9 @@ def SchedWriteFVarBlend
                        WriteFVarBlendY, WriteFVarBlendY>;
 
 def SchedWriteVecALU
- : X86SchedWriteWidths<WriteVecALU, WriteVecALU, WriteVecALU, WriteVecALU>;
+ : X86SchedWriteWidths<WriteVecALU, WriteVecALU, WriteVecALUY, WriteVecALUY>;
 def SchedWritePHAdd
- : X86SchedWriteWidths<WritePHAdd, WritePHAdd, WritePHAdd, WritePHAdd>;
+ : X86SchedWriteWidths<WritePHAdd, WritePHAdd, WritePHAddY, WritePHAddY>;
 def SchedWriteVecLogic
  : X86SchedWriteWidths<WriteVecLogic, WriteVecLogic,
                        WriteVecLogicY, WriteVecLogicY>;

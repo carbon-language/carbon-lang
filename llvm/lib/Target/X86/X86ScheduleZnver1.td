@@ -238,7 +238,9 @@ defm : ZnWriteResFpuPair<WriteVecShift,   [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecLogic,   [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecLogicY,  [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WritePHAdd,      [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WritePHAddY,     [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecALU,     [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteVecALUY,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecIMul,    [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WriteVecIMulY,   [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WritePMULLD,     [ZnFPU0],  4>; // FIXME

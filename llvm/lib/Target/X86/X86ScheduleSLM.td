@@ -166,6 +166,7 @@ defm : SLMWriteResPair<WriteVecShift, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVecLogic, [SLM_FPC_RSV01], 1>;
 defm : SLMWriteResPair<WriteVecLogicY,[SLM_FPC_RSV01], 1>;
 defm : SLMWriteResPair<WriteVecALU,   [SLM_FPC_RSV01],  1>;
+defm : SLMWriteResPair<WriteVecALUY,  [SLM_FPC_RSV01],  1>;
 defm : SLMWriteResPair<WriteVecIMul,  [SLM_FPC_RSV0],   4>;
 defm : SLMWriteResPair<WriteVecIMulY, [SLM_FPC_RSV0],   4>;
 // FIXME: The below is closer to correct, but caused some perf regressions.
@@ -201,6 +202,7 @@ def  : WriteRes<WriteVecExtractSt, [SLM_FPC_RSV0, SLM_MEC_RSV]> {
 defm : SLMWriteResPair<WriteFHAdd,   [SLM_FPC_RSV01], 3, [2]>;
 defm : SLMWriteResPair<WriteFHAddY,  [SLM_FPC_RSV01], 3, [2]>;
 defm : SLMWriteResPair<WritePHAdd,   [SLM_FPC_RSV01], 1>;
+defm : SLMWriteResPair<WritePHAddY,  [SLM_FPC_RSV01], 1>;
 
 // String instructions.
 // Packed Compare Implicit Length Strings, Return Mask

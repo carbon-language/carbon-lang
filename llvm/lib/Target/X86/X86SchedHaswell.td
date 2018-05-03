@@ -197,7 +197,8 @@ def  : WriteRes<WriteVecMove,        [HWPort015]>;
 defm : HWWriteResPair<WriteVecShift, [HWPort0],  1>;
 defm : HWWriteResPair<WriteVecLogic, [HWPort015], 1, [1], 1, 6>;
 defm : HWWriteResPair<WriteVecLogicY,[HWPort015], 1, [1], 1, 7>;
-defm : HWWriteResPair<WriteVecALU,   [HWPort15],  1>;
+defm : HWWriteResPair<WriteVecALU,   [HWPort15],  1, [1], 1, 6>;
+defm : HWWriteResPair<WriteVecALUY,  [HWPort15],  1, [1], 1, 7>;
 defm : HWWriteResPair<WriteVecIMul,  [HWPort0],  5, [1], 1, 6>;
 defm : HWWriteResPair<WriteVecIMulY, [HWPort0],  5, [1], 1, 7>;
 defm : HWWriteResPair<WritePMULLD,   [HWPort0], 10, [2], 2, 6>;
@@ -608,7 +609,8 @@ def : InstRW<[HWWriteFXTRACT], (instrs FXTRACT)>;
 
 defm : HWWriteResPair<WriteFHAdd,  [HWPort1, HWPort5], 5, [1,2], 3, 6>;
 defm : HWWriteResPair<WriteFHAddY, [HWPort1, HWPort5], 5, [1,2], 3, 7>;
-defm : HWWriteResPair<WritePHAdd, [HWPort5, HWPort15], 3, [2,1], 3, 6>;
+defm : HWWriteResPair<WritePHAdd,  [HWPort5, HWPort15], 3, [2,1], 3, 6>;
+defm : HWWriteResPair<WritePHAddY, [HWPort5, HWPort15], 3, [2,1], 3, 7>;
 
 //=== Floating Point XMM and YMM Instructions ===//
 
@@ -940,105 +942,14 @@ def: InstRW<[HWWriteResGroup16], (instregex "ANDN(32|64)rm",
                                             "BLSI(32|64)rm",
                                             "BLSMSK(32|64)rm",
                                             "BLSR(32|64)rm",
-                                            "MOVBE(16|32|64)rm")>;
-
-def HWWriteResGroup16_1 : SchedWriteRes<[HWPort23,HWPort15]> {
-  let Latency = 7;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[HWWriteResGroup16_1], (instregex "(V?)PABSBrm",
-                                              "(V?)PABSDrm",
-                                              "(V?)PABSWrm",
-                                              "(V?)PADDBrm",
-                                              "(V?)PADDDrm",
-                                              "(V?)PADDQrm",
-                                              "(V?)PADDSBrm",
-                                              "(V?)PADDSWrm",
-                                              "(V?)PADDUSBrm",
-                                              "(V?)PADDUSWrm",
-                                              "(V?)PADDWrm",
-                                              "(V?)PAVGBrm",
-                                              "(V?)PAVGWrm",
-                                              "(V?)PCMPEQBrm",
-                                              "(V?)PCMPEQDrm",
-                                              "(V?)PCMPEQQrm",
-                                              "(V?)PCMPEQWrm",
-                                              "(V?)PCMPGTBrm",
-                                              "(V?)PCMPGTDrm",
-                                              "(V?)PCMPGTWrm",
-                                              "(V?)PMAXSBrm",
-                                              "(V?)PMAXSDrm",
-                                              "(V?)PMAXSWrm",
-                                              "(V?)PMAXUBrm",
-                                              "(V?)PMAXUDrm",
-                                              "(V?)PMAXUWrm",
-                                              "(V?)PMINSBrm",
-                                              "(V?)PMINSDrm",
-                                              "(V?)PMINSWrm",
-                                              "(V?)PMINUBrm",
-                                              "(V?)PMINUDrm",
-                                              "(V?)PMINUWrm",
-                                              "(V?)PSIGNBrm",
-                                              "(V?)PSIGNDrm",
-                                              "(V?)PSIGNWrm",
-                                              "(V?)PSUBBrm",
-                                              "(V?)PSUBDrm",
-                                              "(V?)PSUBQrm",
-                                              "(V?)PSUBSBrm",
-                                              "(V?)PSUBSWrm",
-                                              "(V?)PSUBUSBrm",
-                                              "(V?)PSUBUSWrm",
-                                              "(V?)PSUBWrm")>;
-
-def HWWriteResGroup16_2 : SchedWriteRes<[HWPort23,HWPort15]> {
-  let Latency = 8;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[HWWriteResGroup16_2], (instregex "VPABSBYrm",
-                                              "VPABSDYrm",
-                                              "VPABSWYrm",
-                                              "VPADDBYrm",
-                                              "VPADDDYrm",
-                                              "VPADDQYrm",
-                                              "VPADDSBYrm",
-                                              "VPADDSWYrm",
-                                              "VPADDUSBYrm",
-                                              "VPADDUSWYrm",
-                                              "VPADDWYrm",
-                                              "VPAVGBYrm",
-                                              "VPAVGWYrm",
-                                              "VPCMPEQBYrm",
-                                              "VPCMPEQDYrm",
-                                              "VPCMPEQQYrm",
-                                              "VPCMPEQWYrm",
-                                              "VPCMPGTBYrm",
-                                              "VPCMPGTDYrm",
-                                              "VPCMPGTWYrm",
-                                              "VPMAXSBYrm",
-                                              "VPMAXSDYrm",
-                                              "VPMAXSWYrm",
-                                              "VPMAXUBYrm",
-                                              "VPMAXUDYrm",
-                                              "VPMAXUWYrm",
-                                              "VPMINSBYrm",
-                                              "VPMINSDYrm",
-                                              "VPMINSWYrm",
-                                              "VPMINUBYrm",
-                                              "VPMINUDYrm",
-                                              "VPMINUWYrm",
-                                              "VPSIGNBYrm",
-                                              "VPSIGNDYrm",
-                                              "VPSIGNWYrm",
-                                              "VPSUBBYrm",
-                                              "VPSUBDYrm",
-                                              "VPSUBQYrm",
-                                              "VPSUBSBYrm",
-                                              "VPSUBSWYrm",
-                                              "VPSUBUSBYrm",
-                                              "VPSUBUSWYrm",
-                                              "VPSUBWYrm")>;
+                                            "MOVBE(16|32|64)rm",
+                                            "MMX_PABS(B|D|W)rm",
+                                            "MMX_P(ADD|SUB)(B|D|W|Q)irm",
+                                            "MMX_P(ADD|SUB)(U?)S(B|W)irm",
+                                            "MMX_PAVG(B|W)irm",
+                                            "MMX_PCMP(EQ|GT)(B|D|W)irm",
+                                            "MMX_P(MAX|MIN)(SW|UB)irm",
+                                            "MMX_PSIGN(B|D|W)rm")>;
 
 def HWWriteResGroup17 : SchedWriteRes<[HWPort23,HWPort015]> {
   let Latency = 7;
@@ -1513,18 +1424,6 @@ def HWWriteResGroup64 : SchedWriteRes<[HWPort5,HWPort23,HWPort15]> {
   let ResourceCycles = [2,1,1];
 }
 def: InstRW<[HWWriteResGroup64], (instregex "MMX_PH(ADD|SUB)(D|SW|W)rm")>;
-
-def HWWriteResGroup64_1 : SchedWriteRes<[HWPort5,HWPort23,HWPort15]> {
-  let Latency = 10;
-  let NumMicroOps = 4;
-  let ResourceCycles = [2,1,1];
-}
-def: InstRW<[HWWriteResGroup64_1], (instregex "VPHADDDYrm",
-                                              "VPHADDSWYrm",
-                                              "VPHADDWYrm",
-                                              "VPHSUBDYrm",
-                                              "VPHSUBSWYrm",
-                                              "VPHSUBWYrm")>;
 
 def HWWriteResGroup65 : SchedWriteRes<[HWPort23,HWPort06,HWPort0156]> {
   let Latency = 8;

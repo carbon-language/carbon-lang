@@ -404,6 +404,7 @@ def  : WriteRes<WriteVecStore,       [JSAGU, JFPU1, JSTC]>;
 def  : WriteRes<WriteVecMove,             [JFPU01, JVALU]>;
 
 defm : JWriteResFpuPair<WriteVecALU,      [JFPU01, JVALU], 1>;
+defm : JWriteResFpuPair<WriteVecALUY,     [JFPU01, JVALU], 1>;
 defm : JWriteResFpuPair<WriteVecShift,    [JFPU01, JVALU], 1>;
 defm : JWriteResFpuPair<WriteVecIMul,     [JFPU0, JVIMUL], 2>;
 defm : JWriteResFpuPair<WriteVecIMulY,    [JFPU0, JVIMUL], 2>;
@@ -468,6 +469,7 @@ defm : JWriteResFpuPair<WriteAESDecEnc,   [JFPU0, JVIMUL], 3, [1, 1], 2>;
 defm : JWriteResFpuPair<WriteFHAdd,         [JFPU0, JFPA], 3>;
 defm : JWriteResYMMPair<WriteFHAddY,        [JFPU0, JFPA], 3, [2,2], 2>;
 defm : JWriteResFpuPair<WritePHAdd,       [JFPU01, JVALU], 1>;
+defm : JWriteResFpuPair<WritePHAddY,      [JFPU01, JVALU], 1>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Carry-less multiplication instructions.

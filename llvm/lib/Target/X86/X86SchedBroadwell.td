@@ -199,7 +199,8 @@ def  : WriteRes<WriteVecLoad,        [BWPort23]> { let Latency = 5; }
 def  : WriteRes<WriteVecStore,       [BWPort237, BWPort4]>;
 def  : WriteRes<WriteVecMove,        [BWPort015]>;
 
-defm : BWWriteResPair<WriteVecALU,   [BWPort15],  1>; // Vector integer ALU op, no logicals.
+defm : BWWriteResPair<WriteVecALU,   [BWPort15], 1, [1], 1, 5>; // Vector integer ALU op, no logicals.
+defm : BWWriteResPair<WriteVecALUY,  [BWPort15], 1, [1], 1, 6>; // Vector integer ALU op, no logicals (YMM/ZMM).
 defm : BWWriteResPair<WriteVecLogic, [BWPort015], 1, [1], 1, 5>; // Vector integer and/or/xor.
 defm : BWWriteResPair<WriteVecLogicY,[BWPort015], 1, [1], 1, 6>; // Vector integer and/or/xor (YMM/ZMM).
 defm : BWWriteResPair<WriteVecShift, [BWPort0],  1>; // Vector integer shifts.
@@ -365,9 +366,10 @@ def : WriteRes<WriteNop, []>;
 // Horizontal add/sub  instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : BWWriteResPair<WriteFHAdd,   [BWPort1,BWPort5], 5, [1,2], 3>;
+defm : BWWriteResPair<WriteFHAdd,   [BWPort1,BWPort5], 5, [1,2], 3, 5>;
 defm : BWWriteResPair<WriteFHAddY,  [BWPort1,BWPort5], 5, [1,2], 3, 6>;
-defm : BWWriteResPair<WritePHAdd,  [BWPort5,BWPort15], 3, [2,1], 3>;
+defm : BWWriteResPair<WritePHAdd,  [BWPort5,BWPort15], 3, [2,1], 3, 5>;
+defm : BWWriteResPair<WritePHAddY, [BWPort5,BWPort15], 3, [2,1], 3, 6>;
 
 // Remaining instrs.
 
@@ -1087,55 +1089,6 @@ def: InstRW<[BWWriteResGroup74], (instregex "FCOM32m",
                                             "FCOMP32m",
                                             "FCOMP64m")>;
 
-def BWWriteResGroup76 : SchedWriteRes<[BWPort23,BWPort15]> {
-  let Latency = 7;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[BWWriteResGroup76], (instregex "VPABSBYrm",
-                                            "VPABSDYrm",
-                                            "VPABSWYrm",
-                                            "VPADDBYrm",
-                                            "VPADDDYrm",
-                                            "VPADDQYrm",
-                                            "VPADDSBYrm",
-                                            "VPADDSWYrm",
-                                            "VPADDUSBYrm",
-                                            "VPADDUSWYrm",
-                                            "VPADDWYrm",
-                                            "VPAVGBYrm",
-                                            "VPAVGWYrm",
-                                            "VPCMPEQBYrm",
-                                            "VPCMPEQDYrm",
-                                            "VPCMPEQQYrm",
-                                            "VPCMPEQWYrm",
-                                            "VPCMPGTBYrm",
-                                            "VPCMPGTDYrm",
-                                            "VPCMPGTWYrm",
-                                            "VPMAXSBYrm",
-                                            "VPMAXSDYrm",
-                                            "VPMAXSWYrm",
-                                            "VPMAXUBYrm",
-                                            "VPMAXUDYrm",
-                                            "VPMAXUWYrm",
-                                            "VPMINSBYrm",
-                                            "VPMINSDYrm",
-                                            "VPMINSWYrm",
-                                            "VPMINUBYrm",
-                                            "VPMINUDYrm",
-                                            "VPMINUWYrm",
-                                            "VPSIGNBYrm",
-                                            "VPSIGNDYrm",
-                                            "VPSIGNWYrm",
-                                            "VPSUBBYrm",
-                                            "VPSUBDYrm",
-                                            "VPSUBQYrm",
-                                            "VPSUBSBYrm",
-                                            "VPSUBSWYrm",
-                                            "VPSUBUSBYrm",
-                                            "VPSUBUSWYrm",
-                                            "VPSUBWYrm")>;
-
 def BWWriteResGroup77 : SchedWriteRes<[BWPort23,BWPort015]> {
   let Latency = 7;
   let NumMicroOps = 2;
@@ -1414,18 +1367,6 @@ def BWWriteResGroup109 : SchedWriteRes<[BWPort0,BWPort5,BWPort23]> {
 def: InstRW<[BWWriteResGroup109], (instregex "VPSLLVDYrm",
                                              "VPSRAVDYrm",
                                              "VPSRLVDYrm")>;
-
-def BWWriteResGroup110 : SchedWriteRes<[BWPort5,BWPort23,BWPort15]> {
-  let Latency = 9;
-  let NumMicroOps = 4;
-  let ResourceCycles = [2,1,1];
-}
-def: InstRW<[BWWriteResGroup110], (instregex "VPHADDDYrm",
-                                             "VPHADDSWYrm",
-                                             "VPHADDWYrm",
-                                             "VPHSUBDYrm",
-                                             "VPHSUBSWYrm",
-                                             "VPHSUBWYrm")>;
 
 def BWWriteResGroup111 : SchedWriteRes<[BWPort1,BWPort23,BWPort237,BWPort0156]> {
   let Latency = 9;
