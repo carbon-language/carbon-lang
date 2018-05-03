@@ -34,7 +34,8 @@ public:
   explicit ParseTreeDumper(std::ostream &out) : out_(out) {}
 
   constexpr const char *GetNodeName(const char *const &) { return "char *"; }
-#define NODE_NAME(T,N) constexpr const char *GetNodeName(const T &) { return N; }
+#define NODE_NAME(T, N) \
+  constexpr const char *GetNodeName(const T &) { return N; }
 #define NODE(NS, T) NODE_NAME(NS::T, #T)
 #define NESTED_NODE(T1, T2) NODE_NAME(T1::T2, #T2)
   NODE_NAME(bool, "bool")
@@ -610,27 +611,19 @@ public:
 
   // A few types we want to ignore
 
-  template<typename T> bool Pre(const parser::Statement<T> &) {
-    return true;
-  }
+  template<typename T> bool Pre(const parser::Statement<T> &) { return true; }
 
   template<typename T> void Post(const parser::Statement<T> &) {}
 
-  template<typename T> bool Pre(const parser::Indirection<T> &) {
-    return true;
-  }
+  template<typename T> bool Pre(const parser::Indirection<T> &) { return true; }
 
   template<typename T> void Post(const parser::Indirection<T> &) {}
 
-  template<typename T> bool Pre(const parser::Integer<T> &) {
-    return true;
-  }
+  template<typename T> bool Pre(const parser::Integer<T> &) { return true; }
 
   template<typename T> void Post(const parser::Integer<T> &) {}
 
-  template<typename T> bool Pre(const parser::Scalar<T> &) {
-    return true;
-  }
+  template<typename T> bool Pre(const parser::Scalar<T> &) { return true; }
 
   template<typename T> void Post(const parser::Scalar<T> &) {}
 
@@ -644,7 +637,7 @@ public:
 
 protected:
   void IndentEmptyLine() {
-    if (emptyline_&& indent_ > 0) {
+    if (emptyline_ && indent_ > 0) {
       for (int i{0}; i < indent_; ++i) {
         out_ << "| ";
       }
