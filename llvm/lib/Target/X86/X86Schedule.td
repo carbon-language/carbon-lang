@@ -213,6 +213,8 @@ def WriteNop : SchedWrite;
 // Vector width wrappers.
 def SchedWriteFAdd
  : X86SchedWriteWidths<WriteFAdd, WriteFAdd, WriteFAddY, WriteFAddY>;
+def SchedWriteFHAdd
+ : X86SchedWriteWidths<WriteFHAdd, WriteFHAdd, WriteFHAddY, WriteFHAddY>;
 def SchedWriteFCmp
  : X86SchedWriteWidths<WriteFCmp, WriteFCmp, WriteFCmpY, WriteFCmpY>;
 def SchedWriteFMul
@@ -244,6 +246,8 @@ def SchedWriteFVarBlend
 
 def SchedWriteVecALU
  : X86SchedWriteWidths<WriteVecALU, WriteVecALU, WriteVecALU, WriteVecALU>;
+def SchedWritePHAdd
+ : X86SchedWriteWidths<WritePHAdd, WritePHAdd, WritePHAdd, WritePHAdd>;
 def SchedWriteVecLogic
  : X86SchedWriteWidths<WriteVecLogic, WriteVecLogic,
                        WriteVecLogicY, WriteVecLogicY>;
