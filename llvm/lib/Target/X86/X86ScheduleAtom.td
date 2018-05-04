@@ -263,9 +263,11 @@ defm : AtomWriteResPair<WriteVecLogicY,    [AtomPort01],  [AtomPort0], 1, 1>;
 defm : AtomWriteResPair<WriteVecShift,     [AtomPort01], [AtomPort01], 2, 3, [2], [3]>;
 defm : AtomWriteResPair<WriteVecShiftX,    [AtomPort01], [AtomPort01], 2, 3, [2], [3]>;
 defm : AtomWriteResPair<WriteVecShiftY,    [AtomPort01], [AtomPort01], 2, 3, [2], [3]>;
-defm : AtomWriteResPair<WriteVecShiftImmX, [AtomPort01], [AtomPort01], 2, 3, [2], [3]>;
-defm : AtomWriteResPair<WriteVecShiftImmY, [AtomPort01], [AtomPort01], 2, 3, [2], [3]>;
-defm : AtomWriteResPair<WriteVecIMul,       [AtomPort0],  [AtomPort0], 5, 5, [5], [5]>;
+defm : AtomWriteResPair<WriteVecShiftImm,  [AtomPort01], [AtomPort01], 1, 1, [1], [1]>;
+defm : AtomWriteResPair<WriteVecShiftImmX, [AtomPort01], [AtomPort01], 1, 1, [1], [1]>;
+defm : AtomWriteResPair<WriteVecShiftImmY, [AtomPort01], [AtomPort01], 1, 1, [1], [1]>;
+defm : AtomWriteResPair<WriteVecIMul,       [AtomPort0],  [AtomPort0], 4, 4, [4], [4]>;
+defm : AtomWriteResPair<WriteVecIMulX,      [AtomPort0],  [AtomPort0], 5, 5, [5], [5]>;
 defm : AtomWriteResPair<WriteVecIMulY,      [AtomPort0],  [AtomPort0], 5, 5, [5], [5]>;
 defm : AtomWriteResPair<WritePMULLD,       [AtomPort01],  [AtomPort0], 1, 1>;
 defm : AtomWriteResPair<WritePMULLDY,      [AtomPort01],  [AtomPort0], 1, 1>;
@@ -376,18 +378,6 @@ def : InstRW<[AtomWrite0_3], (instrs MMX_MOVD64from64rr, MMX_MOVD64grr,
                                      MOVPDI2DIrr, MOVPQIto64rr,
                                      MOVSDto64rr, MOVSS2DIrr)>;
 
-def AtomWrite0_4 : SchedWriteRes<[AtomPort0]> {
-  let Latency = 4;
-  let ResourceCycles = [4];
-}
-def : InstRW<[AtomWrite0_4], (instrs MMX_PMADDUBSWrr, MMX_PMADDUBSWrm,
-                                     MMX_PMADDWDirr, MMX_PMADDWDirm,
-                                     MMX_PMULHRSWrr, MMX_PMULHRSWrm,
-                                     MMX_PMULHUWirr, MMX_PMULHUWirm,
-                                     MMX_PMULHWirr, MMX_PMULHWirm,
-                                     MMX_PMULLWirr, MMX_PMULLWirm,
-                                     MMX_PMULUDQirr, MMX_PMULUDQirm)>;
-
 def AtomWrite0_5 : SchedWriteRes<[AtomPort0]> {
   let Latency = 5;
   let ResourceCycles = [5];
@@ -443,8 +433,7 @@ def : InstRW<[AtomWrite01_1], (instrs FDECSTP, FFREE, FFREEP, FINCSTP, LD_F0, WA
                                       STOSB, STOSL, STOSQ, STOSW,
                                       MOVSSrr, MOVSSrr_REV,
                                       PSLLDQri, PSRLDQri)>;
-def : InstRW<[AtomWrite01_1], (instregex "(MMX_)?PS(LL|RA|RL)(D|Q|W)ri",
-                                         "MMX_PACK(SSDW|SSWB|USWB)irr",
+def : InstRW<[AtomWrite01_1], (instregex "MMX_PACK(SSDW|SSWB|USWB)irr",
                                          "MMX_PUNPCKH(BW|DQ|WD)irr")>;
 
 def AtomWrite01_2 : SchedWriteRes<[AtomPort01]> {

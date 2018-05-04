@@ -211,6 +211,7 @@ defm : BWWriteResPair<WriteVecALUY,  [BWPort15], 1, [1], 1, 6>; // Vector intege
 defm : BWWriteResPair<WriteVecLogic, [BWPort015], 1, [1], 1, 5>; // Vector integer and/or/xor.
 defm : BWWriteResPair<WriteVecLogicY,[BWPort015], 1, [1], 1, 6>; // Vector integer and/or/xor (YMM/ZMM).
 defm : BWWriteResPair<WriteVecIMul,  [BWPort0],  5, [1], 1, 5>; // Vector integer multiply.
+defm : BWWriteResPair<WriteVecIMulX, [BWPort0],  5, [1], 1, 5>; // Vector integer multiply.
 defm : BWWriteResPair<WriteVecIMulY, [BWPort0],  5, [1], 1, 6>; // Vector integer multiply.
 defm : BWWriteResPair<WritePMULLD,   [BWPort0], 10, [2], 2, 5>; // Vector PMULLD.
 defm : BWWriteResPair<WritePMULLDY,  [BWPort0], 10, [2], 2, 6>; // Vector PMULLD (YMM/ZMM).
@@ -234,6 +235,7 @@ defm : BWWriteResPair<WriteVecShiftX,    [BWPort0,BWPort5],  2, [1,1], 2, 5>;
 defm : X86WriteRes<WriteVecShiftY,       [BWPort0,BWPort5],  4, [1,1], 2>;
 defm : X86WriteRes<WriteVecShiftYLd,     [BWPort0,BWPort23], 7, [1,1], 2>;
 
+defm : BWWriteResPair<WriteVecShiftImm,  [BWPort0],  1, [1], 1, 5>;
 defm : BWWriteResPair<WriteVecShiftImmX, [BWPort0],  1, [1], 1, 5>; // Vector integer immediate shifts (XMM).
 defm : BWWriteResPair<WriteVecShiftImmY, [BWPort0],  1, [1], 1, 6>; // Vector integer immediate shifts (YMM/ZMM).
 defm : BWWriteResPair<WriteVarVecShift,  [BWPort0, BWPort5], 3, [2,1], 3, 5>; // Variable vector shifts.

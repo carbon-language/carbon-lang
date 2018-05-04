@@ -205,7 +205,8 @@ defm : HWWriteResPair<WriteVecLogic, [HWPort015], 1, [1], 1, 6>;
 defm : HWWriteResPair<WriteVecLogicY,[HWPort015], 1, [1], 1, 7>;
 defm : HWWriteResPair<WriteVecALU,   [HWPort15],  1, [1], 1, 6>;
 defm : HWWriteResPair<WriteVecALUY,  [HWPort15],  1, [1], 1, 7>;
-defm : HWWriteResPair<WriteVecIMul,  [HWPort0],  5, [1], 1, 6>;
+defm : HWWriteResPair<WriteVecIMul,  [HWPort0],  5, [1], 1, 5>;
+defm : HWWriteResPair<WriteVecIMulX, [HWPort0],  5, [1], 1, 6>;
 defm : HWWriteResPair<WriteVecIMulY, [HWPort0],  5, [1], 1, 7>;
 defm : HWWriteResPair<WritePMULLD,   [HWPort0], 10, [2], 2, 6>;
 defm : HWWriteResPair<WritePMULLDY,  [HWPort0], 10, [2], 2, 7>;
@@ -231,6 +232,7 @@ defm : HWWriteResPair<WriteVecShiftX,    [HWPort0,HWPort5],  2, [1,1], 2, 6>;
 defm : X86WriteRes<WriteVecShiftY,       [HWPort0,HWPort5],  4, [1,1], 2>;
 defm : X86WriteRes<WriteVecShiftYLd,     [HWPort0,HWPort23], 8, [1,1], 2>;
 
+defm : HWWriteResPair<WriteVecShiftImm,  [HWPort0], 1, [1], 1, 5>;
 defm : HWWriteResPair<WriteVecShiftImmX, [HWPort0], 1, [1], 1, 6>;
 defm : HWWriteResPair<WriteVecShiftImmY, [HWPort0], 1, [1], 1, 7>;
 defm : HWWriteResPair<WriteVarVecShift,  [HWPort0, HWPort5], 3, [2,1], 3, 6>;
@@ -1672,14 +1674,7 @@ def HWWriteResGroup91_5 : SchedWriteRes<[HWPort0,HWPort23]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[HWWriteResGroup91_5], (instregex "MMX_PMADDUBSWrm",
-                                              "MMX_PMADDWDirm",
-                                              "MMX_PMULHRSWrm",
-                                              "MMX_PMULHUWirm",
-                                              "MMX_PMULHWirm",
-                                              "MMX_PMULLWirm",
-                                              "MMX_PMULUDQirm",
-                                              "MMX_PSADBWirm")>;
+def: InstRW<[HWWriteResGroup91_5], (instregex "MMX_PSADBWirm")>;
 
 def HWWriteResGroup92_2 : SchedWriteRes<[HWPort01,HWPort23]> {
   let Latency = 10;

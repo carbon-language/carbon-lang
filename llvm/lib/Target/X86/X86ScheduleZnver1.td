@@ -236,8 +236,9 @@ def  : WriteRes<WriteVecMove,             [ZnFPU]>;
 def  : WriteRes<WriteVecLoad,             [ZnAGU]> { let Latency = 8; }
 
 defm : ZnWriteResFpuPair<WriteVecShift,   [ZnFPU],   1>;
-defm : ZnWriteResFpuPair<WriteVecShiftX,  [ZnFPU],   1>;
-defm : ZnWriteResFpuPair<WriteVecShiftY,  [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteVecShiftX,  [ZnFPU2],  1>;
+defm : ZnWriteResFpuPair<WriteVecShiftY,  [ZnFPU2],  2>;
+defm : ZnWriteResFpuPair<WriteVecShiftImm,  [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecShiftImmX, [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecShiftImmY, [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecLogic,   [ZnFPU],   1>;
@@ -245,6 +246,7 @@ defm : ZnWriteResFpuPair<WriteVecLogicY,  [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecALU,     [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecALUY,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecIMul,    [ZnFPU0],  4>;
+defm : ZnWriteResFpuPair<WriteVecIMulX,   [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WriteVecIMulY,   [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WritePMULLD,     [ZnFPU0],  4>; // FIXME
 defm : ZnWriteResFpuPair<WritePMULLDY,    [ZnFPU0],  5, [2]>; // FIXME
@@ -1087,17 +1089,6 @@ def ZnWritePShift  : SchedWriteRes<[ZnFPU2]> ;
 def ZnWritePShiftY : SchedWriteRes<[ZnFPU2]> {
   let Latency = 2;
 }
-def ZnWritePShiftLd  : SchedWriteRes<[ZnAGU,ZnFPU2]> {
-  let Latency = 8;
-}
-def ZnWritePShiftYLd : SchedWriteRes<[ZnAGU, ZnFPU2]> {
-  let Latency = 9;
-}
-def : InstRW<[ZnWritePShift], (instregex "(V?)PS(LL|RL|RA)(W|D|Q)rr")>;
-def : InstRW<[ZnWritePShiftY], (instregex "(V?)PS(LL|RL|RA)(W|D|Q)Yrr")>;
-
-def : InstRW<[ZnWritePShiftLd], (instregex "(V?)PS(LL|RL|RA)(W|D|Q)rm")>;
-def : InstRW<[ZnWritePShiftYLd], (instregex "(V?)PS(LL|RL|RA)(W|D|Q)Yrm")>;
 
 // PSLL,PSRL DQ.
 def : InstRW<[ZnWritePShift], (instregex "(V?)PS(R|L)LDQri")>;

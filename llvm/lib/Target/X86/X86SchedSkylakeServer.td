@@ -204,7 +204,8 @@ defm : SKXWriteResPair<WriteVecALU,   [SKXPort01], 1, [1], 1, 6>; // Vector inte
 defm : SKXWriteResPair<WriteVecALUY,  [SKXPort01], 1, [1], 1, 7>; // Vector integer ALU op, no logicals (YMM/ZMM).
 defm : SKXWriteResPair<WriteVecLogic, [SKXPort015], 1, [1], 1, 6>; // Vector integer and/or/xor.
 defm : SKXWriteResPair<WriteVecLogicY,[SKXPort015], 1, [1], 1, 7>; // Vector integer and/or/xor (YMM/ZMM).
-defm : SKXWriteResPair<WriteVecIMul,  [SKXPort015],  4, [1], 1, 6>; // Vector integer multiply.
+defm : SKXWriteResPair<WriteVecIMul,  [SKXPort0],    4, [1], 1, 5>; // Vector integer multiply.
+defm : SKXWriteResPair<WriteVecIMulX, [SKXPort015],  4, [1], 1, 6>; // Vector integer multiply (XMM).
 defm : SKXWriteResPair<WriteVecIMulY, [SKXPort015],  4, [1], 1, 7>; // Vector integer multiply (YMM/ZMM).
 defm : SKXWriteResPair<WritePMULLD,   [SKXPort015], 10, [2], 2, 6>; // Vector PMULLD.
 defm : SKXWriteResPair<WritePMULLDY,  [SKXPort015], 10, [2], 2, 7>; // Vector PMULLD (YMM/ZMM).
@@ -229,6 +230,7 @@ defm : X86WriteRes<WriteVecShiftY,    [SKXPort5,SKXPort01],  4, [1,1], 2>;
 defm : X86WriteRes<WriteVecShiftXLd,  [SKXPort01,SKXPort23], 7, [1,1], 2>;
 defm : X86WriteRes<WriteVecShiftYLd,  [SKXPort01,SKXPort23], 8, [1,1], 2>;
 
+defm : SKXWriteResPair<WriteVecShiftImm,  [SKXPort0],  1, [1], 1, 5>;
 defm : SKXWriteResPair<WriteVecShiftImmX, [SKXPort01], 1, [1], 1, 6>; // Vector integer immediate shifts (XMM).
 defm : SKXWriteResPair<WriteVecShiftImmY, [SKXPort01], 1, [1], 1, 7>; // Vector integer immediate shifts (YMM/ZMM).
 defm : SKXWriteResPair<WriteVarVecShift,  [SKXPort01], 1, [1], 1, 6>; // Variable vector shifts.
@@ -1198,14 +1200,7 @@ def SKXWriteResGroup49 : SchedWriteRes<[SKXPort0]> {
   let NumMicroOps = 1;
   let ResourceCycles = [1];
 }
-def: InstRW<[SKXWriteResGroup49], (instregex "MMX_PMADDUBSWrr",
-                                             "MMX_PMADDWDirr",
-                                             "MMX_PMULHRSWrr",
-                                             "MMX_PMULHUWirr",
-                                             "MMX_PMULHWirr",
-                                             "MMX_PMULLWirr",
-                                             "MMX_PMULUDQirr",
-                                             "MUL_FPrST0",
+def: InstRW<[SKXWriteResGroup49], (instregex "MUL_FPrST0",
                                              "MUL_FST0r",
                                              "MUL_FrST0")>;
 
@@ -2392,13 +2387,6 @@ def SKXWriteResGroup135 : SchedWriteRes<[SKXPort0,SKXPort23]> {
   let ResourceCycles = [1,1];
 }
 def: InstRW<[SKXWriteResGroup135], (instregex "MMX_CVTPI2PSirm",
-                                              "MMX_PMADDUBSWrm",
-                                              "MMX_PMADDWDirm",
-                                              "MMX_PMULHRSWrm",
-                                              "MMX_PMULHUWirm",
-                                              "MMX_PMULHWirm",
-                                              "MMX_PMULLWirm",
-                                              "MMX_PMULUDQirm",
                                               "RCPSSm",
                                               "RSQRTSSm",
                                               "VRCPSSm",

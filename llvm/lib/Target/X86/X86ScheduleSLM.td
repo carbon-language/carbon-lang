@@ -170,6 +170,7 @@ def  : WriteRes<WriteVecMove,        [SLM_FPC_RSV01]>;
 defm : SLMWriteResPair<WriteVecShift,    [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVecShiftX,   [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVecShiftY,   [SLM_FPC_RSV0],  1>;
+defm : SLMWriteResPair<WriteVecShiftImm, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVecShiftImmX,[SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVecShiftImmY,[SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVecLogic, [SLM_FPC_RSV01], 1>;
@@ -177,6 +178,7 @@ defm : SLMWriteResPair<WriteVecLogicY,[SLM_FPC_RSV01], 1>;
 defm : SLMWriteResPair<WriteVecALU,   [SLM_FPC_RSV01],  1>;
 defm : SLMWriteResPair<WriteVecALUY,  [SLM_FPC_RSV01],  1>;
 defm : SLMWriteResPair<WriteVecIMul,  [SLM_FPC_RSV0],   4>;
+defm : SLMWriteResPair<WriteVecIMulX, [SLM_FPC_RSV0],   4>;
 defm : SLMWriteResPair<WriteVecIMulY, [SLM_FPC_RSV0],   4>;
 // FIXME: The below is closer to correct, but caused some perf regressions.
 //defm : SLMWriteResPair<WritePMULLD,  [SLM_FPC_RSV0],   11, [11], 7>;
