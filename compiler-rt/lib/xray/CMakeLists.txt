@@ -10,6 +10,7 @@ set(XRAY_SOURCES
 
 # Implementation files for all XRay modes.
 set(XRAY_FDR_MODE_SOURCES
+    xray_fdr_flags.cc
     xray_buffer_queue.cc
     xray_fdr_logging.cc)
 
