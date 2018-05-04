@@ -1372,13 +1372,13 @@ bool LoopIdiomRecognize::recognizeAndInsertCTLZ() {
 
   bool IsCntPhiUsedOutsideLoop = false;
   for (User *U : CntPhi->users())
-    if (!CurLoop->contains(dyn_cast<Instruction>(U))) {
+    if (!CurLoop->contains(cast<Instruction>(U))) {
       IsCntPhiUsedOutsideLoop = true;
       break;
     }
   bool IsCntInstUsedOutsideLoop = false;
   for (User *U : CntInst->users())
-    if (!CurLoop->contains(dyn_cast<Instruction>(U))) {
+    if (!CurLoop->contains(cast<Instruction>(U))) {
       IsCntInstUsedOutsideLoop = true;
       break;
     }
