@@ -96,7 +96,7 @@ void MessageExpectedText::Incorporate(const MessageExpectedText &that) {
       u_, that.u_);
 }
 
-bool Message::operator<(const Message &that) const {
+bool Message::SortBefore(const Message &that) const {
   // Messages from prescanning have ProvenanceRange values for their locations,
   // while messages from later phases have CharBlock values, since the
   // conversion of cooked source stream locations to provenances is not
@@ -220,14 +220,8 @@ void Messages::Emit(
   for (const auto &msg : messages_) {
     sorted.push_back(&msg);
   }
-#if 0
-  // It would be great to sort the messages by location so that messages
-  // from the several compiler passes would be interleaved, but we can't
-  // do that until we have a means of maintaining a relationship between
-  // multiple messages coming out of semantics.
   std::sort(sorted.begin(), sorted.end(),
-      [](const Message *x, const Message *y) { return *x < *y; });
-#endif
+      [](const Message *x, const Message *y) { return x->SortBefore(*y); });
   for (const Message *msg : sorted) {
     msg->Emit(o, cooked, echoSourceLines);
   }

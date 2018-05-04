@@ -133,8 +133,11 @@ public:
     attachmentIsContext_ = true;
   }
   void Attach(Message *);
+  template<typename... A> void Attach(A &&... args) {
+    Attach(new Message{std::forward<A>(args)...});  // reference-counted
+  }
 
-  bool operator<(const Message &that) const;
+  bool SortBefore(const Message &that) const;
   bool IsFatal() const;
   std::string ToString() const;
   ProvenanceRange GetProvenanceRange(const CookedSource &) const;
@@ -175,8 +178,9 @@ public:
 
   bool empty() const { return messages_.empty(); }
 
-  void Put(Message &&m) {
+  Message &Put(Message &&m) {
     last_ = messages_.emplace_after(last_, std::move(m));
+    return *last_;
   }
 
   template<typename... A> Message &Say(A &&... args) {

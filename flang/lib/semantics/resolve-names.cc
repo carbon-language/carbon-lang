@@ -169,15 +169,15 @@ public:
   const SourceName *currStmtSource() { return currStmtSource_; }
 
   // Add a message to the messages to be emitted.
-  void Say(Message &&);
+  Message &Say(Message &&);
   // Emit a message associated with the current statement source.
-  void Say(MessageFixedText &&);
+  Message &Say(MessageFixedText &&);
   // Emit a message about a SourceName or parser::Name
-  void Say(const SourceName &, MessageFixedText &&);
-  void Say(const parser::Name &, MessageFixedText &&);
+  Message &Say(const SourceName &, MessageFixedText &&);
+  Message &Say(const parser::Name &, MessageFixedText &&);
   // Emit a formatted message associated with a source location.
-  void Say(const SourceName &, MessageFixedText &&, const std::string &);
-  void Say(const SourceName &, MessageFixedText &&, const SourceName &,
+  Message &Say(const SourceName &, MessageFixedText &&, const std::string &);
+  Message &Say(const SourceName &, MessageFixedText &&, const SourceName &,
       const SourceName &);
 
 private:
@@ -221,7 +221,7 @@ protected:
 private:
   // implicit rules in effect for current scope
   std::stack<ImplicitRules, std::list<ImplicitRules>> implicitRules_;
-  // previous occurence of these kinds of statements:
+  // previous occurrence of these kinds of statements:
   const SourceName *prevImplicit_{nullptr};
   const SourceName *prevImplicitNone_{nullptr};
   const SourceName *prevImplicitNoneType_{nullptr};
@@ -344,8 +344,10 @@ public:
       symbol.attrs() |= attrs;
       return symbol;
     } else {
-      Say(name, "'%s' is already declared in this scoping unit"_err_en_US);
-      Say(symbol.name(), "Previous declaration of '%s'"_en_US);
+      Say(name, "'%s' is already declared in this scoping unit"_err_en_US)
+          .Attach(symbol.name(),
+              MessageFormattedText{"Previous declaration of '%s'"_en_US,
+                  symbol.name().ToString().data()});
       // replace the old symbols with a new one with correct details
       CurrScope().erase(symbol.name());
       return MakeSymbol(name, attrs, details);
@@ -595,8 +597,10 @@ public:
         auto *details = symbol.detailsIf<EntityDetails>();
         if (!details || !details->isArray()) {
           Say(*name,
-              "Use of '%s' as a procedure conflicts with its declaration"_err_en_US);
-          Say(symbol.name(), "Declaration of '%s'"_en_US);
+              "Use of '%s' as a procedure conflicts with its declaration"_err_en_US)
+              .Attach(symbol.name(),
+                  MessageFormattedText{"Declaration of '%s'"_en_US,
+                      symbol.name().ToString().data()});
         }
       }
     }
@@ -823,24 +827,28 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
 
 // MessageHandler implementation
 
-void MessageHandler::Say(Message &&msg) { messages_.Put(std::move(msg)); }
-void MessageHandler::Say(MessageFixedText &&msg) {
+MessageHandler::Message &MessageHandler::Say(Message &&msg) {
+  return messages_.Put(std::move(msg));
+}
+MessageHandler::Message &MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
-  Say(Message{*currStmtSource_, std::move(msg)});
+  return Say(Message{*currStmtSource_, std::move(msg)});
 }
-void MessageHandler::Say(const SourceName &name, MessageFixedText &&msg) {
-  Say(name, std::move(msg), name.ToString());
+MessageHandler::Message &MessageHandler::Say(
+    const SourceName &name, MessageFixedText &&msg) {
+  return Say(name, std::move(msg), name.ToString());
 }
-void MessageHandler::Say(const parser::Name &name, MessageFixedText &&msg) {
-  Say(name.source, std::move(msg), name.ToString());
+MessageHandler::Message &MessageHandler::Say(
+    const parser::Name &name, MessageFixedText &&msg) {
+  return Say(name.source, std::move(msg), name.ToString());
 }
-void MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
-    const std::string &arg1) {
-  Say(Message{location, MessageFormattedText{msg, arg1.c_str()}});
+MessageHandler::Message &MessageHandler::Say(const SourceName &location,
+    MessageFixedText &&msg, const std::string &arg1) {
+  return Say(Message{location, MessageFormattedText{msg, arg1.c_str()}});
 }
-void MessageHandler::Say(const SourceName &location, MessageFixedText &&msg,
-    const SourceName &arg1, const SourceName &arg2) {
-  Say(Message{location,
+MessageHandler::Message &MessageHandler::Say(const SourceName &location,
+    MessageFixedText &&msg, const SourceName &arg1, const SourceName &arg2) {
+  return Say(Message{location,
       MessageFormattedText{
           msg, arg1.ToString().c_str(), arg2.ToString().c_str()}});
 }
@@ -1120,8 +1128,10 @@ void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
         "'%s' is use-associated from module '%s' and cannot be re-declared"_err_en_US,
         name.source, details->module().name());
   } else {
-    Say(name, "'%s' is already declared in this scoping unit"_err_en_US);
-    Say(symbol.name(), "Previous declaration of '%s'"_en_US);
+    Say(name, "'%s' is already declared in this scoping unit"_err_en_US)
+        .Attach(symbol.name(),
+            MessageFormattedText{"Previous declaration of '%s'"_en_US,
+                symbol.name().ToString().data()});
   }
 }
 
@@ -1136,8 +1146,8 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
   const auto &accessIds = std::get<std::list<parser::AccessId>>(x.t);
   if (accessIds.empty()) {
     if (prevAccessStmt_) {
-      Say("The default accessibility of this module has already been declared"_err_en_US);
-      Say(*prevAccessStmt_, "Previous declaration"_en_US);
+      Say("The default accessibility of this module has already been declared"_err_en_US)
+          .Attach(*prevAccessStmt_, "Previous declaration"_en_US);
     }
     prevAccessStmt_ = currStmtSource();
     defaultAccess_ = accessAttr;
@@ -1383,12 +1393,14 @@ void ResolveNamesVisitor::CheckImplicitSymbol(const parser::Name *name) {
   if (name) {
     const auto &it = CurrScope().find(name->source);
     if (const auto *details = it->second.detailsIf<UseErrorDetails>()) {
-      Say(*name, "Reference to '%s' is ambiguous"_err_en_US);
+      Message &msg{Say(*name, "Reference to '%s' is ambiguous"_err_en_US)};
       for (const auto &pair : details->occurrences()) {
         const SourceName &location{*pair.first};
         const SourceName &moduleName{pair.second->name()};
-        Say(location, "'%s' was use-associated from module '%s'"_en_US,
-            name->source, moduleName);
+        msg.Attach(location,
+            MessageFormattedText{
+                "'%s' was use-associated from module '%s'"_en_US,
+                name->source.ToString().data(), moduleName.ToString().data()});
       }
     } else if (!isImplicitNoneType()) {
       CurrScope().try_emplace(name->source);
