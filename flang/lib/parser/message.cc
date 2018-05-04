@@ -116,7 +116,7 @@ void Message::Emit(
   ProvenanceRange provenanceRange{GetProvenanceRange(cooked)};
   std::string text;
   if (isFatal_) {
-    text += "ERROR: ";
+    text += "error: ";
   }
   text += ToString();
   cooked.allSources().EmitMessage(o, provenanceRange, text, echoSourceLine);
@@ -154,8 +154,14 @@ void Messages::Emit(
   for (const auto &msg : messages_) {
     sorted.push_back(&msg);
   }
+#if 0
+  // It would be great to sort the messages by location so that messages
+  // from the several compiler passes would be interleaved, but we can't
+  // do that until we have a means of maintaining a relationship between
+  // multiple messages coming out of semantics.
   std::sort(sorted.begin(), sorted.end(),
       [](const Message *x, const Message *y) { return *x < *y; });
+#endif
   for (const Message *msg : sorted) {
     msg->Emit(o, cooked, echoSourceLines);
   }
