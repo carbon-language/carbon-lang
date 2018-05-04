@@ -230,11 +230,6 @@ Optional<SVal> RegionBindingsRef::getDirectBinding(const MemRegion *R) const {
 }
 
 Optional<SVal> RegionBindingsRef::getDefaultBinding(const MemRegion *R) const {
-  if (R->isBoundable())
-    if (const TypedValueRegion *TR = dyn_cast<TypedValueRegion>(R))
-      if (TR->getValueType()->isUnionType())
-        return UnknownVal();
-
   return Optional<SVal>::create(lookup(R, BindingKey::Default));
 }
 
@@ -1099,7 +1094,7 @@ void invalidateRegionsWorker::VisitCluster(const MemRegion *baseR,
     return;
   }
 
-  if (T->isStructureOrClassType()) {
+  if (T->isRecordType()) {
     // Invalidate the region by setting its default value to
     // conjured symbol. The type of the symbol is irrelevant.
     DefinedOrUnknownSVal V = svalBuilder.conjureSymbolVal(baseR, Ex, LCtx,
