@@ -156,7 +156,7 @@ public:
   using MessageFixedText = parser::MessageFixedText;
   using MessageFormattedText = parser::MessageFormattedText;
 
-  MessageHandler(parser::Messages &messages) : messages_{messages} {}
+  const parser::Messages &messages() const { return messages_; }
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
     currStmtSource_ = &x.source;
@@ -182,21 +182,20 @@ public:
 
 private:
   // Where messages are emitted:
-  parser::Messages &messages_;
+  parser::Messages messages_;
   // Source location of current statement; null if not in a statement
   const SourceName *currStmtSource_{nullptr};
 };
 
 // Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
-class ImplicitRulesVisitor : public DeclTypeSpecVisitor, public MessageHandler {
+class ImplicitRulesVisitor : public DeclTypeSpecVisitor,
+                             public virtual MessageHandler {
 public:
   using DeclTypeSpecVisitor::Post;
   using DeclTypeSpecVisitor::Pre;
   using MessageHandler::Post;
   using MessageHandler::Pre;
   using ImplicitNoneNameSpec = parser::ImplicitStmt::ImplicitNoneNameSpec;
-
-  ImplicitRulesVisitor(parser::Messages &messages) : MessageHandler(messages) {}
 
   void Post(const parser::ParameterStmt &);
   bool Pre(const parser::ImplicitStmt &);
@@ -308,11 +307,9 @@ private:
 };
 
 // Manage a stack of Scopes
-class ScopeHandler : public ImplicitRulesVisitor {
+class ScopeHandler : public virtual ImplicitRulesVisitor {
 public:
-  ScopeHandler(parser::Messages &messages) : ImplicitRulesVisitor(messages) {
-    PushScope(Scope::globalScope);
-  }
+  ScopeHandler() { PushScope(Scope::globalScope); }
   Scope &CurrScope() { return *scopes_.top(); }
   void PushScope(Scope &scope) {
     scopes_.push(&scope);
@@ -374,13 +371,8 @@ private:
   void ApplyImplicitRules();
 };
 
-class ModuleVisitor : public ScopeHandler {
+class ModuleVisitor : public virtual ScopeHandler {
 public:
-  using ImplicitRulesVisitor::Post;
-  using ImplicitRulesVisitor::Pre;
-
-  ModuleVisitor(parser::Messages &messages) : ScopeHandler(messages) {}
-
   bool Pre(const parser::ModuleStmt &);
   void Post(const parser::EndModuleStmt &);
   bool Pre(const parser::AccessStmt &);
@@ -524,15 +516,43 @@ private:
   }
 };
 
+class SubprogramVisitor : public virtual ScopeHandler {
+public:
+  bool Pre(const parser::StmtFunctionStmt &);
+  void Post(const parser::StmtFunctionStmt &);
+  bool Pre(const parser::SubroutineStmt &);
+  void Post(const parser::SubroutineStmt &);
+  void Post(const parser::EndSubroutineStmt &);
+  bool Pre(const parser::FunctionStmt &);
+  void Post(const parser::FunctionStmt &);
+  void Post(const parser::EndFunctionStmt &);
+  bool Pre(const parser::Suffix &);
+
+protected:
+  // Set when we see a stmt function that is really an array element assignment
+  bool badStmtFuncFound_{false};
+
+private:
+  // Function result name from parser::Suffix, if any.
+  const parser::Name *funcResultName_{nullptr};
+
+  // Create a subprogram symbol in the current scope and push a new scope.
+  Symbol &PushSubprogramScope(const parser::Name &);
+};
+
 // Walk the parse tree and resolve names to symbols.
-class ResolveNamesVisitor : public ArraySpecVisitor, public ModuleVisitor {
+class ResolveNamesVisitor : public ArraySpecVisitor,
+                            public virtual ModuleVisitor,
+                            public virtual SubprogramVisitor {
 public:
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
+  using ImplicitRulesVisitor::Post;
+  using ImplicitRulesVisitor::Pre;
   using ModuleVisitor::Post;
   using ModuleVisitor::Pre;
-
-  ResolveNamesVisitor(parser::Messages &messages) : ModuleVisitor(messages) {}
+  using SubprogramVisitor::Post;
+  using SubprogramVisitor::Pre;
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(const T &) { return true; }
@@ -552,15 +572,6 @@ public:
   bool Pre(const parser::ValueStmt &);
   bool Pre(const parser::VolatileStmt &);
   void Post(const parser::SpecificationPart &);
-  bool Pre(const parser::Suffix &);
-  bool Pre(const parser::StmtFunctionStmt &);
-  void Post(const parser::StmtFunctionStmt &);
-  bool Pre(const parser::SubroutineStmt &);
-  void Post(const parser::SubroutineStmt &);
-  void Post(const parser::EndSubroutineStmt &);
-  bool Pre(const parser::FunctionStmt &);
-  void Post(const parser::FunctionStmt &);
-  void Post(const parser::EndFunctionStmt &);
   bool Pre(const parser::MainProgram &);
   void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
@@ -607,15 +618,8 @@ public:
   }
 
 private:
-  // Function result name from parser::Suffix, if any.
-  const parser::Name *funcResultName_{nullptr};
   // The attribute corresponding to the statement containing an ObjectDecl
   std::optional<Attr> objectDeclAttr_;
-  // Set when we see a stmt function that is really an array element assignment
-  bool badStmtFuncFound_{false};
-
-  // Create a subprogram symbol in the current scope and push a new scope.
-  Symbol &PushSubprogramScope(const parser::Name &);
 
   // Handle a statement that sets an attribute on a list of names.
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
@@ -923,6 +927,7 @@ bool ImplicitRulesVisitor::HandleImplicitNone(
     const std::list<ImplicitNoneNameSpec> &nameSpecs) {
   if (prevImplicitNone_ != nullptr) {
     Say("More than one IMPLICIT NONE statement"_err_en_US);
+    Say(*prevImplicitNone_, "Previous IMPLICIT NONE statement"_en_US);
     return false;
   }
   if (prevParameterStmt_ != nullptr) {
@@ -1018,6 +1023,140 @@ void ModuleVisitor::ApplyDefaultAccess() {
       symbol.attrs().set(defaultAccess_);
     }
   }
+}
+
+// SubprogramVisitor implementation
+
+bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
+  const auto &name = std::get<parser::Name>(x.t);
+  std::optional<SourceName> occurrence;
+  std::optional<DeclTypeSpec> resultType;
+  // Look up name: provides return type or tells us if it's an array
+  auto it = CurrScope().find(name.source);
+  if (it != CurrScope().end()) {
+    Symbol &symbol{it->second};
+    if (auto *details = symbol.detailsIf<EntityDetails>()) {
+      if (details->isArray()) {
+        // not a stmt-func at all but an array; do nothing
+        symbol.add_occurrence(name.source);
+        badStmtFuncFound_ = true;
+        return true;
+      }
+      // TODO: check that attrs are compatible with stmt func
+      resultType = details->type();
+      occurrence = symbol.name();
+      CurrScope().erase(symbol.name());
+    }
+  }
+  if (badStmtFuncFound_) {
+    Say(name, "'%s' has not been declared as an array"_err_en_US);
+    return true;
+  }
+  BeginAttrs();  // no attrs to collect, but PushSubprogramScope expects this
+  auto &symbol = PushSubprogramScope(name);
+  CopyImplicitRules();
+  if (occurrence) {
+    symbol.add_occurrence(*occurrence);
+  }
+  auto &details = symbol.details<SubprogramDetails>();
+  for (const auto &dummyName : std::get<std::list<parser::Name>>(x.t)) {
+    EntityDetails dummyDetails{true};
+    auto it = CurrScope().parent().find(dummyName.source);
+    if (it != CurrScope().parent().end()) {
+      if (auto *d = it->second.detailsIf<EntityDetails>()) {
+        if (d->type()) {
+          dummyDetails.set_type(*d->type());
+        }
+      }
+    }
+    details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
+  }
+  CurrScope().erase(name.source);  // added by PushSubprogramScope
+  EntityDetails resultDetails;
+  if (resultType) {
+    resultDetails.set_type(*resultType);
+  }
+  details.set_result(MakeSymbol(name, resultDetails));
+  return true;
+}
+
+void SubprogramVisitor::Post(const parser::StmtFunctionStmt &x) {
+  if (badStmtFuncFound_) {
+    return;  // This wasn't really a stmt function so no scope was created
+  }
+  PopScope();
+}
+
+void SubprogramVisitor::Post(const parser::EndSubroutineStmt &subp) {
+  PopScope();
+}
+
+void SubprogramVisitor::Post(const parser::EndFunctionStmt &subp) {
+  PopScope();
+}
+
+bool SubprogramVisitor::Pre(const parser::Suffix &suffix) {
+  funcResultName_ = &suffix.resultName.value();
+  return true;
+}
+
+bool SubprogramVisitor::Pre(const parser::SubroutineStmt &stmt) {
+  BeginAttrs();
+  return true;
+}
+bool SubprogramVisitor::Pre(const parser::FunctionStmt &stmt) {
+  BeginAttrs();
+  BeginDeclTypeSpec();
+  CHECK(!funcResultName_);
+  return true;
+}
+
+void SubprogramVisitor::Post(const parser::SubroutineStmt &stmt) {
+  const auto &subrName = std::get<parser::Name>(stmt.t);
+  auto &symbol = PushSubprogramScope(subrName);
+  auto &details = symbol.details<SubprogramDetails>();
+  for (const auto &dummyArg : std::get<std::list<parser::DummyArg>>(stmt.t)) {
+    const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
+    CHECK(dummyName != nullptr && "TODO: alternate return indicator");
+    Symbol &dummy{MakeSymbol(*dummyName, EntityDetails(true))};
+    details.add_dummyArg(dummy);
+  }
+}
+
+void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
+  const auto &funcName = std::get<parser::Name>(stmt.t);
+  auto &symbol = PushSubprogramScope(funcName);
+  auto &details = symbol.details<SubprogramDetails>();
+  for (const auto &dummyName : std::get<std::list<parser::Name>>(stmt.t)) {
+    Symbol &dummy{MakeSymbol(dummyName, EntityDetails(true))};
+    details.add_dummyArg(dummy);
+  }
+  // add function result to function scope
+  EntityDetails funcResultDetails;
+  if (declTypeSpec_) {
+    funcResultDetails.set_type(*declTypeSpec_);
+  }
+  EndDeclTypeSpec();
+
+  const parser::Name *funcResultName;
+  if (funcResultName_ && funcResultName_->source != funcName.source) {
+    funcResultName = funcResultName_;
+    funcResultName_ = nullptr;
+  } else {
+    CurrScope().erase(funcName.source);  // was added by PushSubprogramScope
+    funcResultName = &funcName;
+  }
+  details.set_result(MakeSymbol(*funcResultName, funcResultDetails));
+}
+
+Symbol &SubprogramVisitor::PushSubprogramScope(const parser::Name &name) {
+  auto &symbol = MakeSymbol(name, EndAttrs(), SubprogramDetails());
+  Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram, &symbol);
+  PushScope(subpScope);
+  auto &details = symbol.details<SubprogramDetails>();
+  // can't reuse this name inside subprogram:
+  MakeSymbol(name, SubprogramDetails(details));
+  return symbol;
 }
 
 // ResolveNamesVisitor implementation
@@ -1208,138 +1347,6 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
   }
 }
 
-void ResolveNamesVisitor::Post(const parser::EndSubroutineStmt &subp) {
-  PopScope();
-}
-
-void ResolveNamesVisitor::Post(const parser::EndFunctionStmt &subp) {
-  PopScope();
-}
-
-bool ResolveNamesVisitor::Pre(const parser::Suffix &suffix) {
-  funcResultName_ = &suffix.resultName.value();
-  return true;
-}
-
-bool ResolveNamesVisitor::Pre(const parser::StmtFunctionStmt &x) {
-  const auto &name = std::get<parser::Name>(x.t);
-  std::optional<SourceName> occurrence;
-  std::optional<DeclTypeSpec> resultType;
-  // Look up name: provides return type or tells us if it's an array
-  auto it = CurrScope().find(name.source);
-  if (it != CurrScope().end()) {
-    Symbol &symbol{it->second};
-    if (auto *details = symbol.detailsIf<EntityDetails>()) {
-      if (details->isArray()) {
-        // not a stmt-func at all but an array; do nothing
-        symbol.add_occurrence(name.source);
-        badStmtFuncFound_ = true;
-        return true;
-      }
-      // TODO: check that attrs are compatible with stmt func
-      resultType = details->type();
-      occurrence = symbol.name();
-      CurrScope().erase(symbol.name());
-    }
-  }
-  if (badStmtFuncFound_) {
-    Say(name, "'%s' has not been declared as an array"_err_en_US);
-    return true;
-  }
-  BeginAttrs();  // no attrs to collect, but PushSubprogramScope expects this
-  auto &symbol = PushSubprogramScope(name);
-  CopyImplicitRules();
-  if (occurrence) {
-    symbol.add_occurrence(*occurrence);
-  }
-  auto &details = symbol.details<SubprogramDetails>();
-  for (const auto &dummyName : std::get<std::list<parser::Name>>(x.t)) {
-    EntityDetails dummyDetails{true};
-    auto it = CurrScope().parent().find(dummyName.source);
-    if (it != CurrScope().parent().end()) {
-      if (auto *d = it->second.detailsIf<EntityDetails>()) {
-        if (d->type()) {
-          dummyDetails.set_type(*d->type());
-        }
-      }
-    }
-    details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
-  }
-  CurrScope().erase(name.source);  // added by PushSubprogramScope
-  EntityDetails resultDetails;
-  if (resultType) {
-    resultDetails.set_type(*resultType);
-  }
-  details.set_result(MakeSymbol(name, resultDetails));
-  return true;
-}
-
-void ResolveNamesVisitor::Post(const parser::StmtFunctionStmt &x) {
-  if (badStmtFuncFound_) {
-    return;  // This wasn't really a stmt function so no scope was created
-  }
-  PopScope();
-}
-
-bool ResolveNamesVisitor::Pre(const parser::SubroutineStmt &stmt) {
-  BeginAttrs();
-  return true;
-}
-bool ResolveNamesVisitor::Pre(const parser::FunctionStmt &stmt) {
-  BeginAttrs();
-  BeginDeclTypeSpec();
-  CHECK(!funcResultName_);
-  return true;
-}
-
-void ResolveNamesVisitor::Post(const parser::SubroutineStmt &stmt) {
-  const auto &subrName = std::get<parser::Name>(stmt.t);
-  auto &symbol = PushSubprogramScope(subrName);
-  auto &details = symbol.details<SubprogramDetails>();
-  for (const auto &dummyArg : std::get<std::list<parser::DummyArg>>(stmt.t)) {
-    const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
-    CHECK(dummyName != nullptr && "TODO: alternate return indicator");
-    Symbol &dummy{MakeSymbol(*dummyName, EntityDetails(true))};
-    details.add_dummyArg(dummy);
-  }
-}
-
-void ResolveNamesVisitor::Post(const parser::FunctionStmt &stmt) {
-  const auto &funcName = std::get<parser::Name>(stmt.t);
-  auto &symbol = PushSubprogramScope(funcName);
-  auto &details = symbol.details<SubprogramDetails>();
-  for (const auto &dummyName : std::get<std::list<parser::Name>>(stmt.t)) {
-    Symbol &dummy{MakeSymbol(dummyName, EntityDetails(true))};
-    details.add_dummyArg(dummy);
-  }
-  // add function result to function scope
-  EntityDetails funcResultDetails;
-  if (declTypeSpec_) {
-    funcResultDetails.set_type(*declTypeSpec_);
-  }
-  EndDeclTypeSpec();
-
-  const parser::Name *funcResultName;
-  if (funcResultName_ && funcResultName_->source != funcName.source) {
-    funcResultName = funcResultName_;
-    funcResultName_ = nullptr;
-  } else {
-    CurrScope().erase(funcName.source);  // was added by PushSubprogramScope
-    funcResultName = &funcName;
-  }
-  details.set_result(MakeSymbol(*funcResultName, funcResultDetails));
-}
-
-Symbol &ResolveNamesVisitor::PushSubprogramScope(const parser::Name &name) {
-  auto &symbol = MakeSymbol(name, EndAttrs(), SubprogramDetails());
-  Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram, &symbol);
-  PushScope(subpScope);
-  auto &details = symbol.details<SubprogramDetails>();
-  // can't reuse this name inside subprogram:
-  MakeSymbol(name, SubprogramDetails(details));
-  return symbol;
-}
-
 bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
   Scope &scope = CurrScope().MakeScope(Scope::Kind::MainProgram);
   PushScope(scope);
@@ -1418,11 +1425,10 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
 
 void ResolveNames(
     parser::Program &program, const parser::CookedSource &cookedSource) {
-  parser::Messages messages;
-  ResolveNamesVisitor visitor{messages};
+  ResolveNamesVisitor visitor;
   parser::Walk(static_cast<const parser::Program &>(program), visitor);
-  if (!messages.empty()) {
-    messages.Emit(std::cerr, cookedSource);
+  if (!visitor.messages().empty()) {
+    visitor.messages().Emit(std::cerr, cookedSource);
     return;
   }
   RewriteParseTree(program);
