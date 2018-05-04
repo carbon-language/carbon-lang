@@ -616,16 +616,14 @@ def FeatureISAVersion9_0_0 : SubtargetFeatureISAVersion <9,0,0,
   [FeatureGFX9,
    FeatureMadMixInsts,
    FeatureLDSBankCount32,
-   FeatureD16PreservesUnusedBits
-   ]>;
+   FeatureD16PreservesUnusedBits]>;
 
 def FeatureISAVersion9_0_2 : SubtargetFeatureISAVersion <9,0,2,
   [FeatureGFX9,
    FeatureMadMixInsts,
    FeatureLDSBankCount32,
    FeatureXNACK,
-   FeatureD16PreservesUnusedBits
-   ]>;
+   FeatureD16PreservesUnusedBits]>;
 
 def FeatureISAVersion9_0_4 : SubtargetFeatureISAVersion <9,0,4,
   [FeatureGFX9,
