@@ -1416,9 +1416,8 @@ bool LoopIdiomRecognize::recognizeAndInsertCTLZ() {
   //  br i1 %tobool
 
   IRBuilder<> Builder(PH->getTerminator());
-  SmallVector<const Value *, 2> Ops =
+  const Value *Args[] =
       {InitX, ZeroCheck ? Builder.getTrue() : Builder.getFalse()};
-  ArrayRef<const Value *> Args(Ops);
   if (CurLoop->getHeader()->size() != 6 &&
       TTI->getIntrinsicCost(Intrinsic::ctlz, InitX->getType(), Args) >
           TargetTransformInfo::TCC_Basic)
