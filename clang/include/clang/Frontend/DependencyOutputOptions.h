@@ -65,15 +65,11 @@ public:
   std::string ModuleDependencyOutputDir;
 
 public:
-  DependencyOutputOptions() {
-    IncludeSystemHeaders = 0;
-    ShowHeaderIncludes = 0;
-    UsePhonyTargets = 0;
-    AddMissingHeaderDeps = 0;
-    IncludeModuleFiles = 0;
-    ShowIncludesDest = ShowIncludesDestination::None;
-    OutputFormat = DependencyOutputFormat::Make;
-  }
+  DependencyOutputOptions()
+      : IncludeSystemHeaders(0), ShowHeaderIncludes(0), UsePhonyTargets(0),
+        AddMissingHeaderDeps(0), IncludeModuleFiles(0),
+        ShowIncludesDest(ShowIncludesDestination::None),
+        OutputFormat(DependencyOutputFormat::Make) {}
 };
 
 }  // end namespace clang
