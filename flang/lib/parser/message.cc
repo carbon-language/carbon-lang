@@ -149,21 +149,24 @@ void Message::Emit(
   text += ToString();
   AllSources &sources{cooked.allSources()};
   sources.EmitMessage(o, provenanceRange, text, echoSourceLine);
-  for (const Message *context{context_.get()}; context != nullptr;
-       context = context->context_.get()) {
-    ProvenanceRange contextProvenance{context->GetProvenanceRange(cooked)};
-    text = "in the context: ";
-    text += context->ToString();
-    // TODO: don't echo the source lines of a context when it's the
-    // same line (or maybe just never echo source for context)
-    sources.EmitMessage(o, contextProvenance, text,
-        echoSourceLine && contextProvenance != provenanceRange);
-    provenanceRange = contextProvenance;
-  }
-  for (const Message *attachment{attachment_.get()}; attachment != nullptr;
-       attachment = attachment->attachment_.get()) {
-    sources.EmitMessage(o, attachment->GetProvenanceRange(cooked),
-        attachment->ToString(), echoSourceLine);
+  if (attachmentIsContext_) {
+    for (const Message *context{attachment_.get()}; context != nullptr;
+         context = context->attachment_.get()) {
+      ProvenanceRange contextProvenance{context->GetProvenanceRange(cooked)};
+      text = "in the context: ";
+      text += context->ToString();
+      // TODO: don't echo the source lines of a context when it's the
+      // same line (or maybe just never echo source for context)
+      sources.EmitMessage(o, contextProvenance, text,
+          echoSourceLine && contextProvenance != provenanceRange);
+      provenanceRange = contextProvenance;
+    }
+  } else {
+    for (const Message *attachment{attachment_.get()}; attachment != nullptr;
+         attachment = attachment->attachment_.get()) {
+      sources.EmitMessage(o, attachment->GetProvenanceRange(cooked),
+          attachment->ToString(), echoSourceLine);
+    }
   }
 }
 

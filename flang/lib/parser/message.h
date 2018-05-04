@@ -125,12 +125,14 @@ public:
   Message(CharBlock csr, const MessageExpectedText &t)
     : location_{csr}, text_{t} {}
 
-  Reference context() const { return context_; }
-  Message &set_context(Message *c) {
-    context_ = c;
-    return *this;
-  }
+  bool attachmentIsContext() const { return attachmentIsContext_; }
   Reference attachment() const { return attachment_; }
+
+  void SetContext(Message *c) {
+    attachment_ = c;
+    attachmentIsContext_ = true;
+  }
+  void Attach(Message *);
 
   bool operator<(const Message &that) const;
   bool IsFatal() const;
@@ -140,7 +142,6 @@ public:
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 
   void Incorporate(Message &);
-  void Attach(Message *);
 
 private:
   bool AtSameLocation(const Message &) const;
@@ -148,7 +149,7 @@ private:
   std::variant<ProvenanceRange, CharBlock> location_;
   std::variant<MessageFixedText, MessageFormattedText, MessageExpectedText>
       text_;
-  Reference context_;
+  bool attachmentIsContext_{false};
   Reference attachment_;
 };
 

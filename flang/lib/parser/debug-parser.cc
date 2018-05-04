@@ -25,9 +25,7 @@ std::optional<Success> DebugParser::Parse(ParseState &state) const {
       std::string note{str_, length_};
       Message message{state.GetLocation(),
           MessageFormattedText{"parser debug: %s"_en_US, note.data()}};
-      if (Message * context{state.context().get()}) {
-        message.set_context(context);
-      }
+      message.SetContext(state.context().get());
       message.Emit(*out, ustate->cooked(), true);
     }
   }

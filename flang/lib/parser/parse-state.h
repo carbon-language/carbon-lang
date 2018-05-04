@@ -148,39 +148,39 @@ public:
 
   void PushContext(MessageFixedText text) {
     auto m = new Message{p_, text};  // reference-counted, it's ok
-    m->set_context(context_.get());
+    m->SetContext(context_.get());
     context_ = Message::Reference{m};
   }
 
   void PopContext() {
     if (context_) {
-      context_ = context_->context();
+      context_ = context_->attachment();
     }
   }
 
-  void Say(MessageFixedText t) { return Say(p_, t); }
-  void Say(MessageFormattedText &&t) { return Say(p_, std::move(t)); }
-  void Say(MessageExpectedText &&t) { return Say(p_, std::move(t)); }
+  void Say(const MessageFixedText &t) { Say(p_, t); }
+  void Say(MessageFormattedText &&t) { Say(p_, std::move(t)); }
+  void Say(const MessageExpectedText &t) { Say(p_, t); }
 
-  void Say(CharBlock range, MessageFixedText t) {
+  void Say(CharBlock range, const MessageFixedText &t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(range, t).set_context(context_.get());
+      messages_.Say(range, t).SetContext(context_.get());
     }
   }
   void Say(CharBlock range, MessageFormattedText &&t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(range, std::move(t)).set_context(context_.get());
+      messages_.Say(range, std::move(t)).SetContext(context_.get());
     }
   }
-  void Say(CharBlock range, MessageExpectedText &&t) {
+  void Say(CharBlock range, const MessageExpectedText &t) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(range, std::move(t)).set_context(context_.get());
+      messages_.Say(range, t).SetContext(context_.get());
     }
   }
 
