@@ -90,8 +90,8 @@ public:
   const Messages &messages() const { return messages_; }
   Messages &messages() { return messages_; }
 
-  const Message::Context &context() const { return context_; }
-  Message::Context &context() { return context_; }
+  const Message::Reference &context() const { return context_; }
+  Message::Reference &context() { return context_; }
 
   bool anyErrorRecovery() const { return anyErrorRecovery_; }
   void set_anyErrorRecovery() { anyErrorRecovery_ = true; }
@@ -149,7 +149,7 @@ public:
   void PushContext(MessageFixedText text) {
     auto m = new Message{p_, text};  // reference-counted, it's ok
     m->set_context(context_.get());
-    context_ = Message::Context{m};
+    context_ = Message::Reference{m};
   }
 
   void PopContext() {
@@ -217,7 +217,7 @@ private:
 
   // Accumulated messages and current nested context.
   Messages messages_;
-  Message::Context context_;
+  Message::Reference context_;
 
   UserState *userState_{nullptr};
 

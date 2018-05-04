@@ -104,7 +104,7 @@ private:
 
 class Message : public ReferenceCounted<Message> {
 public:
-  using Context = CountedReference<Message>;
+  using Reference = CountedReference<Message>;
 
   Message(const Message &) = default;
   Message(Message &&) = default;
@@ -125,11 +125,12 @@ public:
   Message(CharBlock csr, const MessageExpectedText &t)
     : location_{csr}, text_{t} {}
 
-  Context context() const { return context_; }
+  Reference context() const { return context_; }
   Message &set_context(Message *c) {
     context_ = c;
     return *this;
   }
+  Reference attachment() const { return attachment_; }
 
   bool operator<(const Message &that) const;
   bool IsFatal() const;
@@ -137,7 +138,9 @@ public:
   ProvenanceRange GetProvenanceRange(const CookedSource &) const;
   void Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
+
   void Incorporate(Message &);
+  void Attach(Message *);
 
 private:
   bool AtSameLocation(const Message &) const;
@@ -145,7 +148,8 @@ private:
   std::variant<ProvenanceRange, CharBlock> location_;
   std::variant<MessageFixedText, MessageFormattedText, MessageExpectedText>
       text_;
-  Context context_;
+  Reference context_;
+  Reference attachment_;
 };
 
 class Messages {

@@ -147,7 +147,8 @@ void Message::Emit(
     text += "error: ";
   }
   text += ToString();
-  cooked.allSources().EmitMessage(o, provenanceRange, text, echoSourceLine);
+  AllSources &sources{cooked.allSources()};
+  sources.EmitMessage(o, provenanceRange, text, echoSourceLine);
   for (const Message *context{context_.get()}; context != nullptr;
        context = context->context_.get()) {
     ProvenanceRange contextProvenance{context->GetProvenanceRange(cooked)};
@@ -155,9 +156,14 @@ void Message::Emit(
     text += context->ToString();
     // TODO: don't echo the source lines of a context when it's the
     // same line (or maybe just never echo source for context)
-    cooked.allSources().EmitMessage(o, contextProvenance, text,
+    sources.EmitMessage(o, contextProvenance, text,
         echoSourceLine && contextProvenance != provenanceRange);
     provenanceRange = contextProvenance;
+  }
+  for (const Message *attachment{attachment_.get()}; attachment != nullptr;
+       attachment = attachment->attachment_.get()) {
+    sources.EmitMessage(o, attachment->GetProvenanceRange(cooked),
+        attachment->ToString(), echoSourceLine);
   }
 }
 
@@ -168,6 +174,14 @@ void Message::Incorporate(Message &that) {
                },
           [](const auto &, const auto &) {}},
       text_, that.text_);
+}
+
+void Message::Attach(Message *m) {
+  if (!attachment_) {
+    attachment_ = m;
+  } else {
+    attachment_->Attach(m);
+  }
 }
 
 bool Message::AtSameLocation(const Message &that) const {
