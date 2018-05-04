@@ -208,8 +208,8 @@
 # PPC64-NEXT:   Entry:
 # PPC64-NEXT:   ProgramHeaderOffset: 0x40
 # PPC64-NEXT:   SectionHeaderOffset:
-# PPC64-NEXT:   Flags [ (0x1)
-# PPC64-NEXT:     0x1
+# PPC64-NEXT:   Flags [ (0x2)
+# PPC64-NEXT:     0x2
 # PPC64-NEXT:   ]
 # PPC64-NEXT:   HeaderSize: 64
 # PPC64-NEXT:   ProgramHeaderEntrySize: 56
