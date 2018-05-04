@@ -28,21 +28,25 @@ namespace Fortran::parser {
 
 class CharBlock {
 public:
-  CharBlock() {}
-  CharBlock(const char *x, std::size_t n = 1) : interval_{x, n} {}
-  CharBlock(const char *b, const char *ep1)
+  constexpr CharBlock() {}
+  constexpr CharBlock(const char *x, std::size_t n = 1) : interval_{x, n} {}
+  constexpr CharBlock(const char *b, const char *ep1)
     : interval_{b, static_cast<std::size_t>(ep1 - b)} {}
   CharBlock(const std::string &s) : interval_{s.data(), s.size()} {}
-  CharBlock(const CharBlock &) = default;
-  CharBlock(CharBlock &&) = default;
-  CharBlock &operator=(const CharBlock &) = default;
-  CharBlock &operator=(CharBlock &&) = default;
+  constexpr CharBlock(const CharBlock &) = default;
+  constexpr CharBlock(CharBlock &&) = default;
+  constexpr CharBlock &operator=(const CharBlock &) = default;
+  constexpr CharBlock &operator=(CharBlock &&) = default;
 
-  bool empty() const { return interval_.empty(); }
-  std::size_t size() const { return interval_.size(); }
-  const char *begin() const { return interval_.start(); }
-  const char *end() const { return interval_.start() + interval_.size(); }
-  const char &operator[](std::size_t j) const { return interval_.start()[j]; }
+  constexpr bool empty() const { return interval_.empty(); }
+  constexpr std::size_t size() const { return interval_.size(); }
+  constexpr const char *begin() const { return interval_.start(); }
+  constexpr const char *end() const {
+    return interval_.start() + interval_.size();
+  }
+  constexpr const char &operator[](std::size_t j) const {
+    return interval_.start()[j];
+  }
 
   bool IsBlank() const {
     for (char ch : *this) {
@@ -55,6 +59,12 @@ public:
 
   std::string ToString() const {
     return std::string{interval_.start(), interval_.size()};
+  }
+
+  // Convert to string, stopping early at any embedded '\0'.
+  std::string NULTerminatedToString() const {
+    return std::string{interval_.start(),
+        /*not in std::*/ strnlen(interval_.start(), interval_.size())};
   }
 
   bool operator<(const CharBlock &that) const { return Compare(that) < 0; }

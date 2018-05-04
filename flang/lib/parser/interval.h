@@ -27,30 +27,33 @@ namespace Fortran::parser {
 template<typename A> class Interval {
 public:
   using type = A;
-  Interval() {}
-  Interval(const A &s, std::size_t n = 1) : start_{s}, size_{n} {}
-  Interval(A &&s, std::size_t n = 1) : start_{std::move(s)}, size_{n} {}
-  Interval(const Interval &) = default;
-  Interval(Interval &&) = default;
-  Interval &operator=(const Interval &) = default;
-  Interval &operator=(Interval &&) = default;
+  constexpr Interval() {}
+  constexpr Interval(const A &s, std::size_t n = 1) : start_{s}, size_{n} {}
+  constexpr Interval(A &&s, std::size_t n = 1)
+    : start_{std::move(s)}, size_{n} {}
+  constexpr Interval(const Interval &) = default;
+  constexpr Interval(Interval &&) = default;
+  constexpr Interval &operator=(const Interval &) = default;
+  constexpr Interval &operator=(Interval &&) = default;
 
-  bool operator==(const Interval &that) const {
+  constexpr bool operator==(const Interval &that) const {
     return start_ == that.start_ && size_ == that.size_;
   }
-  bool operator!=(const Interval &that) const {
+  constexpr bool operator!=(const Interval &that) const {
     return start_ != that.start_ || size_ != that.size_;
   }
 
-  const A &start() const { return start_; }
-  std::size_t size() const { return size_; }
-  bool empty() const { return size_ == 0; }
+  constexpr const A &start() const { return start_; }
+  constexpr std::size_t size() const { return size_; }
+  constexpr bool empty() const { return size_ == 0; }
 
-  bool Contains(const A &x) const { return start_ <= x && x < start_ + size_; }
-  bool Contains(const Interval &that) const {
+  constexpr bool Contains(const A &x) const {
+    return start_ <= x && x < start_ + size_;
+  }
+  constexpr bool Contains(const Interval &that) const {
     return Contains(that.start_) && Contains(that.start_ + (that.size_ - 1));
   }
-  bool ImmediatelyPrecedes(const Interval &that) const {
+  constexpr bool ImmediatelyPrecedes(const Interval &that) const {
     return NextAfter() == that.start_;
   }
   void Annex(const Interval &that) {
@@ -73,9 +76,11 @@ public:
     return start_ + n;
   }
 
-  A Last() const { return start_ + (size_ - 1); }
-  A NextAfter() const { return start_ + size_; }
-  Interval Prefix(std::size_t n) const { return {start_, std::min(size_, n)}; }
+  constexpr A Last() const { return start_ + (size_ - 1); }
+  constexpr A NextAfter() const { return start_ + size_; }
+  constexpr Interval Prefix(std::size_t n) const {
+    return {start_, std::min(size_, n)};
+  }
   Interval Suffix(std::size_t n) const {
     CHECK(n <= size_);
     return {start_ + n, size_ - n};

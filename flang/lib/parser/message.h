@@ -18,6 +18,7 @@
 // Defines a representation for sequences of compiler messages.
 // Supports nested contextualization.
 
+#include "char-block.h"
 #include "char-set.h"
 #include "idioms.h"
 #include "provenance.h"
@@ -29,6 +30,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <variant>
 
 namespace Fortran::parser {
 
@@ -39,22 +41,17 @@ public:
   MessageFixedText() {}
   constexpr MessageFixedText(
       const char str[], std::size_t n, bool isFatal = false)
-    : str_{str}, bytes_{n}, isFatal_{isFatal} {}
+    : text_{str, n}, isFatal_{isFatal} {}
   constexpr MessageFixedText(const MessageFixedText &) = default;
   MessageFixedText(MessageFixedText &&) = default;
   constexpr MessageFixedText &operator=(const MessageFixedText &) = default;
   MessageFixedText &operator=(MessageFixedText &&) = default;
 
-  const char *str() const { return str_; }
-  std::size_t size() const { return bytes_; }
-  bool empty() const { return bytes_ == 0; }
+  const CharBlock &text() const { return text_; }
   bool isFatal() const { return isFatal_; }
 
-  std::string ToString() const;
-
 private:
-  const char *str_{nullptr};
-  std::size_t bytes_{0};
+  CharBlock text_;
   bool isFatal_{false};
 };
 
@@ -81,65 +78,45 @@ private:
 };
 
 // Represents a formatted rendition of "expected '%s'"_err_en_US
-// on a constant text.
+// on a constant text or a set of characters.
 class MessageExpectedText {
 public:
-  MessageExpectedText(const char *s, std::size_t n) : str_{s}, bytes_{n} {
-    if (n == std::string::npos) {
-      bytes_ = std::strlen(s);
-    }
-  }
-  MessageExpectedText(MessageExpectedText &&) = default;
-  explicit MessageExpectedText(char ch) : set_{ch} {}
-  explicit MessageExpectedText(SetOfChars set) : set_{set} {}
+  MessageExpectedText(const char *s, std::size_t n)
+    : u_{CharBlock{s, n == std::string::npos ? std::strlen(s) : n}} {}
+  constexpr explicit MessageExpectedText(CharBlock cb) : u_{cb} {}
+  constexpr explicit MessageExpectedText(char ch) : u_{SetOfChars{ch}} {}
+  constexpr explicit MessageExpectedText(SetOfChars set) : u_{set} {}
+  MessageExpectedText(const MessageExpectedText &) = default;
 
-  const char *str() const { return str_; }
-  std::size_t size() const { return bytes_; }
-  SetOfChars set() const { return set_; }
+  std::string ToString() const;
+  void Incorporate(const MessageExpectedText &);
 
 private:
-  const char *str_{nullptr};
-  std::size_t bytes_{0};
-  SetOfChars set_;
+  std::variant<CharBlock, SetOfChars> u_;
 };
 
 class Message : public ReferenceCounted<Message> {
 public:
   using Context = CountedReference<Message>;
 
-  Message() {}
   Message(const Message &) = default;
   Message(Message &&) = default;
   Message &operator=(const Message &that) = default;
   Message &operator=(Message &&that) = default;
 
   Message(ProvenanceRange pr, MessageFixedText t)
-    : provenanceRange_{pr}, fixedText_{t.str()},
-      fixedBytes_{t.size()}, isFatal_{t.isFatal()} {}
+    : location_{pr}, text_{t.text()}, isFatal_{t.isFatal()} {}
   Message(ProvenanceRange pr, MessageFormattedText &&s)
-    : provenanceRange_{pr}, string_{s.MoveString()}, isFatal_{s.isFatal()} {}
+    : location_{pr}, text_{s.MoveString()}, isFatal_{s.isFatal()} {}
   Message(ProvenanceRange pr, MessageExpectedText t)
-    : provenanceRange_{pr}, fixedText_{t.str()}, fixedBytes_{t.size()},
-      isExpected_{true}, expected_{t.set()}, isFatal_{true} {}
+    : location_{pr}, text_{t}, isFatal_{true} {}
 
   Message(CharBlock csr, MessageFixedText t)
-    : cookedSourceRange_{csr}, fixedText_{t.str()},
-      fixedBytes_{t.size()}, isFatal_{t.isFatal()} {}
+    : location_{csr}, text_{t.text()}, isFatal_{t.isFatal()} {}
   Message(CharBlock csr, MessageFormattedText &&s)
-    : cookedSourceRange_{csr}, string_{s.MoveString()}, isFatal_{s.isFatal()} {}
+    : location_{csr}, text_{s.MoveString()}, isFatal_{s.isFatal()} {}
   Message(CharBlock csr, MessageExpectedText t)
-    : cookedSourceRange_{csr}, fixedText_{t.str()}, fixedBytes_{t.size()},
-      isExpected_{true}, expected_{t.set()}, isFatal_{true} {}
-
-  bool operator<(const Message &that) const {
-    if (cookedSourceRange_.begin() != nullptr) {
-      return cookedSourceRange_.begin() < that.cookedSourceRange_.begin();
-    } else if (that.cookedSourceRange_.begin() != nullptr) {
-      return false;
-    } else {
-      return provenanceRange_.start() < that.provenanceRange_.start();
-    }
-  }
+    : location_{csr}, text_{t}, isFatal_{true} {}
 
   Context context() const { return context_; }
   Message &set_context(Message *c) {
@@ -148,6 +125,7 @@ public:
   }
   bool isFatal() const { return isFatal_; }
 
+  bool operator<(const Message &that) const;
   void Incorporate(Message &);
   std::string ToString() const;
   ProvenanceRange GetProvenanceRange(const CookedSource &) const;
@@ -155,13 +133,10 @@ public:
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 
 private:
-  ProvenanceRange provenanceRange_;
-  CharBlock cookedSourceRange_;
-  const char *fixedText_{nullptr};
-  std::size_t fixedBytes_{0};
-  bool isExpected_{false};
-  std::string string_;
-  SetOfChars expected_;
+  bool AtSameLocation(const Message &) const;
+
+  std::variant<ProvenanceRange, CharBlock> location_;
+  std::variant<CharBlock, MessageExpectedText, std::string> text_;
   Context context_;
   bool isFatal_{false};
 };

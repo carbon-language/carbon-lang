@@ -25,7 +25,7 @@ void ParsingLog::clear() { perPos_.clear(); }
 // In the logs, just use the addresses of the message texts to sort the
 // map keys.
 bool operator<(const MessageFixedText &x, const MessageFixedText &y) {
-  return x.str() < y.str();
+  return x.text().begin() < y.text().begin();
 }
 
 bool ParsingLog::Fails(
