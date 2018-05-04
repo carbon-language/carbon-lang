@@ -279,8 +279,14 @@ def : WriteRes<WriteVecExtractSt, [ZnAGU, ZnFPU12, ZnFPU2]> {
 
 // MOVMSK Instructions.
 def : WriteRes<WriteFMOVMSK, [ZnFPU2]>;
-def : WriteRes<WriteVecMOVMSK, [ZnFPU2]>;
 def : WriteRes<WriteMMXMOVMSK, [ZnFPU2]>;
+def : WriteRes<WriteVecMOVMSK, [ZnFPU2]>;
+
+def : WriteRes<WriteVecMOVMSKY, [ZnFPU2]> {
+  let NumMicroOps = 2;
+  let Latency = 2;
+  let ResourceCycles = [2];
+}
 
 // AES Instructions.
 defm : ZnWriteResFpuPair<WriteAESDecEnc, [ZnFPU01], 4>;
@@ -994,14 +1000,6 @@ def : InstRW<[WriteMicrocoded],
                                (instregex "VPMASKMOVD(Y?)rm")>;
 // m, v,v.
 def : InstRW<[WriteMicrocoded], (instregex "VPMASKMOV(D|Q)(Y?)mr")>;
-
-// PMOVMSKBY.
-def ZnWritePMOVMSKBY : SchedWriteRes<[ZnFPU2]> {
-  let NumMicroOps = 2;
-  let Latency = 2;
-  let ResourceCycles = [2];
-}
-def : InstRW<[ZnWritePMOVMSKBY], (instregex "(V|MMX_)?PMOVMSKBYrr")>;
 
 // VPBROADCAST B/W.
 // x, m8/16.

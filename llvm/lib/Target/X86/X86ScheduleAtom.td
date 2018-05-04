@@ -308,9 +308,10 @@ defm : AtomWriteResPair<WritePCmpEStrM, [AtomPort01], [AtomPort01]>; // NOTE: Do
 // MOVMSK Instructions.
 ////////////////////////////////////////////////////////////////////////////////
 
-def  : WriteRes<WriteFMOVMSK,   [AtomPort0]> { let Latency = 3; let ResourceCycles = [3]; }
-def  : WriteRes<WriteVecMOVMSK, [AtomPort0]> { let Latency = 3; let ResourceCycles = [3]; }
-def  : WriteRes<WriteMMXMOVMSK, [AtomPort0]> { let Latency = 3; let ResourceCycles = [3]; }
+def : WriteRes<WriteFMOVMSK,    [AtomPort0]> { let Latency = 3; let ResourceCycles = [3]; }
+def : WriteRes<WriteVecMOVMSK,  [AtomPort0]> { let Latency = 3; let ResourceCycles = [3]; }
+def : WriteRes<WriteVecMOVMSKY, [AtomPort0]> { let Latency = 3; let ResourceCycles = [3]; }
+def : WriteRes<WriteMMXMOVMSK,  [AtomPort0]> { let Latency = 3; let ResourceCycles = [3]; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // AES Instructions.

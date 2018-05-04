@@ -315,9 +315,10 @@ def : WriteRes<WritePCmpEStrILd, [BWPort0, BWPort5, BWPort23, BWPort0156]> {
 }
 
 // MOVMSK Instructions.
-def : WriteRes<WriteFMOVMSK, [BWPort0]> { let Latency = 3; }
-def : WriteRes<WriteVecMOVMSK, [BWPort0]> { let Latency = 3; }
-def : WriteRes<WriteMMXMOVMSK, [BWPort0]> { let Latency = 1; }
+def : WriteRes<WriteFMOVMSK,    [BWPort0]> { let Latency = 3; }
+def : WriteRes<WriteVecMOVMSK,  [BWPort0]> { let Latency = 3; }
+def : WriteRes<WriteVecMOVMSKY, [BWPort0]> { let Latency = 3; }
+def : WriteRes<WriteMMXMOVMSK,  [BWPort0]> { let Latency = 1; }
 
 // AES instructions.
 def : WriteRes<WriteAESDecEnc, [BWPort5]> { // Decryption, encryption.

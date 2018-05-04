@@ -255,9 +255,10 @@ def : WriteRes<WritePCmpEStrILd, [SLM_FPC_RSV0, SLM_MEC_RSV]> {
 }
 
 // MOVMSK Instructions.
-def : WriteRes<WriteFMOVMSK, [SLM_FPC_RSV1]> { let Latency = 4; }
-def : WriteRes<WriteVecMOVMSK, [SLM_FPC_RSV1]> { let Latency = 4; }
-def : WriteRes<WriteMMXMOVMSK, [SLM_FPC_RSV1]> { let Latency = 4; }
+def : WriteRes<WriteFMOVMSK,    [SLM_FPC_RSV1]> { let Latency = 4; }
+def : WriteRes<WriteVecMOVMSK,  [SLM_FPC_RSV1]> { let Latency = 4; }
+def : WriteRes<WriteVecMOVMSKY, [SLM_FPC_RSV1]> { let Latency = 4; }
+def : WriteRes<WriteMMXMOVMSK,  [SLM_FPC_RSV1]> { let Latency = 4; }
 
 // AES Instructions.
 def : WriteRes<WriteAESDecEnc, [SLM_FPC_RSV0]> {

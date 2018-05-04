@@ -311,9 +311,10 @@ def : WriteRes<WritePCmpEStrILd, [SKXPort0, SKXPort5, SKXPort23, SKXPort0156]> {
 }
 
 // MOVMSK Instructions.
-def : WriteRes<WriteFMOVMSK, [SKXPort0]> { let Latency = 2; }
-def : WriteRes<WriteVecMOVMSK, [SKXPort0]> { let Latency = 2; }
-def : WriteRes<WriteMMXMOVMSK, [SKXPort0]> { let Latency = 2; }
+def : WriteRes<WriteFMOVMSK,    [SKXPort0]> { let Latency = 2; }
+def : WriteRes<WriteVecMOVMSK,  [SKXPort0]> { let Latency = 2; }
+def : WriteRes<WriteVecMOVMSKY, [SKXPort0]> { let Latency = 2; }
+def : WriteRes<WriteMMXMOVMSK,  [SKXPort0]> { let Latency = 2; }
 
 // AES instructions.
 def : WriteRes<WriteAESDecEnc, [SKXPort0]> { // Decryption, encryption.

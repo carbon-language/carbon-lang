@@ -182,9 +182,10 @@ def  WriteVecExtract : SchedWrite; // Extract vector element to gpr.
 def  WriteVecExtractSt : SchedWrite; // Extract vector element and store.
 
 // MOVMSK operations.
-def WriteFMOVMSK : SchedWrite;
-def WriteVecMOVMSK : SchedWrite;
-def WriteMMXMOVMSK : SchedWrite;
+def WriteFMOVMSK    : SchedWrite;
+def WriteVecMOVMSK  : SchedWrite;
+def WriteVecMOVMSKY : SchedWrite;
+def WriteMMXMOVMSK  : SchedWrite;
 
 // Conversion between integer and float.
 defm WriteCvtF2I : X86SchedWritePair; // Float -> Integer.
