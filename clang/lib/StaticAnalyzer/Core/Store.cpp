@@ -65,10 +65,6 @@ const ElementRegion *StoreManager::MakeElementRegion(const SubRegion *Base,
   return MRMgr.getElementRegion(EleTy, idx, Base, svalBuilder.getContext());
 }
 
-StoreRef StoreManager::BindDefault(Store store, const MemRegion *R, SVal V) {
-  return StoreRef(store, *this);
-}
-
 const ElementRegion *StoreManager::GetElementZeroRegion(const SubRegion *R,
                                                         QualType T) {
   NonLoc idx = svalBuilder.makeZeroArrayIndex();

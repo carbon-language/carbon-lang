@@ -348,7 +348,9 @@ ExprEngine::createTemporaryRegionIfNeeded(ProgramStateRef State,
       break;
     case SubobjectAdjustment::MemberPointerAdjustment:
       // FIXME: Unimplemented.
-      State = State->bindDefault(Reg, UnknownVal(), LC);
+      State = State->invalidateRegions(Reg, InitWithAdjustments,
+                                       currBldrCtx->blockCount(), LC, true,
+                                       nullptr, nullptr, nullptr);
       return State;
     }
   }
