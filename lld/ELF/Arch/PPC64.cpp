@@ -97,10 +97,17 @@ PPC64::PPC64() {
 static uint32_t getEFlags(InputFile *File) {
   // Get the e_flag from the input file and issue an error if incompatible
   // e_flag encountered.
-
-  uint32_t EFlags = Config->IsLE ?
-    cast<ObjFile<ELF64LE>>(File)->getObj().getHeader()->e_flags :
-    cast<ObjFile<ELF64BE>>(File)->getObj().getHeader()->e_flags;
+  uint32_t EFlags;
+  switch (Config->EKind) {
+  case ELF64BEKind:
+    EFlags = cast<ObjFile<ELF64BE>>(File)->getObj().getHeader()->e_flags;
+    break;
+  case ELF64LEKind:
+    EFlags = cast<ObjFile<ELF64LE>>(File)->getObj().getHeader()->e_flags;
+    break;
+  default:
+    llvm_unreachable("unknown Config->EKind");
+  }
   if (EFlags > 2) {
     error("incompatible e_flags: " +  toString(File));
     return 0;
