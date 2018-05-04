@@ -15,7 +15,8 @@ set(XRAY_FDR_MODE_SOURCES
     xray_fdr_logging.cc)
 
 set(XRAY_BASIC_MODE_SOURCES
-    xray_inmemory_log.cc)
+    xray_basic_flags.cc
+    xray_basic_logging.cc)
 
 
 # Implementation files for all XRay architectures.
