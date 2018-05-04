@@ -315,7 +315,6 @@ static inline int32_t profitImm(unsigned Imm) {
 
 int32_t HexagonSplitDoubleRegs::profit(const MachineInstr *MI) const {
   unsigned ImmX = 0;
-dbgs() << *MI;
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
     case TargetOpcode::PHI:
