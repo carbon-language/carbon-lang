@@ -216,6 +216,9 @@ defm WriteAESKeyGen : X86SchedWritePair; // Key Generation.
 // Carry-less multiplication instructions.
 defm WriteCLMul : X86SchedWritePair;
 
+// EMMS/FEMMS
+def WriteEMMS : SchedWrite;
+
 // Load/store MXCSR
 def WriteLDMXCSR : SchedWrite;
 def WriteSTMXCSR : SchedWrite;

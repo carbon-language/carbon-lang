@@ -314,6 +314,7 @@ def : WriteRes<WriteNop, [JALU01]> { let Latency = 1; }
 def  : WriteRes<WriteFLoad,        [JLAGU, JFPU01, JFPX]> { let Latency = 5; }
 def  : WriteRes<WriteFStore,        [JSAGU, JFPU1, JSTC]>;
 def  : WriteRes<WriteFMove,               [JFPU01, JFPX]>;
+def  : WriteRes<WriteEMMS,                [JFPU01, JFPX]> { let Latency = 2; }
 
 defm : JWriteResFpuPair<WriteFAdd,         [JFPU0, JFPA],  3>;
 defm : JWriteResYMMPair<WriteFAddY,        [JFPU0, JFPA],  3, [2,2], 2>;

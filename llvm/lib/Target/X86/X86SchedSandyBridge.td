@@ -137,6 +137,7 @@ defm : SBWriteResPair<WriteBZHI, [SBPort1], 1>;
 def  : WriteRes<WriteFStore,       [SBPort23, SBPort4]>;
 def  : WriteRes<WriteFLoad,        [SBPort23]> { let Latency = 6; }
 def  : WriteRes<WriteFMove,        [SBPort5]>;
+defm : X86WriteRes<WriteEMMS,      [SBPort015], 31, [31], 31>;
 
 defm : SBWriteResPair<WriteFAdd,   [SBPort1],  3, [1], 1, 6>;
 defm : SBWriteResPair<WriteFAddY,  [SBPort1],  3, [1], 1, 7>;

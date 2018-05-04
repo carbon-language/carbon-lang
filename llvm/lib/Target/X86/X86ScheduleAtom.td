@@ -201,6 +201,7 @@ def : WriteRes<WriteNop, [AtomPort01]>;
 def  : WriteRes<WriteFLoad,  [AtomPort0]>;
 def  : WriteRes<WriteFStore, [AtomPort0]>;
 def  : WriteRes<WriteFMove,  [AtomPort01]>;
+defm : X86WriteRes<WriteEMMS,[AtomPort01], 5, [5], 1>;
 
 defm : AtomWriteResPair<WriteFAdd,           [AtomPort0],  [AtomPort0],  5,  5,  [5],  [5]>;
 defm : AtomWriteResPair<WriteFAddY,          [AtomPort0],  [AtomPort0],  5,  5,  [5],  [5]>;
@@ -490,8 +491,7 @@ def AtomWrite01_5 : SchedWriteRes<[AtomPort01]> {
   let Latency = 5;
   let ResourceCycles = [5];
 }
-def : InstRW<[AtomWrite01_5], (instrs FLDCW16m, ST_FP80m,
-                                      MMX_EMMS)>;
+def : InstRW<[AtomWrite01_5], (instrs FLDCW16m, ST_FP80m)>;
 def : InstRW<[AtomWrite01_5], (instregex "MMX_PH(ADD|SUB)S?Wrr")>;
 
 def AtomWrite01_6 : SchedWriteRes<[AtomPort01]> {

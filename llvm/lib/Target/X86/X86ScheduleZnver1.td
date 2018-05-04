@@ -234,6 +234,7 @@ def  : WriteRes<WriteCvtF2FSt, [ZnFPU3, ZnAGU]>;
 def  : WriteRes<WriteVecStore,            [ZnAGU]>;
 def  : WriteRes<WriteVecMove,             [ZnFPU]>;
 def  : WriteRes<WriteVecLoad,             [ZnAGU]> { let Latency = 8; }
+def  : WriteRes<WriteEMMS,                [ZnFPU]> { let Latency = 2; }
 
 defm : ZnWriteResFpuPair<WriteVecShift,   [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecShiftX,  [ZnFPU2],  1>;

@@ -128,6 +128,7 @@ defm : SLMWriteResPair<WriteIDiv, [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>
 def  : WriteRes<WriteFStore,       [SLM_FPC_RSV01, SLM_MEC_RSV]>;
 def  : WriteRes<WriteFLoad,        [SLM_MEC_RSV]> { let Latency = 3; }
 def  : WriteRes<WriteFMove,        [SLM_FPC_RSV01]>;
+defm : X86WriteRes<WriteEMMS,      [SLM_FPC_RSV01], 10, [10], 9>;
 
 defm : SLMWriteResPair<WriteFAdd,   [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteFAddY,  [SLM_FPC_RSV1], 3>;
