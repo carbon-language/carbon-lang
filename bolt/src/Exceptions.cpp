@@ -141,8 +141,10 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   assert(Data.isValidOffset(Offset) && "wrong LSDA address");
 
   uint8_t LPStartEncoding = Data.getU8(&Offset);
-  uint64_t LPStart = Data.getEncodedPointer(&Offset, LPStartEncoding,
-                                            Offset + LSDASectionAddress);
+  uint64_t LPStart = 0;
+  if (auto MaybeLPStart = Data.getEncodedPointer(&Offset, LPStartEncoding,
+                                                 Offset + LSDASectionAddress))
+    LPStart = *MaybeLPStart;
 
   assert(LPStart == 0 && "support for split functions not implemented");
 
@@ -193,13 +195,13 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   HasEHRanges = CallSitePtr < CallSiteTableEnd;
   uint64_t RangeBase = getAddress();
   while (CallSitePtr < CallSiteTableEnd) {
-    uintptr_t Start = Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
-                                             CallSitePtr + LSDASectionAddress);
-    uintptr_t Length = Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
+    uint64_t Start = *Data.getEncodedPointer(&CallSitePtr, CallSiteEncoding,
                                               CallSitePtr + LSDASectionAddress);
-    uintptr_t LandingPad = Data.getEncodedPointer(
+    uint64_t Length = *Data.getEncodedPointer(
         &CallSitePtr, CallSiteEncoding, CallSitePtr + LSDASectionAddress);
-    uintptr_t ActionEntry = Data.getULEB128(&CallSitePtr);
+    uint64_t LandingPad = *Data.getEncodedPointer(
+        &CallSitePtr, CallSiteEncoding, CallSitePtr + LSDASectionAddress);
+    uint64_t ActionEntry = Data.getULEB128(&CallSitePtr);
 
     if (opts::PrintExceptions) {
       outs() << "Call Site: [0x" << Twine::utohexstr(RangeBase + Start)
@@ -253,8 +255,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
         assert(Index > 0 && "only positive indices are valid");
         uint32_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
         const auto TTEntryAddress = TTEntry + LSDASectionAddress;
-        auto TypeAddress =
-            Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
+        uint32_t TypeAddress =
+            *Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
         if ((TTypeEncoding & DW_EH_PE_pcrel) &&
             (TypeAddress == TTEntryAddress)) {
           TypeAddress = 0;
@@ -342,8 +344,8 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
     for (unsigned Index = 1; Index <= MaxTypeIndex; ++Index) {
       uint32_t TTEntry = TypeTableStart - Index * TTypeEncodingSize;
       const auto TTEntryAddress = TTEntry + LSDASectionAddress;
-      auto TypeAddress =
-          Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
+      uint64_t TypeAddress =
+          *Data.getEncodedPointer(&TTEntry, TTypeEncoding, TTEntryAddress);
       if ((TTypeEncoding & DW_EH_PE_pcrel) && (TypeAddress == TTEntryAddress)) {
         TypeAddress = 0;
       }
@@ -794,20 +796,17 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
         case DW_CFA_def_cfa_expression:
         case DW_CFA_val_expression: {
           MCDwarfExprBuilder Builder;
-          for (const auto &Operation : Instr.ExprOps) {
-            switch (Operation.Ops.size()) {
-            case 0:
-              Builder.appendOperation(Operation.Opcode);
-              break;
-            case 1:
-              Builder.appendOperation(Operation.Opcode, Operation.Ops[0]);
-              break;
-            case 2:
-              Builder.appendOperation(Operation.Opcode, Operation.Ops[0],
-                                      Operation.Ops[1]);
-              break;
-            default:
-              llvm_unreachable("Unrecognized DWARF expression");
+          for (auto &ExprOp : *Instr.Expression) {
+            const DWARFExpression::Operation::Description &Desc =
+                ExprOp.getDescription();
+            if (Desc.Op[0] == DWARFExpression::Operation::SizeNA) {
+              Builder.appendOperation(ExprOp.getCode());
+            } else if (Desc.Op[1] == DWARFExpression::Operation::SizeNA) {
+              Builder.appendOperation(ExprOp.getCode(),
+                                      ExprOp.getRawOperand(0));
+            } else {
+              Builder.appendOperation(ExprOp.getCode(), ExprOp.getRawOperand(0),
+                                      ExprOp.getRawOperand(1));
             }
           }
           if (Opcode == DW_CFA_expression) {

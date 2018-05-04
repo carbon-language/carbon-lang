@@ -46,7 +46,7 @@ namespace bolt {
 
 using NodeId = CallGraph::NodeId;
 using Arc = CallGraph::Arc;
-using Node = CallGraph::Node;  
+using Node = CallGraph::Node;
 
 namespace {
 
@@ -252,7 +252,7 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
 std::vector<Cluster> randomClusters(const CallGraph &Cg) {
   std::vector<NodeId> FuncIds(Cg.numNodes(), 0);
   std::vector<Cluster> Clusters;
-  Clusters.reserve(Cg.numNodes());  
+  Clusters.reserve(Cg.numNodes());
 
   for (NodeId F = 0; F < Cg.numNodes(); F++) {
     if (Cg.samples(F) == 0) continue;

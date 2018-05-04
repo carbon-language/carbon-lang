@@ -997,7 +997,7 @@ public:
       return false;
     }
   }
-    
+
   bool evaluateX86MemoryOperand(const MCInst &Inst,
                                 unsigned *BaseRegNum,
                                 int64_t *ScaleImm,

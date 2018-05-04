@@ -1,0 +1,2534 @@
+diff --git a/include/llvm/ADT/BitVector.h b/include/llvm/ADT/BitVector.h
+index 124c2a8..03af230 100644
+--- a/include/llvm/ADT/BitVector.h
++++ b/include/llvm/ADT/BitVector.h
+@@ -591,6 +591,11 @@ public:
+     return *this;
+   }
+ 
++  friend BitVector operator|(BitVector LHS, const BitVector &RHS) {
++    LHS |= RHS;
++    return LHS;
++  }
++
+   BitVector &operator^=(const BitVector &RHS) {
+     if (size() < RHS.size())
+       resize(RHS.size());
+diff --git a/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h b/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h
+index 84b2339..9ed1792 100644
+--- a/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h
++++ b/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h
+@@ -28,12 +28,15 @@ class raw_ostream;
+ class DWARFAbbreviationDeclaration {
+ public:
+   struct AttributeSpec {
+-    AttributeSpec(dwarf::Attribute A, dwarf::Form F, int64_t Value)
+-        : Attr(A), Form(F), Value(Value) {
++    AttributeSpec(dwarf::Attribute A, dwarf::Form F, int64_t Value,
++                  uint32_t AttrOffset = -1U, uint32_t FormOffset = -1U)
++        : Attr(A), Form(F), AttrOffset(AttrOffset), FormOffset(FormOffset),
++          Value(Value) {
+       assert(isImplicitConst());
+     }
+-    AttributeSpec(dwarf::Attribute A, dwarf::Form F, Optional<uint8_t> ByteSize)
+-        : Attr(A), Form(F) {
++    AttributeSpec(dwarf::Attribute A, dwarf::Form F, Optional<uint8_t> ByteSize,
++                  uint32_t AttrOffset = -1U, uint32_t FormOffset = -1U)
++        : Attr(A), Form(F), AttrOffset(AttrOffset), FormOffset(FormOffset) {
+       assert(!isImplicitConst());
+       this->ByteSize.HasByteSize = ByteSize.hasValue();
+       if (this->ByteSize.HasByteSize)
+@@ -42,6 +45,8 @@ public:
+ 
+     dwarf::Attribute Attr;
+     dwarf::Form Form;
++    uint32_t AttrOffset;
++    uint32_t FormOffset;
+ 
+   private:
+     /// The following field is used for ByteSize for non-implicit_const
+@@ -112,6 +117,8 @@ public:
+     return AttributeSpecs[idx].Attr;
+   }
+ 
++  const AttributeSpec *findAttribute(dwarf::Attribute Attr) const;
++
+   /// Get the index of the specified attribute.
+   ///
+   /// Searches the this abbreviation declaration for the index of the specified
+@@ -133,7 +140,8 @@ public:
+   /// \returns Optional DWARF form value if the attribute was extracted.
+   Optional<DWARFFormValue> getAttributeValue(const uint32_t DIEOffset,
+                                              const dwarf::Attribute Attr,
+-                                             const DWARFUnit &U) const;
++                                             const DWARFUnit &U,
++                                             uint32_t *OffsetPtr = 0) const;
+ 
+   bool extract(DataExtractor Data, uint32_t* OffsetPtr);
+   void dump(raw_ostream &OS) const;
+diff --git a/include/llvm/DebugInfo/DWARF/DWARFContext.h b/include/llvm/DebugInfo/DWARF/DWARFContext.h
+index e842cf2..83b0dbe 100644
+--- a/include/llvm/DebugInfo/DWARF/DWARFContext.h
++++ b/include/llvm/DebugInfo/DWARF/DWARFContext.h
+@@ -225,6 +225,9 @@ public:
+   /// Get a pointer to the parsed DebugLoc object.
+   const DWARFDebugLoc *getDebugLoc();
+ 
++  /// Extract one location list corresponding in \p Offset
++  Optional<DWARFDebugLoc::LocationList> getOneDebugLocList(uint32_t *Offset);
++
+   /// Get a pointer to the parsed dwo abbreviations object.
+   const DWARFDebugAbbrev *getDebugAbbrevDWO();
+ 
+@@ -280,6 +283,10 @@ public:
+   /// given address where applicable.
+   DIEsForAddress getDIEsForAddress(uint64_t Address);
+ 
++  /// Get offset to an attribute value within a compile unit
++  /// or 0 if the attribute was not found.
++  uint32_t getAttrFieldOffsetForUnit(DWARFUnit *U, dwarf::Attribute Attr) const;
++
+   DILineInfo getLineInfoForAddress(uint64_t Address,
+       DILineInfoSpecifier Specifier = DILineInfoSpecifier()) override;
+   DILineInfoTable getLineInfoForAddressRange(uint64_t Address, uint64_t Size,
+@@ -302,7 +309,7 @@ public:
+   static std::unique_ptr<DWARFContext>
+   create(const object::ObjectFile &Obj, const LoadedObjectInfo *L = nullptr,
+          function_ref<ErrorPolicy(Error)> HandleError = defaultErrorHandler,
+-         std::string DWPName = "");
++         std::string DWPName = "", bool UsesRelocs = true);
+ 
+   static std::unique_ptr<DWARFContext>
+   create(const StringMap<std::unique_ptr<MemoryBuffer>> &Sections,
+@@ -313,7 +320,6 @@ public:
+   /// have initialized the relevant target descriptions.
+   Error loadRegisterInfo(const object::ObjectFile &Obj);
+ 
+-private:
+   /// Return the compile unit that includes an offset (relative to .debug_info).
+   DWARFCompileUnit *getCompileUnitForOffset(uint32_t Offset);
+ 
+diff --git a/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h b/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h
+index ff1c7fb..2622a4e 100644
+--- a/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h
++++ b/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h
+@@ -16,6 +16,7 @@
+ #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
+ #include "llvm/DebugInfo/DWARF/DWARFExpression.h"
+ #include "llvm/Support/Error.h"
++#include <functional>
+ #include <memory>
+ #include <vector>
+ 
+@@ -279,9 +280,20 @@ public:
+   void dump(raw_ostream &OS, const MCRegisterInfo *MRI,
+             Optional<uint64_t> Offset) const;
+ 
++  using RefHandlerType =
++    std::function<void(uint64_t, uint64_t, uint64_t)>;
++
+   /// Parse the section from raw data. \p Data is assumed to contain the whole
+   /// frame section contents to be parsed.
+-  void parse(DWARFDataExtractor Data);
++  /// If non-null RefHandler is passed, call it for every encountered external
++  /// reference in frame data. The expected signature is:
++  ///
++  ///   void RefHandler(uint64_t Value, uint64_t Offset, uint64_t Type);
++  ///
++  /// where Value is a value of the reference, Offset - is an offset into the
++  /// frame data at which the reference occured, and Type is a DWARF encoding
++  /// type of the reference.
++  void parse(DWARFDataExtractor Data, RefHandlerType RefHandler= nullptr);
+ 
+   /// Return whether the section has any entries.
+   bool empty() const { return Entries.empty(); }
+@@ -293,6 +305,12 @@ public:
+     return iterator_range<iterator>(Entries.begin(), Entries.end());
+   }
+ 
++  using FDEFunction = std::function<void(const dwarf::FDE *)>;
++
++  /// Call function F for every FDE in the frame.
++  void for_each_FDE(FDEFunction F) const;
++
++
+   uint64_t getEHFrameAddress() const { return EHFrameAddress; }
+ };
+ 
+diff --git a/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h b/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
+index a6d319a..39674a9 100644
+--- a/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
++++ b/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
+@@ -68,6 +68,9 @@ public:
+   /// Return the location list at the given offset or nullptr.
+   LocationList const *getLocationListAtOffset(uint64_t Offset) const;
+ 
++  /// Returns the parsed location lists.
++  const LocationLists &getLocationLists() const { return Locations; }
++
+   Optional<LocationList> parseOneLocationList(DWARFDataExtractor Data,
+                                               uint32_t *Offset);
+ };
+diff --git a/include/llvm/DebugInfo/DWARF/DWARFDie.h b/include/llvm/DebugInfo/DWARF/DWARFDie.h
+index 39a3dd3..8427987 100644
+--- a/include/llvm/DebugInfo/DWARF/DWARFDie.h
++++ b/include/llvm/DebugInfo/DWARF/DWARFDie.h
+@@ -130,7 +130,8 @@ public:
+   /// \param Attr the attribute to extract.
+   /// \returns an optional DWARFFormValue that will have the form value if the
+   /// attribute was successfully extracted.
+-  Optional<DWARFFormValue> find(dwarf::Attribute Attr) const;
++  Optional<DWARFFormValue> find(dwarf::Attribute Attr,
++                                uint32_t *OffsetPtr = 0) const;
+ 
+   /// Extract the first value of any attribute in Attrs from this DIE.
+   ///
+diff --git a/include/llvm/DebugInfo/DWARF/DWARFObject.h b/include/llvm/DebugInfo/DWARF/DWARFObject.h
+index 795eddd..43243e7 100644
+--- a/include/llvm/DebugInfo/DWARF/DWARFObject.h
++++ b/include/llvm/DebugInfo/DWARF/DWARFObject.h
+@@ -41,6 +41,7 @@ public:
+   virtual StringRef getARangeSection() const { return ""; }
+   virtual StringRef getDebugFrameSection() const { return ""; }
+   virtual StringRef getEHFrameSection() const { return ""; }
++  virtual uint64_t getEHFrameAddress() const { return 0; }
+   virtual const DWARFSection &getLineSection() const { return Dummy; }
+   virtual StringRef getLineStringSection() const { return ""; }
+   virtual StringRef getStringSection() const { return ""; }
+diff --git a/include/llvm/ExecutionEngine/ExecutionEngine.h b/include/llvm/ExecutionEngine/ExecutionEngine.h
+index 7932688..51bf471 100644
+--- a/include/llvm/ExecutionEngine/ExecutionEngine.h
++++ b/include/llvm/ExecutionEngine/ExecutionEngine.h
+@@ -251,6 +251,16 @@ public:
+                      "EE!");
+   }
+ 
++  /// mapSectionAddress - map a section to its target address space value.
++  /// Map a JIT section with a given ID to the address in the target process
++  /// as the running code will see it. This is the address which will be used
++  /// for relocation resolution.
++  virtual void mapSectionAddress(unsigned SectionID,
++                                 uint64_t TargetAddress) {
++    llvm_unreachable("Re-mapping of section addresses not supported with this "
++                     "EE!");
++  }
++
+   /// generateCodeForModule - Run code generation for the specified module and
+   /// load it into memory.
+   ///
+diff --git a/include/llvm/ExecutionEngine/JITSymbol.h b/include/llvm/ExecutionEngine/JITSymbol.h
+index 86ab173..257ed03 100644
+--- a/include/llvm/ExecutionEngine/JITSymbol.h
++++ b/include/llvm/ExecutionEngine/JITSymbol.h
+@@ -297,7 +297,17 @@ public:
+   /// missing. Instead, that symbol will be left out of the result map.
+   virtual Expected<LookupFlagsResult> lookupFlags(const LookupSet &Symbols) = 0;
+ 
++  /// Specify if this resolver can return valid symbols with zero value.
++  virtual void setAllowsZeroSymbols(bool Value = true) {
++    AllowsZeroSymbols = Value;
++  }
++
++  /// Return true if the resolver can return a valid symbol with zero value.
++  virtual bool allowsZeroSymbols() { return AllowsZeroSymbols; }
++
+ private:
++  bool AllowsZeroSymbols = false;
++
+   virtual void anchor();
+ };
+ 
+diff --git a/include/llvm/ExecutionEngine/Orc/Core.h b/include/llvm/ExecutionEngine/Orc/Core.h
+index 26fec8b..c533003 100644
+--- a/include/llvm/ExecutionEngine/Orc/Core.h
++++ b/include/llvm/ExecutionEngine/Orc/Core.h
+@@ -110,7 +110,17 @@ public:
+   virtual SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
+                                SymbolNameSet Symbols) = 0;
+ 
++  /// Specify if this resolver can return valid symbols with zero value.
++  virtual void setAllowsZeroSymbols(bool Value = true) {
++    AllowsZeroSymbols = Value;
++  }
++
++  /// Return true if the resolver can return a valid symbol with zero value.
++  virtual bool allowsZeroSymbols() { return AllowsZeroSymbols; }
++
+ private:
++  bool AllowsZeroSymbols = false;
++
+   virtual void anchor();
+ };
+ 
+diff --git a/include/llvm/ExecutionEngine/Orc/Legacy.h b/include/llvm/ExecutionEngine/Orc/Legacy.h
+index b2b389a..7c108ef 100644
+--- a/include/llvm/ExecutionEngine/Orc/Legacy.h
++++ b/include/llvm/ExecutionEngine/Orc/Legacy.h
+@@ -25,6 +25,10 @@ public:
+   JITSymbolResolverAdapter(ExecutionSession &ES, SymbolResolver &R);
+   Expected<LookupFlagsResult> lookupFlags(const LookupSet &Symbols) override;
+   Expected<LookupResult> lookup(const LookupSet &Symbols) override;
++  bool allowsZeroSymbols() override { return R.allowsZeroSymbols(); }
++  void setAllowsZeroSymbols(bool Value) override {
++    R.setAllowsZeroSymbols(Value);
++  }
+ 
+ private:
+   ExecutionSession &ES;
+@@ -70,11 +74,13 @@ Expected<SymbolNameSet> lookupFlagsWithLegacyFn(SymbolFlagsMap &SymbolFlags,
+ template <typename FindSymbolFn>
+ SymbolNameSet lookupWithLegacyFn(AsynchronousSymbolQuery &Query,
+                                  const SymbolNameSet &Symbols,
+-                                 FindSymbolFn FindSymbol) {
++                                 FindSymbolFn FindSymbol,
++                                 bool AllowZeroSymbols = false) {
+   SymbolNameSet SymbolsNotFound;
+ 
+   for (auto &S : Symbols) {
+-    if (JITSymbol Sym = FindSymbol(*S)) {
++    JITSymbol Sym = FindSymbol(*S);
++    if (Sym || (AllowZeroSymbols && !Sym.getFlags().hasError())) {
+       if (auto Addr = Sym.getAddress()) {
+         Query.setDefinition(S, JITEvaluatedSymbol(*Addr, Sym.getFlags()));
+         Query.notifySymbolFinalized();
+@@ -116,7 +122,8 @@ public:
+ 
+   SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
+                        SymbolNameSet Symbols) final {
+-    return lookupWithLegacyFn(*Query, Symbols, LegacyLookup);
++    return lookupWithLegacyFn(*Query, Symbols, LegacyLookup,
++                              this->allowsZeroSymbols());
+   }
+ 
+ private:
+diff --git a/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h b/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h
+index cfc3922..c0b43ce 100644
+--- a/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h
++++ b/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h
+@@ -80,6 +80,12 @@ public:
+     BaseLayer.mapSectionAddress(K, LocalAddress, TargetAddr);
+   }
+ 
++  /// @brief Map section addresses for the objects associated with the handle H.
++  void mapSectionAddress(VModuleKey K, unsigned SectionID,
++                         JITTargetAddress TargetAddr) {
++    BaseLayer.mapSectionAddress(K, SectionID, TargetAddr);
++  }
++
+   /// @brief Access the transform functor directly.
+   TransformFtor &getTransform() { return Transform; }
+ 
+diff --git a/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h b/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h
+index 8f0d9fa..ada93a2 100644
+--- a/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h
++++ b/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h
+@@ -62,6 +62,8 @@ protected:
+ 
+     virtual void mapSectionAddress(const void *LocalAddress,
+                                    JITTargetAddress TargetAddr) const = 0;
++    virtual void mapSectionAddress(unsigned SectionID,
++                                   JITTargetAddress TargetAddr) const = 0;
+ 
+     JITSymbol getSymbol(StringRef Name, bool ExportedSymbolsOnly) {
+       auto SymEntry = SymbolTable.find(Name);
+@@ -133,6 +135,9 @@ private:
+       std::unique_ptr<RuntimeDyld::LoadedObjectInfo> Info =
+           PFC->RTDyld->loadObject(*PFC->Obj.getBinary());
+ 
++      if (PFC->Parent.NotifyLoaded)
++        PFC->Parent.NotifyLoaded(PFC->K, *PFC->Obj.getBinary(), *Info);
++
+       // Copy the symbol table out of the RuntimeDyld instance.
+       {
+         auto SymTab = PFC->RTDyld->getSymbolTable();
+@@ -140,9 +145,6 @@ private:
+           SymbolTable[KV.first] = KV.second;
+       }
+ 
+-      if (PFC->Parent.NotifyLoaded)
+-        PFC->Parent.NotifyLoaded(PFC->K, *PFC->Obj.getBinary(), *Info);
+-
+       PFC->RTDyld->finalizeWithMemoryManagerLocking();
+ 
+       if (PFC->RTDyld->hasError())
+@@ -175,6 +177,13 @@ private:
+       PFC->RTDyld->mapSectionAddress(LocalAddress, TargetAddr);
+     }
+ 
++    void mapSectionAddress(unsigned SectionID,
++                           JITTargetAddress TargetAddr) const override {
++      assert(PFC && "mapSectionAddress called on finalized LinkedObject");
++      assert(PFC->RTDyld && "mapSectionAddress called on raw LinkedObject");
++      PFC->RTDyld->mapSectionAddress(SectionID, TargetAddr);
++    }
++
+   private:
+     void buildInitialSymbolTable(const OwnedObject &Obj) {
+       for (auto &Symbol : Obj.getBinary()->symbols()) {
+@@ -325,6 +334,13 @@ public:
+     LinkedObjects[K]->mapSectionAddress(LocalAddress, TargetAddr);
+   }
+ 
++  /// @brief Map section addresses for the objects associated with the handle H.
++  void mapSectionAddress(VModuleKey K, unsigned SectionID,
++                         JITTargetAddress TargetAddr) {
++    assert(LinkedObjects.count(K) && "VModuleKey not associated with object");
++    LinkedObjects[K]->mapSectionAddress(SectionID, TargetAddr);
++  }
++
+   /// @brief Immediately emit and finalize the object represented by the given
+   ///        VModuleKey.
+   /// @param K VModuleKey for object to emit/finalize.
+diff --git a/include/llvm/ExecutionEngine/RuntimeDyld.h b/include/llvm/ExecutionEngine/RuntimeDyld.h
+index 14da5af..27b0243 100644
+--- a/include/llvm/ExecutionEngine/RuntimeDyld.h
++++ b/include/llvm/ExecutionEngine/RuntimeDyld.h
+@@ -112,6 +112,14 @@ public:
+                                          StringRef SectionName,
+                                          bool IsReadOnly) = 0;
+ 
++    /// Notify that a comment/note section exists and where it's located
++    /// in case the user needs to look up extra information about the
++    /// code, e.g. debugging information.
++    virtual uint8_t *recordNoteSection(const uint8_t *Data, uintptr_t Size,
++                                       unsigned Alignment,
++                                       unsigned SectionID,
++                                       StringRef SectionName) { return nullptr;}
++
+     /// Inform the memory manager about the total amount of memory required to
+     /// allocate all sections to be loaded:
+     /// \p CodeSize - the total size of all code sections
+@@ -129,6 +137,11 @@ public:
+     /// Override to return true to enable the reserveAllocationSpace callback.
+     virtual bool needsToReserveAllocationSpace() { return false; }
+ 
++    /// Override to return false to tell LLVM no stub space will be needed.
++    /// This requires some guarantees depending on architecuture, but when
++    /// you know what you are doing it saves allocated space.
++    virtual bool allowStubAllocation() const { return true; }
++
+     /// Register the EH frames with the runtime so that c++ exceptions work.
+     ///
+     /// \p Addr parameter provides the local address of the EH frame section
+@@ -205,6 +218,12 @@ public:
+   /// This is the address which will be used for relocation resolution.
+   void mapSectionAddress(const void *LocalAddress, uint64_t TargetAddress);
+ 
++  /// Map a section to its target address space value.
++  /// Map a JIT section with a given ID to the address in the target process as
++  /// the running code will see it. This is the address which will be used for
++  /// relocation resolution.
++  void mapSectionAddress(unsigned SectionID, uint64_t TargetAddress);
++
+   /// Register any EH frame sections that have been loaded but not previously
+   /// registered with the memory manager.  Note, RuntimeDyld is responsible
+   /// for identifying the EH frame and calling the memory manager with the
+diff --git a/include/llvm/MC/MCAsmInfo.h b/include/llvm/MC/MCAsmInfo.h
+index c538c46..7b16897 100644
+--- a/include/llvm/MC/MCAsmInfo.h
++++ b/include/llvm/MC/MCAsmInfo.h
+@@ -225,6 +225,10 @@ protected:
+   /// result of a alignment directive.  Defaults to 0
+   unsigned TextAlignFillValue = 0;
+ 
++  /// If non-zero, this is used to fill the executable space with instructions
++  /// that will trap. Defaults to 0
++  unsigned TrapFillValue = 0;
++
+   //===--- Global Variable Emission Directives --------------------------===//
+ 
+   /// This is the directive used to declare a global entity. Defaults to
+@@ -504,6 +508,7 @@ public:
+   const char *getAscizDirective() const { return AscizDirective; }
+   bool getAlignmentIsInBytes() const { return AlignmentIsInBytes; }
+   unsigned getTextAlignFillValue() const { return TextAlignFillValue; }
++  unsigned getTrapFillValue() const { return TrapFillValue; }
+   const char *getGlobalDirective() const { return GlobalDirective; }
+ 
+   bool doesSetDirectiveSuppressReloc() const {
+diff --git a/include/llvm/MC/MCContext.h b/include/llvm/MC/MCContext.h
+index c110ffd..a29f320 100644
+--- a/include/llvm/MC/MCContext.h
++++ b/include/llvm/MC/MCContext.h
+@@ -506,6 +506,10 @@ namespace llvm {
+       return MCDwarfLineTablesCUMap;
+     }
+ 
++    std::map<unsigned, MCDwarfLineTable> &getMCDwarfLineTables() {
++      return MCDwarfLineTablesCUMap;
++    }
++
+     MCDwarfLineTable &getMCDwarfLineTable(unsigned CUID) {
+       return MCDwarfLineTablesCUMap[CUID];
+     }
+@@ -552,13 +556,14 @@ namespace llvm {
+     /// instruction will be created.
+     void setCurrentDwarfLoc(unsigned FileNum, unsigned Line, unsigned Column,
+                             unsigned Flags, unsigned Isa,
+-                            unsigned Discriminator) {
++                            unsigned Discriminator, uint64_t Addr = -1ULL) {
+       CurrentDwarfLoc.setFileNum(FileNum);
+       CurrentDwarfLoc.setLine(Line);
+       CurrentDwarfLoc.setColumn(Column);
+       CurrentDwarfLoc.setFlags(Flags);
+       CurrentDwarfLoc.setIsa(Isa);
+       CurrentDwarfLoc.setDiscriminator(Discriminator);
++      CurrentDwarfLoc.setAbsoluteAddr(Addr);
+       DwarfLocSeen = true;
+     }
+ 
+diff --git a/include/llvm/MC/MCDwarf.h b/include/llvm/MC/MCDwarf.h
+index 5cdb176..cd46632 100644
+--- a/include/llvm/MC/MCDwarf.h
++++ b/include/llvm/MC/MCDwarf.h
+@@ -73,6 +73,7 @@ class MCDwarfLoc {
+   uint8_t Flags;
+   uint8_t Isa;
+   uint32_t Discriminator;
++  uint64_t AbsoluteAddr;
+ 
+ // Flag that indicates the initial value of the is_stmt_start flag.
+ #define DWARF2_LINE_DEFAULT_IS_STMT 1
+@@ -87,14 +88,17 @@ private: // MCContext manages these
+   friend class MCDwarfLineEntry;
+ 
+   MCDwarfLoc(unsigned fileNum, unsigned line, unsigned column, unsigned flags,
+-             unsigned isa, unsigned discriminator)
++             unsigned isa, unsigned discriminator, uint64_t addr=-1ULL)
+       : FileNum(fileNum), Line(line), Column(column), Flags(flags), Isa(isa),
+-        Discriminator(discriminator) {}
++        Discriminator(discriminator), AbsoluteAddr(addr) {}
+ 
+   // Allow the default copy constructor and assignment operator to be used
+   // for an MCDwarfLoc object.
+ 
+ public:
++  /// \brief Get the AbsoluteAddr of this MCDwarfLoc.
++  uint64_t getAbsoluteAddr() const { return AbsoluteAddr; }
++
+   /// \brief Get the FileNum of this MCDwarfLoc.
+   unsigned getFileNum() const { return FileNum; }
+ 
+@@ -141,6 +145,11 @@ public:
+   void setDiscriminator(unsigned discriminator) {
+     Discriminator = discriminator;
+   }
++
++  /// \brief Set the AbsoluteAddr of this MCDwarfLoc.
++  void setAbsoluteAddr(uint64_t addr) {
++    AbsoluteAddr = addr;
++  }
+ };
+ 
+ /// \brief Instances of this class represent the line information for
+@@ -274,7 +283,7 @@ public:
+ 
+   // This emits the Dwarf file and the line tables for a given Compile Unit.
+   void EmitCU(MCObjectStreamer *MCOS, MCDwarfLineTableParams Params,
+-              Optional<MCDwarfLineStr> &LineStr) const;
++              Optional<MCDwarfLineStr> &LineStr);
+ 
+   Expected<unsigned> tryGetFile(StringRef &Directory, StringRef &FileName,
+                                 MD5::MD5Result *Checksum,
+@@ -380,6 +389,57 @@ public:
+                    SMLoc &Loc);
+ };
+ 
++/// \brief A sequence of MCDwarfOperations corresponds to a DWARF expression,
++/// used as operand in some MCCFIInstructions.
++struct MCDwarfOperation {
++  uint8_t Operation{0};
++  uint64_t Operand0{0};
++  uint64_t Operand1{0};
++
++  MCDwarfOperation(uint8_t O, uint64_t O0, uint64_t O1)
++      : Operation(O), Operand0(O0), Operand1(O1) {}
++
++  bool operator==(const MCDwarfOperation &Other) const {
++    return (Other.Operation == Operation && Other.Operand0 == Operand0 &&
++            Other.Operand1 == Operand1);
++  }
++};
++typedef std::vector<MCDwarfOperation> MCDwarfExpression;
++
++/// \brief This builder should be used to create MCDwarfExpression objects
++/// before feeding them to a CFIInstruction factory method.
++class MCDwarfExprBuilder {
++public:
++  MCDwarfExprBuilder() {}
++
++private:
++  MCDwarfExpression Expr;
++
++public:
++  MCDwarfExprBuilder &appendOperation(uint8_t Operation) {
++    Expr.push_back(MCDwarfOperation(Operation, 0, 0));
++    return *this;
++  }
++
++  MCDwarfExprBuilder &appendOperation(uint8_t Operation, uint64_t Op0) {
++    Expr.push_back(MCDwarfOperation(Operation, Op0, 0));
++    return *this;
++  }
++
++  MCDwarfExprBuilder &appendOperation(uint8_t Operation, uint64_t Op0,
++                                   uint64_t Op1) {
++    Expr.push_back(MCDwarfOperation(Operation, Op0, Op1));
++    return *this;
++  }
++
++  /// \brief Return the resulting expression and reset internal state
++  MCDwarfExpression take() {
++    MCDwarfExpression Res;
++    std::swap(Res, Expr);
++    return Res;
++  }
++};
++
+ class MCCFIInstruction {
+ public:
+   enum OpType {
+@@ -397,6 +457,9 @@ public:
+     OpUndefined,
+     OpRegister,
+     OpWindowSave,
++    OpExpression,
++    OpDefCfaExpression,
++    OpValExpression,
+     OpGnuArgsSize
+   };
+ 
+@@ -409,11 +472,13 @@ private:
+     unsigned Register2;
+   };
+   std::vector<char> Values;
++  MCDwarfExpression Expression;
+ 
+   MCCFIInstruction(OpType Op, MCSymbol *L, unsigned R, int O, StringRef V)
+       : Operation(Op), Label(L), Register(R), Offset(O),
+         Values(V.begin(), V.end()) {
+-    assert(Op != OpRegister);
++    assert(Op != OpRegister && Op != OpDefCfaExpression &&
++           Op != OpValExpression && Op != OpExpression);
+   }
+ 
+   MCCFIInstruction(OpType Op, MCSymbol *L, unsigned R1, unsigned R2)
+@@ -421,6 +486,20 @@ private:
+     assert(Op == OpRegister);
+   }
+ 
++  MCCFIInstruction(OpType Op, MCSymbol *L, unsigned R,
++                   const MCDwarfExpression &E)
++      : Operation(Op), Label(L), Register(R), Offset(0), Expression(E) {
++    assert(Op == OpDefCfaExpression || Op == OpValExpression ||
++           Op == OpExpression);
++  }
++
++  MCCFIInstruction(OpType Op, MCSymbol *L, unsigned R, MCDwarfExpression &&E)
++      : Operation(Op), Label(L), Register(R), Offset(0),
++        Expression(std::move(E)) {
++    assert(Op == OpDefCfaExpression || Op == OpValExpression ||
++           Op == OpExpression);
++  }
++
+ public:
+   /// \brief .cfi_def_cfa defines a rule for computing CFA as: take address from
+   /// Register and add Offset to it.
+@@ -516,14 +595,56 @@ public:
+     return MCCFIInstruction(OpGnuArgsSize, L, 0, Size, "");
+   }
+ 
++  /// \brief MCCFIInstructions that refer to an expression, expression object is
++  /// created by copying
++  static MCCFIInstruction createDefCfaExpression(MCSymbol *L,
++                                                 const MCDwarfExpression &E) {
++    return MCCFIInstruction(OpDefCfaExpression, L, 0, E);
++  }
++
++  static MCCFIInstruction createValExpression(MCSymbol *L, unsigned R,
++                                              const MCDwarfExpression &E) {
++    return MCCFIInstruction(OpValExpression, L, R, E);
++  }
++
++  static MCCFIInstruction createExpression(MCSymbol *L, unsigned R,
++                                           const MCDwarfExpression &E) {
++    return MCCFIInstruction(OpExpression, L, R, E);
++  }
++
++  /// \brief MCCFIInstructions that refer to an expression, expression object is
++  /// moved from an r-value
++  static MCCFIInstruction createDefCfaExpression(MCSymbol *L,
++                                                 MCDwarfExpression &&E) {
++    return MCCFIInstruction(OpDefCfaExpression, L, 0, E);
++  }
++
++  static MCCFIInstruction createValExpression(MCSymbol *L, unsigned R,
++                                              MCDwarfExpression &&E) {
++    return MCCFIInstruction(OpValExpression, L, R, E);
++  }
++
++  static MCCFIInstruction createExpression(MCSymbol *L, unsigned R,
++                                           MCDwarfExpression &&E) {
++    return MCCFIInstruction(OpExpression, L, R, E);
++  }
++
++  bool operator==(const MCCFIInstruction &Other) const {
++    return (Other.Operation == Operation && Other.Label == Label &&
++            Other.Offset == Offset && Other.Register == Register &&
++            Other.Expression == Expression);
++  }
++
+   OpType getOperation() const { return Operation; }
+   MCSymbol *getLabel() const { return Label; }
++  void setLabel(MCSymbol *L) { Label = L; }
+ 
+   unsigned getRegister() const {
+     assert(Operation == OpDefCfa || Operation == OpOffset ||
+            Operation == OpRestore || Operation == OpUndefined ||
+            Operation == OpSameValue || Operation == OpDefCfaRegister ||
+-           Operation == OpRelOffset || Operation == OpRegister);
++           Operation == OpRelOffset || Operation == OpRegister ||
++           Operation == OpExpression || Operation == OpValExpression);
+     return Register;
+   }
+ 
+@@ -539,6 +660,33 @@ public:
+     return Offset;
+   }
+ 
++  void setOffset(int NewOffset) {
++    assert(Operation == OpDefCfa || Operation == OpOffset ||
++           Operation == OpRelOffset || Operation == OpDefCfaOffset ||
++           Operation == OpAdjustCfaOffset || Operation == OpGnuArgsSize);
++    Offset = NewOffset;
++  }
++
++  void setRegister(unsigned NewReg) {
++    assert(Operation == OpDefCfa || Operation == OpOffset ||
++           Operation == OpRestore || Operation == OpUndefined ||
++           Operation == OpSameValue || Operation == OpDefCfaRegister ||
++           Operation == OpRelOffset || Operation == OpRegister ||
++           Operation == OpExpression || Operation == OpValExpression);
++    Register = NewReg;
++  }
++
++  void setRegister2(unsigned NewReg) {
++    assert(Operation == OpRegister);
++    Register2 = NewReg;
++  }
++
++  const MCDwarfExpression &getExpression() const {
++    assert(Operation == OpDefCfaExpression || Operation == OpExpression ||
++           Operation == OpValExpression);
++    return Expression;
++  }
++
+   StringRef getValues() const {
+     assert(Operation == OpEscape);
+     return StringRef(&Values[0], Values.size());
+diff --git a/include/llvm/MC/MCExpr.h b/include/llvm/MC/MCExpr.h
+index fcbbe65..25847aa 100644
+--- a/include/llvm/MC/MCExpr.h
++++ b/include/llvm/MC/MCExpr.h
+@@ -123,6 +123,9 @@ public:
+   /// expression.
+   MCFragment *findAssociatedFragment() const;
+ 
++  /// Helper method that returns the Symbol of an MCSymbolRef Expression.
++  const MCSymbol &getSymbol() const;
++
+   /// @}
+ };
+ 
+diff --git a/include/llvm/MC/MCFragment.h b/include/llvm/MC/MCFragment.h
+index 38c3655..dec2957 100644
+--- a/include/llvm/MC/MCFragment.h
++++ b/include/llvm/MC/MCFragment.h
+@@ -34,6 +34,7 @@ class MCFragment : public ilist_node_with_parent<MCFragment, MCSection> {
+ public:
+   enum FragmentType : uint8_t {
+     FT_Align,
++    FT_NeverAlign,
+     FT_Data,
+     FT_CompactEncodedInst,
+     FT_Fill,
+@@ -325,6 +326,46 @@ public:
+   }
+ };
+ 
++class MCNeverAlignFragment : public MCFragment {
++  /// Alignment - The alignment the end of the next fragment should avoid
++  unsigned Alignment;
++
++  /// EmitNops - Flag to indicate that (optimal) NOPs should be emitted instead
++  /// of using the provided value. The exact interpretation of this flag is
++  /// target dependent.
++  bool EmitNops : 1;
++
++  /// Value - Value to use for filling padding bytes.
++  int64_t Value;
++
++  /// ValueSize - The size of the integer (in bytes) of \p Value.
++  unsigned ValueSize;
++
++  public:
++  MCNeverAlignFragment(unsigned Alignment,
++      int64_t Value, unsigned ValueSize, MCSection *Sec = nullptr)
++    : MCFragment(FT_NeverAlign, false, 0, Sec), Alignment(Alignment),
++    EmitNops(false), Value(Value), ValueSize(ValueSize) {}
++
++  /// \name Accessors
++  /// @{
++
++  unsigned getAlignment() const { return Alignment; }
++
++  int64_t getValue() const { return Value; }
++
++  unsigned getValueSize() const { return ValueSize; }
++
++  bool hasEmitNops() const { return EmitNops; }
++  void setEmitNops(bool Value) { EmitNops = Value; }
++
++  /// @}
++
++  static bool classof(const MCFragment *F) {
++    return F->getKind() == MCFragment::FT_NeverAlign;
++  }
++};
++
+ /// Fragment for adding required padding.
+ /// This fragment is always inserted before an instruction, and holds that
+ /// instruction as context information (as well as a mask of kinds) for
+diff --git a/include/llvm/MC/MCInst.h b/include/llvm/MC/MCInst.h
+index db28fd0..e136a10 100644
+--- a/include/llvm/MC/MCInst.h
++++ b/include/llvm/MC/MCInst.h
+@@ -187,7 +187,7 @@ public:
+   using const_iterator = SmallVectorImpl<MCOperand>::const_iterator;
+ 
+   void clear() { Operands.clear(); }
+-  void erase(iterator I) { Operands.erase(I); }
++  iterator erase(iterator I) { return Operands.erase(I); }
+   size_t size() const { return Operands.size(); }
+   iterator begin() { return Operands.begin(); }
+   const_iterator begin() const { return Operands.begin(); }
+diff --git a/include/llvm/MC/MCObjectFileInfo.h b/include/llvm/MC/MCObjectFileInfo.h
+index c99f252..e6b4a88 100644
+--- a/include/llvm/MC/MCObjectFileInfo.h
++++ b/include/llvm/MC/MCObjectFileInfo.h
+@@ -65,6 +65,9 @@ protected:
+   /// constants.
+   MCSection *ReadOnlySection;
+ 
++  /// Same as the above but for infrequently used data.
++  MCSection *ReadOnlyColdSection;
++
+   /// If exception handling is supported by the target, this is the section the
+   /// Language Specific Data Area information is emitted to.
+   MCSection *LSDASection;
+@@ -230,6 +233,7 @@ public:
+   MCSection *getDataSection() const { return DataSection; }
+   MCSection *getBSSSection() const { return BSSSection; }
+   MCSection *getReadOnlySection() const { return ReadOnlySection; }
++  MCSection *getReadOnlyColdSection() const { return ReadOnlyColdSection; }
+   MCSection *getLSDASection() const { return LSDASection; }
+   MCSection *getCompactUnwindSection() const { return CompactUnwindSection; }
+   MCSection *getDwarfAbbrevSection() const { return DwarfAbbrevSection; }
+diff --git a/include/llvm/MC/MCObjectStreamer.h b/include/llvm/MC/MCObjectStreamer.h
+index 8e9b4ac..d2c569e 100644
+--- a/include/llvm/MC/MCObjectStreamer.h
++++ b/include/llvm/MC/MCObjectStreamer.h
+@@ -121,6 +121,8 @@ public:
+                             unsigned MaxBytesToEmit = 0) override;
+   void EmitCodeAlignment(unsigned ByteAlignment,
+                          unsigned MaxBytesToEmit = 0) override;
++  void EmitNeverAlignCodeAtEnd(unsigned ByteAlignment, int64_t Value = 0,
++                               unsigned ValueSize = 1) override;
+   void emitValueToOffset(const MCExpr *Offset, unsigned char Value,
+                          SMLoc Loc) override;
+   void
+diff --git a/include/llvm/MC/MCStreamer.h b/include/llvm/MC/MCStreamer.h
+index 582a836..0b15454 100644
+--- a/include/llvm/MC/MCStreamer.h
++++ b/include/llvm/MC/MCStreamer.h
+@@ -199,7 +199,7 @@ class MCStreamer {
+ 
+   /// \brief Tracks an index to represent the order a symbol was emitted in.
+   /// Zero means we did not emit that symbol.
+-  DenseMap<const MCSymbol *, unsigned> SymbolOrdering;
++  unsigned SymbolOrdering = 1;
+ 
+   /// \brief This is stack of current and previous section values saved by
+   /// PushSection.
+@@ -290,8 +290,8 @@ public:
+   /// If the comment includes embedded \n's, they will each get the comment
+   /// prefix as appropriate.  The added comment should not end with a \n.
+   /// By default, each comment is terminated with an end of line, i.e. the
+-  /// EOL param is set to true by default. If one prefers not to end the 
+-  /// comment with a new line then the EOL param should be passed 
++  /// EOL param is set to true by default. If one prefers not to end the
++  /// comment with a new line then the EOL param should be passed
+   /// with a false value.
+   virtual void AddComment(const Twine &T, bool EOL = true) {}
+ 
+@@ -338,9 +338,7 @@ public:
+ 
+   /// \brief Returns an index to represent the order a symbol was emitted in.
+   /// (zero if we did not emit that symbol)
+-  unsigned GetSymbolOrder(const MCSymbol *Sym) const {
+-    return SymbolOrdering.lookup(Sym);
+-  }
++  unsigned GetSymbolOrder(const MCSymbol *Sym) const;
+ 
+   /// \brief Update streamer for a new active section.
+   ///
+@@ -608,6 +606,10 @@ public:
+ 
+   virtual void EmitSLEB128Value(const MCExpr *Value);
+ 
++  /// \brief Like EmitULEB128Value but pads the output to specific number of
++  /// bytes.
++  void EmitPaddedULEB128IntValue(uint64_t Value, unsigned PadTo);
++
+   /// \brief Special case of EmitULEB128Value that avoids the client having to
+   /// pass in a MCExpr for constant integers.
+   void EmitULEB128IntValue(uint64_t Value);
+@@ -726,6 +728,12 @@ public:
+   virtual void EmitCodeAlignment(unsigned ByteAlignment,
+                                  unsigned MaxBytesToEmit = 0);
+ 
++  /// \brief If the end of the following fragment ever gets aligned to
++  /// \p ByteAlignment, emit a single nop or \t Value to break this alignment.
++  virtual void EmitNeverAlignCodeAtEnd(unsigned ByteAlignment,
++                                       int64_t Value = 0,
++                                       unsigned ValueSize = 1);
++
+   /// \brief Emit some number of copies of \p Value until the byte offset \p
+   /// Offset is reached.
+   ///
+@@ -904,6 +912,8 @@ public:
+ 
+   virtual void EmitSyntaxDirective();
+ 
++  virtual void EmitCFIInstruction(const MCCFIInstruction &Inst);
++
+   /// \brief Emit a .reloc directive.
+   /// Returns true if the relocation could not be emitted because Name is not
+   /// known.
+diff --git a/include/llvm/MC/MCSymbol.h b/include/llvm/MC/MCSymbol.h
+index cc8fc02..7b7835e 100644
+--- a/include/llvm/MC/MCSymbol.h
++++ b/include/llvm/MC/MCSymbol.h
+@@ -120,10 +120,15 @@ protected:
+ 
+   /// The Flags field is used by object file implementations to store
+   /// additional per symbol information which is not easily classified.
+-  enum : unsigned { NumFlagsBits = 16 };
++  enum : unsigned { NumFlagsBits = 15 };
+   mutable uint32_t Flags : NumFlagsBits;
+ 
+-  /// Index field, for use by the object file implementation.
++  /// Indicates if the next field is used for Index or Order.
++  mutable bool IsIndex : 1;
++
++  /// Index field for use by the object file implementation. It is also used to
++  /// represent order of the symbol. The semantics of the current value is
++  /// indicated by IsIndex field.
+   mutable uint32_t Index = 0;
+ 
+   union {
+@@ -154,7 +159,7 @@ protected:
+       : IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false),
+         IsRegistered(false), IsExternal(false), IsPrivateExtern(false),
+         Kind(Kind), IsUsedInReloc(false), SymbolContents(SymContentsUnset),
+-        CommonAlignLog2(0), Flags(0) {
++        CommonAlignLog2(0), Flags(0), IsIndex{false} {
+     Offset = 0;
+     FragmentAndHasName.setInt(!!Name);
+     if (Name)
+@@ -308,11 +313,27 @@ public:
+ 
+   /// Get the (implementation defined) index.
+   uint32_t getIndex() const {
++    assert(IsIndex && "Index unavailable");
+     return Index;
+   }
+ 
+   /// Set the (implementation defined) index.
+   void setIndex(uint32_t Value) const {
++    assert((IsIndex = true, true) && "assertion-specific code");
++    Index = Value;
++  }
++
++  bool hasIndex() const { return IsIndex; }
++
++  /// Get the (implementation defined) order.
++  uint32_t getOrder() const {
++    assert(!IsIndex && "Order unavailable");
++    return Index;
++  }
++
++  /// Set the (implementation defined) order.
++  void setOrder(uint32_t Value) const {
++    assert((IsIndex = false, true) && "assertion-specific code");
+     Index = Value;
+   }
+ 
+diff --git a/include/llvm/Object/COFF.h b/include/llvm/Object/COFF.h
+index 9190149..25646fe 100644
+--- a/include/llvm/Object/COFF.h
++++ b/include/llvm/Object/COFF.h
+@@ -899,6 +899,7 @@ protected:
+   bool isSectionData(DataRefImpl Sec) const override;
+   bool isSectionBSS(DataRefImpl Sec) const override;
+   bool isSectionVirtual(DataRefImpl Sec) const override;
++  bool isSectionReadOnly(DataRefImpl Sec) const override;
+   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
+   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
+ 
+diff --git a/include/llvm/Object/ELF.h b/include/llvm/Object/ELF.h
+index 46504e7..836fd8d 100644
+--- a/include/llvm/Object/ELF.h
++++ b/include/llvm/Object/ELF.h
+@@ -127,6 +127,18 @@ public:
+            getHeader()->getDataEncoding() == ELF::ELFDATA2LSB;
+   }
+ 
++  Expected<const Elf_Dyn *> dynamic_table_begin(const Elf_Phdr *Phdr) const;
++  Expected<const Elf_Dyn *> dynamic_table_end(const Elf_Phdr *Phdr) const;
++  Expected<Elf_Dyn_Range> dynamic_table(const Elf_Phdr *Phdr) const {
++    Expected<const Elf_Dyn *> Begin = dynamic_table_begin(Phdr);
++    if (!Begin)
++      return Begin.takeError();
++    Expected<const Elf_Dyn *> End = dynamic_table_end(Phdr);
++    if (!End)
++      return End.takeError();
++    return makeArrayRef(Begin.get(), End.get());
++  }
++
+   Expected<Elf_Shdr_Range> sections() const;
+ 
+   Expected<Elf_Sym_Range> symbols(const Elf_Shdr *Sec) const {
+@@ -397,6 +409,34 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
+ }
+ 
+ template <class ELFT>
++Expected<const typename ELFFile<ELFT>::Elf_Dyn *>
++ELFFile<ELFT>::dynamic_table_begin(const Elf_Phdr *Phdr) const {
++  if (!Phdr)
++    return nullptr;
++  assert(Phdr->p_type == ELF::PT_DYNAMIC && "Got the wrong program header");
++  uintX_t Offset = Phdr->p_offset;
++  if (Offset > Buf.size())
++    return make_error<GenericBinaryError>("Could not read dynamic table");
++  return reinterpret_cast<const Elf_Dyn *>(base() + Offset);
++}
++
++template <class ELFT>
++Expected<const typename ELFFile<ELFT>::Elf_Dyn *>
++ELFFile<ELFT>::dynamic_table_end(const Elf_Phdr *Phdr) const {
++  if (!Phdr)
++    return nullptr;
++  assert(Phdr->p_type == ELF::PT_DYNAMIC && "Got the wrong program header");
++  uintX_t Size = Phdr->p_filesz;
++  if (Size % sizeof(Elf_Dyn))
++    return make_error<GenericBinaryError>("Invalid dynamic table size");
++  // FIKME: Check for overflow?
++  uintX_t End = Phdr->p_offset + Size;
++  if (End > Buf.size())
++    return make_error<GenericBinaryError>("Could not read dynamic table");
++  return reinterpret_cast<const Elf_Dyn *>(base() + End);
++}
++
++template <class ELFT>
+ Expected<const typename ELFT::Sym *>
+ ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
+                                    const Elf_Shdr *SymTab) const {
+diff --git a/include/llvm/Object/ELFObjectFile.h b/include/llvm/Object/ELFObjectFile.h
+index 4d00103..06a6295 100644
+--- a/include/llvm/Object/ELFObjectFile.h
++++ b/include/llvm/Object/ELFObjectFile.h
+@@ -254,6 +254,7 @@ protected:
+   bool isSectionData(DataRefImpl Sec) const override;
+   bool isSectionBSS(DataRefImpl Sec) const override;
+   bool isSectionVirtual(DataRefImpl Sec) const override;
++  bool isSectionReadOnly(DataRefImpl Sec) const override;
+   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
+   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
+   section_iterator getRelocatedSection(DataRefImpl Sec) const override;
+@@ -717,6 +718,14 @@ bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
+ }
+ 
+ template <class ELFT>
++bool ELFObjectFile<ELFT>::isSectionReadOnly(DataRefImpl Sec) const {
++  const Elf_Shdr *EShdr = getSection(Sec);
++  return EShdr->sh_flags & ELF::SHF_ALLOC &&
++         !(EShdr->sh_flags & ELF::SHF_WRITE) &&
++         EShdr->sh_type == ELF::SHT_PROGBITS;
++}
++
++template <class ELFT>
+ relocation_iterator
+ ELFObjectFile<ELFT>::section_rel_begin(DataRefImpl Sec) const {
+   DataRefImpl RelData;
+@@ -751,9 +760,6 @@ ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
+ template <class ELFT>
+ section_iterator
+ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
+-  if (EF.getHeader()->e_type != ELF::ET_REL)
+-    return section_end();
+-
+   const Elf_Shdr *EShdr = getSection(Sec);
+   uintX_t Type = EShdr->sh_type;
+   if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA)
+@@ -792,8 +798,6 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
+ 
+ template <class ELFT>
+ uint64_t ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel) const {
+-  assert(EF.getHeader()->e_type == ELF::ET_REL &&
+-         "Only relocatable object files have relocation offsets");
+   const Elf_Shdr *sec = getRelSection(Rel);
+   if (sec->sh_type == ELF::SHT_REL)
+     return getRel(Rel)->r_offset;
+diff --git a/include/llvm/Object/MachO.h b/include/llvm/Object/MachO.h
+index bfd3462..9be0b26 100644
+--- a/include/llvm/Object/MachO.h
++++ b/include/llvm/Object/MachO.h
+@@ -320,6 +320,7 @@ public:
+   /// from offset 0 (i.e. the Mach-O header at the beginning of the file).
+   bool isSectionStripped(DataRefImpl Sec) const override;
+ 
++  bool isSectionReadOnly(DataRefImpl Sec) const override;
+   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
+   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
+ 
+@@ -331,7 +332,7 @@ public:
+ 
+   relocation_iterator locrel_begin() const;
+   relocation_iterator locrel_end() const;
+-  
++
+   void moveRelocationNext(DataRefImpl &Rel) const override;
+   uint64_t getRelocationOffset(DataRefImpl Rel) const override;
+   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
+diff --git a/include/llvm/Object/ObjectFile.h b/include/llvm/Object/ObjectFile.h
+index 9c4ae94..6434272 100644
+--- a/include/llvm/Object/ObjectFile.h
++++ b/include/llvm/Object/ObjectFile.h
+@@ -110,6 +110,7 @@ public:
+   bool isVirtual() const;
+   bool isBitcode() const;
+   bool isStripped() const;
++  bool isReadOnly() const;
+ 
+   bool containsSymbol(SymbolRef S) const;
+ 
+@@ -238,6 +239,7 @@ protected:
+   virtual bool isSectionVirtual(DataRefImpl Sec) const = 0;
+   virtual bool isSectionBitcode(DataRefImpl Sec) const;
+   virtual bool isSectionStripped(DataRefImpl Sec) const;
++  virtual bool isSectionReadOnly(DataRefImpl Sec) const = 0;
+   virtual relocation_iterator section_rel_begin(DataRefImpl Sec) const = 0;
+   virtual relocation_iterator section_rel_end(DataRefImpl Sec) const = 0;
+   virtual section_iterator getRelocatedSection(DataRefImpl Sec) const;
+@@ -442,6 +444,10 @@ inline bool SectionRef::isStripped() const {
+   return OwningObject->isSectionStripped(SectionPimpl);
+ }
+ 
++inline bool SectionRef::isReadOnly() const {
++  return OwningObject->isSectionReadOnly(SectionPimpl);
++}
++
+ inline relocation_iterator SectionRef::relocation_begin() const {
+   return OwningObject->section_rel_begin(SectionPimpl);
+ }
+diff --git a/include/llvm/Object/Wasm.h b/include/llvm/Object/Wasm.h
+index d49acf3a..5929a22 100644
+--- a/include/llvm/Object/Wasm.h
++++ b/include/llvm/Object/Wasm.h
+@@ -177,6 +177,7 @@ public:
+   bool isSectionText(DataRefImpl Sec) const override;
+   bool isSectionData(DataRefImpl Sec) const override;
+   bool isSectionBSS(DataRefImpl Sec) const override;
++  bool isSectionReadOnly(DataRefImpl Sec) const override;
+   bool isSectionVirtual(DataRefImpl Sec) const override;
+   bool isSectionBitcode(DataRefImpl Sec) const override;
+   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
+diff --git a/include/llvm/Support/ToolOutputFile.h b/include/llvm/Support/ToolOutputFile.h
+index 7fd5f20..2a47ef1 100644
+--- a/include/llvm/Support/ToolOutputFile.h
++++ b/include/llvm/Support/ToolOutputFile.h
+@@ -46,7 +46,7 @@ public:
+   /// This constructor's arguments are passed to raw_fd_ostream's
+   /// constructor.
+   ToolOutputFile(StringRef Filename, std::error_code &EC,
+-                 sys::fs::OpenFlags Flags);
++                 sys::fs::OpenFlags Flags, unsigned Mode = 0666);
+ 
+   ToolOutputFile(StringRef Filename, int FD);
+ 
+diff --git a/include/llvm/Support/X86DisassemblerDecoderCommon.h b/include/llvm/Support/X86DisassemblerDecoderCommon.h
+index eeffb9c..2ec2496 100644
+--- a/include/llvm/Support/X86DisassemblerDecoderCommon.h
++++ b/include/llvm/Support/X86DisassemblerDecoderCommon.h
+@@ -62,7 +62,8 @@ namespace X86Disassembler {
+   ENUM_ENTRY(ATTR_EVEXL2, (0x1 << 10))  \
+   ENUM_ENTRY(ATTR_EVEXK,  (0x1 << 11))  \
+   ENUM_ENTRY(ATTR_EVEXKZ, (0x1 << 12))  \
+-  ENUM_ENTRY(ATTR_EVEXB,  (0x1 << 13))
++  ENUM_ENTRY(ATTR_EVEXB,  (0x1 << 13))  \
++  ENUM_ENTRY(ATTR_3DNOW,  (0x1 << 14))
+ 
+ #define ENUM_ENTRY(n, v) n = v,
+ enum attributeBits {
+@@ -272,7 +273,8 @@ enum attributeBits {
+   ENUM_ENTRY(IC_EVEX_L2_W_KZ,        3,  "requires EVEX_KZ, L2 and W")               \
+   ENUM_ENTRY(IC_EVEX_L2_W_XS_KZ,     4,  "requires EVEX_KZ, L2, W and XS prefix")    \
+   ENUM_ENTRY(IC_EVEX_L2_W_XD_KZ,     4,  "requires EVEX_KZ, L2, W and XD prefix")    \
+-  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_KZ, 4,  "requires EVEX_KZ, L2, W and OpSize")
++  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_KZ, 4,  "requires EVEX_KZ, L2, W and OpSize")       \
++  ENUM_ENTRY(IC_3DNOW,               8,  "requires AMD 3DNow prefix 0f0f")
+ 
+ #define ENUM_ENTRY(n, r, d) n,
+ enum InstructionContext {
+diff --git a/include/llvm/Support/raw_ostream.h b/include/llvm/Support/raw_ostream.h
+index d11f5a8..0ad115c 100644
+--- a/include/llvm/Support/raw_ostream.h
++++ b/include/llvm/Support/raw_ostream.h
+@@ -393,7 +393,7 @@ public:
+   /// STDOUT_FILENO instead of opening a file. This will not close the stdout
+   /// descriptor.
+   raw_fd_ostream(StringRef Filename, std::error_code &EC,
+-                 sys::fs::OpenFlags Flags);
++                 sys::fs::OpenFlags Flags, unsigned Mode = 0666);
+ 
+   /// FD is the file descriptor that this writes to.  If ShouldClose is true,
+   /// this closes the file when the stream is destroyed. If FD is for stdout or
+diff --git a/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp b/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
+index adada67..c9c7997 100644
+--- a/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
++++ b/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
+@@ -38,7 +38,7 @@ DWARFAbbreviationDeclaration::DWARFAbbreviationDeclaration() {
+ }
+ 
+ bool
+-DWARFAbbreviationDeclaration::extract(DataExtractor Data, 
++DWARFAbbreviationDeclaration::extract(DataExtractor Data,
+                                       uint32_t* OffsetPtr) {
+   clear();
+   const uint32_t Offset = *OffsetPtr;
+@@ -61,13 +61,15 @@ DWARFAbbreviationDeclaration::extract(DataExtractor Data,
+ 
+   // Read all of the abbreviation attributes and forms.
+   while (true) {
++    uint32_t AOff = *OffsetPtr;
+     auto A = static_cast<Attribute>(Data.getULEB128(OffsetPtr));
++    uint32_t FOff = *OffsetPtr;
+     auto F = static_cast<Form>(Data.getULEB128(OffsetPtr));
+     if (A && F) {
+       bool IsImplicitConst = (F == DW_FORM_implicit_const);
+       if (IsImplicitConst) {
+         int64_t V = Data.getSLEB128(OffsetPtr);
+-        AttributeSpecs.push_back(AttributeSpec(A, F, V));
++        AttributeSpecs.push_back(AttributeSpec(A, F, V, AOff, FOff));
+         continue;
+       }
+       Optional<uint8_t> ByteSize;
+@@ -109,7 +111,7 @@ DWARFAbbreviationDeclaration::extract(DataExtractor Data,
+         break;
+       }
+       // Record this attribute and its fixed size if it has one.
+-      AttributeSpecs.push_back(AttributeSpec(A, F, ByteSize));
++      AttributeSpecs.push_back(AttributeSpec(A, F, ByteSize, AOff, FOff));
+     } else if (A == 0 && F == 0) {
+       // We successfully reached the end of this abbreviation declaration
+       // since both attribute and form are zero.
+@@ -139,6 +141,15 @@ void DWARFAbbreviationDeclaration::dump(raw_ostream &OS) const {
+   OS << '\n';
+ }
+ 
++const DWARFAbbreviationDeclaration::AttributeSpec *
++DWARFAbbreviationDeclaration::findAttribute(dwarf::Attribute Attr) const {
++  for (uint32_t i = 0, e = AttributeSpecs.size(); i != e; ++i) {
++    if (AttributeSpecs[i].Attr == Attr)
++      return &AttributeSpecs[i];
++  }
++  return nullptr;
++}
++
+ Optional<uint32_t>
+ DWARFAbbreviationDeclaration::findAttributeIndex(dwarf::Attribute Attr) const {
+   for (uint32_t i = 0, e = AttributeSpecs.size(); i != e; ++i) {
+@@ -150,7 +161,7 @@ DWARFAbbreviationDeclaration::findAttributeIndex(dwarf::Attribute Attr) const {
+ 
+ Optional<DWARFFormValue> DWARFAbbreviationDeclaration::getAttributeValue(
+     const uint32_t DIEOffset, const dwarf::Attribute Attr,
+-    const DWARFUnit &U) const {
++    const DWARFUnit &U, uint32_t *OffsetPtr) const {
+   Optional<uint32_t> MatchAttrIndex = findAttributeIndex(Attr);
+   if (!MatchAttrIndex)
+     return None;
+@@ -164,6 +175,8 @@ Optional<DWARFFormValue> DWARFAbbreviationDeclaration::getAttributeValue(
+   for (const auto &Spec : AttributeSpecs) {
+     if (*MatchAttrIndex == AttrIndex) {
+       // We have arrived at the attribute to extract, extract if from Offset.
++      if (OffsetPtr)
++        *OffsetPtr = Offset;
+       DWARFFormValue FormValue(Spec.Form);
+       if (Spec.isImplicitConst()) {
+         FormValue.setSValue(Spec.getImplicitConstValue());
+diff --git a/lib/DebugInfo/DWARF/DWARFContext.cpp b/lib/DebugInfo/DWARF/DWARFContext.cpp
+index 3a974dd..65bd4a6 100644
+--- a/lib/DebugInfo/DWARF/DWARFContext.cpp
++++ b/lib/DebugInfo/DWARF/DWARFContext.cpp
+@@ -681,6 +681,15 @@ const DWARFDebugLoc *DWARFContext::getDebugLoc() {
+   return Loc.get();
+ }
+ 
++Optional<DWARFDebugLoc::LocationList>
++DWARFContext::getOneDebugLocList(uint32_t *Offset) {
++  DWARFDebugLoc L;
++  DWARFDataExtractor LocData(*DObj, DObj->getLocSection(), isLittleEndian(),
++                             getCompileUnitAtIndex(0)->getAddressByteSize());
++
++  return L.parseOneLocationList(LocData, Offset);
++}
++
+ const DWARFDebugLocDWO *DWARFContext::getDebugLocDWO() {
+   if (LocDWO)
+     return LocDWO.get();
+@@ -726,7 +735,8 @@ const DWARFDebugFrame *DWARFContext::getEHFrame() {
+ 
+   DWARFDataExtractor debugFrameData(DObj->getEHFrameSection(), isLittleEndian(),
+                                     DObj->getAddressSize());
+-  DebugFrame.reset(new DWARFDebugFrame(true /* IsEH */));
++  DebugFrame.reset(
++      new DWARFDebugFrame(true /* IsEH */, DObj->getEHFrameAddress()));
+   DebugFrame->parse(debugFrameData);
+   return DebugFrame.get();
+ }
+@@ -809,6 +819,19 @@ DWARFContext::getLineTableForUnit(DWARFUnit *U) {
+   return Line->getOrParseLineTable(lineData, stmtOffset, *this, U);
+ }
+ 
++uint32_t DWARFContext::getAttrFieldOffsetForUnit(DWARFUnit *U,
++                                                 dwarf::Attribute Attr) const {
++  const auto UnitDIE = U->getUnitDIE();
++  if (!UnitDIE)
++    return 0;
++
++  uint32_t Offset = 0;
++  if (!UnitDIE.find(Attr, &Offset))
++    return 0;
++
++  return Offset;
++}
++
+ void DWARFContext::parseCompileUnits() {
+   CUs.parse(*this, DObj->getInfoSection());
+ }
+@@ -1244,6 +1267,9 @@ class DWARFObjInMemory final : public DWARFObject {
+ 
+   SmallVector<SmallString<32>, 4> UncompressedSections;
+ 
++  uint64_t EHFrameAddress{0};
++  bool UsesRelocs{true};
++
+   StringRef *mapSectionToMember(StringRef Name) {
+     if (DWARFSection *Sec = mapNameToDWARFSection(Name))
+       return &Sec->Data;
+@@ -1300,10 +1326,11 @@ public:
+     }
+   }
+   DWARFObjInMemory(const object::ObjectFile &Obj, const LoadedObjectInfo *L,
+-                   function_ref<ErrorPolicy(Error)> HandleError)
++                   function_ref<ErrorPolicy(Error)> HandleError,
++                   bool UsesRelocs = true)
+       : IsLittleEndian(Obj.isLittleEndian()),
+         AddressSize(Obj.getBytesInAddress()), FileName(Obj.getFileName()),
+-        Obj(&Obj) {
++        Obj(&Obj), UsesRelocs(UsesRelocs) {
+ 
+     StringMap<unsigned> SectionAmountMap;
+     for (const SectionRef &Section : Obj.sections()) {
+@@ -1350,6 +1377,8 @@ public:
+         if (Name == "debug_ranges") {
+           // FIXME: Use the other dwo range section when we emit it.
+           RangeDWOSection.Data = Data;
++        } else if (Name == "eh_frame") {
++          EHFrameAddress = Section.getAddress();
+         }
+       } else if (Name == "debug_types") {
+         // Find debug_types data by section rather than name as there are
+@@ -1402,7 +1431,7 @@ public:
+           continue;
+       }
+ 
+-      if (Section.relocation_begin() == Section.relocation_end())
++      if (Section.relocation_begin() == Section.relocation_end() || !UsesRelocs)
+         continue;
+ 
+       // Symbol to [address, section index] cache mapping.
+@@ -1445,6 +1474,8 @@ public:
+ 
+   Optional<RelocAddrEntry> find(const DWARFSection &S,
+                                 uint64_t Pos) const override {
++    if (!UsesRelocs)
++      return None;
+     auto &Sec = static_cast<const DWARFSectionMap &>(S);
+     RelocAddrMap::const_iterator AI = Sec.Relocs.find(Pos);
+     if (AI == Sec.Relocs.end())
+@@ -1499,6 +1530,7 @@ public:
+   StringRef getARangeSection() const override { return ARangeSection; }
+   StringRef getDebugFrameSection() const override { return DebugFrameSection; }
+   StringRef getEHFrameSection() const override { return EHFrameSection; }
++  uint64_t getEHFrameAddress() const override { return EHFrameAddress; }
+   const DWARFSection &getLineSection() const override { return LineSection; }
+   StringRef getStringSection() const override { return StringSection; }
+   const DWARFSection &getRangeSection() const override { return RangeSection; }
+@@ -1544,8 +1576,9 @@ public:
+ std::unique_ptr<DWARFContext>
+ DWARFContext::create(const object::ObjectFile &Obj, const LoadedObjectInfo *L,
+                      function_ref<ErrorPolicy(Error)> HandleError,
+-                     std::string DWPName) {
+-  auto DObj = llvm::make_unique<DWARFObjInMemory>(Obj, L, HandleError);
++                     std::string DWPName, bool UsesRelocs) {
++  auto DObj =
++      llvm::make_unique<DWARFObjInMemory>(Obj, L, HandleError, UsesRelocs);
+   return llvm::make_unique<DWARFContext>(std::move(DObj), std::move(DWPName));
+ }
+ 
+diff --git a/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp b/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp
+index 03e3174..0436778 100644
+--- a/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp
++++ b/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp
+@@ -7,6 +7,7 @@
+ //
+ //===----------------------------------------------------------------------===//
+ 
++#include "llvm/BinaryFormat/Dwarf.h"
+ #include "llvm/DebugInfo/DWARF/DWARFDataExtractor.h"
+ #include "llvm/BinaryFormat/Dwarf.h"
+ #include "llvm/DebugInfo/DWARF/DWARFContext.h"
+diff --git a/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp b/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
+index b9dc215..40a5790 100644
+--- a/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
++++ b/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
+@@ -352,7 +352,8 @@ static void LLVM_ATTRIBUTE_NORETURN ReportError(uint32_t StartOffset,
+   report_fatal_error(Str);
+ }
+ 
+-void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
++void DWARFDebugFrame::parse(DWARFDataExtractor Data,
++                            RefHandlerType RefHandler) {
+   uint32_t Offset = 0;
+   DenseMap<uint32_t, CIE *> CIEs;
+ 
+@@ -369,6 +370,9 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+       // length.
+       IsDWARF64 = true;
+       Length = Data.getU64(&Offset);
++    } else if (Length == 0) {
++      // Skip empty entry.
++      continue;
+     }
+ 
+     // At this point, Offset points to the next field after Length.
+@@ -425,6 +429,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+               Personality = Data.getEncodedPointer(
+                   &Offset, *PersonalityEncoding,
+                   EHFrameAddress ? EHFrameAddress + Offset : 0);
++              if (RefHandler)
++                RefHandler(*Personality, Offset, *PersonalityEncoding);
+               break;
+             }
+             case 'R':
+@@ -478,6 +484,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+                 EHFrameAddress ? EHFrameAddress + Offset : 0)) {
+           InitialLocation = *Val;
+         }
++        if (RefHandler)
++          RefHandler(InitialLocation, Offset, Cie->getFDEPointerEncoding());
+         if (auto Val = Data.getEncodedPointer(
+                 &Offset, Cie->getFDEPointerEncoding(), 0)) {
+           AddressRange = *Val;
+@@ -496,6 +504,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+             LSDAAddress = Data.getEncodedPointer(
+                 &Offset, Cie->getLSDAPointerEncoding(),
+                 EHFrameAddress ? Offset + EHFrameAddress : 0);
++            if (RefHandler)
++              RefHandler(*LSDAAddress, Offset, Cie->getLSDAPointerEncoding());
+           }
+ 
+           if (Offset != EndAugmentationOffset)
+@@ -531,6 +541,13 @@ FrameEntry *DWARFDebugFrame::getEntryAtOffset(uint64_t Offset) const {
+   return nullptr;
+ }
+ 
++void DWARFDebugFrame::for_each_FDE(FDEFunction F) const {
++  for (const auto &Entry : Entries) {
++    if (const auto *FDE = dyn_cast<dwarf::FDE>(Entry.get()))
++      F(FDE);
++  }
++}
++
+ void DWARFDebugFrame::dump(raw_ostream &OS, const MCRegisterInfo *MRI,
+                            Optional<uint64_t> Offset) const {
+   if (Offset) {
+diff --git a/lib/DebugInfo/DWARF/DWARFDie.cpp b/lib/DebugInfo/DWARF/DWARFDie.cpp
+index 7ae38e6..f1fd34a 100644
+--- a/lib/DebugInfo/DWARF/DWARFDie.cpp
++++ b/lib/DebugInfo/DWARF/DWARFDie.cpp
+@@ -270,12 +270,13 @@ bool DWARFDie::isSubroutineDIE() const {
+   return Tag == DW_TAG_subprogram || Tag == DW_TAG_inlined_subroutine;
+ }
+ 
+-Optional<DWARFFormValue> DWARFDie::find(dwarf::Attribute Attr) const {
++Optional<DWARFFormValue> DWARFDie::find(dwarf::Attribute Attr,
++                                        uint32_t *OffsetPtr) const {
+   if (!isValid())
+     return None;
+   auto AbbrevDecl = getAbbreviationDeclarationPtr();
+   if (AbbrevDecl)
+-    return AbbrevDecl->getAttributeValue(getOffset(), Attr, *U);
++    return AbbrevDecl->getAttributeValue(getOffset(), Attr, *U, OffsetPtr);
+   return None;
+ }
+ 
+diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
+index 3d274b6..cef29f4 100644
+--- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
++++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
+@@ -175,6 +175,12 @@ static Error getOffset(const SymbolRef &Sym, SectionRef Sec,
+   return Error::success();
+ }
+ 
++void RuntimeDyldImpl::mapSectionAddress(unsigned SectionID,
++                                        uint64_t TargetAddress) {
++  MutexGuard locked(lock);
++  reassignSectionAddress(SectionID, TargetAddress);
++}
++
+ Expected<RuntimeDyldImpl::ObjSectionToIDMap>
+ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
+   MutexGuard locked(lock);
+@@ -585,6 +591,10 @@ unsigned RuntimeDyldImpl::computeGOTSize(const ObjectFile &Obj) {
+ // compute stub buffer size for the given section
+ unsigned RuntimeDyldImpl::computeSectionStubBufSize(const ObjectFile &Obj,
+                                                     const SectionRef &Section) {
++  if (!MemMgr.allowStubAllocation()) {
++    return 0;
++  }
++
+   unsigned StubSize = getMaxStubSize();
+   if (StubSize == 0) {
+     return 0;
+@@ -795,9 +805,12 @@ RuntimeDyldImpl::emitSection(const ObjectFile &Obj,
+     // to handle later processing (and by 'handle' I mean don't do anything
+     // with these sections).
+     Allocate = 0;
+-    Addr = nullptr;
++    Addr =
++      MemMgr.recordNoteSection(reinterpret_cast<const uint8_t *>(data.data()),
++                               DataSize, Alignment, SectionID, Name);
+     DEBUG(dbgs() << "emitSection SectionID: " << SectionID << " Name: " << Name
+-                 << " obj addr: " << format("%p", data.data()) << " new addr: 0"
++                 << " obj addr: " << format("%p", data.data())
++                 << " new addr: " << format("%p", Addr)
+                  << " DataSize: " << DataSize << " StubBufSize: " << StubBufSize
+                  << " Allocate: " << Allocate << "\n");
+   }
+@@ -1064,7 +1077,7 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
+       }
+ 
+       // FIXME: Implement error handling that doesn't kill the host program!
+-      if (!Addr)
++      if (!Addr && !Resolver.allowsZeroSymbols())
+         report_fatal_error("Program used external function '" + Name +
+                            "' which could not be resolved!");
+ 
+@@ -1215,6 +1228,11 @@ void RuntimeDyld::mapSectionAddress(const void *LocalAddress,
+   Dyld->mapSectionAddress(LocalAddress, TargetAddress);
+ }
+ 
++void RuntimeDyld::mapSectionAddress(unsigned SectionID,
++                                    uint64_t TargetAddress) {
++  Dyld->mapSectionAddress(SectionID, TargetAddress);
++}
++
+ bool RuntimeDyld::hasError() { return Dyld->hasError(); }
+ 
+ StringRef RuntimeDyld::getErrorString() { return Dyld->getErrorString(); }
+diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
+index 36b43ec9..3dc3e8f 100644
+--- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
++++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
+@@ -270,6 +270,25 @@ void RuntimeDyldELF::resolveX86_64Relocation(const SectionEntry &Section,
+     break;
+   case ELF::R_X86_64_NONE:
+     break;
++  case ELF::R_X86_64_8: {
++    Value += Addend;
++    assert((int64_t)Value <= INT8_MAX && (int64_t)Value >= INT8_MIN);
++    uint8_t TruncatedAddr = (Value & 0xFF);
++    *Section.getAddressWithOffset(Offset) = TruncatedAddr;
++    DEBUG(dbgs() << "Writing " << format("%p", TruncatedAddr) << " at "
++          << format("%p\n", Section.getAddressWithOffset(Offset)));
++    break;
++  }
++  case ELF::R_X86_64_16: {
++    Value += Addend;
++    assert((int64_t)Value <= INT16_MAX && (int64_t)Value >= INT16_MIN);
++    uint16_t TruncatedAddr = (Value & 0xFFFF);
++    support::ulittle16_t::ref(Section.getAddressWithOffset(Offset)) =
++        TruncatedAddr;
++    DEBUG(dbgs() << "Writing " << format("%p", TruncatedAddr) << " at "
++                 << format("%p\n", Section.getAddressWithOffset(Offset)));
++    break;
++  }
+   case ELF::R_X86_64_64: {
+     support::ulittle64_t::ref(Section.getAddressWithOffset(Offset)) =
+         Value + Addend;
+@@ -390,6 +409,26 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
+   case ELF::R_AARCH64_PREL64:
+     write(isBE, TargetPtr, Value + Addend - FinalAddress);
+     break;
++  case ELF::R_AARCH64_CONDBR19: {
++    uint64_t BranchImm = Value + Addend - FinalAddress;
++
++    assert(isInt<21>(BranchImm));
++
++    *TargetPtr &= 0xff00001fU;
++    // Immediate:20:2 goes in bits 23:5 of Bcc, CBZ, CBNZ
++    *TargetPtr |= static_cast<uint32_t>(BranchImm & 0x1ffffcU) << 3;
++    break;
++  }
++  case ELF::R_AARCH64_TSTBR14: {
++    uint64_t BranchImm = Value + Addend - FinalAddress;
++
++    assert(isInt<16>(BranchImm));
++
++    *TargetPtr &= 0xfff8001fU;
++    // Immediate:15:2 goes in bits 18:5 of TBZ, TBNZ
++    *TargetPtr |= static_cast<uint32_t>(BranchImm & 0xffffffcU) << 3;
++    break;
++  }
+   case ELF::R_AARCH64_CALL26: // fallthrough
+   case ELF::R_AARCH64_JUMP26: {
+     // Operation: S+A-P. Set Call or B immediate value to bits fff_fffc of the
+@@ -462,6 +501,33 @@ void RuntimeDyldELF::resolveAArch64Relocation(const SectionEntry &Section,
+     // from bits 11:4 of X
+     or32AArch64Imm(TargetPtr, getBits(Value + Addend, 4, 11));
+     break;
++  case ELF::R_AARCH64_LD_PREL_LO19: {
++    // Operation: S + A - P
++    uint64_t Result = Value + Addend - FinalAddress;
++
++    // "Check that -2^20 <= result < 2^20".
++    assert(isInt<21>(Result));
++
++    *TargetPtr &= 0xff00001fU;
++    // Immediate goes in bits 23:5 of LD imm instruction, taken
++    // from bits 20:2 of X
++    *TargetPtr |= ((Result & 0xffc) << (5 - 2));
++    break;
++  }
++  case ELF::R_AARCH64_ADR_PREL_LO21: {
++    // Operation: S + A - P
++    uint64_t Result = Value + Addend - FinalAddress;
++
++    // "Check that -2^20 <= result < 2^20".
++    assert(isInt<21>(Result));
++
++    *TargetPtr &= 0x9f00001fU;
++    // Immediate goes in bits 23:5, 30:29 of ADR imm instruction, taken
++    // from bits 20:0 of X
++    *TargetPtr |= ((Result & 0xffc) << (5 - 2));
++    *TargetPtr |= (Result & 0x3) << 29;
++    break;
++  }
+   }
+ }
+ 
+@@ -1173,7 +1239,9 @@ RuntimeDyldELF::processRelocationRef(
+   DEBUG(dbgs() << "\t\tSectionID: " << SectionID << " Offset: " << Offset
+                << "\n");
+   if ((Arch == Triple::aarch64 || Arch == Triple::aarch64_be)) {
+-    if (RelType == ELF::R_AARCH64_CALL26 || RelType == ELF::R_AARCH64_JUMP26) {
++    if ((RelType == ELF::R_AARCH64_CALL26 ||
++         RelType == ELF::R_AARCH64_JUMP26) &&
++        MemMgr.allowStubAllocation()) {
+       resolveAArch64Branch(SectionID, Value, RelI, Stubs);
+     } else if (RelType == ELF::R_AARCH64_ADR_GOT_PAGE) {
+       // Craete new GOT entry or find existing one. If GOT entry is
+@@ -1410,7 +1478,7 @@ RuntimeDyldELF::processRelocationRef(
+     } else {
+       processSimpleRelocation(SectionID, Offset, RelType, Value);
+     }
+-  
++
+   } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
+     if (RelType == ELF::R_PPC64_REL24) {
+       // Determine ABI variant in use for this object.
+@@ -1632,7 +1700,7 @@ RuntimeDyldELF::processRelocationRef(
+       // equivalent to the usual PLT implementation except that we use the stub
+       // mechanism in RuntimeDyld (which puts stubs at the end of the section)
+       // rather than allocating a PLT section.
+-      if (Value.SymbolName) {
++      if (Value.SymbolName && MemMgr.allowStubAllocation()) {
+         // This is a call to an external function.
+         // Look for an existing stub.
+         SectionEntry &Section = Sections[SectionID];
+@@ -1674,9 +1742,8 @@ RuntimeDyldELF::processRelocationRef(
+         resolveRelocation(Section, Offset, StubAddress, ELF::R_X86_64_PC32,
+                           Addend);
+       } else {
+-        RelocationEntry RE(SectionID, Offset, ELF::R_X86_64_PC32, Value.Addend,
+-                  Value.Offset);
+-        addRelocationForSection(RE, Value.SectionID);
++        Value.Addend += support::ulittle32_t::ref(computePlaceholderAddress(SectionID, Offset));
++        processSimpleRelocation(SectionID, Offset, ELF::R_X86_64_PC32, Value);
+       }
+     } else if (RelType == ELF::R_X86_64_GOTPCREL ||
+                RelType == ELF::R_X86_64_GOTPCRELX ||
+diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h
+index 766a9b2..a36c791 100644
+--- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h
++++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h
+@@ -540,6 +540,8 @@ public:
+ 
+   void mapSectionAddress(const void *LocalAddress, uint64_t TargetAddress);
+ 
++  void mapSectionAddress(unsigned SectionID, uint64_t TargetAddress);
++
+   // Is the linker in an error state?
+   bool hasError() { return HasError; }
+ 
+diff --git a/lib/MC/MCAssembler.cpp b/lib/MC/MCAssembler.cpp
+index a0f9a85..be32963 100644
+--- a/lib/MC/MCAssembler.cpp
++++ b/lib/MC/MCAssembler.cpp
+@@ -318,6 +318,34 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
+     return Size;
+   }
+ 
++  case MCFragment::FT_NeverAlign: {
++    const MCNeverAlignFragment &NAF = cast<MCNeverAlignFragment>(F);
++    uint64_t Offset = Layout.getFragmentOffset(&NAF);
++    unsigned Size = 0;
++    uint64_t OffsetToAvoid = 0;
++    // Calculate offset to avoid in order to avoid aligning the end of the
++    // next fragment
++    if (const auto *NextFrag = dyn_cast<MCRelaxableFragment>(F.getNextNode())) {
++      OffsetToAvoid = NAF.getAlignment() -
++        (NextFrag->getContents().size() % NAF.getAlignment());
++    } else if (const auto *NextFrag =
++        dyn_cast<MCDataFragment>(F.getNextNode())) {
++      OffsetToAvoid = NAF.getAlignment() -
++        (NextFrag->getContents().size() % NAF.getAlignment());
++    }
++    // Check if the current offset matches the alignment plus offset we want to
++    // avoid
++    if (Offset % NAF.getAlignment() == OffsetToAvoid) {
++      // Avoid this alignment by introducing one extra byte
++      Size = 1;
++      if (Size > 0 && NAF.hasEmitNops()) {
++        while (Size % getBackend().getMinimumNopSize())
++          Size += 1;
++      }
++    }
++    return Size;
++  }
++
+   case MCFragment::FT_Org: {
+     const MCOrgFragment &OF = cast<MCOrgFragment>(F);
+     MCValue Value;
+@@ -525,6 +553,35 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
+     break;
+   }
+ 
++  case MCFragment::FT_NeverAlign: {
++    const MCNeverAlignFragment &NAF = cast<MCNeverAlignFragment>(F);
++    assert(NAF.getValueSize() && "Invalid virtual align in concrete fragment!");
++
++    uint64_t Count = FragmentSize / NAF.getValueSize();
++    if (Count == 0)
++      break;
++    assert(Count * NAF.getValueSize() == FragmentSize);
++
++    if (NAF.hasEmitNops()) {
++      if (!Asm.getBackend().writeNopData(Count, OW))
++        report_fatal_error("unable to write nop sequence of " +
++            Twine(Count) + " bytes");
++      break;
++    }
++
++    // Otherwise, write out in multiples of the value size.
++    for (uint64_t i = 0; i != Count; ++i) {
++      switch (NAF.getValueSize()) {
++        default: llvm_unreachable("Invalid size!");
++        case 1: OW->write8 (uint8_t (NAF.getValue())); break;
++        case 2: OW->write16(uint16_t(NAF.getValue())); break;
++        case 4: OW->write32(uint32_t(NAF.getValue())); break;
++        case 8: OW->write64(uint64_t(NAF.getValue())); break;
++      }
++    }
++    break;
++  }
++
+   case MCFragment::FT_Data: 
+     ++stats::EmittedDataFragments;
+     OW->writeBytes(cast<MCDataFragment>(F).getContents());
+@@ -651,6 +708,11 @@ void MCAssembler::writeSectionData(const MCSection *Sec,
+                 cast<MCAlignFragment>(F).getValue() == 0) &&
+                "Invalid align in virtual section!");
+         break;
++      case MCFragment::FT_NeverAlign:
++        assert((cast<MCNeverAlignFragment>(F).getValueSize() == 0 ||
++                cast<MCNeverAlignFragment>(F).getValue() == 0) &&
++            "Invalid neveralign in virtual section!");
++        break;
+       case MCFragment::FT_Fill:
+         assert((cast<MCFillFragment>(F).getValue() == 0) &&
+                "Invalid fill in virtual section!");
+diff --git a/lib/MC/MCDwarf.cpp b/lib/MC/MCDwarf.cpp
+index 0e0ea96..0044566 100644
+--- a/lib/MC/MCDwarf.cpp
++++ b/lib/MC/MCDwarf.cpp
+@@ -41,6 +41,7 @@
+ #include <cassert>
+ #include <cstdint>
+ #include <string>
++#include <tuple>
+ #include <utility>
+ #include <vector>
+ 
+@@ -156,12 +157,36 @@ EmitDwarfLineTable(MCObjectStreamer *MCOS, MCSection *Section,
+   unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
+   unsigned Isa = 0;
+   unsigned Discriminator = 0;
++  uint64_t LastAddress = -1ULL;
++  (void)LastAddress;
+   MCSymbol *LastLabel = nullptr;
+ 
+   // Loop through each MCDwarfLineEntry and encode the dwarf line number table.
+-  for (const MCDwarfLineEntry &LineEntry : LineEntries) {
++  for (auto it = LineEntries.begin(),
++            ie = LineEntries.end();
++       it != ie; ++it) {
++    const MCDwarfLineEntry &LineEntry = *it;
+     int64_t LineDelta = static_cast<int64_t>(LineEntry.getLine()) - LastLine;
+ 
++    uint64_t Address = LineEntry.getAbsoluteAddr();
++    if (Address != -1ULL) {
++      auto nit = it;
++      if (++nit == ie) {
++        // We are using a hacky way to update debug info for functions that we
++        // didn't rewrite. We don't have a code section context, and should
++        // emit end_sequence at the address indicated by the last entry.
++        MCOS->EmitIntValue(dwarf::DW_LNS_extended_op, 1);
++        MCOS->EmitIntValue(8 + 1, 1);
++        MCOS->EmitIntValue(dwarf::DW_LNE_set_address, 1);
++        MCOS->EmitIntValue(Address, 8);
++        MCDwarfLineAddr::Emit(MCOS,
++                              MCOS->getAssembler().getDWARFLinetableParams(),
++                              INT64_MAX,
++                              0);
++        return;
++      }
++    }
++
+     if (FileNum != LineEntry.getFileNum()) {
+       FileNum = LineEntry.getFileNum();
+       MCOS->EmitIntValue(dwarf::DW_LNS_set_file, 1);
+@@ -197,18 +222,33 @@ EmitDwarfLineTable(MCObjectStreamer *MCOS, MCSection *Section,
+     if (LineEntry.getFlags() & DWARF2_FLAG_EPILOGUE_BEGIN)
+       MCOS->EmitIntValue(dwarf::DW_LNS_set_epilogue_begin, 1);
+ 
+-    MCSymbol *Label = LineEntry.getLabel();
++    if (Address == -1ULL) {
++      assert(LastAddress == -1ULL &&
++             "Absolute addresses can only be added at the end of the table.");
++
++      MCSymbol *Label = LineEntry.getLabel();
+ 
+-    // At this point we want to emit/create the sequence to encode the delta in
+-    // line numbers and the increment of the address from the previous Label
+-    // and the current Label.
+-    const MCAsmInfo *asmInfo = MCOS->getContext().getAsmInfo();
+-    MCOS->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
+-                                   asmInfo->getCodePointerSize());
++      // At this point we want to emit/create the sequence to encode the delta in
++      // line numbers and the increment of the address from the previous Label
++      // and the current Label.
++      const MCAsmInfo *asmInfo = MCOS->getContext().getAsmInfo();
++      MCOS->EmitDwarfAdvanceLineAddr(LineDelta, LastLabel, Label,
++                                     asmInfo->getCodePointerSize());
++      LastLabel = Label;
++    } else {
++      MCOS->EmitIntValue(dwarf::DW_LNS_extended_op, 1);
++      // DW_LNE_set_address length: pointer size (8) + 1
++      MCOS->EmitIntValue(8 + 1, 1);
++      MCOS->EmitIntValue(dwarf::DW_LNE_set_address, 1);
++      MCOS->EmitIntValue(Address, 8);
++      MCOS->EmitIntValue(dwarf::DW_LNS_advance_line, 1);
++      MCOS->EmitSLEB128IntValue(LineDelta);
++      MCOS->EmitIntValue(dwarf::DW_LNS_copy, 1);
++      LastAddress = Address;
++    }
+ 
+     Discriminator = 0;
+     LastLine = LineEntry.getLine();
+-    LastLabel = Label;
+   }
+ 
+   // Emit a DW_LNE_end_sequence for the end of the section.
+@@ -250,7 +290,7 @@ void MCDwarfLineTable::Emit(MCObjectStreamer *MCOS,
+   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
+ 
+   // Handle the rest of the Compile Units.
+-  for (const auto &CUIDTablePair : LineTables)
++  for (auto &CUIDTablePair : LineTables)
+     CUIDTablePair.second.EmitCU(MCOS, Params, LineStr);
+ 
+   if (LineStr)
+@@ -484,7 +524,7 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS, MCDwarfLineTableParams Params,
+ 
+   // Parameters of the state machine, are next.
+   MCOS->EmitIntValue(context.getAsmInfo()->getMinInstAlignment(), 1);
+-  // maximum_operations_per_instruction 
++  // maximum_operations_per_instruction
+   // For non-VLIW architectures this field is always 1.
+   // FIXME: VLIW architectures need to update this field accordingly.
+   if (LineTableVersion >= 4)
+@@ -514,8 +554,12 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS, MCDwarfLineTableParams Params,
+ 
+ void MCDwarfLineTable::EmitCU(MCObjectStreamer *MCOS,
+                               MCDwarfLineTableParams Params,
+-                              Optional<MCDwarfLineStr> &LineStr) const {
+-  MCSymbol *LineEndSym = Header.Emit(MCOS, Params, LineStr).second;
++                              Optional<MCDwarfLineStr> &LineStr) {
++  MCSymbol *LineBeginSym;
++  MCSymbol *LineEndSym;
++
++  std::tie(LineBeginSym, LineEndSym) = Header.Emit(MCOS, Params, LineStr);
++  setLabel(LineBeginSym);
+ 
+   // Put out the line tables.
+   for (const auto &LineSec : MCLineSections.getMCLineEntries())
+@@ -1253,12 +1297,217 @@ public:
+   void EmitCFIInstruction(const MCCFIInstruction &Instr);
+ };
+ 
++// A stripped-down version of MCObjectStreamer that only calculates how many
++// bytes were written to it. We use it to know in advance how many bytes
++// DWARF expressions will use.
++class SizeCalcMCStreamer {
++  uint64_t TotalSize = {0};
++
++public:
++  SizeCalcMCStreamer() {}
++
++  uint64_t getSize() { return TotalSize; }
++
++  void EmitIntValue(uint64_t Value, unsigned Size) { TotalSize += Size; }
++
++  void EmitULEB128IntValue(uint64_t Value, unsigned Padding = 0) {
++    TotalSize += Padding + getULEB128Size(Value);
++  }
++
++  void EmitSLEB128IntValue(int64_t Value) {
++    TotalSize += getSLEB128Size(Value);
++  }
++};
++
+ } // end anonymous namespace
+ 
+ static void emitEncodingByte(MCObjectStreamer &Streamer, unsigned Encoding) {
+   Streamer.EmitIntValue(Encoding, 1);
+ }
+ 
++template <typename T>
++static void EmitDwarfExpression(T &Streamer,
++                                const MCDwarfExpression &Expr) {
++  for (const auto &Elem : Expr) {
++    Streamer.EmitIntValue(Elem.Operation, 1);
++    switch (Elem.Operation) {
++    default:
++      llvm_unreachable("Unrecognized DWARF expression opcode");
++    case dwarf::DW_OP_addr:
++    case dwarf::DW_OP_call_ref:
++      llvm_unreachable("DW_OP_addr & DW_OP_call_ref are unimplemented");
++      break;
++    case dwarf::DW_OP_const1u:
++    case dwarf::DW_OP_const1s:
++    case dwarf::DW_OP_pick:
++    case dwarf::DW_OP_deref_size:
++    case dwarf::DW_OP_xderef_size:
++      Streamer.EmitIntValue(Elem.Operand0, 1);
++      break;
++    case dwarf::DW_OP_const2u:
++    case dwarf::DW_OP_const2s:
++    case dwarf::DW_OP_skip:
++    case dwarf::DW_OP_bra:
++    case dwarf::DW_OP_call2:
++      Streamer.EmitIntValue(Elem.Operand0, 2);
++      break;
++    case dwarf::DW_OP_const4u:
++    case dwarf::DW_OP_const4s:
++    case dwarf::DW_OP_call4:
++      Streamer.EmitIntValue(Elem.Operand0, 4);
++      break;
++    case dwarf::DW_OP_const8u:
++    case dwarf::DW_OP_const8s:
++      Streamer.EmitIntValue(Elem.Operand0, 8);
++      break;
++    case dwarf::DW_OP_constu:
++    case dwarf::DW_OP_plus_uconst:
++    case dwarf::DW_OP_regx:
++    case dwarf::DW_OP_piece:
++    case dwarf::DW_OP_GNU_addr_index:
++    case dwarf::DW_OP_GNU_const_index:
++      Streamer.EmitULEB128IntValue(Elem.Operand0);
++      break;
++    case dwarf::DW_OP_consts:
++    case dwarf::DW_OP_breg0:
++    case dwarf::DW_OP_breg1:
++    case dwarf::DW_OP_breg2:
++    case dwarf::DW_OP_breg3:
++    case dwarf::DW_OP_breg4:
++    case dwarf::DW_OP_breg5:
++    case dwarf::DW_OP_breg6:
++    case dwarf::DW_OP_breg7:
++    case dwarf::DW_OP_breg8:
++    case dwarf::DW_OP_breg9:
++    case dwarf::DW_OP_breg10:
++    case dwarf::DW_OP_breg11:
++    case dwarf::DW_OP_breg12:
++    case dwarf::DW_OP_breg13:
++    case dwarf::DW_OP_breg14:
++    case dwarf::DW_OP_breg15:
++    case dwarf::DW_OP_breg16:
++    case dwarf::DW_OP_breg17:
++    case dwarf::DW_OP_breg18:
++    case dwarf::DW_OP_breg19:
++    case dwarf::DW_OP_breg20:
++    case dwarf::DW_OP_breg21:
++    case dwarf::DW_OP_breg22:
++    case dwarf::DW_OP_breg23:
++    case dwarf::DW_OP_breg24:
++    case dwarf::DW_OP_breg25:
++    case dwarf::DW_OP_breg26:
++    case dwarf::DW_OP_breg27:
++    case dwarf::DW_OP_breg28:
++    case dwarf::DW_OP_breg29:
++    case dwarf::DW_OP_breg30:
++    case dwarf::DW_OP_breg31:
++    case dwarf::DW_OP_fbreg:
++      Streamer.EmitSLEB128IntValue(Elem.Operand0);
++      break;
++    case dwarf::DW_OP_deref:
++    case dwarf::DW_OP_dup:
++    case dwarf::DW_OP_drop:
++    case dwarf::DW_OP_over:
++    case dwarf::DW_OP_swap:
++    case dwarf::DW_OP_rot:
++    case dwarf::DW_OP_xderef:
++    case dwarf::DW_OP_abs:
++    case dwarf::DW_OP_and:
++    case dwarf::DW_OP_div:
++    case dwarf::DW_OP_minus:
++    case dwarf::DW_OP_mod:
++    case dwarf::DW_OP_mul:
++    case dwarf::DW_OP_neg:
++    case dwarf::DW_OP_not:
++    case dwarf::DW_OP_or:
++    case dwarf::DW_OP_plus:
++    case dwarf::DW_OP_shl:
++    case dwarf::DW_OP_shr:
++    case dwarf::DW_OP_shra:
++    case dwarf::DW_OP_xor:
++    case dwarf::DW_OP_eq:
++    case dwarf::DW_OP_ge:
++    case dwarf::DW_OP_gt:
++    case dwarf::DW_OP_le:
++    case dwarf::DW_OP_lt:
++    case dwarf::DW_OP_ne:
++    case dwarf::DW_OP_lit0:
++    case dwarf::DW_OP_lit1:
++    case dwarf::DW_OP_lit2:
++    case dwarf::DW_OP_lit3:
++    case dwarf::DW_OP_lit4:
++    case dwarf::DW_OP_lit5:
++    case dwarf::DW_OP_lit6:
++    case dwarf::DW_OP_lit7:
++    case dwarf::DW_OP_lit8:
++    case dwarf::DW_OP_lit9:
++    case dwarf::DW_OP_lit10:
++    case dwarf::DW_OP_lit11:
++    case dwarf::DW_OP_lit12:
++    case dwarf::DW_OP_lit13:
++    case dwarf::DW_OP_lit14:
++    case dwarf::DW_OP_lit15:
++    case dwarf::DW_OP_lit16:
++    case dwarf::DW_OP_lit17:
++    case dwarf::DW_OP_lit18:
++    case dwarf::DW_OP_lit19:
++    case dwarf::DW_OP_lit20:
++    case dwarf::DW_OP_lit21:
++    case dwarf::DW_OP_lit22:
++    case dwarf::DW_OP_lit23:
++    case dwarf::DW_OP_lit24:
++    case dwarf::DW_OP_lit25:
++    case dwarf::DW_OP_lit26:
++    case dwarf::DW_OP_lit27:
++    case dwarf::DW_OP_lit28:
++    case dwarf::DW_OP_lit29:
++    case dwarf::DW_OP_lit30:
++    case dwarf::DW_OP_lit31:
++    case dwarf::DW_OP_reg0:
++    case dwarf::DW_OP_reg1:
++    case dwarf::DW_OP_reg2:
++    case dwarf::DW_OP_reg3:
++    case dwarf::DW_OP_reg4:
++    case dwarf::DW_OP_reg5:
++    case dwarf::DW_OP_reg6:
++    case dwarf::DW_OP_reg7:
++    case dwarf::DW_OP_reg8:
++    case dwarf::DW_OP_reg9:
++    case dwarf::DW_OP_reg10:
++    case dwarf::DW_OP_reg11:
++    case dwarf::DW_OP_reg12:
++    case dwarf::DW_OP_reg13:
++    case dwarf::DW_OP_reg14:
++    case dwarf::DW_OP_reg15:
++    case dwarf::DW_OP_reg16:
++    case dwarf::DW_OP_reg17:
++    case dwarf::DW_OP_reg18:
++    case dwarf::DW_OP_reg19:
++    case dwarf::DW_OP_reg20:
++    case dwarf::DW_OP_reg21:
++    case dwarf::DW_OP_reg22:
++    case dwarf::DW_OP_reg23:
++    case dwarf::DW_OP_reg24:
++    case dwarf::DW_OP_reg25:
++    case dwarf::DW_OP_reg26:
++    case dwarf::DW_OP_reg27:
++    case dwarf::DW_OP_reg28:
++    case dwarf::DW_OP_reg29:
++    case dwarf::DW_OP_reg30:
++    case dwarf::DW_OP_reg31:
++    case dwarf::DW_OP_nop:
++    case dwarf::DW_OP_push_object_address:
++    case dwarf::DW_OP_form_tls_address:
++    case dwarf::DW_OP_GNU_push_tls_address:
++      break;
++    case dwarf::DW_OP_bregx:
++      Streamer.EmitULEB128IntValue(Elem.Operand0);
++      Streamer.EmitSLEB128IntValue(Elem.Operand1);
++      break;
++    }
++  }
++}
++
+ void FrameEmitterImpl::EmitCFIInstruction(const MCCFIInstruction &Instr) {
+   int dataAlignmentFactor = getDataAlignmentFactor(Streamer);
+   auto *MRI = Streamer.getContext().getRegisterInfo();
+@@ -1373,7 +1622,28 @@ void FrameEmitterImpl::EmitCFIInstruction(const MCCFIInstruction &Instr) {
+     Streamer.EmitIntValue(dwarf::DW_CFA_GNU_args_size, 1);
+     Streamer.EmitULEB128IntValue(Instr.getOffset());
+     return;
+-
++  case MCCFIInstruction::OpDefCfaExpression: {
++    Streamer.EmitIntValue(dwarf::DW_CFA_def_cfa_expression, 1);
++    SizeCalcMCStreamer FakeStreamer;
++    EmitDwarfExpression<>(FakeStreamer, Instr.getExpression());
++    Streamer.EmitULEB128IntValue(FakeStreamer.getSize());
++    EmitDwarfExpression<>(Streamer, Instr.getExpression());
++    return;
++  }
++  case MCCFIInstruction::OpExpression:
++  case MCCFIInstruction::OpValExpression: {
++    unsigned Reg = Instr.getRegister();
++    Streamer.EmitIntValue(Instr.getOperation() == MCCFIInstruction::OpExpression
++                              ? dwarf::DW_CFA_expression
++                              : dwarf::DW_CFA_val_expression,
++                          1);
++    Streamer.EmitULEB128IntValue(Reg);
++    SizeCalcMCStreamer FakeStreamer;
++    EmitDwarfExpression<>(FakeStreamer, Instr.getExpression());
++    Streamer.EmitULEB128IntValue(FakeStreamer.getSize());
++    EmitDwarfExpression<>(Streamer, Instr.getExpression());
++    return;
++  }
+   case MCCFIInstruction::OpEscape:
+     Streamer.EmitBytes(Instr.getValues());
+     return;
+diff --git a/lib/MC/MCExpr.cpp b/lib/MC/MCExpr.cpp
+index 65fbe8e..4b32cd7 100644
+--- a/lib/MC/MCExpr.cpp
++++ b/lib/MC/MCExpr.cpp
+@@ -834,3 +834,7 @@ MCFragment *MCExpr::findAssociatedFragment() const {
+ 
+   llvm_unreachable("Invalid assembly expression kind!");
+ }
++
++const MCSymbol &MCExpr::getSymbol() const {
++  return cast<MCSymbolRefExpr>(this)->getSymbol();
++}
+diff --git a/lib/MC/MCFragment.cpp b/lib/MC/MCFragment.cpp
+index 1aed50a..e740a0d 100644
+--- a/lib/MC/MCFragment.cpp
++++ b/lib/MC/MCFragment.cpp
+@@ -254,6 +254,9 @@ void MCFragment::destroy() {
+     case FT_Align:
+       delete cast<MCAlignFragment>(this);
+       return;
++    case FT_NeverAlign:
++      delete cast<MCNeverAlignFragment>(this);
++      return;
+     case FT_Data:
+       delete cast<MCDataFragment>(this);
+       return;
+@@ -316,6 +319,7 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
+   OS << "<";
+   switch (getKind()) {
+   case MCFragment::FT_Align: OS << "MCAlignFragment"; break;
++  case MCFragment::FT_NeverAlign: OS << "MCNeverAlignFragment"; break;
+   case MCFragment::FT_Data:  OS << "MCDataFragment"; break;
+   case MCFragment::FT_CompactEncodedInst:
+     OS << "MCCompactEncodedInstFragment"; break;
+@@ -348,6 +352,15 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
+        << " MaxBytesToEmit:" << AF->getMaxBytesToEmit() << ">";
+     break;
+   }
++  case MCFragment::FT_NeverAlign: {
++    const MCNeverAlignFragment *NAF = cast<MCNeverAlignFragment>(this);
++    if (NAF->hasEmitNops())
++      OS << " (emit nops)";
++    OS << "\n       ";
++    OS << " Alignment:" << NAF->getAlignment()
++      << " Value:" << NAF->getValue() << " ValueSize:" << NAF->getValueSize();
++    break;
++  }
+   case MCFragment::FT_Data:  {
+     const MCDataFragment *DF = cast<MCDataFragment>(this);
+     OS << "\n       ";
+@@ -480,7 +493,10 @@ LLVM_DUMP_METHOD void MCAssembler::dump() const{
+     if (it != symbol_begin()) OS << ",\n           ";
+     OS << "(";
+     it->dump();
+-    OS << ", Index:" << it->getIndex() << ", ";
++    if (it->hasIndex())
++      OS << ", Index:" << it->getIndex() << ", ";
++    else
++      OS << ", Order:" << it->getOrder() << ", ";
+     OS << ")";
+   }
+   OS << "]>\n";
+diff --git a/lib/MC/MCObjectFileInfo.cpp b/lib/MC/MCObjectFileInfo.cpp
+index 83da8ac..820aa68 100644
+--- a/lib/MC/MCObjectFileInfo.cpp
++++ b/lib/MC/MCObjectFileInfo.cpp
+@@ -480,6 +480,9 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T, bool Large) {
+   ReadOnlySection =
+       Ctx->getELFSection(".rodata", ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
+ 
++  ReadOnlyColdSection =
++      Ctx->getELFSection(".rodata.cold", ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
++
+   TLSDataSection =
+       Ctx->getELFSection(".tdata", ELF::SHT_PROGBITS,
+                          ELF::SHF_ALLOC | ELF::SHF_TLS | ELF::SHF_WRITE);
+diff --git a/lib/MC/MCObjectStreamer.cpp b/lib/MC/MCObjectStreamer.cpp
+index 0a68458..58199c9 100644
+--- a/lib/MC/MCObjectStreamer.cpp
++++ b/lib/MC/MCObjectStreamer.cpp
+@@ -494,6 +494,13 @@ void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,
+   cast<MCAlignFragment>(getCurrentFragment())->setEmitNops(true);
+ }
+ 
++void MCObjectStreamer::EmitNeverAlignCodeAtEnd(unsigned ByteAlignment,
++                                               int64_t Value,
++                                               unsigned ValueSize) {
++  insert(new MCNeverAlignFragment(ByteAlignment, 0, 1));
++  cast<MCNeverAlignFragment>(getCurrentFragment())->setEmitNops(true);
++}
++
+ void MCObjectStreamer::emitValueToOffset(const MCExpr *Offset,
+                                          unsigned char Value,
+                                          SMLoc Loc) {
+diff --git a/lib/MC/MCStreamer.cpp b/lib/MC/MCStreamer.cpp
+index 7765698..0954b70 100644
+--- a/lib/MC/MCStreamer.cpp
++++ b/lib/MC/MCStreamer.cpp
+@@ -85,11 +85,15 @@ void MCStreamer::reset() {
+   DwarfFrameInfos.clear();
+   CurrentWinFrameInfo = nullptr;
+   WinFrameInfos.clear();
+-  SymbolOrdering.clear();
++  SymbolOrdering = 1;
+   SectionStack.clear();
+   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
+ }
+ 
++unsigned MCStreamer::GetSymbolOrder(const MCSymbol *Symbol) const {
++  return Symbol->getOrder();
++}
++
+ raw_ostream &MCStreamer::GetCommentOS() {
+   // By default, discard comments.
+   return nulls();
+@@ -130,6 +134,13 @@ void MCStreamer::EmitULEB128IntValue(uint64_t Value) {
+   EmitBytes(OSE.str());
+ }
+ 
++void MCStreamer::EmitPaddedULEB128IntValue(uint64_t Value, unsigned PadTo) {
++  SmallString<128> Tmp;
++  raw_svector_ostream OSE(Tmp);
++  encodeULEB128(Value, OSE, PadTo);
++  EmitBytes(OSE.str());
++}
++
+ /// EmitSLEB128IntValue - Special case of EmitSLEB128Value that avoids the
+ /// client having to pass in a MCExpr for constant integers.
+ void MCStreamer::EmitSLEB128IntValue(int64_t Value) {
+@@ -315,7 +326,7 @@ void MCStreamer::AssignFragment(MCSymbol *Symbol, MCFragment *Fragment) {
+ 
+   // As we emit symbols into a section, track the order so that they can
+   // be sorted upon later. Zero is reserved to mean 'unemitted'.
+-  SymbolOrdering[Symbol] = 1 + SymbolOrdering.size();
++  Symbol->setOrder(SymbolOrdering);
+ }
+ 
+ void MCStreamer::EmitLabel(MCSymbol *Symbol, SMLoc Loc) {
+@@ -513,7 +524,7 @@ void MCStreamer::EmitCFIEscape(StringRef Values) {
+ 
+ void MCStreamer::EmitCFIGnuArgsSize(int64_t Size) {
+   MCSymbol *Label = EmitCFILabel();
+-  MCCFIInstruction Instruction = 
++  MCCFIInstruction Instruction =
+     MCCFIInstruction::createGnuArgsSize(Label, Size);
+   MCDwarfFrameInfo *CurFrame = getCurrentDwarfFrameInfo();
+   if (!CurFrame)
+@@ -884,6 +895,14 @@ void MCStreamer::visitUsedExpr(const MCExpr &Expr) {
+   }
+ }
+ 
++void MCStreamer::EmitCFIInstruction(const MCCFIInstruction &Inst) {
++  MCSymbol *Label = EmitCFILabel();
++  MCCFIInstruction Instruction = Inst;
++  Instruction.setLabel(Label);
++  MCDwarfFrameInfo *CurFrame = getCurrentDwarfFrameInfo();
++  CurFrame->Instructions.push_back(Instruction);
++}
++
+ void MCStreamer::EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI,
+                                  bool) {
+   // Scan for values.
+@@ -961,6 +980,8 @@ void MCStreamer::EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,
+                                       unsigned MaxBytesToEmit) {}
+ void MCStreamer::EmitCodeAlignment(unsigned ByteAlignment,
+                                    unsigned MaxBytesToEmit) {}
++void MCStreamer::EmitNeverAlignCodeAtEnd(unsigned ByteAlignment, int64_t Value,
++                                         unsigned ValueSize) {}
+ void MCStreamer::emitValueToOffset(const MCExpr *Offset, unsigned char Value,
+                                    SMLoc Loc) {}
+ void MCStreamer::EmitBundleAlignMode(unsigned AlignPow2) {}
+diff --git a/lib/Object/COFFObjectFile.cpp b/lib/Object/COFFObjectFile.cpp
+index b544fa5..746c9f3 100644
+--- a/lib/Object/COFFObjectFile.cpp
++++ b/lib/Object/COFFObjectFile.cpp
+@@ -339,11 +339,16 @@ unsigned COFFObjectFile::getSectionID(SectionRef Sec) const {
+ 
+ bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
+   const coff_section *Sec = toSec(Ref);
+-  // In COFF, a virtual section won't have any in-file 
++  // In COFF, a virtual section won't have any in-file
+   // content, so the file pointer to the content will be zero.
+   return Sec->PointerToRawData == 0;
+ }
+ 
++bool COFFObjectFile::isSectionReadOnly(DataRefImpl Ref) const {
++  llvm_unreachable("not implemented");
++  return false;
++}
++
+ static uint32_t getNumberOfRelocations(const coff_section *Sec,
+                                        MemoryBufferRef M, const uint8_t *base) {
+   // The field for the number of relocations in COFF section table is only
+diff --git a/lib/Object/MachOObjectFile.cpp b/lib/Object/MachOObjectFile.cpp
+index adc54b4..2fcc293 100644
+--- a/lib/Object/MachOObjectFile.cpp
++++ b/lib/Object/MachOObjectFile.cpp
+@@ -1986,6 +1986,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
+   return getSection(Sec).offset == 0;
+ }
+ 
++bool MachOObjectFile::isSectionReadOnly(DataRefImpl Sec) const {
++  llvm_unreachable("not implemented");
++  return false;
++}
++
+ relocation_iterator MachOObjectFile::section_rel_begin(DataRefImpl Sec) const {
+   DataRefImpl Ret;
+   Ret.d.a = Sec.d.a;
+diff --git a/lib/Object/WasmObjectFile.cpp b/lib/Object/WasmObjectFile.cpp
+index 0c78631..c0dac22 100644
+--- a/lib/Object/WasmObjectFile.cpp
++++ b/lib/Object/WasmObjectFile.cpp
+@@ -1140,6 +1140,8 @@ bool WasmObjectFile::isSectionBSS(DataRefImpl Sec) const { return false; }
+ 
+ bool WasmObjectFile::isSectionVirtual(DataRefImpl Sec) const { return false; }
+ 
++bool WasmObjectFile::isSectionReadOnly(DataRefImpl Sec) const { return false; }
++
+ bool WasmObjectFile::isSectionBitcode(DataRefImpl Sec) const { return false; }
+ 
+ relocation_iterator WasmObjectFile::section_rel_begin(DataRefImpl Ref) const {
+diff --git a/lib/Support/ToolOutputFile.cpp b/lib/Support/ToolOutputFile.cpp
+index e12d9e8..1c74d40 100644
+--- a/lib/Support/ToolOutputFile.cpp
++++ b/lib/Support/ToolOutputFile.cpp
+@@ -35,8 +35,8 @@ ToolOutputFile::CleanupInstaller::~CleanupInstaller() {
+ }
+ 
+ ToolOutputFile::ToolOutputFile(StringRef Filename, std::error_code &EC,
+-                               sys::fs::OpenFlags Flags)
+-    : Installer(Filename), OS(Filename, EC, Flags) {
++                               sys::fs::OpenFlags Flags, unsigned Mode)
++    : Installer(Filename), OS(Filename, EC, Flags, Mode) {
+   // If open fails, no cleanup is needed.
+   if (EC)
+     Installer.Keep = true;
+diff --git a/lib/Support/raw_ostream.cpp b/lib/Support/raw_ostream.cpp
+index e026111..9455379 100644
+--- a/lib/Support/raw_ostream.cpp
++++ b/lib/Support/raw_ostream.cpp
+@@ -490,7 +490,7 @@ void format_object_base::home() {
+ //===----------------------------------------------------------------------===//
+ 
+ static int getFD(StringRef Filename, std::error_code &EC,
+-                 sys::fs::OpenFlags Flags) {
++                 sys::fs::OpenFlags Flags, unsigned Mode = 0666) {
+   // Handle "-" as stdout. Note that when we do this, we consider ourself
+   // the owner of stdout and may set the "binary" flag globally based on Flags.
+   if (Filename == "-") {
+@@ -503,7 +503,7 @@ static int getFD(StringRef Filename, std::error_code &EC,
+   }
+ 
+   int FD;
+-  EC = sys::fs::openFileForWrite(Filename, FD, Flags);
++  EC = sys::fs::openFileForWrite(Filename, FD, Flags, Mode);
+   if (EC)
+     return -1;
+ 
+@@ -511,8 +511,8 @@ static int getFD(StringRef Filename, std::error_code &EC,
+ }
+ 
+ raw_fd_ostream::raw_fd_ostream(StringRef Filename, std::error_code &EC,
+-                               sys::fs::OpenFlags Flags)
+-    : raw_fd_ostream(getFD(Filename, EC, Flags), true) {}
++                               sys::fs::OpenFlags Flags, unsigned Mode)
++    : raw_fd_ostream(getFD(Filename, EC, Flags, Mode), true) {}
+ 
+ /// FD is the file descriptor that this writes to.  If ShouldClose is true, this
+ /// closes the file when the stream is destroyed.
+diff --git a/lib/Target/X86/CMakeLists.txt b/lib/Target/X86/CMakeLists.txt
+index ed79f4f..95cb71f 100644
+--- a/lib/Target/X86/CMakeLists.txt
++++ b/lib/Target/X86/CMakeLists.txt
+@@ -19,6 +19,7 @@ if (X86_GEN_FOLD_TABLES)
+ endif()
+ 
+ add_public_tablegen_target(X86CommonTableGen)
++add_public_tablegen_target(X86GenInstrInfo)
+ 
+ set(sources
+   X86AsmPrinter.cpp
+diff --git a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp b/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
+index fa7c352..35d28c1 100644
+--- a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
++++ b/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
+@@ -46,6 +46,8 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
+ 
+   TextAlignFillValue = 0x90;
+ 
++  TrapFillValue = 0xCC;
++
+   if (!is64Bit)
+     Data64bitsDirective = nullptr;       // we can't emit a 64-bit unit
+ 
+@@ -98,6 +100,8 @@ X86ELFMCAsmInfo::X86ELFMCAsmInfo(const Triple &T) {
+ 
+   TextAlignFillValue = 0x90;
+ 
++  TrapFillValue = 0xCC;
++
+   // Debug Information
+   SupportsDebugInformation = true;
+ 
+@@ -141,6 +145,8 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
+ 
+   TextAlignFillValue = 0x90;
+ 
++  TrapFillValue = 0xCC;
++
+   AllowAtInName = true;
+ 
+   UseIntegratedAssembler = true;
+@@ -164,5 +170,7 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
+ 
+   TextAlignFillValue = 0x90;
+ 
++  TrapFillValue = 0xCC;
++
+   UseIntegratedAssembler = true;
+ }
+diff --git a/lib/Target/X86/X86InstrControl.td b/lib/Target/X86/X86InstrControl.td
+index 9fba65c..1c8eb27 100644
+--- a/lib/Target/X86/X86InstrControl.td
++++ b/lib/Target/X86/X86InstrControl.td
+@@ -200,7 +200,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
+ }
+ 
+ // Loop instructions
+-let SchedRW = [WriteJump] in {
++let isBranch = 1, isTerminator = 1, SchedRW = [WriteJump] in {
+ def LOOP   : Ii8PCRel<0xE2, RawFrm, (outs), (ins brtarget8:$dst), "loop\t$dst", [], IIC_LOOP>;
+ def LOOPE  : Ii8PCRel<0xE1, RawFrm, (outs), (ins brtarget8:$dst), "loope\t$dst", [], IIC_LOOPE>;
+ def LOOPNE : Ii8PCRel<0xE0, RawFrm, (outs), (ins brtarget8:$dst), "loopne\t$dst", [], IIC_LOOPNE>;
+@@ -299,12 +299,13 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
+                            (ins i32imm_pcrel:$dst),
+                            "jmp\t$dst",
+                            [], IIC_JMP_REL>;
+-
+-  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins ptr_rc_tailcall:$dst),
+-                   "", [], IIC_JMP_REG>;  // FIXME: Remove encoding when JIT is dead.
+-  let mayLoad = 1 in
+-  def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem_TC:$dst),
+-                   "jmp{l}\t{*}$dst", [], IIC_JMP_MEM>;
++  let isIndirectBranch = 1 in {
++    def TAILJMPr : I<0xFF, MRM4r, (outs), (ins ptr_rc_tailcall:$dst),
++                     "jmp{l}\t{*}$dst", [], IIC_JMP_REG>;  // FIXME: Remove encoding when JIT is dead.
++    let mayLoad = 1 in
++    def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem_TC:$dst),
++                     "jmp{l}\t{*}$dst", [], IIC_JMP_MEM>;
++  }
+ }
+ 
+ // Conditional tail calls are similar to the above, but they are branches
+diff --git a/lib/Target/X86/X86InstrSystem.td b/lib/Target/X86/X86InstrSystem.td
+index f25f1b0..8a36933 100644
+--- a/lib/Target/X86/X86InstrSystem.td
++++ b/lib/Target/X86/X86InstrSystem.td
+@@ -29,7 +29,8 @@ let mayLoad = 1, mayStore = 0, hasSideEffects = 1 in {
+   def UD2B    : I<0xB9, RawFrm, (outs), (ins), "ud2b", []>, TB;
+ }
+ 
+-def HLT : I<0xF4, RawFrm, (outs), (ins), "hlt", [], IIC_HLT>;
++let isTerminator = 1 in
++  def HLT : I<0xF4, RawFrm, (outs), (ins), "hlt", [], IIC_HLT>;
+ def RSM : I<0xAA, RawFrm, (outs), (ins), "rsm", [], IIC_RSM>, TB;
+ 
+ // Interrupt and SysCall Instructions.

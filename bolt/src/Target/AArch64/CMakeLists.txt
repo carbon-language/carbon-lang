@@ -7,5 +7,5 @@ add_llvm_library(LLVMBOLTTargetAArch64
   )
 
 include_directories(${LLVM_MAIN_SRC_DIR}/lib/Target/AArch64 ${LLVM_BINARY_DIR}/lib/Target/AArch64)
-include_directories(${LLVM_MAIN_SRC_DIR}/tools/llvm-bolt)
+include_directories(${LLVM_MAIN_SRC_DIR}/tools/llvm-bolt/src)
 

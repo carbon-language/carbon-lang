@@ -53,7 +53,7 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
     YamlBB.NumInstructions = BB->getNumNonPseudos();
 
     if (!LBRProfile) {
-      YamlBB.EventCount = 
+      YamlBB.EventCount =
         SampleDataOrErr->getSamples(BB->getInputOffset(), BB->getEndOffset());
       if (YamlBB.EventCount)
         YamlBF.Blocks.emplace_back(YamlBB);

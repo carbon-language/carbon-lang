@@ -30,7 +30,7 @@ double extTSPScore(uint64_t SrcAddr,
                    uint64_t SrcSize,
                    uint64_t DstAddr,
                    uint64_t Count);
-                       
+
 } // namespace CacheMetrics
 } // namespace bolt
 } // namespace llvm

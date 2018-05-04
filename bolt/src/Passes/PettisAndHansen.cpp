@@ -13,7 +13,7 @@ namespace bolt {
 
 using NodeId = CallGraph::NodeId;
 using Arc = CallGraph::Arc;
-using Node = CallGraph::Node;  
+using Node = CallGraph::Node;
 
 namespace {
 class ClusterArc {

@@ -518,13 +518,20 @@ unsigned BinaryContext::addDebugFilenameToUnit(const uint32_t DestCUID,
   // means empty dir.
   assert(FileIndex > 0 && FileIndex <= FileNames.size() &&
          "FileIndex out of range for the compilation unit.");
-  StringRef Dir =
-      FileNames[FileIndex - 1].DirIdx
-          ? LineTable->Prologue
+  StringRef Dir = "";
+  if (FileNames[FileIndex - 1].DirIdx != 0) {
+    if (auto DirName =
+            LineTable->Prologue
                 .IncludeDirectories[FileNames[FileIndex - 1].DirIdx - 1]
-          : "";
-  return Ctx->getDwarfFile(Dir, FileNames[FileIndex - 1].Name, 0, nullptr,
-                           DestCUID);
+                .getAsCString()) {
+      Dir = *DirName;
+    }
+  }
+  StringRef FileName = "";
+  if (auto FName = FileNames[FileIndex - 1].Name.getAsCString())
+    FileName = *FName;
+  assert(FileName != "");
+  return cantFail(Ctx->getDwarfFile(Dir, FileName, 0, nullptr, None, DestCUID));
 }
 
 std::vector<BinaryFunction *> BinaryContext::getSortedFunctions(
@@ -557,11 +564,17 @@ void BinaryContext::preprocessDebugInfo(
     for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
       // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
       // means empty dir.
-      StringRef Dir =
-          FileNames[I].DirIdx
-              ? LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1]
-              : "";
-      Ctx->getDwarfFile(Dir, FileNames[I].Name, 0, nullptr, CUID);
+      StringRef Dir = "";
+      if (FileNames[I].DirIdx != 0)
+        if (auto DirName =
+                LineTable->Prologue.IncludeDirectories[FileNames[I].DirIdx - 1]
+                    .getAsCString())
+          Dir = *DirName;
+      StringRef FileName = "";
+      if (auto FName = FileNames[I].Name.getAsCString())
+        FileName = *FName;
+      assert(FileName != "");
+      cantFail(Ctx->getDwarfFile(Dir, FileName, 0, nullptr, None, CUID));
     }
   }
 
@@ -716,9 +729,11 @@ void BinaryContext::printInstruction(raw_ostream &OS,
 
     if (RowRef != DebugLineTableRowRef::NULL_ROW) {
       const auto &Row = LineTable->Rows[RowRef.RowIndex - 1];
-      OS << " # debug line "
-         << LineTable->Prologue.FileNames[Row.File - 1].Name
-         << ":" << Row.Line;
+      StringRef FileName = "";
+      if (auto FName =
+              LineTable->Prologue.FileNames[Row.File - 1].Name.getAsCString())
+        FileName = *FName;
+      OS << " # debug line " << FileName << ":" << Row.Line;
 
       if (Row.Column) {
         OS << ":" << Row.Column;

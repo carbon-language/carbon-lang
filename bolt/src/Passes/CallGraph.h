@@ -161,7 +161,7 @@ public:
 
   template <typename L>
   void printDot(char* fileName, L getLabel) const;
-  
+
 private:
   void setSamples(const NodeId Id, uint64_t Samples) {
     assert(Id < Nodes.size());
