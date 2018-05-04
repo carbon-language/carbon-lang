@@ -166,8 +166,8 @@ defm : SKXWriteResPair<WriteFRcp,   [SKXPort0],  4, [1], 1, 6>; // Floating poin
 defm : SKXWriteResPair<WriteFRcpY,  [SKXPort0],  4, [1], 1, 7>; // Floating point reciprocal estimate (YMM/ZMM).
 defm : SKXWriteResPair<WriteFRsqrt, [SKXPort0],  4, [1], 1, 6>; // Floating point reciprocal square root estimate.
 defm : SKXWriteResPair<WriteFRsqrtY,[SKXPort0],  4, [1], 1, 7>; // Floating point reciprocal square root estimate (YMM/ZMM).
-defm : SKXWriteResPair<WriteFMA,  [SKXPort015],  4, [1], 1, 6>; // Fused Multiply Add.
-defm : SKXWriteResPair<WriteFMAS, [SKXPort015],  4, [1], 1, 5>; // Fused Multiply Add (Scalar).
+defm : SKXWriteResPair<WriteFMA,  [SKXPort015],  4, [1], 1, 5>; // Fused Multiply Add.
+defm : SKXWriteResPair<WriteFMAX, [SKXPort015],  4, [1], 1, 6>; // Fused Multiply Add (XMM).
 defm : SKXWriteResPair<WriteFMAY, [SKXPort015],  4, [1], 1, 7>; // Fused Multiply Add (YMM/ZMM).
 defm : SKXWriteResPair<WriteDPPD, [SKXPort5,SKXPort015],  9, [1,2], 3, 6>; // Floating point double dot product.
 defm : SKXWriteResPair<WriteDPPS, [SKXPort5,SKXPort015], 13, [1,3], 4, 6>; // Floating point single dot product.

@@ -220,7 +220,7 @@ defm : ZnWriteResFpuPair<WriteFVarShuffleY,[ZnFPU12], 1>;
 defm : ZnWriteResFpuPair<WriteFMul,      [ZnFPU0],  5>;
 defm : ZnWriteResFpuPair<WriteFMulY,     [ZnFPU0],  5>;
 defm : ZnWriteResFpuPair<WriteFMA,       [ZnFPU03], 5>;
-defm : ZnWriteResFpuPair<WriteFMAS,      [ZnFPU03], 5>;
+defm : ZnWriteResFpuPair<WriteFMAX,      [ZnFPU03], 5>;
 defm : ZnWriteResFpuPair<WriteFMAY,      [ZnFPU03], 5>;
 defm : ZnWriteResFpuPair<WriteFRcp,      [ZnFPU01], 5>;
 defm : ZnWriteResFpuPair<WriteFRcpY,     [ZnFPU01], 5>;
