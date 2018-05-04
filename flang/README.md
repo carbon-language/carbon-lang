@@ -6,7 +6,8 @@ Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 
 ## Selection of the C/C++ compiler
 
-F18 requires a C++17 compiler. As of today, the code was only tested with g++ 7.2.0 and g++ 7.3.0  
+F18 requires a C++17 compiler. As of today, the code was only tested with g++
+7.2.0, g++ 7.3.0 and clang 6.0.
 
 For a proper installation, we assume that the PATH and LD_LIBRARY_PATH environment variables 
 are properly set to use gcc, g++ and the associated libraries.   
@@ -18,34 +19,12 @@ can be done now or while calling cmake
     export CC=gcc
     export CXX=g++
 
-## Installation of LLVM 6.0
+## Installation of LLVM & CLANG 6.0
 
-    ############ Extract LLVM and Clang from git in current directory. 
-    ############ 
+F18 depends of the LLVM & CLANG libraries even when clang is not used as C++ compiler.  
 
-    ROOT=$(pwd)
-    REL=release_60
-   
-    # To build LLVM and Clang, we only need the head of the requested branch. 
-    # Remove --single-branch --depth=1 if you want access to the whole git history. 
-   
-    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/llvm.git/       llvm
-    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/clang.git/      llvm/tools/clang
-    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/openmp.git/     llvm/projects/openmp
-    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/libcxx.git/     llvm/projects/libcxx
-    git clone --branch $REL --single-branch --depth=1 https://git.llvm.org/git/libcxxabi.git/  llvm/projects/libcxxabi
-   
-    ###########  Build LLVM & CLANG in $LLVM_PREFIX 
-
-    LLVM_PREFIX=... 
-    mkdir $LLVM_PREFIX
-    
-    mkdir $ROOT/llvm/build
-    cd  $ROOT/llvm/build 
-    CC=gcc CXX+g++ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$LLVM_PREFIX ..
-    make -j 4
-    make install
-   
+If those libraries are not provided by your system then you may want to follow the 
+build instructions at https://clang.llvm.org/get_started.html 
 
 ## Installation of F18
 
@@ -59,8 +38,8 @@ can be done now or while calling cmake
 
     ######## And build it in a dedicated directory
     ######## Reminder: If LLVM & Clang where not installed in a standard 
-    ########           location then you may also have to define
-    ########           CMAKE_MODULE_PATH=$LLVM_PREFIX  
+    ########           location then you may also have to specify it via the
+    ########           CMAKE_MODULE_PATH or CMAKE_PREFIX_PATH variables. 
     mkdir $ROOT/f18-build
     cd $ROOT/f18-build   
     CC=gcc CXX=g++ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$F18_PREFIX $ROOT/f18

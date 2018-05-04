@@ -166,9 +166,6 @@ public:
       return "CharLiteralConstant";
     } else if constexpr (std::is_same_v<T,
                              Fortran::parser::CharLiteralConstantSubstring>) {
-      return "CharLiteralConstantSubstring";
-    } else if constexpr (std::is_same_v<T,
-                             Fortran::parser::CharLiteralConstantSubstring>) {
       return "CharLiteralConstantSubstring;";
     } else if constexpr (std::is_same_v<T, Fortran::parser::CharSelector>) {
       return "CharSelector";
@@ -434,9 +431,6 @@ public:
     } else if constexpr (std::is_same_v<T,
                              Fortran::parser::Expr::ComplexConstructor>) {
       return "ComplexConstructor";
-    } else if constexpr (std::is_same_v<T,
-                             Fortran::parser::Expr::Parentheses>) {
-      return "Parentheses";
     } else if constexpr (std::is_same_v<T, Fortran::parser::AcSpec>) {
       return "AcSpec";
     } else if constexpr (std::is_same_v<T, Fortran::parser::ErrorRecovery>) {
@@ -608,8 +602,6 @@ public:
       return "NullifyStmt";
     } else if constexpr (std::is_same_v<T, Fortran::parser::ObjectDecl>) {
       return "ObjectDecl";
-    } else if constexpr (std::is_same_v<T, Fortran::parser::OldParameterStmt>) {
-      return "OldParameterStmt";
     } else if constexpr (std::is_same_v<T, Fortran::parser::OldParameterStmt>) {
       return "OldParameterStmt;";
     } else if constexpr (std::is_same_v<T, Fortran::parser::Only>) {

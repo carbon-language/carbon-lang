@@ -934,7 +934,7 @@ bool ResolveNamesVisitor::Pre(const parser::AccessStmt &x) {
           },
           accessId.u);
     }
-  } 
+  }
   return false;
 }
 
