@@ -96,19 +96,37 @@ void MessageExpectedText::Incorporate(const MessageExpectedText &that) {
       u_, that.u_);
 }
 
-void Message::Incorporate(Message &that) {
-  std::visit(
-      visitors{[&](MessageExpectedText &e1, const MessageExpectedText &e2) {
-                 e1.Incorporate(e2);
+bool Message::operator<(const Message &that) const {
+  // Messages from prescanning have ProvenanceRange values for their locations,
+  // while messages from later phases have CharBlock values, since the
+  // conversion of cooked source stream locations to provenances is not
+  // free and needs to be deferred, since many messages created during parsing
+  // are speculative.  Messages with ProvenanceRange locations are ordered
+  // before others for sorting.
+  return std::visit(
+      visitors{[](const CharBlock &cb1, const CharBlock &cb2) {
+                 return cb1.begin() < cb2.begin();
                },
-          [](const auto &, const auto &) {}},
-      text_, that.text_);
+          [](const CharBlock &, const ProvenanceRange &) { return false; },
+          [](const ProvenanceRange &pr1, const ProvenanceRange &pr2) {
+            return pr1.start() < pr2.start();
+          },
+          [](const ProvenanceRange &, const CharBlock &) { return true; }},
+      location_, that.location_);
+}
+
+bool Message::IsFatal() const {
+  return std::visit(visitors{[](const MessageExpectedText &) { return true; },
+                        [](const auto &x) { return x.isFatal(); }},
+      text_);
 }
 
 std::string Message::ToString() const {
   return std::visit(
-      visitors{[](const CharBlock &cb) { return cb.NULTerminatedToString(); },
-          [](const std::string &s) { return s; },
+      visitors{[](const MessageFixedText &t) {
+                 return t.text().NULTerminatedToString();
+               },
+          [](const MessageFormattedText &t) { return t.string(); },
           [](const MessageExpectedText &e) { return e.ToString(); }},
       text_);
 }
@@ -125,7 +143,7 @@ void Message::Emit(
     std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
   ProvenanceRange provenanceRange{GetProvenanceRange(cooked)};
   std::string text;
-  if (isFatal_) {
+  if (IsFatal()) {
     text += "error: ";
   }
   text += ToString();
@@ -143,6 +161,15 @@ void Message::Emit(
   }
 }
 
+void Message::Incorporate(Message &that) {
+  std::visit(
+      visitors{[&](MessageExpectedText &e1, const MessageExpectedText &e2) {
+                 e1.Incorporate(e2);
+               },
+          [](const auto &, const auto &) {}},
+      text_, that.text_);
+}
+
 bool Message::AtSameLocation(const Message &that) const {
   return std::visit(
       visitors{[](const CharBlock &cb1, const CharBlock &cb2) {
@@ -152,25 +179,6 @@ bool Message::AtSameLocation(const Message &that) const {
             return pr1.start() == pr2.start();
           },
           [](const auto &, const auto &) { return false; }},
-      location_, that.location_);
-}
-
-bool Message::operator<(const Message &that) const {
-  // Messages from prescanning have ProvenanceRange values for their locations,
-  // while messages from later phases have CharBlock values, since the
-  // conversion of cooked source stream locations to provenances is not
-  // free and needs to be deferred, since many messages created during parsing
-  // are speculative.  Messages with ProvenanceRange locations are ordered
-  // before others for sorting.
-  return std::visit(
-      visitors{[](const CharBlock &cb1, const CharBlock &cb2) {
-                 return cb1.begin() < cb2.begin();
-               },
-          [](const CharBlock &, const ProvenanceRange &) { return false; },
-          [](const ProvenanceRange &pr1, const ProvenanceRange &pr2) {
-            return pr1.start() < pr2.start();
-          },
-          [](const ProvenanceRange &, const CharBlock &) { return true; }},
       location_, that.location_);
 }
 
@@ -210,7 +218,7 @@ void Messages::Emit(
 
 bool Messages::AnyFatalError() const {
   for (const auto &msg : messages_) {
-    if (msg.isFatal()) {
+    if (msg.IsFatal()) {
       return true;
     }
   }

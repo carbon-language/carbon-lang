@@ -38,14 +38,13 @@ namespace Fortran::parser {
 // text and fatality of a message.
 class MessageFixedText {
 public:
-  MessageFixedText() {}
   constexpr MessageFixedText(
       const char str[], std::size_t n, bool isFatal = false)
     : text_{str, n}, isFatal_{isFatal} {}
   constexpr MessageFixedText(const MessageFixedText &) = default;
-  MessageFixedText(MessageFixedText &&) = default;
+  constexpr MessageFixedText(MessageFixedText &&) = default;
   constexpr MessageFixedText &operator=(const MessageFixedText &) = default;
-  MessageFixedText &operator=(MessageFixedText &&) = default;
+  constexpr MessageFixedText &operator=(MessageFixedText &&) = default;
 
   const CharBlock &text() const { return text_; }
   bool isFatal() const { return isFatal_; }
@@ -69,8 +68,13 @@ constexpr MessageFixedText operator""_err_en_US(
 class MessageFormattedText {
 public:
   MessageFormattedText(MessageFixedText, ...);
-  std::string MoveString() { return std::move(string_); }
+  MessageFormattedText(const MessageFormattedText &) = default;
+  MessageFormattedText(MessageFormattedText &&) = default;
+  MessageFormattedText &operator=(const MessageFormattedText &) = default;
+  MessageFormattedText &operator=(MessageFormattedText &&) = default;
+  const std::string &string() const { return string_; }
   bool isFatal() const { return isFatal_; }
+  std::string MoveString() { return std::move(string_); }
 
 private:
   std::string string_;
@@ -87,6 +91,9 @@ public:
   constexpr explicit MessageExpectedText(char ch) : u_{SetOfChars{ch}} {}
   constexpr explicit MessageExpectedText(SetOfChars set) : u_{set} {}
   MessageExpectedText(const MessageExpectedText &) = default;
+  MessageExpectedText(MessageExpectedText &&) = default;
+  MessageExpectedText &operator=(const MessageExpectedText &) = default;
+  MessageExpectedText &operator=(MessageExpectedText &&) = default;
 
   std::string ToString() const;
   void Incorporate(const MessageExpectedText &);
@@ -101,44 +108,44 @@ public:
 
   Message(const Message &) = default;
   Message(Message &&) = default;
-  Message &operator=(const Message &that) = default;
-  Message &operator=(Message &&that) = default;
+  Message &operator=(const Message &) = default;
+  Message &operator=(Message &&) = default;
 
-  Message(ProvenanceRange pr, MessageFixedText t)
-    : location_{pr}, text_{t.text()}, isFatal_{t.isFatal()} {}
+  Message(ProvenanceRange pr, const MessageFixedText &t)
+    : location_{pr}, text_{t} {}
   Message(ProvenanceRange pr, MessageFormattedText &&s)
-    : location_{pr}, text_{s.MoveString()}, isFatal_{s.isFatal()} {}
-  Message(ProvenanceRange pr, MessageExpectedText t)
-    : location_{pr}, text_{t}, isFatal_{true} {}
+    : location_{pr}, text_{std::move(s)} {}
+  Message(ProvenanceRange pr, const MessageExpectedText &t)
+    : location_{pr}, text_{t} {}
 
-  Message(CharBlock csr, MessageFixedText t)
-    : location_{csr}, text_{t.text()}, isFatal_{t.isFatal()} {}
+  Message(CharBlock csr, const MessageFixedText &t)
+    : location_{csr}, text_{t} {}
   Message(CharBlock csr, MessageFormattedText &&s)
-    : location_{csr}, text_{s.MoveString()}, isFatal_{s.isFatal()} {}
-  Message(CharBlock csr, MessageExpectedText t)
-    : location_{csr}, text_{t}, isFatal_{true} {}
+    : location_{csr}, text_{std::move(s)} {}
+  Message(CharBlock csr, const MessageExpectedText &t)
+    : location_{csr}, text_{t} {}
 
   Context context() const { return context_; }
   Message &set_context(Message *c) {
     context_ = c;
     return *this;
   }
-  bool isFatal() const { return isFatal_; }
 
   bool operator<(const Message &that) const;
-  void Incorporate(Message &);
+  bool IsFatal() const;
   std::string ToString() const;
   ProvenanceRange GetProvenanceRange(const CookedSource &) const;
   void Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
+  void Incorporate(Message &);
 
 private:
   bool AtSameLocation(const Message &) const;
 
   std::variant<ProvenanceRange, CharBlock> location_;
-  std::variant<CharBlock, MessageExpectedText, std::string> text_;
+  std::variant<MessageFixedText, MessageFormattedText, MessageExpectedText>
+      text_;
   Context context_;
-  bool isFatal_{false};
 };
 
 class Messages {
