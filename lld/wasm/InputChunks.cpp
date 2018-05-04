@@ -89,6 +89,8 @@ void InputChunk::writeTo(uint8_t *Buf) const {
       break;
     case R_WEBASSEMBLY_TABLE_INDEX_I32:
     case R_WEBASSEMBLY_MEMORY_ADDR_I32:
+    case R_WEBASSEMBLY_FUNCTION_OFFSET_I32:
+    case R_WEBASSEMBLY_SECTION_OFFSET_I32:
       ExistingValue = static_cast<uint32_t>(read32le(Loc));
       write32le(Loc, Value);
       break;
@@ -124,7 +126,9 @@ void InputChunk::writeRelocations(raw_ostream &OS) const {
     case R_WEBASSEMBLY_MEMORY_ADDR_LEB:
     case R_WEBASSEMBLY_MEMORY_ADDR_SLEB:
     case R_WEBASSEMBLY_MEMORY_ADDR_I32:
-      writeSleb128(OS, Rel.Addend, "reloc addend");
+    case R_WEBASSEMBLY_FUNCTION_OFFSET_I32:
+    case R_WEBASSEMBLY_SECTION_OFFSET_I32:
+      writeSleb128(OS, File->calcNewAddend(Rel), "reloc addend");
       break;
     }
   }
