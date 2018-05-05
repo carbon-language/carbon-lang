@@ -1,5 +1,7 @@
 ; Test to ensure -fdiagnostics-show-hotness and -fsave-optimization-record
 ; work when invoking the ThinLTO backend path.
+; REQUIRES: x86-registered-target
+
 ; RUN: opt -module-summary -o %t.o %s
 ; RUN: llvm-lto -thinlto -o %t %t.o
 
