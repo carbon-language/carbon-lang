@@ -79,6 +79,10 @@ protected:
   virtual ArrayRef<uint8_t> data() const = 0;
   virtual uint32_t getInputSectionOffset() const = 0;
 
+  // Verifies the existing data at relocation targets matches our expectations.
+  // This is performed only debug builds as an extra sanity check.
+  void verifyRelocTargets() const;
+
   std::vector<WasmRelocation> Relocations;
   Kind SectionKind;
 };
