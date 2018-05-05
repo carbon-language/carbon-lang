@@ -5,15 +5,9 @@
 ; RUN: opt -module-summary -o %t.o %s
 ; RUN: llvm-lto -thinlto -o %t %t.o
 
-; First try with pass remarks to stderr
-; Temporarily skip the next RUN/CHECK to debug bot failures
-; RUN %clang -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -mllvm -pass-remarks=inline -fdiagnostics-show-hotness -o %t2.o -c 2>&1 | FileCheck %s
-
-; CHECK tinkywinky inlined into main with cost=0 (threshold=337) (hotness: 300)
-
-; Next try YAML pass remarks file
+; First try YAML pass remarks file
 ; RUN: rm -f %t2.opt.yaml
-; RUN: %clang -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -fsave-optimization-record -fdiagnostics-show-hotness -o %t2.o -c
+; RUN: %clang -target x86_64-scei-ps4 -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -fsave-optimization-record -fdiagnostics-show-hotness -o %t2.o -c
 ; RUN: cat %t2.opt.yaml | FileCheck %s -check-prefix=YAML
 
 ; YAML: --- !Passed
@@ -31,6 +25,11 @@
 ; YAML-NEXT:   - Threshold:       '337'
 ; YAML-NEXT:   - String:          ')'
 ; YAML-NEXT: ...
+
+; Next try with pass remarks to stderr
+; RUN: %clang -target x86_64-scei-ps4 -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -mllvm -pass-remarks=inline -fdiagnostics-show-hotness -o %t2.o -c 2>&1 | FileCheck %s
+
+; CHECK: tinkywinky inlined into main with cost=0 (threshold=337) (hotness: 300)
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-scei-ps4"
