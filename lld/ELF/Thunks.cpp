@@ -204,7 +204,7 @@ public:
 class PPC64PltCallStub final : public Thunk {
 public:
   PPC64PltCallStub(Symbol &Dest) : Thunk(Dest) {}
-  uint32_t size() { return 20; }
+  uint32_t size() override { return 20; }
   void writeTo(uint8_t *Buf) override;
   void addSymbols(ThunkSection &IS) override;
 };
