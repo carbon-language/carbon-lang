@@ -515,9 +515,11 @@ define <16 x float> @v16f32_estimate(<16 x float> %x) #1 {
 ;
 ; AVX512-LABEL: v16f32_estimate:
 ; AVX512:       # %bb.0:
-; AVX512-NEXT:    vsqrtps %zmm0, %zmm0
-; AVX512-NEXT:    vbroadcastss {{.*#+}} zmm1 = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-; AVX512-NEXT:    vdivps %zmm0, %zmm1, %zmm0
+; AVX512-NEXT:    vrsqrt14ps %zmm0, %zmm1
+; AVX512-NEXT:    vmulps %zmm1, %zmm0, %zmm0
+; AVX512-NEXT:    vfmadd213ps {{.*#+}} zmm0 = (zmm1 * zmm0) + mem
+; AVX512-NEXT:    vmulps {{.*}}(%rip){1to16}, %zmm1, %zmm1
+; AVX512-NEXT:    vmulps %zmm0, %zmm1, %zmm0
 ; AVX512-NEXT:    retq
   %sqrt = tail call <16 x float> @llvm.sqrt.v16f32(<16 x float> %x)
   %div = fdiv fast <16 x float> <float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0>, %sqrt
