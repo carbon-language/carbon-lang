@@ -482,6 +482,10 @@ class InternalMmapVectorNoCtor {
   uptr capacity() const {
     return capacity_;
   }
+  void reserve(uptr new_size) {
+    if (new_size >= size()) return;
+    Resize(new_size);
+  }
   void resize(uptr new_size) {
     Resize(new_size);
     if (new_size > size_) {
@@ -527,9 +531,7 @@ class InternalMmapVectorNoCtor {
 template<typename T>
 class InternalMmapVector : public InternalMmapVectorNoCtor<T> {
  public:
-  explicit InternalMmapVector(uptr initial_capacity) {
-    InternalMmapVectorNoCtor<T>::Initialize(initial_capacity);
-  }
+  InternalMmapVector() { InternalMmapVectorNoCtor<T>::Initialize(1); }
   ~InternalMmapVector() { InternalMmapVectorNoCtor<T>::Destroy(); }
   // Disallow copies and moves.
   InternalMmapVector(const InternalMmapVector &) = delete;
@@ -545,7 +547,7 @@ class InternalMmapVector : public InternalMmapVectorNoCtor<T> {
 template <typename T>
 class InternalScopedBuffer : public InternalMmapVector<T> {
  public:
-  explicit InternalScopedBuffer(uptr cnt) : InternalMmapVector<T>(cnt) {
+  explicit InternalScopedBuffer(uptr cnt) : InternalMmapVector<T>() {
     this->resize(cnt);
   }
 };

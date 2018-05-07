@@ -89,7 +89,7 @@ TEST(SanitizerCommon, MmapAlignedOrDieOnFatalError) {
 }
 
 TEST(SanitizerCommon, InternalMmapVector) {
-  InternalMmapVector<uptr> vector(1);
+  InternalMmapVector<uptr> vector;
   for (uptr i = 0; i < 100; i++) {
     EXPECT_EQ(i, vector.size());
     vector.push_back(i);
@@ -102,7 +102,7 @@ TEST(SanitizerCommon, InternalMmapVector) {
     vector.pop_back();
     EXPECT_EQ((uptr)i, vector.size());
   }
-  InternalMmapVector<uptr> empty_vector(0);
+  InternalMmapVector<uptr> empty_vector;
   CHECK_GT(empty_vector.capacity(), 0U);
   CHECK_EQ(0U, empty_vector.size());
 }

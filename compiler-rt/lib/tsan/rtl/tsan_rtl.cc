@@ -105,8 +105,8 @@ Context::Context()
   , racy_stacks()
   , racy_addresses()
   , fired_suppressions_mtx(MutexTypeFired, StatMtxFired)
-  , fired_suppressions(8)
   , clock_alloc("clock allocator") {
+  fired_suppressions.reserve(8);
 }
 
 // The objects are allocated in TLS, so one may rely on zero-initialization.

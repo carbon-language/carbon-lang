@@ -104,7 +104,7 @@ InternalMmapVector<RootRegion> const *GetRootRegions() { return root_regions; }
 void InitializeRootRegions() {
   CHECK(!root_regions);
   ALIGNED(64) static char placeholder[sizeof(InternalMmapVector<RootRegion>)];
-  root_regions = new(placeholder) InternalMmapVector<RootRegion>(1);
+  root_regions = new (placeholder) InternalMmapVector<RootRegion>();  // NOLINT
 }
 
 const char *MaybeCallLsanDefaultOptions() {
@@ -445,7 +445,7 @@ void ProcessPC(Frontier *frontier) {
 // Sets the appropriate tag on each chunk.
 static void ClassifyAllChunks(SuspendedThreadsList const &suspended_threads) {
   // Holds the flood fill frontier.
-  Frontier frontier(1);
+  Frontier frontier;
 
   ForEachChunk(CollectIgnoredCb, &frontier);
   ProcessGlobalRegions(&frontier);
@@ -507,7 +507,7 @@ static void CollectLeaksCb(uptr chunk, void *arg) {
 }
 
 static void PrintMatchedSuppressions() {
-  InternalMmapVector<Suppression *> matched(1);
+  InternalMmapVector<Suppression *> matched;
   GetSuppressionContext()->GetMatched(&matched);
   if (!matched.size())
     return;

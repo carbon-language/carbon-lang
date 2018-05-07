@@ -88,7 +88,7 @@ namespace __sanitizer {
 
 class SuspendedThreadsListLinux : public SuspendedThreadsList {
  public:
-  SuspendedThreadsListLinux() : thread_ids_(1024) {}
+  SuspendedThreadsListLinux() { thread_ids_.reserve(1024); }
 
   tid_t GetThreadID(uptr index) const;
   uptr ThreadCount() const;
