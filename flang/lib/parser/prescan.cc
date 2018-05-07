@@ -808,6 +808,9 @@ Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
       *sp++ = ToLowerCaseLetter(ch);
     }
   }
+  if (*p != ' ' && *p != '0') {
+    return {};
+  }
   *sp = '\0';
   if (const char *sp{IsCompilerDirectiveSentinel(sentinel)}) {
     return {
