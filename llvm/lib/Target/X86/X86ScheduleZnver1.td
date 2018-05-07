@@ -223,14 +223,14 @@ defm : ZnWriteResFpuPair<WriteFShuffle,  [ZnFPU12], 1>;
 defm : ZnWriteResFpuPair<WriteFShuffleY, [ZnFPU12], 1>;
 defm : ZnWriteResFpuPair<WriteFVarShuffle, [ZnFPU12], 1>;
 defm : ZnWriteResFpuPair<WriteFVarShuffleY,[ZnFPU12], 1>;
-defm : ZnWriteResFpuPair<WriteFMul,      [ZnFPU0],  5>;
-defm : ZnWriteResFpuPair<WriteFMulY,     [ZnFPU0],  5>;
+defm : ZnWriteResFpuPair<WriteFMul,      [ZnFPU01], 3, [1], 1, 7, 1>;
+defm : ZnWriteResFpuPair<WriteFMulY,     [ZnFPU01], 4, [1], 1, 7, 1>;
 defm : ZnWriteResFpuPair<WriteFMA,       [ZnFPU03], 5>;
 defm : ZnWriteResFpuPair<WriteFMAX,      [ZnFPU03], 5>;
 defm : ZnWriteResFpuPair<WriteFMAY,      [ZnFPU03], 5>;
 defm : ZnWriteResFpuPair<WriteFRcp,      [ZnFPU01], 5>;
 defm : ZnWriteResFpuPair<WriteFRcpX,     [ZnFPU01], 5>;
-//defm : ZnWriteResFpuPair<WriteFRcpY,     [ZnFPU01], 5, [1], 1, 7, 1>;
+defm : ZnWriteResFpuPair<WriteFRcpY,     [ZnFPU01], 5, [1], 1, 7, 2>;
 //defm : ZnWriteResFpuPair<WriteFRsqrt,    [ZnFPU02], 5>;
 defm : ZnWriteResFpuPair<WriteFRsqrtX,   [ZnFPU01], 5, [1], 1, 7, 1>;
 //defm : ZnWriteResFpuPair<WriteFRsqrtY,   [ZnFPU01], 5, [2], 2>;
@@ -1460,32 +1460,6 @@ def : SchedAlias<WriteFHAddLd,  ZnWriteMicrocoded>;
 def : SchedAlias<WriteFHAddY,   ZnWriteMicrocoded>;
 def : SchedAlias<WriteFHAddYLd, ZnWriteMicrocoded>;
 
-// MULL SS/SD PS/PD.
-// x,x / v,v,v.
-def ZnWriteMULr : SchedWriteRes<[ZnFPU01]> {
-  let Latency = 3;
-}
-// ymm.
-def ZnWriteMULYr : SchedWriteRes<[ZnFPU01]> {
-  let Latency = 4;
-}
-def : InstRW<[ZnWriteMULr], (instregex "(V?)MUL(P|S)(S|D)rr")>;
-def : InstRW<[ZnWriteMULYr], (instregex "(V?)MUL(P|S)(S|D)Yrr")>;
-
-// x,m / v,v,m.
-def ZnWriteMULLd : SchedWriteRes<[ZnAGU, ZnFPU01]> {
-  let Latency = 10;
-  let NumMicroOps = 2;
-}
-def : InstRW<[ZnWriteMULLd], (instregex "(V?)MUL(P|S)(S|D)rm")>;
-
-// ymm
-def ZnWriteMULYLd : SchedWriteRes<[ZnAGU, ZnFPU01]> {
-  let Latency = 11;
-  let NumMicroOps = 2;
-}
-def : InstRW<[ZnWriteMULYLd], (instregex "(V?)MUL(P|S)(S|D)Yrm")>;
-
 // VDIVPS.
 // TODO - convert to ZnWriteResFpuPair
 // y,y,y.
@@ -1519,21 +1493,6 @@ def ZnWriteVDIVPDYLd : SchedWriteRes<[ZnAGU, ZnFPU3]> {
   let ResourceCycles = [1,22];
 }
 def : SchedAlias<WriteFDiv64YLd, ZnWriteVDIVPDYLd>;
-
-// VRCPPS.
-// TODO - convert to ZnWriteResFpuPair
-// y,y.
-def ZnWriteVRCPPSYr : SchedWriteRes<[ZnFPU01]> {
-  let Latency = 5;
-}
-def : SchedAlias<WriteFRcpY,   ZnWriteVRCPPSYr>;
-
-// y,m256.
-def ZnWriteVRCPPSYLd : SchedWriteRes<[ZnAGU, ZnFPU01]> {
-  let Latency = 12;
-  let NumMicroOps = 3;
-}
-def : SchedAlias<WriteFRcpYLd, ZnWriteVRCPPSYLd>;
 
 // DPPS.
 // x,x,i / v,v,v,i.

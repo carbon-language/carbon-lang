@@ -3067,10 +3067,10 @@ define void @test_fmul(float *%a0, double *%a1) optsize {
 ; ZNVER1-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [8:0.50]
 ; ZNVER1-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [8:0.50]
 ; ZNVER1-NEXT:    #APP
-; ZNVER1-NEXT:    fmul %st(0), %st(1) # sched: [5:1.00]
-; ZNVER1-NEXT:    fmul %st(2) # sched: [5:1.00]
-; ZNVER1-NEXT:    fmuls (%ecx) # sched: [12:1.00]
-; ZNVER1-NEXT:    fmull (%eax) # sched: [12:1.00]
+; ZNVER1-NEXT:    fmul %st(0), %st(1) # sched: [3:0.50]
+; ZNVER1-NEXT:    fmul %st(2) # sched: [3:0.50]
+; ZNVER1-NEXT:    fmuls (%ecx) # sched: [10:0.50]
+; ZNVER1-NEXT:    fmull (%eax) # sched: [10:0.50]
 ; ZNVER1-NEXT:    #NO_APP
 ; ZNVER1-NEXT:    retl # sched: [1:0.50]
   tail call void asm sideeffect "fmul %st(0), %st(1) \0A\09 fmul %st(2), %st(0) \0A\09 fmuls $0 \0A\09 fmull $1", "*m,*m"(float *%a0, double *%a1) nounwind
@@ -3191,10 +3191,10 @@ define void @test_fmulp_fimul(i16 *%a0, i32 *%a1) optsize {
 ; ZNVER1-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [8:0.50]
 ; ZNVER1-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [8:0.50]
 ; ZNVER1-NEXT:    #APP
-; ZNVER1-NEXT:    fmulp %st(1) # sched: [5:1.00]
-; ZNVER1-NEXT:    fmulp %st(2) # sched: [5:1.00]
-; ZNVER1-NEXT:    fimuls (%ecx) # sched: [12:1.00]
-; ZNVER1-NEXT:    fimull (%eax) # sched: [12:1.00]
+; ZNVER1-NEXT:    fmulp %st(1) # sched: [3:0.50]
+; ZNVER1-NEXT:    fmulp %st(2) # sched: [3:0.50]
+; ZNVER1-NEXT:    fimuls (%ecx) # sched: [10:0.50]
+; ZNVER1-NEXT:    fimull (%eax) # sched: [10:0.50]
 ; ZNVER1-NEXT:    #NO_APP
 ; ZNVER1-NEXT:    retl # sched: [1:0.50]
   tail call void asm sideeffect "fmulp \0A\09 fmulp %st(2), %st(0) \0A\09 fimuls $0 \0A\09 fimull $1", "*m,*m"(i16 *%a0, i32 *%a1) nounwind
