@@ -79,9 +79,9 @@ static void checkError(Error E) {
 // SkipModuleByDistributedBackend flag which requests distributed backend
 // to skip the compilation of the corresponding module and produce an empty
 // object file.
-static void writeEmptyDistributedBuildOutputs(const std::string &ModulePath,
-                                              const std::string &OldPrefix,
-                                              const std::string &NewPrefix,
+static void writeEmptyDistributedBuildOutputs(StringRef ModulePath,
+                                              StringRef OldPrefix,
+                                              StringRef NewPrefix,
                                               bool SkipModule) {
   std::string NewModulePath =
       lto::getThinLTOOutputFile(ModulePath, OldPrefix, NewPrefix);
