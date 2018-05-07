@@ -1285,6 +1285,7 @@ Error ResourceFileWriter::writeVersionInfoBlock(const VersionInfoBlock &Blk) {
   bool OutputHeader = Blk.Name != "";
   uint64_t LengthLoc;
 
+  padStream(sizeof(uint32_t));
   if (OutputHeader) {
     LengthLoc = writeInt<uint16_t>(0);
     writeInt<uint16_t>(0);
@@ -1310,7 +1311,6 @@ Error ResourceFileWriter::writeVersionInfoBlock(const VersionInfoBlock &Blk) {
     writeObjectAt(ulittle16_t(CurLoc - LengthLoc), LengthLoc);
   }
 
-  padStream(sizeof(uint32_t));
   return Error::success();
 }
 
@@ -1340,6 +1340,7 @@ Error ResourceFileWriter::writeVersionInfoValue(const VersionInfoValue &Val) {
     return createError(Twine("VALUE ") + Val.Key +
                        " cannot contain both strings and integers");
 
+  padStream(sizeof(uint32_t));
   auto LengthLoc = writeInt<uint16_t>(0);
   auto ValLengthLoc = writeInt<uint16_t>(0);
   writeInt<uint16_t>(HasStrings);
@@ -1369,7 +1370,6 @@ Error ResourceFileWriter::writeVersionInfoValue(const VersionInfoValue &Val) {
   }
   writeObjectAt(ulittle16_t(CurLoc - LengthLoc), LengthLoc);
   writeObjectAt(ulittle16_t(ValueLength), ValLengthLoc);
-  padStream(sizeof(uint32_t));
   return Error::success();
 }
 
