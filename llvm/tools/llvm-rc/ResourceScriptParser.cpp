@@ -573,6 +573,7 @@ RCParser::ParseType RCParser::parseStringTableResource() {
     // Some examples in documentation suggest that there might be a comma in
     // between, however we strictly adhere to the single statement definition.
     ASSIGN_OR_RETURN(IDResult, readInt());
+    consumeOptionalType(Kind::Comma);
     ASSIGN_OR_RETURN(StrResult, readString());
     Table->addString(*IDResult, *StrResult);
   }
