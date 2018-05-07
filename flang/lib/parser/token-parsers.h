@@ -250,7 +250,7 @@ struct CharLiteralChar {
     if (IsOctalDigit(ch)) {
       ch -= '0';
       for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
-        static constexpr auto octalDigit = "01234567"_ch;
+        static constexpr auto octalDigit = attempt("01234567"_ch);
         och = octalDigit.Parse(state);
         if (och.has_value()) {
           ch = 8 * ch + **och - '0';
@@ -260,14 +260,17 @@ struct CharLiteralChar {
       }
     } else if (ch == 'x' || ch == 'X') {
       ch = 0;
-      for (int j = 0; j++ < 2;) {
-        static constexpr auto hexDigit = "0123456789abcdefABCDEF"_ch;
-        och = hexDigit.Parse(state);
+      static constexpr auto hexDigit = "0123456789abcdefABCDEF"_ch;
+      och = hexDigit.Parse(state);
+      if (och.has_value()) {
+        ch = HexadecimalDigitValue(**och);
+        static constexpr auto hexDigit2 = attempt("0123456789abcdefABCDEF"_ch);
+        och = hexDigit2.Parse(state);
         if (och.has_value()) {
           ch = 16 * ch + HexadecimalDigitValue(**och);
-        } else {
-          break;
         }
+      } else {
+        return {};
       }
     } else {
       state.Say(at, "bad escaped character"_en_US);
