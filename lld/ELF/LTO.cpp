@@ -80,13 +80,12 @@ static void checkError(Error E) {
 // to skip the compilation of the corresponding module and produce an empty
 // object file.
 static void writeEmptyDistributedBuildOutputs(StringRef ModulePath,
-                                              StringRef OldPrefix,
-                                              StringRef NewPrefix,
                                               bool SkipModule) {
   std::string NewModulePath =
-      lto::getThinLTOOutputFile(ModulePath, OldPrefix, NewPrefix);
-  std::error_code EC;
+      lto::getThinLTOOutputFile(ModulePath, Config->ThinLTOPrefixReplace.first,
+                                Config->ThinLTOPrefixReplace.second);
 
+  std::error_code EC;
   raw_fd_ostream OS(NewModulePath + ".thinlto.bc", EC,
                     sys::fs::OpenFlags::F_None);
   if (EC)
@@ -192,9 +191,7 @@ void BitcodeCompiler::add(BitcodeFile &F) {
 
   // Create the empty files which, if indexed, will be overwritten later.
   if (Config->ThinLTOIndexOnly)
-    writeEmptyDistributedBuildOutputs(
-        Obj.getName(), Config->ThinLTOPrefixReplace.first,
-        Config->ThinLTOPrefixReplace.second, false);
+    writeEmptyDistributedBuildOutputs(Obj.getName(), false);
 
   unsigned SymNum = 0;
   std::vector<Symbol *> Syms = F.getSymbols();
@@ -309,7 +306,5 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
 // For lazy object files not added to link, adds empty index files
 void BitcodeCompiler::addLazyObjFile(LazyObjFile *File) {
   writeEmptyDistributedBuildOutputs(File->getBuffer().getBufferIdentifier(),
-                                    Config->ThinLTOPrefixReplace.first,
-                                    Config->ThinLTOPrefixReplace.second,
                                     /*SkipModule=*/true);
 }
