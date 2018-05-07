@@ -207,7 +207,13 @@ defm : ZnWriteResFpuPair<WriteCvtI2F,    [ZnFPU3],  5>;
 defm : ZnWriteResFpuPair<WriteCvtF2F,    [ZnFPU3],  5>;
 defm : ZnWriteResFpuPair<WriteCvtF2I,    [ZnFPU3],  5>;
 defm : ZnWriteResFpuPair<WriteFDiv,      [ZnFPU3], 15>;
-defm : ZnWriteResFpuPair<WriteFDivY,     [ZnFPU3], 15>;
+defm : ZnWriteResFpuPair<WriteFDivX,     [ZnFPU3], 15>;
+//defm : ZnWriteResFpuPair<WriteFDivY,     [ZnFPU3], 15>;
+defm : ZnWriteResFpuPair<WriteFDivZ,     [ZnFPU3], 15>;
+defm : ZnWriteResFpuPair<WriteFDiv64,    [ZnFPU3], 15>;
+defm : ZnWriteResFpuPair<WriteFDiv64X,   [ZnFPU3], 15>;
+//defm : ZnWriteResFpuPair<WriteFDiv64Y,   [ZnFPU3], 15>;
+defm : ZnWriteResFpuPair<WriteFDiv64Z,   [ZnFPU3], 15>;
 defm : ZnWriteResFpuPair<WriteFSign,     [ZnFPU3],  2>;
 defm : ZnWriteResFpuPair<WriteFRnd,      [ZnFPU3],  4, [1], 1, 7, 1>; // FIXME: Should folds require 1 extra uops?
 defm : ZnWriteResFpuPair<WriteFRndY,     [ZnFPU3],  4, [1], 1, 7, 1>; // FIXME: Should folds require 1 extra uops?
@@ -1481,12 +1487,13 @@ def ZnWriteMULYLd : SchedWriteRes<[ZnAGU, ZnFPU01]> {
 def : InstRW<[ZnWriteMULYLd], (instregex "(V?)MUL(P|S)(S|D)Yrm")>;
 
 // VDIVPS.
+// TODO - convert to ZnWriteResFpuPair
 // y,y,y.
 def ZnWriteVDIVPSYr : SchedWriteRes<[ZnFPU3]> {
   let Latency = 12;
   let ResourceCycles = [12];
 }
-def : InstRW<[ZnWriteVDIVPSYr], (instregex "VDIVPSYrr")>;
+def : SchedAlias<WriteFDivY,   ZnWriteVDIVPSYr>;
 
 // y,y,m256.
 def ZnWriteVDIVPSYLd : SchedWriteRes<[ZnAGU, ZnFPU3]> {
@@ -1494,15 +1501,16 @@ def ZnWriteVDIVPSYLd : SchedWriteRes<[ZnAGU, ZnFPU3]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1, 19];
 }
-def : InstRW<[ZnWriteVDIVPSYLd], (instregex "VDIVPSYrm")>;
+def : SchedAlias<WriteFDivYLd,  ZnWriteVDIVPSYLd>;
 
 // VDIVPD.
+// TODO - convert to ZnWriteResFpuPair
 // y,y,y.
 def ZnWriteVDIVPDY : SchedWriteRes<[ZnFPU3]> {
   let Latency = 15;
   let ResourceCycles = [15];
 }
-def : InstRW<[ZnWriteVDIVPDY], (instregex "VDIVPDYrr")>;
+def : SchedAlias<WriteFDiv64Y, ZnWriteVDIVPDY>;
 
 // y,y,m256.
 def ZnWriteVDIVPDYLd : SchedWriteRes<[ZnAGU, ZnFPU3]> {
@@ -1510,7 +1518,7 @@ def ZnWriteVDIVPDYLd : SchedWriteRes<[ZnAGU, ZnFPU3]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,22];
 }
-def : InstRW<[ZnWriteVDIVPDYLd], (instregex "VDIVPDYrm")>;
+def : SchedAlias<WriteFDiv64YLd, ZnWriteVDIVPDYLd>;
 
 // VRCPPS.
 // TODO - convert to ZnWriteResFpuPair

@@ -231,7 +231,7 @@ entry:
 define <8 x double> @divpd512(<8 x double> %y, <8 x double> %x) {
 ; GENERIC-LABEL: divpd512:
 ; GENERIC:       # %bb.0: # %entry
-; GENERIC-NEXT:    vdivpd %zmm0, %zmm1, %zmm0 # sched: [24:1.00]
+; GENERIC-NEXT:    vdivpd %zmm0, %zmm1, %zmm0 # sched: [45:44.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: divpd512:
@@ -246,7 +246,7 @@ entry:
 define <8 x double> @divpd512fold(<8 x double> %y) {
 ; GENERIC-LABEL: divpd512fold:
 ; GENERIC:       # %bb.0: # %entry
-; GENERIC-NEXT:    vdivpd {{.*}}(%rip), %zmm0, %zmm0 # sched: [31:1.00]
+; GENERIC-NEXT:    vdivpd {{.*}}(%rip), %zmm0, %zmm0 # sched: [52:44.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: divpd512fold:
@@ -261,7 +261,7 @@ entry:
 define <16 x float> @divps512(<16 x float> %y, <16 x float> %x) {
 ; GENERIC-LABEL: divps512:
 ; GENERIC:       # %bb.0: # %entry
-; GENERIC-NEXT:    vdivps %zmm0, %zmm1, %zmm0 # sched: [24:1.00]
+; GENERIC-NEXT:    vdivps %zmm0, %zmm1, %zmm0 # sched: [29:28.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: divps512:
@@ -276,7 +276,7 @@ entry:
 define <16 x float> @divps512fold(<16 x float> %y) {
 ; GENERIC-LABEL: divps512fold:
 ; GENERIC:       # %bb.0: # %entry
-; GENERIC-NEXT:    vdivps {{.*}}(%rip), %zmm0, %zmm0 # sched: [31:1.00]
+; GENERIC-NEXT:    vdivps {{.*}}(%rip), %zmm0, %zmm0 # sched: [36:28.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: divps512fold:
@@ -838,7 +838,7 @@ define <16 x float> @test_mask_vdivps(<16 x float> %dst, <16 x float> %i, <16 x 
 ; GENERIC-LABEL: test_mask_vdivps:
 ; GENERIC:       # %bb.0:
 ; GENERIC-NEXT:    vptestmd %zmm3, %zmm3, %k1 # sched: [1:0.33]
-; GENERIC-NEXT:    vdivps %zmm2, %zmm1, %zmm0 {%k1} # sched: [24:1.00]
+; GENERIC-NEXT:    vdivps %zmm2, %zmm1, %zmm0 {%k1} # sched: [29:28.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: test_mask_vdivps:

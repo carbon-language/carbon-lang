@@ -1397,10 +1397,10 @@ define void @test_fdiv(float *%a0, double *%a1) optsize {
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [3:1.00]
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [3:1.00]
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fdiv %st(0), %st(1) # sched: [34:34.00]
-; SLM-NEXT:    fdiv %st(2) # sched: [34:34.00]
-; SLM-NEXT:    fdivs (%ecx) # sched: [37:34.00]
-; SLM-NEXT:    fdivl (%eax) # sched: [37:34.00]
+; SLM-NEXT:    fdiv %st(0), %st(1) # sched: [19:17.00]
+; SLM-NEXT:    fdiv %st(2) # sched: [19:17.00]
+; SLM-NEXT:    fdivs (%ecx) # sched: [22:17.00]
+; SLM-NEXT:    fdivl (%eax) # sched: [22:17.00]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
@@ -1409,8 +1409,8 @@ define void @test_fdiv(float *%a0, double *%a1) optsize {
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [5:0.50]
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [5:0.50]
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fdiv %st(0), %st(1) # sched: [24:1.00]
-; SANDY-NEXT:    fdiv %st(2) # sched: [24:1.00]
+; SANDY-NEXT:    fdiv %st(0), %st(1) # sched: [14:14.00]
+; SANDY-NEXT:    fdiv %st(2) # sched: [14:14.00]
 ; SANDY-NEXT:    fdivs (%ecx) # sched: [31:1.00]
 ; SANDY-NEXT:    fdivl (%eax) # sched: [31:1.00]
 ; SANDY-NEXT:    #NO_APP
@@ -1521,10 +1521,10 @@ define void @test_fdivp_fidiv(i16 *%a0, i32 *%a1) optsize {
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [3:1.00]
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [3:1.00]
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fdivp %st(1) # sched: [34:34.00]
-; SLM-NEXT:    fdivp %st(2) # sched: [34:34.00]
-; SLM-NEXT:    fidivs (%ecx) # sched: [37:34.00]
-; SLM-NEXT:    fidivl (%eax) # sched: [37:34.00]
+; SLM-NEXT:    fdivp %st(1) # sched: [19:17.00]
+; SLM-NEXT:    fdivp %st(2) # sched: [19:17.00]
+; SLM-NEXT:    fidivs (%ecx) # sched: [22:17.00]
+; SLM-NEXT:    fidivl (%eax) # sched: [22:17.00]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
@@ -1533,8 +1533,8 @@ define void @test_fdivp_fidiv(i16 *%a0, i32 *%a1) optsize {
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [5:0.50]
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [5:0.50]
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fdivp %st(1) # sched: [24:1.00]
-; SANDY-NEXT:    fdivp %st(2) # sched: [24:1.00]
+; SANDY-NEXT:    fdivp %st(1) # sched: [14:14.00]
+; SANDY-NEXT:    fdivp %st(2) # sched: [14:14.00]
 ; SANDY-NEXT:    fidivs (%ecx) # sched: [34:1.00]
 ; SANDY-NEXT:    fidivl (%eax) # sched: [34:1.00]
 ; SANDY-NEXT:    #NO_APP
@@ -1645,10 +1645,10 @@ define void @test_fdivr(float *%a0, double *%a1) optsize {
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [3:1.00]
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [3:1.00]
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fdivr %st(0), %st(1) # sched: [34:34.00]
-; SLM-NEXT:    fdivr %st(2) # sched: [34:34.00]
-; SLM-NEXT:    fdivrs (%ecx) # sched: [37:34.00]
-; SLM-NEXT:    fdivrl (%eax) # sched: [37:34.00]
+; SLM-NEXT:    fdivr %st(0), %st(1) # sched: [19:17.00]
+; SLM-NEXT:    fdivr %st(2) # sched: [19:17.00]
+; SLM-NEXT:    fdivrs (%ecx) # sched: [22:17.00]
+; SLM-NEXT:    fdivrl (%eax) # sched: [22:17.00]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
@@ -1657,8 +1657,8 @@ define void @test_fdivr(float *%a0, double *%a1) optsize {
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [5:0.50]
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [5:0.50]
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fdivr %st(0), %st(1) # sched: [24:1.00]
-; SANDY-NEXT:    fdivr %st(2) # sched: [24:1.00]
+; SANDY-NEXT:    fdivr %st(0), %st(1) # sched: [14:14.00]
+; SANDY-NEXT:    fdivr %st(2) # sched: [14:14.00]
 ; SANDY-NEXT:    fdivrs (%ecx) # sched: [31:1.00]
 ; SANDY-NEXT:    fdivrl (%eax) # sched: [31:1.00]
 ; SANDY-NEXT:    #NO_APP
@@ -1769,10 +1769,10 @@ define void @test_fdivrp_fidivr(i16 *%a0, i32 *%a1) optsize {
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [3:1.00]
 ; SLM-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [3:1.00]
 ; SLM-NEXT:    #APP
-; SLM-NEXT:    fdivrp %st(1) # sched: [34:34.00]
-; SLM-NEXT:    fdivrp %st(2) # sched: [34:34.00]
-; SLM-NEXT:    fidivrs (%ecx) # sched: [37:34.00]
-; SLM-NEXT:    fidivrl (%eax) # sched: [37:34.00]
+; SLM-NEXT:    fdivrp %st(1) # sched: [19:17.00]
+; SLM-NEXT:    fdivrp %st(2) # sched: [19:17.00]
+; SLM-NEXT:    fidivrs (%ecx) # sched: [22:17.00]
+; SLM-NEXT:    fidivrl (%eax) # sched: [22:17.00]
 ; SLM-NEXT:    #NO_APP
 ; SLM-NEXT:    retl # sched: [4:1.00]
 ;
@@ -1781,8 +1781,8 @@ define void @test_fdivrp_fidivr(i16 *%a0, i32 *%a1) optsize {
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %eax # sched: [5:0.50]
 ; SANDY-NEXT:    movl {{[0-9]+}}(%esp), %ecx # sched: [5:0.50]
 ; SANDY-NEXT:    #APP
-; SANDY-NEXT:    fdivrp %st(1) # sched: [24:1.00]
-; SANDY-NEXT:    fdivrp %st(2) # sched: [24:1.00]
+; SANDY-NEXT:    fdivrp %st(1) # sched: [14:14.00]
+; SANDY-NEXT:    fdivrp %st(2) # sched: [14:14.00]
 ; SANDY-NEXT:    fidivrs (%ecx) # sched: [34:1.00]
 ; SANDY-NEXT:    fidivrl (%eax) # sched: [34:1.00]
 ; SANDY-NEXT:    #NO_APP
