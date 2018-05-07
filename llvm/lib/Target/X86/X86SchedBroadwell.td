@@ -687,19 +687,7 @@ def BWWriteResGroup28 : SchedWriteRes<[BWPort5]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[BWWriteResGroup28], (instregex "VPBROADCASTBrr",
-                                            "VPBROADCASTWrr",
-                                            "VPMOVSXBDYrr",
-                                            "VPMOVSXBQYrr",
-                                            "VPMOVSXBWYrr",
-                                            "VPMOVSXDQYrr",
-                                            "VPMOVSXWDYrr",
-                                            "VPMOVSXWQYrr",
-                                            "VPMOVZXBDYrr",
-                                            "VPMOVZXBQYrr",
-                                            "VPMOVZXBWYrr",
-                                            "VPMOVZXDQYrr",
-                                            "VPMOVZXWDYrr",
-                                            "VPMOVZXWQYrr")>;
+                                            "VPBROADCASTWrr")>;
 
 def BWWriteResGroup30 : SchedWriteRes<[BWPort0156]> {
   let Latency = 2;

@@ -731,19 +731,7 @@ def: InstRW<[SKLWriteResGroup30], (instregex "(ADD|SUB|SUBR)_FPrST0",
                                              "(ADD|SUB|SUBR)_FrST0",
                                              "VPBROADCASTBrr",
                                              "VPBROADCASTWrr",
-                                             "(V?)PCMPGTQ(Y?)rr",
-                                             "VPMOVSXBDYrr",
-                                             "VPMOVSXBQYrr",
-                                             "VPMOVSXBWYrr",
-                                             "VPMOVSXDQYrr",
-                                             "VPMOVSXWDYrr",
-                                             "VPMOVSXWQYrr",
-                                             "VPMOVZXBDYrr",
-                                             "VPMOVZXBQYrr",
-                                             "VPMOVZXBWYrr",
-                                             "VPMOVZXDQYrr",
-                                             "VPMOVZXWDYrr",
-                                             "VPMOVZXWQYrr")>;
+                                             "(V?)PCMPGTQ(Y?)rr")>;
 
 def SKLWriteResGroup31 : SchedWriteRes<[SKLPort0,SKLPort5]> {
   let Latency = 3;
@@ -1558,12 +1546,7 @@ def SKLWriteResGroup133 : SchedWriteRes<[SKLPort5,SKLPort23]> {
 }
 def: InstRW<[SKLWriteResGroup133], (instregex "(ADD|SUB|SUBR)_F(32|64)m",
                                               "ILD_F(16|32|64)m",
-                                              "VPCMPGTQYrm",
-                                              "VPMOVZXBDYrm",
-                                              "VPMOVZXBQYrm",
-                                              "VPMOVZXBWYrm",
-                                              "VPMOVZXDQYrm",
-                                              "VPMOVZXWQYrm")>;
+                                              "VPCMPGTQYrm")>;
 
 def SKLWriteResGroup134 : SchedWriteRes<[SKLPort01,SKLPort23]> {
   let Latency = 10;

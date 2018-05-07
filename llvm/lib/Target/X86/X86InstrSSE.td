@@ -4881,26 +4881,29 @@ multiclass SS41I_pmovx_rrrm<bits<8> opc, string OpcodeStr, X86MemOperand MemOp,
                  !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"), []>,
                  Sched<[sched.Folded]>;
 }
-// FIXME: YMM cases should use SchedWriteShuffle.YMM.
+
 multiclass SS41I_pmovx_rm_all<bits<8> opc, string OpcodeStr,
                               X86MemOperand MemOp, X86MemOperand MemYOp,
-                              X86SchedWriteWidths sched, Predicate prd> {
-  defm NAME : SS41I_pmovx_rrrm<opc, OpcodeStr, MemOp, VR128, VR128, sched.XMM>;
+                              Predicate prd> {
+  defm NAME : SS41I_pmovx_rrrm<opc, OpcodeStr, MemOp, VR128, VR128,
+                               SchedWriteShuffle.XMM>;
   let Predicates = [HasAVX, prd] in
     defm V#NAME   : SS41I_pmovx_rrrm<opc, !strconcat("v", OpcodeStr), MemOp,
-                                     VR128, VR128, sched.XMM>, VEX, VEX_WIG;
+                                     VR128, VR128, SchedWriteShuffle.XMM>,
+                                     VEX, VEX_WIG;
   let Predicates = [HasAVX2, prd] in
     defm V#NAME#Y : SS41I_pmovx_rrrm<opc, !strconcat("v", OpcodeStr), MemYOp,
-                                     VR256, VR128, sched.XMM>, VEX, VEX_L, VEX_WIG;
+                                     VR256, VR128, WriteShuffle256>,
+                                     VEX, VEX_L, VEX_WIG;
 }
 
 multiclass SS41I_pmovx_rm<bits<8> opc, string OpcodeStr, X86MemOperand MemOp,
                           X86MemOperand MemYOp, Predicate prd> {
   defm PMOVSX#NAME : SS41I_pmovx_rm_all<opc, !strconcat("pmovsx", OpcodeStr),
-                                        MemOp, MemYOp, SchedWriteShuffle, prd>;
+                                        MemOp, MemYOp, prd>;
   defm PMOVZX#NAME : SS41I_pmovx_rm_all<!add(opc, 0x10),
                                         !strconcat("pmovzx", OpcodeStr),
-                                        MemOp, MemYOp, SchedWriteShuffle, prd>;
+                                        MemOp, MemYOp, prd>;
 }
 
 defm BW : SS41I_pmovx_rm<0x20, "bw", i64mem, i128mem, NoVLX_Or_NoBWI>;

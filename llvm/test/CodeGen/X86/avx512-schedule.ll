@@ -3487,7 +3487,7 @@ define <4 x i64> @sext_4x8mem_to_4x64mask(<4 x i8> *%i , <4 x i1> %mask) nounwin
 define <4 x i64> @sext_4x8mem_to_4x64(<4 x i8> *%i) nounwind readnone {
 ; GENERIC-LABEL: sext_4x8mem_to_4x64:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vpmovsxbq (%rdi), %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vpmovsxbq (%rdi), %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: sext_4x8mem_to_4x64:
@@ -3653,7 +3653,7 @@ define <8 x i32> @sext_8x16mem_to_8x32mask(<8 x i16> *%i , <8 x i1> %mask) nounw
 define <8 x i32> @sext_8x16mem_to_8x32(<8 x i16> *%i) nounwind readnone {
 ; GENERIC-LABEL: sext_8x16mem_to_8x32:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vpmovsxwd (%rdi), %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vpmovsxwd (%rdi), %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: sext_8x16mem_to_8x32:
@@ -3883,7 +3883,7 @@ define <4 x i64> @sext_4x16mem_to_4x64mask(<4 x i16> *%i , <4 x i1> %mask) nounw
 define <4 x i64> @sext_4x16mem_to_4x64(<4 x i16> *%i) nounwind readnone {
 ; GENERIC-LABEL: sext_4x16mem_to_4x64:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vpmovsxwq (%rdi), %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vpmovsxwq (%rdi), %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: sext_4x16mem_to_4x64:
@@ -4081,7 +4081,7 @@ define <4 x i64> @sext_4x32mem_to_4x64mask(<4 x i32> *%i , <4 x i1> %mask) nounw
 define <4 x i64> @sext_4x32mem_to_4x64(<4 x i32> *%i) nounwind readnone {
 ; GENERIC-LABEL: sext_4x32mem_to_4x64:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vpmovsxdq (%rdi), %ymm0 # sched: [6:1.00]
+; GENERIC-NEXT:    vpmovsxdq (%rdi), %ymm0 # sched: [8:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SKX-LABEL: sext_4x32mem_to_4x64:

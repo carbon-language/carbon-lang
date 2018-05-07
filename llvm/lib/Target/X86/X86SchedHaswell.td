@@ -1287,19 +1287,7 @@ def HWWriteResGroup51 : SchedWriteRes<[HWPort5]> {
   let ResourceCycles = [1];
 }
 def: InstRW<[HWWriteResGroup51], (instregex "VPBROADCASTBrr",
-                                            "VPBROADCASTWrr",
-                                            "VPMOVSXBDYrr",
-                                            "VPMOVSXBQYrr",
-                                            "VPMOVSXBWYrr",
-                                            "VPMOVSXDQYrr",
-                                            "VPMOVSXWDYrr",
-                                            "VPMOVSXWQYrr",
-                                            "VPMOVZXBDYrr",
-                                            "VPMOVZXBQYrr",
-                                            "VPMOVZXBWYrr",
-                                            "VPMOVZXDQYrr",
-                                            "VPMOVZXWDYrr",
-                                            "VPMOVZXWQYrr")>;
+                                            "VPBROADCASTWrr")>;
 
 def HWWriteResGroup52 : SchedWriteRes<[HWPort1,HWPort23]> {
   let Latency = 9;
@@ -1319,17 +1307,6 @@ def: InstRW<[HWWriteResGroup52_1], (instregex "(ADD|SUB|SUBR)_F(32|64)m",
                                               "VCVTDQ2PSYrm",
                                               "VCVTPS2DQYrm",
                                               "VCVTTPS2DQYrm")>;
-
-def HWWriteResGroup53 : SchedWriteRes<[HWPort5,HWPort23]> {
-  let Latency = 10;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[HWWriteResGroup53], (instregex "VPMOVZXBDYrm",
-                                            "VPMOVZXBQYrm",
-                                            "VPMOVZXBWYrm",
-                                            "VPMOVZXDQYrm",
-                                            "VPMOVZXWQYrm")>;
 
 def HWWriteResGroup53_1 : SchedWriteRes<[HWPort5,HWPort23]> {
   let Latency = 9;

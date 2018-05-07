@@ -940,15 +940,20 @@ def ZnWriteFPU12Y : SchedWriteRes<[ZnFPU12]> {
   let NumMicroOps = 2;
 }
 def ZnWriteFPU12m : SchedWriteRes<[ZnAGU, ZnFPU12]> ;
+def ZnWriteFPU12Ym : SchedWriteRes<[ZnAGU, ZnFPU12]> {
+  let Latency = 8;
+  let NumMicroOps = 2;
+}
 
 def : InstRW<[ZnWriteFPU12], (instregex "MMX_PACKSSDWirr",
                                   "MMX_PACKSSWBirr", "MMX_PACKUSWBirr")>;
 def : InstRW<[ZnWriteFPU12m], (instregex "MMX_PACKSSDWirm",
                                   "MMX_PACKSSWBirm", "MMX_PACKUSWBirm")>;
 
-// VPMOVSX/ZX BW BD BQ DW DQ.
+// VPMOVSX/ZX BW BD BQ WD WQ DQ.
 // y <- x.
-def : InstRW<[ZnWriteFPU12Y], (instregex "VPMOV(SX|ZX)(BW|BQ|DW|DQ)Yrr")>;
+def : InstRW<[ZnWriteFPU12Y], (instregex "VPMOV(SX|ZX)(BW|BD|BQ|WD|WQ|DQ)Yrr")>;
+def : InstRW<[ZnWriteFPU12Ym], (instregex "VPMOV(SX|ZX)(BW|BD|BQ|WD|WQ|DQ)Yrm")>;
 
 def ZnWriteFPU013 : SchedWriteRes<[ZnFPU013]> ;
 def ZnWriteFPU013Y : SchedWriteRes<[ZnFPU013]> {
