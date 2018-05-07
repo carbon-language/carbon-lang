@@ -151,49 +151,6 @@ typedef void (*fill_profile_f)(uptr start, uptr rss, bool file,
 // |stats_size| elements.
 void GetMemoryProfile(fill_profile_f cb, uptr *stats, uptr stats_size);
 
-// InternalScopedBuffer can be used instead of large stack arrays to
-// keep frame size low.
-// FIXME: use InternalAlloc instead of MmapOrDie once
-// InternalAlloc is made libc-free.
-template <typename T>
-class InternalScopedBuffer {
- public:
-  explicit InternalScopedBuffer(uptr cnt) {
-    cnt_ = cnt;
-    ptr_ = (T *)MmapOrDie(cnt * sizeof(T), "InternalScopedBuffer");
-  }
-  ~InternalScopedBuffer() { UnmapOrDie(ptr_, cnt_ * sizeof(T)); }
-  T &operator[](uptr i) { return ptr_[i]; }
-  T *data() { return ptr_; }
-  uptr size() { return cnt_; }
-
- private:
-  T *ptr_;
-  uptr cnt_;
-  // Disallow copies and moves.
-  InternalScopedBuffer(const InternalScopedBuffer &) = delete;
-  InternalScopedBuffer &operator=(const InternalScopedBuffer &) = delete;
-  InternalScopedBuffer(InternalScopedBuffer &&) = delete;
-  InternalScopedBuffer &operator=(InternalScopedBuffer &&) = delete;
-};
-
-class InternalScopedString : public InternalScopedBuffer<char> {
- public:
-  explicit InternalScopedString(uptr max_length)
-      : InternalScopedBuffer<char>(max_length), length_(0) {
-    (*this)[0] = '\0';
-  }
-  uptr length() { return length_; }
-  void clear() {
-    (*this)[0] = '\0';
-    length_ = 0;
-  }
-  void append(const char *format, ...);
-
- private:
-  uptr length_;
-};
-
 // Simple low-level (mmap-based) allocator for internal use. Doesn't have
 // constructor, so all instances of LowLevelAllocator should be
 // linker initialized.
@@ -574,9 +531,40 @@ class InternalMmapVector : public InternalMmapVectorNoCtor<T> {
     InternalMmapVectorNoCtor<T>::Initialize(initial_capacity);
   }
   ~InternalMmapVector() { InternalMmapVectorNoCtor<T>::Destroy(); }
-  // Disallow evil constructors.
-  InternalMmapVector(const InternalMmapVector&);
-  void operator=(const InternalMmapVector&);
+  // Disallow copies and moves.
+  InternalMmapVector(const InternalMmapVector &) = delete;
+  InternalMmapVector &operator=(const InternalMmapVector &) = delete;
+  InternalMmapVector(InternalMmapVector &&) = delete;
+  InternalMmapVector &operator=(InternalMmapVector &&) = delete;
+};
+
+// InternalScopedBuffer can be used instead of large stack arrays to
+// keep frame size low.
+// FIXME: use InternalAlloc instead of MmapOrDie once
+// InternalAlloc is made libc-free.
+template <typename T>
+class InternalScopedBuffer : public InternalMmapVector<T> {
+ public:
+  explicit InternalScopedBuffer(uptr cnt) : InternalMmapVector<T>(cnt) {
+    this->resize(cnt);
+  }
+};
+
+class InternalScopedString : public InternalScopedBuffer<char> {
+ public:
+  explicit InternalScopedString(uptr max_length)
+      : InternalScopedBuffer<char>(max_length), length_(0) {
+    (*this)[0] = '\0';
+  }
+  uptr length() { return length_; }
+  void clear() {
+    (*this)[0] = '\0';
+    length_ = 0;
+  }
+  void append(const char *format, ...);
+
+ private:
+  uptr length_;
 };
 
 // HeapSort for arrays and InternalMmapVector.
