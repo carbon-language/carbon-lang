@@ -70,9 +70,6 @@ static void checkError(Error E) {
 // Creates an empty file to store a list of object files for final
 // linking of distributed ThinLTO.
 static std::unique_ptr<raw_fd_ostream> openFile(StringRef File) {
-  if (File.empty())
-    return nullptr;
-
   std::error_code EC;
   auto Ret =
       llvm::make_unique<raw_fd_ostream>(File, EC, sys::fs::OpenFlags::F_None);
@@ -136,7 +133,10 @@ BitcodeCompiler::BitcodeCompiler() {
   lto::ThinBackend Backend;
 
   if (Config->ThinLTOIndexOnly) {
-    IndexFile = openFile(Config->ThinLTOIndexOnlyObjectsFile);
+    StringRef Path = Config->ThinLTOIndexOnlyArg;
+    if (!Path.empty())
+      IndexFile = openFile(Path);
+
     Backend = lto::createWriteIndexesThinBackend(
         Config->ThinLTOPrefixReplace.first, Config->ThinLTOPrefixReplace.second,
         Config->ThinLTOEmitImportsFiles, IndexFile.get(), nullptr);
