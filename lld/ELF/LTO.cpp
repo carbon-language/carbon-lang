@@ -89,64 +89,65 @@ static std::string getThinLTOOutputFile(StringRef ModulePath) {
                                    Config->ThinLTOPrefixReplace.second);
 }
 
-// Initializes IndexFile, Backend and LTOObj members.
-void BitcodeCompiler::init() {
-  lto::Config Conf;
+static lto::Config createConfig() {
+  lto::Config C;
 
   // LLD supports the new relocations.
-  Conf.Options = InitTargetOptionsFromCodeGenFlags();
-  Conf.Options.RelaxELFRelocations = true;
+  C.Options = InitTargetOptionsFromCodeGenFlags();
+  C.Options.RelaxELFRelocations = true;
 
   // Always emit a section per function/datum with LTO.
-  Conf.Options.FunctionSections = true;
-  Conf.Options.DataSections = true;
+  C.Options.FunctionSections = true;
+  C.Options.DataSections = true;
 
   if (Config->Relocatable)
-    Conf.RelocModel = None;
+    C.RelocModel = None;
   else if (Config->Pic)
-    Conf.RelocModel = Reloc::PIC_;
+    C.RelocModel = Reloc::PIC_;
   else
-    Conf.RelocModel = Reloc::Static;
-  Conf.CodeModel = GetCodeModelFromCMModel();
-  Conf.DisableVerify = Config->DisableVerify;
-  Conf.DiagHandler = diagnosticHandler;
-  Conf.OptLevel = Config->LTOO;
-  Conf.CPU = GetCPUStr();
+    C.RelocModel = Reloc::Static;
+
+  C.CodeModel = GetCodeModelFromCMModel();
+  C.DisableVerify = Config->DisableVerify;
+  C.DiagHandler = diagnosticHandler;
+  C.OptLevel = Config->LTOO;
+  C.CPU = GetCPUStr();
 
   // Set up a custom pipeline if we've been asked to.
-  Conf.OptPipeline = Config->LTONewPmPasses;
-  Conf.AAPipeline = Config->LTOAAPipeline;
+  C.OptPipeline = Config->LTONewPmPasses;
+  C.AAPipeline = Config->LTOAAPipeline;
 
   // Set up optimization remarks if we've been asked to.
-  Conf.RemarksFilename = Config->OptRemarksFilename;
-  Conf.RemarksWithHotness = Config->OptRemarksWithHotness;
+  C.RemarksFilename = Config->OptRemarksFilename;
+  C.RemarksWithHotness = Config->OptRemarksWithHotness;
+
+  C.SampleProfile = Config->LTOSampleProfile;
+  C.UseNewPM = Config->LTONewPassManager;
+  C.DebugPassManager = Config->LTODebugPassManager;
 
   if (Config->SaveTemps)
-    checkError(Conf.addSaveTemps(std::string(Config->OutputFile) + ".",
-                                 /*UseInputModulePath*/ true));
+    checkError(C.addSaveTemps(Config->OutputFile.str() + ".",
+                              /*UseInputModulePath*/ true));
+  return C;
+}
 
+BitcodeCompiler::BitcodeCompiler() {
+  // Initialize LTOObj.
   lto::ThinBackend Backend;
-  if (Config->ThinLTOJobs != -1u)
-    Backend = lto::createInProcessThinBackend(Config->ThinLTOJobs);
 
   if (Config->ThinLTOIndexOnly) {
     IndexFile = openFile(Config->ThinLTOIndexOnlyObjectsFile);
     Backend = lto::createWriteIndexesThinBackend(
         Config->ThinLTOPrefixReplace.first, Config->ThinLTOPrefixReplace.second,
         Config->ThinLTOEmitImportsFiles, IndexFile.get(), nullptr);
+  } else if (Config->ThinLTOJobs != -1U) {
+    Backend = lto::createInProcessThinBackend(Config->ThinLTOJobs);
   }
 
-  Conf.SampleProfile = Config->LTOSampleProfile;
-  Conf.UseNewPM = Config->LTONewPassManager;
-  Conf.DebugPassManager = Config->LTODebugPassManager;
-
-  LTOObj = llvm::make_unique<lto::LTO>(std::move(Conf), Backend,
+  LTOObj = llvm::make_unique<lto::LTO>(createConfig(), Backend,
                                        Config->LTOPartitions);
-}
 
-BitcodeCompiler::BitcodeCompiler() {
-  init();
-
+  // Initialize UsedStartStop.
   for (Symbol *Sym : Symtab->getSymbols()) {
     StringRef Name = Sym->getName();
     for (StringRef Prefix : {"__start_", "__stop_"})
