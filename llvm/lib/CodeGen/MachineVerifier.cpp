@@ -239,7 +239,8 @@ namespace {
     void report(const char *msg, const MachineFunction *MF);
     void report(const char *msg, const MachineBasicBlock *MBB);
     void report(const char *msg, const MachineInstr *MI);
-    void report(const char *msg, const MachineOperand *MO, unsigned MONum);
+    void report(const char *msg, const MachineOperand *MO, unsigned MONum,
+                LLT MOVRegType = LLT{});
 
     void report_context(const LiveInterval &LI) const;
     void report_context(const LiveRange &LR, unsigned VRegUnit,
@@ -490,15 +491,14 @@ void MachineVerifier::report(const char *msg, const MachineInstr *MI) {
   if (Indexes && Indexes->hasIndex(*MI))
     errs() << Indexes->getInstructionIndex(*MI) << '\t';
   MI->print(errs(), /*SkipOpers=*/true);
-  errs() << '\n';
 }
 
-void MachineVerifier::report(const char *msg,
-                             const MachineOperand *MO, unsigned MONum) {
+void MachineVerifier::report(const char *msg, const MachineOperand *MO,
+                             unsigned MONum, LLT MOVRegType) {
   assert(MO);
   report(msg, MO->getParent());
   errs() << "- operand " << MONum << ":   ";
-  MO->print(errs(), TRI);
+  MO->print(errs(), MOVRegType, TRI);
   errs() << "\n";
 }
 
@@ -877,11 +877,11 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   if (MI->getNumOperands() < MCID.getNumOperands()) {
     report("Too few operands", MI);
     errs() << MCID.getNumOperands() << " operands expected, but "
-        << MI->getNumOperands() << " given.\n";
+           << MI->getNumOperands() << " given.\n";
   }
 
   if (MI->isPHI() && MF->getProperties().hasProperty(
-          MachineFunctionProperties::Property::NoPHIs))
+                         MachineFunctionProperties::Property::NoPHIs))
     report("Found PHI instruction with NoPHIs property set", MI);
 
   // Check the tied operands.
@@ -890,7 +890,8 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
 
   // Check the MachineMemOperands for basic consistency.
   for (MachineInstr::mmo_iterator I = MI->memoperands_begin(),
-       E = MI->memoperands_end(); I != E; ++I) {
+                                  E = MI->memoperands_end();
+       I != E; ++I) {
     if ((*I)->isLoad() && !MI->mayLoad())
       report("Missing mayLoad flag", MI);
     if ((*I)->isStore() && !MI->mayStore())
@@ -913,31 +914,31 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
     }
   }
 
-  // Check types.
   if (isPreISelGenericOpcode(MCID.getOpcode())) {
     if (isFunctionSelected)
       report("Unexpected generic instruction in a Selected function", MI);
 
-    // Generic instructions specify equality constraints between some
-    // of their operands. Make sure these are consistent.
+    // Check types.
     SmallVector<LLT, 4> Types;
-    for (unsigned i = 0; i < MCID.getNumOperands(); ++i) {
-      if (!MCID.OpInfo[i].isGenericType())
+    for (unsigned I = 0; I < MCID.getNumOperands(); ++I) {
+      if (!MCID.OpInfo[I].isGenericType())
         continue;
-      size_t TypeIdx = MCID.OpInfo[i].getGenericTypeIndex();
+      // Generic instructions specify type equality constraints between some of
+      // their operands. Make sure these are consistent.
+      size_t TypeIdx = MCID.OpInfo[I].getGenericTypeIndex();
       Types.resize(std::max(TypeIdx + 1, Types.size()));
 
-      LLT OpTy = MRI->getType(MI->getOperand(i).getReg());
+      const MachineOperand *MO = &MI->getOperand(I);
+      LLT OpTy = MRI->getType(MO->getReg());
       if (Types[TypeIdx].isValid() && Types[TypeIdx] != OpTy)
         report("type mismatch in generic instruction", MI);
       Types[TypeIdx] = OpTy;
     }
-  }
 
-  // Generic opcodes must not have physical register operands.
-  if (isPreISelGenericOpcode(MCID.getOpcode())) {
-    for (auto &Op : MI->operands()) {
-      if (Op.isReg() && TargetRegisterInfo::isPhysicalRegister(Op.getReg()))
+    // Generic opcodes must not have physical register operands.
+    for (unsigned I = 0; I < MI->getNumOperands(); ++I) {
+      const MachineOperand *MO = &MI->getOperand(I);
+      if (MO->isReg() && TargetRegisterInfo::isPhysicalRegister(MO->getReg()))
         report("Generic instruction cannot have physical register", MI);
     }
   }
