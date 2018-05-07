@@ -801,6 +801,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     } else if (S.startswith("thinlto-index-only=")) {
       Config->ThinLTOIndexOnly = true;
       Config->ThinLTOIndexOnlyObjectsFile = S.substr(19);
+    } else if (S == "thinlto-emit-imports-files") {
+      Config->ThinLTOEmitImportsFiles = true;
     } else if (S.startswith("thinlto-prefix-replace=")) {
       std::tie(Config->ThinLTOPrefixReplace.first,
                Config->ThinLTOPrefixReplace.second) = S.substr(23).split(';');

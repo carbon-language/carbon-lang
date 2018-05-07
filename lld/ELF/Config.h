@@ -158,6 +158,7 @@ struct Configuration {
   bool SysvHash = false;
   bool Target1Rel;
   bool Trace;
+  bool ThinLTOEmitImportsFiles;
   bool ThinLTOIndexOnly;
   bool UndefinedVersion;
   bool WarnBackrefs;

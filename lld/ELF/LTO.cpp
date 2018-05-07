@@ -86,8 +86,7 @@ static std::unique_ptr<raw_fd_ostream> openFile(StringRef File) {
 static std::string getThinLTOOutputFile(StringRef ModulePath) {
   return lto::getThinLTOOutputFile(ModulePath,
                                    Config->ThinLTOPrefixReplace.first,
-                                   Config->ThinLTOPrefixReplace.second) +
-         ".thinlto.bc";
+                                   Config->ThinLTOPrefixReplace.second);
 }
 
 // Initializes IndexFile, Backend and LTOObj members.
@@ -134,7 +133,7 @@ void BitcodeCompiler::init() {
     IndexFile = openFile(Config->ThinLTOIndexOnlyObjectsFile);
     Backend = lto::createWriteIndexesThinBackend(
         Config->ThinLTOPrefixReplace.first, Config->ThinLTOPrefixReplace.second,
-        true, IndexFile.get(), nullptr);
+        Config->ThinLTOEmitImportsFiles, IndexFile.get(), nullptr);
   }
 
   Conf.SampleProfile = Config->LTOSampleProfile;
@@ -167,8 +166,13 @@ void BitcodeCompiler::add(BitcodeFile &F) {
   lto::InputFile &Obj = *F.Obj;
 
   // Create the empty files which, if indexed, will be overwritten later.
-  if (Config->ThinLTOIndexOnly)
-    openFile(getThinLTOOutputFile(Obj.getName()));
+  if (Config->ThinLTOIndexOnly) {
+    std::string Path = getThinLTOOutputFile(Obj.getName());
+    openFile(Path + ".thinlto.bc");
+
+    if (Config->ThinLTOEmitImportsFiles)
+      openFile(Path + ".imports");
+  }
 
   unsigned SymNum = 0;
   std::vector<Symbol *> Syms = F.getSymbols();
@@ -269,14 +273,17 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
       if (F->AddedToLink || !isBitcode(F->MB))
         continue;
 
-      std::unique_ptr<raw_fd_ostream> OS =
-          openFile(getThinLTOOutputFile(F->getName()));
+      std::string Path = getThinLTOOutputFile(F->getName());
+      std::unique_ptr<raw_fd_ostream> OS = openFile(Path + ".thinlto.bc");
       if (!OS)
         continue;
 
       ModuleSummaryIndex M(false);
       M.setSkipModuleByDistributedBackend();
       WriteIndexToFile(M, *OS);
+
+      if (Config->ThinLTOEmitImportsFiles)
+        openFile(Path + ".imports");
     }
 
     // ThinLTO with index only option is required to generate only the index
