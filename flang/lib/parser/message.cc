@@ -91,7 +91,7 @@ std::string MessageExpectedText::ToString() const {
 
 void MessageExpectedText::Incorporate(const MessageExpectedText &that) {
   std::visit(
-      visitors{[&](SetOfChars &s1, const SetOfChars &s2) { s1.Union(s2); },
+      visitors{[&](SetOfChars &s1, const SetOfChars &s2) { s1 = s1.Union(s2); },
           [](const auto &, const auto &) {}},
       u_, that.u_);
 }
