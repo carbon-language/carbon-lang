@@ -5,16 +5,8 @@
 # CHECK: Bad machine code: Generic instruction is missing a virtual register type
 # CHECK-NEXT: - function:    first_type_of_a_type_index_missing_and_no_mismatches
 # CHECK-NEXT: - basic block: %bb.0
-# CHECK-NEXT: - instruction: %2:gr64 = G_ADD %0:_(s64), %1:gr64
+# CHECK-NEXT: - instruction: %2:gr64 = G_ADD %0:_(s64), %1:_
 # CHECK-NEXT: - operand 0:   %2:gr64
-
-# CHECK-NOT: Type mismatch
-
-# CHECK: Bad machine code: Generic instruction is missing a virtual register type
-# CHECK-NEXT: - function:    first_type_of_a_type_index_missing_and_no_mismatches
-# CHECK-NEXT: - basic block: %bb.0
-# CHECK-NEXT: - instruction: %2:gr64 = G_ADD %0:_(s64), %1:gr64
-# CHECK-NEXT: - operand 2:   %1:gr64
 
 # CHECK-NOT: Type mismatch
 
@@ -26,7 +18,7 @@ body:              |
     liveins: $rdi, $rsi
 
     %0:_(s64) = COPY $rdi
-    %1:gr64 = COPY $rsi
+    %1:_(s64) = COPY $rsi
     %2:gr64 = G_ADD %0, %1
     $rax = COPY %2
 ...
