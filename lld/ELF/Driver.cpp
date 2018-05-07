@@ -807,7 +807,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
       std::tie(Config->ThinLTOPrefixReplace.first,
                Config->ThinLTOPrefixReplace.second) = S.substr(23).split(';');
       if (Config->ThinLTOPrefixReplace.second.empty())
-        error("thinlto-prefix-replace expects 'old;new' format");
+        error("thinlto-prefix-replace expects 'old;new' format, but got " +
+              S.substr(23));
     } else if (!S.startswith("/") && !S.startswith("-fresolution=") &&
                !S.startswith("-pass-through=") && !S.startswith("thinlto")) {
       parseClangOption(S, Arg->getSpelling());
