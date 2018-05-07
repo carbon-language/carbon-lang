@@ -55,11 +55,11 @@ static void saveBuffer(StringRef Buffer, const Twine &Path) {
 }
 
 static void diagnosticHandler(const DiagnosticInfo &DI) {
-  SmallString<128> ErrStorage;
-  raw_svector_ostream OS(ErrStorage);
+  SmallString<128> S;
+  raw_svector_ostream OS(S);
   DiagnosticPrinterRawOStream DP(OS);
   DI.print(DP);
-  warn(ErrStorage);
+  warn(S);
 }
 
 static void checkError(Error E) {
