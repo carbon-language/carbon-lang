@@ -5428,6 +5428,10 @@ SDValue DAGCombiner::unfoldMaskedMerge(SDNode *N) {
   if (!TLI.hasAndNot(M))
     return SDValue();
 
+  // If Y is a constant, check that 'andn' works with immediates.
+  if (!TLI.hasAndNot(Y))
+    return SDValue();
+
   SDLoc DL(N);
 
   SDValue LHS = DAG.getNode(ISD::AND, DL, VT, X, M);
