@@ -72,10 +72,10 @@ RCParser::ParseType RCParser::parseSingleResource() {
     Result = parseDialogResource(false);
   else if (TypeToken->equalsLower("DIALOGEX"))
     Result = parseDialogResource(true);
-  else if (TypeToken->equalsLower("ICON"))
-    Result = parseIconResource();
   else if (TypeToken->equalsLower("HTML"))
     Result = parseHTMLResource();
+  else if (TypeToken->equalsLower("ICON"))
+    Result = parseIconResource();
   else if (TypeToken->equalsLower("MENU"))
     Result = parseMenuResource();
   else if (TypeToken->equalsLower("VERSIONINFO"))
