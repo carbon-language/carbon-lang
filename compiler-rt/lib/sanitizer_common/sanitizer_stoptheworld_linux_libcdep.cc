@@ -295,7 +295,7 @@ static int TracerThread(void* argument) {
   thread_suspender_instance = &thread_suspender;
 
   // Alternate stack for signal handling.
-  InternalScopedBuffer<char> handler_stack_memory(kHandlerStackSize);
+  InternalMmapVector<char> handler_stack_memory(kHandlerStackSize);
   stack_t handler_stack;
   internal_memset(&handler_stack, 0, sizeof(handler_stack));
   handler_stack.ss_sp = handler_stack_memory.data();

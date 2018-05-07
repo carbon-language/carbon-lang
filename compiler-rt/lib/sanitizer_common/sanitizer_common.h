@@ -532,6 +532,10 @@ template<typename T>
 class InternalMmapVector : public InternalMmapVectorNoCtor<T> {
  public:
   InternalMmapVector() { InternalMmapVectorNoCtor<T>::Initialize(1); }
+  explicit InternalMmapVector(uptr cnt) {
+    InternalMmapVectorNoCtor<T>::Initialize(cnt);
+    this->resize(cnt);
+  }
   ~InternalMmapVector() { InternalMmapVectorNoCtor<T>::Destroy(); }
   // Disallow copies and moves.
   InternalMmapVector(const InternalMmapVector &) = delete;
@@ -540,22 +544,10 @@ class InternalMmapVector : public InternalMmapVectorNoCtor<T> {
   InternalMmapVector &operator=(InternalMmapVector &&) = delete;
 };
 
-// InternalScopedBuffer can be used instead of large stack arrays to
-// keep frame size low.
-// FIXME: use InternalAlloc instead of MmapOrDie once
-// InternalAlloc is made libc-free.
-template <typename T>
-class InternalScopedBuffer : public InternalMmapVector<T> {
- public:
-  explicit InternalScopedBuffer(uptr cnt) : InternalMmapVector<T>() {
-    this->resize(cnt);
-  }
-};
-
-class InternalScopedString : public InternalScopedBuffer<char> {
+class InternalScopedString : public InternalMmapVector<char> {
  public:
   explicit InternalScopedString(uptr max_length)
-      : InternalScopedBuffer<char>(max_length), length_(0) {
+      : InternalMmapVector<char>(max_length), length_(0) {
     (*this)[0] = '\0';
   }
   uptr length() { return length_; }

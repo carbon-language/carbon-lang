@@ -214,7 +214,7 @@ void ForEachExtraStackRangeCb(uptr begin, uptr end, void* arg) {
 // Scans thread data (stacks and TLS) for heap pointers.
 static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
                            Frontier *frontier) {
-  InternalScopedBuffer<uptr> registers(suspended_threads.RegisterCount());
+  InternalMmapVector<uptr> registers(suspended_threads.RegisterCount());
   uptr registers_begin = reinterpret_cast<uptr>(registers.data());
   uptr registers_end =
       reinterpret_cast<uptr>(registers.data() + registers.size());
