@@ -1265,8 +1265,16 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_wrap))
     Symtab->addSymbolWrap<ELFT>(Arg->getValue());
 
+  // Do link-time optimization if given files are LLVM bitcode files.
+  // This compiles bitcode files into real object files.
   Symtab->addCombinedLTOObject<ELFT>();
   if (errorCount())
+    return;
+
+  // If -thinlto-index-only is given, we should create only "index
+  // files" and not object files. Index file creation is already done
+  // in addCombinedLTOObject, so we are done if that's the case.
+  if (Config->ThinLTOIndexOnly)
     return;
 
   // Apply symbol renames for -wrap.

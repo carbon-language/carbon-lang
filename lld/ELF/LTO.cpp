@@ -282,7 +282,9 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
     // ThinLTO with index only option is required to generate only the index
     // files. After that, we exit from linker and ThinLTO backend runs in a
     // distributed environment.
-    exit(0);
+    if (IndexFile)
+      IndexFile->close();
+    return {};
   }
 
   for (std::unique_ptr<MemoryBuffer> &File : Files)
