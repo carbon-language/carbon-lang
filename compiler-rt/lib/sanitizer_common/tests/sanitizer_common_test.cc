@@ -107,6 +107,29 @@ TEST(SanitizerCommon, InternalMmapVector) {
   CHECK_EQ(0U, empty_vector.size());
 }
 
+TEST(SanitizerCommon, InternalMmapVectorEq) {
+  InternalMmapVector<uptr> vector1;
+  InternalMmapVector<uptr> vector2;
+  for (uptr i = 0; i < 100; i++) {
+    vector1.push_back(i);
+    vector2.push_back(i);
+  }
+  EXPECT_TRUE(vector1 == vector2);
+  EXPECT_FALSE(vector1 != vector2);
+
+  vector1.push_back(1);
+  EXPECT_FALSE(vector1 == vector2);
+  EXPECT_TRUE(vector1 != vector2);
+
+  vector2.push_back(1);
+  EXPECT_TRUE(vector1 == vector2);
+  EXPECT_FALSE(vector1 != vector2);
+
+  vector1[55] = 1;
+  EXPECT_FALSE(vector1 == vector2);
+  EXPECT_TRUE(vector1 != vector2);
+}
+
 void TestThreadInfo(bool main) {
   uptr stk_addr = 0;
   uptr stk_size = 0;

@@ -528,6 +528,19 @@ class InternalMmapVectorNoCtor {
   uptr size_;
 };
 
+template <typename T>
+bool operator==(const InternalMmapVectorNoCtor<T> &lhs,
+                const InternalMmapVectorNoCtor<T> &rhs) {
+  if (lhs.size() != rhs.size()) return false;
+  return internal_memcmp(lhs.data(), rhs.data(), lhs.size() * sizeof(T)) == 0;
+}
+
+template <typename T>
+bool operator!=(const InternalMmapVectorNoCtor<T> &lhs,
+                const InternalMmapVectorNoCtor<T> &rhs) {
+  return !(lhs == rhs);
+}
+
 template<typename T>
 class InternalMmapVector : public InternalMmapVectorNoCtor<T> {
  public:
