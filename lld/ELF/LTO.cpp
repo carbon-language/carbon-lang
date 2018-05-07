@@ -155,13 +155,10 @@ void BitcodeCompiler::init() {
     Backend = lto::createInProcessThinBackend(Config->ThinLTOJobs);
 
   if (Config->ThinLTOIndexOnly) {
-    std::string OldPrefix;
-    std::string NewPrefix;
-    std::tie(OldPrefix, NewPrefix) = Config->ThinLTOPrefixReplace.split(';');
-
     IndexFile = openFile(Config->ThinLTOIndexOnlyObjectsFile);
-    Backend = lto::createWriteIndexesThinBackend(OldPrefix, NewPrefix, true,
-                                                 IndexFile.get(), nullptr);
+    Backend = lto::createWriteIndexesThinBackend(
+        Config->ThinLTOPrefixReplace.first, Config->ThinLTOPrefixReplace.second,
+        true, IndexFile.get(), nullptr);
   }
 
   Conf.SampleProfile = Config->LTOSampleProfile;
@@ -193,13 +190,11 @@ static void undefine(Symbol *S) {
 void BitcodeCompiler::add(BitcodeFile &F) {
   lto::InputFile &Obj = *F.Obj;
 
-  std::string OldPrefix, NewPrefix;
-  std::tie(OldPrefix, NewPrefix) = Config->ThinLTOPrefixReplace.split(';');
-
   // Create the empty files which, if indexed, will be overwritten later.
   if (Config->ThinLTOIndexOnly)
-    writeEmptyDistributedBuildOutputs(Obj.getName(), OldPrefix, NewPrefix,
-                                      false);
+    writeEmptyDistributedBuildOutputs(
+        Obj.getName(), Config->ThinLTOPrefixReplace.first,
+        Config->ThinLTOPrefixReplace.second, false);
 
   unsigned SymNum = 0;
   std::vector<Symbol *> Syms = F.getSymbols();
@@ -313,9 +308,8 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
 
 // For lazy object files not added to link, adds empty index files
 void BitcodeCompiler::addLazyObjFile(LazyObjFile *File) {
-  StringRef Identifier = File->getBuffer().getBufferIdentifier();
-  std::string OldPrefix, NewPrefix;
-  std::tie(OldPrefix, NewPrefix) = Config->ThinLTOPrefixReplace.split(';');
-  writeEmptyDistributedBuildOutputs(Identifier, OldPrefix, NewPrefix,
-                                    /* SkipModule */ true);
+  writeEmptyDistributedBuildOutputs(File->getBuffer().getBufferIdentifier(),
+                                    Config->ThinLTOPrefixReplace.first,
+                                    Config->ThinLTOPrefixReplace.second,
+                                    /*SkipModule=*/true);
 }
