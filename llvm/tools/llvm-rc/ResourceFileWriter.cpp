@@ -437,6 +437,10 @@ Error ResourceFileWriter::visitAcceleratorsResource(const RCResource *Res) {
   return writeResource(Res, &ResourceFileWriter::writeAcceleratorsBody);
 }
 
+Error ResourceFileWriter::visitBitmapResource(const RCResource *Res) {
+  return writeResource(Res, &ResourceFileWriter::writeBitmapBody);
+}
+
 Error ResourceFileWriter::visitCursorResource(const RCResource *Res) {
   return handleError(visitIconOrCursorResource(Res), Res);
 }
@@ -681,6 +685,29 @@ Error ResourceFileWriter::writeAcceleratorsBody(const RCResource *Base) {
     RETURN_IF_ERROR(
         writeSingleAccelerator(Acc, AcceleratorId == Res->Accelerators.size()));
   }
+  return Error::success();
+}
+
+// --- BitmapResource helpers. --- //
+
+Error ResourceFileWriter::writeBitmapBody(const RCResource *Base) {
+  StringRef Filename = cast<BitmapResource>(Base)->BitmapLoc;
+  bool IsLong;
+  stripQuotes(Filename, IsLong);
+
+  auto File = loadFile(Filename);
+  if (!File)
+    return File.takeError();
+
+  StringRef Buffer = (*File)->getBuffer();
+
+  // Skip the 14 byte BITMAPFILEHEADER.
+  constexpr size_t BITMAPFILEHEADER_size = 14;
+  if (Buffer.size() < BITMAPFILEHEADER_size || Buffer[0] != 'B' ||
+      Buffer[1] != 'M')
+    return createError("Incorrect bitmap file.");
+
+  *FS << Buffer.substr(BITMAPFILEHEADER_size);
   return Error::success();
 }
 

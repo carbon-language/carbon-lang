@@ -66,6 +66,8 @@ RCParser::ParseType RCParser::parseSingleResource() {
 
   if (TypeToken->equalsLower("ACCELERATORS"))
     Result = parseAcceleratorsResource();
+  else if (TypeToken->equalsLower("BITMAP"))
+    Result = parseBitmapResource();
   else if (TypeToken->equalsLower("CURSOR"))
     Result = parseCursorResource();
   else if (TypeToken->equalsLower("DIALOG"))
@@ -482,6 +484,11 @@ Expected<Control> RCParser::parseControl() {
   return Control(*ClassResult, Caption, (*Args)[0], (*Args)[1], (*Args)[2],
                  (*Args)[3], (*Args)[4], TakeOptArg(5), TakeOptArg(6),
                  TakeOptArg(7));
+}
+
+RCParser::ParseType RCParser::parseBitmapResource() {
+  ASSIGN_OR_RETURN(Arg, readString());
+  return llvm::make_unique<BitmapResource>(*Arg);
 }
 
 RCParser::ParseType RCParser::parseIconResource() {
