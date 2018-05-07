@@ -97,11 +97,10 @@ public:
     std::optional<resultType> result{parser_.Parse(state)};
     if (result.has_value()) {
       messages.Annex(state.messages());
-      state.messages() = std::move(messages);
     } else {
       state = std::move(backtrack);
-      state.messages() = std::move(messages);
     }
+    state.messages() = std::move(messages);
     return result;
   }
 
@@ -271,6 +270,9 @@ private:
         auto lastEnd = state.GetLocation();
         if (prevEnd == lastEnd) {
           prevState.messages().Incorporate(state.messages());
+          if (state.anyDeferredMessages()) {
+            prevState.set_anyDeferredMessages();
+          }
         }
         if (prevEnd >= lastEnd) {
           state = std::move(prevState);
@@ -380,11 +382,15 @@ public:
       return ax;
     }
     messages.Annex(state.messages());
+    bool hadDeferredMessages{state.anyDeferredMessages()};
     state = std::move(backtrack);
     state.set_deferMessages(true);
     std::optional<resultType> bx{pb_.Parse(state)};
     state.messages() = std::move(messages);
     state.set_deferMessages(originallyDeferred);
+    if (hadDeferredMessages) {
+      state.set_anyDeferredMessages();
+    }
     if (bx.has_value()) {
       state.set_anyErrorRecovery();
     }

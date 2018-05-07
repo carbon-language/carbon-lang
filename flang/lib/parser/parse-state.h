@@ -49,7 +49,8 @@ public:
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
-      deferMessages_{that.deferMessages_} {}
+      deferMessages_{that.deferMessages_}, anyDeferredMessages_{
+                                               that.anyDeferredMessages_} {}
   ParseState(ParseState &&that)
     : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
@@ -142,7 +143,7 @@ public:
   }
 
   bool anyDeferredMessages() const { return anyDeferredMessages_; }
-  void set_anyDeferredMessages(bool yes) { anyDeferredMessages_ = yes; }
+  void set_anyDeferredMessages() { anyDeferredMessages_ = true; }
 
   const char *GetLocation() const { return p_; }
 
