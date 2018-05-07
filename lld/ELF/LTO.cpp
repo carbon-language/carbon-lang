@@ -67,38 +67,6 @@ static void checkError(Error E) {
                   [&](ErrorInfoBase &EIB) { error(EIB.message()); });
 }
 
-// With the ThinLTOIndexOnly option, only the thin link is performed, and will
-// generate index files for the ThinLTO backends in a distributed build system.
-// The distributed build system may expect that index files are created for all
-// input bitcode objects provided to the linker for the thin link. However,
-// index files will not normally be created for input bitcode objects that
-// either aren't selected by the linker (i.e. in a static library and not
-// needed), or because they don't have a summary. Therefore we need to create
-// empty dummy index file outputs in those cases.
-// If SkipModule is true then .thinlto.bc should contain just
-// SkipModuleByDistributedBackend flag which requests distributed backend
-// to skip the compilation of the corresponding module and produce an empty
-// object file.
-static void writeEmptyDistributedBuildOutputs(StringRef ModulePath,
-                                              bool SkipModule) {
-  std::string NewModulePath =
-      lto::getThinLTOOutputFile(ModulePath, Config->ThinLTOPrefixReplace.first,
-                                Config->ThinLTOPrefixReplace.second);
-
-  std::error_code EC;
-  raw_fd_ostream OS(NewModulePath + ".thinlto.bc", EC,
-                    sys::fs::OpenFlags::F_None);
-  if (EC)
-    error("failed to write " + NewModulePath + ".thinlto.bc" + ": " +
-          EC.message());
-
-  if (SkipModule) {
-    ModuleSummaryIndex Index(false);
-    Index.setSkipModuleByDistributedBackend();
-    WriteIndexToFile(Index, OS);
-  }
-}
-
 // Creates an empty file to store a list of object files for final
 // linking of distributed ThinLTO.
 static std::unique_ptr<raw_fd_ostream> openFile(StringRef File) {
@@ -108,9 +76,18 @@ static std::unique_ptr<raw_fd_ostream> openFile(StringRef File) {
   std::error_code EC;
   auto Ret =
       llvm::make_unique<raw_fd_ostream>(File, EC, sys::fs::OpenFlags::F_None);
-  if (EC)
-    error("cannot create " + File + ": " + EC.message());
+  if (EC) {
+    error("cannot open " + File + ": " + EC.message());
+    return nullptr;
+  }
   return Ret;
+}
+
+static std::string getThinLTOOutputFile(StringRef ModulePath) {
+  return lto::getThinLTOOutputFile(ModulePath,
+                                   Config->ThinLTOPrefixReplace.first,
+                                   Config->ThinLTOPrefixReplace.second) +
+         ".thinlto.bc";
 }
 
 // Initializes IndexFile, Backend and LTOObj members.
@@ -191,7 +168,7 @@ void BitcodeCompiler::add(BitcodeFile &F) {
 
   // Create the empty files which, if indexed, will be overwritten later.
   if (Config->ThinLTOIndexOnly)
-    writeEmptyDistributedBuildOutputs(Obj.getName(), false);
+    openFile(getThinLTOOutputFile(Obj.getName()));
 
   unsigned SymNum = 0;
   std::vector<Symbol *> Syms = F.getSymbols();
@@ -250,12 +227,6 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
   Buff.resize(MaxTasks);
   Files.resize(MaxTasks);
 
-  // If LazyObjFile has not been added to link, emit empty index files
-  if (Config->ThinLTOIndexOnly)
-    for (LazyObjFile *F : LazyObjFiles)
-      if (!F->AddedToLink && isBitcode(F->MB))
-        addLazyObjFile(F);
-
   // The --thinlto-cache-dir option specifies the path to a directory in which
   // to cache native object files for ThinLTO incremental builds. If a path was
   // specified, configure LTO to use it as the cache directory.
@@ -290,21 +261,32 @@ std::vector<InputFile *> BitcodeCompiler::compile() {
     Ret.push_back(Obj);
   }
 
-  // ThinLTO with index only option is required to generate only the index
-  // files. After that, we exit from linker and ThinLTO backend runs in a
-  // distributed environment.
-  if (Config->ThinLTOIndexOnly)
+  // If LazyObjFile has not been added to link, emit empty index files.
+  // This is needed because this is what GNU gold plugin does and we have a
+  // distributed build system that depends on that behavior.
+  if (Config->ThinLTOIndexOnly) {
+    for (LazyObjFile *F : LazyObjFiles) {
+      if (F->AddedToLink || !isBitcode(F->MB))
+        continue;
+
+      std::unique_ptr<raw_fd_ostream> OS =
+          openFile(getThinLTOOutputFile(F->getName()));
+      if (!OS)
+        continue;
+
+      ModuleSummaryIndex M(false);
+      M.setSkipModuleByDistributedBackend();
+      WriteIndexToFile(M, *OS);
+    }
+
+    // ThinLTO with index only option is required to generate only the index
+    // files. After that, we exit from linker and ThinLTO backend runs in a
+    // distributed environment.
     exit(0);
+  }
 
   for (std::unique_ptr<MemoryBuffer> &File : Files)
     if (File)
       Ret.push_back(createObjectFile(*File));
-
   return Ret;
-}
-
-// For lazy object files not added to link, adds empty index files
-void BitcodeCompiler::addLazyObjFile(LazyObjFile *File) {
-  writeEmptyDistributedBuildOutputs(File->getBuffer().getBufferIdentifier(),
-                                    /*SkipModule=*/true);
 }

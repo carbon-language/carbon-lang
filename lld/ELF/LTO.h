@@ -48,7 +48,6 @@ public:
 
   void add(BitcodeFile &F);
   std::vector<InputFile *> compile();
-  void addLazyObjFile(LazyObjFile *File);
 
 private:
   void init();
