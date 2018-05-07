@@ -100,24 +100,22 @@ static void writeEmptyDistributedBuildOutputs(const std::string &ModulePath,
   }
 }
 
-// Creates and returns output stream with a list of object files for final
+// Creates an empty file to store a list of object files for final
 // linking of distributed ThinLTO.
-static std::unique_ptr<raw_fd_ostream> createLinkedObjectsFile() {
-  if (Config->ThinLTOIndexOnlyObjectsFile.empty())
+static std::unique_ptr<raw_fd_ostream> openFile(StringRef File) {
+  if (File.empty())
     return nullptr;
+
   std::error_code EC;
-  auto LinkedObjectsFile = llvm::make_unique<raw_fd_ostream>(
-      Config->ThinLTOIndexOnlyObjectsFile, EC, sys::fs::OpenFlags::F_None);
+  auto Ret =
+      llvm::make_unique<raw_fd_ostream>(File, EC, sys::fs::OpenFlags::F_None);
   if (EC)
-    error("cannot create " + Config->ThinLTOIndexOnlyObjectsFile + ": " +
-          EC.message());
-  return LinkedObjectsFile;
+    error("cannot create " + File + ": " + EC.message());
+  return Ret;
 }
 
-// Creates instance of LTO.
-// LinkedObjectsFile is an output stream to write the list of object files for
-// the final ThinLTO linking. Can be nullptr.
-static std::unique_ptr<lto::LTO> createLTO(raw_fd_ostream *LinkedObjectsFile) {
+// Initializes IndexFile, Backend and LTOObj members.
+void BitcodeCompiler::init() {
   lto::Config Conf;
 
   // LLD supports the new relocations.
@@ -157,23 +155,26 @@ static std::unique_ptr<lto::LTO> createLTO(raw_fd_ostream *LinkedObjectsFile) {
     Backend = lto::createInProcessThinBackend(Config->ThinLTOJobs);
 
   if (Config->ThinLTOIndexOnly) {
-    std::string OldPrefix, NewPrefix;
+    std::string OldPrefix;
+    std::string NewPrefix;
     std::tie(OldPrefix, NewPrefix) = Config->ThinLTOPrefixReplace.split(';');
+
+    IndexFile = openFile(Config->ThinLTOIndexOnlyObjectsFile);
     Backend = lto::createWriteIndexesThinBackend(OldPrefix, NewPrefix, true,
-                                                 LinkedObjectsFile, nullptr);
+                                                 IndexFile.get(), nullptr);
   }
 
   Conf.SampleProfile = Config->LTOSampleProfile;
   Conf.UseNewPM = Config->LTONewPassManager;
   Conf.DebugPassManager = Config->LTODebugPassManager;
 
-  return llvm::make_unique<lto::LTO>(std::move(Conf), Backend,
-                                     Config->LTOPartitions);
+  LTOObj = llvm::make_unique<lto::LTO>(std::move(Conf), Backend,
+                                       Config->LTOPartitions);
 }
 
 BitcodeCompiler::BitcodeCompiler() {
-  LinkedObjects = createLinkedObjectsFile();
-  LTOObj = createLTO(LinkedObjects.get());
+  init();
+
   for (Symbol *Sym : Symtab->getSymbols()) {
     StringRef Name = Sym->getName();
     for (StringRef Prefix : {"__start_", "__stop_"})
