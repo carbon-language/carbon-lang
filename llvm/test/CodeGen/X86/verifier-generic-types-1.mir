@@ -1,5 +1,22 @@
-# RUN: not llc -o - %s -mtriple=x86_64-- -verify-machineinstrs -run-pass=none 2>&1
-# XFAIL: *
+# RUN: not llc -o - %s -mtriple=x86_64-- -verify-machineinstrs -run-pass=none 2>&1 | FileCheck %s
+
+# CHECK-NOT: Type mismatch
+
+# CHECK: Bad machine code: Generic instruction is missing a virtual register type
+# CHECK-NEXT: - function:    first_type_of_a_type_index_missing_and_no_mismatches
+# CHECK-NEXT: - basic block: %bb.0
+# CHECK-NEXT: - instruction: %2:gr64 = G_ADD %0:_(s64), %1:gr64
+# CHECK-NEXT: - operand 0:   %2:gr64
+
+# CHECK-NOT: Type mismatch
+
+# CHECK: Bad machine code: Generic instruction is missing a virtual register type
+# CHECK-NEXT: - function:    first_type_of_a_type_index_missing_and_no_mismatches
+# CHECK-NEXT: - basic block: %bb.0
+# CHECK-NEXT: - instruction: %2:gr64 = G_ADD %0:_(s64), %1:gr64
+# CHECK-NEXT: - operand 2:   %1:gr64
+
+# CHECK-NOT: Type mismatch
 
 ---
 name:              first_type_of_a_type_index_missing_and_no_mismatches

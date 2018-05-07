@@ -930,16 +930,26 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
 
       const MachineOperand *MO = &MI->getOperand(I);
       LLT OpTy = MRI->getType(MO->getReg());
-      if (Types[TypeIdx].isValid() && Types[TypeIdx] != OpTy)
-        report("type mismatch in generic instruction", MI);
-      Types[TypeIdx] = OpTy;
+      // Don't report a type mismatch if there is no actual mismatch, only a
+      // type missing, to reduce noise:
+      if (OpTy.isValid()) {
+        // Only the first valid type for a type index will be printed: don't
+        // overwrite it later so it's always clear which type was expected:
+        if (!Types[TypeIdx].isValid())
+          Types[TypeIdx] = OpTy;
+        else if (Types[TypeIdx] != OpTy)
+          report("Type mismatch in generic instruction", MO, I, OpTy);
+      } else {
+        // Generic instructions must have types attached to their operands.
+        report("Generic instruction is missing a virtual register type", MO, I);
+      }
     }
 
     // Generic opcodes must not have physical register operands.
     for (unsigned I = 0; I < MI->getNumOperands(); ++I) {
       const MachineOperand *MO = &MI->getOperand(I);
       if (MO->isReg() && TargetRegisterInfo::isPhysicalRegister(MO->getReg()))
-        report("Generic instruction cannot have physical register", MI);
+        report("Generic instruction cannot have physical register", MO, I);
     }
   }
 
