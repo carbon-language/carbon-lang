@@ -10792,3 +10792,7 @@ btcl $4, (%eax)
 // CHECK: movdir64b (%si), %ax
 // CHECK: # encoding: [0x67,0x66,0x0f,0x38,0xf8,0x04]
           movdir64b (%si), %ax
+
+// CHECK: pconfig
+// CHECK: # encoding: [0x0f,0x01,0xc5]
+pconfig
