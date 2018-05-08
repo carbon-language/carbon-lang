@@ -317,6 +317,32 @@ def uimm5s8 : Operand<i64>, ImmLeaf<i64,
   let PrintMethod = "printImmScale<8>";
 }
 
+// uimm6sN predicate - True if the immediate is a multiple of N in the range
+// [0 * N, 64 * N].
+def UImm6s1Operand : UImmScaledMemoryIndexed<6, 1>;
+def UImm6s2Operand : UImmScaledMemoryIndexed<6, 2>;
+def UImm6s4Operand : UImmScaledMemoryIndexed<6, 4>;
+def UImm6s8Operand : UImmScaledMemoryIndexed<6, 8>;
+
+def uimm6s1 : Operand<i64>, ImmLeaf<i64, [{ return Imm >= 0 && Imm < 64; }]> {
+  let ParserMatchClass = UImm6s1Operand;
+}
+def uimm6s2 : Operand<i64>, ImmLeaf<i64,
+[{ return Imm >= 0 && Imm < (64*2) && ((Imm % 2) == 0); }]> {
+  let PrintMethod = "printImmScale<2>";
+  let ParserMatchClass = UImm6s2Operand;
+}
+def uimm6s4 : Operand<i64>, ImmLeaf<i64,
+[{ return Imm >= 0 && Imm < (64*4) && ((Imm % 4) == 0); }]> {
+  let PrintMethod = "printImmScale<4>";
+  let ParserMatchClass = UImm6s4Operand;
+}
+def uimm6s8 : Operand<i64>, ImmLeaf<i64,
+[{ return Imm >= 0 && Imm < (64*8) && ((Imm % 8) == 0); }]> {
+  let PrintMethod = "printImmScale<8>";
+  let ParserMatchClass = UImm6s8Operand;
+}
+
 // simm4sN predicate - True if the immediate is a multiple of N in the range
 // [ -8* N, 7 * N].
 def SImm4s1Operand  : SImmScaledMemoryIndexed<4, 1>;
