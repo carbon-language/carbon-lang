@@ -644,6 +644,7 @@ public:
   bool hasRDPID() const { return HasRDPID; }
   bool hasWAITPKG() const { return HasWAITPKG; }
   bool hasPCONFIG() const { return HasPCONFIG; }
+  bool hasSGX() const { return HasSGX; }
   bool useRetpoline() const { return UseRetpoline; }
   bool useRetpolineExternalThunk() const { return UseRetpolineExternalThunk; }
 

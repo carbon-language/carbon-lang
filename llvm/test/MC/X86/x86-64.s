@@ -1623,6 +1623,18 @@ movdir64b (%rdx), %r15
 // CHECK: # encoding: [0x0f,0x01,0xc5]
 pconfig
 
+// CHECK: encls
+// CHECK: encoding: [0x0f,0x01,0xcf]
+encls
+
+// CHECK: enclu
+// CHECK: encoding: [0x0f,0x01,0xd7]
+enclu
+
+// CHECK: enclv
+// CHECK: encoding: [0x0f,0x01,0xc0]
+enclv
+
 //  __asm __volatile(
 //    "pushf        \n\t"
 //    "popf       \n\t"
