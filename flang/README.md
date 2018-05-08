@@ -7,7 +7,8 @@ Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 ## Selection of the C/C++ compiler
 
 F18 requires a C++17 compiler.  The code has been tested with g++
-7.2.0, g++ 7.3.0, g++ 8.1.0, and clang 6.0 (using g++ 7.3.0 headers).
+7.2.0, g++ 7.3.0, g++ 8.1.0, and clang 6.0 (using g++ 7.3.0 or 8.1.0 headers,
+each with small patches).
 
 For a proper installation, we assume that the PATH and LD_LIBRARY_PATH environment variables
 are properly set to use gcc, g++ and the associated libraries.
