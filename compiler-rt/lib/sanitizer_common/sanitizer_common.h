@@ -458,7 +458,7 @@ class InternalMmapVectorNoCtor {
     CHECK_LE(size_, capacity_);
     if (size_ == capacity_) {
       uptr new_capacity = RoundUpToPowerOfTwo(size_ + 1);
-      Resize(new_capacity);
+      Realloc(new_capacity);
     }
     internal_memcpy(&data_[size_++], &element, sizeof(T));
   }
@@ -483,12 +483,13 @@ class InternalMmapVectorNoCtor {
     return capacity_;
   }
   void reserve(uptr new_size) {
-    if (new_size >= size()) return;
-    Resize(new_size);
+    // Never downsize internal buffer.
+    if (new_size > capacity())
+      Realloc(new_size);
   }
   void resize(uptr new_size) {
-    Resize(new_size);
     if (new_size > size_) {
+      reserve(new_size);
       internal_memset(&data_[size_], 0, sizeof(T) * (new_size - size_));
     }
     size_ = new_size;
@@ -517,7 +518,7 @@ class InternalMmapVectorNoCtor {
   }
 
  private:
-  void Resize(uptr new_capacity) {
+  void Realloc(uptr new_capacity) {
     CHECK_GT(new_capacity, 0);
     CHECK_LE(size_, new_capacity);
     T *new_data = (T *)MmapOrDie(new_capacity * sizeof(T),
