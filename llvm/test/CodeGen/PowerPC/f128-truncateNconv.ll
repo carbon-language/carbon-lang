@@ -193,3 +193,155 @@ entry:
 ; CHECK-NEXT: stxsdx [[CONV]], 3, 4
 ; CHECK-NEXT: blr
 }
+
+; Function Attrs: norecurse nounwind readonly
+define signext i32 @qpConv2sw(fp128* nocapture readonly %a)  {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %conv = fptosi fp128 %0 to i32
+  ret i32 %conv
+
+; CHECK-LABEL: qpConv2sw
+; CHECK: lxv [[REG:[0-9]+]], 0(3)
+; CHECK-NEXT: xscvqpswz [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: mfvsrwz [[REG2:[0-9]+]], [[CONV]]
+; CHECK-NEXT: extsw 3, [[REG2]]
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2sw_02(i32* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* getelementptr inbounds
+                            ([4 x fp128], [4 x fp128]* @f128Array, i64 0,
+                             i64 2), align 16
+  %conv = fptosi fp128 %0 to i32
+  store i32 %conv, i32* %res, align 4
+  ret void
+
+; CHECK-LABEL: qpConv2sw_02
+; CHECK: addis [[REG0:[0-9]+]], 2, .LC0@toc@ha
+; CHECK: ld [[REG0]], .LC0@toc@l([[REG0]])
+; CHECK: lxv [[REG:[0-9]+]], 32([[REG0]])
+; CHECK-NEXT: xscvqpswz [[CONV:[0-9]+]], [[REG]]
+; CHECK-NEXT: stxsiwx [[CONV]], 0, 3
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind readonly
+define signext i32 @qpConv2sw_03(fp128* nocapture readonly %a)  {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = load fp128, fp128* getelementptr inbounds
+                            ([4 x fp128], [4 x fp128]* @f128Array, i64 0,
+                             i64 1), align 16
+  %add = fadd fp128 %0, %1
+  %conv = fptosi fp128 %add to i32
+  ret i32 %conv
+
+; CHECK-LABEL: qpConv2sw_03
+; CHECK: addis [[REG0:[0-9]+]], 2, .LC0@toc@ha
+; CHECK-DAG: ld [[REG0]], .LC0@toc@l([[REG0]])
+; CHECK-DAG: lxv [[REG1:[0-9]+]], 16([[REG0]])
+; CHECK-DAG: lxv [[REG:[0-9]+]], 0(3)
+; CHECK-NEXT: xsaddqp [[ADD:[0-9]+]], [[REG]], [[REG1]]
+; CHECK-NEXT: xscvqpswz [[CONV:[0-9]+]], [[ADD]]
+; CHECK-NEXT: mfvsrwz [[REG2:[0-9]+]], [[CONV]]
+; CHECK-NEXT: extsw 3, [[REG2]]
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2sw_04(fp128* nocapture readonly %a,
+                          fp128* nocapture readonly %b, i32* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = load fp128, fp128* %b, align 16
+  %add = fadd fp128 %0, %1
+  %conv = fptosi fp128 %add to i32
+  store i32 %conv, i32* %res, align 4
+  ret void
+
+; CHECK-LABEL: qpConv2sw_04
+; CHECK-DAG: lxv [[REG1:[0-9]+]], 0(4)
+; CHECK-DAG: lxv [[REG:[0-9]+]], 0(3)
+; CHECK-NEXT: xsaddqp [[ADD:[0-9]+]], [[REG]], [[REG1]]
+; CHECK-NEXT: xscvqpswz [[CONV:[0-9]+]], [[ADD]]
+; CHECK-NEXT: stxsiwx [[CONV]], 0, 5
+; CHECK-NEXT: blr
+}
+
+; Function Attrs: norecurse nounwind readonly
+define zeroext i32 @qpConv2uw(fp128* nocapture readonly %a)  {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %conv = fptoui fp128 %0 to i32
+  ret i32 %conv
+
+; CHECK-LABEL: qpConv2uw
+; CHECK: lxv [[REG:[0-9]+]], 0(3)
+; CHECK-NEXT: xscvqpuwz [[CONV:[0-9]+]], [[ADD]]
+; CHECK-NEXT: mfvsrwz 3, [[CONV]]
+; CHECK: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2uw_02(i32* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* getelementptr inbounds
+                            ([4 x fp128], [4 x fp128]* @f128Array, i64 0,
+                             i64 2), align 16
+  %conv = fptoui fp128 %0 to i32
+  store i32 %conv, i32* %res, align 4
+  ret void
+
+; CHECK-LABEL: qpConv2uw_02
+; CHECK: addis [[REG0:[0-9]+]], 2, .LC0@toc@ha
+; CHECK: ld [[REG0]], .LC0@toc@l([[REG0]])
+; CHECK: lxv [[REG:[0-9]+]], 32([[REG0]])
+; CHECK-NEXT: xscvqpuwz [[CONV:[0-9]+]], [[ADD]]
+; CHECK-NEXT: stxsiwx [[CONV]], 0, 3
+; CHECK: blr
+}
+
+; Function Attrs: norecurse nounwind readonly
+define zeroext i32 @qpConv2uw_03(fp128* nocapture readonly %a)  {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = load fp128, fp128* getelementptr inbounds
+                            ([4 x fp128], [4 x fp128]* @f128Array, i64 0,
+                             i64 1), align 16
+  %add = fadd fp128 %0, %1
+  %conv = fptoui fp128 %add to i32
+  ret i32 %conv
+
+; CHECK-LABEL: qpConv2uw_03
+; CHECK: addis [[REG0:[0-9]+]], 2, .LC0@toc@ha
+; CHECK-DAG: ld [[REG0]], .LC0@toc@l([[REG0]])
+; CHECK-DAG: lxv [[REG1:[0-9]+]], 16([[REG0]])
+; CHECK-DAG: lxv [[REG:[0-9]+]], 0(3)
+; CHECK-NEXT: xsaddqp [[ADD:[0-9]+]], [[REG]], [[REG1]]
+; CHECK-NEXT: xscvqpuwz [[CONV:[0-9]+]], [[ADD]]
+; CHECK-NEXT: mfvsrwz 3, [[CONV]]
+; CHECK: blr
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2uw_04(fp128* nocapture readonly %a,
+                          fp128* nocapture readonly %b, i32* nocapture %res) {
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = load fp128, fp128* %b, align 16
+  %add = fadd fp128 %0, %1
+  %conv = fptoui fp128 %add to i32
+  store i32 %conv, i32* %res, align 4
+  ret void
+
+; CHECK-LABEL: qpConv2uw_04
+; CHECK-DAG: lxv [[REG1:[0-9]+]], 0(4)
+; CHECK-DAG: lxv [[REG:[0-9]+]], 0(3)
+; CHECK-NEXT: xsaddqp [[ADD:[0-9]+]], [[REG]], [[REG1]]
+; CHECK-NEXT: xscvqpuwz [[CONV:[0-9]+]], [[ADD]]
+; CHECK-NEXT: stxsiwx [[CONV]], 0, 5
+; CHECK: blr
+}
