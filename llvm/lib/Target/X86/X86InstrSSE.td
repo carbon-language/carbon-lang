@@ -5694,21 +5694,21 @@ let Defs = [EFLAGS], Predicates = [HasAVX] in {
 def VPTESTrr  : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
                 "vptest\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86ptest VR128:$src1, (v2i64 VR128:$src2)))]>,
-                Sched<[SchedWriteVecLogic.XMM]>, VEX, VEX_WIG;
+                Sched<[SchedWriteVecTest.XMM]>, VEX, VEX_WIG;
 def VPTESTrm  : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
                 "vptest\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS,(X86ptest VR128:$src1, (loadv2i64 addr:$src2)))]>,
-                Sched<[SchedWriteVecLogic.XMM.Folded, ReadAfterLd]>,
+                Sched<[SchedWriteVecTest.XMM.Folded, ReadAfterLd]>,
                 VEX, VEX_WIG;
 
 def VPTESTYrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR256:$src1, VR256:$src2),
                 "vptest\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS, (X86ptest VR256:$src1, (v4i64 VR256:$src2)))]>,
-                Sched<[SchedWriteVecLogic.YMM]>, VEX, VEX_L, VEX_WIG;
+                Sched<[SchedWriteVecTest.YMM]>, VEX, VEX_L, VEX_WIG;
 def VPTESTYrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR256:$src1, i256mem:$src2),
                 "vptest\t{$src2, $src1|$src1, $src2}",
                 [(set EFLAGS,(X86ptest VR256:$src1, (loadv4i64 addr:$src2)))]>,
-                Sched<[SchedWriteVecLogic.YMM.Folded, ReadAfterLd]>,
+                Sched<[SchedWriteVecTest.YMM.Folded, ReadAfterLd]>,
                 VEX, VEX_L, VEX_WIG;
 }
 
@@ -5716,11 +5716,11 @@ let Defs = [EFLAGS] in {
 def PTESTrr : SS48I<0x17, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
               "ptest\t{$src2, $src1|$src1, $src2}",
               [(set EFLAGS, (X86ptest VR128:$src1, (v2i64 VR128:$src2)))]>,
-              Sched<[SchedWriteVecLogic.XMM]>;
+              Sched<[SchedWriteVecTest.XMM]>;
 def PTESTrm : SS48I<0x17, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
               "ptest\t{$src2, $src1|$src1, $src2}",
               [(set EFLAGS, (X86ptest VR128:$src1, (memopv2i64 addr:$src2)))]>,
-              Sched<[SchedWriteVecLogic.XMM.Folded, ReadAfterLd]>;
+              Sched<[SchedWriteVecTest.XMM.Folded, ReadAfterLd]>;
 }
 
 // The bit test instructions below are AVX only
@@ -5740,15 +5740,15 @@ multiclass avx_bittest<bits<8> opc, string OpcodeStr, RegisterClass RC,
 let Defs = [EFLAGS], Predicates = [HasAVX] in {
 let ExeDomain = SSEPackedSingle in {
 defm VTESTPS  : avx_bittest<0x0E, "vtestps", VR128, f128mem, loadv4f32, v4f32,
-                            SchedWriteVecLogic.XMM>;
+                            SchedWriteFTest.XMM>;
 defm VTESTPSY : avx_bittest<0x0E, "vtestps", VR256, f256mem, loadv8f32, v8f32,
-                            SchedWriteVecLogic.YMM>, VEX_L;
+                            SchedWriteFTest.YMM>, VEX_L;
 }
 let ExeDomain = SSEPackedDouble in {
 defm VTESTPD  : avx_bittest<0x0F, "vtestpd", VR128, f128mem, loadv2f64, v2f64,
-                            SchedWriteVecLogic.XMM>;
+                            SchedWriteFTest.XMM>;
 defm VTESTPDY : avx_bittest<0x0F, "vtestpd", VR256, f256mem, loadv4f64, v4f64,
-                            SchedWriteVecLogic.YMM>, VEX_L;
+                            SchedWriteFTest.YMM>, VEX_L;
 }
 }
 

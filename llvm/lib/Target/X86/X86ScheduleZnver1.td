@@ -227,6 +227,8 @@ defm : ZnWriteResFpuPair<WriteFRnd,      [ZnFPU3],  4, [1], 1, 7, 1>; // FIXME: 
 defm : ZnWriteResFpuPair<WriteFRndY,     [ZnFPU3],  4, [1], 1, 7, 1>; // FIXME: Should folds require 1 extra uops?
 defm : ZnWriteResFpuPair<WriteFLogic,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteFLogicY,   [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteFTest,     [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteFTestY,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteFShuffle,  [ZnFPU12], 1>;
 defm : ZnWriteResFpuPair<WriteFShuffleY, [ZnFPU12], 1>;
 defm : ZnWriteResFpuPair<WriteFVarShuffle, [ZnFPU12], 1>;
@@ -271,6 +273,8 @@ defm : ZnWriteResFpuPair<WriteVecShiftImmX, [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecShiftImmY, [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecLogic,   [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecLogicY,  [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteVecTest,    [ZnFPU12], 1, [2], 1, 7, 1>;
+defm : ZnWriteResFpuPair<WriteVecTestY,   [ZnFPU12], 1, [2], 1, 7, 1>;
 defm : ZnWriteResFpuPair<WriteVecALU,     [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecALUY,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecIMul,    [ZnFPU0],  4>;
@@ -1100,21 +1104,6 @@ def : InstRW<[ZnWritePMULLDm], (instregex "(V?)PMULLDrm")>;
 def : InstRW<[ZnWritePMULLDYm], (instregex "(V?)PMULLDYrm")>;
 
 //-- Logic instructions --//
-
-// PTEST.
-// v,v.
-def ZnWritePTESTr : SchedWriteRes<[ZnFPU12]> {
-  let ResourceCycles = [2];
-}
-def : InstRW<[ZnWritePTESTr], (instregex "(V?)PTEST(Y?)rr")>;
-
-// v,m.
-def ZnWritePTESTm : SchedWriteRes<[ZnAGU, ZnFPU12]> {
-  let Latency = 8;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1, 2];
-}
-def : InstRW<[ZnWritePTESTm], (instregex "(V?)PTEST(Y?)rm")>;
 
 // PSLL,PSRL,PSRA W/D/Q.
 // x,x / v,v,x.
