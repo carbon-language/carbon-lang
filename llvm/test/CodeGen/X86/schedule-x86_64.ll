@@ -6080,14 +6080,14 @@ define void @test_imul_64(i64 %a0, i64* %a1) optsize {
 ; BTVER2-NEXT:    #APP
 ; BTVER2-NEXT:    imulq %rdi # sched: [6:4.00]
 ; BTVER2-NEXT:    imulq (%rsi) # sched: [9:4.00]
-; BTVER2-NEXT:    imulq %rdi, %rdi # sched: [3:1.00]
-; BTVER2-NEXT:    imulq (%rsi), %rdi # sched: [6:1.00]
+; BTVER2-NEXT:    imulq %rdi, %rdi # sched: [6:4.00]
+; BTVER2-NEXT:    imulq (%rsi), %rdi # sched: [9:4.00]
 ; BTVER2-NEXT:    imulq $665536, %rdi, %rdi # imm = 0xA27C0
-; BTVER2-NEXT:    # sched: [3:1.00]
+; BTVER2-NEXT:    # sched: [6:4.00]
 ; BTVER2-NEXT:    imulq $665536, (%rsi), %rdi # imm = 0xA27C0
-; BTVER2-NEXT:    # sched: [6:1.00]
-; BTVER2-NEXT:    imulq $7, %rdi, %rdi # sched: [3:1.00]
-; BTVER2-NEXT:    imulq $7, (%rsi), %rdi # sched: [6:1.00]
+; BTVER2-NEXT:    # sched: [9:4.00]
+; BTVER2-NEXT:    imulq $7, %rdi, %rdi # sched: [6:4.00]
+; BTVER2-NEXT:    imulq $7, (%rsi), %rdi # sched: [9:4.00]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;

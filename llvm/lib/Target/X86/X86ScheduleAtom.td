@@ -76,8 +76,9 @@ def : WriteRes<WriteRMW, [AtomPort0]>;
 // Arithmetic.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : AtomWriteResPair<WriteALU,   [AtomPort01], [AtomPort0]>;
-defm : AtomWriteResPair<WriteIMul,  [AtomPort01], [AtomPort01],  7,  7, [7], [7]>;
+defm : AtomWriteResPair<WriteALU,    [AtomPort01], [AtomPort0]>;
+defm : AtomWriteResPair<WriteIMul,   [AtomPort01], [AtomPort01],  7,  7,  [7],  [7]>;
+defm : AtomWriteResPair<WriteIMul64, [AtomPort01], [AtomPort01], 12, 12, [12], [12]>;
 
 defm : AtomWriteResPair<WriteDiv8,   [AtomPort01], [AtomPort01], 50, 68, [50], [68]>;
 defm : AtomWriteResPair<WriteDiv16,  [AtomPort01], [AtomPort01], 50, 50, [50], [50]>;
@@ -114,13 +115,6 @@ def AtomWriteIMul32 : SchedWriteRes<[AtomPort01]> {
   let ResourceCycles = [6];
 }
 def : InstRW<[AtomWriteIMul32], (instrs MUL32r, IMUL32r)>;
-
-def AtomWriteIMul64 : SchedWriteRes<[AtomPort01]> {
-  let Latency = 12;
-  let ResourceCycles = [12];
-}
-def : InstRW<[AtomWriteIMul64], (instrs MUL64r, IMUL64r, IMUL64rr, IMUL64rm,
-                                        MUL64m, IMUL64m)>;
 
 def AtomWriteIMul64I : SchedWriteRes<[AtomPort01]> {
   let Latency = 14;

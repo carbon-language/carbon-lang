@@ -74,11 +74,12 @@ def WriteStore : SchedWrite;
 def WriteMove  : SchedWrite;
 
 // Arithmetic.
-defm WriteALU  : X86SchedWritePair; // Simple integer ALU op.
-def WriteALURMW : WriteSequence<[WriteALULd, WriteStore]>;
-defm WriteIMul : X86SchedWritePair; // Integer multiplication.
-def  WriteIMulH : SchedWrite;       // Integer multiplication, high part.
-def  WriteLEA  : SchedWrite;        // LEA instructions can't fold loads.
+defm WriteALU    : X86SchedWritePair; // Simple integer ALU op.
+def WriteALURMW  : WriteSequence<[WriteALULd, WriteStore]>;
+defm WriteIMul   : X86SchedWritePair; // Integer multiplication.
+defm WriteIMul64 : X86SchedWritePair; // Integer 64-bit multiplication.
+def  WriteIMulH  : SchedWrite;        // Integer multiplication, high part.
+def  WriteLEA    : SchedWrite;        // LEA instructions can't fold loads.
 
 // Integer division.
 defm WriteDiv8   : X86SchedWritePair;

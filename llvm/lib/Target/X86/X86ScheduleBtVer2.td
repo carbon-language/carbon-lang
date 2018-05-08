@@ -157,6 +157,8 @@ def : WriteRes<WriteRMW, [JSAGU]>;
 
 defm : JWriteResIntPair<WriteALU,    [JALU01], 1>;
 defm : JWriteResIntPair<WriteIMul,   [JALU1, JMul], 3, [1, 1], 2>; // i8/i16/i32 multiplication
+defm : JWriteResIntPair<WriteIMul64, [JALU1, JMul], 6, [1, 4], 2>; // i64 multiplication
+defm : X86WriteRes<WriteIMulH,       [JALU1], 6, [4], 1>;
 
 defm : JWriteResIntPair<WriteDiv8,   [JALU1, JDiv], 12, [1, 12], 1>;
 defm : JWriteResIntPair<WriteDiv16,  [JALU1, JDiv], 17, [1, 17], 2>;
@@ -173,11 +175,6 @@ defm : JWriteResIntPair<WriteCMOV,  [JALU01], 1>; // Conditional move.
 def  : WriteRes<WriteSETCC, [JALU01]>; // Setcc.
 def  : WriteRes<WriteSETCCStore, [JALU01,JSAGU]>;
 
-def  : WriteRes<WriteIMulH, [JALU1]> {
-  let Latency = 6;
-  let ResourceCycles = [4];
-}
-
 // This is for simple LEAs with one or two input operands.
 // FIXME: SAGU 3-operand LEA
 def : WriteRes<WriteLEA, [JALU01]>;
@@ -191,19 +188,6 @@ defm : JWriteResIntPair<WriteTZCNT,   [JALU01], 2, [2]>;
 // BMI1 BEXTR, BMI2 BZHI
 defm : JWriteResIntPair<WriteBEXTR, [JALU01], 1>;
 defm : JWriteResIntPair<WriteBZHI, [JALU01], 1>; // NOTE: Doesn't exist on Jaguar.
-
-def JWriteIMul64 : SchedWriteRes<[JALU1, JMul]> {
-  let Latency = 6;
-  let ResourceCycles = [1, 4];
-  let NumMicroOps = 2;
-}
-def JWriteIMul64Ld : SchedWriteRes<[JLAGU, JALU1, JMul]> {
-  let Latency = 9;
-  let ResourceCycles = [1, 1, 4];
-  let NumMicroOps = 2;
-}
-def : InstRW<[JWriteIMul64], (instrs MUL64r, IMUL64r)>;
-def : InstRW<[JWriteIMul64Ld], (instrs MUL64m, IMUL64m)>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Integer shifts and rotates.

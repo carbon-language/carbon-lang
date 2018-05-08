@@ -112,12 +112,13 @@ def : WriteRes<WriteLoad,  [HWPort23]> { let Latency = 5; }
 def : WriteRes<WriteMove,  [HWPort0156]>;
 def : WriteRes<WriteZero,  []>;
 
-defm : HWWriteResPair<WriteALU,   [HWPort0156], 1>;
-defm : HWWriteResPair<WriteIMul,  [HWPort1],   3>;
+defm : HWWriteResPair<WriteALU,    [HWPort0156], 1>;
+defm : HWWriteResPair<WriteIMul,   [HWPort1],   3>;
+defm : HWWriteResPair<WriteIMul64, [HWPort1],   3>;
 def  : WriteRes<WriteIMulH, []> { let Latency = 3; }
-defm : HWWriteResPair<WriteShift, [HWPort06],  1>;
-defm : HWWriteResPair<WriteJump,  [HWPort06],   1>;
-defm : HWWriteResPair<WriteCRC32, [HWPort1],   3>;
+defm : HWWriteResPair<WriteShift,  [HWPort06],  1>;
+defm : HWWriteResPair<WriteJump,   [HWPort06],  1>;
+defm : HWWriteResPair<WriteCRC32,  [HWPort1],   3>;
 
 defm : HWWriteResPair<WriteCMOV,  [HWPort06,HWPort0156], 2, [1,1], 2>; // Conditional move.
 def  : WriteRes<WriteSETCC, [HWPort06]>; // Setcc.

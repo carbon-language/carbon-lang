@@ -101,8 +101,9 @@ def : WriteRes<WriteLoad,  [SBPort23]> { let Latency = 5; }
 def : WriteRes<WriteMove,  [SBPort015]>;
 def : WriteRes<WriteZero,  []>;
 
-defm : SBWriteResPair<WriteALU,   [SBPort015], 1>;
-defm : SBWriteResPair<WriteIMul,  [SBPort1],   3>;
+defm : SBWriteResPair<WriteALU,    [SBPort015], 1>;
+defm : SBWriteResPair<WriteIMul,   [SBPort1],   3>;
+defm : SBWriteResPair<WriteIMul64, [SBPort1],   3>;
 
 defm : SBWriteResPair<WriteDiv8,   [SBPort0, SBDivider], 25, [1, 10]>;
 defm : SBWriteResPair<WriteDiv16,  [SBPort0, SBDivider], 25, [1, 10]>;
@@ -1061,13 +1062,6 @@ def: InstRW<[SBWriteResGroup69], (instregex "BTC(16|32|64)mi8",
                                             "SHL(8|16|32|64)mi",
                                             "SHR(8|16|32|64)m1",
                                             "SHR(8|16|32|64)mi")>;
-
-def SBWriteResGroup72 : SchedWriteRes<[SBPort1,SBPort23]> {
-  let Latency = 8;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[SBWriteResGroup72], (instrs MUL8m)>;
 
 def SBWriteResGroup77 : SchedWriteRes<[SBPort0,SBPort1,SBPort23]> {
   let Latency = 8;
