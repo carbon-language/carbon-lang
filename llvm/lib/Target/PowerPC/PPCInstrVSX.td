@@ -2530,7 +2530,7 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def XSCVQPUDZ : X_VT5_XO5_VB5<63, 17, 836, "xscvqpudz", []>;
   def XSCVQPUWZ : X_VT5_XO5_VB5<63,  1, 836, "xscvqpuwz", []>;
 
-  // Convert (Un)Signed DWord -> QP
+  // Convert (Un)Signed DWord -> QP.
   def XSCVSDQP  : X_VT5_XO5_VB5_TyVB<63, 10, 836, "xscvsdqp", vfrc, []>;
   def : Pat<(f128 (sint_to_fp i64:$src)),
             (f128 (XSCVSDQP (COPY_TO_REGCLASS $src, VFRC)))>;
@@ -2538,7 +2538,7 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def : Pat<(f128 (uint_to_fp i64:$src)),
             (f128 (XSCVUDQP (COPY_TO_REGCLASS $src, VFRC)))>;
 
-  // Convert (Un)Signed Word -> QP
+  // Convert (Un)Signed Word -> QP.
   def : Pat<(f128 (sint_to_fp i32:$src)),
             (f128 (XSCVSDQP (MTVSRWA $src)))>;
   def : Pat<(f128 (sint_to_fp (i32 (load xoaddr:$src)))),
@@ -3170,8 +3170,20 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def : Pat<(f128 (uint_to_fp ScalarLoads.ZELi8)),
             (f128 (XSCVUDQP (LXSIBZX xoaddr:$src)))>;
 
+  // Truncate & Convert QP -> (Un)Signed (D)Word.
+  def : Pat<(i64 (fp_to_sint f128:$src)), (i64 (MFVRD (XSCVQPSDZ $src)))>;
+  def : Pat<(i64 (fp_to_uint f128:$src)), (i64 (MFVRD (XSCVQPUDZ $src)))>;
+
   // Instructions for fptosint (i64,i16,i8) feeding a store.
   // The 8-byte version is repeated here due to availability of D-Form STXSD.
+  def : Pat<(PPCstore_scal_int_from_vsr
+              (f64 (PPCcv_fp_to_sint_in_vsr f128:$src)), xaddr:$dst, 8),
+            (STXSDX (COPY_TO_REGCLASS (XSCVQPSDZ f128:$src), VFRC),
+                    xaddr:$dst)>;
+  def : Pat<(PPCstore_scal_int_from_vsr
+              (f64 (PPCcv_fp_to_sint_in_vsr f128:$src)), ixaddr:$dst, 8),
+            (STXSD (COPY_TO_REGCLASS (XSCVQPSDZ f128:$src), VFRC),
+                   ixaddr:$dst)>;
   def : Pat<(PPCstore_scal_int_from_vsr
               (f64 (PPCcv_fp_to_sint_in_vsr f64:$src)), xaddr:$dst, 8),
             (STXSDX (XSCVDPSXDS f64:$src), xaddr:$dst)>;
@@ -3186,6 +3198,14 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
             (STXSIBX (XSCVDPSXWS f64:$src), xoaddr:$dst)>;
 
   // Instructions for fptouint (i64,i16,i8) feeding a store.
+  def : Pat<(PPCstore_scal_int_from_vsr
+              (f64 (PPCcv_fp_to_uint_in_vsr f128:$src)), xaddr:$dst, 8),
+            (STXSDX (COPY_TO_REGCLASS (XSCVQPUDZ f128:$src), VFRC),
+                    xaddr:$dst)>;
+  def : Pat<(PPCstore_scal_int_from_vsr
+              (f64 (PPCcv_fp_to_uint_in_vsr f128:$src)), ixaddr:$dst, 8),
+            (STXSD (COPY_TO_REGCLASS (XSCVQPUDZ f128:$src), VFRC),
+                   ixaddr:$dst)>;
   def : Pat<(PPCstore_scal_int_from_vsr
               (f64 (PPCcv_fp_to_uint_in_vsr f64:$src)), xaddr:$dst, 8),
             (STXSDX (XSCVDPUXDS f64:$src), xaddr:$dst)>;

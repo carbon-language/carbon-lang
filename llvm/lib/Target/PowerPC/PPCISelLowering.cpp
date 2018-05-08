@@ -6930,6 +6930,11 @@ SDValue PPCTargetLowering::LowerFP_TO_INTDirectMove(SDValue Op,
 
 SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
                                           const SDLoc &dl) const {
+
+  // FP to INT conversions are legal for f128.
+  if (EnableQuadPrecision && (Op->getOperand(0).getValueType() == MVT::f128))
+    return Op;
+
   // Expand ppcf128 to i32 by hand for the benefit of llvm-gcc bootstrap on
   // PPC (the libcall is not available).
   if (Op.getOperand(0).getValueType() == MVT::ppcf128) {
