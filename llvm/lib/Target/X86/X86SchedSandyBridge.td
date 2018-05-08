@@ -103,7 +103,16 @@ def : WriteRes<WriteZero,  []>;
 
 defm : SBWriteResPair<WriteALU,   [SBPort015], 1>;
 defm : SBWriteResPair<WriteIMul,  [SBPort1],   3>;
-defm : SBWriteResPair<WriteIDiv, [SBPort0, SBDivider], 25, [1, 10]>;
+
+defm : SBWriteResPair<WriteDiv8,   [SBPort0, SBDivider], 25, [1, 10]>;
+defm : SBWriteResPair<WriteDiv16,  [SBPort0, SBDivider], 25, [1, 10]>;
+defm : SBWriteResPair<WriteDiv32,  [SBPort0, SBDivider], 25, [1, 10]>;
+defm : SBWriteResPair<WriteDiv64,  [SBPort0, SBDivider], 25, [1, 10]>;
+defm : SBWriteResPair<WriteIDiv8,  [SBPort0, SBDivider], 25, [1, 10]>;
+defm : SBWriteResPair<WriteIDiv16, [SBPort0, SBDivider], 25, [1, 10]>;
+defm : SBWriteResPair<WriteIDiv32, [SBPort0, SBDivider], 25, [1, 10]>;
+defm : SBWriteResPair<WriteIDiv64, [SBPort0, SBDivider], 25, [1, 10]>;
+
 def  : WriteRes<WriteIMulH, []> { let Latency = 3; }
 
 defm : SBWriteResPair<WriteShift, [SBPort05],  1>;

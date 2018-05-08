@@ -141,8 +141,14 @@ defm : HWWriteResPair<WritePOPCNT,  [HWPort1], 3>;
 defm : HWWriteResPair<WriteBEXTR, [HWPort06,HWPort15], 2, [1,1], 2>;
 defm : HWWriteResPair<WriteBZHI, [HWPort15], 1>;
 
-// This is quite rough, latency depends on the dividend.
-defm : HWWriteResPair<WriteIDiv,  [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteDiv8,   [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteDiv16,  [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteDiv32,  [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteDiv64,  [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteIDiv8,  [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteIDiv16, [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteIDiv32, [HWPort0, HWDivider], 25, [1,10], 1, 4>;
+defm : HWWriteResPair<WriteIDiv64, [HWPort0, HWDivider], 25, [1,10], 1, 4>;
 
 // Scalar and vector floating point.
 defm : X86WriteRes<WriteFLoad,         [HWPort23], 5, [1], 1>;

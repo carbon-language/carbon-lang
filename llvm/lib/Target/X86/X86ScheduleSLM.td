@@ -121,8 +121,14 @@ defm : SLMWriteResPair<WritePOPCNT,  [SLM_IEC_RSV0], 3>;
 defm : SLMWriteResPair<WriteBEXTR, [SLM_IEC_RSV0], 1>;
 defm : SLMWriteResPair<WriteBZHI, [SLM_IEC_RSV0], 1>;
 
-// This is quite rough, latency depends on the dividend.
-defm : SLMWriteResPair<WriteIDiv, [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteDiv8,   [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteDiv16,  [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteDiv32,  [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteDiv64,  [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteIDiv8,  [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteIDiv16, [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteIDiv32, [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
+defm : SLMWriteResPair<WriteIDiv64, [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
 
 // Scalar and vector floating point.
 def  : WriteRes<WriteFLoad,         [SLM_MEC_RSV]> { let Latency = 3; }

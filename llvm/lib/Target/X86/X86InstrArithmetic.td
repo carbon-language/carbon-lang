@@ -280,70 +280,65 @@ def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
 
 // unsigned division/remainder
 let hasSideEffects = 1 in { // so that we don't speculatively execute
-let SchedRW = [WriteIDiv] in {
 let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def DIV8r  : I<0xF6, MRM6r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
-               "div{b}\t$src", []>;
+               "div{b}\t$src", []>, Sched<[WriteDiv8]>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def DIV16r : I<0xF7, MRM6r, (outs),  (ins GR16:$src),   // DX:AX/r16 = AX,DX
-               "div{w}\t$src", []>, OpSize16;
+               "div{w}\t$src", []>, Sched<[WriteDiv16]>, OpSize16;
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def DIV32r : I<0xF7, MRM6r, (outs),  (ins GR32:$src),   // EDX:EAX/r32 = EAX,EDX
-               "div{l}\t$src", []>, OpSize32;
+               "div{l}\t$src", []>, Sched<[WriteDiv32]>, OpSize32;
 // RDX:RAX/r64 = RAX,RDX
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in
 def DIV64r : RI<0xF7, MRM6r, (outs), (ins GR64:$src),
-                "div{q}\t$src", []>;
-} // SchedRW
+                "div{q}\t$src", []>, Sched<[WriteDiv64]>;
 
 let mayLoad = 1 in {
 let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def DIV8m  : I<0xF6, MRM6m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
-               "div{b}\t$src", []>, SchedLoadReg<WriteIDivLd>;
+               "div{b}\t$src", []>, SchedLoadReg<WriteDiv8.Folded>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def DIV16m : I<0xF7, MRM6m, (outs), (ins i16mem:$src),  // DX:AX/[mem16] = AX,DX
-               "div{w}\t$src", []>, OpSize16, SchedLoadReg<WriteIDivLd>;
+               "div{w}\t$src", []>, OpSize16, SchedLoadReg<WriteDiv16.Folded>;
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in    // EDX:EAX/[mem32] = EAX,EDX
 def DIV32m : I<0xF7, MRM6m, (outs), (ins i32mem:$src),
-               "div{l}\t$src", []>, SchedLoadReg<WriteIDivLd>, OpSize32;
+               "div{l}\t$src", []>, SchedLoadReg<WriteDiv32.Folded>, OpSize32;
 // RDX:RAX/[mem64] = RAX,RDX
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in
 def DIV64m : RI<0xF7, MRM6m, (outs), (ins i64mem:$src),
-                "div{q}\t$src", []>, SchedLoadReg<WriteIDivLd>,
+                "div{q}\t$src", []>, SchedLoadReg<WriteDiv64.Folded>,
                 Requires<[In64BitMode]>;
 }
 
 // Signed division/remainder.
-let SchedRW = [WriteIDiv] in {
 let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def IDIV8r : I<0xF6, MRM7r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
-               "idiv{b}\t$src", []>;
+               "idiv{b}\t$src", []>, Sched<[WriteIDiv8]>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def IDIV16r: I<0xF7, MRM7r, (outs),  (ins GR16:$src),   // DX:AX/r16 = AX,DX
-               "idiv{w}\t$src", []>, OpSize16;
+               "idiv{w}\t$src", []>, Sched<[WriteIDiv16]>, OpSize16;
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in
 def IDIV32r: I<0xF7, MRM7r, (outs),  (ins GR32:$src),   // EDX:EAX/r32 = EAX,EDX
-               "idiv{l}\t$src", []>, OpSize32;
+               "idiv{l}\t$src", []>, Sched<[WriteIDiv32]>, OpSize32;
 // RDX:RAX/r64 = RAX,RDX
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in
 def IDIV64r: RI<0xF7, MRM7r, (outs), (ins GR64:$src),
-                "idiv{q}\t$src", []>;
-} // SchedRW
+                "idiv{q}\t$src", []>, Sched<[WriteIDiv64]>;
 
 let mayLoad = 1 in {
 let Defs = [AL,AH,EFLAGS], Uses = [AX] in
 def IDIV8m : I<0xF6, MRM7m, (outs), (ins i8mem:$src),   // AX/[mem8] = AL,AH
-               "idiv{b}\t$src", []>,
-             SchedLoadReg<WriteIDivLd>;
+               "idiv{b}\t$src", []>, SchedLoadReg<WriteIDiv8.Folded>;
 let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def IDIV16m: I<0xF7, MRM7m, (outs), (ins i16mem:$src),  // DX:AX/[mem16] = AX,DX
-               "idiv{w}\t$src", []>, OpSize16, SchedLoadReg<WriteIDivLd>;
+               "idiv{w}\t$src", []>, OpSize16, SchedLoadReg<WriteIDiv16.Folded>;
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in    // EDX:EAX/[mem32] = EAX,EDX
 def IDIV32m: I<0xF7, MRM7m, (outs), (ins i32mem:$src),
-               "idiv{l}\t$src", []>, OpSize32, SchedLoadReg<WriteIDivLd>;
+               "idiv{l}\t$src", []>, OpSize32, SchedLoadReg<WriteIDiv32.Folded>;
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in // RDX:RAX/[mem64] = RAX,RDX
 def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),
-                "idiv{q}\t$src", []>, SchedLoadReg<WriteIDivLd>,
+                "idiv{q}\t$src", []>, SchedLoadReg<WriteIDiv64.Folded>,
                 Requires<[In64BitMode]>;
 }
 } // hasSideEffects = 0
