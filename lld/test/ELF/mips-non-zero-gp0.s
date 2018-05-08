@@ -55,12 +55,12 @@
 # ADDEND32-NEXT:  0000 00007ff4 00007ff8
 #                      ^ 4+GP0  ^ 8+GP0
 
-# ADDEND64: File: {{.*}}/Inputs/mips-n64-gp0-non-zero.o
+# ADDEND64: File: {{.*}}{{/|\\}}mips-n64-gp0-non-zero.o
 # ADDEND64: .text 0xFFFFFFFFFFFF8011
-# ADDEND64: File: {{.*}}/mips-non-zero-gp0.s.tmp-64.r
+# ADDEND64: File: {{.*}}{{/|\\}}mips-non-zero-gp0.s.tmp-64.r
 # ADDEND64: .text 0x0
 
-# ADDENDMM: File: {{.*}}/Inputs/mips-micro-gp0-non-zero.o
+# ADDENDMM: File: {{.*}}{{/|\\}}mips-micro-gp0-non-zero.o
 # ADDENDMM: .text 0xFFFFFFFFFFFF8012
-# ADDENDMM: File: {{.*}}/mips-non-zero-gp0.s.tmp-micro.r
+# ADDENDMM: File: {{.*}}{{/|\\}}mips-non-zero-gp0.s.tmp-micro.r
 # ADDENDMM: .text 0x1
