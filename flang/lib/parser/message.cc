@@ -117,7 +117,8 @@ bool Message::SortBefore(const Message &that) const {
 
 bool Message::IsFatal() const {
   return std::visit(visitors{[](const MessageExpectedText &) { return true; },
-                        [](const auto &x) { return x.isFatal(); }},
+                        [](const MessageFixedText &x) { return x.isFatal(); },
+                        [](const MessageFormattedText &x) { return x.isFatal(); }},
       text_);
 }
 
