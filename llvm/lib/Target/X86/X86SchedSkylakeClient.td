@@ -147,10 +147,14 @@ def : WriteRes<WriteZero,  []>;
 defm : SKLWriteResPair<WriteJump,  [SKLPort06],   1>;
 
 // Floating point. This covers both scalar and vector operations.
-def  : WriteRes<WriteFLoad,         [SKLPort23]> { let Latency = 6; }
-def  : WriteRes<WriteFStore,        [SKLPort237, SKLPort4]>;
-def  : WriteRes<WriteFMove,         [SKLPort015]>;
-defm : X86WriteRes<WriteEMMS,       [SKLPort05,SKLPort0156], 10, [9,1], 10>;
+defm : X86WriteRes<WriteFLoad,         [SKLPort23], 6, [1], 1>;
+defm : X86WriteRes<WriteFMaskedLoad,   [SKLPort23,SKLPort015], 7, [1,1], 2>;
+defm : X86WriteRes<WriteFMaskedLoadY,  [SKLPort23,SKLPort015], 8, [1,1], 2>;
+defm : X86WriteRes<WriteFStore,        [SKLPort237,SKLPort4], 1, [1,1], 1>;
+defm : X86WriteRes<WriteFMaskedStore,  [SKLPort237,SKLPort0], 2, [1,1], 2>;
+defm : X86WriteRes<WriteFMaskedStoreY, [SKLPort237,SKLPort0], 2, [1,1], 2>;
+defm : X86WriteRes<WriteFMove,         [SKLPort015], 1, [1], 1>;
+defm : X86WriteRes<WriteEMMS,          [SKLPort05,SKLPort0156], 10, [9,1], 10>;
 
 defm : SKLWriteResPair<WriteFAdd,     [SKLPort01],  4, [1], 1, 5>; // Floating point add/sub.
 defm : SKLWriteResPair<WriteFAddX,    [SKLPort01],  4, [1], 1, 6>; // Floating point add/sub (XMM).
@@ -234,9 +238,13 @@ def  : WriteRes<WriteCvtF2FSt, [SKLPort4,SKLPort5,SKLPort237,SKLPort01]> {
 // class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
 
 // Vector integer operations.
-def  : WriteRes<WriteVecLoad,         [SKLPort23]> { let Latency = 6; }
-def  : WriteRes<WriteVecStore,        [SKLPort237, SKLPort4]>;
-def  : WriteRes<WriteVecMove,         [SKLPort015]>;
+defm : X86WriteRes<WriteVecLoad,         [SKLPort23], 6, [1], 1>;
+defm : X86WriteRes<WriteVecMaskedLoad,   [SKLPort23,SKLPort015], 7, [1,1], 2>;
+defm : X86WriteRes<WriteVecMaskedLoadY,  [SKLPort23,SKLPort015], 8, [1,1], 2>;
+defm : X86WriteRes<WriteVecStore,        [SKLPort237,SKLPort4], 1, [1,1], 1>;
+defm : X86WriteRes<WriteVecMaskedStore,  [SKLPort237,SKLPort0], 2, [1,1], 2>;
+defm : X86WriteRes<WriteVecMaskedStoreY, [SKLPort237,SKLPort0], 2, [1,1], 2>;
+defm : X86WriteRes<WriteVecMove,         [SKLPort015], 1, [1], 1>;
 
 defm : SKLWriteResPair<WriteVecALU,   [SKLPort01], 1, [1], 1, 6>; // Vector integer ALU op, no logicals.
 defm : SKLWriteResPair<WriteVecALUY,  [SKLPort01], 1, [1], 1, 7>; // Vector integer ALU op, no logicals (YMM/ZMM).
@@ -645,16 +653,6 @@ def SKLWriteResGroup17 : SchedWriteRes<[SKLPort0156]> {
 def: InstRW<[SKLWriteResGroup17], (instrs LFENCE,
                                           WAIT,
                                           XGETBV)>;
-
-def SKLWriteResGroup18 : SchedWriteRes<[SKLPort0,SKLPort237]> {
-  let Latency = 2;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[SKLWriteResGroup18], (instregex "VMASKMOVPD(Y?)mr",
-                                             "VMASKMOVPS(Y?)mr",
-                                             "VPMASKMOVD(Y?)mr",
-                                             "VPMASKMOVQ(Y?)mr")>;
 
 def SKLWriteResGroup20 : SchedWriteRes<[SKLPort6,SKLPort0156]> {
   let Latency = 2;
@@ -1246,15 +1244,11 @@ def SKLWriteResGroup91 : SchedWriteRes<[SKLPort23,SKLPort015]> {
 }
 def: InstRW<[SKLWriteResGroup91], (instregex "(V?)INSERTF128rm",
                                              "(V?)INSERTI128rm",
-                                             "(V?)MASKMOVPDrm",
-                                             "(V?)MASKMOVPSrm",
                                              "(V?)PADDBrm",
                                              "(V?)PADDDrm",
                                              "(V?)PADDQrm",
                                              "(V?)PADDWrm",
                                              "(V?)PBLENDDrmi",
-                                             "(V?)PMASKMOVDrm",
-                                             "(V?)PMASKMOVQrm",
                                              "(V?)PSUBBrm",
                                              "(V?)PSUBDrm",
                                              "(V?)PSUBQrm",
@@ -1382,15 +1376,11 @@ def SKLWriteResGroup110 : SchedWriteRes<[SKLPort23,SKLPort015]> {
   let NumMicroOps = 2;
   let ResourceCycles = [1,1];
 }
-def: InstRW<[SKLWriteResGroup110], (instregex "VMASKMOVPDYrm",
-                                              "VMASKMOVPSYrm",
-                                              "VPADDBYrm",
+def: InstRW<[SKLWriteResGroup110], (instregex "VPADDBYrm",
                                               "VPADDDYrm",
                                               "VPADDQYrm",
                                               "VPADDWYrm",
                                               "VPBLENDDYrmi",
-                                              "VPMASKMOVDYrm",
-                                              "VPMASKMOVQYrm",
                                               "VPSUBBYrm",
                                               "VPSUBDYrm",
                                               "VPSUBQYrm",

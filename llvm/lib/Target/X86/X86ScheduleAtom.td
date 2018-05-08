@@ -198,8 +198,14 @@ def : WriteRes<WriteNop, [AtomPort01]>;
 // Floating point. This covers both scalar and vector operations.
 ////////////////////////////////////////////////////////////////////////////////
 
-def  : WriteRes<WriteFLoad,  [AtomPort0]>;
-def  : WriteRes<WriteFStore, [AtomPort0]>;
+def  : WriteRes<WriteFLoad,         [AtomPort0]>;
+def  : WriteRes<WriteFMaskedLoad,   [AtomPort0]>;
+def  : WriteRes<WriteFMaskedLoadY,  [AtomPort0]>;
+
+def  : WriteRes<WriteFStore,        [AtomPort0]>;
+def  : WriteRes<WriteFMaskedStore,  [AtomPort0]>;
+def  : WriteRes<WriteFMaskedStoreY, [AtomPort0]>;
+
 def  : WriteRes<WriteFMove,  [AtomPort01]>;
 defm : X86WriteRes<WriteEMMS,[AtomPort01], 5, [5], 1>;
 
@@ -282,8 +288,14 @@ def  : WriteRes<WriteCvtF2FSt, [AtomPort0]>; // NOTE: Doesn't exist on Atom.
 // Vector integer operations.
 ////////////////////////////////////////////////////////////////////////////////
 
-def  : WriteRes<WriteVecLoad,  [AtomPort0]>;
-def  : WriteRes<WriteVecStore, [AtomPort0]>;
+def  : WriteRes<WriteVecLoad,         [AtomPort0]>;
+def  : WriteRes<WriteVecMaskedLoad,   [AtomPort0]>;
+def  : WriteRes<WriteVecMaskedLoadY,  [AtomPort0]>;
+
+def  : WriteRes<WriteVecStore,        [AtomPort0]>;
+def  : WriteRes<WriteVecMaskedStore,  [AtomPort0]>;
+def  : WriteRes<WriteVecMaskedStoreY, [AtomPort0]>;
+
 def  : WriteRes<WriteVecMove,  [AtomPort01]>;
 
 defm : AtomWriteResPair<WriteVecALU,       [AtomPort01],  [AtomPort0], 1, 1>;

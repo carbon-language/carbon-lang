@@ -105,9 +105,13 @@ def WriteZero : SchedWrite;
 defm WriteJump : X86SchedWritePair;
 
 // Floating point. This covers both scalar and vector operations.
-def  WriteFLoad   : SchedWrite;
-def  WriteFStore  : SchedWrite;
-def  WriteFMove   : SchedWrite;
+def  WriteFLoad         : SchedWrite;
+def  WriteFMaskedLoad   : SchedWrite;
+def  WriteFMaskedLoadY  : SchedWrite;
+def  WriteFStore        : SchedWrite;
+def  WriteFMaskedStore  : SchedWrite;
+def  WriteFMaskedStoreY : SchedWrite;
+def  WriteFMove         : SchedWrite;
 
 defm WriteFAdd    : X86SchedWritePair; // Floating point add/sub.
 defm WriteFAddX   : X86SchedWritePair; // Floating point add/sub (XMM).
@@ -183,9 +187,13 @@ defm WritePHAdd  : X86SchedWritePair;
 defm WritePHAddY : X86SchedWritePair; // YMM/ZMM.
 
 // Vector integer operations.
-def  WriteVecLoad  : SchedWrite;
-def  WriteVecStore : SchedWrite;
-def  WriteVecMove  : SchedWrite;
+def  WriteVecLoad         : SchedWrite;
+def  WriteVecMaskedLoad   : SchedWrite;
+def  WriteVecMaskedLoadY  : SchedWrite;
+def  WriteVecStore        : SchedWrite;
+def  WriteVecMaskedStore  : SchedWrite;
+def  WriteVecMaskedStoreY : SchedWrite;
+def  WriteVecMove         : SchedWrite;
 
 defm WriteVecALU   : X86SchedWritePair; // Vector integer ALU op, no logicals.
 defm WriteVecALUY  : X86SchedWritePair; // Vector integer ALU op, no logicals (YMM/ZMM).

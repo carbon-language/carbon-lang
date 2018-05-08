@@ -125,10 +125,14 @@ defm : SLMWriteResPair<WriteBZHI, [SLM_IEC_RSV0], 1>;
 defm : SLMWriteResPair<WriteIDiv, [SLM_IEC_RSV01, SLMDivider], 25, [1,25], 1, 4>;
 
 // Scalar and vector floating point.
-def  : WriteRes<WriteFStore,       [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteFLoad,        [SLM_MEC_RSV]> { let Latency = 3; }
-def  : WriteRes<WriteFMove,        [SLM_FPC_RSV01]>;
-defm : X86WriteRes<WriteEMMS,      [SLM_FPC_RSV01], 10, [10], 9>;
+def  : WriteRes<WriteFLoad,         [SLM_MEC_RSV]> { let Latency = 3; }
+def  : WriteRes<WriteFMaskedLoad,   [SLM_MEC_RSV]> { let Latency = 3; }
+def  : WriteRes<WriteFMaskedLoadY,  [SLM_MEC_RSV]> { let Latency = 3; }
+def  : WriteRes<WriteFStore,        [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteFMaskedStore,  [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteFMaskedStoreY, [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteFMove,         [SLM_FPC_RSV01]>;
+defm : X86WriteRes<WriteEMMS,       [SLM_FPC_RSV01], 10, [10], 9>;
 
 defm : SLMWriteResPair<WriteFAdd,     [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteFAddX,    [SLM_FPC_RSV1], 3>;
@@ -193,9 +197,13 @@ defm : SLMWriteResPair<WriteFBlend,  [SLM_FPC_RSV0],  1>;
 def  : WriteRes<WriteCvtF2FSt, [SLM_FPC_RSV01, SLM_MEC_RSV]>;
 
 // Vector integer operations.
-def  : WriteRes<WriteVecStore,       [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteVecLoad,        [SLM_MEC_RSV]> { let Latency = 3; }
-def  : WriteRes<WriteVecMove,        [SLM_FPC_RSV01]>;
+def  : WriteRes<WriteVecLoad,         [SLM_MEC_RSV]> { let Latency = 3; }
+def  : WriteRes<WriteVecMaskedLoad,   [SLM_MEC_RSV]> { let Latency = 3; }
+def  : WriteRes<WriteVecMaskedLoadY,  [SLM_MEC_RSV]> { let Latency = 3; }
+def  : WriteRes<WriteVecStore,        [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecMaskedStore,  [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecMaskedStoreY, [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecMove,         [SLM_FPC_RSV01]>;
 
 defm : SLMWriteResPair<WriteVecShift,    [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteVecShiftX,   [SLM_FPC_RSV0],  1>;

@@ -151,9 +151,13 @@ def : InstRW<[WriteMove], (instrs COPY)>;
 defm : BWWriteResPair<WriteJump,  [BWPort06],   1>;
 
 // Floating point. This covers both scalar and vector operations.
-def  : WriteRes<WriteFLoad,        [BWPort23]> { let Latency = 5; }
-def  : WriteRes<WriteFStore,       [BWPort237, BWPort4]>;
-def  : WriteRes<WriteFMove,        [BWPort5]>;
+defm : X86WriteRes<WriteFLoad,         [BWPort23], 5, [1], 1>;
+defm : X86WriteRes<WriteFMaskedLoad,   [BWPort23,BWPort5], 7, [1,2], 3>;
+defm : X86WriteRes<WriteFMaskedLoadY,  [BWPort23,BWPort5], 8, [1,2], 3>;
+defm : X86WriteRes<WriteFStore,        [BWPort237,BWPort4], 1, [1,1], 1>;
+defm : X86WriteRes<WriteFMaskedStore,  [BWPort0,BWPort4,BWPort237,BWPort15], 5, [1,1,1,1], 4>;
+defm : X86WriteRes<WriteFMaskedStoreY, [BWPort0,BWPort4,BWPort237,BWPort15], 5, [1,1,1,1], 4>;
+defm : X86WriteRes<WriteFMove,         [BWPort5], 1, [1], 1>;
 
 defm : BWWriteResPair<WriteFAdd,    [BWPort1],  3, [1], 1, 5>; // Floating point add/sub.
 defm : BWWriteResPair<WriteFAddX,   [BWPort1],  3, [1], 1, 5>; // Floating point add/sub (XMM).
@@ -241,10 +245,14 @@ def  : WriteRes<WriteCvtF2FSt, [BWPort1,BWPort4,BWPort237]> {
 // class FMASC { X86FoldableSchedWrite Sched = WriteFAdd; }
 
 // Vector integer operations.
-def  : WriteRes<WriteVecLoad,        [BWPort23]> { let Latency = 5; }
-def  : WriteRes<WriteVecStore,       [BWPort237, BWPort4]>;
-def  : WriteRes<WriteVecMove,        [BWPort015]>;
-defm : X86WriteRes<WriteEMMS,        [BWPort01,BWPort15,BWPort015,BWPort0156], 31, [8,1,21,1], 31>;
+defm : X86WriteRes<WriteVecLoad,         [BWPort23], 5, [1], 1>;
+defm : X86WriteRes<WriteVecMaskedLoad,   [BWPort23,BWPort5], 7, [1,2], 3>;
+defm : X86WriteRes<WriteVecMaskedLoadY,  [BWPort23,BWPort5], 8, [1,2], 3>;
+defm : X86WriteRes<WriteVecStore,        [BWPort237,BWPort4], 1, [1,1], 1>;
+defm : X86WriteRes<WriteVecMaskedStore,  [BWPort0,BWPort4,BWPort237,BWPort15], 5, [1,1,1,1], 4>;
+defm : X86WriteRes<WriteVecMaskedStoreY, [BWPort0,BWPort4,BWPort237,BWPort15], 5, [1,1,1,1], 4>;
+defm : X86WriteRes<WriteVecMove,         [BWPort015], 1, [1], 1>;
+defm : X86WriteRes<WriteEMMS,            [BWPort01,BWPort15,BWPort015,BWPort0156], 31, [8,1,21,1], 31>;
 
 defm : BWWriteResPair<WriteVecALU,   [BWPort15], 1, [1], 1, 5>; // Vector integer ALU op, no logicals.
 defm : BWWriteResPair<WriteVecALUY,  [BWPort15], 1, [1], 1, 6>; // Vector integer ALU op, no logicals (YMM/ZMM).
@@ -899,16 +907,6 @@ def BWWriteResGroup52 : SchedWriteRes<[BWPort1,BWPort06,BWPort0156]> {
 }
 def: InstRW<[BWWriteResGroup52], (instrs IMUL32r, MUL32r, MULX32rr)>;
 
-def BWWriteResGroup53 : SchedWriteRes<[BWPort0,BWPort4,BWPort237,BWPort15]> {
-  let Latency = 5;
-  let NumMicroOps = 4;
-  let ResourceCycles = [1,1,1,1];
-}
-def: InstRW<[BWWriteResGroup53], (instregex "VMASKMOVPD(Y?)mr",
-                                            "VMASKMOVPS(Y?)mr",
-                                            "VPMASKMOVD(Y?)mr",
-                                            "VPMASKMOVQ(Y?)mr")>;
-
 def BWWriteResGroup54 : SchedWriteRes<[BWPort6,BWPort0156]> {
   let Latency = 5;
   let NumMicroOps = 5;
@@ -1107,11 +1105,7 @@ def BWWriteResGroup79 : SchedWriteRes<[BWPort5,BWPort23]> {
 }
 def: InstRW<[BWWriteResGroup79], (instregex "MMX_PACKSSDWirm",
                                             "MMX_PACKSSWBirm",
-                                            "MMX_PACKUSWBirm",
-                                            "VMASKMOVPDrm",
-                                            "VMASKMOVPSrm",
-                                            "VPMASKMOVDrm",
-                                            "VPMASKMOVQrm")>;
+                                            "MMX_PACKUSWBirm")>;
 
 def BWWriteResGroup80 : SchedWriteRes<[BWPort23,BWPort0156]> {
   let Latency = 7;
@@ -1211,16 +1205,6 @@ def: InstRW<[BWWriteResGroup92], (instregex "VPMOVSXBDYrm",
                                             "VPMOVSXWDYrm",
                                             "VPMOVSXWQYrm",
                                             "VPMOVZXWDYrm")>;
-
-def BWWriteResGroup94 : SchedWriteRes<[BWPort5,BWPort23]> {
-  let Latency = 8;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[BWWriteResGroup94], (instregex "VMASKMOVPDYrm",
-                                            "VMASKMOVPSYrm",
-                                            "VPMASKMOVDYrm",
-                                            "VPMASKMOVQYrm")>;
 
 def BWWriteResGroup97 : SchedWriteRes<[BWPort23,BWPort237,BWPort06,BWPort0156]> {
   let Latency = 8;
