@@ -131,6 +131,43 @@ bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
   return true;
 }
 
+bool ReadFileToBuffer(const char *file_name,
+                      InternalMmapVectorNoCtor<char> *buff, uptr max_len,
+                      error_t *errno_p) {
+  uptr PageSize = GetPageSizeCached();
+  buff->clear();
+  // The files we usually open are not seekable, so try different buffer sizes.
+  for (uptr size = Max(PageSize, buff->capacity()); size <= max_len;
+       size *= 2) {
+    buff->resize(size);
+    fd_t fd = OpenFile(file_name, RdOnly, errno_p);
+    if (fd == kInvalidFd)
+      return false;
+    uptr read_len = 0;
+    // Read up to one page at a time.
+    bool reached_eof = false;
+    while (read_len + PageSize <= buff->size()) {
+      uptr just_read;
+      if (!ReadFromFile(fd, buff->data() + read_len, PageSize, &just_read,
+                        errno_p)) {
+        CloseFile(fd);
+        return false;
+      }
+      if (!just_read) {
+        reached_eof = true;
+        break;
+      }
+      read_len += just_read;
+    }
+    CloseFile(fd);
+    if (reached_eof) {  // We've read the whole file.
+      buff->resize(read_len);
+      break;
+    }
+  }
+  return true;
+}
+
 static const char kPathSeparator = SANITIZER_WINDOWS ? ';' : ':';
 
 char *FindPathToBinary(const char *name) {

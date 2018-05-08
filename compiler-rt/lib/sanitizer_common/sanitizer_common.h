@@ -198,15 +198,6 @@ class ScopedErrorReportLock {
 extern uptr stoptheworld_tracer_pid;
 extern uptr stoptheworld_tracer_ppid;
 
-// Opens the file 'file_name" and reads up to 'max_len' bytes.
-// The resulting buffer is mmaped and stored in '*buff'.
-// The size of the mmaped region is stored in '*buff_size'.
-// The total number of read bytes is stored in '*read_len'.
-// Returns true if file was successfully opened and read.
-bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
-                      uptr *read_len, uptr max_len = 1 << 26,
-                      error_t *errno_p = nullptr);
-
 bool IsAccessibleMemoryRange(uptr beg, uptr size);
 
 // Error report formatting.
@@ -644,6 +635,21 @@ enum ModuleArch {
   kModuleArchARMV7K,
   kModuleArchARM64
 };
+
+// Opens the file 'file_name" and reads up to 'max_len' bytes.
+// The resulting buffer is mmaped and stored in '*buff'.
+// The size of the mmaped region is stored in '*buff_size'.
+// The total number of read bytes is stored in '*read_len'.
+// Returns true if file was successfully opened and read.
+bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
+                      uptr *read_len, uptr max_len = 1 << 26,
+                      error_t *errno_p = nullptr);
+// Opens the file 'file_name" and reads up to 'max_len' bytes.
+// The resulting buffer is mmaped and stored in '*buff'.
+// Returns true if file was successfully opened and read.
+bool ReadFileToBuffer(const char *file_name,
+                      InternalMmapVectorNoCtor<char> *buff,
+                      uptr max_len = 1 << 26, error_t *errno_p = nullptr);
 
 // When adding a new architecture, don't forget to also update
 // script/asan_symbolize.py and sanitizer_symbolizer_libcdep.cc.
