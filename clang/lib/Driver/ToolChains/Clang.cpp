@@ -131,6 +131,10 @@ forAllAssociatedToolChains(Compilation &C, const JobAction &JA,
     Work(*C.getSingleOffloadToolChain<Action::OFK_Cuda>());
   else if (JA.isDeviceOffloading(Action::OFK_Cuda))
     Work(*C.getSingleOffloadToolChain<Action::OFK_Host>());
+  else if (JA.isHostOffloading(Action::OFK_HIP))
+    Work(*C.getSingleOffloadToolChain<Action::OFK_HIP>());
+  else if (JA.isDeviceOffloading(Action::OFK_HIP))
+    Work(*C.getSingleOffloadToolChain<Action::OFK_Host>());
 
   if (JA.isHostOffloading(Action::OFK_OpenMP)) {
     auto TCs = C.getOffloadToolChains<Action::OFK_OpenMP>();
@@ -3105,13 +3109,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // Check number of inputs for sanity. We need at least one input.
   assert(Inputs.size() >= 1 && "Must have at least one input.");
   const InputInfo &Input = Inputs[0];
-  // CUDA compilation may have multiple inputs (source file + results of
+  // CUDA/HIP compilation may have multiple inputs (source file + results of
   // device-side compilations). OpenMP device jobs also take the host IR as a
   // second input. All other jobs are expected to have exactly one
   // input.
   bool IsCuda = JA.isOffloading(Action::OFK_Cuda);
+  bool IsHIP = JA.isOffloading(Action::OFK_HIP);
   bool IsOpenMPDevice = JA.isDeviceOffloading(Action::OFK_OpenMP);
-  assert((IsCuda || (IsOpenMPDevice && Inputs.size() == 2) ||
+  assert((IsCuda || IsHIP || (IsOpenMPDevice && Inputs.size() == 2) ||
           Inputs.size() == 1) &&
          "Unable to handle multiple inputs.");
 
@@ -3123,10 +3128,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   bool IsWindowsMSVC = RawTriple.isWindowsMSVCEnvironment();
   bool IsIAMCU = RawTriple.isOSIAMCU();
 
-  // Adjust IsWindowsXYZ for CUDA compilations.  Even when compiling in device
-  // mode (i.e., getToolchain().getTriple() is NVPTX, not Windows), we need to
-  // pass Windows-specific flags to cc1.
-  if (IsCuda) {
+  // Adjust IsWindowsXYZ for CUDA/HIP compilations.  Even when compiling in
+  // device mode (i.e., getToolchain().getTriple() is NVPTX/AMDGCN, not
+  // Windows), we need to pass Windows-specific flags to cc1.
+  if (IsCuda || IsHIP) {
     IsWindowsMSVC |= AuxTriple && AuxTriple->isWindowsMSVCEnvironment();
     IsWindowsGNU |= AuxTriple && AuxTriple->isWindowsGNUEnvironment();
     IsWindowsCygnus |= AuxTriple && AuxTriple->isWindowsCygwinEnvironment();
@@ -3150,18 +3155,21 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     Args.ClaimAllArgs(options::OPT_MJ);
   }
 
-  if (IsCuda) {
-    // We have to pass the triple of the host if compiling for a CUDA device and
-    // vice-versa.
+  if (IsCuda || IsHIP) {
+    // We have to pass the triple of the host if compiling for a CUDA/HIP device
+    // and vice-versa.
     std::string NormalizedTriple;
-    if (JA.isDeviceOffloading(Action::OFK_Cuda))
+    if (JA.isDeviceOffloading(Action::OFK_Cuda) ||
+        JA.isDeviceOffloading(Action::OFK_HIP))
       NormalizedTriple = C.getSingleOffloadToolChain<Action::OFK_Host>()
                              ->getTriple()
                              .normalize();
     else
-      NormalizedTriple = C.getSingleOffloadToolChain<Action::OFK_Cuda>()
-                             ->getTriple()
-                             .normalize();
+      NormalizedTriple =
+          (IsCuda ? C.getSingleOffloadToolChain<Action::OFK_Cuda>()
+                  : C.getSingleOffloadToolChain<Action::OFK_HIP>())
+              ->getTriple()
+              .normalize();
 
     CmdArgs.push_back("-aux-triple");
     CmdArgs.push_back(Args.MakeArgString(NormalizedTriple));
