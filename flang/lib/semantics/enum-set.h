@@ -20,7 +20,6 @@
 
 #include <bitset>
 #include <cstddef>
-#include <functional>
 
 namespace Fortran::semantics {
 

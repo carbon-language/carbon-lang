@@ -26,7 +26,7 @@
 #error this is a C++17 program
 #endif
 #if !defined(__clang__) && defined __GNUC__ && __GNUC__ < 7
-#error G++ >= 7.0 is required
+#error g++ >= 7.3 is required
 #endif
 
 #include <list>
@@ -35,14 +35,15 @@
 #include <type_traits>
 #include <variant>
 
-// Avoid a deduction bug in GNU 7.3.0 headers by forcing the answer.
-// TODO: better resolution
+#if __GNUC__ == 7
+// Avoid a deduction bug in GNU 7.x headers by forcing the answer.
 namespace std {
 template<typename A>
 struct is_trivially_copy_constructible<list<A>> : false_type {};
 template<typename A>
 struct is_trivially_copy_constructible<optional<list<A>>> : false_type {};
 }  // namespace std
+#endif
 
 // enable "this is a std::string"s with the 's' suffix
 using namespace std::literals::string_literals;

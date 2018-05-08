@@ -195,10 +195,11 @@ public:
   constexpr SequenceParser(const SequenceParser &) = default;
   constexpr SequenceParser(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState &state) const {
+    std::optional<resultType> result;
     if (pa_.Parse(state)) {
-      return pb_.Parse(state);
+      result = pb_.Parse(state);
     }
-    return {};
+    return result;
   }
 
 private:
@@ -218,12 +219,13 @@ public:
   constexpr InvertedSequenceParser(const PA &pa, const PB &pb)
     : pa_{pa}, pb_{pb} {}
   std::optional<resultType> Parse(ParseState &state) const {
+    std::optional<resultType> result;
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
       if (pb_.Parse(state)) {
-        return ax;
+        result = std::move(ax);
       }
     }
-    return {};
+    return result;
   }
 
 private:
@@ -292,7 +294,7 @@ template<typename... Ps> inline constexpr auto first(const Ps &... ps) {
 #if !__GNUC__ || __clang__
 // Implement operator|| with first(), unless compiling with g++,
 // which can segfault at compile time and needs to continue to use
-// the original implementation of operator|| as of gcc-7.3.0.
+// the original implementation of operator|| as of gcc-8.1.0.
 template<typename PA, typename PB>
 inline constexpr auto operator||(const PA &pa, const PB &pb) {
   return first(pa, pb);

@@ -47,7 +47,7 @@
 // Parse tree node class types do not have copy constructors or copy assignment
 // operators.  They are explicitly declared "= delete;" to make this clear,
 // although a C++ compiler wouldn't default them anyway due to the presence
-// of move constructors and move assignments.
+// of explicitly defaulted move constructors and move assignments.
 
 CLASS_TRAIT(EmptyTrait);
 CLASS_TRAIT(WrapperTrait);
@@ -710,7 +710,6 @@ struct SignedIntLiteralConstant {
 // R708 int-literal-constant -> digit-string [_ kind-param]
 struct IntLiteralConstant {
   TUPLE_CLASS_BOILERPLATE(IntLiteralConstant);
-  IntLiteralConstant(std::uint64_t n) : t{n, std::optional<KindParam>{}} {}
   std::tuple<std::uint64_t, std::optional<KindParam>> t;
 };
 
