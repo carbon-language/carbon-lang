@@ -109,4 +109,8 @@
 #include <pconfigintrin.h>
 #endif
 
+#if !defined(_MSC_VER) || __has_feature(modules) || defined(__SGX__)
+#include <sgxintrin.h>
+#endif
+
 #endif /* __X86INTRIN_H */

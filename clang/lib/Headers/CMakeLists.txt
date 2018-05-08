@@ -78,6 +78,7 @@ set(files
   prfchwintrin.h
   rdseedintrin.h
   rtmintrin.h
+  sgxintrin.h
   s390intrin.h
   shaintrin.h
   smmintrin.h
