@@ -102,11 +102,12 @@ bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
   *read_len = 0;
   // The files we usually open are not seekable, so try different buffer sizes.
   for (uptr size = kMinFileLen; size <= max_len; size *= 2) {
-    fd_t fd = OpenFile(file_name, RdOnly, errno_p);
-    if (fd == kInvalidFd) return false;
     UnmapOrDie(*buff, *buff_size);
     *buff = (char*)MmapOrDie(size, __func__);
     *buff_size = size;
+    fd_t fd = OpenFile(file_name, RdOnly, errno_p);
+    if (fd == kInvalidFd)
+      return false;
     *read_len = 0;
     // Read up to one page at a time.
     bool reached_eof = false;
@@ -114,6 +115,7 @@ bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
       uptr just_read;
       if (!ReadFromFile(fd, *buff + *read_len, PageSize, &just_read, errno_p)) {
         UnmapOrDie(*buff, *buff_size);
+        CloseFile(fd);
         return false;
       }
       if (just_read == 0) {
