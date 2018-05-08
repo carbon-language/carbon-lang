@@ -176,7 +176,7 @@ void BitcodeCompiler::add(BitcodeFile &F) {
   }
 
   unsigned SymNum = 0;
-  std::vector<Symbol *> Syms = F.getSymbols();
+  ArrayRef<Symbol *> Syms = F.getSymbols();
   std::vector<lto::SymbolResolution> Resols(Syms.size());
 
   bool IsExecutable = !Config->Shared && !Config->Relocatable;
