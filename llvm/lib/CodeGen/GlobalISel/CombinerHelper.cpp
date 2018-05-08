@@ -37,13 +37,13 @@ bool CombinerHelper::tryCombineCopy(MachineInstr &MI) {
 }
 
 bool CombinerHelper::tryCombineExtendingLoads(MachineInstr &MI) {
-  unsigned DstReg = MI.getOperand(0).getReg();
-  unsigned SrcReg = MI.getOperand(1).getReg();
-
   if (MI.getOpcode() != TargetOpcode::G_ANYEXT &&
       MI.getOpcode() != TargetOpcode::G_SEXT &&
       MI.getOpcode() != TargetOpcode::G_ZEXT)
     return false;
+
+  unsigned DstReg = MI.getOperand(0).getReg();
+  unsigned SrcReg = MI.getOperand(1).getReg();
 
   LLT DstTy = MRI.getType(DstReg);
   if (!DstTy.isScalar())
@@ -69,5 +69,5 @@ bool CombinerHelper::tryCombineExtendingLoads(MachineInstr &MI) {
 bool CombinerHelper::tryCombine(MachineInstr &MI) {
   if (tryCombineCopy(MI))
     return true;
-  return tryCombineExtendingLoads(MI);;
+  return tryCombineExtendingLoads(MI);
 }
