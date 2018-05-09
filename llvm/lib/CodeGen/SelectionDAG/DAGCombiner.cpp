@@ -13384,7 +13384,7 @@ bool DAGCombiner::checkMergeStoreCandidatesForDependencies(
 
   SmallPtrSet<const SDNode *, 16> Visited;
   SmallVector<const SDNode *, 8> Worklist;
-  unsigned int Max = 8192;
+  unsigned int Max = 1024;
   // Search Ops of store candidates.
   for (unsigned i = 0; i < NumStores; ++i) {
     SDNode *n = StoreNodes[i].MemNode;
