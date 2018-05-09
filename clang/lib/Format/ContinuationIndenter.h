@@ -200,16 +200,23 @@ private:
 };
 
 struct ParenState {
-  ParenState(unsigned Indent, unsigned LastSpace, bool AvoidBinPacking,
-             bool NoLineBreak)
-      : Indent(Indent), LastSpace(LastSpace), NestedBlockIndent(Indent),
-        BreakBeforeClosingBrace(false), AvoidBinPacking(AvoidBinPacking),
-        BreakBeforeParameter(false), NoLineBreak(NoLineBreak),
-        NoLineBreakInOperand(false), LastOperatorWrapped(true),
-        ContainsLineBreak(false), ContainsUnwrappedBuilder(false),
-        AlignColons(true), ObjCSelectorNameFound(false),
-        HasMultipleNestedBlocks(false), NestedBlockInlined(false),
-        IsInsideObjCArrayLiteral(false) {}
+  ParenState(const FormatToken *Tok, unsigned Indent, unsigned LastSpace,
+             bool AvoidBinPacking, bool NoLineBreak)
+      : Tok(Tok), Indent(Indent), LastSpace(LastSpace),
+        NestedBlockIndent(Indent), BreakBeforeClosingBrace(false),
+        AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
+        NoLineBreak(NoLineBreak), NoLineBreakInOperand(false),
+        LastOperatorWrapped(true), ContainsLineBreak(false),
+        ContainsUnwrappedBuilder(false), AlignColons(true),
+        ObjCSelectorNameFound(false), HasMultipleNestedBlocks(false),
+        NestedBlockInlined(false), IsInsideObjCArrayLiteral(false) {}
+
+  /// \brief The token opening this parenthesis level, or nullptr if this level
+  /// is opened by fake parenthesis.
+  ///
+  /// Not considered for memoization as it will always have the same value at
+  /// the same token.
+  const FormatToken *Tok;
 
   /// The position to which a specific parenthesis level needs to be
   /// indented.
