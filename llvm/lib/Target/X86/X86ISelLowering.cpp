@@ -31095,6 +31095,16 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
     return combinevXi1ConstantToInteger(N0, DAG);
   }
 
+  if (Subtarget.hasAVX512() && SrcVT.isScalarInteger() &&
+      VT.isVector() && VT.getVectorElementType() == MVT::i1 &&
+      isa<ConstantSDNode>(N0)) {
+    auto *C = cast<ConstantSDNode>(N0);
+    if (C->isAllOnesValue())
+      return DAG.getConstant(1, SDLoc(N0), VT);
+    if (C->isNullValue())
+      return DAG.getConstant(0, SDLoc(N0), VT);
+  }
+
   // Try to remove bitcasts from input and output of mask arithmetic to
   // remove GPR<->K-register crossings.
   if (SDValue V = combineCastedMaskArithmetic(N, DAG, DCI, Subtarget))
