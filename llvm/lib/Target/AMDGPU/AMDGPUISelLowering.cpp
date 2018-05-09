@@ -3144,6 +3144,36 @@ SDValue AMDGPUTargetLowering::performTruncateCombine(
     }
   }
 
+  // Partially shrink 64-bit shifts to 32-bit if reduced to 16-bit.
+  //
+  // i16 (trunc (srl i64:x, K)), K <= 16 ->
+  //     i16 (trunc (srl (i32 (trunc x), K)))
+  if (VT.getScalarSizeInBits() < 32) {
+    EVT SrcVT = Src.getValueType();
+    if (SrcVT.getScalarSizeInBits() > 32 &&
+        (Src.getOpcode() == ISD::SRL ||
+         Src.getOpcode() == ISD::SRA ||
+         Src.getOpcode() == ISD::SHL)) {
+      if (auto ShiftAmount = isConstOrConstSplat(Src.getOperand(1))) {
+        if (ShiftAmount->getZExtValue() <= VT.getScalarSizeInBits()) {
+          EVT MidVT = VT.isVector() ?
+            EVT::getVectorVT(*DAG.getContext(), MVT::i32,
+                             VT.getVectorNumElements()) : MVT::i32;
+
+          EVT ShiftTy = getShiftAmountTy(MidVT, DAG.getDataLayout());
+          SDValue NewShiftAmt = DAG.getConstant(ShiftAmount->getZExtValue(),
+                                                SL, ShiftTy);
+          SDValue Trunc = DAG.getNode(ISD::TRUNCATE, SL, MidVT,
+                                      Src.getOperand(0));
+          DCI.AddToWorklist(Trunc.getNode());
+          SDValue ShrunkShift = DAG.getNode(Src.getOpcode(), SL, MidVT,
+                                            Trunc, NewShiftAmt);
+          return DAG.getNode(ISD::TRUNCATE, SL, VT, ShrunkShift);
+        }
+      }
+    }
+  }
+
   return SDValue();
 }
 
