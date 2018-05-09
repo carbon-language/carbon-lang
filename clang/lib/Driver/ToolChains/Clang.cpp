@@ -616,7 +616,7 @@ static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
   }
 }
 
-/// \brief Vectorize at all optimization levels greater than 1 except for -Oz.
+/// Vectorize at all optimization levels greater than 1 except for -Oz.
 /// For -Oz the loop vectorizer is disable, while the slp vectorizer is enabled.
 static bool shouldEnableVectorizerAtOLevel(const ArgList &Args, bool isSlpVec) {
   if (Arg *A = Args.getLastArg(options::OPT_O_Group)) {
@@ -838,7 +838,7 @@ static void addPGOAndCoverageFlags(Compilation &C, const Driver &D,
   }
 }
 
-/// \brief Check whether the given input tree contains any compilation actions.
+/// Check whether the given input tree contains any compilation actions.
 static bool ContainsCompileAction(const Action *A) {
   if (isa<CompileJobAction>(A) || isa<BackendJobAction>(A))
     return true;
@@ -850,7 +850,7 @@ static bool ContainsCompileAction(const Action *A) {
   return false;
 }
 
-/// \brief Check if -relax-all should be passed to the internal assembler.
+/// Check if -relax-all should be passed to the internal assembler.
 /// This is done by default when compiling non-assembler source with -O0.
 static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
   bool RelaxDefault = true;

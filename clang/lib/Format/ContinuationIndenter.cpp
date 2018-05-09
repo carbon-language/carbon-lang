@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file implements the continuation indenter.
+/// This file implements the continuation indenter.
 ///
 //===----------------------------------------------------------------------===//
 
