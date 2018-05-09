@@ -735,9 +735,9 @@ const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
   if (p >= limit_) {
     return nullptr;
   }
+  for (; *p == ' ' || *p == '\t'; ++p) {
+  }
   if (directiveSentinel_ != nullptr) {
-    for (; *p == ' ' || *p == '\t'; ++p) {
-    }
     if (*p++ != '!') {
       return nullptr;
     }
@@ -749,22 +749,26 @@ const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
     for (; *p == ' ' || *p == '\t'; ++p) {
     }
     if (*p == '&') {
-      ++p;
-    } else if (!ampersand) {
+      return p + 1;
+    } else if (ampersand) {
+      return p;
+    } else {
       return nullptr;
     }
   } else {
     if (*p == '&') {
-      ++p;
+      return p + 1;
+    } else if (*p == '!' || *p == '\n') {
+      return nullptr;
     } else if (ampersand || delimiterNesting_ > 0) {
       if (p > lineStart_) {
         --p;
       }
+      return p;
     } else {
       return nullptr;
     }
   }
-  return p;
 }
 
 bool Prescanner::FixedFormContinuation() {
