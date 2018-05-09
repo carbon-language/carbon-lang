@@ -347,7 +347,15 @@ public:
   }
   void Unparse(const BOZLiteralConstant &x) {  // R764 - R767
     Put("Z'");
-    out_ << std::hex << x.v << std::dec << '\'';
+    bool any{false};
+    for (int j{60}; j >= 0; j -= 4) {
+      int d = (x.v >> j) & 0xf;
+      if (d != 0 || any || j == 0) {
+        Put(d > 9 ? 'a' + d - 10 : '0' + d);
+        any = true;
+      }
+    }
+    Put('\'');
   }
   void Unparse(const AcValue::Triplet &x) {  // R773
     Walk(std::get<0>(x.t)), Put(':'), Walk(std::get<1>(x.t));
