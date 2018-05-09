@@ -27766,7 +27766,7 @@ X86TargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
 
     MCSymbol *Sym = nullptr;
     for (const auto &MI : MBB) {
-      if (MI.isDebugValue())
+      if (MI.isDebugInstr())
         continue;
 
       assert(MI.isEHLabel() && "expected EH_LABEL");

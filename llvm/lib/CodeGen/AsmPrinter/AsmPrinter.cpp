@@ -1059,7 +1059,7 @@ void AsmPrinter::EmitFunctionBody() {
     for (auto &MI : MBB) {
       // Print the assembly for the instruction.
       if (!MI.isPosition() && !MI.isImplicitDef() && !MI.isKill() &&
-          !MI.isDebugValue()) {
+          !MI.isDebugInstr()) {
         HasAnyRealCode = true;
         ++NumInstsInFunction;
       }

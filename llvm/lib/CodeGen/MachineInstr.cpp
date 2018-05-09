@@ -467,8 +467,8 @@ bool MachineInstr::isIdenticalTo(const MachineInstr &Other,
         return false;
     }
   }
-  // If DebugLoc does not match then two dbg.values are not identical.
-  if (isDebugValue())
+  // If DebugLoc does not match then two debug instructions are not identical.
+  if (isDebugInstr())
     if (getDebugLoc() && Other.getDebugLoc() &&
         getDebugLoc() != Other.getDebugLoc())
       return false;
@@ -975,7 +975,7 @@ bool MachineInstr::isSafeToMove(AliasAnalysis *AA, bool &SawStore) const {
     return false;
   }
 
-  if (isPosition() || isDebugValue() || isTerminator() ||
+  if (isPosition() || isDebugInstr() || isTerminator() ||
       hasUnmodeledSideEffects())
     return false;
 
@@ -1534,6 +1534,7 @@ void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
     if (isIndirectDebugValue())
       OS << " indirect";
   }
+  // TODO: DBG_LABEL
 
   if (AddNewLine)
     OS << '\n';
