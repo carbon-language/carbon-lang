@@ -916,7 +916,7 @@ ThreadLister::ThreadLister(int pid) : pid_(pid), buffer_(4096) {
   }
 }
 
-bool ThreadLister::ListThreads(InternalMmapVector<int> *threads) {
+bool ThreadLister::ListThreads(InternalMmapVector<tid_t> *threads) {
   if (internal_iserror(descriptor_))
     return false;
   internal_lseek(descriptor_, 0, SEEK_SET);
