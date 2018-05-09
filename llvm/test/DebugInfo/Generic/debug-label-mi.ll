@@ -7,8 +7,8 @@
 ;
 ; RUN: llc -fast-isel=false %s -o - | FileCheck %s --check-prefix=CHECKASM
 ;
-; CHECKASM: #DEBUG_LABEL: foo:top 
-; CHECKASM: #DEBUG_LABEL: foo:done
+; CHECKASM: DEBUG_LABEL: foo:top
+; CHECKASM: DEBUG_LABEL: foo:done
 
 source_filename = "debug-label-mi.c"
 

@@ -3,15 +3,14 @@
 ; RUN: llc -fast-isel=false -debug-only=isel %s -o /dev/null 2> %t.debug
 ; RUN: cat %t.debug | FileCheck %s --check-prefix=CHECKMI
 ;
-; CHECKMI: DBG_LABEL "end_sum", debug-location !18
-; CHECKMI: DBG_LABEL "end", debug-location !20
+; CHECKMI: DBG_LABEL "end_sum", debug-location !17
+; CHECKMI: DBG_LABEL "end", debug-location !19
 source_filename = "debug-label-opt.c"
 
 define i32 @foo(i32* nocapture readonly %a, i32 %n) local_unnamed_addr !dbg !7 {
 entry:
   call void @llvm.dbg.value(metadata i32* %a, metadata !13, metadata !DIExpression()), !dbg !6
   call void @llvm.dbg.value(metadata i32 %n, metadata !14, metadata !DIExpression()), !dbg !6
-  call void @llvm.dbg.value(metadata i32 0, metadata !15, metadata !DIExpression()), !dbg !6
   switch i32 %n, label %end_sum [
     i32 2, label %end_sum.sink.split
     i32 3, label %if.then3
@@ -32,12 +31,10 @@ end_sum.sink.split:                               ; preds = %entry, %if.then3
 
 end_sum:                                          ; preds = %end_sum.sink.split, %entry
   %sum.0 = phi i32 [ 0, %entry ], [ %add, %end_sum.sink.split ]
-  call void @llvm.dbg.value(metadata i32 %sum.0, metadata !15, metadata !DIExpression()), !dbg !6
-  call void @llvm.dbg.label(metadata !16), !dbg !18
+  call void @llvm.dbg.label(metadata !15), !dbg !17
   %2 = load i32, i32* %a, align 4, !dbg !6
-  %mul = mul nsw i32 %2, %sum.0, !dbg !19
-  call void @llvm.dbg.value(metadata i32 %mul, metadata !15, metadata !DIExpression()), !dbg !6
-  call void @llvm.dbg.label(metadata !17), !dbg !20
+  %mul = mul nsw i32 %2, %sum.0, !dbg !18
+  call void @llvm.dbg.label(metadata !16), !dbg !19
   ret i32 %mul, !dbg !6
 }
 
@@ -62,12 +59,11 @@ declare void @llvm.dbg.value(metadata, metadata, metadata)
 !9 = !{!10, !11, !10}
 !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !10, size: 64)
-!12 = !{!13, !14, !15, !16, !17}
+!12 = !{!13, !14, !15, !16}
 !13 = !DILocalVariable(name: "a", arg: 1, scope: !7, file: !1, line: 1, type: !11)
 !14 = !DILocalVariable(name: "n", arg: 2, scope: !7, file: !1, line: 1, type: !10)
-!15 = !DILocalVariable(name: "sum", scope: !7, file: !1, line: 3, type: !10)
-!16 = !DILabel(scope: !7, name: "end_sum", file: !1, line: 10)
-!17 = !DILabel(scope: !7, name: "end", file: !1, line: 13)
-!18 = !DILocation(line: 10, column: 1, scope: !7)
-!19 = !DILocation(line: 11, column: 7, scope: !7)
-!20 = !DILocation(line: 13, column: 1, scope: !7)
+!15 = !DILabel(scope: !7, name: "end_sum", file: !1, line: 10)
+!16 = !DILabel(scope: !7, name: "end", file: !1, line: 13)
+!17 = !DILocation(line: 10, column: 1, scope: !7)
+!18 = !DILocation(line: 11, column: 7, scope: !7)
+!19 = !DILocation(line: 13, column: 1, scope: !7)
