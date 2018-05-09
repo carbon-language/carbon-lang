@@ -100,3 +100,39 @@ define amdgpu_kernel void @s_trunc_srl_i64_16_to_i16(i64 %x) {
   store i16 %add, i16 addrspace(1)* undef
   ret void
 }
+
+; GCN-LABEL: {{^}}trunc_srl_i64_var_mask15_to_i16:
+; GCN: s_waitcnt
+; GCN-NEXT: v_and_b32_e32 v1, 15, v2
+; GCN-NEXT: v_lshrrev_b32_e32 v0, v1, v0
+; GCN-NEXT: s_setpc_b64
+define i16 @trunc_srl_i64_var_mask15_to_i16(i64 %x, i64 %amt) {
+  %amt.masked = and i64 %amt, 15
+  %shift = lshr i64 %x, %amt.masked
+  %trunc = trunc i64 %shift to i16
+  ret i16 %trunc
+}
+
+; GCN-LABEL: {{^}}trunc_srl_i64_var_mask16_to_i16:
+; GCN: s_waitcnt
+; GCN-NEXT: v_and_b32_e32 v2, 16, v2
+; GCN-NEXT: v_lshrrev_b64 v[0:1], v2, v[0:1]
+; GCN-NEXT: s_setpc_b64
+define i16 @trunc_srl_i64_var_mask16_to_i16(i64 %x, i64 %amt) {
+  %amt.masked = and i64 %amt, 16
+  %shift = lshr i64 %x, %amt.masked
+  %trunc = trunc i64 %shift to i16
+  ret i16 %trunc
+}
+
+; GCN-LABEL: {{^}}trunc_srl_i64_var_mask31_to_i16:
+; GCN: s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; GCN-NEXT: v_and_b32_e32 v2, 31, v2
+; GCN-NEXT: v_lshrrev_b64 v[0:1], v2, v[0:1]
+; GCN-NEXT: s_setpc_b64 s[30:31]
+define i16 @trunc_srl_i64_var_mask31_to_i16(i64 %x, i64 %amt) {
+  %amt.masked = and i64 %amt, 31
+  %shift = lshr i64 %x, %amt.masked
+  %trunc = trunc i64 %shift to i16
+  ret i16 %trunc
+}

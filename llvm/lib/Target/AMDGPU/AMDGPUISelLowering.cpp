@@ -3154,22 +3154,29 @@ SDValue AMDGPUTargetLowering::performTruncateCombine(
         (Src.getOpcode() == ISD::SRL ||
          Src.getOpcode() == ISD::SRA ||
          Src.getOpcode() == ISD::SHL)) {
-      if (auto ShiftAmount = isConstOrConstSplat(Src.getOperand(1))) {
-        if (ShiftAmount->getZExtValue() <= VT.getScalarSizeInBits()) {
-          EVT MidVT = VT.isVector() ?
-            EVT::getVectorVT(*DAG.getContext(), MVT::i32,
-                             VT.getVectorNumElements()) : MVT::i32;
+      SDValue Amt = Src.getOperand(1);
+      KnownBits Known;
+      DAG.computeKnownBits(Amt, Known);
+      unsigned Size = VT.getScalarSizeInBits();
+      if ((Known.isConstant() && Known.getConstant().ule(Size)) ||
+          (Known.getBitWidth() - Known.countMinLeadingZeros() <= Log2_32(Size))) {
+        EVT MidVT = VT.isVector() ?
+          EVT::getVectorVT(*DAG.getContext(), MVT::i32,
+                           VT.getVectorNumElements()) : MVT::i32;
 
-          EVT ShiftTy = getShiftAmountTy(MidVT, DAG.getDataLayout());
-          SDValue NewShiftAmt = DAG.getConstant(ShiftAmount->getZExtValue(),
-                                                SL, ShiftTy);
-          SDValue Trunc = DAG.getNode(ISD::TRUNCATE, SL, MidVT,
-                                      Src.getOperand(0));
-          DCI.AddToWorklist(Trunc.getNode());
-          SDValue ShrunkShift = DAG.getNode(Src.getOpcode(), SL, MidVT,
-                                            Trunc, NewShiftAmt);
-          return DAG.getNode(ISD::TRUNCATE, SL, VT, ShrunkShift);
+        EVT NewShiftVT = getShiftAmountTy(MidVT, DAG.getDataLayout());
+        SDValue Trunc = DAG.getNode(ISD::TRUNCATE, SL, MidVT,
+                                    Src.getOperand(0));
+        DCI.AddToWorklist(Trunc.getNode());
+
+        if (Amt.getValueType() != NewShiftVT) {
+          Amt = DAG.getZExtOrTrunc(Amt, SL, NewShiftVT);
+          DCI.AddToWorklist(Amt.getNode());
         }
+
+        SDValue ShrunkShift = DAG.getNode(Src.getOpcode(), SL, MidVT,
+                                          Trunc, Amt);
+        return DAG.getNode(ISD::TRUNCATE, SL, VT, ShrunkShift);
       }
     }
   }
