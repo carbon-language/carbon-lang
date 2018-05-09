@@ -4224,9 +4224,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    IsWindowsMSVC))
     CmdArgs.push_back("-fms-extensions");
 
-  // -fno-use-line-directives is default, except for MSVC targets.
+  // -fno-use-line-directives is default.
   if (Args.hasFlag(options::OPT_fuse_line_directives,
-                   options::OPT_fno_use_line_directives, IsWindowsMSVC))
+                   options::OPT_fno_use_line_directives, false))
     CmdArgs.push_back("-fuse-line-directives");
 
   // -fms-compatibility=0 is default.
