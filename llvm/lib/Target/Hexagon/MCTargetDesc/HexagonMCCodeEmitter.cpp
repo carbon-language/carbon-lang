@@ -623,7 +623,7 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
     return 0;
   }
 
-  Hexagon::Fixups FixupKind = Hexagon::Fixups(fixup_Invalid);
+  unsigned FixupKind = fixup_Invalid;
   const MCSymbolRefExpr *MCSRE = static_cast<const MCSymbolRefExpr *>(ME);
   const MCInstrDesc &MCID = HexagonMCInstrInfo::getDesc(MCII, MI);
   unsigned FixupWidth = HexagonMCInstrInfo::getExtentBits(MCII, MI) -
@@ -696,15 +696,15 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
     }
   }
 
-  if (unsigned(FixupKind) == fixup_Invalid) {
+  if (FixupKind == fixup_Invalid) {
     const auto &FixupTable = State.Extended ? ExtFixups : StdFixups;
 
     auto FindVK = FixupTable.find(VarKind);
     if (FindVK != FixupTable.end())
-      FixupKind = Hexagon::Fixups(FindVK->second[FixupWidth]);
+      FixupKind = FindVK->second[FixupWidth];
   }
 
-  if (unsigned(FixupKind) == fixup_Invalid)
+  if (FixupKind == fixup_Invalid)
     raise_relocation_error(FixupWidth, VarKind);
 
   const MCExpr *FixupExpr = MO.getExpr();
