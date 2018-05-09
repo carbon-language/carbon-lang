@@ -2686,6 +2686,7 @@ bool CGOpenMPRuntime::emitDeclareTargetVarDefinition(const VarDecl *VD,
       CtorCGF.FinishFunction();
       Ctor = Fn;
       ID = llvm::ConstantExpr::getBitCast(Fn, CGM.Int8PtrTy);
+      CGM.addUsedGlobal(cast<llvm::GlobalValue>(Ctor));
     } else {
       Ctor = new llvm::GlobalVariable(
           CGM.getModule(), CGM.Int8Ty, /*isConstant=*/true,
@@ -2724,6 +2725,7 @@ bool CGOpenMPRuntime::emitDeclareTargetVarDefinition(const VarDecl *VD,
       DtorCGF.FinishFunction();
       Dtor = Fn;
       ID = llvm::ConstantExpr::getBitCast(Fn, CGM.Int8PtrTy);
+      CGM.addUsedGlobal(cast<llvm::GlobalValue>(Dtor));
     } else {
       Dtor = new llvm::GlobalVariable(
           CGM.getModule(), CGM.Int8Ty, /*isConstant=*/true,
