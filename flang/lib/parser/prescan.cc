@@ -704,28 +704,31 @@ const char *Prescanner::FixedFormContinuationLine() {
       return lineStart_ + 6;
     }
     return nullptr;
-  }
-  // Normal case: not in a compiler directive.
-  if (col1 == '&') {
-    // Extension: '&' as continuation marker
-    if (warnOnNonstandardUsage_) {
-      Say("nonstandard usage"_en_US, GetProvenance(lineStart_));
+  } else {
+    // Normal case: not in a compiler directive.
+    if (col1 == '&') {
+      // Extension: '&' as continuation marker
+      if (warnOnNonstandardUsage_) {
+        Say("nonstandard usage"_en_US, GetProvenance(lineStart_));
+      }
+      return lineStart_ + 1;
     }
-    return lineStart_ + 1;
-  }
-  if (col1 == '\t' && lineStart_[1] >= '1' && lineStart_[1] <= '9') {
-    tabInCurrentLine_ = true;
-    return lineStart_ + 2;  // VAX extension
-  }
-  if (col1 == ' ' && lineStart_[1] == ' ' && lineStart_[2] == ' ' &&
-      lineStart_[3] == ' ' && lineStart_[4] == ' ') {
-    char col6{lineStart_[5]};
-    if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
-      return lineStart_ + 6;
+    if (col1 == '\t' && lineStart_[1] >= '1' && lineStart_[1] <= '9') {
+      tabInCurrentLine_ = true;
+      return lineStart_ + 2;  // VAX extension
     }
-  }
-  if (delimiterNesting_ > 0) {
-    return lineStart_;
+    if (col1 == ' ' && lineStart_[1] == ' ' && lineStart_[2] == ' ' &&
+        lineStart_[3] == ' ' && lineStart_[4] == ' ') {
+      char col6{lineStart_[5]};
+      if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
+        return lineStart_ + 6;
+      }
+    }
+    if (delimiterNesting_ > 0) {
+      if (col1 != '!' && col1 != '*' && col1 != 'C' && col1 != 'c') {
+        return lineStart_;
+      }
+    }
   }
   return nullptr;  // not a continuation line
 }
