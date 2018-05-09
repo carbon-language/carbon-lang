@@ -110,7 +110,7 @@ void Prescanner::Statement() {
       CHECK(*at_ == '!' || *at_ == '*' || *at_ == 'c' || *at_ == 'C');
     } else {
       while (*at_ == ' ' || *at_ == '\t') {
-        ++at_;
+        ++at_, ++column_;
       }
       CHECK(*at_ == '!');
     }
@@ -119,6 +119,10 @@ void Prescanner::Statement() {
     for (const char *sp{directiveSentinel_}; *sp != '\0';
          ++sp, ++at_, ++column_) {
       tokens.PutNextTokenChar(*sp, GetCurrentProvenance());
+    }
+    if (*at_ == ' ') {
+      tokens.PutNextTokenChar(' ', GetCurrentProvenance());
+      ++at_, ++column_;
     }
     tokens.CloseToken();
     break;
@@ -649,20 +653,23 @@ bool Prescanner::IsNextLinePreprocessorDirective() const {
   return IsPreprocessorDirectiveLine(lineStart_) != nullptr;
 }
 
-void Prescanner::SkipCommentLines() {
-  while (lineStart_ < limit_) {
-    auto lineClass = ClassifyLine(lineStart_);
-    if (lineClass.kind == LineClassification::Kind::Comment) {
-      NextLine();
-    } else if (!inPreprocessorDirective_ &&
-        lineClass.kind ==
-            LineClassification::Kind::ConditionalCompilationDirective) {
-      // Allow conditional compilation directives (e.g., #ifdef) to affect
-      // continuation lines.
-      preprocessor_.Directive(TokenizePreprocessorDirective(), this);
-    } else {
-      break;
-    }
+bool Prescanner::SkipCommentLine() {
+  if (lineStart_ >= limit_) {
+    return false;
+  }
+  auto lineClass = ClassifyLine(lineStart_);
+  if (lineClass.kind == LineClassification::Kind::Comment) {
+    NextLine();
+    return true;
+  } else if (!inPreprocessorDirective_ &&
+      lineClass.kind ==
+          LineClassification::Kind::ConditionalCompilationDirective) {
+    // Allow conditional compilation directives (e.g., #ifdef) to affect
+    // continuation lines.
+    preprocessor_.Directive(TokenizePreprocessorDirective(), this);
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -723,20 +730,57 @@ const char *Prescanner::FixedFormContinuationLine() {
   return nullptr;  // not a continuation line
 }
 
+const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
+  const char *p{lineStart_};
+  if (p >= limit_) {
+    return nullptr;
+  }
+  if (directiveSentinel_ != nullptr) {
+    for (; *p == ' ' || *p == '\t'; ++p) {
+    }
+    if (*p++ != '!') {
+      return nullptr;
+    }
+    for (const char *s{directiveSentinel_}; *s != '\0'; ++p, ++s) {
+      if (*s != ToLowerCaseLetter(*p)) {
+        return nullptr;
+      }
+    }
+    for (; *p == ' ' || *p == '\t'; ++p) {
+    }
+    if (*p == '&') {
+      ++p;
+    } else if (!ampersand) {
+      return nullptr;
+    }
+  } else {
+    if (*p == '&') {
+      ++p;
+    } else if (ampersand || delimiterNesting_ > 0) {
+      if (p > lineStart_) {
+        --p;
+      }
+    } else {
+      return nullptr;
+    }
+  }
+  return p;
+}
+
 bool Prescanner::FixedFormContinuation() {
   // N.B. We accept '&' as a continuation indicator (even) in fixed form.
   if (*at_ == '&' && inCharLiteral_) {
     return false;
   }
-  SkipCommentLines();
-  const char *cont{FixedFormContinuationLine()};
-  if (cont == nullptr) {
-    return false;
-  }
-  BeginSourceLine(cont);
-  column_ = 7;
-  NextLine();
-  return true;
+  do {
+    if (const char *cont{FixedFormContinuationLine()}) {
+      BeginSourceLine(cont);
+      column_ = 7;
+      NextLine();
+      return true;
+    }
+  } while (SkipCommentLine());
+  return false;
 }
 
 bool Prescanner::FreeFormContinuation() {
@@ -749,58 +793,27 @@ bool Prescanner::FreeFormContinuation() {
   if (*p != '\n' && (inCharLiteral_ || *p != '!')) {
     return false;
   }
-  SkipCommentLines();
-  p = lineStart_;
-  if (p >= limit_) {
-    return false;
-  }
-  for (; *p == ' ' || *p == '\t'; ++p) {
-  }
-  if (directiveSentinel_ != nullptr) {
-    // Look for a continued compiler directive.
-    if (*p++ != '!') {
-      return false;
+  do {
+    if (const char *cont{FreeFormContinuationLine(ampersand)}) {
+      at_ = cont;
+      tabInCurrentLine_ = false;
+      NextLine();
+      return true;
     }
-    for (const char *s{directiveSentinel_}; *s != '\0'; ++p, ++s) {
-      if (*s != ToLowerCaseLetter(*p)) {
-        return false;
-      }
-    }
-    for (; *p == ' ' || *p == '\t'; ++p) {
-    }
-    if (*p == '&') {
-      ++p;
-    } else if (!ampersand) {
-      return false;
-    }
-  } else {
-    // Normal case (not a compiler directive)
-    if (*p == '&') {
-      ++p;
-    } else if (ampersand || delimiterNesting_ > 0) {
-      if (p > lineStart_) {
-        --p;
-      }
-    } else {
-      return false;  // not a continuation
-    }
-  }
-  at_ = p;
-  tabInCurrentLine_ = false;
-  NextLine();
-  return true;
+  } while (SkipCommentLine());
+  return false;
 }
 
 std::optional<Prescanner::LineClassification>
 Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
   const char *p{start};
-  char col1{*p};
+  char col1{*p++};
   if (col1 != '*' && col1 != 'C' && col1 != 'c' && col1 != '!') {
     return {};
   }
   char sentinel[5], *sp{sentinel};
   for (int col{2}; col < 6; ++col) {
-    char ch{*++p};
+    char ch{*p++};
     if (ch == '\n' || ch == '\t') {
       return {};
     }
@@ -866,17 +879,18 @@ Prescanner &Prescanner::AddCompilerDirectiveSentinel(const std::string &dir) {
   return *this;
 }
 
-const char *Prescanner::IsCompilerDirectiveSentinel(const char *s) const {
+const char *Prescanner::IsCompilerDirectiveSentinel(
+    const char *sentinel) const {
   std::uint64_t packed{0};
   std::size_t n{0};
-  for (; s[n] != '\0'; ++n) {
-    packed = (packed << 8) | (s[n] & 0xff);
+  for (; sentinel[n] != '\0'; ++n) {
+    packed = (packed << 8) | (sentinel[n] & 0xff);
   }
   if (n == 0 || !compilerDirectiveBloomFilter_.test(packed % prime1) ||
       !compilerDirectiveBloomFilter_.test(packed % prime2)) {
     return nullptr;
   }
-  const auto iter = compilerDirectiveSentinels_.find(std::string(s, n));
+  const auto iter = compilerDirectiveSentinels_.find(std::string(sentinel, n));
   return iter == compilerDirectiveSentinels_.end() ? nullptr : iter->data();
 }
 

@@ -150,13 +150,14 @@ private:
   void QuotedCharacterLiteral(TokenSequence *);
   void Hollerith(TokenSequence *, int);
   bool PadOutCharacterLiteral(TokenSequence *);
-  void SkipCommentLines();
+  bool SkipCommentLine();
   bool IsFixedFormCommentLine(const char *) const;
   bool IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
   void FortranInclude(const char *quote);
   const char *IsPreprocessorDirectiveLine(const char *) const;
   const char *FixedFormContinuationLine();
+  const char *FreeFormContinuationLine(bool ampersand);
   bool FixedFormContinuation();
   bool FreeFormContinuation();
   std::optional<LineClassification> IsFixedFormCompilerDirectiveLine(
