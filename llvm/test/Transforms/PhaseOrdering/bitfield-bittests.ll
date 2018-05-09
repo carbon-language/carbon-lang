@@ -72,8 +72,6 @@ define i32 @anyset(i32 %a) {
   ret i32 %conv
 }
 
-; FIXME: aggressive-instcombine does not match this yet.
-
 define i32 @allset(i32 %a) {
 ; CHECK-LABEL: @allset(
 ; CHECK-NEXT:    [[TMP1:%.*]] = and i32 [[A:%.*]], 15
@@ -101,8 +99,6 @@ define i32 @allset(i32 %a) {
   %conv = zext i1 %cmp to i32
   ret i32 %conv
 }
-
-; FIXME: aggressive-instcombine does not match this yet.
 
 define i32 @anyclear(i32 %a) {
 ; CHECK-LABEL: @anyclear(
