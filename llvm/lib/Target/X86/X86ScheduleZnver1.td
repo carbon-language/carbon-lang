@@ -632,7 +632,7 @@ def : InstRW<[ZnWriteALULat2], (instregex "BLS(I|MSK|R)(32|64)rr")>;
 def : InstRW<[ZnWriteALULat2Ld], (instregex "BLS(I|MSK|R)(32|64)rm")>;
 
 // CLD STD.
-def : InstRW<[WriteALU], (instregex "STD", "CLD")>;
+def : InstRW<[WriteALU], (instrs STD, CLD)>;
 
 // PDEP PEXT.
 // r,r,r.
@@ -670,9 +670,9 @@ def : InstRW<[ZnWriteCMPXCHG], (instregex "CMPXCHG(8|16|32|64)rm")>;
 def ZnWriteCMPXCHG8B : SchedWriteRes<[ZnAGU, ZnALU]> {
   let NumMicroOps = 18;
 }
-def : InstRW<[ZnWriteCMPXCHG8B], (instregex "CMPXCHG8B")>;
+def : InstRW<[ZnWriteCMPXCHG8B], (instrs CMPXCHG8B)>;
 
-def : InstRW<[WriteMicrocoded], (instregex "CMPXCHG16B")>;
+def : InstRW<[WriteMicrocoded], (instrs CMPXCHG16B)>;
 
 // LEAVE
 def ZnWriteLEAVE : SchedWriteRes<[ZnALU, ZnAGU]> {
@@ -688,7 +688,7 @@ def : InstRW<[WriteMicrocoded], (instrs PAUSE)>;
 def : InstRW<[WriteMicrocoded], (instregex "RDTSC")>;
 
 // RDPMC.
-def : InstRW<[WriteMicrocoded], (instregex "RDPMC")>;
+def : InstRW<[WriteMicrocoded], (instrs RDPMC)>;
 
 // RDRAND.
 def : InstRW<[WriteMicrocoded], (instregex "RDRAND(16|32|64)r")>;
@@ -794,16 +794,16 @@ def : InstRW<[WriteMicrocoded], (instregex "CMOV(B|BE|E|P|NB|NBE|NE|NP)_F")>;
 
 // FNSTSW.
 // AX.
-def : InstRW<[WriteMicrocoded], (instregex "FNSTSW16r")>;
+def : InstRW<[WriteMicrocoded], (instrs FNSTSW16r)>;
 
 // m16.
-def : InstRW<[WriteMicrocoded], (instregex "FNSTSWm")>;
+def : InstRW<[WriteMicrocoded], (instrs FNSTSWm)>;
 
 // FLDCW.
-def : InstRW<[WriteMicrocoded], (instregex "FLDCW16m")>;
+def : InstRW<[WriteMicrocoded], (instrs FLDCW16m)>;
 
 // FNSTCW.
-def : InstRW<[WriteMicrocoded], (instregex "FNSTCW16m")>;
+def : InstRW<[WriteMicrocoded], (instrs FNSTCW16m)>;
 
 // FINCSTP FDECSTP.
 def : InstRW<[ZnWriteFPU3], (instrs FINCSTP, FDECSTP)>;
@@ -832,14 +832,13 @@ def : InstRW<[ZnWriteFPU3Lat1], (instregex "CHS_F")>;
 
 // FCOM(P) FUCOM(P).
 // r.
-def : InstRW<[ZnWriteFPU0Lat1], (instregex "COM_FST0r", "COMP_FST0r", "UCOM_Fr",
-                         "UCOM_FPr")>;
+def : InstRW<[ZnWriteFPU0Lat1], (instregex "COM(P?)_FST0r", "UCOM_F(P?)r")>;
 // m.
-def : InstRW<[ZnWriteFPU0Lat1Ld], (instregex "FCOM(32|64)m", "FCOMP(32|64)m")>;
+def : InstRW<[ZnWriteFPU0Lat1Ld], (instregex "FCOM(P?)(32|64)m")>;
 
 // FCOMPP FUCOMPP.
 // r.
-def : InstRW<[ZnWriteFPU0Lat1], (instregex "FCOMPP", "UCOM_FPPr")>;
+def : InstRW<[ZnWriteFPU0Lat1], (instrs FCOMPP, UCOM_FPPr)>;
 
 def ZnWriteFPU02 : SchedWriteRes<[ZnAGU, ZnFPU02]>
 {
@@ -858,7 +857,7 @@ def ZnWriteFPU03 : SchedWriteRes<[ZnAGU, ZnFPU03]>
 }
 
 // FICOM(P).
-def : InstRW<[ZnWriteFPU03], (instregex "FICOM(16|32)m", "FICOMP(16|32)m")>;
+def : InstRW<[ZnWriteFPU03], (instregex "FICOM(P?)(16|32)m")>;
 
 // FTST.
 def : InstRW<[ZnWriteFPU0Lat1], (instregex "TST_F")>;
