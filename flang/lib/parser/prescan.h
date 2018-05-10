@@ -126,39 +126,44 @@ private:
     return {startProvenance_ + (first - start_), bytes};
   }
 
-  void EmitChar(TokenSequence *tokens, char ch) {
-    tokens->PutNextTokenChar(ch, GetCurrentProvenance());
+  void EmitChar(TokenSequence &tokens, char ch) {
+    tokens.PutNextTokenChar(ch, GetCurrentProvenance());
   }
 
-  void EmitInsertedChar(TokenSequence *tokens, char ch) {
+  void EmitInsertedChar(TokenSequence &tokens, char ch) {
     Provenance provenance{cooked_.allSources().CompilerInsertionProvenance(ch)};
-    tokens->PutNextTokenChar(ch, provenance);
+    tokens.PutNextTokenChar(ch, provenance);
   }
 
-  char EmitCharAndAdvance(TokenSequence *tokens, char ch) {
+  char EmitCharAndAdvance(TokenSequence &tokens, char ch) {
     EmitChar(tokens, ch);
     NextChar();
     return *at_;
   }
 
-  void LabelField(TokenSequence *);
+  bool InCompilerDirective() const { return directiveSentinel_ != nullptr; }
+  bool InFixedFormSource() const {
+    return inFixedForm_ && !inPreprocessorDirective_ && !InCompilerDirective();
+  }
+
+  void LabelField(TokenSequence &);
   void SkipToEndOfLine();
   void NextChar();
   void SkipSpaces();
-  bool NextToken(TokenSequence *);
-  bool ExponentAndKind(TokenSequence *);
-  void QuotedCharacterLiteral(TokenSequence *);
-  void Hollerith(TokenSequence *, int);
-  bool PadOutCharacterLiteral(TokenSequence *);
+  bool NextToken(TokenSequence &);
+  bool ExponentAndKind(TokenSequence &);
+  void QuotedCharacterLiteral(TokenSequence &);
+  void Hollerith(TokenSequence &, int);
+  bool PadOutCharacterLiteral(TokenSequence &);
   bool SkipCommentLine();
   bool IsFixedFormCommentLine(const char *) const;
   bool IsFreeFormComment(const char *) const;
   std::optional<std::size_t> IsIncludeLine(const char *) const;
   void FortranInclude(const char *quote);
   const char *IsPreprocessorDirectiveLine(const char *) const;
-  const char *FixedFormContinuationLine();
+  const char *FixedFormContinuationLine(bool mightNeedSpace);
   const char *FreeFormContinuationLine(bool ampersand);
-  bool FixedFormContinuation();
+  bool FixedFormContinuation(bool mightNeedSpace);
   bool FreeFormContinuation();
   std::optional<LineClassification> IsFixedFormCompilerDirectiveLine(
       const char *) const;
@@ -195,6 +200,11 @@ private:
   bool preventHollerith_{false};
   bool inCharLiteral_{false};
   bool inPreprocessorDirective_{false};
+
+  // In some edge cases of compiler directive continuation lines, it
+  // is necessary to treat the line break as a space character by
+  // setting this flag, which is cleared by EmitChar().
+  bool insertASpace_{false};
 
   const Provenance spaceProvenance_{
       cooked_.allSources().CompilerInsertionProvenance(' ')};
