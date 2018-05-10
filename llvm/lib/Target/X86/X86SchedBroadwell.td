@@ -265,8 +265,10 @@ defm : X86WriteRes<WriteVecMove,         [BWPort015], 1, [1], 1>;
 defm : X86WriteRes<WriteEMMS,            [BWPort01,BWPort15,BWPort015,BWPort0156], 31, [8,1,21,1], 31>;
 
 defm : BWWriteResPair<WriteVecALU,   [BWPort15], 1, [1], 1, 5>; // Vector integer ALU op, no logicals.
+defm : BWWriteResPair<WriteVecALUX,  [BWPort15], 1, [1], 1, 5>; // Vector integer ALU op, no logicals.
 defm : BWWriteResPair<WriteVecALUY,  [BWPort15], 1, [1], 1, 6>; // Vector integer ALU op, no logicals (YMM/ZMM).
 defm : BWWriteResPair<WriteVecLogic, [BWPort015], 1, [1], 1, 5>; // Vector integer and/or/xor.
+defm : BWWriteResPair<WriteVecLogicX,[BWPort015], 1, [1], 1, 5>; // Vector integer and/or/xor.
 defm : BWWriteResPair<WriteVecLogicY,[BWPort015], 1, [1], 1, 6>; // Vector integer and/or/xor (YMM/ZMM).
 defm : BWWriteResPair<WriteVecTest,  [BWPort0,BWPort5], 2, [1,1], 2, 5>; // Vector integer TEST instructions.
 defm : BWWriteResPair<WriteVecTestY, [BWPort0,BWPort5], 4, [1,1], 2, 6>; // Vector integer TEST instructions (YMM/ZMM).
@@ -276,8 +278,10 @@ defm : BWWriteResPair<WriteVecIMulY, [BWPort0],  5, [1], 1, 6>; // Vector intege
 defm : BWWriteResPair<WritePMULLD,   [BWPort0], 10, [2], 2, 5>; // Vector PMULLD.
 defm : BWWriteResPair<WritePMULLDY,  [BWPort0], 10, [2], 2, 6>; // Vector PMULLD (YMM/ZMM).
 defm : BWWriteResPair<WriteShuffle,  [BWPort5], 1, [1], 1, 5>; // Vector shuffles.
+defm : BWWriteResPair<WriteShuffleX, [BWPort5], 1, [1], 1, 5>; // Vector shuffles.
 defm : BWWriteResPair<WriteShuffleY, [BWPort5], 1, [1], 1, 6>; // Vector shuffles (YMM/ZMM).
 defm : BWWriteResPair<WriteVarShuffle, [BWPort5], 1, [1], 1, 5>; // Vector variable shuffles.
+defm : BWWriteResPair<WriteVarShuffleX,[BWPort5], 1, [1], 1, 5>; // Vector variable shuffles.
 defm : BWWriteResPair<WriteVarShuffleY,[BWPort5], 1, [1], 1, 6>; // Vector variable shuffles (YMM/ZMM).
 defm : BWWriteResPair<WriteBlend,  [BWPort5], 1, [1], 1, 5>; // Vector blends.
 defm : BWWriteResPair<WriteBlendY, [BWPort5], 1, [1], 1, 6>; // Vector blends (YMM/ZMM).
@@ -286,6 +290,7 @@ defm : BWWriteResPair<WriteVarBlendY, [BWPort5], 2, [2], 2, 6>; // Vector variab
 defm : BWWriteResPair<WriteMPSAD,  [BWPort0, BWPort5], 7, [1, 2], 3, 5>; // Vector MPSAD.
 defm : BWWriteResPair<WriteMPSADY, [BWPort0, BWPort5], 7, [1, 2], 3, 6>; // Vector MPSAD.
 defm : BWWriteResPair<WritePSADBW,   [BWPort0], 5, [1], 1, 5>; // Vector PSADBW.
+defm : BWWriteResPair<WritePSADBWX,  [BWPort0], 5, [1], 1, 5>; // Vector PSADBW.
 defm : BWWriteResPair<WritePSADBWY,  [BWPort0], 5, [1], 1, 6>; // Vector PSADBW (YMM/ZMM).
 defm : BWWriteResPair<WritePHMINPOS, [BWPort0], 5>; // Vector PHMINPOS.
 
@@ -448,6 +453,7 @@ def : WriteRes<WriteNop, []>;
 defm : BWWriteResPair<WriteFHAdd,   [BWPort1,BWPort5], 5, [1,2], 3, 5>;
 defm : BWWriteResPair<WriteFHAddY,  [BWPort1,BWPort5], 5, [1,2], 3, 6>;
 defm : BWWriteResPair<WritePHAdd,  [BWPort5,BWPort15], 3, [2,1], 3, 5>;
+defm : BWWriteResPair<WritePHAddX, [BWPort5,BWPort15], 3, [2,1], 3, 5>;
 defm : BWWriteResPair<WritePHAddY, [BWPort5,BWPort15], 3, [2,1], 3, 6>;
 
 // Remaining instrs.

@@ -281,10 +281,12 @@ defm : ZnWriteResFpuPair<WriteVecShiftImm,  [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecShiftImmX, [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecShiftImmY, [ZnFPU], 1>;
 defm : ZnWriteResFpuPair<WriteVecLogic,   [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteVecLogicX,  [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecLogicY,  [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecTest,    [ZnFPU12], 1, [2], 1, 7, 1>;
 defm : ZnWriteResFpuPair<WriteVecTestY,   [ZnFPU12], 1, [2], 1, 7, 1>;
 defm : ZnWriteResFpuPair<WriteVecALU,     [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteVecALUX,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecALUY,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecIMul,    [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WriteVecIMulX,   [ZnFPU0],  4>;
@@ -292,14 +294,17 @@ defm : ZnWriteResFpuPair<WriteVecIMulY,   [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WritePMULLD,     [ZnFPU0],  4>; // FIXME
 defm : ZnWriteResFpuPair<WritePMULLDY,    [ZnFPU0],  5, [2]>; // FIXME
 defm : ZnWriteResFpuPair<WriteShuffle,    [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteShuffleX,   [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteShuffleY,   [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVarShuffle, [ZnFPU],   1>;
+defm : ZnWriteResFpuPair<WriteVarShuffleX,[ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVarShuffleY,[ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteBlend,      [ZnFPU01], 1>;
 defm : ZnWriteResFpuPair<WriteBlendY,     [ZnFPU01], 1>;
 defm : ZnWriteResFpuPair<WriteShuffle256, [ZnFPU],   2>;
 defm : ZnWriteResFpuPair<WriteVarShuffle256, [ZnFPU],   2>;
 defm : ZnWriteResFpuPair<WritePSADBW,     [ZnFPU0],  3>;
+defm : ZnWriteResFpuPair<WritePSADBWX,    [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WritePSADBWY,    [ZnFPU0],  3>;
 defm : ZnWriteResFpuPair<WritePHMINPOS,   [ZnFPU0],  4>;
 
@@ -1046,6 +1051,8 @@ def : InstRW<[WriteMicrocoded], (instregex "VPGATHER(Q|D)(Q|D)(Y?)rm")>;
 // PHADD|PHSUB (S) W/D.
 def : SchedAlias<WritePHAdd,    ZnWriteMicrocoded>;
 def : SchedAlias<WritePHAddLd,  ZnWriteMicrocoded>;
+def : SchedAlias<WritePHAddX,   ZnWriteMicrocoded>;
+def : SchedAlias<WritePHAddXLd, ZnWriteMicrocoded>;
 def : SchedAlias<WritePHAddY,   ZnWriteMicrocoded>;
 def : SchedAlias<WritePHAddYLd, ZnWriteMicrocoded>;
 
