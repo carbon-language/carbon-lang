@@ -914,7 +914,7 @@ void Writer::assignIndexes() {
 }
 
 static StringRef getOutputDataSegmentName(StringRef Name) {
-  if (Config->Relocatable)
+  if (!Config->MergeDataSegments)
     return Name;
   if (Name.startswith(".text."))
     return ".text";

@@ -292,6 +292,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->GcSections =
       Args.hasFlag(OPT_gc_sections, OPT_no_gc_sections, !Config->Relocatable);
+  Config->MergeDataSegments =
+      Args.hasFlag(OPT_merge_data_segments, OPT_no_merge_data_segments,
+                   !Config->Relocatable);
   Config->PrintGcSections =
       Args.hasFlag(OPT_print_gc_sections, OPT_no_print_gc_sections, false);
   Config->SearchPaths = args::getStrings(Args, OPT_L);

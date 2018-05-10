@@ -40,6 +40,10 @@ defm gc_sections: B<"gc-sections",
     "Enable garbage collection of unused sections",
     "Disable garbage collection of unused sections">;
 
+defm merge_data_segments: B<"merge-data-segments",
+    "Enable merging data segments",
+    "Disable merging data segments">;
+
 def help: F<"help">, HelpText<"Print option help">;
 
 def l: JoinedOrSeparate<["-"], "l">, MetaVarName<"<libName>">,
