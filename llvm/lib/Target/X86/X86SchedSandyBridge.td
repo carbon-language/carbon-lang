@@ -800,10 +800,8 @@ def SBWriteResGroup45 : SchedWriteRes<[SBPort0,SBPort4,SBPort23,SBPort15]> {
   let NumMicroOps = 4;
   let ResourceCycles = [1,1,1,1];
 }
-def: InstRW<[SBWriteResGroup45], (instregex "PEXTRDmr",
-                                            "(V?)PEXTRQmr",
-                                            "PUSHF16",
-                                            "PUSHF64")>;
+def: InstRW<[SBWriteResGroup45], (instregex "(V?)PEXTR(D|Q)mr",
+                                            "PUSHF(16|64)")>;
 
 def SBWriteResGroup46 : SchedWriteRes<[SBPort4,SBPort5,SBPort01,SBPort23]> {
   let Latency = 5;
