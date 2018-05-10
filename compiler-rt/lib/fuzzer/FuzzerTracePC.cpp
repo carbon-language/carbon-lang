@@ -132,9 +132,6 @@ void TracePC::PrintModuleInfo() {
       _Exit(1);
     }
   }
-  if (size_t NumClangCounters = ClangCountersEnd() - ClangCountersBegin())
-    Printf("INFO: %zd Clang Coverage Counters\n", NumClangCounters);
-
   if (size_t NumExtraCounters = ExtraCountersEnd() - ExtraCountersBegin())
     Printf("INFO: %zd Extra Counters\n", NumExtraCounters);
 }
@@ -184,13 +181,6 @@ void TracePC::UpdateObservedPCs() {
             Observe(ModulePCTable[i].Start[j]);
       }
     }
-  }
-  if (size_t NumClangCounters =
-      ClangCountersEnd() - ClangCountersBegin()) {
-    auto P = ClangCountersBegin();
-    for (size_t Idx = 0; Idx < NumClangCounters; Idx++)
-      if (P[Idx])
-        ObservePC((uintptr_t)Idx);
   }
 
   for (size_t i = 0, N = Min(CoveredFuncs.size(), NumPrintNewFuncs); i < N; i++) {
