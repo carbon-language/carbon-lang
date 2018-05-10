@@ -205,7 +205,7 @@ private:
   void writeProloguePayload(const DWARFDebugLine::Prologue &Prologue,
                             AsmPrinter &Asm) const;
 
-  Generator &DG;
+  LLVM_ATTRIBUTE_UNUSED Generator &DG;
   llvm::Optional<DWARFDebugLine::Prologue> Prologue;
   std::vector<ValueAndLength> CustomPrologue;
   std::vector<ValueAndLength> Contents;
