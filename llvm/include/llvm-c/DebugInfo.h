@@ -830,6 +830,33 @@ LLVMDIBuilderCreateGlobalVariableExpression(LLVMDIBuilderRef Builder,
                                             LLVMMetadataRef Expr,
                                             LLVMMetadataRef Decl,
                                             uint32_t AlignInBits);
+/**
+ * Create a new temporary \c MDNode.  Suitable for use in constructing cyclic
+ * \c MDNode structures. A temporary \c MDNode is not uniqued, may be RAUW'd,
+ * and must be manually deleted with \c LLVMDisposeTemporaryMDNode.
+ * \param Ctx            The context in which to construct the temporary node.
+ * \param Data           The metadata elements.
+ * \param NumElements    Number of metadata elements.
+ */
+LLVMMetadataRef LLVMTemporaryMDNode(LLVMContextRef Ctx, LLVMMetadataRef *Data,
+                                    size_t NumElements);
+
+/**
+ * Deallocate a temporary node.
+ *
+ * Calls \c replaceAllUsesWith(nullptr) before deleting, so any remaining
+ * references will be reset.
+ * \param TempNode    The temporary metadata node.
+ */
+void LLVMDisposeTemporaryMDNode(LLVMMetadataRef TempNode);
+
+/**
+ * Replace all uses of temporary metadata.
+ * \param TempTargetMetadata    The temporary metadata node.
+ * \param Replacement           The replacement metadata node.
+ */
+void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef TempTargetMetadata,
+                                    LLVMMetadataRef Replacement);
 
 /**
  * Create a new descriptor for the specified global variable that is temporary
