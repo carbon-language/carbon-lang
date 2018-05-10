@@ -1885,6 +1885,9 @@ TARGET_BUILTIN(__builtin_ia32_cldemote, "vvC*", "n", "cldemote")
 TARGET_BUILTIN(__builtin_ia32_directstore_u32, "vUi*Ui", "n", "movdiri")
 TARGET_BUILTIN(__builtin_ia32_movdir64b, "vv*vC*", "n", "movdir64b")
 
+// PTWRITE
+TARGET_BUILTIN(__builtin_ia32_ptwrite32, "vUi", "n", "ptwrite")
+
 // MSVC
 TARGET_HEADER_BUILTIN(_BitScanForward, "UcUNi*UNi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
 TARGET_HEADER_BUILTIN(_BitScanReverse, "UcUNi*UNi", "nh", "intrin.h", ALL_MS_LANGUAGES, "")
