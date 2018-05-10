@@ -113,7 +113,7 @@ R_X86_64_64:
  .quad R_X86_64_64
 
 // CHECK:      Contents of section .R_X86_64_64:
-// CHECK-NEXT:   200287 87022000 00000000
+// CHECK-NEXT:   200298 98022000 00000000
 
 .section .R_X86_64_GOTPCREL,"a",@progbits
 .global R_X86_64_GOTPCREL
