@@ -228,7 +228,7 @@ bool ThreadSuspender::SuspendAllThreads() {
       if (SuspendThread(tid))
         retry = true;
   } while (retry);
-  return true;
+  return suspended_threads_list_.ThreadCount();
 }
 
 // Pointer to the ThreadSuspender instance for use in signal handler.
