@@ -111,19 +111,18 @@ static void handleColorDiagnostics(opt::InputArgList &Args) {
                               OPT_no_color_diagnostics);
   if (!Arg)
     return;
-
-  if (Arg->getOption().getID() == OPT_color_diagnostics)
+  if (Arg->getOption().getID() == OPT_color_diagnostics) {
     errorHandler().ColorDiagnostics = true;
-  else if (Arg->getOption().getID() == OPT_no_color_diagnostics)
+  } else if (Arg->getOption().getID() == OPT_no_color_diagnostics) {
     errorHandler().ColorDiagnostics = false;
-  else {
+  } else {
     StringRef S = Arg->getValue();
     if (S == "always")
       errorHandler().ColorDiagnostics = true;
-    if (S == "never")
+    else if (S == "never")
       errorHandler().ColorDiagnostics = false;
-    if (S != "auto")
-      error("unknown option: -color-diagnostics=" + S);
+    else if (S != "auto")
+      error("unknown option: --color-diagnostics=" + S);
   }
 }
 
