@@ -497,6 +497,6 @@ dwarfgen::CompileUnit &dwarfgen::Generator::addCompileUnit() {
 
 dwarfgen::LineTable &dwarfgen::Generator::addLineTable(DwarfFormat Format) {
   LineTables.push_back(
-      make_unique<LineTable>(*this, Version, Format, Asm->getPointerSize()));
+      make_unique<LineTable>(Version, Format, Asm->getPointerSize()));
   return *LineTables.back();
 }

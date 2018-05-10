@@ -48,7 +48,8 @@ struct CommonFixture {
     Context = createContext();
     assert(Context != nullptr && "test state is not valid");
     const DWARFObject &Obj = Context->getDWARFObj();
-    LineData = DWARFDataExtractor(Obj, Obj.getLineSection(), true, 8);
+    LineData = DWARFDataExtractor(Obj, Obj.getLineSection(),
+                                  sys::IsLittleEndianHost, 8);
   }
 
   std::unique_ptr<DWARFContext> createContext() {
