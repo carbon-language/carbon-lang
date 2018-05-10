@@ -721,6 +721,10 @@ static DINode::DIFlags map_from_llvmDIFlags(LLVMDIFlags Flags) {
   return static_cast<DINode::DIFlags>(Flags);
 }
 
+static LLVMDIFlags map_to_llvmDIFlags(DINode::DIFlags Flags) {
+  return static_cast<LLVMDIFlags>(Flags);
+}
+
 unsigned LLVMDebugMetadataVersion() {
   return DEBUG_METADATA_VERSION;
 }
@@ -883,6 +887,18 @@ LLVMDIBuilderCreateDebugLocation(LLVMContextRef Ctx, unsigned Line,
                                  LLVMMetadataRef InlinedAt) {
   return wrap(DILocation::get(*unwrap(Ctx), Line, Column, unwrap(Scope),
                               unwrap(InlinedAt)));
+}
+
+unsigned LLVMDILocationGetLine(LLVMMetadataRef Location) {
+  return unwrapDI<DILocation>(Location)->getLine();
+}
+
+unsigned LLVMDILocationGetColumn(LLVMMetadataRef Location) {
+  return unwrapDI<DILocation>(Location)->getColumn();
+}
+
+LLVMMetadataRef LLVMDILocationGetScope(LLVMMetadataRef Location) {
+  return wrap(unwrapDI<DILocation>(Location)->getScope());
 }
 
 LLVMMetadataRef LLVMDIBuilderCreateEnumerationType(
@@ -1100,6 +1116,32 @@ LLVMMetadataRef
 LLVMDIBuilderCreateArtificialType(LLVMDIBuilderRef Builder,
                                   LLVMMetadataRef Type) {
   return wrap(unwrap(Builder)->createArtificialType(unwrapDI<DIType>(Type)));
+}
+
+const char *LLVMDITypeGetName(LLVMMetadataRef DType, size_t *Length) {
+  StringRef Str = unwrap<DIType>(DType)->getName();
+  *Length = Str.size();
+  return Str.data();
+}
+
+uint64_t LLVMDITypeGetSizeInBits(LLVMMetadataRef DType) {
+  return unwrapDI<DIType>(DType)->getSizeInBits();
+}
+
+uint64_t LLVMDITypeGetOffsetInBits(LLVMMetadataRef DType) {
+  return unwrapDI<DIType>(DType)->getOffsetInBits();
+}
+
+uint32_t LLVMDITypeGetAlignInBits(LLVMMetadataRef DType) {
+  return unwrapDI<DIType>(DType)->getAlignInBits();
+}
+
+unsigned LLVMDITypeGetLine(LLVMMetadataRef DType) {
+  return unwrapDI<DIType>(DType)->getLine();
+}
+
+LLVMDIFlags LLVMDITypeGetFlags(LLVMMetadataRef DType) {
+  return map_to_llvmDIFlags(unwrapDI<DIType>(DType)->getFlags());
 }
 
 LLVMMetadataRef LLVMDIBuilderGetOrCreateTypeArray(LLVMDIBuilderRef Builder,

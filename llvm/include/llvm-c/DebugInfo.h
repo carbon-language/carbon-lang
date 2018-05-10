@@ -385,6 +385,30 @@ LLVMDIBuilderCreateDebugLocation(LLVMContextRef Ctx, unsigned Line,
                                  LLVMMetadataRef InlinedAt);
 
 /**
+ * Get the line number of this debug location.
+ * \param Location     The debug location.
+ *
+ * @see DILocation::getLine()
+ */
+unsigned LLVMDILocationGetLine(LLVMMetadataRef Location);
+
+/**
+ * Get the column number of this debug location.
+ * \param Location     The debug location.
+ *
+ * @see DILocation::getColumn()
+ */
+unsigned LLVMDILocationGetColumn(LLVMMetadataRef Location);
+
+/**
+ * Get the local scope associated with this debug location.
+ * \param Location     The debug location.
+ *
+ * @see DILocation::getScope()
+ */
+LLVMMetadataRef LLVMDILocationGetScope(LLVMMetadataRef Location);
+
+/**
  * Create a type array.
  * \param Builder        The DIBuilder.
  * \param Data           The type elements.
@@ -759,6 +783,55 @@ LLVMMetadataRef LLVMDIBuilderCreateClassType(LLVMDIBuilderRef Builder,
 LLVMMetadataRef
 LLVMDIBuilderCreateArtificialType(LLVMDIBuilderRef Builder,
                                   LLVMMetadataRef Type);
+
+/**
+ * Get the name of this DIType.
+ * \param DType     The DIType.
+ * \param Length    The length of the returned string.
+ *
+ * @see DIType::getName()
+ */
+const char *LLVMDITypeGetName(LLVMMetadataRef DType, size_t *Length);
+
+/**
+ * Get the size of this DIType in bits.
+ * \param DType     The DIType.
+ *
+ * @see DIType::getSizeInBits()
+ */
+uint64_t LLVMDITypeGetSizeInBits(LLVMMetadataRef DType);
+
+/**
+ * Get the offset of this DIType in bits.
+ * \param DType     The DIType.
+ *
+ * @see DIType::getOffsetInBits()
+ */
+uint64_t LLVMDITypeGetOffsetInBits(LLVMMetadataRef DType);
+
+/**
+ * Get the alignment of this DIType in bits.
+ * \param DType     The DIType.
+ *
+ * @see DIType::getAlignInBits()
+ */
+uint32_t LLVMDITypeGetAlignInBits(LLVMMetadataRef DType);
+
+/**
+ * Get the source line where this DIType is declared.
+ * \param DType     The DIType.
+ *
+ * @see DIType::getLine()
+ */
+unsigned LLVMDITypeGetLine(LLVMMetadataRef DType);
+
+/**
+ * Get the flags associated with this DIType.
+ * \param DType     The DIType.
+ *
+ * @see DIType::getFlags()
+ */
+LLVMDIFlags LLVMDITypeGetFlags(LLVMMetadataRef DType);
 
 /**
  * Create a descriptor for a value range.
