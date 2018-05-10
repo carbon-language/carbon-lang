@@ -951,7 +951,7 @@ ThreadLister::Result ThreadLister::ListThreads(
 
     // Now we are going to detect short-read or early EOF. In such cases Linux
     // can return inconsistent list with missing alive threads.
-    // Code will just remember that the list is possible incomplete but it will
+    // Code will just remember that the list can be incomplete but it will
     // continue reads to return as much as possible.
     if (!first_read) {
       // The first one was a short-read by definition.
