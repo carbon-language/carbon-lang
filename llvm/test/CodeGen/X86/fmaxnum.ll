@@ -335,8 +335,8 @@ define <4 x float> @maxnum_intrinsic_nnan_fmf_f432(<4 x float> %a, <4 x float> %
 
 ; FIXME: Current (but legacy someday): a function-level attribute should also enable the fold.
 
-define float @maxnum_intrinsic_nnan_fmf_f32(float %a, float %b) #0 {
-; SSE-LABEL: maxnum_intrinsic_nnan_fmf_f32:
+define float @maxnum_intrinsic_nnan_attr_f32(float %a, float %b) #0 {
+; SSE-LABEL: maxnum_intrinsic_nnan_attr_f32:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    movaps %xmm0, %xmm2
 ; SSE-NEXT:    cmpunordss %xmm0, %xmm2
@@ -348,7 +348,7 @@ define float @maxnum_intrinsic_nnan_fmf_f32(float %a, float %b) #0 {
 ; SSE-NEXT:    movaps %xmm2, %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: maxnum_intrinsic_nnan_fmf_f32:
+; AVX-LABEL: maxnum_intrinsic_nnan_attr_f32:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vmaxss %xmm0, %xmm1, %xmm2
 ; AVX-NEXT:    vcmpunordss %xmm0, %xmm0, %xmm0

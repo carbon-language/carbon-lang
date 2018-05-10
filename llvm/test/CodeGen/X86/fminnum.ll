@@ -327,8 +327,8 @@ define <2 x double> @minnum_intrinsic_nnan_fmf_v2f64(<2 x double> %a, <2 x doubl
 
 ; FIXME: Current (but legacy someday): a function-level attribute should also enable the fold.
 
-define double @minnum_intrinsic_nnan_fmf_f64(double %a, double %b) #0 {
-; SSE-LABEL: minnum_intrinsic_nnan_fmf_f64:
+define double @minnum_intrinsic_nnan_attr_f64(double %a, double %b) #0 {
+; SSE-LABEL: minnum_intrinsic_nnan_attr_f64:
 ; SSE:       # %bb.0:
 ; SSE-NEXT:    movapd %xmm0, %xmm2
 ; SSE-NEXT:    cmpunordsd %xmm0, %xmm2
@@ -340,13 +340,13 @@ define double @minnum_intrinsic_nnan_fmf_f64(double %a, double %b) #0 {
 ; SSE-NEXT:    movapd %xmm2, %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX-LABEL: minnum_intrinsic_nnan_fmf_f64:
+; AVX-LABEL: minnum_intrinsic_nnan_attr_f64:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vminsd %xmm0, %xmm1, %xmm2
 ; AVX-NEXT:    vcmpunordsd %xmm0, %xmm0, %xmm0
 ; AVX-NEXT:    vblendvpd %xmm0, %xmm1, %xmm2, %xmm0
 ; AVX-NEXT:    retq
-  %r = tail call nnan double @llvm.minnum.f64(double %a, double %b)
+  %r = tail call double @llvm.minnum.f64(double %a, double %b)
   ret double %r
 }
 
