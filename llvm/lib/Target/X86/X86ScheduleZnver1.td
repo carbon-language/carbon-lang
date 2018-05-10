@@ -291,8 +291,8 @@ defm : ZnWriteResFpuPair<WriteVecALUY,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteVecIMul,    [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WriteVecIMulX,   [ZnFPU0],  4>;
 defm : ZnWriteResFpuPair<WriteVecIMulY,   [ZnFPU0],  4>;
-defm : ZnWriteResFpuPair<WritePMULLD,     [ZnFPU0],  4>; // FIXME
-defm : ZnWriteResFpuPair<WritePMULLDY,    [ZnFPU0],  5, [2]>; // FIXME
+defm : ZnWriteResFpuPair<WritePMULLD,     [ZnFPU0],  4, [1], 1, 7, 1>; // FIXME
+defm : ZnWriteResFpuPair<WritePMULLDY,    [ZnFPU0],  5, [2], 1, 7, 1>; // FIXME
 defm : ZnWriteResFpuPair<WriteShuffle,    [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteShuffleX,   [ZnFPU],   1>;
 defm : ZnWriteResFpuPair<WriteShuffleY,   [ZnFPU],   1>;
@@ -1072,21 +1072,6 @@ def ZnWritePCMPGTQYm : SchedWriteRes<[ZnAGU, ZnFPU03]> {
 }
 def : InstRW<[ZnWritePCMPGTQm], (instregex "(V?)PCMPGTQrm")>;
 def : InstRW<[ZnWritePCMPGTQYm], (instregex "(V?)PCMPGTQYrm")>;
-
-// PMULLD.
-// x,m.
-def ZnWritePMULLDm : SchedWriteRes<[ZnAGU, ZnFPU0]> {
-  let Latency = 11;
-  let NumMicroOps = 2;
-}
-// y,m.
-def ZnWritePMULLDYm : SchedWriteRes<[ZnAGU, ZnFPU0]> {
-  let Latency = 12;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1, 2];
-}
-def : InstRW<[ZnWritePMULLDm], (instregex "(V?)PMULLDrm")>;
-def : InstRW<[ZnWritePMULLDYm], (instregex "(V?)PMULLDYrm")>;
 
 //-- Logic instructions --//
 
