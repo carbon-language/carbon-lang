@@ -285,7 +285,7 @@ define <8 x double> @test_intrinsic_fmax_v8f64(<8 x double> %x, <8 x double> %y)
   ret <8 x double> %z
 }
 
-; FIXME: The IR-level FMF should propagate to the node.
+; FIXME: The IR-level FMF should propagate to the node. With nnan, there's no need to blend.
 
 define double @maxnum_intrinsic_nnan_fmf_f64(double %a, double %b) {
 ; SSE-LABEL: maxnum_intrinsic_nnan_fmf_f64:
@@ -333,49 +333,33 @@ define <4 x float> @maxnum_intrinsic_nnan_fmf_f432(<4 x float> %a, <4 x float> %
   ret <4 x float> %r
 }
 
-; FIXME: Current (but legacy someday): a function-level attribute should also enable the fold.
+; Current (but legacy someday): a function-level attribute should also enable the fold.
 
 define float @maxnum_intrinsic_nnan_attr_f32(float %a, float %b) #0 {
 ; SSE-LABEL: maxnum_intrinsic_nnan_attr_f32:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movaps %xmm0, %xmm2
-; SSE-NEXT:    cmpunordss %xmm0, %xmm2
-; SSE-NEXT:    movaps %xmm2, %xmm3
-; SSE-NEXT:    andps %xmm1, %xmm3
-; SSE-NEXT:    maxss %xmm0, %xmm1
-; SSE-NEXT:    andnps %xmm1, %xmm2
-; SSE-NEXT:    orps %xmm3, %xmm2
-; SSE-NEXT:    movaps %xmm2, %xmm0
+; SSE-NEXT:    maxss %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: maxnum_intrinsic_nnan_attr_f32:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmaxss %xmm0, %xmm1, %xmm2
-; AVX-NEXT:    vcmpunordss %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vblendvps %xmm0, %xmm1, %xmm2, %xmm0
+; AVX-NEXT:    vmaxss %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %r = tail call float @llvm.maxnum.f32(float %a, float %b)
   ret float %r
 }
 
-; FIXME: Make sure vectors work too.
+; Make sure vectors work too.
 
 define <2 x double> @maxnum_intrinsic_nnan_attr_f64(<2 x double> %a, <2 x double> %b) #0 {
 ; SSE-LABEL: maxnum_intrinsic_nnan_attr_f64:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    movapd %xmm1, %xmm2
-; SSE-NEXT:    maxpd %xmm0, %xmm2
-; SSE-NEXT:    cmpunordpd %xmm0, %xmm0
-; SSE-NEXT:    andpd %xmm0, %xmm1
-; SSE-NEXT:    andnpd %xmm2, %xmm0
-; SSE-NEXT:    orpd %xmm1, %xmm0
+; SSE-NEXT:    maxpd %xmm1, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: maxnum_intrinsic_nnan_attr_f64:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmaxpd %xmm0, %xmm1, %xmm2
-; AVX-NEXT:    vcmpunordpd %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vblendvpd %xmm0, %xmm1, %xmm2, %xmm0
+; AVX-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %r = tail call <2 x double> @llvm.maxnum.v2f64(<2 x double> %a, <2 x double> %b)
   ret <2 x double> %r
