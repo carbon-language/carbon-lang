@@ -365,7 +365,7 @@ static bool canEvaluateTruncated(Value *V, Type *Ty, InstCombiner &IC,
     uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
     uint32_t BitWidth = Ty->getScalarSizeInBits();
     if (BitWidth < OrigBitWidth) {
-      APInt Mask = APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth);
+      APInt Mask = APInt::getBitsSetFrom(OrigBitWidth, BitWidth);
       if (IC.MaskedValueIsZero(I->getOperand(0), Mask, 0, CxtI) &&
           IC.MaskedValueIsZero(I->getOperand(1), Mask, 0, CxtI)) {
         return canEvaluateTruncated(I->getOperand(0), Ty, IC, CxtI) &&
@@ -394,7 +394,7 @@ static bool canEvaluateTruncated(Value *V, Type *Ty, InstCombiner &IC,
       uint32_t OrigBitWidth = OrigTy->getScalarSizeInBits();
       uint32_t BitWidth = Ty->getScalarSizeInBits();
       if (IC.MaskedValueIsZero(I->getOperand(0),
-            APInt::getHighBitsSet(OrigBitWidth, OrigBitWidth-BitWidth), 0, CxtI) &&
+            APInt::getBitsSetFrom(OrigBitWidth, BitWidth), 0, CxtI) &&
           Amt->getLimitedValue(BitWidth) < BitWidth) {
         return canEvaluateTruncated(I->getOperand(0), Ty, IC, CxtI);
       }
