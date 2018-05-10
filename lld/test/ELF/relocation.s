@@ -123,7 +123,7 @@ R_X86_64_GOTPCREL:
 // 0x2020F8 - 0x2001D8 = 7952
 // 7952 = 0x101f0000 in little endian
 // CHECK:      Contents of section .R_X86_64_GOTPCREL
-// CHECK-NEXT:   20028f 612e0000
+// CHECK-NEXT:   2002a0 502e0000
 
 .section .R_X86_64_GOT32,"a",@progbits
 .global R_X86_64_GOT32
