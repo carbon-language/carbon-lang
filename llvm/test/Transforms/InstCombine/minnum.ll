@@ -273,3 +273,85 @@ define float @fold_minnum_f32_minf_val(float %x) {
   ret float %val
 }
 
+; PR37405 - https://bugs.llvm.org/show_bug.cgi?id=37405
+
+define double @neg_neg(double %x, double %y) {
+; CHECK-LABEL: @neg_neg(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[NEGY:%.*]] = fsub double -0.000000e+00, [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = call double @llvm.minnum.f64(double [[NEGX]], double [[NEGY]])
+; CHECK-NEXT:    ret double [[R]]
+;
+  %negx = fsub double -0.0, %x
+  %negy = fsub double -0.0, %y
+  %r = call double @llvm.minnum.f64(double %negx, double %negy)
+  ret double %r
+}
+
+; FMF is not required, but it should be propagated from the intrinsic (not the fnegs).
+; Also, make sure this works with vectors.
+
+define <2 x double> @neg_neg_vec_fmf(<2 x double> %x, <2 x double> %y) {
+; CHECK-LABEL: @neg_neg_vec_fmf(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub reassoc <2 x double> <double -0.000000e+00, double -0.000000e+00>, [[X:%.*]]
+; CHECK-NEXT:    [[NEGY:%.*]] = fsub fast <2 x double> <double -0.000000e+00, double -0.000000e+00>, [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = call nnan ninf <2 x double> @llvm.minnum.v2f64(<2 x double> [[NEGX]], <2 x double> [[NEGY]])
+; CHECK-NEXT:    ret <2 x double> [[R]]
+;
+  %negx = fsub reassoc <2 x double> <double -0.0, double -0.0>, %x
+  %negy = fsub fast <2 x double> <double -0.0, double -0.0>, %y
+  %r = call nnan ninf <2 x double> @llvm.minnum.v2f64(<2 x double> %negx, <2 x double> %negy)
+  ret <2 x double> %r
+}
+
+; 1 extra use of an intermediate value should still allow the fold,
+; but 2 would require more instructions than we started with.
+
+declare void @use(double)
+define double @neg_neg_extra_use_x(double %x, double %y) {
+; CHECK-LABEL: @neg_neg_extra_use_x(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[NEGY:%.*]] = fsub double -0.000000e+00, [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = call double @llvm.minnum.f64(double [[NEGX]], double [[NEGY]])
+; CHECK-NEXT:    call void @use(double [[NEGX]])
+; CHECK-NEXT:    ret double [[R]]
+;
+  %negx = fsub double -0.0, %x
+  %negy = fsub double -0.0, %y
+  %r = call double @llvm.minnum.f64(double %negx, double %negy)
+  call void @use(double %negx)
+  ret double %r
+}
+
+define double @neg_neg_extra_use_y(double %x, double %y) {
+; CHECK-LABEL: @neg_neg_extra_use_y(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[NEGY:%.*]] = fsub double -0.000000e+00, [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = call double @llvm.minnum.f64(double [[NEGX]], double [[NEGY]])
+; CHECK-NEXT:    call void @use(double [[NEGY]])
+; CHECK-NEXT:    ret double [[R]]
+;
+  %negx = fsub double -0.0, %x
+  %negy = fsub double -0.0, %y
+  %r = call double @llvm.minnum.f64(double %negx, double %negy)
+  call void @use(double %negy)
+  ret double %r
+}
+
+define double @neg_neg_extra_use_x_and_y(double %x, double %y) {
+; CHECK-LABEL: @neg_neg_extra_use_x_and_y(
+; CHECK-NEXT:    [[NEGX:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    [[NEGY:%.*]] = fsub double -0.000000e+00, [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = call double @llvm.minnum.f64(double [[NEGX]], double [[NEGY]])
+; CHECK-NEXT:    call void @use(double [[NEGX]])
+; CHECK-NEXT:    call void @use(double [[NEGY]])
+; CHECK-NEXT:    ret double [[R]]
+;
+  %negx = fsub double -0.0, %x
+  %negy = fsub double -0.0, %y
+  %r = call double @llvm.minnum.f64(double %negx, double %negy)
+  call void @use(double %negx)
+  call void @use(double %negy)
+  ret double %r
+}
+
