@@ -209,25 +209,25 @@ void ThreadSuspender::KillAllThreads() {
 
 bool ThreadSuspender::SuspendAllThreads() {
   ThreadLister thread_lister(pid_);
-  bool added_threads;
+  bool retry;
   InternalMmapVector<tid_t> threads;
   threads.reserve(128);
   do {
-    added_threads = false;
+    retry = false;
     switch (thread_lister.ListThreads(&threads)) {
       case ThreadLister::Error:
         ResumeAllThreads();
         return false;
       case ThreadLister::Incomplete:
-        added_threads = true;
+        retry = true;
         break;
       case ThreadLister::Ok:
         break;
     }
     for (tid_t tid : threads)
       if (SuspendThread(tid))
-        added_threads = true;
-  } while (added_threads);
+        retry = true;
+  } while (retry);
   return true;
 }
 
