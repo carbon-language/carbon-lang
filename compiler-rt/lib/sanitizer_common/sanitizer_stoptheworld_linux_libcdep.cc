@@ -210,25 +210,23 @@ void ThreadSuspender::KillAllThreads() {
 bool ThreadSuspender::SuspendAllThreads() {
   ThreadLister thread_lister(pid_);
   bool added_threads;
-  bool first_iteration = true;
   InternalMmapVector<tid_t> threads;
   threads.reserve(128);
   do {
-    // Run through the directory entries once.
     added_threads = false;
-    if (!thread_lister.ListThreads(&threads)) {
-      ResumeAllThreads();
-      return false;
+    switch (thread_lister.ListThreads(&threads)) {
+      case ThreadLister::Error:
+        ResumeAllThreads();
+        return false;
+      case ThreadLister::Incomplete:
+        added_threads = true;
+        break;
+      case ThreadLister::Ok:
+        break;
     }
     for (tid_t tid : threads)
       if (SuspendThread(tid))
         added_threads = true;
-    if (first_iteration && !added_threads) {
-      // Detach threads and fail.
-      ResumeAllThreads();
-      return false;
-    }
-    first_iteration = false;
   } while (added_threads);
   return true;
 }
