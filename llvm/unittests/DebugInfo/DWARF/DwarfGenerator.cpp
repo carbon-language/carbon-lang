@@ -203,16 +203,15 @@ void dwarfgen::LineTable::writeData(ArrayRef<ValueAndLength> Data,
     case Long:
     case Quad:
       Asm.OutStreamer->EmitIntValue(Entry.Value, Entry.Length);
-      break;
+      continue;
     case ULEB:
       Asm.EmitULEB128(Entry.Value);
-      break;
+      continue;
     case SLEB:
       Asm.EmitSLEB128(Entry.Value);
-      break;
-    default:
-      llvm_unreachable("unsupported ValueAndLength Length value");
+      continue;
     }
+    llvm_unreachable("unsupported ValueAndLength Length value");
   }
 }
 
