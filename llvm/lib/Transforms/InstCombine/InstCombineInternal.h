@@ -824,8 +824,7 @@ private:
   Instruction *MatchBSwap(BinaryOperator &I);
   bool SimplifyStoreAtEndOfBlock(StoreInst &SI);
 
-  Instruction *SimplifyElementUnorderedAtomicMemCpy(AtomicMemCpyInst *AMI);
-  Instruction *SimplifyMemTransfer(MemIntrinsic *MI);
+  Instruction *SimplifyAnyMemTransfer(AnyMemTransferInst *MI);
   Instruction *SimplifyMemSet(MemSetInst *MI);
 
   Value *EvaluateInDifferentType(Value *V, Type *Ty, bool isSigned);
