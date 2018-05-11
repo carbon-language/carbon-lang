@@ -89,7 +89,7 @@ void Prescanner::Prescan(ProvenanceRange range) {
     }
     dir += '\n';
     TokenSequence tokens{dir, allSources.AddCompilerInsertion(dir).start()};
-    tokens.Emit(&cooked_);
+    tokens.Emit(cooked_);
   }
 }
 
@@ -160,16 +160,16 @@ void Prescanner::Statement() {
     case LineClassification::Kind::PreprocessorDirective:
       Say("preprocessed line resembles a preprocessor directive"_en_US,
           preprocessed->GetProvenanceRange());
-      preprocessed->ToLowerCase().Emit(&cooked_);
+      preprocessed->ToLowerCase().Emit(cooked_);
       break;
     case LineClassification::Kind::CompilerDirective:
       NormalizeCompilerDirectiveCommentMarker(*preprocessed);
       preprocessed->ToLowerCase();
       SourceFormChange(preprocessed->ToString());
-      preprocessed->Emit(&cooked_);
+      preprocessed->Emit(cooked_);
       break;
     case LineClassification::Kind::Source:
-      preprocessed->ToLowerCase().Emit(&cooked_);
+      preprocessed->ToLowerCase().Emit(cooked_);
       break;
     }
   } else {
@@ -177,7 +177,7 @@ void Prescanner::Statement() {
     if (line.kind == LineClassification::Kind::CompilerDirective) {
       SourceFormChange(tokens.ToString());
     }
-    tokens.Emit(&cooked_);
+    tokens.Emit(cooked_);
     cooked_.Put('\n', newlineProvenance);
   }
   directiveSentinel_ = nullptr;

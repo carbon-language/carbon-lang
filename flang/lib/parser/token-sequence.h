@@ -23,6 +23,7 @@
 #include "provenance.h"
 #include <cstddef>
 #include <cstring>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -106,7 +107,10 @@ public:
 
   char *GetMutableCharData() { return &char_[0]; }
   TokenSequence &ToLowerCase();
-  void Emit(CookedSource *) const;
+  bool HasRedundantBlanks() const;
+  TokenSequence &RemoveRedundantBlanks();
+  void Emit(CookedSource &) const;
+  void Dump(std::ostream &) const;
 
 private:
   std::size_t TokenBytes(std::size_t token) const {
