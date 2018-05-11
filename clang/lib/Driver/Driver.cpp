@@ -538,24 +538,46 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
                                               InputList &Inputs) {
 
   //
-  // CUDA
+  // CUDA/HIP
   //
-  // We need to generate a CUDA toolchain if any of the inputs has a CUDA type.
-  if (llvm::any_of(Inputs, [](std::pair<types::ID, const llvm::opt::Arg *> &I) {
+  // We need to generate a CUDA toolchain if any of the inputs has a CUDA
+  // or HIP type. However, mixed CUDA/HIP compilation is not supported.
+  bool IsCuda =
+      llvm::any_of(Inputs, [](std::pair<types::ID, const llvm::opt::Arg *> &I) {
         return types::isCuda(I.first);
-      })) {
+      });
+  bool IsHIP =
+      llvm::any_of(Inputs,
+                   [](std::pair<types::ID, const llvm::opt::Arg *> &I) {
+                     return types::isHIP(I.first);
+                   }) ||
+      C.getInputArgs().hasArg(options::OPT_hip_link);
+  if (IsCuda && IsHIP) {
+    Diag(clang::diag::err_drv_mix_cuda_hip);
+    return;
+  }
+  if (IsCuda || IsHIP) {
     const ToolChain *HostTC = C.getSingleOffloadToolChain<Action::OFK_Host>();
     const llvm::Triple &HostTriple = HostTC->getTriple();
-    llvm::Triple CudaTriple(HostTriple.isArch64Bit() ? "nvptx64-nvidia-cuda"
-                                                     : "nvptx-nvidia-cuda");
-    // Use the CUDA and host triples as the key into the ToolChains map, because
-    // the device toolchain we create depends on both.
+    StringRef DeviceTripleStr;
+    auto OFK = IsHIP ? Action::OFK_HIP : Action::OFK_Cuda;
+    if (IsHIP) {
+      // HIP is only supported on amdgcn.
+      DeviceTripleStr = "amdgcn-amd-amdhsa";
+    } else {
+      // CUDA is only supported on nvptx.
+      DeviceTripleStr = HostTriple.isArch64Bit() ? "nvptx64-nvidia-cuda"
+                                                 : "nvptx-nvidia-cuda";
+    }
+    llvm::Triple CudaTriple(DeviceTripleStr);
+    // Use the CUDA/HIP and host triples as the key into the ToolChains map,
+    // because the device toolchain we create depends on both.
     auto &CudaTC = ToolChains[CudaTriple.str() + "/" + HostTriple.str()];
     if (!CudaTC) {
       CudaTC = llvm::make_unique<toolchains::CudaToolChain>(
-          *this, CudaTriple, *HostTC, C.getInputArgs(), Action::OFK_Cuda);
+          *this, CudaTriple, *HostTC, C.getInputArgs(), OFK);
     }
-    C.addOffloadDeviceToolChain(CudaTC.get(), Action::OFK_Cuda);
+    C.addOffloadDeviceToolChain(CudaTC.get(), OFK);
   }
 
   //
