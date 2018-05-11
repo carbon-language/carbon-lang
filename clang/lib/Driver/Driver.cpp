@@ -3736,9 +3736,12 @@ InputInfo Driver::BuildJobsForActionNoCache(
           UI.DependentToolChain->getTriple().normalize(),
           /*CreatePrefixForHost=*/true);
       auto CurI = InputInfo(
-          UA, GetNamedOutputPath(C, *UA, BaseInput, UI.DependentBoundArch,
-                                 /*AtTopLevel=*/false, MultipleArchs,
-                                 OffloadingPrefix),
+          UA,
+          GetNamedOutputPath(C, *UA, BaseInput, UI.DependentBoundArch,
+                             /*AtTopLevel=*/false,
+                             MultipleArchs ||
+                                 UI.DependentOffloadKind == Action::OFK_HIP,
+                             OffloadingPrefix),
           BaseInput);
       // Save the unbundling result.
       UnbundlingResults.push_back(CurI);
