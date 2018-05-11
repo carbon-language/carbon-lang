@@ -614,7 +614,8 @@ def main_with_tmp(builtinParameters):
             xunit_output_file.write(" failures='" + str(suite['failures']) + 
               "'>\n")
             for result_test in suite['tests']:
-                xunit_output_file.write(result_test.getJUnitXML() + "\n")
+                result_test.writeJUnitXML(xunit_output_file)
+                xunit_output_file.write("\n")
             xunit_output_file.write("</testsuite>\n")
         xunit_output_file.write("</testsuites>")
         xunit_output_file.close()
