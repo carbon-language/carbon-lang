@@ -173,8 +173,8 @@ void Prescanner::Statement() {
       break;
     case LineClassification::Kind::Source:
       if (inFixedForm_) {
-        if (preprocessed->HasBlanks()) {
-          preprocessed->RemoveBlanks();
+        if (preprocessed->HasBlanks(/*after column*/ 6)) {
+          preprocessed->RemoveBlanks(/*after column*/ 6);
         }
       } else {
         if (preprocessed->HasRedundantBlanks()) {

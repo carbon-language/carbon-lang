@@ -157,22 +157,22 @@ TokenSequence &TokenSequence::ToLowerCase() {
   return *this;
 }
 
-bool TokenSequence::HasBlanks() const {
+bool TokenSequence::HasBlanks(std::size_t firstChar) const {
   std::size_t tokens{SizeInTokens()};
   for (std::size_t j{0}; j < tokens; ++j) {
-    if (TokenAt(j).IsBlank()) {
+    if (start_[j] >= firstChar && TokenAt(j).IsBlank()) {
       return true;
     }
   }
   return false;
 }
 
-bool TokenSequence::HasRedundantBlanks() const {
+bool TokenSequence::HasRedundantBlanks(std::size_t firstChar) const {
   std::size_t tokens{SizeInTokens()};
   bool lastWasBlank{false};
   for (std::size_t j{0}; j < tokens; ++j) {
     bool isBlank{TokenAt(j).IsBlank()};
-    if (isBlank && lastWasBlank) {
+    if (isBlank && lastWasBlank && start_[j] >= firstChar) {
       return true;
     }
     lastWasBlank = isBlank;
@@ -180,11 +180,11 @@ bool TokenSequence::HasRedundantBlanks() const {
   return false;
 }
 
-TokenSequence &TokenSequence::RemoveBlanks() {
+TokenSequence &TokenSequence::RemoveBlanks(std::size_t firstChar) {
   std::size_t tokens{SizeInTokens()};
   TokenSequence result;
   for (std::size_t j{0}; j < tokens; ++j) {
-    if (!TokenAt(j).IsBlank()) {
+    if (!TokenAt(j).IsBlank() || start_[j] < firstChar) {
       result.Put(*this, j);
     }
   }
@@ -192,17 +192,16 @@ TokenSequence &TokenSequence::RemoveBlanks() {
   return *this;
 }
 
-TokenSequence &TokenSequence::RemoveRedundantBlanks() {
+TokenSequence &TokenSequence::RemoveRedundantBlanks(std::size_t firstChar) {
   std::size_t tokens{SizeInTokens()};
   TokenSequence result;
   bool lastWasBlank{false};
   for (std::size_t j{0}; j < tokens; ++j) {
     bool isBlank{TokenAt(j).IsBlank()};
-    if (isBlank && lastWasBlank) {
-      continue;
+    if (!isBlank || !lastWasBlank || start_[j] < firstChar) {
+      result.Put(*this, j);
     }
     lastWasBlank = isBlank;
-    result.Put(*this, j);
   }
   swap(result);
   return *this;
