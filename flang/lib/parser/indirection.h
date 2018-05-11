@@ -52,7 +52,8 @@ public:
     that.p_ = tmp;
     return *this;
   }
-  A &operator*() const { return *p_; }
+  A &operator*() { return *p_; }
+  const A &operator*() const { return *p_; }
   A *operator->() { return p_; }
   const A *operator->() const { return p_; }
 
