@@ -376,8 +376,10 @@ class Test:
         testcase_xml = testcase_template.format(class_name=class_name, test_name=test_name, time=elapsed_time)
         fil.write(testcase_xml)
         if self.result.code.isFailure:
-            fil.write(">\n\t<failure >\n")
+            fil.write(u">\n\t<failure >\n")
             fil.write(escape(self.result.output))
-            fil.write("\n\t</failure>\n</testcase>")
+            fil.write(u"\n\t</failure>\n</testcase>")
+        elif self.result.code == UNSUPPORTED:
+            fil.write(u">\n\t<skipped />\n</testcase>\n")
         else:
-            fil.write("/>")
+            fil.write(u"/>")
