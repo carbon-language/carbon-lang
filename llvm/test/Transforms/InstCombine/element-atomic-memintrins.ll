@@ -12,13 +12,15 @@ define void @test_memset_zero_length(i8* %dest) {
   ret void
 }
 
-; Placeholder test. This will chance once support for lowering atomic memsets is added to instcombine.
 define void @test_memset_to_store(i8* %dest) {
 ; CHECK-LABEL: @test_memset_to_store(
-; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 [[DEST:%.*]], i8 1, i32 1, i32 1)
-; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 [[DEST]], i8 1, i32 2, i32 1)
-; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 [[DEST]], i8 1, i32 4, i32 1)
-; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 [[DEST]], i8 1, i32 8, i32 1)
+; CHECK-NEXT:    store atomic i8 1, i8* [[DEST:%.*]] unordered, align 1
+; CHECK-NEXT:    [[TMP1:%.*]] = bitcast i8* [[DEST]] to i16*
+; CHECK-NEXT:    store atomic i16 257, i16* [[TMP1]] unordered, align 1
+; CHECK-NEXT:    [[TMP2:%.*]] = bitcast i8* [[DEST]] to i32*
+; CHECK-NEXT:    store atomic i32 16843009, i32* [[TMP2]] unordered, align 1
+; CHECK-NEXT:    [[TMP3:%.*]] = bitcast i8* [[DEST]] to i64*
+; CHECK-NEXT:    store atomic i64 72340172838076673, i64* [[TMP3]] unordered, align 1
 ; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 [[DEST]], i8 1, i32 16, i32 1)
 ; CHECK-NEXT:    ret void
 ;
@@ -27,6 +29,60 @@ define void @test_memset_to_store(i8* %dest) {
   call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 %dest, i8 1, i32 4, i32 1)
   call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 %dest, i8 1, i32 8, i32 1)
   call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 1 %dest, i8 1, i32 16, i32 1)
+  ret void
+}
+
+define void @test_memset_to_store_2(i8* %dest) {
+; CHECK-LABEL: @test_memset_to_store_2(
+; CHECK-NEXT:    [[TMP1:%.*]] = bitcast i8* [[DEST:%.*]] to i16*
+; CHECK-NEXT:    store atomic i16 257, i16* [[TMP1]] unordered, align 2
+; CHECK-NEXT:    [[TMP2:%.*]] = bitcast i8* [[DEST]] to i32*
+; CHECK-NEXT:    store atomic i32 16843009, i32* [[TMP2]] unordered, align 2
+; CHECK-NEXT:    [[TMP3:%.*]] = bitcast i8* [[DEST]] to i64*
+; CHECK-NEXT:    store atomic i64 72340172838076673, i64* [[TMP3]] unordered, align 2
+; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 2 [[DEST]], i8 1, i32 16, i32 2)
+; CHECK-NEXT:    ret void
+;
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 2 %dest, i8 1, i32 2, i32 2)
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 2 %dest, i8 1, i32 4, i32 2)
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 2 %dest, i8 1, i32 8, i32 2)
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 2 %dest, i8 1, i32 16, i32 2)
+  ret void
+}
+
+define void @test_memset_to_store_4(i8* %dest) {
+; CHECK-LABEL: @test_memset_to_store_4(
+; CHECK-NEXT:    [[TMP1:%.*]] = bitcast i8* [[DEST:%.*]] to i32*
+; CHECK-NEXT:    store atomic i32 16843009, i32* [[TMP1]] unordered, align 4
+; CHECK-NEXT:    [[TMP2:%.*]] = bitcast i8* [[DEST]] to i64*
+; CHECK-NEXT:    store atomic i64 72340172838076673, i64* [[TMP2]] unordered, align 4
+; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 4 [[DEST]], i8 1, i32 16, i32 4)
+; CHECK-NEXT:    ret void
+;
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 4 %dest, i8 1, i32 4, i32 4)
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 4 %dest, i8 1, i32 8, i32 4)
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 4 %dest, i8 1, i32 16, i32 4)
+  ret void
+}
+
+define void @test_memset_to_store_8(i8* %dest) {
+; CHECK-LABEL: @test_memset_to_store_8(
+; CHECK-NEXT:    [[TMP1:%.*]] = bitcast i8* [[DEST:%.*]] to i64*
+; CHECK-NEXT:    store atomic i64 72340172838076673, i64* [[TMP1]] unordered, align 8
+; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 8 [[DEST]], i8 1, i32 16, i32 8)
+; CHECK-NEXT:    ret void
+;
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 8 %dest, i8 1, i32 8, i32 8)
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 8 %dest, i8 1, i32 16, i32 8)
+  ret void
+}
+
+define void @test_memset_to_store_16(i8* %dest) {
+; CHECK-LABEL: @test_memset_to_store_16(
+; CHECK-NEXT:    call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 16 [[DEST:%.*]], i8 1, i32 16, i32 16)
+; CHECK-NEXT:    ret void
+;
+  call void @llvm.memset.element.unordered.atomic.p0i8.i32(i8* align 16 %dest, i8 1, i32 16, i32 16)
   ret void
 }
 

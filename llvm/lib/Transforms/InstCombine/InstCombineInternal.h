@@ -825,7 +825,7 @@ private:
   bool SimplifyStoreAtEndOfBlock(StoreInst &SI);
 
   Instruction *SimplifyAnyMemTransfer(AnyMemTransferInst *MI);
-  Instruction *SimplifyMemSet(MemSetInst *MI);
+  Instruction *SimplifyAnyMemSet(AnyMemSetInst *MI);
 
   Value *EvaluateInDifferentType(Value *V, Type *Ty, bool isSigned);
 
