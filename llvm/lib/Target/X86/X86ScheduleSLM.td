@@ -137,11 +137,11 @@ def  : WriteRes<WriteFLoadX,        [SLM_MEC_RSV]> { let Latency = 3; }
 def  : WriteRes<WriteFLoadY,        [SLM_MEC_RSV]> { let Latency = 3; }
 def  : WriteRes<WriteFMaskedLoad,   [SLM_MEC_RSV]> { let Latency = 3; }
 def  : WriteRes<WriteFMaskedLoadY,  [SLM_MEC_RSV]> { let Latency = 3; }
-def  : WriteRes<WriteFStore,        [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteFStoreX,       [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteFStoreY,       [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteFMaskedStore,  [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteFMaskedStoreY, [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteFStore,        [SLM_MEC_RSV]>;
+def  : WriteRes<WriteFStoreX,       [SLM_MEC_RSV]>;
+def  : WriteRes<WriteFStoreY,       [SLM_MEC_RSV]>;
+def  : WriteRes<WriteFMaskedStore,  [SLM_MEC_RSV]>;
+def  : WriteRes<WriteFMaskedStoreY, [SLM_MEC_RSV]>;
 def  : WriteRes<WriteFMove,         [SLM_FPC_RSV01]>;
 def  : WriteRes<WriteFMoveX,        [SLM_FPC_RSV01]>;
 def  : WriteRes<WriteFMoveY,        [SLM_FPC_RSV01]>;
@@ -215,11 +215,11 @@ def  : WriteRes<WriteVecLoadX,        [SLM_MEC_RSV]> { let Latency = 3; }
 def  : WriteRes<WriteVecLoadY,        [SLM_MEC_RSV]> { let Latency = 3; }
 def  : WriteRes<WriteVecMaskedLoad,   [SLM_MEC_RSV]> { let Latency = 3; }
 def  : WriteRes<WriteVecMaskedLoadY,  [SLM_MEC_RSV]> { let Latency = 3; }
-def  : WriteRes<WriteVecStore,        [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteVecStoreX,       [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteVecStoreY,       [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteVecMaskedStore,  [SLM_FPC_RSV01, SLM_MEC_RSV]>;
-def  : WriteRes<WriteVecMaskedStoreY, [SLM_FPC_RSV01, SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecStore,        [SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecStoreX,       [SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecStoreY,       [SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecMaskedStore,  [SLM_MEC_RSV]>;
+def  : WriteRes<WriteVecMaskedStoreY, [SLM_MEC_RSV]>;
 def  : WriteRes<WriteVecMove,         [SLM_FPC_RSV01]>;
 def  : WriteRes<WriteVecMoveX,        [SLM_FPC_RSV01]>;
 def  : WriteRes<WriteVecMoveY,        [SLM_FPC_RSV01]>;
