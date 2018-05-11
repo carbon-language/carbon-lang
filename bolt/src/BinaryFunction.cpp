@@ -3896,8 +3896,10 @@ DynoStats BinaryFunction::getDynoStats() const {
       if (BC.MIB->isLoad(Instr)) {
         Stats[DynoStats::LOADS] += BBExecutionCount;
       }
+
       if (!BC.MIB->isCall(Instr))
         continue;
+
       uint64_t CallFreq = BBExecutionCount;
       if (BC.MIB->getConditionalTailCall(Instr)) {
         CallFreq =
@@ -3911,10 +3913,16 @@ DynoStats BinaryFunction::getDynoStats() const {
         if (BF && BF->isPLTFunction()) {
           Stats[DynoStats::PLT_CALLS] += CallFreq;
 
-          // We don't process PLT functions and hence have to adjust
-          // relevant dynostats here.
-          Stats[DynoStats::LOADS] += CallFreq;
+          // We don't process PLT functions and hence have to adjust relevant
+          // dynostats here for:
+          //
+          //   jmp *GOT_ENTRY(%rip)
+          //
+          // NOTE: this is arch-specific.
+          Stats[DynoStats::FUNCTION_CALLS] += CallFreq;
           Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
+          Stats[DynoStats::LOADS] += CallFreq;
+          Stats[DynoStats::INSTRUCTIONS] += CallFreq;
         }
       }
     }
