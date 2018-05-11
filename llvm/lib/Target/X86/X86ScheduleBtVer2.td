@@ -279,11 +279,11 @@ defm : X86WriteRes<WriteFStoreY,       [JSAGU, JFPU1,  JSTC], 1, [1, 1, 1], 1>;
 defm : X86WriteRes<WriteFMaskedStore,  [JSAGU, JFPU01, JFPX], 6, [1, 1, 4], 1>;
 defm : X86WriteRes<WriteFMaskedStoreY, [JSAGU, JFPU01, JFPX], 6, [2, 2, 4], 2>;
 
-def  : WriteRes<WriteFMove,               [JFPU01, JFPX]>;
-def  : WriteRes<WriteFMoveX,              [JFPU01, JFPX]>;
-def  : WriteRes<WriteFMoveY,              [JFPU01, JFPX]>;
+defm : X86WriteRes<WriteFMove,         [JFPU01, JFPX], 1, [1, 1], 1>;
+defm : X86WriteRes<WriteFMoveX,        [JFPU01, JFPX], 1, [1, 1], 1>;
+defm : X86WriteRes<WriteFMoveY,        [JFPU01, JFPX], 1, [2, 2], 2>;
 
-def  : WriteRes<WriteEMMS,                [JFPU01, JFPX]> { let Latency = 2; }
+defm : X86WriteRes<WriteEMMS,          [JFPU01, JFPX], 2, [1, 1], 1>;
 
 defm : JWriteResFpuPair<WriteFAdd,         [JFPU0, JFPA],  3>;
 defm : JWriteResFpuPair<WriteFAddX,        [JFPU0, JFPA],  3>;
@@ -415,9 +415,9 @@ defm : X86WriteRes<WriteVecStoreY,        [JSAGU, JFPU1,   JSTC], 1, [1, 1, 1], 
 defm : X86WriteRes<WriteVecMaskedStore,   [JSAGU, JFPU01, JVALU], 6, [1, 1, 4], 1>;
 defm : X86WriteRes<WriteVecMaskedStoreY,  [JSAGU, JFPU01, JVALU], 6, [2, 2, 4], 2>;
 
-def  : WriteRes<WriteVecMove,             [JFPU01, JVALU]>;
-def  : WriteRes<WriteVecMoveX,            [JFPU01, JVALU]>;
-def  : WriteRes<WriteVecMoveY,            [JFPU01, JVALU]>;
+defm : X86WriteRes<WriteVecMove,          [JFPU01, JVALU], 1, [1, 1], 1>;
+defm : X86WriteRes<WriteVecMoveX,         [JFPU01, JVALU], 1, [1, 1], 1>;
+defm : X86WriteRes<WriteVecMoveY,         [JFPU01, JVALU], 1, [2, 2], 2>;
 
 defm : JWriteResFpuPair<WriteVecALU,      [JFPU01, JVALU], 1>;
 defm : JWriteResFpuPair<WriteVecALUX,     [JFPU01, JVALU], 1>;
