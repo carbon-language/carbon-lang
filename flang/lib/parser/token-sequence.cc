@@ -51,6 +51,19 @@ void TokenSequence::swap(TokenSequence &that) {
   provenances_.swap(that.provenances_);
 }
 
+std::size_t TokenSequence::SkipBlanks(std::size_t at) const {
+  std::size_t tokens{start_.size()};
+  if (at > tokens) {
+    return tokens;  // j = ts.SkipBlanks(j+1) shouldn't go past tokens
+  }
+  for (std::size_t tokens{start_.size()}; at < tokens; ++at) {
+    if (!TokenAt(at).IsBlank()) {
+      break;
+    }
+  }
+  return at;
+}
+
 void TokenSequence::Put(const TokenSequence &that) {
   if (nextStart_ < char_.size()) {
     start_.push_back(nextStart_);

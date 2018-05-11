@@ -355,19 +355,9 @@ TokenSequence Preprocessor::ReplaceMacros(
   return tokens;
 }
 
-static std::size_t SkipBlanks(
-    const TokenSequence &tokens, std::size_t at, std::size_t lastToken) {
-  for (; at < lastToken; ++at) {
-    if (!tokens.TokenAt(at).IsBlank()) {
-      break;
-    }
-  }
-  return std::min(at, lastToken);
-}
-
 void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   std::size_t tokens{dir.SizeInTokens()};
-  std::size_t j{SkipBlanks(dir, 0, tokens)};
+  std::size_t j{dir.SkipBlanks(0)};
   if (j == tokens) {
     return;
   }
@@ -375,7 +365,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     prescanner->Say("missing '#'"_err_en_US, dir.GetTokenProvenanceRange(j));
     return;
   }
-  j = SkipBlanks(dir, j + 1, tokens);
+  j = dir.SkipBlanks(j + 1);
   if (j == tokens) {
     return;
   }
@@ -384,7 +374,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   }
   std::size_t dirOffset{j};
   std::string dirName{ToLowerCaseLetters(dir.TokenAt(dirOffset).ToString())};
-  j = SkipBlanks(dir, j + 1, tokens);
+  j = dir.SkipBlanks(j + 1);
   CharBlock nameToken;
   if (j < tokens && IsLegalIdentifierStart(dir.TokenAt(j)[0])) {
     nameToken = dir.TokenAt(j);
@@ -401,7 +391,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     definitions_.erase(nameToken);
     if (++j < tokens && dir.TokenAt(j).size() == 1 &&
         dir.TokenAt(j)[0] == '(') {
-      j = SkipBlanks(dir, j + 1, tokens);
+      j = dir.SkipBlanks(j + 1);
       std::vector<std::string> argName;
       bool isVariadic{false};
       if (dir.TokenAt(j).ToString() != ")") {
@@ -418,7 +408,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
             }
             argName.push_back(an);
           }
-          j = SkipBlanks(dir, j + 1, tokens);
+          j = dir.SkipBlanks(j + 1);
           if (j == tokens) {
             prescanner->Say("#define: malformed argument list"_err_en_US,
                 dir.GetTokenProvenanceRange(tokens - 1));
@@ -433,7 +423,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
                 dir.GetTokenProvenanceRange(j));
             return;
           }
-          j = SkipBlanks(dir, j + 1, tokens);
+          j = dir.SkipBlanks(j + 1);
           if (j == tokens) {
             prescanner->Say("#define: malformed argument list"_err_en_US,
                 dir.GetTokenProvenanceRange(tokens - 1));
@@ -447,11 +437,11 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
           return;
         }
       }
-      j = SkipBlanks(dir, j + 1, tokens);
+      j = dir.SkipBlanks(j + 1);
       definitions_.emplace(std::make_pair(
           nameToken, Definition{argName, dir, j, tokens - j, isVariadic}));
     } else {
-      j = SkipBlanks(dir, j, tokens);
+      j = dir.SkipBlanks(j + 1);
       definitions_.emplace(
           std::make_pair(nameToken, Definition{dir, j, tokens - j}));
     }
@@ -460,7 +450,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
       prescanner->Say("# missing or invalid name"_err_en_US,
           dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset));
     } else {
-      j = SkipBlanks(dir, j + 1, tokens);
+      j = dir.SkipBlanks(j + 1);
       if (j != tokens) {
         prescanner->Say("#undef: excess tokens at end of directive"_err_en_US,
             dir.GetIntervalProvenanceRange(j, tokens - j));
@@ -475,7 +465,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
           dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset));
       return;
     }
-    j = SkipBlanks(dir, j + 1, tokens);
+    j = dir.SkipBlanks(j + 1);
     if (j != tokens) {
       prescanner->Say(MessageFormattedText(
                           "#%s: excess tokens at end of directive"_err_en_US,
@@ -603,17 +593,17 @@ bool Preprocessor::IsNameDefined(const CharBlock &token) {
 static std::string GetDirectiveName(
     const TokenSequence &line, std::size_t *rest) {
   std::size_t tokens{line.SizeInTokens()};
-  std::size_t j{SkipBlanks(line, 0, tokens)};
+  std::size_t j{line.SkipBlanks(0)};
   if (j == tokens || line.TokenAt(j).ToString() != "#") {
     *rest = tokens;
     return "";
   }
-  j = SkipBlanks(line, j + 1, tokens);
+  j = line.SkipBlanks(j + 1);
   if (j == tokens) {
     *rest = tokens;
     return "";
   }
-  *rest = SkipBlanks(line, j + 1, tokens);
+  *rest = line.SkipBlanks(j + 1);
   return ToLowerCaseLetters(line.TokenAt(j).ToString());
 }
 

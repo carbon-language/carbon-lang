@@ -67,8 +67,9 @@ public:
   CharBlock TokenAt(std::size_t token) const {
     return {&char_[start_.at(token)], TokenBytes(token)};
   }
-
   char CharAt(std::size_t j) const { return char_.at(j); }
+
+  std::size_t SkipBlanks(std::size_t) const;
 
   void PutNextTokenChar(char ch, Provenance provenance) {
     char_.emplace_back(ch);
