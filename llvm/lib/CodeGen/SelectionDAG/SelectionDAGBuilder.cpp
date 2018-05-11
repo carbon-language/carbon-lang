@@ -2753,13 +2753,7 @@ void SelectionDAGBuilder::visitBinary(const User &I, unsigned Opcode) {
     DEBUG(dbgs() << "Detected a reduction operation:" << I << "\n");
   }
   if (auto *FPOp = dyn_cast<FPMathOperator>(&I)) {
-    Flags.setAllowReciprocal(FPOp->hasAllowReciprocal());
-    Flags.setAllowContract(FPOp->hasAllowContract());
-    Flags.setNoInfs(FPOp->hasNoInfs());
-    Flags.setNoNaNs(FPOp->hasNoNaNs());
-    Flags.setNoSignedZeros(FPOp->hasNoSignedZeros());
-    Flags.setApproximateFuncs(FPOp->hasApproxFunc());
-    Flags.setAllowReassociation(FPOp->hasAllowReassoc());
+    Flags.copyFMF(*FPOp);
   }
 
   SDValue Op1 = getValue(I.getOperand(0));
