@@ -53,15 +53,12 @@ void TokenSequence::swap(TokenSequence &that) {
 
 std::size_t TokenSequence::SkipBlanks(std::size_t at) const {
   std::size_t tokens{start_.size()};
-  if (at > tokens) {
-    return tokens;  // j = ts.SkipBlanks(j+1) shouldn't go past tokens
-  }
-  for (std::size_t tokens{start_.size()}; at < tokens; ++at) {
+  for (; at < tokens; ++at) {
     if (!TokenAt(at).IsBlank()) {
-      break;
+      return at;
     }
   }
-  return at;
+  return tokens;  // even if at > tokens
 }
 
 void TokenSequence::Put(const TokenSequence &that) {
