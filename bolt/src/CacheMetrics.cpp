@@ -76,11 +76,19 @@ void extractBasicBlockInfo(
   std::unordered_map<BinaryBasicBlock *, uint64_t> &BBAddr,
   std::unordered_map<BinaryBasicBlock *, uint64_t> &BBSize) {
 
-  // Use addresses/sizes as in the output binary
   for (auto BF : BinaryFunctions) {
+    const auto &BC = BF->getBinaryContext();
     for (auto BB : BF->layout()) {
-      BBAddr[BB] = BB->getOutputAddressRange().first;
-      BBSize[BB] = BB->getOutputSize();
+      if (BF->isSimple() || BC.HasRelocations) {
+        // Use addresses/sizes as in the output binary
+        BBAddr[BB] = BB->getOutputAddressRange().first;
+        BBSize[BB] = BB->getOutputSize();
+      } else {
+        // Output ranges should match the input if the body hasn't changed
+        BBAddr[BB] = BB->getInputAddressRange().first + BF->getAddress();
+        BBSize[BB] = BB->getOriginalSize();
+      }
+      assert(BBAddr[BB] > 0 && "incorrect output block address");
     }
   }
 }
@@ -94,6 +102,8 @@ double calcTSPScore(
 
   double Score = 0;
   for (auto BF : BinaryFunctions) {
+    if (!BF->hasProfile())
+      continue;
     for (auto SrcBB : BF->layout()) {
       auto BI = SrcBB->branch_info_begin();
       for (auto DstBB : SrcBB->successors()) {

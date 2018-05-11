@@ -653,6 +653,7 @@ private:
   BasicBlockOrderType BasicBlocksLayout;
   /// Previous layout replaced by modifyLayout
   BasicBlockOrderType BasicBlocksPreviousLayout;
+  bool ModifiedLayout{false};
 
   /// BasicBlockOffsets are used during CFG construction to map from code
   /// offsets to BinaryBasicBlocks.  Any modifications made to the CFG
@@ -852,8 +853,11 @@ public:
     if (SavePrevLayout)
       BasicBlocksPreviousLayout = BasicBlocksLayout;
 
-    BasicBlocksLayout.clear();
-    BasicBlocksLayout.swap(NewLayout);
+    if (NewLayout != BasicBlocksLayout) {
+      ModifiedLayout = true;
+      BasicBlocksLayout.clear();
+      BasicBlocksLayout.swap(NewLayout);
+    }
   }
 
   /// Return a list of basic blocks sorted using DFS and update layout indices

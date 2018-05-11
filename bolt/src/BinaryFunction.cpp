@@ -2188,7 +2188,7 @@ uint64_t BinaryFunction::getInstructionCount() const {
 }
 
 bool BinaryFunction::hasLayoutChanged() const {
-  return BasicBlocksPreviousLayout != BasicBlocksLayout;
+  return ModifiedLayout;
 }
 
 uint64_t BinaryFunction::getEditDistance() const {

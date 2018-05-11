@@ -395,10 +395,14 @@ void ReorderBasicBlocks::runOnFunctions(
     modifyFunctionLayout(Function, opts::ReorderBlocks, opts::MinBranchClusters,
                          ShouldSplit);
 
-    if (opts::PrintFuncStat > 0 && Function.hasLayoutChanged()) {
+    if (Function.hasLayoutChanged()) {
       ++ModifiedFuncCount;
     }
   }
+
+  outs() << "BOLT-INFO: basic block reordering modified layout of "
+         << format("%zu (%.2lf%%) functions\n",
+                   ModifiedFuncCount, 100.0 * ModifiedFuncCount / BFs.size());
 
   if (opts::PrintFuncStat > 0) {
     raw_ostream &OS = outs();
