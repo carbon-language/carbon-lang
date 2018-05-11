@@ -102,7 +102,9 @@ public:
 
   char *GetMutableCharData() { return &char_[0]; }
   TokenSequence &ToLowerCase();
+  bool HasBlanks() const;
   bool HasRedundantBlanks() const;
+  TokenSequence &RemoveBlanks();
   TokenSequence &RemoveRedundantBlanks();
   void Emit(CookedSource &) const;
   void Dump(std::ostream &) const;

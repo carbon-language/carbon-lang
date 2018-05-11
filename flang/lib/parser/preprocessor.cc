@@ -344,9 +344,6 @@ std::optional<TokenSequence> Preprocessor::MacroReplacement(
     }
     j = k;  // advance to the terminal ')'
   }
-  if (result.HasRedundantBlanks()) {
-    result.RemoveRedundantBlanks();
-  }
   return {result};
 }
 

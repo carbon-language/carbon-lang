@@ -163,12 +163,24 @@ void Prescanner::Statement() {
       preprocessed->ToLowerCase().Emit(cooked_);
       break;
     case LineClassification::Kind::CompilerDirective:
+      if (preprocessed->HasRedundantBlanks()) {
+        preprocessed->RemoveRedundantBlanks();
+      }
       NormalizeCompilerDirectiveCommentMarker(*preprocessed);
       preprocessed->ToLowerCase();
       SourceFormChange(preprocessed->ToString());
       preprocessed->Emit(cooked_);
       break;
     case LineClassification::Kind::Source:
+      if (inFixedForm_) {
+        if (preprocessed->HasBlanks()) {
+          preprocessed->RemoveBlanks();
+        }
+      } else {
+        if (preprocessed->HasRedundantBlanks()) {
+          preprocessed->RemoveRedundantBlanks();
+        }
+      }
       preprocessed->ToLowerCase().Emit(cooked_);
       break;
     }

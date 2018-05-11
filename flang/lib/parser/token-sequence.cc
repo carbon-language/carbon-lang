@@ -157,6 +157,16 @@ TokenSequence &TokenSequence::ToLowerCase() {
   return *this;
 }
 
+bool TokenSequence::HasBlanks() const {
+  std::size_t tokens{SizeInTokens()};
+  for (std::size_t j{0}; j < tokens; ++j) {
+    if (TokenAt(j).IsBlank()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool TokenSequence::HasRedundantBlanks() const {
   std::size_t tokens{SizeInTokens()};
   bool lastWasBlank{false};
@@ -168,6 +178,18 @@ bool TokenSequence::HasRedundantBlanks() const {
     lastWasBlank = isBlank;
   }
   return false;
+}
+
+TokenSequence &TokenSequence::RemoveBlanks() {
+  std::size_t tokens{SizeInTokens()};
+  TokenSequence result;
+  for (std::size_t j{0}; j < tokens; ++j) {
+    if (!TokenAt(j).IsBlank()) {
+      result.Put(*this, j);
+    }
+  }
+  swap(result);
+  return *this;
 }
 
 TokenSequence &TokenSequence::RemoveRedundantBlanks() {
@@ -182,7 +204,7 @@ TokenSequence &TokenSequence::RemoveRedundantBlanks() {
     lastWasBlank = isBlank;
     result.Put(*this, j);
   }
-  *this = std::move(result);
+  swap(result);
   return *this;
 }
 
