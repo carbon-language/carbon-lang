@@ -603,10 +603,7 @@ def SKXWriteResGroup11 : SchedWriteRes<[SKXPort4,SKXPort237]> {
 }
 def: InstRW<[SKXWriteResGroup11], (instregex "FBSTPm",
                                              "KMOV(B|D|Q|W)mk",
-                                             "MMX_MOVD64from64rm",
                                              "MMX_MOVD64mr",
-                                             "MMX_MOVNTQmr",
-                                             "MMX_MOVQ64mr",
                                              "MOVNTI_64mr",
                                              "MOVNTImr",
                                              "ST_FP(32|64|80)m",

@@ -575,10 +575,7 @@ def BWWriteResGroup10 : SchedWriteRes<[BWPort4,BWPort237]> {
   let ResourceCycles = [1,1];
 }
 def: InstRW<[BWWriteResGroup10], (instregex "FBSTPm",
-                                            "MMX_MOVD64from64rm",
                                             "MMX_MOVD64mr",
-                                            "MMX_MOVNTQmr",
-                                            "MMX_MOVQ64mr",
                                             "MOVNTI_64mr",
                                             "MOVNTImr",
                                             "ST_FP(32|64|80)m",
