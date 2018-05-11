@@ -2007,12 +2007,12 @@ define <8 x float> @test_insertf128(<8 x float> %a0, <4 x float> %a1, <4 x float
 define <32 x i8> @test_lddqu(i8* %a0) {
 ; GENERIC-LABEL: test_lddqu:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    vlddqu (%rdi), %ymm0 # sched: [6:0.50]
+; GENERIC-NEXT:    vlddqu (%rdi), %ymm0 # sched: [7:0.50]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; SANDY-LABEL: test_lddqu:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    vlddqu (%rdi), %ymm0 # sched: [6:0.50]
+; SANDY-NEXT:    vlddqu (%rdi), %ymm0 # sched: [7:0.50]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_lddqu:
