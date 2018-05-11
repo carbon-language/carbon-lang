@@ -384,6 +384,12 @@ class Test:
             fil.write(encoded_output)
             fil.write("]]></failure>\n</testcase>")
         elif self.result.code == UNSUPPORTED:
-            fil.write(">\n\t<skipped />\n</testcase>\n")
+            unsupported_features = self.getMissingRequiredFeatures()
+            if unsupported_features:
+                skip_message = "Skipping because of: " + ", ".join(unsupported_features)
+            else:
+                skip_message = "Skipping because of configuration."
+
+            fil.write(">\n\t<skipped message=\"{}\" />\n</testcase>\n".format(skip_message))
         else:
             fil.write("/>")
