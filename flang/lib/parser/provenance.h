@@ -90,6 +90,7 @@ public:
   OffsetToProvenanceMappings() {}
   std::size_t size() const;
   void clear();
+  void swap(OffsetToProvenanceMappings &);
   void shrink_to_fit() { provenanceMap_.shrink_to_fit(); }
   void Put(ProvenanceRange);
   void Put(const OffsetToProvenanceMappings &);

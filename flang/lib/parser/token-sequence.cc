@@ -17,6 +17,12 @@
 
 namespace Fortran::parser {
 
+TokenSequence &TokenSequence::operator=(TokenSequence &&that) {
+  clear();
+  swap(that);
+  return *this;
+}
+
 void TokenSequence::clear() {
   start_.clear();
   nextStart_ = 0;
@@ -36,6 +42,13 @@ void TokenSequence::shrink_to_fit() {
   start_.shrink_to_fit();
   char_.shrink_to_fit();
   provenances_.shrink_to_fit();
+}
+
+void TokenSequence::swap(TokenSequence &that) {
+  start_.swap(that.start_);
+  std::swap(nextStart_, that.nextStart_);
+  char_.swap(that.char_);
+  provenances_.swap(that.provenances_);
 }
 
 void TokenSequence::Put(const TokenSequence &that) {

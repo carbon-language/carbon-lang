@@ -20,6 +20,10 @@ namespace Fortran::parser {
 
 void OffsetToProvenanceMappings::clear() { provenanceMap_.clear(); }
 
+void OffsetToProvenanceMappings::swap(OffsetToProvenanceMappings &that) {
+  provenanceMap_.swap(that.provenanceMap_);
+}
+
 std::size_t OffsetToProvenanceMappings::size() const {
   if (provenanceMap_.empty()) {
     return 0;

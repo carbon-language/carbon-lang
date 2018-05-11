@@ -51,17 +51,12 @@ public:
     Put(that);
     return *this;
   }
-  TokenSequence &operator=(TokenSequence &&that) {
-    start_ = std::move(that.start_);
-    nextStart_ = that.nextStart_;
-    char_ = std::move(that.char_);
-    return *this;
-  }
-
+  TokenSequence &operator=(TokenSequence &&that);
   bool empty() const { return start_.empty(); }
   void clear();
   void pop_back();
   void shrink_to_fit();
+  void swap(TokenSequence &);
 
   std::size_t SizeInTokens() const { return start_.size(); }
   std::size_t SizeInChars() const { return char_.size(); }
