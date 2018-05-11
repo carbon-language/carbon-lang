@@ -85,13 +85,27 @@ In short, a Fortran preprocessor should work as if:
 ---------------------------------------------------
 1. Fixed form lines are padded up to column 72 (or 132) and clipped thereafter.
 2. Fortran comments are removed.
-3. Fortran line continuations are processed (outside directives).
-4. C-style line continuations are processed in directives.
-5. C old-style comments are removed from directives.
-6. Directives are processed and macros expanded.
+3. C-style line continuations are processed in preprocessing directives.
+4. C old-style comments are removed from directives.
+5. Fortran line continuations are processed (outside preprocessing directives).
+   Line continuation rules depend on source form.
+   Comment lines that are enabled compiler directives have their line
+   continuations processed.
+   Conditional compilation preprocessing directives (e.g., `#if`) may be
+   appear among continuation lines, and have their usual effects upon them.
+6. Other preprocessing directives are processed and macros expanded.
    Along the way, Fortran `INCLUDE` lines and preprocessor `#include` directives
    are expanded, and all these steps applied recursively to the introduced text.
-7. Newly visible Fortran comments are removed.
+7. Any newly-created Fortran comments are removed.
+
+Steps 5 and 6 are interleaved with respect to the preprocessing state.
+Conditional compilation preprocessing directives always reflect only the macro
+definition state produced by the active `#define` and `#undef` preprocessing directives
+that precede them.
+
+If the source form is changed by means of a compiler directive (i.e.,
+`!DIR$ FIXED` or `FREE`) in an included source file, its effects cease
+at the end of that file.
 
 Last, if the preprocessor is not integrated into the Fortran compiler,
 new Fortran continuation line markers should be introduced into the final
