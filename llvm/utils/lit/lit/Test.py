@@ -386,7 +386,7 @@ class Test:
         elif self.result.code == UNSUPPORTED:
             unsupported_features = self.getMissingRequiredFeatures()
             if unsupported_features:
-                skip_message = "Skipping because of: " + ", ".join(unsupported_features)
+                skip_message = escape("Skipping because of: " + ", ".join(unsupported_features))
             else:
                 skip_message = "Skipping because of configuration."
 
