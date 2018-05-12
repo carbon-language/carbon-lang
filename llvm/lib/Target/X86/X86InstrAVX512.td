@@ -6922,22 +6922,6 @@ let Predicates = [HasAVX512] in {
 } // HasAVX512
 
 let Predicates = [HasAVX512] in {
-  def : Pat<(int_x86_sse_cvtsi2ss VR128X:$src1, GR32:$src2),
-            (VCVTSI2SSZrr_Int VR128X:$src1, GR32:$src2)>;
-  def : Pat<(int_x86_sse_cvtsi2ss VR128X:$src1, (loadi32 addr:$src2)),
-            (VCVTSI2SSZrm_Int VR128X:$src1, addr:$src2)>;
-  def : Pat<(int_x86_sse_cvtsi642ss VR128X:$src1, GR64:$src2),
-            (VCVTSI642SSZrr_Int VR128X:$src1, GR64:$src2)>;
-  def : Pat<(int_x86_sse_cvtsi642ss VR128X:$src1, (loadi64 addr:$src2)),
-            (VCVTSI642SSZrm_Int VR128X:$src1, addr:$src2)>;
-  def : Pat<(int_x86_sse2_cvtsi2sd VR128X:$src1, GR32:$src2),
-            (VCVTSI2SDZrr_Int VR128X:$src1, GR32:$src2)>;
-  def : Pat<(int_x86_sse2_cvtsi2sd VR128X:$src1, (loadi32 addr:$src2)),
-            (VCVTSI2SDZrm_Int VR128X:$src1, addr:$src2)>;
-  def : Pat<(int_x86_sse2_cvtsi642sd VR128X:$src1, GR64:$src2),
-            (VCVTSI642SDZrr_Int VR128X:$src1, GR64:$src2)>;
-  def : Pat<(int_x86_sse2_cvtsi642sd VR128X:$src1, (loadi64 addr:$src2)),
-            (VCVTSI642SDZrm_Int VR128X:$src1, addr:$src2)>;
   def : Pat<(int_x86_avx512_cvtusi2sd VR128X:$src1, GR32:$src2),
             (VCVTUSI2SDZrr_Int VR128X:$src1, GR32:$src2)>;
   def : Pat<(int_x86_avx512_cvtusi2sd VR128X:$src1, (loadi32 addr:$src2)),
