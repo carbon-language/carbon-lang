@@ -16,8 +16,21 @@
 #include "ProfileYAMLMapping.h"
 #include "llvm/Support/CommandLine.h"
 
+using namespace llvm;
+
 namespace opts {
-extern llvm::cl::opt<unsigned> Verbosity;
+
+extern cl::opt<unsigned> Verbosity;
+extern cl::OptionCategory BoltOptCategory;
+
+static llvm::cl::opt<bool>
+IgnoreHash("profile-ignore-hash",
+  cl::desc("ignore hash while reading function profile"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
 }
 
 namespace llvm {
@@ -59,7 +72,7 @@ ProfileReader::parseFunctionProfile(BinaryFunction &BF,
 
   BF.setExecutionCount(YamlBF.ExecCount);
 
-  if (YamlBF.Hash != BF.hash(true, true)) {
+  if (!opts::IgnoreHash && YamlBF.Hash != BF.hash(true, true)) {
     if (opts::Verbosity >= 1)
       errs() << "BOLT-WARNING: function hash mismatch\n";
     ProfileMatched = false;
@@ -251,21 +264,33 @@ ProfileReader::readProfile(const std::string &FileName,
 
   YamlProfileToFunction.resize(YamlBP.Functions.size() + 1);
 
+  auto profileMatches = [](const yaml::bolt::BinaryFunctionProfile &Profile,
+                           BinaryFunction &BF) {
+    if (opts::IgnoreHash && Profile.NumBasicBlocks == BF.size())
+      return true;
+    if (!opts::IgnoreHash && Profile.Hash == BF.hash(/*Recompute = */false))
+      return true;
+    return false;
+  };
+
   // We have to do 2 passes since LTO introduces an ambiguity in function
   // names. The first pass assigns profiles that match 100% by name and
   // by hash. The second pass allows name ambiguity for LTO private functions.
   for (auto &BFI : Functions) {
     auto &Function = BFI.second;
-    auto Hash = Function.hash(true, true);
+
+    // Recompute hash once per function.
+    if (!opts::IgnoreHash)
+      Function.hash(/*Recompute = */true, true);
+
     for (auto &FunctionName : Function.getNames()) {
       auto PI = ProfileNameToProfile.find(FunctionName);
       if (PI == ProfileNameToProfile.end()) {
         continue;
       }
       auto &YamlBF = *PI->getValue();
-      if (YamlBF.Hash == Hash) {
+      if (profileMatches(YamlBF, Function))
         matchProfileToFunction(YamlBF, Function);
-      }
     }
   }
 
@@ -275,7 +300,6 @@ ProfileReader::readProfile(const std::string &FileName,
     if (ProfiledFunctions.count(&Function))
       continue;
 
-    auto Hash = Function.hash(/*Recompute = */false); // was just recomputed
     for (auto &FunctionName : Function.getNames()) {
       const auto CommonName = getLTOCommonName(FunctionName);
       if (CommonName) {
@@ -288,7 +312,7 @@ ProfileReader::readProfile(const std::string &FileName,
         for (auto *YamlBF : LTOProfiles) {
           if (YamlBF->Used)
             continue;
-          if (YamlBF->Hash == Hash) {
+          if ((ProfileMatched = profileMatches(*YamlBF, Function))) {
             matchProfileToFunction(*YamlBF, Function);
             break;
           }
