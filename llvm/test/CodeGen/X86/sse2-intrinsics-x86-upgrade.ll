@@ -259,23 +259,6 @@ declare <2 x i64> @llvm.x86.sse2.pmulu.dq(<4 x i32>, <4 x i32>) nounwind readnon
 
 
 define <2 x double> @test_x86_sse2_cvtsi2sd(<2 x double> %a0, i32 %a1) {
-; SSE-LABEL: test_x86_sse2_cvtsi2sd:
-; SSE:       ## %bb.0:
-; SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; SSE-NEXT:    cvtsi2sdl %eax, %xmm0 ## encoding: [0xf2,0x0f,0x2a,0xc0]
-; SSE-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX2-LABEL: test_x86_sse2_cvtsi2sd:
-; AVX2:       ## %bb.0:
-; AVX2-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX2-NEXT:    vcvtsi2sdl %eax, %xmm0, %xmm0 ## encoding: [0xc5,0xfb,0x2a,0xc0]
-; AVX2-NEXT:    retl ## encoding: [0xc3]
-;
-; SKX-LABEL: test_x86_sse2_cvtsi2sd:
-; SKX:       ## %bb.0:
-; SKX-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; SKX-NEXT:    vcvtsi2sdl %eax, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xfb,0x2a,0xc0]
-; SKX-NEXT:    retl ## encoding: [0xc3]
 ; CHECK-LABEL: test_x86_sse2_cvtsi2sd:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    cvtsi2sdl {{[0-9]+}}(%esp), %xmm0
@@ -284,3 +267,41 @@ define <2 x double> @test_x86_sse2_cvtsi2sd(<2 x double> %a0, i32 %a1) {
   ret <2 x double> %res
 }
 declare <2 x double> @llvm.x86.sse2.cvtsi2sd(<2 x double>, i32) nounwind readnone
+
+
+define <2 x double> @test_x86_sse2_cvtss2sd(<2 x double> %a0, <4 x float> %a1) {
+; CHECK-LABEL: test_x86_sse2_cvtss2sd:
+; CHECK:       ## %bb.0:
+; CHECK-NEXT:    cvtss2sd %xmm1, %xmm0
+; CHECK-NEXT:    retl
+  %res = call <2 x double> @llvm.x86.sse2.cvtss2sd(<2 x double> %a0, <4 x float> %a1) ; <<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.x86.sse2.cvtss2sd(<2 x double>, <4 x float>) nounwind readnone
+
+
+define <2 x double> @test_x86_sse2_cvtss2sd_load(<2 x double> %a0, <4 x float>* %p1) {
+; CHECK-LABEL: test_x86_sse2_cvtss2sd_load:
+; CHECK:       ## %bb.0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; CHECK-NEXT:    cvtss2sd %xmm1, %xmm1
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; CHECK-NEXT:    retl
+  %a1 = load <4 x float>, <4 x float>* %p1
+  %res = call <2 x double> @llvm.x86.sse2.cvtss2sd(<2 x double> %a0, <4 x float> %a1) ; <<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+
+
+define <2 x double> @test_x86_sse2_cvtss2sd_load_optsize(<2 x double> %a0, <4 x float>* %p1) optsize {
+; CHECK-LABEL: test_x86_sse2_cvtss2sd_load_optsize:
+; CHECK:       ## %bb.0:
+; CHECK-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; CHECK-NEXT:    cvtss2sd (%eax), %xmm1
+; CHECK-NEXT:    movsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; CHECK-NEXT:    retl
+  %a1 = load <4 x float>, <4 x float>* %p1
+  %res = call <2 x double> @llvm.x86.sse2.cvtss2sd(<2 x double> %a0, <4 x float> %a1) ; <<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}

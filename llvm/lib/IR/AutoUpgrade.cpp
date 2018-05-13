@@ -258,6 +258,7 @@ static bool ShouldUpgradeX86Intrinsic(Function *F, StringRef Name) {
       Name == "sse.cvtsi642ss" || // Added in 7.0
       Name == "sse2.cvtsi2sd" || // Added in 7.0
       Name == "sse2.cvtsi642sd" || // Added in 7.0
+      Name == "sse2.cvtss2sd" || // Added in 7.0
       Name == "sse2.cvtdq2pd" || // Added in 3.9
       Name == "sse2.cvtps2pd" || // Added in 3.9
       Name == "avx.cvtdq2.pd.256" || // Added in 3.9
@@ -1558,6 +1559,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
                          Name == "sse2.cvtsi642sd")) {
       Rep = Builder.CreateSIToFP(CI->getArgOperand(1),
                                  CI->getType()->getVectorElementType());
+      Rep = Builder.CreateInsertElement(CI->getArgOperand(0), Rep, (uint64_t)0);
+    } else if (IsX86 && Name == "sse2.cvtss2sd") {
+      Rep = Builder.CreateExtractElement(CI->getArgOperand(1), (uint64_t)0);
+      Rep = Builder.CreateFPExt(Rep, CI->getType()->getVectorElementType());
       Rep = Builder.CreateInsertElement(CI->getArgOperand(0), Rep, (uint64_t)0);
     } else if (IsX86 && (Name == "sse2.cvtdq2pd" ||
                          Name == "sse2.cvtps2pd" ||
