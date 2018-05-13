@@ -450,9 +450,9 @@ DWARFUnit::GetDIE(dw_offset_t die_offset) {
 
     if (ContainsDIEOffset(die_offset)) {
       ExtractDIEsIfNeeded(false);
-      DWARFDebugInfoEntry::iterator end = m_die_array.end();
-      DWARFDebugInfoEntry::iterator pos =
-          lower_bound(m_die_array.begin(), end, die_offset, CompareDIEOffset);
+      DWARFDebugInfoEntry::const_iterator end = m_die_array.cend();
+      DWARFDebugInfoEntry::const_iterator pos =
+          lower_bound(m_die_array.cbegin(), end, die_offset, CompareDIEOffset);
       if (pos != end) {
         if (die_offset == (*pos).GetOffset())
           return DWARFDIE(this, &(*pos));
