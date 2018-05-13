@@ -4,10 +4,6 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=skx -show-mc-encoding | FileCheck %s --check-prefix=VCHECK --check-prefix=SKX
 
 define <4 x float> @test_x86_sse_cvtsi642ss(<4 x float> %a0, i64 %a1) {
-; CHECK-LABEL: test_x86_sse_cvtsi642ss:
-; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vcvtsi2ssq %rdi, %xmm0, %xmm0
-; CHECK-NEXT:    retq
 ; SSE-LABEL: test_x86_sse_cvtsi642ss:
 ; SSE:       ## %bb.0:
 ; SSE-NEXT:    cvtsi2ssq %rdi, %xmm0 ## encoding: [0xf3,0x48,0x0f,0x2a,0xc7]
