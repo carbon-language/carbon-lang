@@ -1410,8 +1410,18 @@ def : Pat<(v4f32 (X86Movss
 
 def : Pat<(v4f32 (X86Movss
                    (v4f32 VR128:$dst),
+                   (v4f32 (scalar_to_vector (f32 (sint_to_fp (loadi64 addr:$src))))))),
+          (VCVTSI642SSrm_Int VR128:$dst, addr:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128:$dst),
                    (v4f32 (scalar_to_vector (f32 (sint_to_fp GR32:$src)))))),
           (VCVTSI2SSrr_Int VR128:$dst, GR32:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128:$dst),
+                   (v4f32 (scalar_to_vector (f32 (sint_to_fp (loadi32 addr:$src))))))),
+          (VCVTSI2SSrm_Int VR128:$dst, addr:$src)>;
 
 def : Pat<(v2f64 (X86Movsd
                    (v2f64 VR128:$dst),
@@ -1420,8 +1430,18 @@ def : Pat<(v2f64 (X86Movsd
 
 def : Pat<(v2f64 (X86Movsd
                    (v2f64 VR128:$dst),
+                   (v2f64 (scalar_to_vector (f64 (sint_to_fp (loadi64 addr:$src))))))),
+          (VCVTSI642SDrm_Int VR128:$dst, addr:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128:$dst),
                    (v2f64 (scalar_to_vector (f64 (sint_to_fp GR32:$src)))))),
           (VCVTSI2SDrr_Int VR128:$dst, GR32:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128:$dst),
+                   (v2f64 (scalar_to_vector (f64 (sint_to_fp (loadi32 addr:$src))))))),
+          (VCVTSI2SDrm_Int VR128:$dst, addr:$src)>;
 } // Predicates = [UseAVX]
 
 let Predicates = [UseSSE2] in {
@@ -1444,8 +1464,18 @@ def : Pat<(v2f64 (X86Movsd
 
 def : Pat<(v2f64 (X86Movsd
                    (v2f64 VR128:$dst),
+                   (v2f64 (scalar_to_vector (f64 (sint_to_fp (loadi64 addr:$src))))))),
+          (CVTSI642SDrm_Int VR128:$dst, addr:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128:$dst),
                    (v2f64 (scalar_to_vector (f64 (sint_to_fp GR32:$src)))))),
           (CVTSI2SDrr_Int VR128:$dst, GR32:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128:$dst),
+                   (v2f64 (scalar_to_vector (f64 (sint_to_fp (loadi32 addr:$src))))))),
+          (CVTSI2SDrm_Int VR128:$dst, addr:$src)>;
 } // Predicates = [UseSSE2]
 
 let Predicates = [UseSSE1] in {
@@ -1456,8 +1486,18 @@ def : Pat<(v4f32 (X86Movss
 
 def : Pat<(v4f32 (X86Movss
                    (v4f32 VR128:$dst),
+                   (v4f32 (scalar_to_vector (f32 (sint_to_fp (loadi64 addr:$src))))))),
+          (CVTSI642SSrm_Int VR128:$dst, addr:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128:$dst),
                    (v4f32 (scalar_to_vector (f32 (sint_to_fp GR32:$src)))))),
           (CVTSI2SSrr_Int VR128:$dst, GR32:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128:$dst),
+                   (v4f32 (scalar_to_vector (f32 (sint_to_fp (loadi32 addr:$src))))))),
+          (CVTSI2SSrm_Int VR128:$dst, addr:$src)>;
 } // Predicates = [UseSSE1]
 
 let Predicates = [HasAVX, NoVLX] in {
