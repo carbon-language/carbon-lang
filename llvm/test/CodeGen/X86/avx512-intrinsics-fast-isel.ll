@@ -1989,14 +1989,12 @@ define <2 x double> @test_mm_cvtu32_sd(<2 x double> %__A, i32 %__B) {
 ; X32-LABEL: test_mm_cvtu32_sd:
 ; X32:       # %bb.0: # %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    vcvtusi2sdl %eax, %xmm1, %xmm1
-; X32-NEXT:    vmovsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; X32-NEXT:    vcvtusi2sdl %eax, %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_cvtu32_sd:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vcvtusi2sdl %edi, %xmm1, %xmm1
-; X64-NEXT:    vmovsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; X64-NEXT:    vcvtusi2sdl %edi, %xmm0, %xmm0
 ; X64-NEXT:    retq
 entry:
   %conv.i = uitofp i32 %__B to double
@@ -2017,8 +2015,7 @@ define <2 x double> @test_mm_cvtu64_sd(<2 x double> %__A, i64 %__B) {
 ;
 ; X64-LABEL: test_mm_cvtu64_sd:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vcvtusi2sdq %rdi, %xmm1, %xmm1
-; X64-NEXT:    vmovsd {{.*#+}} xmm0 = xmm1[0],xmm0[1]
+; X64-NEXT:    vcvtusi2sdq %rdi, %xmm0, %xmm0
 ; X64-NEXT:    retq
 entry:
   %conv.i = uitofp i64 %__B to double
@@ -2030,14 +2027,12 @@ define <4 x float> @test_mm_cvtu32_ss(<4 x float> %__A, i32 %__B) {
 ; X32-LABEL: test_mm_cvtu32_ss:
 ; X32:       # %bb.0: # %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    vcvtusi2ssl %eax, %xmm1, %xmm1
-; X32-NEXT:    vmovss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X32-NEXT:    vcvtusi2ssl %eax, %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_cvtu32_ss:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vcvtusi2ssl %edi, %xmm1, %xmm1
-; X64-NEXT:    vmovss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X64-NEXT:    vcvtusi2ssl %edi, %xmm0, %xmm0
 ; X64-NEXT:    retq
 entry:
   %conv.i = uitofp i32 %__B to float
@@ -2074,8 +2069,7 @@ define <4 x float> @test_mm_cvtu64_ss(<4 x float> %__A, i64 %__B) {
 ;
 ; X64-LABEL: test_mm_cvtu64_ss:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vcvtusi2ssq %rdi, %xmm1, %xmm1
-; X64-NEXT:    vmovss {{.*#+}} xmm0 = xmm1[0],xmm0[1,2,3]
+; X64-NEXT:    vcvtusi2ssq %rdi, %xmm0, %xmm0
 ; X64-NEXT:    retq
 entry:
   %conv.i = uitofp i64 %__B to float

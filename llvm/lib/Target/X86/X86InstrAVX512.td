@@ -6970,6 +6970,46 @@ def : Pat<(v2f64 (X86Movsd
                    (v2f64 VR128X:$dst),
                    (v2f64 (scalar_to_vector (f64 (sint_to_fp (loadi32 addr:$src))))))),
           (VCVTSI2SDZrm_Int VR128X:$dst, addr:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128X:$dst),
+                   (v4f32 (scalar_to_vector (f32 (uint_to_fp GR64:$src)))))),
+          (VCVTUSI642SSZrr_Int VR128X:$dst, GR64:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128X:$dst),
+                   (v4f32 (scalar_to_vector (f32 (uint_to_fp (loadi64 addr:$src))))))),
+          (VCVTUSI642SSZrm_Int VR128X:$dst, addr:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128X:$dst),
+                   (v4f32 (scalar_to_vector (f32 (uint_to_fp GR32:$src)))))),
+          (VCVTUSI2SSZrr_Int VR128X:$dst, GR32:$src)>;
+
+def : Pat<(v4f32 (X86Movss
+                   (v4f32 VR128X:$dst),
+                   (v4f32 (scalar_to_vector (f32 (uint_to_fp (loadi32 addr:$src))))))),
+          (VCVTUSI2SSZrm_Int VR128X:$dst, addr:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128X:$dst),
+                   (v2f64 (scalar_to_vector (f64 (uint_to_fp GR64:$src)))))),
+          (VCVTUSI642SDZrr_Int VR128X:$dst, GR64:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128X:$dst),
+                   (v2f64 (scalar_to_vector (f64 (uint_to_fp (loadi64 addr:$src))))))),
+          (VCVTUSI642SDZrm_Int VR128X:$dst, addr:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128X:$dst),
+                   (v2f64 (scalar_to_vector (f64 (uint_to_fp GR32:$src)))))),
+          (VCVTUSI2SDZrr_Int VR128X:$dst, GR32:$src)>;
+
+def : Pat<(v2f64 (X86Movsd
+                   (v2f64 VR128X:$dst),
+                   (v2f64 (scalar_to_vector (f64 (uint_to_fp (loadi32 addr:$src))))))),
+          (VCVTUSI2SDZrm_Int VR128X:$dst, addr:$src)>;
 } // Predicates = [HasAVX512]
 
 // Convert float/double to signed/unsigned int 32/64 with truncation
