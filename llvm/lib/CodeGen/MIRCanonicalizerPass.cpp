@@ -135,7 +135,7 @@ rescheduleLexographically(std::vector<MachineInstr *> instructions,
   }
 
   std::sort(StringInstrMap.begin(), StringInstrMap.end(),
-            [](StringInstrPair &a, StringInstrPair &b) {
+            [](const StringInstrPair &a, const StringInstrPair &b) -> bool {
               return (a.first < b.first);
             });
 
