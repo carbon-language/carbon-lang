@@ -9521,7 +9521,8 @@ _mm_maskz_cvtss_sd (__mmask8 __U, __m128d __A, __m128 __B)
 static __inline__ __m128d __DEFAULT_FN_ATTRS
 _mm_cvtu32_sd (__m128d __A, unsigned __B)
 {
-  return (__m128d) __builtin_ia32_cvtusi2sd32 ((__v2df) __A, __B);
+  __A[0] = __B;
+  return __A;
 }
 
 #ifdef __x86_64__
@@ -9532,8 +9533,8 @@ _mm_cvtu32_sd (__m128d __A, unsigned __B)
 static __inline__ __m128d __DEFAULT_FN_ATTRS
 _mm_cvtu64_sd (__m128d __A, unsigned long long __B)
 {
-  return (__m128d) __builtin_ia32_cvtusi2sd64 ((__v2df) __A, __B,
-                 _MM_FROUND_CUR_DIRECTION);
+  __A[0] = __B;
+  return __A;
 }
 #endif
 
@@ -9544,8 +9545,8 @@ _mm_cvtu64_sd (__m128d __A, unsigned long long __B)
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_cvtu32_ss (__m128 __A, unsigned __B)
 {
-  return (__m128) __builtin_ia32_cvtusi2ss32 ((__v4sf) __A, __B,
-                _MM_FROUND_CUR_DIRECTION);
+  __A[0] = __B;
+  return __A;
 }
 
 #ifdef __x86_64__
@@ -9556,8 +9557,8 @@ _mm_cvtu32_ss (__m128 __A, unsigned __B)
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_cvtu64_ss (__m128 __A, unsigned long long __B)
 {
-  return (__m128) __builtin_ia32_cvtusi2ss64 ((__v4sf) __A, __B,
-                _MM_FROUND_CUR_DIRECTION);
+  __A[0] = __B;
+  return __A;
 }
 #endif
 

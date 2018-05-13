@@ -7007,7 +7007,8 @@ __m128d test_mm_maskz_cvt_roundss_sd( __mmask8 __U, __m128d __A, __m128 __B) {
 
 __m128d test_mm_cvtu32_sd(__m128d __A, unsigned __B) {
   // CHECK-LABEL: @test_mm_cvtu32_sd
-  // CHECK: @llvm.x86.avx512.cvtusi2sd
+  // CHECK: uitofp i32 %{{.*}} to double
+  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
   return _mm_cvtu32_sd(__A, __B); 
 }
 
@@ -7020,7 +7021,8 @@ __m128d test_mm_cvt_roundu64_sd(__m128d __A, unsigned long long __B) {
 
 __m128d test_mm_cvtu64_sd(__m128d __A, unsigned long long __B) {
   // CHECK-LABEL: @test_mm_cvtu64_sd
-  // CHECK: @llvm.x86.avx512.cvtusi642sd
+  // CHECK: uitofp i64 %{{.*}} to double
+  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i32 0
   return _mm_cvtu64_sd(__A, __B); 
 }
 #endif
@@ -7033,7 +7035,8 @@ __m128 test_mm_cvt_roundu32_ss(__m128 __A, unsigned __B) {
 
 __m128 test_mm_cvtu32_ss(__m128 __A, unsigned __B) {
   // CHECK-LABEL: @test_mm_cvtu32_ss
-  // CHECK: @llvm.x86.avx512.cvtusi2ss
+  // CHECK: uitofp i32 %{{.*}} to float
+  // CHECK: insertelement <4 x float> %{{.*}}, float %{{.*}}, i32 0
   return _mm_cvtu32_ss(__A, __B); 
 }
 
@@ -7046,7 +7049,8 @@ __m128 test_mm_cvt_roundu64_ss(__m128 __A, unsigned long long __B) {
 
 __m128 test_mm_cvtu64_ss(__m128 __A, unsigned long long __B) {
   // CHECK-LABEL: @test_mm_cvtu64_ss
-  // CHECK: @llvm.x86.avx512.cvtusi642ss
+  // CHECK: uitofp i64 %{{.*}} to float
+  // CHECK: insertelement <4 x float> %{{.*}}, float %{{.*}}, i32 0
   return _mm_cvtu64_ss(__A, __B); 
 }
 #endif
