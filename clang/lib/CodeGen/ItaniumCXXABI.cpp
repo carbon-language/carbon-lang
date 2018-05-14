@@ -3630,16 +3630,12 @@ static StructorCodegen getCodegenToUse(CodeGenModule &CGM,
   }
   llvm::GlobalValue::LinkageTypes Linkage = CGM.getFunctionLinkage(AliasDecl);
 
-  // Only use RAUW in optimized code, as it makes the complete structor symbol
-  // disappear completely, which degrades debugging experience.
-  if (CGM.getCodeGenOpts().OptimizationLevel > 0) {
-    if (llvm::GlobalValue::isDiscardableIfUnused(Linkage))
-      return StructorCodegen::RAUW;
+  if (llvm::GlobalValue::isDiscardableIfUnused(Linkage))
+    return StructorCodegen::RAUW;
 
-    // FIXME: Should we allow available_externally aliases?
-    if (!llvm::GlobalAlias::isValidLinkage(Linkage))
-      return StructorCodegen::RAUW;
-  }
+  // FIXME: Should we allow available_externally aliases?
+  if (!llvm::GlobalAlias::isValidLinkage(Linkage))
+    return StructorCodegen::RAUW;
 
   if (llvm::GlobalValue::isWeakForLinker(Linkage)) {
     // Only ELF and wasm support COMDATs with arbitrary names (C5/D5).
