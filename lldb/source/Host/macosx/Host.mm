@@ -57,7 +57,7 @@
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/ThreadLauncher.h"
-#include "lldb/Target/ProcessLaunchInfo.h"
+#include "lldb/Target/Process.h"
 #include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/CleanUp.h"
 #include "lldb/Utility/DataBufferHeap.h"
@@ -68,7 +68,6 @@
 #include "lldb/Utility/NameMatches.h"
 #include "lldb/Utility/StreamString.h"
 #include "lldb/Utility/StructuredData.h"
-#include "lldb/lldb-defines.h"
 
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Errno.h"
@@ -1498,9 +1497,15 @@ Status Host::LaunchProcess(ProcessLaunchInfo &launch_info) {
     launch_info.SetProcessID(pid);
 
     // Make sure we reap any processes we spawn or we will have zombies.
-    bool monitoring = launch_info.MonitorProcess());
-    UNUSED_IF_ASSERT_DISABLED(monitoring);
-    assert(monitoring);
+    if (!launch_info.MonitorProcess()) {
+      const bool monitor_signals = false;
+      Host::MonitorChildProcessCallback callback = nullptr;
+
+      if (!launch_info.GetFlags().Test(lldb::eLaunchFlagDontSetExitStatus))
+        callback = Process::SetProcessExitStatus;
+
+      StartMonitoringChildProcess(callback, pid, monitor_signals);
+    }
   } else {
     // Invalid process ID, something didn't go well
     if (error.Success())
