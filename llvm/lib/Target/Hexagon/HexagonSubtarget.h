@@ -54,6 +54,7 @@ class HexagonSubtarget : public HexagonGenSubtargetInfo {
   bool UseMemops = false;
   bool UsePackets = false;
   bool UseNewValueJumps = false;
+  bool UseNewValueStores = false;
 
   bool HasMemNoShuf = false;
   bool EnableDuplex = false;
@@ -155,6 +156,7 @@ public:
   bool useMemops() const { return UseMemops; }
   bool usePackets() const { return UsePackets; }
   bool useNewValueJumps() const { return UseNewValueJumps; }
+  bool useNewValueStores() const { return UseNewValueStores; }
 
   bool modeIEEERndNear() const { return ModeIEEERndNear; }
   bool useHVXOps() const { return HexagonHVXVersion > Hexagon::ArchEnum::V4; }

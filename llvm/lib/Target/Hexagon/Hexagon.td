@@ -52,6 +52,8 @@ def FeatureMemops: SubtargetFeature<"memops", "UseMemops", "true",
       "Use memop instructions">;
 def FeatureNVJ: SubtargetFeature<"nvj", "UseNewValueJumps", "true",
       "Support for new-value jumps", [FeaturePackets]>;
+def FeatureNVS: SubtargetFeature<"nvs", "UseNewValueStores", "true",
+      "Support for new-value stores", [FeaturePackets]>;
 def FeatureDuplex: SubtargetFeature<"duplex", "EnableDuplex", "true",
       "Enable generation of duplex instruction">;
 def FeatureReservedR19: SubtargetFeature<"reserved-r19", "ReservedR19",
@@ -321,23 +323,28 @@ class Proc<string Name, SchedMachineModel Model,
 
 def : Proc<"hexagonv4",  HexagonModelV4,
            [ArchV4,
-            FeatureDuplex, FeatureMemops, FeatureNVJ, FeaturePackets]>;
+            FeatureDuplex, FeatureMemops, FeatureNVJ, FeatureNVS,
+            FeaturePackets]>;
 def : Proc<"hexagonv5",  HexagonModelV4,
            [ArchV4, ArchV5,
-            FeatureDuplex, FeatureMemops, FeatureNVJ, FeaturePackets]>;
+            FeatureDuplex, FeatureMemops, FeatureNVJ, FeatureNVS,
+            FeaturePackets]>;
 def : Proc<"hexagonv55", HexagonModelV55,
            [ArchV4, ArchV5, ArchV55,
-            FeatureDuplex, FeatureMemops, FeatureNVJ, FeaturePackets]>;
+            FeatureDuplex, FeatureMemops, FeatureNVJ, FeatureNVS,
+            FeaturePackets]>;
 def : Proc<"hexagonv60", HexagonModelV60,
            [ArchV4, ArchV5, ArchV55, ArchV60,
-            FeatureDuplex, FeatureMemops, FeatureNVJ, FeaturePackets]>;
+            FeatureDuplex, FeatureMemops, FeatureNVJ, FeatureNVS,
+            FeaturePackets]>;
 def : Proc<"hexagonv62", HexagonModelV62,
            [ArchV4, ArchV5, ArchV55, ArchV60, ArchV62,
-            FeatureDuplex, FeatureMemops, FeatureNVJ, FeaturePackets]>;
+            FeatureDuplex, FeatureMemops, FeatureNVJ, FeatureNVS,
+            FeaturePackets]>;
 def : Proc<"hexagonv65", HexagonModelV65,
            [ArchV4, ArchV5, ArchV55, ArchV60, ArchV62, ArchV65,
             FeatureDuplex, FeatureMemNoShuf, FeatureMemops, FeatureNVJ,
-            FeaturePackets]>;
+            FeatureNVS, FeaturePackets]>;
 
 //===----------------------------------------------------------------------===//
 // Declare the target which we are implementing
