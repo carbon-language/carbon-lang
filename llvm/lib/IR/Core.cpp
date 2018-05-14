@@ -290,6 +290,7 @@ map_to_llvmModFlagBehavior(LLVMModuleFlagBehavior Behavior) {
   case LLVMModuleFlagBehaviorAppendUnique:
     return Module::ModFlagBehavior::AppendUnique;
   }
+  llvm_unreachable("Unknown LLVMModuleFlagBehavior");
 }
 
 static LLVMModuleFlagBehavior
