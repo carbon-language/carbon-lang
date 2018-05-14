@@ -17,20 +17,13 @@ void renderInstructionRow(const InstructionBenchmark &Point,
   OS << "\n";
 }
 
-void analyzeCluster(const std::vector<InstructionBenchmark> &Points,
-                    const llvm::MCSubtargetInfo &STI,
-                    const InstructionBenchmarkClustering::Cluster &Cluster,
-                    llvm::raw_ostream &OS) {
+void printCluster(const std::vector<InstructionBenchmark> &Points,
+                  const llvm::MCSubtargetInfo &STI,
+                  const size_t ClusterId,
+                  const InstructionBenchmarkClustering::Cluster &Cluster,
+                  llvm::raw_ostream &OS) {
   // TODO:
-  // std::sort(Cluster.PointIndices.begin(), Cluster.PointIndices.end(),
-  // [](int PointIdA, int PointIdB) { return GetSchedClass(Points[PointIdA]) <
   // GetSchedClass(Points[PointIdB]); });
-  OS << "Cluster:\n";
-  // Get max length of the name for alignement.
-  size_t NameLen = 0;
-  for (const auto &PointId : Cluster.PointIndices) {
-    NameLen = std::max(NameLen, Points[PointId].AsmTmpl.Name.size());
-  }
 
   // Print all points.
   for (const auto &PointId : Cluster.PointIndices) {
@@ -43,10 +36,10 @@ void analyzeCluster(const std::vector<InstructionBenchmark> &Points,
 llvm::Error
 printAnalysisClusters(const InstructionBenchmarkClustering &Clustering,
                       const llvm::MCSubtargetInfo &STI, llvm::raw_ostream &OS) {
-
-  for (const auto &Cluster : Clustering.getValidClusters()) {
-    analyzeCluster(Clustering.getPoints(), STI, Cluster, OS);
-    OS << "\n\n\n";
+  OS << "cluster_id,key,";
+  for (size_t I = 0, E = Clustering.getValidClusters().size(); I < E; ++I) {
+    printCluster(Clustering.getPoints(), STI, I, Clustering.getValidClusters()[I], OS);
+    OS << "\n\n";
   }
 
   return llvm::Error::success();
