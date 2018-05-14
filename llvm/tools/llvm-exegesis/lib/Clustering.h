@@ -72,8 +72,6 @@ public:
     return ClusterIdForPoint_[P];
   }
 
-  const std::vector<InstructionBenchmark> &getPoints() const { return Points_; }
-
   const Cluster &getCluster(ClusterId Id) const {
     assert(!Id.isUndef() && "unlabeled cluster");
     if (Id.isNoise()) {
@@ -88,11 +86,10 @@ public:
   const std::vector<Cluster> &getValidClusters() const { return Clusters_; }
 
 private:
-  InstructionBenchmarkClustering(const std::vector<InstructionBenchmark> &Points);
-  llvm::Error validateAndSetup();
-  void dbScan(size_t MinPts,
+  InstructionBenchmarkClustering();
+  llvm::Error validateAndSetup(const std::vector<InstructionBenchmark> &Points);
+  void dbScan(const std::vector<InstructionBenchmark> &Points, size_t MinPts,
               double EpsilonSquared);
-  const std::vector<InstructionBenchmark> &Points_;
   int NumDimensions_ = 0;
   // ClusterForPoint_[P] is the cluster id for Points[P].
   std::vector<ClusterId> ClusterIdForPoint_;
