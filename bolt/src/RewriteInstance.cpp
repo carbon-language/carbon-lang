@@ -482,10 +482,6 @@ MCPlusBuilder *createMCPlusBuilder(const Triple::ArchType Arch,
   }
 }
 
-int64_t truncateToSize(int64_t Value, unsigned Bytes) {
-  return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
-}
-
 }
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
@@ -1889,7 +1885,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
                                               Rel.getOffset());
   }
 
-  // Weird stuff - section symbols are marked as ST_Debug.
+  // Section symbols are marked as ST_Debug.
   const bool SymbolIsSection =
       (cantFail(Symbol.getType()) == SymbolRef::ST_Debug);
   const auto PCRelOffset = IsPCRelative && !IsAArch64 ? Rel.getOffset() : 0;
@@ -2144,6 +2140,31 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     // typically as a result of __builtin_unreachable(). Check it here.
     auto *ReferencedBF = getBinaryFunctionContainingAddress(
         Address, /*CheckPastEnd*/ true, /*UseMaxSize*/ IsAArch64);
+
+    if (!IsSectionRelocation) {
+      if (auto *BF = getBinaryFunctionContainingAddress(SymbolAddress)) {
+        if (BF != ReferencedBF) {
+          // It's possible we are referencing a function without referencing any
+          // code, e.g. when taking a bitmask action on a function address.
+          errs() << "BOLT-WARNING: non-standard function reference (e.g. "
+                    "bitmask) detected against function " << *BF;
+          if (IsFromCode) {
+            errs() << " from function " << *ContainingBF << '\n';
+          } else {
+            errs() << " from data section at 0x"
+                   << Twine::utohexstr(Rel.getOffset()) << '\n';
+          }
+          DEBUG(printRelocationInfo(Rel,
+                                    SymbolName,
+                                    SymbolAddress,
+                                    Addend,
+                                    ExtractedValue)
+          );
+          ReferencedBF = BF;
+        }
+      }
+    }
+
     uint64_t RefFunctionOffset = 0;
     MCSymbol *ReferencedSymbol = nullptr;
     if (ForceRelocation) {
@@ -2155,20 +2176,25 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                       " symbol " << SymbolName << " with addend " << Addend
                    << '\n');
     } else if (ReferencedBF) {
-      RefFunctionOffset = Address - ReferencedBF->getAddress();
-      DEBUG(dbgs() << "  referenced function " << *ReferencedBF;
-            if (Address != ReferencedBF->getAddress()) {
-              dbgs() << " at offset 0x" << Twine::utohexstr(RefFunctionOffset);
-            }
-            dbgs() << '\n');
-      if (RefFunctionOffset) {
-        ReferencedSymbol =
-          ReferencedBF->getOrCreateLocalLabel(Address, /*CreatePastEnd*/ true);
-      } else {
-        ReferencedSymbol = ReferencedBF->getSymbol();
+      ReferencedSymbol = ReferencedBF->getSymbol();
+
+      // Adjust the point of reference to a code location inside a function.
+      if (ReferencedBF->containsAddress(Address, /*UseMaxSize = */true)) {
+        RefFunctionOffset = Address - ReferencedBF->getAddress();
+        if (RefFunctionOffset) {
+          ReferencedSymbol =
+            ReferencedBF->getOrCreateLocalLabel(Address,
+                                                /*CreatePastEnd =*/ true);
+        }
+        SymbolAddress = Address;
+        Addend = 0;
       }
-      SymbolAddress = Address;
-      Addend = 0;
+      DEBUG(
+        dbgs() << "  referenced function " << *ReferencedBF;
+        if (Address != ReferencedBF->getAddress())
+          dbgs() << " at offset 0x" << Twine::utohexstr(RefFunctionOffset);
+        dbgs() << '\n'
+      );
     } else {
       if (RefSection && RefSection->isText() && SymbolAddress) {
         // This can happen e.g. with PIC-style jump tables.
@@ -2252,7 +2278,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                (BD == BC->getBinaryDataContainingAddress(SymbolAddress) ||
                 !BC->getBinaryDataContainingAddress(SymbolAddress) ||
                 (IsSectionRelocation && BD->getEndAddress() ==
-                 BC->getBinaryDataContainingAddress(SymbolAddress)->getAddress())));
+                 BC->getBinaryDataContainingAddress(SymbolAddress)->
+                    getAddress())));
 
         // Note: this assertion is trying to check sanity of BinaryData objects
         // but AArch64 has inferred and incomplete object locations coming from
@@ -2292,7 +2319,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         const uint64_t SymbolAlignment = IsAArch64 ? 1 : Symbol.getAlignment();
         const unsigned SymbolFlags = Symbol.getFlags();
 
-        if (cantFail(Symbol.getType()) != SymbolRef::ST_Debug) {
+        if (!IsSectionRelocation) {
           std::string Name;
           if (Symbol.getFlags() & SymbolRef::SF_Global) {
             Name = SymbolName;
@@ -2353,7 +2380,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                      << ReferencedSymbol->getName() << "\n");
       }
     } else if (IsToCode) {
-      BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType(), Addend);
+      BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType(),
+                        Addend);
     } else if (refersToReorderedSection(RefSection) ||
                (opts::ForceToDataRelocations && checkMaxDataRelocations())) {
       BC->addRelocation(Rel.getOffset(),
@@ -2997,7 +3025,8 @@ void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
         continue;
 
       auto TooLarge = false;
-      auto FuncSection = BC->getUniqueSectionByName(Function.getCodeSectionName());
+      auto FuncSection =
+        BC->getUniqueSectionByName(Function.getCodeSectionName());
       assert(FuncSection && "cannot find section for function");
       DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(FuncSection->getAllocAddress())
@@ -3257,8 +3286,8 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer,
       assert(Relocation.Offset < SectionContents.size() && "overflow detected");
       if (SectionOffset < Relocation.Offset) {
         Streamer->EmitBytes(
-                            SectionContents.substr(SectionOffset,
-                                                   Relocation.Offset - SectionOffset));
+            SectionContents.substr(SectionOffset,
+                                   Relocation.Offset - SectionOffset));
         SectionOffset = Relocation.Offset;
       }
       DEBUG(dbgs() << "BOLT-DEBUG: emitting relocation for symbol "

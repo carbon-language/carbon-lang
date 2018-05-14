@@ -57,6 +57,11 @@ namespace bolt {
 class BinaryFunction;
 class DataReader;
 
+/// Helper function to truncate a \p Value to given size in \p Bytes.
+inline int64_t truncateToSize(int64_t Value, unsigned Bytes) {
+  return Value & ((uint64_t) (int64_t) -1 >> (64 - Bytes * 8));
+}
+
 /// Filter iterator.
 template <typename ItrType,
           typename PredType = std::function<bool (const ItrType &)>>

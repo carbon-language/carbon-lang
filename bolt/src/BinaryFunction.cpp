@@ -1156,9 +1156,13 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
       // Make sure we replaced the correct immediate (instruction
       // can have multiple immediate operands).
-      assert((BC.isAArch64() ||
-              static_cast<uint64_t>(Value) == Relocation.Value) &&
+      if (BC.isX86()) {
+        assert(truncateToSize(static_cast<uint64_t>(Value),
+                              Relocation::getSizeForType(Relocation.Type)) ==
+               truncateToSize(Relocation.Value,
+                              Relocation::getSizeForType(Relocation.Type)) &&
              "immediate value mismatch in function");
+      }
     }
 
     // Convert instruction to a shorter version that could be relaxed if
