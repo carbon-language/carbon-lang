@@ -89,7 +89,7 @@ XRayFileHeader &fdrCommonHeaderInfo() {
 // implementations of __xray_set_buffer_iterator(...) and
 // __xray_log_process_buffers(...).
 XRayBuffer fdrIterator(const XRayBuffer B) {
-  DCHECK_EQ(__xray_current_mode(), "xray-fdr");
+  DCHECK(internal_strcmp(__xray_log_get_current_mode(), "xray-fdr") == 0);
   DCHECK(BQ->finalizing());
 
   if (BQ == nullptr || !BQ->finalizing()) {
