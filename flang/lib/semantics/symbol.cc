@@ -52,9 +52,11 @@ static std::string DetailsToString(const Details &details) {
           [&](const MainProgramDetails &) { return "MainProgram"; },
           [&](const ModuleDetails &) { return "Module"; },
           [&](const SubprogramDetails &) { return "Subprogram"; },
+          [&](const SubprogramNameDetails &) { return "SubprogramName"; },
           [&](const EntityDetails &) { return "Entity"; },
           [&](const UseDetails &) { return "Use"; },
           [&](const UseErrorDetails &) { return "UseError"; },
+          [&](const GenericDetails &) { return "Generic"; },
       },
       details);
 }
@@ -63,12 +65,43 @@ const std::string Symbol::GetDetailsName() const {
   return DetailsToString(details_);
 }
 
+void Symbol::set_details(Details &&details) {
+  CHECK(CanReplaceDetails(details));
+  details_.swap(details);
+}
+
+bool Symbol::CanReplaceDetails(const Details &details) const {
+  if (has<UnknownDetails>()) {
+    return true;  // can always replace UnknownDetails
+  } else if (has<UseDetails>() &&
+      std::holds_alternative<UseErrorDetails>(details)) {
+    return true;  // can replace UseDetails with UseErrorDetails
+  } else if (has<SubprogramNameDetails>() &&
+      std::holds_alternative<SubprogramDetails>(details)) {
+    return true;  // can replace SubprogramNameDetails with SubprogramDetails
+  } else {
+    return false;
+  }
+}
+
 const Symbol &Symbol::GetUltimate() const {
   if (const auto *details = detailsIf<UseDetails>()) {
     return details->symbol().GetUltimate();
   } else {
     return *this;
   }
+}
+
+bool Symbol::isSubprogram() const {
+  return std::visit(
+      parser::visitors{
+          [&](const SubprogramDetails &) { return true; },
+          [&](const SubprogramNameDetails &) { return true; },
+          [&](const GenericDetails &) { return true; },
+          [&](const UseDetails &x) { return x.symbol().isSubprogram(); },
+          [&](const auto &) { return false; },
+      },
+      details_);
 }
 
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
@@ -114,6 +147,12 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               DumpType(os, x.result());
               os << x.result().name() << ')';
             }
+            if (x.isInterface()) {
+              os << " interface";
+            }
+          },
+          [&](const SubprogramNameDetails &x) {
+            os << ' ' << EnumToString(x.kind());
           },
           [&](const EntityDetails &x) { os << x; },
           [&](const UseDetails &x) {
@@ -123,6 +162,11 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             os << " uses:";
             for (const auto &pair : x.occurrences()) {
               os << " from " << pair.second->name() << " at " << *pair.first;
+            }
+          },
+          [&](const GenericDetails &x) {
+            for (const auto *proc : x.specificProcs()) {
+              os << ' ' << proc->name();
             }
           },
       },

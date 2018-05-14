@@ -21,10 +21,6 @@
 
 namespace Fortran::semantics {
 
-/// A SourceName is a name in the cooked character stream,
-/// i.e. a range of lower-case characters with provenance.
-using SourceName = parser::CharBlock;
-
 /// A Symbol consists of common information (name, owner, and attributes)
 /// and details information specific to the kind of symbol, represented by the
 /// *Details classes.
@@ -56,6 +52,8 @@ public:
     : dummyArgs_{that.dummyArgs_}, result_{that.result_} {}
 
   bool isFunction() const { return result_.has_value(); }
+  bool isInterface() const { return isInterface_; }
+  void set_isInterface(bool value = true) { isInterface_ = value; }
   const Symbol &result() const {
     CHECK(isFunction());
     return **result_;
@@ -70,7 +68,25 @@ public:
 private:
   std::list<Symbol *> dummyArgs_;
   std::optional<Symbol *> result_;
+  bool isInterface_{false};  // true if this represents an interface-body
   friend std::ostream &operator<<(std::ostream &, const SubprogramDetails &);
+};
+
+// For SubprogramNameDetails, the kind indicates whether it is the name
+// of a module subprogram or internal subprogram.
+ENUM_CLASS(SubprogramKind, Module, Internal)
+
+// Symbol with SubprogramNameDetails is created when we scan for module and
+// internal procedure names, to record that there is a subprogram with this
+// name. Later they are replaced by SubprogramDetails with dummy and result
+// type information.
+class SubprogramNameDetails {
+public:
+  SubprogramNameDetails(SubprogramKind kind) : kind_{kind} {}
+  SubprogramNameDetails() = delete;
+  SubprogramKind kind() const { return kind_; }
+private:
+  SubprogramKind kind_;
 };
 
 class EntityDetails {
@@ -126,10 +142,25 @@ private:
   listType occurrences_;
 };
 
+class GenericDetails {
+public:
+  using listType = std::list<const Symbol *>;
+
+  const listType specificProcs() const { return specificProcs_; }
+
+  void add_specificProc(const Symbol *proc) {
+    specificProcs_.push_back(proc);
+  }
+
+private:
+  listType specificProcs_;
+};
+
 class UnknownDetails {};
 
 using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
-    SubprogramDetails, EntityDetails, UseDetails, UseErrorDetails>;
+      SubprogramDetails, SubprogramNameDetails, EntityDetails, UseDetails,
+      UseErrorDetails, GenericDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 
 class Symbol {
@@ -170,23 +201,18 @@ public:
 
   // Assign the details of the symbol from one of the variants.
   // Only allowed in certain cases.
-  void set_details(Details &&details) {
-    if (has<UnknownDetails>()) {
-      // can always replace UnknownDetails
-    } else if (has<UseDetails>() &&
-        std::holds_alternative<UseErrorDetails>(details)) {
-      // can replace UseDetails with UseErrorDetails
-    } else {
-      CHECK(!"can't replace details");
-    }
-    details_.swap(details);
-  }
+  void set_details(Details &&details);
+
+  // Can the details of this symbol be replaced with the given details?
+  bool CanReplaceDetails(const Details &details) const;
 
   const std::list<SourceName> &occurrences() const { return occurrences_; }
   void add_occurrence(const SourceName &name) { occurrences_.push_back(name); }
 
   // Follow use-associations to get the ultimate entity.
   const Symbol &GetUltimate() const;
+
+  bool isSubprogram() const;
 
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }

@@ -53,6 +53,10 @@ namespace Fortran::semantics {
 
 using Name = std::string;
 
+/// A SourceName is a name in the cooked character stream,
+/// i.e. a range of lower-case characters with provenance.
+using SourceName = parser::CharBlock;
+
 // TODO
 class IntExpr {
 public:
@@ -408,6 +412,62 @@ private:
   const std::optional<Name> interfaceName_;
   const std::optional<DeclTypeSpec> typeSpec_;
   friend std::ostream &operator<<(std::ostream &, const ProcComponentDef &);
+};
+
+class GenericSpec {
+public:
+  enum Kind {
+    GENERIC_NAME,
+    OP_DEFINED,
+    ASSIGNMENT,
+    READ_FORMATTED,
+    READ_UNFORMATTED,
+    WRITE_FORMATTED,
+    WRITE_UNFORMATTED,
+    OP_ADD,
+    OP_AND,
+    OP_CONCAT,
+    OP_DIVIDE,
+    OP_EQ,
+    OP_EQV,
+    OP_GE,
+    OP_GT,
+    OP_LE,
+    OP_LT,
+    OP_MULTIPLY,
+    OP_NE,
+    OP_NEQV,
+    OP_NOT,
+    OP_OR,
+    OP_POWER,
+    OP_SUBTRACT,
+  };
+  static GenericSpec IntrinsicOp(Kind kind) {
+    return GenericSpec(kind, nullptr);
+  }
+  static GenericSpec DefinedOp(const SourceName &name) {
+    return GenericSpec(OP_DEFINED, &name);
+  }
+  static GenericSpec GenericName(const SourceName &name) {
+    return GenericSpec(GENERIC_NAME, &name);
+  }
+
+  const Kind kind() const { return kind_; }
+  const SourceName &genericName() const {
+    CHECK(kind_ == GENERIC_NAME);
+    return *name_;
+  }
+  const SourceName &definedOp() const {
+    CHECK(kind_ == OP_DEFINED);
+    return *name_;
+  }
+
+private:
+  GenericSpec(Kind kind, const SourceName *name)
+    : kind_{kind}, name_{name} {}
+  const Kind kind_;
+  const SourceName *const name_;  // only for GENERIC_NAME & OP_DEFINED
+  friend std::ostream &operator<<(std::ostream &, const GenericSpec &);
 };
 
 class DerivedTypeDefBuilder;

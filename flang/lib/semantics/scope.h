@@ -35,7 +35,7 @@ public:
 
   ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram)
 
-  Scope(const Scope &parent, Kind kind, const Symbol *symbol)
+  Scope(const Scope &parent, Kind kind, Symbol *symbol)
     : parent_{parent}, kind_{kind}, symbol_{symbol} {}
 
   const Scope &parent() const {
@@ -43,6 +43,7 @@ public:
     return parent_;
   }
   Kind kind() const { return kind_; }
+  Symbol *symbol() { return symbol_; }
   const Symbol *symbol() const { return symbol_; }
 
   const SourceName &name() const {
@@ -51,7 +52,7 @@ public:
   }
 
   /// Make a scope nested in this one
-  Scope &MakeScope(Kind kind, const Symbol *symbol = nullptr);
+  Scope &MakeScope(Kind kind, Symbol *symbol = nullptr);
 
   using size_type = mapType::size_type;
   using iterator = mapType::iterator;
@@ -94,7 +95,7 @@ public:
 private:
   const Scope &parent_;
   const Kind kind_;
-  const Symbol *const symbol_;
+  Symbol *const symbol_;
   std::list<Scope> children_;
   mapType symbols_;
 

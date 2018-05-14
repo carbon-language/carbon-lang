@@ -22,7 +22,7 @@ const Scope Scope::systemScope{
     Scope::systemScope, Scope::Kind::System, nullptr};
 Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global, nullptr};
 
-Scope &Scope::MakeScope(Kind kind, const Symbol *symbol) {
+Scope &Scope::MakeScope(Kind kind, Symbol *symbol) {
   children_.emplace_back(*this, kind, symbol);
   return children_.back();
 }
