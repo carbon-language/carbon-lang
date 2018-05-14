@@ -48,7 +48,6 @@
 
 using clang::format::FormatStyle;
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(clang::format::FormatStyle::IncludeCategory)
 LLVM_YAML_IS_SEQUENCE_VECTOR(clang::format::FormatStyle::RawStringFormat)
 
 namespace llvm {
@@ -372,9 +371,9 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.ExperimentalAutoDetectBinPacking);
     IO.mapOptional("FixNamespaceComments", Style.FixNamespaceComments);
     IO.mapOptional("ForEachMacros", Style.ForEachMacros);
-    IO.mapOptional("IncludeBlocks", Style.IncludeBlocks);
-    IO.mapOptional("IncludeCategories", Style.IncludeCategories);
-    IO.mapOptional("IncludeIsMainRegex", Style.IncludeIsMainRegex);
+    IO.mapOptional("IncludeBlocks", Style.IncludeStyle.IncludeBlocks);
+    IO.mapOptional("IncludeCategories", Style.IncludeStyle.IncludeCategories);
+    IO.mapOptional("IncludeIsMainRegex", Style.IncludeStyle.IncludeIsMainRegex);
     IO.mapOptional("IndentCaseLabels", Style.IndentCaseLabels);
     IO.mapOptional("IndentPPDirectives", Style.IndentPPDirectives);
     IO.mapOptional("IndentWidth", Style.IndentWidth);
@@ -453,21 +452,6 @@ template <> struct MappingTraits<FormatStyle::BraceWrappingFlags> {
     IO.mapOptional("SplitEmptyFunction", Wrapping.SplitEmptyFunction);
     IO.mapOptional("SplitEmptyRecord", Wrapping.SplitEmptyRecord);
     IO.mapOptional("SplitEmptyNamespace", Wrapping.SplitEmptyNamespace);
-  }
-};
-
-template <> struct MappingTraits<FormatStyle::IncludeCategory> {
-  static void mapping(IO &IO, FormatStyle::IncludeCategory &Category) {
-    IO.mapOptional("Regex", Category.Regex);
-    IO.mapOptional("Priority", Category.Priority);
-  }
-};
-
-template <> struct ScalarEnumerationTraits<FormatStyle::IncludeBlocksStyle> {
-  static void enumeration(IO &IO, FormatStyle::IncludeBlocksStyle &Value) {
-    IO.enumCase(Value, "Preserve", FormatStyle::IBS_Preserve);
-    IO.enumCase(Value, "Merge", FormatStyle::IBS_Merge);
-    IO.enumCase(Value, "Regroup", FormatStyle::IBS_Regroup);
   }
 };
 
@@ -639,11 +623,12 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ForEachMacros.push_back("foreach");
   LLVMStyle.ForEachMacros.push_back("Q_FOREACH");
   LLVMStyle.ForEachMacros.push_back("BOOST_FOREACH");
-  LLVMStyle.IncludeCategories = {{"^\"(llvm|llvm-c|clang|clang-c)/", 2},
-                                 {"^(<|\"(gtest|gmock|isl|json)/)", 3},
-                                 {".*", 1}};
-  LLVMStyle.IncludeIsMainRegex = "(Test)?$";
-  LLVMStyle.IncludeBlocks = FormatStyle::IBS_Preserve;
+  LLVMStyle.IncludeStyle.IncludeCategories = {
+      {"^\"(llvm|llvm-c|clang|clang-c)/", 2},
+      {"^(<|\"(gtest|gmock|isl|json)/)", 3},
+      {".*", 1}};
+  LLVMStyle.IncludeStyle.IncludeIsMainRegex = "(Test)?$";
+  LLVMStyle.IncludeStyle.IncludeBlocks = tooling::IncludeStyle::IBS_Preserve;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.IndentPPDirectives = FormatStyle::PPDIS_None;
   LLVMStyle.IndentWrappedFunctionNames = false;
@@ -711,9 +696,9 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
   GoogleStyle.AlwaysBreakTemplateDeclarations = true;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.DerivePointerAlignment = true;
-  GoogleStyle.IncludeCategories = {
+  GoogleStyle.IncludeStyle.IncludeCategories = {
       {"^<ext/.*\\.h>", 2}, {"^<.*\\.h>", 1}, {"^<.*", 2}, {".*", 3}};
-  GoogleStyle.IncludeIsMainRegex = "([-_](test|unittest))?$";
+  GoogleStyle.IncludeStyle.IncludeIsMainRegex = "([-_](test|unittest))?$";
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.KeepEmptyLinesAtTheStartOfBlocks = false;
   GoogleStyle.ObjCBinPackProtocolList = FormatStyle::BPS_Never;
@@ -1661,14 +1646,15 @@ static void sortCppIncludes(const FormatStyle &Style,
   // the entire block. Otherwise, no replacement is generated.
   if (Indices.size() == Includes.size() &&
       std::is_sorted(Indices.begin(), Indices.end()) &&
-      Style.IncludeBlocks == FormatStyle::IBS_Preserve)
+      Style.IncludeStyle.IncludeBlocks == tooling::IncludeStyle::IBS_Preserve)
     return;
 
   std::string result;
   for (unsigned Index : Indices) {
     if (!result.empty()) {
       result += "\n";
-      if (Style.IncludeBlocks == FormatStyle::IBS_Regroup &&
+      if (Style.IncludeStyle.IncludeBlocks ==
+              tooling::IncludeStyle::IBS_Regroup &&
           CurrentCategory != Includes[Index].Category)
         result += "\n";
     }
@@ -1697,7 +1683,7 @@ public:
   IncludeCategoryManager(const FormatStyle &Style, StringRef FileName)
       : Style(Style), FileName(FileName) {
     FileStem = llvm::sys::path::stem(FileName);
-    for (const auto &Category : Style.IncludeCategories)
+    for (const auto &Category : Style.IncludeStyle.IncludeCategories)
       CategoryRegexs.emplace_back(Category.Regex, llvm::Regex::IgnoreCase);
     IsMainFile = FileName.endswith(".c") || FileName.endswith(".cc") ||
                  FileName.endswith(".cpp") || FileName.endswith(".c++") ||
@@ -1713,7 +1699,7 @@ public:
     int Ret = INT_MAX;
     for (unsigned i = 0, e = CategoryRegexs.size(); i != e; ++i)
       if (CategoryRegexs[i].match(IncludeName)) {
-        Ret = Style.IncludeCategories[i].Priority;
+        Ret = Style.IncludeStyle.IncludeCategories[i].Priority;
         break;
       }
     if (CheckMainHeader && IsMainFile && Ret > 0 && isMainHeader(IncludeName))
@@ -1730,7 +1716,7 @@ private:
     if (FileStem.startswith(HeaderStem) ||
         FileStem.startswith_lower(HeaderStem)) {
       llvm::Regex MainIncludeRegex(
-          (HeaderStem + Style.IncludeIsMainRegex).str(),
+          (HeaderStem + Style.IncludeStyle.IncludeIsMainRegex).str(),
           llvm::Regex::IgnoreCase);
       if (MainIncludeRegex.match(FileStem))
         return true;
@@ -1786,8 +1772,10 @@ tooling::Replacements sortCppIncludes(const FormatStyle &Style, StringRef Code,
       FormattingOff = false;
 
     const bool EmptyLineSkipped =
-        Trimmed.empty() && (Style.IncludeBlocks == FormatStyle::IBS_Merge ||
-                            Style.IncludeBlocks == FormatStyle::IBS_Regroup);
+        Trimmed.empty() &&
+        (Style.IncludeStyle.IncludeBlocks == tooling::IncludeStyle::IBS_Merge ||
+         Style.IncludeStyle.IncludeBlocks ==
+             tooling::IncludeStyle::IBS_Regroup);
 
     if (!FormattingOff && !Line.endswith("\\")) {
       if (IncludeRegex.match(Line, &Matches)) {
@@ -2103,7 +2091,7 @@ HeaderIncludes::HeaderIncludes(StringRef FileName, StringRef Code,
   // Add 0 for main header and INT_MAX for headers that are not in any
   // category.
   Priorities = {0, INT_MAX};
-  for (const auto &Category : Style.IncludeCategories)
+  for (const auto &Category : Style.IncludeStyle.IncludeCategories)
     Priorities.insert(Category.Priority);
   SmallVector<StringRef, 32> Lines;
   Code.drop_front(MinInsertOffset).split(Lines, "\n");
