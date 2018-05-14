@@ -69,17 +69,17 @@ std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name) {
 }
 
 static void reportTypeError(const Symbol *Existing, const InputFile *File,
-                            StringRef Type) {
+                            llvm::wasm::WasmSymbolType Type) {
   error("symbol type mismatch: " + toString(*Existing) + "\n>>> defined as " +
         toString(Existing->getWasmType()) + " in " +
-        toString(Existing->getFile()) + "\n>>> defined as " + Type + " in " +
-        toString(File));
+        toString(Existing->getFile()) + "\n>>> defined as " + toString(Type) +
+        " in " + toString(File));
 }
 
 static void checkFunctionType(const Symbol *Existing, const InputFile *File,
                               const WasmSignature *NewSig) {
   if (!isa<FunctionSymbol>(Existing)) {
-    reportTypeError(Existing, File, "Function");
+    reportTypeError(Existing, File, WASM_SYMBOL_TYPE_FUNCTION);
     return;
   }
 
@@ -98,7 +98,7 @@ static void checkFunctionType(const Symbol *Existing, const InputFile *File,
 static void checkGlobalType(const Symbol *Existing, const InputFile *File,
                             const WasmGlobalType *NewType) {
   if (!isa<GlobalSymbol>(Existing)) {
-    reportTypeError(Existing, File, "Global");
+    reportTypeError(Existing, File, WASM_SYMBOL_TYPE_GLOBAL);
     return;
   }
 
@@ -112,7 +112,7 @@ static void checkGlobalType(const Symbol *Existing, const InputFile *File,
 
 static void checkDataType(const Symbol *Existing, const InputFile *File) {
   if (!isa<DataSymbol>(Existing))
-    reportTypeError(Existing, File, "Data");
+    reportTypeError(Existing, File, WASM_SYMBOL_TYPE_DATA);
 }
 
 DefinedFunction *SymbolTable::addSyntheticFunction(StringRef Name,
