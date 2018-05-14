@@ -19,6 +19,7 @@
 #include "clang/Tooling/Core/IncludeStyle.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/Regex.h"
 #include <system_error>
 
 namespace clang {
@@ -1810,17 +1811,13 @@ formatReplacements(StringRef Code, const tooling::Replacements &Replaces,
 /// This also supports inserting/deleting C++ #include directives:
 /// - If a replacement has offset UINT_MAX, length 0, and a replacement text
 ///   that is an #include directive, this will insert the #include into the
-///   correct block in the \p Code. When searching for points to insert new
-///   header, this ignores #include's after the #include block(s) in the
-///   beginning of a file to avoid inserting headers into code sections where
-///   new #include's should not be added by default. These code sections
-///   include:
-///     - raw string literals (containing #include).
-///     - #if blocks.
-///     - Special #include's among declarations (e.g. functions).
+///   correct block in the \p Code.
 /// - If a replacement has offset UINT_MAX, length 1, and a replacement text
 ///   that is the name of the header to be removed, the header will be removed
 ///   from \p Code if it exists.
+/// The include manipulation is done via `tooling::HeaderInclude`, see its
+/// documentation for more details on how include insertion points are found and
+/// what edits are produced.
 llvm::Expected<tooling::Replacements>
 cleanupAroundReplacements(StringRef Code, const tooling::Replacements &Replaces,
                           const FormatStyle &Style);
