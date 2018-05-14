@@ -6630,14 +6630,14 @@ __m512d test_mm512_maskz_cvt_roundps_pd(__mmask8 __U, __m256 __A) {
 
 __m512d test_mm512_cvtps_pd(__m256 __A) {
   // CHECK-LABEL: @test_mm512_cvtps_pd
-  // CHECK: @llvm.x86.avx512.mask.cvtps2pd.512
+  // CHECK: fpext <8 x float> %{{.*}} to <8 x double>
   return _mm512_cvtps_pd(__A); 
 }
 
 __m512d test_mm512_cvtpslo_pd(__m512 __A) {
   // CHECK-LABEL: @test_mm512_cvtpslo_pd
   // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> %{{.*}}, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-  // CHECK: @llvm.x86.avx512.mask.cvtps2pd.512
+  // CHECK: fpext <8 x float> %{{.*}} to <8 x double>
   return _mm512_cvtpslo_pd(__A);
 }
 

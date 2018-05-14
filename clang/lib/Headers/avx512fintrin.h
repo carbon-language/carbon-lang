@@ -9311,11 +9311,7 @@ _mm512_maskz_expand_epi32 (__mmask16 __U, __m512i __A)
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_cvtps_pd (__m256 __A)
 {
-  return (__m512d) __builtin_ia32_cvtps2pd512_mask ((__v8sf) __A,
-                (__v8df)
-                _mm512_undefined_pd (),
-                (__mmask8) -1,
-                _MM_FROUND_CUR_DIRECTION);
+  return (__m512d) __builtin_convertvector((__v8sf)__A, __v8df);
 }
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
