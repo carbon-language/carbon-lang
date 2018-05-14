@@ -123,9 +123,10 @@ XRayBuffer fdrIterator(const XRayBuffer B) {
   if (It == End)
     return {nullptr, 0};
 
-  XRayBuffer Result{
-      It->Data, __sanitizer::atomic_load(&It->Extents->Size,
-                                         __sanitizer::memory_order_acquire)};
+  XRayBuffer Result;
+  Result.Data = It->Data;
+  Result.Size = __sanitizer::atomic_load(&It->Extents->Size,
+                                         __sanitizer::memory_order_acquire);
   ++It;
   return Result;
 }
