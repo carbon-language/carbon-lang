@@ -6643,20 +6643,23 @@ __m512d test_mm512_cvtpslo_pd(__m512 __A) {
 
 __m512d test_mm512_mask_cvtps_pd(__m512d __W, __mmask8 __U, __m256 __A) {
   // CHECK-LABEL: @test_mm512_mask_cvtps_pd
-  // CHECK: @llvm.x86.avx512.mask.cvtps2pd.512
+  // CHECK: fpext <8 x float> %{{.*}} to <8 x double>
+  // CHECK: select <8 x i1> %{{.*}}, <8 x double> %{{.*}}, <8 x double> %{{.*}}
   return _mm512_mask_cvtps_pd(__W, __U, __A); 
 }
 
 __m512d test_mm512_mask_cvtpslo_pd(__m512d __W, __mmask8 __U, __m512 __A) {
   // CHECK-LABEL: @test_mm512_mask_cvtpslo_pd
   // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> %{{.*}}, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
-  // CHECK: @llvm.x86.avx512.mask.cvtps2pd.512
+  // CHECK: fpext <8 x float> %{{.*}} to <8 x double>
+  // CHECK: select <8 x i1> %{{.*}}, <8 x double> %{{.*}}, <8 x double> %{{.*}}
   return _mm512_mask_cvtpslo_pd(__W, __U, __A);
 }
 
 __m512d test_mm512_maskz_cvtps_pd(__mmask8 __U, __m256 __A) {
   // CHECK-LABEL: @test_mm512_maskz_cvtps_pd
-  // CHECK: @llvm.x86.avx512.mask.cvtps2pd.512
+  // CHECK: fpext <8 x float> %{{.*}} to <8 x double>
+  // CHECK: select <8 x i1> %{{.*}}, <8 x double> %{{.*}}, <8 x double> %{{.*}}
   return _mm512_maskz_cvtps_pd(__U, __A); 
 }
 __m512d test_mm512_mask_mov_pd(__m512d __W, __mmask8 __U, __m512d __A) {

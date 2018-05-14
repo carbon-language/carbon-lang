@@ -9317,20 +9317,17 @@ _mm512_cvtps_pd (__m256 __A)
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_mask_cvtps_pd (__m512d __W, __mmask8 __U, __m256 __A)
 {
-  return (__m512d) __builtin_ia32_cvtps2pd512_mask ((__v8sf) __A,
-                (__v8df) __W,
-                (__mmask8) __U,
-                _MM_FROUND_CUR_DIRECTION);
+  return (__m512d)__builtin_ia32_selectpd_512((__mmask8)__U,
+                                              (__v8df)_mm512_cvtps_pd(__A),
+                                              (__v8df)__W);
 }
 
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_maskz_cvtps_pd (__mmask8 __U, __m256 __A)
 {
-  return (__m512d) __builtin_ia32_cvtps2pd512_mask ((__v8sf) __A,
-                (__v8df)
-                _mm512_setzero_pd (),
-                (__mmask8) __U,
-                _MM_FROUND_CUR_DIRECTION);
+  return (__m512d)__builtin_ia32_selectpd_512((__mmask8)__U,
+                                              (__v8df)_mm512_cvtps_pd(__A),
+                                              (__v8df)_mm512_setzero_pd());
 }
 
 static __inline__ __m512 __DEFAULT_FN_ATTRS
