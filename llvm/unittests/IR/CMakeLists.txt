@@ -6,7 +6,7 @@ set(LLVM_LINK_COMPONENTS
   Passes
   )
 
-set(IRSources
+add_llvm_unittest(IRTests
   AsmWriterTest.cpp
   AttributesTest.cpp
   BasicBlockTest.cpp
@@ -39,8 +39,4 @@ set(IRSources
   ValueTest.cpp
   VerifierTest.cpp
   WaymarkTest.cpp
-  )
-
-add_llvm_unittest(IRTests
-  ${IRSources}
   )
