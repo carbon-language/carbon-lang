@@ -41,12 +41,6 @@ set(IRSources
   WaymarkTest.cpp
   )
 
-# HACK: Declare a couple of source files as optionally compiled to satisfy the
-# missing-file-checker in LLVM's weird CMake build.
-set(LLVM_OPTIONAL_SOURCES
-  ValueMapTest.cpp
-  )
-
 add_llvm_unittest(IRTests
   ${IRSources}
   )
