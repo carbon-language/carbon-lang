@@ -6921,13 +6921,6 @@ let Predicates = [HasAVX512] in {
             (VCVTSD2SI64Zrm_Int sse_load_f64:$src)>;
 } // HasAVX512
 
-let Predicates = [HasAVX512] in {
-  def : Pat<(int_x86_avx512_cvtusi2sd VR128X:$src1, GR32:$src2),
-            (VCVTUSI2SDZrr_Int VR128X:$src1, GR32:$src2)>;
-  def : Pat<(int_x86_avx512_cvtusi2sd VR128X:$src1, (loadi32 addr:$src2)),
-            (VCVTUSI2SDZrm_Int VR128X:$src1, addr:$src2)>;
-} // Predicates = [HasAVX512]
-
 // Patterns used for matching vcvtsi2s{s,d} intrinsic sequences from clang
 // which produce unnecessary vmovs{s,d} instructions
 let Predicates = [HasAVX512] in {
