@@ -77,11 +77,12 @@ namespace test4 {
   // CHECK1: call i32 @__cxa_atexit{{.*}}_ZN5test41AD2Ev
   // CHECK1: define linkonce_odr void @_ZN5test41AD2Ev({{.*}} comdat align
 
-  // test that we don't do this optimization at -O0 so that the debugger can
-  // see both destructors.
+  // test that we don't do this optimization at -O0 and call the complete
+  // destructor for B instead. This enables the debugger to see both
+  // destructors.
+  // NOOPT: @_ZN5test41BD1Ev = linkonce_odr alias void {{.*}} @_ZN5test41BD2Ev
   // NOOPT: define internal void @__cxx_global_var_init.2()
-  // NOOPT: call i32 @__cxa_atexit{{.*}}@_ZN5test41BD2Ev
-  // NOOPT: define linkonce_odr void @_ZN5test41BD2Ev({{.*}} comdat align
+  // NOOPT: call i32 @__cxa_atexit{{.*}}@_ZN5test41BD1Ev
   struct A {
     virtual ~A() {}
   };
