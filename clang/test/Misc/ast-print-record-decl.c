@@ -2,7 +2,8 @@
 //
 //   First check compiling and printing of this file.
 //
-//   RUN: %clang -Xclang -verify -S -emit-llvm -DKW=struct -DBASES= -o - %s \
+//   RUN: %clang -target x86_64-linux -Xclang -verify -S -emit-llvm \
+//   RUN:        -DKW=struct -DBASES= -o - %s \
 //   RUN: | FileCheck --check-prefixes=CHECK,LLVM %s
 //
 //   RUN: %clang_cc1 -verify -ast-print -DKW=struct -DBASES= %s > %t.c
@@ -14,7 +15,7 @@
 //   RUN: echo "// expected""-warning@* 10 {{'T' is deprecated}}" >> %t.c
 //   RUN: echo "// expected""-note@* 10 {{'T' has been explicitly marked deprecated here}}" >> %t.c
 //
-//   RUN: %clang -Xclang -verify -S -emit-llvm -o - %t.c \
+//   RUN: %clang -target x86_64-linux -Xclang -verify -S -emit-llvm -o - %t.c \
 //   RUN: | FileCheck --check-prefixes=CHECK,LLVM %s
 //
 //   RUN: %clang_cc1 -verify -ast-print %t.c \
@@ -24,7 +25,8 @@
 //
 //   First check compiling and printing of this file.
 //
-//   RUN: %clang -Xclang -verify -S -emit-llvm -DKW=union -DBASES= -o - %s \
+//   RUN: %clang -target x86_64-linux -Xclang -verify -S -emit-llvm \
+//   RUN:        -DKW=union -DBASES= -o - %s \
 //   RUN: | FileCheck --check-prefixes=CHECK,LLVM %s
 //
 //   RUN: %clang_cc1 -verify -ast-print -DKW=union -DBASES= %s > %t.c
@@ -36,7 +38,7 @@
 //   RUN: echo "// expected""-warning@* 10 {{'T' is deprecated}}" >> %t.c
 //   RUN: echo "// expected""-note@* 10 {{'T' has been explicitly marked deprecated here}}" >> %t.c
 //
-//   RUN: %clang -Xclang -verify -S -emit-llvm -o - %t.c \
+//   RUN: %clang -target x86_64-linux -Xclang -verify -S -emit-llvm -o - %t.c \
 //   RUN: | FileCheck --check-prefixes=CHECK,LLVM %s
 //
 //   RUN: %clang_cc1 -verify -ast-print %t.c \
@@ -46,8 +48,8 @@
 //
 //   First check compiling and printing of this file.
 //
-//   RUN: %clang -Xclang -verify -S -emit-llvm -DKW=struct -DBASES=' : B' -o - \
-//   RUN:        -xc++ %s \
+//   RUN: %clang -target x86_64-linux -Xclang -verify -S -emit-llvm \
+//   RUN:        -DKW=struct -DBASES=' : B' -o - -xc++ %s \
 //   RUN: | FileCheck --check-prefixes=CHECK,LLVM %s
 //
 //   RUN: %clang_cc1 -verify -ast-print -DKW=struct -DBASES=' : B' -xc++ %s \
@@ -60,7 +62,7 @@
 //   RUN: echo "// expected""-warning@* 10 {{'T' is deprecated}}" >> %t.cpp
 //   RUN: echo "// expected""-note@* 10 {{'T' has been explicitly marked deprecated here}}" >> %t.cpp
 //
-//   RUN: %clang -Xclang -verify -S -emit-llvm -o - %t.cpp \
+//   RUN: %clang -target x86_64-linux -Xclang -verify -S -emit-llvm -o - %t.cpp \
 //   RUN: | FileCheck --check-prefixes=CHECK,LLVM %s
 //
 //   RUN: %clang_cc1 -verify -ast-print %t.cpp \
