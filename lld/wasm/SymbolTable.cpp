@@ -78,14 +78,14 @@ static void reportTypeError(const Symbol *Existing, const InputFile *File,
 
 static void checkFunctionType(const Symbol *Existing, const InputFile *File,
                               const WasmSignature *NewSig) {
-  if (!isa<FunctionSymbol>(Existing)) {
+  auto ExistingFunction = dyn_cast<FunctionSymbol>(Existing);
+  if (!ExistingFunction) {
     reportTypeError(Existing, File, WASM_SYMBOL_TYPE_FUNCTION);
     return;
   }
 
-  const WasmSignature *OldSig =
-      cast<FunctionSymbol>(Existing)->getFunctionType();
-  if (OldSig && *NewSig != *OldSig) {
+  const WasmSignature *OldSig = ExistingFunction->getFunctionType();
+  if (OldSig && NewSig && *NewSig != *OldSig) {
     warn("Function type mismatch: " + Existing->getName() +
          "\n>>> defined as " + toString(*OldSig) + " in " +
          toString(Existing->getFile()) + "\n>>> defined as " +
