@@ -235,7 +235,14 @@ defm : SBWriteResPair<WriteFBlend,    [SBPort05], 1, [1], 1, 6>;
 defm : SBWriteResPair<WriteFBlendY,   [SBPort05], 1, [1], 1, 7>;
 defm : SBWriteResPair<WriteFVarBlend, [SBPort05], 2, [2], 2, 6>;
 defm : SBWriteResPair<WriteFVarBlendY,[SBPort05], 2, [2], 2, 7>;
-def  : WriteRes<WriteCvtF2FSt, [SBPort1, SBPort23, SBPort4]> { let Latency = 4; }
+
+defm : SBWriteResPair<WriteCvtPH2PS,   [SBPort1], 3>;
+defm : SBWriteResPair<WriteCvtPH2PSY,  [SBPort1], 3>;
+
+defm : X86WriteRes<WriteCvtPS2PH,    [SBPort1], 3, [1], 1>;
+defm : X86WriteRes<WriteCvtPS2PHY,   [SBPort1], 3, [1], 1>;
+defm : X86WriteRes<WriteCvtPS2PHSt,  [SBPort1, SBPort23, SBPort4], 4, [1,1,1], 1>;
+defm : X86WriteRes<WriteCvtPS2PHYSt, [SBPort1, SBPort23, SBPort4], 4, [1,1,1], 1>;
 
 // Vector integer operations.
 defm : X86WriteRes<WriteVecLoad,         [SBPort23], 5, [1], 1>;

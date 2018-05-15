@@ -272,7 +272,6 @@ defm : ZnWriteResFpuPair<WriteFSqrt64X,  [ZnFPU3], 20, [20]>;
 defm : ZnWriteResFpuPair<WriteFSqrt64Y,  [ZnFPU3], 40, [40], 1, 7, 1>;
 defm : ZnWriteResFpuPair<WriteFSqrt64Z,  [ZnFPU3], 40, [40], 1, 7, 1>;
 defm : ZnWriteResFpuPair<WriteFSqrt80,   [ZnFPU3], 20, [20]>;
-def  : WriteRes<WriteCvtF2FSt, [ZnFPU3, ZnAGU]>;
 
 // Vector integer operations which uses FPU units
 defm : X86WriteRes<WriteVecLoad,         [ZnAGU], 8, [1], 1>;
@@ -1326,18 +1325,21 @@ def : InstRW<[ZnWriteCVSTSI2SIr], (instregex "(V?)CVT(T?)SD2SI(64)?rr")>;
 // r32,m32.
 def : InstRW<[ZnWriteCVSTSI2SILd], (instregex "(V?)CVT(T?)SD2SI(64)?rm")>;
 
-
 // VCVTPS2PH.
 // x,v,i.
-def : InstRW<[WriteMicrocoded], (instregex "VCVTPS2PH(Y?)rr")>;
+def : SchedAlias<WriteCvtPS2PH,    ZnWriteMicrocoded>;
+def : SchedAlias<WriteCvtPS2PHY,   ZnWriteMicrocoded>;
 // m,v,i.
-def : InstRW<[WriteMicrocoded], (instregex "VCVTPS2PH(Y?)mr")>;
+def : SchedAlias<WriteCvtPS2PHSt,  ZnWriteMicrocoded>;
+def : SchedAlias<WriteCvtPS2PHYSt, ZnWriteMicrocoded>;
 
 // VCVTPH2PS.
 // v,x.
-def : InstRW<[WriteMicrocoded], (instregex "VCVTPH2PS(Y?)rr")>;
+def : SchedAlias<WriteCvtPH2PS,    ZnWriteMicrocoded>;
+def : SchedAlias<WriteCvtPH2PSY,   ZnWriteMicrocoded>;
 // v,m.
-def : InstRW<[WriteMicrocoded], (instregex "VCVTPH2PS(Y?)rm")>;
+def : SchedAlias<WriteCvtPH2PSLd,  ZnWriteMicrocoded>;
+def : SchedAlias<WriteCvtPH2PSYLd, ZnWriteMicrocoded>;
 
 //-- SSE4A instructions --//
 // EXTRQ

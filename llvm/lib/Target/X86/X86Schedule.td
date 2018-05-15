@@ -299,7 +299,14 @@ def WriteMMXMOVMSK  : SchedWrite;
 defm WriteCvtF2I : X86SchedWritePair; // Float -> Integer.
 defm WriteCvtI2F : X86SchedWritePair; // Integer -> Float.
 defm WriteCvtF2F : X86SchedWritePair; // Float -> Float size conversion.
-def  WriteCvtF2FSt : SchedWrite; // // Float -> Float + store size conversion.
+
+defm WriteCvtPH2PS    : X86SchedWritePair; // Half -> Float size conversion.
+defm WriteCvtPH2PSY   : X86SchedWritePair; // Half -> Float size conversion (YMM/ZMM).
+
+def  WriteCvtPS2PH    : SchedWrite; // // Float -> Half size conversion.
+def  WriteCvtPS2PHY   : SchedWrite; // // Float -> Half size conversion (YMM/ZMM).
+def  WriteCvtPS2PHSt  : SchedWrite; // // Float -> Half + store size conversion.
+def  WriteCvtPS2PHYSt : SchedWrite; // // Float -> Half + store size conversion (YMM/ZMM).
 
 // CRC32 instruction.
 defm WriteCRC32 : X86SchedWritePair;

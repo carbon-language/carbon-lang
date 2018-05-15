@@ -212,7 +212,6 @@ defm : SLMWriteResPair<WriteFShuffleY, [SLM_FPC_RSV0], 1>;
 defm : SLMWriteResPair<WriteFVarShuffle, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFVarShuffleY,[SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFBlend,  [SLM_FPC_RSV0],  1>;
-def  : WriteRes<WriteCvtF2FSt, [SLM_FPC_RSV01, SLM_MEC_RSV]>;
 
 // Vector integer operations.
 def  : WriteRes<WriteVecLoad,         [SLM_MEC_RSV]> { let Latency = 3; }
@@ -396,5 +395,12 @@ defm : SLMWriteResPair<WriteVarVecShiftY, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFMA, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFMAX, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFMAY, [SLM_FPC_RSV0],  1>;
+
+defm : SLMWriteResPair<WriteCvtPH2PS,  [SLM_FPC_RSV0],  1>;
+defm : SLMWriteResPair<WriteCvtPH2PSY, [SLM_FPC_RSV0],  1>;
+def  : WriteRes<WriteCvtPS2PH,    [SLM_FPC_RSV0]>;
+def  : WriteRes<WriteCvtPS2PHY,   [SLM_FPC_RSV0]>;
+def  : WriteRes<WriteCvtPS2PHSt,  [SLM_FPC_RSV0]>;
+def  : WriteRes<WriteCvtPS2PHYSt, [SLM_FPC_RSV0]>;
 
 } // SchedModel

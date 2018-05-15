@@ -7303,37 +7303,41 @@ let Defs = [YMM0, YMM1, YMM2, YMM3, YMM4, YMM5, YMM6, YMM7,
 // Half precision conversion instructions
 //
 
-multiclass f16c_ph2ps<RegisterClass RC, X86MemOperand x86memop> {
+multiclass f16c_ph2ps<RegisterClass RC, X86MemOperand x86memop,
+                      X86FoldableSchedWrite sched> {
   def rr : I<0x13, MRMSrcReg, (outs RC:$dst), (ins VR128:$src),
              "vcvtph2ps\t{$src, $dst|$dst, $src}",
              [(set RC:$dst, (X86cvtph2ps VR128:$src))]>,
-             T8PD, VEX, Sched<[WriteCvtF2F]>;
+             T8PD, VEX, Sched<[sched]>;
   let hasSideEffects = 0, mayLoad = 1 in
   def rm : I<0x13, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
              "vcvtph2ps\t{$src, $dst|$dst, $src}",
              [(set RC:$dst, (X86cvtph2ps (bc_v8i16
                                           (loadv2i64 addr:$src))))]>,
-             T8PD, VEX, Sched<[WriteCvtF2FLd]>;
+             T8PD, VEX, Sched<[sched.Folded]>;
 }
 
-multiclass f16c_ps2ph<RegisterClass RC, X86MemOperand x86memop> {
+multiclass f16c_ps2ph<RegisterClass RC, X86MemOperand x86memop,
+                      SchedWrite RR, SchedWrite MR> {
   def rr : Ii8<0x1D, MRMDestReg, (outs VR128:$dst),
                (ins RC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                [(set VR128:$dst, (X86cvtps2ph RC:$src1, imm:$src2))]>,
-               TAPD, VEX, Sched<[WriteCvtF2F]>;
+               TAPD, VEX, Sched<[RR]>;
   let hasSideEffects = 0, mayStore = 1 in
   def mr : Ii8<0x1D, MRMDestMem, (outs),
                (ins x86memop:$dst, RC:$src1, i32u8imm:$src2),
                "vcvtps2ph\t{$src2, $src1, $dst|$dst, $src1, $src2}", []>,
-               TAPD, VEX, Sched<[WriteCvtF2FSt]>;
+               TAPD, VEX, Sched<[MR]>;
 }
 
 let Predicates = [HasF16C, NoVLX] in {
-  defm VCVTPH2PS  : f16c_ph2ps<VR128, f64mem>;
-  defm VCVTPH2PSY : f16c_ph2ps<VR256, f128mem>, VEX_L;
-  defm VCVTPS2PH  : f16c_ps2ph<VR128, f64mem>;
-  defm VCVTPS2PHY : f16c_ps2ph<VR256, f128mem>, VEX_L;
+  defm VCVTPH2PS  : f16c_ph2ps<VR128, f64mem, WriteCvtPH2PS>;
+  defm VCVTPH2PSY : f16c_ph2ps<VR256, f128mem, WriteCvtPH2PSY>, VEX_L;
+  defm VCVTPS2PH  : f16c_ps2ph<VR128, f64mem, WriteCvtPS2PH,
+                               WriteCvtPS2PHSt>;
+  defm VCVTPS2PHY : f16c_ps2ph<VR256, f128mem, WriteCvtPS2PHY,
+                               WriteCvtPS2PHYSt>, VEX_L;
 
   // Pattern match vcvtph2ps of a scalar i64 load.
   def : Pat<(v4f32 (X86cvtph2ps (v8i16 (vzmovl_v2i64 addr:$src)))),
