@@ -160,6 +160,7 @@ struct CopyConfig {
   bool LocalizeHidden = false;
   bool Weaken = false;
   bool DiscardAll = false;
+  bool OnlyKeepDebug = false;
 };
 
 using SectionPred = std::function<bool(const SectionBase &Sec)>;
@@ -482,6 +483,7 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
   Config.Weaken = InputArgs.hasArg(OBJCOPY_weaken);
   Config.DiscardAll = InputArgs.hasArg(OBJCOPY_discard_all);
+  Config.OnlyKeepDebug = InputArgs.hasArg(OBJCOPY_only_keep_debug);
   for (auto Arg : InputArgs.filtered(OBJCOPY_localize_symbol))
     Config.SymbolsToLocalize.push_back(Arg->getValue());
   for (auto Arg : InputArgs.filtered(OBJCOPY_globalize_symbol))
