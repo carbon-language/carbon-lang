@@ -446,9 +446,47 @@ constexpr struct SkipDigitString {
   }
 } skipDigitString;
 
+// R707 signed-int-literal-constant -> [sign] int-literal-constant
+// N.B. Spaces are consumed before and after the sign, since the sign
+// and the int-literal-constant are distinct tokens.  Does not
+// handle a trailing kind parameter.
+static inline constexpr std::optional<std::int64_t> SignedInteger(
+    const std::optional<std::uint64_t> &x, Location at, bool negate,
+    ParseState &state) {
+  if (!x.has_value()) {
+    return {};
+  }
+  std::uint64_t limit{std::numeric_limits<std::int64_t>::max()};
+  if (negate) {
+    limit = -(limit + 1);
+  }
+  if (*x > limit) {
+    state.Say(at, "overflow in signed decimal literal"_err_en_US);
+  }
+  std::int64_t value = *x;
+  return {negate ? -value : value};
+}
+
+struct SignedIntLiteralConstantWithoutKind {
+  using resultType = std::int64_t;
+  static std::optional<std::int64_t> Parse(ParseState &state) {
+    Location at{state.GetLocation()};
+    static constexpr auto minus = attempt("-"_tok);
+    static constexpr auto plus = maybe("+"_tok);
+    bool negate{false};
+    if (minus.Parse(state)) {
+      negate = true;
+    } else if (!plus.Parse(state)) {
+      return {};
+    }
+    return SignedInteger(digitString.Parse(state), at, negate, state);
+  }
+};
+
 // R710 signed-digit-string -> [sign] digit-string
 // N.B. Not a complete token -- no space is skipped.
-constexpr struct SignedDigitString {
+// Used only in the exponent parts of real literal constants.
+struct SignedDigitString {
   using resultType = std::int64_t;
   static std::optional<std::int64_t> Parse(ParseState &state) {
     std::optional<const char *> sign{state.PeekAtNextChar()};
@@ -459,21 +497,9 @@ constexpr struct SignedDigitString {
     if (negate || **sign == '+') {
       state.UncheckedAdvance();
     }
-    std::optional<std::uint64_t> x{digitString.Parse(state)};
-    if (!x.has_value()) {
-      return {};
-    }
-    std::uint64_t limit{std::numeric_limits<std::int64_t>::max()};
-    if (negate) {
-      limit = -(limit + 1);
-    }
-    if (*x > limit) {
-      state.Say(*sign, "overflow in signed decimal literal"_err_en_US);
-    }
-    std::int64_t value = *x;
-    return {negate ? -value : value};
+    return SignedInteger(digitString.Parse(state), *sign, negate, state);
   }
-} signedDigitString;
+};
 
 // Variants of the above for use in FORMAT specifications, where spaces
 // must be ignored.
@@ -510,15 +536,8 @@ struct PositiveDigitStringIgnoreSpaces {
   using resultType = std::int64_t;
   static std::optional<std::int64_t> Parse(ParseState &state) {
     Location at{state.GetLocation()};
-    std::optional<std::uint64_t> x{DigitStringIgnoreSpaces{}.Parse(state)};
-    if (!x.has_value()) {
-      return {};
-    }
-    if (*x > std::numeric_limits<std::int64_t>::max()) {
-      state.Say(at, "overflow in positive decimal literal"_err_en_US);
-    }
-    std::int64_t value = *x;
-    return {value};
+    return SignedInteger(
+        DigitStringIgnoreSpaces{}.Parse(state), at, false /*positive*/, state);
   }
 };
 
@@ -531,19 +550,8 @@ struct SignedDigitStringIgnoreSpaces {
       negate = **sign == '-';
     }
     Location at{state.GetLocation()};
-    std::optional<std::uint64_t> x{DigitStringIgnoreSpaces{}.Parse(state)};
-    if (!x.has_value()) {
-      return {};
-    }
-    std::uint64_t limit{std::numeric_limits<std::int64_t>::max()};
-    if (negate) {
-      limit = -(limit + 1);
-    }
-    if (*x > limit) {
-      state.Say(at, "overflow in signed decimal literal"_err_en_US);
-    }
-    std::int64_t value = *x;
-    return {negate ? -value : value};
+    return SignedInteger(
+        DigitStringIgnoreSpaces{}.Parse(state), at, negate, state);
   }
 };
 
