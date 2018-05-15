@@ -363,11 +363,13 @@ multiclass C_COND_MM<string TypeStr, RegisterOperand RC, bits<2> fmt,
     let BaseOpcode = "c.ngt."#NAME;
   }
 }
+let DecoderNamespace = "MicroMips" in {
+  defm S   : C_COND_MM<"s", FGR32Opnd, 0b00, II_C_CC_S>,
+             ISA_MICROMIPS32_NOT_MIPS32R6;
+  defm D32 : C_COND_MM<"d", AFGR64Opnd, 0b01, II_C_CC_D>,
+             ISA_MICROMIPS32_NOT_MIPS32R6, FGR_32;
+}
 
-defm S   : C_COND_MM<"s", FGR32Opnd, 0b00, II_C_CC_S>,
-           ISA_MICROMIPS32_NOT_MIPS32R6;
-defm D32 : C_COND_MM<"d", AFGR64Opnd, 0b01, II_C_CC_D>,
-           ISA_MICROMIPS32_NOT_MIPS32R6, FGR_32;
 let DecoderNamespace = "Mips64" in
   defm D64 : C_COND_MM<"d", FGR64Opnd, 0b01, II_C_CC_D>,
              ISA_MICROMIPS32_NOT_MIPS32R6, FGR_64;
