@@ -32,9 +32,6 @@
 #define GET_SUBTARGETINFO_HEADER
 #include "HexagonGenSubtargetInfo.inc"
 
-#define Hexagon_SMALL_DATA_THRESHOLD 8
-#define Hexagon_SLOTS 4
-
 namespace llvm {
 
 class MachineInstr;
@@ -183,11 +180,6 @@ public:
   bool enableSubRegLiveness() const override;
 
   const std::string &getCPUString () const { return CPUString; }
-
-  // Threshold for small data section
-  unsigned getSmallDataThreshold() const {
-    return Hexagon_SMALL_DATA_THRESHOLD;
-  }
 
   const Hexagon::ArchEnum &getHexagonArchVersion() const {
     return HexagonArchVersion;
