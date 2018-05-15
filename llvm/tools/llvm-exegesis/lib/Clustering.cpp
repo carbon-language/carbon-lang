@@ -157,7 +157,7 @@ InstructionBenchmarkClustering::create(
     const double Epsilon) {
   InstructionBenchmarkClustering Clustering(Points);
   if (auto Error = Clustering.validateAndSetup()) {
-    return Error;
+    return std::move(Error);
   }
   if (Clustering.ErrorCluster_.PointIndices.size() == Points.size()) {
     return Clustering; // Nothing to cluster.
