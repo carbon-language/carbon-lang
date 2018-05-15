@@ -48,7 +48,6 @@ class HexagonSubtarget : public HexagonGenSubtargetInfo {
 
   bool UseHVX64BOps = false;
   bool UseHVX128BOps = false;
-  bool ModeIEEERndNear = false;
 
   bool UseLongCalls = false;
   bool UseMemops = false;
@@ -162,7 +161,6 @@ public:
   bool useNewValueStores() const { return UseNewValueStores; }
   bool useSmallData() const { return UseSmallData; }
 
-  bool modeIEEERndNear() const { return ModeIEEERndNear; }
   bool useHVXOps() const { return HexagonHVXVersion > Hexagon::ArchEnum::V4; }
   bool useHVX128BOps() const { return useHVXOps() && UseHVX128BOps; }
   bool useHVX64BOps() const { return useHVXOps() && UseHVX64BOps; }
