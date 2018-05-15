@@ -343,9 +343,16 @@ def : WriteRes<WriteVecExtractSt, [BWPort4,BWPort5,BWPort237]> {
 }
 
 // Conversion between integer and float.
-defm : BWWriteResPair<WriteCvtF2I, [BWPort1], 3>; // Float -> Integer.
-defm : BWWriteResPair<WriteCvtI2F, [BWPort1], 4>; // Integer -> Float.
-defm : BWWriteResPair<WriteCvtF2F, [BWPort1], 3>; // Float -> Float size conversion.
+defm : BWWriteResPair<WriteCvtF2I,    [BWPort1], 3>; // Float -> Integer.
+defm : BWWriteResPair<WriteCvtI2F,    [BWPort1], 4>; // Integer -> Float.
+
+defm : BWWriteResPair<WriteCvtSS2SD,  [BWPort1], 3>;
+defm : BWWriteResPair<WriteCvtPS2PD,  [BWPort1], 3>;
+defm : BWWriteResPair<WriteCvtPS2PDY, [BWPort1], 3>;
+
+defm : BWWriteResPair<WriteCvtSD2SS,  [BWPort1], 3>;
+defm : BWWriteResPair<WriteCvtPD2PS,  [BWPort1], 3>;
+defm : BWWriteResPair<WriteCvtPD2PSY, [BWPort1], 3>;
 
 defm : X86WriteRes<WriteCvtPH2PS,     [BWPort0,BWPort5], 2, [1,1], 2>;
 defm : X86WriteRes<WriteCvtPH2PSY,    [BWPort0,BWPort5], 2, [1,1], 2>;

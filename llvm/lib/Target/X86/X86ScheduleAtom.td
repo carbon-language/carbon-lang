@@ -273,9 +273,16 @@ defm : AtomWriteResPair<WriteFVarShuffle256, [AtomPort0],  [AtomPort0]>; // NOTE
 // Conversions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : AtomWriteResPair<WriteCvtF2I, [AtomPort01], [AtomPort01], 8, 9, [8], [9]>; // Float -> Integer.
-defm : AtomWriteResPair<WriteCvtI2F, [AtomPort01], [AtomPort01], 6, 7, [6], [7]>; // Integer -> Float.
-defm : AtomWriteResPair<WriteCvtF2F, [AtomPort01], [AtomPort01], 6, 7, [6], [7]>; // Float -> Float size conversion.
+defm : AtomWriteResPair<WriteCvtF2I, [AtomPort01], [AtomPort01], 8, 9, [8], [9]>;
+defm : AtomWriteResPair<WriteCvtI2F, [AtomPort01], [AtomPort01], 6, 7, [6], [7]>;
+
+defm : AtomWriteResPair<WriteCvtSS2SD,  [AtomPort01], [AtomPort01], 6, 7, [6], [7]>;
+defm : AtomWriteResPair<WriteCvtPS2PD,  [AtomPort01], [AtomPort01], 7, 8, [7], [8]>;
+defm : AtomWriteResPair<WriteCvtPS2PDY, [AtomPort01], [AtomPort01], 7, 8, [7], [8]>;
+
+defm : AtomWriteResPair<WriteCvtSD2SS,  [AtomPort01], [AtomPort01], 6, 7, [6], [7]>;
+defm : AtomWriteResPair<WriteCvtPD2PS,  [AtomPort01], [AtomPort01], 7, 8, [7], [8]>;
+defm : AtomWriteResPair<WriteCvtPD2PSY, [AtomPort01], [AtomPort01], 7, 8, [7], [8]>;
 
 defm : AtomWriteResPair<WriteCvtPH2PS,  [AtomPort0], [AtomPort0]>; // NOTE: Doesn't exist on Atom.
 defm : AtomWriteResPair<WriteCvtPH2PSY, [AtomPort0], [AtomPort0]>; // NOTE: Doesn't exist on Atom.
@@ -571,9 +578,7 @@ def AtomWrite01_7 : SchedWriteRes<[AtomPort01]> {
 def : InstRW<[AtomWrite01_7], (instrs AAD8i8,
                                       CVTDQ2PDrr,
                                       CVTPD2DQrr,
-                                      CVTPD2PSrr,
                                       CVTPS2DQrm,
-                                      CVTPS2PDrr,
                                       CVTTPD2DQrr,
                                       CVTTPS2DQrm,
                                       MMX_CVTPD2PIirr,
@@ -590,8 +595,6 @@ def : InstRW<[AtomWrite01_8], (instrs LOOPE,
                                       FNSTCW16m,
                                       CVTDQ2PDrm,
                                       CVTPD2DQrm,
-                                      CVTPD2PSrm,
-                                      CVTPS2PDrm,
                                       CVTTPD2DQrm,
                                       MMX_CVTPD2PIirm,
                                       MMX_CVTPI2PDirm,

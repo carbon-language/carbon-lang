@@ -197,9 +197,6 @@ defm : SLMWriteResPair<WriteFSqrt80,  [SLM_FPC_RSV0,SLMFPDivider], 40, [1,40]>;
 defm : SLMWriteResPair<WriteDPPD,   [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteDPPS,   [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteDPPSY,  [SLM_FPC_RSV1], 3>;
-defm : SLMWriteResPair<WriteCvtF2I, [SLM_FPC_RSV01], 4>;
-defm : SLMWriteResPair<WriteCvtI2F, [SLM_FPC_RSV01], 4>;
-defm : SLMWriteResPair<WriteCvtF2F, [SLM_FPC_RSV01], 4>;
 defm : SLMWriteResPair<WriteFSign,  [SLM_FPC_RSV01], 1>;
 defm : SLMWriteResPair<WriteFRnd,   [SLM_FPC_RSV1], 3>;
 defm : SLMWriteResPair<WriteFRndY,  [SLM_FPC_RSV1], 3>;
@@ -212,6 +209,18 @@ defm : SLMWriteResPair<WriteFShuffleY, [SLM_FPC_RSV0], 1>;
 defm : SLMWriteResPair<WriteFVarShuffle, [SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFVarShuffleY,[SLM_FPC_RSV0],  1>;
 defm : SLMWriteResPair<WriteFBlend,  [SLM_FPC_RSV0],  1>;
+
+// Conversion between integer and float.
+defm : SLMWriteResPair<WriteCvtF2I,    [SLM_FPC_RSV01], 4>;
+defm : SLMWriteResPair<WriteCvtI2F,    [SLM_FPC_RSV01], 4>;
+
+defm : SLMWriteResPair<WriteCvtSS2SD,  [SLM_FPC_RSV01], 4>;
+defm : SLMWriteResPair<WriteCvtPS2PD,  [SLM_FPC_RSV01], 4>;
+defm : SLMWriteResPair<WriteCvtPS2PDY, [SLM_FPC_RSV01], 4>;
+
+defm : SLMWriteResPair<WriteCvtSD2SS,  [SLM_FPC_RSV01], 4>;
+defm : SLMWriteResPair<WriteCvtPD2PS,  [SLM_FPC_RSV01], 4>;
+defm : SLMWriteResPair<WriteCvtPD2PSY, [SLM_FPC_RSV01], 4>;
 
 // Vector integer operations.
 def  : WriteRes<WriteVecLoad,         [SLM_MEC_RSV]> { let Latency = 3; }

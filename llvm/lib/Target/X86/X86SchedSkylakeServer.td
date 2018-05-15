@@ -336,9 +336,16 @@ def : WriteRes<WriteVecExtractSt, [SKXPort4,SKXPort5,SKXPort237]> {
 }
 
 // Conversion between integer and float.
-defm : SKXWriteResPair<WriteCvtF2I, [SKXPort1], 3>; // Float -> Integer.
-defm : SKXWriteResPair<WriteCvtI2F, [SKXPort1], 4>; // Integer -> Float.
-defm : SKXWriteResPair<WriteCvtF2F, [SKXPort1], 3>; // Float -> Float size conversion.
+defm : SKXWriteResPair<WriteCvtF2I, [SKXPort1], 3>;
+defm : SKXWriteResPair<WriteCvtI2F, [SKXPort1], 4>;
+
+defm : SKXWriteResPair<WriteCvtSS2SD,  [SKXPort1], 3>;
+defm : SKXWriteResPair<WriteCvtPS2PD,  [SKXPort1], 3>;
+defm : SKXWriteResPair<WriteCvtPS2PDY, [SKXPort1], 3>;
+
+defm : SKXWriteResPair<WriteCvtSD2SS,  [SKXPort1], 3>;
+defm : SKXWriteResPair<WriteCvtPD2PS,  [SKXPort1], 3>;
+defm : SKXWriteResPair<WriteCvtPD2PSY, [SKXPort1], 3>;
 
 defm : X86WriteRes<WriteCvtPH2PS,     [SKXPort5,SKXPort015],  5, [1,1], 2>;
 defm : X86WriteRes<WriteCvtPH2PSY,    [SKXPort5,SKXPort015],  7, [1,1], 2>;
