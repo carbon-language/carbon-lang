@@ -922,33 +922,39 @@ Error ResourceFileWriter::visitIconOrCursorResource(const RCResource *Base) {
 
   // Now, write all the headers concatenated into a separate resource.
   for (size_t ID = 0; ID < NumItems; ++ID) {
-    if (Type == IconCursorGroupType::Icon) {
-      // rc.exe seems to always set NumPlanes to 1. No idea why it happens.
-      ItemEntries[ID].Planes = 1;
-      continue;
-    }
-
-    // We need to rewrite the cursor headers.
+    // We need to rewrite the cursor headers, and fetch actual values
+    // for Planes/BitCount.
     const auto &OldHeader = ItemEntries[ID];
-    ResourceDirEntryStart NewHeader;
-    NewHeader.Cursor.Width = OldHeader.Icon.Width;
-    // Each cursor in fact stores two bitmaps, one under another.
-    // Height provided in cursor definition describes the height of the
-    // cursor, whereas the value existing in resource definition describes
-    // the height of the bitmap. Therefore, we need to double this height.
-    NewHeader.Cursor.Height = OldHeader.Icon.Height * 2;
+    ResourceDirEntryStart NewHeader = OldHeader;
+
+    if (Type == IconCursorGroupType::Cursor) {
+      NewHeader.Cursor.Width = OldHeader.Icon.Width;
+      // Each cursor in fact stores two bitmaps, one under another.
+      // Height provided in cursor definition describes the height of the
+      // cursor, whereas the value existing in resource definition describes
+      // the height of the bitmap. Therefore, we need to double this height.
+      NewHeader.Cursor.Height = OldHeader.Icon.Height * 2;
+
+      // Two WORDs were written at the beginning of the resource (hotspot
+      // location). This is reflected in Size field.
+      NewHeader.Size += 2 * sizeof(uint16_t);
+    }
 
     // Now, we actually need to read the bitmap header to find
     // the number of planes and the number of bits per pixel.
     Reader.setOffset(ItemOffsets[ID]);
     const BitmapInfoHeader *BMPHeader;
     RETURN_IF_ERROR(Reader.readObject(BMPHeader));
-    NewHeader.Planes = BMPHeader->Planes;
-    NewHeader.BitCount = BMPHeader->BitCount;
-
-    // Two WORDs were written at the beginning of the resource (hotspot
-    // location). This is reflected in Size field.
-    NewHeader.Size = OldHeader.Size + 2 * sizeof(uint16_t);
+    if (BMPHeader->Size == sizeof(BitmapInfoHeader)) {
+      NewHeader.Planes = BMPHeader->Planes;
+      NewHeader.BitCount = BMPHeader->BitCount;
+    } else {
+      // A PNG .ico file.
+      // https://blogs.msdn.microsoft.com/oldnewthing/20101022-00/?p=12473
+      // "The image must be in 32bpp"
+      NewHeader.Planes = 1;
+      NewHeader.BitCount = 32;
+    }
 
     ItemEntries[ID] = NewHeader;
   }
