@@ -187,17 +187,14 @@ let DecoderNamespace = "MicroMips" in {
   def MOVF_D32_MM : MMRel, CMov_F_F_FT<"movf.d", AFGR64Opnd, II_MOVF_D,
                                        MipsCMovFP_F>, CMov_F_F_FM_MM<0x20, 1>,
                     ISA_MICROMIPS32_NOT_MIPS32R6, FGR_32;
-}
-let isCodeGenOnly = 1 in {
-def MFC1_MM : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd,
-                             II_MFC1, bitconvert>, MFC1_FM_MM<0x80>,
-              ISA_MICROMIPS;
-def MTC1_MM : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd,
-                             II_MTC1, bitconvert>, MFC1_FM_MM<0xa0>,
-              ISA_MICROMIPS;
-}
 
-let DecoderNamespace = "MicroMips" in {
+  def MFC1_MM : MMRel, MFC1_FT<"mfc1", GPR32Opnd, FGR32Opnd,
+                               II_MFC1, bitconvert>, MFC1_FM_MM<0x80>,
+                ISA_MICROMIPS;
+  def MTC1_MM : MMRel, MTC1_FT<"mtc1", FGR32Opnd, GPR32Opnd,
+                               II_MTC1, bitconvert>, MFC1_FM_MM<0xa0>,
+                ISA_MICROMIPS;
+
   def MADD_S_MM : MMRel, MADDS_FT<"madd.s", FGR32Opnd, II_MADD_S>,
                   MADDS_FM_MM<0x1>, ISA_MICROMIPS32_NOT_MIPS32R6, MADD4;
   def MSUB_S_MM : MMRel, MADDS_FT<"msub.s", FGR32Opnd, II_MSUB_S>,

@@ -62,9 +62,13 @@
 # CHECK-EL: cfc1    $6, $0              # encoding: [0xc0,0x54,0x3b,0x10]
 # CHECK-EL: ctc1    $6, $0              # encoding: [0xc0,0x54,0x3b,0x18]
 # CHECK-EL: mfc1    $6, $f8             # encoding: [0xc8,0x54,0x3b,0x20]
+# CHECK-EL-NEXT:                        # <MCInst #{{[0-9]+}} MFC1_MM
 # CHECK-EL: mtc1    $6, $f8             # encoding: [0xc8,0x54,0x3b,0x28]
+# CHECK-EL-NEXT:                        # <MCInst #{{[0-9]+}} MTC1_MM
 # CHECK-EL: mfhc1   $6, $f8             # encoding: [0xc8,0x54,0x3b,0x30]
+# CHECK-EL-NEXT:                        # <MCInst #{{[0-9]+}} MFHC1_D32_MM
 # CHECK-EL: mthc1   $6, $f8             # encoding: [0xc8,0x54,0x3b,0x38]
+# CHECK-EL-NEXT:                        # <MCInst #{{[0-9]+}} MTHC1_D32_MM
 # CHECK-EL: movz.s  $f4, $f6, $7        # encoding: [0xe6,0x54,0x78,0x20]
 # CHECK-EL-NEXT:                        # <MCInst #{{[0-9]+}} MOVZ_I_S_MM
 # CHECK-EL: movz.d  $f4, $f6, $7        # encoding: [0xe6,0x54,0x78,0x21]
@@ -145,9 +149,13 @@
 # CHECK-EB: cfc1    $6, $0              # encoding: [0x54,0xc0,0x10,0x3b]
 # CHECK-EB: ctc1    $6, $0              # encoding: [0x54,0xc0,0x18,0x3b]
 # CHECK-EB: mfc1    $6, $f8             # encoding: [0x54,0xc8,0x20,0x3b]
+# CHECK-EB-NEXT:                        # <MCInst #{{[0-9]+}} MFC1_MM
 # CHECK-EB: mtc1    $6, $f8             # encoding: [0x54,0xc8,0x28,0x3b]
+# CHECK-EB-NEXT:                        # <MCInst #{{[0-9]+}} MTC1_MM
 # CHECK-EB: mfhc1   $6, $f8             # encoding: [0x54,0xc8,0x30,0x3b]
+# CHECK-EB-NEXT:                        # <MCInst #{{[0-9]+}} MFHC1_D32_MM
 # CHECK-EB: mthc1   $6, $f8             # encoding: [0x54,0xc8,0x38,0x3b]
+# CHECK-EB-NEXT:                        # <MCInst #{{[0-9]+}} MTHC1_D32_MM
 # CHECK-EB: movz.s  $f4, $f6, $7        # encoding: [0x54,0xe6,0x20,0x78]
 # CHECK-EB-NEXT:                        # <MCInst #{{[0-9]+}} MOVZ_I_S_MM
 # CHECK-EB: movz.d  $f4, $f6, $7        # encoding: [0x54,0xe6,0x21,0x78]
