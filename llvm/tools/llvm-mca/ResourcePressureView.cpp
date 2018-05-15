@@ -144,7 +144,10 @@ void ResourcePressureView::printResourcePressurePerInstruction(
 
   TempStream << "\n\nResource pressure by instruction:\n";
   printColumnNames(TempStream, STI.getSchedModel());
-  TempStream << "\tInstructions:\n";
+  TempStream << "Instructions:\n";
+
+  std::string Instruction;
+  raw_string_ostream InstrStream(Instruction);
 
   for (unsigned I = 0, E = Source.size(); I < E; ++I) {
     for (unsigned J = 0; J < NumResourceUnits; ++J) {
@@ -152,8 +155,16 @@ void ResourcePressureView::printResourcePressurePerInstruction(
       printResourcePressure(TempStream, Usage / Executions);
     }
 
-    MCIP.printInst(&Source.getMCInstFromIndex(I), TempStream, "", STI);
-    TempStream << '\n';
+    MCIP.printInst(&Source.getMCInstFromIndex(I), InstrStream, "", STI);
+    InstrStream.flush();
+    StringRef Str(Instruction);
+
+    // Remove any tabs or spaces at the beginning of the instruction.
+    Str = Str.ltrim();
+
+    TempStream << Str << '\n';
+    Instruction = "";
+
     TempStream.flush();
     OS << Buffer;
     Buffer = "";

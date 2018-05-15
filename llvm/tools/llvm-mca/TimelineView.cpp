@@ -98,7 +98,7 @@ void TimelineView::printWaitTimeEntry(raw_string_ostream &OS,
     OS << ' ';
 
   if (Entry.Executions == 0) {
-    OS << " -      -      -      -   ";
+    OS << " -      -      -      -     ";
   } else {
     double AverageTime1, AverageTime2, AverageTime3;
     unsigned Executions = Entry.Executions;
@@ -133,13 +133,25 @@ void TimelineView::printAverageWaitTimes(raw_ostream &OS) const {
       << "[3]: Average time elapsed from WB until retire stage\n\n";
   TempStream << "      [0]    [1]    [2]    [3]\n";
 
+  // Use a different string stream for the instruction.
+  std::string Instruction;
+  raw_string_ostream InstrStream(Instruction);
+
   for (unsigned I = 0, E = WaitTime.size(); I < E; ++I) {
     printWaitTimeEntry(TempStream, WaitTime[I], I);
     // Append the instruction info at the end of the line.
     const MCInst &Inst = AsmSequence.getMCInstFromIndex(I);
-    MCIP.printInst(&Inst, TempStream, "", STI);
-    TempStream << '\n';
+
+    MCIP.printInst(&Inst, InstrStream, "", STI);
+    InstrStream.flush();
+
+    // Consume any tabs or spaces at the beginning of the string.
+    StringRef Str(Instruction);
+    Str = Str.ltrim();
+    TempStream << "   " << Str << '\n';
     TempStream.flush();
+    Instruction = "";
+
     OS << Buffer;
     Buffer = "";
   }
@@ -210,6 +222,10 @@ void TimelineView::printTimeline(raw_ostream &OS) const {
   TempStream.flush();
   OS << Buffer;
 
+  // Use a different string stream for the instruction.
+  std::string Instruction;
+  raw_string_ostream InstrStream(Instruction);
+
   for (unsigned I = 0, E = Timeline.size(); I < E; ++I) {
     Buffer = "";
     const TimelineViewEntry &Entry = Timeline[I];
@@ -221,9 +237,15 @@ void TimelineView::printTimeline(raw_ostream &OS) const {
     printTimelineViewEntry(TempStream, Entry, Iteration, SourceIndex);
     // Append the instruction info at the end of the line.
     const MCInst &Inst = AsmSequence.getMCInstFromIndex(I);
-    MCIP.printInst(&Inst, TempStream, "", STI);
-    TempStream << '\n';
+    MCIP.printInst(&Inst, InstrStream, "", STI);
+    InstrStream.flush();
+
+    // Consume any tabs or spaces at the beginning of the string.
+    StringRef Str(Instruction);
+    Str = Str.ltrim();
+    TempStream << "   " << Str << '\n';
     TempStream.flush();
+    Instruction = "";
     OS << Buffer;
   }
 }
