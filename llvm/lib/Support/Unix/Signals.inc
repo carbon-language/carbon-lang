@@ -101,23 +101,6 @@ static struct {
 } RegisteredSignalInfo[array_lengthof(IntSigs) + array_lengthof(KillSigs)];
 
 
-static void RegisterHandler(int Signal) {
-  assert(NumRegisteredSignals < array_lengthof(RegisteredSignalInfo) &&
-         "Out of space for signal handlers!");
-
-  struct sigaction NewHandler;
-
-  NewHandler.sa_handler = SignalHandler;
-  NewHandler.sa_flags = SA_NODEFER | SA_RESETHAND | SA_ONSTACK;
-  sigemptyset(&NewHandler.sa_mask);
-
-  // Install the new handler, save the old one in RegisteredSignalInfo.
-  sigaction(Signal, &NewHandler,
-            &RegisteredSignalInfo[NumRegisteredSignals].SA);
-  RegisteredSignalInfo[NumRegisteredSignals].SigNo = Signal;
-  ++NumRegisteredSignals;
-}
-
 #if defined(HAVE_SIGALTSTACK)
 // Hold onto both the old and new alternate signal stack so that it's not
 // reported as a leak. We don't make any attempt to remove our alt signal
@@ -159,8 +142,27 @@ static void RegisterHandlers() {
   // be able to reliably handle signals due to stack overflow.
   CreateSigAltStack();
 
-  for (auto S : IntSigs) RegisterHandler(S);
-  for (auto S : KillSigs) RegisterHandler(S);
+  auto registerHandler = [&](int Signal) {
+    assert(NumRegisteredSignals < array_lengthof(RegisteredSignalInfo) &&
+           "Out of space for signal handlers!");
+
+    struct sigaction NewHandler;
+
+    NewHandler.sa_handler = SignalHandler;
+    NewHandler.sa_flags = SA_NODEFER | SA_RESETHAND | SA_ONSTACK;
+    sigemptyset(&NewHandler.sa_mask);
+
+    // Install the new handler, save the old one in RegisteredSignalInfo.
+    sigaction(Signal, &NewHandler,
+              &RegisteredSignalInfo[NumRegisteredSignals].SA);
+    RegisteredSignalInfo[NumRegisteredSignals].SigNo = Signal;
+    ++NumRegisteredSignals;
+  };
+
+  for (auto S : IntSigs)
+    registerHandler(S);
+  for (auto S : KillSigs)
+    registerHandler(S);
 }
 
 static void UnregisterHandlers() {
