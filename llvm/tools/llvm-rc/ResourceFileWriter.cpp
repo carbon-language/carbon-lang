@@ -482,8 +482,8 @@ Error ResourceFileWriter::visitStringTableResource(const RCResource *Base) {
     if (Iter == BundleData.end()) {
       // Need to create a bundle.
       StringTableData.BundleList.push_back(Key);
-      auto EmplaceResult =
-          BundleData.emplace(Key, StringTableInfo::Bundle(ObjectData));
+      auto EmplaceResult = BundleData.emplace(
+          Key, StringTableInfo::Bundle(ObjectData, Res->MemoryFlags));
       assert(EmplaceResult.second && "Could not create a bundle");
       Iter = EmplaceResult.first;
     }
@@ -556,7 +556,7 @@ Error ResourceFileWriter::writeResource(
   padStream(sizeof(uint32_t));
   object::WinResHeaderSuffix HeaderSuffix{
       ulittle32_t(0), // DataVersion; seems to always be 0
-      ulittle16_t(Res->getMemoryFlags()), ulittle16_t(ObjectData.LanguageInfo),
+      ulittle16_t(Res->MemoryFlags), ulittle16_t(ObjectData.LanguageInfo),
       ulittle32_t(ObjectData.VersionInfo),
       ulittle32_t(ObjectData.Characteristics)};
   writeObject(HeaderSuffix);
@@ -785,15 +785,13 @@ public:
 
   SingleIconCursorResource(IconCursorGroupType ResourceType,
                            const ResourceDirEntryStart &HeaderEntry,
-                           ArrayRef<uint8_t> ImageData)
-      : Type(ResourceType), Header(HeaderEntry), Image(ImageData) {}
+                           ArrayRef<uint8_t> ImageData, uint16_t Flags)
+      : RCResource(Flags), Type(ResourceType), Header(HeaderEntry),
+        Image(ImageData) {}
 
   Twine getResourceTypeName() const override { return "Icon/cursor image"; }
   IntOrString getResourceType() const override {
     return Type == IconCursorGroupType::Icon ? RkSingleIcon : RkSingleCursor;
-  }
-  uint16_t getMemoryFlags() const override {
-    return MfDiscardable | MfMoveable;
   }
   ResourceKind getKind() const override { return RkSingleCursorOrIconRes; }
   static bool classof(const RCResource *Res) {
@@ -915,7 +913,8 @@ Error ResourceFileWriter::visitIconOrCursorResource(const RCResource *Base) {
     Reader.setOffset(ItemOffsets[ID]);
     ArrayRef<uint8_t> Image;
     RETURN_IF_ERROR(Reader.readArray(Image, ItemEntries[ID].Size));
-    SingleIconCursorResource SingleRes(Type, ItemEntries[ID], Image);
+    SingleIconCursorResource SingleRes(Type, ItemEntries[ID], Image,
+                                       Base->MemoryFlags);
     SingleRes.setName(IconCursorID + ID);
     RETURN_IF_ERROR(visitSingleIconOrCursor(&SingleRes));
   }
@@ -961,6 +960,10 @@ Error ResourceFileWriter::visitIconOrCursorResource(const RCResource *Base) {
 
   IconCursorGroupResource HeaderRes(Type, *Header, std::move(ItemEntries));
   HeaderRes.setName(ResName);
+  if (Base->MemoryFlags & MfPreload) {
+    HeaderRes.MemoryFlags |= MfPreload;
+    HeaderRes.MemoryFlags &= ~MfPure;
+  }
   RETURN_IF_ERROR(visitIconOrCursorGroup(&HeaderRes));
 
   return Error::success();
@@ -1214,7 +1217,8 @@ public:
   using BundleType = ResourceFileWriter::StringTableInfo::Bundle;
   BundleType Bundle;
 
-  BundleResource(const BundleType &StrBundle) : Bundle(StrBundle) {}
+  BundleResource(const BundleType &StrBundle)
+      : RCResource(StrBundle.MemoryFlags), Bundle(StrBundle) {}
   IntOrString getResourceType() const override { return 6; }
 
   ResourceKind getKind() const override { return RkStringTableBundle; }
