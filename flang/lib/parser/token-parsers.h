@@ -450,11 +450,12 @@ constexpr struct SkipDigitString {
 // N.B. Spaces are consumed before and after the sign, since the sign
 // and the int-literal-constant are distinct tokens.  Does not
 // handle a trailing kind parameter.
-static inline constexpr std::optional<std::int64_t> SignedInteger(
+static std::optional<std::int64_t> SignedInteger(
     const std::optional<std::uint64_t> &x, Location at, bool negate,
     ParseState &state) {
+  std::optional<std::int64_t> result;
   if (!x.has_value()) {
-    return {};
+    return result;
   }
   std::uint64_t limit{std::numeric_limits<std::int64_t>::max()};
   if (negate) {
@@ -464,7 +465,8 @@ static inline constexpr std::optional<std::int64_t> SignedInteger(
     state.Say(at, "overflow in signed decimal literal"_err_en_US);
   }
   std::int64_t value = *x;
-  return {negate ? -value : value};
+  result = negate ? -value : value;
+  return result;
 }
 
 struct SignedIntLiteralConstantWithoutKind {
