@@ -54,28 +54,8 @@ class TempEnvVar {
 template <typename T, typename Base = cl::opt<T>>
 class StackOption : public Base {
 public:
-  // One option...
-  template<class M0t>
-  explicit StackOption(const M0t &M0) : Base(M0) {}
-
-  // Two options...
-  template<class M0t, class M1t>
-  StackOption(const M0t &M0, const M1t &M1) : Base(M0, M1) {}
-
-  // Three options...
-  template<class M0t, class M1t, class M2t>
-  StackOption(const M0t &M0, const M1t &M1, const M2t &M2) : Base(M0, M1, M2) {}
-
-  // Four options...
-  template<class M0t, class M1t, class M2t, class M3t>
-  StackOption(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-    : Base(M0, M1, M2, M3) {}
-
-  // Five options...
-  template <class M0t, class M1t, class M2t, class M3t, class M4t>
-  StackOption(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
-              const M4t &M4)
-      : Base(M0, M1, M2, M3, M4) {}
+  template <class... Ts>
+  explicit StackOption(Ts &&... Ms) : Base(std::forward<Ts>(Ms)...) {}
 
   ~StackOption() override { this->removeArgument(); }
 
