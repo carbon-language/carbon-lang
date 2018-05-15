@@ -1395,7 +1395,7 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
   // transforms.
   Constant *C;
   if (match(&Inst, m_c_BinOp(
-          m_ShuffleVector(m_Value(V1), m_Undef(), m_Constant(Mask)),
+          m_OneUse(m_ShuffleVector(m_Value(V1), m_Undef(), m_Constant(Mask))),
           m_Constant(C))) &&
       V1->getType() == Inst.getType()) {
     // Find constant NewC that has property:
