@@ -398,14 +398,67 @@ define <4 x float> @shuffle_17fsub_fast(<4 x float> %v1, <4 x float> %v2) {
   ret <4 x float> %r
 }
 
-define <4 x i32> @shuffle_17addconst(<4 x i32> %v1, <4 x i32> %v2) {
-; CHECK-LABEL: @shuffle_17addconst(
-; CHECK-NEXT:    [[TMP1:%.*]] = add <4 x i32> [[V1:%.*]], <i32 4, i32 1, i32 2, i32 3>
+define <4 x i32> @add_const(<4 x i32> %v) {
+; CHECK-LABEL: @add_const(
+; CHECK-NEXT:    [[TMP1:%.*]] = add <4 x i32> [[V:%.*]], <i32 44, i32 41, i32 42, i32 43>
 ; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 0>
 ; CHECK-NEXT:    ret <4 x i32> [[TMP2]]
 ;
-  %t1 = shufflevector <4 x i32> %v1, <4 x i32> zeroinitializer, <4 x i32> <i32 1, i32 2, i32 3, i32 0>
-  %r = add <4 x i32> %t1, <i32 1, i32 2, i32 3, i32 4>
+  %t1 = shufflevector <4 x i32> %v, <4 x i32> undef, <4 x i32> <i32 1, i32 2, i32 3, i32 0>
+  %r = add <4 x i32> %t1, <i32 41, i32 42, i32 43, i32 44>
+  ret <4 x i32> %r
+}
+
+define <4 x i32> @sub_const(<4 x i32> %v) {
+; CHECK-LABEL: @sub_const(
+; CHECK-NEXT:    [[TMP1:%.*]] = sub <4 x i32> <i32 44, i32 43, i32 42, i32 41>, [[V:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <4 x i32> [[TMP1]], <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+; CHECK-NEXT:    ret <4 x i32> [[TMP2]]
+;
+  %t1 = shufflevector <4 x i32> %v, <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+  %r = sub <4 x i32> <i32 41, i32 42, i32 43, i32 44>, %t1
+  ret <4 x i32> %r
+}
+
+; FIXME: Math before shuffle requires an extra shuffle.
+
+define <2 x float> @fadd_const_multiuse(<2 x float> %v) {
+; CHECK-LABEL: @fadd_const_multiuse(
+; CHECK-NEXT:    [[T1:%.*]] = shufflevector <2 x float> [[V:%.*]], <2 x float> undef, <2 x i32> <i32 1, i32 0>
+; CHECK-NEXT:    [[TMP1:%.*]] = fadd <2 x float> [[V]], <float 4.200000e+01, float 4.100000e+01>
+; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> undef, <2 x i32> <i32 1, i32 0>
+; CHECK-NEXT:    call void @use(<2 x float> [[T1]])
+; CHECK-NEXT:    ret <2 x float> [[TMP2]]
+;
+  %t1 = shufflevector <2 x float> %v, <2 x float> undef, <2 x i32> <i32 1, i32 0>
+  %r = fadd <2 x float> %t1, <float 41.0, float 42.0>
+  call void @use(<2 x float> %t1)
+  ret <2 x float> %r
+}
+
+; Math before splat allows replacing constant elements with undef lanes.
+
+define <4 x i32> @mul_const_splat(<4 x i32> %v) {
+; CHECK-LABEL: @mul_const_splat(
+; CHECK-NEXT:    [[T1:%.*]] = shufflevector <4 x i32> [[V:%.*]], <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+; CHECK-NEXT:    [[R:%.*]] = mul <4 x i32> [[T1]], <i32 42, i32 42, i32 42, i32 42>
+; CHECK-NEXT:    ret <4 x i32> [[R]]
+;
+  %t1 = shufflevector <4 x i32> %v, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  %r = mul <4 x i32> <i32 42, i32 42, i32 42, i32 42>, %t1
+  ret <4 x i32> %r
+}
+
+; Take 2 elements of a vector and shift each of those by a different amount
+
+define <4 x i32> @lshr_const_half_splat(<4 x i32> %v) {
+; CHECK-LABEL: @lshr_const_half_splat(
+; CHECK-NEXT:    [[T1:%.*]] = shufflevector <4 x i32> [[V:%.*]], <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 2, i32 2>
+; CHECK-NEXT:    [[R:%.*]] = lshr <4 x i32> <i32 8, i32 8, i32 9, i32 9>, [[T1]]
+; CHECK-NEXT:    ret <4 x i32> [[R]]
+;
+  %t1 = shufflevector <4 x i32> %v, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 2, i32 2>
+  %r = lshr <4 x i32> <i32 8, i32 8, i32 9, i32 9>, %t1
   ret <4 x i32> %r
 }
 
