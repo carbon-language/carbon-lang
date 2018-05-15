@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BenchmarkResult.h"
 #include "Analysis.h"
+#include "BenchmarkResult.h"
 #include "llvm/Support/FormatVariadic.h"
 #include <vector>
 
@@ -16,7 +16,7 @@ namespace exegesis {
 
 static const char kCsvSep = ',';
 
-static void writeCsvEscaped(llvm::raw_ostream& OS, const std::string& S) {
+static void writeCsvEscaped(llvm::raw_ostream &OS, const std::string &S) {
   if (std::find(S.begin(), S.end(), kCsvSep) == S.end()) {
     OS << S;
   } else {
@@ -35,10 +35,12 @@ static void writeCsvEscaped(llvm::raw_ostream& OS, const std::string& S) {
 // Prints a row representing an instruction, along with scheduling info and
 // point coordinates (measurements).
 static void printInstructionRow(const InstructionBenchmark &Point,
-                         const llvm::MCSubtargetInfo &STI,
-                         const size_t ClusterId, llvm::raw_ostream &OS) {
+                                const llvm::MCSubtargetInfo &STI,
+                                const size_t ClusterId, llvm::raw_ostream &OS) {
   OS << ClusterId << kCsvSep;
-  writeCsvEscaped(OS, Point.AsmTmpl.Name);
+  writeCsvEscaped(OS, Point.Key.OpcodeName);
+  OS << kCsvSep;
+  writeCsvEscaped(OS, Point.Key.Config);
   // FIXME: Print the sched class once InstructionBenchmark separates key into
   // (mnemonic, mode, opaque).
   for (const auto &Measurement : Point.Measurements) {
@@ -49,9 +51,10 @@ static void printInstructionRow(const InstructionBenchmark &Point,
 }
 
 static void printCluster(const std::vector<InstructionBenchmark> &Points,
-                  const llvm::MCSubtargetInfo &STI, const size_t ClusterId,
-                  const InstructionBenchmarkClustering::Cluster &Cluster,
-                  llvm::raw_ostream &OS) {
+                         const llvm::MCSubtargetInfo &STI,
+                         const size_t ClusterId,
+                         const InstructionBenchmarkClustering::Cluster &Cluster,
+                         llvm::raw_ostream &OS) {
   // Print all points.
   for (const auto &PointId : Cluster.PointIndices) {
     printInstructionRow(Points[PointId], STI, ClusterId, OS);
@@ -65,7 +68,8 @@ printAnalysisClusters(const InstructionBenchmarkClustering &Clustering,
     return llvm::Error::success();
 
   // Write the header.
-  OS << "cluster_id;key,sched_class";
+  OS << "cluster_id" << kCsvSep << "opcode_name" << kCsvSep << "config"
+     << kCsvSep << "sched_class";
   for (const auto &Measurement : Clustering.getPoints().front().Measurements) {
     OS << kCsvSep;
     writeCsvEscaped(OS, Measurement.Key);
