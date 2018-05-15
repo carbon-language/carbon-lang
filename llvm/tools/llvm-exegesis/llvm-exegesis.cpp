@@ -135,7 +135,10 @@ void analysisMain() {
   // FIXME: Check that all points have the same triple/cpu.
   // FIXME: Merge points from several runs (latency and uops).
 
-  llvm::InitializeAllTargets();
+  //llvm::InitializeAllTargets();
+  llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
+
   std::string Error;
   const auto *TheTarget =
       llvm::TargetRegistry::lookupTarget(Points[0].LLVMTriple, Error);
