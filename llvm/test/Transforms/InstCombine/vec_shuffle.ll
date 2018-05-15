@@ -331,17 +331,16 @@ define <2 x float> @shuffle_fdiv_multiuse(<2 x float> %v1, <2 x float> %v2) {
   ret <2 x float> %r
 }
 
-; FIXME: But 2 extra uses would require an extra instruction.
+; But 2 extra uses would require an extra instruction.
 
 define <2 x float> @shuffle_fsub_multiuse(<2 x float> %v1, <2 x float> %v2) {
 ; CHECK-LABEL: @shuffle_fsub_multiuse(
 ; CHECK-NEXT:    [[T1:%.*]] = shufflevector <2 x float> [[V1:%.*]], <2 x float> undef, <2 x i32> <i32 1, i32 0>
 ; CHECK-NEXT:    [[T2:%.*]] = shufflevector <2 x float> [[V2:%.*]], <2 x float> undef, <2 x i32> <i32 1, i32 0>
-; CHECK-NEXT:    [[TMP1:%.*]] = fsub <2 x float> [[V1]], [[V2]]
-; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> undef, <2 x i32> <i32 1, i32 0>
+; CHECK-NEXT:    [[R:%.*]] = fsub <2 x float> [[T1]], [[T2]]
 ; CHECK-NEXT:    call void @use(<2 x float> [[T1]])
 ; CHECK-NEXT:    call void @use(<2 x float> [[T2]])
-; CHECK-NEXT:    ret <2 x float> [[TMP2]]
+; CHECK-NEXT:    ret <2 x float> [[R]]
 ;
   %t1 = shufflevector <2 x float> %v1, <2 x float> undef, <2 x i32> <i32 1, i32 0>
   %t2 = shufflevector <2 x float> %v2, <2 x float> undef, <2 x i32> <i32 1, i32 0>
