@@ -406,11 +406,11 @@ let AddedComplexity = 40 in {
   def : StoreRegImmPat<SWC1_MM, f32>, ISA_MICROMIPS;
 }
 
-  def : MipsPat<(f32 (fpround FGR64Opnd:$src)),
-                (CVT_S_D64_MM FGR64Opnd:$src)>, ISA_MICROMIPS, FGR_64;
-  def : MipsPat<(f64 (fpextend FGR32Opnd:$src)),
-                (CVT_D64_S_MM FGR32Opnd:$src)>, ISA_MICROMIPS, FGR_64;
-  def : MipsPat<(f32 (fpround AFGR64Opnd:$src)),
-                (CVT_S_D32_MM AFGR64Opnd:$src)>, ISA_MICROMIPS, FGR_32;
-  def : MipsPat<(f64 (fpextend FGR32Opnd:$src)),
-                (CVT_D32_S_MM FGR32Opnd:$src)>, ISA_MICROMIPS, FGR_32;
+def : MipsPat<(f32 (fpround FGR64Opnd:$src)),
+              (CVT_S_D64_MM FGR64Opnd:$src)>, ISA_MICROMIPS, FGR_64;
+def : MipsPat<(f64 (fpextend FGR32Opnd:$src)),
+              (CVT_D64_S_MM FGR32Opnd:$src)>, ISA_MICROMIPS, FGR_64;
+def : MipsPat<(f32 (fpround AFGR64Opnd:$src)),
+              (CVT_S_D32_MM AFGR64Opnd:$src)>, ISA_MICROMIPS, FGR_32;
+def : MipsPat<(f64 (fpextend FGR32Opnd:$src)),
+              (CVT_D32_S_MM FGR32Opnd:$src)>, ISA_MICROMIPS, FGR_32;
