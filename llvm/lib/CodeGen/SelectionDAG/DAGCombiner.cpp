@@ -13473,14 +13473,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
       continue;
     }
 
-    // Check that we can merge these candidates without causing a cycle
-    if (!checkMergeStoreCandidatesForDependencies(StoreNodes,
-                                                  NumConsecutiveStores)) {
-      StoreNodes.erase(StoreNodes.begin(),
-                       StoreNodes.begin() + NumConsecutiveStores);
-      continue;
-    }
-
     // The node with the lowest store address.
     LLVMContext &Context = *DAG.getContext();
     const DataLayout &DL = DAG.getDataLayout();
@@ -13576,6 +13568,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
         continue;
       }
 
+      // Check that we can merge these candidates without causing a cycle.
+      if (!checkMergeStoreCandidatesForDependencies(StoreNodes, NumElem)) {
+        StoreNodes.erase(StoreNodes.begin(), StoreNodes.begin() + NumElem);
+        continue;
+      }
+
       bool Merged = MergeStoresOfConstantsOrVecElts(
           StoreNodes, MemVT, NumElem, true, UseVector, LastIntegerTrunc);
       RV |= Merged;
@@ -13631,6 +13629,14 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
           NumSkip++;
 
         StoreNodes.erase(StoreNodes.begin(), StoreNodes.begin() + NumSkip);
+        continue;
+      }
+
+      // Check that we can merge these candidates without causing a cycle.
+      if (!checkMergeStoreCandidatesForDependencies(StoreNodes,
+                                                    NumStoresToMerge)) {
+        StoreNodes.erase(StoreNodes.begin(),
+                         StoreNodes.begin() + NumStoresToMerge);
         continue;
       }
 
@@ -13800,6 +13806,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
              (StoreNodes[NumSkip].MemNode->getAlignment() <= FirstStoreAlign))
         NumSkip++;
       StoreNodes.erase(StoreNodes.begin(), StoreNodes.begin() + NumSkip);
+      continue;
+    }
+
+    // Check that we can merge these candidates without causing a cycle.
+    if (!checkMergeStoreCandidatesForDependencies(StoreNodes, NumElem)) {
+      StoreNodes.erase(StoreNodes.begin(), StoreNodes.begin() + NumElem);
       continue;
     }
 
