@@ -43,9 +43,7 @@ class DescriptorAddendum;
 
 class TypeCode {
 public:
-  enum class Form {
-    Integer, Real, Complex, Logical, Character, DerivedType
-  };
+  enum class Form { Integer, Real, Complex, Logical, Character, DerivedType };
 
   TypeCode() {}
   explicit TypeCode(ISO::CFI_type_t t) : raw_{t} {}
@@ -61,14 +59,11 @@ public:
     return raw_ >= CFI_type_float && raw_ <= CFI_type_long_double;
   }
   constexpr bool IsComplex() const {
-    return raw_ >= CFI_type_float_Complex && raw_ <= CFI_type_long_double_Complex;
+    return raw_ >= CFI_type_float_Complex &&
+        raw_ <= CFI_type_long_double_Complex;
   }
-  constexpr bool IsLogical() const {
-    return raw_ == CFI_type_Bool;
-  }
-  constexpr bool IsCharacter() const {
-    return raw_ == CFI_type_cptr;
-  }
+  constexpr bool IsLogical() const { return raw_ == CFI_type_Bool; }
+  constexpr bool IsCharacter() const { return raw_ == CFI_type_cptr; }
   constexpr bool IsDerivedType() const { return raw_ == CFI_type_struct; }
 
   constexpr bool IsIntrinsic() const {
@@ -76,11 +71,21 @@ public:
   }
 
   constexpr Form GetForm() const {
-    if (IsInteger()) { return Form::Integer; }
-    if (IsReal()) { return Form::Real; }
-    if (IsComplex()) { return Form::Complex; }
-    if (IsLogical()) { return Form::Logical; }
-    if (IsCharacter()) { return Form::Character; }
+    if (IsInteger()) {
+      return Form::Integer;
+    }
+    if (IsReal()) {
+      return Form::Real;
+    }
+    if (IsComplex()) {
+      return Form::Complex;
+    }
+    if (IsLogical()) {
+      return Form::Logical;
+    }
+    if (IsCharacter()) {
+      return Form::Character;
+    }
     return Form::DerivedType;
   }
 
@@ -94,6 +99,7 @@ public:
   std::int64_t Extent() const { return raw_.extent; }
   std::int64_t UpperBound() const { return LowerBound() + Extent() - 1; }
   std::int64_t ByteStride() const { return raw_.sm; }
+
 private:
   ISO::CFI_dim_t raw_;  // must be first and only member
 };
@@ -136,9 +142,7 @@ public:
   bool IsTarget() const {
     return (raw_.attribute & (CFI_attribute_pointer | TARGET)) != 0;
   }
-  bool IsContiguous() const {
-    return (raw_.attribute & CONTIGUOUS) != 0;
-  }
+  bool IsContiguous() const { return (raw_.attribute & CONTIGUOUS) != 0; }
   bool IsNotFinalizable() const {
     return (raw_.attribute & NOT_FINALIZABLE) != 0;
   }
@@ -149,7 +153,8 @@ public:
 
   const DescriptorAddendum *GetAddendum() const {
     if ((raw_.attribute & ADDENDUM) != 0) {
-      return reinterpret_cast<const DescriptorAddendum *>(&GetDimension(rank()));
+      return reinterpret_cast<const DescriptorAddendum *>(
+          &GetDimension(rank()));
     } else {
       return nullptr;
     }
@@ -186,6 +191,7 @@ public:
   const TypeCode type() const { return typeCode_; }
   std::int64_t Value(const DescriptorAddendum *) const;
   std::int64_t Value(const Descriptor *) const;
+
 private:
   const char *name_;
   TypeCode typeCode_;  // not necessarily default INTEGER
@@ -224,7 +230,7 @@ public:
   }
 
 private:
-  enum Flag { PRIVATE=1, IS_DESCRIPTOR=2 };
+  enum Flag { PRIVATE = 1, IS_DESCRIPTOR = 2 };
 
   const char *name_{nullptr};
   std::size_t offset_{0};  // relative to start of derived type instance
@@ -273,12 +279,14 @@ public:
   }
   const ExecutableCode &finalSubroutine() const { return finalSubroutine_; }
 
+  bool IsSameType(const DerivedType &);
+
 private:
   const char *name_;  // NUL-terminated constant text
   std::size_t bytes_;  // allocation size of one scalar instance, w/ alignment
-  enum Flag { EXTENDS=1, SEQUENCE=2, BIND=4, ANY_PRIVATE=8 };
+  enum Flag { EXTENDS = 1, SEQUENCE = 2, BIND = 4, ANY_PRIVATE = 8 };
 
-  std::uint64_t flags_;  // needed for TYPE IS comparison
+  std::uint64_t flags_;  // needed for IsSameType() correct semantics
   const char *initializer_;  // can be null; includes base components
   std::size_t kindParameters_;
   const DerivedTypeParameter *kindParameter_;  // array
@@ -286,7 +294,8 @@ private:
   std::size_t components_;  // *not* including type parameters
   const Component *component_;  // array
   std::size_t typeBoundProcedures_;
-  const ExecutableCode *typeBoundProcedure_;  // array of overridable TBP bindings
+  const ExecutableCode
+      *typeBoundProcedure_;  // array of overridable TBP bindings
   ExecutableCode finalSubroutine_;  // resolved at compilation, can be null
 };
 
@@ -303,12 +312,10 @@ public:
   explicit DescriptorAddendum(const DerivedType *dt) : derivedType_{dt} {}
 
   const DerivedType *derivedType() const { return derivedType_; }
-  std::int64_t GetLenParameterValue(std::size_t n) const {
-    return len_[n];
-  }
+  std::int64_t GetLenParameterValue(std::size_t n) const { return len_[n]; }
   std::size_t SizeOfAddendumInBytes() const {
     return sizeof *this - sizeof len_[0] +
-           derivedType_->lenParameters() * sizeof len_[0];
+        derivedType_->lenParameters() * sizeof len_[0];
   }
 
 private:

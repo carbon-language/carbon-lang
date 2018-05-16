@@ -21,8 +21,8 @@
 namespace Fortran::ISO {
 extern "C" {
 
-void *CFI_address(const CFI_cdesc_t *descriptor,
-                  const CFI_index_t subscripts[]) {
+void *CFI_address(
+    const CFI_cdesc_t *descriptor, const CFI_index_t subscripts[]) {
   auto p = reinterpret_cast<char *>(descriptor->base_addr);
   std::size_t rank{descriptor->rank};
   const CFI_dim_t *dim{descriptor->dim};
@@ -33,12 +33,12 @@ void *CFI_address(const CFI_cdesc_t *descriptor,
 }
 
 int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
-                 const CFI_index_t upper_bounds[], std::size_t elem_len) {
+    const CFI_index_t upper_bounds[], std::size_t elem_len) {
   if (descriptor->version != CFI_VERSION) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if ((descriptor->attribute &
-      ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
+          ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
     // Non-interoperable object
     return CFI_INVALID_DESCRIPTOR;
   }
@@ -80,7 +80,7 @@ int CFI_deallocate(CFI_cdesc_t *descriptor) {
     return CFI_INVALID_DESCRIPTOR;
   }
   if ((descriptor->attribute &
-      ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
+          ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
     // Non-interoperable object
     return CFI_INVALID_DESCRIPTOR;
   }
@@ -93,14 +93,12 @@ int CFI_deallocate(CFI_cdesc_t *descriptor) {
 }
 
 int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
-                  CFI_attribute_t attribute, CFI_type_t type,
-                  std::size_t elem_len, CFI_rank_t rank,
-                  const CFI_index_t extents[]) {
+    CFI_attribute_t attribute, CFI_type_t type, std::size_t elem_len,
+    CFI_rank_t rank, const CFI_index_t extents[]) {
   if ((attribute & ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
     return CFI_INVALID_ATTRIBUTE;
   }
-  if ((attribute & CFI_attribute_allocatable) != 0 &&
-      base_addr != nullptr) {
+  if ((attribute & CFI_attribute_allocatable) != 0 && base_addr != nullptr) {
     return CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
   if (rank > CFI_MAX_RANK) {
@@ -133,19 +131,18 @@ int CFI_is_contiguous(const CFI_cdesc_t *descriptor) {
 }
 
 int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,
-                const CFI_index_t lower_bounds[],
-                const CFI_index_t upper_bounds[],
-                const CFI_index_t strides[]) {
+    const CFI_index_t lower_bounds[], const CFI_index_t upper_bounds[],
+    const CFI_index_t strides[]) {
   return CFI_INVALID_DESCRIPTOR;  // TODO
 }
 
 int CFI_select_part(CFI_cdesc_t *result, const CFI_cdesc_t *source,
-                    std::size_t displacement, std::size_t elem_len) {
+    std::size_t displacement, std::size_t elem_len) {
   return CFI_INVALID_DESCRIPTOR;  // TODO
 }
 
 int CFI_setpointer(CFI_cdesc_t *result, const CFI_cdesc_t *source,
-                   const CFI_index_t lower_bounds[]) {
+    const CFI_index_t lower_bounds[]) {
   return CFI_INVALID_DESCRIPTOR;  // TODO
 }
 }  // extern "C"

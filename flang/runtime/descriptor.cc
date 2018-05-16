@@ -25,16 +25,17 @@ Descriptor::Descriptor(const DerivedType &t, int rank = 0) {
   raw_.rank = rank;
   raw_.type = CFI_type_struct;
   raw_.attribute = ADDENDUM;
-  new(GetAddendum()) DescriptorAddendum{t};
+  new (GetAddendum()) DescriptorAddendum{t};
 }
 
 std::size_t Descriptor::SizeInBytes() const {
   const DescriptorAddendum *addendum{GetAddendum()};
   return sizeof *this + raw_.rank * sizeof(Dimension) +
-         (addendum ? addendum->AddendumSizeInBytes() : 0);
+      (addendum ? addendum->AddendumSizeInBytes() : 0);
 }
 
-std::int64_t DerivedTypeParameter::Value(const DescriptorAddendum *addendum) const {
+std::int64_t DerivedTypeParameter::Value(
+    const DescriptorAddendum *addendum) const {
   if (isLenTypeParameter_) {
     return addendum->GetLenParameterValue(value_);
   } else {
