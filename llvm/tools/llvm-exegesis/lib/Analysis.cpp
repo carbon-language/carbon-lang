@@ -47,9 +47,9 @@ void Analysis::printInstructionRow(const size_t ClusterId, const size_t PointId,
   if (OpcodeIt != MnemonicToOpcode_.end()) {
     const auto &SchedModel = SubtargetInfo_->getSchedModel();
     const unsigned SchedClassId = InstrInfo_->get(OpcodeIt->second).getSchedClass();
-    const llvm::MCSchedClassDesc *const SCDesc =
-        SchedModel.getSchedClassDesc(SchedClassId);
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+    const llvm::MCSchedClassDesc *const SCDesc =
+       SchedModel.getSchedClassDesc(SchedClassId);
     writeCsvEscaped(OS, SCDesc->Name);
 #else
     OS << SchedClassId;
