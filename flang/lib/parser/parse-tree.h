@@ -3194,19 +3194,21 @@ WRAPPER_CLASS(PauseStmt, std::optional<StopCode>);
 // OpenMP Directives and Clauses
 struct OmpClause {
   UNION_CLASS_BOILERPLATE(OmpClause);
-  WRAPPER_CLASS(ClFirstprivate, std::list<Name>);
-  WRAPPER_CLASS(ClPrivate, std::list<Name>);
-  std::variant<ClFirstprivate, ClPrivate> u;
+  WRAPPER_CLASS(Firstprivate, std::list<Name>);
+  WRAPPER_CLASS(Private, std::list<Name>);
+  std::variant<Firstprivate, Private> u;
 };
 
 struct OmpExeDir {
   UNION_CLASS_BOILERPLATE(OmpExeDir);
-  WRAPPER_CLASS(ParDoSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(ParDo, std::list<OmpClause>);
-  WRAPPER_CLASS(ParSections, std::list<OmpClause>);
-  WRAPPER_CLASS(ParWrkshr, std::list<OmpClause>);
+  WRAPPER_CLASS(ParallelDoSimd, std::list<OmpClause>);
+  WRAPPER_CLASS(ParallelDo, std::list<OmpClause>);
+  WRAPPER_CLASS(ParallelSections, std::list<OmpClause>);
+  WRAPPER_CLASS(ParallelWorkshare, std::list<OmpClause>);
   WRAPPER_CLASS(Parallel, std::list<OmpClause>);
-  std::variant<ParDoSimd, ParDo, ParSections, ParWrkshr, Parallel> u;
+  std::variant<ParallelDoSimd, ParallelDo, ParallelSections, ParallelWorkshare,
+      Parallel>
+      u;
 };
 
 struct OmpDirective {

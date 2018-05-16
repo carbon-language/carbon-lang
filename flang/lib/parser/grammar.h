@@ -3321,26 +3321,27 @@ TYPE_CONTEXT_PARSER("PAUSE statement"_en_US,
 // OpenMP Directives and Clauses
 
 // OpenMP Clauses
-TYPE_PARSER(construct<OmpClause>(construct<OmpClause::ClPrivate>(
+TYPE_PARSER(construct<OmpClause>(construct<OmpClause::Private>(
                 "PRIVATE" >> parenthesized(nonemptyList(name)))) ||
-    construct<OmpClause>(construct<OmpClause::ClFirstprivate>(
+    construct<OmpClause>(construct<OmpClause::Firstprivate>(
         "FIRSTPRIVATE" >> parenthesized(nonemptyList(name)))))
 
 // !$OMP PARALLEL [DO | SECTIONS | WORKSHARE | DO SIMD]
 constexpr auto parallel =
     construct<OmpExeDir::Parallel>("PARALLEL" >> many(Parser<OmpClause>{}));
-constexpr auto parDo =
-    construct<OmpExeDir::ParDo>("PARALLEL DO" >> many(Parser<OmpClause>{}));
-constexpr auto parDoSimd = construct<OmpExeDir::ParDoSimd>(
+constexpr auto parallelDo = construct<OmpExeDir::ParallelDo>(
+    "PARALLEL DO" >> many(Parser<OmpClause>{}));
+constexpr auto parallelDoSimd = construct<OmpExeDir::ParallelDoSimd>(
     "PARALLEL DO SIMD" >> many(Parser<OmpClause>{}));
-constexpr auto parSections = construct<OmpExeDir::ParSections>(
+constexpr auto parallelSections = construct<OmpExeDir::ParallelSections>(
     "PARALLEL SECTIONS" >> many(Parser<OmpClause>{}));
-constexpr auto parWrkshr = construct<OmpExeDir::ParWrkshr>(
+constexpr auto parallelWorkshare = construct<OmpExeDir::ParallelWorkshare>(
     "PARALLEL WORKSHARE" >> many(Parser<OmpClause>{}));
 
-TYPE_PARSER(construct<OmpExeDir>(parDoSimd) || construct<OmpExeDir>(parDo) ||
-    construct<OmpExeDir>(parSections) || construct<OmpExeDir>(parWrkshr) ||
-    construct<OmpExeDir>(parallel))
+TYPE_PARSER(construct<OmpExeDir>(parallelDoSimd) ||
+    construct<OmpExeDir>(parallelDo) ||
+    construct<OmpExeDir>(parallelSections) ||
+    construct<OmpExeDir>(parallelWorkshare) || construct<OmpExeDir>(parallel))
 
 constexpr auto beginOmpDirective = skipEmptyLines >> space >> "!$OMP "_sptok;
 constexpr auto endOmpDirective = space >> endOfLine;

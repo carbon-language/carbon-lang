@@ -1650,12 +1650,12 @@ public:
   }
   // OpenMP Directives
   void Unparse(const OmpClause &x) {
-    std::visit(visitors{[&](const OmpClause::ClFirstprivate &y) {
+    std::visit(visitors{[&](const OmpClause::Firstprivate &y) {
                           Word(" FIRSTPRIVATE(");
                           Walk(y.v, ",");
                           Put(")");
                         },
-                   [&](const OmpClause::ClPrivate &y) {
+                   [&](const OmpClause::Private &y) {
                      Word(" PRIVATE(");
                      Walk(y.v, ",");
                      Put(")");
@@ -1664,19 +1664,19 @@ public:
   }
   void Unparse(const OmpExeDir &x) {
     Outdent();
-    std::visit(visitors{[&](const OmpExeDir::ParDoSimd &y) {
+    std::visit(visitors{[&](const OmpExeDir::ParallelDoSimd &y) {
                           Word("!OMP$ PARALLEL DO SIMD");
                           Walk(y.v, " ");
                         },
-                   [&](const OmpExeDir::ParDo &y) {
+                   [&](const OmpExeDir::ParallelDo &y) {
                      Word("!OMP$ PARALLEL DO");
                      Walk(y.v, " ");
                    },
-                   [&](const OmpExeDir::ParSections &y) {
+                   [&](const OmpExeDir::ParallelSections &y) {
                      Word("!OMP$ PARALLEL SECTIONS");
                      Walk(y.v, " ");
                    },
-                   [&](const OmpExeDir::ParWrkshr &y) {
+                   [&](const OmpExeDir::ParallelWorkshare &y) {
                      Word("!OMP$ PARALLEL WORKSHARE");
                      Walk(y.v, " ");
                    },
