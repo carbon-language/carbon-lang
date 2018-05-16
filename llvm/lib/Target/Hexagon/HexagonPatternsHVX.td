@@ -197,8 +197,8 @@ let Predicates = [UseHVX] in {
   def: Pat<(VecPI32 (concat_vectors HVI32:$Vs, HVI32:$Vt)),
            (Combinev HvxVR:$Vt, HvxVR:$Vs)>;
 
-  def: Pat<(VecQ8  (qcat HQ16:$Qs, HQ16:$Qt)), (Combineq $Qs, $Qt)>;
-  def: Pat<(VecQ16 (qcat HQ32:$Qs, HQ32:$Qt)), (Combineq $Qs, $Qt)>;
+  def: Pat<(VecQ8  (qcat HQ16:$Qs, HQ16:$Qt)), (Combineq $Qt, $Qs)>;
+  def: Pat<(VecQ16 (qcat HQ32:$Qs, HQ32:$Qt)), (Combineq $Qt, $Qs)>;
 
   def: Pat<(HexagonVEXTRACTW HVI8:$Vu, I32:$Rs),
            (V6_extractw HvxVR:$Vu, I32:$Rs)>;
