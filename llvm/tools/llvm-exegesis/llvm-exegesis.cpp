@@ -146,12 +146,12 @@ void analysisMain() {
     llvm::errs() << "unknown target '" << Points[0].LLVMTriple << "'\n";
     return;
   }
-  std::unique_ptr<llvm::MCSubtargetInfo> STI(TheTarget->createMCSubtargetInfo(
-      Points[0].LLVMTriple, Points[0].CpuName, ""));
-
   const auto Clustering = llvm::cantFail(InstructionBenchmarkClustering::create(
       Points, AnalysisNumPoints, AnalysisEpsilon));
-  if (auto Err = printAnalysisClusters(Clustering, *STI, llvm::outs()))
+
+  const Analysis Analyzer(*TheTarget, Clustering);
+
+  if (auto Err = Analyzer.printClusters(llvm::outs()))
     llvm::report_fatal_error(std::move(Err));
 }
 
