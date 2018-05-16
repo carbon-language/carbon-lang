@@ -359,8 +359,7 @@ static uint32_t joinHalfWords(uint32_t FirstHalf, uint32_t SecondHalf,
 unsigned ARMAsmBackend::adjustFixupValue(const MCAssembler &Asm,
                                          const MCFixup &Fixup,
                                          const MCValue &Target, uint64_t Value,
-                                         bool IsResolved, MCContext &Ctx,
-                                         bool IsLittleEndian) const {
+                                         bool IsResolved, MCContext &Ctx) const {
   unsigned Kind = Fixup.getKind();
 
   // MachO tries to make .o files that look vaguely pre-linked, so for MOVW/MOVT
@@ -885,8 +884,7 @@ void ARMAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                                bool IsResolved) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
   MCContext &Ctx = Asm.getContext();
-  Value = adjustFixupValue(Asm, Fixup, Target, Value, IsResolved, Ctx,
-                           IsLittleEndian);
+  Value = adjustFixupValue(Asm, Fixup, Target, Value, IsResolved, Ctx);
   if (!Value)
     return; // Doesn't change encoding.
 
