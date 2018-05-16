@@ -596,7 +596,7 @@ MachineInstr *ImplicitNullChecks::insertFaultingInstr(
 
   unsigned DefReg = NoRegister;
   if (NumDefs != 0) {
-    DefReg = MI->defs().begin()->getReg();
+    DefReg = MI->getOperand(0).getReg();
     assert(NumDefs == 1 && "expected exactly one def!");
   }
 
