@@ -360,6 +360,18 @@ let Predicates = [HasSVE] in {
   defm STR_ZXI : sve_mem_z_spill<"str">;
   defm STR_PXI : sve_mem_p_spill<"str">;
 
+  // Contiguous prefetch (register + immediate)
+  defm PRFB_PRI : sve_mem_prfm_si<0b00, "prfb">;
+  defm PRFH_PRI : sve_mem_prfm_si<0b01, "prfh">;
+  defm PRFW_PRI : sve_mem_prfm_si<0b10, "prfw">;
+  defm PRFD_PRI : sve_mem_prfm_si<0b11, "prfd">;
+
+  // Contiguous prefetch (register + register)
+  def PRFB_PRR : sve_mem_prfm_ss<0b001, "prfb", GPR64NoXZRshifted8>;
+  def PRFH_PRR : sve_mem_prfm_ss<0b011, "prfh", GPR64NoXZRshifted16>;
+  def PRFS_PRR : sve_mem_prfm_ss<0b101, "prfw", GPR64NoXZRshifted32>;
+  def PRFD_PRR : sve_mem_prfm_ss<0b111, "prfd", GPR64NoXZRshifted64>;
+
   defm ZIP1_ZZZ : sve_int_perm_bin_perm_zz<0b000, "zip1">;
   defm ZIP2_ZZZ : sve_int_perm_bin_perm_zz<0b001, "zip2">;
 
