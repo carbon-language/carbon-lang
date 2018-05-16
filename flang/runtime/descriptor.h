@@ -161,6 +161,7 @@ public:
   }
 
   std::size_t SizeInBytes() const;
+  // TODO: initialization?  assignment?  finalization?
 
 private:
   // These values must coexist with the ISO_Fortran_binding.h definitions
@@ -240,8 +241,7 @@ private:
 };
 
 struct ExecutableCode {
-  void (*host)(Descriptor *);
-  void (*device)(Descriptor *);
+  std::intptr_t host, device;
 };
 
 struct TypeBoundProcedure {
@@ -261,7 +261,6 @@ struct ProcedurePointer {
 // Extended derived types have the EXTENDS flag set and place their base
 // component first in the component descriptions, which is significant for
 // the execution of FINAL subroutines.
-// TODO: Link to defined assignment subroutines and their characteristics.
 class DerivedType {
 public:
   const char *name() const { return name_; }
@@ -278,9 +277,10 @@ public:
   const ExecutableCode &typeBoundProcedure(int n) const {
     return typeBoundProcedure_[n];
   }
-  const ExecutableCode &finalSubroutine() const { return finalSubroutine_; }
 
   bool IsSameType(const DerivedType &);
+  void CallFinalSubroutine(const Descriptor &);
+  void AssignScalar(const Descriptor &to, const Descriptor &from);
 
 private:
   enum Flag { EXTENDS = 1, SEQUENCE = 2, BIND = 4, ANY_PRIVATE = 8 };
@@ -298,6 +298,7 @@ private:
   const ExecutableCode
       *typeBoundProcedure_;  // array of overridable TBP bindings
   ExecutableCode finalSubroutine_;  // resolved at compilation, can be null
+  ExecutableCode assignment_;  // resolved at compilation, must not be null
 };
 
 // The storage for this object follows the last used dim[] entry in a
