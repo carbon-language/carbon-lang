@@ -37,6 +37,7 @@ namespace Fortran::runtime {
 using DefaultKindInteger = std::int32_t;
 
 class DerivedType;
+class DerivedTypeSpecialization;
 class DescriptorAddendum;
 
 // A C++ view of the ISO descriptor and its type and per-dimension information.
@@ -114,7 +115,7 @@ public:
     raw_.type = t.raw();
     raw_.attribute = 0;
   }
-  Descriptor(const DerivedType &, int rank = 0);
+  Descriptor(const DerivedTypeSpecialization &, int rank = 0);
 
   void Check() const;
 
@@ -185,18 +186,19 @@ private:
 // Information about derived types and their KIND parameter specializations
 // appears in the compiled program units that define or specialize the types.
 
-class DerivedTypeParameter {
+class TypeParameter {
 public:
   const char *name() const { return name_; }
   const TypeCode type() const { return typeCode_; }
   std::int64_t Value(const DescriptorAddendum *) const;
   std::int64_t Value(const Descriptor *) const;
+  std::int64_t Value(const DerivedTypeSpecialization *) const;
 
 private:
   const char *name_;
   TypeCode typeCode_;  // not necessarily default INTEGER
-  bool isLenTypeParameter_;  // if true, value is in dynamic descriptor
-  std::int64_t value_;  // truncated to type then sign-extended
+  bool isLenTypeParameter_;  // whether value is in dynamic descriptor
+  std::int64_t defaultValue_;
 };
 
 // Components that have any need for a descriptor will either reference
@@ -211,36 +213,25 @@ private:
 class Component {
 public:
   const char *name() const { return name_; }
-  template<typename A> A *Locate(char *instance) const {
-    return reinterpret_cast<A *>(instance + offset_);
-  }
-  template<typename A> const A *Locate(const char *instance) const {
-    return reinterpret_cast<const A *>(instance + offset_);
-  }
   TypeCode typeCode() const { return typeCode_; }
+  const Descriptor *staticDescriptor() const { return staticDescriptor_; }
+  bool IsParent() const { return (flags_ & PARENT) != 0; }
   bool IsPrivate() const { return (flags_ & PRIVATE) != 0; }
-  const Descriptor *GetDescriptor(const char *instance) const {
-    if (staticDescriptor_ != nullptr) {
-      return staticDescriptor_;
-    } else if ((flags_ & IS_DESCRIPTOR) != 0) {
-      return Locate<const Descriptor>(instance);
-    } else {
-      return nullptr;
-    }
-  }
+  bool IsDescriptor() const { return (flags_ & IS_DESCRIPTOR) != 0; }
 
 private:
-  enum Flag { PRIVATE = 1, IS_DESCRIPTOR = 2 };
-
+  enum Flag { PARENT = 1, PRIVATE = 2, IS_DESCRIPTOR = 4 };
   const char *name_{nullptr};
-  std::size_t offset_{0};  // relative to start of derived type instance
   std::uint32_t flags_{0};
   TypeCode typeCode_{CFI_type_other};
   const Descriptor *staticDescriptor_{nullptr};
 };
 
 struct ExecutableCode {
-  std::intptr_t host, device;
+  ExecutableCode() {}
+  ExecutableCode(const ExecutableCode &) = default;
+  std::intptr_t host{0};
+  std::intptr_t device{0};
 };
 
 struct TypeBoundProcedure {
@@ -253,53 +244,116 @@ struct ProcedurePointer {
   void *staticLink;
 };
 
-// This static representation of a derived type specialization includes
-// the values of all its KIND type parameters, and reflects those values
-// in the values of array bounds and static derived type descriptors that
-// appear in the static descriptors of the components.
+// This static description of a derived type is not specialized by
+// the values of kind type parameters.  All specializations share
+// this information.
 // Extended derived types have the EXTENDS flag set and place their base
 // component first in the component descriptions, which is significant for
 // the execution of FINAL subroutines.
 class DerivedType {
 public:
+  DerivedType(const char *n, std::size_t kps, std::size_t lps,
+      const TypeParameter *tp, std::size_t cs, const Component *ca,
+      std::size_t tbps, const TypeBoundProcedure *tbp, const ExecutableCode &a)
+    : name_{n}, kindParameters_{kps}, lenParameters_{lps}, components_{cs},
+      typeParameter_{tp}, typeBoundProcedure_{tbp}, assignment_{a} {}
+
   const char *name() const { return name_; }
-  std::size_t SizeInBytes() const { return bytes_; }
-  const char *initializer() const { return initializer_; }
   std::size_t kindParameters() const { return kindParameters_; }
-  const DerivedTypeParameter &kindParameter(int n) const {
-    return kindParameter_[n];
-  }
   std::size_t lenParameters() const { return lenParameters_; }
+  const TypeParameter &typeParameter(int n) const { return typeParameter_[n]; }
   std::size_t components() const { return components_; }
-  const Component &component(int n) const { return component_[n]; }
   std::size_t typeBoundProcedures() const { return typeBoundProcedures_; }
-  const ExecutableCode &typeBoundProcedure(int n) const {
+  const TypeBoundProcedure &typeBoundProcedure(int n) const {
     return typeBoundProcedure_[n];
   }
 
-  bool IsSameType(const DerivedType &);
-  // TODO: default initialization
-  // TODO: sourced allocation initialization
+  DerivedType &set_sequence() {
+    flags_ |= SEQUENCE;
+    return *this;
+  }
+  DerivedType &set_bind_c() {
+    flags_ |= BIND_C;
+    return *this;
+  }
+
+  bool Extends() const { return components_ > 0 && component_[0].IsParent(); }
+  bool AnyPrivate() const;
+  bool IsSequence() const { return (flags_ & SEQUENCE) != 0; }
+  bool IsBindC() const { return (flags_ & BIND_C) != 0; }
+
   // TODO: assignment
   // TODO: finalization
 
 private:
-  enum Flag { EXTENDS = 1, SEQUENCE = 2, BIND = 4, ANY_PRIVATE = 8 };
+  enum Flag { SEQUENCE = 1, BIND_C = 2 };
 
   const char *name_;  // NUL-terminated constant text
-  std::size_t bytes_;  // allocation size of one scalar instance, w/ alignment
-  std::uint64_t flags_;  // needed for IsSameType() correct semantics
-  const char *initializer_;  // can be null; includes base components
+  std::uint64_t flags_{0};  // needed for IsSameType() correct semantics
   std::size_t kindParameters_;
-  const DerivedTypeParameter *kindParameter_;  // array
-  std::size_t lenParameters_;  // count only; values are in descriptor
+  std::size_t lenParameters_;
   std::size_t components_;  // *not* including type parameters
-  const Component *component_;  // array
   std::size_t typeBoundProcedures_;
-  const ExecutableCode
+  const TypeParameter *typeParameter_;  // array
+  const Component *component_;  // array
+  const TypeBoundProcedure
       *typeBoundProcedure_;  // array of overridable TBP bindings
-  ExecutableCode finalSubroutine_;  // resolved at compilation, can be null
-  ExecutableCode assignment_;  // resolved at compilation, must not be null
+  ExecutableCode finalSubroutine_;  // can be null
+  ExecutableCode assignment_;  // must not be null
+};
+
+class ComponentSpecialization {
+public:
+  template<typename A> A *Locate(char *instance) const {
+    return reinterpret_cast<A *>(instance + offset_);
+  }
+  template<typename A> const A *Locate(const char *instance) const {
+    return reinterpret_cast<const A *>(instance + offset_);
+  }
+  const Descriptor *GetDescriptor(
+      const Component &c, const char *instance) const {
+    if (const Descriptor * staticDescriptor{c.staticDescriptor()}) {
+      return staticDescriptor;
+    } else if (c.IsDescriptor()) {
+      return Locate<const Descriptor>(instance);
+    } else {
+      return nullptr;
+    }
+  }
+
+private:
+  std::size_t offset_{0};  // relative to start of derived type instance
+};
+
+// This static representation of a derived type specialization includes
+// the values of all its KIND type parameters, and reflects those values
+// in the values of array bounds and static derived type descriptors that
+// appear in the static descriptors of the components.
+class DerivedTypeSpecialization {
+public:
+  DerivedTypeSpecialization(const DerivedType &dt, std::size_t n,
+      const char *init, const std::int64_t *kp,
+      const ComponentSpecialization *cs)
+    : derivedType_{dt}, bytes_{n}, initializer_{init}, kindParameterValue_{kp},
+      componentSpecialization_{cs} {}
+  const DerivedType &derivedType() const { return derivedType_; }
+  std::size_t SizeInBytes() const { return bytes_; }
+  std::int64_t KindParameterValue(int n) const {
+    return kindParameterValue_[n];
+  }
+  const ComponentSpecialization &componentSpecialization(int n) const {
+    return componentSpecialization_[n];
+  }
+  bool IsSameType(const DerivedTypeSpecialization &);
+  // TODO: initialization
+  // TODO: sourced allocation initialization
+
+private:
+  const DerivedType &derivedType_;
+  std::size_t bytes_;  // allocation size of one scalar instance, w/ alignment
+  const char *initializer_;  // can be null; includes base components
+  const std::int64_t *kindParameterValue_;  // array
+  const ComponentSpecialization *componentSpecialization_;  // array
 };
 
 // The storage for this object follows the last used dim[] entry in a
@@ -309,20 +363,24 @@ private:
 // can serve as components of derived type instances.  The presence of
 // this structure is implied by (CFI_cdesc_t.attribute & ADDENDUM) != 0,
 // and the number of elements in the len_[] array is determined by
-// derivedType_->lenParameters().
+// DerivedType::lenParameters().
 class DescriptorAddendum {
 public:
-  explicit DescriptorAddendum(const DerivedType *dt) : derivedType_{dt} {}
+  explicit DescriptorAddendum(const DerivedTypeSpecialization *dts)
+    : derivedTypeSpecialization_{dts} {}
 
-  const DerivedType *derivedType() const { return derivedType_; }
+  const DerivedTypeSpecialization *derivedTypeSpecialization() const {
+    return derivedTypeSpecialization_;
+  }
   std::int64_t GetLenParameterValue(std::size_t n) const { return len_[n]; }
   std::size_t SizeOfAddendumInBytes() const {
     return sizeof *this - sizeof len_[0] +
-        derivedType_->lenParameters() * sizeof len_[0];
+        derivedTypeSpecialization_->derivedType().lenParameters() *
+        sizeof len_[0];
   }
 
 private:
-  const DerivedType *derivedType_{nullptr};
+  const DerivedTypeSpecialization *derivedTypeSpecialization_{nullptr};
   std::int64_t len_[1];  // must be the last component
   // The LEN type parameter values can also include captured values of
   // specification expressions that were used for bounds and for LEN type
