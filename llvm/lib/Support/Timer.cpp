@@ -22,6 +22,8 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
+#include <limits>
+
 using namespace llvm;
 
 // This ugly hack is brought to you courtesy of constructor/destructor ordering
@@ -367,10 +369,12 @@ void TimerGroup::printAll(raw_ostream &OS) {
 void TimerGroup::printJSONValue(raw_ostream &OS, const PrintRecord &R,
                                 const char *suffix, double Value) {
   assert(yaml::needsQuotes(Name) == yaml::QuotingType::None &&
-         "TimerGroup name needs no quotes");
+         "TimerGroup name should not need quotes");
   assert(yaml::needsQuotes(R.Name) == yaml::QuotingType::None &&
-         "Timer name needs no quotes");
-  OS << "\t\"time." << Name << '.' << R.Name << suffix << "\": " << Value;
+         "Timer name should not need quotes");
+  constexpr auto max_digits10 = std::numeric_limits<double>::max_digits10;
+  OS << "\t\"time." << Name << '.' << R.Name << suffix
+     << "\": " << format("%.*e", max_digits10 - 1, Value);
 }
 
 const char *TimerGroup::printJSONValues(raw_ostream &OS, const char *delim) {
