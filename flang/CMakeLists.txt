@@ -96,6 +96,7 @@ include_directories(BEFORE
 
 add_subdirectory(include/flang)
 add_subdirectory(lib)
+add_subdirectory(runtime)
 add_subdirectory(tools)
 
 configure_file(

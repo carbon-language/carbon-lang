@@ -2,11 +2,13 @@ Debug
 Release
 MinSizeRel
 tags
-./f18
 *.o
 *~
 *#
 CMakeCache.txt
-CMakeFiles/*
+*/CMakeFiles/*
+*/*/CMakeFiles/*
+*/Makefile
+*/*/Makefile
 cmake_install.cmake
 formatted

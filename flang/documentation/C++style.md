@@ -3,7 +3,9 @@ Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 -->
 
 ## In brief:
-* Use *clang-format* to resolve all layout questions.
+* Use *clang-format* on all C++ source and header files before
+  every merge to master.  All code layout should be determined
+  by means of clang-format.
 * Where LLVM's C++ style guide is clear on usage, follow it.
 * Otherwise, where a clear precedent exists in the project, follow it.
 * Otherwise, where a good public C++ style guide is relevant and clear,
@@ -26,10 +28,11 @@ file actually uses directly.  (Exception: when foo.cc starts, as it should,
 with `#include "foo.h"`, and foo.h includes bar.h in order to define the
 interface to the module foo, you don't have to redundantly `#include "bar.h"`
 in foo.cc.)
-1. In the source file "foo.cc", put the `#include "foo.h"` first.
+1. In the source file "foo.cc", put its corresponding `#include "foo.h"`
+first in the sequence of inclusions.
 Then `#include` other project headers in alphabetic order; then C++ standard
 headers, also alphabetically; then C and system headers.
-1. Don't use `#include <iostream>`.  If you need it for debugging,
+1. Don't use `#include <iostream>`.  If you need it for temporary debugging,
 remove the inclusion before committing.
 ### Naming
 1. C++ names that correspond to STL names should look like those STL names
