@@ -230,6 +230,7 @@ private:
 struct ExecutableCode {
   ExecutableCode() {}
   ExecutableCode(const ExecutableCode &) = default;
+  ExecutableCode &operator=(const ExecutableCode &) = default;
   std::intptr_t host{0};
   std::intptr_t device{0};
 };
@@ -239,9 +240,10 @@ struct TypeBoundProcedure {
   ExecutableCode code;
 };
 
-struct ProcedurePointer {
-  ExecutableCode entryAddresses;
-  void *staticLink;
+struct DefinedAssignment {
+  int destinationRank, sourceRank;
+  bool isElemental;
+  ExecutableCode code;
 };
 
 // This static description of a derived type is not specialized by
@@ -254,9 +256,11 @@ class DerivedType {
 public:
   DerivedType(const char *n, std::size_t kps, std::size_t lps,
       const TypeParameter *tp, std::size_t cs, const Component *ca,
-      std::size_t tbps, const TypeBoundProcedure *tbp, const ExecutableCode &a)
+      std::size_t tbps, const TypeBoundProcedure *tbp, std::size_t das,
+      const DefinedAssignment *da)
     : name_{n}, kindParameters_{kps}, lenParameters_{lps}, components_{cs},
-      typeParameter_{tp}, typeBoundProcedure_{tbp}, assignment_{a} {}
+      typeParameter_{tp}, typeBoundProcedure_{tbp}, definedAssignments_{das},
+      definedAssignment_{da} {}
 
   const char *name() const { return name_; }
   std::size_t kindParameters() const { return kindParameters_; }
@@ -274,6 +278,10 @@ public:
   }
   DerivedType &set_bind_c() {
     flags_ |= BIND_C;
+    return *this;
+  }
+  DerivedType &set_finalSubroutine(const ExecutableCode &c) {
+    finalSubroutine_ = c;
     return *this;
   }
 
@@ -299,7 +307,8 @@ private:
   const TypeBoundProcedure
       *typeBoundProcedure_;  // array of overridable TBP bindings
   ExecutableCode finalSubroutine_;  // can be null
-  ExecutableCode assignment_;  // must not be null
+  std::size_t definedAssignments_;
+  const DefinedAssignment *definedAssignment_;  // array
 };
 
 class ComponentSpecialization {
@@ -387,5 +396,15 @@ private:
   // parameters of components.  The values have been truncated to the LEN
   // type parameter's type, if shorter than 64 bits, then sign-extended.
 };
+
+// Procedure pointers have static links for host association.
+// TODO: define the target data structure of that static link
+struct ProcedurePointer {
+  ExecutableCode entryAddresses;
+  void *staticLink;
+};
+
+// TODO: coarray hooks
+
 }  // namespace Fortran::runtime
 #endif  // FORTRAN_RUNTIME_DESCRIPTOR_H_
