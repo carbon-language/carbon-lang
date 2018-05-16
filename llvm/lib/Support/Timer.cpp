@@ -387,7 +387,7 @@ const char *TimerGroup::printJSONValues(raw_ostream &OS, const char *delim) {
     printJSONValue(OS, R, ".sys", T.getSystemTime());
     if (T.getMemUsed()) {
       OS << delim;
-      printJSONValue(OS, R, ".sys", T.getMemUsed());
+      printJSONValue(OS, R, ".mem", T.getMemUsed());
     }
   }
   TimersToPrint.clear();
