@@ -207,6 +207,8 @@ public:
   /// This static method prints all timers and clears them all out.
   static void printAll(raw_ostream &OS);
 
+  const char *printJSONValues(raw_ostream &OS, const char *delim);
+
   /// Prints all timers as JSON key/value pairs, and clears them all out.
   static const char *printAllJSONValues(raw_ostream &OS, const char *delim);
 
@@ -223,7 +225,6 @@ private:
   void PrintQueuedTimers(raw_ostream &OS);
   void printJSONValue(raw_ostream &OS, const PrintRecord &R,
                       const char *suffix, double Value);
-  const char *printJSONValues(raw_ostream &OS, const char *delim);
 };
 
 } // end namespace llvm

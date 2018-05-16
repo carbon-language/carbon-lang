@@ -378,6 +378,8 @@ void TimerGroup::printJSONValue(raw_ostream &OS, const PrintRecord &R,
 }
 
 const char *TimerGroup::printJSONValues(raw_ostream &OS, const char *delim) {
+  sys::SmartScopedLock<true> L(*TimerLock);
+
   prepareToPrintList();
   for (const PrintRecord &R : TimersToPrint) {
     OS << delim;
