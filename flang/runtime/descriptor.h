@@ -161,7 +161,6 @@ public:
   }
 
   std::size_t SizeInBytes() const;
-  // TODO: initialization?  assignment?  finalization?
 
 private:
   // These values must coexist with the ISO_Fortran_binding.h definitions
@@ -279,8 +278,10 @@ public:
   }
 
   bool IsSameType(const DerivedType &);
-  void CallFinalSubroutine(const Descriptor &);
-  void AssignScalar(const Descriptor &to, const Descriptor &from);
+  // TODO: default initialization
+  // TODO: sourced allocation initialization
+  // TODO: assignment
+  // TODO: finalization
 
 private:
   enum Flag { EXTENDS = 1, SEQUENCE = 2, BIND = 4, ANY_PRIVATE = 8 };
@@ -329,4 +330,4 @@ private:
   // type parameter's type, if shorter than 64 bits, then sign-extended.
 };
 }  // namespace Fortran::runtime
-#endif  // __cplusplus#endif  // FORTRAN_RUNTIME_DESCRIPTOR_H_
+#endif  // FORTRAN_RUNTIME_DESCRIPTOR_H_
