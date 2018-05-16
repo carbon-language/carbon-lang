@@ -2521,12 +2521,13 @@ public:
 
   uint64_t  getSP() const         { return _registers.__r[1]; }
   void      setSP(uint32_t value) { _registers.__r[1] = value; }
-  uint64_t  getIP() const         { return _registers.__r[9]; }
-  void      setIP(uint32_t value) { _registers.__r[9] = value; }
+  uint64_t  getIP() const         { return _registers.__pc; }
+  void      setIP(uint32_t value) { _registers.__pc = value; }
 
 private:
   struct or1k_thread_state_t {
-    unsigned int __r[32];
+    unsigned int __r[32]; // r0-r31
+    unsigned int __pc;    // Program counter
   };
 
   or1k_thread_state_t _registers;
@@ -2561,7 +2562,7 @@ inline uint32_t Registers_or1k::getRegister(int regNum) const {
 
   switch (regNum) {
   case UNW_REG_IP:
-    return _registers.__r[9];
+    return _registers.__pc;
   case UNW_REG_SP:
     return _registers.__r[1];
   }
@@ -2576,7 +2577,7 @@ inline void Registers_or1k::setRegister(int regNum, uint32_t value) {
 
   switch (regNum) {
   case UNW_REG_IP:
-    _registers.__r[9] = value;
+    _registers.__pc = value;
     return;
   case UNW_REG_SP:
     _registers.__r[1] = value;
