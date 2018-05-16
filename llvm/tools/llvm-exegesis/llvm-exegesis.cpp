@@ -70,6 +70,10 @@ static llvm::cl::opt<float>
                     llvm::cl::desc("dbscan epsilon for analysis clustering"),
                     llvm::cl::init(0.1));
 
+static llvm::cl::opt<std::string> AnalysisClustersFile("analysis-clusters-file",
+                                                       llvm::cl::desc(""),
+                                                       llvm::cl::init("-"));
+
 namespace exegesis {
 
 void benchmarkMain() {
@@ -135,7 +139,6 @@ void analysisMain() {
   // FIXME: Check that all points have the same triple/cpu.
   // FIXME: Merge points from several runs (latency and uops).
 
-  //llvm::InitializeAllTargets();
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
 
@@ -151,7 +154,13 @@ void analysisMain() {
 
   const Analysis Analyzer(*TheTarget, Clustering);
 
-  if (auto Err = Analyzer.printClusters(llvm::outs()))
+  std::error_code ErrorCode;
+  llvm::raw_fd_ostream ClustersOS(AnalysisClustersFile, ErrorCode,
+                                  llvm::sys::fs::F_RW);
+  if (ErrorCode)
+    llvm::report_fatal_error("cannot open out file: " + AnalysisClustersFile);
+
+  if (auto Err = Analyzer.printClusters(ClustersOS))
     llvm::report_fatal_error(std::move(Err));
 }
 
