@@ -56,12 +56,10 @@ namespace sys {
   // Run all registered signal handlers.
   void RunSignalHandlers();
 
-  using SignalHandlerCallback = void (*)(void *);
-
   /// Add a function to be called when an abort/kill signal is delivered to the
   /// process. The handler can have a cookie passed to it to identify what
   /// instance of the handler it is.
-  void AddSignalHandler(SignalHandlerCallback FnPtr, void *Cookie);
+  void AddSignalHandler(void (*FnPtr)(void *), void *Cookie);
 
   /// This function registers a function to be called when the user "interrupts"
   /// the program (typically by pressing ctrl-c).  When the user interrupts the
