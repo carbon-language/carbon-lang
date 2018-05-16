@@ -371,12 +371,6 @@ DiffOnly("diff-only",
   cl::cat(BoltDiffCategory));
 
 static cl::opt<bool>
-IgnoreBuildID("ignore-build-id",
-  cl::desc("continue even if build-ids in input binary and perf.data mismatch"),
-  cl::init(false),
-  cl::cat(AggregatorCategory));
-
-static cl::opt<bool>
 TimeRewrite("time-rewrite",
   cl::desc("print time spent in rewriting passes"),
   cl::ZeroOrMore,
@@ -950,36 +944,10 @@ RewriteInstance::getBuildID() const {
       OS << Twine::utohexstr(*CharIter);
       ++CharIter;
     }
-    outs() << "BOLT-INFO: Binary build-id is:     " << OS.str() << "\n";
+    outs() << "BOLT-INFO: binary build-id is:     " << OS.str() << "\n";
     return OS.str();
   }
   return NoneType();
-}
-
-void RewriteInstance::checkBuildID() {
-  auto FileBuildID = getBuildID();
-  if (!FileBuildID) {
-    outs() << "BOLT-WARNING: Build ID will not be checked because we could not "
-              "read one from input binary\n";
-    return;
-  }
-  auto PerfBuildID = DA.getPerfBuildID();
-  if (!PerfBuildID) {
-    outs() << "BOLT-WARNING: Build ID will not be checked because we could not "
-              "read one from perf.data\n";
-    return;
-  }
-  if (*FileBuildID == *PerfBuildID)
-    return;
-
-  outs() << "BOLT-ERROR: Build ID mismatch! This indicates the input binary "
-            "supplied for data aggregation is not the same recorded by perf "
-            "when collecting profiling data.\n";
-
-  if (!opts::IgnoreBuildID) {
-    DA.abort();
-    exit(1);
-  }
 }
 
 void RewriteInstance::run() {
@@ -1015,8 +983,15 @@ void RewriteInstance::run() {
                 (llvm::Triple::ArchType)InputFile->getArch())
          << "\n";
 
-  if (DA.started())
-    checkBuildID();
+  if (DA.started()) {
+    if (auto FileBuildID = getBuildID()) {
+      DA.processFileBuildID(*FileBuildID);
+    } else {
+      errs() << "BOLT-WARNING: build-id will not be checked because we could "
+                "not read one from input binary\n";
+    }
+  }
+
   unsigned PassNumber = 1;
   executeRewritePass({});
   if (opts::AggregateOnly || opts::DiffOnly)

@@ -35,16 +35,22 @@ namespace opts {
 
 extern cl::OptionCategory AggregatorCategory;
 
-static llvm::cl::opt<bool>
-TimeAggregator("time-aggr",
-  cl::desc("time BOLT aggregator"),
+static cl::opt<bool>
+BasicAggregation("nl",
+  cl::desc("aggregate basic samples (without LBR info)"),
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
 
-static llvm::cl::opt<bool>
-BasicAggregation("nl",
-  cl::desc("aggregate basic samples (without LBR info)"),
+static cl::opt<bool>
+IgnoreBuildID("ignore-build-id",
+  cl::desc("continue even if build-ids in input binary and perf.data mismatch"),
+  cl::init(false),
+  cl::cat(AggregatorCategory));
+
+static cl::opt<bool>
+TimeAggregator("time-aggr",
+  cl::desc("time BOLT aggregator"),
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));
@@ -219,7 +225,7 @@ bool DataAggregator::launchPerfTasksNoWait() {
   return true;
 }
 
-Optional<std::string> DataAggregator::getPerfBuildID() {
+void DataAggregator::processFileBuildID(StringRef FileBuildID) {
   SmallVector<const char *, 4> Argv;
   SmallVector<char, 256> OutputPath;
   SmallVector<char, 256> ErrPath;
@@ -265,7 +271,7 @@ Optional<std::string> DataAggregator::getPerfBuildID() {
     errs() << ErrBuf;
     deleteTempFile(ErrPath.data());
     deleteTempFile(OutputPath.data());
-    return NoneType();
+    return;
   }
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
@@ -275,26 +281,44 @@ Optional<std::string> DataAggregator::getPerfBuildID() {
            << EC.message() << "\n";
     deleteTempFile(ErrPath.data());
     deleteTempFile(OutputPath.data());
-    return NoneType();
+    return;
   }
 
   FileBuf.reset(MB->release());
   ParsingBuf = FileBuf->getBuffer();
-  Col = 0;
-  Line = 1;
-  auto ParseResult = parsePerfBuildID();
-  if (!ParseResult) {
-    outs() << "PERF2BOLT: Failed to parse build-id from perf output\n";
+  if (ParsingBuf.empty()) {
+    errs() << "PERF2BOLT-WARNING: build-id will not be checked because perf "
+              "data was recorded without it\n";
     deleteTempFile(ErrPath.data());
     deleteTempFile(OutputPath.data());
-    return NoneType();
+    return;
   }
 
-  outs() << "PERF2BOLT: Perf.data build-id is:  " << *ParseResult << "\n";
+  Col = 0;
+  Line = 1;
+  auto FileName = getFileNameForBuildID(FileBuildID);
+  if (!FileName) {
+    errs() << "PERF2BOLT-ERROR: failed to match build-id from perf output. "
+              "This indicates the input binary supplied for data aggregation "
+              "is not the same recorded by perf when collecting profiling "
+              "data. Use -ignore-build-id option to override.\n";
+    if (!opts::IgnoreBuildID) {
+      deleteTempFile(ErrPath.data());
+      deleteTempFile(OutputPath.data());
+      abort();
+      exit(1);
+    }
+  } else if (*FileName != BinaryName) {
+    errs() << "PERF2BOLT-WARNING: build-id matched a different file name. "
+              "Using \"" << *FileName << "\" for profile parsing.\n";
+    BinaryName = *FileName;
+  } else {
+    outs() << "PERF2BOLT: matched build-id and file name\n";
+  }
 
   deleteTempFile(ErrPath.data());
   deleteTempFile(OutputPath.data());
-  return std::string(ParseResult->data(), ParseResult->size());
+  return;
 }
 
 bool DataAggregator::checkPerfDataMagic(StringRef FileName) {
@@ -967,7 +991,7 @@ ErrorOr<int64_t> DataAggregator::parseTaskPID() {
   auto CommNameStr = parseString(FieldSeparator, true);
   if (std::error_code EC = CommNameStr.getError())
     return EC;
-  if (CommNameStr.get() != BinaryName) {
+  if (CommNameStr.get() != BinaryName.substr(0, 15)) {
     consumeRestOfLine();
     return -1;
   }
@@ -1013,12 +1037,19 @@ std::error_code DataAggregator::parseTasks() {
 
     PIDs.insert(PID);
   }
-  if (!PIDs.empty())
+  if (!PIDs.empty()) {
     outs() << "PERF2BOLT: Input binary is associated with " << PIDs.size()
            << " PID(s)\n";
-  else
-    outs() << "PERF2BOLT: Could not bind input binary to a PID - will parse "
-              "all samples in perf data.\n";
+  } else {
+    if (errs().has_colors())
+      errs().changeColor(raw_ostream::YELLOW);
+    errs() << "PERF2BOLT-WARNING: Could not bind input binary to a PID - will "
+              "parse all samples in perf data. This could result in corrupted "
+              "samples for the input binary if system-wide profile collection "
+              "was used.\n";
+    if (errs().has_colors())
+      errs().resetColor();
+  }
 
   return std::error_code();
 }
@@ -1039,16 +1070,15 @@ DataAggregator::parseNameBuildIDPair() {
   return std::make_pair(NameStr.get(), BuildIDStr.get());
 }
 
-Optional<StringRef> DataAggregator::parsePerfBuildID() {
+Optional<StringRef>
+DataAggregator::getFileNameForBuildID(StringRef FileBuildID) {
   while (hasData()) {
     auto IDPair = parseNameBuildIDPair();
     if (!IDPair)
       return NoneType();
 
-    if (sys::path::filename(IDPair->first) != BinaryName)
-      continue;
-
-    return IDPair->second;
+    if (IDPair->second == FileBuildID)
+      return sys::path::filename(IDPair->first);
   }
   return NoneType();
 }

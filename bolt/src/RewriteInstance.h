@@ -121,10 +121,6 @@ public:
   /// Run all the necessary steps to read, optimize and rewrite the binary.
   void run();
 
-  /// Check that binary build ID matches the one used in perf.data to collect
-  /// profile
-  void checkBuildID();
-
   /// Diff this instance against another one. Non-const since we may run passes
   /// to fold identical functions.
   void compare(RewriteInstance &RI2);
