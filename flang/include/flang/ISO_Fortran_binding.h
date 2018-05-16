@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef ISO_FORTRAN_BINDING_H_
-#define ISO_FORTRAN_BINDING_H_
+#ifndef CFI_ISO_FORTRAN_BINDING_H_
+#define CFI_ISO_FORTRAN_BINDING_H_
 
 #include <stddef.h>
 
@@ -27,11 +27,11 @@
 #ifdef __cplusplus
 // C++ does not support flexible array members, so they have to be
 // declared with single elements.
-#define ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY 1
+#define CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY 1
 namespace Fortran::ISO {
 inline namespace Fortran_2018 {
 #else
-#define ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
+#define CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
 #endif
 
 /* 18.5.4 */
@@ -115,14 +115,14 @@ typedef struct CFI_dim_t {
 
 /* 18.5.3 generic data descriptor */
 typedef struct CFI_cdesc_t {
-  /* These three members must be appear first, in exactly this order. */
+  /* These three members must appear first, in exactly this order. */
   void *base_addr;
   size_t elem_len; /* element size in bytes */
   int version; /* == CFI_VERSION */
   CFI_rank_t rank; /* [0 .. CFI_MAX_RANK] */
   CFI_type_t type;
   CFI_attribute_t attribute;
-  CFI_dim_t dim[ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY]; /* must appear last */
+  CFI_dim_t dim[CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY]; /* must appear last */
 } CFI_cdesc_t;
 
 /* 18.5.5 procedural interfaces*/
@@ -149,6 +149,6 @@ int CFI_setpointer(
 }  // namespace Fortran::ISO
 #endif
 
-#undef ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
+#undef CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
 
-#endif /* ISO_FORTRAN_BINDING_H_ */
+#endif /* CFI_ISO_FORTRAN_BINDING_H_ */
