@@ -2311,6 +2311,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   if (Left.opensScope()) {
     if (Style.AlignAfterOpenBracket == FormatStyle::BAS_DontAlign)
       return 0;
+    if (Left.is(tok::l_brace) && !Style.Cpp11BracedListStyle)
+      return 19;
     return Left.ParameterCount > 1 ? Style.PenaltyBreakBeforeFirstCallParameter
                                    : 19;
   }
@@ -3047,6 +3049,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::equal) && !Right.isOneOf(tok::kw_default, tok::kw_delete) &&
       Line.Type == LT_VirtualFunctionDecl && Left.NestingLevel == 0)
+    return false;
+  if (Left.is(tok::equal) && Right.is(tok::l_brace) &&
+      !Style.Cpp11BracedListStyle)
     return false;
   if (Left.is(tok::l_paren) && Left.is(TT_AttributeParen))
     return false;

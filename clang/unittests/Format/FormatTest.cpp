@@ -6708,6 +6708,15 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                "};");
   verifyFormat("#define A {a, a},");
 
+  // Avoid breaking between equal sign and opening brace
+  FormatStyle AvoidBreakingFirstArgument = getLLVMStyle();
+  AvoidBreakingFirstArgument.PenaltyBreakBeforeFirstCallParameter = 200;
+  verifyFormat("const std::unordered_map<std::string, int> MyHashTable =\n"
+               "    {{\"aaaaaaaaaaaaaaaaaaaaa\", 0},\n"
+               "     {\"bbbbbbbbbbbbbbbbbbbbb\", 1},\n"
+               "     {\"ccccccccccccccccccccc\", 2}};",
+               AvoidBreakingFirstArgument);
+
   // Binpacking only if there is no trailing comma
   verifyFormat("const Aaaaaa aaaaa = {aaaaaaaaaa, bbbbbbbbbb,\n"
                "                      cccccccccc, dddddddddd};",
@@ -6864,6 +6873,21 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   verifyFormat("vector<int> foo = { ::SomeGlobalFunction() };", ExtraSpaces);
   verifyFormat("const struct A a = { .a = 1, .b = 2 };", ExtraSpaces);
   verifyFormat("const struct A a = { [0] = 1, [1] = 2 };", ExtraSpaces);
+
+  // Avoid breaking between initializer/equal sign and opening brace
+  ExtraSpaces.PenaltyBreakBeforeFirstCallParameter = 200;
+  verifyFormat("const std::unordered_map<std::string, int> MyHashTable = {\n"
+               "  { \"aaaaaaaaaaaaaaaaaaaaa\", 0 },\n"
+               "  { \"bbbbbbbbbbbbbbbbbbbbb\", 1 },\n"
+               "  { \"ccccccccccccccccccccc\", 2 }\n"
+               "};",
+               ExtraSpaces);
+  verifyFormat("const std::unordered_map<std::string, int> MyHashTable{\n"
+               "  { \"aaaaaaaaaaaaaaaaaaaaa\", 0 },\n"
+               "  { \"bbbbbbbbbbbbbbbbbbbbb\", 1 },\n"
+               "  { \"ccccccccccccccccccccc\", 2 }\n"
+               "};",
+               ExtraSpaces);
 }
 
 TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
