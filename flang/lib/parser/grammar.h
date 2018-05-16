@@ -516,15 +516,17 @@ constexpr auto exponentPart =
     ("ed"_ch || extension("q"_ch)) >> SignedDigitString{};
 
 TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
-    space >> construct<RealLiteralConstant>(
-        sourced(
-            (skipDigitString >> "."_ch >>
-                    !(some(letter) >> "."_ch /* don't misinterpret 1.AND. */) >>
-                    maybe(skipDigitString) >> maybe(exponentPart) >> ok ||
-                "."_ch >> skipDigitString >> maybe(exponentPart) >> ok ||
-                skipDigitString >> exponentPart >> ok) >>
-            construct<RealLiteralConstant::Real>()),
-        maybe(underscore >> kindParam)))
+    space >>
+        construct<RealLiteralConstant>(
+            sourced(
+                (skipDigitString >> "."_ch >>
+                        !(some(letter) >>
+                            "."_ch /* don't misinterpret 1.AND. */) >>
+                        maybe(skipDigitString) >> maybe(exponentPart) >> ok ||
+                    "."_ch >> skipDigitString >> maybe(exponentPart) >> ok ||
+                    skipDigitString >> exponentPart >> ok) >>
+                construct<RealLiteralConstant::Real>()),
+            maybe(underscore >> kindParam)))
 
 // R718 complex-literal-constant -> ( real-part , imag-part )
 TYPE_CONTEXT_PARSER("COMPLEX literal constant"_en_US,
