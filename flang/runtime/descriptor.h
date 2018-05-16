@@ -261,6 +261,7 @@ struct ProcedurePointer {
 // Extended derived types have the EXTENDS flag set and place their base
 // component first in the component descriptions, which is significant for
 // the execution of FINAL subroutines.
+// TODO: Link to defined assignment subroutines and their characteristics.
 class DerivedType {
 public:
   const char *name() const { return name_; }
@@ -282,10 +283,10 @@ public:
   bool IsSameType(const DerivedType &);
 
 private:
-  const char *name_;  // NUL-terminated constant text
-  std::size_t bytes_;  // allocation size of one scalar instance, w/ alignment
   enum Flag { EXTENDS = 1, SEQUENCE = 2, BIND = 4, ANY_PRIVATE = 8 };
 
+  const char *name_;  // NUL-terminated constant text
+  std::size_t bytes_;  // allocation size of one scalar instance, w/ alignment
   std::uint64_t flags_;  // needed for IsSameType() correct semantics
   const char *initializer_;  // can be null; includes base components
   std::size_t kindParameters_;
