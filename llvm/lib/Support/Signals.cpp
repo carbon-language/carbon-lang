@@ -36,19 +36,42 @@
 
 using namespace llvm;
 
-static cl::opt<bool>
+// Use explicit storage to avoid accessing cl::opt in a signal handler.
+static bool DisableSymbolicationFlag = false;
+static cl::opt<bool, true>
     DisableSymbolication("disable-symbolication",
                          cl::desc("Disable symbolizing crash backtraces."),
-                         cl::init(false), cl::Hidden);
+                         cl::location(DisableSymbolicationFlag), cl::Hidden);
 
-static ManagedStatic<std::vector<std::pair<void (*)(void *), void *>>>
-    CallBacksToRun;
-void sys::RunSignalHandlers() {
-  if (!CallBacksToRun.isConstructed())
-    return;
-  for (auto &I : *CallBacksToRun)
-    I.first(I.second);
-  CallBacksToRun->clear();
+// Callbacks to run in signal handler must be lock-free because a signal handler
+// could be running as we add new callbacks. We don't add unbounded numbers of
+// callbacks, an array is therefore sufficient.
+// Assume two pointers are always lock-free.
+struct LLVM_ALIGNAS(sizeof(void *) * 2) CallbackAndCookie {
+  sys::SignalHandlerCallback Callback;
+  void *Cookie;
+};
+static constexpr size_t MaxSignalHandlerCallbacks = 8;
+static std::atomic<CallbackAndCookie> CallBacksToRun[MaxSignalHandlerCallbacks];
+
+void sys::RunSignalHandlers() { // Signal-safe.
+  for (size_t I = 0; I < MaxSignalHandlerCallbacks; ++I) {
+    CallbackAndCookie DoNothing{nullptr, nullptr};
+    auto Entry = CallBacksToRun[I].exchange(DoNothing);
+    if (Entry.Callback)
+      (*Entry.Callback)(Entry.Cookie);
+  }
+}
+
+static void insertSignalHandler(sys::SignalHandlerCallback FnPtr,
+                                void *Cookie) { // Signal-safe.
+  CallbackAndCookie Entry = CallbackAndCookie{FnPtr, Cookie};
+  for (size_t I = 0; I < MaxSignalHandlerCallbacks; ++I) {
+    CallbackAndCookie Expected{nullptr, nullptr};
+    if (CallBacksToRun[I].compare_exchange_strong(Expected, Entry))
+      return;
+  }
+  llvm_unreachable("too many signal callbacks already registered");
 }
 
 static bool findModulesAndOffsets(void **StackTrace, int Depth,
@@ -68,7 +91,7 @@ static FormattedNumber format_ptr(void *PC) {
 LLVM_ATTRIBUTE_USED
 static bool printSymbolizedStackTrace(StringRef Argv0, void **StackTrace,
                                       int Depth, llvm::raw_ostream &OS) {
-  if (DisableSymbolication)
+  if (DisableSymbolicationFlag)
     return false;
 
   // Don't recursively invoke the llvm-symbolizer binary.
