@@ -395,7 +395,7 @@ TYPE_CONTEXT_PARSER("execution part"_en_US,
 //        char-literal-constant | boz-literal-constant
 TYPE_PARSER(
     first(construct<LiteralConstant>(Parser<HollerithLiteralConstant>{}),
-        construct<LiteralConstant>(space >> realLiteralConstant),
+        construct<LiteralConstant>(realLiteralConstant),
         construct<LiteralConstant>(intLiteralConstant),
         construct<LiteralConstant>(Parser<ComplexLiteralConstant>{}),
         construct<LiteralConstant>(Parser<BOZLiteralConstant>{}),
@@ -502,7 +502,7 @@ constexpr auto sign = "+"_tok >> pure(Sign::Positive) ||
     "-"_tok >> pure(Sign::Negative);
 
 // R713 signed-real-literal-constant -> [sign] real-literal-constant
-constexpr auto signedRealLiteralConstant = space >>
+constexpr auto signedRealLiteralConstant =
     construct<SignedRealLiteralConstant>(maybe(sign), realLiteralConstant);
 
 // R714 real-literal-constant ->
@@ -512,12 +512,11 @@ constexpr auto signedRealLiteralConstant = space >>
 // R716 exponent-letter -> E | D
 // Extension: Q
 // R717 exponent -> signed-digit-string
-// N.B. Preceding space is not skipped.
 constexpr auto exponentPart =
     ("ed"_ch || extension("q"_ch)) >> SignedDigitString{};
 
 TYPE_CONTEXT_PARSER("REAL literal constant"_en_US,
-    construct<RealLiteralConstant>(
+    space >> construct<RealLiteralConstant>(
         sourced(
             (skipDigitString >> "."_ch >>
                     !(some(letter) >> "."_ch /* don't misinterpret 1.AND. */) >>
@@ -2829,7 +2828,7 @@ TYPE_PARSER(construct<format::IntrinsicTypeDataEditDesc>(
 // R1312 v -> [sign] digit-string
 constexpr SignedDigitStringIgnoreSpaces scaleFactor;
 TYPE_PARSER(construct<format::DerivedTypeDataEditDesc>(
-    "D" >> "T"_tok >> space >> defaulted(charLiteralConstantWithoutKind),
+    "D" >> "T"_tok >> defaulted(charLiteralConstantWithoutKind),
     defaulted(parenthesized(nonemptyList(scaleFactor)))))
 
 // R1314 k -> [sign] digit-string
