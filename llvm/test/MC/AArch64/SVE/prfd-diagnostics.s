@@ -58,7 +58,7 @@ prfd #0, p0, [x0, x0, lsl #1]
 // Invalid scalar + vector addressing modes
 
 prfd #0, p0, [x0, z0.s]
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].d, (lsl|uxtw|sxtw) #3'
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].s, (uxtw|sxtw) #3'
 // CHECK-NEXT: prfd #0, p0, [x0, z0.s]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 

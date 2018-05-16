@@ -58,27 +58,27 @@ prfw #0, p0, [x0, x0, lsl #1]
 // Invalid scalar + vector addressing modes
 
 prfw #0, p0, [x0, z0.h]
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].d, (lsl|uxtw|sxtw) #2'
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
 // CHECK-NEXT: prfw #0, p0, [x0, z0.h]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 prfw #0, p0, [x0, z0.s]
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].d, (lsl|uxtw|sxtw) #2'
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].s, (uxtw|sxtw) #2'
 // CHECK-NEXT: prfw #0, p0, [x0, z0.s]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 prfw #0, p0, [x0, z0.s]
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].d, (lsl|uxtw|sxtw) #2'
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].s, (uxtw|sxtw) #2'
 // CHECK-NEXT: prfw #0, p0, [x0, z0.s]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 prfw #0, p0, [x0, z0.s, uxtw #3]
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].d, (lsl|uxtw|sxtw) #2'
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].s, (uxtw|sxtw) #2'
 // CHECK-NEXT: prfw #0, p0, [x0, z0.s, uxtw #3]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 prfw #0, p0, [x0, z0.s, lsl #2]
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].d, (lsl|uxtw|sxtw) #2'
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid shift/extend specified, expected 'z[0..31].s, (uxtw|sxtw) #2'
 // CHECK-NEXT: prfw #0, p0, [x0, z0.s, lsl #2]
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
