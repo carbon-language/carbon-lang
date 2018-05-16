@@ -2338,6 +2338,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
       return 2;
     return 1;
   }
+  if (Left.ClosesTemplateDeclaration)
+    return Style.PenaltyBreakTemplateDeclaration;
   if (Left.is(TT_ConditionalExpr))
     return prec::Conditional;
   prec::Level Level = Left.getPrecedence();
@@ -2869,7 +2871,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   if (Right.Previous->ClosesTemplateDeclaration &&
       Right.Previous->MatchingParen &&
       Right.Previous->MatchingParen->NestingLevel == 0 &&
-      Style.AlwaysBreakTemplateDeclarations)
+      Style.AlwaysBreakTemplateDeclarations == FormatStyle::BTDS_Yes)
     return true;
   if (Right.is(TT_CtorInitializerComma) &&
       Style.BreakConstructorInitializers == FormatStyle::BCIS_BeforeComma &&
