@@ -28,7 +28,8 @@
 // C++ does not support flexible array members, so they have to be
 // declared with single elements.
 #define CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY 1
-namespace Fortran::ISO {
+namespace Fortran {
+namespace ISO {
 inline namespace Fortran_2018 {
 #else
 #define CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
@@ -145,8 +146,9 @@ int CFI_setpointer(
     CFI_cdesc_t *, const CFI_cdesc_t *source, const CFI_index_t lower_bounds[]);
 #ifdef __cplusplus
 }  // extern "C"
-}  // namespace Fortran_2018
-}  // namespace Fortran::ISO
+}  // inline namespace Fortran_2018
+}  // namespace ISO
+}  // namespace Fortran
 #endif
 
 #undef CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY
