@@ -84,6 +84,7 @@ TYPE_CONTEXT_PARSER("specification construct"_en_US,
         construct<SpecificationConstruct>(
             statement(indirect(typeDeclarationStmt))),
         construct<SpecificationConstruct>(indirect(Parser<StructureDef>{})),
+        construct<SpecificationConstruct>(indirect(ompDirective)),
         construct<SpecificationConstruct>(indirect(compilerDirective))))
 
 // R513 other-specification-stmt ->
@@ -358,6 +359,7 @@ constexpr auto executableConstruct =
         construct<ExecutableConstruct>(indirect(Parser<SelectTypeConstruct>{})),
         construct<ExecutableConstruct>(indirect(whereConstruct)),
         construct<ExecutableConstruct>(indirect(forallConstruct)),
+        construct<ExecutableConstruct>(indirect(ompDirective)),
         construct<ExecutableConstruct>(indirect(compilerDirective)));
 
 // R510 execution-part-construct ->
@@ -3315,6 +3317,35 @@ TYPE_CONTEXT_PARSER("PAUSE statement"_en_US,
 //     is used only via scalar-int-variable
 //   R1030 default-char-constant-expr -> default-char-expr
 //     is only used via scalar-default-char-constant-expr
+
+// OpenMP Directives and Clauses
+
+// OpenMP Clauses
+TYPE_PARSER(construct<OmpClause>(construct<OmpClause::ClPrivate>(
+                "PRIVATE" >> parenthesized(nonemptyList(name)))) ||
+    construct<OmpClause>(construct<OmpClause::ClFirstprivate>(
+        "FIRSTPRIVATE" >> parenthesized(nonemptyList(name)))))
+
+// !$OMP PARALLEL [DO | SECTIONS | WORKSHARE | DO SIMD]
+constexpr auto parallel =
+    construct<OmpExeDir::Parallel>("PARALLEL" >> many(Parser<OmpClause>{}));
+constexpr auto parDo =
+    construct<OmpExeDir::ParDo>("PARALLEL DO" >> many(Parser<OmpClause>{}));
+constexpr auto parDoSimd = construct<OmpExeDir::ParDoSimd>(
+    "PARALLEL DO SIMD" >> many(Parser<OmpClause>{}));
+constexpr auto parSections = construct<OmpExeDir::ParSections>(
+    "PARALLEL SECTIONS" >> many(Parser<OmpClause>{}));
+constexpr auto parWrkshr = construct<OmpExeDir::ParWrkshr>(
+    "PARALLEL WORKSHARE" >> many(Parser<OmpClause>{}));
+
+TYPE_PARSER(construct<OmpExeDir>(parDoSimd) || construct<OmpExeDir>(parDo) ||
+    construct<OmpExeDir>(parSections) || construct<OmpExeDir>(parWrkshr) ||
+    construct<OmpExeDir>(parallel))
+
+constexpr auto beginOmpDirective = skipEmptyLines >> space >> "!$OMP "_sptok;
+constexpr auto endOmpDirective = space >> endOfLine;
+TYPE_PARSER(beginOmpDirective >>
+    construct<OmpDirective>(indirect(Parser<OmpExeDir>{})) / endOmpDirective)
 
 }  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_GRAMMAR_H_

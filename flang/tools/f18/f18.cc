@@ -336,6 +336,8 @@ int main(int argc, char *const argv[]) {
       options.enableBackslashEscapes = true;
     } else if (arg == "-Mstandard") {
       options.isStrictlyStandard = true;
+    } else if (arg == "-fopenmp") {
+      options.enableOpenMP = true;
     } else if (arg == "-Werror") {
       driver.warningsAreErrors = true;
     } else if (arg == "-ed") {

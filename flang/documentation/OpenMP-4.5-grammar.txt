@@ -1,0 +1,114 @@
+# Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+# OpenMP 4.5 Specifications
+
+2 omp-directive -> sentinel directive-name [clause [,] clause...]
+2.1.1 sentinel -> !$omp | c$omp | *$omp
+2.1.2 sentinel -> !$omp
+# directive-name(constructs)
+2.5 parallel -> PARALLEL 
+2.7.1 do -> DO 
+2.7.2 sections -> SECTIONS
+2.7.3 workshare -> WORKSHARE 
+2.7.4 single-construct -> SINGLE 
+2.8.1 simd-construct -> SIMD
+2.8.2 declare-simd -> DECLARE SIMD
+2.8.3 do-simd-construct -> DO SIMD
+2.9.1 task-construct -> TASK
+2.9.2 taskloop -> TASKLOOP
+2.9.3 taskloop-simd -> TASKLOOP SIMD
+2.9.4 taskyield -> TASKYIELD
+2.10.1 target-data -> TARGET DATA
+2.10.2 target-enter-data -> TARGET ENTER DATA 
+2.10.3 target-exit-data -> TARGET EXIT DATA 
+2.10.4 target -> TARGET
+2.10.5 target-update -> TARGET UPDATE
+2.10.6 declare-target -> DECLARE TARGET
+2.10.7 teams -> TEAMS
+2.10.8 distribute -> DISTRIBUTE
+2.10.9 distribute-simd -> DISTRIBUTE SIMD
+2.10.10 distribute-parellel-do -> DISTRIBUTE PARALLEL DO 
+2.10.11 distribute-parallel-do-simd ->DISTRIBUTE PARALLEL DO SIMD
+2.11.1 parallel-do -> PARALLEL DO
+2.11.2 parallel-sections -> PARALLEL SECTIONS 
+2.11.3 parallel-workshare -> PARALLEL WORKSHARE
+2.11.4 parallel-do-simd -> PARALLEL DO SIMD
+2.11.5 target-parallel -> TARGET PARALLEL
+2.11.6 target-parallel-do -> TARGET PARALLEL DO 
+2.11.7 target-parallel-do-simd -> TARGET PARALLEL DO SIMD 
+2.11.8 target-simd -> TARGET SIMD
+2.11.9 target-teams -> TARGET TEAMS
+2.11.10 teams-distribute -> TEAMS DISTRIBUTE
+2.11.11 teams distribute-simd -> TEAMS DISTRIBUTE SIME 
+2.11.12 target-teams-distribute -> TARGET TEAMS DISTRIBUTE 
+2.11.13 target-teams-distribute-simd -> TARGET TEAMS DISTRIBUTE SIMD 
+2.11.14 teams-distribute-parallel-do -> TEAMS DISTRIBUTE PARALLEL DO 
+2.11.15 target-teams-distribute-parallel-do -> 
+                             TARGET TEAMS DISTRIBUTE PARALLEL DO 
+2.11.16 teams-distribute-parallel-do-simd -> 
+                             TEAMS DISTRIBUTE PARALLEL DO 
+2.11.17 target-teams-distribute-parallel-do-simd ->
+                             TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD 
+2.13.1 master -> MASTER
+2.13.2 critical -> CRITICAL
+2.13.3 barrier -> BARRIER
+2.13.4 taskwait -> TASKWAIT
+2.13.5 taskgroup -> TASKGROUP
+2.13.6 atomic -> ATOMIC
+2.13.7 flush -> FLUSH
+2.13.8 ordered -> ORDERED
+2.14.1 cancel -> CANCEL
+2.14.2 cancellation-point -> CANCELLATION POINT
+2.15.2 threadprivate -> THREADPRIVATE
+2.16 declare-reduction -> DECLARE REDUCTION
+
+# Clauses
+2.5 proc_bind -> PROC_BIND ( MASTER | CLOSE | SPREAD )
+2.5 num_threads -> NUM_THREADS(scalar-int-expr)
+2.7.1 schedule -> SCHEDULE ([sched-modifier] [, sched-modifier]:]
+                  kind[, chunk_size])
+2.7.1 kind -> STATIC | DYNAMIC | GUIDED | AUTO | RUNTIME
+2.7.1 sched-modifier -> MONOTONIC | NONMONOTONIC | SIMD
+2.7.1 chunk_size -> scalar-int-expr
+2.7.1 collapse -> COLLAPSE(scalar-constant)
+2.7.1 ordered -> ORDERED [ (scalar-constant) ]
+2.7.1 nowait -> NOWAIT
+2.8.1 aligned -> ALIGNED ( variable-name-list [ : scalar-constant])
+2.8.1 safelen -> SAFELEN ( scalar-constant )
+2.8.1 simdlen -> SIMDLEN ( scalar-contant )
+2.8.2 uniform -> UNIFORM (dummy-arg-name-list)
+2.8.2 inbranch -> INBRANCH
+2.8.2 notinbranch -> NOTINBRANCH
+2.13.9 depend -> DEPEND (((IN | OUT | INOUT) : variable-name-list) |
+                          SOURCE |
+                          SINK : arrayvec)
+         arrayvec -> ident[scalar-int-expr:scalar-int-expr],...,ident[...]
+2.9.2 num_tasks -> NUM_TASKS (scalar-int-expr)
+2.9.2 grainsize -> GRAINSIZE (scalar-int-expr)
+2.9.2 nogroup -> NOGROUP
+2.9.2 untied -> UNTIED
+2.9.2 priority -> PRIORITY (scalar-int-expr)
+2.9.2 mergeable -> MERGEABLE
+2.9.2 final -> FINAL (scalar-int-expr)
+2.10.1 use_deice_ptr -> USE_DEVICE_PTR (variable-name-list)
+2.10.1 device -> DEVICE (scalar-integer-expr)
+2.10.5 to -> TO (variable-name-list)
+2.10.5 from -> FROM (variable-name-list)
+2.10.6 link -> LINK (variable-name-list)
+2.10.7 num_teams -> NUM_TEAMS (scalar-integer-expr)
+2.10.7 thread_limit -> THREAD_LIMIT (scalar-integer-expr)
+2.10.8 dist_schedule -> DIST_SCHEDULE (STATIC [ , chunk_size])
+2.12 if -> IF ([ directive-name-modifier ':' ] scalar-logical-expr)
+2.15.3.1 default -> DEFAULT (PRIVATE | FIRSTPRIVATE | SHARED | NONE)
+2.15.3.2 shared -> SHARED (variable-name-list)
+2.15.3.3 private -> PRIVATE (variable-name-list)
+2.15.3.4 firstprivate -> FIRSTPRIVATE (variable-name-list)
+2.15.3.5 lastprivate -> LASTPRIVATE (variable-name-list)
+2.15.3.6 reduction -> REDUCTION(reduction-identifier: variable-name-list)
+2.15.3.7 linear -> LINEAR(linear-list [:linear-step])
+           linear-list -> list | modifier(list)
+           modifier -> REF | VAL | UVAL
+2.15.4.1 copyin -> COPYIN (variable-name-list)
+2.15.4.2 copyprivate -> COPYPRIVATE (variable-name-list)
+2.15.5.1 map -> MAP ([[ALWAYS[,]] (TO | FROM | TOFROM | ALLOC | RELEASE |
+                                  DELETE) : ] variable-name-list)
+2.15.5.2 defaultmap -> DEFAULTMAP(TOFROM:SCALAR)

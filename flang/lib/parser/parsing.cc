@@ -70,6 +70,9 @@ void Parsing::Prescan(const std::string &path, Options options) {
       .set_enableOldDebugLines(options.enableOldDebugLines)
       .set_warnOnNonstandardUsage(options_.isStrictlyStandard)
       .AddCompilerDirectiveSentinel("dir$");
+  if (options.enableOpenMP) {
+    prescanner.AddCompilerDirectiveSentinel("$omp");
+  }
   ProvenanceRange range{
       allSources_.AddIncludedFile(*sourceFile, ProvenanceRange{})};
   prescanner.Prescan(range);

@@ -140,6 +140,7 @@ constexpr Parser<EndSubroutineStmt> endSubroutineStmt;  // R1537
 constexpr Parser<EntryStmt> entryStmt;  // R1541
 constexpr Parser<ContainsStmt> containsStmt;  // R1543
 constexpr Parser<CompilerDirective> compilerDirective;
+constexpr Parser<OmpDirective> ompDirective;
 
 }  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_TYPE_PARSERS_H_

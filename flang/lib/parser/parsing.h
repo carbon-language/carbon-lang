@@ -38,6 +38,7 @@ struct Options {
   bool enableBackslashEscapes{true};
   bool enableOldDebugLines{false};
   bool isStrictlyStandard{false};
+  bool enableOpenMP{false};
   Encoding encoding{Encoding::UTF8};
   std::vector<std::string> searchDirectories;
   std::vector<Predefinition> predefinitions;
