@@ -10,6 +10,7 @@
 #ifndef LLVM_SUPPORT_TIMER_H
 #define LLVM_SUPPORT_TIMER_H
 
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
@@ -194,6 +195,10 @@ class TimerGroup {
 
 public:
   explicit TimerGroup(StringRef Name, StringRef Description);
+
+  explicit TimerGroup(StringRef Name, StringRef Description,
+                      const StringMap<TimeRecord> &Records);
+
   ~TimerGroup();
 
   void setName(StringRef NewName, StringRef NewDescription) {

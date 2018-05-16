@@ -236,6 +236,15 @@ TimerGroup::TimerGroup(StringRef Name, StringRef Description)
   TimerGroupList = this;
 }
 
+TimerGroup::TimerGroup(StringRef Name, StringRef Description,
+                       const StringMap<TimeRecord> &Records)
+    : TimerGroup(Name, Description) {
+  TimersToPrint.reserve(Records.size());
+  for (const auto &P : Records)
+    TimersToPrint.emplace_back(P.getValue(), P.getKey(), P.getKey());
+  assert(TimersToPrint.size() == Records.size() && "Size mismatch");
+}
+
 TimerGroup::~TimerGroup() {
   // If the timer group is destroyed before the timers it owns, accumulate and
   // print the timing data.
