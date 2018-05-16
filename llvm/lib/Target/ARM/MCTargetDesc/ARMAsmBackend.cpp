@@ -1153,11 +1153,11 @@ static MachO::CPUSubTypeARM getMachOSubTypeFromArch(StringRef Arch) {
   }
 }
 
-MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
-                                        const MCSubtargetInfo &STI,
-                                        const MCRegisterInfo &MRI,
-                                        const MCTargetOptions &Options,
-                                        bool isLittle) {
+static MCAsmBackend *createARMAsmBackend(const Target &T,
+                                         const MCSubtargetInfo &STI,
+                                         const MCRegisterInfo &MRI,
+                                         const MCTargetOptions &Options,
+                                         bool isLittle) {
   const Triple &TheTriple = STI.getTargetTriple();
   switch (TheTriple.getObjectFormat()) {
   default:
@@ -1187,19 +1187,5 @@ MCAsmBackend *llvm::createARMBEAsmBackend(const Target &T,
                                           const MCSubtargetInfo &STI,
                                           const MCRegisterInfo &MRI,
                                           const MCTargetOptions &Options) {
-  return createARMAsmBackend(T, STI, MRI, Options, false);
-}
-
-MCAsmBackend *llvm::createThumbLEAsmBackend(const Target &T,
-                                            const MCSubtargetInfo &STI,
-                                            const MCRegisterInfo &MRI,
-                                            const MCTargetOptions &Options) {
-  return createARMAsmBackend(T, STI, MRI, Options, true);
-}
-
-MCAsmBackend *llvm::createThumbBEAsmBackend(const Target &T,
-                                            const MCSubtargetInfo &STI,
-                                            const MCRegisterInfo &MRI,
-                                            const MCTargetOptions &Options) {
   return createARMAsmBackend(T, STI, MRI, Options, false);
 }
