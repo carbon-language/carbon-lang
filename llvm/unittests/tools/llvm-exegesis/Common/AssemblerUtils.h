@@ -35,11 +35,6 @@ protected:
     }
   }
 
-  void RunIfSupported(const ExecutableFunction &Function) const {
-    if (CanExecute)
-      Function();
-  }
-
   template <class... Bs> inline void Check(llvm::MCInst MCInst, Bs... Bytes) {
     ExecutableFunction Function = (MCInst.getOpcode() == 0)
                                       ? assembleToFunction({})
