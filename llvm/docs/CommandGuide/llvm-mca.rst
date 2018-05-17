@@ -65,7 +65,7 @@ directly into llvm-mca for analysis:
 
 Or for Intel syntax:
 
-... code-block:: bash
+.. code-block:: bash
 
   $ clang foo.c -O2 -target x86_64-unknown-unknown -mllvm -x86-asm-syntax=intel -S -o - | llvm-mca -mcpu=btver2
 
