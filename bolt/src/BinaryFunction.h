@@ -834,6 +834,18 @@ public:
                                                 BasicBlocksLayout.end());
   }
 
+  inline iterator_range<reverse_order_iterator> rlayout() {
+    return
+      iterator_range<reverse_order_iterator>(BasicBlocksLayout.rbegin(),
+                                             BasicBlocksLayout.rend());
+  }
+
+  inline iterator_range<const_reverse_order_iterator> rlayout() const {
+    return
+      iterator_range<const_reverse_order_iterator>(BasicBlocksLayout.rbegin(),
+                                                   BasicBlocksLayout.rend());
+  }
+
   cfi_iterator        cie_begin()       { return CIEFrameInstructions.begin(); }
   const_cfi_iterator  cie_begin() const { return CIEFrameInstructions.begin(); }
   cfi_iterator        cie_end()         { return CIEFrameInstructions.end(); }

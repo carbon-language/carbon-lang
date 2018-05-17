@@ -171,6 +171,14 @@ ReorderBlocks("reorder-blocks",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static cl::opt<unsigned>
+ReportBadLayout("report-bad-layout",
+  cl::desc("print top <uint> functions with suboptimal code layout on input"),
+  cl::init(0),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
 static cl::opt<bool>
 ReportStaleFuncs("report-stale",
   cl::desc("print the list of functions with stale profile"),
@@ -1597,6 +1605,46 @@ PrintProgramStats::runOnFunctions(BinaryContext &BC,
     case MFT_ALL:
       outs() << " that are going to be fixed\n";
       break;
+    }
+  }
+
+  // Collect and print information about suboptimal code layout on input.
+  if (opts::ReportBadLayout) {
+    std::vector<const BinaryFunction *> SuboptimalFuncs;
+    for (auto &BFI : BFs) {
+      const auto &BF = BFI.second;
+      if (!BF.hasValidProfile())
+        continue;
+
+      const auto HotThreshold = std::max(BF.getKnownExecutionCount(), 1UL);
+      bool HotSeen = false;
+      for (const auto *BB : BF.rlayout()) {
+        if (!HotSeen && BB->getKnownExecutionCount() > HotThreshold) {
+          HotSeen = true;
+          continue;
+        }
+        if (HotSeen && BB->getKnownExecutionCount() == 0) {
+          SuboptimalFuncs.push_back(&BF);
+          break;
+        }
+      }
+    }
+
+    if (!SuboptimalFuncs.empty()) {
+      std::sort(SuboptimalFuncs.begin(), SuboptimalFuncs.end(),
+               [](const BinaryFunction *A, const BinaryFunction *B) {
+                 return A->getKnownExecutionCount() / A->getSize() >
+                        B->getKnownExecutionCount() / B->getSize();
+               });
+
+      outs() << "BOLT-INFO: " << SuboptimalFuncs.size() << " functions have "
+                "cold code in the middle of hot code. Top functions are:\n";
+      for (unsigned I = 0;
+           I < std::min(static_cast<size_t>(opts::ReportBadLayout),
+                        SuboptimalFuncs.size());
+           ++I) {
+        SuboptimalFuncs[I]->print(outs());
+      }
     }
   }
 }
