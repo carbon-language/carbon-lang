@@ -35,7 +35,6 @@ class MessageHandler;
 
 static GenericSpec MapGenericSpec(const parser::GenericSpec &);
 
-
 // ImplicitRules maps initial character of identifier to the DeclTypeSpec*
 // representing the implicit type; nullptr if none.
 class ImplicitRules {
@@ -131,6 +130,7 @@ public:
   bool Pre(const parser::IntrinsicTypeSpec::Logical &);
   bool Pre(const parser::IntrinsicTypeSpec::Real &);
   bool Pre(const parser::IntrinsicTypeSpec::Complex &);
+  bool Pre(const parser::IntrinsicTypeSpec::DoublePrecision &);
   bool Pre(const parser::DeclarationTypeSpec::ClassStar &);
   bool Pre(const parser::DeclarationTypeSpec::TypeStar &);
   void Post(const parser::DeclarationTypeSpec::Type &);
@@ -139,6 +139,13 @@ public:
   bool Pre(const parser::DerivedTypeSpec &);
   void Post(const parser::TypeParamSpec &);
   bool Pre(const parser::TypeParamValue &);
+  void Post(const parser::StructureConstructor &);
+  bool Pre(const parser::AllocateStmt &);
+  void Post(const parser::AllocateStmt &);
+  bool Pre(const parser::TypeGuardStmt &);
+  void Post(const parser::TypeGuardStmt &);
+  bool Pre(const parser::ProcedureDeclarationStmt &);
+  void Post(const parser::ProcedureDeclarationStmt &);
 
 protected:
   std::unique_ptr<DeclTypeSpec> declTypeSpec_;
@@ -243,28 +250,29 @@ private:
 // 6. TODO: BasedPointerStmt
 class ArraySpecVisitor {
 public:
-  const ArraySpec &arraySpec() {
-    return !arraySpec_.empty() ? arraySpec_ : attrArraySpec_;
-  }
-
-  void BeginArraySpec() { CHECK(attrArraySpec_.empty()); }
-  void EndArraySpec() { attrArraySpec_.clear(); }
-  void ClearArraySpec() { arraySpec_.clear(); }
-
   bool Pre(const parser::ArraySpec &);
-  void Post(const parser::AttrSpec &);
+  void Post(const parser::AttrSpec &) { PostAttrSpec(); }
+  void Post(const parser::ComponentAttrSpec &) { PostAttrSpec(); }
   bool Pre(const parser::DeferredShapeSpecList &);
   bool Pre(const parser::AssumedShapeSpec &);
   bool Pre(const parser::ExplicitShapeSpec &);
   bool Pre(const parser::AssumedImpliedSpec &);
   bool Pre(const parser::AssumedRankSpec &);
 
+protected:
+  const ArraySpec &arraySpec();
+  void BeginArraySpec();
+  void EndArraySpec();
+  void ClearArraySpec() { arraySpec_.clear(); }
+
 private:
   // arraySpec_ is populated by any ArraySpec
   ArraySpec arraySpec_;
-  // When an ArraySpec is under an AttrSpec, it is moved into attrArraySpec_
+  // When an ArraySpec is under an AttrSpec or ComponentAttrSpec, it is moved
+  // into attrArraySpec_
   ArraySpec attrArraySpec_;
 
+  void PostAttrSpec();
   Bound GetBound(const parser::SpecificationExpr &);
 };
 
@@ -368,7 +376,6 @@ public:
   bool Pre(const parser::TypeBoundGenericStmt &);
   void Post(const parser::TypeBoundGenericStmt &);
   bool Pre(const parser::ProcedureStmt &);
-  bool Pre(const parser::GenericStmt &);
   void Post(const parser::GenericStmt &);
 
   bool inInterfaceBlock() const { return inInterfaceBlock_; }
@@ -437,10 +444,17 @@ public:
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
 
-  bool Pre(const parser::TypeDeclarationStmt &);
-  void Post(const parser::TypeDeclarationStmt &);
+  bool Pre(const parser::CommonBlockObject &);
+  void Post(const parser::CommonBlockObject &);
+  bool Pre(const parser::TypeParamDefStmt &);
+  void Post(const parser::TypeParamDefStmt &);
+  bool Pre(const parser::DataComponentDefStmt &) { return BeginDecl(); }
+  void Post(const parser::DataComponentDefStmt &) { EndDecl(); }
+  bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
+  void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
   void Post(const parser::EntityDecl &);
   void Post(const parser::ObjectDecl &);
+  void Post(const parser::ComponentDecl &);
   bool Pre(const parser::PrefixSpec &);
   bool Pre(const parser::AsynchronousStmt &);
   bool Pre(const parser::ContiguousStmt &);
@@ -478,15 +492,17 @@ private:
   // The attribute corresponding to the statement containing an ObjectDecl
   std::optional<Attr> objectDeclAttr_;
 
+  bool BeginDecl();
+  void EndDecl();
   // Handle a statement that sets an attribute on a list of names.
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
-
   void DeclareEntity(const parser::Name &, Attrs);
   const parser::Name *GetVariableName(const parser::DataRef &);
   const parser::Name *GetVariableName(const parser::Designator &);
   const parser::Name *GetVariableName(const parser::Expr &);
   const parser::Name *GetVariableName(const parser::Variable &);
   void CheckImplicitSymbol(const parser::Name *);
+  bool CheckUseError(const SourceName &, const Symbol &);
 };
 
 // ImplicitRules implementation
@@ -646,6 +662,39 @@ bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
   // TODO
   return true;
 }
+
+void DeclTypeSpecVisitor::Post(const parser::StructureConstructor &) {
+  // TODO: StructureConstructor
+  derivedTypeSpec_.reset();
+}
+bool DeclTypeSpecVisitor::Pre(const parser::AllocateStmt &) {
+  BeginDeclTypeSpec();
+  return true;
+}
+void DeclTypeSpecVisitor::Post(const parser::AllocateStmt &) {
+  // TODO: AllocateStmt
+  EndDeclTypeSpec();
+  derivedTypeSpec_.reset();
+}
+bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
+  BeginDeclTypeSpec();
+  return true;
+}
+void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
+  // TODO: TypeGuardStmt
+  EndDeclTypeSpec();
+  derivedTypeSpec_.reset();
+}
+bool DeclTypeSpecVisitor::Pre(const parser::ProcedureDeclarationStmt &) {
+  BeginDeclTypeSpec();
+  return true;
+}
+void DeclTypeSpecVisitor::Post(const parser::ProcedureDeclarationStmt &) {
+  // TODO: TypeGuardStmt
+  EndDeclTypeSpec();
+  derivedTypeSpec_.reset();
+}
+
 bool DeclTypeSpecVisitor::Pre(const parser::IntegerTypeSpec &x) {
   MakeIntrinsic(IntegerTypeSpec::Make(GetKindParamValue(x.v)));
   return false;
@@ -662,6 +711,11 @@ bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Complex &x) {
   MakeIntrinsic(ComplexTypeSpec::Make(GetKindParamValue(x.kind)));
   return false;
 }
+bool DeclTypeSpecVisitor::Pre(
+    const parser::IntrinsicTypeSpec::DoublePrecision &) {
+  CHECK(!"TODO: double precision");
+  return false;
+}
 void DeclTypeSpecVisitor::MakeIntrinsic(
     const IntrinsicTypeSpec &intrinsicTypeSpec) {
   SetDeclTypeSpec(DeclTypeSpec::MakeIntrinsic(intrinsicTypeSpec));
@@ -676,18 +730,20 @@ void DeclTypeSpecVisitor::SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec) {
 
 KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
     const std::optional<parser::KindSelector> &kind) {
-  if (!kind) {
-    return KindParamValue();
-  } else if (const auto *expr =
-                 std::get_if<parser::ScalarIntConstantExpr>(&kind->u)) {
-    const auto &lit =
-        std::get<parser::LiteralConstant>(expr->thing.thing.thing->u);
-    const auto &intlit = std::get<parser::IntLiteralConstant>(lit.u);
-    return KindParamValue(std::get<std::uint64_t>(intlit.t));
-  } else {
-    CHECK(!"TODO: translate star-size to kind");
-    return {};  // silence compiler warning
+  if (kind) {
+    if (auto *intExpr = std::get_if<parser::ScalarIntConstantExpr>(&kind->u)) {
+      const parser::Expr &expr2{*intExpr->thing.thing.thing};
+      if (auto *lit = std::get_if<parser::LiteralConstant>(&expr2.u)) {
+        if (auto *intLit = std::get_if<parser::IntLiteralConstant>(&lit->u)) {
+          return KindParamValue{std::get<std::uint64_t>(intLit->t)};
+        }
+      }
+      CHECK(!"TODO: constant evaluation");
+    } else {
+      CHECK(!"TODO: translate star-size to kind");
+    }
   }
+  return KindParamValue{};
 }
 
 // MessageHandler implementation
@@ -842,16 +898,6 @@ bool ArraySpecVisitor::Pre(const parser::ArraySpec &x) {
   return true;
 }
 
-void ArraySpecVisitor::Post(const parser::AttrSpec &) {
-  if (!arraySpec_.empty()) {
-    // Example: integer, dimension(<1>) :: x(<2>)
-    // This saves <1> in attrArraySpec_ so we can process <2> into arraySpec_
-    CHECK(attrArraySpec_.empty());
-    attrArraySpec_.splice(attrArraySpec_.cbegin(), arraySpec_);
-    CHECK(arraySpec_.empty());
-  }
-}
-
 bool ArraySpecVisitor::Pre(const parser::DeferredShapeSpecList &x) {
   for (int i = 0; i < x.v; ++i) {
     arraySpec_.push_back(ShapeSpec::MakeDeferred());
@@ -884,6 +930,27 @@ bool ArraySpecVisitor::Pre(const parser::AssumedImpliedSpec &x) {
 bool ArraySpecVisitor::Pre(const parser::AssumedRankSpec &) {
   arraySpec_.push_back(ShapeSpec::MakeAssumedRank());
   return false;
+}
+
+const ArraySpec &ArraySpecVisitor::arraySpec() {
+  return !arraySpec_.empty() ? arraySpec_ : attrArraySpec_;
+}
+void ArraySpecVisitor::BeginArraySpec() {
+  CHECK(arraySpec_.empty());
+  CHECK(attrArraySpec_.empty());
+}
+void ArraySpecVisitor::EndArraySpec() {
+  CHECK(arraySpec_.empty());
+  attrArraySpec_.clear();
+}
+void ArraySpecVisitor::PostAttrSpec() {
+  if (!arraySpec_.empty()) {
+    // Example: integer, dimension(<1>) :: x(<2>)
+    // This saves <1> in attrArraySpec_ so we can process <2> into arraySpec_
+    CHECK(attrArraySpec_.empty());
+    attrArraySpec_.splice(attrArraySpec_.cbegin(), arraySpec_);
+    CHECK(arraySpec_.empty());
+  }
 }
 
 Bound ArraySpecVisitor::GetBound(const parser::SpecificationExpr &x) {
@@ -1045,7 +1112,8 @@ void ModuleVisitor::AddUse(const SourceName &location,
   } else if (localSymbol.has<UnknownDetails>()) {
     localSymbol.set_details(UseDetails{location, useSymbol});
   } else {
-    CHECK(!"can't happen");
+    localSymbol.set_details(
+        UseErrorDetails{useSymbol.name(), *useModuleScope_});
   }
 }
 
@@ -1072,6 +1140,7 @@ bool ModuleVisitor::Pre(const parser::Module &x) {
 void ModuleVisitor::Post(const parser::Module &) {
   ApplyDefaultAccess();
   PopScope();
+  prevAccessStmt_ = nullptr;
 }
 
 void ModuleVisitor::ApplyDefaultAccess() {
@@ -1088,12 +1157,9 @@ void ModuleVisitor::ApplyDefaultAccess() {
 bool InterfaceVisitor::Pre(const parser::InterfaceStmt &x) {
   inInterfaceBlock_ = true;
   isAbstract_ = std::holds_alternative<parser::Abstract>(x.u);
-  BeginAttrs(); // GenericSpec expects this
   return true;
 }
-void InterfaceVisitor::Post(const parser::InterfaceStmt &) {
-  EndAttrs();
-}
+void InterfaceVisitor::Post(const parser::InterfaceStmt &) {}
 
 void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
   inInterfaceBlock_ = false;
@@ -1103,7 +1169,6 @@ void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
 
 // Create a symbol for the generic in genericSymbol_
 bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
-  auto attrs = GetAttrs();
   const SourceName *genericName{nullptr};
   GenericSpec genericSpec{MapGenericSpec(x)};
   switch (genericSpec.kind()) {
@@ -1113,19 +1178,17 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
   case GenericSpec::Kind::OP_DEFINED:
     genericName = &genericSpec.definedOp();
     break;
-  default:
-    CRASH_NO_CASE;  // TODO: intrinsic ops
+  default: CHECK(!"TODO: intrinsic ops");
   }
-  genericSymbol_ = &MakeSymbol(*genericName, attrs, GenericDetails{});
+  genericSymbol_ = &MakeSymbol(*genericName, Attrs{}, GenericDetails{});
   return false;
 }
 
 bool InterfaceVisitor::Pre(const parser::TypeBoundGenericStmt &) {
-  BeginAttrs();
   return true;
 }
 void InterfaceVisitor::Post(const parser::TypeBoundGenericStmt &) {
-  EndAttrs();
+  //TODO: TypeBoundGenericStmt
 }
 
 bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
@@ -1141,15 +1204,13 @@ bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
   return false;
 }
 
-bool InterfaceVisitor::Pre(const parser::GenericStmt &) {
-  BeginAttrs();
-  return true;
-}
 void InterfaceVisitor::Post(const parser::GenericStmt &x) {
+  if (auto &accessSpec = std::get<std::optional<parser::AccessSpec>>(x.t)) {
+    genericSymbol_->attrs() |= Attrs{AccessSpecToAttr(*accessSpec)};
+  }
   for (const auto &name : std::get<std::list<parser::Name>>(x.t)) {
     AddToGeneric(name);
   }
-  EndAttrs();
 }
 
 void InterfaceVisitor::AddToGeneric(
@@ -1170,6 +1231,9 @@ void InterfaceVisitor::AddToGeneric(
     if (!details || details->kind() != SubprogramKind::Module) {
       Say(name, "'%s' is not a module procedure"_en_US);
     }
+  }
+  if (!genericSymbol_->has<GenericDetails>()) {
+    CHECK(!"TODO: generic symbols should be in separate namespace");
   }
   genericSymbol_->details<GenericDetails>().add_specificProc(&symbol);
 }
@@ -1236,7 +1300,9 @@ void SubprogramVisitor::Post(const parser::StmtFunctionStmt &x) {
 }
 
 bool SubprogramVisitor::Pre(const parser::Suffix &suffix) {
-  funcResultName_ = &suffix.resultName.value();
+  if (suffix.resultName) {
+    funcResultName_ = &suffix.resultName.value();
+  }
   return true;
 }
 
@@ -1244,7 +1310,7 @@ bool SubprogramVisitor::Pre(const parser::SubroutineSubprogram &x) {
   const auto &name = std::get<parser::Name>(
       std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement.t);
   const auto &subpPart =
-          std::get<std::optional<parser::InternalSubprogramPart>>(x.t);
+      std::get<std::optional<parser::InternalSubprogramPart>>(x.t);
   return BeginSubprogram(name, subpPart);
 }
 void SubprogramVisitor::Post(const parser::SubroutineSubprogram &) {
@@ -1319,12 +1385,12 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   const parser::Name *funcResultName;
   if (funcResultName_ && funcResultName_->source != name.source) {
     funcResultName = funcResultName_;
-    funcResultName_ = nullptr;
   } else {
     CurrScope().erase(name.source);  // was added by PushSubprogramScope
     funcResultName = &name;
   }
   details.set_result(MakeSymbol(*funcResultName, funcResultDetails));
+  funcResultName_ = nullptr;
 }
 
 bool SubprogramVisitor::BeginSubprogram(const parser::Name &name,
@@ -1375,21 +1441,59 @@ void ResolveNamesVisitor::Post(const parser::EntityDecl &x) {
   DeclareEntity(name, attrs_ ? *attrs_ : Attrs());
 }
 
-bool ResolveNamesVisitor::Pre(const parser::TypeDeclarationStmt &x) {
+bool ResolveNamesVisitor::BeginDecl() {
   BeginDeclTypeSpec();
   BeginAttrs();
   BeginArraySpec();
   return true;
 }
-
-void ResolveNamesVisitor::Post(const parser::TypeDeclarationStmt &x) {
+void ResolveNamesVisitor::EndDecl() {
   EndDeclTypeSpec();
   EndAttrs();
   EndArraySpec();
 }
 
+bool ResolveNamesVisitor::Pre(const parser::TypeParamDefStmt &x) {
+  BeginDeclTypeSpec();
+  return true;
+}
+void ResolveNamesVisitor::Post(const parser::TypeParamDefStmt &x) {
+  EndDeclTypeSpec();
+  //TODO: TypeParamDefStmt
+}
+
+bool ResolveNamesVisitor::Pre(const parser::CommonBlockObject &x) {
+  BeginArraySpec();
+  return true;
+}
+void ResolveNamesVisitor::Post(const parser::CommonBlockObject &x) {
+  ClearArraySpec();
+  //TODO: CommonBlockObject
+}
+
+void ResolveNamesVisitor::Post(const parser::ComponentDecl &) {
+  ClearArraySpec();
+}
+
 bool ResolveNamesVisitor::Pre(const parser::PrefixSpec &x) {
   return true;  // TODO
+}
+
+bool ResolveNamesVisitor::CheckUseError(
+    const SourceName &name, const Symbol &symbol) {
+  const auto *details = symbol.detailsIf<UseErrorDetails>();
+  if (!details) {
+    return false;
+  }
+  Message &msg{Say(name, "Reference to '%s' is ambiguous"_err_en_US)};
+  for (const auto &pair : details->occurrences()) {
+    const SourceName &location{*pair.first};
+    const SourceName &moduleName{pair.second->name()};
+    msg.Attach(location,
+        MessageFormattedText{"'%s' was use-associated from module '%s'"_en_US,
+            name.ToString().data(), moduleName.ToString().data()});
+  }
+  return true;
 }
 
 void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
@@ -1403,6 +1507,8 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
       }
       symbol.attrs().set(Attr::EXTERNAL);
       symbol.set_details(SubprogramDetails{});
+    } else if (CheckUseError(name->source, symbol)) {
+      // error was reported
     } else if (!symbol.isSubprogram()) {
       auto *details = symbol.detailsIf<EntityDetails>();
       if (!details || !details->isArray()) {
@@ -1638,24 +1744,22 @@ const parser::Name *ResolveNamesVisitor::GetVariableName(
   }
 }
 
-// If implicit types are allowed, ensure name is in the symbol table
+// If implicit types are allowed, ensure name is in the symbol table.
+// Otherwise, report an error if it hasn't been declared.
 void ResolveNamesVisitor::CheckImplicitSymbol(const parser::Name *name) {
   if (name) {
     const auto &it = CurrScope().find(name->source);
-    if (const auto *details = it->second.detailsIf<UseErrorDetails>()) {
-      Message &msg{Say(*name, "Reference to '%s' is ambiguous"_err_en_US)};
-      for (const auto &pair : details->occurrences()) {
-        const SourceName &location{*pair.first};
-        const SourceName &moduleName{pair.second->name()};
-        msg.Attach(location,
-            MessageFormattedText{
-                "'%s' was use-associated from module '%s'"_en_US,
-                name->source.ToString().data(), moduleName.ToString().data()});
+    if (it != CurrScope().end()) {
+      const Symbol &symbol{it->second};
+      if (CheckUseError(name->source, symbol) ||
+          !symbol.has<UnknownDetails>()) {
+        return; // reported an error or symbol is declared
       }
-    } else if (!isImplicitNoneType()) {
-      CurrScope().try_emplace(name->source);
-    } else if (it == CurrScope().end() || it->second.has<UnknownDetails>()) {
+    }
+    if (isImplicitNoneType()) {
       Say(*name, "No explicit type declared for '%s'"_err_en_US);
+    } else {
+      CurrScope().try_emplace(name->source);
     }
   }
 }
@@ -1715,6 +1819,8 @@ static GenericSpec::Kind MapIntrinsicOperator(
     return GenericSpec::OP_POWER;
   case parser::DefinedOperator::IntrinsicOperator::Subtract:
     return GenericSpec::OP_SUBTRACT;
+  case parser::DefinedOperator::IntrinsicOperator::XOR:
+    return GenericSpec::OP_XOR;
   default: CRASH_NO_CASE;
   }
 }

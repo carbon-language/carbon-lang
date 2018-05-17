@@ -73,9 +73,8 @@ void Symbol::set_details(Details &&details) {
 bool Symbol::CanReplaceDetails(const Details &details) const {
   if (has<UnknownDetails>()) {
     return true;  // can always replace UnknownDetails
-  } else if (has<UseDetails>() &&
-      std::holds_alternative<UseErrorDetails>(details)) {
-    return true;  // can replace UseDetails with UseErrorDetails
+  } else if (std::holds_alternative<UseErrorDetails>(details)) {
+    return true;  // can replace any with UseErrorDetails
   } else if (has<SubprogramNameDetails>() &&
       std::holds_alternative<SubprogramDetails>(details)) {
     return true;  // can replace SubprogramNameDetails with SubprogramDetails

@@ -89,7 +89,7 @@ private:
 // The value of a kind type parameter
 class KindParamValue {
 public:
-  KindParamValue(int value = 0) : value_{IntConst::Make(value)} {}
+  KindParamValue(std::uint64_t value = 0) : value_{IntConst::Make(value)} {}
   bool operator==(const KindParamValue &x) const { return value_ == x.value_; }
   bool operator!=(const KindParamValue &x) const { return !operator==(x); }
   bool operator<(const KindParamValue &x) const { return value_ < x.value_; }
@@ -441,6 +441,7 @@ public:
     OP_OR,
     OP_POWER,
     OP_SUBTRACT,
+    OP_XOR,
   };
   static GenericSpec IntrinsicOp(Kind kind) {
     return GenericSpec(kind, nullptr);

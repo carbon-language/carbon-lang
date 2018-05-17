@@ -304,6 +304,7 @@ std::ostream &operator<<(std::ostream &o, const GenericSpec &x) {
   case GenericSpec::OP_NEQV: return o << "OPERATOR(.NEQV.)";
   case GenericSpec::OP_NOT: return o << "OPERATOR(.NOT.)";
   case GenericSpec::OP_OR: return o << "OPERATOR(.OR.)";
+  case GenericSpec::OP_XOR: return o << "OPERATOR(.XOR.)";
   default: CRASH_NO_CASE;
   }
 }
