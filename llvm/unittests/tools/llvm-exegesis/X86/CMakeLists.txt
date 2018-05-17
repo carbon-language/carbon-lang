@@ -14,7 +14,8 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_llvm_unittest(LLVMExegesisX86Tests
-  RegisterAliasingTest.cpp
   InMemoryAssemblerTest.cpp
+  InstructionSnippetGeneratorTest.cpp
   )
 target_link_libraries(LLVMExegesisX86Tests PRIVATE LLVMExegesis)
+

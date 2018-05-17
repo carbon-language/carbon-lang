@@ -76,22 +76,13 @@ static llvm::cl::opt<std::string> AnalysisClustersFile("analysis-clusters-file",
 
 namespace exegesis {
 
-static unsigned GetOpcodeOrDie(const llvm::MCInstrInfo &MCInstrInfo) {
-  if (OpcodeName.empty() && (OpcodeIndex == 0))
-    llvm::report_fatal_error(
-        "please provide one and only one of 'opcode-index' or 'opcode-name'");
-  if (OpcodeIndex > 0)
-    return OpcodeIndex;
-  // Resolve opcode name -> opcode.
-  for (unsigned I = 0, E = MCInstrInfo.getNumOpcodes(); I < E; ++I)
-    if (MCInstrInfo.getName(I) == OpcodeName)
-      return I;
-  llvm::report_fatal_error(llvm::Twine("unknown opcode ").concat(OpcodeName));
-}
-
 void benchmarkMain() {
   if (exegesis::pfm::pfmInitialize())
     llvm::report_fatal_error("cannot initialize libpfm");
+
+  if (OpcodeName.empty() == (OpcodeIndex == 0))
+    llvm::report_fatal_error(
+        "please provide one and only one of 'opcode-index' or 'opcode-name'");
 
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
@@ -101,26 +92,37 @@ void benchmarkMain() {
 
   const LLVMState State;
 
-  // FIXME: Do not require SchedModel for latency.
   if (!State.getSubtargetInfo().getSchedModel().hasExtraProcessorInfo())
     llvm::report_fatal_error("sched model is missing extra processor info!");
+
+  unsigned Opcode = OpcodeIndex;
+  if (Opcode == 0) {
+    // Resolve opcode name -> opcode.
+    for (unsigned I = 0, E = State.getInstrInfo().getNumOpcodes(); I < E; ++I) {
+      if (State.getInstrInfo().getName(I) == OpcodeName) {
+        Opcode = I;
+        break;
+      }
+    }
+    if (Opcode == 0) {
+      llvm::report_fatal_error(
+          llvm::Twine("unknown opcode ").concat(OpcodeName));
+    }
+  }
 
   std::unique_ptr<BenchmarkRunner> Runner;
   switch (BenchmarkMode) {
   case BenchmarkModeE::Latency:
-    Runner = llvm::make_unique<LatencyBenchmarkRunner>(State);
+    Runner = llvm::make_unique<LatencyBenchmarkRunner>();
     break;
   case BenchmarkModeE::Uops:
-    Runner = llvm::make_unique<UopsBenchmarkRunner>(State);
+    Runner = llvm::make_unique<UopsBenchmarkRunner>();
     break;
   case BenchmarkModeE::Analysis:
     llvm_unreachable("not a benchmark");
   }
 
-  if (NumRepetitions == 0)
-    llvm::report_fatal_error("--num-repetitions must be greater than zero");
-
-  Runner->run(GetOpcodeOrDie(State.getInstrInfo()), Filter, NumRepetitions)
+  Runner->run(State, Opcode, NumRepetitions > 0 ? NumRepetitions : 1, Filter)
       .writeYamlOrDie(BenchmarkFile);
   exegesis::pfm::pfmTerminate();
 }
