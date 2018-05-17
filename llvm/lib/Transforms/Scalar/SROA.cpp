@@ -1968,6 +1968,10 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
     // We can't handle loads that extend past the allocated memory.
     if (DL.getTypeStoreSize(LI->getType()) > Size)
       return false;
+    // So far, AllocaSliceRewriter does not support widening split slice tails
+    // in rewriteIntegerLoad.
+    if (S.beginOffset() < AllocBeginOffset)
+      return false;
     // Note that we don't count vector loads or stores as whole-alloca
     // operations which enable integer widening because we would prefer to use
     // vector widening instead.
@@ -1988,6 +1992,10 @@ static bool isIntegerWideningViableForSlice(const Slice &S,
       return false;
     // We can't handle stores that extend past the allocated memory.
     if (DL.getTypeStoreSize(ValueTy) > Size)
+      return false;
+    // So far, AllocaSliceRewriter does not support widening split slice tails
+    // in rewriteIntegerStore.
+    if (S.beginOffset() < AllocBeginOffset)
       return false;
     // Note that we don't count vector loads or stores as whole-alloca
     // operations which enable integer widening because we would prefer to use
