@@ -82,7 +82,7 @@ public:
     return Blocks;
   }
 
-  /// Update the list of basic blocks and meta-info
+  /// Update the list of basic blocks and aggregated cluster data
   void merge(const Cluster *Other,
              const std::vector<BinaryBasicBlock *> &MergedBlocks,
              double MergedScore) {
@@ -91,6 +91,10 @@ public:
     ExecutionCount += Other->ExecutionCount;
     Size += Other->Size;
     Score = MergedScore;
+  }
+
+  void clear() {
+    Blocks.clear();
   }
 
 private:
@@ -219,65 +223,14 @@ public:
 
   /// Run cache+ algorithm and return a basic block ordering
   std::vector<BinaryBasicBlock *> run() {
-    // Merge blocks with their fallthrough successors
-    for (auto BB : BF.layout()) {
-      if (FallthroughPred[BB->getLayoutIndex()] == nullptr &&
-          FallthroughSucc[BB->getLayoutIndex()] != nullptr) {
-        auto CurBB = BB;
-        while (FallthroughSucc[CurBB->getLayoutIndex()] != nullptr) {
-          const auto NextBB = FallthroughSucc[CurBB->getLayoutIndex()];
-          mergeClusters(&AllClusters[BB->getLayoutIndex()],
-                        &AllClusters[NextBB->getLayoutIndex()],
-                        0);
-          CurBB = NextBB;
-        }
-      }
-    }
+    // Pass 1: Merge blocks with their fallthrough successors
+    mergeFallthroughs();
 
-    // Merge pairs of clusters while there is an improvement in ExtTSP metric
-    while (Clusters.size() > 1) {
-      Cluster *BestClusterPred = nullptr;
-      Cluster *BestClusterSucc = nullptr;
-      std::pair<double, size_t> BestGain(-1, 0);
-      for (auto ClusterPred : Clusters) {
-        // Do not merge cold blocks
-        if (ClusterPred->isCold())
-          continue;
+    // Pass 2: Merge pairs of clusters while improving the ExtTSP metric
+    mergeClusterPairs();
 
-        // Get candidates for merging with the current cluster
-        Adjacent.forAllAdjacent(
-          ClusterPred,
-          // Find the best candidate
-          [&](Cluster *ClusterSucc) {
-            assert(ClusterPred != ClusterSucc && "loop edges are not supported");
-            assert(!ClusterSucc->isCold() && "cannot merge cold clusters");
-
-            // Compute the gain of merging two clusters
-            auto Gain = mergeGain(ClusterPred, ClusterSucc);
-            if (Gain.first <= 0.0)
-              return;
-
-            // Breaking ties by density to make the hottest clusters be merged first
-            if (Gain.first > BestGain.first ||
-                (std::abs(Gain.first - BestGain.first) < 1e-8 &&
-                 compareClusterPairs(ClusterPred,
-                                     ClusterSucc,
-                                     BestClusterPred,
-                                     BestClusterSucc))) {
-              BestGain = Gain;
-              BestClusterPred = ClusterPred;
-              BestClusterSucc = ClusterSucc;
-            }
-          });
-      }
-
-      // Stop merging when there is no improvement
-      if (BestGain.first <= 0.0)
-        break;
-
-      // Merge the best pair of clusters
-      mergeClusters(BestClusterPred, BestClusterSucc, BestGain.second);
-    }
+    // Pass 3: Merge cold blocks to reduce code size
+    mergeColdClusters();
 
     // Sorting clusters by density
     std::stable_sort(Clusters.begin(), Clusters.end(), compareClusters);
@@ -339,12 +292,14 @@ private:
     // Initialize clusters
     Clusters.reserve(BF.layout_size());
     AllClusters.reserve(BF.layout_size());
+    CurCluster.reserve(BF.layout_size());
     Size.reserve(BF.layout_size());
     for (auto BB : BF.layout()) {
       size_t Index = BB->getLayoutIndex();
       Size.push_back(std::max(BB->estimateSize(), size_t(1)));
       AllClusters.emplace_back(BB, ExecutionCounts[Index], Size[Index]);
       Clusters.push_back(&AllClusters[Index]);
+      CurCluster.push_back(&AllClusters[Index]);
     }
 
     // Initialize adjacency matrix
@@ -362,6 +317,88 @@ private:
 
     // Initialize fallthrough successors
     findFallthroughBlocks(InWeight, OutWeight);
+  }
+
+  /// Merge blocks with their fallthrough successors.
+  void mergeFallthroughs() {
+    for (auto BB : BF.layout()) {
+      if (FallthroughPred[BB->getLayoutIndex()] == nullptr &&
+          FallthroughSucc[BB->getLayoutIndex()] != nullptr) {
+        auto CurBB = BB;
+        while (FallthroughSucc[CurBB->getLayoutIndex()] != nullptr) {
+          const auto NextBB = FallthroughSucc[CurBB->getLayoutIndex()];
+          mergeClusters(&AllClusters[BB->getLayoutIndex()],
+                        &AllClusters[NextBB->getLayoutIndex()],
+                        0);
+          CurBB = NextBB;
+        }
+      }
+    }
+  }
+
+  /// Merge pairs of clusters while improving the ExtTSP metric
+  void mergeClusterPairs() {
+    while (Clusters.size() > 1) {
+      Cluster *BestClusterPred = nullptr;
+      Cluster *BestClusterSucc = nullptr;
+      std::pair<double, size_t> BestGain(-1, 0);
+      for (auto ClusterPred : Clusters) {
+        // Do not merge cold blocks
+        if (ClusterPred->isCold())
+          continue;
+
+        // Get candidates for merging with the current cluster
+        Adjacent.forAllAdjacent(
+          ClusterPred,
+          // Find the best candidate
+          [&](Cluster *ClusterSucc) {
+            assert(ClusterPred != ClusterSucc && "loop edges are not supported");
+            assert(!ClusterSucc->isCold() && "cannot merge cold clusters");
+
+            // Compute the gain of merging two clusters
+            auto Gain = mergeGain(ClusterPred, ClusterSucc);
+            if (Gain.first <= 0.0)
+              return;
+
+            // Breaking ties by density to make the hottest clusters be merged first
+            if (Gain.first > BestGain.first ||
+                (std::abs(Gain.first - BestGain.first) < 1e-8 &&
+                 compareClusterPairs(ClusterPred,
+                                     ClusterSucc,
+                                     BestClusterPred,
+                                     BestClusterSucc))) {
+              BestGain = Gain;
+              BestClusterPred = ClusterPred;
+              BestClusterSucc = ClusterSucc;
+            }
+          });
+      }
+
+      // Stop merging when there is no improvement
+      if (BestGain.first <= 0.0)
+        break;
+
+      // Merge the best pair of clusters
+      mergeClusters(BestClusterPred, BestClusterSucc, BestGain.second);
+    }
+  }
+
+  /// Merge cold blocks to reduce code size
+  void mergeColdClusters() {
+    for (auto SrcBB : BF.layout()) {
+      // Iterating in reverse order to make sure original fall-trough jumps are
+      // merged first
+      for (auto Itr = SrcBB->succ_rbegin(); Itr != SrcBB->succ_rend(); ++Itr) {
+        BinaryBasicBlock *DstBB = *Itr;
+        auto SrcCluster = CurCluster[SrcBB->getLayoutIndex()];
+        auto DstCluster = CurCluster[DstBB->getLayoutIndex()];
+        if (SrcCluster != DstCluster && !DstCluster->isEntryPoint() &&
+            SrcCluster->blocks().back() == SrcBB &&
+            DstCluster->blocks().front() == DstBB) {
+          mergeClusters(SrcCluster, DstCluster, 0);
+        }
+      }
+    }
   }
 
   /// For a pair of blocks, A and B, block B is the fallthrough successor of A,
@@ -558,10 +595,16 @@ private:
     // Merge the blocks of clusters
     auto MergedBlocks = mergeBlocks(Into->blocks(), From->blocks(), MergeType);
     Into->merge(From, MergedBlocks.getBlocks(), score(MergedBlocks));
+    From->clear();
 
     // Remove cluster From from the list of active clusters
     auto Iter = std::remove(Clusters.begin(), Clusters.end(), From);
     Clusters.erase(Iter, Clusters.end());
+
+    // Update block clusters
+    for (auto BB : Into->blocks()) {
+      CurCluster[BB->getLayoutIndex()] = Into;
+    }
 
     // Invalidate caches
     Cache.invalidate(Into);
@@ -581,6 +624,9 @@ private:
 
   // Active clusters. The vector gets udpated at runtime when clusters are merged
   std::vector<Cluster *> Clusters;
+
+  // Current cluster of a basic block
+  std::vector<Cluster *> CurCluster;
 
   // Size of the block
   std::vector<uint64_t> Size;

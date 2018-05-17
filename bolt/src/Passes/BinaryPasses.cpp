@@ -481,7 +481,7 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
       break;
 
     case LT_OPTIMIZE_CACHE_PLUS:
-      Algo.reset(new CachePlusReorderAlgorithm(std::move(CAlgo)));
+      Algo.reset(new CachePlusReorderAlgorithm());
       break;
 
     case LT_OPTIMIZE_SHUFFLE:

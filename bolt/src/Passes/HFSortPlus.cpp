@@ -9,24 +9,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// TODO: copyright/license msg.
-
-/*
-   +----------------------------------------------------------------------+
-   | HipHop for PHP                                                       |
-   +----------------------------------------------------------------------+
-   | Copyright (c) 2010-present Facebook, Inc. (http://www.facebook.com)  |
-   +----------------------------------------------------------------------+
-   | This source file is subject to version 3.01 of the PHP license,      |
-   | that is bundled with this package in the file LICENSE, and is        |
-   | available through the world-wide-web at the following url:           |
-   | http://www.php.net/license/3_01.txt                                  |
-   | If you did not receive a copy of the PHP license and are unable to   |
-   | obtain it through the world-wide-web, please send a note to          |
-   | license@php.net so we can mail you a copy immediately.               |
-   +----------------------------------------------------------------------+
-*/
-
 #include "BinaryFunction.h"
 #include "HFSort.h"
 #include "ReorderUtils.h"
@@ -110,14 +92,6 @@ bool compareClusterPairs(const Cluster *A1, const Cluster *B1,
   if (Samples1 != Samples2)
     return Samples1 > Samples2;
   return A1->target(0) < A2->target(0);
-}
-
-/// Sorting clusters by their density in decreasing order.
-template <typename C>
-std::vector<Cluster *> sortByDensity(const C &Clusters_) {
-  std::vector<Cluster *> Clusters(Clusters_.begin(), Clusters_.end());
-  std::stable_sort(Clusters.begin(), Clusters.end(), compareClusters);
-  return Clusters;
 }
 
 /// HFSortPlus - layout of hot functions with iTLB cache optimization
@@ -398,14 +372,16 @@ public:
 
     DEBUG(dbgs() << "Completed hfsort+ with " << Clusters.size() << " clusters\n");
 
+    // Sorting clusters by density in decreasing order
+    std::stable_sort(Clusters.begin(), Clusters.end(), compareClusters);
+
     // Return the set of clusters that are left, which are the ones that
     // didn't get merged (so their first func is its original func)
     std::vector<Cluster> Result;
-    for (auto Cluster : sortByDensity(Clusters)) {
+    Result.reserve(Clusters.size());
+    for (auto Cluster : Clusters) {
       Result.emplace_back(std::move(*Cluster));
     }
-
-    assert(std::is_sorted(Result.begin(), Result.end(), compareClustersDensity));
 
     return Result;
   }
@@ -473,6 +449,7 @@ private:
     Adjacent.merge(Into, From);
 
     Into->merge(*From);
+    From->clear();
 
     // Update the clusters and addresses for functions merged from From.
     size_t CurAddr = 0;
