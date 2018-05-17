@@ -170,9 +170,4 @@ llvm::Error Analysis::run<Analysis::PrintSchedClassInconsistencies>(
   return llvm::Error::success();
 }
 
-template llvm::Error
-Analysis::run<Analysis::PrintClusters>(llvm::raw_ostream &OS) const;
-template llvm::Error Analysis::run<Analysis::PrintSchedClassInconsistencies>(
-    llvm::raw_ostream &OS) const;
-
 } // namespace exegesis
