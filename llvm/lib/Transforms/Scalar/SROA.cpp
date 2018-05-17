@@ -1261,10 +1261,21 @@ static void speculatePHINodeLoads(PHINode &PN) {
   }
 
   // Inject loads into all of the pred blocks.
+  DenseMap<BasicBlock*, Value*> InjectedLoads;
   for (unsigned Idx = 0, Num = PN.getNumIncomingValues(); Idx != Num; ++Idx) {
     BasicBlock *Pred = PN.getIncomingBlock(Idx);
-    TerminatorInst *TI = Pred->getTerminator();
     Value *InVal = PN.getIncomingValue(Idx);
+
+    // A PHI node is allowed to have multiple (duplicated) entries for the same
+    // basic block, as long as the value is the same. So if we already injected
+    // a load in the predecessor, then we should reuse the same load for all
+    // duplicated entries.
+    if (Value* V = InjectedLoads.lookup(Pred)) {
+      NewPN->addIncoming(V, Pred);
+      continue;
+    }
+
+    TerminatorInst *TI = Pred->getTerminator();
     IRBuilderTy PredBuilder(TI);
 
     LoadInst *Load = PredBuilder.CreateLoad(
@@ -1274,6 +1285,7 @@ static void speculatePHINodeLoads(PHINode &PN) {
     if (AATags)
       Load->setAAMetadata(AATags);
     NewPN->addIncoming(Load, Pred);
+    InjectedLoads[Pred] = Load;
   }
 
   LLVM_DEBUG(dbgs() << "          speculated to: " << *NewPN << "\n");
