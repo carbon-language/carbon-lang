@@ -160,6 +160,9 @@ void analysisMain() {
 
   if (auto Err = Analyzer.printClusters(ClustersOS))
     llvm::report_fatal_error(std::move(Err));
+
+  if (auto Err = Analyzer.printSchedClassInconsistencies(llvm::outs()))
+    llvm::report_fatal_error(std::move(Err));
 }
 
 } // namespace exegesis
