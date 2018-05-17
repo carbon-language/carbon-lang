@@ -732,10 +732,11 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
     const std::optional<parser::KindSelector> &kind) {
   if (kind) {
     if (auto *intExpr = std::get_if<parser::ScalarIntConstantExpr>(&kind->u)) {
-      const parser::Expr &expr2{*intExpr->thing.thing.thing};
-      if (auto *lit = std::get_if<parser::LiteralConstant>(&expr2.u)) {
+      const parser::Expr &expr{*intExpr->thing.thing.thing};
+      if (auto *lit = std::get_if<parser::LiteralConstant>(&expr.u)) {
         if (auto *intLit = std::get_if<parser::IntLiteralConstant>(&lit->u)) {
-          return KindParamValue{std::get<std::uint64_t>(intLit->t)};
+          return KindParamValue{
+              IntConst::Make(std::get<std::uint64_t>(intLit->t))};
         }
       }
       CHECK(!"TODO: constant evaluation");

@@ -89,7 +89,8 @@ private:
 // The value of a kind type parameter
 class KindParamValue {
 public:
-  KindParamValue(std::uint64_t value = 0) : value_{IntConst::Make(value)} {}
+  KindParamValue(int value = 0) : KindParamValue(IntConst::Make(value)) {}
+  KindParamValue(const IntConst &value) : value_{value} {}
   bool operator==(const KindParamValue &x) const { return value_ == x.value_; }
   bool operator!=(const KindParamValue &x) const { return !operator==(x); }
   bool operator<(const KindParamValue &x) const { return value_ < x.value_; }
