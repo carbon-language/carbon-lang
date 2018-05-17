@@ -661,6 +661,15 @@ let isBarrier = 1, isReturn = 1, isTerminator = 1 in
 def PseudoRET : Pseudo<(outs), (ins), [(RetFlag)]>,
                 PseudoInstExpansion<(JALR X0, X1, 0)>;
 
+// PseudoTAIL is a pseudo instruction similar to PseudoCALL and will eventually
+// expand to auipc and jalr while encoding.
+// Define AsmString to print "tail" when compile with -S flag.
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, Uses = [X2],
+    hasSideEffects = 0, mayLoad = 0, mayStore = 0, isCodeGenOnly = 0 in
+def PseudoTAIL : Pseudo<(outs), (ins bare_symbol:$dst), []> {
+  let AsmString = "tail\t$dst";
+}
+
 /// Loads
 
 multiclass LdPat<PatFrag LoadOp, RVInst Inst> {
