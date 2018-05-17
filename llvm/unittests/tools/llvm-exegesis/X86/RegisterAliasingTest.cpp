@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "X86InstrInfo.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "gmock/gmock.h"
@@ -16,17 +15,27 @@ namespace {
 class RegisterAliasingTest : public ::testing::Test {
 protected:
   RegisterAliasingTest() {
-    const std::string TT = llvm::sys::getProcessTriple();
+    const std::string TT = "x86_64-unknown-linux";
     std::string error;
     const llvm::Target *const TheTarget =
         llvm::TargetRegistry::lookupTarget(TT, error);
-    assert(TheTarget);
+    if (!TheTarget) {
+      llvm::errs() << error << "\n";
+      return;
+    }
     MCRegInfo.reset(TheTarget->createMCRegInfo(TT));
   }
 
-  static void SetUpTestCase() { llvm::InitializeNativeTarget(); }
+  static void SetUpTestCase() {
+    LLVMInitializeX86TargetInfo();
+    LLVMInitializeX86Target();
+    LLVMInitializeX86TargetMC();
+  }
 
-  const llvm::MCRegisterInfo &getMCRegInfo() { return *MCRegInfo; }
+  const llvm::MCRegisterInfo &getMCRegInfo() {
+    assert(MCRegInfo);
+    return *MCRegInfo;
+  }
 
 private:
   std::unique_ptr<const llvm::MCRegisterInfo> MCRegInfo;
