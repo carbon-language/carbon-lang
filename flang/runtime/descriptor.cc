@@ -18,36 +18,33 @@
 
 namespace Fortran::runtime {
 
-Descriptor::Descriptor(const DerivedType &t, int rank = 0) {
+Descriptor::Descriptor(const DerivedTypeSpecialization &dts, int rank) {
   raw_.base_addr = nullptr;
-  raw_.elem_len = t.SizeInBytes();
+  raw_.elem_len = dts.SizeInBytes();
   raw_.version = CFI_VERSION;
   raw_.rank = rank;
   raw_.type = CFI_type_struct;
   raw_.attribute = ADDENDUM;
-  new (GetAddendum()) DescriptorAddendum{t};
+  Addendum()->set_derivedTypeSpecialization(&dts);
 }
 
 std::size_t Descriptor::SizeInBytes() const {
-  const DescriptorAddendum *addendum{GetAddendum()};
+  const DescriptorAddendum *addendum{Addendum()};
   return sizeof *this + raw_.rank * sizeof(Dimension) +
-      (addendum ? addendum->AddendumSizeInBytes() : 0);
+      (addendum ? addendum->SizeOfAddendumInBytes() : 0);
 }
 
-std::int64_t DerivedTypeParameter::Value(
-    const DescriptorAddendum *addendum) const {
-  if (isLenTypeParameter_) {
-    return addendum->GetLenParameterValue(value_);
-  } else {
-    return value_;
-  }
+std::int64_t TypeParameter::KindParameterValue(
+    const DerivedTypeSpecialization &specialization) const {
+  return specialization.KindParameterValue(which_);
 }
 
-std::int64_t DerivedTypeParameter::Value(const Descriptor *descriptor) const {
+std::int64_t TypeParameter::Value(const Descriptor &descriptor) const {
+  const DescriptorAddendum &addendum{*descriptor.Addendum()};
   if (isLenTypeParameter_) {
-    return descriptor->GetAddendum()->GetLenTypeParameterValue(value_);
+    return addendum.LenParameterValue(which_);
   } else {
-    return value_;
+    return KindParameterValue(*addendum.derivedTypeSpecialization());
   }
 }
 }  // namespace Fortran::runtime

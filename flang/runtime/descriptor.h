@@ -16,13 +16,13 @@
 #define FORTRAN_RUNTIME_DESCRIPTOR_H_
 
 // Defines data structures used during execution of a Fortran program
-// to implement pointers, allocatables, arguments, function results,
-// and the special behaviors of instances of derived types.
+// to implement nontrivial dummy arguments, pointers, allocatables,
+// function results, and the special behaviors of instances of derived types.
 // This header file includes and extends the published language
 // interoperability header that is required by the Fortran 2018 standard
 // as a subset of definitions suitable for exposure to user C/C++ code.
-// User C code can depend on that ISO_Fortran_binding.h file, but should
-// never reference this internal header.
+// User C code is welcome to depend on that ISO_Fortran_binding.h file,
+// but should never reference this internal header.
 
 #include "../include/flang/ISO_Fortran_binding.h"
 #include <cinttypes>
@@ -31,16 +31,18 @@
 namespace Fortran::runtime {
 
 // Fortran requires that default INTEGER values occupy a single numeric
-// storage unit, just like default REAL.  So the default INTEGER type,
-// which is what the type of an intrinsic type's KIND type parameter has,
-// is basically forced to be a 32-bit int.
+// storage unit, just like default REAL.  Since there's no reasonable way
+// that default REAL can be anything but 32-bit IEEE-754 today, the default
+// INTEGER type is also forced; and default INTEGER is required to be the
+// type of the kind type parameters of the intrinsic types.
 using DefaultKindInteger = std::int32_t;
 
 class DerivedType;
 class DerivedTypeSpecialization;
 class DescriptorAddendum;
 
-// A C++ view of the ISO descriptor and its type and per-dimension information.
+// This next section implements a C++ view of the sole interoperable
+// descriptor (ISO_cdesc_t) and its type and per-dimension information.
 
 class TypeCode {
 public:
@@ -102,8 +104,9 @@ public:
   std::int64_t ByteStride() const { return raw_.sm; }
 
 private:
-  ISO::CFI_dim_t raw_;  // must be first and only member
+  ISO::CFI_dim_t raw_;
 };
+static_assert(sizeof(Dimension) == sizeof(ISO::CFI_dim_t));
 
 class Descriptor {
 public:
@@ -134,25 +137,36 @@ public:
   bool IsAllocatable() const {
     return (raw_.attribute & CFI_attribute_allocatable) != 0;
   }
-  bool IsLenParameterDependent() const {
-    return (raw_.attribute & LEN_PARAMETER_DEPENDENT) != 0;
+  bool IsImplicitlyAllocated() const {
+    return (raw_.attribute & IMPLICITLY_ALLOCATED) != 0;
   }
-  bool IsStaticDescriptor() const {
+  bool IsDescriptorStatic() const {
     return (raw_.attribute & STATIC_DESCRIPTOR) != 0;
   }
   bool IsTarget() const {
     return (raw_.attribute & (CFI_attribute_pointer | TARGET)) != 0;
   }
   bool IsContiguous() const { return (raw_.attribute & CONTIGUOUS) != 0; }
-  bool IsNotFinalizable() const {
-    return (raw_.attribute & NOT_FINALIZABLE) != 0;
+  bool IsColumnContiguous() const {
+    return (raw_.attribute & COLUMN_CONTIGUOUS) != 0;
   }
+  bool IsTemporary() const { return (raw_.attribute & TEMPORARY) != 0; }
 
+  Dimension &GetDimension(int dim) {
+    return *reinterpret_cast<Dimension *>(&raw_.dim[dim]);
+  }
   const Dimension &GetDimension(int dim) const {
     return *reinterpret_cast<const Dimension *>(&raw_.dim[dim]);
   }
 
-  const DescriptorAddendum *GetAddendum() const {
+  DescriptorAddendum *Addendum() {
+    if ((raw_.attribute & ADDENDUM) != 0) {
+      return reinterpret_cast<DescriptorAddendum *>(&GetDimension(rank()));
+    } else {
+      return nullptr;
+    }
+  }
+  const DescriptorAddendum *Addendum() const {
     if ((raw_.attribute & ADDENDUM) != 0) {
       return reinterpret_cast<const DescriptorAddendum *>(
           &GetDimension(rank()));
@@ -165,22 +179,25 @@ public:
 
 private:
   // These values must coexist with the ISO_Fortran_binding.h definitions
-  // for CFI_attribute_...
+  // for CFI_attribute_... values and fit in the "attribute" field of
+  // CFI_cdesc_t.
   enum AdditionalAttributes {
     // non-pointer nonallocatable derived type component implemented as
     // an implicit allocatable due to dependence on LEN type parameters
-    LEN_PARAMETER_DEPENDENT = 0x4,  // implicitly allocated object
-    ADDENDUM = 0x8,  // last dim[] entry is followed by DescriptorAddendum
-    STATIC_DESCRIPTOR = 0x10,  // base_addr is null, get base address elsewhere
-    TARGET = 0x20,  // TARGET attribute; also implied by CFI_attribute_pointer
-    CONTIGUOUS = 0x40,
-    NOT_FINALIZABLE = 0x80,  // do not finalize, this is a compiler temp
+    IMPLICITLY_ALLOCATED = 0x100,  // bounds depend on LEN type parameter
+    ADDENDUM = 0x200,  // last dim[] entry is followed by DescriptorAddendum
+    STATIC_DESCRIPTOR = 0x400,  // base_addr is null, get base address elsewhere
+    TARGET = 0x800,  // TARGET attribute; also implied by CFI_attribute_pointer
+    CONTIGUOUS = 0x1000,
+    COLUMN_CONTIGUOUS = 0x2000,  // first dimension is contiguous
+    TEMPORARY = 0x4000,  // compiler temp, do not finalize
   };
 
-  ISO::CFI_cdesc_t raw_;  // must be first and only member
+  ISO::CFI_cdesc_t raw_;
 };
+static_assert(sizeof(Descriptor) == sizeof(ISO::CFI_cdesc_t));
 
-// Static type information resides in a read-only section.
+// Static type information is suitable for loading in a read-only section.
 // Information about intrinsic types is inferable from raw CFI_type_t
 // type codes (packaged as TypeCode above).
 // Information about derived types and their KIND parameter specializations
@@ -189,15 +206,19 @@ private:
 class TypeParameter {
 public:
   const char *name() const { return name_; }
-  const TypeCode type() const { return typeCode_; }
-  std::int64_t Value(const DescriptorAddendum *) const;
-  std::int64_t Value(const Descriptor *) const;
-  std::int64_t Value(const DerivedTypeSpecialization *) const;
+  const TypeCode typeCode() const { return typeCode_; }
+  bool isLenTypeParameter() const { return isLenTypeParameter_; }
+  std::size_t which() const { return which_; }
+  std::int64_t defaultValue() const { return defaultValue_; }
+
+  std::int64_t KindParameterValue(const DerivedTypeSpecialization &) const;
+  std::int64_t Value(const Descriptor &) const;
 
 private:
   const char *name_;
-  TypeCode typeCode_;  // not necessarily default INTEGER
+  TypeCode typeCode_;  // INTEGER, but not necessarily default kind
   bool isLenTypeParameter_;  // whether value is in dynamic descriptor
+  std::size_t which_;  // index of this parameter in kind/len array
   std::int64_t defaultValue_;
 };
 
@@ -346,14 +367,16 @@ public:
     : derivedType_{dt}, bytes_{n}, initializer_{init}, kindParameterValue_{kp},
       componentSpecialization_{cs} {}
   const DerivedType &derivedType() const { return derivedType_; }
+
   std::size_t SizeInBytes() const { return bytes_; }
   std::int64_t KindParameterValue(int n) const {
     return kindParameterValue_[n];
   }
-  const ComponentSpecialization &componentSpecialization(int n) const {
+  const ComponentSpecialization &GetComponent(int n) const {
     return componentSpecialization_[n];
   }
-  bool IsSameType(const DerivedTypeSpecialization &);
+  bool IsSameType(const DerivedTypeSpecialization &) const;
+
   // TODO: initialization
   // TODO: sourced allocation initialization
 
@@ -378,14 +401,25 @@ public:
   explicit DescriptorAddendum(const DerivedTypeSpecialization *dts)
     : derivedTypeSpecialization_{dts} {}
 
+  DescriptorAddendum &set_derivedTypeSpecialization(
+      const DerivedTypeSpecialization *dts) {
+    derivedTypeSpecialization_ = dts;
+    return *this;
+  }
+
   const DerivedTypeSpecialization *derivedTypeSpecialization() const {
     return derivedTypeSpecialization_;
   }
-  std::int64_t GetLenParameterValue(std::size_t n) const { return len_[n]; }
+
+  std::int64_t LenParameterValue(std::size_t n) const { return len_[n]; }
   std::size_t SizeOfAddendumInBytes() const {
     return sizeof *this - sizeof len_[0] +
         derivedTypeSpecialization_->derivedType().lenParameters() *
         sizeof len_[0];
+  }
+
+  void SetLenParameterValue(std::size_t which, std::int64_t x) {
+    len_[which] = x;
   }
 
 private:
