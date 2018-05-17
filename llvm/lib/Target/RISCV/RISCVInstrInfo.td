@@ -267,7 +267,7 @@ class Priv<string opcodestr, bits<7> funct7>
 // Instructions
 //===----------------------------------------------------------------------===//
 
-let hasSideEffects = 0, mayLoad = 0, mayStore = 0 in {
+let hasSideEffects = 0, isReMaterializable = 1, mayLoad = 0, mayStore = 0 in {
 def LUI : RVInstU<OPC_LUI, (outs GPR:$rd), (ins uimm20:$imm20),
                   "lui", "$rd, $imm20">;
 
@@ -301,7 +301,11 @@ def SB : Store_rri<0b000, "sb">;
 def SH : Store_rri<0b001, "sh">;
 def SW : Store_rri<0b010, "sw">;
 
+// ADDI isn't always rematerializable, but isReMaterializable will be used as
+// a hint which is verified in isReallyTriviallyReMaterializable.
+let isReMaterializable = 1 in
 def ADDI  : ALU_ri<0b000, "addi">;
+
 def SLTI  : ALU_ri<0b010, "slti">;
 def SLTIU : ALU_ri<0b011, "sltiu">;
 def XORI  : ALU_ri<0b100, "xori">;
