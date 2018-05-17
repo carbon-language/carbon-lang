@@ -16,6 +16,7 @@
 
 #include "llvm/ExecutionEngine/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/SymbolStringPool.h"
+#include "llvm/IR/Module.h"
 
 #include <list>
 #include <map>
@@ -110,11 +111,8 @@ private:
 /// finalize symbols, or abandon materialization by notifying any unmaterialized
 /// symbols of an error.
 class MaterializationResponsibility {
+  friend class MaterializationUnit;
 public:
-  /// Create a MaterializationResponsibility for the given VSO and
-  ///        initial symbols.
-  MaterializationResponsibility(VSO &V, SymbolFlagsMap SymbolFlags);
-
   MaterializationResponsibility(MaterializationResponsibility &&) = default;
   MaterializationResponsibility &
   operator=(MaterializationResponsibility &&) = default;
@@ -160,6 +158,10 @@ public:
   void addDependencies(const SymbolDependenceMap &Dependencies);
 
 private:
+  /// Create a MaterializationResponsibility for the given VSO and
+  ///        initial symbols.
+  MaterializationResponsibility(VSO &V, SymbolFlagsMap SymbolFlags);
+
   VSO &V;
   SymbolFlagsMap SymbolFlags;
 };
@@ -174,8 +176,8 @@ private:
 /// definition is added or already present.
 class MaterializationUnit {
 public:
-  MaterializationUnit(SymbolFlagsMap SymbolFlags)
-      : SymbolFlags(std::move(SymbolFlags)) {}
+  MaterializationUnit(SymbolFlagsMap InitalSymbolFlags)
+      : SymbolFlags(std::move(InitalSymbolFlags)) {}
 
   virtual ~MaterializationUnit() {}
 
@@ -196,6 +198,9 @@ public:
     discard(V, std::move(Name));
   }
 
+protected:
+  SymbolFlagsMap SymbolFlags;
+
 private:
   virtual void anchor();
 
@@ -209,8 +214,6 @@ private:
   ///        symbol is a function, delete the function body or mark it available
   ///        externally).
   virtual void discard(const VSO &V, SymbolStringPtr Name) = 0;
-
-  SymbolFlagsMap SymbolFlags;
 };
 
 /// A MaterializationUnit implementation for pre-existing absolute symbols.
