@@ -433,6 +433,7 @@ MemoryDependenceResults::getInvariantGroupPointerDependency(LoadInst *LI,
   NonLocalDefsCache.try_emplace(
       LI, NonLocalDepResult(ClosestDependency->getParent(),
                             MemDepResult::getDef(ClosestDependency), nullptr));
+  ReverseNonLocalDefsCache[ClosestDependency].insert(LI);
   return MemDepResult::getNonLocal();
 }
 
@@ -919,12 +920,12 @@ void MemoryDependenceResults::getNonLocalPointerDependency(
          "Can't get pointer deps of a non-pointer!");
   Result.clear();
   {
-    // Check if there is cached Def with invariant.group. FIXME: cache might be
-    // invalid if cached instruction would be removed between call to
-    // getPointerDependencyFrom and this function.
+    // Check if there is cached Def with invariant.group.
     auto NonLocalDefIt = NonLocalDefsCache.find(QueryInst);
     if (NonLocalDefIt != NonLocalDefsCache.end()) {
-      Result.push_back(std::move(NonLocalDefIt->second));
+      Result.push_back(NonLocalDefIt->second);
+      ReverseNonLocalDefsCache[NonLocalDefIt->second.getResult().getInst()]
+          .erase(QueryInst);
       NonLocalDefsCache.erase(NonLocalDefIt);
       return;
     }
@@ -1459,9 +1460,29 @@ bool MemoryDependenceResults::getNonLocalPointerDepFromBB(
   return true;
 }
 
-/// If P exists in CachedNonLocalPointerInfo, remove it.
+/// If P exists in CachedNonLocalPointerInfo or NonLocalDefsCache, remove it.
 void MemoryDependenceResults::RemoveCachedNonLocalPointerDependencies(
     ValueIsLoadPair P) {
+
+  // Most of the time this cache is empty.
+  if (!NonLocalDefsCache.empty()) {
+    auto it = NonLocalDefsCache.find(P.getPointer());
+    if (it != NonLocalDefsCache.end()) {
+      RemoveFromReverseMap(ReverseNonLocalDefsCache,
+                           it->second.getResult().getInst(), P.getPointer());
+      NonLocalDefsCache.erase(it);
+    }
+
+    if (auto *I = dyn_cast<Instruction>(P.getPointer())) {
+      auto toRemoveIt = ReverseNonLocalDefsCache.find(I);
+      if (toRemoveIt != ReverseNonLocalDefsCache.end()) {
+        for (const auto &entry : toRemoveIt->second)
+          NonLocalDefsCache.erase(entry);
+        ReverseNonLocalDefsCache.erase(toRemoveIt);
+      }
+    }
+  }
+
   CachedNonLocalPointerInfo::iterator It = NonLocalPointerDeps.find(P);
   if (It == NonLocalPointerDeps.end())
     return;
