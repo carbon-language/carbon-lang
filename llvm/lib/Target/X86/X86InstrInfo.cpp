@@ -11136,7 +11136,7 @@ X86InstrInfo::getOutlininingCandidateInfo(
       &RepeatedSequenceLocs) const {
   unsigned SequenceSize = std::accumulate(
       RepeatedSequenceLocs[0].first, std::next(RepeatedSequenceLocs[0].second),
-      0, [this](unsigned Sum, const MachineInstr &MI) {
+      0, [](unsigned Sum, const MachineInstr &MI) {
         // FIXME: x86 doesn't implement getInstSizeInBytes, so we can't
         // tell the cost.  Just assume each instruction is one byte.
         if (MI.isDebugInstr() || MI.isKill())
