@@ -170,7 +170,7 @@ parseRngListTableHeader(DWARFDataExtractor &DA, uint32_t Offset) {
   }
   llvm::DWARFDebugRnglistTable Table;
   if (Error E = Table.extractHeaderAndOffsets(DA, &Offset))
-    return E;
+    return std::move(E);
   return Table;
 }
 
