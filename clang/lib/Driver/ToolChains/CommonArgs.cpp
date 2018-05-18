@@ -1330,6 +1330,7 @@ void tools::AddHIPLinkerScript(const ToolChain &TC, Compilation &C,
       C.getSingleOffloadToolChain<Action::OFK_HIP>());
   assert(HIPTC->getTriple().getArch() == llvm::Triple::amdgcn &&
          "Wrong platform");
+  (void)HIPTC;
 
   // Construct clang-offload-bundler command to bundle object files for
   // for different GPU archs.
