@@ -88,7 +88,6 @@ void extractBasicBlockInfo(
         BBAddr[BB] = BB->getInputAddressRange().first + BF->getAddress();
         BBSize[BB] = BB->getOriginalSize();
       }
-      assert(BBAddr[BB] > 0 && "incorrect output block address");
     }
   }
 }

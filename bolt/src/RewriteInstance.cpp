@@ -1024,8 +1024,9 @@ void RewriteInstance::run() {
   if (opts::UpdateDebugSections && opts::FixDebugInfoLargeFunctions &&
       checkLargeFunctions()) {
     ++PassNumber;
-    outs() << "BOLT: starting pass (ignoring large functions) "
-           << PassNumber << "...\n";
+    outs() << format("BOLT: starting pass %zu (ignoring %zu large functions) ",
+                     PassNumber, LargeFunctions.size())
+           << "...\n";
     reset();
     executeRewritePass(LargeFunctions);
   }

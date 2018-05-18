@@ -26,8 +26,8 @@ extern cl::OptionCategory BoltOptCategory;
 
 cl::opt<unsigned>
 ClusterSplitThreshold("cluster-split-threshold",
-  cl::desc("The maximum size of a function to apply splitting of clusters"),
-  cl::init(2048),
+  cl::desc("The maximum size of a cluster to apply splitting"),
+  cl::init(128),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -213,9 +213,8 @@ bool compareClusterPairs(const Cluster *A1, const Cluster *B1,
 /// while keeping the implementation sufficiently fast.
 class CachePlus {
 public:
-  CachePlus(const BinaryFunction &BF, bool UseClusterSplitting)
+  CachePlus(const BinaryFunction &BF)
   : BF(BF),
-    UseClusterSplitting(UseClusterSplitting),
     Adjacent(BF.layout_size()),
     Cache(BF.layout_size()) {
     initialize();
@@ -489,6 +488,40 @@ private:
     return Score;
   }
 
+  /// Verify if it is valid to merge two clusters into the new one
+  bool isValidMerge(const Cluster *ClusterPred,
+                    const Cluster *ClusterSucc,
+                    size_t MergeType,
+                    const MergedCluster& MergedBlocks) const {
+    // Does the new cluster preserve the original entry point?
+    if ((ClusterPred->isEntryPoint() || ClusterSucc->isEntryPoint()) &&
+        MergedBlocks.getFirstBlock()->getLayoutIndex() != 0)
+      return false;
+
+    // This corresponds to a concatentation of clusters w/o splitting, which is
+    // always safe
+    if (MergeType == 0)
+      return true;
+
+    size_t Offset = MergeType / 5;
+    // The basic blocks on the boundary of a split of ClusterPred
+    auto BB1 = ClusterPred->blocks()[Offset - 1];
+    auto BB2 = ClusterPred->blocks()[Offset];
+    // Does the splitting break FT successors?
+    if (FallthroughSucc[BB1->getLayoutIndex()] != nullptr) {
+      assert(FallthroughSucc[BB1->getLayoutIndex()] == BB2 &&
+             "Fallthrough successor is not preserved");
+      return false;
+    }
+
+    // Do not split large clusters to reduce computation time
+    if (ClusterPred->blocks().size() > opts::ClusterSplitThreshold) {
+      return false;
+    }
+
+    return true;
+  }
+
   /// The gain of merging two clusters.
   ///
   /// The function considers all possible ways of merging two clusters and
@@ -512,9 +545,8 @@ private:
       auto MergedBlocks = mergeBlocks(ClusterPred->blocks(),
                                       ClusterSucc->blocks(),
                                       MergeType);
-      // Does the new cluster preserve the original entry point?
-      if ((ClusterPred->isEntryPoint() || ClusterSucc->isEntryPoint()) &&
-          MergedBlocks.getFirstBlock()->getLayoutIndex() != 0)
+
+      if (!isValidMerge(ClusterPred, ClusterSucc, MergeType, MergedBlocks))
         return CurGain;
 
       // The score of the new cluster
@@ -528,20 +560,12 @@ private:
     std::pair<double, size_t> Gain = std::make_pair(-1, 0);
     // Try to concatenate two clusters w/o splitting
     Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, 0);
-    if (UseClusterSplitting) {
-      // Try to split ClusterPred into two and merge with ClusterSucc
-      for (size_t Offset = 1; Offset < ClusterPred->blocks().size(); Offset++) {
-        // Make sure the splitting does not break FT successors
-        auto BB = ClusterPred->blocks()[Offset - 1];
-        if (FallthroughSucc[BB->getLayoutIndex()] != nullptr) {
-          assert(FallthroughSucc[BB->getLayoutIndex()] == ClusterPred->blocks()[Offset]);
-          continue;
-        }
-
-        for (size_t Type = 0; Type < 4; Type++) {
-          size_t MergeType = 1 + Type + Offset * 4;
-          Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, MergeType);
-        }
+    // Try to split ClusterPred into two sub-clusters in various ways and then
+    // merge it with ClusterSucc
+    for (size_t Offset = 1; Offset < ClusterPred->blocks().size(); Offset++) {
+      for (size_t Type = 1; Type <= 4; Type++) {
+        size_t MergeType = Type + Offset * 5;
+        Gain = computeMergeGain(Gain, ClusterPred, ClusterSucc, MergeType);
       }
     }
 
@@ -549,11 +573,11 @@ private:
     return Gain;
   }
 
-  /// Merge two clusters (orders) of blocks according to a given 'merge type'.
+  /// Merge two clusters of blocks respecting a given merge 'type' and 'offset'.
   ///
   /// If MergeType == 0, then the result is a concatentation of two clusters.
-  /// Otherwise, the first cluster is cut into two and we consider all possible
-  /// ways of concatenating three clusters.
+  /// Otherwise, the first cluster is cut into two sub-clusters at the offset,
+  /// and merged using all possible ways of concatenating three clusters.
   MergedCluster mergeBlocks(const std::vector<BinaryBasicBlock *> &X,
                             const std::vector<BinaryBasicBlock *> &Y,
                             size_t MergeType) const {
@@ -563,9 +587,8 @@ private:
       return MergedCluster(X.begin(), X.end(), Y.begin(), Y.end(), Empty, Empty);
     }
 
-    MergeType--;
-    size_t Type = MergeType % 4;
-    size_t Offset = MergeType / 4;
+    size_t Type = MergeType % 5;
+    size_t Offset = MergeType / 5;
     assert(0 < Offset && Offset < X.size() &&
            "Invalid offset while merging clusters");
     // Split the first cluster, X, into X1 and X2
@@ -578,10 +601,10 @@ private:
 
     // Construct a new cluster from three existing ones
     switch(Type) {
-    case 0: return MergedCluster(BeginX1, EndX1, BeginY, EndY, BeginX2, EndX2);
-    case 1: return MergedCluster(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
-    case 2: return MergedCluster(BeginX2, EndX2, BeginY, EndY, BeginX1, EndX1);
-    case 3: return MergedCluster(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
+    case 1: return MergedCluster(BeginX1, EndX1, BeginY, EndY, BeginX2, EndX2);
+    case 2: return MergedCluster(BeginY, EndY, BeginX2, EndX2, BeginX1, EndX1);
+    case 3: return MergedCluster(BeginX2, EndX2, BeginY, EndY, BeginX1, EndX1);
+    case 4: return MergedCluster(BeginX2, EndX2, BeginX1, EndX1, BeginY, EndY);
     default:
       llvm_unreachable("unexpected merge type");
     }
@@ -615,9 +638,6 @@ private:
 
   // The binary function
   const BinaryFunction &BF;
-
-  // Indicates whether to use cluster splitting for optimization
-  bool UseClusterSplitting;
 
   // All clusters
   std::vector<Cluster> AllClusters;
@@ -673,7 +693,7 @@ void CachePlusReorderAlgorithm::reorderBasicBlocks(
   }
 
   // Apply the algorithm
-  Order = CachePlus(BF, NumHotBlocks <= opts::ClusterSplitThreshold).run();
+  Order = CachePlus(BF).run();
 
   // Verify correctness
   assert(Order[0]->isEntryPoint() && "Original entry point is not preserved");
