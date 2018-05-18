@@ -25,12 +25,11 @@ using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context,
                                    std::unique_ptr<MCAsmBackend> TAB,
-                                   raw_pwrite_stream &OS,
+                                   std::unique_ptr<MCObjectWriter> OW,
                                    std::unique_ptr<MCCodeEmitter> Emitter)
     : MCStreamer(Context),
-      Assembler(llvm::make_unique<MCAssembler>(Context, std::move(TAB),
-                                               std::move(Emitter),
-                                               TAB->createObjectWriter(OS))),
+      Assembler(llvm::make_unique<MCAssembler>(
+          Context, std::move(TAB), std::move(Emitter), std::move(OW))),
       EmitEHFrame(true), EmitDebugFrame(false) {}
 
 MCObjectStreamer::~MCObjectStreamer() {}
