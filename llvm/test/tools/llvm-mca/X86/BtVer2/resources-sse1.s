@@ -245,15 +245,15 @@ xorps       (%rax), %xmm2
 # CHECK-NEXT:  1      5     1.00    *                   movaps	(%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movhlps	%xmm0, %xmm2
 # CHECK-NEXT:  1      1     0.50                        movlhps	%xmm0, %xmm2
-# CHECK-NEXT:  1      1     1.00           *            movhps	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movhps	%xmm0, (%rax)
 # CHECK-NEXT:  1      6     1.00    *                   movhps	(%rax), %xmm2
-# CHECK-NEXT:  1      1     1.00           *            movlps	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movlps	%xmm0, (%rax)
 # CHECK-NEXT:  1      6     1.00    *                   movlps	(%rax), %xmm2
 # CHECK-NEXT:  1      3     1.00                        movmskps	%xmm0, %ecx
 # CHECK-NEXT:  1      3     1.00           *            movntps	%xmm0, (%rax)
 # CHECK-NEXT:  1      2     1.00    *      *      *     movntq	%mm0, (%rax)
 # CHECK-NEXT:  1      1     0.50                        movss	%xmm0, %xmm2
-# CHECK-NEXT:  1      1     1.00           *            movss	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movss	%xmm0, (%rax)
 # CHECK-NEXT:  1      5     1.00    *                   movss	(%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movups	%xmm0, %xmm2
 # CHECK-NEXT:  1      1     1.00           *            movups	%xmm0, (%rax)

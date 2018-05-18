@@ -475,7 +475,7 @@ xorpd       (%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movd	%eax, %xmm2
 # CHECK-NEXT:  1      5     1.00    *                   movd	(%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movd	%xmm0, %ecx
-# CHECK-NEXT:  1      1     1.00           *            movd	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movd	%xmm0, (%rax)
 # CHECK-NEXT:  1      1     0.50                        movdqa	%xmm0, %xmm2
 # CHECK-NEXT:  1      1     1.00           *            movdqa	%xmm0, (%rax)
 # CHECK-NEXT:  1      5     1.00    *                   movdqa	(%rax), %xmm2
@@ -483,9 +483,9 @@ xorpd       (%rax), %xmm2
 # CHECK-NEXT:  1      1     1.00           *            movdqu	%xmm0, (%rax)
 # CHECK-NEXT:  1      5     1.00    *                   movdqu	(%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movdq2q	%xmm0, %mm2
-# CHECK-NEXT:  1      1     1.00           *            movhpd	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movhpd	%xmm0, (%rax)
 # CHECK-NEXT:  1      6     1.00    *                   movhpd	(%rax), %xmm2
-# CHECK-NEXT:  1      1     1.00           *            movlpd	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movlpd	%xmm0, (%rax)
 # CHECK-NEXT:  1      6     1.00    *                   movlpd	(%rax), %xmm2
 # CHECK-NEXT:  1      3     1.00                        movmskpd	%xmm0, %ecx
 # CHECK-NEXT:  1      1     1.00           *            movntil	%eax, (%rax)
@@ -496,10 +496,10 @@ xorpd       (%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movq	%rax, %xmm2
 # CHECK-NEXT:  1      5     1.00    *                   movq	(%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movq	%xmm0, %rcx
-# CHECK-NEXT:  1      1     1.00           *            movq	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movq	%xmm0, (%rax)
 # CHECK-NEXT:  1      1     0.50                        movq2dq	%mm0, %xmm2
 # CHECK-NEXT:  1      1     0.50                        movsd	%xmm0, %xmm2
-# CHECK-NEXT:  1      1     1.00           *            movsd	%xmm0, (%rax)
+# CHECK-NEXT:  1      2     1.00           *            movsd	%xmm0, (%rax)
 # CHECK-NEXT:  1      5     1.00    *                   movsd	(%rax), %xmm2
 # CHECK-NEXT:  1      1     0.50                        movupd	%xmm0, %xmm2
 # CHECK-NEXT:  1      1     1.00           *            movupd	%xmm0, (%rax)
