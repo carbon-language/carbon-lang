@@ -355,8 +355,8 @@ MemDepResult MemoryDependenceResults::getPointerDependencyFrom(
 MemDepResult
 MemoryDependenceResults::getInvariantGroupPointerDependency(LoadInst *LI,
                                                             BasicBlock *BB) {
-  auto *InvariantGroupMD = LI->getMetadata(LLVMContext::MD_invariant_group);
-  if (!InvariantGroupMD)
+
+  if (!LI->getMetadata(LLVMContext::MD_invariant_group))
     return MemDepResult::getUnknown();
 
   // Take the ptr operand after all casts and geps 0. This way we can search
@@ -417,7 +417,7 @@ MemoryDependenceResults::getInvariantGroupPointerDependency(LoadInst *LI,
       // same pointer operand) we can assume that value pointed by pointer
       // operand didn't change.
       if ((isa<LoadInst>(U) || isa<StoreInst>(U)) &&
-          U->getMetadata(LLVMContext::MD_invariant_group) == InvariantGroupMD)
+          U->getMetadata(LLVMContext::MD_invariant_group) != nullptr)
         ClosestDependency = GetClosestDependency(ClosestDependency, U);
     }
   }
