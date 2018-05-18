@@ -210,7 +210,7 @@ Error DWARFDebugRnglist::extract(DWARFDataExtractor Data, uint32_t HeaderOffset,
                                  uint32_t End, uint32_t *OffsetPtr) {
   Entries.clear();
   while (*OffsetPtr < End) {
-    RangeListEntry Entry{0, 0, 0, 0};
+    RangeListEntry Entry{0, 0, 0, 0, 0};
     if (Error E = Entry.extract(Data, End, OffsetPtr))
       return E;
     Entries.push_back(Entry);
