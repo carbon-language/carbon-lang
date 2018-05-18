@@ -95,9 +95,60 @@ void test()
 
 }  // t3
 
+namespace t4
+{
+
+// PR33439
+struct C2 { virtual ~C2() {} Pad1 _; };
+struct C3 { virtual ~C3() {} Pad2 _; };
+struct C4 : C3 { Pad3 _; };
+struct C8 : C2, virtual C4 { Pad4 _; };
+struct C9 : C4, C8 { Pad5 _; };
+
+C9 c9;
+C2 *c2 = &c9;
+
+void test()
+{
+    assert(dynamic_cast<C2*>(c2) == static_cast<C2*>(&c9));
+    assert(dynamic_cast<C3*>(c2) == 0);
+    assert(dynamic_cast<C4*>(c2) == 0);
+    assert(dynamic_cast<C8*>(c2) == static_cast<C8*>(&c9));
+    assert(dynamic_cast<C9*>(c2) == static_cast<C9*>(&c9));
+}
+
+}  // t4
+
+namespace t5
+{
+
+// PR33439
+struct Dummy { virtual ~Dummy() {} Pad1 _; };
+struct Src { virtual ~Src() {} Pad2 _; };
+struct Dest : Dummy { Pad3 _; };
+struct A1 : Dest { Pad4 _; };
+struct A2 : Dest { Pad5 _; };
+struct Root : Src, A1, A2 { Pad6 _; };
+
+Root root;
+Src *src = &root;
+
+void test()
+{
+    assert(dynamic_cast<Dummy*>(src) == 0);
+    assert(dynamic_cast<Src*>(src) == static_cast<Src*>(&root));
+    assert(dynamic_cast<Dest*>(src) == 0);
+    assert(dynamic_cast<A1*>(src) == static_cast<A1*>(&root));
+    assert(dynamic_cast<A2*>(src) == static_cast<A2*>(&root));
+}
+
+}  // t5
+
 int main()
 {
     t1::test();
     t2::test();
     t3::test();
+    t4::test();
+    t5::test();
 }
