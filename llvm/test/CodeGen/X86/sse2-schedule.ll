@@ -9080,14 +9080,14 @@ define <8 x i16> @test_pinsrw(<8 x i16> %a0, i16 %a1, i16 *%a2) {
 ;
 ; BTVER2-SSE-LABEL: test_pinsrw:
 ; BTVER2-SSE:       # %bb.0:
-; BTVER2-SSE-NEXT:    pinsrw $1, %edi, %xmm0 # sched: [1:0.50]
-; BTVER2-SSE-NEXT:    pinsrw $3, (%rsi), %xmm0 # sched: [6:1.00]
+; BTVER2-SSE-NEXT:    pinsrw $1, %edi, %xmm0 # sched: [7:0.50]
+; BTVER2-SSE-NEXT:    pinsrw $3, (%rsi), %xmm0 # sched: [4:1.00]
 ; BTVER2-SSE-NEXT:    retq # sched: [4:1.00]
 ;
 ; BTVER2-LABEL: test_pinsrw:
 ; BTVER2:       # %bb.0:
-; BTVER2-NEXT:    vpinsrw $1, %edi, %xmm0, %xmm0 # sched: [1:0.50]
-; BTVER2-NEXT:    vpinsrw $3, (%rsi), %xmm0, %xmm0 # sched: [6:1.00]
+; BTVER2-NEXT:    vpinsrw $1, %edi, %xmm0, %xmm0 # sched: [7:0.50]
+; BTVER2-NEXT:    vpinsrw $3, (%rsi), %xmm0, %xmm0 # sched: [4:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-SSE-LABEL: test_pinsrw:

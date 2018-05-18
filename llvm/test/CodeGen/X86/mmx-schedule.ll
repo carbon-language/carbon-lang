@@ -3565,9 +3565,9 @@ define i64 @test_pinsrw(x86_mmx %a0, i32 %a1, i16* %a2) optsize {
 ;
 ; BTVER2-LABEL: test_pinsrw:
 ; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    pinsrw $0, %edi, %mm0 # sched: [7:0.50]
 ; BTVER2-NEXT:    movswl (%rsi), %eax # sched: [4:1.00]
-; BTVER2-NEXT:    pinsrw $0, %edi, %mm0 # sched: [1:0.50]
-; BTVER2-NEXT:    pinsrw $1, %eax, %mm0 # sched: [1:0.50]
+; BTVER2-NEXT:    pinsrw $1, %eax, %mm0 # sched: [7:0.50]
 ; BTVER2-NEXT:    movq %mm0, %rax # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
