@@ -1181,6 +1181,8 @@ __vmi_class_type_info::search_above_dst(__dynamic_cast_info* info,
         info->found_our_static_ptr = false;
         info->found_any_static_type = false;
         p->search_above_dst(info, dst_ptr, current_ptr, path_below, use_strcmp);
+        found_our_static_ptr |= info->found_our_static_ptr;
+        found_any_static_type |= info->found_any_static_type;
         if (++p < e)
         {
             do
@@ -1210,6 +1212,8 @@ __vmi_class_type_info::search_above_dst(__dynamic_cast_info* info,
                 info->found_our_static_ptr = false;
                 info->found_any_static_type = false;
                 p->search_above_dst(info, dst_ptr, current_ptr, path_below, use_strcmp);
+                found_our_static_ptr |= info->found_our_static_ptr;
+                found_any_static_type |= info->found_any_static_type;
             } while (++p < e);
         }
         // Restore flags
