@@ -322,7 +322,7 @@ size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
         RngListTable = TableOrError.get();
       else
         WithColor::error() << "parsing a range list table: "
-                           << toString(std::move(TableOrError.takeError()))
+                           << toString(TableOrError.takeError())
                            << '\n';
 
       // In a split dwarf unit, there is no DW_AT_rnglists_base attribute.
@@ -377,7 +377,7 @@ bool DWARFUnit::parseDWO() {
       DWO->RngListTable = TableOrError.get();
     else
       WithColor::error() << "parsing a range list table: "
-                         << toString(std::move(TableOrError.takeError()))
+                         << toString(TableOrError.takeError())
                          << '\n';
     if (DWO->RngListTable)
       DWO->RangeSectionBase = DWO->RngListTable->getHeaderSize();
