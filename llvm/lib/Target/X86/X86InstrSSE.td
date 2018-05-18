@@ -7111,7 +7111,7 @@ let mayStore = 1 in
 def VEXTRACTF128mr : AVXAIi8<0x19, MRMDestMem, (outs),
           (ins f128mem:$dst, VR256:$src1, u8imm:$src2),
           "vextractf128\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-          []>, Sched<[WriteFStore]>, VEX, VEX_L;
+          []>, Sched<[WriteFStoreX]>, VEX, VEX_L;
 }
 
 multiclass vextract_lowering<string InstrStr, ValueType From, ValueType To> {
