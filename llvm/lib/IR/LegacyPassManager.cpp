@@ -178,7 +178,8 @@ void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
 
   // Compute a possibly negative delta between the instruction count before
   // running P, and after running P.
-  int64_t Delta = (int64_t)CountAfter - (int64_t)CountBefore;
+  int64_t Delta =
+      static_cast<int64_t>(CountAfter) - static_cast<int64_t>(CountBefore);
 
   BasicBlock &BB = *F->begin();
   OptimizationRemarkAnalysis R("size-info", "IRSizeChange",
