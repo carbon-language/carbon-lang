@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-add_subdirectory(evaluate)
-add_subdirectory(parser)
-add_subdirectory(semantics)
+add_library(FortranEvaluate
+  constant.cc
+)
