@@ -20508,15 +20508,12 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                               Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
     }
-    case VPERM_2OP_MASK : {
+    case VPERM_2OP : {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
-      SDValue PassThru = Op.getOperand(3);
-      SDValue Mask = Op.getOperand(4);
 
       // Swap Src1 and Src2 in the node creation
-      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,Src2, Src1),
-                                  Mask, PassThru, Subtarget, DAG);
+      return DAG.getNode(IntrData->Opc0, dl, VT,Src2, Src1);
     }
     case VPERM_3OP_MASKZ:
     case VPERM_3OP_MASK:{
@@ -20913,13 +20910,6 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   switch (IntNo) {
   default: return SDValue();    // Don't custom lower most intrinsics.
-
-  case Intrinsic::x86_avx2_permd:
-  case Intrinsic::x86_avx2_permps:
-    // Operands intentionally swapped. Mask is last operand to intrinsic,
-    // but second operand for node/instruction.
-    return DAG.getNode(X86ISD::VPERMV, dl, Op.getValueType(),
-                       Op.getOperand(2), Op.getOperand(1));
 
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest
