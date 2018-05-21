@@ -456,9 +456,10 @@ void VSO::resolve(const SymbolMap &Resolved) {
              "Resolved flags should match the declared flags");
 
       // Once resolved, symbols can never be weak.
-      Sym.getFlags() = static_cast<JITSymbolFlags::FlagNames>(
-          Sym.getFlags() & ~JITSymbolFlags::Weak);
-      I->second = Sym;
+      JITSymbolFlags ResolvedFlags = Sym.getFlags();
+      ResolvedFlags &= ~JITSymbolFlags::Weak;
+      ResolvedFlags |= JITSymbolFlags::Materializing;
+      I->second = JITEvaluatedSymbol(Sym.getAddress(), ResolvedFlags);
 
       auto &MI = MaterializingInfos[Name];
       for (auto &Q : MI.PendingQueries) {
