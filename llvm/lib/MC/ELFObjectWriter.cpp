@@ -215,9 +215,6 @@ public:
 };
 
 class ELFObjectWriter : public MCObjectWriter {
-  raw_pwrite_stream &OS;
-  bool IsLittleEndian;
-
   /// The target specific ELF writer instance.
   std::unique_ptr<MCELFObjectTargetWriter> TargetObjectWriter;
 
@@ -233,10 +230,8 @@ class ELFObjectWriter : public MCObjectWriter {
                                 unsigned Type) const;
 
 public:
-  ELFObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
-                  raw_pwrite_stream &OS, bool IsLittleEndian)
-      : OS(OS), IsLittleEndian(IsLittleEndian),
-        TargetObjectWriter(std::move(MOTW)) {}
+  ELFObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW)
+      : TargetObjectWriter(std::move(MOTW)) {}
 
   void reset() override {
     Relocations.clear();
@@ -253,14 +248,25 @@ public:
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) override;
 
-  uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override {
-    return ELFWriter(*this, OS, IsLittleEndian).writeObject(Asm, Layout);
-  }
-
   void executePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override;
 
   friend struct ELFWriter;
+};
+
+class ELFSingleObjectWriter : public ELFObjectWriter {
+  raw_pwrite_stream &OS;
+  bool IsLittleEndian;
+
+public:
+  ELFSingleObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
+                        raw_pwrite_stream &OS, bool IsLittleEndian)
+      : ELFObjectWriter(std::move(MOTW)), OS(OS),
+        IsLittleEndian(IsLittleEndian) {}
+
+  uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override {
+    return ELFWriter(*this, OS, IsLittleEndian).writeObject(Asm, Layout);
+  }
 };
 
 } // end anonymous namespace
@@ -1374,6 +1380,6 @@ bool ELFObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(
 std::unique_ptr<MCObjectWriter>
 llvm::createELFObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
                             raw_pwrite_stream &OS, bool IsLittleEndian) {
-  return llvm::make_unique<ELFObjectWriter>(std::move(MOTW), OS,
-                                            IsLittleEndian);
+  return llvm::make_unique<ELFSingleObjectWriter>(std::move(MOTW), OS,
+                                                  IsLittleEndian);
 }
