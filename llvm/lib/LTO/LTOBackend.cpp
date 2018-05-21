@@ -300,7 +300,7 @@ void codegen(Config &Conf, TargetMachine *TM, AddStreamFn AddStream,
     SmallString<1024> DwoFile(Conf.DwoDir);
     sys::path::append(DwoFile, std::to_string(Task) + ".dwo");
     TM->Options.MCOptions.SplitDwarfFile = DwoFile.str().str();
-    DwoOut = make_unique<ToolOutputFile>(DwoFile, EC, sys::fs::F_None);
+    DwoOut = llvm::make_unique<ToolOutputFile>(DwoFile, EC, sys::fs::F_None);
     if (EC)
       report_fatal_error("Failed to open " + DwoFile + ": " + EC.message());
   }
