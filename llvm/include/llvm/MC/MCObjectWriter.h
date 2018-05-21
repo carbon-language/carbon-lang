@@ -109,12 +109,12 @@ public:
                                                       bool InSet,
                                                       bool IsPCRel) const;
 
-  /// Write the object file.
+  /// Write the object file and returns the number of bytes written.
   ///
   /// This routine is called by the assembler after layout and relaxation is
   /// complete, fixups have been evaluated and applied, and relocations
   /// generated.
-  virtual void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) = 0;
+  virtual uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) = 0;
 
   /// @}
   /// \name Binary Output

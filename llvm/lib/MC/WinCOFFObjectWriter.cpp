@@ -206,7 +206,7 @@ public:
   void assignSectionNumbers();
   void assignFileOffsets(MCAssembler &Asm, const MCAsmLayout &Layout);
 
-  void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
+  uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 };
 
 } // end anonymous namespace
@@ -963,8 +963,10 @@ void WinCOFFObjectWriter::assignFileOffsets(MCAssembler &Asm,
   Header.PointerToSymbolTable = Offset;
 }
 
-void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
-                                      const MCAsmLayout &Layout) {
+uint64_t WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
+                                          const MCAsmLayout &Layout) {
+  uint64_t StartOffset = W.OS.tell();
+
   if (Sections.size() > INT32_MAX)
     report_fatal_error(
         "PE COFF object files can't have more than 2147483647 sections");
@@ -1070,6 +1072,8 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
 
   // Write a string table, which completes the entire COFF file.
   Strings.write(W.OS);
+
+  return W.OS.tell() - StartOffset;
 }
 
 MCWinCOFFObjectTargetWriter::MCWinCOFFObjectTargetWriter(unsigned Machine_)

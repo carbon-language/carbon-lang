@@ -247,7 +247,7 @@ public:
                                               const MCFragment &FB, bool InSet,
                                               bool IsPCRel) const override;
 
-  void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
+  uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
   void writeSection(const SectionIndexMapTy &SectionIndexMap,
                     uint32_t GroupSymbolIndex, uint64_t Offset, uint64_t Size,
                     const MCSectionELF &Section);
@@ -1205,8 +1205,10 @@ void ELFObjectWriter::writeSectionHeader(
   }
 }
 
-void ELFObjectWriter::writeObject(MCAssembler &Asm,
-                                  const MCAsmLayout &Layout) {
+uint64_t ELFObjectWriter::writeObject(MCAssembler &Asm,
+                                      const MCAsmLayout &Layout) {
+  uint64_t StartOffset = W.OS.tell();
+
   MCContext &Ctx = Asm.getContext();
   MCSectionELF *StrtabSection =
       Ctx.getELFSection(".strtab", ELF::SHT_STRTAB, 0);
@@ -1334,6 +1336,8 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
   }
   Stream.pwrite(reinterpret_cast<char *>(&NumSections), sizeof(NumSections),
                 NumSectionsOffset);
+
+  return W.OS.tell() - StartOffset;
 }
 
 bool ELFObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(

@@ -285,7 +285,7 @@ private:
   void executePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override;
 
-  void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
+  uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 
   void writeString(const StringRef Str) {
     encodeULEB128(Str.size(), W.OS);
@@ -1075,8 +1075,10 @@ static bool isInSymtab(const MCSymbolWasm &Sym) {
   return true;
 }
 
-void WasmObjectWriter::writeObject(MCAssembler &Asm,
-                                   const MCAsmLayout &Layout) {
+uint64_t WasmObjectWriter::writeObject(MCAssembler &Asm,
+                                       const MCAsmLayout &Layout) {
+  uint64_t StartOffset = W.OS.tell();
+
   LLVM_DEBUG(dbgs() << "WasmObjectWriter::writeObject\n");
   MCContext &Ctx = Asm.getContext();
 
@@ -1472,6 +1474,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   writeCustomRelocSections();
 
   // TODO: Translate the .comment section to the output.
+  return W.OS.tell() - StartOffset;
 }
 
 std::unique_ptr<MCObjectWriter>

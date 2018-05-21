@@ -735,8 +735,10 @@ static MachO::LoadCommandType getLCFromMCVM(MCVersionMinType Type) {
   llvm_unreachable("Invalid mc version min type");
 }
 
-void MachObjectWriter::writeObject(MCAssembler &Asm,
-                                   const MCAsmLayout &Layout) {
+uint64_t MachObjectWriter::writeObject(MCAssembler &Asm,
+                                       const MCAsmLayout &Layout) {
+  uint64_t StartOffset = W.OS.tell();
+
   // Compute symbol table information and bind symbol indices.
   computeSymbolTable(Asm, LocalSymbolData, ExternalSymbolData,
                      UndefinedSymbolData);
@@ -1011,6 +1013,8 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
     // Write the string table.
     StringTable.write(W.OS);
   }
+
+  return W.OS.tell() - StartOffset;
 }
 
 std::unique_ptr<MCObjectWriter>
