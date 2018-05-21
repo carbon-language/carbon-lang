@@ -4494,37 +4494,41 @@ __m512i test_mm512_maskz_srlv_epi64(__mmask8 __U, __m512i __X, __m512i __Y) {
 
 __m512i test_mm512_ternarylogic_epi32(__m512i __A, __m512i __B, __m512i __C) {
   // CHECK-LABEL: @test_mm512_ternarylogic_epi32
-  // CHECK: @llvm.x86.avx512.mask.pternlog.d.512
+  // CHECK: @llvm.x86.avx512.pternlog.d.512
   return _mm512_ternarylogic_epi32(__A, __B, __C, 4); 
 }
 
 __m512i test_mm512_mask_ternarylogic_epi32(__m512i __A, __mmask16 __U, __m512i __B, __m512i __C) {
   // CHECK-LABEL: @test_mm512_mask_ternarylogic_epi32
-  // CHECK: @llvm.x86.avx512.mask.pternlog.d.512
+  // CHECK: @llvm.x86.avx512.pternlog.d.512
+  // CHECK: select <16 x i1> %{{.*}}, <16 x i32> %{{.*}}, <16 x i32> %{{.*}}
   return _mm512_mask_ternarylogic_epi32(__A, __U, __B, __C, 4); 
 }
 
 __m512i test_mm512_maskz_ternarylogic_epi32(__mmask16 __U, __m512i __A, __m512i __B, __m512i __C) {
   // CHECK-LABEL: @test_mm512_maskz_ternarylogic_epi32
-  // CHECK: @llvm.x86.avx512.maskz.pternlog.d.512
+  // CHECK: @llvm.x86.avx512.pternlog.d.512
+  // CHECK: select <16 x i1> %{{.*}}, <16 x i32> %{{.*}}, <16 x i32> zeroinitializer
   return _mm512_maskz_ternarylogic_epi32(__U, __A, __B, __C, 4); 
 }
 
 __m512i test_mm512_ternarylogic_epi64(__m512i __A, __m512i __B, __m512i __C) {
   // CHECK-LABEL: @test_mm512_ternarylogic_epi64
-  // CHECK: @llvm.x86.avx512.mask.pternlog.q.512
+  // CHECK: @llvm.x86.avx512.pternlog.q.512
   return _mm512_ternarylogic_epi64(__A, __B, __C, 4); 
 }
 
 __m512i test_mm512_mask_ternarylogic_epi64(__m512i __A, __mmask8 __U, __m512i __B, __m512i __C) {
   // CHECK-LABEL: @test_mm512_mask_ternarylogic_epi64
-  // CHECK: @llvm.x86.avx512.mask.pternlog.q.512
+  // CHECK: @llvm.x86.avx512.pternlog.q.512
+  // CHECK: select <8 x i1> %{{.*}}, <8 x i64> %{{.*}}, <8 x i64> %{{.*}}
   return _mm512_mask_ternarylogic_epi64(__A, __U, __B, __C, 4); 
 }
 
 __m512i test_mm512_maskz_ternarylogic_epi64(__mmask8 __U, __m512i __A, __m512i __B, __m512i __C) {
   // CHECK-LABEL: @test_mm512_maskz_ternarylogic_epi64
-  // CHECK: @llvm.x86.avx512.maskz.pternlog.q.512
+  // CHECK: @llvm.x86.avx512.pternlog.q.512
+  // CHECK: select <8 x i1> %{{.*}}, <8 x i64> %{{.*}}, <8 x i64> zeroinitializer
   return _mm512_maskz_ternarylogic_epi64(__U, __A, __B, __C, 4); 
 }
 
