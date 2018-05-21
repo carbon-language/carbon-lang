@@ -10,7 +10,7 @@ define i32 @t1(i32 %a, i32 %b) nounwind  {
 ; CHECK-NEXT:    testl %esi, %esi
 ; CHECK-NEXT:    je LBB0_1
 ; CHECK-NEXT:  ## %bb.2: ## %while.body.preheader
-; CHECK-NEXT:  movl %esi, %edx
+; CHECK-NEXT:    movl %esi, %edx
 ; CHECK-NEXT:    .p2align 4, 0x90
 ; CHECK-NEXT:  LBB0_3: ## %while.body
 ; CHECK-NEXT:    ## =>This Inner Loop Header: Depth=1
