@@ -344,6 +344,7 @@ struct Symbol {
   uint8_t Type;
   uint64_t Value;
   uint8_t Visibility;
+  uint32_t ReferenceCount;
 
   uint16_t getShndx() const;
 };
@@ -367,6 +368,7 @@ public:
   void addSymbolNames();
   const SectionBase *getStrTab() const { return SymbolNames; }
   const Symbol *getSymbolByIndex(uint32_t Index) const;
+  Symbol *getSymbolByIndex(uint32_t Index);
   void updateSymbols(function_ref<void(Symbol &)> Callable);
 
   void removeSectionReferences(const SectionBase *Sec) override;
@@ -381,7 +383,7 @@ public:
 };
 
 struct Relocation {
-  const Symbol *RelocSymbol = nullptr;
+  Symbol *RelocSymbol = nullptr;
   uint64_t Offset;
   uint64_t Addend;
   uint32_t Type;
@@ -432,6 +434,7 @@ class RelocationSection
   std::vector<Relocation> Relocations;
 
 public:
+  ~RelocationSection();
   void addRelocation(Relocation Rel) { Relocations.push_back(Rel); }
   void accept(SectionVisitor &Visitor) const override;
   void removeSymbols(function_ref<bool(const Symbol &)> ToRemove) override;
@@ -449,7 +452,7 @@ public:
 class GroupSection : public SectionBase {
   MAKE_SEC_WRITER_FRIEND
   const SymbolTableSection *SymTab = nullptr;
-  const Symbol *Sym = nullptr;
+  Symbol *Sym = nullptr;
   ELF::Elf32_Word FlagWord;
   SmallVector<SectionBase *, 3> GroupMembers;
 
@@ -459,9 +462,16 @@ public:
   ArrayRef<uint8_t> Contents;
 
   explicit GroupSection(ArrayRef<uint8_t> Data) : Contents(Data) {}
+  ~GroupSection() {
+    if (Sym)
+      --Sym->ReferenceCount;
+  }
 
   void setSymTab(const SymbolTableSection *SymTabSec) { SymTab = SymTabSec; }
-  void setSymbol(const Symbol *S) { Sym = S; }
+  void setSymbol(Symbol *S) {
+    Sym = S;
+    ++Sym->ReferenceCount;
+  }
   void setFlagWord(ELF::Elf32_Word W) { FlagWord = W; }
   void addMember(SectionBase *Sec) { GroupMembers.push_back(Sec); }
 

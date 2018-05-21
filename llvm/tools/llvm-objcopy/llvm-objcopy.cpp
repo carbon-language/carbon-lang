@@ -156,6 +156,7 @@ struct CopyConfig {
   bool StripSections = false;
   bool StripNonAlloc = false;
   bool StripDWO = false;
+  bool StripUnneeded = false;
   bool ExtractDWO = false;
   bool LocalizeHidden = false;
   bool Weaken = false;
@@ -389,6 +390,13 @@ void HandleArgs(const CopyConfig &Config, Object &Obj, const Reader &Reader,
         return true;
       }
 
+      // TODO: We might handle the 'null symbol' in a different way
+      // by probably handling it the same way as we handle 'null section' ?
+      if (Config.StripUnneeded && !Sym.ReferenceCount && Sym.Index != 0 &&
+          (Sym.Binding == STB_LOCAL || Sym.getShndx() == SHN_UNDEF) &&
+          Sym.Type != STT_FILE && Sym.Type != STT_SECTION)
+        return true;
+
       return false;
     });
   }
@@ -479,6 +487,7 @@ CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
   Config.StripDWO = InputArgs.hasArg(OBJCOPY_strip_dwo);
   Config.StripSections = InputArgs.hasArg(OBJCOPY_strip_sections);
   Config.StripNonAlloc = InputArgs.hasArg(OBJCOPY_strip_non_alloc);
+  Config.StripUnneeded = InputArgs.hasArg(OBJCOPY_strip_unneeded);
   Config.ExtractDWO = InputArgs.hasArg(OBJCOPY_extract_dwo);
   Config.LocalizeHidden = InputArgs.hasArg(OBJCOPY_localize_hidden);
   Config.Weaken = InputArgs.hasArg(OBJCOPY_weaken);
