@@ -7085,21 +7085,23 @@ __m512i test_mm512_maskz_cvttps_epu32 (__mmask16 __U, __m512 __A)
 __m512 test_mm512_cvtepu32_ps (__m512i __A)
 {
   // CHECK-LABEL: @test_mm512_cvtepu32_ps 
-  // CHECK:  @llvm.x86.avx512.mask.cvtudq2ps.512
+  // CHECK: uitofp <16 x i32> %{{.*}} to <16 x float>
   return _mm512_cvtepu32_ps (__A);
 }
 
 __m512 test_mm512_mask_cvtepu32_ps (__m512 __W, __mmask16 __U, __m512i __A)
 {
   // CHECK-LABEL: @test_mm512_mask_cvtepu32_ps 
-  // CHECK: @llvm.x86.avx512.mask.cvtudq2ps.512
+  // CHECK: uitofp <16 x i32> %{{.*}} to <16 x float>
+  // CHECK: select <16 x i1> {{.*}}, <16 x float> {{.*}}, <16 x float> {{.*}}
   return _mm512_mask_cvtepu32_ps (__W,__U,__A);
 }
 
 __m512 test_mm512_maskz_cvtepu32_ps (__mmask16 __U, __m512i __A)
 {
   // CHECK-LABEL: @test_mm512_maskz_cvtepu32_ps 
-  // CHECK: @llvm.x86.avx512.mask.cvtudq2ps.512
+  // CHECK: uitofp <16 x i32> %{{.*}} to <16 x float>
+  // CHECK: select <16 x i1> {{.*}}, <16 x float> {{.*}}, <16 x float> {{.*}}
   return _mm512_maskz_cvtepu32_ps (__U,__A);
 }
 
@@ -7146,21 +7148,23 @@ __m512d test_mm512_mask_cvtepi32lo_pd (__m512d __W, __mmask8 __U, __m512i __A)
 __m512 test_mm512_cvtepi32_ps (__m512i __A)
 {
   // CHECK-LABEL: @test_mm512_cvtepi32_ps 
-  // CHECK:  @llvm.x86.avx512.mask.cvtdq2ps.512
+  // CHECK: sitofp <16 x i32> %{{.*}} to <16 x float>
   return _mm512_cvtepi32_ps (__A);
 }
 
 __m512 test_mm512_mask_cvtepi32_ps (__m512 __W, __mmask16 __U, __m512i __A)
 {
   // CHECK-LABEL: @test_mm512_mask_cvtepi32_ps 
-  // CHECK: @llvm.x86.avx512.mask.cvtdq2ps.512
+  // CHECK: sitofp <16 x i32> %{{.*}} to <16 x float>
+  // CHECK: select <16 x i1> %{{.*}}, <16 x float> %{{.*}}, <16 x float> %{{.*}}
   return _mm512_mask_cvtepi32_ps (__W,__U,__A);
 }
 
 __m512 test_mm512_maskz_cvtepi32_ps (__mmask16 __U, __m512i __A)
 {
   // CHECK-LABEL: @test_mm512_maskz_cvtepi32_ps 
-  // CHECK: @llvm.x86.avx512.mask.cvtdq2ps.512
+  // CHECK: sitofp <16 x i32> %{{.*}} to <16 x float>
+  // CHECK: select <16 x i1> %{{.*}}, <16 x float> %{{.*}}, <16 x float> %{{.*}}
   return _mm512_maskz_cvtepi32_ps (__U,__A);
 }
 
