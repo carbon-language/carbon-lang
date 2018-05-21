@@ -35,7 +35,7 @@
 ; TYPES_1: struct A [sizeof = 4] {
 ; TYPES_1: virtual void PureFunc() = 0
 ; TYPES_1: virtual void {{(A::)?}}VirtualFunc()
-; TYPES_1: void RegularFunc()
+; TYPES_1: void {{(A::)?}}RegularFunc()
 ; TYPES_1: }
 
 ; TYPES_2: Classes
