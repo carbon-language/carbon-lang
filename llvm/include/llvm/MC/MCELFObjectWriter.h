@@ -147,6 +147,11 @@ std::unique_ptr<MCObjectWriter>
 createELFObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
                       raw_pwrite_stream &OS, bool IsLittleEndian);
 
+std::unique_ptr<MCObjectWriter>
+createELFDwoObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
+                         raw_pwrite_stream &OS, raw_pwrite_stream &DwoOS,
+                         bool IsLittleEndian);
+
 } // end namespace llvm
 
 #endif // LLVM_MC_MCELFOBJECTWRITER_H

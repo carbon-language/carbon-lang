@@ -60,6 +60,12 @@ public:
   std::unique_ptr<MCObjectWriter>
   createObjectWriter(raw_pwrite_stream &OS) const;
 
+  /// Create an MCObjectWriter that writes two object files: a .o file which is
+  /// linked into the final program and a .dwo file which is used by debuggers.
+  /// This function is only supported with ELF targets.
+  std::unique_ptr<MCObjectWriter>
+  createDwoObjectWriter(raw_pwrite_stream &OS, raw_pwrite_stream &DwoOS) const;
+
   virtual std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const = 0;
 

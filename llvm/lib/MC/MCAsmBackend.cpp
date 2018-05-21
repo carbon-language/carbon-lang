@@ -49,6 +49,16 @@ MCAsmBackend::createObjectWriter(raw_pwrite_stream &OS) const {
   }
 }
 
+std::unique_ptr<MCObjectWriter>
+MCAsmBackend::createDwoObjectWriter(raw_pwrite_stream &OS,
+                                    raw_pwrite_stream &DwoOS) const {
+  auto TW = createObjectTargetWriter();
+  if (TW->getFormat() != Triple::ELF)
+    report_fatal_error("dwo only supported with ELF");
+  return createELFDwoObjectWriter(cast<MCELFObjectTargetWriter>(std::move(TW)),
+                                  OS, DwoOS, Endian == support::little);
+}
+
 Optional<MCFixupKind> MCAsmBackend::getFixupKind(StringRef Name) const {
   return None;
 }

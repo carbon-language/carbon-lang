@@ -70,6 +70,10 @@ using SectionIndexMapTy = DenseMap<const MCSectionELF *, uint32_t>;
 class ELFObjectWriter;
 struct ELFWriter;
 
+bool isDwoSection(const MCSectionELF &Sec) {
+  return Sec.getSectionName().endswith(".dwo");
+}
+
 class SymbolTableWriter {
   ELFWriter &EWriter;
   bool Is64Bit;
@@ -96,6 +100,12 @@ public:
 struct ELFWriter {
   ELFObjectWriter &OWriter;
   support::endian::Writer W;
+
+  enum DwoMode {
+    AllSections,
+    NonDwoOnly,
+    DwoOnly,
+  } Mode;
 
   static uint64_t SymbolValue(const MCSymbol &Sym, const MCAsmLayout &Layout);
   static bool isInSymtab(const MCAsmLayout &Layout, const MCSymbolELF &Symbol,
@@ -152,9 +162,9 @@ struct ELFWriter {
 
 public:
   ELFWriter(ELFObjectWriter &OWriter, raw_pwrite_stream &OS,
-            bool IsLittleEndian)
+            bool IsLittleEndian, DwoMode Mode)
       : OWriter(OWriter),
-        W(OS, IsLittleEndian ? support::little : support::big) {}
+        W(OS, IsLittleEndian ? support::little : support::big), Mode(Mode) {}
 
   void WriteWord(uint64_t Word) {
     if (is64Bit())
@@ -244,6 +254,12 @@ public:
                                               const MCFragment &FB, bool InSet,
                                               bool IsPCRel) const override;
 
+  virtual bool checkRelocation(MCContext &Ctx, SMLoc Loc,
+                               const MCSectionELF *From,
+                               const MCSectionELF *To) {
+    return true;
+  }
+
   void recordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, uint64_t &FixedValue) override;
@@ -265,7 +281,44 @@ public:
         IsLittleEndian(IsLittleEndian) {}
 
   uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override {
-    return ELFWriter(*this, OS, IsLittleEndian).writeObject(Asm, Layout);
+    return ELFWriter(*this, OS, IsLittleEndian, ELFWriter::AllSections)
+        .writeObject(Asm, Layout);
+  }
+
+  friend struct ELFWriter;
+};
+
+class ELFDwoObjectWriter : public ELFObjectWriter {
+  raw_pwrite_stream &OS, &DwoOS;
+  bool IsLittleEndian;
+
+public:
+  ELFDwoObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
+                     raw_pwrite_stream &OS, raw_pwrite_stream &DwoOS,
+                     bool IsLittleEndian)
+      : ELFObjectWriter(std::move(MOTW)), OS(OS), DwoOS(DwoOS),
+        IsLittleEndian(IsLittleEndian) {}
+
+  virtual bool checkRelocation(MCContext &Ctx, SMLoc Loc,
+                               const MCSectionELF *From,
+                               const MCSectionELF *To) override {
+    if (isDwoSection(*From)) {
+      Ctx.reportError(Loc, "A dwo section may not contain relocations");
+      return false;
+    }
+    if (To && isDwoSection(*To)) {
+      Ctx.reportError(Loc, "A relocation may not refer to a dwo section");
+      return false;
+    }
+    return true;
+  }
+
+  uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override {
+    uint64_t Size = ELFWriter(*this, OS, IsLittleEndian, ELFWriter::NonDwoOnly)
+                        .writeObject(Asm, Layout);
+    Size += ELFWriter(*this, DwoOS, IsLittleEndian, ELFWriter::DwoOnly)
+                .writeObject(Asm, Layout);
+    return Size;
   }
 };
 
@@ -604,6 +657,8 @@ void ELFWriter::computeSymbolTable(
     } else {
       const MCSectionELF &Section =
           static_cast<const MCSectionELF &>(Symbol.getSection());
+      if (Mode == NonDwoOnly && isDwoSection(Section))
+        continue;
       MSD.SectionIndex = SectionIndexMap.lookup(&Section);
       assert(MSD.SectionIndex && "Invalid section index!");
       if (MSD.SectionIndex >= ELF::SHN_LORESERVE)
@@ -995,6 +1050,10 @@ uint64_t ELFWriter::writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) {
   std::vector<MCSectionELF *> Relocations;
   for (MCSection &Sec : Asm) {
     MCSectionELF &Section = static_cast<MCSectionELF &>(Sec);
+    if (Mode == NonDwoOnly && isDwoSection(Section))
+      continue;
+    if (Mode == DwoOnly && !isDwoSection(Section))
+      continue;
 
     align(Section.getAlignment());
 
@@ -1050,20 +1109,27 @@ uint64_t ELFWriter::writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) {
     SectionOffsets[Group] = std::make_pair(SecStart, SecEnd);
   }
 
-  // Compute symbol table information.
-  computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap, SectionOffsets);
+  if (Mode == DwoOnly) {
+    // dwo files don't have symbol tables or relocations, but they do have
+    // string tables.
+    StrTabBuilder.finalize();
+  } else {
+    // Compute symbol table information.
+    computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap,
+                       SectionOffsets);
 
-  for (MCSectionELF *RelSection : Relocations) {
-    align(RelSection->getAlignment());
+    for (MCSectionELF *RelSection : Relocations) {
+      align(RelSection->getAlignment());
 
-    // Remember the offset into the file for this section.
-    uint64_t SecStart = W.OS.tell();
+      // Remember the offset into the file for this section.
+      uint64_t SecStart = W.OS.tell();
 
-    writeRelocations(Asm,
-                     cast<MCSectionELF>(*RelSection->getAssociatedSection()));
+      writeRelocations(Asm,
+                       cast<MCSectionELF>(*RelSection->getAssociatedSection()));
 
-    uint64_t SecEnd = W.OS.tell();
-    SectionOffsets[RelSection] = std::make_pair(SecStart, SecEnd);
+      uint64_t SecEnd = W.OS.tell();
+      SectionOffsets[RelSection] = std::make_pair(SecStart, SecEnd);
+    }
   }
 
   {
@@ -1336,9 +1402,13 @@ void ELFObjectWriter::recordRelocation(MCAssembler &Asm,
 
   FixedValue = C;
 
+  const MCSectionELF *SecA = (SymA && SymA->isInSection())
+                                 ? cast<MCSectionELF>(&SymA->getSection())
+                                 : nullptr;
+  if (!checkRelocation(Ctx, Fixup.getLoc(), &FixupSection, SecA))
+    return;
+
   if (!RelocateWithSymbol) {
-    const MCSection *SecA =
-        (SymA && !SymA->isUndefined()) ? &SymA->getSection() : nullptr;
     const auto *SectionSymbol =
         SecA ? cast<MCSymbolELF>(SecA->getBeginSymbol()) : nullptr;
     if (SectionSymbol)
@@ -1382,4 +1452,12 @@ llvm::createELFObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
                             raw_pwrite_stream &OS, bool IsLittleEndian) {
   return llvm::make_unique<ELFSingleObjectWriter>(std::move(MOTW), OS,
                                                   IsLittleEndian);
+}
+
+std::unique_ptr<MCObjectWriter>
+llvm::createELFDwoObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
+                               raw_pwrite_stream &OS, raw_pwrite_stream &DwoOS,
+                               bool IsLittleEndian) {
+  return llvm::make_unique<ELFDwoObjectWriter>(std::move(MOTW), OS, DwoOS,
+                                               IsLittleEndian);
 }
