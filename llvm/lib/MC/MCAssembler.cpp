@@ -472,12 +472,12 @@ void MCAssembler::writeFragmentPadding(const MCFragment &F, uint64_t FSize,
       // ----------------------------
       //        ^-------------------^   <- TotalLength
       unsigned DistanceToBoundary = TotalLength - getBundleAlignSize();
-      if (!getBackend().writeNopData(DistanceToBoundary, OW))
+      if (!getBackend().writeNopData(OW->getStream(), DistanceToBoundary))
           report_fatal_error("unable to write NOP sequence of " +
                              Twine(DistanceToBoundary) + " bytes");
       BundlePadding -= DistanceToBoundary;
     }
-    if (!getBackend().writeNopData(BundlePadding, OW))
+    if (!getBackend().writeNopData(OW->getStream(), BundlePadding))
       report_fatal_error("unable to write NOP sequence of " +
                          Twine(BundlePadding) + " bytes");
   }
@@ -523,7 +523,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     // bytes left to fill use the Value and ValueSize to fill the rest.
     // If we are aligning with nops, ask that target to emit the right data.
     if (AF.hasEmitNops()) {
-      if (!Asm.getBackend().writeNopData(Count, OW))
+      if (!Asm.getBackend().writeNopData(OW->getStream(), Count))
         report_fatal_error("unable to write nop sequence of " +
                           Twine(Count) + " bytes");
       break;
@@ -600,7 +600,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
   }
 
   case MCFragment::FT_Padding: {
-    if (!Asm.getBackend().writeNopData(FragmentSize, OW))
+    if (!Asm.getBackend().writeNopData(OW->getStream(), FragmentSize))
       report_fatal_error("unable to write nop sequence of " +
                          Twine(FragmentSize) + " bytes");
     break;
