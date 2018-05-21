@@ -160,10 +160,12 @@ class ELFObjectWriter : public MCObjectWriter {
                              bool ZLibStyle, unsigned Alignment);
 
 public:
+  support::endian::Writer W;
+
   ELFObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
                   raw_pwrite_stream &OS, bool IsLittleEndian)
-      : MCObjectWriter(OS, IsLittleEndian),
-        TargetObjectWriter(std::move(MOTW)) {}
+      : MCObjectWriter(OS, IsLittleEndian), TargetObjectWriter(std::move(MOTW)),
+        W(OS, IsLittleEndian ? support::little : support::big) {}
 
   ~ELFObjectWriter() override = default;
 
@@ -175,16 +177,15 @@ public:
     MCObjectWriter::reset();
   }
 
-  void WriteWord(uint64_t W) {
+  void WriteWord(uint64_t Word) {
     if (is64Bit())
-      write64(W);
+      W.write<uint64_t>(Word);
     else
-      write32(W);
+      W.write<uint32_t>(Word);
   }
 
   template <typename T> void write(T Val) {
-    support::endian::write(getStream(), Val,
-                           IsLittleEndian ? support::little : support::big);
+    W.write(Val);
   }
 
   void writeHeader(const MCAssembler &Asm);
@@ -255,8 +256,8 @@ public:
 } // end anonymous namespace
 
 void ELFObjectWriter::align(unsigned Alignment) {
-  uint64_t Padding = OffsetToAlignment(getStream().tell(), Alignment);
-  WriteZeros(Padding);
+  uint64_t Padding = OffsetToAlignment(W.OS.tell(), Alignment);
+  W.OS.write_zeros(Padding);
 }
 
 unsigned ELFObjectWriter::addToSectionTable(const MCSectionELF *Sec) {
@@ -325,47 +326,50 @@ void ELFObjectWriter::writeHeader(const MCAssembler &Asm) {
   // emitWord method behaves differently for ELF32 and ELF64, writing
   // 4 bytes in the former and 8 in the latter.
 
-  writeBytes(ELF::ElfMagic); // e_ident[EI_MAG0] to e_ident[EI_MAG3]
+  W.OS << ELF::ElfMagic; // e_ident[EI_MAG0] to e_ident[EI_MAG3]
 
-  write8(is64Bit() ? ELF::ELFCLASS64 : ELF::ELFCLASS32); // e_ident[EI_CLASS]
+  W.OS << char(is64Bit() ? ELF::ELFCLASS64 : ELF::ELFCLASS32); // e_ident[EI_CLASS]
 
   // e_ident[EI_DATA]
-  write8(isLittleEndian() ? ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
+  W.OS << char(W.Endian == support::little ? ELF::ELFDATA2LSB
+                                           : ELF::ELFDATA2MSB);
 
-  write8(ELF::EV_CURRENT);        // e_ident[EI_VERSION]
+  W.OS << char(ELF::EV_CURRENT);        // e_ident[EI_VERSION]
   // e_ident[EI_OSABI]
-  write8(TargetObjectWriter->getOSABI());
-  write8(0);                  // e_ident[EI_ABIVERSION]
+  W.OS << char(TargetObjectWriter->getOSABI());
+  W.OS << char(0);                  // e_ident[EI_ABIVERSION]
 
-  WriteZeros(ELF::EI_NIDENT - ELF::EI_PAD);
+  W.OS.write_zeros(ELF::EI_NIDENT - ELF::EI_PAD);
 
-  write16(ELF::ET_REL);             // e_type
+  W.write<uint16_t>(ELF::ET_REL);             // e_type
 
-  write16(TargetObjectWriter->getEMachine()); // e_machine = target
+  W.write<uint16_t>(TargetObjectWriter->getEMachine()); // e_machine = target
 
-  write32(ELF::EV_CURRENT);         // e_version
+  W.write<uint32_t>(ELF::EV_CURRENT);         // e_version
   WriteWord(0);                    // e_entry, no entry point in .o file
   WriteWord(0);                    // e_phoff, no program header for .o
   WriteWord(0);                     // e_shoff = sec hdr table off in bytes
 
   // e_flags = whatever the target wants
-  write32(Asm.getELFHeaderEFlags());
+  W.write<uint32_t>(Asm.getELFHeaderEFlags());
 
   // e_ehsize = ELF header size
-  write16(is64Bit() ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
+  W.write<uint16_t>(is64Bit() ? sizeof(ELF::Elf64_Ehdr)
+                              : sizeof(ELF::Elf32_Ehdr));
 
-  write16(0);                  // e_phentsize = prog header entry size
-  write16(0);                  // e_phnum = # prog header entries = 0
+  W.write<uint16_t>(0);                  // e_phentsize = prog header entry size
+  W.write<uint16_t>(0);                  // e_phnum = # prog header entries = 0
 
   // e_shentsize = Section header entry size
-  write16(is64Bit() ? sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr));
+  W.write<uint16_t>(is64Bit() ? sizeof(ELF::Elf64_Shdr)
+                              : sizeof(ELF::Elf32_Shdr));
 
   // e_shnum     = # of section header ents
-  write16(0);
+  W.write<uint16_t>(0);
 
   // e_shstrndx  = Section # of '.shstrtab'
   assert(StringTableIndex < ELF::SHN_LORESERVE);
-  write16(StringTableIndex);
+  W.write<uint16_t>(StringTableIndex);
 }
 
 uint64_t ELFObjectWriter::SymbolValue(const MCSymbol &Sym,
@@ -784,7 +788,7 @@ void ELFObjectWriter::computeSymbolTable(
   SymbolTableIndex = addToSectionTable(SymtabSection);
 
   align(SymtabSection->getAlignment());
-  uint64_t SecStart = getStream().tell();
+  uint64_t SecStart = W.OS.tell();
 
   // The first entry is the undefined symbol entry.
   Writer.writeSymbol(0, 0, 0, 0, 0, 0, false);
@@ -900,7 +904,7 @@ void ELFObjectWriter::computeSymbolTable(
     assert(MSD.Symbol->getBinding() != ELF::STB_LOCAL);
   }
 
-  uint64_t SecEnd = getStream().tell();
+  uint64_t SecEnd = W.OS.tell();
   SectionOffsets[SymtabSection] = std::make_pair(SecStart, SecEnd);
 
   ArrayRef<uint32_t> ShndxIndexes = Writer.getShndxIndexes();
@@ -910,12 +914,12 @@ void ELFObjectWriter::computeSymbolTable(
   }
   assert(SymtabShndxSectionIndex != 0);
 
-  SecStart = getStream().tell();
+  SecStart = W.OS.tell();
   const MCSectionELF *SymtabShndxSection =
       SectionTable[SymtabShndxSectionIndex - 1];
   for (uint32_t Index : ShndxIndexes)
     write(Index);
-  SecEnd = getStream().tell();
+  SecEnd = W.OS.tell();
   SectionOffsets[SymtabShndxSection] = std::make_pair(SecStart, SecEnd);
 }
 
@@ -976,8 +980,8 @@ bool ELFObjectWriter::maybeWriteCompression(
   const StringRef Magic = "ZLIB";
   if (Size <= Magic.size() + sizeof(Size) + CompressedContents.size())
     return false;
-  write(ArrayRef<char>(Magic.begin(), Magic.size()));
-  writeBE64(Size);
+  W.OS << Magic;
+  support::endian::write(W.OS, Size, support::big);
   return true;
 }
 
@@ -996,7 +1000,7 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
       MAI->compressDebugSections() != DebugCompressionType::None;
   if (!CompressionEnabled || !SectionName.startswith(".debug_") ||
       SectionName == ".debug_frame") {
-    Asm.writeSectionData(getStream(), &Section, Layout);
+    Asm.writeSectionData(W.OS, &Section, Layout);
     return;
   }
 
@@ -1013,14 +1017,14 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
           StringRef(UncompressedData.data(), UncompressedData.size()),
           CompressedContents)) {
     consumeError(std::move(E));
-    getStream() << UncompressedData;
+    W.OS << UncompressedData;
     return;
   }
 
   bool ZlibStyle = MAI->compressDebugSections() == DebugCompressionType::Z;
   if (!maybeWriteCompression(UncompressedData.size(), CompressedContents,
                              ZlibStyle, Sec.getAlignment())) {
-    getStream() << UncompressedData;
+    W.OS << UncompressedData;
     return;
   }
 
@@ -1030,7 +1034,7 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
   else
     // Add "z" prefix to section name. This is zlib-gnu style.
     MC.renameELFSection(&Section, (".z" + SectionName.drop_front(1)).str());
-  getStream() << CompressedContents;
+  W.OS << CompressedContents;
 }
 
 void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
@@ -1039,14 +1043,14 @@ void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
                                        uint32_t Link, uint32_t Info,
                                        uint64_t Alignment,
                                        uint64_t EntrySize) {
-  write32(Name);        // sh_name: index into string table
-  write32(Type);        // sh_type
+  W.write<uint32_t>(Name);        // sh_name: index into string table
+  W.write<uint32_t>(Type);        // sh_type
   WriteWord(Flags);     // sh_flags
   WriteWord(Address);   // sh_addr
   WriteWord(Offset);    // sh_offset
   WriteWord(Size);      // sh_size
-  write32(Link);        // sh_link
-  write32(Info);        // sh_info
+  W.write<uint32_t>(Link);        // sh_link
+  W.write<uint32_t>(Info);        // sh_info
   WriteWord(Alignment); // sh_addralign
   WriteWord(EntrySize); // sh_entsize
 }
@@ -1116,7 +1120,7 @@ void ELFObjectWriter::writeRelocations(const MCAssembler &Asm,
 
 const MCSectionELF *ELFObjectWriter::createStringTable(MCContext &Ctx) {
   const MCSectionELF *StrtabSection = SectionTable[StringTableIndex - 1];
-  StrTabBuilder.write(getStream());
+  StrTabBuilder.write(W.OS);
   return StrtabSection;
 }
 
@@ -1226,12 +1230,12 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
     align(Section.getAlignment());
 
     // Remember the offset into the file for this section.
-    uint64_t SecStart = getStream().tell();
+    uint64_t SecStart = W.OS.tell();
 
     const MCSymbolELF *SignatureSymbol = Section.getGroup();
     writeSectionData(Asm, Section, Layout);
 
-    uint64_t SecEnd = getStream().tell();
+    uint64_t SecEnd = W.OS.tell();
     SectionOffsets[&Section] = std::make_pair(SecStart, SecEnd);
 
     MCSectionELF *RelSection = createRelocationSection(Ctx, Section);
@@ -1263,7 +1267,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
     align(Group->getAlignment());
 
     // Remember the offset into the file for this section.
-    uint64_t SecStart = getStream().tell();
+    uint64_t SecStart = W.OS.tell();
 
     const MCSymbol *SignatureSymbol = Group->getGroup();
     assert(SignatureSymbol);
@@ -1273,7 +1277,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
       write(SecIndex);
     }
 
-    uint64_t SecEnd = getStream().tell();
+    uint64_t SecEnd = W.OS.tell();
     SectionOffsets[Group] = std::make_pair(SecStart, SecEnd);
   }
 
@@ -1284,54 +1288,52 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
     align(RelSection->getAlignment());
 
     // Remember the offset into the file for this section.
-    uint64_t SecStart = getStream().tell();
+    uint64_t SecStart = W.OS.tell();
 
     writeRelocations(Asm,
                      cast<MCSectionELF>(*RelSection->getAssociatedSection()));
 
-    uint64_t SecEnd = getStream().tell();
+    uint64_t SecEnd = W.OS.tell();
     SectionOffsets[RelSection] = std::make_pair(SecStart, SecEnd);
   }
 
   {
-    uint64_t SecStart = getStream().tell();
+    uint64_t SecStart = W.OS.tell();
     const MCSectionELF *Sec = createStringTable(Ctx);
-    uint64_t SecEnd = getStream().tell();
+    uint64_t SecEnd = W.OS.tell();
     SectionOffsets[Sec] = std::make_pair(SecStart, SecEnd);
   }
 
   uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
   align(NaturalAlignment);
 
-  const uint64_t SectionHeaderOffset = getStream().tell();
+  const uint64_t SectionHeaderOffset = W.OS.tell();
 
   // ... then the section header table ...
   writeSectionHeader(Layout, SectionIndexMap, SectionOffsets);
 
-  uint16_t NumSections = (SectionTable.size() + 1 >= ELF::SHN_LORESERVE)
-                             ? (uint16_t)ELF::SHN_UNDEF
-                             : SectionTable.size() + 1;
-  if (sys::IsLittleEndianHost != IsLittleEndian)
-    sys::swapByteOrder(NumSections);
+  uint16_t NumSections = support::endian::byte_swap<uint16_t>(
+      (SectionTable.size() + 1 >= ELF::SHN_LORESERVE) ? (uint16_t)ELF::SHN_UNDEF
+                                                      : SectionTable.size() + 1,
+      W.Endian);
   unsigned NumSectionsOffset;
 
+  auto &Stream = static_cast<raw_pwrite_stream &>(W.OS);
   if (is64Bit()) {
-    uint64_t Val = SectionHeaderOffset;
-    if (sys::IsLittleEndianHost != IsLittleEndian)
-      sys::swapByteOrder(Val);
-    getStream().pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
-                       offsetof(ELF::Elf64_Ehdr, e_shoff));
+    uint64_t Val =
+        support::endian::byte_swap<uint64_t>(SectionHeaderOffset, W.Endian);
+    Stream.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
+                  offsetof(ELF::Elf64_Ehdr, e_shoff));
     NumSectionsOffset = offsetof(ELF::Elf64_Ehdr, e_shnum);
   } else {
-    uint32_t Val = SectionHeaderOffset;
-    if (sys::IsLittleEndianHost != IsLittleEndian)
-      sys::swapByteOrder(Val);
-    getStream().pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
-                       offsetof(ELF::Elf32_Ehdr, e_shoff));
+    uint32_t Val =
+        support::endian::byte_swap<uint32_t>(SectionHeaderOffset, W.Endian);
+    Stream.pwrite(reinterpret_cast<char *>(&Val), sizeof(Val),
+                  offsetof(ELF::Elf32_Ehdr, e_shoff));
     NumSectionsOffset = offsetof(ELF::Elf32_Ehdr, e_shnum);
   }
-  getStream().pwrite(reinterpret_cast<char *>(&NumSections),
-                     sizeof(NumSections), NumSectionsOffset);
+  Stream.pwrite(reinterpret_cast<char *>(&NumSections), sizeof(NumSections),
+                NumSectionsOffset);
 }
 
 bool ELFObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(

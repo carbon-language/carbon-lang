@@ -116,11 +116,16 @@ class MachObjectWriter : public MCObjectWriter {
 
   MachSymbolData *findSymbolData(const MCSymbol &Sym);
 
+  void writeWithPadding(StringRef Str, uint64_t Size);
+
 public:
   MachObjectWriter(std::unique_ptr<MCMachObjectTargetWriter> MOTW,
                    raw_pwrite_stream &OS, bool IsLittleEndian)
       : MCObjectWriter(OS, IsLittleEndian),
-        TargetObjectWriter(std::move(MOTW)) {}
+        TargetObjectWriter(std::move(MOTW)),
+        W(OS, IsLittleEndian ? support::little : support::big) {}
+
+  support::endian::Writer W;
 
   const MCSymbol &findAliasedSymbol(const MCSymbol &Sym) const;
 
