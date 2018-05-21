@@ -843,8 +843,7 @@ VSO &ExecutionSession::createVSO(std::string Name) {
   });
 }
 
-Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names,
-                           MaterializationResponsibility *R) {
+Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names) {
 #if LLVM_ENABLE_THREADS
   // In the threaded case we use promises to return the results.
   std::promise<SymbolMap> PromisedResult;
@@ -854,11 +853,9 @@ Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names,
   Error ReadyError = Error::success();
   auto OnResolve =
       [&](Expected<AsynchronousSymbolQuery::ResolutionResult> Result) {
-        if (Result) {
-          if (R)
-            R->addDependencies(Result->Dependencies);
+        if (Result)
           PromisedResult.set_value(std::move(Result->Symbols));
-        } else {
+        else {
           {
             ErrorAsOutParameter _(&ResolutionError);
             std::lock_guard<std::mutex> Lock(ErrMutex);
@@ -880,14 +877,12 @@ Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names,
   Error ResolutionError = Error::success();
   Error ReadyError = Error::success();
 
-  auto OnResolve = [&](Expected<AsynchronousSymbolQuery::ResolutionResult> RR) {
+  auto OnResolve = [&](Expected<AsynchronousSymbolQuery::ResolutionResult> R) {
     ErrorAsOutParameter _(&ResolutionError);
-    if (RR) {
-      if (R)
-        R->addDependencies(RR->Dependencies);
-      Result = std::move(RR->Symbols);
-    } else
-      ResolutionError = RR.takeError();
+    if (R)
+      Result = std::move(R->Symbols);
+    else
+      ResolutionError = R.takeError();
   };
   auto OnReady = [&](Error Err) {
     ErrorAsOutParameter _(&ReadyError);
@@ -949,10 +944,9 @@ Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names,
 
 /// Look up a symbol by searching a list of VSOs.
 Expected<JITEvaluatedSymbol> lookup(const std::vector<VSO *> VSOs,
-                                    SymbolStringPtr Name,
-                                    MaterializationResponsibility *R) {
+                                    SymbolStringPtr Name) {
   SymbolNameSet Names({Name});
-  if (auto ResultMap = lookup(VSOs, std::move(Names), R)) {
+  if (auto ResultMap = lookup(VSOs, std::move(Names))) {
     assert(ResultMap->size() == 1 && "Unexpected number of results");
     assert(ResultMap->count(Name) && "Missing result for symbol");
     return std::move(ResultMap->begin()->second);

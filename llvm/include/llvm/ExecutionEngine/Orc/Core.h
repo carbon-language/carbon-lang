@@ -614,19 +614,11 @@ private:
 /// VSOs will be searched in order and no VSO pointer may be null.
 /// All symbols must be found within the given VSOs or an error
 /// will be returned.
-///
-/// If this lookup is being performed on behalf of a
-/// MaterializationResponsibility then it must be passed in as R
-/// (in order to record the symbol dependencies).
-/// If this lookup is not being performed on behalf of a
-/// MaterializationResponsibility then R should be left null.
-Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names,
-                           MaterializationResponsibility *R);
+Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names);
 
 /// Look up a symbol by searching a list of VSOs.
 Expected<JITEvaluatedSymbol> lookup(const std::vector<VSO *> VSOs,
-                                    SymbolStringPtr Name,
-                                    MaterializationResponsibility *R);
+                                    SymbolStringPtr Name);
 
 } // End namespace orc
 } // End namespace llvm
