@@ -31,13 +31,14 @@ add_llvm_target(MipsCodeGen
   MipsConstantIslandPass.cpp
   MipsDelaySlotFiller.cpp
   MipsFastISel.cpp
+  MipsHazardSchedule.cpp
   MipsInstrInfo.cpp
   MipsInstructionSelector.cpp
   MipsISelDAGToDAG.cpp
   MipsISelLowering.cpp
   MipsFrameLowering.cpp
   MipsLegalizerInfo.cpp
-  MipsBranchExpansion.cpp
+  MipsLongBranch.cpp
   MipsMCInstLower.cpp
   MipsMachineFunction.cpp
   MipsModuleISelDAGToDAG.cpp
