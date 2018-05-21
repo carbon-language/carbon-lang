@@ -59,13 +59,6 @@ define <4 x i32> @combine_vec_rot_rot_splat_zero(<4 x i32> %x) {
 }
 
 define <4 x i32> @rotate_demanded_bits(<4 x i32>, <4 x i32>) {
-; CHECK-LABEL: rotate_demanded_bits:
-; CHECK:       # %bb.0:
-; CHECK-NEXT:    andb $30, %sil
-; CHECK-NEXT:    movl %esi, %ecx
-; CHECK-NEXT:    roll %cl, %edi
-; CHECK-NEXT:    movl %edi, %eax
-; CHECK-NEXT:    retq
 ; XOP-LABEL: rotate_demanded_bits:
 ; XOP:       # %bb.0:
 ; XOP-NEXT:    vmovdqa {{.*#+}} xmm2 = [30,30,30,30]
@@ -100,13 +93,6 @@ define <4 x i32> @rotate_demanded_bits(<4 x i32>, <4 x i32>) {
 }
 
 define <4 x i32> @rotate_demanded_bits_2(<4 x i32>, <4 x i32>) {
-; CHECK-LABEL: rotate_demanded_bits_2:
-; CHECK:       # %bb.0:
-; CHECK-NEXT:    andb $23, %sil
-; CHECK-NEXT:    movl %esi, %ecx
-; CHECK-NEXT:    roll %cl, %edi
-; CHECK-NEXT:    movl %edi, %eax
-; CHECK-NEXT:    retq
 ; XOP-LABEL: rotate_demanded_bits_2:
 ; XOP:       # %bb.0:
 ; XOP-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm1
@@ -128,14 +114,6 @@ define <4 x i32> @rotate_demanded_bits_2(<4 x i32>, <4 x i32>) {
 }
 
 define <4 x i32> @rotate_demanded_bits_3(<4 x i32>, <4 x i32>) {
-; CHECK-LABEL: rotate_demanded_bits_3:
-; CHECK:       # %bb.0:
-; CHECK-NEXT:    addb %sil, %sil
-; CHECK-NEXT:    andb $30, %sil
-; CHECK-NEXT:    movl %esi, %ecx
-; CHECK-NEXT:    roll %cl, %edi
-; CHECK-NEXT:    movl %edi, %eax
-; CHECK-NEXT:    retq
 ; XOP-LABEL: rotate_demanded_bits_3:
 ; XOP:       # %bb.0:
 ; XOP-NEXT:    vpaddd %xmm1, %xmm1, %xmm1
