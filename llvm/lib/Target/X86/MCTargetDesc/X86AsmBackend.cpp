@@ -365,7 +365,8 @@ bool X86AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count) const {
     for (uint8_t i = 0; i < Prefixes; i++)
       OS << '\x66';
     const uint8_t Rest = ThisNopLength - Prefixes;
-    OS.write(Nops[Rest - 1], Rest);
+    if (Rest != 0)
+      OS.write(Nops[Rest - 1], Rest);
     Count -= ThisNopLength;
   } while (Count != 0);
 
