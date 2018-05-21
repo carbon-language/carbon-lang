@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/raw_ostream.h"
@@ -99,6 +100,14 @@ public:
   virtual uint64_t writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) = 0;
 
   /// @}
+};
+
+/// Base class for classes that define behaviour that is specific to both the
+/// target and the object format.
+class MCObjectTargetWriter {
+public:
+  virtual ~MCObjectTargetWriter() = default;
+  virtual Triple::ObjectFormatType getFormat() const = 0;
 };
 
 } // end namespace llvm

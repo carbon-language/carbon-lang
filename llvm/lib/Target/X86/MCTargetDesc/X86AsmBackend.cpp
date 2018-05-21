@@ -390,9 +390,9 @@ public:
                       const MCSubtargetInfo &STI)
     : ELFX86AsmBackend(T, OSABI, STI) {}
 
-  std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createX86ELFObjectWriter(OS, /*IsELF64*/ false, OSABI, ELF::EM_386);
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createX86ELFObjectWriter(/*IsELF64*/ false, OSABI, ELF::EM_386);
   }
 };
 
@@ -402,9 +402,9 @@ public:
                        const MCSubtargetInfo &STI)
       : ELFX86AsmBackend(T, OSABI, STI) {}
 
-  std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createX86ELFObjectWriter(OS, /*IsELF64*/ false, OSABI,
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createX86ELFObjectWriter(/*IsELF64*/ false, OSABI,
                                     ELF::EM_X86_64);
   }
 };
@@ -415,9 +415,9 @@ public:
                          const MCSubtargetInfo &STI)
       : ELFX86AsmBackend(T, OSABI, STI) {}
 
-  std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createX86ELFObjectWriter(OS, /*IsELF64*/ false, OSABI,
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createX86ELFObjectWriter(/*IsELF64*/ false, OSABI,
                                     ELF::EM_IAMCU);
   }
 };
@@ -428,9 +428,9 @@ public:
                       const MCSubtargetInfo &STI)
     : ELFX86AsmBackend(T, OSABI, STI) {}
 
-  std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createX86ELFObjectWriter(OS, /*IsELF64*/ true, OSABI, ELF::EM_X86_64);
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createX86ELFObjectWriter(/*IsELF64*/ true, OSABI, ELF::EM_X86_64);
   }
 };
 
@@ -452,9 +452,9 @@ public:
         .Default(MCAsmBackend::getFixupKind(Name));
   }
 
-  std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createX86WinCOFFObjectWriter(OS, Is64Bit);
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createX86WinCOFFObjectWriter(Is64Bit);
   }
 };
 
@@ -813,9 +813,9 @@ public:
                          const MCSubtargetInfo &STI)
       : DarwinX86AsmBackend(T, MRI, STI, false) {}
 
-  std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createX86MachObjectWriter(OS, /*Is64Bit=*/false,
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createX86MachObjectWriter(/*Is64Bit=*/false,
                                      MachO::CPU_TYPE_I386,
                                      MachO::CPU_SUBTYPE_I386_ALL);
   }
@@ -834,10 +834,10 @@ public:
                          const MCSubtargetInfo &STI, MachO::CPUSubTypeX86 st)
       : DarwinX86AsmBackend(T, MRI, STI, true), Subtype(st) {}
 
-  std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createX86MachObjectWriter(OS, /*Is64Bit=*/true,
-                                     MachO::CPU_TYPE_X86_64, Subtype);
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createX86MachObjectWriter(/*Is64Bit=*/true, MachO::CPU_TYPE_X86_64,
+                                     Subtype);
   }
 
   /// Generate the compact unwind encoding for the CFI instructions.

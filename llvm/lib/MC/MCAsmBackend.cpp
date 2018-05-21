@@ -11,7 +11,12 @@
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCCodePadder.h"
+#include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCMachObjectWriter.h"
+#include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCWasmObjectWriter.h"
+#include "llvm/MC/MCWinCOFFObjectWriter.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -22,6 +27,27 @@ MCAsmBackend::MCAsmBackend(support::endianness Endian)
     : CodePadder(new MCCodePadder()), Endian(Endian) {}
 
 MCAsmBackend::~MCAsmBackend() = default;
+
+std::unique_ptr<MCObjectWriter>
+MCAsmBackend::createObjectWriter(raw_pwrite_stream &OS) const {
+  auto TW = createObjectTargetWriter();
+  switch (TW->getFormat()) {
+  case Triple::ELF:
+    return createELFObjectWriter(cast<MCELFObjectTargetWriter>(std::move(TW)), OS,
+                                 Endian == support::little);
+  case Triple::MachO:
+    return createMachObjectWriter(cast<MCMachObjectTargetWriter>(std::move(TW)),
+                                  OS, Endian == support::little);
+  case Triple::COFF:
+    return createWinCOFFObjectWriter(
+        cast<MCWinCOFFObjectTargetWriter>(std::move(TW)), OS);
+  case Triple::Wasm:
+    return createWasmObjectWriter(cast<MCWasmObjectTargetWriter>(std::move(TW)),
+                                  OS);
+  default:
+    llvm_unreachable("unexpected object format");
+  }
+}
 
 Optional<MCFixupKind> MCAsmBackend::getFixupKind(StringRef Name) const {
   return None;

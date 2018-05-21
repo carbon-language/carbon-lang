@@ -30,6 +30,7 @@ struct MCFixupKindInfo;
 class MCFragment;
 class MCInst;
 class MCObjectStreamer;
+class MCObjectTargetWriter;
 class MCObjectWriter;
 struct MCCodePaddingContext;
 class MCRelaxableFragment;
@@ -56,8 +57,11 @@ public:
 
   /// Create a new MCObjectWriter instance for use by the assembler backend to
   /// emit the final object file.
-  virtual std::unique_ptr<MCObjectWriter>
-  createObjectWriter(raw_pwrite_stream &OS) const = 0;
+  std::unique_ptr<MCObjectWriter>
+  createObjectWriter(raw_pwrite_stream &OS) const;
+
+  virtual std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const = 0;
 
   /// \name Target Fixup Interfaces
   /// @{

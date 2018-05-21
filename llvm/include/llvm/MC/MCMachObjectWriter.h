@@ -26,7 +26,7 @@ namespace llvm {
 
 class MachObjectWriter;
 
-class MCMachObjectTargetWriter {
+class MCMachObjectTargetWriter : public MCObjectTargetWriter {
   const unsigned Is64Bit : 1;
   const uint32_t CPUType;
   const uint32_t CPUSubtype;
@@ -42,6 +42,11 @@ protected:
 
 public:
   virtual ~MCMachObjectTargetWriter();
+
+  virtual Triple::ObjectFormatType getFormat() const { return Triple::MachO; }
+  static bool classof(const MCObjectTargetWriter *W) {
+    return W->getFormat() == Triple::MachO;
+  }
 
   /// \name Lifetime Management
   /// @{
