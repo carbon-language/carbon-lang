@@ -61,27 +61,14 @@ define <4 x i32> @combine_vec_rot_rot_splat_zero(<4 x i32> %x) {
 define <4 x i32> @rotate_demanded_bits(<4 x i32>, <4 x i32>) {
 ; XOP-LABEL: rotate_demanded_bits:
 ; XOP:       # %bb.0:
-; XOP-NEXT:    vmovdqa {{.*#+}} xmm2 = [30,30,30,30]
-; XOP-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; XOP-NEXT:    vpshld %xmm1, %xmm0, %xmm3
-; XOP-NEXT:    vpxor %xmm4, %xmm4, %xmm4
-; XOP-NEXT:    vpsubd %xmm1, %xmm4, %xmm1
-; XOP-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; XOP-NEXT:    vpsubd %xmm1, %xmm4, %xmm1
-; XOP-NEXT:    vpshld %xmm1, %xmm0, %xmm0
-; XOP-NEXT:    vpor %xmm3, %xmm0, %xmm0
+; XOP-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm1
+; XOP-NEXT:    vprotd %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
 ; AVX512-LABEL: rotate_demanded_bits:
 ; AVX512:       # %bb.0:
-; AVX512-NEXT:    vpbroadcastd {{.*#+}} xmm2 = [30,30,30,30]
-; AVX512-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; AVX512-NEXT:    vpsllvd %xmm1, %xmm0, %xmm3
-; AVX512-NEXT:    vpxor %xmm4, %xmm4, %xmm4
-; AVX512-NEXT:    vpsubd %xmm1, %xmm4, %xmm1
-; AVX512-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; AVX512-NEXT:    vpsrlvd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vpor %xmm3, %xmm0, %xmm0
+; AVX512-NEXT:    vpandd {{.*}}(%rip){1to4}, %xmm1, %xmm1
+; AVX512-NEXT:    vprolvd %xmm1, %xmm0, %xmm0
 ; AVX512-NEXT:    retq
   %3 = and <4 x i32> %1, <i32 30, i32 30, i32 30, i32 30>
   %4 = shl <4 x i32> %0, %3
@@ -117,28 +104,15 @@ define <4 x i32> @rotate_demanded_bits_3(<4 x i32>, <4 x i32>) {
 ; XOP-LABEL: rotate_demanded_bits_3:
 ; XOP:       # %bb.0:
 ; XOP-NEXT:    vpaddd %xmm1, %xmm1, %xmm1
-; XOP-NEXT:    vmovdqa {{.*#+}} xmm2 = [30,30,30,30]
-; XOP-NEXT:    vpand %xmm2, %xmm1, %xmm3
-; XOP-NEXT:    vpshld %xmm3, %xmm0, %xmm3
-; XOP-NEXT:    vpxor %xmm4, %xmm4, %xmm4
-; XOP-NEXT:    vpsubd %xmm1, %xmm4, %xmm1
-; XOP-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; XOP-NEXT:    vpsubd %xmm1, %xmm4, %xmm1
-; XOP-NEXT:    vpshld %xmm1, %xmm0, %xmm0
-; XOP-NEXT:    vpor %xmm0, %xmm3, %xmm0
+; XOP-NEXT:    vpand {{.*}}(%rip), %xmm1, %xmm1
+; XOP-NEXT:    vprotd %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
 ; AVX512-LABEL: rotate_demanded_bits_3:
 ; AVX512:       # %bb.0:
 ; AVX512-NEXT:    vpaddd %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpbroadcastd {{.*#+}} xmm2 = [30,30,30,30]
-; AVX512-NEXT:    vpand %xmm2, %xmm1, %xmm3
-; AVX512-NEXT:    vpsllvd %xmm3, %xmm0, %xmm3
-; AVX512-NEXT:    vpxor %xmm4, %xmm4, %xmm4
-; AVX512-NEXT:    vpsubd %xmm1, %xmm4, %xmm1
-; AVX512-NEXT:    vpand %xmm2, %xmm1, %xmm1
-; AVX512-NEXT:    vpsrlvd %xmm1, %xmm0, %xmm0
-; AVX512-NEXT:    vpor %xmm0, %xmm3, %xmm0
+; AVX512-NEXT:    vpandd {{.*}}(%rip){1to4}, %xmm1, %xmm1
+; AVX512-NEXT:    vprolvd %xmm1, %xmm0, %xmm0
 ; AVX512-NEXT:    retq
   %3 = shl <4 x i32> %1, <i32 1, i32 1, i32 1, i32 1>
   %4 = and <4 x i32> %3, <i32 30, i32 30, i32 30, i32 30>
