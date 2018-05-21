@@ -79,6 +79,20 @@ private:
   SymbolNameSet Symbols;
 };
 
+/// Used to notify clients when symbols can not be found during a lookup.
+class SymbolsNotFound : public ErrorInfo<SymbolsNotFound> {
+public:
+  static char ID;
+
+  SymbolsNotFound(SymbolNameSet Symbols);
+  std::error_code convertToErrorCode() const override;
+  void log(raw_ostream &OS) const override;
+  const SymbolNameSet &getSymbols() const { return Symbols; }
+
+private:
+  SymbolNameSet Symbols;
+};
+
 /// Tracks responsibility for materialization, and mediates interactions between
 /// MaterializationUnits and VSOs.
 ///
@@ -365,6 +379,8 @@ private:
   void addQueryDependence(VSO &V, SymbolStringPtr Name);
 
   void removeQueryDependence(VSO &V, const SymbolStringPtr &Name);
+
+  bool canStillFail();
 
   void handleFailed(Error Err);
 

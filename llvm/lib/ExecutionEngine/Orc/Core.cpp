@@ -20,6 +20,7 @@ namespace llvm {
 namespace orc {
 
 char FailedToMaterialize::ID = 0;
+char SymbolsNotFound::ID = 0;
 
 void MaterializationUnit::anchor() {}
 void SymbolResolver::anchor() {}
@@ -110,11 +111,31 @@ void FailedToMaterialize::log(raw_ostream &OS) const {
   OS << "Failed to materialize symbols: " << Symbols;
 }
 
+SymbolsNotFound::SymbolsNotFound(SymbolNameSet Symbols)
+    : Symbols(std::move(Symbols)) {
+  assert(!this->Symbols.empty() && "Can not fail to resolve an empty set");
+}
+
+std::error_code SymbolsNotFound::convertToErrorCode() const {
+  return orcError(OrcErrorCode::UnknownORCError);
+}
+
+void SymbolsNotFound::log(raw_ostream &OS) const {
+  OS << "Symbols not found: " << Symbols;
+}
+
 void ExecutionSessionBase::failQuery(AsynchronousSymbolQuery &Q, Error Err) {
+  bool DeliveredError = true;
   runSessionLocked([&]() -> void {
     Q.detach();
-    Q.handleFailed(std::move(Err));
+    if (Q.canStillFail())
+      Q.handleFailed(std::move(Err));
+    else
+      DeliveredError = false;
   });
+
+  if (!DeliveredError)
+    reportError(std::move(Err));
 }
 
 AsynchronousSymbolQuery::AsynchronousSymbolQuery(
@@ -158,6 +179,10 @@ void AsynchronousSymbolQuery::handleFullyReady() {
   assert(!NotifySymbolsResolved && "Resolution not applied yet");
   NotifySymbolsReady(Error::success());
   NotifySymbolsReady = SymbolsReadyCallback();
+}
+
+bool AsynchronousSymbolQuery::canStillFail() {
+  return (NotifySymbolsResolved || NotifySymbolsReady);
 }
 
 void AsynchronousSymbolQuery::handleFailed(Error Err) {
@@ -902,7 +927,13 @@ Expected<SymbolMap> lookup(const std::vector<VSO *> &VSOs, SymbolNameSet Names) 
     UnresolvedSymbols = V->lookup(Query, UnresolvedSymbols);
   }
 
-  // FIXME: Error out if there are remaining unresolved symbols.
+  if (!UnresolvedSymbols.empty()) {
+    // If there are unresolved symbols then the query will never return.
+    // Fail it with ES.failQuery.
+    auto &ES = (*VSOs.begin())->getExecutionSession();
+    ES.failQuery(*Query,
+                 make_error<SymbolsNotFound>(std::move(UnresolvedSymbols)));
+  }
 
 #if LLVM_ENABLE_THREADS
   auto ResultFuture = PromisedResult.get_future();
