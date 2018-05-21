@@ -121,8 +121,7 @@ class MachObjectWriter : public MCObjectWriter {
 public:
   MachObjectWriter(std::unique_ptr<MCMachObjectTargetWriter> MOTW,
                    raw_pwrite_stream &OS, bool IsLittleEndian)
-      : MCObjectWriter(OS, IsLittleEndian),
-        TargetObjectWriter(std::move(MOTW)),
+      : TargetObjectWriter(std::move(MOTW)),
         W(OS, IsLittleEndian ? support::little : support::big) {}
 
   support::endian::Writer W;

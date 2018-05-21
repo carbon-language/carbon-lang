@@ -252,8 +252,7 @@ class WasmObjectWriter : public MCObjectWriter {
 public:
   WasmObjectWriter(std::unique_ptr<MCWasmObjectTargetWriter> MOTW,
                    raw_pwrite_stream &OS)
-      : MCObjectWriter(OS, /*IsLittleEndian=*/true), W(OS, support::little),
-        TargetObjectWriter(std::move(MOTW)) {}
+      : W(OS, support::little), TargetObjectWriter(std::move(MOTW)) {}
 
   ~WasmObjectWriter() override;
 

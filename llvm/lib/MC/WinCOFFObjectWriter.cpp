@@ -227,8 +227,7 @@ void COFFSymbol::set_name_offset(uint32_t Offset) {
 
 WinCOFFObjectWriter::WinCOFFObjectWriter(
     std::unique_ptr<MCWinCOFFObjectTargetWriter> MOTW, raw_pwrite_stream &OS)
-    : MCObjectWriter(OS, true), W(OS, support::little),
-      TargetObjectWriter(std::move(MOTW)) {
+    : W(OS, support::little), TargetObjectWriter(std::move(MOTW)) {
   Header.Machine = TargetObjectWriter->getMachine();
 }
 
