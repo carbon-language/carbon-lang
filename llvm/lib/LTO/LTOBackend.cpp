@@ -304,7 +304,7 @@ void codegenWithSplitDwarf(Config &Conf, TargetMachine *TM,
   TM->Options.MCOptions.SplitDwarfFile = DwarfFile.str().str();
 
   legacy::PassManager CodeGenPasses;
-  if (TM->addPassesToEmitFile(CodeGenPasses, OS, Conf.CGFileType))
+  if (TM->addPassesToEmitFile(CodeGenPasses, OS, nullptr, Conf.CGFileType))
     report_fatal_error("Failed to setup codegen");
   CodeGenPasses.run(Mod);
 
@@ -355,7 +355,8 @@ void codegen(Config &Conf, TargetMachine *TM, AddStreamFn AddStream,
 
   auto Stream = AddStream(Task);
   legacy::PassManager CodeGenPasses;
-  if (TM->addPassesToEmitFile(CodeGenPasses, *Stream->OS, Conf.CGFileType))
+  if (TM->addPassesToEmitFile(CodeGenPasses, *Stream->OS, nullptr,
+                              Conf.CGFileType))
     report_fatal_error("Failed to setup codegen");
   CodeGenPasses.run(Mod);
 }
