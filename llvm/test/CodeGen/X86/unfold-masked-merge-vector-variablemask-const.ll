@@ -58,18 +58,20 @@ define <4 x i32> @in_constant_varx_mone(<4 x i32> *%px, <4 x i32> *%py, <4 x i32
 ;
 ; CHECK-SSE2-LABEL: in_constant_varx_mone:
 ; CHECK-SSE2:       # %bb.0:
-; CHECK-SSE2-NEXT:    movdqa (%rdi), %xmm0
+; CHECK-SSE2-NEXT:    movdqa (%rdx), %xmm0
 ; CHECK-SSE2-NEXT:    pcmpeqd %xmm1, %xmm1
-; CHECK-SSE2-NEXT:    pandn (%rdx), %xmm0
-; CHECK-SSE2-NEXT:    pxor %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    pxor %xmm0, %xmm1
+; CHECK-SSE2-NEXT:    pand (%rdi), %xmm0
+; CHECK-SSE2-NEXT:    por %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_varx_mone:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovdqa (%rdi), %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdx), %xmm0
 ; CHECK-XOP-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-XOP-NEXT:    vpandn (%rdx), %xmm0, %xmm0
-; CHECK-XOP-NEXT:    vpxor %xmm1, %xmm0, %xmm0
+; CHECK-XOP-NEXT:    vpxor %xmm1, %xmm0, %xmm1
+; CHECK-XOP-NEXT:    vpand (%rdi), %xmm0, %xmm0
+; CHECK-XOP-NEXT:    vpor %xmm1, %xmm0, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16
@@ -132,21 +134,22 @@ define <4 x i32> @in_constant_varx_mone_invmask(<4 x i32> *%px, <4 x i32> *%py, 
 ;
 ; CHECK-SSE2-LABEL: in_constant_varx_mone_invmask:
 ; CHECK-SSE2:       # %bb.0:
-; CHECK-SSE2-NEXT:    movdqa (%rdi), %xmm0
-; CHECK-SSE2-NEXT:    pcmpeqd %xmm1, %xmm1
-; CHECK-SSE2-NEXT:    movdqa (%rdx), %xmm2
-; CHECK-SSE2-NEXT:    pxor %xmm1, %xmm2
-; CHECK-SSE2-NEXT:    pandn %xmm2, %xmm0
+; CHECK-SSE2-NEXT:    movdqa (%rdx), %xmm1
+; CHECK-SSE2-NEXT:    pcmpeqd %xmm0, %xmm0
+; CHECK-SSE2-NEXT:    pxor %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    pxor %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    pandn (%rdi), %xmm1
+; CHECK-SSE2-NEXT:    por %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_varx_mone_invmask:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovdqa (%rdi), %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdx), %xmm0
 ; CHECK-XOP-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-XOP-NEXT:    vpxor (%rdx), %xmm1, %xmm2
-; CHECK-XOP-NEXT:    vpandn %xmm2, %xmm0, %xmm0
+; CHECK-XOP-NEXT:    vpandn (%rdi), %xmm0, %xmm2
+; CHECK-XOP-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; CHECK-XOP-NEXT:    vpxor %xmm1, %xmm0, %xmm0
+; CHECK-XOP-NEXT:    vpor %xmm0, %xmm2, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16
@@ -198,30 +201,29 @@ define <4 x i32> @out_constant_varx_42(<4 x i32> *%px, <4 x i32> *%py, <4 x i32>
 define <4 x i32> @in_constant_varx_42(<4 x i32> *%px, <4 x i32> *%py, <4 x i32> *%pmask) {
 ; CHECK-SSE1-LABEL: in_constant_varx_42:
 ; CHECK-SSE1:       # %bb.0:
-; CHECK-SSE1-NEXT:    movaps {{.*#+}} xmm0 = [5.885454e-44,5.885454e-44,5.885454e-44,5.885454e-44]
+; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm0
 ; CHECK-SSE1-NEXT:    movaps (%rsi), %xmm1
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm1
-; CHECK-SSE1-NEXT:    andps (%rcx), %xmm1
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm1
-; CHECK-SSE1-NEXT:    movaps %xmm1, (%rdi)
+; CHECK-SSE1-NEXT:    andps %xmm0, %xmm1
+; CHECK-SSE1-NEXT:    andnps {{.*}}(%rip), %xmm0
+; CHECK-SSE1-NEXT:    orps %xmm1, %xmm0
+; CHECK-SSE1-NEXT:    movaps %xmm0, (%rdi)
 ; CHECK-SSE1-NEXT:    movq %rdi, %rax
 ; CHECK-SSE1-NEXT:    retq
 ;
 ; CHECK-SSE2-LABEL: in_constant_varx_42:
 ; CHECK-SSE2:       # %bb.0:
-; CHECK-SSE2-NEXT:    movaps {{.*#+}} xmm1 = [42,42,42,42]
-; CHECK-SSE2-NEXT:    movaps (%rdi), %xmm0
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm0
-; CHECK-SSE2-NEXT:    andps (%rdx), %xmm0
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    movaps (%rdx), %xmm0
+; CHECK-SSE2-NEXT:    movaps (%rdi), %xmm1
+; CHECK-SSE2-NEXT:    andps %xmm0, %xmm1
+; CHECK-SSE2-NEXT:    andnps {{.*}}(%rip), %xmm0
+; CHECK-SSE2-NEXT:    orps %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_varx_42:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovaps {{.*#+}} xmm0 = [42,42,42,42]
-; CHECK-XOP-NEXT:    vxorps (%rdi), %xmm0, %xmm1
-; CHECK-XOP-NEXT:    vandps (%rdx), %xmm1, %xmm1
-; CHECK-XOP-NEXT:    vxorps %xmm0, %xmm1, %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdi), %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdx), %xmm1
+; CHECK-XOP-NEXT:    vpcmov %xmm1, {{.*}}(%rip), %xmm0, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16
@@ -275,11 +277,10 @@ define <4 x i32> @in_constant_varx_42_invmask(<4 x i32> *%px, <4 x i32> *%py, <4
 ; CHECK-SSE1-LABEL: in_constant_varx_42_invmask:
 ; CHECK-SSE1:       # %bb.0:
 ; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm0
-; CHECK-SSE1-NEXT:    movaps {{.*#+}} xmm1 = [5.885454e-44,5.885454e-44,5.885454e-44,5.885454e-44]
-; CHECK-SSE1-NEXT:    movaps (%rsi), %xmm2
-; CHECK-SSE1-NEXT:    xorps %xmm1, %xmm2
-; CHECK-SSE1-NEXT:    andnps %xmm2, %xmm0
-; CHECK-SSE1-NEXT:    xorps %xmm1, %xmm0
+; CHECK-SSE1-NEXT:    movaps %xmm0, %xmm1
+; CHECK-SSE1-NEXT:    andnps (%rsi), %xmm1
+; CHECK-SSE1-NEXT:    andps {{.*}}(%rip), %xmm0
+; CHECK-SSE1-NEXT:    orps %xmm1, %xmm0
 ; CHECK-SSE1-NEXT:    movaps %xmm0, (%rdi)
 ; CHECK-SSE1-NEXT:    movq %rdi, %rax
 ; CHECK-SSE1-NEXT:    retq
@@ -287,20 +288,17 @@ define <4 x i32> @in_constant_varx_42_invmask(<4 x i32> *%px, <4 x i32> *%py, <4
 ; CHECK-SSE2-LABEL: in_constant_varx_42_invmask:
 ; CHECK-SSE2:       # %bb.0:
 ; CHECK-SSE2-NEXT:    movaps (%rdx), %xmm0
-; CHECK-SSE2-NEXT:    movaps {{.*#+}} xmm1 = [42,42,42,42]
-; CHECK-SSE2-NEXT:    movaps (%rdi), %xmm2
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm2
-; CHECK-SSE2-NEXT:    andnps %xmm2, %xmm0
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    movaps %xmm0, %xmm1
+; CHECK-SSE2-NEXT:    andnps (%rdi), %xmm1
+; CHECK-SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
+; CHECK-SSE2-NEXT:    orps %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_varx_42_invmask:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovaps (%rdx), %xmm0
-; CHECK-XOP-NEXT:    vmovaps {{.*#+}} xmm1 = [42,42,42,42]
-; CHECK-XOP-NEXT:    vxorps (%rdi), %xmm1, %xmm2
-; CHECK-XOP-NEXT:    vandnps %xmm2, %xmm0, %xmm0
-; CHECK-XOP-NEXT:    vxorps %xmm1, %xmm0, %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdx), %xmm0
+; CHECK-XOP-NEXT:    vmovdqa {{.*#+}} xmm1 = [42,42,42,42]
+; CHECK-XOP-NEXT:    vpcmov %xmm0, (%rdi), %xmm1, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16
@@ -350,27 +348,27 @@ define <4 x i32> @out_constant_mone_vary(<4 x i32> *%px, <4 x i32> *%py, <4 x i3
 define <4 x i32> @in_constant_mone_vary(<4 x i32> *%px, <4 x i32> *%py, <4 x i32> *%pmask) {
 ; CHECK-SSE1-LABEL: in_constant_mone_vary:
 ; CHECK-SSE1:       # %bb.0:
-; CHECK-SSE1-NEXT:    movaps (%rdx), %xmm0
+; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm0
 ; CHECK-SSE1-NEXT:    movaps %xmm0, %xmm1
-; CHECK-SSE1-NEXT:    andnps (%rcx), %xmm1
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm1
+; CHECK-SSE1-NEXT:    andnps (%rdx), %xmm1
+; CHECK-SSE1-NEXT:    orps %xmm0, %xmm1
 ; CHECK-SSE1-NEXT:    movaps %xmm1, (%rdi)
 ; CHECK-SSE1-NEXT:    movq %rdi, %rax
 ; CHECK-SSE1-NEXT:    retq
 ;
 ; CHECK-SSE2-LABEL: in_constant_mone_vary:
 ; CHECK-SSE2:       # %bb.0:
-; CHECK-SSE2-NEXT:    movaps (%rsi), %xmm1
+; CHECK-SSE2-NEXT:    movaps (%rdx), %xmm1
 ; CHECK-SSE2-NEXT:    movaps %xmm1, %xmm0
-; CHECK-SSE2-NEXT:    andnps (%rdx), %xmm0
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    andnps (%rsi), %xmm0
+; CHECK-SSE2-NEXT:    orps %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_mone_vary:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovaps (%rsi), %xmm0
-; CHECK-XOP-NEXT:    vandnps (%rdx), %xmm0, %xmm1
-; CHECK-XOP-NEXT:    vxorps %xmm0, %xmm1, %xmm0
+; CHECK-XOP-NEXT:    vmovaps (%rdx), %xmm0
+; CHECK-XOP-NEXT:    vandnps (%rsi), %xmm0, %xmm1
+; CHECK-XOP-NEXT:    vorps %xmm1, %xmm0, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16
@@ -425,33 +423,31 @@ define <4 x i32> @out_constant_mone_vary_invmask(<4 x i32> *%px, <4 x i32> *%py,
 define <4 x i32> @in_constant_mone_vary_invmask(<4 x i32> *%px, <4 x i32> *%py, <4 x i32> *%pmask) {
 ; CHECK-SSE1-LABEL: in_constant_mone_vary_invmask:
 ; CHECK-SSE1:       # %bb.0:
-; CHECK-SSE1-NEXT:    movaps (%rdx), %xmm0
-; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm1
-; CHECK-SSE1-NEXT:    xorps {{.*}}(%rip), %xmm1
-; CHECK-SSE1-NEXT:    movaps %xmm0, %xmm2
-; CHECK-SSE1-NEXT:    andnps %xmm1, %xmm2
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm2
-; CHECK-SSE1-NEXT:    movaps %xmm2, (%rdi)
+; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm0
+; CHECK-SSE1-NEXT:    movaps {{.*#+}} xmm1 = [nan,nan,nan,nan]
+; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm1
+; CHECK-SSE1-NEXT:    andps (%rdx), %xmm0
+; CHECK-SSE1-NEXT:    orps %xmm1, %xmm0
+; CHECK-SSE1-NEXT:    movaps %xmm0, (%rdi)
 ; CHECK-SSE1-NEXT:    movq %rdi, %rax
 ; CHECK-SSE1-NEXT:    retq
 ;
 ; CHECK-SSE2-LABEL: in_constant_mone_vary_invmask:
 ; CHECK-SSE2:       # %bb.0:
-; CHECK-SSE2-NEXT:    movdqa (%rsi), %xmm1
-; CHECK-SSE2-NEXT:    pcmpeqd %xmm2, %xmm2
-; CHECK-SSE2-NEXT:    pxor (%rdx), %xmm2
-; CHECK-SSE2-NEXT:    movdqa %xmm1, %xmm0
-; CHECK-SSE2-NEXT:    pandn %xmm2, %xmm0
-; CHECK-SSE2-NEXT:    pxor %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    movdqa (%rdx), %xmm0
+; CHECK-SSE2-NEXT:    pcmpeqd %xmm1, %xmm1
+; CHECK-SSE2-NEXT:    pxor %xmm0, %xmm1
+; CHECK-SSE2-NEXT:    pand (%rsi), %xmm0
+; CHECK-SSE2-NEXT:    por %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_mone_vary_invmask:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovdqa (%rsi), %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdx), %xmm0
 ; CHECK-XOP-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
-; CHECK-XOP-NEXT:    vpxor (%rdx), %xmm1, %xmm1
-; CHECK-XOP-NEXT:    vpandn %xmm1, %xmm0, %xmm1
-; CHECK-XOP-NEXT:    vpxor %xmm0, %xmm1, %xmm0
+; CHECK-XOP-NEXT:    vpxor %xmm1, %xmm0, %xmm1
+; CHECK-XOP-NEXT:    vpand (%rsi), %xmm0, %xmm0
+; CHECK-XOP-NEXT:    vpor %xmm0, %xmm1, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16
@@ -503,30 +499,29 @@ define <4 x i32> @out_constant_42_vary(<4 x i32> *%px, <4 x i32> *%py, <4 x i32>
 define <4 x i32> @in_constant_42_vary(<4 x i32> *%px, <4 x i32> *%py, <4 x i32> *%pmask) {
 ; CHECK-SSE1-LABEL: in_constant_42_vary:
 ; CHECK-SSE1:       # %bb.0:
-; CHECK-SSE1-NEXT:    movaps (%rdx), %xmm0
-; CHECK-SSE1-NEXT:    movaps {{.*#+}} xmm1 = [5.885454e-44,5.885454e-44,5.885454e-44,5.885454e-44]
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm1
-; CHECK-SSE1-NEXT:    andps (%rcx), %xmm1
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm1
-; CHECK-SSE1-NEXT:    movaps %xmm1, (%rdi)
+; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm0
+; CHECK-SSE1-NEXT:    movaps %xmm0, %xmm1
+; CHECK-SSE1-NEXT:    andnps (%rdx), %xmm1
+; CHECK-SSE1-NEXT:    andps {{.*}}(%rip), %xmm0
+; CHECK-SSE1-NEXT:    orps %xmm1, %xmm0
+; CHECK-SSE1-NEXT:    movaps %xmm0, (%rdi)
 ; CHECK-SSE1-NEXT:    movq %rdi, %rax
 ; CHECK-SSE1-NEXT:    retq
 ;
 ; CHECK-SSE2-LABEL: in_constant_42_vary:
 ; CHECK-SSE2:       # %bb.0:
-; CHECK-SSE2-NEXT:    movaps (%rsi), %xmm1
-; CHECK-SSE2-NEXT:    movaps {{.*#+}} xmm0 = [42,42,42,42]
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm0
-; CHECK-SSE2-NEXT:    andps (%rdx), %xmm0
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    movaps (%rdx), %xmm0
+; CHECK-SSE2-NEXT:    movaps %xmm0, %xmm1
+; CHECK-SSE2-NEXT:    andnps (%rsi), %xmm1
+; CHECK-SSE2-NEXT:    andps {{.*}}(%rip), %xmm0
+; CHECK-SSE2-NEXT:    orps %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_42_vary:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovaps (%rsi), %xmm0
-; CHECK-XOP-NEXT:    vxorps {{.*}}(%rip), %xmm0, %xmm1
-; CHECK-XOP-NEXT:    vandps (%rdx), %xmm1, %xmm1
-; CHECK-XOP-NEXT:    vxorps %xmm0, %xmm1, %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdx), %xmm0
+; CHECK-XOP-NEXT:    vmovdqa {{.*#+}} xmm1 = [42,42,42,42]
+; CHECK-XOP-NEXT:    vpcmov %xmm0, (%rsi), %xmm1, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16
@@ -579,33 +574,29 @@ define <4 x i32> @out_constant_42_vary_invmask(<4 x i32> *%px, <4 x i32> *%py, <
 define <4 x i32> @in_constant_42_vary_invmask(<4 x i32> *%px, <4 x i32> *%py, <4 x i32> *%pmask) {
 ; CHECK-SSE1-LABEL: in_constant_42_vary_invmask:
 ; CHECK-SSE1:       # %bb.0:
-; CHECK-SSE1-NEXT:    movaps (%rdx), %xmm0
-; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm1
-; CHECK-SSE1-NEXT:    movaps {{.*#+}} xmm2 = [5.885454e-44,5.885454e-44,5.885454e-44,5.885454e-44]
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm2
-; CHECK-SSE1-NEXT:    andnps %xmm2, %xmm1
-; CHECK-SSE1-NEXT:    xorps %xmm0, %xmm1
-; CHECK-SSE1-NEXT:    movaps %xmm1, (%rdi)
+; CHECK-SSE1-NEXT:    movaps (%rcx), %xmm0
+; CHECK-SSE1-NEXT:    movaps (%rdx), %xmm1
+; CHECK-SSE1-NEXT:    andps %xmm0, %xmm1
+; CHECK-SSE1-NEXT:    andnps {{.*}}(%rip), %xmm0
+; CHECK-SSE1-NEXT:    orps %xmm1, %xmm0
+; CHECK-SSE1-NEXT:    movaps %xmm0, (%rdi)
 ; CHECK-SSE1-NEXT:    movq %rdi, %rax
 ; CHECK-SSE1-NEXT:    retq
 ;
 ; CHECK-SSE2-LABEL: in_constant_42_vary_invmask:
 ; CHECK-SSE2:       # %bb.0:
-; CHECK-SSE2-NEXT:    movaps (%rsi), %xmm1
 ; CHECK-SSE2-NEXT:    movaps (%rdx), %xmm0
-; CHECK-SSE2-NEXT:    movaps {{.*#+}} xmm2 = [42,42,42,42]
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm2
-; CHECK-SSE2-NEXT:    andnps %xmm2, %xmm0
-; CHECK-SSE2-NEXT:    xorps %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    movaps (%rsi), %xmm1
+; CHECK-SSE2-NEXT:    andps %xmm0, %xmm1
+; CHECK-SSE2-NEXT:    andnps {{.*}}(%rip), %xmm0
+; CHECK-SSE2-NEXT:    orps %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
 ;
 ; CHECK-XOP-LABEL: in_constant_42_vary_invmask:
 ; CHECK-XOP:       # %bb.0:
-; CHECK-XOP-NEXT:    vmovaps (%rsi), %xmm0
-; CHECK-XOP-NEXT:    vmovaps (%rdx), %xmm1
-; CHECK-XOP-NEXT:    vxorps {{.*}}(%rip), %xmm0, %xmm2
-; CHECK-XOP-NEXT:    vandnps %xmm2, %xmm1, %xmm1
-; CHECK-XOP-NEXT:    vxorps %xmm0, %xmm1, %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rsi), %xmm0
+; CHECK-XOP-NEXT:    vmovdqa (%rdx), %xmm1
+; CHECK-XOP-NEXT:    vpcmov %xmm1, {{.*}}(%rip), %xmm0, %xmm0
 ; CHECK-XOP-NEXT:    retq
   %x = load <4 x i32>, <4 x i32> *%px, align 16
   %y = load <4 x i32>, <4 x i32> *%py, align 16

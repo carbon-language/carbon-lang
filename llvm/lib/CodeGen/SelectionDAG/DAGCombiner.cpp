@@ -5391,10 +5391,6 @@ SDValue DAGCombiner::unfoldMaskedMerge(SDNode *N) {
 
   EVT VT = N->getValueType(0);
 
-  // FIXME
-  if (VT.isVector())
-    return SDValue();
-
   // There are 3 commutable operators in the pattern,
   // so we have to deal with 8 possible variants of the basic pattern.
   SDValue X, Y, M;
