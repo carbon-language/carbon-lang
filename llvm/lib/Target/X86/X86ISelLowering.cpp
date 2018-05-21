@@ -23825,6 +23825,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   // to v2i64 results at a time. The upper 32-bits contain the wrapped bits
   // that can then be OR'd with the lower 32-bits.
   Amt = convertShiftLeftToScale(Amt, DL, Subtarget, DAG);
+  assert(Amt && "Failed to convert ROTL amount to scale");
 
   static const int OddMask[] = {1, -1, 3, -1};
   SDValue R13 = DAG.getVectorShuffle(VT, DL, R, R, OddMask);
