@@ -424,60 +424,6 @@ private:
   /// Synchronize branch instructions with CFG.
   void postProcessBranches();
 
-  /// Helper function that compares an instruction of this function to the
-  /// given instruction of the given function. The functions should have
-  /// identical CFG.
-  template <class Compare>
-  bool isInstrEquivalentWith(
-      const MCInst &InstA, const BinaryBasicBlock &BBA,
-      const MCInst &InstB, const BinaryBasicBlock &BBB,
-      const BinaryFunction &BFB, Compare Comp) const {
-    if (InstA.getOpcode() != InstB.getOpcode()) {
-      return false;
-    }
-
-    // In this function we check for special conditions:
-    //
-    //    * instructions with landing pads
-    //
-    // Most of the common cases should be handled by MCPlus::equals()
-    // that compares regular instruction operands.
-    //
-    // NB: there's no need to compare jump table indirect jump instructions
-    //     separately as jump tables are handled by comparing corresponding
-    //     symbols.
-    const auto EHInfoA = BC.MIB->getEHInfo(InstA);
-    const auto EHInfoB = BC.MIB->getEHInfo(InstB);
-
-    if (EHInfoA || EHInfoB) {
-      if (!EHInfoA && (EHInfoB->first || EHInfoB->second))
-        return false;
-
-      if (!EHInfoB && (EHInfoA->first || EHInfoA->second))
-        return false;
-
-      if (EHInfoA && EHInfoB) {
-        // Action indices should match.
-        if (EHInfoA->second != EHInfoB->second)
-          return false;
-
-        if (!EHInfoA->first != !EHInfoB->first)
-          return false;
-
-        if (EHInfoA->first && EHInfoB->first) {
-          const auto *LPA = BBA.getLandingPad(EHInfoA->first);
-          const auto *LPB = BBB.getLandingPad(EHInfoB->first);
-          assert(LPA && LPB && "cannot locate landing pad(s)");
-
-          if (LPA->getLayoutIndex() != LPB->getLayoutIndex())
-            return false;
-        }
-      }
-    }
-
-    return BC.MIB->equals(InstA, InstB, Comp);
-  }
-
   /// Recompute landing pad information for the function and all its blocks.
   void recomputeLandingPads();
 
@@ -583,44 +529,15 @@ private:
   /// jump table names.
   mutable std::map<uint64_t, size_t> JumpTableIds;
 
-  /// Generate a unique name for this jump table at the given address that should
-  /// be repeatable no matter what the start address of the table is.
+  /// Generate a unique name for this jump table at the given address that
+  /// should be repeatable no matter what the start address of the table is.
   std::string generateJumpTableName(uint64_t Address) const;
-
-  /// Return jump table that covers a given \p Address in memory.
-  JumpTable *getJumpTableContainingAddress(uint64_t Address) {
-    auto JTI = JumpTables.upper_bound(Address);
-    if (JTI == JumpTables.begin())
-      return nullptr;
-    --JTI;
-    if (JTI->first + JTI->second->getSize() > Address) {
-      return JTI->second;
-    }
-    return nullptr;
-  }
-
-  const JumpTable *getJumpTableContainingAddress(uint64_t Address) const {
-    auto JTI = JumpTables.upper_bound(Address);
-    if (JTI == JumpTables.begin())
-      return nullptr;
-    --JTI;
-    if (JTI->first + JTI->second->getSize() > Address) {
-      return JTI->second;
-    }
-    return nullptr;
-  }
 
   /// Iterate over all jump tables associated with this function.
   iterator_range<std::map<uint64_t, JumpTable *>::const_iterator>
   jumpTables() const {
     return make_range(JumpTables.begin(), JumpTables.end());
   }
-
-  /// Compare two jump tables in 2 functions. The function relies on consistent
-  /// ordering of basic blocks in both binary functions (e.g. DFS).
-  bool equalJumpTables(const JumpTable *JumpTableA,
-                       const JumpTable *JumpTableB,
-                       const BinaryFunction &BFB) const;
 
   /// All jump table sites in the function.
   std::vector<std::pair<uint64_t, uint64_t>> JTSites;
@@ -767,7 +684,6 @@ private:
   }
 
 public:
-
   BinaryFunction(BinaryFunction &&) = default;
 
   using iterator = pointee_iterator<BasicBlockListType::iterator>;
@@ -870,6 +786,11 @@ public:
       BasicBlocksLayout.clear();
       BasicBlocksLayout.swap(NewLayout);
     }
+  }
+
+  /// Return current basic block layout.
+  const BasicBlockOrderType &getLayout() const {
+    return BasicBlocksLayout;
   }
 
   /// Return a list of basic blocks sorted using DFS and update layout indices
@@ -984,6 +905,23 @@ public:
   /// Return instruction at a given offset in the function. Valid before
   /// CFG is constructed or while instruction offsets are available in CFG.
   MCInst *getInstructionAtOffset(uint64_t Offset);
+
+  /// Return jump table that covers a given \p Address in memory.
+  JumpTable *getJumpTableContainingAddress(uint64_t Address) {
+    auto JTI = JumpTables.upper_bound(Address);
+    if (JTI == JumpTables.begin())
+      return nullptr;
+    --JTI;
+    if (JTI->first + JTI->second->getSize() > Address) {
+      return JTI->second;
+    }
+    return nullptr;
+  }
+
+  const JumpTable *getJumpTableContainingAddress(uint64_t Address) const {
+    return const_cast<BinaryFunction *>(this)->
+      getJumpTableContainingAddress(Address);
+  }
 
   /// Return the name of the function as extracted from the binary file.
   /// If the function has multiple names - return the last one
@@ -2124,19 +2062,6 @@ public:
 
   /// Convert function-level branch data into instruction annotations.
   void convertBranchData();
-
-  /// Returns true if this function has identical code and CFG with
-  /// the given function \p BF.
-  ///
-  /// If \p IgnoreSymbols is set to true, then symbolic operands are ignored
-  /// during comparison.
-  ///
-  /// If \p UseDFS is set to true, then compute DFS of each function and use
-  /// is for CFG equivalency. Potentially it will help to catch more cases,
-  /// but is slower.
-  bool isIdenticalWith(const BinaryFunction &BF,
-                       bool IgnoreSymbols = false,
-                       bool UseDFS = false) const;
 
   /// Returns a hash value for the function. To be used for ICF. Two congruent
   /// functions (functions with different symbolic references but identical

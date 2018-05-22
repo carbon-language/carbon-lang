@@ -384,22 +384,6 @@ public:
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
-/// An optimization that replaces references to identical functions with
-/// references to a single one of them.
-///
-class IdenticalCodeFolding : public BinaryFunctionPass {
-public:
-  explicit IdenticalCodeFolding(const cl::opt<bool> &PrintPass)
-    : BinaryFunctionPass(PrintPass) { }
-
-  const char *getName() const override {
-    return "identical-code-folding";
-  }
-  void runOnFunctions(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs,
-                      std::set<uint64_t> &LargeFunctions) override;
-};
-
 /// Prints a list of the top 100 functions sorted by a set of
 /// dyno stats categories.
 class PrintProgramStats : public BinaryFunctionPass {

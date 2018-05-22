@@ -13,6 +13,7 @@
 #include "Passes/Aligner.h"
 #include "Passes/AllocCombiner.h"
 #include "Passes/FrameOptimizer.h"
+#include "Passes/IdenticalCodeFolding.h"
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
 #include "Passes/LongJmp.h"

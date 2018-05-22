@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RewriteInstance.h"
-#include "Passes/BinaryPasses.h"
+#include "Passes/IdenticalCodeFolding.h"
 #include "llvm/Support/CommandLine.h"
 
 #undef  DEBUG_TYPE

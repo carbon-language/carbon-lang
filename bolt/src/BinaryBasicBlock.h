@@ -825,9 +825,9 @@ public:
     LayoutIndex = Index;
   }
 
-  /// FIXME
+  /// Needed by graph traits.
   BinaryFunction *getParent() const {
-    return nullptr;
+    return getFunction();
   }
 
 private:
