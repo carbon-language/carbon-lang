@@ -152,9 +152,19 @@ else()
   set(SANITIZER_CXX_ABI_SYSTEM 1)
 endif()
 
-option(SANITIZER_USE_COMPILER_RT "Use compiler-rt builtins instead of libgcc" OFF)
+set(COMPILER_RT_RUNTIME "default" CACHE STRING
+    "Compiler runtime to use.")
 
-include(HandleCompilerRT)
+if (COMPILER_RT_RUNTIME STREQUAL "default")
+  if (CLANG_DEFAULT_RTLIB STREQUAL "compiler-rt")
+    set(COMPILER_RT_RUNTIME_LIBRARY "builtins")
+  elseif (FUCHSIA)
+    set(COMPILER_RT_RUNTIME_LIBRARY "builtins")
+  endif()
+else()
+  set(COMPILER_RT_RUNTIME_LIBRARY "${COMPILER_RT_RUNTIME}")
+endif()
+
 include(config-ix)
 
 #================================
@@ -303,9 +313,7 @@ append_list_if(COMPILER_RT_HAS_WD4800_FLAG /wd4800 SANITIZER_COMMON_CFLAGS)
 # Set common link flags.
 append_list_if(COMPILER_RT_HAS_NODEFAULTLIBS_FLAG -nodefaultlibs SANITIZER_COMMON_LINK_FLAGS)
 
-if (SANITIZER_USE_COMPILER_RT)
-  list(APPEND SANITIZER_COMMON_LINK_FLAGS -rtlib=compiler-rt)
-  find_compiler_rt_library(builtins COMPILER_RT_BUILTINS_LIBRARY)
+if (COMPILER_RT_RUNTIME_LIBRARY STREQUAL "builtins")
   list(APPEND SANITIZER_COMMON_LINK_LIBS ${COMPILER_RT_BUILTINS_LIBRARY})
 else()
   if (ANDROID)
