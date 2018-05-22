@@ -190,6 +190,7 @@ public:
   Message &Say(const SourceName &, MessageFixedText &&, const std::string &);
   Message &Say(const SourceName &, MessageFixedText &&, const SourceName &,
       const SourceName &);
+  void SayAlreadyDeclared(const SourceName &, const Symbol &);
 
 private:
   // Where messages are emitted:
@@ -284,32 +285,31 @@ public:
   void PushScope(Scope &scope);
   void PopScope();
 
+  Symbol *FindSymbol(const SourceName &name);
+  void EraseSymbol(const SourceName &name);
+
   // Helpers to make a Symbol in the current scope
   template<typename D>
   Symbol &MakeSymbol(const SourceName &name, const Attrs &attrs, D &&details) {
-    const auto &it = CurrScope().find(name);
-    if (it == CurrScope().end()) {
+    auto *symbol = FindSymbol(name);
+    if (!symbol) {
       const auto pair = CurrScope().try_emplace(name, attrs, details);
       CHECK(pair.second);  // name was not found, so must be able to add
       return pair.first->second;
     }
-    auto &symbol = it->second;
-    symbol.add_occurrence(name);
-    if (symbol.CanReplaceDetails(details)) {
+    symbol->add_occurrence(name);
+    if (symbol->CanReplaceDetails(details)) {
       // update the existing symbol
-      symbol.attrs() |= attrs;
-      symbol.set_details(details);
-      return symbol;
+      symbol->attrs() |= attrs;
+      symbol->set_details(details);
+      return *symbol;
     } else if (std::is_same<UnknownDetails, D>::value) {
-      symbol.attrs() |= attrs;
-      return symbol;
+      symbol->attrs() |= attrs;
+      return *symbol;
     } else {
-      Say(name, "'%s' is already declared in this scoping unit"_err_en_US)
-          .Attach(symbol.name(),
-              MessageFormattedText{"Previous declaration of '%s'"_en_US,
-                  symbol.name().ToString().data()});
+      SayAlreadyDeclared(name, *symbol);
       // replace the old symbols with a new one with correct details
-      CurrScope().erase(symbol.name());
+      EraseSymbol(symbol->name());
       return MakeSymbol(name, attrs, details);
     }
   }
@@ -383,8 +383,11 @@ public:
   bool isAbstract() const { return isAbstract_; }
 
 protected:
-  // Add name to the generic we are currently processing
+  // Add name or symbol to the generic we are currently processing
   void AddToGeneric(const parser::Name &name, bool expectModuleProc = false);
+  void AddToGeneric(const Symbol &symbol);
+  // Add to generic the symbol for the subprogram with the same name
+  void SetSpecificInGeneric(Symbol &&symbol);
 
 private:
   bool inInterfaceBlock_{false};  // set when in interface block
@@ -422,6 +425,7 @@ private:
   void EndSubprogram();
   // Create a subprogram symbol in the current scope and push a new scope.
   Symbol &PushSubprogramScope(const parser::Name &);
+  Symbol *GetSpecificFromGeneric(const parser::Name &);
 };
 
 // Walk the parse tree and resolve names to symbols.
@@ -774,6 +778,13 @@ MessageHandler::Message &MessageHandler::Say(const SourceName &location,
       MessageFormattedText{
           msg, arg1.ToString().c_str(), arg2.ToString().c_str()}});
 }
+void MessageHandler::SayAlreadyDeclared(
+    const SourceName &name, const Symbol &prev) {
+  Say(name, "'%s' is already declared in this scoping unit"_err_en_US)
+      .Attach(prev.name(),
+          MessageFormattedText{"Previous declaration of '%s'"_en_US,
+              prev.name().ToString().data()});
+}
 
 // ImplicitRulesVisitor implementation
 
@@ -969,6 +980,17 @@ void ScopeHandler::PopScope() {
   scopes_.pop();
   ImplicitRulesVisitor::PopScope();
 }
+Symbol *ScopeHandler::FindSymbol(const SourceName &name) {
+  const auto &it = CurrScope().find(name);
+  if (it == CurrScope().end()) {
+    return nullptr;
+  } else {
+    return &it->second;
+  }
+}
+void ScopeHandler::EraseSymbol(const SourceName &name) {
+  CurrScope().erase(name);
+}
 
 void ScopeHandler::ApplyImplicitRules() {
   if (!isImplicitNoneType()) {
@@ -1163,9 +1185,15 @@ bool InterfaceVisitor::Pre(const parser::InterfaceStmt &x) {
 void InterfaceVisitor::Post(const parser::InterfaceStmt &) {}
 
 void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
+  if (genericSymbol_) {
+    if (const auto *proc =
+            genericSymbol_->details<GenericDetails>().CheckSpecific()) {
+      SayAlreadyDeclared(genericSymbol_->name(), *proc);
+    }
+    genericSymbol_ = nullptr;
+  }
   inInterfaceBlock_ = false;
   isAbstract_ = false;
-  genericSymbol_ = nullptr;
 }
 
 // Create a symbol for the generic in genericSymbol_
@@ -1181,7 +1209,49 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
     break;
   default: CHECK(!"TODO: intrinsic ops");
   }
-  genericSymbol_ = &MakeSymbol(*genericName, Attrs{}, GenericDetails{});
+  genericSymbol_ = FindSymbol(*genericName);
+  if (genericSymbol_) {
+    if (!genericSymbol_->isSubprogram()) {
+      SayAlreadyDeclared(*genericName, *genericSymbol_);
+      EraseSymbol(*genericName);
+      genericSymbol_ = nullptr;
+    } else if (genericSymbol_->has<UseDetails>()) {
+      // copy the USEd symbol into this scope so we can modify it
+      const Symbol &ultimate{genericSymbol_->GetUltimate()};
+      EraseSymbol(*genericName);
+      genericSymbol_ = &MakeSymbol(ultimate.name(), ultimate.attrs());
+      if (const auto *details = ultimate.detailsIf<GenericDetails>()) {
+        genericSymbol_->set_details(GenericDetails{details->specificProcs()});
+      } else if (const auto *details = ultimate.detailsIf<SubprogramDetails>()) {
+        genericSymbol_->set_details(SubprogramDetails{*details});
+      } else {
+        CHECK(!"can't happen");
+      }
+    }
+  }
+  if (!genericSymbol_) {
+    genericSymbol_ = &MakeSymbol(*genericName);
+    genericSymbol_->set_details(GenericDetails{});
+  }
+  if (genericSymbol_->has<GenericDetails>()) {
+    // okay
+  } else if (genericSymbol_->has<SubprogramDetails>()
+      || genericSymbol_->has<SubprogramNameDetails>()) {
+    Details details;
+    if (auto *d = genericSymbol_->detailsIf<SubprogramNameDetails>()) {
+      details = *d;
+    } else if (auto *d = genericSymbol_->detailsIf<SubprogramDetails>()) {
+      details = *d;
+    } else {
+      CHECK(!"can't happen");
+    }
+    Symbol symbol{CurrScope(), genericSymbol_->name(), genericSymbol_->attrs(),
+        std::move(details)};
+    EraseSymbol(*genericName);
+    genericSymbol_ = &MakeSymbol(*genericName);
+    genericSymbol_->set_details(GenericDetails{std::move(symbol)});
+  }
+  CHECK(genericSymbol_->has<GenericDetails>());
   return false;
 }
 
@@ -1189,7 +1259,7 @@ bool InterfaceVisitor::Pre(const parser::TypeBoundGenericStmt &) {
   return true;
 }
 void InterfaceVisitor::Post(const parser::TypeBoundGenericStmt &) {
-  //TODO: TypeBoundGenericStmt
+  // TODO: TypeBoundGenericStmt
 }
 
 bool InterfaceVisitor::Pre(const parser::ProcedureStmt &x) {
@@ -1216,27 +1286,35 @@ void InterfaceVisitor::Post(const parser::GenericStmt &x) {
 
 void InterfaceVisitor::AddToGeneric(
     const parser::Name &name, bool expectModuleProc) {
-  const auto &it = CurrScope().find(name.source);
-  if (it == CurrScope().end()) {
+  const auto *symbol = FindSymbol(name.source);
+  if (!symbol) {
     Say(name, "Procedure '%s' not found"_err_en_US);
     return;
   }
-  auto &symbol = it->second;
-  if (!symbol.has<SubprogramDetails>() &&
-      !symbol.has<SubprogramNameDetails>()) {
+  if (symbol == genericSymbol_) {
+    if (auto *specific =
+            genericSymbol_->details<GenericDetails>().specific().get()) {
+      symbol = specific;
+    }
+  }
+  if (!symbol->has<SubprogramDetails>() &&
+      !symbol->has<SubprogramNameDetails>()) {
     Say(name, "'%s' is not a subprogram"_err_en_US);
     return;
   }
   if (expectModuleProc) {
-    const auto *details = symbol.detailsIf<SubprogramNameDetails>();
+    const auto *details = symbol->detailsIf<SubprogramNameDetails>();
     if (!details || details->kind() != SubprogramKind::Module) {
       Say(name, "'%s' is not a module procedure"_en_US);
     }
   }
-  if (!genericSymbol_->has<GenericDetails>()) {
-    CHECK(!"TODO: generic symbols should be in separate namespace");
-  }
+  AddToGeneric(*symbol);
+}
+void InterfaceVisitor::AddToGeneric(const Symbol &symbol) {
   genericSymbol_->details<GenericDetails>().add_specificProc(&symbol);
+}
+void InterfaceVisitor::SetSpecificInGeneric(Symbol &&symbol) {
+  genericSymbol_->details<GenericDetails>().set_specific(std::move(symbol));
 }
 
 // SubprogramVisitor implementation
@@ -1246,20 +1324,18 @@ bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
   std::optional<SourceName> occurrence;
   std::optional<DeclTypeSpec> resultType;
   // Look up name: provides return type or tells us if it's an array
-  auto it = CurrScope().find(name.source);
-  if (it != CurrScope().end()) {
-    Symbol &symbol{it->second};
-    if (auto *details = symbol.detailsIf<EntityDetails>()) {
+  if (auto *symbol = FindSymbol(name.source)) {
+    if (auto *details = symbol->detailsIf<EntityDetails>()) {
       if (details->isArray()) {
         // not a stmt-func at all but an array; do nothing
-        symbol.add_occurrence(name.source);
+        symbol->add_occurrence(name.source);
         badStmtFuncFound_ = true;
         return true;
       }
       // TODO: check that attrs are compatible with stmt func
       resultType = details->type();
-      occurrence = symbol.name();
-      CurrScope().erase(symbol.name());
+      occurrence = symbol->name();
+      EraseSymbol(symbol->name());
     }
   }
   if (badStmtFuncFound_) {
@@ -1284,7 +1360,7 @@ bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
     }
     details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
   }
-  CurrScope().erase(name.source);  // added by PushSubprogramScope
+  EraseSymbol(name.source);  // added by PushSubprogramScope
   EntityDetails resultDetails;
   if (resultType) {
     resultDetails.set_type(*resultType);
@@ -1387,7 +1463,7 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   if (funcResultName_ && funcResultName_->source != name.source) {
     funcResultName = funcResultName_;
   } else {
-    CurrScope().erase(name.source);  // was added by PushSubprogramScope
+    EraseSymbol(name.source);  // was added by PushSubprogramScope
     funcResultName = &name;
   }
   details.set_result(MakeSymbol(*funcResultName, funcResultDetails));
@@ -1415,22 +1491,52 @@ void SubprogramVisitor::EndSubprogram() {
 }
 
 Symbol &SubprogramVisitor::PushSubprogramScope(const parser::Name &name) {
-  auto &symbol = MakeSymbol(name, SubprogramDetails());
-  auto &details = symbol.details<SubprogramDetails>();
+  Symbol *symbol = GetSpecificFromGeneric(name);
+  if (!symbol) {
+    symbol = &MakeSymbol(name, SubprogramDetails{});
+  }
+  auto &details = symbol->details<SubprogramDetails>();
   if (inInterfaceBlock()) {
     details.set_isInterface();
     if (!isAbstract()) {
-      symbol.attrs().set(Attr::EXTERNAL);
+      symbol->attrs().set(Attr::EXTERNAL);
     }
     if (isGeneric()) {
-      AddToGeneric(name);
+      AddToGeneric(*symbol);
     }
   }
-  Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram, &symbol);
+  Scope &subpScope = CurrScope().MakeScope(Scope::Kind::Subprogram, symbol);
   PushScope(subpScope);
   // can't reuse this name inside subprogram:
   MakeSymbol(name, SubprogramDetails(details));
-  return symbol;
+  return *symbol;
+}
+
+// If name is a generic, look for the specific subprogram with the same
+// name. Return that subprogram symbol or nullptr.
+Symbol *SubprogramVisitor::GetSpecificFromGeneric(const parser::Name &name) {
+  if (Symbol *symbol = FindSymbol(name.source)) {
+    if (auto *details = symbol->detailsIf<GenericDetails>()) {
+      // found generic, want subprogram
+      auto *specific = details->specific().get();
+      if (isGeneric()) {
+        if (specific) {
+          SayAlreadyDeclared(name.source, *specific);
+        } else {
+          SetSpecificInGeneric(
+              Symbol{CurrScope(), name.source, Attrs{}, SubprogramDetails{}});
+          specific = details->specific().get();
+        }
+      }
+      if (specific) {
+        if (!specific->has<SubprogramDetails>()) {
+          specific->set_details(SubprogramDetails{});
+        }
+        return specific;
+      }
+    }
+  }
+  return nullptr;
 }
 
 // ResolveNamesVisitor implementation
@@ -1460,7 +1566,7 @@ bool ResolveNamesVisitor::Pre(const parser::TypeParamDefStmt &x) {
 }
 void ResolveNamesVisitor::Post(const parser::TypeParamDefStmt &x) {
   EndDeclTypeSpec();
-  //TODO: TypeParamDefStmt
+  // TODO: TypeParamDefStmt
 }
 
 bool ResolveNamesVisitor::Pre(const parser::CommonBlockObject &x) {
@@ -1469,7 +1575,7 @@ bool ResolveNamesVisitor::Pre(const parser::CommonBlockObject &x) {
 }
 void ResolveNamesVisitor::Post(const parser::CommonBlockObject &x) {
   ClearArraySpec();
-  //TODO: CommonBlockObject
+  // TODO: CommonBlockObject
 }
 
 void ResolveNamesVisitor::Post(const parser::ComponentDecl &) {
@@ -1617,10 +1723,7 @@ void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
       CHECK(!"unexpected kind");
     }
   } else {
-    Say(name, "'%s' is already declared in this scoping unit"_err_en_US)
-        .Attach(symbol.name(),
-            MessageFormattedText{"Previous declaration of '%s'"_en_US,
-                symbol.name().ToString().data()});
+    SayAlreadyDeclared(name.source, symbol);
   }
 }
 
@@ -1749,12 +1852,10 @@ const parser::Name *ResolveNamesVisitor::GetVariableName(
 // Otherwise, report an error if it hasn't been declared.
 void ResolveNamesVisitor::CheckImplicitSymbol(const parser::Name *name) {
   if (name) {
-    const auto &it = CurrScope().find(name->source);
-    if (it != CurrScope().end()) {
-      const Symbol &symbol{it->second};
-      if (CheckUseError(name->source, symbol) ||
-          !symbol.has<UnknownDetails>()) {
-        return; // reported an error or symbol is declared
+    if (const auto *symbol = FindSymbol(name->source)) {
+      if (CheckUseError(name->source, *symbol) ||
+          !symbol->has<UnknownDetails>()) {
+        return;  // reported an error or symbol is declared
       }
     }
     if (isImplicitNoneType()) {

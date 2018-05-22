@@ -145,15 +145,25 @@ private:
 class GenericDetails {
 public:
   using listType = std::list<const Symbol *>;
+  GenericDetails() {}
+  GenericDetails(const listType &specificProcs);
+  GenericDetails(Symbol &&specific) { set_specific(std::move(specific)); }
 
   const listType specificProcs() const { return specificProcs_; }
+  void add_specificProc(const Symbol *proc) { specificProcs_.push_back(proc); }
 
-  void add_specificProc(const Symbol *proc) {
-    specificProcs_.push_back(proc);
-  }
+  std::unique_ptr<Symbol> &specific() { return specific_; }
+  void set_specific(Symbol &&specific);
+
+  // Check that specific is one of the specificProcs. If not, return the
+  // specific as a raw pointer.
+  const Symbol *CheckSpecific() const;
 
 private:
+  // all of the specific procedures for this generic
   listType specificProcs_;
+  // a specific procedure with the same name as this generic, if any
+  std::unique_ptr<Symbol> specific_;
 };
 
 class UnknownDetails {};
@@ -210,6 +220,7 @@ public:
   void add_occurrence(const SourceName &name) { occurrences_.push_back(name); }
 
   // Follow use-associations to get the ultimate entity.
+  Symbol &GetUltimate();
   const Symbol &GetUltimate() const;
 
   bool isSubprogram() const;

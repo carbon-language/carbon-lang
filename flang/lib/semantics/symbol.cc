@@ -43,20 +43,46 @@ const Symbol &UseDetails::module() const {
   return *symbol_->owner().symbol();
 }
 
+GenericDetails::GenericDetails(const listType &specificProcs) {
+  for (const auto *proc : specificProcs) {
+    add_specificProc(proc);
+  }
+}
+
+void GenericDetails::set_specific(Symbol &&specific) {
+  CHECK(!specific_);
+  specific_ = std::unique_ptr<Symbol>(new Symbol(std::move(specific)));
+}
+
+const Symbol *GenericDetails::CheckSpecific() const {
+  if (const auto *specific = specific_.get()) {
+    for (const auto *proc : specificProcs_) {
+      if (proc == specific) {
+        return nullptr;
+      }
+    }
+    std::cerr << "specific: " << *specific << "\n";
+    return specific;
+  } else {
+    return nullptr;
+  }
+}
+
 // The name of the kind of details for this symbol.
 // This is primarily for debugging.
 static std::string DetailsToString(const Details &details) {
   return std::visit(
       parser::visitors{
-          [&](const UnknownDetails &) { return "Unknown"; },
-          [&](const MainProgramDetails &) { return "MainProgram"; },
-          [&](const ModuleDetails &) { return "Module"; },
-          [&](const SubprogramDetails &) { return "Subprogram"; },
-          [&](const SubprogramNameDetails &) { return "SubprogramName"; },
-          [&](const EntityDetails &) { return "Entity"; },
-          [&](const UseDetails &) { return "Use"; },
-          [&](const UseErrorDetails &) { return "UseError"; },
-          [&](const GenericDetails &) { return "Generic"; },
+          [](const UnknownDetails &) { return "Unknown"; },
+          [](const MainProgramDetails &) { return "MainProgram"; },
+          [](const ModuleDetails &) { return "Module"; },
+          [](const SubprogramDetails &) { return "Subprogram"; },
+          [](const SubprogramNameDetails &) { return "SubprogramName"; },
+          [](const EntityDetails &) { return "Entity"; },
+          [](const UseDetails &) { return "Use"; },
+          [](const UseErrorDetails &) { return "UseError"; },
+          [](const GenericDetails &) { return "Generic"; },
+          [](const auto &) { return "unknown"; },
       },
       details);
 }
@@ -83,6 +109,9 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
   }
 }
 
+Symbol &Symbol::GetUltimate() {
+  return const_cast<Symbol &>(static_cast<const Symbol *>(this)->GetUltimate());
+}
 const Symbol &Symbol::GetUltimate() const {
   if (const auto *details = detailsIf<UseDetails>()) {
     return details->symbol().GetUltimate();
