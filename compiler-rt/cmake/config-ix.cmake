@@ -108,6 +108,7 @@ if (ANDROID AND COMPILER_RT_HAS_LIBDL)
   # Android's libstdc++ has a dependency on libdl.
   list(APPEND CMAKE_REQUIRED_LIBRARIES dl)
 endif()
+check_library_exists(c++ __cxa_throw "" COMPILER_RT_HAS_LIBCXX)
 check_library_exists(stdc++ __cxa_throw "" COMPILER_RT_HAS_LIBSTDCXX)
 
 # Linker flags.

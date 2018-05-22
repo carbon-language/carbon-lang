@@ -112,9 +112,6 @@ option(COMPILER_RT_EXTERNALIZE_DEBUGINFO
 # COMPILER_RT_DEBUG_PYBOOL is used by lit.common.configured.in.
 pythonize_bool(COMPILER_RT_DEBUG)
 
-include(HandleCompilerRT)
-include(config-ix)
-
 if(APPLE AND SANITIZER_MIN_OSX_VERSION AND SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.9")
   # Mac OS X prior to 10.9 had problems with exporting symbols from
   # libc++/libc++abi.
@@ -133,45 +130,32 @@ pythonize_bool(SANITIZER_CAN_USE_CXXABI)
 
 set(SANITIZER_CXX_ABI "default" CACHE STRING
     "Specify C++ ABI library to use.")
-set(CXXABIS none default libcxxabi libstdc++ libc++)
+set(CXXABIS none default libstdc++ libc++)
 set_property(CACHE SANITIZER_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 
 if (SANITIZER_CXX_ABI STREQUAL "default")
-  if (HAVE_LIBCXXABI AND COMPILER_RT_DEFAULT_TARGET_ONLY)
-    set(SANITIZER_CXX_ABI_LIBNAME "libcxxabi")
+  if (CLANG_DEFAULT_CXX_STDLIB STREQUAL "libc++" AND (TARGET cxx OR HAVE_LIBCXX))
+    set(SANITIZER_CXX_ABI_LIBNAME "libc++")
     set(SANITIZER_CXX_ABI_INTREE 1)
   elseif (APPLE)
-    set(SANITIZER_CXX_ABI_LIBNAME "libcxxabi")
+    set(SANITIZER_CXX_ABI_LIBNAME "libc++")
     set(SANITIZER_CXX_ABI_SYSTEM 1)
+  elseif (FUCHSIA)
+    set(SANITIZER_CXX_ABI_LIBNAME "libc++")
+    set(SANITIZER_CXX_ABI_INTREE 1)
   else()
     set(SANITIZER_CXX_ABI_LIBNAME "libstdc++")
+    set(SANITIZER_CXX_ABI_SYSTEM 1)
   endif()
 else()
   set(SANITIZER_CXX_ABI_LIBNAME "${SANITIZER_CXX_ABI}")
-endif()
-
-if (SANITIZER_CXX_ABI_LIBNAME STREQUAL "libcxxabi")
-  if (SANITIZER_CXX_ABI_INTREE)
-    if (NOT LIBCXXABI_ENABLE_STATIC_UNWINDER AND (TARGET unwind_shared OR HAVE_LIBUNWIND))
-      list(APPEND SANITIZER_CXX_ABI_LIBRARY unwind_shared)
-    elseif (LIBCXXABI_ENABLE_STATIC_UNWINDER AND (TARGET unwind_static OR HAVE_LIBUNWIND))
-      list(APPEND SANITIZER_CXX_ABI_LIBRARY unwind_static)
-    endif()
-    if (NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY AND (TARGET cxxabi_shared OR HAVE_LIBCXXABI))
-      list(APPEND SANITIZER_CXX_ABI_LIBRARY cxxabi_shared)
-    elseif (LIBCXX_ENABLE_STATIC_ABI_LIBRARY AND (TARGET cxxabi_static OR HAVE_LIBCXXABI))
-      list(APPEND SANITIZER_CXX_ABI_LIBRARY cxxabi_static)
-    endif()
-  else()
-    list(APPEND SANITIZER_CXX_ABI_LIBRARY "c++abi")
-  endif()
-elseif (SANITIZER_CXX_ABI_LIBNAME STREQUAL "libc++")
-  list(APPEND SANITIZER_CXX_ABI_LIBRARY "c++")
-elseif (SANITIZER_CXX_ABI_LIBNAME STREQUAL "libstdc++")
-  append_list_if(COMPILER_RT_HAS_LIBSTDCXX stdc++ SANITIZER_CXX_ABI_LIBRARY)
+  set(SANITIZER_CXX_ABI_SYSTEM 1)
 endif()
 
 option(SANITIZER_USE_COMPILER_RT "Use compiler-rt builtins instead of libgcc" OFF)
+
+include(HandleCompilerRT)
+include(config-ix)
 
 #================================
 # Setup Compiler Flags
@@ -336,6 +320,25 @@ append_list_if(COMPILER_RT_HAS_LIBC c SANITIZER_COMMON_LINK_LIBS)
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Fuchsia")
   list(APPEND SANITIZER_COMMON_LINK_FLAGS -Wl,-z,defs,-z,now,-z,relro)
   list(APPEND SANITIZER_COMMON_LINK_LIBS zircon)
+endif()
+
+if (SANITIZER_CXX_ABI_LIBNAME STREQUAL "libc++")
+  if (SANITIZER_CXX_ABI_INTREE)
+    if (NOT LIBCXXABI_ENABLE_STATIC_UNWINDER AND (TARGET unwind_shared OR HAVE_LIBUNWIND))
+      list(APPEND SANITIZER_CXX_ABI_LIBRARY unwind_shared)
+    elseif (LIBCXXABI_ENABLE_STATIC_UNWINDER AND (TARGET unwind_static OR HAVE_LIBUNWIND))
+      list(APPEND SANITIZER_CXX_ABI_LIBRARY unwind_static)
+    endif()
+    if (NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY AND (TARGET cxxabi_shared OR HAVE_LIBCXXABI))
+      list(APPEND SANITIZER_CXX_ABI_LIBRARY cxxabi_shared)
+    elseif (LIBCXX_ENABLE_STATIC_ABI_LIBRARY AND (TARGET cxxabi_static OR HAVE_LIBCXXABI))
+      list(APPEND SANITIZER_CXX_ABI_LIBRARY cxxabi_static)
+    endif()
+  else()
+    append_list_if(COMPILER_RT_HAS_LIBCXX c++ SANITIZER_CXX_ABI_LIBRARY)
+  endif()
+elseif (SANITIZER_CXX_ABI_LIBNAME STREQUAL "libstdc++")
+  append_list_if(COMPILER_RT_HAS_LIBSTDCXX stdc++ SANITIZER_CXX_ABI_LIBRARY)
 endif()
 
 # Warnings to turn off for all libraries, not just sanitizers.
