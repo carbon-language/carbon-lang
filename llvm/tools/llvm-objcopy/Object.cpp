@@ -185,7 +185,6 @@ void SymbolTableSection::addSymbol(StringRef Name, uint8_t Bind, uint8_t Type,
   Sym.Visibility = Visibility;
   Sym.Size = Sz;
   Sym.Index = Symbols.size();
-  Sym.ReferenceCount = 0;
   Symbols.emplace_back(llvm::make_unique<Symbol>(Sym));
   Size += this->EntrySize;
 }
@@ -254,11 +253,6 @@ const Symbol *SymbolTableSection::getSymbolByIndex(uint32_t Index) const {
   if (Symbols.size() <= Index)
     error("Invalid symbol index: " + Twine(Index));
   return Symbols[Index].get();
-}
-
-Symbol *SymbolTableSection::getSymbolByIndex(uint32_t Index) {
-  return const_cast<Symbol *>(
-      static_cast<const SymbolTableSection *>(this)->getSymbolByIndex(Index));
 }
 
 template <class ELFT>
@@ -348,12 +342,6 @@ void ELFSectionWriter<ELFT>::visit(const RelocationSection &Sec) {
 
 void RelocationSection::accept(SectionVisitor &Visitor) const {
   Visitor.visit(*this);
-}
-
-RelocationSection::~RelocationSection() {
-  for (auto &Rel : Relocations) {
-    --Rel.RelocSymbol->ReferenceCount;
-  }
 }
 
 void RelocationSection::removeSymbols(
@@ -659,9 +647,7 @@ void initRelocations(RelocationSection *Relocs, SymbolTableSection *SymbolTable,
     ToAdd.Offset = Rel.r_offset;
     getAddend(ToAdd.Addend, Rel);
     ToAdd.Type = Rel.getType(false);
-    Symbol *Sym = SymbolTable->getSymbolByIndex(Rel.getSymbol(false));
-    ++Sym->ReferenceCount;
-    ToAdd.RelocSymbol = Sym;
+    ToAdd.RelocSymbol = SymbolTable->getSymbolByIndex(Rel.getSymbol(false));
     Relocs->addRelocation(ToAdd);
   }
 }
