@@ -26,12 +26,10 @@
 
 # CHECK-INTSH-OUT: TIMEOUT: per_test_timeout :: infinite_loop.py
 # CHECK-INTSH-OUT: command output:
-# CHECK-INTSH-OUT-NEXT: Running infinite loop
 # CHECK-INTSH-OUT: command reached timeout: True
 
 # CHECK-INTSH-OUT: TIMEOUT: per_test_timeout :: slow.py
 # CHECK-INTSH-OUT: command output:
-# CHECK-INTSH-OUT-NEXT: Running slow program
 # CHECK-INTSH-OUT: command reached timeout: True
 
 # CHECK-INTSH-ERR: Using internal shell
@@ -51,14 +49,12 @@
 # CHECK-OUT-COMMON: TIMEOUT: per_test_timeout :: infinite_loop.py
 # CHECK-OUT-COMMON: Timeout: Reached timeout of 1 seconds
 # CHECK-OUT-COMMON: Command {{([0-9]+ )?}}Output
-# CHECK-OUT-COMMON: Running infinite loop
 
 # CHECK-OUT-COMMON: PASS: per_test_timeout :: short.py
 
 # CHECK-OUT-COMMON: TIMEOUT: per_test_timeout :: slow.py
 # CHECK-OUT-COMMON: Timeout: Reached timeout of 1 seconds
 # CHECK-OUT-COMMON: Command {{([0-9]+ )?}}Output
-# CHECK-OUT-COMMON: Running slow program
 
 # CHECK-OUT-COMMON: Expected Passes{{ *}}: 1
 # CHECK-OUT-COMMON: Individual Timeouts{{ *}}: 2
@@ -79,14 +75,12 @@
 # CHECK-CMDLINE-OVERRIDE-OUT: TIMEOUT: per_test_timeout :: infinite_loop.py
 # CHECK-CMDLINE-OVERRIDE-OUT: Timeout: Reached timeout of 2 seconds
 # CHECK-CMDLINE-OVERRIDE-OUT: Command {{([0-9]+ )?}}Output
-# CHECK-CMDLINE-OVERRIDE-OUT: Running infinite loop
 
 # CHECK-CMDLINE-OVERRIDE-OUT: PASS: per_test_timeout :: short.py
 
 # CHECK-CMDLINE-OVERRIDE-OUT: TIMEOUT: per_test_timeout :: slow.py
 # CHECK-CMDLINE-OVERRIDE-OUT: Timeout: Reached timeout of 2 seconds
 # CHECK-CMDLINE-OVERRIDE-OUT: Command {{([0-9]+ )?}}Output
-# CHECK-CMDLINE-OVERRIDE-OUT: Running slow program
 
 # CHECK-CMDLINE-OVERRIDE-OUT: Expected Passes{{ *}}: 1
 # CHECK-CMDLINE-OVERRIDE-OUT: Individual Timeouts{{ *}}: 2
