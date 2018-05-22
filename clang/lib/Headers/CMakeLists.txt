@@ -46,7 +46,6 @@ set(files
   clflushoptintrin.h
   clwbintrin.h
   emmintrin.h
-  __emmintrin_f16c.h
   f16cintrin.h
   float.h
   fma4intrin.h

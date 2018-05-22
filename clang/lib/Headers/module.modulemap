@@ -95,12 +95,7 @@ module _Builtin_intrinsics [system] [extern_c] {
 
     explicit module sse2 {
       export sse
-      export f16c_128
       header "emmintrin.h"
-    }
-
-    explicit module f16c_128 {
-      header "__emmintrin_f16c.h"
     }
 
     explicit module sse3 {
