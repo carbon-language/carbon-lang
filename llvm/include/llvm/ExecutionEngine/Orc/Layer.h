@@ -46,19 +46,29 @@ private:
   ExecutionSession &ES;
 };
 
-class BasicIRLayerMaterializationUnit : public MaterializationUnit {
+class IRMaterializationUnit : public MaterializationUnit {
+public:
+  IRMaterializationUnit(ExecutionSession &ES, std::unique_ptr<Module> M);
+
+protected:
+  std::unique_ptr<Module> M;
+
+private:
+  void discard(const VSO &V, SymbolStringPtr Name) override;
+
+  std::map<SymbolStringPtr, GlobalValue *> Discardable;
+};
+
+class BasicIRLayerMaterializationUnit : public IRMaterializationUnit {
 public:
   BasicIRLayerMaterializationUnit(IRLayer &L, VModuleKey K,
                                   std::unique_ptr<Module> M);
-
 private:
+
   void materialize(MaterializationResponsibility R) override;
-  void discard(const VSO &V, SymbolStringPtr Name) override;
 
   IRLayer &L;
   VModuleKey K;
-  std::unique_ptr<Module> M;
-  std::map<SymbolStringPtr, GlobalValue *> Discardable;
 };
 
 class ObjectLayer {
