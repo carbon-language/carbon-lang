@@ -8890,7 +8890,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
   case X86::BI__builtin_ia32_palignr128:
   case X86::BI__builtin_ia32_palignr256:
-  case X86::BI__builtin_ia32_palignr512_mask: {
+  case X86::BI__builtin_ia32_palignr512: {
     unsigned ShiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
 
     unsigned NumElts = Ops[0]->getType()->getVectorNumElements();
@@ -8920,15 +8920,9 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       }
     }
 
-    Value *Align = Builder.CreateShuffleVector(Ops[1], Ops[0],
-                                               makeArrayRef(Indices, NumElts),
-                                               "palignr");
-
-    // If this isn't a masked builtin, just return the align operation.
-    if (Ops.size() == 3)
-      return Align;
-
-    return EmitX86Select(*this, Ops[4], Align, Ops[3]);
+    return Builder.CreateShuffleVector(Ops[1], Ops[0],
+                                       makeArrayRef(Indices, NumElts),
+                                       "palignr");
   }
 
   case X86::BI__builtin_ia32_vperm2f128_pd256:
@@ -9097,16 +9091,14 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateBitCast(Res, Ops[0]->getType());
   }
 
-  case X86::BI__builtin_ia32_vplzcntd_128_mask:
-  case X86::BI__builtin_ia32_vplzcntd_256_mask:
-  case X86::BI__builtin_ia32_vplzcntd_512_mask:
-  case X86::BI__builtin_ia32_vplzcntq_128_mask:
-  case X86::BI__builtin_ia32_vplzcntq_256_mask:
-  case X86::BI__builtin_ia32_vplzcntq_512_mask: {
+  case X86::BI__builtin_ia32_vplzcntd_128:
+  case X86::BI__builtin_ia32_vplzcntd_256:
+  case X86::BI__builtin_ia32_vplzcntd_512:
+  case X86::BI__builtin_ia32_vplzcntq_128:
+  case X86::BI__builtin_ia32_vplzcntq_256:
+  case X86::BI__builtin_ia32_vplzcntq_512: {
     Function *F = CGM.getIntrinsic(Intrinsic::ctlz, Ops[0]->getType());
-    return EmitX86Select(*this, Ops[2],
-                         Builder.CreateCall(F, {Ops[0],Builder.getInt1(false)}),
-                         Ops[1]);
+    return Builder.CreateCall(F, {Ops[0],Builder.getInt1(false)});
   }
 
   case X86::BI__builtin_ia32_pabsb128:
