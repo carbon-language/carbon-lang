@@ -3,11 +3,16 @@
 # PR33944
 # XFAIL: windows
 
+# FIXME: This test is fragile because it relies on time which can
+# be affected by system performance. In particular we are currently
+# assuming that `short.py` can be successfully executed within 2
+# seconds of wallclock time.
+
 # Test per test timeout using external shell
 # RUN: not %{lit} \
 # RUN: %{inputs}/shtest-timeout/infinite_loop.py \
 # RUN: %{inputs}/shtest-timeout/short.py \
-# RUN: -j 1 -v --debug --timeout 1 --param external=1 > %t.extsh.out 2> %t.extsh.err
+# RUN: -j 1 -v --debug --timeout 2 --param external=1 > %t.extsh.out 2> %t.extsh.err
 # RUN: FileCheck --check-prefix=CHECK-OUT-COMMON < %t.extsh.out %s
 # RUN: FileCheck --check-prefix=CHECK-EXTSH-ERR < %t.extsh.err %s
 #
@@ -17,7 +22,7 @@
 # RUN: not %{lit} \
 # RUN: %{inputs}/shtest-timeout/infinite_loop.py \
 # RUN: %{inputs}/shtest-timeout/short.py \
-# RUN: -j 1 -v --debug --timeout 1 --param external=0 > %t.intsh.out 2> %t.intsh.err
+# RUN: -j 1 -v --debug --timeout 2 --param external=0 > %t.intsh.out 2> %t.intsh.err
 # RUN: FileCheck  --check-prefix=CHECK-OUT-COMMON < %t.intsh.out %s
 # RUN: FileCheck --check-prefix=CHECK-INTSH-OUT < %t.intsh.out %s
 # RUN: FileCheck --check-prefix=CHECK-INTSH-ERR < %t.intsh.err %s
@@ -33,14 +38,14 @@
 # RUN: %{inputs}/shtest-timeout/infinite_loop.py \
 # RUN: %{inputs}/shtest-timeout/short.py \
 # RUN: -j 1 -v --debug --param external=0 \
-# RUN: --param set_timeout=1 > %t.cfgset.out 2> %t.cfgset.err
+# RUN: --param set_timeout=2 > %t.cfgset.out 2> %t.cfgset.err
 # RUN: FileCheck --check-prefix=CHECK-OUT-COMMON  < %t.cfgset.out %s
 # RUN: FileCheck --check-prefix=CHECK-CFGSET-ERR < %t.cfgset.err %s
 #
 # CHECK-CFGSET-ERR: Using internal shell
 
 # CHECK-OUT-COMMON: TIMEOUT: per_test_timeout :: infinite_loop.py
-# CHECK-OUT-COMMON: Timeout: Reached timeout of 1 seconds
+# CHECK-OUT-COMMON: Timeout: Reached timeout of 2 seconds
 # CHECK-OUT-COMMON: Command {{([0-9]+ )?}}Output
 
 # CHECK-OUT-COMMON: PASS: per_test_timeout :: short.py
