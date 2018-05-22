@@ -5126,9 +5126,6 @@ AArch64InstrInfo::getOutliningType(MachineBasicBlock::iterator &MIT,
   // We should be able to compute the memory usage based on the IR calling
   // convention, even if we can't see the definition.
   if (MI.isCall()) {
-    const Module *M = MF->getFunction().getParent();
-    assert(M && "No module?");
-
     // Get the function associated with the call. Look at each operand and find
     // the one that represents the callee and get its name.
     const Function *Callee = nullptr;
