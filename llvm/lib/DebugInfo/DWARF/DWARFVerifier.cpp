@@ -362,10 +362,9 @@ unsigned DWARFVerifier::verifyDieRanges(const DWARFDie &Die,
                              ParentRI.Die.getTag() == DW_TAG_subprogram);
   if (ShouldBeContained && !ParentRI.contains(RI)) {
     ++NumErrors;
-    error() << "DIE address ranges are not "
-               "contained in its parent's ranges:";
-    Die.dump(OS, 0);
+    error() << "DIE address ranges are not contained in its parent's ranges:";
     ParentRI.Die.dump(OS, 0);
+    Die.dump(OS, 2);
     OS << "\n";
   }
 
