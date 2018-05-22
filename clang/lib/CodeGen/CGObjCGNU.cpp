@@ -1054,7 +1054,7 @@ class CGObjCGNUstep2 : public CGObjCGNUstep {
       StringName = ".objc_str_";
       for (int i=0,e=Str.size() ; i<e ; ++i) {
         char c = Str[i];
-        if (isalpha(c) || isnumber(c))
+        if (isalnum(c))
           StringName += c;
         else if (c == ' ')
           StringName += '_';
