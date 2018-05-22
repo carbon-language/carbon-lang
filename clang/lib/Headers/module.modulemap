@@ -99,7 +99,7 @@ module _Builtin_intrinsics [system] [extern_c] {
       header "emmintrin.h"
     }
 
-    explicit f16c_128 {
+    explicit module f16c_128 {
       header "__emmintrin_f16c.h"
     }
 
