@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 -O3 | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm %s -o - -triple=amdgcn-amd-amdhsa -O3 | FileCheck %s
 
 namespace {
 
