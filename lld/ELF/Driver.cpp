@@ -761,6 +761,10 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ThinLTOIndexOnlyArg =
       Args.getLastArgValue(OPT_plugin_opt_thinlto_index_only_eq);
   Config->ThinLTOJobs = args::getInteger(Args, OPT_thinlto_jobs, -1u);
+  Config->ThinLTOObjectSuffixReplace =
+      getOldNewOptions(Args, OPT_plugin_opt_thinlto_object_suffix_replace_eq);
+  Config->ThinLTOPrefixReplace =
+      getOldNewOptions(Args, OPT_plugin_opt_thinlto_prefix_replace_eq);
   ThreadsEnabled = Args.hasFlag(OPT_threads, OPT_no_threads, true);
   Config->Trace = Args.hasArg(OPT_trace);
   Config->Undefined = args::getStrings(Args, OPT_undefined);
@@ -789,15 +793,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ZText = getZFlag(Args, "text", "notext", true);
   Config->ZWxneeded = hasZOption(Args, "wxneeded");
 
-  // Parse LTO plugin-related options for compatibility with gold.
-  std::tie(Config->ThinLTOPrefixReplace.first,
-           Config->ThinLTOPrefixReplace.second) =
-      getOldNewOptions(Args, OPT_plugin_opt_thinlto_prefix_replace_eq);
-
-  std::tie(Config->ThinLTOObjectSuffixReplace.first,
-           Config->ThinLTOObjectSuffixReplace.second) =
-      getOldNewOptions(Args, OPT_plugin_opt_thinlto_object_suffix_replace_eq);
-
+  // Parse LTO options.
   if (auto *Arg = Args.getLastArg(OPT_plugin_opt_mcpu_eq))
     parseClangOption(Saver.save("-mcpu=" + StringRef(Arg->getValue())),
                      Arg->getSpelling());
