@@ -35,6 +35,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ConvertUTF.h"
+#include <cctype>
 
 using namespace clang;
 using namespace CodeGen;
