@@ -3,8 +3,8 @@
 int absi(int x) {
 // CHECK-LABEL: @absi(
 // CHECK:   [[NEG:%.*]] = sub i32 0, [[X:%.*]]
-// CHECK:   [[CMP:%.*]] = icmp sge i32 [[X]], 0
-// CHECK:   [[SEL:%.*]] = select i1 [[CMP]], i32 [[X]], i32 [[NEG]]
+// CHECK:   [[CMP:%.*]] = icmp slt i32 [[X]], 0
+// CHECK:   [[SEL:%.*]] = select i1 [[CMP]], i32 [[NEG]], i32 [[X]]
 //
   return __builtin_abs(x);
 }
@@ -12,8 +12,8 @@ int absi(int x) {
 long absl(long x) {
 // CHECK-LABEL: @absl(
 // CHECK:   [[NEG:%.*]] = sub i64 0, [[X:%.*]]
-// CHECK:   [[CMP:%.*]] = icmp sge i64 [[X]], 0
-// CHECK:   [[SEL:%.*]] = select i1 [[CMP]], i64 [[X]], i64 [[NEG]]
+// CHECK:   [[CMP:%.*]] = icmp slt i64 [[X]], 0
+// CHECK:   [[SEL:%.*]] = select i1 [[CMP]], i64 [[NEG]], i64 [[X]]
 //
   return __builtin_labs(x);
 }
@@ -21,8 +21,8 @@ long absl(long x) {
 long long absll(long long x) {
 // CHECK-LABEL: @absll(
 // CHECK:   [[NEG:%.*]] = sub i64 0, [[X:%.*]]
-// CHECK:   [[CMP:%.*]] = icmp sge i64 [[X]], 0
-// CHECK:   [[SEL:%.*]] = select i1 [[CMP]], i64 [[X]], i64 [[NEG]]
+// CHECK:   [[CMP:%.*]] = icmp slt i64 [[X]], 0
+// CHECK:   [[SEL:%.*]] = select i1 [[CMP]], i64 [[NEG]], i64 [[X]]
 //
   return __builtin_llabs(x);
 }

@@ -1251,16 +1251,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_abs:
   case Builtin::BI__builtin_labs:
   case Builtin::BI__builtin_llabs: {
+    // X < 0 ? -X : X
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
-
     Value *NegOp = Builder.CreateNeg(ArgValue, "neg");
-    Value *CmpResult =
-    Builder.CreateICmpSGE(ArgValue,
-                          llvm::Constant::getNullValue(ArgValue->getType()),
-                                                            "abscond");
-    Value *Result =
-      Builder.CreateSelect(CmpResult, ArgValue, NegOp, "abs");
-
+    Constant *Zero = llvm::Constant::getNullValue(ArgValue->getType());
+    Value *CmpResult = Builder.CreateICmpSLT(ArgValue, Zero, "abscond");
+    Value *Result = Builder.CreateSelect(CmpResult, NegOp, ArgValue, "abs");
     return RValue::get(Result);
   }
   case Builtin::BI__builtin_conj:
