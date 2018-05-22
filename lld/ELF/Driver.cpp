@@ -673,6 +673,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   errorHandler().Verbose = Args.hasArg(OPT_verbose);
   errorHandler().FatalWarnings =
       Args.hasFlag(OPT_fatal_warnings, OPT_no_fatal_warnings, false);
+  ThreadsEnabled = Args.hasFlag(OPT_threads, OPT_no_threads, true);
 
   Config->AllowMultipleDefinition =
       Args.hasFlag(OPT_allow_multiple_definition,
@@ -765,7 +766,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
       getOldNewOptions(Args, OPT_plugin_opt_thinlto_object_suffix_replace_eq);
   Config->ThinLTOPrefixReplace =
       getOldNewOptions(Args, OPT_plugin_opt_thinlto_prefix_replace_eq);
-  ThreadsEnabled = Args.hasFlag(OPT_threads, OPT_no_threads, true);
   Config->Trace = Args.hasArg(OPT_trace);
   Config->Undefined = args::getStrings(Args, OPT_undefined);
   Config->UndefinedVersion =
