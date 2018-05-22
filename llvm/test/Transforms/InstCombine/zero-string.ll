@@ -59,4 +59,5 @@ define i32 @malloc_strlen() {
   %call = tail call noalias i8* @malloc(i32 10)
   %call1 = tail call i32 @strlen(i8* %call)
   ret i32 %call1
+}
 
