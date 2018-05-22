@@ -3372,39 +3372,11 @@ static uint64_t GetStringLengthH(const Value *V,
   return NullIndex + 1;
 }
 
-static bool isStringFromCalloc(const Value *Str, const TargetLibraryInfo *TLI) {
-  const CallInst *Calloc = dyn_cast<CallInst>(Str);
-  if (!Calloc)
-    return false;
-
-  const Function *InnerCallee = Calloc->getCalledFunction();
-  if (!InnerCallee)
-    return false;
-
-  LibFunc Func;
-  if (!TLI->getLibFunc(*InnerCallee, Func) || !TLI->has(Func) ||
-      Func != LibFunc_calloc)
-    return false;
-
-  const ConstantInt *N = dyn_cast<ConstantInt>(Calloc->getOperand(0));
-  const ConstantInt *Size = dyn_cast<ConstantInt>(Calloc->getOperand(1));
-
-  if (!N || !Size)
-    return false;
-
-  if (N->isNullValue() || Size->isNullValue())
-    return false;
-
-  return true;
-}
-
 /// If we can compute the length of the string pointed to by
 /// the specified pointer, return 'len+1'.  If we can't, return 0.
-uint64_t llvm::GetStringLength(const Value *V, const TargetLibraryInfo *TLI, unsigned CharSize) {
+uint64_t llvm::GetStringLength(const Value *V, unsigned CharSize) {
   if (!V->getType()->isPointerTy())
     return 0;
-  if (isStringFromCalloc(V, TLI))
-    return 1;
 
   SmallPtrSet<const PHINode*, 32> PHIs;
   uint64_t Len = GetStringLengthH(V, PHIs, CharSize);
