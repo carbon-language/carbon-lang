@@ -160,7 +160,7 @@ Value *LibCallSimplifier::optimizeStrCat(CallInst *CI, IRBuilder<> &B) {
   Value *Src = CI->getArgOperand(1);
 
   // See if we can get the length of the input string.
-  uint64_t Len = GetStringLength(Src);
+  uint64_t Len = GetStringLength(Src, TLI);
   if (Len == 0)
     return nullptr;
   --Len; // Unbias length.
@@ -205,7 +205,7 @@ Value *LibCallSimplifier::optimizeStrNCat(CallInst *CI, IRBuilder<> &B) {
     return nullptr;
 
   // See if we can get the length of the input string.
-  uint64_t SrcLen = GetStringLength(Src);
+  uint64_t SrcLen = GetStringLength(Src, TLI);
   if (SrcLen == 0)
     return nullptr;
   --SrcLen; // Unbias length.
@@ -234,7 +234,7 @@ Value *LibCallSimplifier::optimizeStrChr(CallInst *CI, IRBuilder<> &B) {
   // of the input string and turn this into memchr.
   ConstantInt *CharC = dyn_cast<ConstantInt>(CI->getArgOperand(1));
   if (!CharC) {
-    uint64_t Len = GetStringLength(SrcStr);
+    uint64_t Len = GetStringLength(SrcStr, TLI);
     if (Len == 0 || !FT->getParamType(1)->isIntegerTy(32)) // memchr needs i32.
       return nullptr;
 
@@ -313,8 +313,8 @@ Value *LibCallSimplifier::optimizeStrCmp(CallInst *CI, IRBuilder<> &B) {
     return B.CreateZExt(B.CreateLoad(Str1P, "strcmpload"), CI->getType());
 
   // strcmp(P, "x") -> memcmp(P, "x", 2)
-  uint64_t Len1 = GetStringLength(Str1P);
-  uint64_t Len2 = GetStringLength(Str2P);
+  uint64_t Len1 = GetStringLength(Str1P, TLI);
+  uint64_t Len2 = GetStringLength(Str2P, TLI);
   if (Len1 && Len2) {
     return emitMemCmp(Str1P, Str2P,
                       ConstantInt::get(DL.getIntPtrType(CI->getContext()),
@@ -370,7 +370,7 @@ Value *LibCallSimplifier::optimizeStrCpy(CallInst *CI, IRBuilder<> &B) {
     return Src;
 
   // See if we can get the length of the input string.
-  uint64_t Len = GetStringLength(Src);
+  uint64_t Len = GetStringLength(Src, TLI);
   if (Len == 0)
     return nullptr;
 
@@ -390,7 +390,7 @@ Value *LibCallSimplifier::optimizeStpCpy(CallInst *CI, IRBuilder<> &B) {
   }
 
   // See if we can get the length of the input string.
-  uint64_t Len = GetStringLength(Src);
+  uint64_t Len = GetStringLength(Src, TLI);
   if (Len == 0)
     return nullptr;
 
@@ -412,7 +412,7 @@ Value *LibCallSimplifier::optimizeStrNCpy(CallInst *CI, IRBuilder<> &B) {
   Value *LenOp = CI->getArgOperand(2);
 
   // See if we can get the length of the input string.
-  uint64_t SrcLen = GetStringLength(Src);
+  uint64_t SrcLen = GetStringLength(Src, TLI);
   if (SrcLen == 0)
     return nullptr;
   --SrcLen;
@@ -448,7 +448,7 @@ Value *LibCallSimplifier::optimizeStringLength(CallInst *CI, IRBuilder<> &B,
   Value *Src = CI->getArgOperand(0);
 
   // Constant folding: strlen("xyz") -> 3
-  if (uint64_t Len = GetStringLength(Src, CharSize))
+  if (uint64_t Len = GetStringLength(Src, TLI, CharSize))
     return ConstantInt::get(CI->getType(), Len - 1);
 
   // If s is a constant pointer pointing to a string literal, we can fold
@@ -512,8 +512,8 @@ Value *LibCallSimplifier::optimizeStringLength(CallInst *CI, IRBuilder<> &B,
 
   // strlen(x?"foo":"bars") --> x ? 3 : 4
   if (SelectInst *SI = dyn_cast<SelectInst>(Src)) {
-    uint64_t LenTrue = GetStringLength(SI->getTrueValue(), CharSize);
-    uint64_t LenFalse = GetStringLength(SI->getFalseValue(), CharSize);
+    uint64_t LenTrue = GetStringLength(SI->getTrueValue(), TLI, CharSize);
+    uint64_t LenFalse = GetStringLength(SI->getFalseValue(), TLI, CharSize);
     if (LenTrue && LenFalse) {
       ORE.emit([&]() {
         return OptimizationRemark("instcombine", "simplify-libcalls", CI)
@@ -2142,7 +2142,7 @@ Value *LibCallSimplifier::optimizeFPuts(CallInst *CI, IRBuilder<> &B) {
   }
 
   // fputs(s,F) --> fwrite(s,1,strlen(s),F)
-  uint64_t Len = GetStringLength(CI->getArgOperand(0));
+  uint64_t Len = GetStringLength(CI->getArgOperand(0), TLI);
   if (!Len)
     return nullptr;
 
@@ -2565,7 +2565,7 @@ bool FortifiedLibCallSimplifier::isFortifiedCallFoldable(CallInst *CI,
     if (OnlyLowerUnknownSize)
       return false;
     if (isString) {
-      uint64_t Len = GetStringLength(CI->getArgOperand(SizeOp));
+      uint64_t Len = GetStringLength(CI->getArgOperand(SizeOp), TLI);
       // If the length is 0 we don't know how long it is and so we can't
       // remove the check.
       if (Len == 0)
@@ -2637,7 +2637,7 @@ Value *FortifiedLibCallSimplifier::optimizeStrpCpyChk(CallInst *CI,
     return nullptr;
 
   // Maybe we can stil fold __st[rp]cpy_chk to __memcpy_chk.
-  uint64_t Len = GetStringLength(Src);
+  uint64_t Len = GetStringLength(Src, TLI);
   if (Len == 0)
     return nullptr;
 

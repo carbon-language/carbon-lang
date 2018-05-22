@@ -274,7 +274,7 @@ class Value;
 
   /// If we can compute the length of the string pointed to by the specified
   /// pointer, return 'len+1'.  If we can't, return 0.
-  uint64_t GetStringLength(const Value *V, unsigned CharSize = 8);
+  uint64_t GetStringLength(const Value *V, const TargetLibraryInfo *TLI, unsigned CharSize = 8);
 
   /// This method strips off any GEP address adjustments and pointer casts from
   /// the specified value, returning the original object being addressed. Note

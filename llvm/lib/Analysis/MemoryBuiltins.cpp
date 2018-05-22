@@ -589,7 +589,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitCallSite(CallSite CS) {
 
   // Handle strdup-like functions separately.
   if (FnData->AllocTy == StrDupLike) {
-    APInt Size(IntTyBits, GetStringLength(CS.getArgument(0)));
+    APInt Size(IntTyBits, GetStringLength(CS.getArgument(0), TLI));
     if (!Size)
       return unknown();
 
