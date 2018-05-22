@@ -68,9 +68,11 @@
 
 #if !defined(_MSC_VER) || __has_feature(modules) || defined(__AVX2__)
 #include <avx2intrin.h>
+#endif
 
 #if !defined(_MSC_VER) || __has_feature(modules) || defined(__F16C__)
 #include <f16cintrin.h>
+#endif
 
 #if !defined(_MSC_VER) || __has_feature(modules) || defined(__VPCLMULQDQ__)
 #include <vpclmulqdqintrin.h>
