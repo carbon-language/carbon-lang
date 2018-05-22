@@ -851,7 +851,6 @@ public:
 
   std::unique_ptr<PredicateMatcher> popFirstCondition() override;
   const PredicateMatcher &getFirstCondition() const override;
-  LLTCodeGen getFirstConditionAsRootType();
   bool hasFirstCondition() const override;
   unsigned getNumOperands() const;
   StringRef getOpcode() const;
@@ -1920,16 +1919,6 @@ StringRef RuleMatcher::getOpcode() const {
 
 unsigned RuleMatcher::getNumOperands() const {
   return Matchers.front()->getNumOperands();
-}
-
-LLTCodeGen RuleMatcher::getFirstConditionAsRootType() {
-  InstructionMatcher &InsnMatcher = *Matchers.front();
-  if (!InsnMatcher.predicates_empty())
-    if (const auto *TM =
-            dyn_cast<LLTOperandMatcher>(&**InsnMatcher.predicates_begin()))
-      if (TM->getInsnVarID() == 0 && TM->getOpIdx() == 0)
-        return TM->getTy();
-  return {};
 }
 
 /// Generates code to check that the operand is a register defined by an
@@ -4026,6 +4015,25 @@ GlobalISelEmitter::buildMatchTable(MutableArrayRef<RuleMatcher> Rules,
 
   if (!Optimize)
     return MatchTable::buildTable(InputRules, WithCoverage);
+
+  unsigned CurrentOrdering = 0;
+  StringMap<unsigned> OpcodeOrder;
+  for (RuleMatcher &Rule : Rules) {
+    const StringRef Opcode = Rule.getOpcode();
+    assert(!Opcode.empty() && "Didn't expect an undefined opcode");
+    if (OpcodeOrder.count(Opcode) == 0)
+      OpcodeOrder[Opcode] = CurrentOrdering++;
+  }
+
+  std::stable_sort(InputRules.begin(), InputRules.end(),
+                   [&OpcodeOrder](const Matcher *A, const Matcher *B) {
+                     auto *L = static_cast<const RuleMatcher *>(A);
+                     auto *R = static_cast<const RuleMatcher *>(B);
+                     return std::make_tuple(OpcodeOrder[L->getOpcode()],
+                                            L->getNumOperands()) <
+                            std::make_tuple(OpcodeOrder[R->getOpcode()],
+                                            R->getNumOperands());
+                   });
 
   for (Matcher *Rule : InputRules)
     Rule->optimize();
