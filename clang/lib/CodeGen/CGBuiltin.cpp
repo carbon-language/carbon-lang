@@ -1252,8 +1252,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_labs:
   case Builtin::BI__builtin_llabs: {
     // X < 0 ? -X : X
+    // The negation has 'nsw' because abs of INT_MIN is undefined.
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
-    Value *NegOp = Builder.CreateNeg(ArgValue, "neg");
+    Value *NegOp = Builder.CreateNSWNeg(ArgValue, "neg");
     Constant *Zero = llvm::Constant::getNullValue(ArgValue->getType());
     Value *CmpResult = Builder.CreateICmpSLT(ArgValue, Zero, "abscond");
     Value *Result = Builder.CreateSelect(CmpResult, NegOp, ArgValue, "abs");
