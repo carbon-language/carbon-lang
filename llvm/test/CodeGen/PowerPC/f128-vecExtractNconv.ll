@@ -5,6 +5,8 @@
 ; RUN:   -verify-machineinstrs -enable-ppc-quad-precision < %s | \
 ; RUN:   FileCheck %s -check-prefix=CHECK-BE
 
+; Vector extract DWord and convert to quad precision.
+
 @sdwVecMem = global <2 x i64> <i64 88, i64 99>, align 16
 @udwVecMem = global <2 x i64> <i64 88, i64 99>, align 16
 
@@ -155,6 +157,185 @@ entry:
   %0 = load <2 x i64>, <2 x i64>* %b, align 16
   %vecext = extractelement <2 x i64> %0, i32 0
   %conv = uitofp i64 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Vector extract Word and convert to quad precision.
+
+@swVecMem = global <4 x i32> <i32 88, i32 99, i32 100, i32 2>, align 16
+@uwVecMem = global <4 x i32> <i32 89, i32 89, i32 200, i32 3>, align 16
+
+; Function Attrs: norecurse nounwind
+define void @swVecConv2qp(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: swVecConv2qp:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vspltw 2, 2, 3
+; CHECK-NEXT:    vextsw2d 2, 2
+; CHECK-NEXT:    xscvsdqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: swVecConv2qp:
+; CHECK-BE:    vspltw 2, 2, 0
+; CHECK-BE-NEXT:    vextsw2d 2, 2
+; CHECK-BE-NEXT:    xscvsdqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 0
+  %conv = sitofp i32 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @swVecConv2qp1(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: swVecConv2qp1:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vspltw 2, 2, 2
+; CHECK-NEXT:    vextsw2d 2, 2
+; CHECK-NEXT:    xscvsdqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: swVecConv2qp1:
+; CHECK-BE:    vextsw2d 2, 2
+; CHECK-BE-NEXT:    xscvsdqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 1
+  %conv = sitofp i32 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @swVecConv2qp2(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: swVecConv2qp2:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vextsw2d 2, 2
+; CHECK-NEXT:    xscvsdqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: swVecConv2qp2:
+; CHECK-BE:    vspltw 2, 2, 2
+; CHECK-BE-NEXT:    vextsw2d 2, 2
+; CHECK-BE-NEXT:    xscvsdqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 2
+  %conv = sitofp i32 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @swVecConv2qp3(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: swVecConv2qp3:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vspltw 2, 2, 0
+; CHECK-NEXT:    vextsw2d 2, 2
+; CHECK-NEXT:    xscvsdqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: swVecConv2qp3:
+; CHECK-BE:    vspltw 2, 2, 3
+; CHECK-BE-NEXT:    vextsw2d 2, 2
+; CHECK-BE-NEXT:    xscvsdqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 3
+  %conv = sitofp i32 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @uwVecConv2qp(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: uwVecConv2qp:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxextractuw 34, 34, 12
+; CHECK-NEXT:    xscvudqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: uwVecConv2qp:
+; CHECK-BE:    xxextractuw 34, 34, 0
+; CHECK-BE-NEXT:    xscvudqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 0
+  %conv = uitofp i32 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @uwVecConv2qp1(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: uwVecConv2qp1:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxextractuw 34, 34, 8
+; CHECK-NEXT:    xscvudqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: uwVecConv2qp1:
+; CHECK-BE:    xxextractuw 34, 34, 4
+; CHECK-BE-NEXT:    xscvudqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 1
+  %conv = uitofp i32 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @uwVecConv2qp2(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: uwVecConv2qp2:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxextractuw 34, 34, 4
+; CHECK-NEXT:    xscvudqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: uwVecConv2qp2:
+; CHECK-BE:    xxextractuw 34, 34, 8
+; CHECK-BE-NEXT:    xscvudqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 2
+  %conv = uitofp i32 %vecext to fp128
+  store fp128 %conv, fp128* %a, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @uwVecConv2qp3(fp128* nocapture %a, <4 x i32> %b) {
+; CHECK-LABEL: uwVecConv2qp3:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxextractuw 34, 34, 0
+; CHECK-NEXT:    xscvudqp 2, 2
+; CHECK-NEXT:    stxv 34, 0(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: uwVecConv2qp3:
+; CHECK-BE:    xxextractuw 34, 34, 12
+; CHECK-BE-NEXT:    xscvudqp 2, 2
+; CHECK-BE-NEXT:    stxv 34, 0(3)
+; CHECK-BE-NEXT:    blr
+entry:
+  %vecext = extractelement <4 x i32> %b, i32 3
+  %conv = uitofp i32 %vecext to fp128
   store fp128 %conv, fp128* %a, align 16
   ret void
 }
