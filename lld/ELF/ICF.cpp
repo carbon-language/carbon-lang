@@ -78,6 +78,7 @@
 #include "SymbolTable.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
+#include "Writer.h"
 #include "lld/Common/Threads.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/BinaryFormat/ELF.h"
@@ -300,6 +301,13 @@ template <class ELFT>
 bool ICF<ELFT>::equalsConstant(const InputSection *A, const InputSection *B) {
   if (A->NumRelocations != B->NumRelocations || A->Flags != B->Flags ||
       A->getSize() != B->getSize() || A->Data != B->Data)
+    return false;
+
+  // If two sections have different output sections, we cannot merge them.
+  // FIXME: This doesn't do the right thing in the case where there is a linker
+  // script. We probably need to move output section assignment before ICF to
+  // get the correct behaviour here.
+  if (getOutputSectionName(A) != getOutputSectionName(B))
     return false;
 
   if (A->AreRelocsRela)
