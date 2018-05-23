@@ -3152,6 +3152,33 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   def : Pat<(f32 (fpround (f64 (extloadf32 ixaddr:$src)))),
             (f32 (DFLOADf32 ixaddr:$src))>;
 
+  // (Un)Signed DWord vector extract -> QP
+  let Predicates = [IsBigEndian] in {
+    def : Pat<(f128 (sint_to_fp (i64 (extractelt v2i64:$src, 0)))),
+              (f128 (XSCVSDQP (COPY_TO_REGCLASS $src, VFRC)))>;
+    def : Pat<(f128 (sint_to_fp (i64 (extractelt v2i64:$src, 1)))),
+              (f128 (XSCVSDQP
+                      (EXTRACT_SUBREG (XXPERMDI $src, $src, 3), sub_64)))>;
+    def : Pat<(f128 (uint_to_fp (i64 (extractelt v2i64:$src, 0)))),
+              (f128 (XSCVUDQP (COPY_TO_REGCLASS $src, VFRC)))>;
+    def : Pat<(f128 (uint_to_fp (i64 (extractelt v2i64:$src, 1)))),
+              (f128 (XSCVUDQP
+                      (EXTRACT_SUBREG (XXPERMDI $src, $src, 3), sub_64)))>;
+  }
+
+  let Predicates = [IsLittleEndian] in {
+    def : Pat<(f128 (sint_to_fp (i64 (extractelt v2i64:$src, 0)))),
+              (f128 (XSCVSDQP
+                      (EXTRACT_SUBREG (XXPERMDI $src, $src, 3), sub_64)))>;
+    def : Pat<(f128 (sint_to_fp (i64 (extractelt v2i64:$src, 1)))),
+              (f128 (XSCVSDQP (COPY_TO_REGCLASS $src, VFRC)))>;
+    def : Pat<(f128 (uint_to_fp (i64 (extractelt v2i64:$src, 0)))),
+              (f128 (XSCVUDQP
+                      (EXTRACT_SUBREG (XXPERMDI $src, $src, 3), sub_64)))>;
+    def : Pat<(f128 (uint_to_fp (i64 (extractelt v2i64:$src, 1)))),
+              (f128 (XSCVUDQP (COPY_TO_REGCLASS $src, VFRC)))>;
+  }
+
   // Convert (Un)Signed DWord in memory -> QP
   def : Pat<(f128 (sint_to_fp (i64 (load xaddr:$src)))),
             (f128 (XSCVSDQP (LXSDX xaddr:$src)))>;
