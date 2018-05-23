@@ -5524,53 +5524,52 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
 TEST_F(FormatTest, WrapsTemplateDeclarationsWithComments) {
   FormatStyle Style = getGoogleStyle(FormatStyle::LK_Cpp);
   Style.ColumnLimit = 60;
-  EXPECT_EQ(R"test(
-// Baseline - no comments.
-template <
-    typename aaaaaaaaaaaaaaaaaaaaaa<bbbbbbbbbbbb>::value>
-void f() {})test",
-            format(R"test(
-// Baseline - no comments.
-template <
-    typename aaaaaaaaaaaaaaaaaaaaaa<bbbbbbbbbbbb>::value>
-void f() {})test", Style));
+  EXPECT_EQ("// Baseline - no comments.\n"
+            "template <\n"
+            "    typename aaaaaaaaaaaaaaaaaaaaaa<bbbbbbbbbbbb>::value>\n"
+            "void f() {}",
+            format("// Baseline - no comments.\n"
+                   "template <\n"
+                   "    typename aaaaaaaaaaaaaaaaaaaaaa<bbbbbbbbbbbb>::value>\n"
+                   "void f() {}",
+                   Style));
 
-  EXPECT_EQ(R"test(
-template <
-    typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  // trailing
-void f() {})test",
-            format(R"test(
-template <
-    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing
-void f() {})test", Style));
+  EXPECT_EQ("template <\n"
+            "    typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  // trailing\n"
+            "void f() {}",
+            format("template <\n"
+                   "    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing\n"
+                   "void f() {}",
+                   Style));
 
-  EXPECT_EQ(R"test(
-template <
-    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> /* line */
-void f() {})test",
-            format(R"test(
-template <typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  /* line */
-void f() {})test", Style));
+  EXPECT_EQ(
+      "template <\n"
+      "    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> /* line */\n"
+      "void f() {}",
+      format("template <typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  /* line */\n"
+             "void f() {}",
+             Style));
 
-  EXPECT_EQ(R"test(
-template <
-    typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  // trailing
-                                               // multiline
-void f() {})test",
-            format(R"test(
-template <
-    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing
-                                              // multiline
-void f() {})test", Style));
+  EXPECT_EQ(
+      "template <\n"
+      "    typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  // trailing\n"
+      "                                               // multiline\n"
+      "void f() {}",
+      format("template <\n"
+             "    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing\n"
+             "                                              // multiline\n"
+             "void f() {}",
+             Style));
 
-  EXPECT_EQ(R"test(
-template <typename aaaaaaaaaa<
-    bbbbbbbbbbbb>::value>  // trailing loooong
-void f() {})test",
-            format(R"test(
-template <
-    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing loooong
-void f() {})test", Style));
+  EXPECT_EQ(
+      "template <typename aaaaaaaaaa<\n"
+      "    bbbbbbbbbbbb>::value>  // trailing loooong\n"
+      "void f() {}",
+      format(
+          "template <\n"
+          "    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing loooong\n"
+          "void f() {}",
+          Style));
 }
 
 TEST_F(FormatTest, WrapsTemplateParameters) {
