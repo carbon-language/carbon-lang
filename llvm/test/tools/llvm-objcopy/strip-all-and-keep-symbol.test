@@ -10,6 +10,10 @@
 # RUN: llvm-strip -keep-symbol=foo %t1
 # RUN: cmp %t1 %t2
 
+# RUN: cp %t %t3
+# RUN: llvm-strip --keep-symbol foo %t3
+# RUN: cmp %t1 %t3
+
 !ELF
 FileHeader:
   Class:           ELFCLASS64
