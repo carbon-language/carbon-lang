@@ -188,6 +188,12 @@ static bool isEligible(InputSection *S) {
   if (S->Name == ".init" || S->Name == ".fini")
     return false;
 
+  // A user program may enumerate sections named with a C identifier using
+  // __start_* and __stop_* symbols. We cannot ICF any such sections because
+  // that could change program semantics.
+  if (isValidCIdentifier(S->Name))
+    return false;
+
   return true;
 }
 

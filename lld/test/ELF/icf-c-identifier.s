@@ -2,8 +2,8 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 # RUN: ld.lld %t -o %t2 --icf=all --print-icf-sections | count 0
 
-.section .foo,"ax"
+.section foo,"ax",@progbits,unique,0
 .byte 42
 
-.section .bar,"ax"
+.section foo,"ax",@progbits,unique,1
 .byte 42
