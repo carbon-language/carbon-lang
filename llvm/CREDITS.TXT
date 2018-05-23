@@ -224,6 +224,11 @@ N: Rod Kay
 E: rkay@auroraux.org
 D: Author of LLVM Ada bindings
 
+N: Erich Keane
+E: erich.keane@intel.com
+D: A variety of Clang contributions including function multiversioning, regcall/vectorcall.
+I: ErichKeane
+
 N: Eric Kidd
 W: http://randomhacks.net/
 D: llvm-config script
