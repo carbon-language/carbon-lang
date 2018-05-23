@@ -9956,7 +9956,7 @@ _mm512_mask_reduce_max_epu64(__mmask8 __M, __m512i __V) {
 
 static __inline__ double __DEFAULT_FN_ATTRS
 _mm512_mask_reduce_max_pd(__mmask8 __M, __m512d __V) {
-  _mm512_mask_reduce_maxMin_64bit(__V, -_mm512_set1_pd(__builtin_inf()),
+  _mm512_mask_reduce_maxMin_64bit(__V, _mm512_set1_pd(-__builtin_inf()),
                                   max_pd, d, f, pd, __M);
 }
 
@@ -10099,7 +10099,7 @@ _mm512_mask_reduce_max_epu32(__mmask16 __M, __m512i __V) {
 
 static __inline__ float __DEFAULT_FN_ATTRS
 _mm512_mask_reduce_max_ps(__mmask16 __M, __m512 __V) {
-  _mm512_mask_reduce_maxMin_32bit(__V,-_mm512_set1_ps(__builtin_inff()), max_ps, , f,
+  _mm512_mask_reduce_maxMin_32bit(__V,_mm512_set1_ps(-__builtin_inff()), max_ps, , f,
                                   ps, __M);
 }
 
