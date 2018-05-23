@@ -5521,6 +5521,58 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
                NeverBreak);
 }
 
+TEST_F(FormatTest, WrapsTemplateDeclarationsWithComments) {
+  FormatStyle Style = getGoogleStyle(FormatStyle::LK_Cpp);
+  Style.ColumnLimit = 60;
+  EXPECT_EQ(R"test(
+// Baseline - no comments.
+template <
+    typename aaaaaaaaaaaaaaaaaaaaaa<bbbbbbbbbbbb>::value>
+void f() {})test",
+            format(R"test(
+// Baseline - no comments.
+template <
+    typename aaaaaaaaaaaaaaaaaaaaaa<bbbbbbbbbbbb>::value>
+void f() {})test", Style));
+
+  EXPECT_EQ(R"test(
+template <
+    typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  // trailing
+void f() {})test",
+            format(R"test(
+template <
+    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing
+void f() {})test", Style));
+
+  EXPECT_EQ(R"test(
+template <
+    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> /* line */
+void f() {})test",
+            format(R"test(
+template <typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  /* line */
+void f() {})test", Style));
+
+  EXPECT_EQ(R"test(
+template <
+    typename aaaaaaaaaa<bbbbbbbbbbbb>::value>  // trailing
+                                               // multiline
+void f() {})test",
+            format(R"test(
+template <
+    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing
+                                              // multiline
+void f() {})test", Style));
+
+  EXPECT_EQ(R"test(
+template <typename aaaaaaaaaa<
+    bbbbbbbbbbbb>::value>  // trailing loooong
+void f() {})test",
+            format(R"test(
+template <
+    typename aaaaaaaaaa<bbbbbbbbbbbb>::value> // trailing loooong
+void f() {})test", Style));
+}
+
 TEST_F(FormatTest, WrapsTemplateParameters) {
   FormatStyle Style = getLLVMStyle();
   Style.AlignAfterOpenBracket = FormatStyle::BAS_DontAlign;
