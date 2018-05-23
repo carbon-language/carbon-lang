@@ -905,6 +905,7 @@ public:
 
   std::unique_ptr<PredicateMatcher> popFirstCondition() override;
   const PredicateMatcher &getFirstCondition() const override;
+  LLTCodeGen getFirstConditionAsRootType();
   bool hasFirstCondition() const override;
   unsigned getNumOperands() const;
   StringRef getOpcode() const;
@@ -1973,6 +1974,16 @@ StringRef RuleMatcher::getOpcode() const {
 
 unsigned RuleMatcher::getNumOperands() const {
   return Matchers.front()->getNumOperands();
+}
+
+LLTCodeGen RuleMatcher::getFirstConditionAsRootType() {
+  InstructionMatcher &InsnMatcher = *Matchers.front();
+  if (!InsnMatcher.predicates_empty())
+    if (const auto *TM =
+            dyn_cast<LLTOperandMatcher>(&**InsnMatcher.predicates_begin()))
+      if (TM->getInsnVarID() == 0 && TM->getOpIdx() == 0)
+        return TM->getTy();
+  return {};
 }
 
 /// Generates code to check that the operand is a register defined by an
@@ -4119,6 +4130,27 @@ GlobalISelEmitter::buildMatchTable(MutableArrayRef<RuleMatcher> Rules,
 }
 
 void GroupMatcher::optimize() {
+  // Make sure we only sort by a specific predicate within a range of rules that
+  // all have that predicate checked against a specific value (not a wildcard):
+  auto F = Matchers.begin();
+  auto T = F;
+  auto E = Matchers.end();
+  while (T != E) {
+    while (T != E) {
+      auto *R = static_cast<RuleMatcher *>(*T);
+      if (!R->getFirstConditionAsRootType().get().isValid())
+        break;
+      ++T;
+    }
+    std::stable_sort(F, T, [](Matcher *A, Matcher *B) {
+      auto *L = static_cast<RuleMatcher *>(A);
+      auto *R = static_cast<RuleMatcher *>(B);
+      return L->getFirstConditionAsRootType() <
+             R->getFirstConditionAsRootType();
+    });
+    if (T != E)
+      F = ++T;
+  }
   GlobalISelEmitter::optimizeRules<GroupMatcher>(Matchers, MatcherStorage)
       .swap(Matchers);
 }
