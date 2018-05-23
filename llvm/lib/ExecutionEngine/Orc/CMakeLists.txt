@@ -3,6 +3,7 @@ add_llvm_library(LLVMOrcJIT
   ExecutionUtils.cpp
   IndirectionUtils.cpp
   IRCompileLayer.cpp
+  IRTransformLayer.cpp
   Legacy.cpp
   Layer.cpp
   NullResolver.cpp
