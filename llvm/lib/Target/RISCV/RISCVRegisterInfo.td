@@ -139,6 +139,19 @@ def GPRC : RegisterClass<"RISCV", [XLenVT], 32, (add
       [RegInfo<32,32,32>, RegInfo<64,64,64>, RegInfo<32,32,32>]>;
 }
 
+// For indirect tail calls, we can't use callee-saved registers, as they are
+// restored to the saved value before the tail call, which would clobber a call
+// address.
+def GPRTC : RegisterClass<"RISCV", [XLenVT], 32, (add
+    (sequence "X%u", 5, 7),
+    (sequence "X%u", 10, 17),
+    (sequence "X%u", 28, 31)
+  )> {
+  let RegInfos = RegInfoByHwMode<
+      [RV32,              RV64,              DefaultMode],
+      [RegInfo<32,32,32>, RegInfo<64,64,64>, RegInfo<32,32,32>]>;
+}
+
 def SP : RegisterClass<"RISCV", [XLenVT], 32, (add X2)> {
   let RegInfos = RegInfoByHwMode<
       [RV32,              RV64,              DefaultMode],
