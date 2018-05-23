@@ -217,7 +217,7 @@ bool MipsSEInstrInfo::isCopyInstr(const MachineInstr &MI, MachineOperand &Src,
   // Condition is made to match the creation of WRDSP/RDDSP copy instruction
   // from copyPhysReg function.
   if (isReadOrWritToDSPReg(MI, isDSPControlWrite)) {
-    if (!MI.getOperand(1).isImm() || !MI.getOperand(1).getImm() == (1<<4))
+    if (!MI.getOperand(1).isImm() || !(MI.getOperand(1).getImm() == (1<<4)))
       return false;
     else if (isDSPControlWrite) {
       Src = MI.getOperand(0);
