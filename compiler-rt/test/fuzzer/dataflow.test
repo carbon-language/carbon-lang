@@ -2,8 +2,9 @@
 REQUIRES: linux
 
 # Build the tracer and the test.
-RUN: %no_fuzzer_cpp_compiler -c -fno-sanitize=all -fsanitize=dataflow -fsanitize-coverage=trace-pc-guard,pc-table,func,trace-cmp   %S/ThreeFunctionsTest.cpp -o %t-ThreeFunctionsTest.o
-RUN: %no_fuzzer_cpp_compiler    -fno-sanitize=all -fsanitize=dataflow  %t-ThreeFunctionsTest.o %S/../../lib/fuzzer/dataflow/DataFlow.cpp -o  %t-ThreeFunctionsTestDF
+RUN: %no_fuzzer_cpp_compiler -c -fno-sanitize=all -fsanitize=dataflow  %S/../../lib/fuzzer/dataflow/DataFlow.cpp -o  %t-DataFlow.o
+RUN: %no_fuzzer_cpp_compiler    -fno-sanitize=all -fsanitize=dataflow -fsanitize-coverage=trace-pc-guard,pc-table,func,trace-cmp   %S/ThreeFunctionsTest.cpp     %t-DataFlow.o -o %t-ThreeFunctionsTestDF
+RUN: %no_fuzzer_cpp_compiler    -fno-sanitize=all -fsanitize=dataflow -fsanitize-coverage=trace-pc-guard,pc-table,func,trace-cmp   %S/ExplodeDFSanLabelsTest.cpp %t-DataFlow.o -o %t-ExplodeDFSanLabelsTestDF
 
 # Dump the function list.
 RUN:  %t-ThreeFunctionsTestDF 2>&1 | FileCheck %s --check-prefix=FUNC_LIST
@@ -19,6 +20,7 @@ RUN: echo -n FUABC  > %t/IN/FUABC
 RUN: echo -n FUZZR  > %t/IN/FUZZR
 RUN: echo -n FUZZM  > %t/IN/FUZZM
 RUN: echo -n FUZZMU > %t/IN/FUZZMU
+RUN: echo -n 1234567890123456 > %t/IN/1234567890123456
 
 # ABC: No data is used, the only used label is 4 (corresponds to the size)
 RUN:%t-ThreeFunctionsTestDF %t/IN/ABC    | FileCheck %s --check-prefix=IN_ABC
@@ -74,3 +76,9 @@ IN_FUZZMU: L[[L2:[0-9]*]] 6 7
 IN_FUZZMU-DAG: F{{[012]}} 5
 IN_FUZZMU-DAG: F{{[012]}} [[L2]]
 IN_FUZZMU-DAG: F
+
+# Today a very simple test will cause DFSan to die with "out of labels"
+RUN: not %t-ExplodeDFSanLabelsTestDF %t/IN/1234567890123456 2>&1 | FileCheck %s --check-prefix=OUT_OF_LABELS
+OUT_OF_LABELS: ==FATAL: DataFlowSanitizer: out of labels
+
+
