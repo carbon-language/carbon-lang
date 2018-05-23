@@ -1363,6 +1363,22 @@ TEST_P(ASTImporterTestBase, ShouldImportImplicitCXXRecordDecl) {
   Decl *From, *To;
   std::tie(From, To) = getImportedDecl(
       R"(
+      struct declToImport {
+      };
+      )",
+      Lang_CXX, "", Lang_CXX);
+
+  MatchVerifier<Decl> Verifier;
+  // Match the implicit Decl.
+  auto Matcher = cxxRecordDecl(has(cxxRecordDecl()));
+  ASSERT_TRUE(Verifier.match(From, Matcher));
+  EXPECT_TRUE(Verifier.match(To, Matcher));
+}
+
+TEST_P(ASTImporterTestBase, ShouldImportImplicitCXXRecordDeclOfClassTemplate) {
+  Decl *From, *To;
+  std::tie(From, To) = getImportedDecl(
+      R"(
       template <typename U>
       struct declToImport {
       };
@@ -1378,7 +1394,7 @@ TEST_P(ASTImporterTestBase, ShouldImportImplicitCXXRecordDecl) {
 
 TEST_P(
     ASTImporterTestBase,
-    DISABLED_ShouldImportImplicitCXXRecordDeclOfClassTemplateSpecializationDecl) {
+    ShouldImportImplicitCXXRecordDeclOfClassTemplateSpecializationDecl) {
   Decl *From, *To;
   std::tie(From, To) = getImportedDecl(
       R"(

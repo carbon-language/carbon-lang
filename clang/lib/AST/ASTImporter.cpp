@@ -1959,14 +1959,20 @@ Decl *ASTNodeImporter::VisitRecordDecl(RecordDecl *D) {
   // but this particular declaration is not that definition, import the
   // definition and map to that.
   TagDecl *Definition = D->getDefinition();
-  if (Definition && Definition != D) {
+  if (Definition && Definition != D &&
+      // In contrast to a normal CXXRecordDecl, the implicit
+      // CXXRecordDecl of ClassTemplateSpecializationDecl is its redeclaration.
+      // The definition of the implicit CXXRecordDecl in this case is the
+      // ClassTemplateSpecializationDecl itself. Thus, we start with an extra
+      // condition in order to be able to import the implict Decl.
+      !D->isImplicit()) {
     Decl *ImportedDef = Importer.Import(Definition);
     if (!ImportedDef)
       return nullptr;
 
     return Importer.Imported(D, ImportedDef);
   }
-  
+
   // Import the major distinguishing characteristics of this record.
   DeclContext *DC, *LexicalDC;
   DeclarationName Name;
