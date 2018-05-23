@@ -557,6 +557,9 @@ CopyConfig ParseStripOptions(ArrayRef<const char *> ArgsArr) {
 
   for (auto Arg : InputArgs.filtered(STRIP_remove_section))
     Config.ToRemove.push_back(Arg->getValue());
+  
+  for (auto Arg : InputArgs.filtered(STRIP_keep_symbol))
+    Config.SymbolsToKeep.push_back(Arg->getValue());
 
   return Config;
 }
