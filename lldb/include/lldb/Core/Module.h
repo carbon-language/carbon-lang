@@ -155,8 +155,23 @@ public:
 
   Module(const ModuleSpec &module_spec);
 
-  static lldb::ModuleSP
-  CreateJITModule(const lldb::ObjectFileJITDelegateSP &delegate_sp);
+  template <typename ObjFilePlugin, typename... Args>
+  static lldb::ModuleSP CreateModuleFromObjectFile(Args &&... args) {
+    // Must create a module and place it into a shared pointer before we can
+    // create an object file since it has a std::weak_ptr back to the module,
+    // so we need to control the creation carefully in this static function
+    lldb::ModuleSP module_sp(new Module());
+    module_sp->m_objfile_sp =
+        std::make_shared<ObjFilePlugin>(module_sp, std::forward<Args>(args)...);
+
+    // Once we get the object file, update our module with the object file's
+    // architecture since it might differ in vendor/os if some parts were
+    // unknown.
+    if (!module_sp->m_objfile_sp->GetArchitecture(module_sp->m_arch))
+      return nullptr;
+
+    return module_sp;
+  }
 
   //------------------------------------------------------------------
   /// Destructor.
