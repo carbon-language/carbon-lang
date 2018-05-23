@@ -347,10 +347,6 @@ _writegsbase_u64(unsigned long long __V)
 #include <rdseedintrin.h>
 #endif
 
-#if !defined(_MSC_VER) || __has_feature(modules) || defined(__CLZERO__)
-#include <clzerointrin.h>
-#endif
-
 #if !defined(_MSC_VER) || __has_feature(modules) || defined(__WBNOINVD__)
 #include <wbnoinvdintrin.h>
 #endif
