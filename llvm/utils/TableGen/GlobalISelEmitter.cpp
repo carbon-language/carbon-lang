@@ -4606,10 +4606,20 @@ void GroupMatcher::finalize() {
     return;
 
   Matcher &FirstRule = **Matchers.begin();
+  for (;;) {
+    // All the checks are expected to succeed during the first iteration:
+    for (const auto &Rule : Matchers)
+      if (!Rule->hasFirstCondition())
+        return;
+    const auto &FirstCondition = FirstRule.getFirstCondition();
+    for (unsigned I = 1, E = Matchers.size(); I < E; ++I)
+      if (!Matchers[I]->getFirstCondition().isIdentical(FirstCondition))
+        return;
 
-  Conditions.push_back(FirstRule.popFirstCondition());
-  for (unsigned I = 1, E = Matchers.size(); I < E; ++I)
-    Matchers[I]->popFirstCondition();
+    Conditions.push_back(FirstRule.popFirstCondition());
+    for (unsigned I = 1, E = Matchers.size(); I < E; ++I)
+      Matchers[I]->popFirstCondition();
+  }
 }
 
 void GroupMatcher::emit(MatchTable &Table) {
