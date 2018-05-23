@@ -4490,17 +4490,14 @@ void RuleMatcher::optimize() {
   for (auto &Item : InsnVariableIDs) {
     InstructionMatcher &InsnMatcher = *Item.first;
     for (auto &OM : InsnMatcher.operands()) {
-      // Register Banks checks rarely fail, but often crash as targets usually
-      // provide only partially defined RegisterBankInfo::getRegBankFromRegClass
-      // method. Often the problem is hidden as non-optimized MatchTable checks
-      // banks rather late, most notably after checking target / function /
-      // module features and a few opcodes. That makes these checks a)
-      // beneficial to delay until the very end (we don't want to perform a lot
-      // of checks that all pass and then fail at the very end) b) not safe to
-      // have as early checks.
+      // Complex Patterns are usually expensive and they relatively rarely fail
+      // on their own: more often we end up throwing away all the work done by a
+      // matching part of a complex pattern because some other part of the
+      // enclosing pattern didn't match. All of this makes it beneficial to
+      // delay complex patterns until the very end of the rule matching,
+      // especially for targets having lots of complex patterns.
       for (auto &OP : OM->predicates())
-        if (isa<RegisterBankOperandMatcher>(OP) ||
-            isa<ComplexPatternOperandMatcher>(OP))
+        if (isa<ComplexPatternOperandMatcher>(OP))
           EpilogueMatchers.emplace_back(std::move(OP));
       OM->eraseNullPredicates();
     }
