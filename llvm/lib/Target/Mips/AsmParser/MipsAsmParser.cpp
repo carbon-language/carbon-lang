@@ -235,13 +235,13 @@ class MipsAsmParser : public MCTargetAsmParser {
                                   const MCSubtargetInfo *STI);
 
   void expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                     const MCSubtargetInfo *STI, bool IsLoad, bool IsImmOpnd);
+                     const MCSubtargetInfo *STI, bool IsLoad);
 
   void expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                      const MCSubtargetInfo *STI, bool IsImmOpnd);
+                      const MCSubtargetInfo *STI);
 
   void expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                       const MCSubtargetInfo *STI, bool IsImmOpnd);
+                       const MCSubtargetInfo *STI);
 
   bool expandLoadStoreMultiple(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                                const MCSubtargetInfo *STI);
@@ -2138,7 +2138,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
           int MemOffset = Op.getImm();
           if (MemOffset < -32768 || MemOffset > 32767) {
             // Offset can't exceed 16bit value.
-            expandMemInst(Inst, IDLoc, Out, STI, MCID.mayLoad(), true);
+            expandMemInst(Inst, IDLoc, Out, STI, MCID.mayLoad());
             return getParser().hasPendingError();
           }
         } else if (Op.isExpr()) {
@@ -2148,11 +2148,11 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
                 static_cast<const MCSymbolRefExpr *>(Expr);
             if (SR->getKind() == MCSymbolRefExpr::VK_None) {
               // Expand symbol.
-              expandMemInst(Inst, IDLoc, Out, STI, MCID.mayLoad(), false);
+              expandMemInst(Inst, IDLoc, Out, STI, MCID.mayLoad());
               return getParser().hasPendingError();
             }
           } else if (!isEvaluated(Expr)) {
-            expandMemInst(Inst, IDLoc, Out, STI, MCID.mayLoad(), false);
+            expandMemInst(Inst, IDLoc, Out, STI, MCID.mayLoad());
             return getParser().hasPendingError();
           }
         }
@@ -3555,16 +3555,15 @@ bool MipsAsmParser::expandBranchImm(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
 }
 
 void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                                  const MCSubtargetInfo *STI, bool IsLoad,
-                                  bool IsImmOpnd) {
+                                  const MCSubtargetInfo *STI, bool IsLoad) {
   if (IsLoad)
-    expandLoadInst(Inst, IDLoc, Out, STI, IsImmOpnd);
+    expandLoadInst(Inst, IDLoc, Out, STI);
   else
-    expandStoreInst(Inst, IDLoc, Out, STI, IsImmOpnd);
+    expandStoreInst(Inst, IDLoc, Out, STI);
 }
 
 void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                                   const MCSubtargetInfo *STI, bool IsImmOpnd) {
+                                   const MCSubtargetInfo *STI) {
   const MCOperand &DstRegOp = Inst.getOperand(0);
   assert(DstRegOp.isReg() && "expected register operand kind");
   const MCOperand &BaseRegOp = Inst.getOperand(1);
@@ -3582,7 +3581,7 @@ void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   bool IsGPR = (DstRegClassID == Mips::GPR32RegClassID) ||
                (DstRegClassID == Mips::GPR64RegClassID);
 
-  if (IsImmOpnd) {
+  if (OffsetOp.isImm()) {
     // Try to use DstReg as the temporary.
     if (IsGPR && (BaseReg != DstReg)) {
       TOut.emitLoadWithImmOffset(Inst.getOpcode(), DstReg, BaseReg,
@@ -3626,8 +3625,7 @@ void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
 }
 
 void MipsAsmParser::expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
-                                    const MCSubtargetInfo *STI,
-                                    bool IsImmOpnd) {
+                                    const MCSubtargetInfo *STI) {
   const MCOperand &SrcRegOp = Inst.getOperand(0);
   assert(SrcRegOp.isReg() && "expected register operand kind");
   const MCOperand &BaseRegOp = Inst.getOperand(1);
@@ -3638,7 +3636,7 @@ void MipsAsmParser::expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   unsigned SrcReg = SrcRegOp.getReg();
   unsigned BaseReg = BaseRegOp.getReg();
 
-  if (IsImmOpnd) {
+  if (OffsetOp.isImm()) {
     TOut.emitStoreWithImmOffset(Inst.getOpcode(), SrcReg, BaseReg,
                                 OffsetOp.getImm(),
                                 [&]() { return getATReg(IDLoc); }, IDLoc, STI);
