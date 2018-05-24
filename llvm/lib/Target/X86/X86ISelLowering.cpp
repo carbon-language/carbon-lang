@@ -34286,10 +34286,7 @@ static SDValue combineLogicBlendIntoPBLENDV(SDNode *N, SelectionDAG &DAG,
                                             const X86Subtarget &Subtarget) {
   assert(N->getOpcode() == ISD::OR && "Unexpected Opcode");
 
-  SDValue N0 = N->getOperand(0);
-  SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
-
   if (!((VT.is128BitVector() && Subtarget.hasSSE2()) ||
         (VT.is256BitVector() && Subtarget.hasInt256())))
     return SDValue();
