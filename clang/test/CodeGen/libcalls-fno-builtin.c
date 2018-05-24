@@ -5,12 +5,14 @@
 // RUN:  -fno-builtin-strcpy -fno-builtin-stpcpy -fno-builtin-strncpy -fno-builtin-strlen \
 // RUN:  -fno-builtin-strpbrk -fno-builtin-strspn -fno-builtin-strtod -fno-builtin-strtof \
 // RUN:  -fno-builtin-strtold -fno-builtin-strtol -fno-builtin-strtoll -fno-builtin-strtoul \
-// RUN:  -fno-builtin-strtoull -o - %s | FileCheck %s
+// RUN:  -fno-builtin-strtoull -fno-builtin-fread -fno-builtin-fwrite -o - %s | FileCheck %s
 // RUN: %clang_cc1 -S -O3 -fno-builtin -o - %s | FileCheck --check-prefix=ASM %s
 // RUN: %clang_cc1 -S -O3 -fno-builtin-ceil -o - %s | FileCheck --check-prefix=ASM-INDIV %s
+
 // rdar://10551066
 
 typedef __SIZE_TYPE__ size_t;
+typedef struct FILE FILE;
 
 double ceil(double x);
 double copysign(double,double);
@@ -36,6 +38,9 @@ long int strtol(const char *nptr, char **endptr, int base);
 long long int strtoll(const char *nptr, char **endptr, int base);
 unsigned long int strtoul(const char *nptr, char **endptr, int base);
 unsigned long long int strtoull(const char *nptr, char **endptr, int base);
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t fwrite(const void *ptr, size_t size, size_t nmemb,
+              FILE *stream);
 
 double t1(double x) { return ceil(x); }
 // CHECK-LABEL: t1
@@ -138,5 +143,13 @@ long int t23(char **x) { return strtoul("1234", x, 10); }
 long int t24(char **x) { return strtoull("1234", x, 10); }
 // CHECK-LABEL: t24
 // CHECK: call{{.*}}@strtoull{{.*}} [[ATTR]]
+
+void t25(FILE *fp, int *buf) {
+  size_t x = fwrite(buf, sizeof(int), 10, fp);
+  size_t y = fread(buf, sizeof(int), 10, fp);
+}
+// CHECK-LABEL: t25
+// CHECK: call{{.*}}@fwrite{{.*}} [[ATTR]]
+// CHECK: call{{.*}}@fread{{.*}} [[ATTR]]
 
 // CHECK: [[ATTR]] = { nobuiltin }
