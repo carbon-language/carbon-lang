@@ -11,10 +11,10 @@
 
 #if defined(__APPLE__)
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
-using HostObjectFile = lldb_private::ObjectFileMachO;
+using HostObjectFile = ObjectFileMachO;
 #elif defined(_WIN32)
 #include "Plugins/ObjectFile/PECOFF/ObjectFilePECOFF.h"
-using HostObjectFile = lldb_private::ObjectFilePECOFF;
+using HostObjectFile = ObjectFilePECOFF;
 #else
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
 using HostObjectFile = ObjectFileELF;
