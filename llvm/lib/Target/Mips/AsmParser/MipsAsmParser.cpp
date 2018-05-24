@@ -3573,6 +3573,7 @@ void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   MipsTargetStreamer &TOut = getTargetStreamer();
   unsigned DstReg = DstRegOp.getReg();
   unsigned BaseReg = BaseRegOp.getReg();
+  unsigned TmpReg = DstReg;
 
   const MCInstrDesc &Desc = getInstDesc(Inst.getOpcode());
   int16_t DstRegClass = Desc.OpInfo[0].RegClass;
@@ -3581,47 +3582,27 @@ void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   bool IsGPR = (DstRegClassID == Mips::GPR32RegClassID) ||
                (DstRegClassID == Mips::GPR64RegClassID);
 
+  if (!IsGPR || (BaseReg == DstReg)) {
+    // At this point we need AT to perform the expansions
+    // and we exit if it is not available.
+    TmpReg = getATReg(IDLoc);
+    if (!TmpReg)
+      return;
+  }
+
   if (OffsetOp.isImm()) {
-    // Try to use DstReg as the temporary.
-    if (IsGPR && (BaseReg != DstReg)) {
-      TOut.emitLoadWithImmOffset(Inst.getOpcode(), DstReg, BaseReg,
-                                 OffsetOp.getImm(), DstReg, IDLoc, STI);
-      return;
-    }
-
-    // At this point we need AT to perform the expansions and we exit if it is
-    // not available.
-    unsigned ATReg = getATReg(IDLoc);
-    if (!ATReg)
-      return;
-
     TOut.emitLoadWithImmOffset(Inst.getOpcode(), DstReg, BaseReg,
-                               OffsetOp.getImm(), ATReg, IDLoc, STI);
-    return;
-  }
-
-  assert(OffsetOp.isExpr() && "expected expression operand kind");
-  const MCExpr *ExprOffset = OffsetOp.getExpr();
-  MCOperand LoOperand = MCOperand::createExpr(
-      MipsMCExpr::create(MipsMCExpr::MEK_LO, ExprOffset, getContext()));
-  MCOperand HiOperand = MCOperand::createExpr(
-      MipsMCExpr::create(MipsMCExpr::MEK_HI, ExprOffset, getContext()));
-
-  // Try to use DstReg as the temporary.
-  if (IsGPR && (BaseReg != DstReg)) {
+                               OffsetOp.getImm(), TmpReg, IDLoc, STI);
+  } else {
+    assert(OffsetOp.isExpr() && "expected expression operand kind");
+    const MCExpr *ExprOffset = OffsetOp.getExpr();
+    MCOperand LoOperand = MCOperand::createExpr(
+        MipsMCExpr::create(MipsMCExpr::MEK_LO, ExprOffset, getContext()));
+    MCOperand HiOperand = MCOperand::createExpr(
+        MipsMCExpr::create(MipsMCExpr::MEK_HI, ExprOffset, getContext()));
     TOut.emitLoadWithSymOffset(Inst.getOpcode(), DstReg, BaseReg, HiOperand,
-                               LoOperand, DstReg, IDLoc, STI);
-    return;
+                               LoOperand, TmpReg, IDLoc, STI);
   }
-
-  // At this point we need AT to perform the expansions and we exit if it is
-  // not available.
-  unsigned ATReg = getATReg(IDLoc);
-  if (!ATReg)
-    return;
-
-  TOut.emitLoadWithSymOffset(Inst.getOpcode(), DstReg, BaseReg, HiOperand,
-                             LoOperand, ATReg, IDLoc, STI);
 }
 
 void MipsAsmParser::expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
