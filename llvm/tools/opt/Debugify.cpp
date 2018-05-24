@@ -191,8 +191,10 @@ bool checkDebugifyMetadata(Module &M,
     errs() << "ERROR: Missing variable " << Idx + 1 << "\n";
   HasErrors |= MissingVars.count() > 0;
 
-  errs() << Banner << " [" << NameOfWrappedPass << "]: "
-         << (HasErrors ? "FAIL" : "PASS") << '\n';
+  errs() << Banner;
+  if (!NameOfWrappedPass.empty())
+    errs() << " [" << NameOfWrappedPass << "]";
+  errs() << ": " << (HasErrors ? "FAIL" : "PASS") << '\n';
   if (HasErrors) {
     errs() << "Module IR Dump\n";
     M.print(errs(), nullptr, false);
