@@ -182,7 +182,10 @@ void Analysis::printSchedClassClustersHtml(std::vector<size_t> PointIds,
   OS << "<tr><th>ClusterId</th><th>Opcode/Config</th>";
   for (const auto &Measurement : Points[PointIds[0]].Measurements) {
     OS << "<th>";
-    writeEscaped<kEscapeHtml>(OS, Measurement.Key);
+    if (Measurement.DebugString.empty())
+      writeEscaped<kEscapeHtml>(OS, Measurement.Key);
+    else
+      writeEscaped<kEscapeHtml>(OS, Measurement.DebugString);
     OS << "</th>";
   }
   OS << "</tr>";
