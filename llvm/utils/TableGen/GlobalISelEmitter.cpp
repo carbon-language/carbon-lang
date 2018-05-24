@@ -4153,6 +4153,8 @@ void GroupMatcher::optimize() {
   }
   GlobalISelEmitter::optimizeRules<GroupMatcher>(Matchers, MatcherStorage)
       .swap(Matchers);
+  GlobalISelEmitter::optimizeRules<SwitchMatcher>(Matchers, MatcherStorage)
+      .swap(Matchers);
 }
 
 void GlobalISelEmitter::run(raw_ostream &OS) {
@@ -4641,7 +4643,7 @@ void GroupMatcher::emit(MatchTable &Table) {
 }
 
 bool SwitchMatcher::isSupportedPredicateType(const PredicateMatcher &P) {
-  return isa<InstructionOpcodeMatcher>(P);
+  return isa<InstructionOpcodeMatcher>(P) || isa<LLTOperandMatcher>(P);
 }
 
 bool SwitchMatcher::candidateConditionMatches(
@@ -4715,6 +4717,13 @@ void SwitchMatcher::emitPredicateSpecificOpcodes(const PredicateMatcher &P,
   if (const auto *Condition = dyn_cast<InstructionOpcodeMatcher>(&P)) {
     Table << MatchTable::Opcode("GIM_SwitchOpcode") << MatchTable::Comment("MI")
           << MatchTable::IntValue(Condition->getInsnVarID());
+    return;
+  }
+  if (const auto *Condition = dyn_cast<LLTOperandMatcher>(&P)) {
+    Table << MatchTable::Opcode("GIM_SwitchType") << MatchTable::Comment("MI")
+          << MatchTable::IntValue(Condition->getInsnVarID())
+          << MatchTable::Comment("Op")
+          << MatchTable::IntValue(Condition->getOpIdx());
     return;
   }
 
