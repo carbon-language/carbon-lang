@@ -13,9 +13,11 @@
 
 using namespace llvm;
 
+cl::OptionCategory llvm::ColorCategory("Color Options");
+
 static cl::opt<cl::boolOrDefault>
-    UseColor("color",
-             cl::desc("use colored syntax highlighting (default=autodetect)"),
+    UseColor("color", cl::cat(ColorCategory),
+             cl::desc("Use colors in output (default=autodetect)"),
              cl::init(cl::BOU_UNSET));
 
 bool WithColor::colorsEnabled(raw_ostream &OS) {

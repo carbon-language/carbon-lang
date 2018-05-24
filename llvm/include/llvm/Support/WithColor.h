@@ -14,6 +14,8 @@
 
 namespace llvm {
 
+extern cl::OptionCategory ColorCategory;
+
 class raw_ostream;
 
 // Symbolic names for various syntax elements.
