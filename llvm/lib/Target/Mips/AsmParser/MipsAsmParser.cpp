@@ -3565,10 +3565,15 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
 
 void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                                    const MCSubtargetInfo *STI, bool IsImmOpnd) {
-  MipsTargetStreamer &TOut = getTargetStreamer();
+  const MCOperand &DstRegOp = Inst.getOperand(0);
+  assert(DstRegOp.isReg() && "expected register operand kind");
+  const MCOperand &BaseRegOp = Inst.getOperand(1);
+  assert(BaseRegOp.isReg() && "expected register operand kind");
+  const MCOperand &OffsetOp = Inst.getOperand(2);
 
-  unsigned DstReg = Inst.getOperand(0).getReg();
-  unsigned BaseReg = Inst.getOperand(1).getReg();
+  MipsTargetStreamer &TOut = getTargetStreamer();
+  unsigned DstReg = DstRegOp.getReg();
+  unsigned BaseReg = BaseRegOp.getReg();
 
   const MCInstrDesc &Desc = getInstDesc(Inst.getOpcode());
   int16_t DstRegClass = Desc.OpInfo[0].RegClass;
@@ -3581,8 +3586,7 @@ void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
     // Try to use DstReg as the temporary.
     if (IsGPR && (BaseReg != DstReg)) {
       TOut.emitLoadWithImmOffset(Inst.getOpcode(), DstReg, BaseReg,
-                                 Inst.getOperand(2).getImm(), DstReg, IDLoc,
-                                 STI);
+                                 OffsetOp.getImm(), DstReg, IDLoc, STI);
       return;
     }
 
@@ -3593,11 +3597,12 @@ void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
       return;
 
     TOut.emitLoadWithImmOffset(Inst.getOpcode(), DstReg, BaseReg,
-                               Inst.getOperand(2).getImm(), ATReg, IDLoc, STI);
+                               OffsetOp.getImm(), ATReg, IDLoc, STI);
     return;
   }
 
-  const MCExpr *ExprOffset = Inst.getOperand(2).getExpr();
+  assert(OffsetOp.isExpr() && "expected expression operand kind");
+  const MCExpr *ExprOffset = OffsetOp.getExpr();
   MCOperand LoOperand = MCOperand::createExpr(
       MipsMCExpr::create(MipsMCExpr::MEK_LO, ExprOffset, getContext()));
   MCOperand HiOperand = MCOperand::createExpr(
@@ -3623,14 +3628,19 @@ void MipsAsmParser::expandLoadInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
 void MipsAsmParser::expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                                     const MCSubtargetInfo *STI,
                                     bool IsImmOpnd) {
-  MipsTargetStreamer &TOut = getTargetStreamer();
+  const MCOperand &SrcRegOp = Inst.getOperand(0);
+  assert(SrcRegOp.isReg() && "expected register operand kind");
+  const MCOperand &BaseRegOp = Inst.getOperand(1);
+  assert(BaseRegOp.isReg() && "expected register operand kind");
+  const MCOperand &OffsetOp = Inst.getOperand(2);
 
-  unsigned SrcReg = Inst.getOperand(0).getReg();
-  unsigned BaseReg = Inst.getOperand(1).getReg();
+  MipsTargetStreamer &TOut = getTargetStreamer();
+  unsigned SrcReg = SrcRegOp.getReg();
+  unsigned BaseReg = BaseRegOp.getReg();
 
   if (IsImmOpnd) {
     TOut.emitStoreWithImmOffset(Inst.getOpcode(), SrcReg, BaseReg,
-                                Inst.getOperand(2).getImm(),
+                                OffsetOp.getImm(),
                                 [&]() { return getATReg(IDLoc); }, IDLoc, STI);
     return;
   }
@@ -3639,7 +3649,8 @@ void MipsAsmParser::expandStoreInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   if (!ATReg)
     return;
 
-  const MCExpr *ExprOffset = Inst.getOperand(2).getExpr();
+  assert(OffsetOp.isExpr() && "expected expression operand kind");
+  const MCExpr *ExprOffset = OffsetOp.getExpr();
   MCOperand LoOperand = MCOperand::createExpr(
       MipsMCExpr::create(MipsMCExpr::MEK_LO, ExprOffset, getContext()));
   MCOperand HiOperand = MCOperand::createExpr(
