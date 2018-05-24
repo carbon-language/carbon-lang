@@ -11,6 +11,7 @@
 #define LLVM_SUPPORT_WITHCOLOR_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace llvm {
 
