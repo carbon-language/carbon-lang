@@ -50,14 +50,16 @@ macro(test_fuzzer stdlib)
       ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME}/lit.site.cfg
       )
 
-    add_lit_testsuite(check-fuzzer-${stdlib_name} "Running Fuzzer ${stdlib} tests"
-      ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME}
+    add_lit_testsuite(check-fuzzer-${stdlib_name}-${arch}
+      "Running Fuzzer ${stdlib} tests"
+      ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME}/
       DEPENDS ${LIBFUZZER_TEST_DEPS})
     if(TEST_DEPS)
-      add_dependencies(check-fuzzer-${stdlib_name} ${TEST_DEPS})
+      add_dependencies(check-fuzzer-${stdlib_name}-${arch} ${TEST_DEPS})
     endif()
-    set_target_properties(check-fuzzer-${stdlib_name} PROPERTIES FOLDER "Compiler-RT Tests")
-    add_dependencies(check-fuzzer check-fuzzer-${stdlib_name})
+    set_target_properties(check-fuzzer-${stdlib_name}-${arch}
+        PROPERTIES FOLDER "Compiler-RT Tests")
+    add_dependencies(check-fuzzer check-fuzzer-${stdlib_name}-${arch})
   endforeach()
 endmacro()
 
