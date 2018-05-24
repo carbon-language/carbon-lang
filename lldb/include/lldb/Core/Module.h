@@ -12,6 +12,7 @@
 
 #include "lldb/Core/Address.h"    // for Address
 #include "lldb/Core/ModuleSpec.h" // for ModuleSpec
+#include "lldb/Symbol/ObjectFile.h" // for ObjectFile
 #include "lldb/Symbol/SymbolContextScope.h"
 #include "lldb/Symbol/TypeSystem.h"
 #include "lldb/Target/PathMappingList.h"
