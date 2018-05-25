@@ -103,7 +103,7 @@ private:
 
   const TargetLowering *TLI;
 
-  AMDGPUPerfHintAnalysis::FuncInfoMap::iterator visit(const Function &F);
+  void visit(const Function &F);
   static bool isMemBound(const AMDGPUPerfHintAnalysis::FuncInfo &F);
   static bool needLimitWave(const AMDGPUPerfHintAnalysis::FuncInfo &F);
 
@@ -211,11 +211,10 @@ bool AMDGPUPerfHint::isIndirectAccess(const Instruction *Inst) const {
   return false;
 }
 
-AMDGPUPerfHintAnalysis::FuncInfoMap::iterator
-AMDGPUPerfHint::visit(const Function &F) {
+void AMDGPUPerfHint::visit(const Function &F) {
   auto FIP = FIM.insert(std::make_pair(&F, AMDGPUPerfHintAnalysis::FuncInfo()));
   if (!FIP.second)
-    return FIP.first;
+    return;
 
   AMDGPUPerfHintAnalysis::FuncInfo &FI = FIP.first->second;
 
@@ -243,7 +242,8 @@ AMDGPUPerfHint::visit(const Function &F) {
         if (&F == Callee) // Handle immediate recursion
           continue;
 
-        auto Loc = visit(*Callee);
+        visit(*Callee);
+        auto Loc = FIM.find(Callee);
 
         assert(Loc != FIM.end() && "No func info");
         FI.MemInstCount += Loc->second.MemInstCount;
@@ -265,8 +265,6 @@ AMDGPUPerfHint::visit(const Function &F) {
       }
     }
   }
-
-  return FIP.first;
 }
 
 void AMDGPUPerfHint::runOnFunction(Function &F) {
@@ -277,7 +275,8 @@ void AMDGPUPerfHint::runOnFunction(Function &F) {
   DL = &M.getDataLayout();
   AS = AMDGPU::getAMDGPUAS(M);
 
-  auto Loc = visit(F);
+  visit(F);
+  auto Loc = FIM.find(&F);
 
   assert(Loc != FIM.end() && "No func info");
   LLVM_DEBUG(dbgs() << F.getName() << " MemInst: " << Loc->second.MemInstCount
