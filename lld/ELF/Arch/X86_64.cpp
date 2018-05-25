@@ -497,7 +497,7 @@ template <class ELFT> Retpoline<ELFT>::Retpoline() {
 
 template <class ELFT>
 void Retpoline<ELFT>::writeGotPlt(uint8_t *Buf, const Symbol &S) const {
-  write32le(Buf, S.getPltVA() + 17);
+  write64le(Buf, S.getPltVA() + 17);
 }
 
 template <class ELFT> void Retpoline<ELFT>::writePltHeader(uint8_t *Buf) const {
