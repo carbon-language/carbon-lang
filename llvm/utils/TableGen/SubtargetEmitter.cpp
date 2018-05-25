@@ -115,6 +115,7 @@ class SubtargetEmitter {
   void EmitSchedModelHelpers(const std::string &ClassName, raw_ostream &OS);
   void emitSchedModelHelpersImpl(raw_ostream &OS,
                                  bool OnlyExpandMCInstPredicates = false);
+  void emitGenMCSubtargetInfo(raw_ostream &OS);
 
   void EmitSchedModel(raw_ostream &OS);
   void EmitHwModeCheck(const std::string &ClassName, raw_ostream &OS);
@@ -1645,6 +1646,26 @@ void SubtargetEmitter::ParseFeaturesFunction(raw_ostream &OS,
   OS << "}\n";
 }
 
+void SubtargetEmitter::emitGenMCSubtargetInfo(raw_ostream &OS) {
+  OS << "struct " << Target
+     << "GenMCSubtargetInfo : public MCSubtargetInfo {\n";
+  OS << "  " << Target << "GenMCSubtargetInfo(const Triple &TT, \n"
+     << "    StringRef CPU, StringRef FS, ArrayRef<SubtargetFeatureKV> PF,\n"
+     << "    ArrayRef<SubtargetFeatureKV> PD,\n"
+     << "    const SubtargetInfoKV *ProcSched,\n"
+     << "    const MCWriteProcResEntry *WPR,\n"
+     << "    const MCWriteLatencyEntry *WL,\n"
+     << "    const MCReadAdvanceEntry *RA, const InstrStage *IS,\n"
+     << "    const unsigned *OC, const unsigned *FP) :\n"
+     << "      MCSubtargetInfo(TT, CPU, FS, PF, PD, ProcSched,\n"
+     << "                      WPR, WL, RA, IS, OC, FP) { }\n\n"
+     << "  unsigned resolveVariantSchedClass(unsigned SchedClass,\n"
+     << "      const MCInst *MI, unsigned CPUID) const override {\n";
+  emitSchedModelHelpersImpl(OS, /* OnlyExpandMCPredicates */ true);
+  OS << "  }\n";
+  OS << "};\n";
+}
+
 //
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
@@ -1677,10 +1698,12 @@ void SubtargetEmitter::run(raw_ostream &OS) {
 #endif
 
   // MCInstrInfo initialization routine.
+  emitGenMCSubtargetInfo(OS);
+
   OS << "\nstatic inline MCSubtargetInfo *create" << Target
      << "MCSubtargetInfoImpl("
      << "const Triple &TT, StringRef CPU, StringRef FS) {\n";
-  OS << "  return new MCSubtargetInfo(TT, CPU, FS, ";
+  OS << "  return new " << Target << "GenMCSubtargetInfo(TT, CPU, FS, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
   else

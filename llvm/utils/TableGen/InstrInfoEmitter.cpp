@@ -67,6 +67,10 @@ private:
   /// See file llvm/Target/TargetInstPredicates.td for a description of what is
   /// a TIIPredicate and how to use it.
   void emitTIIHelperMethods(raw_ostream &OS);
+
+  /// Expand TIIPredicate definitions to functions that accept a const MCInst
+  /// reference.
+  void emitMCIIHelperMethods(raw_ostream &OS);
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo,
                   std::map<std::vector<Record*>, unsigned> &EL,
@@ -347,6 +351,55 @@ void InstrInfoEmitter::emitOperandTypesEnum(raw_ostream &OS,
   OS << "#endif // GET_INSTRINFO_OPERAND_TYPES_ENUM\n\n";
 }
 
+void InstrInfoEmitter::emitMCIIHelperMethods(raw_ostream &OS) {
+  RecVec TIIPredicates = Records.getAllDerivedDefinitions("TIIPredicate");
+  if (TIIPredicates.empty())
+    return;
+
+  CodeGenTarget &Target = CDP.getTargetInfo();
+  const StringRef TargetName = Target.getName();
+  formatted_raw_ostream FOS(OS);
+
+  FOS << "#ifdef GET_GENINSTRINFO_MC_DECL\n";
+  FOS << "#undef GET_GENINSTRINFO_MC_DECL\n\n";
+
+  FOS << "namespace llvm {\n";
+  FOS << "class MCInst;\n\n";
+
+  FOS << "namespace " << TargetName << "_MC {\n\n";
+
+  for (const Record *Rec : TIIPredicates) {
+    FOS << "bool " << Rec->getValueAsString("FunctionName")
+        << "(const MCInst &MI);\n";
+  }
+
+  FOS << "\n} // end " << TargetName << "_MC namespace\n";
+  FOS << "} // end llvm namespace\n\n";
+
+  FOS << "#endif // GET_GENINSTRINFO_MC_DECL\n\n";
+
+  FOS << "#ifdef GET_GENINSTRINFO_MC_HELPERS\n";
+  FOS << "#undef GET_GENINSTRINFO_MC_HELPERS\n\n";
+
+  FOS << "namespace llvm {\n";
+  FOS << "namespace " << TargetName << "_MC {\n\n";
+
+  PredicateExpander PE;
+  PE.setExpandForMC(true);
+  for (const Record *Rec : TIIPredicates) {
+    FOS << "bool " << Rec->getValueAsString("FunctionName");
+    FOS << "(const MCInst &MI) {\n";
+    FOS << "  return ";
+    PE.expandPredicate(FOS, Rec->getValueAsDef("Pred"));
+    FOS << ";\n}\n";
+  }
+
+  FOS << "\n} // end " << TargetName << "_MC namespace\n";
+  FOS << "} // end llvm namespace\n\n";
+
+  FOS << "#endif // GET_GENISTRINFO_MC_HELPERS\n";
+}
+
 void InstrInfoEmitter::emitTIIHelperMethods(raw_ostream &OS) {
   RecVec TIIPredicates = Records.getAllDerivedDefinitions("TIIPredicate");
   if (TIIPredicates.empty())
@@ -490,6 +543,8 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   emitOperandNameMappings(OS, Target, NumberedInstructions);
 
   emitOperandTypesEnum(OS, Target);
+
+  emitMCIIHelperMethods(OS);
 }
 
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
