@@ -8,8 +8,11 @@
 //===----------------------------------------------------------------------===//
 /// \file
 ///
-/// This file implements classes that are used to model reorder buffers and
-/// the hardware dispatch logic.
+/// This file models the dispatch component of an instruction pipeline.
+///
+/// The DispatchStage is responsible for updating instruction dependencies
+/// and communicating to the simulated instruction scheduler that an instruction
+/// is ready to be scheduled for execution.
 ///
 //===----------------------------------------------------------------------===//
 

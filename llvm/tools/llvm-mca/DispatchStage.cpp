@@ -8,7 +8,11 @@
 //===----------------------------------------------------------------------===//
 /// \file
 ///
-/// This file implements methods declared by the DispatchStage class.
+/// This file models the dispatch component of an instruction pipeline.
+///
+/// The DispatchStage is responsible for updating instruction dependencies
+/// and communicating to the simulated instruction scheduler that an instruction
+/// is ready to be scheduled for execution.
 ///
 //===----------------------------------------------------------------------===//
 
