@@ -1556,7 +1556,9 @@ void SubtargetEmitter::emitSchedModelHelpersImpl(
         OS << "    return " << SC.Index << ";\n";
       OS << "    break;\n";
     }
-    OS << "  };\n";
+    // Add a default case to avoid generating a potentially empty switch.
+    OS << "  default : break;\n"
+       << "  };\n";
   }
 
   if (OnlyExpandMCInstPredicates) {
