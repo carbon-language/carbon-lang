@@ -16,8 +16,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVM_MCA_DISPATCH_H
-#define LLVM_TOOLS_LLVM_MCA_DISPATCH_H
+#ifndef LLVM_TOOLS_LLVM_MCA_DISPATCH_STAGE_H
+#define LLVM_TOOLS_LLVM_MCA_DISPATCH_STAGE_H
 
 #include "Instruction.h"
 #include "RegisterFile.h"
@@ -108,4 +108,4 @@ public:
 };
 } // namespace mca
 
-#endif
+#endif // LLVM_TOOLS_LLVM_MCA_DISPATCH_STAGE_H
