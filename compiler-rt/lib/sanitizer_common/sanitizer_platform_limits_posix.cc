@@ -264,7 +264,6 @@ namespace __sanitizer {
 #else
 #error Unknown size of struct ustat
 #endif
-
   unsigned struct_ustat_sz = SIZEOF_STRUCT_USTAT;
   unsigned struct_rlimit64_sz = sizeof(struct rlimit64);
   unsigned struct_statvfs64_sz = sizeof(struct statvfs64);
