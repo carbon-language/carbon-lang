@@ -16,6 +16,7 @@
 #include "CodeGenInstruction.h"
 #include "CodeGenSchedule.h"
 #include "CodeGenTarget.h"
+#include "PredicateExpander.h"
 #include "SequenceToOffsetTable.h"
 #include "TableGenBackends.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -59,6 +60,13 @@ private:
   typedef std::map<std::map<unsigned, unsigned>,
                    std::vector<std::string>> OpNameMapTy;
   typedef std::map<std::string, unsigned>::iterator StrUintMapIter;
+
+  /// Generate member functions in the target-specific GenInstrInfo class.
+  ///
+  /// This method is used to custom expand TIIPredicate definitions.
+  /// See file llvm/Target/TargetInstPredicates.td for a description of what is
+  /// a TIIPredicate and how to use it.
+  void emitTIIHelperMethods(raw_ostream &OS);
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo,
                   std::map<std::vector<Record*>, unsigned> &EL,
@@ -339,6 +347,25 @@ void InstrInfoEmitter::emitOperandTypesEnum(raw_ostream &OS,
   OS << "#endif // GET_INSTRINFO_OPERAND_TYPES_ENUM\n\n";
 }
 
+void InstrInfoEmitter::emitTIIHelperMethods(raw_ostream &OS) {
+  RecVec TIIPredicates = Records.getAllDerivedDefinitions("TIIPredicate");
+  if (TIIPredicates.empty())
+    return;
+
+  formatted_raw_ostream FOS(OS);
+  PredicateExpander PE;
+  PE.setExpandForMC(false);
+  PE.setIndentLevel(2);
+
+  for (const Record *Rec : TIIPredicates) {
+    FOS << "\n  static bool " << Rec->getValueAsString("FunctionName");
+    FOS << "(const MachineInstr &MI) {\n";
+    FOS << "    return ";
+    PE.expandPredicate(FOS, Rec->getValueAsDef("Pred"));
+    FOS << ";\n  }\n";
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Main Output.
 //===----------------------------------------------------------------------===//
@@ -435,9 +462,11 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
   OS << "struct " << ClassName << " : public TargetInstrInfo {\n"
      << "  explicit " << ClassName
      << "(int CFSetupOpcode = -1, int CFDestroyOpcode = -1, int CatchRetOpcode = -1, int ReturnOpcode = -1);\n"
-     << "  ~" << ClassName << "() override = default;\n"
-     << "};\n";
-  OS << "} // end llvm namespace\n";
+     << "  ~" << ClassName << "() override = default;\n";
+
+  emitTIIHelperMethods(OS);
+
+  OS << "\n};\n} // end llvm namespace\n";
 
   OS << "#endif // GET_INSTRINFO_HEADER\n\n";
 
