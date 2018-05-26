@@ -106,7 +106,7 @@ declare i1 @llvm.type.test(i8*, metadata) nounwind readnone
 declare void @llvm.assume(i1)
 declare {i8*, i1} @llvm.type.checked.load(i8*, i32, metadata)
 
-; DIS: ^0 = module: (path: "{{.*}}/test/Bitcode/Output/thinlto-type-vcalls.ll.tmp.o", hash: (0, 0, 0, 0, 0))
+; DIS: ^0 = module: (path: "{{.*}}thinlto-type-vcalls.ll.tmp.o", hash: (0, 0, 0, 0, 0))
 ; DIS: ^1 = gv: (name: "llvm.type.test") ; guid = 608142985856744218
 ; DIS: ^2 = gv: (name: "f1", summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 8, typeIdInfo: (typeTestAssumeVCalls: (vFuncId: (guid: 6699318081062747564, offset: 16)))))) ; guid = 2072045998141807037
 ; DIS: ^3 = gv: (name: "f3", summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 5, typeIdInfo: (typeCheckedLoadVCalls: (vFuncId: (guid: 6699318081062747564, offset: 16)))))) ; guid = 4197650231481825559
@@ -117,7 +117,7 @@ declare {i8*, i1} @llvm.type.checked.load(i8*, i32, metadata)
 ; DIS: ^8 = gv: (name: "f5", summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 5, typeIdInfo: (typeCheckedLoadConstVCalls: (vFuncId: (guid: 6699318081062747564, offset: 16), args: (42)))))) ; guid = 11686717102184386164
 ; DIS: ^9 = gv: (name: "f6", summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 2, typeIdInfo: (typeTests: (7546896869197086323))))) ; guid = 11834966808443348068
 
-; COMBINED-DIS: ^0 = module: (path: "{{.*}}/test/Bitcode/Output/thinlto-type-vcalls.ll.tmp.o", hash: (0, 0, 0, 0, 0))
+; COMBINED-DIS: ^0 = module: (path: "{{.*}}thinlto-type-vcalls.ll.tmp.o", hash: (0, 0, 0, 0, 0))
 ; COMBINED-DIS: ^1 = gv: (guid: 2072045998141807037, summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 8, typeIdInfo: (typeTestAssumeVCalls: (vFuncId: (guid: 6699318081062747564, offset: 16))))))
 ; COMBINED-DIS: ^2 = gv: (guid: 4197650231481825559, summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 5, typeIdInfo: (typeCheckedLoadVCalls: (vFuncId: (guid: 6699318081062747564, offset: 16))))))
 ; COMBINED-DIS: ^3 = gv: (guid: 8471399308421654326, summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 15, typeIdInfo: (typeTestAssumeVCalls: (vFuncId: (guid: 6699318081062747564, offset: 24), vFuncId: (guid: 16434608426314478903, offset: 32))))))

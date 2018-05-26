@@ -142,18 +142,21 @@ entry:
   ret i32 0
 }
 
-; DIS: ^0 = module: (path: "{{.*}}/test/Bitcode/Output/thinlto-function-summary-refgraph.ll.tmp.o", hash: (0, 0, 0, 0, 0))
-; DIS: ^1 = gv: (name: "Z", summaries: (function: (module: ^0, flags: (linkage: linkonce_odr, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 2, calls: ((callee: ^8))))) ; guid = 104084381700047393
-; DIS: ^2 = gv: (name: "X", summaries: (function: (module: ^0, flags: (linkage: available_externally, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 2, calls: ((callee: ^4)), refs: (^4)))) ; guid = 1881667236089500162
-; DIS: ^3 = gv: (name: "W", summaries: (function: (module: ^0, flags: (linkage: weak_odr, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 2, calls: ((callee: ^6)), refs: (^7)))) ; guid = 5790125716599269729
-; DIS: ^4 = gv: (name: "foo") ; guid = 6699318081062747564
-; DIS: ^5 = gv: (name: "func") ; guid = 7289175272376759421
-; DIS: ^6 = gv: (name: "func3") ; guid = 11517462787082255043
-; DIS: ^7 = gv: (name: "globalvar", summaries: (variable: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0)))) ; guid = 12887606300320728018
-; DIS: ^8 = gv: (name: "func2") ; guid = 14069196320850861797
-; DIS: ^9 = gv: (name: "llvm.ctpop.i8") ; guid = 15254915475081819833
-; DIS: ^10 = gv: (name: "main", summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 9, calls: ((callee: ^5)), refs: (^5)))) ; guid = 15822663052811949562
-; DIS: ^11 = gv: (name: "bar", summaries: (variable: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), refs: (^5)))) ; guid = 16434608426314478903
+; Don't try to match summary IDs. The numbering depends on the map iteration
+; order, which depends on GUID, and the private function Y GUID will depend
+; on the path to the test.
+; DIS: ^0 = module: (path: "{{.*}}thinlto-function-summary-refgraph.ll.tmp.o", hash: (0, 0, 0, 0, 0))
+; DIS-DAG: = gv: (name: "Z", summaries: (function: (module: ^0, flags: (linkage: linkonce_odr, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 2, calls: ((callee: ^{{.*}}))))) ; guid = 104084381700047393
+; DIS-DAG: = gv: (name: "X", summaries: (function: (module: ^0, flags: (linkage: available_externally, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 2, calls: ((callee: ^{{.*}})), refs: (^{{.*}})))) ; guid = 1881667236089500162
+; DIS-DAG: = gv: (name: "W", summaries: (function: (module: ^0, flags: (linkage: weak_odr, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 2, calls: ((callee: ^{{.*}})), refs: (^{{.*}})))) ; guid = 5790125716599269729
+; DIS-DAG: = gv: (name: "foo") ; guid = 6699318081062747564
+; DIS-DAG: = gv: (name: "func") ; guid = 7289175272376759421
+; DIS-DAG: = gv: (name: "func3") ; guid = 11517462787082255043
+; DIS-DAG: = gv: (name: "globalvar", summaries: (variable: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0)))) ; guid = 12887606300320728018
+; DIS-DAG: = gv: (name: "func2") ; guid = 14069196320850861797
+; DIS-DAG: = gv: (name: "llvm.ctpop.i8") ; guid = 15254915475081819833
+; DIS-DAG: = gv: (name: "main", summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 9, calls: ((callee: ^{{.*}})), refs: (^{{.*}})))) ; guid = 15822663052811949562
+; DIS-DAG: = gv: (name: "bar", summaries: (variable: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), refs: (^{{.*}})))) ; guid = 16434608426314478903
 ; Don't try to match the exact GUID. Since it is private, the file path
 ; will get hashed, and that will be test dependent.
-; DIS: ^12 = gv: (name: "Y", summaries: (function: (module: ^0, flags: (linkage: private, notEligibleToImport: 0, live: 0, dsoLocal: 1), insts: 14, calls: ((callee: ^8))))) ; guid =
+; DIS-DAG: = gv: (name: "Y", summaries: (function: (module: ^0, flags: (linkage: private, notEligibleToImport: 0, live: 0, dsoLocal: 1), insts: 14, calls: ((callee: ^{{.*}}))))) ; guid =

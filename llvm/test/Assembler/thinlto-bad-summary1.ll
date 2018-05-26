@@ -14,5 +14,5 @@ entry:
     ret i32 1
 }
 
-^0 = module: (path: "{{.*}}/test/Assembler/thinlto-bad-summary1.ll", hash: (0, 0, 0, 0, 0))
+^0 = module: (path: "{{.*}}thinlto-bad-summary1.ll", hash: (0, 0, 0, 0, 0))
 ^1 = ()
