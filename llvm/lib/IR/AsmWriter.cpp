@@ -2576,7 +2576,7 @@ void AssemblyWriter::printModuleSummaryIndex() {
 
   // Print module path entries, using the module id as the slot number. To
   // print in order, add paths to a vector indexed by module id.
-  std::vector<std::pair<StringRef, ModuleHash>> moduleVec;
+  std::vector<std::pair<std::string, ModuleHash>> moduleVec;
   std::string RegularLTOModuleName = "[Regular LTO]";
   moduleVec.resize(TheIndex->modulePaths().size());
   for (auto &ModPath : TheIndex->modulePaths()) {
