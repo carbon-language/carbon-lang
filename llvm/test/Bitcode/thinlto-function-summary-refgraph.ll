@@ -154,4 +154,6 @@ entry:
 ; DIS: ^9 = gv: (name: "llvm.ctpop.i8") ; guid = 15254915475081819833
 ; DIS: ^10 = gv: (name: "main", summaries: (function: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), insts: 9, calls: ((callee: ^5)), refs: (^5)))) ; guid = 15822663052811949562
 ; DIS: ^11 = gv: (name: "bar", summaries: (variable: (module: ^0, flags: (linkage: external, notEligibleToImport: 0, live: 0, dsoLocal: 0), refs: (^5)))) ; guid = 16434608426314478903
-; DIS: ^12 = gv: (name: "Y", summaries: (function: (module: ^0, flags: (linkage: private, notEligibleToImport: 0, live: 0, dsoLocal: 1), insts: 14, calls: ((callee: ^8))))) ; guid = 18057131226797195731
+; Don't try to match the exact GUID. Since it is private, the file path
+; will get hashed, and that will be test dependent.
+; DIS: ^12 = gv: (name: "Y", summaries: (function: (module: ^0, flags: (linkage: private, notEligibleToImport: 0, live: 0, dsoLocal: 1), insts: 14, calls: ((callee: ^8))))) ; guid =
