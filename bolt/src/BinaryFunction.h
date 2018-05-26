@@ -2305,7 +2305,6 @@ template <> struct GraphTraits<bolt::BinaryFunction *> :
 
   using nodes_iterator = pointer_iterator<bolt::BinaryFunction::iterator>;
 
-//  typedef bolt::BinaryBasicBlock * nodes_iterator;
   static nodes_iterator nodes_begin(bolt::BinaryFunction *F) {
     llvm_unreachable("Not implemented");
     return nodes_iterator(F->begin());

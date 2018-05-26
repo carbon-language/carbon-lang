@@ -701,8 +701,22 @@ public:
     return replaceInstruction(Inst, Replacement.begin(), Replacement.end());
   }
 
+  /// Return iterator pointing to the first inserted instruction.
+  template <typename Itr>
+  iterator replaceInstruction(iterator II, Itr Begin, Itr End) {
+    adjustNumPseudos(*II, -1);
+    adjustNumPseudos(Begin, End, 1);
+
+    return Instructions.insert(Instructions.erase(II), Begin, End);
+  }
+
+  iterator replaceInstruction(iterator II,
+                              const std::vector<MCInst> &Replacement) {
+    return replaceInstruction(II, Replacement.begin(), Replacement.end());
+  }
+
   /// Insert \p NewInst before \p At, which must be an existing instruction in
-  /// this BB. Return a pointer to the newly inserted instruction.
+  /// this BB. Return iterator pointing to the newly inserted instruction.
   iterator insertInstruction(iterator At, MCInst &&NewInst) {
     adjustNumPseudos(NewInst, 1);
     return Instructions.emplace(At, std::move(NewInst));

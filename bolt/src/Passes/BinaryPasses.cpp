@@ -1540,5 +1540,55 @@ void StripRepRet::runOnFunctions(
   }
 }
 
+void InlineMemcpy::runOnFunctions(BinaryContext &BC,
+                                  std::map<uint64_t, BinaryFunction> &BFs,
+                                  std::set<uint64_t> &LargeFunctions) {
+  if (!BC.isX86())
+    return;
+
+  uint64_t NumInlined = 0;
+  uint64_t NumInlinedDyno = 0;
+  for (auto &BFI : BFs) {
+    for (auto &BB : BFI.second) {
+      for(auto II = BB.begin(); II != BB.end(); ++II) {
+        auto &Inst = *II;
+
+        if (!BC.MIB->isCall(Inst) || MCPlus::getNumPrimeOperands(Inst) != 1 ||
+            !Inst.getOperand(0).isExpr())
+          continue;
+
+        const auto *CalleeSymbol = BC.MIB->getTargetSymbol(Inst);
+        if (CalleeSymbol->getName() != "memcpy" &&
+            CalleeSymbol->getName() != "memcpy@PLT" &&
+            CalleeSymbol->getName() != "_memcpy8")
+          continue;
+
+        const auto IsMemcpy8 = (CalleeSymbol->getName() == "_memcpy8");
+        const auto IsTailCall = BC.MIB->isTailCall(Inst);
+
+        const auto NewCode = BC.MIB->createInlineMemcpy(IsMemcpy8);
+        II = BB.replaceInstruction(II, NewCode);
+        std::advance(II, NewCode.size() - 1);
+        if (IsTailCall) {
+          MCInst Return;
+          BC.MIB->createReturn(Return);
+          II = BB.insertInstruction(std::next(II), std::move(Return));
+        }
+
+        ++NumInlined;
+        NumInlinedDyno += BB.getKnownExecutionCount();
+      }
+    }
+  }
+
+  if (NumInlined) {
+    outs() << "BOLT-INFO: inlined " << NumInlined << " memcpy() calls";
+    if (NumInlinedDyno)
+      outs() << ". The calls were executed " << NumInlinedDyno
+             << " times based on profile.";
+    outs() << '\n';
+  }
+}
+
 } // namespace bolt
 } // namespace llvm

@@ -1283,6 +1283,13 @@ public:
     return true;
   }
 
+  /// Creates inline memcpy instruction. If \p ReturnEnd is true, then return
+  /// (dest + n) instead of dest.
+  virtual std::vector<MCInst> createInlineMemcpy(bool ReturnEnd) const {
+    llvm_unreachable("not implemented");
+    return {};
+  }
+
   /// Returns true if instruction is a call frame pseudo instruction.
   virtual bool isCFI(const MCInst &Inst) const {
     return Inst.getOpcode() == TargetOpcode::CFI_INSTRUCTION;

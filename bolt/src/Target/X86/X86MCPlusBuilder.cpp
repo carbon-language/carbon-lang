@@ -15,6 +15,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -2711,6 +2712,29 @@ public:
   bool createReturn(MCInst &Inst) const override {
     Inst.setOpcode(X86::RETQ);
     return true;
+  }
+
+  std::vector<MCInst> createInlineMemcpy(bool ReturnEnd) const override {
+    std::vector<MCInst> Code;
+    if (ReturnEnd) {
+      Code.emplace_back(MCInstBuilder(X86::LEA64r)
+                            .addReg(X86::RAX)
+                            .addReg(X86::RDI)
+                            .addImm(1)
+                            .addReg(X86::RDX)
+                            .addImm(0)
+                            .addReg(X86::NoRegister));
+    } else {
+      Code.emplace_back(MCInstBuilder(X86::MOV64rr)
+                            .addReg(X86::RAX)
+                            .addReg(X86::RDI));
+    }
+    Code.emplace_back(MCInstBuilder(X86::MOV32rr)
+                          .addReg(X86::ECX)
+                          .addReg(X86::EDX));
+    Code.emplace_back(MCInstBuilder(X86::REP_MOVSB_64));
+
+    return Code;
   }
 
   bool replaceImmWithSymbol(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,

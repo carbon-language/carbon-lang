@@ -433,6 +433,21 @@ public:
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Pass for inlining calls to memcpy using 'rep movsb' on X86.
+class InlineMemcpy : public BinaryFunctionPass {
+public:
+  explicit InlineMemcpy(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) {}
+
+  const char *getName() const override {
+    return "inline-memcpy";
+  }
+
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 enum FrameOptimizationType : char {
   FOP_NONE, /// Don't perform FOP.
   FOP_HOT,  /// Perform FOP on hot functions.

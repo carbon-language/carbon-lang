@@ -231,6 +231,13 @@ RegReAssign("reg-reassign",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
+StringOps("inline-memcpy",
+  cl::desc("inline memcpy using 'rep movsb' instruction (X86-only)"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
 StripRepRet("strip-rep-ret",
   cl::desc("strip 'repz' prefix from 'repz retq' sequence (on by default)"),
   cl::init(true),
@@ -357,6 +364,9 @@ void BinaryFunctionPassManager::runAllPasses(
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
                        opts::ICF);
+
+  Manager.registerPass(llvm::make_unique<InlineMemcpy>(NeverPrint),
+                       opts::StringOps);
 
   Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP));
 
