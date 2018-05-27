@@ -63,7 +63,8 @@ UnrollVerifyDomtree("unroll-verify-domtree", cl::Hidden,
 
 /// Convert the instruction operands from referencing the current values into
 /// those specified by VMap.
-void llvm::remapInstruction(Instruction *I, ValueToValueMapTy &VMap) {
+static inline void remapInstruction(Instruction *I,
+                                    ValueToValueMapTy &VMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
 
@@ -97,9 +98,9 @@ void llvm::remapInstruction(Instruction *I, ValueToValueMapTy &VMap) {
 /// Folds a basic block into its predecessor if it only has one predecessor, and
 /// that predecessor only has one successor.
 /// The LoopInfo Analysis that is passed will be kept consistent.
-BasicBlock *llvm::foldBlockIntoPredecessor(BasicBlock *BB, LoopInfo *LI,
-                                           ScalarEvolution *SE,
-                                           DominatorTree *DT) {
+static BasicBlock *
+foldBlockIntoPredecessor(BasicBlock *BB, LoopInfo *LI, ScalarEvolution *SE,
+                         DominatorTree *DT) {
   // Merge basic blocks into their predecessor if there is only one distinct
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
@@ -109,8 +110,7 @@ BasicBlock *llvm::foldBlockIntoPredecessor(BasicBlock *BB, LoopInfo *LI,
   if (OnlyPred->getTerminator()->getNumSuccessors() != 1)
     return nullptr;
 
-  LLVM_DEBUG(dbgs() << "Merging: " << BB->getName() << " into "
-                    << OnlyPred->getName() << "\n");
+  LLVM_DEBUG(dbgs() << "Merging: " << *BB << "into: " << *OnlyPred);
 
   // Resolve any PHI nodes at the start of the block.  They are all
   // guaranteed to have exactly one entry if they exist, unless there are
@@ -255,9 +255,9 @@ static bool isEpilogProfitable(Loop *L) {
 /// Perform some cleanup and simplifications on loops after unrolling. It is
 /// useful to simplify the IV's in the new loop, as well as do a quick
 /// simplify/dce pass of the instructions.
-void llvm::simplifyLoopAfterUnroll(Loop *L, bool SimplifyIVs, LoopInfo *LI,
-                                   ScalarEvolution *SE, DominatorTree *DT,
-                                   AssumptionCache *AC) {
+static void simplifyLoopAfterUnroll(Loop *L, bool SimplifyIVs, LoopInfo *LI,
+                                    ScalarEvolution *SE, DominatorTree *DT,
+                                    AssumptionCache *AC) {
   // Simplify any new induction variables in the partially unrolled loop.
   if (SE && SimplifyIVs) {
     SmallVector<WeakTrackingVH, 16> DeadInsts;
@@ -473,8 +473,8 @@ LoopUnrollResult llvm::UnrollLoop(
     if (Force)
       RuntimeTripCount = false;
     else {
-      LLVM_DEBUG(dbgs() << "Won't unroll; remainder loop could not be "
-                           "generated when assuming runtime trip count\n");
+      LLVM_DEBUG(dbgs() << "Wont unroll; remainder loop could not be generated"
+                           "when assuming runtime trip count\n");
       return LoopUnrollResult::Unmodified;
     }
   }

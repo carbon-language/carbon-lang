@@ -28,7 +28,6 @@ add_llvm_library(LLVMTransformUtils
   LoopRotationUtils.cpp
   LoopSimplify.cpp
   LoopUnroll.cpp
-  LoopUnrollAndJam.cpp
   LoopUnrollPeel.cpp
   LoopUnrollRuntime.cpp
   LoopUtils.cpp
