@@ -64,7 +64,7 @@ static bool isNullOrUndef(const Constant *C) {
   return true;
 }
 
-static bool isSuitableForBSS(const GlobalVariable *GV, bool NoZerosInBSS) {
+static bool isSuitableForBSS(const GlobalVariable *GV) {
   const Constant *C = GV->getInitializer();
 
   // Must have zero initializer.
@@ -77,10 +77,6 @@ static bool isSuitableForBSS(const GlobalVariable *GV, bool NoZerosInBSS) {
 
   // If the global has an explicit section specified, don't put it in BSS.
   if (GV->hasSection())
-    return false;
-
-  // If -nozero-initialized-in-bss is specified, don't ever use BSS.
-  if (NoZerosInBSS)
     return false;
 
   // Otherwise, put it in BSS!
@@ -155,7 +151,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalObject *GO,
 
   // Handle thread-local data first.
   if (GVar->isThreadLocal()) {
-    if (isSuitableForBSS(GVar, TM.Options.NoZerosInBSS))
+    if (isSuitableForBSS(GVar) && !TM.Options.NoZerosInBSS)
       return SectionKind::getThreadBSS();
     return SectionKind::getThreadData();
   }
@@ -164,8 +160,9 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalObject *GO,
   if (GVar->hasCommonLinkage())
     return SectionKind::getCommon();
 
-  // Variable can be easily put to BSS section.
-  if (isSuitableForBSS(GVar, TM.Options.NoZerosInBSS)) {
+  // Most non-mergeable zero data can be put in the BSS section unless otherwise
+  // specified.
+  if (isSuitableForBSS(GVar) && !TM.Options.NoZerosInBSS) {
     if (GVar->hasLocalLinkage())
       return SectionKind::getBSSLocal();
     else if (GVar->hasExternalLinkage())
