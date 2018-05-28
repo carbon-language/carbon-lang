@@ -173,8 +173,8 @@ typedef union ompt_data_t {
 
 static const ompt_data_t ompt_data_none = {0};
 
-typedef uint64_t ompt_wait_id_t;
-static const ompt_wait_id_t ompt_wait_id_none = 0;
+typedef uint64_t omp_wait_id_t;
+static const omp_wait_id_t omp_wait_id_none = 0;
 
 typedef void ompt_device_t;
 
@@ -287,7 +287,7 @@ typedef void (*ompt_callback_thread_end_t) (
 );
 
 typedef void (*ompt_wait_callback_t) (
-    ompt_wait_id_t wait_id                /* wait data                           */
+    omp_wait_id_t wait_id                /* wait data                           */
 );
 
 /* parallel and workshares */
@@ -467,19 +467,19 @@ typedef void (*ompt_callback_mutex_acquire_t) (
     ompt_mutex_kind_t kind,               /* mutex kind                          */
     unsigned int hint,                    /* mutex hint                          */
     unsigned int impl,                    /* mutex implementation                */
-    ompt_wait_id_t wait_id,               /* id of object being awaited          */
+    omp_wait_id_t wait_id,               /* id of object being awaited          */
     const void *codeptr_ra                /* return address of runtime call      */
 );
 
 typedef void (*ompt_callback_mutex_t) (
     ompt_mutex_kind_t kind,               /* mutex kind                          */
-    ompt_wait_id_t wait_id,               /* id of object being awaited          */
+    omp_wait_id_t wait_id,               /* id of object being awaited          */
     const void *codeptr_ra                /* return address of runtime call      */
 );
 
 typedef void (*ompt_callback_nest_lock_t) (
     ompt_scope_endpoint_t endpoint,       /* endpoint of nested lock             */
-    ompt_wait_id_t wait_id,               /* id of object being awaited          */
+    omp_wait_id_t wait_id,               /* id of object being awaited          */
     const void *codeptr_ra                /* return address of runtime call      */
 );
 
@@ -569,7 +569,7 @@ extern "C" {
 
 /* state */
 OMPT_API_FUNCTION(omp_state_t, ompt_get_state, (
-    ompt_wait_id_t *wait_id
+    omp_wait_id_t *wait_id
 ));
 
 /* thread */

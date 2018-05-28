@@ -189,7 +189,7 @@ on_ompt_callback_mutex_acquire(
   ompt_mutex_kind_t kind,
   unsigned int hint,
   unsigned int impl,
-  ompt_wait_id_t wait_id,
+  omp_wait_id_t wait_id,
   const void *codeptr_ra)
 {
   switch(kind)
@@ -217,7 +217,7 @@ on_ompt_callback_mutex_acquire(
 static void
 on_ompt_callback_mutex_acquired(
   ompt_mutex_kind_t kind,
-  ompt_wait_id_t wait_id,
+  omp_wait_id_t wait_id,
   const void *codeptr_ra)
 {
   switch(kind)
@@ -245,7 +245,7 @@ on_ompt_callback_mutex_acquired(
 static void
 on_ompt_callback_mutex_released(
   ompt_mutex_kind_t kind,
-  ompt_wait_id_t wait_id,
+  omp_wait_id_t wait_id,
   const void *codeptr_ra)
 {
   switch(kind)
@@ -273,7 +273,7 @@ on_ompt_callback_mutex_released(
 static void
 on_ompt_callback_nest_lock(
     ompt_scope_endpoint_t endpoint,
-    ompt_wait_id_t wait_id,
+    omp_wait_id_t wait_id,
     const void *codeptr_ra)
 {
   switch(endpoint)
@@ -447,7 +447,7 @@ on_ompt_callback_lock_init(
   ompt_mutex_kind_t kind,
   unsigned int hint,
   unsigned int impl,
-  ompt_wait_id_t wait_id,
+  omp_wait_id_t wait_id,
   const void *codeptr_ra)
 {
   switch(kind)
@@ -466,7 +466,7 @@ on_ompt_callback_lock_init(
 static void
 on_ompt_callback_lock_destroy(
   ompt_mutex_kind_t kind,
-  ompt_wait_id_t wait_id,
+  omp_wait_id_t wait_id,
   const void *codeptr_ra)
 {
   switch(kind)

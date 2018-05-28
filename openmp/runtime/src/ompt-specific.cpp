@@ -211,15 +211,15 @@ ompt_data_t *__ompt_get_thread_data_internal() {
 void __ompt_thread_assign_wait_id(void *variable) {
   kmp_info_t *ti = ompt_get_thread();
 
-  ti->th.ompt_thread_info.wait_id = (ompt_wait_id_t)variable;
+  ti->th.ompt_thread_info.wait_id = (omp_wait_id_t)variable;
 }
 
-omp_state_t __ompt_get_state_internal(ompt_wait_id_t *ompt_wait_id) {
+omp_state_t __ompt_get_state_internal(omp_wait_id_t *omp_wait_id) {
   kmp_info_t *ti = ompt_get_thread();
 
   if (ti) {
-    if (ompt_wait_id)
-      *ompt_wait_id = ti->th.ompt_thread_info.wait_id;
+    if (omp_wait_id)
+      *omp_wait_id = ti->th.ompt_thread_info.wait_id;
     return ti->th.ompt_thread_info.state;
   }
   return omp_state_undefined;
