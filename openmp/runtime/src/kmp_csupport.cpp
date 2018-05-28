@@ -276,7 +276,7 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
     va_start(ap, microtask);
 
 #if OMPT_SUPPORT
-    ompt_frame_t *ompt_frame;
+    omp_frame_t *ompt_frame;
     if (ompt_enabled.enabled) {
       kmp_info_t *master_th = __kmp_threads[gtid];
       kmp_team_t *parent_team = master_th->th.th_team;
@@ -677,7 +677,7 @@ void __kmpc_barrier(ident_t *loc, kmp_int32 global_tid) {
   }
 
 #if OMPT_SUPPORT
-  ompt_frame_t *ompt_frame;
+  omp_frame_t *ompt_frame;
   if (ompt_enabled.enabled) {
     __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
     if (ompt_frame->enter_frame == NULL)
@@ -1563,7 +1563,7 @@ kmp_int32 __kmpc_barrier_master(ident_t *loc, kmp_int32 global_tid) {
     __kmp_check_barrier(global_tid, ct_barrier, loc);
 
 #if OMPT_SUPPORT
-  ompt_frame_t *ompt_frame;
+  omp_frame_t *ompt_frame;
   if (ompt_enabled.enabled) {
     __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
     if (ompt_frame->enter_frame == NULL)
@@ -1625,7 +1625,7 @@ kmp_int32 __kmpc_barrier_master_nowait(ident_t *loc, kmp_int32 global_tid) {
   }
 
 #if OMPT_SUPPORT
-  ompt_frame_t *ompt_frame;
+  omp_frame_t *ompt_frame;
   if (ompt_enabled.enabled) {
     __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
     if (ompt_frame->enter_frame == NULL)
@@ -1975,7 +1975,7 @@ void __kmpc_copyprivate(ident_t *loc, kmp_int32 gtid, size_t cpy_size,
     *data_ptr = cpy_data;
 
 #if OMPT_SUPPORT
-  ompt_frame_t *ompt_frame;
+  omp_frame_t *ompt_frame;
   if (ompt_enabled.enabled) {
     __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
     if (ompt_frame->enter_frame == NULL)
@@ -3359,7 +3359,7 @@ __kmpc_reduce_nowait(ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
     // JP: as long as there is a barrier in the implementation, OMPT should and
     // will provide the barrier events
     //         so we set-up the necessary frame/return addresses.
-    ompt_frame_t *ompt_frame;
+    omp_frame_t *ompt_frame;
     if (ompt_enabled.enabled) {
       __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
       if (ompt_frame->enter_frame == NULL)
@@ -3540,7 +3540,7 @@ kmp_int32 __kmpc_reduce(ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars,
 // this barrier should be visible to a customer and to the threading profile
 // tool (it's a terminating barrier on constructs if NOWAIT not specified)
 #if OMPT_SUPPORT
-    ompt_frame_t *ompt_frame;
+    omp_frame_t *ompt_frame;
     if (ompt_enabled.enabled) {
       __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
       if (ompt_frame->enter_frame == NULL)
@@ -3626,7 +3626,7 @@ void __kmpc_end_reduce(ident_t *loc, kmp_int32 global_tid,
 
 // TODO: implicit barrier: should be exposed
 #if OMPT_SUPPORT
-    ompt_frame_t *ompt_frame;
+    omp_frame_t *ompt_frame;
     if (ompt_enabled.enabled) {
       __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
       if (ompt_frame->enter_frame == NULL)
@@ -3650,7 +3650,7 @@ void __kmpc_end_reduce(ident_t *loc, kmp_int32 global_tid,
 
 // TODO: implicit barrier: should be exposed
 #if OMPT_SUPPORT
-    ompt_frame_t *ompt_frame;
+    omp_frame_t *ompt_frame;
     if (ompt_enabled.enabled) {
       __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
       if (ompt_frame->enter_frame == NULL)
@@ -3671,7 +3671,7 @@ void __kmpc_end_reduce(ident_t *loc, kmp_int32 global_tid,
   } else if (packed_reduction_method == atomic_reduce_block) {
 
 #if OMPT_SUPPORT
-    ompt_frame_t *ompt_frame;
+    omp_frame_t *ompt_frame;
     if (ompt_enabled.enabled) {
       __ompt_get_task_info_internal(0, NULL, NULL, &ompt_frame, NULL, NULL);
       if (ompt_frame->enter_frame == NULL)

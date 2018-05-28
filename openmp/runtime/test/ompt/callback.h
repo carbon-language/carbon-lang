@@ -74,7 +74,7 @@ static ompt_enumerate_mutex_impls_t ompt_enumerate_mutex_impls;
 static void print_ids(int level)
 {
   int task_type, thread_num;
-  ompt_frame_t *frame;
+  omp_frame_t *frame;
   ompt_data_t *task_parallel_data;
   ompt_data_t *task_data;
   int exists_task = ompt_get_task_info(level, &task_type, &task_data, &frame,
@@ -571,7 +571,7 @@ on_ompt_callback_master(
 static void
 on_ompt_callback_parallel_begin(
   ompt_data_t *encountering_task_data,
-  const ompt_frame_t *encountering_task_frame,
+  const omp_frame_t *encountering_task_frame,
   ompt_data_t* parallel_data,
   uint32_t requested_team_size,
   ompt_invoker_t invoker,
@@ -596,7 +596,7 @@ on_ompt_callback_parallel_end(
 static void
 on_ompt_callback_task_create(
     ompt_data_t *encountering_task_data,
-    const ompt_frame_t *encountering_task_frame,
+    const omp_frame_t *encountering_task_frame,
     ompt_data_t* new_task_data,
     int type,
     int has_dependences,
@@ -678,7 +678,7 @@ on_ompt_callback_control_tool(
   void *arg,
   const void *codeptr_ra)
 {
-  ompt_frame_t* omptTaskFrame;
+  omp_frame_t* omptTaskFrame;
   ompt_get_task_info(0, NULL, (ompt_data_t**) NULL, &omptTaskFrame, NULL, NULL);
   printf("%" PRIu64 ": ompt_event_control_tool: command=%" PRIu64 ", modifier=%" PRIu64 ", arg=%p, codeptr_ra=%p, current_task_frame.exit=%p, current_task_frame.reenter=%p \n", ompt_get_thread_data()->value, command, modifier, arg, codeptr_ra, omptTaskFrame->exit_frame, omptTaskFrame->enter_frame);
   return 0; //success

@@ -502,7 +502,7 @@ OMPT_API_ROUTINE ompt_data_t *ompt_get_thread_data(void) {
 
 OMPT_API_ROUTINE int ompt_get_task_info(int ancestor_level, int *type,
                                         ompt_data_t **task_data,
-                                        ompt_frame_t **task_frame,
+                                        omp_frame_t **task_frame,
                                         ompt_data_t **parallel_data,
                                         int *thread_num) {
   return __ompt_get_task_info_internal(ancestor_level, type, task_data,

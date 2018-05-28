@@ -328,7 +328,7 @@ void __ompt_lw_taskteam_unlink(kmp_info_t *thr) {
 
 int __ompt_get_task_info_internal(int ancestor_level, int *type,
                                   ompt_data_t **task_data,
-                                  ompt_frame_t **task_frame,
+                                  omp_frame_t **task_frame,
                                   ompt_data_t **parallel_data,
                                   int *thread_num) {
   if (__kmp_get_gtid() < 0)

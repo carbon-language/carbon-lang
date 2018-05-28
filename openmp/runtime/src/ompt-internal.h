@@ -53,7 +53,7 @@ typedef struct ompt_callbacks_active_s {
       (info->td_flags.merged_if0 ? ompt_task_mergeable : 0x0)
 
 typedef struct {
-  ompt_frame_t frame;
+  omp_frame_t frame;
   ompt_data_t task_data;
   struct kmp_taskdata *scheduling_parent;
   int thread_num;
