@@ -96,10 +96,14 @@ namespace Mips {
     fixup_Mips_Branch_PCRel,
 
     // resulting in - R_MIPS_GPREL16/R_MIPS_SUB/R_MIPS_HI16
+    //                R_MICROMIPS_GPREL16/R_MICROMIPS_SUB/R_MICROMIPS_HI16
     fixup_Mips_GPOFF_HI,
+    fixup_MICROMIPS_GPOFF_HI,
 
     // resulting in - R_MIPS_GPREL16/R_MIPS_SUB/R_MIPS_LO16
+    //                R_MICROMIPS_GPREL16/R_MICROMIPS_SUB/R_MICROMIPS_LO16
     fixup_Mips_GPOFF_LO,
+    fixup_MICROMIPS_GPOFF_LO,
 
     // resulting in - R_MIPS_PAGE
     fixup_Mips_GOT_PAGE,

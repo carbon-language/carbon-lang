@@ -329,11 +329,25 @@ unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
     Type = setRType3((unsigned)ELF::R_MIPS_HI16, Type);
     return Type;
   }
+  case Mips::fixup_MICROMIPS_GPOFF_HI: {
+    unsigned Type = (unsigned)ELF::R_MIPS_NONE;
+    Type = setRType((unsigned)ELF::R_MICROMIPS_GPREL16, Type);
+    Type = setRType2((unsigned)ELF::R_MICROMIPS_SUB, Type);
+    Type = setRType3((unsigned)ELF::R_MICROMIPS_HI16, Type);
+    return Type;
+  }
   case Mips::fixup_Mips_GPOFF_LO: {
     unsigned Type = (unsigned)ELF::R_MIPS_NONE;
     Type = setRType((unsigned)ELF::R_MIPS_GPREL16, Type);
     Type = setRType2((unsigned)ELF::R_MIPS_SUB, Type);
     Type = setRType3((unsigned)ELF::R_MIPS_LO16, Type);
+    return Type;
+  }
+  case Mips::fixup_MICROMIPS_GPOFF_LO: {
+    unsigned Type = (unsigned)ELF::R_MIPS_NONE;
+    Type = setRType((unsigned)ELF::R_MICROMIPS_GPREL16, Type);
+    Type = setRType2((unsigned)ELF::R_MICROMIPS_SUB, Type);
+    Type = setRType3((unsigned)ELF::R_MICROMIPS_LO16, Type);
     return Type;
   }
   case Mips::fixup_Mips_HIGHER:

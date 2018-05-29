@@ -656,12 +656,12 @@ getExprOpValue(const MCExpr *Expr, SmallVectorImpl<MCFixup> &Fixups,
       break;
     case MipsMCExpr::MEK_LO:
       // Check for %lo(%neg(%gp_rel(X)))
-      if (MipsExpr->isGpOff()) {
-        FixupKind = Mips::fixup_Mips_GPOFF_LO;
-        break;
-      }
-      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_LO16
-                                   : Mips::fixup_Mips_LO16;
+      if (MipsExpr->isGpOff())
+        FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_GPOFF_LO
+                                     : Mips::fixup_Mips_GPOFF_LO;
+      else
+        FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_LO16
+                                     : Mips::fixup_Mips_LO16;
       break;
     case MipsMCExpr::MEK_HIGHEST:
       FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_HIGHEST
@@ -673,12 +673,12 @@ getExprOpValue(const MCExpr *Expr, SmallVectorImpl<MCFixup> &Fixups,
       break;
     case MipsMCExpr::MEK_HI:
       // Check for %hi(%neg(%gp_rel(X)))
-      if (MipsExpr->isGpOff()) {
-        FixupKind = Mips::fixup_Mips_GPOFF_HI;
-        break;
-      }
-      FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_HI16
-                                   : Mips::fixup_Mips_HI16;
+      if (MipsExpr->isGpOff())
+        FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_GPOFF_HI
+                                     : Mips::fixup_Mips_GPOFF_HI;
+      else
+        FixupKind = isMicroMips(STI) ? Mips::fixup_MICROMIPS_HI16
+                                     : Mips::fixup_Mips_HI16;
       break;
     case MipsMCExpr::MEK_PCREL_HI16:
       FixupKind = Mips::fixup_MIPS_PCHI16;
