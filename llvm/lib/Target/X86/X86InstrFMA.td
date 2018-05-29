@@ -367,12 +367,12 @@ defm VFNMSUB : fma3s<0x9F, 0xAF, 0xBF, "vfnmsub", X86Fnmsubs1, X86Fnmsub,
 multiclass scalar_fma_patterns<SDNode Op, string Prefix, string Suffix, SDNode Move,
                                ValueType VT, ValueType EltVT> {
   let Predicates = [HasFMA, NoAVX512] in {
-    def : Pat<(VT (Move (VT VR128:$src2), (VT (scalar_to_vector
-                (Op (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
-                    (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+    def : Pat<(VT (Move (VT VR128:$src1), (VT (scalar_to_vector
+                (Op (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+                    (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
                     (EltVT (extractelt (VT VR128:$src3), (iPTR 0)))))))),
               (!cast<I>(Prefix#"213"#Suffix#"r_Int")
-               VR128:$src2, VR128:$src1, VR128:$src3)>;
+               VR128:$src1, VR128:$src2, VR128:$src3)>;
   }
 }
 

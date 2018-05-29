@@ -6699,40 +6699,40 @@ defm VFNMSUB : avx512_fma3s<0xAF, 0xBF, 0x9F, "vfnmsub", X86Fnmsub, X86Fnmsubs1,
 
 multiclass avx512_scalar_fma_patterns<SDNode Op, string Prefix, string Suffix, SDNode Move,
                                       ValueType VT, ValueType EltVT, PatLeaf ZeroFP> {
-  let Predicates = [HasFMA, HasAVX512] in {
-    def : Pat<(VT (Move (VT VR128:$src2), (VT (scalar_to_vector
-                (Op (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
-                    (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+  let Predicates = [HasAVX512] in {
+    def : Pat<(VT (Move (VT VR128:$src1), (VT (scalar_to_vector
+                (Op (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+                    (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
                     (EltVT (extractelt (VT VR128:$src3), (iPTR 0)))))))),
               (!cast<I>(Prefix#"213"#Suffix#"Zr_Int")
-               VR128:$src2, VR128:$src1, VR128:$src3)>;
+               VR128:$src1, VR128:$src2, VR128:$src3)>;
 
-    def : Pat<(VT (Move (VT VR128:$src2), (VT (scalar_to_vector
+    def : Pat<(VT (Move (VT VR128:$src1), (VT (scalar_to_vector
                (X86selects VK1WM:$mask,
-                (Op (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
-                    (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+                (Op (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+                    (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
                     (EltVT (extractelt (VT VR128:$src3), (iPTR 0)))),
-                (EltVT (extractelt (VT VR128:$src2), (iPTR 0)))))))),
+                (EltVT (extractelt (VT VR128:$src1), (iPTR 0)))))))),
               (!cast<I>(Prefix#"213"#Suffix#"Zr_Intk")
-               VR128:$src2, VK1WM:$mask, VR128:$src1, VR128:$src3)>;
+               VR128:$src1, VK1WM:$mask, VR128:$src2, VR128:$src3)>;
 
-    def : Pat<(VT (Move (VT VR128:$src3), (VT (scalar_to_vector
+    def : Pat<(VT (Move (VT VR128:$src1), (VT (scalar_to_vector
                (X86selects VK1WM:$mask,
-                (Op (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
-                    (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
-                    (EltVT (extractelt (VT VR128:$src3), (iPTR 0)))),
-                (EltVT (extractelt (VT VR128:$src3), (iPTR 0)))))))),
+                (Op (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+                    (EltVT (extractelt (VT VR128:$src3), (iPTR 0))),
+                    (EltVT (extractelt (VT VR128:$src1), (iPTR 0)))),
+                (EltVT (extractelt (VT VR128:$src1), (iPTR 0)))))))),
               (!cast<I>(Prefix#"231"#Suffix#"Zr_Intk")
-               VR128:$src3, VK1WM:$mask, VR128:$src2, VR128:$src1)>;
+               VR128:$src1, VK1WM:$mask, VR128:$src2, VR128:$src3)>;
 
-    def : Pat<(VT (Move (VT VR128:$src2), (VT (scalar_to_vector
+    def : Pat<(VT (Move (VT VR128:$src1), (VT (scalar_to_vector
                (X86selects VK1WM:$mask,
-                (Op (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
-                    (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+                (Op (EltVT (extractelt (VT VR128:$src2), (iPTR 0))),
+                    (EltVT (extractelt (VT VR128:$src1), (iPTR 0))),
                     (EltVT (extractelt (VT VR128:$src3), (iPTR 0)))),
                 (EltVT ZeroFP)))))),
               (!cast<I>(Prefix#"213"#Suffix#"Zr_Intkz")
-               VR128:$src2, VK1WM:$mask, VR128:$src1, VR128:$src3)>;
+               VR128:$src1, VK1WM:$mask, VR128:$src2, VR128:$src3)>;
   }
 }
 
