@@ -1,6 +1,7 @@
 Debug
 Release
 MinSizeRel
+build
 tags
 *.o
 *~

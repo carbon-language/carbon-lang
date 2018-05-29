@@ -12,12 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(f18
-  f18.cc
-  dump.cc
-)
-
-target_link_libraries(f18
-  FortranParser
-  FlangSemantics
-)
+add_subdirectory(evaluate)

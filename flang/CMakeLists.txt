@@ -97,8 +97,12 @@ include_directories(BEFORE
 add_subdirectory(include/flang)
 add_subdirectory(lib)
 add_subdirectory(runtime)
+add_subdirectory(test)
 add_subdirectory(tools)
 
 configure_file(
   ${FLANG_SOURCE_DIR}/include/flang/Config/config.h.cmake
   ${FLANG_BINARY_DIR}/include/flang/Config/config.h)
+
+enable_testing()
+add_test(NAME LZBC COMMAND leading-zero-bit-count-test)

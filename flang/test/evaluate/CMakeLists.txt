@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_executable(f18
-  f18.cc
-  dump.cc
+add_executable(leading-zero-bit-count-test
+  leading-zero-bit-count.cc
 )
 
-target_link_libraries(f18
-  FortranParser
-  FlangSemantics
+target_link_libraries(leading-zero-bit-count-test
+  FortranEvaluate
 )
