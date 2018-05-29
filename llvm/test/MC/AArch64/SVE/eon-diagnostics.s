@@ -3,65 +3,50 @@
 // --------------------------------------------------------------------------//
 // Immediate not compatible with encode/decode function.
 
-and z5.b, z5.b, #0xfa
+eon z5.b, z5.b, #0xfa
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: expected compatible register or logical immediate
-// CHECK-NEXT: and z5.b, z5.b, #0xfa
+// CHECK-NEXT: eon z5.b, z5.b, #0xfa
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-and z5.b, z5.b, #0xfff9
+eon z5.b, z5.b, #0xfff9
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: expected compatible register or logical immediate
-// CHECK-NEXT: and z5.b, z5.b, #0xfff9
+// CHECK-NEXT: eon z5.b, z5.b, #0xfff9
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-and z5.h, z5.h, #0xfffa
+eon z5.h, z5.h, #0xfffa
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: expected compatible register or logical immediate
-// CHECK-NEXT: and z5.h, z5.h, #0xfffa
+// CHECK-NEXT: eon z5.h, z5.h, #0xfffa
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-and z5.h, z5.h, #0xfffffff9
+eon z5.h, z5.h, #0xfffffff9
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: expected compatible register or logical immediate
-// CHECK-NEXT: and z5.h, z5.h, #0xfffffff9
+// CHECK-NEXT: eon z5.h, z5.h, #0xfffffff9
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-and z5.s, z5.s, #0xfffffffa
+eon z5.s, z5.s, #0xfffffffa
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: expected compatible register or logical immediate
-// CHECK-NEXT: and z5.s, z5.s, #0xfffffffa
+// CHECK-NEXT: eon z5.s, z5.s, #0xfffffffa
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-and z5.s, z5.s, #0xffffffffffffff9
+eon z5.s, z5.s, #0xffffffffffffff9
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: expected compatible register or logical immediate
-// CHECK-NEXT: and z5.s, z5.s, #0xffffffffffffff9
+// CHECK-NEXT: eon z5.s, z5.s, #0xffffffffffffff9
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-and z15.d, z15.d, #0xfffffffffffffffa
+eon z15.d, z15.d, #0xfffffffffffffffa
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: expected compatible register or logical immediate
-// CHECK-NEXT: and z15.d, z15.d, #0xfffffffffffffffa
+// CHECK-NEXT: eon z15.d, z15.d, #0xfffffffffffffffa
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 // --------------------------------------------------------------------------//
 // Source and Destination Registers must match
 
-and z7.d, z8.d, #254
+eon z7.d, z8.d, #254
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: operand must match destination register
-// CHECK-NEXT: and z7.d, z8.d, #254
+// CHECK-NEXT: eon z7.d, z8.d, #254
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-and z0.d, p0/m, z1.d, z2.d
+eon z7.d, z8.d, #254
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: operand must match destination register
-// CHECK-NEXT: and z0.d, p0/m, z1.d, z2.d
-// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
-
-// Element size specifiers should match.
-and z21.d, z5.d, z26.b
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid element width
-// CHECK-NEXT: and z21.d, z5.d, z26.b
-// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
-
-
-// --------------------------------------------------------------------------//
-// Predicate out of restricted predicate range
-
-and z0.d, p8/z, z0.d, z1.d
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: restricted predicate has range [0, 7].
-// CHECK-NEXT: and z0.d, p8/z, z0.d, z1.d
+// CHECK-NEXT: eon z7.d, z8.d, #254
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:

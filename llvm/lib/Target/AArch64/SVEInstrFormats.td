@@ -399,6 +399,13 @@ class sve_int_bin_pred_arit_log<bits<2> sz8_64, bits<2> fmt, bits<3> opc,
   let Constraints = "$Zdn = $_Zdn";
 }
 
+multiclass sve_int_bin_pred_log<bits<3> opc, string asm> {
+  def _B : sve_int_bin_pred_arit_log<0b00, 0b11, opc, asm, ZPR8>;
+  def _H : sve_int_bin_pred_arit_log<0b01, 0b11, opc, asm, ZPR16>;
+  def _S : sve_int_bin_pred_arit_log<0b10, 0b11, opc, asm, ZPR32>;
+  def _D : sve_int_bin_pred_arit_log<0b11, 0b11, opc, asm, ZPR64>;
+}
+
 multiclass sve_int_bin_pred_arit_0<bits<3> opc, string asm> {
   def _B : sve_int_bin_pred_arit_log<0b00, 0b00, opc, asm, ZPR8>;
   def _H : sve_int_bin_pred_arit_log<0b01, 0b00, opc, asm, ZPR16>;
@@ -468,6 +475,28 @@ multiclass sve_int_arith_imm0<bits<3> opc, string asm> {
   def _H : sve_int_arith_imm0<0b01, opc, asm, ZPR16, addsub_imm8_opt_lsl_i16>;
   def _S : sve_int_arith_imm0<0b10, opc, asm, ZPR32, addsub_imm8_opt_lsl_i32>;
   def _D : sve_int_arith_imm0<0b11, opc, asm, ZPR64, addsub_imm8_opt_lsl_i64>;
+}
+
+
+//===----------------------------------------------------------------------===//
+// SVE Bitwise Logical - Unpredicated Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_bin_cons_log<bits<2> opc, string asm>
+: I<(outs ZPR64:$Zd), (ins ZPR64:$Zn, ZPR64:$Zm),
+  asm, "\t$Zd, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zm;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = opc{1-0};
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Zm;
+  let Inst{15-10} = 0b001100;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
 }
 
 //===----------------------------------------------------------------------===//
