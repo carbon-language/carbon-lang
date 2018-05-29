@@ -207,7 +207,7 @@ static Error readSection(WasmSection &Section,
                          WasmObjectFile::ReadContext &Ctx) {
   Section.Offset = Ctx.Ptr - Ctx.Start;
   Section.Type = readUint8(Ctx);
-  DEBUG(dbgs() << "readSection type=" << Section.Type << "\n");
+  LLVM_DEBUG(dbgs() << "readSection type=" << Section.Type << "\n");
   uint32_t Size = readVaruint32(Ctx);
   if (Size == 0)
     return make_error<StringError>("Zero length section",
@@ -366,7 +366,8 @@ Error WasmObjectFile::parseLinkingSection(ReadContext &Ctx) {
     Ctx.End = OrigEnd;
     uint8_t Type = readUint8(Ctx);
     uint32_t Size = readVaruint32(Ctx);
-    DEBUG(dbgs() << "readSubsection type=" << int(Type) << " size=" << Size << "\n");
+    LLVM_DEBUG(dbgs() << "readSubsection type=" << int(Type) << " size=" << Size
+                      << "\n");
     Ctx.End = Ctx.Ptr + Size;
     switch (Type) {
     case wasm::WASM_SYMBOL_TABLE:
