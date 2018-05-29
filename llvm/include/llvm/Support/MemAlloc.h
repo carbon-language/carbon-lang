@@ -19,6 +19,7 @@
 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include <cstdlib>
 
 namespace llvm {
 
