@@ -1146,10 +1146,6 @@ public:
   /// Certain combinations of ABIs, Targets and features require that types
   /// are legal for some operations and not for other operations.
   /// For MIPS all vector types must be passed through the integer register set.
-  virtual MVT getRegisterTypeForCallingConv(MVT VT) const {
-    return getRegisterType(VT);
-  }
-
   virtual MVT getRegisterTypeForCallingConv(LLVMContext &Context,
                                             EVT VT) const {
     return getRegisterType(Context, VT);
