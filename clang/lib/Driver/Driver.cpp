@@ -84,7 +84,7 @@ using namespace clang::driver;
 using namespace clang;
 using namespace llvm::opt;
 
-Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
+Driver::Driver(StringRef ClangExecutable, StringRef TargetTriple,
                DiagnosticsEngine &Diags,
                IntrusiveRefCntPtr<vfs::FileSystem> VFS)
     : Opts(createDriverOptTable()), Diags(Diags), VFS(std::move(VFS)),
@@ -94,7 +94,7 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
       CCPrintOptionsFilename(nullptr), CCPrintHeadersFilename(nullptr),
       CCLogDiagnosticsFilename(nullptr), CCCPrintBindings(false),
       CCPrintOptions(false), CCPrintHeaders(false), CCLogDiagnostics(false),
-      CCGenDiagnostics(false), DefaultTargetTriple(DefaultTargetTriple),
+      CCGenDiagnostics(false), TargetTriple(TargetTriple),
       CCCGenericGCCName(""), Saver(Alloc), CheckInputsExist(true),
       CCCUsePCH(true), GenReproducer(false),
       SuppressMissingInputWarning(false) {
@@ -388,14 +388,14 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
 /// This routine provides the logic to compute a target triple from various
 /// args passed to the driver and the default triple string.
 static llvm::Triple computeTargetTriple(const Driver &D,
-                                        StringRef DefaultTargetTriple,
+                                        StringRef TargetTriple,
                                         const ArgList &Args,
                                         StringRef DarwinArchName = "") {
   // FIXME: Already done in Compilation *Driver::BuildCompilation
   if (const Arg *A = Args.getLastArg(options::OPT_target))
-    DefaultTargetTriple = A->getValue();
+    TargetTriple = A->getValue();
 
-  llvm::Triple Target(llvm::Triple::normalize(DefaultTargetTriple));
+  llvm::Triple Target(llvm::Triple::normalize(TargetTriple));
 
   // Handle Apple-specific options available here.
   if (Target.isOSBinFormatMachO()) {
@@ -941,19 +941,19 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   GenReproducer = Args.hasFlag(options::OPT_gen_reproducer,
                                options::OPT_fno_crash_diagnostics,
                                !!::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH"));
-  // FIXME: DefaultTargetTriple is used by the target-prefixed calls to as/ld
+  // FIXME: TargetTriple is used by the target-prefixed calls to as/ld
   // and getToolChain is const.
   if (IsCLMode()) {
     // clang-cl targets MSVC-style Win32.
-    llvm::Triple T(DefaultTargetTriple);
+    llvm::Triple T(TargetTriple);
     T.setOS(llvm::Triple::Win32);
     T.setVendor(llvm::Triple::PC);
     T.setEnvironment(llvm::Triple::MSVC);
     T.setObjectFormat(llvm::Triple::COFF);
-    DefaultTargetTriple = T.str();
+    TargetTriple = T.str();
   }
   if (const Arg *A = Args.getLastArg(options::OPT_target))
-    DefaultTargetTriple = A->getValue();
+    TargetTriple = A->getValue();
   if (const Arg *A = Args.getLastArg(options::OPT_ccc_install_dir))
     Dir = InstalledDir = A->getValue();
   for (const Arg *A : Args.filtered(options::OPT_B)) {
@@ -1001,7 +1001,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 
   // Owned by the host.
   const ToolChain &TC = getToolChain(
-      *UArgs, computeTargetTriple(*this, DefaultTargetTriple, *UArgs));
+      *UArgs, computeTargetTriple(*this, TargetTriple, *UArgs));
 
   // The compilation takes ownership of Args.
   Compilation *C = new Compilation(*this, TC, UArgs.release(), TranslatedArgs,
@@ -3665,7 +3665,7 @@ InputInfo Driver::BuildJobsForActionNoCache(
 
     if (!ArchName.empty())
       TC = &getToolChain(C.getArgs(),
-                         computeTargetTriple(*this, DefaultTargetTriple,
+                         computeTargetTriple(*this, TargetTriple,
                                              C.getArgs(), ArchName));
     else
       TC = &C.getDefaultToolChain();
@@ -3834,7 +3834,7 @@ InputInfo Driver::BuildJobsForActionNoCache(
 }
 
 const char *Driver::getDefaultImageName() const {
-  llvm::Triple Target(llvm::Triple::normalize(DefaultTargetTriple));
+  llvm::Triple Target(llvm::Triple::normalize(TargetTriple));
   return Target.isOSWindows() ? "a.exe" : "a.out";
 }
 
@@ -4073,14 +4073,14 @@ std::string Driver::GetFilePath(StringRef Name, const ToolChain &TC) const {
 void Driver::generatePrefixedToolNames(
     StringRef Tool, const ToolChain &TC,
     SmallVectorImpl<std::string> &Names) const {
-  // FIXME: Needs a better variable than DefaultTargetTriple
-  Names.emplace_back((DefaultTargetTriple + "-" + Tool).str());
+  // FIXME: Needs a better variable than TargetTriple
+  Names.emplace_back((TargetTriple + "-" + Tool).str());
   Names.emplace_back(Tool);
 
   // Allow the discovery of tools prefixed with LLVM's default target triple.
-  std::string LLVMDefaultTargetTriple = llvm::sys::getDefaultTargetTriple();
-  if (LLVMDefaultTargetTriple != DefaultTargetTriple)
-    Names.emplace_back((LLVMDefaultTargetTriple + "-" + Tool).str());
+  std::string DefaultTargetTriple = llvm::sys::getDefaultTargetTriple();
+  if (DefaultTargetTriple != TargetTriple)
+    Names.emplace_back((DefaultTargetTriple + "-" + Tool).str());
 }
 
 static bool ScanDirForExecutable(SmallString<128> &Dir,
