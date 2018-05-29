@@ -12,8 +12,8 @@
 //   - C++ modules TS
 
 #include "llvm/Demangle/Demangle.h"
-
 #include "llvm/Demangle/Compiler.h"
+#include "llvm/Support/MemAlloc.h"
 
 #include <algorithm>
 #include <cassert>
@@ -89,7 +89,7 @@ class OutputStream {
       BufferCapacity *= 2;
       if (BufferCapacity < N + CurrentPosition)
         BufferCapacity = N + CurrentPosition;
-      Buffer = static_cast<char *>(std::realloc(Buffer, BufferCapacity));
+      Buffer = static_cast<char *>(llvm::safe_realloc(Buffer, BufferCapacity));
     }
   }
 
@@ -274,7 +274,7 @@ public:
 
 #ifndef NDEBUG
   LLVM_DUMP_METHOD void dump() const {
-    char *Buffer = static_cast<char*>(std::malloc(1024));
+    char *Buffer = static_cast<char*>(llvm::safe_malloc(1024));
     OutputStream S(Buffer, 1024);
     print(S);
     S += '\0';
@@ -1947,11 +1947,11 @@ class PODSmallVector {
   void reserve(size_t NewCap) {
     size_t S = size();
     if (isInline()) {
-      auto* Tmp = static_cast<T*>(std::malloc(NewCap * sizeof(T)));
+      auto* Tmp = static_cast<T*>(llvm::safe_malloc(NewCap * sizeof(T)));
       std::copy(First, Last, Tmp);
       First = Tmp;
     } else
-      First = static_cast<T*>(std::realloc(First, NewCap * sizeof(T)));
+      First = static_cast<T*>(llvm::safe_realloc(First, NewCap * sizeof(T)));
     Last = First + S;
     Cap = First + NewCap;
   }
