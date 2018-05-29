@@ -6843,7 +6843,7 @@ bool MipsAsmParser::parseSetAssignment() {
   MCAsmParser &Parser = getParser();
 
   if (Parser.parseIdentifier(Name))
-    reportParseError("expected identifier after .set");
+    return reportParseError("expected identifier after .set");
 
   if (getLexer().isNot(AsmToken::Comma))
     return reportParseError("unexpected token, expected comma");
@@ -7330,8 +7330,7 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetNoGINVDirective();
   } else {
     // It is just an identifier, look for an assignment.
-    parseSetAssignment();
-    return false;
+    return parseSetAssignment();
   }
 
   return true;
