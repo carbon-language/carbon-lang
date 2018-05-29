@@ -110,11 +110,13 @@ namespace Mips {
     // resulting in - R_MIPS_GOT_DISP
     fixup_Mips_GOT_DISP,
 
-    // resulting in - R_MIPS_GOT_HIGHER
+    // resulting in - R_MIPS_HIGHER/R_MICROMIPS_HIGHER 
     fixup_Mips_HIGHER,
+    fixup_MICROMIPS_HIGHER,
 
-    // resulting in - R_MIPS_HIGHEST
+    // resulting in - R_MIPS_HIGHEST/R_MICROMIPS_HIGHEST
     fixup_Mips_HIGHEST,
+    fixup_MICROMIPS_HIGHEST,
 
     // resulting in - R_MIPS_GOT_HI16
     fixup_Mips_GOT_HI16,
