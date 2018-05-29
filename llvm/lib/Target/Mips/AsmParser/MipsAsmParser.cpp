@@ -5971,13 +5971,12 @@ MipsAsmParser::parseMemOperand(OperandVector &Operands) {
 bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
   MCAsmParser &Parser = getParser();
   MCSymbol *Sym = getContext().lookupSymbol(Parser.getTok().getIdentifier());
-  if (Sym) {
-    SMLoc S = Parser.getTok().getLoc();
-    const MCExpr *Expr;
-    if (Sym->isVariable())
-      Expr = Sym->getVariableValue();
-    else
-      return false;
+  if (!Sym)
+    return false;
+
+  SMLoc S = Parser.getTok().getLoc();
+  if (Sym->isVariable()) {
+    const MCExpr *Expr = Sym->getVariableValue();
     if (Expr->getKind() == MCExpr::SymbolRef) {
       const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr *>(Expr);
       StringRef DefSymbol = Ref->getSymbol().getName();
@@ -5987,12 +5986,13 @@ bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
         if (ResTy == MatchOperand_Success) {
           Parser.Lex();
           return true;
-        } else if (ResTy == MatchOperand_ParseFail)
+        }
+        if (ResTy == MatchOperand_ParseFail)
           llvm_unreachable("Should never ParseFail");
-        return false;
       }
     }
   }
+
   return false;
 }
 
@@ -6085,7 +6085,7 @@ MipsAsmParser::matchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S) {
     return MatchOperand_Success;
   }
 
-  LLVM_DEBUG(dbgs() << Parser.getTok().getKind() << "\n");
+  LLVM_DEBUG(dbgs() << Token.getKind() << "\n");
 
   return MatchOperand_NoMatch;
 }
