@@ -37729,6 +37729,11 @@ static SDValue combineSIntToFP(SDNode *N, SelectionDAG &DAG,
     if (VT == MVT::f16 || VT == MVT::f128)
       return SDValue();
 
+    // If we have AVX512DQ we can use packed conversion instructions unless
+    // the VT is f80.
+    if (Subtarget.hasDQI() && VT != MVT::f80)
+      return SDValue();
+
     if (!Ld->isVolatile() && !VT.isVector() &&
         ISD::isNON_EXTLoad(Op0.getNode()) && Op0.hasOneUse() &&
         !Subtarget.is64Bit() && LdVT == MVT::i64) {
