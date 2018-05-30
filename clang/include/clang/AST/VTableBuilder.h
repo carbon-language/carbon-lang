@@ -222,9 +222,6 @@ private:
     return static_cast<uintptr_t>(Value & ~7ULL);
   }
 
-  explicit VTableComponent(uint64_t Value)
-    : Value(Value) { }
-
   /// The kind is stored in the lower 3 bits of the value. For offsets, we
   /// make use of the facts that classes can't be larger than 2^55 bytes,
   /// so we store the offset in the lower part of the 61 bits that remain.
