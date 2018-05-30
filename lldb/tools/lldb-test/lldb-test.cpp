@@ -551,17 +551,15 @@ bool opts::irmemorymap::evalMalloc(IRMemoryMap &IRMemMap, StringRef Line,
   auto Probe = AllocatedIntervals.begin();
   Probe.advanceTo(Addr); //< First interval s.t stop >= Addr.
   AllocationT NewAllocation = {Addr, EndOfRegion};
-  if (Probe != AllocatedIntervals.end()) {
-    while (Probe.start() < EndOfRegion) {
-      AllocationT ProbeAllocation = {Probe.start(), Probe.stop()};
-      if (areAllocationsOverlapping(ProbeAllocation, NewAllocation)) {
-        outs() << "Malloc error: overlapping allocation detected"
-               << formatv(", previous allocation at [{0:x}, {1:x})\n",
-                          Probe.start(), Probe.stop());
-        exit(1);
-      }
-      ++Probe;
+  while (Probe != AllocatedIntervals.end() && Probe.start() < EndOfRegion) {
+    AllocationT ProbeAllocation = {Probe.start(), Probe.stop()};
+    if (areAllocationsOverlapping(ProbeAllocation, NewAllocation)) {
+      outs() << "Malloc error: overlapping allocation detected"
+             << formatv(", previous allocation at [{0:x}, {1:x})\n",
+                        Probe.start(), Probe.stop());
+      exit(1);
     }
+    ++Probe;
   }
 
   // Insert the new allocation into the interval map.
