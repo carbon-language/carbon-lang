@@ -1681,6 +1681,18 @@ def : MipsInstAlias<"not $rt, $rs",
 def : MipsInstAlias<"lapc $rd, $imm",
                     (ADDIUPC_MMR6 GPR32Opnd:$rd, simm19_lsl2:$imm)>,
                     ISA_MICROMIPS32R6;
+def : MipsInstAlias<"neg $rt, $rs",
+                    (SUB_MMR6 GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>,
+      ISA_MICROMIPS32R6;
+def : MipsInstAlias<"neg $rt",
+                    (SUB_MMR6 GPR32Opnd:$rt, ZERO, GPR32Opnd:$rt), 1>,
+      ISA_MICROMIPS32R6;
+def : MipsInstAlias<"negu $rt, $rs",
+                    (SUBU_MMR6 GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>,
+      ISA_MICROMIPS32R6;
+def : MipsInstAlias<"negu $rt",
+                    (SUBU_MMR6 GPR32Opnd:$rt, ZERO, GPR32Opnd:$rt), 1>,
+      ISA_MICROMIPS32R6;
 
 //===----------------------------------------------------------------------===//
 //
