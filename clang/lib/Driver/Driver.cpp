@@ -2151,9 +2151,10 @@ class OffloadingActionBuilder final {
     }
   };
 
-  /// CUDA action builder. It injects device code in the host backend
-  /// action.
-  class CudaActionBuilder final : public DeviceActionBuilder {
+  /// Base class for CUDA/HIP action builder. It injects device code in
+  /// the host backend action.
+  class CudaActionBuilderBase : public DeviceActionBuilder {
+  protected:
     /// Flags to signal if the user requested host-only or device-only
     /// compilation.
     bool CompileHostOnly = false;
@@ -2170,11 +2171,185 @@ class OffloadingActionBuilder final {
 
     /// Flag that is set to true if this builder acted on the current input.
     bool IsActive = false;
+  public:
+    CudaActionBuilderBase(Compilation &C, DerivedArgList &Args,
+                          const Driver::InputList &Inputs,
+                          Action::OffloadKind OFKind)
+        : DeviceActionBuilder(C, Args, Inputs, OFKind) {}
 
+    ActionBuilderReturnCode addDeviceDepences(Action *HostAction) override {
+      // While generating code for CUDA, we only depend on the host input action
+      // to trigger the creation of all the CUDA device actions.
+
+      // If we are dealing with an input action, replicate it for each GPU
+      // architecture. If we are in host-only mode we return 'success' so that
+      // the host uses the CUDA offload kind.
+      if (auto *IA = dyn_cast<InputAction>(HostAction)) {
+        assert(!GpuArchList.empty() &&
+               "We should have at least one GPU architecture.");
+
+        // If the host input is not CUDA or HIP, we don't need to bother about
+        // this input.
+        if (IA->getType() != types::TY_CUDA &&
+            IA->getType() != types::TY_HIP) {
+          // The builder will ignore this input.
+          IsActive = false;
+          return ABRT_Inactive;
+        }
+
+        // Set the flag to true, so that the builder acts on the current input.
+        IsActive = true;
+
+        if (CompileHostOnly)
+          return ABRT_Success;
+
+        // Replicate inputs for each GPU architecture.
+        auto Ty = IA->getType() == types::TY_HIP ? types::TY_HIP_DEVICE
+                                                 : types::TY_CUDA_DEVICE;
+        for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
+          CudaDeviceActions.push_back(
+              C.MakeAction<InputAction>(IA->getInputArg(), Ty));
+        }
+
+        return ABRT_Success;
+      }
+
+      // If this is an unbundling action use it as is for each CUDA toolchain.
+      if (auto *UA = dyn_cast<OffloadUnbundlingJobAction>(HostAction)) {
+        CudaDeviceActions.clear();
+        for (auto Arch : GpuArchList) {
+          CudaDeviceActions.push_back(UA);
+          UA->registerDependentActionInfo(ToolChains[0], CudaArchToString(Arch),
+                                          AssociatedOffloadKind);
+        }
+        return ABRT_Success;
+      }
+
+      return IsActive ? ABRT_Success : ABRT_Inactive;
+    }
+
+    void appendTopLevelActions(ActionList &AL) override {
+      // Utility to append actions to the top level list.
+      auto AddTopLevel = [&](Action *A, CudaArch BoundArch) {
+        OffloadAction::DeviceDependences Dep;
+        Dep.add(*A, *ToolChains.front(), CudaArchToString(BoundArch),
+                AssociatedOffloadKind);
+        AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
+      };
+
+      // If we have a fat binary, add it to the list.
+      if (CudaFatBinary) {
+        AddTopLevel(CudaFatBinary, CudaArch::UNKNOWN);
+        CudaDeviceActions.clear();
+        CudaFatBinary = nullptr;
+        return;
+      }
+
+      if (CudaDeviceActions.empty())
+        return;
+
+      // If we have CUDA actions at this point, that's because we have a have
+      // partial compilation, so we should have an action for each GPU
+      // architecture.
+      assert(CudaDeviceActions.size() == GpuArchList.size() &&
+             "Expecting one action per GPU architecture.");
+      assert(ToolChains.size() == 1 &&
+             "Expecting to have a sing CUDA toolchain.");
+      for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I)
+        AddTopLevel(CudaDeviceActions[I], GpuArchList[I]);
+
+      CudaDeviceActions.clear();
+    }
+
+    bool initialize() override {
+      assert(AssociatedOffloadKind == Action::OFK_Cuda ||
+             AssociatedOffloadKind == Action::OFK_HIP);
+
+      // We don't need to support CUDA.
+      if (AssociatedOffloadKind == Action::OFK_Cuda &&
+          !C.hasOffloadToolChain<Action::OFK_Cuda>())
+        return false;
+
+      // We don't need to support HIP.
+      if (AssociatedOffloadKind == Action::OFK_HIP &&
+          !C.hasOffloadToolChain<Action::OFK_HIP>())
+        return false;
+
+      const ToolChain *HostTC = C.getSingleOffloadToolChain<Action::OFK_Host>();
+      assert(HostTC && "No toolchain for host compilation.");
+      if (HostTC->getTriple().isNVPTX() ||
+          HostTC->getTriple().getArch() == llvm::Triple::amdgcn) {
+        // We do not support targeting NVPTX/AMDGCN for host compilation. Throw
+        // an error and abort pipeline construction early so we don't trip
+        // asserts that assume device-side compilation.
+        C.getDriver().Diag(diag::err_drv_cuda_host_arch)
+            << HostTC->getTriple().getArchName();
+        return true;
+      }
+
+      ToolChains.push_back(
+          AssociatedOffloadKind == Action::OFK_Cuda
+              ? C.getSingleOffloadToolChain<Action::OFK_Cuda>()
+              : C.getSingleOffloadToolChain<Action::OFK_HIP>());
+
+      Arg *PartialCompilationArg = Args.getLastArg(
+          options::OPT_cuda_host_only, options::OPT_cuda_device_only,
+          options::OPT_cuda_compile_host_device);
+      CompileHostOnly = PartialCompilationArg &&
+                        PartialCompilationArg->getOption().matches(
+                            options::OPT_cuda_host_only);
+      CompileDeviceOnly = PartialCompilationArg &&
+                          PartialCompilationArg->getOption().matches(
+                              options::OPT_cuda_device_only);
+
+      // Collect all cuda_gpu_arch parameters, removing duplicates.
+      std::set<CudaArch> GpuArchs;
+      bool Error = false;
+      for (Arg *A : Args) {
+        if (!(A->getOption().matches(options::OPT_cuda_gpu_arch_EQ) ||
+              A->getOption().matches(options::OPT_no_cuda_gpu_arch_EQ)))
+          continue;
+        A->claim();
+
+        const StringRef ArchStr = A->getValue();
+        if (A->getOption().matches(options::OPT_no_cuda_gpu_arch_EQ) &&
+            ArchStr == "all") {
+          GpuArchs.clear();
+          continue;
+        }
+        CudaArch Arch = StringToCudaArch(ArchStr);
+        if (Arch == CudaArch::UNKNOWN) {
+          C.getDriver().Diag(clang::diag::err_drv_cuda_bad_gpu_arch) << ArchStr;
+          Error = true;
+        } else if (A->getOption().matches(options::OPT_cuda_gpu_arch_EQ))
+          GpuArchs.insert(Arch);
+        else if (A->getOption().matches(options::OPT_no_cuda_gpu_arch_EQ))
+          GpuArchs.erase(Arch);
+        else
+          llvm_unreachable("Unexpected option.");
+      }
+
+      // Collect list of GPUs remaining in the set.
+      for (CudaArch Arch : GpuArchs)
+        GpuArchList.push_back(Arch);
+
+      // Default to sm_20 which is the lowest common denominator for
+      // supported GPUs.  sm_20 code should work correctly, if
+      // suboptimally, on all newer GPUs.
+      if (GpuArchList.empty())
+        GpuArchList.push_back(CudaArch::SM_20);
+
+      return Error;
+    }
+  };
+
+  /// \brief CUDA action builder. It injects device code in the host backend
+  /// action.
+  class CudaActionBuilder final : public CudaActionBuilderBase {
   public:
     CudaActionBuilder(Compilation &C, DerivedArgList &Args,
                       const Driver::InputList &Inputs)
-        : DeviceActionBuilder(C, Args, Inputs, Action::OFK_Cuda) {}
+        : CudaActionBuilderBase(C, Args, Inputs, Action::OFK_Cuda) {}
 
     ActionBuilderReturnCode
     getDeviceDependences(OffloadAction::DeviceDependences &DA,
@@ -2279,147 +2454,73 @@ class OffloadingActionBuilder final {
 
       return ABRT_Success;
     }
+  };
+  /// \brief HIP action builder. It injects device code in the host backend
+  /// action.
+  class HIPActionBuilder final : public CudaActionBuilderBase {
+    /// The linker inputs obtained for each device arch.
+    SmallVector<ActionList, 8> DeviceLinkerInputs;
 
-    ActionBuilderReturnCode addDeviceDepences(Action *HostAction) override {
-      // While generating code for CUDA, we only depend on the host input action
-      // to trigger the creation of all the CUDA device actions.
+  public:
+    HIPActionBuilder(Compilation &C, DerivedArgList &Args,
+                     const Driver::InputList &Inputs)
+        : CudaActionBuilderBase(C, Args, Inputs, Action::OFK_HIP) {}
 
-      // If we are dealing with an input action, replicate it for each GPU
-      // architecture. If we are in host-only mode we return 'success' so that
-      // the host uses the CUDA offload kind.
-      if (auto *IA = dyn_cast<InputAction>(HostAction)) {
-        assert(!GpuArchList.empty() &&
-               "We should have at least one GPU architecture.");
+    bool canUseBundlerUnbundler() const override { return true; }
 
-        // If the host input is not CUDA or HIP, we don't need to bother about
-        // this input.
-        if (IA->getType() != types::TY_CUDA &&
-            IA->getType() != types::TY_HIP) {
-          // The builder will ignore this input.
-          IsActive = false;
-          return ABRT_Inactive;
+    ActionBuilderReturnCode
+    getDeviceDependences(OffloadAction::DeviceDependences &DA,
+                         phases::ID CurPhase, phases::ID FinalPhase,
+                         PhasesTy &Phases) override {
+      // amdgcn does not support linking of object files, therefore we skip
+      // backend and assemble phases to output LLVM IR.
+      if (CudaDeviceActions.empty() || CurPhase == phases::Backend ||
+          CurPhase == phases::Assemble)
+        return ABRT_Success;
+
+      assert((CurPhase == phases::Link ||
+              CudaDeviceActions.size() == GpuArchList.size()) &&
+             "Expecting one action per GPU architecture.");
+      assert(!CompileHostOnly &&
+             "Not expecting CUDA actions in host-only compilation.");
+
+      // Save CudaDeviceActions to DeviceLinkerInputs for each GPU subarch.
+      // This happens to each device action originated from each input file.
+      // Later on, device actions in DeviceLinkerInputs are used to create
+      // device link actions in appendLinkDependences and the created device
+      // link actions are passed to the offload action as device dependence.
+      if (CurPhase == phases::Link) {
+        DeviceLinkerInputs.resize(CudaDeviceActions.size());
+        auto LI = DeviceLinkerInputs.begin();
+        for (auto *A : CudaDeviceActions) {
+          LI->push_back(A);
+          ++LI;
         }
 
-        // Set the flag to true, so that the builder acts on the current input.
-        IsActive = true;
-
-        if (CompileHostOnly)
-          return ABRT_Success;
-
-        // Replicate inputs for each GPU architecture.
-        auto Ty = IA->getType() == types::TY_HIP ? types::TY_HIP_DEVICE
-                                                 : types::TY_CUDA_DEVICE;
-        for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I) {
-          CudaDeviceActions.push_back(
-              C.MakeAction<InputAction>(IA->getInputArg(), Ty));
-        }
-
+        // We will pass the device action as a host dependence, so we don't
+        // need to do anything else with them.
+        CudaDeviceActions.clear();
         return ABRT_Success;
       }
 
-      return IsActive ? ABRT_Success : ABRT_Inactive;
+      // By default, we produce an action for each device arch.
+      for (Action *&A : CudaDeviceActions)
+        A = C.getDriver().ConstructPhaseAction(C, Args, CurPhase, A,
+                                               AssociatedOffloadKind);
+
+      return ABRT_Success;
     }
 
-    void appendTopLevelActions(ActionList &AL) override {
-      // Utility to append actions to the top level list.
-      auto AddTopLevel = [&](Action *A, CudaArch BoundArch) {
-        OffloadAction::DeviceDependences Dep;
-        Dep.add(*A, *ToolChains.front(), CudaArchToString(BoundArch),
-                Action::OFK_Cuda);
-        AL.push_back(C.MakeAction<OffloadAction>(Dep, A->getType()));
-      };
-
-      // If we have a fat binary, add it to the list.
-      if (CudaFatBinary) {
-        AddTopLevel(CudaFatBinary, CudaArch::UNKNOWN);
-        CudaDeviceActions.clear();
-        CudaFatBinary = nullptr;
-        return;
+    void appendLinkDependences(OffloadAction::DeviceDependences &DA) override {
+      // Append a new link action for each device.
+      unsigned I = 0;
+      for (auto &LI : DeviceLinkerInputs) {
+        auto *DeviceLinkAction =
+            C.MakeAction<LinkJobAction>(LI, types::TY_Image);
+        DA.add(*DeviceLinkAction, *ToolChains[0],
+               CudaArchToString(GpuArchList[I]), AssociatedOffloadKind);
+        ++I;
       }
-
-      if (CudaDeviceActions.empty())
-        return;
-
-      // If we have CUDA actions at this point, that's because we have a have
-      // partial compilation, so we should have an action for each GPU
-      // architecture.
-      assert(CudaDeviceActions.size() == GpuArchList.size() &&
-             "Expecting one action per GPU architecture.");
-      assert(ToolChains.size() == 1 &&
-             "Expecting to have a sing CUDA toolchain.");
-      for (unsigned I = 0, E = GpuArchList.size(); I != E; ++I)
-        AddTopLevel(CudaDeviceActions[I], GpuArchList[I]);
-
-      CudaDeviceActions.clear();
-    }
-
-    bool initialize() override {
-      // We don't need to support CUDA.
-      if (!C.hasOffloadToolChain<Action::OFK_Cuda>())
-        return false;
-
-      const ToolChain *HostTC = C.getSingleOffloadToolChain<Action::OFK_Host>();
-      assert(HostTC && "No toolchain for host compilation.");
-      if (HostTC->getTriple().isNVPTX() ||
-          HostTC->getTriple().getArch() == llvm::Triple::amdgcn) {
-        // We do not support targeting NVPTX/AMDGCN for host compilation. Throw
-        // an error and abort pipeline construction early so we don't trip
-        // asserts that assume device-side compilation.
-        C.getDriver().Diag(diag::err_drv_cuda_host_arch)
-            << HostTC->getTriple().getArchName();
-        return true;
-      }
-
-      ToolChains.push_back(C.getSingleOffloadToolChain<Action::OFK_Cuda>());
-
-      Arg *PartialCompilationArg = Args.getLastArg(
-          options::OPT_cuda_host_only, options::OPT_cuda_device_only,
-          options::OPT_cuda_compile_host_device);
-      CompileHostOnly = PartialCompilationArg &&
-                        PartialCompilationArg->getOption().matches(
-                            options::OPT_cuda_host_only);
-      CompileDeviceOnly = PartialCompilationArg &&
-                          PartialCompilationArg->getOption().matches(
-                              options::OPT_cuda_device_only);
-
-      // Collect all cuda_gpu_arch parameters, removing duplicates.
-      std::set<CudaArch> GpuArchs;
-      bool Error = false;
-      for (Arg *A : Args) {
-        if (!(A->getOption().matches(options::OPT_cuda_gpu_arch_EQ) ||
-              A->getOption().matches(options::OPT_no_cuda_gpu_arch_EQ)))
-          continue;
-        A->claim();
-
-        const StringRef ArchStr = A->getValue();
-        if (A->getOption().matches(options::OPT_no_cuda_gpu_arch_EQ) &&
-            ArchStr == "all") {
-          GpuArchs.clear();
-          continue;
-        }
-        CudaArch Arch = StringToCudaArch(ArchStr);
-        if (Arch == CudaArch::UNKNOWN) {
-          C.getDriver().Diag(clang::diag::err_drv_cuda_bad_gpu_arch) << ArchStr;
-          Error = true;
-        } else if (A->getOption().matches(options::OPT_cuda_gpu_arch_EQ))
-          GpuArchs.insert(Arch);
-        else if (A->getOption().matches(options::OPT_no_cuda_gpu_arch_EQ))
-          GpuArchs.erase(Arch);
-        else
-          llvm_unreachable("Unexpected option.");
-      }
-
-      // Collect list of GPUs remaining in the set.
-      for (CudaArch Arch : GpuArchs)
-        GpuArchList.push_back(Arch);
-
-      // Default to sm_20 which is the lowest common denominator for
-      // supported GPUs.  sm_20 code should work correctly, if
-      // suboptimally, on all newer GPUs.
-      if (GpuArchList.empty())
-        GpuArchList.push_back(CudaArch::SM_20);
-
-      return Error;
     }
   };
 
@@ -2588,6 +2689,9 @@ public:
 
     // Create a specialized builder for CUDA.
     SpecializedBuilders.push_back(new CudaActionBuilder(C, Args, Inputs));
+
+    // Create a specialized builder for HIP.
+    SpecializedBuilders.push_back(new HIPActionBuilder(C, Args, Inputs));
 
     // Create a specialized builder for OpenMP.
     SpecializedBuilders.push_back(new OpenMPActionBuilder(C, Args, Inputs));
