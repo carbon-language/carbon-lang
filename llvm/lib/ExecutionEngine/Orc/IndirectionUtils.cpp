@@ -63,8 +63,8 @@ JITCompileCallbackManager::getCompileCallback(CompileFunction Compile) {
 
     std::lock_guard<std::mutex> Lock(CCMgrMutex);
     AddrToSymbol[*TrampolineAddr] = CallbackName;
-    cantFail(
-        CallbacksVSO.define(make_unique<CompileCallbackMaterializationUnit>(
+    cantFail(CallbacksVSO.define(
+        llvm::make_unique<CompileCallbackMaterializationUnit>(
             std::move(CallbackName), std::move(Compile))));
     return *TrampolineAddr;
   } else
