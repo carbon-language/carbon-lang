@@ -15,8 +15,8 @@
 #ifndef FORTRAN_EVALUATE_CONSTANT_H_
 #define FORTRAN_EVALUATE_CONSTANT_H_
 
-#include "../parser/idioms.h"
 #include "type.h"
+#include "../parser/idioms.h"
 #include <cinttypes>
 #include <cstddef>
 #include <limits>
@@ -29,25 +29,27 @@ enum class Error { None, Overflow, DivisionByZero, InvalidOperation };
 enum class Relation { LessThan, Equal, GreaterThan, Unordered };
 
 template<typename IntrinsicTypeClassification,
-         IntrinsicTypeClassification CLASSIFICATION,
-         IntrinsicType::KindLenCType KIND>
+    IntrinsicTypeClassification CLASSIFICATION,
+    IntrinsicType::KindLenCType KIND>
 class ScalarConstant;
 
 template<typename IntrinsicTypeClassification,
-         IntrinsicTypeClassification CLASSIFICATION,
-         IntrinsicType::KindLenCType KIND>
+    IntrinsicTypeClassification CLASSIFICATION,
+    IntrinsicType::KindLenCType KIND>
 class ScalarConstantBase {
 public:
   constexpr ScalarConstantBase() {}
-  constexpr IntrinsicType Type() const {return {CLASSIFICATION, KIND}; }
+  constexpr IntrinsicType Type() const { return {CLASSIFICATION, KIND}; }
   constexpr Error error() const { return error_; }
   constexpr bool AnyError() const { return error_ != Error::None; }
+
 protected:
   constexpr void SetError(Error error) {
     if (error_ == Error::None) {
       error_ = error;
     }
   }
+
 private:
   Error error_{Error::None};
 };
@@ -55,13 +57,14 @@ private:
 // Integer scalar constants
 template<IntrinsicType::KindLenCType KIND>
 class ScalarConstant<IntrinsicType::Classification,
-                     IntrinsicType::Classification::Integer, KIND>
+    IntrinsicType::Classification::Integer, KIND>
   : public ScalarConstantBase<IntrinsicType::Classification,
-                       IntrinsicType::Classification::Integer, KIND> {
+        IntrinsicType::Classification::Integer, KIND> {
 private:
   static_assert(KIND == 1 || KIND == 2 || KIND == 4 || KIND == 8);
   using BaseType = ScalarConstantBase<IntrinsicType::Classification,
-                       IntrinsicType::Classification::Integer, KIND>;
+      IntrinsicType::Classification::Integer, KIND>;
+
 public:
   using ValueCType = std::int64_t;
 
@@ -122,18 +125,17 @@ private:
 };
 
 template<IntrinsicType::KindLenCType KIND>
-using ScalarIntegerConstant =
-    ScalarConstant<IntrinsicType::Classification,
-                   IntrinsicType::Classification::Integer, KIND>;
+using ScalarIntegerConstant = ScalarConstant<IntrinsicType::Classification,
+    IntrinsicType::Classification::Integer, KIND>;
 
 extern template class ScalarConstant<IntrinsicType::Classification,
-                   IntrinsicType::Classification::Integer, 1>;
+    IntrinsicType::Classification::Integer, 1>;
 extern template class ScalarConstant<IntrinsicType::Classification,
-                   IntrinsicType::Classification::Integer, 2>;
+    IntrinsicType::Classification::Integer, 2>;
 extern template class ScalarConstant<IntrinsicType::Classification,
-                   IntrinsicType::Classification::Integer, 4>;
+    IntrinsicType::Classification::Integer, 4>;
 extern template class ScalarConstant<IntrinsicType::Classification,
-                   IntrinsicType::Classification::Integer, 8>;
+    IntrinsicType::Classification::Integer, 8>;
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_CONSTANT_H_

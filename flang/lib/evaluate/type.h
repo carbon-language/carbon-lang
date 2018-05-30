@@ -40,8 +40,8 @@ public:
   }
 
   IntrinsicType() = delete;
-  constexpr IntrinsicType(Classification c, KindLenCType kind,
-			  KindLenCType len = 1)
+  constexpr IntrinsicType(
+      Classification c, KindLenCType kind, KindLenCType len = 1)
     : classification_{c}, kind_{kind}, len_{len} {}
 
   // Defaulted kinds.

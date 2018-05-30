@@ -23,7 +23,7 @@ namespace testing {
 namespace {
 int passes{0};
 int failures{0};
-}
+}  // namespace
 
 static void BitBucket(const char *, ...) {}
 
@@ -36,8 +36,8 @@ static void PrintFailureDetails(const char *format, ...) {
   fputc('\n', stderr);
 }
 
-FailureDetailPrinter Test(const char *file, int line, const char *predicate,
-                          bool pass) {
+FailureDetailPrinter Test(
+    const char *file, int line, const char *predicate, bool pass) {
   if (pass) {
     ++passes;
     return BitBucket;
@@ -48,7 +48,9 @@ FailureDetailPrinter Test(const char *file, int line, const char *predicate,
   }
 }
 
-FailureDetailPrinter Compare(const char *file, int line, const char *xs, const char *rel, const char *ys, unsigned long long x, unsigned long long y) {
+FailureDetailPrinter Compare(const char *file, int line, const char *xs,
+    const char *rel, const char *ys, unsigned long long x,
+    unsigned long long y) {
   while (*rel == ' ') {
     ++rel;
   }
@@ -75,8 +77,8 @@ FailureDetailPrinter Compare(const char *file, int line, const char *xs, const c
     return BitBucket;
   } else {
     ++failures;
-    fprintf(stderr, "%s:%d: FAIL %s[0x%llx] %s %s[0x%llx]:\n", file, line,
-            xs, x, rel, ys, y);
+    fprintf(stderr, "%s:%d: FAIL %s[0x%llx] %s %s[0x%llx]:\n", file, line, xs,
+        x, rel, ys, y);
     return PrintFailureDetails;
   }
 }

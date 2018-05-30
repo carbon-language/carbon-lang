@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../lib/evaluate/fixed-point.h"
 #include "testing.h"
+#include "../../lib/evaluate/fixed-point.h"
 #include <cstdio>
 
-using Fortran::evaluate::Ordering;
 using Fortran::evaluate::FixedPoint;
+using Fortran::evaluate::Ordering;
 
-template<int BITS, typename FP = FixedPoint<BITS>>
-void exhaustiveTesting() {
+template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
   COMPARE(BITS, ==, FP::bits);
   std::uint64_t maxUnsignedValue{(std::uint64_t{1} << BITS) - 1};
   std::int64_t maxPositiveSignedValue{(std::int64_t{1} << (BITS - 1)) - 1};
-  std::int64_t mostNegativeSignedValue{-(std::int64_t{1} << (BITS-1))};
+  std::int64_t mostNegativeSignedValue{-(std::int64_t{1} << (BITS - 1))};
   char desc[64];
-  std::snprintf(desc, sizeof desc, "BITS=%d, PARTBITS=%d, sizeof(Part)=%d", BITS, FP::partBits, static_cast<int>(sizeof(typename FP::Part)));
+  std::snprintf(desc, sizeof desc, "BITS=%d, PARTBITS=%d, sizeof(Part)=%d",
+      BITS, FP::partBits, static_cast<int>(sizeof(typename FP::Part)));
   FP zero;
   TEST(zero.IsZero())(desc);
   for (std::uint64_t x{0}; x <= maxUnsignedValue; ++x) {
@@ -36,17 +36,19 @@ void exhaustiveTesting() {
     COMPARE(x, ==, copy.ToUInt64())(desc);
     copy = a;
     COMPARE(x, ==, copy.ToUInt64())(desc);
-    COMPARE(x==0, ==, a.IsZero())("%s, x=0x%llx", desc, x);
+    COMPARE(x == 0, ==, a.IsZero())("%s, x=0x%llx", desc, x);
     copy.OnesComplement();
     COMPARE(x ^ maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx", desc, x);
     copy = a;
     bool over{copy.TwosComplement()};
-    COMPARE(over, ==, x == std::uint64_t{1} << (BITS-1))("%s, x=0x%llx", desc, x);
-    COMPARE(-x & maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx", desc, x);
+    COMPARE(over, ==, x == std::uint64_t{1} << (BITS - 1))
+    ("%s, x=0x%llx", desc, x);
+    COMPARE(-x & maxUnsignedValue, ==, copy.ToUInt64())
+    ("%s, x=0x%llx", desc, x);
     int lzbc{a.LeadingZeroBitCount()};
     COMPARE(lzbc, >=, 0)("%s, x=0x%llx", desc, x);
     COMPARE(lzbc, <=, BITS)("%s, x=0x%llx", desc, x);
-    COMPARE(x==0, ==, lzbc == BITS)("%s, x=0x%llx, lzbc=%d", desc, x, lzbc);
+    COMPARE(x == 0, ==, lzbc == BITS)("%s, x=0x%llx, lzbc=%d", desc, x, lzbc);
     std::uint64_t lzcheck{std::uint64_t{1} << (BITS - lzbc)};
     COMPARE(x, <, lzcheck)("%s, x=0x%llx, lzbc=%d", desc, x, lzbc);
     COMPARE(x + x + !x, >=, lzcheck)("%s, x=0x%llx, lzbc=%d", desc, x, lzbc);
@@ -71,16 +73,20 @@ void exhaustiveTesting() {
     for (int count{0}; count <= BITS + 1; ++count) {
       copy = a;
       copy.ShiftLeft(count);
-      COMPARE((x << count) & maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx, count=%d", desc, x, count);
+      COMPARE((x << count) & maxUnsignedValue, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, count=%d", desc, x, count);
       copy = a;
       copy.ShiftRightLogical(count);
-      COMPARE(x >> count, ==, copy.ToUInt64())("%s, x=0x%llx, count=%d", desc, x, count);
+      COMPARE(x >> count, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, count=%d", desc, x, count);
       copy = a;
       copy.ShiftLeft(-count);
-      COMPARE(x >> count, ==, copy.ToUInt64())("%s, x=0x%llx, count=%d", desc, x, count);
+      COMPARE(x >> count, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, count=%d", desc, x, count);
       copy = a;
       copy.ShiftRightLogical(-count);
-      COMPARE((x << count) & maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx, count=%d", desc, x, count);
+      COMPARE((x << count) & maxUnsignedValue, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, count=%d", desc, x, count);
     }
     for (std::uint64_t y{0}; y <= maxUnsignedValue; ++y) {
       std::int64_t sy = y;
@@ -103,7 +109,9 @@ void exhaustiveTesting() {
       } else {
         ord = Ordering::Equal;
       }
-      TEST(a.CompareSigned(b) == ord)("%s, x=0x%llx %lld %d, y=0x%llx %lld %d", desc, x, sx, a.IsNegative(), y, sy, b.IsNegative());
+      TEST(a.CompareSigned(b) == ord)
+      ("%s, x=0x%llx %lld %d, y=0x%llx %lld %d", desc, x, sx, a.IsNegative(), y,
+          sy, b.IsNegative());
       copy = a;
       copy.And(b);
       COMPARE(x & y, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
@@ -115,50 +123,71 @@ void exhaustiveTesting() {
       COMPARE(x ^ y, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
       copy = a;
       bool carry{copy.AddUnsigned(b)};
-      COMPARE(x + y, ==, copy.ToUInt64() + (std::uint64_t{carry} << BITS))("%s, x=0x%llx, y=0x%llx, carry=%d", desc, x, y, carry);
+      COMPARE(x + y, ==, copy.ToUInt64() + (std::uint64_t{carry} << BITS))
+      ("%s, x=0x%llx, y=0x%llx, carry=%d", desc, x, y, carry);
       copy = a;
       over = copy.AddSigned(b);
-      COMPARE((sx + sy) & maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      COMPARE(over, ==, sx+sy < mostNegativeSignedValue || sx+sy > maxPositiveSignedValue)("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      COMPARE((sx + sy) & maxUnsignedValue, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      COMPARE(over, ==,
+          sx + sy < mostNegativeSignedValue || sx + sy > maxPositiveSignedValue)
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       copy = a;
       over = copy.SubtractSigned(b);
-      COMPARE((sx - sy) & maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      COMPARE(over, ==, sx-sy < mostNegativeSignedValue || sx-sy > maxPositiveSignedValue)("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      COMPARE((sx - sy) & maxUnsignedValue, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      COMPARE(over, ==,
+          sx - sy < mostNegativeSignedValue || sx - sy > maxPositiveSignedValue)
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       copy = a;
       FP upper;
       copy.MultiplyUnsigned(b, upper);
-      COMPARE(x * y, ==, (upper.ToUInt64() << BITS) ^ copy.ToUInt64())("%s, x=0x%llx, y=0x%llx, lower=0x%llx, upper=0x%llx", desc, x, y, copy.ToUInt64(), upper.ToUInt64());
+      COMPARE(x * y, ==, (upper.ToUInt64() << BITS) ^ copy.ToUInt64())
+      ("%s, x=0x%llx, y=0x%llx, lower=0x%llx, upper=0x%llx", desc, x, y,
+          copy.ToUInt64(), upper.ToUInt64());
       copy = a;
       copy.MultiplySigned(b, upper);
-      COMPARE((sx * sy) & maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      COMPARE(((sx * sy) >> BITS) & maxUnsignedValue, ==, upper.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      COMPARE((sx * sy) & maxUnsignedValue, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      COMPARE(((sx * sy) >> BITS) & maxUnsignedValue, ==, upper.ToUInt64())
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       copy = a;
       FP rem;
-      COMPARE(y == 0, ==, copy.DivideUnsigned(b, rem))("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      COMPARE(y == 0, ==, copy.DivideUnsigned(b, rem))
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       if (y == 0) {
-        COMPARE(maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        COMPARE(maxUnsignedValue, ==, copy.ToUInt64())
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         COMPARE(0, ==, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else {
-        COMPARE(x / y, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-        COMPARE(x % y, ==, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        COMPARE(x / y, ==, copy.ToUInt64())
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        COMPARE(x % y, ==, rem.ToUInt64())
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
       copy = a;
       bool badCase{sx == mostNegativeSignedValue &&
-                   ((sy == -1 && sx != sy) || (BITS==1 && sx==sy))};
-      COMPARE(y == 0 || badCase, ==, copy.DivideSigned(b, rem))("%s, x=0x%llx, y=0x%llx", desc, x, y);
+          ((sy == -1 && sx != sy) || (BITS == 1 && sx == sy))};
+      COMPARE(y == 0 || badCase, ==, copy.DivideSigned(b, rem))
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       if (y == 0) {
         if (sx >= 0) {
-          COMPARE(maxPositiveSignedValue, ==, copy.ToInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+          COMPARE(maxPositiveSignedValue, ==, copy.ToInt64())
+          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         } else {
-          COMPARE(mostNegativeSignedValue, ==, copy.ToInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+          COMPARE(mostNegativeSignedValue, ==, copy.ToInt64())
+          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         }
         COMPARE(0, ==, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else if (badCase) {
         COMPARE(x, ==, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
         COMPARE(0, ==, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else {
-        COMPARE(sx/sy, ==, copy.ToInt64())("%s, x=0x%llx %lld, y=0x%llx %lld; unsigned 0x%llx", desc, x, sx, y, sy, copy.ToUInt64());
-        COMPARE(sx-sy*(sx/sy), ==, rem.ToInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        COMPARE(sx / sy, ==, copy.ToInt64())
+        ("%s, x=0x%llx %lld, y=0x%llx %lld; unsigned 0x%llx", desc, x, sx, y,
+            sy, copy.ToUInt64());
+        COMPARE(sx - sy * (sx / sy), ==, rem.ToInt64())
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
     }
   }

@@ -42,8 +42,8 @@ static constexpr Ordering Reverse(Ordering ordering) {
 // testing of what would otherwise be more rare edge cases, this template class
 // may be configured to use other part types &/or partial fields in the
 // parts.
-template <int BITS, int PARTBITS=32,
-          typename PART = std::uint32_t, typename BIGPART = std::uint64_t>
+template<int BITS, int PARTBITS = 32, typename PART = std::uint32_t,
+    typename BIGPART = std::uint64_t>
 class FixedPoint {
 public:
   static constexpr int bits{BITS};
@@ -58,7 +58,8 @@ private:
   static constexpr int extraPartBits{maxPartBits - partBits};
   static constexpr int parts{(bits + partBits - 1) / partBits};
   static_assert(parts >= 1);
-  static constexpr int extraTopPartBits{extraPartBits + (parts * partBits) - bits};
+  static constexpr int extraTopPartBits{
+      extraPartBits + (parts * partBits) - bits};
   static constexpr int topPartBits{maxPartBits - extraTopPartBits};
   static_assert(topPartBits > 0 && topPartBits <= partBits);
   static_assert((parts - 1) * partBits + topPartBits == bits);
@@ -105,7 +106,7 @@ public:
   }
 
   constexpr bool IsNegative() const {
-    return (part_[parts-1] >> (topPartBits - 1)) & 1;
+    return (part_[parts - 1] >> (topPartBits - 1)) & 1;
   }
 
   constexpr Ordering CompareToZeroSigned() const {
@@ -116,7 +117,7 @@ public:
   }
 
   constexpr Ordering CompareUnsigned(const FixedPoint &y) const {
-    for (int j{parts}; j-- > 0; ) {
+    for (int j{parts}; j-- > 0;) {
       if (part_[j] > y.part_[j]) {
         return Ordering::Greater;
       }
@@ -136,8 +137,8 @@ public:
   }
 
   constexpr int LeadingZeroBitCount() const {
-    if (part_[parts-1] != 0) {
-      int lzbc{evaluate::LeadingZeroBitCount(part_[parts-1])};
+    if (part_[parts - 1] != 0) {
+      int lzbc{evaluate::LeadingZeroBitCount(part_[parts - 1])};
       return lzbc - extraTopPartBits;
     }
     int upperZeroes{topPartBits};
@@ -172,7 +173,7 @@ public:
     for (int j{0}; j + 1 < parts; ++j) {
       part_[j] = ~part_[j] & partMask;
     }
-    part_[parts-1] = ~part_[parts-1] & topPartMask;
+    part_[parts - 1] = ~part_[parts - 1] & topPartMask;
   }
 
   // Returns true on overflow (i.e., negating the most negative signed number)
@@ -183,9 +184,9 @@ public:
       part_[j] = (~part_[j] + carry) & partMask;
       carry = newCarry;
     }
-    Part before{part_[parts-1]};
-    part_[parts-1] = (~before + carry) & topPartMask;
-    return before != 0 && part_[parts-1] == before;
+    Part before{part_[parts - 1]};
+    part_[parts - 1] = (~before + carry) & topPartMask;
+    return before != 0 && part_[parts - 1] == before;
   }
 
   constexpr void And(const FixedPoint &y) {
@@ -212,7 +213,7 @@ public:
     } else if (count > 0) {
       int shiftParts{count / partBits};
       int bitShift{count - partBits * shiftParts};
-      int j{parts-1};
+      int j{parts - 1};
       if (bitShift == 0) {
         for (; j >= shiftParts; --j) {
           part_[j] = part_[j - shiftParts] & PartMask(j);
@@ -223,8 +224,8 @@ public:
       } else {
         for (; j > shiftParts; --j) {
           part_[j] = ((part_[j - shiftParts] << bitShift) |
-                      (part_[j - shiftParts - 1] >> (partBits - bitShift))) &
-                     PartMask(j);
+                         (part_[j - shiftParts - 1] >> (partBits - bitShift))) &
+              PartMask(j);
         }
         if (j == shiftParts) {
           part_[j] = (part_[0] << bitShift) & PartMask(j);
@@ -254,8 +255,8 @@ public:
       } else {
         for (; j + shiftParts + 1 < parts; ++j) {
           part_[j] = ((part_[j + shiftParts] >> bitShift) |
-                      (part_[j + shiftParts + 1] << (partBits - bitShift))) &
-                     partMask;
+                         (part_[j + shiftParts + 1] << (partBits - bitShift))) &
+              partMask;
         }
         if (j + shiftParts + 1 == parts) {
           part_[j++] = part_[parts - 1] >> bitShift;
@@ -276,9 +277,9 @@ public:
       part_[j] = carry & partMask;
       carry >>= partBits;
     }
-    carry += part_[parts-1];
-    carry += y.part_[parts-1];
-    part_[parts-1] = carry & topPartMask;
+    carry += part_[parts - 1];
+    carry += y.part_[parts - 1];
+    part_[parts - 1] = carry & topPartMask;
     return carry > topPartMask;
   }
 
@@ -309,7 +310,7 @@ public:
           if (y.part_[k] != 0) {
             BigPart xy{part_[j]};
             xy *= y.part_[k];
-            for (int to{j+k}; xy != 0; ++to) {
+            for (int to{j + k}; xy != 0; ++to) {
               xy += product[to];
               product[to] = xy & partMask;
               xy >>= partBits;
@@ -324,8 +325,8 @@ public:
     }
     if (topPartBits < partBits) {
       upper.ShiftLeft(partBits - topPartBits);
-      upper.part_[0] |= part_[parts-1] >> topPartBits;
-      part_[parts-1] &= topPartMask;
+      upper.part_[0] |= part_[parts - 1] >> topPartBits;
+      part_[parts - 1] &= topPartMask;
     }
   }
 
@@ -352,7 +353,8 @@ public:
   }
 
   // Overwrites *this with quotient.  Returns true on division by zero.
-  constexpr bool DivideUnsigned(const FixedPoint &divisor, FixedPoint &remainder) {
+  constexpr bool DivideUnsigned(
+      const FixedPoint &divisor, FixedPoint &remainder) {
     remainder.Clear();
     if (divisor.IsZero()) {
       RightMask(bits);
@@ -410,7 +412,8 @@ public:
         // Dividend was (and remains) the most negative number.
         // See whether the original divisor was -1 (if so, it's 1 now).
         if (divisorOrdering == Ordering::Less &&
-            divisor.CompareUnsigned(FixedPoint{std::uint64_t{1}}) == Ordering::Equal) {
+            divisor.CompareUnsigned(FixedPoint{std::uint64_t{1}}) ==
+                Ordering::Equal) {
           // most negative number / -1 is the sole overflow case
           remainder.Clear();
           return true;
@@ -465,7 +468,7 @@ public:
 
 private:
   static constexpr Part PartMask(int part) {
-    return part == parts-1 ? topPartMask : partMask;
+    return part == parts - 1 ? topPartMask : partMask;
   }
 
   constexpr void Clear() {

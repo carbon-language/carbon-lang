@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../lib/evaluate/leading-zero-bit-count.h"
 #include "testing.h"
+#include "../../lib/evaluate/leading-zero-bit-count.h"
 
 using Fortran::evaluate::LeadingZeroBitCount;
 

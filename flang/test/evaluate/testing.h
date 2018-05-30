@@ -25,12 +25,17 @@ int Complete();
 // function that can be optionally called to print more detail, e.g.
 //   COMPARE(x, ==, y)("z is 0x%llx", z);
 // will also print z after the usual failure message if x != y.
-#define TEST(predicate) testing::Test(__FILE__, __LINE__, #predicate, (predicate))
-#define COMPARE(x, rel, y) testing::Compare(__FILE__, __LINE__, #x, #rel, #y, (x), (y))
+#define TEST(predicate) \
+  testing::Test(__FILE__, __LINE__, #predicate, (predicate))
+#define COMPARE(x, rel, y) \
+  testing::Compare(__FILE__, __LINE__, #x, #rel, #y, (x), (y))
 
 // Functions called by thesemacros; do not call directly.
 using FailureDetailPrinter = void (*)(const char *, ...);
-FailureDetailPrinter Test(const char *file, int line, const char *predicate, bool pass);
-FailureDetailPrinter Compare(const char *file, int line, const char *xs, const char *rel, const char *ys, unsigned long long x, unsigned long long y);
+FailureDetailPrinter Test(
+    const char *file, int line, const char *predicate, bool pass);
+FailureDetailPrinter Compare(const char *file, int line, const char *xs,
+    const char *rel, const char *ys, unsigned long long x,
+    unsigned long long y);
 }  // namespace testing
 #endif  // FORTRAN_EVALUATE_TESTING_H_

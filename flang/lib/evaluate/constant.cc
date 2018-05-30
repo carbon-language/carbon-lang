@@ -25,39 +25,43 @@ ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Negate() const {
 }
 
 template<IntrinsicType::KindLenCType KIND>
-ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Add(const ScalarIntegerConstant<KIND> &that) const {
+ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Add(
+    const ScalarIntegerConstant<KIND> &that) const {
   ScalarIntegerConstant<KIND> result{*this};
-  return result.Assign(static_cast<BigIntType>(value_) +
-                       static_cast<BigIntType>(that.value_));
+  return result.Assign(
+      static_cast<BigIntType>(value_) + static_cast<BigIntType>(that.value_));
 }
 
 template<IntrinsicType::KindLenCType KIND>
-ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Subtract(const ScalarIntegerConstant<KIND> &that) const {
+ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Subtract(
+    const ScalarIntegerConstant<KIND> &that) const {
   ScalarIntegerConstant<KIND> result{*this};
-  return result.Assign(static_cast<BigIntType>(value_) -
-                       static_cast<BigIntType>(that.value_));
+  return result.Assign(
+      static_cast<BigIntType>(value_) - static_cast<BigIntType>(that.value_));
 }
 
 template<IntrinsicType::KindLenCType KIND>
-ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Multiply(const ScalarIntegerConstant<KIND> &that) const {
+ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Multiply(
+    const ScalarIntegerConstant<KIND> &that) const {
   ScalarIntegerConstant<KIND> result{*this};
-  return result.Assign(static_cast<BigIntType>(value_) -
-                       static_cast<BigIntType>(that.value_));
+  return result.Assign(
+      static_cast<BigIntType>(value_) - static_cast<BigIntType>(that.value_));
 }
 
 template<IntrinsicType::KindLenCType KIND>
-ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Divide(const ScalarIntegerConstant<KIND> &that) const {
+ScalarIntegerConstant<KIND> ScalarIntegerConstant<KIND>::Divide(
+    const ScalarIntegerConstant<KIND> &that) const {
   ScalarIntegerConstant<KIND> result{*this};
   if (that.value_ == 0) {
     result.SetError(Error::DivisionByZero);
     return result;
   } else {
-    return result.Assign(static_cast<BigIntType>(value_) /
-                         static_cast<BigIntType>(that.value_));
+    return result.Assign(
+        static_cast<BigIntType>(value_) / static_cast<BigIntType>(that.value_));
   }
 }
 
 template class ScalarConstant<IntrinsicType::Classification,
-                   IntrinsicType::Classification::Integer, 1>;
+    IntrinsicType::Classification::Integer, 1>;
 
 }  // namespace Fortran::evaluate
