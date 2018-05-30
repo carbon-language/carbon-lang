@@ -782,6 +782,12 @@ def fcomment_block_commands : CommaJoined<["-"], "fcomment-block-commands=">, Gr
 def fparse_all_comments : Flag<["-"], "fparse-all-comments">, Group<f_clang_Group>, Flags<[CC1Option]>;
 def fcommon : Flag<["-"], "fcommon">, Group<f_Group>;
 def fcompile_resource_EQ : Joined<["-"], "fcompile-resource=">, Group<f_Group>;
+def fcomplete_member_pointers : Flag<["-"], "fcomplete-member-pointers">, Group<f_clang_Group>,
+   Flags<[CoreOption, CC1Option]>,
+   HelpText<"Require member pointer base types to be complete if they would be significant under the Microsoft ABI">;
+def fno_complete_member_pointers : Flag<["-"], "fno-complete-member-pointers">, Group<f_clang_Group>,
+   Flags<[CoreOption]>,
+   HelpText<"Do not require member pointer base types to be complete if they would be significant under the Microsoft ABI">;
 def fconstant_cfstrings : Flag<["-"], "fconstant-cfstrings">, Group<f_Group>;
 def fconstant_string_class_EQ : Joined<["-"], "fconstant-string-class=">, Group<f_Group>;
 def fconstexpr_depth_EQ : Joined<["-"], "fconstexpr-depth=">, Group<f_Group>;

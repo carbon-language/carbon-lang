@@ -6350,6 +6350,8 @@ def err_bad_memptr_rhs : Error<
 def err_bad_memptr_lhs : Error<
   "left hand operand to %0 must be a %select{|pointer to }1class "
   "compatible with the right hand operand, but is %2">;
+def err_memptr_incomplete : Error<
+  "member pointer has incomplete base type %0">;
 def warn_exception_caught_by_earlier_handler : Warning<
   "exception of type %0 will be caught by earlier handler">,
   InGroup<Exceptions>;
