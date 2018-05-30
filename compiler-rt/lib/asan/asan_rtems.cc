@@ -72,11 +72,6 @@ void EarlyInit() {
   ResetShadowMemory();
 }
 
-// Main thread information.  Initialized in CreateMainThread() and
-// used by ThreadStartHook().
-static uptr MainThreadSelf;
-static AsanThread *MainThread;
-
 // We can use a plain thread_local variable for TSD.
 static thread_local void *per_thread;
 
@@ -134,18 +129,12 @@ void AsanThread::SetThreadStackAndTls(const AsanThread::InitOptions *options) {
   tls_end_ = options->tls_bottom + options->tls_size;
 }
 
-// Called by __asan::AsanInitInternal (asan_rtl.c).
+// Called by __asan::AsanInitInternal (asan_rtl.c).  Unlike other ports, the
+// main thread on RTEMS does not require special treatment; its AsanThread is
+// already created by the provided hooks.  This function simply looks up and
+// returns the created thread.
 AsanThread *CreateMainThread() {
-  CHECK_NE(__sanitizer::MainThreadStackBase, 0);
-  CHECK_GT(__sanitizer::MainThreadStackSize, 0);
-  AsanThread *t = CreateAsanThread(
-      nullptr, 0, GetThreadSelf(), true,
-      __sanitizer::MainThreadStackBase, __sanitizer::MainThreadStackSize,
-      __sanitizer::MainThreadTlsBase, __sanitizer::MainThreadTlsSize);
-  SetCurrentThread(t);
-  MainThreadSelf = pthread_self();
-  MainThread = t;
-  return t;
+  return GetThreadContextByTidLocked(0)->thread;
 }
 
 // This is called before each thread creation is attempted.  So, in
@@ -179,16 +168,14 @@ static void ThreadCreateHook(void *hook, bool aborted) {
   }
 }
 
-// This is called (1) in the newly-created thread before it runs
-// anything else, with the pointer returned by BeforeThreadCreateHook
-// (above).  cf. asan_interceptors.cc:asan_thread_start.  (2) before
-// a thread restart.
+// This is called (1) in the newly-created thread before it runs anything else,
+// with the pointer returned by BeforeThreadCreateHook (above).  (2) before a
+// thread restart.
 static void ThreadStartHook(void *hook, uptr os_id) {
-  if (!hook && !MainThreadSelf)
+  if (!hook)
     return;
 
-  DCHECK(hook || os_id == MainThreadSelf);
-  AsanThread *thread = hook ? static_cast<AsanThread *>(hook) : MainThread;
+  AsanThread *thread = static_cast<AsanThread *>(hook);
   SetCurrentThread(thread);
 
   ThreadStatus status =
