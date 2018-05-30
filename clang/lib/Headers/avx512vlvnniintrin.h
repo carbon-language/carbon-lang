@@ -76,7 +76,7 @@ _mm256_maskz_dpbusds_epi32(__mmask8 __U, __m256i __S, __m256i __A, __m256i __B)
   return (__m256i)__builtin_ia32_selectd_256(__U,
                                      (__v8si)_mm256_dpbusds_epi32(__S, __A, __B),
                                      (__v8si)_mm256_setzero_si256());
-
+}
 
 static __inline__ __m256i __DEFAULT_FN_ATTRS
 _mm256_dpwssd_epi32(__m256i __S, __m256i __A, __m256i __B)
