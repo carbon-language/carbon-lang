@@ -2004,12 +2004,8 @@ bool SIInsertWaitcnts::runOnMachineFunction(MachineFunction &MF) {
     // TODO: Could insert earlier and schedule more liberally with operations
     // that only use caller preserved registers.
     MachineBasicBlock &EntryBB = MF.front();
-    auto SWaitInst = BuildMI(EntryBB, EntryBB.getFirstNonPHI(),
-                             DebugLoc(), TII->get(AMDGPU::S_WAITCNT))
-                             .addImm(0);
-
-    LLVM_DEBUG(dbgs() << "insertWaitcntInBlock\n"
-               << "New Instr: " << *SWaitInst << '\n');
+    BuildMI(EntryBB, EntryBB.getFirstNonPHI(), DebugLoc(), TII->get(AMDGPU::S_WAITCNT))
+      .addImm(0);
 
     Modified = true;
   }
