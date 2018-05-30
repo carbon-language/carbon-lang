@@ -191,6 +191,9 @@ public:
   Message &Say(const SourceName &, MessageFixedText &&, const SourceName &,
       const SourceName &);
   void SayAlreadyDeclared(const SourceName &, const Symbol &);
+  // Emit a message and attached message with two names and locations.
+  void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
+      MessageFixedText &&);
 
 private:
   // Where messages are emitted:
@@ -793,10 +796,13 @@ MessageHandler::Message &MessageHandler::Say(const SourceName &location,
 }
 void MessageHandler::SayAlreadyDeclared(
     const SourceName &name, const Symbol &prev) {
-  Say(name, "'%s' is already declared in this scoping unit"_err_en_US)
-      .Attach(prev.name(),
-          MessageFormattedText{"Previous declaration of '%s'"_en_US,
-              prev.name().ToString().data()});
+  Say2(name, "'%s' is already declared in this scoping unit"_err_en_US,
+    prev.name(), "Previous declaration of '%s'"_en_US);
+}
+void MessageHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
+    const SourceName &name2, MessageFixedText &&msg2) {
+  Say(name1, std::move(msg1))
+      .Attach(name2, MessageFormattedText{msg2, name2.ToString().data()});
 }
 
 // ImplicitRulesVisitor implementation
@@ -1656,13 +1662,13 @@ void DeclarationVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
         name.source, details->module().name());
   } else if (auto *details = symbol.detailsIf<SubprogramNameDetails>()) {
     if (details->kind() == SubprogramKind::Module) {
-      Say(name,
-          "Declaration of '%s' conflicts with its use as module procedure"_err_en_US)
-          .Attach(symbol.name(), "Module procedure definition"_en_US);
+      Say2(name.source,
+          "Declaration of '%s' conflicts with its use as module procedure"_err_en_US,
+          symbol.name(), "Module procedure definition"_en_US);
     } else if (details->kind() == SubprogramKind::Internal) {
-      Say(name,
-          "Declaration of '%s' conflicts with its use as internal procedure"_err_en_US)
-          .Attach(symbol.name(), "Internal procedure definition"_en_US);
+      Say2(name.source,
+          "Declaration of '%s' conflicts with its use as internal procedure"_err_en_US,
+          symbol.name(), "Internal procedure definition"_en_US);
     } else {
       CHECK(!"unexpected kind");
     }
@@ -1732,11 +1738,9 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
     } else if (!symbol.isSubprogram()) {
       auto *details = symbol.detailsIf<EntityDetails>();
       if (!details || !details->isArray()) {
-        Say(*name,
-            "Use of '%s' as a procedure conflicts with its declaration"_err_en_US)
-            .Attach(symbol.name(),
-                MessageFormattedText{"Declaration of '%s'"_en_US,
-                    symbol.name().ToString().data()});
+        Say2(name->source,
+            "Use of '%s' as a procedure conflicts with its declaration"_err_en_US,
+            symbol.name(), "Declaration of '%s'"_en_US);
       }
     }
   }
