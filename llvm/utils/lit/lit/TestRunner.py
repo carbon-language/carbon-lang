@@ -40,17 +40,6 @@ kUseCloseFDs = not kIsWindows
 kAvoidDevNull = kIsWindows
 kDevNull = "/dev/null"
 
-# A regex that matches %dbg(ARG), which lit inserts at the beginning of each
-# run command pipeline such that ARG specifies the pipeline's source line
-# number.  lit later expands each %dbg(ARG) to a command that behaves as a null
-# command in the target shell so that the line number is seen in lit's verbose
-# mode.
-#
-# This regex captures ARG.  ARG must not contain a right parenthesis, which
-# terminates %dbg.  ARG must not contain quotes, in which ARG might be enclosed
-# during expansion.
-kPdbgRegex = '%dbg\(([^)\'"]*)\)'
-
 class ShellEnvironment(object):
 
     """Mutable shell environment containing things like CWD and env vars.
@@ -800,13 +789,6 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
         results.append(cmdResult)
         return cmdResult.exitCode
 
-    if cmd.commands[0].args[0] == ':':
-        if len(cmd.commands) != 1:
-            raise InternalShellError(cmd.commands[0], "Unsupported: ':' "
-                                     "cannot be part of a pipeline")
-        results.append(ShellCommandResult(cmd.commands[0], '', '', 0, False))
-        return 0;
-
     procs = []
     default_stdin = subprocess.PIPE
     stderrTempFiles = []
@@ -999,7 +981,6 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
     return exitCode
 
 def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
-    commands = applySubstitutions(commands, [(kPdbgRegex, ": '\\1'")])
     cmds = []
     for ln in commands:
         try:
@@ -1070,7 +1051,7 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
             out += 'error: command reached timeout: %s\n' % (
                 str(result.timeoutReached),)
 
-    return out, err, exitCode, timeoutInfo, commands
+    return out, err, exitCode, timeoutInfo
 
 def executeScript(test, litConfig, tmpBase, commands, cwd):
     bashPath = litConfig.getBashPath()
@@ -1085,15 +1066,9 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
       mode += 'b'  # Avoid CRLFs when writing bash scripts.
     f = open(script, mode)
     if isWin32CMDEXE:
-        commands = applySubstitutions(commands, [(kPdbgRegex,
-                                                  "echo '\\1' > nul")])
-        if litConfig.echo_all_commands:
-            f.write('@echo on\n')
-        else:
-            f.write('@echo off\n')
-        f.write('\n@if %ERRORLEVEL% NEQ 0 EXIT\n'.join(commands))
+        f.write('@echo off\n')
+        f.write('\nif %ERRORLEVEL% NEQ 0 EXIT\n'.join(commands))
     else:
-        commands = applySubstitutions(commands, [(kPdbgRegex, ": '\\1'")])
         if test.config.pipefail:
             f.write('set -o pipefail;')
         if litConfig.echo_all_commands:
@@ -1118,9 +1093,9 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
         out, err, exitCode = lit.util.executeCommand(command, cwd=cwd,
                                        env=test.config.environment,
                                        timeout=litConfig.maxIndividualTestTime)
-        return (out, err, exitCode, None, commands)
+        return (out, err, exitCode, None)
     except lit.util.ExecuteCommandTimeoutException as e:
-        return (e.out, e.err, e.exitCode, e.msg, commands)
+        return (e.out, e.err, e.exitCode, e.msg)
 
 def parseIntegratedTestScriptCommands(source_path, keywords):
     """
@@ -1240,14 +1215,14 @@ def getDefaultSubstitutions(test, tmpDir, tmpBase, normalize_slashes=False):
             ])
     return substitutions
 
-def applySubstitutions(script, substitutions, escapeForWindows=False):
+def applySubstitutions(script, substitutions):
     """Apply substitutions to the script.  Allow full regular expression syntax.
     Replace each matching occurrence of regular expression pattern a with
     substitution b in line ln."""
     def processLine(ln):
         # Apply substitutions
         for a,b in substitutions:
-            if kIsWindows and escapeForWindows:
+            if kIsWindows:
                 b = b.replace("\\","\\\\")
             ln = re.sub(a, b, ln)
 
@@ -1326,9 +1301,7 @@ class IntegratedTestKeywordParser(object):
         self.parser = parser
 
         if kind == ParserKind.COMMAND:
-            self.parser = lambda line_number, line, output: \
-                                 self._handleCommand(line_number, line, output,
-                                                     self.keyword)
+            self.parser = self._handleCommand
         elif kind == ParserKind.LIST:
             self.parser = self._handleList
         elif kind == ParserKind.BOOLEAN_EXPR:
@@ -1359,7 +1332,7 @@ class IntegratedTestKeywordParser(object):
         return (not line.strip() or output)
 
     @staticmethod
-    def _handleCommand(line_number, line, output, keyword):
+    def _handleCommand(line_number, line, output):
         """A helper for parsing COMMAND type keywords"""
         # Trim trailing whitespace.
         line = line.rstrip()
@@ -1378,14 +1351,6 @@ class IntegratedTestKeywordParser(object):
         else:
             if output is None:
                 output = []
-            pdbg = "%dbg({keyword} at line {line_number})".format(
-                keyword=keyword,
-                line_number=line_number)
-            assert re.match(kPdbgRegex + "$", pdbg), \
-                   "kPdbgRegex expected to match actual %dbg usage"
-            line = "{pdbg} && {real_command}".format(
-                pdbg=pdbg,
-                real_command=line)
             output.append(line)
         return output
 
@@ -1524,7 +1489,7 @@ def _runShTest(test, litConfig, useExternalSh, script, tmpBase):
     if isinstance(res, lit.Test.Result):
         return res
 
-    out,err,exitCode,timeoutInfo,script = res
+    out,err,exitCode,timeoutInfo = res
     if exitCode == 0:
         status = Test.PASS
     else:
@@ -1565,7 +1530,7 @@ def executeShTest(test, litConfig, useExternalSh,
     substitutions = list(extra_substitutions)
     substitutions += getDefaultSubstitutions(test, tmpDir, tmpBase,
                                              normalize_slashes=useExternalSh)
-    script = applySubstitutions(script, substitutions, True)
+    script = applySubstitutions(script, substitutions)
 
     # Re-run failed tests up to test_retry_attempts times.
     attempts = 1
