@@ -29,19 +29,22 @@
 
 namespace __asan {
 
+static void ResetShadowMemory() {
+  uptr shadow_start = SHADOW_OFFSET;
+  uptr shadow_end = MEM_TO_SHADOW(kMyriadMemoryEnd32);
+  uptr gap_start = MEM_TO_SHADOW(shadow_start);
+  uptr gap_end = MEM_TO_SHADOW(shadow_end);
+
+  REAL(memset)((void *)shadow_start, 0, shadow_end - shadow_start);
+  REAL(memset)((void *)gap_start, kAsanShadowGap, gap_end - gap_start);
+}
+
 void InitializeShadowMemory() {
   kHighMemEnd = 0;
   kMidMemBeg =  0;
   kMidMemEnd =  0;
 
-  uptr shadow_start = SHADOW_OFFSET;
-  uptr shadow_end = MEM_TO_SHADOW(kMyriadMemoryEnd32);
-  uptr shadow_size = shadow_end - shadow_start;
-  uptr gap_start = MEM_TO_SHADOW(shadow_start);
-  uptr gap_end = MEM_TO_SHADOW(shadow_end);
-
-  REAL(memset)((void *)shadow_start, 0, shadow_size);
-  REAL(memset)((void *)gap_start, kAsanShadowGap, gap_end - gap_start);
+  ResetShadowMemory();
 }
 
 void AsanApplyToGlobals(globals_op_fptr op, const void *needle) {
@@ -66,7 +69,7 @@ void EarlyInit() {
   // Provide early initialization of shadow memory so that
   // instrumented code running before full initialzation will not
   // report spurious errors.
-  InitializeShadowMemory();
+  ResetShadowMemory();
 }
 
 // Main thread information.  Initialized in CreateMainThread() and
@@ -118,10 +121,8 @@ static AsanThread *CreateAsanThread(StackTrace *stack, u32 parent_tid,
 }
 
 // This gets the same arguments passed to Init by CreateAsanThread, above.
-// We're in the creator thread before the new thread is actually started,
-// but its stack address range is already known.  We don't bother tracking
-// the static TLS address range because the system itself already uses an
-// ASan-aware allocator for that.
+// We're in the creator thread before the new thread is actually started, but
+// its stack and tls address range are already known.
 void AsanThread::SetThreadStackAndTls(const AsanThread::InitOptions *options) {
   DCHECK_NE(GetCurrentThread(), this);
   DCHECK_NE(GetCurrentThread(), nullptr);
@@ -219,8 +220,10 @@ static void HandleExit() {
   // Disable ASan by setting it to uninitialized.  Also reset the
   // shadow memory to avoid reporting errors after the run-time has
   // been desroyed.
-  asan_inited = false;
-  //  InitializeShadowMemory();
+  if (asan_inited) {
+    asan_inited = false;
+    ResetShadowMemory();
+  }
 }
 
 }  // namespace __asan
