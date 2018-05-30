@@ -689,14 +689,12 @@ let DecoderNamespace = "MicroMips" in {
                  ISA_MICROMIPS32_NOT_MIPS32R6;
   def LWM16_MM : LoadMultMM16<"lwm16", II_LWM>, LWM_FM_MM16<0x4>,
                  ISA_MICROMIPS32_NOT_MIPS32R6;
-  let AdditionalPredicates = [InMicroMips] in {
-    def CFC2_MM : InstSE<(outs GPR32Opnd:$rt), (ins COP2Opnd:$impl),
-                         "cfc2\t$rt, $impl", [], II_CFC2, FrmFR, "cfc2">,
-                  POOL32A_CFTC2_FM_MM<0b1100110100>;
-    def CTC2_MM : InstSE<(outs COP2Opnd:$impl), (ins GPR32Opnd:$rt),
-                         "ctc2\t$rt, $impl", [], II_CTC2, FrmFR, "ctc2">,
-                  POOL32A_CFTC2_FM_MM<0b1101110100>;
-  }
+  def CFC2_MM : InstSE<(outs GPR32Opnd:$rt), (ins COP2Opnd:$impl),
+                       "cfc2\t$rt, $impl", [], II_CFC2, FrmFR, "cfc2">,
+                POOL32A_CFTC2_FM_MM<0b1100110100>, ISA_MICROMIPS;
+  def CTC2_MM : InstSE<(outs COP2Opnd:$impl), (ins GPR32Opnd:$rt),
+                       "ctc2\t$rt, $impl", [], II_CTC2, FrmFR, "ctc2">,
+                POOL32A_CFTC2_FM_MM<0b1101110100>, ISA_MICROMIPS;
 }
 
 class WaitMM<string opstr> :
