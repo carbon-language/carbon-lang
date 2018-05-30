@@ -320,6 +320,18 @@ namespace injected_class_name {
   using T = decltype(b);
 }
 
+namespace member_guides {
+  // PR34520
+  template<class>
+  struct Foo {
+    template <class T> struct Bar {
+      Bar(...) {}
+    };
+    Bar(int) -> Bar<int>;
+  };
+  Foo<int>::Bar b = 0;
+}
+
 #else
 
 // expected-no-diagnostics
