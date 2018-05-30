@@ -20502,6 +20502,25 @@ SDValue X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                               Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case INTR_TYPE_3OP_RM: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src3 = Op.getOperand(3);
+
+      // We specify 2 possible opcodes for intrinsics with rounding modes.
+      // First, we check if the intrinsic may have non-default rounding mode,
+      // (IntrData->Opc1 != 0), then we check the rounding mode operand.
+      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
+      if (IntrWithRoundingModeOpcode != 0) {
+        SDValue Rnd = Op.getOperand(4);
+        if (!isRoundModeCurDirection(Rnd)) {
+          return DAG.getNode(IntrWithRoundingModeOpcode,
+                             dl, Op.getValueType(),
+                             Src1, Src2, Src3, Rnd);
+        }
+      }
+      return DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2, Src3);
+    }
     case VPERM_2OP : {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
@@ -30389,6 +30408,35 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// Checks if the shuffle mask takes subsequent elements
+/// alternately from two vectors.
+/// For example <0, 5, 2, 7> or <8, 1, 10, 3, 12, 5, 14, 7> are both correct.
+static bool isAddSubOrSubAddMask(ArrayRef<int> Mask, int ParitySrc[2]) {
+
+  unsigned Size = Mask.size();
+  for (unsigned i = 0; i != Size; ++i) {
+    int M = Mask[i];
+    if (M < 0)
+      continue;
+
+    // Make sure we are using the matching element from the input.
+    if ((M % Size) != i)
+      return false;
+
+    // Make sure we use the same input for all elements of the same parity.
+    int Src = M / Size;
+    if (ParitySrc[i % 2] >= 0 && ParitySrc[i % 2] != Src)
+      return false;
+    ParitySrc[i % 2] = Src;
+  }
+
+  // Make sure each input is used.
+  if (ParitySrc[0] < 0 || ParitySrc[1] < 0 || ParitySrc[0] == ParitySrc[1])
+    return false;
+
+  return true;
+}
+
 /// Returns true iff the shuffle node \p N can be replaced with ADDSUB(SUBADD)
 /// operation. If true is returned then the operands of ADDSUB(SUBADD) operation
 /// are written to the parameters \p Opnd0 and \p Opnd1.
@@ -30444,27 +30492,8 @@ static bool isAddSubOrSubAdd(SDNode *N, const X86Subtarget &Subtarget,
   }
 
   ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(N)->getMask();
-
   int ParitySrc[2] = {-1, -1};
-  unsigned Size = Mask.size();
-  for (unsigned i = 0; i != Size; ++i) {
-    int M = Mask[i];
-    if (M < 0)
-      continue;
-
-    // Make sure we are using the matching element from the input.
-    if ((M % Size) != i)
-      return false;
-
-    // Make sure we use the same input for all elements of the same parity.
-    int Src = M / Size;
-    if (ParitySrc[i % 2] >= 0 && ParitySrc[i % 2] != Src)
-      return false;
-    ParitySrc[i % 2] = Src;
-  }
-
-  // Make sure each input is used.
-  if (ParitySrc[0] < 0 || ParitySrc[1] < 0 || ParitySrc[0] == ParitySrc[1])
+  if (!isAddSubOrSubAddMask(Mask, ParitySrc))
     return false;
 
   // It's a subadd if the vector in the even parity is an FADD.
@@ -30476,11 +30505,56 @@ static bool isAddSubOrSubAdd(SDNode *N, const X86Subtarget &Subtarget,
   return true;
 }
 
+/// Combine shuffle of two fma nodes into FMAddSub or FMSubAdd.
+static SDValue combineShuffleToFMAddSub(SDNode *N,
+                                        const X86Subtarget &Subtarget,
+                                        SelectionDAG &DAG) {
+  // We only handle target-independent shuffles.
+  // FIXME: It would be easy and harmless to use the target shuffle mask
+  // extraction tool to support more.
+  if (N->getOpcode() != ISD::VECTOR_SHUFFLE)
+    return SDValue();
+
+  MVT VT = N->getSimpleValueType(0);
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  if (!Subtarget.hasAnyFMA() || !TLI.isTypeLegal(VT))
+    return SDValue();
+
+  // We're trying to match (shuffle fma(a, b, c), X86Fmsub(a, b, c).
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+  SDValue FMAdd = Op0, FMSub = Op1;
+  if (FMSub.getOpcode() != X86ISD::FMSUB)
+    std::swap(FMAdd, FMSub);
+
+  if (FMAdd.getOpcode() != ISD::FMA || FMSub.getOpcode() != X86ISD::FMSUB ||
+      FMAdd.getOperand(0) != FMSub.getOperand(0) || !FMAdd.hasOneUse() ||
+      FMAdd.getOperand(1) != FMSub.getOperand(1) || !FMSub.hasOneUse() ||
+      FMAdd.getOperand(2) != FMSub.getOperand(2))
+    return SDValue();
+
+  // Check for correct shuffle mask.
+  ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(N)->getMask();
+  int ParitySrc[2] = {-1, -1};
+  if (!isAddSubOrSubAddMask(Mask, ParitySrc))
+    return SDValue();
+
+  // FMAddSub takes zeroth operand from FMSub node.
+  SDLoc DL(N);
+  bool IsSubAdd = ParitySrc[0] == 0 ? Op0 == FMAdd : Op1 == FMAdd;
+  unsigned Opcode = IsSubAdd ? X86ISD::FMSUBADD : X86ISD::FMADDSUB;
+  return DAG.getNode(Opcode, DL, VT, FMAdd.getOperand(0), FMAdd.getOperand(1),
+                     FMAdd.getOperand(2));
+}
+
 /// Try to combine a shuffle into a target-specific add-sub or
 /// mul-add-sub node.
 static SDValue combineShuffleToAddSubOrFMAddSub(SDNode *N,
                                                 const X86Subtarget &Subtarget,
                                                 SelectionDAG &DAG) {
+  if (SDValue V = combineShuffleToFMAddSub(N, Subtarget, DAG))
+    return V;
+
   SDValue Opnd0, Opnd1;
   bool IsSubAdd;
   if (!isAddSubOrSubAdd(N, Subtarget, DAG, Opnd0, Opnd1, IsSubAdd))
