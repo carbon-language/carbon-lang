@@ -224,8 +224,7 @@ _mm_div_ps(__m128 __a, __m128 __b)
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_sqrt_ss(__m128 __a)
 {
-  __m128 __c = __builtin_ia32_sqrtss((__v4sf)__a);
-  return (__m128) { __c[0], __a[1], __a[2], __a[3] };
+  return (__m128)__builtin_ia32_sqrtss((__v4sf)__a);
 }
 
 /// Calculates the square roots of the values stored in a 128-bit vector
@@ -260,8 +259,7 @@ _mm_sqrt_ps(__m128 __a)
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_rcp_ss(__m128 __a)
 {
-  __m128 __c = __builtin_ia32_rcpss((__v4sf)__a);
-  return (__m128) { __c[0], __a[1], __a[2], __a[3] };
+  return (__m128)__builtin_ia32_rcpss((__v4sf)__a);
 }
 
 /// Calculates the approximate reciprocals of the values stored in a
@@ -278,7 +276,7 @@ _mm_rcp_ss(__m128 __a)
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_rcp_ps(__m128 __a)
 {
-  return __builtin_ia32_rcpps((__v4sf)__a);
+  return (__m128)__builtin_ia32_rcpps((__v4sf)__a);
 }
 
 /// Calculates the approximate reciprocal of the square root of the value
@@ -297,8 +295,7 @@ _mm_rcp_ps(__m128 __a)
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_rsqrt_ss(__m128 __a)
 {
-  __m128 __c = __builtin_ia32_rsqrtss((__v4sf)__a);
-  return (__m128) { __c[0], __a[1], __a[2], __a[3] };
+  return __builtin_ia32_rsqrtss((__v4sf)__a);
 }
 
 /// Calculates the approximate reciprocals of the square roots of the
