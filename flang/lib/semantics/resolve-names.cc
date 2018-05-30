@@ -428,10 +428,51 @@ private:
   Symbol *GetSpecificFromGeneric(const parser::Name &);
 };
 
+class DeclarationVisitor : public ArraySpecVisitor,
+                           public virtual ScopeHandler {
+public:
+  using ArraySpecVisitor::Post;
+  using ArraySpecVisitor::Pre;
+
+  void Post(const parser::EntityDecl &);
+  void Post(const parser::ObjectDecl &);
+  bool Pre(const parser::AsynchronousStmt &);
+  bool Pre(const parser::ContiguousStmt &);
+  bool Pre(const parser::ExternalStmt &);
+  bool Pre(const parser::IntrinsicStmt &);
+  bool Pre(const parser::OptionalStmt &);
+  bool Pre(const parser::ProtectedStmt &);
+  bool Pre(const parser::ValueStmt &);
+  bool Pre(const parser::VolatileStmt &);
+  bool Pre(const parser::AllocatableStmt &) {
+    objectDeclAttr_ = Attr::ALLOCATABLE;
+    return true;
+  }
+  void Post(const parser::AllocatableStmt &) { objectDeclAttr_ = std::nullopt; }
+  bool Pre(const parser::TargetStmt &x) {
+    objectDeclAttr_ = Attr::TARGET;
+    return true;
+  }
+  void Post(const parser::TargetStmt &) { objectDeclAttr_ = std::nullopt; }
+  void Post(const parser::DimensionStmt::Declaration &);
+
+protected:
+  bool BeginDecl();
+  void EndDecl();
+
+private:
+  // The attribute corresponding to the statement containing an ObjectDecl
+  std::optional<Attr> objectDeclAttr_;
+
+  // Handle a statement that sets an attribute on a list of names.
+  bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
+  void DeclareEntity(const parser::Name &, Attrs);
+};
+
 // Walk the parse tree and resolve names to symbols.
-class ResolveNamesVisitor : public ArraySpecVisitor,
-                            public ModuleVisitor,
-                            public SubprogramVisitor {
+class ResolveNamesVisitor : public ModuleVisitor,
+                            public SubprogramVisitor,
+                            public DeclarationVisitor {
 public:
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
@@ -443,6 +484,8 @@ public:
   using ModuleVisitor::Pre;
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
+  using DeclarationVisitor::Post;
+  using DeclarationVisitor::Pre;
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(const T &) { return true; }
@@ -456,34 +499,12 @@ public:
   void Post(const parser::DataComponentDefStmt &) { EndDecl(); }
   bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
   void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
-  void Post(const parser::EntityDecl &);
-  void Post(const parser::ObjectDecl &);
   void Post(const parser::ComponentDecl &);
   bool Pre(const parser::PrefixSpec &);
-  bool Pre(const parser::AsynchronousStmt &);
-  bool Pre(const parser::ContiguousStmt &);
-  bool Pre(const parser::ExternalStmt &);
-  bool Pre(const parser::IntrinsicStmt &);
-  bool Pre(const parser::OptionalStmt &);
-  bool Pre(const parser::ProtectedStmt &);
-  bool Pre(const parser::ValueStmt &);
-  bool Pre(const parser::VolatileStmt &);
   void Post(const parser::SpecificationPart &);
   bool Pre(const parser::MainProgram &);
   void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
-
-  bool Pre(const parser::AllocatableStmt &) {
-    objectDeclAttr_ = Attr::ALLOCATABLE;
-    return true;
-  }
-  void Post(const parser::AllocatableStmt &) { objectDeclAttr_ = std::nullopt; }
-  bool Pre(const parser::TargetStmt &x) {
-    objectDeclAttr_ = Attr::TARGET;
-    return true;
-  }
-  void Post(const parser::TargetStmt &) { objectDeclAttr_ = std::nullopt; }
-  void Post(const parser::DimensionStmt::Declaration &);
 
   void Post(const parser::Expr &x) { CheckImplicitSymbol(GetVariableName(x)); }
   void Post(const parser::Variable &x) {
@@ -493,14 +514,6 @@ public:
   void Post(const parser::ProcedureDesignator &);
 
 private:
-  // The attribute corresponding to the statement containing an ObjectDecl
-  std::optional<Attr> objectDeclAttr_;
-
-  bool BeginDecl();
-  void EndDecl();
-  // Handle a statement that sets an attribute on a list of names.
-  bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
-  void DeclareEntity(const parser::Name &, Attrs);
   const parser::Name *GetVariableName(const parser::DataRef &);
   const parser::Name *GetVariableName(const parser::Designator &);
   const parser::Name *GetVariableName(const parser::Expr &);
@@ -1539,26 +1552,126 @@ Symbol *SubprogramVisitor::GetSpecificFromGeneric(const parser::Name &name) {
   return nullptr;
 }
 
-// ResolveNamesVisitor implementation
+// DeclarationVisitor implementation
 
-void ResolveNamesVisitor::Post(const parser::EntityDecl &x) {
+bool DeclarationVisitor::BeginDecl() {
+  BeginDeclTypeSpec();
+  BeginAttrs();
+  BeginArraySpec();
+  return true;
+}
+void DeclarationVisitor::EndDecl() {
+  EndDeclTypeSpec();
+  EndAttrs();
+  EndArraySpec();
+}
+
+void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
+  const auto &name = std::get<parser::Name>(x.t);
+  DeclareEntity(name, Attrs{});
+}
+
+void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   // TODO: may be under StructureStmt
   const auto &name{std::get<parser::ObjectName>(x.t)};
   // TODO: CoarraySpec, CharLength, Initialization
   DeclareEntity(name, attrs_ ? *attrs_ : Attrs());
 }
 
-bool ResolveNamesVisitor::BeginDecl() {
-  BeginDeclTypeSpec();
-  BeginAttrs();
-  BeginArraySpec();
-  return true;
+bool DeclarationVisitor::Pre(const parser::AsynchronousStmt &x) {
+  return HandleAttributeStmt(Attr::ASYNCHRONOUS, x.v);
 }
-void ResolveNamesVisitor::EndDecl() {
-  EndDeclTypeSpec();
-  EndAttrs();
-  EndArraySpec();
+bool DeclarationVisitor::Pre(const parser::ContiguousStmt &x) {
+  return HandleAttributeStmt(Attr::CONTIGUOUS, x.v);
 }
+bool DeclarationVisitor::Pre(const parser::ExternalStmt &x) {
+  return HandleAttributeStmt(Attr::EXTERNAL, x.v);
+}
+bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
+  return HandleAttributeStmt(Attr::INTRINSIC, x.v);
+}
+bool DeclarationVisitor::Pre(const parser::OptionalStmt &x) {
+  return HandleAttributeStmt(Attr::OPTIONAL, x.v);
+}
+bool DeclarationVisitor::Pre(const parser::ProtectedStmt &x) {
+  return HandleAttributeStmt(Attr::PROTECTED, x.v);
+}
+bool DeclarationVisitor::Pre(const parser::ValueStmt &x) {
+  return HandleAttributeStmt(Attr::VALUE, x.v);
+}
+bool DeclarationVisitor::Pre(const parser::VolatileStmt &x) {
+  return HandleAttributeStmt(Attr::VOLATILE, x.v);
+}
+bool DeclarationVisitor::HandleAttributeStmt(
+    Attr attr, const std::list<parser::Name> &names) {
+  for (const auto &name : names) {
+    const auto pair = CurrScope().try_emplace(name.source, Attrs{attr});
+    if (!pair.second) {
+      // symbol was already there: set attribute on it
+      Symbol &symbol{pair.first->second};
+      if (attr != Attr::ASYNCHRONOUS && attr != Attr::VOLATILE &&
+          symbol.has<UseDetails>()) {
+        Say(*currStmtSource(),
+            "Cannot change %s attribute on use-associated '%s'"_err_en_US,
+            EnumToString(attr), name.source);
+      }
+      symbol.attrs().set(attr);
+    }
+  }
+  return false;
+}
+
+void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
+  CHECK(objectDeclAttr_.has_value());
+  const auto &name = std::get<parser::ObjectName>(x.t);
+  DeclareEntity(name, Attrs{*objectDeclAttr_});
+}
+
+void DeclarationVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
+  Symbol &symbol{MakeSymbol(name.source, attrs)};
+  // TODO: check attribute consistency
+  if (symbol.has<UnknownDetails>()) {
+    symbol.set_details(EntityDetails());
+  }
+  if (EntityDetails *details = symbol.detailsIf<EntityDetails>()) {
+    if (declTypeSpec_) {
+      if (details->type().has_value()) {
+        Say(name, "The type of '%s' has already been declared"_err_en_US);
+      } else {
+        details->set_type(*declTypeSpec_);
+      }
+    }
+    if (!arraySpec().empty()) {
+      if (!details->shape().empty()) {
+        Say(name,
+            "The dimensions of '%s' have already been declared"_err_en_US);
+      } else {
+        details->set_shape(arraySpec());
+      }
+      ClearArraySpec();
+    }
+  } else if (UseDetails *details = symbol.detailsIf<UseDetails>()) {
+    Say(name.source,
+        "'%s' is use-associated from module '%s' and cannot be re-declared"_err_en_US,
+        name.source, details->module().name());
+  } else if (auto *details = symbol.detailsIf<SubprogramNameDetails>()) {
+    if (details->kind() == SubprogramKind::Module) {
+      Say(name,
+          "Declaration of '%s' conflicts with its use as module procedure"_err_en_US)
+          .Attach(symbol.name(), "Module procedure definition"_en_US);
+    } else if (details->kind() == SubprogramKind::Internal) {
+      Say(name,
+          "Declaration of '%s' conflicts with its use as internal procedure"_err_en_US)
+          .Attach(symbol.name(), "Internal procedure definition"_en_US);
+    } else {
+      CHECK(!"unexpected kind");
+    }
+  } else {
+    SayAlreadyDeclared(name.source, symbol);
+  }
+}
+
+// ResolveNamesVisitor implementation
 
 bool ResolveNamesVisitor::Pre(const parser::TypeParamDefStmt &x) {
   BeginDeclTypeSpec();
@@ -1626,104 +1739,6 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
                     symbol.name().ToString().data()});
       }
     }
-  }
-}
-
-bool ResolveNamesVisitor::Pre(const parser::AsynchronousStmt &x) {
-  return HandleAttributeStmt(Attr::ASYNCHRONOUS, x.v);
-}
-bool ResolveNamesVisitor::Pre(const parser::ContiguousStmt &x) {
-  return HandleAttributeStmt(Attr::CONTIGUOUS, x.v);
-}
-bool ResolveNamesVisitor::Pre(const parser::ExternalStmt &x) {
-  return HandleAttributeStmt(Attr::EXTERNAL, x.v);
-}
-bool ResolveNamesVisitor::Pre(const parser::IntrinsicStmt &x) {
-  return HandleAttributeStmt(Attr::INTRINSIC, x.v);
-}
-bool ResolveNamesVisitor::Pre(const parser::OptionalStmt &x) {
-  return HandleAttributeStmt(Attr::OPTIONAL, x.v);
-}
-bool ResolveNamesVisitor::Pre(const parser::ProtectedStmt &x) {
-  return HandleAttributeStmt(Attr::PROTECTED, x.v);
-}
-bool ResolveNamesVisitor::Pre(const parser::ValueStmt &x) {
-  return HandleAttributeStmt(Attr::VALUE, x.v);
-}
-bool ResolveNamesVisitor::Pre(const parser::VolatileStmt &x) {
-  return HandleAttributeStmt(Attr::VOLATILE, x.v);
-}
-bool ResolveNamesVisitor::HandleAttributeStmt(
-    Attr attr, const std::list<parser::Name> &names) {
-  for (const auto &name : names) {
-    const auto pair = CurrScope().try_emplace(name.source, Attrs{attr});
-    if (!pair.second) {
-      // symbol was already there: set attribute on it
-      Symbol &symbol{pair.first->second};
-      if (attr != Attr::ASYNCHRONOUS && attr != Attr::VOLATILE &&
-          symbol.has<UseDetails>()) {
-        Say(*currStmtSource(),
-            "Cannot change %s attribute on use-associated '%s'"_err_en_US,
-            EnumToString(attr), name.source);
-      }
-      symbol.attrs().set(attr);
-    }
-  }
-  return false;
-}
-
-void ResolveNamesVisitor::Post(const parser::ObjectDecl &x) {
-  CHECK(objectDeclAttr_.has_value());
-  const auto &name = std::get<parser::ObjectName>(x.t);
-  DeclareEntity(name, Attrs{*objectDeclAttr_});
-}
-
-void ResolveNamesVisitor::Post(const parser::DimensionStmt::Declaration &x) {
-  const auto &name = std::get<parser::Name>(x.t);
-  DeclareEntity(name, Attrs{});
-}
-
-void ResolveNamesVisitor::DeclareEntity(const parser::Name &name, Attrs attrs) {
-  Symbol &symbol{MakeSymbol(name.source, attrs)};
-  // TODO: check attribute consistency
-  if (symbol.has<UnknownDetails>()) {
-    symbol.set_details(EntityDetails());
-  }
-  if (EntityDetails *details = symbol.detailsIf<EntityDetails>()) {
-    if (declTypeSpec_) {
-      if (details->type().has_value()) {
-        Say(name, "The type of '%s' has already been declared"_err_en_US);
-      } else {
-        details->set_type(*declTypeSpec_);
-      }
-    }
-    if (!arraySpec().empty()) {
-      if (!details->shape().empty()) {
-        Say(name,
-            "The dimensions of '%s' have already been declared"_err_en_US);
-      } else {
-        details->set_shape(arraySpec());
-      }
-      ClearArraySpec();
-    }
-  } else if (UseDetails *details = symbol.detailsIf<UseDetails>()) {
-    Say(name.source,
-        "'%s' is use-associated from module '%s' and cannot be re-declared"_err_en_US,
-        name.source, details->module().name());
-  } else if (auto *details = symbol.detailsIf<SubprogramNameDetails>()) {
-    if (details->kind() == SubprogramKind::Module) {
-      Say(name,
-          "Declaration of '%s' conflicts with its use as module procedure"_err_en_US)
-          .Attach(symbol.name(), "Module procedure definition"_en_US);
-    } else if (details->kind() == SubprogramKind::Internal) {
-      Say(name,
-          "Declaration of '%s' conflicts with its use as internal procedure"_err_en_US)
-          .Attach(symbol.name(), "Internal procedure definition"_en_US);
-    } else {
-      CHECK(!"unexpected kind");
-    }
-  } else {
-    SayAlreadyDeclared(name.source, symbol);
   }
 }
 
