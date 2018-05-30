@@ -12,6 +12,7 @@
 #include "ToolChains/AMDGPU.h"
 #include "ToolChains/AVR.h"
 #include "ToolChains/Ananas.h"
+#include "ToolChains/BareMetal.h"
 #include "ToolChains/Clang.h"
 #include "ToolChains/CloudABI.h"
 #include "ToolChains/Contiki.h"
@@ -22,15 +23,15 @@
 #include "ToolChains/FreeBSD.h"
 #include "ToolChains/Fuchsia.h"
 #include "ToolChains/Gnu.h"
-#include "ToolChains/BareMetal.h"
+#include "ToolChains/HIP.h"
 #include "ToolChains/Haiku.h"
 #include "ToolChains/Hexagon.h"
 #include "ToolChains/Lanai.h"
 #include "ToolChains/Linux.h"
+#include "ToolChains/MSVC.h"
 #include "ToolChains/MinGW.h"
 #include "ToolChains/Minix.h"
 #include "ToolChains/MipsLinux.h"
-#include "ToolChains/MSVC.h"
 #include "ToolChains/Myriad.h"
 #include "ToolChains/NaCl.h"
 #include "ToolChains/NetBSD.h"
@@ -70,9 +71,9 @@
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/StringSaver.h"
 #include <map>
 #include <memory>
 #include <utility>
@@ -540,7 +541,7 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
   //
   // CUDA/HIP
   //
-  // We need to generate a CUDA toolchain if any of the inputs has a CUDA
+  // We need to generate a CUDA/HIP toolchain if any of the inputs has a CUDA
   // or HIP type. However, mixed CUDA/HIP compilation is not supported.
   bool IsCuda =
       llvm::any_of(Inputs, [](std::pair<types::ID, const llvm::opt::Arg *> &I) {
@@ -556,21 +557,15 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
     Diag(clang::diag::err_drv_mix_cuda_hip);
     return;
   }
-  if (IsCuda || IsHIP) {
+  if (IsCuda) {
     const ToolChain *HostTC = C.getSingleOffloadToolChain<Action::OFK_Host>();
     const llvm::Triple &HostTriple = HostTC->getTriple();
     StringRef DeviceTripleStr;
-    auto OFK = IsHIP ? Action::OFK_HIP : Action::OFK_Cuda;
-    if (IsHIP) {
-      // HIP is only supported on amdgcn.
-      DeviceTripleStr = "amdgcn-amd-amdhsa";
-    } else {
-      // CUDA is only supported on nvptx.
-      DeviceTripleStr = HostTriple.isArch64Bit() ? "nvptx64-nvidia-cuda"
-                                                 : "nvptx-nvidia-cuda";
-    }
+    auto OFK = Action::OFK_Cuda;
+    DeviceTripleStr =
+        HostTriple.isArch64Bit() ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
     llvm::Triple CudaTriple(DeviceTripleStr);
-    // Use the CUDA/HIP and host triples as the key into the ToolChains map,
+    // Use the CUDA and host triples as the key into the ToolChains map,
     // because the device toolchain we create depends on both.
     auto &CudaTC = ToolChains[CudaTriple.str() + "/" + HostTriple.str()];
     if (!CudaTC) {
@@ -578,6 +573,21 @@ void Driver::CreateOffloadingDeviceToolChains(Compilation &C,
           *this, CudaTriple, *HostTC, C.getInputArgs(), OFK);
     }
     C.addOffloadDeviceToolChain(CudaTC.get(), OFK);
+  } else if (IsHIP) {
+    const ToolChain *HostTC = C.getSingleOffloadToolChain<Action::OFK_Host>();
+    const llvm::Triple &HostTriple = HostTC->getTriple();
+    StringRef DeviceTripleStr;
+    auto OFK = Action::OFK_HIP;
+    DeviceTripleStr = "amdgcn-amd-amdhsa";
+    llvm::Triple HIPTriple(DeviceTripleStr);
+    // Use the HIP and host triples as the key into the ToolChains map,
+    // because the device toolchain we create depends on both.
+    auto &HIPTC = ToolChains[HIPTriple.str() + "/" + HostTriple.str()];
+    if (!HIPTC) {
+      HIPTC = llvm::make_unique<toolchains::HIPToolChain>(
+          *this, HIPTriple, *HostTC, C.getInputArgs());
+    }
+    C.addOffloadDeviceToolChain(HIPTC.get(), OFK);
   }
 
   //
