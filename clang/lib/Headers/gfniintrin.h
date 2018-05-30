@@ -202,5 +202,5 @@ _mm512_maskz_gf2p8mul_epi8(__mmask64 __U, __m512i __A, __m512i __B)
 #undef __DEFAULT_FN_ATTRS_Z
 #undef __DEFAULT_FN_ATTRS_VL
 
-#endif // __GFNIINTRIN_H
+#endif /* __GFNIINTRIN_H */
 

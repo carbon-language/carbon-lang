@@ -9651,19 +9651,20 @@ _mm512_mask_abs_pd(__m512d __W, __mmask8 __K, __m512d __A)
   return (__m512d)_mm512_mask_and_epi64((__v8di)__W, __K, _mm512_set1_epi64(0x7FFFFFFFFFFFFFFF),(__v8di)__A);
 }
 
-// Vector-reduction arithmetic accepts vectors as inputs and produces scalars as
-// outputs. This class of vector operation forms the basis of many scientific
-// computations. In vector-reduction arithmetic, the evaluation off is
-// independent of the order of the input elements of V.
+/* Vector-reduction arithmetic accepts vectors as inputs and produces scalars as
+ * outputs. This class of vector operation forms the basis of many scientific
+ * computations. In vector-reduction arithmetic, the evaluation off is
+ * independent of the order of the input elements of V.
 
-// Used bisection method. At each step, we partition the vector with previous
-// step in half, and the operation is performed on its two halves.
-// This takes log2(n) steps where n is the number of elements in the vector.
+ * Used bisection method. At each step, we partition the vector with previous
+ * step in half, and the operation is performed on its two halves.
+ * This takes log2(n) steps where n is the number of elements in the vector.
 
-// Vec512 - Vector with size 512.
-// Operator - Can be one of following: +,*,&,|
-// T2  - Can get 'i' for int and 'f' for float.
-// T1 - Can get 'i' for int and 'd' for double.
+ * Vec512 - Vector with size 512.
+ * Operator - Can be one of following: +,*,&,|
+ * T2  - Can get 'i' for int and 'f' for float.
+ * T1 - Can get 'i' for int and 'd' for double.
+ */
 
 #define _mm512_reduce_operator_64bit(Vec512, Operator, T2, T1)         \
   __extension__({                                                      \
@@ -9717,14 +9718,15 @@ static __inline__ double __DEFAULT_FN_ATTRS _mm512_reduce_mul_pd(__m512d __W) {
   _mm512_reduce_operator_64bit(__W, *, f, d);
 }
 
-// Vec512 - Vector with size 512.
-// Vec512Neutral - All vector elements set to the identity element.
-// Identity element: {+,0},{*,1},{&,0xFFFFFFFFFFFFFFFF},{|,0}
-// Operator - Can be one of following: +,*,&,|
-// Mask - Intrinsic Mask
-// T2  - Can get 'i' for int and 'f' for float.
-// T1 - Can get 'i' for int and 'd' for packed double-precision.
-// T3 - Can be Pd for packed double or q for q-word.
+/* Vec512 - Vector with size 512.
+ * Vec512Neutral - All vector elements set to the identity element.
+ * Identity element: {+,0},{*,1},{&,0xFFFFFFFFFFFFFFFF},{|,0}
+ * Operator - Can be one of following: +,*,&,|
+ * Mask - Intrinsic Mask
+ * T2  - Can get 'i' for int and 'f' for float.
+ * T1 - Can get 'i' for int and 'd' for packed double-precision.
+ * T3 - Can be Pd for packed double or q for q-word.
+ */
 
 #define _mm512_mask_reduce_operator_64bit(Vec512, Vec512Neutral, Operator,     \
                                           Mask, T2, T1, T3)                    \
@@ -9772,10 +9774,11 @@ _mm512_mask_reduce_mul_pd(__mmask8 __M, __m512d __W) {
 #undef _mm512_reduce_operator_64bit
 #undef _mm512_mask_reduce_operator_64bit
 
-// Vec512 - Vector with size 512.
-// Operator - Can be one of following: +,*,&,|
-// T2 - Can get 'i' for int and ' ' for packed single.
-// T1 - Can get 'i' for int and 'f' for float.
+/* Vec512 - Vector with size 512.
+ * Operator - Can be one of following: +,*,&,|
+ * T2 - Can get 'i' for int and ' ' for packed single.
+ * T1 - Can get 'i' for int and 'f' for float.
+ */
 
 #define _mm512_reduce_operator_32bit(Vec512, Operator, T2, T1) __extension__({ \
     __m256##T1 Vec256 =                                                        \
@@ -9849,14 +9852,15 @@ _mm512_reduce_mul_ps(__m512 __W) {
   _mm512_reduce_operator_32bit(__W, *, f, );
 }
 
-// Vec512 - Vector with size 512.
-// Vec512Neutral - All vector elements set to the identity element.
-// Identity element: {+,0},{*,1},{&,0xFFFFFFFF},{|,0}
-// Operator - Can be one of following: +,*,&,|
-// Mask - Intrinsic Mask
-// T2  - Can get 'i' for int and 'f' for float.
-// T1 - Can get 'i' for int and 'd' for double.
-// T3 - Can be Ps for packed single or d for d-word.
+/* Vec512 - Vector with size 512.
+ * Vec512Neutral - All vector elements set to the identity element.
+ * Identity element: {+,0},{*,1},{&,0xFFFFFFFF},{|,0}
+ * Operator - Can be one of following: +,*,&,|
+ * Mask - Intrinsic Mask
+ * T2  - Can get 'i' for int and 'f' for float.
+ * T1 - Can get 'i' for int and 'd' for double.
+ * T3 - Can be Ps for packed single or d for d-word.
+ */
 
 #define _mm512_mask_reduce_operator_32bit(Vec512, Vec512Neutral, Operator,     \
                                           Mask, T2, T1, T3)                    \
@@ -9901,16 +9905,17 @@ _mm512_mask_reduce_mul_ps(__mmask16 __M, __m512 __W) {
 #undef _mm512_reduce_operator_32bit
 #undef _mm512_mask_reduce_operator_32bit
 
-// Used bisection method. At each step, we partition the vector with previous
-// step in half, and the operation is performed on its two halves.
-// This takes log2(n) steps where n is the number of elements in the vector.
-// This macro uses only intrinsics from the AVX512F feature.
+/* Used bisection method. At each step, we partition the vector with previous
+ * step in half, and the operation is performed on its two halves.
+ * This takes log2(n) steps where n is the number of elements in the vector.
+ * This macro uses only intrinsics from the AVX512F feature.
 
-// Vec512 - Vector with size of 512.
-// IntrinName - Can be one of following: {max|min}_{epi64|epu64|pd} for example:
-//              __mm512_max_epi64
-// T1 - Can get 'i' for int and 'd' for double.[__m512{i|d}]
-// T2 - Can get 'i' for int and 'f' for float. [__v8d{i|f}]
+ * Vec512 - Vector with size of 512.
+ * IntrinName - Can be one of following: {max|min}_{epi64|epu64|pd} for example:
+ *              __mm512_max_epi64
+ * T1 - Can get 'i' for int and 'd' for double.[__m512{i|d}]
+ * T2 - Can get 'i' for int and 'f' for float. [__v8d{i|f}]
+ */
 
 #define _mm512_reduce_maxMin_64bit(Vec512, IntrinName, T1, T2) __extension__({ \
         Vec512 = _mm512_##IntrinName(                                          \
@@ -9975,22 +9980,23 @@ _mm512_reduce_min_pd(__m512d __V) {
   _mm512_reduce_maxMin_64bit(__V, min_pd, d, f);
 }
 
-// Vec512 - Vector with size 512.
-// Vec512Neutral - A 512 length vector with elements set to the identity element
-// Identity element: {max_epi,0x8000000000000000}
-//                   {max_epu,0x0000000000000000}
-//                   {max_pd, 0xFFF0000000000000}
-//                   {min_epi,0x7FFFFFFFFFFFFFFF}
-//                   {min_epu,0xFFFFFFFFFFFFFFFF}
-//                   {min_pd, 0x7FF0000000000000}
-//
-// IntrinName - Can be one of following: {max|min}_{epi64|epu64|pd} for example:
-//              __mm512_max_epi64
-// T1 - Can get 'i' for int and 'd' for double.[__m512{i|d}]
-// T2 - Can get 'i' for int and 'f' for float. [__v8d{i|f}]
-// T3 - Can get 'q' q word and 'pd' for packed double.
-//      [__builtin_ia32_select{q|pd}_512]
-// Mask - Intrinsic Mask
+/* Vec512 - Vector with size 512.
+ * Vec512Neutral - A 512 length vector with elements set to the identity element
+ * Identity element: {max_epi,0x8000000000000000}
+ *                   {max_epu,0x0000000000000000}
+ *                   {max_pd, 0xFFF0000000000000}
+ *                   {min_epi,0x7FFFFFFFFFFFFFFF}
+ *                   {min_epu,0xFFFFFFFFFFFFFFFF}
+ *                   {min_pd, 0x7FF0000000000000}
+ *
+ * IntrinName - Can be one of following: {max|min}_{epi64|epu64|pd} for example:
+ *              __mm512_max_epi64
+ * T1 - Can get 'i' for int and 'd' for double.[__m512{i|d}]
+ * T2 - Can get 'i' for int and 'f' for float. [__v8d{i|f}]
+ * T3 - Can get 'q' q word and 'pd' for packed double.
+ *      [__builtin_ia32_select{q|pd}_512]
+ * Mask - Intrinsic Mask
+ */
 
 #define _mm512_mask_reduce_maxMin_64bit(Vec512, Vec512Neutral, IntrinName, T1, \
                                         T2, T3, Mask)                          \
@@ -10040,11 +10046,12 @@ _mm512_mask_reduce_min_pd(__mmask8 __M, __m512d __V) {
 #undef _mm512_reduce_maxMin_64bit
 #undef _mm512_mask_reduce_maxMin_64bit
 
-// Vec512 - Vector with size 512.
-// IntrinName - Can be one of following: {max|min}_{epi32|epu32|ps} for example:
-//              __mm512_max_epi32
-// T1 - Can get 'i' for int and ' ' .[__m512{i|}]
-// T2 - Can get 'i' for int and 'f' for float.[__v16s{i|f}]
+/* Vec512 - Vector with size 512.
+ * IntrinName - Can be one of following: {max|min}_{epi32|epu32|ps} for example:
+ *              __mm512_max_epi32
+ * T1 - Can get 'i' for int and ' ' .[__m512{i|}]
+ * T2 - Can get 'i' for int and 'f' for float.[__v16s{i|f}]
+ */
 
 #define _mm512_reduce_maxMin_32bit(Vec512, IntrinName, T1, T2) __extension__({ \
     Vec512 = _mm512_##IntrinName(                                              \
@@ -10120,22 +10127,23 @@ static __inline__ float __DEFAULT_FN_ATTRS _mm512_reduce_min_ps(__m512 a) {
   _mm512_reduce_maxMin_32bit(a, min_ps, , f);
 }
 
-// Vec512 - Vector with size 512.
-// Vec512Neutral - A 512 length vector with elements set to the identity element
-// Identity element: {max_epi,0x80000000}
-//                   {max_epu,0x00000000}
-//                   {max_ps, 0xFF800000}
-//                   {min_epi,0x7FFFFFFF}
-//                   {min_epu,0xFFFFFFFF}
-//                   {min_ps, 0x7F800000}
-//
-// IntrinName - Can be one of following: {max|min}_{epi32|epu32|ps} for example:
-//              __mm512_max_epi32
-// T1 - Can get 'i' for int and ' ' .[__m512{i|}]
-// T2 - Can get 'i' for int and 'f' for float.[__v16s{i|f}]
-// T3 - Can get 'q' q word and 'pd' for packed double.
-//      [__builtin_ia32_select{q|pd}_512]
-// Mask - Intrinsic Mask
+/* Vec512 - Vector with size 512.
+ * Vec512Neutral - A 512 length vector with elements set to the identity element
+ * Identity element: {max_epi,0x80000000}
+ *                   {max_epu,0x00000000}
+ *                   {max_ps, 0xFF800000}
+ *                   {min_epi,0x7FFFFFFF}
+ *                   {min_epu,0xFFFFFFFF}
+ *                   {min_ps, 0x7F800000}
+ *
+ * IntrinName - Can be one of following: {max|min}_{epi32|epu32|ps} for example:
+ *              __mm512_max_epi32
+ * T1 - Can get 'i' for int and ' ' .[__m512{i|}]
+ * T2 - Can get 'i' for int and 'f' for float.[__v16s{i|f}]
+ * T3 - Can get 'q' q word and 'pd' for packed double.
+ *      [__builtin_ia32_select{q|pd}_512]
+ * Mask - Intrinsic Mask
+ */
 
 #define _mm512_mask_reduce_maxMin_32bit(Vec512, Vec512Neutral, IntrinName, T1, \
                                         T2, T3, Mask)                          \
@@ -10187,4 +10195,4 @@ _mm512_mask_reduce_min_ps(__mmask16 __M, __m512 __V) {
 
 #undef __DEFAULT_FN_ATTRS
 
-#endif // __AVX512FINTRIN_H
+#endif /* __AVX512FINTRIN_H */
