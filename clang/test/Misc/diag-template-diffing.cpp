@@ -1265,7 +1265,7 @@ void test() {
   foo<BoolT<true>>(X);
 }
 // CHECK-ELIDE-NOTREE: no matching function for call to 'foo'
-// CHECK-ELIDE-NOTREE: candidate function not viable: no known conversion from 'BoolT<false>' to 'BoolT<true>' for 1st argument
+// CHECK-ELIDE-NOTREE: candidate function template not viable: no known conversion from 'BoolT<false>' to 'BoolT<true>' for 1st argument
 }
 
 namespace DifferentIntegralTypes {
