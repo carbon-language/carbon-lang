@@ -2048,7 +2048,7 @@ _mm_store1_ps(float *__p, __m128 __a)
 static __inline__ void __DEFAULT_FN_ATTRS
 _mm_store_ps1(float *__p, __m128 __a)
 {
-  return _mm_store1_ps(__p, __a);
+  _mm_store1_ps(__p, __a);
 }
 
 /// Stores float values from a 128-bit vector of [4 x float] to an

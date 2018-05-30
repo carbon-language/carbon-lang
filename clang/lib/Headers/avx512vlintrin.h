@@ -7432,7 +7432,7 @@ _mm256_maskz_cvtusepi64_epi16 (__mmask8 __M, __m256i __A)
 static __inline__ void __DEFAULT_FN_ATTRS
 _mm256_mask_cvtusepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 {
-  return __builtin_ia32_pmovusqw256mem_mask ((__v8hi *) __P, (__v4di) __A, __M);
+  __builtin_ia32_pmovusqw256mem_mask ((__v8hi *) __P, (__v4di) __A, __M);
 }
 
 static __inline__ __m128i __DEFAULT_FN_ATTRS

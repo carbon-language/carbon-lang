@@ -1979,7 +1979,7 @@ _mm_store1_pd(double *__dp, __m128d __a)
 static __inline__ void __DEFAULT_FN_ATTRS
 _mm_store_pd1(double *__dp, __m128d __a)
 {
-  return _mm_store1_pd(__dp, __a);
+  _mm_store1_pd(__dp, __a);
 }
 
 /// Stores a 128-bit vector of [2 x double] into an unaligned memory
