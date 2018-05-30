@@ -15,80 +15,104 @@
 #ifndef FORTRAN_EVALUATE_FIXED_POINT_H_
 #define FORTRAN_EVALUATE_FIXED_POINT_H_
 
-// Emulates integers of a nearly arbitrary fixed size for use when the C++
-// environment does not support it.  The size must be some multiple of
-// 32 bits.  Signed and unsigned operations are distinct.
+// Emulates integers of a arbitrary static size for use when the C++
+// environment does not support it.  Signed and unsigned operations are
+// distinguished by member function interface; the data are typeless.
 
 #include "leading-zero-bit-count.h"
 #include <cinttypes>
+#include <climits>
 #include <cstddef>
 
 namespace Fortran::evaluate {
 
 enum class Ordering { Less, Equal, Greater };
-static constexpr Ordering Reverse Ordering ordering) {
+static constexpr Ordering Reverse(Ordering ordering) {
   if (ordering == Ordering::Less) {
     return Ordering::Greater;
-  }
-  if (ordering == Ordering::Greater) {
+  } else if (ordering == Ordering::Greater) {
     return Ordering::Less;
+  } else {
+    return Ordering::Equal;
   }
-  return Ordering::Equal;
 }
 
-typedef <int BITS>
+// Implement an integer as an assembly of smaller (i.e., 32-bit) integers.
+// These are stored in little-endian order.  To facilitate exhaustive
+// testing of what would otherwise be more rare edge cases, this template class
+// may be configured to use other part types &/or partial fields in the
+// parts.
+template <int BITS, int PARTBITS=32,
+          typename PART = std::uint32_t, typename BIGPART = std::uint64_t>
 class FixedPoint {
-private:
-  using Part = std::uint32_t;
-  using BigPart = std::uint64_t;
+public:
   static constexpr int bits{BITS};
-  static constexpr int partBits{CHAR_BIT * sizeof(Part)};
-  static_assert(bits >= partBits);
-  static_assert(sizeof(BigPart) == 2 * partBits);
-  static constexpr int parts{bits / partBits};
-  static_assert(bits * partBits == parts);  // no partial part
+  static constexpr int partBits{PARTBITS};
+  using Part = PART;
+  using BigPart = BIGPART;
+  static_assert(sizeof(BigPart) >= 2 * sizeof(Part));
+
+private:
+  static constexpr int maxPartBits{CHAR_BIT * sizeof(Part)};
+  static_assert(partBits > 0 && partBits <= maxPartBits);
+  static constexpr int extraPartBits{maxPartBits - partBits};
+  static constexpr int parts{(bits + partBits - 1) / partBits};
+  static_assert(parts >= 1);
+  static constexpr int extraTopPartBits{extraPartBits + (parts * partBits) - bits};
+  static constexpr int topPartBits{maxPartBits - extraTopPartBits};
+  static_assert(topPartBits > 0 && topPartBits <= partBits);
+  static_assert((parts - 1) * partBits + topPartBits == bits);
+  static constexpr Part partMask{static_cast<Part>(~0) >> extraPartBits};
+  static constexpr Part topPartMask{static_cast<Part>(~0) >> extraTopPartBits};
 
 public:
-  FixedPoint() = delete;
+  constexpr FixedPoint() {}  // zero
   constexpr FixedPoint(const FixedPoint &) = default;
   constexpr FixedPoint(std::uint64_t n) {
-    for (int j{0}; j < parts; ++j) {
-      part_[j] = n;
+    for (int j{0}; j < parts - 1; ++j) {
+      part_[j] = n & partMask;
       if constexpr (partBits < 64) {
         n >>= partBits;
       } else {
         n = 0;
       }
     }
+    part_[parts - 1] = n & topPartMask;
   }
   constexpr FixedPoint(std::int64_t n) {
-    std::int64_t signExtension{-(n < 0) << partBits};
-    for (int j{0}; j < parts; ++j) {
-      part_[j] = n;
+    std::int64_t signExtension{-(n < 0)};
+    signExtension <<= partBits;
+    for (int j{0}; j < parts - 1; ++j) {
+      part_[j] = n & partMask;
       if constexpr (partBits < 64) {
         n = (n >> partBits) | signExtension;
       } else {
         n = signExtension;
       }
     }
+    part_[parts - 1] = n & topPartMask;
   }
 
   constexpr FixedPoint &operator=(const FixedPoint &) = default;
 
-  constexpr Ordering CompareToZeroUnsigned() const {
+  constexpr bool IsZero() const {
     for (int j{0}; j < parts; ++j) {
       if (part_[j] != 0) {
-        return Ordering::Greater;
+        return false;
       }
     }
-    return Ordering::Equal;
+    return true;
+  }
+
+  constexpr bool IsNegative() const {
+    return (part_[parts-1] >> (topPartBits - 1)) & 1;
   }
 
   constexpr Ordering CompareToZeroSigned() const {
     if (IsNegative()) {
       return Ordering::Less;
     }
-    return CompareToZeroUnsigned();
+    return IsZero() ? Ordering::Equal : Ordering::Greater;
   }
 
   constexpr Ordering CompareUnsigned(const FixedPoint &y) const {
@@ -104,56 +128,64 @@ public:
   }
 
   constexpr Ordering CompareSigned(const FixedPoint &y) const {
-    if (IsNegative()) {
-      if (!y.IsNegative()) {
-        return Ordering::Less;
-      }
-      return Reverse(CompareUnsigned(y));
-    } else if (y.IsNegative()) {
-      return Ordering::Greater;
-    } else {
-      return CompareUnsigned(y);
+    bool isNegative{IsNegative()};
+    if (isNegative != y.IsNegative()) {
+      return isNegative ? Ordering::Less : Ordering::Greater;
     }
+    return CompareUnsigned(y);
   }
 
   constexpr int LeadingZeroBitCount() const {
-    for (int j{0}; j < parts; ++j) {
-      if (part_[j] != 0) {
-        return (j * partBits) + evaluate::LeadingZeroBitCount(part_[j]);
+    if (part_[parts-1] != 0) {
+      int lzbc{evaluate::LeadingZeroBitCount(part_[parts-1])};
+      return lzbc - extraTopPartBits;
+    }
+    int upperZeroes{topPartBits};
+    for (int j{1}; j < parts; ++j) {
+      if (Part p{part_[parts - 1 - j]}) {
+        int lzbc{evaluate::LeadingZeroBitCount(p)};
+        return upperZeroes + lzbc - extraPartBits;
       }
+      upperZeroes += partBits;
     }
     return bits;
   }
 
   constexpr std::uint64_t ToUInt64() const {
-    std::uint64_t n{0};
-    int filled{0};
-    static constexpr int toFill{bits < 64 ? bits : 64};
-    for (int j{0}; filled < 64; ++j, filled += partBits) {
+    std::uint64_t n{part_[0]};
+    int filled{partBits};
+    for (int j{1}; filled < 64 && j < parts; ++j, filled += partBits) {
       n |= part_[j] << filled;
     }
     return n;
   }
 
   constexpr std::int64_t ToInt64() const {
-    return static_cast<std::int64_t>(ToUInt64());
+    std::int64_t signExtended = ToUInt64();
+    if (bits < 64) {
+      signExtended |= -(signExtended >> (bits - 1)) << bits;
+    }
+    return signExtended;
   }
 
   constexpr void OnesComplement() {
-    for (int j{0}; j < parts; ++j) {
-      part_[j] = ~part_[j];
+    for (int j{0}; j + 1 < parts; ++j) {
+      part_[j] = ~part_[j] & partMask;
     }
+    part_[parts-1] = ~part_[parts-1] & topPartMask;
   }
 
-  // Returns true on overflow (i.e., negating the most negative number)
+  // Returns true on overflow (i.e., negating the most negative signed number)
   constexpr bool TwosComplement() {
     Part carry{1};
-    for (int j{0}; j < parts; ++j) {
+    for (int j{0}; j + 1 < parts; ++j) {
       Part newCarry{part_[j] == 0 && carry};
-      part_[j] = ~part_[j] + carry;
+      part_[j] = (~part_[j] + carry) & partMask;
       carry = newCarry;
     }
-    return carry != IsNegative();
+    Part before{part_[parts-1]};
+    part_[parts-1] = (~before + carry) & topPartMask;
+    return before != 0 && part_[parts-1] == before;
   }
 
   constexpr void And(const FixedPoint &y) {
@@ -176,25 +208,27 @@ public:
 
   constexpr void ShiftLeft(int count) {
     if (count < 0) {
-      ShiftRight(-count);
-    } else {
+      ShiftRightLogical(-count);
+    } else if (count > 0) {
       int shiftParts{count / partBits};
       int bitShift{count - partBits * shiftParts};
       int j{parts-1};
       if (bitShift == 0) {
         for (; j >= shiftParts; --j) {
-          part_[j] = part_[j - shiftParts];
+          part_[j] = part_[j - shiftParts] & PartMask(j);
         }
         for (; j >= 0; --j) {
           part_[j] = 0;
         }
       } else {
         for (; j > shiftParts; --j) {
-          part_[j] = (part_[j - shiftParts] << bitShift) |
-                     (part_[j - shiftParts - 1] >> (partBits - bitShift);
+          part_[j] = ((part_[j - shiftParts] << bitShift) |
+                      (part_[j - shiftParts - 1] >> (partBits - bitShift))) &
+                     PartMask(j);
         }
         if (j == shiftParts) {
-          part_[j--] = part_[0] << bitShift;
+          part_[j] = (part_[0] << bitShift) & PartMask(j);
+          --j;
         }
         for (; j >= 0; --j) {
           part_[j] = 0;
@@ -206,7 +240,7 @@ public:
   constexpr void ShiftRightLogical(int count) {  // i.e., unsigned
     if (count < 0) {
       ShiftLeft(-count);
-    } else {
+    } else if (count > 0) {
       int shiftParts{count / partBits};
       int bitShift{count - partBits * shiftParts};
       int j{0};
@@ -219,8 +253,9 @@ public:
         }
       } else {
         for (; j + shiftParts + 1 < parts; ++j) {
-          part_[j] = (part_[j + shiftParts] >> bitShift) |
-                     (part_[j + shiftParts + 1] << (partBits - bitShift);
+          part_[j] = ((part_[j + shiftParts] >> bitShift) |
+                      (part_[j + shiftParts + 1] << (partBits - bitShift))) &
+                     partMask;
         }
         if (j + shiftParts + 1 == parts) {
           part_[j++] = part_[parts - 1] >> bitShift;
@@ -233,27 +268,36 @@ public:
   }
 
   // Returns carry out.
-  constexpr bool AddUnsigned(const FixedPoint &y, bool carryIn{false}) {
+  constexpr bool AddUnsigned(const FixedPoint &y, bool carryIn = false) {
     BigPart carry{carryIn};
-    for (int j{0}; j < parts; ++j) {
+    for (int j{0}; j + 1 < parts; ++j) {
       carry += part_[j];
-      part_[j] = carry += y.part_[j];
-      carry >>= 32;
+      carry += y.part_[j];
+      part_[j] = carry & partMask;
+      carry >>= partBits;
     }
-    return carry != 0;
+    carry += part_[parts-1];
+    carry += y.part_[parts-1];
+    part_[parts-1] = carry & topPartMask;
+    return carry > topPartMask;
   }
 
   // Returns true on overflow.
   constexpr bool AddSigned(const FixedPoint &y) {
-    bool carry{AddUnsigned(y)};
-    return carry != IsNegative();
+    bool isNegative{IsNegative()};
+    bool sameSign{isNegative == y.IsNegative()};
+    AddUnsigned(y);
+    return sameSign && IsNegative() != isNegative;
   }
 
   // Returns true on overflow.
   constexpr bool SubtractSigned(const FixedPoint &y) {
+    bool isNegative{IsNegative()};
+    bool sameSign{isNegative == y.IsNegative()};
     FixedPoint minusy{y};
     minusy.TwosComplement();
-    return AddSigned(minusy);
+    AddUnsigned(minusy);
+    return !sameSign && IsNegative() != isNegative;
   }
 
   // Overwrites *this with lower half of full product.
@@ -263,10 +307,11 @@ public:
       if (part_[j] != 0) {
         for (int k{0}; k < parts; ++k) {
           if (y.part_[k] != 0) {
-            BigPart x{part_[j]};
-            x *= y.part_[k];
+            BigPart xy{part_[j]};
+            xy *= y.part_[k];
             for (int to{j+k}; xy != 0; ++to) {
-              product[to] = xy += product[to];
+              xy += product[to];
+              product[to] = xy & partMask;
               xy >>= partBits;
             }
           }
@@ -276,6 +321,11 @@ public:
     for (int j{0}; j < parts; ++j) {
       part_[j] = product[j];
       upper.part_[j] = product[j + parts];
+    }
+    if (topPartBits < partBits) {
+      upper.ShiftLeft(partBits - topPartBits);
+      upper.part_[0] |= part_[parts-1] >> topPartBits;
+      part_[parts-1] &= topPartMask;
     }
   }
 
@@ -301,53 +351,130 @@ public:
     }
   }
 
-  // Overwrites *this with quotient.
-  constexpr void DivideUnsigned(const FixedPoint &divisor, FixedPoint &remainder) {
+  // Overwrites *this with quotient.  Returns true on division by zero.
+  constexpr bool DivideUnsigned(const FixedPoint &divisor, FixedPoint &remainder) {
+    remainder.Clear();
+    if (divisor.IsZero()) {
+      RightMask(bits);
+      return true;
+    }
     FixedPoint top{*this};
-    *this = remainder = FixedPoint{0};
+    Clear();
     int bitsDone{top.LeadingZeroBitCount()};
     top.ShiftLeft(bitsDone);
     for (; bitsDone < bits; ++bitsDone) {
       remainder.AddUnsigned(remainder, top.AddUnsigned(top));
       bool nextBit{remainder.CompareUnsigned(divisor) != Ordering::Less};
-      quotient.AddUnsigned(quotient, nextBit);
+      AddUnsigned(*this, nextBit);
       if (nextBit) {
         remainder.SubtractSigned(divisor);
       }
     }
+    return false;
   }
 
   // Overwrites *this with quotient.  Returns true on overflow (viz.,
   // the most negative value divided by -1) or division by zero.
+  // A nonzero remainder has the sign of the dividend, i.e., it is
+  // the MOD intrinsic (X-INT(X/Y)*Y), not MODULO.
   constexpr bool DivideSigned(FixedPoint divisor, FixedPoint &remainder) {
-    bool negateQuotient{false}, negateRemainder{false};
-    if (IsNegative()) {
-      negateQuotient = negateRemainder = true;
-      TwosComplement();
-    }
+    bool dividendIsNegative{IsNegative()};
+    bool negateQuotient{dividendIsNegative};
     Ordering divisorOrdering{divisor.CompareToZeroSigned()};
-    bool overflow{divisorOrdering == Ordering::Equal};
     if (divisorOrdering == Ordering::Less) {
       negateQuotient = !negateQuotient;
-      divisor.TwosComplement();
+      if (divisor.TwosComplement()) {
+        // divisor was (and is) the most negative number
+        if (CompareUnsigned(divisor) == Ordering::Equal) {
+          RightMask(1);
+          remainder.Clear();
+          return bits <= 1;  // edge case: 1-bit signed numbers overflow on 1!
+        } else {
+          remainder = *this;
+          Clear();
+          return false;
+        }
+      }
+    } else if (divisorOrdering == Ordering::Equal) {
+      // division by zero
+      remainder.Clear();
+      if (dividendIsNegative) {
+        LeftMask(1);  // most negative signed number
+      } else {
+        RightMask(bits - 1);  // most positive signed number
+      }
+      return true;
     }
+    if (dividendIsNegative) {
+      if (TwosComplement()) {
+        // Dividend was (and remains) the most negative number.
+        // See whether the original divisor was -1 (if so, it's 1 now).
+        if (divisorOrdering == Ordering::Less &&
+            divisor.CompareUnsigned(FixedPoint{std::uint64_t{1}}) == Ordering::Equal) {
+          // most negative number / -1 is the sole overflow case
+          remainder.Clear();
+          return true;
+        }
+      }
+    }
+    // Overflow is not possible, and both the dividend (*this) and divisor
+    // are now positive.
     DivideUnsigned(divisor, remainder);
-    overflow |= IsNegative();
     if (negateQuotient) {
       TwosComplement();
     }
-    if (negateRemainder) {
+    if (dividendIsNegative) {
       remainder.TwosComplement();
     }
-    return overflow;
+    return false;
+  }
+
+  // MASKR intrinsic
+  constexpr void RightMask(int places) {
+    int j{0};
+    for (; j + 1 < parts && places >= partBits; ++j, places -= partBits) {
+      part_[j] = partMask;
+    }
+    if (places > 0) {
+      if (j + 1 < parts) {
+        part_[j++] = partMask >> (partBits - places);
+      } else if (j + 1 == parts) {
+        if (places >= topPartBits) {
+          part_[j++] = topPartMask;
+        } else {
+          part_[j++] = topPartMask >> (topPartBits - places);
+        }
+      }
+    }
+    for (; j < parts; ++j) {
+      part_[j] = 0;
+    }
+  }
+
+  // MASKL intrinsic
+  constexpr void LeftMask(int places) {
+    if (places < 0) {
+      Clear();
+    } else if (places >= bits) {
+      RightMask(bits);
+    } else {
+      RightMask(bits - places);
+      OnesComplement();
+    }
   }
 
 private:
-  constexpr bool IsNegative() const {
-    return (part_[parts-1] >> (partBits - 1)) & 1;
+  static constexpr Part PartMask(int part) {
+    return part == parts-1 ? topPartMask : partMask;
   }
 
-  Part part_[parts];  // little-endian order: [parts-1] is most significant
+  constexpr void Clear() {
+    for (int j{0}; j < parts; ++j) {
+      part_[j] = 0;
+    }
+  }
+
+  Part part_[parts]{};  // little-endian order: [parts-1] is most significant
 };
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_FIXED_POINT_H_

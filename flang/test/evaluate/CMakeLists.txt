@@ -12,10 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_library(FortranEvaluateTesting
+  testing.cc
+)
+
 add_executable(leading-zero-bit-count-test
-  leading-zero-bit-count.cc
+  leading-zero-bit-count-test.cc
 )
 
 target_link_libraries(leading-zero-bit-count-test
   FortranEvaluate
+  FortranEvaluateTesting
+)
+
+add_executable(fixed-point-test
+  fixed-point-test.cc
+)
+
+target_link_libraries(fixed-point-test
+  FortranEvaluate
+  FortranEvaluateTesting
 )

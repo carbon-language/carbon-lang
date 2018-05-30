@@ -15,68 +15,22 @@
 #ifndef FORTRAN_EVALUATE_TESTING_H_
 #define FORTRAN_EVALUATE_TESTING_H_
 
-#include <cinttypes>
-#include <cstdlib>
-#include <iostream>
-
 namespace testing {
 
-int passes{0};
-int failures{0};
+// Returns EXIT_SUCCESS or EXIT_FAILURE, so a test's main() should end
+// with "return testing::Complete()".
+int Complete();
 
-void Check(const char *file, int line, std::uint64_t want, std::uint64_t got) {
-  if (want != got) {
-    ++failures;
-    std::cerr << file << ':' << std::dec << line << '(' << (passes + failures)
-              << "): want 0x" << std::hex << want
-              << ", got 0x" << got << '\n' << std::dec;
-  } else {
-    ++passes;
-  }
-}
+// Pass/fail testing.  These macros return a pointer to a printf-like
+// function that can be optionally called to print more detail, e.g.
+//   COMPARE(x, ==, y)("z is 0x%llx", z);
+// will also print z after the usual failure message if x != y.
+#define TEST(predicate) testing::Test(__FILE__, __LINE__, #predicate, (predicate))
+#define COMPARE(x, rel, y) testing::Compare(__FILE__, __LINE__, #x, #rel, #y, (x), (y))
 
-void Check(const char *file, int line, std::uint64_t x, std::uint64_t want,
-           std::uint64_t got) {
-  if (want != got) {
-    ++failures;
-    std::cerr << file << ':' << std::dec << line << '(' << (passes + failures)
-              << ")[0x" << std::hex << x << "]: want 0x" << want
-              << ", got 0x" << got << '\n' << std::hex;
-  } else {
-    ++passes;
-  }
-}
-
-int Complete() {
-  if (failures == 0) {
-    if (passes == 1) {
-      std::cout << "test PASSES\n";
-    } else {
-      std::cout << "all " << std::dec << passes << " tests PASS\n";
-    }
-    passes = 0;
-    return EXIT_SUCCESS;
-  } else {
-    if (passes == 1) {
-      std::cerr << std::dec << "1 test passes, ";
-    } else {
-      std::cerr << std::dec << passes << " tests pass, ";
-    }
-    if (failures == 1) {
-      std::cerr << "1 test FAILS\n";
-    } else {
-      std::cerr << std::dec << failures << " tests FAIL\n";
-    }
-    passes = failures = 0;
-    return EXIT_FAILURE;
-  }
-}
-
+// Functions called by thesemacros; do not call directly.
+using FailureDetailPrinter = void (*)(const char *, ...);
+FailureDetailPrinter Test(const char *file, int line, const char *predicate, bool pass);
+FailureDetailPrinter Compare(const char *file, int line, const char *xs, const char *rel, const char *ys, unsigned long long x, unsigned long long y);
 }  // namespace testing
-
-#define CHECK(want, got) \
-  testing::Check(__FILE__, __LINE__, (want), (got))
-#define CHECK_CASE(n, want, got) \
-  testing::Check(__FILE__, __LINE__, (n), (want), (got))
-
 #endif  // FORTRAN_EVALUATE_TESTING_H_
