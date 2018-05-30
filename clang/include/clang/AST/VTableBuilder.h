@@ -93,10 +93,6 @@ public:
                            reinterpret_cast<uintptr_t>(MD));
   }
 
-  static VTableComponent getFromOpaqueInteger(uint64_t I) {
-    return VTableComponent(I);
-  }
-
   /// Get the kind of this vtable component.
   Kind getKind() const {
     return (Kind)(Value & 0x7);
