@@ -330,6 +330,22 @@ namespace member_guides {
     Bar(int) -> Bar<int>;
   };
   Foo<int>::Bar b = 0;
+
+  struct A {
+    template<typename T> struct Public; // expected-note {{declared public}}
+    Public(float) -> Public<float>;
+  protected: // expected-note {{declared protected by intervening access specifier}}
+    template<typename T> struct Protected; // expected-note 2{{declared protected}}
+    Protected(float) -> Protected<float>;
+    Public(int) -> Public<int>; // expected-error {{different access}}
+  private: // expected-note {{declared private by intervening access specifier}}
+    template<typename T> struct Private; // expected-note {{declared private}}
+    Protected(int) -> Protected<int>; // expected-error {{different access}}
+  public: // expected-note 2{{declared public by intervening access specifier}}
+    template<typename T> Public(T) -> Public<T>;
+    template<typename T> Protected(T) -> Protected<T>; // expected-error {{different access}}
+    template<typename T> Private(T) -> Private<T>; // expected-error {{different access}}
+  };
 }
 
 #else
