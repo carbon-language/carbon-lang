@@ -25,6 +25,15 @@ target_link_libraries(leading-zero-bit-count-test
   FortranEvaluateTesting
 )
 
+add_executable(bit-population-count-test
+  bit-population-count-test.cc
+)
+
+target_link_libraries(bit-population-count-test
+  FortranEvaluate
+  FortranEvaluateTesting
+)
+
 add_executable(fixed-point-test
   fixed-point-test.cc
 )

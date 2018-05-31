@@ -105,5 +105,6 @@ configure_file(
   ${FLANG_BINARY_DIR}/include/flang/Config/config.h)
 
 enable_testing()
-add_test(NAME LZBC COMMAND leading-zero-bit-count-test)
+add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
+add_test(NAME PopPar COMMAND bit-population-count-test)
 add_test(NAME FixedPoint COMMAND fixed-point-test)

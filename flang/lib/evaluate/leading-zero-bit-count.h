@@ -15,9 +15,10 @@
 #ifndef FORTRAN_EVALUATE_LEADING_ZERO_BIT_COUNT_H_
 #define FORTRAN_EVALUATE_LEADING_ZERO_BIT_COUNT_H_
 
-// A fast and portable function that counts the number of leading zero bits
-// in an integer value.  (If the most significant bit is set, the leading
-// zero count is zero; if no bit is set, the leading zero count is the
+// A fast and portable function that implements Fortran's LEADZ intrinsic
+// function, which counts the number of leading (most significant) zero bit
+// positions in an integer value.  (If the most significant bit is set, the
+// leading zero count is zero; if no bit is set, the leading zero count is the
 // word size in bits; otherwise, it's the largest left shift count that
 // doesn't reduce the number of bits in the word that are set.)
 
