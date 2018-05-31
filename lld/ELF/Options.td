@@ -96,7 +96,7 @@ def discard_locals: F<"discard-locals">,
   HelpText<"Delete temporary local symbols">;
 
 def discard_none: F<"discard-none">,
-  HelpText<"Keep all symbols in the symbol table (default)">;
+  HelpText<"Keep all symbols in the symbol table">;
 
 defm dynamic_linker: Eq<"dynamic-linker", "Which dynamic linker to use">;
 
