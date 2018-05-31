@@ -1222,6 +1222,12 @@ SVal SimpleSValBuilder::simplifySVal(ProgramStateRef State, SVal V) {
     ProgramStateRef State;
     SValBuilder &SVB;
 
+    // Cache results for the lifetime of the Simplifier. Results change every
+    // time new constraints are added to the program state, which is the whole
+    // point of simplifying, and for that very reason it's pointless to maintain
+    // the same cache for the duration of the whole analysis.
+    llvm::DenseMap<SymbolRef, SVal> Cached;
+
     static bool isUnchanged(SymbolRef Sym, SVal Val) {
       return Sym == Val.getAsSymbol();
     }
@@ -1242,9 +1248,16 @@ SVal SimpleSValBuilder::simplifySVal(ProgramStateRef State, SVal V) {
     // start producing them.
 
     SVal VisitSymIntExpr(const SymIntExpr *S) {
+      auto I = Cached.find(S);
+      if (I != Cached.end())
+        return I->second;
+
       SVal LHS = Visit(S->getLHS());
-      if (isUnchanged(S->getLHS(), LHS))
-        return SVB.makeSymbolVal(S);
+      if (isUnchanged(S->getLHS(), LHS)) {
+        SVal V = SVB.makeSymbolVal(S);
+        Cached[S] = V;
+        return V;
+      }
       SVal RHS;
       // By looking at the APSInt in the right-hand side of S, we cannot
       // figure out if it should be treated as a Loc or as a NonLoc.
@@ -1263,15 +1276,27 @@ SVal SimpleSValBuilder::simplifySVal(ProgramStateRef State, SVal V) {
       } else {
         RHS = SVB.makeIntVal(S->getRHS());
       }
-      return SVB.evalBinOp(State, S->getOpcode(), LHS, RHS, S->getType());
+
+      SVal V = SVB.evalBinOp(State, S->getOpcode(), LHS, RHS, S->getType());
+      Cached[S] = V;
+      return V;
     }
 
     SVal VisitSymSymExpr(const SymSymExpr *S) {
+      auto I = Cached.find(S);
+      if (I != Cached.end())
+        return I->second;
+
       SVal LHS = Visit(S->getLHS());
       SVal RHS = Visit(S->getRHS());
-      if (isUnchanged(S->getLHS(), LHS) && isUnchanged(S->getRHS(), RHS))
-        return SVB.makeSymbolVal(S);
-      return SVB.evalBinOp(State, S->getOpcode(), LHS, RHS, S->getType());
+      if (isUnchanged(S->getLHS(), LHS) && isUnchanged(S->getRHS(), RHS)) {
+        SVal V = SVB.makeSymbolVal(S);
+        Cached[S] = V;
+        return V;
+      }
+      SVal V = SVB.evalBinOp(State, S->getOpcode(), LHS, RHS, S->getType());
+      Cached[S] = V;
+      return V;
     }
 
     SVal VisitSymExpr(SymbolRef S) { return nonloc::SymbolVal(S); }
