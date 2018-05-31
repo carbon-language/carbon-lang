@@ -81,7 +81,7 @@ void reset();
 /// provided in the XRay API.
 XRayBuffer nextBuffer(XRayBuffer B);
 
-}; // namespace profileCollectorService
+} // namespace profileCollectorService
 
 } // namespace __xray
 
