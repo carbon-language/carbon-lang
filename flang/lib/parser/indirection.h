@@ -15,7 +15,7 @@
 #ifndef FORTRAN_PARSER_INDIRECTION_H_
 #define FORTRAN_PARSER_INDIRECTION_H_
 
-// Defines a smart pointer template class that's rather like std::unique_ptr<>
+// Defines a smart pointer class template that's rather like std::unique_ptr<>
 // but further restricted, like a C++ reference, to be non-null when constructed
 // or assigned.  Users need not check whether these pointers are null.
 // Intended to be as invisible as possible.

@@ -260,7 +260,7 @@ using Location = const char *;
 // Implicit definitions of the Standard
 
 // R403 scalar-xyz -> xyz
-// These template class wrappers correspond to the Standard's modifiers
+// These class template wrappers correspond to the Standard's modifiers
 // scalar-xyz, constant-xzy, int-xzy, default-char-xyz, & logical-xyz.
 // TODO: Implement as wrappers instead, or maybe remove.
 template<typename A> struct Scalar {
@@ -812,7 +812,7 @@ struct LiteralConstant {
 };
 
 // R604 constant ->  literal-constant | named-constant
-// Renamed to dodge a clash with Constant<> template class.
+// Renamed to dodge a clash with Constant<> class template.
 struct ConstantValue {
   UNION_CLASS_BOILERPLATE(ConstantValue);
   std::variant<LiteralConstant, NamedConstant> u;

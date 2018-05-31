@@ -24,9 +24,9 @@ class IntrinsicType {
 public:
   enum class Classification { Integer, Real, Complex, Character, Logical };
 
-  // Default REAL just has to be IEEE-754 single precision today.
-  // It occupies one numeric storage unit.  The default INTEGER and
-  // default LOGICAL intrinsic types also have to occupy one numeric
+  // Default REAL just simply has to be IEEE-754 single precision today.
+  // It occupies one numeric storage unit by definition.  The default INTEGER
+  // and default LOGICAL intrinsic types also have to occupy one numeric
   // storage unit, so their kinds are forced.  Default COMPLEX occupies
   // two numeric storage unit.
   using KindLenCType = std::int32_t;

@@ -15,7 +15,7 @@
 #ifndef FORTRAN_PARSER_REFERENCE_COUNTED_H_
 #define FORTRAN_PARSER_REFERENCE_COUNTED_H_
 
-// A template class of smart pointers to objects with their own
+// A class template of smart pointers to objects with their own
 // reference counting object lifetimes that's lighter weight
 // than std::shared_ptr<>.  Not thread-safe.
 

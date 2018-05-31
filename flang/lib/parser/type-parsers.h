@@ -23,7 +23,7 @@
 namespace Fortran::parser {
 
 // Many parsers in the grammar are defined as instances of this Parser<>
-// template class, i.e. as the anonymous sole parser for a given type.
+// class template, i.e. as the anonymous sole parser for a given type.
 // This usage requires that their Parse() member functions be defined
 // separately, typically with a parsing expression wrapped up in an
 // TYPE_PARSER() macro call.

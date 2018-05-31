@@ -25,7 +25,7 @@
 // returns {} to signify failure.  On failure, the state cannot be assumed
 // to still be valid, in general -- see below for exceptions.
 //
-// This header defines the fundamental parser template classes and helper
+// This header defines the fundamental parser class templates and helper
 // template functions.  See parser-combinators.txt for documentation.
 
 #include "char-block.h"

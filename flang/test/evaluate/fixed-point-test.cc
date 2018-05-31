@@ -25,8 +25,9 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
   std::int64_t maxPositiveSignedValue{(std::int64_t{1} << (BITS - 1)) - 1};
   std::int64_t mostNegativeSignedValue{-(std::int64_t{1} << (BITS - 1))};
   char desc[64];
-  std::snprintf(desc, sizeof desc, "BITS=%d, PARTBITS=%d, sizeof(Part)=%d",
-      BITS, FP::partBits, static_cast<int>(sizeof(typename FP::Part)));
+  std::snprintf(desc, sizeof desc, "BITS=%d, PARTBITS=%d, sizeof(Part)=%d, LE=%d",
+      BITS, FP::partBits, static_cast<int>(sizeof(typename FP::Part)),
+      FP::littleEndian);
   FP zero;
   TEST(zero.IsZero())(desc);
   for (std::uint64_t x{0}; x <= maxUnsignedValue; ++x) {
@@ -37,8 +38,8 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
     copy = a;
     COMPARE(x, ==, copy.ToUInt64())(desc);
     COMPARE(x == 0, ==, a.IsZero())("%s, x=0x%llx", desc, x);
-    copy.OnesComplement();
-    COMPARE(x ^ maxUnsignedValue, ==, copy.ToUInt64())("%s, x=0x%llx", desc, x);
+    FP t{a.OnesComplement()};
+    COMPARE(x ^ maxUnsignedValue, ==, t.ToUInt64())("%s, x=0x%llx", desc, x);
     copy = a;
     bool over{copy.TwosComplement()};
     COMPARE(over, ==, x == std::uint64_t{1} << (BITS - 1))
@@ -86,6 +87,12 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
       copy = a;
       copy.ShiftRightLogical(-count);
       COMPARE((x << count) & maxUnsignedValue, ==, copy.ToUInt64())
+      ("%s, x=0x%llx, count=%d", desc, x, count);
+      copy = a;
+      copy.ShiftRightArithmetic(count);
+      std::uint64_t fill{-(x >> (BITS-1))};
+      std::uint64_t sra{count >= BITS ? fill : (x >> count) | (fill << (BITS-count))};
+      COMPARE(sra, ==, copy.ToInt64())
       ("%s, x=0x%llx, count=%d", desc, x, count);
     }
     for (std::uint64_t y{0}; y <= maxUnsignedValue; ++y) {
@@ -207,7 +214,6 @@ int main() {
   exhaustiveTesting<9, FixedPoint<9, 2>>();
   exhaustiveTesting<9, FixedPoint<9, 2, std::uint8_t, std::uint16_t>>();
   exhaustiveTesting<9, FixedPoint<9, 8, std::uint8_t, std::uint16_t>>();
-  // exhaustiveTesting<15>();
-  // exhaustiveTesting<16>();
+  exhaustiveTesting<9, FixedPoint<9, 8, std::uint8_t, std::uint16_t, false>>();
   return testing::Complete();
 }
