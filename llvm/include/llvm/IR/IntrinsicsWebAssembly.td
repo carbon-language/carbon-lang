@@ -15,10 +15,16 @@
 let TargetPrefix = "wasm" in {  // All intrinsics start with "llvm.wasm.".
 
 // Query the current memory size, and increase the current memory size.
-// Note that mem.size is not IntrNoMem because it must be sequenced with
-// respect to mem.grow calls.
-// These are the new proposed names, which aren't yet official. Use at your own
-// risk.
+// Note that memory.size is not IntrNoMem because it must be sequenced with
+// respect to memory.grow calls.
+def int_wasm_memory_size : Intrinsic<[llvm_anyint_ty],
+                                     [llvm_i32_ty],
+                                     [IntrReadMem]>;
+def int_wasm_memory_grow : Intrinsic<[llvm_anyint_ty],
+                                     [llvm_i32_ty, LLVMMatchType<0>],
+                                     []>;
+
+// These are the old names.
 def int_wasm_mem_size : Intrinsic<[llvm_anyint_ty],
                                   [llvm_i32_ty],
                                   [IntrReadMem]>;
@@ -26,8 +32,7 @@ def int_wasm_mem_grow : Intrinsic<[llvm_anyint_ty],
                                   [llvm_i32_ty, LLVMMatchType<0>],
                                   []>;
 
-// These are the existing names, which are currently official, but expected
-// to be deprecated in the future. They also lack the immediate field.
+// These are the old old names. They also lack the immediate field.
 def int_wasm_current_memory : Intrinsic<[llvm_anyint_ty], [], [IntrReadMem]>;
 def int_wasm_grow_memory : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>], []>;
 
