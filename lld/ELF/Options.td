@@ -244,6 +244,12 @@ defm print_icf_sections: B<"print-icf-sections",
     "List identical folded sections",
     "Do not list identical folded sections (default)">;
 
+def pop_state: F<"pop-state">,
+  HelpText<"Undo the effect of -push-state">;
+
+def push_state: F<"push-state">,
+  HelpText<"Save the current state of -as-needed, -static and -whole-archive">;
+
 def print_map: F<"print-map">,
   HelpText<"Print a link map to the standard output">;
 
