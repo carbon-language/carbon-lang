@@ -159,6 +159,10 @@ static cl::opt<std::string> CommandFile(cl::Positional,
                                         cl::desc("<command-file>"),
                                         cl::init("-"),
                                         cl::sub(IRMemoryMapSubcommand));
+static cl::opt<bool> UseHostOnlyAllocationPolicy(
+    "host-only", cl::desc("Use the host-only allocation policy"),
+    cl::init(false), cl::sub(IRMemoryMapSubcommand));
+
 using AllocationT = std::pair<addr_t, addr_t>;
 bool areAllocationsOverlapping(const AllocationT &L, const AllocationT &R);
 using AddrIntervalMap =
@@ -521,14 +525,16 @@ bool opts::irmemorymap::evalMalloc(IRMemoryMap &IRMemMap, StringRef Line,
     exit(1);
   }
 
+  IRMemoryMap::AllocationPolicy AP =
+      UseHostOnlyAllocationPolicy ? IRMemoryMap::eAllocationPolicyHostOnly
+                                  : IRMemoryMap::eAllocationPolicyProcessOnly;
+
   // Issue the malloc in the target process with "-rw" permissions.
   const uint32_t Permissions = 0x3;
   const bool ZeroMemory = false;
-  IRMemoryMap::AllocationPolicy Policy =
-      IRMemoryMap::eAllocationPolicyProcessOnly;
   Status ST;
   addr_t Addr =
-      IRMemMap.Malloc(Size, Alignment, Permissions, Policy, ZeroMemory, ST);
+      IRMemMap.Malloc(Size, Alignment, Permissions, AP, ZeroMemory, ST);
   if (ST.Fail()) {
     outs() << formatv("Malloc error: {0}\n", ST);
     return true;
