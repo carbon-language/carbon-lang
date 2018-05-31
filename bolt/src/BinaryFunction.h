@@ -556,12 +556,14 @@ private:
 
   /// Offsets in function that are data values in a constant island identified
   /// after disassembling
-  std::map<uint64_t, MCSymbol *> IslandSymbols;
+  std::map<uint64_t, MCSymbol *> IslandOffsets;
+  SmallPtrSet<MCSymbol *, 4> IslandSymbols;
+  std::map<const MCSymbol *, BinaryFunction *> ProxyIslandSymbols;
   std::map<const MCSymbol *, MCSymbol *> ColdIslandSymbols;
   /// Keeps track of other functions we depend on because there is a reference
   /// to the constant islands in them.
   std::map<BinaryFunction *, std::map<const MCSymbol *, MCSymbol *>>
-      IslandProxies;
+      IslandProxies, ColdIslandProxies;
   std::set<BinaryFunction *> IslandDependency; // The other way around
 
   // Blocks are kept sorted in the layout order. If we need to change the
@@ -1730,61 +1732,45 @@ public:
   /// hot code area while the second return value is the symbol for reference
   /// in the cold code area, as when the function is split the islands are
   /// duplicated.
-  std::pair<MCSymbol *, MCSymbol *> getOrCreateIslandAccess(uint64_t Address) {
-    MCSymbol *Symbol, *ColdSymbol;
+  MCSymbol *getOrCreateIslandAccess(uint64_t Address) {
+    MCSymbol *Symbol;
     if (!isInConstantIsland(Address))
-      return std::make_pair(nullptr, nullptr);
+      return nullptr;
 
     // Register our island at global namespace
     Symbol = BC.getOrCreateGlobalSymbol(Address, 0, 0, "ISLANDat");
     // Internal bookkeeping
     const auto Offset = Address - getAddress();
-    assert((!IslandSymbols.count(Offset) || IslandSymbols[Offset] == Symbol) &&
+    assert((!IslandOffsets.count(Offset) || IslandOffsets[Offset] == Symbol) &&
            "Inconsistent island symbol management");
-    if (!IslandSymbols.count(Offset)) {
-      IslandSymbols[Offset] = Symbol;
+    if (!IslandOffsets.count(Offset)) {
+      IslandOffsets[Offset] = Symbol;
+      IslandSymbols.insert(Symbol);
     }
-    if (!ColdIslandSymbols.count(Symbol)) {
-      ColdSymbol = BC.Ctx->getOrCreateSymbol(Symbol->getName() + ".cold");
-      ColdIslandSymbols[Symbol] = ColdSymbol;
-    } else {
-      ColdSymbol = ColdIslandSymbols[Symbol];
-    }
-    return std::make_pair(Symbol, ColdSymbol);
+    return Symbol;
   }
 
   /// Called by an external function which wishes to emit references to constant
   /// island symbols of this function. We create a proxy for it, so we emit
   /// separate symbols when emitting our constant island on behalf of this other
   /// function.
-  std::pair<MCSymbol *, MCSymbol *>
+  MCSymbol *
   getOrCreateProxyIslandAccess(uint64_t Address, BinaryFunction *Referrer) {
-    auto HotColdSymbols = getOrCreateIslandAccess(Address);
-    if (!HotColdSymbols.first)
-      return HotColdSymbols;
+    auto Symbol = getOrCreateIslandAccess(Address);
+    if (!Symbol)
+      return nullptr;
 
-    MCSymbol *ProxyHot, *ProxyCold;
-    if (!IslandProxies[Referrer].count(HotColdSymbols.first)) {
-      ProxyHot =
-          BC.Ctx->getOrCreateSymbol(HotColdSymbols.first->getName() +
+    MCSymbol *Proxy;
+    if (!IslandProxies[Referrer].count(Symbol)) {
+      Proxy =
+          BC.Ctx->getOrCreateSymbol(Symbol->getName() +
                                     ".proxy.for." + Referrer->getPrintName());
-      ProxyCold =
-          BC.Ctx->getOrCreateSymbol(HotColdSymbols.second->getName() +
-                                    ".proxy.for." + Referrer->getPrintName());
-      IslandProxies[Referrer][HotColdSymbols.first] = ProxyHot;
-      IslandProxies[Referrer][HotColdSymbols.second] = ProxyCold;
+      IslandProxies[Referrer][Symbol] = Proxy;
+      IslandProxies[Referrer][Proxy] = Symbol;
     }
-    ProxyHot = IslandProxies[Referrer][HotColdSymbols.first];
-    ProxyCold = IslandProxies[Referrer][HotColdSymbols.second];
-    return std::make_pair(ProxyHot, ProxyCold);
+    Proxy = IslandProxies[Referrer][Symbol];
+    return Proxy;
   }
-
-  /// Make this function depend on \p OtherBF because we have a reference to its
-  /// constant island. When emitting this function, we will also emit OtherBF's
-  /// constants. This only happens in custom AArch64 assembly code (either
-  /// poorly written code or over-optimized).
-  void addConstantIslandDependency(BinaryFunction *OtherBF, MCSymbol *HotSymbol,
-                                   MCSymbol *ColdSymbol);
 
   /// Detects whether \p Address is inside a data region in this function
   /// (constant islands).

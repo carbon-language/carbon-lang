@@ -942,7 +942,7 @@ MCSymbol *BinaryFunction::getOrCreateLocalLabel(uint64_t Address,
     return LI->second;
 
   // For AArch64, check if this address is part of a constant island.
-  if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address).first) {
+  if (MCSymbol *IslandSym = getOrCreateIslandAccess(Address)) {
     return IslandSym;
   }
 
@@ -976,7 +976,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     if (BC.isAArch64()) {
       // Check if this is an access to a constant island and create bookkeeping
       // to keep track of it and emit it later as part of this function
-      if (MCSymbol *IslandSym = getOrCreateIslandAccess(TargetAddress).first) {
+      if (MCSymbol *IslandSym = getOrCreateIslandAccess(TargetAddress)) {
         return IslandSym;
       } else {
         // Detect custom code written in assembly that refers to arbitrary
@@ -986,13 +986,15 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         auto IslandIter =
             BC.AddressToConstantIslandMap.lower_bound(TargetAddress);
         if (IslandIter != BC.AddressToConstantIslandMap.end()) {
-          MCSymbol *IslandSym, *ColdIslandSym;
-          std::tie(IslandSym, ColdIslandSym) =
-              IslandIter->second->getOrCreateProxyIslandAccess(TargetAddress,
-                                                               this);
-          if (IslandSym) {
-            addConstantIslandDependency(IslandIter->second, IslandSym,
-                                        ColdIslandSym);
+          if (MCSymbol *IslandSym =
+                  IslandIter->second->getOrCreateProxyIslandAccess(
+                      TargetAddress, this)) {
+            /// Make this function depend on IslandIter->second because we have
+            /// a reference to its constant island. When emitting this function,
+            /// we will also emit IslandIter->second's constants. This only
+            /// happens in custom AArch64 assembly code.
+            IslandDependency.insert(IslandIter->second);
+            ProxyIslandSymbols[IslandSym] = IslandIter->second;
             return IslandSym;
           }
         }
@@ -2434,18 +2436,6 @@ void BinaryFunction::setTrapOnEntry() {
   TrapsOnEntry = true;
 }
 
-void BinaryFunction::addConstantIslandDependency(BinaryFunction *OtherBF,
-                                                 MCSymbol *HotSymbol,
-                                                 MCSymbol *ColdSymbol) {
-  IslandDependency.insert(OtherBF);
-  if (!ColdIslandSymbols.count(HotSymbol)) {
-    ColdIslandSymbols[HotSymbol] = ColdSymbol;
-  }
-  DEBUG(dbgs() << "BOLT-DEBUG: Constant island dependency added! "
-               << getPrintName() << " refers to " << OtherBF->getPrintName()
-               << "\n");
-}
-
 void BinaryFunction::emitConstantIslands(
     MCStreamer &Streamer, bool EmitColdPart,
     BinaryFunction *OnBehalfOf) {
@@ -2474,7 +2464,7 @@ void BinaryFunction::emitConstantIslands(
            << "\n";
 
   // We split the island into smaller blocks and output labels between them.
-  auto IS = IslandSymbols.begin();
+  auto IS = IslandOffsets.begin();
   for (auto DataIter = DataOffsets.begin(); DataIter != DataOffsets.end();
        ++DataIter) {
     uint64_t FunctionOffset = *DataIter;
@@ -2498,9 +2488,9 @@ void BinaryFunction::emitConstantIslands(
 
     // Emit labels, relocs and data
     auto RI = MoveRelocations.lower_bound(FunctionOffset);
-    while ((IS != IslandSymbols.end() && IS->first < EndOffset) ||
+    while ((IS != IslandOffsets.end() && IS->first < EndOffset) ||
            (RI != MoveRelocations.end() && RI->first < EndOffset)) {
-      auto NextLabelOffset = IS == IslandSymbols.end() ? EndOffset : IS->first;
+      auto NextLabelOffset = IS == IslandOffsets.end() ? EndOffset : IS->first;
       auto NextRelOffset = RI == MoveRelocations.end() ? EndOffset : RI->first;
       auto NextStop = std::min(NextLabelOffset, NextRelOffset);
       assert(NextStop <= EndOffset && "internal overflow error");
@@ -2508,7 +2498,7 @@ void BinaryFunction::emitConstantIslands(
         Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, NextStop));
         FunctionOffset = NextStop;
       }
-      if (IS != IslandSymbols.end() && FunctionOffset == IS->first) {
+      if (IS != IslandOffsets.end() && FunctionOffset == IS->first) {
         // This is a slightly complex code to decide which label to emit. We
         // have 4 cases to handle: regular symbol, cold symbol, regular or cold
         // symbol being emitted on behalf of an external function.
@@ -2521,7 +2511,7 @@ void BinaryFunction::emitConstantIslands(
               Streamer.EmitLabel(IS->second);
             else
               assert(hasName(IS->second->getName()));
-          } else {
+          } else if (ColdIslandSymbols.count(IS->second) != 0) {
             DEBUG(dbgs() << "BOLT-DEBUG: emitted label "
                          << ColdIslandSymbols[IS->second]->getName() << '\n');
             if (ColdIslandSymbols[IS->second]->isUndefined())
@@ -2534,13 +2524,11 @@ void BinaryFunction::emitConstantIslands(
                            << '\n');
               Streamer.EmitLabel(Sym);
             }
-          } else {
-            if (MCSymbol *Sym =
-                    IslandProxies[OnBehalfOf][ColdIslandSymbols[IS->second]]) {
-              DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << Sym->getName()
-                           << '\n');
-              Streamer.EmitLabel(Sym);
-            }
+          } else if (MCSymbol *Sym =
+                         ColdIslandProxies[OnBehalfOf][IS->second]) {
+            DEBUG(dbgs() << "BOLT-DEBUG: emitted label " << Sym->getName()
+                         << '\n');
+            Streamer.EmitLabel(Sym);
           }
         }
         ++IS;
@@ -2560,7 +2548,7 @@ void BinaryFunction::emitConstantIslands(
       Streamer.EmitBytes(FunctionContents.slice(FunctionOffset, EndOffset));
     }
   }
-  assert(IS == IslandSymbols.end() && "some symbols were not emitted!");
+  assert(IS == IslandOffsets.end() && "some symbols were not emitted!");
 
   if (OnBehalfOf)
     return;
@@ -2584,13 +2572,31 @@ void BinaryFunction::duplicateConstantIslands() {
           ++OpNum;
           continue;
         }
-        const auto *Symbol = BC.MIB->getTargetSymbol(Inst, OpNum);
-        auto ISym = ColdIslandSymbols.find(Symbol);
-        if (ISym == ColdIslandSymbols.end())
+        auto *Symbol = BC.MIB->getTargetSymbol(Inst, OpNum);
+        // Check if this is an island symbol
+        if (!IslandSymbols.count(Symbol) && !ProxyIslandSymbols.count(Symbol))
           continue;
+
+        // Create cold symbol, if missing
+        auto ISym = ColdIslandSymbols.find(Symbol);
+        MCSymbol *ColdSymbol;
+        if (ISym != ColdIslandSymbols.end()) {
+          ColdSymbol = ISym->second;
+        } else {
+          ColdSymbol = BC.Ctx->getOrCreateSymbol(Symbol->getName() + ".cold");
+          ColdIslandSymbols[Symbol] = ColdSymbol;
+          // Check if this is a proxy island symbol and update owner proxy map
+          if (ProxyIslandSymbols.count(Symbol)) {
+            BinaryFunction *Owner = ProxyIslandSymbols[Symbol];
+            auto IProxiedSym = Owner->IslandProxies[this].find(Symbol);
+            Owner->ColdIslandProxies[this][IProxiedSym->second] = ColdSymbol;
+          }
+        }
+
+        // Update instruction reference
         Operand = MCOperand::createExpr(BC.MIB->getTargetExprFor(
             Inst,
-            MCSymbolRefExpr::create(ISym->second, MCSymbolRefExpr::VK_None,
+            MCSymbolRefExpr::create(ColdSymbol, MCSymbolRefExpr::VK_None,
                                     *BC.Ctx),
             *BC.Ctx, 0));
         ++OpNum;
