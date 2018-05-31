@@ -19,9 +19,9 @@ define i64 @t1(i32 %a) {
 define i64 @t2(i32 %a) {
 ; CHECK-LABEL: @t2(
 ; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i32 [[A:%.*]], 5
-; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 5
-; CHECK-NEXT:    [[TMP3:%.*]] = sext i32 [[TMP2]] to i64
-; CHECK-NEXT:    ret i64 [[TMP3]]
+; CHECK-NEXT:    [[NARROW:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 5
+; CHECK-NEXT:    [[TMP2:%.*]] = sext i32 [[NARROW]] to i64
+; CHECK-NEXT:    ret i64 [[TMP2]]
 ;
   %1 = icmp slt i32 %a, 5
   %2 = sext i32 %a to i64
@@ -33,9 +33,9 @@ define i64 @t2(i32 %a) {
 define i64 @t3(i32 %a) {
 ; CHECK-LABEL: @t3(
 ; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[A:%.*]], 5
-; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 5
-; CHECK-NEXT:    [[TMP3:%.*]] = zext i32 [[TMP2]] to i64
-; CHECK-NEXT:    ret i64 [[TMP3]]
+; CHECK-NEXT:    [[NARROW:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 5
+; CHECK-NEXT:    [[TMP2:%.*]] = zext i32 [[NARROW]] to i64
+; CHECK-NEXT:    ret i64 [[TMP2]]
 ;
   %1 = icmp ult i32 %a, 5
   %2 = zext i32 %a to i64
@@ -58,13 +58,12 @@ define i32 @t4(i64 %a) {
 }
 
 ; Same as @t3, but with mismatched signedness between icmp and zext.
-; InstCombine should leave this alone.
 define i64 @t5(i32 %a) {
 ; CHECK-LABEL: @t5(
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i32 [[A:%.*]], 5
-; CHECK-NEXT:    [[TMP2:%.*]] = zext i32 [[A]] to i64
-; CHECK-NEXT:    [[TMP3:%.*]] = select i1 [[TMP1]], i64 5, i64 [[TMP2]]
-; CHECK-NEXT:    ret i64 [[TMP3]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i32 [[A:%.*]], 5
+; CHECK-NEXT:    [[NARROW:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 5
+; CHECK-NEXT:    [[TMP2:%.*]] = zext i32 [[NARROW]] to i64
+; CHECK-NEXT:    ret i64 [[TMP2]]
 ;
   %1 = icmp slt i32 %a, 5
   %2 = zext i32 %a to i64
