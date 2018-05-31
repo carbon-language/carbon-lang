@@ -7729,7 +7729,7 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 #define _mm256_mask_extractf32x4_ps(W, U, A, imm) \
   (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
                                    (__v4sf)_mm256_extractf32x4_ps((A), (imm)), \
-                                   (__v4sf)(W))
+                                   (__v4sf)(__m128)(W))
 
 #define _mm256_maskz_extractf32x4_ps(U, A, imm) \
   (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
@@ -7747,7 +7747,7 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 #define _mm256_mask_extracti32x4_epi32(W, U, A, imm) \
   (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
                                 (__v4si)_mm256_extracti32x4_epi32((A), (imm)), \
-                                (__v4si)(W))
+                                (__v4si)(__m128i)(W))
 
 #define _mm256_maskz_extracti32x4_epi32(U, A, imm) \
   (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
@@ -7755,7 +7755,7 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
                                 (__v4si)_mm_setzero_si128())
 
 #define _mm256_insertf32x4(A, B, imm) \
-  (__m256)__builtin_shufflevector((__v8sf)(A), \
+  (__m256)__builtin_shufflevector((__v8sf)(__m256)(A), \
                                   (__v8sf)_mm256_castps128_ps256((__m128)(B)), \
                                   ((imm) & 0x1) ?  0 :  8, \
                                   ((imm) & 0x1) ?  1 :  9, \
@@ -7769,7 +7769,7 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 #define _mm256_mask_insertf32x4(W, U, A, B, imm) \
   (__m256)__builtin_ia32_selectps_256((__mmask8)(U), \
                                   (__v8sf)_mm256_insertf32x4((A), (B), (imm)), \
-                                  (__v8sf)(W))
+                                  (__v8sf)(__m256)(W))
 
 #define _mm256_maskz_insertf32x4(U, A, B, imm) \
   (__m256)__builtin_ia32_selectps_256((__mmask8)(U), \
@@ -7777,7 +7777,7 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
                                   (__v8sf)_mm256_setzero_ps())
 
 #define _mm256_inserti32x4(A, B, imm) \
-  (__m256i)__builtin_shufflevector((__v8si)(A), \
+  (__m256i)__builtin_shufflevector((__v8si)(__m256i)(A), \
                                  (__v8si)_mm256_castsi128_si256((__m128i)(B)), \
                                  ((imm) & 0x1) ?  0 :  8, \
                                  ((imm) & 0x1) ?  1 :  9, \
@@ -7791,7 +7791,7 @@ _mm256_mask_cvtepi64_storeu_epi16 (void * __P, __mmask8 __M, __m256i __A)
 #define _mm256_mask_inserti32x4(W, U, A, B, imm) \
   (__m256i)__builtin_ia32_selectd_256((__mmask8)(U), \
                                   (__v8si)_mm256_inserti32x4((A), (B), (imm)), \
-                                  (__v8si)(W))
+                                  (__v8si)(__m256i)(W))
 
 #define _mm256_maskz_inserti32x4(U, A, B, imm) \
   (__m256i)__builtin_ia32_selectd_256((__mmask8)(U), \

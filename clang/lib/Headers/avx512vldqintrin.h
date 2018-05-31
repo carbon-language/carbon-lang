@@ -1094,7 +1094,7 @@ _mm256_maskz_broadcast_i64x2 (__mmask8 __M, __m128i __A)
 #define _mm256_mask_extractf64x2_pd(W, U, A, imm) \
   (__m128d)__builtin_ia32_selectpd_128((__mmask8)(U), \
                                    (__v2df)_mm256_extractf64x2_pd((A), (imm)), \
-                                   (__v2df)(W))
+                                   (__v2df)(__m128d)(W))
 
 #define _mm256_maskz_extractf64x2_pd(U, A, imm) \
   (__m128d)__builtin_ia32_selectpd_128((__mmask8)(U), \
@@ -1110,7 +1110,7 @@ _mm256_maskz_broadcast_i64x2 (__mmask8 __M, __m128i __A)
 #define _mm256_mask_extracti64x2_epi64(W, U, A, imm) \
   (__m128i)__builtin_ia32_selectq_128((__mmask8)(U), \
                                 (__v2di)_mm256_extracti64x2_epi64((A), (imm)), \
-                                (__v2di)(W))
+                                (__v2di)(__m128i)(W))
 
 #define _mm256_maskz_extracti64x2_epi64(U, A, imm) \
   (__m128i)__builtin_ia32_selectq_128((__mmask8)(U), \
@@ -1118,7 +1118,7 @@ _mm256_maskz_broadcast_i64x2 (__mmask8 __M, __m128i __A)
                                 (__v2di)_mm_setzero_si128())
 
 #define _mm256_insertf64x2(A, B, imm) \
-  (__m256d)__builtin_shufflevector((__v4df)(A), \
+  (__m256d)__builtin_shufflevector((__v4df)(__m256d)(A), \
                                  (__v4df)_mm256_castpd128_pd256((__m128d)(B)), \
                                  ((imm) & 0x1) ? 0 : 4, \
                                  ((imm) & 0x1) ? 1 : 5, \
@@ -1128,7 +1128,7 @@ _mm256_maskz_broadcast_i64x2 (__mmask8 __M, __m128i __A)
 #define _mm256_mask_insertf64x2(W, U, A, B, imm) \
   (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
                                   (__v4df)_mm256_insertf64x2((A), (B), (imm)), \
-                                  (__v4df)(W))
+                                  (__v4df)(__m256d)(W))
 
 #define _mm256_maskz_insertf64x2(U, A, B, imm) \
   (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
@@ -1136,7 +1136,7 @@ _mm256_maskz_broadcast_i64x2 (__mmask8 __M, __m128i __A)
                                   (__v4df)_mm256_setzero_pd())
 
 #define _mm256_inserti64x2(A, B, imm) \
-  (__m256i)__builtin_shufflevector((__v4di)(A), \
+  (__m256i)__builtin_shufflevector((__v4di)(__m256i)(A), \
                                  (__v4di)_mm256_castsi128_si256((__m128i)(B)), \
                                  ((imm) & 0x1) ? 0 : 4, \
                                  ((imm) & 0x1) ? 1 : 5, \
@@ -1146,7 +1146,7 @@ _mm256_maskz_broadcast_i64x2 (__mmask8 __M, __m128i __A)
 #define _mm256_mask_inserti64x2(W, U, A, B, imm) \
   (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
                                   (__v4di)_mm256_inserti64x2((A), (B), (imm)), \
-                                  (__v4di)(W))
+                                  (__v4di)(__m256i)(W))
 
 #define _mm256_maskz_inserti64x2(U, A, B, imm) \
   (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \

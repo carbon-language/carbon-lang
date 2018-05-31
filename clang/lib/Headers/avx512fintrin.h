@@ -679,13 +679,13 @@ _mm512_maskz_and_epi64(__mmask8 __k, __m512i __a, __m512i __b)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_andnot_si512 (__m512i __A, __m512i __B)
 {
-  return (__m512i)(~(__v8du)(__A) & (__v8du)__B);
+  return (__m512i)(~(__v8du)__A & (__v8du)__B);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_andnot_epi32 (__m512i __A, __m512i __B)
 {
-  return (__m512i)(~(__v16su)(__A) & (__v16su)__B);
+  return (__m512i)(~(__v16su)__A & (__v16su)__B);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -706,7 +706,7 @@ _mm512_maskz_andnot_epi32(__mmask16 __U, __m512i __A, __m512i __B)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_andnot_epi64(__m512i __A, __m512i __B)
 {
-  return (__m512i)(~(__v8du)(__A) & (__v8du)__B);
+  return (__m512i)(~(__v8du)__A & (__v8du)__B);
 }
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
@@ -3622,7 +3622,7 @@ _mm512_maskz_permutex2var_epi64(__mmask8 __U, __m512i __A, __m512i __I,
 #define _mm512_mask_extractf64x4_pd(W, U, A, imm) \
   (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
                                    (__v4df)_mm512_extractf64x4_pd((A), (imm)), \
-                                   (__v4df)(W))
+                                   (__v4df)(__m256d)(W))
 
 #define _mm512_maskz_extractf64x4_pd(U, A, imm) \
   (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
@@ -3640,7 +3640,7 @@ _mm512_maskz_permutex2var_epi64(__mmask8 __U, __m512i __A, __m512i __I,
 #define _mm512_mask_extractf32x4_ps(W, U, A, imm) \
   (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
                                    (__v4sf)_mm512_extractf32x4_ps((A), (imm)), \
-                                   (__v4sf)(W))
+                                   (__v4sf)(__m128)(W))
 
 #define _mm512_maskz_extractf32x4_ps(U, A, imm) \
   (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
@@ -4337,7 +4337,7 @@ _mm512_maskz_cvtps_epu32 ( __mmask16 __U, __m512 __A)
 
 #define _mm512_mask_cvt_roundpd_epu32(W, U, A, R) \
   (__m256i)__builtin_ia32_cvtpd2udq512_mask((__v8df)(__m512d)(A), \
-                                            (__v8si)(W), \
+                                            (__v8si)(__m256i)(W), \
                                             (__mmask8)(U), (int)(R))
 
 #define _mm512_maskz_cvt_roundpd_epu32(U, A, R) \
@@ -7736,7 +7736,7 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
 #define _mm512_mask_extracti32x4_epi32(W, U, A, imm) \
   (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
                                 (__v4si)_mm512_extracti32x4_epi32((A), (imm)), \
-                                (__v4si)(W))
+                                (__v4si)(__m128i)(W))
 
 #define _mm512_maskz_extracti32x4_epi32(U, A, imm) \
   (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
@@ -7754,7 +7754,7 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
 #define _mm512_mask_extracti64x4_epi64(W, U, A, imm) \
   (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
                                 (__v4di)_mm512_extracti64x4_epi64((A), (imm)), \
-                                (__v4di)(W))
+                                (__v4di)(__m256i)(W))
 
 #define _mm512_maskz_extracti64x4_epi64(U, A, imm) \
   (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
@@ -7776,7 +7776,7 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
 #define _mm512_mask_insertf64x4(W, U, A, B, imm) \
   (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
                                   (__v8df)_mm512_insertf64x4((A), (B), (imm)), \
-                                  (__v8df)(W))
+                                  (__v8df)(__m512d)(W))
 
 #define _mm512_maskz_insertf64x4(U, A, B, imm) \
   (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
@@ -7798,7 +7798,7 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
 #define _mm512_mask_inserti64x4(W, U, A, B, imm) \
   (__m512i)__builtin_ia32_selectq_512((__mmask8)(U), \
                                   (__v8di)_mm512_inserti64x4((A), (B), (imm)), \
-                                  (__v8di)(W))
+                                  (__v8di)(__m512i)(W))
 
 #define _mm512_maskz_inserti64x4(U, A, B, imm) \
   (__m512i)__builtin_ia32_selectq_512((__mmask8)(U), \
@@ -7828,7 +7828,7 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
 #define _mm512_mask_insertf32x4(W, U, A, B, imm) \
   (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \
                                  (__v16sf)_mm512_insertf32x4((A), (B), (imm)), \
-                                 (__v16sf)(W))
+                                 (__v16sf)(__m512)(W))
 
 #define _mm512_maskz_insertf32x4(U, A, B, imm) \
   (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \
@@ -7858,7 +7858,7 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
 #define _mm512_mask_inserti32x4(W, U, A, B, imm) \
   (__m512i)__builtin_ia32_selectd_512((__mmask16)(U), \
                                  (__v16si)_mm512_inserti32x4((A), (B), (imm)), \
-                                 (__v16si)(W))
+                                 (__v16si)(__m512i)(W))
 
 #define _mm512_maskz_inserti32x4(U, A, B, imm) \
   (__m512i)__builtin_ia32_selectd_512((__mmask16)(U), \
@@ -9386,19 +9386,19 @@ _mm512_mask_compressstoreu_epi32 (void *__P, __mmask16 __U, __m512i __A)
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_mask_cvtsd_ss (__m128 __W, __mmask8 __U, __m128 __A, __m128d __B)
 {
-  return __builtin_ia32_cvtsd2ss_round_mask ((__v4sf)(__A),
-                                             (__v2df)(__B),
-                                             (__v4sf)(__W),
-                                             (__mmask8)(__U), _MM_FROUND_CUR_DIRECTION);
+  return __builtin_ia32_cvtsd2ss_round_mask ((__v4sf)__A,
+                                             (__v2df)__B,
+                                             (__v4sf)__W,
+                                             (__mmask8)__U, _MM_FROUND_CUR_DIRECTION);
 }
 
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_maskz_cvtsd_ss (__mmask8 __U, __m128 __A, __m128d __B)
 {
-  return __builtin_ia32_cvtsd2ss_round_mask ((__v4sf)(__A),
-                                             (__v2df)(__B),
+  return __builtin_ia32_cvtsd2ss_round_mask ((__v4sf)__A,
+                                             (__v2df)__B,
                                              (__v4sf)_mm_setzero_ps(),
-                                             (__mmask8)(__U), _MM_FROUND_CUR_DIRECTION);
+                                             (__mmask8)__U, _MM_FROUND_CUR_DIRECTION);
 }
 
 #define _mm_cvtss_i32 _mm_cvtss_si32
@@ -9459,19 +9459,19 @@ _mm_maskz_cvtsd_ss (__mmask8 __U, __m128 __A, __m128d __B)
 static __inline__ __m128d __DEFAULT_FN_ATTRS
 _mm_mask_cvtss_sd (__m128d __W, __mmask8 __U, __m128d __A, __m128 __B)
 {
-  return __builtin_ia32_cvtss2sd_round_mask((__v2df)(__A),
-                                              (__v4sf)(__B),
-                                              (__v2df)(__W),
-                                              (__mmask8)(__U), _MM_FROUND_CUR_DIRECTION);
+  return __builtin_ia32_cvtss2sd_round_mask((__v2df)__A,
+                                            (__v4sf)__B,
+                                            (__v2df)__W,
+                                            (__mmask8)__U, _MM_FROUND_CUR_DIRECTION);
 }
 
 static __inline__ __m128d __DEFAULT_FN_ATTRS
 _mm_maskz_cvtss_sd (__mmask8 __U, __m128d __A, __m128 __B)
 {
-  return __builtin_ia32_cvtss2sd_round_mask((__v2df)(__A),
-                                              (__v4sf)(__B),
-                                              (__v2df)_mm_setzero_pd(),
-                                              (__mmask8)(__U), _MM_FROUND_CUR_DIRECTION);
+  return __builtin_ia32_cvtss2sd_round_mask((__v2df)__A,
+                                            (__v4sf)__B,
+                                            (__v2df)_mm_setzero_pd(),
+                                            (__mmask8)__U, _MM_FROUND_CUR_DIRECTION);
 }
 
 static __inline__ __m128d __DEFAULT_FN_ATTRS

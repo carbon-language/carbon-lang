@@ -1119,7 +1119,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_extractf32x8_ps(W, U, A, imm) \
   (__m256)__builtin_ia32_selectps_256((__mmask8)(U), \
                                    (__v8sf)_mm512_extractf32x8_ps((A), (imm)), \
-                                   (__v8sf)(W))
+                                   (__v8sf)(__m256)(W))
 
 #define _mm512_maskz_extractf32x8_ps(U, A, imm) \
   (__m256)__builtin_ia32_selectps_256((__mmask8)(U), \
@@ -1135,7 +1135,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_extractf64x2_pd(W, U, A, imm) \
   (__m128d)__builtin_ia32_selectpd_128((__mmask8)(U), \
                                    (__v2df)_mm512_extractf64x2_pd((A), (imm)), \
-                                   (__v2df)(W))
+                                   (__v2df)(__m128d)(W))
 
 #define _mm512_maskz_extractf64x2_pd(U, A, imm) \
   (__m128d)__builtin_ia32_selectpd_128((__mmask8)(U), \
@@ -1157,7 +1157,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_extracti32x8_epi32(W, U, A, imm) \
   (__m256i)__builtin_ia32_selectd_256((__mmask8)(U), \
                                 (__v8si)_mm512_extracti32x8_epi32((A), (imm)), \
-                                (__v8si)(W))
+                                (__v8si)(__m256i)(W))
 
 #define _mm512_maskz_extracti32x8_epi32(U, A, imm) \
   (__m256i)__builtin_ia32_selectd_256((__mmask8)(U), \
@@ -1173,7 +1173,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_extracti64x2_epi64(W, U, A, imm) \
   (__m128d)__builtin_ia32_selectq_128((__mmask8)(U), \
                                 (__v2di)_mm512_extracti64x2_epi64((A), (imm)), \
-                                (__v2di)(W))
+                                (__v2di)(__m128i)(W))
 
 #define _mm512_maskz_extracti64x2_epi64(U, A, imm) \
   (__m128d)__builtin_ia32_selectq_128((__mmask8)(U), \
@@ -1203,7 +1203,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_insertf32x8(W, U, A, B, imm) \
   (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \
                                  (__v16sf)_mm512_insertf32x8((A), (B), (imm)), \
-                                 (__v16sf)(W))
+                                 (__v16sf)(__m512)(W))
 
 #define _mm512_maskz_insertf32x8(U, A, B, imm) \
   (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \
@@ -1225,7 +1225,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_insertf64x2(W, U, A, B, imm) \
   (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
                                   (__v8df)_mm512_insertf64x2((A), (B), (imm)), \
-                                  (__v8df)(W))
+                                  (__v8df)(__m512d)(W))
 
 #define _mm512_maskz_insertf64x2(U, A, B, imm) \
   (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
@@ -1255,7 +1255,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_inserti32x8(W, U, A, B, imm) \
   (__m512i)__builtin_ia32_selectd_512((__mmask16)(U), \
                                  (__v16si)_mm512_inserti32x8((A), (B), (imm)), \
-                                 (__v16si)(W))
+                                 (__v16si)(__m512i)(W))
 
 #define _mm512_maskz_inserti32x8(U, A, B, imm) \
   (__m512i)__builtin_ia32_selectd_512((__mmask16)(U), \
@@ -1277,7 +1277,7 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
 #define _mm512_mask_inserti64x2(W, U, A, B, imm) \
   (__m512i)__builtin_ia32_selectq_512((__mmask8)(U), \
                                   (__v8di)_mm512_inserti64x2((A), (B), (imm)), \
-                                  (__v8di)(W))
+                                  (__v8di)(__m512i)(W))
 
 #define _mm512_maskz_inserti64x2(U, A, B, imm) \
   (__m512i)__builtin_ia32_selectq_512((__mmask8)(U), \
