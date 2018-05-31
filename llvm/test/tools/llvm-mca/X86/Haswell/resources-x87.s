@@ -281,7 +281,7 @@ fyl2xp1
 # CHECK-NEXT:  1      7     0.50    *             *     fldt	(%eax)
 # CHECK-NEXT:  3      7     1.00    *             *     fldcw	(%eax)
 # CHECK-NEXT:  64     61    14.00                 *     fldenv	(%eax)
-# CHECK-NEXT:  1      1      -                    *     fld1
+# CHECK-NEXT:  2      1     1.00                  *     fld1
 # CHECK-NEXT:  2      1     0.50                  *     fldl2e
 # CHECK-NEXT:  2      1     0.50                  *     fldl2t
 # CHECK-NEXT:  2      1     0.50                  *     fldlg2
@@ -369,7 +369,7 @@ fyl2xp1
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
-# CHECK-NEXT:  -     17.00  117.92 141.92 49.00  49.00  27.00  56.92  65.25  9.00
+# CHECK-NEXT:  -     17.00  118.92 142.92 49.00  49.00  27.00  56.92  65.25  9.00
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    Instructions:
@@ -448,7 +448,7 @@ fyl2xp1
 # CHECK-NEXT:  -      -      -      -     0.50   0.50    -      -      -      -     fldt	(%eax)
 # CHECK-NEXT:  -      -     1.50   0.50   0.50   0.50    -      -      -      -     fldcw	(%eax)
 # CHECK-NEXT:  -      -     18.92  11.42  4.00   4.00    -     10.92  14.75   -     fldenv	(%eax)
-# CHECK-NEXT:  -      -      -      -      -      -      -      -      -      -     fld1
+# CHECK-NEXT:  -      -     1.00   1.00    -      -      -      -      -      -     fld1
 # CHECK-NEXT:  -      -     0.50   0.50    -      -      -      -      -      -     fldl2e
 # CHECK-NEXT:  -      -     0.50   0.50    -      -      -      -      -      -     fldl2t
 # CHECK-NEXT:  -      -     0.50   0.50    -      -      -      -      -      -     fldlg2

@@ -141,6 +141,8 @@ def WriteZero : SchedWrite;
 defm WriteJump : X86SchedWritePair;
 
 // Floating point. This covers both scalar and vector operations.
+def  WriteFLD0          : SchedWrite;
+def  WriteFLD1          : SchedWrite;
 def  WriteFLoad         : SchedWrite;
 def  WriteFLoadX        : SchedWrite;
 def  WriteFLoadY        : SchedWrite;

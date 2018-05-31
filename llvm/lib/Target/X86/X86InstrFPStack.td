@@ -564,10 +564,11 @@ def LD_Fp180 : FpI_<(outs RFP80:$dst), (ins), ZeroArgFP,
                 [(set RFP80:$dst, fpimm1)]>;
 }
 
-let SchedRW = [WriteZero] in {
+let SchedRW = [WriteFLD0] in
 def LD_F0 : FPI<0xD9, MRM_EE, (outs), (ins), "fldz">;
+
+let SchedRW = [WriteFLD1] in
 def LD_F1 : FPI<0xD9, MRM_E8, (outs), (ins), "fld1">;
-}
 
 // Floating point compares.
 let SchedRW = [WriteFCom] in {

@@ -815,10 +815,10 @@ def ZnWriteFPU3 : SchedWriteRes<[ZnAGU, ZnFPU3]> {
 }
 
 // FLDZ.
-def : InstRW<[ZnWriteFPU13], (instregex "LD_F0")>;
+def : SchedAlias<WriteFLD0, ZnWriteFPU13>;
 
 // FLD1.
-def : InstRW<[ZnWriteFPU3], (instregex "LD_F1")>;
+def : SchedAlias<WriteFLD1, ZnWriteFPU3>;
 
 // FLDPI FLDL2E etc.
 def : InstRW<[ZnWriteFPU3], (instregex "FLDPI", "FLDL2(T|E)", "FLDL(G|N)2")>;
