@@ -469,6 +469,7 @@ public:
   explicit WebAssemblyCXXABI(CodeGen::CodeGenModule &CGM)
       : ItaniumCXXABI(CGM, /*UseARMMethodPtrABI=*/true,
                       /*UseARMGuardVarABI=*/true) {}
+  void emitBeginCatch(CodeGenFunction &CGF, const CXXCatchStmt *C) override;
 
 private:
   bool HasThisReturn(GlobalDecl GD) const override {
@@ -4097,4 +4098,11 @@ std::pair<llvm::Value *, const CXXRecordDecl *>
 ItaniumCXXABI::LoadVTablePtr(CodeGenFunction &CGF, Address This,
                              const CXXRecordDecl *RD) {
   return {CGF.GetVTablePtr(This, CGM.Int8PtrTy, RD), RD};
+}
+
+void WebAssemblyCXXABI::emitBeginCatch(CodeGenFunction &CGF,
+                                       const CXXCatchStmt *C) {
+  CGF.EHStack.pushCleanup<CatchRetScope>(
+      NormalCleanup, cast<llvm::CatchPadInst>(CGF.CurrentFuncletPad));
+  ItaniumCXXABI::emitBeginCatch(CGF, C);
 }
