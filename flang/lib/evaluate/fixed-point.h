@@ -47,6 +47,8 @@ static constexpr Ordering Reverse(Ordering ordering) {
 // To facilitate exhaustive testing of what would otherwise be more rare
 // edge cases, this class template may be configured to use other part
 // types &/or partial fields in the parts.
+// Member functions that correspond to Fortran intrinsic functions are
+// named accordingly.
 template<int BITS, int PARTBITS = 32, typename PART = std::uint32_t,
     typename BIGPART = std::uint64_t, bool LITTLE_ENDIAN = true>
 class FixedPoint {
@@ -73,35 +75,72 @@ private:
   static constexpr Part topPartMask{static_cast<Part>(~0) >> extraTopPartBits};
 
 public:
+  // Constructors and value-generating static functions
   constexpr FixedPoint() { Clear(); }  // default constructor: zero
   constexpr FixedPoint(const FixedPoint &) = default;
   constexpr FixedPoint(std::uint64_t n) {
     for (int j{0}; j + 1 < parts; ++j) {
-      LEPart(j) = n & partMask;
+      SetLEPart(j, n);
       if constexpr (partBits < 64) {
         n >>= partBits;
       } else {
         n = 0;
       }
     }
-    LEPart(parts - 1) = n & topPartMask;
+    SetLEPart(parts - 1, n);
   }
   constexpr FixedPoint(std::int64_t n) {
     std::int64_t signExtension{-(n < 0)};
     signExtension <<= partBits;
     for (int j{0}; j + 1 < parts; ++j) {
-      LEPart(j) = n & partMask;
+      SetLEPart(j, n);
       if constexpr (partBits < 64) {
         n = (n >> partBits) | signExtension;
       } else {
         n = signExtension;
       }
     }
-    LEPart(parts - 1) = n & topPartMask;
+    SetLEPart(parts - 1, n);
+  }
+
+  // Right-justified mask (e.g., MASKR(1) == 1, MASKR(2) == 3, &c.)
+  static constexpr FixedPoint MASKR(int places) {
+    FixedPoint result{nullptr};
+    int j{0};
+    for (; j + 1 < parts && places >= partBits; ++j, places -= partBits) {
+      result.LEPart(j) = partMask;
+    }
+    if (places > 0) {
+      if (j + 1 < parts) {
+        result.LEPart(j++) = partMask >> (partBits - places);
+      } else if (j + 1 == parts) {
+        if (places >= topPartBits) {
+          result.LEPart(j++) = topPartMask;
+        } else {
+          result.LEPart(j++) = topPartMask >> (topPartBits - places);
+        }
+      }
+    }
+    for (; j < parts; ++j) {
+      result.LEPart(j) = 0;
+    }
+    return result;
+  }
+
+  // Left-justified mask (e.g., MASKL(1) has only its sign bit set)
+  static constexpr FixedPoint MASKL(int places) {
+    if (places < 0) {
+      return {};
+    } else if (places >= bits) {
+      return MASKR(bits);
+    } else {
+      return MASKR(bits - places).NOT();
+    }
   }
 
   constexpr FixedPoint &operator=(const FixedPoint &) = default;
 
+  // Predicates and comparisons
   constexpr bool IsZero() const {
     for (int j{0}; j < parts; ++j) {
       if (part_[j] != 0) {
@@ -162,27 +201,32 @@ public:
     return signExtended;
   }
 
-  // NOT
-  constexpr FixedPoint OnesComplement() const {
+  // Ones'-complement (i.e., C's ~)
+  constexpr FixedPoint NOT() const {
     FixedPoint result{nullptr};
-    for (int j{0}; j + 1 < parts; ++j) {
-      result.LEPart(j) = ~LEPart(j) & partMask;
+    for (int j{0}; j < parts; ++j) {
+      result.SetLEPart(j, ~LEPart(j));
     }
-    result.LEPart(parts - 1) = ~LEPart(parts - 1) & topPartMask;
     return result;
   }
 
-  // Returns true on overflow (i.e., negating the most negative signed number)
-  constexpr bool TwosComplement() {
+  // Two's-complement negation (-x = ~x + 1).
+  struct ValueWithOverflow {
+    FixedPoint value;
+    bool overflow;  // true when operand was MASKL(1), the most negative number
+  };
+  constexpr ValueWithOverflow Negate() const {
+    FixedPoint result;
     Part carry{1};
     for (int j{0}; j + 1 < parts; ++j) {
       Part newCarry{LEPart(j) == 0 && carry};
-      LEPart(j) = (~LEPart(j) + carry) & partMask;
+      result.SetLEPart(j, ~LEPart(j) + carry);
       carry = newCarry;
     }
-    Part before{LEPart(parts - 1)};
-    LEPart(parts - 1) = (~before + carry) & topPartMask;
-    return before != 0 && LEPart(parts - 1) == before;
+    Part top{LEPart(parts - 1)};
+    result.SetLEPart(parts - 1, ~top + carry);
+    bool overflow{top != 0 && result.LEPart(parts - 1) == top};
+    return {result, overflow};
   }
 
   // LEADZ intrinsic
@@ -216,19 +260,18 @@ public:
       int j{parts - 1};
       if (bitShift == 0) {
         for (; j >= shiftParts; --j) {
-          LEPart(j) = LEPart(j - shiftParts) & PartMask(j);
+          SetLEPart(j, LEPart(j - shiftParts));
         }
         for (; j >= 0; --j) {
           LEPart(j) = 0;
         }
       } else {
         for (; j > shiftParts; --j) {
-          LEPart(j) = ((LEPart(j - shiftParts) << bitShift) |
-                         (LEPart(j - shiftParts - 1) >> (partBits - bitShift))) &
-              PartMask(j);
+          SetLEPart(j, ((LEPart(j - shiftParts) << bitShift) |
+                       (LEPart(j - shiftParts - 1) >> (partBits - bitShift))));
         }
         if (j == shiftParts) {
-          LEPart(j) = (LEPart(0) << bitShift) & PartMask(j);
+          SetLEPart(j, LEPart(0) << bitShift);
           --j;
         }
         for (; j >= 0; --j) {
@@ -259,9 +302,8 @@ public:
         }
       } else {
         for (; j + shiftParts + 1 < parts; ++j) {
-          LEPart(j) = ((LEPart(j + shiftParts) >> bitShift) |
-                         (LEPart(j + shiftParts + 1) << (partBits - bitShift))) &
-              partMask;
+          SetLEPart(j, (LEPart(j + shiftParts) >> bitShift) |
+                       (LEPart(j + shiftParts + 1) << (partBits - bitShift)));
         }
         if (j + shiftParts + 1 == parts) {
           LEPart(j++) = LEPart(parts - 1) >> bitShift;
@@ -282,9 +324,7 @@ public:
       bool fill{IsNegative()};
       ShiftRightLogical(count);
       if (fill) {
-        FixedPoint signs;
-        signs.LeftMask(count);
-        Or(signs);
+        Or(MASKL(count));
       }
     }
   }
@@ -316,12 +356,12 @@ public:
     for (int j{0}; j + 1 < parts; ++j) {
       carry += LEPart(j);
       carry += y.LEPart(j);
-      LEPart(j) = carry & partMask;
+      SetLEPart(j, carry);
       carry >>= partBits;
     }
     carry += LEPart(parts - 1);
     carry += y.LEPart(parts - 1);
-    LEPart(parts - 1) = carry & topPartMask;
+    SetLEPart(parts - 1, carry);
     return carry > topPartMask;
   }
 
@@ -337,9 +377,7 @@ public:
   constexpr bool SubtractSigned(const FixedPoint &y) {
     bool isNegative{IsNegative()};
     bool sameSign{isNegative == y.IsNegative()};
-    FixedPoint minusy{y};
-    minusy.TwosComplement();
-    AddUnsigned(minusy);
+    AddUnsigned(y.Negate().value);
     return !sameSign && IsNegative() != isNegative;
   }
 
@@ -377,16 +415,16 @@ public:
     bool yIsNegative{y.IsNegative()};
     FixedPoint yprime{y};
     if (yIsNegative) {
-      yprime.TwosComplement();
+      yprime = y.Negate().value;
     }
     bool isNegative{IsNegative()};
     if (isNegative) {
-      TwosComplement();
+      *this = Negate().value;
     }
     MultiplyUnsigned(yprime, upper);
     if (isNegative != yIsNegative) {
-      *this = OnesComplement();
-      upper = upper.OnesComplement();
+      *this = NOT();
+      upper = upper.NOT();
       FixedPoint one{std::uint64_t{1}};
       if (AddUnsigned(one)) {
         upper.AddUnsigned(one);
@@ -399,7 +437,7 @@ public:
       const FixedPoint &divisor, FixedPoint &remainder) {
     remainder.Clear();
     if (divisor.IsZero()) {
-      RightMask(bits);
+      *this = MASKR(bits);
       return true;
     }
     FixedPoint top{*this};
@@ -428,10 +466,11 @@ public:
     Ordering divisorOrdering{divisor.CompareToZeroSigned()};
     if (divisorOrdering == Ordering::Less) {
       negateQuotient = !negateQuotient;
-      if (divisor.TwosComplement()) {
+      auto negated{divisor.Negate()};
+      if (negated.overflow) {
         // divisor was (and is) the most negative number
         if (CompareUnsigned(divisor) == Ordering::Equal) {
-          RightMask(1);
+          *this = MASKR(1);
           remainder.Clear();
           return bits <= 1;  // edge case: 1-bit signed numbers overflow on 1!
         } else {
@@ -440,18 +479,20 @@ public:
           return false;
         }
       }
+      divisor = negated.value;
     } else if (divisorOrdering == Ordering::Equal) {
       // division by zero
       remainder.Clear();
       if (dividendIsNegative) {
-        LeftMask(1);  // most negative signed number
+        *this = MASKL(1);  // most negative signed number
       } else {
-        RightMask(bits - 1);  // most positive signed number
+        *this = MASKR(bits - 1);  // most positive signed number
       }
       return true;
     }
     if (dividendIsNegative) {
-      if (TwosComplement()) {
+      auto negated{Negate()};
+      if (negated.overflow) {
         // Dividend was (and remains) the most negative number.
         // See whether the original divisor was -1 (if so, it's 1 now).
         if (divisorOrdering == Ordering::Less &&
@@ -461,16 +502,18 @@ public:
           remainder.Clear();
           return true;
         }
+      } else {
+        *this = negated.value;
       }
     }
     // Overflow is not possible, and both the dividend (*this) and divisor
     // are now positive.
     DivideUnsigned(divisor, remainder);
     if (negateQuotient) {
-      TwosComplement();
+      *this = Negate().value;
     }
     if (dividendIsNegative) {
-      remainder.TwosComplement();
+      remainder = remainder.Negate().value;
     }
     return false;
   }
@@ -487,40 +530,6 @@ public:
       AddUnsigned(divisor);
     }
     return overflow;
-  }
-
-  // MASKR intrinsic
-  constexpr void RightMask(int places) {
-    int j{0};
-    for (; j + 1 < parts && places >= partBits; ++j, places -= partBits) {
-      LEPart(j) = partMask;
-    }
-    if (places > 0) {
-      if (j + 1 < parts) {
-        LEPart(j++) = partMask >> (partBits - places);
-      } else if (j + 1 == parts) {
-        if (places >= topPartBits) {
-          LEPart(j++) = topPartMask;
-        } else {
-          LEPart(j++) = topPartMask >> (topPartBits - places);
-        }
-      }
-    }
-    for (; j < parts; ++j) {
-      LEPart(j) = 0;
-    }
-  }
-
-  // MASKL intrinsic
-  constexpr void LeftMask(int places) {
-    if (places < 0) {
-      Clear();
-    } else if (places >= bits) {
-      RightMask(bits);
-    } else {
-      RightMask(bits - places);
-      *this = OnesComplement();
-    }
   }
 
 private:
@@ -541,6 +550,10 @@ private:
     } else {
       return part_[parts - 1 - part];
     }
+  }
+
+  constexpr void SetLEPart(int part, Part x) {
+    LEPart(part) = x & PartMask(part);
   }
 
   static constexpr Part PartMask(int part) {

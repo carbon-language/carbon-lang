@@ -48,6 +48,19 @@ FailureDetailPrinter Test(
   }
 }
 
+FailureDetailPrinter Match(const char *file, int line,
+    unsigned long long want, const char *gots, unsigned long long got) {
+  if (want == got) {
+    ++passes;
+    return BitBucket;
+  } else {
+    ++failures;
+    fprintf(stderr, "%s:%d: FAIL: %s == 0x%llx, not 0x%llx\n", file, line, gots,
+        got, want);
+    return PrintFailureDetails;
+  }
+}
+
 FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     const char *rel, const char *ys, unsigned long long x,
     unsigned long long y) {
@@ -77,7 +90,7 @@ FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     return BitBucket;
   } else {
     ++failures;
-    fprintf(stderr, "%s:%d: FAIL %s[0x%llx] %s %s[0x%llx]:\n", file, line, xs,
+    fprintf(stderr, "%s:%d: FAIL %s[0x%llx] %s %s[0x%llx]\n", file, line, xs,
         x, rel, ys, y);
     return PrintFailureDetails;
   }

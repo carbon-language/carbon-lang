@@ -27,6 +27,8 @@ int Complete();
 // will also print z after the usual failure message if x != y.
 #define TEST(predicate) \
   testing::Test(__FILE__, __LINE__, #predicate, (predicate))
+#define MATCH(want, got) \
+  testing::Match(__FILE__, __LINE__, (want), #got, (got))
 #define COMPARE(x, rel, y) \
   testing::Compare(__FILE__, __LINE__, #x, #rel, #y, (x), (y))
 
@@ -34,6 +36,8 @@ int Complete();
 using FailureDetailPrinter = void (*)(const char *, ...);
 FailureDetailPrinter Test(
     const char *file, int line, const char *predicate, bool pass);
+FailureDetailPrinter Match(const char *file, int line,
+    unsigned long long want, const char *gots, unsigned long long got);
 FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     const char *rel, const char *ys, unsigned long long x,
     unsigned long long y);
