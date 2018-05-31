@@ -31,7 +31,7 @@ def build_id: F<"build-id">, HelpText<"Generate build ID note">;
 
 def build_id_eq: J<"build-id=">, HelpText<"Generate build ID note">;
 
-defm check_sections : B<"check-sections",
+defm check_sections: B<"check-sections",
     "Check section addresses for overlaps (default)",
     "Do not check section addresses for overlaps">;
 
@@ -334,7 +334,7 @@ defm warn_common: B<"warn-common",
     "Warn about duplicate common symbols",
     "Do not warn about duplicate common symbols (default)">;
 
-defm warn_symbol_ordering : B<"warn-symbol-ordering",
+defm warn_symbol_ordering: B<"warn-symbol-ordering",
     "Warn about problems with the symbol ordering file (default)",
     "Do not warn about problems with the symbol ordering file">;
 
@@ -469,7 +469,7 @@ def stats: F<"stats">;
 def warn_execstack: F<"warn-execstack">;
 def warn_once: F<"warn-once">;
 def warn_shared_textrel: F<"warn-shared-textrel">;
-def EB : F<"EB">;
-def EL : F<"EL">;
+def EB: F<"EB">;
+def EL: F<"EL">;
 def G: JoinedOrSeparate<["-"], "G">;
-def Qy : F<"Qy">;
+def Qy: F<"Qy">;
