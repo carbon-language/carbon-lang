@@ -22,6 +22,7 @@
 // ("Signed" here means two's-complement, just to be clear.)
 
 #include "leading-zero-bit-count.h"
+#include "bit-population-count.h"
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
@@ -138,6 +139,22 @@ public:
     }
   }
 
+  static constexpr FixedPoint HUGE() { return MASKR(bits-1); }
+
+  // Returns the number of full decimal digits that can be represented.
+  static constexpr int RANGE() {
+    if (bits < 4) {
+      return 0;
+    }
+    FixedPoint x{HUGE}, ten{std::uint64_t{10}};
+    int digits{0};
+    while (x.Compare(ten) != Ordering::Less) {
+      ++digits;
+      x = x.DivideUnsigned(ten).quotient;
+    }
+    return digits;
+  }
+
   constexpr FixedPoint &operator=(const FixedPoint &) = default;
 
   constexpr bool IsZero() const {
@@ -181,9 +198,35 @@ public:
     return bits;
   }
 
-  // POPCNT intrinsic
-  // TODO pmk
-  // pmk also POPPAR
+  // Count the number of bit positions that are set.
+  constexpr int POPCNT() const {
+    int count{0};
+    for (int j{0}; j < parts; ++j) {
+      count += BitPopulationCount(part_[j]);
+    }
+    return count;
+  }
+
+  // True when POPCNT is odd.
+  constexpr bool POPPAR() const { return POPCNT() & 1; }
+
+  constexpr int TRAILZ() const {
+    auto minus1{AddUnsigned(MASKR(bits))};  // { x-1, carry = x > 0 }
+    if (!minus1.carry) {
+      return bits;  // was zero
+    } else {
+      // x ^ (x-1) has all bits set at and below original least-order set bit.
+      return POPCNT(IEOR(minus1.value)) - 1;
+    }
+  }
+
+  constexpr bool BTEST(int pos) const {
+    if (pos < 0 || pos >= bits) {
+      return false;
+    } else {
+      return (LEPart(pos / partBits) >> (pos % partBits)) & 1;
+    }
+  }
 
   constexpr Ordering CompareUnsigned(const FixedPoint &y) const {
     for (int j{parts}; j-- > 0;) {
@@ -196,6 +239,15 @@ public:
     }
     return Ordering::Equal;
   }
+
+  constexpr bool BGE(const FixedPoint &y) const {
+    return CompareUnsigned(y) != Ordering::Less;
+  }
+  constexpr bool BGT(const FixedPoint &y) const {
+    return CompareUnsigned(y) == Ordering::Greater;
+  }
+  constexpr bool BLE(const FixedPoint &y) const { return !BGT(y); }
+  constexpr bool BLT(const FixedPoint &y) const { return !BGE(y); }
 
   constexpr Ordering CompareSigned(const FixedPoint &y) const {
     bool isNegative{IsNegative()};
@@ -252,6 +304,14 @@ public:
     return {result, overflow};
   }
 
+  constexpr ValueWithOverflow ABS() const {
+    if (IsNegative()) {
+      return Negate();
+    } else {
+      return {*this, false};
+    }
+  }
+
   // Shifts the operand left when the count is positive, right when negative.
   // Vacated bit positions are filled with zeroes.
   constexpr FixedPoint ISHFT(int count) const {
@@ -296,9 +356,65 @@ public:
     }
   }
 
-  // TODO pmk
-  // ISHFTC intrinsic - shift some least-significant bits circularly
-  // DSHIFTL/R
+  // Circular shift of a field of least-significant bits.  The least-order
+  // "size" bits are shifted circularly in place by "count" positions;
+  // the shift is leftward if count is nonnegative, rightward otherwise.
+  // Higher-order bits are unchanged.
+  constexpr FixedPoint ISHFTC(int count, int size) const {
+    if (count == 0 || size <= 0) {
+      return *this;
+    }
+    if (size > bits) {
+      size = bits;
+    }
+    if ((count %= size) == 0) {
+      return *this;
+    }
+    int middleBits, leastBits;
+    if (count > 0) {
+      middleBits = size - count;
+      leastBits = count;
+    } else {
+      middleBits = -count;
+      leastBits = size + count;
+    }
+    if (size == bits) {
+      return SHIFTL(leastBits).IOR(SHIFTR(middleBits));
+    }
+    FixedPoint unchanged{IAND(MASKL(bits - size))};
+    FixedPoint middle{IAND(MASKR(middleBits)).SHIFTL(leastBits)};
+    FixedPoint least{SHIFTR(middleBits).IAND(MASKR(leastBits))};
+    return unchanged.IOR(middle).IOR(least);
+  }
+
+  // Double shifts, aka shifts with specific fill
+  constexpr FixedPoint DSHIFTL(const FixedPoint &fill, int count) const {
+    if (count <= 0) {
+      return *this;
+    } else if (count >= 2 * bits) {
+      return {};
+    } else if (count > bits) {
+      return fill.SHIFTL(count - bits);
+    } else if (count == bits) {
+      return fill;
+    } else {
+      return SHIFTL(count).IOR(fill.SHIFTR(bits - count));
+    }
+  }
+
+  constexpr FixedPoint DSHIFTR(const FixedPoint &fill, int count) const {
+    if (count <= 0) {
+      return *this;
+    } else if (count >= 2 * bits) {
+      return {};
+    } else if (count > bits) {
+      return fill.SHIFTR(count - bits);
+    } else if (count == bits) {
+      return fill;
+    } else {
+      return SHIFTR(count).IOR(fill.SHIFTL(bits - count));
+    }
+  }
 
   // Vacated upper bits are filled with zeroes.
   constexpr FixedPoint SHIFTR(int count) const {
@@ -345,6 +461,33 @@ public:
     }
   }
 
+  // Clears a single bit.
+  constexpr FixedPoint IBCLR(int pos) const {
+    if (pos < 0 || pos >= bits) {
+      return *this;
+    } else {
+      FixedPoint result{*this};
+      result.LEPart(pos / partBits) &= ~(Part{1} << (pos % partBits));
+      return result;
+    }
+  }
+
+  // Sets a single bit.
+  constexpr FixedPoint IBSET(int pos) const {
+    if (pos < 0 || pos >= bits) {
+      return *this;
+    } else {
+      FixedPoint result{*this};
+      result.LEPart(pos / partBits) |= Part{1} << (pos % partBits);
+      return result;
+    }
+  }
+
+  // Extracts a field.
+  constexpr FixedPoint IBITS(int pos, int size) const {
+    return SHIFTR(pos).IAND(MASKR(size));
+  }
+
   constexpr FixedPoint IAND(const FixedPoint &y) const {
     FixedPoint result{nullptr};
     for (int j{0}; j < parts; ++j) {
@@ -367,6 +510,27 @@ public:
       result.LEPart(j) = LEPart(j) ^ y.LEPart(j);
     }
     return result;
+  }
+
+  constexpr FixedPoint MERGE_BITS(const FixedPoint &y,
+                                  const FixedPoint &mask) const {
+    return IAND(mask).IOR(y.IAND(mask.NOT()));
+  }
+
+  constexpr FixedPoint MAX(const FixedPoint &y) const {
+    if (CompareSigned(y) == Ordering::Less) {
+      return y;
+    } else {
+      return *this;
+    }
+  }
+
+  constexpr FixedPoint MIN(const FixedPoint &y) const {
+    if (CompareSigned(y) == Ordering::Less) {
+      return *this;
+    } else {
+      return y;
+    }
   }
 
   // Unsigned addition with carry.
@@ -404,6 +568,26 @@ public:
     ValueWithCarry diff{AddUnsigned(y.Negate().value)};
     bool overflow{!sameSign && diff.value.IsNegative() != isNegative};
     return {diff.value, overflow};
+  }
+
+  // MAX(X-Y, 0)
+  constexpr FixedPoint DIM(const FixedPoint &y) const {
+    if (CompareSigned(y) != Ordering::Greater) {
+      return {};
+    } else {
+      return SubtractSigned(y).value;
+    }
+  }
+
+  constexpr ValueWithOverflow SIGN(const FixedPoint &sign) const {
+    bool goNegative{sign.IsNegative()};
+    if (goNegative == IsNegative()) {
+      return *this;
+    } else if (goNegative) {
+      return Negate();
+    } else {
+      return ABS();
+    }
   }
 
   struct Product {

@@ -52,6 +52,12 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
     std::uint64_t lzcheck{std::uint64_t{1} << (BITS - lzbc)};
     COMPARE(x, <, lzcheck)("%s, x=0x%llx, lzbc=%d", desc, x, lzbc);
     COMPARE(x + x + !x, >=, lzcheck)("%s, x=0x%llx, lzbc=%d", desc, x, lzbc);
+    int popcheck{0};
+    for (int j{0}; j < BITS; ++j) {
+      popcheck += (x >> j) & 1;
+    }
+    MATCH(popcheck, a.POPCNT())("%s, x=0x%llx", desc, x);
+    MATCH(popcheck & 1, a.POPPAR())("%s, x=0x%llx", desc, x);
     Ordering ord{Ordering::Equal};
     std::int64_t sx = x;
     if (x + x > maxUnsignedValue) {
@@ -180,7 +186,9 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
         MATCH(sx - sy * (sx / sy), quot.remainder.ToInt64())
           ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
-      // TODO test MODULO
+      // TODO test ABS, B[GL][ET], BTEST, DIM, HUGE, MODULO, ISHFTC, DSHIFTL/R
+      // TODO test IBCLR, IBSET, IBITS, MAX, MIN, MERGE_BITS, RANGE, SIGN
+      // TODO test TRAILZ
     }
   }
 }
