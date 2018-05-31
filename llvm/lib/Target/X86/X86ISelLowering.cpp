@@ -5422,6 +5422,13 @@ static SDValue peekThroughOneUseBitcasts(SDValue V) {
   return V;
 }
 
+// Peek through EXTRACT_SUBVECTORs - typically used for AVX1 256-bit intops.
+static SDValue peekThroughEXTRACT_SUBVECTORs(SDValue V) {
+  while (V.getOpcode() == ISD::EXTRACT_SUBVECTOR)
+    V = V.getOperand(0);
+  return V;
+}
+
 static const Constant *getTargetConstantFromNode(SDValue Op) {
   Op = peekThroughBitcasts(Op);
 
@@ -23137,13 +23144,8 @@ static SDValue IsSplatValue(MVT VT, SDValue V, const SDLoc &dl,
   // Check for SUB(SPLAT_BV, SPLAT) cases from rotate patterns.
   if (V.getOpcode() == ISD::SUB &&
       !SupportedVectorVarShift(VT, Subtarget, Opcode)) {
-    // Peek through any EXTRACT_SUBVECTORs.
-    SDValue LHS = V.getOperand(0);
-    SDValue RHS = V.getOperand(1);
-    while (LHS.getOpcode() == ISD::EXTRACT_SUBVECTOR)
-      LHS = LHS.getOperand(0);
-    while (RHS.getOpcode() == ISD::EXTRACT_SUBVECTOR)
-      RHS = RHS.getOperand(0);
+    SDValue LHS = peekThroughEXTRACT_SUBVECTORs(V.getOperand(0));
+    SDValue RHS = peekThroughEXTRACT_SUBVECTORs(V.getOperand(1));
 
     // Ensure that the corresponding splat BV element is not UNDEF.
     BitVector UndefElts;
@@ -23195,9 +23197,7 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
   unsigned X86OpcV = (Opcode == ISD::SHL) ? X86ISD::VSHL :
     (Opcode == ISD::SRL) ? X86ISD::VSRL : X86ISD::VSRA;
 
-  // Peek through any EXTRACT_SUBVECTORs.
-  while (Amt.getOpcode() == ISD::EXTRACT_SUBVECTOR)
-    Amt = Amt.getOperand(0);
+  Amt = peekThroughEXTRACT_SUBVECTORs(Amt);
 
   if (SupportedVectorShiftWithBaseAmnt(VT, Subtarget, Opcode)) {
     if (SDValue BaseShAmt = IsSplatValue(VT, Amt, dl, DAG, Subtarget, Opcode)) {
