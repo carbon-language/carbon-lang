@@ -1021,7 +1021,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       ++InputFile::NextGroupId;
       break;
     case OPT_push_state:
-      Stack.push_back({Config->AsNeeded, Config->Static, InWholeArchive});
+      Stack.emplace_back(Config->AsNeeded, Config->Static, InWholeArchive);
       break;
     case OPT_pop_state:
       if (Stack.empty()) {
