@@ -129,7 +129,7 @@ public:
 
   // Left-justified mask (e.g., MASKL(1) has only its sign bit set)
   static constexpr FixedPoint MASKL(int places) {
-    if (places < 0) {
+    if (places <= 0) {
       return {};
     } else if (places >= bits) {
       return MASKR(bits);
@@ -140,7 +140,6 @@ public:
 
   constexpr FixedPoint &operator=(const FixedPoint &) = default;
 
-  // Predicates and comparisons
   constexpr bool IsZero() const {
     for (int j{0}; j < parts; ++j) {
       if (part_[j] != 0) {
@@ -163,6 +162,28 @@ public:
       return Ordering::Greater;
     }
   }
+
+  // Count the number of contiguous most-significant bit positions
+  // that are clear.
+  constexpr int LEADZ() const {
+    if (LEPart(parts - 1) != 0) {
+      int lzbc{LeadingZeroBitCount(LEPart(parts - 1))};
+      return lzbc - extraTopPartBits;
+    }
+    int upperZeroes{topPartBits};
+    for (int j{1}; j < parts; ++j) {
+      if (Part p{LEPart(parts - 1 - j)}) {
+        int lzbc{LeadingZeroBitCount(p)};
+        return upperZeroes + lzbc - extraPartBits;
+      }
+      upperZeroes += partBits;
+    }
+    return bits;
+  }
+
+  // POPCNT intrinsic
+  // TODO pmk
+  // pmk also POPPAR
 
   constexpr Ordering CompareUnsigned(const FixedPoint &y) const {
     for (int j{parts}; j-- > 0;) {
@@ -211,9 +232,11 @@ public:
   }
 
   // Two's-complement negation (-x = ~x + 1).
+  // An overflow flag accompanies the result, and will be true when the
+  // operand is the most negative signed number (MASKL(1)).
   struct ValueWithOverflow {
     FixedPoint value;
-    bool overflow;  // true when operand was MASKL(1), the most negative number
+    bool overflow;
   };
   constexpr ValueWithOverflow Negate() const {
     FixedPoint result;
@@ -229,103 +252,96 @@ public:
     return {result, overflow};
   }
 
-  // LEADZ intrinsic
-  constexpr int LeadingZeroBitCount() const {
-    if (LEPart(parts - 1) != 0) {
-      int lzbc{evaluate::LeadingZeroBitCount(LEPart(parts - 1))};
-      return lzbc - extraTopPartBits;
+  // Shifts the operand left when the count is positive, right when negative.
+  // Vacated bit positions are filled with zeroes.
+  constexpr FixedPoint ISHFT(int count) const {
+    if (count < 0) {
+      return SHIFTR(-count);
+    } else {
+      return SHIFTL(count);
     }
-    int upperZeroes{topPartBits};
-    for (int j{1}; j < parts; ++j) {
-      if (Part p{LEPart(parts - 1 - j)}) {
-        int lzbc{evaluate::LeadingZeroBitCount(p)};
-        return upperZeroes + lzbc - extraPartBits;
-      }
-      upperZeroes += partBits;
-    }
-    return bits;
   }
 
-  // POPCNT intrinsic
-  // TODO pmk
-  // pmk also POPPAR
-
-  // SHIFTL and ISHFT intrinsics
-  constexpr void ShiftLeft(int count) {
-    if (count < 0) {
-      ShiftRightLogical(-count);
-    } else if (count > 0) {
+  // Left shift with zero fill.
+  constexpr FixedPoint SHIFTL(int count) const {
+    if (count <= 0) {
+      return *this;
+    } else {
+      FixedPoint result{nullptr};
       int shiftParts{count / partBits};
       int bitShift{count - partBits * shiftParts};
       int j{parts - 1};
       if (bitShift == 0) {
         for (; j >= shiftParts; --j) {
-          SetLEPart(j, LEPart(j - shiftParts));
+          result.SetLEPart(j, LEPart(j - shiftParts));
         }
         for (; j >= 0; --j) {
-          LEPart(j) = 0;
+          result.LEPart(j) = 0;
         }
       } else {
         for (; j > shiftParts; --j) {
-          SetLEPart(j, ((LEPart(j - shiftParts) << bitShift) |
+          result.SetLEPart(j, ((LEPart(j - shiftParts) << bitShift) |
                        (LEPart(j - shiftParts - 1) >> (partBits - bitShift))));
         }
         if (j == shiftParts) {
-          SetLEPart(j, LEPart(0) << bitShift);
+          result.SetLEPart(j, LEPart(0) << bitShift);
           --j;
         }
         for (; j >= 0; --j) {
-          LEPart(j) = 0;
+          result.LEPart(j) = 0;
         }
       }
+      return result;
     }
   }
 
-  // ISHFTC intrinsic - shift some least-significant bits circularly
   // TODO pmk
+  // ISHFTC intrinsic - shift some least-significant bits circularly
+  // DSHIFTL/R
 
-  // SHIFTR intrinsic (and ISHFT with negated argument)
-  // i.e., vacated upper bits are filled with zeroes
-  constexpr void ShiftRightLogical(int count) {
-    if (count < 0) {
-      ShiftLeft(-count);
-    } else if (count > 0) {
+  // Vacated upper bits are filled with zeroes.
+  constexpr FixedPoint SHIFTR(int count) const {
+    if (count <= 0) {
+      return *this;
+    } else {
+      FixedPoint result{nullptr};
       int shiftParts{count / partBits};
       int bitShift{count - partBits * shiftParts};
       int j{0};
       if (bitShift == 0) {
         for (; j + shiftParts < parts; ++j) {
-          LEPart(j) = LEPart(j + shiftParts);
+          result.LEPart(j) = LEPart(j + shiftParts);
         }
         for (; j < parts; ++j) {
-          LEPart(j) = 0;
+          result.LEPart(j) = 0;
         }
       } else {
         for (; j + shiftParts + 1 < parts; ++j) {
-          SetLEPart(j, (LEPart(j + shiftParts) >> bitShift) |
+          result.SetLEPart(j, (LEPart(j + shiftParts) >> bitShift) |
                        (LEPart(j + shiftParts + 1) << (partBits - bitShift)));
         }
         if (j + shiftParts + 1 == parts) {
-          LEPart(j++) = LEPart(parts - 1) >> bitShift;
+          result.LEPart(j++) = LEPart(parts - 1) >> bitShift;
         }
         for (; j < parts; ++j) {
-          LEPart(j) = 0;
+          result.LEPart(j) = 0;
         }
       }
+      return result;
     }
   }
 
-  // SHIFTA intrinsic (sign extending, but *not* a division
-  // by a power of two in general!)
-  constexpr void ShiftRightArithmetic(int count) {
-    if (count < 0) {
-      ShiftLeft(-count);
-    } else if (count > 0) {
-      bool fill{IsNegative()};
-      ShiftRightLogical(count);
-      if (fill) {
-        Or(MASKL(count));
+  // Be advised, an arithmetic (sign-filling) right shift is not
+  // the same as a division by a power of two in all cases.
+  constexpr FixedPoint SHIFTA(int count) const {
+    if (count <= 0) {
+      return *this;
+    } else {
+      FixedPoint result{SHIFTR(count)};
+      if (IsNegative()) {
+        result.Or(MASKL(count));
       }
+      return result;
     }
   }
 
@@ -404,7 +420,7 @@ public:
       upper.LEPart(j) = product[j + parts];
     }
     if (topPartBits < partBits) {
-      upper.ShiftLeft(partBits - topPartBits);
+      upper = upper.SHIFTL(partBits - topPartBits);
       upper.LEPart(0) |= LEPart(parts - 1) >> topPartBits;
       LEPart(parts - 1) &= topPartMask;
     }
@@ -440,10 +456,9 @@ public:
       *this = MASKR(bits);
       return true;
     }
-    FixedPoint top{*this};
+    int bitsDone{LEADZ()};
+    FixedPoint top{SHIFTL(bitsDone)};
     Clear();
-    int bitsDone{top.LeadingZeroBitCount()};
-    top.ShiftLeft(bitsDone);
     for (; bitsDone < bits; ++bitsDone) {
       remainder.AddUnsigned(remainder, top.AddUnsigned(top));
       bool nextBit{remainder.CompareUnsigned(divisor) != Ordering::Less};

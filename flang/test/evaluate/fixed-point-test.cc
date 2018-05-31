@@ -45,7 +45,7 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
       ("%s, x=0x%llx", desc, x);
     MATCH(negated.value.ToUInt64(), -x & maxUnsignedValue)
       ("%s, x=0x%llx", desc, x);
-    int lzbc{a.LeadingZeroBitCount()};
+    int lzbc{a.LEADZ()};
     COMPARE(lzbc, >=, 0)("%s, x=0x%llx", desc, x);
     COMPARE(lzbc, <=, BITS)("%s, x=0x%llx", desc, x);
     MATCH(x == 0, lzbc == BITS)("%s, x=0x%llx, lzbc=%d", desc, x, lzbc);
@@ -71,27 +71,21 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
     TEST(sx == a.ToInt64())("%s, x=0x%llx %lld", desc, x, sx);
     TEST(a.CompareToZeroSigned() == ord)("%s, x=0x%llx %lld", desc, x, sx);
     for (int count{0}; count <= BITS + 1; ++count) {
-      copy = a;
-      copy.ShiftLeft(count);
-      MATCH((x << count) & maxUnsignedValue, copy.ToUInt64())
+      t = a.SHIFTL(count);
+      MATCH((x << count) & maxUnsignedValue, t.ToUInt64())
         ("%s, x=0x%llx, count=%d", desc, x, count);
-      copy = a;
-      copy.ShiftRightLogical(count);
-      MATCH(x >> count, copy.ToUInt64())
+      t = a.ISHFT(count);
+      MATCH((x << count) & maxUnsignedValue, t.ToUInt64())
         ("%s, x=0x%llx, count=%d", desc, x, count);
-      copy = a;
-      copy.ShiftLeft(-count);
-      MATCH(x >> count, copy.ToUInt64())
+      t = a.SHIFTR(count);
+      MATCH(x >> count, t.ToUInt64())
         ("%s, x=0x%llx, count=%d", desc, x, count);
-      copy = a;
-      copy.ShiftRightLogical(-count);
-      MATCH((x << count) & maxUnsignedValue, copy.ToUInt64())
-        ("%s, x=0x%llx, count=%d", desc, x, count);
-      copy = a;
-      copy.ShiftRightArithmetic(count);
+      t = a.ISHFT(-count);
+      MATCH(x >> count, t.ToUInt64())("%s, x=0x%llx, count=%d", desc, x, count);
+      t = a.SHIFTA(count);
       std::uint64_t fill{-(x >> (BITS-1))};
       std::uint64_t sra{count >= BITS ? fill : (x >> count) | (fill << (BITS-count))};
-      MATCH(sra, copy.ToInt64())
+      MATCH(sra, t.ToInt64())
         ("%s, x=0x%llx, count=%d", desc, x, count);
     }
     for (std::uint64_t y{0}; y <= maxUnsignedValue; ++y) {
