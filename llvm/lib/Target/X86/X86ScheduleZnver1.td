@@ -821,7 +821,7 @@ def : SchedAlias<WriteFLD0, ZnWriteFPU13>;
 def : SchedAlias<WriteFLD1, ZnWriteFPU3>;
 
 // FLDPI FLDL2E etc.
-def : InstRW<[ZnWriteFPU3], (instregex "FLDPI", "FLDL2(T|E)", "FLDL(G|N)2")>;
+def : SchedAlias<WriteFLDC, ZnWriteFPU3>;
 
 // FNSTSW.
 // AX.
