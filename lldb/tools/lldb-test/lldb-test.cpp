@@ -169,9 +169,11 @@ static cl::opt<bool> UseHostOnlyAllocationPolicy(
 using AllocationT = std::pair<addr_t, addr_t>;
 bool areAllocationsOverlapping(const AllocationT &L, const AllocationT &R);
 using AddrIntervalMap =
-      IntervalMap<addr_t, bool, 8, IntervalMapHalfOpenInfo<addr_t>>;
+      IntervalMap<addr_t, unsigned, 8, IntervalMapHalfOpenInfo<addr_t>>;
 bool evalMalloc(IRMemoryMap &IRMemMap, StringRef Line,
                 AddrIntervalMap &AllocatedIntervals);
+bool evalFree(IRMemoryMap &IRMemMap, StringRef Line,
+              AddrIntervalMap &AllocatedIntervals);
 int evaluateMemoryMapCommands(Debugger &Dbg);
 } // namespace irmemorymap
 
@@ -569,9 +571,45 @@ bool opts::irmemorymap::evalMalloc(IRMemoryMap &IRMemMap, StringRef Line,
     ++Probe;
   }
 
-  // Insert the new allocation into the interval map.
+  // Insert the new allocation into the interval map. Use unique allocation IDs
+  // to inhibit interval coalescing.
+  static unsigned AllocationID = 0;
   if (Size)
-    AllocatedIntervals.insert(Addr, EndOfRegion, true);
+    AllocatedIntervals.insert(Addr, EndOfRegion, AllocationID++);
+
+  return true;
+}
+
+bool opts::irmemorymap::evalFree(IRMemoryMap &IRMemMap, StringRef Line,
+                                 AddrIntervalMap &AllocatedIntervals) {
+  // ::= free <allocation-index>
+  size_t AllocIndex;
+  int Matches = sscanf(Line.data(), "free %zu", &AllocIndex);
+  if (Matches != 1)
+    return false;
+
+  outs() << formatv("Command: free(allocation-index={0})\n", AllocIndex);
+
+  // Find and free the AllocIndex-th allocation.
+  auto Probe = AllocatedIntervals.begin();
+  for (size_t I = 0; I < AllocIndex && Probe != AllocatedIntervals.end(); ++I)
+    ++Probe;
+
+  if (Probe == AllocatedIntervals.end()) {
+    outs() << "Free error: Invalid allocation index\n";
+    exit(1);
+  }
+
+  Status ST;
+  IRMemMap.Free(Probe.start(), ST);
+  if (ST.Fail()) {
+    outs() << formatv("Free error: {0}\n", ST);
+    exit(1);
+  }
+
+  // Erase the allocation from the live interval map.
+  outs() << formatv("Free: [{0:x}, {1:x})\n", Probe.start(), Probe.stop());
+  Probe.erase();
 
   return true;
 }
@@ -616,6 +654,9 @@ int opts::irmemorymap::evaluateMemoryMapCommands(Debugger &Dbg) {
       continue;
 
     if (evalMalloc(IRMemMap, Line, AllocatedIntervals))
+      continue;
+
+    if (evalFree(IRMemMap, Line, AllocatedIntervals))
       continue;
 
     errs() << "Could not parse line: " << Line << "\n";
