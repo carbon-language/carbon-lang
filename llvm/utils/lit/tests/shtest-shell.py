@@ -161,7 +161,7 @@
 #
 # CHECK: FAIL: shtest-shell :: error-1.txt
 # CHECK: *** TEST 'shtest-shell :: error-1.txt' FAILED ***
-# CHECK: shell parser error on: ': \'RUN: at line 3\' && echo "missing quote'
+# CHECK: shell parser error on: ': \'RUN: at line 3\'; echo "missing quote'
 # CHECK: ***
 
 # CHECK: FAIL: shtest-shell :: error-2.txt

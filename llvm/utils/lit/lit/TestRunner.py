@@ -1001,7 +1001,7 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
 def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
     cmds = []
     for i, ln in enumerate(commands):
-        ln = commands[i] = re.sub(kPdbgRegex, ": '\\1'", ln)
+        ln = commands[i] = re.sub(kPdbgRegex, ": '\\1'; ", ln)
         try:
             cmds.append(ShUtil.ShParser(ln, litConfig.isWindows,
                                         test.config.pipefail).parse())
@@ -1086,7 +1086,7 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
     f = open(script, mode)
     if isWin32CMDEXE:
         for i, ln in enumerate(commands):
-            commands[i] = re.sub(kPdbgRegex, "echo '\\1' > nul", ln)
+            commands[i] = re.sub(kPdbgRegex, "echo '\\1' > nul && ", ln)
         if litConfig.echo_all_commands:
             f.write('@echo on\n')
         else:
@@ -1094,7 +1094,7 @@ def executeScript(test, litConfig, tmpBase, commands, cwd):
         f.write('\n@if %ERRORLEVEL% NEQ 0 EXIT\n'.join(commands))
     else:
         for i, ln in enumerate(commands):
-            commands[i] = re.sub(kPdbgRegex, ": '\\1'", ln)
+            commands[i] = re.sub(kPdbgRegex, ": '\\1'; ", ln)
         if test.config.pipefail:
             f.write('set -o pipefail;')
         if litConfig.echo_all_commands:
@@ -1384,7 +1384,7 @@ class IntegratedTestKeywordParser(object):
                 line_number=line_number)
             assert re.match(kPdbgRegex + "$", pdbg), \
                    "kPdbgRegex expected to match actual %dbg usage"
-            line = "{pdbg} && {real_command}".format(
+            line = "{pdbg} {real_command}".format(
                 pdbg=pdbg,
                 real_command=line)
             output.append(line)

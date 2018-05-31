@@ -16,9 +16,9 @@
 # CHECK-LABEL: FAIL: shtest-run-at-line :: external-shell/basic.txt
 
 # CHECK:      Script:
-# CHECK:      [[pdbg0]]RUN: at line 4[[pdbg1]] &&  true
-# CHECK-NEXT: [[pdbg0]]RUN: at line 5[[pdbg1]] &&  false
-# CHECK-NEXT: [[pdbg0]]RUN: at line 6[[pdbg1]] &&  true
+# CHECK:      [[pdbg0]]RUN: at line 4[[pdbg1]];  true
+# CHECK-NEXT: [[pdbg0]]RUN: at line 5[[pdbg1]];  false
+# CHECK-NEXT: [[pdbg0]]RUN: at line 6[[pdbg1]];  true
 
 # CHECK:     RUN: at line 4
 # CHECK:     RUN: at line 5
@@ -27,9 +27,9 @@
 # CHECK-LABEL: FAIL: shtest-run-at-line :: external-shell/line-continuation.txt
 
 # CHECK:      Script:
-# CHECK:      [[pdbg0]]RUN: at line 4[[pdbg1]] &&  echo 'foo bar'  | FileCheck
-# CHECK-NEXT: [[pdbg0]]RUN: at line 6[[pdbg1]] &&  echo  'foo baz'  | FileCheck
-# CHECK-NEXT: [[pdbg0]]RUN: at line 9[[pdbg1]] &&  echo 'foo bar'  | FileCheck
+# CHECK:      [[pdbg0]]RUN: at line 4[[pdbg1]];  echo 'foo bar'  | FileCheck
+# CHECK-NEXT: [[pdbg0]]RUN: at line 6[[pdbg1]];  echo  'foo baz'  | FileCheck
+# CHECK-NEXT: [[pdbg0]]RUN: at line 9[[pdbg1]];  echo 'foo bar'  | FileCheck
 
 # CHECK:     RUN: at line 4
 # CHECK:     RUN: at line 6
@@ -39,9 +39,9 @@
 # CHECK-LABEL: FAIL: shtest-run-at-line :: internal-shell/basic.txt
 
 # CHECK:      Script:
-# CHECK:      : 'RUN: at line 1' &&  true
-# CHECK-NEXT: : 'RUN: at line 2' &&  false
-# CHECK-NEXT: : 'RUN: at line 3' &&  true
+# CHECK:      : 'RUN: at line 1';  true
+# CHECK-NEXT: : 'RUN: at line 2';  false
+# CHECK-NEXT: : 'RUN: at line 3';  true
 
 # CHECK:      Command Output (stdout)
 # CHECK:      $ ":" "RUN: at line 1"
@@ -53,10 +53,10 @@
 # CHECK-LABEL: FAIL: shtest-run-at-line :: internal-shell/line-continuation.txt
 
 # CHECK:      Script:
-# CHECK:      : 'RUN: at line 1' &&  : first line continued to second line
-# CHECK-NEXT: : 'RUN: at line 3' &&  echo 'foo bar'  | FileCheck
-# CHECK-NEXT: : 'RUN: at line 5' &&  echo  'foo baz'  | FileCheck
-# CHECK-NEXT: : 'RUN: at line 8' &&  echo 'foo bar'  | FileCheck
+# CHECK:      : 'RUN: at line 1';  : first line continued to second line
+# CHECK-NEXT: : 'RUN: at line 3';  echo 'foo bar'  | FileCheck
+# CHECK-NEXT: : 'RUN: at line 5';  echo  'foo baz'  | FileCheck
+# CHECK-NEXT: : 'RUN: at line 8';  echo 'foo bar'  | FileCheck
 
 # CHECK:      Command Output (stdout)
 # CHECK:      $ ":" "RUN: at line 1"
