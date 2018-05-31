@@ -239,7 +239,7 @@ public:
     bool overflow;
   };
   constexpr ValueWithOverflow Negate() const {
-    FixedPoint result;
+    FixedPoint result{nullptr};
     Part carry{1};
     for (int j{0}; j + 1 < parts; ++j) {
       Part newCarry{LEPart(j) == 0 && carry};
@@ -280,8 +280,9 @@ public:
         }
       } else {
         for (; j > shiftParts; --j) {
-          result.SetLEPart(j, ((LEPart(j - shiftParts) << bitShift) |
-                       (LEPart(j - shiftParts - 1) >> (partBits - bitShift))));
+          result.SetLEPart(j,
+              ((LEPart(j - shiftParts) << bitShift) |
+                  (LEPart(j - shiftParts - 1) >> (partBits - bitShift))));
         }
         if (j == shiftParts) {
           result.SetLEPart(j, LEPart(0) << bitShift);
@@ -317,8 +318,9 @@ public:
         }
       } else {
         for (; j + shiftParts + 1 < parts; ++j) {
-          result.SetLEPart(j, (LEPart(j + shiftParts) >> bitShift) |
-                       (LEPart(j + shiftParts + 1) << (partBits - bitShift)));
+          result.SetLEPart(j,
+              (LEPart(j + shiftParts) >> bitShift) |
+                  (LEPart(j + shiftParts + 1) << (partBits - bitShift)));
         }
         if (j + shiftParts + 1 == parts) {
           result.LEPart(j++) = LEPart(parts - 1) >> bitShift;
@@ -336,76 +338,85 @@ public:
   constexpr FixedPoint SHIFTA(int count) const {
     if (count <= 0) {
       return *this;
+    } else if (IsNegative()) {
+      return SHIFTR(count).IOR(MASKL(count));
     } else {
-      FixedPoint result{SHIFTR(count)};
-      if (IsNegative()) {
-        result.Or(MASKL(count));
-      }
-      return result;
+      return SHIFTR(count);
     }
   }
 
-  // IAND
-  constexpr void And(const FixedPoint &y) {
+  constexpr FixedPoint IAND(const FixedPoint &y) const {
+    FixedPoint result{nullptr};
     for (int j{0}; j < parts; ++j) {
-      LEPart(j) &= y.LEPart(j);
+      result.LEPart(j) = LEPart(j) & y.LEPart(j);
     }
+    return result;
   }
 
-  // IOR
-  constexpr void Or(const FixedPoint &y) {
+  constexpr FixedPoint IOR(const FixedPoint &y) const {
+    FixedPoint result{nullptr};
     for (int j{0}; j < parts; ++j) {
-      LEPart(j) |= y.LEPart(j);
+      result.LEPart(j) = LEPart(j) | y.LEPart(j);
     }
+    return result;
   }
 
-  // IEOR
-  constexpr void Xor(const FixedPoint &y) {
+  constexpr FixedPoint IEOR(const FixedPoint &y) const {
+    FixedPoint result{nullptr};
     for (int j{0}; j < parts; ++j) {
-      LEPart(j) ^= y.LEPart(j);
+      result.LEPart(j) = LEPart(j) ^ y.LEPart(j);
     }
+    return result;
   }
 
-  // Returns true when there is a carry out of the most significant bit.
-  constexpr bool AddUnsigned(const FixedPoint &y, bool carryIn = false) {
+  // Unsigned addition with carry.
+  struct ValueWithCarry {
+    FixedPoint value;
+    bool carry;
+  };
+  constexpr ValueWithCarry AddUnsigned(
+      const FixedPoint &y, bool carryIn = false) const {
+    FixedPoint sum{nullptr};
     BigPart carry{carryIn};
     for (int j{0}; j + 1 < parts; ++j) {
       carry += LEPart(j);
       carry += y.LEPart(j);
-      SetLEPart(j, carry);
+      sum.SetLEPart(j, carry);
       carry >>= partBits;
     }
     carry += LEPart(parts - 1);
     carry += y.LEPart(parts - 1);
-    SetLEPart(parts - 1, carry);
-    return carry > topPartMask;
+    sum.SetLEPart(parts - 1, carry);
+    return {sum, carry > topPartMask};
   }
 
-  // Returns true on overflow.
-  constexpr bool AddSigned(const FixedPoint &y) {
+  constexpr ValueWithOverflow AddSigned(const FixedPoint &y) const {
     bool isNegative{IsNegative()};
     bool sameSign{isNegative == y.IsNegative()};
-    AddUnsigned(y);
-    return sameSign && IsNegative() != isNegative;
+    ValueWithCarry sum{AddUnsigned(y)};
+    bool overflow{sameSign && sum.value.IsNegative() != isNegative};
+    return {sum.value, overflow};
   }
 
-  // Returns true on overflow.
-  constexpr bool SubtractSigned(const FixedPoint &y) {
+  constexpr ValueWithOverflow SubtractSigned(const FixedPoint &y) const {
     bool isNegative{IsNegative()};
     bool sameSign{isNegative == y.IsNegative()};
-    AddUnsigned(y.Negate().value);
-    return !sameSign && IsNegative() != isNegative;
+    ValueWithCarry diff{AddUnsigned(y.Negate().value)};
+    bool overflow{!sameSign && diff.value.IsNegative() != isNegative};
+    return {diff.value, overflow};
   }
 
-  // Overwrites *this with lower half of full product.
-  constexpr void MultiplyUnsigned(const FixedPoint &y, FixedPoint &upper) {
+  struct Product {
+    FixedPoint upper, lower;
+  };
+  constexpr Product MultiplyUnsigned(const FixedPoint &y) const {
     Part product[2 * parts]{};  // little-endian full product
     for (int j{0}; j < parts; ++j) {
-      if (LEPart(j) != 0) {
+      if (Part xpart{LEPart(j)}) {
         for (int k{0}; k < parts; ++k) {
-          if (y.LEPart(k) != 0) {
-            BigPart xy{LEPart(j)};
-            xy *= y.LEPart(k);
+          if (Part ypart{y.LEPart(k)}) {
+            BigPart xy{xpart};
+            xy *= ypart;
             for (int to{j + k}; xy != 0; ++to) {
               xy += product[to];
               product[to] = xy & partMask;
@@ -415,37 +426,42 @@ public:
         }
       }
     }
+    FixedPoint upper{nullptr}, lower{nullptr};
     for (int j{0}; j < parts; ++j) {
-      LEPart(j) = product[j];
+      lower.LEPart(j) = product[j];
       upper.LEPart(j) = product[j + parts];
     }
     if (topPartBits < partBits) {
       upper = upper.SHIFTL(partBits - topPartBits);
-      upper.LEPart(0) |= LEPart(parts - 1) >> topPartBits;
-      LEPart(parts - 1) &= topPartMask;
+      upper.LEPart(0) |= lower.LEPart(parts - 1) >> topPartBits;
+      lower.LEPart(parts - 1) &= topPartMask;
     }
+    return {upper, lower};
   }
 
-  // Overwrites *this with lower half of full product.
-  constexpr void MultiplySigned(const FixedPoint &y, FixedPoint &upper) {
+  constexpr Product MultiplySigned(const FixedPoint &y) const {
     bool yIsNegative{y.IsNegative()};
-    FixedPoint yprime{y};
+    FixedPoint absy{y};
     if (yIsNegative) {
-      yprime = y.Negate().value;
+      absy = y.Negate().value;
     }
     bool isNegative{IsNegative()};
+    FixedPoint absx{*this};
     if (isNegative) {
-      *this = Negate().value;
+      absx = Negate().value;
     }
-    MultiplyUnsigned(yprime, upper);
+    Product product{absx.MultiplyUnsigned(absy)};
     if (isNegative != yIsNegative) {
-      *this = NOT();
-      upper = upper.NOT();
+      product.lower = product.lower.NOT();
+      product.upper = product.upper.NOT();
       FixedPoint one{std::uint64_t{1}};
-      if (AddUnsigned(one)) {
-        upper.AddUnsigned(one);
+      auto incremented{product.lower.AddUnsigned(one)};
+      product.lower = incremented.value;
+      if (incremented.carry) {
+        product.upper = product.upper.AddUnsigned(one).value;
       }
     }
+    return product;
   }
 
   // Overwrites *this with quotient.  Returns true on division by zero.
@@ -460,11 +476,13 @@ public:
     FixedPoint top{SHIFTL(bitsDone)};
     Clear();
     for (; bitsDone < bits; ++bitsDone) {
-      remainder.AddUnsigned(remainder, top.AddUnsigned(top));
+      auto doubledTop{top.AddUnsigned(top)};
+      top = doubledTop.value;
+      remainder = remainder.AddUnsigned(remainder, doubledTop.carry).value;
       bool nextBit{remainder.CompareUnsigned(divisor) != Ordering::Less};
-      AddUnsigned(*this, nextBit);
+      *this = AddUnsigned(*this, nextBit).value;
       if (nextBit) {
-        remainder.SubtractSigned(divisor);
+        remainder = remainder.SubtractSigned(divisor).value;
       }
     }
     return false;
@@ -542,7 +560,7 @@ public:
     bool distinctSigns{IsNegative() != negativeDivisor};
     bool overflow{quotient.DivideSigned(divisor, *this)};
     if (distinctSigns && !IsZero()) {
-      AddUnsigned(divisor);
+      *this = AddUnsigned(divisor).value;
     }
     return overflow;
   }

@@ -112,44 +112,35 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
       TEST(a.CompareSigned(b) == ord)
         ("%s, x=0x%llx %lld %d, y=0x%llx %lld %d", desc, x, sx,
          a.IsNegative(), y, sy, b.IsNegative());
-      copy = a;
-      copy.And(b);
-      MATCH(x & y, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      copy = a;
-      copy.Or(b);
-      MATCH(x | y, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      copy = a;
-      copy.Xor(b);
-      MATCH(x ^ y, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      copy = a;
-      bool carry{copy.AddUnsigned(b)};
-      COMPARE(x + y, ==, copy.ToUInt64() + (std::uint64_t{carry} << BITS))
-        ("%s, x=0x%llx, y=0x%llx, carry=%d", desc, x, y, carry);
-      copy = a;
-      bool over{copy.AddSigned(b)};
-      MATCH((sx + sy) & maxUnsignedValue, copy.ToUInt64())
+      t = a.IAND(b);
+      MATCH(x & y, t.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      t = a.IOR(b);
+      MATCH(x | y, t.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      t = a.IEOR(b);
+      MATCH(x ^ y, t.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      auto sum{a.AddUnsigned(b)};
+      COMPARE(x + y, ==, sum.value.ToUInt64() + (std::uint64_t{sum.carry} << BITS))
+        ("%s, x=0x%llx, y=0x%llx, carry=%d", desc, x, y, sum.carry);
+      auto ssum{a.AddSigned(b)};
+      MATCH((sx + sy) & maxUnsignedValue, ssum.value.ToUInt64())
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      MATCH(over,
-          sx + sy < mostNegativeSignedValue || sx + sy > maxPositiveSignedValue)
+      MATCH(sx + sy < mostNegativeSignedValue ||
+            sx + sy > maxPositiveSignedValue, ssum.overflow)
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      copy = a;
-      over = copy.SubtractSigned(b);
-      MATCH((sx - sy) & maxUnsignedValue, copy.ToUInt64())
+      auto diff{a.SubtractSigned(b)};
+      MATCH((sx - sy) & maxUnsignedValue, diff.value.ToUInt64())
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      MATCH(over,
-          sx - sy < mostNegativeSignedValue || sx - sy > maxPositiveSignedValue)
+      MATCH(sx - sy < mostNegativeSignedValue ||
+            sx - sy > maxPositiveSignedValue, diff.overflow)
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      copy = a;
-      FP upper;
-      copy.MultiplyUnsigned(b, upper);
-      MATCH(x * y, (upper.ToUInt64() << BITS) ^ copy.ToUInt64())
+      auto product{a.MultiplyUnsigned(b)};
+      MATCH(x * y, (product.upper.ToUInt64() << BITS) ^ product.lower.ToUInt64())
         ("%s, x=0x%llx, y=0x%llx, lower=0x%llx, upper=0x%llx", desc, x, y,
-          copy.ToUInt64(), upper.ToUInt64());
-      copy = a;
-      copy.MultiplySigned(b, upper);
-      MATCH((sx * sy) & maxUnsignedValue, copy.ToUInt64())
+          product.lower.ToUInt64(), product.upper.ToUInt64());
+      product = a.MultiplySigned(b);
+      MATCH((sx * sy) & maxUnsignedValue, product.lower.ToUInt64())
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      MATCH(((sx * sy) >> BITS) & maxUnsignedValue, upper.ToUInt64())
+      MATCH(((sx * sy) >> BITS) & maxUnsignedValue, product.upper.ToUInt64())
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       copy = a;
       FP rem;
