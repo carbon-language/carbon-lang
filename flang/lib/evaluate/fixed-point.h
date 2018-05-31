@@ -21,8 +21,8 @@
 // are distinguished from each other with distinct member function interfaces.
 // ("Signed" here means two's-complement, just to be clear.)
 
-#include "leading-zero-bit-count.h"
 #include "bit-population-count.h"
+#include "leading-zero-bit-count.h"
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
@@ -139,7 +139,7 @@ public:
     }
   }
 
-  static constexpr FixedPoint HUGE() { return MASKR(bits-1); }
+  static constexpr FixedPoint HUGE() { return MASKR(bits - 1); }
 
   // Returns the number of full decimal digits that can be represented.
   static constexpr int RANGE() {
@@ -216,7 +216,7 @@ public:
       return bits;  // was zero
     } else {
       // x ^ (x-1) has all bits set at and below original least-order set bit.
-      return POPCNT(IEOR(minus1.value)) - 1;
+      return IEOR(minus1.value).POPCNT() - 1;
     }
   }
 
@@ -512,8 +512,8 @@ public:
     return result;
   }
 
-  constexpr FixedPoint MERGE_BITS(const FixedPoint &y,
-                                  const FixedPoint &mask) const {
+  constexpr FixedPoint MERGE_BITS(
+      const FixedPoint &y, const FixedPoint &mask) const {
     return IAND(mask).IOR(y.IAND(mask.NOT()));
   }
 

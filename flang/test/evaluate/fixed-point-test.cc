@@ -20,7 +20,6 @@ using Fortran::evaluate::FixedPoint;
 using Fortran::evaluate::Ordering;
 
 template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
-  COMPARE(BITS, ==, FP::bits);
   std::uint64_t maxUnsignedValue{(std::uint64_t{1} << BITS) - 1};
   std::int64_t maxPositiveSignedValue{(std::int64_t{1} << (BITS - 1)) - 1};
   std::int64_t mostNegativeSignedValue{-(std::int64_t{1} << (BITS - 1))};
@@ -28,8 +27,14 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
   std::snprintf(desc, sizeof desc, "BITS=%d, PARTBITS=%d, sizeof(Part)=%d, LE=%d",
       BITS, FP::partBits, static_cast<int>(sizeof(typename FP::Part)),
       FP::littleEndian);
+
+  MATCH(BITS, FP::bits)(desc);
+  MATCH(maxPositiveSignedValue, FP::HUGE().ToUInt64())(desc);
   FP zero;
   TEST(zero.IsZero())(desc);
+  MATCH(0, zero.ToUInt64())(desc);
+  MATCH(0, zero.ToInt64())(desc);
+
   for (std::uint64_t x{0}; x <= maxUnsignedValue; ++x) {
     FP a{x};
     MATCH(x, a.ToUInt64())(desc);
@@ -43,7 +48,12 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
     auto negated{a.Negate()};
     MATCH(x == std::uint64_t{1} << (BITS - 1), negated.overflow)
       ("%s, x=0x%llx", desc, x);
-    MATCH(negated.value.ToUInt64(), -x & maxUnsignedValue)
+    MATCH(-x & maxUnsignedValue, negated.value.ToUInt64())
+      ("%s, x=0x%llx", desc, x);
+    auto abs{a.ABS()};
+    MATCH(x == std::uint64_t{1} << (BITS - 1), abs.overflow)
+      ("%s, x=0x%llx", desc, x);
+    MATCH(x >> (BITS-1) ? -x & maxUnsignedValue : x, abs.value.ToUInt64())
       ("%s, x=0x%llx", desc, x);
     int lzbc{a.LEADZ()};
     COMPARE(lzbc, >=, 0)("%s, x=0x%llx", desc, x);
@@ -58,6 +68,16 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
     }
     MATCH(popcheck, a.POPCNT())("%s, x=0x%llx", desc, x);
     MATCH(popcheck & 1, a.POPPAR())("%s, x=0x%llx", desc, x);
+    int trailcheck{0};
+    for (; trailcheck < BITS; ++trailcheck) {
+      if ((x >> trailcheck) & 1) {
+        break;
+      }
+    }
+    MATCH(trailcheck, a.TRAILZ())("%s, x=0x%llx", desc, x);
+    // TODO test BTEST, DIM, MODULO, ISHFTC, DSHIFTL/R
+    // TODO test IBCLR, IBSET, IBITS, MAX, MIN, MERGE_BITS, RANGE, SIGN
+
     Ordering ord{Ordering::Equal};
     std::int64_t sx = x;
     if (x + x > maxUnsignedValue) {
@@ -74,6 +94,7 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
         ord = Ordering::Equal;
       }
     }
+
     TEST(sx == a.ToInt64())("%s, x=0x%llx %lld", desc, x, sx);
     TEST(a.CompareToZeroSigned() == ord)("%s, x=0x%llx %lld", desc, x, sx);
     for (int count{0}; count <= BITS + 1; ++count) {
@@ -94,6 +115,7 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
       MATCH(sra, t.ToInt64())
         ("%s, x=0x%llx, count=%d", desc, x, count);
     }
+
     for (std::uint64_t y{0}; y <= maxUnsignedValue; ++y) {
       std::int64_t sy = y;
       if (y + y > maxUnsignedValue) {
@@ -108,6 +130,10 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
         ord = Ordering::Equal;
       }
       TEST(a.CompareUnsigned(b) == ord)("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(x >= y, a.BGE(b))("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(x > y, a.BGT(b))("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(x <= y, a.BLE(b))("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(x < y, a.BLT(b))("%s, x=0x%llx, y=0x%llx", desc, x, y);
       if (sx < sy) {
         ord = Ordering::Less;
       } else if (sx > sy) {
@@ -118,6 +144,7 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
       TEST(a.CompareSigned(b) == ord)
         ("%s, x=0x%llx %lld %d, y=0x%llx %lld %d", desc, x, sx,
          a.IsNegative(), y, sy, b.IsNegative());
+
       t = a.IAND(b);
       MATCH(x & y, t.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
       t = a.IOR(b);
@@ -186,9 +213,6 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
         MATCH(sx - sy * (sx / sy), quot.remainder.ToInt64())
           ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
-      // TODO test ABS, B[GL][ET], BTEST, DIM, HUGE, MODULO, ISHFTC, DSHIFTL/R
-      // TODO test IBCLR, IBSET, IBITS, MAX, MIN, MERGE_BITS, RANGE, SIGN
-      // TODO test TRAILZ
     }
   }
 }

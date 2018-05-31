@@ -76,8 +76,7 @@ inline constexpr int BitPopulationCount(std::uint8_t x) {
   return (x & 0xf) + (x >> 4);
 }
 
-template<typename UINT>
-inline constexpr bool Parity(UINT x) {
+template<typename UINT> inline constexpr bool Parity(UINT x) {
   return BitPopulationCount(x) & 1;
 }
 
