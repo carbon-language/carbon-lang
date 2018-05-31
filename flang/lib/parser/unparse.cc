@@ -1648,46 +1648,6 @@ public:
     }
     Walk(std::get<Name>(x.t));
   }
-  // OpenMP Directives
-  void Unparse(const OmpClause &x) {
-    std::visit(visitors{[&](const OmpClause::Firstprivate &y) {
-                          Word(" FIRSTPRIVATE(");
-                          Walk(y.v, ",");
-                          Put(")");
-                        },
-                   [&](const OmpClause::Private &y) {
-                     Word(" PRIVATE(");
-                     Walk(y.v, ",");
-                     Put(")");
-                   }},
-        x.u);
-  }
-  void Unparse(const OmpExeDir &x) {
-    Outdent();
-    std::visit(visitors{[&](const OmpExeDir::ParallelDoSimd &y) {
-                          Word("!OMP$ PARALLEL DO SIMD");
-                          Walk(y.v, " ");
-                        },
-                   [&](const OmpExeDir::ParallelDo &y) {
-                     Word("!OMP$ PARALLEL DO");
-                     Walk(y.v, " ");
-                   },
-                   [&](const OmpExeDir::ParallelSections &y) {
-                     Word("!OMP$ PARALLEL SECTIONS");
-                     Walk(y.v, " ");
-                   },
-                   [&](const OmpExeDir::ParallelWorkshare &y) {
-                     Word("!OMP$ PARALLEL WORKSHARE");
-                     Walk(y.v, " ");
-                   },
-                   [&](const OmpExeDir::Parallel &y) {
-                     Word("!OMP$ PARALLEL");
-                     Walk(y.v, " ");
-                   }},
-        x.u);
-    Put('\n');
-    Indent();
-  }
   void Unparse(const BasedPointerStmt &x) {
     Word("POINTER ("), Walk(std::get<0>(x.t)), Put(", ");
     Walk(std::get<1>(x.t));

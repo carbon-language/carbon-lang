@@ -80,8 +80,8 @@
 2.8.2 notinbranch -> NOTINBRANCH
 2.13.9 depend -> DEPEND (((IN | OUT | INOUT) : variable-name-list) |
                           SOURCE |
-                          SINK : arrayvec)
-         arrayvec -> ident[scalar-int-expr:scalar-int-expr],...,ident[...]
+                          SINK : vec)
+         vec -> iterator [ +/- scalar-int-expr:scalar-int-expr],..., iterator[...]
 2.9.2 num_tasks -> NUM_TASKS (scalar-int-expr)
 2.9.2 grainsize -> GRAINSIZE (scalar-int-expr)
 2.9.2 nogroup -> NOGROUP

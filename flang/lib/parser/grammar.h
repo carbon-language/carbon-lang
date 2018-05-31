@@ -84,7 +84,7 @@ TYPE_CONTEXT_PARSER("specification construct"_en_US,
         construct<SpecificationConstruct>(
             statement(indirect(typeDeclarationStmt))),
         construct<SpecificationConstruct>(indirect(Parser<StructureDef>{})),
-        construct<SpecificationConstruct>(indirect(ompDirective)),
+        construct<SpecificationConstruct>(indirect(openmpConstruct)),
         construct<SpecificationConstruct>(indirect(compilerDirective))))
 
 // R513 other-specification-stmt ->
@@ -223,6 +223,9 @@ constexpr auto scalarDefaultCharConstantExpr =
 constexpr auto intConstantExpr = integer(constantExpr);
 constexpr auto scalarIntConstantExpr = scalar(intConstantExpr);
 
+
+
+
 // R501 program -> program-unit [program-unit]...
 // This is the top-level production for the Fortran language.
 constexpr StartNewSubprogram startNewSubprogram;
@@ -359,7 +362,7 @@ constexpr auto executableConstruct =
         construct<ExecutableConstruct>(indirect(Parser<SelectTypeConstruct>{})),
         construct<ExecutableConstruct>(indirect(whereConstruct)),
         construct<ExecutableConstruct>(indirect(forallConstruct)),
-        construct<ExecutableConstruct>(indirect(ompDirective)),
+        construct<ExecutableConstruct>(indirect(openmpConstruct)),
         construct<ExecutableConstruct>(indirect(compilerDirective)));
 
 // R510 execution-part-construct ->
@@ -3243,7 +3246,7 @@ TYPE_CONTEXT_PARSER("statement function definition"_en_US,
 // Directives, extensions, and deprecated statements
 // !DIR$ IVDEP
 // !DIR$ IGNORE_TKR [ [(tkr...)] name ]...
-constexpr auto beginDirective = skipEmptyLines >> space >> "!"_ch;
+constexpr auto beginDirective = skipEmptyLines >> space >> "!"_tok;
 constexpr auto endDirective = space >> endOfLine;
 constexpr auto ivdep = construct<CompilerDirective::IVDEP>("DIR$ IVDEP"_tok);
 constexpr auto ignore_tkr = "DIR$ IGNORE_TKR" >>
@@ -3320,36 +3323,5 @@ TYPE_CONTEXT_PARSER("PAUSE statement"_en_US,
 //     is used only via scalar-int-variable
 //   R1030 default-char-constant-expr -> default-char-expr
 //     is only used via scalar-default-char-constant-expr
-
-// OpenMP Directives and Clauses
-
-// OpenMP Clauses
-TYPE_PARSER(construct<OmpClause>(construct<OmpClause::Private>(
-                "PRIVATE" >> parenthesized(nonemptyList(name)))) ||
-    construct<OmpClause>(construct<OmpClause::Firstprivate>(
-        "FIRSTPRIVATE" >> parenthesized(nonemptyList(name)))))
-
-// !$OMP PARALLEL [DO | SECTIONS | WORKSHARE | DO SIMD]
-constexpr auto parallel =
-    construct<OmpExeDir::Parallel>("PARALLEL" >> many(Parser<OmpClause>{}));
-constexpr auto parallelDo = construct<OmpExeDir::ParallelDo>(
-    "PARALLEL DO" >> many(Parser<OmpClause>{}));
-constexpr auto parallelDoSimd = construct<OmpExeDir::ParallelDoSimd>(
-    "PARALLEL DO SIMD" >> many(Parser<OmpClause>{}));
-constexpr auto parallelSections = construct<OmpExeDir::ParallelSections>(
-    "PARALLEL SECTIONS" >> many(Parser<OmpClause>{}));
-constexpr auto parallelWorkshare = construct<OmpExeDir::ParallelWorkshare>(
-    "PARALLEL WORKSHARE" >> many(Parser<OmpClause>{}));
-
-TYPE_PARSER(construct<OmpExeDir>(parallelDoSimd) ||
-    construct<OmpExeDir>(parallelDo) ||
-    construct<OmpExeDir>(parallelSections) ||
-    construct<OmpExeDir>(parallelWorkshare) || construct<OmpExeDir>(parallel))
-
-constexpr auto beginOmpDirective = skipEmptyLines >> space >> "!$OMP "_sptok;
-constexpr auto endOmpDirective = space >> endOfLine;
-TYPE_PARSER(beginOmpDirective >>
-    construct<OmpDirective>(indirect(Parser<OmpExeDir>{})) / endOmpDirective)
-
 }  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_GRAMMAR_H_

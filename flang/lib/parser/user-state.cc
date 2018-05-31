@@ -15,6 +15,7 @@
 #include "user-state.h"
 #include "basic-parsers.h"
 #include "grammar.h"
+#include "openmp-grammar.h"
 #include "parse-state.h"
 #include "stmt-parser.h"
 #include "type-parsers.h"
