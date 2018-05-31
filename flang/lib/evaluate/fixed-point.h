@@ -464,36 +464,35 @@ public:
     return product;
   }
 
-  // Overwrites *this with quotient.  Returns true on division by zero.
-  constexpr bool DivideUnsigned(
-      const FixedPoint &divisor, FixedPoint &remainder) {
-    remainder.Clear();
+  struct QuotientWithRemainder {
+    FixedPoint quotient, remainder;
+    bool divisionByZero, overflow;
+  };
+  constexpr QuotientWithRemainder DivideUnsigned(
+      const FixedPoint &divisor) const {
     if (divisor.IsZero()) {
-      *this = MASKR(bits);
-      return true;
+      return {MASKR(bits), FixedPoint{}, true, false};  // overflow to max value
     }
     int bitsDone{LEADZ()};
     FixedPoint top{SHIFTL(bitsDone)};
-    Clear();
+    FixedPoint quotient, remainder;
     for (; bitsDone < bits; ++bitsDone) {
       auto doubledTop{top.AddUnsigned(top)};
       top = doubledTop.value;
       remainder = remainder.AddUnsigned(remainder, doubledTop.carry).value;
       bool nextBit{remainder.CompareUnsigned(divisor) != Ordering::Less};
-      *this = AddUnsigned(*this, nextBit).value;
+      quotient = quotient.AddUnsigned(quotient, nextBit).value;
       if (nextBit) {
         remainder = remainder.SubtractSigned(divisor).value;
       }
     }
-    return false;
+    return {quotient, remainder, false, false};
   }
 
-  // Overwrites *this with quotient.  Returns true on overflow (viz.,
-  // the most negative value divided by -1) and on division by zero.
-  // A nonzero remainder has the sign of the dividend, i.e., it is
-  // the MOD intrinsic (X-INT(X/Y)*Y), not MODULO (below).
+  // A nonzero remainder has the sign of the dividend, i.e., it computes
+  // the MOD intrinsic (X-INT(X/Y)*Y), not MODULO (which is below).
   // 8/5 = 1r3;  -8/5 = -1r-3;  8/-5 = -1r3;  -8/-5 = 1r-3
-  constexpr bool DivideSigned(FixedPoint divisor, FixedPoint &remainder) {
+  constexpr QuotientWithRemainder DivideSigned(FixedPoint divisor) const {
     bool dividendIsNegative{IsNegative()};
     bool negateQuotient{dividendIsNegative};
     Ordering divisorOrdering{divisor.CompareToZeroSigned()};
@@ -503,26 +502,21 @@ public:
       if (negated.overflow) {
         // divisor was (and is) the most negative number
         if (CompareUnsigned(divisor) == Ordering::Equal) {
-          *this = MASKR(1);
-          remainder.Clear();
-          return bits <= 1;  // edge case: 1-bit signed numbers overflow on 1!
+          return {MASKR(1), FixedPoint{}, false, bits <= 1};
         } else {
-          remainder = *this;
-          Clear();
-          return false;
+          return {FixedPoint{}, *this, false, false};
         }
       }
       divisor = negated.value;
     } else if (divisorOrdering == Ordering::Equal) {
       // division by zero
-      remainder.Clear();
       if (dividendIsNegative) {
-        *this = MASKL(1);  // most negative signed number
+        return {MASKL(1), FixedPoint{}, true, false};
       } else {
-        *this = MASKR(bits - 1);  // most positive signed number
+        return {MASKR(bits - 1), FixedPoint{}, true, false};
       }
-      return true;
     }
+    FixedPoint dividend{*this};
     if (dividendIsNegative) {
       auto negated{Negate()};
       if (negated.overflow) {
@@ -532,37 +526,36 @@ public:
             divisor.CompareUnsigned(FixedPoint{std::uint64_t{1}}) ==
                 Ordering::Equal) {
           // most negative number / -1 is the sole overflow case
-          remainder.Clear();
-          return true;
+          return {*this, FixedPoint{}, false, true};
         }
       } else {
-        *this = negated.value;
+        dividend = negated.value;
       }
     }
-    // Overflow is not possible, and both the dividend (*this) and divisor
+    // Overflow is not possible, and both the dividend and divisor
     // are now positive.
-    DivideUnsigned(divisor, remainder);
+    QuotientWithRemainder result{dividend.DivideUnsigned(divisor)};
     if (negateQuotient) {
-      *this = Negate().value;
+      result.quotient = result.quotient.Negate().value;
     }
     if (dividendIsNegative) {
-      remainder = remainder.Negate().value;
+      result.remainder = result.remainder.Negate().value;
     }
-    return false;
+    return result;
   }
 
-  // MODULO intrinsic.  Returns true on overflow.  Has the sign of
-  // the divisor argument.
+  // Result has the sign of the divisor argument.
   // 8 mod 5 = 3;  -8 mod 5 = 2;  8 mod -5 = -2;  -8 mod -5 = -3
-  constexpr bool ModuloSigned(const FixedPoint &divisor) {
+  constexpr ValueWithOverflow MODULO(const FixedPoint &divisor) const {
     FixedPoint quotient{*this};
     bool negativeDivisor{divisor.IsNegative()};
     bool distinctSigns{IsNegative() != negativeDivisor};
-    bool overflow{quotient.DivideSigned(divisor, *this)};
-    if (distinctSigns && !IsZero()) {
-      *this = AddUnsigned(divisor).value;
+    QuotientWithRemainder divided{DivideSigned(divisor)};
+    if (distinctSigns && !divided.remainder.IsZero()) {
+      return {divided.remainder.AddUnsigned(divisor).value, divided.overflow};
+    } else {
+      return {divided.remainder, divided.overflow};
     }
-    return overflow;
   }
 
 private:

@@ -142,42 +142,45 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       MATCH(((sx * sy) >> BITS) & maxUnsignedValue, product.upper.ToUInt64())
         ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      copy = a;
-      FP rem;
-      MATCH(y == 0, copy.DivideUnsigned(b, rem))
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      auto quot{a.DivideUnsigned(b)};
+      MATCH(y == 0, quot.divisionByZero)("%s, x=0x%llx, y=0x%llx", desc, x, y);
       if (y == 0) {
-        MATCH(maxUnsignedValue, copy.ToUInt64())
+        MATCH(maxUnsignedValue, quot.quotient.ToUInt64())
           ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-        MATCH(0, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(0, quot.remainder.ToUInt64())
+          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else {
-        MATCH(x / y, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-        MATCH(x % y, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(x / y, quot.quotient.ToUInt64())
+          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(x % y, quot.remainder.ToUInt64())
+          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
-      copy = a;
+      quot = a.DivideSigned(b);
       bool badCase{sx == mostNegativeSignedValue &&
           ((sy == -1 && sx != sy) || (BITS == 1 && sx == sy))};
-      MATCH(y == 0 || badCase, copy.DivideSigned(b, rem))
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(y == 0, quot.divisionByZero)("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(badCase, quot.overflow)("%s, x=0x%llx, y=0x%llx", desc, x, y);
       if (y == 0) {
         if (sx >= 0) {
-          MATCH(maxPositiveSignedValue, copy.ToInt64())
+          MATCH(maxPositiveSignedValue, quot.quotient.ToInt64())
           ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         } else {
-          MATCH(mostNegativeSignedValue, copy.ToInt64())
+          MATCH(mostNegativeSignedValue, quot.quotient.ToInt64())
           ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         }
-        MATCH(0, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(0, quot.remainder.ToUInt64())
+          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else if (badCase) {
-        MATCH(x, copy.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-        MATCH(0, rem.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(x, quot.quotient.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(0, quot.remainder.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else {
-        MATCH(sx / sy, copy.ToInt64())
+        MATCH(sx / sy, quot.quotient.ToInt64())
           ("%s, x=0x%llx %lld, y=0x%llx %lld; unsigned 0x%llx", desc, x, sx, y,
-            sy, copy.ToUInt64());
-        MATCH(sx - sy * (sx / sy), rem.ToInt64())
+            sy, quot.quotient.ToUInt64());
+        MATCH(sx - sy * (sx / sy), quot.remainder.ToInt64())
           ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
+      // TODO test MODULO
     }
   }
 }
