@@ -53,7 +53,10 @@ cl::SubCommand ModuleSubcommand("module-sections",
                                 "Display LLDB Module Information");
 cl::SubCommand SymbolsSubcommand("symbols", "Dump symbols for an object file");
 cl::SubCommand IRMemoryMapSubcommand("ir-memory-map", "Test IRMemoryMap");
+
 cl::opt<std::string> Log("log", cl::desc("Path to a log file"), cl::init(""),
+                         cl::sub(BreakpointSubcommand),
+                         cl::sub(ModuleSubcommand), cl::sub(SymbolsSubcommand),
                          cl::sub(IRMemoryMapSubcommand));
 
 /// Create a target using the file pointed to by \p Filename, or abort.
