@@ -3964,7 +3964,7 @@ _mm256_set_epi64x(long long __a, long long __b, long long __c, long long __d)
 static __inline __m256d __DEFAULT_FN_ATTRS
 _mm256_setr_pd(double __a, double __b, double __c, double __d)
 {
-  return _mm256_set_pd(__a, __b, __c, __d);
+  return _mm256_set_pd(__d, __c, __b, __a);
 }
 
 /// Constructs a 256-bit floating-point vector of [8 x float],
@@ -4005,7 +4005,7 @@ static __inline __m256 __DEFAULT_FN_ATTRS
 _mm256_setr_ps(float __a, float __b, float __c, float __d,
                float __e, float __f, float __g, float __h)
 {
-  return _mm256_set_ps(__a, __b, __c, __d, __e, __f, __g, __h);
+  return _mm256_set_ps(__h, __g, __f, __e, __d, __c, __b, __a);
 }
 
 /// Constructs a 256-bit integer vector, initialized in reverse order
@@ -4037,7 +4037,7 @@ static __inline __m256i __DEFAULT_FN_ATTRS
 _mm256_setr_epi32(int __i0, int __i1, int __i2, int __i3,
                   int __i4, int __i5, int __i6, int __i7)
 {
-  return _mm256_set_epi32(__i0, __i1, __i2, __i3, __i4, __i5, __i6, __i7);
+  return _mm256_set_epi32(__i7, __i6, __i5, __i4, __i3, __i2, __i1, __i0);
 }
 
 /// Constructs a 256-bit integer vector, initialized in reverse order
@@ -4087,10 +4087,10 @@ _mm256_setr_epi16(short __w15, short __w14, short __w13, short __w12,
        short __w07, short __w06, short __w05, short __w04,
        short __w03, short __w02, short __w01, short __w00)
 {
-  return _mm256_set_epi16(__w15, __w14, __w13, __w12,
-                          __w11, __w10, __w09, __w08,
-                          __w07, __w06, __w05, __w04,
-                          __w03, __w02, __w01, __w00);
+  return _mm256_set_epi16(__w00, __w01, __w02, __w03,
+                          __w04, __w05, __w06, __w07,
+                          __w08, __w09, __w10, __w11,
+                          __w12, __w13, __w14, __w15);
 }
 
 /// Constructs a 256-bit integer vector, initialized in reverse order
@@ -4176,10 +4176,10 @@ _mm256_setr_epi8(char __b31, char __b30, char __b29, char __b28,
                  char __b07, char __b06, char __b05, char __b04,
                  char __b03, char __b02, char __b01, char __b00)
 {
-  return _mm256_set_epi8(__b31, __b30, __b29, __b28, __b27, __b26, __b25, __b24,
-                         __b23, __b22, __b21, __b20, __b19, __b18, __b17, __b16,
-                         __b15, __b14, __b13, __b12, __b11, __b10, __b09, __b08,
-                         __b07, __b06, __b05, __b04, __b03, __b02, __b01, __b00);
+  return _mm256_set_epi8(__b00, __b01, __b02, __b03, __b04, __b05, __b06, __b07,
+                         __b08, __b09, __b10, __b11, __b12, __b13, __b14, __b15,
+                         __b16, __b17, __b18, __b19, __b20, __b21, __b22, __b23,
+                         __b24, __b25, __b26, __b27, __b28, __b29, __b30, __b31);
 }
 
 /// Constructs a 256-bit integer vector, initialized in reverse order
@@ -4202,7 +4202,7 @@ _mm256_setr_epi8(char __b31, char __b30, char __b29, char __b28,
 static __inline __m256i __DEFAULT_FN_ATTRS
 _mm256_setr_epi64x(long long __a, long long __b, long long __c, long long __d)
 {
-  return _mm256_set_epi64x(__a, __b, __c, __d);
+  return _mm256_set_epi64x(__d, __c, __b, __a);
 }
 
 /* Create vectors with repeated elements */

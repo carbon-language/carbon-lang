@@ -3641,7 +3641,7 @@ _mm_set_epi64x(long long __q1, long long __q0)
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_set_epi64(__m64 __q1, __m64 __q0)
 {
-  return _mm_set_epi64x((long long)__q0, (long long)__q1);
+  return _mm_set_epi64x((long long)__q1, (long long)__q0);
 }
 
 /// Initializes the 32-bit values in a 128-bit vector of [4 x i32] with
@@ -3872,7 +3872,7 @@ _mm_set1_epi8(char __b)
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_setr_epi64(__m64 __q0, __m64 __q1)
 {
-  return _mm_set_epi64(__q0, __q1);
+  return _mm_set_epi64(__q1, __q0);
 }
 
 /// Constructs a 128-bit integer vector, initialized in reverse order
@@ -3895,7 +3895,7 @@ _mm_setr_epi64(__m64 __q0, __m64 __q1)
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_setr_epi32(int __i0, int __i1, int __i2, int __i3)
 {
-  return _mm_set_epi32(__i0, __i1, __i2, __i3);
+  return _mm_set_epi32(__i3, __i2, __i1, __i0);
 }
 
 /// Constructs a 128-bit integer vector, initialized in reverse order
@@ -3926,7 +3926,7 @@ _mm_setr_epi32(int __i0, int __i1, int __i2, int __i3)
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_setr_epi16(short __w0, short __w1, short __w2, short __w3, short __w4, short __w5, short __w6, short __w7)
 {
-  return _mm_set_epi16(__w0, __w1, __w2, __w3, __w4, __w5, __w6, __w7);
+  return _mm_set_epi16(__w7, __w6, __w5, __w4, __w3, __w2, __w1, __w0);
 }
 
 /// Constructs a 128-bit integer vector, initialized in reverse order
@@ -3973,7 +3973,7 @@ _mm_setr_epi16(short __w0, short __w1, short __w2, short __w3, short __w4, short
 static __inline__ __m128i __DEFAULT_FN_ATTRS
 _mm_setr_epi8(char __b0, char __b1, char __b2, char __b3, char __b4, char __b5, char __b6, char __b7, char __b8, char __b9, char __b10, char __b11, char __b12, char __b13, char __b14, char __b15)
 {
-  return _mm_set_epi8(__b0, __b1, __b2, __b3, __b4, __b5, __b6, __b7, __b8, __b9, __b10, __b11, __b12, __b13, __b14, __b15);
+  return _mm_set_epi8(__b15, __b14, __b13, __b12, __b11, __b10, __b9, __b8, __b7, __b6, __b5, __b4, __b3, __b2, __b1, __b0);
 }
 
 /// Creates a 128-bit integer vector initialized to zero.
