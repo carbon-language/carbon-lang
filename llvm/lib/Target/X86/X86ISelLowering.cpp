@@ -23133,6 +23133,8 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 static SDValue IsSplatValue(MVT VT, SDValue V, const SDLoc &dl,
                             SelectionDAG &DAG, const X86Subtarget &Subtarget,
                             unsigned Opcode) {
+   V = peekThroughEXTRACT_SUBVECTORs(V);
+
   // Check if this is a splat build_vector node.
   if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(V)) {
     SDValue SplatAmt = BV->getSplatValue();
@@ -23790,6 +23792,16 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
                                                EltSizeInBits - RotateAmt, DAG);
       return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
     }
+  }
+
+  // Rotate by splat - expand back to shifts.
+  // TODO - legalizers should be able to handle this.
+  if (IsSplatValue(VT, Amt, DL, DAG, Subtarget, Opcode)) {
+    SDValue AmtR = DAG.getConstant(EltSizeInBits, DL, VT);
+    AmtR = DAG.getNode(ISD::SUB, DL, VT, AmtR, Amt);
+    SDValue SHL = DAG.getNode(ISD::SHL, DL, VT, R, Amt);
+    SDValue SRL = DAG.getNode(ISD::SRL, DL, VT, R, AmtR);
+    return DAG.getNode(ISD::OR, DL, VT, SHL, SRL);
   }
 
   // AVX2 - best to fallback to variable shifts.

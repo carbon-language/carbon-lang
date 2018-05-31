@@ -506,29 +506,19 @@ define <4 x i64> @splatvar_rotate_v4i64(<4 x i64> %a, <4 x i64> %b) nounwind {
 define <8 x i32> @splatvar_rotate_v8i32(<8 x i32> %a, <8 x i32> %b) nounwind {
 ; AVX1-LABEL: splatvar_rotate_v8i32:
 ; AVX1:       # %bb.0:
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[0,0,0,0]
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm3 = xmm2[1,1,3,3]
-; AVX1-NEXT:    vpslld $23, %xmm1, %xmm1
-; AVX1-NEXT:    vpaddd {{.*}}(%rip), %xmm1, %xmm1
-; AVX1-NEXT:    vcvttps2dq %xmm1, %xmm1
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm4 = xmm1[1,1,3,3]
-; AVX1-NEXT:    vpmuludq %xmm4, %xmm3, %xmm3
-; AVX1-NEXT:    vpmuludq %xmm1, %xmm2, %xmm2
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm5 = xmm2[1,1,3,3]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm5 = xmm5[0,1],xmm3[2,3],xmm5[4,5],xmm3[6,7]
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm3 = xmm3[0,0,2,2]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm2 = xmm2[0,1],xmm3[2,3],xmm2[4,5],xmm3[6,7]
-; AVX1-NEXT:    vpor %xmm5, %xmm2, %xmm2
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm3 = xmm0[1,1,3,3]
-; AVX1-NEXT:    vpmuludq %xmm4, %xmm3, %xmm3
-; AVX1-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0,1],xmm3[2,3],xmm1[4,5],xmm3[6,7]
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm3 = xmm3[0,0,2,2]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm3[2,3],xmm0[4,5],xmm3[6,7]
-; AVX1-NEXT:    vpor %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm2 = xmm1[0,0,0,0]
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; AVX1-NEXT:    vpmovzxdq {{.*#+}} xmm1 = xmm1[0],zero,xmm1[1],zero
+; AVX1-NEXT:    vpslld %xmm1, %xmm3, %xmm4
+; AVX1-NEXT:    vmovdqa {{.*#+}} xmm5 = [32,32,32,32]
+; AVX1-NEXT:    vpsubd %xmm2, %xmm5, %xmm2
+; AVX1-NEXT:    vpmovzxdq {{.*#+}} xmm2 = xmm2[0],zero,xmm2[1],zero
+; AVX1-NEXT:    vpsrld %xmm2, %xmm3, %xmm3
+; AVX1-NEXT:    vpor %xmm3, %xmm4, %xmm3
+; AVX1-NEXT:    vpslld %xmm1, %xmm0, %xmm1
+; AVX1-NEXT:    vpsrld %xmm2, %xmm0, %xmm0
+; AVX1-NEXT:    vpor %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm3, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: splatvar_rotate_v8i32:
