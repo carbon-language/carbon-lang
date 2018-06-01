@@ -280,6 +280,15 @@ define <8 x double> @test_expand_load_pd_512(i8* %addr, <8 x double> %data) {
   ret <8 x double> %res
 }
 
+; Make sure we don't crash if you pass 0 to the mask.
+define <8 x double> @test_zero_mask_expand_load_pd_512(i8* %addr, <8 x double> %data, i8 %mask) {
+; CHECK-LABEL: test_zero_mask_expand_load_pd_512:
+; CHECK:       ## %bb.0:
+; CHECK-NEXT:    retq
+  %res = call <8 x double> @llvm.x86.avx512.mask.expand.load.pd.512(i8* %addr, <8 x double> %data, i8 0)
+  ret <8 x double> %res
+}
+
 define <16 x float> @test_mask_expand_load_ps_512(i8* %addr, <16 x float> %data, i16 %mask) {
 ; CHECK-LABEL: test_mask_expand_load_ps_512:
 ; CHECK:       ## %bb.0:
