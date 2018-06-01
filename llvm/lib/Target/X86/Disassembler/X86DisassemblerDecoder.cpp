@@ -1479,6 +1479,7 @@ static int readModRM(struct InternalInstruction* insn) {
     case TYPE_XMM:                                        \
       return prefix##_XMM0 + index;                       \
     case TYPE_VK:                                         \
+      index &= 0xf;                                       \
       if (index > 7)                                      \
         *valid = 0;                                       \
       return prefix##_K0 + index;                         \
