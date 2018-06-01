@@ -107,4 +107,4 @@ configure_file(
 enable_testing()
 add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
 add_test(NAME PopPar COMMAND bit-population-count-test)
-add_test(NAME FixedPoint COMMAND fixed-point-test)
+add_test(NAME Integer COMMAND integer-test)

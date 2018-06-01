@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_EVALUATE_FIXED_POINT_H_
-#define FORTRAN_EVALUATE_FIXED_POINT_H_
+#ifndef FORTRAN_EVALUATE_INTEGER_H_
+#define FORTRAN_EVALUATE_INTEGER_H_
 
-// Emulates integers of a arbitrary static size for use when the C++
-// environment does not support that size or when a fixed interface
-// is needed.  The data are typeless, so signed and unsigned operations
+// Emulates binary integers of an arbitrary (but fixed) bit size for use
+// when the host C++ environment does not support that size or when the
+// full suite of Fortran's integer intrinsic scalar functions are needed.
+// The data model is typeless, so signed* and unsigned operations
 // are distinguished from each other with distinct member function interfaces.
-// ("Signed" here means two's-complement, just to be clear.)
+// (*"Signed" here means two's-complement, just to be clear.  Ones'-complement
+// and signed-magnitude encodings appear to be extinct in 2018.)
 
 #include "bit-population-count.h"
 #include "leading-zero-bit-count.h"
@@ -42,9 +44,13 @@ static constexpr Ordering Reverse(Ordering ordering) {
   }
 }
 
-// Implements an integer as an assembly of smaller (i.e., 32-bit) integers.
-// These are stored in either little- or big-endian order, independent of
-// the host's endianness.
+// Implements an integer as an assembly of smaller integer parts.
+// For best performance, the part should be half of the size of the
+// largest efficient integer supported by the host processor.
+// These parts are stored in either little- or big-endian order, which can
+// match that of the host's endianness or not; but if the ordering matches
+// that of the host, raw host data can be overlaid with a properly configured
+// instance of this class and used in situ.
 // To facilitate exhaustive testing of what would otherwise be more rare
 // edge cases, this class template may be configured to use other part
 // types &/or partial fields in the parts.
@@ -52,7 +58,7 @@ static constexpr Ordering Reverse(Ordering ordering) {
 // named accordingly.
 template<int BITS, int PARTBITS = 32, typename PART = std::uint32_t,
     typename BIGPART = std::uint64_t, bool LITTLE_ENDIAN = true>
-class FixedPoint {
+class Integer {
 public:
   static constexpr int bits{BITS};
   static constexpr int partBits{PARTBITS};
@@ -77,9 +83,9 @@ private:
 
 public:
   // Constructors and value-generating static functions
-  constexpr FixedPoint() { Clear(); }  // default constructor: zero
-  constexpr FixedPoint(const FixedPoint &) = default;
-  constexpr FixedPoint(std::uint64_t n) {
+  constexpr Integer() { Clear(); }  // default constructor: zero
+  constexpr Integer(const Integer &) = default;
+  constexpr Integer(std::uint64_t n) {
     for (int j{0}; j + 1 < parts; ++j) {
       SetLEPart(j, n);
       if constexpr (partBits < 64) {
@@ -90,7 +96,7 @@ public:
     }
     SetLEPart(parts - 1, n);
   }
-  constexpr FixedPoint(std::int64_t n) {
+  constexpr Integer(std::int64_t n) {
     std::int64_t signExtension{-(n < 0)};
     signExtension <<= partBits;
     for (int j{0}; j + 1 < parts; ++j) {
@@ -105,8 +111,8 @@ public:
   }
 
   // Right-justified mask (e.g., MASKR(1) == 1, MASKR(2) == 3, &c.)
-  static constexpr FixedPoint MASKR(int places) {
-    FixedPoint result{nullptr};
+  static constexpr Integer MASKR(int places) {
+    Integer result{nullptr};
     int j{0};
     for (; j + 1 < parts && places >= partBits; ++j, places -= partBits) {
       result.LEPart(j) = partMask;
@@ -129,7 +135,7 @@ public:
   }
 
   // Left-justified mask (e.g., MASKL(1) has only its sign bit set)
-  static constexpr FixedPoint MASKL(int places) {
+  static constexpr Integer MASKL(int places) {
     if (places <= 0) {
       return {};
     } else if (places >= bits) {
@@ -139,14 +145,14 @@ public:
     }
   }
 
-  static constexpr FixedPoint HUGE() { return MASKR(bits - 1); }
+  static constexpr Integer HUGE() { return MASKR(bits - 1); }
 
   // Returns the number of full decimal digits that can be represented.
   static constexpr int RANGE() {
     if (bits < 4) {
       return 0;
     }
-    FixedPoint x{HUGE}, ten{std::uint64_t{10}};
+    Integer x{HUGE}, ten{std::uint64_t{10}};
     int digits{0};
     while (x.Compare(ten) != Ordering::Less) {
       ++digits;
@@ -155,7 +161,7 @@ public:
     return digits;
   }
 
-  constexpr FixedPoint &operator=(const FixedPoint &) = default;
+  constexpr Integer &operator=(const Integer &) = default;
 
   constexpr bool IsZero() const {
     for (int j{0}; j < parts; ++j) {
@@ -228,7 +234,7 @@ public:
     }
   }
 
-  constexpr Ordering CompareUnsigned(const FixedPoint &y) const {
+  constexpr Ordering CompareUnsigned(const Integer &y) const {
     for (int j{parts}; j-- > 0;) {
       if (LEPart(j) > y.LEPart(j)) {
         return Ordering::Greater;
@@ -240,16 +246,16 @@ public:
     return Ordering::Equal;
   }
 
-  constexpr bool BGE(const FixedPoint &y) const {
+  constexpr bool BGE(const Integer &y) const {
     return CompareUnsigned(y) != Ordering::Less;
   }
-  constexpr bool BGT(const FixedPoint &y) const {
+  constexpr bool BGT(const Integer &y) const {
     return CompareUnsigned(y) == Ordering::Greater;
   }
-  constexpr bool BLE(const FixedPoint &y) const { return !BGT(y); }
-  constexpr bool BLT(const FixedPoint &y) const { return !BGE(y); }
+  constexpr bool BLE(const Integer &y) const { return !BGT(y); }
+  constexpr bool BLT(const Integer &y) const { return !BGE(y); }
 
-  constexpr Ordering CompareSigned(const FixedPoint &y) const {
+  constexpr Ordering CompareSigned(const Integer &y) const {
     bool isNegative{IsNegative()};
     if (isNegative != y.IsNegative()) {
       return isNegative ? Ordering::Less : Ordering::Greater;
@@ -275,8 +281,8 @@ public:
   }
 
   // Ones'-complement (i.e., C's ~)
-  constexpr FixedPoint NOT() const {
-    FixedPoint result{nullptr};
+  constexpr Integer NOT() const {
+    Integer result{nullptr};
     for (int j{0}; j < parts; ++j) {
       result.SetLEPart(j, ~LEPart(j));
     }
@@ -287,11 +293,11 @@ public:
   // An overflow flag accompanies the result, and will be true when the
   // operand is the most negative signed number (MASKL(1)).
   struct ValueWithOverflow {
-    FixedPoint value;
+    Integer value;
     bool overflow;
   };
   constexpr ValueWithOverflow Negate() const {
-    FixedPoint result{nullptr};
+    Integer result{nullptr};
     Part carry{1};
     for (int j{0}; j + 1 < parts; ++j) {
       Part newCarry{LEPart(j) == 0 && carry};
@@ -314,7 +320,7 @@ public:
 
   // Shifts the operand left when the count is positive, right when negative.
   // Vacated bit positions are filled with zeroes.
-  constexpr FixedPoint ISHFT(int count) const {
+  constexpr Integer ISHFT(int count) const {
     if (count < 0) {
       return SHIFTR(-count);
     } else {
@@ -323,11 +329,11 @@ public:
   }
 
   // Left shift with zero fill.
-  constexpr FixedPoint SHIFTL(int count) const {
+  constexpr Integer SHIFTL(int count) const {
     if (count <= 0) {
       return *this;
     } else {
-      FixedPoint result{nullptr};
+      Integer result{nullptr};
       int shiftParts{count / partBits};
       int bitShift{count - partBits * shiftParts};
       int j{parts - 1};
@@ -360,7 +366,7 @@ public:
   // "size" bits are shifted circularly in place by "count" positions;
   // the shift is leftward if count is nonnegative, rightward otherwise.
   // Higher-order bits are unchanged.
-  constexpr FixedPoint ISHFTC(int count, int size = bits) const {
+  constexpr Integer ISHFTC(int count, int size = bits) const {
     if (count == 0 || size <= 0) {
       return *this;
     }
@@ -378,14 +384,14 @@ public:
     if (size == bits) {
       return SHIFTL(leastBits).IOR(SHIFTR(middleBits));
     }
-    FixedPoint unchanged{IAND(MASKL(bits - size))};
-    FixedPoint middle{IAND(MASKR(middleBits)).SHIFTL(leastBits)};
-    FixedPoint least{SHIFTR(middleBits).IAND(MASKR(leastBits))};
+    Integer unchanged{IAND(MASKL(bits - size))};
+    Integer middle{IAND(MASKR(middleBits)).SHIFTL(leastBits)};
+    Integer least{SHIFTR(middleBits).IAND(MASKR(leastBits))};
     return unchanged.IOR(middle).IOR(least);
   }
 
   // Double shifts, aka shifts with specific fill
-  constexpr FixedPoint DSHIFTL(const FixedPoint &fill, int count) const {
+  constexpr Integer DSHIFTL(const Integer &fill, int count) const {
     if (count <= 0) {
       return *this;
     } else if (count >= 2 * bits) {
@@ -399,7 +405,7 @@ public:
     }
   }
 
-  constexpr FixedPoint DSHIFTR(const FixedPoint &fill, int count) const {
+  constexpr Integer DSHIFTR(const Integer &fill, int count) const {
     if (count <= 0) {
       return *this;
     } else if (count >= 2 * bits) {
@@ -414,11 +420,11 @@ public:
   }
 
   // Vacated upper bits are filled with zeroes.
-  constexpr FixedPoint SHIFTR(int count) const {
+  constexpr Integer SHIFTR(int count) const {
     if (count <= 0) {
       return *this;
     } else {
-      FixedPoint result{nullptr};
+      Integer result{nullptr};
       int shiftParts{count / partBits};
       int bitShift{count - partBits * shiftParts};
       int j{0};
@@ -448,7 +454,7 @@ public:
 
   // Be advised, an arithmetic (sign-filling) right shift is not
   // the same as a division by a power of two in all cases.
-  constexpr FixedPoint SHIFTA(int count) const {
+  constexpr Integer SHIFTA(int count) const {
     if (count <= 0) {
       return *this;
     } else if (IsNegative()) {
@@ -459,62 +465,62 @@ public:
   }
 
   // Clears a single bit.
-  constexpr FixedPoint IBCLR(int pos) const {
+  constexpr Integer IBCLR(int pos) const {
     if (pos < 0 || pos >= bits) {
       return *this;
     } else {
-      FixedPoint result{*this};
+      Integer result{*this};
       result.LEPart(pos / partBits) &= ~(Part{1} << (pos % partBits));
       return result;
     }
   }
 
   // Sets a single bit.
-  constexpr FixedPoint IBSET(int pos) const {
+  constexpr Integer IBSET(int pos) const {
     if (pos < 0 || pos >= bits) {
       return *this;
     } else {
-      FixedPoint result{*this};
+      Integer result{*this};
       result.LEPart(pos / partBits) |= Part{1} << (pos % partBits);
       return result;
     }
   }
 
   // Extracts a field.
-  constexpr FixedPoint IBITS(int pos, int size) const {
+  constexpr Integer IBITS(int pos, int size) const {
     return SHIFTR(pos).IAND(MASKR(size));
   }
 
-  constexpr FixedPoint IAND(const FixedPoint &y) const {
-    FixedPoint result{nullptr};
+  constexpr Integer IAND(const Integer &y) const {
+    Integer result{nullptr};
     for (int j{0}; j < parts; ++j) {
       result.LEPart(j) = LEPart(j) & y.LEPart(j);
     }
     return result;
   }
 
-  constexpr FixedPoint IOR(const FixedPoint &y) const {
-    FixedPoint result{nullptr};
+  constexpr Integer IOR(const Integer &y) const {
+    Integer result{nullptr};
     for (int j{0}; j < parts; ++j) {
       result.LEPart(j) = LEPart(j) | y.LEPart(j);
     }
     return result;
   }
 
-  constexpr FixedPoint IEOR(const FixedPoint &y) const {
-    FixedPoint result{nullptr};
+  constexpr Integer IEOR(const Integer &y) const {
+    Integer result{nullptr};
     for (int j{0}; j < parts; ++j) {
       result.LEPart(j) = LEPart(j) ^ y.LEPart(j);
     }
     return result;
   }
 
-  constexpr FixedPoint MERGE_BITS(
-      const FixedPoint &y, const FixedPoint &mask) const {
+  constexpr Integer MERGE_BITS(
+      const Integer &y, const Integer &mask) const {
     return IAND(mask).IOR(y.IAND(mask.NOT()));
   }
 
-  constexpr FixedPoint MAX(const FixedPoint &y) const {
+  constexpr Integer MAX(const Integer &y) const {
     if (CompareSigned(y) == Ordering::Less) {
       return y;
     } else {
@@ -522,7 +528,7 @@ public:
     }
   }
 
-  constexpr FixedPoint MIN(const FixedPoint &y) const {
+  constexpr Integer MIN(const Integer &y) const {
     if (CompareSigned(y) == Ordering::Less) {
       return *this;
     } else {
@@ -532,12 +538,12 @@ public:
 
   // Unsigned addition with carry.
   struct ValueWithCarry {
-    FixedPoint value;
+    Integer value;
     bool carry;
   };
   constexpr ValueWithCarry AddUnsigned(
-      const FixedPoint &y, bool carryIn = false) const {
-    FixedPoint sum{nullptr};
+      const Integer &y, bool carryIn = false) const {
+    Integer sum{nullptr};
     BigPart carry{carryIn};
     for (int j{0}; j + 1 < parts; ++j) {
       carry += LEPart(j);
@@ -551,7 +557,7 @@ public:
     return {sum, carry > topPartMask};
   }
 
-  constexpr ValueWithOverflow AddSigned(const FixedPoint &y) const {
+  constexpr ValueWithOverflow AddSigned(const Integer &y) const {
     bool isNegative{IsNegative()};
     bool sameSign{isNegative == y.IsNegative()};
     ValueWithCarry sum{AddUnsigned(y)};
@@ -559,7 +565,7 @@ public:
     return {sum.value, overflow};
   }
 
-  constexpr ValueWithOverflow SubtractSigned(const FixedPoint &y) const {
+  constexpr ValueWithOverflow SubtractSigned(const Integer &y) const {
     bool isNegative{IsNegative()};
     bool sameSign{isNegative == y.IsNegative()};
     ValueWithCarry diff{AddUnsigned(y.Negate().value)};
@@ -568,7 +574,7 @@ public:
   }
 
   // MAX(X-Y, 0)
-  constexpr FixedPoint DIM(const FixedPoint &y) const {
+  constexpr Integer DIM(const Integer &y) const {
     if (CompareSigned(y) != Ordering::Greater) {
       return {};
     } else {
@@ -576,7 +582,7 @@ public:
     }
   }
 
-  constexpr ValueWithOverflow SIGN(const FixedPoint &sign) const {
+  constexpr ValueWithOverflow SIGN(const Integer &sign) const {
     bool goNegative{sign.IsNegative()};
     if (goNegative == IsNegative()) {
       return *this;
@@ -588,9 +594,9 @@ public:
   }
 
   struct Product {
-    FixedPoint upper, lower;
+    Integer upper, lower;
   };
-  constexpr Product MultiplyUnsigned(const FixedPoint &y) const {
+  constexpr Product MultiplyUnsigned(const Integer &y) const {
     Part product[2 * parts]{};  // little-endian full product
     for (int j{0}; j < parts; ++j) {
       if (Part xpart{LEPart(j)}) {
@@ -607,7 +613,7 @@ public:
         }
       }
     }
-    FixedPoint upper{nullptr}, lower{nullptr};
+    Integer upper{nullptr}, lower{nullptr};
     for (int j{0}; j < parts; ++j) {
       lower.LEPart(j) = product[j];
       upper.LEPart(j) = product[j + parts];
@@ -620,14 +626,14 @@ public:
     return {upper, lower};
   }
 
-  constexpr Product MultiplySigned(const FixedPoint &y) const {
+  constexpr Product MultiplySigned(const Integer &y) const {
     bool yIsNegative{y.IsNegative()};
-    FixedPoint absy{y};
+    Integer absy{y};
     if (yIsNegative) {
       absy = y.Negate().value;
     }
     bool isNegative{IsNegative()};
-    FixedPoint absx{*this};
+    Integer absx{*this};
     if (isNegative) {
       absx = Negate().value;
     }
@@ -635,7 +641,7 @@ public:
     if (isNegative != yIsNegative) {
       product.lower = product.lower.NOT();
       product.upper = product.upper.NOT();
-      FixedPoint one{std::uint64_t{1}};
+      Integer one{std::uint64_t{1}};
       auto incremented{product.lower.AddUnsigned(one)};
       product.lower = incremented.value;
       if (incremented.carry) {
@@ -646,17 +652,17 @@ public:
   }
 
   struct QuotientWithRemainder {
-    FixedPoint quotient, remainder;
+    Integer quotient, remainder;
     bool divisionByZero, overflow;
   };
   constexpr QuotientWithRemainder DivideUnsigned(
-      const FixedPoint &divisor) const {
+      const Integer &divisor) const {
     if (divisor.IsZero()) {
-      return {MASKR(bits), FixedPoint{}, true, false};  // overflow to max value
+      return {MASKR(bits), Integer{}, true, false};  // overflow to max value
     }
     int bitsDone{LEADZ()};
-    FixedPoint top{SHIFTL(bitsDone)};
-    FixedPoint quotient, remainder;
+    Integer top{SHIFTL(bitsDone)};
+    Integer quotient, remainder;
     for (; bitsDone < bits; ++bitsDone) {
       auto doubledTop{top.AddUnsigned(top)};
       top = doubledTop.value;
@@ -673,7 +679,7 @@ public:
   // A nonzero remainder has the sign of the dividend, i.e., it computes
   // the MOD intrinsic (X-INT(X/Y)*Y), not MODULO (which is below).
   // 8/5 = 1r3;  -8/5 = -1r-3;  8/-5 = -1r3;  -8/-5 = 1r-3
-  constexpr QuotientWithRemainder DivideSigned(FixedPoint divisor) const {
+  constexpr QuotientWithRemainder DivideSigned(Integer divisor) const {
     bool dividendIsNegative{IsNegative()};
     bool negateQuotient{dividendIsNegative};
     Ordering divisorOrdering{divisor.CompareToZeroSigned()};
@@ -683,31 +689,31 @@ public:
       if (negated.overflow) {
         // divisor was (and is) the most negative number
         if (CompareUnsigned(divisor) == Ordering::Equal) {
-          return {MASKR(1), FixedPoint{}, false, bits <= 1};
+          return {MASKR(1), Integer{}, false, bits <= 1};
         } else {
-          return {FixedPoint{}, *this, false, false};
+          return {Integer{}, *this, false, false};
         }
       }
       divisor = negated.value;
     } else if (divisorOrdering == Ordering::Equal) {
       // division by zero
       if (dividendIsNegative) {
-        return {MASKL(1), FixedPoint{}, true, false};
+        return {MASKL(1), Integer{}, true, false};
       } else {
-        return {MASKR(bits - 1), FixedPoint{}, true, false};
+        return {MASKR(bits - 1), Integer{}, true, false};
       }
     }
-    FixedPoint dividend{*this};
+    Integer dividend{*this};
     if (dividendIsNegative) {
       auto negated{Negate()};
       if (negated.overflow) {
         // Dividend was (and remains) the most negative number.
         // See whether the original divisor was -1 (if so, it's 1 now).
         if (divisorOrdering == Ordering::Less &&
-            divisor.CompareUnsigned(FixedPoint{std::uint64_t{1}}) ==
+            divisor.CompareUnsigned(Integer{std::uint64_t{1}}) ==
                 Ordering::Equal) {
           // most negative number / -1 is the sole overflow case
-          return {*this, FixedPoint{}, false, true};
+          return {*this, Integer{}, false, true};
         }
       } else {
         dividend = negated.value;
@@ -727,8 +733,8 @@ public:
 
   // Result has the sign of the divisor argument.
   // 8 mod 5 = 3;  -8 mod 5 = 2;  8 mod -5 = -2;  -8 mod -5 = -3
-  constexpr ValueWithOverflow MODULO(const FixedPoint &divisor) const {
-    FixedPoint quotient{*this};
+  constexpr ValueWithOverflow MODULO(const Integer &divisor) const {
+    Integer quotient{*this};
     bool negativeDivisor{divisor.IsNegative()};
     bool distinctSigns{IsNegative() != negativeDivisor};
     QuotientWithRemainder divided{DivideSigned(divisor)};
@@ -740,7 +746,7 @@ public:
   }
 
 private:
-  constexpr FixedPoint(std::nullptr_t) {}  // does not initialize
+  constexpr Integer(std::nullptr_t) {}  // does not initialize parts
 
   // Accesses parts in little-endian order.
   constexpr const Part &LEPart(int part) const {
@@ -776,4 +782,4 @@ private:
   Part part_[parts];
 };
 }  // namespace Fortran::evaluate
-#endif  // FORTRAN_EVALUATE_FIXED_POINT_H_
+#endif  // FORTRAN_EVALUATE_INTEGER_H_

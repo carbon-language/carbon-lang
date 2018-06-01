@@ -34,11 +34,11 @@ target_link_libraries(bit-population-count-test
   FortranEvaluateTesting
 )
 
-add_executable(fixed-point-test
-  fixed-point-test.cc
+add_executable(integer-test
+  integer-test.cc
 )
 
-target_link_libraries(fixed-point-test
+target_link_libraries(integer-test
   FortranEvaluate
   FortranEvaluateTesting
 )

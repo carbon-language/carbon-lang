@@ -13,37 +13,37 @@
 // limitations under the License.
 
 #include "testing.h"
-#include "../../lib/evaluate/fixed-point.h"
+#include "../../lib/evaluate/integer.h"
 #include <cstdio>
 
-using Fortran::evaluate::FixedPoint;
+using Fortran::evaluate::Integer;
 using Fortran::evaluate::Ordering;
 
-template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
+template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
   std::uint64_t maxUnsignedValue{(std::uint64_t{1} << BITS) - 1};
   std::int64_t maxPositiveSignedValue{(std::int64_t{1} << (BITS - 1)) - 1};
   std::int64_t mostNegativeSignedValue{-(std::int64_t{1} << (BITS - 1))};
   char desc[64];
   std::snprintf(desc, sizeof desc, "BITS=%d, PARTBITS=%d, sizeof(Part)=%d, LE=%d",
-      BITS, FP::partBits, static_cast<int>(sizeof(typename FP::Part)),
-      FP::littleEndian);
+      BITS, INT::partBits, static_cast<int>(sizeof(typename INT::Part)),
+      INT::littleEndian);
 
-  MATCH(BITS, FP::bits)(desc);
-  MATCH(maxPositiveSignedValue, FP::HUGE().ToUInt64())(desc);
-  FP zero;
+  MATCH(BITS, INT::bits)(desc);
+  MATCH(maxPositiveSignedValue, INT::HUGE().ToUInt64())(desc);
+  INT zero;
   TEST(zero.IsZero())(desc);
   MATCH(0, zero.ToUInt64())(desc);
   MATCH(0, zero.ToInt64())(desc);
 
   for (std::uint64_t x{0}; x <= maxUnsignedValue; ++x) {
-    FP a{x};
+    INT a{x};
     MATCH(x, a.ToUInt64())(desc);
-    FP copy{a};
+    INT copy{a};
     MATCH(x, copy.ToUInt64())(desc);
     copy = a;
     MATCH(x, copy.ToUInt64())(desc);
     MATCH(x == 0, a.IsZero())("%s, x=0x%llx", desc, x);
-    FP t{a.NOT()};
+    INT t{a.NOT()};
     MATCH(x ^ maxUnsignedValue, t.ToUInt64())("%s, x=0x%llx", desc, x);
     auto negated{a.Negate()};
     MATCH(x == std::uint64_t{1} << (BITS - 1), negated.overflow)
@@ -125,7 +125,7 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
       if (y + y > maxUnsignedValue) {
         sy = y | (~std::uint64_t{0} << BITS);
       }
-      FP b{y};
+      INT b{y};
       if (x < y) {
         ord = Ordering::Less;
       } else if (x > y) {
@@ -230,11 +230,11 @@ int main() {
   exhaustiveTesting<7>();
   exhaustiveTesting<8>();
   exhaustiveTesting<9>();
-  exhaustiveTesting<9, FixedPoint<9, 1>>();
-  exhaustiveTesting<9, FixedPoint<9, 1, std::uint8_t, std::uint16_t>>();
-  exhaustiveTesting<9, FixedPoint<9, 2>>();
-  exhaustiveTesting<9, FixedPoint<9, 2, std::uint8_t, std::uint16_t>>();
-  exhaustiveTesting<9, FixedPoint<9, 8, std::uint8_t, std::uint16_t>>();
-  exhaustiveTesting<9, FixedPoint<9, 8, std::uint8_t, std::uint16_t, false>>();
+  exhaustiveTesting<9, Integer<9, 1>>();
+  exhaustiveTesting<9, Integer<9, 1, std::uint8_t, std::uint16_t>>();
+  exhaustiveTesting<9, Integer<9, 2>>();
+  exhaustiveTesting<9, Integer<9, 2, std::uint8_t, std::uint16_t>>();
+  exhaustiveTesting<9, Integer<9, 8, std::uint8_t, std::uint16_t>>();
+  exhaustiveTesting<9, Integer<9, 8, std::uint8_t, std::uint16_t, false>>();
   return testing::Complete();
 }
