@@ -81,8 +81,10 @@ TYPE_PARSER(construct<OmpScheduleModifierType>(
     "NONMONOTONIC" >> pure(OmpScheduleModifierType::ModType::Nonmonotonic) ||
     "SIMD" >> pure(OmpScheduleModifierType::ModType::Simd)))
 
+TYPE_PARSER(construct<OmpScheduleModifier>(Parser<OmpScheduleModifierType>{}, maybe(","_ch >> Parser<OmpScheduleModifierType>{})))
+
 TYPE_PARSER(construct<OmpScheduleClause>(
-    optionalList(Parser<OmpScheduleModifierType>{}),
+    maybe(Parser<OmpScheduleModifier>{}),
     "STATIC" >> pure(OmpScheduleClause::ScheduleType::Static) ||
         "DYNAMIC" >> pure(OmpScheduleClause::ScheduleType::Dynamic) ||
         "GUIDED" >> pure(OmpScheduleClause::ScheduleType::Guided) ||
@@ -128,11 +130,11 @@ TYPE_PARSER(construct<OmpReductionOperator>(reductionBinaryOperator) ||
     construct<OmpReductionOperator>(reductionProcedureOperator))
 
 TYPE_PARSER(construct<OmpReductionClause>(
-    Parser<OmpReductionOperator>{}, nonemptyList(designator)))
+    Parser<OmpReductionOperator>{} / ":"_ch, nonemptyList(designator)))
 
 // DEPEND(SOURCE | SINK : vec | (IN | OUT | INOUT) : list
 TYPE_PARSER(construct<OmpDependSinkVecLength>(
-    Parser<DefinedOperator>{}, scalarIntConstantExpr))
+    indirect(Parser<DefinedOperator>{}), scalarIntConstantExpr))
 
 TYPE_PARSER(
     construct<OmpDependSinkVec>(name, maybe(Parser<OmpDependSinkVecLength>{})))
@@ -172,7 +174,7 @@ TYPE_PARSER(construct<OmpAlignedClause>(
 TYPE_PARSER(construct<OmpNameList>(pure(OmpNameList::Kind::Object), name) ||
     construct<OmpNameList>("/" >> pure(OmpNameList::Kind::Common), name / "/"))
 
-TYPE_CONTEXT_PARSER("Omp Clause"_en_US,
+TYPE_PARSER(
 construct<OmpClause>(construct<OmpClause::Defaultmap>("DEFAULTMAP"_tok >> parenthesized("TOFROM"_tok >> ":"_ch >> "SCALAR"_tok))) ||
 construct<OmpClause>(construct<OmpClause::Inbranch>("INBRANCH"_tok)) ||
 construct<OmpClause>(construct<OmpClause::Mergeable>("MERGEABLE"_tok)) ||
@@ -278,15 +280,6 @@ TYPE_PARSER(
     construct<OmpLoopDirective>(construct<OmpLoopDirective::TeamsDistribute>(
         "TEAMS DISTRIBUTE"_tok >> many(Parser<OmpClause>{}))))
 
-TYPE_PARSER(construct<OmpDeclDirective>(construct<OmpDeclDirective::DeclareReduction>(
-        "DECLARE REDUCTION"_tok >> many(Parser<OmpClause>{}))) ||
-    construct<OmpDeclDirective>(construct<OmpDeclDirective::DeclareSimd>(
-        "DECLARE SIMD"_tok >> many(Parser<OmpClause>{}))) ||
-    construct<OmpDeclDirective>(construct<OmpDeclDirective::DeclareTarget>(
-        "DECLARE TARGET"_tok >> many(Parser<OmpClause>{}))) ||
-    construct<OmpDeclDirective>(construct<OmpDeclDirective::Threadprivate>(
-        "THREADPRIVATE"_tok >> many(Parser<OmpClause>{}))))
-
 TYPE_PARSER(construct<OmpStandaloneDirective>(
                 construct<OmpStandaloneDirective::Barrier>(
                     "BARRIER"_tok >> many(Parser<OmpClause>{}))) ||
@@ -320,17 +313,12 @@ TYPE_PARSER(
 TYPE_PARSER(construct<OpenMPStandaloneConstruct>(
     statement(Parser<OmpStandaloneDirective>{})))
 
-TYPE_PARSER(
-    construct<OpenMPDeclConstruct>(statement(Parser<OmpDeclDirective>{})))
-
 TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
     beginOmpDirective >>
         (construct<OpenMPConstruct>(
              indirect(Parser<OpenMPStandaloneConstruct>{})) ||
             construct<OpenMPConstruct>(
-                indirect(Parser<OpenMPLoopConstruct>{})) ||
-            construct<OpenMPConstruct>(
-                indirect(Parser<OpenMPDeclConstruct>{}))))
+                indirect(Parser<OpenMPLoopConstruct>{}))))
 
 }  // namespace Fortran::parser
 #endif  // OPENMP_PARSER_GRAMMAR_H_

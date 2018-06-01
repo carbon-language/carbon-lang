@@ -250,7 +250,6 @@ struct AssignedGotoStmt;
 struct PauseStmt;
 struct OpenMPConstruct;
 struct OmpClause;
-struct OmpDeclDirective;
 struct OmpStandaloneDirective;
 struct OmpLoopDirective;
 struct OmpEndDirective;
@@ -3221,20 +3220,24 @@ struct OmpMapClause {
   std::tuple<std::optional<Type>, std::list<Name>> t;
 };
 
-// schedule-modifier -> MONOTONIC | NONMONOTONIC | SIMD
+// schedule-modifier-type -> MONOTONIC | NONMONOTONIC | SIMD
 struct OmpScheduleModifierType {
   ENUM_CLASS(ModType, Monotonic, Nonmonotonic, Simd)
   WRAPPER_CLASS_BOILERPLATE(OmpScheduleModifierType, ModType);
 };
 
-// SCHEDULE([schedule-modifier [,schedule-modifier]] kind [,  Chunksize])
+struct OmpScheduleModifier {
+  TUPLE_CLASS_BOILERPLATE(OmpScheduleModifier);
+  WRAPPER_CLASS(Modifier1, OmpScheduleModifierType);
+  WRAPPER_CLASS(Modifier2, OmpScheduleModifierType);
+  std::tuple<Modifier1, std::optional<Modifier2>> t;
+};
+
+// SCHEDULE([schedule-modifier [,schedule-modifier]] schedule-type [,  chunksize])
 struct OmpScheduleClause {
   TUPLE_CLASS_BOILERPLATE(OmpScheduleClause);
   ENUM_CLASS(ScheduleType, Static, Dynamic, Guided, Auto, Runtime)
-  WRAPPER_CLASS(Chunksize, ScalarIntExpr);
-  std::tuple<std::list<OmpScheduleModifierType>, std::optional<ScheduleType>,
-      Chunksize>
-      t;
+  std::tuple<std::optional<OmpScheduleModifier>, ScheduleType, std::optional<ScalarIntExpr>> t;
 };
 
 // IF(DirectiveNameModifier: scalar-logical-expr)
@@ -3369,15 +3372,6 @@ struct OmpClause {
   OmpScheduleClause> u;
 };
 
-struct OmpDeclDirective {
-  UNION_CLASS_BOILERPLATE(OmpDeclDirective);
-  WRAPPER_CLASS(DeclareReduction, std::list<OmpClause>);
-  WRAPPER_CLASS(DeclareSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(DeclareTarget, std::list<OmpClause>);
-  WRAPPER_CLASS(Threadprivate, std::list<OmpClause>);
-  std::variant<DeclareReduction, DeclareSimd, DeclareTarget, Threadprivate> u;
-};
-
 struct OmpLoopDirective {
   UNION_CLASS_BOILERPLATE(OmpLoopDirective);
   WRAPPER_CLASS(DistributeParallelDoSimd, std::list<OmpClause>);
@@ -3440,13 +3434,12 @@ struct OpenMPLoopConstruct {
       t;
 };
 
-WRAPPER_CLASS(OpenMPDeclConstruct, Statement<OmpDeclDirective>);
 WRAPPER_CLASS(OpenMPStandaloneConstruct, Statement<OmpStandaloneDirective>);
 
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
   std::variant<Indirection<OpenMPStandaloneConstruct>,
-      Indirection<OpenMPDeclConstruct>, Indirection<OpenMPLoopConstruct>> u;
+      Indirection<OpenMPLoopConstruct>> u;
 };
 
 }  // namespace parser
