@@ -171,14 +171,13 @@ public:
       ++p;
     }
     Integer radix{base};
-    for (; unsigned char ch = *p; ++p) {
-      std::uint64_t digit;
-      if (ch >= '0' && ch < '0' + base) {
-        digit = ch - '0';
-      } else if (base > 10 && ch >= 'A' && ch < 'A' + base - 10) {
-        digit = ch - 'A' + 10;
-      } else if (base > 10 && ch >= 'a' && ch < 'a' + base - 10) {
-        digit = ch - 'a' + 10;
+    for (; std::uint64_t digit = *p; ++p) {
+      if (digit >= '0' && digit < '0' + base) {
+        digit -= '0';
+      } else if (base > 10 && digit >= 'A' && digit < 'A' + base - 10) {
+        digit -= 'A' - 10;
+      } else if (base > 10 && digit >= 'a' && digit < 'a' + base - 10) {
+        digit -= 'a' - 10;
       } else {
         break;
       }
@@ -653,7 +652,7 @@ public:
       lower.LEPart(j) = product[j];
       upper.LEPart(j) = product[j + parts];
     }
-    if (topPartBits < partBits) {
+    if constexpr (topPartBits < partBits) {
       upper = upper.SHIFTL(partBits - topPartBits);
       upper.LEPart(0) |= lower.LEPart(parts - 1) >> topPartBits;
       lower.LEPart(parts - 1) &= topPartMask;
