@@ -13691,17 +13691,11 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
         continue;
       }
 
-      bool Merged = MergeStoresOfConstantsOrVecElts(
-          StoreNodes, MemVT, NumStoresToMerge, false, true, false);
-      if (!Merged) {
-        StoreNodes.erase(StoreNodes.begin(),
-                         StoreNodes.begin() + NumStoresToMerge);
-        continue;
-      }
-      // Remove merged stores for next iteration.
+      RV |= MergeStoresOfConstantsOrVecElts(StoreNodes, MemVT, NumStoresToMerge,
+                                            false, true, false);
+
       StoreNodes.erase(StoreNodes.begin(),
                        StoreNodes.begin() + NumStoresToMerge);
-      RV = true;
       continue;
     }
 
