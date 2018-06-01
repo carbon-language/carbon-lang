@@ -576,3 +576,7 @@
 
 #CHECK: enclv
 0x0f 0x01 0xc0
+
+# Make sure we ignore EVEX.X when the index register isn't being used.
+#CHECK: vaddps (%rax), %xmm16, %xmm1
+0x62 0xb1 0x7c 0x00 0x58 0x08

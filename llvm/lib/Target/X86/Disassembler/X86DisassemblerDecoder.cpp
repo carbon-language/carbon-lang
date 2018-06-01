@@ -1304,7 +1304,7 @@ static int readDisplacement(struct InternalInstruction* insn) {
  * @return      - 0 if the information was successfully read; nonzero otherwise.
  */
 static int readModRM(struct InternalInstruction* insn) {
-  uint8_t mod, rm, reg;
+  uint8_t mod, rm, reg, evexrm;
 
   dbgprintf(insn, "readModRM()");
 
@@ -1341,9 +1341,11 @@ static int readModRM(struct InternalInstruction* insn) {
 
   reg |= rFromREX(insn->rexPrefix) << 3;
   rm  |= bFromREX(insn->rexPrefix) << 3;
+
+  evexrm = 0;
   if (insn->vectorExtensionType == TYPE_EVEX && insn->mode == MODE_64BIT) {
     reg |= r2FromEVEX2of4(insn->vectorExtensionPrefix[1]) << 4;
-    rm  |=  xFromEVEX2of4(insn->vectorExtensionPrefix[1]) << 4;
+    evexrm = xFromEVEX2of4(insn->vectorExtensionPrefix[1]) << 4;
   }
 
   insn->reg = (Reg)(insn->regBase + reg);
@@ -1433,7 +1435,7 @@ static int readModRM(struct InternalInstruction* insn) {
       break;
     case 0x3:
       insn->eaDisplacement = EA_DISP_NONE;
-      insn->eaBase = (EABase)(insn->eaRegBase + rm);
+      insn->eaBase = (EABase)(insn->eaRegBase + rm + evexrm);
       break;
     }
     break;
