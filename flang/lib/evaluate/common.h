@@ -33,6 +33,16 @@ static constexpr Ordering Reverse(Ordering ordering) {
   }
 }
 
+static constexpr Relation RelationFromOrdering(Ordering ordering) {
+  if (ordering == Ordering::Less) {
+    return Relation::Less;
+  } else if (ordering == Ordering::Greater) {
+    return Relation::Greater;
+  } else {
+    return Relation::Equal;
+  }
+}
+
 static constexpr Relation Reverse(Relation relation) {
   if (relation == Relation::Less) {
     return Relation::Greater;

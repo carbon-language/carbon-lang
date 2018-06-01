@@ -191,6 +191,8 @@ public:
     return {result, overflow};
   }
 
+  // TODO formatting
+
   static constexpr Integer HUGE() { return MASKR(bits - 1); }
 
   // Returns the number of full decimal digits that can be represented.
