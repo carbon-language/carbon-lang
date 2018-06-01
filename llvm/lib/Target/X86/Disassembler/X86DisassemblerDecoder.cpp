@@ -1459,6 +1459,7 @@ static int readModRM(struct InternalInstruction* insn) {
     case TYPE_Rv:                                         \
       return base + index;                                \
     case TYPE_R8:                                         \
+      index &= 0xf;                                       \
       if (insn->rexPrefix &&                              \
          index >= 4 && index <= 7) {                      \
         return prefix##_SPL + (index - 4);                \
@@ -1466,11 +1467,11 @@ static int readModRM(struct InternalInstruction* insn) {
         return prefix##_AL + index;                       \
       }                                                   \
     case TYPE_R16:                                        \
-      return prefix##_AX + index;                         \
+      return prefix##_AX + (index & 0xf);                 \
     case TYPE_R32:                                        \
-      return prefix##_EAX + index;                        \
+      return prefix##_EAX + (index & 0xf);                \
     case TYPE_R64:                                        \
-      return prefix##_RAX + index;                        \
+      return prefix##_RAX + (index & 0xf);                \
     case TYPE_ZMM:                                        \
       return prefix##_ZMM0 + index;                       \
     case TYPE_YMM:                                        \
