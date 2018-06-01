@@ -739,7 +739,7 @@ let DecoderNamespace = "MicroMips" in {
                  ISA_MICROMIPS32_NOT_MIPS32R6;
 
   def LEA_ADDiu_MM : MMRel, EffectiveAddress<"addiu", GPR32Opnd>,
-                     LW_FM_MM<0xc>;
+                     LW_FM_MM<0xc>, ISA_MICROMIPS;
 
   /// Arithmetic Instructions (3-Operand, R-Type)
   def ADDu_MM  : MMRel, ArithLogicR<"addu", GPR32Opnd, 1, II_ADDU, add>,

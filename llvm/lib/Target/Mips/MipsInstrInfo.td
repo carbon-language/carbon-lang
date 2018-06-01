@@ -2317,7 +2317,8 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
+let AdditionalPredicates = [NotInMicroMips] in
+  def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>, ISA_MIPS1;
 
 // MADD*/MSUB*
 def MADD  : MMRel, MArithR<"madd", II_MADD, 1>, MULT_FM<0x1c, 0>,
