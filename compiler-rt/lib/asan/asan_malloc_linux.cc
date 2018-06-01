@@ -132,10 +132,12 @@ INTERCEPTOR(void*, __libc_memalign, uptr boundary, uptr size) {
 }
 #endif // SANITIZER_INTERCEPT_MEMALIGN
 
+#if SANITIZER_INTERCEPT_ALIGNED_ALLOC
 INTERCEPTOR(void*, aligned_alloc, uptr boundary, uptr size) {
   GET_STACK_TRACE_MALLOC;
   return asan_memalign(boundary, size, &stack, FROM_MALLOC);
 }
+#endif // SANITIZER_INTERCEPT_ALIGNED_ALLOC
 
 INTERCEPTOR(uptr, malloc_usable_size, void *ptr) {
   GET_CURRENT_PC_BP_SP;
