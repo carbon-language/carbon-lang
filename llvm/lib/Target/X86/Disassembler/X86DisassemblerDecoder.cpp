@@ -1349,8 +1349,8 @@ static int readModRM(struct InternalInstruction* insn) {
   insn->reg = (Reg)(insn->regBase + reg);
 
   switch (insn->addressSize) {
-  case 2:
-    insn->eaBaseBase = EA_BASE_BX_SI;
+  case 2: {
+    EABase eaBaseBase = EA_BASE_BX_SI;
 
     switch (mod) {
     case 0x0:
@@ -1360,19 +1360,19 @@ static int readModRM(struct InternalInstruction* insn) {
         if (readDisplacement(insn))
           return -1;
       } else {
-        insn->eaBase = (EABase)(insn->eaBaseBase + rm);
+        insn->eaBase = (EABase)(eaBaseBase + rm);
         insn->eaDisplacement = EA_DISP_NONE;
       }
       break;
     case 0x1:
-      insn->eaBase = (EABase)(insn->eaBaseBase + rm);
+      insn->eaBase = (EABase)(eaBaseBase + rm);
       insn->eaDisplacement = EA_DISP_8;
       insn->displacementSize = 1;
       if (readDisplacement(insn))
         return -1;
       break;
     case 0x2:
-      insn->eaBase = (EABase)(insn->eaBaseBase + rm);
+      insn->eaBase = (EABase)(eaBaseBase + rm);
       insn->eaDisplacement = EA_DISP_16;
       if (readDisplacement(insn))
         return -1;
@@ -1384,9 +1384,10 @@ static int readModRM(struct InternalInstruction* insn) {
       break;
     }
     break;
+  }
   case 4:
-  case 8:
-    insn->eaBaseBase = (insn->addressSize == 4 ? EA_BASE_EAX : EA_BASE_RAX);
+  case 8: {
+    EABase eaBaseBase = (insn->addressSize == 4 ? EA_BASE_EAX : EA_BASE_RAX);
 
     switch (mod) {
     case 0x0:
@@ -1408,7 +1409,7 @@ static int readModRM(struct InternalInstruction* insn) {
           return -1;
         break;
       default:
-        insn->eaBase = (EABase)(insn->eaBaseBase + rm);
+        insn->eaBase = (EABase)(eaBaseBase + rm);
         break;
       }
       break;
@@ -1424,7 +1425,7 @@ static int readModRM(struct InternalInstruction* insn) {
           return -1;
         break;
       default:
-        insn->eaBase = (EABase)(insn->eaBaseBase + rm);
+        insn->eaBase = (EABase)(eaBaseBase + rm);
         if (readDisplacement(insn))
           return -1;
         break;
@@ -1436,6 +1437,7 @@ static int readModRM(struct InternalInstruction* insn) {
       break;
     }
     break;
+  }
   } /* switch (insn->addressSize) */
 
   return 0;
