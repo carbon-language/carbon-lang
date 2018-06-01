@@ -450,7 +450,7 @@ def plugin_opt_thinlto_prefix_replace_eq: J<"plugin-opt=thinlto-prefix-replace="
 // just ignore the option on lld side as it's easier. In fact, the linker could
 // be called 'ld' and understanding which linker is used would require parsing of
 // --version output.
-def plugin: J<"plugin">;
+defm plugin: Eq<"plugin", "Ignored for compatibility with GNU linkers">;
 
 def plugin_opt_fresolution_eq: J<"plugin-opt=-fresolution=">;
 def plugin_opt_pass_through_eq: J<"plugin-opt=-pass-through=">;
