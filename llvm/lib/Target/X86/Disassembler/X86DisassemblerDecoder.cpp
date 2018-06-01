@@ -1341,7 +1341,7 @@ static int readModRM(struct InternalInstruction* insn) {
 
   reg |= rFromREX(insn->rexPrefix) << 3;
   rm  |= bFromREX(insn->rexPrefix) << 3;
-  if (insn->vectorExtensionType == TYPE_EVEX) {
+  if (insn->vectorExtensionType == TYPE_EVEX && insn->mode == MODE_64BIT) {
     reg |= r2FromEVEX2of4(insn->vectorExtensionPrefix[1]) << 4;
     rm  |=  xFromEVEX2of4(insn->vectorExtensionPrefix[1]) << 4;
   }
@@ -1759,7 +1759,7 @@ static int readOperands(struct InternalInstruction* insn) {
         insn->sibIndex = (SIBIndex)4;
 
       // If EVEX.v2 is set this is one of the 16-31 registers.
-      if (insn->vectorExtensionType == TYPE_EVEX &&
+      if (insn->vectorExtensionType == TYPE_EVEX && insn->mode == MODE_64BIT &&
           v2FromEVEX4of4(insn->vectorExtensionPrefix[3]))
         insn->sibIndex = (SIBIndex)(insn->sibIndex + 16);
 
