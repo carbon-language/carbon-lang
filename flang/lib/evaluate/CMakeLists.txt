@@ -14,4 +14,5 @@
 
 add_library(FortranEvaluate
   constant.cc
+  integer.cc
 )

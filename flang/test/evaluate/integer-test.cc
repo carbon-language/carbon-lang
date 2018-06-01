@@ -24,9 +24,9 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
   std::int64_t maxPositiveSignedValue{(std::int64_t{1} << (BITS - 1)) - 1};
   std::int64_t mostNegativeSignedValue{-(std::int64_t{1} << (BITS - 1))};
   char desc[64];
-  std::snprintf(desc, sizeof desc, "BITS=%d, PARTBITS=%d, sizeof(Part)=%d, LE=%d",
-      BITS, INT::partBits, static_cast<int>(sizeof(typename INT::Part)),
-      INT::littleEndian);
+  std::snprintf(desc, sizeof desc,
+      "BITS=%d, PARTBITS=%d, sizeof(Part)=%d, LE=%d", BITS, INT::partBits,
+      static_cast<int>(sizeof(typename INT::Part)), INT::littleEndian);
 
   MATCH(BITS, INT::bits)(desc);
   MATCH(maxPositiveSignedValue, INT::HUGE().ToUInt64())(desc);
@@ -47,14 +47,14 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
     MATCH(x ^ maxUnsignedValue, t.ToUInt64())("%s, x=0x%llx", desc, x);
     auto negated{a.Negate()};
     MATCH(x == std::uint64_t{1} << (BITS - 1), negated.overflow)
-      ("%s, x=0x%llx", desc, x);
+    ("%s, x=0x%llx", desc, x);
     MATCH(-x & maxUnsignedValue, negated.value.ToUInt64())
-      ("%s, x=0x%llx", desc, x);
+    ("%s, x=0x%llx", desc, x);
     auto abs{a.ABS()};
     MATCH(x == std::uint64_t{1} << (BITS - 1), abs.overflow)
-      ("%s, x=0x%llx", desc, x);
-    MATCH(x >> (BITS-1) ? -x & maxUnsignedValue : x, abs.value.ToUInt64())
-      ("%s, x=0x%llx", desc, x);
+    ("%s, x=0x%llx", desc, x);
+    MATCH(x >> (BITS - 1) ? -x & maxUnsignedValue : x, abs.value.ToUInt64())
+    ("%s, x=0x%llx", desc, x);
     int lzbc{a.LEADZ()};
     COMPARE(lzbc, >=, 0)("%s, x=0x%llx", desc, x);
     COMPARE(lzbc, <=, BITS)("%s, x=0x%llx", desc, x);
@@ -77,7 +77,7 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
     MATCH(trailcheck, a.TRAILZ())("%s, x=0x%llx", desc, x);
     for (int j{0}; j < BITS; ++j) {
       MATCH((x >> j) & 1, a.BTEST(j))
-        ("%s, x=0x%llx, bit %d", desc, x, j);
+      ("%s, x=0x%llx, bit %d", desc, x, j);
     }
     // TODO test DIM, MODULO, ISHFTC, DSHIFTL/R
     // TODO test IBCLR, IBSET, IBITS, MAX, MIN, MERGE_BITS, RANGE, SIGN
@@ -104,20 +104,21 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
     for (int count{0}; count <= BITS + 1; ++count) {
       t = a.SHIFTL(count);
       MATCH((x << count) & maxUnsignedValue, t.ToUInt64())
-        ("%s, x=0x%llx, count=%d", desc, x, count);
+      ("%s, x=0x%llx, count=%d", desc, x, count);
       t = a.ISHFT(count);
       MATCH((x << count) & maxUnsignedValue, t.ToUInt64())
-        ("%s, x=0x%llx, count=%d", desc, x, count);
+      ("%s, x=0x%llx, count=%d", desc, x, count);
       t = a.SHIFTR(count);
       MATCH(x >> count, t.ToUInt64())
-        ("%s, x=0x%llx, count=%d", desc, x, count);
+      ("%s, x=0x%llx, count=%d", desc, x, count);
       t = a.ISHFT(-count);
       MATCH(x >> count, t.ToUInt64())("%s, x=0x%llx, count=%d", desc, x, count);
       t = a.SHIFTA(count);
-      std::uint64_t fill{-(x >> (BITS-1))};
-      std::uint64_t sra{count >= BITS ? fill : (x >> count) | (fill << (BITS-count))};
+      std::uint64_t fill{-(x >> (BITS - 1))};
+      std::uint64_t sra{
+          count >= BITS ? fill : (x >> count) | (fill << (BITS - count))};
       MATCH(sra, t.ToInt64())
-        ("%s, x=0x%llx, count=%d", desc, x, count);
+      ("%s, x=0x%llx, count=%d", desc, x, count);
     }
 
     for (std::uint64_t y{0}; y <= maxUnsignedValue; ++y) {
@@ -146,8 +147,8 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
         ord = Ordering::Equal;
       }
       TEST(a.CompareSigned(b) == ord)
-        ("%s, x=0x%llx %lld %d, y=0x%llx %lld %d", desc, x, sx,
-         a.IsNegative(), y, sy, b.IsNegative());
+      ("%s, x=0x%llx %lld %d, y=0x%llx %lld %d", desc, x, sx, a.IsNegative(), y,
+          sy, b.IsNegative());
 
       t = a.IAND(b);
       MATCH(x & y, t.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
@@ -156,41 +157,45 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
       t = a.IEOR(b);
       MATCH(x ^ y, t.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
       auto sum{a.AddUnsigned(b)};
-      COMPARE(x + y, ==, sum.value.ToUInt64() + (std::uint64_t{sum.carry} << BITS))
-        ("%s, x=0x%llx, y=0x%llx, carry=%d", desc, x, y, sum.carry);
+      COMPARE(
+          x + y, ==, sum.value.ToUInt64() + (std::uint64_t{sum.carry} << BITS))
+      ("%s, x=0x%llx, y=0x%llx, carry=%d", desc, x, y, sum.carry);
       auto ssum{a.AddSigned(b)};
       MATCH((sx + sy) & maxUnsignedValue, ssum.value.ToUInt64())
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      MATCH(sx + sy < mostNegativeSignedValue ||
-            sx + sy > maxPositiveSignedValue, ssum.overflow)
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(
+          sx + sy < mostNegativeSignedValue || sx + sy > maxPositiveSignedValue,
+          ssum.overflow)
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       auto diff{a.SubtractSigned(b)};
       MATCH((sx - sy) & maxUnsignedValue, diff.value.ToUInt64())
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
-      MATCH(sx - sy < mostNegativeSignedValue ||
-            sx - sy > maxPositiveSignedValue, diff.overflow)
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      MATCH(
+          sx - sy < mostNegativeSignedValue || sx - sy > maxPositiveSignedValue,
+          diff.overflow)
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       auto product{a.MultiplyUnsigned(b)};
-      MATCH(x * y, (product.upper.ToUInt64() << BITS) ^ product.lower.ToUInt64())
-        ("%s, x=0x%llx, y=0x%llx, lower=0x%llx, upper=0x%llx", desc, x, y,
+      MATCH(
+          x * y, (product.upper.ToUInt64() << BITS) ^ product.lower.ToUInt64())
+      ("%s, x=0x%llx, y=0x%llx, lower=0x%llx, upper=0x%llx", desc, x, y,
           product.lower.ToUInt64(), product.upper.ToUInt64());
       product = a.MultiplySigned(b);
       MATCH((sx * sy) & maxUnsignedValue, product.lower.ToUInt64())
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       MATCH(((sx * sy) >> BITS) & maxUnsignedValue, product.upper.ToUInt64())
-        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+      ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       auto quot{a.DivideUnsigned(b)};
       MATCH(y == 0, quot.divisionByZero)("%s, x=0x%llx, y=0x%llx", desc, x, y);
       if (y == 0) {
         MATCH(maxUnsignedValue, quot.quotient.ToUInt64())
-          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         MATCH(0, quot.remainder.ToUInt64())
-          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else {
         MATCH(x / y, quot.quotient.ToUInt64())
-          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         MATCH(x % y, quot.remainder.ToUInt64())
-          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
       quot = a.DivideSigned(b);
       bool badCase{sx == mostNegativeSignedValue &&
@@ -206,16 +211,18 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
           ("%s, x=0x%llx, y=0x%llx", desc, x, y);
         }
         MATCH(0, quot.remainder.ToUInt64())
-          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else if (badCase) {
-        MATCH(x, quot.quotient.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
-        MATCH(0, quot.remainder.ToUInt64())("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(x, quot.quotient.ToUInt64())
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        MATCH(0, quot.remainder.ToUInt64())
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       } else {
         MATCH(sx / sy, quot.quotient.ToInt64())
-          ("%s, x=0x%llx %lld, y=0x%llx %lld; unsigned 0x%llx", desc, x, sx, y,
+        ("%s, x=0x%llx %lld, y=0x%llx %lld; unsigned 0x%llx", desc, x, sx, y,
             sy, quot.quotient.ToUInt64());
         MATCH(sx - sy * (sx / sy), quot.remainder.ToInt64())
-          ("%s, x=0x%llx, y=0x%llx", desc, x, y);
+        ("%s, x=0x%llx, y=0x%llx", desc, x, y);
       }
     }
   }

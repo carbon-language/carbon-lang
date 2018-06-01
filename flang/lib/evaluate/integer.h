@@ -24,47 +24,42 @@
 // and signed-magnitude encodings appear to be extinct in 2018.)
 
 #include "bit-population-count.h"
+#include "common.h"
 #include "leading-zero-bit-count.h"
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
+#include <type_traits>
 
 namespace Fortran::evaluate {
 
-// Integers are always ordered.
-enum class Ordering { Less, Equal, Greater };
-
-static constexpr Ordering Reverse(Ordering ordering) {
-  if (ordering == Ordering::Less) {
-    return Ordering::Greater;
-  } else if (ordering == Ordering::Greater) {
-    return Ordering::Less;
-  } else {
-    return Ordering::Equal;
-  }
-}
-
-// Implements an integer as an assembly of smaller integer parts.
-// For best performance, the part should be half of the size of the
-// largest efficient integer supported by the host processor.
+// Implements an integer as an assembly of smaller host integer parts
+// that constitute the digits of a large-radix fixed-point number.
+// For best performance, the type of these parts should be half of the
+// size of the largest efficient integer supported by the host processor.
 // These parts are stored in either little- or big-endian order, which can
 // match that of the host's endianness or not; but if the ordering matches
 // that of the host, raw host data can be overlaid with a properly configured
 // instance of this class and used in situ.
 // To facilitate exhaustive testing of what would otherwise be more rare
 // edge cases, this class template may be configured to use other part
-// types &/or partial fields in the parts.
+// types &/or partial fields in the parts.  The radix (i.e., the number
+// of possible values in a part), however, must be a power of two; this
+// template class is not generalized to enable, say, decimal arithmetic.
 // Member functions that correspond to Fortran intrinsic functions are
-// named accordingly.
-template<int BITS, int PARTBITS = 32, typename PART = std::uint32_t,
-    typename BIGPART = std::uint64_t, bool LITTLE_ENDIAN = true>
-class Integer {
+// named accordingly so that they can be referenced easily in the
+// language standard.
+template<int BITS,
+    int PARTBITS =
+        BITS<32 ? BITS : 32, typename PART = HostUnsignedInt<PARTBITS>,
+            typename BIGPART = HostUnsignedInt<PARTBITS * 2>,
+            bool LITTLE_ENDIAN = IsHostLittleEndian> class Integer {
 public:
   static constexpr int bits{BITS};
   static constexpr int partBits{PARTBITS};
   using Part = PART;
   using BigPart = BIGPART;
-  static_assert(sizeof(BigPart) >= 2 * sizeof(Part));
+  static_assert(CHAR_BIT * sizeof(BigPart) >= 2 * partBits);
   static constexpr bool littleEndian{LITTLE_ENDIAN};
 
 private:
@@ -152,9 +147,9 @@ public:
     if (bits < 4) {
       return 0;
     }
-    Integer x{HUGE}, ten{std::uint64_t{10}};
+    Integer x{HUGE()}, ten{std::uint64_t{10}};
     int digits{0};
-    while (x.Compare(ten) != Ordering::Less) {
+    while (x.CompareUnsigned(ten) != Ordering::Less) {
       ++digits;
       x = x.DivideUnsigned(ten).quotient;
     }
@@ -515,8 +510,7 @@ public:
     return result;
   }
 
-  constexpr Integer MERGE_BITS(
-      const Integer &y, const Integer &mask) const {
+  constexpr Integer MERGE_BITS(const Integer &y, const Integer &mask) const {
     return IAND(mask).IOR(y.IAND(mask.NOT()));
   }
 
@@ -585,7 +579,7 @@ public:
   constexpr ValueWithOverflow SIGN(const Integer &sign) const {
     bool goNegative{sign.IsNegative()};
     if (goNegative == IsNegative()) {
-      return *this;
+      return {*this, false};
     } else if (goNegative) {
       return Negate();
     } else {
@@ -655,8 +649,7 @@ public:
     Integer quotient, remainder;
     bool divisionByZero, overflow;
   };
-  constexpr QuotientWithRemainder DivideUnsigned(
-      const Integer &divisor) const {
+  constexpr QuotientWithRemainder DivideUnsigned(const Integer &divisor) const {
     if (divisor.IsZero()) {
       return {MASKR(bits), Integer{}, true, false};  // overflow to max value
     }
@@ -734,7 +727,6 @@ public:
   // Result has the sign of the divisor argument.
   // 8 mod 5 = 3;  -8 mod 5 = 2;  8 mod -5 = -2;  -8 mod -5 = -3
   constexpr ValueWithOverflow MODULO(const Integer &divisor) const {
-    Integer quotient{*this};
     bool negativeDivisor{divisor.IsNegative()};
     bool distinctSigns{IsNegative() != negativeDivisor};
     QuotientWithRemainder divided{DivideSigned(divisor)};
@@ -781,5 +773,14 @@ private:
 
   Part part_[parts];
 };
+
+extern template class Integer<8>;
+extern template class Integer<16>;
+extern template class Integer<32>;
+extern template class Integer<64>;
+extern template class Integer<128>;
+
+template<int KIND> using IntrinsicInteger = Integer<KIND * CHAR_BIT>;
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_INTEGER_H_
