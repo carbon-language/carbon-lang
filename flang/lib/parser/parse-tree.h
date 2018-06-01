@@ -3286,8 +3286,8 @@ struct OmpLinearClause {
   std::variant<WithModifier, WithoutModifier> u;
 };
 
-// reduction-identifier -> Add, Subtract, Multiply, .and., .or., .eqv., .neqg.,
-// min, max, iand, ior, ieor
+// reduction-identifier -> "+", "-", "*", .AND., .OR., .EQV., .NEQV.,
+// MIN, MAX, IAND, IOR, IEOR
 struct OmpReductionOperator {
   UNION_CLASS_BOILERPLATE(OmpReductionOperator);
   ENUM_CLASS(ProcedureOperator, MIN, MAX, IAND, IOR, IEOR)

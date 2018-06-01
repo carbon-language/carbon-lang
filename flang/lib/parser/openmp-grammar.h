@@ -12,14 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OPENMP_PARSER_GRAMMAR_H_
-#define OPENMP_PARSER_GRAMMAR_H_
+#ifndef FORTRAN_PARSER_OPENMP_GRAMMAR_H_
+#define FORTRAN_PARSER_OPENMP_GRAMMAR_H_
 
-// Top-level grammar specification for Fortran.  These parsers drive
-// the tokenization parsers in cooked-tokens.h to consume characters,
-// recognize the productions of Fortran, and to construct a parse tree.
-// See ParserCombinators.md for documentation on the parser combinator
-// library used here to implement an LL recursive descent recognizer.
+// Top-level grammar specification for OpenMP. 
+// See OpenMP-4.5-grammar.txt for documentation.
 
 #include "basic-parsers.h"
 #include "characters.h"
@@ -63,13 +60,13 @@ TYPE_PARSER(construct<OmpProcBindClause>(
 // map-type-modifier -> ALWAYS
 // map-type -> TO | FROM | TOFROM | ALLOC | RELEASE | DELETE
 TYPE_PARSER(construct<OmpMapClause>(
-    maybe(maybe("ALWAYS"_tok >> maybe(","_ch)) >>
-        ("TO" >> pure(OmpMapClause::Type::To) / ":"_ch ||
-            "FROM" >> pure(OmpMapClause::Type::From) / ":"_ch ||
-            "TOFROM" >> pure(OmpMapClause::Type::Tofrom) / ":"_ch ||
-            "ALLOC" >> pure(OmpMapClause::Type::Alloc) / ":"_ch ||
-            "RELEASE" >> pure(OmpMapClause::Type::Release) / ":"_ch ||
-            "DELETE" >> pure(OmpMapClause::Type::Delete) / ":"_ch)),
+    maybe(maybe("ALWAYS" >> maybe(","_tok)) >>
+        ("TO" >> pure(OmpMapClause::Type::To) / ":"_tok ||
+            "FROM" >> pure(OmpMapClause::Type::From) / ":"_tok ||
+            "TOFROM" >> pure(OmpMapClause::Type::Tofrom) / ":"_tok ||
+            "ALLOC" >> pure(OmpMapClause::Type::Alloc) / ":"_tok ||
+            "RELEASE" >> pure(OmpMapClause::Type::Release) / ":"_tok ||
+            "DELETE" >> pure(OmpMapClause::Type::Delete) / ":"_tok)),
     nonemptyList(name)))
 
 // SCHEDULE ([modifier [, modifier]:]kind[, chunk_size])
@@ -82,7 +79,7 @@ TYPE_PARSER(construct<OmpScheduleModifierType>(
     "SIMD" >> pure(OmpScheduleModifierType::ModType::Simd)))
 
 TYPE_PARSER(construct<OmpScheduleModifier>(Parser<OmpScheduleModifierType>{},
-    maybe(","_ch >> Parser<OmpScheduleModifierType>{})))
+    maybe(","_tok >> Parser<OmpScheduleModifierType>{})))
 
 TYPE_PARSER(construct<OmpScheduleClause>(maybe(Parser<OmpScheduleModifier>{}),
     "STATIC" >> pure(OmpScheduleClause::ScheduleType::Static) ||
@@ -90,11 +87,11 @@ TYPE_PARSER(construct<OmpScheduleClause>(maybe(Parser<OmpScheduleModifier>{}),
         "GUIDED" >> pure(OmpScheduleClause::ScheduleType::Guided) ||
         "AUTO" >> pure(OmpScheduleClause::ScheduleType::Auto) ||
         "RUNTIME" >> pure(OmpScheduleClause::ScheduleType::Runtime),
-    maybe(","_ch) >> scalarIntExpr))
+    maybe(","_tok) >> scalarIntExpr))
 
 // IF(directive-name-modifier: scalar-logical-expr)
 TYPE_PARSER(construct<OmpIfClause>(
-    ("PARALLEL"_tok >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
+    maybe("PARALLEL"_tok >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
         "TARGET ENTER DATA"_tok >>
             pure(OmpIfClause::DirectiveNameModifier::TargetEnterData) ||
         "TARGET EXIT DATA"_tok >>
@@ -106,7 +103,7 @@ TYPE_PARSER(construct<OmpIfClause>(
         "TARGET"_tok >> pure(OmpIfClause::DirectiveNameModifier::Target) ||
         "TASKLOOP"_tok >> pure(OmpIfClause::DirectiveNameModifier::Taskloop) ||
         "TASK"_tok >> pure(OmpIfClause::DirectiveNameModifier::Task)) /
-        maybe(":"_ch),
+        maybe(":"_tok),
     scalarLogicalExpr))
 
 // REDUCTION(reduction-identifier: list)
@@ -130,7 +127,7 @@ TYPE_PARSER(construct<OmpReductionOperator>(reductionBinaryOperator) ||
     construct<OmpReductionOperator>(reductionProcedureOperator))
 
 TYPE_PARSER(construct<OmpReductionClause>(
-    Parser<OmpReductionOperator>{} / ":"_ch, nonemptyList(designator)))
+    Parser<OmpReductionOperator>{} / ":"_tok, nonemptyList(designator)))
 
 // DEPEND(SOURCE | SINK : vec | (IN | OUT | INOUT) : list
 TYPE_PARSER(construct<OmpDependSinkVecLength>(
@@ -146,11 +143,11 @@ TYPE_PARSER(construct<OmpDependenceType>(
 
 TYPE_CONTEXT_PARSER("Omp Depend clause"_en_US,
     construct<OmpDependClause>(construct<OmpDependClause::Sink>(
-        "SINK"_tok >> ":"_ch >> nonemptyList(Parser<OmpDependSinkVec>{}))) ||
+        "SINK"_tok >> ":"_tok >> nonemptyList(Parser<OmpDependSinkVec>{}))) ||
         construct<OmpDependClause>(
             construct<OmpDependClause::Source>("SOURCE"_tok)) ||
         construct<OmpDependClause>(construct<OmpDependClause::InOut>(
-            Parser<OmpDependenceType>{}, ":"_ch >> nonemptyList(designator))))
+            Parser<OmpDependenceType>{}, ":"_tok >> nonemptyList(designator))))
 
 // LINEAR(list: linear-step)
 TYPE_PARSER(construct<OmpLinearModifier>(
@@ -162,20 +159,20 @@ TYPE_CONTEXT_PARSER("Omp LINEAR clause"_en_US,
     construct<OmpLinearClause>(
         construct<OmpLinearClause>(construct<OmpLinearClause::WithModifier>(
             Parser<OmpLinearModifier>{}, parenthesized(nonemptyList(name)),
-            maybe(":"_ch >> scalarIntConstantExpr))) ||
+            maybe(":"_tok >> scalarIntConstantExpr))) ||
         construct<OmpLinearClause>(construct<OmpLinearClause::WithoutModifier>(
-            nonemptyList(name), maybe(":"_ch >> scalarIntConstantExpr)))))
+            nonemptyList(name), maybe(":"_tok >> scalarIntConstantExpr)))))
 
 // ALIGNED(list: alignment)
 TYPE_PARSER(construct<OmpAlignedClause>(
-    nonemptyList(name), maybe(":"_ch) >> scalarIntConstantExpr))
+    nonemptyList(name), maybe(":"_tok) >> scalarIntConstantExpr))
 
 TYPE_PARSER(construct<OmpNameList>(pure(OmpNameList::Kind::Object), name) ||
     construct<OmpNameList>("/" >> pure(OmpNameList::Kind::Common), name / "/"))
 
 TYPE_PARSER(
     construct<OmpClause>(construct<OmpClause::Defaultmap>("DEFAULTMAP"_tok >>
-        parenthesized("TOFROM"_tok >> ":"_ch >> "SCALAR"_tok))) ||
+        parenthesized("TOFROM"_tok >> ":"_tok >> "SCALAR"_tok))) ||
     construct<OmpClause>(construct<OmpClause::Inbranch>("INBRANCH"_tok)) ||
     construct<OmpClause>(construct<OmpClause::Mergeable>("MERGEABLE"_tok)) ||
     construct<OmpClause>(construct<OmpClause::Nogroup>("NOGROUP"_tok)) ||
@@ -193,7 +190,7 @@ TYPE_PARSER(
         "DEVICE"_tok >> parenthesized(scalarIntExpr))) ||
     construct<OmpClause>(
         construct<OmpClause::DistSchedule>("DIST_SCHEDULE"_tok >>
-            parenthesized("STATIC"_tok >> ","_ch >> scalarIntExpr))) ||
+            parenthesized("STATIC"_tok >> ","_tok >> scalarIntExpr))) ||
     construct<OmpClause>(construct<OmpClause::Final>(
         "FINAL"_tok >> parenthesized(scalarIntExpr))) ||
     construct<OmpClause>(
@@ -353,4 +350,4 @@ TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
                                  indirect(Parser<OpenMPLoopConstruct>{}))))
 
 }  // namespace Fortran::parser
-#endif  // OPENMP_PARSER_GRAMMAR_H_
+#endif  // FORTRAN_PARSER_OPENMP_GRAMMAR_H_

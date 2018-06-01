@@ -1668,7 +1668,7 @@ public:
     Word(" SCHEDULE(");
     Walk(std::get<std::optional<OmpScheduleModifier>>(x.t));
     Walk(std::get<OmpScheduleClause::ScheduleType>(x.t));
-    Walk(std::get<std::optional<ScalarIntExpr>>(x.t));
+    Walk(",", std::get<std::optional<ScalarIntExpr>>(x.t));
     Put(")");
   }
   void Unparse(const OmpAlignedClause &x) {
@@ -1692,6 +1692,18 @@ public:
     Word(" LINEAR("), Walk(x.modifier), Put("("), Walk(x.names, ","), Put(")");
     Walk(":", x.step);
     Put(")");
+  }
+  void Unparse(const OmpReductionOperator::BinaryOperator &x) {
+    switch (x) {
+    case OmpReductionOperator::BinaryOperator::Add: Put("+"); break;
+    case OmpReductionOperator::BinaryOperator::Subtract: Put("-"); break;
+    case OmpReductionOperator::BinaryOperator::Multiply: Put("*"); break;
+    case OmpReductionOperator::BinaryOperator::AND: Word(".AND."); break;
+    case OmpReductionOperator::BinaryOperator::OR: Word(".OR."); break;
+    case OmpReductionOperator::BinaryOperator::EQV: Word(".EQV."); break;
+    case OmpReductionOperator::BinaryOperator::NEQV: Word(".NEQV."); break;
+    default: break;
+    }
   }
   void Unparse(const OmpReductionClause &x) {
     Word(" REDUCTION(");
@@ -2081,8 +2093,6 @@ public:
   WALK_NESTED_ENUM(OmpLinearModifier, Type)  // OMP linear-modifier
   WALK_NESTED_ENUM(
       OmpReductionOperator, ProcedureOperator)  // OMP reduction-identifier
-  WALK_NESTED_ENUM(
-      OmpReductionOperator, BinaryOperator)  // OMP reduction-identifier
   WALK_NESTED_ENUM(OmpDependenceType, Type)  // OMP dependence-type
   WALK_NESTED_ENUM(OmpMapClause, Type)  // OMP map-type
   WALK_NESTED_ENUM(OmpScheduleClause, ScheduleType)  // OMP schedule-type
