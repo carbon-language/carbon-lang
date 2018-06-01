@@ -1715,15 +1715,15 @@ public:
   }
   void Unparse(const OmpDependClause &x) {
     std::visit(visitors{[&](const OmpDependClause::Source &y) {
-                          Word(" DEPEND(SOURCE)");
+                          Word("DEPEND(SOURCE)");
                         },
                    [&](const OmpDependClause::Sink &y) {
-                     Word(" DEPEND(SINK:");
+                     Word("DEPEND(SINK:");
                      Walk(y.v);
                      Put(")");
                    },
                    [&](const OmpDependClause::InOut &y) {
-                     Word(" DEPEND(");
+                     Word("DEPEND(");
                      Walk(y.t);
                      Put(")");
                    }},
@@ -1732,216 +1732,221 @@ public:
   void Before(const OmpClause::Defaultmap &x) {
     Word(" DEFAULTMAP(TOFROM:SCALAR)");
   }
-  void Before(const OmpClause::Inbranch &x) { Word(" INBRANCH"); }
-  void Before(const OmpClause::Mergeable &x) { Word(" MERGEABLE"); }
-  void Before(const OmpClause::Nogroup &x) { Word(" NOGROUP"); }
-  void Before(const OmpClause::Notinbranch &x) { Word(" NOTINBRANCH"); }
-  void Before(const OmpClause::Nowait &x) { Word(" NOWAIT"); }
-  void Before(const OmpClause::Untied &x) { Word(" UNTIED"); }
+  void Before(const OmpClause::Inbranch &x) { Word("INBRANCH"); }
+  void Before(const OmpClause::Mergeable &x) { Word("MERGEABLE"); }
+  void Before(const OmpClause::Nogroup &x) { Word("NOGROUP"); }
+  void Before(const OmpClause::Notinbranch &x) { Word("NOTINBRANCH"); }
+  void Before(const OmpClause::Nowait &x) { Word("NOWAIT"); }
+  void Before(const OmpClause::Untied &x) { Word("UNTIED"); }
   void Unparse(const OmpClause::Collapse &x) {
-    Word(" COLLAPSE(");
+    Word("COLLAPSE(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Copyin &x) {
-    Word(" COPYIN(");
+    Word("COPYIN(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::Copyprivate &x) {
-    Word(" COPYPRIVATE(");
+    Word("COPYPRIVATE(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::Device &x) {
-    Word(" DEVICE(");
+    Word("DEVICE(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::DistSchedule &x) {
-    Word(" DIST_SCHEDULE(STATIC,");
+    Word("DIST_SCHEDULE(STATIC,");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Final &x) {
-    Word(" FINAL(");
+    Word("FINAL(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Firstprivate &x) {
-    Word(" FIRSTPRIVATE(");
+    Word("FIRSTPRIVATE(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::From &x) {
-    Word(" FROM(");
+    Word("FROM(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::Grainsize &x) {
-    Word(" GRAINSIZE(");
+    Word("GRAINSIZE(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Lastprivate &x) {
-    Word(" LASTPRIVATE(");
+    Word("LASTPRIVATE(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::Link &x) {
-    Word(" LINK(");
+    Word("LINK(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::NumTasks &x) {
-    Word(" NUM_TASKS(");
+    Word("NUM_TASKS(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::NumTeams &x) {
-    Word(" NUM_TEAMS(");
+    Word("NUM_TEAMS(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::NumThreads &x) {
-    Word(" NUM_THREADS(");
+    Word("NUM_THREADS(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Ordered &x) {
-    Word(" ORDERED");
+    Word("ORDERED");
     Walk("(", x.v, ")");
   }
   void Unparse(const OmpClause::Priority &x) {
-    Word(" PRIORITY(");
+    Word("PRIORITY(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Private &x) {
-    Word(" PRIVATE(");
+    Word("PRIVATE(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::Safelen &x) {
-    Word(" SAFELEN(");
+    Word("SAFELEN(");
+    Walk(x.v);
+    Put(")");
+  }
+  void Unparse(const OmpClause::Simdlen &x) {
+    Word("SIMDLEN(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::ThreadLimit &x) {
-    Word(" THREADLIMIT(");
+    Word("THREADLIMIT(");
     Walk(x.v);
     Put(")");
   }
   void Unparse(const OmpClause::Shared &x) {
-    Word(" SHARED(");
+    Word("SHARED(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::To &x) {
-    Word(" TO(");
+    Word("TO(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::Uniform &x) {
-    Word(" UNIFORM(");
+    Word("UNIFORM(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpClause::UseDevicePtr &x) {
-    Word(" USE_DEVICE_PTR(");
+    Word("USE_DEVICE_PTR(");
     Walk(x.v, ",");
     Put(")");
   }
   void Unparse(const OmpLoopDirective &x) {
     std::visit(
         visitors{[&](const OmpLoopDirective::DistributeParallelDoSimd &y) {
-                   Word("DISTRIBUTE PARALLEL DO SIMD");
-                   Walk(y.v);
+                   Word("DISTRIBUTE PARALLEL DO SIMD ");
+                   Walk(y.v, " ");
                  },
             [&](const OmpLoopDirective::DistributeParallelDo &y) {
-              Word("DISTRIBUTE PARALLEL DO");
-              Walk(y.v);
+              Word("DISTRIBUTE PARALLEL DO ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::DistributeSimd &y) {
-              Word("DISTRIBUTE SIMD");
-              Walk(y.v);
+              Word("DISTRIBUTE SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::Distribute &y) {
-              Word("DISTRIBUTE");
-              Walk(y.v);
+              Word("DISTRIBUTE ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::DoSimd &y) {
-              Word("DO SIMD");
-              Walk(y.v);
+              Word("DO SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::Do &y) {
-              Word("DO");
-              Walk(y.v);
+              Word("DO ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::ParallelDoSimd &y) {
-              Word("PARALLEL DO SIMD");
-              Walk(y.v);
+              Word("PARALLEL DO SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::ParallelDo &y) {
-              Word("PARALLEL DO");
-              Walk(y.v);
+              Word("PARALLEL DO ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::Simd &y) {
-              Word("SIMD");
-              Walk(y.v);
+              Word("SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TargetParallelDoSimd &y) {
-              Word("TARGET PARALLEL DO SIMD");
-              Walk(y.v);
+              Word("TARGET PARALLEL DO SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TargetParallelDo &y) {
-              Word("TARGET PARALLEL DO");
-              Walk(y.v);
+              Word("TARGET PARALLEL DO ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TargetTeamsDistributeParallelDoSimd
                     &y) {
-              Word("TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD");
-              Walk(y.v);
+              Word("TARGET TEAMS DISTRIBUTE PARALLEL DO SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TargetTeamsDistributeParallelDo &y) {
-              Word("TARGET TEAMS DISTRIBUTE PARALLEL DO");
-              Walk(y.v);
+              Word("TARGET TEAMS DISTRIBUTE PARALLEL DO ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TargetTeamsDistributeSimd &y) {
-              Word("TARGET TEAMS DISTRIBUTE SIMD");
-              Walk(y.v);
+              Word("TARGET TEAMS DISTRIBUTE SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TargetTeamsDistribute &y) {
-              Word("TARGET TEAMS DISTRIBUTE");
-              Walk(y.v);
+              Word("TARGET TEAMS DISTRIBUTE ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TargetSimd &y) {
-              Word("TARGET SIMD");
-              Walk(y.v);
+              Word("TARGET SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TaskloopSimd &y) {
-              Word("TASKLOOP SIMD");
-              Walk(y.v);
+              Word("TASKLOOP SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::Taskloop &y) {
-              Word("TASKLOOP");
-              Walk(y.v);
+              Word("TASKLOOP ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TeamsDistributeParallelDoSimd &y) {
-              Word("TEAMS DISTRIBUTE PARALLEL DO SIMD");
-              Walk(y.v);
+              Word("TEAMS DISTRIBUTE PARALLEL DO SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TeamsDistributeParallelDo &y) {
-              Word("TEAMS DISTRIBUTE PARALLEL DO");
-              Walk(y.v);
+              Word("TEAMS DISTRIBUTE PARALLEL DO ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TeamsDistributeSimd &y) {
-              Word("TEAMS DISTRIBUTE SIMD");
-              Walk(y.v);
+              Word("TEAMS DISTRIBUTE SIMD ");
+              Walk(y.v, " ");
             },
             [&](const OmpLoopDirective::TeamsDistribute &y) {
-              Word("TEAMS DISTRIBUTE");
-              Walk(y.v);
+              Word("TEAMS DISTRIBUTE ");
+              Walk(y.v, " ");
             }},
         x.u);
     Put("\n");
@@ -1949,40 +1954,40 @@ public:
   }
   void Unparse(const OmpStandaloneDirective &x) {
     std::visit(visitors{[&](const OmpStandaloneDirective::Barrier &y) {
-                          Word("BARRIER");
-                          Walk(y.v);
+                          Word("BARRIER ");
+                          Walk(y.v, " ");
                         },
                    [&](const OmpStandaloneDirective::CancellationPoint &y) {
-                     Word("CANCELLATION POINT");
-                     Walk(y.v);
+                     Word("CANCELLATION POINT ");
+                     Walk(y.v, " ");
                    },
                    [&](const OmpStandaloneDirective::Cancel &y) {
-                     Word("CANCEL");
-                     Walk(y.v);
+                     Word("CANCEL ");
+                     Walk(y.v, " ");
                    },
                    [&](const OmpStandaloneDirective::Flush &y) {
-                     Word("FLUSH");
-                     Walk(y.v);
+                     Word("FLUSH ");
+                     Walk(y.v, " ");
                    },
                    [&](const OmpStandaloneDirective::TargetEnterData &y) {
-                     Word("TARGET ENTER DATA");
-                     Walk(y.v);
+                     Word("TARGET ENTER DATA ");
+                     Walk(y.v, " ");
                    },
                    [&](const OmpStandaloneDirective::TargetExitData &y) {
-                     Word("TARGET EXIT DATA");
-                     Walk(y.v);
+                     Word("TARGET EXIT DATA ");
+                     Walk(y.v, " ");
                    },
                    [&](const OmpStandaloneDirective::TargetUpdate &y) {
-                     Word("TARGET UPDATE");
-                     Walk(y.v);
+                     Word("TARGET UPDATE ");
+                     Walk(y.v, " ");
                    },
                    [&](const OmpStandaloneDirective::Taskwait &y) {
-                     Word("TASKWAIT");
-                     Walk(y.v);
+                     Word("TASKWAIT ");
+                     Walk(y.v, " ");
                    },
                    [&](const OmpStandaloneDirective::Taskyield &y) {
-                     Word("TASKYIELD");
-                     Walk(y.v);
+                     Word("TASKYIELD ");
+                     Walk(y.v, " ");
                    }},
         x.u);
     Put("\n");
