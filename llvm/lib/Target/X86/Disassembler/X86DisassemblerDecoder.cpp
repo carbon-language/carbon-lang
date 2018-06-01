@@ -1695,7 +1695,7 @@ static int readVVVV(struct InternalInstruction* insn) {
     return -1;
 
   if (insn->mode != MODE_64BIT)
-    vvvv &= 0x7;
+    vvvv &= 0xf; // Can only clear bit 4. Bit 3 must be cleared later.
 
   insn->vvvv = static_cast<Reg>(vvvv);
   return 0;
@@ -1860,6 +1860,8 @@ static int readOperands(struct InternalInstruction* insn) {
       needVVVV = 0; /* Mark that we have found a VVVV operand. */
       if (!hasVVVV)
         return -1;
+      if (insn->mode != MODE_64BIT)
+        insn->vvvv = static_cast<Reg>(insn->vvvv & 0x7);
       if (fixupReg(insn, &Op))
         return -1;
       break;
