@@ -582,3 +582,26 @@ define <2 x i32*> @pr23113(<4 x i32*> %A) {
   %1 = shufflevector <4 x i32*> %A, <4 x i32*> undef, <2 x i32> <i32 0, i32 1>
   ret <2 x i32*> %1
 }
+
+; FIXME: Unused lanes in the new binop should not kill the entire op.
+
+define <2 x i32> @PR37648(<2 x i32> %x) {
+; CHECK-LABEL: @PR37648(
+; CHECK-NEXT:    ret <2 x i32> undef
+;
+  %splat = shufflevector <2 x i32> %x, <2 x i32> undef, <2 x i32> zeroinitializer
+  %r = urem <2 x i32> %splat, <i32 1, i32 1>
+  ret <2 x i32> %r
+}
+
+define <2 x float> @splat_first_fp(<2 x float> %x) {
+; CHECK-LABEL: @splat_first_fp(
+; CHECK-NEXT:    [[TMP1:%.*]] = fadd <2 x float> [[X:%.*]], <float 1.000000e+00, float undef>
+; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <2 x float> [[TMP1]], <2 x float> undef, <2 x i32> zeroinitializer
+; CHECK-NEXT:    ret <2 x float> [[TMP2]]
+;
+  %splat = shufflevector <2 x float> %x, <2 x float> undef, <2 x i32> zeroinitializer
+  %r = fadd <2 x float> %splat, <float 1.0, float 1.0>
+  ret <2 x float> %r
+}
+
