@@ -3246,7 +3246,7 @@ TYPE_CONTEXT_PARSER("statement function definition"_en_US,
 // Directives, extensions, and deprecated statements
 // !DIR$ IVDEP
 // !DIR$ IGNORE_TKR [ [(tkr...)] name ]...
-constexpr auto beginDirective = skipEmptyLines >> space >> "!"_tok;
+constexpr auto beginDirective = skipEmptyLines >> space >> "!"_ch;
 constexpr auto endDirective = space >> endOfLine;
 constexpr auto ivdep = construct<CompilerDirective::IVDEP>("DIR$ IVDEP"_tok);
 constexpr auto ignore_tkr = "DIR$ IGNORE_TKR" >>
