@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 %s -triple wasm32-unknown-unknown -fms-extensions -fexceptions -fcxx-exceptions -emit-llvm -o - -std=c++11 | FileCheck %s
-// RUN: %clang_cc1 %s -triple wasm64-unknown-unknown -fms-extensions -fexceptions -fcxx-exceptions -emit-llvm -o - -std=c++11 | FileCheck %s
+// RUN: %clang_cc1 %s -triple wasm32-unknown-unknown -fms-extensions -fexceptions -fcxx-exceptions -target-feature +exception-handling -emit-llvm -o - -std=c++11 | FileCheck %s
+// RUN: %clang_cc1 %s -triple wasm64-unknown-unknown -fms-extensions -fexceptions -fcxx-exceptions -target-feature +exception-handling -emit-llvm -o - -std=c++11 | FileCheck %s
 
 void may_throw();
 void dont_throw() noexcept;

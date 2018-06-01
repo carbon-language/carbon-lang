@@ -4102,7 +4102,8 @@ ItaniumCXXABI::LoadVTablePtr(CodeGenFunction &CGF, Address This,
 
 void WebAssemblyCXXABI::emitBeginCatch(CodeGenFunction &CGF,
                                        const CXXCatchStmt *C) {
-  CGF.EHStack.pushCleanup<CatchRetScope>(
-      NormalCleanup, cast<llvm::CatchPadInst>(CGF.CurrentFuncletPad));
+  if (CGF.getTarget().hasFeature("exception-handling"))
+    CGF.EHStack.pushCleanup<CatchRetScope>(
+        NormalCleanup, cast<llvm::CatchPadInst>(CGF.CurrentFuncletPad));
   ItaniumCXXABI::emitBeginCatch(CGF, C);
 }

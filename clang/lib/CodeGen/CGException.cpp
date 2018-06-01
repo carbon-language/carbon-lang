@@ -154,7 +154,8 @@ static const EHPersonality &getObjCPersonality(const llvm::Triple &T,
 }
 
 static const EHPersonality &getCXXPersonality(const llvm::Triple &T,
-                                              const LangOptions &L) {
+                                              const LangOptions &L,
+                                              const TargetInfo &Target) {
   if (L.SjLjExceptions)
     return EHPersonality::GNU_CPlusPlus_SJLJ;
   if (L.DWARFExceptions)
@@ -163,8 +164,10 @@ static const EHPersonality &getCXXPersonality(const llvm::Triple &T,
     return EHPersonality::MSVC_CxxFrameHandler3;
   if (L.SEHExceptions)
     return EHPersonality::GNU_CPlusPlus_SEH;
-  if (T.getArch() == llvm::Triple::wasm32 ||
-      T.getArch() == llvm::Triple::wasm64)
+  // Wasm EH is a non-MVP feature for now.
+  if (Target.hasFeature("exception-handling") &&
+      (T.getArch() == llvm::Triple::wasm32 ||
+       T.getArch() == llvm::Triple::wasm64))
     return EHPersonality::GNU_Wasm_CPlusPlus;
   return EHPersonality::GNU_CPlusPlus;
 }
@@ -172,12 +175,13 @@ static const EHPersonality &getCXXPersonality(const llvm::Triple &T,
 /// Determines the personality function to use when both C++
 /// and Objective-C exceptions are being caught.
 static const EHPersonality &getObjCXXPersonality(const llvm::Triple &T,
-                                                 const LangOptions &L) {
+                                                 const LangOptions &L,
+                                                 const TargetInfo &Target) {
   switch (L.ObjCRuntime.getKind()) {
   // In the fragile ABI, just use C++ exception handling and hope
   // they're not doing crazy exception mixing.
   case ObjCRuntime::FragileMacOSX:
-    return getCXXPersonality(T, L);
+    return getCXXPersonality(T, L, Target);
 
   // The ObjC personality defers to the C++ personality for non-ObjC
   // handlers.  Unlike the C++ case, we use the same personality
@@ -209,14 +213,16 @@ const EHPersonality &EHPersonality::get(CodeGenModule &CGM,
                                         const FunctionDecl *FD) {
   const llvm::Triple &T = CGM.getTarget().getTriple();
   const LangOptions &L = CGM.getLangOpts();
+  const TargetInfo &Target = CGM.getTarget();
 
   // Functions using SEH get an SEH personality.
   if (FD && FD->usesSEHTry())
     return getSEHPersonalityMSVC(T);
 
   if (L.ObjC1)
-    return L.CPlusPlus ? getObjCXXPersonality(T, L) : getObjCPersonality(T, L);
-  return L.CPlusPlus ? getCXXPersonality(T, L) : getCPersonality(T, L);
+    return L.CPlusPlus ? getObjCXXPersonality(T, L, Target)
+                       : getObjCPersonality(T, L);
+  return L.CPlusPlus ? getCXXPersonality(T, L, Target) : getCPersonality(T, L);
 }
 
 const EHPersonality &EHPersonality::get(CodeGenFunction &CGF) {
@@ -313,7 +319,7 @@ void CodeGenModule::SimplifyPersonality() {
 
   const EHPersonality &ObjCXX = EHPersonality::get(*this, /*FD=*/nullptr);
   const EHPersonality &CXX =
-      getCXXPersonality(getTarget().getTriple(), LangOpts);
+      getCXXPersonality(getTarget().getTriple(), LangOpts, getTarget());
   if (&ObjCXX == &CXX)
     return;
 
