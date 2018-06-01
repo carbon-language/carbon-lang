@@ -75,7 +75,11 @@ template<int BITS, typename FP = FixedPoint<BITS>> void exhaustiveTesting() {
       }
     }
     MATCH(trailcheck, a.TRAILZ())("%s, x=0x%llx", desc, x);
-    // TODO test BTEST, DIM, MODULO, ISHFTC, DSHIFTL/R
+    for (int j{0}; j < BITS; ++j) {
+      MATCH((x >> j) & 1, a.BTEST(j))
+        ("%s, x=0x%llx, bit %d", desc, x, j);
+    }
+    // TODO test DIM, MODULO, ISHFTC, DSHIFTL/R
     // TODO test IBCLR, IBSET, IBITS, MAX, MIN, MERGE_BITS, RANGE, SIGN
 
     Ordering ord{Ordering::Equal};

@@ -360,7 +360,7 @@ public:
   // "size" bits are shifted circularly in place by "count" positions;
   // the shift is leftward if count is nonnegative, rightward otherwise.
   // Higher-order bits are unchanged.
-  constexpr FixedPoint ISHFTC(int count, int size) const {
+  constexpr FixedPoint ISHFTC(int count, int size = bits) const {
     if (count == 0 || size <= 0) {
       return *this;
     }
@@ -370,11 +370,8 @@ public:
     if ((count %= size) == 0) {
       return *this;
     }
-    int middleBits, leastBits;
-    if (count > 0) {
-      middleBits = size - count;
-      leastBits = count;
-    } else {
+    int middleBits{size - count}, leastBits{count};
+    if (count < 0) {
       middleBits = -count;
       leastBits = size + count;
     }
