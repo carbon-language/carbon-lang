@@ -1377,6 +1377,9 @@ let Predicates = [InMicroMips] in {
         ISA_MICROMIPS;
   def : MipsInstAlias<"bal $offset", (BGEZAL_MM ZERO, brtarget_mm:$offset), 1>,
         ISA_MICROMIPS32_NOT_MIPS32R6;
+
+  def : MipsInstAlias<"j $rs", (JR_MM GPR32Opnd:$rs), 0>,
+        ISA_MICROMIPS32_NOT_MIPS32R6;
 }
 def : MipsInstAlias<"hypcall", (HYPCALL_MM 0), 1>,
                     ISA_MICROMIPS32R5, ASE_VIRT;
