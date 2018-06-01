@@ -18,6 +18,8 @@
 #if SANITIZER_FREEBSD || SANITIZER_FUCHSIA || SANITIZER_LINUX || \
     SANITIZER_NETBSD || SANITIZER_RTEMS || SANITIZER_SOLARIS
 
+#include "sanitizer_common/sanitizer_allocator_checks.h"
+#include "sanitizer_common/sanitizer_errno.h"
 #include "sanitizer_common/sanitizer_tls_get_addr.h"
 #include "asan_allocator.h"
 #include "asan_interceptors.h"
@@ -42,6 +44,27 @@ static void *AllocateFromLocalPool(uptr size_in_bytes) {
   allocated_for_dlsym += size_in_words;
   CHECK_LT(allocated_for_dlsym, kDlsymAllocPoolSize);
   return mem;
+}
+
+static int PosixMemalignFromLocalPool(void **memptr, uptr alignment,
+                                      uptr size_in_bytes) {
+  if (UNLIKELY(!CheckPosixMemalignAlignment(alignment)))
+    return errno_EINVAL;
+
+  CHECK(alignment >= kWordSize);
+
+  uptr addr = (uptr)&alloc_memory_for_dlsym[allocated_for_dlsym];
+  uptr aligned_addr = RoundUpTo(addr, alignment);
+  uptr aligned_size = RoundUpTo(size_in_bytes, kWordSize);
+
+  uptr *end_mem = (uptr*)(aligned_addr + aligned_size);
+  uptr allocated = end_mem - alloc_memory_for_dlsym;
+  if (allocated >= kDlsymAllocPoolSize)
+    return errno_ENOMEM;
+
+  allocated_for_dlsym = allocated;
+  *memptr = (void*)aligned_addr;
+  return 0;
 }
 
 // On RTEMS, we use the local pool to handle memory allocation before
@@ -166,8 +189,9 @@ INTERCEPTOR(int, mallopt, int cmd, int value) {
 #endif // SANITIZER_INTERCEPT_MALLOPT_AND_MALLINFO
 
 INTERCEPTOR(int, posix_memalign, void **memptr, uptr alignment, uptr size) {
+  if (UNLIKELY(UseLocalPool()))
+    return PosixMemalignFromLocalPool(memptr, alignment, size);
   GET_STACK_TRACE_MALLOC;
-  // Printf("posix_memalign: %zx %zu\n", alignment, size);
   return asan_posix_memalign(memptr, alignment, size, &stack);
 }
 
