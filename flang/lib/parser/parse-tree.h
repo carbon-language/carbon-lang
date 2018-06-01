@@ -3233,11 +3233,14 @@ struct OmpScheduleModifier {
   std::tuple<Modifier1, std::optional<Modifier2>> t;
 };
 
-// SCHEDULE([schedule-modifier [,schedule-modifier]] schedule-type [,  chunksize])
+// SCHEDULE([schedule-modifier [,schedule-modifier]] schedule-type [,
+// chunksize])
 struct OmpScheduleClause {
   TUPLE_CLASS_BOILERPLATE(OmpScheduleClause);
   ENUM_CLASS(ScheduleType, Static, Dynamic, Guided, Auto, Runtime)
-  std::tuple<std::optional<OmpScheduleModifier>, ScheduleType, std::optional<ScalarIntExpr>> t;
+  std::tuple<std::optional<OmpScheduleModifier>, ScheduleType,
+      std::optional<ScalarIntExpr>>
+      t;
 };
 
 // IF(DirectiveNameModifier: scalar-logical-expr)
@@ -3283,7 +3286,8 @@ struct OmpLinearClause {
   std::variant<WithModifier, WithoutModifier> u;
 };
 
-// reduction-identifier -> Add, Subtract, Multiply, .and., .or., .eqv., .neqg., min, max, iand, ior, ieor
+// reduction-identifier -> Add, Subtract, Multiply, .and., .or., .eqv., .neqg.,
+// min, max, iand, ior, ieor
 struct OmpReductionOperator {
   UNION_CLASS_BOILERPLATE(OmpReductionOperator);
   ENUM_CLASS(ProcedureOperator, MIN, MAX, IAND, IOR, IEOR)
@@ -3363,13 +3367,13 @@ struct OmpClause {
   WRAPPER_CLASS(Uniform, std::list<Name>);
   WRAPPER_CLASS(UseDevicePtr, std::list<Name>);
   std::variant<Defaultmap, Inbranch, Mergeable, Nogroup, Notinbranch, Nowait,
-  Untied, Collapse, Copyin, Copyprivate, Device, DistSchedule,
-  Final, Firstprivate, From, Grainsize, Lastprivate, Link,
-  NumTasks, NumTeams, NumThreads, Ordered, Priority, Private, Safelen,
-  Shared, Simdlen, ThreadLimit, To, Uniform, UseDevicePtr,
-  OmpAlignedClause, OmpDefaultClause, OmpDependClause, OmpIfClause, 
-  OmpLinearClause, OmpMapClause, OmpProcBindClause, OmpReductionClause, 
-  OmpScheduleClause> u;
+      Untied, Collapse, Copyin, Copyprivate, Device, DistSchedule, Final,
+      Firstprivate, From, Grainsize, Lastprivate, Link, NumTasks, NumTeams,
+      NumThreads, Ordered, Priority, Private, Safelen, Shared, Simdlen,
+      ThreadLimit, To, Uniform, UseDevicePtr, OmpAlignedClause,
+      OmpDefaultClause, OmpDependClause, OmpIfClause, OmpLinearClause,
+      OmpMapClause, OmpProcBindClause, OmpReductionClause, OmpScheduleClause>
+      u;
 };
 
 struct OmpLoopDirective {
@@ -3439,7 +3443,8 @@ WRAPPER_CLASS(OpenMPStandaloneConstruct, Statement<OmpStandaloneDirective>);
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
   std::variant<Indirection<OpenMPStandaloneConstruct>,
-      Indirection<OpenMPLoopConstruct>> u;
+      Indirection<OpenMPLoopConstruct>>
+      u;
 };
 
 }  // namespace parser

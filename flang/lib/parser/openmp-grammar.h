@@ -81,10 +81,10 @@ TYPE_PARSER(construct<OmpScheduleModifierType>(
     "NONMONOTONIC" >> pure(OmpScheduleModifierType::ModType::Nonmonotonic) ||
     "SIMD" >> pure(OmpScheduleModifierType::ModType::Simd)))
 
-TYPE_PARSER(construct<OmpScheduleModifier>(Parser<OmpScheduleModifierType>{}, maybe(","_ch >> Parser<OmpScheduleModifierType>{})))
+TYPE_PARSER(construct<OmpScheduleModifier>(Parser<OmpScheduleModifierType>{},
+    maybe(","_ch >> Parser<OmpScheduleModifierType>{})))
 
-TYPE_PARSER(construct<OmpScheduleClause>(
-    maybe(Parser<OmpScheduleModifier>{}),
+TYPE_PARSER(construct<OmpScheduleClause>(maybe(Parser<OmpScheduleModifier>{}),
     "STATIC" >> pure(OmpScheduleClause::ScheduleType::Static) ||
         "DYNAMIC" >> pure(OmpScheduleClause::ScheduleType::Dynamic) ||
         "GUIDED" >> pure(OmpScheduleClause::ScheduleType::Guided) ||
@@ -161,8 +161,7 @@ TYPE_PARSER(construct<OmpLinearModifier>(
 TYPE_CONTEXT_PARSER("Omp LINEAR clause"_en_US,
     construct<OmpLinearClause>(
         construct<OmpLinearClause>(construct<OmpLinearClause::WithModifier>(
-            Parser<OmpLinearModifier>{},
-            parenthesized(nonemptyList(name)),
+            Parser<OmpLinearModifier>{}, parenthesized(nonemptyList(name)),
             maybe(":"_ch >> scalarIntConstantExpr))) ||
         construct<OmpLinearClause>(construct<OmpLinearClause::WithoutModifier>(
             nonemptyList(name), maybe(":"_ch >> scalarIntConstantExpr)))))
@@ -175,47 +174,81 @@ TYPE_PARSER(construct<OmpNameList>(pure(OmpNameList::Kind::Object), name) ||
     construct<OmpNameList>("/" >> pure(OmpNameList::Kind::Common), name / "/"))
 
 TYPE_PARSER(
-construct<OmpClause>(construct<OmpClause::Defaultmap>("DEFAULTMAP"_tok >> parenthesized("TOFROM"_tok >> ":"_ch >> "SCALAR"_tok))) ||
-construct<OmpClause>(construct<OmpClause::Inbranch>("INBRANCH"_tok)) ||
-construct<OmpClause>(construct<OmpClause::Mergeable>("MERGEABLE"_tok)) ||
-construct<OmpClause>(construct<OmpClause::Nogroup>("NOGROUP"_tok)) ||
-construct<OmpClause>(construct<OmpClause::Notinbranch>("NOTINBRANCH"_tok)) ||
-construct<OmpClause>(construct<OmpClause::Nowait>("NOWAIT"_tok)) ||
-construct<OmpClause>(construct<OmpClause::Untied>("UNTIED"_tok)) ||
-construct<OmpClause>(construct<OmpClause::Collapse>("COLLAPSE"_tok >> parenthesized(scalarIntConstantExpr))) ||
-construct<OmpClause>(construct<OmpClause::Copyin>("COPYIN"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
-construct<OmpClause>(construct<OmpClause::Copyprivate>("COPYPRIVATE"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
-construct<OmpClause>(construct<OmpClause::Device>("DEVICE"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::DistSchedule>("DIST_SCHEDULE"_tok >> parenthesized("STATIC"_tok >> ","_ch >> scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::Final>("FINAL"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::Firstprivate>("FIRSTPRIVATE"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
-construct<OmpClause>(construct<OmpClause::From>("FROM"_tok >> parenthesized(nonemptyList(designator)))) ||
-construct<OmpClause>(construct<OmpClause::Grainsize>("GRAINSIZE"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::Lastprivate>("LASTPRIVATE"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
-construct<OmpClause>(construct<OmpClause::Link>("LINK"_tok >> parenthesized(nonemptyList(name)))) ||
-construct<OmpClause>(construct<OmpClause::NumTasks>("NUM_TASKS"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::NumTeams>( "NUM_TEAMS"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::NumThreads>("NUM_THREADS"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::Ordered>("ORDERED"_tok >> maybe(parenthesized(scalarIntConstantExpr)))) ||
-construct<OmpClause>(construct<OmpClause::Priority>("PRIORITY"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::Private>("PRIVATE"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
-construct<OmpClause>(construct<OmpClause::Safelen>("SAFELEN"_tok >> parenthesized(scalarIntConstantExpr))) ||
-construct<OmpClause>(construct<OmpClause::Shared>("SHARED"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
-construct<OmpClause>(construct<OmpClause::Simdlen>("SIMDLEN"_tok >> parenthesized(scalarIntConstantExpr))) ||
-construct<OmpClause>(construct<OmpClause::ThreadLimit>("THREAD_LIMIT"_tok >> parenthesized(scalarIntExpr))) ||
-construct<OmpClause>(construct<OmpClause::To>("TO"_tok >> parenthesized(nonemptyList(designator)))) ||
-construct<OmpClause>(construct<OmpClause::Uniform>("UNIFORM"_tok >> parenthesized(nonemptyList(name)))) ||
-construct<OmpClause>(construct<OmpClause::UseDevicePtr>("USE_DEVICE_PTR"_tok >> parenthesized(nonemptyList(name)))) ||
-construct<OmpClause>("ALIGNED"_tok >> parenthesized(Parser<OmpAlignedClause>{})) ||
-construct<OmpClause>("DEFAULT"_tok >> parenthesized(Parser<OmpDefaultClause>{})) ||
-construct<OmpClause>("DEPEND"_tok >> parenthesized(Parser<OmpDependClause>{})) ||
-construct<OmpClause>("IF"_tok >> parenthesized(Parser<OmpIfClause>{})) ||
-construct<OmpClause>("LINEAR"_tok >> parenthesized(Parser<OmpLinearClause>{})) ||
-construct<OmpClause>("MAP"_tok >> parenthesized(Parser<OmpMapClause>{})) ||
-construct<OmpClause>("PROC_BIND"_tok >> parenthesized(Parser<OmpProcBindClause>{})) ||
-construct<OmpClause>("REDUCTION"_tok >> parenthesized(Parser<OmpReductionClause>{})) ||
-construct<OmpClause>("SCHEDULE"_tok >> parenthesized(Parser<OmpScheduleClause>{}))
-)
+    construct<OmpClause>(construct<OmpClause::Defaultmap>("DEFAULTMAP"_tok >>
+        parenthesized("TOFROM"_tok >> ":"_ch >> "SCALAR"_tok))) ||
+    construct<OmpClause>(construct<OmpClause::Inbranch>("INBRANCH"_tok)) ||
+    construct<OmpClause>(construct<OmpClause::Mergeable>("MERGEABLE"_tok)) ||
+    construct<OmpClause>(construct<OmpClause::Nogroup>("NOGROUP"_tok)) ||
+    construct<OmpClause>(
+        construct<OmpClause::Notinbranch>("NOTINBRANCH"_tok)) ||
+    construct<OmpClause>(construct<OmpClause::Nowait>("NOWAIT"_tok)) ||
+    construct<OmpClause>(construct<OmpClause::Untied>("UNTIED"_tok)) ||
+    construct<OmpClause>(construct<OmpClause::Collapse>(
+        "COLLAPSE"_tok >> parenthesized(scalarIntConstantExpr))) ||
+    construct<OmpClause>(construct<OmpClause::Copyin>(
+        "COPYIN"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
+    construct<OmpClause>(construct<OmpClause::Copyprivate>("COPYPRIVATE"_tok >>
+        parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
+    construct<OmpClause>(construct<OmpClause::Device>(
+        "DEVICE"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(
+        construct<OmpClause::DistSchedule>("DIST_SCHEDULE"_tok >>
+            parenthesized("STATIC"_tok >> ","_ch >> scalarIntExpr))) ||
+    construct<OmpClause>(construct<OmpClause::Final>(
+        "FINAL"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(
+        construct<OmpClause::Firstprivate>("FIRSTPRIVATE"_tok >>
+            parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
+    construct<OmpClause>(construct<OmpClause::From>(
+        "FROM"_tok >> parenthesized(nonemptyList(designator)))) ||
+    construct<OmpClause>(construct<OmpClause::Grainsize>(
+        "GRAINSIZE"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(construct<OmpClause::Lastprivate>("LASTPRIVATE"_tok >>
+        parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
+    construct<OmpClause>(construct<OmpClause::Link>(
+        "LINK"_tok >> parenthesized(nonemptyList(name)))) ||
+    construct<OmpClause>(construct<OmpClause::NumTasks>(
+        "NUM_TASKS"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(construct<OmpClause::NumTeams>(
+        "NUM_TEAMS"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(construct<OmpClause::NumThreads>(
+        "NUM_THREADS"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(construct<OmpClause::Ordered>(
+        "ORDERED"_tok >> maybe(parenthesized(scalarIntConstantExpr)))) ||
+    construct<OmpClause>(construct<OmpClause::Priority>(
+        "PRIORITY"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(construct<OmpClause::Private>(
+        "PRIVATE"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
+    construct<OmpClause>(construct<OmpClause::Safelen>(
+        "SAFELEN"_tok >> parenthesized(scalarIntConstantExpr))) ||
+    construct<OmpClause>(construct<OmpClause::Shared>(
+        "SHARED"_tok >> parenthesized(nonemptyList(Parser<OmpNameList>{})))) ||
+    construct<OmpClause>(construct<OmpClause::Simdlen>(
+        "SIMDLEN"_tok >> parenthesized(scalarIntConstantExpr))) ||
+    construct<OmpClause>(construct<OmpClause::ThreadLimit>(
+        "THREAD_LIMIT"_tok >> parenthesized(scalarIntExpr))) ||
+    construct<OmpClause>(construct<OmpClause::To>(
+        "TO"_tok >> parenthesized(nonemptyList(designator)))) ||
+    construct<OmpClause>(construct<OmpClause::Uniform>(
+        "UNIFORM"_tok >> parenthesized(nonemptyList(name)))) ||
+    construct<OmpClause>(construct<OmpClause::UseDevicePtr>(
+        "USE_DEVICE_PTR"_tok >> parenthesized(nonemptyList(name)))) ||
+    construct<OmpClause>(
+        "ALIGNED"_tok >> parenthesized(Parser<OmpAlignedClause>{})) ||
+    construct<OmpClause>(
+        "DEFAULT"_tok >> parenthesized(Parser<OmpDefaultClause>{})) ||
+    construct<OmpClause>(
+        "DEPEND"_tok >> parenthesized(Parser<OmpDependClause>{})) ||
+    construct<OmpClause>("IF"_tok >> parenthesized(Parser<OmpIfClause>{})) ||
+    construct<OmpClause>(
+        "LINEAR"_tok >> parenthesized(Parser<OmpLinearClause>{})) ||
+    construct<OmpClause>("MAP"_tok >> parenthesized(Parser<OmpMapClause>{})) ||
+    construct<OmpClause>(
+        "PROC_BIND"_tok >> parenthesized(Parser<OmpProcBindClause>{})) ||
+    construct<OmpClause>(
+        "REDUCTION"_tok >> parenthesized(Parser<OmpReductionClause>{})) ||
+    construct<OmpClause>(
+        "SCHEDULE"_tok >> parenthesized(Parser<OmpScheduleClause>{})))
 
 TYPE_PARSER(skipEmptyLines >> space >> "!$OMP END"_sptok >>
     (construct<OmpEndDirective>(Parser<OmpLoopDirective>{})))
@@ -314,11 +347,10 @@ TYPE_PARSER(construct<OpenMPStandaloneConstruct>(
     statement(Parser<OmpStandaloneDirective>{})))
 
 TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
-    beginOmpDirective >>
-        (construct<OpenMPConstruct>(
-             indirect(Parser<OpenMPStandaloneConstruct>{})) ||
-            construct<OpenMPConstruct>(
-                indirect(Parser<OpenMPLoopConstruct>{}))))
+    beginOmpDirective >> (construct<OpenMPConstruct>(
+                              indirect(Parser<OpenMPStandaloneConstruct>{})) ||
+                             construct<OpenMPConstruct>(
+                                 indirect(Parser<OpenMPLoopConstruct>{}))))
 
 }  // namespace Fortran::parser
 #endif  // OPENMP_PARSER_GRAMMAR_H_
