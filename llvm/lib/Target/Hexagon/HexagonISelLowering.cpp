@@ -1327,28 +1327,6 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
     setMinimumJumpTableEntries(std::numeric_limits<int>::max());
   setOperationAction(ISD::BR_JT, MVT::Other, Expand);
 
-  // Hexagon has instructions for add/sub with carry. The problem with
-  // modeling these instructions is that they produce 2 results: Rdd and Px.
-  // To model the update of Px, we will have to use Defs[p0..p3] which will
-  // cause any predicate live range to spill. So, we pretend we dont't have
-  // these instructions.
-  setOperationAction(ISD::ADDE, MVT::i8,  Expand);
-  setOperationAction(ISD::ADDE, MVT::i16, Expand);
-  setOperationAction(ISD::ADDE, MVT::i32, Expand);
-  setOperationAction(ISD::ADDE, MVT::i64, Expand);
-  setOperationAction(ISD::SUBE, MVT::i8,  Expand);
-  setOperationAction(ISD::SUBE, MVT::i16, Expand);
-  setOperationAction(ISD::SUBE, MVT::i32, Expand);
-  setOperationAction(ISD::SUBE, MVT::i64, Expand);
-  setOperationAction(ISD::ADDC, MVT::i8,  Expand);
-  setOperationAction(ISD::ADDC, MVT::i16, Expand);
-  setOperationAction(ISD::ADDC, MVT::i32, Expand);
-  setOperationAction(ISD::ADDC, MVT::i64, Expand);
-  setOperationAction(ISD::SUBC, MVT::i8,  Expand);
-  setOperationAction(ISD::SUBC, MVT::i16, Expand);
-  setOperationAction(ISD::SUBC, MVT::i32, Expand);
-  setOperationAction(ISD::SUBC, MVT::i64, Expand);
-
   // Only add and sub that detect overflow are the saturating ones.
   for (MVT VT : MVT::integer_valuetypes()) {
     setOperationAction(ISD::UADDO, VT, Expand);
@@ -1428,10 +1406,9 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
   // either "custom" or "legal" for specific cases.
   static const unsigned VectExpOps[] = {
     // Integer arithmetic:
-    ISD::ADD,     ISD::SUB,     ISD::MUL,     ISD::SDIV,    ISD::UDIV,
-    ISD::SREM,    ISD::UREM,    ISD::SDIVREM, ISD::UDIVREM, ISD::ADDC,
-    ISD::SUBC,    ISD::SADDO,   ISD::UADDO,   ISD::SSUBO,   ISD::USUBO,
-    ISD::SMUL_LOHI,             ISD::UMUL_LOHI,
+    ISD::ADD,     ISD::SUB,     ISD::MUL,     ISD::SDIV,      ISD::UDIV,
+    ISD::SREM,    ISD::UREM,    ISD::SDIVREM, ISD::UDIVREM,   ISD::SADDO,
+    ISD::UADDO,   ISD::SSUBO,   ISD::USUBO,   ISD::SMUL_LOHI, ISD::UMUL_LOHI,
     // Logical/bit:
     ISD::AND,     ISD::OR,      ISD::XOR,     ISD::ROTL,    ISD::ROTR,
     ISD::CTPOP,   ISD::CTLZ,    ISD::CTTZ,
