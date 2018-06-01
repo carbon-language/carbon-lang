@@ -592,7 +592,6 @@
 // RUN:     -flto \
 // RUN:     -fmerge-all-constants \
 // RUN:     -no-canonical-prefixes \
-// RUN:     -fno-coverage-mapping \
 // RUN:     --version \
 // RUN:     -Werror /Zs -- %s 2>&1
 
