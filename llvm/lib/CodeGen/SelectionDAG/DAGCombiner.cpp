@@ -13555,6 +13555,11 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
         unsigned SizeInBits = (i + 1) * ElementSizeBytes * 8;
         EVT StoreTy = EVT::getIntegerVT(Context, SizeInBits);
         bool IsFast = false;
+
+        // Break early when size is too large to be legal.
+        if (StoreTy.getSizeInBits() > MaximumLegalStoreInBits)
+          break;
+
         if (TLI.isTypeLegal(StoreTy) &&
             TLI.canMergeStoresTo(FirstStoreAS, StoreTy, DAG) &&
             TLI.allowsMemoryAccess(Context, DL, StoreTy, FirstStoreAS,
@@ -13658,6 +13663,11 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
         EVT Ty =
             EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(), Elts);
         bool IsFast;
+
+        // Break early when size is too large to be legal.
+        if (Ty.getSizeInBits() > MaximumLegalStoreInBits)
+          break;
+
         if (TLI.isTypeLegal(Ty) &&
             TLI.canMergeStoresTo(FirstStoreAS, Ty, DAG) &&
             TLI.allowsMemoryAccess(Context, DL, Ty, FirstStoreAS,
@@ -13715,6 +13725,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
     // Find acceptable loads. Loads need to have the same chain (token factor),
     // must not be zext, volatile, indexed, and they must be consecutive.
     BaseIndexOffset LdBasePtr;
+
     for (unsigned i = 0; i < NumConsecutiveStores; ++i) {
       StoreSDNode *St = cast<StoreSDNode>(StoreNodes[i].MemNode);
       SDValue Val = peekThroughBitcast(St->getValue());
@@ -13783,6 +13794,10 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
       // Find a legal type for the vector store.
       unsigned Elts = (i + 1) * NumMemElts;
       EVT StoreTy = EVT::getVectorVT(Context, MemVT.getScalarType(), Elts);
+
+      // Break early when size is too large to be legal.
+      if (StoreTy.getSizeInBits() > MaximumLegalStoreInBits)
+        break;
 
       bool IsFastSt, IsFastLd;
       if (TLI.isTypeLegal(StoreTy) &&
