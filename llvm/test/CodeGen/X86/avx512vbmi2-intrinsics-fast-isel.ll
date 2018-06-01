@@ -237,15 +237,13 @@ define <8 x i64> @test_mm512_maskz_expandloadu_epi16(i32 %__U, i8* readonly %__P
 ; X32:       # %bb.0: # %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kmovd {{[0-9]+}}(%esp), %k1
-; X32-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X32-NEXT:    vpexpandw (%eax), %zmm0 {%k1}
+; X32-NEXT:    vpexpandw (%eax), %zmm0 {%k1} {z}
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm512_maskz_expandloadu_epi16:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    kmovd %edi, %k1
-; X64-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X64-NEXT:    vpexpandw (%rsi), %zmm0 {%k1}
+; X64-NEXT:    vpexpandw (%rsi), %zmm0 {%k1} {z}
 ; X64-NEXT:    retq
 entry:
   %0 = tail call <32 x i16> @llvm.x86.avx512.mask.expand.load.w.512(i8* %__P, <32 x i16> zeroinitializer, i32 %__U)
@@ -282,15 +280,13 @@ define <8 x i64> @test_mm512_maskz_expandloadu_epi8(i64 %__U, i8* readonly %__P)
 ; X32-NEXT:    kmovd {{[0-9]+}}(%esp), %k1
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kunpckdq %k1, %k0, %k1
-; X32-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X32-NEXT:    vpexpandb (%eax), %zmm0 {%k1}
+; X32-NEXT:    vpexpandb (%eax), %zmm0 {%k1} {z}
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm512_maskz_expandloadu_epi8:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    kmovq %rdi, %k1
-; X64-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X64-NEXT:    vpexpandb (%rsi), %zmm0 {%k1}
+; X64-NEXT:    vpexpandb (%rsi), %zmm0 {%k1} {z}
 ; X64-NEXT:    retq
 entry:
   %0 = tail call <64 x i8> @llvm.x86.avx512.mask.expand.load.b.512(i8* %__P, <64 x i8> zeroinitializer, i64 %__U)

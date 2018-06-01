@@ -230,15 +230,13 @@ define <2 x i64> @test_mm_maskz_expandloadu_epi16(i8 zeroext %__U, i8* readonly 
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movb {{[0-9]+}}(%esp), %cl
 ; X32-NEXT:    kmovd %ecx, %k1
-; X32-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X32-NEXT:    vpexpandw (%eax), %xmm0 {%k1}
+; X32-NEXT:    vpexpandw (%eax), %xmm0 {%k1} {z}
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_maskz_expandloadu_epi16:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    kmovd %edi, %k1
-; X64-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X64-NEXT:    vpexpandw (%rsi), %xmm0 {%k1}
+; X64-NEXT:    vpexpandw (%rsi), %xmm0 {%k1} {z}
 ; X64-NEXT:    retq
 entry:
   %0 = tail call <8 x i16> @llvm.x86.avx512.mask.expand.load.w.128(i8* %__P, <8 x i16> zeroinitializer, i8 %__U)
@@ -271,15 +269,13 @@ define <2 x i64> @test_mm_maskz_expandloadu_epi8(i16 zeroext %__U, i8* readonly 
 ; X32:       # %bb.0: # %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kmovw {{[0-9]+}}(%esp), %k1
-; X32-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X32-NEXT:    vpexpandb (%eax), %xmm0 {%k1}
+; X32-NEXT:    vpexpandb (%eax), %xmm0 {%k1} {z}
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_maskz_expandloadu_epi8:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    kmovd %edi, %k1
-; X64-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X64-NEXT:    vpexpandb (%rsi), %xmm0 {%k1}
+; X64-NEXT:    vpexpandb (%rsi), %xmm0 {%k1} {z}
 ; X64-NEXT:    retq
 entry:
   %0 = tail call <16 x i8> @llvm.x86.avx512.mask.expand.load.b.128(i8* %__P, <16 x i8> zeroinitializer, i16 %__U)
@@ -510,15 +506,13 @@ define <4 x i64> @test_mm256_maskz_expandloadu_epi16(i16 zeroext %__U, i8* reado
 ; X32:       # %bb.0: # %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kmovw {{[0-9]+}}(%esp), %k1
-; X32-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X32-NEXT:    vpexpandw (%eax), %ymm0 {%k1}
+; X32-NEXT:    vpexpandw (%eax), %ymm0 {%k1} {z}
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm256_maskz_expandloadu_epi16:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    kmovd %edi, %k1
-; X64-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X64-NEXT:    vpexpandw (%rsi), %ymm0 {%k1}
+; X64-NEXT:    vpexpandw (%rsi), %ymm0 {%k1} {z}
 ; X64-NEXT:    retq
 entry:
   %0 = tail call <16 x i16> @llvm.x86.avx512.mask.expand.load.w.256(i8* %__P, <16 x i16> zeroinitializer, i16 %__U)
@@ -551,15 +545,13 @@ define <4 x i64> @test_mm256_maskz_expandloadu_epi8(i32 %__U, i8* readonly %__P)
 ; X32:       # %bb.0: # %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    kmovd {{[0-9]+}}(%esp), %k1
-; X32-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X32-NEXT:    vpexpandb (%eax), %ymm0 {%k1}
+; X32-NEXT:    vpexpandb (%eax), %ymm0 {%k1} {z}
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test_mm256_maskz_expandloadu_epi8:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    kmovd %edi, %k1
-; X64-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; X64-NEXT:    vpexpandb (%rsi), %ymm0 {%k1}
+; X64-NEXT:    vpexpandb (%rsi), %ymm0 {%k1} {z}
 ; X64-NEXT:    retq
 entry:
   %0 = tail call <32 x i8> @llvm.x86.avx512.mask.expand.load.b.256(i8* %__P, <32 x i8> zeroinitializer, i32 %__U)

@@ -15,8 +15,7 @@ define <32 x i16> @test_maskz_expand_load_w_512(i8* %addr, i32 %mask) {
 ; CHECK-LABEL: test_maskz_expand_load_w_512:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    kmovd %esi, %k1
-; CHECK-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; CHECK-NEXT:    vpexpandw (%rdi), %zmm0 {%k1}
+; CHECK-NEXT:    vpexpandw (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %res = call <32 x i16> @llvm.x86.avx512.mask.expand.load.w.512(i8* %addr, <32 x i16> zeroinitializer, i32 %mask)
   ret <32 x i16> %res
@@ -78,8 +77,7 @@ define <64 x i8> @test_maskz_expand_load_b_512(i8* %addr, i64 %mask) {
 ; CHECK-LABEL: test_maskz_expand_load_b_512:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    kmovq %rsi, %k1
-; CHECK-NEXT:    vpxor %xmm0, %xmm0, %xmm0
-; CHECK-NEXT:    vpexpandb (%rdi), %zmm0 {%k1}
+; CHECK-NEXT:    vpexpandb (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %res = call <64 x i8> @llvm.x86.avx512.mask.expand.load.b.512(i8* %addr, <64 x i8> zeroinitializer, i64 %mask)
   ret <64 x i8> %res

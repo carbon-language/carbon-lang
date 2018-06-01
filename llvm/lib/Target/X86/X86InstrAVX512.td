@@ -9409,6 +9409,10 @@ multiclass expand_by_vec_width_lowering<X86VectorVTInfo _ > {
             (!cast<Instruction>(NAME#_.ZSuffix##rmkz)
                                         _.KRCWM:$mask, addr:$src)>;
 
+  def : Pat<(_.VT (X86mExpandingLoad addr:$src, _.KRCWM:$mask, _.ImmAllZerosV)),
+            (!cast<Instruction>(NAME#_.ZSuffix##rmkz)
+                                        _.KRCWM:$mask, addr:$src)>;
+
   def : Pat<(_.VT (X86mExpandingLoad addr:$src, _.KRCWM:$mask,
                                                (_.VT _.RC:$src0))),
             (!cast<Instruction>(NAME#_.ZSuffix##rmk)
