@@ -77,6 +77,25 @@ private:
   static constexpr Part topPartMask{static_cast<Part>(~0) >> extraTopPartBits};
 
 public:
+  struct ValueWithOverflow {
+    Integer value;
+    bool overflow;
+  };
+
+  struct ValueWithCarry {
+    Integer value;
+    bool carry;
+  };
+
+  struct Product {
+    Integer upper, lower;
+  };
+
+  struct QuotientWithRemainder {
+    Integer quotient, remainder;
+    bool divisionByZero, overflow;
+  };
+
   // Constructors and value-generating static functions
   constexpr Integer() { Clear(); }  // default constructor: zero
   constexpr Integer(const Integer &) = default;
@@ -138,6 +157,39 @@ public:
     } else {
       return MASKR(bits - places).NOT();
     }
+  }
+
+  static constexpr ValueWithOverflow ReadUnsigned(
+      const char *&pp, std::uint64_t base = 10) {
+    Integer result;
+    bool overflow{false};
+    const char *p{pp};
+    while (*p == ' ' || *p == '\t') {
+      ++p;
+    }
+    if (*p == '+') {
+      ++p;
+    }
+    Integer radix{base};
+    for (; unsigned char ch = *p; ++p) {
+      std::uint64_t digit;
+      if (ch >= '0' && ch < '0' + base) {
+        digit = ch - '0';
+      } else if (base > 10 && ch >= 'A' && ch < 'A' + base - 10) {
+        digit = ch - 'A' + 10;
+      } else if (base > 10 && ch >= 'a' && ch < 'a' + base - 10) {
+        digit = ch - 'a' + 10;
+      } else {
+        break;
+      }
+      Product shifted{result.MultiplyUnsigned(radix)};
+      overflow |= !shifted.upper.IsZero();
+      ValueWithCarry next{shifted.lower.AddUnsigned(Integer{digit})};
+      overflow |= next.carry;
+      result = next.value;
+    }
+    pp = p;
+    return {result, overflow};
   }
 
   static constexpr Integer HUGE() { return MASKR(bits - 1); }
@@ -287,10 +339,6 @@ public:
   // Two's-complement negation (-x = ~x + 1).
   // An overflow flag accompanies the result, and will be true when the
   // operand is the most negative signed number (MASKL(1)).
-  struct ValueWithOverflow {
-    Integer value;
-    bool overflow;
-  };
   constexpr ValueWithOverflow Negate() const {
     Integer result{nullptr};
     Part carry{1};
@@ -531,10 +579,6 @@ public:
   }
 
   // Unsigned addition with carry.
-  struct ValueWithCarry {
-    Integer value;
-    bool carry;
-  };
   constexpr ValueWithCarry AddUnsigned(
       const Integer &y, bool carryIn = false) const {
     Integer sum{nullptr};
@@ -587,9 +631,6 @@ public:
     }
   }
 
-  struct Product {
-    Integer upper, lower;
-  };
   constexpr Product MultiplyUnsigned(const Integer &y) const {
     Part product[2 * parts]{};  // little-endian full product
     for (int j{0}; j < parts; ++j) {
@@ -645,10 +686,6 @@ public:
     return product;
   }
 
-  struct QuotientWithRemainder {
-    Integer quotient, remainder;
-    bool divisionByZero, overflow;
-  };
   constexpr QuotientWithRemainder DivideUnsigned(const Integer &divisor) const {
     if (divisor.IsZero()) {
       return {MASKR(bits), Integer{}, true, false};  // overflow to max value

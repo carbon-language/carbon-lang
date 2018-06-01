@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "testing.h"
 #include "../../lib/evaluate/integer.h"
+#include "testing.h"
 #include <cstdio>
 
 using Fortran::evaluate::Integer;
@@ -36,6 +36,7 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
   MATCH(0, zero.ToInt64())(desc);
 
   for (std::uint64_t x{0}; x <= maxUnsignedValue; ++x) {
+    unsigned long long ullx = x;
     INT a{x};
     MATCH(x, a.ToUInt64())(desc);
     INT copy{a};
@@ -43,6 +44,19 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
     copy = a;
     MATCH(x, copy.ToUInt64())(desc);
     MATCH(x == 0, a.IsZero())("%s, x=0x%llx", desc, x);
+    char buffer[64];
+    std::snprintf(buffer, sizeof buffer, "   %llu", ullx);
+    const char *p{buffer};
+    auto readcheck{INT::ReadUnsigned(p)};
+    TEST(!readcheck.overflow)("%s, x=0x%llx", desc, x);
+    MATCH(x, readcheck.value.ToUInt64())("%s, x=0x%llx", desc, x);
+    TEST(!*p)("%s, x=0x%llx", desc, x);
+    std::snprintf(buffer, sizeof buffer, "%llx", ullx);
+    p = buffer;
+    readcheck = INT::ReadUnsigned(p, 16);
+    TEST(!readcheck.overflow)("%s, x=0x%llx", desc, x);
+    MATCH(x, readcheck.value.ToUInt64())("%s, x=0x%llx", desc, x);
+    TEST(!*p)("%s, x=0x%llx", desc, x);
     INT t{a.NOT()};
     MATCH(x ^ maxUnsignedValue, t.ToUInt64())("%s, x=0x%llx", desc, x);
     auto negated{a.Negate()};

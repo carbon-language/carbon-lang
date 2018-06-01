@@ -17,7 +17,7 @@ add_library(FortranEvaluateTesting
 )
 
 add_executable(leading-zero-bit-count-test
-  leading-zero-bit-count-test.cc
+  leading-zero-bit-count.cc
 )
 
 target_link_libraries(leading-zero-bit-count-test
@@ -26,7 +26,7 @@ target_link_libraries(leading-zero-bit-count-test
 )
 
 add_executable(bit-population-count-test
-  bit-population-count-test.cc
+  bit-population-count.cc
 )
 
 target_link_libraries(bit-population-count-test
@@ -35,7 +35,7 @@ target_link_libraries(bit-population-count-test
 )
 
 add_executable(integer-test
-  integer-test.cc
+  integer.cc
 )
 
 target_link_libraries(integer-test

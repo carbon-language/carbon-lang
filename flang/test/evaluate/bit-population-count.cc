@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "testing.h"
 #include "../../lib/evaluate/bit-population-count.h"
+#include "testing.h"
 
 using Fortran::evaluate::BitPopulationCount;
 using Fortran::evaluate::Parity;
