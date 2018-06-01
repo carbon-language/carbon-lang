@@ -2308,17 +2308,19 @@ let AdditionalPredicates = [NotInMicroMips] in {
   /// Word Swap Bytes Within Halfwords
   def WSBH : MMRel, SubwordSwap<"wsbh", GPR32Opnd, II_WSBH>, SEB_FM<2, 0x20>,
              ISA_MIPS32R2;
+
+  /// No operation.
+  def NOP : PseudoSE<(outs), (ins), []>,
+                     PseudoInstExpansion<(SLL ZERO, ZERO, 0)>, ISA_MIPS1;
+
+  // FrameIndexes are legalized when they are operands from load/store
+  // instructions. The same not happens for stack address copies, so an
+  // add op with mem ComplexPattern is used and the stack address copy
+  // can be matched. It's similar to Sparc LEA_ADDRi
+  let AdditionalPredicates = [NotInMicroMips] in
+    def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>, ISA_MIPS1;
+
 }
-
-/// No operation.
-def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
-
-// FrameIndexes are legalized when they are operands from load/store
-// instructions. The same not happens for stack address copies, so an
-// add op with mem ComplexPattern is used and the stack address copy
-// can be matched. It's similar to Sparc LEA_ADDRi
-let AdditionalPredicates = [NotInMicroMips] in
-  def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>, ISA_MIPS1;
 
 // MADD*/MSUB*
 def MADD  : MMRel, MArithR<"madd", II_MADD, 1>, MULT_FM<0x1c, 0>,
@@ -2636,7 +2638,8 @@ let AdditionalPredicates = [NotInMicroMips] in {
   def : MipsInstAlias<
           "not $rt",
           (NOR GPR32Opnd:$rt, GPR32Opnd:$rt, ZERO), 0>;
-  def : MipsInstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
+
+  def : MipsInstAlias<"nop", (SLL ZERO, ZERO, 0), 1>, ISA_MIPS1;
 
   defm : OneOrTwoOperandMacroImmediateAlias<"add", ADDi>, ISA_MIPS1_NOT_32R6_64R6;
 

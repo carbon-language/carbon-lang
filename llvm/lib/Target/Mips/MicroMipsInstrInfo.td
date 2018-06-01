@@ -1278,8 +1278,8 @@ let Predicates = [InMicroMips] in {
                                      II_DIVU, 0, 1, 1>, ISA_MIPS1_NOT_32R6_64R6;
 
   def : MipsInstAlias<"wait", (WAIT_MM 0x0), 1>, ISA_MICROMIPS;
-  def : MipsInstAlias<"nop", (SLL_MM ZERO, ZERO, 0), 1>;
-  def : MipsInstAlias<"nop", (MOVE16_MM ZERO, ZERO), 1>;
+  def : MipsInstAlias<"nop", (SLL_MM ZERO, ZERO, 0), 1>, ISA_MICROMIPS;
+  def : MipsInstAlias<"nop", (MOVE16_MM ZERO, ZERO), 1>, ISA_MICROMIPS;
   def : MipsInstAlias<"ei", (EI_MM ZERO), 1>, ISA_MICROMIPS;
   def : MipsInstAlias<"di", (DI_MM ZERO), 1>, ISA_MICROMIPS;
   def : MipsInstAlias<"neg $rt, $rs",
