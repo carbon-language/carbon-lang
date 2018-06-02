@@ -99,14 +99,7 @@ if (APPLE)
 endif()
 
 if(CLANG_ORDER_FILE AND (LD64_EXECUTABLE OR GOLD_EXECUTABLE))
-  include(CMakePushCheckState)
-
-  function(check_linker_flag flag out_var)
-    cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${flag}")
-    check_cxx_compiler_flag("" ${out_var})
-    cmake_pop_check_state()
-  endfunction()
+  include(CheckLinkerFlag)
 
   if (LD64_EXECUTABLE)
     set(LINKER_ORDER_FILE_OPTION "-Wl,-order_file,${CLANG_ORDER_FILE}")
