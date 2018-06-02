@@ -53,12 +53,6 @@ static CXTypeKind GetBuiltinTypeKind(const BuiltinType *BT) {
     BTCASE(Float);
     BTCASE(Double);
     BTCASE(LongDouble);
-    BTCASE(ShortAccum);
-    BTCASE(Accum);
-    BTCASE(LongAccum);
-    BTCASE(UShortAccum);
-    BTCASE(UAccum);
-    BTCASE(ULongAccum);
     BTCASE(Float16);
     BTCASE(Float128);
     BTCASE(NullPtr);
@@ -552,12 +546,6 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(Float);
     TKIND(Double);
     TKIND(LongDouble);
-    TKIND(ShortAccum);
-    TKIND(Accum);
-    TKIND(LongAccum);
-    TKIND(UShortAccum);
-    TKIND(UAccum);
-    TKIND(ULongAccum);
     TKIND(Float16);
     TKIND(Float128);
     TKIND(NullPtr);

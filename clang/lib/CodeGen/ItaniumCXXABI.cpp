@@ -2724,12 +2724,6 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
     case BuiltinType::OCLClkEvent:
     case BuiltinType::OCLQueue:
     case BuiltinType::OCLReserveID:
-    case BuiltinType::ShortAccum:
-    case BuiltinType::Accum:
-    case BuiltinType::LongAccum:
-    case BuiltinType::UShortAccum:
-    case BuiltinType::UAccum:
-    case BuiltinType::ULongAccum:
       return false;
 
     case BuiltinType::Dependent:
