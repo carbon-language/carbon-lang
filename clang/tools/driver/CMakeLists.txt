@@ -98,13 +98,16 @@ if (APPLE)
   set(TOOL_INFO_BUILD_VERSION)
 endif()
 
-if(CLANG_ORDER_FILE AND (LD64_EXECUTABLE OR GOLD_EXECUTABLE))
+if(CLANG_ORDER_FILE AND
+   (LD64_EXECUTABLE OR LLVM_LINKER_IS_GOLD OR LLVM_LINKER_IS_LLD))
   include(CheckLinkerFlag)
 
   if (LD64_EXECUTABLE)
     set(LINKER_ORDER_FILE_OPTION "-Wl,-order_file,${CLANG_ORDER_FILE}")
-  elseif (GOLD_EXECUTABLE)
+  elseif (LLVM_LINKER_IS_GOLD)
     set(LINKER_ORDER_FILE_OPTION "-Wl,--section-ordering-file,${CLANG_ORDER_FILE}")
+  elseif (LLVM_LINKER_IS_LLD)
+    set(LINKER_ORDER_FILE_OPTION "-Wl,--symbol-ordering-file,${CLANG_ORDER_FILE}")
   endif()
 
   # This is a test to ensure the actual order file works with the linker.
