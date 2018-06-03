@@ -8300,26 +8300,6 @@ static Value *EmitX86MaskLogic(CodeGenFunction &CGF, Instruction::BinaryOps Opc,
                                   CGF.Builder.getIntNTy(std::max(NumElts, 8U)));
 }
 
-static Value *EmitX86SubVectorBroadcast(CodeGenFunction &CGF,
-                                        ArrayRef<Value *> Ops,
-                                        llvm::Type *DstTy,
-                                        unsigned SrcSizeInBits,
-                                        unsigned Align) {
-  // Load the subvector.
-  Value *SubVec = CGF.Builder.CreateAlignedLoad(Ops[0], Align);
-
-  // Create broadcast mask.
-  unsigned NumDstElts = DstTy->getVectorNumElements();
-  unsigned NumSrcElts = SrcSizeInBits / DstTy->getScalarSizeInBits();
-
-  SmallVector<uint32_t, 8> Mask;
-  for (unsigned i = 0; i != NumDstElts; i += NumSrcElts)
-    for (unsigned j = 0; j != NumSrcElts; ++j)
-      Mask.push_back(j);
-
-  return CGF.Builder.CreateShuffleVector(SubVec, SubVec, Mask, "subvecbcst");
-}
-
 static Value *EmitX86Select(CodeGenFunction &CGF,
                             Value *Mask, Value *Op0, Value *Op1) {
 
@@ -8958,12 +8938,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_movdqa32load512_mask:
   case X86::BI__builtin_ia32_movdqa64load512_mask:
     return EmitX86MaskedLoad(*this, Ops, 64);
-
-  case X86::BI__builtin_ia32_vbroadcastf128_pd256:
-  case X86::BI__builtin_ia32_vbroadcastf128_ps256: {
-    llvm::Type *DstTy = ConvertType(E->getType());
-    return EmitX86SubVectorBroadcast(*this, Ops, DstTy, 128, 1);
-  }
 
   case X86::BI__builtin_ia32_storehps:
   case X86::BI__builtin_ia32_storelps: {
