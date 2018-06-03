@@ -8263,32 +8263,32 @@ static Value *getMaskVecValue(CodeGenFunction &CGF, Value *Mask,
 }
 
 static Value *EmitX86MaskedStore(CodeGenFunction &CGF,
-                                 ArrayRef<Value *> Ops,
+                                 SmallVectorImpl<Value *> &Ops,
                                  unsigned Align) {
   // Cast the pointer to right type.
-  Value *Ptr = CGF.Builder.CreateBitCast(Ops[0],
+  Ops[0] = CGF.Builder.CreateBitCast(Ops[0],
                                llvm::PointerType::getUnqual(Ops[1]->getType()));
 
   Value *MaskVec = getMaskVecValue(CGF, Ops[2],
                                    Ops[1]->getType()->getVectorNumElements());
 
-  return CGF.Builder.CreateMaskedStore(Ops[1], Ptr, Align, MaskVec);
+  return CGF.Builder.CreateMaskedStore(Ops[1], Ops[0], Align, MaskVec);
 }
 
 static Value *EmitX86MaskedLoad(CodeGenFunction &CGF,
-                                ArrayRef<Value *> Ops, unsigned Align) {
+                                SmallVectorImpl<Value *> &Ops, unsigned Align) {
   // Cast the pointer to right type.
-  Value *Ptr = CGF.Builder.CreateBitCast(Ops[0],
+  Ops[0] = CGF.Builder.CreateBitCast(Ops[0],
                                llvm::PointerType::getUnqual(Ops[1]->getType()));
 
   Value *MaskVec = getMaskVecValue(CGF, Ops[2],
                                    Ops[1]->getType()->getVectorNumElements());
 
-  return CGF.Builder.CreateMaskedLoad(Ptr, Align, MaskVec, Ops[1]);
+  return CGF.Builder.CreateMaskedLoad(Ops[0], Align, MaskVec, Ops[1]);
 }
 
 static Value *EmitX86MaskLogic(CodeGenFunction &CGF, Instruction::BinaryOps Opc,
-                              unsigned NumElts, ArrayRef<Value *> Ops,
+                              unsigned NumElts, SmallVectorImpl<Value *> &Ops,
                               bool InvertLHS = false) {
   Value *LHS = getMaskVecValue(CGF, Ops[0], NumElts);
   Value *RHS = getMaskVecValue(CGF, Ops[1], NumElts);
@@ -8301,7 +8301,7 @@ static Value *EmitX86MaskLogic(CodeGenFunction &CGF, Instruction::BinaryOps Opc,
 }
 
 static Value *EmitX86SubVectorBroadcast(CodeGenFunction &CGF,
-                                        ArrayRef<Value *> Ops,
+                                        SmallVectorImpl<Value *> &Ops,
                                         llvm::Type *DstTy,
                                         unsigned SrcSizeInBits,
                                         unsigned Align) {
