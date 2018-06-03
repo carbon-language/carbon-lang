@@ -87,6 +87,10 @@ bool applyDebugifyMetadata(Module &M,
       for (Instruction &I : BB)
         I.setDebugLoc(DILocation::get(Ctx, NextLine++, 1, SP));
 
+      // Inserting debug values into EH pads can break IR invariants.
+      if (BB.isEHPad())
+        continue;
+
       // Attach debug values.
       for (Instruction &I : BB) {
         // Skip void-valued instructions.
@@ -96,6 +100,11 @@ bool applyDebugifyMetadata(Module &M,
         // Skip the terminator instruction and any just-inserted intrinsics.
         if (isa<TerminatorInst>(&I) || isa<DbgValueInst>(&I))
           break;
+
+        // Don't insert instructions after a musttail call.
+        if (auto *Call = dyn_cast<CallInst>(&I))
+          if (Call->isMustTailCall())
+            break;
 
         std::string Name = utostr(NextVar++);
         const DILocation *Loc = I.getDebugLoc().get();
