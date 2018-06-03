@@ -8269,11 +8269,6 @@ static Value *EmitX86MaskedStore(CodeGenFunction &CGF,
   Ops[0] = CGF.Builder.CreateBitCast(Ops[0],
                                llvm::PointerType::getUnqual(Ops[1]->getType()));
 
-  // If the mask is all ones just emit a regular store.
-  if (const auto *C = dyn_cast<Constant>(Ops[2]))
-    if (C->isAllOnesValue())
-      return CGF.Builder.CreateAlignedStore(Ops[1], Ops[0], Align);
-
   Value *MaskVec = getMaskVecValue(CGF, Ops[2],
                                    Ops[1]->getType()->getVectorNumElements());
 
@@ -8285,11 +8280,6 @@ static Value *EmitX86MaskedLoad(CodeGenFunction &CGF,
   // Cast the pointer to right type.
   Ops[0] = CGF.Builder.CreateBitCast(Ops[0],
                                llvm::PointerType::getUnqual(Ops[1]->getType()));
-
-  // If the mask is all ones just emit a regular store.
-  if (const auto *C = dyn_cast<Constant>(Ops[2]))
-    if (C->isAllOnesValue())
-      return CGF.Builder.CreateAlignedLoad(Ops[0], Align);
 
   Value *MaskVec = getMaskVecValue(CGF, Ops[2],
                                    Ops[1]->getType()->getVectorNumElements());
