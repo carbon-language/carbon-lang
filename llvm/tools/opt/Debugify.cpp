@@ -319,11 +319,13 @@ PreservedAnalyses NewPMDebugifyPass::run(Module &M, ModuleAnalysisManager &) {
   return PreservedAnalyses::all();
 }
 
-ModulePass *createCheckDebugifyModulePass(bool Strip, StringRef NameOfWrappedPass) {
+ModulePass *createCheckDebugifyModulePass(bool Strip,
+                                          StringRef NameOfWrappedPass) {
   return new CheckDebugifyModulePass(Strip, NameOfWrappedPass);
 }
 
-FunctionPass *createCheckDebugifyFunctionPass(bool Strip, StringRef NameOfWrappedPass) {
+FunctionPass *createCheckDebugifyFunctionPass(bool Strip,
+                                              StringRef NameOfWrappedPass) {
   return new CheckDebugifyFunctionPass(Strip, NameOfWrappedPass);
 }
 
@@ -335,16 +337,16 @@ PreservedAnalyses NewPMCheckDebugifyPass::run(Module &M,
 
 char DebugifyModulePass::ID = 0;
 static RegisterPass<DebugifyModulePass> DM("debugify",
-                                    "Attach debug info to everything");
+                                           "Attach debug info to everything");
 
 char CheckDebugifyModulePass::ID = 0;
-static RegisterPass<CheckDebugifyModulePass> CDM("check-debugify",
-                                         "Check debug info from -debugify");
+static RegisterPass<CheckDebugifyModulePass>
+    CDM("check-debugify", "Check debug info from -debugify");
 
 char DebugifyFunctionPass::ID = 0;
 static RegisterPass<DebugifyFunctionPass> DF("debugify-function",
-                                    "Attach debug info to a function");
+                                             "Attach debug info to a function");
 
 char CheckDebugifyFunctionPass::ID = 0;
-static RegisterPass<CheckDebugifyFunctionPass> CDF("check-debugify-function",
-                                         "Check debug info from -debugify-function");
+static RegisterPass<CheckDebugifyFunctionPass>
+    CDF("check-debugify-function", "Check debug info from -debugify-function");
