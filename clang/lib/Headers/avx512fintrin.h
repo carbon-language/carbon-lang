@@ -212,8 +212,7 @@ _mm512_undefined_epi32(void)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_broadcastd_epi32 (__m128i __A)
 {
-  return (__m512i)__builtin_shufflevector((__v4si) __A,
-                                          (__v4si)_mm_undefined_si128(),
+  return (__m512i)__builtin_shufflevector((__v4si) __A, (__v4si) __A,
                                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
@@ -236,8 +235,7 @@ _mm512_maskz_broadcastd_epi32 (__mmask16 __M, __m128i __A)
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_broadcastq_epi64 (__m128i __A)
 {
-  return (__m512i)__builtin_shufflevector((__v2di) __A,
-                                          (__v2di) _mm_undefined_si128(),
+  return (__m512i)__builtin_shufflevector((__v2di) __A, (__v2di) __A,
                                           0, 0, 0, 0, 0, 0, 0, 0);
 }
 
@@ -344,8 +342,7 @@ _mm512_maskz_set1_epi64(__mmask8 __M, long long __A)
 static __inline__ __m512 __DEFAULT_FN_ATTRS
 _mm512_broadcastss_ps(__m128 __A)
 {
-  return (__m512)__builtin_shufflevector((__v4sf) __A,
-                                         (__v4sf)_mm_undefined_ps(),
+  return (__m512)__builtin_shufflevector((__v4sf) __A, (__v4sf) __A,
                                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
@@ -395,8 +392,7 @@ _mm512_set4_ps (float __A, float __B, float __C, float __D)
 static __inline__ __m512d __DEFAULT_FN_ATTRS
 _mm512_broadcastsd_pd(__m128d __A)
 {
-  return (__m512d)__builtin_shufflevector((__v2df) __A,
-                                          (__v2df) _mm_undefined_pd(),
+  return (__m512d)__builtin_shufflevector((__v2df) __A, (__v2df) __A,
                                           0, 0, 0, 0, 0, 0, 0, 0);
 }
 
