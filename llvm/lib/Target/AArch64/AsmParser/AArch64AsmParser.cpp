@@ -1048,24 +1048,13 @@ public:
     return VectorList.NumElements == NumElements;
   }
 
-  bool isVectorIndex1() const {
-    return Kind == k_VectorIndex && VectorIndex.Val == 1;
-  }
-
-  bool isVectorIndexB() const {
-    return Kind == k_VectorIndex && VectorIndex.Val < 16;
-  }
-
-  bool isVectorIndexH() const {
-    return Kind == k_VectorIndex && VectorIndex.Val < 8;
-  }
-
-  bool isVectorIndexS() const {
-    return Kind == k_VectorIndex && VectorIndex.Val < 4;
-  }
-
-  bool isVectorIndexD() const {
-    return Kind == k_VectorIndex && VectorIndex.Val < 2;
+  template <int Min, int Max>
+  DiagnosticPredicate isVectorIndex() const {
+    if (Kind != k_VectorIndex)
+      return DiagnosticPredicateTy::NoMatch;
+    if (VectorIndex.Val >= Min && VectorIndex.Val <= Max)
+      return DiagnosticPredicateTy::Match;
+    return DiagnosticPredicateTy::NearMatch;
   }
 
   bool isToken() const override { return Kind == k_Token; }
@@ -3839,16 +3828,26 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
   case Match_InvalidSVECpyImm64:
     return Error(Loc, "immediate must be an integer in range [-128, 127] or a "
                       "multiple of 256 in range [-32768, 32512]");
-  case Match_InvalidIndex1:
+  case Match_InvalidIndexRange1_1:
     return Error(Loc, "expected lane specifier '[1]'");
-  case Match_InvalidIndexB:
+  case Match_InvalidIndexRange0_15:
     return Error(Loc, "vector lane must be an integer in range [0, 15].");
-  case Match_InvalidIndexH:
+  case Match_InvalidIndexRange0_7:
     return Error(Loc, "vector lane must be an integer in range [0, 7].");
-  case Match_InvalidIndexS:
+  case Match_InvalidIndexRange0_3:
     return Error(Loc, "vector lane must be an integer in range [0, 3].");
-  case Match_InvalidIndexD:
+  case Match_InvalidIndexRange0_1:
     return Error(Loc, "vector lane must be an integer in range [0, 1].");
+  case Match_InvalidSVEIndexRange0_63:
+    return Error(Loc, "vector lane must be an integer in range [0, 63].");
+  case Match_InvalidSVEIndexRange0_31:
+    return Error(Loc, "vector lane must be an integer in range [0, 31].");
+  case Match_InvalidSVEIndexRange0_15:
+    return Error(Loc, "vector lane must be an integer in range [0, 15].");
+  case Match_InvalidSVEIndexRange0_7:
+    return Error(Loc, "vector lane must be an integer in range [0, 7].");
+  case Match_InvalidSVEIndexRange0_3:
+    return Error(Loc, "vector lane must be an integer in range [0, 3].");
   case Match_InvalidLabel:
     return Error(Loc, "expected label or encodable integer pc offset");
   case Match_MRS:
@@ -4375,11 +4374,16 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidSVECpyImm16:
   case Match_InvalidSVECpyImm32:
   case Match_InvalidSVECpyImm64:
-  case Match_InvalidIndex1:
-  case Match_InvalidIndexB:
-  case Match_InvalidIndexH:
-  case Match_InvalidIndexS:
-  case Match_InvalidIndexD:
+  case Match_InvalidIndexRange1_1:
+  case Match_InvalidIndexRange0_15:
+  case Match_InvalidIndexRange0_7:
+  case Match_InvalidIndexRange0_3:
+  case Match_InvalidIndexRange0_1:
+  case Match_InvalidSVEIndexRange0_63:
+  case Match_InvalidSVEIndexRange0_31:
+  case Match_InvalidSVEIndexRange0_15:
+  case Match_InvalidSVEIndexRange0_7:
+  case Match_InvalidSVEIndexRange0_3:
   case Match_InvalidLabel:
   case Match_InvalidComplexRotationEven:
   case Match_InvalidComplexRotationOdd:
@@ -5028,6 +5032,9 @@ AArch64AsmParser::tryParseSVEDataVector(OperandVector &Operands) {
     Operands.push_back(AArch64Operand::CreateVectorReg(
         RegNum, RegKind::SVEDataVector, ElementWidth, S, S, getContext()));
 
+    OperandMatchResultTy Res = tryParseVectorIndex(Operands);
+    if (Res == MatchOperand_ParseFail)
+      return MatchOperand_ParseFail;
     return MatchOperand_Success;
   }
 
