@@ -26,6 +26,7 @@
 #include "bit-population-count.h"
 #include "common.h"
 #include "leading-zero-bit-count.h"
+#include "type.h"
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
@@ -191,6 +192,22 @@ public:
     return {result, overflow};
   }
 
+  constexpr Integer &operator=(const Integer &) = default;
+
+  template<typename FROM>
+  static constexpr ValueWithOverflow Convert(const FROM &that) {
+    std::uint64_t field{that.ToUInt64()};
+    ValueWithOverflow result;
+    result.value = Integer{field};
+    result.overflow |= bits < 64 && (field >> bits) != 0;
+    for (int j{64}; j < that.bits; j += 64) {
+      field = that.SHIFTR(j).ToUInt64();
+      result.value = result.value.IOR(Integer{field}.SHIFTL(bits));
+      result.overflow |= bits < (j+64) && (field >> (bits-j)) != 0;
+    }
+    return result;
+  }
+
   // TODO formatting
 
   static constexpr Integer HUGE() { return MASKR(bits - 1); }
@@ -208,8 +225,6 @@ public:
     }
     return digits;
   }
-
-  constexpr Integer &operator=(const Integer &) = default;
 
   constexpr bool IsZero() const {
     for (int j{0}; j < parts; ++j) {
@@ -819,6 +834,7 @@ extern template class Integer<64>;
 extern template class Integer<128>;
 
 template<int KIND> using IntrinsicInteger = Integer<KIND * CHAR_BIT>;
+using DefaultIntrinsicInteger = IntrinsicInteger<IntrinsicType::defaultIntegerKind>;
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_INTEGER_H_

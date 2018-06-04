@@ -20,6 +20,13 @@
 
 namespace Fortran::evaluate {
 
+// Default REAL just simply has to be IEEE-754 single precision today.
+// It occupies one numeric storage unit by definition.  The default INTEGER
+// and default LOGICAL intrinsic types also have to occupy one numeric
+// storage unit, so their kinds are forced.  Default COMPLEX occupies
+// two numeric storage unit.
+using DefaultIntrinsicIntegerCType = std::int32_t;
+
 class IntrinsicType {
 public:
   enum class Classification { Integer, Real, Complex, Character, Logical };
@@ -29,7 +36,7 @@ public:
   // and default LOGICAL intrinsic types also have to occupy one numeric
   // storage unit, so their kinds are forced.  Default COMPLEX occupies
   // two numeric storage unit.
-  using KindLenCType = std::int32_t;
+  using KindLenCType = DefaultIntrinsicIntegerCType;
   static constexpr KindLenCType defaultRealKind{4};  // IEEE-754 single
   static constexpr KindLenCType defaultIntegerKind{defaultRealKind};
   static constexpr KindLenCType kindLenIntegerKind{defaultIntegerKind};
