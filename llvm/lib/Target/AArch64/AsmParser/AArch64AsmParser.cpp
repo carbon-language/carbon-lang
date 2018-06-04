@@ -3844,6 +3844,8 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
     return Error(Loc, "immediate must be an integer in range [-128, 255]"
                       " with a shift amount of 0");
   case Match_InvalidSVECpyImm16:
+    return Error(Loc, "immediate must be an integer in range [-128, 127] or a "
+                      "multiple of 256 in range [-32768, 65280]");
   case Match_InvalidSVECpyImm32:
   case Match_InvalidSVECpyImm64:
     return Error(Loc, "immediate must be an integer in range [-128, 127] or a "

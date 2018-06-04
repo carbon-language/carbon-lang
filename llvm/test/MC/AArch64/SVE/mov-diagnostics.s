@@ -66,28 +66,29 @@ mov z0.b, #1, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.h, #-33024
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z0.h, #-33024
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.h, #-32769
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z0.h, #-32769
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.h, #-129, lsl #8
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z0.h, #-129, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-mov z0.h, #32513
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
-// CHECK-NEXT: mov z0.h, #32513
+// Note: 65281 is a valid logical immediate.
+mov z0.h, #65282
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
+// CHECK-NEXT: mov z0.h, #65282
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-mov z0.h, #128, lsl #8
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
-// CHECK-NEXT: mov z0.h, #128, lsl #8
+mov z0.h, #256, lsl #8
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
+// CHECK-NEXT: mov z0.h, #256, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.s, #-33024
@@ -136,12 +137,12 @@ mov z5.b, #0xfff9
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z5.h, #0xfffa
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z5.h, #0xfffa
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z5.h, #0xfffffff9
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z5.h, #0xfffffff9
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
@@ -181,33 +182,33 @@ mov z0.b, p0/z, #1, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.h, p0/z, #-33024
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z0.h, p0/z, #-33024
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.h, p0/z, #-32769
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z0.h, p0/z, #-32769
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.h, p0/z, #-129, lsl #8
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z0.h, p0/z, #-129, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.h, p0/z, #32513
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: mov z0.h, p0/z, #32513
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-mov z0.h, p0/z, #32768
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
-// CHECK-NEXT: mov z0.h, p0/z, #32768
+mov z0.h, p0/z, #65281
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
+// CHECK-NEXT: mov z0.h, p0/z, #65281
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-mov z0.h, p0/z, #128, lsl #8
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
-// CHECK-NEXT: mov z0.h, p0/z, #128, lsl #8
+mov z0.h, p0/z, #256, lsl #8
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
+// CHECK-NEXT: mov z0.h, p0/z, #256, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 mov z0.s, p0/z, #-33024

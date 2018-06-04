@@ -194,10 +194,16 @@ mov     z21.d, #32512
 // CHECK-UNKNOWN: f5 ef f8 25 <unknown>
 
 mov     z0.h, #32768
-// CHECK-INST: dupm    z0.h, #0x8000
-// CHECK-ENCODING: [0x00,0x0c,0xc0,0x05]
+// CHECK-INST: mov    z0.h, #-32768
+// CHECK-ENCODING: [0x00,0xf0,0x78,0x25]
 // CHECK-ERROR: instruction requires: sve
-// CHECK-UNKNOWN: 00 0c c0 05 <unknown>
+// CHECK-UNKNOWN: 00 f0 78 25 <unknown>
+
+mov     z0.h, #65280
+// CHECK-INST: mov    z0.h, #-256
+// CHECK-ENCODING: [0xe0,0xff,0x78,0x25]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 ff 78 25 <unknown>
 
 mov     z0.s, #-32769
 // CHECK-INST: mov     z0.s, #0xffff7fff

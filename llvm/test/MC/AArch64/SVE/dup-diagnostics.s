@@ -48,33 +48,33 @@ dup z0.b, #1, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 dup z0.h, #-33024
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: dup z0.h, #-33024
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 dup z0.h, #-32769
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: dup z0.h, #-32769
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 dup z0.h, #-129, lsl #8
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
 // CHECK-NEXT: dup z0.h, #-129, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-dup z0.h, #32513
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
-// CHECK-NEXT: dup z0.h, #32513
+dup z0.h, #65281
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
+// CHECK-NEXT: dup z0.h, #65281
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-dup z0.h, #32768
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
-// CHECK-NEXT: dup z0.h, #32768
+dup z0.h, #65536
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
+// CHECK-NEXT: dup z0.h, #65536
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
-dup z0.h, #128, lsl #8
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 32512]
-// CHECK-NEXT: dup z0.h, #128, lsl #8
+dup z0.h, #256, lsl #8
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: immediate must be an integer in range [-128, 127] or a multiple of 256 in range [-32768, 65280]
+// CHECK-NEXT: dup z0.h, #256, lsl #8
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 dup z0.s, #-33024
