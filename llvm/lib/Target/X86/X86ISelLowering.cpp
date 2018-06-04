@@ -6093,7 +6093,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
 // destination value type.
 static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
                                SmallVectorImpl<SDValue> &Ops,
-                               SelectionDAG &DAG) {
+                               const SelectionDAG &DAG) {
   Mask.clear();
   Ops.clear();
 
@@ -6326,7 +6326,7 @@ static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Inputs,
 static bool resolveTargetShuffleInputs(SDValue Op,
                                        SmallVectorImpl<SDValue> &Inputs,
                                        SmallVectorImpl<int> &Mask,
-                                       SelectionDAG &DAG) {
+                                       const SelectionDAG &DAG) {
   if (!setTargetShuffleZeroElements(Op, Mask, Inputs))
     if (!getFauxShuffleMask(Op, Mask, Inputs, DAG))
       return false;
