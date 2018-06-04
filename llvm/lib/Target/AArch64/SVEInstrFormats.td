@@ -621,6 +621,39 @@ class sve_int_bin_cons_log<bits<2> opc, string asm>
 // SVE Integer Wide Immediate - Predicated Group
 //===----------------------------------------------------------------------===//
 
+class sve_int_dup_fpimm_pred<bits<2> sz, Operand fpimmtype,
+                             string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zd), (ins zprty:$_Zd, PPRAny:$Pg, fpimmtype:$imm8),
+  asm, "\t$Zd, $Pg/m, $imm8",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pg;
+  bits<5> Zd;
+  bits<8> imm8;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz;
+  let Inst{21-20} = 0b01;
+  let Inst{19-16} = Pg;
+  let Inst{15-13} = 0b110;
+  let Inst{12-5}  = imm8;
+  let Inst{4-0}   = Zd;
+
+  let Constraints = "$Zd = $_Zd";
+}
+
+multiclass sve_int_dup_fpimm_pred<string asm> {
+  def _H : sve_int_dup_fpimm_pred<0b01, fpimm16, asm, ZPR16>;
+  def _S : sve_int_dup_fpimm_pred<0b10, fpimm32, asm, ZPR32>;
+  def _D : sve_int_dup_fpimm_pred<0b11, fpimm64, asm, ZPR64>;
+
+  def : InstAlias<"fmov $Zd, $Pg/m, $imm8",
+                  (!cast<Instruction>(NAME # _H) ZPR16:$Zd, PPRAny:$Pg, fpimm16:$imm8), 1>;
+  def : InstAlias<"fmov $Zd, $Pg/m, $imm8",
+                  (!cast<Instruction>(NAME # _S) ZPR32:$Zd, PPRAny:$Pg, fpimm32:$imm8), 1>;
+  def : InstAlias<"fmov $Zd, $Pg/m, $imm8",
+                  (!cast<Instruction>(NAME # _D) ZPR64:$Zd, PPRAny:$Pg, fpimm64:$imm8), 1>;
+}
+
 class sve_int_dup_imm_pred<bits<2> sz8_64, bit m, string asm,
                            ZPRRegOp zprty, string pred_qual, dag iops>
 : I<(outs zprty:$Zd), iops,
@@ -656,6 +689,13 @@ multiclass sve_int_dup_imm_pred_merge<string asm> {
                   (!cast<Instruction>(NAME # _S) ZPR32:$Zd, PPRAny:$Pg, cpy_imm8_opt_lsl_i32:$imm), 1>;
   def : InstAlias<"mov $Zd, $Pg/m, $imm",
                   (!cast<Instruction>(NAME # _D) ZPR64:$Zd, PPRAny:$Pg, cpy_imm8_opt_lsl_i64:$imm), 1>;
+
+  def : InstAlias<"fmov $Zd, $Pg/m, #0.0",
+                  (!cast<Instruction>(NAME # _H) ZPR16:$Zd, PPRAny:$Pg, 0, 0), 0>;
+  def : InstAlias<"fmov $Zd, $Pg/m, #0.0",
+                  (!cast<Instruction>(NAME # _S) ZPR32:$Zd, PPRAny:$Pg, 0, 0), 0>;
+  def : InstAlias<"fmov $Zd, $Pg/m, #0.0",
+                  (!cast<Instruction>(NAME # _D) ZPR64:$Zd, PPRAny:$Pg, 0, 0), 0>;
 }
 
 multiclass sve_int_dup_imm_pred_zero<string asm> {

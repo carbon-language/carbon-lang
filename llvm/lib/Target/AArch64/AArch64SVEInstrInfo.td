@@ -41,8 +41,9 @@ let Predicates = [HasSVE] in {
   defm DUPM_ZI : sve_int_dup_mask_imm<"dupm">;
 
   // Splat immediate (predicated)
-  defm CPY_ZPmI : sve_int_dup_imm_pred_merge<"cpy">;
-  defm CPY_ZPzI : sve_int_dup_imm_pred_zero<"cpy">;
+  defm CPY_ZPmI  : sve_int_dup_imm_pred_merge<"cpy">;
+  defm CPY_ZPzI  : sve_int_dup_imm_pred_zero<"cpy">;
+  defm FCPY_ZPmI : sve_int_dup_fpimm_pred<"fcpy">;
 
   // continuous load with reg+immediate
   defm LD1B_IMM    : sve_mem_cld_si<0b0000, "ld1b",  Z_b, ZPR8>;
