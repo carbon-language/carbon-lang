@@ -31,27 +31,21 @@ public:
   static constexpr int precision{PRECISION};
   static_assert(precision > 0);
 
-  template<typename A>
-  struct Result {
-    A value;
-    int flags{RealFlag::Ok};
-  };
-
   constexpr Real() {}  // +0.0
   constexpr Real(const Real &) = default;
   constexpr Real(std::int64_t n)
-      : significand_{n}, exponent_{precision}, negative_{n < 0} {
+    : significand_{n}, exponent_{precision}, negative_{n < 0} {
     if (negative_) {
       significand_ = significand_.Negate().value;  // overflow is safe to ignore
     }
     Normalize();
   }
 
-  // TODO conversion from (or to?) other real types
-
+  // TODO: Change to FromInteger(), return flags
   template<int b, int pb, typename p, typename dp, bool le>
-  constexpr Real(const Integer<b, pb, p, dp, le> &n, Rounding rounding = Rounding::TiesToEven)
-      : negative_{n.IsNegative()} {
+  constexpr Real(const Integer<b, pb, p, dp, le> &n,
+      Rounding rounding = Rounding::TiesToEven)
+    : negative_{n.IsNegative()} {
     if (negative_) {
       n = n.Negate().value;
     }
@@ -76,14 +70,21 @@ public:
     }
   }
 
+  // TODO conversion from (or to?) other real types
+  // TODO AINT/ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
+  // HUGE, INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
+  // PRECISION, HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
+
   constexpr Real &operator=(const Real &) = default;
 
+  constexpr bool IsANumber() const { return !notANumber_; }
+  constexpr bool IsNotANumber() const { return notANumber_; }
   constexpr bool IsNegative() const { return negative_ && !notANumber_; }
   constexpr bool IsFinite() const { return !infinite_ && !notANumber_; }
   constexpr bool IsInfinite() const { return infinite_ && !notANumber_; }
-  constexpr bool IsANumber() const { return !notANumber_; }
-  constexpr bool IsNotANumber() const { return notANumber_; }
-  constexpr bool IsZero() const { return !notANumber_ && significand_.IsZero(); }
+  constexpr bool IsZero() const {
+    return !notANumber_ && significand_.IsZero();
+  }
 
   constexpr Real ABS() const {  // non-arithmetic, no flags
     Real result{*this};
@@ -106,9 +107,8 @@ public:
     return epsilon;
   }
 
-  template<typename INT>
-  constexpr Result<INT> ToInteger() const {
-    Result<INT> result;
+  template<typename INT> constexpr ValueWithRealFlags<INT> ToInteger() const {
+    ValueWithRealFlags<INT> result;
     if (notANumber_) {
       result.flags |= RealFlag::InvalidArgument;
       result.value = result.value.HUGE();
@@ -121,7 +121,8 @@ public:
       result.flags = RealFlag::Overflow;
     } else {
       if (exponent_ > 0) {
-        result.value = INT::Convert(significand_.SHIFTR(result.value.bits - exponent_));
+        result.value =
+            INT::Convert(significand_.SHIFTR(result.value.bits - exponent_));
       }
       if (negative_) {
         auto negated = result.value.Negate();
@@ -183,8 +184,9 @@ public:
     }
   }
 
-  constexpr Result<Real> Add(const Real &y, Rounding rounding) const {
-    Result<Real> result;
+  constexpr ValueWithRealFlags<Real> Add(
+      const Real &y, Rounding rounding) const {
+    ValueWithRealFlags<Real> result;
     if (notANumber_ || y.notANumber_) {
       result.value.notANumber_ = true;  // NaN + x -> NaN
       result.flags = RealFlag::InvalidArgument;
@@ -204,8 +206,7 @@ public:
       // y is larger; simplify by reversing
       return y.Add(*this, rounding);
     }
-    if (exponent_ == y.exponent_ &&
-        negative_ != y.negative_ &&
+    if (exponent_ == y.exponent_ && negative_ != y.negative_ &&
         significand_.CompareUnsigned(y.significand_) == Ordering::Less) {
       // Same exponent, opposite signs, and y is larger.
       result = y.Add(*this, rounding);
@@ -216,18 +217,22 @@ public:
     result.value = y;
     result.value.exponent_ = exponent_;
     result.value.negative_ = negative_;
-    RoundingBits roundingBits{result.value.ShiftSignificandRight(exponent_ - y.exponent_)};
+    RoundingBits roundingBits{
+        result.value.ShiftSignificandRight(exponent_ - y.exponent_)};
     if (negative_ != y.negative_) {
-      typename Significand::ValueWithOverflow negated{result.value.significand_.Negate()};
+      typename Significand::ValueWithOverflow negated{
+          result.value.significand_.Negate()};
       if (negated.overflow) {
         // y had only its MSB set.  Result is our significand, less its MSB.
         result.value.significand_ = significand_.IBCLR(precision - 1);
       } else {
-        typename Significand::ValueWithCarry diff{significand_.AddUnsigned(negated.value)};
+        typename Significand::ValueWithCarry diff{
+            significand_.AddUnsigned(negated.value)};
         result.value.significand_ = diff.value;
       }
     } else {
-      typename Significand::ValueWithCarry sum{significand_.AddUnsigned(result.value.significand_)};
+      typename Significand::ValueWithCarry sum{
+          significand_.AddUnsigned(result.value.significand_)};
       if (sum.carry) {
         roundingBits.guard |= roundingBits.round;
         roundingBits.round = sum.value.BTEST(0);
@@ -242,14 +247,16 @@ public:
     return result;
   }
 
-  constexpr Result<Real> Subtract(const Real &y, Rounding rounding) const {
+  constexpr ValueWithRealFlags<Real> Subtract(
+      const Real &y, Rounding rounding) const {
     Real minusy{y};
     minusy.negative_ ^= true;
     return Add(minusy, rounding);
   }
 
-  constexpr Result<Real> Multiply(const Real &y, Rounding rounding) const {
-    Result<Real> result;
+  constexpr ValueWithRealFlags<Real> Multiply(
+      const Real &y, Rounding rounding) const {
+    ValueWithRealFlags<Real> result;
     if (notANumber_ || y.notANumber_) {
       result.value.notANumber_ = true;  // NaN * x -> NaN
       result.flags = RealFlag::InvalidArgument;
@@ -260,7 +267,8 @@ public:
       result.value.infinite_ = true;
       return result;
     }
-    typename Significand::Product product{significand_.MultiplyUnsigned(y.significand_)};
+    typename Significand::Product product{
+        significand_.MultiplyUnsigned(y.significand_)};
     result.value.exponent_ = exponent_ + y.exponent_ - 1;
     result.value.significand_ = product.upper;
     RoundingBits roundingBits;
@@ -271,8 +279,9 @@ public:
     return result;
   }
 
-  constexpr Result<Real> Divide(const Real &y, Rounding rounding) const {
-    Result<Real> result;
+  constexpr ValueWithRealFlags<Real> Divide(
+      const Real &y, Rounding rounding) const {
+    ValueWithRealFlags<Real> result;
     if (notANumber_ || y.notANumber_) {
       result.value.notANumber_ = true;  // NaN * x -> NaN
       result.flags = RealFlag::InvalidArgument;
@@ -284,7 +293,8 @@ public:
       return result;
     }
     result.value.negative_ = negative_ != y.negative_;
-    typename Significand::QuotientWithRemainder divided{significand_.DivideUnsigned(y.significand_)};
+    typename Significand::QuotientWithRemainder divided{
+        significand_.DivideUnsigned(y.significand_)};
     if (divided.divisionByZero) {
       result.value.infinite_ = true;
       result.flags |= RealFlag::DivideByZero;
@@ -294,7 +304,8 @@ public:
     result.value.significand_ = divided.quotient;
     // To round, double the remainder and compare it to the divisor.
     RoundingBits roundingBits;
-    typename Significand::ValueWithCarry doubledRem{divided.remainder.AddUnsigned(divided.remainder)};
+    typename Significand::ValueWithCarry doubledRem{
+        divided.remainder.AddUnsigned(divided.remainder)};
     Ordering drcmp{doubledRem.value.CompareUnsigned(y.significand_)};
     roundingBits.round = drcmp != Ordering::Less;
     roundingBits.guard = drcmp != Ordering::Equal;
@@ -353,24 +364,18 @@ private:
     case Rounding::TiesToEven:
       round = bits.round && !bits.guard && significand_.BTEST(0);
       break;
-    case Rounding::ToZero:
-      break;
-    case Rounding::Down:
-      round = negative_ && (bits.round || bits.guard);
-      break;
-    case Rounding::Up:
-      round = !negative_ && (bits.round || bits.guard);
-      break;
-    case Rounding::TiesAwayFromZero:
-      round = bits.round && !bits.guard;
-      break;
+    case Rounding::ToZero: break;
+    case Rounding::Down: round = negative_ && (bits.round || bits.guard); break;
+    case Rounding::Up: round = !negative_ && (bits.round || bits.guard); break;
+    case Rounding::TiesAwayFromZero: round = bits.round && !bits.guard; break;
     }
     return round;
   }
 
   void Round(Rounding rounding, const RoundingBits &bits) {
     if (MustRound(rounding, bits)) {
-      typename Significand::ValueWithCarry sum{significand_.AddUnsigned(Significand{}, true)};
+      typename Significand::ValueWithCarry sum{
+          significand_.AddUnsigned(Significand{}, true)};
       if (sum.carry) {
         // significand was all ones, and we rounded
         ++exponent_;

@@ -55,14 +55,21 @@ static constexpr Relation Reverse(Relation relation) {
 
 namespace RealFlag {
 enum {
-  Ok = 0, Overflow = 1, DivideByZero = 2, InvalidArgument = 4,
-  Underflow = 8, Inexact = 16
+  Ok = 0,
+  Overflow = 1,
+  DivideByZero = 2,
+  InvalidArgument = 4,
+  Underflow = 8,
+  Inexact = 16
 };
 }  // namespace RealFlag
 
-enum class Rounding {
-  TiesToEven, ToZero, Down, Up, TiesAwayFromZero
+template<typename A> struct ValueWithRealFlags {
+  A value;
+  int flags{RealFlag::Ok};
 };
+
+enum class Rounding { TiesToEven, ToZero, Down, Up, TiesAwayFromZero };
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 constexpr bool IsHostLittleEndian{false};

@@ -203,13 +203,14 @@ public:
     for (int j{64}; j < that.bits; j += 64) {
       field = that.SHIFTR(j).ToUInt64();
       result.value = result.value.IOR(Integer{field}.SHIFTL(bits));
-      result.overflow |= bits < (j+64) && (field >> (bits-j)) != 0;
+      result.overflow |= bits < (j + 64) && (field >> (bits - j)) != 0;
     }
     return result;
   }
 
   // TODO formatting
 
+  static constexpr Integer BIT_SIZE() { return {std::uint64_t{bits}}; }
   static constexpr Integer HUGE() { return MASKR(bits - 1); }
 
   // Returns the number of full decimal digits that can be represented.
@@ -834,7 +835,8 @@ extern template class Integer<64>;
 extern template class Integer<128>;
 
 template<int KIND> using IntrinsicInteger = Integer<KIND * CHAR_BIT>;
-using DefaultIntrinsicInteger = IntrinsicInteger<IntrinsicType::defaultIntegerKind>;
+using DefaultIntrinsicInteger =
+    IntrinsicInteger<IntrinsicType::defaultIntegerKind>;
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_INTEGER_H_
