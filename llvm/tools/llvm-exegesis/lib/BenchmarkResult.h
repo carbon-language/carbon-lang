@@ -27,8 +27,8 @@ namespace exegesis {
 struct InstructionBenchmarkKey {
   // The LLVM opcode name.
   std::string OpcodeName;
-  // The benchmark mode.
-  std::string Mode;
+  enum ModeE { Unknown, Latency, Uops };
+  ModeE Mode;
   // An opaque configuration, that can be used to separate several benchmarks of
   // the same instruction under different configurations.
   std::string Config;
