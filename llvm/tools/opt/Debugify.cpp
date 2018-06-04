@@ -91,20 +91,24 @@ bool applyDebugifyMetadata(Module &M,
       if (BB.isEHPad())
         continue;
 
+      // Debug values must be inserted before a musttail call (if one is
+      // present), or before the block terminator otherwise.
+      Instruction *LastInst = BB.getTerminatingMustTailCall();
+      if (!LastInst)
+        LastInst = BB.getTerminator();
+
       // Attach debug values.
-      for (Instruction &I : BB) {
+      for (auto It = BB.begin(), End = LastInst->getIterator(); It != End;
+           ++It) {
+        Instruction &I = *It;
+
         // Skip void-valued instructions.
         if (I.getType()->isVoidTy())
           continue;
 
-        // Skip the terminator instruction and any just-inserted intrinsics.
-        if (isa<TerminatorInst>(&I) || isa<DbgValueInst>(&I))
+        // Skip any just-inserted intrinsics.
+        if (isa<DbgValueInst>(&I))
           break;
-
-        // Don't insert instructions after a musttail call.
-        if (auto *Call = dyn_cast<CallInst>(&I))
-          if (Call->isMustTailCall())
-            break;
 
         std::string Name = utostr(NextVar++);
         const DILocation *Loc = I.getDebugLoc().get();
@@ -112,7 +116,7 @@ bool applyDebugifyMetadata(Module &M,
                                                getCachedDIType(I.getType()),
                                                /*AlwaysPreserve=*/true);
         DIB.insertDbgValueIntrinsic(&I, LocalVar, DIB.createExpression(), Loc,
-                                    BB.getTerminator());
+                                    LastInst);
       }
     }
     DIB.finalizeSubprogram(SP);
