@@ -229,15 +229,17 @@ of:
        int Baz = Bar;
      }
 
+  Values defined in superclasses can be accessed the same way.
+
 * a template arg of a ``class``, such as the use of ``Bar`` in::
 
      class Foo<int Bar> {
        int Baz = Bar;
      }
 
-* value local to a ``multiclass``, such as the use of ``Bar`` in::
+* value local to a ``class``, such as the use of ``Bar`` in::
 
-     multiclass Foo {
+     class Foo {
        int Bar = 5;
        int Baz = Bar;
      }
@@ -245,8 +247,15 @@ of:
 * a template arg to a ``multiclass``, such as the use of ``Bar`` in::
 
      multiclass Foo<int Bar> {
-       int Baz = Bar;
+       def : SomeClass<Bar>;
      }
+
+* the iteration variable of a ``foreach``, such as the use of ``i`` in::
+
+     foreach i = 0-5 in
+     def Foo#i;
+
+* a variable defined by ``defset``
 
 * the implicit template argument ``NAME`` in a ``class`` or ``multiclass``
 
