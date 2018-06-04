@@ -275,6 +275,10 @@ struct CheckDebugifyModulePass : public ModulePass {
   CheckDebugifyModulePass(bool Strip = false, StringRef NameOfWrappedPass = "")
       : ModulePass(ID), Strip(Strip), NameOfWrappedPass(NameOfWrappedPass) {}
 
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesAll();
+  }
+
   static char ID; // Pass identification.
 
 private:
