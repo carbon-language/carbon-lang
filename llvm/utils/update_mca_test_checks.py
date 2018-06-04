@@ -409,7 +409,7 @@ def _write_output(test_path, input_lines, prefix_list, block_infos,  # noqa
       continue
 
   # Add a blank line before the new checks if required.
-  if output_lines[-1]:
+  if len(output_lines) > 0 and output_lines[-1]:
     output_lines.append('')
 
   output_check_lines = []
