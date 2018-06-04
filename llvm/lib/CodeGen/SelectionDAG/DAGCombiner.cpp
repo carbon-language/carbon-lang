@@ -2196,16 +2196,14 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
 static SDValue flipBoolean(SDValue V, const SDLoc &DL, EVT VT,
                            SelectionDAG &DAG, const TargetLowering &TLI) {
   SDValue Cst;
-  switch(TLI.getBooleanContents(VT)) {
-    case TargetLowering::ZeroOrOneBooleanContent:
-    case TargetLowering::UndefinedBooleanContent:
-      Cst = DAG.getConstant(1, DL, VT);
-      break;
-    case TargetLowering::ZeroOrNegativeOneBooleanContent:
-      Cst = DAG.getConstant(-1, DL, VT);
-      break;
-    default:
-      llvm_unreachable("Unsupported boolean content");
+  switch (TLI.getBooleanContents(VT)) {
+  case TargetLowering::ZeroOrOneBooleanContent:
+  case TargetLowering::UndefinedBooleanContent:
+    Cst = DAG.getConstant(1, DL, VT);
+    break;
+  case TargetLowering::ZeroOrNegativeOneBooleanContent:
+    Cst = DAG.getConstant(-1, DL, VT);
+    break;
   }
 
   return DAG.getNode(ISD::XOR, DL, VT, V, Cst);
