@@ -7928,9 +7928,10 @@ multiclass SIMDFPScalarRShift<bit U, bits<5> opc, string asm> {
     let Inst{19-16} = imm{3-0};
     let Inst{23-22} = 0b11;
   }
-  def SHr : BaseSIMDScalarShift<U, opc, {?,?,?,?,?,?,?},
+  def SHr : BaseSIMDScalarShift<U, opc, {0,0,1,?,?,?,?},
                                 FPR32, FPR16, vecshiftR32, asm, []> {
     let Inst{19-16} = imm{3-0};
+    let Inst{22-21} = 0b01;
   }
   def HDr : BaseSIMDScalarShift<U, opc, {?,?,?,?,?,?,?},
                                 FPR16, FPR64, vecshiftR32, asm, []> {
