@@ -269,8 +269,8 @@ public:
   using super = legacy::PassManager;
 
   void add(Pass *P) override {
-    bool WrapWithDebugify =
-        DebugifyEach && !P->getAsImmutablePass() && !isIRPrintingPass(P);
+    bool WrapWithDebugify = DebugifyEach && !P->getAsImmutablePass() &&
+                            !isIRPrintingPass(P) && !isBitcodeWriterPass(P);
     if (!WrapWithDebugify) {
       super::add(P);
       return;
