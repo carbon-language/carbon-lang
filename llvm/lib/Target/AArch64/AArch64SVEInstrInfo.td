@@ -40,6 +40,10 @@ let Predicates = [HasSVE] in {
   defm FDUP_ZI  : sve_int_dup_fpimm<"fdup">;
   defm DUPM_ZI : sve_int_dup_mask_imm<"dupm">;
 
+  // Splat immediate (predicated)
+  defm CPY_ZPmI : sve_int_dup_imm_pred_merge<"cpy">;
+  defm CPY_ZPzI : sve_int_dup_imm_pred_zero<"cpy">;
+
   // continuous load with reg+immediate
   defm LD1B_IMM    : sve_mem_cld_si<0b0000, "ld1b",  Z_b, ZPR8>;
   defm LD1B_H_IMM  : sve_mem_cld_si<0b0001, "ld1b",  Z_h, ZPR16>;
