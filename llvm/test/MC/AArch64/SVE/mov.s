@@ -406,31 +406,61 @@ mov     z21.d, p15/m, #-128, lsl #8
 // Tests for indexed variant
 
 mov     z0.b, z0.b[0]
-// CHECK-INST: mov     z0.b, z0.b[0]
+// CHECK-INST: mov     z0.b, b0
 // CHECK-ENCODING: [0x00,0x20,0x21,0x05]
 // CHECK-ERROR: instruction requires: sve
 // CHECK-UNKNOWN: 00 20 21 05 <unknown>
 
 mov     z0.h, z0.h[0]
-// CHECK-INST: mov     z0.h, z0.h[0]
+// CHECK-INST: mov     z0.h, h0
 // CHECK-ENCODING: [0x00,0x20,0x22,0x05]
 // CHECK-ERROR: instruction requires: sve
 // CHECK-UNKNOWN: 00 20 22 05 <unknown>
 
 mov     z0.s, z0.s[0]
-// CHECK-INST: mov     z0.s, z0.s[0]
+// CHECK-INST: mov     z0.s, s0
 // CHECK-ENCODING: [0x00,0x20,0x24,0x05]
 // CHECK-ERROR: instruction requires: sve
 // CHECK-UNKNOWN: 00 20 24 05 <unknown>
 
 mov     z0.d, z0.d[0]
-// CHECK-INST: mov     z0.d, z0.d[0]
+// CHECK-INST: mov     z0.d, d0
 // CHECK-ENCODING: [0x00,0x20,0x28,0x05]
 // CHECK-ERROR: instruction requires: sve
 // CHECK-UNKNOWN: 00 20 28 05 <unknown>
 
 mov     z0.q, z0.q[0]
-// CHECK-INST: mov     z0.q, z0.q[0]
+// CHECK-INST: mov     z0.q, q0
+// CHECK-ENCODING: [0x00,0x20,0x30,0x05]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 20 30 05 <unknown>
+
+mov     z0.b, b0
+// CHECK-INST: mov     z0.b, b0
+// CHECK-ENCODING: [0x00,0x20,0x21,0x05]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 20 21 05 <unknown>
+
+mov     z0.h, h0
+// CHECK-INST: mov     z0.h, h0
+// CHECK-ENCODING: [0x00,0x20,0x22,0x05]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 20 22 05 <unknown>
+
+mov     z0.s, s0
+// CHECK-INST: mov     z0.s, s0
+// CHECK-ENCODING: [0x00,0x20,0x24,0x05]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 20 24 05 <unknown>
+
+mov     z0.d, d0
+// CHECK-INST: mov     z0.d, d0
+// CHECK-ENCODING: [0x00,0x20,0x28,0x05]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 20 28 05 <unknown>
+
+mov     z0.q, q0
+// CHECK-INST: mov     z0.q, q0
 // CHECK-ENCODING: [0x00,0x20,0x30,0x05]
 // CHECK-ERROR: instruction requires: sve
 // CHECK-UNKNOWN: 00 20 30 05 <unknown>

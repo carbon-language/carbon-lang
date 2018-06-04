@@ -141,6 +141,31 @@ dup z0.d, #128, lsl #8
 // --------------------------------------------------------------------------//
 // Immediate not compatible with encode/decode function.
 
+dup z0.b, b0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand for instruction
+// CHECK-NEXT: dup z0.b, b0
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+dup z0.h, h0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand for instruction
+// CHECK-NEXT: dup z0.h, h0
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+dup z0.s, s0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand for instruction
+// CHECK-NEXT: dup z0.s, s0
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+dup z0.d, d0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand for instruction
+// CHECK-NEXT: dup z0.d, d0
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+dup z0.q, q0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand for instruction
+// CHECK-NEXT: dup z0.q, q0
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 dup z24.b, z17.b[-1]
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: vector lane must be an integer in range [0, 63].
 // CHECK-NEXT: dup z24.b, z17.b[-1]

@@ -934,6 +934,11 @@ public:
            AArch64MCRegisterClasses[Class].contains(getReg());
   }
 
+  template <unsigned Class> bool isFPRasZPR() const {
+    return Kind == k_Register && Reg.Kind == RegKind::Scalar &&
+           AArch64MCRegisterClasses[Class].contains(getReg());
+  }
+
   template <int ElementWidth, unsigned Class>
   DiagnosticPredicate isSVEPredicateVectorRegOfWidth() const {
     if (Kind != k_Register || Reg.Kind != RegKind::SVEPredicateVector)
@@ -1267,6 +1272,21 @@ public:
         RI->getEncodingValue(getReg()));
 
     Inst.addOperand(MCOperand::createReg(Reg));
+  }
+
+  template <int Width>
+  void addFPRasZPRRegOperands(MCInst &Inst, unsigned N) const {
+    unsigned Base;
+    switch (Width) {
+    case 8:   Base = AArch64::B0; break;
+    case 16:  Base = AArch64::H0; break;
+    case 32:  Base = AArch64::S0; break;
+    case 64:  Base = AArch64::D0; break;
+    case 128: Base = AArch64::Q0; break;
+    default:
+      llvm_unreachable("Unsupported width");
+    }
+    Inst.addOperand(MCOperand::createReg(AArch64::Z0 + getReg() - Base));
   }
 
   void addVectorReg64Operands(MCInst &Inst, unsigned N) const {

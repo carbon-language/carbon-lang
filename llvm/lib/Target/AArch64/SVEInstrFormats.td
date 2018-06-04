@@ -334,6 +334,16 @@ multiclass sve_int_perm_dup_i<string asm> {
                   (!cast<Instruction>(NAME # _D) ZPR64:$Zd, ZPR64:$Zn, sve_elm_idx_extdup_d:$idx), 1>;
   def : InstAlias<"mov $Zd, $Zn$idx",
                   (!cast<Instruction>(NAME # _Q) ZPR128:$Zd, ZPR128:$Zn, sve_elm_idx_extdup_q:$idx), 1>;
+  def : InstAlias<"mov $Zd, $Bn",
+                  (!cast<Instruction>(NAME # _B) ZPR8:$Zd, FPR8asZPR:$Bn, 0), 2>;
+  def : InstAlias<"mov $Zd, $Hn",
+                  (!cast<Instruction>(NAME # _H) ZPR16:$Zd, FPR16asZPR:$Hn, 0), 2>;
+  def : InstAlias<"mov $Zd, $Sn",
+                  (!cast<Instruction>(NAME # _S) ZPR32:$Zd, FPR32asZPR:$Sn, 0), 2>;
+  def : InstAlias<"mov $Zd, $Dn",
+                  (!cast<Instruction>(NAME # _D) ZPR64:$Zd, FPR64asZPR:$Dn, 0), 2>;
+  def : InstAlias<"mov $Zd, $Qn",
+                  (!cast<Instruction>(NAME # _Q) ZPR128:$Zd, FPR128asZPR:$Qn, 0), 2>;
 }
 
 //===----------------------------------------------------------------------===//
