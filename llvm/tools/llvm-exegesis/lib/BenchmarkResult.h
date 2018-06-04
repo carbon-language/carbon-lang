@@ -77,6 +77,8 @@ public:
   double min() const { return MinValue; }
   double max() const { return MaxValue; }
 
+  const std::string &key() const { return Key; }
+
 private:
   std::string Key;
   double SumValues = 0.0;
