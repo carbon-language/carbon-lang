@@ -53,6 +53,17 @@ static constexpr Relation Reverse(Relation relation) {
   }
 }
 
+namespace RealFlag {
+enum {
+  Ok = 0, Overflow = 1, DivideByZero = 2, InvalidArgument = 4,
+  Underflow = 8, Inexact = 16
+};
+}  // namespace RealFlag
+
+enum class Rounding {
+  TiesToEven, ToZero, Down, Up, TiesAwayFromZero
+};
+
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 constexpr bool IsHostLittleEndian{false};
 #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -61,6 +72,8 @@ constexpr bool IsHostLittleEndian{true};
 #error host endianness is not known
 #endif
 
+// HostUnsignedInt<BITS> finds the smallest native unsigned integer type
+// whose size is >= BITS.
 template<bool LE8, bool LE16, bool LE32, bool LE64> struct SmallestUInt {};
 template<> struct SmallestUInt<true, true, true, true> {
   using type = std::uint8_t;
