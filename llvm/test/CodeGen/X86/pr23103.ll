@@ -13,10 +13,10 @@ define <1 x double> @pr23103(<1 x double>* align 8 %Vp) {
 ; CHECK-NEXT:    pushq %rax
 ; CHECK-NEXT:    .cfi_def_cfa_offset 16
 ; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vmovsd %xmm0, (%rsp) # 8-byte Spill
 ; CHECK-NEXT:    callq foo
-; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vaddsd (%rsp), %xmm0, %xmm0 # 8-byte Folded Reload
 ; CHECK-NEXT:    popq %rax
-; CHECK-NEXT:    .cfi_def_cfa_offset 8
 ; CHECK-NEXT:    retq
 entry:
   %V = load <1 x double>, <1 x double>* %Vp, align 8
