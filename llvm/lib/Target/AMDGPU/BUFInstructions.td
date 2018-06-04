@@ -142,17 +142,17 @@ class getMTBUFInsDA<list<RegisterClass> vdataList,
   RegisterClass vaddrClass = !if(!empty(vaddrList), ?, !head(vaddrList));
   dag InsNoData = !if(!empty(vaddrList),
     (ins                    SReg_128:$srsrc, SCSrc_b32:$soffset,
-         offset:$offset, DFMT:$dfmt, NFMT:$nfmt, GLC:$glc, slc:$slc, tfe:$tfe),
+         offset:$offset, DFMT:$dfmt, NFMT:$nfmt, GLC:$glc, SLC:$slc, TFE:$tfe),
     (ins vaddrClass:$vaddr, SReg_128:$srsrc, SCSrc_b32:$soffset,
-         offset:$offset, DFMT:$dfmt, NFMT:$nfmt, GLC:$glc, slc:$slc, tfe:$tfe)
+         offset:$offset, DFMT:$dfmt, NFMT:$nfmt, GLC:$glc, SLC:$slc, TFE:$tfe)
   );
   dag InsData = !if(!empty(vaddrList),
     (ins vdataClass:$vdata,                    SReg_128:$srsrc,
          SCSrc_b32:$soffset, offset:$offset, DFMT:$dfmt, NFMT:$nfmt, GLC:$glc,
-         slc:$slc, tfe:$tfe),
+         SLC:$slc, TFE:$tfe),
     (ins vdataClass:$vdata, vaddrClass:$vaddr, SReg_128:$srsrc,
          SCSrc_b32:$soffset, offset:$offset, DFMT:$dfmt, NFMT:$nfmt, GLC:$glc,
-         slc:$slc, tfe:$tfe)
+         SLC:$slc, TFE:$tfe)
   );
   dag ret = !if(!empty(vdataList), InsNoData, InsData);
 }
@@ -382,19 +382,19 @@ class getMUBUFInsDA<list<RegisterClass> vdataList,
   RegisterClass vaddrClass = !if(!empty(vaddrList), ?, !head(vaddrList));
   dag InsNoData = !if(!empty(vaddrList),
     (ins                    SReg_128:$srsrc, SCSrc_b32:$soffset,
-         offset:$offset, GLC:$glc, slc:$slc),
+         offset:$offset, GLC:$glc, SLC:$slc),
     (ins vaddrClass:$vaddr, SReg_128:$srsrc, SCSrc_b32:$soffset,
-         offset:$offset, GLC:$glc, slc:$slc)
+         offset:$offset, GLC:$glc, SLC:$slc)
   );
   dag InsData = !if(!empty(vaddrList),
     (ins vdataClass:$vdata,                    SReg_128:$srsrc,
-         SCSrc_b32:$soffset, offset:$offset, GLC:$glc, slc:$slc),
+         SCSrc_b32:$soffset, offset:$offset, GLC:$glc, SLC:$slc),
     (ins vdataClass:$vdata, vaddrClass:$vaddr, SReg_128:$srsrc,
-         SCSrc_b32:$soffset, offset:$offset, GLC:$glc, slc:$slc)
+         SCSrc_b32:$soffset, offset:$offset, GLC:$glc, SLC:$slc)
   );
   dag ret = !con(
               !if(!empty(vdataList), InsNoData, InsData),
-              !if(isLds, (ins), (ins tfe:$tfe))
+              !if(isLds, (ins), (ins TFE:$tfe))
              );
 }
 
@@ -552,7 +552,7 @@ multiclass MUBUF_Pseudo_Stores<string opName, RegisterClass vdataClass,
 class MUBUF_Pseudo_Store_Lds<string opName>
   : MUBUF_Pseudo<opName,
                  (outs),
-                 (ins SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, GLC:$glc, slc:$slc),
+                 (ins SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, GLC:$glc, SLC:$slc),
                  " $srsrc, $soffset$offset lds$glc$slc"> {
   let mayLoad = 0;
   let mayStore = 1;
@@ -573,15 +573,15 @@ class getMUBUFAtomicInsDA<RegisterClass vdataClass, bit vdata_in,
   dag ret = !if(vdata_in,
     !if(!empty(vaddrList),
       (ins vdataClass:$vdata_in,
-           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, slc:$slc),
+           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, SLC:$slc),
       (ins vdataClass:$vdata_in, vaddrClass:$vaddr,
-           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, slc:$slc)
+           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, SLC:$slc)
     ),
     !if(!empty(vaddrList),
       (ins vdataClass:$vdata,
-           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, slc:$slc),
+           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, SLC:$slc),
       (ins vdataClass:$vdata, vaddrClass:$vaddr,
-           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, slc:$slc)
+           SReg_128:$srsrc, SCSrc_b32:$soffset, offset:$offset, SLC:$slc)
   ));
 }
 
