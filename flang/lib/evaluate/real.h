@@ -130,13 +130,13 @@ public:
     if (exponent == maxExponent && !fraction.IsZero()) {  // NaN
       result.flags |= RealFlag::InvalidArgument;
       result.value = result.value.HUGE();
-    } else if (exponent >= exponentBias + result.value.bits) {  // +/-Inf
+    } else if (exponent >= maxExponent || exponent >= exponentBias + result.value.bits) {  // +/-Inf
       if (isNegative) {
         result.value = result.value.MASKL(1);
       } else {
         result.value = result.value.HUGE();
       }
-      result.flags = RealFlag::Overflow;
+      result.flags |= RealFlag::Overflow;
     } else if (exponent < exponentBias) {  // |x| < 1.0
       if (!fraction.IsZero()) {
         result.flags |= RealFlag::Underflow | RealFlag::Inexact;
@@ -409,8 +409,8 @@ private:
         // +/-0.0
         word_ = Word{};
       } else if (biasedExponent <= leadz) {
+        // denormal
         word_ = Word::Convert(fraction).value.SHIFTL(biasedExponent);
-        // TODO: Underflow
       } else {
         word_ = Word::Convert(fraction).value.SHIFTL(leadz);
         if (implicitMSB) {
@@ -425,6 +425,8 @@ private:
     }
   }
 
+  // Determines whether a value should be rounded by increasing its
+  // fraction, given a rounding mode and a summary of the lost bits.
   constexpr bool MustRound(Rounding rounding, const RoundingBits &bits) const {
     bool round{false};  // to dodge bogus g++ warning about missing return
     switch (rounding) {
@@ -443,7 +445,7 @@ private:
     return round;
   }
 
-  // Returns flags.
+  // Rounds a result, if necessary; returns flags.
   int Round(Rounding rounding, const RoundingBits &bits) {
     std::uint64_t exponent{Exponent()};
     int flags{(bits.round | bits.guard) ? RealFlag::Inexact : RealFlag::Ok};
@@ -467,11 +469,22 @@ private:
   Word word_{};  // an Integer<>
 };
 
+using RealKind2 = Real<Integer<16>, 11>;
 extern template class Real<Integer<16>, 11>;
+
+using RealKind4 = Real<Integer<32>, 24>;
 extern template class Real<Integer<32>, 24>;
+
+using RealKind8 = Real<Integer<64>, 53>;
 extern template class Real<Integer<64>, 53>;
+
+using RealKind10 = Real<Integer<80>, 64, false>;  // 80387
 extern template class Real<Integer<80>, 64, false>;
+
+using RealKind16 = Real<Integer<128>, 112>;
 extern template class Real<Integer<128>, 112>;
+
+// N.B. No "double-double" support.
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_REAL_H_

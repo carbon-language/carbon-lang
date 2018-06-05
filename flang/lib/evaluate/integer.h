@@ -344,7 +344,7 @@ public:
     std::uint64_t n{LEPart(0)};
     int filled{partBits};
     for (int j{1}; filled < 64 && j < parts; ++j, filled += partBits) {
-      n |= LEPart(j) << filled;
+      n |= std::uint64_t{LEPart(j)} << filled;
     }
     return n;
   }

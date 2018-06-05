@@ -17,11 +17,7 @@
 #include "testing.h"
 #include <cstdio>
 
-using Fortran::evaluate::Integer;
-using Fortran::evaluate::Ordering;
-using Fortran::evaluate::Real;
-using Fortran::evaluate::Relation;
-using Fortran::evaluate::ValueWithRealFlags;
+using namespace Fortran::evaluate;
 
 template<typename R> void tests() {
   char desc[64];
@@ -103,24 +99,24 @@ template<typename R> void tests() {
     TEST(!vr.value.IsZero())("%s,%d,0x%llx",desc,j,x);
     auto ivf = vr.value.template ToInteger<Integer<64>>();
     if (j > (maxExponent / 2)) {
-      MATCH(Fortran::evaluate::RealFlag::Overflow, vr.flags)(desc);
+      MATCH(RealFlag::Overflow, vr.flags)(desc);
       TEST(vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
-      MATCH(Fortran::evaluate::RealFlag::Overflow, ivf.flags)("%s,%d,0x%llx",desc,j,x);
+      MATCH(RealFlag::Overflow, ivf.flags)("%s,%d,0x%llx",desc,j,x);
       MATCH(0x7fffffffffffffff, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
     } else {
-      MATCH(Fortran::evaluate::RealFlag::Ok, vr.flags)(desc);
+      MATCH(RealFlag::Ok, vr.flags)(desc);
       TEST(!vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
-      MATCH(Fortran::evaluate::RealFlag::Ok, ivf.flags)("%s,%d,0x%llx",desc,j,x);
+      MATCH(RealFlag::Ok, ivf.flags)("%s,%d,0x%llx",desc,j,x);
       MATCH(x, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
     }
   }
 }
 
 int main() {
-  tests<Real<Integer<16>, 11>>();
-  tests<Real<Integer<32>, 24>>();
-  tests<Real<Integer<64>, 53>>();
-  tests<Real<Integer<80>, 64, false>>();
-  tests<Real<Integer<128>, 112>>();
+  tests<RealKind2>();
+  tests<RealKind4>();
+  tests<RealKind8>();
+  tests<RealKind10>();
+  tests<RealKind16>();
   return testing::Complete();
 }
