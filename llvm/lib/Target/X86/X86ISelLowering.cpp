@@ -28744,6 +28744,19 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
     }
     break;
   }
+  case X86ISD::PACKUS: {
+    // PACKUS is just a truncation if the upper half is zero.
+    // TODO: Add DemandedElts support.
+    KnownBits Known2;
+    DAG.computeKnownBits(Op.getOperand(0), Known, Depth + 1);
+    DAG.computeKnownBits(Op.getOperand(1), Known2, Depth + 1);
+    Known.One &= Known2.One;
+    Known.Zero &= Known2.Zero;
+    if (Known.countMinLeadingZeros() < BitWidth)
+      Known.resetAll();
+    Known = Known.trunc(BitWidth);
+    break;
+  }
   case X86ISD::VZEXT: {
     // TODO: Add DemandedElts support.
     SDValue N0 = Op.getOperand(0);
