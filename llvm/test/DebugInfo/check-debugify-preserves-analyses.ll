@@ -1,8 +1,8 @@
 ; RUN: opt < %s -globals-aa -functionattrs | \
-; RUN:   opt -S -strip -strip-dead-prototypes -strip-module-flags > %t.no_dbg
+; RUN:   opt -S -strip -strip-dead-prototypes -strip-named-metadata > %t.no_dbg
 
 ; RUN: opt < %s -debugify-each -globals-aa -functionattrs | \
-; RUN:   opt -S -strip -strip-dead-prototypes -strip-module-flags > %t.with_dbg
+; RUN:   opt -S -strip -strip-dead-prototypes -strip-named-metadata > %t.with_dbg
 
 ; RUN: diff %t.no_dbg %t.with_dbg
 
