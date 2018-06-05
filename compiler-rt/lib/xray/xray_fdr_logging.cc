@@ -25,6 +25,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "xray/xray_interface.h"
@@ -1170,7 +1171,6 @@ XRayLogInitStatus fdrLoggingInit(size_t BufferSize, size_t BufferMax,
 }
 
 bool fdrLogDynamicInitializer() XRAY_NEVER_INSTRUMENT {
-  using namespace __xray;
   XRayLogImpl Impl{
       fdrLoggingInit,
       fdrLoggingFinalize,
