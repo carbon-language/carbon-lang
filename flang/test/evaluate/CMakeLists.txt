@@ -42,3 +42,12 @@ target_link_libraries(integer-test
   FortranEvaluate
   FortranEvaluateTesting
 )
+
+add_executable(real-test
+  real.cc
+)
+
+target_link_libraries(real-test
+  FortranEvaluate
+  FortranEvaluateTesting
+)
