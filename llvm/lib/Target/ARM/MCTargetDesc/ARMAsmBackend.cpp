@@ -487,6 +487,11 @@ unsigned ARMAsmBackend::adjustFixupValue(const MCAssembler &Asm,
     return 0xffffff & ((Value - 8) >> 2);
   case ARM::fixup_t2_uncondbranch: {
     Value = Value - 4;
+    if (!isInt<25>(Value)) {
+      Ctx.reportError(Fixup.getLoc(), "Relocation out of range");
+      return 0;
+    }
+
     Value >>= 1; // Low bit is not encoded.
 
     uint32_t out = 0;
@@ -506,6 +511,11 @@ unsigned ARMAsmBackend::adjustFixupValue(const MCAssembler &Asm,
   }
   case ARM::fixup_t2_condbranch: {
     Value = Value - 4;
+    if (!isInt<21>(Value)) {
+      Ctx.reportError(Fixup.getLoc(), "Relocation out of range");
+      return 0;
+    }
+
     Value >>= 1; // Low bit is not encoded.
 
     uint64_t out = 0;
