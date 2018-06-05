@@ -13,7 +13,26 @@
 ! limitations under the License.
 
 integer :: y
-call x
-!ERROR: Use of 'y' as a procedure conflicts with its declaration
+procedure() :: a
+procedure(real) :: b
+call a  ! OK - can be function or subroutine
+!ERROR: Cannot call subroutine 'a' like a function
+c = a()
+!ERROR: Cannot call function 'b' like a subroutine
+call b
+!ERROR: Cannot call function 'y' like a subroutine
 call y
+call x
+!ERROR: Cannot call subroutine 'x' like a function
+z = x()
+end
+
+subroutine s
+  !ERROR: Cannot call function 'f' like a subroutine
+  call f
+  !ERROR: Cannot call subroutine 's' like a function
+  i = s()
+contains
+  function f()
+  end
 end

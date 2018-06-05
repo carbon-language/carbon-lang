@@ -14,6 +14,7 @@
 
 #include "type.h"
 #include "attr.h"
+#include "symbol.h"
 #include <iostream>
 #include <set>
 
@@ -89,7 +90,7 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   if (!x.data_.attrs.empty()) {
     o << ", " << x.data_.attrs;
   }
-  o << " :: " << x.data_.name;
+  o << " :: " << x.data_.name.ToString();
   if (x.data_.lenParams.size() > 0 || x.data_.kindParams.size() > 0) {
     o << '(';
     int n = 0;
@@ -125,6 +126,21 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   }
   for (const auto &comp : x.data_.procComps) {
     o << "  " << comp << "\n";
+  }
+  if (x.data_.hasTbpPart()) {
+    o << "CONTAINS\n";
+    if (x.data_.bindingPrivate) {
+      o << "  PRIVATE\n";
+    }
+    for (const auto &tbp : x.data_.typeBoundProcs) {
+      o << "  " << tbp << "\n";
+    }
+    for (const auto &tbg : x.data_.typeBoundGenerics) {
+      o << "  " << tbg << "\n";
+    }
+    for (const auto &name : x.data_.finalProcs) {
+      o << "  FINAL :: " << name.ToString() << '\n';
+    }
   }
   return o << "END TYPE";
 }
@@ -184,7 +200,7 @@ std::ostream &operator<<(std::ostream &o, const DataComponentDef &x) {
   if (!x.attrs_.empty()) {
     o << ", " << x.attrs_;
   }
-  o << " :: " << x.name_;
+  o << " :: " << x.name_.ToString();
   if (!x.arraySpec_.empty()) {
     o << '(';
     int n = 0;
@@ -199,8 +215,8 @@ std::ostream &operator<<(std::ostream &o, const DataComponentDef &x) {
   return o;
 }
 
-DataComponentDef::DataComponentDef(const DeclTypeSpec &type, const Name &name,
-    const Attrs &attrs, const ArraySpec &arraySpec)
+DataComponentDef::DataComponentDef(const DeclTypeSpec &type,
+    const SourceName &name, const Attrs &attrs, const ArraySpec &arraySpec)
   : type_{type}, name_{name}, attrs_{attrs}, arraySpec_{arraySpec} {
   attrs.CheckValid({Attr::PUBLIC, Attr::PRIVATE, Attr::ALLOCATABLE,
       Attr::POINTER, Attr::CONTIGUOUS});
@@ -253,25 +269,22 @@ std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
 }
 
 std::ostream &operator<<(std::ostream &o, const ProcDecl &x) {
-  return o << x.name_;
+  return o << x.name_.ToString();
 }
 
-ProcComponentDef::ProcComponentDef(ProcDecl decl, Attrs attrs,
-    const std::optional<Name> &interfaceName,
-    const std::optional<DeclTypeSpec> &typeSpec)
-  : decl_{decl}, attrs_{attrs}, interfaceName_{interfaceName}, typeSpec_{
-                                                                   typeSpec} {
+ProcComponentDef::ProcComponentDef(
+    const ProcDecl &decl, Attrs attrs, ProcInterface &&interface)
+  : decl_{decl}, attrs_{attrs}, interface_{std::move(interface)} {
   CHECK(attrs_.test(Attr::POINTER));
   attrs_.CheckValid(
       {Attr::PUBLIC, Attr::PRIVATE, Attr::NOPASS, Attr::POINTER, Attr::PASS});
-  CHECK(!interfaceName || !typeSpec);  // can't both be defined
 }
 std::ostream &operator<<(std::ostream &o, const ProcComponentDef &x) {
   o << "PROCEDURE(";
-  if (x.interfaceName_) {
-    o << *x.interfaceName_;
-  } else if (x.typeSpec_) {
-    o << *x.typeSpec_;
+  if (auto *symbol = x.interface_.symbol()) {
+    o << symbol->name().ToString();
+  } else if (auto *type = x.interface_.type()) {
+    o << *type;
   }
   o << "), " << x.attrs_ << " :: " << x.decl_;
   return o;
@@ -309,53 +322,31 @@ std::ostream &operator<<(std::ostream &o, const GenericSpec &x) {
   }
 }
 
+std::ostream &operator<<(std::ostream &o, const TypeBoundProc &x) {
+  o << "PROCEDURE(";
+  if (x.interface_) {
+    o << x.interface_->ToString();
+  }
+  o << ")";
+  if (!x.attrs_.empty()) {
+    o << ", " << x.attrs_;
+  }
+  o << " :: " << x.binding_.ToString();
+  if (x.procedure_ != x.binding_) {
+    o << " => " << x.procedure_.ToString();
+  }
+  return o;
+}
+std::ostream &operator<<(std::ostream &o, const TypeBoundGeneric &x) {
+  o << "GENERIC ";
+  if (!x.attrs_.empty()) {
+    o << ", " << x.attrs_;
+  }
+  o << " :: " << x.genericSpec_ << " => " << x.name_.ToString();
+  return o;
+}
+
 DerivedTypeDef::DerivedTypeDef(const DerivedTypeDef::Data &data)
   : data_{data} {}
-
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::name(const Name &x) {
-  data_.name = x;
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::extends(const Name &x) {
-  data_.extends = x;
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::attr(const Attr &x) {
-  // TODO: x.CheckValid({Attr::ABSTRACT, Attr::PUBLIC, Attr::PRIVATE,
-  // Attr::BIND_C});
-  data_.attrs.set(x);
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::attrs(const Attrs &x) {
-  x.CheckValid({Attr::ABSTRACT, Attr::PUBLIC, Attr::PRIVATE, Attr::BIND_C});
-  data_.attrs |= x;
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::lenParam(const TypeParamDef &x) {
-  data_.lenParams.push_back(x);
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::kindParam(const TypeParamDef &x) {
-  data_.kindParams.push_back(x);
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::dataComponent(
-    const DataComponentDef &x) {
-  data_.dataComps.push_back(x);
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::procComponent(
-    const ProcComponentDef &x) {
-  data_.procComps.push_back(x);
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::Private(bool x) {
-  data_.Private = x;
-  return *this;
-}
-DerivedTypeDefBuilder &DerivedTypeDefBuilder::sequence(bool x) {
-  data_.sequence = x;
-  return *this;
-}
 
 }  // namespace Fortran::semantics

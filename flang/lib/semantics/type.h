@@ -16,8 +16,8 @@
 #define FORTRAN_SEMANTICS_TYPE_H_
 
 #include "attr.h"
+#include "../parser/char-block.h"
 #include "../parser/idioms.h"
-#include "../parser/parse-tree.h"
 #include <list>
 #include <map>
 #include <memory>
@@ -64,8 +64,6 @@ public:
     return IntExpr();  // TODO
   }
   IntExpr() {}
-  IntExpr(const parser::ScalarIntExpr &) { /*TODO*/
-  }
   virtual std::ostream &Output(std::ostream &o) const { return o << "IntExpr"; }
 };
 
@@ -361,57 +359,87 @@ public:
   // TODO: coarray-spec
   // TODO: component-initialization
   DataComponentDef(
-      const DeclTypeSpec &type, const Name &name, const Attrs &attrs)
+      const DeclTypeSpec &type, const SourceName &name, const Attrs &attrs)
     : DataComponentDef(type, name, attrs, ArraySpec{}) {}
-  DataComponentDef(const DeclTypeSpec &type, const Name &name,
+  DataComponentDef(const DeclTypeSpec &type, const SourceName &name,
       const Attrs &attrs, const ArraySpec &arraySpec);
 
   const DeclTypeSpec &type() const { return type_; }
-  const Name &name() const { return name_; }
+  const SourceName &name() const { return name_; }
   const Attrs &attrs() const { return attrs_; }
   const ArraySpec &shape() const { return arraySpec_; }
 
 private:
   const DeclTypeSpec type_;
-  const Name name_;
+  const SourceName name_;
   const Attrs attrs_;
   const ArraySpec arraySpec_;
   friend std::ostream &operator<<(std::ostream &, const DataComponentDef &);
 };
 
-class ProcDecl {
+class Symbol;
+
+// This represents a proc-interface in the declaration of a procedure or
+// procedure component. It comprises a symbol (representing the specific
+// interface), a decl-type-spec (representing the function return type),
+// or neither.
+class ProcInterface {
 public:
-  ProcDecl(const Name &name) : name_{name} {}
-  // TODO: proc-pointer-init
-  const Name &name() const { return name_; }
+  ProcInterface() = default;
+  ProcInterface(ProcInterface &&that)
+    : symbol_{that.symbol_}, type_{std::move(that.type_)} {}
+  ProcInterface(const ProcInterface &that) : symbol_{that.symbol_} {
+    if (that.type_) {
+      *this = *that.type_;
+    }
+  }
+  ProcInterface &operator=(ProcInterface &&that) {
+    symbol_ = that.symbol_;
+    type_ = std::move(that.type_);
+    return *this;
+  }
+  ProcInterface &operator=(const Symbol &symbol) {
+    CHECK(!type_);
+    symbol_ = &symbol;
+    return *this;
+  }
+  ProcInterface &operator=(const DeclTypeSpec &type) {
+    CHECK(!symbol_);
+    type_ = std::make_unique<DeclTypeSpec>(type);
+    return *this;
+  }
+  const Symbol *symbol() const { return symbol_; }
+  const DeclTypeSpec *type() const { return type_.get(); }
 
 private:
-  const Name name_;
+  const Symbol *symbol_{nullptr};
+  std::unique_ptr<const DeclTypeSpec> type_;
+};
+
+class ProcDecl {
+public:
+  ProcDecl(const ProcDecl &decl) = default;
+  ProcDecl(const SourceName &name) : name_{name} {}
+  // TODO: proc-pointer-init
+  const SourceName &name() const { return name_; }
+
+private:
+  const SourceName name_;
   friend std::ostream &operator<<(std::ostream &, const ProcDecl &);
 };
 
 class ProcComponentDef {
 public:
-  ProcComponentDef(ProcDecl decl, Attrs attrs)
-    : ProcComponentDef(decl, attrs, std::nullopt, std::nullopt) {}
-  ProcComponentDef(ProcDecl decl, Attrs attrs, const Name &interfaceName)
-    : ProcComponentDef(decl, attrs, interfaceName, std::nullopt) {}
-  ProcComponentDef(ProcDecl decl, Attrs attrs, const DeclTypeSpec &typeSpec)
-    : ProcComponentDef(decl, attrs, std::nullopt, typeSpec) {}
+  ProcComponentDef(const ProcDecl &decl, Attrs attrs, ProcInterface &&interface);
 
   const ProcDecl &decl() const { return decl_; }
   const Attrs &attrs() const { return attrs_; }
-  const std::optional<Name> &interfaceName() const { return interfaceName_; }
-  const std::optional<DeclTypeSpec> &typeSpec() const { return typeSpec_; }
+  const ProcInterface &interface() const { return interface_; }
 
 private:
-  ProcComponentDef(ProcDecl decl, Attrs attrs,
-      const std::optional<Name> &interfaceName,
-      const std::optional<DeclTypeSpec> &typeSpec);
   const ProcDecl decl_;
   const Attrs attrs_;
-  const std::optional<Name> interfaceName_;
-  const std::optional<DeclTypeSpec> typeSpec_;
+  const ProcInterface interface_;
   friend std::ostream &operator<<(std::ostream &, const ProcComponentDef &);
 };
 
@@ -472,13 +500,59 @@ private:
   friend std::ostream &operator<<(std::ostream &, const GenericSpec &);
 };
 
-class DerivedTypeDefBuilder;
+class TypeBoundGeneric {
+public:
+  TypeBoundGeneric(const SourceName &name, const Attrs &attrs,
+      const GenericSpec &genericSpec)
+    : name_{name}, attrs_{attrs}, genericSpec_{genericSpec} {
+    attrs_.CheckValid({Attr::PUBLIC, Attr::PRIVATE});
+  }
+
+private:
+  const SourceName name_;
+  const Attrs attrs_;
+  const GenericSpec genericSpec_;
+  friend std::ostream &operator<<(std::ostream &, const TypeBoundGeneric &);
+};
+
+class TypeBoundProc {
+public:
+  TypeBoundProc(const SourceName &interface, const Attrs &attrs,
+      const SourceName &binding)
+    : TypeBoundProc(interface, attrs, binding, binding) {
+    if (!attrs_.test(Attr::DEFERRED)) {
+      parser::die(
+          "DEFERRED attribute is required if interface name is specified");
+    }
+  }
+  TypeBoundProc(const Attrs &attrs, const SourceName &binding,
+      const std::optional<SourceName> &procedure)
+    : TypeBoundProc({}, attrs, binding, procedure ? *procedure : binding) {
+    if (attrs_.test(Attr::DEFERRED)) {
+      parser::die("DEFERRED attribute is only allowed with interface name");
+    }
+  }
+
+private:
+  TypeBoundProc(const std::optional<SourceName> &interface, const Attrs &attrs,
+      const SourceName &binding, const SourceName &procedure)
+    : interface_{interface}, attrs_{attrs}, binding_{binding}, procedure_{
+                                                                   procedure} {
+    attrs_.CheckValid({Attr::PUBLIC, Attr::PRIVATE, Attr::NOPASS, Attr::PASS,
+        Attr::DEFERRED, Attr::NON_OVERRIDABLE});
+  }
+  const std::optional<SourceName> interface_;
+  const Attrs attrs_;
+  const SourceName binding_;
+  const SourceName procedure_;
+  friend std::ostream &operator<<(std::ostream &, const TypeBoundProc &);
+};
 
 // Definition of a derived type
 class DerivedTypeDef {
 public:
-  const Name &name() const { return data_.name; }
-  const std::optional<Name> &extends() const { return data_.extends; }
+  const SourceName &name() const { return data_.name; }
+  const std::optional<SourceName> &extends() const { return data_.extends; }
   const Attrs &attrs() const { return data_.attrs; }
   const TypeParamDefs &lenParams() const { return data_.lenParams; }
   const TypeParamDefs &kindParams() const { return data_.kindParams; }
@@ -488,11 +562,17 @@ public:
   const std::list<ProcComponentDef> &procComponents() const {
     return data_.procComps;
   }
+  const std::list<TypeBoundProc> &typeBoundProcs() const {
+    return data_.typeBoundProcs;
+  }
+  const std::list<TypeBoundGeneric> &typeBoundGenerics() const {
+    return data_.typeBoundGenerics;
+  }
+  const std::list<SourceName> finalProcs() const { return data_.finalProcs; }
 
-private:
   struct Data {
-    Name name;
-    std::optional<Name> extends;
+    SourceName name;
+    std::optional<SourceName> extends;
     Attrs attrs;
     bool Private{false};
     bool sequence{false};
@@ -500,33 +580,20 @@ private:
     TypeParamDefs kindParams;
     std::list<DataComponentDef> dataComps;
     std::list<ProcComponentDef> procComps;
+    bool bindingPrivate{false};
+    std::list<TypeBoundProc> typeBoundProcs;
+    std::list<TypeBoundGeneric> typeBoundGenerics;
+    std::list<SourceName> finalProcs;
+    bool hasTbpPart() const {
+      return !finalProcs.empty() || !typeBoundProcs.empty() ||
+          !typeBoundGenerics.empty();
+    }
   };
-  friend class DerivedTypeDefBuilder;
   explicit DerivedTypeDef(const Data &x);
+private:
   const Data data_;
   // TODO: type-bound procedures
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeDef &);
-};
-
-class DerivedTypeDefBuilder {
-public:
-  DerivedTypeDefBuilder(const Name &name) { data_.name = name; }
-  DerivedTypeDefBuilder() {}
-  operator DerivedTypeDef() const { return DerivedTypeDef(data_); }
-  DerivedTypeDefBuilder &name(const Name &x);
-  DerivedTypeDefBuilder &extends(const Name &x);
-  DerivedTypeDefBuilder &attr(const Attr &x);
-  DerivedTypeDefBuilder &attrs(const Attrs &x);
-  DerivedTypeDefBuilder &lenParam(const TypeParamDef &x);
-  DerivedTypeDefBuilder &kindParam(const TypeParamDef &x);
-  DerivedTypeDefBuilder &dataComponent(const DataComponentDef &x);
-  DerivedTypeDefBuilder &procComponent(const ProcComponentDef &x);
-  DerivedTypeDefBuilder &Private(bool x = true);
-  DerivedTypeDefBuilder &sequence(bool x = true);
-
-private:
-  DerivedTypeDef::Data data_;
-  friend class DerivedTypeDef;
 };
 
 using ParamValue = LenParamValue;

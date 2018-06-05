@@ -89,9 +89,25 @@ private:
   SubprogramKind kind_;
 };
 
+// A name from an entity-decl -- could be object or function.
 class EntityDetails {
 public:
   EntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
+  const std::optional<DeclTypeSpec> &type() const { return type_; }
+  void set_type(const DeclTypeSpec &type);
+  bool isDummy() const { return isDummy_; }
+
+private:
+  bool isDummy_;
+  std::optional<DeclTypeSpec> type_;
+  friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
+};
+
+// An entity known to be an object.
+class ObjectEntityDetails {
+public:
+  ObjectEntityDetails(const EntityDetails &);
+  ObjectEntityDetails(bool isDummy = false) : isDummy_{isDummy} {}
   const std::optional<DeclTypeSpec> &type() const { return type_; }
   void set_type(const DeclTypeSpec &type);
   const ArraySpec &shape() const { return shape_; }
@@ -103,7 +119,23 @@ private:
   bool isDummy_;
   std::optional<DeclTypeSpec> type_;
   ArraySpec shape_;
-  friend std::ostream &operator<<(std::ostream &, const EntityDetails &);
+  friend std::ostream &operator<<(std::ostream &, const ObjectEntityDetails &);
+};
+
+// A procedure pointer, dummy procedure, or external procedure
+class ProcEntityDetails {
+public:
+  ProcEntityDetails() = default;
+  ProcEntityDetails(const EntityDetails &d);
+
+  const ProcInterface &interface() const { return interface_; }
+  ProcInterface &interface() { return interface_; }
+  void set_interface(ProcInterface &&interface) { interface_ = std::move(interface); }
+  bool HasExplicitInterface() const;
+
+private:
+  ProcInterface interface_;
+  friend std::ostream &operator<<(std::ostream &, const ProcEntityDetails &);
 };
 
 // Record the USE of a symbol: location is where (USE statement or renaming);
@@ -169,12 +201,16 @@ private:
 class UnknownDetails {};
 
 using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
-      SubprogramDetails, SubprogramNameDetails, EntityDetails, UseDetails,
-      UseErrorDetails, GenericDetails>;
+      SubprogramDetails, SubprogramNameDetails, EntityDetails,
+      ObjectEntityDetails, ProcEntityDetails, UseDetails, UseErrorDetails,
+      GenericDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 
 class Symbol {
 public:
+  ENUM_CLASS(Flag, Function, Subroutine);
+  using Flags = EnumSet<Flag, Flag_enumSize>;
+
   Symbol(const Scope &owner, const SourceName &name, const Attrs &attrs,
       Details &&details)
     : owner_{owner}, attrs_{attrs}, details_{std::move(details)} {
@@ -184,6 +220,10 @@ public:
   const SourceName &name() const { return occurrences_.front(); }
   Attrs &attrs() { return attrs_; }
   const Attrs &attrs() const { return attrs_; }
+  Flags &flags() { return flags_; }
+  const Flags &flags() const { return flags_; }
+  bool test(Flag flag) const { return flags_.test(flag); }
+  void set(Flag flag, bool value = true) { flags_.set(flag, value); }
 
   // Does symbol have this type of details?
   template<typename D> bool has() const {
@@ -224,6 +264,7 @@ public:
   const Symbol &GetUltimate() const;
 
   bool isSubprogram() const;
+  bool HasExplicitInterface() const;
 
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }
@@ -232,11 +273,14 @@ private:
   const Scope &owner_;
   std::list<SourceName> occurrences_;
   Attrs attrs_;
+  Flags flags_;
   Details details_;
 
   const std::string GetDetailsName() const;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
 };
+
+std::ostream &operator<<(std::ostream &, Symbol::Flag);
 
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_SYMBOL_H_

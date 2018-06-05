@@ -31,10 +31,21 @@ void EntityDetails::set_type(const DeclTypeSpec &type) {
   type_ = type;
 }
 
-void EntityDetails::set_shape(const ArraySpec &shape) {
+void ObjectEntityDetails::set_type(const DeclTypeSpec &type) {
+  CHECK(!type_);
+  type_ = type;
+}
+
+void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
   CHECK(shape_.empty());
   for (const auto &shapeSpec : shape) {
     shape_.push_back(shapeSpec);
+  }
+}
+
+ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
+  if (auto &type = d.type()) {
+    interface_ = *type;
   }
 }
 
@@ -79,6 +90,8 @@ static std::string DetailsToString(const Details &details) {
           [](const SubprogramDetails &) { return "Subprogram"; },
           [](const SubprogramNameDetails &) { return "SubprogramName"; },
           [](const EntityDetails &) { return "Entity"; },
+          [](const ObjectEntityDetails &) { return "ObjectEntity"; },
+          [](const ProcEntityDetails &) { return "ProcEntity"; },
           [](const UseDetails &) { return "Use"; },
           [](const UseErrorDetails &) { return "UseError"; },
           [](const GenericDetails &) { return "Generic"; },
@@ -99,13 +112,18 @@ void Symbol::set_details(Details &&details) {
 bool Symbol::CanReplaceDetails(const Details &details) const {
   if (has<UnknownDetails>()) {
     return true;  // can always replace UnknownDetails
-  } else if (std::holds_alternative<UseErrorDetails>(details)) {
-    return true;  // can replace any with UseErrorDetails
-  } else if (has<SubprogramNameDetails>() &&
-      std::holds_alternative<SubprogramDetails>(details)) {
-    return true;  // can replace SubprogramNameDetails with SubprogramDetails
   } else {
-    return false;
+    return std::visit(
+        parser::visitors{
+            [](const UseErrorDetails &) { return true; },
+            [=](const ObjectEntityDetails &) { return has<EntityDetails>(); },
+            [=](const ProcEntityDetails &) { return has<EntityDetails>(); },
+            [=](const SubprogramDetails &) {
+              return has<SubprogramNameDetails>();
+            },
+            [](const auto &) { return false; },
+        },
+        details);
   }
 }
 
@@ -123,16 +141,42 @@ const Symbol &Symbol::GetUltimate() const {
 bool Symbol::isSubprogram() const {
   return std::visit(
       parser::visitors{
-          [&](const SubprogramDetails &) { return true; },
-          [&](const SubprogramNameDetails &) { return true; },
-          [&](const GenericDetails &) { return true; },
-          [&](const UseDetails &x) { return x.symbol().isSubprogram(); },
-          [&](const auto &) { return false; },
+          [](const SubprogramDetails &) { return true; },
+          [](const SubprogramNameDetails &) { return true; },
+          [](const GenericDetails &) { return true; },
+          [](const UseDetails &x) { return x.symbol().isSubprogram(); },
+          [](const auto &) { return false; },
       },
       details_);
 }
 
+bool Symbol::HasExplicitInterface() const {
+  return std::visit(
+      parser::visitors{
+          [](const SubprogramDetails &) { return true; },
+          [](const SubprogramNameDetails &) { return true; },
+          [](const ProcEntityDetails &x) { return x.HasExplicitInterface(); },
+          [](const UseDetails &x) { return x.symbol().HasExplicitInterface(); },
+          [](const auto &) { return false; },
+      },
+      details_);
+}
+
+ObjectEntityDetails::ObjectEntityDetails(const EntityDetails &d)
+  : isDummy_{d.isDummy()} {
+  if (auto &type = d.type()) {
+    set_type(*type);
+  }
+}
+
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
+  if (x.type()) {
+    os << " type: " << *x.type();
+  }
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
   if (x.type()) {
     os << " type: " << *x.type();
   }
@@ -144,6 +188,23 @@ std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   }
   return os;
 }
+
+bool ProcEntityDetails::HasExplicitInterface() const {
+  if (auto *symbol = interface_.symbol()) {
+    return symbol->HasExplicitInterface();
+  }
+  return false;
+}
+
+std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
+  if (auto *symbol = x.interface_.symbol()) {
+    os << ' ' << symbol->name().ToString();
+  } else if (auto *type = x.interface_.type()) {
+    os << ' ' << *type;
+  }
+  return os;
+}
+
 
 static std::ostream &DumpType(std::ostream &os, const Symbol &symbol) {
   if (const auto *details = symbol.detailsIf<EntityDetails>()) {
@@ -183,6 +244,8 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             os << ' ' << EnumToString(x.kind());
           },
           [&](const EntityDetails &x) { os << x; },
+          [&](const ObjectEntityDetails &x) { os << x; },
+          [&](const ProcEntityDetails &x) { os << x; },
           [&](const UseDetails &x) {
             os << " from " << x.symbol().name() << " in " << x.module().name();
           },
@@ -202,10 +265,32 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
   return os;
 }
 
+std::ostream &operator<<(std::ostream &o, Symbol::Flag flag) {
+  return o << Symbol::EnumToString(flag);
+}
+
+std::ostream &operator<<(std::ostream &o, const Symbol::Flags &flags) {
+  std::size_t n{flags.count()};
+  std::size_t seen{0};
+  for (std::size_t j{0}; seen < n; ++j) {
+    Symbol::Flag flag{static_cast<Symbol::Flag>(j)};
+    if (flags.test(flag)) {
+      if (seen++ > 0) {
+        o << ", ";
+      }
+      o << flag;
+    }
+  }
+  return o;
+}
+
 std::ostream &operator<<(std::ostream &os, const Symbol &symbol) {
   os << symbol.name();
   if (!symbol.attrs().empty()) {
     os << ", " << symbol.attrs();
+  }
+  if (!symbol.flags().empty()) {
+    os << " (" << symbol.flags() << ')';
   }
   os << ": " << symbol.details_;
   return os;
