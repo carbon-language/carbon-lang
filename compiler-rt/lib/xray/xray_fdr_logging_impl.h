@@ -37,8 +37,7 @@
 
 namespace __xray {
 
-__sanitizer::atomic_sint32_t LoggingStatus = {
-    XRayLogInitStatus::XRAY_LOG_UNINITIALIZED};
+atomic_sint32_t LoggingStatus = {XRayLogInitStatus::XRAY_LOG_UNINITIALIZED};
 
 /// We expose some of the state transitions when FDR logging mode is operating
 /// such that we can simulate a series of log events that may occur without
@@ -228,8 +227,8 @@ static void writeNewBufferPreamble(tid_t Tid,
   TLD.RecordPtr += sizeof(Metadata);
   // Since we write out the extents as the first metadata record of the
   // buffer, we need to write out the extents including the extents record.
-  __sanitizer::atomic_store(&TLD.Buffer.Extents->Size, sizeof(Metadata),
-                            __sanitizer::memory_order_release);
+  atomic_store(&TLD.Buffer.Extents->Size, sizeof(Metadata),
+               memory_order_release);
 }
 
 inline void setupNewBuffer(int (*wall_clock_reader)(
@@ -237,7 +236,7 @@ inline void setupNewBuffer(int (*wall_clock_reader)(
   auto &TLD = getThreadLocalData();
   auto &B = TLD.Buffer;
   TLD.RecordPtr = static_cast<char *>(B.Data);
-  tid_t Tid = __sanitizer::GetTid();
+  tid_t Tid = GetTid();
   timespec TS{0, 0};
   // This is typically clock_gettime, but callers have injection ability.
   wall_clock_reader(CLOCK_MONOTONIC, &TS);
@@ -248,14 +247,12 @@ inline void setupNewBuffer(int (*wall_clock_reader)(
 
 static void incrementExtents(size_t Add) {
   auto &TLD = getThreadLocalData();
-  __sanitizer::atomic_fetch_add(&TLD.Buffer.Extents->Size, Add,
-                                __sanitizer::memory_order_acq_rel);
+  atomic_fetch_add(&TLD.Buffer.Extents->Size, Add, memory_order_acq_rel);
 }
 
 static void decrementExtents(size_t Subtract) {
   auto &TLD = getThreadLocalData();
-  __sanitizer::atomic_fetch_sub(&TLD.Buffer.Extents->Size, Subtract,
-                                __sanitizer::memory_order_acq_rel);
+  atomic_fetch_sub(&TLD.Buffer.Extents->Size, Subtract, memory_order_acq_rel);
 }
 
 inline void writeNewCPUIdMetadata(uint16_t CPU,
@@ -494,8 +491,7 @@ isLogInitializedAndReady(BufferQueue *LBQ, uint64_t TSC, unsigned char CPU,
     XRAY_NEVER_INSTRUMENT {
   // Bail out right away if logging is not initialized yet.
   // We should take the opportunity to release the buffer though.
-  auto Status = __sanitizer::atomic_load(&LoggingStatus,
-                                         __sanitizer::memory_order_acquire);
+  auto Status = atomic_load(&LoggingStatus, memory_order_acquire);
   auto &TLD = getThreadLocalData();
   if (Status != XRayLogInitStatus::XRAY_LOG_INITIALIZED) {
     if (TLD.RecordPtr != nullptr &&
@@ -509,8 +505,7 @@ isLogInitializedAndReady(BufferQueue *LBQ, uint64_t TSC, unsigned char CPU,
     return false;
   }
 
-  if (__sanitizer::atomic_load(&LoggingStatus,
-                               __sanitizer::memory_order_acquire) !=
+  if (atomic_load(&LoggingStatus, memory_order_acquire) !=
           XRayLogInitStatus::XRAY_LOG_INITIALIZED ||
       LBQ->finalizing()) {
     if (!releaseThreadLocalBuffer(*LBQ))
@@ -521,8 +516,7 @@ isLogInitializedAndReady(BufferQueue *LBQ, uint64_t TSC, unsigned char CPU,
   if (TLD.Buffer.Data == nullptr) {
     auto EC = LBQ->getBuffer(TLD.Buffer);
     if (EC != BufferQueue::ErrorCode::Ok) {
-      auto LS = __sanitizer::atomic_load(&LoggingStatus,
-                                         __sanitizer::memory_order_acquire);
+      auto LS = atomic_load(&LoggingStatus, memory_order_acquire);
       if (LS != XRayLogInitStatus::XRAY_LOG_FINALIZING &&
           LS != XRayLogInitStatus::XRAY_LOG_FINALIZED)
         Report("Failed to acquire a buffer; error=%s\n",

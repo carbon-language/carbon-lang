@@ -69,9 +69,9 @@ BufferQueue::BufferQueue(size_t B, size_t N, bool &Success)
 }
 
 BufferQueue::ErrorCode BufferQueue::getBuffer(Buffer &Buf) {
-  if (__sanitizer::atomic_load(&Finalizing, __sanitizer::memory_order_acquire))
+  if (atomic_load(&Finalizing, memory_order_acquire))
     return ErrorCode::QueueFinalizing;
-  __sanitizer::SpinMutexLock Guard(&Mutex);
+  SpinMutexLock Guard(&Mutex);
   if (LiveBuffers == BufferCount)
     return ErrorCode::NotEnoughMemory;
 
@@ -99,7 +99,7 @@ BufferQueue::ErrorCode BufferQueue::releaseBuffer(Buffer &Buf) {
   if (!Found)
     return ErrorCode::UnrecognizedBuffer;
 
-  __sanitizer::SpinMutexLock Guard(&Mutex);
+  SpinMutexLock Guard(&Mutex);
 
   // This points to a semantic bug, we really ought to not be releasing more
   // buffers than we actually get.
@@ -119,8 +119,7 @@ BufferQueue::ErrorCode BufferQueue::releaseBuffer(Buffer &Buf) {
 }
 
 BufferQueue::ErrorCode BufferQueue::finalize() {
-  if (__sanitizer::atomic_exchange(&Finalizing, 1,
-                                   __sanitizer::memory_order_acq_rel))
+  if (atomic_exchange(&Finalizing, 1, memory_order_acq_rel))
     return ErrorCode::QueueFinalizing;
   return ErrorCode::Ok;
 }

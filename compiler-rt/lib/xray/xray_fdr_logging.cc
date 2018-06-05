@@ -38,12 +38,11 @@ namespace __xray {
 // Global BufferQueue.
 BufferQueue *BQ = nullptr;
 
-__sanitizer::atomic_sint32_t LogFlushStatus = {
-    XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING};
+atomic_sint32_t LogFlushStatus = {XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING};
 
 FDRLoggingOptions FDROptions;
 
-__sanitizer::SpinMutex FDROptionsMutex;
+SpinMutex FDROptionsMutex;
 
 namespace {
 XRayFileHeader &fdrCommonHeaderInfo() {
@@ -125,40 +124,38 @@ XRayBuffer fdrIterator(const XRayBuffer B) {
 
   XRayBuffer Result;
   Result.Data = It->Data;
-  Result.Size = __sanitizer::atomic_load(&It->Extents->Size,
-                                         __sanitizer::memory_order_acquire);
+  Result.Size = atomic_load(&It->Extents->Size, memory_order_acquire);
   ++It;
   return Result;
 }
 
 // Must finalize before flushing.
 XRayLogFlushStatus fdrLoggingFlush() XRAY_NEVER_INSTRUMENT {
-  if (__sanitizer::atomic_load(&LoggingStatus,
-                               __sanitizer::memory_order_acquire) !=
+  if (atomic_load(&LoggingStatus, memory_order_acquire) !=
       XRayLogInitStatus::XRAY_LOG_FINALIZED) {
-    if (__sanitizer::Verbosity())
+    if (Verbosity())
       Report("Not flushing log, implementation is not finalized.\n");
     return XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING;
   }
 
   s32 Result = XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING;
-  if (!__sanitizer::atomic_compare_exchange_strong(
-          &LogFlushStatus, &Result, XRayLogFlushStatus::XRAY_LOG_FLUSHING,
-          __sanitizer::memory_order_release)) {
-    if (__sanitizer::Verbosity())
+  if (!atomic_compare_exchange_strong(&LogFlushStatus, &Result,
+                                      XRayLogFlushStatus::XRAY_LOG_FLUSHING,
+                                      memory_order_release)) {
+    if (Verbosity())
       Report("Not flushing log, implementation is still finalizing.\n");
     return static_cast<XRayLogFlushStatus>(Result);
   }
 
   if (BQ == nullptr) {
-    if (__sanitizer::Verbosity())
+    if (Verbosity())
       Report("Cannot flush when global buffer queue is null.\n");
     return XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING;
   }
 
   // We wait a number of milliseconds to allow threads to see that we've
   // finalised before attempting to flush the log.
-  __sanitizer::SleepForMillis(fdrFlags()->grace_period_ms);
+  SleepForMillis(fdrFlags()->grace_period_ms);
 
   // At this point, we're going to uninstall the iterator implementation, before
   // we decide to do anything further with the global buffer queue.
@@ -171,9 +168,8 @@ XRayLogFlushStatus fdrLoggingFlush() XRAY_NEVER_INSTRUMENT {
     // Clean up the buffer queue, and do not bother writing out the files!
     delete BQ;
     BQ = nullptr;
-    __sanitizer::atomic_store(&LogFlushStatus,
-                              XRayLogFlushStatus::XRAY_LOG_FLUSHED,
-                              __sanitizer::memory_order_release);
+    atomic_store(&LogFlushStatus, XRayLogFlushStatus::XRAY_LOG_FLUSHED,
+                 memory_order_release);
     return XRayLogFlushStatus::XRAY_LOG_FLUSHED;
   }
 
@@ -190,15 +186,14 @@ XRayLogFlushStatus fdrLoggingFlush() XRAY_NEVER_INSTRUMENT {
   {
     // FIXME: Remove this section of the code, when we remove the struct-based
     // configuration API.
-    __sanitizer::SpinMutexLock Guard(&FDROptionsMutex);
+    SpinMutexLock Guard(&FDROptionsMutex);
     Fd = FDROptions.Fd;
   }
   if (Fd == -1)
     Fd = getLogFD();
   if (Fd == -1) {
     auto Result = XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING;
-    __sanitizer::atomic_store(&LogFlushStatus, Result,
-                              __sanitizer::memory_order_release);
+    atomic_store(&LogFlushStatus, Result, memory_order_release);
     return Result;
   }
 
@@ -214,8 +209,7 @@ XRayLogFlushStatus fdrLoggingFlush() XRAY_NEVER_INSTRUMENT {
     // still use a Metadata record, but fill in the extents instead for the
     // data.
     MetadataRecord ExtentsRecord;
-    auto BufferExtents = __sanitizer::atomic_load(
-        &B.Extents->Size, __sanitizer::memory_order_acquire);
+    auto BufferExtents = atomic_load(&B.Extents->Size, memory_order_acquire);
     assert(BufferExtents <= B.Size);
     ExtentsRecord.Type = uint8_t(RecordType::Metadata);
     ExtentsRecord.RecordKind =
@@ -230,19 +224,17 @@ XRayLogFlushStatus fdrLoggingFlush() XRAY_NEVER_INSTRUMENT {
     }
   });
 
-  __sanitizer::atomic_store(&LogFlushStatus,
-                            XRayLogFlushStatus::XRAY_LOG_FLUSHED,
-                            __sanitizer::memory_order_release);
+  atomic_store(&LogFlushStatus, XRayLogFlushStatus::XRAY_LOG_FLUSHED,
+               memory_order_release);
   return XRayLogFlushStatus::XRAY_LOG_FLUSHED;
 }
 
 XRayLogInitStatus fdrLoggingFinalize() XRAY_NEVER_INSTRUMENT {
   s32 CurrentStatus = XRayLogInitStatus::XRAY_LOG_INITIALIZED;
-  if (!__sanitizer::atomic_compare_exchange_strong(
-          &LoggingStatus, &CurrentStatus,
-          XRayLogInitStatus::XRAY_LOG_FINALIZING,
-          __sanitizer::memory_order_release)) {
-    if (__sanitizer::Verbosity())
+  if (!atomic_compare_exchange_strong(&LoggingStatus, &CurrentStatus,
+                                      XRayLogInitStatus::XRAY_LOG_FINALIZING,
+                                      memory_order_release)) {
+    if (Verbosity())
       Report("Cannot finalize log, implementation not initialized.\n");
     return static_cast<XRayLogInitStatus>(CurrentStatus);
   }
@@ -251,9 +243,8 @@ XRayLogInitStatus fdrLoggingFinalize() XRAY_NEVER_INSTRUMENT {
   // operations to be performed until re-initialized.
   BQ->finalize();
 
-  __sanitizer::atomic_store(&LoggingStatus,
-                            XRayLogInitStatus::XRAY_LOG_FINALIZED,
-                            __sanitizer::memory_order_release);
+  atomic_store(&LoggingStatus, XRayLogInitStatus::XRAY_LOG_FINALIZED,
+               memory_order_release);
   return XRayLogInitStatus::XRAY_LOG_FINALIZED;
 }
 
@@ -415,11 +406,10 @@ XRayLogInitStatus fdrLoggingInit(size_t BufferSize, size_t BufferMax,
     return XRayLogInitStatus::XRAY_LOG_UNINITIALIZED;
 
   s32 CurrentStatus = XRayLogInitStatus::XRAY_LOG_UNINITIALIZED;
-  if (!__sanitizer::atomic_compare_exchange_strong(
-          &LoggingStatus, &CurrentStatus,
-          XRayLogInitStatus::XRAY_LOG_INITIALIZING,
-          __sanitizer::memory_order_release)) {
-    if (__sanitizer::Verbosity())
+  if (!atomic_compare_exchange_strong(&LoggingStatus, &CurrentStatus,
+                                      XRayLogInitStatus::XRAY_LOG_INITIALIZING,
+                                      memory_order_release)) {
+    if (Verbosity())
       Report("Cannot initialize already initialized implementation.\n");
     return static_cast<XRayLogInitStatus>(CurrentStatus);
   }
@@ -428,7 +418,7 @@ XRayLogInitStatus fdrLoggingInit(size_t BufferSize, size_t BufferMax,
   // called with BufferSize == 0 and BufferMax == 0 we parse the configuration
   // provided in the Options pointer as a string instead.
   if (BufferSize == 0 && BufferMax == 0) {
-    if (__sanitizer::Verbosity())
+    if (Verbosity())
       Report("Initializing FDR mode with options: %s\n",
              static_cast<const char *>(Options));
 
@@ -463,23 +453,23 @@ XRayLogInitStatus fdrLoggingInit(size_t BufferSize, size_t BufferMax,
     *fdrFlags() = FDRFlags;
     BufferSize = FDRFlags.buffer_size;
     BufferMax = FDRFlags.buffer_max;
-    __sanitizer::SpinMutexLock Guard(&FDROptionsMutex);
+    SpinMutexLock Guard(&FDROptionsMutex);
     FDROptions.Fd = -1;
     FDROptions.ReportErrors = true;
   } else if (OptionsSize != sizeof(FDRLoggingOptions)) {
     // FIXME: This is deprecated, and should really be removed.
     // At this point we use the flag parser specific to the FDR mode
     // implementation.
-    if (__sanitizer::Verbosity())
+    if (Verbosity())
       Report("Cannot initialize FDR logging; wrong size for options: %d\n",
              OptionsSize);
-    return static_cast<XRayLogInitStatus>(__sanitizer::atomic_load(
-        &LoggingStatus, __sanitizer::memory_order_acquire));
+    return static_cast<XRayLogInitStatus>(
+        atomic_load(&LoggingStatus, memory_order_acquire));
   } else {
-    if (__sanitizer::Verbosity())
+    if (Verbosity())
       Report("XRay FDR: struct-based init is deprecated, please use "
              "string-based configuration instead.\n");
-    __sanitizer::SpinMutexLock Guard(&FDROptionsMutex);
+    SpinMutexLock Guard(&FDROptionsMutex);
     memcpy(&FDROptions, Options, OptionsSize);
   }
 
@@ -526,11 +516,10 @@ XRayLogInitStatus fdrLoggingInit(size_t BufferSize, size_t BufferMax,
   // Install the buffer iterator implementation.
   __xray_log_set_buffer_iterator(fdrIterator);
 
-  __sanitizer::atomic_store(&LoggingStatus,
-                            XRayLogInitStatus::XRAY_LOG_INITIALIZED,
-                            __sanitizer::memory_order_release);
+  atomic_store(&LoggingStatus, XRayLogInitStatus::XRAY_LOG_INITIALIZED,
+               memory_order_release);
 
-  if (__sanitizer::Verbosity())
+  if (Verbosity())
     Report("XRay FDR init successful.\n");
   return XRayLogInitStatus::XRAY_LOG_INITIALIZED;
 }
@@ -545,11 +534,10 @@ bool fdrLogDynamicInitializer() XRAY_NEVER_INSTRUMENT {
   };
   auto RegistrationResult = __xray_log_register_mode("xray-fdr", Impl);
   if (RegistrationResult != XRayLogRegisterStatus::XRAY_REGISTRATION_OK &&
-      __sanitizer::Verbosity())
+      Verbosity())
     Report("Cannot register XRay FDR mode to 'xray-fdr'; error = %d\n",
            RegistrationResult);
-  if (flags()->xray_fdr_log ||
-      !__sanitizer::internal_strcmp(flags()->xray_mode, "xray-fdr"))
+  if (flags()->xray_fdr_log || !internal_strcmp(flags()->xray_mode, "xray-fdr"))
     __xray_set_log_impl(Impl);
   return true;
 }
