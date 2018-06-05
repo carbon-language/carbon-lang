@@ -40,34 +40,6 @@ namespace __xray {
 
 atomic_sint32_t LoggingStatus = {XRayLogInitStatus::XRAY_LOG_UNINITIALIZED};
 
-/// We expose some of the state transitions when FDR logging mode is operating
-/// such that we can simulate a series of log events that may occur without
-/// and test with determinism without worrying about the real CPU time.
-///
-/// Because the code uses thread_local allocation extensively as part of its
-/// design, callers that wish to test events occuring on different threads
-/// will actually have to run them on different threads.
-///
-/// This also means that it is possible to break invariants maintained by
-/// cooperation with xray_fdr_logging class, so be careful and think twice.
-namespace __xray_fdr_internal {
-
-/// Writes the new buffer record and wallclock time that begin a buffer for the
-/// current thread.
-static void writeNewBufferPreamble(tid_t Tid, timespec TS);
-
-/// Writes a Function Record to the buffer associated with the current thread.
-static void writeFunctionRecord(int FuncId, uint32_t TSCDelta,
-                                XRayEntryType EntryType);
-
-/// Sets up a new buffer in thread_local storage and writes a preamble. The
-/// wall_clock_reader function is used to populate the WallTimeRecord entry.
-static void setupNewBuffer(int (*wall_clock_reader)(clockid_t,
-                                                    struct timespec *));
-
-/// TSC Wrap records are written when a TSC delta encoding scheme overflows.
-static void writeTSCWrapMetadata(uint64_t TSC);
-
 // Group together thread-local-data in a struct, then hide it behind a function
 // call so that it can be initialized on first use instead of as a global. We
 // force the alignment to 64-bytes for x86 cache line alignment, as this
@@ -150,13 +122,6 @@ static ThreadLocalData &getThreadLocalData() {
   }();
   return TLD;
 }
-
-//-----------------------------------------------------------------------------|
-// The rest of the file is implementation.                                     |
-//-----------------------------------------------------------------------------|
-// Functions are implemented in the header for inlining since we don't want    |
-// to grow the stack when we've hijacked the binary for logging.               |
-//-----------------------------------------------------------------------------|
 
 namespace {
 
@@ -541,7 +506,7 @@ isLogInitializedAndReady(BufferQueue *LBQ, uint64_t TSC, unsigned char CPU,
   }
 
   return true;
-} // namespace __xray_fdr_internal
+}
 
 // Compute the TSC difference between the time of measurement and the previous
 // event. There are a few interesting situations we need to account for:
@@ -718,8 +683,6 @@ inline void processFunctionHook(int32_t FuncId, XRayEntryType Entry,
   endBufferIfFull();
   __asm volatile("# LLVM-MCA-END");
 }
-
-} // namespace __xray_fdr_internal
 
 // Global BufferQueue.
 BufferQueue *BQ = nullptr;
@@ -967,20 +930,17 @@ static TSCAndCPU getTimestamp() XRAY_NEVER_INSTRUMENT {
 void fdrLoggingHandleArg0(int32_t FuncId,
                           XRayEntryType Entry) XRAY_NEVER_INSTRUMENT {
   auto TC = getTimestamp();
-  __xray_fdr_internal::processFunctionHook(FuncId, Entry, TC.TSC, TC.CPU, 0,
-                                           clock_gettime, BQ);
+  processFunctionHook(FuncId, Entry, TC.TSC, TC.CPU, 0, clock_gettime, BQ);
 }
 
 void fdrLoggingHandleArg1(int32_t FuncId, XRayEntryType Entry,
                           uint64_t Arg) XRAY_NEVER_INSTRUMENT {
   auto TC = getTimestamp();
-  __xray_fdr_internal::processFunctionHook(FuncId, Entry, TC.TSC, TC.CPU, Arg,
-                                           clock_gettime, BQ);
+  processFunctionHook(FuncId, Entry, TC.TSC, TC.CPU, Arg, clock_gettime, BQ);
 }
 
 void fdrLoggingHandleCustomEvent(void *Event,
                                  std::size_t EventSize) XRAY_NEVER_INSTRUMENT {
-  using namespace __xray_fdr_internal;
   auto TC = getTimestamp();
   auto &TSC = TC.TSC;
   auto &CPU = TC.CPU;
@@ -1031,7 +991,6 @@ void fdrLoggingHandleCustomEvent(void *Event,
 void fdrLoggingHandleTypedEvent(
     uint16_t EventType, const void *Event,
     std::size_t EventSize) noexcept XRAY_NEVER_INSTRUMENT {
-  using namespace __xray_fdr_internal;
   auto TC = getTimestamp();
   auto &TSC = TC.TSC;
   auto &CPU = TC.CPU;
@@ -1179,8 +1138,8 @@ XRayLogInitStatus fdrLoggingInit(size_t BufferSize, size_t BufferMax,
   }
 
   static bool UNUSED Once = [] {
-    pthread_key_create(&__xray_fdr_internal::Key, +[](void *) {
-      auto &TLD = __xray_fdr_internal::getThreadLocalData();
+    pthread_key_create(&Key, +[](void *) {
+      auto &TLD = getThreadLocalData();
       if (TLD.BQ == nullptr)
         return;
       auto EC = TLD.BQ->releaseBuffer(TLD.Buffer);
