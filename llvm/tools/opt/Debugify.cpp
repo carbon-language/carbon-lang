@@ -67,8 +67,8 @@ bool applyDebugifyMetadata(Module &M,
   unsigned NextLine = 1;
   unsigned NextVar = 1;
   auto File = DIB.createFile(M.getName(), "/");
-  auto CU = DIB.createCompileUnit(dwarf::DW_LANG_C, File,
-                            "debugify", /*isOptimized=*/true, "", 0);
+  auto CU = DIB.createCompileUnit(dwarf::DW_LANG_C, File, "debugify",
+                                  /*isOptimized=*/true, "", 0);
 
   // Visit each instruction.
   for (Function &F : Functions) {
@@ -145,8 +145,7 @@ bool applyDebugifyMetadata(Module &M,
 
 bool checkDebugifyMetadata(Module &M,
                            iterator_range<Module::iterator> Functions,
-                           StringRef NameOfWrappedPass,
-                           StringRef Banner,
+                           StringRef NameOfWrappedPass, StringRef Banner,
                            bool Strip) {
   // Skip modules without debugify metadata.
   NamedMDNode *NMD = M.getNamedMetadata("llvm.debugify");
@@ -252,7 +251,7 @@ struct DebugifyFunctionPass : public FunctionPass {
     Module &M = *F.getParent();
     auto FuncIt = F.getIterator();
     return applyDebugifyMetadata(M, make_range(FuncIt, std::next(FuncIt)),
-                     "FunctionDebugify: ");
+                                 "FunctionDebugify: ");
   }
 
   DebugifyFunctionPass() : FunctionPass(ID) {}
@@ -314,9 +313,7 @@ private:
 
 } // end anonymous namespace
 
-ModulePass *createDebugifyModulePass() {
-  return new DebugifyModulePass();
-}
+ModulePass *createDebugifyModulePass() { return new DebugifyModulePass(); }
 
 FunctionPass *createDebugifyFunctionPass() {
   return new DebugifyFunctionPass();
