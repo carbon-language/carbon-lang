@@ -1157,10 +1157,11 @@ def: Pat<(shl V4I16:$b, (v4i16 (HexagonVSPLAT u4_0ImmPred:$c))),
 // --(9) Arithmetic/bitwise ----------------------------------------------
 //
 
-def: Pat<(abs I32:$Rs), (A2_abs   I32:$Rs)>;
-def: Pat<(abs I64:$Rs), (A2_absp  I64:$Rs)>;
-def: Pat<(not I32:$Rs), (A2_subri -1, I32:$Rs)>;
-def: Pat<(not I64:$Rs), (A2_notp  I64:$Rs)>;
+def: Pat<(abs  I32:$Rs), (A2_abs   I32:$Rs)>;
+def: Pat<(abs  I64:$Rs), (A2_absp  I64:$Rs)>;
+def: Pat<(not  I32:$Rs), (A2_subri -1, I32:$Rs)>;
+def: Pat<(not  I64:$Rs), (A2_notp  I64:$Rs)>;
+def: Pat<(ineg I64:$Rs), (A2_negp  I64:$Rs)>;
 
 let Predicates = [HasV5T] in {
   def: Pat<(fabs F32:$Rs), (S2_clrbit_i    F32:$Rs, 31)>;
