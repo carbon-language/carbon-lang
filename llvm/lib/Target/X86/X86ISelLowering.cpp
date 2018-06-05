@@ -28795,6 +28795,57 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
     Known.Zero.setBitsFrom(8);
     break;
   }
+
+  // Handle target shuffles.
+  // TODO - use resolveTargetShuffleInputs once we can limit recursive depth.
+  if (isTargetShuffle(Opc)) {
+    bool IsUnary;
+    SmallVector<int, 64> Mask;
+    SmallVector<SDValue, 2> Ops;
+    if (getTargetShuffleMask(Op.getNode(), VT.getSimpleVT(), true, Ops, Mask,
+                             IsUnary)) {
+      unsigned NumOps = Ops.size();
+      unsigned NumElts = VT.getVectorNumElements();
+      if (Mask.size() == NumElts) {
+        SmallVector<APInt, 2> DemandedOps(NumOps, APInt(NumElts, 0));
+        Known.Zero.setAllBits(); Known.One.setAllBits();
+        for (unsigned i = 0; i != NumElts; ++i) {
+          if (!DemandedElts[i])
+            continue;
+          int M = Mask[i];
+          if (M == SM_SentinelUndef) {
+            // For UNDEF elements, we don't know anything about the common state
+            // of the shuffle result.
+            Known.resetAll();
+            break;
+          } else if (M == SM_SentinelZero) {
+            Known.One.clearAllBits();
+            continue;
+          }
+          assert(0 <= M && (unsigned)M < (NumOps * NumElts) &&
+                 "Shuffle index out of range");
+
+          unsigned OpIdx = (unsigned)M / NumElts;
+          unsigned EltIdx = (unsigned)M % NumElts;
+          if (Ops[OpIdx].getValueType() != VT) {
+            // TODO - handle target shuffle ops with different value types.
+            Known.resetAll();
+            break;
+          }
+          DemandedOps[OpIdx].setBit(EltIdx);
+        }
+        // Known bits are the values that are shared by every demanded element.
+        for (unsigned i = 0; i != NumOps && !Known.isUnknown(); ++i) {
+          if (!DemandedOps[i])
+            continue;
+          KnownBits Known2;
+          DAG.computeKnownBits(Ops[i], Known2, DemandedOps[i], Depth + 1);
+          Known.One &= Known2.One;
+          Known.Zero &= Known2.Zero;
+        }
+      }
+    }
+  }
 }
 
 unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
