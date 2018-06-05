@@ -50,11 +50,10 @@ namespace Fortran::evaluate {
 // Member functions that correspond to Fortran intrinsic functions are
 // named accordingly so that they can be referenced easily in the
 // language standard.
-template<int BITS,
+template<int BITS, bool LITTLE_ENDIAN = IsHostLittleEndian,
     int PARTBITS =
         BITS<32 ? BITS : 32, typename PART = HostUnsignedInt<PARTBITS>,
-            typename BIGPART = HostUnsignedInt<PARTBITS * 2>,
-            bool LITTLE_ENDIAN = IsHostLittleEndian> class Integer {
+            typename BIGPART = HostUnsignedInt<PARTBITS * 2>> class Integer {
 public:
   static constexpr int bits{BITS};
   static constexpr int partBits{PARTBITS};
@@ -197,13 +196,27 @@ public:
   template<typename FROM>
   static constexpr ValueWithOverflow Convert(const FROM &that) {
     std::uint64_t field{that.ToUInt64()};
-    ValueWithOverflow result;
-    result.value = Integer{field};
-    result.overflow |= bits < 64 && (field >> bits) != 0;
+    ValueWithOverflow result{field, false};
+    if constexpr (bits < 64) {
+      if ((field >> bits) != 0) {
+        result.overflow = true;
+        return result;
+      }
+    }
     for (int j{64}; j < that.bits; j += 64) {
       field = that.SHIFTR(j).ToUInt64();
-      result.value = result.value.IOR(Integer{field}.SHIFTL(bits));
-      result.overflow |= bits < (j + 64) && (field >> (bits - j)) != 0;
+      if (bits <= j) {
+        if (field != 0) {
+          result.overflow = true;
+          break;
+        }
+      } else {
+        result.value = result.value.IOR(Integer{field}.SHIFTL(j));
+        if (bits < j + 64 && (field >> (bits - j)) != 0) {
+          result.overflow = true;
+          break;
+        }
+      }
     }
     return result;
   }

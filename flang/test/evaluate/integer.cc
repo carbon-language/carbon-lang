@@ -251,11 +251,11 @@ int main() {
   exhaustiveTesting<7>();
   exhaustiveTesting<8>();
   exhaustiveTesting<9>();
-  exhaustiveTesting<9, Integer<9, 1>>();
-  exhaustiveTesting<9, Integer<9, 1, std::uint8_t, std::uint16_t>>();
-  exhaustiveTesting<9, Integer<9, 2>>();
-  exhaustiveTesting<9, Integer<9, 2, std::uint8_t, std::uint16_t>>();
-  exhaustiveTesting<9, Integer<9, 8, std::uint8_t, std::uint16_t>>();
-  exhaustiveTesting<9, Integer<9, 8, std::uint8_t, std::uint16_t, false>>();
+  exhaustiveTesting<9, Integer<9, true, 1>>();
+  exhaustiveTesting<9, Integer<9, true, 1, std::uint8_t, std::uint16_t>>();
+  exhaustiveTesting<9, Integer<9, true, 2>>();
+  exhaustiveTesting<9, Integer<9, true, 2, std::uint8_t, std::uint16_t>>();
+  exhaustiveTesting<9, Integer<9, true, 8, std::uint8_t, std::uint16_t>>();
+  exhaustiveTesting<9, Integer<9, false, 8, std::uint8_t, std::uint16_t>>();
   return testing::Complete();
 }

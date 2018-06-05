@@ -23,6 +23,16 @@ namespace Fortran::evaluate {
 enum class Ordering { Less, Equal, Greater };
 enum class Relation { Less, Equal, Greater, Unordered };
 
+static constexpr Ordering CompareUnsigned(std::uint64_t x, std::uint64_t y) {
+  if (x < y) {
+    return Ordering::Less;
+  } else if (x > y) {
+    return Ordering::Greater;
+  } else {
+    return Ordering::Equal;
+  }
+}
+
 static constexpr Ordering Reverse(Ordering ordering) {
   if (ordering == Ordering::Less) {
     return Ordering::Greater;
