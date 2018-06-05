@@ -2555,7 +2555,14 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case X86::BI_mm_prefetch:
     i = 1; l = 0; u = 7;
     break;
+  case X86::BI__builtin_ia32_vec_ext_v2si:
+    i = 1; l = 0; u = 1;
+    break;
+  case X86::BI__builtin_ia32_vec_ext_v4hi:
+    i = 1; l = 0; u = 3;
+    break;
   case X86::BI__builtin_ia32_sha1rnds4:
+  case X86::BI__builtin_ia32_vec_set_v4hi:
     i = 2; l = 0; u = 3;
     break;
   case X86::BI__builtin_ia32_vpermil2pd:

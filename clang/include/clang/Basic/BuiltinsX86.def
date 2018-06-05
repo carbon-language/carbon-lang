@@ -142,7 +142,7 @@ TARGET_BUILTIN(__builtin_ia32_movntq, "vV1LLi*V1LLi", "n", "mmx")
 TARGET_BUILTIN(__builtin_ia32_vec_init_v2si, "V2iii", "nc", "mmx")
 TARGET_BUILTIN(__builtin_ia32_vec_init_v4hi, "V4sssss", "nc", "mmx")
 TARGET_BUILTIN(__builtin_ia32_vec_init_v8qi, "V8ccccccccc", "nc", "mmx")
-TARGET_BUILTIN(__builtin_ia32_vec_ext_v2si, "iV2ii", "nc", "mmx")
+TARGET_BUILTIN(__builtin_ia32_vec_ext_v2si, "iV2iIi", "nc", "mmx")
 
 // MMX2 (MMX+SSE) intrinsics
 TARGET_BUILTIN(__builtin_ia32_cvtpi2ps, "V4fV4fV2i", "nc", "mmx,sse")
