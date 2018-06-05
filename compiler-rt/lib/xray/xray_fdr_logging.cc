@@ -15,8 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "xray_fdr_logging.h"
-
-#include <cassert>
 #include <errno.h>
 #include <limits>
 #include <pthread.h>
@@ -363,10 +361,10 @@ static void rewindRecentCall(uint64_t TSC, uint64_t &LastTSC,
   decrementExtents(FunctionRecSize);
   FunctionRecord FuncRecord;
   internal_memcpy(&FuncRecord, TLD.RecordPtr, FunctionRecSize);
-  assert(FuncRecord.RecordKind ==
+  DCHECK(FuncRecord.RecordKind ==
              uint8_t(FunctionRecord::RecordKinds::FunctionEnter) &&
          "Expected to find function entry recording when rewinding.");
-  assert(FuncRecord.FuncId == (FuncId & ~(0x0F << 28)) &&
+  DCHECK(FuncRecord.FuncId == (FuncId & ~(0x0F << 28)) &&
          "Expected matching function id when rewinding Exit");
   --TLD.NumConsecutiveFnEnters;
   LastTSC -= FuncRecord.TSCDelta;
@@ -388,7 +386,7 @@ static void rewindRecentCall(uint64_t TSC, uint64_t &LastTSC,
     FunctionRecord ExpectedTailExit;
     internal_memcpy(&ExpectedTailExit, RewindingRecordPtr, FunctionRecSize);
 
-    assert(ExpectedTailExit.RecordKind ==
+    DCHECK(ExpectedTailExit.RecordKind ==
                uint8_t(FunctionRecord::RecordKinds::FunctionTailExit) &&
            "Expected to find tail exit when rewinding.");
     RewindingRecordPtr -= FunctionRecSize;
@@ -396,10 +394,10 @@ static void rewindRecentCall(uint64_t TSC, uint64_t &LastTSC,
     FunctionRecord ExpectedFunctionEntry;
     internal_memcpy(&ExpectedFunctionEntry, RewindingRecordPtr,
                     FunctionRecSize);
-    assert(ExpectedFunctionEntry.RecordKind ==
+    DCHECK(ExpectedFunctionEntry.RecordKind ==
                uint8_t(FunctionRecord::RecordKinds::FunctionEnter) &&
            "Expected to find function entry when rewinding tail call.");
-    assert(ExpectedFunctionEntry.FuncId == ExpectedTailExit.FuncId &&
+    DCHECK(ExpectedFunctionEntry.FuncId == ExpectedTailExit.FuncId &&
            "Expected funcids to match when rewinding tail call.");
 
     // This tail call exceeded the threshold duration. It will not be erased.
@@ -576,7 +574,7 @@ static void processFunctionHook(int32_t FuncId, XRayEntryType Entry,
   // handleArg0 to happen at any given time.
   RecursionGuard Guard{Running};
   if (!Guard) {
-    assert(Running == true && "RecursionGuard is buggy!");
+    DCHECK(Running == true && "RecursionGuard is buggy!");
     return;
   }
 
@@ -630,7 +628,7 @@ static void processFunctionHook(int32_t FuncId, XRayEntryType Entry,
   }
 
   // By this point, we are now ready to write up to 40 bytes (explained above).
-  assert((TLD.RecordPtr + MaxSize) - static_cast<char *>(TLD.Buffer.Data) >=
+  DCHECK((TLD.RecordPtr + MaxSize) - static_cast<char *>(TLD.Buffer.Data) >=
              static_cast<ptrdiff_t>(MetadataRecSize) &&
          "Misconfigured BufferQueue provided; Buffer size not large enough.");
 
@@ -859,7 +857,7 @@ XRayLogFlushStatus fdrLoggingFlush() XRAY_NEVER_INSTRUMENT {
     // data.
     MetadataRecord ExtentsRecord;
     auto BufferExtents = atomic_load(&B.Extents->Size, memory_order_acquire);
-    assert(BufferExtents <= B.Size);
+    DCHECK(BufferExtents <= B.Size);
     ExtentsRecord.Type = uint8_t(RecordType::Metadata);
     ExtentsRecord.RecordKind =
         uint8_t(MetadataRecord::RecordKinds::BufferExtents);
