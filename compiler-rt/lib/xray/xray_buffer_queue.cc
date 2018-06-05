@@ -16,14 +16,37 @@
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include <memory>
 
 using namespace __xray;
 using namespace __sanitizer;
 
+template <class T> static T *initArray(size_t N) {
+  auto A = reinterpret_cast<T *>(
+      InternalAlloc(N * sizeof(T), nullptr, kCacheLineSize));
+  if (A != nullptr)
+    while (N > 0)
+      new (A + (--N)) T();
+  return A;
+}
+
 BufferQueue::BufferQueue(size_t B, size_t N, bool &Success)
-    : BufferSize(B), Buffers(new BufferRep[N]()), BufferCount(N), Finalizing{0},
-      OwnedBuffers(new void *[N]()), Next(Buffers), First(Buffers),
-      LiveBuffers(0) {
+    : BufferSize(B), Buffers(initArray<BufferQueue::BufferRep>(N)),
+      BufferCount(N), Finalizing{0}, OwnedBuffers(initArray<void *>(N)),
+      Next(Buffers), First(Buffers), LiveBuffers(0) {
+  if (Buffers == nullptr) {
+    Success = false;
+    return;
+  }
+  if (OwnedBuffers == nullptr) {
+    // Clean up the buffers we've already allocated.
+    for (auto B = Buffers, E = Buffers + BufferCount; B != E; ++B)
+      B->~BufferRep();
+    InternalFree(Buffers);
+    Success = false;
+    return;
+  };
+
   for (size_t i = 0; i < N; ++i) {
     auto &T = Buffers[i];
     void *Tmp = InternalAlloc(BufferSize, nullptr, 64);
@@ -109,6 +132,8 @@ BufferQueue::~BufferQueue() {
     InternalFree(Buf.Data);
     InternalFree(Buf.Extents);
   }
-  delete[] Buffers;
-  delete[] OwnedBuffers;
+  for (auto B = Buffers, E = Buffers + BufferCount; B != E; ++B)
+    B->~BufferRep();
+  InternalFree(Buffers);
+  InternalFree(OwnedBuffers);
 }

@@ -39,7 +39,6 @@ public:
     BufferExtents *Extents;
   };
 
-private:
   struct BufferRep {
     // The managed buffer.
     Buffer Buff;
@@ -49,6 +48,7 @@ private:
     bool Used = false;
   };
 
+private:
   // This models a ForwardIterator. |T| Must be either a `Buffer` or `const
   // Buffer`. Note that we only advance to the "used" buffers, when
   // incrementing, so that at dereference we're always at a valid point.
