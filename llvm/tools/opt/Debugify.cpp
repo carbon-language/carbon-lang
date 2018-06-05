@@ -39,6 +39,19 @@ bool isFunctionSkipped(Function &F) {
   return F.isDeclaration() || !F.hasExactDefinition();
 }
 
+/// Find a suitable insertion point for debug values intrinsics.
+///
+/// These must be inserted before the terminator. Special care is needed to
+/// handle musttail and deopt calls, as these behave like (but are in fact not)
+/// terminators.
+Instruction *findDebugValueInsertionPoint(BasicBlock &BB) {
+  if (auto *I = BB.getTerminatingMustTailCall())
+    return I;
+  if (auto *I = BB.getTerminatingDeoptimizeCall())
+    return I;
+  return BB.getTerminator();
+}
+
 bool applyDebugifyMetadata(Module &M,
                            iterator_range<Module::iterator> Functions,
                            StringRef Banner) {
@@ -91,11 +104,7 @@ bool applyDebugifyMetadata(Module &M,
       if (BB.isEHPad())
         continue;
 
-      // Debug values must be inserted before a musttail call (if one is
-      // present), or before the block terminator otherwise.
-      Instruction *LastInst = BB.getTerminatingMustTailCall();
-      if (!LastInst)
-        LastInst = BB.getTerminator();
+      Instruction *LastInst = findDebugValueInsertionPoint(BB);
 
       // Attach debug values.
       for (auto It = BB.begin(), End = LastInst->getIterator(); It != End;
