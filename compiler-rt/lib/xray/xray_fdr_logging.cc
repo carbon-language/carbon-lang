@@ -199,7 +199,7 @@ static void writeNewBufferPreamble(tid_t Tid,
                memory_order_release);
 }
 
-inline void setupNewBuffer(int (*wall_clock_reader)(
+static void setupNewBuffer(int (*wall_clock_reader)(
     clockid_t, struct timespec *)) XRAY_NEVER_INSTRUMENT {
   auto &TLD = getThreadLocalData();
   auto &B = TLD.Buffer;
@@ -223,7 +223,7 @@ static void decrementExtents(size_t Subtract) {
   atomic_fetch_sub(&TLD.Buffer.Extents->Size, Subtract, memory_order_acq_rel);
 }
 
-inline void writeNewCPUIdMetadata(uint16_t CPU,
+static void writeNewCPUIdMetadata(uint16_t CPU,
                                   uint64_t TSC) XRAY_NEVER_INSTRUMENT {
   auto &TLD = getThreadLocalData();
   MetadataRecord NewCPUId;
@@ -243,7 +243,7 @@ inline void writeNewCPUIdMetadata(uint16_t CPU,
   incrementExtents(sizeof(MetadataRecord));
 }
 
-inline void writeTSCWrapMetadata(uint64_t TSC) XRAY_NEVER_INSTRUMENT {
+static void writeTSCWrapMetadata(uint64_t TSC) XRAY_NEVER_INSTRUMENT {
   auto &TLD = getThreadLocalData();
   MetadataRecord TSCWrap;
   TSCWrap.Type = uint8_t(RecordType::Metadata);
@@ -262,7 +262,7 @@ inline void writeTSCWrapMetadata(uint64_t TSC) XRAY_NEVER_INSTRUMENT {
 
 // Call Argument metadata records store the arguments to a function in the
 // order of their appearance; holes are not supported by the buffer format.
-static inline void writeCallArgumentMetadata(uint64_t A) XRAY_NEVER_INSTRUMENT {
+static void writeCallArgumentMetadata(uint64_t A) XRAY_NEVER_INSTRUMENT {
   auto &TLD = getThreadLocalData();
   MetadataRecord CallArg;
   CallArg.Type = uint8_t(RecordType::Metadata);
@@ -274,9 +274,8 @@ static inline void writeCallArgumentMetadata(uint64_t A) XRAY_NEVER_INSTRUMENT {
   incrementExtents(sizeof(MetadataRecord));
 }
 
-static inline void
-writeFunctionRecord(int FuncId, uint32_t TSCDelta,
-                    XRayEntryType EntryType) XRAY_NEVER_INSTRUMENT {
+static void writeFunctionRecord(int FuncId, uint32_t TSCDelta,
+                                XRayEntryType EntryType) XRAY_NEVER_INSTRUMENT {
   FunctionRecord FuncRecord;
   FuncRecord.Type = uint8_t(RecordType::Function);
   // Only take 28 bits of the function id.
@@ -420,7 +419,7 @@ static void rewindRecentCall(uint64_t TSC, uint64_t &LastTSC,
   }
 }
 
-inline bool releaseThreadLocalBuffer(BufferQueue &BQArg) {
+static bool releaseThreadLocalBuffer(BufferQueue &BQArg) {
   auto &TLD = getThreadLocalData();
   auto EC = BQArg.releaseBuffer(TLD.Buffer);
   if (EC != BufferQueue::ErrorCode::Ok) {
@@ -431,7 +430,7 @@ inline bool releaseThreadLocalBuffer(BufferQueue &BQArg) {
   return true;
 }
 
-inline bool prepareBuffer(uint64_t TSC, unsigned char CPU,
+static bool prepareBuffer(uint64_t TSC, unsigned char CPU,
                           int (*wall_clock_reader)(clockid_t,
                                                    struct timespec *),
                           size_t MaxSize) XRAY_NEVER_INSTRUMENT {
@@ -454,7 +453,7 @@ inline bool prepareBuffer(uint64_t TSC, unsigned char CPU,
   return true;
 }
 
-inline bool
+static bool
 isLogInitializedAndReady(BufferQueue *LBQ, uint64_t TSC, unsigned char CPU,
                          int (*wall_clock_reader)(clockid_t, struct timespec *))
     XRAY_NEVER_INSTRUMENT {
@@ -527,7 +526,7 @@ isLogInitializedAndReady(BufferQueue *LBQ, uint64_t TSC, unsigned char CPU,
 //   - The TSC delta is representable within the 32 bits we can store in a
 //     FunctionRecord. In this case we write down just a FunctionRecord with
 //     the correct TSC delta.
-inline uint32_t writeCurrentCPUTSC(ThreadLocalData &TLD, uint64_t TSC,
+static uint32_t writeCurrentCPUTSC(ThreadLocalData &TLD, uint64_t TSC,
                                    uint8_t CPU) {
   if (CPU != TLD.CurrentCPU) {
     // We've moved to a new CPU.
@@ -545,7 +544,7 @@ inline uint32_t writeCurrentCPUTSC(ThreadLocalData &TLD, uint64_t TSC,
   return 0;
 }
 
-inline void endBufferIfFull() XRAY_NEVER_INSTRUMENT {
+static void endBufferIfFull() XRAY_NEVER_INSTRUMENT {
   auto &TLD = getThreadLocalData();
   auto BufferStart = static_cast<char *>(TLD.Buffer.Data);
   if ((TLD.RecordPtr + MetadataRecSize) - BufferStart <=
@@ -564,7 +563,7 @@ thread_local volatile bool Running = false;
 /// walk backward through its buffer and erase trivial functions to avoid
 /// polluting the log and may use the buffer queue to obtain or release a
 /// buffer.
-inline void processFunctionHook(int32_t FuncId, XRayEntryType Entry,
+static void processFunctionHook(int32_t FuncId, XRayEntryType Entry,
                                 uint64_t TSC, unsigned char CPU, uint64_t Arg1,
                                 int (*wall_clock_reader)(clockid_t,
                                                          struct timespec *),
