@@ -45,7 +45,7 @@ void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
 
 ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
   if (auto &type = d.type()) {
-    interface_ = *type;
+    interface_.set_type(*type);
   }
 }
 

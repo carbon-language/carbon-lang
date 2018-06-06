@@ -386,30 +386,12 @@ class Symbol;
 class ProcInterface {
 public:
   ProcInterface() = default;
-  ProcInterface(ProcInterface &&that)
-    : symbol_{that.symbol_}, type_{std::move(that.type_)} {}
-  ProcInterface(const ProcInterface &that) : symbol_{that.symbol_} {
-    if (that.type_) {
-      *this = *that.type_;
-    }
-  }
-  ProcInterface &operator=(ProcInterface &&that) {
-    symbol_ = that.symbol_;
-    type_ = std::move(that.type_);
-    return *this;
-  }
-  ProcInterface &operator=(const Symbol &symbol) {
-    CHECK(!type_);
-    symbol_ = &symbol;
-    return *this;
-  }
-  ProcInterface &operator=(const DeclTypeSpec &type) {
-    CHECK(!symbol_);
-    type_ = std::make_unique<DeclTypeSpec>(type);
-    return *this;
-  }
+  ProcInterface(const ProcInterface &);
+  ProcInterface &operator=(ProcInterface &&);
   const Symbol *symbol() const { return symbol_; }
   const DeclTypeSpec *type() const { return type_.get(); }
+  void set_symbol(const Symbol &symbol);
+  void set_type(const DeclTypeSpec &type);
 
 private:
   const Symbol *symbol_{nullptr};

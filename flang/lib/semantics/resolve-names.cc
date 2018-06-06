@@ -1851,10 +1851,10 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
           "'%s' is not an abstract interface or a procedure with an explicit interface"_err_en_US,
           symbol->name(), "Declaration of '%s'"_en_US);
     } else {
-      interface = *symbol;
+      interface.set_symbol(*symbol);
     }
   } else if (auto &type = GetDeclTypeSpec()) {
-    interface = *type;
+    interface.set_type(*type);
   }
   if (derivedTypeData_) {
     derivedTypeData_->procComps.emplace_back(
@@ -1885,7 +1885,7 @@ void DeclarationVisitor::SetType(
     }
   } else if (auto *details = symbol.detailsIf<ProcEntityDetails>()) {
     if (!details->interface().type()) {
-      details->interface() = type;
+      details->interface().set_type(type);
       return;
     }
   } else {
@@ -2050,18 +2050,18 @@ void ModuleVisitor::SetAccess(const parser::Name &name, Attr attr) {
   }
 }
 
-static bool HasExplicitType(const Symbol &symbol) {
+static bool NeedsExplicitType(const Symbol &symbol) {
   if (symbol.has<UnknownDetails>()) {
-    return false;
+    return true;
   } else if (const auto *details = symbol.detailsIf<EntityDetails>()) {
-    return details->type().has_value();
+    return !details->type().has_value();
   } else if (const auto *details = symbol.detailsIf<ObjectEntityDetails>()) {
-    return details->type().has_value();
+    return !details->type().has_value();
   } else if (const auto *details = symbol.detailsIf<ProcEntityDetails>()) {
-    return details->interface().symbol() != nullptr ||
-        details->interface().type() != nullptr;
+    return details->interface().symbol() == nullptr &&
+        details->interface().type() == nullptr;
   } else {
-    return true;  // doesn't need explicit type
+    return false;
   }
 }
 
@@ -2072,7 +2072,7 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
     for (const auto &pair : CurrScope()) {
       const auto &name = pair.first;
       const auto &symbol = pair.second;
-      if (!HasExplicitType(symbol)) {
+      if (NeedsExplicitType(symbol)) {
         Say(name, "No explicit type declared for '%s'"_err_en_US);
       }
     }
