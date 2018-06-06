@@ -84,7 +84,7 @@ static void temp_file_name(char *buf, size_t bufsize, const char *prefix) {
   tmpdir = GetEnv("EXTERNAL_STORAGE");
 #endif
   internal_snprintf(buf, bufsize, "%s/%sXXXXXX", tmpdir, prefix);
-  ASSERT_TRUE(mktemp(buf));
+  ASSERT_TRUE(mkstemp(buf));
 #endif
 }
 
