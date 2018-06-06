@@ -43,7 +43,7 @@ FailureDetailPrinter Test(
     return BitBucket;
   } else {
     ++failures;
-    fprintf(stderr, "%s:%d: FAIL %s\n", file, line, predicate);
+    fprintf(stderr, "%s:%d: FAIL: %s\n", file, line, predicate);
     return PrintFailureDetails;
   }
 }
@@ -90,7 +90,7 @@ FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     return BitBucket;
   } else {
     ++failures;
-    fprintf(stderr, "%s:%d: FAIL %s[0x%llx] %s %s[0x%llx]\n", file, line, xs, x,
+    fprintf(stderr, "%s:%d: FAIL: %s[0x%llx] %s %s[0x%llx]\n", file, line, xs, x,
         rel, ys, y);
     return PrintFailureDetails;
   }

@@ -123,28 +123,31 @@ public:
   }
 
   template<typename INT> constexpr ValueWithRealFlags<INT> ToInteger() const {
-    ValueWithRealFlags<INT> result;
     bool isNegative{IsNegative()};
     std::uint64_t exponent{Exponent()};
     Fraction fraction{GetFraction()};
+    ValueWithRealFlags<INT> result;
     if (exponent == maxExponent && !fraction.IsZero()) {  // NaN
       result.flags.set(RealFlag::InvalidArgument);
       result.value = result.value.HUGE();
-    } else if (exponent >= maxExponent || exponent >= exponentBias + result.value.bits) {  // +/-Inf
+    } else if (exponent >= maxExponent ||  // +/-Inf
+               exponent >= exponentBias + result.value.bits) {  // too big
       if (isNegative) {
         result.value = result.value.MASKL(1);
       } else {
         result.value = result.value.HUGE();
       }
       result.flags.set(RealFlag::Overflow);
-    } else if (exponent < exponentBias) {  // |x| < 1.0
+    } else if (exponent < exponentBias) {  // |x| < 1.0 -> 0
       if (!fraction.IsZero()) {
         result.flags.set(RealFlag::Underflow);
         result.flags.set(RealFlag::Inexact);
       }
     } else {
-      if (exponent < exponentBias + significandBits) {
-        int rshift = exponentBias + significandBits - exponent;
+      // finite number |x| >= 1.0
+      constexpr std::uint64_t noShiftExponent{exponentBias + precision - 1};
+      if (exponent < noShiftExponent) {
+        int rshift = noShiftExponent - exponent;
         if (!fraction.IBITS(0, rshift).IsZero()) {
           result.flags.set(RealFlag::Inexact);
         }
@@ -155,7 +158,7 @@ public:
           result.value = truncated.value;
         }
       } else {
-        int lshift = exponent - (exponentBias + significandBits);
+        int lshift = exponent - noShiftExponent;
         if (lshift + precision >= result.value.bits) {
           result.flags.set(RealFlag::Overflow);
         } else {
