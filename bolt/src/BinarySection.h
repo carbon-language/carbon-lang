@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/raw_ostream.h"
 #include <set>
+#include <map>
 
 namespace llvm {
 
@@ -68,6 +69,9 @@ class BinarySection {
   unsigned SectionID{-1u};         // Unique ID used for address mapping.
                                    // Set by ExecutableFileMemoryManager.
   mutable bool IsReordered{false}; // Have the contents been reordered?
+
+  uint64_t hash(const BinaryData &BD,
+                std::map<const BinaryData *, uint64_t> &Cache) const;
 
   // non-copyable
   BinarySection(const BinarySection &) = delete;
@@ -338,6 +342,11 @@ public:
     Relocation Key{Offset, 0, 0, 0, 0};
     auto Itr = Relocations.find(Key);
     return Itr != Relocations.end() ? &*Itr : nullptr;
+  }
+
+  uint64_t hash(const BinaryData &BD) const {
+    std::map<const BinaryData *, uint64_t> Cache;
+    return hash(BD, Cache);
   }
 
   ///

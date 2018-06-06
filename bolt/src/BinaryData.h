@@ -23,7 +23,7 @@
 namespace llvm {
 namespace bolt {
 
-struct BinarySection;
+class BinarySection;
 
 /// \p BinaryData represents an indivisible part of a data section section.
 /// BinaryData's may contain sub-components, e.g. jump tables but they are
@@ -106,7 +106,7 @@ public:
   bool isAtomic() const {
     return isTopLevelJumpTable() || !Parent;
   }
-
+  
   iterator_range<std::vector<std::string>::const_iterator> names() const {
     return make_range(Names.begin(), Names.end());
   }
@@ -140,7 +140,7 @@ public:
     return std::find(Symbols.begin(), Symbols.end(), Symbol) != Symbols.end();
   }
 
-  bool isAbsolute() const { return getSymbol()->isAbsolute(); }
+  bool isAbsolute() const;
   bool isMoveable() const;
 
   uint64_t getAddress() const { return Address; }

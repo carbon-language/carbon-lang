@@ -44,6 +44,9 @@ struct Relocation {
   /// Return size of the given relocation \p Type.
   static size_t getSizeForType(uint64_t Type);
 
+  /// Return size of this relocation.
+  size_t getSize() const { return getSizeForType(Type); }
+
   /// Extract current relocated value from binary contents. This is used for
   /// RISC architectures where values are encoded in specific bits depending
   /// on the relocation value.

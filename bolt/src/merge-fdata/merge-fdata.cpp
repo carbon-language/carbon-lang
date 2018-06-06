@@ -306,7 +306,8 @@ int main(int argc, char **argv) {
 
     // For consistency, sort functions by their IDs.
     std::sort(MergedProfile.Functions.begin(), MergedProfile.Functions.end(),
-              [] (BinaryFunctionProfile &A, BinaryFunctionProfile &B) {
+              [] (const BinaryFunctionProfile &A,
+                  const BinaryFunctionProfile &B) {
                 return A.Id < B.Id;
               });
 

@@ -32,6 +32,10 @@ PrintSymbolAliases("print-aliases",
   cl::cat(BoltCategory));
 }
 
+bool BinaryData::isAbsolute() const {
+  return Flags & SymbolRef::SF_Absolute;
+}
+
 bool BinaryData::isMoveable() const {
   return (!isAbsolute() &&
           (IsMoveable &&

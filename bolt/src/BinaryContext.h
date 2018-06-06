@@ -192,6 +192,9 @@ public:
   /// symbols are padded with the space before the next BinaryData object.
   void fixBinaryDataHoles();
 
+  /// Generate names based on data hashes for unknown symbols.
+  void generateSymbolHashes();
+
   /// Populate \p GlobalMemData.  This should be done after all symbol discovery
   /// is complete, e.g. after building CFGs for all functions.
   void assignMemData();

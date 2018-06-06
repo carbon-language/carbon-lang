@@ -2573,6 +2573,8 @@ void RewriteInstance::disassembleFunctions() {
       Function.print(outs(), "while building cfg", true);
 
   } // Iterate over all functions
+
+  BC->postProcessSymbolTable();
 }
 
 void RewriteInstance::postProcessFunctions() {
@@ -2600,8 +2602,6 @@ void RewriteInstance::postProcessFunctions() {
     BC->TotalScore += Function.getFunctionScore();
     BC->SumExecutionCount += Function.getKnownExecutionCount();
   }
-
-  BC->postProcessSymbolTable();
 
   if (opts::PrintGlobals) {
     outs() << "BOLT-INFO: Global symbols:\n";

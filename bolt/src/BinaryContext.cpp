@@ -123,14 +123,14 @@ void BinaryContext::updateObjectNesting(BinaryDataMapType::iterator GAI) {
 
   auto fixParents =
     [&](BinaryDataMapType::iterator Itr, BinaryData *NewParent) {
-      auto *OldParent = Itr->second->Parent;
+    auto *OldParent = Itr->second->Parent;
+    Itr->second->Parent = NewParent;
+    ++Itr;
+    while (Itr != BinaryDataMap.end() && OldParent &&
+           Itr->second->Parent == OldParent) {
       Itr->second->Parent = NewParent;
       ++Itr;
-      while (Itr != BinaryDataMap.end() && OldParent &&
-             Itr->second->Parent == OldParent) {
-        Itr->second->Parent = NewParent;
-        ++Itr;
-      }
+    }
   };
 
   // Check if the previous symbol contains the newly added symbol.
@@ -225,11 +225,13 @@ MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
         GlobalSymbols[Name] = BD;
       }
       updateObjectNesting(GAI);
+      BD = nullptr;
     } else if (!GAI->second->hasName(Name)) {
       GAI->second->Names.push_back(Name);
       GlobalSymbols[Name] = GAI->second;
+    } else {
+      BD = nullptr;
     }
-    BD = nullptr;
   } else {
     GAI = BinaryDataMap.emplace(Address, BD).first;
     GlobalSymbols[Name] = BD;
@@ -240,7 +242,8 @@ MCSymbol *BinaryContext::registerNameAtAddress(StringRef Name,
   auto *Symbol = Ctx->getOrCreateSymbol(Name);
   if (BD) {
     BD->Symbols.push_back(Symbol);
-    assert(BD->Symbols.size() == BD->Names.size());
+    assert(BD->Symbols.size() == BD->Names.size() &&
+           "there should be a 1:1 mapping between names and symbols");
   }
   return Symbol;
 }
@@ -298,6 +301,69 @@ bool BinaryContext::setBinaryDataSize(uint64_t Address, uint64_t Size) {
   return false;
 }
 
+void BinaryContext::generateSymbolHashes() {
+  auto isNonAnonymousName = [](StringRef Name) {
+    return !(Name.startswith("SYMBOLat") ||
+             Name.startswith("DATAat") ||
+             Name.startswith("HOLEat"));
+  };
+
+  auto isPadding = [](const BinaryData &BD) {
+    auto Contents = BD.getSection().getContents();
+    auto SymData = Contents.substr(BD.getOffset(), BD.getSize());
+    return (BD.getName().startswith("HOLEat") ||
+            SymData.find_first_not_of(0) == StringRef::npos);
+  };
+
+  for (auto &Entry : BinaryDataMap) {
+    auto &BD = *Entry.second;
+    auto Name = BD.getName();
+
+    if (isNonAnonymousName(Name))
+      continue;
+
+    // First check if a non-anonymous alias exists and move it to the front.
+    if (BD.getNames().size() > 1) {
+      auto Itr = std::find_if(BD.Names.begin(),
+                              BD.Names.end(),
+                              isNonAnonymousName);
+      if (Itr != BD.Names.end()) {
+        assert(BD.Names.size() == BD.Symbols.size() &&
+               "there should be a 1:1 mapping between names and symbols");
+        auto Idx = std::distance(BD.Names.begin(), Itr);
+        std::swap(BD.Names[0], *Itr);
+        std::swap(BD.Symbols[0], BD.Symbols[Idx]);
+        continue;
+      }
+    }
+
+    // We have to skip 0 size symbols since they will all collide.
+    if (BD.getSize() == 0) {
+      continue;
+    }
+
+    const auto Hash = BD.getSection().hash(BD);
+    const auto Idx = Name.find("0x");
+    std::string NewName = (Twine(Name.substr(0, Idx)) +
+                 "_" + Twine::utohexstr(Hash)).str();
+    if (getBinaryDataByName(NewName)) {
+      // Ignore collisions for symbols that appear to be padding
+      // (i.e. all zeros or a "hole")
+      if (!isPadding(BD)) {
+        outs() << "BOLT-WARNING: collision detected when hashing " << BD
+               << " with new name (" << NewName << "), skipping.\n";
+      }
+      continue;
+    }
+    BD.Names.insert(BD.Names.begin(), NewName);
+    BD.Symbols.insert(BD.Symbols.begin(),
+                       Ctx->getOrCreateSymbol(NewName));
+    assert(BD.Names.size() == BD.Symbols.size() &&
+           "there should be a 1:1 mapping between names and symbols");
+    GlobalSymbols[NewName] = &BD;
+  }
+}
+
 void BinaryContext::postProcessSymbolTable() {
   fixBinaryDataHoles();
   bool Valid = true;
@@ -315,6 +381,7 @@ void BinaryContext::postProcessSymbolTable() {
   }
   assert(Valid);
   assignMemData();
+  generateSymbolHashes();
 }
 
 void BinaryContext::foldFunction(BinaryFunction &ChildBF,
@@ -379,7 +446,7 @@ void BinaryContext::fixBinaryDataHoles() {
 
     while (Itr != End) {
       if (Itr->second->getAddress() > EndAddress) {
-        auto Gap = Itr->second->getAddress() - EndAddress;
+      auto Gap = Itr->second->getAddress() - EndAddress;
         Holes.push_back(std::make_pair(EndAddress, Gap));
       }
       EndAddress = Itr->second->getEndAddress();
@@ -723,11 +790,11 @@ void BinaryContext::printInstruction(raw_ostream &OS,
       OS << " # TAILCALL ";
     if (MIB->isInvoke(Instruction)) {
       if (const auto EHInfo = MIB->getEHInfo(Instruction)) {
-        OS << " # handler: ";
+      OS << " # handler: ";
         if (EHInfo->first)
           OS << *EHInfo->first;
-        else
-          OS << '0';
+      else
+        OS << '0';
         OS << "; action: " << EHInfo->second;
       }
       auto GnuArgsSize = MIB->getGnuArgsSize(Instruction);
