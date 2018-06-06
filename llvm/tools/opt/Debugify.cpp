@@ -35,6 +35,11 @@ using namespace llvm;
 
 namespace {
 
+cl::opt<bool> Quiet("debugify-quiet",
+                    cl::desc("Suppress verbose debugify output"));
+
+raw_ostream &dbg() { return Quiet ? nulls() : errs(); }
+
 bool isFunctionSkipped(Function &F) {
   return F.isDeclaration() || !F.hasExactDefinition();
 }
@@ -57,7 +62,7 @@ bool applyDebugifyMetadata(Module &M,
                            StringRef Banner) {
   // Skip modules with debug info.
   if (M.getNamedMetadata("llvm.dbg.cu")) {
-    errs() << Banner << "Skipping module with debug info\n";
+    dbg() << Banner << "Skipping module with debug info\n";
     return false;
   }
 
@@ -159,7 +164,7 @@ bool checkDebugifyMetadata(Module &M,
   // Skip modules without debugify metadata.
   NamedMDNode *NMD = M.getNamedMetadata("llvm.debugify");
   if (!NMD) {
-    errs() << Banner << "Skipping module without debugify metadata\n";
+    dbg() << Banner << "Skipping module without debugify metadata\n";
     return false;
   }
 
@@ -190,10 +195,10 @@ bool checkDebugifyMetadata(Module &M,
         continue;
       }
 
-      errs() << "ERROR: Instruction with empty DebugLoc in function ";
-      errs() << F.getName() << " --";
-      I.print(errs());
-      errs() << "\n";
+      dbg() << "ERROR: Instruction with empty DebugLoc in function ";
+      dbg() << F.getName() << " --";
+      I.print(dbg());
+      dbg() << "\n";
       HasErrors = true;
     }
 
@@ -212,20 +217,16 @@ bool checkDebugifyMetadata(Module &M,
 
   // Print the results.
   for (unsigned Idx : MissingLines.set_bits())
-    errs() << "WARNING: Missing line " << Idx + 1 << "\n";
+    dbg() << "WARNING: Missing line " << Idx + 1 << "\n";
 
   for (unsigned Idx : MissingVars.set_bits())
-    errs() << "ERROR: Missing variable " << Idx + 1 << "\n";
+    dbg() << "ERROR: Missing variable " << Idx + 1 << "\n";
   HasErrors |= MissingVars.count() > 0;
 
-  errs() << Banner;
+  dbg() << Banner;
   if (!NameOfWrappedPass.empty())
-    errs() << " [" << NameOfWrappedPass << "]";
-  errs() << ": " << (HasErrors ? "FAIL" : "PASS") << '\n';
-  if (HasErrors) {
-    errs() << "Module IR Dump\n";
-    M.print(errs(), nullptr, false);
-  }
+    dbg() << " [" << NameOfWrappedPass << "]";
+  dbg() << ": " << (HasErrors ? "FAIL" : "PASS") << '\n';
 
   // Strip the Debugify Metadata if required.
   if (Strip) {
