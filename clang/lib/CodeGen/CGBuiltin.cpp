@@ -492,30 +492,30 @@ static std::tuple<char, char, bool>
 getBitTestActionSizeAndLocking(unsigned BuiltinID) {
   switch (BuiltinID) {
   case Builtin::BI_bittest:
-    return {'\0', 'l', false};
+    return std::make_tuple('\0', 'l', false);
   case Builtin::BI_bittestandcomplement:
-    return {'c', 'l', false};
+    return std::make_tuple('c', 'l', false);
   case Builtin::BI_bittestandreset:
-    return {'r', 'l', false};
+    return std::make_tuple('r', 'l', false);
   case Builtin::BI_bittestandset:
-    return {'s', 'l', false};
+    return std::make_tuple('s', 'l', false);
   case Builtin::BI_interlockedbittestandreset:
-    return {'r', 'l', /*Locked=*/true};
+    return std::make_tuple('r', 'l', /*Locked=*/true);
   case Builtin::BI_interlockedbittestandset:
-    return {'s', 'l', /*Locked=*/true};
+    return std::make_tuple('s', 'l', /*Locked=*/true);
 
   case Builtin::BI_bittest64:
-    return {'\0', 'q', false};
+    return std::make_tuple('\0', 'q', false);
   case Builtin::BI_bittestandcomplement64:
-    return {'c', 'q', false};
+    return std::make_tuple('c', 'q', false);
   case Builtin::BI_bittestandreset64:
-    return {'r', 'q', false};
+    return std::make_tuple('r', 'q', false);
   case Builtin::BI_bittestandset64:
-    return {'s', 'q', false};
+    return std::make_tuple('s', 'q', false);
   case Builtin::BI_interlockedbittestandreset64:
-    return {'r', 'q', /*Locked=*/true};
+    return std::make_tuple('r', 'q', /*Locked=*/true);
   case Builtin::BI_interlockedbittestandset64:
-    return {'s', 'q', /*Locked=*/true};
+    return std::make_tuple('s', 'q', /*Locked=*/true);
   }
   llvm_unreachable("expected only bittest builtins");
 }
