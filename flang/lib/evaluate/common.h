@@ -15,6 +15,7 @@
 #ifndef FORTRAN_EVALUATE_COMMON_H_
 #define FORTRAN_EVALUATE_COMMON_H_
 
+#include "../semantics/enum-set.h"
 #include <cinttypes>
 
 namespace Fortran::evaluate {
@@ -63,20 +64,19 @@ static constexpr Relation Reverse(Relation relation) {
   }
 }
 
-namespace RealFlag {
-enum {
-  Ok = 0,
-  Overflow = 1,
-  DivideByZero = 2,
-  InvalidArgument = 4,
-  Underflow = 8,
-  Inexact = 16
+enum class RealFlag {
+  Overflow,
+  DivideByZero,
+  InvalidArgument,
+  Underflow,
+  Inexact
 };
-}  // namespace RealFlag
+
+using RealFlags = semantics::EnumSet<RealFlag, 5>;
 
 template<typename A> struct ValueWithRealFlags {
   A value;
-  int flags{RealFlag::Ok};
+  RealFlags flags;
 };
 
 enum class Rounding { TiesToEven, ToZero, Down, Up, TiesAwayFromZero };

@@ -50,7 +50,7 @@ namespace Fortran::evaluate {
 // Member functions that correspond to Fortran intrinsic functions are
 // named accordingly so that they can be referenced easily in the
 // language standard.
-template<int BITS, bool LITTLE_ENDIAN = IsHostLittleEndian,
+template<int BITS, bool IS_LITTLE_ENDIAN = IsHostLittleEndian,
     int PARTBITS =
         BITS<32 ? BITS : 32, typename PART = HostUnsignedInt<PARTBITS>,
             typename BIGPART = HostUnsignedInt<PARTBITS * 2>> class Integer {
@@ -60,7 +60,7 @@ public:
   using Part = PART;
   using BigPart = BIGPART;
   static_assert(CHAR_BIT * sizeof(BigPart) >= 2 * partBits);
-  static constexpr bool littleEndian{LITTLE_ENDIAN};
+  static constexpr bool littleEndian{IS_LITTLE_ENDIAN};
 
 private:
   static constexpr int maxPartBits{CHAR_BIT * sizeof(Part)};

@@ -128,7 +128,7 @@ public:
     std::uint64_t exponent{Exponent()};
     Fraction fraction{GetFraction()};
     if (exponent == maxExponent && !fraction.IsZero()) {  // NaN
-      result.flags |= RealFlag::InvalidArgument;
+      result.flags.set(RealFlag::InvalidArgument);
       result.value = result.value.HUGE();
     } else if (exponent >= maxExponent || exponent >= exponentBias + result.value.bits) {  // +/-Inf
       if (isNegative) {
@@ -136,37 +136,38 @@ public:
       } else {
         result.value = result.value.HUGE();
       }
-      result.flags |= RealFlag::Overflow;
+      result.flags.set(RealFlag::Overflow);
     } else if (exponent < exponentBias) {  // |x| < 1.0
       if (!fraction.IsZero()) {
-        result.flags |= RealFlag::Underflow | RealFlag::Inexact;
+        result.flags.set(RealFlag::Underflow);
+        result.flags.set(RealFlag::Inexact);
       }
     } else {
       if (exponent < exponentBias + significandBits) {
         int rshift = exponentBias + significandBits - exponent;
         if (!fraction.IBITS(0, rshift).IsZero()) {
-          result.flags |= RealFlag::Inexact;
+          result.flags.set(RealFlag::Inexact);
         }
         auto truncated = result.value.Convert(fraction.SHIFTR(rshift));
         if (truncated.overflow) {
-          result.flags |= RealFlag::Overflow;
+          result.flags.set(RealFlag::Overflow);
         } else {
           result.value = truncated.value;
         }
       } else {
         int lshift = exponent - (exponentBias + significandBits);
         if (lshift + precision >= result.value.bits) {
-          result.flags |= RealFlag::Overflow;
+          result.flags.set(RealFlag::Overflow);
         } else {
           result.value = result.value.Convert(fraction).value.SHIFTL(lshift);
         }
       }
-      if (result.flags & RealFlag::Overflow) {
+      if (result.flags.test(RealFlag::Overflow)) {
         result.value = result.value.HUGE();
       } else if (isNegative) {
         auto negated = result.value.Negate();
         if (negated.overflow) {
-          result.flags |= RealFlag::Overflow;
+          result.flags.set(RealFlag::Overflow);
           result.value = result.value.HUGE();
         } else {
           result.value = negated.value;
@@ -218,7 +219,7 @@ public:
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN + x -> NaN
-      result.flags = RealFlag::InvalidArgument;
+      result.flags.set(RealFlag::InvalidArgument);
       return result;
     }
     bool isNegative{IsNegative()};
@@ -228,7 +229,7 @@ public:
         result.value = *this;  // +/-Inf + +/-Inf -> +/-Inf
       } else {
         result.value.word_ = NaNWord();  // +/-Inf + -/+Inf -> NaN
-        result.flags = RealFlag::InvalidArgument;
+        result.flags.set(RealFlag::InvalidArgument);
       }
       return result;
     }
@@ -289,7 +290,7 @@ public:
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN * x -> NaN
-      result.flags = RealFlag::InvalidArgument;
+      result.flags.set(RealFlag::InvalidArgument);
     } else {
       bool isNegative{IsNegative() != y.IsNegative()};
       if (IsInfinite() || y.IsInfinite()) {
@@ -311,24 +312,24 @@ public:
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN / x -> NaN, x / NaN -> NaN
-      result.flags = RealFlag::InvalidArgument;
+      result.flags.set(RealFlag::InvalidArgument);
     } else {
       bool isNegative{IsNegative() != y.IsNegative()};
       if (IsInfinite()) {
         if (y.IsInfinite() || y.IsZero()) {
           result.value.word_ = NaNWord();  // Inf/Inf -> NaN, Inf/0 -> Nan
-          result.flags = RealFlag::InvalidArgument;
+          result.flags.set(RealFlag::InvalidArgument);
         } else {
           result.value.Normalize(isNegative, maxExponent, Fraction{});
         }
       } else if (y.IsInfinite()) {
         result.value.word_ = NaNWord();  // x/Inf -> NaN
-        result.flags = RealFlag::InvalidArgument;
+        result.flags.set(RealFlag::InvalidArgument);
       } else {
         auto qr = GetFraction().DivideUnsigned(y.GetFraction());
         if (qr.divisionByZero) {
           result.value.Normalize(isNegative, maxExponent, Fraction{});
-          result.flags |= RealFlag::DivideByZero;
+          result.flags.set(RealFlag::DivideByZero);
         } else {
           // To round, double the remainder and compare it to the divisor.
           auto doubled = qr.remainder.AddUnsigned(qr.remainder);
@@ -394,15 +395,14 @@ private:
     return Word{maxExponent}.SHIFTL(significandBits).IBSET(0);
   }
 
-  // Returns flag bits.
-  constexpr int Normalize(
+  constexpr RealFlags Normalize(
       bool negative, std::uint64_t biasedExponent, const Fraction &fraction) {
     if (biasedExponent >= maxExponent) {
       word_ = Word{maxExponent}.SHIFTL(significandBits);
       if (negative) {
         word_ = word_.IBSET(bits - 1);
       }
-      return RealFlag::Overflow;
+      return {RealFlag::Overflow};
     } else {
       std::uint64_t leadz = fraction.LEADZ();
       if (leadz >= precision) {
@@ -421,7 +421,7 @@ private:
       if (negative) {
         word_ = word_.IBSET(bits - 1);
       }
-      return RealFlag::Ok;
+      return {};
     }
   }
 
@@ -445,10 +445,13 @@ private:
     return round;
   }
 
-  // Rounds a result, if necessary; returns flags.
-  int Round(Rounding rounding, const RoundingBits &bits) {
+  // Rounds a result, if necessary.
+  RealFlags Round(Rounding rounding, const RoundingBits &bits) {
     std::uint64_t exponent{Exponent()};
-    int flags{(bits.round | bits.guard) ? RealFlag::Inexact : RealFlag::Ok};
+    RealFlags flags;
+    if (bits.round | bits.guard) {
+      flags.set(RealFlag::Inexact);
+    }
     if (exponent < maxExponent && MustRound(rounding, bits)) {
       typename Fraction::ValueWithCarry sum{
           GetFraction().AddUnsigned(Fraction{}, true)};
@@ -458,7 +461,7 @@ private:
           sum.value.IBSET(precision - 1);
         } else {
           // rounded away to an infinity
-          flags |= RealFlag::Overflow;
+          flags.set(RealFlag::Overflow);
         }
       }
       flags |= Normalize(IsNegative(), exponent, sum.value);

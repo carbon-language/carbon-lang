@@ -49,7 +49,7 @@ template<typename R> void tests() {
   TEST(zero.Compare(minusZero) == Relation::Equal)(desc);
   ValueWithRealFlags<R> vr;
   MATCH(0, vr.value.RawBits().ToUInt64())(desc);
-  MATCH(0, vr.flags)(desc);
+  TEST(vr.flags.empty())(desc);
   R nan{Word{std::uint64_t{1}}.SHIFTL(R::bits).SubtractSigned(Word{std::uint64_t{1}}).value};
   MATCH(R::bits, nan.RawBits().POPCNT())(desc);
   TEST(!nan.IsNegative())(desc);
@@ -99,14 +99,14 @@ template<typename R> void tests() {
     TEST(!vr.value.IsZero())("%s,%d,0x%llx",desc,j,x);
     auto ivf = vr.value.template ToInteger<Integer<64>>();
     if (j > (maxExponent / 2)) {
-      MATCH(RealFlag::Overflow, vr.flags)(desc);
+      TEST(vr.flags.test(RealFlag::Overflow))(desc);
       TEST(vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
-      MATCH(RealFlag::Overflow, ivf.flags)("%s,%d,0x%llx",desc,j,x);
+      TEST(ivf.flags.test(RealFlag::Overflow))("%s,%d,0x%llx",desc,j,x);
       MATCH(0x7fffffffffffffff, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
     } else {
-      MATCH(RealFlag::Ok, vr.flags)(desc);
+      TEST(vr.flags.empty())(desc);
       TEST(!vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
-      MATCH(RealFlag::Ok, ivf.flags)("%s,%d,0x%llx",desc,j,x);
+      TEST(ivf.flags.empty())("%s,%d,0x%llx",desc,j,x);
       MATCH(x, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
     }
   }
