@@ -301,9 +301,9 @@ define i8 @shifty_abs_too_many_uses(i8 %x) {
 
 define i8 @shifty_sub(i8 %x) {
 ; CHECK-LABEL: @shifty_sub(
-; CHECK-NEXT:    [[SH:%.*]] = ashr i8 [[X:%.*]], 7
-; CHECK-NEXT:    [[XOR:%.*]] = xor i8 [[SH]], [[X]]
-; CHECK-NEXT:    [[R:%.*]] = sub i8 [[XOR]], [[SH]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i8 [[X:%.*]], 0
+; CHECK-NEXT:    [[TMP2:%.*]] = sub i8 0, [[X]]
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[TMP1]], i8 [[TMP2]], i8 [[X]]
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %sh = ashr i8 %x, 7
@@ -314,9 +314,9 @@ define i8 @shifty_sub(i8 %x) {
 
 define i8 @shifty_sub_nsw_commute(i8 %x) {
 ; CHECK-LABEL: @shifty_sub_nsw_commute(
-; CHECK-NEXT:    [[SH:%.*]] = ashr i8 [[X:%.*]], 7
-; CHECK-NEXT:    [[XOR:%.*]] = xor i8 [[SH]], [[X]]
-; CHECK-NEXT:    [[R:%.*]] = sub nsw i8 [[XOR]], [[SH]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i8 [[X:%.*]], 0
+; CHECK-NEXT:    [[TMP2:%.*]] = sub nsw i8 0, [[X]]
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[TMP1]], i8 [[TMP2]], i8 [[X]]
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %sh = ashr i8 %x, 7
@@ -327,9 +327,8 @@ define i8 @shifty_sub_nsw_commute(i8 %x) {
 
 define <4 x i32> @shifty_sub_nuw_vec_commute(<4 x i32> %x) {
 ; CHECK-LABEL: @shifty_sub_nuw_vec_commute(
-; CHECK-NEXT:    [[SH:%.*]] = ashr <4 x i32> [[X:%.*]], <i32 31, i32 31, i32 31, i32 31>
-; CHECK-NEXT:    [[XOR:%.*]] = xor <4 x i32> [[SH]], [[X]]
-; CHECK-NEXT:    [[R:%.*]] = sub nuw <4 x i32> [[XOR]], [[SH]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt <4 x i32> [[X:%.*]], zeroinitializer
+; CHECK-NEXT:    [[R:%.*]] = select <4 x i1> [[TMP1]], <4 x i32> [[X]], <4 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <4 x i32> [[R]]
 ;
   %sh = ashr <4 x i32> %x, <i32 31, i32 31, i32 31, i32 31>
@@ -340,9 +339,8 @@ define <4 x i32> @shifty_sub_nuw_vec_commute(<4 x i32> %x) {
 
 define i12 @shifty_sub_nsw_nuw(i12 %x) {
 ; CHECK-LABEL: @shifty_sub_nsw_nuw(
-; CHECK-NEXT:    [[SH:%.*]] = ashr i12 [[X:%.*]], 11
-; CHECK-NEXT:    [[XOR:%.*]] = xor i12 [[SH]], [[X]]
-; CHECK-NEXT:    [[R:%.*]] = sub nuw nsw i12 [[XOR]], [[SH]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i12 [[X:%.*]], 0
+; CHECK-NEXT:    [[R:%.*]] = select i1 [[TMP1]], i12 [[X]], i12 0
 ; CHECK-NEXT:    ret i12 [[R]]
 ;
   %sh = ashr i12 %x, 11
