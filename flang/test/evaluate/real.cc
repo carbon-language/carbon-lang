@@ -92,6 +92,7 @@ template<typename R> void tests() {
     std::uint64_t x{1};
     x <<= j;
     Integer<64> ix{x};
+    TEST(!ix.IsNegative())("%s,%d,0x%llx",desc,j,x);
     MATCH(x, ix.ToUInt64())("%s,%d,0x%llx",desc,j,x);
     vr = R::ConvertSigned(ix);
     TEST(!vr.value.IsNegative())("%s,%d,0x%llx",desc,j,x);
@@ -103,6 +104,30 @@ template<typename R> void tests() {
       TEST(vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
       TEST(ivf.flags.test(RealFlag::Overflow))("%s,%d,0x%llx",desc,j,x);
       MATCH(0x7fffffffffffffff, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
+    } else {
+      TEST(vr.flags.empty())(desc);
+      TEST(!vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
+      TEST(ivf.flags.empty())("%s,%d,0x%llx",desc,j,x);
+      MATCH(x, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
+    }
+  }
+  for (std::uint64_t j{0}; j < 64; ++j) {
+    std::uint64_t x{1};
+    x <<= j;
+    x |= std::uint64_t{1} << 63;
+    Integer<64> ix{x};
+    TEST(ix.IsNegative())("%s,%d,0x%llx",desc,j,x);
+    MATCH(x, ix.ToUInt64())("%s,%d,0x%llx",desc,j,x);
+    vr = R::ConvertSigned(ix, Rounding::ToZero);
+    TEST(vr.value.IsNegative())("%s,%d,0x%llx",desc,j,x);
+    TEST(!vr.value.IsNotANumber())("%s,%d,0x%llx",desc,j,x);
+    TEST(!vr.value.IsZero())("%s,%d,0x%llx",desc,j,x);
+    auto ivf = vr.value.template ToInteger<Integer<64>>();
+    if (j > (maxExponent / 2)) {
+      TEST(vr.flags.test(RealFlag::Overflow))(desc);
+      TEST(vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
+      TEST(ivf.flags.test(RealFlag::Overflow))("%s,%d,0x%llx",desc,j,x);
+      MATCH(0x8000000000000000, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
     } else {
       TEST(vr.flags.empty())(desc);
       TEST(!vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);

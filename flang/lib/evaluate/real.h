@@ -39,8 +39,8 @@ public:
 
   constexpr Real() {}  // +0.0
   constexpr Real(const Real &) = default;
-  constexpr Real &operator=(const Real &) = default;
   constexpr Real(const Word &bits) : word_{bits} {}
+  constexpr Real &operator=(const Real &) = default;
 
   template<typename INT>
   static constexpr ValueWithRealFlags<Real> ConvertSigned(
@@ -76,9 +76,7 @@ public:
   // HUGE, INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
   // PRECISION, HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
 
-  constexpr Word RawBits() const {
-    return word_;
-  }
+  constexpr Word RawBits() const { return word_; }
   constexpr std::uint64_t Exponent() const {
     return word_.IBITS(significandBits, exponentBits).ToUInt64();
   }
@@ -131,7 +129,7 @@ public:
       result.flags.set(RealFlag::InvalidArgument);
       result.value = result.value.HUGE();
     } else if (exponent >= maxExponent ||  // +/-Inf
-               exponent >= exponentBias + result.value.bits) {  // too big
+        exponent >= exponentBias + result.value.bits) {  // too big
       if (isNegative) {
         result.value = result.value.MASKL(1);
       } else {
@@ -381,7 +379,8 @@ private:
   }
 
   template<typename INT>
-  static constexpr RoundingBits GetRoundingBits(const INT &fraction, int rshift) {
+  static constexpr RoundingBits GetRoundingBits(
+      const INT &fraction, int rshift) {
     RoundingBits roundingBits;
     if (rshift > fraction.bits) {
       roundingBits.guard = !fraction.IsZero();
