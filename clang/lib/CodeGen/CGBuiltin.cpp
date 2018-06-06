@@ -8778,8 +8778,29 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateBitCast(BuildVector(Ops),
                                  llvm::Type::getX86_MMXTy(getLLVMContext()));
   case X86::BI__builtin_ia32_vec_ext_v2si:
-    return Builder.CreateExtractElement(Ops[0],
-                                        cast<ConstantInt>(Ops[1])->getZExtValue());
+  case X86::BI__builtin_ia32_vec_ext_v16qi:
+  case X86::BI__builtin_ia32_vec_ext_v8hi:
+  case X86::BI__builtin_ia32_vec_ext_v4si:
+  case X86::BI__builtin_ia32_vec_ext_v4sf:
+  case X86::BI__builtin_ia32_vec_ext_v2di:
+  case X86::BI__builtin_ia32_vec_ext_v32qi:
+  case X86::BI__builtin_ia32_vec_ext_v16hi:
+  case X86::BI__builtin_ia32_vec_ext_v8si:
+  case X86::BI__builtin_ia32_vec_ext_v4di:
+    // These builtins exist so we can ensure the index is an ICE and in range.
+    // Otherwise we could just do this in the header file.
+    return Builder.CreateExtractElement(Ops[0], Ops[1]);
+  case X86::BI__builtin_ia32_vec_set_v16qi:
+  case X86::BI__builtin_ia32_vec_set_v8hi:
+  case X86::BI__builtin_ia32_vec_set_v4si:
+  case X86::BI__builtin_ia32_vec_set_v2di:
+  case X86::BI__builtin_ia32_vec_set_v32qi:
+  case X86::BI__builtin_ia32_vec_set_v16hi:
+  case X86::BI__builtin_ia32_vec_set_v8si:
+  case X86::BI__builtin_ia32_vec_set_v4di:
+    // These builtins exist so we can ensure the index is an ICE and in range.
+    // Otherwise we could just do this in the header file.
+    return Builder.CreateInsertElement(Ops[0], Ops[1], Ops[2]);
   case X86::BI_mm_setcsr:
   case X86::BI__builtin_ia32_ldmxcsr: {
     Address Tmp = CreateMemTemp(E->getArg(0)->getType());
