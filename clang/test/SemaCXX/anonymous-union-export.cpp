@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++17 -fmodules-ts -emit-obj -verify %s
+// RUN: %clang_cc1 -std=c++17 -fmodules-ts -emit-obj -verify -o %t.pcm %s
 
 export module M;
 export {
