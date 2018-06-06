@@ -17,8 +17,8 @@
 
 define i32 @shl_add(i32 %NBits) {
 ; CHECK-LABEL: @shl_add(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl i32 1, %NBits
@@ -28,8 +28,8 @@ define i32 @shl_add(i32 %NBits) {
 
 define i32 @shl_add_nsw(i32 %NBits) {
 ; CHECK-LABEL: @shl_add_nsw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl i32 1, %NBits
@@ -39,8 +39,8 @@ define i32 @shl_add_nsw(i32 %NBits) {
 
 define i32 @shl_add_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_add_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl i32 1, %NBits
@@ -50,8 +50,8 @@ define i32 @shl_add_nuw(i32 %NBits) {
 
 define i32 @shl_add_nsw_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_add_nsw_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl i32 1, %NBits
@@ -63,8 +63,8 @@ define i32 @shl_add_nsw_nuw(i32 %NBits) {
 
 define i32 @shl_nsw_add(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_add(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nsw i32 1, %NBits
@@ -74,8 +74,8 @@ define i32 @shl_nsw_add(i32 %NBits) {
 
 define i32 @shl_nsw_add_nsw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_add_nsw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nsw i32 1, %NBits
@@ -85,8 +85,8 @@ define i32 @shl_nsw_add_nsw(i32 %NBits) {
 
 define i32 @shl_nsw_add_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_add_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nsw i32 1, %NBits
@@ -96,8 +96,8 @@ define i32 @shl_nsw_add_nuw(i32 %NBits) {
 
 define i32 @shl_nsw_add_nsw_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_add_nsw_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nsw i32 1, %NBits
@@ -109,8 +109,8 @@ define i32 @shl_nsw_add_nsw_nuw(i32 %NBits) {
 
 define i32 @shl_nuw_add(i32 %NBits) {
 ; CHECK-LABEL: @shl_nuw_add(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw i32 1, %NBits
@@ -120,8 +120,8 @@ define i32 @shl_nuw_add(i32 %NBits) {
 
 define i32 @shl_nuw_add_nsw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nuw_add_nsw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw i32 1, %NBits
@@ -131,8 +131,8 @@ define i32 @shl_nuw_add_nsw(i32 %NBits) {
 
 define i32 @shl_nuw_add_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nuw_add_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw i32 1, %NBits
@@ -142,8 +142,8 @@ define i32 @shl_nuw_add_nuw(i32 %NBits) {
 
 define i32 @shl_nuw_add_nsw_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nuw_add_nsw_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw i32 1, %NBits
@@ -155,8 +155,8 @@ define i32 @shl_nuw_add_nsw_nuw(i32 %NBits) {
 
 define i32 @shl_nsw_nuw_add(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_nuw_add(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw nsw i32 1, %NBits
@@ -166,8 +166,8 @@ define i32 @shl_nsw_nuw_add(i32 %NBits) {
 
 define i32 @shl_nsw_nuw_add_nsw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_nuw_add_nsw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw nsw i32 1, %NBits
@@ -177,8 +177,8 @@ define i32 @shl_nsw_nuw_add_nsw(i32 %NBits) {
 
 define i32 @shl_nsw_nuw_add_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_nuw_add_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw nsw i32 1, %NBits
@@ -188,8 +188,8 @@ define i32 @shl_nsw_nuw_add_nuw(i32 %NBits) {
 
 define i32 @shl_nsw_nuw_add_nsw_nuw(i32 %NBits) {
 ; CHECK-LABEL: @shl_nsw_nuw_add_nsw_nuw(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl nuw nsw i32 1, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add nuw nsw i32 [[SETBIT]], -1
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nuw nsw i32 -1, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor i32 [[NOTMASK]], -1
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %setbit = shl nuw nsw i32 1, %NBits
@@ -203,8 +203,8 @@ define i32 @shl_nsw_nuw_add_nsw_nuw(i32 %NBits) {
 
 define <2 x i32> @shl_add_vec(<2 x i32> %NBits) {
 ; CHECK-LABEL: @shl_add_vec(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl <2 x i32> <i32 1, i32 1>, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add <2 x i32> [[SETBIT]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw <2 x i32> <i32 -1, i32 -1>, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor <2 x i32> [[NOTMASK]], <i32 -1, i32 -1>
 ; CHECK-NEXT:    ret <2 x i32> [[RET]]
 ;
   %setbit = shl <2 x i32> <i32 1, i32 1>, %NBits
@@ -214,8 +214,8 @@ define <2 x i32> @shl_add_vec(<2 x i32> %NBits) {
 
 define <3 x i32> @shl_add_vec_undef0(<3 x i32> %NBits) {
 ; CHECK-LABEL: @shl_add_vec_undef0(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl <3 x i32> <i32 1, i32 undef, i32 1>, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add <3 x i32> [[SETBIT]], <i32 -1, i32 -1, i32 -1>
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw <3 x i32> <i32 -1, i32 -1, i32 -1>, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor <3 x i32> [[NOTMASK]], <i32 -1, i32 -1, i32 -1>
 ; CHECK-NEXT:    ret <3 x i32> [[RET]]
 ;
   %setbit = shl <3 x i32> <i32 1, i32 undef, i32 1>, %NBits
@@ -225,8 +225,8 @@ define <3 x i32> @shl_add_vec_undef0(<3 x i32> %NBits) {
 
 define <3 x i32> @shl_add_vec_undef1(<3 x i32> %NBits) {
 ; CHECK-LABEL: @shl_add_vec_undef1(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl <3 x i32> <i32 1, i32 1, i32 1>, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add <3 x i32> [[SETBIT]], <i32 -1, i32 undef, i32 -1>
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw <3 x i32> <i32 -1, i32 -1, i32 -1>, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor <3 x i32> [[NOTMASK]], <i32 -1, i32 -1, i32 -1>
 ; CHECK-NEXT:    ret <3 x i32> [[RET]]
 ;
   %setbit = shl <3 x i32> <i32 1, i32 1, i32 1>, %NBits
@@ -236,8 +236,8 @@ define <3 x i32> @shl_add_vec_undef1(<3 x i32> %NBits) {
 
 define <3 x i32> @shl_add_vec_undef2(<3 x i32> %NBits) {
 ; CHECK-LABEL: @shl_add_vec_undef2(
-; CHECK-NEXT:    [[SETBIT:%.*]] = shl <3 x i32> <i32 1, i32 undef, i32 1>, [[NBITS:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = add <3 x i32> [[SETBIT]], <i32 -1, i32 undef, i32 -1>
+; CHECK-NEXT:    [[NOTMASK:%.*]] = shl nsw <3 x i32> <i32 -1, i32 -1, i32 -1>, [[NBITS:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = xor <3 x i32> [[NOTMASK]], <i32 -1, i32 -1, i32 -1>
 ; CHECK-NEXT:    ret <3 x i32> [[RET]]
 ;
   %setbit = shl <3 x i32> <i32 1, i32 undef, i32 1>, %NBits
