@@ -8,14 +8,9 @@
 
 ; GCN-LABEL: {{^}}s_fabs_free_f16:
 ; GCN: s_load_dword [[VAL:s[0-9]+]]
-
-; CI: s_and_b32 [[RESULT:s[0-9]+]], [[VAL]], 0x7fff
-; CI: v_mov_b32_e32 [[V_RESULT:v[0-9]+]], [[RESULT]]
-; CI: {{flat|global}}_store_short v{{\[[0-9]+:[0-9]+\]}}, [[V_RESULT]]
-
-; GFX89: v_mov_b32_e32 [[MASK:v[0-9]+]], 0x7fff
-; GFX89: v_and_b32_e32 [[V_RESULT:v[0-9]+]], [[VAL]], [[MASK]]
-; GFX89: {{flat|global}}_store_short v{{\[[0-9]+:[0-9]+\]}}, [[V_RESULT]]
+; GCN: s_and_b32 [[RESULT:s[0-9]+]], [[VAL]], 0x7fff
+; GCN: v_mov_b32_e32 [[V_RESULT:v[0-9]+]], [[RESULT]]
+; GCN: {{flat|global}}_store_short v{{\[[0-9]+:[0-9]+\]}}, [[V_RESULT]]
 define amdgpu_kernel void @s_fabs_free_f16(half addrspace(1)* %out, i16 %in) {
   %bc= bitcast i16 %in to half
   %fabs = call half @llvm.fabs.f16(half %bc)
@@ -25,14 +20,9 @@ define amdgpu_kernel void @s_fabs_free_f16(half addrspace(1)* %out, i16 %in) {
 
 ; GCN-LABEL: {{^}}s_fabs_f16:
 ; GCN: s_load_dword [[VAL:s[0-9]+]]
-
-; CI: s_and_b32 [[RESULT:s[0-9]+]], [[VAL]], 0x7fff
-; CI: v_mov_b32_e32 [[V_RESULT:v[0-9]+]], [[RESULT]]
-; CI: {{flat|global}}_store_short v{{\[[0-9]+:[0-9]+\]}}, [[V_RESULT]]
-
-; GFX89: v_mov_b32_e32 [[MASK:v[0-9]+]], 0x7fff
-; GFX89: v_and_b32_e32 [[V_RESULT:v[0-9]+]], [[VAL]], [[MASK]]
-; GFX89: {{flat|global}}_store_short v{{\[[0-9]+:[0-9]+\]}}, [[V_RESULT]]
+; GCN: s_and_b32 [[RESULT:s[0-9]+]], [[VAL]], 0x7fff
+; GCN: v_mov_b32_e32 [[V_RESULT:v[0-9]+]], [[RESULT]]
+; GCN: {{flat|global}}_store_short v{{\[[0-9]+:[0-9]+\]}}, [[V_RESULT]]
 define amdgpu_kernel void @s_fabs_f16(half addrspace(1)* %out, half %in) {
   %fabs = call half @llvm.fabs.f16(half %in)
   store half %fabs, half addrspace(1)* %out
