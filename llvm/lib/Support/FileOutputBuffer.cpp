@@ -85,7 +85,8 @@ public:
     using namespace sys::fs;
     int FD;
     std::error_code EC;
-    if (auto EC = openFileForWrite(FinalPath, FD, CD_CreateAlways, OF_None))
+    if (auto EC =
+            openFileForWrite(FinalPath, FD, CD_CreateAlways, OF_None, Mode))
       return errorCodeToError(EC);
     raw_fd_ostream OS(FD, /*shouldClose=*/true, /*unbuffered=*/true);
     OS << StringRef((const char *)Buffer.base(), Buffer.size());
