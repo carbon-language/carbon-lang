@@ -55,6 +55,7 @@ static constexpr const unsigned kReg2Id = 2;
 static constexpr const char kReg2Name[] = "Reg2";
 
 TEST(BenchmarkResultTest, WriteToAndReadFromDisk) {
+  llvm::ExitOnError ExitOnErr;
   BenchmarkResultContext Ctx;
   Ctx.addInstrEntry(kInstrId, kInstrName);
   Ctx.addRegEntry(kReg1Id, kReg1Name);
@@ -83,11 +84,12 @@ TEST(BenchmarkResultTest, WriteToAndReadFromDisk) {
   EC = llvm::sys::fs::createUniqueDirectory("BenchmarkResultTestDir", Filename);
   ASSERT_FALSE(EC);
   llvm::sys::path::append(Filename, "data.yaml");
-  ToDisk.writeYamlOrDie(Ctx, Filename);
+  ExitOnErr(ToDisk.writeYaml(Ctx, Filename));
 
   {
     // One-element version.
-    const auto FromDisk = InstructionBenchmark::readYamlOrDie(Ctx, Filename);
+    const auto FromDisk =
+        ExitOnErr(InstructionBenchmark::readYaml(Ctx, Filename));
 
     EXPECT_EQ(FromDisk.Key.OpcodeName, ToDisk.Key.OpcodeName);
     EXPECT_THAT(FromDisk.Key.Instructions,
@@ -104,7 +106,7 @@ TEST(BenchmarkResultTest, WriteToAndReadFromDisk) {
   {
     // Vector version.
     const auto FromDiskVector =
-        InstructionBenchmark::readYamlsOrDie(Ctx, Filename);
+        ExitOnErr(InstructionBenchmark::readYamls(Ctx, Filename));
     ASSERT_EQ(FromDiskVector.size(), size_t{1});
     const auto FromDisk = FromDiskVector[0];
     EXPECT_EQ(FromDisk.Key.OpcodeName, ToDisk.Key.OpcodeName);

@@ -210,27 +210,32 @@ unsigned BenchmarkResultContext::getInstrOpcode(llvm::StringRef Name) const {
 }
 
 template <typename ObjectOrList>
-static ObjectOrList readYamlOrDieCommon(const BenchmarkResultContext &Context,
-                                        llvm::StringRef Filename) {
-  std::unique_ptr<llvm::MemoryBuffer> MemBuffer = llvm::cantFail(
-      llvm::errorOrToExpected(llvm::MemoryBuffer::getFile(Filename)));
-  llvm::yaml::Input Yin(*MemBuffer, getUntypedContext(Context));
-  ObjectOrList Benchmark;
-  Yin >> Benchmark;
-  return Benchmark;
+static llvm::Expected<ObjectOrList>
+readYamlCommon(const BenchmarkResultContext &Context,
+               llvm::StringRef Filename) {
+  if (auto ExpectedMemoryBuffer =
+          llvm::errorOrToExpected(llvm::MemoryBuffer::getFile(Filename))) {
+    std::unique_ptr<llvm::MemoryBuffer> MemoryBuffer =
+        std::move(ExpectedMemoryBuffer.get());
+    llvm::yaml::Input Yin(*MemoryBuffer, getUntypedContext(Context));
+    ObjectOrList Benchmark;
+    Yin >> Benchmark;
+    return Benchmark;
+  } else {
+    return ExpectedMemoryBuffer.takeError();
+  }
 }
 
-InstructionBenchmark
-InstructionBenchmark::readYamlOrDie(const BenchmarkResultContext &Context,
-                                    llvm::StringRef Filename) {
-  return readYamlOrDieCommon<InstructionBenchmark>(Context, Filename);
+llvm::Expected<InstructionBenchmark>
+InstructionBenchmark::readYaml(const BenchmarkResultContext &Context,
+                               llvm::StringRef Filename) {
+  return readYamlCommon<InstructionBenchmark>(Context, Filename);
 }
 
-std::vector<InstructionBenchmark>
-InstructionBenchmark::readYamlsOrDie(const BenchmarkResultContext &Context,
-                                     llvm::StringRef Filename) {
-  return readYamlOrDieCommon<std::vector<InstructionBenchmark>>(Context,
-                                                                Filename);
+llvm::Expected<std::vector<InstructionBenchmark>>
+InstructionBenchmark::readYamls(const BenchmarkResultContext &Context,
+                                llvm::StringRef Filename) {
+  return readYamlCommon<std::vector<InstructionBenchmark>>(Context, Filename);
 }
 
 void InstructionBenchmark::writeYamlTo(const BenchmarkResultContext &Context,
@@ -245,18 +250,21 @@ void InstructionBenchmark::readYamlFrom(const BenchmarkResultContext &Context,
   Yin >> *this;
 }
 
-// FIXME: Change the API to let the caller handle errors.
-void InstructionBenchmark::writeYamlOrDie(const BenchmarkResultContext &Context,
-                                          const llvm::StringRef Filename) {
+llvm::Error
+InstructionBenchmark::writeYaml(const BenchmarkResultContext &Context,
+                                const llvm::StringRef Filename) {
   if (Filename == "-") {
     writeYamlTo(Context, llvm::outs());
   } else {
     int ResultFD = 0;
-    llvm::cantFail(llvm::errorCodeToError(
-        openFileForWrite(Filename, ResultFD, llvm::sys::fs::F_Text)));
+    if (auto E = llvm::errorCodeToError(
+            openFileForWrite(Filename, ResultFD, llvm::sys::fs::F_Text))) {
+      return E;
+    }
     llvm::raw_fd_ostream Ostr(ResultFD, true /*shouldClose*/);
     writeYamlTo(Context, Ostr);
   }
+  return llvm::Error::success();
 }
 
 void BenchmarkMeasureStats::push(const BenchmarkMeasure &BM) {
