@@ -63,7 +63,9 @@ InstructionBenchmark BenchmarkRunner::run(unsigned Opcode,
     InstrBenchmark.Error = "Empty snippet";
     return InstrBenchmark;
   }
-
+  for (const auto &MCInst : Snippet) {
+    InstrBenchmark.Key.Instructions.push_back(MCInst);
+  }
   InfoStream << "Snippet:\n";
   for (const auto &MCInst : Snippet) {
     DumpMCInst(MCRegisterInfo, MCInstrInfo, MCInst, InfoStream);

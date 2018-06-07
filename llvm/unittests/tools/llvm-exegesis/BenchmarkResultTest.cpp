@@ -28,23 +28,46 @@ bool operator==(const BenchmarkMeasure &A, const BenchmarkMeasure &B) {
   return std::tie(A.Key, A.Value) == std::tie(B.Key, B.Value);
 }
 
+static std::string Dump(const llvm::MCInst &McInst) {
+  std::string Buffer;
+  llvm::raw_string_ostream OS(Buffer);
+  McInst.print(OS);
+  return Buffer;
+}
+
 MATCHER(EqMCInst, "") {
-  return get<0>(arg).getOpcode() == get<1>(arg).getOpcode();
+  const std::string Lhs = Dump(get<0>(arg));
+  const std::string Rhs = Dump(get<1>(arg));
+  if (Lhs != Rhs) {
+    *result_listener << Lhs << " <=> " << Rhs;
+    return false;
+  }
+  return true;
 }
 
 namespace {
 
 static constexpr const unsigned kInstrId = 5;
 static constexpr const char kInstrName[] = "Instruction5";
+static constexpr const unsigned kReg1Id = 1;
+static constexpr const char kReg1Name[] = "Reg1";
+static constexpr const unsigned kReg2Id = 2;
+static constexpr const char kReg2Name[] = "Reg2";
 
 TEST(BenchmarkResultTest, WriteToAndReadFromDisk) {
   BenchmarkResultContext Ctx;
   Ctx.addInstrEntry(kInstrId, kInstrName);
+  Ctx.addRegEntry(kReg1Id, kReg1Name);
+  Ctx.addRegEntry(kReg2Id, kReg2Name);
 
   InstructionBenchmark ToDisk;
 
   ToDisk.Key.OpcodeName = "name";
-  ToDisk.Key.Instructions.push_back(llvm::MCInstBuilder(kInstrId));
+  ToDisk.Key.Instructions.push_back(llvm::MCInstBuilder(kInstrId)
+                                        .addReg(kReg1Id)
+                                        .addReg(kReg2Id)
+                                        .addImm(123)
+                                        .addFPImm(0.5));
   ToDisk.Key.Config = "config";
   ToDisk.Mode = InstructionBenchmark::Latency;
   ToDisk.CpuName = "cpu_name";
