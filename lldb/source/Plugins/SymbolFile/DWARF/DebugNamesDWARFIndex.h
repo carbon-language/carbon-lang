@@ -12,6 +12,7 @@
 
 #include "Plugins/SymbolFile/DWARF/DWARFIndex.h"
 #include "Plugins/SymbolFile/DWARF/LogChannelDWARF.h"
+#include "Plugins/SymbolFile/DWARF/ManualDWARFIndex.h"
 #include "lldb/Utility/ConstString.h"
 #include "llvm/DebugInfo/DWARF/DWARFAcceleratorTable.h"
 
@@ -22,7 +23,7 @@ public:
   Create(Module &module, DWARFDataExtractor debug_names,
          DWARFDataExtractor debug_str, DWARFDebugInfo *debug_info);
 
-  void Preload() override {}
+  void Preload() override { m_fallback.Preload(); }
 
   void GetGlobalVariables(ConstString basename, DIEArray &offsets) override;
   void GetGlobalVariables(const RegularExpression &regex,
@@ -51,7 +52,8 @@ private:
                        DWARFDataExtractor debug_names_data,
                        DWARFDataExtractor debug_str_data,
                        DWARFDebugInfo *debug_info)
-      : DWARFIndex(module), m_debug_names_up(std::move(debug_names_up)) {}
+      : DWARFIndex(module), m_debug_names_up(std::move(debug_names_up)),
+        m_fallback(module, debug_info, GetUnits(*m_debug_names_up)) {}
 
   // LLVM DWARFDebugNames will hold a non-owning reference to this data, so keep
   // track of the ownership here.
@@ -60,10 +62,13 @@ private:
 
   using DebugNames = llvm::DWARFDebugNames;
   std::unique_ptr<DebugNames> m_debug_names_up;
+  ManualDWARFIndex m_fallback;
 
   void Append(const DebugNames::Entry &entry, DIEArray &offsets);
   void MaybeLogLookupError(llvm::Error error, const DebugNames::NameIndex &ni,
                            llvm::StringRef name);
+
+  static llvm::DenseSet<dw_offset_t> GetUnits(const DebugNames &debug_names);
 };
 
 } // namespace lldb_private

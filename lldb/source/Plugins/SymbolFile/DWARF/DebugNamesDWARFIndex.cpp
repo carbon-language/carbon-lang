@@ -34,6 +34,16 @@ DebugNamesDWARFIndex::Create(Module &module, DWARFDataExtractor debug_names,
       module, std::move(index_up), debug_names, debug_str, debug_info));
 }
 
+llvm::DenseSet<dw_offset_t>
+DebugNamesDWARFIndex::GetUnits(const DebugNames &debug_names) {
+  llvm::DenseSet<dw_offset_t> result;
+  for (const DebugNames::NameIndex &ni : debug_names) {
+    for (uint32_t cu = 0; cu < ni.getCUCount(); ++cu)
+      result.insert(ni.getCUOffset(cu));
+  }
+  return result;
+}
+
 void DebugNamesDWARFIndex::Append(const DebugNames::Entry &entry,
                                   DIEArray &offsets) {
   llvm::Optional<uint64_t> cu_offset = entry.getCUOffset();
@@ -55,6 +65,8 @@ void DebugNamesDWARFIndex::MaybeLogLookupError(llvm::Error error,
 
 void DebugNamesDWARFIndex::GetGlobalVariables(ConstString basename,
                                               DIEArray &offsets) {
+  m_fallback.GetGlobalVariables(basename, offsets);
+
   for (const DebugNames::Entry &entry :
        m_debug_names_up->equal_range(basename.GetStringRef())) {
     if (entry.tag() != DW_TAG_variable)
@@ -66,6 +78,8 @@ void DebugNamesDWARFIndex::GetGlobalVariables(ConstString basename,
 
 void DebugNamesDWARFIndex::GetGlobalVariables(const RegularExpression &regex,
                                               DIEArray &offsets) {
+  m_fallback.GetGlobalVariables(regex, offsets);
+
   for (const DebugNames::NameIndex &ni: *m_debug_names_up) {
     for (DebugNames::NameTableEntry nte: ni) {
       if (!regex.Execute(nte.getString()))
@@ -85,6 +99,8 @@ void DebugNamesDWARFIndex::GetGlobalVariables(const RegularExpression &regex,
 }
 
 void DebugNamesDWARFIndex::Dump(Stream &s) {
+  m_fallback.Dump(s);
+
   std::string data;
   llvm::raw_string_ostream os(data);
   m_debug_names_up->dump(os);
