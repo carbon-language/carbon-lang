@@ -38,6 +38,38 @@ define i8 @shl_128 (i8 %x) {
 }
 
 ; ============================================================================ ;
+; Positive tests with value range known
+; ============================================================================ ;
+
+declare void @llvm.assume(i1 %cond);
+
+define i8 @knownbits_negative(i8 %x, i8 %y) {
+; CHECK-LABEL: @knownbits_negative(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i8 [[X:%.*]], 0
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret i8 [[RET]]
+;
+  %cmp = icmp slt i8 %x, 0
+  tail call void @llvm.assume(i1 %cmp)
+  %ret = shl nuw i8 %x, %y
+  ret i8 %ret
+}
+
+define i8 @knownbits_negativeorzero(i8 %x, i8 %y) {
+; CHECK-LABEL: @knownbits_negativeorzero(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i8 [[X:%.*]], 1
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret i8 [[RET]]
+;
+  %cmp = icmp slt i8 %x, 1
+  tail call void @llvm.assume(i1 %cmp)
+  %ret = shl nuw i8 %x, %y
+  ret i8 %ret
+}
+
+; ============================================================================ ;
 ; Vectors
 ; ============================================================================ ;
 
@@ -120,4 +152,58 @@ define <2 x i8> @bad_shl_vec_nonsplat(<2 x i8> %x) {
 ;
   %ret = shl nuw <2 x i8> <i8 -1, i8 1>, %x
   ret <2 x i8> %ret
+}
+
+; Bad known bits
+
+define i8 @bad_knownbits(i8 %x, i8 %y) {
+; CHECK-LABEL: @bad_knownbits(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt i8 [[X:%.*]], 2
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret i8 [[RET]]
+;
+  %cmp = icmp slt i8 %x, 2
+  tail call void @llvm.assume(i1 %cmp)
+  %ret = shl nuw i8 %x, %y
+  ret i8 %ret
+}
+
+define i8 @bad_knownbits_minusoneormore(i8 %x, i8 %y) {
+; CHECK-LABEL: @bad_knownbits_minusoneormore(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i8 [[X:%.*]], -2
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret i8 [[RET]]
+;
+  %cmp = icmp sgt i8 %x, -2
+  tail call void @llvm.assume(i1 %cmp)
+  %ret = shl nuw i8 %x, %y
+  ret i8 %ret
+}
+
+define i8 @bad_knownbits_zeroorpositive(i8 %x, i8 %y) {
+; CHECK-LABEL: @bad_knownbits_zeroorpositive(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i8 [[X:%.*]], -1
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret i8 [[RET]]
+;
+  %cmp = icmp sgt i8 %x, -1
+  tail call void @llvm.assume(i1 %cmp)
+  %ret = shl nuw i8 %x, %y
+  ret i8 %ret
+}
+
+define i8 @bad_knownbits_positive(i8 %x, i8 %y) {
+; CHECK-LABEL: @bad_knownbits_positive(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i8 [[X:%.*]], 0
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 [[X]], [[Y:%.*]]
+; CHECK-NEXT:    ret i8 [[RET]]
+;
+  %cmp = icmp sgt i8 %x, 0
+  tail call void @llvm.assume(i1 %cmp)
+  %ret = shl nuw i8 %x, %y
+  ret i8 %ret
 }
