@@ -9222,6 +9222,26 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                        makeArrayRef(Indices, NumElts),
                                        "palignr");
   }
+  case X86::BI__builtin_ia32_alignd128:
+  case X86::BI__builtin_ia32_alignd256:
+  case X86::BI__builtin_ia32_alignd512:
+  case X86::BI__builtin_ia32_alignq128:
+  case X86::BI__builtin_ia32_alignq256:
+  case X86::BI__builtin_ia32_alignq512: {
+    unsigned NumElts = Ops[0]->getType()->getVectorNumElements();
+    unsigned ShiftVal = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
+
+    // Mask the shift amount to width of two vectors.
+    ShiftVal &= (2 * NumElts) - 1;
+
+    uint32_t Indices[16];
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = i + ShiftVal;
+
+    return Builder.CreateShuffleVector(Ops[1], Ops[0],
+                                       makeArrayRef(Indices, NumElts),
+                                       "valign");
+  }
 
   case X86::BI__builtin_ia32_vperm2f128_pd256:
   case X86::BI__builtin_ia32_vperm2f128_ps256:

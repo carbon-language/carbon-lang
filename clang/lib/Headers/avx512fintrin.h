@@ -3465,16 +3465,8 @@ _mm512_maskz_permutex2var_epi64(__mmask8 __U, __m512i __A, __m512i __I,
 }
 
 #define _mm512_alignr_epi64(A, B, I) \
-  (__m512i)__builtin_shufflevector((__v8di)(__m512i)(B), \
-                                   (__v8di)(__m512i)(A), \
-                                   ((int)(I) & 0x7) + 0, \
-                                   ((int)(I) & 0x7) + 1, \
-                                   ((int)(I) & 0x7) + 2, \
-                                   ((int)(I) & 0x7) + 3, \
-                                   ((int)(I) & 0x7) + 4, \
-                                   ((int)(I) & 0x7) + 5, \
-                                   ((int)(I) & 0x7) + 6, \
-                                   ((int)(I) & 0x7) + 7)
+  (__m512i)__builtin_ia32_alignq512((__v8di)(__m512i)(A), \
+                                    (__v8di)(__m512i)(B), (int)(I))
 
 #define _mm512_mask_alignr_epi64(W, U, A, B, imm) \
   (__m512i)__builtin_ia32_selectq_512((__mmask8)(U), \
@@ -3487,24 +3479,8 @@ _mm512_maskz_permutex2var_epi64(__mmask8 __U, __m512i __A, __m512i __I,
                                  (__v8di)_mm512_setzero_si512())
 
 #define _mm512_alignr_epi32(A, B, I) \
-  (__m512i)__builtin_shufflevector((__v16si)(__m512i)(B), \
-                                   (__v16si)(__m512i)(A), \
-                                   ((int)(I) & 0xf) + 0, \
-                                   ((int)(I) & 0xf) + 1, \
-                                   ((int)(I) & 0xf) + 2, \
-                                   ((int)(I) & 0xf) + 3, \
-                                   ((int)(I) & 0xf) + 4, \
-                                   ((int)(I) & 0xf) + 5, \
-                                   ((int)(I) & 0xf) + 6, \
-                                   ((int)(I) & 0xf) + 7, \
-                                   ((int)(I) & 0xf) + 8, \
-                                   ((int)(I) & 0xf) + 9, \
-                                   ((int)(I) & 0xf) + 10, \
-                                   ((int)(I) & 0xf) + 11, \
-                                   ((int)(I) & 0xf) + 12, \
-                                   ((int)(I) & 0xf) + 13, \
-                                   ((int)(I) & 0xf) + 14, \
-                                   ((int)(I) & 0xf) + 15)
+  (__m512i)__builtin_ia32_alignd512((__v16si)(__m512i)(A), \
+                                    (__v16si)(__m512i)(B), (int)(I))
 
 #define _mm512_mask_alignr_epi32(W, U, A, B, imm) \
   (__m512i)__builtin_ia32_selectd_512((__mmask16)(U), \

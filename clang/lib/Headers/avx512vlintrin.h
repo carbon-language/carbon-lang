@@ -8082,12 +8082,8 @@ _mm256_maskz_permutexvar_epi32(__mmask8 __M, __m256i __X, __m256i __Y)
 }
 
 #define _mm_alignr_epi32(A, B, imm) \
-  (__m128i)__builtin_shufflevector((__v4si)(__m128i)(B), \
-                                   (__v4si)(__m128i)(A), \
-                                   ((int)(imm) & 0x3) + 0, \
-                                   ((int)(imm) & 0x3) + 1, \
-                                   ((int)(imm) & 0x3) + 2, \
-                                   ((int)(imm) & 0x3) + 3)
+  (__m128i)__builtin_ia32_alignd128((__v4si)(__m128i)(A), \
+                                    (__v4si)(__m128i)(B), (int)(imm))
 
 #define _mm_mask_alignr_epi32(W, U, A, B, imm) \
   (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
@@ -8100,16 +8096,8 @@ _mm256_maskz_permutexvar_epi32(__mmask8 __M, __m256i __X, __m256i __Y)
                                     (__v4si)_mm_setzero_si128())
 
 #define _mm256_alignr_epi32(A, B, imm) \
-  (__m256i)__builtin_shufflevector((__v8si)(__m256i)(B), \
-                                   (__v8si)(__m256i)(A), \
-                                   ((int)(imm) & 0x7) + 0, \
-                                   ((int)(imm) & 0x7) + 1, \
-                                   ((int)(imm) & 0x7) + 2, \
-                                   ((int)(imm) & 0x7) + 3, \
-                                   ((int)(imm) & 0x7) + 4, \
-                                   ((int)(imm) & 0x7) + 5, \
-                                   ((int)(imm) & 0x7) + 6, \
-                                   ((int)(imm) & 0x7) + 7)
+  (__m256i)__builtin_ia32_alignd256((__v8si)(__m256i)(A), \
+                                    (__v8si)(__m256i)(B), (int)(imm))
 
 #define _mm256_mask_alignr_epi32(W, U, A, B, imm) \
   (__m256i)__builtin_ia32_selectd_256((__mmask8)(U), \
@@ -8122,10 +8110,8 @@ _mm256_maskz_permutexvar_epi32(__mmask8 __M, __m256i __X, __m256i __Y)
                                  (__v8si)_mm256_setzero_si256())
 
 #define _mm_alignr_epi64(A, B, imm) \
-  (__m128i)__builtin_shufflevector((__v2di)(__m128i)(B), \
-                                   (__v2di)(__m128i)(A), \
-                                   ((int)(imm) & 0x1) + 0, \
-                                   ((int)(imm) & 0x1) + 1)
+  (__m128i)__builtin_ia32_alignq128((__v2di)(__m128i)(A), \
+                                    (__v2di)(__m128i)(B), (int)(imm))
 
 #define _mm_mask_alignr_epi64(W, U, A, B, imm) \
   (__m128i)__builtin_ia32_selectq_128((__mmask8)(U), \
@@ -8138,12 +8124,8 @@ _mm256_maskz_permutexvar_epi32(__mmask8 __M, __m256i __X, __m256i __Y)
                                     (__v2di)_mm_setzero_si128())
 
 #define _mm256_alignr_epi64(A, B, imm) \
-  (__m256i)__builtin_shufflevector((__v4di)(__m256i)(B), \
-                                   (__v4di)(__m256i)(A), \
-                                   ((int)(imm) & 0x3) + 0, \
-                                   ((int)(imm) & 0x3) + 1, \
-                                   ((int)(imm) & 0x3) + 2, \
-                                   ((int)(imm) & 0x3) + 3)
+  (__m256i)__builtin_ia32_alignq256((__v4di)(__m256i)(A), \
+                                    (__v4di)(__m256i)(B), (int)(imm))
 
 #define _mm256_mask_alignr_epi64(W, U, A, B, imm) \
   (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
