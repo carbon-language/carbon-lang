@@ -52,13 +52,14 @@ InstructionBenchmark BenchmarkRunner::run(unsigned Opcode,
     return InstrBenchmark;
   }
   llvm::raw_string_ostream InfoStream(InstrBenchmark.Info);
-  llvm::Expected<std::vector<llvm::MCInst>> SnippetOrError =
-      createSnippet(RATC, Opcode, InfoStream);
-  if (llvm::Error E = SnippetOrError.takeError()) {
+  llvm::Expected<BenchmarkConfiguration> ConfigurationOrError =
+      createConfiguration(RATC, Opcode, InfoStream);
+  if (llvm::Error E = ConfigurationOrError.takeError()) {
     InstrBenchmark.Error = llvm::toString(std::move(E));
     return InstrBenchmark;
   }
-  std::vector<llvm::MCInst> &Snippet = SnippetOrError.get();
+  BenchmarkConfiguration &Configuration = ConfigurationOrError.get();
+  const std::vector<llvm::MCInst> &Snippet = Configuration.Snippet;
   if (Snippet.empty()) {
     InstrBenchmark.Error = "Empty snippet";
     return InstrBenchmark;
