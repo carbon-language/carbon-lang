@@ -9,8 +9,7 @@
 
 define i8 @shl_nuw (i8 %x) {
 ; CHECK-LABEL: @shl_nuw(
-; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 -1, [[X:%.*]]
-; CHECK-NEXT:    ret i8 [[RET]]
+; CHECK-NEXT:    ret i8 -1
 ;
   %ret = shl nuw i8 -1, %x
   ; nuw here means that %x can only be 0
@@ -19,8 +18,7 @@ define i8 @shl_nuw (i8 %x) {
 
 define i8 @shl_nuw_nsw (i8 %x) {
 ; CHECK-LABEL: @shl_nuw_nsw(
-; CHECK-NEXT:    [[RET:%.*]] = shl nuw nsw i8 -1, [[X:%.*]]
-; CHECK-NEXT:    ret i8 [[RET]]
+; CHECK-NEXT:    ret i8 -1
 ;
   %ret = shl nuw nsw i8 -1, %x
   ; nuw here means that %x can only be 0
@@ -29,8 +27,7 @@ define i8 @shl_nuw_nsw (i8 %x) {
 
 define i8 @shl_128 (i8 %x) {
 ; CHECK-LABEL: @shl_128(
-; CHECK-NEXT:    [[RET:%.*]] = shl nuw i8 -128, [[X:%.*]]
-; CHECK-NEXT:    ret i8 [[RET]]
+; CHECK-NEXT:    ret i8 -128
 ;
   %ret = shl nuw i8 128, %x
   ; 128 == 1<<7 == just the sign bit is set
@@ -75,8 +72,7 @@ define i8 @knownbits_negativeorzero(i8 %x, i8 %y) {
 
 define <2 x i8> @shl_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @shl_vec(
-; CHECK-NEXT:    [[RET:%.*]] = shl nuw <2 x i8> <i8 -1, i8 -1>, [[X:%.*]]
-; CHECK-NEXT:    ret <2 x i8> [[RET]]
+; CHECK-NEXT:    ret <2 x i8> <i8 -1, i8 -1>
 ;
   %ret = shl nuw <2 x i8> <i8 -1, i8 -1>, %x
   ret <2 x i8> %ret
@@ -84,8 +80,7 @@ define <2 x i8> @shl_vec(<2 x i8> %x) {
 
 define <3 x i8> @shl_vec_undef(<3 x i8> %x) {
 ; CHECK-LABEL: @shl_vec_undef(
-; CHECK-NEXT:    [[RET:%.*]] = shl nuw <3 x i8> <i8 -1, i8 undef, i8 -1>, [[X:%.*]]
-; CHECK-NEXT:    ret <3 x i8> [[RET]]
+; CHECK-NEXT:    ret <3 x i8> <i8 -1, i8 undef, i8 -1>
 ;
   %ret = shl nuw <3 x i8> <i8 -1, i8 undef, i8 -1>, %x
   ret <3 x i8> %ret
@@ -93,8 +88,7 @@ define <3 x i8> @shl_vec_undef(<3 x i8> %x) {
 
 define <2 x i8> @shl_vec_nonsplat(<2 x i8> %x) {
 ; CHECK-LABEL: @shl_vec_nonsplat(
-; CHECK-NEXT:    [[RET:%.*]] = shl nuw <2 x i8> <i8 -1, i8 -2>, [[X:%.*]]
-; CHECK-NEXT:    ret <2 x i8> [[RET]]
+; CHECK-NEXT:    ret <2 x i8> <i8 -1, i8 -2>
 ;
   %ret = shl nuw <2 x i8> <i8 -1, i8 -2>, %x
   ret <2 x i8> %ret
