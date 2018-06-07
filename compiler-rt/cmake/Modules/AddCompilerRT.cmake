@@ -537,6 +537,14 @@ macro(add_custom_libcxx name prefix)
   string(REPLACE "-Wl,-z,defs" "" LIBCXX_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
   string(REPLACE "-Wl,-z,defs" "" LIBCXX_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
+  # The libc++ sources are fundamentally non-modular. They need special
+  # versions of the headers in order to provide C++03 and legacy ABI definitions.
+  # NOTE: The public headers can be used with modules in all other contexts
+  if (LLVM_ENABLE_MODULES)
+    set(LIBCXX_CXX_FLAGS "${LIBCXX_CXX_FLAGS} -Wno-unused-command-line-argument")
+    set(LIBCXX_CXX_FLAGS "${LIBCXX_CXX_FLAGS} -fno-modules")
+  endif()
+
   ExternalProject_Add(${name}
     DEPENDS ${name}-clobber ${LIBCXX_DEPS}
     PREFIX ${prefix}
