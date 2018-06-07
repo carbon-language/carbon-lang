@@ -345,12 +345,8 @@ void ManualDWARFIndex::IndexUnitImpl(
         // entries
         if (mangled_cstr && name != mangled_cstr &&
             ((mangled_cstr[0] == '_') || (::strcmp(name, mangled_cstr) != 0))) {
-          Mangled mangled(ConstString(mangled_cstr), true);
-          set.globals.Insert(mangled.GetMangledName(),
+          set.globals.Insert(ConstString(mangled_cstr),
                              DIERef(cu_offset, die.GetOffset()));
-          ConstString demangled = mangled.GetDemangledName(cu_language);
-          if (demangled)
-            set.globals.Insert(demangled, DIERef(cu_offset, die.GetOffset()));
         }
       }
       break;
@@ -361,9 +357,9 @@ void ManualDWARFIndex::IndexUnitImpl(
   }
 }
 
-void ManualDWARFIndex::GetGlobalVariables(ConstString name, DIEArray &offsets) {
+void ManualDWARFIndex::GetGlobalVariables(ConstString basename, DIEArray &offsets) {
   Index();
-  m_set.globals.Find(name, offsets);
+  m_set.globals.Find(basename, offsets);
 }
 
 void ManualDWARFIndex::GetGlobalVariables(const RegularExpression &regex,

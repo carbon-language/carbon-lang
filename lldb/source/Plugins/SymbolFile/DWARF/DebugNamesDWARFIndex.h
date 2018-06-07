@@ -11,6 +11,7 @@
 #define LLDB_DEBUGNAMESDWARFINDEX_H
 
 #include "Plugins/SymbolFile/DWARF/DWARFIndex.h"
+#include "Plugins/SymbolFile/DWARF/LogChannelDWARF.h"
 #include "lldb/Utility/ConstString.h"
 #include "llvm/DebugInfo/DWARF/DWARFAcceleratorTable.h"
 
@@ -23,9 +24,9 @@ public:
 
   void Preload() override {}
 
-  void GetGlobalVariables(ConstString name, DIEArray &offsets) override {}
+  void GetGlobalVariables(ConstString basename, DIEArray &offsets) override;
   void GetGlobalVariables(const RegularExpression &regex,
-                          DIEArray &offsets) override {}
+                          DIEArray &offsets) override;
   void GetGlobalVariables(const DWARFUnit &cu, DIEArray &offsets) override {}
   void GetObjCMethods(ConstString class_name, DIEArray &offsets) override {}
   void GetCompleteObjCClass(ConstString class_name, bool must_be_implementation,
@@ -42,7 +43,7 @@ public:
 
   void ReportInvalidDIEOffset(dw_offset_t offset,
                               llvm::StringRef name) override {}
-  void Dump(Stream &s) override {}
+  void Dump(Stream &s) override;
 
 private:
   DebugNamesDWARFIndex(Module &module,
@@ -57,7 +58,12 @@ private:
   DWARFDataExtractor m_debug_names_data;
   DWARFDataExtractor m_debug_str_data;
 
-  std::unique_ptr<llvm::DWARFDebugNames> m_debug_names_up;
+  using DebugNames = llvm::DWARFDebugNames;
+  std::unique_ptr<DebugNames> m_debug_names_up;
+
+  void Append(const DebugNames::Entry &entry, DIEArray &offsets);
+  void MaybeLogLookupError(llvm::Error error, const DebugNames::NameIndex &ni,
+                           llvm::StringRef name);
 };
 
 } // namespace lldb_private
