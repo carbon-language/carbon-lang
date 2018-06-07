@@ -166,9 +166,12 @@ static void maybeRunAnalysis(const Analysis &Analyzer, const std::string &Name,
   }
   std::error_code ErrorCode;
   llvm::raw_fd_ostream ClustersOS(OutputFilename, ErrorCode,
-                                  llvm::sys::fs::F_RW);
-  ExitOnErr(llvm::errorCodeToError(ErrorCode));
-  ExitOnErr(Analyzer.run<Pass>(ClustersOS));
+                                  llvm::sys::fs::FA_Read |
+                                      llvm::sys::fs::FA_Write);
+  if (ErrorCode)
+    llvm::report_fatal_error("cannot open out file: " + OutputFilename);
+  if (auto Err = Analyzer.run<Pass>(ClustersOS))
+    llvm::report_fatal_error(std::move(Err));
 }
 
 static void analysisMain() {
