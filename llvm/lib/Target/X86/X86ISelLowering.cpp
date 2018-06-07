@@ -36428,32 +36428,15 @@ combineVectorTruncationWithPACKUS(SDNode *N, SelectionDAG &DAG,
 }
 
 /// Truncate a group of v4i32 into v8i16 using X86ISD::PACKSS.
-static SDValue
-combineVectorTruncationWithPACKSS(SDNode *N, const X86Subtarget &Subtarget,
-                                  SelectionDAG &DAG,
-                                  SmallVector<SDValue, 8> &Regs) {
-  assert(Regs.size() > 0 && Regs[0].getValueType() == MVT::v4i32);
+static SDValue combineVectorTruncationWithPACKSS(SDNode *N, const SDLoc &DL,
+                                                 const X86Subtarget &Subtarget,
+                                                 SelectionDAG &DAG) {
+  SDValue In = N->getOperand(0);
+  EVT InVT = In.getValueType();
   EVT OutVT = N->getValueType(0);
-  SDLoc DL(N);
-
-  // Shift left by 16 bits, then arithmetic-shift right by 16 bits.
-  SDValue ShAmt = DAG.getConstant(16, DL, MVT::i32);
-  for (auto &Reg : Regs) {
-    Reg = getTargetVShiftNode(X86ISD::VSHLI, DL, MVT::v4i32, Reg, ShAmt,
-                              Subtarget, DAG);
-    Reg = getTargetVShiftNode(X86ISD::VSRAI, DL, MVT::v4i32, Reg, ShAmt,
-                              Subtarget, DAG);
-  }
-
-  for (unsigned i = 0, e = Regs.size() / 2; i < e; i++)
-    Regs[i] = DAG.getNode(X86ISD::PACKSS, DL, MVT::v8i16, Regs[i * 2],
-                          Regs[i * 2 + 1]);
-
-  if (Regs.size() > 2) {
-    Regs.resize(Regs.size() / 2);
-    return DAG.getNode(ISD::CONCAT_VECTORS, DL, OutVT, Regs);
-  } else
-    return Regs[0];
+  In = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, InVT, In,
+                   DAG.getValueType(OutVT));
+  return truncateVectorWithPACK(X86ISD::PACKSS, OutVT, In, DL, DAG, Subtarget);
 }
 
 /// This function transforms truncation from vXi32/vXi64 to vXi8/vXi16 into
@@ -36511,7 +36494,7 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
   if (Subtarget.hasSSE41() || OutSVT == MVT::i8)
     return combineVectorTruncationWithPACKUS(N, DAG, SubVec);
   if (InSVT == MVT::i32)
-    return combineVectorTruncationWithPACKSS(N, Subtarget, DAG, SubVec);
+    return combineVectorTruncationWithPACKSS(N, DL, Subtarget, DAG);
 
   return SDValue();
 }

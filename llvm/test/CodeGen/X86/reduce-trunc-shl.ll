@@ -69,13 +69,7 @@ define <8 x i16> @trunc_shl_16_v8i16_v8i32(<8 x i32> %a) {
 define <8 x i16> @trunc_shl_17_v8i16_v8i32(<8 x i32> %a) {
 ; SSE2-LABEL: trunc_shl_17_v8i16_v8i32:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    pslld $17, %xmm0
-; SSE2-NEXT:    pslld $17, %xmm1
-; SSE2-NEXT:    pslld $16, %xmm1
-; SSE2-NEXT:    psrad $16, %xmm1
-; SSE2-NEXT:    pslld $16, %xmm0
-; SSE2-NEXT:    psrad $16, %xmm0
-; SSE2-NEXT:    packssdw %xmm1, %xmm0
+; SSE2-NEXT:    xorps %xmm0, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; AVX2-LABEL: trunc_shl_17_v8i16_v8i32:
