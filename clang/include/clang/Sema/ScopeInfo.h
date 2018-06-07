@@ -748,8 +748,6 @@ public:
     switch (CapRegionKind) {
     case CR_Default:
       return "default captured statement";
-    case CR_ObjCAtFinally:
-      return "Objective-C @finally statement";
     case CR_OpenMP:
       return "OpenMP region";
     }
