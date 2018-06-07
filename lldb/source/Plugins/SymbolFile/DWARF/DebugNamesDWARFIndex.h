@@ -34,7 +34,7 @@ public:
                             DIEArray &offsets) override {}
   void GetTypes(ConstString name, DIEArray &offsets) override {}
   void GetTypes(const DWARFDeclContext &context, DIEArray &offsets) override {}
-  void GetNamespaces(ConstString name, DIEArray &offsets) override {}
+  void GetNamespaces(ConstString name, DIEArray &offsets) override;
   void GetFunctions(ConstString name, DWARFDebugInfo &info,
                     const CompilerDeclContext &parent_decl_ctx,
                     uint32_t name_type_mask,

@@ -98,6 +98,16 @@ void DebugNamesDWARFIndex::GetGlobalVariables(const RegularExpression &regex,
   }
 }
 
+void DebugNamesDWARFIndex::GetNamespaces(ConstString name, DIEArray &offsets) {
+  m_fallback.GetNamespaces(name, offsets);
+
+  for (const DebugNames::Entry &entry :
+       m_debug_names_up->equal_range(name.GetStringRef())) {
+    if (entry.tag() == DW_TAG_namespace)
+      Append(entry, offsets);
+  }
+}
+
 void DebugNamesDWARFIndex::Dump(Stream &s) {
   m_fallback.Dump(s);
 
