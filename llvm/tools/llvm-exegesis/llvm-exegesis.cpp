@@ -144,9 +144,12 @@ void benchmarkMain() {
   if (BenchmarkFile.empty())
     BenchmarkFile = "-";
 
-  ExitOnErr(
-      Runner->run(GetOpcodeOrDie(State.getInstrInfo()), Filter, NumRepetitions)
-          .writeYaml(getBenchmarkResultContext(State), BenchmarkFile));
+  const BenchmarkResultContext Context = getBenchmarkResultContext(State);
+  std::vector<InstructionBenchmark> Results = ExitOnErr(Runner->run(
+      GetOpcodeOrDie(State.getInstrInfo()), Filter, NumRepetitions));
+  for (InstructionBenchmark &Result : Results)
+    Result.writeYaml(Context, BenchmarkFile);
+
   exegesis::pfm::pfmTerminate();
 }
 
