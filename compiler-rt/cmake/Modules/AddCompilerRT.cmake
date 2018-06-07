@@ -512,9 +512,6 @@ macro(add_custom_libcxx name prefix)
   set(PASSTHROUGH_VARIABLES
     CMAKE_C_COMPILER_TARGET
     CMAKE_CXX_COMPILER_TARGET
-    CMAKE_SHARED_LINKER_FLAGS
-    CMAKE_MODULE_LINKER_FLAGS
-    CMAKE_EXE_LINKER_FLAGS
     CMAKE_INSTALL_PREFIX
     CMAKE_MAKE_PROGRAM
     CMAKE_LINKER
@@ -536,6 +533,10 @@ macro(add_custom_libcxx name prefix)
   set(LIBCXX_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_STRING}")
   set(LIBCXX_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS_STRING}")
 
+  string(REPLACE "-Wl,-z,defs" "" LIBCXX_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+  string(REPLACE "-Wl,-z,defs" "" LIBCXX_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
+  string(REPLACE "-Wl,-z,defs" "" LIBCXX_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+
   ExternalProject_Add(${name}
     DEPENDS ${name}-clobber ${LIBCXX_DEPS}
     PREFIX ${prefix}
@@ -546,6 +547,9 @@ macro(add_custom_libcxx name prefix)
                ${compiler_args}
                -DCMAKE_C_FLAGS=${LIBCXX_C_FLAGS}
                -DCMAKE_CXX_FLAGS=${LIBCXX_CXX_FLAGS}
+               -DCMAKE_SHARED_LINKER_FLAGS=${LIBCXX_SHARED_LINKER_FLAGS}
+               -DCMAKE_MODULE_LINKER_FLAGS=${LIBCXX_MODULE_LINKER_FLAGS}
+               -DCMAKE_EXE_LINKER_FLAGS=${LIBCXX_EXE_LINKER_FLAGS}
                -DCMAKE_BUILD_TYPE=Release
                -DLLVM_PATH=${LLVM_MAIN_SRC_DIR}
                -DLLVM_BINARY_DIR=${prefix}
