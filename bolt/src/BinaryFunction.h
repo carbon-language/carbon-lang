@@ -80,6 +80,7 @@ class DynoStats {
       Fadd(FORWARD_COND_BRANCHES_TAKEN, BACKWARD_COND_BRANCHES_TAKEN))\
   D(ALL_CONDITIONAL,              "all conditional branches",\
       Fadd(FORWARD_COND_BRANCHES, BACKWARD_COND_BRANCHES))\
+  D(VENEER_CALLS_AARCH64,         "linker-inserted veneer calls", Fn)\
   D(LAST_DYNO_STAT,               "<reserved>", 0)
 
 public:
@@ -90,13 +91,15 @@ public:
 
 private:
   uint64_t Stats[LAST_DYNO_STAT+1];
+  bool PrintAArch64Stats;
 
 #define D(name, desc, ...) desc,
   static constexpr const char *Desc[] = { DYNO_STATS };
 #undef D
 
 public:
-  DynoStats() {
+  DynoStats(bool PrintAArch64Stats ) {
+    this->PrintAArch64Stats = PrintAArch64Stats;
     for (auto Stat = FIRST_DYNO_STAT + 0; Stat < LAST_DYNO_STAT; ++Stat)
       Stats[Stat] = 0;
   }
@@ -2198,6 +2201,9 @@ public:
       const DWARFDebugLoc::LocationList &InputLL,
       BaseAddress BaseAddr) const;
 
+  /// Return true if the function is an AArch64 linker inserted veneer
+  bool isAArch64Veneer() const;
+
   virtual ~BinaryFunction();
 
   /// Info for fragmented functions.
@@ -2230,7 +2236,8 @@ public:
 /// Return program-wide dynostats.
 template <typename FuncsType>
 inline DynoStats getDynoStats(const FuncsType &Funcs) {
-  DynoStats dynoStats;
+  bool IsAArch64 = Funcs.begin()->second.getBinaryContext().isAArch64();
+  DynoStats dynoStats(IsAArch64);
   for (auto &BFI : Funcs) {
     auto &BF = BFI.second;
     if (BF.isSimple()) {
@@ -2247,7 +2254,8 @@ callWithDynoStats(FnType &&Func,
                   const FuncsType &Funcs,
                   StringRef Phase,
                   const bool Flag) {
-  DynoStats DynoStatsBefore;
+  bool IsAArch64 = Funcs.begin()->second.getBinaryContext().isAArch64();
+  DynoStats DynoStatsBefore(IsAArch64);
   if (Flag) {
     DynoStatsBefore = getDynoStats(Funcs);
   }

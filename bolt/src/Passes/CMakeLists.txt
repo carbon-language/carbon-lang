@@ -33,6 +33,7 @@ add_llvm_library(LLVMBOLTPasses
   StackReachingUses.cpp
   StokeInfo.cpp
   ValidateInternalCalls.cpp
+  VeneerElimination.cpp
 
   DEPENDS
   intrinsics_gen

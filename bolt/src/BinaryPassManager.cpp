@@ -24,6 +24,7 @@
 #include "Passes/ReorderData.h"
 #include "Passes/StokeInfo.h"
 #include "Passes/ValidateInternalCalls.h"
+#include "Passes/VeneerElimination.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>
@@ -274,6 +275,13 @@ PrintStoke("print-stoke",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static llvm::cl::opt<bool>
+  PrintVeneerElimination("print-veneer-elimination",
+    cl::desc("print functions after veneer elimination pass"),
+    cl::init(false),
+    cl::ZeroOrMore,
+    cl::cat(BoltOptCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -367,6 +375,9 @@ void BinaryFunctionPassManager::runAllPasses(
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
                        opts::ICF);
+
+  if (BC.isAArch64())
+      Manager.registerPass(llvm::make_unique<VeneerElimination>(PrintVeneerElimination));
 
   Manager.registerPass(llvm::make_unique<InlineMemcpy>(NeverPrint),
                        opts::StringOps);

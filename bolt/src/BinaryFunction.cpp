@@ -1361,6 +1361,14 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             MIB->matchLinkerVeneer(Instructions.begin(), Instructions.end(),
                                    AbsoluteInstrAddr, Instruction, TargetHiBits,
                                    TargetLowBits, TargetAddress)) {
+          MIB->addAnnotation(Instruction, "AArch64Veneer", true);
+
+          uint8_t Counter = 0;
+          for (auto It = std::prev(Instructions.end()); Counter != 2;
+               --It, ++Counter) {
+            MIB->addAnnotation(It->second, "AArch64Veneer", true);
+          }
+
           fixStubTarget(*TargetLowBits, *TargetHiBits, TargetAddress);
         }
       }
@@ -3753,7 +3761,7 @@ void BinaryFunction::printLoopInfo(raw_ostream &OS) const {
 }
 
 DynoStats BinaryFunction::getDynoStats() const {
-  DynoStats Stats;
+  DynoStats Stats(/*PrintAArch64Stats*/ BC.isAArch64());
 
   // Return empty-stats about the function we don't completely understand.
   if (!isSimple() || !hasValidProfile())
@@ -3778,6 +3786,10 @@ DynoStats BinaryFunction::getDynoStats() const {
     // Ignore empty blocks and blocks that were not executed.
     if (BB->getNumNonPseudos() == 0 || BBExecutionCount == 0)
       continue;
+
+    // Count AArch64 linker-inserted veneers
+    if(isAArch64Veneer())
+        Stats[DynoStats::VENEER_CALLS_AARCH64] += getKnownExecutionCount();
 
     // Count the number of calls by iterating through all instructions.
     for (const auto &Instr : *BB) {
@@ -3887,6 +3899,22 @@ DynoStats BinaryFunction::getDynoStats() const {
   return Stats;
 }
 
+bool BinaryFunction::isAArch64Veneer() const {
+  if (BasicBlocks.size() != 1)
+    return false;
+
+  auto &BB = **BasicBlocks.begin();
+  if (BB.size() != 3)
+    return false;
+
+  for (auto &Inst : BB) {
+    if (!BC.MIB->hasAnnotation(Inst, "AArch64Veneer"))
+      return false;
+  }
+
+  return true;
+}
+
 void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
   auto printStatWithDelta = [&](const std::string &Name, uint64_t Stat,
                                 uint64_t OtherStat) {
@@ -3907,6 +3935,10 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
   for (auto Stat = DynoStats::FIRST_DYNO_STAT + 1;
        Stat < DynoStats::LAST_DYNO_STAT;
        ++Stat) {
+
+    if (!PrintAArch64Stats && Stat == DynoStats::VENEER_CALLS_AARCH64)
+      continue;
+
     printStatWithDelta(Desc[Stat], Stats[Stat], Other ? (*Other)[Stat] : 0);
   }
 }
