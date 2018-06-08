@@ -4613,17 +4613,8 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    result.
 /// \returns A 256-bit vector of [8 x float] containing the interleaved values.
 #define _mm256_insertf128_ps(V1, V2, M) \
-  (__m256)__builtin_shufflevector( \
-    (__v8sf)(__m256)(V1), \
-    (__v8sf)_mm256_castps128_ps256((__m128)(V2)), \
-    (((M) & 1) ?  0 :  8), \
-    (((M) & 1) ?  1 :  9), \
-    (((M) & 1) ?  2 : 10), \
-    (((M) & 1) ?  3 : 11), \
-    (((M) & 1) ?  8 :  4), \
-    (((M) & 1) ?  9 :  5), \
-    (((M) & 1) ? 10 :  6), \
-    (((M) & 1) ? 11 :  7) )
+  (__m256)__builtin_ia32_vinsertf128_ps256((__v8sf)(__m256)(V1), \
+                                           (__v4sf)(__m128)(V2), (int)(M))
 
 /// Constructs a new 256-bit vector of [4 x double] by first duplicating
 ///    a 256-bit vector of [4 x double] given in the first parameter, and then
@@ -4660,13 +4651,8 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    result.
 /// \returns A 256-bit vector of [4 x double] containing the interleaved values.
 #define _mm256_insertf128_pd(V1, V2, M) \
-  (__m256d)__builtin_shufflevector( \
-    (__v4df)(__m256d)(V1), \
-    (__v4df)_mm256_castpd128_pd256((__m128d)(V2)), \
-    (((M) & 1) ? 0 : 4), \
-    (((M) & 1) ? 1 : 5), \
-    (((M) & 1) ? 4 : 2), \
-    (((M) & 1) ? 5 : 3) )
+  (__m256d)__builtin_ia32_vinsertf128_pd256((__v4df)(__m256d)(V1), \
+                                            (__v2df)(__m128d)(V2), (int)(M))
 
 /// Constructs a new 256-bit integer vector by first duplicating a
 ///    256-bit integer vector given in the first parameter, and then replacing
@@ -4703,13 +4689,8 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    result.
 /// \returns A 256-bit integer vector containing the interleaved values.
 #define _mm256_insertf128_si256(V1, V2, M) \
-  (__m256i)__builtin_shufflevector( \
-    (__v4di)(__m256i)(V1), \
-    (__v4di)_mm256_castsi128_si256((__m128i)(V2)), \
-    (((M) & 1) ? 0 : 4), \
-    (((M) & 1) ? 1 : 5), \
-    (((M) & 1) ? 4 : 2), \
-    (((M) & 1) ? 5 : 3) )
+  (__m256i)__builtin_ia32_vinsertf128_si256((__v4di)(__m256i)(V1), \
+                                            (__v2di)(__m128i)(V2), (int)(M))
 
 /*
    Vector extract.
@@ -4738,13 +4719,7 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    If bit [0] of \a M is 1, bits [255:128] of \a V are copied to the result.
 /// \returns A 128-bit vector of [4 x float] containing the extracted bits.
 #define _mm256_extractf128_ps(V, M) \
-  (__m128)__builtin_shufflevector( \
-    (__v8sf)(__m256)(V), \
-    (__v8sf)(_mm256_undefined_ps()), \
-    (((M) & 1) ? 4 : 0), \
-    (((M) & 1) ? 5 : 1), \
-    (((M) & 1) ? 6 : 2), \
-    (((M) & 1) ? 7 : 3) )
+  (__m128)__builtin_ia32_vextractf128_ps256((__v8sf)(__m256)(V), (int)(M))
 
 /// Extracts either the upper or the lower 128 bits from a 256-bit vector
 ///    of [4 x double], as determined by the immediate integer parameter, and
@@ -4768,11 +4743,7 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    If bit [0] of \a M is 1, bits [255:128] of \a V are copied to the result.
 /// \returns A 128-bit vector of [2 x double] containing the extracted bits.
 #define _mm256_extractf128_pd(V, M) \
-  (__m128d)__builtin_shufflevector( \
-    (__v4df)(__m256d)(V), \
-    (__v4df)(_mm256_undefined_pd()), \
-    (((M) & 1) ? 2 : 0), \
-    (((M) & 1) ? 3 : 1) )
+  (__m128d)__builtin_ia32_vextractf128_pd256((__v4df)(__m256d)(V), (int)(M))
 
 /// Extracts either the upper or the lower 128 bits from a 256-bit
 ///    integer vector, as determined by the immediate integer parameter, and
@@ -4796,11 +4767,7 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    If bit [0] of \a M is 1, bits [255:128] of \a V are copied to the result.
 /// \returns A 128-bit integer vector containing the extracted bits.
 #define _mm256_extractf128_si256(V, M) \
-  (__m128i)__builtin_shufflevector( \
-    (__v4di)(__m256i)(V), \
-    (__v4di)(_mm256_undefined_si256()), \
-    (((M) & 1) ? 2 : 0), \
-    (((M) & 1) ? 3 : 1) )
+  (__m128i)__builtin_ia32_vextractf128_si256((__v4di)(__m256i)(V), (int)(M))
 
 /* SIMD load ops (unaligned) */
 /// Loads two 128-bit floating-point vectors of [4 x float] from

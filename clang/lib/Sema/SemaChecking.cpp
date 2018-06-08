@@ -2607,9 +2607,33 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     return false;
   case X86::BI__builtin_ia32_vec_ext_v2si:
   case X86::BI__builtin_ia32_vec_ext_v2di:
+  case X86::BI__builtin_ia32_vextractf128_pd256:
+  case X86::BI__builtin_ia32_vextractf128_ps256:
+  case X86::BI__builtin_ia32_vextractf128_si256:
+  case X86::BI__builtin_ia32_extract128i256:
+  case X86::BI__builtin_ia32_extractf64x4:
+  case X86::BI__builtin_ia32_extracti64x4:
+  case X86::BI__builtin_ia32_extractf32x8:
+  case X86::BI__builtin_ia32_extracti32x8:
+  case X86::BI__builtin_ia32_extractf64x2_256:
+  case X86::BI__builtin_ia32_extracti64x2_256:
+  case X86::BI__builtin_ia32_extractf32x4_256:
+  case X86::BI__builtin_ia32_extracti32x4_256:
     i = 1; l = 0; u = 1;
     break;
   case X86::BI__builtin_ia32_vec_set_v2di:
+  case X86::BI__builtin_ia32_vinsertf128_pd256:
+  case X86::BI__builtin_ia32_vinsertf128_ps256:
+  case X86::BI__builtin_ia32_vinsertf128_si256:
+  case X86::BI__builtin_ia32_insert128i256:
+  case X86::BI__builtin_ia32_insertf32x8:
+  case X86::BI__builtin_ia32_inserti32x8:
+  case X86::BI__builtin_ia32_insertf64x4:
+  case X86::BI__builtin_ia32_inserti64x4:
+  case X86::BI__builtin_ia32_insertf64x2_256:
+  case X86::BI__builtin_ia32_inserti64x2_256:
+  case X86::BI__builtin_ia32_insertf32x4_256:
+  case X86::BI__builtin_ia32_inserti32x4_256:
     i = 2; l = 0; u = 1;
     break;
   case X86::BI__builtin_ia32_vpermilpd:
@@ -2617,6 +2641,10 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case X86::BI__builtin_ia32_vec_ext_v4si:
   case X86::BI__builtin_ia32_vec_ext_v4sf:
   case X86::BI__builtin_ia32_vec_ext_v4di:
+  case X86::BI__builtin_ia32_extractf32x4:
+  case X86::BI__builtin_ia32_extracti32x4:
+  case X86::BI__builtin_ia32_extractf64x2_512:
+  case X86::BI__builtin_ia32_extracti64x2_512:
     i = 1; l = 0; u = 3;
     break;
   case X86::BI_mm_prefetch:
@@ -2633,6 +2661,10 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case X86::BI__builtin_ia32_shuf_f64x2_256:
   case X86::BI__builtin_ia32_shuf_i32x4_256:
   case X86::BI__builtin_ia32_shuf_i64x2_256:
+  case X86::BI__builtin_ia32_insertf64x2_512:
+  case X86::BI__builtin_ia32_inserti64x2_512:
+  case X86::BI__builtin_ia32_insertf32x4:
+  case X86::BI__builtin_ia32_inserti32x4:
     i = 2; l = 0; u = 3;
     break;
   case X86::BI__builtin_ia32_vpermil2pd:

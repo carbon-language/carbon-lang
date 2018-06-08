@@ -9235,6 +9235,75 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
     return Builder.CreateDefaultAlignedStore(Ops[1], Ops[0]);
   }
+  case X86::BI__builtin_ia32_vextractf128_pd256:
+  case X86::BI__builtin_ia32_vextractf128_ps256:
+  case X86::BI__builtin_ia32_vextractf128_si256:
+  case X86::BI__builtin_ia32_extract128i256:
+  case X86::BI__builtin_ia32_extractf64x4:
+  case X86::BI__builtin_ia32_extractf32x4:
+  case X86::BI__builtin_ia32_extracti64x4:
+  case X86::BI__builtin_ia32_extracti32x4:
+  case X86::BI__builtin_ia32_extractf32x8:
+  case X86::BI__builtin_ia32_extracti32x8:
+  case X86::BI__builtin_ia32_extractf32x4_256:
+  case X86::BI__builtin_ia32_extracti32x4_256:
+  case X86::BI__builtin_ia32_extractf64x2_256:
+  case X86::BI__builtin_ia32_extracti64x2_256:
+  case X86::BI__builtin_ia32_extractf64x2_512:
+  case X86::BI__builtin_ia32_extracti64x2_512: {
+    llvm::Type *DstTy = ConvertType(E->getType());
+    unsigned NumElts = DstTy->getVectorNumElements();
+    unsigned Index = cast<ConstantInt>(Ops[1])->getZExtValue() * NumElts;
+
+    uint32_t Indices[16];
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = i + Index;
+
+    return Builder.CreateShuffleVector(Ops[0],
+                                       UndefValue::get(Ops[0]->getType()),
+                                       makeArrayRef(Indices, NumElts),
+                                       "extract");
+  }
+  case X86::BI__builtin_ia32_vinsertf128_pd256:
+  case X86::BI__builtin_ia32_vinsertf128_ps256:
+  case X86::BI__builtin_ia32_vinsertf128_si256:
+  case X86::BI__builtin_ia32_insert128i256:
+  case X86::BI__builtin_ia32_insertf64x4:
+  case X86::BI__builtin_ia32_insertf32x4:
+  case X86::BI__builtin_ia32_inserti64x4:
+  case X86::BI__builtin_ia32_inserti32x4:
+  case X86::BI__builtin_ia32_insertf32x8:
+  case X86::BI__builtin_ia32_inserti32x8:
+  case X86::BI__builtin_ia32_insertf32x4_256:
+  case X86::BI__builtin_ia32_inserti32x4_256:
+  case X86::BI__builtin_ia32_insertf64x2_256:
+  case X86::BI__builtin_ia32_inserti64x2_256:
+  case X86::BI__builtin_ia32_insertf64x2_512:
+  case X86::BI__builtin_ia32_inserti64x2_512: {
+    unsigned DstNumElts = Ops[0]->getType()->getVectorNumElements();
+    unsigned SrcNumElts = Ops[1]->getType()->getVectorNumElements();
+    unsigned Index = cast<ConstantInt>(Ops[2])->getZExtValue() * SrcNumElts;
+
+    uint32_t Indices[16];
+    for (unsigned i = 0; i != DstNumElts; ++i)
+      Indices[i] = (i >= SrcNumElts) ? SrcNumElts + (i % SrcNumElts) : i;
+
+    Value *Op1 = Builder.CreateShuffleVector(Ops[1],
+                                             UndefValue::get(Ops[1]->getType()),
+                                             makeArrayRef(Indices, DstNumElts),
+                                             "widen");
+
+    for (unsigned i = 0; i != DstNumElts; ++i) {
+      if (i >= Index && i < (Index + SrcNumElts))
+        Indices[i] = (i - Index) + DstNumElts;
+      else
+        Indices[i] = i;
+    }
+
+    return Builder.CreateShuffleVector(Ops[0], Op1,
+                                       makeArrayRef(Indices, DstNumElts),
+                                       "insert");
+  }
   case X86::BI__builtin_ia32_pblendw128:
   case X86::BI__builtin_ia32_blendpd:
   case X86::BI__builtin_ia32_blendps:
