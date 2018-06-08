@@ -6316,7 +6316,7 @@ LoopVectorizationPlanner::plan(bool OptForSize, unsigned UserVF) {
     // Collect the instructions (and their associated costs) that will be more
     // profitable to scalarize.
     CM.selectUserVectorizationFactor(UserVF);
-    buildVPlans(UserVF, UserVF);
+    buildVPlansWithVPRecipes(UserVF, UserVF);
     LLVM_DEBUG(printPlans(dbgs()));
     return {UserVF, 0};
   }
@@ -6334,7 +6334,7 @@ LoopVectorizationPlanner::plan(bool OptForSize, unsigned UserVF) {
       CM.collectInstsToScalarize(VF);
   }
 
-  buildVPlans(1, MaxVF);
+  buildVPlansWithVPRecipes(1, MaxVF);
   LLVM_DEBUG(printPlans(dbgs()));
   if (MaxVF == 1)
     return NoVectorization;
@@ -6495,23 +6495,9 @@ bool LoopVectorizationPlanner::getDecisionAndClampRange(
 /// vectorization decision can potentially shorten this sub-range during
 /// buildVPlan().
 void LoopVectorizationPlanner::buildVPlans(unsigned MinVF, unsigned MaxVF) {
-
-  // Collect conditions feeding internal conditional branches; they need to be
-  // represented in VPlan for it to model masking.
-  SmallPtrSet<Value *, 1> NeedDef;
-
-  auto *Latch = OrigLoop->getLoopLatch();
-  for (BasicBlock *BB : OrigLoop->blocks()) {
-    if (BB == Latch)
-      continue;
-    BranchInst *Branch = dyn_cast<BranchInst>(BB->getTerminator());
-    if (Branch && Branch->isConditional())
-      NeedDef.insert(Branch->getCondition());
-  }
-
   for (unsigned VF = MinVF; VF < MaxVF + 1;) {
     VFRange SubRange = {VF, MaxVF + 1};
-    VPlans.push_back(buildVPlan(SubRange, NeedDef));
+    VPlans.push_back(buildVPlan(SubRange));
     VF = SubRange.End;
   }
 }
@@ -6866,31 +6852,22 @@ LoopVectorizationPlanner::createReplicateRegion(Instruction *Instr,
   return Region;
 }
 
-LoopVectorizationPlanner::VPlanPtr
-LoopVectorizationPlanner::buildVPlan(VFRange &Range,
-                                     const SmallPtrSetImpl<Value *> &NeedDef) {
-  // Outer loop handling: They may require CFG and instruction level
-  // transformations before even evaluating whether vectorization is profitable.
-  // Since we cannot modify the incoming IR, we need to build VPlan upfront in
-  // the vectorization pipeline.
-  if (!OrigLoop->empty()) {
-    assert(EnableVPlanNativePath && "VPlan-native path is not enabled.");
-
-    // Create new empty VPlan
-    auto Plan = llvm::make_unique<VPlan>();
-
-    // Build hierarchical CFG
-    VPlanHCFGBuilder HCFGBuilder(OrigLoop, LI);
-    HCFGBuilder.buildHierarchicalCFG(*Plan.get());
-
-    return Plan;
-  }
-
+void LoopVectorizationPlanner::buildVPlansWithVPRecipes(unsigned MinVF,
+                                                        unsigned MaxVF) {
   assert(OrigLoop->empty() && "Inner loop expected.");
-  EdgeMaskCache.clear();
-  BlockMaskCache.clear();
-  DenseMap<Instruction *, Instruction *> &SinkAfter = Legal->getSinkAfter();
-  DenseMap<Instruction *, Instruction *> SinkAfterInverse;
+
+  // Collect conditions feeding internal conditional branches; they need to be
+  // represented in VPlan for it to model masking.
+  SmallPtrSet<Value *, 1> NeedDef;
+
+  auto *Latch = OrigLoop->getLoopLatch();
+  for (BasicBlock *BB : OrigLoop->blocks()) {
+    if (BB == Latch)
+      continue;
+    BranchInst *Branch = dyn_cast<BranchInst>(BB->getTerminator());
+    if (Branch && Branch->isConditional())
+      NeedDef.insert(Branch->getCondition());
+  }
 
   // Collect instructions from the original loop that will become trivially dead
   // in the vectorized loop. We don't need to vectorize these instructions. For
@@ -6901,10 +6878,27 @@ LoopVectorizationPlanner::buildVPlan(VFRange &Range,
   SmallPtrSet<Instruction *, 4> DeadInstructions;
   collectTriviallyDeadInstructions(DeadInstructions);
 
+  for (unsigned VF = MinVF; VF < MaxVF + 1;) {
+    VFRange SubRange = {VF, MaxVF + 1};
+    VPlans.push_back(
+        buildVPlanWithVPRecipes(SubRange, NeedDef, DeadInstructions));
+    VF = SubRange.End;
+  }
+}
+
+LoopVectorizationPlanner::VPlanPtr
+LoopVectorizationPlanner::buildVPlanWithVPRecipes(
+    VFRange &Range, SmallPtrSetImpl<Value *> &NeedDef,
+    SmallPtrSetImpl<Instruction *> &DeadInstructions) {
   // Hold a mapping from predicated instructions to their recipes, in order to
   // fix their AlsoPack behavior if a user is determined to replicate and use a
   // scalar instead of vector value.
   DenseMap<Instruction *, VPReplicateRecipe *> PredInst2Recipe;
+
+  EdgeMaskCache.clear();
+  BlockMaskCache.clear();
+  DenseMap<Instruction *, Instruction *> &SinkAfter = Legal->getSinkAfter();
+  DenseMap<Instruction *, Instruction *> SinkAfterInverse;
 
   // Create a dummy pre-entry VPBasicBlock to start building the VPlan.
   VPBasicBlock *VPBB = new VPBasicBlock("Pre-Entry");
@@ -7043,6 +7037,25 @@ LoopVectorizationPlanner::buildVPlan(VFRange &Range,
   RSO << "},UF>=1";
   RSO.flush();
   Plan->setName(PlanName);
+
+  return Plan;
+}
+
+LoopVectorizationPlanner::VPlanPtr
+LoopVectorizationPlanner::buildVPlan(VFRange &Range) {
+  // Outer loop handling: They may require CFG and instruction level
+  // transformations before even evaluating whether vectorization is profitable.
+  // Since we cannot modify the incoming IR, we need to build VPlan upfront in
+  // the vectorization pipeline.
+  assert(!OrigLoop->empty());
+  assert(EnableVPlanNativePath && "VPlan-native path is not enabled.");
+
+  // Create new empty VPlan
+  auto Plan = llvm::make_unique<VPlan>();
+
+  // Build hierarchical CFG
+  VPlanHCFGBuilder HCFGBuilder(OrigLoop, LI);
+  HCFGBuilder.buildHierarchicalCFG(*Plan.get());
 
   return Plan;
 }
