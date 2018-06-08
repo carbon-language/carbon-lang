@@ -847,7 +847,7 @@ _mm256_permutevar8x32_ps(__m256 __a, __m256i __b)
                                    ((M) >> 6) & 0x3)
 
 #define _mm256_permute2x128_si256(V1, V2, M) \
-  (__m256i)__builtin_ia32_permti256((__m256i)(V1), (__m256i)(V2), (M))
+  (__m256i)__builtin_ia32_permti256((__m256i)(V1), (__m256i)(V2), (int)(M))
 
 #define _mm256_extracti128_si256(V, M) \
   (__m128i)__builtin_ia32_extract128i256((__v4di)(__m256i)(V), (int)(M))
