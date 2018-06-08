@@ -4689,8 +4689,8 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    result.
 /// \returns A 256-bit integer vector containing the interleaved values.
 #define _mm256_insertf128_si256(V1, V2, M) \
-  (__m256i)__builtin_ia32_vinsertf128_si256((__v4di)(__m256i)(V1), \
-                                            (__v2di)(__m128i)(V2), (int)(M))
+  (__m256i)__builtin_ia32_vinsertf128_si256((__v8si)(__m256i)(V1), \
+                                            (__v4si)(__m128i)(V2), (int)(M))
 
 /*
    Vector extract.
@@ -4767,7 +4767,7 @@ _mm256_zextsi128_si256(__m128i __a)
 ///    If bit [0] of \a M is 1, bits [255:128] of \a V are copied to the result.
 /// \returns A 128-bit integer vector containing the extracted bits.
 #define _mm256_extractf128_si256(V, M) \
-  (__m128i)__builtin_ia32_vextractf128_si256((__v4di)(__m256i)(V), (int)(M))
+  (__m128i)__builtin_ia32_vextractf128_si256((__v8si)(__m256i)(V), (int)(M))
 
 /* SIMD load ops (unaligned) */
 /// Loads two 128-bit floating-point vectors of [4 x float] from
