@@ -237,6 +237,7 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **Args,
      return !MakeErrMsg(ErrMsg, "posix_spawn failed", Err);
 
     PI.Pid = PID;
+    PI.Process = PID;
 
     return true;
   }
@@ -300,6 +301,7 @@ static bool Execute(ProcessInfo &PI, StringRef Program, const char **Args,
   }
 
   PI.Pid = child;
+  PI.Process = child;
 
   return true;
 }
