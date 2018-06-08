@@ -14,6 +14,7 @@
 
 add_library(FortranEvaluateTesting
   testing.cc
+  fp-testing.cc
 )
 
 add_executable(leading-zero-bit-count-test

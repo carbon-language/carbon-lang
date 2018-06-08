@@ -92,6 +92,9 @@ public:
   constexpr bool IsZero() const {
     return Exponent() == 0 && GetSignificand().IsZero();
   }
+  constexpr bool IsDenormal() const {
+    return Exponent() == 0 && !GetSignificand().IsZero();
+  }
 
   constexpr Real ABS() const {  // non-arithmetic, no flags returned
     Real result;
@@ -216,7 +219,7 @@ public:
   }
 
   constexpr ValueWithRealFlags<Real> Add(
-      const Real &y, Rounding rounding) const {
+      const Real &y, Rounding rounding = Rounding::TiesToEven) const {
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN + x -> NaN
@@ -240,54 +243,68 @@ public:
       // y is larger in magnitude; simplify by reversing operands
       return y.Add(*this, rounding);
     }
-    if (exponent == yExponent && isNegative != yIsNegative &&
-        GetSignificand().CompareUnsigned(y.GetSignificand()) ==
-            Ordering::Less) {
-      // Same exponent, opposite signs, and y is larger in magnitude
-      return y.Add(*this, rounding);
+    if (exponent == yExponent && isNegative != yIsNegative) {
+      Ordering order{GetSignificand().CompareUnsigned(y.GetSignificand())};
+      if (order == Ordering::Less) {
+        // Same exponent, opposite signs, and y is larger in magnitude
+        return y.Add(*this, rounding);
+      }
+      if (order == Ordering::Equal) {
+        // x + (-x) -> +0.0, never -0.0
+        return {};
+      }
     }
     // Our exponent is greater than y's, or the exponents match and y is not
     // of the opposite sign and greater magnitude.  So (x+y) will have the
     // same sign as x.
     Fraction yFraction{y.GetFraction()};
     RoundingBits roundingBits;
-    if (exponent > yExponent) {
-      int rshift = exponent - yExponent;
-      roundingBits = GetRoundingBits(yFraction, rshift);
-      yFraction = yFraction.SHIFTR(rshift);
-    }
     Fraction fraction{GetFraction()};
+    int rshift = exponent - yExponent;
+    if (exponent > 0 && yExponent == 0) {
+      --rshift;  // correct overshift when only y is denormal
+    }
+    roundingBits = GetRoundingBits(yFraction, rshift);
+    yFraction = yFraction.SHIFTR(rshift);
+    bool carry{false};
     if (isNegative != yIsNegative) {
       // Opposite signs: subtract
-      auto negated = yFraction.Negate();
-      if (negated.overflow) {
-        // y had only its MSB set.  Result has our fraction, less its MSB.
-        fraction = fraction.IBCLR(precision - 1);
+      carry = !roundingBits.sticky_;
+      if (carry) {
+        carry = !roundingBits.round_;
+        if (carry) {
+          carry = !roundingBits.guard_;
+        } else {
+          roundingBits.guard_ ^= true;
+        }
       } else {
-        fraction = fraction.AddUnsigned(negated.value).value;
+        roundingBits.round_ ^= true;
+        roundingBits.guard_ ^= true;
       }
-    } else {
-      auto sum = fraction.AddUnsigned(yFraction);
-      fraction = sum.value;
-      if (sum.carry) {
-        roundingBits.guard |= roundingBits.round;
-        roundingBits.round = sum.value.BTEST(0);
-        fraction = fraction.SHIFTR(1).IBSET(precision - 1);
-        ++exponent;
-      }
+      yFraction = yFraction.NOT();
     }
-    result.flags |= result.value.Normalize(isNegative, exponent, fraction);
+    auto sum = fraction.AddUnsigned(yFraction, carry);
+    fraction = sum.value;
+    if (isNegative == yIsNegative && sum.carry) {
+      roundingBits.sticky_ |= roundingBits.round_;
+      roundingBits.round_ = roundingBits.guard_;
+      roundingBits.guard_ = sum.value.BTEST(0);
+      fraction = fraction.SHIFTR(1).IBSET(precision - 1);
+      ++exponent;
+    }
+    result.flags |=
+        result.value.Normalize(isNegative, exponent, fraction, &roundingBits);
     result.flags |= result.value.Round(rounding, roundingBits);
     return result;
   }
 
   constexpr ValueWithRealFlags<Real> Subtract(
-      const Real &y, Rounding rounding) const {
+      const Real &y, Rounding rounding = Rounding::TiesToEven) const {
     return Add(y.Negate(), rounding);
   }
 
   constexpr ValueWithRealFlags<Real> Multiply(
-      const Real &y, Rounding rounding) const {
+      const Real &y, Rounding rounding = Rounding::TiesToEven) const {
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN * x -> NaN
@@ -309,7 +326,7 @@ public:
   }
 
   constexpr ValueWithRealFlags<Real> Divide(
-      const Real &y, Rounding rounding) const {
+      const Real &y, Rounding rounding = Rounding::TiesToEven) const {
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN / x -> NaN, x / NaN -> NaN
@@ -336,8 +353,8 @@ public:
           auto doubled = qr.remainder.AddUnsigned(qr.remainder);
           Ordering drcmp{doubled.value.CompareUnsigned(y.GetFraction())};
           RoundingBits roundingBits;
-          roundingBits.round = drcmp != Ordering::Less;
-          roundingBits.guard = drcmp != Ordering::Equal;
+          roundingBits.guard_ = drcmp != Ordering::Less;
+          roundingBits.round_ = drcmp != Ordering::Equal;
           std::uint64_t exponent{Exponent() - y.Exponent() + exponentBias};
           result.flags |=
               result.value.Normalize(isNegative, exponent, qr.quotient);
@@ -356,8 +373,9 @@ private:
     RoundingBits() {}
     RoundingBits(const RoundingBits &) = default;
     RoundingBits &operator=(const RoundingBits &) = default;
-    bool round{false};
-    bool guard{false};  // a/k/a "sticky" bit
+    bool guard_{false};
+    bool round_{false};
+    bool sticky_{false};
   };
 
   constexpr Significand GetSignificand() const {
@@ -382,23 +400,33 @@ private:
   static constexpr RoundingBits GetRoundingBits(
       const INT &fraction, int rshift) {
     RoundingBits roundingBits;
-    if (rshift > fraction.bits) {
-      roundingBits.guard = !fraction.IsZero();
-    } else if (rshift > 0) {
-      roundingBits.round = fraction.BTEST(rshift - 1);
-      roundingBits.guard =
-          rshift > 2 && !fraction.IAND(fraction.MASKR(rshift - 1)).IsZero();
+    if (rshift > 0 && rshift < fraction.bits + 1) {
+      roundingBits.guard_ = fraction.BTEST(rshift - 1);
+    }
+    if (rshift > 1 && rshift < fraction.bits + 2) {
+      roundingBits.round_ = fraction.BTEST(rshift - 2);
+    }
+    if (rshift > 2) {
+      if (rshift >= fraction.bits + 2) {
+        roundingBits.sticky_ = !fraction.IsZero();
+      } else {
+        auto mask = fraction.MASKR(rshift - 2);
+        roundingBits.sticky_ = !fraction.IAND(mask).IsZero();
+      }
     }
     return roundingBits;
   }
 
   // TODO: Configurable NaN representations
   static constexpr Word NaNWord() {
-    return Word{maxExponent}.SHIFTL(significandBits).IBSET(0);
+    return Word{maxExponent}
+        .SHIFTL(significandBits)
+        .IBSET(significandBits - 1)
+        .IBSET(significandBits - 2);
   }
 
-  constexpr RealFlags Normalize(
-      bool negative, std::uint64_t biasedExponent, const Fraction &fraction) {
+  constexpr RealFlags Normalize(bool negative, std::uint64_t biasedExponent,
+      const Fraction &fraction, RoundingBits *roundingBits = nullptr) {
     if (biasedExponent >= maxExponent) {
       word_ = Word{maxExponent}.SHIFTL(significandBits);
       if (negative) {
@@ -406,19 +434,36 @@ private:
       }
       return {RealFlag::Overflow};
     } else {
-      std::uint64_t leadz = fraction.LEADZ();
-      if (leadz >= precision) {
+      std::uint64_t lshift = fraction.LEADZ();
+      if (lshift >= precision) {
         // +/-0.0
         word_ = Word{};
-      } else if (biasedExponent <= leadz) {
-        // denormal
-        word_ = Word::Convert(fraction).value.SHIFTL(biasedExponent);
       } else {
-        word_ = Word::Convert(fraction).value.SHIFTL(leadz);
+        word_ = Word::Convert(fraction).value;
+        if (lshift < biasedExponent) {
+          biasedExponent -= lshift;
+        } else if (biasedExponent > 0) {
+          lshift = biasedExponent - 1;
+          biasedExponent = 0;
+        } else {
+          lshift = 0;
+        }
+        if (lshift > 0) {
+          word_ = word_.SHIFTL(lshift);
+          if (roundingBits != nullptr) {
+            for (; lshift > 0; --lshift) {
+              if (roundingBits->guard_) {
+                word_ = word_.IBSET(lshift - 1);
+              }
+              roundingBits->guard_ = roundingBits->round_;
+              roundingBits->round_ = roundingBits->sticky_;
+            }
+          }
+        }
         if (implicitMSB) {
           word_ = word_.IBCLR(significandBits);
         }
-        word_ = word_.IOR(Word{biasedExponent - leadz}.SHIFTL(significandBits));
+        word_ = word_.IOR(Word{biasedExponent}.SHIFTL(significandBits));
       }
       if (negative) {
         word_ = word_.IBSET(bits - 1);
@@ -431,18 +476,19 @@ private:
   // fraction, given a rounding mode and a summary of the lost bits.
   constexpr bool MustRound(Rounding rounding, const RoundingBits &bits) const {
     bool round{false};  // to dodge bogus g++ warning about missing return
+    bool roundOrSticky{bits.round_ | bits.sticky_};
     switch (rounding) {
     case Rounding::TiesToEven:
-      round = bits.round && !bits.guard && word_.BTEST(0);
+      round = bits.guard_ && (roundOrSticky || word_.BTEST(0));
       break;
     case Rounding::ToZero: break;
     case Rounding::Down:
-      round = IsNegative() && (bits.round || bits.guard);
+      round = IsNegative() && (bits.guard_ || roundOrSticky);
       break;
     case Rounding::Up:
-      round = !IsNegative() && (bits.round || bits.guard);
+      round = !IsNegative() && (bits.guard_ || roundOrSticky);
       break;
-    case Rounding::TiesAwayFromZero: round = bits.round && !bits.guard; break;
+    case Rounding::TiesAwayFromZero: round = bits.guard_; break;
     }
     return round;
   }
@@ -451,16 +497,16 @@ private:
   RealFlags Round(Rounding rounding, const RoundingBits &bits) {
     std::uint64_t exponent{Exponent()};
     RealFlags flags;
-    if (bits.round | bits.guard) {
+    if (bits.guard_ | bits.round_ | bits.sticky_) {
       flags.set(RealFlag::Inexact);
     }
     if (exponent < maxExponent && MustRound(rounding, bits)) {
       typename Fraction::ValueWithCarry sum{
           GetFraction().AddUnsigned(Fraction{}, true)};
       if (sum.carry) {
-        // The fraction was all ones before rounding and sum.value is zero now
+        // The fraction was all ones before rounding; sum.value is now zero
         if (++exponent < maxExponent) {
-          sum.value.IBSET(precision - 1);
+          sum.value = sum.value.IBSET(precision - 1);
         } else {
           // rounded away to an infinity
           flags.set(RealFlag::Overflow);

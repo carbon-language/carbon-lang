@@ -15,6 +15,7 @@
 #include "../../lib/evaluate/integer.h"
 #include "../../lib/evaluate/real.h"
 #include "testing.h"
+#include "fp-testing.h"
 #include <cstdio>
 
 using namespace Fortran::evaluate;
@@ -110,19 +111,17 @@ template<typename R> void tests() {
       TEST(ivf.flags.empty())("%s,%d,0x%llx",desc,j,x);
       MATCH(x, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
     }
-  }
-  for (std::uint64_t j{0}; j < 64; ++j) {
-    std::uint64_t x{1};
-    x <<= j;
-    x |= std::uint64_t{1} << 63;
-    Integer<64> ix{x};
+    ix = ix.Negate().value;
     TEST(ix.IsNegative())("%s,%d,0x%llx",desc,j,x);
+    x = -x;
+    std::int64_t nx = x;
     MATCH(x, ix.ToUInt64())("%s,%d,0x%llx",desc,j,x);
-    vr = R::ConvertSigned(ix, Rounding::ToZero);
+    MATCH(nx, ix.ToInt64())("%s,%d,0x%llx",desc,j,x);
+    vr = R::ConvertSigned(ix);
     TEST(vr.value.IsNegative())("%s,%d,0x%llx",desc,j,x);
     TEST(!vr.value.IsNotANumber())("%s,%d,0x%llx",desc,j,x);
     TEST(!vr.value.IsZero())("%s,%d,0x%llx",desc,j,x);
-    auto ivf = vr.value.template ToInteger<Integer<64>>();
+    ivf = vr.value.template ToInteger<Integer<64>>();
     if (j > (maxExponent / 2)) {
       TEST(vr.flags.test(RealFlag::Overflow))(desc);
       TEST(vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
@@ -133,6 +132,75 @@ template<typename R> void tests() {
       TEST(!vr.value.IsInfinite())("%s,%d,0x%llx",desc,j,x);
       TEST(ivf.flags.empty())("%s,%d,0x%llx",desc,j,x);
       MATCH(x, ivf.value.ToUInt64())("%s,%d,0x%llx",desc,j,x);
+      MATCH(nx, ivf.value.ToInt64())("%s,%d,0x%llx",desc,j,x);
+    }
+  }
+}
+
+// Takes a 12-bit number and distributes its bits across a 32-bit single
+// precision real.  All sign and exponent bit positions are tested, plus
+// the upper two bits and lowest bit in the significand.
+std::uint32_t MakeReal(std::uint32_t n) {
+  return (n << 23) | (n >> 11) | ((n & 6) << 20);
+}
+
+std::uint32_t NormalizeNaN(std::uint32_t x) {
+  if ((x & 0x7f800000) == 0x7f800000 &&
+      (x & 0x007fffff) != 0) {
+    x = 0x7fe00000;
+  }
+  return x;
+}
+
+void subset32bit() {
+  union {
+    std::uint32_t u32;
+    float f;
+  } u;
+  for (std::uint32_t j{0}; j < 4096; ++j) {
+    std::uint32_t rj{MakeReal(j)};
+    u.u32 = rj;
+    float fj{u.f};
+    RealKind4 x{Integer<32>{std::uint64_t{rj}}};
+    for (std::uint32_t k{0}; k < 4096; ++k) {
+      std::uint32_t rk{MakeReal(k)};
+      u.u32 = rk;
+      float fk{u.f};
+      RealKind4 y{Integer<32>{std::uint64_t{rk}}};
+      { ValueWithRealFlags<RealKind4> sum{x.Add(y)};
+        ScopedHostFloatingPointEnvironment fpenv;
+        float fcheck{fj + fk};
+        u.f = fcheck;
+        std::uint32_t rcheck{NormalizeNaN(u.u32)};
+        std::uint32_t check = sum.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)("0x%x + 0x%x", rj, rk);
+      }
+#if 0
+      { ValueWithRealFlags<RealKind4> diff{x.Subtract(y)};
+        ScopedHostFloatingPointEnvironment fpenv;
+        float fcheck{fj - fk};
+        u.f = fcheck;
+        std::uint32_t rcheck{NormalizeNaN(u.u32)};
+        std::uint32_t check = diff.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)("0x%x - 0x%x", rj, rk);
+      }
+      { ValueWithRealFlags<RealKind4> prod{x.Multiply(y)};
+        ScopedHostFloatingPointEnvironment fpenv;
+        float fcheck{fj * fk};
+        u.f = fcheck;
+        std::uint32_t rcheck{NormalizeNaN(u.u32)};
+        std::uint32_t check = prod.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)("0x%x * 0x%x", rj, rk);
+      }
+      { ValueWithRealFlags<RealKind4> quot{x.Divide(y)};
+        ScopedHostFloatingPointEnvironment fpenv;
+        float fcheck{fj * fk};
+        u.f = fcheck;
+        std::uint32_t rcheck{NormalizeNaN(u.u32)};
+        std::uint32_t check = quot.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)("0x%x / 0x%x", rj, rk);
+      }
+#endif
     }
   }
 }
@@ -143,5 +211,6 @@ int main() {
   tests<RealKind8>();
   tests<RealKind10>();
   tests<RealKind16>();
+  subset32bit();
   return testing::Complete();
 }
