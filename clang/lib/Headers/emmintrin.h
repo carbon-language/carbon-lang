@@ -4757,9 +4757,8 @@ _mm_movemask_pd(__m128d __a)
 ///    Bit[1] = 1: upper element of \a b copied to upper element of result. \n
 /// \returns A 128-bit vector of [2 x double] containing the shuffled values.
 #define _mm_shuffle_pd(a, b, i) \
-  (__m128d)__builtin_shufflevector((__v2df)(__m128d)(a), (__v2df)(__m128d)(b), \
-                                   0 + (((i) >> 0) & 0x1), \
-                                   2 + (((i) >> 1) & 0x1))
+  (__m128d)__builtin_ia32_shufpd((__v2df)(__m128d)(a), (__v2df)(__m128d)(b), \
+                                 (int)(i))
 
 /// Casts a 128-bit floating-point vector of [2 x double] into a 128-bit
 ///    floating-point vector of [4 x float].

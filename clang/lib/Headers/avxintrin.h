@@ -1516,16 +1516,8 @@ _mm256_blendv_ps(__m256 __a, __m256 __b, __m256 __c)
 ///    11: Bits [127:96] and [255:224] are copied from the selected operand.
 /// \returns A 256-bit vector of [8 x float] containing the shuffled values.
 #define _mm256_shuffle_ps(a, b, mask) \
-  (__m256)__builtin_shufflevector((__v8sf)(__m256)(a), \
-                                  (__v8sf)(__m256)(b), \
-                                  0  + (((mask) >> 0) & 0x3), \
-                                  0  + (((mask) >> 2) & 0x3), \
-                                  8  + (((mask) >> 4) & 0x3), \
-                                  8  + (((mask) >> 6) & 0x3), \
-                                  4  + (((mask) >> 0) & 0x3), \
-                                  4  + (((mask) >> 2) & 0x3), \
-                                  12 + (((mask) >> 4) & 0x3), \
-                                  12 + (((mask) >> 6) & 0x3))
+  (__m256)__builtin_ia32_shufps256((__v8sf)(__m256)(a), \
+                                   (__v8sf)(__m256)(b), (int)(mask))
 
 /// Selects four double-precision values from the 256-bit operands of
 ///    [4 x double], as specified by the immediate value operand.
@@ -1570,12 +1562,8 @@ _mm256_blendv_ps(__m256 __a, __m256 __b, __m256 __c)
 ///    destination.
 /// \returns A 256-bit vector of [4 x double] containing the shuffled values.
 #define _mm256_shuffle_pd(a, b, mask) \
-  (__m256d)__builtin_shufflevector((__v4df)(__m256d)(a), \
-                                   (__v4df)(__m256d)(b), \
-                                   0 + (((mask) >> 0) & 0x1), \
-                                   4 + (((mask) >> 1) & 0x1), \
-                                   2 + (((mask) >> 2) & 0x1), \
-                                   6 + (((mask) >> 3) & 0x1))
+  (__m256d)__builtin_ia32_shufpd256((__v4df)(__m256d)(a), \
+                                    (__v4df)(__m256d)(b), (int)(mask))
 
 /* Compare */
 #define _CMP_EQ_OQ    0x00 /* Equal (ordered, non-signaling)  */
