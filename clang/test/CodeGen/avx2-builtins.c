@@ -141,7 +141,7 @@ __m128i test_mm_blend_epi32(__m128i a, __m128i b) {
   // CHECK-LABEL: test_mm_blend_epi32
   // CHECK-NOT: @llvm.x86.avx2.pblendd.128
   // CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> %{{.*}}, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
-  return _mm_blend_epi32(a, b, 0x35);
+  return _mm_blend_epi32(a, b, 0x05);
 }
 
 __m256i test_mm256_blend_epi32(__m256i a, __m256i b) {

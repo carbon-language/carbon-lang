@@ -9235,6 +9235,27 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[0] = Builder.CreateBitCast(Ops[0], PtrTy);
     return Builder.CreateDefaultAlignedStore(Ops[1], Ops[0]);
   }
+  case X86::BI__builtin_ia32_pblendw128:
+  case X86::BI__builtin_ia32_blendpd:
+  case X86::BI__builtin_ia32_blendps:
+  case X86::BI__builtin_ia32_blendpd256:
+  case X86::BI__builtin_ia32_blendps256:
+  case X86::BI__builtin_ia32_pblendw256:
+  case X86::BI__builtin_ia32_pblendd128:
+  case X86::BI__builtin_ia32_pblendd256: {
+    unsigned NumElts = Ops[0]->getType()->getVectorNumElements();
+    unsigned Imm = cast<llvm::ConstantInt>(Ops[2])->getZExtValue();
+
+    uint32_t Indices[16];
+    // If there are more than 8 elements, the immediate is used twice so make
+    // sure we handle that.
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = ((Imm >> (i % 8)) & 0x1) ? NumElts + i : i;
+
+    return Builder.CreateShuffleVector(Ops[1], Ops[0],
+                                       makeArrayRef(Indices, NumElts),
+                                       "blend");
+  }
   case X86::BI__builtin_ia32_palignr128:
   case X86::BI__builtin_ia32_palignr256:
   case X86::BI__builtin_ia32_palignr512: {
