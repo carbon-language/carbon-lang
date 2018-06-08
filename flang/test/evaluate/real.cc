@@ -24,7 +24,7 @@ template<typename R> void tests() {
   char desc[64];
   using Word = typename R::Word;
   std::snprintf(desc, sizeof desc, "bits=%d, le=%d",
-		R::bits, Word::littleEndian);
+                R::bits, Word::littleEndian);
   R zero;
   TEST(!zero.IsNegative())(desc);
   TEST(!zero.IsNotANumber())(desc);
@@ -175,7 +175,6 @@ void subset32bit() {
         std::uint32_t check = sum.value.RawBits().ToUInt64();
         MATCH(rcheck, check)("0x%x + 0x%x", rj, rk);
       }
-#if 0
       { ValueWithRealFlags<RealKind4> diff{x.Subtract(y)};
         ScopedHostFloatingPointEnvironment fpenv;
         float fcheck{fj - fk};
@@ -184,6 +183,7 @@ void subset32bit() {
         std::uint32_t check = diff.value.RawBits().ToUInt64();
         MATCH(rcheck, check)("0x%x - 0x%x", rj, rk);
       }
+#if 0
       { ValueWithRealFlags<RealKind4> prod{x.Multiply(y)};
         ScopedHostFloatingPointEnvironment fpenv;
         float fcheck{fj * fk};
