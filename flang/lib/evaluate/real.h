@@ -228,13 +228,21 @@ public:
     }
     bool isNegative{IsNegative()};
     bool yIsNegative{y.IsNegative()};
-    if (IsInfinite() || y.IsInfinite()) {
-      if (isNegative == yIsNegative) {
-        result.value = *this;  // +/-Inf + +/-Inf -> +/-Inf
+    if (IsInfinite()) {
+      if (y.IsInfinite()) {
+        if (isNegative == yIsNegative) {
+          result.value = *this;  // +/-Inf + +/-Inf -> +/-Inf
+        } else {
+          result.value.word_ = NaNWord();  // +/-Inf + -/+Inf -> NaN
+          result.flags.set(RealFlag::InvalidArgument);
+        }
       } else {
-        result.value.word_ = NaNWord();  // +/-Inf + -/+Inf -> NaN
-        result.flags.set(RealFlag::InvalidArgument);
+        result.value = *this;  // +/-Inf + x -> +/-Inf
       }
+      return result;
+    }
+    if (y.IsInfinite()) {
+      result.value = y;  // x + +/-Inf -> +/-Inf
       return result;
     }
     std::uint64_t exponent{Exponent()};
@@ -276,7 +284,7 @@ public:
     fraction = sum.value;
     if (isNegative == yIsNegative && sum.carry) {
       roundingBits.ShiftRight(sum.value.BTEST(0));
-      fraction = fraction.SHIFTR(1).IBSET(precision - 1);
+      fraction = fraction.SHIFTR(1).IBSET(fraction.bits - 1);
       ++exponent;
     }
     result.flags |=
@@ -299,14 +307,53 @@ public:
     } else {
       bool isNegative{IsNegative() != y.IsNegative()};
       if (IsInfinite() || y.IsInfinite()) {
-        result.value.Normalize(isNegative, maxExponent, Fraction{});
+        if (IsZero() || y.IsZero()) {
+          result.value.word_ = NaNWord();  // 0 * Inf -> NaN
+          result.flags.set(RealFlag::InvalidArgument);
+        } else {
+          result.value.Normalize(isNegative, maxExponent, Fraction{});
+        }
       } else {
         auto product = GetFraction().MultiplyUnsigned(y.GetFraction());
-        std::uint64_t exponent{Exponent() + y.Exponent() - exponentBias};
-        result.flags |=
-            result.value.Normalize(isNegative, exponent, product.upper);
-        result.flags |= result.value.Round(
-            rounding, RoundingBits{product.lower, precision});
+        std::int64_t exponent = Exponent(), yExponent = y.Exponent();
+        // A zero exponent field value has the same weight as 1.
+        exponent += !exponent;
+        yExponent += !yExponent;
+        exponent += yExponent;
+        exponent -= exponentBias;
+        ++exponent;
+        if (exponent < 1) {
+          int rshift = 1 - exponent;
+          exponent = 1;
+          bool sticky{false};
+          if (rshift >= product.upper.bits + product.lower.bits) {
+            sticky = !product.lower.IsZero() || !product.upper.IsZero();
+          } else if (rshift >= product.lower.bits) {
+            sticky = !product.lower.IsZero();
+          } else {
+            sticky = !product.lower.IAND(product.lower.MASKR(rshift)).IsZero();
+          }
+          product.lower = product.lower.DSHIFTR(product.upper, rshift);
+          product.upper = product.upper.SHIFTR(rshift);
+          if (sticky) {
+            product.lower = product.lower.IBSET(0);
+          }
+        }
+        int leadz{product.upper.LEADZ()};
+        if (leadz >= product.upper.bits) {
+          leadz += product.lower.LEADZ();
+        }
+        int lshift{leadz};
+        if (lshift > exponent - 1) {
+          lshift = exponent - 1;
+        }
+        exponent -= lshift;
+        product.upper = product.upper.DSHIFTL(product.lower, lshift);
+        product.lower = product.lower.SHIFTL(lshift);
+        RoundingBits roundingBits{product.lower, product.upper.bits};
+        result.flags |= result.value.Normalize(
+            isNegative, exponent, product.upper, &roundingBits);
+        result.flags |= result.value.Round(rounding, roundingBits);
       }
     }
     return result;
@@ -457,26 +504,36 @@ private:
         .IBSET(significandBits - 2);
   }
 
-  constexpr RealFlags Normalize(bool negative, std::uint64_t biasedExponent,
+  constexpr RealFlags Normalize(bool negative, std::uint64_t exponent,
       const Fraction &fraction, RoundingBits *roundingBits = nullptr) {
-    if (biasedExponent >= maxExponent) {
-      word_ = Word{maxExponent}.SHIFTL(significandBits);
+    if (exponent >= maxExponent) {
+      word_ = Word{maxExponent}.SHIFTL(significandBits);  // Inf
       if (negative) {
         word_ = word_.IBSET(bits - 1);
       }
       return {RealFlag::Overflow};
+    }
+    if (fraction.BTEST(fraction.bits - 1)) {
+      // fraction is normalized
+      word_ = Word::Convert(fraction).value;
+      if (exponent == 0) {
+        exponent = 1;
+      }
     } else {
       std::uint64_t lshift = fraction.LEADZ();
-      if (lshift >= precision) {
+      if (lshift >= fraction.bits) {
         // +/-0.0
         word_ = Word{};
+        exponent = 0;
       } else {
         word_ = Word::Convert(fraction).value;
-        if (lshift < biasedExponent) {
-          biasedExponent -= lshift;
-        } else if (biasedExponent > 0) {
-          lshift = biasedExponent - 1;
-          biasedExponent = 0;
+        if (lshift < exponent) {
+          exponent -= lshift;
+        } else if (exponent > 0) {
+          lshift = exponent - 1;
+          exponent = 0;
+        } else if (lshift == 0) {
+          exponent = 1;
         } else {
           lshift = 0;
         }
@@ -490,16 +547,16 @@ private:
             }
           }
         }
-        if (implicitMSB) {
-          word_ = word_.IBCLR(significandBits);
-        }
-        word_ = word_.IOR(Word{biasedExponent}.SHIFTL(significandBits));
       }
-      if (negative) {
-        word_ = word_.IBSET(bits - 1);
-      }
-      return {};
     }
+    if (implicitMSB) {
+      word_ = word_.IBCLR(significandBits);
+    }
+    word_ = word_.IOR(Word{exponent}.SHIFTL(significandBits));
+    if (negative) {
+      word_ = word_.IBSET(bits - 1);
+    }
+    return {};
   }
 
   // Rounds a result, if necessary.

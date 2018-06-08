@@ -137,11 +137,12 @@ template<typename R> void tests() {
   }
 }
 
-// Takes a 12-bit number and distributes its bits across a 32-bit single
+// Takes a 13-bit number and distributes its bits across a 32-bit single
 // precision real.  All sign and exponent bit positions are tested, plus
-// the upper two bits and lowest bit in the significand.
+// the upper two bits and lowest bit in the significand.  The middle bits
+// of the significand are either all zeroes or all ones.
 std::uint32_t MakeReal(std::uint32_t n) {
-  return (n << 23) | (n >> 11) | ((n & 6) << 20);
+  return ((n & 0x1ffc) << 20) | !!(n & 2) | ((-(n & 1) & 0xfffff) << 1);
 }
 
 std::uint32_t NormalizeNaN(std::uint32_t x) {
@@ -157,12 +158,12 @@ void subset32bit() {
     std::uint32_t u32;
     float f;
   } u;
-  for (std::uint32_t j{0}; j < 4096; ++j) {
+  for (std::uint32_t j{0}; j < 8192; ++j) {
     std::uint32_t rj{MakeReal(j)};
     u.u32 = rj;
     float fj{u.f};
     RealKind4 x{Integer<32>{std::uint64_t{rj}}};
-    for (std::uint32_t k{0}; k < 4096; ++k) {
+    for (std::uint32_t k{0}; k < 8192; ++k) {
       std::uint32_t rk{MakeReal(k)};
       u.u32 = rk;
       float fk{u.f};
@@ -183,7 +184,6 @@ void subset32bit() {
         std::uint32_t check = diff.value.RawBits().ToUInt64();
         MATCH(rcheck, check)("0x%x - 0x%x", rj, rk);
       }
-#if 0
       { ValueWithRealFlags<RealKind4> prod{x.Multiply(y)};
         ScopedHostFloatingPointEnvironment fpenv;
         float fcheck{fj * fk};
@@ -192,6 +192,7 @@ void subset32bit() {
         std::uint32_t check = prod.value.RawBits().ToUInt64();
         MATCH(rcheck, check)("0x%x * 0x%x", rj, rk);
       }
+#if 0
       { ValueWithRealFlags<RealKind4> quot{x.Divide(y)};
         ScopedHostFloatingPointEnvironment fpenv;
         float fcheck{fj * fk};
@@ -211,6 +212,6 @@ int main() {
   tests<RealKind8>();
   tests<RealKind10>();
   tests<RealKind16>();
-  subset32bit();
+  subset32bit();  // TODO rounding modes, exception flags
   return testing::Complete();
 }
