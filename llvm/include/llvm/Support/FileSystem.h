@@ -717,7 +717,11 @@ enum OpenFlags : unsigned {
   F_Append = 2, // For compatibility
 
   /// Delete the file on close. Only makes a difference on windows.
-  OF_Delete = 4
+  OF_Delete = 4,
+
+  /// When a child process is launched, this file should remain open in the
+  /// child process.
+  OF_ChildInherit = 8,
 };
 
 /// Create a uniquely named file.
