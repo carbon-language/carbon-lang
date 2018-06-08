@@ -3494,30 +3494,34 @@ _mm512_maskz_permutex2var_epi64(__mmask8 __U, __m512i __A, __m512i __I,
 /* Vector Extract */
 
 #define _mm512_extractf64x4_pd(A, I) \
-  (__m256d)__builtin_ia32_extractf64x4((__v8df)(__m512d)(A), (int)(I))
+  (__m256d)__builtin_ia32_extractf64x4_mask((__v8df)(__m512d)(A), (int)(I), \
+                                            (__v4df)_mm256_undefined_si256(), \
+                                            (__mmask8)-1)
 
 #define _mm512_mask_extractf64x4_pd(W, U, A, imm) \
-  (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
-                                   (__v4df)_mm512_extractf64x4_pd((A), (imm)), \
-                                   (__v4df)(__m256d)(W))
+  (__m256d)__builtin_ia32_extractf64x4_mask((__v8df)(__m512d)(A), (int)(imm), \
+                                            (__v4df)(__m256d)(W), \
+                                            (__mmask8)(U))
 
 #define _mm512_maskz_extractf64x4_pd(U, A, imm) \
-  (__m256d)__builtin_ia32_selectpd_256((__mmask8)(U), \
-                                   (__v4df)_mm512_extractf64x4_pd((A), (imm)), \
-                                   (__v4df)_mm256_setzero_pd())
+  (__m256d)__builtin_ia32_extractf64x4_mask((__v8df)(__m512d)(A), (int)(imm), \
+                                            (__v4df)_mm256_setzero_pd(), \
+                                            (__mmask8)(U))
 
 #define _mm512_extractf32x4_ps(A, I) \
-  (__m128)__builtin_ia32_extractf32x4((__v16sf)(__m512)(A), (int)(I))
+  (__m128)__builtin_ia32_extractf32x4_mask((__v16sf)(__m512)(A), (int)(I), \
+                                           (__v4sf)_mm_undefined_ps(), \
+                                           (__mmask8)-1)
 
 #define _mm512_mask_extractf32x4_ps(W, U, A, imm) \
-  (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
-                                   (__v4sf)_mm512_extractf32x4_ps((A), (imm)), \
-                                   (__v4sf)(__m128)(W))
+  (__m128)__builtin_ia32_extractf32x4_mask((__v16sf)(__m512)(A), (int)(imm), \
+                                           (__v4sf)(__m128)(W), \
+                                           (__mmask8)(U))
 
 #define _mm512_maskz_extractf32x4_ps(U, A, imm) \
-  (__m128)__builtin_ia32_selectps_128((__mmask8)(U), \
-                                   (__v4sf)_mm512_extractf32x4_ps((A), (imm)), \
-                                   (__v4sf)_mm_setzero_ps())
+  (__m128)__builtin_ia32_extractf32x4_mask((__v16sf)(__m512)(A), (int)(imm), \
+                                           (__v4sf)_mm_setzero_ps(), \
+                                           (__mmask8)(U))
 
 /* Vector Blend */
 
@@ -7534,30 +7538,34 @@ _mm512_mask_cvtepi64_storeu_epi16 (void *__P, __mmask8 __M, __m512i __A)
 }
 
 #define _mm512_extracti32x4_epi32(A, imm) \
-  (__m128i)__builtin_ia32_extracti32x4((__v16si)(__m512i)(A), (int)(imm))
+  (__m128i)__builtin_ia32_extracti32x4_mask((__v16si)(__m512i)(A), (int)(imm), \
+                                            (__v4si)_mm_undefined_si128(), \
+                                            (__mmask8)-1)
 
 #define _mm512_mask_extracti32x4_epi32(W, U, A, imm) \
-  (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
-                                (__v4si)_mm512_extracti32x4_epi32((A), (imm)), \
-                                (__v4si)(__m128i)(W))
+  (__m128i)__builtin_ia32_extracti32x4_mask((__v16si)(__m512i)(A), (int)(imm), \
+                                            (__v4si)(__m128i)(W), \
+                                            (__mmask8)(U))
 
 #define _mm512_maskz_extracti32x4_epi32(U, A, imm) \
-  (__m128i)__builtin_ia32_selectd_128((__mmask8)(U), \
-                                (__v4si)_mm512_extracti32x4_epi32((A), (imm)), \
-                                (__v4si)_mm_setzero_si128())
+  (__m128i)__builtin_ia32_extracti32x4_mask((__v16si)(__m512i)(A), (int)(imm), \
+                                            (__v4si)_mm_setzero_si128(), \
+                                            (__mmask8)(U))
 
 #define _mm512_extracti64x4_epi64(A, imm) \
-  (__m256i)__builtin_ia32_extracti64x4((__v8di)(__m512i)(A), (int)(imm))
+  (__m256i)__builtin_ia32_extracti64x4_mask((__v8di)(__m512i)(A), (int)(imm), \
+                                            (__v4di)_mm256_undefined_si256(), \
+                                            (__mmask8)-1)
 
 #define _mm512_mask_extracti64x4_epi64(W, U, A, imm) \
-  (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
-                                (__v4di)_mm512_extracti64x4_epi64((A), (imm)), \
-                                (__v4di)(__m256i)(W))
+  (__m256i)__builtin_ia32_extracti64x4_mask((__v8di)(__m512i)(A), (int)(imm), \
+                                            (__v4di)(__m256i)(W), \
+                                            (__mmask8)(U))
 
 #define _mm512_maskz_extracti64x4_epi64(U, A, imm) \
-  (__m256i)__builtin_ia32_selectq_256((__mmask8)(U), \
-                                (__v4di)_mm512_extracti64x4_epi64((A), (imm)), \
-                                (__v4di)_mm256_setzero_si256())
+  (__m256i)__builtin_ia32_extracti64x4_mask((__v8di)(__m512i)(A), (int)(imm), \
+                                            (__v4di)_mm256_setzero_si256(), \
+                                            (__mmask8)(U))
 
 #define _mm512_insertf64x4(A, B, imm) \
   (__m512d)__builtin_ia32_insertf64x4((__v8df)(__m512d)(A), \
