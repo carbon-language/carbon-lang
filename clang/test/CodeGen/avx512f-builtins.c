@@ -4016,40 +4016,40 @@ __m512i test_mm512_mask2_permutex2var_epi64(__m512i __A, __m512i __I, __mmask8 _
 
 __m512d test_mm512_permute_pd(__m512d __X) {
   // CHECK-LABEL: @test_mm512_permute_pd
-  // CHECK: shufflevector <8 x double> %{{.*}}, <8 x double> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
+  // CHECK: shufflevector <8 x double> %{{.*}}, <8 x double> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
   return _mm512_permute_pd(__X, 2);
 }
 
 __m512d test_mm512_mask_permute_pd(__m512d __W, __mmask8 __U, __m512d __X) {
   // CHECK-LABEL: @test_mm512_mask_permute_pd
-  // CHECK: shufflevector <8 x double> %{{.*}}, <8 x double> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
+  // CHECK: shufflevector <8 x double> %{{.*}}, <8 x double> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
   // CHECK: select <8 x i1> %{{.*}}, <8 x double> %{{.*}}, <8 x double> %{{.*}}
   return _mm512_mask_permute_pd(__W, __U, __X, 2);
 }
 
 __m512d test_mm512_maskz_permute_pd(__mmask8 __U, __m512d __X) {
   // CHECK-LABEL: @test_mm512_maskz_permute_pd
-  // CHECK: shufflevector <8 x double> %{{.*}}, <8 x double> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
+  // CHECK: shufflevector <8 x double> %{{.*}}, <8 x double> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
   // CHECK: select <8 x i1> %{{.*}}, <8 x double> %{{.*}}, <8 x double> %{{.*}}
   return _mm512_maskz_permute_pd(__U, __X, 2);
 }
 
 __m512 test_mm512_permute_ps(__m512 __X) {
   // CHECK-LABEL: @test_mm512_permute_ps
-  // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> zeroinitializer, <16 x i32> <i32 2, i32 0, i32 0, i32 0, i32 6, i32 4, i32 4, i32 4, i32 10, i32 8, i32 8, i32 8, i32 14, i32 12, i32 12, i32 12>
+  // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> undef, <16 x i32> <i32 2, i32 0, i32 0, i32 0, i32 6, i32 4, i32 4, i32 4, i32 10, i32 8, i32 8, i32 8, i32 14, i32 12, i32 12, i32 12>
   return _mm512_permute_ps(__X, 2);
 }
 
 __m512 test_mm512_mask_permute_ps(__m512 __W, __mmask16 __U, __m512 __X) {
   // CHECK-LABEL: @test_mm512_mask_permute_ps
-  // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> zeroinitializer, <16 x i32> <i32 2, i32 0, i32 0, i32 0, i32 6, i32 4, i32 4, i32 4, i32 10, i32 8, i32 8, i32 8, i32 14, i32 12, i32 12, i32 12>
+  // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> undef, <16 x i32> <i32 2, i32 0, i32 0, i32 0, i32 6, i32 4, i32 4, i32 4, i32 10, i32 8, i32 8, i32 8, i32 14, i32 12, i32 12, i32 12>
   // CHECK: select <16 x i1> %{{.*}}, <16 x float> %{{.*}}, <16 x float> %{{.*}}
   return _mm512_mask_permute_ps(__W, __U, __X, 2);
 }
 
 __m512 test_mm512_maskz_permute_ps(__mmask16 __U, __m512 __X) {
   // CHECK-LABEL: @test_mm512_maskz_permute_ps
-  // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> zeroinitializer, <16 x i32> <i32 2, i32 0, i32 0, i32 0, i32 6, i32 4, i32 4, i32 4, i32 10, i32 8, i32 8, i32 8, i32 14, i32 12, i32 12, i32 12>
+  // CHECK: shufflevector <16 x float> %{{.*}}, <16 x float> undef, <16 x i32> <i32 2, i32 0, i32 0, i32 0, i32 6, i32 4, i32 4, i32 4, i32 10, i32 8, i32 8, i32 8, i32 14, i32 12, i32 12, i32 12>
   // CHECK: select <16 x i1> %{{.*}}, <16 x float> %{{.*}}, <16 x float> %{{.*}}
   return _mm512_maskz_permute_ps(__U, __X, 2);
 }

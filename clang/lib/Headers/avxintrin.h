@@ -998,9 +998,7 @@ _mm256_permutevar_ps(__m256 __a, __m256i __c)
 ///         returned vector.
 /// \returns A 128-bit vector of [2 x double] containing the copied values.
 #define _mm_permute_pd(A, C) \
-  (__m128d)__builtin_shufflevector((__v2df)(__m128d)(A), \
-                                   (__v2df)_mm_undefined_pd(), \
-                                   ((C) >> 0) & 0x1, ((C) >> 1) & 0x1)
+  (__m128d)__builtin_ia32_vpermilpd((__v2df)(__m128d)(A), (int)(C))
 
 /// Copies the values in a 256-bit vector of [4 x double] as specified by
 ///    the immediate integer operand.
@@ -1040,12 +1038,7 @@ _mm256_permutevar_ps(__m256 __a, __m256i __c)
 ///         returned vector.
 /// \returns A 256-bit vector of [4 x double] containing the copied values.
 #define _mm256_permute_pd(A, C) \
-  (__m256d)__builtin_shufflevector((__v4df)(__m256d)(A), \
-                                   (__v4df)_mm256_undefined_pd(), \
-                                   0 + (((C) >> 0) & 0x1), \
-                                   0 + (((C) >> 1) & 0x1), \
-                                   2 + (((C) >> 2) & 0x1), \
-                                   2 + (((C) >> 3) & 0x1))
+  (__m256d)__builtin_ia32_vpermilpd256((__v4df)(__m256d)(A), (int)(C))
 
 /// Copies the values in a 128-bit vector of [4 x float] as specified by
 ///    the immediate integer operand.
@@ -1101,10 +1094,7 @@ _mm256_permutevar_ps(__m256 __a, __m256i __c)
 ///          returned vector.
 /// \returns A 128-bit vector of [4 x float] containing the copied values.
 #define _mm_permute_ps(A, C) \
-  (__m128)__builtin_shufflevector((__v4sf)(__m128)(A), \
-                                  (__v4sf)_mm_undefined_ps(), \
-                                  ((C) >> 0) & 0x3, ((C) >> 2) & 0x3, \
-                                  ((C) >> 4) & 0x3, ((C) >> 6) & 0x3)
+  (__m128)__builtin_ia32_vpermilps((__v4sf)(__m128)(A), (int)(C))
 
 /// Copies the values in a 256-bit vector of [8 x float] as specified by
 ///    the immediate integer operand.
@@ -1196,16 +1186,7 @@ _mm256_permutevar_ps(__m256 __a, __m256i __c)
 ///          returned vector.
 /// \returns A 256-bit vector of [8 x float] containing the copied values.
 #define _mm256_permute_ps(A, C) \
-  (__m256)__builtin_shufflevector((__v8sf)(__m256)(A), \
-                                  (__v8sf)_mm256_undefined_ps(), \
-                                  0 + (((C) >> 0) & 0x3), \
-                                  0 + (((C) >> 2) & 0x3), \
-                                  0 + (((C) >> 4) & 0x3), \
-                                  0 + (((C) >> 6) & 0x3), \
-                                  4 + (((C) >> 0) & 0x3), \
-                                  4 + (((C) >> 2) & 0x3), \
-                                  4 + (((C) >> 4) & 0x3), \
-                                  4 + (((C) >> 6) & 0x3))
+  (__m256)__builtin_ia32_vpermilps256((__v8sf)(__m256)(A), (int)(C))
 
 /// Permutes 128-bit data values stored in two 256-bit vectors of
 ///    [4 x double], as specified by the immediate integer operand.

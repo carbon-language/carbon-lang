@@ -6302,16 +6302,7 @@ _mm_cvttss_u64 (__m128 __A)
 #endif
 
 #define _mm512_permute_pd(X, C) \
-  (__m512d)__builtin_shufflevector((__v8df)(__m512d)(X), \
-                                   (__v8df)_mm512_undefined_pd(), \
-                                   0 + (((C) >> 0) & 0x1), \
-                                   0 + (((C) >> 1) & 0x1), \
-                                   2 + (((C) >> 2) & 0x1), \
-                                   2 + (((C) >> 3) & 0x1), \
-                                   4 + (((C) >> 4) & 0x1), \
-                                   4 + (((C) >> 5) & 0x1), \
-                                   6 + (((C) >> 6) & 0x1), \
-                                   6 + (((C) >> 7) & 0x1))
+  (__m512d)__builtin_ia32_vpermilpd512((__v8df)(__m512d)(X), (int)(C))
 
 #define _mm512_mask_permute_pd(W, U, X, C) \
   (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
@@ -6324,24 +6315,7 @@ _mm_cvttss_u64 (__m128 __A)
                                        (__v8df)_mm512_setzero_pd())
 
 #define _mm512_permute_ps(X, C) \
-  (__m512)__builtin_shufflevector((__v16sf)(__m512)(X), \
-                                  (__v16sf)_mm512_undefined_ps(), \
-                                   0  + (((C) >> 0) & 0x3), \
-                                   0  + (((C) >> 2) & 0x3), \
-                                   0  + (((C) >> 4) & 0x3), \
-                                   0  + (((C) >> 6) & 0x3), \
-                                   4  + (((C) >> 0) & 0x3), \
-                                   4  + (((C) >> 2) & 0x3), \
-                                   4  + (((C) >> 4) & 0x3), \
-                                   4  + (((C) >> 6) & 0x3), \
-                                   8  + (((C) >> 0) & 0x3), \
-                                   8  + (((C) >> 2) & 0x3), \
-                                   8  + (((C) >> 4) & 0x3), \
-                                   8  + (((C) >> 6) & 0x3), \
-                                   12 + (((C) >> 0) & 0x3), \
-                                   12 + (((C) >> 2) & 0x3), \
-                                   12 + (((C) >> 4) & 0x3), \
-                                   12 + (((C) >> 6) & 0x3))
+  (__m512)__builtin_ia32_vpermilps512((__v16sf)(__m512)(X), (int)(C))
 
 #define _mm512_mask_permute_ps(W, U, X, C) \
   (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \

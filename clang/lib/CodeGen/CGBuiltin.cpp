@@ -9256,6 +9256,33 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                        makeArrayRef(Indices, NumElts),
                                        "blend");
   }
+  case X86::BI__builtin_ia32_vpermilpd:
+  case X86::BI__builtin_ia32_vpermilps:
+  case X86::BI__builtin_ia32_vpermilpd256:
+  case X86::BI__builtin_ia32_vpermilps256:
+  case X86::BI__builtin_ia32_vpermilpd512:
+  case X86::BI__builtin_ia32_vpermilps512: {
+    uint32_t Imm = cast<llvm::ConstantInt>(Ops[1])->getZExtValue();
+    llvm::Type *Ty = Ops[0]->getType();
+    unsigned NumElts = Ty->getVectorNumElements();
+    unsigned NumLanes = Ty->getPrimitiveSizeInBits() / 128;
+    unsigned NumLaneElts = NumElts / NumLanes;
+
+    // Splat the 8-bits of immediate 4 times to help the loop wrap around.
+    Imm = (Imm & 0xff) * 0x01010101;
+
+    uint32_t Indices[16];
+    for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
+      for (unsigned i = 0; i != NumLaneElts; ++i) {
+        Indices[i + l] = (Imm % NumLaneElts) + l;
+        Imm /= NumLaneElts;
+      }
+    }
+
+    return Builder.CreateShuffleVector(Ops[0], UndefValue::get(Ty),
+                                       makeArrayRef(Indices, NumElts),
+                                       "permil");
+  }
   case X86::BI__builtin_ia32_palignr128:
   case X86::BI__builtin_ia32_palignr256:
   case X86::BI__builtin_ia32_palignr512: {

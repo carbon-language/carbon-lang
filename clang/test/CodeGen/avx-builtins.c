@@ -639,32 +639,32 @@ __m256 test_mm256_or_ps(__m256 A, __m256 B) {
 
 __m128d test_mm_permute_pd(__m128d A) {
   // CHECK-LABEL: test_mm_permute_pd
-  // CHECK: shufflevector <2 x double> %{{.*}}, <2 x double> zeroinitializer, <2 x i32> <i32 1, i32 0>
+  // CHECK: shufflevector <2 x double> %{{.*}}, <2 x double> undef, <2 x i32> <i32 1, i32 0>
   return _mm_permute_pd(A, 1);
 }
 
 __m256d test_mm256_permute_pd(__m256d A) {
   // CHECK-LABEL: test_mm256_permute_pd
-  // CHECK: shufflevector <4 x double> %{{.*}}, <4 x double> zeroinitializer, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  // CHECK: shufflevector <4 x double> %{{.*}}, <4 x double> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
   return _mm256_permute_pd(A, 5);
 }
 
 __m128 test_mm_permute_ps(__m128 A) {
   // CHECK-LABEL: test_mm_permute_ps
-  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> zeroinitializer, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   return _mm_permute_ps(A, 0x1b);
 }
 
 // Test case for PR12401
 __m128 test2_mm_permute_ps(__m128 a) {
   // CHECK-LABEL: test2_mm_permute_ps
-  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> zeroinitializer, <4 x i32> <i32 2, i32 1, i32 2, i32 3>
+  // CHECK: shufflevector <4 x float> %{{.*}}, <4 x float> undef, <4 x i32> <i32 2, i32 1, i32 2, i32 3>
   return _mm_permute_ps(a, 0xe6);
 }
 
 __m256 test_mm256_permute_ps(__m256 A) {
   // CHECK-LABEL: test_mm256_permute_ps
-  // CHECK: shufflevector <8 x float> %{{.*}}, <8 x float> zeroinitializer, <8 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4>
+  // CHECK: shufflevector <8 x float> %{{.*}}, <8 x float> undef, <8 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4>
   return _mm256_permute_ps(A, 0x1b);
 }
 
