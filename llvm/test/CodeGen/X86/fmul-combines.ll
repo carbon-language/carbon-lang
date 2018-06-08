@@ -86,6 +86,32 @@ define <4 x float> @fmul_v4f32_two_consts_no_splat_non_canonical(<4 x float> %x)
   ret <4 x float> %z
 }
 
+; Node-level FMF and no function-level attributes.
+
+define <4 x float> @fmul_v4f32_two_consts_no_splat_reassoc(<4 x float> %x) {
+; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_reassoc:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    mulps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    mulps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    retq
+  %y = fmul <4 x float> %x, <float 1.0, float 2.0, float 3.0, float 4.0>
+  %z = fmul reassoc <4 x float> %y, <float 5.0, float 6.0, float 7.0, float 8.0>
+  ret <4 x float> %z
+}
+
+; Multiplication by 2.0 is a special case because that gets converted to fadd x, x.
+
+define <4 x float> @fmul_v4f32_two_consts_no_splat_reassoc_2(<4 x float> %x) {
+; CHECK-LABEL: fmul_v4f32_two_consts_no_splat_reassoc_2:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    addps %xmm0, %xmm0
+; CHECK-NEXT:    mulps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    retq
+  %y = fadd <4 x float> %x, %x
+  %z = fmul reassoc <4 x float> %y, <float 5.0, float 6.0, float 7.0, float 8.0>
+  ret <4 x float> %z
+}
+
 ; CHECK: float 6
 ; CHECK: float 14
 ; CHECK: float 24
