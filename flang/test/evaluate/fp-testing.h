@@ -23,9 +23,11 @@ using Fortran::evaluate::RealFlags;
 class ScopedHostFloatingPointEnvironment {
 public:
   ScopedHostFloatingPointEnvironment(bool treatDenormalOperandsAsZero = false,
-                                     bool flushDenormalResultsToZero = false);
+      bool flushDenormalResultsToZero = false);
   ~ScopedHostFloatingPointEnvironment();
+  void ClearFlags() const;
   RealFlags CurrentFlags() const;
+
 private:
   fenv_t originalFenv_;
   fenv_t currentFenv_;

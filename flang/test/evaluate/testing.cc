@@ -90,8 +90,8 @@ FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     return BitBucket;
   } else {
     ++failures;
-    fprintf(stderr, "%s:%d: FAIL: %s[0x%llx] %s %s[0x%llx]\n", file, line, xs, x,
-        rel, ys, y);
+    fprintf(stderr, "%s:%d: FAIL: %s[0x%llx] %s %s[0x%llx]\n", file, line, xs,
+        x, rel, ys, y);
     return PrintFailureDetails;
   }
 }

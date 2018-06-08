@@ -86,6 +86,13 @@ public:
   constexpr bool IsNotANumber() const {
     return Exponent() == maxExponent && !GetSignificand().IsZero();
   }
+  constexpr bool IsQuietNaN() const {
+    return Exponent() == maxExponent &&
+        GetSignificand().BTEST(significandBits - 1);
+  }
+  constexpr bool IsSignalingNaN() const {
+    return IsNotANumber() && !GetSignificand().BTEST(significandBits - 1);
+  }
   constexpr bool IsInfinite() const {
     return Exponent() == maxExponent && GetSignificand().IsZero();
   }
@@ -223,7 +230,9 @@ public:
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN + x -> NaN
-      result.flags.set(RealFlag::InvalidArgument);
+      if (IsSignalingNaN() || y.IsSignalingNaN()) {
+        result.flags.set(RealFlag::InvalidArgument);
+      }
       return result;
     }
     bool isNegative{IsNegative()};
@@ -511,7 +520,11 @@ private:
       if (negative) {
         word_ = word_.IBSET(bits - 1);
       }
-      return {RealFlag::Overflow};
+      RealFlags flags{RealFlag::Overflow};
+      if (!fraction.IsZero()) {
+        flags.set(RealFlag::Inexact);
+      }
+      return flags;
     }
     if (fraction.BTEST(fraction.bits - 1)) {
       // fraction is normalized

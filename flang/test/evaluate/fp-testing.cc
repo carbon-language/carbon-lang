@@ -19,7 +19,8 @@
 
 using Fortran::evaluate::RealFlag;
 
-ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(bool treatDenormalOperandsAsZero, bool flushDenormalResultsToZero) {
+ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(
+    bool treatDenormalOperandsAsZero, bool flushDenormalResultsToZero) {
   errno = 0;
   if (feholdexcept(&originalFenv_) != 0) {
     std::fprintf(stderr, "feholdexcept() failed: %s\n", std::strerror(errno));
@@ -41,7 +42,7 @@ ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(bool trea
     currentFenv_.__mxcsr &= ~0x8000;
   }
 #else
-  // TODO others
+    // TODO others
 #endif
   errno = 0;
   if (fesetenv(&currentFenv_) != 0) {
@@ -56,6 +57,10 @@ ScopedHostFloatingPointEnvironment::~ScopedHostFloatingPointEnvironment() {
     std::fprintf(stderr, "fesetenv() failed: %s\n", std::strerror(errno));
     std::abort();
   }
+}
+
+void ScopedHostFloatingPointEnvironment::ClearFlags() const {
+  feclearexcept(FE_ALL_EXCEPT);
 }
 
 RealFlags ScopedHostFloatingPointEnvironment::CurrentFlags() const {
