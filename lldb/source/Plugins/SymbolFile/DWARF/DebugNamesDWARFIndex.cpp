@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Plugins/SymbolFile/DWARF/DebugNamesDWARFIndex.h"
+#include "Plugins/SymbolFile/DWARF/DWARFDebugInfo.h"
 #include "lldb/Utility/RegularExpression.h"
 #include "lldb/Utility/Stream.h"
 
@@ -44,12 +45,18 @@ DebugNamesDWARFIndex::GetUnits(const DebugNames &debug_names) {
   return result;
 }
 
-void DebugNamesDWARFIndex::Append(const DebugNames::Entry &entry,
-                                  DIEArray &offsets) {
+DIERef DebugNamesDWARFIndex::ToDIERef(const DebugNames::Entry &entry) {
   llvm::Optional<uint64_t> cu_offset = entry.getCUOffset();
   llvm::Optional<uint64_t> die_offset = entry.getDIESectionOffset();
   if (cu_offset && die_offset)
-    offsets.emplace_back(*cu_offset, *die_offset);
+    return DIERef(*cu_offset, *die_offset);
+  return DIERef();
+}
+
+void DebugNamesDWARFIndex::Append(const DebugNames::Entry &entry,
+                                  DIEArray &offsets) {
+  if (DIERef ref = ToDIERef(entry))
+    offsets.push_back(ref);
 }
 
 void DebugNamesDWARFIndex::MaybeLogLookupError(llvm::Error error,
@@ -115,6 +122,25 @@ void DebugNamesDWARFIndex::GetNamespaces(ConstString name, DIEArray &offsets) {
        m_debug_names_up->equal_range(name.GetStringRef())) {
     if (entry.tag() == DW_TAG_namespace)
       Append(entry, offsets);
+  }
+}
+
+void DebugNamesDWARFIndex::GetFunctions(
+    ConstString name, DWARFDebugInfo &info,
+    const CompilerDeclContext &parent_decl_ctx, uint32_t name_type_mask,
+    std::vector<DWARFDIE> &dies) {
+
+  m_fallback.GetFunctions(name, info, parent_decl_ctx, name_type_mask, dies);
+
+  for (const DebugNames::Entry &entry :
+       m_debug_names_up->equal_range(name.GetStringRef())) {
+    Tag tag = entry.tag();
+    if (tag != DW_TAG_subprogram && tag != DW_TAG_inlined_subroutine)
+      continue;
+
+    if (DIERef ref = ToDIERef(entry))
+      ProcessFunctionDIE(name.GetStringRef(), ref, info, parent_decl_ctx,
+                         name_type_mask, dies);
   }
 }
 
