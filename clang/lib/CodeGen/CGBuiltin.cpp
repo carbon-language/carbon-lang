@@ -9309,6 +9309,35 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                        makeArrayRef(Indices, DstNumElts),
                                        "insert");
   }
+  case X86::BI__builtin_ia32_pmovqd512_mask:
+  case X86::BI__builtin_ia32_pmovwb512_mask: {
+    Value *Res = Builder.CreateTrunc(Ops[0], Ops[1]->getType());
+    return EmitX86Select(*this, Ops[2], Res, Ops[1]);
+  }
+  case X86::BI__builtin_ia32_pmovdb512_mask:
+  case X86::BI__builtin_ia32_pmovdw512_mask:
+  case X86::BI__builtin_ia32_pmovqw512_mask: {
+    if (const auto *C = dyn_cast<Constant>(Ops[2]))
+      if (C->isAllOnesValue())
+        return Builder.CreateTrunc(Ops[0], Ops[1]->getType());
+
+    Intrinsic::ID IID;
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported intrinsic!");
+    case X86::BI__builtin_ia32_pmovdb512_mask:
+      IID = Intrinsic::x86_avx512_mask_pmov_db_512;
+      break;
+    case X86::BI__builtin_ia32_pmovdw512_mask:
+      IID = Intrinsic::x86_avx512_mask_pmov_dw_512;
+      break;
+    case X86::BI__builtin_ia32_pmovqw512_mask:
+      IID = Intrinsic::x86_avx512_mask_pmov_qw_512;
+      break;
+    }
+
+    Function *Intr = CGM.getIntrinsic(IID);
+    return Builder.CreateCall(Intr, Ops);
+  }
   case X86::BI__builtin_ia32_pblendw128:
   case X86::BI__builtin_ia32_blendpd:
   case X86::BI__builtin_ia32_blendps:
