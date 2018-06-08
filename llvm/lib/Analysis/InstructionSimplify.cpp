@@ -561,6 +561,10 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       match(Op0, m_Xor(m_Value(Y), m_SignMask())))
     return Y;
 
+  // add nuw %x, -1  ->  -1, because %x can only be 0.
+  if (isNUW && match(Op1, m_AllOnes()))
+    return Op1; // Which is -1.
+
   /// i1 add -> xor.
   if (MaxRecurse && Op0->getType()->isIntOrIntVectorTy(1))
     if (Value *V = SimplifyXorInst(Op0, Op1, Q, MaxRecurse-1))
