@@ -36371,8 +36371,9 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// Truncate a group of v4i32 into v16i8/v8i16 using X86ISD::PACKUS.
+/// Truncate using ISD::AND mask and X86ISD::PACKUS.
 static SDValue combineVectorTruncationWithPACKUS(SDNode *N, const SDLoc &DL,
+                                                 const X86Subtarget &Subtarget,
                                                  SelectionDAG &DAG) {
   SDValue In = N->getOperand(0);
   EVT InVT = In.getValueType();
@@ -36399,42 +36400,9 @@ static SDValue combineVectorTruncationWithPACKUS(SDNode *N, const SDLoc &DL,
                               DAG.getIntPtrConstant(i * NumSubRegElts, DL));
     SubVecs[i] = DAG.getNode(ISD::AND, DL, SubRegVT, Sub, MaskVal);
   }
+  In = DAG.getNode(ISD::CONCAT_VECTORS, DL, InVT, SubVecs);
 
-  // TODO - convert this to truncateVectorWithPACK.
-  MVT UnpackedVT, PackedVT;
-  if (OutSVT == MVT::i8) {
-    UnpackedVT = MVT::v8i16;
-    PackedVT = MVT::v16i8;
-  } else {
-    UnpackedVT = MVT::v4i32;
-    PackedVT = MVT::v8i16;
-  }
-
-  // In each iteration, truncate the type by a half size.
-  auto SubNum = SubVecs.size();
-  for (unsigned j = 1, e = InSVT.getSizeInBits() / OutSVT.getSizeInBits();
-       j < e; j *= 2, SubNum /= 2) {
-    for (unsigned i = 0; i < SubNum; i++)
-      SubVecs[i] = DAG.getBitcast(UnpackedVT, SubVecs[i]);
-    for (unsigned i = 0; i < SubNum / 2; i++)
-      SubVecs[i] = DAG.getNode(X86ISD::PACKUS, DL, PackedVT, SubVecs[i * 2],
-                               SubVecs[i * 2 + 1]);
-  }
-
-  // If the type of the result is v8i8, we need do one more X86ISD::PACKUS, and
-  // then extract a subvector as the result since v8i8 is not a legal type.
-  if (OutVT == MVT::v8i8) {
-    SubVecs[0] =
-        DAG.getNode(X86ISD::PACKUS, DL, PackedVT, SubVecs[0], SubVecs[0]);
-    SubVecs[0] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, OutVT, SubVecs[0],
-                             DAG.getIntPtrConstant(0, DL));
-    return SubVecs[0];
-  } else if (SubNum > 1) {
-    SubVecs.resize(SubNum);
-    return DAG.getNode(ISD::CONCAT_VECTORS, DL, OutVT, SubVecs);
-  }
-
-  return SubVecs[0];
+  return truncateVectorWithPACK(X86ISD::PACKUS, OutVT, In, DL, DAG, Subtarget);
 }
 
 /// Truncate a group of v4i32 into v8i16 using X86ISD::PACKSS.
@@ -36491,7 +36459,7 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
   // for 2 x v4i32 -> v8i16. For SSSE3 and below, we need to use PACKSS to
   // truncate 2 x v4i32 to v8i16.
   if (Subtarget.hasSSE41() || OutSVT == MVT::i8)
-    return combineVectorTruncationWithPACKUS(N, DL, DAG);
+    return combineVectorTruncationWithPACKUS(N, DL, Subtarget, DAG);
   if (InSVT == MVT::i32)
     return combineVectorTruncationWithPACKSS(N, DL, Subtarget, DAG);
 
