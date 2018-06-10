@@ -1582,7 +1582,7 @@ define <16 x float> @test_mm512_add_round_ps_current(<16 x float> %a0, <16 x flo
   %1 = call <16 x float> @llvm.x86.avx512.add.ps.512(<16 x float> %a0, <16 x float> %a1, i32 4)
   ret <16 x float> %1
 }
-declare <16 x float> @llvm.x86.avx512..add.ps.512(<16 x float>, <16 x float>, i32)
+declare <16 x float> @llvm.x86.avx512.add.ps.512(<16 x float>, <16 x float>, i32)
 
 define <16 x float> @test_mm512_mask_sub_round_ps_rn_sae(<16 x float> %a0, <16 x float> %a1, <16 x float> %src, i16 %mask) {
 ; CHECK-LABEL: test_mm512_mask_sub_round_ps_rn_sae:
