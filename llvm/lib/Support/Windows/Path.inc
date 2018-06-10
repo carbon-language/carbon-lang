@@ -1197,7 +1197,7 @@ Expected<file_t> openNativeFileForRead(const Twine &Name, OpenFlags Flags,
   if (Result && RealPath)
     realPathFromHandle(*Result, *RealPath);
 
-  return Result;
+  return std::move(Result);
 }
 
 void closeFile(file_t &F) {
