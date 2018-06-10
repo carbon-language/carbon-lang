@@ -813,11 +813,7 @@ public:
   const std::vector<TreePatternNodePtr> &getTrees() const { return Trees; }
   unsigned getNumTrees() const { return Trees.size(); }
   const TreePatternNodePtr &getTree(unsigned i) const { return Trees[i]; }
-
-  void setTree(unsigned i, TreePatternNodePtr Tree) {
-    Trees[i] = std::move(Tree);
-  }
-
+  void setTree(unsigned i, TreePatternNodePtr Tree) { Trees[i] = Tree; }
   TreePatternNodePtr getOnlyTree() const {
     assert(Trees.size() == 1 && "Doesn't have exactly one pattern!");
     return Trees[0];
