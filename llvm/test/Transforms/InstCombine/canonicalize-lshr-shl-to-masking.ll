@@ -98,8 +98,8 @@ define i32 @positive_biggershl_lshrexact(i32 %x) {
   ret i32 %ret
 }
 
-define i32 @positive_biggershl_lshrexact_shlexact(i32 %x) {
-; CHECK-LABEL: @positive_biggershl_lshrexact_shlexact(
+define i32 @positive_biggershl_lshrexact_shlnuw(i32 %x) {
+; CHECK-LABEL: @positive_biggershl_lshrexact_shlnuw(
 ; CHECK-NEXT:    [[RET:%.*]] = shl nuw i32 [[X:%.*]], 5
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
@@ -256,6 +256,50 @@ define <3 x i32> @positive_biggershl_vec_undef2(<3 x i32> %x) {
   %tmp0 = lshr <3 x i32> %x, <i32 5, i32 undef, i32 5>
   %ret = shl <3 x i32> %tmp0, <i32 10, i32 undef, i32 10>
   ret <3 x i32> %ret
+}
+
+; ============================================================================ ;
+; Positive multi-use tests with constant
+; ============================================================================ ;
+
+; FIXME: drop 'exact' once it is no longer needed.
+
+define i32 @positive_sameconst_multiuse(i32 %x) {
+; CHECK-LABEL: @positive_sameconst_multiuse(
+; CHECK-NEXT:    [[TMP0:%.*]] = lshr exact i32 [[X:%.*]], 5
+; CHECK-NEXT:    call void @use32(i32 [[TMP0]])
+; CHECK-NEXT:    ret i32 [[X]]
+;
+  %tmp0 = lshr exact i32 %x, 5
+  call void @use32(i32 %tmp0)
+  %ret = shl i32 %tmp0, 5
+  ret i32 %ret
+}
+
+define i32 @positive_biggerlshr_multiuse(i32 %x) {
+; CHECK-LABEL: @positive_biggerlshr_multiuse(
+; CHECK-NEXT:    [[TMP0:%.*]] = lshr exact i32 [[X:%.*]], 10
+; CHECK-NEXT:    call void @use32(i32 [[TMP0]])
+; CHECK-NEXT:    [[RET:%.*]] = lshr exact i32 [[X]], 5
+; CHECK-NEXT:    ret i32 [[RET]]
+;
+  %tmp0 = lshr exact i32 %x, 10
+  call void @use32(i32 %tmp0)
+  %ret = shl i32 %tmp0, 5
+  ret i32 %ret
+}
+
+define i32 @positive_biggershl_multiuse(i32 %x) {
+; CHECK-LABEL: @positive_biggershl_multiuse(
+; CHECK-NEXT:    [[TMP0:%.*]] = lshr exact i32 [[X:%.*]], 5
+; CHECK-NEXT:    call void @use32(i32 [[TMP0]])
+; CHECK-NEXT:    [[RET:%.*]] = shl i32 [[X]], 5
+; CHECK-NEXT:    ret i32 [[RET]]
+;
+  %tmp0 = lshr exact i32 %x, 5
+  call void @use32(i32 %tmp0)
+  %ret = shl i32 %tmp0, 10
+  ret i32 %ret
 }
 
 ; ============================================================================ ;
