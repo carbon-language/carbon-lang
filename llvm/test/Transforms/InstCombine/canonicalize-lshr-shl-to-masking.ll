@@ -15,8 +15,8 @@
 
 define i32 @positive_samevar(i32 %x, i32 %y) {
 ; CHECK-LABEL: @positive_samevar(
-; CHECK-NEXT:    [[TMP0:%.*]] = lshr i32 [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = shl i32 [[TMP0]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shl i32 -1, [[Y:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = and i32 [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret i32 [[RET]]
 ;
   %tmp0 = lshr i32 %x, %y
@@ -114,8 +114,8 @@ define i32 @positive_biggershl_lshrexact_shlnuw(i32 %x) {
 
 define <2 x i32> @positive_samevar_vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @positive_samevar_vec(
-; CHECK-NEXT:    [[TMP0:%.*]] = lshr <2 x i32> [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = shl <2 x i32> [[TMP0]], [[Y]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shl <2 x i32> <i32 -1, i32 -1>, [[Y:%.*]]
+; CHECK-NEXT:    [[RET:%.*]] = and <2 x i32> [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[RET]]
 ;
   %tmp0 = lshr <2 x i32> %x, %y
@@ -161,8 +161,7 @@ define <3 x i32> @positive_sameconst_vec_undef1(<3 x i32> %x) {
 
 define <3 x i32> @positive_sameconst_vec_undef2(<3 x i32> %x) {
 ; CHECK-LABEL: @positive_sameconst_vec_undef2(
-; CHECK-NEXT:    [[TMP0:%.*]] = lshr <3 x i32> [[X:%.*]], <i32 5, i32 undef, i32 5>
-; CHECK-NEXT:    [[RET:%.*]] = shl <3 x i32> [[TMP0]], <i32 5, i32 undef, i32 5>
+; CHECK-NEXT:    [[RET:%.*]] = and <3 x i32> [[X:%.*]], <i32 -32, i32 undef, i32 -32>
 ; CHECK-NEXT:    ret <3 x i32> [[RET]]
 ;
   %tmp0 = lshr <3 x i32> %x, <i32 5, i32 undef, i32 5>
