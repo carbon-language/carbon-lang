@@ -14,6 +14,7 @@
 
 #include "DataflowAnalysis.h"
 #include "RegAnalysis.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
 
@@ -35,8 +36,9 @@ class ReachingDefOrUse
 
 public:
   ReachingDefOrUse(const RegAnalysis &RA, const BinaryContext &BC,
-                   BinaryFunction &BF)
-      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BC, BF), RA(RA) {}
+                   BinaryFunction &BF, Optional<MCPhysReg> TrackingReg = None)
+      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BC, BF), RA(RA),
+        TrackingReg(TrackingReg) {}
   virtual ~ReachingDefOrUse() {}
 
   bool isReachedBy(MCPhysReg Reg, ExprIterator Candidates) {
@@ -66,6 +68,10 @@ public:
 protected:
   /// Reference to the result of reg analysis
   const RegAnalysis &RA;
+
+  /// If set, limit the dataflow to only track instructions affecting this
+  /// register. Otherwise the analysis can be too permissive.
+  Optional<MCPhysReg> TrackingReg;
 
   void preflight() {
     // Populate our universe of tracked expressions with all instructions
@@ -103,6 +109,11 @@ protected:
       RA.getInstClobberList(*Y, YClobbers);
     else
       this->BC.MIB->getTouchedRegs(*Y, YClobbers);
+    // Limit the analysis, if requested
+    if (TrackingReg) {
+      XClobbers &= this->BC.MIB->getAliases(*TrackingReg);
+      YClobbers &= this->BC.MIB->getAliases(*TrackingReg);
+    }
     // X kills Y if it clobbers Y completely -- this is a conservative approach.
     // In practice, we may produce use-def links that may not exist.
     XClobbers &= YClobbers;
@@ -120,7 +131,21 @@ protected:
     }
     // Gen
     if (!this->BC.MIB->isCFI(Point)) {
-      Next.set(this->ExprToIdx[&Point]);
+      if (TrackingReg == None) {
+        // Track all instructions
+        Next.set(this->ExprToIdx[&Point]);
+      }
+      else {
+        // Track only instructions relevant to TrackingReg
+        auto Regs = BitVector(this->BC.MRI->getNumRegs(), false);
+        if (Def)
+          RA.getInstClobberList(Point, Regs);
+        else
+          RA.getInstUsedRegsList(Point, Regs, false);
+        Regs &= this->BC.MIB->getAliases(*TrackingReg);
+        if (Regs.any())
+          Next.set(this->ExprToIdx[&Point]);
+      }
     }
     return Next;
   }

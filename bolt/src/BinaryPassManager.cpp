@@ -23,6 +23,7 @@
 #include "Passes/ReorderFunctions.h"
 #include "Passes/ReorderData.h"
 #include "Passes/StokeInfo.h"
+#include "Passes/ValidateInternalCalls.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>
@@ -358,6 +359,8 @@ void BinaryFunctionPassManager::runAllPasses(
 
   // Run this pass first to use stats for the original functions.
   Manager.registerPass(llvm::make_unique<PrintProgramStats>(NeverPrint));
+
+  Manager.registerPass(llvm::make_unique<ValidateInternalCalls>(NeverPrint));
 
   Manager.registerPass(llvm::make_unique<StripRepRet>(NeverPrint),
                        opts::StripRepRet);

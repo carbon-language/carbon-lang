@@ -22,10 +22,14 @@ namespace llvm {
 namespace bolt {
 
 RegAnalysis::RegAnalysis(BinaryContext &BC,
-                         std::map<uint64_t, BinaryFunction> &BFs,
-                         BinaryFunctionCallGraph &CG)
-    : BC(BC) {
-  CallGraphWalker CGWalker(CG);
+                         std::map<uint64_t, BinaryFunction> *BFs,
+                         BinaryFunctionCallGraph *CG)
+    : BC(BC), CS(opts::AssumeABI ? ConservativeStrategy::CLOBBERS_ABI
+                                 : ConservativeStrategy::CLOBBERS_ALL) {
+  if (!CG)
+    return;
+
+  CallGraphWalker CGWalker(*CG);
 
   CGWalker.registerVisitor([&](BinaryFunction *Func) -> bool {
     BitVector RegsKilled = getFunctionClobberList(Func);
@@ -56,8 +60,11 @@ RegAnalysis::RegAnalysis(BinaryContext &BC,
 #endif
   }
 
+  if (!BFs)
+    return;
+
   // This loop is for computing statistics only
-  for (auto &MapEntry : BFs) {
+  for (auto &MapEntry : *BFs) {
     auto *Func = &MapEntry.second;
     auto Iter = RegsKilledMap.find(Func);
     assert(Iter != RegsKilledMap.end() &&
@@ -89,25 +96,36 @@ RegAnalysis::RegAnalysis(BinaryContext &BC,
 }
 
 void RegAnalysis::beConservative(BitVector &Result) const {
-  if (!opts::AssumeABI) {
+  switch (CS) {
+  case ConservativeStrategy::CLOBBERS_ALL:
     Result.set();
-  } else {
+    break;
+  case ConservativeStrategy::CLOBBERS_ABI: {
     BitVector BV(BC.MRI->getNumRegs(), false);
     BC.MIB->getCalleeSavedRegs(BV);
     BV.flip();
     Result |= BV;
   }
+  case ConservativeStrategy::CLOBBERS_NONE:
+    Result.reset();
+    break;
+  }
 }
 
 bool RegAnalysis::isConservative(BitVector &Vec) const {
-  if (!opts::AssumeABI) {
+  switch (CS) {
+  case ConservativeStrategy::CLOBBERS_ALL:
     return Vec.all();
-  } else {
+  case ConservativeStrategy::CLOBBERS_ABI: {
     BitVector BV(BC.MRI->getNumRegs(), false);
     BC.MIB->getCalleeSavedRegs(BV);
     BV |= Vec;
     return BV.all();
   }
+  case ConservativeStrategy::CLOBBERS_NONE:
+    return Vec.none();
+  }
+  return false;
 }
 
 void RegAnalysis::getInstUsedRegsList(const MCInst &Inst, BitVector &RegSet,
@@ -117,6 +135,12 @@ void RegAnalysis::getInstUsedRegsList(const MCInst &Inst, BitVector &RegSet,
       BC.MIB->getClobberedRegs(Inst, RegSet);
     else
       BC.MIB->getUsedRegs(Inst, RegSet);
+    return;
+  }
+
+  // If no call graph supplied...
+  if (RegsKilledMap.size() == 0) {
+    beConservative(RegSet);
     return;
   }
 

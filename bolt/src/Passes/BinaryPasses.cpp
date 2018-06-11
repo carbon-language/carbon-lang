@@ -586,7 +586,7 @@ void FixupBranches::runOnFunctions(
   for (auto &It : BFs) {
     auto &Function = It.second;
     if (BC.HasRelocations || shouldOptimize(Function)) {
-      if (BC.isAArch64() && !Function.isSimple())
+      if (BC.HasRelocations && !Function.isSimple())
         continue;
       Function.fixBranches();
     }

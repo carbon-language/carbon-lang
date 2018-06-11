@@ -556,6 +556,20 @@ public:
                         uint64_t Count = 0,
                         uint64_t MispredictedCount = 0);
 
+  /// Move all of this block's successors to a new block, and set the
+  /// execution count of this new block with our execution count. This is
+  /// useful when splitting a block in two.
+  void moveAllSuccessorsTo(BinaryBasicBlock *New) {
+    New->addSuccessors(successors().begin(),
+                       successors().end(),
+                       branch_info_begin(),
+                       branch_info_end());
+    removeAllSuccessors();
+
+    // Update the execution count on the new block.
+    New->setExecutionCount(getExecutionCount());
+  }
+
   /// Remove /p Succ basic block from the list of successors. Update the
   /// list of predecessors of /p Succ and update branch info.
   void removeSuccessor(BinaryBasicBlock *Succ);

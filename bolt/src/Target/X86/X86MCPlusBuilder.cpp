@@ -1610,6 +1610,14 @@ public:
         return false;
       }
       break;
+    case X86::ADD64i32:
+      assert(Inst.getOperand(0).isImm());
+      if (auto InputVal = getOperandVal(X86::RAX)) {
+        Output = *InputVal + Inst.getOperand(0).getImm();
+      } else {
+        return false;
+      }
+      break;
 
     case X86::LEA64r: {
       unsigned BaseRegNum;

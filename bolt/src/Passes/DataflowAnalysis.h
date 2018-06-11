@@ -458,7 +458,7 @@ public:
 class ExprIterator
     : public std::iterator<std::forward_iterator_tag, const MCInst *> {
   const BitVector *BV;
-  const std::vector<const MCInst *> &Expressions;
+  const std::vector<MCInst *> &Expressions;
   int Idx;
 
 public:
@@ -475,15 +475,15 @@ public:
   }
   bool operator==(const ExprIterator &Other) const { return Idx == Other.Idx; }
   bool operator!=(const ExprIterator &Other) const { return Idx != Other.Idx; }
-  const MCInst *operator*() {
+  MCInst *operator*() {
     assert(Idx != -1 && "Invalid access to end iterator");
     return Expressions[Idx];
   }
-  ExprIterator(const BitVector *BV, const std::vector<const MCInst *> &Exprs)
+  ExprIterator(const BitVector *BV, const std::vector<MCInst *> &Exprs)
       : BV(BV), Expressions(Exprs) {
     Idx = BV->find_first();
   }
-  ExprIterator(const BitVector *BV, const std::vector<const MCInst *> &Exprs,
+  ExprIterator(const BitVector *BV, const std::vector<MCInst *> &Exprs,
                int Idx)
       : BV(BV), Expressions(Exprs), Idx(Idx) {}
 
@@ -503,12 +503,12 @@ public:
   /// These iterator functions offer access to the set of pointers to
   /// instructions in a given program point
   template <typename T>
-  ExprIterator expr_begin(T &Point) const {
+  ExprIterator expr_begin(const T &Point) const {
     if (auto State = this->getStateAt(Point))
       return ExprIterator(&*State, Expressions);
     return expr_end();
   }
-  ExprIterator expr_begin(BitVector &BV) const {
+  ExprIterator expr_begin(const BitVector &BV) const {
     return ExprIterator(&BV, Expressions);
   }
   ExprIterator expr_end() const {
@@ -522,7 +522,7 @@ public:
   /// expression/def) into a vector because we need to associate them with
   /// small numbers. They will be tracked via BitVectors throughout the
   /// dataflow analysis.
-  std::vector<const MCInst *> Expressions;
+  std::vector<MCInst *> Expressions;
   /// Maps expressions defs (MCInsts) to its index in the Expressions vector
   std::unordered_map<const MCInst *, uint64_t> ExprToIdx;
 

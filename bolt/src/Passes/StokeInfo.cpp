@@ -157,7 +157,7 @@ void StokeInfo::runOnFunctions(
   DEBUG(dbgs() << "\tgetNumRegs " << BC.MRI->getNumRegs() << "\n");
 
   auto CG = buildCallGraph(BC, BFs);
-  RegAnalysis RA(BC, BFs, CG);
+  RegAnalysis RA(BC, &BFs, &CG);
 
   NumRegs = BC.MRI->getNumRegs();
   assert(NumRegs > 0 && "STOKE-INFO: the target register number is incorrect!");

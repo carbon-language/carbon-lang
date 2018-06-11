@@ -250,7 +250,7 @@ void JTFootprintReduction::runOnFunctions(
   std::unique_ptr<BinaryFunctionCallGraph> CG;
   if (!opts::JTFootprintOnlyPIC) {
     CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
-    RA.reset(new RegAnalysis(BC, BFs, *CG));
+    RA.reset(new RegAnalysis(BC, &BFs, &*CG));
   }
   for (auto &BFIt : BFs) {
     auto &Function = BFIt.second;

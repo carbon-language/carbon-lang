@@ -230,7 +230,7 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
   // Run FrameAnalysis pass
   BinaryFunctionCallGraph CG = buildCallGraph(BC, BFs);
   FrameAnalysis FA(BC, BFs, CG);
-  RegAnalysis RA(BC, BFs, CG);
+  RegAnalysis RA(BC, &BFs, &CG);
 
   // Our main loop: perform caller-saved register optimizations, then
   // callee-saved register optimizations (shrink wrapping).

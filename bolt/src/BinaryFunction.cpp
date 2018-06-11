@@ -1207,11 +1207,16 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             // Recursive call.
             TargetSymbol = getSymbol();
           } else {
-            // Possibly an old-style PIC code
-            errs() << "BOLT-WARNING: internal call detected at 0x"
-                   << Twine::utohexstr(AbsoluteInstrAddr) << " in function "
-                   << *this << ". Skipping.\n";
-            IsSimple = false;
+            if (BC.isX86()) {
+              // Dangerous old-style x86 PIC code. We may need to freeze this
+              // function, so preserve the function as is for now.
+              PreserveNops = true;
+            } else {
+              errs() << "BOLT-WARNING: internal call detected at 0x"
+                     << Twine::utohexstr(AbsoluteInstrAddr) << " in function "
+                     << *this << ". Skipping.\n";
+              IsSimple = false;
+            }
           }
         }
 

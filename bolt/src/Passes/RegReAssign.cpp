@@ -340,7 +340,7 @@ void RegReAssign::setupAggressivePass(BinaryContext &BC,
                                      std::map<uint64_t, BinaryFunction> &BFs) {
   setupConservativePass(BC, BFs);
   CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
-  RA.reset(new RegAnalysis(BC, BFs, *CG));
+  RA.reset(new RegAnalysis(BC, &BFs, &*CG));
 
   GPRegs = BitVector(BC.MRI->getNumRegs(), false);
   BC.MIB->getGPRegs(GPRegs);

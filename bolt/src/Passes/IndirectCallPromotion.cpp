@@ -738,18 +738,6 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
   using BinaryBranchInfo = BinaryBasicBlock::BinaryBranchInfo;
   BinaryBasicBlock *MergeBlock = nullptr;
 
-  auto moveSuccessors = [](BinaryBasicBlock *Old, BinaryBasicBlock *New) {
-    // Copy over successors to the new block.
-    New->addSuccessors(Old->successors().begin(),
-                       Old->successors().end(),
-                       Old->branch_info_begin(),
-                       Old->branch_info_end());
-    Old->removeAllSuccessors();
-
-    // Update the execution count on the new block.
-    New->setExecutionCount(Old->getExecutionCount());
-  };
-
   // Scale indirect call counts to the execution count of the original
   // basic block containing the indirect call.
   uint64_t TotalIndirectBranches = 0;
@@ -796,7 +784,7 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
   };
 
   if (IsJumpTable) {
-    moveSuccessors(IndCallBlock, NewBBs.back().get());
+    IndCallBlock->moveAllSuccessorsTo(NewBBs.back().get());
 
     std::vector<MCSymbol*> SymTargets;
     for (size_t I = 0; I < Targets.size(); ++I) {
@@ -840,7 +828,7 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
 
     if (!IsTailCall) {
       MergeBlock = NewBBs.back().get();
-      moveSuccessors(IndCallBlock, MergeBlock);
+      IndCallBlock->moveAllSuccessorsTo(MergeBlock);
     }
 
     // Fix up successors and execution counts.
@@ -1108,7 +1096,7 @@ void IndirectCallPromotion::runOnFunctions(
   std::unique_ptr<BinaryFunctionCallGraph> CG;
   if (opts::IndirectCallPromotion >= ICP_JUMP_TABLES) {
     CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
-    RA.reset(new RegAnalysis(BC, BFs, *CG));
+    RA.reset(new RegAnalysis(BC, &BFs, &*CG));
   }
 
   DEBUG_VERBOSE(2, {
