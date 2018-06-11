@@ -63,7 +63,7 @@ void ScopedHostFloatingPointEnvironment::ClearFlags() const {
   feclearexcept(FE_ALL_EXCEPT);
 }
 
-RealFlags ScopedHostFloatingPointEnvironment::CurrentFlags() const {
+RealFlags ScopedHostFloatingPointEnvironment::CurrentFlags() {
   int exceptions = fetestexcept(FE_ALL_EXCEPT);
   RealFlags flags;
   if (exceptions & FE_INVALID) {
@@ -82,4 +82,17 @@ RealFlags ScopedHostFloatingPointEnvironment::CurrentFlags() const {
     flags.set(RealFlag::Inexact);
   }
   return flags;
+}
+
+void ScopedHostFloatingPointEnvironment::SetRounding(Rounding rounding) {
+  switch (rounding) {
+  case Rounding::TiesToEven: fesetround(FE_TONEAREST); break;
+  case Rounding::ToZero: fesetround(FE_TOWARDZERO); break;
+  case Rounding::Up: fesetround(FE_UPWARD); break;
+  case Rounding::Down: fesetround(FE_DOWNWARD); break;
+  case Rounding::TiesAwayFromZero:
+    std::fprintf(stderr, "SetRounding: TiesAwayFromZero not available");
+    std::abort();
+    break;
+  }
 }

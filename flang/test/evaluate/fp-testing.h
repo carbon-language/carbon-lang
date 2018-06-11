@@ -19,6 +19,7 @@
 #include <fenv.h>
 
 using Fortran::evaluate::RealFlags;
+using Fortran::evaluate::Rounding;
 
 class ScopedHostFloatingPointEnvironment {
 public:
@@ -26,7 +27,8 @@ public:
       bool flushDenormalResultsToZero = false);
   ~ScopedHostFloatingPointEnvironment();
   void ClearFlags() const;
-  RealFlags CurrentFlags() const;
+  static RealFlags CurrentFlags();
+  static void SetRounding(Rounding rounding);
 
 private:
   fenv_t originalFenv_;

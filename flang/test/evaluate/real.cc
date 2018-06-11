@@ -20,7 +20,7 @@
 
 using namespace Fortran::evaluate;
 
-template<typename R> void tests() {
+template<typename R> void basicTests(int rm, Rounding rounding) {
   char desc[64];
   using Word = typename R::Word;
   std::snprintf(
@@ -99,51 +99,52 @@ template<typename R> void tests() {
   TEST(inf.Compare(negInf) == Relation::Greater)(desc);
   TEST(negInf.Compare(negInf) == Relation::Equal)(desc);
   for (std::uint64_t j{0}; j < 63; ++j) {
+    char ldesc[128];
     std::uint64_t x{1};
     x <<= j;
+    std::snprintf(ldesc, sizeof ldesc, "%s j=%d x=0x%llx rm=%d", desc,
+        static_cast<int>(j), static_cast<unsigned long long>(x), rm);
     Integer<64> ix{x};
-    TEST(!ix.IsNegative())("%s,%d,0x%llx", desc, j, x);
-    MATCH(x, ix.ToUInt64())("%s,%d,0x%llx", desc, j, x);
-    vr = R::ConvertSigned(ix);
-    TEST(!vr.value.IsNegative())("%s,%d,0x%llx", desc, j, x);
-    TEST(!vr.value.IsNotANumber())("%s,%d,0x%llx", desc, j, x);
-    TEST(!vr.value.IsZero())("%s,%d,0x%llx", desc, j, x);
+    TEST(!ix.IsNegative())(ldesc);
+    MATCH(x, ix.ToUInt64())(ldesc);
+    vr = R::ConvertSigned(ix, rounding);
+    TEST(!vr.value.IsNegative())(ldesc);
+    TEST(!vr.value.IsNotANumber())(ldesc);
+    TEST(!vr.value.IsZero())(ldesc);
     auto ivf = vr.value.template ToInteger<Integer<64>>();
     if (j > (maxExponent / 2)) {
-      TEST(vr.flags.test(RealFlag::Overflow))(desc);
-      TEST(vr.value.IsInfinite())("%s,%d,0x%llx", desc, j, x);
-      TEST(ivf.flags.test(RealFlag::Overflow))("%s,%d,0x%llx", desc, j, x);
-      MATCH(0x7fffffffffffffff, ivf.value.ToUInt64())
-      ("%s,%d,0x%llx", desc, j, x);
+      TEST(vr.flags.test(RealFlag::Overflow))(ldesc);
+      TEST(vr.value.IsInfinite())(ldesc);
+      TEST(ivf.flags.test(RealFlag::Overflow))(ldesc);
+      MATCH(0x7fffffffffffffff, ivf.value.ToUInt64())(ldesc);
     } else {
-      TEST(vr.flags.empty())(desc);
-      TEST(!vr.value.IsInfinite())("%s,%d,0x%llx", desc, j, x);
-      TEST(ivf.flags.empty())("%s,%d,0x%llx", desc, j, x);
-      MATCH(x, ivf.value.ToUInt64())("%s,%d,0x%llx", desc, j, x);
+      TEST(vr.flags.empty())(ldesc);
+      TEST(!vr.value.IsInfinite())(ldesc);
+      TEST(ivf.flags.empty())(ldesc);
+      MATCH(x, ivf.value.ToUInt64())(ldesc);
     }
     ix = ix.Negate().value;
-    TEST(ix.IsNegative())("%s,%d,0x%llx", desc, j, x);
+    TEST(ix.IsNegative())(ldesc);
     x = -x;
     std::int64_t nx = x;
-    MATCH(x, ix.ToUInt64())("%s,%d,0x%llx", desc, j, x);
-    MATCH(nx, ix.ToInt64())("%s,%d,0x%llx", desc, j, x);
+    MATCH(x, ix.ToUInt64())(ldesc);
+    MATCH(nx, ix.ToInt64())(ldesc);
     vr = R::ConvertSigned(ix);
-    TEST(vr.value.IsNegative())("%s,%d,0x%llx", desc, j, x);
-    TEST(!vr.value.IsNotANumber())("%s,%d,0x%llx", desc, j, x);
-    TEST(!vr.value.IsZero())("%s,%d,0x%llx", desc, j, x);
+    TEST(vr.value.IsNegative())(ldesc);
+    TEST(!vr.value.IsNotANumber())(ldesc);
+    TEST(!vr.value.IsZero())(ldesc);
     ivf = vr.value.template ToInteger<Integer<64>>();
     if (j > (maxExponent / 2)) {
-      TEST(vr.flags.test(RealFlag::Overflow))(desc);
-      TEST(vr.value.IsInfinite())("%s,%d,0x%llx", desc, j, x);
-      TEST(ivf.flags.test(RealFlag::Overflow))("%s,%d,0x%llx", desc, j, x);
-      MATCH(0x8000000000000000, ivf.value.ToUInt64())
-      ("%s,%d,0x%llx", desc, j, x);
+      TEST(vr.flags.test(RealFlag::Overflow))(ldesc);
+      TEST(vr.value.IsInfinite())(ldesc);
+      TEST(ivf.flags.test(RealFlag::Overflow))(ldesc);
+      MATCH(0x8000000000000000, ivf.value.ToUInt64())(ldesc);
     } else {
-      TEST(vr.flags.empty())(desc);
-      TEST(!vr.value.IsInfinite())("%s,%d,0x%llx", desc, j, x);
-      TEST(ivf.flags.empty())("%s,%d,0x%llx", desc, j, x);
-      MATCH(x, ivf.value.ToUInt64())("%s,%d,0x%llx", desc, j, x);
-      MATCH(nx, ivf.value.ToInt64())("%s,%d,0x%llx", desc, j, x);
+      TEST(vr.flags.empty())(ldesc);
+      TEST(!vr.value.IsInfinite())(ldesc);
+      TEST(ivf.flags.empty())(ldesc);
+      MATCH(x, ivf.value.ToUInt64())(ldesc);
+      MATCH(nx, ivf.value.ToInt64())(ldesc);
     }
   }
 }
@@ -183,12 +184,41 @@ std::uint32_t FlagsToBits(const RealFlags &flags) {
   return bits;
 }
 
-void subset32bit() {
+void inttest(std::int64_t x, int pass, Rounding rounding) {
   union {
     std::uint32_t u32;
     float f;
   } u;
   ScopedHostFloatingPointEnvironment fpenv;
+  Integer<64> ix{x};
+  ValueWithRealFlags<RealKind4> real;
+  real = real.value.ConvertSigned(ix, rounding);
+  fpenv.ClearFlags();
+  float fcheck = x;  // TODO unsigned too
+  auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
+  u.f = fcheck;
+  std::uint32_t rcheck{NormalizeNaN(u.u32)};
+  std::uint32_t check = real.value.RawBits().ToUInt64();
+  MATCH(rcheck, check)("%d 0x%llx", pass, x);
+  MATCH(actualFlags, FlagsToBits(real.flags))("%d 0x%llx", pass, x);
+}
+
+void subset32bit(int pass, Rounding rounding) {
+  for (int j{0}; j < 63; ++j) {
+    std::int64_t x{1};
+    x <<= j;
+    inttest(x, pass, rounding);
+    inttest(-x, pass, rounding);
+  }
+  inttest(0, pass, rounding);
+  inttest(static_cast<std::int64_t>(0x8000000000000000), pass, rounding);
+
+  union {
+    std::uint32_t u32;
+    float f;
+  } u;
+  ScopedHostFloatingPointEnvironment fpenv;
+
   for (std::uint32_t j{0}; j < 8192; ++j) {
     std::uint32_t rj{MakeReal(j)};
     u.u32 = rj;
@@ -200,51 +230,71 @@ void subset32bit() {
       float fk{u.f};
       RealKind4 y{Integer<32>{std::uint64_t{rk}}};
       {
-        ValueWithRealFlags<RealKind4> sum{x.Add(y)};
+        ValueWithRealFlags<RealKind4> sum{x.Add(y, rounding)};
         fpenv.ClearFlags();
         float fcheck{fj + fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
         std::uint32_t rcheck{NormalizeNaN(u.u32)};
         std::uint32_t check = sum.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("0x%x + 0x%x", rj, rk);
-        MATCH(actualFlags, FlagsToBits(sum.flags))("0x%x + 0x%x", rj, rk);
+        MATCH(rcheck, check)("%d 0x%x + 0x%x", pass, rj, rk);
+        MATCH(actualFlags, FlagsToBits(sum.flags))
+        ("%d 0x%x + 0x%x", pass, rj, rk);
       }
       {
-        ValueWithRealFlags<RealKind4> diff{x.Subtract(y)};
+        ValueWithRealFlags<RealKind4> diff{x.Subtract(y, rounding)};
+        fpenv.ClearFlags();
         float fcheck{fj - fk};
+        auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
         std::uint32_t rcheck{NormalizeNaN(u.u32)};
         std::uint32_t check = diff.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("0x%x - 0x%x", rj, rk);
+        MATCH(rcheck, check)("%d 0x%x - 0x%x", pass, rj, rk);
+        MATCH(actualFlags, FlagsToBits(diff.flags))
+        ("%d 0x%x - 0x%x", pass, rj, rk);
       }
       {
-        ValueWithRealFlags<RealKind4> prod{x.Multiply(y)};
+        ValueWithRealFlags<RealKind4> prod{x.Multiply(y, rounding)};
+        fpenv.ClearFlags();
         float fcheck{fj * fk};
+        auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
         std::uint32_t rcheck{NormalizeNaN(u.u32)};
         std::uint32_t check = prod.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("0x%x * 0x%x", rj, rk);
+        MATCH(rcheck, check)("%d 0x%x * 0x%x", pass, rj, rk);
+        MATCH(actualFlags, FlagsToBits(prod.flags))
+        ("%d 0x%x * 0x%x -> 0x%x", pass, rj, rk, rcheck);
       }
 #if 0
-      { ValueWithRealFlags<RealKind4> quot{x.Divide(y)};
-        float fcheck{fj * fk};
+      { ValueWithRealFlags<RealKind4> quot{x.Divide(y, rounding)};
+        fpenv.ClearFlags();
+        float fcheck{fj / fk};
+        auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
         std::uint32_t rcheck{NormalizeNaN(u.u32)};
         std::uint32_t check = quot.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("0x%x / 0x%x", rj, rk);
+        MATCH(rcheck, check)("%d 0x%x / 0x%x", pass, rj, rk);
+        MATCH(actualFlags, FlagsToBits(quot.flags))("%d 0x%x / 0x%x", pass, rj, rk);
       }
 #endif
     }
   }
 }
 
+void roundTest(int rm, Rounding rounding) {
+  basicTests<RealKind2>(rm, rounding);
+  basicTests<RealKind4>(rm, rounding);
+  basicTests<RealKind8>(rm, rounding);
+  basicTests<RealKind10>(rm, rounding);
+  basicTests<RealKind16>(rm, rounding);
+  ScopedHostFloatingPointEnvironment::SetRounding(rounding);
+  subset32bit(rm, rounding);
+}
+
 int main() {
-  tests<RealKind2>();
-  tests<RealKind4>();
-  tests<RealKind8>();
-  tests<RealKind10>();
-  tests<RealKind16>();
-  subset32bit();  // TODO rounding modes
-  return testing::Complete();
+  roundTest(0, Rounding::TiesToEven);
+  roundTest(1, Rounding::ToZero);
+  roundTest(2, Rounding::Up);
+  roundTest(3, Rounding::Down);
+  // TODO: how to test Rounding::TiesAwayFromZero on x86?
 }

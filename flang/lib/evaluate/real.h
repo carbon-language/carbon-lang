@@ -267,8 +267,11 @@ public:
         return y.Add(*this, rounding);
       }
       if (order == Ordering::Equal) {
-        // x + (-x) -> +0.0, never -0.0
-        return {};
+        // x + (-x) -> +0.0 unless rounding is directed downwards
+        if (rounding == Rounding::Down) {
+          result.value.Normalize(true, 0, Fraction{}, rounding);  // -0.0
+        }
+        return result;
       }
     }
     // Our exponent is greater than y's, or the exponents match and y is not
@@ -296,8 +299,8 @@ public:
       fraction = fraction.SHIFTR(1).IBSET(fraction.bits - 1);
       ++exponent;
     }
-    result.flags |=
-        result.value.Normalize(isNegative, exponent, fraction, &roundingBits);
+    result.flags |= result.value.Normalize(
+        isNegative, exponent, fraction, rounding, &roundingBits);
     result.flags |= result.value.Round(rounding, roundingBits);
     return result;
   }
@@ -312,7 +315,9 @@ public:
     ValueWithRealFlags<Real> result;
     if (IsNotANumber() || y.IsNotANumber()) {
       result.value.word_ = NaNWord();  // NaN * x -> NaN
-      result.flags.set(RealFlag::InvalidArgument);
+      if (IsSignalingNaN() || y.IsSignalingNaN()) {
+        result.flags.set(RealFlag::InvalidArgument);
+      }
     } else {
       bool isNegative{IsNegative() != y.IsNegative()};
       if (IsInfinite() || y.IsInfinite()) {
@@ -338,7 +343,10 @@ public:
           if (rshift >= product.upper.bits + product.lower.bits) {
             sticky = !product.lower.IsZero() || !product.upper.IsZero();
           } else if (rshift >= product.lower.bits) {
-            sticky = !product.lower.IsZero();
+            sticky = !product.lower.IsZero() ||
+                !product.upper
+                     .IAND(product.upper.MASKR(rshift - product.lower.bits))
+                     .IsZero();
           } else {
             sticky = !product.lower.IAND(product.lower.MASKR(rshift)).IsZero();
           }
@@ -359,10 +367,14 @@ public:
         exponent -= lshift;
         product.upper = product.upper.DSHIFTL(product.lower, lshift);
         product.lower = product.lower.SHIFTL(lshift);
-        RoundingBits roundingBits{product.lower, product.upper.bits};
+        RoundingBits roundingBits{product.lower, product.lower.bits};
         result.flags |= result.value.Normalize(
-            isNegative, exponent, product.upper, &roundingBits);
+            isNegative, exponent, product.upper, rounding, &roundingBits);
         result.flags |= result.value.Round(rounding, roundingBits);
+        if (result.flags.test(RealFlag::Inexact) &&
+            result.value.Exponent() == 0) {
+          result.flags.set(RealFlag::Underflow);
+        }
       }
     }
     return result;
@@ -514,9 +526,19 @@ private:
   }
 
   constexpr RealFlags Normalize(bool negative, std::uint64_t exponent,
-      const Fraction &fraction, RoundingBits *roundingBits = nullptr) {
+      const Fraction &fraction, Rounding rounding = Rounding::TiesToEven,
+      RoundingBits *roundingBits = nullptr) {
     if (exponent >= maxExponent) {
-      word_ = Word{maxExponent}.SHIFTL(significandBits);  // Inf
+      if (rounding == Rounding::TiesToEven ||
+          rounding == Rounding::TiesAwayFromZero ||
+          (rounding == Rounding::Up && !negative) ||
+          (rounding == Rounding::Down && negative)) {
+        word_ = Word{maxExponent}.SHIFTL(significandBits);  // Inf
+      } else {
+        // directed rounding: round to largest finite value rather than infinity
+        // (x86 does this, not sure whether it's standard or not)
+        word_ = Word{word_.MASKR(word_.bits - 1)}.IBCLR(significandBits);
+      }
       if (negative) {
         word_ = word_.IBSET(bits - 1);
       }
@@ -608,7 +630,7 @@ extern template class Real<Integer<32>, 24>;
 using RealKind8 = Real<Integer<64>, 53>;
 extern template class Real<Integer<64>, 53>;
 
-using RealKind10 = Real<Integer<80>, 64, false>;  // 80387
+using RealKind10 = Real<Integer<80>, 64, false>;  // 80387 extended precision
 extern template class Real<Integer<80>, 64, false>;
 
 using RealKind16 = Real<Integer<128>, 112>;
