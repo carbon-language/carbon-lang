@@ -3066,6 +3066,21 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
             }
           }
       }
+
+      // (A/B)/C --> A/(B*C) if safe and B*C can be folded.
+      if (const SCEVUDivExpr *OtherDiv = dyn_cast<SCEVUDivExpr>(LHS)) {
+        if (auto *DivisorConstant =
+                dyn_cast<SCEVConstant>(OtherDiv->getRHS())) {
+          bool Overflow = false;
+          APInt NewRHS =
+              DivisorConstant->getAPInt().umul_ov(RHSC->getAPInt(), Overflow);
+          if (Overflow) {
+            return getConstant(RHSC->getType(), 0, false);
+          }
+          return getUDivExpr(OtherDiv->getLHS(), getConstant(NewRHS));
+        }
+      }
+
       // (A+B)/C --> (A/C + B/C) if safe and A/C and B/C can be folded.
       if (const SCEVAddExpr *A = dyn_cast<SCEVAddExpr>(LHS)) {
         SmallVector<const SCEV *, 4> Operands;
