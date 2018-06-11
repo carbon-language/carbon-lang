@@ -97,6 +97,8 @@ static inline uint64_t SPMagic(SampleProfileFormat Format = SPF_Raw_Binary) {
 static inline StringRef getRepInFormat(StringRef Name,
                                        SampleProfileFormat Format,
                                        std::string &GUIDBuf) {
+  if (Name.empty())
+    return Name;
   GUIDBuf = std::to_string(Function::getGUID(Name));
   return (Format == SPF_Compact_Binary) ? StringRef(GUIDBuf) : Name;
 }
