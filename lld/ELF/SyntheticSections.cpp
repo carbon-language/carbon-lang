@@ -708,10 +708,10 @@ MipsGotSection::FileGot &MipsGotSection::getGot(InputFile &F) {
   return Gots[*F.MipsGotIndex];
 }
 
-uint64_t MipsGotSection::getPageEntryOffset(const InputFile &F,
+uint64_t MipsGotSection::getPageEntryOffset(const InputFile *F,
                                             const Symbol &Sym,
                                             int64_t Addend) const {
-  const FileGot &G = Gots[*F.MipsGotIndex];
+  const FileGot &G = Gots[*F->MipsGotIndex];
   uint64_t Index = 0;
   if (const OutputSection *OutSec = Sym.getOutputSection()) {
     uint64_t SecAddr = getMipsPageAddr(OutSec->Addr);
@@ -723,9 +723,9 @@ uint64_t MipsGotSection::getPageEntryOffset(const InputFile &F,
   return Index * Config->Wordsize;
 }
 
-uint64_t MipsGotSection::getSymEntryOffset(const InputFile &F, const Symbol &S,
+uint64_t MipsGotSection::getSymEntryOffset(const InputFile *F, const Symbol &S,
                                            int64_t Addend) const {
-  const FileGot &G = Gots[*F.MipsGotIndex];
+  const FileGot &G = Gots[*F->MipsGotIndex];
   Symbol *Sym = const_cast<Symbol *>(&S);
   if (Sym->isTls())
     return G.Tls.find(Sym)->second * Config->Wordsize;
@@ -734,14 +734,14 @@ uint64_t MipsGotSection::getSymEntryOffset(const InputFile &F, const Symbol &S,
   return G.Local16.find({Sym, Addend})->second * Config->Wordsize;
 }
 
-uint64_t MipsGotSection::getTlsIndexOffset(const InputFile &F) const {
-  const FileGot &G = Gots[*F.MipsGotIndex];
+uint64_t MipsGotSection::getTlsIndexOffset(const InputFile *F) const {
+  const FileGot &G = Gots[*F->MipsGotIndex];
   return G.DynTlsSymbols.find(nullptr)->second * Config->Wordsize;
 }
 
-uint64_t MipsGotSection::getGlobalDynOffset(const InputFile &F,
+uint64_t MipsGotSection::getGlobalDynOffset(const InputFile *F,
                                             const Symbol &S) const {
-  const FileGot &G = Gots[*F.MipsGotIndex];
+  const FileGot &G = Gots[*F->MipsGotIndex];
   Symbol *Sym = const_cast<Symbol *>(&S);
   return G.DynTlsSymbols.find(Sym)->second * Config->Wordsize;
 }

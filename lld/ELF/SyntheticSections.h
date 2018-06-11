@@ -187,12 +187,12 @@ public:
   void addDynTlsEntry(InputFile &File, Symbol &Sym);
   void addTlsIndex(InputFile &File);
 
-  uint64_t getPageEntryOffset(const InputFile &F, const Symbol &S,
+  uint64_t getPageEntryOffset(const InputFile *F, const Symbol &S,
                               int64_t Addend) const;
-  uint64_t getSymEntryOffset(const InputFile &F, const Symbol &S,
+  uint64_t getSymEntryOffset(const InputFile *F, const Symbol &S,
                              int64_t Addend) const;
-  uint64_t getGlobalDynOffset(const InputFile &F, const Symbol &S) const;
-  uint64_t getTlsIndexOffset(const InputFile &F) const;
+  uint64_t getGlobalDynOffset(const InputFile *F, const Symbol &S) const;
+  uint64_t getTlsIndexOffset(const InputFile *F) const;
 
   // Returns the symbol which corresponds to the first entry of the global part
   // of GOT on MIPS platform. It is required to fill up MIPS-specific dynamic
