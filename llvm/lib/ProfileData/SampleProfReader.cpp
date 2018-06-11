@@ -319,14 +319,31 @@ ErrorOr<StringRef> SampleProfileReaderBinary::readString() {
   return Str;
 }
 
-ErrorOr<StringRef> SampleProfileReaderBinary::readStringFromTable() {
+template <typename T>
+inline ErrorOr<uint32_t> SampleProfileReaderBinary::readStringIndex(T &Table) {
   std::error_code EC;
   auto Idx = readNumber<uint32_t>();
   if (std::error_code EC = Idx.getError())
     return EC;
-  if (*Idx >= NameTable.size())
+  if (*Idx >= Table.size())
     return sampleprof_error::truncated_name_table;
+  return *Idx;
+}
+
+ErrorOr<StringRef> SampleProfileReaderRawBinary::readStringFromTable() {
+  auto Idx = readStringIndex(NameTable);
+  if (std::error_code EC = Idx.getError())
+    return EC;
+
   return NameTable[*Idx];
+}
+
+ErrorOr<StringRef> SampleProfileReaderCompactBinary::readStringFromTable() {
+  auto Idx = readStringIndex(NameTable);
+  if (std::error_code EC = Idx.getError())
+    return EC;
+
+  return StringRef(NameTable[*Idx]);
 }
 
 std::error_code
@@ -429,6 +446,48 @@ std::error_code SampleProfileReaderBinary::read() {
   return sampleprof_error::success;
 }
 
+std::error_code SampleProfileReaderRawBinary::verifySPMagic(uint64_t Magic) {
+  if (Magic == SPMagic())
+    return sampleprof_error::success;
+  return sampleprof_error::bad_magic;
+}
+
+std::error_code
+SampleProfileReaderCompactBinary::verifySPMagic(uint64_t Magic) {
+  if (Magic == SPMagic(SPF_Compact_Binary))
+    return sampleprof_error::success;
+  return sampleprof_error::bad_magic;
+}
+
+std::error_code SampleProfileReaderRawBinary::readNameTable() {
+  auto Size = readNumber<uint32_t>();
+  if (std::error_code EC = Size.getError())
+    return EC;
+  NameTable.reserve(*Size);
+  for (uint32_t I = 0; I < *Size; ++I) {
+    auto Name(readString());
+    if (std::error_code EC = Name.getError())
+      return EC;
+    NameTable.push_back(*Name);
+  }
+
+  return sampleprof_error::success;
+}
+
+std::error_code SampleProfileReaderCompactBinary::readNameTable() {
+  auto Size = readNumber<uint64_t>();
+  if (std::error_code EC = Size.getError())
+    return EC;
+  NameTable.reserve(*Size);
+  for (uint32_t I = 0; I < *Size; ++I) {
+    auto FID = readNumber<uint64_t>();
+    if (std::error_code EC = FID.getError())
+      return EC;
+    NameTable.push_back(std::to_string(*FID));
+  }
+  return sampleprof_error::success;
+}
+
 std::error_code SampleProfileReaderBinary::readHeader() {
   Data = reinterpret_cast<const uint8_t *>(Buffer->getBufferStart());
   End = Data + Buffer->getBufferSize();
@@ -437,7 +496,7 @@ std::error_code SampleProfileReaderBinary::readHeader() {
   auto Magic = readNumber<uint64_t>();
   if (std::error_code EC = Magic.getError())
     return EC;
-  else if (*Magic != SPMagic())
+  else if (std::error_code EC = verifySPMagic(*Magic))
     return sampleprof_error::bad_magic;
 
   // Read the version number.
@@ -450,18 +509,8 @@ std::error_code SampleProfileReaderBinary::readHeader() {
   if (std::error_code EC = readSummary())
     return EC;
 
-  // Read the name table.
-  auto Size = readNumber<uint32_t>();
-  if (std::error_code EC = Size.getError())
+  if (std::error_code EC = readNameTable())
     return EC;
-  NameTable.reserve(*Size);
-  for (uint32_t I = 0; I < *Size; ++I) {
-    auto Name(readString());
-    if (std::error_code EC = Name.getError())
-      return EC;
-    NameTable.push_back(*Name);
-  }
-
   return sampleprof_error::success;
 }
 
@@ -521,11 +570,18 @@ std::error_code SampleProfileReaderBinary::readSummary() {
   return sampleprof_error::success;
 }
 
-bool SampleProfileReaderBinary::hasFormat(const MemoryBuffer &Buffer) {
+bool SampleProfileReaderRawBinary::hasFormat(const MemoryBuffer &Buffer) {
   const uint8_t *Data =
       reinterpret_cast<const uint8_t *>(Buffer.getBufferStart());
   uint64_t Magic = decodeULEB128(Data);
   return Magic == SPMagic();
+}
+
+bool SampleProfileReaderCompactBinary::hasFormat(const MemoryBuffer &Buffer) {
+  const uint8_t *Data =
+      reinterpret_cast<const uint8_t *>(Buffer.getBufferStart());
+  uint64_t Magic = decodeULEB128(Data);
+  return Magic == SPMagic(SPF_Compact_Binary);
 }
 
 std::error_code SampleProfileReaderGCC::skipNextWord() {
@@ -813,8 +869,10 @@ SampleProfileReader::create(const Twine &Filename, LLVMContext &C) {
 ErrorOr<std::unique_ptr<SampleProfileReader>>
 SampleProfileReader::create(std::unique_ptr<MemoryBuffer> &B, LLVMContext &C) {
   std::unique_ptr<SampleProfileReader> Reader;
-  if (SampleProfileReaderBinary::hasFormat(*B))
-    Reader.reset(new SampleProfileReaderBinary(std::move(B), C));
+  if (SampleProfileReaderRawBinary::hasFormat(*B))
+    Reader.reset(new SampleProfileReaderRawBinary(std::move(B), C));
+  else if (SampleProfileReaderCompactBinary::hasFormat(*B))
+    Reader.reset(new SampleProfileReaderCompactBinary(std::move(B), C));
   else if (SampleProfileReaderGCC::hasFormat(*B))
     Reader.reset(new SampleProfileReaderGCC(std::move(B), C));
   else if (SampleProfileReaderText::hasFormat(*B))
