@@ -2981,7 +2981,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       // We deal with this case later by detecting an entry
       // following a closing paren of this submessage.
     }
-    
+
     // If this is an entry immediately following a submessage, it will be
     // preceded by a closing paren of that submessage, like in:
     //     left---.  .---right
@@ -3027,6 +3027,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       return false;
     if (Left.is(TT_JsTypeColon))
       return true;
+    // Don't wrap between ":" and "!" of a strict prop init ("field!: type;").
+    if (Left.is(tok::exclaim) && Right.is(tok::colon))
+      return false;
     if (Right.is(Keywords.kw_is))
       return false;
     if (Left.is(Keywords.kw_in))
