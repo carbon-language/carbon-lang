@@ -1778,6 +1778,18 @@ ScalarEvolution::getZeroExtendExpr(const SCEV *Op, Type *Ty, unsigned Depth) {
     }
   }
 
+  if (auto *SA = dyn_cast<SCEVMulExpr>(Op)) {
+    // zext((A * B * ...)<nuw>) --> (zext(A) * zext(B) * ...)<nuw>
+    if (SA->hasNoUnsignedWrap()) {
+      // If the multiply does not unsign overflow then we can, by definition,
+      // commute the zero extension with the multiply operation.
+      SmallVector<const SCEV *, 4> Ops;
+      for (const auto *Op : SA->operands())
+        Ops.push_back(getZeroExtendExpr(Op, Ty, Depth + 1));
+      return getMulExpr(Ops, SCEV::FlagNUW, Depth + 1);
+    }
+  }
+
   // The cast wasn't folded; create an explicit cast node.
   // Recompute the insert position, as it may have been invalidated.
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
