@@ -110,7 +110,7 @@ public:
 protected:
   virtual std::error_code writeNameTable() = 0;
   virtual std::error_code writeMagicIdent() = 0;
-  std::error_code writeHeader(const StringMap<FunctionSamples> &ProfileMap);
+  std::error_code writeHeader(const StringMap<FunctionSamples> &ProfileMap) override;
   std::error_code writeSummary();
   std::error_code writeNameIdx(StringRef FName);
   std::error_code writeBody(const FunctionSamples &S);
