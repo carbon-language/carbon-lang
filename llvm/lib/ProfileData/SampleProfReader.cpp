@@ -497,7 +497,7 @@ std::error_code SampleProfileReaderBinary::readHeader() {
   if (std::error_code EC = Magic.getError())
     return EC;
   else if (std::error_code EC = verifySPMagic(*Magic))
-    return sampleprof_error::bad_magic;
+    return EC;
 
   // Read the version number.
   auto Version = readNumber<uint64_t>();
