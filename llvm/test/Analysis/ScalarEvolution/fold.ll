@@ -118,7 +118,7 @@ define i64 @test9(i64 %a) {
 }
 
 define i64 @test10(i64 %a, i64 %b) {
-; CHECK-LABEL: @test9
+; CHECK-LABEL: @test10
   %t0 = udiv i64 %a, 100000000000000
   %t1 = udiv i64 %t0, 100000000000000
   %t2 = mul i64 %b, %t1
