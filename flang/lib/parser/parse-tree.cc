@@ -112,4 +112,11 @@ Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
           AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};
 }
 
+std::ostream &operator<<(std::ostream &os, const Name &x) {
+  return os << x.ToString();
+}
+std::ostream &operator<<(std::ostream &os, const CharBlock &x) {
+  return os << x.ToString();
+}
+
 }  // namespace Fortran::parser

@@ -15,10 +15,11 @@
 
 ######## f18 ##########
 
-add_executable( f18
+add_executable(f18
   f18.cc
+  dump.cc
 )
-target_link_libraries( f18
+target_link_libraries(f18
   FortranParser
   FlangSemantics
 )
