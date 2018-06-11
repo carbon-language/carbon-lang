@@ -265,8 +265,8 @@ void subset32bit(int pass, Rounding rounding) {
         MATCH(actualFlags, FlagsToBits(prod.flags))
         ("%d 0x%x * 0x%x -> 0x%x", pass, rj, rk, rcheck);
       }
-#if 0
-      { ValueWithRealFlags<RealKind4> quot{x.Divide(y, rounding)};
+      {
+        ValueWithRealFlags<RealKind4> quot{x.Divide(y, rounding)};
         fpenv.ClearFlags();
         float fcheck{fj / fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
@@ -274,9 +274,9 @@ void subset32bit(int pass, Rounding rounding) {
         std::uint32_t rcheck{NormalizeNaN(u.u32)};
         std::uint32_t check = quot.value.RawBits().ToUInt64();
         MATCH(rcheck, check)("%d 0x%x / 0x%x", pass, rj, rk);
-        MATCH(actualFlags, FlagsToBits(quot.flags))("%d 0x%x / 0x%x", pass, rj, rk);
+        MATCH(actualFlags, FlagsToBits(quot.flags))
+        ("%d 0x%x / 0x%x", pass, rj, rk);
       }
-#endif
     }
   }
 }
