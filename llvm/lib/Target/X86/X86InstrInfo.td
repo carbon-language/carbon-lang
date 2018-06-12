@@ -1145,19 +1145,19 @@ def trunc_su : PatFrag<(ops node:$src), (trunc node:$src), [{
 let hasSideEffects = 0, SchedRW = [WriteNop] in {
   def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
   def NOOPW : I<0x1f, MRMXm, (outs), (ins i16mem:$zero),
-                "nop{w}\t$zero", []>, TB, OpSize16;
+                "nop{w}\t$zero", []>, TB, OpSize16, NotMemoryFoldable;
   def NOOPL : I<0x1f, MRMXm, (outs), (ins i32mem:$zero),
-                "nop{l}\t$zero", []>, TB, OpSize32;
+                "nop{l}\t$zero", []>, TB, OpSize32, NotMemoryFoldable;
   def NOOPQ : RI<0x1f, MRMXm, (outs), (ins i64mem:$zero),
-                "nop{q}\t$zero", []>, TB,
+                "nop{q}\t$zero", []>, TB, NotMemoryFoldable,
                 Requires<[In64BitMode]>;
   // Also allow register so we can assemble/disassemble
   def NOOPWr : I<0x1f, MRMXr, (outs), (ins GR16:$zero),
-                 "nop{w}\t$zero", []>, TB, OpSize16;
+                 "nop{w}\t$zero", []>, TB, OpSize16, NotMemoryFoldable;
   def NOOPLr : I<0x1f, MRMXr, (outs), (ins GR32:$zero),
-                 "nop{l}\t$zero", []>, TB, OpSize32;
+                 "nop{l}\t$zero", []>, TB, OpSize32, NotMemoryFoldable;
   def NOOPQr : RI<0x1f, MRMXr, (outs), (ins GR64:$zero),
-                  "nop{q}\t$zero", []>, TB,
+                  "nop{q}\t$zero", []>, TB, NotMemoryFoldable,
                   Requires<[In64BitMode]>;
 }
 
@@ -2181,11 +2181,11 @@ def BOUNDS32rm : I<0x62, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
 // Adjust RPL Field of Segment Selector
 def ARPL16rr : I<0x63, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                  "arpl\t{$src, $dst|$dst, $src}", []>,
-                 Requires<[Not64BitMode]>;
+                 Requires<[Not64BitMode]>, NotMemoryFoldable;
 let mayStore = 1 in
 def ARPL16mr : I<0x63, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                  "arpl\t{$src, $dst|$dst, $src}", []>,
-                 Requires<[Not64BitMode]>;
+                 Requires<[Not64BitMode]>, NotMemoryFoldable;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
@@ -2723,7 +2723,7 @@ let SchedRW = [WriteSystem] in {
     def TPAUSE : I<0xAE, MRM6r,
                      (outs), (ins GR32orGR64:$src), "tpause\t$src",
                      [(set EFLAGS, (X86tpause GR32orGR64:$src, EDX, EAX))]>,
-                     PD, Requires<[HasWAITPKG]>;
+                     PD, Requires<[HasWAITPKG]>, NotMemoryFoldable;
   }
 } // SchedRW
 
@@ -2843,7 +2843,7 @@ def CLFLUSHOPT : I<0xAE, MRM7m, (outs), (ins i8mem:$src),
 
 let Predicates = [HasCLWB], SchedRW = [WriteLoad] in
 def CLWB       : I<0xAE, MRM6m, (outs), (ins i8mem:$src), "clwb\t$src",
-                   [(int_x86_clwb addr:$src)]>, PD;
+                   [(int_x86_clwb addr:$src)]>, PD, NotMemoryFoldable;
 
 let Predicates = [HasCLDEMOTE], SchedRW = [WriteLoad] in
 def CLDEMOTE : I<0x1C, MRM0m, (outs), (ins i8mem:$src), "cldemote\t$src",
