@@ -898,7 +898,10 @@ VSO &ExecutionSession::createVSO(std::string Name) {
   });
 }
 
-Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
+Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
+                                   AsynchronousLookupFunction AsyncLookup,
+                                   SymbolNameSet Names,
+                                   MaterializationResponsibility *MR) {
 
 #if LLVM_ENABLE_THREADS
   // In the threaded case we use promises to return the results.
@@ -909,9 +912,11 @@ Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
   Error ReadyError = Error::success();
   auto OnResolve =
       [&](Expected<AsynchronousSymbolQuery::ResolutionResult> Result) {
-        if (Result)
+        if (Result) {
+          if (MR)
+            MR->addDependencies(Result->Dependencies);
           PromisedResult.set_value(std::move(Result->Symbols));
-        else {
+        } else {
           {
             ErrorAsOutParameter _(&ResolutionError);
             std::lock_guard<std::mutex> Lock(ErrMutex);
@@ -920,6 +925,7 @@ Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
           PromisedResult.set_value(SymbolMap());
         }
       };
+
   auto OnReady = [&](Error Err) {
     if (Err) {
       ErrorAsOutParameter _(&ReadyError);
@@ -935,11 +941,14 @@ Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
 
   auto OnResolve = [&](Expected<AsynchronousSymbolQuery::ResolutionResult> R) {
     ErrorAsOutParameter _(&ResolutionError);
-    if (R)
+    if (R) {
+      if (MR)
+        MR->addDependencies(Result->Dependencies);
       Result = std::move(R->Symbols);
-    else
+    } else
       ResolutionError = R.takeError();
   };
+
   auto OnReady = [&](Error Err) {
     ErrorAsOutParameter _(&ReadyError);
     if (Err)
@@ -949,22 +958,14 @@ Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
 
   auto Query = std::make_shared<AsynchronousSymbolQuery>(
       Names, std::move(OnResolve), std::move(OnReady));
-  SymbolNameSet UnresolvedSymbols(std::move(Names));
 
-  for (auto *V : VSOs) {
-    assert(V && "VSO pointers in VSOs list should be non-null");
-    if (UnresolvedSymbols.empty())
-      break;
-    UnresolvedSymbols = V->lookup(Query, UnresolvedSymbols);
-  }
+  SymbolNameSet UnresolvedSymbols = AsyncLookup(Query, std::move(Names));
 
-  if (!UnresolvedSymbols.empty()) {
-    // If there are unresolved symbols then the query will never return.
-    // Fail it with ES.failQuery.
-    auto &ES = (*VSOs.begin())->getExecutionSession();
+  // If there are unresolved symbols then the query will never return.
+  // Fail it with ES.failQuery.
+  if (!UnresolvedSymbols.empty())
     ES.failQuery(*Query,
                  make_error<SymbolsNotFound>(std::move(UnresolvedSymbols)));
-  }
 
 #if LLVM_ENABLE_THREADS
   auto ResultFuture = PromisedResult.get_future();
@@ -1002,6 +1003,27 @@ Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
 
   return Result;
 #endif
+}
+
+Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
+
+  if (VSOs.empty())
+    return SymbolMap();
+
+  auto &ES = (*VSOs.begin())->getExecutionSession();
+
+  auto LookupFn = [&](std::shared_ptr<AsynchronousSymbolQuery> Q,
+                      SymbolNameSet Unresolved) {
+    for (auto *V : VSOs) {
+      assert(V && "VSOs entries must not be null");
+      if (Unresolved.empty())
+        break;
+      Unresolved = V->lookup(Q, std::move(Unresolved));
+    }
+    return Unresolved;
+  };
+
+  return blockingLookup(ES, std::move(LookupFn), Names);
 }
 
 /// Look up a symbol by searching a list of VSOs.

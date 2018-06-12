@@ -614,6 +614,15 @@ private:
   std::vector<std::unique_ptr<VSO>> VSOs;
 };
 
+using AsynchronousLookupFunction = std::function<SymbolNameSet(
+    std::shared_ptr<AsynchronousSymbolQuery> Q, SymbolNameSet Names)>;
+
+/// Perform a blocking lookup on the given symbols.
+Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
+                                   AsynchronousLookupFunction AsyncLookup,
+                                   SymbolNameSet Names,
+                                   MaterializationResponsibility *MR = nullptr);
+
 /// Look up the given names in the given VSOs.
 /// VSOs will be searched in order and no VSO pointer may be null.
 /// All symbols must be found within the given VSOs or an error
