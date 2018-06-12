@@ -1270,7 +1270,9 @@ static bool generatePathDiagnostics(
     PathDiagnostic &PD, PathDiagnosticBuilder &PDB, const ExplodedNode *N,
     LocationContextMap &LCM,
     ArrayRef<std::unique_ptr<BugReporterVisitor>> visitors,
+    BugReport *R,
     PathDiagnosticConsumer::PathGenerationScheme ActiveScheme) {
+  const ExplodedNode *LastNode = N;
   BugReport *report = PDB.getBugReport();
   StackDiagVector CallStack;
   InterestingExprs IE;
@@ -1289,8 +1291,12 @@ static bool generatePathDiagnostics(
       generatePathDiagnosticsForNode(
           N, PD, PrevLoc, PDB, LCM, CallStack, IE, AddPathEdges);
 
-    if (!NextNode)
+    if (!NextNode) {
+      for (auto &V : visitors) {
+        V->finalizeVisitor(PDB, LastNode, *R);
+      }
       continue;
+    }
 
     // Add pieces from custom visitors.
     llvm::FoldingSet<PathDiagnosticPiece> DeduplicationSet;
@@ -2583,7 +2589,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       // hold onto old mappings.
       LCM.clear();
 
-      generatePathDiagnostics(PD, PDB, N, LCM, visitors, ActiveScheme);
+      generatePathDiagnostics(PD, PDB, N, LCM, visitors, R, ActiveScheme);
 
       // Clean up the visitors we used.
       visitors.clear();

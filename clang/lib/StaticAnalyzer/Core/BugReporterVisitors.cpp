@@ -181,6 +181,11 @@ BugReporterVisitor::getEndPath(BugReporterContext &BRC,
   return nullptr;
 }
 
+void
+BugReporterVisitor::finalizeVisitor(BugReporterContext &BRC,
+                                    const ExplodedNode *EndPathNode,
+                                    BugReport &BR) {};
+
 std::unique_ptr<PathDiagnosticPiece> BugReporterVisitor::getDefaultEndPath(
     BugReporterContext &BRC, const ExplodedNode *EndPathNode, BugReport &BR) {
   PathDiagnosticLocation L =
@@ -866,12 +871,10 @@ public:
     llvm_unreachable("Invalid visit mode!");
   }
 
-  std::unique_ptr<PathDiagnosticPiece> getEndPath(BugReporterContext &BRC,
-                                                  const ExplodedNode *N,
-                                                  BugReport &BR) override {
+  void finalizeVisitor(BugReporterContext &BRC, const ExplodedNode *N,
+                       BugReport &BR) override {
     if (EnableNullFPSuppression)
       BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
-    return nullptr;
   }
 };
 
@@ -2144,10 +2147,8 @@ bool ConditionBRVisitor::isPieceMessageGeneric(
          Piece->getString() == GenericFalseMessage;
 }
 
-std::unique_ptr<PathDiagnosticPiece>
-LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
-                                                    const ExplodedNode *N,
-                                                    BugReport &BR) {
+void LikelyFalsePositiveSuppressionBRVisitor::finalizeVisitor(
+    BugReporterContext &BRC, const ExplodedNode *N, BugReport &BR) {
   // Here we suppress false positives coming from system headers. This list is
   // based on known issues.
   ExprEngine &Eng = BRC.getBugReporter().getEngine();
@@ -2161,7 +2162,7 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
     // TR1, Boost, or llvm/ADT.
     if (Options.shouldSuppressFromCXXStandardLibrary()) {
       BR.markInvalid(getTag(), nullptr);
-      return nullptr;
+      return;
     } else {
       // If the complete 'std' suppression is not enabled, suppress reports
       // from the 'std' namespace that are known to produce false positives.
@@ -2173,7 +2174,7 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
         const CXXRecordDecl *CD = MD->getParent();
         if (CD->getName() == "list") {
           BR.markInvalid(getTag(), nullptr);
-          return nullptr;
+          return;
         }
       }
 
@@ -2183,7 +2184,7 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
         const CXXRecordDecl *CD = MD->getParent();
         if (CD->getName() == "__independent_bits_engine") {
           BR.markInvalid(getTag(), nullptr);
-          return nullptr;
+          return;
         }
       }
 
@@ -2202,7 +2203,7 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
         // data structure.
         if (CD->getName() == "basic_string") {
           BR.markInvalid(getTag(), nullptr);
-          return nullptr;
+          return;
         }
 
         // The analyzer issues a false positive on
@@ -2210,7 +2211,7 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
         // because it does not reason properly about temporary destructors.
         if (CD->getName() == "shared_ptr") {
           BR.markInvalid(getTag(), nullptr);
-          return nullptr;
+          return;
         }
       }
     }
@@ -2224,11 +2225,9 @@ LikelyFalsePositiveSuppressionBRVisitor::getEndPath(BugReporterContext &BRC,
     Loc = Loc.getSpellingLoc();
     if (SM.getFilename(Loc).endswith("sys/queue.h")) {
       BR.markInvalid(getTag(), nullptr);
-      return nullptr;
+      return;
     }
   }
-
-  return nullptr;
 }
 
 std::shared_ptr<PathDiagnosticPiece>
