@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include <memory>
+#include <time.h>
 
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_flags.h"
@@ -30,6 +31,16 @@
 namespace __xray {
 
 namespace {
+
+constexpr uptr XRayProfilingVersion = 0x20180424;
+
+struct XRayProfilingFileHeader {
+  const u64 MagicBytes = 0x7872617970726f66; // Identifier for XRay profiling
+                                             // files 'xrayprof' in hex.
+  const uptr Version = XRayProfilingVersion;
+  uptr Timestamp = 0; // System time in nanoseconds.
+  uptr PID = 0;       // Process ID.
+};
 
 atomic_sint32_t ProfilerLogFlushStatus = {
     XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING};
@@ -89,8 +100,6 @@ atomic_sint32_t ProfileFlushStatus = {
     XRayLogFlushStatus::XRAY_LOG_NOT_FLUSHING};
 
 XRayLogFlushStatus profilingFlush() XRAY_NEVER_INSTRUMENT {
-  // When flushing, all we really do is reset the global state, and only when
-  // the log has already been finalized.
   if (atomic_load(&ProfilerLogStatus, memory_order_acquire) !=
       XRayLogInitStatus::XRAY_LOG_FINALIZED) {
     if (Verbosity())
@@ -104,6 +113,37 @@ XRayLogFlushStatus profilingFlush() XRAY_NEVER_INSTRUMENT {
                                       memory_order_acq_rel)) {
     if (Verbosity())
       Report("Not flushing profiles, implementation still finalizing.\n");
+  }
+
+  // At this point, we'll create the file that will contain the profile, but
+  // only if the options say so.
+  if (!profilingFlags()->no_flush) {
+    int Fd = -1;
+    Fd = getLogFD();
+    if (Fd == -1) {
+      if (__sanitizer::Verbosity())
+        Report(
+            "profiler: Failed to acquire a file descriptor, dropping data.\n");
+    } else {
+      XRayProfilingFileHeader Header;
+      Header.Timestamp = NanoTime();
+      Header.PID = internal_getpid();
+      retryingWriteAll(Fd, reinterpret_cast<const char *>(&Header),
+                       reinterpret_cast<const char *>(&Header) +
+                           sizeof(Header));
+
+      // Now for each of the threads, write out the profile data as we would see
+      // it in memory, verbatim.
+      XRayBuffer B = profileCollectorService::nextBuffer({nullptr, 0});
+      while (B.Data != nullptr && B.Size != 0) {
+        retryingWriteAll(Fd, reinterpret_cast<const char *>(B.Data),
+                         reinterpret_cast<const char *>(B.Data) + B.Size);
+        B = profileCollectorService::nextBuffer(B);
+      }
+
+      // Then we close out the file.
+      internal_close(Fd);
+    }
   }
 
   profileCollectorService::reset();
@@ -221,8 +261,13 @@ profilingLoggingInit(size_t BufferSize, size_t BufferMax, void *Options,
     auto *F = profilingFlags();
     F->setDefaults();
     registerProfilerFlags(&ConfigParser, F);
-    const char *ProfilerCompileFlags = profilingCompilerDefinedFlags();
-    ConfigParser.ParseString(ProfilerCompileFlags);
+    ConfigParser.ParseString(profilingCompilerDefinedFlags());
+    const char *Env = GetEnv("XRAY_PROFILING_OPTIONS");
+    if (Env == nullptr)
+      Env = "";
+    ConfigParser.ParseString(Env);
+
+    // Then parse the configuration string provided.
     ConfigParser.ParseString(static_cast<const char *>(Options));
     if (Verbosity())
       ReportUnrecognizedFlags();
@@ -265,8 +310,7 @@ bool profilingDynamicInitializer() XRAY_NEVER_INSTRUMENT {
     F->setDefaults();
     FlagParser ProfilingParser;
     registerProfilerFlags(&ProfilingParser, F);
-    const char *ProfilerCompileFlags = profilingCompilerDefinedFlags();
-    ProfilingParser.ParseString(ProfilerCompileFlags);
+    ProfilingParser.ParseString(profilingCompilerDefinedFlags());
   }
 
   XRayLogImpl Impl{

@@ -3,7 +3,13 @@
 //
 // FIXME: Make -fxray-modes=xray-profiling part of the default?
 // RUN: %clangxx_xray -std=c++11 %s -o %t -fxray-modes=xray-profiling
-// RUN: %run %t
+// RUN: rm xray-log.profiling-multi-* || true
+// RUN: XRAY_OPTIONS=verbosity=1 \
+// RUN:     XRAY_PROFILING_OPTIONS=no_flush=1 %run %t
+// RUN: XRAY_OPTIONS=verbosity=1 %run %t
+// RUN: PROFILES=`ls xray-log.profiling-multi-* | wc -l`
+// RUN: [ $PROFILES -eq 1 ]
+// RUN: rm xray-log.profiling-multi-* || true
 //
 // UNSUPPORTED: target-is-mips64,target-is-mips64el
 
@@ -14,23 +20,20 @@
 #include <string>
 #include <thread>
 
-#define XRAY_ALWAYS_INSTRUMENT [[clang::xray_always_instrument]]
-#define XRAY_NEVER_INSTRUMENT [[clang::xray_never_instrument]]
-
-XRAY_ALWAYS_INSTRUMENT void f2() { return; }
-XRAY_ALWAYS_INSTRUMENT void f1() { f2(); }
-XRAY_ALWAYS_INSTRUMENT void f0() { f1(); }
+[[clang::xray_always_instrument]] void f2() { return; }
+[[clang::xray_always_instrument]] void f1() { f2(); }
+[[clang::xray_always_instrument]] void f0() { f1(); }
 
 using namespace std;
 
 volatile int buffer_counter = 0;
 
-XRAY_NEVER_INSTRUMENT void process_buffer(const char *, XRayBuffer) {
+[[clang::xray_never_instrument]] void process_buffer(const char *, XRayBuffer) {
   // FIXME: Actually assert the contents of the buffer.
   ++buffer_counter;
 }
 
-XRAY_ALWAYS_INSTRUMENT int main(int, char **) {
+[[clang::xray_always_instrument]] int main(int, char **) {
   assert(__xray_log_select_mode("xray-profiling") ==
          XRayLogRegisterStatus::XRAY_REGISTRATION_OK);
   assert(__xray_log_get_current_mode() != nullptr);
