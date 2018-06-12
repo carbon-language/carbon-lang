@@ -883,7 +883,7 @@ UbigraphViz::~UbigraphViz() {
   std::string Ubiviz;
   if (auto Path = llvm::sys::findProgramByName("ubiviz"))
     Ubiviz = *Path;
-  std::array<StringRef, 2> Args = {Ubiviz, Filename};
+  std::array<StringRef, 2> Args{{Ubiviz, Filename}};
 
   if (llvm::sys::ExecuteAndWait(Ubiviz, Args, llvm::None, {}, 0, 0, &ErrMsg)) {
     llvm::errs() << "Error viewing graph: " << ErrMsg << "\n";
