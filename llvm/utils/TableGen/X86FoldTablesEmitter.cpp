@@ -517,8 +517,10 @@ void X86FoldTablesEmitter::updateTables(const CodeGenInstruction *RegInstr,
 
   // Instructions which have the WriteRMW value (Read-Modify-Write) should be
   // added to Table2Addr.
-  if (hasDefInList(MemRec, "SchedRW", "WriteRMW") && MemOutSize != RegOutSize &&
-      MemInSize == RegInSize) {
+  if ((hasDefInList(MemRec, "SchedRW", "WriteRMW") ||
+       hasDefInList(MemRec, "SchedRW", "WriteADCRMW") ||
+       hasDefInList(MemRec, "SchedRW", "WriteALURMW")) &&
+       MemOutSize != RegOutSize && MemInSize == RegInSize) {
     addEntryWithFlags(Table2Addr, RegInstr, MemInstr, S, 0);
     return;
   }
