@@ -16,6 +16,7 @@
 #include "testing.h"
 #include "../../lib/evaluate/type.h"
 #include <cstdio>
+#include <cstdlib>
 
 using namespace Fortran::evaluate;
 
@@ -161,7 +162,12 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
 // the upper two bits and lowest bit in the significand.  The middle bits
 // of the significand are either all zeroes or all ones.
 std::uint32_t MakeReal(std::uint32_t n) {
-  return ((n & 0x1ffc) << 20) | !!(n & 2) | ((-(n & 1) & 0xfffff) << 1);
+  std::uint32_t n0_8{n & 0x1ff};
+  std::uint32_t n9{(n >> 9) & 1};
+  std::uint32_t n10{(n >> 10) & 1};
+  std::uint32_t n11{(n >> 11) & 1};
+  std::uint32_t n12{(n >> 12) & 1};
+  return (n0_8 << 23) | (n9 << 22) | (n11 << 21) | (-n12 & 0x1ffffe) | n10;
 }
 
 std::uint32_t NormalizeNaN(std::uint32_t x) {
@@ -210,7 +216,7 @@ void inttest(std::int64_t x, int pass, Rounding rounding) {
   MATCH(actualFlags, FlagsToBits(real.flags))("%d 0x%llx", pass, x);
 }
 
-void subset32bit(int pass, Rounding rounding) {
+void subset32bit(int pass, Rounding rounding, std::uint32_t opds) {
   for (int j{0}; j < 63; ++j) {
     std::int64_t x{1};
     x <<= j;
@@ -226,12 +232,12 @@ void subset32bit(int pass, Rounding rounding) {
   } u;
   ScopedHostFloatingPointEnvironment fpenv;
 
-  for (std::uint32_t j{0}; j < 8192; ++j) {
+  for (std::uint32_t j{0}; j < opds; ++j) {
     std::uint32_t rj{MakeReal(j)};
     u.u32 = rj;
     float fj{u.f};
     Real4 x{Integer4{std::uint64_t{rj}}};
-    for (std::uint32_t k{0}; k < 8192; ++k) {
+    for (std::uint32_t k{0}; k < opds; ++k) {
       std::uint32_t rk{MakeReal(k)};
       u.u32 = rk;
       float fk{u.f};
@@ -288,20 +294,25 @@ void subset32bit(int pass, Rounding rounding) {
   }
 }
 
-void roundTest(int rm, Rounding rounding) {
+void roundTest(int rm, Rounding rounding, std::uint32_t opds) {
   basicTests<Real2>(rm, rounding);
   basicTests<Real4>(rm, rounding);
   basicTests<Real8>(rm, rounding);
   basicTests<Real10>(rm, rounding);
   basicTests<Real16>(rm, rounding);
   ScopedHostFloatingPointEnvironment::SetRounding(rounding);
-  subset32bit(rm, rounding);
+  subset32bit(rm, rounding, opds);
 }
 
 int main() {
-  roundTest(0, Rounding::TiesToEven);
-  roundTest(1, Rounding::ToZero);
-  roundTest(2, Rounding::Up);
-  roundTest(3, Rounding::Down);
+  std::uint32_t opds{1024};
+  if (const char *p{std::getenv("REAL_TEST_OPERANDS")}) {
+    // Use 8192 for more exhaustive testing.
+    opds = std::atol(p);
+  }
+  roundTest(0, Rounding::TiesToEven, opds);
+  roundTest(1, Rounding::ToZero, opds);
+  roundTest(2, Rounding::Up, opds);
+  roundTest(3, Rounding::Down, opds);
   // TODO: how to test Rounding::TiesAwayFromZero on x86?
 }

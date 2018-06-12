@@ -15,9 +15,10 @@
 #ifndef FORTRAN_EVALUATE_TYPE_H_
 #define FORTRAN_EVALUATE_TYPE_H_
 
-// These definitions map Fortran's intrinsic types to their value
-// representation types in the evaluation library for ease of template
-// programming.
+// These definitions map Fortran's intrinsic types, characterized by byte
+// sizes encoded in KIND type parameter values, to their value representation
+// types in the evaluation library, which are parameterized in terms of
+// total bit width and real precision.
 
 #include "complex.h"
 #include "integer.h"
@@ -81,14 +82,12 @@ template<int KIND> struct Logical {
   using ValueType = value::Logical<8 * kind>;
 };
 
-#if 0  // TODO
 template<int KIND> struct Character {
   static constexpr Classification classification{Classification::Character};
   static constexpr int kind{KIND};
   static constexpr bool hasLen{true};
-  using ValueType = value::Character<8 * kind>;
+  using ValueType = std::uint8_t[kind];  // TODO: ?
 };
-#endif
 
 // Default REAL just simply has to be IEEE-754 single precision today.
 // It occupies one numeric storage unit by definition.  The default INTEGER
@@ -101,9 +100,7 @@ using DefaultInteger = Integer<DefaultReal::kind>;
 using IntrinsicTypeParameterType = DefaultInteger;
 using DefaultComplex = Complex<2 * DefaultReal::kind>;
 using DefaultLogical = Logical<DefaultReal::kind>;
-#if 0  // TODO
 using DefaultCharacter = Character<1>;
-#endif
 
 }  // namespace Fortran::evaluate::type
 #endif  // FORTRAN_EVALUATE_TYPE_H_
