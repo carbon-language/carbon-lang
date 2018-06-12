@@ -50,7 +50,7 @@ IgnoreBuildID("ignore-build-id",
 
 static cl::opt<bool>
 TimeAggregator("time-aggr",
-  cl::desc("time BOLT aggregator"),
+  cl::desc("time Bolt aggregator"),
   cl::init(false),
   cl::ZeroOrMore,
   cl::cat(AggregatorCategory));

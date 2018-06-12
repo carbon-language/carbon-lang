@@ -23,7 +23,7 @@ namespace bolt {
 
 /// This pass identify indirect jumps to jump tables and reduce their entries
 /// size from 8 to 4 bytes. For PIC jump tables, it will remove the PIC code
-/// (since BOLT only process static code and it makes no sense to use expensive
+/// (since Bolt only process static code and it makes no sense to use expensive
 /// PIC-style jumps in static code).
 class JTFootprintReduction : public BinaryFunctionPass {
   uint64_t TotalJTScore{0};

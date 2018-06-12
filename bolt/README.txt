@@ -1,21 +1,21 @@
-BOLT
+Bolt
 ====
 
-  BOLT is a post-link optimizer developed to speed up large applications.
+  Bolt is a post-link optimizer developed to speed up large applications.
   It achieves speed-ups by optimizing application's code layout based on an
   execution profile gathered by sampling profilers such as Linux `perf` tool.
-  BOLT could operate on any binary with symbol table, but for maximum gains
+  Bolt could operate on any binary with symbol table, but for maximum gains
   it utilizes relocations saved by a linker (--emit-relocs).
   
-  NOTE: Currently BOLT support is limited to non-PIC/PIE binaries.
+  NOTE: Currently Bolt support is limited to non-PIC/non-PIE binaries.
 
 INSTALLATION
 ============
 
-  BOLT heavily uses LLVM libraries and by design it is built as one of LLVM
+  Bolt heavily uses LLVM libraries and by design it is built as one of LLVM
   tools. The build process in not much different from regular LLVM.
 
-  Start with cloning LLVM and BOLT repos:
+  Start with cloning LLVM and Bolt repos:
 
   > git clone https://github.com/llvm-mirror/llvm llvm
   > cd llvm/tools

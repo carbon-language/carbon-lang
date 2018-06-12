@@ -214,7 +214,7 @@ public:
   bool hasPCRelOperand(const MCInst &Inst) const override {
     // ADRP is blacklisted and is an exception. Even though it has a
     // PC-relative operand, this operand is not a complete symbol reference
-    // and BOLT shouldn't try to process it in isolation.
+    // and Bolt shouldn't try to process it in isolation.
     if (isADRP(Inst))
       return false;
 

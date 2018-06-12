@@ -258,7 +258,7 @@ public:
   uint64_t MissedMacroFusionExecCount{0};
 
   /// Track next available address for new allocatable sections. RewriteInstance
-  /// sets this prior to running BOLT passes, so layout passes are aware of the
+  /// sets this prior to running Bolt passes, so layout passes are aware of the
   /// final addresses functions will have.
   uint64_t LayoutStartAddress{0};
 

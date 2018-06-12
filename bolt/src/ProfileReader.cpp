@@ -1,4 +1,4 @@
-//===-- ProfileReader.cpp - BOLT profile de-serializer ----------*- C++ -*-===//
+//===-- ProfileReader.cpp - Bolt profile de-serializer ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

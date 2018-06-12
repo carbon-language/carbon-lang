@@ -419,7 +419,7 @@ void RegReAssign::runOnFunctions(BinaryContext &BC,
     outs() << "BOLT-WARNING: You used -reg-reassign and -update-debug-sections."
            << " Some registers were changed but associated AT_LOCATION for "
            << "impacted variables were NOT updated! This operation is "
-           << "currently unsupported by BOLT.\n";
+           << "currently unsupported by Bolt.\n";
   }
   outs() << "BOLT-INFO: Reg Reassignment Pass Stats:\n";
   outs() << "\t   " << FuncsChanged.size() << " functions affected.\n";

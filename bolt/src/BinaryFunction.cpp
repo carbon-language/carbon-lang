@@ -300,7 +300,7 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
     return nullptr;
 
   /*
-   * This is commented out because it makes BOLT too slow.
+   * This is commented out because it makes Bolt too slow.
    * assert(std::is_sorted(BasicBlockOffsets.begin(),
    *                       BasicBlockOffsets.end(),
    *                       CompareBasicBlockOffsets())));

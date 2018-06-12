@@ -33,10 +33,10 @@ using namespace bolt;
 
 namespace opts {
 
-cl::OptionCategory BoltCategory("BOLT generic options");
-cl::OptionCategory BoltDiffCategory("BOLTDIFF generic options");
-cl::OptionCategory BoltOptCategory("BOLT optimization options");
-cl::OptionCategory BoltRelocCategory("BOLT options in relocation mode");
+cl::OptionCategory BoltCategory("Bolt generic options");
+cl::OptionCategory BoltDiffCategory("BoltDiff generic options");
+cl::OptionCategory BoltOptCategory("Bolt optimization options");
+cl::OptionCategory BoltRelocCategory("Bolt options in relocation mode");
 cl::OptionCategory BoltOutputCategory("Output options");
 cl::OptionCategory AggregatorCategory("Data aggregation options");
 
@@ -124,14 +124,14 @@ const char *BoltRevision =
 }
 
 static void printBoltRevision(llvm::raw_ostream &OS) {
-  OS << "BOLT revision " << BoltRevision << "\n";
+  OS << "Bolt revision " << BoltRevision << "\n";
 }
 
 void perf2boltMode(int argc, char **argv) {
   cl::HideUnrelatedOptions(makeArrayRef(opts::Perf2BoltCategories));
   cl::ParseCommandLineOptions(
       argc, argv,
-      "perf2bolt - BOLT data aggregator\n"
+      "perf2bolt - Bolt data aggregator\n"
       "\nEXAMPLE: perf2bolt -p=perf.data executable -o data.fdata\n");
   if (opts::PerfData.empty()) {
     errs() << ToolName << ": expected -perfdata=<filename> option.\n";
@@ -159,7 +159,7 @@ void boltDiffMode(int argc, char **argv) {
   cl::HideUnrelatedOptions(makeArrayRef(opts::BoltDiffCategories));
   cl::ParseCommandLineOptions(
       argc, argv,
-      "llvm-boltdiff - BOLT binary diff tool\n"
+      "llvm-boltdiff - Bolt binary diff tool\n"
       "\nEXAMPLE: llvm-boltdiff -data=a.fdata -data2=b.fdata exec1 exec2\n");
   if (opts::InputDataFilename2.empty()) {
     errs() << ToolName << ": expected -data2=<filename> option.\n";
@@ -187,7 +187,7 @@ void boltMode(int argc, char **argv) {
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
   cl::ParseCommandLineOptions(argc, argv,
-                              "BOLT - Binary Optimization and Layout Tool\n");
+                              "Bolt - Binary Optimization and Layout Tool\n");
 
   if (opts::OutputFilename.empty()) {
     errs() << ToolName << ": expected -o=<output file> option.\n";

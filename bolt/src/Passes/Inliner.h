@@ -1,4 +1,4 @@
-//===--- Passes/Inliner.h - Inlining infra for BOLT -----------------------===//
+//===--- Passes/Inliner.h - Inlining infra for Bolt -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
