@@ -562,7 +562,8 @@ void X86FoldTablesEmitter::updateTables(const CodeGenInstruction *RegInstr,
     //   MOVAPSmr => (outs), (ins f128mem:$dst, VR128:$src)
     Record *RegOpRec = RegInstr->Operands[RegOutSize - 1].Rec;
     Record *MemOpRec = MemInstr->Operands[RegOutSize - 1].Rec;
-    if (isRegisterOperand(RegOpRec) && isMemoryOperand(MemOpRec))
+    if (isRegisterOperand(RegOpRec) && isMemoryOperand(MemOpRec) &&
+        getRegOperandSize(RegOpRec) == getMemOperandSize(MemOpRec))
       addEntryWithFlags(Table0, RegInstr, MemInstr, S, 0);
   }
 
