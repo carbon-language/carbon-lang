@@ -32,6 +32,8 @@ namespace opts {
 
 extern cl::OptionCategory BoltCategory;
 
+extern cl::opt<unsigned> Verbosity;
+
 static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
   cl::desc("print debug info when printing functions"),
@@ -315,6 +317,7 @@ void BinaryContext::generateSymbolHashes() {
             SymData.find_first_not_of(0) == StringRef::npos);
   };
 
+  uint64_t NumCollisions = 0;
   for (auto &Entry : BinaryDataMap) {
     auto &BD = *Entry.second;
     auto Name = BD.getName();
@@ -350,8 +353,11 @@ void BinaryContext::generateSymbolHashes() {
       // Ignore collisions for symbols that appear to be padding
       // (i.e. all zeros or a "hole")
       if (!isPadding(BD)) {
-        outs() << "BOLT-WARNING: collision detected when hashing " << BD
-               << " with new name (" << NewName << "), skipping.\n";
+        if (opts::Verbosity) {
+          errs() << "BOLT-WARNING: collision detected when hashing " << BD
+                 << " with new name (" << NewName << "), skipping.\n";
+        }
+        ++NumCollisions;
       }
       continue;
     }
@@ -361,6 +367,13 @@ void BinaryContext::generateSymbolHashes() {
     assert(BD.Names.size() == BD.Symbols.size() &&
            "there should be a 1:1 mapping between names and symbols");
     GlobalSymbols[NewName] = &BD;
+  }
+  if (NumCollisions) {
+    errs() << "BOLT-WARNING: " << NumCollisions
+           << " collisions detected while hashing binary objects";
+    if (!opts::Verbosity)
+      errs() << ". Use -v=1 to see the list.";
+    errs() << '\n';
   }
 }
 
@@ -375,7 +388,7 @@ void BinaryContext::postProcessSymbolTable() {
         !BD->getSize() &&
         !BD->isAbsolute() &&
         BD->getSection()) {
-      outs() << "BOLT-WARNING: zero sized top level symbol: " << *BD << "\n";
+      errs() << "BOLT-WARNING: zero sized top level symbol: " << *BD << "\n";
       Valid = false;
     }
   }
