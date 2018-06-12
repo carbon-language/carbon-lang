@@ -12,14 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../lib/evaluate/real.h"
 #include "fp-testing.h"
 #include "testing.h"
-#include "../../lib/evaluate/integer.h"
+#include "../../lib/evaluate/type.h"
 #include <cstdio>
 
 using namespace Fortran::evaluate;
-using namespace Fortran::evaluate::value;
+
+using Real2 = typename type::Real<2>::ValueType;
+using Real4 = typename type::Real<4>::ValueType;
+using Real8 = typename type::Real<8>::ValueType;
+using Real10 = typename type::Real<10>::ValueType;
+using Real16 = typename type::Real<16>::ValueType;
+using Integer4 = typename type::Integer<4>::ValueType;
+using Integer8 = typename type::Integer<8>::ValueType;
 
 template<typename R> void basicTests(int rm, Rounding rounding) {
   char desc[64];
@@ -105,14 +111,14 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
     x <<= j;
     std::snprintf(ldesc, sizeof ldesc, "%s j=%d x=0x%llx rm=%d", desc,
         static_cast<int>(j), static_cast<unsigned long long>(x), rm);
-    Integer<64> ix{x};
+    Integer8 ix{x};
     TEST(!ix.IsNegative())(ldesc);
     MATCH(x, ix.ToUInt64())(ldesc);
     vr = R::ConvertSigned(ix, rounding);
     TEST(!vr.value.IsNegative())(ldesc);
     TEST(!vr.value.IsNotANumber())(ldesc);
     TEST(!vr.value.IsZero())(ldesc);
-    auto ivf = vr.value.template ToInteger<Integer<64>>();
+    auto ivf = vr.value.template ToInteger<Integer8>();
     if (j > (maxExponent / 2)) {
       TEST(vr.flags.test(RealFlag::Overflow))(ldesc);
       TEST(vr.value.IsInfinite())(ldesc);
@@ -134,7 +140,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
     TEST(vr.value.IsNegative())(ldesc);
     TEST(!vr.value.IsNotANumber())(ldesc);
     TEST(!vr.value.IsZero())(ldesc);
-    ivf = vr.value.template ToInteger<Integer<64>>();
+    ivf = vr.value.template ToInteger<Integer8>();
     if (j > (maxExponent / 2)) {
       TEST(vr.flags.test(RealFlag::Overflow))(ldesc);
       TEST(vr.value.IsInfinite())(ldesc);
@@ -191,8 +197,8 @@ void inttest(std::int64_t x, int pass, Rounding rounding) {
     float f;
   } u;
   ScopedHostFloatingPointEnvironment fpenv;
-  Integer<64> ix{x};
-  ValueWithRealFlags<RealKind4> real;
+  Integer8 ix{x};
+  ValueWithRealFlags<Real4> real;
   real = real.value.ConvertSigned(ix, rounding);
   fpenv.ClearFlags();
   float fcheck = x;  // TODO unsigned too
@@ -224,14 +230,14 @@ void subset32bit(int pass, Rounding rounding) {
     std::uint32_t rj{MakeReal(j)};
     u.u32 = rj;
     float fj{u.f};
-    RealKind4 x{Integer<32>{std::uint64_t{rj}}};
+    Real4 x{Integer4{std::uint64_t{rj}}};
     for (std::uint32_t k{0}; k < 8192; ++k) {
       std::uint32_t rk{MakeReal(k)};
       u.u32 = rk;
       float fk{u.f};
-      RealKind4 y{Integer<32>{std::uint64_t{rk}}};
+      Real4 y{Integer4{std::uint64_t{rk}}};
       {
-        ValueWithRealFlags<RealKind4> sum{x.Add(y, rounding)};
+        ValueWithRealFlags<Real4> sum{x.Add(y, rounding)};
         fpenv.ClearFlags();
         float fcheck{fj + fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
@@ -243,7 +249,7 @@ void subset32bit(int pass, Rounding rounding) {
         ("%d 0x%x + 0x%x", pass, rj, rk);
       }
       {
-        ValueWithRealFlags<RealKind4> diff{x.Subtract(y, rounding)};
+        ValueWithRealFlags<Real4> diff{x.Subtract(y, rounding)};
         fpenv.ClearFlags();
         float fcheck{fj - fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
@@ -255,7 +261,7 @@ void subset32bit(int pass, Rounding rounding) {
         ("%d 0x%x - 0x%x", pass, rj, rk);
       }
       {
-        ValueWithRealFlags<RealKind4> prod{x.Multiply(y, rounding)};
+        ValueWithRealFlags<Real4> prod{x.Multiply(y, rounding)};
         fpenv.ClearFlags();
         float fcheck{fj * fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
@@ -267,7 +273,7 @@ void subset32bit(int pass, Rounding rounding) {
         ("%d 0x%x * 0x%x -> 0x%x", pass, rj, rk, rcheck);
       }
       {
-        ValueWithRealFlags<RealKind4> quot{x.Divide(y, rounding)};
+        ValueWithRealFlags<Real4> quot{x.Divide(y, rounding)};
         fpenv.ClearFlags();
         float fcheck{fj / fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
@@ -283,11 +289,11 @@ void subset32bit(int pass, Rounding rounding) {
 }
 
 void roundTest(int rm, Rounding rounding) {
-  basicTests<RealKind2>(rm, rounding);
-  basicTests<RealKind4>(rm, rounding);
-  basicTests<RealKind8>(rm, rounding);
-  basicTests<RealKind10>(rm, rounding);
-  basicTests<RealKind16>(rm, rounding);
+  basicTests<Real2>(rm, rounding);
+  basicTests<Real4>(rm, rounding);
+  basicTests<Real8>(rm, rounding);
+  basicTests<Real10>(rm, rounding);
+  basicTests<Real16>(rm, rounding);
   ScopedHostFloatingPointEnvironment::SetRounding(rounding);
   subset32bit(rm, rounding);
 }

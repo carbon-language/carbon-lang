@@ -75,6 +75,10 @@ enum class RealFlag {
 using RealFlags = semantics::EnumSet<RealFlag, 5>;
 
 template<typename A> struct ValueWithRealFlags {
+  A AccumulateFlags(RealFlags &f) {
+    f |= flags;
+    return value;
+  }
   A value;
   RealFlags flags;
 };

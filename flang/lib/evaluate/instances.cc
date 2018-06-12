@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "complex.h"
 #include "integer.h"
 #include "logical.h"
 #include "real.h"
@@ -22,6 +23,7 @@ template class Integer<8>;
 template class Integer<16>;
 template class Integer<32>;
 template class Integer<64>;
+template class Integer<80>;
 template class Integer<128>;
 
 template class Real<Integer<16>, 11>;
@@ -29,6 +31,12 @@ template class Real<Integer<32>, 24>;
 template class Real<Integer<64>, 53>;
 template class Real<Integer<80>, 64, false>;
 template class Real<Integer<128>, 112>;
+
+template class Complex<Real<Integer<16>, 11>>;
+template class Complex<Real<Integer<32>, 24>>;
+template class Complex<Real<Integer<64>, 53>>;
+template class Complex<Real<Integer<80>, 64, false>>;
+template class Complex<Real<Integer<128>, 112>>;
 
 template class Logical<8>;
 template class Logical<16>;

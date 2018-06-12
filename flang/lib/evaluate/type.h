@@ -19,6 +19,7 @@
 // representation types in the evaluation library for ease of template
 // programming.
 
+#include "complex.h"
 #include "integer.h"
 #include "logical.h"
 #include "real.h"
@@ -39,19 +40,19 @@ template<> struct Real<2> {
   static constexpr Classification classification{Classification::Real};
   static constexpr int kind{2};
   static constexpr bool hasLen{false};
-  using ValueType = value::Real<value::Integer<16>, 11>;
+  using ValueType = value::Real<typename Integer<kind>::ValueType, 11>;
 };
 template<> struct Real<4> {
   static constexpr Classification classification{Classification::Real};
   static constexpr int kind{4};
   static constexpr bool hasLen{false};
-  using ValueType = value::Real<value::Integer<32>, 24>;
+  using ValueType = value::Real<typename Integer<kind>::ValueType, 24>;
 };
 template<> struct Real<8> {
   static constexpr Classification classification{Classification::Real};
   static constexpr int kind{8};
   static constexpr bool hasLen{false};
-  using ValueType = value::Real<value::Integer<64>, 53>;
+  using ValueType = value::Real<typename Integer<kind>::ValueType, 53>;
 };
 template<> struct Real<10> {
   static constexpr Classification classification{Classification::Real};
@@ -63,17 +64,15 @@ template<> struct Real<16> {
   static constexpr Classification classification{Classification::Real};
   static constexpr int kind{16};
   static constexpr bool hasLen{false};
-  using ValueType = value::Real<value::Integer<128>, 112>;
+  using ValueType = value::Real<typename Integer<kind>::ValueType, 112>;
 };
 
-#if 0  // TODO
 template<int KIND> struct Complex {
   static constexpr Classification classification{Classification::Complex};
   static constexpr int kind{KIND};
   static constexpr bool hasLen{false};
-  using ValueType = value::Complex<8 * kind>;
+  using ValueType = value::Complex<typename Real<(8 * kind / 2)>::ValueType>;
 };
-#endif
 
 template<int KIND> struct Logical {
   static constexpr Classification classification{Classification::Logical};
@@ -100,9 +99,7 @@ template<int KIND> struct Character {
 using DefaultReal = Real<4>;
 using DefaultInteger = Integer<DefaultReal::kind>;
 using IntrinsicTypeParameterType = DefaultInteger;
-#if 0  // TODO
 using DefaultComplex = Complex<2 * DefaultReal::kind>;
-#endif
 using DefaultLogical = Logical<DefaultReal::kind>;
 #if 0  // TODO
 using DefaultCharacter = Character<1>;
