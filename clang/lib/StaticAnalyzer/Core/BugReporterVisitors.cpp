@@ -616,6 +616,7 @@ class ReturnVisitor : public BugReporterVisitorImpl<ReturnVisitor> {
   } Mode = Initial;
 
   bool EnableNullFPSuppression;
+  bool ShouldInvalidate = true;
 
 public:
   ReturnVisitor(const StackFrameContext *Frame, bool Suppressed)
@@ -845,7 +846,7 @@ public:
 
       if (bugreporter::trackNullOrUndefValue(N, ArgE, BR, /*IsArg=*/true,
                                              EnableNullFPSuppression))
-        BR.removeInvalidation(ReturnVisitor::getTag(), StackFrame);
+        ShouldInvalidate = false;
 
       // If we /can't/ track the null pointer, we should err on the side of
       // false negatives, and continue towards marking this report invalid.
@@ -873,7 +874,7 @@ public:
 
   void finalizeVisitor(BugReporterContext &BRC, const ExplodedNode *N,
                        BugReport &BR) override {
-    if (EnableNullFPSuppression)
+    if (EnableNullFPSuppression && ShouldInvalidate)
       BR.markInvalid(ReturnVisitor::getTag(), StackFrame);
   }
 };
