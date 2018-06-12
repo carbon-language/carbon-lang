@@ -658,6 +658,22 @@ static bool isZeroEltBroadcastVectorMask(ArrayRef<int> Mask) {
   return true;
 }
 
+static bool isIdentityVectorMask(ArrayRef<int> Mask) {
+  bool IdentityLHS = true;
+  bool IdentityRHS = true;
+  unsigned MaskSize = Mask.size();
+
+  // Example: shufflevector A, B, <0,1,u,3>
+  // Example: shufflevector A, B, <4,u,6,u>
+  for (unsigned i = 0; i < MaskSize && (IdentityLHS || IdentityRHS); ++i) {
+    if (Mask[i] < 0)
+      continue;
+    IdentityLHS &= (Mask[i] == i);
+    IdentityRHS &= (Mask[i] == (i + MaskSize));
+  }
+  return IdentityLHS || IdentityRHS;
+}
+
 static bool isAlternateVectorMask(ArrayRef<int> Mask) {
   bool isAlternate = true;
   unsigned MaskSize = Mask.size();
@@ -1213,9 +1229,13 @@ int TargetTransformInfo::getInstructionThroughput(const Instruction *I) const {
     SmallVector<int, 16> Mask = Shuffle->getShuffleMask();
 
     if (NumVecElems == Mask.size()) {
+      if (isIdentityVectorMask(Mask))
+        return 0;
+
       if (isReverseVectorMask(Mask))
         return TTIImpl->getShuffleCost(TargetTransformInfo::SK_Reverse,
                                        VecTypOp0, 0, nullptr);
+
       if (isAlternateVectorMask(Mask))
         return TTIImpl->getShuffleCost(TargetTransformInfo::SK_Alternate,
                                        VecTypOp0, 0, nullptr);
