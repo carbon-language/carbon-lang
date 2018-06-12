@@ -115,8 +115,7 @@ public:
     return result;
   }
 
-  template<typename INT>
-  constexpr INT EXPONENT() const {
+  template<typename INT> constexpr INT EXPONENT() const {
     std::uint64_t exponent{Exponent()};
     if (exponent == maxExponent) {
       return INT::HUGE();
@@ -171,7 +170,8 @@ public:
         if (lshift + precision >= result.value.bits) {
           result.flags.set(RealFlag::Overflow);
         } else {
-          result.value = result.value.ConvertUnsigned(fraction).value.SHIFTL(lshift);
+          result.value =
+              result.value.ConvertUnsigned(fraction).value.SHIFTL(lshift);
         }
       }
       if (result.flags.test(RealFlag::Overflow)) {
@@ -680,21 +680,11 @@ private:
   Word word_{};  // an Integer<>
 };
 
-using RealKind2 = Real<Integer<16>, 11>;
 extern template class Real<Integer<16>, 11>;
-
-using RealKind4 = Real<Integer<32>, 24>;
 extern template class Real<Integer<32>, 24>;
-
-using RealKind8 = Real<Integer<64>, 53>;
 extern template class Real<Integer<64>, 53>;
-
-using RealKind10 = Real<Integer<80>, 64, false>;  // 80387 extended precision
-extern template class Real<Integer<80>, 64, false>;
-
-using RealKind16 = Real<Integer<128>, 112>;
+extern template class Real<Integer<80>, 64, false>;  // 80387 extended precision
 extern template class Real<Integer<128>, 112>;
-
 // N.B. No "double-double" support.
 
 }  // namespace Fortran::evaluate::value

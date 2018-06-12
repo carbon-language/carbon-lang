@@ -29,9 +29,7 @@ public:
   // For static expression evaluation, all the bits will have the same value.
   constexpr bool IsTrue() const { return word_.BTEST(0); }
 
-  constexpr Logical NOT() const {
-    return {word_.NOT()};
-  }
+  constexpr Logical NOT() const { return {word_.NOT()}; }
 
   constexpr Logical AND(const Logical &that) const {
     return {word_.IAND(that.word_)};
@@ -41,9 +39,7 @@ public:
     return {word_.IOR(that.word_)};
   }
 
-  constexpr Logical EQV(const Logical &that) const {
-    return NEQV(that).NOT();
-  }
+  constexpr Logical EQV(const Logical &that) const { return NEQV(that).NOT(); }
 
   constexpr Logical NEQV(const Logical &that) const {
     return {word_.IEOR(that.word_)};

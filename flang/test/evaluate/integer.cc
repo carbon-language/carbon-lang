@@ -16,8 +16,8 @@
 #include "testing.h"
 #include <cstdio>
 
-using Fortran::evaluate::value::Integer;
 using Fortran::evaluate::Ordering;
+using Fortran::evaluate::value::Integer;
 
 template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
   std::uint64_t maxUnsignedValue{(std::uint64_t{1} << BITS) - 1};
