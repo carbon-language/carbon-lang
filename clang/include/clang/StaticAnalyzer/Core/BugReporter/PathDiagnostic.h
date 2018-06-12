@@ -296,6 +296,12 @@ public:
   }
 
   const Stmt *asStmt() const { assert(isValid()); return S; }
+  const Stmt *getStmtOrNull() const {
+    if (!isValid())
+      return nullptr;
+    return asStmt();
+  }
+
   const Decl *asDecl() const { assert(isValid()); return D; }
 
   bool hasRange() const { return K == StmtK || K == RangeK || K == DeclK; }

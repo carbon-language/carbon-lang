@@ -1338,12 +1338,6 @@ static bool generatePathDiagnostics(
   return true;
 }
 
-static const Stmt *getLocStmt(PathDiagnosticLocation L) {
-  if (!L.isValid())
-    return nullptr;
-  return L.asStmt();
-}
-
 static const Stmt *getStmtParent(const Stmt *S, const ParentMap &PM) {
   if (!S)
     return nullptr;
@@ -1448,7 +1442,7 @@ static void addContextEdges(PathPieces &pieces, SourceManager &SM,
     // This is important for nested logical expressions (||, &&, ?:) where we
     // want to show all the levels of context.
     while (true) {
-      const Stmt *Dst = getLocStmt(Piece->getEndLocation());
+      const Stmt *Dst = Piece->getEndLocation().getStmtOrNull();
 
       // We are looking at an edge. Is the destination within a larger
       // expression?
@@ -1471,9 +1465,11 @@ static void addContextEdges(PathPieces &pieces, SourceManager &SM,
         auto *PrevPiece = dyn_cast<PathDiagnosticControlFlowPiece>(Prev->get());
 
         if (PrevPiece) {
-          if (const Stmt *PrevSrc = getLocStmt(PrevPiece->getStartLocation())) {
+          if (const Stmt *PrevSrc =
+                  PrevPiece->getStartLocation().getStmtOrNull()) {
             const Stmt *PrevSrcParent = getStmtParent(PrevSrc, PM);
-            if (PrevSrcParent == getStmtParent(getLocStmt(DstContext), PM)) {
+            if (PrevSrcParent ==
+                getStmtParent(DstContext.getStmtOrNull(), PM)) {
               PrevPiece->setEndLocation(DstContext);
               break;
             }
@@ -1509,8 +1505,8 @@ static void simplifySimpleBranches(PathPieces &pieces) {
     if (!PieceI)
       continue;
 
-    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
-    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
+    const Stmt *s1Start = PieceI->getStartLocation().getStmtOrNull();
+    const Stmt *s1End   = PieceI->getEndLocation().getStmtOrNull();
 
     if (!s1Start || !s1End)
       continue;
@@ -1543,8 +1539,8 @@ static void simplifySimpleBranches(PathPieces &pieces) {
     if (!PieceNextI)
       continue;
 
-    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
-    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
+    const Stmt *s2Start = PieceNextI->getStartLocation().getStmtOrNull();
+    const Stmt *s2End   = PieceNextI->getEndLocation().getStmtOrNull();
 
     if (!s2Start || !s2End || s1End != s2Start)
       continue;
@@ -1634,8 +1630,8 @@ static void removeContextCycles(PathPieces &Path, SourceManager &SM,
       continue;
     }
 
-    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
-    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
+    const Stmt *s1Start = PieceI->getStartLocation().getStmtOrNull();
+    const Stmt *s1End   = PieceI->getEndLocation().getStmtOrNull();
 
     PathPieces::iterator NextI = I; ++NextI;
     if (NextI == E)
@@ -1658,8 +1654,8 @@ static void removeContextCycles(PathPieces &Path, SourceManager &SM,
       }
     }
 
-    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
-    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
+    const Stmt *s2Start = PieceNextI->getStartLocation().getStmtOrNull();
+    const Stmt *s2End   = PieceNextI->getEndLocation().getStmtOrNull();
 
     if (s1Start && s2Start && s1Start == s2End && s2Start == s1End) {
       const size_t MAX_SHORT_LINE_LENGTH = 80;
@@ -1702,8 +1698,8 @@ static void removePunyEdges(PathPieces &path, SourceManager &SM,
     if (!PieceI)
       continue;
 
-    const Stmt *start = getLocStmt(PieceI->getStartLocation());
-    const Stmt *end   = getLocStmt(PieceI->getEndLocation());
+    const Stmt *start = PieceI->getStartLocation().getStmtOrNull();
+    const Stmt *end   = PieceI->getEndLocation().getStmtOrNull();
 
     if (!start || !end)
       continue;
@@ -1794,8 +1790,8 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
       continue;
     }
 
-    const Stmt *s1Start = getLocStmt(PieceI->getStartLocation());
-    const Stmt *s1End   = getLocStmt(PieceI->getEndLocation());
+    const Stmt *s1Start = PieceI->getStartLocation().getStmtOrNull();
+    const Stmt *s1End   = PieceI->getEndLocation().getStmtOrNull();
     const Stmt *level1 = getStmtParent(s1Start, PM);
     const Stmt *level2 = getStmtParent(s1End, PM);
 
@@ -1810,8 +1806,8 @@ static bool optimizeEdges(PathPieces &path, SourceManager &SM,
       continue;
     }
 
-    const Stmt *s2Start = getLocStmt(PieceNextI->getStartLocation());
-    const Stmt *s2End   = getLocStmt(PieceNextI->getEndLocation());
+    const Stmt *s2Start = PieceNextI->getStartLocation().getStmtOrNull();
+    const Stmt *s2End   = PieceNextI->getEndLocation().getStmtOrNull();
     const Stmt *level3 = getStmtParent(s2Start, PM);
     const Stmt *level4 = getStmtParent(s2End, PM);
 
@@ -3089,85 +3085,4 @@ BugType *BugReporter::getBugTypeForName(CheckName CheckName, StringRef name,
   if (!BT)
     BT = new BugType(CheckName, name, category);
   return BT;
-}
-
-LLVM_DUMP_METHOD void PathPieces::dump() const {
-  unsigned index = 0;
-  for (PathPieces::const_iterator I = begin(), E = end(); I != E; ++I) {
-    llvm::errs() << "[" << index++ << "]  ";
-    (*I)->dump();
-    llvm::errs() << "\n";
-  }
-}
-
-LLVM_DUMP_METHOD void PathDiagnosticCallPiece::dump() const {
-  llvm::errs() << "CALL\n--------------\n";
-
-  if (const Stmt *SLoc = getLocStmt(getLocation()))
-    SLoc->dump();
-  else if (const auto *ND = dyn_cast<NamedDecl>(getCallee()))
-    llvm::errs() << *ND << "\n";
-  else
-    getLocation().dump();
-}
-
-LLVM_DUMP_METHOD void PathDiagnosticEventPiece::dump() const {
-  llvm::errs() << "EVENT\n--------------\n";
-  llvm::errs() << getString() << "\n";
-  llvm::errs() << " ---- at ----\n";
-  getLocation().dump();
-}
-
-LLVM_DUMP_METHOD void PathDiagnosticControlFlowPiece::dump() const {
-  llvm::errs() << "CONTROL\n--------------\n";
-  getStartLocation().dump();
-  llvm::errs() << " ---- to ----\n";
-  getEndLocation().dump();
-}
-
-LLVM_DUMP_METHOD void PathDiagnosticMacroPiece::dump() const {
-  llvm::errs() << "MACRO\n--------------\n";
-  // FIXME: Print which macro is being invoked.
-}
-
-LLVM_DUMP_METHOD void PathDiagnosticNotePiece::dump() const {
-  llvm::errs() << "NOTE\n--------------\n";
-  llvm::errs() << getString() << "\n";
-  llvm::errs() << " ---- at ----\n";
-  getLocation().dump();
-}
-
-LLVM_DUMP_METHOD void PathDiagnosticLocation::dump() const {
-  if (!isValid()) {
-    llvm::errs() << "<INVALID>\n";
-    return;
-  }
-
-  switch (K) {
-  case RangeK:
-    // FIXME: actually print the range.
-    llvm::errs() << "<range>\n";
-    break;
-  case SingleLocK:
-    asLocation().dump();
-    llvm::errs() << "\n";
-    break;
-  case StmtK:
-    if (S)
-      S->dump();
-    else
-      llvm::errs() << "<NULL STMT>\n";
-    break;
-  case DeclK:
-    if (const auto *ND = dyn_cast_or_null<NamedDecl>(D))
-      llvm::errs() << *ND << "\n";
-    else if (isa<BlockDecl>(D))
-      // FIXME: Make this nicer.
-      llvm::errs() << "<block>\n";
-    else if (D)
-      llvm::errs() << "<unknown decl>\n";
-    else
-      llvm::errs() << "<NULL DECL>\n";
-    break;
-  }
 }
