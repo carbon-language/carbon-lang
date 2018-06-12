@@ -475,7 +475,7 @@ static int merge_main(int argc, const char *argv[]) {
       cl::values(
           clEnumValN(PF_Raw_Binary, "binary", "Binary encoding (default)"),
           clEnumValN(PF_Compact_Binary, "compbinary",
-                     "Compact binary encoding (default)"),
+                     "Compact binary encoding"),
           clEnumValN(PF_Text, "text", "Text encoding"),
           clEnumValN(PF_GCC, "gcc",
                      "GCC encoding (only meaningful for -sample)")));
