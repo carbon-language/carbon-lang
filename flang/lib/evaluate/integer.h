@@ -26,13 +26,12 @@
 #include "bit-population-count.h"
 #include "common.h"
 #include "leading-zero-bit-count.h"
-#include "type.h"
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <type_traits>
 
-namespace Fortran::evaluate {
+namespace Fortran::evaluate::value {
 
 // Implements an integer as an assembly of smaller host integer parts
 // that constitute the digits of a large-radix fixed-point number.
@@ -124,6 +123,19 @@ public:
     SetLEPart(parts - 1, n);
   }
 
+  constexpr Integer &operator=(const Integer &) = default;
+
+  // Left-justified mask (e.g., MASKL(1) has only its sign bit set)
+  static constexpr Integer MASKL(int places) {
+    if (places <= 0) {
+      return {};
+    } else if (places >= bits) {
+      return MASKR(bits);
+    } else {
+      return MASKR(bits - places).NOT();
+    }
+  }
+
   // Right-justified mask (e.g., MASKR(1) == 1, MASKR(2) == 3, &c.)
   static constexpr Integer MASKR(int places) {
     Integer result{nullptr};
@@ -146,17 +158,6 @@ public:
       result.LEPart(j) = 0;
     }
     return result;
-  }
-
-  // Left-justified mask (e.g., MASKL(1) has only its sign bit set)
-  static constexpr Integer MASKL(int places) {
-    if (places <= 0) {
-      return {};
-    } else if (places >= bits) {
-      return MASKR(bits);
-    } else {
-      return MASKR(bits - places).NOT();
-    }
   }
 
   static constexpr ValueWithOverflow ReadUnsigned(
@@ -191,10 +192,8 @@ public:
     return {result, overflow};
   }
 
-  constexpr Integer &operator=(const Integer &) = default;
-
   template<typename FROM>
-  static constexpr ValueWithOverflow Convert(const FROM &that) {
+  static constexpr ValueWithOverflow ConvertUnsigned(const FROM &that) {
     std::uint64_t field{that.ToUInt64()};
     ValueWithOverflow result{field, false};
     if constexpr (bits < 64) {
@@ -846,10 +845,5 @@ extern template class Integer<16>;
 extern template class Integer<32>;
 extern template class Integer<64>;
 extern template class Integer<128>;
-
-template<int KIND> using IntrinsicInteger = Integer<KIND * CHAR_BIT>;
-using DefaultIntrinsicInteger =
-    IntrinsicInteger<IntrinsicType::defaultIntegerKind>;
-
-}  // namespace Fortran::evaluate
+}  // namespace Fortran::evaluate::value
 #endif  // FORTRAN_EVALUATE_INTEGER_H_

@@ -20,7 +20,7 @@
 #include <cinttypes>
 #include <limits>
 
-namespace Fortran::evaluate {
+namespace Fortran::evaluate::value {
 
 // Models IEEE-754 floating-point numbers.  The first argument to this
 // class template must be (or look like) an instance of Integer.
@@ -59,11 +59,11 @@ public:
     int bitsNeeded{absN.bits - (leadz + implicitMSB)};
     int bitsLost{bitsNeeded - significandBits};
     if (bitsLost <= 0) {
-      Fraction fraction{Fraction::Convert(absN).value};
+      Fraction fraction{Fraction::ConvertUnsigned(absN).value};
       result.flags |= result.value.Normalize(
           isNegative, exponent, fraction.SHIFTL(-bitsLost));
     } else {
-      Fraction fraction{Fraction::Convert(absN.SHIFTR(bitsLost)).value};
+      Fraction fraction{Fraction::ConvertUnsigned(absN.SHIFTR(bitsLost)).value};
       result.flags |= result.value.Normalize(isNegative, exponent, fraction);
       RoundingBits roundingBits{absN, bitsLost};
       result.flags |= result.value.Round(rounding, roundingBits);
@@ -115,10 +115,11 @@ public:
     return result;
   }
 
-  constexpr DefaultIntrinsicInteger EXPONENT() const {
+  template<typename INT>
+  constexpr INT EXPONENT() const {
     std::uint64_t exponent{Exponent()};
     if (exponent == maxExponent) {
-      return DefaultIntrinsicInteger::HUGE();
+      return INT::HUGE();
     } else {
       return {static_cast<std::int64_t>(exponent - exponentBias)};
     }
@@ -159,7 +160,7 @@ public:
         if (!fraction.IBITS(0, rshift).IsZero()) {
           result.flags.set(RealFlag::Inexact);
         }
-        auto truncated = result.value.Convert(fraction.SHIFTR(rshift));
+        auto truncated = result.value.ConvertUnsigned(fraction.SHIFTR(rshift));
         if (truncated.overflow) {
           result.flags.set(RealFlag::Overflow);
         } else {
@@ -170,7 +171,7 @@ public:
         if (lshift + precision >= result.value.bits) {
           result.flags.set(RealFlag::Overflow);
         } else {
-          result.value = result.value.Convert(fraction).value.SHIFTL(lshift);
+          result.value = result.value.ConvertUnsigned(fraction).value.SHIFTL(lshift);
         }
       }
       if (result.flags.test(RealFlag::Overflow)) {
@@ -516,11 +517,11 @@ private:
   };
 
   constexpr Significand GetSignificand() const {
-    return Significand::Convert(word_).value;
+    return Significand::ConvertUnsigned(word_).value;
   }
 
   constexpr Fraction GetFraction() const {
-    Fraction result{Fraction::Convert(word_).value};
+    Fraction result{Fraction::ConvertUnsigned(word_).value};
     if constexpr (!implicitMSB) {
       return result;
     } else {
@@ -616,7 +617,7 @@ private:
       word_ = Word{};
       exponent = 0;
     } else {
-      word_ = Word::Convert(fraction).value;
+      word_ = Word::ConvertUnsigned(fraction).value;
       if (lshift > 0) {
         word_ = word_.SHIFTL(lshift);
         if (roundingBits != nullptr) {
@@ -696,5 +697,5 @@ extern template class Real<Integer<128>, 112>;
 
 // N.B. No "double-double" support.
 
-}  // namespace Fortran::evaluate
+}  // namespace Fortran::evaluate::value
 #endif  // FORTRAN_EVALUATE_REAL_H_

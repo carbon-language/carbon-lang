@@ -19,6 +19,7 @@
 #include <cstdio>
 
 using namespace Fortran::evaluate;
+using namespace Fortran::evaluate::value;
 
 template<typename R> void basicTests(int rm, Rounding rounding) {
   char desc[64];

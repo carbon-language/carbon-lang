@@ -15,74 +15,73 @@
 #ifndef FORTRAN_EVALUATE_TYPE_H_
 #define FORTRAN_EVALUATE_TYPE_H_
 
-#include <cinttypes>
-#include <cstddef>
+// These definitions map Fortran's intrinsic types to their value
+// representation types in the evaluation library for ease of template
+// programming.
 
-namespace Fortran::evaluate {
+#include "integer.h"
+#include "logical.h"
+#include "real.h"
+
+namespace Fortran::evaluate::type {
+
+enum class Classification { Integer, Real, Complex, Character, Logical };
+
+template<int KIND> struct Integer {
+  static constexpr Classification classification{Classification::Integer};
+  static constexpr int kind{KIND};
+  static constexpr bool hasLen{false};
+  using ValueType = value::Integer<8 * kind>;
+};
+
+template<int KIND> struct Real {
+  static constexpr Classification classification{Classification::Real};
+  static constexpr int kind{KIND};
+  static constexpr bool hasLen{false};
+  using ValueType = value::Real<8 * K>;
+};
+
+#if 0  // TODO
+template<int KIND> struct Complex {
+  static constexpr Classification classification{Classification::Complex};
+  static constexpr int kind{KIND};
+  static constexpr bool hasLen{false};
+  using ValueType = value::Complex<8 * K>;
+};
+#endif
+
+template<int KIND> struct Logical {
+  static constexpr Classification classification{Classification::Logical};
+  static constexpr int kind{KIND};
+  static constexpr bool hasLen{false};
+  using ValueType = value::Logical<8 * K>;
+};
+
+#if 0  // TODO
+template<int KIND> struct Character {
+  static constexpr Classification classification{Classification::Character};
+  static constexpr int kind{KIND};
+  static constexpr bool hasLen{true};
+  using ValueType = value::Character<8 * K>;
+};
+#endif
 
 // Default REAL just simply has to be IEEE-754 single precision today.
 // It occupies one numeric storage unit by definition.  The default INTEGER
 // and default LOGICAL intrinsic types also have to occupy one numeric
-// storage unit, so their kinds are forced.  Default COMPLEX occupies
-// two numeric storage unit.
-using DefaultIntrinsicIntegerCType = std::int32_t;
+// storage unit, so their kinds are also forced.  Default COMPLEX occupies
+// two numeric storage units.
 
-class IntrinsicType {
-public:
-  enum class Classification { Integer, Real, Complex, Character, Logical };
-
-  // Default REAL just simply has to be IEEE-754 single precision today.
-  // It occupies one numeric storage unit by definition.  The default INTEGER
-  // and default LOGICAL intrinsic types also have to occupy one numeric
-  // storage unit, so their kinds are forced.  Default COMPLEX occupies
-  // two numeric storage unit.
-  using KindLenCType = DefaultIntrinsicIntegerCType;
-  static constexpr KindLenCType defaultRealKind{4};  // IEEE-754 single
-  static constexpr KindLenCType defaultIntegerKind{defaultRealKind};
-  static constexpr KindLenCType kindLenIntegerKind{defaultIntegerKind};
-  static constexpr KindLenCType defaultLogicalKind{defaultIntegerKind};
-
-  static constexpr IntrinsicType IntrinsicTypeParameterType() {
-    return IntrinsicType{Classification::Integer, kindLenIntegerKind};
-  }
-
-  IntrinsicType() = delete;
-  constexpr IntrinsicType(
-      Classification c, KindLenCType kind, KindLenCType len = 1)
-    : classification_{c}, kind_{kind}, len_{len} {}
-
-  // Defaulted kinds.
-  constexpr explicit IntrinsicType(Classification c)
-    : classification_{c}, kind_{-1} /* overridden immediately */ {
-    switch (c) {
-    case Classification::Integer: kind_ = defaultIntegerKind; break;
-    case Classification::Real: kind_ = defaultRealKind; break;
-    case Classification::Complex: kind_ = 2 * defaultRealKind; break;
-    case Classification::Character: kind_ = 1; break;
-    case Classification::Logical: kind_ = defaultLogicalKind; break;
-    }
-  }
-  constexpr IntrinsicType(const IntrinsicType &) = default;
-  constexpr IntrinsicType &operator=(const IntrinsicType &) = default;
-
-  constexpr Classification classification() const { return classification_; }
-  constexpr KindLenCType kind() const { return kind_; }
-  constexpr KindLenCType len() const { return len_; }
-
-  // Not necessarily the size of an aligned allocation of runtime memory.
-  constexpr std::size_t MinSizeInBytes() const {
-    std::size_t n = kind_;
-    if (classification_ == Classification::Character) {
-      n *= len_;
-    }
-    return n;
-  }
-
-private:
-  Classification classification_;
-  KindLenCType kind_;
-  KindLenCType len_{1};  // valid only for CHARACTER
-};
+using DefaultReal = Real<4>;
+using DefaultInteger = Integer<DefaultReal::kind>;
+using IntrinsicTypeParameterType = DefaultInteger;
+#if 0 // TODO
+using DefaultComplex = Complex<2 * DefaultReal::kind>;
+#endif
+using DefaultLogical = Logical<DefaultReal::kind>;
+#if 0 // TODO
+using DefaultCharacter = Character<1>;
+#endif
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

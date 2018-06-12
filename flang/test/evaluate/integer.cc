@@ -16,7 +16,7 @@
 #include "testing.h"
 #include <cstdio>
 
-using Fortran::evaluate::Integer;
+using Fortran::evaluate::value::Integer;
 using Fortran::evaluate::Ordering;
 
 template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {

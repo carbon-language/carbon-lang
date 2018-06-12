@@ -31,7 +31,7 @@ int Complete();
 #define COMPARE(x, rel, y) \
   testing::Compare(__FILE__, __LINE__, #x, #rel, #y, (x), (y))
 
-// Functions called by thesemacros; do not call directly.
+// Functions called by these macros; do not call directly.
 using FailureDetailPrinter = void (*)(const char *, ...);
 FailureDetailPrinter Test(
     const char *file, int line, const char *predicate, bool pass);

@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include "integer.h"
+#include "logical.h"
+#include "real.h"
 
-namespace Fortran::evaluate {
+namespace Fortran::evaluate::value {
 
 template class Integer<8>;
 template class Integer<16>;
@@ -22,7 +24,19 @@ template class Integer<32>;
 template class Integer<64>;
 template class Integer<128>;
 
-// Sanity checks intended to catch misconfiguration bugs
+template class Real<Integer<16>, 11>;
+template class Real<Integer<32>, 24>;
+template class Real<Integer<64>, 53>;
+template class Real<Integer<80>, 64, false>;
+template class Real<Integer<128>, 112>;
+
+template class Logical<8>;
+template class Logical<16>;
+template class Logical<32>;
+template class Logical<64>;
+template class Logical<128>;
+
+// Sanity checks against misconfiguration bugs
 static_assert(Integer<8>::partBits == 8);
 static_assert(std::is_same_v<typename Integer<8>::Part, std::uint8_t>);
 static_assert(Integer<16>::partBits == 16);
@@ -34,4 +48,4 @@ static_assert(std::is_same_v<typename Integer<64>::Part, std::uint32_t>);
 static_assert(Integer<128>::partBits == 32);
 static_assert(std::is_same_v<typename Integer<128>::Part, std::uint32_t>);
 
-}  // namespace Fortran::evaluate
+}  // namespace Fortran::evaluate::value
