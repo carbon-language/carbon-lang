@@ -335,6 +335,7 @@ public:
             MemRec->getValueAsDef("OpPrefix") ||
         RegRec->getValueAsDef("OpMap") != MemRec->getValueAsDef("OpMap") ||
         RegRec->getValueAsDef("OpSize") != MemRec->getValueAsDef("OpSize") ||
+        RegRec->getValueAsDef("AdSize") != MemRec->getValueAsDef("AdSize") ||
         RegRec->getValueAsBit("hasVEX_4V") !=
             MemRec->getValueAsBit("hasVEX_4V") ||
         RegRec->getValueAsBit("hasEVEX_K") !=
