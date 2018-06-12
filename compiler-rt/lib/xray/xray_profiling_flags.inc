@@ -1,4 +1,4 @@
-//===-- xray_flags.inc ------------------------------------------*- C++ -*-===//
+//===-- xray_profiling_flags.inc --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
