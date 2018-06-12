@@ -674,29 +674,25 @@ static bool isIdentityVectorMask(ArrayRef<int> Mask) {
   return IdentityLHS || IdentityRHS;
 }
 
-static bool isAlternateVectorMask(ArrayRef<int> Mask) {
-  bool isAlternate = true;
+static bool isSelectVectorMask(ArrayRef<int> Mask) {
+  bool IsSelect = true;
+  bool FoundLHS = false;
+  bool FoundRHS = false;
   unsigned MaskSize = Mask.size();
 
-  // Example: shufflevector A, B, <0,5,2,7>
-  for (unsigned i = 0; i < MaskSize && isAlternate; ++i) {
-    if (Mask[i] < 0)
-      continue;
-    isAlternate = Mask[i] == (int)((i & 1) ? MaskSize + i : i);
-  }
-
-  if (isAlternate)
-    return true;
-
-  isAlternate = true;
+  // Example: shufflevector A, B, <0,1,6,3>
   // Example: shufflevector A, B, <4,1,6,3>
-  for (unsigned i = 0; i < MaskSize && isAlternate; ++i) {
+  for (unsigned i = 0; i < MaskSize && IsSelect; ++i) {
     if (Mask[i] < 0)
       continue;
-    isAlternate = Mask[i] == (int)((i & 1) ? i : MaskSize + i);
+    bool IsLHS = (Mask[i] == (int)i);
+    bool IsRHS = (Mask[i] == (int)(i + MaskSize));
+    FoundLHS |= IsLHS;
+    FoundRHS |= IsRHS;
+    IsSelect = IsLHS || IsRHS;
   }
-
-  return isAlternate;
+  // If we don't use both vectors this is really an Identity mask.
+  return IsSelect && FoundLHS && FoundRHS;
 }
 
 static bool isTransposeVectorMask(ArrayRef<int> Mask) {
@@ -1236,8 +1232,8 @@ int TargetTransformInfo::getInstructionThroughput(const Instruction *I) const {
         return TTIImpl->getShuffleCost(TargetTransformInfo::SK_Reverse,
                                        VecTypOp0, 0, nullptr);
 
-      if (isAlternateVectorMask(Mask))
-        return TTIImpl->getShuffleCost(TargetTransformInfo::SK_Alternate,
+      if (isSelectVectorMask(Mask))
+        return TTIImpl->getShuffleCost(TargetTransformInfo::SK_Select,
                                        VecTypOp0, 0, nullptr);
 
       if (isTransposeVectorMask(Mask))
