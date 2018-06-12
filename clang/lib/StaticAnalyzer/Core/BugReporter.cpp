@@ -534,30 +534,6 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
 }
 
 //===----------------------------------------------------------------------===//
-// "Visitors only" path diagnostic generation algorithm.
-//===----------------------------------------------------------------------===//
-static bool generateVisitorsOnlyPathDiagnostics(
-    PathDiagnostic &PD, PathDiagnosticBuilder &PDB, const ExplodedNode *N,
-    ArrayRef<std::unique_ptr<BugReporterVisitor>> visitors) {
-  // All path generation skips the very first node (the error node).
-  // This is because there is special handling for the end-of-path note.
-  N = N->getFirstPred();
-  if (!N)
-    return true;
-
-  BugReport *R = PDB.getBugReport();
-  while (const ExplodedNode *Pred = N->getFirstPred()) {
-    for (auto &V : visitors)
-      // Visit all the node pairs, but throw the path pieces away.
-      V->VisitNode(N, Pred, PDB, *R);
-
-    N = Pred;
-  }
-
-  return R->isValid();
-}
-
-//===----------------------------------------------------------------------===//
 // "Minimal" path diagnostic generation algorithm.
 //===----------------------------------------------------------------------===//
 using StackDiagPair =
@@ -1285,7 +1261,7 @@ static void generatePathDiagnosticsForNode(const ExplodedNode *N,
 
 /// There are two path diagnostics generation modes: with adding edges (used
 /// for plists) and without  (used for HTML and text).
-/// When edges are added (\p AddPathEdges),
+/// When edges are added (\p ActiveScheme is Extensive),
 /// the path is modified to insert artificially generated
 /// edges.
 /// Otherwise, more detailed diagnostics is emitted for block edges, explaining
@@ -1294,20 +1270,24 @@ static bool generatePathDiagnostics(
     PathDiagnostic &PD, PathDiagnosticBuilder &PDB, const ExplodedNode *N,
     LocationContextMap &LCM,
     ArrayRef<std::unique_ptr<BugReporterVisitor>> visitors,
-    bool AddPathEdges) {
+    PathDiagnosticConsumer::PathGenerationScheme ActiveScheme) {
   BugReport *report = PDB.getBugReport();
   StackDiagVector CallStack;
   InterestingExprs IE;
+  bool AddPathEdges = (ActiveScheme == PathDiagnosticConsumer::Extensive);
+  bool GenerateDiagnostics = (ActiveScheme != PathDiagnosticConsumer::None);
 
-  PathDiagnosticLocation PrevLoc = PD.getLocation();
+  PathDiagnosticLocation PrevLoc = GenerateDiagnostics ?
+    PD.getLocation() : PathDiagnosticLocation();
 
   const ExplodedNode *NextNode = N->getFirstPred();
   while (NextNode) {
     N = NextNode;
     NextNode = N->getFirstPred();
 
-    generatePathDiagnosticsForNode(
-        N, PD, PrevLoc, PDB, LCM, CallStack, IE, AddPathEdges);
+    if (GenerateDiagnostics)
+      generatePathDiagnosticsForNode(
+          N, PD, PrevLoc, PDB, LCM, CallStack, IE, AddPathEdges);
 
     if (!NextNode)
       continue;
@@ -1316,6 +1296,10 @@ static bool generatePathDiagnostics(
     llvm::FoldingSet<PathDiagnosticPiece> DeduplicationSet;
     for (auto &V : visitors) {
       if (auto p = V->VisitNode(N, NextNode, PDB, *report)) {
+
+        if (!GenerateDiagnostics)
+          continue;
+
         if (DeduplicationSet.GetOrInsertNode(p.get()) != p.get())
           continue;
 
@@ -1342,7 +1326,7 @@ static bool generatePathDiagnostics(
 
   // After constructing the full PathDiagnostic, do a pass over it to compact
   // PathDiagnosticPieces that occur within a macro.
-  if (!AddPathEdges)
+  if (!AddPathEdges && GenerateDiagnostics)
     CompactPathDiagnostic(PD.getMutablePieces(), PDB.getSourceManager());
 
   return true;
@@ -2599,19 +2583,7 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
       // hold onto old mappings.
       LCM.clear();
 
-      switch (ActiveScheme) {
-      case PathDiagnosticConsumer::Extensive:
-        generatePathDiagnostics(PD, PDB, N, LCM, visitors,
-                               /*AddPathEdges=*/true);
-        break;
-      case PathDiagnosticConsumer::Minimal:
-        generatePathDiagnostics(PD, PDB, N, LCM, visitors,
-                               /*AddPathEdges=*/false);
-        break;
-      case PathDiagnosticConsumer::None:
-        generateVisitorsOnlyPathDiagnostics(PD, PDB, N, visitors);
-        break;
-      }
+      generatePathDiagnostics(PD, PDB, N, LCM, visitors, ActiveScheme);
 
       // Clean up the visitors we used.
       visitors.clear();
