@@ -114,7 +114,16 @@ public:
 
   void HandlePathDiagnostic(std::unique_ptr<PathDiagnostic> D);
 
-  enum PathGenerationScheme { None, Minimal, Extensive, AlternateExtensive };
+  enum PathGenerationScheme {
+    /// Only runs visitors, no output generated.
+    None,
+
+    /// Used for HTML and text output.
+    Minimal,
+
+    /// Used for plist output, used for "arrows" generation.
+    Extensive,
+  };
 
   virtual PathGenerationScheme getGenerationScheme() const { return Minimal; }
   virtual bool supportsLogicalOpControlFlow() const { return false; }
