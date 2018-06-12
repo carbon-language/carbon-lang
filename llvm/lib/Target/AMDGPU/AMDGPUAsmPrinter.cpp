@@ -220,10 +220,26 @@ void AMDGPUAsmPrinter::EmitFunctionBodyEnd() {
       TM.getTargetTriple().getOS() != Triple::AMDHSA)
     return;
 
+  auto &Streamer = getTargetStreamer()->getStreamer();
+  auto &Context = Streamer.getContext();
+  auto &ObjectFileInfo = *Context.getObjectFileInfo();
+  auto &ReadOnlySection = *ObjectFileInfo.getReadOnlySection();
+
+  Streamer.PushSection();
+  Streamer.SwitchSection(&ReadOnlySection);
+
+  // CP microcode requires the kernel descriptor to be allocated on 64 byte
+  // alignment.
+  Streamer.EmitValueToAlignment(64, 0, 1, 0);
+  if (ReadOnlySection.getAlignment() < 64)
+    ReadOnlySection.setAlignment(64);
+
   SmallString<128> KernelName;
   getNameWithPrefix(KernelName, &MF->getFunction());
   getTargetStreamer()->EmitAmdhsaKernelDescriptor(
       KernelName, getAmdhsaKernelDescriptor(*MF, CurrentProgramInfo));
+
+  Streamer.PopSection();
 }
 
 void AMDGPUAsmPrinter::EmitFunctionEntryLabel() {

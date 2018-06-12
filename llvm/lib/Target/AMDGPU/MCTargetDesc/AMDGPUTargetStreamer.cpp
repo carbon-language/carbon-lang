@@ -374,17 +374,6 @@ void AMDGPUTargetELFStreamer::EmitAmdhsaKernelDescriptor(
     const amdhsa::kernel_descriptor_t &KernelDescriptor) {
   auto &Streamer = getStreamer();
   auto &Context = Streamer.getContext();
-  auto &ObjectFileInfo = *Context.getObjectFileInfo();
-  auto &ReadOnlySection = *ObjectFileInfo.getReadOnlySection();
-
-  Streamer.PushSection();
-  Streamer.SwitchSection(&ReadOnlySection);
-
-  // CP microcode requires the kernel descriptor to be allocated on 64 byte
-  // alignment.
-  Streamer.EmitValueToAlignment(64, 0, 1, 0);
-  if (ReadOnlySection.getAlignment() < 64)
-    ReadOnlySection.setAlignment(64);
 
   MCSymbolELF *KernelDescriptorSymbol = cast<MCSymbolELF>(
       Context.getOrCreateSymbol(Twine(KernelName) + Twine(".kd")));
@@ -419,6 +408,4 @@ void AMDGPUTargetELFStreamer::EmitAmdhsaKernelDescriptor(
       sizeof(KernelDescriptor) -
           offsetof(amdhsa::kernel_descriptor_t, kernel_code_entry_byte_offset) -
           sizeof(KernelDescriptor.kernel_code_entry_byte_offset)));
-
-  Streamer.PopSection();
 }

@@ -1,6 +1,16 @@
 ; RUN: llc -mtriple=amdgcn-amd-amdhsa -mcpu=gfx803 -mattr=+code-object-v3 < %s | FileCheck --check-prefixes=ALL-ASM,OSABI-AMDHSA-ASM %s
 ; RUN: llc -filetype=obj -mtriple=amdgcn-amd-amdhsa -mcpu=gfx803 -mattr=+code-object-v3 < %s | llvm-readobj -elf-output-style=GNU -notes -relocations -sections -symbols | FileCheck --check-prefixes=ALL-ELF,OSABI-AMDHSA-ELF %s
 
+; ALL-ASM-LABEL: {{^}}fadd:
+; OSABI-AMDHSA-ASM: s_endpgm
+; OSABI-AMDHSA-ASM: .section .rodata,#alloc
+; OSABI-AMDHSA-ASM: .p2align 6
+
+; ALL-ASM-LABEL: {{^}}fsub:
+; OSABI-AMDHSA-ASM: s_endpgm
+; OSABI-AMDHSA-ASM: .section .rodata,#alloc
+; OSABI-AMDHSA-ASM: .p2align 6
+
 ; OSABI-AMDHSA-ASM-NOT: .hsa_code_object_version
 ; OSABI-AMDHSA-ASM-NOT: .hsa_code_object_isa
 ; OSABI-AMDHSA-ASM-NOT: .amd_amdgpu_isa
