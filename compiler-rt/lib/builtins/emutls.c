@@ -96,7 +96,7 @@ static __inline emutls_address_array* emutls_getspecific() {
     return (emutls_address_array*) pthread_getspecific(emutls_pthread_key);
 }
 
-#else
+#else /* _WIN32 */
 
 #include <windows.h>
 #include <malloc.h>
@@ -222,11 +222,11 @@ static __inline void __atomic_store_n(void *ptr, uintptr_t val, unsigned type) {
     InterlockedExchangePointer((void *volatile *)ptr, (void *)val);
 }
 
-#endif
+#endif /* __ATOMIC_RELEASE */
 
 #pragma warning (pop)
 
-#endif
+#endif /* _WIN32 */
 
 static size_t emutls_num_object = 0;  /* number of allocated TLS objects */
 
@@ -314,11 +314,12 @@ static __inline void emutls_check_array_set_size(emutls_address_array *array,
  * which must be no smaller than the given index.
  */
 static __inline uintptr_t emutls_new_data_array_size(uintptr_t index) {
-   /* Need to allocate emutls_address_array with one extra slot
-    * to store the data array size.
+   /* Need to allocate emutls_address_array with extra slots
+    * to store the header.
     * Round up the emutls_address_array size to multiple of 16.
     */
-    return ((index + 1 + 15) & ~((uintptr_t)15)) - 1;
+    uintptr_t header_words = sizeof(emutls_address_array) / sizeof(void *);
+    return ((index + header_words + 15) & ~((uintptr_t)15)) - header_words;
 }
 
 /* Returns the size in bytes required for an emutls_address_array with
