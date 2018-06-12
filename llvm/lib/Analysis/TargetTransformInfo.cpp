@@ -668,8 +668,8 @@ static bool isIdentityVectorMask(ArrayRef<int> Mask) {
   for (unsigned i = 0; i < MaskSize && (IdentityLHS || IdentityRHS); ++i) {
     if (Mask[i] < 0)
       continue;
-    IdentityLHS &= (Mask[i] == i);
-    IdentityRHS &= (Mask[i] == (i + MaskSize));
+    IdentityLHS &= (Mask[i] == (int)i);
+    IdentityRHS &= (Mask[i] == (int)(i + MaskSize));
   }
   return IdentityLHS || IdentityRHS;
 }
