@@ -294,7 +294,7 @@ ErrorOr<std::unique_ptr<SampleProfileWriter>>
 SampleProfileWriter::create(StringRef Filename, SampleProfileFormat Format) {
   std::error_code EC;
   std::unique_ptr<raw_ostream> OS;
-  if (Format == SPF_Raw_Binary || Format == SPF_Compact_Binary)
+  if (Format == SPF_Binary || Format == SPF_Compact_Binary)
     OS.reset(new raw_fd_ostream(Filename, EC, sys::fs::F_None));
   else
     OS.reset(new raw_fd_ostream(Filename, EC, sys::fs::F_Text));
@@ -317,7 +317,7 @@ SampleProfileWriter::create(std::unique_ptr<raw_ostream> &OS,
   std::error_code EC;
   std::unique_ptr<SampleProfileWriter> Writer;
 
-  if (Format == SPF_Raw_Binary)
+  if (Format == SPF_Binary)
     Writer.reset(new SampleProfileWriterRawBinary(OS));
   else if (Format == SPF_Compact_Binary)
     Writer.reset(new SampleProfileWriterCompactBinary(OS));

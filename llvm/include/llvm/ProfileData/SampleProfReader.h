@@ -426,7 +426,7 @@ private:
 
 public:
   SampleProfileReaderRawBinary(std::unique_ptr<MemoryBuffer> B, LLVMContext &C)
-      : SampleProfileReaderBinary(std::move(B), C, SPF_Raw_Binary) {}
+      : SampleProfileReaderBinary(std::move(B), C, SPF_Binary) {}
 
   /// \brief Return true if \p Buffer is in the format supported by this class.
   static bool hasFormat(const MemoryBuffer &Buffer);

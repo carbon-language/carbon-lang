@@ -180,7 +180,7 @@ TEST_F(SampleProfTest, roundtrip_text_profile) {
 }
 
 TEST_F(SampleProfTest, roundtrip_raw_binary_profile) {
-  testRoundTrip(SampleProfileFormat::SPF_Raw_Binary);
+  testRoundTrip(SampleProfileFormat::SPF_Binary);
 }
 
 TEST_F(SampleProfTest, roundtrip_compact_binary_profile) {

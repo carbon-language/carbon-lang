@@ -83,10 +83,10 @@ enum SampleProfileFormat {
   SPF_Text = 0x1,
   SPF_Compact_Binary = 0x2,
   SPF_GCC = 0x3,
-  SPF_Raw_Binary = 0xff
+  SPF_Binary = 0xff
 };
 
-static inline uint64_t SPMagic(SampleProfileFormat Format = SPF_Raw_Binary) {
+static inline uint64_t SPMagic(SampleProfileFormat Format = SPF_Binary) {
   return uint64_t('S') << (64 - 8) | uint64_t('P') << (64 - 16) |
          uint64_t('R') << (64 - 24) | uint64_t('O') << (64 - 32) |
          uint64_t('F') << (64 - 40) | uint64_t('4') << (64 - 48) |
