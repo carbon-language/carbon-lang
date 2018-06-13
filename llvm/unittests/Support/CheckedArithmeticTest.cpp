@@ -32,6 +32,15 @@ TEST(CheckedArithmetic, CheckedMul) {
   EXPECT_EQ(checkedMul<int64_t>(10, 2), Optional<int64_t>(20));
 }
 
+TEST(CheckedArithmetic, CheckedMulAdd) {
+  const int64_t Max = std::numeric_limits<int64_t>::max();
+  const int64_t Min = std::numeric_limits<int64_t>::min();
+  EXPECT_EQ(checkedMulAdd<int64_t>(Max, 1, 2), None);
+  EXPECT_EQ(checkedMulAdd<int64_t>(1, 1, Max), None);
+  EXPECT_EQ(checkedMulAdd<int64_t>(1, -1, Min), None);
+  EXPECT_EQ(checkedMulAdd<int64_t>(10, 2, 3), Optional<int64_t>(23));
+}
+
 TEST(CheckedArithmetic, CheckedMulSmall) {
   const int16_t Max = std::numeric_limits<int16_t>::max();
   const int16_t Min = std::numeric_limits<int16_t>::min();
@@ -39,6 +48,15 @@ TEST(CheckedArithmetic, CheckedMulSmall) {
   EXPECT_EQ(checkedMul<int16_t>(Max, Max), None);
   EXPECT_EQ(checkedMul<int16_t>(Min, 2), None);
   EXPECT_EQ(checkedMul<int16_t>(10, 2), Optional<int16_t>(20));
+}
+
+TEST(CheckedArithmetic, CheckedMulAddSmall) {
+  const int16_t Max = std::numeric_limits<int16_t>::max();
+  const int16_t Min = std::numeric_limits<int16_t>::min();
+  EXPECT_EQ(checkedMulAdd<int16_t>(Max, 1, 2), None);
+  EXPECT_EQ(checkedMulAdd<int16_t>(1, 1, Max), None);
+  EXPECT_EQ(checkedMulAdd<int16_t>(1, -1, Min), None);
+  EXPECT_EQ(checkedMulAdd<int16_t>(10, 2, 3), Optional<int16_t>(23));
 }
 
 TEST(CheckedArithmetic, CheckedAddUnsigned) {
@@ -53,6 +71,13 @@ TEST(CheckedArithmetic, CheckedMulUnsigned) {
   EXPECT_EQ(checkedMulUnsigned<uint64_t>(Max, 2), llvm::None);
   EXPECT_EQ(checkedMulUnsigned<uint64_t>(Max, Max), llvm::None);
   EXPECT_EQ(checkedMulUnsigned<uint64_t>(10, 2), Optional<uint64_t>(20));
+}
+
+TEST(CheckedArithmetic, CheckedMulAddUnsigned) {
+  const uint64_t Max = std::numeric_limits<uint64_t>::max();
+  EXPECT_EQ(checkedMulAddUnsigned<uint64_t>(Max, 1, 2), None);
+  EXPECT_EQ(checkedMulAddUnsigned<uint64_t>(1, 1, Max), None);
+  EXPECT_EQ(checkedMulAddUnsigned<uint64_t>(10, 2, 3), Optional<uint64_t>(23));
 }
 
 

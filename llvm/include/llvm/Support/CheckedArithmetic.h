@@ -57,6 +57,16 @@ checkedMul(T LHS, T RHS) {
   return checkedOp(LHS, RHS, &llvm::APInt::smul_ov);
 }
 
+/// Multiply A and B, and add C to the resulting product.
+/// Return the value if available, None if overflowing.
+template <typename T>
+typename std::enable_if<std::is_signed<T>::value, llvm::Optional<T>>::type
+checkedMulAdd(T A, T B, T C) {
+  if (auto Product = checkedMul(A, B))
+    return checkedAdd(*Product, C);
+  return llvm::None;
+}
+
 /// Add two unsigned integers \p LHS and \p RHS, return wrapped result
 /// if available.
 template <typename T>
@@ -71,6 +81,16 @@ template <typename T>
 typename std::enable_if<std::is_unsigned<T>::value, llvm::Optional<T>>::type
 checkedMulUnsigned(T LHS, T RHS) {
   return checkedOp(LHS, RHS, &llvm::APInt::umul_ov, /*Signed=*/false);
+}
+
+/// Multiply unsigned A and B, and add C to the resulting product.
+/// Return the value if available, None if overflowing.
+template <typename T>
+typename std::enable_if<std::is_unsigned<T>::value, llvm::Optional<T>>::type
+checkedMulAddUnsigned(T A, T B, T C) {
+  if (auto Product = checkedMulUnsigned(A, B))
+    return checkedAddUnsigned(*Product, C);
+  return llvm::None;
 }
 
 } // End llvm namespace
