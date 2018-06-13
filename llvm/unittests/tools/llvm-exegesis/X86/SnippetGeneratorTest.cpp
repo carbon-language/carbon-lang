@@ -23,7 +23,8 @@ namespace {
 class X86SnippetGeneratorTest : public ::testing::Test {
 protected:
   X86SnippetGeneratorTest()
-      : MCInstrInfo(State.getInstrInfo()), MCRegisterInfo(State.getRegInfo()) {}
+      : State("x86_64-unknown-linux", "haswell"),
+        MCInstrInfo(State.getInstrInfo()), MCRegisterInfo(State.getRegInfo()) {}
 
   static void SetUpTestCase() {
     LLVMInitializeX86TargetInfo();
