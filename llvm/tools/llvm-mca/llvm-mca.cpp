@@ -523,6 +523,7 @@ int main(int argc, char **argv) {
 
     B.run();
     Printer.printReport(TOF->os());
+    TOF->os().flush();
   }
 
   TOF->keep();
