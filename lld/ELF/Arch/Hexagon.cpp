@@ -67,7 +67,7 @@ void Hexagon::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
   case R_HEX_NONE:
     break;
   case R_HEX_B22_PCREL:
-    or32le(Loc, applyMask(0x01ff3ffe, ((Val >> 2) & 0x3fffff)));
+    or32le(Loc, applyMask(0x1ff3ffe, Val >> 2));
     break;
   default:
     error(getErrorLocation(Loc) + "unrecognized reloc " + toString(Type));
