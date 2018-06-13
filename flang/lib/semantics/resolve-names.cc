@@ -586,16 +586,6 @@ public:
   bool Pre(const parser::CallStmt &);
   void Post(const parser::CallStmt &);
 
-  // TODO(tkeith): Needed for clang build only (!?)
-  bool Pre(const parser::ProcedureDeclarationStmt &stmt) {
-    return DeclarationVisitor::Pre(stmt) ||
-           ImplicitRulesVisitor::Pre(stmt);
-  }
-  void Post(const parser::ProcedureDeclarationStmt &stmt) {
-    DeclarationVisitor::Post(stmt);
-    ImplicitRulesVisitor::Post(stmt);
-  }
-
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
   std::optional<Symbol::Flag> expectedProcFlag_;
