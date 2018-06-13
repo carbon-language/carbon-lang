@@ -49,33 +49,30 @@ class LLVM_LIBRARY_VISIBILITY PPCTargetInfo : public TargetInfo {
   } ArchDefineTypes;
 
 
-  ArchDefineTypes ArchDefs;
+  ArchDefineTypes ArchDefs = ArchDefineNone;
   static const Builtin::Info BuiltinInfo[];
   static const char *const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   std::string CPU;
 
   // Target cpu features.
-  bool HasAltivec;
-  bool HasVSX;
-  bool HasP8Vector;
-  bool HasP8Crypto;
-  bool HasDirectMove;
-  bool HasQPX;
-  bool HasHTM;
-  bool HasBPERMD;
-  bool HasExtDiv;
-  bool HasP9Vector;
+  bool HasAltivec = false;
+  bool HasVSX = false;
+  bool HasP8Vector = false;
+  bool HasP8Crypto = false;
+  bool HasDirectMove = false;
+  bool HasQPX = false;
+  bool HasHTM = false;
+  bool HasBPERMD = false;
+  bool HasExtDiv = false;
+  bool HasP9Vector = false;
 
 protected:
   std::string ABI;
 
 public:
   PPCTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
-      : TargetInfo(Triple), HasAltivec(false), HasVSX(false),
-        HasP8Vector(false), HasP8Crypto(false), HasDirectMove(false),
-        HasQPX(false), HasHTM(false), HasBPERMD(false), HasExtDiv(false),
-        HasP9Vector(false), ArchDefs(ArchDefineNone) {
+      : TargetInfo(Triple) {
     SuitableAlign = 128;
     SimdDefaultAlign = 128;
     LongDoubleWidth = LongDoubleAlign = 128;
