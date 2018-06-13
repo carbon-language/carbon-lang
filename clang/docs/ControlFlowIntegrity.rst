@@ -104,10 +104,11 @@ dynamic type; that is, the dynamic type of the called object must be a
 derived class of the static type of the object used to make the call.
 This CFI scheme can be enabled on its own using ``-fsanitize=cfi-vcall``.
 
-For this scheme to work, all translation units containing the definition of
-a virtual member function (whether inline or not), other than members of
-:ref:`blacklisted <cfi-blacklist>` types, must be compiled with ``-flto``
-or ``-flto=thin`` enabled and be statically linked into the program.
+For this scheme to work, all translation units containing the definition
+of a virtual member function (whether inline or not), other than members
+of :ref:`blacklisted <cfi-blacklist>` types or types with public :doc:`LTO
+visibility <LTOVisibility>`, must be compiled with ``-flto`` or ``-flto=thin``
+enabled and be statically linked into the program.
 
 Performance
 -----------
