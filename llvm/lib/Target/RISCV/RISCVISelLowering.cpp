@@ -137,6 +137,9 @@ RISCVTargetLowering::RISCVTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::BlockAddress, XLenVT, Custom);
   setOperationAction(ISD::ConstantPool, XLenVT, Custom);
 
+  // Atomic operations aren't suported in the base RV32I ISA.
+  setMaxAtomicSizeInBitsSupported(0);
+
   setBooleanContents(ZeroOrOneBooleanContent);
 
   // Function alignments (log2).

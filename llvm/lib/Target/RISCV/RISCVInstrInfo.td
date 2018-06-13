@@ -743,6 +743,20 @@ defm : StPat<truncstorei8, SB, GPR>;
 defm : StPat<truncstorei16, SH, GPR>;
 defm : StPat<store, SW, GPR>;
 
+/// Fences
+
+// Refer to Table A.6 in the version 2.3 draft of the RISC-V Instruction Set
+// Manual: Volume I.
+
+// fence acquire -> fence r, rw
+def : Pat<(atomic_fence (i32 4), (imm)), (FENCE 0b10, 0b11)>;
+// fence release -> fence rw, w
+def : Pat<(atomic_fence (i32 5), (imm)), (FENCE 0b11, 0b1)>;
+// fence acq_rel -> fence.tso
+def : Pat<(atomic_fence (i32 6), (imm)), (FENCE_TSO)>;
+// fence seq_cst -> fence rw, rw
+def : Pat<(atomic_fence (i32 7), (imm)), (FENCE 0b11, 0b11)>;
+
 /// Other pseudo-instructions
 
 // Pessimistically assume the stack pointer will be clobbered
