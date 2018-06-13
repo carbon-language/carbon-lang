@@ -330,7 +330,7 @@ static DWARFDie toDie(const DWARFDebugNames::Entry &Entry,
   if (!CU)
     return DWARFDie();
 
-  if (Optional<uint64_t> DWOId = CU->getDWOId()) {
+  if (llvm::Optional<uint64_t> DWOId = CU->getDWOId()) {
     // This is a skeleton unit. Look up the DIE in the DWO unit.
     CU = DICtx.getDWOCompileUnitForHash(*DWOId);
     if (!CU)
