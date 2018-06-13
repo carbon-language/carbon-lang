@@ -14,4 +14,5 @@
 
 add_library(FortranEvaluate
   instances.cc
+  real.cc
 )

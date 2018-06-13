@@ -26,12 +26,6 @@ template class Integer<64>;
 template class Integer<80>;
 template class Integer<128>;
 
-template class Real<Integer<16>, 11>;
-template class Real<Integer<32>, 24>;
-template class Real<Integer<64>, 53>;
-template class Real<Integer<80>, 64, false>;
-template class Real<Integer<128>, 112>;
-
 template class Complex<Real<Integer<16>, 11>>;
 template class Complex<Real<Integer<32>, 24>>;
 template class Complex<Real<Integer<64>, 53>>;

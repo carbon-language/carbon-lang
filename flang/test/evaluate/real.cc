@@ -115,7 +115,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
     Integer8 ix{x};
     TEST(!ix.IsNegative())(ldesc);
     MATCH(x, ix.ToUInt64())(ldesc);
-    vr = R::ConvertSigned(ix, rounding);
+    vr = R::FromInteger(ix, rounding);
     TEST(!vr.value.IsNegative())(ldesc);
     TEST(!vr.value.IsNotANumber())(ldesc);
     TEST(!vr.value.IsZero())(ldesc);
@@ -137,7 +137,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
     std::int64_t nx = x;
     MATCH(x, ix.ToUInt64())(ldesc);
     MATCH(nx, ix.ToInt64())(ldesc);
-    vr = R::ConvertSigned(ix);
+    vr = R::FromInteger(ix);
     TEST(vr.value.IsNegative())(ldesc);
     TEST(!vr.value.IsNotANumber())(ldesc);
     TEST(!vr.value.IsZero())(ldesc);
@@ -209,7 +209,7 @@ void inttest(std::int64_t x, int pass, Rounding rounding) {
   ScopedHostFloatingPointEnvironment fpenv;
   Integer8 ix{x};
   ValueWithRealFlags<Real4> real;
-  real = real.value.ConvertSigned(ix, rounding);
+  real = real.value.FromInteger(ix, rounding);
 #ifndef __clang__  // broken and also slow
   fpenv.ClearFlags();
 #endif
