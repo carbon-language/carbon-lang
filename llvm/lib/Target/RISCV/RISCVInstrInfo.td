@@ -757,6 +757,12 @@ def : Pat<(atomic_fence (i32 6), (imm)), (FENCE_TSO)>;
 // fence seq_cst -> fence rw, rw
 def : Pat<(atomic_fence (i32 7), (imm)), (FENCE 0b11, 0b11)>;
 
+// Lowering for atomic load and store is defined in RISCVInstrInfoA.td.
+// Although these are lowered to fence+load/store instructions defined in the
+// base RV32I/RV64I ISA, this lowering is only used when the A extension is
+// present. This is necessary as it isn't valid to mix __atomic_* libcalls
+// with inline atomic operations for the same object.
+
 /// Other pseudo-instructions
 
 // Pessimistically assume the stack pointer will be clobbered
