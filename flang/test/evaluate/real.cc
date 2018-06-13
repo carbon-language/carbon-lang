@@ -157,8 +157,8 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
   }
 }
 
-// Takes a 13-bit number and distributes its bits across a 32-bit single
-// precision real.  All sign and exponent bit positions are tested, plus
+// Takes a 13-bit (or more) number and distributes its bits across a 32-bit
+// single precision real.  All sign and exponent bit positions are tested, plus
 // the upper two bits and lowest bit in the significand.  The middle bits
 // of the significand are either all zeroes or all ones.
 std::uint32_t MakeReal(std::uint32_t n) {
@@ -167,7 +167,10 @@ std::uint32_t MakeReal(std::uint32_t n) {
   std::uint32_t n10{(n >> 10) & 1};
   std::uint32_t n11{(n >> 11) & 1};
   std::uint32_t n12{(n >> 12) & 1};
-  return (n0_8 << 23) | (n9 << 22) | (n11 << 21) | (-n12 & 0x1ffffe) | n10;
+  std::uint32_t n13{(n >> 13) & 1};
+  std::uint32_t n14{(n >> 14) & 1};
+  return ((n0_8 << 23) | (n9 << 22) | (n11 << 21) | (n14 << 16) |
+          (n13 << 1) | n10) ^ -n12;
 }
 
 std::uint32_t NormalizeNaN(std::uint32_t x) {

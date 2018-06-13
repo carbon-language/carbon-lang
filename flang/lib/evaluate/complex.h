@@ -44,7 +44,8 @@ public:
   ValueWithRealFlags<Complex> Multiply(const Complex &) const;
   ValueWithRealFlags<Complex> Divide(const Complex &) const;
 
-  // TODO: (C)ABS, unit testing
+  // TODO: (C)ABS once Real::HYPOT is done
+  // TODO: unit testing
 
 private:
   Part re_, im_;

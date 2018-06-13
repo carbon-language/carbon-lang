@@ -107,8 +107,8 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Add(
   // Our exponent is greater than y's, or the exponents match and y is not
   // of the opposite sign and greater magnitude.  So (x+y) will have the
   // same sign as x.
-  Fraction yFraction{y.GetFraction()};
   Fraction fraction{GetFraction()};
+  Fraction yFraction{y.GetFraction()};
   int rshift = exponent - yExponent;
   if (exponent > 0 && yExponent == 0) {
     --rshift;  // correct overshift when only y is denormal
@@ -187,8 +187,8 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Multiply(
       product.upper = product.upper.DSHIFTL(product.lower, lshift);
       product.lower = product.lower.SHIFTL(lshift);
       RoundingBits roundingBits{product.lower, product.lower.bits};
-      NormalizeAndRound(
-          result, isNegative, exponent, product.upper, rounding, roundingBits);
+      NormalizeAndRound(result, isNegative, exponent, product.upper, rounding,
+          roundingBits, true /*multiply*/);
     }
   }
   return result;
@@ -266,19 +266,22 @@ template<typename W, int P, bool IM>
 RealFlags Real<W, P, IM>::Normalize(bool negative, std::uint64_t exponent,
     const Fraction &fraction, Rounding rounding, RoundingBits *roundingBits) {
   std::uint64_t lshift = fraction.LEADZ();
-  if (lshift < fraction.bits) {
-    if (lshift < exponent) {
-      exponent -= lshift;
-    } else if (exponent > 0) {
-      lshift = exponent - 1;
-      exponent = 0;
-    } else if (lshift == 0) {
-      exponent = 1;
-    } else {
-      lshift = 0;
-    }
+  if (lshift == fraction.bits /* fraction is zero */ &&
+      (roundingBits == nullptr || roundingBits->empty())) {
+    // No fraction, no rounding bits -> +/-0.0
+    exponent = lshift = 0;
+  } else if (lshift < exponent) {
+    exponent -= lshift;
+  } else if (exponent > 0) {
+    lshift = exponent - 1;
+    exponent = 0;
+  } else if (lshift == 0) {
+    exponent = 1;
+  } else {
+    lshift = 0;
   }
   if (exponent >= maxExponent) {
+    // Infinity or overflow
     if (rounding == Rounding::TiesToEven ||
         rounding == Rounding::TiesAwayFromZero ||
         (rounding == Rounding::Up && !negative) ||
@@ -286,7 +289,7 @@ RealFlags Real<W, P, IM>::Normalize(bool negative, std::uint64_t exponent,
       word_ = Word{maxExponent}.SHIFTL(significandBits);  // Inf
     } else {
       // directed rounding: round to largest finite value rather than infinity
-      // (x86 does this, not sure whether it's standard or not)
+      // (x86 does this, not sure whether it's standard behavior)
       word_ = Word{word_.MASKR(word_.bits - 1)}.IBCLR(significandBits);
     }
     if (negative) {
@@ -298,24 +301,18 @@ RealFlags Real<W, P, IM>::Normalize(bool negative, std::uint64_t exponent,
     }
     return flags;
   }
-  if (lshift >= fraction.bits) {
-    // +/-0.0
-    word_ = Word{};
-    exponent = 0;
-  } else {
-    word_ = Word::ConvertUnsigned(fraction).value;
-    if (lshift > 0) {
-      word_ = word_.SHIFTL(lshift);
-      if (roundingBits != nullptr) {
-        for (; lshift > 0; --lshift) {
-          if (roundingBits->ShiftLeft()) {
-            word_ = word_.IBSET(lshift - 1);
-          }
+  word_ = Word::ConvertUnsigned(fraction).value;
+  if (lshift > 0) {
+    word_ = word_.SHIFTL(lshift);
+    if (roundingBits != nullptr) {
+      for (; lshift > 0; --lshift) {
+        if (roundingBits->ShiftLeft()) {
+          word_ = word_.IBSET(lshift - 1);
         }
       }
     }
   }
-  if (implicitMSB) {
+  if constexpr (implicitMSB) {
     word_ = word_.IBCLR(significandBits);
   }
   word_ = word_.IOR(Word{exponent}.SHIFTL(significandBits));
@@ -326,26 +323,45 @@ RealFlags Real<W, P, IM>::Normalize(bool negative, std::uint64_t exponent,
 }
 
 template<typename W, int P, bool IM>
-RealFlags Real<W, P, IM>::Round(Rounding rounding, const RoundingBits &bits) {
-  std::uint64_t exponent{Exponent()};
+RealFlags Real<W, P, IM>::Round(
+    Rounding rounding, const RoundingBits &bits, bool multiply) {
+  std::uint64_t origExponent{Exponent()};
   RealFlags flags;
-  if (!bits.Zero()) {
+  bool inexact{!bits.empty()};
+  if (inexact) {
     flags.set(RealFlag::Inexact);
   }
-  if (exponent < maxExponent &&
+  if (origExponent < maxExponent &&
       bits.MustRound(rounding, IsNegative(), word_.BTEST(0) /* is odd */)) {
     typename Fraction::ValueWithCarry sum{
         GetFraction().AddUnsigned(Fraction{}, true)};
+    std::uint64_t newExponent{origExponent};
     if (sum.carry) {
       // The fraction was all ones before rounding; sum.value is now zero
-      if (++exponent < maxExponent) {
-        sum.value = sum.value.IBSET(precision - 1);
-      } else {
-        // rounded away to an infinity
-        flags.set(RealFlag::Overflow);
+      sum.value = sum.value.IBSET(precision - 1);
+      if (++newExponent >= maxExponent) {
+        flags.set(RealFlag::Overflow);  // rounded away to an infinity
       }
     }
-    flags |= Normalize(IsNegative(), exponent, sum.value);
+    flags |= Normalize(IsNegative(), newExponent, sum.value);
+  }
+  if (inexact && origExponent == 0) {
+    // inexact denormal input
+    if (Exponent() == 0) {
+      flags.set(RealFlag::Underflow);  // output still denormal -> Underflow
+    } else {
+      // Rounding went up to the smallest normal number.
+      // Still signal Underflow unless we're in a weird x86 edge case with
+      // multiplication: if the sticky bit is set (i.e., the lower half of
+      // the full product had bits below the top 2), Underflow gets set in
+      // a directed rounding mode only if the guard bit was also set.
+      if (multiply && bits.sticky() &&
+          (bits.guard() ||
+              !(rounding == Rounding::Up || rounding == Rounding::Down))) {
+      } else {
+        flags.set(RealFlag::Underflow);
+      }
+    }
   }
   return flags;
 }
@@ -353,14 +369,10 @@ RealFlags Real<W, P, IM>::Round(Rounding rounding, const RoundingBits &bits) {
 template<typename W, int P, bool IM>
 void Real<W, P, IM>::NormalizeAndRound(ValueWithRealFlags<Real> &result,
     bool isNegative, std::uint64_t exponent, const Fraction &fraction,
-    Rounding rounding, RoundingBits roundingBits) {
+    Rounding rounding, RoundingBits roundingBits, bool multiply) {
   result.flags |= result.value.Normalize(
       isNegative, exponent, fraction, rounding, &roundingBits);
-  std::uint64_t normalizedExponent{result.value.Exponent()};
-  result.flags |= result.value.Round(rounding, roundingBits);
-  if (result.flags.test(RealFlag::Inexact) && normalizedExponent == 0) {
-    result.flags.set(RealFlag::Underflow);
-  }
+  result.flags |= result.value.Round(rounding, roundingBits, multiply);
 }
 
 template class Real<Integer<16>, 11>;

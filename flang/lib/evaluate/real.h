@@ -100,6 +100,11 @@ public:
   ValueWithRealFlags<Real> Divide(
       const Real &, Rounding rounding = Rounding::TiesToEven) const;
 
+  // SQRT(x**2 + y**2) but computed so as to avoid spurious overflow
+  // TODO: needed for CABS
+  ValueWithRealFlags<Real> HYPOT(
+      const Real &, Rounding rounding = Rounding::TiesToEven) const;
+
   template<typename INT> constexpr INT EXPONENT() const {
     std::uint64_t exponent{Exponent()};
     if (exponent == maxExponent) {
@@ -116,7 +121,7 @@ public:
   }
 
   template<typename INT>
-  static constexpr ValueWithRealFlags<Real> FromInteger(
+  static ValueWithRealFlags<Real> FromInteger(
       const INT &n, Rounding rounding = Rounding::TiesToEven) {
     bool isNegative{n.IsNegative()};
     INT absN{n};
@@ -273,19 +278,20 @@ private:
     return infinity;
   }
 
-  // Normalizes and marshals the fields of a floating-point value in place.
+  // Normalizes and marshals the fields of a floating-point number in place.
+  // The value is not a NaN, and a zero fraction means a zero value (i.e.,
+  // a maximal exponent and zero fraction doesn't signify infinity, although
+  // this member function will detect overflow and encode infinities).
   RealFlags Normalize(bool negative, std::uint64_t exponent,
       const Fraction &fraction, Rounding rounding = Rounding::TiesToEven,
       RoundingBits *roundingBits = nullptr);
 
   // Rounds a result, if necessary, in place.
-  RealFlags Round(Rounding, const RoundingBits &);
+  RealFlags Round(Rounding, const RoundingBits &, bool multiply = false);
 
-  // Common code for multiplication and divison, isolated here so that any
-  // future maintenance will apply to both operations.
   static void NormalizeAndRound(ValueWithRealFlags<Real> &result,
       bool isNegative, std::uint64_t exponent, const Fraction &, Rounding,
-      RoundingBits);
+      RoundingBits, bool multiply = false);
 
   Word word_{};  // an Integer<>
 };

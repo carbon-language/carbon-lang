@@ -45,7 +45,10 @@ public:
     }
   }
 
-  constexpr bool Zero() const { return !(guard_ | round_ | sticky_); }
+  constexpr bool guard() const { return guard_; }
+  constexpr bool round() const { return round_; }
+  constexpr bool sticky() const { return sticky_; }
+  constexpr bool empty() const { return !(guard_ | round_ | sticky_); }
 
   constexpr bool Negate() {
     bool carry{!sticky_};
@@ -85,8 +88,8 @@ public:
       round = guard_ && (round_ | sticky_ | isOdd);
       break;
     case Rounding::ToZero: break;
-    case Rounding::Down: round = isNegative && !Zero(); break;
-    case Rounding::Up: round = !isNegative && !Zero(); break;
+    case Rounding::Down: round = isNegative && !empty(); break;
+    case Rounding::Up: round = !isNegative && !empty(); break;
     case Rounding::TiesAwayFromZero: round = guard_; break;
     }
     return round;
