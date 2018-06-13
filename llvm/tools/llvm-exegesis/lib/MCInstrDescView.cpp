@@ -208,13 +208,17 @@ static void randomize(const Variable &Var, llvm::MCOperand &AssignedValue) {
 static void setRegisterOperandValue(const RegisterOperandAssignment &ROV,
                                     InstructionInstance &II) {
   assert(ROV.Op);
-  assert(ROV.Op->IsExplicit);
-  auto &AssignedValue = II.getValueFor(*ROV.Op);
-  if (AssignedValue.isValid()) {
-    assert(AssignedValue.isReg() && AssignedValue.getReg() == ROV.Reg);
-    return;
+  if (ROV.Op->IsExplicit) {
+    auto &AssignedValue = II.getValueFor(*ROV.Op);
+    if (AssignedValue.isValid()) {
+      assert(AssignedValue.isReg() && AssignedValue.getReg() == ROV.Reg);
+      return;
+    }
+    AssignedValue = llvm::MCOperand::createReg(ROV.Reg);
+  } else {
+    assert(ROV.Op->ImplicitReg != nullptr);
+    assert(ROV.Reg == *ROV.Op->ImplicitReg);
   }
-  AssignedValue = llvm::MCOperand::createReg(ROV.Reg);
 }
 
 size_t randomBit(const llvm::BitVector &Vector) {

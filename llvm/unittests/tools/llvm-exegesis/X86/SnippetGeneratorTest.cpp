@@ -103,9 +103,20 @@ TEST_F(LatencySnippetGeneratorTest, DependencyThroughOtherOpcode) {
 
   const unsigned Opcode = llvm::X86::CMP64rr;
   auto Conf = checkAndGetConfiguration(Opcode);
-  EXPECT_THAT(Conf.Info, testing::HasSubstr("cycle through CMOVLE16rr"));
+  EXPECT_THAT(Conf.Info, testing::HasSubstr("cycle through"));
   ASSERT_THAT(Conf.Snippet, testing::SizeIs(2));
+  const llvm::MCInst Instr = Conf.Snippet[0];
+  EXPECT_THAT(Instr.getOpcode(), Opcode);
   // TODO: check that the two instructions alias each other.
+}
+
+TEST_F(LatencySnippetGeneratorTest, LAHF) {
+  const unsigned Opcode = llvm::X86::LAHF;
+  auto Conf = checkAndGetConfiguration(Opcode);
+  EXPECT_THAT(Conf.Info, testing::HasSubstr("cycle through"));
+  ASSERT_THAT(Conf.Snippet, testing::SizeIs(2));
+  const llvm::MCInst Instr = Conf.Snippet[0];
+  EXPECT_THAT(Instr.getOpcode(), Opcode);
 }
 
 class UopsSnippetGeneratorTest : public X86SnippetGeneratorTest {
