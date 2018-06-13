@@ -34,9 +34,7 @@ public:
 } // namespace
 
 // Support V60 only at the moment.
-uint32_t Hexagon::calcEFlags() const {
-  return 0x60;
-}
+uint32_t Hexagon::calcEFlags() const { return 0x60; }
 
 uint32_t Hexagon::applyMask(uint32_t Mask, uint32_t Data) const {
   uint32_t Result = 0;
@@ -54,7 +52,7 @@ uint32_t Hexagon::applyMask(uint32_t Mask, uint32_t Data) const {
 }
 
 RelExpr Hexagon::getRelExpr(RelType Type, const Symbol &S,
-                                 const uint8_t *Loc) const {
+                            const uint8_t *Loc) const {
   switch (Type) {
   case R_HEX_B22_PCREL:
     return R_PC;
