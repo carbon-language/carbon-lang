@@ -804,7 +804,10 @@ public:
   }
 
 private:
-  constexpr Integer(std::nullptr_t) {}  // does not initialize parts
+  // A private constructor, selected by the use of nullptr,
+  // that is used by member functions when it would be a waste
+  // of time to initialize parts_[].
+  constexpr Integer(std::nullptr_t) {}
 
   // Accesses parts in little-endian order.
   constexpr const Part &LEPart(int part) const {

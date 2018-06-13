@@ -68,11 +68,12 @@ template<> struct Real<16> {
   using ValueType = value::Real<typename Integer<kind>::ValueType, 112>;
 };
 
+// The KIND type parameter on COMPLEX is the kind of each of its components.
 template<int KIND> struct Complex {
   static constexpr Classification classification{Classification::Complex};
   static constexpr int kind{KIND};
   static constexpr bool hasLen{false};
-  using ValueType = value::Complex<typename Real<(8 * kind / 2)>::ValueType>;
+  using ValueType = value::Complex<typename Real<kind>::ValueType>;
 };
 
 template<int KIND> struct Logical {
@@ -98,7 +99,7 @@ template<int KIND> struct Character {
 using DefaultReal = Real<4>;
 using DefaultInteger = Integer<DefaultReal::kind>;
 using IntrinsicTypeParameterType = DefaultInteger;
-using DefaultComplex = Complex<2 * DefaultReal::kind>;
+using DefaultComplex = Complex<DefaultReal::kind>;
 using DefaultLogical = Logical<DefaultReal::kind>;
 using DefaultCharacter = Character<1>;
 

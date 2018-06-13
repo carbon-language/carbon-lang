@@ -419,7 +419,7 @@ public:
         }
         bool guard{NextQuotientBit(top, msb, divisor)};
         bool round{NextQuotientBit(top, msb, divisor)};
-        bool sticky{msb | !top.IsZero()};
+        bool sticky{msb || !top.IsZero()};
         RoundingBits roundingBits{guard, round, sticky};
         if (exponent < 1) {
           std::int64_t rshift{1 - exponent};

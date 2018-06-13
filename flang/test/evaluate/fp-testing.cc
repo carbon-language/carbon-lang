@@ -30,7 +30,7 @@ ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(
     std::fprintf(stderr, "fegetenv() failed: %s\n", std::strerror(errno));
     std::abort();
   }
-#ifdef __x86_64__
+#if defined __x86_64__
   if (treatDenormalOperandsAsZero) {
     currentFenv_.__mxcsr |= 0x0040;
   } else {

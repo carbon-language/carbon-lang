@@ -60,4 +60,5 @@ add_executable(real-test
 target_link_libraries(real-test
   FortranEvaluate
   FortranEvaluateTesting
+  m
 )
