@@ -4317,18 +4317,19 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
     unsigned Sel = CMask->getZExtValue();
 
     for (unsigned I = 0; I < 32; I += 8) {
-      unsigned ByteMask = 0xff << I;
       unsigned SelBits = Sel & 0xff;
       if (SelBits < 4) {
-        Known.One |= RHSKnown.One & ByteMask;
-        Known.Zero |= RHSKnown.Zero & ByteMask;
+        SelBits *= 8;
+        Known.One |= ((RHSKnown.One.getZExtValue() >> SelBits) & 0xff) << I;
+        Known.Zero |= ((RHSKnown.Zero.getZExtValue() >> SelBits) & 0xff) << I;
       } else if (SelBits < 7) {
-        Known.One |= LHSKnown.One & ByteMask;
-        Known.Zero |= LHSKnown.Zero & ByteMask;
+        SelBits = (SelBits & 3) * 8;
+        Known.One |= ((LHSKnown.One.getZExtValue() >> SelBits) & 0xff) << I;
+        Known.Zero |= ((LHSKnown.Zero.getZExtValue() >> SelBits) & 0xff) << I;
       } else if (SelBits == 0x0c) {
-        Known.Zero |= ByteMask;
+        Known.Zero |= 0xff << I;
       } else if (SelBits > 0x0c) {
-        Known.One |= ByteMask;
+        Known.One |= 0xff << I;
       }
       Sel >>= 8;
     }
