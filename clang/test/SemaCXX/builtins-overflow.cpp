@@ -29,8 +29,7 @@ struct Result {
 template <typename RET, typename LHS, typename RHS>
 constexpr Result<RET> add(LHS &&lhs, RHS &&rhs) {
   RET sum{};
-  bool b = __builtin_add_overflow(lhs, rhs, &sum);
-  return {b, sum};
+  return {__builtin_add_overflow(lhs, rhs, &sum), sum};
 }
 
 static_assert(add<short>(static_cast<char>(120), static_cast<char>(10)) == Result<short>{false, 130});
@@ -45,8 +44,7 @@ static_assert(add<int>(INT_MIN + 22, -23) == Result<int>{true, INT_MAX});
 template <typename RET, typename LHS, typename RHS>
 constexpr Result<RET> sub(LHS &&lhs, RHS &&rhs) {
   RET sum{};
-  bool b = __builtin_sub_overflow(lhs, rhs, &sum);
-  return {b, sum};
+  return {__builtin_sub_overflow(lhs, rhs, &sum), sum};
 }
 
 static_assert(sub<unsigned char>(static_cast<char>(0),static_cast<char>(1)) == Result<unsigned char>{true, UCHAR_MAX});
@@ -60,8 +58,7 @@ static_assert(sub<int>(INT_MIN + 22, 23) == Result<int>{true, INT_MAX});
 template <typename RET, typename LHS, typename RHS>
 constexpr Result<RET> mul(LHS &&lhs, RHS &&rhs) {
   RET sum{};
-  bool b  = __builtin_mul_overflow(lhs, rhs, &sum);
-  return {b, sum};
+  return {__builtin_mul_overflow(lhs, rhs, &sum), sum};
 }
 
 static_assert(mul<int>(17,22) == Result<int>{false, 374});
@@ -70,8 +67,7 @@ static_assert(mul<int>(INT_MIN / 22, -23) == Result<int>{true, -2049870757});
 
 constexpr Result<int> sadd(int lhs, int rhs) {
   int sum{};
-  bool b = __builtin_sadd_overflow(lhs, rhs, &sum);
-  return {b, sum};
+  return {__builtin_sadd_overflow(lhs, rhs, &sum), sum};
 }
 
 static_assert(sadd(17,22) == Result<int>{false, 39});
@@ -80,8 +76,7 @@ static_assert(sadd(INT_MIN + 22, -23) == Result<int>{true, INT_MAX});
 
 constexpr Result<int> ssub(int lhs, int rhs) {
   int sum{};
-  bool b = __builtin_ssub_overflow(lhs, rhs, &sum);
-  return {b, sum};
+  return {__builtin_ssub_overflow(lhs, rhs, &sum), sum};
 }
 
 static_assert(ssub(17,22) == Result<int>{false, -5});
@@ -90,8 +85,7 @@ static_assert(ssub(INT_MIN + 22, 23) == Result<int>{true, INT_MAX});
 
 constexpr Result<int> smul(int lhs, int rhs) {
   int sum{};
-  bool b = __builtin_smul_overflow(lhs, rhs, &sum);
-  return {b, sum};
+  return {__builtin_smul_overflow(lhs, rhs, &sum), sum};
 }
 
 static_assert(smul(17,22) == Result<int>{false, 374});
