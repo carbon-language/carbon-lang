@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_THREAD_POOL_H
 #define LLVM_SUPPORT_THREAD_POOL_H
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/thread.h"
 
