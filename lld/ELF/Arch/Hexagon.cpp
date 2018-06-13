@@ -26,7 +26,6 @@ namespace {
 class Hexagon final : public TargetInfo {
 public:
   uint32_t calcEFlags() const override;
-  uint32_t applyMask(uint32_t Mask, uint32_t Data) const;
   RelExpr getRelExpr(RelType Type, const Symbol &S,
                      const uint8_t *Loc) const override;
   void relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const override;
@@ -36,7 +35,7 @@ public:
 // Support V60 only at the moment.
 uint32_t Hexagon::calcEFlags() const { return 0x60; }
 
-uint32_t Hexagon::applyMask(uint32_t Mask, uint32_t Data) const {
+static uint32_t applyMask(uint32_t Mask, uint32_t Data) {
   uint32_t Result = 0;
   size_t Off = 0;
 
