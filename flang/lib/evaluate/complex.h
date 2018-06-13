@@ -29,8 +29,6 @@ public:
   constexpr Complex(const Part &r, const Part &i) : re_{r}, im_{i} {}
   explicit constexpr Complex(const Part &r) : re_{r} {}
 
-  // TODO: (C)ABS, unit testing
-
   constexpr const Part &REAL() const { return re_; }
   constexpr const Part &AIMAG() const { return im_; }
   constexpr Complex CONJG() const { return {re_, im_.Negate()}; }
@@ -41,67 +39,12 @@ public:
         im_.Compare(that.im_) == Relation::Equal;
   }
 
-  constexpr ValueWithRealFlags<Complex> Add(const Complex &that) const {
-    RealFlags flags;
-    Part reSum{re_.Add(that.re_).AccumulateFlags(flags)};
-    Part imSum{im_.Add(that.im_).AccumulateFlags(flags)};
-    return {Complex{reSum, imSum}, flags};
-  }
+  ValueWithRealFlags<Complex> Add(const Complex &) const;
+  ValueWithRealFlags<Complex> Subtract(const Complex &) const;
+  ValueWithRealFlags<Complex> Multiply(const Complex &) const;
+  ValueWithRealFlags<Complex> Divide(const Complex &) const;
 
-  constexpr ValueWithRealFlags<Complex> Subtract(const Complex &that) const {
-    RealFlags flags;
-    Part reDiff{re_.Subtract(that.re_).AccumulateFlags(flags)};
-    Part imDiff{im_.Subtract(that.im_).AccumulateFlags(flags)};
-    return {Complex{reDiff, imDiff}, flags};
-  }
-
-  constexpr ValueWithRealFlags<Complex> Multiply(const Complex &that) const {
-    // (a + ib)*(c + id) -> ac - bd + i(ad + bc)
-    RealFlags flags;
-    Part ac{re_.Multiply(that.re_).AccumulateFlags(flags)};
-    Part bd{im_.Multiply(that.im_).AccumulateFlags(flags)};
-    Part ad{re_.Multiply(that.im_).AccumulateFlags(flags)};
-    Part bc{im_.Multiply(that.re_).AccumulateFlags(flags)};
-    Part acbd{ac.Subtract(bd).AccumulateFlags(flags)};
-    Part adbc{ad.Add(bc).AccumulateFlags(flags)};
-    return {Complex{acbd, adbc}, flags};
-  }
-
-  constexpr ValueWithRealFlags<Complex> Divide(const Complex &that) const {
-    // (a + ib)/(c + id) -> [(a+ib)*(c-id)] / [(c+id)*(c-id)]
-    //   -> [ac+bd+i(bc-ad)] / (cc+dd)
-    //   -> ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
-    // but to avoid overflows, scale by d/c if c>=d, else c/d
-    Part scale;  // <= 1.0
-    RealFlags flags;
-    bool cGEd{that.re_.ABS().Compare(that.im_.ABS()) != Relation::Less};
-    if (cGEd) {
-      scale = that.im_.Divide(that.re_).AccumulateFlags(flags);
-    } else {
-      scale = that.re_.Divide(that.im_).AccumulateFlags(flags);
-    }
-    Part den;
-    if (cGEd) {
-      Part dS{scale.Multiply(that.im_).AccumulateFlags(flags)};
-      den = dS.Add(that.re_).AccumulateFlags(flags);
-    } else {
-      Part cS{scale.Multiply(that.re_).AccumulateFlags(flags)};
-      den = cS.Add(that.im_).AccumulateFlags(flags);
-    }
-    Part aS{scale.Multiply(re_).AccumulateFlags(flags)};
-    Part bS{scale.Multiply(im_).AccumulateFlags(flags)};
-    Part re1, im1;
-    if (cGEd) {
-      re1 = re_.Add(bS).AccumulateFlags(flags);
-      im1 = im_.Subtract(aS).AccumulateFlags(flags);
-    } else {
-      re1 = aS.Add(im_).AccumulateFlags(flags);
-      im1 = bS.Subtract(re_).AccumulateFlags(flags);
-    }
-    Part re{re1.Divide(den).AccumulateFlags(flags)};
-    Part im{im1.Divide(den).AccumulateFlags(flags)};
-    return {Complex{re, im}, flags};
-  }
+  // TODO: (C)ABS, unit testing
 
 private:
   Part re_, im_;
@@ -112,5 +55,6 @@ extern template class Complex<Real<Integer<32>, 24>>;
 extern template class Complex<Real<Integer<64>, 53>>;
 extern template class Complex<Real<Integer<80>, 64, false>>;
 extern template class Complex<Real<Integer<128>, 112>>;
+
 }  // namespace Fortran::evaluate::value
 #endif  // FORTRAN_EVALUATE_COMPLEX_H_

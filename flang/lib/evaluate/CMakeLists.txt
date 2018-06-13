@@ -13,6 +13,8 @@
 # limitations under the License.
 
 add_library(FortranEvaluate
-  instances.cc
+  complex.cc
+  integer.cc
+  logical.cc
   real.cc
 )
