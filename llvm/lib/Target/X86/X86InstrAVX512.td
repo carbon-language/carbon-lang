@@ -11232,9 +11232,11 @@ defm VPSHRD  : VBMI2_shift_imm<0x72, 0x73, "vpshrd", X86VShrd, SchedWriteVecIMul
 
 // Compress
 defm VPCOMPRESSB : compress_by_elt_width<0x63, "vpcompressb", WriteVarShuffle256,
-                                         avx512vl_i8_info, HasVBMI2>, EVEX;
+                                         avx512vl_i8_info, HasVBMI2>, EVEX,
+                                         NotMemoryFoldable;
 defm VPCOMPRESSW : compress_by_elt_width <0x63, "vpcompressw", WriteVarShuffle256,
-                                          avx512vl_i16_info, HasVBMI2>, EVEX, VEX_W;
+                                          avx512vl_i16_info, HasVBMI2>, EVEX, VEX_W,
+                                          NotMemoryFoldable;
 // Expand
 defm VPEXPANDB : expand_by_elt_width <0x62, "vpexpandb", WriteVarShuffle256,
                                       avx512vl_i8_info, HasVBMI2>, EVEX;
