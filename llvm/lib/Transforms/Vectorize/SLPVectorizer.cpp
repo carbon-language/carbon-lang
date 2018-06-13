@@ -431,11 +431,8 @@ static InstructionsState getSameOpcode(ArrayRef<Value *> VL) {
   for (int Cnt = 0, E = VL.size(); Cnt < E; Cnt++) {
     auto *I = cast<Instruction>(VL[Cnt]);
     unsigned InstOpcode = I->getOpcode();
-    if ((Res.HasAltOpcodes &&
-         InstOpcode != (isOdd(Cnt) ? AltOpcode : Opcode)) ||
-        (!Res.HasAltOpcodes && InstOpcode != Opcode)) {
+    if (InstOpcode != (isOdd(Cnt) ? AltOpcode : Opcode))
       return InstructionsState(OpInst, 0, false);
-    }
   }
   return InstructionsState(OpInst, Opcode, Res.HasAltOpcodes);
 }
