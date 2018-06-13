@@ -142,8 +142,6 @@ public:
   void Post(const parser::AllocateStmt &);
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
-  bool Pre(const parser::ProcedureDeclarationStmt &);
-  void Post(const parser::ProcedureDeclarationStmt &);
 
 protected:
   std::unique_ptr<DeclTypeSpec> &GetDeclTypeSpec();
@@ -780,15 +778,6 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
   return true;
 }
 void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
-  // TODO: TypeGuardStmt
-  EndDeclTypeSpec();
-  derivedTypeSpec_.reset();
-}
-bool DeclTypeSpecVisitor::Pre(const parser::ProcedureDeclarationStmt &) {
-  BeginDeclTypeSpec();
-  return true;
-}
-void DeclTypeSpecVisitor::Post(const parser::ProcedureDeclarationStmt &) {
   // TODO: TypeGuardStmt
   EndDeclTypeSpec();
   derivedTypeSpec_.reset();
