@@ -6791,7 +6791,6 @@
 				AFF81FB220D1CC910010F95E /* PlatformiOSSimulatorCoreSimulatorSupport.mm */,
 			);
 			name = objcxx;
-			path = "New Group";
 			sourceTree = "<group>";
 		};
 		E769331B1A94D10E00C73337 /* lldb-server */ = {
