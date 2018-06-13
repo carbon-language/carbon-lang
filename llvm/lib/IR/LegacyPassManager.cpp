@@ -545,11 +545,7 @@ public:
     Timer *&T = TimingData[P];
     if (!T) {
       StringRef PassName = P->getPassName();
-      StringRef PassArgument;
-      if (const PassInfo *PI = Pass::lookupPassInfo(P->getPassID()))
-        PassArgument = PI->getPassArgument();
-      T = new Timer(PassArgument.empty() ? PassName : PassArgument, PassName,
-                    TG);
+      T = new Timer(PassName, PassName, TG);
     }
     return T;
   }
