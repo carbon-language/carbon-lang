@@ -64,6 +64,15 @@ TYPE_CONTEXT_PARSER("declaration construct"_en_US,
                 statement(indirect(Parser<StmtFunctionStmt>{})))),
         construct<DeclarationConstruct>(declErrorRecovery)))
 
+// R507 variant of declaration-construct for use in limitedSpecificationPart.
+constexpr auto limitedDeclarationConstruct =
+    inContext("declaration construct"_en_US,
+        recovery(
+            first(construct<DeclarationConstruct>(specificationConstruct),
+                construct<DeclarationConstruct>(statement(indirect(dataStmt)))),
+            construct<DeclarationConstruct>(
+                errorRecoveryStart >> stmtErrorRecovery)));
+
 // R508 specification-construct ->
 //        derived-type-def | enum-def | generic-stmt | interface-block |
 //        parameter-stmt | procedure-declaration-stmt |
@@ -250,6 +259,16 @@ TYPE_CONTEXT_PARSER("specification part"_en_US,
     construct<SpecificationPart>(many(statement(indirect(Parser<UseStmt>{}))),
         many(statement(indirect(Parser<ImportStmt>{}))), implicitPart,
         many(declarationConstruct)))
+
+// R504 variant for many contexts (modules, submodules, BLOCK DATA subprograms,
+// and interfaces) which have constraints on their specification parts that
+// preclude FORMAT, ENTRY, and statement functions, and benefit from
+// specialized error recovery in the event of a spurious executable
+// statement.
+constexpr auto limitedSpecificationPart = inContext("specification part"_en_US,
+    construct<SpecificationPart>(many(statement(indirect(Parser<UseStmt>{}))),
+        many(statement(indirect(Parser<ImportStmt>{}))), implicitPart,
+        many(limitedDeclarationConstruct)));
 
 // R505 implicit-part -> [implicit-part-stmt]... implicit-stmt
 // TODO: Can overshoot; any trailing PARAMETER, FORMAT, & ENTRY
@@ -2910,7 +2929,7 @@ TYPE_CONTEXT_PARSER("END PROGRAM statement"_en_US,
 //         module-stmt [specification-part] [module-subprogram-part]
 //         end-module-stmt
 TYPE_CONTEXT_PARSER("module"_en_US,
-    construct<Module>(statement(Parser<ModuleStmt>{}), specificationPart,
+    construct<Module>(statement(Parser<ModuleStmt>{}), limitedSpecificationPart,
         maybe(Parser<ModuleSubprogramPart>{}),
         unterminatedStatement(Parser<EndModuleStmt>{})))
 
@@ -2967,8 +2986,8 @@ TYPE_PARSER(construct<Only>(Parser<Rename>{}) ||
 //         submodule-stmt [specification-part] [module-subprogram-part]
 //         end-submodule-stmt
 TYPE_CONTEXT_PARSER("submodule"_en_US,
-    construct<Submodule>(statement(Parser<SubmoduleStmt>{}), specificationPart,
-        maybe(Parser<ModuleSubprogramPart>{}),
+    construct<Submodule>(statement(Parser<SubmoduleStmt>{}),
+        limitedSpecificationPart, maybe(Parser<ModuleSubprogramPart>{}),
         unterminatedStatement(Parser<EndSubmoduleStmt>{})))
 
 // R1417 submodule-stmt -> SUBMODULE ( parent-identifier ) submodule-name
@@ -2986,7 +3005,8 @@ TYPE_CONTEXT_PARSER("END SUBMODULE statement"_en_US,
 
 // R1420 block-data -> block-data-stmt [specification-part] end-block-data-stmt
 TYPE_CONTEXT_PARSER("BLOCK DATA subprogram"_en_US,
-    construct<BlockData>(statement(Parser<BlockDataStmt>{}), specificationPart,
+    construct<BlockData>(statement(Parser<BlockDataStmt>{}),
+        limitedSpecificationPart,
         unterminatedStatement(Parser<EndBlockDataStmt>{})))
 
 // R1421 block-data-stmt -> BLOCK DATA [block-data-name]
@@ -3021,10 +3041,10 @@ TYPE_PARSER(construct<EndInterfaceStmt>("END INTERFACE" >> maybe(genericSpec)))
 TYPE_CONTEXT_PARSER("interface body"_en_US,
     construct<InterfaceBody>(
         construct<InterfaceBody::Function>(statement(functionStmt),
-            indirect(specificationPart), statement(endFunctionStmt))) ||
-        construct<InterfaceBody>(
-            construct<InterfaceBody::Subroutine>(statement(subroutineStmt),
-                indirect(specificationPart), statement(endSubroutineStmt))))
+            indirect(limitedSpecificationPart), statement(endFunctionStmt))) ||
+        construct<InterfaceBody>(construct<InterfaceBody::Subroutine>(
+            statement(subroutineStmt), indirect(limitedSpecificationPart),
+            statement(endSubroutineStmt))))
 
 // R1507 specific-procedure -> procedure-name
 constexpr auto specificProcedure = name;
