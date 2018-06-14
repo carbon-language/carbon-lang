@@ -110,13 +110,9 @@ SVal ExprEngine::makeZeroElementRegion(ProgramStateRef State, SVal LValue,
   return LValue;
 }
 
-
-SVal ExprEngine::getLocationForConstructedObject(const CXXConstructExpr *CE,
-                                                 ExplodedNode *Pred,
-                                                 const ConstructionContext *CC,
-                                                 EvalCallOptions &CallOpts) {
-  const LocationContext *LCtx = Pred->getLocationContext();
-  ProgramStateRef State = Pred->getState();
+std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
+    const Expr *E, ProgramStateRef State, const LocationContext *LCtx,
+    const ConstructionContext *CC, EvalCallOptions &CallOpts) {
   MemRegionManager &MRMgr = getSValBuilder().getRegionManager();
 
   // See if we're constructing an existing region by looking at the
@@ -129,8 +125,9 @@ SVal ExprEngine::getLocationForConstructedObject(const CXXConstructExpr *CE,
       const auto *Var = cast<VarDecl>(DS->getSingleDecl());
       SVal LValue = State->getLValue(Var, LCtx);
       QualType Ty = Var->getType();
-      return makeZeroElementRegion(State, LValue, Ty,
-                                   CallOpts.IsArrayCtorOrDtor);
+      return std::make_pair(
+          State,
+          makeZeroElementRegion(State, LValue, Ty, CallOpts.IsArrayCtorOrDtor));
     }
     case ConstructionContext::SimpleConstructorInitializerKind: {
       const auto *ICC = cast<ConstructorInitializerConstructionContext>(CC);
@@ -154,7 +151,7 @@ SVal ExprEngine::getLocationForConstructedObject(const CXXConstructExpr *CE,
       QualType Ty = Field->getType();
       FieldVal = makeZeroElementRegion(State, FieldVal, Ty,
                                        CallOpts.IsArrayCtorOrDtor);
-      return FieldVal;
+      return std::make_pair(State, FieldVal);
     }
     case ConstructionContext::NewAllocatedObjectKind: {
       if (AMgr.getAnalyzerOptions().mayInlineCXXAllocator()) {
@@ -167,19 +164,65 @@ SVal ExprEngine::getLocationForConstructedObject(const CXXConstructExpr *CE,
             // TODO: In fact, we need to call the constructor for every
             // allocated element, not just the first one!
             CallOpts.IsArrayCtorOrDtor = true;
-            return loc::MemRegionVal(getStoreManager().GetElementZeroRegion(
-                MR, NE->getType()->getPointeeType()));
+            return std::make_pair(
+                State, loc::MemRegionVal(getStoreManager().GetElementZeroRegion(
+                           MR, NE->getType()->getPointeeType())));
           }
-          return V;
+          return std::make_pair(State, V);
         }
         // TODO: Detect when the allocator returns a null pointer.
         // Constructor shall not be called in this case.
       }
       break;
     }
+    case ConstructionContext::SimpleReturnedValueKind: {
+      // The temporary is to be managed by the parent stack frame.
+      // So build it in the parent stack frame if we're not in the
+      // top frame of the analysis.
+      const StackFrameContext *SFC = LCtx->getCurrentStackFrame();
+      if (const LocationContext *CallerLCtx = SFC->getParent()) {
+        auto RTC = (*SFC->getCallSiteBlock())[SFC->getIndex()]
+                       .getAs<CFGCXXRecordTypedCall>();
+        if (!RTC) {
+          // We were unable to find the correct construction context for the
+          // call in the parent stack frame. This is equivalent to not being
+          // able to find construction context at all.
+          break;
+        } else if (!isa<TemporaryObjectConstructionContext>(
+                       RTC->getConstructionContext())) {
+          // FIXME: The return value is constructed directly into a
+          // non-temporary due to C++17 mandatory copy elision. This is not
+          // implemented yet.
+          assert(getContext().getLangOpts().CPlusPlus17);
+          break;
+        }
+        CC = RTC->getConstructionContext();
+        LCtx = CallerLCtx;
+      } else {
+        // We are on the top frame of the analysis.
+        // TODO: What exactly happens when we are? Does the temporary object
+        // live long enough in the region store in this case? Would checkers
+        // think that this object immediately goes out of scope?
+        CallOpts.IsTemporaryCtorOrDtor = true;
+        SVal V = loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(E, LCtx));
+        return std::make_pair(State, V);
+      }
+
+      // Continue as if we have a temporary with a different location context.
+      // FALLTHROUGH.
+    }
     case ConstructionContext::TemporaryObjectKind: {
-      const auto *TOCC = cast<TemporaryObjectConstructionContext>(CC);
-      if (const auto *MTE = TOCC->getMaterializedTemporaryExpr()) {
+      const auto *TCC = cast<TemporaryObjectConstructionContext>(CC);
+      const CXXBindTemporaryExpr *BTE = TCC->getCXXBindTemporaryExpr();
+      const MaterializeTemporaryExpr *MTE = TCC->getMaterializedTemporaryExpr();
+
+      if (!BTE) {
+        // FIXME: Lifetime extension for temporaries without destructors
+        // is not implemented yet.
+        MTE = nullptr;
+      }
+
+      if (MTE) {
         if (const ValueDecl *VD = MTE->getExtendingDecl()) {
           assert(MTE->getStorageDuration() != SD_FullExpression);
           if (!VD->getType()->isReferenceType()) {
@@ -192,40 +235,26 @@ SVal ExprEngine::getLocationForConstructedObject(const CXXConstructExpr *CE,
           }
         }
       }
-      // TODO: Support temporaries lifetime-extended via static references.
-      // They'd need a getCXXStaticTempObjectRegion().
-      CallOpts.IsTemporaryCtorOrDtor = true;
-      return loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(CE, LCtx));
-    }
-    case ConstructionContext::SimpleReturnedValueKind: {
-      // The temporary is to be managed by the parent stack frame.
-      // So build it in the parent stack frame if we're not in the
-      // top frame of the analysis.
-      // TODO: What exactly happens when we are? Does the temporary object live
-      // long enough in the region store in this case? Would checkers think
-      // that this object immediately goes out of scope?
-      const LocationContext *TempLCtx = LCtx;
-      const StackFrameContext *SFC = LCtx->getCurrentStackFrame();
-      if (const LocationContext *CallerLCtx = SFC->getParent()) {
-        auto RTC = (*SFC->getCallSiteBlock())[SFC->getIndex()]
-                       .getAs<CFGCXXRecordTypedCall>();
-        if (!RTC) {
-          // We were unable to find the correct construction context for the
-          // call in the parent stack frame. This is equivalent to not being
-          // able to find construction context at all.
-          CallOpts.IsCtorOrDtorWithImproperlyModeledTargetRegion = true;
-        } else if (!isa<TemporaryObjectConstructionContext>(
-                       RTC->getConstructionContext())) {
-          // FIXME: The return value is constructed directly into a
-          // non-temporary due to C++17 mandatory copy elision. This is not
-          // implemented yet.
-          assert(getContext().getLangOpts().CPlusPlus17);
-          CallOpts.IsCtorOrDtorWithImproperlyModeledTargetRegion = true;
-        }
-        TempLCtx = CallerLCtx;
+
+      if (MTE && MTE->getStorageDuration() != SD_FullExpression) {
+        // If the temporary is lifetime-extended, don't save the BTE,
+        // because we don't need a temporary destructor, but an automatic
+        // destructor.
+        BTE = nullptr;
       }
+
+      // FIXME: Support temporaries lifetime-extended via static references.
+      // They'd need a getCXXStaticTempObjectRegion().
+      SVal V = loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(E, LCtx));
+
+      if (BTE)
+        State = addObjectUnderConstruction(State, BTE, LCtx, V);
+
+      if (MTE)
+        State = addObjectUnderConstruction(State, MTE, LCtx, V);
+
       CallOpts.IsTemporaryCtorOrDtor = true;
-      return loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(CE, TempLCtx));
+      return std::make_pair(State, V);
     }
     case ConstructionContext::CXX17ElidedCopyVariableKind:
     case ConstructionContext::CXX17ElidedCopyReturnedValueKind:
@@ -237,7 +266,8 @@ SVal ExprEngine::getLocationForConstructedObject(const CXXConstructExpr *CE,
   // If we couldn't find an existing region to construct into, assume we're
   // constructing a temporary. Notify the caller of our failure.
   CallOpts.IsCtorOrDtorWithImproperlyModeledTargetRegion = true;
-  return loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(CE, LCtx));
+  return std::make_pair(
+      State, loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(E, LCtx)));
 }
 
 const CXXConstructExpr *
@@ -288,7 +318,8 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
 
   switch (CE->getConstructionKind()) {
   case CXXConstructExpr::CK_Complete: {
-    Target = getLocationForConstructedObject(CE, Pred, CC, CallOpts);
+    std::tie(State, Target) =
+        prepareForObjectConstruction(CE, State, LCtx, CC, CallOpts);
     break;
   }
   case CXXConstructExpr::CK_VirtualBase:
@@ -349,6 +380,18 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
   }
   }
 
+  if (State != Pred->getState()) {
+    static SimpleProgramPointTag T("ExprEngine",
+                                   "Prepare for object construction");
+    ExplodedNodeSet DstPrepare;
+    StmtNodeBuilder BldrPrepare(Pred, DstPrepare, *currBldrCtx);
+    BldrPrepare.generateNode(CE, Pred, State, &T, ProgramPoint::PreStmtKind);
+    assert(DstPrepare.size() <= 1);
+    if (DstPrepare.size() == 0)
+      return;
+    Pred = *BldrPrepare.begin();
+  }
+
   CallEventManager &CEMgr = getStateManager().getCallEventManager();
   CallEventRef<CXXConstructorCall> Call =
     CEMgr.getCXXConstructorCall(CE, Target.getAsRegion(), State, LCtx);
@@ -379,9 +422,6 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
         // dimensional array.
         State = State->bindDefaultZero(Target, LCtx);
       }
-
-      State = markStatementsCorrespondingToConstructedObject(State, CC, LCtx,
-                                                             Target);
 
       Bldr.generateNode(CE, *I, State, /*tag=*/nullptr,
                         ProgramPoint::PreStmtKind);

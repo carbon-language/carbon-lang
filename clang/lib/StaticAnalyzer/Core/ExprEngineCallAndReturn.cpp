@@ -587,18 +587,20 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
   unsigned Count = currBldrCtx->blockCount();
   if (auto RTC = getCurrentCFGElement().getAs<CFGCXXRecordTypedCall>()) {
     // Conjure a temporary if the function returns an object by value.
-    MemRegionManager &MRMgr = svalBuilder.getRegionManager();
-    const CXXTempObjectRegion *TR = MRMgr.getCXXTempObjectRegion(E, LCtx);
-    State = markStatementsCorrespondingToConstructedObject(
-        State, RTC->getConstructionContext(), LCtx, loc::MemRegionVal(TR));
-
+    SVal Target;
+    assert(RTC->getStmt() == Call.getOriginExpr());
+    EvalCallOptions CallOpts; // FIXME: We won't really need those.
+    std::tie(State, Target) =
+        prepareForObjectConstruction(Call.getOriginExpr(), State, LCtx,
+                                     RTC->getConstructionContext(), CallOpts);
+    assert(Target.getAsRegion());
     // Invalidate the region so that it didn't look uninitialized. Don't notify
     // the checkers.
-    State = State->invalidateRegions(TR, E, Count, LCtx,
+    State = State->invalidateRegions(Target.getAsRegion(), E, Count, LCtx,
                                      /* CausedByPointerEscape=*/false, nullptr,
                                      &Call, nullptr);
 
-    R = State->getSVal(TR, E->getType());
+    R = State->getSVal(Target.castAs<Loc>(), E->getType());
   } else {
     // Conjure a symbol if the return value is unknown.
 

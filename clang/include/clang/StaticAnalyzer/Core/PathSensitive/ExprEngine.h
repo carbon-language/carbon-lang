@@ -744,14 +744,15 @@ private:
   /// constructing into an existing region.
   const CXXConstructExpr *findDirectConstructorForCurrentCFGElement();
 
-  /// For a given constructor, look forward in the current CFG block to
-  /// determine the region into which an object will be constructed by \p CE.
-  /// When the lookahead fails, a temporary region is returned, and the
+  /// Update the program state with all the path-sensitive information
+  /// that's necessary to perform construction of an object with a given
+  /// syntactic construction context. If the construction context is unavailable
+  /// or unusable for any reason, a dummy temporary region is returned, and the
   /// IsConstructorWithImproperlyModeledTargetRegion flag is set in \p CallOpts.
-  SVal getLocationForConstructedObject(const CXXConstructExpr *CE,
-                                       ExplodedNode *Pred,
-                                       const ConstructionContext *CC,
-                                       EvalCallOptions &CallOpts);
+  /// Returns the updated program state and the new object's this-region.
+  std::pair<ProgramStateRef, SVal> prepareForObjectConstruction(
+      const Expr *E, ProgramStateRef State, const LocationContext *LCtx,
+      const ConstructionContext *CC, EvalCallOptions &CallOpts);
 
   /// Store the location of a C++ object corresponding to a statement
   /// until the statement is actually encountered. For example, if a DeclStmt
@@ -782,14 +783,6 @@ private:
   static bool areAllObjectsFullyConstructed(ProgramStateRef State,
                                             const LocationContext *FromLC,
                                             const LocationContext *ToLC);
-
-  /// Adds an initialized temporary and/or a materialization, whichever is
-  /// necessary, by looking at the whole construction context. Handles
-  /// function return values, which need the construction context of the parent
-  /// stack frame, automagically.
-  ProgramStateRef markStatementsCorrespondingToConstructedObject(
-      ProgramStateRef State, const ConstructionContext *CC,
-      const LocationContext *LC, SVal V);
 };
 
 /// Traits for storing the call processing policy inside GDM.
