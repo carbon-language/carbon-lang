@@ -1,4 +1,4 @@
-//===-- ProfileYAMLMapping.h - mappings for Bolt profile --------*- C++ -*-===//
+//===-- ProfileYAMLMapping.h - mappings for BOLT profile --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

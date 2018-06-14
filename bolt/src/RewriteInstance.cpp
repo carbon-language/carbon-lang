@@ -353,7 +353,7 @@ Verbosity("v",
 
 static cl::opt<bool>
 AddBoltInfo("add-bolt-info",
-  cl::desc("add Bolt version and command line argument information to "
+  cl::desc("add BOLT version and command line argument information to "
            "processed binaries"),
   cl::init(true),
   cl::cat(BoltCategory));
@@ -482,7 +482,7 @@ constexpr const char *RewriteInstance::SectionsToOverwrite[];
 
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
-const std::string RewriteInstance::BoltSecPrefix = ".bolt";
+const std::string RewriteInstance::BOLTSecPrefix = ".bolt";
 
 const char RewriteInstance::TimerGroupName[] = "rewrite";
 const char RewriteInstance::TimerGroupDesc[] = "Rewrite passes";
@@ -835,7 +835,7 @@ void RewriteInstance::discoverStorage() {
     }
 
     if (SectionName.startswith(OrgSecPrefix) ||
-        SectionName.startswith(BoltSecPrefix)) {
+        SectionName.startswith(BOLTSecPrefix)) {
       errs() << "BOLT-ERROR: input file was processed by BOLT. "
                 "Cannot re-optimize.\n";
       exit(1);
@@ -1001,8 +1001,7 @@ void RewriteInstance::run() {
       checkLargeFunctions()) {
     ++PassNumber;
     // Emit again because now some functions have been split
-    outs() << "BOLT-INFO: split-functions: starting pass " << PassNumber
-           << "...\n";
+    outs() << "BOLT: split-functions: starting pass " << PassNumber << "...\n";
     reset();
     executeRewritePass({});
   }
@@ -1013,7 +1012,7 @@ void RewriteInstance::run() {
   if (opts::UpdateDebugSections && opts::FixDebugInfoLargeFunctions &&
       checkLargeFunctions()) {
     ++PassNumber;
-    outs() << "BOLT-INFO: starting pass (ignoring large functions) "
+    outs() << "BOLT: starting pass (ignoring large functions) "
            << PassNumber << "...\n";
     reset();
     executeRewritePass(LargeFunctions);
@@ -1183,7 +1182,7 @@ void RewriteInstance::discoverFileObjects() {
     std::string AlternativeName;
     if (Name.empty()) {
       if (PLTSection && PLTSection->getAddress() == Address) {
-        // Don't register __BOLT_PLT_PSEUDO twice.
+        // Don't register BOLT_PLT_PSEUDO twice.
         continue;
       }
       UniqueName = "ANONYMOUS." + std::to_string(AnonymousId++);
@@ -2270,7 +2269,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                 (BD->nameStartsWith("ANONYMOUS") &&
                  (BD->getSectionName().startswith(".plt") ||
                   BD->getSectionName().endswith(".plt")))) &&
-               "Bolt symbol names of all non-section relocations must match "
+               "BOLT symbol names of all non-section relocations must match "
                "up with symbol names referenced in the relocation");
 
         if (!opts::AllowSectionRelocations && IsSectionRelocation) {
@@ -3073,7 +3072,7 @@ void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
       const auto Flags = BinarySection::getFlags(/*IsReadOnly=*/true,
                                                  /*IsText=*/true,
                                                  /*IsAllocatable=*/true);
-      auto &Section = BC->registerOrUpdateSection(BoltSecPrefix + ".text",
+      auto &Section = BC->registerOrUpdateSection(BOLTSecPrefix + ".text",
                                                   ELF::SHT_PROGBITS,
                                                   Flags,
                                                   nullptr,
@@ -3578,7 +3577,7 @@ void RewriteInstance::addBoltInfoSection() {
     std::string DescStr;
     raw_string_ostream DescOS(DescStr);
 
-    DescOS << "Bolt revision: " << BoltRevision << ", " << "command line:";
+    DescOS << "BOLT revision: " << BoltRevision << ", " << "command line:";
     for (auto I = 0; I < Argc; ++I) {
       DescOS << " " << Argv[I];
     }
@@ -4378,7 +4377,7 @@ void RewriteInstance::rewriteFile() {
       OverwrittenScore += Function.getFunctionScore();
       // Overwrite function in the output file.
       if (opts::Verbosity >= 2) {
-        outs() << "BOLT-INFO: rewriting function \"" << Function << "\"\n";
+        outs() << "BOLT: rewriting function \"" << Function << "\"\n";
       }
       OS.pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
                 Function.getImageSize(),
@@ -4408,7 +4407,7 @@ void RewriteInstance::rewriteFile() {
         ++CountOverwrittenFunctions;
         if (opts::MaxFunctions &&
             CountOverwrittenFunctions == opts::MaxFunctions) {
-          outs() << "BOLT-INFO: maximum number of functions reached\n";
+          outs() << "BOLT: maximum number of functions reached\n";
           break;
         }
         continue;
@@ -4416,7 +4415,7 @@ void RewriteInstance::rewriteFile() {
 
       // Write cold part
       if (opts::Verbosity >= 2) {
-        outs() << "BOLT-INFO: rewriting function \"" << Function
+        outs() << "BOLT: rewriting function \"" << Function
                << "\" (cold part)\n";
       }
       OS.pwrite(reinterpret_cast<char*>(Function.cold().getImageAddress()),
@@ -4428,7 +4427,7 @@ void RewriteInstance::rewriteFile() {
       ++CountOverwrittenFunctions;
       if (opts::MaxFunctions &&
           CountOverwrittenFunctions == opts::MaxFunctions) {
-        outs() << "BOLT-INFO: maximum number of functions reached\n";
+        outs() << "BOLT: maximum number of functions reached\n";
         break;
       }
     }
@@ -4465,7 +4464,7 @@ void RewriteInstance::rewriteFile() {
     if (!Section.isFinalized() || Section.isLocal())
       continue;
     if (opts::Verbosity >= 1) {
-      outs() << "BOLT-INFO: writing new section " << Section.getName()
+      outs() << "BOLT: writing new section " << Section.getName()
              << "\n data at 0x" << Twine::utohexstr(Section.getAllocAddress())
              << "\n of size " << Section.getOutputSize()
              << "\n at offset " << Section.getFileOffset() << '\n';

@@ -18,7 +18,7 @@ namespace bolt {
 
 /// LongJmp is veneer-insertion pass originally written for AArch64 that
 /// compensates for its short-range branches, typically done during linking. We
-/// pull this pass inside Bolt because here we can do a better job at stub
+/// pull this pass inside BOLT because here we can do a better job at stub
 /// inserting by manipulating the CFG, something linkers can't do.
 ///
 /// LongJmp is a two-step process. In the first step, when function sizes are

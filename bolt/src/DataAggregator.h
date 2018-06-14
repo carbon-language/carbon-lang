@@ -89,7 +89,7 @@ class DataAggregator : public DataReader {
 
   DenseSet<int64_t> PIDs;
 
-  /// References to core Bolt data structures
+  /// References to core BOLT data structures
   BinaryContext *BC{nullptr};
   std::map<uint64_t, BinaryFunction> *BFs{nullptr};
 

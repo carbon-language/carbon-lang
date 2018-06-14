@@ -33,7 +33,7 @@ Optional<StringRef> getLTOCommonName(const StringRef Name) {
 
 namespace {
 
-/// Return standard name of the function possibly renamed by Bolt.
+/// Return standard name of the function possibly renamed by BOLT.
 StringRef normalizeName(StringRef Name) {
   // Strip "PG." prefix used for globalized locals.
   return Name.startswith("PG.") ? Name.substr(2) : Name;

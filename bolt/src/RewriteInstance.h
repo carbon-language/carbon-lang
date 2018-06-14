@@ -323,7 +323,7 @@ private:
      std::vector<ELFShdrTy> *OutputSections = nullptr,
      std::map<std::string, uint32_t> *OutputSectionNameMap = nullptr);
 
-  /// Add a notes section containing the Bolt revision and command line options.
+  /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
 
   /// Computes output .debug_line line table offsets for each compile unit,
@@ -522,7 +522,7 @@ private:
 
   static const std::string OrgSecPrefix;
 
-  static const std::string BoltSecPrefix;
+  static const std::string BOLTSecPrefix;
 
   /// Number of processed to data relocations.  Used to implement the
   /// -max-relocations debugging option.
