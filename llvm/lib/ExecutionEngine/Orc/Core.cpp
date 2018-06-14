@@ -937,7 +937,7 @@ VSO &ExecutionSession::createVSO(std::string Name) {
 
 Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
                                    AsynchronousLookupFunction AsyncLookup,
-                                   SymbolNameSet Names,
+                                   SymbolNameSet Names, bool WaitUntilReady,
                                    MaterializationResponsibility *MR) {
 
 #if LLVM_ENABLE_THREADS
@@ -963,14 +963,23 @@ Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
         }
       };
 
-  auto OnReady = [&](Error Err) {
-    if (Err) {
-      ErrorAsOutParameter _(&ReadyError);
-      std::lock_guard<std::mutex> Lock(ErrMutex);
-      ReadyError = std::move(Err);
-    }
-    PromisedReady.set_value();
-  };
+  std::function<void(Error)> OnReady;
+  if (WaitUntilReady) {
+    OnReady = [&](Error Err) {
+      if (Err) {
+        ErrorAsOutParameter _(&ReadyError);
+        std::lock_guard<std::mutex> Lock(ErrMutex);
+        ReadyError = std::move(Err);
+      }
+      PromisedReady.set_value();
+    };
+  } else {
+    OnReady = [&](Error Err) {
+      if (Err)
+        ES.reportError(std::move(Err));
+    };
+  }
+
 #else
   SymbolMap Result;
   Error ResolutionError = Error::success();
@@ -986,11 +995,19 @@ Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
       ResolutionError = R.takeError();
   };
 
-  auto OnReady = [&](Error Err) {
-    ErrorAsOutParameter _(&ReadyError);
-    if (Err)
-      ReadyError = std::move(Err);
-  };
+  std::function<void(Error)> OnReady;
+  if (WaitUntilReady) {
+    OnReady = [&](Error Err) {
+      ErrorAsOutParameter _(&ReadyError);
+      if (Err)
+        ReadyError = std::move(Err);
+    };
+  } else {
+    OnReady = [&](Error Err) {
+      if (Err)
+        ES.reportError(std::move(Err));
+    };
+  }
 #endif
 
   auto Query = std::make_shared<AsynchronousSymbolQuery>(
@@ -1017,14 +1034,17 @@ Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
     }
   }
 
-  auto ReadyFuture = PromisedReady.get_future();
-  ReadyFuture.get();
+  if (WaitUntilReady) {
+    auto ReadyFuture = PromisedReady.get_future();
+    ReadyFuture.get();
 
-  {
-    std::lock_guard<std::mutex> Lock(ErrMutex);
-    if (ReadyError)
-      return std::move(ReadyError);
-  }
+    {
+      std::lock_guard<std::mutex> Lock(ErrMutex);
+      if (ReadyError)
+        return std::move(ReadyError);
+    }
+  } else
+    cantFail(std::move(ReadyError));
 
   return std::move(Result);
 
@@ -1060,7 +1080,7 @@ Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names) {
     return Unresolved;
   };
 
-  return blockingLookup(ES, std::move(LookupFn), Names);
+  return blockingLookup(ES, std::move(LookupFn), Names, true);
 }
 
 /// Look up a symbol by searching a list of VSOs.
