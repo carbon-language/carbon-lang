@@ -645,17 +645,19 @@ static bool isReverseVectorMask(ArrayRef<int> Mask) {
 }
 
 static bool isSingleSourceVectorMask(ArrayRef<int> Mask) {
-  bool Vec0 = false;
-  bool Vec1 = false;
-  for (unsigned i = 0, NumVecElts = Mask.size(); i < NumVecElts; ++i) {
-    if (Mask[i] >= 0) {
-      if ((unsigned)Mask[i] >= NumVecElts)
-        Vec1 = true;
-      else
-        Vec0 = true;
-    }
+  bool ShuffleLHS = false;
+  bool ShuffleRHS = false;
+  unsigned MaskSize = Mask.size();
+
+  for (unsigned i = 0; i < MaskSize && !(ShuffleLHS && ShuffleRHS); ++i) {
+    if (Mask[i] < 0)
+      continue;
+    if ((unsigned)Mask[i] >= MaskSize)
+      ShuffleRHS = true;
+    else
+      ShuffleLHS = true;
   }
-  return !(Vec0 && Vec1);
+  return !(ShuffleLHS && ShuffleRHS);
 }
 
 static bool isZeroEltBroadcastVectorMask(ArrayRef<int> Mask) {
