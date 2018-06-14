@@ -392,7 +392,7 @@ struct SDTypeConstraint {
   /// constraint to the nodes operands.  This returns true if it makes a
   /// change, false otherwise.  If a type contradiction is found, an error
   /// is flagged.
-  bool ApplyTypeConstraint(TreePatternNode &N, const SDNodeInfo &NodeInfo,
+  bool ApplyTypeConstraint(TreePatternNode *N, const SDNodeInfo &NodeInfo,
                            TreePattern &TP) const;
 };
 
@@ -437,7 +437,7 @@ public:
   /// constraints for this node to the operands of the node.  This returns
   /// true if it makes a change, false otherwise.  If a type contradiction is
   /// found, an error is flagged.
-  bool ApplyTypeConstraints(TreePatternNode &N, TreePattern &TP) const;
+  bool ApplyTypeConstraints(TreePatternNode *N, TreePattern &TP) const;
 };
 
 /// TreePredicateFn - This is an abstraction that represents the predicates on
@@ -626,8 +626,7 @@ public:
   Record *getOperator() const { assert(!isLeaf()); return Operator; }
 
   unsigned getNumChildren() const { return Children.size(); }
-  const TreePatternNode &getChild(unsigned N) const { return *Children[N]; }
-  TreePatternNode &getChild(unsigned N) { return *Children[N]; }
+  TreePatternNode *getChild(unsigned N) const { return Children[N].get(); }
   const TreePatternNodePtr &getChildShared(unsigned N) const {
     return Children[N];
   }
@@ -706,7 +705,7 @@ public:   // Higher level manipulation routines.
   /// the specified node.  For this comparison, all of the state of the node
   /// is considered, except for the assigned name.  Nodes with differing names
   /// that are otherwise identical are considered isomorphic.
-  bool isIsomorphicTo(const TreePatternNode &N,
+  bool isIsomorphicTo(const TreePatternNode *N,
                       const MultipleUseVarSet &DepVars) const;
 
   /// SubstituteFormalArguments - Replace the formal arguments in this tree
@@ -872,7 +871,7 @@ public:
 private:
   TreePatternNodePtr ParseTreePattern(Init *DI, StringRef OpName);
   void ComputeNamedNodes();
-  void ComputeNamedNodes(const TreePatternNodePtr &N);
+  void ComputeNamedNodes(TreePatternNode *N);
 };
 
 
@@ -1194,14 +1193,14 @@ private:
 
   void AddPatternToMatch(TreePattern *Pattern, PatternToMatch &&PTM);
   void FindPatternInputsAndOutputs(
-      TreePattern &I, const TreePatternNodePtr &Pat,
+      TreePattern &I, TreePatternNodePtr Pat,
       std::map<std::string, TreePatternNodePtr> &InstInputs,
       std::map<std::string, TreePatternNodePtr> &InstResults,
       std::vector<Record *> &InstImpResults);
 };
 
 
-inline bool SDNodeInfo::ApplyTypeConstraints(TreePatternNode &N,
+inline bool SDNodeInfo::ApplyTypeConstraints(TreePatternNode *N,
                                              TreePattern &TP) const {
     bool MadeChange = false;
     for (unsigned i = 0, e = TypeConstraints.size(); i != e; ++i)
