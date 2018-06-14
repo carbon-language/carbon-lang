@@ -125,9 +125,11 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       const auto *Var = cast<VarDecl>(DS->getSingleDecl());
       SVal LValue = State->getLValue(Var, LCtx);
       QualType Ty = Var->getType();
-      return std::make_pair(
-          State,
-          makeZeroElementRegion(State, LValue, Ty, CallOpts.IsArrayCtorOrDtor));
+      LValue =
+          makeZeroElementRegion(State, LValue, Ty, CallOpts.IsArrayCtorOrDtor);
+      State =
+          addObjectUnderConstruction(State, DSCC->getDeclStmt(), LCtx, LValue);
+      return std::make_pair(State, LValue);
     }
     case ConstructionContext::SimpleConstructorInitializerKind: {
       const auto *ICC = cast<ConstructorInitializerConstructionContext>(CC);

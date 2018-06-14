@@ -193,23 +193,6 @@ static bool wasDifferentDeclUsedForInlining(CallEventRef<> Call,
   return RuntimeCallee->getCanonicalDecl() != StaticDecl->getCanonicalDecl();
 }
 
-/// Returns true if the CXXConstructExpr \p E was intended to construct a
-/// prvalue for the region in \p V.
-///
-/// Note that we can't just test for rvalue vs. glvalue because
-/// CXXConstructExprs embedded in DeclStmts and initializers are considered
-/// rvalues by the AST, and the analyzer would like to treat them as lvalues.
-static bool isTemporaryPRValue(const CXXConstructExpr *E, SVal V) {
-  if (E->isGLValue())
-    return false;
-
-  const MemRegion *MR = V.getAsRegion();
-  if (!MR)
-    return false;
-
-  return isa<CXXTempObjectRegion>(MR);
-}
-
 /// The call exit is simulated with a sequence of nodes, which occur between
 /// CallExitBegin and CallExitEnd. The following operations occur between the
 /// two program points:
@@ -269,11 +252,7 @@ void ExprEngine::processCallExit(ExplodedNode *CEBNode) {
       loc::MemRegionVal This =
         svalBuilder.getCXXThis(CCE->getConstructor()->getParent(), calleeCtx);
       SVal ThisV = state->getSVal(This);
-
-      // If the constructed object is a temporary prvalue, get its bindings.
-      if (isTemporaryPRValue(CCE, ThisV))
-        ThisV = state->getSVal(ThisV.castAs<Loc>());
-
+      ThisV = state->getSVal(ThisV.castAs<Loc>());
       state = state->BindExpr(CCE, callerCtx, ThisV);
     }
 
@@ -574,11 +553,7 @@ ProgramStateRef ExprEngine::bindReturnValue(const CallEvent &Call,
     }
   } else if (const CXXConstructorCall *C = dyn_cast<CXXConstructorCall>(&Call)){
     SVal ThisV = C->getCXXThisVal();
-
-    // If the constructed object is a temporary prvalue, get its bindings.
-    if (isTemporaryPRValue(cast<CXXConstructExpr>(E), ThisV))
-      ThisV = State->getSVal(ThisV.castAs<Loc>());
-
+    ThisV = State->getSVal(ThisV.castAs<Loc>());
     return State->BindExpr(E, LCtx, ThisV);
   }
 

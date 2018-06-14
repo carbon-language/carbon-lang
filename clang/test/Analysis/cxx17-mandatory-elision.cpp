@@ -3,6 +3,26 @@
 
 void clang_analyzer_eval(bool);
 
+namespace variable_functional_cast_crash {
+
+struct A {
+  A(int) {}
+};
+
+void foo() {
+  A a = A(0);
+}
+
+struct B {
+  A a;
+  B(): a(A(0)) {}
+};
+
+} // namespace variable_functional_cast_crash
+
+
+namespace address_vector_tests {
+
 template <typename T> struct AddressVector {
   T *buf[10];
   int len;
@@ -56,3 +76,5 @@ void testMultipleReturns() {
   clang_analyzer_eval(v.buf[4] == &c); // expected-warning{{TRUE}}
 #endif
 }
+
+} // namespace address_vector_tests
