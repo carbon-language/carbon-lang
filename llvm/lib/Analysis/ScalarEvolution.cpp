@@ -1768,13 +1768,13 @@ ScalarEvolution::getZeroExtendExpr(const SCEV *Op, Type *Ty, unsigned Depth) {
     }
   }
 
-  if (auto *SA = dyn_cast<SCEVMulExpr>(Op)) {
+  if (auto *SM = dyn_cast<SCEVMulExpr>(Op)) {
     // zext((A * B * ...)<nuw>) --> (zext(A) * zext(B) * ...)<nuw>
-    if (SA->hasNoUnsignedWrap()) {
+    if (SM->hasNoUnsignedWrap()) {
       // If the multiply does not unsign overflow then we can, by definition,
       // commute the zero extension with the multiply operation.
       SmallVector<const SCEV *, 4> Ops;
-      for (const auto *Op : SA->operands())
+      for (const auto *Op : SM->operands())
         Ops.push_back(getZeroExtendExpr(Op, Ty, Depth + 1));
       return getMulExpr(Ops, SCEV::FlagNUW, Depth + 1);
     }
@@ -1791,10 +1791,10 @@ ScalarEvolution::getZeroExtendExpr(const SCEV *Op, Type *Ty, unsigned Depth) {
     //   = zext((2^K * (trunc X to i{N-K}))<nuw>) to iM
     //   = (2^K * (zext(trunc X to i{N-K}) to iM))<nuw>.
     //
-    if (SA->getNumOperands() == 2)
-      if (auto *MulLHS = dyn_cast<SCEVConstant>(SA->getOperand(0)))
+    if (SM->getNumOperands() == 2)
+      if (auto *MulLHS = dyn_cast<SCEVConstant>(SM->getOperand(0)))
         if (MulLHS->getAPInt().isPowerOf2())
-          if (auto *TruncRHS = dyn_cast<SCEVTruncateExpr>(SA->getOperand(1))) {
+          if (auto *TruncRHS = dyn_cast<SCEVTruncateExpr>(SM->getOperand(1))) {
             int NewTruncBits = getTypeSizeInBits(TruncRHS->getType()) -
                                MulLHS->getAPInt().logBase2();
             Type *NewTruncTy = IntegerType::get(getContext(), NewTruncBits);
