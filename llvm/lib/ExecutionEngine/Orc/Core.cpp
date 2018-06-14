@@ -679,6 +679,8 @@ SymbolNameSet VSO::lookupFlagsImpl(SymbolFlagsMap &Flags,
 
 SymbolNameSet VSO::lookup(std::shared_ptr<AsynchronousSymbolQuery> Q,
                           SymbolNameSet Names) {
+  assert(Q && "Query can not be null");
+
   std::vector<std::unique_ptr<MaterializationUnit>> MUs;
 
   SymbolNameSet Unresolved = std::move(Names);
