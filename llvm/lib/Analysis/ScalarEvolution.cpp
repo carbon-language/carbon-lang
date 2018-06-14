@@ -2764,22 +2764,21 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
   unsigned Idx = 0;
   if (const SCEVConstant *LHSC = dyn_cast<SCEVConstant>(Ops[0])) {
 
-    // C1*(C2+V) -> C1*C2 + C1*V
     if (Ops.size() == 2)
-        if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Ops[1]))
-          // If any of Add's ops are Adds or Muls with a constant,
-          // apply this transformation as well.
-          if (Add->getNumOperands() == 2)
-            // TODO: There are some cases where this transformation is not
-            // profitable, for example:
-            // Add = (C0 + X) * Y + Z.
-            // Maybe the scope of this transformation should be narrowed down.
-            if (containsConstantInAddMulChain(Add))
-              return getAddExpr(getMulExpr(LHSC, Add->getOperand(0),
-                                           SCEV::FlagAnyWrap, Depth + 1),
-                                getMulExpr(LHSC, Add->getOperand(1),
-                                           SCEV::FlagAnyWrap, Depth + 1),
-                                SCEV::FlagAnyWrap, Depth + 1);
+      // C1*(C2+V) -> C1*C2 + C1*V
+      if (const SCEVAddExpr *Add = dyn_cast<SCEVAddExpr>(Ops[1]))
+        // If any of Add's ops are Adds or Muls with a constant, apply this
+        // transformation as well.
+        //
+        // TODO: There are some cases where this transformation is not
+        // profitable; for example, Add = (C0 + X) * Y + Z.  Maybe the scope of
+        // this transformation should be narrowed down.
+        if (Add->getNumOperands() == 2 && containsConstantInAddMulChain(Add))
+          return getAddExpr(getMulExpr(LHSC, Add->getOperand(0),
+                                       SCEV::FlagAnyWrap, Depth + 1),
+                            getMulExpr(LHSC, Add->getOperand(1),
+                                       SCEV::FlagAnyWrap, Depth + 1),
+                            SCEV::FlagAnyWrap, Depth + 1);
 
     ++Idx;
     while (const SCEVConstant *RHSC = dyn_cast<SCEVConstant>(Ops[Idx])) {
