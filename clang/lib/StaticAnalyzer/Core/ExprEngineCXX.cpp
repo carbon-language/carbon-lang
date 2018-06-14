@@ -180,7 +180,8 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       }
       break;
     }
-    case ConstructionContext::SimpleReturnedValueKind: {
+    case ConstructionContext::SimpleReturnedValueKind:
+    case ConstructionContext::CXX17ElidedCopyReturnedValueKind: {
       // The temporary is to be managed by the parent stack frame.
       // So build it in the parent stack frame if we're not in the
       // top frame of the analysis.
@@ -193,16 +194,10 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
           // call in the parent stack frame. This is equivalent to not being
           // able to find construction context at all.
           break;
-        } else if (!isa<TemporaryObjectConstructionContext>(
-                       RTC->getConstructionContext())) {
-          // FIXME: The return value is constructed directly into a
-          // non-temporary due to C++17 mandatory copy elision. This is not
-          // implemented yet.
-          assert(getContext().getLangOpts().CPlusPlus17);
-          break;
         }
-        CC = RTC->getConstructionContext();
-        LCtx = CallerLCtx;
+        return prepareForObjectConstruction(
+            cast<Expr>(SFC->getCallSite()), State, CallerLCtx,
+            RTC->getConstructionContext(), CallOpts);
       } else {
         // We are on the top frame of the analysis.
         // TODO: What exactly happens when we are? Does the temporary object
@@ -212,9 +207,7 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
         SVal V = loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(E, LCtx));
         return std::make_pair(State, V);
       }
-
-      // Continue as if we have a temporary with a different location context.
-      // FALLTHROUGH.
+      llvm_unreachable("Unhandled return value construction context!");
     }
     case ConstructionContext::TemporaryObjectKind: {
       const auto *TCC = cast<TemporaryObjectConstructionContext>(CC);
@@ -261,9 +254,6 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       CallOpts.IsTemporaryCtorOrDtor = true;
       return std::make_pair(State, V);
     }
-    case ConstructionContext::CXX17ElidedCopyReturnedValueKind:
-      // Not implemented yet.
-      break;
     }
   }
   // If we couldn't find an existing region to construct into, assume we're

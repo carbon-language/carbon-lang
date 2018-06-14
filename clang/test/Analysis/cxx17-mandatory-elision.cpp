@@ -150,9 +150,8 @@ void testMultipleReturns() {
   ClassWithoutDestructor c = make3(v);
 
 #if __cplusplus >= 201703L
-  // FIXME: Both should be TRUE.
   clang_analyzer_eval(v.len == 1); // expected-warning{{TRUE}}
-  clang_analyzer_eval(v.buf[0] == &c); // expected-warning{{FALSE}}
+  clang_analyzer_eval(v.buf[0] == &c); // expected-warning{{TRUE}}
 #else
   clang_analyzer_eval(v.len == 5); // expected-warning{{TRUE}}
   clang_analyzer_eval(v.buf[0] != v.buf[1]); // expected-warning{{TRUE}}
@@ -183,6 +182,13 @@ void testVariable() {
   AddressVector<ClassWithDestructor> v;
   {
     ClassWithDestructor c = ClassWithDestructor(v);
+    // Check if the last destructor is an automatic destructor.
+    // A temporary destructor would have fired by now.
+#if __cplusplus >= 201703L
+    clang_analyzer_eval(v.len == 1); // expected-warning{{TRUE}}
+#else
+    clang_analyzer_eval(v.len == 3); // expected-warning{{TRUE}}
+#endif
   }
 #if __cplusplus >= 201703L
   // 0. Construct the variable.
@@ -210,6 +216,13 @@ void testCtorInitializer() {
   AddressVector<ClassWithDestructor> v;
   {
     TestCtorInitializer t(v);
+    // Check if the last destructor is an automatic destructor.
+    // A temporary destructor would have fired by now.
+#if __cplusplus >= 201703L
+    clang_analyzer_eval(v.len == 1); // expected-warning{{TRUE}}
+#else
+    clang_analyzer_eval(v.len == 3); // expected-warning{{TRUE}}
+#endif
   }
 #if __cplusplus >= 201703L
   // 0. Construct the member variable.
@@ -227,4 +240,53 @@ void testCtorInitializer() {
 #endif
 }
 
+
+ClassWithDestructor make1(AddressVector<ClassWithDestructor> &v) {
+  return ClassWithDestructor(v);
+}
+ClassWithDestructor make2(AddressVector<ClassWithDestructor> &v) {
+  return make1(v);
+}
+ClassWithDestructor make3(AddressVector<ClassWithDestructor> &v) {
+  return make2(v);
+}
+
+void testMultipleReturnsWithDestructors() {
+  AddressVector<ClassWithDestructor> v;
+  {
+    ClassWithDestructor c = make3(v);
+    // Check if the last destructor is an automatic destructor.
+    // A temporary destructor would have fired by now.
+#if __cplusplus >= 201703L
+    clang_analyzer_eval(v.len == 1); // expected-warning{{TRUE}}
+#else
+    clang_analyzer_eval(v.len == 9); // expected-warning{{TRUE}}
+#endif
+  }
+
+#if __cplusplus >= 201703L
+  // 0. Construct the variable. Yes, constructor in make1() constructs
+  //    the variable 'c'.
+  // 1. Destroy the variable.
+  clang_analyzer_eval(v.len == 2); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[1]); // expected-warning{{TRUE}}
+#else
+  // 0. Construct the temporary in make1().
+  // 1. Construct the temporary in make2().
+  // 2. Destroy the temporary in make1().
+  // 3. Construct the temporary in make3().
+  // 4. Destroy the temporary in make2().
+  // 5. Construct the temporary here.
+  // 6. Destroy the temporary in make3().
+  // 7. Construct the variable.
+  // 8. Destroy the temporary here.
+  // 9. Destroy the variable.
+  clang_analyzer_eval(v.len == 10); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[2]); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[1] == v.buf[4]); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[3] == v.buf[6]); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[5] == v.buf[8]); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[7] == v.buf[9]); // expected-warning{{TRUE}}
+#endif
+}
 } // namespace address_vector_tests
