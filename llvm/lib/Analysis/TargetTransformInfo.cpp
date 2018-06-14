@@ -631,10 +631,17 @@ int TargetTransformInfo::getInstructionLatency(const Instruction *I) const {
 }
 
 static bool isReverseVectorMask(ArrayRef<int> Mask) {
-  for (unsigned i = 0, MaskSize = Mask.size(); i < MaskSize; ++i)
-    if (Mask[i] >= 0 && Mask[i] != (int)(MaskSize - 1 - i))
-      return false;
-  return true;
+  bool ReverseLHS = true;
+  bool ReverseRHS = true;
+  unsigned MaskSize = Mask.size();
+
+  for (unsigned i = 0; i < MaskSize && (ReverseLHS || ReverseRHS); ++i) {
+    if (Mask[i] < 0)
+      continue;
+    ReverseLHS &= (Mask[i] == (int)(MaskSize - 1 - i));
+    ReverseRHS &= (Mask[i] == (int)(MaskSize + MaskSize - 1 - i));
+  }
+  return ReverseLHS || ReverseRHS;
 }
 
 static bool isSingleSourceVectorMask(ArrayRef<int> Mask) {
