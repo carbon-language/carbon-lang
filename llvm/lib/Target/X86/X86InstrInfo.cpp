@@ -805,9 +805,9 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
 
     // VBROADCASTS{SD}rr register instructions were an AVX2 addition while the
     // VBROADCASTS{SD}rm memory instructions were available from AVX1.
-    // TB_NO_REVERSE prevents unfolding from introducing an illegal instruction
-    // on AVX1 targets. The VPBROADCAST instructions are all AVX2 instructions
-    // so they don't need an equivalent limitation.
+    // TB_NO_REVERSE prevents unfolding because doing so would create a full
+    // vector load while the broadcast load would have only been a single
+    // element.
     { X86::VBROADCASTSSrr,  X86::VBROADCASTSSrm,      TB_NO_REVERSE },
     { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
     { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
