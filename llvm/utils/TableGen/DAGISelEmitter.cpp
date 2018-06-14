@@ -38,36 +38,36 @@ public:
 /// getResultPatternCost - Compute the number of instructions for this pattern.
 /// This is a temporary hack.  We should really include the instruction
 /// latencies in this calculation.
-static unsigned getResultPatternCost(TreePatternNode *P,
+static unsigned getResultPatternCost(const TreePatternNode &P,
                                      CodeGenDAGPatterns &CGP) {
-  if (P->isLeaf()) return 0;
+  if (P.isLeaf()) return 0;
 
   unsigned Cost = 0;
-  Record *Op = P->getOperator();
+  Record *Op = P.getOperator();
   if (Op->isSubClassOf("Instruction")) {
     Cost++;
     CodeGenInstruction &II = CGP.getTargetInfo().getInstruction(Op);
     if (II.usesCustomInserter)
       Cost += 10;
   }
-  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
-    Cost += getResultPatternCost(P->getChild(i), CGP);
+  for (unsigned i = 0, e = P.getNumChildren(); i != e; ++i)
+    Cost += getResultPatternCost(P.getChild(i), CGP);
   return Cost;
 }
 
 /// getResultPatternCodeSize - Compute the code size of instructions for this
 /// pattern.
-static unsigned getResultPatternSize(TreePatternNode *P,
+static unsigned getResultPatternSize(const TreePatternNode &P,
                                      CodeGenDAGPatterns &CGP) {
-  if (P->isLeaf()) return 0;
+  if (P.isLeaf()) return 0;
 
   unsigned Cost = 0;
-  Record *Op = P->getOperator();
+  Record *Op = P.getOperator();
   if (Op->isSubClassOf("Instruction")) {
     Cost += Op->getValueAsInt("CodeSize");
   }
-  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
-    Cost += getResultPatternSize(P->getChild(i), CGP);
+  for (unsigned i = 0, e = P.getNumChildren(); i != e; ++i)
+    Cost += getResultPatternSize(P.getChild(i), CGP);
   return Cost;
 }
 
@@ -100,13 +100,13 @@ struct PatternSortingPredicate {
     if (LHSSize < RHSSize) return false;
 
     // If the patterns have equal complexity, compare generated instruction cost
-    unsigned LHSCost = getResultPatternCost(LHS->getDstPattern(), CGP);
-    unsigned RHSCost = getResultPatternCost(RHS->getDstPattern(), CGP);
+    unsigned LHSCost = getResultPatternCost(*LHS->getDstPattern(), CGP);
+    unsigned RHSCost = getResultPatternCost(*RHS->getDstPattern(), CGP);
     if (LHSCost < RHSCost) return true;
     if (LHSCost > RHSCost) return false;
 
-    unsigned LHSPatSize = getResultPatternSize(LHS->getDstPattern(), CGP);
-    unsigned RHSPatSize = getResultPatternSize(RHS->getDstPattern(), CGP);
+    unsigned LHSPatSize = getResultPatternSize(*LHS->getDstPattern(), CGP);
+    unsigned RHSPatSize = getResultPatternSize(*RHS->getDstPattern(), CGP);
     if (LHSPatSize < RHSPatSize) return true;
     if (LHSPatSize > RHSPatSize) return false;
 

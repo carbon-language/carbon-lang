@@ -204,18 +204,17 @@ struct OperandsSignature {
     const CodeGenRegisterClass *DstRC = nullptr;
 
     for (unsigned i = 0, e = InstPatNode->getNumChildren(); i != e; ++i) {
-      TreePatternNode *Op = InstPatNode->getChild(i);
+      const TreePatternNode &Op = InstPatNode->getChild(i);
 
       // Handle imm operands specially.
-      if (!Op->isLeaf() && Op->getOperator()->getName() == "imm") {
+      if (!Op.isLeaf() && Op.getOperator()->getName() == "imm") {
         unsigned PredNo = 0;
-        if (!Op->getPredicateFns().empty()) {
-          TreePredicateFn PredFn = Op->getPredicateFns()[0];
+        if (!Op.getPredicateFns().empty()) {
+          TreePredicateFn PredFn = Op.getPredicateFns()[0];
           // If there is more than one predicate weighing in on this operand
           // then we don't handle it.  This doesn't typically happen for
           // immediates anyway.
-          if (Op->getPredicateFns().size() > 1 ||
-              !PredFn.isImmediatePattern())
+          if (Op.getPredicateFns().size() > 1 || !PredFn.isImmediatePattern())
             return false;
           // Ignore any instruction with 'FastIselShouldIgnore', these are
           // not needed and just bloat the fast instruction selector.  For
@@ -235,11 +234,11 @@ struct OperandsSignature {
 
       // For now, filter out any operand with a predicate.
       // For now, filter out any operand with multiple values.
-      if (!Op->getPredicateFns().empty() || Op->getNumTypes() != 1)
+      if (!Op.getPredicateFns().empty() || Op.getNumTypes() != 1)
         return false;
 
-      if (!Op->isLeaf()) {
-         if (Op->getOperator()->getName() == "fpimm") {
+      if (!Op.isLeaf()) {
+         if (Op.getOperator()->getName() == "fpimm") {
           Operands.push_back(OpKind::getFP());
           continue;
         }
@@ -247,15 +246,15 @@ struct OperandsSignature {
         return false;
       }
 
-      assert(Op->hasConcreteType(0) && "Type infererence not done?");
+      assert(Op.hasConcreteType(0) && "Type infererence not done?");
 
       // For now, all the operands must have the same type (if they aren't
       // immediates).  Note that this causes us to reject variable sized shifts
       // on X86.
-      if (Op->getSimpleType(0) != VT)
+      if (Op.getSimpleType(0) != VT)
         return false;
 
-      DefInit *OpDI = dyn_cast<DefInit>(Op->getLeafValue());
+      DefInit *OpDI = dyn_cast<DefInit>(Op.getLeafValue());
       if (!OpDI)
         return false;
       Record *OpLeafRec = OpDI->getDef();
@@ -426,14 +425,14 @@ static std::string getLegalCName(std::string OpName) {
 
 FastISelMap::FastISelMap(StringRef instns) : InstNS(instns) {}
 
-static std::string PhyRegForNode(TreePatternNode *Op,
+static std::string PhyRegForNode(const TreePatternNode &Op,
                                  const CodeGenTarget &Target) {
   std::string PhysReg;
 
-  if (!Op->isLeaf())
+  if (!Op.isLeaf())
     return PhysReg;
 
-  Record *OpLeafRec = cast<DefInit>(Op->getLeafValue())->getDef();
+  Record *OpLeafRec = cast<DefInit>(Op.getLeafValue())->getDef();
   if (!OpLeafRec->isSubClassOf("Register"))
     return PhysReg;
 
@@ -473,10 +472,10 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
     // For now, ignore multi-instruction patterns.
     bool MultiInsts = false;
     for (unsigned i = 0, e = Dst->getNumChildren(); i != e; ++i) {
-      TreePatternNode *ChildOp = Dst->getChild(i);
-      if (ChildOp->isLeaf())
+      const TreePatternNode &ChildOp = Dst->getChild(i);
+      if (ChildOp.isLeaf())
         continue;
-      if (ChildOp->getOperator()->isSubClassOf("Instruction")) {
+      if (ChildOp.getOperator()->isSubClassOf("Instruction")) {
         MultiInsts = true;
         break;
       }
@@ -500,13 +499,13 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
     } else {
       // If this isn't a leaf, then continue since the register classes are
       // a bit too complicated for now.
-      if (!Dst->getChild(1)->isLeaf()) continue;
+      if (!Dst->getChild(1).isLeaf()) continue;
 
-      DefInit *SR = dyn_cast<DefInit>(Dst->getChild(1)->getLeafValue());
+      DefInit *SR = dyn_cast<DefInit>(Dst->getChild(1).getLeafValue());
       if (SR)
         SubRegNo = getQualifiedName(SR->getDef());
       else
-        SubRegNo = Dst->getChild(1)->getLeafValue()->getAsString();
+        SubRegNo = Dst->getChild(1).getLeafValue()->getAsString();
     }
 
     // Inspect the pattern.
@@ -523,8 +522,8 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
     if (InstPatNode->getNumTypes()) RetVT = InstPatNode->getSimpleType(0);
     MVT::SimpleValueType VT = RetVT;
     if (InstPatNode->getNumChildren()) {
-      assert(InstPatNode->getChild(0)->getNumTypes() == 1);
-      VT = InstPatNode->getChild(0)->getSimpleType(0);
+      assert(InstPatNode->getChild(0).getNumTypes() == 1);
+      VT = InstPatNode->getChild(0).getSimpleType(0);
     }
 
     // For now, filter out any instructions with predicates.
@@ -550,8 +549,8 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
         std::string PhysReg = PhyRegForNode(InstPatNode->getChild(i), Target);
         if (PhysReg.empty()) {
           if (DstIndex >= Dst->getNumChildren() ||
-              Dst->getChild(DstIndex)->getName() !=
-              InstPatNode->getChild(i)->getName()) {
+              Dst->getChild(DstIndex).getName() !=
+              InstPatNode->getChild(i).getName()) {
             FoundNonSimplePattern = true;
             break;
           }
