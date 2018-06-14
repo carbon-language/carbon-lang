@@ -119,8 +119,9 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
   // current construction context.
   if (CC) {
     switch (CC->getKind()) {
+    case ConstructionContext::CXX17ElidedCopyVariableKind:
     case ConstructionContext::SimpleVariableKind: {
-      const auto *DSCC = cast<SimpleVariableConstructionContext>(CC);
+      const auto *DSCC = cast<VariableConstructionContext>(CC);
       const auto *DS = DSCC->getDeclStmt();
       const auto *Var = cast<VarDecl>(DS->getSingleDecl());
       SVal LValue = State->getLValue(Var, LCtx);
@@ -131,6 +132,7 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
           addObjectUnderConstruction(State, DSCC->getDeclStmt(), LCtx, LValue);
       return std::make_pair(State, LValue);
     }
+    case ConstructionContext::CXX17ElidedCopyConstructorInitializerKind:
     case ConstructionContext::SimpleConstructorInitializerKind: {
       const auto *ICC = cast<ConstructorInitializerConstructionContext>(CC);
       const auto *Init = ICC->getCXXCtorInitializer();
@@ -259,9 +261,7 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       CallOpts.IsTemporaryCtorOrDtor = true;
       return std::make_pair(State, V);
     }
-    case ConstructionContext::CXX17ElidedCopyVariableKind:
     case ConstructionContext::CXX17ElidedCopyReturnedValueKind:
-    case ConstructionContext::CXX17ElidedCopyConstructorInitializerKind:
       // Not implemented yet.
       break;
     }

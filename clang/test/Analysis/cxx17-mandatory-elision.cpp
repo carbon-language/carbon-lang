@@ -49,7 +49,62 @@ public:
   }
 };
 
+
+struct A {
+  int x;
+  A(): x(0) {}
+  ~A() {}
+};
+
+struct B {
+  A a;
+  B() : a(A()) {}
+};
+
+void foo() {
+  B b;
+  clang_analyzer_eval(b.a.x == 0); // expected-warning{{TRUE}}
+}
+
 } // namespace ctor_initializer
+
+
+namespace elision_on_ternary_op_branches {
+class C1 {
+  int x;
+public:
+  C1(int x): x(x) {}
+  int getX() const { return x; }
+  ~C1();
+};
+
+class C2 {
+  int x;
+  int y;
+public:
+  C2(int x, int y): x(x), y(y) {}
+  int getX() const { return x; }
+  int getY() const { return y; }
+  ~C2();
+};
+
+void foo(int coin) {
+  C1 c1 = coin ? C1(1) : C1(2);
+  if (coin) {
+    clang_analyzer_eval(c1.getX() == 1); // expected-warning{{TRUE}}
+  } else {
+    clang_analyzer_eval(c1.getX() == 2); // expected-warning{{TRUE}}
+  }
+  C2 c2 = coin ? C2(3, 4) : C2(5, 6);
+  if (coin) {
+    clang_analyzer_eval(c2.getX() == 3); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c2.getY() == 4); // expected-warning{{TRUE}}
+  } else {
+    clang_analyzer_eval(c2.getX() == 5); // expected-warning{{TRUE}}
+    clang_analyzer_eval(c2.getY() == 6); // expected-warning{{TRUE}}
+  }
+}
+} // namespace elision_on_ternary_op_branches
 
 
 namespace address_vector_tests {
@@ -105,6 +160,70 @@ void testMultipleReturns() {
   clang_analyzer_eval(v.buf[2] != v.buf[3]); // expected-warning{{TRUE}}
   clang_analyzer_eval(v.buf[3] != v.buf[4]); // expected-warning{{TRUE}}
   clang_analyzer_eval(v.buf[4] == &c); // expected-warning{{TRUE}}
+#endif
+}
+
+class ClassWithDestructor {
+  AddressVector<ClassWithDestructor> &v;
+
+public:
+  ClassWithDestructor(AddressVector<ClassWithDestructor> &v) : v(v) {
+    v.push(this);
+  }
+
+  ClassWithDestructor(ClassWithDestructor &&c) : v(c.v) { v.push(this); }
+  ClassWithDestructor(const ClassWithDestructor &c) : v(c.v) {
+    v.push(this);
+  }
+
+  ~ClassWithDestructor() { v.push(this); }
+};
+
+void testVariable() {
+  AddressVector<ClassWithDestructor> v;
+  {
+    ClassWithDestructor c = ClassWithDestructor(v);
+  }
+#if __cplusplus >= 201703L
+  // 0. Construct the variable.
+  // 1. Destroy the variable.
+  clang_analyzer_eval(v.len == 2); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[1]); // expected-warning{{TRUE}}
+#else
+  // 0. Construct the temporary.
+  // 1. Construct the variable.
+  // 2. Destroy the temporary.
+  // 3. Destroy the variable.
+  clang_analyzer_eval(v.len == 4); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[2]); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[1] == v.buf[3]); // expected-warning{{TRUE}}
+#endif
+}
+
+struct TestCtorInitializer {
+  ClassWithDestructor c;
+  TestCtorInitializer(AddressVector<ClassWithDestructor> &v)
+    : c(ClassWithDestructor(v)) {}
+};
+
+void testCtorInitializer() {
+  AddressVector<ClassWithDestructor> v;
+  {
+    TestCtorInitializer t(v);
+  }
+#if __cplusplus >= 201703L
+  // 0. Construct the member variable.
+  // 1. Destroy the member variable.
+  clang_analyzer_eval(v.len == 2); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[1]); // expected-warning{{TRUE}}
+#else
+  // 0. Construct the temporary.
+  // 1. Construct the member variable.
+  // 2. Destroy the temporary.
+  // 3. Destroy the member variable.
+  clang_analyzer_eval(v.len == 4); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[2]); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[1] == v.buf[3]); // expected-warning{{TRUE}}
 #endif
 }
 
