@@ -21,6 +21,37 @@ struct B {
 } // namespace variable_functional_cast_crash
 
 
+namespace ctor_initializer {
+
+struct S {
+  int x, y, z;
+};
+
+struct T {
+  S s;
+  int w;
+  T(int w): s(), w(w) {}
+};
+
+class C {
+  T t;
+public:
+  C() : t(T(4)) {
+    S s = {1, 2, 3};
+    t.s = s;
+    // FIXME: Should be TRUE in C++11 as well.
+    clang_analyzer_eval(t.w == 4);
+#if __cplusplus >= 201703L
+    // expected-warning@-2{{TRUE}}
+#else
+    // expected-warning@-4{{UNKNOWN}}
+#endif
+  }
+};
+
+} // namespace ctor_initializer
+
+
 namespace address_vector_tests {
 
 template <typename T> struct AddressVector {

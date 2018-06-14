@@ -762,20 +762,23 @@ private:
   /// made within the constructor alive until its declaration actually
   /// goes into scope.
   static ProgramStateRef addObjectUnderConstruction(
-      ProgramStateRef State, const Stmt *S,
+      ProgramStateRef State,
+      llvm::PointerUnion<const Stmt *, const CXXCtorInitializer *> P,
       const LocationContext *LC, SVal V);
 
   /// Mark the object sa fully constructed, cleaning up the state trait
   /// that tracks objects under construction.
-  static ProgramStateRef finishObjectConstruction(ProgramStateRef State,
-                                                  const Stmt *S,
-                                                  const LocationContext *LC);
+  static ProgramStateRef finishObjectConstruction(
+      ProgramStateRef State,
+      llvm::PointerUnion<const Stmt *, const CXXCtorInitializer *> P,
+      const LocationContext *LC);
 
   /// If the given statement corresponds to an object under construction,
   /// being part of its construciton context, retrieve that object's location.
-  static Optional<SVal> getObjectUnderConstruction(ProgramStateRef State,
-                                                   const Stmt *S,
-                                                   const LocationContext *LC);
+  static Optional<SVal> getObjectUnderConstruction(
+      ProgramStateRef State,
+      llvm::PointerUnion<const Stmt *, const CXXCtorInitializer *> P,
+      const LocationContext *LC);
 
   /// Check if all objects under construction have been fully constructed
   /// for the given context range (including FromLC, not including ToLC).

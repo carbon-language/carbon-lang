@@ -153,6 +153,7 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       QualType Ty = Field->getType();
       FieldVal = makeZeroElementRegion(State, FieldVal, Ty,
                                        CallOpts.IsArrayCtorOrDtor);
+      State = addObjectUnderConstruction(State, Init, LCtx, FieldVal);
       return std::make_pair(State, FieldVal);
     }
     case ConstructionContext::NewAllocatedObjectKind: {
@@ -270,35 +271,6 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
   CallOpts.IsCtorOrDtorWithImproperlyModeledTargetRegion = true;
   return std::make_pair(
       State, loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(E, LCtx)));
-}
-
-const CXXConstructExpr *
-ExprEngine::findDirectConstructorForCurrentCFGElement() {
-  // Go backward in the CFG to see if the previous element (ignoring
-  // destructors) was a CXXConstructExpr. If so, that constructor
-  // was constructed directly into an existing region.
-  // This process is essentially the inverse of that performed in
-  // findElementDirectlyInitializedByCurrentConstructor().
-  if (currStmtIdx == 0)
-    return nullptr;
-
-  const CFGBlock *B = getBuilderContext().getBlock();
-
-  unsigned int PreviousStmtIdx = currStmtIdx - 1;
-  CFGElement Previous = (*B)[PreviousStmtIdx];
-
-  while (Previous.getAs<CFGImplicitDtor>() && PreviousStmtIdx > 0) {
-    --PreviousStmtIdx;
-    Previous = (*B)[PreviousStmtIdx];
-  }
-
-  if (Optional<CFGStmt> PrevStmtElem = Previous.getAs<CFGStmt>()) {
-    if (auto *CtorExpr = dyn_cast<CXXConstructExpr>(PrevStmtElem->getStmt())) {
-      return CtorExpr;
-    }
-  }
-
-  return nullptr;
 }
 
 void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
