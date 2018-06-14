@@ -126,53 +126,30 @@ using LenParamValue = Bound;
 
 class IntrinsicTypeSpec;
 class DerivedTypeSpec;
+
 class DeclTypeSpec {
 public:
-  // intrinsic-type-spec or TYPE(intrinsic-type-spec)
-  static DeclTypeSpec MakeIntrinsic(const IntrinsicTypeSpec &typeSpec) {
-    return DeclTypeSpec{typeSpec};
-  }
-  // TYPE(derived-type-spec)
-  static DeclTypeSpec MakeTypeDerivedType(
-      std::unique_ptr<DerivedTypeSpec> &&typeSpec) {
-    return DeclTypeSpec{TypeDerived, std::move(typeSpec)};
-  }
-  // CLASS(derived-type-spec)
-  static DeclTypeSpec MakeClassDerivedType(
-      std::unique_ptr<DerivedTypeSpec> &&typeSpec) {
-    return DeclTypeSpec{ClassDerived, std::move(typeSpec)};
-  }
-  // TYPE(*)
-  static DeclTypeSpec MakeTypeStar() { return DeclTypeSpec{TypeStar}; }
-  // CLASS(*)
-  static DeclTypeSpec MakeClassStar() { return DeclTypeSpec{ClassStar}; }
-
-  DeclTypeSpec(const DeclTypeSpec &);
-  DeclTypeSpec &operator=(const DeclTypeSpec &);
-
   enum Category { Intrinsic, TypeDerived, ClassDerived, TypeStar, ClassStar };
+
+  // intrinsic-type-spec or TYPE(intrinsic-type-spec)
+  DeclTypeSpec(const IntrinsicTypeSpec &);
+  // TYPE(derived-type-spec) or CLASS(derived-type-spec)
+  DeclTypeSpec(Category, const DerivedTypeSpec &);
+  // TYPE(*) or CLASS(*)
+  DeclTypeSpec(Category);
+
   Category category() const { return category_; }
-  const IntrinsicTypeSpec &intrinsicTypeSpec() const {
-    return *intrinsicTypeSpec_;
-  }
-  const DerivedTypeSpec &derivedTypeSpec() const { return *derivedTypeSpec_; }
+  const IntrinsicTypeSpec &intrinsicTypeSpec() const;
+  const DerivedTypeSpec &derivedTypeSpec() const;
 
 private:
-  DeclTypeSpec(Category category) : category_{category} {
-    CHECK(category == TypeStar || category == ClassStar);
-  }
-  DeclTypeSpec(Category category, std::unique_ptr<DerivedTypeSpec> &&typeSpec);
-  DeclTypeSpec(const IntrinsicTypeSpec &intrinsicTypeSpec)
-    : category_{Intrinsic}, intrinsicTypeSpec_{&intrinsicTypeSpec} {
-    // All instances of IntrinsicTypeSpec live in caches and are never deleted,
-    // so the pointer to intrinsicTypeSpec will always be valid.
-  }
-
   Category category_;
-  const IntrinsicTypeSpec *intrinsicTypeSpec_{nullptr};
-  std::unique_ptr<DerivedTypeSpec> derivedTypeSpec_;
-  friend std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
+  union {
+    const IntrinsicTypeSpec *intrinsic;
+    const DerivedTypeSpec *derived;
+  } typeSpec_;
 };
+std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
 
 // Root of the *TypeSpec hierarchy
 class TypeSpec {
@@ -585,30 +562,11 @@ using ParamValue = LenParamValue;
 class DerivedTypeSpec : public TypeSpec {
 public:
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
-  DerivedTypeSpec(const Name &name) : name_{name} {}
-  virtual ~DerivedTypeSpec() = default;
-  DerivedTypeSpec &AddParamValue(const ParamValue &value) {
-    paramValues_.push_back(std::make_pair(std::nullopt, value));
-    return *this;
-  }
-  DerivedTypeSpec &AddParamValue(const Name &name, const ParamValue &value) {
-    paramValues_.push_back(std::make_pair(name, value));
-    return *this;
-  }
-
-  const std::list<std::pair<std::optional<Name>, ParamValue>> &paramValues() {
-    return paramValues_;
-  }
-
-  // Provide access to the derived-type definition if is known
-  const DerivedTypeDef *definition() {
-    // TODO
-    return 0;
-  }
+  DerivedTypeSpec(const SourceName &name) : name_{&name} {}
+  const SourceName &name() const { return *name_; }
 
 private:
-  const Name name_;
-  std::list<std::pair<std::optional<Name>, ParamValue>> paramValues_;
+  const SourceName *name_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };
 

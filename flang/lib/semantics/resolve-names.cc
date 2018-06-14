@@ -148,7 +148,7 @@ protected:
   void BeginDeclTypeSpec();
   void EndDeclTypeSpec();
 
-  std::unique_ptr<DerivedTypeSpec> derivedTypeSpec_;
+  std::optional<DerivedTypeSpec> derivedTypeSpec_;
   std::unique_ptr<ParamValue> typeParamValue_;
 
 private:
@@ -629,8 +629,8 @@ void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
 }
 
 void ImplicitRules::AddDefaultRules() {
-  SetType(DeclTypeSpec::MakeIntrinsic(IntegerTypeSpec::Make()), "i", "n", true);
-  SetType(DeclTypeSpec::MakeIntrinsic(RealTypeSpec::Make()), "a", "z", true);
+  SetType(DeclTypeSpec{IntegerTypeSpec::Make()}, "i", "n", true);
+  SetType(DeclTypeSpec{RealTypeSpec::Make()}, "a", "z", true);
 }
 
 // Return the next char after ch in a way that works for ASCII or EBCDIC.
@@ -716,25 +716,19 @@ void DeclTypeSpecVisitor::EndDeclTypeSpec() {
 }
 
 bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::ClassStar &x) {
-  SetDeclTypeSpec(DeclTypeSpec::MakeClassStar());
+  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::ClassStar});
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::TypeStar &x) {
-  SetDeclTypeSpec(DeclTypeSpec::MakeTypeStar());
+  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::TypeStar});
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(const parser::DerivedTypeSpec &x) {
   CHECK(!derivedTypeSpec_);
-  derivedTypeSpec_ =
-      std::make_unique<DerivedTypeSpec>(std::get<parser::Name>(x.t).ToString());
+  derivedTypeSpec_ = DerivedTypeSpec{std::get<parser::Name>(x.t).source};
   return true;
 }
 void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
-  if (const auto &keyword = std::get<std::optional<parser::Keyword>>(x.t)) {
-    derivedTypeSpec_->AddParamValue(keyword->v.ToString(), *typeParamValue_);
-  } else {
-    derivedTypeSpec_->AddParamValue(*typeParamValue_);
-  }
   typeParamValue_.reset();
 }
 bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
@@ -752,12 +746,10 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
 }
 
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Type &) {
-  SetDeclTypeSpec(
-      DeclTypeSpec::MakeTypeDerivedType(std::move(derivedTypeSpec_)));
+  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::TypeDerived, *derivedTypeSpec_});
 }
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Class &) {
-  SetDeclTypeSpec(
-      DeclTypeSpec::MakeClassDerivedType(std::move(derivedTypeSpec_)));
+  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::ClassDerived, *derivedTypeSpec_});
 }
 bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
   // TODO
@@ -766,7 +758,7 @@ bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
 
 void DeclTypeSpecVisitor::Post(const parser::StructureConstructor &) {
   // TODO: StructureConstructor
-  derivedTypeSpec_.reset();
+  derivedTypeSpec_ = std::nullopt;
 }
 bool DeclTypeSpecVisitor::Pre(const parser::AllocateStmt &) {
   BeginDeclTypeSpec();
@@ -775,7 +767,7 @@ bool DeclTypeSpecVisitor::Pre(const parser::AllocateStmt &) {
 void DeclTypeSpecVisitor::Post(const parser::AllocateStmt &) {
   // TODO: AllocateStmt
   EndDeclTypeSpec();
-  derivedTypeSpec_.reset();
+  derivedTypeSpec_ = std::nullopt;
 }
 bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
   BeginDeclTypeSpec();
@@ -784,7 +776,7 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeGuardStmt &) {
 void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
   // TODO: TypeGuardStmt
   EndDeclTypeSpec();
-  derivedTypeSpec_.reset();
+  derivedTypeSpec_ = std::nullopt;
 }
 
 bool DeclTypeSpecVisitor::Pre(const parser::IntegerTypeSpec &x) {
@@ -810,7 +802,7 @@ bool DeclTypeSpecVisitor::Pre(
 }
 void DeclTypeSpecVisitor::MakeIntrinsic(
     const IntrinsicTypeSpec &intrinsicTypeSpec) {
-  SetDeclTypeSpec(DeclTypeSpec::MakeIntrinsic(intrinsicTypeSpec));
+  SetDeclTypeSpec(DeclTypeSpec{intrinsicTypeSpec});
 }
 // Check that we're expecting to see a DeclTypeSpec (and haven't seen one yet)
 // and save it in declTypeSpec_.

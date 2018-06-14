@@ -15,6 +15,7 @@
 #include "type.h"
 #include "attr.h"
 #include "symbol.h"
+#include "../parser/idioms.h"
 #include <iostream>
 #include <set>
 
@@ -146,23 +147,7 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
 }
 
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
-  o << "TYPE(" << x.name_;
-  if (!x.paramValues_.empty()) {
-    o << '(';
-    int n = 0;
-    for (const auto &paramValue : x.paramValues_) {
-      if (n++) {
-        o << ", ";
-      }
-      if (paramValue.first) {
-        o << *paramValue.first << '=';
-      }
-      o << paramValue.second;
-    }
-    o << ')';
-  }
-  o << ')';
-  return o;
+  return o << "TYPE(" << x.name_ << ')';
 }
 
 const Bound Bound::ASSUMED{Bound::Assumed};
@@ -231,40 +216,37 @@ DataComponentDef::DataComponentDef(const DeclTypeSpec &type,
   }
 }
 
-DeclTypeSpec::DeclTypeSpec(const DeclTypeSpec &that)
-  : category_{that.category_}, intrinsicTypeSpec_{that.intrinsicTypeSpec_} {
-  if (category_ == TypeDerived || category_ == ClassDerived) {
-    derivedTypeSpec_ =
-        std::make_unique<DerivedTypeSpec>(*that.derivedTypeSpec_);
-  }
+DeclTypeSpec::DeclTypeSpec(const IntrinsicTypeSpec &intrinsic)
+  : category_{Intrinsic} {
+  typeSpec_.intrinsic = &intrinsic;
 }
-
-DeclTypeSpec &DeclTypeSpec::operator=(const DeclTypeSpec &that) {
-  category_ = that.category_;
-  intrinsicTypeSpec_ = that.intrinsicTypeSpec_;
-  if (category_ == TypeDerived || category_ == ClassDerived) {
-    derivedTypeSpec_ =
-        std::make_unique<DerivedTypeSpec>(*that.derivedTypeSpec_);
-  }
-  return *this;
-}
-
-DeclTypeSpec::DeclTypeSpec(
-    Category category, std::unique_ptr<DerivedTypeSpec> &&typeSpec)
-  : category_{category}, intrinsicTypeSpec_{nullptr}, derivedTypeSpec_{
-                                                          std::move(typeSpec)} {
+DeclTypeSpec::DeclTypeSpec(Category category, const DerivedTypeSpec &derived)
+  : category_{category} {
   CHECK(category == TypeDerived || category == ClassDerived);
+  typeSpec_.derived = &derived;
+}
+DeclTypeSpec::DeclTypeSpec(Category category) : category_{category} {
+  CHECK(category == TypeStar || category == ClassStar);
+}
+const IntrinsicTypeSpec &DeclTypeSpec::intrinsicTypeSpec() const {
+  CHECK(category_ == Intrinsic);
+  return *typeSpec_.intrinsic;
+}
+const DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() const {
+  CHECK(category_ == TypeDerived || category_ == ClassDerived);
+  return *typeSpec_.derived;
 }
 
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
-  // TODO: need CLASS(...) instead of TYPE() for ClassDerived
-  switch (x.category_) {
+  switch (x.category()) {
   case DeclTypeSpec::Intrinsic: return x.intrinsicTypeSpec().Output(o);
-  case DeclTypeSpec::TypeDerived: return o << x.derivedTypeSpec();
-  case DeclTypeSpec::ClassDerived: return o << x.derivedTypeSpec();
+  case DeclTypeSpec::TypeDerived:
+    return o << "TYPE(" << x.derivedTypeSpec() << ')';
+  case DeclTypeSpec::ClassDerived:
+    return o << "CLASS(" << x.derivedTypeSpec() << ')';
   case DeclTypeSpec::TypeStar: return o << "TYPE(*)";
   case DeclTypeSpec::ClassStar: return o << "CLASS(*)";
-  default: CRASH_NO_CASE;
+  default: CRASH_NO_CASE; return o;
   }
 }
 
