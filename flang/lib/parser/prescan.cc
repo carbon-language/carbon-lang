@@ -853,14 +853,17 @@ Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
   char sentinel[5], *sp{sentinel};
   for (int col{2}; col < 6; ++col) {
     char ch{*p++};
-    if (ch == '\n' || ch == '\t') {
+    if (ch == '\n') {
       return {};
+    }
+    if (ch == '\t') {
+      break;
     }
     if (ch != ' ') {
       *sp++ = ToLowerCaseLetter(ch);
     }
   }
-  if (*p != ' ' && *p != '0') {
+  if (*p != ' ' && *p != '\t' && *p != '0') {
     return {};
   }
   *sp = '\0';

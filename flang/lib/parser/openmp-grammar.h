@@ -15,7 +15,7 @@
 #ifndef FORTRAN_PARSER_OPENMP_GRAMMAR_H_
 #define FORTRAN_PARSER_OPENMP_GRAMMAR_H_
 
-// Top-level grammar specification for OpenMP. 
+// Top-level grammar specification for OpenMP.
 // See OpenMP-4.5-grammar.txt for documentation.
 
 #include "basic-parsers.h"
@@ -91,7 +91,8 @@ TYPE_PARSER(construct<OmpScheduleClause>(maybe(Parser<OmpScheduleModifier>{}),
 
 // IF(directive-name-modifier: scalar-logical-expr)
 TYPE_PARSER(construct<OmpIfClause>(
-    maybe("PARALLEL"_tok >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
+    maybe(
+        "PARALLEL"_tok >> pure(OmpIfClause::DirectiveNameModifier::Parallel) ||
         "TARGET ENTER DATA"_tok >>
             pure(OmpIfClause::DirectiveNameModifier::TargetEnterData) ||
         "TARGET EXIT DATA"_tok >>

@@ -223,9 +223,6 @@ constexpr auto scalarDefaultCharConstantExpr =
 constexpr auto intConstantExpr = integer(constantExpr);
 constexpr auto scalarIntConstantExpr = scalar(intConstantExpr);
 
-
-
-
 // R501 program -> program-unit [program-unit]...
 // This is the top-level production for the Fortran language.
 constexpr StartNewSubprogram startNewSubprogram;

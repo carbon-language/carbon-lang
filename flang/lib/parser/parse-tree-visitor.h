@@ -674,7 +674,6 @@ void Walk(format::IntrinsicTypeDataEditDesc &x, M &mutator) {
   }
 }
 
-
 template<typename V>
 void Walk(const OmpLinearClause::WithModifier &x, V &visitor) {
   if (visitor.Pre(x)) {
@@ -684,8 +683,7 @@ void Walk(const OmpLinearClause::WithModifier &x, V &visitor) {
     visitor.Post(x);
   }
 }
-template<typename M>
-void Walk(OmpLinearClause::WithModifier &x, M &mutator) {
+template<typename M> void Walk(OmpLinearClause::WithModifier &x, M &mutator) {
   if (mutator.Pre(x)) {
     Walk(x.modifier, mutator);
     Walk(x.names, mutator);
@@ -709,7 +707,6 @@ void Walk(OmpLinearClause::WithoutModifier &x, M &mutator) {
     mutator.Post(x);
   }
 }
-
 
 }  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_PARSE_TREE_VISITOR_H_
