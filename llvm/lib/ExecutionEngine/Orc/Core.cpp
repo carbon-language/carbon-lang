@@ -452,7 +452,7 @@ void VSO::addDependencies(const SymbolFlagsMap &Dependants,
 
           if (OtherMI.IsFinalized)
             transferFinalizedNodeDependencies(MI, Name, OtherMI);
-          else {
+          else if (&OtherVSO != this || OtherSymbol != Name) {
             OtherMI.Dependants[this].insert(Name);
             DepsOnOtherVSO.insert(OtherSymbol);
           }
