@@ -562,8 +562,9 @@ void VSO::finalize(const SymbolFlagsMap &Finalized) {
             // MaterializingInfo and update its materializing state.
             assert(DependantVSO.Symbols.count(DependantName) &&
                    "Dependant has no entry in the Symbols table");
-            DependantVSO.Symbols[DependantName].getFlags() &=
-                JITSymbolFlags::Materializing;
+            auto &DependantSym = DependantVSO.Symbols[DependantName];
+            DependantSym.setFlags(static_cast<JITSymbolFlags::FlagNames>(
+                DependantSym.getFlags() & ~JITSymbolFlags::Materializing));
             DependantVSO.MaterializingInfos.erase(DependantMII);
           }
         }
@@ -580,7 +581,9 @@ void VSO::finalize(const SymbolFlagsMap &Finalized) {
         }
         assert(Symbols.count(Name) &&
                "Symbol has no entry in the Symbols table");
-        Symbols[Name].getFlags() &= ~JITSymbolFlags::Materializing;
+        auto &Sym = Symbols[Name];
+        Sym.setFlags(static_cast<JITSymbolFlags::FlagNames>(
+            Sym.getFlags() & ~JITSymbolFlags::Materializing));
         MaterializingInfos.erase(MII);
       }
     }
