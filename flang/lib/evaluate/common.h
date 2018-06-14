@@ -15,7 +15,7 @@
 #ifndef FORTRAN_EVALUATE_COMMON_H_
 #define FORTRAN_EVALUATE_COMMON_H_
 
-#include "../semantics/enum-set.h"
+#include "../common/enum-set.h"
 #include <cinttypes>
 
 namespace Fortran::evaluate {
@@ -72,7 +72,7 @@ enum class RealFlag {
   Inexact
 };
 
-using RealFlags = semantics::EnumSet<RealFlag, 5>;
+using RealFlags = common::EnumSet<RealFlag, 5>;
 
 template<typename A> struct ValueWithRealFlags {
   A AccumulateFlags(RealFlags &f) {

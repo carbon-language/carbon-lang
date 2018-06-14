@@ -15,7 +15,7 @@
 #ifndef FORTRAN_SEMANTICS_ATTR_H_
 #define FORTRAN_SEMANTICS_ATTR_H_
 
-#include "enum-set.h"
+#include "../common/enum-set.h"
 #include "../parser/idioms.h"
 #include <cinttypes>
 #include <iostream>
@@ -31,9 +31,9 @@ ENUM_CLASS(Attr, ABSTRACT, ALLOCATABLE, ASYNCHRONOUS, BIND_C, CONTIGUOUS,
     VOLATILE)
 
 // Set of attributes
-class Attrs : public EnumSet<Attr, Attr_enumSize> {
+class Attrs : public common::EnumSet<Attr, Attr_enumSize> {
 private:
-  using enumSetType = EnumSet<Attr, Attr_enumSize>;
+  using enumSetType = common::EnumSet<Attr, Attr_enumSize>;
 
 public:
   using enumSetType::enumSetType;

@@ -412,7 +412,8 @@ private:
 
 class ProcComponentDef {
 public:
-  ProcComponentDef(const ProcDecl &decl, Attrs attrs, ProcInterface &&interface);
+  ProcComponentDef(
+      const ProcDecl &decl, Attrs attrs, ProcInterface &&interface);
 
   const ProcDecl &decl() const { return decl_; }
   const Attrs &attrs() const { return attrs_; }
@@ -475,8 +476,7 @@ public:
   }
 
 private:
-  GenericSpec(Kind kind, const SourceName *name)
-    : kind_{kind}, name_{name} {}
+  GenericSpec(Kind kind, const SourceName *name) : kind_{kind}, name_{name} {}
   const Kind kind_;
   const SourceName *const name_;  // only for GENERIC_NAME & OP_DEFINED
   friend std::ostream &operator<<(std::ostream &, const GenericSpec &);
@@ -572,6 +572,7 @@ public:
     }
   };
   explicit DerivedTypeDef(const Data &x);
+
 private:
   const Data data_;
   // TODO: type-bound procedures

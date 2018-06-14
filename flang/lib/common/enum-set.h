@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_SEMANTICS_ENUM_SET_H_
-#define FORTRAN_SEMANTICS_ENUM_SET_H_
+#ifndef FORTRAN_COMMON_ENUM_SET_H_
+#define FORTRAN_COMMON_ENUM_SET_H_
 
 // Implements a set of enums as a std::bitset<>.  APIs from bitset<> and set<>
 // can be used on these sets, whichever might be more clear to the user.
@@ -21,7 +21,7 @@
 #include <bitset>
 #include <cstddef>
 
-namespace Fortran::semantics {
+namespace Fortran::common {
 
 template<typename ENUM, std::size_t BITS> class EnumSet {
   static_assert(BITS > 0);
@@ -172,13 +172,13 @@ private:
   bitsetType bitset_;
 };
 
-}  // namespace Fortran::semantics
+}  // namespace Fortran::common
 
 template<typename ENUM, std::size_t values>
-struct std::hash<Fortran::semantics::EnumSet<ENUM, values>> {
+struct std::hash<Fortran::common::EnumSet<ENUM, values>> {
   std::size_t operator()(
-      const Fortran::semantics::EnumSet<ENUM, values> &x) const {
+      const Fortran::common::EnumSet<ENUM, values> &x) const {
     return std::hash(x.bitset());
   }
 };
-#endif  // FORTRAN_SEMANTICS_ENUM_SET_H_
+#endif  // FORTRAN_COMMON_ENUM_SET_H_

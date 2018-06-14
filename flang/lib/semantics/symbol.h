@@ -85,6 +85,7 @@ public:
   SubprogramNameDetails(SubprogramKind kind) : kind_{kind} {}
   SubprogramNameDetails() = delete;
   SubprogramKind kind() const { return kind_; }
+
 private:
   SubprogramKind kind_;
 };
@@ -130,7 +131,9 @@ public:
 
   const ProcInterface &interface() const { return interface_; }
   ProcInterface &interface() { return interface_; }
-  void set_interface(ProcInterface &&interface) { interface_ = std::move(interface); }
+  void set_interface(ProcInterface &&interface) {
+    interface_ = std::move(interface);
+  }
   bool HasExplicitInterface() const;
 
 private:
@@ -201,15 +204,15 @@ private:
 class UnknownDetails {};
 
 using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
-      SubprogramDetails, SubprogramNameDetails, EntityDetails,
-      ObjectEntityDetails, ProcEntityDetails, UseDetails, UseErrorDetails,
-      GenericDetails>;
+    SubprogramDetails, SubprogramNameDetails, EntityDetails,
+    ObjectEntityDetails, ProcEntityDetails, UseDetails, UseErrorDetails,
+    GenericDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 
 class Symbol {
 public:
   ENUM_CLASS(Flag, Function, Subroutine);
-  using Flags = EnumSet<Flag, Flag_enumSize>;
+  using Flags = common::EnumSet<Flag, Flag_enumSize>;
 
   Symbol(const Scope &owner, const SourceName &name, const Attrs &attrs,
       Details &&details)

@@ -94,6 +94,8 @@ include_directories(BEFORE
   ${FLANG_SOURCE_DIR}/include
   )
 
+enable_testing()
+
 add_subdirectory(include/flang)
 add_subdirectory(lib)
 add_subdirectory(runtime)
@@ -103,10 +105,3 @@ add_subdirectory(tools)
 configure_file(
   ${FLANG_SOURCE_DIR}/include/flang/Config/config.h.cmake
   ${FLANG_BINARY_DIR}/include/flang/Config/config.h)
-
-enable_testing()
-add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
-add_test(NAME PopPar COMMAND bit-population-count-test)
-add_test(NAME Integer COMMAND integer-test)
-add_test(NAME Logical COMMAND logical-test)
-add_test(NAME Real COMMAND real-test)

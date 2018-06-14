@@ -497,7 +497,8 @@ private:
   void DeclareProcEntity(const parser::Name &, Attrs, ProcInterface &&);
 
   // Set the type of an entity or report an error.
-  void SetType(const SourceName &name, Symbol &symbol, const DeclTypeSpec &type);
+  void SetType(
+      const SourceName &name, Symbol &symbol, const DeclTypeSpec &type);
 
   // Declare an object or procedure entity.
   template<typename T>
@@ -537,7 +538,6 @@ private:
     }
     return symbol;
   }
-
 };
 
 // Walk the parse tree and resolve names to symbols.
@@ -547,6 +547,8 @@ class ResolveNamesVisitor : public ModuleVisitor,
 public:
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
+  using DeclarationVisitor::Post;
+  using DeclarationVisitor::Pre;
   using ImplicitRulesVisitor::Post;
   using ImplicitRulesVisitor::Pre;
   using InterfaceVisitor::Post;
@@ -555,8 +557,6 @@ public:
   using ModuleVisitor::Pre;
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
-  using DeclarationVisitor::Post;
-  using DeclarationVisitor::Pre;
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(const T &) { return true; }
@@ -736,7 +736,7 @@ void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
 bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
   typeParamValue_ = std::make_unique<ParamValue>(std::visit(
       parser::visitors{
-          //TODO: create IntExpr from ScalarIntExpr
+          // TODO: create IntExpr from ScalarIntExpr
           [&](const parser::ScalarIntExpr &x) { return Bound{IntExpr{}}; },
           [&](const parser::Star &x) { return Bound::ASSUMED; },
           [&](const parser::TypeParamValue::Deferred &x) {
@@ -865,7 +865,7 @@ MessageHandler::Message &MessageHandler::Say(const SourceName &location,
 void MessageHandler::SayAlreadyDeclared(
     const SourceName &name, const Symbol &prev) {
   Say2(name, "'%s' is already declared in this scoping unit"_err_en_US,
-    prev.name(), "Previous declaration of '%s'"_en_US);
+      prev.name(), "Previous declaration of '%s'"_en_US);
 }
 void MessageHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
     const SourceName &name2, MessageFixedText &&msg2) {
@@ -1312,7 +1312,8 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
       genericSymbol_ = &MakeSymbol(ultimate.name(), ultimate.attrs());
       if (const auto *details = ultimate.detailsIf<GenericDetails>()) {
         genericSymbol_->set_details(GenericDetails{details->specificProcs()});
-      } else if (const auto *details = ultimate.detailsIf<SubprogramDetails>()) {
+      } else if (const auto *details =
+                     ultimate.detailsIf<SubprogramDetails>()) {
         genericSymbol_->set_details(SubprogramDetails{*details});
       } else {
         CHECK(!"can't happen");
@@ -1325,8 +1326,8 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
   }
   if (genericSymbol_->has<GenericDetails>()) {
     // okay
-  } else if (genericSymbol_->has<SubprogramDetails>()
-      || genericSymbol_->has<SubprogramNameDetails>()) {
+  } else if (genericSymbol_->has<SubprogramDetails>() ||
+      genericSymbol_->has<SubprogramNameDetails>()) {
     Details details;
     if (auto *d = genericSymbol_->detailsIf<SubprogramNameDetails>()) {
       details = *d;
@@ -1684,8 +1685,7 @@ bool DeclarationVisitor::Pre(const parser::ExternalStmt &x) {
       symbol->set_details(ProcEntityDetails(*details));
       symbol->set(Symbol::Flag::Function);
     } else {
-      Say2(name.source,
-          "EXTERNAL attribute not allowed on '%s'"_err_en_US,
+      Say2(name.source, "EXTERNAL attribute not allowed on '%s'"_err_en_US,
           symbol->name(), "Declaration of '%s'"_en_US);
     }
   }
@@ -1777,7 +1777,7 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeDef &x) {
 }
 void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
   DerivedTypeDef derivedType{*derivedTypeData_};
-  //TODO: do something with derivedType
+  // TODO: do something with derivedType
   derivedTypeData_.reset();
 }
 bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {

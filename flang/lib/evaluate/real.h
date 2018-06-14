@@ -77,15 +77,11 @@ public:
   }
 
   constexpr Real ABS() const {  // non-arithmetic, no flags returned
-    Real result;
-    result.word_ = word_.IBCLR(bits - 1);
-    return result;
+    return {word_.IBCLR(bits - 1)};
   }
 
   constexpr Real Negate() const {
-    Real result;
-    result.word_ = word_.IEOR(word_.MASKL(1));
-    return result;
+    return {word_.IEOR(word_.MASKL(1))};
   }
 
   Relation Compare(const Real &) const;

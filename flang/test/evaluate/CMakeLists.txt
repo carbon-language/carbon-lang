@@ -62,3 +62,9 @@ target_link_libraries(real-test
   FortranEvaluateTesting
   m
 )
+
+add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
+add_test(NAME PopPar COMMAND bit-population-count-test)
+add_test(NAME Integer COMMAND integer-test)
+add_test(NAME Logical COMMAND logical-test)
+add_test(NAME Real COMMAND real-test)

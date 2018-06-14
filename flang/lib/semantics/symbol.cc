@@ -205,7 +205,6 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
   return os;
 }
 
-
 static std::ostream &DumpType(std::ostream &os, const Symbol &symbol) {
   if (const auto *details = symbol.detailsIf<EntityDetails>()) {
     if (details->type()) {

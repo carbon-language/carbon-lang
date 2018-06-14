@@ -47,12 +47,13 @@ namespace Fortran::evaluate::value {
 // of possible values in a part), however, must be a power of two; this
 // template class is not generalized to enable, say, decimal arithmetic.
 // Member functions that correspond to Fortran intrinsic functions are
-// named accordingly so that they can be referenced easily in the
-// language standard.
+// named accordingly in ALL CAPS so that they can be referenced easily in
+// the language standard.
 template<int BITS, bool IS_LITTLE_ENDIAN = IsHostLittleEndian,
-    int PARTBITS =
-        BITS<32 ? BITS : 32, typename PART = HostUnsignedInt<PARTBITS>,
-            typename BIGPART = HostUnsignedInt<PARTBITS * 2>> class Integer {
+    int PARTBITS = BITS <= 32 ? BITS : 32,
+    typename PART = HostUnsignedInt<PARTBITS>,
+    typename BIGPART = HostUnsignedInt<PARTBITS * 2>>
+class Integer {
 public:
   static constexpr int bits{BITS};
   static constexpr int partBits{PARTBITS};
@@ -122,6 +123,20 @@ public:
     }
     SetLEPart(parts - 1, n);
   }
+  constexpr Integer(int ni) {
+    std::int64_t n{ni};
+    std::int64_t signExtension{-(n < 0)};
+    signExtension <<= partBits;
+    for (int j{0}; j + 1 < parts; ++j) {
+      SetLEPart(j, n);
+      if constexpr (partBits < 64) {
+        n = (n >> partBits) | signExtension;
+      } else {
+        n = signExtension;
+      }
+    }
+    SetLEPart(parts - 1, n);
+  }
 
   constexpr Integer &operator=(const Integer &) = default;
 
@@ -172,6 +187,14 @@ public:
       ++p;
     }
     Integer radix{base};
+    // This code makes assumptions about local contiguity in regions of the
+    // character set and only works up to base 36.  These assumptions hold
+    // for all current combinations of surviving character sets (ASCII, UTF-8,
+    // EBCDIC) and the bases used in Fortran source and formatted I/O
+    // (viz., 2, 8, 10, & 16).  But: management thought that a disclaimer
+    // might be needed here to warn future users of this code about these
+    // assumptions, so here you go, future programmer in some postapocalyptic
+    // hellscape, and best of luck with the inexorable killer robots.
     for (; std::uint64_t digit = *p; ++p) {
       if (digit >= '0' && digit < '0' + base) {
         digit -= '0';
@@ -197,23 +220,16 @@ public:
     std::uint64_t field{that.ToUInt64()};
     ValueWithOverflow result{field, false};
     if constexpr (bits < 64) {
-      if ((field >> bits) != 0) {
-        result.overflow = true;
-        return result;
-      }
+      result.overflow = (field >> bits) != 0;
     }
-    for (int j{64}; j < that.bits; j += 64) {
+    for (int j{64}; j < that.bits && !result.overflow; j += 64) {
       field = that.SHIFTR(j).ToUInt64();
       if (bits <= j) {
-        if (field != 0) {
-          result.overflow = true;
-          break;
-        }
+        result.overflow = field != 0;
       } else {
         result.value = result.value.IOR(Integer{field}.SHIFTL(j));
-        if (bits < j + 64 && (field >> (bits - j)) != 0) {
-          result.overflow = true;
-          break;
+        if (bits < j + 64) {
+          result.overflow = (field >> (bits - j)) != 0;
         }
       }
     }
@@ -445,7 +461,8 @@ public:
     if (size > bits) {
       size = bits;
     }
-    if ((count %= size) == 0) {
+    count %= size;
+    if (count == 0) {
       return *this;
     }
     int middleBits{size - count}, leastBits{count};
