@@ -2727,6 +2727,12 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case X86::BI__builtin_ia32_roundpd:
   case X86::BI__builtin_ia32_roundps256:
   case X86::BI__builtin_ia32_roundpd256:
+  case X86::BI__builtin_ia32_getmantpd128_mask:
+  case X86::BI__builtin_ia32_getmantpd256_mask:
+  case X86::BI__builtin_ia32_getmantps128_mask:
+  case X86::BI__builtin_ia32_getmantps256_mask:
+  case X86::BI__builtin_ia32_getmantpd512_mask:
+  case X86::BI__builtin_ia32_getmantps512_mask:
   case X86::BI__builtin_ia32_vec_ext_v16qi:
   case X86::BI__builtin_ia32_vec_ext_v16hi:
     i = 1; l = 0; u = 15;
