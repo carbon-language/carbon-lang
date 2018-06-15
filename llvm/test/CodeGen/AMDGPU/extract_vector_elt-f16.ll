@@ -58,8 +58,14 @@ define amdgpu_kernel void @extract_vector_elt_v2f16_dynamic_vgpr(half addrspace(
 }
 
 ; GCN-LABEL: {{^}}extract_vector_elt_v3f16:
-; GCN: s_load_dword s
-; GCN: s_load_dword s
+; SI: s_load_dword s
+; SI: s_load_dword s
+
+; GFX89: s_load_dwordx2
+; GFX89: s_load_dwordx2
+
+; GCN: buffer_store_short
+; GCN: buffer_store_short
 define amdgpu_kernel void @extract_vector_elt_v3f16(half addrspace(1)* %out, <3 x half> %foo) #0 {
   %p0 = extractelement <3 x half> %foo, i32 0
   %p1 = extractelement <3 x half> %foo, i32 2
@@ -71,12 +77,14 @@ define amdgpu_kernel void @extract_vector_elt_v3f16(half addrspace(1)* %out, <3 
 
 ; FIXME: Why sometimes vector shift?
 ; GCN-LABEL: {{^}}dynamic_extract_vector_elt_v3f16:
-; GCN: s_load_dword s
-; GCN: s_load_dword s
-; GCN: s_load_dword s
+; SI: s_load_dword s
+; SI: s_load_dword s
+; SI: s_load_dword s
 
-; GFX9-DAG: global_load_short_d16_hi v
-; GFX9-DAG: global_load_short_d16 v
+; GFX89: s_load_dwordx2 s
+; GFX89: s_load_dwordx2 s
+; GFX89: s_load_dword s
+
 
 ; GCN-DAG: s_lshl_b32 s{{[0-9]+}}, s{{[0-9]+}}, 4
 ; GFX89: v_lshrrev_b64 v{{\[[0-9]+:[0-9]+\]}}, s{{[0-9]+}}, v
