@@ -216,6 +216,16 @@ class SVEExactFPImmOperand<string Suffix, string ValA, string ValB> : Operand<i3
   let ParserMatchClass = SVEExactFPImm<Suffix, ValA, ValB>;
 }
 
+def sve_fpimm_half_one
+    : SVEExactFPImmOperand<"HalfOne", "AArch64ExactFPImm::half",
+                           "AArch64ExactFPImm::one">;
+def sve_fpimm_half_two
+    : SVEExactFPImmOperand<"HalfTwo", "AArch64ExactFPImm::half",
+                           "AArch64ExactFPImm::two">;
+def sve_fpimm_zero_one
+    : SVEExactFPImmOperand<"ZeroOne", "AArch64ExactFPImm::zero",
+                           "AArch64ExactFPImm::one">;
+
 //===----------------------------------------------------------------------===//
 // SVE PTrue - These are used extensively throughout the pattern matching so
 //             it's important we define them first.
@@ -460,6 +470,40 @@ multiclass sve_int_bin_cons_arit_0<bits<3> opc, string asm> {
   def _S : sve_int_bin_cons_arit_0<0b10, opc, asm, ZPR32>;
   def _D : sve_int_bin_cons_arit_0<0b11, opc, asm, ZPR64>;
 }
+
+//===----------------------------------------------------------------------===//
+// SVE Floating Point Arithmetic - Predicated Group
+//===----------------------------------------------------------------------===//
+
+class sve_fp_2op_i_p_zds<bits<2> sz, bits<3> opc, string asm,
+                         ZPRRegOp zprty,
+                         Operand imm_ty>
+: I<(outs zprty:$Zdn), (ins PPR3bAny:$Pg, zprty:$_Zdn, imm_ty:$i1),
+  asm, "\t$Zdn, $Pg/m, $_Zdn, $i1",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zdn;
+  bit i1;
+  let Inst{31-24} = 0b01100101;
+  let Inst{23-22} = sz;
+  let Inst{21-19} = 0b011;
+  let Inst{18-16} = opc;
+  let Inst{15-13} = 0b100;
+  let Inst{12-10} = Pg;
+  let Inst{9-6}   = 0b0000;
+  let Inst{5}     = i1;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve_fp_2op_i_p_zds<bits<3> opc, string asm, Operand imm_ty> {
+  def _H : sve_fp_2op_i_p_zds<0b01, opc, asm, ZPR16, imm_ty>;
+  def _S : sve_fp_2op_i_p_zds<0b10, opc, asm, ZPR32, imm_ty>;
+  def _D : sve_fp_2op_i_p_zds<0b11, opc, asm, ZPR64, imm_ty>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // SVE Stack Allocation Group
