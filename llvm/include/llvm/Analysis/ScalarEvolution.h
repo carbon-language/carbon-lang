@@ -23,6 +23,7 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/BitmaskEnum.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -113,7 +114,8 @@ public:
     FlagNW = (1 << 0),  // No self-wrap.
     FlagNUW = (1 << 1), // No unsigned wrap.
     FlagNSW = (1 << 2), // No signed wrap.
-    NoWrapMask = (1 << 3) - 1
+    NoWrapMask = (1 << 3) - 1,
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestEnumerator=*/NoWrapMask),
   };
 
   explicit SCEV(const FoldingSetNodeIDRef ID, unsigned SCEVTy)
@@ -312,36 +314,9 @@ public:
     IncrementNUSW = (1 << 0), // No unsigned with signed increment wrap.
     IncrementNSSW = (1 << 1), // No signed with signed increment wrap
                               // (equivalent with SCEV::NSW)
-    IncrementNoWrapMask = (1 << 2) - 1
+    IncrementNoWrapMask = IncrementNUSW | IncrementNSSW,
+    LLVM_MARK_AS_BITMASK_ENUM(/*LargestEnumerator=*/IncrementNoWrapMask),
   };
-
-  /// Convenient IncrementWrapFlags manipulation methods.
-  LLVM_NODISCARD static SCEVWrapPredicate::IncrementWrapFlags
-  clearFlags(SCEVWrapPredicate::IncrementWrapFlags Flags,
-             SCEVWrapPredicate::IncrementWrapFlags OffFlags) {
-    assert((Flags & IncrementNoWrapMask) == Flags && "Invalid flags value!");
-    assert((OffFlags & IncrementNoWrapMask) == OffFlags &&
-           "Invalid flags value!");
-    return (SCEVWrapPredicate::IncrementWrapFlags)(Flags & ~OffFlags);
-  }
-
-  LLVM_NODISCARD static SCEVWrapPredicate::IncrementWrapFlags
-  maskFlags(SCEVWrapPredicate::IncrementWrapFlags Flags, int Mask) {
-    assert((Flags & IncrementNoWrapMask) == Flags && "Invalid flags value!");
-    assert((Mask & IncrementNoWrapMask) == Mask && "Invalid mask value!");
-
-    return (SCEVWrapPredicate::IncrementWrapFlags)(Flags & Mask);
-  }
-
-  LLVM_NODISCARD static SCEVWrapPredicate::IncrementWrapFlags
-  setFlags(SCEVWrapPredicate::IncrementWrapFlags Flags,
-           SCEVWrapPredicate::IncrementWrapFlags OnFlags) {
-    assert((Flags & IncrementNoWrapMask) == Flags && "Invalid flags value!");
-    assert((OnFlags & IncrementNoWrapMask) == OnFlags &&
-           "Invalid flags value!");
-
-    return (SCEVWrapPredicate::IncrementWrapFlags)(Flags | OnFlags);
-  }
 
   /// Returns the set of SCEVWrapPredicate no wrap flags implied by a
   /// SCEVAddRecExpr.
@@ -466,21 +441,6 @@ public:
     DominatesBlock,        ///< The SCEV dominates the block.
     ProperlyDominatesBlock ///< The SCEV properly dominates the block.
   };
-
-  /// Convenient NoWrapFlags manipulation that hides enum casts and is
-  /// visible in the ScalarEvolution name space.
-  LLVM_NODISCARD static SCEV::NoWrapFlags maskFlags(SCEV::NoWrapFlags Flags,
-                                                    int Mask) {
-    return (SCEV::NoWrapFlags)(Flags & Mask);
-  }
-  LLVM_NODISCARD static SCEV::NoWrapFlags setFlags(SCEV::NoWrapFlags Flags,
-                                                   SCEV::NoWrapFlags OnFlags) {
-    return (SCEV::NoWrapFlags)(Flags | OnFlags);
-  }
-  LLVM_NODISCARD static SCEV::NoWrapFlags
-  clearFlags(SCEV::NoWrapFlags Flags, SCEV::NoWrapFlags OffFlags) {
-    return (SCEV::NoWrapFlags)(Flags & ~OffFlags);
-  }
 
   ScalarEvolution(Function &F, TargetLibraryInfo &TLI, AssumptionCache &AC,
                   DominatorTree &DT, LoopInfo &LI);

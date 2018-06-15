@@ -331,7 +331,7 @@ class Type;
     /// to make it easier to propagate flags.
     void setNoWrapFlags(NoWrapFlags Flags) {
       if (Flags & (FlagNUW | FlagNSW))
-        Flags = ScalarEvolution::setFlags(Flags, FlagNW);
+        Flags |= FlagNW;
       SubclassData |= Flags;
     }
 
