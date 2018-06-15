@@ -126,6 +126,7 @@ def or_oneuse : HasOneUseBinOp<or>;
 def xor_oneuse : HasOneUseBinOp<xor>;
 } // Properties = [SDNPCommutative, SDNPAssociative]
 
+def add_oneuse : HasOneUseBinOp<add>;
 def sub_oneuse : HasOneUseBinOp<sub>;
 
 def srl_oneuse : HasOneUseBinOp<srl>;
@@ -680,6 +681,12 @@ multiclass BFEPattern <Instruction UBFE, Instruction SBFE, Instruction MOV> {
   def : AMDGPUPat <
     (i32 (and (i32 (srl i32:$src, i32:$rshift)), IMMZeroBasedBitfieldMask:$mask)),
     (UBFE $src, $rshift, (MOV (i32 (IMMPopCount $mask))))
+  >;
+
+  // x & ((1 << y) - 1)
+  def : AMDGPUPat <
+    (and i32:$src, (add_oneuse (shl_oneuse 1, i32:$width), -1)),
+    (UBFE $src, (i32 0), $width)
   >;
 
   // x & (-1 >> (bitwidth - y))
