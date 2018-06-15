@@ -157,25 +157,39 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
   }
 }
 
-// Takes a 13-bit (or more) number and distributes its bits across a 32-bit
-// single precision real.  All sign and exponent bit positions are tested, plus
-// the upper two bits and lowest bit in the significand.  The middle bits
-// of the significand are either all zeroes or all ones.
+// Takes an integer and distributes its bits across a floating
+// point value.  The LSB is used to complement the result.
 std::uint32_t MakeReal(std::uint32_t n) {
-  std::uint32_t n0_8{n & 0x1ff};
-  std::uint32_t n9{(n >> 9) & 1};
-  std::uint32_t n10{(n >> 10) & 1};
-  std::uint32_t n11{(n >> 11) & 1};
-  std::uint32_t n12{(n >> 12) & 1};
-  std::uint32_t n13{(n >> 13) & 1};
-  std::uint32_t n14{(n >> 14) & 1};
-  return ((n0_8 << 23) | (n9 << 22) | (n11 << 21) | (n14 << 16) |
-          (n13 << 1) | n10) ^ -n12;
+  int shifts[] = { -1, 31, 23, 30, 22, 0, 24, 29, 25, 28, 26, 1, 16, 21, 2, -1 };
+  std::uint32_t x{0};
+  for (int j{1}; shifts[j] >= 0; ++j) {
+    x |= ((n >> j) & 1) << shifts[j];
+  }
+  x ^= -(n & 1);
+  return x;
+}
+
+std::uint64_t MakeReal(std::uint64_t n) {
+  int shifts[] = { -1, 63, 52, 62, 51, 0, 53, 61, 54, 60, 55, 59, 1, 16, 50, 2, -1 };
+  std::uint64_t x{0};
+  for (int j{1}; shifts[j] >= 0; ++j) {
+    x |= ((n >> j) & 1) << shifts[j];
+  }
+  x ^= -(n & 1);
+  return x;
 }
 
 std::uint32_t NormalizeNaN(std::uint32_t x) {
   if ((x & 0x7f800000) == 0x7f800000 && (x & 0x007fffff) != 0) {
     x = 0x7fe00000;
+  }
+  return x;
+}
+
+std::uint64_t NormalizeNaN(std::uint64_t x) {
+  if ((x & 0x7ff0000000000000) == 0x7ff0000000000000 &&
+      (x & 0x000fffffffffffff) != 0) {
+    x = 0x7ffc000000000000;
   }
   return x;
 }
@@ -204,108 +218,122 @@ std::uint32_t FlagsToBits(const RealFlags &flags) {
   return bits;
 }
 
+template<typename UINT = std::uint32_t, typename FLT = float, typename REAL>
 void inttest(std::int64_t x, int pass, Rounding rounding) {
   union {
-    std::uint32_t u32;
-    float f;
+    UINT ui;
+    FLT f;
   } u;
   ScopedHostFloatingPointEnvironment fpenv;
   Integer8 ix{x};
-  ValueWithRealFlags<Real4> real;
+  ValueWithRealFlags<REAL> real;
   real = real.value.FromInteger(ix, rounding);
 #ifndef __clang__  // broken and also slow
   fpenv.ClearFlags();
 #endif
-  float fcheck = x;  // TODO unsigned too
+  FLT fcheck = x;  // TODO unsigned too
   auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
   u.f = fcheck;
-  std::uint32_t rcheck{NormalizeNaN(u.u32)};
-  std::uint32_t check = real.value.RawBits().ToUInt64();
+  UINT rcheck{NormalizeNaN(u.ui)};
+  UINT check = real.value.RawBits().ToUInt64();
   MATCH(rcheck, check)("%d 0x%llx", pass, x);
   MATCH(actualFlags, FlagsToBits(real.flags))("%d 0x%llx", pass, x);
 }
 
-void subset32bit(int pass, Rounding rounding, std::uint32_t opds) {
+template<typename UINT = std::uint32_t, typename FLT = float, typename REAL = Real4>
+void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
   for (int j{0}; j < 63; ++j) {
     std::int64_t x{1};
     x <<= j;
-    inttest(x, pass, rounding);
-    inttest(-x, pass, rounding);
+    inttest<UINT,FLT,REAL>(x, pass, rounding);
+    inttest<UINT,FLT,REAL>(-x, pass, rounding);
   }
-  inttest(0, pass, rounding);
-  inttest(static_cast<std::int64_t>(0x8000000000000000), pass, rounding);
+  inttest<UINT,FLT,REAL>(0, pass, rounding);
+  inttest<UINT,FLT,REAL>(static_cast<std::int64_t>(0x8000000000000000), pass, rounding);
 
   union {
-    std::uint32_t u32;
-    float f;
+    UINT ui;
+    FLT f;
   } u;
   ScopedHostFloatingPointEnvironment fpenv;
 
-  for (std::uint32_t j{0}; j < opds; ++j) {
-    std::uint32_t rj{MakeReal(j)};
-    u.u32 = rj;
-    float fj{u.f};
-    Real4 x{Integer4{std::uint64_t{rj}}};
-    for (std::uint32_t k{0}; k < opds; ++k) {
-      std::uint32_t rk{MakeReal(k)};
-      u.u32 = rk;
-      float fk{u.f};
-      Real4 y{Integer4{std::uint64_t{rk}}};
+  for (UINT j{0}; j < opds; ++j) {
+    UINT rj{MakeReal(j)};
+    u.ui = rj;
+    FLT fj{u.f};
+    REAL x{typename REAL::Word{std::uint64_t{rj}}};
+    for (UINT k{0}; k < opds; ++k) {
+      UINT rk{MakeReal(k)};
+      u.ui = rk;
+      FLT fk{u.f};
+      REAL y{typename REAL::Word{std::uint64_t{rk}}};
       {
-        ValueWithRealFlags<Real4> sum{x.Add(y, rounding)};
+        ValueWithRealFlags<REAL> sum{x.Add(y, rounding)};
 #ifndef __clang__  // broken and also slow
         fpenv.ClearFlags();
 #endif
-        float fcheck{fj + fk};
+        FLT fcheck{fj + fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
-        std::uint32_t rcheck{NormalizeNaN(u.u32)};
-        std::uint32_t check = sum.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("%d 0x%x + 0x%x", pass, rj, rk);
+        UINT rcheck{NormalizeNaN(u.ui)};
+        UINT check = sum.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)
+          ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(sum.flags))
-        ("%d 0x%x + 0x%x", pass, rj, rk);
+          ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
       }
       {
-        ValueWithRealFlags<Real4> diff{x.Subtract(y, rounding)};
+        ValueWithRealFlags<REAL> diff{x.Subtract(y, rounding)};
 #ifndef __clang__  // broken and also slow
         fpenv.ClearFlags();
 #endif
-        float fcheck{fj - fk};
+        FLT fcheck{fj - fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
-        std::uint32_t rcheck{NormalizeNaN(u.u32)};
-        std::uint32_t check = diff.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("%d 0x%x - 0x%x", pass, rj, rk);
+        UINT rcheck{NormalizeNaN(u.ui)};
+        UINT check = diff.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)
+          ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(diff.flags))
-        ("%d 0x%x - 0x%x", pass, rj, rk);
+          ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
       }
       {
-        ValueWithRealFlags<Real4> prod{x.Multiply(y, rounding)};
+        ValueWithRealFlags<REAL> prod{x.Multiply(y, rounding)};
 #ifndef __clang__  // broken and also slow
         fpenv.ClearFlags();
 #endif
-        float fcheck{fj * fk};
+        FLT fcheck{fj * fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
-        std::uint32_t rcheck{NormalizeNaN(u.u32)};
-        std::uint32_t check = prod.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("%d 0x%x * 0x%x", pass, rj, rk);
+        UINT rcheck{NormalizeNaN(u.ui)};
+        UINT check = prod.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)
+          ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(prod.flags))
-        ("%d 0x%x * 0x%x -> 0x%x", pass, rj, rk, rcheck);
+          ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
       }
       {
-        ValueWithRealFlags<Real4> quot{x.Divide(y, rounding)};
+        ValueWithRealFlags<REAL> quot{x.Divide(y, rounding)};
 #ifndef __clang__  // broken and also slow
         fpenv.ClearFlags();
 #endif
-        float fcheck{fj / fk};
+        FLT fcheck{fj / fk};
         auto actualFlags{FlagsToBits(fpenv.CurrentFlags())};
         u.f = fcheck;
-        std::uint32_t rcheck{NormalizeNaN(u.u32)};
-        std::uint32_t check = quot.value.RawBits().ToUInt64();
-        MATCH(rcheck, check)("%d 0x%x / 0x%x", pass, rj, rk);
+        UINT rcheck{NormalizeNaN(u.ui)};
+        UINT check = quot.value.RawBits().ToUInt64();
+        MATCH(rcheck, check)
+          ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(quot.flags))
-        ("%d 0x%x / 0x%x", pass, rj, rk);
+          ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
+           static_cast<long long>(rk));
       }
     }
   }
@@ -318,13 +346,14 @@ void roundTest(int rm, Rounding rounding, std::uint32_t opds) {
   basicTests<Real10>(rm, rounding);
   basicTests<Real16>(rm, rounding);
   ScopedHostFloatingPointEnvironment::SetRounding(rounding);
-  subset32bit(rm, rounding, opds);
+  subsetTests<std::uint32_t, float, Real4>(rm, rounding, opds);
+  subsetTests<std::uint64_t, double, Real8>(rm, rounding, opds);
 }
 
 int main() {
-  std::uint32_t opds{1024};
+  std::uint32_t opds{512};  // for quick testing by default
   if (const char *p{std::getenv("REAL_TEST_OPERANDS")}) {
-    // Use 8192 for more exhaustive testing.
+    // Use 8192 or 16384 for more exhaustive testing.
     opds = std::atol(p);
   }
   roundTest(0, Rounding::TiesToEven, opds);
