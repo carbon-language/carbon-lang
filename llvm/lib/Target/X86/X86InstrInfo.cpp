@@ -8916,15 +8916,12 @@ static bool shouldPreventUndefRegUpdateMemFold(MachineFunction &MF, MachineInstr
   if (MF.getFunction().optForSize() || !hasUndefRegUpdate(MI.getOpcode()) ||
       !MI.getOperand(1).isReg())
     return false;
-
-  // Check if the register is explicitly marked as undef.
-  if (MI.getOperand(1).isUndef())
-    return true;
-
-  // Another possibility is that it is defined by by an IMPLICIT_DEF pseudo.
+ 
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
   MachineInstr *VRegDef = RegInfo.getUniqueVRegDef(MI.getOperand(1).getReg());
-  return VRegDef && VRegDef->isImplicitDef()
+  if (VRegDef == nullptr)
+    return false;
+  return VRegDef->isImplicitDef();
 }
 
 
