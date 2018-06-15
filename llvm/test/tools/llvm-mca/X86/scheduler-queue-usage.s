@@ -12,34 +12,6 @@
 
 xor %eax, %ebx
 
-# ALL:             Iterations:        1
-# ALL-NEXT:        Instructions:      1
-# ALL-NEXT:        Total Cycles:      4
-
-# BDW-NEXT:        Dispatch Width:    4
-# BTVER2-NEXT:     Dispatch Width:    2
-# HSW-NEXT:        Dispatch Width:    4
-# IVB-NEXT:        Dispatch Width:    4
-# KNL-NEXT:        Dispatch Width:    4
-# SKX-NEXT:        Dispatch Width:    6
-# SKX-AVX512-NEXT: Dispatch Width:    6
-# SLM-NEXT:        Dispatch Width:    2
-# SNB-NEXT:        Dispatch Width:    4
-# ZNVER1-NEXT:     Dispatch Width:    4
-
-# ALL-NEXT:        IPC:               0.25
-
-# BDW-NEXT:        Block RThroughput: 0.3
-# BTVER2-NEXT:     Block RThroughput: 0.5
-# HSW-NEXT:        Block RThroughput: 0.3
-# IVB-NEXT:        Block RThroughput: 0.3
-# KNL-NEXT:        Block RThroughput: 0.3
-# SKX-NEXT:        Block RThroughput: 0.3
-# SKX-AVX512-NEXT: Block RThroughput: 0.3
-# SLM-NEXT:        Block RThroughput: 0.5
-# SNB-NEXT:        Block RThroughput: 0.3
-# ZNVER1-NEXT:     Block RThroughput: 0.3
-
 # ALL:             Schedulers - number of cycles where we saw N instructions issued:
 # ALL-NEXT:        [# issued], [# cycles]
 # ALL-NEXT:         0,          3  (75.0%)
