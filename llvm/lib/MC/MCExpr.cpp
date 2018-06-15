@@ -239,6 +239,8 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_PPC_LO: return "l";
   case VK_PPC_HI: return "h";
   case VK_PPC_HA: return "ha";
+  case VK_PPC_HIGH: return "high";
+  case VK_PPC_HIGHA: return "higha";
   case VK_PPC_HIGHER: return "higher";
   case VK_PPC_HIGHERA: return "highera";
   case VK_PPC_HIGHEST: return "highest";
@@ -343,6 +345,8 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("l", VK_PPC_LO)
     .Case("h", VK_PPC_HI)
     .Case("ha", VK_PPC_HA)
+    .Case("high", VK_PPC_HIGH)
+    .Case("higha", VK_PPC_HIGHA)
     .Case("higher", VK_PPC_HIGHER)
     .Case("highera", VK_PPC_HIGHERA)
     .Case("highest", VK_PPC_HIGHEST)

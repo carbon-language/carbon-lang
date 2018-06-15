@@ -55,6 +55,10 @@ static MCSymbolRefExpr::VariantKind getAccessVariant(const MCValue &Target,
     return MCSymbolRefExpr::VK_PPC_HI;
   case PPCMCExpr::VK_PPC_HA:
     return MCSymbolRefExpr::VK_PPC_HA;
+  case PPCMCExpr::VK_PPC_HIGH:
+    return MCSymbolRefExpr::VK_PPC_HIGH;
+  case PPCMCExpr::VK_PPC_HIGHA:
+    return MCSymbolRefExpr::VK_PPC_HIGHA;
   case PPCMCExpr::VK_PPC_HIGHERA:
     return MCSymbolRefExpr::VK_PPC_HIGHERA;
   case PPCMCExpr::VK_PPC_HIGHER:
@@ -150,6 +154,12 @@ unsigned PPCELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
         break;
       case MCSymbolRefExpr::VK_PPC_HA:
         Type = ELF::R_PPC_ADDR16_HA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_HIGH:
+        Type = ELF::R_PPC64_ADDR16_HIGH;
+        break;
+      case MCSymbolRefExpr::VK_PPC_HIGHA:
+        Type = ELF::R_PPC64_ADDR16_HIGHA;
         break;
       case MCSymbolRefExpr::VK_PPC_HIGHER:
         Type = ELF::R_PPC64_ADDR16_HIGHER;
