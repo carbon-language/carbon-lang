@@ -141,6 +141,36 @@ define amdgpu_kernel void @v_insertelement_v4f16_dynamic_vgpr(half addrspace(1)*
   ret void
 }
 
+; GCN-LABEL: {{^}}reduce_load_vector_v8f16_extract_01:
+; GCN: s_load_dwordx2 [[PTR:s\[[0-9]+:[0-9]+\]]],
+; GCN-NOT: {{s|buffer|flat|global}}_load_
+; GCN: s_load_dword s{{[0-9]+}}, [[PTR]], 0x0
+; GCN-NOT: {{s|buffer|flat|global}}_load_
+; GCN: s_lshr_b32 s{{[0-9]+}}, s{{[0-9]+}}, 16
+define amdgpu_kernel void @reduce_load_vector_v8f16_extract_01(<16 x half> addrspace(4)* %ptr) #0 {
+  %load = load <16 x half>, <16 x half> addrspace(4)* %ptr
+  %elt0 = extractelement <16 x half> %load, i32 0
+  %elt1 = extractelement <16 x half> %load, i32 1
+  store volatile half %elt0, half addrspace(1)* undef, align 2
+  store volatile half %elt1, half addrspace(1)* undef, align 2
+  ret void
+}
+
+; GCN-LABEL: {{^}}reduce_load_vector_v8f16_extract_23:
+; GCN: s_load_dwordx2 [[PTR:s\[[0-9]+:[0-9]+\]]],
+; GCN-NOT: {{s|buffer|flat|global}}_load_
+; GCN: s_load_dword s{{[0-9]+}}, [[PTR]], {{0x1|0x4}}
+; GCN-NOT: {{s|buffer|flat|global}}_load_
+; GCN: s_lshr_b32 s{{[0-9]+}}, s{{[0-9]+}}, 16
+define amdgpu_kernel void @reduce_load_vector_v8f16_extract_23(<16 x half> addrspace(4)* %ptr) #0 {
+  %load = load <16 x half>, <16 x half> addrspace(4)* %ptr
+  %elt2 = extractelement <16 x half> %load, i32 2
+  %elt3 = extractelement <16 x half> %load, i32 3
+  store volatile half %elt2, half addrspace(1)* undef, align 2
+  store volatile half %elt3, half addrspace(1)* undef, align 2
+  ret void
+}
+
 declare i32 @llvm.amdgcn.workitem.id.x() #1
 
 attributes #0 = { nounwind }
