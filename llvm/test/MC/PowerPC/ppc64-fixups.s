@@ -338,7 +338,6 @@ base:
 # CHECK-LE-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_GOT16_LO_DS target 0x0
             ld 1, target@got@l(3)
 
-
 # CHECK-BE: addis 3, 2, target@tprel@ha     # encoding: [0x3c,0x62,A,A]
 # CHECK-LE: addis 3, 2, target@tprel@ha     # encoding: [A,A,0x62,0x3c]
 # CHECK-BE-NEXT:                            #   fixup A - offset: 2, value: target@tprel@ha, kind: fixup_ppc_half16
@@ -346,6 +345,22 @@ base:
 # CHECK-BE-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_TPREL16_HA target 0x0
 # CHECK-LE-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TPREL16_HA target 0x0
             addis 3, 2, target@tprel@ha
+
+# CHECK-BE: addis 3, 2, target@tprel@higha  # encoding: [0x3c,0x62,A,A]
+# CHECK-LE: addis 3, 2, target@tprel@higha  # encoding: [A,A,0x62,0x3c]
+# CHECK-BE-NEXT:                            # fixup A - offset: 2, value: target@tprel@higha, kind: fixup_ppc_half16
+# CHECK-LE-NEXT:                            # fixup A - offset: 0, value: target@tprel@higha, kind: fixup_ppc_half16
+# CHECK-BE-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_TPREL16_HIGHA target 0x0
+# CHECK-LE-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TPREL16_HIGHA target 0x0
+            addis 3, 2, target@tprel@higha
+
+# CHECK-BE: addis 3, 2, target@tprel@high   # encoding: [0x3c,0x62,A,A]
+# CHECK-LE: addis 3, 2, target@tprel@high   # encoding: [A,A,0x62,0x3c]
+# CHECK-BE-NEXT:                            # fixup A - offset: 2, value: target@tprel@high, kind: fixup_ppc_half16
+# CHECK-LE-NEXT:                            # fixup A - offset: 0, value: target@tprel@high, kind: fixup_ppc_half16
+# CHECK-BE-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_TPREL16_HIGH target 0x0
+# CHECK-LE-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_TPREL16_HIGH target 0x0
+            addis 3, 2, target@tprel@high
 
 # CHECK-BE: addi 3, 3, target@tprel@l       # encoding: [0x38,0x63,A,A]
 # CHECK-LE: addi 3, 3, target@tprel@l       # encoding: [A,A,0x63,0x38]
@@ -426,6 +441,22 @@ base:
 # CHECK-BE-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_DTPREL16_HA target 0x0
 # CHECK-LE-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_DTPREL16_HA target 0x0
             addis 3, 2, target@dtprel@ha
+
+# CHECK-BE: addis 3, 2, target@dtprel@higha # encoding: [0x3c,0x62,A,A]
+# CHECK-LE: addis 3, 2, target@dtprel@higha # encoding: [A,A,0x62,0x3c]
+# CHECK-BE-NEXT:                            # fixup A - offset: 2, value: target@dtprel@higha, kind: fixup_ppc_half16
+# CHECK-LE-NEXT:                            # fixup A - offset: 0, value: target@dtprel@higha, kind: fixup_ppc_half16
+# CHECK-BE-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_DTPREL16_HIGHA target 0x0
+# CHECK-LE-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_DTPREL16_HIGHA target 0x0
+            addis 3, 2, target@dtprel@higha
+
+# CHECK-BE: addis 3, 2, target@dtprel@high  # encoding: [0x3c,0x62,A,A]
+# CHECK-LE: addis 3, 2, target@dtprel@high  # encoding: [A,A,0x62,0x3c]
+# CHECK-BE-NEXT:                            # fixup A - offset: 2, value: target@dtprel@high, kind: fixup_ppc_half16
+# CHECK-LE-NEXT:                            # fixup A - offset: 0, value: target@dtprel@high, kind: fixup_ppc_half16
+# CHECK-BE-REL:                             0x{{[0-9A-F]*[26AE]}} R_PPC64_DTPREL16_HIGH target 0x0
+# CHECK-LE-REL:                             0x{{[0-9A-F]*[048C]}} R_PPC64_DTPREL16_HIGH target 0x0
+            addis 3, 2, target@dtprel@high
 
 # CHECK-BE: addi 3, 3, target@dtprel@l      # encoding: [0x38,0x63,A,A]
 # CHECK-LE: addi 3, 3, target@dtprel@l      # encoding: [A,A,0x63,0x38]

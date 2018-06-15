@@ -236,6 +236,8 @@ public:
     VK_PPC_TPREL_LO,       // symbol@tprel@l
     VK_PPC_TPREL_HI,       // symbol@tprel@h
     VK_PPC_TPREL_HA,       // symbol@tprel@ha
+    VK_PPC_TPREL_HIGH,     // symbol@tprel@high
+    VK_PPC_TPREL_HIGHA,    // symbol@tprel@higha
     VK_PPC_TPREL_HIGHER,   // symbol@tprel@higher
     VK_PPC_TPREL_HIGHERA,  // symbol@tprel@highera
     VK_PPC_TPREL_HIGHEST,  // symbol@tprel@highest
@@ -243,6 +245,8 @@ public:
     VK_PPC_DTPREL_LO,      // symbol@dtprel@l
     VK_PPC_DTPREL_HI,      // symbol@dtprel@h
     VK_PPC_DTPREL_HA,      // symbol@dtprel@ha
+    VK_PPC_DTPREL_HIGH,    // symbol@dtprel@high
+    VK_PPC_DTPREL_HIGHA,   // symbol@dtprel@higha
     VK_PPC_DTPREL_HIGHER,  // symbol@dtprel@higher
     VK_PPC_DTPREL_HIGHERA, // symbol@dtprel@highera
     VK_PPC_DTPREL_HIGHEST, // symbol@dtprel@highest

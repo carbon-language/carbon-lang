@@ -209,6 +209,12 @@ unsigned PPCELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_TPREL_HA:
         Type = ELF::R_PPC_TPREL16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_HIGH:
+        Type = ELF::R_PPC64_TPREL16_HIGH;
+        break;
+      case MCSymbolRefExpr::VK_PPC_TPREL_HIGHA:
+        Type = ELF::R_PPC64_TPREL16_HIGHA;
+        break;
       case MCSymbolRefExpr::VK_PPC_TPREL_HIGHER:
         Type = ELF::R_PPC64_TPREL16_HIGHER;
         break;
@@ -232,6 +238,12 @@ unsigned PPCELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
         break;
       case MCSymbolRefExpr::VK_PPC_DTPREL_HA:
         Type = ELF::R_PPC64_DTPREL16_HA;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_HIGH:
+        Type = ELF::R_PPC64_DTPREL16_HIGH;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL_HIGHA:
+        Type = ELF::R_PPC64_DTPREL16_HIGHA;
         break;
       case MCSymbolRefExpr::VK_PPC_DTPREL_HIGHER:
         Type = ELF::R_PPC64_DTPREL16_HIGHER;
