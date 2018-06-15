@@ -58,21 +58,11 @@ define i32 @bzhi32_a4_commutative(i32 %val, i32 %numlowbits) nounwind {
 ; ---------------------------------------------------------------------------- ;
 
 define i32 @bzhi32_b0(i32 %val, i32 %numlowbits) nounwind {
-; SI-LABEL: bzhi32_b0:
-; SI:       ; %bb.0:
-; SI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; SI-NEXT:    v_lshl_b32_e32 v1, -1, v1
-; SI-NEXT:    v_not_b32_e32 v1, v1
-; SI-NEXT:    v_and_b32_e32 v0, v1, v0
-; SI-NEXT:    s_setpc_b64 s[30:31]
-;
-; VI-LABEL: bzhi32_b0:
-; VI:       ; %bb.0:
-; VI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; VI-NEXT:    v_lshlrev_b32_e64 v1, v1, -1
-; VI-NEXT:    v_not_b32_e32 v1, v1
-; VI-NEXT:    v_and_b32_e32 v0, v1, v0
-; VI-NEXT:    s_setpc_b64 s[30:31]
+; GCN-LABEL: bzhi32_b0:
+; GCN:       ; %bb.0:
+; GCN-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; GCN-NEXT:    v_bfe_u32 v0, v0, 0, v1
+; GCN-NEXT:    s_setpc_b64 s[30:31]
   %notmask = shl i32 -1, %numlowbits
   %mask = xor i32 %notmask, -1
   %masked = and i32 %mask, %val
@@ -80,21 +70,11 @@ define i32 @bzhi32_b0(i32 %val, i32 %numlowbits) nounwind {
 }
 
 define i32 @bzhi32_b1_indexzext(i32 %val, i8 zeroext %numlowbits) nounwind {
-; SI-LABEL: bzhi32_b1_indexzext:
-; SI:       ; %bb.0:
-; SI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; SI-NEXT:    v_lshl_b32_e32 v1, -1, v1
-; SI-NEXT:    v_not_b32_e32 v1, v1
-; SI-NEXT:    v_and_b32_e32 v0, v1, v0
-; SI-NEXT:    s_setpc_b64 s[30:31]
-;
-; VI-LABEL: bzhi32_b1_indexzext:
-; VI:       ; %bb.0:
-; VI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; VI-NEXT:    v_lshlrev_b32_e64 v1, v1, -1
-; VI-NEXT:    v_not_b32_e32 v1, v1
-; VI-NEXT:    v_and_b32_e32 v0, v1, v0
-; VI-NEXT:    s_setpc_b64 s[30:31]
+; GCN-LABEL: bzhi32_b1_indexzext:
+; GCN:       ; %bb.0:
+; GCN-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; GCN-NEXT:    v_bfe_u32 v0, v0, 0, v1
+; GCN-NEXT:    s_setpc_b64 s[30:31]
   %conv = zext i8 %numlowbits to i32
   %notmask = shl i32 -1, %conv
   %mask = xor i32 %notmask, -1
@@ -103,21 +83,11 @@ define i32 @bzhi32_b1_indexzext(i32 %val, i8 zeroext %numlowbits) nounwind {
 }
 
 define i32 @bzhi32_b4_commutative(i32 %val, i32 %numlowbits) nounwind {
-; SI-LABEL: bzhi32_b4_commutative:
-; SI:       ; %bb.0:
-; SI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; SI-NEXT:    v_lshl_b32_e32 v1, -1, v1
-; SI-NEXT:    v_not_b32_e32 v1, v1
-; SI-NEXT:    v_and_b32_e32 v0, v0, v1
-; SI-NEXT:    s_setpc_b64 s[30:31]
-;
-; VI-LABEL: bzhi32_b4_commutative:
-; VI:       ; %bb.0:
-; VI-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
-; VI-NEXT:    v_lshlrev_b32_e64 v1, v1, -1
-; VI-NEXT:    v_not_b32_e32 v1, v1
-; VI-NEXT:    v_and_b32_e32 v0, v0, v1
-; VI-NEXT:    s_setpc_b64 s[30:31]
+; GCN-LABEL: bzhi32_b4_commutative:
+; GCN:       ; %bb.0:
+; GCN-NEXT:    s_waitcnt vmcnt(0) expcnt(0) lgkmcnt(0)
+; GCN-NEXT:    v_bfe_u32 v0, v0, 0, v1
+; GCN-NEXT:    s_setpc_b64 s[30:31]
   %notmask = shl i32 -1, %numlowbits
   %mask = xor i32 %notmask, -1
   %masked = and i32 %val, %mask ; swapped order

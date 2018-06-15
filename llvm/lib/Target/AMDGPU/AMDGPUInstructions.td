@@ -689,6 +689,12 @@ multiclass BFEPattern <Instruction UBFE, Instruction SBFE, Instruction MOV> {
     (UBFE $src, (i32 0), $width)
   >;
 
+  // x & ~(-1 << y)
+  def : AMDGPUPat <
+    (and i32:$src, (xor_oneuse (shl_oneuse -1, i32:$width), -1)),
+    (UBFE $src, (i32 0), $width)
+  >;
+
   // x & (-1 >> (bitwidth - y))
   def : AMDGPUPat <
     (and i32:$src, (srl_oneuse -1, (sub 32, i32:$width))),
