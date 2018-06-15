@@ -53,6 +53,10 @@ let Predicates = [HasSVE] in {
   defm DUP_ZR  : sve_int_perm_dup_r<"dup">;
   defm DUP_ZZI : sve_int_perm_dup_i<"dup">;
 
+  // Splat scalar register (predicated)
+  defm CPY_ZPmR : sve_int_perm_cpy_r<"cpy">;
+  defm CPY_ZPmV : sve_int_perm_cpy_v<"cpy">;
+
   // continuous load with reg+immediate
   defm LD1B_IMM    : sve_mem_cld_si<0b0000, "ld1b",  Z_b, ZPR8>;
   defm LD1B_H_IMM  : sve_mem_cld_si<0b0001, "ld1b",  Z_h, ZPR16>;

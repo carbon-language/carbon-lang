@@ -1453,6 +1453,81 @@ multiclass sve_int_perm_bin_perm_pp<bits<3> opc, string asm> {
   def _D : sve_int_perm_bin_perm_pp<opc, 0b11, asm, PPR64>;
 }
 
+
+//===----------------------------------------------------------------------===//
+// SVE Permute Vector - Predicated Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_perm_cpy_r<bits<2> sz8_64, string asm, ZPRRegOp zprty,
+                         RegisterClass srcRegType>
+: I<(outs zprty:$Zd), (ins zprty:$_Zd, PPR3bAny:$Pg, srcRegType:$Rn),
+  asm, "\t$Zd, $Pg/m, $Rn",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Rn;
+  bits<5> Zd;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21-13} = 0b101000101;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = Zd;
+
+  let Constraints = "$Zd = $_Zd";
+}
+
+multiclass sve_int_perm_cpy_r<string asm> {
+  def _B : sve_int_perm_cpy_r<0b00, asm, ZPR8, GPR32sp>;
+  def _H : sve_int_perm_cpy_r<0b01, asm, ZPR16, GPR32sp>;
+  def _S : sve_int_perm_cpy_r<0b10, asm, ZPR32, GPR32sp>;
+  def _D : sve_int_perm_cpy_r<0b11, asm, ZPR64, GPR64sp>;
+
+  def : InstAlias<"mov $Zd, $Pg/m, $Rn",
+                  (!cast<Instruction>(NAME # _B) ZPR8:$Zd, PPR3bAny:$Pg, GPR32sp:$Rn), 1>;
+  def : InstAlias<"mov $Zd, $Pg/m, $Rn",
+                  (!cast<Instruction>(NAME # _H) ZPR16:$Zd, PPR3bAny:$Pg, GPR32sp:$Rn), 1>;
+  def : InstAlias<"mov $Zd, $Pg/m, $Rn",
+                  (!cast<Instruction>(NAME # _S) ZPR32:$Zd, PPR3bAny:$Pg, GPR32sp:$Rn), 1>;
+  def : InstAlias<"mov $Zd, $Pg/m, $Rn",
+                  (!cast<Instruction>(NAME # _D) ZPR64:$Zd, PPR3bAny:$Pg, GPR64sp:$Rn), 1>;
+}
+
+class sve_int_perm_cpy_v<bits<2> sz8_64, string asm, ZPRRegOp zprty,
+                         RegisterClass srcRegtype>
+: I<(outs zprty:$Zd), (ins zprty:$_Zd, PPR3bAny:$Pg, srcRegtype:$Vn),
+  asm, "\t$Zd, $Pg/m, $Vn",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Vn;
+  bits<5> Zd;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21-13} = 0b100000100;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Vn;
+  let Inst{4-0}   = Zd;
+
+  let Constraints = "$Zd = $_Zd";
+}
+
+multiclass sve_int_perm_cpy_v<string asm> {
+  def _B : sve_int_perm_cpy_v<0b00, asm, ZPR8, FPR8>;
+  def _H : sve_int_perm_cpy_v<0b01, asm, ZPR16, FPR16>;
+  def _S : sve_int_perm_cpy_v<0b10, asm, ZPR32, FPR32>;
+  def _D : sve_int_perm_cpy_v<0b11, asm, ZPR64, FPR64>;
+
+  def : InstAlias<"mov $Zd, $Pg/m, $Vn",
+                  (!cast<Instruction>(NAME # _B) ZPR8:$Zd, PPR3bAny:$Pg, FPR8:$Vn), 1>;
+  def : InstAlias<"mov $Zd, $Pg/m, $Vn",
+                  (!cast<Instruction>(NAME # _H) ZPR16:$Zd, PPR3bAny:$Pg, FPR16:$Vn), 1>;
+  def : InstAlias<"mov $Zd, $Pg/m, $Vn",
+                  (!cast<Instruction>(NAME # _S) ZPR32:$Zd, PPR3bAny:$Pg, FPR32:$Vn), 1>;
+  def : InstAlias<"mov $Zd, $Pg/m, $Vn",
+                  (!cast<Instruction>(NAME # _D) ZPR64:$Zd, PPR3bAny:$Pg, FPR64:$Vn), 1>;
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Memory - Contiguous Load Group
 //===----------------------------------------------------------------------===//
