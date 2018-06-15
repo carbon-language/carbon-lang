@@ -105,7 +105,6 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
           I = ReplacedValues.find(NewValId);
         }
         SDValue NewVal = getSDValue(NewValId);
-        (void)NewVal;
         assert(NewVal.getNode()->getNodeId() != NewNode &&
                "ReplacedValues maps to a new node!");
       }
