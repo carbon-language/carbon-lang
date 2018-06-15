@@ -55,6 +55,7 @@ struct InstructionBenchmark {
   std::vector<BenchmarkMeasure> Measurements;
   std::string Error;
   std::string Info;
+  std::vector<uint8_t> AssembledSnippet;
 
   // Read functions.
   static llvm::Expected<InstructionBenchmark>
