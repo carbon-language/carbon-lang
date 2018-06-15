@@ -16,8 +16,9 @@ module m
   real :: var
   interface i
     !ERROR: 'var' is not a subprogram
+    procedure :: sub, var
     !ERROR: Procedure 'bad' not found
-    procedure :: sub, var, bad
+    procedure :: bad
   end interface
 contains
   subroutine sub
