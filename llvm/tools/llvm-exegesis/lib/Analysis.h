@@ -115,7 +115,6 @@ private:
   std::unique_ptr<llvm::MCAsmInfo> AsmInfo_;
   std::unique_ptr<llvm::MCInstPrinter> InstPrinter_;
   std::unique_ptr<llvm::MCDisassembler> Disasm_;
-  std::unordered_map<std::string, unsigned> MnemonicToOpcode_;
 };
 
 // Computes the idealized ProcRes Unit pressure. This is the expected
