@@ -682,6 +682,13 @@ multiclass BFEPattern <Instruction UBFE, Instruction SBFE, Instruction MOV> {
     (UBFE $src, $rshift, (MOV (i32 (IMMPopCount $mask))))
   >;
 
+  // x & (-1 >> (bitwidth - y))
+  def : AMDGPUPat <
+    (and i32:$src, (srl_oneuse -1, (sub 32, i32:$width))),
+    (UBFE $src, (i32 0), $width)
+  >;
+
+  // x << (bitwidth - y) >> (bitwidth - y)
   def : AMDGPUPat <
     (srl (shl_oneuse i32:$src, (sub 32, i32:$width)), (sub 32, i32:$width)),
     (UBFE $src, (i32 0), $width)
