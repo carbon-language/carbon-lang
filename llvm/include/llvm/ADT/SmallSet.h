@@ -51,11 +51,11 @@ public:
   SmallSetIterator(SetIterTy SetIter) : SetIter(SetIter), isSmall(false) {
     // Use static_assert here, as the SmallSetIterator type is incomplete in the
     // class scope.
-    static_assert(std::is_trivially_destructible<SelfTy>::value &&
-                      std::is_trivially_copy_constructible<SelfTy>::value &&
-                      std::is_trivially_copy_assignable<SelfTy>::value &&
-                      std::is_move_constructible<SelfTy>::value &&
-                      std::is_trivially_move_assignable<SelfTy>::value,
+    static_assert(std::is_trivially_destructible<SelfTy>() &&
+                      std::is_trivially_copy_constructible<SelfTy>() &&
+                      std::is_trivially_copy_assignable<SelfTy>() &&
+                      std::is_move_constructible<SelfTy>() &&
+                      std::is_trivially_move_assignable<SelfTy>(),
                   "SelfTy needs to be trivial copy and move constructors and "
                   "assignments");
   }
