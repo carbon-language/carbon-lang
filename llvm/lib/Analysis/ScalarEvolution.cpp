@@ -3897,7 +3897,7 @@ const SCEV *ScalarEvolution::getMinusSCEV(const SCEV *LHS, const SCEV *RHS,
   auto AddFlags = SCEV::FlagAnyWrap;
   const bool RHSIsNotMinSigned =
       !getSignedRangeMin(RHS).isMinSignedValue();
-  if (Flags & SCEV::FlagNSW) {
+  if ((Flags & SCEV::FlagNSW) == SCEV::FlagNSW) {
     // Let M be the minimum representable signed value. Then (-1)*RHS
     // signed-wraps if and only if RHS is M. That can happen even for
     // a NSW subtraction because e.g. (-1)*M signed-wraps even though
@@ -11940,7 +11940,7 @@ bool SCEVWrapPredicate::isAlwaysTrue() const {
   SCEV::NoWrapFlags ScevFlags = AR->getNoWrapFlags();
   IncrementWrapFlags IFlags = Flags;
 
-  if (ScevFlags & SCEV::FlagNSW)
+  if ((ScevFlags | SCEV::FlagNSW) == ScevFlags)
     IFlags &= ~IncrementNSSW;
 
   return IFlags == IncrementAnyWrap;
@@ -11962,10 +11962,10 @@ SCEVWrapPredicate::getImpliedFlags(const SCEVAddRecExpr *AR,
   SCEV::NoWrapFlags StaticFlags = AR->getNoWrapFlags();
 
   // We can safely transfer the NSW flag as NSSW.
-  if (StaticFlags & SCEV::FlagNSW)
+  if ((StaticFlags | SCEV::FlagNSW) == StaticFlags)
     ImpliedFlags = IncrementNSSW;
 
-  if (StaticFlags & SCEV::FlagNUW) {
+  if ((StaticFlags | SCEV::FlagNUW) == StaticFlags) {
     // If the increment is positive, the SCEV NUW flag will also imply the
     // WrapPredicate NUSW flag.
     if (const auto *Step = dyn_cast<SCEVConstant>(AR->getStepRecurrence(SE)))
