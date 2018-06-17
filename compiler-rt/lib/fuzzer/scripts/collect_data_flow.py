@@ -29,7 +29,7 @@ import shutil
 tmpdir = ""
 
 def cleanup(d):
-  print "removing: ", d
+  print("removing: ", d)
   shutil.rmtree(d)
 
 def collect_dataflow_for_corpus(self, exe, corpus_dir, output_dir):
