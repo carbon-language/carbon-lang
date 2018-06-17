@@ -228,8 +228,10 @@ MaterializationResponsibility::MaterializationResponsibility(
     : V(V), SymbolFlags(std::move(SymbolFlags)) {
   assert(!this->SymbolFlags.empty() && "Materializing nothing?");
 
+#ifndef NDEBUG
   for (auto &KV : this->SymbolFlags)
     KV.second |= JITSymbolFlags::Materializing;
+#endif
 }
 
 MaterializationResponsibility::~MaterializationResponsibility() {
@@ -242,15 +244,21 @@ SymbolNameSet MaterializationResponsibility::getRequestedSymbols() {
 }
 
 void MaterializationResponsibility::resolve(const SymbolMap &Symbols) {
+#ifndef NDEBUG
   for (auto &KV : Symbols) {
     auto I = SymbolFlags.find(KV.first);
     assert(I != SymbolFlags.end() &&
            "Resolving symbol outside this responsibility set");
     assert(I->second.isMaterializing() && "Duplicate resolution");
     I->second &= ~JITSymbolFlags::Materializing;
-    assert(KV.second.getFlags() == I->second &&
-           "Resolving symbol with incorrect flags");
+    if (I->second.isWeak())
+      assert(I->second == (KV.second.getFlags() | JITSymbolFlags::Weak) &&
+             "Resolving symbol with incorrect flags");
+    else
+      assert(I->second == KV.second.getFlags() &&
+             "Resolving symbol with incorrect flags");
   }
+#endif
 
   V.resolve(Symbols);
 }
@@ -274,7 +282,9 @@ Error MaterializationResponsibility::defineMaterializing(
   // symbol error.
   for (auto &KV : NewSymbolFlags) {
     auto I = SymbolFlags.insert(KV).first;
+#ifndef NDEBUG
     I->second |= JITSymbolFlags::Materializing;
+#endif
   }
 
   return V.defineMaterializing(NewSymbolFlags);
