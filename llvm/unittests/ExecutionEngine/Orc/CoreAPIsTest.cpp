@@ -205,6 +205,44 @@ TEST(CoreAPIsTest, LookupFlagsTest) {
   EXPECT_EQ(SymbolFlags[Bar], BarFlags) << "Incorrect flags returned for Bar";
 }
 
+TEST(CoreAPIsTest, TestTrivialCircularDependency) {
+  ExecutionSession ES;
+
+  auto &V = ES.createVSO("V");
+
+  auto Foo = ES.getSymbolStringPool().intern("foo");
+  auto FooFlags = JITSymbolFlags::Exported;
+  auto FooSym = JITEvaluatedSymbol(1U, FooFlags);
+
+  Optional<MaterializationResponsibility> FooR;
+  auto FooMU = llvm::make_unique<SimpleMaterializationUnit>(
+      SymbolFlagsMap({{Foo, FooFlags}}),
+      [&](MaterializationResponsibility R) { FooR.emplace(std::move(R)); });
+
+  cantFail(V.define(FooMU));
+
+  bool FooReady = false;
+  auto Q =
+    std::make_shared<AsynchronousSymbolQuery>(
+      SymbolNameSet({ Foo }),
+      [](Expected<AsynchronousSymbolQuery::ResolutionResult> R) {
+        cantFail(std::move(R));
+      },
+      [&](Error Err) {
+        cantFail(std::move(Err));
+        FooReady = true;
+      });
+
+  V.lookup(std::move(Q), { Foo });
+
+  FooR->addDependencies({{&V, {Foo}}});
+  FooR->resolve({{Foo, FooSym}});
+  FooR->finalize();
+
+  EXPECT_TRUE(FooReady)
+    << "Self-dependency prevented symbol from being marked ready";
+}
+
 TEST(CoreAPIsTest, TestCircularDependenceInOneVSO) {
 
   ExecutionSession ES;

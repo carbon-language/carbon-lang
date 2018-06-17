@@ -467,6 +467,9 @@ void VSO::addDependencies(const SymbolFlagsMap &Dependants,
             DepsOnOtherVSO.insert(OtherSymbol);
           }
         }
+
+        if (DepsOnOtherVSO.empty())
+          MI.UnfinalizedDependencies.erase(&OtherVSO);
       }
     }
   });
