@@ -282,6 +282,7 @@ Error MaterializationResponsibility::defineMaterializing(
   // symbol error.
   for (auto &KV : NewSymbolFlags) {
     auto I = SymbolFlags.insert(KV).first;
+    (void)I;
 #ifndef NDEBUG
     I->second |= JITSymbolFlags::Materializing;
 #endif
