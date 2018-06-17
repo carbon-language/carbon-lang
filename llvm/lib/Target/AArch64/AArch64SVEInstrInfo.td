@@ -57,6 +57,11 @@ let Predicates = [HasSVE] in {
   defm CPY_ZPmR : sve_int_perm_cpy_r<"cpy">;
   defm CPY_ZPmV : sve_int_perm_cpy_v<"cpy">;
 
+  // Select elements from either vector (predicated)
+  defm SEL_ZPZZ    : sve_int_sel_vvv<"sel">;
+
+  def SEL_PPPP    : sve_int_pred_log<0b0011, "sel">;
+
   // continuous load with reg+immediate
   defm LD1B_IMM    : sve_mem_cld_si<0b0000, "ld1b",  Z_b, ZPR8>;
   defm LD1B_H_IMM  : sve_mem_cld_si<0b0001, "ld1b",  Z_h, ZPR16>;
@@ -504,4 +509,6 @@ let Predicates = [HasSVE] in {
   // InstAliases
   def : InstAlias<"mov $Zd, $Zn",
                   (ORR_ZZZ ZPR64:$Zd, ZPR64:$Zn, ZPR64:$Zn), 1>;
+  def : InstAlias<"mov $Pd, $Pg/m, $Pn",
+                  (SEL_PPPP PPR8:$Pd, PPRAny:$Pg, PPR8:$Pn, PPR8:$Pd), 1>;
 }
