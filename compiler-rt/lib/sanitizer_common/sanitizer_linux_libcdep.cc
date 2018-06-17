@@ -157,6 +157,26 @@ bool SetEnv(const char *name, const char *value) {
 }
 #endif
 
+static bool GetLibcVersion(int *major, int *minor, int *patch) {
+#ifdef _CS_GNU_LIBC_VERSION
+  char buf[64];
+  uptr len = confstr(_CS_GNU_LIBC_VERSION, buf, sizeof(buf));
+  if (len >= sizeof(buf))
+    return false;
+  buf[len] = 0;
+  static const char kGLibC[] = "glibc ";
+  if (internal_strncmp(buf, kGLibC, sizeof(kGLibC) - 1) != 0)
+    return false;
+  const char *p = buf + sizeof(kGLibC) - 1;
+  *major = internal_simple_strtoll(p, &p, 10);
+  *minor = (*p == '.') ? internal_simple_strtoll(p + 1, &p, 10) : 0;
+  *patch = (*p == '.') ? internal_simple_strtoll(p + 1, &p, 10) : 0;
+  return true;
+#else
+  return false;
+#endif
+}
+
 #if !SANITIZER_FREEBSD && !SANITIZER_ANDROID && !SANITIZER_GO &&               \
     !SANITIZER_NETBSD && !SANITIZER_OPENBSD && !SANITIZER_SOLARIS
 static uptr g_tls_size;
@@ -192,26 +212,6 @@ void CallGetTls(void* ptr, size_t* size, size_t* align) {
   internal_memcpy(&get_tls, &ptr, sizeof(ptr));
   CHECK_NE(get_tls, 0);
   get_tls(size, align);
-}
-
-bool GetLibcVersion(int *major, int *minor, int *patch) {
-#ifdef _CS_GNU_LIBC_VERSION
-  char buf[64];
-  uptr len = confstr(_CS_GNU_LIBC_VERSION, buf, sizeof(buf));
-  if (len >= sizeof(buf))
-    return false;
-  buf[len] = 0;
-  static const char kGLibC[] = "glibc ";
-  if (internal_strncmp(buf, kGLibC, sizeof(kGLibC) - 1) != 0)
-    return false;
-  const char *p = buf + sizeof(kGLibC) - 1;
-  *major = internal_simple_strtoll(p, &p, 10);
-  *minor = (*p == '.') ? internal_simple_strtoll(p + 1, &p, 10) : 0;
-  *patch = (*p == '.') ? internal_simple_strtoll(p + 1, &p, 10) : 0;
-  return true;
-#else
-  return false;
-#endif
 }
 
 bool CmpLibcVersion(int major, int minor, int patch) {
