@@ -163,6 +163,60 @@ TEST(CoreAPIsTest, SimpleAsynchronousSymbolQueryAgainstVSO) {
   EXPECT_TRUE(OnReadyRun) << "OnReady was not run";
 }
 
+TEST(CoreAPIsTest, EmptyVSOAndQueryLookup) {
+  ExecutionSession ES;
+  auto &V = ES.createVSO("V");
+
+  bool OnResolvedRun = false;
+  bool OnReadyRun = false;
+
+  auto Q = std::make_shared<AsynchronousSymbolQuery>(
+      SymbolNameSet(),
+      [&](Expected<AsynchronousSymbolQuery::ResolutionResult> RR) {
+        cantFail(std::move(RR));
+        OnResolvedRun = true;
+      },
+      [&](Error Err) {
+        cantFail(std::move(Err));
+        OnReadyRun = true;
+      });
+
+  V.lookup(std::move(Q), {});
+
+  EXPECT_TRUE(OnResolvedRun) << "OnResolved was not run for empty query";
+  EXPECT_TRUE(OnReadyRun) << "OnReady was not run for empty query";
+}
+
+TEST(CoreAPIsTest, ChainedVSOLookup) {
+  ExecutionSession ES;
+  auto Foo = ES.getSymbolStringPool().intern("foo");
+  auto FooSym = JITEvaluatedSymbol(1U, JITSymbolFlags::Exported);
+
+  auto &V1 = ES.createVSO("V1");
+  cantFail(V1.define(absoluteSymbols({{Foo, FooSym}})));
+
+  auto &V2 = ES.createVSO("V2");
+
+  bool OnResolvedRun = false;
+  bool OnReadyRun = false;
+
+  auto Q = std::make_shared<AsynchronousSymbolQuery>(
+      SymbolNameSet({Foo}),
+      [&](Expected<AsynchronousSymbolQuery::ResolutionResult> RR) {
+        cantFail(std::move(RR));
+        OnResolvedRun = true;
+      },
+      [&](Error Err) {
+        cantFail(std::move(Err));
+        OnReadyRun = true;
+      });
+
+  V2.lookup(Q, V1.lookup(Q, {Foo}));
+
+  EXPECT_TRUE(OnResolvedRun) << "OnResolved was not run for empty query";
+  EXPECT_TRUE(OnReadyRun) << "OnReady was not run for empty query";
+}
+
 TEST(CoreAPIsTest, LookupFlagsTest) {
 
   // Test that lookupFlags works on a predefined symbol, and does not trigger

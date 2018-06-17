@@ -147,6 +147,12 @@ AsynchronousSymbolQuery::AsynchronousSymbolQuery(
 
   for (auto &S : Symbols)
     ResolvedSymbols[S] = nullptr;
+
+  // If the query is empty it is trivially resolved/ready.
+  if (Symbols.empty()) {
+    handleFullyResolved();
+    handleFullyReady();
+  }
 }
 
 void AsynchronousSymbolQuery::resolve(const SymbolStringPtr &Name,
@@ -695,27 +701,33 @@ SymbolNameSet VSO::lookup(std::shared_ptr<AsynchronousSymbolQuery> Q,
                           SymbolNameSet Names) {
   assert(Q && "Query can not be null");
 
+  LookupImplActionFlags ActionFlags = None;
   std::vector<std::unique_ptr<MaterializationUnit>> MUs;
 
   SymbolNameSet Unresolved = std::move(Names);
   ES.runSessionLocked([&, this]() {
-    lookupImpl(Q, MUs, Unresolved);
+    ActionFlags = lookupImpl(Q, MUs, Unresolved);
     if (FallbackDefinitionGenerator && !Unresolved.empty()) {
+      assert(ActionFlags == None &&
+             "ActionFlags set but unresolved symbols remain?");
       auto FallbackDefs = FallbackDefinitionGenerator(*this, Unresolved);
       if (!FallbackDefs.empty()) {
         for (auto &D : FallbackDefs)
           Unresolved.erase(D);
-        lookupImpl(Q, MUs, FallbackDefs);
+        ActionFlags = lookupImpl(Q, MUs, FallbackDefs);
         assert(FallbackDefs.empty() &&
                "All fallback defs should have been found by lookupImpl");
       }
     }
   });
 
-  if (Q->isFullyResolved())
+  assert((MUs.empty() || ActionFlags == None) &&
+         "If action flags are set, there should be no work to do (so no MUs)");
+
+  if (ActionFlags & NotifyFullyResolved)
     Q->handleFullyResolved();
 
-  if (Q->isFullyReady())
+  if (ActionFlags & NotifyFullyReady)
     Q->handleFullyReady();
 
   // Dispatch any required MaterializationUnits for materialization.
@@ -725,9 +737,12 @@ SymbolNameSet VSO::lookup(std::shared_ptr<AsynchronousSymbolQuery> Q,
   return Unresolved;
 }
 
-void VSO::lookupImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
-                     std::vector<std::unique_ptr<MaterializationUnit>> &MUs,
-                     SymbolNameSet &Unresolved) {
+VSO::LookupImplActionFlags
+VSO::lookupImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
+                std::vector<std::unique_ptr<MaterializationUnit>> &MUs,
+                SymbolNameSet &Unresolved) {
+  LookupImplActionFlags ActionFlags = None;
+
   for (auto I = Unresolved.begin(), E = Unresolved.end(); I != E;) {
     auto TmpI = I++;
     auto Name = *TmpI;
@@ -742,8 +757,11 @@ void VSO::lookupImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
     Unresolved.erase(TmpI);
 
     // If the symbol has an address then resolve it.
-    if (SymI->second.getAddress() != 0)
+    if (SymI->second.getAddress() != 0) {
       Q->resolve(Name, SymI->second);
+      if (Q->isFullyResolved())
+        ActionFlags |= NotifyFullyResolved;
+    }
 
     // If the symbol is lazy, get the MaterialiaztionUnit for it.
     if (SymI->second.getFlags().isLazy()) {
@@ -775,6 +793,8 @@ void VSO::lookupImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
       // The symbol is neither lazy nor materializing. Finalize it and
       // continue.
       Q->notifySymbolReady();
+      if (Q->isFullyReady())
+        ActionFlags |= NotifyFullyReady;
       continue;
     }
 
@@ -785,6 +805,8 @@ void VSO::lookupImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
     MI.PendingQueries.push_back(Q);
     Q->addQueryDependence(*this, Name);
   }
+
+  return ActionFlags;
 }
 
 void VSO::dump(raw_ostream &OS) {
