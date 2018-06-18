@@ -516,20 +516,6 @@ struct MatchableInfo {
   /// removed.
   SmallVector<AsmOperand, 8> AsmOperands;
 
-  /// AsmOperandEqualityConstraints - an array of pairs holding operand
-  /// constraints.
-  /// Each constraint is represented as a pair holding position of the token of
-  /// the operand asm name.
-  /// For example, an "AsmString" "add $Vd.s, $Vn.s, $Xn" would be
-  /// split in the following list of tokens:
-  ///
-  ///    ['add', '$Vd', '.s', '$Vn', '.s', '$Xn']
-  ///
-  /// A constraint "$Vd = $Vn" (e.g. for a destructive operation) is rendered
-  /// as the pair {1,3} into this set (note that tokens are numbered starting
-  /// from 0).
-  SmallVector<std::pair<unsigned,unsigned>, 1> AsmOperandTiedConstraints;
-
   /// Predicates - The required subtarget features to match this instruction.
   SmallVector<const SubtargetFeatureInfo *, 4> RequiredFeatures;
 
