@@ -5736,7 +5736,7 @@ multiclass avx512_shift_rmbi<bits<8> opc, Format ImmFormM,
                    (ins _.ScalarMemOp:$src1, u8imm:$src2), OpcodeStr,
       "$src2, ${src1}"##_.BroadcastStr, "${src1}"##_.BroadcastStr##", $src2",
      (_.VT (OpNode (X86VBroadcast (_.ScalarLdFrag addr:$src1)), (i8 imm:$src2)))>,
-     EVEX_B, Sched<[sched.Folded, ReadAfterLd]>;
+     EVEX_B, Sched<[sched.Folded]>;
 }
 
 multiclass avx512_shift_rrm<bits<8> opc, string OpcodeStr, SDNode OpNode,
