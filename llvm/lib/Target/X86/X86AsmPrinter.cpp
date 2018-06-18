@@ -689,11 +689,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     SM.serializeToStackMapSection();
     FM.serializeToFaultMapSection();
 
-    // Funny Darwin hack: This flag tells the linker that no global symbols
-    // contain code that falls through to other global symbols (e.g. the obvious
-    // implementation of multiple entry points).  If this doesn't occur, the
-    // linker can safely perform dead code stripping.  Since LLVM never
-    // generates code that does this, it is always safe to set.
+    // This flag tells the linker that no global symbols contain code that fall
+    // through to other global symbols (e.g. an implementation of multiple entry
+    // points). If this doesn't occur, the linker can safely perform dead code
+    // stripping. Since LLVM never generates code that does this, it is always
+    // safe to set.
     OutStreamer->EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
     return;
   }
