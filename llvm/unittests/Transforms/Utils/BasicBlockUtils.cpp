@@ -50,31 +50,3 @@ TEST(BasicBlockUtils, SplitBlockPredecessors) {
   SplitBlockPredecessors(&F->getEntryBlock(), {}, "split.entry", &DT);
   EXPECT_TRUE(DT.verify());
 }
-
-TEST(BasicBlockUtils, MergeBlockIntoPredecessor) {
-  LLVMContext C;
-  std::unique_ptr<Module> M = parseIR(C,
-                                      R"(
-
-      define i32 @f(i8* %str) {
-      entry:
-        %dead = extractvalue [1 x i8*] [ i8* blockaddress(@f, %L0) ], 0
-        br label %L0
-      L0:
-        ret i32 0
-      }
-      )");
-
-  // First remove the dead instruction to empty the usage of the constant
-  // containing blockaddress(@f, %L0)
-  Function *F = M->getFunction("f");
-  auto BBI = F->begin();
-  Instruction *DI = &*((*BBI).begin());
-  EXPECT_TRUE(DI->use_empty());
-  DI->eraseFromParent();
-
-  // Get L0 and make sure that it can be merged into entry block.
-  ++BBI;
-  BasicBlock *BB = &(*BBI);
-  EXPECT_TRUE(MergeBlockIntoPredecessor(BB));
-}
