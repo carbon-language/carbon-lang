@@ -1367,30 +1367,29 @@ static std::pair<isl::set, isl::set> partitionSetParts(isl::set S,
 }
 
 /// Create the conditions under which @p L @p Pred @p R is true.
-static __isl_give isl_set *buildConditionSet(ICmpInst::Predicate Pred,
-                                             __isl_take isl_pw_aff *L,
-                                             __isl_take isl_pw_aff *R) {
+static isl::set buildConditionSet(ICmpInst::Predicate Pred, isl::pw_aff L,
+                                  isl::pw_aff R) {
   switch (Pred) {
   case ICmpInst::ICMP_EQ:
-    return isl_pw_aff_eq_set(L, R);
+    return L.eq_set(R);
   case ICmpInst::ICMP_NE:
-    return isl_pw_aff_ne_set(L, R);
+    return L.ne_set(R);
   case ICmpInst::ICMP_SLT:
-    return isl_pw_aff_lt_set(L, R);
+    return L.lt_set(R);
   case ICmpInst::ICMP_SLE:
-    return isl_pw_aff_le_set(L, R);
+    return L.le_set(R);
   case ICmpInst::ICMP_SGT:
-    return isl_pw_aff_gt_set(L, R);
+    return L.gt_set(R);
   case ICmpInst::ICMP_SGE:
-    return isl_pw_aff_ge_set(L, R);
+    return L.ge_set(R);
   case ICmpInst::ICMP_ULT:
-    return isl_pw_aff_lt_set(L, R);
+    return L.lt_set(R);
   case ICmpInst::ICMP_UGT:
-    return isl_pw_aff_gt_set(L, R);
+    return L.gt_set(R);
   case ICmpInst::ICMP_ULE:
-    return isl_pw_aff_le_set(L, R);
+    return L.le_set(R);
   case ICmpInst::ICMP_UGE:
-    return isl_pw_aff_ge_set(L, R);
+    return L.ge_set(R);
   default:
     llvm_unreachable("Non integer predicate not supported");
   }
@@ -1440,7 +1439,9 @@ bool buildConditionSets(Scop &S, BasicBlock *BB, SwitchInst *SI, Loop *L,
 
     RHS = getPwAff(S, BB, InvalidDomainMap, SE.getSCEV(CaseValue));
     isl_set *CaseConditionSet =
-        buildConditionSet(ICmpInst::ICMP_EQ, isl_pw_aff_copy(LHS), RHS);
+        buildConditionSet(ICmpInst::ICMP_EQ, isl::manage_copy(LHS),
+                          isl::manage(RHS))
+            .release();
     ConditionSets[Idx] = isl_set_coalesce(
         isl_set_intersect(CaseConditionSet, isl_set_copy(Domain)));
   }
@@ -1517,7 +1518,9 @@ bool buildConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
     bool NonNeg = false;
     isl_pw_aff *LHS = getPwAff(S, BB, InvalidDomainMap, LHSSCEV, NonNeg);
     isl_pw_aff *RHS = getPwAff(S, BB, InvalidDomainMap, RHSSCEV, NonNeg);
-    ConsequenceCondSet = buildConditionSet(ICmpInst::ICMP_SLE, LHS, RHS);
+    ConsequenceCondSet = buildConditionSet(ICmpInst::ICMP_SLE, isl::manage(LHS),
+                                           isl::manage(RHS))
+                             .release();
   } else if (auto *PHI = dyn_cast<PHINode>(Condition)) {
     auto *Unique = dyn_cast<ConstantInt>(
         getUniqueNonErrorValue(PHI, &S.getRegion(), *S.getLI(), *S.getDT()));
@@ -1598,7 +1601,9 @@ bool buildConditionSets(Scop &S, BasicBlock *BB, Value *Condition,
     default:
       LHS = getPwAff(S, BB, InvalidDomainMap, LeftOperand, NonNeg);
       RHS = getPwAff(S, BB, InvalidDomainMap, RightOperand, NonNeg);
-      ConsequenceCondSet = buildConditionSet(ICond->getPredicate(), LHS, RHS);
+      ConsequenceCondSet = buildConditionSet(ICond->getPredicate(),
+                                             isl::manage(LHS), isl::manage(RHS))
+                               .release();
       break;
     }
   }
