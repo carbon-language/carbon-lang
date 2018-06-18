@@ -26,9 +26,10 @@ llvm::VersionTuple HostInfoNetBSD::GetOSVersion() {
 
   ::memset(&un, 0, sizeof(un));
   if (::uname(&un) < 0)
-    return false;
+    return VersionTuple();
 
   /* Accept versions like 7.99.21 and 6.1_STABLE */
+  uint32_t major, minor, update;
   int status = ::sscanf(un.release, "%" PRIu32 ".%" PRIu32 ".%" PRIu32, &major,
                         &minor, &update);
   switch (status) {

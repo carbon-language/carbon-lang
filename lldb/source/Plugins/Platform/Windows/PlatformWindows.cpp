@@ -568,16 +568,8 @@ void PlatformWindows::GetStatus(Stream &strm) {
   Platform::GetStatus(strm);
 
 #ifdef _WIN32
-  uint32_t major;
-  uint32_t minor;
-  uint32_t update;
-  if (!HostInfo::GetOSVersion(major, minor, update)) {
-    strm << "Windows";
-    return;
-  }
-
-  strm << "Host: Windows " << major << '.' << minor << " Build: " << update
-       << '\n';
+  llvm::VersionTuple version = HostInfo::GetOSVersion();
+  strm << "Host: Windows " << version.getAsString() << '\n';
 #endif
 }
 
