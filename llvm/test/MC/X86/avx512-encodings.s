@@ -17196,6 +17196,14 @@ vpermilpd $0x23, 0x400(%rbx), %zmm2
 // CHECK:  encoding: [0x62,0xf1,0xff,0x18,0x2c,0xc1]
           vcvttsd2si {sae}, %xmm1, %rax
 
+// CHECK: vcvttsd2si {sae}, %xmm3, %eax
+// CHECK:  encoding: [0x62,0xf1,0x7f,0x18,0x2c,0xc3]
+          vcvttsd2sil {sae}, %xmm3, %eax
+
+// CHECK: vcvttsd2si {sae}, %xmm1, %rax
+// CHECK:  encoding: [0x62,0xf1,0xff,0x18,0x2c,0xc1]
+          vcvttsd2siq {sae}, %xmm1, %rax
+
 // CHECK: vcvttsd2usi %xmm21, %eax
 // CHECK:  encoding: [0x62,0xb1,0x7f,0x08,0x78,0xc5]
           vcvttsd2usi %xmm21, %eax
