@@ -2025,8 +2025,8 @@ isl::id Scop::getIdForParam(const SCEV *Parameter) const {
 }
 
 isl::set Scop::addNonEmptyDomainConstraints(isl::set C) const {
-  isl_set *DomainContext = isl_union_set_params(getDomains().release());
-  return isl::manage(isl_set_intersect_params(C.release(), DomainContext));
+  isl::set DomainContext = getDomains().params();
+  return C.intersect_params(DomainContext);
 }
 
 bool Scop::isDominatedBy(const DominatorTree &DT, BasicBlock *BB) const {
