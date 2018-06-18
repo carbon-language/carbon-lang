@@ -3,11 +3,6 @@
 // ------------------------------------------------------------------------- //
 // Invalid result register
 
-uqdech w0
-// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
-// CHECK-NEXT: uqdech w0
-// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
-
 uqdech wsp
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
 // CHECK-NEXT: uqdech wsp
@@ -16,6 +11,25 @@ uqdech wsp
 uqdech sp
 // CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
 // CHECK-NEXT: uqdech sp
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+
+// ------------------------------------------------------------------------- //
+// Operands not matching up (unsigned dec only has one register operand)
+
+uqdech x0, w0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid predicate pattern
+// CHECK-NEXT: uqdech x0, w0
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+uqdech w0, w0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid predicate pattern
+// CHECK-NEXT: uqdech w0, w0
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+uqdech x0, x0
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid predicate pattern
+// CHECK-NEXT: uqdech x0, x0
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
 

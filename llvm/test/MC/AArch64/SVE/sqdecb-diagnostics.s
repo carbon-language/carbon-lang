@@ -20,6 +20,20 @@ sqdecb sp
 
 
 // ------------------------------------------------------------------------- //
+// Operands not matching up
+
+sqdecb x0, w1
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: operand must be 32-bit form of destination register
+// CHECK-NEXT: sqdecb x0, w1
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+sqdecb x0, x1
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid predicate pattern
+// CHECK-NEXT: sqdecb x0, x1
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
+
+// ------------------------------------------------------------------------- //
 // Immediate not compatible with encode/decode function.
 
 sqdecb x0, all, mul #-1
