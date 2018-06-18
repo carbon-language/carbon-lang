@@ -2191,11 +2191,9 @@ static std::vector<isl::id> getFortranArrayIds(Scop::array_range Arrays) {
       if (!PwAff)
         continue;
 
-      isl::id Id =
-          isl::manage(isl_pw_aff_get_dim_id(PwAff.get(), isl_dim_param, 0));
+      isl::id Id = PwAff.get_dim_id(isl::dim::param, 0);
       assert(!Id.is_null() &&
              "Invalid Id for PwAff expression in Fortran array");
-      Id.dump();
       OutermostSizeIds.push_back(Id);
     }
   }
@@ -2541,9 +2539,8 @@ bool Scop::buildDomains(Region *R, DominatorTree &DT, LoopInfo &LI,
 ///
 /// This function assumes @p NewL and @p OldL are equal or there is a CFG
 /// edge from @p OldL to @p NewL.
-static __isl_give isl_set *adjustDomainDimensions(Scop &S,
-                                                  __isl_take isl_set *Dom,
-                                                  Loop *OldL, Loop *NewL) {
+static isl::set adjustDomainDimensions(Scop &S, isl::set Dom, Loop *OldL, Loop
+                                       *NewL) {
   // If the loops are the same there is nothing to do.
   if (NewL == OldL)
     return Dom;
@@ -2563,21 +2560,21 @@ static __isl_give isl_set *adjustDomainDimensions(Scop &S,
   //      => Loops were left were difference of the depths defines how many.
   if (OldDepth == NewDepth) {
     assert(OldL->getParentLoop() == NewL->getParentLoop());
-    Dom = isl_set_project_out(Dom, isl_dim_set, NewDepth, 1);
-    Dom = isl_set_add_dims(Dom, isl_dim_set, 1);
+    Dom = Dom.project_out(isl::dim::set, NewDepth, 1);
+    Dom = Dom.add_dims(isl::dim::set, 1);
   } else if (OldDepth < NewDepth) {
     assert(OldDepth + 1 == NewDepth);
     auto &R = S.getRegion();
     (void)R;
     assert(NewL->getParentLoop() == OldL ||
            ((!OldL || !R.contains(OldL)) && R.contains(NewL)));
-    Dom = isl_set_add_dims(Dom, isl_dim_set, 1);
+    Dom = Dom.add_dims(isl::dim::set, 1);
   } else {
     assert(OldDepth > NewDepth);
     int Diff = OldDepth - NewDepth;
-    int NumDim = isl_set_n_dim(Dom);
+    int NumDim = Dom.n_dim();
     assert(NumDim >= Diff);
-    Dom = isl_set_project_out(Dom, isl_dim_set, NumDim - Diff, Diff);
+    Dom = Dom.project_out(isl::dim::set, NumDim - Diff, Diff);
   }
 
   return Dom;
@@ -2639,8 +2636,8 @@ bool Scop::propagateInvalidStmtDomains(
 
       Loop *SuccBBLoop = getFirstNonBoxedLoopFor(SuccBB, LI, getBoxedLoops());
 
-      auto AdjustedInvalidDomain = isl::manage(adjustDomainDimensions(
-          *this, InvalidDomain.copy(), BBLoop, SuccBBLoop));
+      auto AdjustedInvalidDomain = adjustDomainDimensions(*this, InvalidDomain,
+                                                          BBLoop, SuccBBLoop);
 
       isl::set SuccInvalidDomain = InvalidDomainMap[SuccBB];
       SuccInvalidDomain = SuccInvalidDomain.unite(AdjustedInvalidDomain);
@@ -2696,8 +2693,8 @@ void Scop::propagateDomainConstraintsToRegionExit(
 
   // Since the dimensions of @p BB and @p ExitBB might be different we have to
   // adjust the domain before we can propagate it.
-  isl::set AdjustedDomain = isl::manage(
-      adjustDomainDimensions(*this, Domain.copy(), BBLoop, ExitBBLoop));
+  isl::set AdjustedDomain = adjustDomainDimensions(*this, Domain, BBLoop,
+                                                   ExitBBLoop);
   isl::set &ExitDomain = DomainMap[ExitBB];
 
   // If the exit domain is not yet created we set it otherwise we "add" the
@@ -2805,8 +2802,7 @@ bool Scop::buildDomainsWithBranchConstraints(
 
       Loop *SuccBBLoop = getFirstNonBoxedLoopFor(SuccBB, LI, getBoxedLoops());
 
-      CondSet = isl::manage(
-          adjustDomainDimensions(*this, CondSet.copy(), BBLoop, SuccBBLoop));
+      CondSet = adjustDomainDimensions(*this, CondSet, BBLoop, SuccBBLoop);
 
       // Set the domain for the successor or merge it with an existing domain in
       // case there are multiple paths (without loop back edges) to the
@@ -2883,12 +2879,10 @@ isl::set Scop::getPredecessorDomainConstraints(BasicBlock *BB, isl::set Domain,
       PropagatedRegions.insert(PredR);
     }
 
-    auto *PredBBDom = getDomainConditions(PredBB).release();
+    isl::set PredBBDom = getDomainConditions(PredBB);
     Loop *PredBBLoop = getFirstNonBoxedLoopFor(PredBB, LI, getBoxedLoops());
-
     PredBBDom = adjustDomainDimensions(*this, PredBBDom, PredBBLoop, BBLoop);
-
-    PredDom = PredDom.unite(isl::manage(PredBBDom));
+    PredDom = PredDom.unite(PredBBDom);
   }
 
   return PredDom;
@@ -3103,9 +3097,8 @@ Scop::buildAliasGroupsForAccesses(AliasAnalysis &AA) {
   DenseSet<const ScopArrayInfo *> HasWriteAccess;
   for (ScopStmt &Stmt : *this) {
 
-    isl_set *StmtDomain = Stmt.getDomain().release();
-    bool StmtDomainEmpty = isl_set_is_empty(StmtDomain);
-    isl_set_free(StmtDomain);
+    isl::set StmtDomain = Stmt.getDomain();
+    bool StmtDomainEmpty = StmtDomain.is_empty();
 
     // Statements with an empty domain will never be executed.
     if (StmtDomainEmpty)
