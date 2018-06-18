@@ -10601,9 +10601,6 @@ defm VPEXTRWZ : avx512_extract_elt_w<"vpextrw", v8i16x_info>, VEX_WIG;
 defm VPEXTRDZ : avx512_extract_elt_dq<"vpextrd", v4i32x_info, GR32>;
 defm VPEXTRQZ : avx512_extract_elt_dq<"vpextrq", v2i64x_info, GR64>, VEX_W;
 
-def : InstAlias<"vpextrw.s\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                (VPEXTRWZrr_REV GR32orGR64:$dst, VR128X:$src1, u8imm:$src2), 0>;
-
 multiclass avx512_insert_elt_m<bits<8> opc, string OpcodeStr, SDNode OpNode,
                                             X86VectorVTInfo _, PatFrag LdFrag> {
   def rm : AVX512Ii8<opc, MRMSrcMem, (outs _.RC:$dst),
