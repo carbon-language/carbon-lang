@@ -2352,10 +2352,10 @@ buildMinMaxAccess(isl::set Set, Scop::MinMaxVectorTy &MinMaxAccesses, Scop &S) {
   return isl::stat::ok;
 }
 
-static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
-  isl_set *Domain = MA->getStatement()->getDomain().release();
-  Domain = isl_set_project_out(Domain, isl_dim_set, 0, isl_set_n_dim(Domain));
-  return isl_set_reset_tuple_id(Domain);
+static isl::set getAccessDomain(MemoryAccess *MA) {
+  isl::set Domain = MA->getStatement()->getDomain();
+  Domain = Domain.project_out(isl::dim::set, 0, Domain.n_dim());
+  return Domain.reset_tuple_id();
 }
 
 /// Wrapper function to calculate minimal/maximal accesses to each array.
@@ -3138,22 +3138,20 @@ void Scop::splitAliasGroupsByDomain(AliasGroupVectorTy &AliasGroups) {
     AliasGroupTy NewAG;
     AliasGroupTy &AG = AliasGroups[u];
     AliasGroupTy::iterator AGI = AG.begin();
-    isl_set *AGDomain = getAccessDomain(*AGI);
+    isl::set AGDomain = getAccessDomain(*AGI);
     while (AGI != AG.end()) {
       MemoryAccess *MA = *AGI;
-      isl_set *MADomain = getAccessDomain(MA);
-      if (isl_set_is_disjoint(AGDomain, MADomain)) {
+      isl::set MADomain = getAccessDomain(MA);
+      if (AGDomain.is_disjoint(MADomain)) {
         NewAG.push_back(MA);
         AGI = AG.erase(AGI);
-        isl_set_free(MADomain);
       } else {
-        AGDomain = isl_set_union(AGDomain, MADomain);
+        AGDomain = AGDomain.unite(MADomain);
         AGI++;
       }
     }
     if (NewAG.size() > 1)
       AliasGroups.push_back(std::move(NewAG));
-    isl_set_free(AGDomain);
   }
 }
 
