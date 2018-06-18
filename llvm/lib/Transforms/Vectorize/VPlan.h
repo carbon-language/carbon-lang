@@ -556,6 +556,11 @@ public:
   /// Insert an unlinked recipe into a basic block immediately before
   /// the specified recipe.
   void insertBefore(VPRecipeBase *InsertPos);
+
+  /// This method unlinks 'this' from the containing basic block and deletes it.
+  ///
+  /// \returns an iterator pointing to the element after the erased one
+  iplist<VPRecipeBase>::iterator eraseFromParent();
 };
 
 /// This is a concrete Recipe that models a single VPlan-level instruction.
