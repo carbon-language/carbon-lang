@@ -5536,7 +5536,8 @@ AST_MATCHER_P(NestedNameSpecifier, specifiesType,
 ///   matches "A::"
 AST_MATCHER_P(NestedNameSpecifierLoc, specifiesTypeLoc,
               internal::Matcher<TypeLoc>, InnerMatcher) {
-  return Node && InnerMatcher.matches(Node.getTypeLoc(), Finder, Builder);
+  return Node && Node.getNestedNameSpecifier()->getAsType() &&
+         InnerMatcher.matches(Node.getTypeLoc(), Finder, Builder);
 }
 
 /// Matches on the prefix of a \c NestedNameSpecifier.
