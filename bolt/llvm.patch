@@ -2446,6 +2446,55 @@ index ed79f4f..95cb71f 100644
  
  set(sources
    X86AsmPrinter.cpp
+diff --git a/lib/Target/X86/Disassembler/X86Disassembler.cpp b/lib/Target/X86/Disassembler/X86Disassembler.cpp
+index c58254a..ab9241e 100644
+--- a/lib/Target/X86/Disassembler/X86Disassembler.cpp
++++ b/lib/Target/X86/Disassembler/X86Disassembler.cpp
+@@ -247,6 +247,8 @@ MCDisassembler::DecodeStatus X86GenericDisassembler::getInstruction(
+                  // It should not be 'pause' f3 90
+                  InternalInstr.opcode != 0x90)
+           Flags |= X86::IP_HAS_REPEAT;
++        if (InternalInstr.hasLockPrefix)
++          Flags |= X86::IP_HAS_LOCK;
+       }
+       Instr.setFlags(Flags);
+     }
+diff --git a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp
+index 6a10278..626b143 100644
+--- a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp
++++ b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp
+@@ -298,6 +298,9 @@ static bool isREX(struct InternalInstruction *insn, uint8_t prefix) {
+ static void setPrefixPresent(struct InternalInstruction *insn, uint8_t prefix) {
+   uint8_t nextByte;
+   switch (prefix) {
++  case 0xf0:
++    insn->hasLockPrefix = true;
++    break;
+   case 0xf2:
+   case 0xf3:
+     if (lookAtByte(insn, &nextByte))
+@@ -1748,7 +1751,7 @@ static int readOperands(struct InternalInstruction* insn) {
+ 
+       // If sibIndex was set to SIB_INDEX_NONE, index offset is 4.
+       if (insn->sibIndex == SIB_INDEX_NONE)
+-        insn->sibIndex = (SIBIndex)4;
++        insn->sibIndex = (SIBIndex)(insn->sibIndexBase + 4);
+ 
+       // If EVEX.v2 is set this is one of the 16-31 registers.
+       if (insn->vectorExtensionType == TYPE_EVEX &&
+diff --git a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h
+index 44422a9..d60aa3f 100644
+--- a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h
++++ b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h
+@@ -563,6 +563,8 @@ struct InternalInstruction {
+   bool hasAdSize;
+   // Operand-size override
+   bool hasOpSize;
++  // Lock prefix
++  bool hasLockPrefix;
+   // The repeat prefix if any
+   uint8_t repeatPrefix;
+ 
 diff --git a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp b/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
 index fa7c352..35d28c1 100644
 --- a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
