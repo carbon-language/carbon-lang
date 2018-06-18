@@ -2539,8 +2539,8 @@ bool Scop::buildDomains(Region *R, DominatorTree &DT, LoopInfo &LI,
 ///
 /// This function assumes @p NewL and @p OldL are equal or there is a CFG
 /// edge from @p OldL to @p NewL.
-static isl::set adjustDomainDimensions(Scop &S, isl::set Dom, Loop *OldL, Loop
-                                       *NewL) {
+static isl::set adjustDomainDimensions(Scop &S, isl::set Dom, Loop *OldL,
+                                       Loop *NewL) {
   // If the loops are the same there is nothing to do.
   if (NewL == OldL)
     return Dom;
@@ -2636,8 +2636,8 @@ bool Scop::propagateInvalidStmtDomains(
 
       Loop *SuccBBLoop = getFirstNonBoxedLoopFor(SuccBB, LI, getBoxedLoops());
 
-      auto AdjustedInvalidDomain = adjustDomainDimensions(*this, InvalidDomain,
-                                                          BBLoop, SuccBBLoop);
+      auto AdjustedInvalidDomain =
+          adjustDomainDimensions(*this, InvalidDomain, BBLoop, SuccBBLoop);
 
       isl::set SuccInvalidDomain = InvalidDomainMap[SuccBB];
       SuccInvalidDomain = SuccInvalidDomain.unite(AdjustedInvalidDomain);
@@ -2693,8 +2693,8 @@ void Scop::propagateDomainConstraintsToRegionExit(
 
   // Since the dimensions of @p BB and @p ExitBB might be different we have to
   // adjust the domain before we can propagate it.
-  isl::set AdjustedDomain = adjustDomainDimensions(*this, Domain, BBLoop,
-                                                   ExitBBLoop);
+  isl::set AdjustedDomain =
+      adjustDomainDimensions(*this, Domain, BBLoop, ExitBBLoop);
   isl::set &ExitDomain = DomainMap[ExitBB];
 
   // If the exit domain is not yet created we set it otherwise we "add" the
