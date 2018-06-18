@@ -280,9 +280,10 @@ Status PlatformWindows::ResolveExecutable(
 }
 
 bool PlatformWindows::GetRemoteOSVersion() {
-  if (m_remote_platform_sp)
-    return m_remote_platform_sp->GetOSVersion(
-        m_major_os_version, m_minor_os_version, m_update_os_version);
+  if (m_remote_platform_sp) {
+    m_os_version = m_remote_platform_sp->GetOSVersion();
+    return !m_os_version.empty();
+  }
   return false;
 }
 
