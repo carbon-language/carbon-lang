@@ -23,7 +23,7 @@ llvm::VersionTuple HostInfoFreeBSD::GetOSVersion() {
 
   ::memset(&un, 0, sizeof(utsname));
   if (uname(&un) < 0)
-    return false;
+    return llvm::VersionTuple();
 
   unsigned major, minor;
   if (2 == sscanf(un.release, "%u.%u", &major, &minor))

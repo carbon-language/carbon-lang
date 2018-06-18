@@ -63,12 +63,12 @@ llvm::VersionTuple HostInfoWindows::GetOSVersion() {
 
 bool HostInfoWindows::GetOSBuildString(std::string &s) {
   s.clear();
-  uint32_t major, minor, update;
-  if (!GetOSVersion(major, minor, update))
+  llvm::VersionTuple version = GetOSVersion();
+  if (version.empty())
     return false;
 
   llvm::raw_string_ostream stream(s);
-  stream << "Windows NT " << major << "." << minor << "." << update;
+  stream << "Windows NT " << version.getAsString();
   return true;
 }
 
