@@ -689,6 +689,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // linker can safely perform dead code stripping.  Since LLVM never
     // generates code that does this, it is always safe to set.
     OutStreamer->EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
+    return;
   }
 
   if (TT.isKnownWindowsMSVCEnvironment() && MMI->usesVAFloatArgument()) {
@@ -696,15 +697,18 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         (TT.getArch() == Triple::x86_64) ? "_fltused" : "__fltused";
     MCSymbol *S = MMI->getContext().getOrCreateSymbol(SymbolName);
     OutStreamer->EmitSymbolAttribute(S, MCSA_Global);
+    return;
   }
 
   if (TT.isOSBinFormatCOFF()) {
     SM.serializeToStackMapSection();
+    return;
   }
 
   if (TT.isOSBinFormatELF()) {
     SM.serializeToStackMapSection();
     FM.serializeToFaultMapSection();
+    return;
   }
 }
 
