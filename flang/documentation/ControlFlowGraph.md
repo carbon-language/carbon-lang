@@ -18,9 +18,12 @@ of a subprogram's control flow graph in place.
 A _control flow graph_ is a collection of simple (_i.e.,_ "non-extended")
 basic _blocks_ that comprise straight-line sequences of _actions_ with a
 single entry point and a single exit point, and a collection of
-directed flow _edges_ (or _arcs_) denoting all possible transfers of
-control flow that may take place during execution from the ends of
-any basic blocks to the beginning of a basic block.
+directed flow _edges_ (or _arcs_) denoting all possible transition of
+control flow that may take place during execution from the end of
+one basic block to the beginning of another (or itself).
+
+A block that has multiple distinct successors in the flow of control
+must end with an action that selects its successor.
 
 The sequence of actions that constitutes a basic block may
 include references to user and library procedures.
