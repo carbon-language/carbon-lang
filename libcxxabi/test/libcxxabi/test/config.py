@@ -35,7 +35,7 @@ class Configuration(LibcxxConfiguration):
         super(Configuration, self).configure_obj_root()
 
     def has_cpp_feature(self, feature, required_value):
-        return intMacroValue(self.cxx.dumpMacros().get('__cpp_' + feature, 0)) >= required_value
+        return intMacroValue(self.cxx.dumpMacros().get('__cpp_' + feature, '0')) >= required_value
 
     def configure_features(self):
         super(Configuration, self).configure_features()
