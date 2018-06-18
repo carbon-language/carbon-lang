@@ -568,6 +568,8 @@ public:
 /// executed, these instructions would always form a single-def expression as
 /// the VPInstruction is also a single def-use vertex.
 class VPInstruction : public VPUser, public VPRecipeBase {
+  friend class VPlanHCFGTransforms;
+
 public:
   /// VPlan opcodes, extending LLVM IR with idiomatics instructions.
   enum { Not = Instruction::OtherOpsEnd + 1 };
