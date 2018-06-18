@@ -119,7 +119,14 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, DominatorTree *DT,
                                      LoopInfo *LI,
                                      MemoryDependenceResults *MemDep) {
   // Don't merge away blocks who have their address taken.
-  if (BB->hasAddressTaken()) return false;
+  if (BB->hasAddressTaken()) {
+    // If the block has its address taken, it may be a tree of dead constants
+    // hanging off of it.  These shouldn't keep the block alive.
+    BlockAddress *BA = BlockAddress::get(BB);
+    BA->removeDeadConstantUsers();
+    if (!BA->use_empty())
+      return false;
+  }
 
   // Can't merge if there are multiple predecessors, or no predecessors.
   BasicBlock *PredBB = BB->getUniquePredecessor();
