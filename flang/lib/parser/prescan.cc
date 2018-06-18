@@ -14,11 +14,11 @@
 
 #include "prescan.h"
 #include "characters.h"
-#include "idioms.h"
 #include "message.h"
 #include "preprocessor.h"
 #include "source.h"
 #include "token-sequence.h"
+#include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>
 #include <sstream>

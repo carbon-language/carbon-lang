@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_PARSER_INTERVAL_H_
-#define FORTRAN_PARSER_INTERVAL_H_
+#ifndef FORTRAN_COMMON_INTERVAL_H_
+#define FORTRAN_COMMON_INTERVAL_H_
 
 // Defines a generalized template class Interval<A> to represent
 // the half-open interval [x .. x+n).
@@ -22,7 +22,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace Fortran::parser {
+namespace Fortran::common {
 
 template<typename A> class Interval {
 public:
@@ -91,5 +91,5 @@ private:
   std::size_t size_{0};
 };
 
-}  // namespace Fortran::parser
-#endif  // FORTRAN_PARSER_INTERVAL_H_
+}  // namespace Fortran::common
+#endif  // FORTRAN_COMMON_INTERVAL_H_

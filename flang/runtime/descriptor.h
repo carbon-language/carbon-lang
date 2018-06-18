@@ -30,23 +30,15 @@
 
 namespace Fortran::runtime {
 
-// Fortran requires that default INTEGER values occupy a single numeric
-// storage unit, just like default REAL.  Since there's no reasonable way
-// that default REAL can be anything but 32-bit IEEE-754 today, the default
-// INTEGER type is also forced; and default INTEGER is required to be the
-// type of the kind type parameters of the intrinsic types.
-using DefaultKindInteger = std::int32_t;
-
-class DerivedType;
 class DerivedTypeSpecialization;
 class DescriptorAddendum;
 
-// This next section implements a C++ view of the sole interoperable
-// descriptor (ISO_cdesc_t) and its type and per-dimension information.
+// A C++ view of the sole interoperable standard descriptor (ISO_cdesc_t)
+// and its type and per-dimension information.
 
 class TypeCode {
 public:
-  enum class Form { Integer, Real, Complex, Logical, Character, DerivedType };
+  enum class Form { Integer, Real, Complex, Logical, Character, Derived };
 
   TypeCode() {}
   explicit TypeCode(ISO::CFI_type_t t) : raw_{t} {}
@@ -67,10 +59,10 @@ public:
   }
   constexpr bool IsLogical() const { return raw_ == CFI_type_Bool; }
   constexpr bool IsCharacter() const { return raw_ == CFI_type_cptr; }
-  constexpr bool IsDerivedType() const { return raw_ == CFI_type_struct; }
+  constexpr bool IsDerived() const { return raw_ == CFI_type_struct; }
 
   constexpr bool IsIntrinsic() const {
-    return raw_ >= CFI_type_signed_char && raw_ <= CFI_type_cptr;
+    return IsValid() && !IsDerived();
   }
 
   constexpr Form GetForm() const {
@@ -89,7 +81,7 @@ public:
     if (IsCharacter()) {
       return Form::Character;
     }
-    return Form::DerivedType;
+    return Form::Derived;
   }
 
 private:

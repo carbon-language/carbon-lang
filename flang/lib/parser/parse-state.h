@@ -22,9 +22,9 @@
 // and recovery during parsing!
 
 #include "characters.h"
-#include "idioms.h"
 #include "message.h"
 #include "provenance.h"
+#include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>
 #include <list>

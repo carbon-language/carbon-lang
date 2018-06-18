@@ -13,14 +13,14 @@
 // limitations under the License.
 
 #include "attr.h"
-#include "../parser/idioms.h"
+#include "../common/idioms.h"
 #include <stddef.h>
 
 namespace Fortran::semantics {
 
 void Attrs::CheckValid(const Attrs &allowed) const {
   if (!allowed.HasAll(*this)) {
-    parser::die("invalid attribute");
+    common::die("invalid attribute");
   }
 }
 

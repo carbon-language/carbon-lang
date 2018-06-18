@@ -16,7 +16,7 @@
 #define FORTRAN_SEMANTICS_ATTR_H_
 
 #include "../common/enum-set.h"
-#include "../parser/idioms.h"
+#include "../common/idioms.h"
 #include <cinttypes>
 #include <iostream>
 #include <string>

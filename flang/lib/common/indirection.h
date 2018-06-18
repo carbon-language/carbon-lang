@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_PARSER_INDIRECTION_H_
-#define FORTRAN_PARSER_INDIRECTION_H_
+#ifndef FORTRAN_COMMON_INDIRECTION_H_
+#define FORTRAN_COMMON_INDIRECTION_H_
 
 // Defines a smart pointer class template that's rather like std::unique_ptr<>
 // but further restricted, like a C++ reference, to be non-null when constructed
 // or assigned.  Users need not check whether these pointers are null.
 // Intended to be as invisible as possible.
 
-#include "idioms.h"
+#include "../common/idioms.h"
 #include <utility>
 
-namespace Fortran::parser {
+namespace Fortran::common {
 
 template<typename A> class Indirection {
 public:
@@ -60,6 +60,5 @@ public:
 private:
   A *p_{nullptr};
 };
-
-}  // namespace Fortran::parser
-#endif  // FORTRAN_PARSER_INDIRECTION_H_
+}  // namespace Fortran::common
+#endif  // FORTRAN_COMMON_INDIRECTION_H_

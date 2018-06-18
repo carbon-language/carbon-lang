@@ -14,9 +14,9 @@
 
 #include "preprocessor.h"
 #include "characters.h"
-#include "idioms.h"
 #include "message.h"
 #include "prescan.h"
+#include "../common/idioms.h"
 #include <algorithm>
 #include <cinttypes>
 #include <cstddef>

@@ -24,6 +24,7 @@
 #include "integer.h"
 #include "logical.h"
 #include "real.h"
+#include <string>
 
 namespace Fortran::evaluate::type {
 
@@ -87,7 +88,7 @@ template<int KIND> struct Character {
   static constexpr Classification classification{Classification::Character};
   static constexpr int kind{KIND};
   static constexpr bool hasLen{true};
-  using ValueType = std::uint8_t[kind];  // TODO: ?
+  using ValueType = std::string;
 };
 
 // Default REAL just simply has to be IEEE-754 single precision today.

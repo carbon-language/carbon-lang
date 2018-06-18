@@ -18,7 +18,7 @@
 #include "scope.h"
 #include "symbol.h"
 #include "type.h"
-#include "../parser/indirection.h"
+#include "../common/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <list>
@@ -115,7 +115,7 @@ protected:
     case parser::AccessSpec::Kind::Private: return Attr::PRIVATE;
     }
     // unnecessary but g++ warns "control reaches end of non-void function"
-    parser::die("unreachable");
+    common::die("unreachable");
   }
 };
 
@@ -735,7 +735,7 @@ void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
 }
 bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
   typeParamValue_ = std::make_unique<ParamValue>(std::visit(
-      parser::visitors{
+      common::visitors{
           // TODO: create IntExpr from ScalarIntExpr
           [&](const parser::ScalarIntExpr &x) { return Bound{IntExpr{}}; },
           [&](const parser::Star &x) { return Bound::ASSUMED; },
@@ -881,7 +881,7 @@ void ImplicitRulesVisitor::Post(const parser::ParameterStmt &x) {
 
 bool ImplicitRulesVisitor::Pre(const parser::ImplicitStmt &x) {
   bool res = std::visit(
-      parser::visitors{
+      common::visitors{
           [&](const std::list<ImplicitNoneNameSpec> &x) {
             return HandleImplicitNone(x);
           },
@@ -1107,22 +1107,22 @@ void ScopeHandler::ApplyImplicitRules() {
 
 bool ModuleVisitor::Pre(const parser::Only &x) {
   std::visit(
-      parser::visitors{
-          [&](const parser::Indirection<parser::GenericSpec> &generic) {
+      common::visitors{
+          [&](const common::Indirection<parser::GenericSpec> &generic) {
             std::visit(
-                parser::visitors{
+                common::visitors{
                     [&](const parser::Name &name) { AddUse(name); },
-                    [](const auto &) { parser::die("TODO: GenericSpec"); },
+                    [](const auto &) { common::die("TODO: GenericSpec"); },
                 },
                 generic->u);
           },
           [&](const parser::Name &name) { AddUse(name); },
           [&](const parser::Rename &rename) {
             std::visit(
-                parser::visitors{
+                common::visitors{
                     [&](const parser::Rename::Names &names) { AddUse(names); },
                     [&](const parser::Rename::Operators &ops) {
-                      parser::die("TODO: Rename::Operators");
+                      common::die("TODO: Rename::Operators");
                     },
                 },
                 rename.u);
@@ -1161,7 +1161,7 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
     std::set<SourceName> useNames;
     for (const auto &rename : *list) {
       std::visit(
-          parser::visitors{
+          common::visitors{
               [&](const parser::Rename::Names &names) {
                 useNames.insert(std::get<1>(names.t).source);
               },
@@ -2003,15 +2003,15 @@ bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
   } else {
     for (const auto &accessId : accessIds) {
       std::visit(
-          parser::visitors{
+          common::visitors{
               [=](const parser::Name &y) { SetAccess(y, accessAttr); },
-              [=](const parser::Indirection<parser::GenericSpec> &y) {
+              [=](const common::Indirection<parser::GenericSpec> &y) {
                 std::visit(
-                    parser::visitors{
+                    common::visitors{
                         [=](const parser::Name &z) {
                           SetAccess(z, accessAttr);
                         },
-                        [](const auto &) { parser::die("TODO: GenericSpec"); },
+                        [](const auto &) { common::die("TODO: GenericSpec"); },
                     },
                     y->u);
               },
@@ -2088,7 +2088,7 @@ const parser::Name *ResolveNamesVisitor::GetVariableName(
 const parser::Name *ResolveNamesVisitor::GetVariableName(
     const parser::Designator &x) {
   return std::visit(
-      parser::visitors{
+      common::visitors{
           [&](const parser::ObjectName &x) { return &x; },
           [&](const parser::DataRef &x) { return GetVariableName(x); },
           [&](const auto &) {
@@ -2100,7 +2100,7 @@ const parser::Name *ResolveNamesVisitor::GetVariableName(
 const parser::Name *ResolveNamesVisitor::GetVariableName(
     const parser::Expr &x) {
   if (const auto *designator =
-          std::get_if<parser::Indirection<parser::Designator>>(&x.u)) {
+          std::get_if<common::Indirection<parser::Designator>>(&x.u)) {
     return GetVariableName(**designator);
   } else {
     return nullptr;
@@ -2109,7 +2109,7 @@ const parser::Name *ResolveNamesVisitor::GetVariableName(
 const parser::Name *ResolveNamesVisitor::GetVariableName(
     const parser::Variable &x) {
   if (const auto *designator =
-          std::get_if<parser::Indirection<parser::Designator>>(&x.u)) {
+          std::get_if<common::Indirection<parser::Designator>>(&x.u)) {
     return GetVariableName(**designator);
   } else {
     return nullptr;
@@ -2198,13 +2198,13 @@ static GenericSpec::Kind MapIntrinsicOperator(
 // Map a parser::GenericSpec to a semantics::GenericSpec
 static GenericSpec MapGenericSpec(const parser::GenericSpec &genericSpec) {
   return std::visit(
-      parser::visitors{
+      common::visitors{
           [](const parser::Name &x) {
             return GenericSpec::GenericName(x.source);
           },
           [](const parser::DefinedOperator &x) {
             return std::visit(
-                parser::visitors{
+                common::visitors{
                     [](const parser::DefinedOpName &name) {
                       return GenericSpec::DefinedOp(name.v.source);
                     },

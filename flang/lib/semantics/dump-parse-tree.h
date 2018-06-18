@@ -15,9 +15,9 @@
 #define FORTRAN_SEMANTICS_DUMP_PARSE_TREE_H_
 
 #include "symbol.h"
+#include "../common/idioms.h"
+#include "../common/indirection.h"
 #include "../parser/format-specification.h"
-#include "../parser/idioms.h"
-#include "../parser/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <ostream>
@@ -716,9 +716,9 @@ public:
 
   template<typename T> void Post(const parser::Statement<T> &) {}
 
-  template<typename T> bool Pre(const parser::Indirection<T> &) { return true; }
+  template<typename T> bool Pre(const common::Indirection<T> &) { return true; }
 
-  template<typename T> void Post(const parser::Indirection<T> &) {}
+  template<typename T> void Post(const common::Indirection<T> &) {}
 
   template<typename T> bool Pre(const parser::Integer<T> &) { return true; }
 

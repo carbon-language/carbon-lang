@@ -16,8 +16,8 @@
 #define FORTRAN_SEMANTICS_TYPE_H_
 
 #include "attr.h"
+#include "../common/idioms.h"
 #include "../parser/char-block.h"
-#include "../parser/idioms.h"
 #include <list>
 #include <map>
 #include <memory>
@@ -503,7 +503,7 @@ public:
       const SourceName &binding)
     : TypeBoundProc(interface, attrs, binding, binding) {
     if (!attrs_.test(Attr::DEFERRED)) {
-      parser::die(
+      common::die(
           "DEFERRED attribute is required if interface name is specified");
     }
   }
@@ -511,7 +511,7 @@ public:
       const std::optional<SourceName> &procedure)
     : TypeBoundProc({}, attrs, binding, procedure ? *procedure : binding) {
     if (attrs_.test(Attr::DEFERRED)) {
-      parser::die("DEFERRED attribute is only allowed with interface name");
+      common::die("DEFERRED attribute is only allowed with interface name");
     }
   }
 

@@ -12,17 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-add_library(FlangSemantics
-  attr.cc
-  resolve-names.cc
-  rewrite-parse-tree.cc
-  scope.cc
-  symbol.cc
-  type.cc
+add_library(FortranCommon
+  idioms.cc
 )
 
-target_link_libraries(FlangSemantics
-  FortranCommon
-  clangBasic
-)

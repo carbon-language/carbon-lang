@@ -80,9 +80,7 @@ public:
     return {word_.IBCLR(bits - 1)};
   }
 
-  constexpr Real Negate() const {
-    return {word_.IEOR(word_.MASKL(1))};
-  }
+  constexpr Real Negate() const { return {word_.IEOR(word_.MASKL(1))}; }
 
   Relation Compare(const Real &) const;
   ValueWithRealFlags<Real> Add(

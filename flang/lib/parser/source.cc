@@ -14,7 +14,7 @@
 
 #include "source.h"
 #include "char-buffer.h"
-#include "idioms.h"
+#include "../common/idioms.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstddef>

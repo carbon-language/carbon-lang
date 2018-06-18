@@ -247,8 +247,8 @@ public:
     if (const auto p = detailsIf<D>()) {
       return *p;
     } else {
-      Fortran::parser::die("unexpected %s details at %s(%d)",
-          GetDetailsName().c_str(), __FILE__, __LINE__);
+      common::die("unexpected %s details at %s(%d)", GetDetailsName().c_str(),
+          __FILE__, __LINE__);
     }
   }
 

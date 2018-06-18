@@ -200,10 +200,11 @@ typename std::enable_if<WrapperTrait<A>>::type Walk(A &x, M &mutator) {
 }
 
 template<typename T, typename V>
-void Walk(const Indirection<T> &x, V &visitor) {
+void Walk(const common::Indirection<T> &x, V &visitor) {
   Walk(*x, visitor);
 }
-template<typename T, typename M> void Walk(Indirection<T> &x, M &mutator) {
+template<typename T, typename M>
+void Walk(common::Indirection<T> &x, M &mutator) {
   Walk(*x, mutator);
 }
 

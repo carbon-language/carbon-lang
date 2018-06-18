@@ -14,7 +14,7 @@
 
 #include "symbol.h"
 #include "scope.h"
-#include "../parser/idioms.h"
+#include "../common/idioms.h"
 #include <memory>
 
 namespace Fortran::semantics {
@@ -83,7 +83,7 @@ const Symbol *GenericDetails::CheckSpecific() const {
 // This is primarily for debugging.
 static std::string DetailsToString(const Details &details) {
   return std::visit(
-      parser::visitors{
+      common::visitors{
           [](const UnknownDetails &) { return "Unknown"; },
           [](const MainProgramDetails &) { return "MainProgram"; },
           [](const ModuleDetails &) { return "Module"; },
@@ -114,7 +114,7 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
     return true;  // can always replace UnknownDetails
   } else {
     return std::visit(
-        parser::visitors{
+        common::visitors{
             [](const UseErrorDetails &) { return true; },
             [=](const ObjectEntityDetails &) { return has<EntityDetails>(); },
             [=](const ProcEntityDetails &) { return has<EntityDetails>(); },
@@ -140,7 +140,7 @@ const Symbol &Symbol::GetUltimate() const {
 
 bool Symbol::isSubprogram() const {
   return std::visit(
-      parser::visitors{
+      common::visitors{
           [](const SubprogramDetails &) { return true; },
           [](const SubprogramNameDetails &) { return true; },
           [](const GenericDetails &) { return true; },
@@ -152,7 +152,7 @@ bool Symbol::isSubprogram() const {
 
 bool Symbol::HasExplicitInterface() const {
   return std::visit(
-      parser::visitors{
+      common::visitors{
           [](const SubprogramDetails &) { return true; },
           [](const SubprogramNameDetails &) { return true; },
           [](const ProcEntityDetails &x) { return x.HasExplicitInterface(); },
@@ -217,7 +217,7 @@ static std::ostream &DumpType(std::ostream &os, const Symbol &symbol) {
 std::ostream &operator<<(std::ostream &os, const Details &details) {
   os << DetailsToString(details);
   std::visit(
-      parser::visitors{
+      common::visitors{
           [&](const UnknownDetails &x) {},
           [&](const MainProgramDetails &x) {},
           [&](const ModuleDetails &x) {},

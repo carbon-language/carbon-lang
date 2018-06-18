@@ -17,7 +17,7 @@
 
 #include "attr.h"
 #include "symbol.h"
-#include "../parser/idioms.h"
+#include "../common/idioms.h"
 #include "../parser/parse-tree.h"
 #include <list>
 #include <map>

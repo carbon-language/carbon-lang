@@ -21,10 +21,10 @@
 #include "basic-parsers.h"
 #include "char-set.h"
 #include "characters.h"
-#include "idioms.h"
 #include "instrumented-parser.h"
 #include "provenance.h"
 #include "type-parsers.h"
+#include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>
 #include <functional>
@@ -364,10 +364,10 @@ struct BOZLiteral {
       content += **at;
     }
 
-    if (!shift) {
+    if (!shift.has_value()) {
       // extension: base allowed to appear as suffix, too
-      if (!IsNonstandardUsageOk(state) || !(at = nextCh.Parse(state)) ||
-          !baseChar(**at)) {
+      if (!IsNonstandardUsageOk(state) ||
+          !(at = nextCh.Parse(state)).has_value() || !baseChar(**at)) {
         return {};
       }
       spaceCheck.Parse(state);
@@ -478,7 +478,7 @@ struct SignedIntLiteralConstantWithoutKind {
     bool negate{false};
     if (minus.Parse(state)) {
       negate = true;
-    } else if (!plus.Parse(state)) {
+    } else if (!plus.Parse(state).has_value()) {
       return {};
     }
     return SignedInteger(digitString.Parse(state), at, negate, state);
@@ -565,7 +565,7 @@ struct HollerithLiteral {
     const char *start{state.GetLocation()};
     std::optional<std::uint64_t> charCount{
         DigitStringIgnoreSpaces{}.Parse(state)};
-    if (!charCount || *charCount < 1) {
+    if (!charCount.has_value() || *charCount < 1) {
       return {};
     }
     static constexpr auto letterH = "h"_ch;

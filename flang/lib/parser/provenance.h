@@ -17,9 +17,9 @@
 
 #include "char-block.h"
 #include "char-buffer.h"
-#include "idioms.h"
-#include "interval.h"
 #include "source.h"
+#include "../common/idioms.h"
+#include "../common/interval.h"
 #include <cstddef>
 #include <map>
 #include <memory>
@@ -79,7 +79,7 @@ private:
   std::size_t offset_{0};
 };
 
-using ProvenanceRange = Interval<Provenance>;
+using ProvenanceRange = common::Interval<Provenance>;
 
 // Maps 0-based local offsets in some contiguous range (e.g., a token
 // sequence) to their provenances.  Lookup time is on the order of

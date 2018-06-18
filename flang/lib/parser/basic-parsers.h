@@ -29,11 +29,11 @@
 // template functions.  See parser-combinators.txt for documentation.
 
 #include "char-block.h"
-#include "idioms.h"
-#include "indirection.h"
 #include "message.h"
 #include "parse-state.h"
 #include "provenance.h"
+#include "../common/idioms.h"
+#include "../common/indirection.h"
 #include <cstring>
 #include <functional>
 #include <list>
@@ -1157,7 +1157,7 @@ constexpr Construct6<T, PA, PB, PC, PD, PE, PF> construct(const PA &pa,
 // For a parser p, indirect(p) returns a parser that builds an indirect
 // reference to p's return type.
 template<typename PA> inline constexpr auto indirect(const PA &p) {
-  return construct<Indirection<typename PA::resultType>>(p);
+  return construct<common::Indirection<typename PA::resultType>>(p);
 }
 
 // If a and b are parsers, then nonemptySeparated(a, b) returns a parser

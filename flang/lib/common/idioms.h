@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: move to lib/common
-#ifndef FORTRAN_PARSER_IDIOMS_H_
-#define FORTRAN_PARSER_IDIOMS_H_
+#ifndef FORTRAN_COMMON_IDIOMS_H_
+#define FORTRAN_COMMON_IDIOMS_H_
 
 // Defines anything that might ever be useful in more than one source file
 // or that is too weird or too specific to the host C++ compiler to be
@@ -49,7 +48,7 @@ struct is_trivially_copy_constructible<optional<list<A>>> : false_type {};
 // enable "this is a std::string"s with the 's' suffix
 using namespace std::literals::string_literals;
 
-namespace Fortran::parser {
+namespace Fortran::common {
 
 // Helper templates for combining a list of lambdas into an anonymous
 // struct for use with std::visit() on a std::variant<> sum type.
@@ -68,22 +67,16 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 // Calls std::fprintf(stderr, ...), then abort().
 [[noreturn]] void die(const char *, ...);
 
-// Treat operator! as if it were a Boolean context, i.e. like if() and ? :,
-// when its operand is std::optional<>.
-template<typename A> bool operator!(const std::optional<A> &x) {
-  return !x.has_value();
-}
-
 // For switch statements without default: labels.
 #define CRASH_NO_CASE \
-  Fortran::parser::die("no case at " __FILE__ "(%d)", __LINE__)
+  Fortran::common::die("no case at " __FILE__ "(%d)", __LINE__)
 
 // For cheap assertions that should be applied in production.
 // To disable, compile with '-DCHECK=(void)'
 #ifndef CHECK
 #define CHECK(x) \
   ((x) || \
-      (Fortran::parser::die( \
+      (Fortran::common::die( \
            "CHECK(" #x ") failed at " __FILE__ "(%d)", __LINE__), \
           false))
 #endif
@@ -130,12 +123,12 @@ template<typename A> struct ListItemCount {
   enum class NAME { __VA_ARGS__ }; \
   static constexpr std::size_t NAME##_enumSize{[] { \
     enum { __VA_ARGS__ }; \
-    return Fortran::parser::ListItemCount{__VA_ARGS__}.value; \
+    return Fortran::common::ListItemCount{__VA_ARGS__}.value; \
   }()}; \
   static inline std::string EnumToString(NAME e) { \
-    return Fortran::parser::EnumIndexToString( \
+    return Fortran::common::EnumIndexToString( \
         static_cast<int>(e), #__VA_ARGS__); \
   }
 
-}  // namespace Fortran::parser
-#endif  // FORTRAN_PARSER_IDIOMS_H_
+}  // namespace Fortran::common
+#endif  // FORTRAN_COMMON_IDIOMS_H_

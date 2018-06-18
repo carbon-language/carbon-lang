@@ -58,8 +58,9 @@ typedef unsigned short CFI_attribute_t;
 
 typedef signed char CFI_type_t;
 /* These codes are required to be macros (i.e., #ifdef will work).
- * They are not required to be either distinct nor to have had their
- * synonyms combined.
+ * They are not required to be distinct, but neither are they required
+ * to have had their synonyms combined.
+ * Extension: 128-bit integers are anticipated
  */
 #define CFI_type_signed_char 1
 #define CFI_type_short 2
@@ -71,31 +72,34 @@ typedef signed char CFI_type_t;
 #define CFI_type_int16_t 8
 #define CFI_type_int32_t 9
 #define CFI_type_int64_t 10
-#define CFI_type_int_least8_t 11
-#define CFI_type_int_least16_t 12
-#define CFI_type_int_least32_t 13
-#define CFI_type_int_least64_t 14
-#define CFI_type_int_fast8_t 15
-#define CFI_type_int_fast16_t 16
-#define CFI_type_int_fast32_t 17
-#define CFI_type_int_fast64_t 18
-#define CFI_type_intmax_t 19
-#define CFI_type_intptr_t 20
-#define CFI_type_ptrdiff_t 21
-#define CFI_type_float 22
-#define CFI_type_double 23
-#define CFI_type_long_double 24
-#define CFI_type_float_Complex 25
-#define CFI_type_double_Complex 26
-#define CFI_type_long_double_Complex 27
-#define CFI_type_Bool 28
-#define CFI_type_char 29
-#define CFI_type_cptr 30
-#define CFI_type_struct 31
-#define CFI_type_other (-1) /* must be negative */
+#define CFI_type_int128_t 11
+#define CFI_type_int_least8_t 12
+#define CFI_type_int_least16_t 13
+#define CFI_type_int_least32_t 14
+#define CFI_type_int_least64_t 15
+#define CFI_type_int_least128_t 16
+#define CFI_type_int_fast8_t 17
+#define CFI_type_int_fast16_t 18
+#define CFI_type_int_fast32_t 19
+#define CFI_type_int_fast64_t 20
+#define CFI_type_int_fast128_t 21
+#define CFI_type_intmax_t 22
+#define CFI_type_intptr_t 23
+#define CFI_type_ptrdiff_t 24
+#define CFI_type_float 25
+#define CFI_type_double 26
+#define CFI_type_long_double 27
+#define CFI_type_float_Complex 28
+#define CFI_type_double_Complex 29
+#define CFI_type_long_double_Complex 30
+#define CFI_type_Bool 31
+#define CFI_type_char 32
+#define CFI_type_cptr 33
+#define CFI_type_struct 34
+#define CFI_type_other (-1)  // must be negative
 
 /* Error code macros */
-#define CFI_SUCCESS 0
+#define CFI_SUCCESS 0  /* must be zero */
 #define CFI_ERROR_BASE_ADDR_NULL 1
 #define CFI_ERROR_BASE_ADDR_NOT_NULL 2
 #define CFI_INVALID_ELEM_LEN 3

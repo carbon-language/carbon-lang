@@ -15,7 +15,7 @@
 #include "rewrite-parse-tree.h"
 #include "scope.h"
 #include "symbol.h"
-#include "../parser/indirection.h"
+#include "../common/indirection.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <list>
@@ -44,7 +44,7 @@ public:
   }
 
   using stmtFuncType =
-      parser::Statement<parser::Indirection<parser::StmtFunctionStmt>>;
+      parser::Statement<common::Indirection<parser::StmtFunctionStmt>>;
 
   // Find mis-parsed statement functions and move to stmtFuncsToConvert list.
   void Post(parser::SpecificationPart &x) {
@@ -89,7 +89,7 @@ private:
   // entity declaration, convert it.
   template<typename T> void ConvertFunctionRef(T &x) {
     auto *funcRef =
-        std::get_if<parser::Indirection<parser::FunctionReference>>(&x.u);
+        std::get_if<common::Indirection<parser::FunctionReference>>(&x.u);
     if (!funcRef) {
       return;
     }
@@ -98,7 +98,7 @@ private:
     if (!name || !name->symbol || !name->symbol->has<EntityDetails>()) {
       return;
     }
-    x.u = parser::Indirection{(*funcRef)->ConvertToArrayElementRef()};
+    x.u = common::Indirection{(*funcRef)->ConvertToArrayElementRef()};
   }
 };
 

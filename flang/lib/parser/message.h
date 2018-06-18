@@ -20,9 +20,9 @@
 
 #include "char-block.h"
 #include "char-set.h"
-#include "idioms.h"
 #include "provenance.h"
-#include "reference-counted.h"
+#include "../common/idioms.h"
+#include "../common/reference-counted.h"
 #include <cstddef>
 #include <cstring>
 #include <forward_list>
@@ -102,9 +102,9 @@ private:
   std::variant<CharBlock, SetOfChars> u_;
 };
 
-class Message : public ReferenceCounted<Message> {
+class Message : public common::ReferenceCounted<Message> {
 public:
-  using Reference = CountedReference<Message>;
+  using Reference = common::CountedReference<Message>;
 
   Message(const Message &) = default;
   Message(Message &&) = default;
