@@ -2261,7 +2261,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
     }
     OS << "};\n\n";
 
-    OS << "const uint8_t TiedAsmOperandTable[][3] = {\n";
+    OS << "static const uint8_t TiedAsmOperandTable[][3] = {\n";
     for (auto &KV : TiedOperandsEnumMap) {
       OS << "  /* " << KV.second << " */ { "
          << utostr(std::get<0>(KV.first)) << ", "
@@ -2270,7 +2270,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
     }
     OS << "};\n\n";
   } else
-    OS << "const uint8_t TiedAsmOperandTable[][3] = "
+    OS << "static const uint8_t TiedAsmOperandTable[][3] = "
           "{ /* empty  */ {0, 0, 0} };\n\n";
 
   OS << "namespace {\n";
