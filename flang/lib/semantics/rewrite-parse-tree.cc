@@ -23,7 +23,7 @@
 namespace Fortran::semantics {
 
 // Symbols collected during name resolution that are added to parse tree.
-using symbolMap = std::map<const SourceName, Symbol *>;
+using symbolMap = std::map<const char *, Symbol *>;
 
 /// Walk the parse tree and add symbols from the symbolMap in Name nodes.
 /// Convert mis-identified statement functions to array element assignments.
@@ -37,7 +37,7 @@ public:
 
   // Fill in name.symbol if there is a corresponding symbol
   void Post(parser::Name &name) {
-    const auto it = symbols_.find(name.source);
+    const auto it = symbols_.find(name.source.begin());
     if (it != symbols_.end()) {
       name.symbol = it->second;
     }
@@ -104,9 +104,9 @@ private:
 
 static void CollectSymbols(Scope &scope, symbolMap &symbols) {
   for (auto &pair : scope) {
-    Symbol &symbol{pair.second};
-    for (const auto &name : symbol.occurrences()) {
-      symbols.emplace(name, &symbol);
+    Symbol *symbol{pair.second};
+    for (const auto &name : symbol->occurrences()) {
+      symbols.emplace(name.begin(), symbol);
     }
   }
   for (auto &child : scope.children()) {
