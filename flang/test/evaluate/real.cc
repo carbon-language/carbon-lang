@@ -160,7 +160,7 @@ template<typename R> void basicTests(int rm, Rounding rounding) {
 // Takes an integer and distributes its bits across a floating
 // point value.  The LSB is used to complement the result.
 std::uint32_t MakeReal(std::uint32_t n) {
-  int shifts[] = { -1, 31, 23, 30, 22, 0, 24, 29, 25, 28, 26, 1, 16, 21, 2, -1 };
+  int shifts[] = {-1, 31, 23, 30, 22, 0, 24, 29, 25, 28, 26, 1, 16, 21, 2, -1};
   std::uint32_t x{0};
   for (int j{1}; shifts[j] >= 0; ++j) {
     x |= ((n >> j) & 1) << shifts[j];
@@ -170,7 +170,8 @@ std::uint32_t MakeReal(std::uint32_t n) {
 }
 
 std::uint64_t MakeReal(std::uint64_t n) {
-  int shifts[] = { -1, 63, 52, 62, 51, 0, 53, 61, 54, 60, 55, 59, 1, 16, 50, 2, -1 };
+  int shifts[] = {
+      -1, 63, 52, 62, 51, 0, 53, 61, 54, 60, 55, 59, 1, 16, 50, 2, -1};
   std::uint64_t x{0};
   for (int j{1}; shifts[j] >= 0; ++j) {
     x |= ((n >> j) & 1) << shifts[j];
@@ -240,16 +241,18 @@ void inttest(std::int64_t x, int pass, Rounding rounding) {
   MATCH(actualFlags, FlagsToBits(real.flags))("%d 0x%llx", pass, x);
 }
 
-template<typename UINT = std::uint32_t, typename FLT = float, typename REAL = Real4>
+template<typename UINT = std::uint32_t, typename FLT = float,
+    typename REAL = Real4>
 void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
   for (int j{0}; j < 63; ++j) {
     std::int64_t x{1};
     x <<= j;
-    inttest<UINT,FLT,REAL>(x, pass, rounding);
-    inttest<UINT,FLT,REAL>(-x, pass, rounding);
+    inttest<UINT, FLT, REAL>(x, pass, rounding);
+    inttest<UINT, FLT, REAL>(-x, pass, rounding);
   }
-  inttest<UINT,FLT,REAL>(0, pass, rounding);
-  inttest<UINT,FLT,REAL>(static_cast<std::int64_t>(0x8000000000000000), pass, rounding);
+  inttest<UINT, FLT, REAL>(0, pass, rounding);
+  inttest<UINT, FLT, REAL>(
+      static_cast<std::int64_t>(0x8000000000000000), pass, rounding);
 
   union {
     UINT ui;
@@ -278,11 +281,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = sum.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-          ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(sum.flags))
-          ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx + 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
       }
       {
         ValueWithRealFlags<REAL> diff{x.Subtract(y, rounding)};
@@ -295,11 +298,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = diff.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-          ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(diff.flags))
-          ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx - 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
       }
       {
         ValueWithRealFlags<REAL> prod{x.Multiply(y, rounding)};
@@ -312,11 +315,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = prod.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-          ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(prod.flags))
-          ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx * 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
       }
       {
         ValueWithRealFlags<REAL> quot{x.Divide(y, rounding)};
@@ -329,11 +332,11 @@ void subsetTests(int pass, Rounding rounding, std::uint32_t opds) {
         UINT rcheck{NormalizeNaN(u.ui)};
         UINT check = quot.value.RawBits().ToUInt64();
         MATCH(rcheck, check)
-          ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
         MATCH(actualFlags, FlagsToBits(quot.flags))
-          ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
-           static_cast<long long>(rk));
+        ("%d 0x%llx / 0x%llx", pass, static_cast<long long>(rj),
+            static_cast<long long>(rk));
       }
     }
   }

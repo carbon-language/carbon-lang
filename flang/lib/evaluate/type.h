@@ -38,44 +38,44 @@ template<Category C, int KIND> struct TypeBase {
 
 template<Category C, int KIND> struct Type;
 
-template<int KIND> struct Type<Category::Integer, KIND>
-    : public TypeBase<Category::Integer, KIND> {
+template<int KIND>
+struct Type<Category::Integer, KIND>
+  : public TypeBase<Category::Integer, KIND> {
   using Value = value::Integer<8 * KIND>;
 };
 
-template<> struct Type<Category::Real, 2>
-    : public TypeBase<Category::Real, 2> {
+template<> struct Type<Category::Real, 2> : public TypeBase<Category::Real, 2> {
   using Value = value::Real<typename Type<Category::Integer, 2>::Value, 11>;
 };
 
-template<> struct Type<Category::Real, 4>
-    : public TypeBase<Category::Real, 4> {
+template<> struct Type<Category::Real, 4> : public TypeBase<Category::Real, 4> {
   using Value = value::Real<typename Type<Category::Integer, 4>::Value, 24>;
 };
 
-template<> struct Type<Category::Real, 8>
-    : public TypeBase<Category::Real, 8> {
+template<> struct Type<Category::Real, 8> : public TypeBase<Category::Real, 8> {
   using Value = value::Real<typename Type<Category::Integer, 8>::Value, 53>;
 };
 
-template<> struct Type<Category::Real, 10>
-    : public TypeBase<Category::Real, 10> {
+template<>
+struct Type<Category::Real, 10> : public TypeBase<Category::Real, 10> {
   using Value = value::Real<value::Integer<80>, 64, false>;
 };
 
-template<> struct Type<Category::Real, 16>
-    : public TypeBase<Category::Real, 16> {
+template<>
+struct Type<Category::Real, 16> : public TypeBase<Category::Real, 16> {
   using Value = value::Real<typename Type<Category::Integer, 16>::Value, 112>;
 };
 
 // The KIND type parameter on COMPLEX is the kind of each of its components.
-template<int KIND> struct Type<Category::Complex, KIND>
-    : public TypeBase<Category::Complex, KIND> {
+template<int KIND>
+struct Type<Category::Complex, KIND>
+  : public TypeBase<Category::Complex, KIND> {
   using Value = value::Complex<typename Type<Category::Real, KIND>::Value>;
 };
 
-template<int KIND> struct Type<Category::Logical, KIND>
-    : public TypeBase<Category::Logical, KIND> {
+template<int KIND>
+struct Type<Category::Logical, KIND>
+  : public TypeBase<Category::Logical, KIND> {
   using Value = value::Logical<8 * KIND>;
 };
 
@@ -98,5 +98,5 @@ using IntrinsicTypeParameterType = DefaultInteger;
 using DefaultComplex = Type<Category::Complex, DefaultReal::kind>;
 using DefaultLogical = Type<Category::Logical, DefaultReal::kind>;
 using DefaultCharacter = Type<Category::Character, 1>;
-}  // namespace Fortran::evaluate::type
+}  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

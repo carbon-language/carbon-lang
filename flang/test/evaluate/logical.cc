@@ -17,7 +17,8 @@
 #include <cstdio>
 
 template<int KIND> void testKind() {
-  using Type = Fortran::evaluate::Type<Fortran::evaluate::Category::Logical, KIND>;
+  using Type =
+      Fortran::evaluate::Type<Fortran::evaluate::Category::Logical, KIND>;
   TEST(Type::category == Fortran::evaluate::Category::Logical);
   TEST(Type::kind == KIND);
   TEST(!Type::hasLen);

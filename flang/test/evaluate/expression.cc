@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "testing.h"
 #include "../../lib/evaluate/expression.h"
+#include "testing.h"
 #include <cstdio>
 #include <cstdlib>
 
@@ -24,7 +24,8 @@ int main() {
   using IntEx4 = Expression<Int4>;
   auto ie = IntEx4{value::Integer<32>(666)};
   auto one = IntEx4{value::Integer<32>(1)};
-  auto incr = IntEx4{IntEx4::Binary::Operator::Add, std::move(ie), std::move(one)};
+  auto incr =
+      IntEx4{IntEx4::Binary::Operator::Add, std::move(ie), std::move(one)};
   using Log = Expression<Type<Category::Logical, 1>>;
   auto two = IntEx4{value::Integer<32>(2)};
   auto cmp = Log{Log::ComparisonOperator::EQ, std::move(incr), std::move(two)};
