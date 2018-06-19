@@ -18,8 +18,5 @@ add_llvm_unittest(LLVMExegesisX86Tests
   AnalysisTest.cpp
   SnippetGeneratorTest.cpp
   RegisterAliasingTest.cpp
-  TargetTest.cpp
   )
-target_link_libraries(LLVMExegesisX86Tests PRIVATE
-  LLVMExegesis
-  LLVMExegesisX86)
+target_link_libraries(LLVMExegesisX86Tests PRIVATE LLVMExegesis)

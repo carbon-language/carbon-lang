@@ -86,10 +86,6 @@ namespace exegesis {
 
 static llvm::ExitOnError ExitOnErr;
 
-#ifdef LLVM_EXEGESIS_INITIALIZE_NATIVE_TARGET
-void LLVM_EXEGESIS_INITIALIZE_NATIVE_TARGET();
-#endif
-
 static unsigned GetOpcodeOrDie(const llvm::MCInstrInfo &MCInstrInfo) {
   if (OpcodeName.empty() && (OpcodeIndex == 0))
     llvm::report_fatal_error(
@@ -124,9 +120,6 @@ void benchmarkMain() {
 
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
-#ifdef LLVM_EXEGESIS_INITIALIZE_NATIVE_TARGET
-  LLVM_EXEGESIS_INITIALIZE_NATIVE_TARGET();
-#endif
 
   // FIXME: Target-specific filter.
   X86Filter Filter;
