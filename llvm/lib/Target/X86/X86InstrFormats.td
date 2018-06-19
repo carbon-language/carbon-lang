@@ -208,6 +208,11 @@ class TAXD : TA { Prefix OpPrefix = XD; }
 class VEX    { Encoding OpEnc = EncVEX; }
 class VEX_W    { bits<2> VEX_WPrefix = 1; }
 class VEX_WIG  { bits<2> VEX_WPrefix = 2; }
+// Special version of VEX_W that can be changed to VEX.W==0 for EVEX2VEX.
+// FIXME: We should consider adding separate bits for VEX_WIG and the extra
+// part of W1X. This would probably simplify the tablegen emitters and
+// the TSFlags creation below.
+class VEX_W1X  { bits<2> VEX_WPrefix = 3; }
 class VEX_4V : VEX { bit hasVEX_4V = 1; }
 class VEX_L  { bit hasVEX_L = 1; }
 class VEX_LIG { bit ignoresVEX_L = 1; }

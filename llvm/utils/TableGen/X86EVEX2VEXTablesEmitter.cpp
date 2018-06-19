@@ -94,36 +94,6 @@ void X86EVEX2VEXTablesEmitter::printTable(const std::vector<Entry> &Table,
       {"VMOVDQU16Z256rr",     "VMOVDQUYrr",      false},
       {"VMOVDQU16Z256rr_REV", "VMOVDQUYrr_REV",  false},
 
-      {"VPERMILPDZ128mi",     "VPERMILPDmi",     true},
-      {"VPERMILPDZ128ri",     "VPERMILPDri",     true},
-      {"VPERMILPDZ128rm",     "VPERMILPDrm",     true},
-      {"VPERMILPDZ128rr",     "VPERMILPDrr",     true},
-      {"VPERMILPDZ256mi",     "VPERMILPDYmi",    false},
-      {"VPERMILPDZ256ri",     "VPERMILPDYri",    false},
-      {"VPERMILPDZ256rm",     "VPERMILPDYrm",    false},
-      {"VPERMILPDZ256rr",     "VPERMILPDYrr",    false},
-
-      {"VPBROADCASTQZ128m",   "VPBROADCASTQrm",  true},
-      {"VPBROADCASTQZ128r",   "VPBROADCASTQrr",  true},
-      {"VPBROADCASTQZ256m",   "VPBROADCASTQYrm", false},
-      {"VPBROADCASTQZ256r",   "VPBROADCASTQYrr", false},
-
-      {"VBROADCASTSDZ256m",   "VBROADCASTSDYrm", false},
-      {"VBROADCASTSDZ256r",   "VBROADCASTSDYrr", false},
-
-      {"VBROADCASTF64X2Z128rm", "VBROADCASTF128", false},
-      {"VBROADCASTI64X2Z128rm", "VBROADCASTI128", false},
-
-      {"VEXTRACTF64x2Z256mr", "VEXTRACTF128mr",  false},
-      {"VEXTRACTF64x2Z256rr", "VEXTRACTF128rr",  false},
-      {"VEXTRACTI64x2Z256mr", "VEXTRACTI128mr",  false},
-      {"VEXTRACTI64x2Z256rr", "VEXTRACTI128rr",  false},
-
-      {"VINSERTF64x2Z256rm",  "VINSERTF128rm",   false},
-      {"VINSERTF64x2Z256rr",  "VINSERTF128rr",   false},
-      {"VINSERTI64x2Z256rm",  "VINSERTI128rm",   false},
-      {"VINSERTI64x2Z256rr",  "VINSERTI128rr",   false},
-
       // These will require some custom adjustment in the conversion pass.
       {"VALIGNDZ128rri",      "VPALIGNRrri",     true},
       {"VALIGNQZ128rri",      "VPALIGNRrri",     true},
@@ -137,25 +107,6 @@ void X86EVEX2VEXTablesEmitter::printTable(const std::vector<Entry> &Table,
       {"VSHUFI32X4Z256rri",   "VPERM2I128rr",    false},
       {"VSHUFI64X2Z256rmi",   "VPERM2I128rm",    false},
       {"VSHUFI64X2Z256rri",   "VPERM2I128rr",    false},
-
-      // These can be replaced if we verify the scale part of the immediate is
-      // zero.
-      {"VRNDSCALEPDZ128rri",  "VROUNDPDr",       true},
-      {"VRNDSCALEPDZ128rmi",  "VROUNDPDm",       true},
-      {"VRNDSCALEPSZ128rri",  "VROUNDPSr",       true},
-      {"VRNDSCALEPSZ128rmi",  "VROUNDPSm",       true},
-      {"VRNDSCALEPDZ256rri",  "VROUNDPDYr",      false},
-      {"VRNDSCALEPDZ256rmi",  "VROUNDPDYm",      false},
-      {"VRNDSCALEPSZ256rri",  "VROUNDPSYr",      false},
-      {"VRNDSCALEPSZ256rmi",  "VROUNDPSYm",      false},
-      {"VRNDSCALESDZr",       "VROUNDSDr",       true},
-      {"VRNDSCALESDZm",       "VROUNDSDm",       true},
-      {"VRNDSCALESSZr",       "VROUNDSSr",       true},
-      {"VRNDSCALESSZm",       "VROUNDSSm",       true},
-      {"VRNDSCALESDZr_Int",   "VROUNDSDr_Int",   true},
-      {"VRNDSCALESDZm_Int",   "VROUNDSDm_Int",   true},
-      {"VRNDSCALESSZr_Int",   "VROUNDSSr_Int",   true},
-      {"VRNDSCALESSZm_Int",   "VROUNDSSm_Int",   true},
   };
 
   // Print the manually added entries
@@ -203,31 +154,34 @@ static inline uint64_t getValueFromBitsInit(const BitsInit *B) {
 // Function object - Operator() returns true if the given VEX instruction
 // matches the EVEX instruction of this object.
 class IsMatch {
-  const CodeGenInstruction *Inst;
+  const CodeGenInstruction *EVEXInst;
 
 public:
-  IsMatch(const CodeGenInstruction *Inst) : Inst(Inst) {}
+  IsMatch(const CodeGenInstruction *EVEXInst) : EVEXInst(EVEXInst) {}
 
-  bool operator()(const CodeGenInstruction *Inst2) {
-    Record *Rec1 = Inst->TheDef;
-    Record *Rec2 = Inst2->TheDef;
-    uint64_t Rec1WVEX =
-        getValueFromBitsInit(Rec1->getValueAsBitsInit("VEX_WPrefix"));
-    uint64_t Rec2WVEX =
-        getValueFromBitsInit(Rec2->getValueAsBitsInit("VEX_WPrefix"));
+  bool operator()(const CodeGenInstruction *VEXInst) {
+    Record *RecE = EVEXInst->TheDef;
+    Record *RecV = VEXInst->TheDef;
+    uint64_t EVEX_W =
+        getValueFromBitsInit(RecE->getValueAsBitsInit("VEX_WPrefix"));
+    uint64_t VEX_W =
+        getValueFromBitsInit(RecV->getValueAsBitsInit("VEX_WPrefix"));
 
-    if (Rec2->getValueAsDef("OpEnc")->getName().str() != "EncVEX" ||
+    if (RecV->getValueAsDef("OpEnc")->getName().str() != "EncVEX" ||
         // VEX/EVEX fields
-        Rec2->getValueAsDef("OpPrefix") != Rec1->getValueAsDef("OpPrefix") ||
-        Rec2->getValueAsDef("OpMap") != Rec1->getValueAsDef("OpMap") ||
-        Rec2->getValueAsBit("hasVEX_4V") != Rec1->getValueAsBit("hasVEX_4V") ||
-        !equalBitsInits(Rec2->getValueAsBitsInit("EVEX_LL"),
-                        Rec1->getValueAsBitsInit("EVEX_LL")) ||
-        (Rec1WVEX != 2 && Rec2WVEX != 2 && Rec1WVEX != Rec2WVEX) ||
+        RecV->getValueAsDef("OpPrefix") != RecE->getValueAsDef("OpPrefix") ||
+        RecV->getValueAsDef("OpMap") != RecE->getValueAsDef("OpMap") ||
+        RecV->getValueAsBit("hasVEX_4V") != RecE->getValueAsBit("hasVEX_4V") ||
+        !equalBitsInits(RecV->getValueAsBitsInit("EVEX_LL"),
+                        RecE->getValueAsBitsInit("EVEX_LL")) ||
+        // Match is allowed if either is VEX_WIG, or they match, or EVEX
+        // is VEX_W1X and VEX is VEX_W0.
+        (!(EVEX_W == 2 || VEX_W == 2 || EVEX_W == VEX_W ||
+           (EVEX_W == 3 && VEX_W == 0))) ||
         // Instruction's format
-        Rec2->getValueAsDef("Form") != Rec1->getValueAsDef("Form") ||
-        Rec2->getValueAsBit("isAsmParserOnly") !=
-            Rec1->getValueAsBit("isAsmParserOnly"))
+        RecV->getValueAsDef("Form") != RecE->getValueAsDef("Form") ||
+        RecV->getValueAsBit("isAsmParserOnly") !=
+            RecE->getValueAsBit("isAsmParserOnly"))
       return false;
 
     // This is needed for instructions with intrinsic version (_Int).
@@ -236,9 +190,9 @@ public:
     // Also for instructions that their EVEX version was upgraded to work with
     // k-registers. For example VPCMPEQBrm (xmm output register) and
     // VPCMPEQBZ128rm (k register output register).
-    for (unsigned i = 0, e = Inst->Operands.size(); i < e; i++) {
-      Record *OpRec1 = Inst->Operands[i].Rec;
-      Record *OpRec2 = Inst2->Operands[i].Rec;
+    for (unsigned i = 0, e = EVEXInst->Operands.size(); i < e; i++) {
+      Record *OpRec1 = EVEXInst->Operands[i].Rec;
+      Record *OpRec2 = VEXInst->Operands[i].Rec;
 
       if (OpRec1 == OpRec2)
         continue;
