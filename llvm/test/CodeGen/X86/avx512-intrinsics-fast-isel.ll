@@ -7534,11 +7534,11 @@ entry:
 define i64 @test_mm512_reduce_max_epi64(<8 x i64> %__W) {
 ; X86-LABEL: test_mm512_reduce_max_epi64:
 ; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpmaxsq %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -7547,25 +7547,25 @@ define i64 @test_mm512_reduce_max_epi64(<8 x i64> %__W) {
 ;
 ; X64-LABEL: test_mm512_reduce_max_epi64:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpmaxsq %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = icmp slt <8 x i64> %shuffle1.i, %__W
-  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle1.i
-  %shuffle3.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp sgt <8 x i64> %1, %shuffle3.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle3.i
-  %shuffle6.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp sgt <8 x i64> %3, %shuffle6.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle6.i
+  %shuffle.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %0 = icmp slt <8 x i64> %shuffle.i, %__W
+  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle.i
+  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %2 = icmp sgt <8 x i64> %1, %shuffle1.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
+  %shuffle3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %4 = icmp sgt <8 x i64> %3, %shuffle3.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle3.i
   %vecext.i = extractelement <8 x i64> %5, i32 0
   ret i64 %vecext.i
 }
@@ -7573,11 +7573,11 @@ entry:
 define i64 @test_mm512_reduce_max_epu64(<8 x i64> %__W) {
 ; X86-LABEL: test_mm512_reduce_max_epu64:
 ; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpmaxuq %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -7586,25 +7586,25 @@ define i64 @test_mm512_reduce_max_epu64(<8 x i64> %__W) {
 ;
 ; X64-LABEL: test_mm512_reduce_max_epu64:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpmaxuq %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = icmp ult <8 x i64> %shuffle1.i, %__W
-  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle1.i
-  %shuffle3.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp ugt <8 x i64> %1, %shuffle3.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle3.i
-  %shuffle6.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp ugt <8 x i64> %3, %shuffle6.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle6.i
+  %shuffle.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %0 = icmp ult <8 x i64> %shuffle.i, %__W
+  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle.i
+  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %2 = icmp ugt <8 x i64> %1, %shuffle1.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
+  %shuffle3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %4 = icmp ugt <8 x i64> %3, %shuffle3.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle3.i
   %vecext.i = extractelement <8 x i64> %5, i32 0
   ret i64 %vecext.i
 }
@@ -7620,11 +7620,11 @@ define double @test_mm512_reduce_max_pd(<8 x double> %__W) {
 ; X86-NEXT:    andl $-8, %esp
 ; X86-NEXT:    subl $8, %esp
 ; X86-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxpd %ymm1, %ymm0, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovlpd %xmm0, (%esp)
 ; X86-NEXT:    fldl (%esp)
 ; X86-NEXT:    movl %ebp, %esp
@@ -7636,33 +7636,34 @@ define double @test_mm512_reduce_max_pd(<8 x double> %__W) {
 ; X64-LABEL: test_mm512_reduce_max_pd:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vmaxpd %ymm1, %ymm0, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; X64-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <8 x double> %__W, <8 x double> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = tail call <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double> %__W, <8 x double> %shuffle1.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle3.i = shufflevector <8 x double> %0, <8 x double> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = tail call <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double> %0, <8 x double> %shuffle3.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle6.i = shufflevector <8 x double> %1, <8 x double> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double> %1, <8 x double> %shuffle6.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %vecext.i = extractelement <8 x double> %2, i32 0
+  %extract.i = shufflevector <8 x double> %__W, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract2.i = shufflevector <8 x double> %__W, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %0 = tail call <4 x double> @llvm.x86.avx.max.pd.256(<4 x double> %extract.i, <4 x double> %extract2.i)
+  %extract4.i = shufflevector <4 x double> %0, <4 x double> undef, <2 x i32> <i32 0, i32 1>
+  %extract5.i = shufflevector <4 x double> %0, <4 x double> undef, <2 x i32> <i32 2, i32 3>
+  %1 = tail call <2 x double> @llvm.x86.sse2.max.pd(<2 x double> %extract4.i, <2 x double> %extract5.i)
+  %shuffle.i = shufflevector <2 x double> %1, <2 x double> undef, <2 x i32> <i32 1, i32 0>
+  %2 = tail call <2 x double> @llvm.x86.sse2.max.pd(<2 x double> %1, <2 x double> %shuffle.i)
+  %vecext.i = extractelement <2 x double> %2, i32 0
   ret double %vecext.i
 }
 
 define i64 @test_mm512_reduce_min_epi64(<8 x i64> %__W) {
 ; X86-LABEL: test_mm512_reduce_min_epi64:
 ; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpminsq %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -7671,25 +7672,25 @@ define i64 @test_mm512_reduce_min_epi64(<8 x i64> %__W) {
 ;
 ; X64-LABEL: test_mm512_reduce_min_epi64:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpminsq %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = icmp sgt <8 x i64> %shuffle1.i, %__W
-  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle1.i
-  %shuffle3.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp slt <8 x i64> %1, %shuffle3.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle3.i
-  %shuffle6.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp slt <8 x i64> %3, %shuffle6.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle6.i
+  %shuffle.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %0 = icmp sgt <8 x i64> %shuffle.i, %__W
+  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle.i
+  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %2 = icmp slt <8 x i64> %1, %shuffle1.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
+  %shuffle3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %4 = icmp slt <8 x i64> %3, %shuffle3.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle3.i
   %vecext.i = extractelement <8 x i64> %5, i32 0
   ret i64 %vecext.i
 }
@@ -7697,11 +7698,11 @@ entry:
 define i64 @test_mm512_reduce_min_epu64(<8 x i64> %__W) {
 ; X86-LABEL: test_mm512_reduce_min_epu64:
 ; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpminuq %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -7710,25 +7711,25 @@ define i64 @test_mm512_reduce_min_epu64(<8 x i64> %__W) {
 ;
 ; X64-LABEL: test_mm512_reduce_min_epu64:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpminuq %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = icmp ugt <8 x i64> %shuffle1.i, %__W
-  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle1.i
-  %shuffle3.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp ult <8 x i64> %1, %shuffle3.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle3.i
-  %shuffle6.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp ult <8 x i64> %3, %shuffle6.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle6.i
+  %shuffle.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %0 = icmp ugt <8 x i64> %shuffle.i, %__W
+  %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> %shuffle.i
+  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %2 = icmp ult <8 x i64> %1, %shuffle1.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
+  %shuffle3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %4 = icmp ult <8 x i64> %3, %shuffle3.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle3.i
   %vecext.i = extractelement <8 x i64> %5, i32 0
   ret i64 %vecext.i
 }
@@ -7744,11 +7745,11 @@ define double @test_mm512_reduce_min_pd(<8 x double> %__W) {
 ; X86-NEXT:    andl $-8, %esp
 ; X86-NEXT:    subl $8, %esp
 ; X86-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminpd %ymm1, %ymm0, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovlpd %xmm0, (%esp)
 ; X86-NEXT:    fldl (%esp)
 ; X86-NEXT:    movl %ebp, %esp
@@ -7760,22 +7761,23 @@ define double @test_mm512_reduce_min_pd(<8 x double> %__W) {
 ; X64-LABEL: test_mm512_reduce_min_pd:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vminpd %ymm1, %ymm0, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vminpd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; X64-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <8 x double> %__W, <8 x double> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = tail call <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double> %__W, <8 x double> %shuffle1.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle3.i = shufflevector <8 x double> %0, <8 x double> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = tail call <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double> %0, <8 x double> %shuffle3.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle6.i = shufflevector <8 x double> %1, <8 x double> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double> %1, <8 x double> %shuffle6.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %vecext.i = extractelement <8 x double> %2, i32 0
+  %extract.i = shufflevector <8 x double> %__W, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract2.i = shufflevector <8 x double> %__W, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %0 = tail call <4 x double> @llvm.x86.avx.min.pd.256(<4 x double> %extract.i, <4 x double> %extract2.i)
+  %extract4.i = shufflevector <4 x double> %0, <4 x double> undef, <2 x i32> <i32 0, i32 1>
+  %extract5.i = shufflevector <4 x double> %0, <4 x double> undef, <2 x i32> <i32 2, i32 3>
+  %1 = tail call <2 x double> @llvm.x86.sse2.min.pd(<2 x double> %extract4.i, <2 x double> %extract5.i)
+  %shuffle.i = shufflevector <2 x double> %1, <2 x double> undef, <2 x i32> <i32 1, i32 0>
+  %2 = tail call <2 x double> @llvm.x86.sse2.min.pd(<2 x double> %1, <2 x double> %shuffle.i)
+  %vecext.i = extractelement <2 x double> %2, i32 0
   ret double %vecext.i
 }
 
@@ -7786,11 +7788,11 @@ define i64 @test_mm512_mask_reduce_max_epi64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    kmovw %eax, %k1
 ; X86-NEXT:    vmovdqa64 {{.*#+}} zmm1 = [0,2147483648,0,2147483648,0,2147483648,0,2147483648,0,2147483648,0,2147483648,0,2147483648,0,2147483648]
 ; X86-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X86-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm1[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpmaxsq %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -7802,11 +7804,11 @@ define i64 @test_mm512_mask_reduce_max_epi64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X64-NEXT:    kmovw %edi, %k1
 ; X64-NEXT:    vpbroadcastq {{.*#+}} zmm1 = [9223372036854775808,9223372036854775808,9223372036854775808,9223372036854775808,9223372036854775808,9223372036854775808,9223372036854775808,9223372036854775808]
 ; X64-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X64-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm1[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpmaxsq %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpmaxsq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
@@ -7814,15 +7816,15 @@ define i64 @test_mm512_mask_reduce_max_epi64(i8 zeroext %__M, <8 x i64> %__W) {
 entry:
   %0 = bitcast i8 %__M to <8 x i1>
   %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> <i64 -9223372036854775808, i64 -9223372036854775808, i64 -9223372036854775808, i64 -9223372036854775808, i64 -9223372036854775808, i64 -9223372036854775808, i64 -9223372036854775808, i64 -9223372036854775808>
-  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp sgt <8 x i64> %1, %shuffle1.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
-  %shuffle4.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp sgt <8 x i64> %3, %shuffle4.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle4.i
-  %shuffle7.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %6 = icmp sgt <8 x i64> %5, %shuffle7.i
-  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle7.i
+  %shuffle.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %2 = icmp sgt <8 x i64> %1, %shuffle.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle.i
+  %shuffle3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %4 = icmp sgt <8 x i64> %3, %shuffle3.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle3.i
+  %shuffle5.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %6 = icmp sgt <8 x i64> %5, %shuffle5.i
+  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle5.i
   %vecext.i = extractelement <8 x i64> %7, i32 0
   ret i64 %vecext.i
 }
@@ -7833,11 +7835,11 @@ define i64 @test_mm512_mask_reduce_max_epu64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
 ; X86-NEXT:    kmovw %eax, %k1
 ; X86-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -7848,11 +7850,11 @@ define i64 @test_mm512_mask_reduce_max_epu64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    kmovw %edi, %k1
 ; X64-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm1 = zmm0[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpmaxuq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
@@ -7860,15 +7862,15 @@ define i64 @test_mm512_mask_reduce_max_epu64(i8 zeroext %__M, <8 x i64> %__W) {
 entry:
   %0 = bitcast i8 %__M to <8 x i1>
   %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> zeroinitializer
-  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp ugt <8 x i64> %1, %shuffle1.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
-  %shuffle4.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp ugt <8 x i64> %3, %shuffle4.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle4.i
-  %shuffle7.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %6 = icmp ugt <8 x i64> %5, %shuffle7.i
-  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle7.i
+  %shuffle.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %2 = icmp ugt <8 x i64> %1, %shuffle.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle.i
+  %shuffle2.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %4 = icmp ugt <8 x i64> %3, %shuffle2.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle2.i
+  %shuffle4.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %6 = icmp ugt <8 x i64> %5, %shuffle4.i
+  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle4.i
   %vecext.i = extractelement <8 x i64> %7, i32 0
   ret i64 %vecext.i
 }
@@ -7888,11 +7890,11 @@ define i64 @test_mm512_mask_reduce_max_pd(i8 zeroext %__M, <8 x double> %__W) {
 ; X86-NEXT:    vbroadcastsd {{.*#+}} zmm1 = [-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf]
 ; X86-NEXT:    vmovapd %zmm0, %zmm1 {%k1}
 ; X86-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X86-NEXT:    vmaxpd %zmm0, %zmm1, %zmm0
+; X86-NEXT:    vmaxpd %ymm0, %ymm1, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovlpd %xmm0, {{[0-9]+}}(%esp)
 ; X86-NEXT:    fldl {{[0-9]+}}(%esp)
 ; X86-NEXT:    fisttpll (%esp)
@@ -7910,24 +7912,26 @@ define i64 @test_mm512_mask_reduce_max_pd(i8 zeroext %__M, <8 x double> %__W) {
 ; X64-NEXT:    vbroadcastsd {{.*#+}} zmm1 = [-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf]
 ; X64-NEXT:    vmovapd %zmm0, %zmm1 {%k1}
 ; X64-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X64-NEXT:    vmaxpd %zmm0, %zmm1, %zmm0
+; X64-NEXT:    vmaxpd %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vmaxpd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vmaxpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vcvttsd2si %xmm0, %rax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast i8 %__M to <8 x i1>
   %1 = select <8 x i1> %0, <8 x double> %__W, <8 x double> <double 0xFFF0000000000000, double 0xFFF0000000000000, double 0xFFF0000000000000, double 0xFFF0000000000000, double 0xFFF0000000000000, double 0xFFF0000000000000, double 0xFFF0000000000000, double 0xFFF0000000000000>
-  %shuffle1.i = shufflevector <8 x double> %1, <8 x double> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double> %1, <8 x double> %shuffle1.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle4.i = shufflevector <8 x double> %2, <8 x double> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = tail call <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double> %2, <8 x double> %shuffle4.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle7.i = shufflevector <8 x double> %3, <8 x double> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = tail call <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double> %3, <8 x double> %shuffle7.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %vecext.i = extractelement <8 x double> %4, i32 0
+  %extract.i = shufflevector <8 x double> %1, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract4.i = shufflevector <8 x double> %1, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %2 = tail call <4 x double> @llvm.x86.avx.max.pd.256(<4 x double> %extract.i, <4 x double> %extract4.i) #3
+  %extract6.i = shufflevector <4 x double> %2, <4 x double> undef, <2 x i32> <i32 0, i32 1>
+  %extract7.i = shufflevector <4 x double> %2, <4 x double> undef, <2 x i32> <i32 2, i32 3>
+  %3 = tail call <2 x double> @llvm.x86.sse2.max.pd(<2 x double> %extract6.i, <2 x double> %extract7.i) #3
+  %shuffle.i = shufflevector <2 x double> %3, <2 x double> undef, <2 x i32> <i32 1, i32 0>
+  %4 = tail call <2 x double> @llvm.x86.sse2.max.pd(<2 x double> %3, <2 x double> %shuffle.i) #3
+  %vecext.i = extractelement <2 x double> %4, i32 0
   %conv = fptosi double %vecext.i to i64
   ret i64 %conv
 }
@@ -7939,11 +7943,11 @@ define i64 @test_mm512_mask_reduce_min_epi64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    kmovw %eax, %k1
 ; X86-NEXT:    vmovdqa64 {{.*#+}} zmm1 = [4294967295,2147483647,4294967295,2147483647,4294967295,2147483647,4294967295,2147483647,4294967295,2147483647,4294967295,2147483647,4294967295,2147483647,4294967295,2147483647]
 ; X86-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X86-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm1[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpminsq %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -7955,11 +7959,11 @@ define i64 @test_mm512_mask_reduce_min_epi64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X64-NEXT:    kmovw %edi, %k1
 ; X64-NEXT:    vpbroadcastq {{.*#+}} zmm1 = [9223372036854775807,9223372036854775807,9223372036854775807,9223372036854775807,9223372036854775807,9223372036854775807,9223372036854775807,9223372036854775807]
 ; X64-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X64-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm1[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpminsq %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpminsq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
@@ -7967,15 +7971,15 @@ define i64 @test_mm512_mask_reduce_min_epi64(i8 zeroext %__M, <8 x i64> %__W) {
 entry:
   %0 = bitcast i8 %__M to <8 x i1>
   %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> <i64 9223372036854775807, i64 9223372036854775807, i64 9223372036854775807, i64 9223372036854775807, i64 9223372036854775807, i64 9223372036854775807, i64 9223372036854775807, i64 9223372036854775807>
-  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp slt <8 x i64> %1, %shuffle1.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
-  %shuffle4.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp slt <8 x i64> %3, %shuffle4.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle4.i
-  %shuffle7.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %6 = icmp slt <8 x i64> %5, %shuffle7.i
-  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle7.i
+  %shuffle.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %2 = icmp slt <8 x i64> %1, %shuffle.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle.i
+  %shuffle3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %4 = icmp slt <8 x i64> %3, %shuffle3.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle3.i
+  %shuffle5.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %6 = icmp slt <8 x i64> %5, %shuffle5.i
+  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle5.i
   %vecext.i = extractelement <8 x i64> %7, i32 0
   ret i64 %vecext.i
 }
@@ -7987,11 +7991,11 @@ define i64 @test_mm512_mask_reduce_min_epu64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    kmovw %eax, %k1
 ; X86-NEXT:    vpternlogd $255, %zmm1, %zmm1, %zmm1
 ; X86-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X86-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
+; X86-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm1[4,5,6,7,0,1,2,3]
 ; X86-NEXT:    vpminuq %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X86-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X86-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X86-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X86-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vpextrd $1, %xmm0, %edx
@@ -8003,11 +8007,11 @@ define i64 @test_mm512_mask_reduce_min_epu64(i8 zeroext %__M, <8 x i64> %__W) {
 ; X64-NEXT:    kmovw %edi, %k1
 ; X64-NEXT:    vpternlogd $255, %zmm1, %zmm1, %zmm1
 ; X64-NEXT:    vmovdqa64 %zmm0, %zmm1 {%k1}
-; X64-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
+; X64-NEXT:    vshufi64x2 {{.*#+}} zmm0 = zmm1[4,5,6,7,0,1,2,3]
 ; X64-NEXT:    vpminuq %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; X64-NEXT:    vpermq {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5]
 ; X64-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; X64-NEXT:    vpshufd {{.*#+}} zmm1 = zmm0[2,3,0,1,6,7,4,5,10,11,8,9,14,15,12,13]
 ; X64-NEXT:    vpminuq %zmm1, %zmm0, %zmm0
 ; X64-NEXT:    vmovq %xmm0, %rax
 ; X64-NEXT:    vzeroupper
@@ -8015,15 +8019,15 @@ define i64 @test_mm512_mask_reduce_min_epu64(i8 zeroext %__M, <8 x i64> %__W) {
 entry:
   %0 = bitcast i8 %__M to <8 x i1>
   %1 = select <8 x i1> %0, <8 x i64> %__W, <8 x i64> <i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1, i64 -1>
-  %shuffle1.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = icmp ult <8 x i64> %1, %shuffle1.i
-  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle1.i
-  %shuffle4.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = icmp ult <8 x i64> %3, %shuffle4.i
-  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle4.i
-  %shuffle7.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %6 = icmp ult <8 x i64> %5, %shuffle7.i
-  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle7.i
+  %shuffle.i = shufflevector <8 x i64> %1, <8 x i64> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 0, i32 1, i32 2, i32 3>
+  %2 = icmp ult <8 x i64> %1, %shuffle.i
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %shuffle.i
+  %shuffle3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <8 x i32> <i32 2, i32 3, i32 0, i32 1, i32 6, i32 7, i32 4, i32 5>
+  %4 = icmp ult <8 x i64> %3, %shuffle3.i
+  %5 = select <8 x i1> %4, <8 x i64> %3, <8 x i64> %shuffle3.i
+  %shuffle5.i = shufflevector <8 x i64> %5, <8 x i64> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %6 = icmp ult <8 x i64> %5, %shuffle5.i
+  %7 = select <8 x i1> %6, <8 x i64> %5, <8 x i64> %shuffle5.i
   %vecext.i = extractelement <8 x i64> %7, i32 0
   ret i64 %vecext.i
 }
@@ -8043,11 +8047,11 @@ define double @test_mm512_mask_reduce_min_pd(i8 zeroext %__M, <8 x double> %__W)
 ; X86-NEXT:    vbroadcastsd {{.*#+}} zmm1 = [+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf]
 ; X86-NEXT:    vmovapd %zmm0, %zmm1 {%k1}
 ; X86-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X86-NEXT:    vminpd %zmm0, %zmm1, %zmm0
+; X86-NEXT:    vminpd %ymm0, %ymm1, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovlpd %xmm0, (%esp)
 ; X86-NEXT:    fldl (%esp)
 ; X86-NEXT:    movl %ebp, %esp
@@ -8062,123 +8066,102 @@ define double @test_mm512_mask_reduce_min_pd(i8 zeroext %__M, <8 x double> %__W)
 ; X64-NEXT:    vbroadcastsd {{.*#+}} zmm1 = [+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf]
 ; X64-NEXT:    vmovapd %zmm0, %zmm1 {%k1}
 ; X64-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X64-NEXT:    vminpd %zmm0, %zmm1, %zmm0
+; X64-NEXT:    vminpd %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vminpd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vminpd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; X64-NEXT:    vminpd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast i8 %__M to <8 x i1>
   %1 = select <8 x i1> %0, <8 x double> %__W, <8 x double> <double 0x7FF0000000000000, double 0x7FF0000000000000, double 0x7FF0000000000000, double 0x7FF0000000000000, double 0x7FF0000000000000, double 0x7FF0000000000000, double 0x7FF0000000000000, double 0x7FF0000000000000>
-  %shuffle1.i = shufflevector <8 x double> %1, <8 x double> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double> %1, <8 x double> %shuffle1.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle4.i = shufflevector <8 x double> %2, <8 x double> undef, <8 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = tail call <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double> %2, <8 x double> %shuffle4.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %shuffle7.i = shufflevector <8 x double> %3, <8 x double> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = tail call <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double> %3, <8 x double> %shuffle7.i, <8 x double> zeroinitializer, i8 -1, i32 4) #3
-  %vecext.i = extractelement <8 x double> %4, i32 0
+  %extract.i = shufflevector <8 x double> %1, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract4.i = shufflevector <8 x double> %1, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %2 = tail call <4 x double> @llvm.x86.avx.min.pd.256(<4 x double> %extract.i, <4 x double> %extract4.i)
+  %extract6.i = shufflevector <4 x double> %2, <4 x double> undef, <2 x i32> <i32 0, i32 1>
+  %extract7.i = shufflevector <4 x double> %2, <4 x double> undef, <2 x i32> <i32 2, i32 3>
+  %3 = tail call <2 x double> @llvm.x86.sse2.min.pd(<2 x double> %extract6.i, <2 x double> %extract7.i)
+  %shuffle.i = shufflevector <2 x double> %3, <2 x double> undef, <2 x i32> <i32 1, i32 0>
+  %4 = tail call <2 x double> @llvm.x86.sse2.min.pd(<2 x double> %3, <2 x double> %shuffle.i)
+  %vecext.i = extractelement <2 x double> %4, i32 0
   ret double %vecext.i
 }
 
 define i32 @test_mm512_reduce_max_epi32(<8 x i64> %__W) {
-; X86-LABEL: test_mm512_reduce_max_epi32:
-; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vpmaxsd %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovd %xmm0, %eax
-; X86-NEXT:    vzeroupper
-; X86-NEXT:    retl
-;
-; X64-LABEL: test_mm512_reduce_max_epi32:
-; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vpmaxsd %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
-; X64-NEXT:    vzeroupper
-; X64-NEXT:    retq
+; CHECK-LABEL: test_mm512_reduce_max_epi32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; CHECK-NEXT:    vpmaxsd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; CHECK-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; CHECK-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; CHECK-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vmovd %xmm0, %eax
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    ret{{[l|q]}}
 entry:
-  %0 = bitcast <8 x i64> %__W to <16 x i32>
-  %shuffle1.i = shufflevector <16 x i32> %0, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = icmp slt <16 x i32> %shuffle1.i, %0
-  %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> %shuffle1.i
-  %shuffle3.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp sgt <16 x i32> %2, %shuffle3.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle3.i
-  %shuffle6.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp sgt <16 x i32> %4, %shuffle6.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle6.i
-  %shuffle9.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp sgt <16 x i32> %6, %shuffle9.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle9.i
-  %9 = bitcast <16 x i32> %8 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %9, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %extract.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract2.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %0 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %1 = bitcast <4 x i64> %extract2.i to <8 x i32>
+  %2 = icmp sgt <8 x i32> %0, %1
+  %3 = select <8 x i1> %2, <8 x i32> %0, <8 x i32> %1
+  %4 = bitcast <8 x i32> %3 to <4 x i64>
+  %extract4.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract5.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %5 = bitcast <2 x i64> %extract4.i to <4 x i32>
+  %6 = bitcast <2 x i64> %extract5.i to <4 x i32>
+  %7 = icmp sgt <4 x i32> %5, %6
+  %8 = select <4 x i1> %7, <4 x i32> %5, <4 x i32> %6
+  %shuffle.i = shufflevector <4 x i32> %8, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %9 = icmp sgt <4 x i32> %8, %shuffle.i
+  %10 = select <4 x i1> %9, <4 x i32> %8, <4 x i32> %shuffle.i
+  %shuffle8.i = shufflevector <4 x i32> %10, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %11 = icmp sgt <4 x i32> %10, %shuffle8.i
+  %12 = select <4 x i1> %11, <4 x i32> %10, <4 x i32> %shuffle8.i
+  %vecext.i = extractelement <4 x i32> %12, i32 0
+  ret i32 %vecext.i
 }
 
 define i32 @test_mm512_reduce_max_epu32(<8 x i64> %__W) {
-; X86-LABEL: test_mm512_reduce_max_epu32:
-; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vpmaxud %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovd %xmm0, %eax
-; X86-NEXT:    vzeroupper
-; X86-NEXT:    retl
-;
-; X64-LABEL: test_mm512_reduce_max_epu32:
-; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vpmaxud %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
-; X64-NEXT:    vzeroupper
-; X64-NEXT:    retq
+; CHECK-LABEL: test_mm512_reduce_max_epu32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; CHECK-NEXT:    vpmaxud %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; CHECK-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; CHECK-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; CHECK-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vmovd %xmm0, %eax
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    ret{{[l|q]}}
 entry:
-  %0 = bitcast <8 x i64> %__W to <16 x i32>
-  %shuffle1.i = shufflevector <16 x i32> %0, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = icmp ult <16 x i32> %shuffle1.i, %0
-  %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> %shuffle1.i
-  %shuffle3.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp ugt <16 x i32> %2, %shuffle3.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle3.i
-  %shuffle6.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp ugt <16 x i32> %4, %shuffle6.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle6.i
-  %shuffle9.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp ugt <16 x i32> %6, %shuffle9.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle9.i
-  %9 = bitcast <16 x i32> %8 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %9, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %extract.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract2.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %0 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %1 = bitcast <4 x i64> %extract2.i to <8 x i32>
+  %2 = icmp ugt <8 x i32> %0, %1
+  %3 = select <8 x i1> %2, <8 x i32> %0, <8 x i32> %1
+  %4 = bitcast <8 x i32> %3 to <4 x i64>
+  %extract4.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract5.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %5 = bitcast <2 x i64> %extract4.i to <4 x i32>
+  %6 = bitcast <2 x i64> %extract5.i to <4 x i32>
+  %7 = icmp ugt <4 x i32> %5, %6
+  %8 = select <4 x i1> %7, <4 x i32> %5, <4 x i32> %6
+  %shuffle.i = shufflevector <4 x i32> %8, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %9 = icmp ugt <4 x i32> %8, %shuffle.i
+  %10 = select <4 x i1> %9, <4 x i32> %8, <4 x i32> %shuffle.i
+  %shuffle8.i = shufflevector <4 x i32> %10, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %11 = icmp ugt <4 x i32> %10, %shuffle8.i
+  %12 = select <4 x i1> %11, <4 x i32> %10, <4 x i32> %shuffle8.i
+  %vecext.i = extractelement <4 x i32> %12, i32 0
+  ret i32 %vecext.i
 }
 
 define float @test_mm512_reduce_max_ps(<16 x float> %__W) {
@@ -8187,13 +8170,13 @@ define float @test_mm512_reduce_max_ps(<16 x float> %__W) {
 ; X86-NEXT:    pushl %eax
 ; X86-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxps %ymm1, %ymm0, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X86-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovss %xmm0, (%esp)
 ; X86-NEXT:    flds (%esp)
 ; X86-NEXT:    popl %eax
@@ -8204,125 +8187,107 @@ define float @test_mm512_reduce_max_ps(<16 x float> %__W) {
 ; X64-LABEL: test_mm512_reduce_max_ps:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vmaxps %ymm1, %ymm0, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X64-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; X64-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <16 x float> %__W, <16 x float> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %__W, <16 x float> %shuffle1.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle3.i = shufflevector <16 x float> %0, <16 x float> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %0, <16 x float> %shuffle3.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle6.i = shufflevector <16 x float> %1, <16 x float> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %1, <16 x float> %shuffle6.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle9.i = shufflevector <16 x float> %2, <16 x float> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %2, <16 x float> %shuffle9.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %vecext.i = extractelement <16 x float> %3, i32 0
+  %0 = bitcast <16 x float> %__W to <8 x double>
+  %extract.i = shufflevector <8 x double> %0, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %1 = bitcast <4 x double> %extract.i to <8 x float>
+  %extract2.i = shufflevector <8 x double> %0, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %2 = bitcast <4 x double> %extract2.i to <8 x float>
+  %3 = tail call <8 x float> @llvm.x86.avx.max.ps.256(<8 x float> %1, <8 x float> %2)
+  %extract4.i = shufflevector <8 x float> %3, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract5.i = shufflevector <8 x float> %3, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = tail call <4 x float> @llvm.x86.sse.max.ps(<4 x float> %extract4.i, <4 x float> %extract5.i)
+  %shuffle.i = shufflevector <4 x float> %4, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %5 = tail call <4 x float> @llvm.x86.sse.max.ps(<4 x float> %4, <4 x float> %shuffle.i)
+  %shuffle8.i = shufflevector <4 x float> %5, <4 x float> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %6 = tail call <4 x float> @llvm.x86.sse.max.ps(<4 x float> %5, <4 x float> %shuffle8.i)
+  %vecext.i = extractelement <4 x float> %6, i32 0
   ret float %vecext.i
 }
 
 define i32 @test_mm512_reduce_min_epi32(<8 x i64> %__W) {
-; X86-LABEL: test_mm512_reduce_min_epi32:
-; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vpminsd %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovd %xmm0, %eax
-; X86-NEXT:    vzeroupper
-; X86-NEXT:    retl
-;
-; X64-LABEL: test_mm512_reduce_min_epi32:
-; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vpminsd %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
-; X64-NEXT:    vzeroupper
-; X64-NEXT:    retq
+; CHECK-LABEL: test_mm512_reduce_min_epi32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; CHECK-NEXT:    vpminsd %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; CHECK-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; CHECK-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; CHECK-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vmovd %xmm0, %eax
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    ret{{[l|q]}}
 entry:
-  %0 = bitcast <8 x i64> %__W to <16 x i32>
-  %shuffle1.i = shufflevector <16 x i32> %0, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = icmp sgt <16 x i32> %shuffle1.i, %0
-  %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> %shuffle1.i
-  %shuffle3.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp slt <16 x i32> %2, %shuffle3.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle3.i
-  %shuffle6.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp slt <16 x i32> %4, %shuffle6.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle6.i
-  %shuffle9.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp slt <16 x i32> %6, %shuffle9.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle9.i
-  %9 = bitcast <16 x i32> %8 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %9, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %extract.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract2.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %0 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %1 = bitcast <4 x i64> %extract2.i to <8 x i32>
+  %2 = icmp slt <8 x i32> %0, %1
+  %3 = select <8 x i1> %2, <8 x i32> %0, <8 x i32> %1
+  %4 = bitcast <8 x i32> %3 to <4 x i64>
+  %extract4.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract5.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %5 = bitcast <2 x i64> %extract4.i to <4 x i32>
+  %6 = bitcast <2 x i64> %extract5.i to <4 x i32>
+  %7 = icmp slt <4 x i32> %5, %6
+  %8 = select <4 x i1> %7, <4 x i32> %5, <4 x i32> %6
+  %shuffle.i = shufflevector <4 x i32> %8, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %9 = icmp slt <4 x i32> %8, %shuffle.i
+  %10 = select <4 x i1> %9, <4 x i32> %8, <4 x i32> %shuffle.i
+  %shuffle8.i = shufflevector <4 x i32> %10, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %11 = icmp slt <4 x i32> %10, %shuffle8.i
+  %12 = select <4 x i1> %11, <4 x i32> %10, <4 x i32> %shuffle8.i
+  %vecext.i = extractelement <4 x i32> %12, i32 0
+  ret i32 %vecext.i
 }
 
 define i32 @test_mm512_reduce_min_epu32(<8 x i64> %__W) {
-; X86-LABEL: test_mm512_reduce_min_epu32:
-; X86:       # %bb.0: # %entry
-; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vpminud %zmm0, %zmm1, %zmm0
-; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovd %xmm0, %eax
-; X86-NEXT:    vzeroupper
-; X86-NEXT:    retl
-;
-; X64-LABEL: test_mm512_reduce_min_epu32:
-; X64:       # %bb.0: # %entry
-; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vpminud %zmm0, %zmm1, %zmm0
-; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
-; X64-NEXT:    vzeroupper
-; X64-NEXT:    retq
+; CHECK-LABEL: test_mm512_reduce_min_epu32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
+; CHECK-NEXT:    vpminud %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; CHECK-NEXT:    vpminud %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; CHECK-NEXT:    vpminud %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; CHECK-NEXT:    vpminud %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    vmovd %xmm0, %eax
+; CHECK-NEXT:    vzeroupper
+; CHECK-NEXT:    ret{{[l|q]}}
 entry:
-  %0 = bitcast <8 x i64> %__W to <16 x i32>
-  %shuffle1.i = shufflevector <16 x i32> %0, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = icmp ugt <16 x i32> %shuffle1.i, %0
-  %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> %shuffle1.i
-  %shuffle3.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp ult <16 x i32> %2, %shuffle3.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle3.i
-  %shuffle6.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp ult <16 x i32> %4, %shuffle6.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle6.i
-  %shuffle9.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp ult <16 x i32> %6, %shuffle9.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle9.i
-  %9 = bitcast <16 x i32> %8 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %9, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %extract.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract2.i = shufflevector <8 x i64> %__W, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %0 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %1 = bitcast <4 x i64> %extract2.i to <8 x i32>
+  %2 = icmp ult <8 x i32> %0, %1
+  %3 = select <8 x i1> %2, <8 x i32> %0, <8 x i32> %1
+  %4 = bitcast <8 x i32> %3 to <4 x i64>
+  %extract4.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract5.i = shufflevector <4 x i64> %4, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %5 = bitcast <2 x i64> %extract4.i to <4 x i32>
+  %6 = bitcast <2 x i64> %extract5.i to <4 x i32>
+  %7 = icmp ult <4 x i32> %5, %6
+  %8 = select <4 x i1> %7, <4 x i32> %5, <4 x i32> %6
+  %shuffle.i = shufflevector <4 x i32> %8, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %9 = icmp ult <4 x i32> %8, %shuffle.i
+  %10 = select <4 x i1> %9, <4 x i32> %8, <4 x i32> %shuffle.i
+  %shuffle8.i = shufflevector <4 x i32> %10, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %11 = icmp ult <4 x i32> %10, %shuffle8.i
+  %12 = select <4 x i1> %11, <4 x i32> %10, <4 x i32> %shuffle8.i
+  %vecext.i = extractelement <4 x i32> %12, i32 0
+  ret i32 %vecext.i
 }
 
 define float @test_mm512_reduce_min_ps(<16 x float> %__W) {
@@ -8331,13 +8296,13 @@ define float @test_mm512_reduce_min_ps(<16 x float> %__W) {
 ; X86-NEXT:    pushl %eax
 ; X86-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminps %ymm1, %ymm0, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vminps %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X86-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminps %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovss %xmm0, (%esp)
 ; X86-NEXT:    flds (%esp)
 ; X86-NEXT:    popl %eax
@@ -8348,26 +8313,30 @@ define float @test_mm512_reduce_min_ps(<16 x float> %__W) {
 ; X64-LABEL: test_mm512_reduce_min_ps:
 ; X64:       # %bb.0: # %entry
 ; X64-NEXT:    vextractf64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vminps %ymm1, %ymm0, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vminps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X64-NEXT:    vminps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; X64-NEXT:    vminps %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
-  %shuffle1.i = shufflevector <16 x float> %__W, <16 x float> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %0 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %__W, <16 x float> %shuffle1.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle3.i = shufflevector <16 x float> %0, <16 x float> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %1 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %0, <16 x float> %shuffle3.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle6.i = shufflevector <16 x float> %1, <16 x float> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %1, <16 x float> %shuffle6.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle9.i = shufflevector <16 x float> %2, <16 x float> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %2, <16 x float> %shuffle9.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %vecext.i = extractelement <16 x float> %3, i32 0
+  %0 = bitcast <16 x float> %__W to <8 x double>
+  %extract.i = shufflevector <8 x double> %0, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %1 = bitcast <4 x double> %extract.i to <8 x float>
+  %extract2.i = shufflevector <8 x double> %0, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %2 = bitcast <4 x double> %extract2.i to <8 x float>
+  %3 = tail call <8 x float> @llvm.x86.avx.min.ps.256(<8 x float> %1, <8 x float> %2)
+  %extract4.i = shufflevector <8 x float> %3, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract5.i = shufflevector <8 x float> %3, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = tail call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %extract4.i, <4 x float> %extract5.i)
+  %shuffle.i = shufflevector <4 x float> %4, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %5 = tail call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %4, <4 x float> %shuffle.i)
+  %shuffle8.i = shufflevector <4 x float> %5, <4 x float> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %6 = tail call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %5, <4 x float> %shuffle8.i)
+  %vecext.i = extractelement <4 x float> %6, i32 0
   ret float %vecext.i
 }
 
@@ -8378,13 +8347,13 @@ define i32 @test_mm512_mask_reduce_max_epi32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    vpbroadcastd {{.*#+}} zmm1 = [2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648]
 ; X86-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; X86-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
-; X86-NEXT:    vpmaxsd %zmm0, %zmm1, %zmm0
+; X86-NEXT:    vpmaxsd %ymm0, %ymm1, %ymm0
 ; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vzeroupper
 ; X86-NEXT:    retl
@@ -8395,37 +8364,42 @@ define i32 @test_mm512_mask_reduce_max_epi32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X64-NEXT:    vpbroadcastd {{.*#+}} zmm1 = [2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648,2147483648]
 ; X64-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; X64-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
-; X64-NEXT:    vpmaxsd %zmm0, %zmm1, %zmm0
+; X64-NEXT:    vpmaxsd %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpmaxsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vpmaxsd %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vmovd %xmm0, %eax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast <8 x i64> %__W to <16 x i32>
   %1 = bitcast i16 %__M to <16 x i1>
   %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> <i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648>
-  %shuffle1.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp sgt <16 x i32> %2, %shuffle1.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle1.i
-  %shuffle4.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp sgt <16 x i32> %4, %shuffle4.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle4.i
-  %shuffle7.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp sgt <16 x i32> %6, %shuffle7.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle7.i
-  %shuffle10.i = shufflevector <16 x i32> %8, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %9 = icmp sgt <16 x i32> %8, %shuffle10.i
-  %10 = select <16 x i1> %9, <16 x i32> %8, <16 x i32> %shuffle10.i
-  %11 = bitcast <16 x i32> %10 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %11, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %3 = bitcast <16 x i32> %2 to <8 x i64>
+  %extract.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract4.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %5 = bitcast <4 x i64> %extract4.i to <8 x i32>
+  %6 = icmp sgt <8 x i32> %4, %5
+  %7 = select <8 x i1> %6, <8 x i32> %4, <8 x i32> %5
+  %8 = bitcast <8 x i32> %7 to <4 x i64>
+  %extract6.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract7.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %9 = bitcast <2 x i64> %extract6.i to <4 x i32>
+  %10 = bitcast <2 x i64> %extract7.i to <4 x i32>
+  %11 = icmp sgt <4 x i32> %9, %10
+  %12 = select <4 x i1> %11, <4 x i32> %9, <4 x i32> %10
+  %shuffle.i = shufflevector <4 x i32> %12, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %13 = icmp sgt <4 x i32> %12, %shuffle.i
+  %14 = select <4 x i1> %13, <4 x i32> %12, <4 x i32> %shuffle.i
+  %shuffle10.i = shufflevector <4 x i32> %14, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %15 = icmp sgt <4 x i32> %14, %shuffle10.i
+  %16 = select <4 x i1> %15, <4 x i32> %14, <4 x i32> %shuffle10.i
+  %vecext.i = extractelement <4 x i32> %16, i32 0
+  ret i32 %vecext.i
 }
 
 define i32 @test_mm512_mask_reduce_max_epu32(i16 zeroext %__M, <8 x i64> %__W) {
@@ -8434,13 +8408,13 @@ define i32 @test_mm512_mask_reduce_max_epu32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    kmovw {{[0-9]+}}(%esp), %k1
 ; X86-NEXT:    vmovdqa32 %zmm0, %zmm0 {%k1} {z}
 ; X86-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X86-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpmaxud %ymm1, %ymm0, %ymm0
 ; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vzeroupper
 ; X86-NEXT:    retl
@@ -8450,37 +8424,42 @@ define i32 @test_mm512_mask_reduce_max_epu32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X64-NEXT:    kmovw %edi, %k1
 ; X64-NEXT:    vmovdqa32 %zmm0, %zmm0 {%k1} {z}
 ; X64-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; X64-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vpmaxud %ymm1, %ymm0, %ymm0
 ; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpmaxud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vpmaxud %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vmovd %xmm0, %eax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast <8 x i64> %__W to <16 x i32>
   %1 = bitcast i16 %__M to <16 x i1>
   %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> zeroinitializer
-  %shuffle1.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp ugt <16 x i32> %2, %shuffle1.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle1.i
-  %shuffle4.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp ugt <16 x i32> %4, %shuffle4.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle4.i
-  %shuffle7.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp ugt <16 x i32> %6, %shuffle7.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle7.i
-  %shuffle10.i = shufflevector <16 x i32> %8, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %9 = icmp ugt <16 x i32> %8, %shuffle10.i
-  %10 = select <16 x i1> %9, <16 x i32> %8, <16 x i32> %shuffle10.i
-  %11 = bitcast <16 x i32> %10 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %11, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %3 = bitcast <16 x i32> %2 to <8 x i64>
+  %extract.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract3.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %5 = bitcast <4 x i64> %extract3.i to <8 x i32>
+  %6 = icmp ugt <8 x i32> %4, %5
+  %7 = select <8 x i1> %6, <8 x i32> %4, <8 x i32> %5
+  %8 = bitcast <8 x i32> %7 to <4 x i64>
+  %extract5.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract6.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %9 = bitcast <2 x i64> %extract5.i to <4 x i32>
+  %10 = bitcast <2 x i64> %extract6.i to <4 x i32>
+  %11 = icmp ugt <4 x i32> %9, %10
+  %12 = select <4 x i1> %11, <4 x i32> %9, <4 x i32> %10
+  %shuffle.i = shufflevector <4 x i32> %12, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %13 = icmp ugt <4 x i32> %12, %shuffle.i
+  %14 = select <4 x i1> %13, <4 x i32> %12, <4 x i32> %shuffle.i
+  %shuffle9.i = shufflevector <4 x i32> %14, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %15 = icmp ugt <4 x i32> %14, %shuffle9.i
+  %16 = select <4 x i1> %15, <4 x i32> %14, <4 x i32> %shuffle9.i
+  %vecext.i = extractelement <4 x i32> %16, i32 0
+  ret i32 %vecext.i
 }
 
 define float @test_mm512_mask_reduce_max_ps(i16 zeroext %__M, <16 x float> %__W) {
@@ -8492,13 +8471,13 @@ define float @test_mm512_mask_reduce_max_ps(i16 zeroext %__M, <16 x float> %__W)
 ; X86-NEXT:    vbroadcastss {{.*#+}} zmm1 = [-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf]
 ; X86-NEXT:    vmovaps %zmm0, %zmm1 {%k1}
 ; X86-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X86-NEXT:    vmaxps %zmm0, %zmm1, %zmm0
+; X86-NEXT:    vmaxps %ymm0, %ymm1, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X86-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovss %xmm0, (%esp)
 ; X86-NEXT:    flds (%esp)
 ; X86-NEXT:    popl %eax
@@ -8512,28 +8491,32 @@ define float @test_mm512_mask_reduce_max_ps(i16 zeroext %__M, <16 x float> %__W)
 ; X64-NEXT:    vbroadcastss {{.*#+}} zmm1 = [-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf,-Inf]
 ; X64-NEXT:    vmovaps %zmm0, %zmm1 {%k1}
 ; X64-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X64-NEXT:    vmaxps %zmm0, %zmm1, %zmm0
+; X64-NEXT:    vmaxps %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X64-NEXT:    vmaxps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; X64-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vmaxps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast i16 %__M to <16 x i1>
   %1 = select <16 x i1> %0, <16 x float> %__W, <16 x float> <float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000, float 0xFFF0000000000000>
-  %shuffle1.i = shufflevector <16 x float> %1, <16 x float> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %1, <16 x float> %shuffle1.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle4.i = shufflevector <16 x float> %2, <16 x float> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %2, <16 x float> %shuffle4.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle7.i = shufflevector <16 x float> %3, <16 x float> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %3, <16 x float> %shuffle7.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle10.i = shufflevector <16 x float> %4, <16 x float> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = tail call <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float> %4, <16 x float> %shuffle10.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %vecext.i = extractelement <16 x float> %5, i32 0
+  %2 = bitcast <16 x float> %1 to <8 x double>
+  %extract.i = shufflevector <8 x double> %2, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %3 = bitcast <4 x double> %extract.i to <8 x float>
+  %extract4.i = shufflevector <8 x double> %2, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = bitcast <4 x double> %extract4.i to <8 x float>
+  %5 = tail call <8 x float> @llvm.x86.avx.max.ps.256(<8 x float> %3, <8 x float> %4)
+  %extract6.i = shufflevector <8 x float> %5, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract7.i = shufflevector <8 x float> %5, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %6 = tail call <4 x float> @llvm.x86.sse.max.ps(<4 x float> %extract6.i, <4 x float> %extract7.i)
+  %shuffle.i = shufflevector <4 x float> %6, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %7 = tail call <4 x float> @llvm.x86.sse.max.ps(<4 x float> %6, <4 x float> %shuffle.i)
+  %shuffle10.i = shufflevector <4 x float> %7, <4 x float> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %8 = tail call <4 x float> @llvm.x86.sse.max.ps(<4 x float> %7, <4 x float> %shuffle10.i)
+  %vecext.i = extractelement <4 x float> %8, i32 0
   ret float %vecext.i
 }
 
@@ -8544,13 +8527,13 @@ define i32 @test_mm512_mask_reduce_min_epi32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    vpbroadcastd {{.*#+}} zmm1 = [2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647]
 ; X86-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; X86-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
-; X86-NEXT:    vpminsd %zmm0, %zmm1, %zmm0
+; X86-NEXT:    vpminsd %ymm0, %ymm1, %ymm0
 ; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vzeroupper
 ; X86-NEXT:    retl
@@ -8561,37 +8544,42 @@ define i32 @test_mm512_mask_reduce_min_epi32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X64-NEXT:    vpbroadcastd {{.*#+}} zmm1 = [2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647,2147483647]
 ; X64-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; X64-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
-; X64-NEXT:    vpminsd %zmm0, %zmm1, %zmm0
+; X64-NEXT:    vpminsd %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpminsd %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vpminsd %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vmovd %xmm0, %eax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast <8 x i64> %__W to <16 x i32>
   %1 = bitcast i16 %__M to <16 x i1>
   %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> <i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647, i32 2147483647>
-  %shuffle1.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp slt <16 x i32> %2, %shuffle1.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle1.i
-  %shuffle4.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp slt <16 x i32> %4, %shuffle4.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle4.i
-  %shuffle7.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp slt <16 x i32> %6, %shuffle7.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle7.i
-  %shuffle10.i = shufflevector <16 x i32> %8, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %9 = icmp slt <16 x i32> %8, %shuffle10.i
-  %10 = select <16 x i1> %9, <16 x i32> %8, <16 x i32> %shuffle10.i
-  %11 = bitcast <16 x i32> %10 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %11, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %3 = bitcast <16 x i32> %2 to <8 x i64>
+  %extract.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract4.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %5 = bitcast <4 x i64> %extract4.i to <8 x i32>
+  %6 = icmp slt <8 x i32> %4, %5
+  %7 = select <8 x i1> %6, <8 x i32> %4, <8 x i32> %5
+  %8 = bitcast <8 x i32> %7 to <4 x i64>
+  %extract6.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract7.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %9 = bitcast <2 x i64> %extract6.i to <4 x i32>
+  %10 = bitcast <2 x i64> %extract7.i to <4 x i32>
+  %11 = icmp slt <4 x i32> %9, %10
+  %12 = select <4 x i1> %11, <4 x i32> %9, <4 x i32> %10
+  %shuffle.i = shufflevector <4 x i32> %12, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %13 = icmp slt <4 x i32> %12, %shuffle.i
+  %14 = select <4 x i1> %13, <4 x i32> %12, <4 x i32> %shuffle.i
+  %shuffle10.i = shufflevector <4 x i32> %14, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %15 = icmp slt <4 x i32> %14, %shuffle10.i
+  %16 = select <4 x i1> %15, <4 x i32> %14, <4 x i32> %shuffle10.i
+  %vecext.i = extractelement <4 x i32> %16, i32 0
+  ret i32 %vecext.i
 }
 
 define i32 @test_mm512_mask_reduce_min_epu32(i16 zeroext %__M, <8 x i64> %__W) {
@@ -8601,13 +8589,13 @@ define i32 @test_mm512_mask_reduce_min_epu32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X86-NEXT:    vpternlogd $255, %zmm1, %zmm1, %zmm1
 ; X86-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; X86-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
-; X86-NEXT:    vpminud %zmm0, %zmm1, %zmm0
+; X86-NEXT:    vpminud %ymm0, %ymm1, %ymm0
 ; X86-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X86-NEXT:    vpminud %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpminud %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X86-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X86-NEXT:    vpminud %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vpminud %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vpminud %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovd %xmm0, %eax
 ; X86-NEXT:    vzeroupper
 ; X86-NEXT:    retl
@@ -8618,37 +8606,42 @@ define i32 @test_mm512_mask_reduce_min_epu32(i16 zeroext %__M, <8 x i64> %__W) {
 ; X64-NEXT:    vpternlogd $255, %zmm1, %zmm1, %zmm1
 ; X64-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
 ; X64-NEXT:    vextracti64x4 $1, %zmm1, %ymm0
-; X64-NEXT:    vpminud %zmm0, %zmm1, %zmm0
+; X64-NEXT:    vpminud %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    vextracti128 $1, %ymm0, %xmm1
-; X64-NEXT:    vpminud %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vpminud %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; X64-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
-; X64-NEXT:    vpminud %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovq %xmm0, %rax
-; X64-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-NEXT:    vpminud %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vpminud %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vmovd %xmm0, %eax
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast <8 x i64> %__W to <16 x i32>
   %1 = bitcast i16 %__M to <16 x i1>
   %2 = select <16 x i1> %1, <16 x i32> %0, <16 x i32> <i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1, i32 -1>
-  %shuffle1.i = shufflevector <16 x i32> %2, <16 x i32> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = icmp ult <16 x i32> %2, %shuffle1.i
-  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %shuffle1.i
-  %shuffle4.i = shufflevector <16 x i32> %4, <16 x i32> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = icmp ult <16 x i32> %4, %shuffle4.i
-  %6 = select <16 x i1> %5, <16 x i32> %4, <16 x i32> %shuffle4.i
-  %shuffle7.i = shufflevector <16 x i32> %6, <16 x i32> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %7 = icmp ult <16 x i32> %6, %shuffle7.i
-  %8 = select <16 x i1> %7, <16 x i32> %6, <16 x i32> %shuffle7.i
-  %shuffle10.i = shufflevector <16 x i32> %8, <16 x i32> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %9 = icmp ult <16 x i32> %8, %shuffle10.i
-  %10 = select <16 x i1> %9, <16 x i32> %8, <16 x i32> %shuffle10.i
-  %11 = bitcast <16 x i32> %10 to <8 x i64>
-  %vecext.i = extractelement <8 x i64> %11, i32 0
-  %conv.i = trunc i64 %vecext.i to i32
-  ret i32 %conv.i
+  %3 = bitcast <16 x i32> %2 to <8 x i64>
+  %extract.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract4.i = shufflevector <8 x i64> %3, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = bitcast <4 x i64> %extract.i to <8 x i32>
+  %5 = bitcast <4 x i64> %extract4.i to <8 x i32>
+  %6 = icmp ult <8 x i32> %4, %5
+  %7 = select <8 x i1> %6, <8 x i32> %4, <8 x i32> %5
+  %8 = bitcast <8 x i32> %7 to <4 x i64>
+  %extract6.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 0, i32 1>
+  %extract7.i = shufflevector <4 x i64> %8, <4 x i64> undef, <2 x i32> <i32 2, i32 3>
+  %9 = bitcast <2 x i64> %extract6.i to <4 x i32>
+  %10 = bitcast <2 x i64> %extract7.i to <4 x i32>
+  %11 = icmp ult <4 x i32> %9, %10
+  %12 = select <4 x i1> %11, <4 x i32> %9, <4 x i32> %10
+  %shuffle.i = shufflevector <4 x i32> %12, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %13 = icmp ult <4 x i32> %12, %shuffle.i
+  %14 = select <4 x i1> %13, <4 x i32> %12, <4 x i32> %shuffle.i
+  %shuffle10.i = shufflevector <4 x i32> %14, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %15 = icmp ult <4 x i32> %14, %shuffle10.i
+  %16 = select <4 x i1> %15, <4 x i32> %14, <4 x i32> %shuffle10.i
+  %vecext.i = extractelement <4 x i32> %16, i32 0
+  ret i32 %vecext.i
 }
 
 define float @test_mm512_mask_reduce_min_ps(i16 zeroext %__M, <16 x float> %__W) {
@@ -8660,13 +8653,13 @@ define float @test_mm512_mask_reduce_min_ps(i16 zeroext %__M, <16 x float> %__W)
 ; X86-NEXT:    vbroadcastss {{.*#+}} zmm1 = [+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf]
 ; X86-NEXT:    vmovaps %zmm0, %zmm1 {%k1}
 ; X86-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X86-NEXT:    vminps %zmm0, %zmm1, %zmm0
+; X86-NEXT:    vminps %ymm0, %ymm1, %ymm0
 ; X86-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X86-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X86-NEXT:    vminps %zmm1, %zmm0, %zmm0
-; X86-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X86-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X86-NEXT:    vminps %xmm1, %xmm0, %xmm0
+; X86-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X86-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X86-NEXT:    vmovss %xmm0, (%esp)
 ; X86-NEXT:    flds (%esp)
 ; X86-NEXT:    popl %eax
@@ -8680,28 +8673,32 @@ define float @test_mm512_mask_reduce_min_ps(i16 zeroext %__M, <16 x float> %__W)
 ; X64-NEXT:    vbroadcastss {{.*#+}} zmm1 = [+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf,+Inf]
 ; X64-NEXT:    vmovaps %zmm0, %zmm1 {%k1}
 ; X64-NEXT:    vextractf64x4 $1, %zmm1, %ymm0
-; X64-NEXT:    vminps %zmm0, %zmm1, %zmm0
+; X64-NEXT:    vminps %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; X64-NEXT:    vminps %zmm1, %zmm0, %zmm0
+; X64-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vpermilpd {{.*#+}} xmm1 = xmm0[1,0]
-; X64-NEXT:    vminps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    vmovshdup {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; X64-NEXT:    vminps %zmm1, %zmm0, %zmm0
-; X64-NEXT:    # kill: def $xmm0 killed $xmm0 killed $zmm0
+; X64-NEXT:    vminps %xmm1, %xmm0, %xmm0
+; X64-NEXT:    vpermilps {{.*#+}} xmm1 = xmm0[1,0,3,2]
+; X64-NEXT:    vminps %xmm1, %xmm0, %xmm0
 ; X64-NEXT:    vzeroupper
 ; X64-NEXT:    retq
 entry:
   %0 = bitcast i16 %__M to <16 x i1>
   %1 = select <16 x i1> %0, <16 x float> %__W, <16 x float> <float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000, float 0x7FF0000000000000>
-  %shuffle1.i = shufflevector <16 x float> %1, <16 x float> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %2 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %1, <16 x float> %shuffle1.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle4.i = shufflevector <16 x float> %2, <16 x float> undef, <16 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %3 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %2, <16 x float> %shuffle4.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle7.i = shufflevector <16 x float> %3, <16 x float> undef, <16 x i32> <i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %4 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %3, <16 x float> %shuffle7.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %shuffle10.i = shufflevector <16 x float> %4, <16 x float> undef, <16 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
-  %5 = tail call <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float> %4, <16 x float> %shuffle10.i, <16 x float> zeroinitializer, i16 -1, i32 4) #3
-  %vecext.i = extractelement <16 x float> %5, i32 0
+  %2 = bitcast <16 x float> %1 to <8 x double>
+  %extract.i = shufflevector <8 x double> %2, <8 x double> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %3 = bitcast <4 x double> %extract.i to <8 x float>
+  %extract4.i = shufflevector <8 x double> %2, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %4 = bitcast <4 x double> %extract4.i to <8 x float>
+  %5 = tail call <8 x float> @llvm.x86.avx.min.ps.256(<8 x float> %3, <8 x float> %4)
+  %extract6.i = shufflevector <8 x float> %5, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %extract7.i = shufflevector <8 x float> %5, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %6 = tail call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %extract6.i, <4 x float> %extract7.i)
+  %shuffle.i = shufflevector <4 x float> %6, <4 x float> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 1>
+  %7 = tail call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %6, <4 x float> %shuffle.i)
+  %shuffle10.i = shufflevector <4 x float> %7, <4 x float> undef, <4 x i32> <i32 1, i32 0, i32 3, i32 2>
+  %8 = tail call <4 x float> @llvm.x86.sse.min.ps(<4 x float> %7, <4 x float> %shuffle10.i)
+  %vecext.i = extractelement <4 x float> %8, i32 0
   ret float %vecext.i
 }
 
@@ -8717,10 +8714,14 @@ declare void @llvm.masked.compressstore.v8f64(<8 x double>, double*, <8 x i1>)
 declare void @llvm.masked.compressstore.v8i64(<8 x i64>, i64*, <8 x i1>)
 declare void @llvm.masked.compressstore.v16f32(<16 x float>, float*, <16 x i1>)
 declare void @llvm.masked.compressstore.v16i32(<16 x i32>, i32*, <16 x i1>)
-declare <8 x double> @llvm.x86.avx512.mask.max.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32)
-declare <8 x double> @llvm.x86.avx512.mask.min.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32)
-declare <16 x float> @llvm.x86.avx512.mask.max.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32)
-declare <16 x float> @llvm.x86.avx512.mask.min.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32)
+declare <4 x double> @llvm.x86.avx.max.pd.256(<4 x double>, <4 x double>)
+declare <2 x double> @llvm.x86.sse2.max.pd(<2 x double>, <2 x double>)
+declare <4 x double> @llvm.x86.avx.min.pd.256(<4 x double>, <4 x double>)
+declare <2 x double> @llvm.x86.sse2.min.pd(<2 x double>, <2 x double>)
+declare <8 x float> @llvm.x86.avx.max.ps.256(<8 x float>, <8 x float>)
+declare <4 x float> @llvm.x86.sse.max.ps(<4 x float>, <4 x float>)
+declare <8 x float> @llvm.x86.avx.min.ps.256(<8 x float>, <8 x float>)
+declare <4 x float> @llvm.x86.sse.min.ps(<4 x float>, <4 x float>)
 
 !0 = !{i32 1}
 
