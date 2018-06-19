@@ -298,7 +298,7 @@ public:
     if (!symbol) {
       const auto pair = CurrScope().try_emplace(name, attrs, details);
       CHECK(pair.second);  // name was not found, so must be able to add
-      return pair.first->second;
+      return *pair.first->second;
     }
     symbol->add_occurrence(name);
     if (symbol->CanReplaceDetails(details)) {
@@ -323,6 +323,10 @@ public:
   }
   template<typename D>
   Symbol &MakeSymbol(const parser::Name &name, D &&details) {
+    return MakeSymbol(name, Attrs(), details);
+  }
+  template<typename D>
+  Symbol &MakeSymbol(const SourceName &name, D &&details) {
     return MakeSymbol(name, Attrs(), details);
   }
   Symbol &MakeSymbol(const SourceName &name, Attrs attrs = Attrs{}) {
@@ -390,7 +394,7 @@ protected:
   void AddToGeneric(const parser::Name &name, bool expectModuleProc = false);
   void AddToGeneric(const Symbol &symbol);
   // Add to generic the symbol for the subprogram with the same name
-  void SetSpecificInGeneric(Symbol &&symbol);
+  void SetSpecificInGeneric(Symbol *symbol);
 
 private:
   bool inInterfaceBlock_{false};  // set when in interface block
@@ -1072,7 +1076,7 @@ Symbol *ScopeHandler::FindSymbol(const SourceName &name) {
   if (it == CurrScope().end()) {
     return nullptr;
   } else {
-    return &it->second;
+    return it->second;
   }
 }
 void ScopeHandler::EraseSymbol(const SourceName &name) {
@@ -1083,7 +1087,7 @@ void ScopeHandler::ApplyImplicitRules() {
   if (!isImplicitNoneType()) {
     implicitRules().AddDefaultRules();
     for (auto &pair : CurrScope()) {
-      Symbol &symbol = pair.second;
+      Symbol &symbol = *pair.second;
       if (symbol.has<UnknownDetails>()) {
         symbol.set_details(ObjectEntityDetails{});
       } else if (auto *details = symbol.detailsIf<EntityDetails>()) {
@@ -1145,7 +1149,7 @@ bool ModuleVisitor::Pre(const parser::UseStmt &x) {
     Say(x.moduleName, "Module '%s' not found"_err_en_US);
     return false;
   }
-  const auto *details = it->second.detailsIf<ModuleDetails>();
+  const auto *details = it->second->detailsIf<ModuleDetails>();
   if (!details) {
     Say(x.moduleName, "'%s' is not a module"_err_en_US);
     return false;
@@ -1173,7 +1177,7 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
     }
     const SourceName &moduleName{x.moduleName.source};
     for (const auto &pair : *useModuleScope_) {
-      const Symbol &symbol{pair.second};
+      const Symbol &symbol{*pair.second};
       if (symbol.attrs().test(Attr::PUBLIC) &&
           !symbol.detailsIf<ModuleDetails>()) {
         const SourceName &name{symbol.name()};
@@ -1205,7 +1209,7 @@ void ModuleVisitor::AddUse(const SourceName &location,
         useModuleScope_->name());
     return;
   }
-  const Symbol &useSymbol{it->second};
+  const Symbol &useSymbol{*it->second};
   if (useSymbol.attrs().test(Attr::PRIVATE)) {
     Say(useName, "'%s' is PRIVATE in '%s'"_err_en_US, useName,
         useModuleScope_->name());
@@ -1258,7 +1262,7 @@ void ModuleVisitor::Post(const parser::Module &) {
 
 void ModuleVisitor::ApplyDefaultAccess() {
   for (auto &pair : CurrScope()) {
-    Symbol &symbol = pair.second;
+    Symbol &symbol = *pair.second;
     if (!symbol.attrs().HasAny({Attr::PUBLIC, Attr::PRIVATE})) {
       symbol.attrs().set(defaultAccess_);
     }
@@ -1336,11 +1340,10 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
     } else {
       CHECK(!"can't happen");
     }
-    Symbol symbol{CurrScope(), genericSymbol_->name(), genericSymbol_->attrs(),
-        std::move(details)};
+    GenericDetails genericDetails;
+    genericDetails.set_specific(genericSymbol_);
     EraseSymbol(*genericName);
-    genericSymbol_ = &MakeSymbol(*genericName);
-    genericSymbol_->set_details(GenericDetails{std::move(symbol)});
+    genericSymbol_ = &MakeSymbol(*genericName, genericDetails);
   }
   CHECK(genericSymbol_->has<GenericDetails>());
   return false;
@@ -1383,8 +1386,7 @@ void InterfaceVisitor::AddToGeneric(
     return;
   }
   if (symbol == genericSymbol_) {
-    if (auto *specific =
-            genericSymbol_->details<GenericDetails>().specific().get()) {
+    if (auto *specific = genericSymbol_->details<GenericDetails>().specific()) {
       symbol = specific;
     }
   }
@@ -1404,8 +1406,8 @@ void InterfaceVisitor::AddToGeneric(
 void InterfaceVisitor::AddToGeneric(const Symbol &symbol) {
   genericSymbol_->details<GenericDetails>().add_specificProc(&symbol);
 }
-void InterfaceVisitor::SetSpecificInGeneric(Symbol &&symbol) {
-  genericSymbol_->details<GenericDetails>().set_specific(std::move(symbol));
+void InterfaceVisitor::SetSpecificInGeneric(Symbol *symbol) {
+  genericSymbol_->details<GenericDetails>().set_specific(symbol);
 }
 
 // SubprogramVisitor implementation
@@ -1442,7 +1444,7 @@ bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
     EntityDetails dummyDetails{true};
     auto it = CurrScope().parent().find(dummyName.source);
     if (it != CurrScope().parent().end()) {
-      if (auto *d = it->second.detailsIf<EntityDetails>()) {
+      if (auto *d = it->second->detailsIf<EntityDetails>()) {
         if (d->type()) {
           dummyDetails.set_type(*d->type());
         }
@@ -1612,14 +1614,14 @@ Symbol *SubprogramVisitor::GetSpecificFromGeneric(const parser::Name &name) {
   if (Symbol *symbol = FindSymbol(name.source)) {
     if (auto *details = symbol->detailsIf<GenericDetails>()) {
       // found generic, want subprogram
-      auto *specific = details->specific().get();
+      auto *specific = details->specific();
       if (isGeneric()) {
         if (specific) {
           SayAlreadyDeclared(name.source, *specific);
         } else {
-          SetSpecificInGeneric(
-              Symbol{CurrScope(), name.source, Attrs{}, SubprogramDetails{}});
-          specific = details->specific().get();
+          specific = &CurrScope().MakeSymbol(
+              name.source, Attrs{}, SubprogramDetails{});
+          SetSpecificInGeneric(specific);
         }
       }
       if (specific) {
@@ -1712,7 +1714,7 @@ bool DeclarationVisitor::HandleAttributeStmt(
     const auto pair = CurrScope().try_emplace(name.source, Attrs{attr});
     if (!pair.second) {
       // symbol was already there: set attribute on it
-      Symbol &symbol{pair.first->second};
+      Symbol &symbol{*pair.first->second};
       if (attr != Attr::ASYNCHRONOUS && attr != Attr::VOLATILE &&
           symbol.has<UseDetails>()) {
         Say(*currStmtSource(),
@@ -2060,7 +2062,7 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
     // Check that every name referenced has an explicit type
     for (const auto &pair : CurrScope()) {
       const auto &name = pair.first;
-      const auto &symbol = pair.second;
+      const auto &symbol = *pair.second;
       if (NeedsExplicitType(symbol)) {
         Say(name, "No explicit type declared for '%s'"_err_en_US);
       }
@@ -2249,7 +2251,7 @@ static void DumpSymbols(std::ostream &os, const Scope &scope, int indent = 0) {
   ++indent;
   for (const auto &symbol : scope) {
     PutIndent(os, indent);
-    os << symbol.second << "\n";
+    os << *symbol.second << "\n";
   }
   for (const auto &child : scope.children()) {
     DumpSymbols(os, child, indent);

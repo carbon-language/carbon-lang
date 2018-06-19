@@ -26,7 +26,7 @@
 namespace Fortran::semantics {
 
 class Scope {
-  using mapType = std::map<SourceName, Symbol>;
+  using mapType = std::map<SourceName, Symbol *>;
 
 public:
   // root of the scope tree; contains intrinsics:
@@ -86,7 +86,14 @@ public:
   template<typename D>
   std::pair<iterator, bool> try_emplace(
       const SourceName &name, Attrs attrs, D &&details) {
-    return symbols_.try_emplace(name, *this, name, attrs, details);
+    Symbol &symbol{MakeSymbol(name, attrs, std::move(details))};
+    return symbols_.insert(std::make_pair(name, &symbol));
+  }
+
+  /// Make a Symbol but don't add it to the scope.
+  template<typename D>
+  Symbol &MakeSymbol(const SourceName &name, Attrs attrs, D &&details) {
+    return allSymbols.Make(*this, name, attrs, std::move(details));
   }
 
   std::list<Scope> &children() { return children_; }
@@ -98,6 +105,10 @@ private:
   Symbol *const symbol_;
   std::list<Scope> children_;
   mapType symbols_;
+
+  // Storage for all Symbols. Every Symbol is in allSymbols and every Symbol*
+  // or Symbol& points to one in there.
+  static Symbols<1024> allSymbols;
 
   friend std::ostream &operator<<(std::ostream &, const Scope &);
 };

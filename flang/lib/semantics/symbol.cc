@@ -60,20 +60,19 @@ GenericDetails::GenericDetails(const listType &specificProcs) {
   }
 }
 
-void GenericDetails::set_specific(Symbol &&specific) {
+void GenericDetails::set_specific(Symbol *specific) {
   CHECK(!specific_);
-  specific_ = std::unique_ptr<Symbol>(new Symbol(std::move(specific)));
+  specific_ = specific;
 }
 
 const Symbol *GenericDetails::CheckSpecific() const {
-  if (const auto *specific = specific_.get()) {
+  if (specific_) {
     for (const auto *proc : specificProcs_) {
-      if (proc == specific) {
+      if (proc == specific_) {
         return nullptr;
       }
     }
-    std::cerr << "specific: " << *specific << "\n";
-    return specific;
+    return specific_;
   } else {
     return nullptr;
   }

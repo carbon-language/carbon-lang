@@ -182,13 +182,13 @@ public:
   using listType = std::list<const Symbol *>;
   GenericDetails() {}
   GenericDetails(const listType &specificProcs);
-  GenericDetails(Symbol &&specific) { set_specific(std::move(specific)); }
+  GenericDetails(Symbol *specific) : specific_{specific} {}
 
   const listType specificProcs() const { return specificProcs_; }
   void add_specificProc(const Symbol *proc) { specificProcs_.push_back(proc); }
 
-  std::unique_ptr<Symbol> &specific() { return specific_; }
-  void set_specific(Symbol &&specific);
+  Symbol *specific() { return specific_; }
+  void set_specific(Symbol *specific);
 
   // Check that specific is one of the specificProcs. If not, return the
   // specific as a raw pointer.
@@ -198,7 +198,7 @@ private:
   // all of the specific procedures for this generic
   listType specificProcs_;
   // a specific procedure with the same name as this generic, if any
-  std::unique_ptr<Symbol> specific_;
+  Symbol *specific_{nullptr};
 };
 
 class UnknownDetails {};
@@ -214,12 +214,7 @@ public:
   ENUM_CLASS(Flag, Function, Subroutine);
   using Flags = common::EnumSet<Flag, Flag_enumSize>;
 
-  Symbol(const Scope &owner, const SourceName &name, const Attrs &attrs,
-      Details &&details)
-    : owner_{owner}, attrs_{attrs}, details_{std::move(details)} {
-    add_occurrence(name);
-  }
-  const Scope &owner() const { return owner_; }
+  const Scope &owner() const { return *owner_; }
   const SourceName &name() const { return occurrences_.front(); }
   Attrs &attrs() { return attrs_; }
   const Attrs &attrs() const { return attrs_; }
@@ -273,17 +268,54 @@ public:
   bool operator!=(const Symbol &that) const { return this != &that; }
 
 private:
-  const Scope &owner_;
+  const Scope *owner_;
   std::list<SourceName> occurrences_;
   Attrs attrs_;
   Flags flags_;
   Details details_;
 
+  Symbol() {}  // only created in class Symbols
   const std::string GetDetailsName() const;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
+  template<std::size_t> friend class Symbols;
+  template<class, std::size_t> friend class std::array;
 };
 
 std::ostream &operator<<(std::ostream &, Symbol::Flag);
+
+// Manage memory for all symbols. BLOCK_SIZE symbols at a time are allocated.
+// Make() returns a reference to the next available one. They are never
+// deleted.
+template<std::size_t BLOCK_SIZE> class Symbols {
+public:
+  Symbol &Make(const Scope &owner, const SourceName &name, const Attrs &attrs,
+      Details &&details) {
+    Symbol &symbol = Get();
+    symbol.owner_ = &owner;
+    symbol.occurrences_.push_back(name);
+    symbol.attrs_ = attrs;
+    symbol.details_ = std::move(details);
+    return symbol;
+  }
+
+private:
+  using blockType = std::array<Symbol, BLOCK_SIZE>;
+  std::list<blockType *> blocks_;
+  std::size_t nextIndex_{0};
+  blockType *currBlock_{nullptr};
+
+  Symbol &Get() {
+    if (nextIndex_ == 0) {
+      blocks_.push_back(new blockType());
+      currBlock_ = blocks_.back();
+    }
+    Symbol &result = (*currBlock_)[nextIndex_];
+    if (++nextIndex_ >= BLOCK_SIZE) {
+      nextIndex_ = 0;  // allocate a new block next time
+    }
+    return result;
+  }
+};
 
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_SYMBOL_H_

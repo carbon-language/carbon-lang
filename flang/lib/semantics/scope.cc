@@ -22,6 +22,8 @@ const Scope Scope::systemScope{
     Scope::systemScope, Scope::Kind::System, nullptr};
 Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global, nullptr};
 
+Symbols<1024> Scope::allSymbols;
+
 Scope &Scope::MakeScope(Kind kind, Symbol *symbol) {
   children_.emplace_back(*this, kind, symbol);
   return children_.back();
@@ -34,7 +36,7 @@ std::ostream &operator<<(std::ostream &os, const Scope &scope) {
   }
   os << scope.children_.size() << " children\n";
   for (const auto &sym : scope.symbols_) {
-    os << "  " << sym.second << "\n";
+    os << "  " << *sym.second << "\n";
   }
   return os;
 }
