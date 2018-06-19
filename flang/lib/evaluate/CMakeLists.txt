@@ -18,3 +18,7 @@ add_library(FortranEvaluate
   logical.cc
   real.cc
 )
+
+target_link_libraries(FortranEvaluate
+  FortranCommon
+)

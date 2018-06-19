@@ -20,13 +20,13 @@
 
 using namespace Fortran::evaluate;
 
-using Real2 = typename type::Real<2>::ValueType;
-using Real4 = typename type::Real<4>::ValueType;
-using Real8 = typename type::Real<8>::ValueType;
-using Real10 = typename type::Real<10>::ValueType;
-using Real16 = typename type::Real<16>::ValueType;
-using Integer4 = typename type::Integer<4>::ValueType;
-using Integer8 = typename type::Integer<8>::ValueType;
+using Real2 = typename Type<Category::Real, 2>::Value;
+using Real4 = typename Type<Category::Real, 4>::Value;
+using Real8 = typename Type<Category::Real, 8>::Value;
+using Real10 = typename Type<Category::Real, 10>::Value;
+using Real16 = typename Type<Category::Real, 16>::Value;
+using Integer4 = typename Type<Category::Integer, 4>::Value;
+using Integer8 = typename Type<Category::Integer, 8>::Value;
 
 template<typename R> void basicTests(int rm, Rounding rounding) {
   char desc[64];
@@ -361,4 +361,5 @@ int main() {
   roundTest(2, Rounding::Up, opds);
   roundTest(3, Rounding::Down, opds);
   // TODO: how to test Rounding::TiesAwayFromZero on x86?
+  return testing::Complete();
 }

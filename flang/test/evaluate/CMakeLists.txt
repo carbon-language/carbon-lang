@@ -63,6 +63,16 @@ target_link_libraries(real-test
   m
 )
 
+add_executable(expression-test
+  expression.cc
+)
+
+target_link_libraries(expression-test
+  FortranEvaluate
+  FortranEvaluateTesting
+)
+
+add_test(NAME Expression COMMAND expression-test)
 add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
 add_test(NAME PopPar COMMAND bit-population-count-test)
 add_test(NAME Integer COMMAND integer-test)

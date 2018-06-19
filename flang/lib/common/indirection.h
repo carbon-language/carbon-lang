@@ -33,12 +33,12 @@ public:
     CHECK(p_ && "assigning null pointer to Indirection");
     p = nullptr;
   }
+  Indirection(const A &x) : p_{new A(x)} {}
   Indirection(A &&p) : p_{new A(std::move(p))} {}
   template<typename... ARGS>
   Indirection(ARGS &&... args) : p_{new A(std::forward<ARGS>(args)...)} {}
-  Indirection(Indirection &&that) {
-    CHECK(that.p_ && "constructing Indirection from null Indirection");
-    p_ = that.p_;
+  Indirection(Indirection &&that) : p_{that.p_} {
+    CHECK(p_ && "move construction of Indirection from null Indirection");
     that.p_ = nullptr;
   }
   ~Indirection() {
@@ -46,7 +46,7 @@ public:
     p_ = nullptr;
   }
   Indirection &operator=(Indirection &&that) {
-    CHECK(that.p_ && "assigning null Indirection to Indirection");
+    CHECK(that.p_ && "move assignment of null Indirection to Indirection");
     auto tmp = p_;
     p_ = that.p_;
     that.p_ = tmp;
