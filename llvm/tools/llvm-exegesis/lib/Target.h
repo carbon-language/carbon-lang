@@ -29,7 +29,7 @@ public:
   // Registers a target. Not thread safe.
   static void registerTarget(ExegesisTarget *T);
 
-  ~ExegesisTarget();
+  virtual ~ExegesisTarget();
 
 private:
   virtual bool matchesArch(llvm::Triple::ArchType Arch) const = 0;
