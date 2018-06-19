@@ -46,31 +46,37 @@ struct Type<Category::Integer, KIND>
 
 template<> struct Type<Category::Real, 2> : public TypeBase<Category::Real, 2> {
   using Value = value::Real<typename Type<Category::Integer, 2>::Value, 11>;
+  using Complex = Type<Category::Complex, 2>;
 };
 
 template<> struct Type<Category::Real, 4> : public TypeBase<Category::Real, 4> {
   using Value = value::Real<typename Type<Category::Integer, 4>::Value, 24>;
+  using Complex = Type<Category::Complex, 2>;
 };
 
 template<> struct Type<Category::Real, 8> : public TypeBase<Category::Real, 8> {
   using Value = value::Real<typename Type<Category::Integer, 8>::Value, 53>;
+  using Complex = Type<Category::Complex, 2>;
 };
 
 template<>
 struct Type<Category::Real, 10> : public TypeBase<Category::Real, 10> {
   using Value = value::Real<value::Integer<80>, 64, false>;
+  using Complex = Type<Category::Complex, 2>;
 };
 
 template<>
 struct Type<Category::Real, 16> : public TypeBase<Category::Real, 16> {
   using Value = value::Real<typename Type<Category::Integer, 16>::Value, 112>;
+  using Complex = Type<Category::Complex, 2>;
 };
 
 // The KIND type parameter on COMPLEX is the kind of each of its components.
 template<int KIND>
 struct Type<Category::Complex, KIND>
   : public TypeBase<Category::Complex, KIND> {
-  using Value = value::Complex<typename Type<Category::Real, KIND>::Value>;
+  using Part = Type<Category::Real, KIND>;
+  using Value = value::Complex<typename Part::Value>;
 };
 
 template<int KIND>
@@ -95,8 +101,9 @@ template<int KIND> struct Type<Category::Character, KIND> {
 using DefaultReal = Type<Category::Real, 4>;
 using DefaultInteger = Type<Category::Integer, DefaultReal::kind>;
 using IntrinsicTypeParameterType = DefaultInteger;
-using DefaultComplex = Type<Category::Complex, DefaultReal::kind>;
-using DefaultLogical = Type<Category::Logical, DefaultReal::kind>;
+using DefaultComplex = typename DefaultReal::Complex;
+using DefaultLogical = Type<Category::Logical, DefaultInteger::kind>;
 using DefaultCharacter = Type<Category::Character, 1>;
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

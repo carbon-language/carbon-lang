@@ -22,12 +22,11 @@ using namespace Fortran::evaluate;
 int main() {
   using Int4 = Type<Category::Integer, 4>;
   using IntEx4 = Expression<Int4>;
-  auto ie = IntEx4{value::Integer<32>(666)};
-  auto one = IntEx4{value::Integer<32>(1)};
-  auto incr =
-      IntEx4{IntEx4::Binary::Operator::Add, std::move(ie), std::move(one)};
+  IntEx4 ie{value::Integer<32>(666)};
+  IntEx4 one{value::Integer<32>(1)};
+  IntEx4 incr{IntEx4::Add{std::move(ie), std::move(one)}};
   using Log = Expression<Type<Category::Logical, 1>>;
-  auto two = IntEx4{value::Integer<32>(2)};
-  auto cmp = Log{Log::ComparisonOperator::EQ, std::move(incr), std::move(two)};
+  IntEx4 two{value::Integer<32>(2)};
+  Log cmp{Log::EQ(std::move(incr), std::move(two))};
   return testing::Complete();
 }
