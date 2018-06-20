@@ -85,12 +85,12 @@ static std::size_t RemoveCarriageReturns(char *buffer, std::size_t bytes) {
     void *crvp{std::memchr(vp, '\r', bytes)};
     char *crcp{static_cast<char *>(crvp)};
     if (crcp == nullptr) {
-      std::memcpy(buffer + wrote, p, bytes);
+      std::memmove(buffer + wrote, p, bytes);
       wrote += bytes;
       break;
     }
     std::size_t chunk = crcp - p;
-    std::memcpy(buffer + wrote, p, chunk);
+    std::memmove(buffer + wrote, p, chunk);
     wrote += chunk;
     p += chunk + 1;
     bytes -= chunk + 1;
