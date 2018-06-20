@@ -22,6 +22,16 @@
 
 namespace Fortran::evaluate {
 
+// First, a statically polymorphic representation of expressions that's
+// specialized across the type categories of Fortran.  Subexpression
+// operands are implemented with non-nullable owning pointers.
+// Every Expression specialization has (at least) these type aliases:
+//   using Result = Type<category, kind>
+//   using Operand = ExprOperand<Result>
+//   using Constant = typename Result::Value  // e.g., value::Integer<BITS>
+// nested declarations of wrapper structs for each operation, e.g.
+//   struct Add { Operand x, y; };
+// an a std::variant<> u; to hold an instance of one of these structs.
 template<typename T> struct Expression;
 
 template<typename T> struct ExprOperand {
@@ -31,13 +41,7 @@ template<typename T> struct ExprOperand {
   common::Indirection<Expression<T>> v;
 };
 
-template<template<int> class T> using IntegerKindsVariant =
-  std::variant<T<1>, T<2>, T<4>, T<8>, T<16>>;
-template<template<int> class T> using RealKindsVariant =
-  std::variant<T<2>, T<4>, T<8>, T<10>, T<16>>;
-template<template<int> class T> using CharacterKindsVariant =
-  std::variant<T<1>>;  // TODO larger CHARACTER kinds, incl. Kanji
-
+// Dynamically polymorphic operands that can hold any supported kind.
 struct IntegerOperand {
   template<int KIND> using Operand = ExprOperand<Type<Category::Integer, KIND>>;
   IntegerKindsVariant<Operand> u;
@@ -47,10 +51,12 @@ struct RealOperand {
   RealKindsVariant<Operand> u;
 };
 struct CharacterOperand {
-  template<int KIND> using Operand = ExprOperand<Type<Category::Character, KIND>>;
+  template<int KIND>
+  using Operand = ExprOperand<Type<Category::Character, KIND>>;
   CharacterKindsVariant<Operand> u;
 };
 
+// Shared by Integer, Real, and Complex
 template<Category C, int KIND> struct NumericBase {
   static constexpr Category category{C};
   static constexpr int kind{KIND};
@@ -58,18 +64,32 @@ template<Category C, int KIND> struct NumericBase {
   using Operand = ExprOperand<Result>;
   using Constant = typename Result::Value;
   struct Convert {
-    // N.B. Conversions to/from Complex are done with CMPLX and part access
-    // operations (resp.).  Conversions between kinds of Complex are done
-    // via decomposition and reconstruction.
+    // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
+    // and part access operations (resp.).  Conversions between kinds of
+    // Complex are done via decomposition to Real and reconstruction.
     std::variant<IntegerOperand, RealOperand> u;
   };
-  struct Parentheses { Operand x; };
-  struct Negate { Operand x; };
-  struct Add { Operand x, y; };
-  struct Subtract { Operand x, y; };
-  struct Multiply { Operand x, y; };
-  struct Divide { Operand x, y; };
-  struct Power { Operand x, y; };
+  struct Parentheses {
+    Operand x;
+  };
+  struct Negate {
+    Operand x;
+  };
+  struct Add {
+    Operand x, y;
+  };
+  struct Subtract {
+    Operand x, y;
+  };
+  struct Multiply {
+    Operand x, y;
+  };
+  struct Divide {
+    Operand x, y;
+  };
+  struct Power {
+    Operand x, y;
+  };
 };
 
 template<int KIND>
@@ -90,10 +110,13 @@ struct Expression<Type<Category::Integer, KIND>>
   Expression(Expression &&) = default;
   Expression(const typename Base::Constant &x) : u{x} {}
   template<typename A> Expression(A &&x) : u{std::move(x)} {}
-  std::variant<Constant, Convert, Parentheses, Negate, Add, Subtract,
-               Multiply, Divide, Power> u;
+  std::variant<Constant, Convert, Parentheses, Negate, Add, Subtract, Multiply,
+      Divide, Power>
+      u;
 };
 
+// Shared by Real and Complex, which need to allow and distinguish
+// exponentiation by integer powers.
 template<Category C, int KIND>
 struct FloatingBase : public NumericBase<C, KIND> {
   using Result = typename NumericBase<C, KIND>::Result;
@@ -118,15 +141,19 @@ struct Expression<Type<Category::Real, KIND>>
   using Divide = typename Base::Divide;
   using Power = typename Base::Power;
   using IntegerPower = typename Base::IntegerPower;
-  struct RealPart { ExprOperand<typename Result::Complex> x; };
-  struct AIMAG { ExprOperand<typename Result::Complex> x; };
+  struct RealPart {
+    ExprOperand<typename Result::Complex> x;
+  };
+  struct AIMAG {
+    ExprOperand<typename Result::Complex> x;
+  };
   Expression() = delete;
   Expression(Expression &&) = default;
   Expression(const Constant &x) : u{x} {}
   template<typename A> Expression(A &&x) : u{std::move(x)} {}
-  std::variant<Constant, Convert, Parentheses, Negate, Add, Subtract,
-               Multiply, Divide, Power, IntegerPower,
-               RealPart, AIMAG> u;
+  std::variant<Constant, Convert, Parentheses, Negate, Add, Subtract, Multiply,
+      Divide, Power, IntegerPower, RealPart, AIMAG>
+      u;
 };
 
 template<int KIND>
@@ -143,42 +170,72 @@ struct Expression<Type<Category::Complex, KIND>>
   using Divide = typename Base::Divide;
   using Power = typename Base::Power;
   using IntegerPower = typename Base::IntegerPower;
-  struct CMPLX { ExprOperand<typename Result::Part> re, im; };
+  struct CMPLX {
+    ExprOperand<typename Result::Part> re, im;
+  };
   Expression() = delete;
   Expression(Expression &&) = default;
   Expression(const Constant &x) : u{x} {}
   template<typename A> Expression(A &&x) : u{std::move(x)} {}
-  std::variant<Constant, Parentheses, Negate, Add, Subtract,
-               Multiply, Divide, Power, IntegerPower, CMPLX> u;
+  std::variant<Constant, Parentheses, Negate, Add, Subtract, Multiply, Divide,
+      Power, IntegerPower, CMPLX>
+      u;
 };
 
 template<> struct Expression<Type<Category::Logical, 1>> {
-  // No need to distinguish the various kinds of LOGICAL in expressions.
+  // No need to distinguish the various kinds of LOGICAL in expressions,
+  // only in memory.
   static constexpr Category category{Category::Logical};
   static constexpr int kind{1};
   using Result = Type<category, kind>;
   using Operand = ExprOperand<Result>;
   using Constant = typename Result::Value;
-  struct Not { Operand x; };
-  struct And { Operand x, y; };
-  struct Or { Operand x, y; };
-  struct Eqv { Operand x, y; };
-  struct Neqv { Operand x, y; };
+  struct Not {
+    Operand x;
+  };
+  struct And {
+    Operand x, y;
+  };
+  struct Or {
+    Operand x, y;
+  };
+  struct Eqv {
+    Operand x, y;
+  };
+  struct Neqv {
+    Operand x, y;
+  };
 
   template<typename T> struct Comparison {
     using Operand = ExprOperand<T>;
-    struct LT { Operand x, y; };
-    struct LE { Operand x, y; };
-    struct EQ { Operand x, y; };
-    struct NE { Operand x, y; };
-    struct GE { Operand x, y; };
-    struct GT { Operand x, y; };
-    std::variant<LT, LE, EQ, NE, GE, GT> u;  // TODO: .UN.?
+    struct LT {
+      Operand x, y;
+    };
+    struct LE {
+      Operand x, y;
+    };
+    struct EQ {
+      Operand x, y;
+    };
+    struct NE {
+      Operand x, y;
+    };
+    struct GE {
+      Operand x, y;
+    };
+    struct GT {
+      Operand x, y;
+    };
+    std::variant<LT, LE, EQ, NE, GE, GT> u;  // TODO: .UN. extension?
   };
   template<int KIND> struct Comparison<Type<Category::Complex, KIND>> {
     using Operand = ExprOperand<Type<Category::Complex, KIND>>;
-    struct EQ { Operand x, y; };
-    struct NE { Operand x, y; };
+    struct EQ {
+      Operand x, y;
+    };
+    struct NE {
+      Operand x, y;
+    };
     std::variant<EQ, NE> u;
   };
 
@@ -197,47 +254,56 @@ template<> struct Expression<Type<Category::Logical, 1>> {
     RealKindsVariant<C> u;
   };
 
+  struct CharacterComparison {
+    template<int KIND> using C = Comparison<Type<Category::Character, KIND>>;
+    CharacterKindsVariant<C> u;
+  };
+
   Expression() = delete;
   Expression(Expression &&) = default;
   Expression(const Constant &x) : u{x} {}
+  template<int KIND>
+  Expression(Comparison<Type<Category::Integer, KIND>> &&x)
+    : u{IntegerComparison{std::move(x)}} {}
+  template<int KIND>
+  Expression(Comparison<Type<Category::Real, KIND>> &&x)
+    : u{RealComparison{std::move(x)}} {}
+  template<int KIND>
+  Expression(Comparison<Type<Category::Complex, KIND>> &&x)
+    : u{ComplexComparison{std::move(x)}} {}
+  template<int KIND>
+  Expression(Comparison<Type<Category::Character, KIND>> &&x)
+    : u{CharacterComparison{std::move(x)}} {}
   template<typename A> Expression(A &&x) : u{std::move(x)} {}
 
-  template<typename T> static Comparison<T> LT(Expression<T> &&x, Expression<T> &&y) {
+  template<typename T>
+  static Comparison<T> LT(Expression<T> &&x, Expression<T> &&y) {
     return {typename Comparison<T>::LT{std::move(x), std::move(y)}};
   }
-  template<typename T> static Comparison<T> LE(Expression<T> &&x, Expression<T> &&y) {
+  template<typename T>
+  static Comparison<T> LE(Expression<T> &&x, Expression<T> &&y) {
     return {typename Comparison<T>::LE{std::move(x), std::move(y)}};
   }
-  template<typename T> static Comparison<T> EQ(Expression<T> &&x, Expression<T> &&y) {
+  template<typename T>
+  static Comparison<T> EQ(Expression<T> &&x, Expression<T> &&y) {
     return {typename Comparison<T>::EQ{std::move(x), std::move(y)}};
   }
-  template<typename T> static Comparison<T> NE(Expression<T> &&x, Expression<T> &&y) {
+  template<typename T>
+  static Comparison<T> NE(Expression<T> &&x, Expression<T> &&y) {
     return {typename Comparison<T>::NE{std::move(x), std::move(y)}};
   }
-  template<typename T> static Comparison<T> GE(Expression<T> &&x, Expression<T> &&y) {
+  template<typename T>
+  static Comparison<T> GE(Expression<T> &&x, Expression<T> &&y) {
     return {typename Comparison<T>::GE{std::move(x), std::move(y)}};
   }
-  template<typename T> static Comparison<T> GT(Expression<T> &&x, Expression<T> &&y) {
+  template<typename T>
+  static Comparison<T> GT(Expression<T> &&x, Expression<T> &&y) {
     return {typename Comparison<T>::GT{std::move(x), std::move(y)}};
   }
 
-  std::variant<Constant, Not, And, Or, Eqv, Neqv,
-      Comparison<Type<Category::Integer, 1>>,
-      Comparison<Type<Category::Integer, 2>>,
-      Comparison<Type<Category::Integer, 4>>,
-      Comparison<Type<Category::Integer, 8>>,
-      Comparison<Type<Category::Integer, 16>>,
-      Comparison<Type<Category::Character, 1>>,
-      Comparison<Type<Category::Real, 2>>,
-      Comparison<Type<Category::Real, 4>>,
-      Comparison<Type<Category::Real, 8>>,
-      Comparison<Type<Category::Real, 10>>,
-      Comparison<Type<Category::Real, 16>>,
-      Comparison<Type<Category::Complex, 2>>,
-      Comparison<Type<Category::Complex, 4>>,
-      Comparison<Type<Category::Complex, 8>>,
-      Comparison<Type<Category::Complex, 10>>,
-      Comparison<Type<Category::Complex, 16>>> u;
+  std::variant<Constant, Not, And, Or, Eqv, Neqv, IntegerComparison,
+      RealComparison, ComplexComparison, CharacterComparison>
+      u;
 };
 
 template<int KIND> struct Expression<Type<Category::Character, KIND>> {
@@ -245,14 +311,60 @@ template<int KIND> struct Expression<Type<Category::Character, KIND>> {
   static constexpr int kind{KIND};
   using Result = Type<category, kind>;
   using Constant = typename Result::Value;
-  struct Concat { ExprOperand<Result> x, y; };
+  struct Concat {
+    ExprOperand<Result> x, y;
+  };
   Expression() = delete;
   Expression(Expression &&) = default;
   Expression(const Constant &x) : u{x} {}
   Expression(Expression &&a, Expression &&b)
     : u{Concat{std::move(a), std::move(b)}} {}
   std::variant<Constant, Concat> u;
-  // TODO: length
+  Expression<IntrinsicTypeParameterType> len;
+};
+
+// Convenience type aliases
+template<int KIND> using IntExpr = Expression<Type<Category::Integer, KIND>>;
+template<int KIND> using RealExpr = Expression<Type<Category::Real, KIND>>;
+template<int KIND>
+using ComplexExpr = Expression<Type<Category::Complex, KIND>>;
+using LogicalExpr = Expression<Type<Category::Logical, 1>>;
+template<int KIND> using CharExpr = Expression<Type<Category::Character, KIND>>;
+using DefaultIntExpr = Expression<DefaultInteger>;
+
+// Dynamically polymorphic representation of expressions across kinds
+struct IntegerExpression {
+  IntegerKindsVariant<IntExpr> u;
+};
+struct RealExpression {
+  RealKindsVariant<RealExpr> u;
+};
+struct ComplexExpression {
+  ComplexKindsVariant<ComplexExpr> u;
+};
+struct CharacterExpression {
+  CharacterKindsVariant<CharExpr> u;
+};
+
+// Dynamically polymorphic representation of expressions across categories
+class ArbitraryExpression {
+  ArbitraryExpression() = delete;
+  ArbitraryExpression(ArbitraryExpression &&) = default;
+  template<int KIND>
+  ArbitraryExpression(IntExpr<KIND> &&x) : u{IntegerExpression{std::move(x)}} {}
+  template<int KIND>
+  ArbitraryExpression(RealExpr<KIND> &&x) : u{RealExpression{std::move(x)}} {}
+  template<int KIND>
+  ArbitraryExpression(ComplexExpr<KIND> &&x)
+    : u{ComplexExpression{std::move(x)}} {}
+  template<int KIND>
+  ArbitraryExpression(CharExpr<KIND> &&x)
+    : u{CharacterExpression{std::move(x)}} {}
+  template<typename A> ArbitraryExpression(A &&x) : u{std::move(x)} {}
+
+  std::variant<IntegerExpression, RealExpression, ComplexExpression,
+      LogicalExpr, CharacterExpression>
+      u;
 };
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_

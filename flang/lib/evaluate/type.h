@@ -25,6 +25,7 @@
 #include "logical.h"
 #include "real.h"
 #include <string>
+#include <variant>
 
 namespace Fortran::evaluate {
 
@@ -97,13 +98,29 @@ template<int KIND> struct Type<Category::Character, KIND> {
 // and default LOGICAL intrinsic types also have to occupy one numeric
 // storage unit, so their kinds are also forced.  Default COMPLEX occupies
 // two numeric storage units.
+// TODO: Support a compile-time option to default everything to KIND=8
 
 using DefaultReal = Type<Category::Real, 4>;
+using DefaultDoublePrecision = Type<Category::Real, 2 * DefaultReal::kind>;
 using DefaultInteger = Type<Category::Integer, DefaultReal::kind>;
 using IntrinsicTypeParameterType = DefaultInteger;
 using DefaultComplex = typename DefaultReal::Complex;
 using DefaultLogical = Type<Category::Logical, DefaultInteger::kind>;
 using DefaultCharacter = Type<Category::Character, 1>;
+
+// These templates create instances of std::variant<> that can contain
+// applications of some class template to all of the supported kinds of
+// a category of intrinsic type.
+template<template<int> class T>
+using IntegerKindsVariant = std::variant<T<1>, T<2>, T<4>, T<8>, T<16>>;
+template<template<int> class T>
+using RealKindsVariant = std::variant<T<2>, T<4>, T<8>, T<10>, T<16>>;
+template<template<int> class T> using ComplexKindsVariant = RealKindsVariant<T>;
+template<template<int> class T>
+using LogicalKindsVariant = std::variant<T<1>, T<2>, T<4>, T<8>>;
+template<template<int> class T>
+using CharacterKindsVariant =
+    std::variant<T<1>>;  // TODO larger CHARACTER kinds, incl. Kanji
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_
