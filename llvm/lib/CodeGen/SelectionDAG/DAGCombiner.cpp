@@ -8688,8 +8688,9 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
         if (ShiftMask.isMask()) {
           EVT MaskedVT = EVT::getIntegerVT(*DAG.getContext(),
                                            ShiftMask.countTrailingOnes());
-          // Recompute the type.
-          if (TLI.isLoadExtLegal(ExtType, N0.getValueType(), MaskedVT))
+          // If the mask is smaller, recompute the type.
+          if ((ExtVT.getSizeInBits() > MaskedVT.getSizeInBits()) &&
+              TLI.isLoadExtLegal(ExtType, N0.getValueType(), MaskedVT))
             ExtVT = MaskedVT;
         }
       }
