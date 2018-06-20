@@ -334,14 +334,16 @@ void replaceDbgValueForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
 /// DIExpression.
 void salvageDebugInfo(Instruction &I);
 
-/// Assuming the instruction \p From is going to be deleted, insert replacement
+/// Assuming the value \p From is going to be deleted, insert replacement
 /// dbg.value intrinsics for each debug user of \p From. The newly-inserted
 /// dbg.values refer to \p To instead of \p From. Each replacement dbg.value
 /// has the same location and variable as the debug user it replaces, has a
 /// DIExpression determined by the result of \p RewriteExpr applied to an old
-/// debug user of \p From, and is placed before \p InsertBefore.
+/// debug user of \p From, and is placed before \p InsertBefore. If
+/// \p RewriteExpr returns nullptr, no replacement for the specified debug
+/// user is emitted.
 void insertReplacementDbgValues(
-    Instruction &From, Instruction &To, Instruction &InsertBefore,
+    Value &From, Value &To, Instruction &InsertBefore,
     function_ref<DIExpression *(DbgInfoIntrinsic &OldDII)> RewriteExpr);
 
 /// Remove all instructions from a basic block other than it's terminator
