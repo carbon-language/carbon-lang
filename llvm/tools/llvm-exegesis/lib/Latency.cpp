@@ -64,7 +64,7 @@ LatencyBenchmarkRunner::generateSelfAliasingPrototype(
     setRandomAliasing(SelfAliasing, II, II);
   }
   Prototype.Snippet.push_back(std::move(II));
-  return Prototype;
+  return std::move(Prototype);
 }
 
 llvm::Expected<SnippetPrototype>
@@ -99,7 +99,7 @@ LatencyBenchmarkRunner::generateTwoInstructionPrototype(
                                           MCInstrInfo.getName(OtherOpcode));
     Prototype.Snippet.push_back(std::move(ThisII));
     Prototype.Snippet.push_back(std::move(OtherII));
-    return Prototype;
+    return std::move(Prototype);
   }
   return llvm::make_error<BenchmarkFailure>(
       "Infeasible : Didn't find any scheme to make the instruction serial");

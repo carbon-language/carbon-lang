@@ -147,13 +147,13 @@ UopsBenchmarkRunner::generatePrototype(unsigned Opcode) const {
     SnippetPrototype Prototype;
     Prototype.Explanation = "instruction is parallel, repeating a random one.";
     Prototype.Snippet.emplace_back(Instr);
-    return Prototype;
+    return std::move(Prototype);
   }
   if (SelfAliasing.hasImplicitAliasing()) {
     SnippetPrototype Prototype;
     Prototype.Explanation = "instruction is serial, repeating a random one.";
     Prototype.Snippet.emplace_back(Instr);
-    return Prototype;
+    return std::move(Prototype);
   }
   const auto TiedVariables = getTiedVariables(Instr);
   if (!TiedVariables.empty()) {
@@ -174,7 +174,7 @@ UopsBenchmarkRunner::generatePrototype(unsigned Opcode) const {
       Prototype.Snippet.back().getValueFor(*Var) =
           llvm::MCOperand::createReg(Reg);
     }
-    return Prototype;
+    return std::move(Prototype);
   }
   InstructionInstance II(Instr);
   // No tied variables, we pick random values for defs.
@@ -205,7 +205,7 @@ UopsBenchmarkRunner::generatePrototype(unsigned Opcode) const {
   Prototype.Explanation =
       "instruction has no tied variables picking Uses different from defs";
   Prototype.Snippet.push_back(std::move(II));
-  return Prototype;
+  return std::move(Prototype);
 }
 
 std::vector<BenchmarkMeasure>
