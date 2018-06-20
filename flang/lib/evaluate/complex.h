@@ -16,6 +16,7 @@
 #define FORTRAN_EVALUATE_COMPLEX_H_
 
 #include "real.h"
+#include <string>
 
 namespace Fortran::evaluate::value {
 
@@ -44,6 +45,7 @@ public:
   ValueWithRealFlags<Complex> Multiply(const Complex &) const;
   ValueWithRealFlags<Complex> Divide(const Complex &) const;
 
+  std::string DumpHexadecimal() const;
   // TODO: (C)ABS once Real::HYPOT is done
   // TODO: unit testing
 

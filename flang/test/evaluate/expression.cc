@@ -16,17 +16,23 @@
 #include "testing.h"
 #include <cstdio>
 #include <cstdlib>
+#include <sstream>
+#include <iostream>  // TODO pmk rm
 
 using namespace Fortran::evaluate;
 
 int main() {
   using Int4 = Type<Category::Integer, 4>;
+  TEST(Int4::Dump() == "Integer(4)");
   using IntEx4 = Expression<Int4>;
-  IntEx4 ie{value::Integer<32>(666)};
-  IntEx4 one{value::Integer<32>(1)};
-  IntEx4 incr{IntEx4::Add{std::move(ie), std::move(one)}};
+  IntEx4 ie{666};
+  std::stringstream ss;
+  ie.Dump(ss);
+  TEST(ss.str() == "666");
+  IntEx4 one{IntEx4::Constant{1}};
+  IntEx4 incr{std::move(ie) + IntEx4{1}};
+incr.Dump(std::cout) << '\n';
   using Log = Expression<Type<Category::Logical, 1>>;
-  IntEx4 two{value::Integer<32>(2)};
-  Log cmp{Log::EQ(std::move(incr), std::move(two))};
+  Log cmp{Log::EQ(std::move(incr), IntEx4{2})};
   return testing::Complete();
 }

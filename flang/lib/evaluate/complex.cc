@@ -81,4 +81,13 @@ ValueWithRealFlags<Complex<R>> Complex<R>::Divide(const Complex &that) const {
   Part im{im1.Divide(den).AccumulateFlags(flags)};
   return {Complex{re, im}, flags};
 }
+
+template<typename R> std::string Complex<R>::DumpHexadecimal() const {
+  std::string result{'('};
+  result += re_.DumpHexadecimal();
+  result += ',';
+  result += im_.DumpHexadecimal();
+  result += ')';
+  return result;
+}
 }  // namespace Fortran::evaluate::value

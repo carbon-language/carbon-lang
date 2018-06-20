@@ -34,7 +34,7 @@ namespace Fortran::evaluate {
 //   struct Add { Operand x, y; };
 // a data member to hold an instance of one of these structs:
 //   std::variant<> u;
-// and a formatting member function, dump().
+// and a formatting member function, Dump().
 template<typename T> struct Expression;
 
 template<typename T> struct ExprOperand {
@@ -97,8 +97,6 @@ template<Category C, int KIND> struct NumericBase {
   struct Power {
     Operand x, y;
   };
-
-  void dump(std::ostream &) const;
 };
 
 template<int KIND>
@@ -117,8 +115,11 @@ struct Expression<Type<Category::Integer, KIND>>
   using Power = typename Base::Power;
   Expression() = delete;
   Expression(Expression &&) = default;
-  Expression(const typename Base::Constant &x) : u{x} {}
+  Expression(const Constant &x) : u{x} {}
+  Expression(std::int64_t n) : u{Constant{n}} {}
+  Expression(int n) : u{Constant{n}} {}
   template<typename A> Expression(A &&x) : u{std::move(x)} {}
+  std::ostream &Dump(std::ostream &) const;
   std::variant<Constant, Convert, Parentheses, Negate, Add, Subtract, Multiply,
       Divide, Power>
       u;
@@ -160,6 +161,7 @@ struct Expression<Type<Category::Real, KIND>>
   Expression(Expression &&) = default;
   Expression(const Constant &x) : u{x} {}
   template<typename A> Expression(A &&x) : u{std::move(x)} {}
+  std::ostream &Dump(std::ostream &) const;
   std::variant<Constant, Convert, Parentheses, Negate, Add, Subtract, Multiply,
       Divide, Power, IntegerPower, RealPart, AIMAG>
       u;
@@ -186,6 +188,7 @@ struct Expression<Type<Category::Complex, KIND>>
   Expression(Expression &&) = default;
   Expression(const Constant &x) : u{x} {}
   template<typename A> Expression(A &&x) : u{std::move(x)} {}
+  std::ostream &Dump(std::ostream &) const;
   std::variant<Constant, Parentheses, Negate, Add, Subtract, Multiply, Divide,
       Power, IntegerPower, CMPLX>
       u;
@@ -310,6 +313,8 @@ template<> struct Expression<Type<Category::Logical, 1>> {
     return {typename Comparison<T>::GT{std::move(x), std::move(y)}};
   }
 
+  std::ostream &Dump(std::ostream &) const;
+
   std::variant<Constant, Not, And, Or, Eqv, Neqv, IntegerComparison,
       RealComparison, ComplexComparison, CharacterComparison>
       u;
@@ -330,6 +335,7 @@ template<int KIND> struct Expression<Type<Category::Character, KIND>> {
   Expression(Expression &&a, Expression &&b)
     : u{Concat{std::move(a), std::move(b)}} {}
   Length LEN() const;
+  std::ostream &Dump(std::ostream &) const;
   std::variant<Constant, Concat> u;
 };
 
@@ -377,7 +383,10 @@ struct ArbitraryExpression {
       u;
 };
 
-// Convenience operator overloadings for expression construction.
+// Convenience functions and operator overloadings for expression construction.
+template<typename A> Expression<A> Parentheses(Expression<A> &&x) {
+  return {typename Expression<A>::Parentheses{std::move(x)}};
+}
 template<typename A> Expression<A> operator-(Expression<A> &&x) {
   return {typename Expression<A>::Negate{std::move(x)}};
 }
@@ -397,6 +406,11 @@ template<typename A>
 Expression<A> operator/(Expression<A> &&x, Expression<A> &&y) {
   return {typename Expression<A>::Divide{std::move(x), std::move(y)}};
 }
+template<typename A> Expression<A> Power(Expression<A> &&x, Expression<A> &&y) {
+  return {typename Expression<A>::Power{std::move(x), std::move(y)}};
+}
+
+// TODO: comparison generators
 
 extern template struct Expression<Type<Category::Integer, 1>>;
 extern template struct Expression<Type<Category::Integer, 2>>;

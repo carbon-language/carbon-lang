@@ -16,11 +16,55 @@
 #include "../common/idioms.h"
 #include <ostream>
 #include <string>
+#include <type_traits>
 
 namespace Fortran::evaluate {
 
-template<Category C, int KIND>
-void NumericBase<C, KIND>::dump(std::ostream &o) const {}
+template<int KIND> std::ostream &IntExpr<KIND>::Dump(std::ostream &o) const {
+  std::visit(
+      common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
+          [&](const Convert &c) {
+            o << "convert(";
+            std::visit(
+                [&](const auto &x) {  // x is IntegerOperand or RealOperand
+                  std::visit(
+                      [&](const auto &y) {  // y is ExprOperand<Type<C,K>>
+                        using Expr =
+                            typename std::remove_reference<decltype(*y)>::type;
+                        using Ty = typename Expr::Result;
+                        y->Dump(o << Ty::Dump() << ' ');
+                      },
+                      x.u);
+                },
+                c.u);
+            o << ')';
+          },
+          [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
+          [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
+          [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
+          [&](const Subtract &s) {
+            s.y->Dump(s.x->Dump(o << '(') << '-') << ')';
+          },
+          [&](const Multiply &m) {
+            m.y->Dump(m.x->Dump(o << '(') << '*') << ')';
+          },
+          [&](const Divide &d) {
+            d.y->Dump(d.x->Dump(o << '(') << '/') << ')';
+          },
+          [&](const Power &p) {
+            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
+          }},
+      u);
+  return o;
+}
+
+template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
+  std::visit(
+      common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
+          [&](const auto &) { o << "TODO"; }},
+      u);
+  return o;
+}
 
 template<int KIND> typename CharExpr<KIND>::Length CharExpr<KIND>::LEN() const {
   return std::visit(
