@@ -12,17 +12,17 @@ void func() {
   unsigned _Fract u_fract = 0.5ur;
   unsigned long _Fract u_long_fract = 0.5ulr;
 
-// DEFAULT: store i16 128, i16* %u_short_accum, align 2
-// DEFAULT: store i32 32768, i32* %u_accum, align 4
-// DEFAULT: store i64 2147483648, i64* %u_long_accum, align 8
-// DEFAULT: store i8  -128, i8* %u_short_fract, align 1
-// DEFAULT: store i16 -32768, i16* %u_fract, align 2
-// DEFAULT: store i32 -2147483648, i32* %u_long_fract, align 4
+// DEFAULT: store i16 128, i16* {{.*}}, align 2
+// DEFAULT: store i32 32768, i32* {{.*}}, align 4
+// DEFAULT: store i64 2147483648, i64* {{.*}}, align 8
+// DEFAULT: store i8  -128, i8* {{.*}}, align 1
+// DEFAULT: store i16 -32768, i16* {{.*}}, align 2
+// DEFAULT: store i32 -2147483648, i32* {{.*}}, align 4
 
-// SAME: store i16 64, i16* %u_short_accum, align 2
-// SAME: store i32 16384, i32* %u_accum, align 4
-// SAME: store i64 1073741824, i64* %u_long_accum, align 8
-// SAME: store i8  64, i8* %u_short_fract, align 1
-// SAME: store i16 16384, i16* %u_fract, align 2
-// SAME: store i32 1073741824, i32* %u_long_fract, align 4
+// SAME: store i16 64, i16* {{.*}}, align 2
+// SAME: store i32 16384, i32* {{.*}}, align 4
+// SAME: store i64 1073741824, i64* {{.*}}, align 8
+// SAME: store i8  64, i8* {{.*}}, align 1
+// SAME: store i16 16384, i16* {{.*}}, align 2
+// SAME: store i32 1073741824, i32* {{.*}}, align 4
 }
