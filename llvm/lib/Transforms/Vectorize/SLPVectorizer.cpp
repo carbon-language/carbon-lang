@@ -316,10 +316,6 @@ static unsigned getAltOpcode(unsigned Op) {
   }
 }
 
-static bool isOdd(unsigned Value) {
-  return Value & 1;
-}
-
 static bool sameOpcodeOrAlt(unsigned Opcode, unsigned AltOpcode,
                             unsigned CheckedOpcode) {
   return Opcode == CheckedOpcode || AltOpcode == CheckedOpcode;
@@ -378,7 +374,7 @@ static InstructionsState getSameOpcode(ArrayRef<Value *> VL) {
     unsigned AltOpcode = getAltOpcode(Opcode);
     for (int Cnt = 0, E = VL.size(); Cnt < E; Cnt++) {
       unsigned InstOpcode = cast<Instruction>(VL[Cnt])->getOpcode();
-      if (InstOpcode != (isOdd(Cnt) ? AltOpcode : Opcode))
+      if (!sameOpcodeOrAlt(Opcode, AltOpcode, InstOpcode))
         return InstructionsState(VL[0], 0, false);
     }
   }
@@ -3510,22 +3506,26 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       // Create shuffle to take alternate operations from the vector.
       // Also, gather up odd and even scalar ops to propagate IR flags to
       // each vector operation.
-      ValueList OddScalars, EvenScalars;
+      ValueList OpScalars, AltScalars;
       unsigned e = E->Scalars.size();
       SmallVector<Constant *, 8> Mask(e);
       for (unsigned i = 0; i < e; ++i) {
-        if (isOdd(i)) {
+        auto *OpInst = cast<Instruction>(E->Scalars[i]);
+        unsigned InstOpcode = OpInst->getOpcode();
+        assert(sameOpcodeOrAlt(S.Opcode, AltOpcode, InstOpcode) &&
+               "Unexpected main/alternate opcode");
+        if (InstOpcode == AltOpcode) {
           Mask[i] = Builder.getInt32(e + i);
-          OddScalars.push_back(E->Scalars[i]);
+          AltScalars.push_back(E->Scalars[i]);
         } else {
           Mask[i] = Builder.getInt32(i);
-          EvenScalars.push_back(E->Scalars[i]);
+          OpScalars.push_back(E->Scalars[i]);
         }
       }
 
       Value *ShuffleMask = ConstantVector::get(Mask);
-      propagateIRFlags(V0, EvenScalars);
-      propagateIRFlags(V1, OddScalars);
+      propagateIRFlags(V0, OpScalars);
+      propagateIRFlags(V1, AltScalars);
 
       Value *V = Builder.CreateShuffleVector(V0, V1, ShuffleMask);
       if (Instruction *I = dyn_cast<Instruction>(V))
