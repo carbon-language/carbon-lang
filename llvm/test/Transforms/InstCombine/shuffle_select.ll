@@ -226,7 +226,7 @@ define <4 x double> @fsub(<4 x double> %v0) {
   ret <4 x double> %t3
 }
 
-; Union any FMF.
+; Intersect any FMF.
 
 define <4 x float> @fmul(<4 x float> %v0) {
 ; CHECK-LABEL: @fmul(
