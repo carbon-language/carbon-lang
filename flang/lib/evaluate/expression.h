@@ -18,6 +18,7 @@
 #include "common.h"
 #include "type.h"
 #include "../common/indirection.h"
+#include <ostream>
 #include <variant>
 
 namespace Fortran::evaluate {
@@ -31,13 +32,19 @@ namespace Fortran::evaluate {
 //   using Constant = typename Result::Value  // e.g., value::Integer<BITS>
 // nested declarations of wrapper structs for each operation, e.g.
 //   struct Add { Operand x, y; };
-// an a std::variant<> u; to hold an instance of one of these structs.
+// a data member to hold an instance of one of these structs:
+//   std::variant<> u;
+// and a formatting member function, dump().
 template<typename T> struct Expression;
 
 template<typename T> struct ExprOperand {
   template<typename... ARGS> ExprOperand(const ARGS &... args) : v{args...} {}
   template<typename... ARGS>
   ExprOperand(ARGS &&... args) : v{std::forward<ARGS>(args)...} {}
+  Expression<T> &operator*() { return *v; }
+  const Expression<T> &operator*() const { return *v; }
+  Expression<T> *operator->() { return &*v; }
+  const Expression<T> *operator->() const { return &*v; }
   common::Indirection<Expression<T>> v;
 };
 
@@ -90,6 +97,8 @@ template<Category C, int KIND> struct NumericBase {
   struct Power {
     Operand x, y;
   };
+
+  void dump(std::ostream &) const;
 };
 
 template<int KIND>
@@ -311,6 +320,7 @@ template<int KIND> struct Expression<Type<Category::Character, KIND>> {
   static constexpr int kind{KIND};
   using Result = Type<category, kind>;
   using Constant = typename Result::Value;
+  using Length = Expression<IntrinsicTypeParameterType>;
   struct Concat {
     ExprOperand<Result> x, y;
   };
@@ -319,8 +329,8 @@ template<int KIND> struct Expression<Type<Category::Character, KIND>> {
   Expression(const Constant &x) : u{x} {}
   Expression(Expression &&a, Expression &&b)
     : u{Concat{std::move(a), std::move(b)}} {}
+  Length LEN() const;
   std::variant<Constant, Concat> u;
-  Expression<IntrinsicTypeParameterType> len;
 };
 
 // Convenience type aliases
@@ -347,7 +357,7 @@ struct CharacterExpression {
 };
 
 // Dynamically polymorphic representation of expressions across categories
-class ArbitraryExpression {
+struct ArbitraryExpression {
   ArbitraryExpression() = delete;
   ArbitraryExpression(ArbitraryExpression &&) = default;
   template<int KIND>
@@ -366,5 +376,44 @@ class ArbitraryExpression {
       LogicalExpr, CharacterExpression>
       u;
 };
+
+// Convenience operator overloadings for expression construction.
+template<typename A> Expression<A> operator-(Expression<A> &&x) {
+  return {typename Expression<A>::Negate{std::move(x)}};
+}
+template<typename A>
+Expression<A> operator+(Expression<A> &&x, Expression<A> &&y) {
+  return {typename Expression<A>::Add{std::move(x), std::move(y)}};
+}
+template<typename A>
+Expression<A> operator-(Expression<A> &&x, Expression<A> &&y) {
+  return {typename Expression<A>::Subtract{std::move(x), std::move(y)}};
+}
+template<typename A>
+Expression<A> operator*(Expression<A> &&x, Expression<A> &&y) {
+  return {typename Expression<A>::Multiply{std::move(x), std::move(y)}};
+}
+template<typename A>
+Expression<A> operator/(Expression<A> &&x, Expression<A> &&y) {
+  return {typename Expression<A>::Divide{std::move(x), std::move(y)}};
+}
+
+extern template struct Expression<Type<Category::Integer, 1>>;
+extern template struct Expression<Type<Category::Integer, 2>>;
+extern template struct Expression<Type<Category::Integer, 4>>;
+extern template struct Expression<Type<Category::Integer, 8>>;
+extern template struct Expression<Type<Category::Integer, 16>>;
+extern template struct Expression<Type<Category::Real, 2>>;
+extern template struct Expression<Type<Category::Real, 4>>;
+extern template struct Expression<Type<Category::Real, 8>>;
+extern template struct Expression<Type<Category::Real, 10>>;
+extern template struct Expression<Type<Category::Real, 16>>;
+extern template struct Expression<Type<Category::Complex, 2>>;
+extern template struct Expression<Type<Category::Complex, 4>>;
+extern template struct Expression<Type<Category::Complex, 8>>;
+extern template struct Expression<Type<Category::Complex, 10>>;
+extern template struct Expression<Type<Category::Complex, 16>>;
+extern template struct Expression<Type<Category::Logical, 1>>;
+extern template struct Expression<Type<Category::Character, 1>>;
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_
