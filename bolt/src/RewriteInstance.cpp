@@ -2469,9 +2469,9 @@ void RewriteInstance::disassembleFunctions() {
     Function.disassemble(*FunctionData);
 
     if (!Function.isSimple() && BC->HasRelocations) {
-      errs() << "BOLT-ERROR: function " << Function << " cannot be properly "
-             << "disassembled. Unable to continue in relocation mode.\n";
-      exit(1);
+      BC->exitWithBugReport("function cannot be properly disassembled. "
+                            "Unable to continue in relocation mode.",
+                            Function);
     }
 
     if (opts::PrintAll || opts::PrintDisasm)
@@ -2550,9 +2550,7 @@ void RewriteInstance::disassembleFunctions() {
     if (!Function.trapsOnEntry()) {
       if (!CFIRdWrt->fillCFIInfoFor(Function)) {
         if (BC->HasRelocations) {
-          errs() << "BOLT-ERROR: unable to fill CFI for function "
-                 << Function << ". Aborting.\n";
-          exit(1);
+          BC->exitWithBugReport("unable to fill CFI.", Function);
         } else {
           errs() << "BOLT-WARNING: unable to fill CFI for function "
                  << Function << ". Skipping.\n";
@@ -2952,7 +2950,7 @@ void RewriteInstance::mapFileSections(orc::VModuleKey Key) {
   mapTextSections(Key);
   mapDataSections(Key);
 }
-  
+
 void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
   NewTextSectionStartAddress = NextAvailableAddress;
   if (BC->HasRelocations) {
@@ -3248,7 +3246,7 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer,
 
   if (BC->HasRelocations && opts::HotData && Section.isReordered())
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_data_start"));
-  
+
   DEBUG(dbgs() << "BOLT-DEBUG: emitting "
                << (Section.isAllocatable() ? "" : "non-")
                << "allocatable data section " << SectionName << '\n');
@@ -3718,7 +3716,7 @@ std::vector<uint32_t> RewriteInstance::getOutputSections(
       AllocatableSections.push_back(&Section);
     }
   }
-  
+
   for (const auto *Section : AllocatableSections) {
     // Ignore function sections.
     if (Section->getFileAddress() < NewTextSegmentAddress) {

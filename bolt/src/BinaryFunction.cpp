@@ -1721,9 +1721,15 @@ bool BinaryFunction::buildCFG() {
     DEBUG(dbgs() << "registering branch [0x" << Twine::utohexstr(Branch.first)
                  << "] -> [0x" << Twine::utohexstr(Branch.second) << "]\n");
     auto *FromBB = getBasicBlockContainingOffset(Branch.first);
-    assert(FromBB && "cannot find BB containing FROM branch");
     auto *ToBB = getBasicBlockAtOffset(Branch.second);
-    assert(ToBB && "cannot find BB containing TO branch");
+    if (!FromBB || !ToBB) {
+      if (!FromBB)
+        errs() << "BOLT-ERROR: cannot find BB containing the branch.\n";
+      if (!ToBB)
+        errs() << "BOLT-ERROR: cannot find BB containing branch destination.\n";
+      BC.exitWithBugReport("disassembly failed - inconsistent branch found.",
+                           *this);
+    }
 
     FromBB->addSuccessor(ToBB);
   }

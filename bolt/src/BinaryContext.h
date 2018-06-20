@@ -720,6 +720,9 @@ public:
     }
     return Offset;
   }
+
+  void exitWithBugReport(StringRef Message,
+                         const BinaryFunction &Function) const;
 };
 
 } // namespace bolt

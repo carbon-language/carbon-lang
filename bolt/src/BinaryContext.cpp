@@ -1052,3 +1052,22 @@ const Relocation *BinaryContext::getRelocationAt(uint64_t Address) {
   assert(Section && "cannot find section for address");
   return Section->getRelocationAt(Address - Section->getAddress());
 }
+
+void BinaryContext::exitWithBugReport(StringRef Message,
+                                      const BinaryFunction &Function) const {
+  errs() << "=======================================\n";
+  errs() << "BOLT is unable to proceed because it couldn't properly understand "
+            "this function.\n";
+  errs() << "If you are running the most recent version of BOLT, you may "
+            "want to "
+            "report this and paste this dump.\nPlease check that there is no "
+            "sensitive contents being shared in this dump.\n";
+  errs() << "\nOffending function: " << Function.getPrintName() << "\n\n";
+  ScopedPrinter SP(errs());
+  SP.printBinaryBlock("Function contents", *getFunctionData(Function));
+  errs() << "\n";
+  Function.dump();
+  errs() << "ERROR: " << Message;
+  errs() << "\n=======================================\n";
+  exit(1);
+}
