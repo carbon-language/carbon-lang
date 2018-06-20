@@ -18,6 +18,7 @@
 #include "lldb/Utility/Log.h"
 
 #include "Plugins/ExpressionParser/Clang/ClangHost.h"
+#include "Plugins/ScriptInterpreter/Python/ScriptInterpreterPython.h"
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Path.h"
@@ -48,7 +49,7 @@ SBFileSpec SBHostOS::GetLLDBPath(lldb::PathType path_type) {
     fspec = HostInfo::GetHeaderDir();
     break;
   case ePathTypePythonDir:
-    fspec = HostInfo::GetPythonDir();
+    fspec = ScriptInterpreterPython::GetPythonDir();
     break;
   case ePathTypeLLDBSystemPlugins:
     fspec = HostInfo::GetSystemPluginDir();
