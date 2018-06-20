@@ -810,6 +810,7 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  3      7     1.00    *      *            incl	(%rax)
 # CHECK-NEXT:  1      1     0.33                        incq	%rdi
 # CHECK-NEXT:  3      7     1.00    *      *            incq	(%rax)
+# CHECK-NEXT:  1      1     0.50                        lahf
 # CHECK-NEXT:  1      3     1.00                        mulb	%dil
 # CHECK-NEXT:  2      8     1.00    *                   mulb	(%rax)
 # CHECK-NEXT:  4      4     1.33                        mulw	%si
@@ -967,6 +968,7 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  3      3     1.50                        rorq	%cl, %rdi
 # CHECK-NEXT:  6      9     1.50    *      *            rolq	%cl, (%rax)
 # CHECK-NEXT:  6      9     1.50    *      *            rorq	%cl, (%rax)
+# CHECK-NEXT:  1      1     0.50                        sahf
 # CHECK-NEXT:  1      1     0.50                        sarb	%dil
 # CHECK-NEXT:  1      1     0.50                        shlb	%dil
 # CHECK-NEXT:  1      1     0.50                        shrb	%dil
@@ -1166,7 +1168,7 @@ xorq (%rax), %rdi
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]
-# CHECK-NEXT: 160.00  -     346.33 141.33 210.00 338.33 238.00 238.00
+# CHECK-NEXT: 160.00  -     347.33 141.33 210.00 339.33 238.00 238.00
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  Instructions:
@@ -1367,6 +1369,7 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  -      -     0.33   0.33   1.00   0.33   1.00   1.00   incl	(%rax)
 # CHECK-NEXT:  -      -     0.33   0.33    -     0.33    -      -     incq	%rdi
 # CHECK-NEXT:  -      -     0.33   0.33   1.00   0.33   1.00   1.00   incq	(%rax)
+# CHECK-NEXT:  -      -     0.50    -      -     0.50    -      -     lahf
 # CHECK-NEXT:  -      -      -     1.00    -      -      -      -     mulb	%dil
 # CHECK-NEXT:  -      -      -     1.00    -      -     0.50   0.50   mulb	(%rax)
 # CHECK-NEXT:  -      -     1.17   1.67    -     1.17    -      -     mulw	%si
@@ -1524,6 +1527,7 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  -      -     1.50    -      -     1.50    -      -     rorq	%cl, %rdi
 # CHECK-NEXT:  -      -     1.50    -     1.00   1.50   1.00   1.00   rolq	%cl, (%rax)
 # CHECK-NEXT:  -      -     1.50    -     1.00   1.50   1.00   1.00   rorq	%cl, (%rax)
+# CHECK-NEXT:  -      -     0.50    -      -     0.50    -      -     sahf
 # CHECK-NEXT:  -      -     0.50    -      -     0.50    -      -     sarb	%dil
 # CHECK-NEXT:  -      -     0.50    -      -     0.50    -      -     shlb	%dil
 # CHECK-NEXT:  -      -     0.50    -      -     0.50    -      -     shrb	%dil
