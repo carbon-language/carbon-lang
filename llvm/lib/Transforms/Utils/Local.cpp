@@ -1671,6 +1671,24 @@ void llvm::salvageDebugInfo(Instruction &I) {
   }
 }
 
+void llvm::insertReplacementDbgValues(
+    Instruction &From, Instruction &To, Instruction &InsertBefore,
+    function_ref<DIExpression *(DbgInfoIntrinsic &OldDII)> RewriteExpr) {
+  // Collect all debug users of From.
+  SmallVector<DbgInfoIntrinsic *, 1> Users;
+  findDbgUsers(Users, &From);
+  if (Users.empty())
+    return;
+
+  // Insert a replacement debug value for each old debug user. It's assumed
+  // that the old debug users will be erased later.
+  DIBuilder DIB(*From.getModule());
+  for (auto *OldDII : Users)
+    DIB.insertDbgValueIntrinsic(&To, OldDII->getVariable(),
+                                RewriteExpr(*OldDII),
+                                OldDII->getDebugLoc().get(), &InsertBefore);
+}
+
 unsigned llvm::removeAllNonTerminatorAndEHPadInstructions(BasicBlock *BB) {
   unsigned NumDeadInst = 0;
   // Delete the instructions backwards, as it has a reduced likelihood of
