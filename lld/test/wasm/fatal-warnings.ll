@@ -3,8 +3,8 @@
 ; RUN: lld -flavor wasm -o %t.wasm %t.main.o %t.ret32.o 2>&1 | FileCheck %s -check-prefix=CHECK-WARN
 ; RUN: not lld -flavor wasm --fatal-warnings -o %t.wasm %t.main.o %t.ret32.o 2>&1 | FileCheck %s -check-prefix=CHECK-FATAL
 
-; CHECK-WARN: warning: Function type mismatch: ret32
-; CHECK-FATAL: error: Function type mismatch: ret32
+; CHECK-WARN: warning: function signature mismatch: ret32
+; CHECK-FATAL: error: function signature mismatch: ret32
 
 target triple = "wasm32-unknown-unknown"
 
