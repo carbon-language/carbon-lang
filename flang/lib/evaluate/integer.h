@@ -29,6 +29,7 @@
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
+#include <string>
 #include <type_traits>
 
 namespace Fortran::evaluate::value {
@@ -236,7 +237,48 @@ public:
     return result;
   }
 
-  // TODO formatting
+  std::string UnsignedDecimal() const {
+    if constexpr (bits < 4) {
+      char digit = '0' + ToUInt64();
+      return {digit};
+    } else if (IsZero()) {
+      return {'0'};
+    } else {
+      QuotientWithRemainder qr{DivideUnsigned(10)};
+      char digit = '0' + qr.remainder.ToUInt64();
+      if (qr.quotient.IsZero()) {
+        return {digit};
+      } else {
+        return qr.quotient.UnsignedDecimal() + digit;
+      }
+    }
+  }
+
+  std::string SignedDecimal() const {
+    if (IsNegative()) {
+      return std::string{'-'} + Negate().value.UnsignedDecimal();
+    } else {
+      return UnsignedDecimal();
+    }
+  }
+
+  // Omits a leading "0x".
+  std::string Hexadecimal() const {
+    std::string result;
+    int digits{(bits + 3) >> 2};
+    for (int j{0}; j < digits; ++j) {
+      int pos{(digits - 1 - j) * 4};
+      char nybble = IBITS(pos, 4).ToUInt64();
+      if (nybble != 0 || !result.empty() || j + 1 == digits) {
+        char digit = '0' + nybble;
+        if (digit > '9') {
+          digit += 'a' - ('9' + 1);
+        }
+        result += digit;
+      }
+    }
+    return result;
+  }
 
   static constexpr Integer BIT_SIZE() { return {std::uint64_t{bits}}; }
   static constexpr Integer HUGE() { return MASKR(bits - 1); }

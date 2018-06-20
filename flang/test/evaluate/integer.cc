@@ -15,6 +15,7 @@
 #include "../../lib/evaluate/integer.h"
 #include "testing.h"
 #include <cstdio>
+#include <string>
 
 using Fortran::evaluate::Ordering;
 using Fortran::evaluate::value::Integer;
@@ -53,6 +54,18 @@ template<int BITS, typename INT = Integer<BITS>> void exhaustiveTesting() {
     TEST(!*p)("%s, x=0x%llx", desc, x);
     std::snprintf(buffer, sizeof buffer, "%llx", ullx);
     p = buffer;
+    readcheck = INT::ReadUnsigned(p, 16);
+    TEST(!readcheck.overflow)("%s, x=0x%llx", desc, x);
+    MATCH(x, readcheck.value.ToUInt64())("%s, x=0x%llx", desc, x);
+    TEST(!*p)("%s, x=0x%llx", desc, x);
+    std::string udec{a.UnsignedDecimal()};
+    p = udec.data();
+    readcheck = INT::ReadUnsigned(p);
+    TEST(!readcheck.overflow)("%s, x=0x%llx", desc, x);
+    MATCH(x, readcheck.value.ToUInt64())("%s, x=0x%llx", desc, x);
+    TEST(!*p)("%s, x=0x%llx", desc, x);
+    std::string hex{a.Hexadecimal()};
+    p = hex.data();
     readcheck = INT::ReadUnsigned(p, 16);
     TEST(!readcheck.overflow)("%s, x=0x%llx", desc, x);
     MATCH(x, readcheck.value.ToUInt64())("%s, x=0x%llx", desc, x);
@@ -246,6 +259,10 @@ int main() {
   TEST(Reverse(Ordering::Less) == Ordering::Greater);
   TEST(Reverse(Ordering::Greater) == Ordering::Less);
   TEST(Reverse(Ordering::Equal) == Ordering::Equal);
+  TEST(Integer<128>{123456789}.UnsignedDecimal() == "123456789");
+  TEST(Integer<128>{123456789}.SignedDecimal() == "123456789");
+  TEST(Integer<128>{-123456789}.SignedDecimal() == "-123456789");
+  TEST(Integer<128>{0x123456789abcdef}.Hexadecimal() == "123456789abcdef");
   exhaustiveTesting<1>();
   exhaustiveTesting<2>();
   exhaustiveTesting<7>();

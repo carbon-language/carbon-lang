@@ -20,6 +20,7 @@
 #include "rounding-bits.h"
 #include <cinttypes>
 #include <limits>
+#include <string>
 
 namespace Fortran::evaluate::value {
 
@@ -207,6 +208,8 @@ public:
   constexpr std::uint64_t Exponent() const {
     return word_.IBITS(significandBits, exponentBits).ToUInt64();
   }
+
+  std::string DumpHexadecimal() const;
 
 private:
   using Fraction = Integer<precision>;  // all bits made explicit
