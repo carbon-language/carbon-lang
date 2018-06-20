@@ -86,11 +86,11 @@ Instruction::Instruction(const llvm::MCInstrDesc &MCInstrDesc,
 InstructionInstance::InstructionInstance(const Instruction &Instr)
     : Instr(Instr), VariableValues(Instr.Variables.size()) {}
 
-InstructionInstance::InstructionInstance(InstructionInstance &&) noexcept =
+InstructionInstance::InstructionInstance(InstructionInstance &&) =
     default;
 
 InstructionInstance &InstructionInstance::
-operator=(InstructionInstance &&) noexcept = default;
+operator=(InstructionInstance &&) = default;
 
 unsigned InstructionInstance::getOpcode() const {
   return Instr.Description->getOpcode();
@@ -135,7 +135,8 @@ llvm::MCInst InstructionInstance::randomizeUnsetVariablesAndBuild() {
 
 SnippetPrototype::SnippetPrototype(SnippetPrototype &&) = default;
 
-SnippetPrototype &SnippetPrototype::operator=(SnippetPrototype &&) = default;
+SnippetPrototype &SnippetPrototype::
+operator=(SnippetPrototype &&) = default;
 
 bool RegisterOperandAssignment::
 operator==(const RegisterOperandAssignment &Other) const {

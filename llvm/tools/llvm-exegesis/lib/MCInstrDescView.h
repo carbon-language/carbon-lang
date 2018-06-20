@@ -88,8 +88,8 @@ struct InstructionInstance {
   InstructionInstance &operator=(const InstructionInstance &) = delete;
 
   // Moving is OK.
-  InstructionInstance(InstructionInstance &&) noexcept;
-  InstructionInstance &operator=(InstructionInstance &&) noexcept;
+  InstructionInstance(InstructionInstance &&);
+  InstructionInstance &operator=(InstructionInstance &&);
 
   unsigned getOpcode() const;
   llvm::MCOperand &getValueFor(const Variable &Var);
@@ -116,8 +116,8 @@ struct SnippetPrototype {
   SnippetPrototype &operator=(const SnippetPrototype &) = delete;
 
   // Moving is OK.
-  SnippetPrototype(SnippetPrototype &&) noexcept;
-  SnippetPrototype &operator=(SnippetPrototype &&) noexcept;
+  SnippetPrototype(SnippetPrototype &&);
+  SnippetPrototype &operator=(SnippetPrototype &&);
 
   std::string Explanation;
   std::vector<InstructionInstance> Snippet;
