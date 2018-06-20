@@ -321,21 +321,6 @@ static bool sameOpcodeOrAlt(unsigned Opcode, unsigned AltOpcode,
   return Opcode == CheckedOpcode || AltOpcode == CheckedOpcode;
 }
 
-/// Chooses the correct key for scheduling data. If \p Op has the same (or
-/// alternate) opcode as \p OpValue, the key is \p Op. Otherwise the key is \p
-/// OpValue.
-static Value *isOneOf(Value *OpValue, Value *Op) {
-  auto *I = dyn_cast<Instruction>(Op);
-  if (!I)
-    return OpValue;
-  auto *OpInst = cast<Instruction>(OpValue);
-  unsigned OpInstOpcode = OpInst->getOpcode();
-  unsigned IOpcode = I->getOpcode();
-  if (sameOpcodeOrAlt(OpInstOpcode, getAltOpcode(OpInstOpcode), IOpcode))
-    return Op;
-  return OpValue;
-}
-
 namespace {
 
 /// Main data required for vectorization of instructions.
@@ -356,6 +341,21 @@ struct InstructionsState {
 };
 
 } // end anonymous namespace
+
+/// Chooses the correct key for scheduling data. If \p Op has the same (or
+/// alternate) opcode as \p OpValue, the key is \p Op. Otherwise the key is \p
+/// OpValue.
+static Value *isOneOf(Value *OpValue, Value *Op) {
+  auto *I = dyn_cast<Instruction>(Op);
+  if (!I)
+    return OpValue;
+  auto *OpInst = cast<Instruction>(OpValue);
+  unsigned OpInstOpcode = OpInst->getOpcode();
+  unsigned IOpcode = I->getOpcode();
+  if (sameOpcodeOrAlt(OpInstOpcode, getAltOpcode(OpInstOpcode), IOpcode))
+    return Op;
+  return OpValue;
+}
 
 /// \returns analysis of the Instructions in \p VL described in
 /// InstructionsState, the Opcode that we suppose the whole list 
