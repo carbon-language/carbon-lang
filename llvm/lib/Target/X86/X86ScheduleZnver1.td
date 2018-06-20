@@ -162,6 +162,7 @@ defm : ZnWriteResPair<WriteCMOV,   [ZnALU], 1>;
 defm : ZnWriteResPair<WriteCMOV2,  [ZnALU], 1>;
 def  : WriteRes<WriteSETCC,  [ZnALU]>;
 def  : WriteRes<WriteSETCCStore,  [ZnALU, ZnAGU]>;
+defm : X86WriteRes<WriteLAHFSAHF, [ZnALU], 2, [1], 2>;
 
 // Bit counts.
 defm : ZnWriteResPair<WriteBitScan, [ZnALU], 3>;
@@ -508,13 +509,6 @@ def : InstRW<[ZnWritePushA], (instregex "PUSHA(16|32)")>;
 
 //LAHF
 def : InstRW<[WriteMicrocoded], (instrs LAHF)>;
-
-// SAHF.
-def ZnWriteSAHF : SchedWriteRes<[ZnALU]> {
-  let Latency = 2;
-  let NumMicroOps = 2;
-}
-def : InstRW<[ZnWriteSAHF], (instrs SAHF)>;
 
 // BSWAP.
 def ZnWriteBSwap : SchedWriteRes<[ZnALU]> {

@@ -222,6 +222,8 @@ incl (%rax)
 incq %rdi
 incq (%rax)
 
+lahf
+
 mulb %dil
 mulb (%rax)
 mulw %si
@@ -394,6 +396,8 @@ rolq %cl, %rdi
 rorq %cl, %rdi
 rolq %cl, (%rax)
 rorq %cl, (%rax)
+
+sahf
 
 sarb %dil
 shlb %dil
