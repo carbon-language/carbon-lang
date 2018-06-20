@@ -1,4 +1,4 @@
-// RUN: %clang -ffixed-point -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang -ffixed-point -S -emit-llvm %s -o - --target=x86_64-linux | FileCheck %s
 // RUN: %clang -ffixed-point -S -emit-llvm %s -o - --target=x86_64-scei-ps4-ubuntu-fast | FileCheck %s
 
 // Primary fixed point types
