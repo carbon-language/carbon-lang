@@ -134,11 +134,6 @@ public:
 class TargetLoweringObjectFileCOFF : public TargetLoweringObjectFile {
   mutable unsigned NextUniqueID = 0;
 
-  /// Append "$symbol" to the section name when targetting mingw. The ld.bfd
-  /// COFF linker will not properly handle comdats otherwise.
-  void appendComdatSymbolForMinGW(SmallVectorImpl<char> &SecName,
-                                  StringRef Symbol, const DataLayout &DL) const;
-
 public:
   ~TargetLoweringObjectFileCOFF() override = default;
 

@@ -1072,15 +1072,6 @@ static StringRef getCOFFSectionNameForUniqueGlobal(SectionKind Kind) {
   return ".data";
 }
 
-void TargetLoweringObjectFileCOFF::appendComdatSymbolForMinGW(
-    SmallVectorImpl<char> &SecName, StringRef Symbol,
-    const DataLayout &DL) const {
-  if (getTargetTriple().isWindowsGNUEnvironment()) {
-    SecName.push_back('$');
-    getMangler().getNameWithPrefix(SecName, Symbol, DL);
-  }
-}
-
 MCSection *TargetLoweringObjectFileCOFF::SelectSectionForGlobal(
     const GlobalObject *GO, SectionKind Kind, const TargetMachine &TM) const {
   // If we have -ffunction-sections then we should emit the global value to a
@@ -1113,8 +1104,12 @@ MCSection *TargetLoweringObjectFileCOFF::SelectSectionForGlobal(
     if (!ComdatGV->hasPrivateLinkage()) {
       MCSymbol *Sym = TM.getSymbol(ComdatGV);
       StringRef COMDATSymName = Sym->getName();
-      appendComdatSymbolForMinGW(Name, COMDATSymName,
-                                 GO->getParent()->getDataLayout());
+
+      // Append "$symbol" to the section name when targetting mingw. The ld.bfd
+      // COFF linker will not properly handle comdats otherwise.
+      if (getTargetTriple().isWindowsGNUEnvironment())
+        raw_svector_ostream(Name) << '$' << COMDATSymName;
+
       return getContext().getCOFFSection(Name, Characteristics, Kind,
                                          COMDATSymName, Selection, UniqueID);
     } else {
