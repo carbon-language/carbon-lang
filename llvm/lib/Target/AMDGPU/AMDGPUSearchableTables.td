@@ -28,8 +28,6 @@ def RsrcIntrinsics : GenericTable {
 foreach intr = !listconcat(AMDGPUBufferIntrinsics,
                            AMDGPUImageIntrinsics,
                            AMDGPUImageDimIntrinsics,
-                           AMDGPUImageDimGatherIntrinsics,
-                           AMDGPUImageDimGetResInfoIntrinsics,
                            AMDGPUImageDimAtomicIntrinsics) in {
   def : RsrcIntrinsic<!cast<AMDGPURsrcIntrinsic>(intr)>;
 }
@@ -91,22 +89,3 @@ def : SourceOfDivergence<int_amdgcn_ds_swizzle>;
 
 foreach intr = AMDGPUImageDimAtomicIntrinsics in
 def : SourceOfDivergence<intr>;
-
-class D16ImageDimIntrinsic<AMDGPUImageDimIntrinsic intr> {
-  Intrinsic Intr = intr;
-  code D16HelperIntr =
-      !cast<code>("AMDGPUIntrinsic::SI_image_d16helper_" # intr.P.OpMod # intr.P.Dim.Name);
-}
-
-def D16ImageDimIntrinsics : GenericTable {
-  let FilterClass = "D16ImageDimIntrinsic";
-  let Fields = ["Intr", "D16HelperIntr"];
-
-  let PrimaryKey = ["Intr"];
-  let PrimaryKeyName = "lookupD16ImageDimIntrinsic";
-}
-
-foreach intr = !listconcat(AMDGPUImageDimIntrinsics,
-                           AMDGPUImageDimGatherIntrinsics) in {
-  def : D16ImageDimIntrinsic<intr>;
-}

@@ -107,8 +107,17 @@ struct MIMGInfo {
   uint8_t VAddrDwords;
 };
 
+#define GET_MIMGBaseOpcodesTable_IMPL
+#define GET_MIMGDimInfoTable_IMPL
 #define GET_MIMGInfoTable_IMPL
 #include "AMDGPUGenSearchableTables.inc"
+
+int getMIMGOpcode(unsigned BaseOpcode, unsigned MIMGEncoding,
+                  unsigned VDataDwords, unsigned VAddrDwords) {
+  const MIMGInfo *Info = getMIMGOpcodeHelper(BaseOpcode, MIMGEncoding,
+                                             VDataDwords, VAddrDwords);
+  return Info ? Info->Opcode : -1;
+}
 
 int getMaskedMIMGOp(unsigned Opc, unsigned NewChannels) {
   const MIMGInfo *OrigInfo = getMIMGInfo(Opc);

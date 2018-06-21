@@ -606,6 +606,7 @@ class arglistconcat<list<list<AMDGPUArg>> arglists, int shift = 0> {
 
 // Represent texture/image types / dimensionality.
 class AMDGPUDimProps<string name, list<string> coord_names, list<string> slice_names> {
+  AMDGPUDimProps Dim = !cast<AMDGPUDimProps>(NAME);
   string Name = name; // e.g. "2darraymsaa"
   bit DA = 0; // DA bit in MIMG encoding
 
@@ -617,6 +618,9 @@ class AMDGPUDimProps<string name, list<string> coord_names, list<string> slice_n
     makeArgList<!listconcat(!foreach(name, coord_names, "d" # name # "dh"),
                             !foreach(name, coord_names, "d" # name # "dv")),
                 llvm_anyfloat_ty>.ret;
+
+  bits<8> NumCoords = !size(CoordSliceArgs);
+  bits<8> NumGradients = !size(GradientArgs);
 }
 
 def AMDGPUDim1D : AMDGPUDimProps<"1d", ["s"], []>;
@@ -867,22 +871,18 @@ defset list<AMDGPUImageDimIntrinsic> AMDGPUImageDimIntrinsics = {
   }
 
   defm int_amdgcn_image_getlod : AMDGPUImageDimSampleDims<"GET_LOD", AMDGPUSample, 1>;
-}
 
-//////////////////////////////////////////////////////////////////////////
-// getresinfo intrinsics (separate due to D16)
-//////////////////////////////////////////////////////////////////////////
-defset list<AMDGPUImageDimIntrinsic> AMDGPUImageDimGetResInfoIntrinsics = {
+  //////////////////////////////////////////////////////////////////////////
+  // getresinfo intrinsics
+  //////////////////////////////////////////////////////////////////////////
   foreach dim = AMDGPUDims.All in {
     def !strconcat("int_amdgcn_image_getresinfo_", dim.Name)
       : AMDGPUImageDimIntrinsic<AMDGPUDimGetResInfoProfile<dim>, [IntrNoMem], []>;
   }
-}
 
-//////////////////////////////////////////////////////////////////////////
-// gather4 intrinsics
-//////////////////////////////////////////////////////////////////////////
-defset list<AMDGPUImageDimIntrinsic> AMDGPUImageDimGatherIntrinsics = {
+  //////////////////////////////////////////////////////////////////////////
+  // gather4 intrinsics
+  //////////////////////////////////////////////////////////////////////////
   foreach sample = AMDGPUSampleVariantsNoGradients in {
     foreach dim = [AMDGPUDim2D, AMDGPUDimCube, AMDGPUDim2DArray] in {
       def int_amdgcn_image_gather4 # sample.LowerCaseMod # _ # dim.Name:

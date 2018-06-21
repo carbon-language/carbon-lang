@@ -69,6 +69,13 @@ struct D16ImageDimIntrinsic {
 };
 const D16ImageDimIntrinsic *lookupD16ImageDimIntrinsic(unsigned Intr);
 
+struct ImageDimIntrinsicInfo {
+  unsigned Intr;
+  unsigned BaseOpcode;
+  MIMGDim Dim;
+};
+const ImageDimIntrinsicInfo *getImageDimIntrinsicInfo(unsigned Intr);
+
 } // end AMDGPU namespace
 } // End llvm namespace
 
