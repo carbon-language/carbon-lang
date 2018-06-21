@@ -706,6 +706,10 @@ private:
   /// demanded bits.
   bool SimplifyDemandedInstructionBits(Instruction &Inst);
 
+  Value *simplifyAMDGCNMemoryIntrinsicDemanded(IntrinsicInst *II,
+                                               APInt DemandedElts,
+                                               int DmaskIdx = -1);
+
   Value *SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
                                     APInt &UndefElts, unsigned Depth = 0);
 

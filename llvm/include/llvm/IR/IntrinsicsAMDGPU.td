@@ -803,8 +803,14 @@ class AMDGPUImageDimIntrinsic<AMDGPUDimProfile P_,
                            !if(P_.IsAtomic, 0, 1)), 1> {
   AMDGPUDimProfile P = P_;
 
+  AMDGPUImageDimIntrinsic Intr = !cast<AMDGPUImageDimIntrinsic>(NAME);
+
   let TargetPrefix = "amdgcn";
 }
+
+// Marker class for intrinsics with a DMask that determines the returned
+// channels.
+class AMDGPUImageDMaskIntrinsic;
 
 defset list<AMDGPUImageDimIntrinsic> AMDGPUImageDimIntrinsics = {
 
@@ -839,10 +845,14 @@ defset list<AMDGPUImageDimIntrinsic> AMDGPUImageDimIntrinsics = {
     }
   }
 
-  defm int_amdgcn_image_load : AMDGPUImageDimIntrinsicsAll<
-              "LOAD", [llvm_anyfloat_ty], [], [IntrReadMem], [SDNPMemOperand]>;
-  defm int_amdgcn_image_load_mip : AMDGPUImageDimIntrinsicsNoMsaa<
-              "LOAD_MIP", [llvm_anyfloat_ty], [], [IntrReadMem], [SDNPMemOperand], 1>;
+  defm int_amdgcn_image_load
+    : AMDGPUImageDimIntrinsicsAll<"LOAD", [llvm_anyfloat_ty], [], [IntrReadMem],
+                                  [SDNPMemOperand]>,
+      AMDGPUImageDMaskIntrinsic;
+  defm int_amdgcn_image_load_mip
+    : AMDGPUImageDimIntrinsicsNoMsaa<"LOAD_MIP", [llvm_anyfloat_ty], [],
+                                     [IntrReadMem], [SDNPMemOperand], 1>,
+      AMDGPUImageDMaskIntrinsic;
 
   defm int_amdgcn_image_store : AMDGPUImageDimIntrinsicsAll<
               "STORE", [], [AMDGPUArg<llvm_anyfloat_ty, "vdata">],
@@ -866,18 +876,22 @@ defset list<AMDGPUImageDimIntrinsic> AMDGPUImageDimIntrinsics = {
   }
 
   foreach sample = AMDGPUSampleVariants in {
-    defm int_amdgcn_image_sample # sample.LowerCaseMod :
-        AMDGPUImageDimSampleDims<"SAMPLE" # sample.UpperCaseMod, sample>;
+    defm int_amdgcn_image_sample # sample.LowerCaseMod
+      : AMDGPUImageDimSampleDims<"SAMPLE" # sample.UpperCaseMod, sample>,
+        AMDGPUImageDMaskIntrinsic;
   }
 
-  defm int_amdgcn_image_getlod : AMDGPUImageDimSampleDims<"GET_LOD", AMDGPUSample, 1>;
+  defm int_amdgcn_image_getlod
+    : AMDGPUImageDimSampleDims<"GET_LOD", AMDGPUSample, 1>,
+      AMDGPUImageDMaskIntrinsic;
 
   //////////////////////////////////////////////////////////////////////////
   // getresinfo intrinsics
   //////////////////////////////////////////////////////////////////////////
   foreach dim = AMDGPUDims.All in {
     def !strconcat("int_amdgcn_image_getresinfo_", dim.Name)
-      : AMDGPUImageDimIntrinsic<AMDGPUDimGetResInfoProfile<dim>, [IntrNoMem], []>;
+      : AMDGPUImageDimIntrinsic<AMDGPUDimGetResInfoProfile<dim>, [IntrNoMem], []>,
+        AMDGPUImageDMaskIntrinsic;
   }
 
   //////////////////////////////////////////////////////////////////////////
