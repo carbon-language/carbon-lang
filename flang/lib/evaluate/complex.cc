@@ -90,4 +90,10 @@ template<typename R> std::string Complex<R>::DumpHexadecimal() const {
   result += ')';
   return result;
 }
+
+template class Complex<Real<Integer<16>, 11>>;
+template class Complex<Real<Integer<32>, 24>>;
+template class Complex<Real<Integer<64>, 53>>;
+template class Complex<Real<Integer<80>, 64, false>>;
+template class Complex<Real<Integer<128>, 112>>;
 }  // namespace Fortran::evaluate::value

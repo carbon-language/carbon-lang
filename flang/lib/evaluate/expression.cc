@@ -48,8 +48,7 @@ std::ostream &ConversionOperand::Dump(std::ostream &o) const {
 
 template<int KIND> std::ostream &IntExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{
-          [&](const Constant &n) { o << n.SignedDecimal(); },
+      common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
           [&](const Convert &c) { c.x.Dump(o); },
           [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
           [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
@@ -65,16 +64,14 @@ template<int KIND> std::ostream &IntExpr<KIND>::Dump(std::ostream &o) const {
           },
           [&](const Power &p) {
             p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
-          },
-      },
+          }},
       u);
   return o;
 }
 
 template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{
-          [&](const Constant &n) { o << n.DumpHexadecimal(); },
+      common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
           [&](const Convert &c) { c.x.Dump(o); },
           [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
           [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
@@ -95,8 +92,7 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
             p.y.Dump(p.x->Dump(o << '(') << "**") << ')';
           },
           [&](const RealPart &z) { z.z->Dump(o << "REAL(") << ')'; },
-          [&](const AIMAG &z) { z.z->Dump(o << "AIMAG(") << ')'; },
-      },
+          [&](const AIMAG &z) { z.z->Dump(o << "AIMAG(") << ')'; }},
       u);
   return o;
 }
@@ -104,10 +100,7 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
 template<int KIND>
 std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const Constant &n) {
-                         o << '(' << n.REAL().DumpHexadecimal() << ','
-                           << n.AIMAG().DumpHexadecimal() << ')';
-                       },
+      common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
           [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
           [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
           [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
