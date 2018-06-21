@@ -306,21 +306,68 @@ class MIMG_Sampler_Helper <bits<7> op, string asm, RegisterClass dst_rc,
                       #!if(BaseOpcode.HasD16, "$d16", "");
 }
 
-multiclass MIMG_Sampler_Src_Helper <bits<7> op, string asm, RegisterClass dst_rc,
+class MIMGAddrSize<int dw, bit enable_disasm> {
+  int NumWords = dw;
+
+  RegisterClass RegClass = !if(!le(NumWords, 0), ?,
+                           !if(!eq(NumWords, 1), VGPR_32,
+                           !if(!eq(NumWords, 2), VReg_64,
+                           !if(!eq(NumWords, 3), VReg_96,
+                           !if(!eq(NumWords, 4), VReg_128,
+                           !if(!le(NumWords, 8), VReg_256,
+                           !if(!le(NumWords, 16), VReg_512, ?)))))));
+
+  // Whether the instruction variant with this vaddr size should be enabled for
+  // the auto-generated disassembler.
+  bit Disassemble = enable_disasm;
+}
+
+// Return whether a value inside the range [min, max] (endpoints inclusive)
+// is in the given list.
+class isRangeInList<int min, int max, list<int> lst> {
+  bit ret = !foldl(0, lst, lhs, y, !or(lhs, !and(!le(min, y), !le(y, max))));
+}
+
+class MIMGAddrSizes_tmp<list<MIMGAddrSize> lst, int min> {
+  list<MIMGAddrSize> List = lst;
+  int Min = min;
+}
+
+class MIMG_Sampler_AddrSizes<AMDGPUSampleVariant sample> {
+  // List of all possible numbers of address words, taking all combinations of
+  // A16 and image dimension into account (note: no MSAA, since this is for
+  // sample/gather ops).
+  list<int> AllNumAddrWords =
+    !foreach(dw, !if(sample.Gradients,
+                     !if(!eq(sample.LodOrClamp, ""),
+                         [2, 3, 4, 5, 6, 7, 9],
+                         [2, 3, 4, 5, 7, 8, 10]),
+                     !if(!eq(sample.LodOrClamp, ""),
+                         [1, 2, 3],
+                         [1, 2, 3, 4])),
+             !add(dw, !size(sample.ExtraAddrArgs)));
+
+  // Generate machine instructions based on possible register classes for the
+  // required numbers of address words. The disassembler defaults to the
+  // smallest register class.
+  list<MIMGAddrSize> MachineInstrs =
+    !foldl(MIMGAddrSizes_tmp<[], 0>, [1, 2, 3, 4, 8, 16], lhs, dw,
+           !if(isRangeInList<lhs.Min, dw, AllNumAddrWords>.ret,
+               MIMGAddrSizes_tmp<
+                  !listconcat(lhs.List, [MIMGAddrSize<dw, !empty(lhs.List)>]),
+                  !if(!eq(dw, 3), 3, !add(dw, 1))>, // we still need _V4 for codegen w/ 3 dwords
+               lhs)).List;
+}
+
+multiclass MIMG_Sampler_Src_Helper <bits<7> op, string asm,
+                                    AMDGPUSampleVariant sample, RegisterClass dst_rc,
                                     bit enableDisasm = 0> {
-  let VAddrDwords = 1 in
-  def _V1 : MIMG_Sampler_Helper <op, asm, dst_rc, VGPR_32,
-                                 !if(enableDisasm, "AMDGPU", "")>;
-  let VAddrDwords = 2 in
-  def _V2 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_64>;
-  let VAddrDwords = 3 in
-  def _V3 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_96>;
-  let VAddrDwords = 4 in
-  def _V4 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_128>;
-  let VAddrDwords = 8 in
-  def _V8 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_256>;
-  let VAddrDwords = 16 in
-  def _V16 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_512>;
+  foreach addr = MIMG_Sampler_AddrSizes<sample>.MachineInstrs in {
+    let VAddrDwords = addr.NumWords in
+    def _V # addr.NumWords
+      : MIMG_Sampler_Helper <op, asm, dst_rc, addr.RegClass,
+                             !if(!and(enableDisasm, addr.Disassemble), "AMDGPU", "")>;
+  }
 }
 
 class MIMG_Sampler_BaseOpcode<AMDGPUSampleVariant sample>
@@ -341,13 +388,13 @@ multiclass MIMG_Sampler <bits<7> op, AMDGPUSampleVariant sample, bit wqm = 0,
   let BaseOpcode = !cast<MIMGBaseOpcode>(NAME), WQM = wqm,
       mayLoad = !if(isGetLod, 0, 1) in {
     let VDataDwords = 1 in
-    defm _V1 : MIMG_Sampler_Src_Helper<op, asm, VGPR_32, 1>;
+    defm _V1 : MIMG_Sampler_Src_Helper<op, asm, sample, VGPR_32, 1>;
     let VDataDwords = 2 in
-    defm _V2 : MIMG_Sampler_Src_Helper<op, asm, VReg_64>;
+    defm _V2 : MIMG_Sampler_Src_Helper<op, asm, sample, VReg_64>;
     let VDataDwords = 3 in
-    defm _V3 : MIMG_Sampler_Src_Helper<op, asm, VReg_96>;
+    defm _V3 : MIMG_Sampler_Src_Helper<op, asm, sample, VReg_96>;
     let VDataDwords = 4 in
-    defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128>;
+    defm _V4 : MIMG_Sampler_Src_Helper<op, asm, sample, VReg_128>;
   }
 }
 
@@ -363,9 +410,9 @@ multiclass MIMG_Gather <bits<7> op, AMDGPUSampleVariant sample, bit wqm = 0,
   let BaseOpcode = !cast<MIMGBaseOpcode>(NAME), WQM = wqm,
       Gather4 = 1, hasPostISelHook = 0 in {
     let VDataDwords = 2 in
-    defm _V2 : MIMG_Sampler_Src_Helper<op, asm, VReg_64>; /* for packed D16 only */
+    defm _V2 : MIMG_Sampler_Src_Helper<op, asm, sample, VReg_64>; /* for packed D16 only */
     let VDataDwords = 4 in
-    defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128, 1>;
+    defm _V4 : MIMG_Sampler_Src_Helper<op, asm, sample, VReg_128, 1>;
   }
 }
 
