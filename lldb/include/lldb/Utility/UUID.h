@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string>
+#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
   class StringRef;
@@ -44,9 +45,9 @@ public:
 
   void Dump(Stream *s) const;
 
-  const void *GetBytes() const;
-
-  size_t GetByteSize() const;
+  llvm::ArrayRef<uint8_t> GetBytes() const {
+    return {m_uuid, m_num_uuid_bytes};
+  }
 
   bool IsValid() const;
 
