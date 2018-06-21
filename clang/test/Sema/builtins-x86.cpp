@@ -2,6 +2,7 @@
 //
 // Ensure that when we use builtins in C++ code with templates that compute the
 // valid immediate, the dead code with the invalid immediate doesn't error.
+// expected-no-diagnostics
 
 typedef short __v8hi __attribute__((__vector_size__(16)));
 
