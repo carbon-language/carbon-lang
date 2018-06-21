@@ -22,14 +22,15 @@
 using namespace Fortran::evaluate;
 
 int main() {
-  TEST(DefaultIntExpr::Result::Dump() == "Integer(4)");
-  DefaultIntExpr ie{666};
+  TEST(DefaultIntegerExpr::Result::Dump() == "Integer(4)");
+  DefaultIntegerExpr ie{666};
   std::stringstream ss;
   ie.Dump(ss);
   TEST(ss.str() == "666");
-  DefaultIntExpr one{DefaultIntExpr::Constant{1}};
-  DefaultIntExpr incr{std::move(ie) + DefaultIntExpr{1}};
+  DefaultIntegerExpr one{DefaultIntegerExpr::Constant{1}};
+  DefaultIntegerExpr incr{std::move(ie) + std::move(one) +
+                          DefaultIntegerExpr{1}};
 incr.Dump(std::cout) << '\n';
-  LogicalExpr cmp{std::move(incr) <= DefaultIntExpr{2}};
+  LogicalExpr cmp{std::move(incr) <= DefaultIntegerExpr{2}};
   return testing::Complete();
 }

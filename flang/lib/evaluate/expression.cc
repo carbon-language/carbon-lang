@@ -26,30 +26,31 @@ std::ostream &DumpExprWithType(std::ostream &o, const A &x) {
   return x.Dump(o << '(' << Ty::Dump() << ' ') << ')';
 }
 
-std::ostream &IntegerOperand::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { DumpExprWithType(o, *x); }, u);
+std::ostream &AnyIntegerExpr::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { DumpExprWithType(o, x); }, u);
   return o;
 }
 
-std::ostream &RealOperand::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { DumpExprWithType(o, *x); }, u);
+std::ostream &AnyRealExpr::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { DumpExprWithType(o, x); }, u);
   return o;
 }
 
-std::ostream &CharacterOperand::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { x->Dump(o); }, u);
-  return o;
-}
-
-std::ostream &ConversionOperand::Dump(std::ostream &o) const {
+std::ostream &AnyCharacterExpr::Dump(std::ostream &o) const {
   std::visit([&](const auto &x) { x.Dump(o); }, u);
   return o;
 }
 
-template<int KIND> std::ostream &IntExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &AnyIntegerOrRealExpr::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { x.Dump(o); }, u);
+  return o;
+}
+
+template<int KIND>
+std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
-          [&](const Convert &c) { c.x.Dump(o); },
+          [&](const Convert &c) { c.x->Dump(o); },
           [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
           [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
           [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
@@ -72,7 +73,7 @@ template<int KIND> std::ostream &IntExpr<KIND>::Dump(std::ostream &o) const {
 template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
-          [&](const Convert &c) { c.x.Dump(o); },
+          [&](const Convert &c) { c.x->Dump(o); },
           [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
           [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
           [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
@@ -89,7 +90,7 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
             p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
           },
           [&](const IntPower &p) {
-            p.y.Dump(p.x->Dump(o << '(') << "**") << ')';
+            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
           },
           [&](const RealPart &z) { z.z->Dump(o << "REAL(") << ')'; },
           [&](const AIMAG &z) { z.z->Dump(o << "AIMAG(") << ')'; }},
@@ -117,7 +118,7 @@ std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
             p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
           },
           [&](const IntPower &p) {
-            p.y.Dump(p.x->Dump(o << '(') << "**") << ')';
+            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
           },
           [&](const CMPLX &c) {
             c.im->Dump(c.re->Dump(o << '(') << ',') << ')';
@@ -126,7 +127,8 @@ std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
   return o;
 }
 
-template<int KIND> typename CharExpr<KIND>::Length CharExpr<KIND>::LEN() const {
+template<int KIND>
+typename CharacterExpr<KIND>::Length CharacterExpr<KIND>::LEN() const {
   return std::visit(
       common::visitors{
           [](const std::string &str) { return Length{str.size()}; },
@@ -134,7 +136,8 @@ template<int KIND> typename CharExpr<KIND>::Length CharExpr<KIND>::LEN() const {
       u);
 }
 
-template<int KIND> std::ostream &CharExpr<KIND>::Dump(std::ostream &o) const {
+template<int KIND>
+std::ostream &CharacterExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(common::visitors{[&](const Constant &s) { o << '"' << s << '"'; },
                  [&](const Concat &c) { c.y->Dump(c.x->Dump(o) << "//"); }},
       u);
@@ -157,8 +160,7 @@ template<typename T> std::ostream &Comparison<T>::Dump(std::ostream &o) const {
 }
 
 template<int KIND>
-std::ostream &Comparison<Type<Category::Complex, KIND>>::Dump(
-    std::ostream &o) const {
+std::ostream &Comparison<ComplexExpr<KIND>>::Dump(std::ostream &o) const {
   std::visit(common::visitors{[&](const EQ &c) {
                                 c.y->Dump(c.x->Dump(o << '(') << ".EQ.") << ')';
                               },
@@ -208,21 +210,20 @@ std::ostream &LogicalExpr::Dump(std::ostream &o) const {
   return o;
 }
 
-template struct Expression<Type<Category::Integer, 1>>;
-template struct Expression<Type<Category::Integer, 2>>;
-template struct Expression<Type<Category::Integer, 4>>;
-template struct Expression<Type<Category::Integer, 8>>;
-template struct Expression<Type<Category::Integer, 16>>;
-template struct Expression<Type<Category::Real, 2>>;
-template struct Expression<Type<Category::Real, 4>>;
-template struct Expression<Type<Category::Real, 8>>;
-template struct Expression<Type<Category::Real, 10>>;
-template struct Expression<Type<Category::Real, 16>>;
-template struct Expression<Type<Category::Complex, 2>>;
-template struct Expression<Type<Category::Complex, 4>>;
-template struct Expression<Type<Category::Complex, 8>>;
-template struct Expression<Type<Category::Complex, 10>>;
-template struct Expression<Type<Category::Complex, 16>>;
-template struct Expression<Type<Category::Logical, 1>>;
-template struct Expression<Type<Category::Character, 1>>;
+template struct IntegerExpr<1>;
+template struct IntegerExpr<2>;
+template struct IntegerExpr<4>;
+template struct IntegerExpr<8>;
+template struct IntegerExpr<16>;
+template struct RealExpr<2>;
+template struct RealExpr<4>;
+template struct RealExpr<8>;
+template struct RealExpr<10>;
+template struct RealExpr<16>;
+template struct ComplexExpr<2>;
+template struct ComplexExpr<4>;
+template struct ComplexExpr<8>;
+template struct ComplexExpr<10>;
+template struct ComplexExpr<16>;
+template struct CharacterExpr<1>;
 }  // namespace Fortran::evaluate
