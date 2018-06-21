@@ -1667,15 +1667,8 @@ CP microcode requires the Kernel descritor to be allocated on 64 byte alignment.
      453     1 bit   ENABLE_SGPR_FLAT_SCRATCH_INIT   *see above*
      454     1 bit   ENABLE_SGPR_PRIVATE_SEGMENT     *see above*
                      _SIZE
-     455     1 bit   ENABLE_SGPR_GRID_WORKGROUP      Not implemented in CP and
-                     _COUNT_X                        should always be 0.
-     456     1 bit   ENABLE_SGPR_GRID_WORKGROUP      Not implemented in CP and
-                     _COUNT_Y                        should always be 0.
-     457     1 bit   ENABLE_SGPR_GRID_WORKGROUP      Not implemented in CP and
-                     _COUNT_Z                        should always be 0.
-     463:458 6 bits                                  Reserved, must be 0.
-     511:464 6                                       Reserved, must be 0.
-             bytes
+     455     1 bit                                   Reserved, must be 0.
+     511:456 8 bytes                                 Reserved, must be 0.
      512     **Total size 64 bytes.**
      ======= ====================================================================
 

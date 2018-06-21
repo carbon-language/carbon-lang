@@ -360,18 +360,6 @@ uint16_t AMDGPUAsmPrinter::getAmdhsaKernelCodeProperties(
     KernelCodeProperties |=
         amdhsa::KERNEL_CODE_PROPERTY_ENABLE_SGPR_FLAT_SCRATCH_INIT;
   }
-  if (MFI.hasGridWorkgroupCountX()) {
-    KernelCodeProperties |=
-        amdhsa::KERNEL_CODE_PROPERTY_ENABLE_SGPR_GRID_WORKGROUP_COUNT_X;
-  }
-  if (MFI.hasGridWorkgroupCountY()) {
-    KernelCodeProperties |=
-        amdhsa::KERNEL_CODE_PROPERTY_ENABLE_SGPR_GRID_WORKGROUP_COUNT_Y;
-  }
-  if (MFI.hasGridWorkgroupCountZ()) {
-    KernelCodeProperties |=
-        amdhsa::KERNEL_CODE_PROPERTY_ENABLE_SGPR_GRID_WORKGROUP_COUNT_Z;
-  }
 
   return KernelCodeProperties;
 }
@@ -1206,21 +1194,6 @@ void AMDGPUAsmPrinter::getAmdKernelCode(amd_kernel_code_t &Out,
 
   if (MFI->hasFlatScratchInit())
     Out.code_properties |= AMD_CODE_PROPERTY_ENABLE_SGPR_FLAT_SCRATCH_INIT;
-
-  if (MFI->hasGridWorkgroupCountX()) {
-    Out.code_properties |=
-      AMD_CODE_PROPERTY_ENABLE_SGPR_GRID_WORKGROUP_COUNT_X;
-  }
-
-  if (MFI->hasGridWorkgroupCountY()) {
-    Out.code_properties |=
-      AMD_CODE_PROPERTY_ENABLE_SGPR_GRID_WORKGROUP_COUNT_Y;
-  }
-
-  if (MFI->hasGridWorkgroupCountZ()) {
-    Out.code_properties |=
-      AMD_CODE_PROPERTY_ENABLE_SGPR_GRID_WORKGROUP_COUNT_Z;
-  }
 
   if (MFI->hasDispatchPtr())
     Out.code_properties |= AMD_CODE_PROPERTY_ENABLE_SGPR_DISPATCH_PTR;
