@@ -156,6 +156,7 @@ static std::string computeDataLayout(const Triple &TT) {
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
+                                           bool JIT,
                                            Optional<Reloc::Model> RM) {
   bool is64Bit = TT.getArch() == Triple::x86_64;
   if (!RM.hasValue()) {
@@ -167,6 +168,8 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
         return Reloc::PIC_;
       return Reloc::DynamicNoPIC;
     }
+    if (JIT)
+      return Reloc::Static;
     if (TT.isOSWindows() && is64Bit)
       return Reloc::PIC_;
     return Reloc::Static;
@@ -210,7 +213,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, const Triple &TT,
                                    CodeGenOpt::Level OL, bool JIT)
     : LLVMTargetMachine(
           T, computeDataLayout(TT), TT, CPU, FS, Options,
-          getEffectiveRelocModel(TT, RM),
+          getEffectiveRelocModel(TT, JIT, RM),
           getEffectiveCodeModel(CM, JIT, TT.getArch() == Triple::x86_64), OL),
       TLOF(createTLOF(getTargetTriple())) {
   // Windows stack unwinder gets confused when execution flow "falls through"
