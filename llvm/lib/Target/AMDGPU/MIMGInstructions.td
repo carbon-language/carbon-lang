@@ -252,14 +252,16 @@ multiclass MIMG_Sampler_Src_Helper <bits<7> op, string asm,
                MIMG_Mask<asm#"_V16", channels>;
 }
 
-multiclass MIMG_Sampler <bits<7> op, string asm, bit wqm = 0, bit has_d16 = 1> {
+multiclass MIMG_Sampler <bits<7> op, AMDGPUSampleVariant sample, bit wqm = 0,
+                         bit has_d16 = 1,
+                         string asm = "image_sample"#sample.LowerCaseMod> {
   defm _V1 : MIMG_Sampler_Src_Helper<op, asm, VGPR_32, 1, wqm, has_d16>;
   defm _V2 : MIMG_Sampler_Src_Helper<op, asm, VReg_64, 2, wqm, has_d16>;
   defm _V3 : MIMG_Sampler_Src_Helper<op, asm, VReg_96, 3, wqm, has_d16>;
   defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128, 4, wqm, has_d16>;
 }
 
-multiclass MIMG_Sampler_WQM <bits<7> op, string asm> : MIMG_Sampler<op, asm, 1>;
+multiclass MIMG_Sampler_WQM <bits<7> op, AMDGPUSampleVariant sample> : MIMG_Sampler<op, sample, 1>;
 
 class MIMG_Gather_Helper <bits<7> op, string asm,
                           RegisterClass dst_rc,
@@ -311,12 +313,14 @@ multiclass MIMG_Gather_Src_Helper <bits<7> op, string asm,
              MIMG_Gather_Size<asm#"_V16", channels>;
 }
 
-multiclass MIMG_Gather <bits<7> op, string asm, bit wqm=0> {
+multiclass MIMG_Gather <bits<7> op, AMDGPUSampleVariant sample, bit wqm = 0,
+                        string asm = "image_gather4"#sample.LowerCaseMod> {
   defm _V2 : MIMG_Gather_Src_Helper<op, asm, VReg_64, 2, wqm>; /* for packed D16 only */
   defm _V4 : MIMG_Gather_Src_Helper<op, asm, VReg_128, 4, wqm>;
 }
 
-multiclass MIMG_Gather_WQM <bits<7> op, string asm> : MIMG_Gather<op, asm, 1>;
+multiclass MIMG_Gather_WQM <bits<7> op, AMDGPUSampleVariant sample>
+    : MIMG_Gather<op, sample, 1>;
 
 //===----------------------------------------------------------------------===//
 // MIMG Instructions
@@ -354,75 +358,75 @@ defm IMAGE_ATOMIC_DEC : MIMG_Atomic <mimg<0x1c>, "image_atomic_dec">;
 //def IMAGE_ATOMIC_FCMPSWAP : MIMG_NoPattern_ <"image_atomic_fcmpswap", 0x0000001d>; -- not on VI
 //def IMAGE_ATOMIC_FMIN : MIMG_NoPattern_ <"image_atomic_fmin", 0x0000001e>; -- not on VI
 //def IMAGE_ATOMIC_FMAX : MIMG_NoPattern_ <"image_atomic_fmax", 0x0000001f>; -- not on VI
-defm IMAGE_SAMPLE           : MIMG_Sampler_WQM <0x00000020, "image_sample">;
-defm IMAGE_SAMPLE_CL        : MIMG_Sampler_WQM <0x00000021, "image_sample_cl">;
-defm IMAGE_SAMPLE_D         : MIMG_Sampler <0x00000022, "image_sample_d">;
-defm IMAGE_SAMPLE_D_CL      : MIMG_Sampler <0x00000023, "image_sample_d_cl">;
-defm IMAGE_SAMPLE_L         : MIMG_Sampler <0x00000024, "image_sample_l">;
-defm IMAGE_SAMPLE_B         : MIMG_Sampler_WQM <0x00000025, "image_sample_b">;
-defm IMAGE_SAMPLE_B_CL      : MIMG_Sampler_WQM <0x00000026, "image_sample_b_cl">;
-defm IMAGE_SAMPLE_LZ        : MIMG_Sampler <0x00000027, "image_sample_lz">;
-defm IMAGE_SAMPLE_C         : MIMG_Sampler_WQM <0x00000028, "image_sample_c">;
-defm IMAGE_SAMPLE_C_CL      : MIMG_Sampler_WQM <0x00000029, "image_sample_c_cl">;
-defm IMAGE_SAMPLE_C_D       : MIMG_Sampler <0x0000002a, "image_sample_c_d">;
-defm IMAGE_SAMPLE_C_D_CL    : MIMG_Sampler <0x0000002b, "image_sample_c_d_cl">;
-defm IMAGE_SAMPLE_C_L       : MIMG_Sampler <0x0000002c, "image_sample_c_l">;
-defm IMAGE_SAMPLE_C_B       : MIMG_Sampler_WQM <0x0000002d, "image_sample_c_b">;
-defm IMAGE_SAMPLE_C_B_CL    : MIMG_Sampler_WQM <0x0000002e, "image_sample_c_b_cl">;
-defm IMAGE_SAMPLE_C_LZ      : MIMG_Sampler <0x0000002f, "image_sample_c_lz">;
-defm IMAGE_SAMPLE_O         : MIMG_Sampler_WQM <0x00000030, "image_sample_o">;
-defm IMAGE_SAMPLE_CL_O      : MIMG_Sampler_WQM <0x00000031, "image_sample_cl_o">;
-defm IMAGE_SAMPLE_D_O       : MIMG_Sampler <0x00000032, "image_sample_d_o">;
-defm IMAGE_SAMPLE_D_CL_O    : MIMG_Sampler <0x00000033, "image_sample_d_cl_o">;
-defm IMAGE_SAMPLE_L_O       : MIMG_Sampler <0x00000034, "image_sample_l_o">;
-defm IMAGE_SAMPLE_B_O       : MIMG_Sampler_WQM <0x00000035, "image_sample_b_o">;
-defm IMAGE_SAMPLE_B_CL_O    : MIMG_Sampler_WQM <0x00000036, "image_sample_b_cl_o">;
-defm IMAGE_SAMPLE_LZ_O      : MIMG_Sampler <0x00000037, "image_sample_lz_o">;
-defm IMAGE_SAMPLE_C_O       : MIMG_Sampler_WQM <0x00000038, "image_sample_c_o">;
-defm IMAGE_SAMPLE_C_CL_O    : MIMG_Sampler_WQM <0x00000039, "image_sample_c_cl_o">;
-defm IMAGE_SAMPLE_C_D_O     : MIMG_Sampler <0x0000003a, "image_sample_c_d_o">;
-defm IMAGE_SAMPLE_C_D_CL_O  : MIMG_Sampler <0x0000003b, "image_sample_c_d_cl_o">;
-defm IMAGE_SAMPLE_C_L_O     : MIMG_Sampler <0x0000003c, "image_sample_c_l_o">;
-defm IMAGE_SAMPLE_C_B_O     : MIMG_Sampler_WQM <0x0000003d, "image_sample_c_b_o">;
-defm IMAGE_SAMPLE_C_B_CL_O  : MIMG_Sampler_WQM <0x0000003e, "image_sample_c_b_cl_o">;
-defm IMAGE_SAMPLE_C_LZ_O    : MIMG_Sampler <0x0000003f, "image_sample_c_lz_o">;
-defm IMAGE_GATHER4          : MIMG_Gather_WQM <0x00000040, "image_gather4">;
-defm IMAGE_GATHER4_CL       : MIMG_Gather_WQM <0x00000041, "image_gather4_cl">;
-defm IMAGE_GATHER4_L        : MIMG_Gather <0x00000044, "image_gather4_l">;
-defm IMAGE_GATHER4_B        : MIMG_Gather_WQM <0x00000045, "image_gather4_b">;
-defm IMAGE_GATHER4_B_CL     : MIMG_Gather_WQM <0x00000046, "image_gather4_b_cl">;
-defm IMAGE_GATHER4_LZ       : MIMG_Gather <0x00000047, "image_gather4_lz">;
-defm IMAGE_GATHER4_C        : MIMG_Gather_WQM <0x00000048, "image_gather4_c">;
-defm IMAGE_GATHER4_C_CL     : MIMG_Gather_WQM <0x00000049, "image_gather4_c_cl">;
-defm IMAGE_GATHER4_C_L      : MIMG_Gather <0x0000004c, "image_gather4_c_l">;
-defm IMAGE_GATHER4_C_B      : MIMG_Gather_WQM <0x0000004d, "image_gather4_c_b">;
-defm IMAGE_GATHER4_C_B_CL   : MIMG_Gather_WQM <0x0000004e, "image_gather4_c_b_cl">;
-defm IMAGE_GATHER4_C_LZ     : MIMG_Gather <0x0000004f, "image_gather4_c_lz">;
-defm IMAGE_GATHER4_O        : MIMG_Gather_WQM <0x00000050, "image_gather4_o">;
-defm IMAGE_GATHER4_CL_O     : MIMG_Gather_WQM <0x00000051, "image_gather4_cl_o">;
-defm IMAGE_GATHER4_L_O      : MIMG_Gather <0x00000054, "image_gather4_l_o">;
-defm IMAGE_GATHER4_B_O      : MIMG_Gather_WQM <0x00000055, "image_gather4_b_o">;
-defm IMAGE_GATHER4_B_CL_O   : MIMG_Gather <0x00000056, "image_gather4_b_cl_o">;
-defm IMAGE_GATHER4_LZ_O     : MIMG_Gather <0x00000057, "image_gather4_lz_o">;
-defm IMAGE_GATHER4_C_O      : MIMG_Gather_WQM <0x00000058, "image_gather4_c_o">;
-defm IMAGE_GATHER4_C_CL_O   : MIMG_Gather_WQM <0x00000059, "image_gather4_c_cl_o">;
-defm IMAGE_GATHER4_C_L_O    : MIMG_Gather <0x0000005c, "image_gather4_c_l_o">;
-defm IMAGE_GATHER4_C_B_O    : MIMG_Gather_WQM <0x0000005d, "image_gather4_c_b_o">;
-defm IMAGE_GATHER4_C_B_CL_O : MIMG_Gather_WQM <0x0000005e, "image_gather4_c_b_cl_o">;
-defm IMAGE_GATHER4_C_LZ_O   : MIMG_Gather <0x0000005f, "image_gather4_c_lz_o">;
+defm IMAGE_SAMPLE           : MIMG_Sampler_WQM <0x00000020, AMDGPUSample>;
+defm IMAGE_SAMPLE_CL        : MIMG_Sampler_WQM <0x00000021, AMDGPUSample_cl>;
+defm IMAGE_SAMPLE_D         : MIMG_Sampler <0x00000022, AMDGPUSample_d>;
+defm IMAGE_SAMPLE_D_CL      : MIMG_Sampler <0x00000023, AMDGPUSample_d_cl>;
+defm IMAGE_SAMPLE_L         : MIMG_Sampler <0x00000024, AMDGPUSample_l>;
+defm IMAGE_SAMPLE_B         : MIMG_Sampler_WQM <0x00000025, AMDGPUSample_b>;
+defm IMAGE_SAMPLE_B_CL      : MIMG_Sampler_WQM <0x00000026, AMDGPUSample_b_cl>;
+defm IMAGE_SAMPLE_LZ        : MIMG_Sampler <0x00000027, AMDGPUSample_lz>;
+defm IMAGE_SAMPLE_C         : MIMG_Sampler_WQM <0x00000028, AMDGPUSample_c>;
+defm IMAGE_SAMPLE_C_CL      : MIMG_Sampler_WQM <0x00000029, AMDGPUSample_c_cl>;
+defm IMAGE_SAMPLE_C_D       : MIMG_Sampler <0x0000002a, AMDGPUSample_c_d>;
+defm IMAGE_SAMPLE_C_D_CL    : MIMG_Sampler <0x0000002b, AMDGPUSample_c_d_cl>;
+defm IMAGE_SAMPLE_C_L       : MIMG_Sampler <0x0000002c, AMDGPUSample_c_l>;
+defm IMAGE_SAMPLE_C_B       : MIMG_Sampler_WQM <0x0000002d, AMDGPUSample_c_b>;
+defm IMAGE_SAMPLE_C_B_CL    : MIMG_Sampler_WQM <0x0000002e, AMDGPUSample_c_b_cl>;
+defm IMAGE_SAMPLE_C_LZ      : MIMG_Sampler <0x0000002f, AMDGPUSample_c_lz>;
+defm IMAGE_SAMPLE_O         : MIMG_Sampler_WQM <0x00000030, AMDGPUSample_o>;
+defm IMAGE_SAMPLE_CL_O      : MIMG_Sampler_WQM <0x00000031, AMDGPUSample_cl_o>;
+defm IMAGE_SAMPLE_D_O       : MIMG_Sampler <0x00000032, AMDGPUSample_d_o>;
+defm IMAGE_SAMPLE_D_CL_O    : MIMG_Sampler <0x00000033, AMDGPUSample_d_cl_o>;
+defm IMAGE_SAMPLE_L_O       : MIMG_Sampler <0x00000034, AMDGPUSample_l_o>;
+defm IMAGE_SAMPLE_B_O       : MIMG_Sampler_WQM <0x00000035, AMDGPUSample_b_o>;
+defm IMAGE_SAMPLE_B_CL_O    : MIMG_Sampler_WQM <0x00000036, AMDGPUSample_b_cl_o>;
+defm IMAGE_SAMPLE_LZ_O      : MIMG_Sampler <0x00000037, AMDGPUSample_lz_o>;
+defm IMAGE_SAMPLE_C_O       : MIMG_Sampler_WQM <0x00000038, AMDGPUSample_c_o>;
+defm IMAGE_SAMPLE_C_CL_O    : MIMG_Sampler_WQM <0x00000039, AMDGPUSample_c_cl_o>;
+defm IMAGE_SAMPLE_C_D_O     : MIMG_Sampler <0x0000003a, AMDGPUSample_c_d_o>;
+defm IMAGE_SAMPLE_C_D_CL_O  : MIMG_Sampler <0x0000003b, AMDGPUSample_c_d_cl_o>;
+defm IMAGE_SAMPLE_C_L_O     : MIMG_Sampler <0x0000003c, AMDGPUSample_c_l_o>;
+defm IMAGE_SAMPLE_C_B_CL_O  : MIMG_Sampler_WQM <0x0000003e, AMDGPUSample_c_b_cl_o>;
+defm IMAGE_SAMPLE_C_B_O     : MIMG_Sampler_WQM <0x0000003d, AMDGPUSample_c_b_o>;
+defm IMAGE_SAMPLE_C_LZ_O    : MIMG_Sampler <0x0000003f, AMDGPUSample_c_lz_o>;
+defm IMAGE_GATHER4          : MIMG_Gather_WQM <0x00000040, AMDGPUSample>;
+defm IMAGE_GATHER4_CL       : MIMG_Gather_WQM <0x00000041, AMDGPUSample_cl>;
+defm IMAGE_GATHER4_L        : MIMG_Gather <0x00000044, AMDGPUSample_l>;
+defm IMAGE_GATHER4_B        : MIMG_Gather_WQM <0x00000045, AMDGPUSample_b>;
+defm IMAGE_GATHER4_B_CL     : MIMG_Gather_WQM <0x00000046, AMDGPUSample_b_cl>;
+defm IMAGE_GATHER4_LZ       : MIMG_Gather <0x00000047, AMDGPUSample_lz>;
+defm IMAGE_GATHER4_C        : MIMG_Gather_WQM <0x00000048, AMDGPUSample_c>;
+defm IMAGE_GATHER4_C_CL     : MIMG_Gather_WQM <0x00000049, AMDGPUSample_c_cl>;
+defm IMAGE_GATHER4_C_L      : MIMG_Gather <0x0000004c, AMDGPUSample_c_l>;
+defm IMAGE_GATHER4_C_B      : MIMG_Gather_WQM <0x0000004d, AMDGPUSample_c_b>;
+defm IMAGE_GATHER4_C_B_CL   : MIMG_Gather_WQM <0x0000004e, AMDGPUSample_c_b_cl>;
+defm IMAGE_GATHER4_C_LZ     : MIMG_Gather <0x0000004f, AMDGPUSample_c_lz>;
+defm IMAGE_GATHER4_O        : MIMG_Gather_WQM <0x00000050, AMDGPUSample_o>;
+defm IMAGE_GATHER4_CL_O     : MIMG_Gather_WQM <0x00000051, AMDGPUSample_cl_o>;
+defm IMAGE_GATHER4_L_O      : MIMG_Gather <0x00000054, AMDGPUSample_l_o>;
+defm IMAGE_GATHER4_B_O      : MIMG_Gather_WQM <0x00000055, AMDGPUSample_b_o>;
+defm IMAGE_GATHER4_B_CL_O   : MIMG_Gather <0x00000056, AMDGPUSample_b_cl_o>;
+defm IMAGE_GATHER4_LZ_O     : MIMG_Gather <0x00000057, AMDGPUSample_lz_o>;
+defm IMAGE_GATHER4_C_O      : MIMG_Gather_WQM <0x00000058, AMDGPUSample_c_o>;
+defm IMAGE_GATHER4_C_CL_O   : MIMG_Gather_WQM <0x00000059, AMDGPUSample_c_cl_o>;
+defm IMAGE_GATHER4_C_L_O    : MIMG_Gather <0x0000005c, AMDGPUSample_c_l_o>;
+defm IMAGE_GATHER4_C_B_O    : MIMG_Gather_WQM <0x0000005d, AMDGPUSample_c_b_o>;
+defm IMAGE_GATHER4_C_B_CL_O : MIMG_Gather_WQM <0x0000005e, AMDGPUSample_c_b_cl_o>;
+defm IMAGE_GATHER4_C_LZ_O   : MIMG_Gather <0x0000005f, AMDGPUSample_c_lz_o>;
 
 let mayLoad = 0, mayStore = 0 in {
-defm IMAGE_GET_LOD          : MIMG_Sampler <0x00000060, "image_get_lod", 1, 0>;
+defm IMAGE_GET_LOD          : MIMG_Sampler <0x00000060, AMDGPUSample, 1, 0, "image_get_lod">;
 }
 
-defm IMAGE_SAMPLE_CD        : MIMG_Sampler <0x00000068, "image_sample_cd">;
-defm IMAGE_SAMPLE_CD_CL     : MIMG_Sampler <0x00000069, "image_sample_cd_cl">;
-defm IMAGE_SAMPLE_C_CD      : MIMG_Sampler <0x0000006a, "image_sample_c_cd">;
-defm IMAGE_SAMPLE_C_CD_CL   : MIMG_Sampler <0x0000006b, "image_sample_c_cd_cl">;
-defm IMAGE_SAMPLE_CD_O      : MIMG_Sampler <0x0000006c, "image_sample_cd_o">;
-defm IMAGE_SAMPLE_CD_CL_O   : MIMG_Sampler <0x0000006d, "image_sample_cd_cl_o">;
-defm IMAGE_SAMPLE_C_CD_O    : MIMG_Sampler <0x0000006e, "image_sample_c_cd_o">;
-defm IMAGE_SAMPLE_C_CD_CL_O : MIMG_Sampler <0x0000006f, "image_sample_c_cd_cl_o">;
+defm IMAGE_SAMPLE_CD        : MIMG_Sampler <0x00000068, AMDGPUSample_cd>;
+defm IMAGE_SAMPLE_CD_CL     : MIMG_Sampler <0x00000069, AMDGPUSample_cd_cl>;
+defm IMAGE_SAMPLE_C_CD      : MIMG_Sampler <0x0000006a, AMDGPUSample_c_cd>;
+defm IMAGE_SAMPLE_C_CD_CL   : MIMG_Sampler <0x0000006b, AMDGPUSample_c_cd_cl>;
+defm IMAGE_SAMPLE_CD_O      : MIMG_Sampler <0x0000006c, AMDGPUSample_cd_o>;
+defm IMAGE_SAMPLE_CD_CL_O   : MIMG_Sampler <0x0000006d, AMDGPUSample_cd_cl_o>;
+defm IMAGE_SAMPLE_C_CD_O    : MIMG_Sampler <0x0000006e, AMDGPUSample_c_cd_o>;
+defm IMAGE_SAMPLE_C_CD_CL_O : MIMG_Sampler <0x0000006f, AMDGPUSample_c_cd_cl_o>;
 //def IMAGE_RSRC256 : MIMG_NoPattern_RSRC256 <"image_rsrc256", 0x0000007e>;
 //def IMAGE_SAMPLER : MIMG_NoPattern_ <"image_sampler", 0x0000007f>;
 }
