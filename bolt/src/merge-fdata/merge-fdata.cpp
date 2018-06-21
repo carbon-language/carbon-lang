@@ -233,6 +233,30 @@ void mergeFunctionProfile(BinaryFunctionProfile &MergedBF,
   }
 }
 
+bool isYAML(const StringRef Filename) {
+  auto MB = MemoryBuffer::getFileOrSTDIN(Filename);
+  if (std::error_code EC = MB.getError())
+    report_error(Filename, EC);
+  auto Buffer = MB.get()->getBuffer();
+  if (Buffer.startswith("---\n"))
+    return true;
+  return false;
+}
+
+void mergeLegacyProfiles(const cl::list<std::string> &Filenames) {
+  errs() << "Using legacy profile format.\n";
+  for (auto &Filename : Filenames) {
+    if (isYAML(Filename))
+      report_error(Filename, "cannot mix YAML and legacy formats");
+    auto MB = MemoryBuffer::getFileOrSTDIN(Filename);
+    if (std::error_code EC = MB.getError())
+      report_error(Filename, EC);
+    errs() << "Merging data from " << Filename << "...\n";
+    outs() << MB.get()->getBuffer();
+  }
+  errs() << "Profile from " << Filenames.size() << " files merged.\n";
+}
+
 } // anonymous namespace
 
 int main(int argc, char **argv) {
@@ -248,6 +272,11 @@ int main(int argc, char **argv) {
                               "merge multiple fdata into a single file");
 
   ToolName = argv[0];
+
+  if (!isYAML(opts::InputDataFilenames.front())) {
+    mergeLegacyProfiles(opts::InputDataFilenames);
+    return 0;
+  }
 
   // Merged header.
   BinaryProfileHeader MergedHeader;
