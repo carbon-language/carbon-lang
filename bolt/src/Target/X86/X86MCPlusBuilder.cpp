@@ -2309,10 +2309,11 @@ public:
         int64_t       ScaleValue;
         unsigned      IndexRegNum;
         const MCExpr *DispExpr = nullptr;
+        int64_t       DispValue;
         unsigned      SegRegNum;
         if (!evaluateX86MemoryOperand(Instr, &BaseRegNum,
                                       &ScaleValue, &IndexRegNum,
-                                      nullptr, &SegRegNum, &DispExpr))
+                                      &DispValue, &SegRegNum, &DispExpr))
           break;
         if (BaseRegNum != RegInfo->getProgramCounter() ||
             IndexRegNum != X86::NoRegister ||
