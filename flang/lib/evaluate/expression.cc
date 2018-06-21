@@ -74,6 +74,8 @@ template<int KIND> typename CharExpr<KIND>::Length CharExpr<KIND>::LEN() const {
       u);
 }
 
+// TODO dump logical and comparison
+
 template struct Expression<Type<Category::Integer, 1>>;
 template struct Expression<Type<Category::Integer, 2>>;
 template struct Expression<Type<Category::Integer, 4>>;
