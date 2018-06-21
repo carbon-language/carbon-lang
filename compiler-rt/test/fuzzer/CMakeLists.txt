@@ -3,6 +3,10 @@ if (NOT COMPILER_RT_STANDALONE_BUILD)
   list(APPEND LIBFUZZER_TEST_DEPS fuzzer asan ubsan)
 endif()
 
+if (APPLE)
+  darwin_filter_host_archs(FUZZER_SUPPORTED_ARCH FUZZER_SUPPORTED_ARCH)
+endif()
+
 if(COMPILER_RT_INCLUDE_TESTS)
   list(APPEND LIBFUZZER_TEST_DEPS FuzzerUnitTests)
 endif()
