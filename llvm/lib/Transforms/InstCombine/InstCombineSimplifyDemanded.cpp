@@ -1650,57 +1650,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       break;
     case Intrinsic::amdgcn_buffer_load:
     case Intrinsic::amdgcn_buffer_load_format:
-    case Intrinsic::amdgcn_image_sample:
-    case Intrinsic::amdgcn_image_sample_cl:
-    case Intrinsic::amdgcn_image_sample_d:
-    case Intrinsic::amdgcn_image_sample_d_cl:
-    case Intrinsic::amdgcn_image_sample_l:
-    case Intrinsic::amdgcn_image_sample_b:
-    case Intrinsic::amdgcn_image_sample_b_cl:
-    case Intrinsic::amdgcn_image_sample_lz:
-    case Intrinsic::amdgcn_image_sample_cd:
-    case Intrinsic::amdgcn_image_sample_cd_cl:
-
-    case Intrinsic::amdgcn_image_sample_c:
-    case Intrinsic::amdgcn_image_sample_c_cl:
-    case Intrinsic::amdgcn_image_sample_c_d:
-    case Intrinsic::amdgcn_image_sample_c_d_cl:
-    case Intrinsic::amdgcn_image_sample_c_l:
-    case Intrinsic::amdgcn_image_sample_c_b:
-    case Intrinsic::amdgcn_image_sample_c_b_cl:
-    case Intrinsic::amdgcn_image_sample_c_lz:
-    case Intrinsic::amdgcn_image_sample_c_cd:
-    case Intrinsic::amdgcn_image_sample_c_cd_cl:
-
-    case Intrinsic::amdgcn_image_sample_o:
-    case Intrinsic::amdgcn_image_sample_cl_o:
-    case Intrinsic::amdgcn_image_sample_d_o:
-    case Intrinsic::amdgcn_image_sample_d_cl_o:
-    case Intrinsic::amdgcn_image_sample_l_o:
-    case Intrinsic::amdgcn_image_sample_b_o:
-    case Intrinsic::amdgcn_image_sample_b_cl_o:
-    case Intrinsic::amdgcn_image_sample_lz_o:
-    case Intrinsic::amdgcn_image_sample_cd_o:
-    case Intrinsic::amdgcn_image_sample_cd_cl_o:
-
-    case Intrinsic::amdgcn_image_sample_c_o:
-    case Intrinsic::amdgcn_image_sample_c_cl_o:
-    case Intrinsic::amdgcn_image_sample_c_d_o:
-    case Intrinsic::amdgcn_image_sample_c_d_cl_o:
-    case Intrinsic::amdgcn_image_sample_c_l_o:
-    case Intrinsic::amdgcn_image_sample_c_b_o:
-    case Intrinsic::amdgcn_image_sample_c_b_cl_o:
-    case Intrinsic::amdgcn_image_sample_c_lz_o:
-    case Intrinsic::amdgcn_image_sample_c_cd_o:
-    case Intrinsic::amdgcn_image_sample_c_cd_cl_o:
-
-    case Intrinsic::amdgcn_image_getlod: {
-      auto IID = II->getIntrinsicID();
-      bool IsBuffer = IID == Intrinsic::amdgcn_buffer_load ||
-                      IID == Intrinsic::amdgcn_buffer_load_format;
-      return simplifyAMDGCNMemoryIntrinsicDemanded(II, DemandedElts,
-                                                   IsBuffer ? -1 : 3);
-    }
+      return simplifyAMDGCNMemoryIntrinsicDemanded(II, DemandedElts);
     default: {
       if (getAMDGPUImageDMaskIntrinsic(II->getIntrinsicID()))
         return simplifyAMDGCNMemoryIntrinsicDemanded(II, DemandedElts, 0);

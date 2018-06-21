@@ -26,7 +26,6 @@ def RsrcIntrinsics : GenericTable {
 }
 
 foreach intr = !listconcat(AMDGPUBufferIntrinsics,
-                           AMDGPUImageIntrinsics,
                            AMDGPUImageDimIntrinsics,
                            AMDGPUImageDimAtomicIntrinsics) in {
   def : RsrcIntrinsic<!cast<AMDGPURsrcIntrinsic>(intr)>;
@@ -60,19 +59,6 @@ def : SourceOfDivergence<int_amdgcn_atomic_dec>;
 def : SourceOfDivergence<int_amdgcn_ds_fadd>;
 def : SourceOfDivergence<int_amdgcn_ds_fmin>;
 def : SourceOfDivergence<int_amdgcn_ds_fmax>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_swap>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_add>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_sub>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_smin>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_umin>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_smax>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_umax>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_and>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_or>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_xor>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_inc>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_dec>;
-def : SourceOfDivergence<int_amdgcn_image_atomic_cmpswap>;
 def : SourceOfDivergence<int_amdgcn_buffer_atomic_swap>;
 def : SourceOfDivergence<int_amdgcn_buffer_atomic_add>;
 def : SourceOfDivergence<int_amdgcn_buffer_atomic_sub>;
