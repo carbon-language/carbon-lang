@@ -61,13 +61,13 @@ struct RsrcIntrinsic {
   uint8_t RsrcArg;
   bool IsImage;
 };
-const RsrcIntrinsic *lookupRsrcIntrinsicByIntr(unsigned Intr);
+const RsrcIntrinsic *lookupRsrcIntrinsic(unsigned Intr);
 
 struct D16ImageDimIntrinsic {
   unsigned Intr;
   unsigned D16HelperIntr;
 };
-const D16ImageDimIntrinsic *lookupD16ImageDimIntrinsicByIntr(unsigned Intr);
+const D16ImageDimIntrinsic *lookupD16ImageDimIntrinsic(unsigned Intr);
 
 } // end AMDGPU namespace
 } // End llvm namespace

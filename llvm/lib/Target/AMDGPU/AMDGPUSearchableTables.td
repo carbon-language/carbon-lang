@@ -13,13 +13,18 @@ include "llvm/TableGen/SearchableTable.td"
 // Resource intrinsics table.
 //===----------------------------------------------------------------------===//
 
-class RsrcIntrinsic<AMDGPURsrcIntrinsic intr> : SearchableTable {
-  let SearchableFields = ["Intr"];
-  let EnumNameField = ?;
-
+class RsrcIntrinsic<AMDGPURsrcIntrinsic intr> {
   Intrinsic Intr = !cast<Intrinsic>(intr);
   bits<8> RsrcArg = intr.RsrcArg;
   bit IsImage = intr.IsImage;
+}
+
+def RsrcIntrinsics : GenericTable {
+  let FilterClass = "RsrcIntrinsic";
+  let Fields = ["Intr", "RsrcArg", "IsImage"];
+
+  let PrimaryKey = ["Intr"];
+  let PrimaryKeyName = "lookupRsrcIntrinsic";
 }
 
 foreach intr = !listconcat(AMDGPUBufferIntrinsics,
@@ -31,11 +36,16 @@ foreach intr = !listconcat(AMDGPUBufferIntrinsics,
   def : RsrcIntrinsic<!cast<AMDGPURsrcIntrinsic>(intr)>;
 }
 
-class SourceOfDivergence<Intrinsic intr> : SearchableTable {
-  let SearchableFields = ["Intr"];
-  let EnumNameField = ?;
-
+class SourceOfDivergence<Intrinsic intr> {
   Intrinsic Intr = intr;
+}
+
+def SourcesOfDivergence : GenericTable {
+  let FilterClass = "SourceOfDivergence";
+  let Fields = ["Intr"];
+
+  let PrimaryKey = ["Intr"];
+  let PrimaryKeyName = "lookupSourceOfDivergence";
 }
 
 def : SourceOfDivergence<int_amdgcn_workitem_id_x>;
@@ -84,13 +94,18 @@ def : SourceOfDivergence<int_amdgcn_ds_swizzle>;
 foreach intr = AMDGPUImageDimAtomicIntrinsics in
 def : SourceOfDivergence<intr>;
 
-class D16ImageDimIntrinsic<AMDGPUImageDimIntrinsic intr> : SearchableTable {
-  let SearchableFields = ["Intr"];
-  let EnumNameField = ?;
-
+class D16ImageDimIntrinsic<AMDGPUImageDimIntrinsic intr> {
   Intrinsic Intr = intr;
   code D16HelperIntr =
       !cast<code>("AMDGPUIntrinsic::SI_image_d16helper_" # intr.P.OpMod # intr.P.Dim.Name);
+}
+
+def D16ImageDimIntrinsics : GenericTable {
+  let FilterClass = "D16ImageDimIntrinsic";
+  let Fields = ["Intr", "D16HelperIntr"];
+
+  let PrimaryKey = ["Intr"];
+  let PrimaryKeyName = "lookupD16ImageDimIntrinsic";
 }
 
 foreach intr = !listconcat(AMDGPUImageDimIntrinsics,

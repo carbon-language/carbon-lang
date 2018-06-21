@@ -951,15 +951,15 @@ namespace {
 struct SourceOfDivergence {
   unsigned Intr;
 };
-const SourceOfDivergence *lookupSourceOfDivergenceByIntr(unsigned Intr);
+const SourceOfDivergence *lookupSourceOfDivergence(unsigned Intr);
 
-#define GET_SOURCEOFDIVERGENCE_IMPL
+#define GET_SourcesOfDivergence_IMPL
 #include "AMDGPUGenSearchableTables.inc"
 
 } // end anonymous namespace
 
 bool isIntrinsicSourceOfDivergence(unsigned IntrID) {
-  return lookupSourceOfDivergenceByIntr(IntrID);
+  return lookupSourceOfDivergence(IntrID);
 }
 } // namespace AMDGPU
 } // namespace llvm

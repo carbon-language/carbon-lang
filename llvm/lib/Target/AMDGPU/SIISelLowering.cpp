@@ -649,7 +649,7 @@ bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
                                           MachineFunction &MF,
                                           unsigned IntrID) const {
   if (const AMDGPU::RsrcIntrinsic *RsrcIntr =
-          AMDGPU::lookupRsrcIntrinsicByIntr(IntrID)) {
+          AMDGPU::lookupRsrcIntrinsic(IntrID)) {
     AttributeList Attr = Intrinsic::getAttributes(CI.getContext(),
                                                   (Intrinsic::ID)IntrID);
     if (Attr.hasFnAttribute(Attribute::ReadNone))
@@ -5138,7 +5138,7 @@ SDValue SITargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
         Op.getValueType().isVector() &&
         Op.getValueType().getScalarSizeInBits() == 16) {
       if (const AMDGPU::D16ImageDimIntrinsic *D16ImageDimIntr =
-            AMDGPU::lookupD16ImageDimIntrinsicByIntr(IntrID)) {
+            AMDGPU::lookupD16ImageDimIntrinsic(IntrID)) {
         return adjustLoadValueType(D16ImageDimIntr->D16HelperIntr,
                                    cast<MemSDNode>(Op), DAG, true);
       }
@@ -5393,7 +5393,7 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
   }
   default: {
     const AMDGPU::D16ImageDimIntrinsic *D16ImageDimIntr =
-        AMDGPU::lookupD16ImageDimIntrinsicByIntr(IntrinsicID);
+        AMDGPU::lookupD16ImageDimIntrinsic(IntrinsicID);
     if (D16ImageDimIntr) {
       SDValue VData = Op.getOperand(2);
       EVT StoreVT = VData.getValueType();
