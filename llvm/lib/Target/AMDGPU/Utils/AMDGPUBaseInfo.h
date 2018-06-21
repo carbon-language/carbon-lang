@@ -166,6 +166,9 @@ int getMaskedMIMGAtomicOp(const MCInstrInfo &MII,
                           unsigned Opc, unsigned NewChannels);
 
 LLVM_READONLY
+int getMIMGGatherOpPackedD16(uint16_t Opcode);
+
+LLVM_READONLY
 int getMCOpcode(uint16_t Opcode, unsigned Gen);
 
 void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,

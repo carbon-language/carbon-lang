@@ -300,16 +300,6 @@ def SIImage_gather4_c_b_o     : SDTImage_sample<"AMDGPUISD::IMAGE_GATHER4_C_B_O"
 def SIImage_gather4_c_b_cl_o  : SDTImage_sample<"AMDGPUISD::IMAGE_GATHER4_C_B_CL_O">;
 def SIImage_gather4_c_lz_o    : SDTImage_sample<"AMDGPUISD::IMAGE_GATHER4_C_LZ_O">;
 
-class SDSample<string opcode> : SDNode <opcode,
-  SDTypeProfile<1, 4, [SDTCisVT<0, v4f32>, SDTCisVT<2, v8i32>,
-                       SDTCisVT<3, v4i32>, SDTCisVT<4, i32>]>
->;
-
-def SIsample : SDSample<"AMDGPUISD::SAMPLE">;
-def SIsampleb : SDSample<"AMDGPUISD::SAMPLEB">;
-def SIsampled : SDSample<"AMDGPUISD::SAMPLED">;
-def SIsamplel : SDSample<"AMDGPUISD::SAMPLEL">;
-
 def SIpc_add_rel_offset : SDNode<"AMDGPUISD::PC_ADD_REL_OFFSET",
   SDTypeProfile<1, 2, [SDTCisVT<0, iPTR>, SDTCisSameAs<0,1>, SDTCisSameAs<0,2>]>
 >;
@@ -2077,6 +2067,14 @@ def getMIMGAtomicOp2 : InstrMapping {
   let ColFields = ["AtomicSize"];
   let KeyCol = ["2"];
   let ValueCols = [["1"]];
+}
+
+def getMIMGGatherOpPackedD16 : InstrMapping {
+  let FilterClass = "MIMG_Gather_Size";
+  let RowFields = ["Op"];
+  let ColFields = ["Channels"];
+  let KeyCol = ["4"];
+  let ValueCols = [["2"]];
 }
 
 // Maps an commuted opcode to its original version

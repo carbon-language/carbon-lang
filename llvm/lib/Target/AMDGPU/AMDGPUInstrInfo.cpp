@@ -109,8 +109,7 @@ int AMDGPUInstrInfo::pseudoToMCOpcode(int Opcode) const {
   // Adjust the encoding family to GFX80 for D16 buffer instructions when the
   // subtarget has UnpackedD16VMem feature.
   // TODO: remove this when we discard GFX80 encoding.
-  if (ST.hasUnpackedD16VMem() && (get(Opcode).TSFlags & SIInstrFlags::D16)
-                              && !(get(Opcode).TSFlags & SIInstrFlags::MIMG))
+  if (ST.hasUnpackedD16VMem() && (get(Opcode).TSFlags & SIInstrFlags::D16Buf))
     Gen = SIEncodingFamily::GFX80;
 
   int MCOp = AMDGPU::getMCOpcode(Opcode, Gen);

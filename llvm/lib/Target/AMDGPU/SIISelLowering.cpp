@@ -7762,9 +7762,16 @@ static unsigned SubIdx2Lane(unsigned Idx) {
 /// Adjust the writemask of MIMG instructions
 SDNode *SITargetLowering::adjustWritemask(MachineSDNode *&Node,
                                           SelectionDAG &DAG) const {
+  unsigned Opcode = Node->getMachineOpcode();
+
+  // Subtract 1 because the vdata output is not a MachineSDNode operand.
+  int D16Idx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::d16) - 1;
+  if (D16Idx >= 0 && Node->getConstantOperandVal(D16Idx))
+    return Node; // not implemented for D16
+
   SDNode *Users[4] = { nullptr };
   unsigned Lane = 0;
-  unsigned DmaskIdx = (Node->getNumOperands() - Node->getNumValues() == 9) ? 2 : 3;
+  unsigned DmaskIdx = AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::dmask) - 1;
   unsigned OldDmask = Node->getConstantOperandVal(DmaskIdx);
   unsigned NewDmask = 0;
   bool HasChain = Node->getNumValues() > 1;
@@ -7936,7 +7943,7 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
   unsigned Opcode = Node->getMachineOpcode();
 
   if (TII->isMIMG(Opcode) && !TII->get(Opcode).mayStore() &&
-      !TII->isGather4(Opcode) && !TII->isD16(Opcode)) {
+      !TII->isGather4(Opcode)) {
     return adjustWritemask(Node, DAG);
   }
 

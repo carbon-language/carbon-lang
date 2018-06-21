@@ -17,6 +17,11 @@ class MIMG_Atomic_Size <string op, bit is32Bit> {
   int AtomicSize = !if(is32Bit, 1, 2);
 }
 
+class MIMG_Gather_Size <string op, int channels> {
+  string Op = op;
+  int Channels = channels;
+}
+
 class mimg <bits<7> si, bits<7> vi = si> {
   field bits<7> SI = si;
   field bits<7> VI = vi;
@@ -37,125 +42,88 @@ class MIMG_Helper <dag outs, dag ins, string asm,
 class MIMG_NoSampler_Helper <bits<7> op, string asm,
                              RegisterClass dst_rc,
                              RegisterClass addr_rc,
-                             bit d16_bit=0,
-                             string dns=""> : MIMG_Helper <
-  (outs dst_rc:$vdata),
-  (ins addr_rc:$vaddr, SReg_256:$srsrc,
-       DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
-       R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da),
-  asm#" $vdata, $vaddr, $srsrc$dmask$unorm$glc$slc$r128$tfe$lwe$da"#!if(d16_bit, " d16", ""),
-  dns>, MIMGe<op> {
+                             bit has_d16,
+                             string dns="">
+  : MIMG_Helper <(outs dst_rc:$vdata),
+                 !con((ins addr_rc:$vaddr, SReg_256:$srsrc,
+                           DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
+                           R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da),
+                      !if(has_d16, (ins D16:$d16), (ins))),
+                 asm#" $vdata, $vaddr, $srsrc$dmask$unorm$glc$slc$r128$tfe$lwe$da"
+                   #!if(has_d16, "$d16", ""),
+                 dns>,
+    MIMGe<op> {
   let ssamp = 0;
-  let D16 = d16;
-}
 
-multiclass MIMG_NoSampler_Src_Helper_Helper <bits<7> op, string asm,
-                                             RegisterClass dst_rc,
-                                             int channels, bit d16_bit,
-                                             string suffix> {
-  def NAME # _V1 # suffix : MIMG_NoSampler_Helper <op, asm, dst_rc, VGPR_32, d16_bit,
-                                                   !if(!eq(channels, 1), "AMDGPU", "")>,
-                            MIMG_Mask<asm#"_V1"#suffix, channels>;
-  def NAME # _V2 # suffix : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_64, d16_bit>,
-                            MIMG_Mask<asm#"_V2"#suffix, channels>;
-  def NAME # _V3 # suffix : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_96, d16_bit>,
-                            MIMG_Mask<asm#"_V3"#suffix, channels>;
-  def NAME # _V4 # suffix : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_128, d16_bit>,
-                            MIMG_Mask<asm#"_V4"#suffix, channels>;
+  let HasD16 = has_d16;
+  let d16 = !if(HasD16, ?, 0);
 }
 
 multiclass MIMG_NoSampler_Src_Helper <bits<7> op, string asm,
-                                      RegisterClass dst_rc,
-                                      int channels> {
-  defm NAME : MIMG_NoSampler_Src_Helper_Helper <op, asm, dst_rc, channels, 0, "">;
-
-  let d16 = 1 in {
-    let SubtargetPredicate = HasPackedD16VMem in {
-      defm NAME : MIMG_NoSampler_Src_Helper_Helper <op, asm, dst_rc, channels, 1, "_D16">;
-    } // End HasPackedD16VMem.
-
-    let SubtargetPredicate = HasUnpackedD16VMem, DecoderNamespace = "GFX80_UNPACKED" in {
-      defm NAME : MIMG_NoSampler_Src_Helper_Helper <op, asm, dst_rc, channels, 1, "_D16_gfx80">;
-    } // End HasUnpackedD16VMem.
-  } // End d16 = 1.
+                                             RegisterClass dst_rc,
+                                             int channels, bit has_d16> {
+  def NAME # _V1 : MIMG_NoSampler_Helper <op, asm, dst_rc, VGPR_32, has_d16,
+                                         !if(!eq(channels, 1), "AMDGPU", "")>,
+                   MIMG_Mask<asm#"_V1", channels>;
+  def NAME # _V2 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_64, has_d16>,
+                   MIMG_Mask<asm#"_V2", channels>;
+  def NAME # _V3 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_96, has_d16>,
+                   MIMG_Mask<asm#"_V3", channels>;
+  def NAME # _V4 : MIMG_NoSampler_Helper <op, asm, dst_rc, VReg_128, has_d16>,
+                   MIMG_Mask<asm#"_V4", channels>;
 }
 
-multiclass MIMG_NoSampler <bits<7> op, string asm> {
-  defm _V1 : MIMG_NoSampler_Src_Helper <op, asm, VGPR_32, 1>;
-  defm _V2 : MIMG_NoSampler_Src_Helper <op, asm, VReg_64, 2>;
-  defm _V3 : MIMG_NoSampler_Src_Helper <op, asm, VReg_96, 3>;
-  defm _V4 : MIMG_NoSampler_Src_Helper <op, asm, VReg_128, 4>;
-}
-
-multiclass MIMG_PckNoSampler <bits<7> op, string asm> {
-  defm NAME # _V1 : MIMG_NoSampler_Src_Helper_Helper <op, asm, VGPR_32, 1, 0, "">;
-  defm NAME # _V2 : MIMG_NoSampler_Src_Helper_Helper <op, asm, VReg_64, 2, 0, "">;
-  defm NAME # _V3 : MIMG_NoSampler_Src_Helper_Helper <op, asm, VReg_96, 3, 0, "">;
-  defm NAME # _V4 : MIMG_NoSampler_Src_Helper_Helper <op, asm, VReg_128, 4, 0, "">;
+multiclass MIMG_NoSampler <bits<7> op, string asm, bit has_d16> {
+  defm _V1 : MIMG_NoSampler_Src_Helper <op, asm, VGPR_32, 1, has_d16>;
+  defm _V2 : MIMG_NoSampler_Src_Helper <op, asm, VReg_64, 2, has_d16>;
+  defm _V3 : MIMG_NoSampler_Src_Helper <op, asm, VReg_96, 3, has_d16>;
+  defm _V4 : MIMG_NoSampler_Src_Helper <op, asm, VReg_128, 4, has_d16>;
 }
 
 class MIMG_Store_Helper <bits<7> op, string asm,
                          RegisterClass data_rc,
                          RegisterClass addr_rc,
-                         bit d16_bit=0,
-                         string dns = ""> : MIMG_Helper <
-  (outs),
-  (ins data_rc:$vdata, addr_rc:$vaddr, SReg_256:$srsrc,
-       DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
-       R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da),
-  asm#" $vdata, $vaddr, $srsrc$dmask$unorm$glc$slc$r128$tfe$lwe$da"#!if(d16_bit, " d16", ""), dns>, MIMGe<op> {
+                         bit has_d16,
+                         string dns = "">
+  : MIMG_Helper <(outs),
+                 !con((ins data_rc:$vdata, addr_rc:$vaddr, SReg_256:$srsrc,
+                           DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
+                           R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da),
+                      !if(has_d16, (ins D16:$d16), (ins))),
+                 asm#" $vdata, $vaddr, $srsrc$dmask$unorm$glc$slc$r128$tfe$lwe$da"
+                   #!if(has_d16, "$d16", ""),
+                 dns>,
+    MIMGe<op> {
   let ssamp = 0;
   let mayLoad = 0;
   let mayStore = 1;
   let hasSideEffects = 0;
   let hasPostISelHook = 0;
   let DisableWQM = 1;
-  let D16 = d16;
-}
 
-multiclass MIMG_Store_Addr_Helper_Helper <bits<7> op, string asm,
-                                  RegisterClass data_rc,
-                                  int channels, bit d16_bit,
-                                  string suffix> {
-  def NAME # _V1 # suffix : MIMG_Store_Helper <op, asm, data_rc, VGPR_32, d16_bit,
-                                               !if(!eq(channels, 1), "AMDGPU", "")>,
-                            MIMG_Mask<asm#"_V1"#suffix, channels>;
-  def NAME # _V2 # suffix : MIMG_Store_Helper <op, asm, data_rc, VReg_64, d16_bit>,
-                            MIMG_Mask<asm#"_V2"#suffix, channels>;
-  def NAME # _V3 # suffix : MIMG_Store_Helper <op, asm, data_rc, VReg_96, d16_bit>,
-                            MIMG_Mask<asm#"_V3"#suffix, channels>;
-  def NAME # _V4 # suffix : MIMG_Store_Helper <op, asm, data_rc, VReg_128, d16_bit>,
-                            MIMG_Mask<asm#"_V4"#suffix, channels>;
+  let HasD16 = has_d16;
+  let d16 = !if(HasD16, ?, 0);
 }
 
 multiclass MIMG_Store_Addr_Helper <bits<7> op, string asm,
                                   RegisterClass data_rc,
-                                  int channels> {
-  defm NAME : MIMG_Store_Addr_Helper_Helper <op, asm, data_rc, channels, 0, "">;
-
-  let d16 = 1 in {
-    let SubtargetPredicate = HasPackedD16VMem in {
-      defm NAME : MIMG_Store_Addr_Helper_Helper <op, asm, data_rc, channels, 1, "_D16">;
-    } // End HasPackedD16VMem.
-
-    let SubtargetPredicate = HasUnpackedD16VMem, DecoderNamespace = "GFX80_UNPACKED" in {
-      defm NAME : MIMG_Store_Addr_Helper_Helper <op, asm, data_rc, channels, 1, "_D16_gfx80">;
-    } // End HasUnpackedD16VMem.
-  } // End d16 = 1.
+                                  int channels, bit has_d16> {
+  def NAME # _V1 : MIMG_Store_Helper <op, asm, data_rc, VGPR_32, has_d16,
+                                      !if(!eq(channels, 1), "AMDGPU", "")>,
+                   MIMG_Mask<asm#"_V1", channels>;
+  def NAME # _V2 : MIMG_Store_Helper <op, asm, data_rc, VReg_64, has_d16>,
+                   MIMG_Mask<asm#"_V2", channels>;
+  def NAME # _V3 : MIMG_Store_Helper <op, asm, data_rc, VReg_96, has_d16>,
+                   MIMG_Mask<asm#"_V3", channels>;
+  def NAME # _V4 : MIMG_Store_Helper <op, asm, data_rc, VReg_128, has_d16>,
+                   MIMG_Mask<asm#"_V4", channels>;
 }
 
-multiclass MIMG_Store <bits<7> op, string asm> {
-  defm _V1 : MIMG_Store_Addr_Helper <op, asm, VGPR_32, 1>;
-  defm _V2 : MIMG_Store_Addr_Helper <op, asm, VReg_64, 2>;
-  defm _V3 : MIMG_Store_Addr_Helper <op, asm, VReg_96, 3>;
-  defm _V4 : MIMG_Store_Addr_Helper <op, asm, VReg_128, 4>;
-}
-
-multiclass MIMG_PckStore <bits<7> op, string asm> {
-  defm NAME # _V1 : MIMG_Store_Addr_Helper_Helper <op, asm, VGPR_32, 1, 0, "">;
-  defm NAME # _V2 : MIMG_Store_Addr_Helper_Helper <op, asm, VReg_64, 2, 0, "">;
-  defm NAME # _V3 : MIMG_Store_Addr_Helper_Helper <op, asm, VReg_96, 3, 0, "">;
-  defm NAME # _V4 : MIMG_Store_Addr_Helper_Helper <op, asm, VReg_128, 4, 0, "">;
+multiclass MIMG_Store <bits<7> op, string asm, bit has_d16> {
+  defm _V1 : MIMG_Store_Addr_Helper <op, asm, VGPR_32, 1, has_d16>;
+  defm _V2 : MIMG_Store_Addr_Helper <op, asm, VReg_64, 2, has_d16>;
+  defm _V3 : MIMG_Store_Addr_Helper <op, asm, VReg_96, 3, has_d16>;
+  defm _V4 : MIMG_Store_Addr_Helper <op, asm, VReg_128, 4, has_d16>;
 }
 
 class MIMG_Atomic_Helper <string asm, RegisterClass data_rc,
@@ -177,23 +145,27 @@ class MIMG_Atomic_Helper <string asm, RegisterClass data_rc,
 }
 
 class MIMG_Atomic_Real_si<mimg op, string name, string asm,
-  RegisterClass data_rc, RegisterClass addr_rc, bit enableDasm> :
-  MIMG_Atomic_Helper<asm, data_rc, addr_rc, "SICI", enableDasm>,
-  SIMCInstr<name, SIEncodingFamily.SI>,
-  MIMGe<op.SI> {
+                          RegisterClass data_rc, RegisterClass addr_rc,
+                          bit enableDasm>
+  : MIMG_Atomic_Helper<asm, data_rc, addr_rc, "SICI", enableDasm>,
+    SIMCInstr<name, SIEncodingFamily.SI>,
+    MIMGe<op.SI> {
   let isCodeGenOnly = 0;
   let AssemblerPredicates = [isSICI];
   let DisableDecoder = DisableSIDecoder;
+  let d16 = 0;
 }
 
 class MIMG_Atomic_Real_vi<mimg op, string name, string asm,
-  RegisterClass data_rc, RegisterClass addr_rc, bit enableDasm> :
-  MIMG_Atomic_Helper<asm, data_rc, addr_rc, "VI", enableDasm>,
-  SIMCInstr<name, SIEncodingFamily.VI>,
-  MIMGe<op.VI> {
+                          RegisterClass data_rc, RegisterClass addr_rc,
+                          bit enableDasm>
+  : MIMG_Atomic_Helper<asm, data_rc, addr_rc, "VI", enableDasm>,
+    SIMCInstr<name, SIEncodingFamily.VI>,
+    MIMGe<op.VI> {
   let isCodeGenOnly = 0;
   let AssemblerPredicates = [isVI];
   let DisableDecoder = DisableVIDecoder;
+  let d16 = 0;
 }
 
 multiclass MIMG_Atomic_Helper_m <mimg op,
@@ -245,59 +217,46 @@ multiclass MIMG_Atomic <mimg op, string asm,
 class MIMG_Sampler_Helper <bits<7> op, string asm,
                            RegisterClass dst_rc,
                            RegisterClass src_rc,
-                           bit wqm,
-                           bit d16_bit=0,
-                           string dns=""> : MIMG_Helper <
-  (outs dst_rc:$vdata),
-  (ins src_rc:$vaddr, SReg_256:$srsrc, SReg_128:$ssamp,
-       DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
-       R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da),
-  asm#" $vdata, $vaddr, $srsrc, $ssamp$dmask$unorm$glc$slc$r128$tfe$lwe$da"#!if(d16_bit, " d16", ""),
-  dns>, MIMGe<op> {
+                           bit wqm, bit has_d16,
+                           string dns="">
+  : MIMG_Helper <(outs dst_rc:$vdata),
+                 !con((ins src_rc:$vaddr, SReg_256:$srsrc, SReg_128:$ssamp,
+                           DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
+                           R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da),
+                      !if(has_d16, (ins D16:$d16), (ins))),
+                 asm#" $vdata, $vaddr, $srsrc, $ssamp$dmask$unorm$glc$slc$r128$tfe$lwe$da"
+                   #!if(has_d16, "$d16", ""),
+                 dns>,
+    MIMGe<op> {
   let WQM = wqm;
-  let D16 = d16;
-}
 
-multiclass MIMG_Sampler_Src_Helper_Helper <bits<7> op, string asm,
-                                    RegisterClass dst_rc,
-                                    int channels, bit wqm,
-                                    bit d16_bit, string suffix> {
-    def _V1 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VGPR_32, wqm, d16_bit,
-                                   !if(!eq(channels, 1), "AMDGPU", "")>,
-                       MIMG_Mask<asm#"_V1"#suffix, channels>;
-    def _V2 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_64, wqm, d16_bit>,
-                       MIMG_Mask<asm#"_V2"#suffix, channels>;
-    def _V3 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_96, wqm, d16_bit>,
-                       MIMG_Mask<asm#"_V3"#suffix, channels>;
-    def _V4 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_128, wqm, d16_bit>,
-                       MIMG_Mask<asm#"_V4"#suffix, channels>;
-    def _V8 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_256, wqm, d16_bit>,
-                       MIMG_Mask<asm#"_V8"#suffix, channels>;
-    def _V16 # suffix : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_512, wqm, d16_bit>,
-                        MIMG_Mask<asm#"_V16"#suffix, channels>;
+  let HasD16 = has_d16;
+  let d16 = !if(HasD16, ?, 0);
 }
 
 multiclass MIMG_Sampler_Src_Helper <bits<7> op, string asm,
                                     RegisterClass dst_rc,
-                                    int channels, bit wqm> {
-  defm "" : MIMG_Sampler_Src_Helper_Helper <op, asm, dst_rc, channels, wqm, 0, "">;
-
-  let d16 = 1 in {
-    let SubtargetPredicate = HasPackedD16VMem in {
-      defm "" : MIMG_Sampler_Src_Helper_Helper <op, asm, dst_rc, channels, wqm, 1, "_D16">;
-    } // End HasPackedD16VMem.
-
-    let SubtargetPredicate = HasUnpackedD16VMem, DecoderNamespace = "GFX80_UNPACKED" in {
-      defm "" : MIMG_Sampler_Src_Helper_Helper <op, asm, dst_rc, channels, wqm, 1, "_D16_gfx80">;
-    } // End HasUnpackedD16VMem.
-  } // End d16 = 1.
+                                    int channels, bit wqm, bit has_d16> {
+    def _V1 : MIMG_Sampler_Helper <op, asm, dst_rc, VGPR_32, wqm, has_d16,
+                                   !if(!eq(channels, 1), "AMDGPU", "")>,
+              MIMG_Mask<asm#"_V1", channels>;
+    def _V2 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_64, wqm, has_d16>,
+              MIMG_Mask<asm#"_V2", channels>;
+    def _V3 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_96, wqm, has_d16>,
+              MIMG_Mask<asm#"_V3", channels>;
+    def _V4 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_128, wqm, has_d16>,
+              MIMG_Mask<asm#"_V4", channels>;
+    def _V8 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_256, wqm, has_d16>,
+              MIMG_Mask<asm#"_V8", channels>;
+    def _V16 : MIMG_Sampler_Helper <op, asm, dst_rc, VReg_512, wqm, has_d16>,
+               MIMG_Mask<asm#"_V16", channels>;
 }
 
-multiclass MIMG_Sampler <bits<7> op, string asm, bit wqm=0> {
-  defm _V1 : MIMG_Sampler_Src_Helper<op, asm, VGPR_32, 1, wqm>;
-  defm _V2 : MIMG_Sampler_Src_Helper<op, asm, VReg_64, 2, wqm>;
-  defm _V3 : MIMG_Sampler_Src_Helper<op, asm, VReg_96, 3, wqm>;
-  defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128, 4, wqm>;
+multiclass MIMG_Sampler <bits<7> op, string asm, bit wqm = 0, bit has_d16 = 1> {
+  defm _V1 : MIMG_Sampler_Src_Helper<op, asm, VGPR_32, 1, wqm, has_d16>;
+  defm _V2 : MIMG_Sampler_Src_Helper<op, asm, VReg_64, 2, wqm, has_d16>;
+  defm _V3 : MIMG_Sampler_Src_Helper<op, asm, VReg_96, 3, wqm, has_d16>;
+  defm _V4 : MIMG_Sampler_Src_Helper<op, asm, VReg_128, 4, wqm, has_d16>;
 }
 
 multiclass MIMG_Sampler_WQM <bits<7> op, string asm> : MIMG_Sampler<op, asm, 1>;
@@ -306,14 +265,14 @@ class MIMG_Gather_Helper <bits<7> op, string asm,
                           RegisterClass dst_rc,
                           RegisterClass src_rc,
                           bit wqm,
-                          bit d16_bit=0,
-                          string dns=""> : MIMG <
-  (outs dst_rc:$vdata),
-  (ins src_rc:$vaddr, SReg_256:$srsrc, SReg_128:$ssamp,
-       DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
-       R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da),
-  asm#" $vdata, $vaddr, $srsrc, $ssamp$dmask$unorm$glc$slc$r128$tfe$lwe$da"#!if(d16_bit, " d16", ""),
-  []>, MIMGe<op> {
+                          string dns="">
+  : MIMG <(outs dst_rc:$vdata),
+          (ins src_rc:$vaddr, SReg_256:$srsrc, SReg_128:$ssamp,
+               DMask:$dmask, UNorm:$unorm, GLC:$glc, SLC:$slc,
+               R128:$r128, TFE:$tfe, LWE:$lwe, DA:$da, D16:$d16),
+          asm#" $vdata, $vaddr, $srsrc, $ssamp$dmask$unorm$glc$slc$r128$tfe$lwe$da$d16",
+          []>,
+    MIMGe<op> {
   let mayLoad = 1;
   let mayStore = 0;
 
@@ -327,7 +286,7 @@ class MIMG_Gather_Helper <bits<7> op, string asm,
   let Gather4 = 1;
   let hasPostISelHook = 0;
   let WQM = wqm;
-  let D16 = d16;
+  let HasD16 = 1;
 
   let DecoderNamespace = dns;
   let isAsmParserOnly = !if(!eq(dns,""), 1, 0);
@@ -336,29 +295,25 @@ class MIMG_Gather_Helper <bits<7> op, string asm,
 
 multiclass MIMG_Gather_Src_Helper <bits<7> op, string asm,
                                     RegisterClass dst_rc,
-                                    bit wqm, bit d16_bit,
-                                    string prefix,
-                                    string suffix> {
-  def prefix # _V1 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VGPR_32, wqm, d16_bit, "AMDGPU">;
-  def prefix # _V2 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_64, wqm, d16_bit>;
-  def prefix # _V3 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_96, wqm, d16_bit>;
-  def prefix # _V4 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_128, wqm, d16_bit>;
-  def prefix # _V8 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_256, wqm, d16_bit>;
-  def prefix # _V16 # suffix : MIMG_Gather_Helper <op, asm, dst_rc, VReg_512, wqm, d16_bit>;
+                                    int channels, bit wqm> {
+  def _V1 : MIMG_Gather_Helper <op, asm, dst_rc, VGPR_32, wqm,
+                                !if(!eq(channels, 4), "AMDGPU", "")>,
+            MIMG_Gather_Size<asm#"_V1", channels>;
+  def _V2 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_64, wqm>,
+            MIMG_Gather_Size<asm#"_V2", channels>;
+  def _V3 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_96, wqm>,
+            MIMG_Gather_Size<asm#"_V3", channels>;
+  def _V4 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_128, wqm>,
+            MIMG_Gather_Size<asm#"_V4", channels>;
+  def _V8 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_256, wqm>,
+            MIMG_Gather_Size<asm#"_V8", channels>;
+  def _V16 : MIMG_Gather_Helper <op, asm, dst_rc, VReg_512, wqm>,
+             MIMG_Gather_Size<asm#"_V16", channels>;
 }
 
 multiclass MIMG_Gather <bits<7> op, string asm, bit wqm=0> {
-  defm "" : MIMG_Gather_Src_Helper<op, asm, VReg_128, wqm, 0, "_V4", "">;
-
-  let d16 = 1 in {
-    let AssemblerPredicate = HasPackedD16VMem in {
-      defm "" : MIMG_Gather_Src_Helper<op, asm, VReg_64, wqm, 1, "_V2", "_D16">;
-    } // End HasPackedD16VMem.
-
-    let AssemblerPredicate = HasUnpackedD16VMem, DecoderNamespace = "GFX80_UNPACKED" in {
-      defm "" : MIMG_Gather_Src_Helper<op, asm, VReg_128, wqm, 1, "_V4", "_D16_gfx80">;
-    } // End HasUnpackedD16VMem.
-  } // End d16 = 1.
+  defm _V2 : MIMG_Gather_Src_Helper<op, asm, VReg_64, 2, wqm>; /* for packed D16 only */
+  defm _V4 : MIMG_Gather_Src_Helper<op, asm, VReg_128, 4, wqm>;
 }
 
 multiclass MIMG_Gather_WQM <bits<7> op, string asm> : MIMG_Gather<op, asm, 1>;
@@ -367,19 +322,19 @@ multiclass MIMG_Gather_WQM <bits<7> op, string asm> : MIMG_Gather<op, asm, 1>;
 // MIMG Instructions
 //===----------------------------------------------------------------------===//
 let SubtargetPredicate = isGCN in {
-defm IMAGE_LOAD : MIMG_NoSampler <0x00000000, "image_load">;
-defm IMAGE_LOAD_MIP : MIMG_NoSampler <0x00000001, "image_load_mip">;
-defm IMAGE_LOAD_PCK : MIMG_PckNoSampler <0x00000002, "image_load_pck">;
-defm IMAGE_LOAD_PCK_SGN : MIMG_PckNoSampler <0x00000003, "image_load_pck_sgn">;
-defm IMAGE_LOAD_MIP_PCK : MIMG_PckNoSampler <0x00000004, "image_load_mip_pck">;
-defm IMAGE_LOAD_MIP_PCK_SGN : MIMG_PckNoSampler <0x00000005, "image_load_mip_pck_sgn">;
-defm IMAGE_STORE : MIMG_Store <0x00000008, "image_store">;
-defm IMAGE_STORE_MIP : MIMG_Store <0x00000009, "image_store_mip">;
-defm IMAGE_STORE_PCK : MIMG_PckStore <0x0000000a, "image_store_pck">;
-defm IMAGE_STORE_MIP_PCK : MIMG_PckStore <0x0000000b, "image_store_mip_pck">;
+defm IMAGE_LOAD : MIMG_NoSampler <0x00000000, "image_load", 1>;
+defm IMAGE_LOAD_MIP : MIMG_NoSampler <0x00000001, "image_load_mip", 1>;
+defm IMAGE_LOAD_PCK : MIMG_NoSampler <0x00000002, "image_load_pck", 0>;
+defm IMAGE_LOAD_PCK_SGN : MIMG_NoSampler <0x00000003, "image_load_pck_sgn", 0>;
+defm IMAGE_LOAD_MIP_PCK : MIMG_NoSampler <0x00000004, "image_load_mip_pck", 0>;
+defm IMAGE_LOAD_MIP_PCK_SGN : MIMG_NoSampler <0x00000005, "image_load_mip_pck_sgn", 0>;
+defm IMAGE_STORE : MIMG_Store <0x00000008, "image_store", 1>;
+defm IMAGE_STORE_MIP : MIMG_Store <0x00000009, "image_store_mip", 1>;
+defm IMAGE_STORE_PCK : MIMG_Store <0x0000000a, "image_store_pck", 0>;
+defm IMAGE_STORE_MIP_PCK : MIMG_Store <0x0000000b, "image_store_mip_pck", 0>;
 
 let mayLoad = 0, mayStore = 0 in {
-defm IMAGE_GET_RESINFO : MIMG_NoSampler <0x0000000e, "image_get_resinfo">;
+defm IMAGE_GET_RESINFO : MIMG_NoSampler <0x0000000e, "image_get_resinfo", 0>;
 }
 
 defm IMAGE_ATOMIC_SWAP : MIMG_Atomic <mimg<0x0f, 0x10>, "image_atomic_swap">;
@@ -457,7 +412,7 @@ defm IMAGE_GATHER4_C_B_CL_O : MIMG_Gather_WQM <0x0000005e, "image_gather4_c_b_cl
 defm IMAGE_GATHER4_C_LZ_O   : MIMG_Gather <0x0000005f, "image_gather4_c_lz_o">;
 
 let mayLoad = 0, mayStore = 0 in {
-defm IMAGE_GET_LOD          : MIMG_Sampler_WQM <0x00000060, "image_get_lod">;
+defm IMAGE_GET_LOD          : MIMG_Sampler <0x00000060, "image_get_lod", 1, 0>;
 }
 
 defm IMAGE_SAMPLE_CD        : MIMG_Sampler <0x00000068, "image_sample_cd">;
@@ -519,13 +474,13 @@ class makeRegSequence<ValueType vt, RegisterClass RC, list<string> names> {
 }
 
 class ImageDimPattern<AMDGPUImageDimIntrinsic I,
-                      string dop, ValueType dty,
+                      string dop, ValueType dty, bit d16,
                       string suffix = ""> : GCNPat<(undef), (undef)> {
   list<AMDGPUArg> AddrArgs = I.P.AddrDefaultArgs;
   getDwordsType AddrDwords = getDwordsType<!size(AddrArgs)>;
 
-  Instruction MI =
-    !cast<Instruction>(!strconcat("IMAGE_", I.P.OpMod, dop, AddrDwords.suffix, suffix));
+  MIMG MI =
+    !cast<MIMG>(!strconcat("IMAGE_", I.P.OpMod, dop, AddrDwords.suffix, suffix));
 
   // DAG fragment to match data arguments (vdata for store/atomic, dmask
   // for non-atomic).
@@ -581,7 +536,8 @@ class ImageDimPattern<AMDGPUImageDimIntrinsic I,
              0, /* r128 */
              0, /* tfe */
              0 /*(as_i1imm $lwe)*/,
-             { I.P.Dim.DA }));
+             { I.P.Dim.DA }),
+         !if(MI.HasD16, (MI d16), (MI)));
   let ResultInstrs = [
     !if(IsCmpSwap, (EXTRACT_SUBREG ImageInstruction, sub0), ImageInstruction)
   ];
@@ -589,23 +545,23 @@ class ImageDimPattern<AMDGPUImageDimIntrinsic I,
 
 foreach intr = !listconcat(AMDGPUImageDimIntrinsics,
                            AMDGPUImageDimGetResInfoIntrinsics) in {
-  def intr#_pat_v1 : ImageDimPattern<intr, "_V1", f32>;
-  def intr#_pat_v2 : ImageDimPattern<intr, "_V2", v2f32>;
-  def intr#_pat_v4 : ImageDimPattern<intr, "_V4", v4f32>;
+  def intr#_pat_v1 : ImageDimPattern<intr, "_V1", f32, 0>;
+  def intr#_pat_v2 : ImageDimPattern<intr, "_V2", v2f32, 0>;
+  def intr#_pat_v4 : ImageDimPattern<intr, "_V4", v4f32, 0>;
 }
 
 multiclass ImageDimD16Helper<AMDGPUImageDimIntrinsic I,
                              AMDGPUImageDimIntrinsic d16helper> {
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    def _unpacked_v1 : ImageDimPattern<I, "_V1", f16, "_D16_gfx80">;
-    def _unpacked_v2 : ImageDimPattern<d16helper, "_V2", v2i32, "_D16_gfx80">;
-    def _unpacked_v4 : ImageDimPattern<d16helper, "_V4", v4i32, "_D16_gfx80">;
+    def _unpacked_v1 : ImageDimPattern<I, "_V1", f16, 1>;
+    def _unpacked_v2 : ImageDimPattern<d16helper, "_V2", v2i32, 1>;
+    def _unpacked_v4 : ImageDimPattern<d16helper, "_V4", v4i32, 1>;
   } // End HasUnpackedD16VMem.
 
   let SubtargetPredicate = HasPackedD16VMem in {
-    def _packed_v1 : ImageDimPattern<I, "_V1", f16, "_D16">;
-    def _packed_v2 : ImageDimPattern<I, "_V1", v2f16, "_D16">;
-    def _packed_v4 : ImageDimPattern<I, "_V2", v4f16, "_D16">;
+    def _packed_v1 : ImageDimPattern<I, "_V1", f16, 1>;
+    def _packed_v2 : ImageDimPattern<I, "_V1", v2f16, 1>;
+    def _packed_v4 : ImageDimPattern<I, "_V2", v4f16, 1>;
   } // End HasPackedD16VMem.
 }
 
@@ -627,7 +583,7 @@ foreach intr = AMDGPUImageDimIntrinsics in {
 }
 
 foreach intr = AMDGPUImageDimGatherIntrinsics in {
-  def intr#_pat3 : ImageDimPattern<intr, "_V4", v4f32>;
+  def intr#_pat3 : ImageDimPattern<intr, "_V4", v4f32, 0>;
 
   def intr#_d16helper_profile : AMDGPUDimProfileCopy<intr.P> {
     let RetTypes = !foreach(ty, intr.P.RetTypes, llvm_any_ty);
@@ -643,16 +599,16 @@ foreach intr = AMDGPUImageDimGatherIntrinsics in {
     def intr#_unpacked_v4 :
         ImageDimPattern<!cast<AMDGPUImageDimIntrinsic>(
                             "int_SI_image_d16helper_" # intr.P.OpMod # intr.P.Dim.Name),
-                        "_V4", v4i32, "_D16_gfx80">;
+                        "_V4", v4i32, 1>;
   } // End HasUnpackedD16VMem.
 
   let SubtargetPredicate = HasPackedD16VMem in {
-    def intr#_packed_v4 : ImageDimPattern<intr, "_V2", v4f16, "_D16">;
+    def intr#_packed_v4 : ImageDimPattern<intr, "_V2", v4f16, 1>;
   } // End HasPackedD16VMem.
 }
 
 foreach intr = AMDGPUImageDimAtomicIntrinsics in {
-  def intr#_pat1 : ImageDimPattern<intr, "_V1", i32>;
+  def intr#_pat1 : ImageDimPattern<intr, "_V1", i32, 0>;
 }
 
 /********** ======================= **********/
@@ -663,154 +619,160 @@ foreach intr = AMDGPUImageDimAtomicIntrinsics in {
 // TODO:
 // 1. Handle v4i32 rsrc type (Register Class for the instruction to be SReg_128).
 // 2. Add A16 support when we pass address of half type.
-multiclass ImageSamplePattern<SDPatternOperator name, MIMG opcode, ValueType dt, ValueType vt>  {
+multiclass ImageSamplePattern<SDPatternOperator name, MIMG opcode,
+                              ValueType dt, ValueType vt, bit d16>  {
   def : GCNPat<
     (dt (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, i32:$dmask, i1:$unorm, i1:$glc,
         i1:$slc, i1:$lwe, i1:$da)),
-    (opcode $addr, $rsrc, $sampler,
-          (as_i32imm $dmask), (as_i1imm $unorm), (as_i1imm $glc), (as_i1imm $slc),
-          0, 0, (as_i1imm $lwe), (as_i1imm $da))
+    !con((opcode $addr, $rsrc, $sampler, (as_i32imm $dmask), (as_i1imm $unorm),
+                (as_i1imm $glc), (as_i1imm $slc), 0, 0, (as_i1imm $lwe),
+                (as_i1imm $da)),
+         !if(opcode.HasD16, (opcode d16), (opcode)))
     >;
 }
 
-multiclass ImageSampleDataPatterns<SDPatternOperator name, string opcode, ValueType dt, string suffix = ""> {
-  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V1 # suffix), dt, f32>;
-  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V2 # suffix), dt, v2f32>;
-  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V4 # suffix), dt, v4f32>;
-  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V8 # suffix), dt, v8f32>;
-  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V16 # suffix), dt, v16f32>;
+multiclass ImageSampleDataPatterns<SDPatternOperator name, string opcode,
+                                   ValueType dt, bit d16> {
+  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V1), dt, f32, d16>;
+  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V2), dt, v2f32, d16>;
+  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V4), dt, v4f32, d16>;
+  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V8), dt, v8f32, d16>;
+  defm : ImageSamplePattern<name, !cast<MIMG>(opcode # _V16), dt, v16f32, d16>;
 }
 
 // ImageSample patterns.
 multiclass ImageSamplePatterns<SDPatternOperator name, string opcode> {
-  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), f32>;
-  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v2f32>;
-  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4f32>;
+  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), f32, 0>;
+  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v2f32, 0>;
+  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4f32, 0>;
 
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), f16, "_D16_gfx80">;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), f16, 1>;
   } // End HasUnpackedD16VMem.
 
   let SubtargetPredicate = HasPackedD16VMem in {
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), f16, "_D16">;
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), v2f16, "_D16">;
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v4f16, "_D16">;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), f16, 1>;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V1), v2f16, 1>;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v4f16, 1>;
   } // End HasPackedD16VMem.
 }
 
 // ImageSample alternative patterns for illegal vector half Types.
 multiclass ImageSampleAltPatterns<SDPatternOperator name, string opcode> {
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v2i32, "_D16_gfx80">;
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4i32, "_D16_gfx80">;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v2i32, 1>;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4i32, 1>;
   } // End HasUnpackedD16VMem.
 }
 
 // ImageGather4 patterns.
 multiclass ImageGather4Patterns<SDPatternOperator name, string opcode> {
-  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4f32>;
+  defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4f32, 0>;
 
   let SubtargetPredicate = HasPackedD16VMem in {
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v4f16, "_D16">;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V2), v4f16, 1>;
   } // End HasPackedD16VMem.
 }
 
 // ImageGather4 alternative patterns for illegal vector half Types.
 multiclass ImageGather4AltPatterns<SDPatternOperator name, string opcode> {
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4i32, "_D16_gfx80">;
+    defm : ImageSampleDataPatterns<name, !cast<string>(opcode # _V4), v4i32, 1>;
   } // End HasUnpackedD16VMem.
-
 }
 
 // ImageLoad for amdgcn.
-multiclass ImageLoadPattern<SDPatternOperator name, MIMG opcode, ValueType dt, ValueType vt> {
+multiclass ImageLoadPattern<SDPatternOperator name, MIMG opcode,
+                            ValueType dt, ValueType vt, bit d16> {
   def : GCNPat <
     (dt (name vt:$addr, v8i32:$rsrc, i32:$dmask, i1:$glc, i1:$slc, i1:$lwe,
                 i1:$da)),
-    (opcode $addr, $rsrc,
-          (as_i32imm $dmask), 1, (as_i1imm $glc), (as_i1imm $slc),
-          0, 0, (as_i1imm $lwe), (as_i1imm $da))
+    !con((opcode $addr, $rsrc, (as_i32imm $dmask), 1, (as_i1imm $glc),
+                 (as_i1imm $slc), 0, 0, (as_i1imm $lwe), (as_i1imm $da)),
+         !if(opcode.HasD16, (opcode d16), (opcode)))
   >;
 }
 
-multiclass ImageLoadDataPatterns<SDPatternOperator name, string opcode, ValueType dt, string suffix = ""> {
-  defm : ImageLoadPattern<name, !cast<MIMG>(opcode # _V1 # suffix), dt, i32>;
-  defm : ImageLoadPattern<name, !cast<MIMG>(opcode # _V2 # suffix), dt, v2i32>;
-  defm : ImageLoadPattern<name, !cast<MIMG>(opcode # _V4 # suffix), dt, v4i32>;
+multiclass ImageLoadDataPatterns<SDPatternOperator name, string opcode,
+                                 ValueType dt, bit d16> {
+  defm : ImageLoadPattern<name, !cast<MIMG>(opcode # _V1), dt, i32, d16>;
+  defm : ImageLoadPattern<name, !cast<MIMG>(opcode # _V2), dt, v2i32, d16>;
+  defm : ImageLoadPattern<name, !cast<MIMG>(opcode # _V4), dt, v4i32, d16>;
 }
 
 // ImageLoad patterns.
 // TODO: support v3f32.
 multiclass ImageLoadPatterns<SDPatternOperator name, string opcode> {
-  defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), f32>;
-  defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V2), v2f32>;
-  defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V4), v4f32>;
+  defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), f32, 0>;
+  defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V2), v2f32, 0>;
+  defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V4), v4f32, 0>;
 
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), f16, "_D16_gfx80">;
+    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), f16, 1>;
   } // End HasUnpackedD16VMem.
 
   let SubtargetPredicate = HasPackedD16VMem in {
-    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), f16, "_D16">;
-    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), v2f16, "_D16">;
-    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V2), v4f16, "_D16">;
+    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), f16, 1>;
+    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V1), v2f16, 1>;
+    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V2), v4f16, 1>;
   } // End HasPackedD16VMem.
 }
 
 // ImageLoad alternative patterns for illegal vector half Types.
 multiclass ImageLoadAltPatterns<SDPatternOperator name, string opcode> {
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V2), v2i32, "_D16_gfx80">;
-    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V4), v4i32,  "_D16_gfx80">;
+    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V2), v2i32, 1>;
+    defm : ImageLoadDataPatterns<name, !cast<string>(opcode # _V4), v4i32, 1>;
   } // End HasUnPackedD16VMem.
 }
 
 // ImageStore for amdgcn.
-multiclass ImageStorePattern<SDPatternOperator name, MIMG opcode, ValueType dt, ValueType vt> {
+multiclass ImageStorePattern<SDPatternOperator name, MIMG opcode,
+                             ValueType dt, ValueType vt, bit d16> {
   def : GCNPat <
     (name dt:$data, vt:$addr, v8i32:$rsrc, i32:$dmask, i1:$glc, i1:$slc,
           i1:$lwe, i1:$da),
-    (opcode $data, $addr, $rsrc,
-          (as_i32imm $dmask), 1, (as_i1imm $glc), (as_i1imm $slc),
-          0, 0, (as_i1imm $lwe), (as_i1imm $da))
+    !con((opcode $data, $addr, $rsrc, (as_i32imm $dmask), 1, (as_i1imm $glc),
+                 (as_i1imm $slc), 0, 0, (as_i1imm $lwe), (as_i1imm $da)),
+         !if(opcode.HasD16, (opcode d16), (opcode)))
   >;
 }
 
-multiclass ImageStoreDataPatterns<SDPatternOperator name, string opcode, ValueType dt, string suffix = ""> {
-  defm : ImageStorePattern<name, !cast<MIMG>(opcode # _V1 # suffix), dt, i32>;
-  defm : ImageStorePattern<name, !cast<MIMG>(opcode # _V2 # suffix), dt, v2i32>;
-  defm : ImageStorePattern<name, !cast<MIMG>(opcode # _V4 # suffix), dt, v4i32>;
+multiclass ImageStoreDataPatterns<SDPatternOperator name, string opcode,
+                                  ValueType dt, bit d16> {
+  defm : ImageStorePattern<name, !cast<MIMG>(opcode # _V1), dt, i32, d16>;
+  defm : ImageStorePattern<name, !cast<MIMG>(opcode # _V2), dt, v2i32, d16>;
+  defm : ImageStorePattern<name, !cast<MIMG>(opcode # _V4), dt, v4i32, d16>;
 }
 
 // ImageStore patterns.
 // TODO: support v3f32.
 multiclass ImageStorePatterns<SDPatternOperator name, string opcode> {
-  defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), f32>;
-  defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v2f32>;
-  defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V4), v4f32>;
+  defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), f32, 0>;
+  defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v2f32, 0>;
+  defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V4), v4f32, 0>;
 
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), f16, "_D16_gfx80">;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), f16, 1>;
   } // End HasUnpackedD16VMem.
 
   let SubtargetPredicate = HasPackedD16VMem in {
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), f16, "_D16">;
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), v2f16, "_D16">;
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v4f16, "_D16">;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), f16, 1>;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), v2f16, 1>;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v4f16, 1>;
   } // End HasPackedD16VMem.
 }
 
 // ImageStore alternative patterns.
 multiclass ImageStoreAltPatterns<SDPatternOperator name, string opcode> {
   let SubtargetPredicate = HasUnpackedD16VMem in {
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v2i32, "_D16_gfx80">;
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V4), v4i32, "_D16_gfx80">;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v2i32, 1>;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V4), v4i32, 1>;
   } // End HasUnpackedD16VMem.
 
   let SubtargetPredicate = HasPackedD16VMem in {
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), i32, "_D16">;
-    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v2i32, "_D16">;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V1), i32, 1>;
+    defm : ImageStoreDataPatterns<name, !cast<string>(opcode # _V2), v2i32, 1>;
   } // End HasPackedD16VMem.
 }
 
@@ -1030,83 +992,3 @@ defm : ImageAtomicPatterns<int_amdgcn_image_atomic_or, "IMAGE_ATOMIC_OR">;
 defm : ImageAtomicPatterns<int_amdgcn_image_atomic_xor, "IMAGE_ATOMIC_XOR">;
 defm : ImageAtomicPatterns<int_amdgcn_image_atomic_inc, "IMAGE_ATOMIC_INC">;
 defm : ImageAtomicPatterns<int_amdgcn_image_atomic_dec, "IMAGE_ATOMIC_DEC">;
-
-/* SIsample for simple 1D texture lookup */
-def : GCNPat <
-  (SIsample i32:$addr, v8i32:$rsrc, v4i32:$sampler, imm),
-  (IMAGE_SAMPLE_V4_V1 $addr, $rsrc, $sampler, 0xf, 0, 0, 0, 0, 0, 0, 0)
->;
-
-class SamplePattern<SDNode name, MIMG opcode, ValueType vt> : GCNPat <
-    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, imm),
-    (opcode $addr, $rsrc, $sampler, 0xf, 0, 0, 0, 0, 0, 0, 0)
->;
-
-class SampleRectPattern<SDNode name, MIMG opcode, ValueType vt> : GCNPat <
-    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_RECT),
-    (opcode $addr, $rsrc, $sampler, 0xf, 1, 0, 0, 0, 0, 0, 0)
->;
-
-class SampleArrayPattern<SDNode name, MIMG opcode, ValueType vt> : GCNPat <
-    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_ARRAY),
-    (opcode $addr, $rsrc, $sampler, 0xf, 0, 0, 0, 0, 0, 0, 1)
->;
-
-class SampleShadowPattern<SDNode name, MIMG opcode,
-                          ValueType vt> : GCNPat <
-    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_SHADOW),
-    (opcode $addr, $rsrc, $sampler, 0xf, 0, 0, 0, 0, 0, 0, 0)
->;
-
-class SampleShadowArrayPattern<SDNode name, MIMG opcode,
-                               ValueType vt> : GCNPat <
-    (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, TEX_SHADOW_ARRAY),
-    (opcode $addr, $rsrc, $sampler, 0xf, 0, 0, 0, 0, 0, 0, 1)
->;
-
-/* SIsample* for texture lookups consuming more address parameters */
-multiclass SamplePatterns<MIMG sample, MIMG sample_c, MIMG sample_l,
-                          MIMG sample_c_l, MIMG sample_b, MIMG sample_c_b,
-MIMG sample_d, MIMG sample_c_d, ValueType addr_type> {
-  def : SamplePattern <SIsample, sample, addr_type>;
-  def : SampleRectPattern <SIsample, sample, addr_type>;
-  def : SampleArrayPattern <SIsample, sample, addr_type>;
-  def : SampleShadowPattern <SIsample, sample_c, addr_type>;
-  def : SampleShadowArrayPattern <SIsample, sample_c, addr_type>;
-
-  def : SamplePattern <SIsamplel, sample_l, addr_type>;
-  def : SampleArrayPattern <SIsamplel, sample_l, addr_type>;
-  def : SampleShadowPattern <SIsamplel, sample_c_l, addr_type>;
-  def : SampleShadowArrayPattern <SIsamplel, sample_c_l, addr_type>;
-
-  def : SamplePattern <SIsampleb, sample_b, addr_type>;
-  def : SampleArrayPattern <SIsampleb, sample_b, addr_type>;
-  def : SampleShadowPattern <SIsampleb, sample_c_b, addr_type>;
-  def : SampleShadowArrayPattern <SIsampleb, sample_c_b, addr_type>;
-
-  def : SamplePattern <SIsampled, sample_d, addr_type>;
-  def : SampleArrayPattern <SIsampled, sample_d, addr_type>;
-  def : SampleShadowPattern <SIsampled, sample_c_d, addr_type>;
-  def : SampleShadowArrayPattern <SIsampled, sample_c_d, addr_type>;
-}
-
-defm : SamplePatterns<IMAGE_SAMPLE_V4_V2, IMAGE_SAMPLE_C_V4_V2,
-                      IMAGE_SAMPLE_L_V4_V2, IMAGE_SAMPLE_C_L_V4_V2,
-                      IMAGE_SAMPLE_B_V4_V2, IMAGE_SAMPLE_C_B_V4_V2,
-                      IMAGE_SAMPLE_D_V4_V2, IMAGE_SAMPLE_C_D_V4_V2,
-                      v2i32>;
-defm : SamplePatterns<IMAGE_SAMPLE_V4_V4, IMAGE_SAMPLE_C_V4_V4,
-                      IMAGE_SAMPLE_L_V4_V4, IMAGE_SAMPLE_C_L_V4_V4,
-                      IMAGE_SAMPLE_B_V4_V4, IMAGE_SAMPLE_C_B_V4_V4,
-                      IMAGE_SAMPLE_D_V4_V4, IMAGE_SAMPLE_C_D_V4_V4,
-                      v4i32>;
-defm : SamplePatterns<IMAGE_SAMPLE_V4_V8, IMAGE_SAMPLE_C_V4_V8,
-                      IMAGE_SAMPLE_L_V4_V8, IMAGE_SAMPLE_C_L_V4_V8,
-                      IMAGE_SAMPLE_B_V4_V8, IMAGE_SAMPLE_C_B_V4_V8,
-                      IMAGE_SAMPLE_D_V4_V8, IMAGE_SAMPLE_C_D_V4_V8,
-                      v8i32>;
-defm : SamplePatterns<IMAGE_SAMPLE_V4_V16, IMAGE_SAMPLE_C_V4_V16,
-                      IMAGE_SAMPLE_L_V4_V16, IMAGE_SAMPLE_C_L_V4_V16,
-                      IMAGE_SAMPLE_B_V4_V16, IMAGE_SAMPLE_C_B_V4_V16,
-                      IMAGE_SAMPLE_D_V4_V16, IMAGE_SAMPLE_C_D_V4_V16,
-                      v16i32>;
