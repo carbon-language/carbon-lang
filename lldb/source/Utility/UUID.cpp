@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
-namespace lldb_private {
+using namespace lldb_private;
 
 UUID::UUID() { Clear(); }
 
@@ -168,14 +168,6 @@ size_t UUID::SetFromStringRef(llvm::StringRef str, uint32_t num_uuid_bytes) {
 
   // Else return zero to indicate we were not able to parse a UUID value
   return 0;
-}
-
-size_t UUID::SetFromCString(const char *cstr, uint32_t num_uuid_bytes) {
-  if (cstr == NULL)
-    return 0;
-
-  return SetFromStringRef(cstr, num_uuid_bytes);
-}
 }
 
 bool lldb_private::operator==(const lldb_private::UUID &lhs,
