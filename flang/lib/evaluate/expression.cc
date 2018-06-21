@@ -20,25 +20,37 @@
 
 namespace Fortran::evaluate {
 
+template<typename A>
+std::ostream &DumpExprWithType(std::ostream &o, const A &x) {
+  using Ty = typename A::Result;
+  return x.Dump(o << '(' << Ty::Dump() << ' ') << ')';
+}
+
+std::ostream &IntegerOperand::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { DumpExprWithType(o, *x); }, u);
+  return o;
+}
+
+std::ostream &RealOperand::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { DumpExprWithType(o, *x); }, u);
+  return o;
+}
+
+std::ostream &CharacterOperand::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { x->Dump(o); }, u);
+  return o;
+}
+
+std::ostream &ConversionOperand::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { x.Dump(o); }, u);
+  return o;
+}
+
 template<int KIND> std::ostream &IntExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
-          [&](const Convert &c) {
-            o << "convert(";
-            std::visit(
-                [&](const auto &x) {  // x is IntegerOperand or RealOperand
-                  std::visit(
-                      [&](const auto &y) {  // y is ExprOperand<Type<C,K>>
-                        using Expr =
-                            typename std::remove_reference<decltype(*y)>::type;
-                        using Ty = typename Expr::Result;
-                        y->Dump(o << Ty::Dump() << ' ');
-                      },
-                      x.u);
-                },
-                c.u);
-            o << ')';
-          },
+      common::visitors{
+          [&](const Constant &n) { o << n.SignedDecimal(); },
+          [&](const Convert &c) { c.x.Dump(o); },
           [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
           [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
           [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
@@ -53,15 +65,49 @@ template<int KIND> std::ostream &IntExpr<KIND>::Dump(std::ostream &o) const {
           },
           [&](const Power &p) {
             p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
-          }},
+          },
+      },
       u);
   return o;
 }
 
 template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
-          [&](const auto &) { o << "TODO"; }},
+      common::visitors{
+          [&](const Constant &n) { o << n.DumpHexadecimal(); },
+          [&](const Convert &c) { c.x.Dump(o); },
+          [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
+          [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
+          [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
+          [&](const Subtract &s) {
+            s.y->Dump(s.x->Dump(o << '(') << '-') << ')';
+          },
+          [&](const Multiply &m) {
+            m.y->Dump(m.x->Dump(o << '(') << '*') << ')';
+          },
+          [&](const Divide &d) {
+            d.y->Dump(d.x->Dump(o << '(') << '/') << ')';
+          },
+          [&](const Power &p) {
+            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
+          },
+          [&](const IntPower &p) {
+            p.y.Dump(p.x->Dump(o << '(') << "**") << ')';
+          },
+          [&](const RealPart &z) { z.z->Dump(o << "REAL(") << ')'; },
+          [&](const AIMAG &z) { z.z->Dump(o << "AIMAG(") << ')'; },
+      },
+      u);
+  return o;
+}
+
+template<int KIND>
+std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
+  std::visit(common::visitors{[&](const Constant &n) {
+                                o << '(' << n.REAL().DumpHexadecimal() << ','
+                                  << n.AIMAG().DumpHexadecimal() << ')';
+                              },
+                 [&](const auto &) { o << "TODO"; }},
       u);
   return o;
 }
@@ -74,7 +120,79 @@ template<int KIND> typename CharExpr<KIND>::Length CharExpr<KIND>::LEN() const {
       u);
 }
 
-// TODO dump logical and comparison
+template<int KIND> std::ostream &CharExpr<KIND>::Dump(std::ostream &o) const {
+  std::visit(common::visitors{[&](const Constant &s) { o << '"' << s << '"'; },
+                 [&](const Concat &c) { c.y->Dump(c.x->Dump(o) << "//"); }},
+      u);
+  return o;
+}
+
+template<typename T> std::ostream &Comparison<T>::Dump(std::ostream &o) const {
+  std::visit(
+      common::visitors{
+          [&](const LT &c) { c.y->Dump(c.x->Dump(o << '(') << ".LT.") << ')'; },
+          [&](const LE &c) { c.y->Dump(c.x->Dump(o << '(') << ".LE.") << ')'; },
+          [&](const EQ &c) { c.y->Dump(c.x->Dump(o << '(') << ".EQ.") << ')'; },
+          [&](const NE &c) { c.y->Dump(c.x->Dump(o << '(') << ".NE.") << ')'; },
+          [&](const GE &c) { c.y->Dump(c.x->Dump(o << '(') << ".GE.") << ')'; },
+          [&](const GT &c) {
+            c.y->Dump(c.x->Dump(o << '(') << ".GT.") << ')';
+          }},
+      u);
+  return o;
+}
+
+template<int KIND>
+std::ostream &Comparison<Type<Category::Complex, KIND>>::Dump(
+    std::ostream &o) const {
+  std::visit(common::visitors{[&](const EQ &c) {
+                                c.y->Dump(c.x->Dump(o << '(') << ".EQ.") << ')';
+                              },
+                 [&](const NE &c) {
+                   c.y->Dump(c.x->Dump(o << '(') << ".NE.") << ')';
+                 }},
+      u);
+  return o;
+}
+
+std::ostream &IntegerComparison::Dump(std::ostream &o) const {
+  std::visit([&](const auto &c) { c.Dump(o); }, u);
+  return o;
+}
+
+std::ostream &RealComparison::Dump(std::ostream &o) const {
+  std::visit([&](const auto &c) { c.Dump(o); }, u);
+  return o;
+}
+
+std::ostream &ComplexComparison::Dump(std::ostream &o) const {
+  std::visit([&](const auto &c) { c.Dump(o); }, u);
+  return o;
+}
+
+std::ostream &CharacterComparison::Dump(std::ostream &o) const {
+  std::visit([&](const auto &c) { c.Dump(o); }, u);
+  return o;
+}
+
+std::ostream &LogicalExpr::Dump(std::ostream &o) const {
+  std::visit(
+      common::visitors{[&](const bool &tf) { o << (tf ? ".T." : ".F."); },
+          [&](const Not &n) { n.x->Dump(o << "(.NOT.") << ')'; },
+          [&](const And &a) {
+            a.y->Dump(a.x->Dump(o << '(') << ".AND.") << ')';
+          },
+          [&](const Or &a) { a.y->Dump(a.x->Dump(o << '(') << ".OR.") << ')'; },
+          [&](const Eqv &a) {
+            a.y->Dump(a.x->Dump(o << '(') << ".EQV.") << ')';
+          },
+          [&](const Neqv &a) {
+            a.y->Dump(a.x->Dump(o << '(') << ".NEQV.") << ')';
+          },
+          [&](const auto &comparison) { comparison.Dump(o); }},
+      u);
+  return o;
+}
 
 template struct Expression<Type<Category::Integer, 1>>;
 template struct Expression<Type<Category::Integer, 2>>;
