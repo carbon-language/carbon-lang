@@ -854,12 +854,13 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
         Type = IndirectBranchType::POSSIBLE_JUMP_TABLE;
       continue;
     }
-    // Potentially a switch table can contain  __builtin_unreachable() entry
+    // Potentially a switch table can contain __builtin_unreachable() entry
     // pointing just right after the function. In this case we have to check
     // another entry. Otherwise the entry is outside of this function scope
     // and it's not a switch table.
     if (Value == getAddress() + getSize()) {
-      JTOffsetCandidates.push_back(Value - getAddress());
+      JTOffsetCandidates.push_back(getSize());
+      IgnoredBranches.emplace_back(Offset, getSize());
     } else {
       break;
     }
@@ -1388,16 +1389,32 @@ add_instruction:
     addInstruction(Offset, std::move(Instruction));
   }
 
-  postProcessJumpTables();
-
   updateState(State::Disassembled);
+
+  postProcessJumpTables();
 }
 
 void BinaryFunction::postProcessJumpTables() {
   // Create labels for all entries.
   for (auto &JTI : JumpTables) {
     auto &JT = *JTI.second;
-    for (auto Offset : JT.OffsetEntries) {
+    if (JT.Type == JumpTable::JTT_PIC && opts::JumpTables == JTS_BASIC) {
+      opts::JumpTables = JTS_MOVE;
+      outs() << "BOLT-INFO: forcing -jump-tables=move as PIC jump table was "
+                "detected\n";
+    }
+    for (unsigned I = 0; I < JT.OffsetEntries.size(); ++I) {
+      auto Offset = JT.OffsetEntries[I];
+      if (Offset != getSize() && !getInstructionAtOffset(Offset)) {
+        DEBUG(dbgs() << "BOLT-DEBUG: truncating jump table " << JT.getName()
+                     << " at index " << I << " containing offset 0x"
+                     << Twine::utohexstr(Offset) << '\n');
+        assert(I > 1 && "jump table with a size smaller than 1 detected");
+        assert(JT.Type == JumpTable::JTT_PIC &&
+               "unexpected truncation of non-PIC jump table");
+        JT.OffsetEntries.resize(I);
+        break;
+      }
       auto *Label = getOrCreateLocalLabel(getAddress() + Offset,
                                           /*CreatePastEnd*/ true);
       JT.Entries.push_back(Label);
