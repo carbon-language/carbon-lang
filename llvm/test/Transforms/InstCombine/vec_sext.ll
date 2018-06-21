@@ -45,3 +45,26 @@ define <4 x i32> @test1(<4 x i32> %a, <4 x i32> %b) {
   ret <4 x i32> %cond
 }
 
+define <2 x i32> @is_negative_undef_elt(<2 x i32> %a) {
+; CHECK-LABEL: @is_negative_undef_elt(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i32> [[A:%.*]], <i32 0, i32 undef>
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i1> [[CMP]] to <2 x i32>
+; CHECK-NEXT:    ret <2 x i32> [[SEXT]]
+;
+  %cmp = icmp slt <2 x i32> %a, <i32 0, i32 undef>
+  %sext = sext <2 x i1> %cmp to <2 x i32>
+  ret <2 x i32> %sext
+
+}
+
+define <2 x i32> @is_positive_undef_elt(<2 x i32> %a) {
+; CHECK-LABEL: @is_positive_undef_elt(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt <2 x i32> [[A:%.*]], <i32 undef, i32 -1>
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i1> [[CMP]] to <2 x i32>
+; CHECK-NEXT:    ret <2 x i32> [[SEXT]]
+;
+  %cmp = icmp sgt <2 x i32> %a, <i32 undef, i32 -1>
+  %sext = sext <2 x i1> %cmp to <2 x i32>
+  ret <2 x i32> %sext
+}
+
