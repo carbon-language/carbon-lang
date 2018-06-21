@@ -103,11 +103,32 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
 
 template<int KIND>
 std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
-  std::visit(common::visitors{[&](const Constant &n) {
-                                o << '(' << n.REAL().DumpHexadecimal() << ','
-                                  << n.AIMAG().DumpHexadecimal() << ')';
-                              },
-                 [&](const auto &) { o << "TODO"; }},
+  std::visit(
+      common::visitors{[&](const Constant &n) {
+                         o << '(' << n.REAL().DumpHexadecimal() << ','
+                           << n.AIMAG().DumpHexadecimal() << ')';
+                       },
+          [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
+          [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
+          [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
+          [&](const Subtract &s) {
+            s.y->Dump(s.x->Dump(o << '(') << '-') << ')';
+          },
+          [&](const Multiply &m) {
+            m.y->Dump(m.x->Dump(o << '(') << '*') << ')';
+          },
+          [&](const Divide &d) {
+            d.y->Dump(d.x->Dump(o << '(') << '/') << ')';
+          },
+          [&](const Power &p) {
+            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
+          },
+          [&](const IntPower &p) {
+            p.y.Dump(p.x->Dump(o << '(') << "**") << ')';
+          },
+          [&](const CMPLX &c) {
+            c.im->Dump(c.re->Dump(o << '(') << ',') << ')';
+          }},
       u);
   return o;
 }

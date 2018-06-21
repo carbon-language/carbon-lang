@@ -95,7 +95,7 @@ struct ConversionOperand {
   std::variant<IntegerOperand, RealOperand> u;
 };
 
-template<int KIND> struct Expression < Type<Category::Integer, KIND> {
+template<int KIND> struct Expression<Type<Category::Integer, KIND>> {
   static constexpr Category category{Category::Integer};
   static constexpr int kind{KIND};
   using Result = Type<category, kind>;
