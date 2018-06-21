@@ -7821,9 +7821,7 @@ SDNode *SITargetLowering::adjustWritemask(MachineSDNode *&Node,
 
   unsigned BitsSet = countPopulation(NewDmask);
 
-  const SIInstrInfo *TII = getSubtarget()->getInstrInfo();
-  int NewOpcode = AMDGPU::getMaskedMIMGOp(*TII,
-                                          Node->getMachineOpcode(), BitsSet);
+  int NewOpcode = AMDGPU::getMaskedMIMGOp(Node->getMachineOpcode(), BitsSet);
   assert(NewOpcode != -1 &&
          NewOpcode != static_cast<int>(Node->getMachineOpcode()) &&
          "failed to find equivalent MIMG op");

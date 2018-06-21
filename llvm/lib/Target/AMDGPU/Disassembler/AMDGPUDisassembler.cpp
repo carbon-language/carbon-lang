@@ -329,19 +329,15 @@ DecodeStatus AMDGPUDisassembler::convertMIMGInst(MCInst &MI) const {
 
   int NewOpcode = -1;
 
-  if (IsAtomic) {
-    if (DMask == 0x1 || DMask == 0x3 || DMask == 0xF) {
-      NewOpcode = AMDGPU::getMaskedMIMGAtomicOp(*MCII, MI.getOpcode(), DstSize);
-    }
-    if (NewOpcode == -1) return MCDisassembler::Success;
-  } else if (IsGather4) {
+  if (IsGather4) {
     if (D16 && AMDGPU::hasPackedD16(STI))
-      NewOpcode = AMDGPU::getMIMGGatherOpPackedD16(MI.getOpcode());
+      NewOpcode = AMDGPU::getMaskedMIMGOp(MI.getOpcode(), 2);
     else
       return MCDisassembler::Success;
   } else {
-    NewOpcode = AMDGPU::getMaskedMIMGOp(*MCII, MI.getOpcode(), DstSize);
-    assert(NewOpcode != -1 && "could not find matching mimg channel instruction");
+    NewOpcode = AMDGPU::getMaskedMIMGOp(MI.getOpcode(), DstSize);
+    if (NewOpcode == -1)
+      return MCDisassembler::Success;
   }
 
   auto RCID = MCII->get(NewOpcode).OpInfo[VDataIdx].RegClass;

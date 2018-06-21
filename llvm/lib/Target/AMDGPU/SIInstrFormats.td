@@ -333,17 +333,3 @@ class EXPCommon<dag outs, dag ins, string asm, list<dag> pattern> :
 }
 
 } // End Uses = [EXEC]
-
-class MIMG <dag outs, dag ins, string asm, list<dag> pattern> :
-    InstSI <outs, ins, asm, pattern> {
-
-  let VM_CNT = 1;
-  let EXP_CNT = 1;
-  let MIMG = 1;
-  let Uses = [EXEC];
-
-  let UseNamedOperandTable = 1;
-  let hasSideEffects = 0; // XXX ????
-
-  bit HasD16 = 0;
-}

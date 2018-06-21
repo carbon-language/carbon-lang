@@ -1098,14 +1098,7 @@ public:
 
   AMDGPUOperand::Ptr defaultGLC() const;
   AMDGPUOperand::Ptr defaultSLC() const;
-  AMDGPUOperand::Ptr defaultTFE() const;
 
-  AMDGPUOperand::Ptr defaultD16() const;
-  AMDGPUOperand::Ptr defaultDMask() const;
-  AMDGPUOperand::Ptr defaultUNorm() const;
-  AMDGPUOperand::Ptr defaultDA() const;
-  AMDGPUOperand::Ptr defaultR128() const;
-  AMDGPUOperand::Ptr defaultLWE() const;
   AMDGPUOperand::Ptr defaultSMRDOffset8() const;
   AMDGPUOperand::Ptr defaultSMRDOffset20() const;
   AMDGPUOperand::Ptr defaultSMRDLiteralOffset() const;
@@ -4111,10 +4104,6 @@ AMDGPUOperand::Ptr AMDGPUAsmParser::defaultSLC() const {
   return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTySLC);
 }
 
-AMDGPUOperand::Ptr AMDGPUAsmParser::defaultTFE() const {
-  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyTFE);
-}
-
 void AMDGPUAsmParser::cvtMubufImpl(MCInst &Inst,
                                const OperandVector &Operands,
                                bool IsAtomic,
@@ -4269,30 +4258,6 @@ void AMDGPUAsmParser::cvtMIMG(MCInst &Inst, const OperandVector &Operands,
 
 void AMDGPUAsmParser::cvtMIMGAtomic(MCInst &Inst, const OperandVector &Operands) {
   cvtMIMG(Inst, Operands, true);
-}
-
-AMDGPUOperand::Ptr AMDGPUAsmParser::defaultDMask() const {
-  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyDMask);
-}
-
-AMDGPUOperand::Ptr AMDGPUAsmParser::defaultUNorm() const {
-  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyUNorm);
-}
-
-AMDGPUOperand::Ptr AMDGPUAsmParser::defaultDA() const {
-  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyDA);
-}
-
-AMDGPUOperand::Ptr AMDGPUAsmParser::defaultR128() const {
-  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyR128);
-}
-
-AMDGPUOperand::Ptr AMDGPUAsmParser::defaultLWE() const {
-  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyLWE);
-}
-
-AMDGPUOperand::Ptr AMDGPUAsmParser::defaultD16() const {
-  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyD16);
 }
 
 //===----------------------------------------------------------------------===//

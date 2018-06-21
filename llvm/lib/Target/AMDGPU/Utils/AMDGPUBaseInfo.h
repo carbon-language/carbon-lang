@@ -37,6 +37,11 @@ class MCSubtargetInfo;
 class Triple;
 
 namespace AMDGPU {
+
+#define GET_MIMGBaseOpcode_DECL
+#define GET_MIMGEncoding_DECL
+#include "AMDGPUGenSearchableTables.inc"
+
 namespace IsaInfo {
 
 enum {
@@ -158,15 +163,7 @@ LLVM_READONLY
 int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIdx);
 
 LLVM_READONLY
-int getMaskedMIMGOp(const MCInstrInfo &MII,
-                    unsigned Opc, unsigned NewChannels);
-
-LLVM_READONLY
-int getMaskedMIMGAtomicOp(const MCInstrInfo &MII,
-                          unsigned Opc, unsigned NewChannels);
-
-LLVM_READONLY
-int getMIMGGatherOpPackedD16(uint16_t Opcode);
+int getMaskedMIMGOp(unsigned Opc, unsigned NewChannels);
 
 LLVM_READONLY
 int getMCOpcode(uint16_t Opcode, unsigned Gen);

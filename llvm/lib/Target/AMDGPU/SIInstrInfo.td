@@ -2021,62 +2021,6 @@ def getBasicFromSDWAOp : InstrMapping {
   let ValueCols = [["Default"]];
 }
 
-def getMaskedMIMGOp1 : InstrMapping {
-  let FilterClass = "MIMG_Mask";
-  let RowFields = ["Op"];
-  let ColFields = ["Channels"];
-  let KeyCol = ["1"];
-  let ValueCols = [["2"], ["3"], ["4"] ];
-}
-
-def getMaskedMIMGOp2 : InstrMapping {
-  let FilterClass = "MIMG_Mask";
-  let RowFields = ["Op"];
-  let ColFields = ["Channels"];
-  let KeyCol = ["2"];
-  let ValueCols = [["1"], ["3"], ["4"] ];
-}
-
-def getMaskedMIMGOp3 : InstrMapping {
-  let FilterClass = "MIMG_Mask";
-  let RowFields = ["Op"];
-  let ColFields = ["Channels"];
-  let KeyCol = ["3"];
-  let ValueCols = [["1"], ["2"], ["4"] ];
-}
-
-def getMaskedMIMGOp4 : InstrMapping {
-  let FilterClass = "MIMG_Mask";
-  let RowFields = ["Op"];
-  let ColFields = ["Channels"];
-  let KeyCol = ["4"];
-  let ValueCols = [["1"], ["2"], ["3"] ];
-}
-
-def getMIMGAtomicOp1 : InstrMapping {
-  let FilterClass = "MIMG_Atomic_Size";
-  let RowFields = ["Op"];
-  let ColFields = ["AtomicSize"];
-  let KeyCol = ["1"];
-  let ValueCols = [["2"]];
-}
-
-def getMIMGAtomicOp2 : InstrMapping {
-  let FilterClass = "MIMG_Atomic_Size";
-  let RowFields = ["Op"];
-  let ColFields = ["AtomicSize"];
-  let KeyCol = ["2"];
-  let ValueCols = [["1"]];
-}
-
-def getMIMGGatherOpPackedD16 : InstrMapping {
-  let FilterClass = "MIMG_Gather_Size";
-  let RowFields = ["Op"];
-  let ColFields = ["Channels"];
-  let KeyCol = ["4"];
-  let ValueCols = [["2"]];
-}
-
 // Maps an commuted opcode to its original version
 def getCommuteOrig : InstrMapping {
   let FilterClass = "Commutable_REV";
