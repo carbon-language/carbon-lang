@@ -52,7 +52,7 @@ macro(test_fuzzer stdlib)
       )
 
     add_lit_testsuite(check-fuzzer-${stdlib_name}-${arch}
-      "Running Fuzzer ${stdlib} tests"
+      "Running libFuzzer ${stdlib} tests for arch ${arch}"
       ${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_NAME}/
       DEPENDS ${LIBFUZZER_TEST_DEPS})
     if(TEST_DEPS)
