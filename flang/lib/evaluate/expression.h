@@ -59,6 +59,7 @@ template<typename A> struct Unary {
   }
   Unary &operator=(Unary &&) = default;
   A *Mutable() const { return const_cast<A *>(x.get()); }
+  std::ostream &Dump(std::ostream &, const char *opr) const;
   std::unique_ptr<const A> x;
 };
 
@@ -81,6 +82,7 @@ template<typename A, typename B> struct Binary {
   Binary &operator=(Binary &&) = default;
   A *MutableX() const { return const_cast<A *>(x.get()); }
   B *MutableY() const { return const_cast<B *>(y.get()); }
+  std::ostream &Dump(std::ostream &, const char *opr) const;
   std::unique_ptr<const A> x;
   std::unique_ptr<const B> y;
 };

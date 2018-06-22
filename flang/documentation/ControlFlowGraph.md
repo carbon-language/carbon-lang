@@ -74,15 +74,15 @@ resolved function references, constant literals, and
 data designators.
 
 Expression nodes are represented in the compiler in a type-safe manner.
-There is a general `Expression` class template that is parameterized
-over type classification (e.g., `INTEGER`, `REAL`, &c.) and, for intrinsic
-types, kind type parameter values.
-The `Expression` class template is specialized for each type classification
-with a representation the admits only the operations that are valid
-for that type.
-Operands are non-nullable storage-owning indirections to other instances
+There is a distinct class or class template for every category of
+intrinsic type, templatized over its supported kind type parameter values.
+
+Operands are storage-owning indirections to other instances
 of `Expression`, instances of constant values, and to representations
 of data and function references.
+These indirections are not nullable apart from the situation in which
+the operands of an expression are being removed for use elsewhere before
+the expression is destructed.
 
 The ranks and the extents of the shapes of the results of expressions
 are explicit for constant arrays and recoverable by analysis otherwise.

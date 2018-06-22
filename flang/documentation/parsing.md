@@ -75,7 +75,7 @@ source; the parser proper does not have a tokenizer.  The prescanner
 builds these token sequences out of source lines and supplies them
 to the preprocessor, which interprets directives and expands macro
 invocations.  The token sequences returned by the preprocessor are then
-marshaled to constitue the cooked character stream that is the output of
+marshaled to constitute the cooked character stream that is the output of
 the prescanner.
 
 The preprocessor and prescanner can both instantiate new temporary
@@ -122,7 +122,7 @@ Messages
 --------
 Message texts, and snprintf-like formatting strings for constructing
 messages, are instantiated in the various components of the parser with
-C++ user defined character literals tagged with `err_en_US` and `_en_US`
+C++ user defined character literals tagged with `_err_en_US` and `_en_US`
 (signifying fatality and language, with the default being the dialect of
 English used in the United States) so that they may be easily identified
 for localization.  As described above, messages are associated with

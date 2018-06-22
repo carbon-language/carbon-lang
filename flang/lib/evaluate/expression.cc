@@ -48,26 +48,28 @@ std::ostream &AnyIntegerOrRealExpr::Dump(std::ostream &o) const {
   return o;
 }
 
+template<typename A>
+std::ostream &Unary<A>::Dump(std::ostream &o, const char *opr) const {
+  return x->Dump(o << opr) << ')';
+}
+
+template<typename A, typename B>
+std::ostream &Binary<A, B>::Dump(std::ostream &o, const char *opr) const {
+  return y->Dump(x->Dump(o << '(') << opr) << ')';
+}
+
 template<int KIND>
 std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
           [&](const Convert &c) { c.x->Dump(o); },
-          [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
-          [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
-          [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
-          [&](const Subtract &s) {
-            s.y->Dump(s.x->Dump(o << '(') << '-') << ')';
-          },
-          [&](const Multiply &m) {
-            m.y->Dump(m.x->Dump(o << '(') << '*') << ')';
-          },
-          [&](const Divide &d) {
-            d.y->Dump(d.x->Dump(o << '(') << '/') << ')';
-          },
-          [&](const Power &p) {
-            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
-          }},
+          [&](const Parentheses &p) { p.Dump(o, "("); },
+          [&](const Negate &n) { n.Dump(o, "(-"); },
+          [&](const Add &a) { a.Dump(o, "+"); },
+          [&](const Subtract &s) { s.Dump(o, "-"); },
+          [&](const Multiply &m) { m.Dump(o, "*"); },
+          [&](const Divide &d) { d.Dump(o, "/"); },
+          [&](const Power &p) { p.Dump(o, "**"); }},
       u);
   return o;
 }
@@ -132,26 +134,16 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
           [&](const Convert &c) { c.x->Dump(o); },
-          [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
-          [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
-          [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
-          [&](const Subtract &s) {
-            s.y->Dump(s.x->Dump(o << '(') << '-') << ')';
-          },
-          [&](const Multiply &m) {
-            m.y->Dump(m.x->Dump(o << '(') << '*') << ')';
-          },
-          [&](const Divide &d) {
-            d.y->Dump(d.x->Dump(o << '(') << '/') << ')';
-          },
-          [&](const Power &p) {
-            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
-          },
-          [&](const IntPower &p) {
-            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
-          },
-          [&](const RealPart &z) { z.x->Dump(o << "REAL(") << ')'; },
-          [&](const AIMAG &z) { z.x->Dump(o << "AIMAG(") << ')'; }},
+          [&](const Parentheses &p) { p.Dump(o, "("); },
+          [&](const Negate &n) { n.Dump(o, "(-"); },
+          [&](const Add &a) { a.Dump(o, "+"); },
+          [&](const Subtract &s) { s.Dump(o, "-"); },
+          [&](const Multiply &m) { m.Dump(o, "*"); },
+          [&](const Divide &d) { d.Dump(o, "/"); },
+          [&](const Power &p) { p.Dump(o, "**"); },
+          [&](const IntPower &p) { p.Dump(o, "**"); },
+          [&](const RealPart &z) { z.Dump(o, "REAL("); },
+          [&](const AIMAG &p) { p.Dump(o, "AIMAG("); }},
       u);
   return o;
 }
@@ -160,27 +152,15 @@ template<int KIND>
 std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
-          [&](const Parentheses &p) { p.x->Dump(o << '(') << ')'; },
-          [&](const Negate &n) { n.x->Dump(o << "(-") << ')'; },
-          [&](const Add &a) { a.y->Dump(a.x->Dump(o << '(') << '+') << ')'; },
-          [&](const Subtract &s) {
-            s.y->Dump(s.x->Dump(o << '(') << '-') << ')';
-          },
-          [&](const Multiply &m) {
-            m.y->Dump(m.x->Dump(o << '(') << '*') << ')';
-          },
-          [&](const Divide &d) {
-            d.y->Dump(d.x->Dump(o << '(') << '/') << ')';
-          },
-          [&](const Power &p) {
-            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
-          },
-          [&](const IntPower &p) {
-            p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
-          },
-          [&](const CMPLX &c) {
-            c.y->Dump(c.x->Dump(o << '(') << ',') << ')';
-          }},
+          [&](const Parentheses &p) { p.Dump(o, "("); },
+          [&](const Negate &n) { n.Dump(o, "(-"); },
+          [&](const Add &a) { a.Dump(o, "+"); },
+          [&](const Subtract &s) { s.Dump(o, "-"); },
+          [&](const Multiply &m) { m.Dump(o, "*"); },
+          [&](const Divide &d) { d.Dump(o, "/"); },
+          [&](const Power &p) { p.Dump(o, "**"); },
+          [&](const IntPower &p) { p.Dump(o, "**"); },
+          [&](const CMPLX &c) { c.Dump(o, ","); }},
       u);
   return o;
 }
@@ -205,28 +185,20 @@ std::ostream &CharacterExpr<KIND>::Dump(std::ostream &o) const {
 }
 
 template<typename T> std::ostream &Comparison<T>::Dump(std::ostream &o) const {
-  std::visit(
-      common::visitors{
-          [&](const LT &c) { c.y->Dump(c.x->Dump(o << '(') << ".LT.") << ')'; },
-          [&](const LE &c) { c.y->Dump(c.x->Dump(o << '(') << ".LE.") << ')'; },
-          [&](const EQ &c) { c.y->Dump(c.x->Dump(o << '(') << ".EQ.") << ')'; },
-          [&](const NE &c) { c.y->Dump(c.x->Dump(o << '(') << ".NE.") << ')'; },
-          [&](const GE &c) { c.y->Dump(c.x->Dump(o << '(') << ".GE.") << ')'; },
-          [&](const GT &c) {
-            c.y->Dump(c.x->Dump(o << '(') << ".GT.") << ')';
-          }},
+  std::visit(common::visitors{[&](const LT &c) { c.Dump(o, ".LT."); },
+                 [&](const LE &c) { c.Dump(o, ".LE."); },
+                 [&](const EQ &c) { c.Dump(o, ".EQ."); },
+                 [&](const NE &c) { c.Dump(o, ".NE."); },
+                 [&](const GE &c) { c.Dump(o, ".GE."); },
+                 [&](const GT &c) { c.Dump(o, ".GT."); }},
       u);
   return o;
 }
 
 template<int KIND>
 std::ostream &Comparison<ComplexExpr<KIND>>::Dump(std::ostream &o) const {
-  std::visit(common::visitors{[&](const EQ &c) {
-                                c.y->Dump(c.x->Dump(o << '(') << ".EQ.") << ')';
-                              },
-                 [&](const NE &c) {
-                   c.y->Dump(c.x->Dump(o << '(') << ".NE.") << ')';
-                 }},
+  std::visit(common::visitors{[&](const EQ &c) { c.Dump(o, ".EQ."); },
+                 [&](const NE &c) { c.Dump(o, ".NE."); }},
       u);
   return o;
 }
@@ -254,17 +226,11 @@ std::ostream &CharacterComparison::Dump(std::ostream &o) const {
 std::ostream &LogicalExpr::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const bool &tf) { o << (tf ? ".T." : ".F."); },
-          [&](const Not &n) { n.x->Dump(o << "(.NOT.") << ')'; },
-          [&](const And &a) {
-            a.y->Dump(a.x->Dump(o << '(') << ".AND.") << ')';
-          },
-          [&](const Or &a) { a.y->Dump(a.x->Dump(o << '(') << ".OR.") << ')'; },
-          [&](const Eqv &a) {
-            a.y->Dump(a.x->Dump(o << '(') << ".EQV.") << ')';
-          },
-          [&](const Neqv &a) {
-            a.y->Dump(a.x->Dump(o << '(') << ".NEQV.") << ')';
-          },
+          [&](const Not &n) { n.Dump(o, "(.NOT."); },
+          [&](const And &a) { a.Dump(o, ".AND."); },
+          [&](const Or &a) { a.Dump(o, ".OR."); },
+          [&](const Eqv &a) { a.Dump(o, ".EQV."); },
+          [&](const Neqv &a) { a.Dump(o, ".NEQV."); },
           [&](const auto &comparison) { comparison.Dump(o); }},
       u);
   return o;
