@@ -85,7 +85,7 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
 // Invoke CLASS_TRAIT(traitName) to define a trait, then put
 //   using traitName = std::true_type;  (or false_type)
 // into the appropriate class definitions.  You can then use
-//   typename std::enable_if<traitName<...>, ...>::type
+//   typename std::enable_if_t<traitName<...>, ...>
 // in template specialization definitions.
 #define CLASS_TRAIT(T) \
   namespace class_trait_ns_##T { \
@@ -94,14 +94,12 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
     template<typename A> \
     constexpr bool has_trait{decltype(test<A>(nullptr))::value}; \
     template<typename A> \
-    constexpr typename std::enable_if<has_trait<A>, bool>::type \
-    trait_value() { \
+    constexpr typename std::enable_if_t<has_trait<A>, bool> trait_value() { \
       using U = typename A::T; \
       return U::value; \
     } \
     template<typename A> \
-    constexpr typename std::enable_if<!has_trait<A>, bool>::type \
-    trait_value() { \
+    constexpr typename std::enable_if_t<!has_trait<A>, bool> trait_value() { \
       return false; \
     } \
   } \

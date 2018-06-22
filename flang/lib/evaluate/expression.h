@@ -16,10 +16,13 @@
 #define FORTRAN_EVALUATE_EXPRESSION_H_
 
 // Represent Fortran expressions in a type-safe manner.
-// Expressions are the sole owners of their constituents; there is no
+// Expressions are the sole owners of their constituents; i.e., there is no
 // context-independent hash table or sharing of common subexpressions.
-// Both deep copy and move semantics are supported for expression construction.
+// Both deep copy and move semantics are supported for expression construction
+// and manipulation in place.
 // TODO: variable and function references
+// TODO: elevate some intrinsics to operations
+// TODO: convenience wrappers for constructing conversions
 
 #include "common.h"
 #include "type.h"
@@ -41,7 +44,7 @@ struct AnyCharacterExpr;
 struct AnyIntegerOrRealExpr;
 
 // Helper base classes to manage subexpressions, which are known as data members
-// named 'x' and (for binary operations) 'y'.
+// named 'x' and, for binary operations, 'y'.
 template<typename A> struct Unary {
   Unary(const A &a) : x{std::make_unique<A>(a)} {}
   Unary(std::unique_ptr<const A> &&a) : x{std::move(a)} {}
@@ -488,6 +491,9 @@ struct AnyIntegerOrRealExpr {
 };
 
 // Convenience functions and operator overloadings for expression construction.
+// These definitions are created with temporary helper macros to reduce
+// C++ boilerplate.  All combinations of lvalue and rvalue references are
+// allowed for operands.
 #define UNARY(FUNC, CONSTR) \
   template<typename A> A FUNC(const A &x) { return {typename A::CONSTR{x}}; }
 UNARY(Parentheses, Parentheses)

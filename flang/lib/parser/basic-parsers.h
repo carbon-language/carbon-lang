@@ -969,18 +969,16 @@ private:
 // With a single argument that is a parser with a usable value of
 // type A, construct<T>(p) invokes T's explicit constructor T(A &&).
 template<class T, typename PA>
-constexpr
-    typename std::enable_if<std::is_same_v<Success, typename PA::resultType>,
-        Construct01<T, PA>>::type
-    construct(const PA &parser) {
+constexpr std::enable_if_t<std::is_same_v<Success, typename PA::resultType>,
+    Construct01<T, PA>>
+construct(const PA &parser) {
   return Construct01<T, PA>{parser};
 }
 
 template<typename T, typename PA>
-constexpr
-    typename std::enable_if<!std::is_same_v<Success, typename PA::resultType>,
-        Construct1<T, PA>>::type
-    construct(const PA &parser) {
+constexpr std::enable_if_t<!std::is_same_v<Success, typename PA::resultType>,
+    Construct1<T, PA>>
+construct(const PA &parser) {
   return Construct1<T, PA>{parser};
 }
 

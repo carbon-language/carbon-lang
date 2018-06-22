@@ -35,17 +35,15 @@ namespace Fortran::parser {
 
 // Default case for visitation of non-class data members and strings
 template<typename A, typename V>
-typename std::enable_if<!std::is_class_v<A> ||
-    std::is_same_v<std::string, A>>::type
-Walk(const A &x, V &visitor) {
+std::enable_if_t<!std::is_class_v<A> || std::is_same_v<std::string, A>> Walk(
+    const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     visitor.Post(x);
   }
 }
 template<typename A, typename M>
-typename std::enable_if<!std::is_class_v<A> ||
-    std::is_same_v<std::string, A>>::type
-Walk(A &x, M &mutator) {
+std::enable_if_t<!std::is_class_v<A> || std::is_same_v<std::string, A>> Walk(
+    A &x, M &mutator) {
   if (mutator.Pre(x)) {
     mutator.Post(x);
   }
@@ -142,27 +140,27 @@ void Walk(std::pair<A, B> &x, M &mutator) {
 
 // Trait-determined traversal of empty, tuple, union, and wrapper classes.
 template<typename A, typename V>
-typename std::enable_if<EmptyTrait<A>>::type Walk(const A &x, V &visitor) {
+std::enable_if_t<EmptyTrait<A>> Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     visitor.Post(x);
   }
 }
 template<typename A, typename M>
-typename std::enable_if<EmptyTrait<A>>::type Walk(A &x, M &mutator) {
+std::enable_if_t<EmptyTrait<A>> Walk(A &x, M &mutator) {
   if (mutator.Pre(x)) {
     mutator.Post(x);
   }
 }
 
 template<typename A, typename V>
-typename std::enable_if<TupleTrait<A>>::type Walk(const A &x, V &visitor) {
+std::enable_if_t<TupleTrait<A>> Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.t, visitor);
     visitor.Post(x);
   }
 }
 template<typename A, typename M>
-typename std::enable_if<TupleTrait<A>>::type Walk(A &x, M &mutator) {
+std::enable_if_t<TupleTrait<A>> Walk(A &x, M &mutator) {
   if (mutator.Pre(x)) {
     Walk(x.t, mutator);
     mutator.Post(x);
@@ -170,14 +168,14 @@ typename std::enable_if<TupleTrait<A>>::type Walk(A &x, M &mutator) {
 }
 
 template<typename A, typename V>
-typename std::enable_if<UnionTrait<A>>::type Walk(const A &x, V &visitor) {
+std::enable_if_t<UnionTrait<A>> Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.u, visitor);
     visitor.Post(x);
   }
 }
 template<typename A, typename M>
-typename std::enable_if<UnionTrait<A>>::type Walk(A &x, M &mutator) {
+std::enable_if_t<UnionTrait<A>> Walk(A &x, M &mutator) {
   if (mutator.Pre(x)) {
     Walk(x.u, mutator);
     mutator.Post(x);
@@ -185,14 +183,14 @@ typename std::enable_if<UnionTrait<A>>::type Walk(A &x, M &mutator) {
 }
 
 template<typename A, typename V>
-typename std::enable_if<WrapperTrait<A>>::type Walk(const A &x, V &visitor) {
+std::enable_if_t<WrapperTrait<A>> Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     Walk(x.v, visitor);
     visitor.Post(x);
   }
 }
 template<typename A, typename M>
-typename std::enable_if<WrapperTrait<A>>::type Walk(A &x, M &mutator) {
+std::enable_if_t<WrapperTrait<A>> Walk(A &x, M &mutator) {
   if (mutator.Pre(x)) {
     Walk(x.v, mutator);
     mutator.Post(x);

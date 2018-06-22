@@ -24,21 +24,20 @@
 #include "integer.h"
 #include "logical.h"
 #include "real.h"
+#include "../common/idioms.h"
 #include <string>
 #include <variant>
 
 namespace Fortran::evaluate {
 
-enum class Category { Integer, Real, Complex, Logical, Character, Derived };
-
-std::string CategoryName(Category);
+ENUM_CLASS(Category, Integer, Real, Complex, Logical, Character, Derived)
 
 template<Category C, int KIND> struct TypeBase {
   static constexpr Category category{C};
   static constexpr int kind{KIND};
   static constexpr bool hasLen{false};
   static std::string Dump() {
-    return CategoryName(category) + '(' + std::to_string(kind) + ')';
+    return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
 };
 

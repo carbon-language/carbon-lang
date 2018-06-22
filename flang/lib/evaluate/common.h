@@ -16,13 +16,14 @@
 #define FORTRAN_EVALUATE_COMMON_H_
 
 #include "../common/enum-set.h"
+#include "../common/idioms.h"
 #include <cinttypes>
 
 namespace Fortran::evaluate {
 
 // Integers are always ordered; reals may not be.
-enum class Ordering { Less, Equal, Greater };
-enum class Relation { Less, Equal, Greater, Unordered };
+ENUM_CLASS(Ordering, Less, Equal, Greater)
+ENUM_CLASS(Relation, Less, Equal, Greater, Unordered)
 
 static constexpr Ordering CompareUnsigned(std::uint64_t x, std::uint64_t y) {
   if (x < y) {
@@ -64,13 +65,8 @@ static constexpr Relation Reverse(Relation relation) {
   }
 }
 
-enum class RealFlag {
-  Overflow,
-  DivideByZero,
-  InvalidArgument,
-  Underflow,
-  Inexact
-};
+ENUM_CLASS(
+    RealFlag, Overflow, DivideByZero, InvalidArgument, Underflow, Inexact)
 
 using RealFlags = common::EnumSet<RealFlag, 5>;
 
@@ -83,7 +79,7 @@ template<typename A> struct ValueWithRealFlags {
   RealFlags flags;
 };
 
-enum class Rounding { TiesToEven, ToZero, Down, Up, TiesAwayFromZero };
+ENUM_CLASS(Rounding, TiesToEven, ToZero, Down, Up, TiesAwayFromZero)
 
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 constexpr bool IsHostLittleEndian{false};

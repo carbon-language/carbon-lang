@@ -18,7 +18,6 @@ add_library(FortranEvaluate
   integer.cc
   logical.cc
   real.cc
-  type.cc
 )
 
 target_link_libraries(FortranEvaluate
