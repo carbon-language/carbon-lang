@@ -346,7 +346,7 @@ private:
   public:
     IntelExprStateMachine()
         : State(IES_INIT), PrevState(IES_ERROR), BaseReg(0), IndexReg(0),
-          TmpReg(0), Scale(1), Imm(0), Sym(nullptr), BracCount(0),
+          TmpReg(0), Scale(0), Imm(0), Sym(nullptr), BracCount(0),
           MemExpr(false) {}
 
     void addImm(int64_t imm) { Imm += imm; }
@@ -452,7 +452,7 @@ private:
         IC.pushOperator(IC_PLUS);
         if (CurrState == IES_REGISTER && PrevState != IES_MULTIPLY) {
           // If we already have a BaseReg, then assume this is the IndexReg with
-          // a scale of 1.
+          // no explicit scale.
           if (!BaseReg) {
             BaseReg = TmpReg;
           } else {
@@ -461,7 +461,7 @@ private:
               return true;
             }
             IndexReg = TmpReg;
-            Scale = 1;
+            Scale = 0;
           }
         }
         break;
@@ -505,7 +505,7 @@ private:
           IC.pushOperator(IC_NEG);
         if (CurrState == IES_REGISTER && PrevState != IES_MULTIPLY) {
           // If we already have a BaseReg, then assume this is the IndexReg with
-          // a scale of 1.
+          // no explicit scale.
           if (!BaseReg) {
             BaseReg = TmpReg;
           } else {
@@ -514,7 +514,7 @@ private:
               return true;
             }
             IndexReg = TmpReg;
-            Scale = 1;
+            Scale = 0;
           }
         }
         break;
@@ -737,13 +737,13 @@ private:
         State = IES_RBRAC;
         if (CurrState == IES_REGISTER && PrevState != IES_MULTIPLY) {
           // If we already have a BaseReg, then assume this is the IndexReg with
-          // a scale of 1.
+          // no explicit scale.
           if (!BaseReg) {
             BaseReg = TmpReg;
           } else {
             assert (!IndexReg && "BaseReg/IndexReg already set!");
             IndexReg = TmpReg;
-            Scale = 1;
+            Scale = 0;
           }
         }
         break;
@@ -1858,9 +1858,17 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
   unsigned IndexReg = SM.getIndexReg();
   unsigned Scale = SM.getScale();
 
-  if (Scale == 1 && BaseReg != X86::ESP && BaseReg != X86::RSP &&
+  if (Scale == 0 && BaseReg != X86::ESP && BaseReg != X86::RSP &&
       (IndexReg == X86::ESP || IndexReg == X86::RSP))
     std::swap(BaseReg, IndexReg);
+
+  if (Scale != 0 &&
+      X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg))
+    return ErrorOperand(Start, "16-bit addresses cannot have a scale");
+
+  // If there was no explicit scale specified, change it to 1.
+  if (Scale == 0)
+    Scale = 1;
 
   // If this is a 16-bit addressing mode with the base and index in the wrong
   // order, swap them so CheckBaseRegAndIndexRegAndScale doesn't fail. It is
