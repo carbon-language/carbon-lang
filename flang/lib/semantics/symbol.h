@@ -295,7 +295,7 @@ private:
   const std::string GetDetailsName() const;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
   template<std::size_t> friend class Symbols;
-  template<class, std::size_t> friend class std::array;
+  template<class, std::size_t> friend struct std::array;
 };
 
 std::ostream &operator<<(std::ostream &, Symbol::Flag);

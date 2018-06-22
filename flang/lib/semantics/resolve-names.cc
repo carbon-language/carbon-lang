@@ -131,7 +131,6 @@ public:
   bool Pre(const parser::IntrinsicTypeSpec::DoublePrecision &);
   bool Pre(const parser::DeclarationTypeSpec::ClassStar &);
   bool Pre(const parser::DeclarationTypeSpec::TypeStar &);
-  void Post(const parser::DeclarationTypeSpec::Type &);
   void Post(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
   void Post(const parser::TypeParamSpec &);
@@ -147,6 +146,7 @@ protected:
   void BeginDeclTypeSpec();
   void EndDeclTypeSpec();
   void BeginDerivedTypeSpec(DerivedTypeSpec &);
+  void SetDerivedDeclTypeSpec(DeclTypeSpec::Category);
 
 private:
   bool expectDeclTypeSpec_{false};  // should only see decl-type-spec when true
@@ -803,11 +803,8 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
   return false;
 }
 
-void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Type &) {
-  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::TypeDerived, *derivedTypeSpec_});
-}
 void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Class &) {
-  SetDeclTypeSpec(DeclTypeSpec{DeclTypeSpec::ClassDerived, *derivedTypeSpec_});
+  SetDerivedDeclTypeSpec(DeclTypeSpec::ClassDerived);
 }
 bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
   // TODO
@@ -862,6 +859,13 @@ void DeclTypeSpecVisitor::MakeIntrinsic(
     const IntrinsicTypeSpec &intrinsicTypeSpec) {
   SetDeclTypeSpec(DeclTypeSpec{intrinsicTypeSpec});
 }
+
+// Set declTypeSpec_ based on derivedTypeSpec_
+void DeclTypeSpecVisitor::SetDerivedDeclTypeSpec(
+    DeclTypeSpec::Category category) {
+  SetDeclTypeSpec(DeclTypeSpec{category, *derivedTypeSpec_});
+}
+
 void DeclTypeSpecVisitor::BeginDerivedTypeSpec(
     DerivedTypeSpec &derivedTypeSpec) {
   CHECK(!derivedTypeSpec_);
@@ -1845,7 +1849,7 @@ void DeclarationVisitor::DeclareObjectEntity(
 }
 
 void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Type &x) {
-  DeclTypeSpecVisitor::Post(x);
+  SetDerivedDeclTypeSpec(DeclTypeSpec::TypeDerived);
   DerivedTypeSpec &type{GetDeclTypeSpec()->derivedTypeSpec()};
   if (const auto *symbol = ResolveDerivedType(type.name())) {
     if (!symbol->has<DerivedTypeDetails>()) {
@@ -1897,7 +1901,6 @@ bool DeclarationVisitor::Pre(const parser::SequenceStmt &x) {
 }
 void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
   const auto &name = std::get<parser::Name>(x.t);
-  Attrs attrs{attrs_ ? *attrs_ : Attrs{}};
   DeclareObjectEntity(name, GetAttrs());
   ClearArraySpec();
 }
