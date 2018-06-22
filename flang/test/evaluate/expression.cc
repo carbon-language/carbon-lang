@@ -28,9 +28,14 @@ int main() {
   ie.Dump(ss);
   TEST(ss.str() == "666");
   DefaultIntegerExpr one{DefaultIntegerExpr::Constant{1}};
-  DefaultIntegerExpr incr{DefaultIntegerExpr::Add{ie, one}};
+  auto minusOne{-DefaultIntegerExpr{1}};
+  DefaultIntegerExpr incr{DefaultIntegerExpr::Add{ie, minusOne}};
 incr.Dump(std::cout) << '\n';
-  LogicalExpr cmp{Comparison<DefaultIntegerExpr>{Comparison<DefaultIntegerExpr>::LE{std::move(incr), DefaultIntegerExpr{2}}}};
+  incr = ie + one;
+incr.Dump(std::cout) << '\n';
+  auto three{std::move(one) + DefaultIntegerExpr{2}};
+three.Dump(std::cout) << '\n';
+  LogicalExpr cmp{std::move(incr) <= DefaultIntegerExpr{2}};
 cmp.Dump(std::cout) << '\n';
   return testing::Complete();
 }
