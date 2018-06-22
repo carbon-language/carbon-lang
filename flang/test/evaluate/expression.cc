@@ -28,9 +28,9 @@ int main() {
   ie.Dump(ss);
   TEST(ss.str() == "666");
   DefaultIntegerExpr one{DefaultIntegerExpr::Constant{1}};
-  DefaultIntegerExpr incr{std::move(ie) + std::move(one) +
-                          DefaultIntegerExpr{1}};
+  DefaultIntegerExpr incr{DefaultIntegerExpr::Add{ie, one}};
 incr.Dump(std::cout) << '\n';
-  LogicalExpr cmp{std::move(incr) <= DefaultIntegerExpr{2}};
+  LogicalExpr cmp{Comparison<DefaultIntegerExpr>{Comparison<DefaultIntegerExpr>::LE{std::move(incr), DefaultIntegerExpr{2}}}};
+cmp.Dump(std::cout) << '\n';
   return testing::Complete();
 }

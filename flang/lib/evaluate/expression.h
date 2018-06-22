@@ -15,6 +15,12 @@
 #ifndef FORTRAN_EVALUATE_EXPRESSION_H_
 #define FORTRAN_EVALUATE_EXPRESSION_H_
 
+// Represent Fortran expressions in a type-safe manner.
+// Expressions are the sole owners of their constituents; there is no
+// context-independent hash table or sharing of common subexpressions.
+// Both deep copy and move semantics are supported for expression construction.
+// TODO: variable and function references
+
 #include "common.h"
 #include "type.h"
 #include <memory>
@@ -34,28 +40,65 @@ struct AnyComplexExpr;
 struct AnyCharacterExpr;
 struct AnyIntegerOrRealExpr;
 
+template<typename A> std::unique_ptr<A> DeepCopy(const std::unique_ptr<A> &p) {
+  return std::make_unique<A>(const_cast<const A &>(*p));
+}
+
+template<typename A> struct Unary {
+  Unary(const A &a) : x{std::make_unique<A>(a)} {}
+  Unary(std::unique_ptr<const A> &&a) : x{std::move(a)} {}
+  Unary(A &&a) : x{std::make_unique<A>(std::move(a))} {}
+  Unary(const Unary &that) : x{DeepCopy(that.x)} {}
+  Unary(Unary &&) = default;
+  std::unique_ptr<const A> x;
+};
+
+template<typename A, typename B> struct Binary {
+  Binary(const A &a, const B &b)
+    : x{std::make_unique<A>(a)}, y{std::make_unique<B>(b)} {}
+  Binary(std::unique_ptr<const A> &&a, std::unique_ptr<const B> &&b)
+    : x{std::move(a)}, y{std::move(b)} {}
+  Binary(A &&a, B &&b)
+    : x{std::make_unique<A>(std::move(a))}, y{std::make_unique<B>(
+                                                std::move(b))} {}
+  Binary(const Binary &that) : x{DeepCopy(that.x)}, y{DeepCopy(that.y)} {}
+  Binary(Binary &&) = default;
+  std::unique_ptr<const A> x;
+  std::unique_ptr<const B> y;
+};
+
 template<int KIND> struct IntegerExpr {
   using Result = Type<Category::Integer, KIND>;
-  using Operand = std::unique_ptr<IntegerExpr>;
   using Constant = typename Result::Value;
-  struct Convert {
-    std::unique_ptr<AnyIntegerOrRealExpr> x;
+  struct Convert : Unary<AnyIntegerOrRealExpr> {
+    using Unary<AnyIntegerOrRealExpr>::Unary;
   };
-  struct Unary {
-    Operand x;
+  using Un = Unary<IntegerExpr>;
+  using Bin = Binary<IntegerExpr, IntegerExpr>;
+  struct Parentheses : public Un {
+    using Un::Un;
   };
-  struct Parentheses : public Unary {};
-  struct Negate : public Unary {};
-  struct Binary {
-    Operand x, y;
+  struct Negate : public Un {
+    using Un::Un;
   };
-  struct Add : public Binary {};
-  struct Subtract : public Binary {};
-  struct Multiply : public Binary {};
-  struct Divide : public Binary {};
-  struct Power : public Binary {};
+  struct Add : public Bin {
+    using Bin::Bin;
+  };
+  struct Subtract : public Bin {
+    using Bin::Bin;
+  };
+  struct Multiply : public Bin {
+    using Bin::Bin;
+  };
+  struct Divide : public Bin {
+    using Bin::Bin;
+  };
+  struct Power : public Bin {
+    using Bin::Bin;
+  };
 
   IntegerExpr() = delete;
+  IntegerExpr(const IntegerExpr &) = default;
   IntegerExpr(IntegerExpr &&) = default;
   IntegerExpr(const Constant &x) : u{x} {}
   IntegerExpr(std::int64_t n) : u{Constant{n}} {}
@@ -73,38 +116,49 @@ using DefaultIntegerExpr = IntegerExpr<DefaultInteger::kind>;
 
 template<int KIND> struct RealExpr {
   using Result = Type<Category::Real, KIND>;
-  using Operand = std::unique_ptr<RealExpr>;
   using Constant = typename Result::Value;
-  struct Convert {
-    // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
-    // and part access operations (resp.).  Conversions between kinds of
-    // Complex are done via decomposition to Real and reconstruction.
-    std::unique_ptr<AnyIntegerOrRealExpr> x;
+  // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
+  // and part access operations (resp.).  Conversions between kinds of
+  // Complex are done via decomposition to Real and reconstruction.
+  struct Convert : Unary<AnyIntegerOrRealExpr> {
+    using Unary<AnyIntegerOrRealExpr>::Unary;
   };
-  struct Unary {
-    Operand x;
+  using Un = Unary<RealExpr>;
+  using Bin = Binary<RealExpr, RealExpr>;
+  struct Parentheses : public Un {
+    using Un::Un;
   };
-  struct Parentheses : public Unary {};
-  struct Negate : public Unary {};
-  struct Binary {
-    Operand x, y;
+  struct Negate : public Un {
+    using Un::Un;
   };
-  struct Add : public Binary {};
-  struct Subtract : public Binary {};
-  struct Multiply : public Binary {};
-  struct Divide : public Binary {};
-  struct Power : public Binary {};
-  struct IntPower {
-    Operand x;
-    std::unique_ptr<AnyIntegerExpr> y;
+  struct Add : public Bin {
+    using Bin::Bin;
   };
-  struct FromComplex {
-    std::unique_ptr<ComplexExpr<KIND>> z;
+  struct Subtract : public Bin {
+    using Bin::Bin;
   };
-  struct RealPart : public FromComplex {};
-  struct AIMAG : public FromComplex {};
+  struct Multiply : public Bin {
+    using Bin::Bin;
+  };
+  struct Divide : public Bin {
+    using Bin::Bin;
+  };
+  struct Power : public Bin {
+    using Bin::Bin;
+  };
+  struct IntPower : public Binary<RealExpr, AnyIntegerExpr> {
+    using Binary<RealExpr, AnyIntegerExpr>::Binary;
+  };
+  using CplxUn = Unary<ComplexExpr<KIND>>;
+  struct RealPart : public CplxUn {
+    using CplxUn::CplxUn;
+  };
+  struct AIMAG : public CplxUn {
+    using CplxUn::CplxUn;
+  };
 
   RealExpr() = delete;
+  RealExpr(const RealExpr &) = default;
   RealExpr(RealExpr &&) = default;
   RealExpr(const Constant &x) : u{x} {}
   template<typename A> RealExpr(A &&x) : u{std::move(x)} {}
@@ -118,30 +172,39 @@ template<int KIND> struct RealExpr {
 
 template<int KIND> struct ComplexExpr {
   using Result = Type<Category::Complex, KIND>;
-  using Operand = std::unique_ptr<ComplexExpr>;
   using Constant = typename Result::Value;
-  struct Unary {
-    Operand x;
+  using Un = Unary<ComplexExpr>;
+  using Bin = Binary<ComplexExpr, ComplexExpr>;
+  struct Parentheses : public Un {
+    using Un::Un;
   };
-  struct Parentheses : public Unary {};
-  struct Negate : public Unary {};
-  struct Binary {
-    Operand x, y;
+  struct Negate : public Un {
+    using Un::Un;
   };
-  struct Add : public Binary {};
-  struct Subtract : public Binary {};
-  struct Multiply : public Binary {};
-  struct Divide : public Binary {};
-  struct Power : public Binary {};
-  struct IntPower {
-    Operand x;
-    std::unique_ptr<AnyIntegerExpr> y;
+  struct Add : public Bin {
+    using Bin::Bin;
   };
-  struct CMPLX {
-    std::unique_ptr<RealExpr<KIND>> re, im;
+  struct Subtract : public Bin {
+    using Bin::Bin;
+  };
+  struct Multiply : public Bin {
+    using Bin::Bin;
+  };
+  struct Divide : public Bin {
+    using Bin::Bin;
+  };
+  struct Power : public Bin {
+    using Bin::Bin;
+  };
+  struct IntPower : public Binary<ComplexExpr, AnyIntegerExpr> {
+    using Binary<ComplexExpr, AnyIntegerExpr>::Binary;
+  };
+  struct CMPLX : public Binary<RealExpr<KIND>, RealExpr<KIND>> {
+    using Binary<RealExpr<KIND>, RealExpr<KIND>>::Binary;
   };
 
   ComplexExpr() = delete;
+  ComplexExpr(const ComplexExpr &) = default;
   ComplexExpr(ComplexExpr &&) = default;
   ComplexExpr(const Constant &x) : u{x} {}
   template<typename A> ComplexExpr(A &&x) : u{std::move(x)} {}
@@ -155,21 +218,20 @@ template<int KIND> struct ComplexExpr {
 
 template<int KIND> struct CharacterExpr {
   using Result = Type<Category::Character, KIND>;
-  using Operand = std::unique_ptr<CharacterExpr>;
   using Constant = typename Result::Value;
-  using Length = IntegerExpr<IntrinsicTypeParameterType::kind>;
-  struct Concat {
-    Operand x, y;
+  using LengthExpr = IntegerExpr<IntrinsicTypeParameterType::kind>;
+  struct Concat : public Binary<CharacterExpr, CharacterExpr> {
+    using Binary<CharacterExpr, CharacterExpr>::Binary;
   };
 
   CharacterExpr() = delete;
+  CharacterExpr(const CharacterExpr &) = default;
   CharacterExpr(CharacterExpr &&) = default;
   CharacterExpr(const Constant &x) : u{x} {}
-  CharacterExpr(CharacterExpr &&a, CharacterExpr &&b)
-    : u{Concat{std::make_unique<CharacterExpr>(std::move(a)),
-          std::make_unique<CharacterExpr>(std::move(b))}} {}
+  CharacterExpr(Constant &&x) : u{std::move(x)} {}
+  CharacterExpr(Concat &&x) : u{std::move(x)} {}
 
-  Length LEN() const;
+  IntegerExpr<IntrinsicTypeParameterType::kind> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
   std::variant<Constant, Concat> u;
@@ -179,17 +241,27 @@ template<int KIND> struct CharacterExpr {
 // expressions with polymorphism over all of the possible categories and
 // kinds of comparable operands.
 template<typename T> struct Comparison {
-  struct Binary {
-    std::unique_ptr<T> x, y;
+  struct LT : public Binary<T, T> {
+    using Binary<T, T>::Binary;
   };
-  struct LT : public Binary {};
-  struct LE : public Binary {};
-  struct EQ : public Binary {};
-  struct NE : public Binary {};
-  struct GE : public Binary {};
-  struct GT : public Binary {};
+  struct LE : public Binary<T, T> {
+    using Binary<T, T>::Binary;
+  };
+  struct EQ : public Binary<T, T> {
+    using Binary<T, T>::Binary;
+  };
+  struct NE : public Binary<T, T> {
+    using Binary<T, T>::Binary;
+  };
+  struct GE : public Binary<T, T> {
+    using Binary<T, T>::Binary;
+  };
+  struct GT : public Binary<T, T> {
+    using Binary<T, T>::Binary;
+  };
 
   Comparison() = delete;
+  Comparison(const Comparison &) = default;
   Comparison(Comparison &&) = default;
   template<typename A> Comparison(A &&x) : u{std::move(x)} {}
 
@@ -200,13 +272,16 @@ template<typename T> struct Comparison {
 
 // COMPLEX admits only .EQ. and .NE. comparisons.
 template<int KIND> struct Comparison<ComplexExpr<KIND>> {
-  struct Binary {
-    std::unique_ptr<ComplexExpr<KIND>> x, y;
+  using Bin = Binary<ComplexExpr<KIND>, ComplexExpr<KIND>>;
+  struct EQ : public Bin {
+    using Bin::Bin;
   };
-  struct EQ : public Binary {};
-  struct NE : public Binary {};
+  struct NE : public Bin {
+    using Bin::Bin;
+  };
 
   Comparison() = delete;
+  Comparison(const Comparison &) = default;
   Comparison(Comparison &&) = default;
   template<typename A> Comparison(A &&x) : u{std::move(x)} {}
 
@@ -217,6 +292,7 @@ template<int KIND> struct Comparison<ComplexExpr<KIND>> {
 
 struct IntegerComparison {
   IntegerComparison() = delete;
+  IntegerComparison(const IntegerComparison &) = default;
   IntegerComparison(IntegerComparison &&) = default;
   template<typename A> IntegerComparison(A &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
@@ -226,6 +302,7 @@ struct IntegerComparison {
 
 struct RealComparison {
   RealComparison() = delete;
+  RealComparison(const RealComparison &) = default;
   RealComparison(RealComparison &&) = default;
   template<typename A> RealComparison(A &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
@@ -244,6 +321,7 @@ struct ComplexComparison {
 
 struct CharacterComparison {
   CharacterComparison() = delete;
+  CharacterComparison(const CharacterComparison &) = default;
   CharacterComparison(CharacterComparison &&) = default;
   template<typename A> CharacterComparison(A &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
@@ -253,31 +331,48 @@ struct CharacterComparison {
 
 // No need to distinguish the various kinds of LOGICAL expression results.
 struct LogicalExpr {
-  using Operand = std::unique_ptr<LogicalExpr>;
   using Constant = bool;
-  struct Not {
-    Operand x;
+  struct Not : Unary<LogicalExpr> {
+    using Unary<LogicalExpr>::Unary;
   };
-  struct Binary {
-    Operand x, y;
+  using Bin = Binary<LogicalExpr, LogicalExpr>;
+  struct And : public Bin {
+    using Bin::Bin;
   };
-  struct And : public Binary {};
-  struct Or : public Binary {};
-  struct Eqv : public Binary {};
-  struct Neqv : public Binary {};
+  struct Or : public Bin {
+    using Bin::Bin;
+  };
+  struct Eqv : public Bin {
+    using Bin::Bin;
+  };
+  struct Neqv : public Bin {
+    using Bin::Bin;
+  };
 
   LogicalExpr() = delete;
+  LogicalExpr(const LogicalExpr &) = default;
   LogicalExpr(LogicalExpr &&) = default;
-  LogicalExpr(const Constant &x) : u{x} {}
+  LogicalExpr(Constant x) : u{x} {}
+  template<int KIND>
+  LogicalExpr(const Comparison<IntegerExpr<KIND>> &x)
+    : u{IntegerComparison{x}} {}
   template<int KIND>
   LogicalExpr(Comparison<IntegerExpr<KIND>> &&x)
     : u{IntegerComparison{std::move(x)}} {}
   template<int KIND>
+  LogicalExpr(const Comparison<RealExpr<KIND>> &x) : u{RealComparison{x}} {}
+  template<int KIND>
   LogicalExpr(Comparison<RealExpr<KIND>> &&x)
     : u{RealComparison{std::move(x)}} {}
   template<int KIND>
+  LogicalExpr(const Comparison<ComplexExpr<KIND>> &x)
+    : u{ComplexComparison{x}} {}
+  template<int KIND>
   LogicalExpr(Comparison<ComplexExpr<KIND>> &&x)
     : u{ComplexComparison{std::move(x)}} {}
+  template<int KIND>
+  LogicalExpr(const Comparison<CharacterExpr<KIND>> &x)
+    : u{CharacterComparison{x}} {}
   template<int KIND>
   LogicalExpr(Comparison<CharacterExpr<KIND>> &&x)
     : u{CharacterComparison{std::move(x)}} {}
@@ -293,98 +388,62 @@ struct LogicalExpr {
 // Dynamically polymorphic expressions that can hold any supported kind.
 struct AnyIntegerExpr {
   AnyIntegerExpr() = delete;
+  AnyIntegerExpr(const AnyIntegerExpr &) = default;
   AnyIntegerExpr(AnyIntegerExpr &&) = default;
-  template<int KIND> AnyIntegerExpr(IntegerExpr<KIND> &&x) : u{x} {}
+  template<int KIND> AnyIntegerExpr(const IntegerExpr<KIND> &x) : u{x} {}
+  template<int KIND> AnyIntegerExpr(IntegerExpr<KIND> &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
   IntegerKindsVariant<IntegerExpr> u;
 };
 struct AnyRealExpr {
   AnyRealExpr() = delete;
+  AnyRealExpr(const AnyRealExpr &) = default;
   AnyRealExpr(AnyRealExpr &&) = default;
-  template<int KIND> AnyRealExpr(RealExpr<KIND> &&x) : u{x} {}
+  template<int KIND> AnyRealExpr(const RealExpr<KIND> &x) : u{x} {}
+  template<int KIND> AnyRealExpr(RealExpr<KIND> &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
   RealKindsVariant<RealExpr> u;
 };
 struct AnyComplexExpr {
   AnyComplexExpr() = delete;
+  AnyComplexExpr(const AnyComplexExpr &) = default;
   AnyComplexExpr(AnyComplexExpr &&) = default;
-  template<int KIND> AnyComplexExpr(ComplexExpr<KIND> &&x) : u{x} {}
+  template<int KIND> AnyComplexExpr(const ComplexExpr<KIND> &x) : u{x} {}
+  template<int KIND> AnyComplexExpr(ComplexExpr<KIND> &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
   ComplexKindsVariant<ComplexExpr> u;
 };
 struct AnyCharacterExpr {
   AnyCharacterExpr() = delete;
+  AnyCharacterExpr(const AnyCharacterExpr &) = default;
   AnyCharacterExpr(AnyCharacterExpr &&) = default;
-  template<int KIND> AnyCharacterExpr(CharacterExpr<KIND> &&x) : u{x} {}
+  template<int KIND> AnyCharacterExpr(const CharacterExpr<KIND> &x) : u{x} {}
+  template<int KIND>
+  AnyCharacterExpr(CharacterExpr<KIND> &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
   CharacterKindsVariant<CharacterExpr> u;
 };
 
 struct AnyIntegerOrRealExpr {
   AnyIntegerOrRealExpr() = delete;
+  AnyIntegerOrRealExpr(const AnyIntegerOrRealExpr &) = default;
   AnyIntegerOrRealExpr(AnyIntegerOrRealExpr &&) = default;
+  template<int KIND>
+  AnyIntegerOrRealExpr(const IntegerExpr<KIND> &x) : u{AnyIntegerExpr{x}} {}
   template<int KIND>
   AnyIntegerOrRealExpr(IntegerExpr<KIND> &&x)
     : u{AnyIntegerExpr{std::move(x)}} {}
   template<int KIND>
+  AnyIntegerOrRealExpr(const RealExpr<KIND> &x) : u{AnyRealExpr{x}} {}
+  template<int KIND>
   AnyIntegerOrRealExpr(RealExpr<KIND> &&x) : u{AnyRealExpr{std::move(x)}} {}
-  template<typename A> AnyIntegerOrRealExpr(A &&x) : u{std::move(x)} {}
+  AnyIntegerOrRealExpr(const AnyIntegerExpr &x) : u{x} {}
+  AnyIntegerOrRealExpr(AnyIntegerExpr &&x) : u{std::move(x)} {}
+  AnyIntegerOrRealExpr(const AnyRealExpr &x) : u{x} {}
+  AnyIntegerOrRealExpr(AnyRealExpr &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
   std::variant<AnyIntegerExpr, AnyRealExpr> u;
 };
-
-// Convenience functions and operator overloadings for expression construction.
-template<typename A> A Parentheses(A &&x) {
-  return {typename A::Parentheses{{std::make_unique<A>(std::move(x))}}};
-}
-template<typename A> A operator-(A &&x) {
-  return {typename A::Negate{{std::make_unique<A>(std::move(x))}}};
-}
-template<typename A> A operator+(A &&x, A &&y) {
-  return {typename A::Add{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> A operator-(A &&x, A &&y) {
-  return {typename A::Subtract{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> A operator*(A &&x, A &&y) {
-  return {typename A::Multiply{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> A operator/(A &&x, A &&y) {
-  return {typename A::Divide{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> A Power(A &&x, A &&y) {
-  return {typename A::Power{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-
-template<typename A> Comparison<A> operator<(A &&x, A &&y) {
-  return {typename Comparison<A>::LT{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> Comparison<A> operator<=(A &&x, A &&y) {
-  return {typename Comparison<A>::LE{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> Comparison<A> operator==(A &&x, A &&y) {
-  return {typename Comparison<A>::EQ{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> Comparison<A> operator!=(A &&x, A &&y) {
-  return {typename Comparison<A>::NE{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> Comparison<A> operator>=(A &&x, A &&y) {
-  return {typename Comparison<A>::GE{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
-template<typename A> Comparison<A> operator>(A &&x, A &&y) {
-  return {typename Comparison<A>::GT{
-      {std::make_unique<A>(std::move(x)), std::make_unique<A>(std::move(y))}}};
-}
 
 // External instantiations
 extern template struct IntegerExpr<1>;

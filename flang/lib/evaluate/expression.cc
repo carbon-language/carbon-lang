@@ -92,8 +92,8 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
           [&](const IntPower &p) {
             p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
           },
-          [&](const RealPart &z) { z.z->Dump(o << "REAL(") << ')'; },
-          [&](const AIMAG &z) { z.z->Dump(o << "AIMAG(") << ')'; }},
+          [&](const RealPart &z) { z.x->Dump(o << "REAL(") << ')'; },
+          [&](const AIMAG &z) { z.x->Dump(o << "AIMAG(") << ')'; }},
       u);
   return o;
 }
@@ -121,18 +121,20 @@ std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
             p.y->Dump(p.x->Dump(o << '(') << "**") << ')';
           },
           [&](const CMPLX &c) {
-            c.im->Dump(c.re->Dump(o << '(') << ',') << ')';
+            c.y->Dump(c.x->Dump(o << '(') << ',') << ')';
           }},
       u);
   return o;
 }
 
 template<int KIND>
-typename CharacterExpr<KIND>::Length CharacterExpr<KIND>::LEN() const {
+typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
   return std::visit(
       common::visitors{
-          [](const std::string &str) { return Length{str.size()}; },
-          [](const Concat &c) { return Length{c.x->LEN() + c.y->LEN()}; }},
+          [](const std::string &str) { return LengthExpr{str.size()}; },
+          [](const Concat &c) {
+            return LengthExpr{LengthExpr::Add{c.x->LEN(), c.y->LEN()}};
+          }},
       u);
 }
 
