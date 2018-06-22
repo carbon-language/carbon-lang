@@ -537,6 +537,7 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   switch (I.getOpcode()) {
   default:
     break;
+  case TargetOpcode::G_ASHR:
   case TargetOpcode::G_SITOFP:
   case TargetOpcode::G_FMUL:
   case TargetOpcode::G_FADD:
@@ -562,6 +563,14 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
     return selectG_STORE(I);
   }
   return false;
+}
+
+InstructionSelector::ComplexRendererFns
+AMDGPUInstructionSelector::selectVCSRC(MachineOperand &Root) const {
+  return {{
+      [=](MachineInstrBuilder &MIB) { MIB.add(Root); }
+  }};
+
 }
 
 ///

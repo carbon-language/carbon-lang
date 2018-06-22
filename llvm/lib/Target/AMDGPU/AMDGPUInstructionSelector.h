@@ -73,6 +73,9 @@ private:
   bool selectG_STORE(MachineInstr &I) const;
 
   InstructionSelector::ComplexRendererFns
+  selectVCSRC(MachineOperand &Root) const;
+
+  InstructionSelector::ComplexRendererFns
   selectVSRC0(MachineOperand &Root) const;
 
   InstructionSelector::ComplexRendererFns

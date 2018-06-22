@@ -18,6 +18,11 @@ def gi_vsrc0 :
     GIComplexOperandMatcher<s32, "selectVSRC0">,
     GIComplexPatternEquiv<sd_vsrc0>;
 
+def sd_vcsrc : ComplexPattern<i32, 1, "">;
+def gi_vcsrc :
+    GIComplexOperandMatcher<s32, "selectVCSRC">,
+    GIComplexPatternEquiv<sd_vcsrc>;
+
 def gi_vop3mods0 :
     GIComplexOperandMatcher<s32, "selectVOP3Mods0">,
     GIComplexPatternEquiv<VOP3Mods0>;
@@ -60,6 +65,26 @@ class GISelVop2CommutePat <
   (inst src0_vt:$src0, src1_vt:$src1)
 >;
 
+class GISelVop3Pat2 <
+  SDPatternOperator node,
+  Instruction inst,
+  ValueType dst_vt,
+  ValueType src0_vt = dst_vt, ValueType src1_vt = src0_vt>   : GCNPat <
+
+  (dst_vt (node (src0_vt (sd_vcsrc src0_vt:$src0)), (src1_vt (sd_vcsrc src1_vt:$src1)))),
+  (inst src0_vt:$src0, src1_vt:$src1)
+>;
+
+class GISelVop3Pat2CommutePat <
+  SDPatternOperator node,
+  Instruction inst,
+  ValueType dst_vt,
+  ValueType src0_vt = dst_vt, ValueType src1_vt = src0_vt>   : GCNPat <
+
+  (dst_vt (node (src0_vt (sd_vcsrc src0_vt:$src0)), (src1_vt (sd_vcsrc src1_vt:$src1)))),
+  (inst src0_vt:$src1, src1_vt:$src0)
+>;
+
 multiclass GISelVop2IntrPat <
   SDPatternOperator node, Instruction inst,
   ValueType dst_vt, ValueType src_vt = dst_vt> {
@@ -75,6 +100,15 @@ multiclass GISelVop2IntrPat <
 
 def : GISelSop2Pat <or, S_OR_B32, i32>;
 def : GISelVop2Pat <or, V_OR_B32_e32, i32>;
+
+def : GISelSop2Pat <sra, S_ASHR_I32, i32>;
+let AddedComplexity = 100 in {
+let SubtargetPredicate = isSICI in {
+def : GISelVop2Pat <sra, V_ASHR_I32_e32, i32>;
+}
+def : GISelVop2CommutePat <sra, V_ASHRREV_I32_e32, i32>;
+}
+def : GISelVop3Pat2CommutePat <sra, V_ASHRREV_I32_e64, i32>;
 
 // FIXME: Select directly to _e32 so we don't need to deal with modifiers.
 // FIXME: We can't re-use SelectionDAG patterns here because they match
