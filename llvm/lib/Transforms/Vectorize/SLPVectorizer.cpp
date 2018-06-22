@@ -624,7 +624,7 @@ private:
 
   /// \reorder commutative operands in alt shuffle if they result in
   ///  vectorized code.
-  void reorderAltShuffleOperands(unsigned Opcode, unsigned AltOpcode,
+  void reorderAltShuffleOperands(const InstructionsState &S,
                                  ArrayRef<Value *> VL,
                                  SmallVectorImpl<Value *> &Left,
                                  SmallVectorImpl<Value *> &Right);
@@ -1898,7 +1898,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
       // Reorder operands if reordering would enable vectorization.
       if (isa<BinaryOperator>(VL0)) {
         ValueList Left, Right;
-        reorderAltShuffleOperands(S.Opcode, S.AltOpcode, VL, Left, Right);
+        reorderAltShuffleOperands(S, VL, Left, Right);
         buildTree_rec(Left, Depth + 1, UserTreeIdx);
         buildTree_rec(Right, Depth + 1, UserTreeIdx);
         return;
@@ -2623,15 +2623,14 @@ int BoUpSLP::getGatherCost(ArrayRef<Value *> VL) {
 // load a[3] + load b[3]
 // Reordering the second load b[1]  load a[1] would allow us to vectorize this
 // code.
-void BoUpSLP::reorderAltShuffleOperands(unsigned Opcode, unsigned AltOpcode,
+void BoUpSLP::reorderAltShuffleOperands(const InstructionsState &S,
                                         ArrayRef<Value *> VL,
                                         SmallVectorImpl<Value *> &Left,
                                         SmallVectorImpl<Value *> &Right) {
   // Push left and right operands of binary operation into Left and Right
-  (void)AltOpcode;
   for (Value *V : VL) {
     auto *I = cast<Instruction>(V);
-    assert(sameOpcodeOrAlt(Opcode, AltOpcode, I->getOpcode()) &&
+    assert(sameOpcodeOrAlt(S.Opcode, S.AltOpcode, I->getOpcode()) &&
            "Incorrect instruction in vector");
     Left.push_back(I->getOperand(0));
     Right.push_back(I->getOperand(1));
@@ -3469,8 +3468,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       ValueList LHSVL, RHSVL;
       assert(Instruction::isBinaryOp(S.Opcode) &&
              "Invalid Shuffle Vector Operand");
-      reorderAltShuffleOperands(S.Opcode, S.AltOpcode, E->Scalars, LHSVL,
-                                RHSVL);
+      reorderAltShuffleOperands(S, E->Scalars, LHSVL, RHSVL);
       setInsertPointAfterBundle(E->Scalars, S);
 
       Value *LHS = vectorizeTree(LHSVL);
