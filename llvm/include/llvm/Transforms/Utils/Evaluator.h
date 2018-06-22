@@ -73,12 +73,6 @@ public:
     ValueStack.back()[V] = C;
   }
 
-  Function *getCallee(Value *V);
-
-  /// Given call expression and result value cast the result value
-  /// to call expression type if call expression contains bitcast.
-  Constant *castCallResultIfNeeded(Value *CallExpr, Constant *RV);
-
   const DenseMap<Constant*, Constant*> &getMutatedMemory() const {
     return MutatedMemory;
   }
