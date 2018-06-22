@@ -134,19 +134,21 @@ public:
   // intrinsic-type-spec or TYPE(intrinsic-type-spec)
   DeclTypeSpec(const IntrinsicTypeSpec &);
   // TYPE(derived-type-spec) or CLASS(derived-type-spec)
-  DeclTypeSpec(Category, const DerivedTypeSpec &);
+  DeclTypeSpec(Category, DerivedTypeSpec &);
   // TYPE(*) or CLASS(*)
   DeclTypeSpec(Category);
+  DeclTypeSpec() = delete;
 
   Category category() const { return category_; }
   const IntrinsicTypeSpec &intrinsicTypeSpec() const;
+  DerivedTypeSpec &derivedTypeSpec();
   const DerivedTypeSpec &derivedTypeSpec() const;
 
 private:
   Category category_;
   union {
     const IntrinsicTypeSpec *intrinsic;
-    const DerivedTypeSpec *derived;
+    DerivedTypeSpec *derived;
   } typeSpec_;
 };
 std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
@@ -354,6 +356,7 @@ private:
   friend std::ostream &operator<<(std::ostream &, const DataComponentDef &);
 };
 
+class Scope;
 class Symbol;
 
 // This represents a proc-interface in the declaration of a procedure or
@@ -510,8 +513,8 @@ private:
 // Definition of a derived type
 class DerivedTypeDef {
 public:
-  const SourceName &name() const { return data_.name; }
-  const std::optional<SourceName> &extends() const { return data_.extends; }
+  const SourceName &name() const { return *data_.name; }
+  const SourceName *extends() const { return data_.extends; }
   const Attrs &attrs() const { return data_.attrs; }
   const TypeParamDefs &lenParams() const { return data_.lenParams; }
   const TypeParamDefs &kindParams() const { return data_.kindParams; }
@@ -530,8 +533,8 @@ public:
   const std::list<SourceName> finalProcs() const { return data_.finalProcs; }
 
   struct Data {
-    SourceName name;
-    std::optional<SourceName> extends;
+    const SourceName *name{nullptr};
+    const SourceName *extends{nullptr};
     Attrs attrs;
     bool Private{false};
     bool sequence{false};
@@ -558,15 +561,19 @@ private:
 
 using ParamValue = LenParamValue;
 
-// Instantiation of a DerivedTypeDef with kind and len parameter values
 class DerivedTypeSpec : public TypeSpec {
 public:
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
-  DerivedTypeSpec(const SourceName &name) : name_{&name} {}
+  explicit DerivedTypeSpec(const SourceName &name) : name_{&name} {}
+  DerivedTypeSpec() = delete;
   const SourceName &name() const { return *name_; }
+  const Scope *scope() const { return scope_; }
+  void set_scope(const Scope &);
 
 private:
   const SourceName *name_;
+  const Scope *scope_{nullptr};
+  std::list<std::pair<std::optional<SourceName>, ParamValue>> paramValues_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
 };
 

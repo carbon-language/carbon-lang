@@ -16,6 +16,7 @@
 #define FORTRAN_SEMANTICS_SYMBOL_H_
 
 #include "type.h"
+#include "../common/enum-set.h"
 #include <functional>
 #include <memory>
 
@@ -141,6 +142,9 @@ private:
   friend std::ostream &operator<<(std::ostream &, const ProcEntityDetails &);
 };
 
+// A derived type
+class DerivedTypeDetails {};
+
 // Record the USE of a symbol: location is where (USE statement or renaming);
 // symbol is the USEd module.
 class UseDetails {
@@ -188,7 +192,12 @@ public:
   void add_specificProc(const Symbol *proc) { specificProcs_.push_back(proc); }
 
   Symbol *specific() { return specific_; }
-  void set_specific(Symbol *specific);
+  void set_specific(Symbol &specific);
+
+  // Derived type with same name as generic, if any.
+  Symbol *derivedType() { return derivedType_; }
+  const Symbol *derivedType() const { return derivedType_; }
+  void set_derivedType(Symbol &derivedType);
 
   // Check that specific is one of the specificProcs. If not, return the
   // specific as a raw pointer.
@@ -199,19 +208,21 @@ private:
   listType specificProcs_;
   // a specific procedure with the same name as this generic, if any
   Symbol *specific_{nullptr};
+  // a derived type with the same name as this generic, if any
+  Symbol *derivedType_{nullptr};
 };
 
 class UnknownDetails {};
 
 using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     SubprogramDetails, SubprogramNameDetails, EntityDetails,
-    ObjectEntityDetails, ProcEntityDetails, UseDetails, UseErrorDetails,
-    GenericDetails>;
+    ObjectEntityDetails, ProcEntityDetails, DerivedTypeDetails, UseDetails,
+    UseErrorDetails, GenericDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 
 class Symbol {
 public:
-  ENUM_CLASS(Flag, Function, Subroutine);
+  ENUM_CLASS(Flag, Function, Subroutine, Implicit);
   using Flags = common::EnumSet<Flag, Flag_enumSize>;
 
   const Scope &owner() const { return *owner_; }
@@ -222,6 +233,10 @@ public:
   const Flags &flags() const { return flags_; }
   bool test(Flag flag) const { return flags_.test(flag); }
   void set(Flag flag, bool value = true) { flags_.set(flag, value); }
+  // The Scope introduced by this symbol, if any.
+  Scope *scope() { return scope_; }
+  const Scope *scope() const { return scope_; }
+  void set_scope(Scope *scope) { scope_ = scope; }
 
   // Does symbol have this type of details?
   template<typename D> bool has() const {
@@ -255,7 +270,8 @@ public:
   bool CanReplaceDetails(const Details &details) const;
 
   const std::list<SourceName> &occurrences() const { return occurrences_; }
-  void add_occurrence(const SourceName &name) { occurrences_.push_back(name); }
+  void add_occurrence(const SourceName &);
+  void remove_occurrence(const SourceName &);
 
   // Follow use-associations to get the ultimate entity.
   Symbol &GetUltimate();
@@ -272,6 +288,7 @@ private:
   std::list<SourceName> occurrences_;
   Attrs attrs_;
   Flags flags_;
+  Scope *scope_{nullptr};
   Details details_;
 
   Symbol() {}  // only created in class Symbols

@@ -18,7 +18,7 @@
 
 namespace Fortran::semantics {
 
-const Scope Scope::systemScope{
+Scope Scope::systemScope{
     Scope::systemScope, Scope::Kind::System, nullptr};
 Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global, nullptr};
 
@@ -29,14 +29,40 @@ Scope &Scope::MakeScope(Kind kind, Symbol *symbol) {
   return children_.back();
 }
 
+Scope::iterator Scope::find(const SourceName &name) {
+  auto it = symbols_.find(name);
+  if (it != end()) {
+    it->second->add_occurrence(name);
+  }
+  return it;
+}
+Scope::const_iterator Scope::find(const SourceName &name) const {
+  return symbols_.find(name);
+}
+Scope::size_type Scope::erase(const SourceName &name) {
+  auto it = symbols_.find(name);
+  if (it != end()) {
+    it->second->remove_occurrence(name);
+    symbols_.erase(it);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+DerivedTypeSpec &Scope::MakeDerivedTypeSpec(const SourceName &name) {
+  derivedTypeSpecs_.emplace_back(name);
+  return derivedTypeSpecs_.back();
+}
+
 std::ostream &operator<<(std::ostream &os, const Scope &scope) {
   os << Scope::EnumToString(scope.kind()) << " scope: ";
   if (auto *symbol = scope.symbol()) {
     os << *symbol << ' ';
   }
   os << scope.children_.size() << " children\n";
-  for (const auto &sym : scope.symbols_) {
-    os << "  " << *sym.second << "\n";
+  for (const auto &pair : scope.symbols_) {
+    const auto &symbol = pair.second;
+    os << "  " << symbol << '\n';
   }
   return os;
 }

@@ -14,8 +14,9 @@
 
 #include "type.h"
 #include "attr.h"
+#include "scope.h"
 #include "symbol.h"
-#include "../parser/idioms.h"
+#include "../common/idioms.h"
 #include <iostream>
 #include <set>
 
@@ -40,6 +41,10 @@ const IntConst &IntConst::Make(std::uint64_t value) {
     it = cache.insert({value, IntConst{value}}).first;
   }
   return it->second;
+}
+
+std::ostream &operator<<(std::ostream &o, const TypeSpec &x) {
+  return x.Output(o);
 }
 
 const LogicalTypeSpec &LogicalTypeSpec::Make() { return helper.Make(); }
@@ -91,7 +96,7 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   if (!x.data_.attrs.empty()) {
     o << ", " << x.data_.attrs;
   }
-  o << " :: " << x.data_.name.ToString();
+  o << " :: " << x.data_.name->ToString();
   if (x.data_.lenParams.size() > 0 || x.data_.kindParams.size() > 0) {
     o << '(';
     int n = 0;
@@ -146,8 +151,14 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   return o << "END TYPE";
 }
 
+void DerivedTypeSpec::set_scope(const Scope &scope) {
+  CHECK(!scope_);
+  CHECK(scope.kind() == Scope::Kind::DerivedType);
+  scope_ = &scope;
+}
+
 std::ostream &operator<<(std::ostream &o, const DerivedTypeSpec &x) {
-  return o << "TYPE(" << x.name_ << ')';
+  return o << "TYPE(" << x.name().ToString() << ')';
 }
 
 const Bound Bound::ASSUMED{Bound::Assumed};
@@ -220,7 +231,7 @@ DeclTypeSpec::DeclTypeSpec(const IntrinsicTypeSpec &intrinsic)
   : category_{Intrinsic} {
   typeSpec_.intrinsic = &intrinsic;
 }
-DeclTypeSpec::DeclTypeSpec(Category category, const DerivedTypeSpec &derived)
+DeclTypeSpec::DeclTypeSpec(Category category, DerivedTypeSpec &derived)
   : category_{category} {
   CHECK(category == TypeDerived || category == ClassDerived);
   typeSpec_.derived = &derived;
@@ -232,6 +243,10 @@ const IntrinsicTypeSpec &DeclTypeSpec::intrinsicTypeSpec() const {
   CHECK(category_ == Intrinsic);
   return *typeSpec_.intrinsic;
 }
+DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() {
+  CHECK(category_ == TypeDerived || category_ == ClassDerived);
+  return *typeSpec_.derived;
+}
 const DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() const {
   CHECK(category_ == TypeDerived || category_ == ClassDerived);
   return *typeSpec_.derived;
@@ -241,9 +256,9 @@ std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
   switch (x.category()) {
   case DeclTypeSpec::Intrinsic: return x.intrinsicTypeSpec().Output(o);
   case DeclTypeSpec::TypeDerived:
-    return o << "TYPE(" << x.derivedTypeSpec() << ')';
+    return o << "TYPE(" << x.derivedTypeSpec().name().ToString() << ')';
   case DeclTypeSpec::ClassDerived:
-    return o << "CLASS(" << x.derivedTypeSpec() << ')';
+    return o << "CLASS(" << x.derivedTypeSpec().name().ToString() << ')';
   case DeclTypeSpec::TypeStar: return o << "TYPE(*)";
   case DeclTypeSpec::ClassStar: return o << "CLASS(*)";
   default: CRASH_NO_CASE; return o;
@@ -348,8 +363,5 @@ std::ostream &operator<<(std::ostream &o, const TypeBoundGeneric &x) {
   o << " :: " << x.genericSpec_ << " => " << x.name_.ToString();
   return o;
 }
-
-DerivedTypeDef::DerivedTypeDef(const DerivedTypeDef::Data &data)
-  : data_{data} {}
 
 }  // namespace Fortran::semantics

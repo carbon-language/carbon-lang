@@ -26,7 +26,9 @@
   std::ostream &operator<<(std::ostream &, const name &); \
   } \
   void Dump(std::ostream &os, const ns::name &x) { os << x << '\n'; } \
-  void Dump(std::ostream &os, const ns::name *x) { Dump(os, *x); } \
+  void Dump(std::ostream &os, const ns::name *x) { \
+    if (x == nullptr) os << "null\n"; else Dump(os, *x); \
+  } \
   void Dump(const ns::name &x) { Dump(std::cerr, x); } \
   void Dump(const ns::name *x) { Dump(std::cerr, *x); }
 
@@ -35,6 +37,7 @@ DEFINE_DUMP(parser, Name)
 DEFINE_DUMP(parser, CharBlock)
 DEFINE_DUMP(semantics, Symbol)
 DEFINE_DUMP(semantics, Scope)
+DEFINE_DUMP(semantics, TypeSpec)
 DEFINE_DUMP(semantics, DeclTypeSpec)
 }  // namespace Fortran
 

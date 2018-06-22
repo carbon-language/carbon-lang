@@ -44,7 +44,7 @@ void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
 }
 
 ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
-  if (auto &type = d.type()) {
+  if (auto type = d.type()) {
     interface_.set_type(*type);
   }
 }
@@ -60,9 +60,13 @@ GenericDetails::GenericDetails(const listType &specificProcs) {
   }
 }
 
-void GenericDetails::set_specific(Symbol *specific) {
+void GenericDetails::set_specific(Symbol &specific) {
   CHECK(!specific_);
-  specific_ = specific;
+  specific_ = &specific;
+}
+void GenericDetails::set_derivedType(Symbol &derivedType) {
+  CHECK(!derivedType_);
+  derivedType_ = &derivedType;
 }
 
 const Symbol *GenericDetails::CheckSpecific() const {
@@ -91,6 +95,7 @@ static std::string DetailsToString(const Details &details) {
           [](const EntityDetails &) { return "Entity"; },
           [](const ObjectEntityDetails &) { return "ObjectEntity"; },
           [](const ProcEntityDetails &) { return "ProcEntity"; },
+          [](const DerivedTypeDetails &) { return "DerivedType"; },
           [](const UseDetails &) { return "Use"; },
           [](const UseErrorDetails &) { return "UseError"; },
           [](const GenericDetails &) { return "Generic"; },
@@ -126,6 +131,20 @@ bool Symbol::CanReplaceDetails(const Details &details) const {
   }
 }
 
+void Symbol::add_occurrence(const SourceName &name) {
+  if (occurrences_.back().begin() != name.begin()) {
+    occurrences_.push_back(name);
+  }
+}
+void Symbol::remove_occurrence(const SourceName &name) {
+  auto end = occurrences_.end();
+  for (auto it = occurrences_.begin(); it != end; ++it) {
+    if (it->begin() == name.begin()) {
+      occurrences_.erase(it);
+      return;
+    }
+  }
+}
 Symbol &Symbol::GetUltimate() {
   return const_cast<Symbol &>(static_cast<const Symbol *>(this)->GetUltimate());
 }
@@ -162,11 +181,7 @@ bool Symbol::HasExplicitInterface() const {
 }
 
 ObjectEntityDetails::ObjectEntityDetails(const EntityDetails &d)
-  : isDummy_{d.isDummy()} {
-  if (auto &type = d.type()) {
-    set_type(*type);
-  }
-}
+  : isDummy_{d.isDummy()}, type_{d.type()} {}
 
 std::ostream &operator<<(std::ostream &os, const EntityDetails &x) {
   if (x.type()) {
@@ -201,6 +216,10 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
   } else if (auto *type = x.interface_.type()) {
     os << ' ' << *type;
   }
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const DerivedTypeDetails &x) {
   return os;
 }
 
@@ -244,6 +263,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           [&](const EntityDetails &x) { os << x; },
           [&](const ObjectEntityDetails &x) { os << x; },
           [&](const ProcEntityDetails &x) { os << x; },
+          [&](const DerivedTypeDetails &x) { os << x; },
           [&](const UseDetails &x) {
             os << " from " << x.symbol().name() << " in " << x.module().name();
           },

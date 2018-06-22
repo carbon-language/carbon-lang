@@ -30,14 +30,22 @@ class Scope {
 
 public:
   // root of the scope tree; contains intrinsics:
-  static const Scope systemScope;
+  static Scope systemScope;
   static Scope globalScope;  // contains program-units
 
-  ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram)
+  ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram, DerivedType)
 
-  Scope(const Scope &parent, Kind kind, Symbol *symbol)
-    : parent_{parent}, kind_{kind}, symbol_{symbol} {}
+  Scope(Scope &parent, Kind kind, Symbol *symbol)
+    : parent_{parent}, kind_{kind}, symbol_{symbol} {
+    if (symbol) {
+      symbol->set_scope(this);
+    }
+  }
 
+  Scope &parent() {
+    CHECK(kind_ != Kind::System);
+    return parent_;
+  }
   const Scope &parent() const {
     CHECK(kind_ != Kind::System);
     return parent_;
@@ -65,12 +73,9 @@ public:
   const_iterator cbegin() const { return symbols_.cbegin(); }
   const_iterator cend() const { return symbols_.cend(); }
 
-  iterator find(const SourceName &name) { return symbols_.find(name); }
-  const_iterator find(const SourceName &name) const {
-    return symbols_.find(name);
-  }
-
-  size_type erase(const SourceName &name) { return symbols_.erase(name); }
+  iterator find(const SourceName &name);
+  const_iterator find(const SourceName &name) const;
+  size_type erase(const SourceName &);
 
   /// Make a Symbol with unknown details.
   std::pair<iterator, bool> try_emplace(
@@ -99,12 +104,15 @@ public:
   std::list<Scope> &children() { return children_; }
   const std::list<Scope> &children() const { return children_; }
 
+  DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
+
 private:
-  const Scope &parent_;
+  Scope &parent_;
   const Kind kind_;
   Symbol *const symbol_;
   std::list<Scope> children_;
   mapType symbols_;
+  std::list<DerivedTypeSpec> derivedTypeSpecs_;
 
   // Storage for all Symbols. Every Symbol is in allSymbols and every Symbol*
   // or Symbol& points to one in there.

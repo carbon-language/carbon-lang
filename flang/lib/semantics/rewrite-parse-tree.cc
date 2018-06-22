@@ -102,11 +102,20 @@ private:
   }
 };
 
+static void CollectSymbol(Symbol &symbol, symbolMap &symbols) {
+  for (const auto &name : symbol.occurrences()) {
+    symbols.emplace(name.begin(), &symbol);
+  }
+}
+
 static void CollectSymbols(Scope &scope, symbolMap &symbols) {
   for (auto &pair : scope) {
     Symbol *symbol{pair.second};
-    for (const auto &name : symbol->occurrences()) {
-      symbols.emplace(name.begin(), symbol);
+    CollectSymbol(*symbol, symbols);
+    if (auto *details = symbol->detailsIf<GenericDetails>()) {
+      if (details->derivedType()) {
+        CollectSymbol(*details->derivedType(), symbols);
+      }
     }
   }
   for (auto &child : scope.children()) {

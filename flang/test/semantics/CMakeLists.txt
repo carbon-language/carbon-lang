@@ -43,6 +43,9 @@ set(TESTS
   resolve18.f90
   resolve19.f90
   resolve20.f90
+  resolve21.f90
+  resolve22.f90
+  resolve23.f90
 )
 
 foreach(test ${TESTS})
