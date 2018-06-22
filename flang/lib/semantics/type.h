@@ -566,7 +566,7 @@ public:
   std::ostream &Output(std::ostream &o) const override { return o << *this; }
   explicit DerivedTypeSpec(const SourceName &name) : name_{&name} {}
   DerivedTypeSpec() = delete;
-  virtual ~DerivedTypeSpec() {}
+  virtual ~DerivedTypeSpec();
   const SourceName &name() const { return *name_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);

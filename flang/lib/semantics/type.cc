@@ -151,6 +151,10 @@ std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
   return o << "END TYPE";
 }
 
+// DerivedTypeSpec is a base class for classes with virtual functions,
+// so clang wants it to have a virtual destructor.
+DerivedTypeSpec::~DerivedTypeSpec() {}
+
 void DerivedTypeSpec::set_scope(const Scope &scope) {
   CHECK(!scope_);
   CHECK(scope.kind() == Scope::Kind::DerivedType);
