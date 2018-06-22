@@ -536,13 +536,6 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
 
   switch (I.getOpcode()) {
   default:
-    break;
-  case TargetOpcode::G_ASHR:
-  case TargetOpcode::G_SITOFP:
-  case TargetOpcode::G_FMUL:
-  case TargetOpcode::G_FADD:
-  case TargetOpcode::G_FPTOUI:
-  case TargetOpcode::G_OR:
     return selectImpl(I, CoverageInfo);
   case TargetOpcode::G_ADD:
     return selectG_ADD(I);
