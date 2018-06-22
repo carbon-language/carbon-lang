@@ -7,9 +7,9 @@
         .file 0 "root.cpp"
         .file 1 "header.h"
 	.loc  0 10 0
-        nop
+        .byte 0
         .loc  1 20 0
-        nop
+        .byte 0
 
 # CHECK:      file_names[ 0]:
 # CHECK-NEXT: name: "root.cpp"
