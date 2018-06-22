@@ -31,7 +31,11 @@ int main() {
   TEST(DefaultIntegerExpr::Result::Dump() == "Integer(4)");
   MATCH("666", Dump(DefaultIntegerExpr{666}));
   MATCH("(-1)", Dump(-DefaultIntegerExpr{1}));
-  MATCH("(2+(3*4))", Dump(DefaultIntegerExpr{2} + DefaultIntegerExpr{3} * DefaultIntegerExpr{4}));
+  auto ex1{DefaultIntegerExpr{2} + DefaultIntegerExpr{3} * -DefaultIntegerExpr{4}};
+  MATCH("(2+(3*(-4)))", Dump(ex1));
+  Fortran::parser::CharBlock src;
+  ex1.Fold(src, nullptr);
+  MATCH("-10", Dump(ex1));
   MATCH("(6.LE.7)", Dump(DefaultIntegerExpr{6} <= DefaultIntegerExpr{7}));
   DefaultIntegerExpr a{1};
   DefaultIntegerExpr b{2};

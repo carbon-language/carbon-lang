@@ -24,6 +24,10 @@ void OffsetToProvenanceMappings::swap(OffsetToProvenanceMappings &that) {
   provenanceMap_.swap(that.provenanceMap_);
 }
 
+void OffsetToProvenanceMappings::shrink_to_fit() {
+  provenanceMap_.shrink_to_fit();
+}
+
 std::size_t OffsetToProvenanceMappings::size() const {
   if (provenanceMap_.empty()) {
     return 0;
@@ -322,7 +326,7 @@ static void DumpRange(std::ostream &o, const ProvenanceRange &r) {
     << r.size() << " bytes)";
 }
 
-void OffsetToProvenanceMappings::Dump(std::ostream &o) const {
+std::ostream &OffsetToProvenanceMappings::Dump(std::ostream &o) const {
   for (const ContiguousProvenanceMapping &m : provenanceMap_) {
     std::size_t n{m.range.size()};
     o << "offsets [" << m.start << ".." << (m.start + n - 1)
@@ -330,9 +334,10 @@ void OffsetToProvenanceMappings::Dump(std::ostream &o) const {
     DumpRange(o, m.range);
     o << '\n';
   }
+  return o;
 }
 
-void AllSources::Dump(std::ostream &o) const {
+std::ostream &AllSources::Dump(std::ostream &o) const {
   o << "AllSources range_ ";
   DumpRange(o, range_);
   o << '\n';
@@ -362,13 +367,15 @@ void AllSources::Dump(std::ostream &o) const {
     }
     o << '\n';
   }
+  return o;
 }
 
-void CookedSource::Dump(std::ostream &o) const {
+std::ostream &CookedSource::Dump(std::ostream &o) const {
   o << "CookedSource:\n";
   allSources_.Dump(o);
   o << "CookedSource::provenanceMap_:\n";
   provenanceMap_.Dump(o);
+  return o;
 }
 
 }  // namespace Fortran::parser

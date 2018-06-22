@@ -89,6 +89,9 @@ public:
   };
 
   struct Product {
+    bool SignedMultiplicationOverflowed() const {
+      return lower.IsNegative() ? (upper.POPCNT() != bits) : !upper.IsZero();
+    }
     Integer upper, lower;
   };
 

@@ -26,6 +26,8 @@
 
 #include "common.h"
 #include "type.h"
+#include "../lib/parser/char-block.h"
+#include "../lib/parser/message.h"
 #include <memory>
 #include <ostream>
 #include <variant>
@@ -56,6 +58,7 @@ template<typename A> struct Unary {
     return *this;
   }
   Unary &operator=(Unary &&) = default;
+  A *Mutable() const { return const_cast<A *>(x.get()); }
   std::unique_ptr<const A> x;
 };
 
@@ -76,6 +79,8 @@ template<typename A, typename B> struct Binary {
     return *this;
   }
   Binary &operator=(Binary &&) = default;
+  A *MutableX() const { return const_cast<A *>(x.get()); }
+  B *MutableY() const { return const_cast<B *>(y.get()); }
   std::unique_ptr<const A> x;
   std::unique_ptr<const B> y;
 };
@@ -121,6 +126,7 @@ template<int KIND> struct IntegerExpr {
   IntegerExpr &operator=(IntegerExpr &&) = default;
 
   std::ostream &Dump(std::ostream &) const;
+  void Fold(const parser::CharBlock &, parser::Messages *);
 
   std::variant<Constant, Convert, Parentheses, Negate, Add, Subtract, Multiply,
       Divide, Power>

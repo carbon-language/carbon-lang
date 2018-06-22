@@ -18,6 +18,8 @@
 #include <string>
 #include <type_traits>
 
+using namespace Fortran::parser::literals;
+
 namespace Fortran::evaluate {
 
 template<typename A>
@@ -68,6 +70,62 @@ std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
           }},
       u);
   return o;
+}
+
+template<int KIND>
+void IntegerExpr<KIND>::Fold(
+    const parser::CharBlock &at, parser::Messages *messages) {
+  std::visit(common::visitors{[&](const Parentheses &p) {
+                                p.Mutable()->Fold(at, messages);
+                                if (auto c{std::get_if<Constant>(&p.x->u)}) {
+                                  u = *c;
+                                }
+                              },
+                 [&](const Negate &n) {
+                   n.Mutable()->Fold(at, messages);
+                   if (auto c{std::get_if<Constant>(&n.x->u)}) {
+                     auto negated{c->Negate()};
+                     if (negated.overflow && messages != nullptr) {
+                       messages->Say(at, "integer negation overflowed"_en_US);
+                     }
+                     u = negated.value;
+                   }
+                 },
+                 [&](const Add &a) {
+                   a.MutableX()->Fold(at, messages);
+                   a.MutableY()->Fold(at, messages);
+                   if (auto xc{std::get_if<Constant>(&a.x->u)}) {
+                     if (auto yc{std::get_if<Constant>(&a.y->u)}) {
+                       auto sum{xc->AddSigned(*yc)};
+                       if (sum.overflow && messages != nullptr) {
+                         messages->Say(at, "integer addition overflowed"_en_US);
+                       }
+                       u = sum.value;
+                     }
+                   }
+                 },
+                 [&](const Multiply &a) {
+                   a.MutableX()->Fold(at, messages);
+                   a.MutableY()->Fold(at, messages);
+                   if (auto xc{std::get_if<Constant>(&a.x->u)}) {
+                     if (auto yc{std::get_if<Constant>(&a.y->u)}) {
+                       auto product{xc->MultiplySigned(*yc)};
+                       if (product.SignedMultiplicationOverflowed() &&
+                           messages != nullptr) {
+                         messages->Say(
+                             at, "integer multiplication overflowed"_en_US);
+                       }
+                       u = product.lower;
+                     }
+                   }
+                 },
+                 [&](const Bin &b) {
+                   b.MutableX()->Fold(at, messages);
+                   b.MutableY()->Fold(at, messages);
+                 },
+                 [&](const auto &) {  // TODO: more
+                 }},
+      u);
 }
 
 template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
