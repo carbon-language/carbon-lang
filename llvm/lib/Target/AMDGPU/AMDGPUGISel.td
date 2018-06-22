@@ -26,6 +26,10 @@ def gi_vop3mods :
     GIComplexOperandMatcher<s32, "selectVOP3Mods">,
     GIComplexPatternEquiv<VOP3Mods>;
 
+def gi_vop3omods :
+    GIComplexOperandMatcher<s32, "selectVOP3OMods">,
+    GIComplexPatternEquiv<VOP3OMods>;
+
 class GISelSop2Pat <
   SDPatternOperator node,
   Instruction inst,

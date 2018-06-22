@@ -537,6 +537,7 @@ bool AMDGPUInstructionSelector::select(MachineInstr &I,
   switch (I.getOpcode()) {
   default:
     break;
+  case TargetOpcode::G_SITOFP:
   case TargetOpcode::G_FMUL:
   case TargetOpcode::G_FADD:
   case TargetOpcode::G_FPTOUI:
@@ -578,6 +579,14 @@ AMDGPUInstructionSelector::selectVOP3Mods0(MachineOperand &Root) const {
   return {{
       [=](MachineInstrBuilder &MIB) { MIB.add(Root); },
       [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }, // src0_mods
+      [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }, // clamp
+      [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }  // omod
+  }};
+}
+InstructionSelector::ComplexRendererFns
+AMDGPUInstructionSelector::selectVOP3OMods(MachineOperand &Root) const {
+  return {{
+      [=](MachineInstrBuilder &MIB) { MIB.add(Root); },
       [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }, // clamp
       [=](MachineInstrBuilder &MIB) { MIB.addImm(0); }  // omod
   }};

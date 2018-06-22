@@ -78,6 +78,8 @@ private:
   InstructionSelector::ComplexRendererFns
   selectVOP3Mods0(MachineOperand &Root) const;
   InstructionSelector::ComplexRendererFns
+  selectVOP3OMods(MachineOperand &Root) const;
+  InstructionSelector::ComplexRendererFns
   selectVOP3Mods(MachineOperand &Root) const;
 
   const SIInstrInfo &TII;

@@ -91,6 +91,9 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const SISubtarget &ST,
   setAction({G_FPTOSI, S32}, Legal);
   setAction({G_FPTOSI, 1, S32}, Legal);
 
+  setAction({G_SITOFP, S32}, Legal);
+  setAction({G_SITOFP, 1, S32}, Legal);
+
   setAction({G_FPTOUI, S32}, Legal);
   setAction({G_FPTOUI, 1, S32}, Legal);
 
