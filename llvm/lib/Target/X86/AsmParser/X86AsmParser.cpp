@@ -1021,10 +1021,8 @@ static bool CheckBaseRegAndIndexRegAndScale(unsigned BaseReg, unsigned IndexReg,
         ErrMsg = "base register is 16-bit, but index register is not";
         return true;
       }
-      if (((BaseReg == X86::BX || BaseReg == X86::BP) &&
-           IndexReg != X86::SI && IndexReg != X86::DI) ||
-          ((BaseReg == X86::SI || BaseReg == X86::DI) &&
-           IndexReg != X86::BX && IndexReg != X86::BP)) {
+      if ((BaseReg != X86::BX && BaseReg != X86::BP) ||
+          (IndexReg != X86::SI && IndexReg != X86::DI)) {
         ErrMsg = "invalid 16-bit base/index register combination";
         return true;
       }
@@ -1859,6 +1857,13 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
   unsigned BaseReg = SM.getBaseReg();
   unsigned IndexReg = SM.getIndexReg();
   unsigned Scale = SM.getScale();
+
+  // If this is a 16-bit addressing mode with the base and index in the wrong
+  // order, swap them so CheckBaseRegAndIndexRegAndScale doesn't fail. It is
+  // shared with att syntax where order matters.
+  if ((BaseReg == X86::SI || BaseReg == X86::DI) &&
+      (IndexReg == X86::BX || IndexReg == X86::BP))
+    std::swap(BaseReg, IndexReg);
 
   if ((BaseReg || IndexReg) &&
       CheckBaseRegAndIndexRegAndScale(BaseReg, IndexReg, Scale, is64BitMode(),

@@ -89,3 +89,16 @@ leaq (%rax,%rsp), %rax
 // 32: error: invalid base+index expression
 // 64: error: invalid base+index expression
 leaq (%eax,%esp), %eax
+
+// 32: error: invalid 16-bit base/index register combination
+// 64: error: invalid 16-bit base register
+lea (%si,%bp), %ax
+// 32: error: invalid 16-bit base/index register combination
+// 64: error: invalid 16-bit base register
+lea (%di,%bp), %ax
+// 32: error: invalid 16-bit base/index register combination
+// 64: error: invalid 16-bit base register
+lea (%si,%bx), %ax
+// 32: error: invalid 16-bit base/index register combination
+// 64: error: invalid 16-bit base register
+lea (%di,%bx), %ax
