@@ -976,7 +976,8 @@ static bool CheckBaseRegAndIndexRegAndScale(unsigned BaseReg, unsigned IndexReg,
   // both 64-bit or 32-bit registers.
   // To support VSIB, IndexReg can be 128-bit or 256-bit registers.
 
-  if ((BaseReg == X86::RIP && IndexReg != 0) || (IndexReg == X86::RIP)) {
+  if ((BaseReg == X86::RIP && IndexReg != 0) || (IndexReg == X86::RIP) ||
+      (IndexReg == X86::ESP) || (IndexReg == X86::RSP)) {
     ErrMsg = "invalid base+index expression";
     return true;
   }

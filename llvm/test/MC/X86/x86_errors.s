@@ -81,3 +81,11 @@ mov (%rax,%rip), %rbx
 
 // 32: error: instruction requires: 64-bit mode
 ljmpq *(%eax)
+
+// 32: error: register %rax is only available in 64-bit mode
+// 64: error: invalid base+index expression
+leaq (%rax,%rsp), %rax
+
+// 32: error: invalid base+index expression
+// 64: error: invalid base+index expression
+leaq (%eax,%esp), %eax
