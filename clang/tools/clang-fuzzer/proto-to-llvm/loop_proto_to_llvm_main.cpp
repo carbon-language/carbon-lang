@@ -1,4 +1,4 @@
-//==-- loop_proto_to_cxx_main.cpp - Driver for protobuf-C++ conversion -----==//
+//==-- loop_proto_to_llvm_main.cpp - Driver for protobuf-LLVM conversion----==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Implements a simple driver to print a C++ program from a protobuf with loops.
+// Implements a simple driver to print a LLVM program from a protobuf with loops
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,15 +17,15 @@
 #include <streambuf>
 #include <string>
 
-#include "proto_to_cxx.h"
+#include "loop_proto_to_llvm.h"
 
 int main(int argc, char **argv) {
   for (int i = 1; i < argc; i++) {
     std::fstream in(argv[i]);
     std::string str((std::istreambuf_iterator<char>(in)),
                     std::istreambuf_iterator<char>());
-    std::cout << "// " << argv[i] << std::endl;
-    std::cout << clang_fuzzer::LoopProtoToCxx(
+    std::cout << ";; " << argv[i] << std::endl;
+    std::cout << clang_fuzzer::LoopProtoToLLVM(
         reinterpret_cast<const uint8_t *>(str.data()), str.size());
   }
 }
