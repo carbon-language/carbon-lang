@@ -971,7 +971,8 @@ static unsigned MatchRegisterName(StringRef Name);
 /// }
 
 static bool CheckBaseRegAndIndexRegAndScale(unsigned BaseReg, unsigned IndexReg,
-                                            unsigned Scale, StringRef &ErrMsg) {
+                                            unsigned Scale, bool Is64BitMode,
+                                            StringRef &ErrMsg) {
   // If we have both a base register and an index register make sure they are
   // both 64-bit or 32-bit registers.
   // To support VSIB, IndexReg can be 128-bit or 256-bit registers.
@@ -981,6 +982,24 @@ static bool CheckBaseRegAndIndexRegAndScale(unsigned BaseReg, unsigned IndexReg,
     ErrMsg = "invalid base+index expression";
     return true;
   }
+
+  // Check for use of invalid 16-bit registers. Only BX/BP/SI/DI are allowed,
+  // and then only in non-64-bit modes. Except for DX, which is a special case
+  // because an unofficial form of in/out instructions uses it.
+  if (X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg) &&
+      (Is64BitMode || (BaseReg != X86::BX && BaseReg != X86::BP &&
+                       BaseReg != X86::SI && BaseReg != X86::DI)) &&
+      BaseReg != X86::DX) {
+    ErrMsg = "invalid 16-bit base register";
+    return true;
+  }
+
+  if (BaseReg == 0 &&
+      X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg)) {
+    ErrMsg = "16-bit memory operand may not include only index register";
+    return true;
+  }
+
   if (BaseReg != 0 && IndexReg != 0) {
     if (X86MCRegisterClasses[X86::GR64RegClassID].contains(BaseReg) &&
         (X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg) ||
@@ -1842,7 +1861,8 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
   unsigned Scale = SM.getScale();
 
   if ((BaseReg || IndexReg) &&
-      CheckBaseRegAndIndexRegAndScale(BaseReg, IndexReg, Scale, ErrMsg))
+      CheckBaseRegAndIndexRegAndScale(BaseReg, IndexReg, Scale, is64BitMode(),
+                                      ErrMsg))
     return ErrorOperand(Start, ErrMsg);
   if (isParsingInlineAsm())
     return CreateMemForInlineAsm(RegNo, Disp, BaseReg, IndexReg,
@@ -2161,24 +2181,9 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
   if (parseToken(AsmToken::RParen, "unexpected token in memory operand"))
     return nullptr;
 
-  // Check for use of invalid 16-bit registers. Only BX/BP/SI/DI are allowed,
-  // and then only in non-64-bit modes. Except for DX, which is a special case
-  // because an unofficial form of in/out instructions uses it.
-  if (X86MCRegisterClasses[X86::GR16RegClassID].contains(BaseReg) &&
-      (is64BitMode() || (BaseReg != X86::BX && BaseReg != X86::BP &&
-                         BaseReg != X86::SI && BaseReg != X86::DI)) &&
-      BaseReg != X86::DX) {
-    Error(BaseLoc, "invalid 16-bit base register");
-    return nullptr;
-  }
-  if (BaseReg == 0 &&
-      X86MCRegisterClasses[X86::GR16RegClassID].contains(IndexReg)) {
-    Error(IndexLoc, "16-bit memory operand may not include only index register");
-    return nullptr;
-  }
-
   StringRef ErrMsg;
-  if (CheckBaseRegAndIndexRegAndScale(BaseReg, IndexReg, Scale, ErrMsg)) {
+  if (CheckBaseRegAndIndexRegAndScale(BaseReg, IndexReg, Scale, is64BitMode(),
+                                      ErrMsg)) {
     Error(BaseLoc, ErrMsg);
     return nullptr;
   }
