@@ -1858,6 +1858,10 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
   unsigned IndexReg = SM.getIndexReg();
   unsigned Scale = SM.getScale();
 
+  if (Scale == 1 && BaseReg != X86::ESP && BaseReg != X86::RSP &&
+      (IndexReg == X86::ESP || IndexReg == X86::RSP))
+    std::swap(BaseReg, IndexReg);
+
   // If this is a 16-bit addressing mode with the base and index in the wrong
   // order, swap them so CheckBaseRegAndIndexRegAndScale doesn't fail. It is
   // shared with att syntax where order matters.
