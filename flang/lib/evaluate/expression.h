@@ -40,15 +40,16 @@ struct AnyComplexExpr;
 struct AnyCharacterExpr;
 struct AnyIntegerOrRealExpr;
 
-// Helper classes to manage subexpressions.
+// Helper base classes to manage subexpressions, which are known as data members
+// named 'x' and (for binary operations) 'y'.
 template<typename A> struct Unary {
   Unary(const A &a) : x{std::make_unique<A>(a)} {}
   Unary(std::unique_ptr<const A> &&a) : x{std::move(a)} {}
   Unary(A &&a) : x{std::make_unique<A>(std::move(a))} {}
-  Unary(const Unary &that) : x{std::make_unique<A>(A{*that.x})} {}
+  Unary(const Unary &that) : x{std::make_unique<A>(*that.x)} {}
   Unary(Unary &&) = default;
   Unary &operator=(const Unary &that) {
-    *x = *that.x;
+    x = std::make_unique<A>(*that.x);
     return *this;
   }
   Unary &operator=(Unary &&) = default;
@@ -64,11 +65,11 @@ template<typename A, typename B> struct Binary {
     : x{std::make_unique<A>(std::move(a))}, y{std::make_unique<B>(
                                                 std::move(b))} {}
   Binary(const Binary &that)
-    : x{std::make_unique<A>(A{*that.x})}, y{std::make_unique<B>(B{*that.y})} {}
+    : x{std::make_unique<A>(*that.x)}, y{std::make_unique<B>(*that.y)} {}
   Binary(Binary &&) = default;
   Binary &operator=(const Binary &that) {
-    *x = *that.x;
-    *y = *that.y;
+    x = std::make_unique<A>(*that.x);
+    y = std::make_unique<B>(*that.y);
     return *this;
   }
   Binary &operator=(Binary &&) = default;
@@ -255,8 +256,8 @@ template<int KIND> struct CharacterExpr {
 };
 
 // The Comparison class template is a helper for constructing logical
-// expressions with polymorphism over all of the possible categories and
-// kinds of comparable operands.
+// expressions with polymorphism over the cross product of the possible
+// categories and kinds of comparable operands.
 template<typename T> struct Comparison {
   struct LT : public Binary<T, T> {
     using Binary<T, T>::Binary;
@@ -547,7 +548,7 @@ BINARY(operator>=, GE)
 BINARY(operator>, GT)
 #undef BINARY
 
-// External instantiations
+// External class template instantiations are in expression.cc.
 extern template struct IntegerExpr<1>;
 extern template struct IntegerExpr<2>;
 extern template struct IntegerExpr<4>;

@@ -15,6 +15,8 @@
 #ifndef FORTRAN_EVALUATE_TESTING_H_
 #define FORTRAN_EVALUATE_TESTING_H_
 
+#include <string>
+
 namespace testing {
 
 // Returns EXIT_SUCCESS or EXIT_FAILURE, so a test's main() should end
@@ -37,6 +39,8 @@ FailureDetailPrinter Test(
     const char *file, int line, const char *predicate, bool pass);
 FailureDetailPrinter Match(const char *file, int line, unsigned long long want,
     const char *gots, unsigned long long got);
+FailureDetailPrinter Match(const char *file, int line, const char *want,
+    const char *gots, const std::string &got);
 FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     const char *rel, const char *ys, unsigned long long x,
     unsigned long long y);

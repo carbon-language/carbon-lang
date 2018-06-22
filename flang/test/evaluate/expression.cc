@@ -17,25 +17,28 @@
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>
-#include <iostream>  // TODO pmk rm
+#include <string>
 
 using namespace Fortran::evaluate;
 
+template<typename A> std::string Dump(const A &x) {
+  std::stringstream ss;
+  x.Dump(ss);
+  return ss.str();
+}
+
 int main() {
   TEST(DefaultIntegerExpr::Result::Dump() == "Integer(4)");
-  DefaultIntegerExpr ie{666};
-  std::stringstream ss;
-  ie.Dump(ss);
-  TEST(ss.str() == "666");
-  DefaultIntegerExpr one{DefaultIntegerExpr::Constant{1}};
-  auto minusOne{-DefaultIntegerExpr{1}};
-  DefaultIntegerExpr incr{DefaultIntegerExpr::Add{ie, minusOne}};
-incr.Dump(std::cout) << '\n';
-  incr = ie + one;
-incr.Dump(std::cout) << '\n';
-  auto three{std::move(one) + DefaultIntegerExpr{2}};
-three.Dump(std::cout) << '\n';
-  LogicalExpr cmp{std::move(incr) <= DefaultIntegerExpr{2}};
-cmp.Dump(std::cout) << '\n';
+  MATCH("666", Dump(DefaultIntegerExpr{666}));
+  MATCH("(-1)", Dump(-DefaultIntegerExpr{1}));
+  MATCH("(2+(3*4))", Dump(DefaultIntegerExpr{2} + DefaultIntegerExpr{3} * DefaultIntegerExpr{4}));
+  MATCH("(6.LE.7)", Dump(DefaultIntegerExpr{6} <= DefaultIntegerExpr{7}));
+  DefaultIntegerExpr a{1};
+  DefaultIntegerExpr b{2};
+  MATCH("(1/2)", Dump(a / b));
+  MATCH("1", Dump(a));
+  a = b;
+  MATCH("2", Dump(a));
+  MATCH("2", Dump(b));
   return testing::Complete();
 }

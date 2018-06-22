@@ -61,6 +61,19 @@ FailureDetailPrinter Match(const char *file, int line, unsigned long long want,
   }
 }
 
+FailureDetailPrinter Match(const char *file, int line, const char *want,
+    const char *gots, const std::string &got) {
+  if (want == got) {
+    ++passes;
+    return BitBucket;
+  } else {
+    ++failures;
+    fprintf(stderr, "%s:%d: FAIL: %s == \"%s\", not \"%s\"\n", file, line, gots,
+        got.data(), want);
+    return PrintFailureDetails;
+  }
+}
+
 FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     const char *rel, const char *ys, unsigned long long x,
     unsigned long long y) {
