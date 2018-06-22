@@ -4824,13 +4824,13 @@ bool SLPVectorizerPass::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   LLVM_DEBUG(dbgs() << "SLP: Trying to vectorize a list of length = "
                     << VL.size() << ".\n");
 
-  // Check that all of the parts are scalar instructions of the same type.
-  Instruction *I0 = dyn_cast<Instruction>(VL[0]);
-  if (!I0)
+  // Check that all of the parts are scalar instructions of the same type,
+  // we permit an alternate opcode via InstructionsState.
+  InstructionsState S = getSameOpcode(VL);
+  if (!S.Opcode)
     return false;
 
-  unsigned Opcode0 = I0->getOpcode();
-
+  Instruction *I0 = cast<Instruction>(S.OpValue);
   unsigned Sz = R.getVectorElementSize(I0);
   unsigned MinVF = std::max(2U, R.getMinVecRegSize() / Sz);
   unsigned MaxVF = std::max<unsigned>(PowerOf2Floor(VL.size()), MinVF);
@@ -4847,30 +4847,15 @@ bool SLPVectorizerPass::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
   for (Value *V : VL) {
     Type *Ty = V->getType();
     if (!isValidElementType(Ty)) {
-      // NOTE: the following will give user internal llvm type name, which may not be useful
+      // NOTE: the following will give user internal llvm type name, which may
+      // not be useful.
       R.getORE()->emit([&]() {
-          std::string type_str;
-          llvm::raw_string_ostream rso(type_str);
-          Ty->print(rso);
-          return OptimizationRemarkMissed(
-                     SV_NAME, "UnsupportedType", I0)
-                 << "Cannot SLP vectorize list: type "
-                 << rso.str() + " is unsupported by vectorizer";
-      });
-      return false;
-    }
-    Instruction *Inst = dyn_cast<Instruction>(V);
-
-    if (!Inst)
-      return false;
-    if (Inst->getOpcode() != Opcode0) {
-      R.getORE()->emit([&]() {
-          return OptimizationRemarkMissed(
-                     SV_NAME, "InequableTypes", I0)
-                 << "Cannot SLP vectorize list: not all of the "
-                 << "parts of scalar instructions are of the same type: "
-                 << ore::NV("Instruction1Opcode", I0) << " and "
-                 << ore::NV("Instruction2Opcode", Inst);
+        std::string type_str;
+        llvm::raw_string_ostream rso(type_str);
+        Ty->print(rso);
+        return OptimizationRemarkMissed(SV_NAME, "UnsupportedType", I0)
+               << "Cannot SLP vectorize list: type "
+               << rso.str() + " is unsupported by vectorizer";
       });
       return false;
     }
