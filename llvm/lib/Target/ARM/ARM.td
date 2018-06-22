@@ -526,15 +526,13 @@ def ARMv6m    : Architecture<"armv6-m",   "ARMv6m",   [HasV6MOps,
                                                        FeatureNoARM,
                                                        ModeThumb,
                                                        FeatureDB,
-                                                       FeatureMClass,
-                                                       FeatureStrictAlign]>;
+                                                       FeatureMClass]>;
 
 def ARMv6sm   : Architecture<"armv6s-m",  "ARMv6sm",  [HasV6MOps,
                                                        FeatureNoARM,
                                                        ModeThumb,
                                                        FeatureDB,
-                                                       FeatureMClass,
-                                                       FeatureStrictAlign]>;
+                                                       FeatureMClass]>;
 
 def ARMv7a    : Architecture<"armv7-a",   "ARMv7a",   [HasV7Ops,
                                                        FeatureNEON,
@@ -644,8 +642,7 @@ def ARMv8mBaseline : Architecture<"armv8-m.base", "ARMv8mBaseline",
                                                        FeatureV7Clrex,
                                                        Feature8MSecExt,
                                                        FeatureAcquireRelease,
-                                                       FeatureMClass,
-                                                       FeatureStrictAlign]>;
+                                                       FeatureMClass]>;
 
 def ARMv8mMainline : Architecture<"armv8-m.main", "ARMv8mMainline",
                                                       [HasV8MMainlineOps,
