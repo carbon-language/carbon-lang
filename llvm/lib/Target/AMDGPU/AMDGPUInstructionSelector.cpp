@@ -528,8 +528,11 @@ bool AMDGPUInstructionSelector::selectG_LOAD(MachineInstr &I) const {
 bool AMDGPUInstructionSelector::select(MachineInstr &I,
                                        CodeGenCoverage &CoverageInfo) const {
 
-  if (!isPreISelGenericOpcode(I.getOpcode()))
+  if (!isPreISelGenericOpcode(I.getOpcode())) {
+    if (I.isCopy())
+      return selectCOPY(I);
     return true;
+  }
 
   switch (I.getOpcode()) {
   default:
