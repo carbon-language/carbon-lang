@@ -1095,6 +1095,20 @@ TEST(ImportDecl, ImportTemplatedDeclForTemplate) {
                  unless(has(cxxRecordDecl(hasName("declToImport"))))))));
 }
 
+TEST(ImportDecl, ImportClassTemplatePartialSpecialization) {
+  MatchVerifier<Decl> Verifier;
+  auto Code =
+      R"s(
+      struct declToImport {
+        template <typename T0> struct X;
+        template <typename T0> struct X<T0 *> {};
+      };
+      )s";
+  testImport(Code, Lang_CXX, "", Lang_CXX, Verifier,
+             recordDecl(has(classTemplateDecl()),
+                        has(classTemplateSpecializationDecl())));
+}
+
 TEST(ImportExpr, CXXOperatorCallExpr) {
   MatchVerifier<Decl> Verifier;
   testImport("class declToImport {"
@@ -1126,6 +1140,52 @@ TEST_P(ASTImporterTestBase, ImportOfTemplatedDeclOfClassTemplateDecl) {
   Decl *ToTemplated1 = Import(From->getTemplatedDecl(), Lang_CXX);
   EXPECT_TRUE(ToTemplated1);
   EXPECT_EQ(ToTemplated1, ToTemplated);
+}
+
+TEST_P(ASTImporterTestBase,
+       DISABLED_ImportOfTemplatedDeclOfFunctionTemplateDecl) {
+  Decl *FromTU = getTuDecl("template<class X> void f(){}", Lang_CXX);
+  auto From = FirstDeclMatcher<FunctionTemplateDecl>().match(
+      FromTU, functionTemplateDecl());
+  ASSERT_TRUE(From);
+  auto To = cast<FunctionTemplateDecl>(Import(From, Lang_CXX));
+  ASSERT_TRUE(To);
+  Decl *ToTemplated = To->getTemplatedDecl();
+  Decl *ToTemplated1 = Import(From->getTemplatedDecl(), Lang_CXX);
+  EXPECT_TRUE(ToTemplated1);
+  EXPECT_EQ(ToTemplated1, ToTemplated);
+}
+
+TEST_P(ASTImporterTestBase,
+       ImportOfTemplatedDeclShouldImportTheClassTemplateDecl) {
+  Decl *FromTU = getTuDecl("template<class X> struct S{};", Lang_CXX);
+  auto FromFT =
+      FirstDeclMatcher<ClassTemplateDecl>().match(FromTU, classTemplateDecl());
+  ASSERT_TRUE(FromFT);
+
+  auto ToTemplated =
+      cast<CXXRecordDecl>(Import(FromFT->getTemplatedDecl(), Lang_CXX));
+  EXPECT_TRUE(ToTemplated);
+  auto ToTU = ToTemplated->getTranslationUnitDecl();
+  auto ToFT =
+      FirstDeclMatcher<ClassTemplateDecl>().match(ToTU, classTemplateDecl());
+  EXPECT_TRUE(ToFT);
+}
+
+TEST_P(ASTImporterTestBase,
+       DISABLED_ImportOfTemplatedDeclShouldImportTheFunctionTemplateDecl) {
+  Decl *FromTU = getTuDecl("template<class X> void f(){}", Lang_CXX);
+  auto FromFT = FirstDeclMatcher<FunctionTemplateDecl>().match(
+      FromTU, functionTemplateDecl());
+  ASSERT_TRUE(FromFT);
+
+  auto ToTemplated =
+      cast<FunctionDecl>(Import(FromFT->getTemplatedDecl(), Lang_CXX));
+  EXPECT_TRUE(ToTemplated);
+  auto ToTU = ToTemplated->getTranslationUnitDecl();
+  auto ToFT = FirstDeclMatcher<FunctionTemplateDecl>().match(
+      ToTU, functionTemplateDecl());
+  EXPECT_TRUE(ToFT);
 }
 
 TEST_P(ASTImporterTestBase, ImportCorrectTemplatedDecl) {
