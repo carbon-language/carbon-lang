@@ -1012,7 +1012,7 @@ Value *InstCombiner::simplifyAMDGCNMemoryIntrinsicDemanded(IntrinsicInst *II,
   SmallVector<uint32_t, 8> EltMask;
   unsigned NewLoadIdx = 0;
   for (unsigned OrigLoadIdx = 0; OrigLoadIdx < VWidth; ++OrigLoadIdx) {
-    if (!!(DemandedElts & (1 << OrigLoadIdx)))
+    if (!!DemandedElts[OrigLoadIdx])
       EltMask.push_back(NewLoadIdx++);
     else
       EltMask.push_back(NewNumElts);
