@@ -949,7 +949,7 @@ Value *InstCombiner::simplifyAMDGCNMemoryIntrinsicDemanded(IntrinsicInst *II,
     for (unsigned SrcIdx = 0; SrcIdx < 4; ++SrcIdx) {
       const unsigned Bit = 1 << SrcIdx;
       if (!!(DMaskVal & Bit)) {
-        if (!!(DemandedElts & (1 << OrigLoadIdx)))
+        if (!!DemandedElts[OrigLoadIdx])
           NewDMaskVal |= Bit;
         OrigLoadIdx++;
       }
