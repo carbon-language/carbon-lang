@@ -1,4 +1,4 @@
-; RUN: opt -loop-vectorize %s -S | FileCheck %s
+; RUN: opt -loop-vectorize  -force-vector-width=2 -force-vector-interleave=1 %s -S | FileCheck %s
 ; Tests that the debug intrinsic does not cause additional instructions to be
 ; created by SCEVExpander.
 
