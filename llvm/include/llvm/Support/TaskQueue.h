@@ -44,17 +44,19 @@ class TaskQueue {
         : C(std::move(C)), P(std::make_shared<std::promise<ResultTy>>()),
           Parent(&Parent) {}
 
-    template <typename T> void invokeCallbackAndSetPromise() {
+    template<typename T>
+    void invokeCallbackAndSetPromise(T*) {
       P->set_value(C());
     }
 
-    template <> void invokeCallbackAndSetPromise<void>() {
+    void invokeCallbackAndSetPromise(void*) {
       C();
       P->set_value();
     }
 
     void operator()() noexcept {
-      invokeCallbackAndSetPromise<ResultTy>();
+      ResultTy *Dummy = nullptr;
+      invokeCallbackAndSetPromise(Dummy);
       Parent->completeTask();
     }
 
