@@ -158,7 +158,7 @@ void assembleToStream(const ExegesisTarget *ET,
   Properties.set(llvm::MachineFunctionProperties::Property::NoVRegs);
   Properties.reset(llvm::MachineFunctionProperties::Property::IsSSA);
   std::vector<llvm::MCInst> SnippetWithSetup;
-  bool IsSnippetSetupComplete;
+  bool IsSnippetSetupComplete = RegsToDef.empty();
   if (ET) {
     SnippetWithSetup =
         generateSnippetSetupCode(RegsToDef, *ET, IsSnippetSetupComplete);
