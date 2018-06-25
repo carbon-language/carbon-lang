@@ -1019,12 +1019,15 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
     return Common;
 
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  Value *X;
+  // sdiv Op0, -1 --> -Op0
+  // sdiv Op0, (sext i1 X) --> -Op0 (because if X is 0, the op is undefined)
+  if (match(Op1, m_AllOnes()) ||
+      (match(Op1, m_SExt(m_Value(X))) && X->getType()->isIntOrIntVectorTy(1)))
+    return BinaryOperator::CreateNeg(Op0);
+
   const APInt *Op1C;
   if (match(Op1, m_APInt(Op1C))) {
-    // sdiv X, -1 == -X
-    if (Op1C->isAllOnesValue())
-      return BinaryOperator::CreateNeg(Op0);
-
     // sdiv exact X, C  -->  ashr exact X, log2(C)
     if (I.isExact() && Op1C->isNonNegative() && Op1C->isPowerOf2()) {
       Value *ShAmt = ConstantInt::get(Op1->getType(), Op1C->exactLogBase2());

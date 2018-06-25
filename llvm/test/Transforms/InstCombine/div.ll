@@ -48,8 +48,7 @@ define <2 x i64> @sdiv_by_minus1_vec_undef_elt(<2 x i64> %x) {
 
 define i32 @sdiv_by_sext_minus1(i1 %x, i32 %y) {
 ; CHECK-LABEL: @sdiv_by_sext_minus1(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext i1 [[X:%.*]] to i32
-; CHECK-NEXT:    [[DIV:%.*]] = sdiv i32 [[Y:%.*]], [[SEXT]]
+; CHECK-NEXT:    [[DIV:%.*]] = sub i32 0, [[Y:%.*]]
 ; CHECK-NEXT:    ret i32 [[DIV]]
 ;
   %sext = sext i1 %x to i32
@@ -59,8 +58,7 @@ define i32 @sdiv_by_sext_minus1(i1 %x, i32 %y) {
 
 define <2 x i32> @sdiv_by_sext_minus1_vec(<2 x i1> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @sdiv_by_sext_minus1_vec(
-; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i1> [[X:%.*]] to <2 x i32>
-; CHECK-NEXT:    [[DIV:%.*]] = sdiv <2 x i32> [[Y:%.*]], [[SEXT]]
+; CHECK-NEXT:    [[DIV:%.*]] = sub <2 x i32> zeroinitializer, [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[DIV]]
 ;
   %sext = sext <2 x i1> %x to <2 x i32>
