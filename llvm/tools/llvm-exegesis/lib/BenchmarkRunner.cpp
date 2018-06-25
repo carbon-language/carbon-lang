@@ -31,8 +31,7 @@ BenchmarkRunner::InstructionFilter::~InstructionFilter() = default;
 BenchmarkRunner::BenchmarkRunner(const LLVMState &State)
     : State(State), MCInstrInfo(State.getInstrInfo()),
       MCRegisterInfo(State.getRegInfo()),
-      RATC(MCRegisterInfo,
-           getFunctionReservedRegs(*State.createTargetMachine())) {}
+      RATC(MCRegisterInfo, getFunctionReservedRegs(State.getTargetMachine())) {}
 
 BenchmarkRunner::~BenchmarkRunner() = default;
 
