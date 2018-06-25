@@ -91,22 +91,22 @@ BenchmarkRunner::runOne(const BenchmarkConfiguration &Configuration,
   // that the inside instructions are repeated.
   constexpr const int kMinInstructionsForSnippet = 16;
   {
-    auto ObjectFilePath = writeObjectFile(
-        GenerateInstructions(kMinInstructionsForSnippet));
+    auto ObjectFilePath =
+        writeObjectFile(GenerateInstructions(kMinInstructionsForSnippet));
     if (llvm::Error E = ObjectFilePath.takeError()) {
       InstrBenchmark.Error = llvm::toString(std::move(E));
       return InstrBenchmark;
     }
     const ExecutableFunction EF(State.createTargetMachine(),
-                              getObjectFromFile(*ObjectFilePath));
+                                getObjectFromFile(*ObjectFilePath));
     const auto FnBytes = EF.getFunctionBytes();
     InstrBenchmark.AssembledSnippet.assign(FnBytes.begin(), FnBytes.end());
   }
 
   // Assemble NumRepetitions instructions repetitions of the snippet for
   // measurements.
-  auto ObjectFilePath = writeObjectFile(
-      GenerateInstructions(InstrBenchmark.NumRepetitions));
+  auto ObjectFilePath =
+      writeObjectFile(GenerateInstructions(InstrBenchmark.NumRepetitions));
   if (llvm::Error E = ObjectFilePath.takeError()) {
     InstrBenchmark.Error = llvm::toString(std::move(E));
     return InstrBenchmark;
@@ -114,7 +114,7 @@ BenchmarkRunner::runOne(const BenchmarkConfiguration &Configuration,
   llvm::outs() << "Check generated assembly with: /usr/bin/objdump -d "
                << *ObjectFilePath << "\n";
   const ExecutableFunction EF(State.createTargetMachine(),
-                            getObjectFromFile(*ObjectFilePath));
+                              getObjectFromFile(*ObjectFilePath));
   InstrBenchmark.Measurements = runMeasurements(EF, NumRepetitions);
 
   return InstrBenchmark;

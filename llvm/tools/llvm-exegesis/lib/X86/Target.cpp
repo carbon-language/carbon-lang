@@ -29,7 +29,7 @@ class ExegesisX86Target : public ExegesisTarget {
 
 } // namespace
 
-static ExegesisTarget* getTheExegesisX86Target() {
+static ExegesisTarget *getTheExegesisX86Target() {
   static ExegesisX86Target Target;
   return &Target;
 }
@@ -38,4 +38,4 @@ void InitializeX86ExegesisTarget() {
   ExegesisTarget::registerTarget(getTheExegesisX86Target());
 }
 
-}  // namespace exegesis
+} // namespace exegesis

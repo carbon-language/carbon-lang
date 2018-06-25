@@ -38,9 +38,9 @@ public:
 
 private:
   virtual bool matchesArch(llvm::Triple::ArchType Arch) const = 0;
-  const ExegesisTarget* Next = nullptr;
+  const ExegesisTarget *Next = nullptr;
 };
 
-}  // namespace exegesis
+} // namespace exegesis
 
 #endif // LLVM_TOOLS_LLVM_EXEGESIS_TARGET_H
