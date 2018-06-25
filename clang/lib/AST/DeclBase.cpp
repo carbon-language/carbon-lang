@@ -1343,6 +1343,8 @@ bool DeclContext::decls_empty() const {
 }
 
 bool DeclContext::containsDecl(Decl *D) const {
+  if (hasExternalLexicalStorage())
+    LoadLexicalDeclsFromExternalStorage();
   return (D->getLexicalDeclContext() == this &&
           (D->NextInContextAndBits.getPointer() || D == LastDecl));
 }
