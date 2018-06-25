@@ -99,7 +99,18 @@ llvm::MCOperand &InstructionInstance::getValueFor(const Variable &Var) {
   return VariableValues[Var.Index];
 }
 
+const llvm::MCOperand &
+InstructionInstance::getValueFor(const Variable &Var) const {
+  return VariableValues[Var.Index];
+}
+
 llvm::MCOperand &InstructionInstance::getValueFor(const Operand &Op) {
+  assert(Op.VariableIndex >= 0);
+  return getValueFor(Instr.Variables[Op.VariableIndex]);
+}
+
+const llvm::MCOperand &
+InstructionInstance::getValueFor(const Operand &Op) const {
   assert(Op.VariableIndex >= 0);
   return getValueFor(Instr.Variables[Op.VariableIndex]);
 }
@@ -118,12 +129,15 @@ bool InstructionInstance::hasImmediateVariables() const {
   });
 }
 
-llvm::MCInst InstructionInstance::randomizeUnsetVariablesAndBuild() {
+void InstructionInstance::randomizeUnsetVariables() {
   for (const Variable &Var : Instr.Variables) {
     llvm::MCOperand &AssignedValue = getValueFor(Var);
     if (!AssignedValue.isValid())
       randomize(Instr, Var, AssignedValue);
   }
+}
+
+llvm::MCInst InstructionInstance::build() const {
   llvm::MCInst Result;
   Result.setOpcode(Instr.Description->Opcode);
   for (const auto &Op : Instr.Operands)
