@@ -66,6 +66,58 @@ define <2 x i32> @sdiv_by_sext_minus1_vec(<2 x i1> %x, <2 x i32> %y) {
   ret <2 x i32> %div
 }
 
+define i8 @udiv_by_negative(i8 %x) {
+; CHECK-LABEL: @udiv_by_negative(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i8 [[X:%.*]], -7
+; CHECK-NEXT:    [[A:%.*]] = zext i1 [[TMP1]] to i8
+; CHECK-NEXT:    ret i8 [[A]]
+;
+  %A = udiv i8 %x, 250
+  ret i8 %A
+}
+
+define i32 @udiv_by_minus1(i32 %A) {
+; CHECK-LABEL: @udiv_by_minus1(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i32 [[A:%.*]], -1
+; CHECK-NEXT:    [[B:%.*]] = zext i1 [[TMP1]] to i32
+; CHECK-NEXT:    ret i32 [[B]]
+;
+  %B = udiv i32 %A, -1
+  ret i32 %B
+}
+
+define <2 x i64> @udiv_by_minus1_vec(<2 x i64> %x) {
+; CHECK-LABEL: @udiv_by_minus1_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i64> [[X:%.*]], <i64 -1, i64 -1>
+; CHECK-NEXT:    [[DIV:%.*]] = zext <2 x i1> [[TMP1]] to <2 x i64>
+; CHECK-NEXT:    ret <2 x i64> [[DIV]]
+;
+  %div = udiv <2 x i64> %x, <i64 -1, i64 -1>
+  ret <2 x i64> %div
+}
+
+define i32 @udiv_by_sext_all_ones(i1 %x, i32 %y) {
+; CHECK-LABEL: @udiv_by_sext_all_ones(
+; CHECK-NEXT:    [[SEXT:%.*]] = sext i1 [[X:%.*]] to i32
+; CHECK-NEXT:    [[DIV:%.*]] = udiv i32 [[Y:%.*]], [[SEXT]]
+; CHECK-NEXT:    ret i32 [[DIV]]
+;
+  %sext = sext i1 %x to i32
+  %div = udiv i32 %y, %sext
+  ret i32 %div
+}
+
+define <2 x i32> @udiv_by_sext_all_ones_vec(<2 x i1> %x, <2 x i32> %y) {
+; CHECK-LABEL: @udiv_by_sext_all_ones_vec(
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <2 x i1> [[X:%.*]] to <2 x i32>
+; CHECK-NEXT:    [[DIV:%.*]] = udiv <2 x i32> [[Y:%.*]], [[SEXT]]
+; CHECK-NEXT:    ret <2 x i32> [[DIV]]
+;
+  %sext = sext <2 x i1> %x to <2 x i32>
+  %div = udiv <2 x i32> %y, %sext
+  ret <2 x i32> %div
+}
+
 define i32 @test5(i32 %A) {
 ; CHECK-LABEL: @test5(
 ; CHECK-NEXT:    ret i32 0
