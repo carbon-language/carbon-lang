@@ -267,6 +267,9 @@ bool ICF<ELFT>::constantEq(const InputSection *SecA, ArrayRef<RelTy> RA,
     if (!DA->Section || !DB->Section)
       return false;
 
+    if (DA->Section->kind() != DB->Section->kind())
+      return false;
+
     // Relocations referring to InputSections are constant-equal if their
     // section offsets are equal.
     if (isa<InputSection>(DA->Section)) {
