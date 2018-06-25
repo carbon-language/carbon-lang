@@ -700,5 +700,22 @@ TEST_F(FormatTestTextProto, PreventBreaksBetweenKeyAndSubmessages) {
       "}");
 }
 
+TEST_F(FormatTestTextProto, FormatsCommentsAtEndOfFile) {
+  verifyFormat("key: value\n"
+               "# endfile comment");
+  verifyFormat("key: value\n"
+               "// endfile comment");
+  verifyFormat("key: value\n"
+               "// endfile comment 1\n"
+               "// endfile comment 2");
+  verifyFormat("submessage { key: value }\n"
+               "# endfile comment");
+  verifyFormat("submessage <\n"
+               "  key: value\n"
+               "  item {}\n"
+               ">\n"
+               "# endfile comment");
+}
+
 } // end namespace tooling
 } // end namespace clang
