@@ -19,6 +19,7 @@ add_llvm_target(WebAssemblyCodeGen
   WebAssemblyCFGStackify.cpp
   WebAssemblyCFGSort.cpp
   WebAssemblyLateEHPrepare.cpp
+  WebAssemblyExceptionInfo.cpp
   WebAssemblyExplicitLocals.cpp
   WebAssemblyFastISel.cpp
   WebAssemblyFixIrreducibleControlFlow.cpp

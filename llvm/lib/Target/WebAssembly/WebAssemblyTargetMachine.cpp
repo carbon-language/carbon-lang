@@ -66,6 +66,7 @@ extern "C" void LLVMInitializeWebAssemblyTarget() {
   initializeWebAssemblyExplicitLocalsPass(PR);
   initializeWebAssemblyFixIrreducibleControlFlowPass(PR);
   initializeWebAssemblyLateEHPreparePass(PR);
+  initializeWebAssemblyExceptionInfoPass(PR);
   initializeWebAssemblyCFGSortPass(PR);
   initializeWebAssemblyCFGStackifyPass(PR);
   initializeWebAssemblyLowerBrUnlessPass(PR);
