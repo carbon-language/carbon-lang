@@ -22,9 +22,9 @@ protected:
 TEST_F(TaskQueueTest, OrderedFutures) {
   ThreadPool TP(1);
   TaskQueue TQ(TP);
-  std::atomic<int> X = 0;
-  std::atomic<int> Y = 0;
-  std::atomic<int> Z = 0;
+  std::atomic<int> X{ 0 };
+  std::atomic<int> Y{ 0 };
+  std::atomic<int> Z{ 0 };
 
   std::mutex M1, M2, M3;
   std::unique_lock<std::mutex> L1(M1);
@@ -66,9 +66,9 @@ TEST_F(TaskQueueTest, OrderedFutures) {
 TEST_F(TaskQueueTest, UnOrderedFutures) {
   ThreadPool TP(1);
   TaskQueue TQ(TP);
-  std::atomic<int> X = 0;
-  std::atomic<int> Y = 0;
-  std::atomic<int> Z = 0;
+  std::atomic<int> X{ 0 };
+  std::atomic<int> Y{ 0 };
+  std::atomic<int> Z{ 0 };
   std::mutex M;
 
   std::unique_lock<std::mutex> Lock(M);
