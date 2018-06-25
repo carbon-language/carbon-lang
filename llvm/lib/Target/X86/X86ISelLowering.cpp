@@ -32741,8 +32741,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
     SDValue AndNode = Cond.getOperand(0);
     if (AndNode.getOpcode() == ISD::AND && CC == ISD::SETEQ &&
         isNullConstant(Cond.getOperand(1)) &&
-        isa<ConstantSDNode>(AndNode.getOperand(1)) &&
-        cast<ConstantSDNode>(AndNode.getOperand(1))->getAPIntValue() == 1) {
+        isOneConstant(AndNode.getOperand(1))) {
       // LHS and RHS swapped due to
       // setcc outputting 1 when AND resulted in 0 and vice versa.
       AndNode = DAG.getZExtOrTrunc(AndNode, DL, MVT::i8);
