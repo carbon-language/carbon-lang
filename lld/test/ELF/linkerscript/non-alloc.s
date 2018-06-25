@@ -3,7 +3,7 @@
 
 # RUN: echo "SECTIONS { .foo 0 : {*(foo)} }" > %t.script
 # RUN: ld.lld --hash-style=sysv -o %t1 --script %t.script %t -shared
-# RUN: llvm-readobj -elf-output-style=GNU -s -l %t1 | FileCheck %s
+# RUN: llvm-readelf -s -l %t1 | FileCheck %s
 
 # Test that we create all necessary PT_LOAD. We use to stop at the first
 # non-alloc, causing us to not create PT_LOAD for linker generated sections.
