@@ -310,6 +310,13 @@ SplitFunctions("split-functions",
   cl::cat(BoltOptCategory));
 
 cl::opt<bool>
+SplitEH("split-eh",
+  cl::desc("split C++ exception handling code"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+cl::opt<bool>
 TrapOldCode("trap-old-code",
   cl::desc("insert traps in old function bodies (relocation mode)"),
   cl::Hidden,
@@ -1774,6 +1781,10 @@ void RewriteInstance::adjustCommandLineOptions() {
     outs() << "BOLT-INFO: disabling -align-macro-fusion in non-relocation "
               "mode\n";
     opts::AlignMacroOpFusion = MFT_NONE;
+  }
+  if (opts::SplitEH && !BC->HasRelocations) {
+    outs() << "BOLT-WARNING: disabling -split-eh in non-relocation mode\n";
+    opts::SplitEH = false;
   }
   if (BC->isX86() && BC->HasRelocations &&
       opts::AlignMacroOpFusion == MFT_HOT &&

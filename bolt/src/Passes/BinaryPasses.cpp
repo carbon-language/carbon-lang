@@ -53,6 +53,7 @@ extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<bolt::MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> SplitEH;
 extern cl::opt<bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
@@ -199,13 +200,6 @@ SctcMode("sctc-mode",
       "heuristic",
       "use branch prediction data to control sctc")),
   cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-SplitEH("split-eh",
-  cl::desc("split C++ exception handling code (experimental)"),
-  cl::ZeroOrMore,
-  cl::Hidden,
   cl::cat(BoltOptCategory));
 
 static cl::opt<unsigned>
