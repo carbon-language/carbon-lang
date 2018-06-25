@@ -61,9 +61,9 @@ struct Operand {
   bool IsExplicit = false;
   const RegisterAliasingTracker *Tracker = nullptr; // Set for Register Op.
   const llvm::MCOperandInfo *Info = nullptr;        // Set for Explicit Op.
-  int TiedToIndex = -1;                             // Set for Reg/Explicit Op.
+  int TiedToIndex = -1;                             // Set for Reg&Explicit Op.
   const llvm::MCPhysReg *ImplicitReg = nullptr;     // Set for Implicit Op.
-  int VariableIndex = -1;                           // Set for Reg/Explicit Op.
+  int VariableIndex = -1;                           // Set for Explicit Op.
 };
 
 // A view over an MCInstrDesc offering a convenient interface to compute
