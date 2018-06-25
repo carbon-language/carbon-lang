@@ -717,5 +717,23 @@ TEST_F(FormatTestTextProto, FormatsCommentsAtEndOfFile) {
                "# endfile comment");
 }
 
+TEST_F(FormatTestTextProto, KeepsAmpersandsNextToKeys) {
+  verifyFormat("@tmpl { field: 1 }");
+  verifyFormat("@placeholder: 1");
+  verifyFormat("@name <>");
+  verifyFormat("submessage: @base { key: value }");
+  verifyFormat("submessage: @base {\n"
+               "  key: value\n"
+               "  item: {}\n"
+               "}");
+  verifyFormat("submessage: {\n"
+               "  msg: @base {\n"
+               "    yolo: {}\n"
+               "    key: value\n"
+               "  }\n"
+               "  key: value\n"
+               "}");
+}
+
 } // end namespace tooling
 } // end namespace clang
