@@ -220,7 +220,7 @@ public:
   using BenchmarkRunner::BenchmarkRunner;
 
   Instruction createInstruction(unsigned Opcode) {
-    return Instruction(MCInstrInfo.get(Opcode), RATC);
+    return Instruction(State.getInstrInfo().get(Opcode), RATC);
   }
 
 private:

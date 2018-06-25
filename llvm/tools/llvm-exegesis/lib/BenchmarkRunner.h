@@ -80,8 +80,6 @@ public:
 
 protected:
   const LLVMState &State;
-  const llvm::MCInstrInfo &MCInstrInfo;
-  const llvm::MCRegisterInfo &MCRegisterInfo;
   const RegisterAliasingTrackerCache RATC;
 
 private:

@@ -29,9 +29,8 @@ BenchmarkFailure::BenchmarkFailure(const llvm::Twine &S)
 BenchmarkRunner::InstructionFilter::~InstructionFilter() = default;
 
 BenchmarkRunner::BenchmarkRunner(const LLVMState &State)
-    : State(State), MCInstrInfo(State.getInstrInfo()),
-      MCRegisterInfo(State.getRegInfo()),
-      RATC(MCRegisterInfo, getFunctionReservedRegs(State.getTargetMachine())) {}
+    : State(State),
+      RATC(State.getRegInfo(), getFunctionReservedRegs(State.getTargetMachine())) {}
 
 BenchmarkRunner::~BenchmarkRunner() = default;
 

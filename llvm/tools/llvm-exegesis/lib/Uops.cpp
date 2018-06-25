@@ -139,7 +139,7 @@ InstructionBenchmark::ModeE UopsBenchmarkRunner::getMode() const {
 
 llvm::Expected<SnippetPrototype>
 UopsBenchmarkRunner::generatePrototype(unsigned Opcode) const {
-  const auto &InstrDesc = MCInstrInfo.get(Opcode);
+  const auto &InstrDesc = State.getInstrInfo().get(Opcode);
   if (auto E = isInfeasible(InstrDesc))
     return std::move(E);
   const Instruction Instr(InstrDesc, RATC);
@@ -179,7 +179,7 @@ UopsBenchmarkRunner::generatePrototype(unsigned Opcode) const {
   }
   InstructionInstance II(Instr);
   // No tied variables, we pick random values for defs.
-  llvm::BitVector Defs(MCRegisterInfo.getNumRegs());
+  llvm::BitVector Defs(State.getRegInfo().getNumRegs());
   for (const auto &Op : Instr.Operands) {
     if (Op.Tracker && Op.IsExplicit && Op.IsDef) {
       auto PossibleRegisters = Op.Tracker->sourceBits();
@@ -191,7 +191,7 @@ UopsBenchmarkRunner::generatePrototype(unsigned Opcode) const {
     }
   }
   // And pick random use values that are not reserved and don't alias with defs.
-  const auto DefAliases = getAliasedBits(MCRegisterInfo, Defs);
+  const auto DefAliases = getAliasedBits(State.getRegInfo(), Defs);
   for (const auto &Op : Instr.Operands) {
     if (Op.Tracker && Op.IsExplicit && !Op.IsDef) {
       auto PossibleRegisters = Op.Tracker->sourceBits();
