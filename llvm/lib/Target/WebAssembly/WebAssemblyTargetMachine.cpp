@@ -65,7 +65,7 @@ extern "C" void LLVMInitializeWebAssemblyTarget() {
   initializeWebAssemblyRegColoringPass(PR);
   initializeWebAssemblyExplicitLocalsPass(PR);
   initializeWebAssemblyFixIrreducibleControlFlowPass(PR);
-  initializeWebAssemblyExceptionPreparePass(PR);
+  initializeWebAssemblyLateEHPreparePass(PR);
   initializeWebAssemblyCFGSortPass(PR);
   initializeWebAssemblyCFGStackifyPass(PR);
   initializeWebAssemblyLowerBrUnlessPass(PR);
@@ -322,7 +322,7 @@ void WebAssemblyPassConfig::addPreEmitPass() {
   addPass(createWebAssemblyExplicitLocals());
 
   // Do various transformations for exception handling
-  addPass(createWebAssemblyExceptionPrepare());
+  addPass(createWebAssemblyLateEHPrepare());
 
   // Sort the blocks of the CFG into topological order, a prerequisite for
   // BLOCK and LOOP markers.
