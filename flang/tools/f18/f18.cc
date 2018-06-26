@@ -23,6 +23,7 @@
 #include "../../lib/parser/unparse.h"
 #include "../../lib/semantics/dump-parse-tree.h"
 #include "../../lib/semantics/resolve-names.h"
+#include "../../lib/semantics/unparse-with-symbols.h"
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
@@ -196,22 +197,28 @@ std::string CompileFortran(
     exitStatus = EXIT_FAILURE;
     return {};
   }
+  auto &parseTree{*parsing.parseTree()};
   if (driver.measureTree) {
-    MeasureParseTree(*parsing.parseTree());
+    MeasureParseTree(parseTree);
+  }
+  if (driver.dumpParseTree) {
+    Fortran::semantics::DumpTree(std::cout, parseTree);
+  }
+  if (driver.dumpUnparse) {
+    if (driver.dumpSymbols) {
+      Fortran::semantics::ResolveNames(parseTree, parsing.cooked());
+      Fortran::semantics::UnparseWithSymbols(
+          std::cout, parseTree, driver.encoding);
+    } else {
+      Unparse(std::cout, parseTree, driver.encoding, true);
+    }
+    return {};
   }
   if (driver.debugResolveNames || driver.dumpSymbols) {
-    Fortran::semantics::ResolveNames(*parsing.parseTree(), parsing.cooked());
+    Fortran::semantics::ResolveNames(parseTree, parsing.cooked());
     if (driver.dumpSymbols) {
       Fortran::semantics::DumpSymbols(std::cout);
     }
-  }
-  if (driver.dumpParseTree) {
-    Fortran::semantics::DumpTree(std::cout, *parsing.parseTree());
-  }
-  if (driver.dumpUnparse) {
-    Unparse(
-        std::cout, *parsing.parseTree(), driver.encoding, true /*capitalize*/);
-    return {};
   }
   if (driver.parseOnly) {
     return {};
@@ -225,7 +232,7 @@ std::string CompileFortran(
   {
     std::ofstream tmpSource;
     tmpSource.open(tmpSourcePath);
-    Unparse(tmpSource, *parsing.parseTree(), driver.encoding);
+    Unparse(tmpSource, parseTree, driver.encoding);
   }
 
   if (ParentProcess()) {

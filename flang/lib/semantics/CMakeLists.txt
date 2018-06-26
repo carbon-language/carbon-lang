@@ -20,6 +20,7 @@ add_library(FlangSemantics
   scope.cc
   symbol.cc
   type.cc
+  unparse-with-symbols.cc
 )
 
 target_link_libraries(FlangSemantics

@@ -277,6 +277,9 @@ public:
   Symbol &GetUltimate();
   const Symbol &GetUltimate() const;
 
+  const DeclTypeSpec *GetType() const;
+  void SetType(const DeclTypeSpec &);
+
   bool isSubprogram() const;
   bool HasExplicitInterface() const;
 
@@ -294,6 +297,7 @@ private:
   Symbol() {}  // only created in class Symbols
   const std::string GetDetailsName() const;
   friend std::ostream &operator<<(std::ostream &, const Symbol &);
+  friend std::ostream &DumpForUnparse(std::ostream &, const Symbol &, bool);
   template<std::size_t> friend class Symbols;
   template<class, std::size_t> friend struct std::array;
 };

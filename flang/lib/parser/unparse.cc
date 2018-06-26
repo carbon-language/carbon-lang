@@ -31,9 +31,9 @@ namespace Fortran::parser {
 class UnparseVisitor {
 public:
   UnparseVisitor(std::ostream &out, int indentationAmount, Encoding encoding,
-      bool capitalize)
+      bool capitalize, preStatementType *preStatement)
     : out_{out}, indentationAmount_{indentationAmount}, encoding_{encoding},
-      capitalizeKeywords_{capitalize} {}
+      capitalizeKeywords_{capitalize}, preStatement_{preStatement} {}
 
   // In nearly all cases, this code avoids defining Boolean-valued Pre()
   // callbacks for the parse tree walking framework in favor of two void
@@ -66,6 +66,9 @@ public:
 
   // Statement labels and ends of lines
   template<typename T> void Before(const Statement<T> &x) {
+    if (preStatement_) {
+      (*preStatement_)(x.source, out_, indent_);
+    }
     Walk(x.label, " ");
   }
   template<typename T> void Post(const Statement<T> &) { Put('\n'); }
@@ -2201,6 +2204,7 @@ private:
   std::set<CharBlock> structureComponents_;
   Encoding encoding_{Encoding::UTF8};
   bool capitalizeKeywords_{true};
+  preStatementType *preStatement_{nullptr};
 };
 
 void UnparseVisitor::Put(char ch) {
@@ -2263,8 +2267,8 @@ void UnparseVisitor::Word(const char *str) {
 void UnparseVisitor::Word(const std::string &str) { Word(str.c_str()); }
 
 void Unparse(std::ostream &out, const Program &program, Encoding encoding,
-    bool capitalizeKeywords) {
-  UnparseVisitor visitor{out, 1, encoding, capitalizeKeywords};
+    bool capitalizeKeywords, preStatementType *preStatement) {
+  UnparseVisitor visitor{out, 1, encoding, capitalizeKeywords, preStatement};
   Walk(program, visitor);
   visitor.Done();
 }

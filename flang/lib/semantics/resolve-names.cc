@@ -1798,6 +1798,7 @@ bool DeclarationVisitor::HandleAttributeStmt(
             EnumToString(attr), name.source);
       }
       symbol.attrs().set(attr);
+      symbol.add_occurrence(name.source);
     }
   }
   return false;
@@ -1959,25 +1960,11 @@ bool DeclarationVisitor::Pre(const parser::FinalProcedureStmt &x) {
 
 void DeclarationVisitor::SetType(
     const SourceName &name, Symbol &symbol, const DeclTypeSpec &type) {
-  if (auto *details = symbol.detailsIf<EntityDetails>()) {
-    if (!details->type()) {
-      details->set_type(type);
-      return;
-    }
-  } else if (auto *details = symbol.detailsIf<ObjectEntityDetails>()) {
-    if (!details->type()) {
-      details->set_type(type);
-      return;
-    }
-  } else if (auto *details = symbol.detailsIf<ProcEntityDetails>()) {
-    if (!details->interface().type()) {
-      details->interface().set_type(type);
-      return;
-    }
-  } else {
+  if (symbol.GetType()) {
+    Say(name, "The type of '%s' has already been declared"_err_en_US);
     return;
   }
-  Say(name, "The type of '%s' has already been declared"_err_en_US);
+  symbol.SetType(type);
 }
 
 // ResolveNamesVisitor implementation
@@ -2115,7 +2102,9 @@ const Symbol *ResolveNamesVisitor::FindComponent(
                 "Declaration of '%s'"_en_US, typeName.ToString().data()});
     return nullptr;
   }
-  return it->second;
+  auto *symbol{it->second};
+  symbol->add_occurrence(component);
+  return symbol;
 }
 
 void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {

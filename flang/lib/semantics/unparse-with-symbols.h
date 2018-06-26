@@ -12,27 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_PARSER_UNPARSE_H_
-#define FORTRAN_PARSER_UNPARSE_H_
+#ifndef FORTRAN_SEMANTICS_UNPARSE_WITH_SYMBOLS_H_
+#define FORTRAN_SEMANTICS_UNPARSE_WITH_SYMBOLS_H_
 
-#include "char-block.h"
-#include "characters.h"
-#include <functional>
+#include "../parser/characters.h"
 #include <iosfwd>
 
 namespace Fortran::parser {
-
 struct Program;
-
-// A function called before each Statement is unparsed.
-using preStatementType =
-    std::function<void(const CharBlock &, std::ostream &, int)>;
-
-/// Convert parsed program to out as Fortran.
-void Unparse(std::ostream &out, const Program &program,
-    Encoding encoding = Encoding::UTF8, bool capitalizeKeywords = true,
-    preStatementType *preStatement = nullptr);
-
 }  // namespace Fortran::parser
 
-#endif
+namespace Fortran::semantics {
+void UnparseWithSymbols(std::ostream &, const parser::Program &,
+    parser::Encoding encoding = parser::Encoding::UTF8);
+}  // namespace Fortran::semantics
+
+#endif  // FORTRAN_SEMANTICS_UNPARSE_WITH_SYMBOLS_H_

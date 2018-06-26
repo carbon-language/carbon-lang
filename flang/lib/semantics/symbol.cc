@@ -156,6 +156,34 @@ const Symbol &Symbol::GetUltimate() const {
   }
 }
 
+const DeclTypeSpec *Symbol::GetType() const {
+  return std::visit(
+      common::visitors{
+          [](const EntityDetails &x) {
+            return x.type().has_value() ? &x.type().value() : nullptr;
+          },
+          [](const ObjectEntityDetails &x) {
+            return x.type().has_value() ? &x.type().value() : nullptr;
+          },
+          [](const ProcEntityDetails &x) { return x.interface().type(); },
+          [](const auto &) {
+            return static_cast<const DeclTypeSpec *>(nullptr);
+          },
+      },
+      details_);
+}
+
+void Symbol::SetType(const DeclTypeSpec &type) {
+  std::visit(
+      common::visitors{
+          [&](EntityDetails &x) { x.set_type(type); },
+          [&](ObjectEntityDetails &x) { x.set_type(type); },
+          [&](ProcEntityDetails &x) { x.interface().set_type(type); },
+          [](auto &) {},
+      },
+      details_);
+}
+
 bool Symbol::isSubprogram() const {
   return std::visit(
       common::visitors{
@@ -224,10 +252,8 @@ std::ostream &operator<<(std::ostream &os, const DerivedTypeDetails &x) {
 }
 
 static std::ostream &DumpType(std::ostream &os, const Symbol &symbol) {
-  if (const auto *details = symbol.detailsIf<EntityDetails>()) {
-    if (details->type()) {
-      os << *details->type() << ' ';
-    }
+  if (const auto *type{symbol.GetType()}) {
+    os << *type << ' ';
   }
   return os;
 }
@@ -311,6 +337,41 @@ std::ostream &operator<<(std::ostream &os, const Symbol &symbol) {
     os << " (" << symbol.flags() << ')';
   }
   os << ": " << symbol.details_;
+  return os;
+}
+
+// Output a unique name for a scope by qualifying it with the names of
+// parent scopes. For scopes without corresponding symbols, use "ANON".
+static void DumpUniqueName(std::ostream &os, const Scope &scope) {
+  if (&scope != &Scope::globalScope) {
+    DumpUniqueName(os, scope.parent());
+    os << '/';
+    if (auto *scopeSymbol{scope.symbol()}) {
+      os << scopeSymbol->name().ToString();
+    } else {
+      os << "ANON";
+    }
+  }
+}
+
+// Dump a symbol for UnparseWithSymbols. This will be used for tests so the
+// format should be reasonably stable.
+std::ostream &DumpForUnparse(
+    std::ostream &os, const Symbol &symbol, bool isDef) {
+  DumpUniqueName(os, symbol.owner());
+  os << '/' << symbol.name().ToString();
+  if (isDef) {
+    if (!symbol.attrs().empty()) {
+      os << ' ' << symbol.attrs();
+    }
+    if (symbol.test(Symbol::Flag::Implicit)) {
+      os << " (implicit)";
+    }
+    os << ' ' << symbol.GetDetailsName();
+    if (const auto *type{symbol.GetType()}) {
+      os << ' ' << *type;
+    }
+  }
   return os;
 }
 
