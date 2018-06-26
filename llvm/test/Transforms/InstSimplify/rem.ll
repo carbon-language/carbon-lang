@@ -306,3 +306,26 @@ define i32 @rem10(i32 %x, i32 %y) {
   %mod = urem i32 %shl, %x
   ret i32 %mod
 }
+
+define i32 @srem_with_sext_bool_divisor(i1 %x, i32 %y) {
+; CHECK-LABEL: @srem_with_sext_bool_divisor(
+; CHECK-NEXT:    [[S:%.*]] = sext i1 [[X:%.*]] to i32
+; CHECK-NEXT:    [[R:%.*]] = srem i32 [[Y:%.*]], [[S]]
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %s = sext i1 %x to i32
+  %r = srem i32 %y, %s
+  ret i32 %r
+}
+
+define <2 x i32> @srem_with_sext_bool_divisor_vec(<2 x i1> %x, <2 x i32> %y) {
+; CHECK-LABEL: @srem_with_sext_bool_divisor_vec(
+; CHECK-NEXT:    [[S:%.*]] = sext <2 x i1> [[X:%.*]] to <2 x i32>
+; CHECK-NEXT:    [[R:%.*]] = srem <2 x i32> [[Y:%.*]], [[S]]
+; CHECK-NEXT:    ret <2 x i32> [[R]]
+;
+  %s = sext <2 x i1> %x to <2 x i32>
+  %r = srem <2 x i32> %y, %s
+  ret <2 x i32> %r
+}
+
