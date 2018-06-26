@@ -175,6 +175,8 @@ Error CtorDtorRunner2::run() {
     return CtorDtorMap.takeError();
 
   CtorDtorsByPriority.clear();
+
+  return Error::success();
 }
 
 void LocalCXXRuntimeOverridesBase::runDestructors() {
