@@ -3051,6 +3051,8 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     // == 1)
     if (C->getAPIntValue().isOneValue())
       return false;
+    if (C->getAPIntValue().isAllOnesValue())
+      return false;
 
     if (C->getAPIntValue().isPowerOf2())
       return true;
