@@ -1721,6 +1721,7 @@ void llvm::insertReplacementDbgValues(
       auto *I = DIB.insertDbgValueIntrinsic(&To, OldDII->getVariable(), Expr,
                                             OldDII->getDebugLoc().get(),
                                             &InsertBefore);
+      (void)I;
       LLVM_DEBUG(dbgs() << "REPLACE:  " << *I << '\n');
     }
 }
