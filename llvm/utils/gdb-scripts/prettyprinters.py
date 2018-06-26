@@ -11,6 +11,8 @@ class Iterator:
   def children(self):
     return self
 
+def escape_bytes(val, l):
+  return '"' + val.string(encoding='Latin-1', length=l).encode('unicode_escape').decode() + '"'
 
 class SmallStringPrinter:
   """Print an llvm::SmallString object."""
@@ -21,10 +23,7 @@ class SmallStringPrinter:
   def to_string(self):
     begin = self.val['BeginX']
     end = self.val['EndX']
-    return begin.cast(gdb.lookup_type("char").pointer()).string(length = end - begin)
-
-  def display_hint (self):
-    return 'string'
+    return escape_bytes(begin.cast(gdb.lookup_type('char').pointer()), end - begin)
 
 class StringRefPrinter:
   """Print an llvm::StringRef object."""
@@ -33,10 +32,7 @@ class StringRefPrinter:
     self.val = val
 
   def to_string(self):
-    return self.val['Data'].string(encoding='Latin-1', length=self.val['Length'])
-
-  def display_hint (self):
-    return 'string'
+    return escape_bytes(self.val['Data'], self.val['Length'])
 
 class SmallVectorPrinter:
   """Print an llvm::SmallVector object."""
