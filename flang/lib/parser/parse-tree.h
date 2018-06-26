@@ -1649,7 +1649,6 @@ struct Expr {
   struct GT : public IntrinsicBinary {
     using IntrinsicBinary::IntrinsicBinary;
   };
-  // TODO: .UN. unordered comparisons?
   struct AND : public IntrinsicBinary {
     using IntrinsicBinary::IntrinsicBinary;
   };
@@ -1666,7 +1665,7 @@ struct Expr {
     using IntrinsicBinary::IntrinsicBinary;
   };
 
-  // PGI/XLF extension: (x,y)
+  // PGI/XLF extension: (x,y), not both constant
   struct ComplexConstructor : public IntrinsicBinary {
     using IntrinsicBinary::IntrinsicBinary;
   };
