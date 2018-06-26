@@ -25,8 +25,10 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/Allocator.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/ScaledNumber.h"
+#include "llvm/Support/StringSaver.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -766,6 +768,11 @@ private:
   std::set<std::string> CfiFunctionDefs;
   std::set<std::string> CfiFunctionDecls;
 
+  // Used in cases where we want to record the name of a global, but
+  // don't have the string owned elsewhere (e.g. the Strtab on a module).
+  StringSaver Saver;
+  BumpPtrAllocator Alloc;
+
   // YAML I/O support.
   friend yaml::MappingTraits<ModuleSummaryIndex>;
 
@@ -777,7 +784,7 @@ private:
 
 public:
   // See HaveGVs variable comment.
-  ModuleSummaryIndex(bool HaveGVs) : HaveGVs(HaveGVs) {}
+  ModuleSummaryIndex(bool HaveGVs) : HaveGVs(HaveGVs), Saver(Alloc) {}
 
   bool haveGVs() const { return HaveGVs; }
 
@@ -885,6 +892,11 @@ public:
   ValueInfo getOrInsertValueInfo(GlobalValue::GUID GUID) {
     return ValueInfo(HaveGVs, getOrInsertValuePtr(GUID));
   }
+
+  // Save a string in the Index. Use before passing Name to
+  // getOrInsertValueInfo when the string isn't owned elsewhere (e.g. on the
+  // module's Strtab).
+  StringRef saveString(std::string String) { return Saver.save(String); }
 
   /// Return a ValueInfo for \p GUID setting value \p Name.
   ValueInfo getOrInsertValueInfo(GlobalValue::GUID GUID, StringRef Name) {

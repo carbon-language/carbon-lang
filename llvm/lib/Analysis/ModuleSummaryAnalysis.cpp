@@ -607,14 +607,14 @@ ModuleSummaryIndexWrapperPass::ModuleSummaryIndexWrapperPass()
 
 bool ModuleSummaryIndexWrapperPass::runOnModule(Module &M) {
   auto &PSI = *getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI();
-  Index = buildModuleSummaryIndex(
+  Index.emplace(buildModuleSummaryIndex(
       M,
       [this](const Function &F) {
         return &(this->getAnalysis<BlockFrequencyInfoWrapperPass>(
                          *const_cast<Function *>(&F))
                      .getBFI());
       },
-      &PSI);
+      &PSI));
   return false;
 }
 

@@ -4836,11 +4836,14 @@ void ModuleSummaryIndexBitcodeReader::setValueGUID(
   if (PrintSummaryGUIDs)
     dbgs() << "GUID " << ValueGUID << "(" << OriginalNameID << ") is "
            << ValueName << "\n";
-  
+
   // UseStrtab is false for legacy summary formats and value names are
-  // created on stack. We can't use them outside of parseValueSymbolTable.
+  // created on stack. In that case we save the name in a string saver in
+  // the index so that the value name can be recorded.
   ValueIdToValueInfoMap[ValueID] = std::make_pair(
-      TheIndex.getOrInsertValueInfo(ValueGUID, UseStrtab ? ValueName : ""),
+      TheIndex.getOrInsertValueInfo(
+          ValueGUID,
+          UseStrtab ? ValueName : TheIndex.saveString(ValueName.str())),
       OriginalNameID);
 }
 
