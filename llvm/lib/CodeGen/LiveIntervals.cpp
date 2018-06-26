@@ -421,6 +421,7 @@ void LiveIntervals::extendSegmentsToUses(LiveRange &Segments,
       SlotIndex Stop = Indexes->getMBBEndIdx(Pred);
       if (VNInfo *OldVNI = OldRange.getVNInfoBefore(Stop)) {
         assert(OldVNI == VNI && "Wrong value out of predecessor");
+        (void)OldVNI;
         WorkList.push_back(std::make_pair(Stop, VNI));
       } else {
 #ifndef NDEBUG
