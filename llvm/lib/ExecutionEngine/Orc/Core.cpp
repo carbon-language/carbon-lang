@@ -196,13 +196,14 @@ void AsynchronousSymbolQuery::handleFailed(Error Err) {
   assert(QueryRegistrations.empty() && ResolvedSymbols.empty() &&
          NotYetResolvedCount == 0 && NotYetReadyCount == 0 &&
          "Query should already have been abandoned");
-  if (NotifySymbolsResolved)
+  if (NotifySymbolsResolved) {
     NotifySymbolsResolved(std::move(Err));
-  else {
+    NotifySymbolsResolved = SymbolsResolvedCallback();
+  } else {
     assert(NotifySymbolsReady && "Failed after both callbacks issued?");
     NotifySymbolsReady(std::move(Err));
-    NotifySymbolsReady = SymbolsReadyCallback();
   }
+  NotifySymbolsReady = SymbolsReadyCallback();
 }
 
 void AsynchronousSymbolQuery::addQueryDependence(VSO &V, SymbolStringPtr Name) {
