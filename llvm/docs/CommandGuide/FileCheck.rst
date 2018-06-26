@@ -242,7 +242,7 @@ it and the previous directive.  A "``CHECK-SAME:``" cannot be the first
 directive in a file.
 
 The "CHECK-EMPTY:" directive
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you need to check that the next line has nothing on it, not even whitespace,
 you can use the "``CHECK-EMPTY:``" directive.
