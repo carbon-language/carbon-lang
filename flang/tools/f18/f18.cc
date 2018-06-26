@@ -84,6 +84,7 @@ struct DriverOptions {
   bool dumpProvenance{false};
   bool dumpCookedChars{false};
   bool dumpUnparse{false};
+  bool dumpUnparseWithSymbols{false};
   bool dumpParseTree{false};
   bool dumpSymbols{false};
   bool debugResolveNames{false};
@@ -201,24 +202,24 @@ std::string CompileFortran(
   if (driver.measureTree) {
     MeasureParseTree(parseTree);
   }
-  if (driver.dumpParseTree) {
-    Fortran::semantics::DumpTree(std::cout, parseTree);
-  }
-  if (driver.dumpUnparse) {
-    if (driver.dumpSymbols) {
-      Fortran::semantics::ResolveNames(parseTree, parsing.cooked());
-      Fortran::semantics::UnparseWithSymbols(
-          std::cout, parseTree, driver.encoding);
-    } else {
-      Unparse(std::cout, parseTree, driver.encoding, true);
-    }
-    return {};
-  }
-  if (driver.debugResolveNames || driver.dumpSymbols) {
+  if (driver.debugResolveNames || driver.dumpSymbols ||
+      driver.dumpUnparseWithSymbols) {
     Fortran::semantics::ResolveNames(parseTree, parsing.cooked());
     if (driver.dumpSymbols) {
       Fortran::semantics::DumpSymbols(std::cout);
     }
+    if (driver.dumpUnparseWithSymbols) {
+      Fortran::semantics::UnparseWithSymbols(
+          std::cout, parseTree, driver.encoding);
+      return {};
+    }
+  }
+  if (driver.dumpParseTree) {
+    Fortran::semantics::DumpTree(std::cout, parseTree);
+  }
+  if (driver.dumpUnparse) {
+    Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/);
+    return {};
   }
   if (driver.parseOnly) {
     return {};
@@ -365,6 +366,8 @@ int main(int argc, char *const argv[]) {
       options.instrumentedParse = true;
     } else if (arg == "-funparse") {
       driver.dumpUnparse = true;
+    } else if (arg == "-funparse-with-symbols") {
+      driver.dumpUnparseWithSymbols = true;
     } else if (arg == "-fparse-only") {
       driver.parseOnly = true;
     } else if (arg == "-c") {
@@ -397,6 +400,7 @@ int main(int argc, char *const argv[]) {
           << "  -fparse-only         parse only, no output except messages\n"
           << "  -funparse            parse & reformat only, no code "
              "generation\n"
+          << "  -funparse-with-symbols  parse, resolve symbols, and unparse\n"
           << "  -fdebug-measure-parse-tree\n"
           << "  -fdebug-dump-provenance\n"
           << "  -fdebug-dump-parse-tree\n"
