@@ -1717,9 +1717,19 @@ void llvm::insertReplacementDbgValues(
   // that the old debug users will be erased later.
   DIBuilder DIB(*InsertBefore.getModule());
   for (auto *OldDII : Users)
-    if (DIExpression *Expr = RewriteExpr(*OldDII))
-      DIB.insertDbgValueIntrinsic(&To, OldDII->getVariable(), Expr,
-                                  OldDII->getDebugLoc().get(), &InsertBefore);
+    if (DIExpression *Expr = RewriteExpr(*OldDII)) {
+      auto *I = DIB.insertDbgValueIntrinsic(&To, OldDII->getVariable(), Expr,
+                                            OldDII->getDebugLoc().get(),
+                                            &InsertBefore);
+      LLVM_DEBUG(dbgs() << "REPLACE:  " << *I << '\n');
+    }
+}
+
+void llvm::insertReplacementDbgValues(Value &From, Value &To,
+                                      Instruction &InsertBefore) {
+  return llvm::insertReplacementDbgValues(
+      From, To, InsertBefore,
+      [](DbgInfoIntrinsic &OldDII) { return OldDII.getExpression(); });
 }
 
 unsigned llvm::removeAllNonTerminatorAndEHPadInstructions(BasicBlock *BB) {
