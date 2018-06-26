@@ -445,6 +445,9 @@ private:
 ///        and addresses using the AsynchronousSymbolQuery type. It will
 ///        eventually replace the LegacyJITSymbolResolver interface as the
 ///        stardard ORC symbol resolver type.
+///
+/// FIXME: SymbolResolvers should go away and be replaced with VSOs with
+///        defenition generators.
 class SymbolResolver {
 public:
   virtual ~SymbolResolver() = default;
