@@ -36,10 +36,10 @@
 
 	aesd v0.16b, v2.16b
 
-	.cpu generic+v8.1a+nolse
+	.cpu generic+nolse
         casa  w5, w7, [x20]
 
-	.cpu generic+v8.1a+lse
+	.cpu generic+lse
         casa  w5, w7, [x20]
 
 // NOTE: the errors precede the actual output!  The errors appear in order
