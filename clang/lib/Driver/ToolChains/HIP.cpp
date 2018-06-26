@@ -75,12 +75,12 @@ const char *AMDGCN::Linker::constructLLVMLinkCommand(
     std::string ISAVerBC =
         "oclc_isa_version_" + SubArchName.drop_front(3).str() + ".amdgcn.bc";
 
-    BCLibs.append({"hip.amdgcn.bc", "hc.amdgcn.bc", "opencl.amdgcn.bc",
+    BCLibs.append({"opencl.amdgcn.bc",
                    "ockl.amdgcn.bc", "irif.amdgcn.bc", "ocml.amdgcn.bc",
                    "oclc_finite_only_off.amdgcn.bc",
                    "oclc_daz_opt_off.amdgcn.bc",
                    "oclc_correctly_rounded_sqrt_on.amdgcn.bc",
-                   "oclc_unsafe_math_off.amdgcn.bc", "hc.amdgcn.bc", ISAVerBC});
+                   "oclc_unsafe_math_off.amdgcn.bc", ISAVerBC});
   }
   for (auto Lib : BCLibs)
     addBCLib(C, Args, CmdArgs, LibraryPaths, Lib);
