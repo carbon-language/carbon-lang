@@ -712,7 +712,8 @@ void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
       auto RetTyNullability = ReturnType->getNullability(Ctx);
       auto BlockNullability = CSI.ReturnType->getNullability(Ctx);
       if (BlockNullability &&
-          (!RetTyNullability || *RetTyNullability < *BlockNullability))
+          (!RetTyNullability ||
+           hasWeakerNullability(*RetTyNullability, *BlockNullability)))
         CSI.ReturnType = ReturnType;
       continue;
     }

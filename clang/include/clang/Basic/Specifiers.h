@@ -296,7 +296,7 @@ namespace clang {
 
   /// Return true if \p L has a weaker nullability annotation than \p R. The
   /// ordering is: Unspecified < Nullable < NonNull.
-  inline bool operator<(NullabilityKind L, NullabilityKind R) {
+  inline bool hasWeakerNullability(NullabilityKind L, NullabilityKind R) {
     return uint8_t(L) > uint8_t(R);
   }
 
