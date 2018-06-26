@@ -1,3 +1,5 @@
+// UNSUPPORTED: win32
+
 // RUN: %clangxx_cfi -o %t %s
 // RUN: %expect_crash %run %t a
 // RUN: %expect_crash %run %t b
