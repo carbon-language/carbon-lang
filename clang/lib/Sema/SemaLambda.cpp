@@ -707,8 +707,15 @@ void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
     QualType ReturnType =
         (RetE ? RetE->getType() : Context.VoidTy).getUnqualifiedType();
     if (Context.getCanonicalFunctionResultType(ReturnType) ==
-          Context.getCanonicalFunctionResultType(CSI.ReturnType))
+          Context.getCanonicalFunctionResultType(CSI.ReturnType)) {
+      // Use the return type with the strictest possible nullability annotation.
+      auto RetTyNullability = ReturnType->getNullability(Ctx);
+      auto BlockNullability = CSI.ReturnType->getNullability(Ctx);
+      if (BlockNullability &&
+          (!RetTyNullability || *RetTyNullability < *BlockNullability))
+        CSI.ReturnType = ReturnType;
       continue;
+    }
 
     // FIXME: This is a poor diagnostic for ReturnStmts without expressions.
     // TODO: It's possible that the *first* return is the divergent one.
