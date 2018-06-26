@@ -16,7 +16,10 @@
 
 #include "RegisterFile.h"
 #include "Instruction.h"
+
+#ifndef NDEBUG
 #include "llvm/Support/Debug.h"
+#endif
 
 using namespace llvm;
 
