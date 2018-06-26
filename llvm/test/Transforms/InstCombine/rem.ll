@@ -60,8 +60,8 @@ define i5 @biggest_divisor(i5 %x) {
 
 define i8 @urem_with_sext_bool_divisor(i1 %x, i8 %y) {
 ; CHECK-LABEL: @urem_with_sext_bool_divisor(
-; CHECK-NEXT:    [[S:%.*]] = sext i1 [[X:%.*]] to i8
-; CHECK-NEXT:    [[REM:%.*]] = urem i8 [[Y:%.*]], [[S]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 [[Y:%.*]], -1
+; CHECK-NEXT:    [[REM:%.*]] = select i1 [[TMP1]], i8 0, i8 [[Y]]
 ; CHECK-NEXT:    ret i8 [[REM]]
 ;
   %s = sext i1 %x to i8
@@ -71,8 +71,8 @@ define i8 @urem_with_sext_bool_divisor(i1 %x, i8 %y) {
 
 define <2 x i8> @urem_with_sext_bool_divisor_vec(<2 x i1> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @urem_with_sext_bool_divisor_vec(
-; CHECK-NEXT:    [[S:%.*]] = sext <2 x i1> [[X:%.*]] to <2 x i8>
-; CHECK-NEXT:    [[REM:%.*]] = urem <2 x i8> [[Y:%.*]], [[S]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i8> [[Y:%.*]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[REM:%.*]] = select <2 x i1> [[TMP1]], <2 x i8> zeroinitializer, <2 x i8> [[Y]]
 ; CHECK-NEXT:    ret <2 x i8> [[REM]]
 ;
   %s = sext <2 x i1> %x to <2 x i8>
