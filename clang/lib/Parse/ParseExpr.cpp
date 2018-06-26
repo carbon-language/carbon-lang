@@ -302,6 +302,59 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     if (OpToken.is(tok::caretcaret)) {
       return ExprError(Diag(Tok, diag::err_opencl_logical_exclusive_or));
     }
+
+    // If we have a name-shaped expression followed by '<', track it in case we
+    // later find we're probably supposed to be in a template-id.
+    ExprResult TemplateName = LHS;
+    bool DependentTemplateName = false;
+    if (OpToken.is(tok::less) && Actions.mightBeIntendedToBeTemplateName(
+                                     TemplateName, DependentTemplateName)) {
+      AngleBracketTracker::Priority Priority =
+          (DependentTemplateName ? AngleBracketTracker::DependentName
+                                 : AngleBracketTracker::PotentialTypo) |
+          (OpToken.hasLeadingSpace() ? AngleBracketTracker::SpaceBeforeLess
+                                     : AngleBracketTracker::NoSpaceBeforeLess);
+      AngleBrackets.add(*this, TemplateName.get(), OpToken.getLocation(),
+                        Priority);
+    }
+
+    // If we're potentially in a template-id, we may now be able to determine
+    // whether we're actually in one or not.
+    if (auto *Info = AngleBrackets.getCurrent(*this)) {
+      // If an operator is followed by a type that can be a template argument
+      // and cannot be an expression, then this is ill-formed, but might be
+      // intended to be part of a template-id. Likewise if this is <>.
+      if ((OpToken.isOneOf(tok::less, tok::comma) &&
+            isKnownToBeDeclarationSpecifier()) ||
+           (OpToken.is(tok::less) &&
+            Tok.isOneOf(tok::greater, tok::greatergreater,
+                        tok::greatergreatergreater))) {
+        if (diagnoseUnknownTemplateId(Info->TemplateName, Info->LessLoc)) {
+          AngleBrackets.clear(*this);
+          return ExprError();
+        }
+      }
+
+      // If a context that looks like a template-id is followed by '()', then
+      // this is ill-formed, but might be intended to be a template-id followed
+      // by '()'.
+      if (OpToken.is(tok::greater) && Tok.is(tok::l_paren) &&
+          NextToken().is(tok::r_paren)) {
+        Actions.diagnoseExprIntendedAsTemplateName(
+            getCurScope(), Info->TemplateName, Info->LessLoc,
+            OpToken.getLocation());
+        AngleBrackets.clear(*this);
+        return ExprError();
+      }
+    }
+
+    // After a '>' (etc), we're no longer potentially in a construct that's
+    // intended to be treated as a template-id.
+    if (OpToken.is(tok::greater) ||
+        (getLangOpts().CPlusPlus11 &&
+         OpToken.isOneOf(tok::greatergreater, tok::greatergreatergreater)))
+      AngleBrackets.clear(*this);
+
     // Bail out when encountering a comma followed by a token which can't
     // possibly be the start of an expression. For instance:
     //   int f() { return 1, }
@@ -312,16 +365,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
       Tok = OpToken;
       return LHS;
     }
-
-    // If a '<' token is followed by a type that can be a template argument and
-    // cannot be an expression, then this is ill-formed, but might be intended
-    // to be a template-id.
-    if (OpToken.is(tok::less) && Actions.mightBeIntendedToBeTemplateName(LHS) &&
-        (isKnownToBeDeclarationSpecifier() ||
-         Tok.isOneOf(tok::greater, tok::greatergreater,
-                     tok::greatergreatergreater)) &&
-        diagnoseUnknownTemplateId(LHS, OpToken.getLocation()))
-      return ExprError();
 
     // If the next token is an ellipsis, then this is a fold-expression. Leave
     // it alone so we can handle it in the paren expression.

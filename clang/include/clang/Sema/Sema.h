@@ -21,6 +21,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/LocInfoType.h"
@@ -1829,14 +1830,24 @@ public:
   getTemplateNameKindForDiagnostics(TemplateName Name);
 
   /// Determine whether it's plausible that E was intended to be a
-  /// template-name.
-  bool mightBeIntendedToBeTemplateName(ExprResult E) {
-    if (!getLangOpts().CPlusPlus || E.isInvalid())
+  /// template-name. Updates E to denote the template name expression.
+  bool mightBeIntendedToBeTemplateName(ExprResult &ER, bool &Dependent) {
+    if (!getLangOpts().CPlusPlus || ER.isInvalid())
       return false;
-    if (auto *DRE = dyn_cast<DeclRefExpr>(E.get()))
+    Expr *E = ER.get()->IgnoreImplicit();
+    while (auto *BO = dyn_cast<BinaryOperator>(E))
+      E = BO->getRHS()->IgnoreImplicit();
+    ER = E;
+    Dependent = false;
+    if (auto *DRE = dyn_cast<DeclRefExpr>(E))
       return !DRE->hasExplicitTemplateArgs();
-    if (auto *ME = dyn_cast<MemberExpr>(E.get()))
+    if (auto *ME = dyn_cast<MemberExpr>(E))
       return !ME->hasExplicitTemplateArgs();
+    Dependent = true;
+    if (auto *DSDRE = dyn_cast<DependentScopeDeclRefExpr>(E))
+      return !DSDRE->hasExplicitTemplateArgs();
+    if (auto *DSME = dyn_cast<CXXDependentScopeMemberExpr>(E))
+      return !DSME->hasExplicitTemplateArgs();
     // Any additional cases recognized here should also be handled by
     // diagnoseExprIntendedAsTemplateName.
     return false;
