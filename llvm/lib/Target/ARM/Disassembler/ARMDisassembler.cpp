@@ -729,10 +729,13 @@ DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
     // code and mask operands so that we can apply them correctly
     // to the subsequent instructions.
     if (MI.getOpcode() == ARM::t2IT) {
-
       unsigned Firstcond = MI.getOperand(0).getImm();
       unsigned Mask = MI.getOperand(1).getImm();
       ITBlock.setITState(Firstcond, Mask);
+
+      // An IT instruction that would give a 'NV' predicate is unpredictable.
+      if (Firstcond == ARMCC::AL && !isPowerOf2_32(Mask))
+        CS << "unpredictable IT predicate sequence";
     }
 
     return Result;
