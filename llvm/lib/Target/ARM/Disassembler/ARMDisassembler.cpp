@@ -659,6 +659,8 @@ ThumbDisassembler::AddThumbPredicate(MCInst &MI) const {
 void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
   unsigned CC;
   CC = ITBlock.getITCC();
+  if (CC == 0xF)
+    CC = ARMCC::AL;
   if (ITBlock.instrInITBlock())
     ITBlock.advanceITState();
 
