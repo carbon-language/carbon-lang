@@ -692,9 +692,7 @@ void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
   }
 
   // Third case: only one return statement. Don't bother doing extra work!
-  SmallVectorImpl<ReturnStmt*>::iterator I = CSI.Returns.begin(),
-                                         E = CSI.Returns.end();
-  if (I+1 == E)
+  if (CSI.Returns.size() == 1)
     return;
 
   // General case: many return statements.
@@ -703,8 +701,7 @@ void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
   // We require the return types to strictly match here.
   // Note that we've already done the required promotions as part of
   // processing the return statement.
-  for (; I != E; ++I) {
-    const ReturnStmt *RS = *I;
+  for (const ReturnStmt *RS : CSI.Returns) {
     const Expr *RetE = RS->getRetValue();
 
     QualType ReturnType =
