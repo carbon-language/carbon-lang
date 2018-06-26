@@ -733,13 +733,13 @@ size_t ObjectFileELF::GetModuleSpecifications(
             if (gnu_debuglink_crc) {
               // Use 4 bytes of crc from the .gnu_debuglink section.
               uint32_t uuidt[4] = {gnu_debuglink_crc, 0, 0, 0};
-              uuid.SetBytes(uuidt, sizeof(uuidt));
+              uuid = UUID::fromData(uuidt, sizeof(uuidt));
             } else if (core_notes_crc) {
               // Use 8 bytes - first 4 bytes for *magic* prefix, mainly to make
               // it look different form .gnu_debuglink crc followed by 4 bytes
               // of note segments crc.
               uint32_t uuidt[4] = {g_core_uuid_magic, core_notes_crc, 0, 0};
-              uuid.SetBytes(uuidt, sizeof(uuidt));
+              uuid = UUID::fromData(uuidt, sizeof(uuidt));
             }
           }
 
@@ -926,7 +926,7 @@ bool ObjectFileELF::GetUUID(lldb_private::UUID *uuid) {
       // different form .gnu_debuglink crc - followed by 4 bytes of note
       // segments crc.
       uint32_t uuidt[4] = {g_core_uuid_magic, core_notes_crc, 0, 0};
-      m_uuid.SetBytes(uuidt, sizeof(uuidt));
+      m_uuid = UUID::fromData(uuidt, sizeof(uuidt));
     }
   } else {
     if (!m_gnu_debuglink_crc)
@@ -935,7 +935,7 @@ bool ObjectFileELF::GetUUID(lldb_private::UUID *uuid) {
     if (m_gnu_debuglink_crc) {
       // Use 4 bytes of crc from the .gnu_debuglink section.
       uint32_t uuidt[4] = {m_gnu_debuglink_crc, 0, 0, 0};
-      m_uuid.SetBytes(uuidt, sizeof(uuidt));
+      m_uuid = UUID::fromData(uuidt, sizeof(uuidt));
     }
   }
 
@@ -1284,7 +1284,7 @@ ObjectFileELF::RefineModuleDetailsFromNote(lldb_private::DataExtractor &data,
             }
 
             // Save the build id as the UUID for the module.
-            uuid.SetBytes(uuidbuf, note.n_descsz);
+            uuid = UUID::fromData(uuidbuf, note.n_descsz);
           }
         }
         break;

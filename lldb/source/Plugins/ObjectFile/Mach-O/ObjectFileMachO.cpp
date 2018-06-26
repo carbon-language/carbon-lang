@@ -2087,10 +2087,8 @@ UUID ObjectFileMachO::GetSharedCacheUUID(FileSpec dyld_shared_cache,
   version_str[6] = '\0';
   if (strcmp(version_str, "dyld_v") == 0) {
     offset = offsetof(struct lldb_copy_dyld_cache_header_v1, uuid);
-    uint8_t uuid_bytes[sizeof(uuid_t)];
-    memcpy(uuid_bytes, dsc_header_data.GetData(&offset, sizeof(uuid_t)),
-           sizeof(uuid_t));
-    dsc_uuid.SetBytes(uuid_bytes);
+    dsc_uuid = UUID::fromOptionalData(
+        dsc_header_data.GetData(&offset, sizeof(uuid_t)), sizeof(uuid_t));
   }
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_SYMBOLS));
   if (log && dsc_uuid.IsValid()) {
@@ -4861,7 +4859,7 @@ bool ObjectFileMachO::GetUUID(const llvm::MachO::mach_header &header,
         if (!memcmp(uuid_bytes, opencl_uuid, 16))
           return false;
 
-        uuid.SetBytes(uuid_bytes);
+        uuid = UUID::fromOptionalData(uuid_bytes, 16);
         return true;
       }
       return false;
@@ -5392,12 +5390,11 @@ bool ObjectFileMachO::GetCorefileMainBinaryInfo (addr_t &address, UUID &uuid) {
                   uuid_t raw_uuid;
                   memset (raw_uuid, 0, sizeof (uuid_t));
 
-                  if (m_data.GetU32 (&offset, &type, 1)
-                      && m_data.GetU64 (&offset, &address, 1)
-                      && m_data.CopyData (offset, sizeof (uuid_t), raw_uuid) != 0
-                      && uuid.SetBytes (raw_uuid, sizeof (uuid_t)))
-                  {
-                      return true;
+                  if (m_data.GetU32(&offset, &type, 1) &&
+                      m_data.GetU64(&offset, &address, 1) &&
+                      m_data.CopyData(offset, sizeof(uuid_t), raw_uuid) != 0) {
+                    uuid = UUID::fromOptionalData(raw_uuid, sizeof(uuid_t));
+                    return true;
                   }
               }
           }
@@ -5660,7 +5657,7 @@ void ObjectFileMachO::GetLLDBSharedCacheUUID(addr_t &base_addr, UUID &uuid) {
                           + 100); // sharedCacheBaseAddress <mach-o/dyld_images.h>
           }
         }
-        uuid.SetBytes(sharedCacheUUID_address);
+        uuid = UUID::fromOptionalData(sharedCacheUUID_address, sizeof(uuid_t));
       }
     }
   } else {
@@ -5685,7 +5682,7 @@ void ObjectFileMachO::GetLLDBSharedCacheUUID(addr_t &base_addr, UUID &uuid) {
         dyld_process_info_get_cache (process_info, &sc_info);
         if (sc_info.cacheBaseAddress != 0) {
           base_addr = sc_info.cacheBaseAddress;
-          uuid.SetBytes (sc_info.cacheUUID);
+          uuid = UUID::fromOptionalData(sc_info.cacheUUID, sizeof(uuid_t));
         }
         dyld_process_info_release (process_info);
       }
