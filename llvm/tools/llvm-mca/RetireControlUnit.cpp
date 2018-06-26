@@ -13,10 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RetireControlUnit.h"
-
-#ifndef NDEBUG
 #include "llvm/Support/Debug.h"
-#endif
 
 using namespace llvm;
 

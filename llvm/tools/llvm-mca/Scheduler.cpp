@@ -13,10 +13,8 @@
 
 #include "Scheduler.h"
 #include "Support.h"
-#ifndef NDEBUG
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#endif
 
 namespace mca {
 
