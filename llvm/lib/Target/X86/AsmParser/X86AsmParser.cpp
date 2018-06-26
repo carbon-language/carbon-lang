@@ -974,6 +974,13 @@ static unsigned MatchRegisterName(StringRef Name);
 static bool CheckBaseRegAndIndexRegAndScale(unsigned BaseReg, unsigned IndexReg,
                                             unsigned Scale, bool Is64BitMode,
                                             StringRef &ErrMsg) {
+  // RIP/EIP-relative addressing is only supported in 64-bit mode.
+  if (!Is64BitMode && BaseReg != 0 &&
+      (BaseReg == X86::RIP || BaseReg == X86::EIP)) {
+    ErrMsg = "RIP-relative addressing requires 64-bit mode";
+    return true;
+  }
+
   // If we have both a base register and an index register make sure they are
   // both 64-bit or 32-bit registers.
   // To support VSIB, IndexReg can be 128-bit or 256-bit registers.
