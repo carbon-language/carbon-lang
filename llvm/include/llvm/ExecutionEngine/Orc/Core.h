@@ -701,6 +701,18 @@ Expected<SymbolMap> lookup(const VSO::VSOList &VSOs, SymbolNameSet Names);
 Expected<JITEvaluatedSymbol> lookup(const VSO::VSOList &VSOs,
                                     SymbolStringPtr Name);
 
+/// Mangles symbol names then uniques them in the context of an
+/// ExecutionSession.
+class MangleAndInterner {
+public:
+  MangleAndInterner(ExecutionSessionBase &ES, const DataLayout &DL);
+  SymbolStringPtr operator()(StringRef Name);
+
+private:
+  ExecutionSessionBase &ES;
+  const DataLayout &DL;
+};
+
 } // End namespace orc
 } // End namespace llvm
 
