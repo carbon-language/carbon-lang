@@ -1251,22 +1251,28 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                   llvm_v4i64_ty], [IntrNoMem]>;
 
   def int_x86_avx512_mask_fpclass_pd_128 :
-          Intrinsic<[llvm_v2i1_ty], [llvm_v2f64_ty, llvm_i32_ty],
+         GCCBuiltin<"__builtin_ia32_fpclasspd128_mask">,
+          Intrinsic<[llvm_i8_ty], [llvm_v2f64_ty, llvm_i32_ty, llvm_i8_ty],
           [IntrNoMem]>;
   def int_x86_avx512_mask_fpclass_pd_256 :
-          Intrinsic<[llvm_v4i1_ty], [llvm_v4f64_ty, llvm_i32_ty],
+         GCCBuiltin<"__builtin_ia32_fpclasspd256_mask">,
+          Intrinsic<[llvm_i8_ty], [llvm_v4f64_ty, llvm_i32_ty, llvm_i8_ty],
           [IntrNoMem]>;
   def int_x86_avx512_mask_fpclass_pd_512 :
-          Intrinsic<[llvm_v8i1_ty], [llvm_v8f64_ty, llvm_i32_ty],
+         GCCBuiltin<"__builtin_ia32_fpclasspd512_mask">,
+          Intrinsic<[llvm_i8_ty], [llvm_v8f64_ty, llvm_i32_ty, llvm_i8_ty],
           [IntrNoMem]>;
   def int_x86_avx512_mask_fpclass_ps_128 :
-          Intrinsic<[llvm_v4i1_ty], [llvm_v4f32_ty, llvm_i32_ty],
+         GCCBuiltin<"__builtin_ia32_fpclassps128_mask">,
+          Intrinsic<[llvm_i8_ty], [llvm_v4f32_ty, llvm_i32_ty, llvm_i8_ty],
           [IntrNoMem]>;
   def int_x86_avx512_mask_fpclass_ps_256 :
-          Intrinsic<[llvm_v8i1_ty], [llvm_v8f32_ty, llvm_i32_ty],
+         GCCBuiltin<"__builtin_ia32_fpclassps256_mask">,
+          Intrinsic<[llvm_i8_ty], [llvm_v8f32_ty, llvm_i32_ty, llvm_i8_ty],
           [IntrNoMem]>;
   def int_x86_avx512_mask_fpclass_ps_512 :
-          Intrinsic<[llvm_v16i1_ty], [llvm_v16f32_ty, llvm_i32_ty],
+         GCCBuiltin<"__builtin_ia32_fpclassps512_mask">,
+          Intrinsic<[llvm_i16_ty], [llvm_v16f32_ty, llvm_i32_ty, llvm_i16_ty],
           [IntrNoMem]>;
   def int_x86_avx512_mask_fpclass_sd :
          GCCBuiltin<"__builtin_ia32_fpclasssd_mask">,
