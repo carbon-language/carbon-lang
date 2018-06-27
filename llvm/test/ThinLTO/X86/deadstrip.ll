@@ -23,9 +23,7 @@
 ; RUN:   -r %t2.bc,_dead_func,l \
 ; RUN:   -r %t2.bc,_another_dead_func,pl \
 ; RUN:   -thinlto-threads=1 \
-; RUN:	 -debug-only=function-import >%t2.out.debug 2>&1
-; RUN: cat %t2.out.debug
-; RUN: cat %t2.out.debug | FileCheck %s --check-prefix=DEBUG
+; RUN:	 -debug-only=function-import 2>&1 | FileCheck %s --check-prefix=DEBUG
 ; RUN: llvm-dis < %t.out.1.3.import.bc | FileCheck %s --check-prefix=LTO2
 ; RUN: llvm-dis < %t.out.2.3.import.bc | FileCheck %s --check-prefix=LTO2-CHECK2
 ; RUN: llvm-nm %t.out.1 | FileCheck %s --check-prefix=CHECK2-NM
@@ -78,12 +76,12 @@
 ; CHECK-NM-NOT: bar
 ; CHECK-NM-NOT: dead
 
-; DEBUG: Live root: 2412314959268824392 (llvm.global_ctors)
-; DEBUG: Live root: 15822663052811949562 (main)
-; DEBUG: Ignores Dead GUID: 7342339837106705152 (dead_func)
-; DEBUG: Ignores Dead GUID: 7546896869197086323 (baz)
-; DEBUG: Initialize import for 15611644523426561710 (boo)
-; DEBUG: Ignores Dead GUID: 2384416018110111308 (another_dead_func)
+; DEBUG-DAG: Live root: 2412314959268824392 (llvm.global_ctors)
+; DEBUG-DAG: Live root: 15822663052811949562 (main)
+; DEBUG-DAG: Ignores Dead GUID: 7342339837106705152 (dead_func)
+; DEBUG-DAG: Ignores Dead GUID: 7546896869197086323 (baz)
+; DEBUG-DAG: Initialize import for 15611644523426561710 (boo)
+; DEBUG-DAG: Ignores Dead GUID: 2384416018110111308 (another_dead_func)
 
 ; Next test the case where Inputs/deadstrip.ll does not get a module index,
 ; which will cause it to be handled by regular LTO in the new LTO API.
