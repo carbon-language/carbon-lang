@@ -198,6 +198,8 @@ void freebsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("elf64ltsmip_fbsd");
     break;
+  default:
+    break;
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_G)) {
