@@ -2,6 +2,7 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux | FileCheck %s --check-prefix=X64
 ; RUN: llc < %s -mtriple=i386-pc-linux | FileCheck %s --check-prefix=X86
 
+; FIXME: We don't match this properly due to different size of 'rotate' and 'and'
 define i16 @btr_16(i16 %x, i16 %n) {
 ; X64-LABEL: btr_16:
 ; X64:       # %bb.0:
@@ -28,11 +29,8 @@ define i16 @btr_16(i16 %x, i16 %n) {
 define i16 @bts_16(i16 %x, i16 %n) {
 ; X64-LABEL: bts_16:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    orl %edi, %eax
-; X64-NEXT:    # kill: def $ax killed $ax killed $eax
+; X64-NEXT:    btsl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: bts_16:
@@ -51,11 +49,8 @@ define i16 @bts_16(i16 %x, i16 %n) {
 define i16 @btc_16(i16 %x, i16 %n) {
 ; X64-LABEL: btc_16:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    xorl %edi, %eax
-; X64-NEXT:    # kill: def $ax killed $ax killed $eax
+; X64-NEXT:    btcl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btc_16:
@@ -74,10 +69,8 @@ define i16 @btc_16(i16 %x, i16 %n) {
 define i32 @btr_32(i32 %x, i32 %n) {
 ; X64-LABEL: btr_32:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $-2, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    roll %cl, %eax
-; X64-NEXT:    andl %edi, %eax
+; X64-NEXT:    btrl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btr_32:
@@ -96,10 +89,8 @@ define i32 @btr_32(i32 %x, i32 %n) {
 define i32 @bts_32(i32 %x, i32 %n) {
 ; X64-LABEL: bts_32:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    orl %edi, %eax
+; X64-NEXT:    btsl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: bts_32:
@@ -117,10 +108,8 @@ define i32 @bts_32(i32 %x, i32 %n) {
 define i32 @btc_32(i32 %x, i32 %n) {
 ; X64-LABEL: btc_32:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    xorl %edi, %eax
+; X64-NEXT:    btcl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btc_32:
@@ -138,10 +127,8 @@ define i32 @btc_32(i32 %x, i32 %n) {
 define i64 @btr_64(i64 %x, i64 %n) {
 ; X64-LABEL: btr_64:
 ; X64:       # %bb.0:
-; X64-NEXT:    movq $-2, %rax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    rolq %cl, %rax
-; X64-NEXT:    andq %rdi, %rax
+; X64-NEXT:    btrq %rsi, %rdi
+; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btr_64:
@@ -171,10 +158,8 @@ define i64 @btr_64(i64 %x, i64 %n) {
 define i64 @bts_64(i64 %x, i64 %n) {
 ; X64-LABEL: bts_64:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shlq %cl, %rax
-; X64-NEXT:    orq %rdi, %rax
+; X64-NEXT:    btsq %rsi, %rdi
+; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: bts_64:
@@ -201,10 +186,8 @@ define i64 @bts_64(i64 %x, i64 %n) {
 define i64 @btc_64(i64 %x, i64 %n) {
 ; X64-LABEL: btc_64:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shlq %cl, %rax
-; X64-NEXT:    xorq %rdi, %rax
+; X64-NEXT:    btcq %rsi, %rdi
+; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btc_64:
@@ -256,11 +239,8 @@ define i16 @bts_16_mask(i16 %x, i16 %n) {
 ; X64-LABEL: bts_16_mask:
 ; X64:       # %bb.0:
 ; X64-NEXT:    andb $15, %sil
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    orl %edi, %eax
-; X64-NEXT:    # kill: def $ax killed $ax killed $eax
+; X64-NEXT:    btsl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: bts_16_mask:
@@ -282,11 +262,8 @@ define i16 @btc_16_mask(i16 %x, i16 %n) {
 ; X64-LABEL: btc_16_mask:
 ; X64:       # %bb.0:
 ; X64-NEXT:    andb $15, %sil
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    xorl %edi, %eax
-; X64-NEXT:    # kill: def $ax killed $ax killed $eax
+; X64-NEXT:    btcl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btc_16_mask:
@@ -307,10 +284,8 @@ define i16 @btc_16_mask(i16 %x, i16 %n) {
 define i32 @btr_32_mask(i32 %x, i32 %n) {
 ; X64-LABEL: btr_32_mask:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $-2, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    roll %cl, %eax
-; X64-NEXT:    andl %edi, %eax
+; X64-NEXT:    btrl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btr_32_mask:
@@ -330,10 +305,8 @@ define i32 @btr_32_mask(i32 %x, i32 %n) {
 define i32 @bts_32_mask(i32 %x, i32 %n) {
 ; X64-LABEL: bts_32_mask:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    orl %edi, %eax
+; X64-NEXT:    btsl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: bts_32_mask:
@@ -352,10 +325,8 @@ define i32 @bts_32_mask(i32 %x, i32 %n) {
 define i32 @btc_32_mask(i32 %x, i32 %n) {
 ; X64-LABEL: btc_32_mask:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shll %cl, %eax
-; X64-NEXT:    xorl %edi, %eax
+; X64-NEXT:    btcl %esi, %edi
+; X64-NEXT:    movl %edi, %eax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btc_32_mask:
@@ -374,10 +345,8 @@ define i32 @btc_32_mask(i32 %x, i32 %n) {
 define i64 @btr_64_mask(i64 %x, i64 %n) {
 ; X64-LABEL: btr_64_mask:
 ; X64:       # %bb.0:
-; X64-NEXT:    movq $-2, %rax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    rolq %cl, %rax
-; X64-NEXT:    andq %rdi, %rax
+; X64-NEXT:    btrq %rsi, %rdi
+; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btr_64_mask:
@@ -408,10 +377,8 @@ define i64 @btr_64_mask(i64 %x, i64 %n) {
 define i64 @bts_64_mask(i64 %x, i64 %n) {
 ; X64-LABEL: bts_64_mask:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shlq %cl, %rax
-; X64-NEXT:    orq %rdi, %rax
+; X64-NEXT:    btsq %rsi, %rdi
+; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: bts_64_mask:
@@ -439,10 +406,8 @@ define i64 @bts_64_mask(i64 %x, i64 %n) {
 define i64 @btc_64_mask(i64 %x, i64 %n) {
 ; X64-LABEL: btc_64_mask:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl $1, %eax
-; X64-NEXT:    movl %esi, %ecx
-; X64-NEXT:    shlq %cl, %rax
-; X64-NEXT:    xorq %rdi, %rax
+; X64-NEXT:    btcq %rsi, %rdi
+; X64-NEXT:    movq %rdi, %rax
 ; X64-NEXT:    retq
 ;
 ; X86-LABEL: btc_64_mask:
