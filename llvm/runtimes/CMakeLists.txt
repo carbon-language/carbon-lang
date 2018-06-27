@@ -507,15 +507,7 @@ else() # if this is included from LLVM's CMake
       endif()
 
       foreach(name ${LLVM_RUNTIME_TARGETS})
-        set(target ${name})
-        string(REPLACE ":" ";" target_list ${target})
-        list(GET target_list 0 name)
-        list(LENGTH target_list target_list_len)
-        if(${target_list_len} GREATER 1)
-          list(GET target_list 1 target)
-        endif()
-
-        runtime_register_target(${name} ${target}
+        runtime_register_target(${name} ${name}
           DEPS ${deps}
           )
 
@@ -527,6 +519,32 @@ else() # if this is included from LLVM's CMake
           add_dependencies(check-runtimes check-runtimes-${name})
           add_dependencies(runtimes-test-depends runtimes-test-depends-${name})
         endif()
+      endforeach()
+
+      foreach(sanitizer ${LLVM_RUNTIME_SANITIZERS})
+        if (sanitizer STREQUAL "Address")
+          set(sanitizer_name "asan")
+        elseif (sanitizer STREQUAL "Memory")
+          set(sanitizer_name "msan")
+        elseif (sanitizer STREQUAL "Thread")
+          set(sanitizer_name "tsan")
+        elseif (sanitizer STREQUAL "Undefined")
+          set(sanitizer_name "ubsan")
+        else()
+          message(FATAL_ERROR "Unsupported value of LLVM_RUNTIME_TARGET_SANITIZERS: ${sanitizers}")
+        endif()
+        foreach(name ${LLVM_RUNTIME_SANITIZER_${sanitizer}_TARGETS})
+          runtime_register_target(${name}-${sanitizer_name} ${name}
+            DEPS runtimes-${name}
+            CMAKE_ARGS -DLLVM_USE_SANITIZER=${sanitizer}
+                       -DLLVM_RUNTIMES_PREFIX=${name}/
+                       -DLLVM_RUNTIMES_LIBDIR_SUFFIX=/${sanitizer_name}
+            )
+          add_dependencies(runtimes runtimes-${name}-${sanitizer_name})
+          add_dependencies(runtimes-configure runtimes-${name}-${sanitizer_name}-configure)
+          add_dependencies(install-runtimes install-runtimes-${name}-${sanitizer_name})
+          add_dependencies(install-runtimes-stripped install-runtimes-${name}-${sanitizer_name}-stripped)
+        endforeach()
       endforeach()
     endif()
 

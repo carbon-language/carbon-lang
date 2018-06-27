@@ -46,7 +46,9 @@ foreach(target x86_64;aarch64)
   set(BUILTINS_${target}-fuchsia_CMAKE_SYSROOT ${FUCHSIA_${target}_SYSROOT} CACHE PATH "")
 endforeach()
 
-set(LLVM_RUNTIME_TARGETS "default;x86_64-fuchsia;aarch64-fuchsia;x86_64-fuchsia-asan:x86_64-fuchsia;aarch64-fuchsia-asan:aarch64-fuchsia" CACHE STRING "")
+set(LLVM_RUNTIME_TARGETS "default;x86_64-fuchsia;aarch64-fuchsia" CACHE STRING "")
+set(LLVM_RUNTIME_SANITIZERS "Address" CACHE STRING "")
+set(LLVM_RUNTIME_SANITIZER_Address_TARGETS "x86_64-fuchsia;aarch64-fuchsia" CACHE STRING "")
 
 # Set the default target runtimes options.
 if(NOT APPLE)
@@ -81,11 +83,6 @@ foreach(target x86_64;aarch64)
   set(RUNTIMES_${target}-fuchsia_LIBCXXABI_USE_LLVM_UNWINDER ON CACHE BOOL "")
   set(RUNTIMES_${target}-fuchsia_LIBCXX_USE_COMPILER_RT ON CACHE BOOL "")
   set(RUNTIMES_${target}-fuchsia_SANITIZER_USE_COMPILER_RT ON CACHE BOOL "")
-
-  set(RUNTIMES_${target}-fuchsia-asan_LLVM_USE_SANITIZER Address CACHE STRING "")
-  set(RUNTIMES_${target}-fuchsia-asan_LLVM_RUNTIMES_PREFIX "${target}-fuchsia/" CACHE STRING "")
-  set(RUNTIMES_${target}-fuchsia-asan_LLVM_RUNTIMES_LIBDIR_SUFFIX "/asan" CACHE STRING "")
-  set(RUNTIMES_${target}-fuchsia-asan_LIBCXX_INSTALL_HEADERS OFF CACHE BOOL "")
 endforeach()
 
 # Setup toolchain.
