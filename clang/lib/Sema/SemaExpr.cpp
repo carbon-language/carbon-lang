@@ -8130,18 +8130,57 @@ Sema::CheckSingleAssignmentConstraints(QualType LHSType, ExprResult &CallerRHS,
       RHS = E;
       return Compatible;
     }
-    
+
     if (ConvertRHS)
       RHS = ImpCastExprToType(E, Ty, Kind);
   }
   return result;
 }
 
+namespace {
+/// The original operand to an operator, prior to the application of the usual
+/// arithmetic conversions and converting the arguments of a builtin operator
+/// candidate.
+struct OriginalOperand {
+  explicit OriginalOperand(Expr *Op) : Orig(Op), Conversion(nullptr) {
+    if (auto *MTE = dyn_cast<MaterializeTemporaryExpr>(Op))
+      Op = MTE->GetTemporaryExpr();
+    if (auto *BTE = dyn_cast<CXXBindTemporaryExpr>(Op))
+      Op = BTE->getSubExpr();
+    if (auto *ICE = dyn_cast<ImplicitCastExpr>(Op)) {
+      Orig = ICE->getSubExprAsWritten();
+      Conversion = ICE->getConversionFunction();
+    }
+  }
+
+  QualType getType() const { return Orig->getType(); }
+
+  Expr *Orig;
+  NamedDecl *Conversion;
+};
+}
+
 QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &LHS,
                                ExprResult &RHS) {
+  OriginalOperand OrigLHS(LHS.get()), OrigRHS(RHS.get());
+
   Diag(Loc, diag::err_typecheck_invalid_operands)
-    << LHS.get()->getType() << RHS.get()->getType()
+    << OrigLHS.getType() << OrigRHS.getType()
     << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();
+
+  // If a user-defined conversion was applied to either of the operands prior
+  // to applying the built-in operator rules, tell the user about it.
+  if (OrigLHS.Conversion) {
+    Diag(OrigLHS.Conversion->getLocation(),
+         diag::note_typecheck_invalid_operands_converted)
+      << 0 << LHS.get()->getType();
+  }
+  if (OrigRHS.Conversion) {
+    Diag(OrigRHS.Conversion->getLocation(),
+         diag::note_typecheck_invalid_operands_converted)
+      << 1 << RHS.get()->getType();
+  }
+
   return QualType();
 }
 
@@ -9887,7 +9926,7 @@ static QualType checkArithmeticOrEnumeralThreeWayCompare(Sema &S,
     // type E, the operator yields the result of converting the operands
     // to the underlying type of E and applying <=> to the converted operands.
     if (!S.Context.hasSameUnqualifiedType(LHSStrippedType, RHSStrippedType)) {
-      S.InvalidOperands(Loc, LHSStripped, RHSStripped);
+      S.InvalidOperands(Loc, LHS, RHS);
       return QualType();
     }
     QualType IntType =
