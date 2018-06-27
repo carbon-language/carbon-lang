@@ -48,7 +48,7 @@
 namespace llvm {
 namespace amdhsa {
 
-// Floating point rounding modes. Must be kept backwards compatible.
+// Floating point rounding modes. Must match hardware definition.
 enum : uint8_t {
   FLOAT_ROUND_MODE_NEAR_EVEN = 0,
   FLOAT_ROUND_MODE_PLUS_INFINITY = 1,
@@ -56,7 +56,7 @@ enum : uint8_t {
   FLOAT_ROUND_MODE_ZERO = 3,
 };
 
-// Floating point denorm modes. Must be kept backwards compatible.
+// Floating point denorm modes. Must match hardware definition.
 enum : uint8_t {
   FLOAT_DENORM_MODE_FLUSH_SRC_DST = 0,
   FLOAT_DENORM_MODE_FLUSH_DST = 1,
@@ -64,7 +64,7 @@ enum : uint8_t {
   FLOAT_DENORM_MODE_FLUSH_NONE = 3,
 };
 
-// System VGPR workitem IDs. Must be kept backwards compatible.
+// System VGPR workitem IDs. Must match hardware definition.
 enum : uint8_t {
   SYSTEM_VGPR_WORKITEM_ID_X = 0,
   SYSTEM_VGPR_WORKITEM_ID_X_Y = 1,
@@ -72,7 +72,7 @@ enum : uint8_t {
   SYSTEM_VGPR_WORKITEM_ID_UNDEFINED = 3,
 };
 
-// Compute program resource register 1. Must be kept backwards compatible.
+// Compute program resource register 1. Must match hardware definition.
 #define COMPUTE_PGM_RSRC1(NAME, SHIFT, WIDTH) \
   AMDHSA_BITS_ENUM_ENTRY(COMPUTE_PGM_RSRC1_ ## NAME, SHIFT, WIDTH)
 enum : int32_t {
@@ -94,7 +94,7 @@ enum : int32_t {
 };
 #undef COMPUTE_PGM_RSRC1
 
-// Compute program resource register 2. Must be kept backwards compatible.
+// Compute program resource register 2. Must match hardware definition.
 #define COMPUTE_PGM_RSRC2(NAME, SHIFT, WIDTH) \
   AMDHSA_BITS_ENUM_ENTRY(COMPUTE_PGM_RSRC2_ ## NAME, SHIFT, WIDTH)
 enum : int32_t {
