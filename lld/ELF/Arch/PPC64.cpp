@@ -54,6 +54,7 @@ public:
   RelExpr adjustRelaxExpr(RelType Type, const uint8_t *Data,
                           RelExpr Expr) const override;
   void relaxTlsGdToIe(uint8_t *Loc, RelType Type, uint64_t Val) const override;
+  void relaxTlsGdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const override;
 };
 } // namespace
 
@@ -157,6 +158,42 @@ uint32_t PPC64::calcEFlags() const {
   }
 
   return 2;
+}
+
+void PPC64::relaxTlsGdToLe(uint8_t *Loc, RelType Type, uint64_t Val) const {
+  // Reference: 3.7.4.2 of the 64-bit ELF V2 abi supplement.
+  // The general dynamic code sequence for a global `x` will look like:
+  // Instruction                    Relocation                Symbol
+  // addis r3, r2, x@got@tlsgd@ha   R_PPC64_GOT_TLSGD16_HA      x
+  // addi  r3, r3, x@got@tlsgd@l    R_PPC64_GOT_TLSGD16_LO      x
+  // bl __tls_get_addr(x@tlsgd)     R_PPC64_TLSGD               x
+  //                                R_PPC64_REL24               __tls_get_addr
+  // nop                            None                       None
+
+  // Relaxing to local exec entails converting:
+  // addis r3, r2, x@got@tlsgd@ha    into      nop
+  // addi  r3, r3, x@got@tlsgd@l     into      addis r3, r13, x@tprel@ha
+  // bl __tls_get_addr(x@tlsgd)      into      nop
+  // nop                             into      addi r3, r3, x@tprel@l
+
+  uint32_t EndianOffset = Config->EKind == ELF64BEKind ? 2U : 0U;
+
+  switch (Type) {
+  case R_PPC64_GOT_TLSGD16_HA:
+    write32(Loc - EndianOffset, 0x60000000); // nop
+    break;
+  case R_PPC64_GOT_TLSGD16_LO:
+    write32(Loc - EndianOffset, 0x3c6d0000); // addis r3, r13
+    relocateOne(Loc, R_PPC64_TPREL16_HA, Val);
+    break;
+  case R_PPC64_TLSGD:
+    write32(Loc, 0x60000000);     // nop
+    write32(Loc + 4, 0x38630000); // addi r3, r3
+    relocateOne(Loc + 4 + EndianOffset, R_PPC64_TPREL16_LO, Val);
+    break;
+  default:
+    llvm_unreachable("unsupported relocation for TLS GD to LE relaxation");
+  }
 }
 
 RelExpr PPC64::getRelExpr(RelType Type, const Symbol &S,
