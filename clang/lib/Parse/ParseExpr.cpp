@@ -246,30 +246,6 @@ bool Parser::isNotExpressionStart() {
   return isKnownToBeDeclarationSpecifier();
 }
 
-/// We've parsed something that could plausibly be intended to be a template
-/// name (\p LHS) followed by a '<' token, and the following code can't possibly
-/// be an expression. Determine if this is likely to be a template-id and if so,
-/// diagnose it.
-bool Parser::diagnoseUnknownTemplateId(ExprResult LHS, SourceLocation Less) {
-  TentativeParsingAction TPA(*this);
-  // FIXME: We could look at the token sequence in a lot more detail here.
-  if (SkipUntil(tok::greater, tok::greatergreater, tok::greatergreatergreater,
-                StopAtSemi | StopBeforeMatch)) {
-    TPA.Commit();
-
-    SourceLocation Greater;
-    ParseGreaterThanInTemplateList(Greater, true, false);
-    Actions.diagnoseExprIntendedAsTemplateName(getCurScope(), LHS,
-                                               Less, Greater);
-    return true;
-  }
-
-  // There's no matching '>' token, this probably isn't supposed to be
-  // interpreted as a template-id. Parse it as an (ill-formed) comparison.
-  TPA.Revert();
-  return false;
-}
-
 bool Parser::isFoldOperator(prec::Level Level) const {
   return Level > prec::Unknown && Level != prec::Conditional &&
          Level != prec::Spaceship;
@@ -303,57 +279,12 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
       return ExprError(Diag(Tok, diag::err_opencl_logical_exclusive_or));
     }
 
-    // If we have a name-shaped expression followed by '<', track it in case we
-    // later find we're probably supposed to be in a template-id.
-    ExprResult TemplateName = LHS;
-    bool DependentTemplateName = false;
-    if (OpToken.is(tok::less) && Actions.mightBeIntendedToBeTemplateName(
-                                     TemplateName, DependentTemplateName)) {
-      AngleBracketTracker::Priority Priority =
-          (DependentTemplateName ? AngleBracketTracker::DependentName
-                                 : AngleBracketTracker::PotentialTypo) |
-          (OpToken.hasLeadingSpace() ? AngleBracketTracker::SpaceBeforeLess
-                                     : AngleBracketTracker::NoSpaceBeforeLess);
-      AngleBrackets.add(*this, TemplateName.get(), OpToken.getLocation(),
-                        Priority);
-    }
-
     // If we're potentially in a template-id, we may now be able to determine
     // whether we're actually in one or not.
-    if (auto *Info = AngleBrackets.getCurrent(*this)) {
-      // If an operator is followed by a type that can be a template argument
-      // and cannot be an expression, then this is ill-formed, but might be
-      // intended to be part of a template-id. Likewise if this is <>.
-      if ((OpToken.isOneOf(tok::less, tok::comma) &&
-            isKnownToBeDeclarationSpecifier()) ||
-           (OpToken.is(tok::less) &&
-            Tok.isOneOf(tok::greater, tok::greatergreater,
-                        tok::greatergreatergreater))) {
-        if (diagnoseUnknownTemplateId(Info->TemplateName, Info->LessLoc)) {
-          AngleBrackets.clear(*this);
-          return ExprError();
-        }
-      }
-
-      // If a context that looks like a template-id is followed by '()', then
-      // this is ill-formed, but might be intended to be a template-id followed
-      // by '()'.
-      if (OpToken.is(tok::greater) && Tok.is(tok::l_paren) &&
-          NextToken().is(tok::r_paren)) {
-        Actions.diagnoseExprIntendedAsTemplateName(
-            getCurScope(), Info->TemplateName, Info->LessLoc,
-            OpToken.getLocation());
-        AngleBrackets.clear(*this);
-        return ExprError();
-      }
-    }
-
-    // After a '>' (etc), we're no longer potentially in a construct that's
-    // intended to be treated as a template-id.
-    if (OpToken.is(tok::greater) ||
-        (getLangOpts().CPlusPlus11 &&
-         OpToken.isOneOf(tok::greatergreater, tok::greatergreatergreater)))
-      AngleBrackets.clear(*this);
+    if (OpToken.isOneOf(tok::comma, tok::greater, tok::greatergreater,
+                        tok::greatergreatergreater) &&
+        checkPotentialAngleBracketDelimiter(OpToken))
+      return ExprError();
 
     // Bail out when encountering a comma followed by a token which can't
     // possibly be the start of an expression. For instance:
@@ -879,6 +810,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     assert(Res.get() == nullptr && "Stray primary-expression annotation?");
     Res = getExprAnnotation(Tok);
     ConsumeAnnotationToken();
+    if (!Res.isInvalid() && Tok.is(tok::less))
+      checkPotentialAngleBracket(Res);
     break;
 
   case tok::kw___super:
@@ -1098,11 +1031,13 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         isAddressOfOperand, std::move(Validator),
         /*IsInlineAsmIdentifier=*/false,
         Tok.is(tok::r_paren) ? nullptr : &Replacement);
-    if (!Res.isInvalid() && !Res.get()) {
+    if (!Res.isInvalid() && Res.isUnset()) {
       UnconsumeToken(Replacement);
       return ParseCastExpression(isUnaryExpression, isAddressOfOperand,
                                  NotCastExpr, isTypeCast);
     }
+    if (!Res.isInvalid() && Tok.is(tok::less))
+      checkPotentialAngleBracket(Res);
     break;
   }
   case tok::char_constant:     // constant: character-constant
@@ -1841,6 +1776,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
                                             OpKind, SS, TemplateKWLoc, Name,
                                  CurParsedObjCImpl ? CurParsedObjCImpl->Dcl
                                                    : nullptr);
+      if (!LHS.isInvalid() && Tok.is(tok::less))
+        checkPotentialAngleBracket(LHS);
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'
@@ -2878,7 +2815,10 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr *> &Exprs,
     if (Tok.isNot(tok::comma))
       break;
     // Move to the next argument, remember where the comma was.
+    Token Comma = Tok;
     CommaLocs.push_back(ConsumeToken());
+
+    checkPotentialAngleBracketDelimiter(Comma);
   }
   if (SawError) {
     // Ensure typos get diagnosed when errors were encountered while parsing the
@@ -2913,7 +2853,10 @@ Parser::ParseSimpleExpressionList(SmallVectorImpl<Expr*> &Exprs,
       return false;
 
     // Move to the next argument, remember where the comma was.
+    Token Comma = Tok;
     CommaLocs.push_back(ConsumeToken());
+
+    checkPotentialAngleBracketDelimiter(Comma);
   }
 }
 

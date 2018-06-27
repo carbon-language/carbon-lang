@@ -32,6 +32,16 @@ struct X {
     // FIXME: Is this the right heuristic?
     xyz<T::foo < 1>(); // expected-error{{missing 'template' keyword prior to dependent template name 'foo'}}
     T::foo < xyz<1>(); // expected-error{{missing 'template' keyword prior to dependent template name 'foo'}}
+
+    sizeof T::foo < 123 > (); // expected-error{{missing 'template' keyword prior to dependent template name 'foo'}}
+    f(t->foo<1, 2>(), // expected-error{{missing 'template' keyword prior to dependent template name 'foo'}}
+      t->bar<3, 4>()); // expected-error{{missing 'template' keyword prior to dependent template name 'bar'}}
+
+    int arr[] = {
+      t->baz<1, 2>(1 + 1), // ok, two comparisons
+      t->foo<1, 2>(), // expected-error{{missing 'template' keyword prior to dependent template name 'foo'}}
+      t->bar<3, 4>()  // FIXME: we don't recover from the previous error so don't diagnose this
+    };
   }
 
   int xyz;

@@ -1607,6 +1607,14 @@ private:
   }
 
   bool diagnoseUnknownTemplateId(ExprResult TemplateName, SourceLocation Less);
+  void checkPotentialAngleBracket(ExprResult &PotentialTemplateName);
+  bool checkPotentialAngleBracketDelimiter(const AngleBracketTracker::Loc &,
+                                           const Token &OpToken);
+  bool checkPotentialAngleBracketDelimiter(const Token &OpToken) {
+    if (auto *Info = AngleBrackets.getCurrent(*this))
+      return checkPotentialAngleBracketDelimiter(*Info, OpToken);
+    return false;
+  }
 
   ExprResult ParsePostfixExpressionSuffix(ExprResult LHS);
   ExprResult ParseUnaryExprOrTypeTraitExpression();

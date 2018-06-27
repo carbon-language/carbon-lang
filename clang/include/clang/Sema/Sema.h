@@ -1830,23 +1830,19 @@ public:
   getTemplateNameKindForDiagnostics(TemplateName Name);
 
   /// Determine whether it's plausible that E was intended to be a
-  /// template-name. Updates E to denote the template name expression.
-  bool mightBeIntendedToBeTemplateName(ExprResult &ER, bool &Dependent) {
-    if (!getLangOpts().CPlusPlus || ER.isInvalid())
+  /// template-name.
+  bool mightBeIntendedToBeTemplateName(ExprResult E, bool &Dependent) {
+    if (!getLangOpts().CPlusPlus || E.isInvalid())
       return false;
-    Expr *E = ER.get()->IgnoreImplicit();
-    while (auto *BO = dyn_cast<BinaryOperator>(E))
-      E = BO->getRHS()->IgnoreImplicit();
-    ER = E;
     Dependent = false;
-    if (auto *DRE = dyn_cast<DeclRefExpr>(E))
+    if (auto *DRE = dyn_cast<DeclRefExpr>(E.get()))
       return !DRE->hasExplicitTemplateArgs();
-    if (auto *ME = dyn_cast<MemberExpr>(E))
+    if (auto *ME = dyn_cast<MemberExpr>(E.get()))
       return !ME->hasExplicitTemplateArgs();
     Dependent = true;
-    if (auto *DSDRE = dyn_cast<DependentScopeDeclRefExpr>(E))
+    if (auto *DSDRE = dyn_cast<DependentScopeDeclRefExpr>(E.get()))
       return !DSDRE->hasExplicitTemplateArgs();
-    if (auto *DSME = dyn_cast<CXXDependentScopeMemberExpr>(E))
+    if (auto *DSME = dyn_cast<CXXDependentScopeMemberExpr>(E.get()))
       return !DSME->hasExplicitTemplateArgs();
     // Any additional cases recognized here should also be handled by
     // diagnoseExprIntendedAsTemplateName.
