@@ -786,7 +786,7 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
       // -A scale other than 1 is used.
       if (insn.sibScale != 1 ||
           (insn.sibBase == SIB_BASE_NONE && insn.mode != MODE_64BIT) ||
-          ((insn.sibBase != SIB_BASE_NONE &&
+          (insn.sibBase != SIB_BASE_NONE &&
            insn.sibBase != SIB_BASE_ESP && insn.sibBase != SIB_BASE_RSP &&
            insn.sibBase != SIB_BASE_R12D && insn.sibBase != SIB_BASE_R12)) {
         indexReg = MCOperand::createReg(insn.addressSize == 4 ? X86::EIZ :
