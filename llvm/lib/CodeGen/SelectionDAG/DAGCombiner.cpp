@@ -3048,12 +3048,6 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   auto IsPowerOfTwo = [](ConstantSDNode *C) {
     if (C->isNullValue() || C->isOpaque())
       return false;
-    // The instruction sequence to be generated contains shifting C by (op size
-    // in bits - # of trailing zeros in C), which results in an undef value when
-    // C == 1. (e.g. if the op size in bits is 32, it will be (sra x , 32) if C
-    // == 1)
-    if (C->getAPIntValue().isOneValue())
-      return false;
     if (C->getAPIntValue().isAllOnesValue())
       return false;
     if (C->getAPIntValue().isMinSignedValue())
@@ -3100,14 +3094,16 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
     // If dividing by a positive value, we're done. Otherwise, the result must
     // be negated.
-    SDValue Sub =
-        DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Sra);
+    SDValue Zero = DAG.getConstant(0, DL, VT);
+    SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, Zero, Sra);
 
     // FIXME: Use SELECT_CC once we improve SELECT_CC constant-folding.
     SDValue Res = DAG.getSelect(
-        DL, VT,
-        DAG.getSetCC(DL, VT, N1, DAG.getConstant(0, DL, VT), ISD::SETLT), Sub,
-        Sra);
+        DL, VT, DAG.getSetCC(DL, VT, N1, Zero, ISD::SETLT), Sub, Sra);
+    // Special case: (sdiv X, 1) -> X
+    SDValue One = DAG.getConstant(1, DL, VT);
+    Res = DAG.getSelect(DL, VT, DAG.getSetCC(DL, VT, N1, One, ISD::SETEQ), N0,
+                        Res);
     return Res;
   }
 
