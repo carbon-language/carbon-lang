@@ -4385,10 +4385,13 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
 
   // Per C++ core issue 1213, the result is an xvalue if either operand is
   // a non-lvalue array, and an lvalue otherwise.
-  if (getLangOpts().CPlusPlus11 &&
-      ((LHSExp->getType()->isArrayType() && !LHSExp->isLValue()) ||
-       (RHSExp->getType()->isArrayType() && !RHSExp->isLValue())))
-    VK = VK_XValue;
+  if (getLangOpts().CPlusPlus11) {
+    for (auto *Op : {LHSExp, RHSExp}) {
+      Op = Op->IgnoreImplicit();
+      if (Op->getType()->isArrayType() && !Op->isLValue())
+        VK = VK_XValue;
+    }
+  }
 
   // Perform default conversions.
   if (!LHSExp->getType()->getAs<VectorType>()) {
@@ -4449,6 +4452,13 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
   } else if (const VectorType *VTy = LHSTy->getAs<VectorType>()) {
     BaseExpr = LHSExp;    // vectors: V[123]
     IndexExpr = RHSExp;
+    // We apply C++ DR1213 to vector subscripting too.
+    if (getLangOpts().CPlusPlus11 && LHSExp->getValueKind() == VK_RValue) {
+      ExprResult Materialized = TemporaryMaterializationConversion(LHSExp);
+      if (Materialized.isInvalid())
+        return ExprError();
+      LHSExp = Materialized.get();
+    }
     VK = LHSExp->getValueKind();
     if (VK != VK_RValue)
       OK = OK_VectorComponent;
