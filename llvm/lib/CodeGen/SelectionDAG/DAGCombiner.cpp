@@ -1692,6 +1692,10 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
       return N->getOperand(1);
   }
 
+  // Don't simplify token factors if optnone.
+  if (OptLevel == CodeGenOpt::None)
+    return SDValue();
+
   SmallVector<SDNode *, 8> TFs;     // List of token factors to visit.
   SmallVector<SDValue, 8> Ops;      // Ops for replacing token factor.
   SmallPtrSet<SDNode*, 16> SeenOps;
