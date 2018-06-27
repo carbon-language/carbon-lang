@@ -10087,22 +10087,22 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     switch (BuiltinID) {
     default: llvm_unreachable("Unsupported intrinsic!");
     case X86::BI__builtin_ia32_fpclassps128_mask:
-      ID = Intrinsic::x86_avx512_mask_fpclass_ps_128;
+      ID = Intrinsic::x86_avx512_fpclass_ps_128;
       break;
     case X86::BI__builtin_ia32_fpclassps256_mask:
-      ID = Intrinsic::x86_avx512_mask_fpclass_ps_256;
+      ID = Intrinsic::x86_avx512_fpclass_ps_256;
       break;
     case X86::BI__builtin_ia32_fpclassps512_mask:
-      ID = Intrinsic::x86_avx512_mask_fpclass_ps_512;
+      ID = Intrinsic::x86_avx512_fpclass_ps_512;
       break;
     case X86::BI__builtin_ia32_fpclasspd128_mask:
-      ID = Intrinsic::x86_avx512_mask_fpclass_pd_128;
+      ID = Intrinsic::x86_avx512_fpclass_pd_128;
       break;
     case X86::BI__builtin_ia32_fpclasspd256_mask:
-      ID = Intrinsic::x86_avx512_mask_fpclass_pd_256;
+      ID = Intrinsic::x86_avx512_fpclass_pd_256;
       break;
     case X86::BI__builtin_ia32_fpclasspd512_mask:
-      ID = Intrinsic::x86_avx512_mask_fpclass_pd_512;
+      ID = Intrinsic::x86_avx512_fpclass_pd_512;
       break;
     }
 
