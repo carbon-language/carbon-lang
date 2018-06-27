@@ -230,6 +230,11 @@ RelExpr PPC64::getRelExpr(RelType Type, const Symbol &S,
   case R_PPC64_GOT_TPREL16_DS:
   case R_PPC64_GOT_TPREL16_HI:
     return R_GOT_OFF;
+  case R_PPC64_GOT_DTPREL16_HA:
+  case R_PPC64_GOT_DTPREL16_LO_DS:
+  case R_PPC64_GOT_DTPREL16_DS:
+  case R_PPC64_GOT_DTPREL16_HI:
+    return R_TLSLD_GOT_OFF;
   case R_PPC64_TPREL16:
   case R_PPC64_TPREL16_HA:
   case R_PPC64_TPREL16_LO:
@@ -312,15 +317,18 @@ static std::pair<RelType, uint64_t> toAddr16Rel(RelType Type, uint64_t Val) {
     return {R_PPC64_ADDR16, TocBiasedVal};
   case R_PPC64_TOC16_DS:
   case R_PPC64_GOT_TPREL16_DS:
+  case R_PPC64_GOT_DTPREL16_DS:
     return {R_PPC64_ADDR16_DS, TocBiasedVal};
   case R_PPC64_GOT_TLSGD16_HA:
   case R_PPC64_GOT_TLSLD16_HA:
   case R_PPC64_GOT_TPREL16_HA:
+  case R_PPC64_GOT_DTPREL16_HA:
   case R_PPC64_TOC16_HA:
     return {R_PPC64_ADDR16_HA, TocBiasedVal};
   case R_PPC64_GOT_TLSGD16_HI:
   case R_PPC64_GOT_TLSLD16_HI:
   case R_PPC64_GOT_TPREL16_HI:
+  case R_PPC64_GOT_DTPREL16_HI:
   case R_PPC64_TOC16_HI:
     return {R_PPC64_ADDR16_HI, TocBiasedVal};
   case R_PPC64_GOT_TLSGD16_LO:
@@ -329,6 +337,7 @@ static std::pair<RelType, uint64_t> toAddr16Rel(RelType Type, uint64_t Val) {
     return {R_PPC64_ADDR16_LO, TocBiasedVal};
   case R_PPC64_TOC16_LO_DS:
   case R_PPC64_GOT_TPREL16_LO_DS:
+  case R_PPC64_GOT_DTPREL16_LO_DS:
     return {R_PPC64_ADDR16_LO_DS, TocBiasedVal};
 
   // Dynamic Thread pointer biased relocation types.
@@ -434,6 +443,9 @@ void PPC64::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
     write32(Loc, (read32(Loc) & ~Mask) | (Val & Mask));
     break;
   }
+  case R_PPC64_DTPREL64:
+    write64(Loc, Val - DynamicThreadPointerOffset);
+    break;
   default:
     error(getErrorLocation(Loc) + "unrecognized reloc " + Twine(Type));
   }
