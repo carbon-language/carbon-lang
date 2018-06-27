@@ -58,6 +58,9 @@
 # RUN: not ld.lld %t -z foo 2>&1 | FileCheck -check-prefix=ERR9 %s
 # ERR9: unknown -z value: foo
 
+# RUN: not ld.lld %t -z max-page-size 2>&1 | FileCheck -check-prefix=ERR10 %s
+# ERR10: unknown -z value: max-page-size
+
 .globl _start
 _start:
   nop
