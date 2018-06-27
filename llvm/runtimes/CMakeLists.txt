@@ -402,17 +402,19 @@ else() # if this is included from LLVM's CMake
     endif()
 
     foreach(runtime_name ${runtime_names})
-      list(APPEND ${name}_extra_targets
-        "${runtime_name}:${runtime_name}-${name}"
-        "install-${runtime_name}:install-${runtime_name}-${name}"
-        "install-${runtime_name}-stripped:install-${runtime_name}-${name}-stripped")
+      set(${runtime_name}-${name} ${runtime_name})
+      set(install-${runtime_name}-${name} install-${runtime_name})
+      set(install-${runtime_name}-${name}-stripped install-${runtime_name}-stripped)
+      list(APPEND ${name}_extra_targets ${runtime_name}-${name} install-${runtime_name}-${name} install-${runtime_name}-${name}-stripped)
       if(LLVM_INCLUDE_TESTS)
-        list(APPEND ${name}_test_targets "check-${runtime_name}:check-${runtime_name}-${name}")
+        set(check-${runtime_name}-${name} check-${runtime_name} )
+        list(APPEND ${name}_test_targets check-${runtime_name}-${name})
       endif()
     endforeach()
 
     foreach(target_name IN LISTS SUB_COMPONENTS SUB_INSTALL_TARGETS)
-      list(APPEND ${name}_extra_targets "${target_name}:${target_name}-${name}")
+      set(${target_name}-${name} ${target_name})
+      list(APPEND ${name}_extra_targets ${target_name}-${name})
     endforeach()
 
     foreach(component ${LLVM_RUNTIME_DISTRIBUTION_COMPONENTS})
@@ -424,12 +426,13 @@ else() # if this is included from LLVM's CMake
     endforeach()
 
     if(LLVM_INCLUDE_TESTS)
-      list(APPEND ${name}_test_targets
-        "runtimes-test-depends:runtimes-test-depends-${name}"
-        "check-runtimes:check-runtimes-${name}")
+      set(runtimes-test-depends-${name} runtimes-test-depends)
+      set(check-runtimes-${name} check-runtimes)
+      list(APPEND ${name}_test_targets runtimes-test-depends-${name} check-runtimes-${name})
       foreach(target_name IN LISTS SUB_CHECK_TARGETS)
-        list(APPEND ${name}_test_targets "${target_name}:${target_name}-${name}")
-        list(APPEND test_targets "${target_name}-${name}")
+        set(${target_name}-${name} ${target_name})
+        list(APPEND ${name}_test_targets ${target_name}-${name})
+        list(APPEND test_targets ${target_name}-${name})
       endforeach()
       set(test_targets "${test_targets}" PARENT_SCOPE)
     endif()
