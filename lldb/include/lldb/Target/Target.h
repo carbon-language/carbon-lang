@@ -938,7 +938,7 @@ public:
 
   bool MergeArchitecture(const ArchSpec &arch_spec);
 
-  Architecture *GetArchitecturePlugin() { return m_arch.GetPlugin(); }
+  Architecture *GetArchitecturePlugin() const { return m_arch.GetPlugin(); }
 
   Debugger &GetDebugger() { return m_debugger; }
 
