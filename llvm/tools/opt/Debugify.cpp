@@ -184,12 +184,15 @@ bool diagnoseMisSizedDbgValue(Module &M, DbgValueInst *DVI) {
 
   Type *Ty = V->getType();
   uint64_t ValueOperandSize = getAllocSizeInBits(M, Ty);
-  uint64_t DbgVarSize = *DVI->getFragmentSizeInBits();
-  bool HasBadSize = Ty->isIntegerTy() ? (ValueOperandSize < DbgVarSize)
-                                      : (ValueOperandSize != DbgVarSize);
+  Optional<uint64_t> DbgVarSize = DVI->getFragmentSizeInBits();
+  if (!ValueOperandSize || !DbgVarSize)
+    return false;
+
+  bool HasBadSize = Ty->isIntegerTy() ? (ValueOperandSize < *DbgVarSize)
+                                      : (ValueOperandSize != *DbgVarSize);
   if (HasBadSize) {
     dbg() << "ERROR: dbg.value operand has size " << ValueOperandSize
-          << ", but its variable has size " << DbgVarSize << ": ";
+          << ", but its variable has size " << *DbgVarSize << ": ";
     DVI->print(dbg());
     dbg() << "\n";
   }
