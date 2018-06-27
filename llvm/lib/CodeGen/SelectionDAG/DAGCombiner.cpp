@@ -3045,9 +3045,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   // vector of such elements.
   SmallBitVector KnownNegatives(
       (N1C || !VT.isVector()) ? 1 : VT.getVectorNumElements(), false);
-  unsigned EltIndex = 0;
-  auto IsPowerOfTwo = [&KnownNegatives, &EltIndex](ConstantSDNode *C) {
-    unsigned Idx = EltIndex++;
+  auto IsPowerOfTwo = [](ConstantSDNode *C) {
     if (C->isNullValue() || C->isOpaque())
       return false;
     // The instruction sequence to be generated contains shifting C by (op size
@@ -3063,10 +3061,8 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
     if (C->getAPIntValue().isPowerOf2())
       return true;
-    if ((-C->getAPIntValue()).isPowerOf2()) {
-      KnownNegatives.set(Idx);
+    if ((-C->getAPIntValue()).isPowerOf2())
       return true;
-    }
     return false;
   };
 
@@ -3088,6 +3084,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     SDValue Inexact = DAG.getNode(ISD::SUB, DL, ShiftAmtTy, Bits, C1);
     if (!isConstantOrConstantVector(Inexact))
       return SDValue();
+
     // Splat the sign bit into the register
     SDValue Sign = DAG.getNode(ISD::SRA, DL, VT, N0,
                                DAG.getConstant(BitWidth - 1, DL, ShiftAmtTy));
@@ -3095,37 +3092,23 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
     // Add (N0 < 0) ? abs2 - 1 : 0;
     SDValue Srl = DAG.getNode(ISD::SRL, DL, VT, Sign, Inexact);
-    SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N0, Srl);
     AddToWorklist(Srl.getNode());
-    AddToWorklist(Add.getNode()); // Divide by pow2
+    SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N0, Srl);
+    AddToWorklist(Add.getNode());
     SDValue Sra = DAG.getNode(ISD::SRA, DL, VT, Add, C1);
+    AddToWorklist(Sra.getNode());
 
     // If dividing by a positive value, we're done. Otherwise, the result must
     // be negated.
-    if (KnownNegatives.none())
-      return Sra;
-
-    AddToWorklist(Sra.getNode());
     SDValue Sub =
         DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), Sra);
-    // If all shift amount elements are negative, we're done.
-    if (KnownNegatives.all())
-      return Sub;
 
-    // Shift amount has both positive and negative elements.
-    assert(VT.isVector() && !N0C &&
-           "Expecting a non-splat vector shift amount");
-
-    SmallVector<SDValue, 64> VSelectMask;
-    for (int i = 0, e = VT.getVectorNumElements(); i < e; ++i)
-      VSelectMask.push_back(
-          DAG.getConstant(KnownNegatives[i] ? -1 : 0, DL, MVT::i1));
-
-    SDValue Mask =
-        DAG.getBuildVector(EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                            VT.getVectorElementCount()),
-                           DL, VSelectMask);
-    return DAG.getNode(ISD::VSELECT, DL, VT, Mask, Sub, Sra);
+    // FIXME: Use SELECT_CC once we improve SELECT_CC constant-folding.
+    SDValue Res = DAG.getSelect(
+        DL, VT,
+        DAG.getSetCC(DL, VT, N1, DAG.getConstant(0, DL, VT), ISD::SETLT), Sub,
+        Sra);
+    return Res;
   }
 
   // If integer divide is expensive and we satisfy the requirements, emit an
