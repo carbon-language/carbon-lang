@@ -209,12 +209,37 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       }
       llvm_unreachable("Unhandled return value construction context!");
     }
-    case ConstructionContext::ElidedTemporaryObjectKind:
+    case ConstructionContext::ElidedTemporaryObjectKind: {
       assert(AMgr.getAnalyzerOptions().shouldElideConstructors());
-      // FALL-THROUGH
+      const auto *TCC = cast<ElidedTemporaryObjectConstructionContext>(CC);
+      const CXXBindTemporaryExpr *BTE = TCC->getCXXBindTemporaryExpr();
+      const MaterializeTemporaryExpr *MTE = TCC->getMaterializedTemporaryExpr();
+      const CXXConstructExpr *CE = TCC->getConstructorAfterElision();
+
+      // Support pre-C++17 copy elision. We'll have the elidable copy
+      // constructor in the AST and in the CFG, but we'll skip it
+      // and construct directly into the final object. This call
+      // also sets the CallOpts flags for us.
+      SVal V;
+      std::tie(State, V) = prepareForObjectConstruction(
+          CE, State, LCtx, TCC->getConstructionContextAfterElision(), CallOpts);
+
+      // Remember that we've elided the constructor.
+      State = addObjectUnderConstruction(State, CE, LCtx, V);
+
+      // Remember that we've elided the destructor.
+      if (BTE)
+        State = elideDestructor(State, BTE, LCtx);
+
+      // Instead of materialization, shamelessly return
+      // the final object destination.
+      if (MTE)
+        State = addObjectUnderConstruction(State, MTE, LCtx, V);
+
+      return std::make_pair(State, V);
+    }
     case ConstructionContext::SimpleTemporaryObjectKind: {
-      // TODO: Copy elision implementation goes here.
-      const auto *TCC = cast<TemporaryObjectConstructionContext>(CC);
+      const auto *TCC = cast<SimpleTemporaryObjectConstructionContext>(CC);
       const CXXBindTemporaryExpr *BTE = TCC->getCXXBindTemporaryExpr();
       const MaterializeTemporaryExpr *MTE = TCC->getMaterializedTemporaryExpr();
       SVal V = UnknownVal();
@@ -265,6 +290,20 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *CE,
   ProgramStateRef State = Pred->getState();
 
   SVal Target = UnknownVal();
+
+  if (Optional<SVal> ElidedTarget =
+          getObjectUnderConstruction(State, CE, LCtx)) {
+    // We've previously modeled an elidable constructor by pretending that it in
+    // fact constructs into the correct target. This constructor can therefore
+    // be skipped.
+    Target = *ElidedTarget;
+    StmtNodeBuilder Bldr(Pred, destNodes, *currBldrCtx);
+    State = finishObjectConstruction(State, CE, LCtx);
+    if (auto L = Target.getAs<Loc>())
+      State = State->BindExpr(CE, LCtx, State->getSVal(*L, CE->getType()));
+    Bldr.generateNode(CE, Pred, State);
+    return;
+  }
 
   // FIXME: Handle arrays, which run the same constructor for every element.
   // For now, we just run the first constructor (which should still invalidate

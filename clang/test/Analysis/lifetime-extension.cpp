@@ -97,13 +97,10 @@ void f1() {
 
 void f2() {
   C *after, *before;
-  C c = C(1, &after, &before);
-  clang_analyzer_eval(after == before);
-#ifdef TEMPORARIES
-  // expected-warning@-2{{TRUE}}
-#else
-  // expected-warning@-4{{UNKNOWN}}
-#endif
+  {
+    C c = C(1, &after, &before);
+  }
+  clang_analyzer_eval(after == before); // expected-warning{{TRUE}}
 }
 
 void f3(bool coin) {
@@ -129,6 +126,7 @@ void f4(bool coin) {
   // operator. Ideally also add support for the binary conditional operator in
   // C++. Because for now it calls the constructor for the condition twice.
   if (coin) {
+    // FIXME: Should not warn.
     clang_analyzer_eval(after == before);
 #ifdef TEMPORARIES
   // expected-warning@-2{{The left operand of '==' is a garbage value}}
@@ -136,13 +134,12 @@ void f4(bool coin) {
   // expected-warning@-4{{UNKNOWN}}
 #endif
   } else {
+    // FIXME: Should be TRUE.
     clang_analyzer_eval(after == before);
 #ifdef TEMPORARIES
-    // Seems to work at the moment, but also seems accidental.
-    // Feel free to break.
-  // expected-warning@-4{{TRUE}}
+  // expected-warning@-2{{FALSE}}
 #else
-  // expected-warning@-6{{UNKNOWN}}
+  // expected-warning@-4{{UNKNOWN}}
 #endif
   }
 }
@@ -234,24 +231,25 @@ void f2() {
 } // end namespace maintain_original_object_address_on_move
 
 namespace maintain_address_of_copies {
+class C;
 
-template <typename T> struct AddressVector {
-  const T *buf[10];
+struct AddressVector {
+  C *buf[10];
   int len;
 
   AddressVector() : len(0) {}
 
-  void push(const T *t) {
-    buf[len] = t;
+  void push(C *c) {
+    buf[len] = c;
     ++len;
   }
 };
 
 class C {
-  AddressVector<C> &v;
+  AddressVector &v;
 
 public:
-  C(AddressVector<C> &v) : v(v) { v.push(this); }
+  C(AddressVector &v) : v(v) { v.push(this); }
   ~C() { v.push(this); }
 
 #ifdef MOVES
@@ -267,132 +265,70 @@ public:
 #endif
   } // no-warning
 
-  static C make(AddressVector<C> &v) { return C(v); }
+  static C make(AddressVector &v) { return C(v); }
 };
 
 void f1() {
-  AddressVector<C> v;
+  AddressVector v;
   {
     C c = C(v);
   }
-  // 0. Create the original temporary and lifetime-extend it into variable 'c'
-  //    construction argument.
-  // 1. Construct variable 'c' (elidable copy/move).
-  // 2. Destroy the temporary.
-  // 3. Destroy variable 'c'.
-  clang_analyzer_eval(v.len == 4);
-  clang_analyzer_eval(v.buf[0] == v.buf[2]);
-  clang_analyzer_eval(v.buf[1] == v.buf[3]);
-#ifdef TEMPORARIES
-  // expected-warning@-4{{TRUE}}
-  // expected-warning@-4{{TRUE}}
-  // expected-warning@-4{{TRUE}}
-#else
-  // expected-warning@-8{{UNKNOWN}}
-  // expected-warning@-8{{UNKNOWN}}
-  // expected-warning@-8{{UNKNOWN}}
-#endif
+  // 0. Construct variable 'c' (copy/move elided).
+  // 1. Destroy variable 'c'.
+  clang_analyzer_eval(v.len == 2); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[1]); // expected-warning{{TRUE}}
 }
 
 void f2() {
-  AddressVector<C> v;
+  AddressVector v;
   {
     const C &c = C::make(v);
   }
-  // 0. Construct the original temporary within make(),
-  // 1. Construct the return value of make() (elidable copy/move) and
-  //    lifetime-extend it via reference 'c',
-  // 2. Destroy the temporary within make(),
-  // 3. Destroy the temporary lifetime-extended by 'c'.
-  clang_analyzer_eval(v.len == 4);
-  clang_analyzer_eval(v.buf[0] == v.buf[2]);
-  clang_analyzer_eval(v.buf[1] == v.buf[3]);
+  // 0. Construct the return value of make() (copy/move elided) and
+  //    lifetime-extend it directly via reference 'c',
+  // 1. Destroy the temporary lifetime-extended by 'c'.
+  clang_analyzer_eval(v.len == 2);
+  clang_analyzer_eval(v.buf[0] == v.buf[1]);
 #ifdef TEMPORARIES
-  // expected-warning@-4{{TRUE}}
-  // expected-warning@-4{{TRUE}}
-  // expected-warning@-4{{TRUE}}
+  // expected-warning@-3{{TRUE}}
+  // expected-warning@-3{{TRUE}}
 #else
-  // expected-warning@-8{{UNKNOWN}}
-  // expected-warning@-8{{UNKNOWN}}
-  // expected-warning@-8{{UNKNOWN}}
+  // expected-warning@-6{{UNKNOWN}}
+  // expected-warning@-6{{UNKNOWN}}
 #endif
 }
 
 void f3() {
-  AddressVector<C> v;
+  AddressVector v;
   {
     C &&c = C::make(v);
   }
-  // 0. Construct the original temporary within make(),
-  // 1. Construct the return value of make() (elidable copy/move) and
-  //    lifetime-extend it via reference 'c',
-  // 2. Destroy the temporary within make(),
-  // 3. Destroy the temporary lifetime-extended by 'c'.
-  clang_analyzer_eval(v.len == 4);
-  clang_analyzer_eval(v.buf[0] == v.buf[2]);
-  clang_analyzer_eval(v.buf[1] == v.buf[3]);
+  // 0. Construct the return value of make() (copy/move elided) and
+  //    lifetime-extend it directly via reference 'c',
+  // 1. Destroy the temporary lifetime-extended by 'c'.
+  clang_analyzer_eval(v.len == 2);
+  clang_analyzer_eval(v.buf[0] == v.buf[1]);
 #ifdef TEMPORARIES
-  // expected-warning@-4{{TRUE}}
-  // expected-warning@-4{{TRUE}}
-  // expected-warning@-4{{TRUE}}
+  // expected-warning@-3{{TRUE}}
+  // expected-warning@-3{{TRUE}}
 #else
-  // expected-warning@-8{{UNKNOWN}}
-  // expected-warning@-8{{UNKNOWN}}
-  // expected-warning@-8{{UNKNOWN}}
+  // expected-warning@-6{{UNKNOWN}}
+  // expected-warning@-6{{UNKNOWN}}
 #endif
 }
 
-C doubleMake(AddressVector<C> &v) {
+C doubleMake(AddressVector &v) {
   return C::make(v);
 }
 
 void f4() {
-  AddressVector<C> v;
+  AddressVector v;
   {
     C c = doubleMake(v);
   }
-  // 0. Construct the original temporary within make(),
-  // 1. Construct the return value of make() (elidable copy/move) and
-  //    lifetime-extend it into the return value constructor argument within
-  //    doubleMake(),
-  // 2. Destroy the temporary within make(),
-  // 3. Construct the return value of doubleMake() (elidable copy/move) and
-  //    lifetime-extend it into the variable 'c' constructor argument,
-  // 4. Destroy the return value of make(),
-  // 5. Construct variable 'c' (elidable copy/move),
-  // 6. Destroy the return value of doubleMake(),
-  // 7. Destroy variable 'c'.
-  clang_analyzer_eval(v.len == 8);
-  clang_analyzer_eval(v.buf[0] == v.buf[2]);
-  clang_analyzer_eval(v.buf[1] == v.buf[4]);
-  clang_analyzer_eval(v.buf[3] == v.buf[6]);
-  clang_analyzer_eval(v.buf[5] == v.buf[7]);
-#ifdef TEMPORARIES
-  // expected-warning@-6{{TRUE}}
-  // expected-warning@-6{{TRUE}}
-  // expected-warning@-6{{TRUE}}
-  // expected-warning@-6{{TRUE}}
-  // expected-warning@-6{{TRUE}}
-#else
-  // expected-warning@-12{{UNKNOWN}}
-  // expected-warning@-12{{UNKNOWN}}
-  // expected-warning@-12{{UNKNOWN}}
-  // expected-warning@-12{{UNKNOWN}}
-  // expected-warning@-12{{UNKNOWN}}
-#endif
+  // 0. Construct variable 'c' (all copies/moves elided),
+  // 1. Destroy variable 'c'.
+  clang_analyzer_eval(v.len == 2); // expected-warning{{TRUE}}
+  clang_analyzer_eval(v.buf[0] == v.buf[1]); // expected-warning{{TRUE}}
 }
-
-class NoDtor {
-  AddressVector<NoDtor> &v;
-
-public:
-  NoDtor(AddressVector<NoDtor> &v) : v(v) { v.push(this); }
-};
-
-void f5() {
-  AddressVector<NoDtor> v;
-  const NoDtor &N = NoDtor(v);
-  clang_analyzer_eval(v.buf[0] == &N); // expected-warning{{TRUE}}
-}
-
 } // end namespace maintain_address_of_copies
