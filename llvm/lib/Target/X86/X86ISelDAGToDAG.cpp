@@ -954,13 +954,11 @@ bool X86DAGToDAGISel::matchWrapper(SDValue N, X86ISelAddressMode &AM) {
 
   bool IsRIPRel = N.getOpcode() == X86ISD::WrapperRIP;
 
-  // We can't use an addressing mode in the 64-bit large code model. In the
-  // medium code model, we use can use an mode when RIP wrappers are present.
-  // That signifies access to globals that are known to be "near", such as the
-  // GOT itself.
+  // Only do this address mode folding for 64-bit if we're in the small code
+  // model.
+  // FIXME: But we can do GOTPCREL addressing in the medium code model.
   CodeModel::Model M = TM.getCodeModel();
-  if (Subtarget->is64Bit() &&
-      (M == CodeModel::Large || (M == CodeModel::Medium && !IsRIPRel)))
+  if (Subtarget->is64Bit() && M != CodeModel::Small && M != CodeModel::Kernel)
     return true;
 
   // Base and index reg must be 0 in order to use %rip as base.
