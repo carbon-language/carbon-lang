@@ -597,7 +597,7 @@ void temporaryInCondition() {
 
 // CHECK: void referenceVariableWithConstructor()
 // CHECK:          1: 0
-// CHECK-NEXT:     2: [B1.1] (CXXConstructExpr, [B1.3], [B1.4], const class temporary_object_expr_with_dtors::D)
+// CHECK-NEXT:     2: [B1.1] (CXXConstructExpr, [B1.4], const class temporary_object_expr_with_dtors::D)
 // CHECK-NEXT:     3: [B1.2] (BindTemporary)
 // CHECK-NEXT:     4: [B1.3]
 // CHECK-NEXT:     5: const temporary_object_expr_with_dtors::D &d(0);
@@ -607,7 +607,7 @@ void referenceVariableWithConstructor() {
 }
 
 // CHECK: void referenceVariableWithInitializer()
-// CHECK:          1: temporary_object_expr_with_dtors::D() (CXXConstructExpr, [B1.2], [B1.4], class temporary_object_expr_with_dtors::D)
+// CHECK:          1: temporary_object_expr_with_dtors::D() (CXXConstructExpr, [B1.4], class temporary_object_expr_with_dtors::D)
 // CHECK-NEXT:     2: [B1.1] (BindTemporary)
 // CHECK-NEXT:     3: [B1.2] (ImplicitCastExpr, NoOp, const class temporary_object_expr_with_dtors::D)
 // CHECK-NEXT:     4: [B1.3]
@@ -638,7 +638,7 @@ void referenceVariableWithInitializer() {
 // CXX11-NEXT:     4: [B5.3] (BindTemporary)
 // CXX11-NEXT:     5: [B5.4] (ImplicitCastExpr, NoOp, const class temporary_object_expr_with_dtors::D)
 // CXX11-NEXT:     6: [B5.5]
-// CXX11-NEXT:     7: [B5.6] (CXXConstructExpr, [B5.8], [B4.3], class temporary_object_expr_with_dtors::D)
+// CXX11-NEXT:     7: [B5.6] (CXXConstructExpr, [B4.3], class temporary_object_expr_with_dtors::D)
 // CXX11-NEXT:     8: [B5.7] (BindTemporary)
 // CXX11:        [B6]
 // CXX11-NEXT:     1: 0
@@ -648,7 +648,7 @@ void referenceVariableWithInitializer() {
 // CXX11-NEXT:     4: temporary_object_expr_with_dtors::D([B6.3]) (CXXFunctionalCastExpr, ConstructorConversion, class temporary_object_expr_with_dtors::D)
 // CXX11-NEXT:     5: [B6.4] (ImplicitCastExpr, NoOp, const class temporary_object_expr_with_dtors::D)
 // CXX11-NEXT:     6: [B6.5]
-// CXX11-NEXT:     7: [B6.6] (CXXConstructExpr, [B6.8], [B4.3], class temporary_object_expr_with_dtors::D)
+// CXX11-NEXT:     7: [B6.6] (CXXConstructExpr, [B4.3], class temporary_object_expr_with_dtors::D)
 // CXX11-NEXT:     8: [B6.7] (BindTemporary)
 // CXX11:        [B7]
 // CXX11-NEXT:     1: coin
@@ -663,11 +663,11 @@ void referenceVariableWithInitializer() {
 // CXX17:        [B2]
 // CXX17-NEXT:     1: D::get
 // CXX17-NEXT:     2: [B2.1] (ImplicitCastExpr, FunctionToPointerDecay, class temporary_object_expr_with_dtors::D (*)(void))
-// CXX17-NEXT:     3: [B2.2]() (CXXRecordTypedCall, [B2.4], [B1.3])
+// CXX17-NEXT:     3: [B2.2]() (CXXRecordTypedCall, [B1.3])
 // CXX17-NEXT:     4: [B2.3] (BindTemporary)
 // CXX17:        [B3]
 // CXX17-NEXT:     1: 0
-// CXX17-NEXT:     2: [B3.1] (CXXConstructExpr, [B3.3], [B1.3], class temporary_object_expr_with_dtors::D)
+// CXX17-NEXT:     2: [B3.1] (CXXConstructExpr, [B1.3], class temporary_object_expr_with_dtors::D)
 // CXX17-NEXT:     3: [B3.2] (BindTemporary)
 // CXX17-NEXT:     4: temporary_object_expr_with_dtors::D([B3.3]) (CXXFunctionalCastExpr, ConstructorConversion, class temporary_object_expr_with_dtors::D)
 // CXX17:        [B4]
@@ -680,7 +680,7 @@ void referenceVariableWithTernaryOperator(bool coin) {
 
 // CHECK: void referenceWithFunctionalCast()
 // CHECK:          1: 1
-// CHECK-NEXT:     2: [B1.1] (CXXConstructExpr, [B1.3], [B1.5], class temporary_object_expr_with_dtors::D)
+// CHECK-NEXT:     2: [B1.1] (CXXConstructExpr, [B1.5], class temporary_object_expr_with_dtors::D)
 // CHECK-NEXT:     3: [B1.2] (BindTemporary)
 // CHECK-NEXT:     4: temporary_object_expr_with_dtors::D([B1.3]) (CXXFunctionalCastExpr, ConstructorCon
 // CHECK-NEXT:     5: [B1.4]

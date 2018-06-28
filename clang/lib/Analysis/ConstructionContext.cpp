@@ -76,6 +76,13 @@ const ConstructionContext *ConstructionContext::createFromLayers(
         // both destruction and materialization info attached to it in the AST.
         if ((MTE = dyn_cast<MaterializeTemporaryExpr>(
                  ParentLayer->getTriggerStmt()))) {
+          if (MTE->getStorageDuration() != SD_FullExpression) {
+            // If the temporary is lifetime-extended, don't save the BTE,
+            // because we don't need a temporary destructor, but an automatic
+            // destructor.
+            BTE = nullptr;
+          }
+
           // Handle pre-C++17 copy and move elision.
           const CXXConstructExpr *ElidedCE = nullptr;
           const ConstructionContext *ElidedCC = nullptr;

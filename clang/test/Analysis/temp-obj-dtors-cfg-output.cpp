@@ -857,7 +857,7 @@ const C &bar3(bool coin) {
 // CHECK:     3: [B11.2] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:     4: [B11.3]
 // WARNINGS:     5: [B11.4] (CXXConstructExpr, class A)
-// ANALYZER:     5: [B11.4] (CXXConstructExpr, [B11.6], [B10.3], class A)
+// ANALYZER:     5: [B11.4] (CXXConstructExpr, [B10.3], class A)
 // CHECK:     6: [B11.5] (BindTemporary)
 // CHECK:     Preds (1): B13
 // CHECK:     Succs (1): B10
@@ -878,7 +878,7 @@ const C &bar3(bool coin) {
 // CHECK:    12: [B12.11] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:    13: [B12.12]
 // WARNINGS:    14: [B12.13] (CXXConstructExpr, class A)
-// ANALYZER:    14: [B12.13] (CXXConstructExpr, [B12.15], [B10.3], class A)
+// ANALYZER:    14: [B12.13] (CXXConstructExpr, [B10.3], class A)
 // CHECK:    15: [B12.14] (BindTemporary)
 // CHECK:     Preds (1): B13
 // CHECK:     Succs (1): B10
@@ -1104,7 +1104,7 @@ const C &bar3(bool coin) {
 // CHECK:     Succs (1): B1
 // CHECK:   [B1]
 // WARNINGS:     1: A() (CXXConstructExpr, class A)
-// ANALYZER:     1: A() (CXXConstructExpr, [B1.2], [B1.4], class A)
+// ANALYZER:     1: A() (CXXConstructExpr, [B1.4], class A)
 // CHECK:     2: [B1.1] (BindTemporary)
 // CHECK:     3: [B1.2] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:     4: [B1.3]
@@ -1150,7 +1150,7 @@ const C &bar3(bool coin) {
 // CHECK:     1: A::make
 // CHECK:     2: [B1.1] (ImplicitCastExpr, FunctionToPointerDecay, class A (*)(void))
 // WARNINGS:     3: [B1.2]()
-// ANALYZER:     3: [B1.2]() (CXXRecordTypedCall, [B1.4], [B1.6])
+// ANALYZER:     3: [B1.2]() (CXXRecordTypedCall, [B1.6])
 // CHECK:     4: [B1.3] (BindTemporary)
 // CHECK:     5: [B1.4] (ImplicitCastExpr, NoOp, const class A)
 // CHECK:     6: [B1.5]

@@ -217,6 +217,7 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       const auto *TCC = cast<TemporaryObjectConstructionContext>(CC);
       const CXXBindTemporaryExpr *BTE = TCC->getCXXBindTemporaryExpr();
       const MaterializeTemporaryExpr *MTE = TCC->getMaterializedTemporaryExpr();
+      SVal V = UnknownVal();
 
       if (MTE) {
         if (const ValueDecl *VD = MTE->getExtendingDecl()) {
@@ -230,14 +231,6 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
             CallOpts.IsTemporaryLifetimeExtendedViaAggregate = true;
           }
         }
-      }
-
-      SVal V = UnknownVal();
-      if (MTE && MTE->getStorageDuration() != SD_FullExpression) {
-        // If the temporary is lifetime-extended, don't save the BTE,
-        // because we don't need a temporary destructor, but an automatic
-        // destructor.
-        BTE = nullptr;
 
         if (MTE->getStorageDuration() == SD_Static ||
             MTE->getStorageDuration() == SD_Thread)
