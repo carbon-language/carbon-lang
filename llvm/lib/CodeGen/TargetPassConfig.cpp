@@ -914,8 +914,7 @@ void TargetPassConfig::addMachinePasses() {
   addPass(&XRayInstrumentationID, false);
   addPass(&PatchableFunctionID, false);
 
-  if (getOptLevel() != CodeGenOpt::None &&
-      EnableMachineOutliner == AlwaysOutline)
+  if (EnableMachineOutliner == AlwaysOutline)
     addPass(createMachineOutlinerPass());
 
   // Add passes that directly emit MI after all other MI passes.
