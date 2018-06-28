@@ -3047,8 +3047,6 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
   // Helper for determining whether a value is a power-2 constant scalar or a
   // vector of such elements.
-  SmallBitVector KnownNegatives(
-      (N1C || !VT.isVector()) ? 1 : VT.getVectorNumElements(), false);
   auto IsPowerOfTwo = [](ConstantSDNode *C) {
     if (C->isNullValue() || C->isOpaque())
       return false;
