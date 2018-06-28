@@ -37,7 +37,7 @@ PreservedAnalyses CGProfilePass::run(Module &M, ModuleAnalysisManager &MAM) {
     Count = SaturatingAdd(Count, NewCount);
   };
   // Ignore error here.  Indirect calls are ignored if this fails.
-  (bool)Symtab.create(M);
+  (void)(bool)Symtab.create(M);
   for (auto &F : M) {
     if (F.isDeclaration())
       continue;
