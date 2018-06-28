@@ -114,8 +114,6 @@ public:
            S->kind() == UndefinedFunctionKind;
   }
 
-  const WasmSignature *getFunctionType() const { return FunctionType; }
-
   // Get/set the table index
   void setTableIndex(uint32_t Index);
   uint32_t getTableIndex() const;
@@ -126,6 +124,8 @@ public:
   void setFunctionIndex(uint32_t Index);
   bool hasFunctionIndex() const;
 
+  const WasmSignature *FunctionType;
+
 protected:
   FunctionSymbol(StringRef Name, Kind K, uint32_t Flags, InputFile *F,
                  const WasmSignature *Type)
@@ -133,8 +133,6 @@ protected:
 
   uint32_t TableIndex = INVALID_INDEX;
   uint32_t FunctionIndex = INVALID_INDEX;
-
-  const WasmSignature *FunctionType;
 };
 
 class DefinedFunction : public FunctionSymbol {
