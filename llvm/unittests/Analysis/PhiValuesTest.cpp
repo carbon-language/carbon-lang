@@ -194,8 +194,8 @@ TEST(PhiValuesTest, DependentPhi) {
 
   // Check that replacing an incoming phi then deleting it works
   Phi3->setIncomingValue(1, Val2);
-  Phi2->eraseFromParent();
   PV.invalidateValue(Phi2);
+  Phi2->eraseFromParent();
   PV.invalidateValue(Phi3);
   Vals = PV.getValuesForPhi(Phi1);
   EXPECT_EQ(Vals.size(), 2u);
