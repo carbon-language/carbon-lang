@@ -2310,6 +2310,13 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
                               "unsupported required tail call to function ");
   }
 
+  if (AMDGPU::isShader(MF.getFunction().getCallingConv())) {
+    // Note the issue is with the CC of the calling function, not of the call
+    // itself.
+    return lowerUnhandledCall(CLI, InVals,
+                          "unsupported call from graphics shader of function ");
+  }
+
   // The first 4 bytes are reserved for the callee's emergency stack slot.
   const unsigned CalleeUsableStackOffset = 4;
 
