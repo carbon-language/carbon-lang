@@ -191,7 +191,7 @@ typedef std::pair<const CXXBindTemporaryExpr *, const LocationContext *>
 typedef llvm::ImmutableSet<ElidedDestructorItem>
     ElidedDestructorSet;
 REGISTER_TRAIT_WITH_PROGRAMSTATE(ElidedDestructors,
-                                 ElidedDestructorSet);
+                                 ElidedDestructorSet)
 
 //===----------------------------------------------------------------------===//
 // Engine construction and deletion.
