@@ -218,12 +218,6 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       const CXXBindTemporaryExpr *BTE = TCC->getCXXBindTemporaryExpr();
       const MaterializeTemporaryExpr *MTE = TCC->getMaterializedTemporaryExpr();
 
-      if (!BTE) {
-        // FIXME: Lifetime extension for temporaries without destructors
-        // is not implemented yet.
-        MTE = nullptr;
-      }
-
       if (MTE) {
         if (const ValueDecl *VD = MTE->getExtendingDecl()) {
           assert(MTE->getStorageDuration() != SD_FullExpression);
@@ -238,16 +232,20 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
         }
       }
 
+      SVal V = UnknownVal();
       if (MTE && MTE->getStorageDuration() != SD_FullExpression) {
         // If the temporary is lifetime-extended, don't save the BTE,
         // because we don't need a temporary destructor, but an automatic
         // destructor.
         BTE = nullptr;
+
+        if (MTE->getStorageDuration() == SD_Static ||
+            MTE->getStorageDuration() == SD_Thread)
+          V = loc::MemRegionVal(MRMgr.getCXXStaticTempObjectRegion(E));
       }
 
-      // FIXME: Support temporaries lifetime-extended via static references.
-      // They'd need a getCXXStaticTempObjectRegion().
-      SVal V = loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(E, LCtx));
+      if (V.isUnknown())
+        V = loc::MemRegionVal(MRMgr.getCXXTempObjectRegion(E, LCtx));
 
       if (BTE)
         State = addObjectUnderConstruction(State, BTE, LCtx, V);

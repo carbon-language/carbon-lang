@@ -234,25 +234,24 @@ void f2() {
 } // end namespace maintain_original_object_address_on_move
 
 namespace maintain_address_of_copies {
-class C;
 
-struct AddressVector {
-  C *buf[10];
+template <typename T> struct AddressVector {
+  const T *buf[10];
   int len;
 
   AddressVector() : len(0) {}
 
-  void push(C *c) {
-    buf[len] = c;
+  void push(const T *t) {
+    buf[len] = t;
     ++len;
   }
 };
 
 class C {
-  AddressVector &v;
+  AddressVector<C> &v;
 
 public:
-  C(AddressVector &v) : v(v) { v.push(this); }
+  C(AddressVector<C> &v) : v(v) { v.push(this); }
   ~C() { v.push(this); }
 
 #ifdef MOVES
@@ -268,11 +267,11 @@ public:
 #endif
   } // no-warning
 
-  static C make(AddressVector &v) { return C(v); }
+  static C make(AddressVector<C> &v) { return C(v); }
 };
 
 void f1() {
-  AddressVector v;
+  AddressVector<C> v;
   {
     C c = C(v);
   }
@@ -296,7 +295,7 @@ void f1() {
 }
 
 void f2() {
-  AddressVector v;
+  AddressVector<C> v;
   {
     const C &c = C::make(v);
   }
@@ -320,7 +319,7 @@ void f2() {
 }
 
 void f3() {
-  AddressVector v;
+  AddressVector<C> v;
   {
     C &&c = C::make(v);
   }
@@ -343,12 +342,12 @@ void f3() {
 #endif
 }
 
-C doubleMake(AddressVector &v) {
+C doubleMake(AddressVector<C> &v) {
   return C::make(v);
 }
 
 void f4() {
-  AddressVector v;
+  AddressVector<C> v;
   {
     C c = doubleMake(v);
   }
@@ -382,4 +381,18 @@ void f4() {
   // expected-warning@-12{{UNKNOWN}}
 #endif
 }
+
+class NoDtor {
+  AddressVector<NoDtor> &v;
+
+public:
+  NoDtor(AddressVector<NoDtor> &v) : v(v) { v.push(this); }
+};
+
+void f5() {
+  AddressVector<NoDtor> v;
+  const NoDtor &N = NoDtor(v);
+  clang_analyzer_eval(v.buf[0] == &N); // expected-warning{{TRUE}}
+}
+
 } // end namespace maintain_address_of_copies
