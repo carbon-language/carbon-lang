@@ -90,6 +90,7 @@ public:
   void setOutputSymbolIndex(uint32_t Index);
 
   WasmSymbolType getWasmType() const;
+  bool isExported() const;
 
   // True if this symbol was referenced by a regular (non-bitcode) object.
   unsigned IsUsedInRegularObj : 1;

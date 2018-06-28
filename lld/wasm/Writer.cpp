@@ -740,11 +740,7 @@ void Writer::calculateExports() {
   unsigned FakeGlobalIndex = NumImportedGlobals + InputGlobals.size();
 
   for (Symbol *Sym : Symtab->getSymbols()) {
-    if (!Sym->isDefined())
-      continue;
-    if (Sym->isHidden() && !Config->ExportAll)
-      continue;
-    if (Sym->isLocal())
+    if (!Sym->isExported())
       continue;
     if (!Sym->isLive())
       continue;
