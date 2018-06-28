@@ -94,11 +94,12 @@ public:
 
   // True if this symbol was referenced by a regular (non-bitcode) object.
   unsigned IsUsedInRegularObj : 1;
+  unsigned ForceExport : 1;
 
 protected:
   Symbol(StringRef Name, Kind K, uint32_t Flags, InputFile *F)
-      : IsUsedInRegularObj(false), Name(Name), SymbolKind(K), Flags(Flags),
-        File(F), Referenced(!Config->GcSections) {}
+      : IsUsedInRegularObj(false), ForceExport(false), Name(Name),
+        SymbolKind(K), Flags(Flags), File(F), Referenced(!Config->GcSections) {}
 
   StringRef Name;
   Kind SymbolKind;
@@ -339,6 +340,7 @@ T *replaceSymbol(Symbol *S, ArgT &&... Arg) {
 
   T *S2 = new (S) T(std::forward<ArgT>(Arg)...);
   S2->IsUsedInRegularObj = SymCopy.IsUsedInRegularObj;
+  S2->ForceExport = SymCopy.ForceExport;
   return S2;
 }
 

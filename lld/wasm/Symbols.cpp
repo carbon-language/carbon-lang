@@ -102,7 +102,7 @@ bool Symbol::isExported() const {
   if (!isDefined() || isLocal())
     return false;
 
-  if (Config->ExportAll)
+  if (ForceExport || Config->ExportAll)
     return true;
 
   return !isHidden();

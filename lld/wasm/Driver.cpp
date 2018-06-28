@@ -439,6 +439,16 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (!Config->Relocatable)
     handleWeakUndefines();
 
+  // Handle --export.
+  for (auto *Arg : Args.filtered(OPT_export)) {
+    StringRef Name = Arg->getValue();
+    Symbol *Sym = Symtab->find(Name);
+    if (Sym && Sym->isDefined())
+      Sym->ForceExport = true;
+    else if (!Config->AllowUndefined)
+      error("symbol exported via --export not found: " + Name);
+  }
+
   // Do link-time optimization if given files are LLVM bitcode files.
   // This compiles bitcode files into real object files.
   Symtab->addCombinedLTOObject();
@@ -465,16 +475,6 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   }
   if (errorCount())
     return;
-
-  // Handle --export.
-  for (auto *Arg : Args.filtered(OPT_export)) {
-    StringRef Name = Arg->getValue();
-    Symbol *Sym = Symtab->find(Name);
-    if (Sym && Sym->isDefined())
-      Sym->setHidden(false);
-    else if (!Config->AllowUndefined)
-      error("symbol exported via --export not found: " + Name);
-  }
 
   if (EntrySym)
     EntrySym->setHidden(false);
