@@ -209,7 +209,11 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
       }
       llvm_unreachable("Unhandled return value construction context!");
     }
-    case ConstructionContext::TemporaryObjectKind: {
+    case ConstructionContext::ElidedTemporaryObjectKind:
+      assert(AMgr.getAnalyzerOptions().shouldElideConstructors());
+      // FALL-THROUGH
+    case ConstructionContext::SimpleTemporaryObjectKind: {
+      // TODO: Copy elision implementation goes here.
       const auto *TCC = cast<TemporaryObjectConstructionContext>(CC);
       const CXXBindTemporaryExpr *BTE = TCC->getCXXBindTemporaryExpr();
       const MaterializeTemporaryExpr *MTE = TCC->getMaterializedTemporaryExpr();
