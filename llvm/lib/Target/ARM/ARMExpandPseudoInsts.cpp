@@ -419,7 +419,7 @@ static const NEONLdStTableEntry *LookupNEONLdSt(unsigned Opcode) {
   if (!TableChecked.load(std::memory_order_relaxed)) {
     assert(std::is_sorted(std::begin(NEONLdStTable), std::end(NEONLdStTable)) &&
            "NEONLdStTable is not sorted!");
-    TablesChecked.store(true, std::memory_order_relaxed);
+    TableChecked.store(true, std::memory_order_relaxed);
   }
 #endif
 

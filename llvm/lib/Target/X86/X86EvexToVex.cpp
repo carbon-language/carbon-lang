@@ -247,7 +247,7 @@ bool EvexToVexInstPass::CompressEvexToVexImpl(MachineInstr &MI) const {
     assert(std::is_sorted(std::begin(X86EvexToVex256CompressTable),
                           std::end(X86EvexToVex256CompressTable)) &&
            "X86EvexToVex256CompressTable is not sorted!");
-    TablesChecked.store(true, std::memory_order_relaxed);
+    TableChecked.store(true, std::memory_order_relaxed);
   }
 #endif
 
