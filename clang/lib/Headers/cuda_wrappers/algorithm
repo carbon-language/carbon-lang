@@ -69,28 +69,28 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
 template <class __T, class __Cmp>
 __attribute__((enable_if(true, "")))
-inline __device__ const __T &
+inline __host__ __device__ const __T &
 max(const __T &__a, const __T &__b, __Cmp __cmp) {
   return __cmp(__a, __b) ? __b : __a;
 }
 
 template <class __T>
 __attribute__((enable_if(true, "")))
-inline __device__ const __T &
+inline __host__ __device__ const __T &
 max(const __T &__a, const __T &__b) {
   return __a < __b ? __b : __a;
 }
 
 template <class __T, class __Cmp>
 __attribute__((enable_if(true, "")))
-inline __device__ const __T &
+inline __host__ __device__ const __T &
 min(const __T &__a, const __T &__b, __Cmp __cmp) {
   return __cmp(__b, __a) ? __b : __a;
 }
 
 template <class __T>
 __attribute__((enable_if(true, "")))
-inline __device__ const __T &
+inline __host__ __device__ const __T &
 min(const __T &__a, const __T &__b) {
   return __a < __b ? __a : __b;
 }
