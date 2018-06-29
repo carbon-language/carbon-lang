@@ -2412,11 +2412,13 @@ bool Generic_GCC::IsIntegratedAssemblerDefault() const {
     return true;
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
-    // Enabled for Debian and Android mips64/mipsel, as they can precisely
-    // identify the ABI in use (Debian) or only use N64 for MIPS64 (Android).
-    // Other targets are unable to distinguish N32 from N64.
+    // Enabled for Debian, Android, FreeBSD and OpenBSD mips64/mipsel, as they
+    // can precisely identify the ABI in use (Debian) or only use N64 for MIPS64
+    // (Android). Other targets are unable to distinguish N32 from N64.
     if (getTriple().getEnvironment() == llvm::Triple::GNUABI64 ||
-        getTriple().isAndroid())
+        getTriple().isAndroid() ||
+        getTriple().isOSFreeBSD() ||
+        getTriple().isOSOpenBSD())
       return true;
     return false;
   default:
