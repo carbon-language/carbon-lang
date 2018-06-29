@@ -2467,7 +2467,7 @@ bool DwarfLinker::link(const DebugMap &Map) {
   return Options.NoOutput ? true : Streamer->finish(Map);
 }
 
-bool linkDwarf(raw_fd_ostream &OutFile, CachedBinaryHolder &BinHolder,
+bool linkDwarf(raw_fd_ostream &OutFile, BinaryHolder &BinHolder,
                const DebugMap &DM, const LinkOptions &Options) {
   DwarfLinker Linker(OutFile, BinHolder, Options);
   return Linker.link(DM);

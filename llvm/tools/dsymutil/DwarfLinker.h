@@ -56,7 +56,7 @@ using UnitListTy = std::vector<std::unique_ptr<CompileUnit>>;
 /// first step when we start processing a DebugMapObject.
 class DwarfLinker {
 public:
-  DwarfLinker(raw_fd_ostream &OutFile, CachedBinaryHolder &BinHolder,
+  DwarfLinker(raw_fd_ostream &OutFile, BinaryHolder &BinHolder,
               const LinkOptions &Options)
       : OutFile(OutFile), BinHolder(BinHolder), Options(Options) {}
 
@@ -445,7 +445,7 @@ private:
   /// @}
 
   raw_fd_ostream &OutFile;
-  CachedBinaryHolder &BinHolder;
+  BinaryHolder &BinHolder;
   LinkOptions Options;
   std::unique_ptr<DwarfStreamer> Streamer;
   uint64_t OutputDebugInfoSize;

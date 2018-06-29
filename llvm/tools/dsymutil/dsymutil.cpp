@@ -496,7 +496,7 @@ int main(int argc, char **argv) {
     }
 
     // Shared a single binary holder for all the link steps.
-    CachedBinaryHolder BinHolder;
+    BinaryHolder BinHolder;
 
     NumThreads =
         std::min<unsigned>(OptionsOrErr->Threads, DebugMapPtrsOrErr->size());

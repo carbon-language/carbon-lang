@@ -30,7 +30,7 @@
 namespace llvm {
 namespace dsymutil {
 
-class CachedBinaryHolder;
+class BinaryHolder;
 
 /// Extract the DebugMaps from the given file.
 /// The file has to be a MachO object file. Multiple debug maps can be
@@ -46,7 +46,7 @@ bool dumpStab(StringRef InputFile, ArrayRef<std::string> Archs,
 
 /// Link the Dwarf debug info as directed by the passed DebugMap \p DM into a
 /// DwarfFile named \p OutputFilename. \returns false if the link failed.
-bool linkDwarf(raw_fd_ostream &OutFile, CachedBinaryHolder &BinHolder,
+bool linkDwarf(raw_fd_ostream &OutFile, BinaryHolder &BinHolder,
                const DebugMap &DM, const LinkOptions &Options);
 
 } // end namespace dsymutil

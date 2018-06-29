@@ -42,9 +42,8 @@ getMachOFatMemoryBuffers(StringRef Filename, MemoryBuffer &Mem,
   return Buffers;
 }
 
-Error CachedBinaryHolder::ArchiveEntry::load(StringRef Filename,
-                                             TimestampTy Timestamp,
-                                             bool Verbose) {
+Error BinaryHolder::ArchiveEntry::load(StringRef Filename,
+                                       TimestampTy Timestamp, bool Verbose) {
   StringRef ArchiveFilename = getArchiveAndObjectName(Filename).first;
 
   // Try to load archive and force it to be memory mapped.
@@ -55,7 +54,7 @@ Error CachedBinaryHolder::ArchiveEntry::load(StringRef Filename,
   MemoryBuffer = std::move(*ErrOrBuff);
 
   if (Verbose)
-    WithColor::note() << "opened archive '" << ArchiveFilename << "'\n";
+    WithColor::note() << "loaded archive '" << ArchiveFilename << "'\n";
 
   // Load one or more archive buffers, depending on whether we're dealing with
   // a fat binary.
@@ -85,7 +84,7 @@ Error CachedBinaryHolder::ArchiveEntry::load(StringRef Filename,
   return Error::success();
 }
 
-Error CachedBinaryHolder::ObjectEntry::load(StringRef Filename, bool Verbose) {
+Error BinaryHolder::ObjectEntry::load(StringRef Filename, bool Verbose) {
   // Try to load regular binary and force it to be memory mapped.
   auto ErrOrBuff = MemoryBuffer::getFileOrSTDIN(Filename, -1, false);
   if (auto Err = ErrOrBuff.getError())
@@ -94,7 +93,7 @@ Error CachedBinaryHolder::ObjectEntry::load(StringRef Filename, bool Verbose) {
   MemoryBuffer = std::move(*ErrOrBuff);
 
   if (Verbose)
-    WithColor::note() << "opened object.\n";
+    WithColor::note() << "loaded object.\n";
 
   // Load one or more object buffers, depending on whether we're dealing with a
   // fat binary.
@@ -124,7 +123,7 @@ Error CachedBinaryHolder::ObjectEntry::load(StringRef Filename, bool Verbose) {
 }
 
 std::vector<const object::ObjectFile *>
-CachedBinaryHolder::ObjectEntry::getObjects() const {
+BinaryHolder::ObjectEntry::getObjects() const {
   std::vector<const object::ObjectFile *> Result;
   Result.reserve(Objects.size());
   for (auto &Object : Objects) {
@@ -133,7 +132,7 @@ CachedBinaryHolder::ObjectEntry::getObjects() const {
   return Result;
 }
 Expected<const object::ObjectFile &>
-CachedBinaryHolder::ObjectEntry::getObject(const Triple &T) const {
+BinaryHolder::ObjectEntry::getObject(const Triple &T) const {
   for (const auto &Obj : Objects) {
     if (const auto *MachO = dyn_cast<object::MachOObjectFile>(Obj.get())) {
       if (MachO->getArchTriple().str() == T.str())
@@ -144,10 +143,10 @@ CachedBinaryHolder::ObjectEntry::getObject(const Triple &T) const {
   return errorCodeToError(object::object_error::arch_not_found);
 }
 
-Expected<const CachedBinaryHolder::ObjectEntry &>
-CachedBinaryHolder::ArchiveEntry::getObjectEntry(StringRef Filename,
-                                                 TimestampTy Timestamp,
-                                                 bool Verbose) {
+Expected<const BinaryHolder::ObjectEntry &>
+BinaryHolder::ArchiveEntry::getObjectEntry(StringRef Filename,
+                                           TimestampTy Timestamp,
+                                           bool Verbose) {
   StringRef ArchiveFilename;
   StringRef ObjectFilename;
   std::tie(ArchiveFilename, ObjectFilename) = getArchiveAndObjectName(Filename);
@@ -183,7 +182,7 @@ CachedBinaryHolder::ArchiveEntry::getObjectEntry(StringRef Filename,
           }
 
           if (Verbose)
-            WithColor::note() << "found member in current archive.\n";
+            WithColor::note() << "found member in archive.\n";
 
           auto ErrOrMem = Child.getMemoryBufferRef();
           if (!ErrOrMem)
@@ -210,8 +209,8 @@ CachedBinaryHolder::ArchiveEntry::getObjectEntry(StringRef Filename,
   return MemberCache[Key];
 }
 
-Expected<const CachedBinaryHolder::ObjectEntry &>
-CachedBinaryHolder::getObjectEntry(StringRef Filename, TimestampTy Timestamp) {
+Expected<const BinaryHolder::ObjectEntry &>
+BinaryHolder::getObjectEntry(StringRef Filename, TimestampTy Timestamp) {
   if (Verbose)
     WithColor::note() << "trying to open '" << Filename << "'\n";
 
@@ -221,7 +220,8 @@ CachedBinaryHolder::getObjectEntry(StringRef Filename, TimestampTy Timestamp) {
     StringRef ArchiveFilename = getArchiveAndObjectName(Filename).first;
     std::lock_guard<std::mutex> Lock(ArchiveCacheMutex);
     if (ArchiveCache.count(ArchiveFilename)) {
-      return ArchiveCache[ArchiveFilename].getObjectEntry(Filename, Timestamp);
+      return ArchiveCache[ArchiveFilename].getObjectEntry(Filename, Timestamp,
+                                                          Verbose);
     } else {
       ArchiveEntry &AE = ArchiveCache[ArchiveFilename];
       auto Err = AE.load(Filename, Timestamp, Verbose);
@@ -230,8 +230,8 @@ CachedBinaryHolder::getObjectEntry(StringRef Filename, TimestampTy Timestamp) {
         // Don't return the error here: maybe the file wasn't an archive.
         llvm::consumeError(std::move(Err));
       } else {
-        return ArchiveCache[ArchiveFilename].getObjectEntry(Filename,
-                                                            Timestamp);
+        return ArchiveCache[ArchiveFilename].getObjectEntry(Filename, Timestamp,
+                                                            Verbose);
       }
     }
   }
@@ -241,7 +241,7 @@ CachedBinaryHolder::getObjectEntry(StringRef Filename, TimestampTy Timestamp) {
   std::lock_guard<std::mutex> Lock(ObjectCacheMutex);
   if (!ObjectCache.count(Filename)) {
     ObjectEntry &OE = ObjectCache[Filename];
-    auto Err = OE.load(Filename);
+    auto Err = OE.load(Filename, Verbose);
     if (Err) {
       ObjectCache.erase(Filename);
       return std::move(Err);
@@ -251,182 +251,12 @@ CachedBinaryHolder::getObjectEntry(StringRef Filename, TimestampTy Timestamp) {
   return ObjectCache[Filename];
 }
 
-void CachedBinaryHolder::clear() {
+void BinaryHolder::clear() {
   std::lock_guard<std::mutex> ArchiveLock(ArchiveCacheMutex);
   std::lock_guard<std::mutex> ObjectLock(ObjectCacheMutex);
   ArchiveCache.clear();
   ObjectCache.clear();
 }
 
-void BinaryHolder::changeBackingMemoryBuffer(
-    std::unique_ptr<MemoryBuffer> &&Buf) {
-  CurrentArchives.clear();
-  CurrentObjectFiles.clear();
-  CurrentFatBinary.reset();
-
-  CurrentMemoryBuffer = std::move(Buf);
-}
-
-ErrorOr<std::vector<MemoryBufferRef>> BinaryHolder::GetMemoryBuffersForFile(
-    StringRef Filename, sys::TimePoint<std::chrono::seconds> Timestamp) {
-  if (Verbose)
-    outs() << "trying to open '" << Filename << "'\n";
-
-  // Try that first as it doesn't involve any filesystem access.
-  if (auto ErrOrArchiveMembers = GetArchiveMemberBuffers(Filename, Timestamp))
-    return *ErrOrArchiveMembers;
-
-  // If the name ends with a closing paren, there is a huge chance
-  // it is an archive member specification.
-  if (Filename.endswith(")"))
-    if (auto ErrOrArchiveMembers =
-            MapArchiveAndGetMemberBuffers(Filename, Timestamp))
-      return *ErrOrArchiveMembers;
-
-  // Otherwise, just try opening a standard file. If this is an
-  // archive member specifiaction and any of the above didn't handle it
-  // (either because the archive is not there anymore, or because the
-  // archive doesn't contain the requested member), this will still
-  // provide a sensible error message.
-  auto ErrOrFile = MemoryBuffer::getFileOrSTDIN(Filename, -1, false);
-  if (auto Err = ErrOrFile.getError())
-    return Err;
-
-  changeBackingMemoryBuffer(std::move(*ErrOrFile));
-  if (Verbose)
-    outs() << "\tloaded file.\n";
-
-  auto ErrOrFat = object::MachOUniversalBinary::create(
-      CurrentMemoryBuffer->getMemBufferRef());
-  if (!ErrOrFat) {
-    consumeError(ErrOrFat.takeError());
-    // Not a fat binary must be a standard one. Return a one element vector.
-    return std::vector<MemoryBufferRef>{CurrentMemoryBuffer->getMemBufferRef()};
-  }
-
-  CurrentFatBinary = std::move(*ErrOrFat);
-  CurrentFatBinaryName = Filename;
-  return getMachOFatMemoryBuffers(CurrentFatBinaryName, *CurrentMemoryBuffer,
-                                  *CurrentFatBinary);
-}
-
-ErrorOr<std::vector<MemoryBufferRef>> BinaryHolder::GetArchiveMemberBuffers(
-    StringRef Filename, sys::TimePoint<std::chrono::seconds> Timestamp) {
-  if (CurrentArchives.empty())
-    return make_error_code(errc::no_such_file_or_directory);
-
-  StringRef CurArchiveName = CurrentArchives.front()->getFileName();
-  if (!Filename.startswith(Twine(CurArchiveName, "(").str()))
-    return make_error_code(errc::no_such_file_or_directory);
-
-  // Remove the archive name and the parens around the archive member name.
-  Filename = Filename.substr(CurArchiveName.size() + 1).drop_back();
-
-  std::vector<MemoryBufferRef> Buffers;
-  Buffers.reserve(CurrentArchives.size());
-
-  for (const auto &CurrentArchive : CurrentArchives) {
-    Error Err = Error::success();
-    for (auto Child : CurrentArchive->children(Err)) {
-      if (auto NameOrErr = Child.getName()) {
-        if (*NameOrErr == Filename) {
-          auto ModTimeOrErr = Child.getLastModified();
-          if (!ModTimeOrErr)
-            return errorToErrorCode(ModTimeOrErr.takeError());
-          if (Timestamp != sys::TimePoint<>() &&
-              Timestamp != ModTimeOrErr.get()) {
-            if (Verbose)
-              outs() << "\tmember had timestamp mismatch.\n";
-            continue;
-          }
-          if (Verbose)
-            outs() << "\tfound member in current archive.\n";
-          auto ErrOrMem = Child.getMemoryBufferRef();
-          if (!ErrOrMem)
-            return errorToErrorCode(ErrOrMem.takeError());
-          Buffers.push_back(*ErrOrMem);
-        }
-      }
-    }
-    if (Err)
-      return errorToErrorCode(std::move(Err));
-  }
-
-  if (Buffers.empty())
-    return make_error_code(errc::no_such_file_or_directory);
-  return Buffers;
-}
-
-ErrorOr<std::vector<MemoryBufferRef>>
-BinaryHolder::MapArchiveAndGetMemberBuffers(
-    StringRef Filename, sys::TimePoint<std::chrono::seconds> Timestamp) {
-  StringRef ArchiveFilename = Filename.substr(0, Filename.find('('));
-
-  auto ErrOrBuff = MemoryBuffer::getFileOrSTDIN(ArchiveFilename, -1, false);
-  if (auto Err = ErrOrBuff.getError())
-    return Err;
-
-  if (Verbose)
-    outs() << "\topened new archive '" << ArchiveFilename << "'\n";
-
-  changeBackingMemoryBuffer(std::move(*ErrOrBuff));
-  std::vector<MemoryBufferRef> ArchiveBuffers;
-  auto ErrOrFat = object::MachOUniversalBinary::create(
-      CurrentMemoryBuffer->getMemBufferRef());
-  if (!ErrOrFat) {
-    consumeError(ErrOrFat.takeError());
-    // Not a fat binary must be a standard one.
-    ArchiveBuffers.push_back(CurrentMemoryBuffer->getMemBufferRef());
-  } else {
-    CurrentFatBinary = std::move(*ErrOrFat);
-    CurrentFatBinaryName = ArchiveFilename;
-    ArchiveBuffers = getMachOFatMemoryBuffers(
-        CurrentFatBinaryName, *CurrentMemoryBuffer, *CurrentFatBinary);
-  }
-
-  for (auto MemRef : ArchiveBuffers) {
-    auto ErrOrArchive = object::Archive::create(MemRef);
-    if (!ErrOrArchive)
-      return errorToErrorCode(ErrOrArchive.takeError());
-    CurrentArchives.push_back(std::move(*ErrOrArchive));
-  }
-  return GetArchiveMemberBuffers(Filename, Timestamp);
-}
-
-ErrorOr<const object::ObjectFile &>
-BinaryHolder::getObjfileForArch(const Triple &T) {
-  for (const auto &Obj : CurrentObjectFiles) {
-    if (const auto *MachO = dyn_cast<object::MachOObjectFile>(Obj.get())) {
-      if (MachO->getArchTriple().str() == T.str())
-        return *MachO;
-    } else if (Obj->getArch() == T.getArch())
-      return *Obj;
-  }
-
-  return make_error_code(object::object_error::arch_not_found);
-}
-
-ErrorOr<std::vector<const object::ObjectFile *>>
-BinaryHolder::GetObjectFiles(StringRef Filename,
-                             sys::TimePoint<std::chrono::seconds> Timestamp) {
-  auto ErrOrMemBufferRefs = GetMemoryBuffersForFile(Filename, Timestamp);
-  if (auto Err = ErrOrMemBufferRefs.getError())
-    return Err;
-
-  std::vector<const object::ObjectFile *> Objects;
-  Objects.reserve(ErrOrMemBufferRefs->size());
-
-  CurrentObjectFiles.clear();
-  for (auto MemBuf : *ErrOrMemBufferRefs) {
-    auto ErrOrObjectFile = object::ObjectFile::createObjectFile(MemBuf);
-    if (!ErrOrObjectFile)
-      return errorToErrorCode(ErrOrObjectFile.takeError());
-
-    Objects.push_back(ErrOrObjectFile->get());
-    CurrentObjectFiles.push_back(std::move(*ErrOrObjectFile));
-  }
-
-  return std::move(Objects);
-}
 } // namespace dsymutil
 } // namespace llvm
