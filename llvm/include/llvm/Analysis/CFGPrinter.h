@@ -21,47 +21,122 @@
 
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Analysis/BlockFrequencyInfo.h"
+#include "llvm/Analysis/BranchProbabilityInfo.h"
+#include "llvm/Analysis/HeatUtils.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/GraphWriter.h"
 
 namespace llvm {
 class CFGViewerPass
     : public PassInfoMixin<CFGViewerPass> {
 public:
-  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 class CFGOnlyViewerPass
     : public PassInfoMixin<CFGOnlyViewerPass> {
 public:
-  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 class CFGPrinterPass
     : public PassInfoMixin<CFGPrinterPass> {
 public:
-  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
 class CFGOnlyPrinterPass
     : public PassInfoMixin<CFGOnlyPrinterPass> {
 public:
-  PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 };
 
-template<>
-struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
+class CFGDOTInfo {
+private:
+  const Function *F;
+  const BlockFrequencyInfo *BFI;
+  const BranchProbabilityInfo *BPI;
+  uint64_t MaxFreq;
+  bool ShowHeat;
+  bool Heuristic;
+  bool EdgeWeights;
+  bool RawWeights;
 
-  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
+public:
+  CFGDOTInfo(const Function *F) : CFGDOTInfo(F, nullptr, nullptr, 0) { }
 
-  static std::string getGraphName(const Function *F) {
-    return "CFG for '" + F->getName().str() + "' function";
+  CFGDOTInfo(const Function *F, const BlockFrequencyInfo *BFI,
+             BranchProbabilityInfo *BPI, uint64_t MaxFreq) 
+      : F(F), BFI(BFI), BPI(BPI), MaxFreq(MaxFreq) {
+    ShowHeat = false;
+    Heuristic = true;
+    EdgeWeights = true;
+    RawWeights = true;
   }
 
-  static std::string getSimpleNodeLabel(const BasicBlock *Node,
-                                        const Function *) {
+  const BlockFrequencyInfo *getBFI() { return BFI; }
+
+  const BranchProbabilityInfo *getBPI() { return BPI; }
+
+  const Function *getFunction() { return this->F; }
+
+  uint64_t getMaxFreq() { return MaxFreq; }
+
+  uint64_t getFreq(const BasicBlock *BB) {
+    return getBlockFreq(BB, BFI, Heuristic);
+  }
+
+  void setHeatColors(bool ShowHeat) { this->ShowHeat = ShowHeat; }
+
+  bool showHeatColors() { return ShowHeat; }
+
+  void setHeuristic(bool Heuristic) { this->Heuristic = Heuristic; }
+
+  bool useHeuristic() { return Heuristic; }
+
+  void setRawEdgeWeights(bool RawWeights) { this->RawWeights = RawWeights; }
+
+  bool useRawEdgeWeights() { return RawWeights; }
+
+  void setEdgeWeights(bool EdgeWeights) { this->EdgeWeights = EdgeWeights; }
+
+  bool showEdgeWeights() { return EdgeWeights; }
+};
+
+template <>
+struct GraphTraits<CFGDOTInfo *> : public GraphTraits<const BasicBlock *> {
+  static NodeRef getEntryNode(CFGDOTInfo *CFGInfo) {
+    return &(CFGInfo->getFunction()->getEntryBlock());
+  }
+
+  // nodes_iterator/begin/end - Allow iteration over all nodes in the graph
+  using nodes_iterator = pointer_iterator<Function::const_iterator>;
+
+  static nodes_iterator nodes_begin(CFGDOTInfo *CFGInfo) {
+    return nodes_iterator(CFGInfo->getFunction()->begin());
+  }
+
+  static nodes_iterator nodes_end(CFGDOTInfo *CFGInfo) {
+    return nodes_iterator(CFGInfo->getFunction()->end());
+  }
+
+  static size_t size(CFGDOTInfo *CFGInfo) { return CFGInfo->getFunction()->size(); }
+};
+
+template <> struct DOTGraphTraits<CFGDOTInfo *> : public DefaultDOTGraphTraits {
+
+  DOTGraphTraits(bool isSimple = false) : DefaultDOTGraphTraits(isSimple) {}
+
+  static std::string getGraphName(CFGDOTInfo *CFGInfo) {
+    return "CFG for '" + CFGInfo->getFunction()->getName().str() + "' function";
+  }
+
+  static std::string getSimpleNodeLabel(const BasicBlock *Node, CFGDOTInfo *) {
     if (!Node->getName().empty())
       return Node->getName().str();
 
@@ -73,7 +148,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
   }
 
   static std::string getCompleteNodeLabel(const BasicBlock *Node,
-                                          const Function *) {
+                                          CFGDOTInfo *) {
     enum { MaxColumns = 80 };
     std::string Str;
     raw_string_ostream OS(Str);
@@ -117,12 +192,11 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     return OutStr;
   }
 
-  std::string getNodeLabel(const BasicBlock *Node,
-                           const Function *Graph) {
+  std::string getNodeLabel(const BasicBlock *Node, CFGDOTInfo *CFGInfo) {
     if (isSimple())
-      return getSimpleNodeLabel(Node, Graph);
+      return getSimpleNodeLabel(Node, CFGInfo);
     else
-      return getCompleteNodeLabel(Node, Graph);
+      return getCompleteNodeLabel(Node, CFGInfo);
   }
 
   static std::string getEdgeSourceLabel(const BasicBlock *Node,
@@ -149,39 +223,86 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
 
   /// Display the raw branch weights from PGO.
   std::string getEdgeAttributes(const BasicBlock *Node, succ_const_iterator I,
-                                const Function *F) {
+                                CFGDOTInfo *CFGInfo) {
+
+    if (!CFGInfo->showEdgeWeights())
+      return "";
+
+    const unsigned MaxEdgeWidth = 2;
+
     const TerminatorInst *TI = Node->getTerminator();
     if (TI->getNumSuccessors() == 1)
+      return "penwidth="+std::to_string(MaxEdgeWidth);
+
+    unsigned OpNo = I.getSuccessorIndex();
+
+    if (OpNo >= TI->getNumSuccessors())
       return "";
 
-    MDNode *WeightsNode = TI->getMetadata(LLVMContext::MD_prof);
-    if (!WeightsNode)
+    std::string Attrs = "";
+
+    BasicBlock *SuccBB = TI->getSuccessor(OpNo);
+    auto BranchProb = CFGInfo->getBPI()->getEdgeProbability(Node,SuccBB);
+    double WeightPercent = ((double)BranchProb.getNumerator()) /
+                           ((double)BranchProb.getDenominator());
+    double Width = 1+(MaxEdgeWidth-1)*WeightPercent;
+
+    if (CFGInfo->useRawEdgeWeights()) {
+      // Prepend a 'W' to indicate that this is a weight rather than the actual
+      // profile count (due to scaling).
+
+      uint64_t Freq = CFGInfo->getFreq(Node);
+      Attrs = formatv("label=\"W:{0}\" penwidth={1}", (uint64_t)(Freq*WeightPercent), Width);
+      if (Attrs.size())
+        return Attrs;
+
+      MDNode *WeightsNode = TI->getMetadata(LLVMContext::MD_prof);
+      if (!WeightsNode)
+        return Attrs;
+
+      MDString *MDName = cast<MDString>(WeightsNode->getOperand(0));
+      if (MDName->getString() != "branch_weights")
+        return Attrs;
+
+      unsigned OpNo = I.getSuccessorIndex() + 1;
+      if (OpNo >= WeightsNode->getNumOperands())
+        return Attrs;
+      ConstantInt *Weight =
+          mdconst::dyn_extract<ConstantInt>(WeightsNode->getOperand(OpNo));
+      if (!Weight)
+        return Attrs;
+
+      Attrs = "label=\"W:" + std::to_string(Weight->getZExtValue()) + "\" penwidth=" + std::to_string(Width);
+    } else {
+      //formatting value to percentage
+      Attrs = formatv("label=\"{0:P}\" penwidth={1}", WeightPercent, Width);
+    }
+    return Attrs;
+  }
+
+  std::string getNodeAttributes(const BasicBlock *Node, CFGDOTInfo *CFGInfo) {
+
+    if (!CFGInfo->showHeatColors())
       return "";
 
-    MDString *MDName = cast<MDString>(WeightsNode->getOperand(0));
-    if (MDName->getString() != "branch_weights")
-      return "";
+    uint64_t Freq = CFGInfo->getFreq(Node);
+    std::string Color = getHeatColor(Freq, CFGInfo->getMaxFreq());
+    std::string EdgeColor = (Freq <= (CFGInfo->getMaxFreq() / 2))
+                             ? (getHeatColor(0))
+                             : (getHeatColor(1));
 
-    unsigned OpNo = I.getSuccessorIndex() + 1;
-    if (OpNo >= WeightsNode->getNumOperands())
-      return "";
-    ConstantInt *Weight =
-        mdconst::dyn_extract<ConstantInt>(WeightsNode->getOperand(OpNo));
-    if (!Weight)
-      return "";
-
-    // Prepend a 'W' to indicate that this is a weight rather than the actual
-    // profile count (due to scaling).
-    Twine Attrs = "label=\"W:" + Twine(Weight->getZExtValue()) + "\"";
-    return Attrs.str();
+    std::string Attrs = "color=\"" + EdgeColor + "ff\", style=filled,"+
+                        "fillcolor=\"" + Color + "70\"";
+    return Attrs;
   }
 };
-} // End llvm namespace
+
+} // namespace llvm
 
 namespace llvm {
-  class FunctionPass;
-  FunctionPass *createCFGPrinterLegacyPassPass ();
-  FunctionPass *createCFGOnlyPrinterLegacyPassPass ();
-} // End llvm namespace
+class ModulePass;
+ModulePass *createCFGPrinterLegacyPassPass();
+ModulePass *createCFGOnlyPrinterLegacyPassPass();
+} // namespace llvm
 
 #endif
