@@ -47,11 +47,11 @@ struct DOTGraphTraits<RegionNode*> : public DefaultDOTGraphTraits {
       BasicBlock *BB = Node->getNodeAs<BasicBlock>();
 
       if (isSimple())
-        return DOTGraphTraits<CFGDOTInfo*>
-          ::getSimpleNodeLabel(BB, nullptr);
+        return DOTGraphTraits<const Function*>
+          ::getSimpleNodeLabel(BB, BB->getParent());
       else
-        return DOTGraphTraits<CFGDOTInfo*>
-          ::getCompleteNodeLabel(BB, nullptr);
+        return DOTGraphTraits<const Function*>
+          ::getCompleteNodeLabel(BB, BB->getParent());
     }
 
     return "Not implemented";

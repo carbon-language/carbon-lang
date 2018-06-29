@@ -38,12 +38,13 @@ struct DOTGraphTraits<DomTreeNode*> : public DefaultDOTGraphTraits {
     if (!BB)
       return "Post dominance root node";
 
+
     if (isSimple())
-      return DOTGraphTraits<CFGDOTInfo*>
-        ::getSimpleNodeLabel(BB, nullptr);
+      return DOTGraphTraits<const Function*>
+        ::getSimpleNodeLabel(BB, BB->getParent());
     else
-      return DOTGraphTraits<CFGDOTInfo*>
-        ::getCompleteNodeLabel(BB, nullptr);
+      return DOTGraphTraits<const Function*>
+        ::getCompleteNodeLabel(BB, BB->getParent());
   }
 };
 

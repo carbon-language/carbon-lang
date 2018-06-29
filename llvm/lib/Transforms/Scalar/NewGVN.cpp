@@ -896,7 +896,7 @@ bool NewGVN::isBackedge(BasicBlock *From, BasicBlock *To) const {
 
 #ifndef NDEBUG
 static std::string getBlockName(const BasicBlock *B) {
-  return DOTGraphTraits<CFGDOTInfo *>::getSimpleNodeLabel(B, nullptr);
+  return DOTGraphTraits<const Function *>::getSimpleNodeLabel(B, nullptr);
 }
 #endif
 
