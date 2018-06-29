@@ -14,6 +14,7 @@
 #ifndef LLVM_TOOLS_DSYMUTIL_BINARYHOLDER_H
 #define LLVM_TOOLS_DSYMUTIL_BINARYHOLDER_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/Error.h"
@@ -23,8 +24,117 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorOr.h"
 
+#include <mutex>
+
 namespace llvm {
 namespace dsymutil {
+
+/// The CachedBinaryHolder class is responsible for creating and owning
+/// ObjectFiles and their underlying MemoryBuffers. It differs from a simple
+/// OwningBinary in that it handles accessing and caching of archives and its
+/// members.
+class CachedBinaryHolder {
+public:
+  using TimestampTy = sys::TimePoint<std::chrono::seconds>;
+
+  CachedBinaryHolder(bool Verbose = false) : Verbose(Verbose) {}
+
+  // Forward declarations for friend declaration.
+  class ObjectEntry;
+  class ArchiveEntry;
+
+  /// Base class shared by cached entries, representing objects and archives.
+  class EntryBase {
+  protected:
+    std::unique_ptr<MemoryBuffer> MemoryBuffer;
+    std::unique_ptr<object::MachOUniversalBinary> FatBinary;
+    std::string FatBinaryName;
+  };
+
+  /// Cached entry holding one or more (in case of a fat binary) object files.
+  class ObjectEntry : public EntryBase {
+  public:
+    /// Load the given object binary in memory.
+    Error load(StringRef Filename, bool Verbose = false);
+
+    /// Access all owned ObjectFiles.
+    std::vector<const object::ObjectFile *> getObjects() const;
+
+    /// Access to a derived version of all the currently owned ObjectFiles. The
+    /// conversion might be invalid, in which case an Error is returned.
+    template <typename ObjectFileType>
+    Expected<std::vector<const ObjectFileType *>> getObjectsAs() const {
+      std::vector<const object::ObjectFile *> Result;
+      Result.reserve(Objects.size());
+      for (auto &Object : Objects) {
+        const auto *Derived = dyn_cast<ObjectFileType>(Object.get());
+        if (!Derived)
+          return errorCodeToError(object::object_error::invalid_file_type);
+        Result.push_back(Derived);
+      }
+      return Result;
+    }
+
+    /// Access the owned ObjectFile with architecture \p T.
+    Expected<const object::ObjectFile &> getObject(const Triple &T) const;
+
+    /// Access to a derived version of the currently owned ObjectFile with
+    /// architecture \p T. The conversion must be known to be valid.
+    template <typename ObjectFileType>
+    Expected<const ObjectFileType &> getObjectAs(const Triple &T) const {
+      auto Object = getObject(T);
+      if (!Object)
+        return Object.takeError();
+      return cast<ObjectFileType>(*Object);
+    }
+
+  private:
+    std::vector<std::unique_ptr<object::ObjectFile>> Objects;
+    friend ArchiveEntry;
+  };
+
+  /// Cached entry holding one or more (in the of a fat binary) archive files.
+  class ArchiveEntry : public EntryBase {
+  public:
+    struct KeyTy {
+      std::string Filename;
+      TimestampTy Timestamp;
+
+      KeyTy() : Filename(), Timestamp() {}
+      KeyTy(StringRef Filename, TimestampTy Timestamp)
+          : Filename(Filename.str()), Timestamp(Timestamp) {}
+    };
+
+    /// Load the given object binary in memory.
+    Error load(StringRef Filename, TimestampTy Timestamp, bool Verbose = false);
+
+    Expected<const ObjectEntry &> getObjectEntry(StringRef Filename,
+                                                 TimestampTy Timestamp,
+                                                 bool Verbose = false);
+
+  private:
+    std::vector<std::unique_ptr<object::Archive>> Archives;
+    DenseMap<KeyTy, ObjectEntry> MemberCache;
+    std::mutex MemberCacheMutex;
+  };
+
+  Expected<const ObjectEntry &> getObjectEntry(StringRef Filename,
+                                               TimestampTy Timestamp);
+
+  void clear();
+
+private:
+  /// Cache of static archives. Objects that are part of a static archive are
+  /// stored under this object, rather than in the map below.
+  StringMap<ArchiveEntry> ArchiveCache;
+  std::mutex ArchiveCacheMutex;
+
+  /// Object entries for objects that are not in a static archive.
+  StringMap<ObjectEntry> ObjectCache;
+  std::mutex ObjectCacheMutex;
+
+  bool Verbose;
+};
 
 /// The BinaryHolder class is responsible for creating and owning ObjectFile
 /// objects and their underlying MemoryBuffer. This is different from a simple
@@ -123,8 +233,8 @@ public:
     return getObjfileForArch(T);
   }
 
-  /// Access to a derived version of the currently owned
-  /// ObjectFile. The conversion must be known to be valid.
+  /// Get and cast to a subclass of the currently owned ObjectFile. The
+  /// conversion must be known to be valid.
   template <typename ObjectFileType>
   ErrorOr<const ObjectFileType &> GetAs(const Triple &T) {
     auto ErrOrObj = Get(T);
@@ -134,5 +244,33 @@ public:
   }
 };
 } // namespace dsymutil
+
+template <>
+struct DenseMapInfo<dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy> {
+
+  static inline dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy
+  getEmptyKey() {
+    return dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy();
+  }
+
+  static inline dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy
+  getTombstoneKey() {
+    return dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy("/", {});
+  }
+
+  static unsigned
+  getHashValue(const dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy &K) {
+    return hash_combine(DenseMapInfo<StringRef>::getHashValue(K.Filename),
+                        DenseMapInfo<unsigned>::getHashValue(
+                            K.Timestamp.time_since_epoch().count()));
+  }
+
+  static bool
+  isEqual(const dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy &LHS,
+          const dsymutil::CachedBinaryHolder::ArchiveEntry::KeyTy &RHS) {
+    return LHS.Filename == RHS.Filename && LHS.Timestamp == RHS.Timestamp;
+  }
+};
+
 } // namespace llvm
 #endif
