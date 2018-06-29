@@ -28,7 +28,8 @@ struct iterator_base : public llvm::iterator_facade_base<
   explicit iterator_base(const ListT &List) : List(&List) {
     Position = static_cast<DerivedT *>(this)->list_size();
   }
-  iterator_base(const ListT &List, int Position) : List(&List), Position(Position) {}
+  iterator_base(const ListT &List, int Position)
+      : List(&List), Position(Position) {}
   iterator_base &operator=(const iterator_base &R) = default;
 
   bool operator==(const iterator_base &O) const {
