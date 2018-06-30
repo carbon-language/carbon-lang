@@ -6327,12 +6327,12 @@ declare <4 x float> @llvm.fma.v4f32(<4 x float>, <4 x float>, <4 x float>) #8
 declare <8 x float> @llvm.fma.v8f32(<8 x float>, <8 x float>, <8 x float>) #8
 
 define <2 x double> @test_mm_mask_sqrt_pd(<2 x double> %__W, i8 zeroext %__U, <2 x double> %__A) {
-; X32-LABEL: test_mm_mask_sqrt_pd:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtpd %xmm1, %xmm0 {%k1}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm_mask_sqrt_pd:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtpd %xmm1, %xmm0 {%k1}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_mask_sqrt_pd:
 ; X64:       # %bb.0: # %entry
@@ -6350,12 +6350,12 @@ entry:
 declare <2 x double> @llvm.sqrt.v2f64(<2 x double>)
 
 define <2 x double> @test_mm_maskz_sqrt_pd(i8 zeroext %__U, <2 x double> %__A) {
-; X32-LABEL: test_mm_maskz_sqrt_pd:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtpd %xmm0, %xmm0 {%k1} {z}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm_maskz_sqrt_pd:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtpd %xmm0, %xmm0 {%k1} {z}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_maskz_sqrt_pd:
 ; X64:       # %bb.0: # %entry
@@ -6371,12 +6371,12 @@ entry:
 }
 
 define <4 x double> @test_mm256_mask_sqrt_pd(<4 x double> %__W, i8 zeroext %__U, <4 x double> %__A) {
-; X32-LABEL: test_mm256_mask_sqrt_pd:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtpd %ymm1, %ymm0 {%k1}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm256_mask_sqrt_pd:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtpd %ymm1, %ymm0 {%k1}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm256_mask_sqrt_pd:
 ; X64:       # %bb.0: # %entry
@@ -6394,12 +6394,12 @@ entry:
 declare <4 x double> @llvm.sqrt.v4f64(<4 x double>)
 
 define <4 x double> @test_mm256_maskz_sqrt_pd(i8 zeroext %__U, <4 x double> %__A) {
-; X32-LABEL: test_mm256_maskz_sqrt_pd:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtpd %ymm0, %ymm0 {%k1} {z}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm256_maskz_sqrt_pd:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtpd %ymm0, %ymm0 {%k1} {z}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm256_maskz_sqrt_pd:
 ; X64:       # %bb.0: # %entry
@@ -6415,12 +6415,12 @@ entry:
 }
 
 define <4 x float> @test_mm_mask_sqrt_ps(<4 x float> %__W, i8 zeroext %__U, <4 x float> %__A) {
-; X32-LABEL: test_mm_mask_sqrt_ps:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtps %xmm1, %xmm0 {%k1}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm_mask_sqrt_ps:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtps %xmm1, %xmm0 {%k1}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_mask_sqrt_ps:
 ; X64:       # %bb.0: # %entry
@@ -6438,12 +6438,12 @@ entry:
 declare <4 x float> @llvm.sqrt.v4f32(<4 x float>)
 
 define <4 x float> @test_mm_maskz_sqrt_ps(i8 zeroext %__U, <4 x float> %__A) {
-; X32-LABEL: test_mm_maskz_sqrt_ps:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtps %xmm0, %xmm0 {%k1} {z}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm_maskz_sqrt_ps:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtps %xmm0, %xmm0 {%k1} {z}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm_maskz_sqrt_ps:
 ; X64:       # %bb.0: # %entry
@@ -6459,12 +6459,12 @@ entry:
 }
 
 define <8 x float> @test_mm256_mask_sqrt_ps(<8 x float> %__W, i8 zeroext %__U, <8 x float> %__A) {
-; X32-LABEL: test_mm256_mask_sqrt_ps:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtps %ymm1, %ymm0 {%k1}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm256_mask_sqrt_ps:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtps %ymm1, %ymm0 {%k1}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm256_mask_sqrt_ps:
 ; X64:       # %bb.0: # %entry
@@ -6479,12 +6479,12 @@ entry:
 }
 
 define <8 x float> @test_mm256_maskz_sqrt_ps(i8 zeroext %__U, <8 x float> %__A) {
-; X32-LABEL: test_mm256_maskz_sqrt_ps:
-; X32:       # %bb.0: # %entry
-; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X32-NEXT:    kmovw %eax, %k1
-; X32-NEXT:    vsqrtps %ymm0, %ymm0 {%k1} {z}
-; X32-NEXT:    retl
+; X86-LABEL: test_mm256_maskz_sqrt_ps:
+; X86:       # %bb.0: # %entry
+; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X86-NEXT:    kmovw %eax, %k1
+; X86-NEXT:    vsqrtps %ymm0, %ymm0 {%k1} {z}
+; X86-NEXT:    retl
 ;
 ; X64-LABEL: test_mm256_maskz_sqrt_ps:
 ; X64:       # %bb.0: # %entry
