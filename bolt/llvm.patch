@@ -1,5 +1,5 @@
 diff --git a/include/llvm/ADT/BitVector.h b/include/llvm/ADT/BitVector.h
-index 124c2a8..03af230 100644
+index 124c2a8c86d..03af230f2e7 100644
 --- a/include/llvm/ADT/BitVector.h
 +++ b/include/llvm/ADT/BitVector.h
 @@ -591,6 +591,11 @@ public:
@@ -15,7 +15,7 @@ index 124c2a8..03af230 100644
      if (size() < RHS.size())
        resize(RHS.size());
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h b/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h
-index 84b2339..9ed1792 100644
+index 84b23398b8c..9ed1792f0c9 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h
 @@ -28,12 +28,15 @@ class raw_ostream;
@@ -67,7 +67,7 @@ index 84b2339..9ed1792 100644
    bool extract(DataExtractor Data, uint32_t* OffsetPtr);
    void dump(raw_ostream &OS) const;
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFContext.h b/include/llvm/DebugInfo/DWARF/DWARFContext.h
-index e842cf2..83b0dbe 100644
+index e842cf231e7..83b0dbe0676 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFContext.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFContext.h
 @@ -225,6 +225,9 @@ public:
@@ -109,7 +109,7 @@ index e842cf2..83b0dbe 100644
    DWARFCompileUnit *getCompileUnitForOffset(uint32_t Offset);
  
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h b/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h
-index ff1c7fb..2622a4e 100644
+index ff1c7fb3838..2622a4e7eef 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFDebugFrame.h
 @@ -16,6 +16,7 @@
@@ -156,7 +156,7 @@ index ff1c7fb..2622a4e 100644
  };
  
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h b/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
-index a6d319a..39674a9 100644
+index a6d319a9045..39674a9d499 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFDebugLoc.h
 @@ -68,6 +68,9 @@ public:
@@ -170,7 +170,7 @@ index a6d319a..39674a9 100644
                                                uint32_t *Offset);
  };
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFDie.h b/include/llvm/DebugInfo/DWARF/DWARFDie.h
-index 39a3dd3..8427987 100644
+index 39a3dd32c0f..84279875611 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFDie.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFDie.h
 @@ -130,7 +130,8 @@ public:
@@ -184,7 +184,7 @@ index 39a3dd3..8427987 100644
    /// Extract the first value of any attribute in Attrs from this DIE.
    ///
 diff --git a/include/llvm/DebugInfo/DWARF/DWARFObject.h b/include/llvm/DebugInfo/DWARF/DWARFObject.h
-index 795eddd..43243e7 100644
+index 795eddd1c5d..43243e70474 100644
 --- a/include/llvm/DebugInfo/DWARF/DWARFObject.h
 +++ b/include/llvm/DebugInfo/DWARF/DWARFObject.h
 @@ -41,6 +41,7 @@ public:
@@ -196,7 +196,7 @@ index 795eddd..43243e7 100644
    virtual StringRef getLineStringSection() const { return ""; }
    virtual StringRef getStringSection() const { return ""; }
 diff --git a/include/llvm/ExecutionEngine/ExecutionEngine.h b/include/llvm/ExecutionEngine/ExecutionEngine.h
-index 7932688..51bf471 100644
+index 7932688290e..51bf4719f6c 100644
 --- a/include/llvm/ExecutionEngine/ExecutionEngine.h
 +++ b/include/llvm/ExecutionEngine/ExecutionEngine.h
 @@ -251,6 +251,16 @@ public:
@@ -217,7 +217,7 @@ index 7932688..51bf471 100644
    /// load it into memory.
    ///
 diff --git a/include/llvm/ExecutionEngine/JITSymbol.h b/include/llvm/ExecutionEngine/JITSymbol.h
-index 86ab173..257ed03 100644
+index 86ab17363e1..257ed03371b 100644
 --- a/include/llvm/ExecutionEngine/JITSymbol.h
 +++ b/include/llvm/ExecutionEngine/JITSymbol.h
 @@ -297,7 +297,17 @@ public:
@@ -239,7 +239,7 @@ index 86ab173..257ed03 100644
  };
  
 diff --git a/include/llvm/ExecutionEngine/Orc/Core.h b/include/llvm/ExecutionEngine/Orc/Core.h
-index 26fec8b..c533003 100644
+index 26fec8b359f..c5330034335 100644
 --- a/include/llvm/ExecutionEngine/Orc/Core.h
 +++ b/include/llvm/ExecutionEngine/Orc/Core.h
 @@ -110,7 +110,17 @@ public:
@@ -261,7 +261,7 @@ index 26fec8b..c533003 100644
  };
  
 diff --git a/include/llvm/ExecutionEngine/Orc/Legacy.h b/include/llvm/ExecutionEngine/Orc/Legacy.h
-index b2b389a..7c108ef 100644
+index b2b389ad339..7c108ef848f 100644
 --- a/include/llvm/ExecutionEngine/Orc/Legacy.h
 +++ b/include/llvm/ExecutionEngine/Orc/Legacy.h
 @@ -25,6 +25,10 @@ public:
@@ -302,7 +302,7 @@ index b2b389a..7c108ef 100644
  
  private:
 diff --git a/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h b/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h
-index cfc3922..c0b43ce 100644
+index cfc3922ebb5..c0b43ce8639 100644
 --- a/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h
 +++ b/include/llvm/ExecutionEngine/Orc/ObjectTransformLayer.h
 @@ -80,6 +80,12 @@ public:
@@ -319,7 +319,7 @@ index cfc3922..c0b43ce 100644
    TransformFtor &getTransform() { return Transform; }
  
 diff --git a/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h b/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h
-index 8f0d9fa..ada93a2 100644
+index 8f0d9fa6eb6..ada93a275e5 100644
 --- a/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h
 +++ b/include/llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h
 @@ -62,6 +62,8 @@ protected:
@@ -380,7 +380,7 @@ index 8f0d9fa..ada93a2 100644
    ///        VModuleKey.
    /// @param K VModuleKey for object to emit/finalize.
 diff --git a/include/llvm/ExecutionEngine/RuntimeDyld.h b/include/llvm/ExecutionEngine/RuntimeDyld.h
-index 14da5af..27b0243 100644
+index 14da5af0206..27b02437b98 100644
 --- a/include/llvm/ExecutionEngine/RuntimeDyld.h
 +++ b/include/llvm/ExecutionEngine/RuntimeDyld.h
 @@ -112,6 +112,14 @@ public:
@@ -424,7 +424,7 @@ index 14da5af..27b0243 100644
    /// registered with the memory manager.  Note, RuntimeDyld is responsible
    /// for identifying the EH frame and calling the memory manager with the
 diff --git a/include/llvm/MC/MCAsmInfo.h b/include/llvm/MC/MCAsmInfo.h
-index c538c46..7b16897 100644
+index c538c46fc07..7b168971a3d 100644
 --- a/include/llvm/MC/MCAsmInfo.h
 +++ b/include/llvm/MC/MCAsmInfo.h
 @@ -225,6 +225,10 @@ protected:
@@ -447,7 +447,7 @@ index c538c46..7b16897 100644
  
    bool doesSetDirectiveSuppressReloc() const {
 diff --git a/include/llvm/MC/MCContext.h b/include/llvm/MC/MCContext.h
-index c110ffd..a29f320 100644
+index c110ffd3a77..a29f32091ca 100644
 --- a/include/llvm/MC/MCContext.h
 +++ b/include/llvm/MC/MCContext.h
 @@ -506,6 +506,10 @@ namespace llvm {
@@ -478,7 +478,7 @@ index c110ffd..a29f320 100644
      }
  
 diff --git a/include/llvm/MC/MCDwarf.h b/include/llvm/MC/MCDwarf.h
-index 5cdb176..cd46632 100644
+index 5cdb176e8e2..cd466322894 100644
 --- a/include/llvm/MC/MCDwarf.h
 +++ b/include/llvm/MC/MCDwarf.h
 @@ -73,6 +73,7 @@ class MCDwarfLoc {
@@ -727,7 +727,7 @@ index 5cdb176..cd46632 100644
      assert(Operation == OpEscape);
      return StringRef(&Values[0], Values.size());
 diff --git a/include/llvm/MC/MCExpr.h b/include/llvm/MC/MCExpr.h
-index fcbbe65..25847aa 100644
+index fcbbe650d26..25847aa2946 100644
 --- a/include/llvm/MC/MCExpr.h
 +++ b/include/llvm/MC/MCExpr.h
 @@ -123,6 +123,9 @@ public:
@@ -741,7 +741,7 @@ index fcbbe65..25847aa 100644
  };
  
 diff --git a/include/llvm/MC/MCFragment.h b/include/llvm/MC/MCFragment.h
-index 38c3655..dec2957 100644
+index 38c365538e3..dec295707e9 100644
 --- a/include/llvm/MC/MCFragment.h
 +++ b/include/llvm/MC/MCFragment.h
 @@ -34,6 +34,7 @@ class MCFragment : public ilist_node_with_parent<MCFragment, MCSection> {
@@ -800,7 +800,7 @@ index 38c3655..dec2957 100644
  /// This fragment is always inserted before an instruction, and holds that
  /// instruction as context information (as well as a mask of kinds) for
 diff --git a/include/llvm/MC/MCInst.h b/include/llvm/MC/MCInst.h
-index db28fd0..e136a10 100644
+index db28fd0fd6d..e136a10b264 100644
 --- a/include/llvm/MC/MCInst.h
 +++ b/include/llvm/MC/MCInst.h
 @@ -187,7 +187,7 @@ public:
@@ -813,7 +813,7 @@ index db28fd0..e136a10 100644
    iterator begin() { return Operands.begin(); }
    const_iterator begin() const { return Operands.begin(); }
 diff --git a/include/llvm/MC/MCObjectFileInfo.h b/include/llvm/MC/MCObjectFileInfo.h
-index c99f252..e6b4a88 100644
+index c99f2521f8f..e6b4a88f469 100644
 --- a/include/llvm/MC/MCObjectFileInfo.h
 +++ b/include/llvm/MC/MCObjectFileInfo.h
 @@ -65,6 +65,9 @@ protected:
@@ -835,7 +835,7 @@ index c99f252..e6b4a88 100644
    MCSection *getCompactUnwindSection() const { return CompactUnwindSection; }
    MCSection *getDwarfAbbrevSection() const { return DwarfAbbrevSection; }
 diff --git a/include/llvm/MC/MCObjectStreamer.h b/include/llvm/MC/MCObjectStreamer.h
-index 8e9b4ac..d2c569e 100644
+index 8e9b4ac5632..d2c569e3399 100644
 --- a/include/llvm/MC/MCObjectStreamer.h
 +++ b/include/llvm/MC/MCObjectStreamer.h
 @@ -121,6 +121,8 @@ public:
@@ -848,7 +848,7 @@ index 8e9b4ac..d2c569e 100644
                           SMLoc Loc) override;
    void
 diff --git a/include/llvm/MC/MCStreamer.h b/include/llvm/MC/MCStreamer.h
-index 582a836..0b15454 100644
+index 582a836023b..0b15454ecd6 100644
 --- a/include/llvm/MC/MCStreamer.h
 +++ b/include/llvm/MC/MCStreamer.h
 @@ -199,7 +199,7 @@ class MCStreamer {
@@ -916,7 +916,7 @@ index 582a836..0b15454 100644
    /// Returns true if the relocation could not be emitted because Name is not
    /// known.
 diff --git a/include/llvm/MC/MCSymbol.h b/include/llvm/MC/MCSymbol.h
-index cc8fc02..7b7835e 100644
+index cc8fc02968a..7b7835e83d8 100644
 --- a/include/llvm/MC/MCSymbol.h
 +++ b/include/llvm/MC/MCSymbol.h
 @@ -120,10 +120,15 @@ protected:
@@ -975,7 +975,7 @@ index cc8fc02..7b7835e 100644
    }
  
 diff --git a/include/llvm/Object/COFF.h b/include/llvm/Object/COFF.h
-index 9190149..25646fe 100644
+index 9190149f382..25646fe0241 100644
 --- a/include/llvm/Object/COFF.h
 +++ b/include/llvm/Object/COFF.h
 @@ -899,6 +899,7 @@ protected:
@@ -987,7 +987,7 @@ index 9190149..25646fe 100644
    relocation_iterator section_rel_end(DataRefImpl Sec) const override;
  
 diff --git a/include/llvm/Object/ELF.h b/include/llvm/Object/ELF.h
-index 46504e7..836fd8d 100644
+index 46504e74bc2..836fd8ddc45 100644
 --- a/include/llvm/Object/ELF.h
 +++ b/include/llvm/Object/ELF.h
 @@ -127,6 +127,18 @@ public:
@@ -1009,10 +1009,11 @@ index 46504e7..836fd8d 100644
    Expected<Elf_Shdr_Range> sections() const;
  
    Expected<Elf_Sym_Range> symbols(const Elf_Shdr *Sec) const {
-@@ -397,6 +409,34 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
+@@ -396,6 +408,34 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
+   }
  }
  
- template <class ELFT>
++template <class ELFT>
 +Expected<const typename ELFFile<ELFT>::Elf_Dyn *>
 +ELFFile<ELFT>::dynamic_table_begin(const Elf_Phdr *Phdr) const {
 +  if (!Phdr)
@@ -1040,12 +1041,11 @@ index 46504e7..836fd8d 100644
 +  return reinterpret_cast<const Elf_Dyn *>(base() + End);
 +}
 +
-+template <class ELFT>
+ template <class ELFT>
  Expected<const typename ELFT::Sym *>
  ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
-                                    const Elf_Shdr *SymTab) const {
 diff --git a/include/llvm/Object/ELFObjectFile.h b/include/llvm/Object/ELFObjectFile.h
-index 4d00103..06a6295 100644
+index 4d001039238..06a629573cc 100644
 --- a/include/llvm/Object/ELFObjectFile.h
 +++ b/include/llvm/Object/ELFObjectFile.h
 @@ -254,6 +254,7 @@ protected:
@@ -1056,10 +1056,11 @@ index 4d00103..06a6295 100644
    relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
    relocation_iterator section_rel_end(DataRefImpl Sec) const override;
    section_iterator getRelocatedSection(DataRefImpl Sec) const override;
-@@ -717,6 +718,14 @@ bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
+@@ -716,6 +717,14 @@ bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
+   return getSection(Sec)->sh_type == ELF::SHT_NOBITS;
  }
  
- template <class ELFT>
++template <class ELFT>
 +bool ELFObjectFile<ELFT>::isSectionReadOnly(DataRefImpl Sec) const {
 +  const Elf_Shdr *EShdr = getSection(Sec);
 +  return EShdr->sh_flags & ELF::SHF_ALLOC &&
@@ -1067,10 +1068,9 @@ index 4d00103..06a6295 100644
 +         EShdr->sh_type == ELF::SHT_PROGBITS;
 +}
 +
-+template <class ELFT>
+ template <class ELFT>
  relocation_iterator
  ELFObjectFile<ELFT>::section_rel_begin(DataRefImpl Sec) const {
-   DataRefImpl RelData;
 @@ -751,9 +760,6 @@ ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
  template <class ELFT>
  section_iterator
@@ -1091,7 +1091,7 @@ index 4d00103..06a6295 100644
    if (sec->sh_type == ELF::SHT_REL)
      return getRel(Rel)->r_offset;
 diff --git a/include/llvm/Object/MachO.h b/include/llvm/Object/MachO.h
-index bfd3462..9be0b26 100644
+index bfd3462bf69..9be0b260f34 100644
 --- a/include/llvm/Object/MachO.h
 +++ b/include/llvm/Object/MachO.h
 @@ -320,6 +320,7 @@ public:
@@ -1112,7 +1112,7 @@ index bfd3462..9be0b26 100644
    uint64_t getRelocationOffset(DataRefImpl Rel) const override;
    symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
 diff --git a/include/llvm/Object/ObjectFile.h b/include/llvm/Object/ObjectFile.h
-index 9c4ae94..6434272 100644
+index 9c4ae94d3a6..64342723371 100644
 --- a/include/llvm/Object/ObjectFile.h
 +++ b/include/llvm/Object/ObjectFile.h
 @@ -110,6 +110,7 @@ public:
@@ -1143,7 +1143,7 @@ index 9c4ae94..6434272 100644
    return OwningObject->section_rel_begin(SectionPimpl);
  }
 diff --git a/include/llvm/Object/Wasm.h b/include/llvm/Object/Wasm.h
-index d49acf3a..5929a22 100644
+index d49acf3a38a..5929a22e1f3 100644
 --- a/include/llvm/Object/Wasm.h
 +++ b/include/llvm/Object/Wasm.h
 @@ -177,6 +177,7 @@ public:
@@ -1155,7 +1155,7 @@ index d49acf3a..5929a22 100644
    bool isSectionBitcode(DataRefImpl Sec) const override;
    relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
 diff --git a/include/llvm/Support/ToolOutputFile.h b/include/llvm/Support/ToolOutputFile.h
-index 7fd5f20..2a47ef1 100644
+index 7fd5f20ee4e..2a47ef1bfdb 100644
 --- a/include/llvm/Support/ToolOutputFile.h
 +++ b/include/llvm/Support/ToolOutputFile.h
 @@ -46,7 +46,7 @@ public:
@@ -1168,7 +1168,7 @@ index 7fd5f20..2a47ef1 100644
    ToolOutputFile(StringRef Filename, int FD);
  
 diff --git a/include/llvm/Support/X86DisassemblerDecoderCommon.h b/include/llvm/Support/X86DisassemblerDecoderCommon.h
-index eeffb9c..2ec2496 100644
+index eeffb9c0167..2ec249671eb 100644
 --- a/include/llvm/Support/X86DisassemblerDecoderCommon.h
 +++ b/include/llvm/Support/X86DisassemblerDecoderCommon.h
 @@ -62,7 +62,8 @@ namespace X86Disassembler {
@@ -1192,7 +1192,7 @@ index eeffb9c..2ec2496 100644
  #define ENUM_ENTRY(n, r, d) n,
  enum InstructionContext {
 diff --git a/include/llvm/Support/raw_ostream.h b/include/llvm/Support/raw_ostream.h
-index d11f5a8..0ad115c 100644
+index d11f5a83779..0ad115c886b 100644
 --- a/include/llvm/Support/raw_ostream.h
 +++ b/include/llvm/Support/raw_ostream.h
 @@ -393,7 +393,7 @@ public:
@@ -1205,7 +1205,7 @@ index d11f5a8..0ad115c 100644
    /// FD is the file descriptor that this writes to.  If ShouldClose is true,
    /// this closes the file when the stream is destroyed. If FD is for stdout or
 diff --git a/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp b/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
-index adada67..c9c7997 100644
+index adada672af0..c9c79971a25 100644
 --- a/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFAbbreviationDeclaration.cpp
 @@ -38,7 +38,7 @@ DWARFAbbreviationDeclaration::DWARFAbbreviationDeclaration() {
@@ -1278,7 +1278,7 @@ index adada67..c9c7997 100644
        if (Spec.isImplicitConst()) {
          FormValue.setSValue(Spec.getImplicitConstValue());
 diff --git a/lib/DebugInfo/DWARF/DWARFContext.cpp b/lib/DebugInfo/DWARF/DWARFContext.cpp
-index 3a974dd..65bd4a6 100644
+index 3a974dddc4e..65bd4a69db8 100644
 --- a/lib/DebugInfo/DWARF/DWARFContext.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFContext.cpp
 @@ -681,6 +681,15 @@ const DWARFDebugLoc *DWARFContext::getDebugLoc() {
@@ -1399,7 +1399,7 @@ index 3a974dd..65bd4a6 100644
  }
  
 diff --git a/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp b/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp
-index 03e3174..0436778 100644
+index 03e31746139..0436778e2e4 100644
 --- a/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFDataExtractor.cpp
 @@ -7,6 +7,7 @@
@@ -1411,7 +1411,7 @@ index 03e3174..0436778 100644
  #include "llvm/BinaryFormat/Dwarf.h"
  #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 diff --git a/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp b/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
-index b9dc215..40a5790 100644
+index b9dc2151e06..9a4a6f024bb 100644
 --- a/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
 @@ -352,7 +352,8 @@ static void LLVM_ATTRIBUTE_NORETURN ReportError(uint32_t StartOffset,
@@ -1434,7 +1434,7 @@ index b9dc215..40a5790 100644
      }
  
      // At this point, Offset points to the next field after Length.
-@@ -425,6 +429,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+@@ -425,11 +429,16 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
                Personality = Data.getEncodedPointer(
                    &Offset, *PersonalityEncoding,
                    EHFrameAddress ? EHFrameAddress + Offset : 0);
@@ -1443,7 +1443,15 @@ index b9dc215..40a5790 100644
                break;
              }
              case 'R':
-@@ -478,6 +484,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+               FDEPointerEncoding = Data.getU8(&Offset);
+               break;
++            case 'S':
++              // Current frame is a signal trampoline.
++              break;
+             case 'z':
+               if (i)
+                 ReportError(StartOffset,
+@@ -478,6 +487,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
                  EHFrameAddress ? EHFrameAddress + Offset : 0)) {
            InitialLocation = *Val;
          }
@@ -1452,7 +1460,7 @@ index b9dc215..40a5790 100644
          if (auto Val = Data.getEncodedPointer(
                  &Offset, Cie->getFDEPointerEncoding(), 0)) {
            AddressRange = *Val;
-@@ -496,6 +504,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+@@ -496,6 +507,8 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
              LSDAAddress = Data.getEncodedPointer(
                  &Offset, Cie->getLSDAPointerEncoding(),
                  EHFrameAddress ? Offset + EHFrameAddress : 0);
@@ -1461,7 +1469,7 @@ index b9dc215..40a5790 100644
            }
  
            if (Offset != EndAugmentationOffset)
-@@ -531,6 +541,13 @@ FrameEntry *DWARFDebugFrame::getEntryAtOffset(uint64_t Offset) const {
+@@ -531,6 +544,13 @@ FrameEntry *DWARFDebugFrame::getEntryAtOffset(uint64_t Offset) const {
    return nullptr;
  }
  
@@ -1476,7 +1484,7 @@ index b9dc215..40a5790 100644
                             Optional<uint64_t> Offset) const {
    if (Offset) {
 diff --git a/lib/DebugInfo/DWARF/DWARFDie.cpp b/lib/DebugInfo/DWARF/DWARFDie.cpp
-index 7ae38e6..f1fd34a 100644
+index 7ae38e6e053..f1fd34af238 100644
 --- a/lib/DebugInfo/DWARF/DWARFDie.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFDie.cpp
 @@ -270,12 +270,13 @@ bool DWARFDie::isSubroutineDIE() const {
@@ -1496,7 +1504,7 @@ index 7ae38e6..f1fd34a 100644
  }
  
 diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
-index 3d274b6..cef29f4 100644
+index 3d274b63a4f..cef29f4b41d 100644
 --- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
 +++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyld.cpp
 @@ -175,6 +175,12 @@ static Error getOffset(const SymbolRef &Sym, SectionRef Sec,
@@ -1560,7 +1568,7 @@ index 3d274b6..cef29f4 100644
  
  StringRef RuntimeDyld::getErrorString() { return Dyld->getErrorString(); }
 diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
-index 36b43ec9..3dc3e8f 100644
+index 36b43ec9b78..3dc3e8f325c 100644
 --- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
 +++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldELF.cpp
 @@ -270,6 +270,25 @@ void RuntimeDyldELF::resolveX86_64Relocation(const SectionEntry &Section,
@@ -1692,7 +1700,7 @@ index 36b43ec9..3dc3e8f 100644
      } else if (RelType == ELF::R_X86_64_GOTPCREL ||
                 RelType == ELF::R_X86_64_GOTPCRELX ||
 diff --git a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h
-index 766a9b2..a36c791 100644
+index 766a9b21cb1..a36c791c843 100644
 --- a/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h
 +++ b/lib/ExecutionEngine/RuntimeDyld/RuntimeDyldImpl.h
 @@ -540,6 +540,8 @@ public:
@@ -1705,7 +1713,7 @@ index 766a9b2..a36c791 100644
    bool hasError() { return HasError; }
  
 diff --git a/lib/MC/MCAssembler.cpp b/lib/MC/MCAssembler.cpp
-index a0f9a85..be32963 100644
+index a0f9a857e3c..be32963b705 100644
 --- a/lib/MC/MCAssembler.cpp
 +++ b/lib/MC/MCAssembler.cpp
 @@ -318,6 +318,34 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
@@ -1792,7 +1800,7 @@ index a0f9a85..be32963 100644
          assert((cast<MCFillFragment>(F).getValue() == 0) &&
                 "Invalid fill in virtual section!");
 diff --git a/lib/MC/MCDwarf.cpp b/lib/MC/MCDwarf.cpp
-index 0e0ea96..0044566 100644
+index 0e0ea965d14..0044566d9ab 100644
 --- a/lib/MC/MCDwarf.cpp
 +++ b/lib/MC/MCDwarf.cpp
 @@ -41,6 +41,7 @@
@@ -2165,7 +2173,7 @@ index 0e0ea96..0044566 100644
      Streamer.EmitBytes(Instr.getValues());
      return;
 diff --git a/lib/MC/MCExpr.cpp b/lib/MC/MCExpr.cpp
-index 65fbe8e..4b32cd7 100644
+index 65fbe8e8428..4b32cd7c586 100644
 --- a/lib/MC/MCExpr.cpp
 +++ b/lib/MC/MCExpr.cpp
 @@ -834,3 +834,7 @@ MCFragment *MCExpr::findAssociatedFragment() const {
@@ -2177,7 +2185,7 @@ index 65fbe8e..4b32cd7 100644
 +  return cast<MCSymbolRefExpr>(this)->getSymbol();
 +}
 diff --git a/lib/MC/MCFragment.cpp b/lib/MC/MCFragment.cpp
-index 1aed50a..e740a0d 100644
+index 1aed50aaeb7..e740a0d304a 100644
 --- a/lib/MC/MCFragment.cpp
 +++ b/lib/MC/MCFragment.cpp
 @@ -254,6 +254,9 @@ void MCFragment::destroy() {
@@ -2227,7 +2235,7 @@ index 1aed50a..e740a0d 100644
    }
    OS << "]>\n";
 diff --git a/lib/MC/MCObjectFileInfo.cpp b/lib/MC/MCObjectFileInfo.cpp
-index 83da8ac..820aa68 100644
+index 83da8ac1bae..820aa688e5f 100644
 --- a/lib/MC/MCObjectFileInfo.cpp
 +++ b/lib/MC/MCObjectFileInfo.cpp
 @@ -480,6 +480,9 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(const Triple &T, bool Large) {
@@ -2241,7 +2249,7 @@ index 83da8ac..820aa68 100644
        Ctx->getELFSection(".tdata", ELF::SHT_PROGBITS,
                           ELF::SHF_ALLOC | ELF::SHF_TLS | ELF::SHF_WRITE);
 diff --git a/lib/MC/MCObjectStreamer.cpp b/lib/MC/MCObjectStreamer.cpp
-index 0a68458..58199c9 100644
+index 0a684588110..58199c97420 100644
 --- a/lib/MC/MCObjectStreamer.cpp
 +++ b/lib/MC/MCObjectStreamer.cpp
 @@ -494,6 +494,13 @@ void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,
@@ -2259,7 +2267,7 @@ index 0a68458..58199c9 100644
                                           unsigned char Value,
                                           SMLoc Loc) {
 diff --git a/lib/MC/MCStreamer.cpp b/lib/MC/MCStreamer.cpp
-index 7765698..0954b70 100644
+index 776569894a5..0954b70df49 100644
 --- a/lib/MC/MCStreamer.cpp
 +++ b/lib/MC/MCStreamer.cpp
 @@ -85,11 +85,15 @@ void MCStreamer::reset() {
@@ -2336,7 +2344,7 @@ index 7765698..0954b70 100644
                                     SMLoc Loc) {}
  void MCStreamer::EmitBundleAlignMode(unsigned AlignPow2) {}
 diff --git a/lib/Object/COFFObjectFile.cpp b/lib/Object/COFFObjectFile.cpp
-index b544fa5..746c9f3 100644
+index b544fa5c147..746c9f32865 100644
 --- a/lib/Object/COFFObjectFile.cpp
 +++ b/lib/Object/COFFObjectFile.cpp
 @@ -339,11 +339,16 @@ unsigned COFFObjectFile::getSectionID(SectionRef Sec) const {
@@ -2358,7 +2366,7 @@ index b544fa5..746c9f3 100644
                                         MemoryBufferRef M, const uint8_t *base) {
    // The field for the number of relocations in COFF section table is only
 diff --git a/lib/Object/MachOObjectFile.cpp b/lib/Object/MachOObjectFile.cpp
-index adc54b4..2fcc293 100644
+index adc54b42eba..2fcc293a14b 100644
 --- a/lib/Object/MachOObjectFile.cpp
 +++ b/lib/Object/MachOObjectFile.cpp
 @@ -1986,6 +1986,11 @@ bool MachOObjectFile::isSectionStripped(DataRefImpl Sec) const {
@@ -2374,7 +2382,7 @@ index adc54b4..2fcc293 100644
    DataRefImpl Ret;
    Ret.d.a = Sec.d.a;
 diff --git a/lib/Object/WasmObjectFile.cpp b/lib/Object/WasmObjectFile.cpp
-index 0c78631..c0dac22 100644
+index 0c78631da25..c0dac222978 100644
 --- a/lib/Object/WasmObjectFile.cpp
 +++ b/lib/Object/WasmObjectFile.cpp
 @@ -1140,6 +1140,8 @@ bool WasmObjectFile::isSectionBSS(DataRefImpl Sec) const { return false; }
@@ -2387,7 +2395,7 @@ index 0c78631..c0dac22 100644
  
  relocation_iterator WasmObjectFile::section_rel_begin(DataRefImpl Ref) const {
 diff --git a/lib/Support/ToolOutputFile.cpp b/lib/Support/ToolOutputFile.cpp
-index e12d9e8..1c74d40 100644
+index e12d9e824f7..1c74d40f094 100644
 --- a/lib/Support/ToolOutputFile.cpp
 +++ b/lib/Support/ToolOutputFile.cpp
 @@ -35,8 +35,8 @@ ToolOutputFile::CleanupInstaller::~CleanupInstaller() {
@@ -2402,7 +2410,7 @@ index e12d9e8..1c74d40 100644
    if (EC)
      Installer.Keep = true;
 diff --git a/lib/Support/raw_ostream.cpp b/lib/Support/raw_ostream.cpp
-index e026111..9455379 100644
+index e0261110308..94553799b22 100644
 --- a/lib/Support/raw_ostream.cpp
 +++ b/lib/Support/raw_ostream.cpp
 @@ -490,7 +490,7 @@ void format_object_base::home() {
@@ -2435,7 +2443,7 @@ index e026111..9455379 100644
  /// FD is the file descriptor that this writes to.  If ShouldClose is true, this
  /// closes the file when the stream is destroyed.
 diff --git a/lib/Target/X86/CMakeLists.txt b/lib/Target/X86/CMakeLists.txt
-index ed79f4f..95cb71f 100644
+index ed79f4fec4e..95cb71fb867 100644
 --- a/lib/Target/X86/CMakeLists.txt
 +++ b/lib/Target/X86/CMakeLists.txt
 @@ -19,6 +19,7 @@ if (X86_GEN_FOLD_TABLES)
@@ -2447,7 +2455,7 @@ index ed79f4f..95cb71f 100644
  set(sources
    X86AsmPrinter.cpp
 diff --git a/lib/Target/X86/Disassembler/X86Disassembler.cpp b/lib/Target/X86/Disassembler/X86Disassembler.cpp
-index c58254a..ab9241e 100644
+index c58254ae38c..ab9241e5530 100644
 --- a/lib/Target/X86/Disassembler/X86Disassembler.cpp
 +++ b/lib/Target/X86/Disassembler/X86Disassembler.cpp
 @@ -247,6 +247,8 @@ MCDisassembler::DecodeStatus X86GenericDisassembler::getInstruction(
@@ -2460,7 +2468,7 @@ index c58254a..ab9241e 100644
        Instr.setFlags(Flags);
      }
 diff --git a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp
-index 6a10278..626b143 100644
+index 6a10278dc7f..626b1439871 100644
 --- a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp
 +++ b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.cpp
 @@ -298,6 +298,9 @@ static bool isREX(struct InternalInstruction *insn, uint8_t prefix) {
@@ -2483,7 +2491,7 @@ index 6a10278..626b143 100644
        // If EVEX.v2 is set this is one of the 16-31 registers.
        if (insn->vectorExtensionType == TYPE_EVEX &&
 diff --git a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h
-index 44422a9..d60aa3f 100644
+index 44422a95f16..d60aa3fd198 100644
 --- a/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h
 +++ b/lib/Target/X86/Disassembler/X86DisassemblerDecoder.h
 @@ -563,6 +563,8 @@ struct InternalInstruction {
@@ -2496,7 +2504,7 @@ index 44422a9..d60aa3f 100644
    uint8_t repeatPrefix;
  
 diff --git a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp b/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
-index fa7c352..35d28c1 100644
+index fa7c352a1b6..35d28c19fc2 100644
 --- a/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
 +++ b/lib/Target/X86/MCTargetDesc/X86MCAsmInfo.cpp
 @@ -46,6 +46,8 @@ X86MCAsmInfoDarwin::X86MCAsmInfoDarwin(const Triple &T) {
@@ -2535,7 +2543,7 @@ index fa7c352..35d28c1 100644
    UseIntegratedAssembler = true;
  }
 diff --git a/lib/Target/X86/X86InstrControl.td b/lib/Target/X86/X86InstrControl.td
-index 9fba65c..1c8eb27 100644
+index 9fba65c6cf6..1c8eb2708fc 100644
 --- a/lib/Target/X86/X86InstrControl.td
 +++ b/lib/Target/X86/X86InstrControl.td
 @@ -200,7 +200,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
@@ -2568,7 +2576,7 @@ index 9fba65c..1c8eb27 100644
  
  // Conditional tail calls are similar to the above, but they are branches
 diff --git a/lib/Target/X86/X86InstrSystem.td b/lib/Target/X86/X86InstrSystem.td
-index f25f1b0..8a36933 100644
+index f25f1b0e8e4..8a369331256 100644
 --- a/lib/Target/X86/X86InstrSystem.td
 +++ b/lib/Target/X86/X86InstrSystem.td
 @@ -29,7 +29,8 @@ let mayLoad = 1, mayStore = 0, hasSideEffects = 1 in {
