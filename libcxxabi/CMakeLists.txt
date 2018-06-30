@@ -110,7 +110,7 @@ endforeach()
 
 find_path(
   LIBCXXABI_LIBCXX_INCLUDES
-  vector
+  __config
   PATHS ${LIBCXXABI_LIBCXX_INCLUDES}
         ${LIBCXXABI_LIBCXX_PATH}/include
         ${CMAKE_BINARY_DIR}/${LIBCXXABI_LIBCXX_INCLUDES}
