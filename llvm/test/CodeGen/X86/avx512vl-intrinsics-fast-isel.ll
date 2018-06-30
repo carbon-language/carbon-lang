@@ -2208,55 +2208,6 @@ define <4 x i64> @test_mm256_maskz_broadcastq_epi64(i8 %a0, <2 x i64> %a1) {
   ret <4 x i64> %res1
 }
 
-define <2 x double> @test_mm_broadcastsd_pd(<2 x double> %a0) {
-; CHECK-LABEL: test_mm_broadcastsd_pd:
-; CHECK:       # %bb.0:
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
-; CHECK-NEXT:    ret{{[l|q]}}
-  %res = shufflevector <2 x double> %a0, <2 x double> undef, <2 x i32> zeroinitializer
-  ret <2 x double> %res
-}
-
-define <2 x double> @test_mm_mask_broadcastsd_pd(<2 x double> %a0, i8 %a1, <2 x double> %a2) {
-; X86-LABEL: test_mm_mask_broadcastsd_pd:
-; X86:       # %bb.0:
-; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X86-NEXT:    kmovw %eax, %k1
-; X86-NEXT:    vmovddup {{.*#+}} xmm0 {%k1} = xmm1[0,0]
-; X86-NEXT:    retl
-;
-; X64-LABEL: test_mm_mask_broadcastsd_pd:
-; X64:       # %bb.0:
-; X64-NEXT:    kmovw %edi, %k1
-; X64-NEXT:    vmovddup {{.*#+}} xmm0 {%k1} = xmm1[0,0]
-; X64-NEXT:    retq
-  %trn1 = trunc i8 %a1 to i2
-  %arg1 = bitcast i2 %trn1 to <2 x i1>
-  %res0 = shufflevector <2 x double> %a2, <2 x double> undef, <2 x i32> zeroinitializer
-  %res1 = select <2 x i1> %arg1, <2 x double> %res0, <2 x double> %a0
-  ret <2 x double> %res1
-}
-
-define <2 x double> @test_mm_maskz_broadcastsd_pd(i8 %a0, <2 x double> %a1) {
-; X86-LABEL: test_mm_maskz_broadcastsd_pd:
-; X86:       # %bb.0:
-; X86-NEXT:    movb {{[0-9]+}}(%esp), %al
-; X86-NEXT:    kmovw %eax, %k1
-; X86-NEXT:    vmovddup {{.*#+}} xmm0 {%k1} {z} = xmm0[0,0]
-; X86-NEXT:    retl
-;
-; X64-LABEL: test_mm_maskz_broadcastsd_pd:
-; X64:       # %bb.0:
-; X64-NEXT:    kmovw %edi, %k1
-; X64-NEXT:    vmovddup {{.*#+}} xmm0 {%k1} {z} = xmm0[0,0]
-; X64-NEXT:    retq
-  %trn0 = trunc i8 %a0 to i2
-  %arg0 = bitcast i2 %trn0 to <2 x i1>
-  %res0 = shufflevector <2 x double> %a1, <2 x double> undef, <2 x i32> zeroinitializer
-  %res1 = select <2 x i1> %arg0, <2 x double> %res0, <2 x double> zeroinitializer
-  ret <2 x double> %res1
-}
-
 define <4 x double> @test_mm256_broadcastsd_pd(<2 x double> %a0) {
 ; CHECK-LABEL: test_mm256_broadcastsd_pd:
 ; CHECK:       # %bb.0:
