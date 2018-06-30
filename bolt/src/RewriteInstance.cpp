@@ -804,6 +804,11 @@ void RewriteInstance::discoverStorage() {
     exit(1);
   }
   auto Obj = ELF64LEFile->getELFFile();
+  if (Obj->getHeader()->e_type != ELF::ET_EXEC) {
+    errs() << "BOLT-ERROR: only non-PIE ELF executables are supported at the "
+              "moment.\n";
+    exit(1);
+  }
 
   EntryPoint = Obj->getHeader()->e_entry;
 

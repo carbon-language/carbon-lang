@@ -1407,7 +1407,7 @@ void BinaryFunction::postProcessJumpTables() {
     if (JT.Type == JumpTable::JTT_PIC && opts::JumpTables == JTS_BASIC) {
       opts::JumpTables = JTS_MOVE;
       outs() << "BOLT-INFO: forcing -jump-tables=move as PIC jump table was "
-                "detected\n";
+                "detected in function " << *this << '\n';
     }
     for (unsigned I = 0; I < JT.OffsetEntries.size(); ++I) {
       auto Offset = JT.OffsetEntries[I];
