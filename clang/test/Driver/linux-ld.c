@@ -1784,6 +1784,7 @@
 // CHECK-LD-GENTOO-X32: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=x86_64-unknown-linux-gnu \
 // RUN:     --gcc-toolchain="%S/Inputs/rhel_7_tree/opt/rh/devtoolset-7/root/usr" \
 // RUN:     --sysroot=%S/Inputs/rhel_7_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-LD-RHEL7-DTS %s
