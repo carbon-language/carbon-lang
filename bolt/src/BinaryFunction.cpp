@@ -867,8 +867,8 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   }
   if (Type == IndirectBranchType::POSSIBLE_JUMP_TABLE ||
       Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
-    assert(JTOffsetCandidates.size() > 2 &&
-           "expected more than 2 jump table entries");
+    assert(JTOffsetCandidates.size() > 1 &&
+           "expected more than one jump table entry");
 
     auto JumpTableName = generateJumpTableName(ArrayStart);
     auto JumpTableType =
