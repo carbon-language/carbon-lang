@@ -34646,7 +34646,7 @@ static bool hasBZHI(const X86Subtarget &Subtarget, MVT VT) {
 // It's equivalent to performing bzhi (zero high bits) on the input, with the
 // same index of the load.
 static SDValue combineAndLoadToBZHI(SDNode *Node, SelectionDAG &DAG,
-    const X86Subtarget &Subtarget) {
+                                    const X86Subtarget &Subtarget) {
   MVT VT = Node->getSimpleValueType(0);
   SDLoc dl(Node);
 
@@ -34701,15 +34701,16 @@ static SDValue combineAndLoadToBZHI(SDNode *Node, SelectionDAG &DAG,
           // <- (and (srl 0xFFFFFFFF, (sub 32, idx)))
           //    that will be replaced with one bzhi instruction.
           SDValue Inp = (i == 0) ? Node->getOperand(1) : Node->getOperand(0);
-          SDValue SizeC = DAG.getConstant(VT.getSizeInBits(), dl, VT);
+          SDValue SizeC = DAG.getConstant(VT.getSizeInBits(), dl, MVT::i32);
 
           // Get the Node which indexes into the array.
           SDValue Index = getIndexFromUnindexedLoad(Ld);
           if (!Index)
             return SDValue();
-          Index = DAG.getZExtOrTrunc(Index, dl, VT);
+          Index = DAG.getZExtOrTrunc(Index, dl, MVT::i32);
 
-          SDValue Sub = DAG.getNode(ISD::SUB, dl, VT, SizeC, Index);
+          SDValue Sub = DAG.getNode(ISD::SUB, dl, MVT::i32, SizeC, Index);
+          Sub = DAG.getNode(ISD::TRUNCATE, dl, MVT::i8, Sub);
 
           SDValue AllOnes = DAG.getAllOnesConstant(dl, VT);
           SDValue LShr = DAG.getNode(ISD::SRL, dl, VT, AllOnes, Sub);
