@@ -2837,10 +2837,8 @@ void BoUpSLP::setInsertPointAfterBundle(ArrayRef<Value *> VL,
   // should be in this block.
   auto *Front = cast<Instruction>(S.OpValue);
   auto *BB = Front->getParent();
-  const unsigned Opcode = S.Opcode;
-  const unsigned AltOpcode = S.AltOpcode;
   assert(llvm::all_of(make_range(VL.begin(), VL.end()), [=](Value *V) -> bool {
-    return !sameOpcodeOrAlt(Opcode, AltOpcode,
+    return !sameOpcodeOrAlt(S.Opcode, S.AltOpcode,
                             cast<Instruction>(V)->getOpcode()) ||
            cast<Instruction>(V)->getParent() == BB;
   }));
@@ -2882,7 +2880,7 @@ void BoUpSLP::setInsertPointAfterBundle(ArrayRef<Value *> VL,
   if (!LastInst) {
     SmallPtrSet<Value *, 16> Bundle(VL.begin(), VL.end());
     for (auto &I : make_range(BasicBlock::iterator(Front), BB->end())) {
-      if (Bundle.erase(&I) && sameOpcodeOrAlt(Opcode, AltOpcode, I.getOpcode()))
+      if (Bundle.erase(&I) && sameOpcodeOrAlt(S.Opcode, S.AltOpcode, I.getOpcode()))
         LastInst = &I;
       if (Bundle.empty())
         break;
