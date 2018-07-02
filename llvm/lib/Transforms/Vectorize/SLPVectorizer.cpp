@@ -2357,15 +2357,11 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
       if (NeedToShuffleReuses) {
         for (unsigned Idx : E->ReuseShuffleIndices) {
           Instruction *I = cast<Instruction>(VL[Idx]);
-          if (!I)
-            continue;
           ReuseShuffleCost -=
               TTI->getArithmeticInstrCost(I->getOpcode(), ScalarTy);
         }
         for (Value *V : VL) {
           Instruction *I = cast<Instruction>(V);
-          if (!I)
-            continue;
           ReuseShuffleCost +=
               TTI->getArithmeticInstrCost(I->getOpcode(), ScalarTy);
         }
@@ -2373,8 +2369,6 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
       int VecCost = 0;
       for (Value *i : VL) {
         Instruction *I = cast<Instruction>(i);
-        if (!I)
-          break;
         assert(S.isOpcodeOrAlt(I) && "Unexpected main/alternate opcode");
         ScalarCost += TTI->getArithmeticInstrCost(I->getOpcode(), ScalarTy);
       }
