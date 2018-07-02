@@ -8,7 +8,7 @@
 ; RUN: -polly-acc-dump-kernel-ir -polly-process-unprofitable -disable-output < %s | \
 ; RUN: FileCheck -check-prefix=I32 %s
 
-; REQUIRES pollyacc
+; REQUIRES: pollyacc
 
 ; This test case checks whether the openCl runtime functions (get_local_id/get_group_id) return the right types for 32 and 64bit devices.
 
