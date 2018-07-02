@@ -527,6 +527,17 @@ let Predicates = [HasSVE] in {
   defm CMPLO_WIDE_PPzZZ : sve_int_cmp_1_wide<0b110, "cmplo">;
   defm CMPLS_WIDE_PPzZZ : sve_int_cmp_1_wide<0b111, "cmpls">;
 
+  defm CMPGE_PPzZI : sve_int_scmp_vi<0b000, "cmpge">;
+  defm CMPGT_PPzZI : sve_int_scmp_vi<0b001, "cmpgt">;
+  defm CMPLT_PPzZI : sve_int_scmp_vi<0b010, "cmplt">;
+  defm CMPLE_PPzZI : sve_int_scmp_vi<0b011, "cmple">;
+  defm CMPEQ_PPzZI : sve_int_scmp_vi<0b100, "cmpeq">;
+  defm CMPNE_PPzZI : sve_int_scmp_vi<0b101, "cmpne">;
+  defm CMPHS_PPzZI : sve_int_ucmp_vi<0b00, "cmphs">;
+  defm CMPHI_PPzZI : sve_int_ucmp_vi<0b01, "cmphi">;
+  defm CMPLO_PPzZI : sve_int_ucmp_vi<0b10, "cmplo">;
+  defm CMPLS_PPzZI : sve_int_ucmp_vi<0b11, "cmpls">;
+
   defm SQINCB_XPiWdI : sve_int_pred_pattern_b_s32<0b00000, "sqincb">;
   defm UQINCB_WPiI   : sve_int_pred_pattern_b_u32<0b00001, "uqincb">;
   defm SQDECB_XPiWdI : sve_int_pred_pattern_b_s32<0b00010, "sqdecb">;
