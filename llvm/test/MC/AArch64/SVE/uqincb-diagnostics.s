@@ -13,6 +13,11 @@ uqincb sp
 // CHECK-NEXT: uqincb sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+uqincb z0.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
+// CHECK-NEXT: uqincb z0.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up (unsigned inc only has one register operand)

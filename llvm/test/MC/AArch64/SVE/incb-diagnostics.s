@@ -13,6 +13,12 @@ incb sp
 // CHECK-NEXT: incb sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+// INCB does not have a vector equivalent
+incb z0.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
+// CHECK-NEXT: incb z0.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Immediate not compatible with encode/decode function.

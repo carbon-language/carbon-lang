@@ -18,6 +18,11 @@ sqdecb sp
 // CHECK-NEXT: sqdecb sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+sqdecb z0.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
+// CHECK-NEXT: sqdecb z0.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up

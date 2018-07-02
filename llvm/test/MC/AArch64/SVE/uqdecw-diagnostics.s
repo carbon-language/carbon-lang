@@ -13,6 +13,11 @@ uqdecw sp
 // CHECK-NEXT: uqdecw sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+uqdecw z0.d
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid element width
+// CHECK-NEXT: uqdecw z0.d
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up (unsigned dec only has one register operand)

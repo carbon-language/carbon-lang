@@ -78,6 +78,46 @@ sqinch  x0, w0, pow2, mul #16
 
 
 // ---------------------------------------------------------------------------//
+// Test vector form and aliases.
+// ---------------------------------------------------------------------------//
+sqinch  z0.h
+// CHECK-INST: sqinch  z0.h
+// CHECK-ENCODING: [0xe0,0xc3,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 c3 60 04 <unknown>
+
+sqinch  z0.h, all
+// CHECK-INST: sqinch  z0.h
+// CHECK-ENCODING: [0xe0,0xc3,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 c3 60 04 <unknown>
+
+sqinch  z0.h, all, mul #1
+// CHECK-INST: sqinch  z0.h
+// CHECK-ENCODING: [0xe0,0xc3,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 c3 60 04 <unknown>
+
+sqinch  z0.h, all, mul #16
+// CHECK-INST: sqinch  z0.h, all, mul #16
+// CHECK-ENCODING: [0xe0,0xc3,0x6f,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 c3 6f 04 <unknown>
+
+sqinch  z0.h, pow2
+// CHECK-INST: sqinch  z0.h, pow2
+// CHECK-ENCODING: [0x00,0xc0,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 c0 60 04 <unknown>
+
+sqinch  z0.h, pow2, mul #16
+// CHECK-INST: sqinch  z0.h, pow2, mul #16
+// CHECK-ENCODING: [0x00,0xc0,0x6f,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 c0 6f 04 <unknown>
+
+
+// ---------------------------------------------------------------------------//
 // Test all patterns for 64-bit form
 // ---------------------------------------------------------------------------//
 

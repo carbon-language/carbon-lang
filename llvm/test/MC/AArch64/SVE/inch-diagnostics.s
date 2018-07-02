@@ -13,6 +13,12 @@ inch sp
 // CHECK-NEXT: inch sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+// inch requires z0.h
+inch z0.s
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid element width
+// CHECK-NEXT: inch z0.s
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Immediate not compatible with encode/decode function.

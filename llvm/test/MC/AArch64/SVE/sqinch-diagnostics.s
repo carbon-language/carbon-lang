@@ -18,6 +18,11 @@ sqinch sp
 // CHECK-NEXT: sqinch sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+sqinch z0.s
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid element width
+// CHECK-NEXT: sqinch z0.s
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up

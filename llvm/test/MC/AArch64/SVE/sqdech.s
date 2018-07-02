@@ -78,6 +78,46 @@ sqdech  x0, w0, pow2, mul #16
 
 
 // ---------------------------------------------------------------------------//
+// Test vector form and aliases.
+// ---------------------------------------------------------------------------//
+sqdech  z0.h
+// CHECK-INST: sqdech  z0.h
+// CHECK-ENCODING: [0xe0,0xcb,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 cb 60 04 <unknown>
+
+sqdech  z0.h, all
+// CHECK-INST: sqdech  z0.h
+// CHECK-ENCODING: [0xe0,0xcb,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 cb 60 04 <unknown>
+
+sqdech  z0.h, all, mul #1
+// CHECK-INST: sqdech  z0.h
+// CHECK-ENCODING: [0xe0,0xcb,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 cb 60 04 <unknown>
+
+sqdech  z0.h, all, mul #16
+// CHECK-INST: sqdech  z0.h, all, mul #16
+// CHECK-ENCODING: [0xe0,0xcb,0x6f,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: e0 cb 6f 04 <unknown>
+
+sqdech  z0.h, pow2
+// CHECK-INST: sqdech  z0.h, pow2
+// CHECK-ENCODING: [0x00,0xc8,0x60,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 c8 60 04 <unknown>
+
+sqdech  z0.h, pow2, mul #16
+// CHECK-INST: sqdech  z0.h, pow2, mul #16
+// CHECK-ENCODING: [0x00,0xc8,0x6f,0x04]
+// CHECK-ERROR: instruction requires: sve
+// CHECK-UNKNOWN: 00 c8 6f 04 <unknown>
+
+
+// ---------------------------------------------------------------------------//
 // Test all patterns for 64-bit form
 // ---------------------------------------------------------------------------//
 

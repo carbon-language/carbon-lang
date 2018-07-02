@@ -18,6 +18,11 @@ sqincb sp
 // CHECK-NEXT: sqincb sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+sqincb z0.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
+// CHECK-NEXT: sqincb z0.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up

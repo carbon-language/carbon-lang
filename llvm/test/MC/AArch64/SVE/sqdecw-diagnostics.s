@@ -18,6 +18,11 @@ sqdecw sp
 // CHECK-NEXT: sqdecw sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+sqdecw z0.d
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid element width
+// CHECK-NEXT: sqdecw z0.d
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up

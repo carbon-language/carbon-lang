@@ -13,6 +13,11 @@ uqinch sp
 // CHECK-NEXT: uqinch sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+uqinch z0.s
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid element width
+// CHECK-NEXT: uqinch z0.s
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up (unsigned inc only has one register operand)

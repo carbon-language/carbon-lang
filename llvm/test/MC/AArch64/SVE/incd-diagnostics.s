@@ -13,6 +13,12 @@ incd sp
 // CHECK-NEXT: incd sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+// incd requires z0.d
+incd z0.s
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid element width
+// CHECK-NEXT: incd z0.s
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Immediate not compatible with encode/decode function.

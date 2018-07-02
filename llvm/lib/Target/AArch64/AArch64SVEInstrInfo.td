@@ -574,6 +574,25 @@ let Predicates = [HasSVE] in {
   defm SQDECD_XPiI   : sve_int_pred_pattern_b_x64<0b11110, "sqdecd">;
   defm UQDECD_XPiI   : sve_int_pred_pattern_b_x64<0b11111, "uqdecd">;
 
+  defm SQINCH_ZPiI : sve_int_countvlv<0b01000, "sqinch", ZPR16>;
+  defm UQINCH_ZPiI : sve_int_countvlv<0b01001, "uqinch", ZPR16>;
+  defm SQDECH_ZPiI : sve_int_countvlv<0b01010, "sqdech", ZPR16>;
+  defm UQDECH_ZPiI : sve_int_countvlv<0b01011, "uqdech", ZPR16>;
+  defm INCH_ZPiI   : sve_int_countvlv<0b01100, "inch",   ZPR16>;
+  defm DECH_ZPiI   : sve_int_countvlv<0b01101, "dech",   ZPR16>;
+  defm SQINCW_ZPiI : sve_int_countvlv<0b10000, "sqincw", ZPR32>;
+  defm UQINCW_ZPiI : sve_int_countvlv<0b10001, "uqincw", ZPR32>;
+  defm SQDECW_ZPiI : sve_int_countvlv<0b10010, "sqdecw", ZPR32>;
+  defm UQDECW_ZPiI : sve_int_countvlv<0b10011, "uqdecw", ZPR32>;
+  defm INCW_ZPiI   : sve_int_countvlv<0b10100, "incw",   ZPR32>;
+  defm DECW_ZPiI   : sve_int_countvlv<0b10101, "decw",   ZPR32>;
+  defm SQINCD_ZPiI : sve_int_countvlv<0b11000, "sqincd", ZPR64>;
+  defm UQINCD_ZPiI : sve_int_countvlv<0b11001, "uqincd", ZPR64>;
+  defm SQDECD_ZPiI : sve_int_countvlv<0b11010, "sqdecd", ZPR64>;
+  defm UQDECD_ZPiI : sve_int_countvlv<0b11011, "uqdecd", ZPR64>;
+  defm INCD_ZPiI   : sve_int_countvlv<0b11100, "incd",   ZPR64>;
+  defm DECD_ZPiI   : sve_int_countvlv<0b11101, "decd",   ZPR64>;
+
   defm INDEX_RR : sve_int_index_rr<"index">;
   defm INDEX_IR : sve_int_index_ir<"index">;
   defm INDEX_RI : sve_int_index_ri<"index">;

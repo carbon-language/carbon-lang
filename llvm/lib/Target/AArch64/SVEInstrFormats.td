@@ -285,6 +285,36 @@ let Predicates = [HasSVE] in {
 // SVE Element Count Group
 //===----------------------------------------------------------------------===//
 
+class sve_int_countvlv<bits<5> opc, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn, sve_pred_enum:$pattern, sve_incdec_imm:$imm4),
+  asm, "\t$Zdn, $pattern, mul $imm4",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zdn;
+  bits<5> pattern;
+  bits<4> imm4;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = opc{4-3};
+  let Inst{21}    = 0b1;
+  let Inst{20}    = opc{2};
+  let Inst{19-16} = imm4;
+  let Inst{15-12} = 0b1100;
+  let Inst{11-10} = opc{1-0};
+  let Inst{9-5}   = pattern;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve_int_countvlv<bits<5> opc, string asm, ZPRRegOp zprty> {
+  def NAME : sve_int_countvlv<opc, asm, zprty>;
+
+  def : InstAlias<asm # "\t$Zdn, $pattern",
+                  (!cast<Instruction>(NAME) zprty:$Zdn, sve_pred_enum:$pattern, 1), 1>;
+  def : InstAlias<asm # "\t$Zdn",
+                  (!cast<Instruction>(NAME) zprty:$Zdn, 0b11111, 1), 2>;
+}
+
 class sve_int_pred_pattern_a<bits<3> opc, string asm>
 : I<(outs GPR64:$Rdn), (ins GPR64:$_Rdn, sve_pred_enum:$pattern, sve_incdec_imm:$imm4),
   asm, "\t$Rdn, $pattern, mul $imm4",

@@ -13,6 +13,11 @@ uqdecb sp
 // CHECK-NEXT: uqdecb sp
 // CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
 
+uqdecb z0.b
+// CHECK: [[@LINE-1]]:{{[0-9]+}}: error: invalid operand
+// CHECK-NEXT: uqdecb z0.b
+// CHECK-NOT: [[@LINE-1]]:{{[0-9]+}}:
+
 
 // ------------------------------------------------------------------------- //
 // Operands not matching up (unsigned dec only has one register operand)
