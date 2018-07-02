@@ -30,19 +30,18 @@ define <4 x i32> @sub(<4 x i32> %v) {
 
 ; If any element of the shuffle mask operand is undef, that element of the result is undef.
 ; The shuffle is eliminated in this transform, but we can replace a constant element with undef.
+; Preserve flags when possible.
 
 define <4 x i32> @mul(<4 x i32> %v) {
 ; CHECK-LABEL: @mul(
-; CHECK-NEXT:    [[B:%.*]] = mul <4 x i32> [[V:%.*]], <i32 undef, i32 12, i32 undef, i32 14>
+; CHECK-NEXT:    [[B:%.*]] = mul nuw nsw <4 x i32> [[V:%.*]], <i32 undef, i32 12, i32 undef, i32 14>
 ; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x i32> [[V]], <4 x i32> [[B]], <4 x i32> <i32 undef, i32 5, i32 2, i32 7>
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
 ;
-  %b = mul <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
+  %b = mul nsw nuw <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
   %s = shufflevector <4 x i32> %v, <4 x i32> %b, <4 x i32> <i32 undef, i32 5, i32 2, i32 7>
   ret <4 x i32> %s
 }
-
-; Preserve flags when possible.
 
 define <4 x i32> @shl(<4 x i32> %v) {
 ; CHECK-LABEL: @shl(
