@@ -2350,6 +2350,9 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
       return ReuseShuffleCost + VecCallCost - ScalarCallCost;
     }
     case Instruction::ShuffleVector: {
+      assert(S.isAltShuffle() && Instruction::isBinaryOp(S.Opcode) &&
+             Instruction::isBinaryOp(S.AltOpcode) &&
+             "Invalid Shuffle Vector Operand");
       int ScalarCost = 0;
       if (NeedToShuffleReuses) {
         for (unsigned Idx : E->ReuseShuffleIndices) {
@@ -3461,7 +3464,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     }
     case Instruction::ShuffleVector: {
       ValueList LHSVL, RHSVL;
-      assert(Instruction::isBinaryOp(S.Opcode) &&
+      assert(S.isAltShuffle() && Instruction::isBinaryOp(S.Opcode) &&
+             Instruction::isBinaryOp(S.AltOpcode) &&
              "Invalid Shuffle Vector Operand");
       reorderAltShuffleOperands(S, E->Scalars, LHSVL, RHSVL);
       setInsertPointAfterBundle(E->Scalars, S);
