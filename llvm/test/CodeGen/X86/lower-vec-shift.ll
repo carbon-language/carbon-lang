@@ -207,3 +207,35 @@ define <4 x i32> @test8(<4 x i32> %a) {
   %lshr = ashr <4 x i32> %a, <i32 3, i32 3, i32 2, i32 2>
   ret <4 x i32> %lshr
 }
+
+define <8 x i16> @test9(<8 x i16> %a) {
+; SSE-LABEL: test9:
+; SSE:       # %bb.0:
+; SSE-NEXT:    movdqa {{.*#+}} xmm2 = [65535,0,65535,65535,65535,0,0,0]
+; SSE-NEXT:    movdqa %xmm0, %xmm1
+; SSE-NEXT:    pand %xmm2, %xmm1
+; SSE-NEXT:    psraw $2, %xmm0
+; SSE-NEXT:    pandn %xmm0, %xmm2
+; SSE-NEXT:    por %xmm2, %xmm1
+; SSE-NEXT:    psraw $1, %xmm1
+; SSE-NEXT:    movdqa %xmm1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: test9:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vpsraw $2, %xmm0, %xmm1
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2,3,4],xmm1[5,6,7]
+; AVX1-NEXT:    vpsraw $1, %xmm0, %xmm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: test9:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vpmovsxwd %xmm0, %ymm0
+; AVX2-NEXT:    vpsravd {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX2-NEXT:    vpackssdw %xmm1, %xmm0, %xmm0
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+  %lshr = ashr <8 x i16> %a, <i16 1, i16 3, i16 1, i16 1, i16 1, i16 3, i16 3, i16 3>
+  ret <8 x i16> %lshr
+}
