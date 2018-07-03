@@ -43,6 +43,15 @@ let Predicates = [HasSVE] in {
   defm EOR_ZI : sve_int_log_imm<0b01, "eor", "eon">;
   defm AND_ZI : sve_int_log_imm<0b10, "and", "bic">;
 
+  defm SXTB_ZPmZ : sve_int_un_pred_arit_0_h<0b000, "sxtb">;
+  defm UXTB_ZPmZ : sve_int_un_pred_arit_0_h<0b001, "uxtb">;
+  defm SXTH_ZPmZ : sve_int_un_pred_arit_0_w<0b010, "sxth">;
+  defm UXTH_ZPmZ : sve_int_un_pred_arit_0_w<0b011, "uxth">;
+  defm SXTW_ZPmZ : sve_int_un_pred_arit_0_d<0b100, "sxtw">;
+  defm UXTW_ZPmZ : sve_int_un_pred_arit_0_d<0b101, "uxtw">;
+  defm ABS_ZPmZ  : sve_int_un_pred_arit_0<  0b110, "abs">;
+  defm NEG_ZPmZ  : sve_int_un_pred_arit_0<  0b111, "neg">;
+
   defm FADD_ZPmI    : sve_fp_2op_i_p_zds<0b000, "fadd", sve_fpimm_half_one>;
   defm FMUL_ZPmI    : sve_fp_2op_i_p_zds<0b010, "fmul", sve_fpimm_half_two>;
   defm FMAX_ZPmI    : sve_fp_2op_i_p_zds<0b110, "fmax", sve_fpimm_zero_one>;
