@@ -90,28 +90,28 @@ static DecodeStatus DecodeDDDDRegisterClass(MCInst &Inst, unsigned RegNo,
                                             const void *Decoder);
 static DecodeStatus DecodeZPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                            uint64_t Address,
-                                           const void *Decode);
+                                           const void *Decoder);
 static DecodeStatus DecodeZPR_4bRegisterClass(MCInst &Inst, unsigned RegNo,
                                               uint64_t Address,
-                                              const void *Decode);
+                                              const void *Decoder);
 static DecodeStatus DecodeZPR_3bRegisterClass(MCInst &Inst, unsigned RegNo,
                                               uint64_t Address,
-                                              const void *Decode);
+                                              const void *Decoder);
 static DecodeStatus DecodeZPR2RegisterClass(MCInst &Inst, unsigned RegNo,
                                             uint64_t Address,
-                                            const void *Decode);
+                                            const void *Decoder);
 static DecodeStatus DecodeZPR3RegisterClass(MCInst &Inst, unsigned RegNo,
                                             uint64_t Address,
-                                            const void *Decode);
+                                            const void *Decoder);
 static DecodeStatus DecodeZPR4RegisterClass(MCInst &Inst, unsigned RegNo,
                                             uint64_t Address,
-                                            const void *Decode);
+                                            const void *Decoder);
 static DecodeStatus DecodePPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                            uint64_t Address,
-                                           const void *Decode);
+                                           const void *Decoder);
 static DecodeStatus DecodePPR_3bRegisterClass(MCInst &Inst, unsigned RegNo,
                                               uint64_t Address,
-                                              const void *Decode);
+                                              const void *Decoder);
 
 static DecodeStatus DecodeFixedPointScaleImm32(MCInst &Inst, unsigned Imm,
                                                uint64_t Address,
