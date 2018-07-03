@@ -163,8 +163,7 @@ define <4 x i32> @srem(<4 x i32> %v) {
 
 define <4 x float> @fadd(<4 x float> %v) {
 ; CHECK-LABEL: @fadd(
-; CHECK-NEXT:    [[B:%.*]] = fadd <4 x float> [[V:%.*]], <float 4.100000e+01, float 4.200000e+01, float 4.300000e+01, float 4.400000e+01>
-; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x float> [[B]], <4 x float> [[V]], <4 x i32> <i32 0, i32 1, i32 6, i32 7>
+; CHECK-NEXT:    [[S:%.*]] = fadd <4 x float> [[V:%.*]], <float 4.100000e+01, float 4.200000e+01, float -0.000000e+00, float -0.000000e+00>
 ; CHECK-NEXT:    ret <4 x float> [[S]]
 ;
   %b = fadd <4 x float> %v, <float 41.0, float 42.0, float 43.0, float 44.0>
@@ -187,8 +186,7 @@ define <4 x double> @fsub(<4 x double> %v) {
 
 define <4 x float> @fmul(<4 x float> %v) {
 ; CHECK-LABEL: @fmul(
-; CHECK-NEXT:    [[B:%.*]] = fmul nnan ninf <4 x float> [[V:%.*]], <float 4.100000e+01, float 4.200000e+01, float 4.300000e+01, float 4.400000e+01>
-; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x float> [[B]], <4 x float> [[V]], <4 x i32> <i32 0, i32 5, i32 6, i32 7>
+; CHECK-NEXT:    [[S:%.*]] = fmul nnan ninf <4 x float> [[V:%.*]], <float 4.100000e+01, float 1.000000e+00, float 1.000000e+00, float 1.000000e+00>
 ; CHECK-NEXT:    ret <4 x float> [[S]]
 ;
   %b = fmul nnan ninf <4 x float> %v, <float 41.0, float 42.0, float 43.0, float 44.0>

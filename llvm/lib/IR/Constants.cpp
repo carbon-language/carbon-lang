@@ -2281,7 +2281,12 @@ Constant *ConstantExpr::getBinOpIdentity(unsigned Opcode, Type *Ty) {
   case Instruction::And:
     return Constant::getAllOnesValue(Ty);
 
-  // FIXME: FAdd / FMul?
+  // TODO: If the fadd has 'nsz', should we return +0.0?
+  case Instruction::FAdd:
+    return ConstantFP::getNegativeZero(Ty);
+
+  case Instruction::FMul:
+    return ConstantFP::get(Ty, 1.0);
   }
 }
 

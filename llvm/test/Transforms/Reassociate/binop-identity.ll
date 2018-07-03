@@ -48,7 +48,7 @@ define i8 @xor_0(i8 %x) {
   ret i8 %a2
 }
 
-; FIXME
+; FIXME - the binop identity constant for fadd is -0.0, so this didn't fold.
 
 define float @fadd_0(float %x) {
 ; CHECK-LABEL: @fadd_0(
@@ -60,12 +60,9 @@ define float @fadd_0(float %x) {
   ret float %a2
 }
 
-; FIXME
-
 define float @fmul_1(float %x) {
 ; CHECK-LABEL: @fmul_1(
-; CHECK-NEXT:    [[A2:%.*]] = fmul fast float [[X:%.*]], 1.000000e+00
-; CHECK-NEXT:    ret float [[A2]]
+; CHECK-NEXT:    ret float [[X:%.*]]
 ;
   %a1 = fmul fast float %x, 4.0
   %a2 = fmul fast float %a1, 0.25
