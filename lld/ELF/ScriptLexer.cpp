@@ -116,6 +116,7 @@ void ScriptLexer::tokenize(MemoryBufferRef MB) {
     }
 
     // ">foo" is parsed to ">" and "foo", but ">>" is parsed to ">>".
+    // "|", "||", "&" and "&&" are different operators.
     if (S.startswith("<<") || S.startswith("<=") || S.startswith(">>") ||
         S.startswith(">=") || S.startswith("||") || S.startswith("&&")) {
       Vec.push_back(S.substr(0, 2));
