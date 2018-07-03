@@ -922,6 +922,7 @@ public:
   bool isSystemPStateFieldWithImm0_1() const {
     if (!isSysReg()) return false;
     return (SysReg.PStateField == AArch64PState::PAN ||
+            SysReg.PStateField == AArch64PState::DIT ||
             SysReg.PStateField == AArch64PState::UAO);
   }
 
