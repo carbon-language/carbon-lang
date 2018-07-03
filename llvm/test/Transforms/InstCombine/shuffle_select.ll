@@ -6,8 +6,7 @@
 
 define <4 x i32> @add(<4 x i32> %v) {
 ; CHECK-LABEL: @add(
-; CHECK-NEXT:    [[B:%.*]] = add <4 x i32> [[V:%.*]], <i32 11, i32 undef, i32 13, i32 undef>
-; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x i32> [[B]], <4 x i32> [[V]], <4 x i32> <i32 0, i32 5, i32 2, i32 7>
+; CHECK-NEXT:    [[S:%.*]] = add <4 x i32> [[V:%.*]], <i32 11, i32 0, i32 13, i32 0>
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
 ;
   %b = add <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
@@ -34,8 +33,7 @@ define <4 x i32> @sub(<4 x i32> %v) {
 
 define <4 x i32> @mul(<4 x i32> %v) {
 ; CHECK-LABEL: @mul(
-; CHECK-NEXT:    [[B:%.*]] = mul nuw nsw <4 x i32> [[V:%.*]], <i32 undef, i32 12, i32 undef, i32 14>
-; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x i32> [[V]], <4 x i32> [[B]], <4 x i32> <i32 undef, i32 5, i32 2, i32 7>
+; CHECK-NEXT:    [[S:%.*]] = mul nuw nsw <4 x i32> [[V:%.*]], <i32 undef, i32 12, i32 1, i32 14>
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
 ;
   %b = mul nsw nuw <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
@@ -80,8 +78,7 @@ define <3 x i32> @ashr(<3 x i32> %v) {
 
 define <3 x i42> @and(<3 x i42> %v) {
 ; CHECK-LABEL: @and(
-; CHECK-NEXT:    [[B:%.*]] = and <3 x i42> [[V:%.*]], <i42 undef, i42 12, i42 undef>
-; CHECK-NEXT:    [[S:%.*]] = shufflevector <3 x i42> [[V]], <3 x i42> [[B]], <3 x i32> <i32 0, i32 4, i32 undef>
+; CHECK-NEXT:    [[S:%.*]] = and <3 x i42> [[V:%.*]], <i42 -1, i42 12, i42 undef>
 ; CHECK-NEXT:    ret <3 x i42> [[S]]
 ;
   %b = and <3 x i42> %v, <i42 11, i42 12, i42 13>
@@ -96,7 +93,7 @@ declare void @use_v4i32(<4 x i32>)
 define <4 x i32> @or(<4 x i32> %v) {
 ; CHECK-LABEL: @or(
 ; CHECK-NEXT:    [[B:%.*]] = or <4 x i32> [[V:%.*]], <i32 11, i32 12, i32 13, i32 14>
-; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x i32> [[B]], <4 x i32> [[V]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+; CHECK-NEXT:    [[S:%.*]] = or <4 x i32> [[V]], <i32 0, i32 0, i32 13, i32 14>
 ; CHECK-NEXT:    call void @use_v4i32(<4 x i32> [[B]])
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
 ;
@@ -108,8 +105,7 @@ define <4 x i32> @or(<4 x i32> %v) {
 
 define <4 x i32> @xor(<4 x i32> %v) {
 ; CHECK-LABEL: @xor(
-; CHECK-NEXT:    [[B:%.*]] = xor <4 x i32> [[V:%.*]], <i32 undef, i32 12, i32 undef, i32 undef>
-; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x i32> [[V]], <4 x i32> [[B]], <4 x i32> <i32 0, i32 5, i32 2, i32 3>
+; CHECK-NEXT:    [[S:%.*]] = xor <4 x i32> [[V:%.*]], <i32 0, i32 12, i32 0, i32 0>
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
 ;
   %b = xor <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
