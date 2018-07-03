@@ -117,7 +117,7 @@ void ScriptLexer::tokenize(MemoryBufferRef MB) {
 
     // ">foo" is parsed to ">" and "foo", but ">>" is parsed to ">>".
     if (S.startswith("<<") || S.startswith("<=") || S.startswith(">>") ||
-        S.startswith(">=")) {
+        S.startswith(">=") || S.startswith("||") || S.startswith("&&")) {
       Vec.push_back(S.substr(0, 2));
       S = S.substr(2);
       continue;
