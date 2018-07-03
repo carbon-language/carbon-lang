@@ -35,8 +35,8 @@
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/type_traits.h"
 #include <memory>
-#include <type_traits>
 
 namespace llvm {
 
@@ -58,8 +58,8 @@ class unique_function<ReturnT(ParamTs...)> {
   template <typename T>
   using AdjustedParamT = typename std::conditional<
       !std::is_reference<T>::value &&
-          std::is_trivially_copy_constructible<T>::value &&
-          std::is_trivially_move_constructible<T>::value &&
+          llvm::is_trivially_copy_constructible<T>::value &&
+          llvm::is_trivially_move_constructible<T>::value &&
           sizeof(T) <= (2 * sizeof(void *)),
       T, T &>::type;
 
