@@ -243,8 +243,23 @@ public:
     // Now move into the storage.
     new (CallableAddr) CallableT(std::move(Callable));
 
+#ifndef _MSC_VER
     // See if we can create a trivial callback.
-    // FIXME: we should use constexpr if here and below to avoid instantiating
+    //
+    // This requires two things. First, we need to put a function pointer into
+    // a `PointerIntPair` and a `PointerUnion`. We assume that function
+    // pointers on almost every platform have at least 4-byte alignment which
+    // allows this to work, but on some platforms this appears to not hold, and
+    // so we need to disable this optimization on those platforms.
+    //
+    // FIXME: Currently, Windows appears to fail the asserts that check this.
+    // We should investigate why, and if fixed removed the #ifndef above.
+    //
+    // Second, we need the callable to be trivially moved and trivially
+    // destroyed so that we don't have to store type erased callbacks for those
+    // operations.
+    //
+    // FIXME: We should use constexpr if here and below to avoid instantiating
     // the non-trivial static objects when unnecessary. While the linker should
     // remove them, it is still wasteful.
     if (llvm::is_trivially_move_constructible<CallableT>::value &&
@@ -252,6 +267,7 @@ public:
       CallbackAndInlineFlag = {&CallImpl<CallableT>, IsInlineStorage};
       return;
     }
+#endif
 
     // Otherwise, we need to point at an object with a vtable that contains all
     // the different type erased behaviors needed. Create a static instance of
