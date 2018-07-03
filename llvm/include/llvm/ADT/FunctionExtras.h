@@ -240,7 +240,7 @@ public:
     // FIXME: we should use constexpr if here and below to avoid instantiating
     // the non-trivial static objects when unnecessary. While the linker should
     // remove them, it is still wasteful.
-    if (std::is_trivially_move_constructible<CallableT>::value &&
+    if (llvm::is_trivially_move_constructible<CallableT>::value &&
         std::is_trivially_destructible<CallableT>::value) {
       CallbackAndInlineFlag = {&CallImpl<CallableT>, IsInlineStorage};
       return;
