@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cctype>
 #include <cstdio>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <numeric>
@@ -1950,7 +1951,7 @@ class BumpPointerAllocator {
   static constexpr size_t AllocSize = 4096;
   static constexpr size_t UsableAllocSize = AllocSize - sizeof(BlockMeta);
 
-  alignas(16) char InitialBuffer[AllocSize];
+  alignas(std::max_align_t) char InitialBuffer[AllocSize];
   BlockMeta* BlockList = nullptr;
 
   void grow() {
