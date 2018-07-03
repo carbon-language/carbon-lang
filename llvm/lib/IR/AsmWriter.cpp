@@ -2788,8 +2788,14 @@ static const char *getSummaryKindName(GlobalValueSummary::SummaryKind SK) {
 }
 
 void AssemblyWriter::printAliasSummary(const AliasSummary *AS) {
-  Out << ", aliasee: ^"
-      << Machine.getGUIDSlot(SummaryToGUIDMap[&AS->getAliasee()]);
+  Out << ", aliasee: ";
+  // The indexes emitted for distributed backends may not include the
+  // aliasee summary (only if it is being imported directly). Handle
+  // that case by just emitting "null" as the aliasee.
+  if (AS->hasAliasee())
+    Out << "^" << Machine.getGUIDSlot(SummaryToGUIDMap[&AS->getAliasee()]);
+  else
+    Out << "null";
 }
 
 void AssemblyWriter::printGlobalVarSummary(const GlobalVarSummary *GS) {
