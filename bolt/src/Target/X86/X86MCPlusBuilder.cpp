@@ -2770,18 +2770,8 @@ public:
 
     Value = Inst.getOperand(ImmOpNo).getImm();
 
-    MCOperand Operand;
-    if (!Addend) {
-      Operand = MCOperand::createExpr(getTargetExprFor(
-          Inst, MCSymbolRefExpr::create(Symbol, *Ctx), *Ctx, RelType));
-    } else {
-      Operand = MCOperand::createExpr(getTargetExprFor(
-          Inst,
-          MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, *Ctx),
-                                  MCConstantExpr::create(Addend, *Ctx), *Ctx),
-          *Ctx, RelType));
-    }
-    Inst.getOperand(ImmOpNo) = Operand;
+    setOperandToSymbolRef(Inst, ImmOpNo, Symbol, Addend, Ctx, RelType);
+
     return true;
   }
 

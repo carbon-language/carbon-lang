@@ -639,6 +639,10 @@ private:
     return getOrCreateLocalLabel(getAddress() + Offset);
   }
 
+  /// Update all \p From references in the code to refer to \p To. Used
+  /// in disassembled state only.
+  void updateReferences(const MCSymbol *From, const MCSymbol *To);
+
   /// This is called in disassembled state.
   void addEntryPoint(uint64_t Address);
 

@@ -824,6 +824,12 @@ public:
     return false;
   }
 
+  /// Discard operand \p OpNum replacing it by a new MCOperand that is a
+  /// MCExpr referencing \p Symbol + \p Addend.
+  virtual bool setOperandToSymbolRef(MCInst &Inst, int OpNum,
+                                     const MCSymbol *Symbol, int64_t Addend,
+                                     MCContext *Ctx, uint64_t RelType) const;
+
   /// Replace an immediate operand in the instruction \p Inst with a reference
   /// of the passed \p Symbol plus \p Addend. If the instruction does not have
   /// an immediate operand or has more than one - then return false. Otherwise

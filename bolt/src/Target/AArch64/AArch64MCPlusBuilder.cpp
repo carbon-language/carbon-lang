@@ -968,24 +968,6 @@ public:
     return true;
   }
 
-  bool setOperandToSymbolRef(MCInst &Inst, int OpNum, MCSymbol *Symbol,
-                             int64_t Addend, MCContext *Ctx,
-                             uint64_t RelType) const {
-    MCOperand Operand;
-    if (!Addend) {
-      Operand = MCOperand::createExpr(getTargetExprFor(
-          Inst, MCSymbolRefExpr::create(Symbol, *Ctx), *Ctx, RelType));
-    } else {
-      Operand = MCOperand::createExpr(getTargetExprFor(
-          Inst,
-          MCBinaryExpr::createAdd(MCSymbolRefExpr::create(Symbol, *Ctx),
-                                  MCConstantExpr::create(Addend, *Ctx), *Ctx),
-          *Ctx, RelType));
-    }
-    Inst.getOperand(OpNum) = Operand;
-    return true;
-  }
-
   bool replaceImmWithSymbol(MCInst &Inst, MCSymbol *Symbol, int64_t Addend,
                             MCContext *Ctx, int64_t &Value,
                             uint64_t RelType) const override {

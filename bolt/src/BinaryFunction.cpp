@@ -1928,6 +1928,20 @@ void BinaryFunction::removeTagsFromProfile() {
   }
 }
 
+void BinaryFunction::updateReferences(const MCSymbol *From, const MCSymbol *To) {
+  assert(CurrentState == State::Empty || CurrentState == State::Disassembled);
+  assert(From && To && "invalid symbols");
+
+  for (auto I = Instructions.begin(), E = Instructions.end(); I != E; ++I) {
+    auto &Inst = I->second;
+    for (int I = 0, E = MCPlus::getNumPrimeOperands(Inst); I != E; ++I) {
+      const MCSymbol *S = BC.MIB->getTargetSymbol(Inst, I);
+      if (S == From)
+        BC.MIB->setOperandToSymbolRef(Inst, I, To, 0, &*BC.Ctx, 0);
+    }
+  }
+}
+
 void BinaryFunction::addEntryPoint(uint64_t Address) {
   assert(containsAddress(Address) && "address does not belong to the function");
 
@@ -1943,6 +1957,8 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
   // If we haven't built CFG for the function, we can add a new entry point
   // even if it doesn't have an associated entry in the symbol table.
   if (CurrentState == State::Empty || CurrentState == State::Disassembled) {
+    auto Iter = Labels.find(Offset);
+    const MCSymbol *OldSym = Iter != Labels.end() ? Iter->second : nullptr;
     if (!EntrySymbol) {
       DEBUG(dbgs() << "creating local label\n");
       EntrySymbol = getOrCreateLocalLabel(Address);
@@ -1951,6 +1967,9 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
     }
     addEntryPointAtOffset(Address - getAddress());
     Labels.emplace(Offset, EntrySymbol);
+    if (OldSym != nullptr && EntrySymbol != OldSym) {
+      updateReferences(OldSym, EntrySymbol);
+    }
     return;
   }
 
