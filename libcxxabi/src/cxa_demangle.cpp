@@ -1891,7 +1891,7 @@ class BumpPointerAllocator {
   static constexpr size_t AllocSize = 4096;
   static constexpr size_t UsableAllocSize = AllocSize - sizeof(BlockMeta);
 
-  alignas(std::max_align_t) char InitialBuffer[AllocSize];
+  alignas(max_align_t) char InitialBuffer[AllocSize];
   BlockMeta* BlockList = nullptr;
 
   void grow() {
