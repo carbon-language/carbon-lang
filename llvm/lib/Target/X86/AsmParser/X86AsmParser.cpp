@@ -1099,7 +1099,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
     // checked.
     // FIXME: Check AH, CH, DH, BH cannot be used in an instruction requiring a
     // REX prefix.
-    if (RegNo == X86::RIZ ||
+    if (RegNo == X86::RIZ || RegNo == X86::RIP || RegNo == X86::EIP ||
         X86MCRegisterClasses[X86::GR64RegClassID].contains(RegNo) ||
         X86II::isX86_64NonExtLowByteReg(RegNo) ||
         X86II::isX86_64ExtendedReg(RegNo))
