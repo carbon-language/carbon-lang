@@ -52,8 +52,18 @@ define <4 x i32> @shl(<4 x i32> %v) {
   ret <4 x i32> %s
 }
 
-define <4 x i32> @lshr(<4 x i32> %v) {
-; CHECK-LABEL: @lshr(
+define <4 x i32> @lshr_constant_op0(<4 x i32> %v) {
+; CHECK-LABEL: @lshr_constant_op0(
+; CHECK-NEXT:    [[B:%.*]] = lshr exact <4 x i32> [[V:%.*]], <i32 11, i32 12, i32 13, i32 14>
+; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x i32> [[V]], <4 x i32> [[B]], <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+; CHECK-NEXT:    ret <4 x i32> [[S]]
+;
+  %b = lshr exact <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
+  %s = shufflevector <4 x i32> %v, <4 x i32> %b, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+  ret <4 x i32> %s
+}
+define <4 x i32> @lshr_constant_op1(<4 x i32> %v) {
+; CHECK-LABEL: @lshr_constant_op1(
 ; CHECK-NEXT:    [[B:%.*]] = lshr exact <4 x i32> <i32 11, i32 12, i32 13, i32 14>, [[V:%.*]]
 ; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x i32> [[V]], <4 x i32> [[B]], <4 x i32> <i32 4, i32 5, i32 2, i32 7>
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
@@ -194,13 +204,24 @@ define <4 x float> @fmul(<4 x float> %v) {
   ret <4 x float> %s
 }
 
-define <4 x double> @fdiv(<4 x double> %v) {
-; CHECK-LABEL: @fdiv(
+define <4 x double> @fdiv_constant_op0(<4 x double> %v) {
+; CHECK-LABEL: @fdiv_constant_op0(
 ; CHECK-NEXT:    [[B:%.*]] = fdiv fast <4 x double> <double 4.100000e+01, double 4.200000e+01, double 4.300000e+01, double 4.400000e+01>, [[V:%.*]]
 ; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x double> [[V]], <4 x double> [[B]], <4 x i32> <i32 undef, i32 1, i32 6, i32 7>
 ; CHECK-NEXT:    ret <4 x double> [[S]]
 ;
   %b = fdiv fast <4 x double> <double 41.0, double 42.0, double 43.0, double 44.0>, %v
+  %s = shufflevector <4 x double> %v, <4 x double> %b, <4 x i32> <i32 undef, i32 1, i32 6, i32 7>
+  ret <4 x double> %s
+}
+
+define <4 x double> @fdiv_constant_op1(<4 x double> %v) {
+; CHECK-LABEL: @fdiv_constant_op1(
+; CHECK-NEXT:    [[B:%.*]] = fdiv reassoc <4 x double> [[V:%.*]], <double 4.100000e+01, double 4.200000e+01, double 4.300000e+01, double 4.400000e+01>
+; CHECK-NEXT:    [[S:%.*]] = shufflevector <4 x double> [[V]], <4 x double> [[B]], <4 x i32> <i32 undef, i32 1, i32 6, i32 7>
+; CHECK-NEXT:    ret <4 x double> [[S]]
+;
+  %b = fdiv reassoc <4 x double> %v, <double 41.0, double 42.0, double 43.0, double 44.0>
   %s = shufflevector <4 x double> %v, <4 x double> %b, <4 x i32> <i32 undef, i32 1, i32 6, i32 7>
   ret <4 x double> %s
 }
