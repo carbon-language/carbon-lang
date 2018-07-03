@@ -46,6 +46,13 @@ template <typename ReturnT, typename... ParamTs>
 class unique_function<ReturnT(ParamTs...)> {
   static constexpr int InlineStorageSize = sizeof(void *) * 3;
 
+  // MSVC has a bug and ICEs if we give it a particular dependent value
+  // expression as part of the `std::conditional` below. To work around this,
+  // we build that into a template struct's constexpr bool.
+  template <typename T> struct IsSizeLessThanThresholdT {
+    static constexpr bool value = sizeof(T) <= (2 * sizeof(void *));
+  };
+
   // Provide a type function to map parameters that won't observe extra copies
   // or moves and which are small enough to likely pass in register to values
   // and all other types to l-value reference types. We use this to compute the
@@ -60,7 +67,7 @@ class unique_function<ReturnT(ParamTs...)> {
       !std::is_reference<T>::value &&
           llvm::is_trivially_copy_constructible<T>::value &&
           llvm::is_trivially_move_constructible<T>::value &&
-          sizeof(T) <= (2 * sizeof(void *)),
+          IsSizeLessThanThresholdT<T>::value,
       T, T &>::type;
 
   // The type of the erased function pointer we use as a callback to dispatch to
