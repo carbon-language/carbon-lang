@@ -792,7 +792,7 @@ DIExpression *DIExpression::prepend(const DIExpression *Expr, bool DerefBefore,
   SmallVector<uint64_t, 8> Ops;
   if (DerefBefore)
     Ops.push_back(dwarf::DW_OP_deref);
-  
+
   appendOffset(Ops, Offset);
   if (DerefAfter)
     Ops.push_back(dwarf::DW_OP_deref);
