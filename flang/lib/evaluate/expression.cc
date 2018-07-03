@@ -43,7 +43,12 @@ std::ostream &AnyCharacterExpr::Dump(std::ostream &o) const {
   return o;
 }
 
-std::ostream &AnyIntegerOrRealExpr::Dump(std::ostream &o) const {
+std::ostream &AnyComplexExpr::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { x.Dump(o); }, u);
+  return o;
+}
+
+std::ostream &AnyExpr::Dump(std::ostream &o) const {
   std::visit([&](const auto &x) { x.Dump(o); }, u);
   return o;
 }
@@ -62,7 +67,8 @@ template<int KIND>
 std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
-          [&](const Convert &c) { c.x->Dump(o); },
+          [&](const Convert<AnyIntegerExpr> &j) { j.x->Dump(o); },
+          [&](const Convert<AnyRealExpr> &a) { a.x->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
@@ -78,13 +84,13 @@ template<int KIND>
 void IntegerExpr<KIND>::Fold(
     const parser::CharBlock &at, parser::Messages *messages) {
   std::visit(common::visitors{[&](const Parentheses &p) {
-                                p.Mutable()->Fold(at, messages);
+                                p.x->Fold(at, messages);
                                 if (auto c{std::get_if<Constant>(&p.x->u)}) {
                                   u = *c;
                                 }
                               },
                  [&](const Negate &n) {
-                   n.Mutable()->Fold(at, messages);
+                   n.x->Fold(at, messages);
                    if (auto c{std::get_if<Constant>(&n.x->u)}) {
                      auto negated{c->Negate()};
                      if (negated.overflow && messages != nullptr) {
@@ -94,8 +100,8 @@ void IntegerExpr<KIND>::Fold(
                    }
                  },
                  [&](const Add &a) {
-                   a.MutableX()->Fold(at, messages);
-                   a.MutableY()->Fold(at, messages);
+                   a.x->Fold(at, messages);
+                   a.y->Fold(at, messages);
                    if (auto xc{std::get_if<Constant>(&a.x->u)}) {
                      if (auto yc{std::get_if<Constant>(&a.y->u)}) {
                        auto sum{xc->AddSigned(*yc)};
@@ -107,8 +113,8 @@ void IntegerExpr<KIND>::Fold(
                    }
                  },
                  [&](const Multiply &a) {
-                   a.MutableX()->Fold(at, messages);
-                   a.MutableY()->Fold(at, messages);
+                   a.x->Fold(at, messages);
+                   a.y->Fold(at, messages);
                    if (auto xc{std::get_if<Constant>(&a.x->u)}) {
                      if (auto yc{std::get_if<Constant>(&a.y->u)}) {
                        auto product{xc->MultiplySigned(*yc)};
@@ -122,8 +128,8 @@ void IntegerExpr<KIND>::Fold(
                    }
                  },
                  [&](const Bin &b) {
-                   b.MutableX()->Fold(at, messages);
-                   b.MutableY()->Fold(at, messages);
+                   b.x->Fold(at, messages);
+                   b.y->Fold(at, messages);
                  },
                  [&](const auto &) {  // TODO: more
                  }},
@@ -133,7 +139,8 @@ void IntegerExpr<KIND>::Fold(
 template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
-          [&](const Convert &c) { c.x->Dump(o); },
+          [&](const Convert<AnyIntegerExpr> &j) { j.x->Dump(o); },
+          [&](const Convert<AnyRealExpr> &a) { a.x->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },

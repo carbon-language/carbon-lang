@@ -54,8 +54,10 @@ Data Types
 There are five built-in ("intrinsic") types: `INTEGER`, `REAL`, `COMPLEX`,
 `LOGICAL`, and `CHARACTER`.
 They are parameterized with "kind" values, which should be treated as
-non-portable integer codes but in practice today are the byte sizes of
+non-portable integer codes, although in practice today are the byte sizes of
 the data.
+(For `COMPLEX`, the kind type parameter value is the byte size of one of the
+two `REAL` components, or half of the total size.)
 The legacy `DOUBLE PRECISION` intrinsic type is an alias for a kind of `REAL`
 that should be bigger than the default `REAL`.
 
@@ -86,7 +88,7 @@ where type is not necessary.
 Arrays
 ------
 Arrays are not a type in Fortran.
-Being an array is a property of an object, not of a type.
+Being an array is a property of an object or function, not of a type.
 Unlike C, one cannot have an array of arrays or an array of pointers,
 although can can have an array of a derived type that has arrays or
 pointers as components.
