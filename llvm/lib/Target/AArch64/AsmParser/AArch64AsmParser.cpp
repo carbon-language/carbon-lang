@@ -1044,14 +1044,16 @@ public:
   }
 
   template<int64_t Angle, int64_t Remainder>
-  bool isComplexRotation() const {
-    if (!isImm()) return false;
+  DiagnosticPredicate isComplexRotation() const {
+    if (!isImm()) return DiagnosticPredicateTy::NoMatch;
 
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
-    if (!CE) return false;
+    if (!CE) return DiagnosticPredicateTy::NoMatch;
     uint64_t Value = CE->getValue();
 
-    return (Value % Angle == Remainder && Value <= 270);
+    if (Value % Angle == Remainder && Value <= 270)
+      return DiagnosticPredicateTy::Match;
+    return DiagnosticPredicateTy::NearMatch;
   }
 
   template <unsigned RegClassID> bool isGPR64() const {

@@ -56,7 +56,10 @@ let Predicates = [HasSVE] in {
   defm FMUL_ZPmI    : sve_fp_2op_i_p_zds<0b010, "fmul", sve_fpimm_half_two>;
   defm FMAX_ZPmI    : sve_fp_2op_i_p_zds<0b110, "fmax", sve_fpimm_zero_one>;
 
+  defm FCADD_ZPmZ : sve_fp_fcadd<"fcadd">;
+  defm FCMLA_ZPmZZ : sve_fp_fcmla<"fcmla">;
 
+  defm FCMLA_ZZZI : sve_fp_fcmla_by_indexed_elem<"fcmla">;
   defm FMUL_ZZZI   : sve_fp_fmul_by_indexed_elem<"fmul">;
 
   // Splat immediate (unpredicated)
