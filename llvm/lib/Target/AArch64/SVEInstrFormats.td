@@ -781,6 +781,45 @@ multiclass sve_fp_2op_i_p_zds<bits<3> opc, string asm, Operand imm_ty> {
   def _D : sve_fp_2op_i_p_zds<0b11, opc, asm, ZPR64, imm_ty>;
 }
 
+//===----------------------------------------------------------------------===//
+// SVE Floating Point Multiply - Indexed Group
+//===----------------------------------------------------------------------===//
+
+class sve_fp_fmul_by_indexed_elem<bits<2> sz, string asm, ZPRRegOp zprty,
+                                      ZPRRegOp zprty2, Operand itype>
+: I<(outs zprty:$Zd), (ins zprty:$Zn, zprty2:$Zm, itype:$iop),
+  asm, "\t$Zd, $Zn, $Zm$iop", "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  let Inst{31-24} = 0b01100100;
+  let Inst{23-22} = sz;
+  let Inst{21}    = 0b1;
+  let Inst{15-10} = 0b001000;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve_fp_fmul_by_indexed_elem<string asm> {
+  def _H : sve_fp_fmul_by_indexed_elem<{0, ?}, asm, ZPR16, ZPR3b16, VectorIndexH> {
+    bits<3> Zm;
+    bits<3> iop;
+    let Inst{22} = iop{2};
+    let Inst{20-19} = iop{1-0};
+    let Inst{18-16} = Zm;
+  }
+  def _S : sve_fp_fmul_by_indexed_elem<0b10, asm, ZPR32, ZPR3b32, VectorIndexS> {
+    bits<3> Zm;
+    bits<2> iop;
+    let Inst{20-19} = iop;
+    let Inst{18-16} = Zm;
+  }
+  def _D : sve_fp_fmul_by_indexed_elem<0b11, asm, ZPR64, ZPR4b64, VectorIndexD> {
+    bits<4> Zm;
+    bit iop;
+    let Inst{20} = iop;
+    let Inst{19-16} = Zm;
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // SVE Stack Allocation Group

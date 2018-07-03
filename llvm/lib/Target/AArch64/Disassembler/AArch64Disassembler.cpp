@@ -91,6 +91,12 @@ static DecodeStatus DecodeDDDDRegisterClass(MCInst &Inst, unsigned RegNo,
 static DecodeStatus DecodeZPRRegisterClass(MCInst &Inst, unsigned RegNo,
                                            uint64_t Address,
                                            const void *Decode);
+static DecodeStatus DecodeZPR_4bRegisterClass(MCInst &Inst, unsigned RegNo,
+                                              uint64_t Address,
+                                              const void *Decode);
+static DecodeStatus DecodeZPR_3bRegisterClass(MCInst &Inst, unsigned RegNo,
+                                              uint64_t Address,
+                                              const void *Decode);
 static DecodeStatus DecodeZPR2RegisterClass(MCInst &Inst, unsigned RegNo,
                                             uint64_t Address,
                                             const void *Decode);
@@ -497,6 +503,22 @@ static DecodeStatus DecodeZPRRegisterClass(MCInst &Inst, unsigned RegNo,
   unsigned Register = ZPRDecoderTable[RegNo];
   Inst.addOperand(MCOperand::createReg(Register));
   return Success;
+}
+
+static DecodeStatus DecodeZPR_4bRegisterClass(MCInst &Inst, unsigned RegNo,
+                                              uint64_t Address,
+                                              const void *Decoder) {
+  if (RegNo > 15)
+    return Fail;
+  return DecodeZPRRegisterClass(Inst, RegNo, Address, Decoder);
+}
+
+static DecodeStatus DecodeZPR_3bRegisterClass(MCInst &Inst, unsigned RegNo,
+                                              uint64_t Address,
+                                              const void *Decoder) {
+  if (RegNo > 7)
+    return Fail;
+  return DecodeZPRRegisterClass(Inst, RegNo, Address, Decoder);
 }
 
 static const unsigned ZZDecoderTable[] = {
