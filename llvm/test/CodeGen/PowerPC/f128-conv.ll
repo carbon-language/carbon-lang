@@ -398,3 +398,157 @@ entry:
 ; CHECK-NEXT: stxv [[CONV]], 0(3)
 ; CHECK-NEXT: blr
 }
+
+;  Convert QP to DP
+
+@f128Array = global [4 x fp128]
+                      [fp128 0xL00000000000000004004C00000000000,
+                       fp128 0xLF000000000000000400808AB851EB851,
+                       fp128 0xL5000000000000000400E0C26324C8366,
+                       fp128 0xL8000000000000000400A24E2E147AE14], align 16
+@f128global = global fp128 0xL300000000000000040089CA8F5C28F5C, align 16
+
+; Function Attrs: norecurse nounwind readonly
+define double @qpConv2dp(fp128* nocapture readonly %a) {
+; CHECK-LABEL: qpConv2dp:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxv 2, 0(3)
+; CHECK-NEXT:    xscvqpdp 2, 2
+; CHECK-NEXT:    xxlor 1, 2, 2
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %conv = fptrunc fp128 %0 to double
+  ret double %conv
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2dp_02(double* nocapture %res) {
+; CHECK-LABEL: qpConv2dp_02:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis 4, 2, .LC6@toc@ha
+; CHECK-NEXT:    ld 4, .LC6@toc@l(4)
+; CHECK-NEXT:    lxvx 2, 0, 4
+; CHECK-NEXT:    xscvqpdp 2, 2
+; CHECK-NEXT:    stxsd 2, 0(3)
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* @f128global, align 16
+  %conv = fptrunc fp128 %0 to double
+  store double %conv, double* %res, align 8
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2dp_03(double* nocapture %res, i32 signext %idx) {
+; CHECK-LABEL: qpConv2dp_03:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis 5, 2, .LC7@toc@ha
+; CHECK-NEXT:    sldi 4, 4, 3
+; CHECK-NEXT:    ld 5, .LC7@toc@l(5)
+; CHECK-NEXT:    lxvx 2, 0, 5
+; CHECK-NEXT:    xscvqpdp 2, 2
+; CHECK-NEXT:    stxsdx 2, 3, 4
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* getelementptr inbounds ([4 x fp128], [4 x fp128]* @f128Array, i64 0, i64 0), align 16
+  %conv = fptrunc fp128 %0 to double
+  %idxprom = sext i32 %idx to i64
+  %arrayidx = getelementptr inbounds double, double* %res, i64 %idxprom
+  store double %conv, double* %arrayidx, align 8
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2dp_04(fp128* nocapture readonly %a, fp128* nocapture readonly %b, double* nocapture %res) {
+; CHECK-LABEL: qpConv2dp_04:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxv 2, 0(3)
+; CHECK-NEXT:    lxv 3, 0(4)
+; CHECK-NEXT:    xsaddqp 2, 2, 3
+; CHECK-NEXT:    xscvqpdp 2, 2
+; CHECK-NEXT:    stxsd 2, 0(5)
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = load fp128, fp128* %b, align 16
+  %add = fadd fp128 %0, %1
+  %conv = fptrunc fp128 %add to double
+  store double %conv, double* %res, align 8
+  ret void
+}
+
+;  Convert QP to SP
+
+; Function Attrs: norecurse nounwind readonly
+define float @qpConv2sp(fp128* nocapture readonly %a) {
+; CHECK-LABEL: qpConv2sp:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxv 2, 0(3)
+; CHECK-NEXT:    xscvqpdpo 2, 2
+; CHECK-NEXT:    xsrsp 1, 2
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %conv = fptrunc fp128 %0 to float
+  ret float %conv
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2sp_02(float* nocapture %res) {
+; CHECK-LABEL: qpConv2sp_02:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis 4, 2, .LC6@toc@ha
+; CHECK-NEXT:    ld 4, .LC6@toc@l(4)
+; CHECK-NEXT:    lxvx 2, 0, 4
+; CHECK-NEXT:    xscvqpdpo 2, 2
+; CHECK-NEXT:    xsrsp 0, 2
+; CHECK-NEXT:    stfs 0, 0(3)
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* @f128global, align 16
+  %conv = fptrunc fp128 %0 to float
+  store float %conv, float* %res, align 4
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2sp_03(float* nocapture %res, i32 signext %idx) {
+; CHECK-LABEL: qpConv2sp_03:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis 5, 2, .LC7@toc@ha
+; CHECK-NEXT:    sldi 4, 4, 2
+; CHECK-NEXT:    ld 5, .LC7@toc@l(5)
+; CHECK-NEXT:    lxv 2, 48(5)
+; CHECK-NEXT:    xscvqpdpo 2, 2
+; CHECK-NEXT:    xsrsp 0, 2
+; CHECK-NEXT:    stfsx 0, 3, 4
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* getelementptr inbounds ([4 x fp128], [4 x fp128]* @f128Array, i64 0, i64 3), align 16
+  %conv = fptrunc fp128 %0 to float
+  %idxprom = sext i32 %idx to i64
+  %arrayidx = getelementptr inbounds float, float* %res, i64 %idxprom
+  store float %conv, float* %arrayidx, align 4
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @qpConv2sp_04(fp128* nocapture readonly %a, fp128* nocapture readonly %b, float* nocapture %res) {
+; CHECK-LABEL: qpConv2sp_04:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxv 2, 0(3)
+; CHECK-NEXT:    lxv 3, 0(4)
+; CHECK-NEXT:    xsaddqp 2, 2, 3
+; CHECK-NEXT:    xscvqpdpo 2, 2
+; CHECK-NEXT:    xsrsp 0, 2
+; CHECK-NEXT:    stfs 0, 0(5)
+; CHECK-NEXT:    blr
+entry:
+  %0 = load fp128, fp128* %a, align 16
+  %1 = load fp128, fp128* %b, align 16
+  %add = fadd fp128 %0, %1
+  %conv = fptrunc fp128 %add to float
+  store float %conv, float* %res, align 4
+  ret void
+}

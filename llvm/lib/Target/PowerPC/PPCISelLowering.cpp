@@ -808,6 +808,10 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
         setOperationAction(ISD::FP_EXTEND, MVT::f128, Legal);
         setLoadExtAction(ISD::EXTLOAD, MVT::f128, MVT::f64, Expand);
         setOperationAction(ISD::FMA, MVT::f128, Legal);
+        setOperationAction(ISD::FP_ROUND, MVT::f64, Legal);
+        setOperationAction(ISD::FP_ROUND, MVT::f32, Legal);
+        setTruncStoreAction(MVT::f128, MVT::f64, Expand);
+        setTruncStoreAction(MVT::f128, MVT::f32, Expand);
       }
 
     }
