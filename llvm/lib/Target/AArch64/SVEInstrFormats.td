@@ -994,6 +994,32 @@ multiclass sve_int_perm_bin_perm_zz<bits<3> opc, string asm> {
 }
 
 //===----------------------------------------------------------------------===//
+// SVE Floating Point Unary Operations Group
+//===----------------------------------------------------------------------===//
+
+class sve_fp_2op_p_zd<bits<7> opc, string asm, RegisterOperand i_zprtype,
+                      RegisterOperand o_zprtype>
+: I<(outs o_zprtype:$Zd), (ins i_zprtype:$_Zd, PPR3bAny:$Pg, i_zprtype:$Zn),
+  asm, "\t$Zd, $Pg/m, $Zn",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zd;
+  bits<5> Zn;
+  let Inst{31-24} = 0b01100101;
+  let Inst{23-22} = opc{6-5};
+  let Inst{21}    = 0b0;
+  let Inst{20-16} = opc{4-0};
+  let Inst{15-13} = 0b101;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+
+  let Constraints = "$Zd = $_Zd";
+}
+
+
+//===----------------------------------------------------------------------===//
 // SVE Integer Arithmetic - Binary Predicated Group
 //===----------------------------------------------------------------------===//
 
