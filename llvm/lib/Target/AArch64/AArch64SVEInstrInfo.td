@@ -12,6 +12,13 @@
 //===----------------------------------------------------------------------===//
 
 let Predicates = [HasSVE] in {
+
+  def RDFFR_PPz  : sve_int_rdffr_pred<0b0, "rdffr">;
+  def RDFFRS_PPz : sve_int_rdffr_pred<0b1, "rdffrs">;
+  def RDFFR_P    : sve_int_rdffr_unpred<"rdffr">;
+  def SETFFR     : sve_int_setffr<"setffr">;
+  def WRFFR      : sve_int_wrffr<"wrffr">;
+
   defm ADD_ZZZ   : sve_int_bin_cons_arit_0<0b000, "add">;
   defm SUB_ZZZ   : sve_int_bin_cons_arit_0<0b001, "sub">;
   defm SQADD_ZZZ : sve_int_bin_cons_arit_0<0b100, "sqadd">;
