@@ -239,3 +239,28 @@ define <8 x i16> @test9(<8 x i16> %a) {
   %lshr = ashr <8 x i16> %a, <i16 1, i16 3, i16 1, i16 1, i16 1, i16 3, i16 3, i16 3>
   ret <8 x i16> %lshr
 }
+
+define <8 x i32> @test10(<8 x i32>* %a) {
+; SSE-LABEL: test10:
+; SSE:       # %bb.0:
+; SSE-NEXT:    movdqa (%rdi), %xmm0
+; SSE-NEXT:    movdqa 16(%rdi), %xmm1
+; SSE-NEXT:    psrad %xmm0, %xmm1
+; SSE-NEXT:    psrad $1, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX1-LABEL: test10:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vmovdqa (%rdi), %xmm0
+; AVX1-NEXT:    vpsrad $1, %xmm0, %xmm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: test10:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vmovdqa (%rdi), %ymm0
+; AVX2-NEXT:    vpsrad $1, %ymm0, %ymm0
+; AVX2-NEXT:    retq
+  %ld = load <8 x i32>, <8 x i32>* %a, align 32
+  %ashr = ashr <8 x i32> %ld, <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <8 x i32> %ashr
+}
