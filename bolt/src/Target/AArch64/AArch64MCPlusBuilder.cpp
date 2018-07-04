@@ -691,7 +691,7 @@ public:
              Inst.getOperand(0).getImm() != AArch64CC::NV &&
              "Can't reverse ALWAYS cond code");
     } else {
-      Inst.dump();
+      DEBUG(Inst.dump());
       llvm_unreachable("Unrecognized branch instruction");
     }
     return replaceBranchTarget(Inst, TBB, Ctx);
