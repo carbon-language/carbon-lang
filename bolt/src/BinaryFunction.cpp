@@ -327,6 +327,17 @@ void BinaryFunction::markUnreachableBlocks() {
     if (BB->isEntryPoint() || BB->isLandingPad()) {
       Stack.push(BB);
       BB->markValid(true);
+      continue;
+    }
+    // FIXME:
+    // Also mark BBs with indirect jumps as reachable, since we do not
+    // support removing unused jump tables yet (T29418024 / GH-issue20)
+    for (const auto &Inst : *BB) {
+      if (BC.MIB->getJumpTable(Inst)) {
+        Stack.push(BB);
+        BB->markValid(true);
+        break;
+      }
     }
   }
 
