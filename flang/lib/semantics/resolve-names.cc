@@ -418,6 +418,7 @@ protected:
   void AddToGeneric(const Symbol &symbol);
   // Add to generic the symbol for the subprogram with the same name
   void SetSpecificInGeneric(Symbol &symbol);
+  void CheckGenericProcedures(Symbol &);
 
 private:
   bool inInterfaceBlock_{false};  // set when in interface block
@@ -1487,6 +1488,43 @@ void InterfaceVisitor::SetSpecificInGeneric(Symbol &symbol) {
   genericSymbol_->details<GenericDetails>().set_specific(symbol);
 }
 
+// Check that the specific procedures are all functions or all subroutines.
+// If there is a derived type with the same name they must be functions.
+// Set the corresponding flag on generic.
+void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
+  auto &details{generic.details<GenericDetails>()};
+  auto &specifics{details.specificProcs()};
+  if (specifics.empty()) {
+    if (details.derivedType()) {
+      generic.set(Symbol::Flag::Function);
+    }
+    return;
+  }
+  auto &firstSpecific{*specifics.front()};
+  bool isFunction{firstSpecific.test(Symbol::Flag::Function)};
+  for (auto *specific : specifics) {
+    if (isFunction != specific->test(Symbol::Flag::Function)) {
+      auto &msg{Say(generic.name(),
+          "Generic interface '%s' has both a function and a subroutine"_err_en_US)};
+      if (isFunction) {
+        msg.Attach(firstSpecific.name(), "Function declaration"_en_US);
+        msg.Attach(specific->name(), "Subroutine declaration"_en_US);
+      } else {
+        msg.Attach(firstSpecific.name(), "Subroutine declaration"_en_US);
+        msg.Attach(specific->name(), "Function declaration"_en_US);
+      }
+    }
+  }
+  if (!isFunction && details.derivedType()) {
+    Say2(generic.name(),
+        "Generic interface '%s' may only contain functions due to derived type"
+        " with same name"_err_en_US,
+        details.derivedType()->name(), "Derived type '%s'"_en_US);
+  }
+  generic.set(isFunction ? Symbol::Flag::Function : Symbol::Flag::Subroutine);
+}
+
+
 // SubprogramVisitor implementation
 
 bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
@@ -2143,9 +2181,7 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
       } else if (symbol.detailsIf<ProcEntityDetails>()) {
         symbol.set(*expectedProcFlag_);  // in case it hasn't been set yet
       } else if (symbol.detailsIf<GenericDetails>()) {
-        // TODO: We need to check that a generic contains all functions
-        // or all subroutines, then mark it accordingly. Then we can check
-        // here that it is used appropriately.
+        // OK
       } else {
         Say2(name->source,
             "Use of '%s' as a procedure conflicts with its declaration"_err_en_US,
@@ -2227,13 +2263,14 @@ static bool NeedsExplicitType(const Symbol &symbol) {
 
 void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
   badStmtFuncFound_ = false;
-  if (isImplicitNoneType()) {
-    for (const auto &pair : CurrScope()) {
-      const auto &name = pair.first;
-      const auto &symbol = *pair.second;
-      if (NeedsExplicitType(symbol)) {
-        Say(name, "No explicit type declared for '%s'"_err_en_US);
-      }
+  for (auto &pair : CurrScope()) {
+    auto &name{pair.first};
+    auto &symbol{*pair.second};
+    if (isImplicitNoneType() && NeedsExplicitType(symbol)) {
+      Say(name, "No explicit type declared for '%s'"_err_en_US);
+    }
+    if (symbol.has<GenericDetails>()) {
+      CheckGenericProcedures(symbol);
     }
   }
 }
