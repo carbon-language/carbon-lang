@@ -3865,6 +3865,7 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode,
     case RegConstraintEqualityTy::EqualsReg:
       return Error(Loc, "operand must match destination register");
     }
+    llvm_unreachable("Unknown RegConstraintEqualityTy");
   }
   case Match_MissingFeature:
     return Error(Loc,
