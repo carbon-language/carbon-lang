@@ -84,62 +84,6 @@ std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
   return o;
 }
 
-template<int KIND>
-void IntegerExpr<KIND>::Fold(
-    const parser::CharBlock &at, parser::Messages *messages) {
-  std::visit(common::visitors{[&](const Parentheses &p) {
-                                p.x->Fold(at, messages);
-                                if (auto c{std::get_if<Constant>(&p.x->u)}) {
-                                  u = *c;
-                                }
-                              },
-                 [&](const Negate &n) {
-                   n.x->Fold(at, messages);
-                   if (auto c{std::get_if<Constant>(&n.x->u)}) {
-                     auto negated{c->Negate()};
-                     if (negated.overflow && messages != nullptr) {
-                       messages->Say(at, "integer negation overflowed"_en_US);
-                     }
-                     u = negated.value;
-                   }
-                 },
-                 [&](const Add &a) {
-                   a.x->Fold(at, messages);
-                   a.y->Fold(at, messages);
-                   if (auto xc{std::get_if<Constant>(&a.x->u)}) {
-                     if (auto yc{std::get_if<Constant>(&a.y->u)}) {
-                       auto sum{xc->AddSigned(*yc)};
-                       if (sum.overflow && messages != nullptr) {
-                         messages->Say(at, "integer addition overflowed"_en_US);
-                       }
-                       u = sum.value;
-                     }
-                   }
-                 },
-                 [&](const Multiply &a) {
-                   a.x->Fold(at, messages);
-                   a.y->Fold(at, messages);
-                   if (auto xc{std::get_if<Constant>(&a.x->u)}) {
-                     if (auto yc{std::get_if<Constant>(&a.y->u)}) {
-                       auto product{xc->MultiplySigned(*yc)};
-                       if (product.SignedMultiplicationOverflowed() &&
-                           messages != nullptr) {
-                         messages->Say(
-                             at, "integer multiplication overflowed"_en_US);
-                       }
-                       u = product.lower;
-                     }
-                   }
-                 },
-                 [&](const Bin &b) {
-                   b.x->Fold(at, messages);
-                   b.y->Fold(at, messages);
-                 },
-                 [&](const auto &) {  // TODO: more
-                 }},
-      u);
-}
-
 template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
@@ -174,17 +118,6 @@ std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
           [&](const CMPLX &c) { c.Dump(o, ","); }},
       u);
   return o;
-}
-
-template<int KIND>
-typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
-  return std::visit(
-      common::visitors{
-          [](const std::string &str) { return LengthExpr{str.size()}; },
-          [](const Concat &c) {
-            return LengthExpr{LengthExpr::Add{c.x->LEN(), c.y->LEN()}};
-          }},
-      u);
 }
 
 template<int KIND>
@@ -245,6 +178,73 @@ std::ostream &LogicalExpr::Dump(std::ostream &o) const {
           [&](const auto &comparison) { comparison.Dump(o); }},
       u);
   return o;
+}
+
+template<int KIND> void IntegerExpr<KIND>::Fold(FoldingContext &context) {
+  std::visit(common::visitors{[&](const Parentheses &p) {
+                                p.x->Fold(context);
+                                if (auto c{std::get_if<Constant>(&p.x->u)}) {
+                                  u = std::move(*c);
+                                }
+                              },
+                 [&](const Negate &n) {
+                   n.x->Fold(context);
+                   if (auto c{std::get_if<Constant>(&n.x->u)}) {
+                     auto negated{c->Negate()};
+                     if (negated.overflow && context.messages != nullptr) {
+                       context.messages->Say(
+                           context.at, "integer negation overflowed"_en_US);
+                     }
+                     u = std::move(negated.value);
+                   }
+                 },
+                 [&](const Add &a) {
+                   a.x->Fold(context);
+                   a.y->Fold(context);
+                   if (auto xc{std::get_if<Constant>(&a.x->u)}) {
+                     if (auto yc{std::get_if<Constant>(&a.y->u)}) {
+                       auto sum{xc->AddSigned(*yc)};
+                       if (sum.overflow && context.messages != nullptr) {
+                         context.messages->Say(
+                             context.at, "integer addition overflowed"_en_US);
+                       }
+                       u = std::move(sum.value);
+                     }
+                   }
+                 },
+                 [&](const Multiply &a) {
+                   a.x->Fold(context);
+                   a.y->Fold(context);
+                   if (auto xc{std::get_if<Constant>(&a.x->u)}) {
+                     if (auto yc{std::get_if<Constant>(&a.y->u)}) {
+                       auto product{xc->MultiplySigned(*yc)};
+                       if (product.SignedMultiplicationOverflowed() &&
+                           context.messages != nullptr) {
+                         context.messages->Say(context.at,
+                             "integer multiplication overflowed"_en_US);
+                       }
+                       u = std::move(product.lower);
+                     }
+                   }
+                 },
+                 [&](const Bin &b) {
+                   b.x->Fold(context);
+                   b.y->Fold(context);
+                 },
+                 [&](const auto &) {  // TODO: more
+                 }},
+      u);
+}
+
+template<int KIND>
+typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
+  return std::visit(
+      common::visitors{
+          [](const std::string &str) { return LengthExpr{str.size()}; },
+          [](const Concat &c) {
+            return LengthExpr{LengthExpr::Add{c.x->LEN(), c.y->LEN()}};
+          }},
+      u);
 }
 
 template struct IntegerExpr<1>;

@@ -44,6 +44,11 @@ struct AnyRealExpr;
 struct AnyComplexExpr;
 struct AnyCharacterExpr;
 
+struct FoldingContext {
+  const parser::CharBlock &at;
+  parser::Messages *messages;
+};
+
 // Helper base classes to manage subexpressions, which are known as data members
 // named 'x' and, for binary operations, 'y'.
 template<typename A> struct Unary {
@@ -136,7 +141,7 @@ template<int KIND> struct IntegerExpr {
   IntegerExpr &operator=(IntegerExpr &&) = default;
 
   std::ostream &Dump(std::ostream &) const;
-  void Fold(const parser::CharBlock &, parser::Messages *);
+  void Fold(FoldingContext &);
 
   std::variant<Constant, Convert<AnyIntegerExpr>, Convert<AnyRealExpr>,
       Parentheses, Negate, Add, Subtract, Multiply, Divide, Power>
