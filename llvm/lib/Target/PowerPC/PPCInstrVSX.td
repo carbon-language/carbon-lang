@@ -2531,8 +2531,8 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   // Quad-Precision Floating-Point Conversion Instructions:
 
   // Convert DP -> QP
-  def XSCVDPQP  : X_VT5_XO5_VB5_TyVB<63, 22, 836, "xscvdpqp", vfrc, []>;
-  def : Pat<(f128 (fpextend f64:$src)), (f128 (XSCVDPQP $src))>;
+  def XSCVDPQP  : X_VT5_XO5_VB5_TyVB<63, 22, 836, "xscvdpqp", vfrc,
+                                     [(set f128:$vT, (fpextend f64:$vB))]>;
 
   // Round & Convert QP -> DP (dword[1] is set to zero)
   def XSCVQPDP  : X_VT5_XO5_VB5_VSFR<63, 20, 836, "xscvqpdp" , []>;
@@ -3380,6 +3380,11 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
   // Round & Convert QP -> DP/SP
   def : Pat<(f64 (fpround f128:$src)), (f64 (XSCVQPDP $src))>;
   def : Pat<(f32 (fpround f128:$src)), (f32 (XSRSP (XSCVQPDPO $src)))>;
+
+  // Convert SP -> QP
+  def : Pat<(f128 (fpextend f32:$src)),
+            (f128 (XSCVDPQP (COPY_TO_REGCLASS $src, VFRC)))>;
+
 } // end HasP9Vector, AddedComplexity
 
 let Predicates = [HasP9Vector] in {

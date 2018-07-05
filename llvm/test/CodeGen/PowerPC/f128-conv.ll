@@ -552,3 +552,165 @@ entry:
   store float %conv, float* %res, align 4
   ret void
 }
+
+@f128Glob = common global fp128 0xL00000000000000000000000000000000, align 16
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @dpConv2qp(double %a) {
+; CHECK-LABEL: dpConv2qp:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxlor 2, 1, 1
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    blr
+entry:
+  %conv = fpext double %a to fp128
+  ret fp128 %conv
+}
+
+; Function Attrs: norecurse nounwind
+define void @dpConv2qp_02(double* nocapture readonly %a) {
+; CHECK-LABEL: dpConv2qp_02:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxsd 2, 0(3)
+; CHECK-NEXT:    addis 3, 2, .LC8@toc@ha
+; CHECK-NEXT:    ld 3, .LC8@toc@l(3)
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxvx 2, 0, 3
+; CHECK-NEXT:    blr
+entry:
+  %0 = load double, double* %a, align 8
+  %conv = fpext double %0 to fp128
+  store fp128 %conv, fp128* @f128Glob, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @dpConv2qp_02b(double* nocapture readonly %a, i32 signext %idx) {
+; CHECK-LABEL: dpConv2qp_02b:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    sldi 4, 4, 3
+; CHECK-NEXT:    lxsdx 2, 3, 4
+; CHECK-NEXT:    addis 3, 2, .LC8@toc@ha
+; CHECK-NEXT:    ld 3, .LC8@toc@l(3)
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxvx 2, 0, 3
+; CHECK-NEXT:    blr
+entry:
+  %idxprom = sext i32 %idx to i64
+  %arrayidx = getelementptr inbounds double, double* %a, i64 %idxprom
+  %0 = load double, double* %arrayidx, align 8
+  %conv = fpext double %0 to fp128
+  store fp128 %conv, fp128* @f128Glob, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @dpConv2qp_03(fp128* nocapture %res, i32 signext %idx, double %a) {
+; CHECK-LABEL: dpConv2qp_03:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxlor 2, 1, 1
+; CHECK-NEXT:    sldi 4, 4, 4
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxvx 2, 3, 4
+; CHECK-NEXT:    blr
+entry:
+  %conv = fpext double %a to fp128
+  %idxprom = sext i32 %idx to i64
+  %arrayidx = getelementptr inbounds fp128, fp128* %res, i64 %idxprom
+  store fp128 %conv, fp128* %arrayidx, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @dpConv2qp_04(double %a, fp128* nocapture %res) {
+; CHECK-LABEL: dpConv2qp_04:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxlor 2, 1, 1
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxv 2, 0(4)
+; CHECK-NEXT:    blr
+entry:
+  %conv = fpext double %a to fp128
+  store fp128 %conv, fp128* %res, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @spConv2qp(float %a) {
+; CHECK-LABEL: spConv2qp:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxlor 2, 1, 1
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    blr
+entry:
+  %conv = fpext float %a to fp128
+  ret fp128 %conv
+}
+
+; Function Attrs: norecurse nounwind
+define void @spConv2qp_02(float* nocapture readonly %a) {
+; CHECK-LABEL: spConv2qp_02:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxssp 2, 0(3)
+; CHECK-NEXT:    addis 3, 2, .LC8@toc@ha
+; CHECK-NEXT:    ld 3, .LC8@toc@l(3)
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxvx 2, 0, 3
+; CHECK-NEXT:    blr
+entry:
+  %0 = load float, float* %a, align 4
+  %conv = fpext float %0 to fp128
+  store fp128 %conv, fp128* @f128Glob, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @spConv2qp_02b(float* nocapture readonly %a, i32 signext %idx) {
+; CHECK-LABEL: spConv2qp_02b:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    sldi 4, 4, 2
+; CHECK-NEXT:    lxsspx 2, 3, 4
+; CHECK-NEXT:    addis 3, 2, .LC8@toc@ha
+; CHECK-NEXT:    ld 3, .LC8@toc@l(3)
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxvx 2, 0, 3
+; CHECK-NEXT:    blr
+entry:
+  %idxprom = sext i32 %idx to i64
+  %arrayidx = getelementptr inbounds float, float* %a, i64 %idxprom
+  %0 = load float, float* %arrayidx, align 4
+  %conv = fpext float %0 to fp128
+  store fp128 %conv, fp128* @f128Glob, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @spConv2qp_03(fp128* nocapture %res, i32 signext %idx, float %a) {
+; CHECK-LABEL: spConv2qp_03:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxlor 2, 1, 1
+; CHECK-NEXT:    sldi 4, 4, 4
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxvx 2, 3, 4
+; CHECK-NEXT:    blr
+entry:
+  %conv = fpext float %a to fp128
+  %idxprom = sext i32 %idx to i64
+  %arrayidx = getelementptr inbounds fp128, fp128* %res, i64 %idxprom
+  store fp128 %conv, fp128* %arrayidx, align 16
+  ret void
+}
+
+; Function Attrs: norecurse nounwind
+define void @spConv2qp_04(float %a, fp128* nocapture %res) {
+; CHECK-LABEL: spConv2qp_04:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xxlor 2, 1, 1
+; CHECK-NEXT:    xscvdpqp 2, 2
+; CHECK-NEXT:    stxv 2, 0(4)
+; CHECK-NEXT:    blr
+entry:
+  %conv = fpext float %a to fp128
+  store fp128 %conv, fp128* %res, align 16
+  ret void
+}
