@@ -37,7 +37,7 @@ int main() {
   FoldingContext context{src, nullptr};
   ex1.Fold(context);
   MATCH("-10", Dump(ex1));
-  MATCH("(6.LE.7)", Dump(DefaultIntegerExpr{6} <= DefaultIntegerExpr{7}));
+  MATCH("(Integer(4)::6.LE.7)", Dump(DefaultIntegerExpr{6} <= DefaultIntegerExpr{7}));
   DefaultIntegerExpr a{1};
   DefaultIntegerExpr b{2};
   MATCH("(1/2)", Dump(a / b));

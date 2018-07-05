@@ -27,18 +27,10 @@ std::ostream &DumpExprWithType(std::ostream &o, const std::variant<A...> &u) {
   std::visit(
       [&](const auto &x) {
         using Ty = typename std::remove_reference_t<decltype(x)>::Result;
-        x.Dump(o << '(' << Ty::Dump() << ' ') << ')';
+        x.Dump(o << '(' << Ty::Dump() << "::") << ')';
       },
       u);
   return o;
-}
-
-std::ostream &AnyIntegerExpr::Dump(std::ostream &o) const {
-  return DumpExprWithType(o, u);
-}
-
-std::ostream &AnyRealExpr::Dump(std::ostream &o) const {
-  return DumpExprWithType(o, u);
 }
 
 template<typename... A>
@@ -47,11 +39,13 @@ std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
   return o;
 }
 
-std::ostream &AnyCharacterExpr::Dump(std::ostream &o) const {
+template<Category CAT>
+std::ostream &AnyKindExpr<CAT>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
-std::ostream &AnyComplexExpr::Dump(std::ostream &o) const {
+template<Category CAT>
+std::ostream &AnyKindComparison<CAT>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
@@ -68,27 +62,25 @@ std::ostream &Binary<A, B>::Dump(std::ostream &o, const char *opr) const {
 }
 
 template<int KIND>
-std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
-          [&](const Convert<AnyIntegerExpr> &j) { j.x->Dump(o); },
-          [&](const Convert<AnyRealExpr> &a) { a.x->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
           [&](const Subtract &s) { s.Dump(o, "-"); },
           [&](const Multiply &m) { m.Dump(o, "*"); },
           [&](const Divide &d) { d.Dump(o, "/"); },
-          [&](const Power &p) { p.Dump(o, "**"); }},
+          [&](const Power &p) { p.Dump(o, "**"); },
+          [&](const auto &convert) { DumpExprWithType(o, convert.x->u); }},
       u);
   return o;
 }
 
-template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
+template<int KIND>
+std::ostream &Expr<Category::Real, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
-          [&](const Convert<AnyIntegerExpr> &j) { j.x->Dump(o); },
-          [&](const Convert<AnyRealExpr> &a) { a.x->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
@@ -98,13 +90,14 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
           [&](const Power &p) { p.Dump(o, "**"); },
           [&](const IntPower &p) { p.Dump(o, "**"); },
           [&](const RealPart &z) { z.Dump(o, "REAL("); },
-          [&](const AIMAG &p) { p.Dump(o, "AIMAG("); }},
+          [&](const AIMAG &p) { p.Dump(o, "AIMAG("); },
+          [&](const auto &convert) { DumpExprWithType(o, convert.x->u); }},
       u);
   return o;
 }
 
 template<int KIND>
-std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &Expr<Category::Complex, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
@@ -121,53 +114,22 @@ std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
 }
 
 template<int KIND>
-std::ostream &CharacterExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &Expr<Category::Character, KIND>::Dump(std::ostream &o) const {
   std::visit(common::visitors{[&](const Constant &s) { o << '"' << s << '"'; },
                  [&](const Concat &c) { c.y->Dump(c.x->Dump(o) << "//"); }},
       u);
   return o;
 }
 
-template<typename T> std::ostream &Comparison<T>::Dump(std::ostream &o) const {
-  std::visit(common::visitors{[&](const LT &c) { c.Dump(o, ".LT."); },
-                 [&](const LE &c) { c.Dump(o, ".LE."); },
-                 [&](const EQ &c) { c.Dump(o, ".EQ."); },
-                 [&](const NE &c) { c.Dump(o, ".NE."); },
-                 [&](const GE &c) { c.Dump(o, ".GE."); },
-                 [&](const GT &c) { c.Dump(o, ".GT."); }},
-      u);
-  return o;
+template<typename A> std::ostream &Comparison<A>::Dump(std::ostream &o) const {
+  using Ty = typename A::Result;
+  o << '(' << Ty::Dump() << "::";
+  this->x->Dump(o);
+  o << '.' << EnumToString(this->opr) << '.';
+  return this->y->Dump(o) << ')';
 }
 
-template<int KIND>
-std::ostream &Comparison<ComplexExpr<KIND>>::Dump(std::ostream &o) const {
-  std::visit(common::visitors{[&](const EQ &c) { c.Dump(o, ".EQ."); },
-                 [&](const NE &c) { c.Dump(o, ".NE."); }},
-      u);
-  return o;
-}
-
-std::ostream &IntegerComparison::Dump(std::ostream &o) const {
-  std::visit([&](const auto &c) { c.Dump(o); }, u);
-  return o;
-}
-
-std::ostream &RealComparison::Dump(std::ostream &o) const {
-  std::visit([&](const auto &c) { c.Dump(o); }, u);
-  return o;
-}
-
-std::ostream &ComplexComparison::Dump(std::ostream &o) const {
-  std::visit([&](const auto &c) { c.Dump(o); }, u);
-  return o;
-}
-
-std::ostream &CharacterComparison::Dump(std::ostream &o) const {
-  std::visit([&](const auto &c) { c.Dump(o); }, u);
-  return o;
-}
-
-std::ostream &LogicalExpr::Dump(std::ostream &o) const {
+std::ostream &Expr<Category::Logical, 1>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const bool &tf) { o << (tf ? ".T." : ".F."); },
           [&](const Not &n) { n.Dump(o, "(.NOT."); },
@@ -180,7 +142,8 @@ std::ostream &LogicalExpr::Dump(std::ostream &o) const {
   return o;
 }
 
-template<int KIND> void IntegerExpr<KIND>::Fold(FoldingContext &context) {
+template<int KIND>
+void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
   std::visit(common::visitors{[&](const Parentheses &p) {
                                 p.x->Fold(context);
                                 if (auto c{std::get_if<Constant>(&p.x->u)}) {
@@ -247,20 +210,38 @@ typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
       u);
 }
 
-template struct IntegerExpr<1>;
-template struct IntegerExpr<2>;
-template struct IntegerExpr<4>;
-template struct IntegerExpr<8>;
-template struct IntegerExpr<16>;
-template struct RealExpr<2>;
-template struct RealExpr<4>;
-template struct RealExpr<8>;
-template struct RealExpr<10>;
-template struct RealExpr<16>;
-template struct ComplexExpr<2>;
-template struct ComplexExpr<4>;
-template struct ComplexExpr<8>;
-template struct ComplexExpr<10>;
-template struct ComplexExpr<16>;
-template struct CharacterExpr<1>;
+template struct Expr<Category::Integer, 1>;
+template struct Expr<Category::Integer, 2>;
+template struct Expr<Category::Integer, 4>;
+template struct Expr<Category::Integer, 8>;
+template struct Expr<Category::Integer, 16>;
+template struct Expr<Category::Real, 2>;
+template struct Expr<Category::Real, 4>;
+template struct Expr<Category::Real, 8>;
+template struct Expr<Category::Real, 10>;
+template struct Expr<Category::Real, 16>;
+template struct Expr<Category::Complex, 2>;
+template struct Expr<Category::Complex, 4>;
+template struct Expr<Category::Complex, 8>;
+template struct Expr<Category::Complex, 10>;
+template struct Expr<Category::Complex, 16>;
+template struct Expr<Category::Character, 1>;
+template struct Expr<Category::Logical, 1>;
+
+template struct Comparison<IntegerExpr<1>>;
+template struct Comparison<IntegerExpr<2>>;
+template struct Comparison<IntegerExpr<4>>;
+template struct Comparison<IntegerExpr<8>>;
+template struct Comparison<IntegerExpr<16>>;
+template struct Comparison<RealExpr<2>>;
+template struct Comparison<RealExpr<4>>;
+template struct Comparison<RealExpr<8>>;
+template struct Comparison<RealExpr<10>>;
+template struct Comparison<RealExpr<16>>;
+template struct Comparison<ComplexExpr<2>>;
+template struct Comparison<ComplexExpr<4>>;
+template struct Comparison<ComplexExpr<8>>;
+template struct Comparison<ComplexExpr<10>>;
+template struct Comparison<ComplexExpr<16>>;
+template struct Comparison<CharacterExpr<1>>;
 }  // namespace Fortran::evaluate

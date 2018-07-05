@@ -95,6 +95,9 @@ template<int KIND> struct Type<Category::Character, KIND> {
   static constexpr int kind{KIND};
   static constexpr bool hasLen{true};
   using Value = std::string;
+  static std::string Dump() {
+    return EnumToString(category) + '(' + std::to_string(kind) + ')';
+  }
 };
 
 // Default REAL just simply has to be IEEE-754 single precision today.
@@ -115,16 +118,21 @@ using DefaultCharacter = Type<Category::Character, 1>;
 // These templates create instances of std::variant<> that can contain
 // applications of some class template to all of the supported kinds of
 // a category of intrinsic type.
-template<template<int> class T>
-using IntegerKindsVariant = std::variant<T<1>, T<2>, T<4>, T<8>, T<16>>;
-template<template<int> class T>
-using RealKindsVariant = std::variant<T<2>, T<4>, T<8>, T<10>, T<16>>;
-template<template<int> class T> using ComplexKindsVariant = RealKindsVariant<T>;
-template<template<int> class T>
-using LogicalKindsVariant = std::variant<T<1>, T<2>, T<4>, T<8>>;
-template<template<int> class T>
-using CharacterKindsVariant =
-    std::variant<T<1>>;  // TODO larger CHARACTER kinds, incl. Kanji
-
+template<Category CAT, template<int> class T> struct KindsVariant;
+template<template<int> class T> struct KindsVariant<Category::Integer, T> {
+  using type = std::variant<T<1>, T<2>, T<4>, T<8>, T<16>>;
+};
+template<template<int> class T> struct KindsVariant<Category::Real, T> {
+  using type = std::variant<T<2>, T<4>, T<8>, T<10>, T<16>>;
+};
+template<template<int> class T> struct KindsVariant<Category::Complex, T> {
+  using type = typename KindsVariant<Category::Real, T>::type;
+};
+template<template<int> class T> struct KindsVariant<Category::Character, T> {
+  using type = std::variant<T<1>>;  // TODO larger CHARACTER kinds, incl. Kanji
+};
+template<template<int> class T> struct KindsVariant<Category::Logical, T> {
+  using type = std::variant<T<1>, T<2>, T<4>, T<8>>;
+};
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_
