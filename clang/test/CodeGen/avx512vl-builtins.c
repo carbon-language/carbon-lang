@@ -1139,8 +1139,7 @@ __mmask8 test_mm256_cmp_ps_mask_ngt_us(__m256 a, __m256 b) {
 
 __mmask8 test_mm256_cmp_ps_mask_false_oq(__m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_cmp_ps_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <8 x float> %{{.*}}, %{{.*}}
   return _mm256_cmp_ps_mask(a, b, _CMP_FALSE_OQ);
 }
 
@@ -1164,8 +1163,7 @@ __mmask8 test_mm256_cmp_ps_mask_gt_os(__m256 a, __m256 b) {
 
 __mmask8 test_mm256_cmp_ps_mask_true_uq(__m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_cmp_ps_mask_true_uq
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <8 x float> %{{.*}}, %{{.*}}
   return _mm256_cmp_ps_mask(a, b, _CMP_TRUE_UQ);
 }
 
@@ -1237,8 +1235,7 @@ __mmask8 test_mm256_cmp_ps_mask_ngt_uq(__m256 a, __m256 b) {
 
 __mmask8 test_mm256_cmp_ps_mask_false_os(__m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_cmp_ps_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <8 x float> %{{.*}}, %{{.*}}
   return _mm256_cmp_ps_mask(a, b, _CMP_FALSE_OS);
 }
 
@@ -1262,8 +1259,7 @@ __mmask8 test_mm256_cmp_ps_mask_gt_oq(__m256 a, __m256 b) {
 
 __mmask8 test_mm256_cmp_ps_mask_true_us(__m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_cmp_ps_mask_true_us
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <8 x float> %{{.*}}, %{{.*}}
   return _mm256_cmp_ps_mask(a, b, _CMP_TRUE_US);
 }
 
@@ -1346,8 +1342,8 @@ __mmask8 test_mm256_mask_cmp_ps_mask_ngt_us(__mmask8 m, __m256 a, __m256 b) {
 
 __mmask8 test_mm256_mask_cmp_ps_mask_false_oq(__mmask8 m, __m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_mask_cmp_ps_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <8 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <8 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_ps_mask(m, a, b, _CMP_FALSE_OQ);
 }
 
@@ -1374,7 +1370,8 @@ __mmask8 test_mm256_mask_cmp_ps_mask_gt_os(__mmask8 m, __m256 a, __m256 b) {
 
 __mmask8 test_mm256_mask_cmp_ps_mask_true_uq(__mmask8 m, __m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_mask_cmp_ps_mask_true_uq
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <8 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <8 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_ps_mask(m, a, b, _CMP_TRUE_UQ);
 }
 
@@ -1457,8 +1454,8 @@ __mmask8 test_mm256_mask_cmp_ps_mask_ngt_uq(__mmask8 m, __m256 a, __m256 b) {
 
 __mmask8 test_mm256_mask_cmp_ps_mask_false_os(__mmask8 m, __m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_mask_cmp_ps_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <8 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <8 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_ps_mask(m, a, b, _CMP_FALSE_OS);
 }
 
@@ -1485,7 +1482,8 @@ __mmask8 test_mm256_mask_cmp_ps_mask_gt_oq(__mmask8 m, __m256 a, __m256 b) {
 
 __mmask8 test_mm256_mask_cmp_ps_mask_true_us(__mmask8 m, __m256 a, __m256 b) {
   // CHECK-LABEL: test_mm256_mask_cmp_ps_mask_true_us
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <8 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <8 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_ps_mask(m, a, b, _CMP_TRUE_US);
 }
 
@@ -1557,8 +1555,7 @@ __mmask8 test_mm256_cmp_pd_mask_ngt_us(__m256d a, __m256d b) {
 
 __mmask8 test_mm256_cmp_pd_mask_false_oq(__m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_cmp_pd_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <4 x double> %{{.*}}, %{{.*}}
   return _mm256_cmp_pd_mask(a, b, _CMP_FALSE_OQ);
 }
 
@@ -1582,8 +1579,7 @@ __mmask8 test_mm256_cmp_pd_mask_gt_os(__m256d a, __m256d b) {
 
 __mmask8 test_mm256_cmp_pd_mask_true_uq(__m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_cmp_pd_mask_true_uq
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <4 x double> %{{.*}}, %{{.*}}
   return _mm256_cmp_pd_mask(a, b, _CMP_TRUE_UQ);
 }
 
@@ -1655,8 +1651,7 @@ __mmask8 test_mm256_cmp_pd_mask_ngt_uq(__m256d a, __m256d b) {
 
 __mmask8 test_mm256_cmp_pd_mask_false_os(__m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_cmp_pd_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <4 x double> %{{.*}}, %{{.*}}
   return _mm256_cmp_pd_mask(a, b, _CMP_FALSE_OS);
 }
 
@@ -1680,8 +1675,7 @@ __mmask8 test_mm256_cmp_pd_mask_gt_oq(__m256d a, __m256d b) {
 
 __mmask8 test_mm256_cmp_pd_mask_true_us(__m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_cmp_pd_mask_true_us
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <4 x double> %{{.*}}, %{{.*}}
   return _mm256_cmp_pd_mask(a, b, _CMP_TRUE_US);
 }
 
@@ -1764,8 +1758,8 @@ __mmask8 test_mm256_mask_cmp_pd_mask_ngt_us(__mmask8 m, __m256d a, __m256d b) {
 
 __mmask8 test_mm256_mask_cmp_pd_mask_false_oq(__mmask8 m, __m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_mask_cmp_pd_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <4 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_pd_mask(m, a, b, _CMP_FALSE_OQ);
 }
 
@@ -1792,7 +1786,8 @@ __mmask8 test_mm256_mask_cmp_pd_mask_gt_os(__mmask8 m, __m256d a, __m256d b) {
 
 __mmask8 test_mm256_mask_cmp_pd_mask_true_uq(__mmask8 m, __m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_mask_cmp_pd_mask_true_uq
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <4 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_pd_mask(m, a, b, _CMP_TRUE_UQ);
 }
 
@@ -1875,8 +1870,8 @@ __mmask8 test_mm256_mask_cmp_pd_mask_ngt_uq(__mmask8 m, __m256d a, __m256d b) {
 
 __mmask8 test_mm256_mask_cmp_pd_mask_false_os(__mmask8 m, __m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_mask_cmp_pd_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <4 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_pd_mask(m, a, b, _CMP_FALSE_OS);
 }
 
@@ -1903,7 +1898,8 @@ __mmask8 test_mm256_mask_cmp_pd_mask_gt_oq(__mmask8 m, __m256d a, __m256d b) {
 
 __mmask8 test_mm256_mask_cmp_pd_mask_true_us(__mmask8 m, __m256d a, __m256d b) {
   // CHECK-LABEL: test_mm256_mask_cmp_pd_mask_true_us
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <4 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm256_mask_cmp_pd_mask(m, a, b, _CMP_TRUE_US);
 }
 
@@ -1975,8 +1971,7 @@ __mmask8 test_mm_cmp_ps_mask_ngt_us(__m128 a, __m128 b) {
 
 __mmask8 test_mm_cmp_ps_mask_false_oq(__m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_cmp_ps_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <4 x float> %{{.*}}, %{{.*}}
   return _mm_cmp_ps_mask(a, b, _CMP_FALSE_OQ);
 }
 
@@ -2000,8 +1995,7 @@ __mmask8 test_mm_cmp_ps_mask_gt_os(__m128 a, __m128 b) {
 
 __mmask8 test_mm_cmp_ps_mask_true_uq(__m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_cmp_ps_mask_true_uq
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <4 x float> %{{.*}}, %{{.*}}
   return _mm_cmp_ps_mask(a, b, _CMP_TRUE_UQ);
 }
 
@@ -2073,8 +2067,7 @@ __mmask8 test_mm_cmp_ps_mask_ngt_uq(__m128 a, __m128 b) {
 
 __mmask8 test_mm_cmp_ps_mask_false_os(__m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_cmp_ps_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <4 x float> %{{.*}}, %{{.*}}
   return _mm_cmp_ps_mask(a, b, _CMP_FALSE_OS);
 }
 
@@ -2098,8 +2091,7 @@ __mmask8 test_mm_cmp_ps_mask_gt_oq(__m128 a, __m128 b) {
 
 __mmask8 test_mm_cmp_ps_mask_true_us(__m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_cmp_ps_mask_true_us
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <4 x float> %{{.*}}, %{{.*}}
   return _mm_cmp_ps_mask(a, b, _CMP_TRUE_US);
 }
 
@@ -2182,8 +2174,8 @@ __mmask8 test_mm_mask_cmp_ps_mask_ngt_us(__mmask8 m, __m128 a, __m128 b) {
 
 __mmask8 test_mm_mask_cmp_ps_mask_false_oq(__mmask8 m, __m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_mask_cmp_ps_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <4 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_ps_mask(m, a, b, _CMP_FALSE_OQ);
 }
 
@@ -2210,7 +2202,8 @@ __mmask8 test_mm_mask_cmp_ps_mask_gt_os(__mmask8 m, __m128 a, __m128 b) {
 
 __mmask8 test_mm_mask_cmp_ps_mask_true_uq(__mmask8 m, __m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_mask_cmp_ps_mask_true_uq
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <4 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_ps_mask(m, a, b, _CMP_TRUE_UQ);
 }
 
@@ -2293,8 +2286,8 @@ __mmask8 test_mm_mask_cmp_ps_mask_ngt_uq(__mmask8 m, __m128 a, __m128 b) {
 
 __mmask8 test_mm_mask_cmp_ps_mask_false_os(__mmask8 m, __m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_mask_cmp_ps_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <4 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_ps_mask(m, a, b, _CMP_FALSE_OS);
 }
 
@@ -2321,7 +2314,8 @@ __mmask8 test_mm_mask_cmp_ps_mask_gt_oq(__mmask8 m, __m128 a, __m128 b) {
 
 __mmask8 test_mm_mask_cmp_ps_mask_true_us(__mmask8 m, __m128 a, __m128 b) {
   // CHECK-LABEL: test_mm_mask_cmp_ps_mask_true_us
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <4 x float> %{{.*}}, %{{.*}}
+  // CHECK: and <4 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_ps_mask(m, a, b, _CMP_TRUE_US);
 }
 
@@ -2393,8 +2387,7 @@ __mmask8 test_mm_cmp_pd_mask_ngt_us(__m128d a, __m128d b) {
 
 __mmask8 test_mm_cmp_pd_mask_false_oq(__m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_cmp_pd_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <2 x double> %{{.*}}, %{{.*}}
   return _mm_cmp_pd_mask(a, b, _CMP_FALSE_OQ);
 }
 
@@ -2418,8 +2411,7 @@ __mmask8 test_mm_cmp_pd_mask_gt_os(__m128d a, __m128d b) {
 
 __mmask8 test_mm_cmp_pd_mask_true_uq(__m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_cmp_pd_mask_true_uq
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <2 x double> %{{.*}}, %{{.*}}
   return _mm_cmp_pd_mask(a, b, _CMP_TRUE_UQ);
 }
 
@@ -2491,8 +2483,7 @@ __mmask8 test_mm_cmp_pd_mask_ngt_uq(__m128d a, __m128d b) {
 
 __mmask8 test_mm_cmp_pd_mask_false_os(__m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_cmp_pd_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: fcmp false <2 x double> %{{.*}}, %{{.*}}
   return _mm_cmp_pd_mask(a, b, _CMP_FALSE_OS);
 }
 
@@ -2516,8 +2507,7 @@ __mmask8 test_mm_cmp_pd_mask_gt_oq(__m128d a, __m128d b) {
 
 __mmask8 test_mm_cmp_pd_mask_true_us(__m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_cmp_pd_mask_true_us
-  // CHECK-NOT: call
-  // CHECK: ret i8 -1
+  // CHECK: fcmp true <2 x double> %{{.*}}, %{{.*}}
   return _mm_cmp_pd_mask(a, b, _CMP_TRUE_US);
 }
 
@@ -2600,8 +2590,8 @@ __mmask8 test_mm_mask_cmp_pd_mask_ngt_us(__mmask8 m, __m128d a, __m128d b) {
 
 __mmask8 test_mm_mask_cmp_pd_mask_false_oq(__mmask8 m, __m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_mask_cmp_pd_mask_false_oq
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <2 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <2 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_pd_mask(m, a, b, _CMP_FALSE_OQ);
 }
 
@@ -2628,7 +2618,8 @@ __mmask8 test_mm_mask_cmp_pd_mask_gt_os(__mmask8 m, __m128d a, __m128d b) {
 
 __mmask8 test_mm_mask_cmp_pd_mask_true_uq(__mmask8 m, __m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_mask_cmp_pd_mask_true_uq
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <2 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <2 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_pd_mask(m, a, b, _CMP_TRUE_UQ);
 }
 
@@ -2711,8 +2702,8 @@ __mmask8 test_mm_mask_cmp_pd_mask_ngt_uq(__mmask8 m, __m128d a, __m128d b) {
 
 __mmask8 test_mm_mask_cmp_pd_mask_false_os(__mmask8 m, __m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_mask_cmp_pd_mask_false_os
-  // CHECK-NOT: call
-  // CHECK: ret i8 0
+  // CHECK: [[CMP:%.*]] = fcmp false <2 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <2 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_pd_mask(m, a, b, _CMP_FALSE_OS);
 }
 
@@ -2739,7 +2730,8 @@ __mmask8 test_mm_mask_cmp_pd_mask_gt_oq(__mmask8 m, __m128d a, __m128d b) {
 
 __mmask8 test_mm_mask_cmp_pd_mask_true_us(__mmask8 m, __m128d a, __m128d b) {
   // CHECK-LABEL: test_mm_mask_cmp_pd_mask_true_us
-  // FIXME
+  // CHECK: [[CMP:%.*]] = fcmp true <2 x double> %{{.*}}, %{{.*}}
+  // CHECK: and <2 x i1> [[CMP]], {{.*}}
   return _mm_mask_cmp_pd_mask(m, a, b, _CMP_TRUE_US);
 }
 
