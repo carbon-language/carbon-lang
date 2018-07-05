@@ -22,36 +22,40 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-template<typename A>
-std::ostream &DumpExprWithType(std::ostream &o, const A &x) {
-  using Ty = typename A::Result;
-  return x.Dump(o << '(' << Ty::Dump() << ' ') << ')';
-}
-
-std::ostream &AnyIntegerExpr::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { DumpExprWithType(o, x); }, u);
+template<typename... A>
+std::ostream &DumpExprWithType(std::ostream &o, const std::variant<A...> &u) {
+  std::visit(
+      [&](const auto &x) {
+        using Ty = typename std::remove_reference_t<decltype(x)>::Result;
+        x.Dump(o << '(' << Ty::Dump() << ' ') << ')';
+      },
+      u);
   return o;
 }
 
+std::ostream &AnyIntegerExpr::Dump(std::ostream &o) const {
+  return DumpExprWithType(o, u);
+}
+
 std::ostream &AnyRealExpr::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { DumpExprWithType(o, x); }, u);
+  return DumpExprWithType(o, u);
+}
+
+template<typename... A>
+std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
+  std::visit([&](const auto &x) { x.Dump(o); }, u);
   return o;
 }
 
 std::ostream &AnyCharacterExpr::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { x.Dump(o); }, u);
-  return o;
+  return DumpExpr(o, u);
 }
 
 std::ostream &AnyComplexExpr::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { x.Dump(o); }, u);
-  return o;
+  return DumpExpr(o, u);
 }
 
-std::ostream &AnyExpr::Dump(std::ostream &o) const {
-  std::visit([&](const auto &x) { x.Dump(o); }, u);
-  return o;
-}
+std::ostream &AnyExpr::Dump(std::ostream &o) const { return DumpExpr(o, u); }
 
 template<typename A>
 std::ostream &Unary<A>::Dump(std::ostream &o, const char *opr) const {
