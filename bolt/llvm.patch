@@ -1411,7 +1411,7 @@ index 03e31746139..0436778e2e4 100644
  #include "llvm/BinaryFormat/Dwarf.h"
  #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 diff --git a/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp b/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
-index b9dc2151e06..9a4a6f024bb 100644
+index b9dc2151e06..f3c7c81bb10 100644
 --- a/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
 +++ b/lib/DebugInfo/DWARF/DWARFDebugFrame.cpp
 @@ -352,7 +352,8 @@ static void LLVM_ATTRIBUTE_NORETURN ReportError(uint32_t StartOffset,
@@ -1434,6 +1434,15 @@ index b9dc2151e06..9a4a6f024bb 100644
      }
  
      // At this point, Offset points to the next field after Length.
+@@ -399,7 +403,7 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
+ 
+       // Parse the augmentation data for EH CIEs
+       StringRef AugmentationData("");
+-      uint32_t FDEPointerEncoding = DW_EH_PE_omit;
++      uint32_t FDEPointerEncoding = DW_EH_PE_absptr;
+       uint32_t LSDAPointerEncoding = DW_EH_PE_omit;
+       Optional<uint64_t> Personality;
+       Optional<uint32_t> PersonalityEncoding;
 @@ -425,11 +429,16 @@ void DWARFDebugFrame::parse(DWARFDataExtractor Data) {
                Personality = Data.getEncodedPointer(
                    &Offset, *PersonalityEncoding,
