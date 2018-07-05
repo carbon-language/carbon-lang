@@ -65,12 +65,16 @@ declare <4 x float> @llvm.x86.fma.vfnmadd.ss(<4 x float> %a, <4 x float> %b, <4 
 define <8 x float> @test4(<8 x float> %a, <8 x float> %b, <8 x float> %c) {
 ; X32-LABEL: test4:
 ; X32:       # %bb.0: # %entry
-; X32-NEXT:    vfnmadd213ps {{.*#+}} ymm0 = -(ymm1 * ymm0) + ymm2
+; X32-NEXT:    vbroadcastss {{.*#+}} ymm3 = [-0,-0,-0,-0,-0,-0,-0,-0]
+; X32-NEXT:    vxorps %ymm3, %ymm2, %ymm2
+; X32-NEXT:    vfnmsub213ps {{.*#+}} ymm0 = -(ymm1 * ymm0) - ymm2
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: test4:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    vfnmadd213ps {{.*#+}} ymm0 = -(ymm1 * ymm0) + ymm2
+; X64-NEXT:    vbroadcastss {{.*#+}} ymm3 = [-0,-0,-0,-0,-0,-0,-0,-0]
+; X64-NEXT:    vxorps %ymm3, %ymm2, %ymm2
+; X64-NEXT:    vfnmsub213ps {{.*#+}} ymm0 = -(ymm1 * ymm0) - ymm2
 ; X64-NEXT:    retq
 entry:
   %0 = tail call <8 x float> @llvm.x86.fma.vfmsub.ps.256(<8 x float> %a, <8 x float> %b, <8 x float> %c) #2

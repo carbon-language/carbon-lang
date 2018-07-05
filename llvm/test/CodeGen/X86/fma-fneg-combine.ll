@@ -78,10 +78,18 @@ entry:
 
 
 define <8 x float> @test7(<8 x float> %a, <8 x float> %b, <8 x float> %c) {
-; CHECK-LABEL: test7:
-; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    vfnmadd213ps %ymm2, %ymm1, %ymm0
-; CHECK-NEXT:    retq
+; SKX-LABEL: test7:
+; SKX:       # %bb.0: # %entry
+; SKX-NEXT:    vxorps {{.*}}(%rip){1to8}, %ymm2, %ymm2
+; SKX-NEXT:    vfnmsub213ps {{.*#+}} ymm0 = -(ymm1 * ymm0) - ymm2
+; SKX-NEXT:    retq
+;
+; KNL-LABEL: test7:
+; KNL:       # %bb.0: # %entry
+; KNL-NEXT:    vbroadcastss {{.*#+}} ymm3 = [-0,-0,-0,-0,-0,-0,-0,-0]
+; KNL-NEXT:    vxorps %ymm3, %ymm2, %ymm2
+; KNL-NEXT:    vfnmsub213ps {{.*#+}} ymm0 = -(ymm1 * ymm0) - ymm2
+; KNL-NEXT:    retq
 entry:
   %0 = tail call <8 x float> @llvm.x86.fma.vfmsub.ps.256(<8 x float> %a, <8 x float> %b, <8 x float> %c) #2
   %sub.i = fsub <8 x float> <float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00, float -0.000000e+00>, %0
