@@ -3387,6 +3387,17 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
 
 } // end HasP9Vector, AddedComplexity
 
+let AddedComplexity = 400 in {
+  let Predicates = [IsISA3_0, HasP9Vector, HasDirectMove, IsBigEndian] in {
+    def : Pat<(f128 (PPCbuild_fp128 i64:$rB, i64:$rA)),
+              (f128 (COPY_TO_REGCLASS (MTVSRDD $rB, $rA), VRRC))>;
+  }
+  let Predicates = [IsISA3_0, HasP9Vector, HasDirectMove, IsLittleEndian] in {
+    def : Pat<(f128 (PPCbuild_fp128 i64:$rA, i64:$rB)),
+              (f128 (COPY_TO_REGCLASS (MTVSRDD $rB, $rA), VRRC))>;
+  }
+}
+
 let Predicates = [HasP9Vector] in {
   let isPseudo = 1 in {
     let mayStore = 1 in {
