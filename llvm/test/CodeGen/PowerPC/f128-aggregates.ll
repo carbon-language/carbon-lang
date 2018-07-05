@@ -1,7 +1,191 @@
 ; RUN: llc -mcpu=pwr9 -mtriple=powerpc64le-unknown-unknown \
 ; RUN:   -enable-ppc-quad-precision -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mcpu=pwr9 -mtriple=powerpc64-unknown-unknown \
-; RUN:   -enable-ppc-quad-precision -verify-machineinstrs < %s | FileCheck -check-prefix=CHECK-BE %s
+; RUN:   -enable-ppc-quad-precision -verify-machineinstrs < %s \
+; RUN:   | FileCheck -check-prefix=CHECK-BE %s
+
+; Testing homogeneous aggregates.
+
+%struct.With9fp128params = type { fp128, fp128, fp128, fp128, fp128, fp128,
+                                  fp128, fp128, fp128 }
+
+@a1 = common local_unnamed_addr global [3 x fp128] zeroinitializer, align 16
+
+; Function Attrs: norecurse nounwind readonly
+define fp128 @testArray_01(fp128* nocapture readonly %sa) {
+; CHECK-LABEL: testArray_01:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxv 34, 32(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testArray_01:
+; CHECK-BE:       lxv 34, 32(3)
+; CHECK-BE-NEXT:  blr
+entry:
+  %arrayidx = getelementptr inbounds fp128, fp128* %sa, i64 2
+  %0 = load fp128, fp128* %arrayidx, align 16
+  ret fp128 %0
+}
+
+; Function Attrs: norecurse nounwind readonly
+define fp128 @testArray_02() {
+; CHECK-LABEL: testArray_02:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis 3, 2, .LC0@toc@ha
+; CHECK-NEXT:    ld 3, .LC0@toc@l(3)
+; CHECK-NEXT:    lxv 34, 32(3)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testArray_02:
+; CHECK-BE:       lxv 34, 32(3)
+; CHECK-BE-NEXT:  blr
+entry:
+  %0 = load fp128, fp128* getelementptr inbounds ([3 x fp128], [3 x fp128]* @a1,
+                                                  i64 0, i64 2), align 16
+  ret fp128 %0
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @testStruct_01(fp128 inreg returned %a.coerce) {
+; CHECK-LABEL: testStruct_01:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testStruct_01:
+; CHECK-BE:       # %bb.0: # %entry
+; CHECK-BE-NEXT:  blr
+entry:
+  ret fp128 %a.coerce
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @testStruct_02([8 x fp128] %a.coerce) {
+; CHECK-LABEL: testStruct_02:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vmr 2, 9
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testStruct_02:
+; CHECK-BE:       vmr 2, 9
+; CHECK-BE-NEXT:  blr
+entry:
+  %a.coerce.fca.7.extract = extractvalue [8 x fp128] %a.coerce, 7
+  ret fp128 %a.coerce.fca.7.extract
+}
+
+; Since we can only pass a max of 8 float128 value in VSX registers, ensure we
+; store to stack if passing more.
+; Function Attrs: norecurse nounwind readonly
+define fp128 @testStruct_03(%struct.With9fp128params* byval nocapture readonly
+                            align 16 %a) {
+; CHECK-LABEL: testStruct_03:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    lxv 34, 128(1)
+; CHECK-NEXT:    std 10, 88(1)
+; CHECK-NEXT:    std 9, 80(1)
+; CHECK-NEXT:    std 8, 72(1)
+; CHECK-NEXT:    std 7, 64(1)
+; CHECK-NEXT:    std 6, 56(1)
+; CHECK-NEXT:    std 5, 48(1)
+; CHECK-NEXT:    std 4, 40(1)
+; CHECK-NEXT:    std 3, 32(1)
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testStruct_03:
+; CHECK-BE:       # %bb.0: # %entry
+; CHECK-BE-NEXT:    lxv 34, 144(1)
+; CHECK-BE-NEXT:    std 10, 104(1)
+; CHECK-BE-NEXT:    std 9, 96(1)
+; CHECK-BE-NEXT:    std 8, 88(1)
+; CHECK-BE-NEXT:    std 7, 80(1)
+; CHECK-BE-NEXT:    std 6, 72(1)
+; CHECK-BE-NEXT:    std 5, 64(1)
+; CHECK-BE-NEXT:    std 4, 56(1)
+; CHECK-BE-NEXT:    std 3, 48(1)
+; CHECK-BE-NEXT:    blr
+entry:
+  %a7 = getelementptr inbounds %struct.With9fp128params,
+                               %struct.With9fp128params* %a, i64 0, i32 6
+  %0 = load fp128, fp128* %a7, align 16
+  ret fp128 %0
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @testStruct_04([8 x fp128] %a.coerce) {
+; CHECK-LABEL: testStruct_04:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vmr 2, 5
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testStruct_04:
+; CHECK-BE:       vmr 2, 5
+; CHECK-BE-NEXT:  blr
+entry:
+  %a.coerce.fca.3.extract = extractvalue [8 x fp128] %a.coerce, 3
+  ret fp128 %a.coerce.fca.3.extract
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @testHUnion_01([1 x fp128] %a.coerce) {
+; CHECK-LABEL: testHUnion_01:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testHUnion_01:
+; CHECK-BE:       # %bb.0: # %entry
+; CHECK-BE-NEXT:  blr
+entry:
+  %a.coerce.fca.0.extract = extractvalue [1 x fp128] %a.coerce, 0
+  ret fp128 %a.coerce.fca.0.extract
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @testHUnion_02([3 x fp128] %a.coerce) {
+; CHECK-LABEL: testHUnion_02:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testHUnion_02:
+; CHECK-BE:       # %bb.0: # %entry
+; CHECK-BE-NEXT:  blr
+entry:
+  %a.coerce.fca.0.extract = extractvalue [3 x fp128] %a.coerce, 0
+  ret fp128 %a.coerce.fca.0.extract
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @testHUnion_03([3 x fp128] %a.coerce) {
+; CHECK-LABEL: testHUnion_03:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vmr 2, 3
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testHUnion_03:
+; CHECK-BE:       # %bb.0: # %entry
+; CHECK-BE-NEXT:  vmr 2, 3
+; CHECK-BE-NEXT:  blr
+entry:
+  %a.coerce.fca.1.extract = extractvalue [3 x fp128] %a.coerce, 1
+  ret fp128 %a.coerce.fca.1.extract
+}
+
+; Function Attrs: norecurse nounwind readnone
+define fp128 @testHUnion_04([3 x fp128] %a.coerce) {
+; CHECK-LABEL: testHUnion_04:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vmr 2, 4
+; CHECK-NEXT:    blr
+
+; CHECK-BE-LABEL: testHUnion_04:
+; CHECK-BE:       # %bb.0: # %entry
+; CHECK-BE-NEXT:  vmr 2, 4
+; CHECK-BE-NEXT:  blr
+entry:
+  %a.coerce.fca.2.extract = extractvalue [3 x fp128] %a.coerce, 2
+  ret fp128 %a.coerce.fca.2.extract
+}
+
+; Testing mixed member aggregates.
 
 %struct.MixedC = type { i32, %struct.SA, float, [12 x i8] }
 %struct.SA = type { double, fp128, <4 x float> }
@@ -151,7 +335,7 @@ entry:
 define fp128 @sum_float128(i32 signext %count, ...) {
 ; CHECK-LABEL: sum_float128:
 ; CHECK:       # %bb.0: # %entry
-; CHECK-NEXT:    addis 11, 2, .LCPI7_0@toc@ha
+; CHECK-NEXT:    addis 11, 2, .LCPI17_0@toc@ha
 ; CHECK-NEXT:    cmpwi 0, 3, 1
 ; CHECK-NEXT:    std 10, 88(1)
 ; CHECK-NEXT:    std 9, 80(1)
@@ -160,7 +344,7 @@ define fp128 @sum_float128(i32 signext %count, ...) {
 ; CHECK-NEXT:    std 6, 56(1)
 ; CHECK-NEXT:    std 5, 48(1)
 ; CHECK-NEXT:    std 4, 40(1)
-; CHECK-NEXT:    addi 11, 11, .LCPI7_0@toc@l
+; CHECK-NEXT:    addi 11, 11, .LCPI17_0@toc@l
 ; CHECK-NEXT:    lxvx 34, 0, 11
 ; CHECK-NEXT:    bltlr 0
 ; CHECK-NEXT:  # %bb.1: # %if.end
