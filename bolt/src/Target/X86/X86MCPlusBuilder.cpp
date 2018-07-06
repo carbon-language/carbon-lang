@@ -2215,13 +2215,6 @@ public:
     return true;
   }
 
-  void createLongJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
-                     MCContext *Ctx) const override {
-    MCInst Inst;
-    createUncondBranch(Inst, Target, Ctx);
-    Seq.emplace_back(Inst);
-  }
-
   template <typename Itr>
   std::pair<IndirectBranchType, MCInst *>
   analyzePICJumpTable(Itr II,
@@ -2821,94 +2814,6 @@ public:
     Inst.getOperand(0) = MCOperand::createExpr(
         MCSymbolRefExpr::create(TBB, MCSymbolRefExpr::VK_None, *Ctx));
     return true;
-  }
-
-  int getPCRelEncodingSize(MCInst &Inst) const override {
-
-    switch (Inst.getOpcode()) {
-    default:
-      llvm_unreachable("Failed to get pcrel encoding size");
-      return 0;
-
-    case X86::TAILJMPd: return 32;
-    case X86::TAILJMPm: return 32;
-
-    case X86::CALL64pcrel32: return 64;
-
-    case X86::JCXZ:   return  8;
-    case X86::JECXZ:  return  8;
-    case X86::JRCXZ:  return  8;
-
-    case X86::JMP_1:  return  8;
-    case X86::JMP_2:  return 16;
-    case X86::JMP_4:  return 32;
-
-    case X86::JE_1:  return  8;
-    case X86::JE_2:  return 16;
-    case X86::JE_4:  return 32;
-    case X86::JNE_1: return  8;
-    case X86::JNE_2: return 16;
-    case X86::JNE_4: return 32;
-
-    case X86::JL_1:  return  8;
-    case X86::JL_2:  return 16;
-    case X86::JL_4:  return 32;
-    case X86::JGE_1: return  8;
-    case X86::JGE_2: return 16;
-    case X86::JGE_4: return 32;
-
-    case X86::JLE_1: return  8;
-    case X86::JLE_2: return 16;
-    case X86::JLE_4: return 32;
-    case X86::JG_1:  return  8;
-    case X86::JG_2:  return 16;
-    case X86::JG_4:  return 32;
-
-    case X86::JB_1:  return  8;
-    case X86::JB_2:  return 16;
-    case X86::JB_4:  return 32;
-    case X86::JAE_1: return  8;
-    case X86::JAE_2: return 16;
-    case X86::JAE_4: return 32;
-
-    case X86::JBE_1: return  8;
-    case X86::JBE_2: return 16;
-    case X86::JBE_4: return 32;
-    case X86::JA_1:  return  8;
-    case X86::JA_2:  return 16;
-    case X86::JA_4:  return 32;
-
-    case X86::JS_1:  return  8;
-    case X86::JS_2:  return 16;
-    case X86::JS_4:  return 32;
-    case X86::JNS_1: return  8;
-    case X86::JNS_2: return 16;
-    case X86::JNS_4: return 32;
-
-    case X86::JP_1:  return  8;
-    case X86::JP_2:  return 16;
-    case X86::JP_4:  return 32;
-    case X86::JNP_1: return  8;
-    case X86::JNP_2: return 16;
-    case X86::JNP_4: return 32;
-
-    case X86::JO_1:  return  8;
-    case X86::JO_2:  return 16;
-    case X86::JO_4:  return 32;
-    case X86::JNO_1: return  8;
-    case X86::JNO_2: return 16;
-    case X86::JNO_4: return 32;
-    }
-  }
-
-  // TODO
-  int getShortJmpEncodingSize() const override {
-    return 16;
-  }
-
-  // TODO
-  int getUncondBranchEncodingSize() const override {
-    return 28;
   }
 
   unsigned getCanonicalBranchOpcode(unsigned Opcode) const override {
