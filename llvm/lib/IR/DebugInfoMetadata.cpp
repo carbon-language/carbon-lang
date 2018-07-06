@@ -834,9 +834,7 @@ DIExpression *DIExpression::prependOpcodes(const DIExpression *Expr,
         StackValue = false;
       }
     }
-    Ops.push_back(Op.getOp());
-    for (unsigned I = 0; I < Op.getNumArgs(); ++I)
-      Ops.push_back(Op.getArg(I));
+    Op.appendToVector(Ops);
   }
   if (StackValue)
     Ops.push_back(dwarf::DW_OP_stack_value);
@@ -906,9 +904,7 @@ Optional<DIExpression *> DIExpression::createFragmentExpression(
         continue;
       }
       }
-      Ops.push_back(Op.getOp());
-      for (unsigned I = 0; I < Op.getNumArgs(); ++I)
-        Ops.push_back(Op.getArg(I));
+      Op.appendToVector(Ops);
     }
   }
   Ops.push_back(dwarf::DW_OP_LLVM_fragment);
