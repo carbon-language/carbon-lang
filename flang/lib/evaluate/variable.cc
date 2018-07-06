@@ -144,7 +144,8 @@ std::ostream &ProcedureDesignator::Dump(std::ostream &o) const {
   return Emit(o, u);
 }
 
-std::ostream &ProcedureRef::Dump(std::ostream &o) const {
+template<typename ARG>
+std::ostream &ProcedureRef<ARG>::Dump(std::ostream &o) const {
   Emit(o, proc);
   char separator{'('};
   for (const auto &arg : argument) {
@@ -159,7 +160,12 @@ std::ostream &ProcedureRef::Dump(std::ostream &o) const {
 
 std::ostream &Variable::Dump(std::ostream &o) const { return Emit(o, u); }
 
-std::ostream &ActualArg::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &ActualFunctionArg::Dump(std::ostream &o) const {
+  return Emit(o, u);
+}
+std::ostream &ActualSubroutineArg::Dump(std::ostream &o) const {
+  return Emit(o, u);
+}
 
 std::ostream &Label::Dump(std::ostream &o) const {
   return o << '*' << std::dec << label;

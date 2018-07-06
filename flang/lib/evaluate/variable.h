@@ -27,13 +27,11 @@
 
 namespace Fortran::evaluate {
 
-struct DataRef;
-struct Variable;
-struct ActualArg;
-struct Label;
-
 using semantics::Symbol;
 
+// TODO: Reference sections in the Standard
+
+struct DataRef;
 struct Component {
   CLASS_BOILERPLATE(Component)
   Component(const DataRef &b, const Symbol &c) : base{b}, sym{&c} {}
@@ -71,6 +69,7 @@ struct ArrayRef {
   std::vector<Subscript> subscript;
 };
 
+struct Variable;
 struct CoarrayRef {
   CLASS_BOILERPLATE(CoarrayRef)
   CoarrayRef(const Symbol &n, std::vector<SubscriptExpr> &&s)
@@ -129,20 +128,30 @@ struct ProcedureDesignator {
   std::variant<const Symbol *, Component> u;
 };
 
-struct ProcedureRef {  // TODO split off FunctionRef without alt returns
+template<typename ARG> struct ProcedureRef {
+  using ArgumentType = common::Indirection<ARG>;
   CLASS_BOILERPLATE(ProcedureRef)
-  ProcedureRef(
-      ProcedureDesignator &&p, std::vector<common::Indirection<ActualArg>> &&a)
+  ProcedureRef(ProcedureDesignator &&p, std::vector<ArgumentType> &&a)
     : proc{std::move(p)}, argument(std::move(a)) {}
   ProcedureDesignator proc;
-  std::vector<common::Indirection<ActualArg>> argument;
+  std::vector<ArgumentType> argument;
 };
+
+struct ActualFunctionArg;
+using FunctionRef = ProcedureRef<ActualFunctionArg>;
 
 struct Variable {
   CLASS_BOILERPLATE(Variable)
   explicit Variable(Designator &&d) : u{std::move(d)} {}
-  explicit Variable(ProcedureRef &&p) : u{std::move(p)} {}
-  std::variant<Designator, ProcedureRef> u;
+  explicit Variable(FunctionRef &&p) : u{std::move(p)} {}
+  std::variant<Designator, FunctionRef> u;
+};
+
+struct ActualFunctionArg {
+  CLASS_BOILERPLATE(ActualFunctionArg)
+  explicit ActualFunctionArg(GenericExpr &&x) : u{std::move(x)} {}
+  explicit ActualFunctionArg(Variable &&x) : u{std::move(x)} {}
+  std::variant<common::Indirection<GenericExpr>, Variable> u;
 };
 
 struct Label {  // TODO: this is a placeholder
@@ -151,13 +160,16 @@ struct Label {  // TODO: this is a placeholder
   int label;
 };
 
-struct ActualArg {
-  CLASS_BOILERPLATE(ActualArg)
-  explicit ActualArg(GenericExpr &&x) : u{std::move(x)} {}
-  explicit ActualArg(Variable &&x) : u{std::move(x)} {}
-  explicit ActualArg(const Label &l) : u{&l} {}
+struct ActualSubroutineArg {
+  CLASS_BOILERPLATE(ActualSubroutineArg)
+  explicit ActualSubroutineArg(GenericExpr &&x) : u{std::move(x)} {}
+  explicit ActualSubroutineArg(Variable &&x) : u{std::move(x)} {}
+  explicit ActualSubroutineArg(const Label &l) : u{&l} {}
   std::variant<common::Indirection<GenericExpr>, Variable, const Label *> u;
 };
+
+using SubroutineRef = ProcedureRef<ActualSubroutineArg>;
+
 }  // namespace Fortran::evaluate
 
 // This inclusion must follow the definitions in this header due to

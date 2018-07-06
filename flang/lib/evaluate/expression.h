@@ -24,6 +24,7 @@
 // TODO: convenience wrappers for constructing conversions
 
 #include "common.h"
+#include "expression-forward.h"
 #include "type.h"
 #include "variable.h"
 #include "../lib/common/idioms.h"
@@ -112,6 +113,7 @@ template<int KIND> struct Expr<Category::Integer, KIND> {
 
   void Fold(FoldingContext &);
 
+  // TODO: function reference
   std::variant<Constant, common::Indirection<Designator>,
       Convert<GenericIntegerExpr>, Convert<GenericRealExpr>, Parentheses,
       Negate, Add, Subtract, Multiply, Divide, Power>
@@ -173,6 +175,7 @@ template<int KIND> struct Expr<Category::Real, KIND> {
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
 
+  // TODO: designators, function references
   std::variant<Constant, Convert<GenericIntegerExpr>, Convert<GenericRealExpr>,
       Parentheses, Negate, Add, Subtract, Multiply, Divide, Power, IntPower,
       RealPart, AIMAG>
@@ -218,6 +221,7 @@ template<int KIND> struct Expr<Category::Complex, KIND> {
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
 
+  // TODO: designators, function references
   std::variant<Constant, Parentheses, Negate, Add, Subtract, Multiply, Divide,
       Power, IntPower, CMPLX>
       u;
@@ -236,6 +240,7 @@ template<int KIND> struct Expr<Category::Character, KIND> {
 
   LengthExpr LEN() const;
 
+  // TODO: designators, function references
   std::variant<Constant, Binary<Expr>> u;
 };
 
@@ -313,6 +318,7 @@ template<> struct Expr<Category::Logical, 1> {
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
 
+  // TODO: designators, function references
   std::variant<Constant, Not, And, Or, Eqv, Neqv,
       CategoryComparison<Category::Integer>, CategoryComparison<Category::Real>,
       CategoryComparison<Category::Complex>,
