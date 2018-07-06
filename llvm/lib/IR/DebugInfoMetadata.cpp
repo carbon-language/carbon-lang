@@ -475,7 +475,7 @@ DICompileUnit::getEmissionKind(StringRef Str) {
       .Default(None);
 }
 
-const char *DICompileUnit::EmissionKindString(DebugEmissionKind EK) {
+const char *DICompileUnit::emissionKindString(DebugEmissionKind EK) {
   switch (EK) {
   case NoDebug:        return "NoDebug";
   case FullDebug:      return "FullDebug";

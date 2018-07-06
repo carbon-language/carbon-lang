@@ -1166,7 +1166,7 @@ public:
   };
 
   static Optional<DebugEmissionKind> getEmissionKind(StringRef Str);
-  static const char *EmissionKindString(DebugEmissionKind EK);
+  static const char *emissionKindString(DebugEmissionKind EK);
 
 private:
   unsigned SourceLanguage;
@@ -2434,13 +2434,13 @@ public:
 
   /// Prepend \p DIExpr with a deref and offset operation and optionally turn it
   /// into a stack value.
-  static DIExpression *prepend(const DIExpression *DIExpr, bool DerefBefore,
+  static DIExpression *prepend(const DIExpression *Expr, bool DerefBefore,
                                int64_t Offset = 0, bool DerefAfter = false,
                                bool StackValue = false);
 
   /// Prepend \p DIExpr with the given opcodes and optionally turn it into a
   /// stack value.
-  static DIExpression *prependOpcodes(const DIExpression *DIExpr,
+  static DIExpression *prependOpcodes(const DIExpression *Expr,
                                       SmallVectorImpl<uint64_t> &Ops,
                                       bool StackValue = false);
 
@@ -2448,7 +2448,7 @@ public:
   /// DW_OP_deref if needed, and applying \p Ops to the resulting expression.
   /// If \p DIExpr is a fragment, the returned expression will contain the same
   /// fragment.
-  static DIExpression *appendToStack(const DIExpression *DIExpr,
+  static DIExpression *appendToStack(const DIExpression *Expr,
                                      ArrayRef<uint64_t> Ops);
 
   /// Create a DIExpression to describe one part of an aggregate variable that
