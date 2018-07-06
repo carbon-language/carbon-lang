@@ -6023,8 +6023,7 @@ SDValue DAGCombiner::foldRedundantShiftedMasks(SDNode *AND) {
         break;
       } else // Same as SRL
         N0Opcode = ISD::SRL;
-      LLVM_FALLTHROUGH
-      /* fall-through */
+      LLVM_FALLTHROUGH;
     case ISD::SRL:
       CanReduce = (EffectiveOtherMask.lshr(ShiftValue) == EffectiveMask) ||
                   (EffectiveMask.shl(ShiftValue) == EffectiveOtherMask);
