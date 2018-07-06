@@ -3581,27 +3581,26 @@ __m128 test_mm_maskz_div_round_ss(__mmask8 __U, __m128 __A, __m128 __B) {
 }
 __m128 test_mm_mask_div_ss(__m128 __W, __mmask8 __U, __m128 __A, __m128 __B) {
   // CHECK-LABEL: @test_mm_mask_div_ss
-  // CHECK-NOT: @llvm.x86.avx512.mask.div.ss.round
   // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: fdiv float %{{.*}}, %{{.*}}
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: select i1 %{{.*}}, float %{{.*}}, float %{{.*}}
-  // CHECK: insertelement <4 x float> %{{.*}}, float %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: fdiv float %{{.*}}, %{{.*}}
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 %{{.*}}, float %{{.*}}, float %{{.*}}
+  // CHECK-NEXT: insertelement <4 x float> %{{.*}}, float %{{.*}}, i64 0
   return _mm_mask_div_ss(__W,__U,__A,__B); 
 }
 __m128 test_mm_maskz_div_ss(__mmask8 __U, __m128 __A, __m128 __B) {
   // CHECK-LABEL: @test_mm_maskz_div_ss
-  // CHECK-NOT: @llvm.x86.avx512.mask.div.ss.round
   // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: fdiv float %{{.*}}, %{{.*}}
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: select i1 %{{.*}}, float %{{.*}}, float %{{.*}}
-  // CHECK: insertelement <4 x float> %{{.*}}, float %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: fdiv float %{{.*}}, %{{.*}}
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 %{{.*}}, float %{{.*}}, float %{{.*}}
+  // CHECK-NEXT: insertelement <4 x float> %{{.*}}, float %{{.*}}, i64 0
   return _mm_maskz_div_ss(__U,__A,__B); 
 }
 __m128d test_mm_div_round_sd(__m128d __A, __m128d __B) {
@@ -3621,27 +3620,26 @@ __m128d test_mm_maskz_div_round_sd(__mmask8 __U, __m128d __A, __m128d __B) {
 }
 __m128d test_mm_mask_div_sd(__m128d __W, __mmask8 __U, __m128d __A, __m128d __B) {
   // CHECK-LABEL: @test_mm_mask_div_sd
-  // CHECK-NOT: @llvm.x86.avx512.mask.div.sd.round
   // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: fdiv double %{{.*}}, %{{.*}}
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: select i1 %{{.*}}, double %{{.*}}, double %{{.*}}
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: fdiv double %{{.*}}, %{{.*}}
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 %{{.*}}, double %{{.*}}, double %{{.*}}
+  // CHECK-NEXT: insertelement <2 x double> %{{.*}}, double %{{.*}}, i64 0
   return _mm_mask_div_sd(__W,__U,__A,__B); 
 }
 __m128d test_mm_maskz_div_sd(__mmask8 __U, __m128d __A, __m128d __B) {
   // CHECK-LABEL: @test_mm_maskz_div_sd
-  // CHECK-NOT: @llvm.x86.avx512.mask.div.sd.round
   // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: fdiv double %{{.*}}, %{{.*}}
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: select i1 %{{.*}}, double %{{.*}}, double %{{.*}}
-  // CHECK: insertelement <2 x double> %{{.*}}, double %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: fdiv double %{{.*}}, %{{.*}}
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 %{{.*}}, double %{{.*}}, double %{{.*}}
+  // CHECK-NEXT: insertelement <2 x double> %{{.*}}, double %{{.*}}, i64 0
   return _mm_maskz_div_sd(__U,__A,__B); 
 }
 __m128 test_mm_max_round_ss(__m128 __A, __m128 __B) {
@@ -5948,117 +5946,115 @@ __m512 test_mm512_maskz_shuffle_ps(__mmask16 __U, __m512 __M, __m512 __V) {
 __m128d test_mm_sqrt_round_sd(__m128d __A, __m128d __B) {
   // CHECK-LABEL: @test_mm_sqrt_round_sd
   // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: call double @llvm.sqrt.f64(double %{{.*}})
-  // CHECK: select i1 {{.*}}, double {{.*}}, double {{.*}}
-  // CHECK: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
+  // CHECK-NEXT: call double @llvm.sqrt.f64(double %{{.*}})
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
   return _mm_sqrt_round_sd(__A, __B, 4); 
 }
 
 __m128d test_mm_mask_sqrt_sd(__m128d __W, __mmask8 __U, __m128d __A, __m128d __B){
   // CHECK-LABEL: @test_mm_mask_sqrt_sd
   // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call double @llvm.sqrt.f64(double %{{.*}})
-  // CHECK: select i1 {{.*}}, double {{.*}}, double {{.*}}
-  // CHECK: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
-    return _mm_mask_sqrt_sd(__W,__U,__A,__B);
+  // CHECK-NEXT: call double @llvm.sqrt.f64(double %{{.*}})
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, double {{.*}}, double {{.*}}
+  // CHECK-NEXT: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
+  return _mm_mask_sqrt_sd(__W,__U,__A,__B);
 }
 
 __m128d test_mm_mask_sqrt_round_sd(__m128d __W, __mmask8 __U, __m128d __A, __m128d __B){
   // CHECK-LABEL: @test_mm_mask_sqrt_round_sd
   // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call double @llvm.sqrt.f64(double %{{.*}})
-  // CHECK: select i1 {{.*}}, double {{.*}}, double {{.*}}
-  // CHECK: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
-    return _mm_mask_sqrt_round_sd(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+  // CHECK-NEXT: call double @llvm.sqrt.f64(double %{{.*}})
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, double {{.*}}, double {{.*}}
+  // CHECK-NEXT: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
+  return _mm_mask_sqrt_round_sd(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m128d test_mm_maskz_sqrt_sd(__mmask8 __U, __m128d __A, __m128d __B){
   // CHECK-LABEL: @test_mm_maskz_sqrt_sd
   // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call double @llvm.sqrt.f64(double %{{.*}})
-  // CHECK: select i1 {{.*}}, double {{.*}}, double {{.*}}
-  // CHECK: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
-    return _mm_maskz_sqrt_sd(__U,__A,__B);
+  // CHECK-NEXT: call double @llvm.sqrt.f64(double %{{.*}})
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, double {{.*}}, double {{.*}}
+  // CHECK-NEXT: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
+  return _mm_maskz_sqrt_sd(__U,__A,__B);
 }
 
 __m128d test_mm_maskz_sqrt_round_sd(__mmask8 __U, __m128d __A, __m128d __B){
   // CHECK-LABEL: @test_mm_maskz_sqrt_round_sd
   // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: extractelement <2 x double> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call double @llvm.sqrt.f64(double %{{.*}})
-  // CHECK: select i1 {{.*}}, double {{.*}}, double {{.*}}
-  // CHECK: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
-    return _mm_maskz_sqrt_round_sd(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+  // CHECK-NEXT: call double @llvm.sqrt.f64(double %{{.*}})
+  // CHECK-NEXT: extractelement <2 x double> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, double {{.*}}, double {{.*}}
+  // CHECK-NEXT: insertelement <2 x double> %{{.*}}, double {{.*}}, i64 0
+  return _mm_maskz_sqrt_round_sd(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m128 test_mm_sqrt_round_ss(__m128 __A, __m128 __B) {
   // CHECK-LABEL: @test_mm_sqrt_round_ss
   // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: call float @llvm.sqrt.f32(float %{{.*}})
-  // CHECK: select i1 {{.*}}, float {{.*}}, float {{.*}}
-  // CHECK: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
+  // CHECK-NEXT: call float @llvm.sqrt.f32(float %{{.*}})
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
   return _mm_sqrt_round_ss(__A, __B, 4); 
 }
 
 __m128 test_mm_mask_sqrt_ss(__m128 __W, __mmask8 __U, __m128 __A, __m128 __B){
   // CHECK-LABEL: @test_mm_mask_sqrt_ss
   // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call float @llvm.sqrt.f32(float %{{.*}})
-  // CHECK: select i1 {{.*}}, float {{.*}}, float {{.*}}
-  // CHECK: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
-    return _mm_mask_sqrt_ss(__W,__U,__A,__B);
+  // CHECK-NEXT: call float @llvm.sqrt.f32(float %{{.*}})
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, float {{.*}}, float {{.*}}
+  // CHECK-NEXT: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
+  return _mm_mask_sqrt_ss(__W,__U,__A,__B);
 }
 
 __m128 test_mm_mask_sqrt_round_ss(__m128 __W, __mmask8 __U, __m128 __A, __m128 __B){
   // CHECK-LABEL: @test_mm_mask_sqrt_round_ss
   // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call float @llvm.sqrt.f32(float %{{.*}})
-  // CHECK: select i1 {{.*}}, float {{.*}}, float {{.*}}
-  // CHECK: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
-    return _mm_mask_sqrt_round_ss(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+  // CHECK-NEXT: call float @llvm.sqrt.f32(float %{{.*}})
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, float {{.*}}, float {{.*}}
+  // CHECK-NEXT: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
+  return _mm_mask_sqrt_round_ss(__W,__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m128 test_mm_maskz_sqrt_ss(__mmask8 __U, __m128 __A, __m128 __B){
   // CHECK-LABEL: @test_mm_maskz_sqrt_ss
   // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call float @llvm.sqrt.f32(float %{{.*}})
-  // CHECK: select i1 {{.*}}, float {{.*}}, float {{.*}}
-  // CHECK: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
-    return _mm_maskz_sqrt_ss(__U,__A,__B);
+  // CHECK-NEXT: call float @llvm.sqrt.f32(float %{{.*}})
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, float {{.*}}, float {{.*}}
+  // CHECK-NEXT: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
+  return _mm_maskz_sqrt_ss(__U,__A,__B);
 }
 
 __m128 test_mm_maskz_sqrt_round_ss(__mmask8 __U, __m128 __A, __m128 __B){
   // CHECK-LABEL: @test_mm_maskz_sqrt_round_ss
   // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: extractelement <4 x float> %{{.*}}, i64 0
-  // CHECK: bitcast i8 %{{.*}} to <8 x i1>
-  // CHECK: extractelement <8 x i1> %{{.*}}, i64 0
-  // CHECK: call float @llvm.sqrt.f32(float %{{.*}})
-  // CHECK: select i1 {{.*}}, float {{.*}}, float {{.*}}
-  // CHECK: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
-    return _mm_maskz_sqrt_round_ss(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
+  // CHECK-NEXT: call float @llvm.sqrt.f32(float %{{.*}})
+  // CHECK-NEXT: extractelement <4 x float> %{{.*}}, i64 0
+  // CHECK-NEXT: bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK-NEXT: extractelement <8 x i1> %{{.*}}, i64 0
+  // CHECK-NEXT: select i1 {{.*}}, float {{.*}}, float {{.*}}
+  // CHECK-NEXT: insertelement <4 x float> %{{.*}}, float {{.*}}, i64 0
+  return _mm_maskz_sqrt_round_ss(__U,__A,__B,_MM_FROUND_CUR_DIRECTION);
 }
 
 __m512 test_mm512_broadcast_f32x4(float const* __A) {
