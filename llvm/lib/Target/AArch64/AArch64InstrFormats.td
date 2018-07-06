@@ -1612,6 +1612,30 @@ class SignAuthTwoOperand<bits<4> opc, string asm,
   let Inst{4-0}   = Rd;
 }
 
+// Base class for the Armv8.4-A 8 and 16-bit flag manipulation instructions
+class BaseFlagManipulation<bit sf, bit sz, dag iops, string asm, string ops>
+    : I<(outs), iops, asm, ops, "", []>,
+      Sched<[WriteI, ReadI, ReadI]> {
+  let Uses = [NZCV];
+  bits<5> Rn;
+  let Inst{31}    = sf;
+  let Inst{30-15} = 0b0111010000000000;
+  let Inst{14}    = sz;
+  let Inst{13-10} = 0b0010;
+  let Inst{9-5}   = Rn;
+  let Inst{4-0}   = 0b01101;
+}
+
+class FlagRotate<dag iops, string asm, string ops>
+    : BaseFlagManipulation<0b1, 0b0, iops, asm, ops> {
+  bits<6> imm;
+  bits<4> mask;
+  let Inst{20-15} = imm;
+  let Inst{13-10} = 0b0001;
+  let Inst{4}     = 0b0;
+  let Inst{3-0}   = mask;
+}
+
 //---
 // Basic two-operand data processing instructions.
 //---
