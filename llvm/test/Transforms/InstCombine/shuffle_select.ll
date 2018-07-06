@@ -998,6 +998,49 @@ define <4 x i32> @lshr_2_vars(<4 x i32> %v0, <4 x i32> %v1) {
   ret <4 x i32> %t3
 }
 
+define <4 x i32> @lshr_2_vars_exact(<4 x i32> %v0, <4 x i32> %v1) {
+; CHECK-LABEL: @lshr_2_vars_exact(
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> [[V0:%.*]], <4 x i32> [[V1:%.*]], <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+; CHECK-NEXT:    [[T3:%.*]] = lshr exact <4 x i32> <i32 5, i32 6, i32 3, i32 8>, [[TMP1]]
+; CHECK-NEXT:    ret <4 x i32> [[T3]]
+;
+  %t1 = lshr exact <4 x i32> <i32 1, i32 2, i32 3, i32 4>, %v0
+  %t2 = lshr exact <4 x i32> <i32 5, i32 6, i32 7, i32 8>, %v1
+  %t3 = shufflevector <4 x i32> %t1, <4 x i32> %t2, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+  ret <4 x i32> %t3
+}
+
+; FIXME: This is not safe for the same reason that div/rem with undef mask is not safe.
+; Analysis could determine that the shift has an undef shift amount creating poison.
+
+define <4 x i32> @lshr_2_vars_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
+; CHECK-LABEL: @lshr_2_vars_undef_mask_elt(
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> [[V0:%.*]], <4 x i32> [[V1:%.*]], <4 x i32> <i32 undef, i32 5, i32 2, i32 7>
+; CHECK-NEXT:    [[T3:%.*]] = lshr <4 x i32> <i32 undef, i32 6, i32 3, i32 8>, [[TMP1]]
+; CHECK-NEXT:    ret <4 x i32> [[T3]]
+;
+  %t1 = lshr <4 x i32> <i32 1, i32 2, i32 3, i32 4>, %v0
+  %t2 = lshr <4 x i32> <i32 5, i32 6, i32 7, i32 8>, %v1
+  %t3 = shufflevector <4 x i32> %t1, <4 x i32> %t2, <4 x i32> <i32 undef, i32 5, i32 2, i32 7>
+  ret <4 x i32> %t3
+}
+
+; FIXME: This is not safe for the same reason that div/rem with undef mask is not safe.
+; Analysis could determine that the shift has an undef shift amount creating poison.
+; The 'exact' could also result in poison by choosing a -1 shift value.
+
+define <4 x i32> @lshr_2_vars_exact_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
+; CHECK-LABEL: @lshr_2_vars_exact_undef_mask_elt(
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> [[V0:%.*]], <4 x i32> [[V1:%.*]], <4 x i32> <i32 undef, i32 5, i32 2, i32 7>
+; CHECK-NEXT:    [[T3:%.*]] = lshr exact <4 x i32> <i32 undef, i32 6, i32 3, i32 8>, [[TMP1]]
+; CHECK-NEXT:    ret <4 x i32> [[T3]]
+;
+  %t1 = lshr exact <4 x i32> <i32 1, i32 2, i32 3, i32 4>, %v0
+  %t2 = lshr exact <4 x i32> <i32 5, i32 6, i32 7, i32 8>, %v1
+  %t3 = shufflevector <4 x i32> %t1, <4 x i32> %t2, <4 x i32> <i32 undef, i32 5, i32 2, i32 7>
+  ret <4 x i32> %t3
+}
+
 ; Try weird types.
 
 define <3 x i32> @ashr_2_vars(<3 x i32> %v0, <3 x i32> %v1) {
