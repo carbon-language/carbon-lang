@@ -1,7 +1,7 @@
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-a:0:32-n32-S64"
 target triple = "armv4t-arm-none-eabi"
 
-; RUN: llc -march=arm < %s | FileCheck %s -check-prefix=ARM
+; RUN: llc -march=arm %s -o - | FileCheck %s -check-prefix=ARM
 
 define i32 @ror(i32 %a) {
 entry:
@@ -78,7 +78,7 @@ entry:
 	%4 = or i32 %1, %3
 	ret i32 %4
 }
-; ARM-LABEL:shl_nogood:
+; ARM-LABEL: shl_nogood:
 ; ARM:		 		lsl	r0, r0, #16
 ; ARM-NEXT: 	mov	r1, #172
 ; ARM-NEXT:	and	r1, r1, r0, asr #16
@@ -87,7 +87,7 @@ entry:
 ; ARM-NEXT:	and	r0, r2, r0, lsl r1
 ; ARM-NEXT:	orr	r0, r1, r0
 ; ARM-NEXT:	mov	pc, lr
-; ARM-LABEL:shl_nogood2:
+; ARM-LABEL: shl_nogood2:
 ; ARM:		 		lsl	r0, r0, #16
 ; ARM-NEXT: 	mov	r1, #172
 ; ARM-NEXT:	asr	r2, r0, #16

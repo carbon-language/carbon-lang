@@ -1,4 +1,4 @@
-; RUN: llc -march=aarch64 < %s | FileCheck %s -check-prefix=A64
+; RUN: llc -march=aarch64 %s -o - | FileCheck %s -check-prefix=A64
 
 define i32 @ror(i32 %a) {
 entry:
@@ -77,7 +77,7 @@ entry:
 	%4 = or i32 %1, %3
 	ret i32 %4
 }
-; A64-LABEL:shl_nogood:                             // @shl_nogood
+; A64-LABEL: shl_nogood:
 ; A64:		 		sxth	w8, w0
 ; A64-NEXT: 	mov	w9, #172
 ; A64-NEXT: 	and	w9, w8, w9
@@ -86,7 +86,7 @@ entry:
 ; A64-NEXT:	and	w8, w8, w10
 ; A64-NEXT:	orr	w0, w9, w8
 ; A64-NEXT:		ret
-; A64-LABEL:shl_nogood2:                            // @shl_nogood2
+; A64-LABEL: shl_nogood2:
 ; A64:		 		sxth	w8, w0
 ; A64-NEXT: 	mov	w9, #172
 ; A64-NEXT: 	and	w9, w8, w9
