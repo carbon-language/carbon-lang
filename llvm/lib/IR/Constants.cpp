@@ -254,6 +254,16 @@ bool Constant::isNaN() const {
   return true;
 }
 
+bool Constant::containsUndefElement() const {
+  if (!getType()->isVectorTy())
+    return false;
+  for (unsigned i = 0, e = getType()->getVectorNumElements(); i != e; ++i)
+    if (isa<UndefValue>(getAggregateElement(i)))
+      return true;
+
+  return false;
+}
+
 /// Constructor to create a '0' constant of arbitrary type.
 Constant *Constant::getNullValue(Type *Ty) {
   switch (Ty->getTypeID()) {
