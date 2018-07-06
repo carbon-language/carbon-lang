@@ -655,7 +655,7 @@ ErrorOr<LBREntry> DataAggregator::parseLBREntry() {
   if (MispredStr.size() != 1 ||
       (MispredStr[0] != 'P' && MispredStr[0] != 'M')) {
     reportError("expected single char for mispred bit");
-    Diag << "Found: " << OffsetStr << "\n";
+    Diag << "Found: " << MispredStr << "\n";
     return make_error_code(llvm::errc::io_error);
   }
   Res.Mispred = MispredStr[0] == 'M';
@@ -665,7 +665,7 @@ ErrorOr<LBREntry> DataAggregator::parseLBREntry() {
     return EC;
   if (Rest.get().size() < 5) {
     reportError("expected rest of LBR entry");
-    Diag << "Found: " << OffsetStr << "\n";
+    Diag << "Found: " << Rest.get() << "\n";
     return make_error_code(llvm::errc::io_error);
   }
   return Res;
