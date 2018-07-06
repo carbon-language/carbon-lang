@@ -82,4 +82,13 @@ std::optional<std::size_t> CountCharacters(
   return {chars};
 }
 
+std::string QuoteCharacterLiteral(const std::string &str) {
+  std::string result{'"'};
+  const auto emit = [&](char ch) { result += ch; };
+  for (char ch : str) {
+    EmitQuotedChar(ch, emit, emit);
+  }
+  result += '"';
+  return result;
+}
 }  // namespace Fortran::parser

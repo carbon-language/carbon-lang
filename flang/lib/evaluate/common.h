@@ -108,5 +108,17 @@ template<int BITS>
 using HostUnsignedInt =
     typename SmallestUInt<BITS <= 8, BITS <= 16, BITS <= 32, BITS <= 64>::type;
 
+// Many classes in this library follow a common paradigm.
+// - There is no default constructor (Class() {}), usually to prevent the
+//   need for std::monostate as a default constituent in a std::variant<>.
+// - There are full copy and move semantics for construction and assignment.
+// - There's a Dump(std::ostream &) member function.
+#define CLASS_BOILERPLATE(t) \
+  t(const t &) = default; \
+  t(t &&) = default; \
+  t &operator=(const t &) = default; \
+  t &operator=(t &&) = default; \
+  std::ostream &Dump(std::ostream &) const;
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_COMMON_H_

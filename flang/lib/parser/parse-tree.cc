@@ -44,24 +44,25 @@ DataRef::DataRef(std::list<PartRef> &&prl) : u{std::move(prl.front().name)} {
   for (bool first{true}; !prl.empty(); first = false, prl.pop_front()) {
     PartRef &pr{prl.front()};
     if (!first) {
-      u = common::Indirection<StructureComponent>{
-          std::move(*this), std::move(pr.name)};
+      u = common::Indirection<StructureComponent>::Make(
+          std::move(*this), std::move(pr.name));
     }
     if (!pr.subscripts.empty()) {
-      u = common::Indirection<ArrayElement>{
-          std::move(*this), std::move(pr.subscripts)};
+      u = common::Indirection<ArrayElement>::Make(
+          std::move(*this), std::move(pr.subscripts));
     }
     if (pr.imageSelector.has_value()) {
-      u = common::Indirection<CoindexedNamedObject>{
-          std::move(*this), std::move(*pr.imageSelector)};
+      u = common::Indirection<CoindexedNamedObject>::Make(
+          std::move(*this), std::move(*pr.imageSelector));
     }
   }
 }
 
 // R1001 - R1022 expression
-Expr::Expr(Designator &&x) : u{common::Indirection<Designator>(std::move(x))} {}
+Expr::Expr(Designator &&x)
+  : u{common::Indirection<Designator>::Make(std::move(x))} {}
 Expr::Expr(FunctionReference &&x)
-  : u{common::Indirection<FunctionReference>(std::move(x))} {}
+  : u{common::Indirection<FunctionReference>::Make(std::move(x))} {}
 
 static Designator MakeArrayElementRef(Name &name, std::list<Expr> &subscripts) {
   ArrayElement arrayElement{name, std::list<SectionSubscript>{}};

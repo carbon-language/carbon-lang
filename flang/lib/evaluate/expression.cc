@@ -13,7 +13,9 @@
 // limitations under the License.
 
 #include "expression.h"
+#include "variable.h"
 #include "../common/idioms.h"
+#include "../parser/characters.h"
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -40,16 +42,18 @@ std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
 }
 
 template<Category CAT>
-std::ostream &AnyKindExpr<CAT>::Dump(std::ostream &o) const {
+std::ostream &CategoryExpr<CAT>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
 template<Category CAT>
-std::ostream &AnyKindComparison<CAT>::Dump(std::ostream &o) const {
+std::ostream &CategoryComparison<CAT>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
-std::ostream &AnyExpr::Dump(std::ostream &o) const { return DumpExpr(o, u); }
+std::ostream &GenericExpr::Dump(std::ostream &o) const {
+  return DumpExpr(o, u);
+}
 
 template<typename A>
 std::ostream &Unary<A>::Dump(std::ostream &o, const char *opr) const {
@@ -65,6 +69,7 @@ template<int KIND>
 std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
+          [&](const common::Indirection<Designator> &d) { d->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
@@ -115,8 +120,12 @@ std::ostream &Expr<Category::Complex, KIND>::Dump(std::ostream &o) const {
 
 template<int KIND>
 std::ostream &Expr<Category::Character, KIND>::Dump(std::ostream &o) const {
-  std::visit(common::visitors{[&](const Constant &s) { o << '"' << s << '"'; },
-                 [&](const Concat &c) { c.y->Dump(c.x->Dump(o) << "//"); }},
+  std::visit(common::visitors{[&](const Constant &s) {
+                                o << parser::QuoteCharacterLiteral(s);
+                              },
+                 [&](const auto &concat) {
+                   concat.y->Dump(concat.x->Dump(o) << "//");
+                 }},
       u);
   return o;
 }
@@ -144,13 +153,13 @@ std::ostream &Expr<Category::Logical, 1>::Dump(std::ostream &o) const {
 
 template<int KIND>
 void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
-  std::visit(common::visitors{[&](const Parentheses &p) {
+  std::visit(common::visitors{[&](Parentheses &p) {
                                 p.x->Fold(context);
                                 if (auto c{std::get_if<Constant>(&p.x->u)}) {
                                   u = std::move(*c);
                                 }
                               },
-                 [&](const Negate &n) {
+                 [&](Negate &n) {
                    n.x->Fold(context);
                    if (auto c{std::get_if<Constant>(&n.x->u)}) {
                      auto negated{c->Negate()};
@@ -161,7 +170,7 @@ void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
                      u = std::move(negated.value);
                    }
                  },
-                 [&](const Add &a) {
+                 [&](Add &a) {
                    a.x->Fold(context);
                    a.y->Fold(context);
                    if (auto xc{std::get_if<Constant>(&a.x->u)}) {
@@ -175,7 +184,7 @@ void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
                      }
                    }
                  },
-                 [&](const Multiply &a) {
+                 [&](Multiply &a) {
                    a.x->Fold(context);
                    a.y->Fold(context);
                    if (auto xc{std::get_if<Constant>(&a.x->u)}) {
@@ -190,7 +199,7 @@ void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
                      }
                    }
                  },
-                 [&](const Bin &b) {
+                 [&](Bin &b) {
                    b.x->Fold(context);
                    b.y->Fold(context);
                  },
@@ -201,12 +210,13 @@ void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
 
 template<int KIND>
 typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
-  return std::visit(
-      common::visitors{
-          [](const std::string &str) { return LengthExpr{str.size()}; },
-          [](const Concat &c) {
-            return LengthExpr{LengthExpr::Add{c.x->LEN(), c.y->LEN()}};
-          }},
+  return std::visit(common::visitors{[](const std::string &str) {
+                                       return LengthExpr{str.size()};
+                                     },
+                        [](const auto &concat) {
+                          return LengthExpr{LengthExpr::Add{
+                              concat.x->LEN(), concat.y->LEN()}};
+                        }},
       u);
 }
 

@@ -181,7 +181,7 @@ public:
         Walk(*k), Put('_');
       }
     }
-    PutQuoted(std::get<std::string>(x.t));
+    Put(QuoteCharacterLiteral(std::get<std::string>(x.t)));
   }
   void Before(const HollerithLiteralConstant &x) {
     std::optional<std::size_t> chars{CountCharacters(x.v.data(), x.v.size(),
@@ -1351,7 +1351,9 @@ public:
     if (x.repeatCount.has_value()) {
       Walk(*x.repeatCount);
     }
-    std::visit(common::visitors{[&](const std::string &y) { PutQuoted(y); },
+    std::visit(common::visitors{[&](const std::string &y) {
+                                  Put(QuoteCharacterLiteral(y));
+                                },
                    [&](const std::list<format::FormatItem> &y) {
                      Walk("(", y, ",", ")");
                    },
@@ -2127,7 +2129,6 @@ private:
   void Put(const char *);
   void Put(const std::string &);
   void PutKeywordLetter(char);
-  void PutQuoted(const std::string &);
   void Word(const char *);
   void Word(const std::string &);
   void Indent() { indent_ += indentationAmount_; }
@@ -2247,15 +2248,6 @@ void UnparseVisitor::PutKeywordLetter(char ch) {
   } else {
     Put(ToLowerCaseLetter(ch));
   }
-}
-
-void UnparseVisitor::PutQuoted(const std::string &str) {
-  Put('"');
-  const auto emit = [&](char ch) { Put(ch); };
-  for (char ch : str) {
-    EmitQuotedChar(ch, emit, emit);
-  }
-  Put('"');
 }
 
 void UnparseVisitor::Word(const char *str) {

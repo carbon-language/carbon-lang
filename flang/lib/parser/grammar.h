@@ -3123,7 +3123,8 @@ TYPE_PARSER("INTRINSIC" >> maybe("::"_tok) >>
 // R1520 function-reference -> procedure-designator ( [actual-arg-spec-list] )
 TYPE_CONTEXT_PARSER("function reference"_en_US,
     construct<FunctionReference>(construct<Call>(Parser<ProcedureDesignator>{},
-        parenthesized(optionalList(actualArgSpec)))) / !"["_tok)
+        parenthesized(optionalList(actualArgSpec)))) /
+        !"["_tok)
 
 // R1521 call-stmt -> CALL procedure-designator [( [actual-arg-spec-list] )]
 TYPE_PARSER(

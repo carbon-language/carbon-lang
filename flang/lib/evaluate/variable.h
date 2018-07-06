@@ -15,10 +15,13 @@
 #ifndef FORTRAN_EVALUATE_VARIABLE_H_
 #define FORTRAN_EVALUATE_VARIABLE_H_
 
-#include "expression.h"
-#include "traverse.h"
-#include <memory>
+#include "common.h"
+#include "expression-forward.h"
+#include "../common/idioms.h"
+#include "../common/indirection.h"
+#include "../semantics/symbol.h"
 #include <optional>
+#include <ostream>
 #include <variant>
 #include <vector>
 
@@ -27,156 +30,138 @@ namespace Fortran::evaluate {
 struct DataRef;
 struct Variable;
 struct ActualArg;
-struct Label;  // TODO
+struct Label;
 
 using semantics::Symbol;
 
 struct Component {
-  Component(const Symbol &c, std::unique_ptr<DataRef> &&b)
-    : sym{c}, base{std::move(b)} {}
-  const Symbol &sym;
-  template<typename V> void DefaultTraverse(V &v) { v(base); }
-  std::unique_ptr<DataRef> base;
+  CLASS_BOILERPLATE(Component)
+  Component(const DataRef &b, const Symbol &c) : base{b}, sym{&c} {}
+  Component(common::Indirection<DataRef> &&b, const Symbol &c)
+    : base{std::move(b)}, sym{&c} {}
+  common::Indirection<DataRef> base;
+  const Symbol *sym;
 };
 
-using SubscriptExpr = DefaultIntExpr;
+using SubscriptExpr = common::Indirection<DefaultIntegerExpr>;
 
 struct Triplet {
-  Triplet(std::optional<SubscriptExpr> &&l, std::optional<SubscriptExpr> &&u,
-      std::optional<SubscriptExpr> &&s)
-    : lower{std::move(l)}, upper{std::move(u)}, stride{std::move(s)} {}
-  template<typename V> void DefaultTraverse(V &v) {
-    v(lower);
-    v(upper);
-    v(stride);
-  }
+  CLASS_BOILERPLATE(Triplet)
+  Triplet(std::optional<SubscriptExpr> &&, std::optional<SubscriptExpr> &&,
+      std::optional<SubscriptExpr> &&);
   std::optional<SubscriptExpr> lower, upper, stride;
 };
 
 struct Subscript {
-  Subscript() = delete;
+  CLASS_BOILERPLATE(Subscript)
+  explicit Subscript(const SubscriptExpr &s) : u{s} {}
   explicit Subscript(SubscriptExpr &&s) : u{std::move(s)} {}
+  explicit Subscript(const Triplet &t) : u{t} {}
   explicit Subscript(Triplet &&t) : u{std::move(t)} {}
-  template<typename V> void DefaultTraverse(V &v) { v(u); }
   std::variant<SubscriptExpr, Triplet> u;
 };
 
 struct ArrayRef {
-  ArrayRef() = delete;
-  ArrayRef(const Symbol &n, std::vector<Subscript> &&s)
-    : u{n}, subscript{std::move(ss)} {}
-  ArrayRef(Component &&c, std::vector<Subscript> &&s)
-    : u{std::move(c)}, subscript{std::move(ss)} {}
-  template<typename V> void DefaultTraverse(V &v) {
-    v(u);
-    v(subscript);
-  }
-  std::variant<const Symbol &, Component> u;
+  CLASS_BOILERPLATE(ArrayRef)
+  ArrayRef(const Symbol &n, std::vector<Subscript> &&ss)
+    : u{&n}, subscript(std::move(ss)) {}
+  ArrayRef(Component &&c, std::vector<Subscript> &&ss)
+    : u{std::move(c)}, subscript(std::move(ss)) {}
+  std::variant<const Symbol *, Component> u;
   std::vector<Subscript> subscript;
 };
 
 struct CoarrayRef {
-  CoarrayRef() = delete;
+  CLASS_BOILERPLATE(CoarrayRef)
   CoarrayRef(const Symbol &n, std::vector<SubscriptExpr> &&s)
-    : u{n}, cosubscript{std::move(s)} {}
+    : u{&n}, cosubscript(std::move(s)) {}
   CoarrayRef(Component &&c, std::vector<SubscriptExpr> &&s)
-    : u{std::move(c)}, cosubscript{std::move(s)} {}
+    : u{std::move(c)}, cosubscript(std::move(s)) {}
   CoarrayRef(ArrayRef &&a, std::vector<SubscriptExpr> &&s)
-    : u{std::move(a)}, cosubscript{std::move(s)} {}
-  template<typename V> void DefaultTraverse(V &v) {
-    v(u);
-    v(cosubscript);
-    v(stat);
-    v(team);
-    v(teamNumber);
-  }
-  std::variant<const Symbol &, Component, ArrayRef> u;
+    : u{std::move(a)}, cosubscript(std::move(s)) {}
+  std::variant<const Symbol *, Component, ArrayRef> u;
   std::vector<SubscriptExpr> cosubscript;
-  std::unique_ptr<Variable> stat, team, teamNumber;  // nullable
+  std::optional<common::Indirection<Variable>> stat, team, teamNumber;
 };
 
 struct DataRef {
-  DataRef() = delete;
-  explicit DataRef(const Symbol &n) : u{n} {}
+  CLASS_BOILERPLATE(DataRef)
+  explicit DataRef(const Symbol &n) : u{&n} {}
   explicit DataRef(Component &&c) : u{std::move(c)} {}
   explicit DataRef(ArrayRef &&a) : u{std::move(a)} {}
   explicit DataRef(CoarrayRef &&c) : u{std::move(c)} {}
-  template<typename V> void DefaultTraverse(V &v) { v(u); }
-  std::variant<const Symbol &, Component, ArrayRef, CoarrayRef> u;
+  std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u;
 };
 
 struct Substring {
-  Substring() = delete;
+  CLASS_BOILERPLATE(Substring)
   Substring(DataRef &&d, std::optional<SubscriptExpr> &&f,
       std::optional<SubscriptExpr> &&l)
     : u{std::move(d)}, first{std::move(f)}, last{std::move(l)} {}
   Substring(std::string &&s, std::optional<SubscriptExpr> &&f,
       std::optional<SubscriptExpr> &&l)
     : u{std::move(s)}, first{std::move(f)}, last{std::move(l)} {}
-  template<typename V> void DefaultTraverse(V &v) {
-    v(u);
-    v(first);
-    v(last);
-  }
   std::variant<DataRef, std::string> u;
   std::optional<SubscriptExpr> first, last;
 };
 
 struct ComplexPart {
-  enum class Part { RE, IM };
+  ENUM_CLASS(Part, RE, IM)
+  CLASS_BOILERPLATE(ComplexPart)
   ComplexPart(DataRef &&z, Part p) : complex{std::move(z)}, part{p} {}
-  template<typename V> void DefaultTraverse(V &v) { v(complex); }
   DataRef complex;
   Part part;
 };
 
 struct Designator {
-  Designator() = delete;
+  CLASS_BOILERPLATE(Designator)
   explicit Designator(DataRef &&d) : u{std::move(d)} {}
   explicit Designator(Substring &&s) : u{std::move(s)} {}
   explicit Designator(ComplexPart &&c) : u{std::move(c)} {}
-  template<typename V> void DefaultTraverse(V &v) { v(u); }
   std::variant<DataRef, Substring, ComplexPart> u;
 };
 
 struct ProcedureDesignator {
-  ProcedureDesignator() = delete;
-  ProcedureDesignator(std::unique_ptr<Variable> &&v, const Symbol &n)
-    : u{std::move(v)}, sym{n} {}
-  ProcedureDesignator(DataRef &&d, const Symbol &n) : u{std::move(d)}, sym{n} {}
-  template<typename V> void DefaultTraverse(V &v) { v(u); }
-  std::variant<std::unique_ptr<Variable>, DataRef> u;
-  const Symbol &sym;
+  CLASS_BOILERPLATE(ProcedureDesignator)
+  explicit ProcedureDesignator(const Symbol &n) : u{&n} {}
+  explicit ProcedureDesignator(const Component &c) : u{c} {}
+  explicit ProcedureDesignator(Component &&c) : u{std::move(c)} {}
+  std::variant<const Symbol *, Component> u;
 };
 
-struct ProcedureRef {
-  ProcedureRef() = delete;
+struct ProcedureRef {  // TODO split off FunctionRef without alt returns
+  CLASS_BOILERPLATE(ProcedureRef)
   ProcedureRef(
-      ProcedureDesignator &&p, std::vector<std::unique_ptr<ActualArg>> &&a)
-    : proc{std::move(p)}, arg{std::move(a)} {}
-  template<typename V> void DefaultTraverse(V &v) {
-    v(proc);
-    v(arg);
-  }
+      ProcedureDesignator &&p, std::vector<common::Indirection<ActualArg>> &&a)
+    : proc{std::move(p)}, argument(std::move(a)) {}
   ProcedureDesignator proc;
-  std::vector<std::unique_ptr<ActualArg>> arg;  // nullable
+  std::vector<common::Indirection<ActualArg>> argument;
 };
 
 struct Variable {
-  Variable() = delete;
-  explicit Variable(Designator &&d) : u{std::move(u)} {}
+  CLASS_BOILERPLATE(Variable)
+  explicit Variable(Designator &&d) : u{std::move(d)} {}
   explicit Variable(ProcedureRef &&p) : u{std::move(p)} {}
-  template<typename V> void DefaultTraverse(V &v) { v(u); }
   std::variant<Designator, ProcedureRef> u;
 };
 
+struct Label {  // TODO: this is a placeholder
+  CLASS_BOILERPLATE(Label)
+  explicit Label(int lab) : label{lab} {}
+  int label;
+};
+
 struct ActualArg {
-  ActualArg() = delete;
-  explicit ActualArg(AnyExpr &&x) : u{std::move(x)} {}
+  CLASS_BOILERPLATE(ActualArg)
+  explicit ActualArg(GenericExpr &&x) : u{std::move(x)} {}
   explicit ActualArg(Variable &&x) : u{std::move(x)} {}
-  explicit ActualArg(const Label &l) : u{l} {}
-  template<typename V> void DefaultTraverse(V &v) { v(u); }
-  std::variant<AnyExpr, Variable, const Label &> u;
+  explicit ActualArg(const Label &l) : u{&l} {}
+  std::variant<common::Indirection<GenericExpr>, Variable, const Label *> u;
 };
 }  // namespace Fortran::evaluate
+
+// This inclusion must follow the definitions in this header due to
+// mutual references.
+#include "expression.h"
+
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_

@@ -70,6 +70,7 @@ add_executable(expression-test
 target_link_libraries(expression-test
   FortranEvaluate
   FortranEvaluateTesting
+  FortranParser
 )
 
 add_test(NAME Expression COMMAND expression-test)

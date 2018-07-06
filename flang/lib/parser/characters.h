@@ -161,6 +161,8 @@ void EmitQuotedChar(char ch, const NORMAL &emit, const INSERTED &insert,
   }
 }
 
+std::string QuoteCharacterLiteral(const std::string &);
+
 std::optional<int> UTF8CharacterBytes(const char *);
 std::optional<int> EUC_JPCharacterBytes(const char *);
 std::optional<std::size_t> CountCharacters(
