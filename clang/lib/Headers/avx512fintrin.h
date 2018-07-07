@@ -6699,16 +6699,8 @@ _mm512_maskz_srai_epi64(__mmask8 __U, __m512i __A, int __B)
                                       (__v8di)_mm512_setzero_si512())
 
 #define _mm512_shuffle_pd(A, B, M) \
-  (__m512d)__builtin_shufflevector((__v8df)(__m512d)(A), \
-                                   (__v8df)(__m512d)(B), \
-                                   0  + (((M) >> 0) & 0x1), \
-                                   8  + (((M) >> 1) & 0x1), \
-                                   2  + (((M) >> 2) & 0x1), \
-                                   10 + (((M) >> 3) & 0x1), \
-                                   4  + (((M) >> 4) & 0x1), \
-                                   12 + (((M) >> 5) & 0x1), \
-                                   6  + (((M) >> 6) & 0x1), \
-                                   14 + (((M) >> 7) & 0x1))
+  (__m512d)__builtin_ia32_shufpd512((__v8df)(__m512d)(A), \
+                                    (__v8df)(__m512d)(B), (int)(M))
 
 #define _mm512_mask_shuffle_pd(W, U, A, B, M) \
   (__m512d)__builtin_ia32_selectpd_512((__mmask8)(U), \
@@ -6721,24 +6713,8 @@ _mm512_maskz_srai_epi64(__mmask8 __U, __m512i __A, int __B)
                                        (__v8df)_mm512_setzero_pd())
 
 #define _mm512_shuffle_ps(A, B, M) \
-  (__m512)__builtin_shufflevector((__v16sf)(__m512)(A), \
-                                  (__v16sf)(__m512)(B), \
-                                  0  + (((M) >> 0) & 0x3), \
-                                  0  + (((M) >> 2) & 0x3), \
-                                  16 + (((M) >> 4) & 0x3), \
-                                  16 + (((M) >> 6) & 0x3), \
-                                  4  + (((M) >> 0) & 0x3), \
-                                  4  + (((M) >> 2) & 0x3), \
-                                  20 + (((M) >> 4) & 0x3), \
-                                  20 + (((M) >> 6) & 0x3), \
-                                  8  + (((M) >> 0) & 0x3), \
-                                  8  + (((M) >> 2) & 0x3), \
-                                  24 + (((M) >> 4) & 0x3), \
-                                  24 + (((M) >> 6) & 0x3), \
-                                  12 + (((M) >> 0) & 0x3), \
-                                  12 + (((M) >> 2) & 0x3), \
-                                  28 + (((M) >> 4) & 0x3), \
-                                  28 + (((M) >> 6) & 0x3))
+  (__m512)__builtin_ia32_shufps512((__v16sf)(__m512)(A), \
+                                   (__v16sf)(__m512)(B), (int)(M))
 
 #define _mm512_mask_shuffle_ps(W, U, A, B, M) \
   (__m512)__builtin_ia32_selectps_512((__mmask16)(U), \
