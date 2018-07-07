@@ -6597,7 +6597,7 @@ _mm_maskz_scalef_ss (__mmask8 __U, __m128 __A, __m128 __B)
                                              (__v4sf)(__m128)(B), \
                                              (__v4sf)_mm_setzero_ps(), \
                                              (__mmask8)(U), \
-                                             _MM_FROUND_CUR_DIRECTION)
+                                             (int)(R))
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS
 _mm512_srai_epi32(__m512i __A, int __B)
@@ -7826,7 +7826,7 @@ _mm_maskz_fmadd_ss (__mmask8 __U, __m128 __A, __m128 __B, __m128 __C)
   (__m128)__builtin_ia32_vfmaddss3_maskz((__v4sf)(__m128)(A), \
                                          (__v4sf)(__m128)(B), \
                                          (__v4sf)(__m128)(C), (__mmask8)(U), \
-                                         _MM_FROUND_CUR_DIRECTION)
+                                         (int)(R))
 
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_mask3_fmadd_ss (__m128 __W, __m128 __X, __m128 __Y, __mmask8 __U)
@@ -7988,7 +7988,7 @@ _mm_maskz_fnmsub_ss (__mmask8 __U, __m128 __A, __m128 __B, __m128 __C)
   (__m128)__builtin_ia32_vfmaddss3_maskz((__v4sf)(__m128)(A), \
                                          -(__v4sf)(__m128)(B), \
                                          -(__v4sf)(__m128)(C), (__mmask8)(U), \
-                                         _MM_FROUND_CUR_DIRECTION)
+                                         (int)(R))
 
 static __inline__ __m128 __DEFAULT_FN_ATTRS
 _mm_mask3_fnmsub_ss (__m128 __W, __m128 __X, __m128 __Y, __mmask8 __U)
@@ -8042,7 +8042,7 @@ _mm_maskz_fmadd_sd (__mmask8 __U, __m128d __A, __m128d __B, __m128d __C)
   (__m128d)__builtin_ia32_vfmaddsd3_maskz((__v2df)(__m128d)(A), \
                                           (__v2df)(__m128d)(B), \
                                           (__v2df)(__m128d)(C), (__mmask8)(U), \
-                                          _MM_FROUND_CUR_DIRECTION)
+                                          (int)(R))
 
 static __inline__ __m128d __DEFAULT_FN_ATTRS
 _mm_mask3_fmadd_sd (__m128d __W, __m128d __X, __m128d __Y, __mmask8 __U)
@@ -8205,7 +8205,7 @@ _mm_maskz_fnmsub_sd (__mmask8 __U, __m128d __A, __m128d __B, __m128d __C)
                                           -(__v2df)(__m128d)(B), \
                                           -(__v2df)(__m128d)(C), \
                                           (__mmask8)(U), \
-                                          _MM_FROUND_CUR_DIRECTION)
+                                          (int)(R))
 
 static __inline__ __m128d __DEFAULT_FN_ATTRS
 _mm_mask3_fnmsub_sd (__m128d __W, __m128d __X, __m128d __Y, __mmask8 __U)
