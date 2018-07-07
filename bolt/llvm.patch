@@ -1045,7 +1045,7 @@ index 46504e74bc2..836fd8ddc45 100644
  Expected<const typename ELFT::Sym *>
  ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
 diff --git a/include/llvm/Object/ELFObjectFile.h b/include/llvm/Object/ELFObjectFile.h
-index 4d001039238..06a629573cc 100644
+index 4d001039238..62837bbcaa0 100644
 --- a/include/llvm/Object/ELFObjectFile.h
 +++ b/include/llvm/Object/ELFObjectFile.h
 @@ -254,6 +254,7 @@ protected:
@@ -1081,7 +1081,17 @@ index 4d001039238..06a629573cc 100644
    const Elf_Shdr *EShdr = getSection(Sec);
    uintX_t Type = EShdr->sh_type;
    if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA)
-@@ -792,8 +798,6 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
+@@ -762,6 +768,9 @@ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
+   auto R = EF.getSection(EShdr->sh_info);
+   if (!R)
+     report_fatal_error(errorToErrorCode(R.takeError()).message());
++  if (EF.getHeader()->e_type != ELF::ET_REL &&
++      !((*R)->sh_flags & ELF::SHF_ALLOC))
++    return section_end();
+   return section_iterator(SectionRef(toDRI(*R), this));
+ }
+ 
+@@ -792,8 +801,6 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
  
  template <class ELFT>
  uint64_t ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel) const {

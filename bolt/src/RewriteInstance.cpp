@@ -1472,9 +1472,8 @@ void RewriteInstance::discoverFileObjects() {
 
   // Read all relocations now that we have binary functions mapped.
   for (const auto &Section : InputFile->sections()) {
-    if (Section.relocation_begin() != Section.relocation_end()) {
+    if (Section.getRelocatedSection() != InputFile->section_end())
       readRelocations(Section);
-    }
   }
 }
 
