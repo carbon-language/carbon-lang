@@ -2915,7 +2915,6 @@ std::shared_ptr<PathDiagnosticPiece> MallocChecker::MallocBugVisitor::VisitNode(
           Msg = "Internal buffer is released because the object was destroyed";
           break;
         case AF_None:
-        default:
           llvm_unreachable("Unhandled allocation family!");
       }
       StackHint = new StackHintGeneratorForSymbol(Sym,
