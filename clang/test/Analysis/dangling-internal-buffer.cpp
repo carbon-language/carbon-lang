@@ -26,7 +26,7 @@ void deref_after_scope_char() {
   {
     std::string s;
     c = s.c_str();
-  }
+  } // expected-note {{Internal buffer is released because the object was destroyed}}
   consume(c); // expected-warning {{Use of memory after it is freed}}
   // expected-note@-1 {{Use of memory after it is freed}}
 }
@@ -36,7 +36,7 @@ void deref_after_scope_wchar_t() {
   {
     std::wstring ws;
     w = ws.c_str();
-  }
+  } // expected-note {{Internal buffer is released because the object was destroyed}}
   consume(w); // expected-warning {{Use of memory after it is freed}}
   // expected-note@-1 {{Use of memory after it is freed}}
 }
@@ -46,7 +46,7 @@ void deref_after_scope_char16_t() {
   {
     std::u16string s16;
     c16 = s16.c_str();
-  }
+  } // expected-note {{Internal buffer is released because the object was destroyed}}
   consume(c16); // expected-warning {{Use of memory after it is freed}}
   // expected-note@-1 {{Use of memory after it is freed}}
 }
@@ -56,7 +56,7 @@ void deref_after_scope_char32_t() {
   {
     std::u32string s32;
     c32 = s32.c_str();
-  }
+  } // expected-note {{Internal buffer is released because the object was destroyed}}
   consume(c32); // expected-warning {{Use of memory after it is freed}}
   // expected-note@-1 {{Use of memory after it is freed}}
 }
