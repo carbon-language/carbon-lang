@@ -2632,22 +2632,22 @@ void RewriteInstance::runOptimizationPasses() {
 void RewriteInstance::emitFunction(MCStreamer &Streamer,
                                    BinaryFunction &Function,
                                    bool EmitColdPart) {
-  if (Function.getSize() == 0)
+  if (Function.size() == 0)
     return;
 
   if (Function.getState() == BinaryFunction::State::Empty)
     return;
 
   MCSection *Section;
-  if (BC->HasRelocations) {
+  if (BC->HasRelocations || Function.isInjected()) {
     Section = BC->MOFI->getTextSection();
   } else {
     // Each fuction is emmitted into its own section.
     Section =
         BC->Ctx->getELFSection(EmitColdPart ? Function.getColdCodeSectionName()
                                             : Function.getCodeSectionName(),
-                              ELF::SHT_PROGBITS,
-                              ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+                               ELF::SHT_PROGBITS,
+                               ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
   }
 
   Section->setHasInstructions(true);
@@ -2837,6 +2837,16 @@ void RewriteInstance::emitFunctions() {
       }
 
       ColdFunctionSeen = true;
+
+      // Emit injected functions hot part
+      for (auto *InjectedFunction : BC->getInjectedBinaryFunctions())
+        emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/false);
+
+      // Emit injected functions cold part
+      for (auto *InjectedFunction : BC->getInjectedBinaryFunctions())
+        emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/true);
+
+      //TODO: this code is unreachable if all functions are hot
       if (opts::SplitFunctions != BinaryFunction::ST_NONE) {
         DEBUG(dbgs() << "BOLT-DEBUG: generating code for split functions\n");
         for (auto *FPtr : SortedFunctions) {
@@ -2864,6 +2874,14 @@ void RewriteInstance::emitFunctions() {
       emitFunction(*Streamer, Function, /*EmitColdPart=*/true);
 
     ++CurrentIndex;
+  }
+
+  // Emit injected functions in non-reloc mode
+  if (!BC->HasRelocations) {
+    for (auto *InjectedFunction : BC->getInjectedBinaryFunctions()){
+      emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/false);
+      emitFunction(*Streamer, *InjectedFunction, /*EmitColdPart=*/true);
+    }
   }
 
   if (!ColdFunctionSeen && opts::HotText) {
@@ -3007,6 +3025,28 @@ void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
     OLT->mapSectionAddress(Key, TextSection->getSectionID(),
                            NewTextSectionStartAddress);
   } else {
+
+    // Prepare .text section for injected functions
+    auto TextSection = BC->getUniqueSectionByName(".text");
+    assert(TextSection && ".text not found in output");
+    if (TextSection->hasValidSectionID()) {
+      uint64_t NewTextSectionOffset = 0;
+      auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);
+      NextAvailableAddress += Padding;
+      NewTextSectionStartAddress = NextAvailableAddress;
+      NewTextSectionOffset = getFileOffsetForAddress(NextAvailableAddress);
+      NextAvailableAddress += Padding + TextSection->getOutputSize();
+      TextSection->setFileAddress(NewTextSectionStartAddress);
+      TextSection->setFileOffset(NewTextSectionOffset);
+
+      DEBUG(dbgs() << "BOLT: mapping .text 0x"
+                   << Twine::utohexstr(TextSection->getAllocAddress())
+                   << " to 0x" << Twine::utohexstr(NewTextSectionStartAddress)
+                   << '\n');
+      OLT->mapSectionAddress(Key, TextSection->getSectionID(),
+                             NewTextSectionStartAddress);
+    }
+
     for (auto &BFI : BinaryFunctions) {
       auto &Function = BFI.second;
       if (!Function.isSimple() || !opts::shouldProcess(Function))
@@ -3014,7 +3054,7 @@ void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
 
       auto TooLarge = false;
       auto FuncSection =
-        BC->getUniqueSectionByName(Function.getCodeSectionName());
+          BC->getUniqueSectionByName(Function.getCodeSectionName());
       assert(FuncSection && "cannot find section for function");
       DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(FuncSection->getAllocAddress())
@@ -3160,16 +3200,15 @@ void RewriteInstance::mapDataSections(orc::VModuleKey Key) {
 }
 
 void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
 
+  auto updateOutputValue = [&](BinaryFunction &Function) {
     if (!Function.isEmitted()) {
+      assert(!Function.isInjected() && "injected function should be emitted");
       Function.setOutputAddress(Function.getAddress());
       Function.setOutputSize(Function.getSize());
-      continue;
+      return;
     }
-
-    if (BC->HasRelocations) {
+    if (BC->HasRelocations || Function.isInjected()) {
       const auto BaseAddress = NewTextSectionStartAddress;
       const auto StartOffset = Layout.getSymbolOffset(*Function.getSymbol());
       const auto EndOffset =
@@ -3206,15 +3245,15 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
 
     // Update basic block output ranges only for the debug info.
     if (!opts::UpdateDebugSections)
-      continue;
+      return;
 
     // Output ranges should match the input if the body hasn't changed.
     if (!Function.isSimple() && !BC->HasRelocations)
-      continue;
+      return;
 
     // AArch64 may have functions that only contains a constant island (no code)
     if (Function.layout_begin() == Function.layout_end())
-      continue;
+      return;
 
     BinaryBasicBlock *PrevBB = nullptr;
     for (auto BBI = Function.layout_begin(), BBE = Function.layout_end();
@@ -3235,7 +3274,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
         auto PrevBBEndAddress = Address;
         if (BB->isCold() != PrevBB->isCold()) {
           PrevBBEndAddress =
-            Function.getOutputAddress() + Function.getOutputSize();
+              Function.getOutputAddress() + Function.getOutputSize();
         }
         PrevBB->setOutputEndAddress(PrevBBEndAddress);
       }
@@ -3244,6 +3283,15 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
     PrevBB->setOutputEndAddress(PrevBB->isCold() ?
         Function.cold().getAddress() + Function.cold().getImageSize() :
         Function.getOutputAddress() + Function.getOutputSize());
+  };
+
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+    updateOutputValue(Function);
+  }
+
+  for (auto *InjectedFunction : BC->getInjectedBinaryFunctions()) {
+    updateOutputValue(*InjectedFunction);
   }
 }
 
@@ -3949,6 +3997,30 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       return IslandSizes[BF] = BF->estimateConstantIslandSize();
     };
 
+    // Add symbols of injected functions
+    for (BinaryFunction *Function : BC->getInjectedBinaryFunctions()) {
+      Elf_Sym NewSymbol;
+      NewSymbol.st_shndx = NewTextSectionIndex;
+      NewSymbol.st_value = Function->getOutputAddress();
+      NewSymbol.st_name = AddToStrTab(Function->getPrintName());
+      NewSymbol.st_size = Function->getOutputSize();
+      NewSymbol.st_other = 0;
+      NewSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
+      Write(0, reinterpret_cast<const char *>(&NewSymbol), sizeof(NewSymbol));
+
+      if (Function->isSplit()) {
+        auto NewColdSym = NewSymbol;
+        NewColdSym.setType(ELF::STT_NOTYPE);
+        SmallVector<char, 256> Buf;
+        NewColdSym.st_name = AddToStrTab(
+            Twine(Function->getPrintName()).concat(".cold.0").toStringRef(Buf));
+        NewColdSym.st_value = Function->cold().getAddress();
+        NewColdSym.st_size = Function->cold().getImageSize();
+        Write(0, reinterpret_cast<const char *>(&NewColdSym),
+              sizeof(NewColdSym));
+      }
+    }
+
     for (const Elf_Sym &Symbol : cantFail(Obj->symbols(Section))) {
       auto NewSymbol = Symbol;
       const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value);
@@ -4121,12 +4193,12 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     if (opts::HotText && !IsHotTextUpdated && !PatchExisting) {
       addSymbol("__hot_start");
       addSymbol("__hot_end");
-    }
+      }
 
-    if (opts::HotData && !IsHotDataUpdated && !PatchExisting) {
-      addSymbol("__hot_data_start");
-      addSymbol("__hot_data_end");
-    }
+      if (opts::HotData && !IsHotDataUpdated && !PatchExisting) {
+        addSymbol("__hot_data_start");
+        addSymbol("__hot_data_end");
+      }
   };
 
   // Update dynamic symbol table.

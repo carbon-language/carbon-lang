@@ -136,8 +136,11 @@ class BinaryContext {
 
   /// Low level section registration.
   BinarySection &registerSection(BinarySection *Section);
-public:
 
+  /// Functions injected by BOLT
+  std::vector<BinaryFunction *> InjectedBinaryFunctions;
+
+public:
   /// [name] -> [BinaryData*] map used for global symbol resolution.
   using SymbolMapType = std::map<std::string, BinaryData *>;
   SymbolMapType GlobalSymbols;
@@ -198,6 +201,15 @@ public:
   /// Populate \p GlobalMemData.  This should be done after all symbol discovery
   /// is complete, e.g. after building CFGs for all functions.
   void assignMemData();
+
+  /// Create BOLT-injected function
+  BinaryFunction *createInjectedBinaryFunction(const std::string &Name,
+                                               bool IsSimple = true);
+
+  std::vector<BinaryFunction *> &getInjectedBinaryFunctions() {
+    return InjectedBinaryFunctions;
+  }
+
 public:
   /// Map address to a constant island owner (constant data in code section)
   std::map<uint64_t, BinaryFunction *> AddressToConstantIslandMap;

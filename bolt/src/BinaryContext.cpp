@@ -61,6 +61,9 @@ BinaryContext::~BinaryContext() {
   for (auto *Section : Sections) {
     delete Section;
   }
+  for (auto *InjectedFunction : InjectedBinaryFunctions) {
+    delete InjectedFunction;
+  }
   clearBinaryData();
 }
 
@@ -1070,4 +1073,13 @@ void BinaryContext::exitWithBugReport(StringRef Message,
   errs() << "ERROR: " << Message;
   errs() << "\n=======================================\n";
   exit(1);
+}
+
+BinaryFunction *
+BinaryContext::createInjectedBinaryFunction(const std::string &Name,
+                                            bool IsSimple) {
+  InjectedBinaryFunctions.push_back(new BinaryFunction(Name, *this, IsSimple));
+  auto *BF = InjectedBinaryFunctions.back();
+  setSymbolToFunctionMap(BF->getSymbol(), BF);
+  return BF;
 }

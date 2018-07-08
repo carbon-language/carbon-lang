@@ -290,7 +290,6 @@ std::string BinaryFunction::getDemangledName() const {
   return NameStr;
 }
 
-
 BinaryBasicBlock *
 BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
   if (Offset > Size)
@@ -401,6 +400,9 @@ bool BinaryFunction::isForwardCall(const MCSymbol *CalleeSymbol) const {
   // should have been ordered with a stable sort.
   const auto *CalleeBF = BC.getFunctionForSymbol(CalleeSymbol);
   if (CalleeBF) {
+    if(CalleeBF->isInjected())
+      return true;
+
     if (hasValidIndex() && CalleeBF->hasValidIndex()) {
       return getIndex() < CalleeBF->getIndex();
     } else if (hasValidIndex() && !CalleeBF->hasValidIndex()) {
@@ -428,7 +430,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (!opts::shouldProcess(*this) || !opts::shouldPrint(*this))
     return;
 
-  StringRef SectionName = Section.getName();
+  StringRef SectionName =
+      IsInjected ? "<no input section>" : InputSection->getName();
   OS << "Binary Function \"" << *this << "\" " << Annotation << " {";
   if (Names.size() > 1) {
     OS << "\n  Other names : ";
@@ -2371,13 +2374,15 @@ void BinaryFunction::emitBodyRaw(MCStreamer *Streamer) {
   assert(false &&
          "cannot emit raw body unless relocation accuracy is guaranteed");
 
+  assert(!isInjected() && "cannot emit raw body of injected function");
+
   // Raw contents of the function.
-  StringRef SectionContents = Section.getContents();
+  StringRef SectionContents = InputSection->getContents();
 
   // Raw contents of the function.
   StringRef FunctionContents =
-      SectionContents.substr(getAddress() - Section.getAddress(),
-                             getSize());
+      SectionContents.substr(getAddress() - InputSection->getAddress(),
+      getSize());
 
   if (opts::Verbosity)
     outs() << "BOLT-INFO: emitting function " << *this << " in raw ("
@@ -2451,12 +2456,15 @@ void BinaryFunction::emitConstantIslands(
 
   assert((!OnBehalfOf || IslandProxies[OnBehalfOf].size() > 0) &&
          "spurious OnBehalfOf constant island emission");
+
+  assert(!isInjected() &&
+         "injected functions should not have constant islands");
   // Raw contents of the function.
-  StringRef SectionContents = Section.getContents();
+  StringRef SectionContents = InputSection->getContents();
 
   // Raw contents of the function.
   StringRef FunctionContents =
-      SectionContents.substr(getAddress() - Section.getAddress(),
+      SectionContents.substr(getAddress() - InputSection->getAddress(),
                              getMaxSize());
 
   if (opts::Verbosity && !OnBehalfOf)
@@ -3148,10 +3156,10 @@ void BinaryFunction::insertBasicBlocks(
     std::vector<std::unique_ptr<BinaryBasicBlock>> &&NewBBs,
     const bool UpdateLayout,
     const bool UpdateCFIState) {
-  const auto StartIndex = getIndex(Start);
+  const auto StartIndex = Start ? getIndex(Start) : -1;
   const auto NumNewBlocks = NewBBs.size();
 
-  BasicBlocks.insert(BasicBlocks.begin() + StartIndex + 1,
+  BasicBlocks.insert(BasicBlocks.begin() + (StartIndex + 1),
                      NumNewBlocks,
                      nullptr);
 
@@ -3219,8 +3227,16 @@ void BinaryFunction::updateCFIState(BinaryBasicBlock *Start,
   }
 }
 
-void BinaryFunction::updateLayout(BinaryBasicBlock* Start,
+void BinaryFunction::updateLayout(BinaryBasicBlock *Start,
                                   const unsigned NumNewBlocks) {
+  // If start not provided insert new blocks at the beginning
+  if (!Start) {
+    BasicBlocksLayout.insert(layout_begin(), BasicBlocks.begin(),
+                             BasicBlocks.begin() + NumNewBlocks);
+    updateLayoutIndices();
+    return;
+  }
+
   // Insert new blocks in the layout immediately after Start.
   auto Pos = std::find(layout_begin(), layout_end(), Start);
   assert(Pos != layout_end());

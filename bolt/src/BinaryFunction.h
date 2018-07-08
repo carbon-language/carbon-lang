@@ -249,8 +249,10 @@ public:
 
   using BasicBlockOrderType = std::vector<BinaryBasicBlock *>;
 
-private:
+  /// Mark injected functions
+  bool IsInjected = false;
 
+private:
   /// Current state of the function.
   State CurrentState{State::Empty};
 
@@ -258,7 +260,7 @@ private:
   std::vector<std::string> Names;
 
   /// Containing section
-  BinarySection &Section;
+  BinarySection *InputSection = nullptr;
 
   /// Address of the function in memory. Also could be an offset from
   /// base address for position independent binaries.
@@ -404,11 +406,6 @@ private:
   template<typename T> BinaryFunction &clearList(T& List) {
     T TempList;
     TempList.swap(List);
-    return *this;
-  }
-
-  BinaryFunction &updateState(BinaryFunction::State State) {
-    CurrentState = State;
     return *this;
   }
 
@@ -680,16 +677,26 @@ private:
   friend class RewriteInstance;
   friend class BinaryContext;
 
-  /// Creation should be handled by RewriteInstance::createBinaryFunction().
+  /// Creation should be handled by RewriteInstance or BinaryContext
   BinaryFunction(const std::string &Name, BinarySection &Section,
                  uint64_t Address, uint64_t Size, BinaryContext &BC,
                  bool IsSimple) :
-      Names({Name}), Section(Section), Address(Address),
+      Names({Name}), InputSection(&Section), Address(Address),
       Size(Size), BC(BC), IsSimple(IsSimple),
       CodeSectionName(".local.text." + Name),
       ColdCodeSectionName(".local.cold.text." + Name),
       FunctionNumber(++Count) {
     OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
+  }
+
+  /// This constructor is used to create an injected function
+  BinaryFunction(const std::string &Name, BinaryContext &BC, bool IsSimple)
+      : Names({Name}), Address(0), Size(0), BC(BC), IsSimple(IsSimple),
+        CodeSectionName(".local.text." + Name),
+        ColdCodeSectionName(".local.cold.text." + Name),
+        FunctionNumber(++Count) {
+    OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
+    IsInjected = true;
   }
 
 public:
@@ -782,6 +789,11 @@ public:
   }
   inline iterator_range<const_cfi_iterator> cie() const {
     return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
+  }
+
+  BinaryFunction &updateState(BinaryFunction::State State) {
+    CurrentState = State;
+    return *this;
   }
 
   /// Update layout of basic blocks used for output.
@@ -985,9 +997,13 @@ public:
     return getState() == State::Emitted;
   }
 
-  /// Return containing file section.
   BinarySection &getSection() const {
-    return Section;
+    assert(InputSection);
+    return *InputSection;
+  }
+
+  bool isInjected() const {
+    return IsInjected;
   }
 
   /// Return original address of the function (or offset from base for PIC).
