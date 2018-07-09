@@ -4494,8 +4494,6 @@ let Predicates = [HasAVX512] in {
               (VMOVDI2PDIZrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector (loadi32 addr:$src))))),
               (VMOVDI2PDIZrm addr:$src)>;
-    def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
-              (VMOVDI2PDIZrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
               (VMOVDI2PDIZrm addr:$src)>;
     def : Pat<(v4i32 (X86vzload addr:$src)),

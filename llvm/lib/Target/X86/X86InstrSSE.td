@@ -4234,8 +4234,6 @@ let Predicates = [UseAVX] in {
               (VMOVDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector (loadi32 addr:$src))))),
               (VMOVDI2PDIrm addr:$src)>;
-    def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
-              (VMOVDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
               (VMOVDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzload addr:$src)),
@@ -4264,8 +4262,6 @@ let Predicates = [UseSSE2] in {
     def : Pat<(v2i64 (X86vzmovl (v2i64 (scalar_to_vector (zextloadi64i32 addr:$src))))),
               (MOVDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector (loadi32 addr:$src))))),
-              (MOVDI2PDIrm addr:$src)>;
-    def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv4f32 addr:$src)))),
               (MOVDI2PDIrm addr:$src)>;
     def : Pat<(v4i32 (X86vzmovl (bc_v4i32 (loadv2i64 addr:$src)))),
               (MOVDI2PDIrm addr:$src)>;
@@ -4347,8 +4343,6 @@ let Predicates = [UseAVX], AddedComplexity = 20 in {
             (VMOVQI2PQIrm addr:$src)>;
   def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
             (VMOVQI2PQIrm addr:$src)>;
-  def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
-            (VMOVQI2PQIrm addr:$src)>;
   def : Pat<(v2i64 (X86vzload addr:$src)),
             (VMOVQI2PQIrm addr:$src)>;
   def : Pat<(v4i64 (X86vzmovl (insert_subvector undef,
@@ -4362,8 +4356,6 @@ let Predicates = [UseSSE2], AddedComplexity = 20 in {
   def : Pat<(v2i64 (X86vzmovl (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
             (MOVQI2PQIrm addr:$src)>;
   def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
-            (MOVQI2PQIrm addr:$src)>;
-  def : Pat<(v2i64 (X86vzmovl (bc_v2i64 (loadv4f32 addr:$src)))),
             (MOVQI2PQIrm addr:$src)>;
   def : Pat<(v2i64 (X86vzload addr:$src)), (MOVQI2PQIrm addr:$src)>;
 }
