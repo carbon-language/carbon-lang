@@ -22,11 +22,51 @@
 // Intended to be as invisible as a reference, wherever possible.
 
 #include "../common/idioms.h"
+#include <type_traits>
 #include <utility>
 
 namespace Fortran::common {
 
-template<typename A> class Indirection {
+// The default case does not support (deep) copy construction and assignment.
+template<typename A, bool COPY = false> class Indirection {
+public:
+  using element_type = A;
+  Indirection() = delete;
+  Indirection(A *&&p) : p_{p} {
+    CHECK(p_ && "assigning null pointer to Indirection");
+    p = nullptr;
+  }
+  Indirection(A &&x) : p_{new A(std::move(x))} {}
+  Indirection(Indirection &&that) : p_{that.p_} {
+    CHECK(p_ && "move construction of Indirection from null Indirection");
+    that.p_ = nullptr;
+  }
+  ~Indirection() {
+    delete p_;
+    p_ = nullptr;
+  }
+  Indirection &operator=(Indirection &&that) {
+    CHECK(that.p_ && "move assignment of null Indirection to Indirection");
+    auto tmp = p_;
+    p_ = that.p_;
+    that.p_ = tmp;
+    return *this;
+  }
+  A &operator*() { return *p_; }
+  const A &operator*() const { return *p_; }
+  A *operator->() { return p_; }
+  const A *operator->() const { return p_; }
+
+  template<typename... ARGS> static Indirection Make(ARGS &&... args) {
+    return {new A(std::forward<ARGS>(args)...)};
+  }
+
+private:
+  A *p_{nullptr};
+};
+
+// Variant with copy construction and assignment
+template<typename A> class Indirection<A, true> {
 public:
   using element_type = A;
   Indirection() = delete;

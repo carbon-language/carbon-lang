@@ -28,7 +28,6 @@
 #include "type.h"
 #include "variable.h"
 #include "../lib/common/idioms.h"
-#include "../lib/common/indirection.h"
 #include "../lib/parser/char-block.h"
 #include "../lib/parser/message.h"
 #include <ostream>
@@ -46,21 +45,21 @@ struct FoldingContext {
 template<typename A> struct Unary {
   CLASS_BOILERPLATE(Unary)
   Unary(const A &a) : x{a} {}
-  Unary(common::Indirection<A> &&a) : x{std::move(a)} {}
+  Unary(CopyableIndirection<A> &&a) : x{std::move(a)} {}
   Unary(A &&a) : x{std::move(a)} {}
   std::ostream &Dump(std::ostream &, const char *opr) const;
-  common::Indirection<A> x;
+  CopyableIndirection<A> x;
 };
 
 template<typename A, typename B = A> struct Binary {
   CLASS_BOILERPLATE(Binary)
   Binary(const A &a, const B &b) : x{a}, y{b} {}
-  Binary(common::Indirection<const A> &&a, common::Indirection<const B> &&b)
+  Binary(CopyableIndirection<const A> &&a, CopyableIndirection<const B> &&b)
     : x{std::move(a)}, y{std::move(b)} {}
   Binary(A &&a, B &&b) : x{std::move(a)}, y{std::move(b)} {}
   std::ostream &Dump(std::ostream &, const char *opr) const;
-  common::Indirection<A> x;
-  common::Indirection<B> y;
+  CopyableIndirection<A> x;
+  CopyableIndirection<B> y;
 };
 
 template<int KIND> struct Expr<Category::Integer, KIND> {
@@ -115,7 +114,7 @@ template<int KIND> struct Expr<Category::Integer, KIND> {
   void Fold(FoldingContext &);
 
   // TODO: function reference
-  std::variant<Constant, common::Indirection<Designator>,
+  std::variant<Constant, CopyableIndirection<Designator>,
       Convert<GenericIntegerExpr>, Convert<GenericRealExpr>, Parentheses,
       Negate, Add, Subtract, Multiply, Divide, Power>
       u;

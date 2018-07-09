@@ -69,7 +69,7 @@ std::ostream &Emit(
 }
 
 template<typename A>
-std::ostream &Emit(std::ostream &o, const common::Indirection<A> &p,
+std::ostream &Emit(std::ostream &o, const CopyableIndirection<A> &p,
     const char *kw = nullptr) {
   if (kw != nullptr) {
     o << kw;

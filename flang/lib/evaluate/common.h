@@ -17,6 +17,7 @@
 
 #include "../common/enum-set.h"
 #include "../common/idioms.h"
+#include "../common/indirection.h"
 #include <cinttypes>
 
 namespace Fortran::evaluate {
@@ -119,6 +120,9 @@ using HostUnsignedInt =
   t &operator=(const t &) = default; \
   t &operator=(t &&) = default; \
   std::ostream &Dump(std::ostream &) const;
+
+// Force availability of copy construction and assignment
+template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_COMMON_H_

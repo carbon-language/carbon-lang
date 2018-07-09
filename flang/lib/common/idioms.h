@@ -25,8 +25,8 @@
 #if __cplusplus < 201703L
 #error this is a C++17 program
 #endif
-#if !defined(__clang__) && defined __GNUC__ && __GNUC__ < 7
-#error g++ >= 7.3 is required
+#if !__clang__ && defined __GNUC__ && __GNUC__ < 7
+#error g++ >= 7.2 is required
 #endif
 
 #include <list>

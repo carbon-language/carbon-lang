@@ -24,7 +24,6 @@
 #include "common.h"
 #include "expression-forward.h"
 #include "../common/idioms.h"
-#include "../common/indirection.h"
 #include "../semantics/symbol.h"
 #include <optional>
 #include <ostream>
@@ -43,7 +42,7 @@ struct ActualFunctionArg;
 // Subscript and cosubscript expressions are of a kind that matches the
 // address size, at least at the top level.
 using SubscriptIntegerExpr =
-    common::Indirection<IntegerExpr<SubscriptInteger::kind>>;
+    CopyableIndirection<IntegerExpr<SubscriptInteger::kind>>;
 
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
@@ -53,9 +52,9 @@ using SubscriptIntegerExpr =
 struct Component {
   CLASS_BOILERPLATE(Component)
   Component(const DataRef &b, const Symbol &c) : base{b}, sym{&c} {}
-  Component(common::Indirection<DataRef> &&b, const Symbol &c)
+  Component(CopyableIndirection<DataRef> &&b, const Symbol &c)
     : base{std::move(b)}, sym{&c} {}
-  common::Indirection<DataRef> base;
+  CopyableIndirection<DataRef> base;
   const Symbol *sym;
 };
 
@@ -109,7 +108,7 @@ struct CoarrayRef {
       cosubscript(std::move(css)) {}
   std::vector<const Symbol *> base;
   std::vector<SubscriptIntegerExpr> subscript, cosubscript;
-  std::optional<common::Indirection<Variable>> stat, team;
+  std::optional<CopyableIndirection<Variable>> stat, team;
   bool teamIsTeamNumber{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
 
@@ -173,7 +172,7 @@ struct ProcedureDesignator {
 };
 
 template<typename ARG> struct ProcedureRef {
-  using ArgumentType = common::Indirection<ARG>;
+  using ArgumentType = CopyableIndirection<ARG>;
   CLASS_BOILERPLATE(ProcedureRef)
   ProcedureRef(ProcedureDesignator &&p, std::vector<ArgumentType> &&a)
     : proc{std::move(p)}, argument(std::move(a)) {}
@@ -194,7 +193,7 @@ struct ActualFunctionArg {
   CLASS_BOILERPLATE(ActualFunctionArg)
   explicit ActualFunctionArg(GenericExpr &&x) : u{std::move(x)} {}
   explicit ActualFunctionArg(Variable &&x) : u{std::move(x)} {}
-  std::variant<common::Indirection<GenericExpr>, Variable> u;
+  std::variant<CopyableIndirection<GenericExpr>, Variable> u;
 };
 
 struct Label {  // TODO: this is a placeholder
@@ -208,7 +207,7 @@ struct ActualSubroutineArg {
   explicit ActualSubroutineArg(GenericExpr &&x) : u{std::move(x)} {}
   explicit ActualSubroutineArg(Variable &&x) : u{std::move(x)} {}
   explicit ActualSubroutineArg(const Label &l) : u{&l} {}
-  std::variant<common::Indirection<GenericExpr>, Variable, const Label *> u;
+  std::variant<CopyableIndirection<GenericExpr>, Variable, const Label *> u;
 };
 
 using SubroutineRef = ProcedureRef<ActualSubroutineArg>;

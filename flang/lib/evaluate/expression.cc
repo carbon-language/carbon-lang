@@ -69,7 +69,7 @@ template<int KIND>
 std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
-          [&](const common::Indirection<Designator> &d) { d->Dump(o); },
+          [&](const CopyableIndirection<Designator> &d) { d->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
@@ -210,13 +210,19 @@ void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
 
 template<int KIND>
 typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
-  return std::visit(common::visitors{[](const std::string &str) {
-                                       return LengthExpr{str.size()};
-                                     },
-                        [](const auto &concat) {
-                          return LengthExpr{LengthExpr::Add{
-                              concat.x->LEN(), concat.y->LEN()}};
-                        }},
+  // Written thus, instead of with common::visitors{}, to dodge a
+  // bug in g++ 7.2.0 that failed to direct the std::string case to its
+  // specific alternative.
+  return std::visit(
+      [](const auto &x) {
+        if constexpr (std::is_same_v<
+                          const typename CharacterExpr<KIND>::Constant &,
+                          decltype(x)>) {
+          return LengthExpr{x.size()};
+        } else {
+          return LengthExpr{LengthExpr::Add{x.x->LEN(), x.y->LEN()}};
+        }
+      },
       u);
 }
 
