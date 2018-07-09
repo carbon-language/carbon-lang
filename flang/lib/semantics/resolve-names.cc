@@ -2147,45 +2147,50 @@ const Symbol *ResolveNamesVisitor::FindComponent(
 
 void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
   if (const auto *name = std::get_if<parser::Name>(&x.u)) {
-    Symbol &symbol{MakeSymbol(name->source)};
-    if (symbol.has<UnknownDetails>()) {
-      if (isImplicitNoneExternal() && !symbol.attrs().test(Attr::EXTERNAL)) {
+    auto *symbol{FindSymbol(name->source)};
+    if (symbol == nullptr) {
+      symbol = &MakeSymbol(name->source);
+      if (isImplicitNoneExternal() && !symbol->attrs().test(Attr::EXTERNAL)) {
         Say(*name,
             "'%s' is an external procedure without the EXTERNAL"
             " attribute in a scope with IMPLICIT NONE(EXTERNAL)"_err_en_US);
       }
-      symbol.attrs().set(Attr::EXTERNAL);
-      symbol.set_details(ProcEntityDetails{});
-      if (const auto type = GetImplicitType(symbol)) {
-        symbol.details<ProcEntityDetails>().interface().set_type(*type);
+      symbol->attrs().set(Attr::EXTERNAL);
+      symbol->set_details(ProcEntityDetails{});
+      if (const auto type = GetImplicitType(*symbol)) {
+        symbol->details<ProcEntityDetails>().interface().set_type(*type);
       }
       CHECK(expectedProcFlag_);
-      symbol.set(*expectedProcFlag_);
-    } else if (CheckUseError(name->source, symbol)) {
+      symbol->set(*expectedProcFlag_);
+    } else if (symbol->has<UnknownDetails>()) {
+      CHECK(!"unexpected UnknownDetails");
+    } else if (CheckUseError(name->source, *symbol)) {
       // error was reported
     } else {
-      if (auto *details = symbol.detailsIf<EntityDetails>()) {
-        symbol.set_details(ProcEntityDetails(*details));
-        symbol.set(Symbol::Flag::Function);
+      if (auto *details = symbol->detailsIf<EntityDetails>()) {
+        symbol->set_details(ProcEntityDetails(*details));
+        symbol->set(Symbol::Flag::Function);
       }
-      if (symbol.test(Symbol::Flag::Function) &&
+      if (symbol->test(Symbol::Flag::Function) &&
           expectedProcFlag_ == Symbol::Flag::Subroutine) {
         Say2(name->source,
             "Cannot call function '%s' like a subroutine"_err_en_US,
-            symbol.name(), "Declaration of '%s'"_en_US);
-      } else if (symbol.test(Symbol::Flag::Subroutine) &&
+            symbol->name(), "Declaration of '%s'"_en_US);
+      } else if (symbol->test(Symbol::Flag::Subroutine) &&
           expectedProcFlag_ == Symbol::Flag::Function) {
         Say2(name->source,
             "Cannot call subroutine '%s' like a function"_err_en_US,
-            symbol.name(), "Declaration of '%s'"_en_US);
-      } else if (symbol.detailsIf<ProcEntityDetails>()) {
-        symbol.set(*expectedProcFlag_);  // in case it hasn't been set yet
-      } else if (symbol.detailsIf<GenericDetails>()) {
+            symbol->name(), "Declaration of '%s'"_en_US);
+      } else if (symbol->detailsIf<ProcEntityDetails>()) {
+        symbol->set(*expectedProcFlag_);  // in case it hasn't been set yet
+      } else if (symbol->detailsIf<GenericDetails>()) {
         // OK
+      } else if (symbol->detailsIf<DerivedTypeDetails>()) {
+        // OK: type constructor
       } else {
         Say2(name->source,
             "Use of '%s' as a procedure conflicts with its declaration"_err_en_US,
-            symbol.name(), "Declaration of '%s'"_en_US);
+            symbol->name(), "Declaration of '%s'"_en_US);
       }
     }
   }
