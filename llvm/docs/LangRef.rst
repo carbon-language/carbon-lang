@@ -1461,6 +1461,14 @@ example:
     trap or generate asynchronous exceptions. Exception handling schemes
     that are recognized by LLVM to handle asynchronous exceptions, such
     as SEH, will still provide their implementation defined semantics.
+``"null-pointer-is-valid"``
+   If ``"null-pointer-is-valid"`` is set to ``"true"``, then ``null`` address
+   in address-space 0 is considered to be a valid address for memory loads and
+   stores. Any analysis or optimization should not treat dereferencing a
+   pointer to ``null`` as undefined behavior in this function.
+   Note: Comparing address of a global variable to ``null`` may still
+   evaluate to false because of a limitation in querying this attribute inside
+   constant expressions.
 ``optforfuzzing``
     This attribute indicates that this function should be optimized
     for maximum fuzzing signal.
