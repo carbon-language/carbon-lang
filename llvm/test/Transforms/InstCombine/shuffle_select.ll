@@ -1023,7 +1023,7 @@ define <4 x i32> @lshr_2_vars_exact(<4 x i32> %v0, <4 x i32> %v1) {
   ret <4 x i32> %t3
 }
 
-; TODO: This could be transformed by using a safe constant.
+; TODO: This would require a new shuffle mask (replace undef with op0 or op1 lane). Otherwise, we have shift-by-undef.
 
 define <4 x i32> @lshr_2_vars_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
 ; CHECK-LABEL: @lshr_2_vars_undef_mask_elt(
@@ -1038,7 +1038,7 @@ define <4 x i32> @lshr_2_vars_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
   ret <4 x i32> %t3
 }
 
-; TODO: This could be transformed by using a safe constant.
+; TODO: This would require a new shuffle mask (replace undef with op0 or op1 lane). Otherwise, we have shift-by-undef.
 
 define <4 x i32> @lshr_2_vars_exact_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
 ; CHECK-LABEL: @lshr_2_vars_exact_undef_mask_elt(
