@@ -539,6 +539,8 @@ let Predicates = [HasSVE] in {
   defm ADR_LSL_ZZZ_S  : sve_int_bin_cons_misc_0_a_32_lsl<0b10, "adr">;
   defm ADR_LSL_ZZZ_D  : sve_int_bin_cons_misc_0_a_64_lsl<0b11, "adr">;
 
+  defm TBL_ZZZ  : sve_int_perm_tbl<"tbl">;
+
   defm ZIP1_ZZZ : sve_int_perm_bin_perm_zz<0b000, "zip1">;
   defm ZIP2_ZZZ : sve_int_perm_bin_perm_zz<0b001, "zip2">;
   defm UZP1_ZZZ : sve_int_perm_bin_perm_zz<0b010, "uzp1">;

@@ -571,6 +571,39 @@ multiclass sve_int_perm_dup_i<string asm> {
                   (!cast<Instruction>(NAME # _Q) ZPR128:$Zd, FPR128asZPR:$Qn, 0), 2>;
 }
 
+class sve_int_perm_tbl<bits<2> sz8_64, string asm, ZPRRegOp zprty,
+                       RegisterOperand VecList>
+: I<(outs zprty:$Zd), (ins VecList:$Zn, zprty:$Zm),
+  asm, "\t$Zd, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zm;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Zm;
+  let Inst{15-10} = 0b001100;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve_int_perm_tbl<string asm> {
+  def _B : sve_int_perm_tbl<0b00, asm, ZPR8, Z_b>;
+  def _H : sve_int_perm_tbl<0b01, asm, ZPR16, Z_h>;
+  def _S : sve_int_perm_tbl<0b10, asm, ZPR32, Z_s>;
+  def _D : sve_int_perm_tbl<0b11, asm, ZPR64, Z_d>;
+
+  def : InstAlias<asm # "\t$Zd, $Zn, $Zm",
+                 (!cast<Instruction>(NAME # _B) ZPR8:$Zd, ZPR8:$Zn, ZPR8:$Zm), 0>;
+  def : InstAlias<asm # "\t$Zd, $Zn, $Zm",
+                 (!cast<Instruction>(NAME # _H) ZPR16:$Zd, ZPR16:$Zn, ZPR16:$Zm), 0>;
+  def : InstAlias<asm # "\t$Zd, $Zn, $Zm",
+                 (!cast<Instruction>(NAME # _S) ZPR32:$Zd, ZPR32:$Zn, ZPR32:$Zm), 0>;
+  def : InstAlias<asm # "\t$Zd, $Zn, $Zm",
+                 (!cast<Instruction>(NAME # _D) ZPR64:$Zd, ZPR64:$Zn, ZPR64:$Zm), 0>;
+}
 
 //===----------------------------------------------------------------------===//
 // SVE Vector Select Group
