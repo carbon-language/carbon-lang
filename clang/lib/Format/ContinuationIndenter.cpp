@@ -321,6 +321,9 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
       State.Stack.back().NoLineBreakInOperand)
     return false;
 
+  if (Previous.is(tok::l_square) && Previous.is(TT_ObjCMethodExpr))
+    return false;
+
   return !State.Stack.back().NoLineBreak;
 }
 
