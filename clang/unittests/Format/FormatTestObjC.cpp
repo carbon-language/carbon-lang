@@ -820,6 +820,48 @@ TEST_F(FormatTestObjC, FormatObjCMethodExpr) {
   verifyFormat("aaaaaa = [aa aa:aa\n"
                "             aa:aa];");
 
+  // Message receiver taking multiple lines.
+  // Non-corner case.
+  verifyFormat("[[object block:^{\n"
+               "  return 42;\n"
+               "}] a:42 b:42];");
+  // Arguments just fit into one line.
+  verifyFormat("[[object block:^{\n"
+               "  return 42;\n"
+               "}] aaaaaaa:42 b:42];");
+  // Arguments just over a column limit.
+  verifyFormat("[[object block:^{\n"
+               "  return 42;\n"
+               "}] aaaaaaa:42\n"
+               "        bb:42];");
+  // Arguments just fit into one line.
+  Style.ColumnLimit = 23;
+  verifyFormat("[[obj a:42\n"
+               "      b:42\n"
+               "      c:42\n"
+               "      d:42] e:42 f:42];");
+
+  // Arguments do not fit into one line with a receiver.
+  Style.ColumnLimit = 20;
+  verifyFormat("[[obj a:42] a:42\n"
+               "            b:42];");
+  verifyFormat("[[obj a:42] a:42\n"
+               "            b:42\n"
+               "            c:42];");
+  verifyFormat("[[obj aaaaaa:42\n"
+               "           b:42]\n"
+               "    cc:42\n"
+               "     d:42];");
+
+  // Avoid breaking receiver expression.
+  Style.ColumnLimit = 30;
+  verifyFormat("fooooooo =\n"
+               "    [[obj fooo] aaa:42\n"
+               "                aaa:42];");
+  verifyFormat("[[[obj foo] bar] aa:42\n"
+               "                 bb:42\n"
+               "                 cc:42];");
+
   Style.ColumnLimit = 70;
   verifyFormat(
       "void f() {\n"
