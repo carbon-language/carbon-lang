@@ -1508,6 +1508,15 @@ struct shared_table {
 
 /* ------------------------------------------------------------------------ */
 
+typedef struct kmp_sched_flags {
+  unsigned ordered : 1;
+  unsigned nomerge : 1;
+  unsigned contains_last : 1;
+  unsigned unused : 29;
+} kmp_sched_flags_t;
+
+KMP_BUILD_ASSERT(sizeof(kmp_sched_flags_t) == 4);
+
 #if KMP_STATIC_STEAL_ENABLED
 typedef struct KMP_ALIGN_CACHE dispatch_private_info32 {
   kmp_int32 count;
@@ -1625,13 +1634,12 @@ typedef struct KMP_ALIGN_CACHE dispatch_private_info {
     dispatch_private_info64_t p64;
   } u;
   enum sched_type schedule; /* scheduling algorithm */
-  kmp_int32 ordered; /* ordered clause specified */
+  kmp_sched_flags_t flags; /* flags (e.g., ordered, nomerge, etc.) */
   kmp_int32 ordered_bumped;
   // To retain the structure size after making ordered_iteration scalar
   kmp_int32 ordered_dummy[KMP_MAX_ORDERED - 3];
   // Stack of buffers for nest of serial regions
   struct dispatch_private_info *next;
-  kmp_int32 nomerge; /* don't merge iters if serialized */
   kmp_int32 type_size; /* the size of types in private_info */
   enum cons_type pushed_ws;
 } dispatch_private_info_t;
