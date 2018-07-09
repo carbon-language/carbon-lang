@@ -515,11 +515,23 @@ private:
         }
         Left->MatchingParen = CurrentToken;
         CurrentToken->MatchingParen = Left;
+        // FirstObjCSelectorName is set when a colon is found. This does
+        // not work, however, when the method has no parameters.
+        // Here, we set FirstObjCSelectorName when the end of the method call is
+        // reached, in case it was not set already.
+        if (!Contexts.back().FirstObjCSelectorName) {
+            FormatToken* Previous = CurrentToken->getPreviousNonComment();
+            if (Previous && Previous->is(TT_SelectorName)) {
+              Previous->ObjCSelectorNameParts = 1;
+              Contexts.back().FirstObjCSelectorName = Previous;
+            }
+        } else {
+          Left->ParameterCount =
+              Contexts.back().FirstObjCSelectorName->ObjCSelectorNameParts;
+        }
         if (Contexts.back().FirstObjCSelectorName) {
           Contexts.back().FirstObjCSelectorName->LongestObjCSelectorName =
               Contexts.back().LongestObjCSelectorName;
-          Contexts.back().FirstObjCSelectorName->ObjCSelectorNameParts =
-              Left->ParameterCount;
           if (Left->BlockParameterCount > 1)
             Contexts.back().FirstObjCSelectorName->LongestObjCSelectorName = 0;
         }
@@ -539,11 +551,6 @@ private:
                                  TT_DesignatedInitializerLSquare)) {
           Left->Type = TT_ObjCMethodExpr;
           StartsObjCMethodExpr = true;
-          // ParameterCount might have been set to 1 before expression was
-          // recognized as ObjCMethodExpr (as '1 + number of commas' formula is
-          // used for other expression types). Parameter counter has to be,
-          // therefore, reset to 0.
-          Left->ParameterCount = 0;
           Contexts.back().ColonIsObjCMethodExpr = true;
           if (Parent && Parent->is(tok::r_paren))
             // FIXME(bug 36976): ObjC return types shouldn't use TT_CastRParen.
@@ -617,12 +624,12 @@ private:
   }
 
   void updateParameterCount(FormatToken *Left, FormatToken *Current) {
+    // For ObjC methods, the number of parameters is calculated differently as
+    // method declarations have a different structure (the parameters are not
+    // inside a bracket scope).
     if (Current->is(tok::l_brace) && Current->BlockKind == BK_Block)
       ++Left->BlockParameterCount;
-    if (Left->Type == TT_ObjCMethodExpr) {
-      if (Current->is(tok::colon))
-        ++Left->ParameterCount;
-    } else if (Current->is(tok::comma)) {
+    if (Current->is(tok::comma)) {
       ++Left->ParameterCount;
       if (!Left->Role)
         Left->Role.reset(new CommaSeparatedList(Style));
@@ -718,6 +725,7 @@ private:
                    Contexts.back().LongestObjCSelectorName)
             Contexts.back().LongestObjCSelectorName =
                 Tok->Previous->ColumnWidth;
+          ++Contexts.back().FirstObjCSelectorName->ObjCSelectorNameParts;
         }
       } else if (Contexts.back().ColonIsForRangeExpr) {
         Tok->Type = TT_RangeBasedForLoopColon;
