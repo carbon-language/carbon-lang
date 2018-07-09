@@ -57,6 +57,7 @@ namespace json {
 class Array;
 class ObjectKey;
 class Value;
+template <typename T> Value toJSON(const llvm::Optional<T> &Opt);
 
 /// An Object is a JSON object, which maps strings to heterogenous JSON values.
 /// It simulates DenseMap<ObjectKey, Value>. ObjectKey is a maybe-owned string.
@@ -577,6 +578,11 @@ bool fromJSON(const Value &E, std::map<std::string, T> &Out) {
     return true;
   }
   return false;
+}
+
+// Allow serialization of Optional<T> for supported T.
+template <typename T> Value toJSON(const llvm::Optional<T> &Opt) {
+  return Opt ? Value(*Opt) : Value(nullptr);
 }
 
 /// Helper for mapping JSON objects onto protocol structs.

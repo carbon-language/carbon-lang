@@ -37,6 +37,8 @@ TEST(JSONTest, Constructors) {
   EXPECT_EQ(R"({"A":{"B":{}}})", s(Object{{"A", Object{{"B", Object{}}}}}));
   EXPECT_EQ(R"({"A":{"B":{"X":"Y"}}})",
             s(Object{{"A", Object{{"B", Object{{"X", "Y"}}}}}}));
+  EXPECT_EQ("null", s(llvm::Optional<double>()));
+  EXPECT_EQ("2.5", s(llvm::Optional<double>(2.5)));
 }
 
 TEST(JSONTest, StringOwnership) {
