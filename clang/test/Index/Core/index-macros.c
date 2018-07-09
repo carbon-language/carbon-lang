@@ -8,5 +8,5 @@
 #undef X1
 
 // CHECK: [[@LINE+2]]:1 | macro/C | DEF | c:index-macros.c@251@macro@DEF | Ref |
-// CHECK: [[@LINE+1]]:5 | variable/C | i | c:@i | i | Def | rel: 0
+// CHECK: [[@LINE+1]]:5 | variable/C | i | c:@i | {{.*}} | Def | rel: 0
 DEF(i);
