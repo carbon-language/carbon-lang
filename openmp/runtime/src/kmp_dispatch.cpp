@@ -36,6 +36,9 @@
 #endif
 #include "kmp_lock.h"
 #include "kmp_dispatch.h"
+#if KMP_USE_HIER_SCHED
+#include "kmp_dispatch_hier.h"
+#endif
 
 #if OMPT_SUPPORT
 #include "ompt-specific.h"
@@ -667,6 +670,59 @@ void __kmp_dispatch_init_algorithm(ident_t *loc, int gtid,
   pr->schedule = schedule;
 }
 
+#if KMP_USE_HIER_SCHED
+template <typename T>
+inline void __kmp_dispatch_init_hier_runtime(ident_t *loc, T lb, T ub,
+                                             typename traits_t<T>::signed_t st);
+template <>
+inline void
+__kmp_dispatch_init_hier_runtime<kmp_int32>(ident_t *loc, kmp_int32 lb,
+                                            kmp_int32 ub, kmp_int32 st) {
+  __kmp_dispatch_init_hierarchy<kmp_int32>(
+      loc, __kmp_hier_scheds.size, __kmp_hier_scheds.layers,
+      __kmp_hier_scheds.scheds, __kmp_hier_scheds.small_chunks, lb, ub, st);
+}
+template <>
+inline void
+__kmp_dispatch_init_hier_runtime<kmp_uint32>(ident_t *loc, kmp_uint32 lb,
+                                             kmp_uint32 ub, kmp_int32 st) {
+  __kmp_dispatch_init_hierarchy<kmp_uint32>(
+      loc, __kmp_hier_scheds.size, __kmp_hier_scheds.layers,
+      __kmp_hier_scheds.scheds, __kmp_hier_scheds.small_chunks, lb, ub, st);
+}
+template <>
+inline void
+__kmp_dispatch_init_hier_runtime<kmp_int64>(ident_t *loc, kmp_int64 lb,
+                                            kmp_int64 ub, kmp_int64 st) {
+  __kmp_dispatch_init_hierarchy<kmp_int64>(
+      loc, __kmp_hier_scheds.size, __kmp_hier_scheds.layers,
+      __kmp_hier_scheds.scheds, __kmp_hier_scheds.large_chunks, lb, ub, st);
+}
+template <>
+inline void
+__kmp_dispatch_init_hier_runtime<kmp_uint64>(ident_t *loc, kmp_uint64 lb,
+                                             kmp_uint64 ub, kmp_int64 st) {
+  __kmp_dispatch_init_hierarchy<kmp_uint64>(
+      loc, __kmp_hier_scheds.size, __kmp_hier_scheds.layers,
+      __kmp_hier_scheds.scheds, __kmp_hier_scheds.large_chunks, lb, ub, st);
+}
+
+// free all the hierarchy scheduling memory associated with the team
+void __kmp_dispatch_free_hierarchies(kmp_team_t *team) {
+  int num_disp_buff = team->t.t_max_nproc > 1 ? __kmp_dispatch_num_buffers : 2;
+  for (int i = 0; i < num_disp_buff; ++i) {
+    // type does not matter here so use kmp_int32
+    auto sh =
+        reinterpret_cast<dispatch_shared_info_template<kmp_int32> volatile *>(
+            &team->t.t_disp_buffer[i]);
+    if (sh->hier) {
+      sh->hier->deallocate();
+      __kmp_free(sh->hier);
+    }
+  }
+}
+#endif
+
 // UT - unsigned flavor of T, ST - signed flavor of T,
 // DBL - double if sizeof(T)==4, or long double if sizeof(T)==8
 template <typename T>
@@ -713,6 +769,37 @@ __kmp_dispatch_init(ident_t *loc, int gtid, enum sched_type schedule, T lb,
   team = th->th.th_team;
   active = !team->t.t_serialized;
   th->th.th_ident = loc;
+
+#if KMP_USE_HIER_SCHED
+  // Initialize the scheduling hierarchy if requested in OMP_SCHEDULE envirable
+  // Hierarchical scheduling does not work with ordered, so if ordered is
+  // detected, then revert back to threaded scheduling.
+  bool ordered;
+  enum sched_type my_sched = schedule;
+  my_buffer_index = th->th.th_dispatch->th_disp_index;
+  pr = reinterpret_cast<dispatch_private_info_template<T> *>(
+      &th->th.th_dispatch
+           ->th_disp_buffer[my_buffer_index % __kmp_dispatch_num_buffers]);
+  my_sched = SCHEDULE_WITHOUT_MODIFIERS(my_sched);
+  if ((my_sched >= kmp_nm_lower) && (my_sched < kmp_nm_upper))
+    my_sched =
+        (enum sched_type)(((int)my_sched) - (kmp_nm_lower - kmp_sch_lower));
+  ordered = (kmp_ord_lower & my_sched);
+  if (pr->flags.use_hier) {
+    if (ordered) {
+      KD_TRACE(100, ("__kmp_dispatch_init: T#%d ordered loop detected.  "
+                     "Disabling hierarchical scheduling.\n",
+                     gtid));
+      pr->flags.use_hier = FALSE;
+    }
+  }
+  if (schedule == kmp_sch_runtime && __kmp_hier_scheds.size > 0) {
+    // Don't use hierarchical for ordered parallel loops and don't
+    // use the runtime hierarchy if one was specified in the program
+    if (!ordered && !pr->flags.use_hier)
+      __kmp_dispatch_init_hier_runtime<T>(loc, lb, ub, st);
+  }
+#endif // KMP_USE_HIER_SCHED
 
 #if USE_ITT_BUILD
   kmp_uint64 cur_chunk = chunk;
@@ -822,6 +909,12 @@ __kmp_dispatch_init(ident_t *loc, int gtid, enum sched_type schedule, T lb,
       }
       __kmp_itt_metadata_loop(loc, schedtype, pr->u.p.tc, cur_chunk);
     }
+#if KMP_USE_HIER_SCHED
+    if (pr->flags.use_hier) {
+      pr->u.p.count = 0;
+      pr->u.p.ub = pr->u.p.lb = pr->u.p.st = pr->u.p.tc = 0;
+    }
+#endif // KMP_USER_HIER_SCHED
 #endif /* USE_ITT_BUILD */
   }
 
@@ -1886,9 +1979,14 @@ static int __kmp_dispatch_next(ident_t *loc, int gtid, kmp_int32 *p_last,
         th->th.th_dispatch->th_dispatch_sh_current);
     KMP_DEBUG_ASSERT(sh);
 
-    status = __kmp_dispatch_next_algorithm<T>(gtid, pr, sh, &last, p_lb, p_ub,
-                                              p_st, th->th.th_team_nproc,
-                                              th->th.th_info.ds.ds_tid);
+#if KMP_USE_HIER_SCHED
+    if (pr->flags.use_hier)
+      status = sh->hier->next(loc, gtid, pr, &last, p_lb, p_ub, p_st);
+    else
+#endif // KMP_USE_HIER_SCHED
+      status = __kmp_dispatch_next_algorithm<T>(gtid, pr, sh, &last, p_lb, p_ub,
+                                                p_st, th->th.th_team_nproc,
+                                                th->th.th_info.ds.ds_tid);
     // status == 0: no more iterations to execute
     if (status == 0) {
       UT num_done;
@@ -1906,6 +2004,9 @@ static int __kmp_dispatch_next(ident_t *loc, int gtid, kmp_int32 *p_last,
       }
 #endif
 
+#if KMP_USE_HIER_SCHED
+      pr->flags.use_hier = FALSE;
+#endif
       if ((ST)num_done == th->th.th_team_nproc - 1) {
 #if (KMP_STATIC_STEAL_ENABLED)
         if (pr->schedule == kmp_sch_static_steal &&

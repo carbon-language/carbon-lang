@@ -41,6 +41,11 @@
 
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
+#if KMP_USE_HIER_SCHED
+// Forward declarations of some hierarchical scheduling data structures
+template <typename T> struct kmp_hier_t;
+template <typename T> struct kmp_hier_top_unit_t;
+#endif // KMP_USE_HIER_SCHED
 
 template <typename T> struct dispatch_shared_info_template;
 template <typename T> struct dispatch_private_info_template;
@@ -142,6 +147,13 @@ template <typename T> struct KMP_ALIGN_CACHE dispatch_private_info_template {
   kmp_int32 ordered_dummy[KMP_MAX_ORDERED - 3];
   dispatch_private_info *next; /* stack of buffers for nest of serial regions */
   kmp_uint32 type_size;
+#if KMP_USE_HIER_SCHED
+  kmp_int32 hier_id;
+  kmp_hier_top_unit_t<T> *hier_parent;
+  // member functions
+  kmp_int32 get_hier_id() const { return hier_id; }
+  kmp_hier_top_unit_t<T> *get_parent() { return hier_parent; }
+#endif
   enum cons_type pushed_ws;
 };
 
@@ -171,6 +183,9 @@ template <typename T> struct dispatch_shared_info_template {
   volatile kmp_int32 doacross_buf_idx; // teamwise index
   kmp_uint32 *doacross_flags; // array of iteration flags (0/1)
   kmp_int32 doacross_num_done; // count finished threads
+#endif
+#if KMP_USE_HIER_SCHED
+  kmp_hier_t<T> *hier;
 #endif
 #if KMP_USE_HWLOC
   // When linking with libhwloc, the ORDERED EPCC test slowsdown on big
