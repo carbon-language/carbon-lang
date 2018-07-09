@@ -3397,7 +3397,8 @@ void __kmp_print_structure(void) {
                                      root->r.r_uber_thread);
         __kmp_printf("    Active?:      %2d\n", root->r.r_active);
         __kmp_printf("    Nested?:      %2d\n", root->r.r_nested);
-        __kmp_printf("    In Parallel:  %2d\n", KMP_ATOMIC_LD_RLX(&root->r.r_in_parallel));
+        __kmp_printf("    In Parallel:  %2d\n",
+                     KMP_ATOMIC_LD_RLX(&root->r.r_in_parallel));
         __kmp_printf("\n");
         __kmp_print_structure_team_accum(list, root->r.r_root_team);
         __kmp_print_structure_team_accum(list, root->r.r_hot_team);
