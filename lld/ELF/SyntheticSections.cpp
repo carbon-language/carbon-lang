@@ -1764,28 +1764,34 @@ template <class ELFT> bool RelrSection<ELFT>::updateAllocSize() {
   for (size_t I = 0, E = Offsets.size(); I < E;) {
     // Add a leading relocation.
     RelrRelocs.push_back(Elf_Relr(Offsets[I]));
+    uint64_t Base = Offsets[I] + Wordsize;
     ++I;
 
-    // Find foldable relocations to create a bitmap.
-    uint64_t Bitmap = 0;
-    for (size_t J = I; J < E; ++J) {
-      uint64_t Delta = Offsets[J] - Offsets[I];
+    // Find foldable relocations to construct bitmaps.
+    while (I < E) {
+      uint64_t Bitmap = 0;
 
-      // If it is too far, it cannot be folded.
-      if (Delta >= NBits * Wordsize)
+      while (I < E) {
+        uint64_t Delta = Offsets[I] - Base;
+
+        // If it is too far, it cannot be folded.
+        if (Delta >= NBits * Wordsize)
+          break;
+
+        // If it is not a multiple of wordsize away, it cannot be folded.
+        if (Delta % Wordsize)
+          break;
+
+        // Fold it.
+        Bitmap |= 1ULL << (Delta / Wordsize);
+        ++I;
+      }
+
+      if (!Bitmap)
         break;
 
-      // If it is not a multiple of wordsize away, it cannot be folded.
-      if (Delta % Wordsize)
-        break;
-
-      // Fold it.
-      Bitmap |= 1ULL << (Delta / Wordsize);
-    }
-
-    if (Bitmap) {
       RelrRelocs.push_back(Elf_Relr((Bitmap << 1) | 1));
-      I += NBits;
+      Base += NBits * Wordsize;
     }
   }
 
