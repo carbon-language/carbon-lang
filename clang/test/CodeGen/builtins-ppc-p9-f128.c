@@ -42,4 +42,9 @@ __float128 testDivOdd() {
 // CHECK-NEXT: ret fp128
 }
 
+double testTruncOdd() {
+  return __builtin_truncf128_round_to_odd(A);
+// CHECK: @llvm.ppc.truncf128.round.to.odd(fp128
+// CHECK-NEXT: ret double
+}
 
