@@ -80,3 +80,13 @@ entry:
 
 declare fp128 @llvm.ppc.divf128.round.to.odd(fp128, fp128)
 
+define double @testTruncOdd() {
+entry:
+  %0 = load fp128, fp128* @A, align 16
+  %1 = call double @llvm.ppc.truncf128.round.to.odd(fp128 %0)
+  ret double %1
+  ; CHECK-LABEL: testTruncOdd
+  ; CHECK: xscvqpdpo
+}
+
+declare double @llvm.ppc.truncf128.round.to.odd(fp128)

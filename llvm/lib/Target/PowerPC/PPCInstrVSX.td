@@ -2555,7 +2555,10 @@ let AddedComplexity = 400, Predicates = [HasP9Vector] in {
 
   // Round & Convert QP -> DP (dword[1] is set to zero)
   def XSCVQPDP  : X_VT5_XO5_VB5_VSFR<63, 20, 836, "xscvqpdp" , []>;
-  def XSCVQPDPO : X_VT5_XO5_VB5_VSFR_Ro<63, 20, 836, "xscvqpdpo", []>;
+  def XSCVQPDPO : X_VT5_XO5_VB5_VSFR_Ro<63, 20, 836, "xscvqpdpo",
+                                        [(set f64:$vT,
+                                        (int_ppc_truncf128_round_to_odd
+                                        f128:$vB))]>;
 
   // Truncate & Convert QP -> (Un)Signed (D)Word (dword[1] is set to zero)
   def XSCVQPSDZ : X_VT5_XO5_VB5<63, 25, 836, "xscvqpsdz", []>;

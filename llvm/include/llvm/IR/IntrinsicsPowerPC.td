@@ -62,6 +62,9 @@ let TargetPrefix = "ppc" in {  // All intrinsics start with "llvm.ppc.".
                        Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i64_ty],
                                  [IntrNoMem]>;
 
+  def int_ppc_truncf128_round_to_odd
+      : GCCBuiltin<"__builtin_truncf128_round_to_odd">,
+        Intrinsic <[llvm_double_ty], [llvm_f128_ty], [IntrNoMem]>;
   def int_ppc_sqrtf128_round_to_odd
       : GCCBuiltin<"__builtin_sqrtf128_round_to_odd">,
         Intrinsic <[llvm_f128_ty], [llvm_f128_ty], [IntrNoMem]>;
