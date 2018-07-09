@@ -14459,10 +14459,10 @@ The ``llvm.objectsize`` intrinsic takes three arguments. The first argument is
 a pointer to or into the ``object``. The second argument determines whether
 ``llvm.objectsize`` returns 0 (if true) or -1 (if false) when the object size
 is unknown. The third argument controls how ``llvm.objectsize`` acts when
-``null`` is used as its pointer argument. If it's true and the pointer is in
-address space 0, ``null`` is treated as an opaque value with an unknown number
-of bytes. Otherwise, ``llvm.objectsize`` reports 0 bytes available when given
-``null``.
+``null`` in address space 0 is used as its pointer argument. If it's ``false``,
+``llvm.objectsize`` reports 0 bytes available when given ``null``. Otherwise, if
+the ``null`` is in a non-zero address space or if ``true`` is given for the
+third argument of ``llvm.objectsize``, we assume its size is unknown.
 
 The second and third arguments only accept constants.
 
