@@ -356,10 +356,63 @@ multiclass sve_int_count_v<bits<5> opc, string asm> {
   def _D : sve_int_count_v<0b11, opc, asm, ZPR64>;
 }
 
+class sve_int_pcount_pred<bits<2> sz8_64, bits<4> opc, string asm,
+                          PPRRegOp pprty>
+: I<(outs GPR64:$Rd), (ins PPRAny:$Pg, pprty:$Pn),
+  asm, "\t$Rd, $Pg, $Pn",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pg;
+  bits<4> Pn;
+  bits<5> Rd;
+  let Inst{31-24} = 0b00100101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21-19} = 0b100;
+  let Inst{18-16} = opc{3-1};
+  let Inst{15-14} = 0b10;
+  let Inst{13-10} = Pg;
+  let Inst{9}     = opc{0};
+  let Inst{8-5}   = Pn;
+  let Inst{4-0}   = Rd;
+}
+
+multiclass sve_int_pcount_pred<bits<4> opc, string asm> {
+  def _B : sve_int_pcount_pred<0b00, opc, asm, PPR8>;
+  def _H : sve_int_pcount_pred<0b01, opc, asm, PPR16>;
+  def _S : sve_int_pcount_pred<0b10, opc, asm, PPR32>;
+  def _D : sve_int_pcount_pred<0b11, opc, asm, PPR64>;
+}
 
 //===----------------------------------------------------------------------===//
 // SVE Element Count Group
 //===----------------------------------------------------------------------===//
+
+class sve_int_count<bits<3> opc, string asm>
+: I<(outs GPR64:$Rd), (ins sve_pred_enum:$pattern, sve_incdec_imm:$imm4),
+  asm, "\t$Rd, $pattern, mul $imm4",
+  "",
+  []>, Sched<[]> {
+  bits<5> Rd;
+  bits<4> imm4;
+  bits<5> pattern;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = opc{2-1};
+  let Inst{21-20} = 0b10;
+  let Inst{19-16} = imm4;
+  let Inst{15-11} = 0b11100;
+  let Inst{10}    = opc{0};
+  let Inst{9-5}   = pattern;
+  let Inst{4-0}   = Rd;
+}
+
+multiclass sve_int_count<bits<3> opc, string asm> {
+  def NAME : sve_int_count<opc, asm>;
+
+  def : InstAlias<asm # "\t$Rd, $pattern",
+                  (!cast<Instruction>(NAME) GPR64:$Rd, sve_pred_enum:$pattern, 1), 1>;
+  def : InstAlias<asm # "\t$Rd",
+                  (!cast<Instruction>(NAME) GPR64:$Rd, 0b11111, 1), 2>;
+}
 
 class sve_int_countvlv<bits<5> opc, string asm, ZPRRegOp zprty>
 : I<(outs zprty:$Zdn), (ins zprty:$_Zdn, sve_pred_enum:$pattern, sve_incdec_imm:$imm4),
