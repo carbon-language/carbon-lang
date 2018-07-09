@@ -794,6 +794,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->Undefined = args::getStrings(Args, OPT_undefined);
   Config->UndefinedVersion =
       Args.hasFlag(OPT_undefined_version, OPT_no_undefined_version, true);
+  Config->UseAndroidRelrTags = Args.hasFlag(
+      OPT_use_android_relr_tags, OPT_no_use_android_relr_tags, false);
   Config->UnresolvedSymbols = getUnresolvedSymbolPolicy(Args);
   Config->WarnBackrefs =
       Args.hasFlag(OPT_warn_backrefs, OPT_no_warn_backrefs, false);
@@ -873,10 +875,16 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   if (auto *Arg = Args.getLastArg(OPT_pack_dyn_relocs)) {
     StringRef S = Arg->getValue();
-    if (S == "android")
+    if (S == "android") {
       Config->AndroidPackDynRelocs = true;
-    else if (S != "none")
+    } else if (S == "relr") {
+      Config->RelrPackDynRelocs = true;
+    } else if (S == "android+relr") {
+      Config->AndroidPackDynRelocs = true;
+      Config->RelrPackDynRelocs = true;
+    } else if (S != "none") {
       error("unknown -pack-dyn-relocs format: " + S);
+    }
   }
 
   if (auto *Arg = Args.getLastArg(OPT_symbol_ordering_file))

@@ -153,6 +153,7 @@ struct Configuration {
   bool PrintGcSections;
   bool PrintIcfSections;
   bool Relocatable;
+  bool RelrPackDynRelocs = false;
   bool SaveTemps;
   bool SingleRoRx;
   bool Shared;
@@ -163,6 +164,7 @@ struct Configuration {
   bool ThinLTOEmitImportsFiles;
   bool ThinLTOIndexOnly;
   bool UndefinedVersion;
+  bool UseAndroidRelrTags = false;
   bool WarnBackrefs;
   bool WarnCommon;
   bool WarnMissingEntry;
