@@ -1418,14 +1418,11 @@ Instruction *InstCombiner::foldShuffledBinop(BinaryOperator &Inst) {
     }
     if (MayChange) {
       Constant *NewC = ConstantVector::get(NewVecC);
-      // With integer div/rem instructions, it is not safe to use a vector with
-      // undef elements because the entire instruction can be folded to undef.
-      // All other binop opcodes are always safe to speculate, and therefore, it
-      // is fine to include undef elements for unused lanes (and using undefs
-      // may help optimization).
-      // FIXME: This transform is also not poison-safe. Eg, shift-by-undef would
-      // create poison that may not exist in the original code.
-      if (Inst.isIntDivRem())
+      // It may not be safe to execute a binop on a vector with undef elements
+      // because the entire instruction can be folded to undef or create poison
+      // that did not exist in the original code.
+      if (Inst.isIntDivRem() ||
+          (Inst.isShift() && isa<Constant>(Inst.getOperand(1))))
         NewC = getSafeVectorConstantForBinop(Inst.getOpcode(), NewC);
       
       // Op(shuffle(V1, Mask), C) -> shuffle(Op(V1, NewC), Mask)
