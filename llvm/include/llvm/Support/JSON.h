@@ -163,11 +163,12 @@ public:
     V.emplace_back(std::forward<Args>(A)...);
   }
   void pop_back() { V.pop_back(); }
-  iterator insert(const_iterator P, const Value &E) { return V.insert(P, E); }
-  iterator insert(const_iterator P, Value &&E) {
+  // FIXME: insert() takes const_iterator since C++11, old libstdc++ disagrees.
+  iterator insert(iterator P, const Value &E) { return V.insert(P, E); }
+  iterator insert(iterator P, Value &&E) {
     return V.insert(P, std::move(E));
   }
-  template <typename It> iterator insert(const_iterator P, It A, It Z) {
+  template <typename It> iterator insert(iterator P, It A, It Z) {
     return V.insert(P, A, Z);
   }
   template <typename... Args> iterator emplace(const_iterator P, Args &&... A) {
