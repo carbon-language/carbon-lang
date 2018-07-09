@@ -248,6 +248,11 @@ struct FormatToken {
   /// selector consist of.
   unsigned ObjCSelectorNameParts = 0;
 
+  /// The 0-based index of the parameter/argument. For ObjC it is set
+  /// for the selector name token.
+  /// For now calculated only for ObjC.
+  unsigned ParameterIndex = 0;
+
   /// Stores the number of required fake parentheses and the
   /// corresponding operator precedence.
   ///

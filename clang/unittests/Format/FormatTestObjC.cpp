@@ -678,6 +678,18 @@ TEST_F(FormatTestObjC, FormatObjCMethodExpr) {
   verifyFormat("[(id)foo bar:(id) ? baz : quux];");
   verifyFormat("4 > 4 ? (id)a : (id)baz;");
 
+  unsigned PreviousColumnLimit = Style.ColumnLimit;
+  Style.ColumnLimit = 50;
+  // Instead of:
+  // bool a =
+  //     ([object a:42] == 0 || [object a:42
+  //                                    b:42] == 0);
+  verifyFormat("bool a = ([object a:42] == 0 ||\n"
+               "          [object a:42 b:42] == 0);");
+  Style.ColumnLimit = PreviousColumnLimit;
+  verifyFormat("bool a = ([aaaaaaaa aaaaa] == aaaaaaaaaaaaaaaaa ||\n"
+               "          [aaaaaaaa aaaaa] == aaaaaaaaaaaaaaaaaaaa);");
+
   // This tests that the formatter doesn't break after "backing" but before ":",
   // which would be at 80 columns.
   verifyFormat(
@@ -754,11 +766,10 @@ TEST_F(FormatTestObjC, FormatObjCMethodExpr) {
       "[self aaaaaaaaaaaaa:aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa,\n"
       "                    aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa,\n"
       "                    aaaaaaaaaaaaaaa, aaaaaaaaaaaaaaa];");
+
   verifyFormat("[self // break\n"
                "      a:a\n"
                "    aaa:aaa];");
-  verifyFormat("bool a = ([aaaaaaaa aaaaa] == aaaaaaaaaaaaaaaaa ||\n"
-               "          [aaaaaaaa aaaaa] == aaaaaaaaaaaaaaaaaaaa);");
 
   // Formats pair-parameters.
   verifyFormat("[I drawRectOn:surface ofSize:aa:bbb atOrigin:cc:dd];");
@@ -802,6 +813,12 @@ TEST_F(FormatTestObjC, FormatObjCMethodExpr) {
   // Space between cast rparen and selector name component.
   verifyFormat("[((Foo *)foo) bar];");
   verifyFormat("[((Foo *)foo) bar:1 blech:2];");
+
+  Style.ColumnLimit = 20;
+  verifyFormat("aaaaa = [a aa:aa\n"
+               "           aa:aa];");
+  verifyFormat("aaaaaa = [aa aa:aa\n"
+               "             aa:aa];");
 
   Style.ColumnLimit = 70;
   verifyFormat(

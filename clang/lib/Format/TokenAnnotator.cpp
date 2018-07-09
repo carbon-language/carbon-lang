@@ -725,6 +725,8 @@ private:
                    Contexts.back().LongestObjCSelectorName)
             Contexts.back().LongestObjCSelectorName =
                 Tok->Previous->ColumnWidth;
+          Tok->Previous->ParameterIndex =
+              Contexts.back().FirstObjCSelectorName->ObjCSelectorNameParts;
           ++Contexts.back().FirstObjCSelectorName->ObjCSelectorNameParts;
         }
       } else if (Contexts.back().ColonIsForRangeExpr) {
@@ -2142,8 +2144,20 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     // FIXME: Only calculate this if CanBreakBefore is true once static
     // initializers etc. are sorted out.
     // FIXME: Move magic numbers to a better place.
-    Current->SplitPenalty = 20 * Current->BindingStrength +
-                            splitPenalty(Line, *Current, InFunctionDecl);
+
+    // Reduce penalty for aligning ObjC method arguments using the colon
+    // alignment as this is the canonical way (still prefer fitting everything
+    // into one line if possible). Trying to fit a whole expression into one
+    // line should not force other line breaks (e.g. when ObjC method
+    // expression is a part of other expression).
+    Current->SplitPenalty = splitPenalty(Line, *Current, InFunctionDecl);
+    if (Style.Language == FormatStyle::LK_ObjC &&
+        Current->is(TT_SelectorName) && Current->ParameterIndex > 0) {
+      if (Current->ParameterIndex == 1)
+        Current->SplitPenalty += 5 * Current->BindingStrength;
+    } else {
+      Current->SplitPenalty += 20 * Current->BindingStrength;
+    }
 
     Current = Current->Next;
   }
