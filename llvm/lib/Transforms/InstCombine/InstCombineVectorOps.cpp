@@ -1288,33 +1288,18 @@ static Instruction *foldSelectShuffle(ShuffleVectorInst &Shuf,
       Mask->containsUndefElement() &&
       (Instruction::isIntDivRem(BOpc) || Instruction::isShift(BOpc));
 
-  Constant *NewC;
+  // Select the constant elements needed for the single binop.
+  Constant *NewC = ConstantExpr::getShuffleVector(C0, C1, Mask);
   Value *V;
   if (X == Y) {
-    NewC = ConstantExpr::getShuffleVector(C0, C1, Mask);
-
     // The new binop constant must not have any potential for extra poison/UB.
     if (MightCreatePoisonOrUB) {
       // TODO: Use getBinOpAbsorber for LHS replacement constants?
       if (!ConstantsAreOp1)
         return nullptr;
 
-      Type *EltTy = Shuf.getType()->getVectorElementType();
-      auto *IdC = ConstantExpr::getBinOpIdentity(BOpc, EltTy, true);
-      if (!IdC)
-        return nullptr;
-
-      // Replace undef elements caused by the mask with identity constants.
-      NewC = ConstantExpr::getShuffleVector(C0, C1, Mask);
-      unsigned NumElts = Shuf.getType()->getVectorNumElements();
-      SmallVector<Constant *, 16> VectorOfNewC(NumElts);
-      for (unsigned i = 0; i != NumElts; i++) {
-        if (isa<UndefValue>(Mask->getAggregateElement(i)))
-          VectorOfNewC[i] = IdC;
-        else
-          VectorOfNewC[i] = NewC->getAggregateElement(i);
-      }
-      NewC = ConstantVector::get(VectorOfNewC);
+      // Replace undef elements with identity constants.
+      NewC = getSafeVectorConstantForBinop(BOpc, NewC);
     }
 
     // Remove a binop and the shuffle by rearranging the constant:
@@ -1340,7 +1325,6 @@ static Instruction *foldSelectShuffle(ShuffleVectorInst &Shuf,
     // Select the variable vectors first, then perform the binop:
     // shuffle (op X, C0), (op Y, C1), M --> op (shuffle X, Y, M), C'
     // shuffle (op C0, X), (op C1, Y), M --> op C', (shuffle X, Y, M)
-    NewC = ConstantExpr::getShuffleVector(C0, C1, Mask);
     V = Builder.CreateShuffleVector(X, Y, Mask);
   }
 

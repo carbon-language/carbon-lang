@@ -1423,8 +1423,10 @@ Instruction *InstCombiner::foldShuffledBinop(BinaryOperator &Inst) {
       // All other binop opcodes are always safe to speculate, and therefore, it
       // is fine to include undef elements for unused lanes (and using undefs
       // may help optimization).
+      // FIXME: This transform is also not poison-safe. Eg, shift-by-undef would
+      // create poison that may not exist in the original code.
       if (Inst.isIntDivRem())
-        NewC = getSafeVectorConstantForIntDivRem(NewC);
+        NewC = getSafeVectorConstantForBinop(Inst.getOpcode(), NewC);
       
       // Op(shuffle(V1, Mask), C) -> shuffle(Op(V1, NewC), Mask)
       // Op(C, shuffle(V1, Mask)) -> shuffle(Op(NewC, V1), Mask)
