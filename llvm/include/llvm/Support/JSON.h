@@ -204,7 +204,7 @@ inline bool operator!=(const Array &L, const Array &R) { return !(L == R); }
 /// Each Value is one of the JSON kinds:
 ///   null    (nullptr_t)
 ///   boolean (bool)
-///   number  (double)
+///   number  (double or int64)
 ///   string  (StringRef)
 ///   array   (json::Array)
 ///   object  (json::Object)
@@ -226,7 +226,7 @@ inline bool operator!=(const Array &L, const Array &R) { return !(L == R); }
 ///     fromJSON(const json::Value&, T&)->bool
 /// Deserializers are provided for:
 ///   - bool
-///   - int
+///   - int and int64_t
 ///   - double
 ///   - std::string
 ///   - vector<T>, where T is deserializable
@@ -254,6 +254,8 @@ public:
   enum Kind {
     Null,
     Boolean,
+    /// Number values can store both int64s and doubles at full precision,
+    /// depending on what they were constructed/parsed from.
     Number,
     String,
     Array,
@@ -281,24 +283,36 @@ public:
   Value(llvm::StringRef V) : Type(T_StringRef) { create<llvm::StringRef>(V); }
   Value(const char *V) : Type(T_StringRef) { create<llvm::StringRef>(V); }
   Value(std::nullptr_t) : Type(T_Null) {}
-  // Prevent implicit conversions to boolean.
-  template <typename T, typename = typename std::enable_if<
-                            std::is_same<T, bool>::value>::type>
+  // Boolean (disallow implicit conversions).
+  // (The last template parameter is a dummy to keep templates distinct.)
+  template <
+      typename T,
+      typename = typename std::enable_if<std::is_same<T, bool>::value>::type,
+      bool = false>
   Value(T B) : Type(T_Boolean) {
     create<bool>(B);
   }
-  // Numbers: arithmetic types that are not boolean.
+  // Integers (except boolean). Must be non-narrowing convertible to int64_t.
   template <
       typename T,
-      typename = typename std::enable_if<std::is_arithmetic<T>::value>::type,
+      typename = typename std::enable_if<std::is_integral<T>::value>::type,
       typename = typename std::enable_if<!std::is_same<T, bool>::value>::type>
-  Value(T D) : Type(T_Number) {
-    create<double>(D);
+  Value(T I) : Type(T_Integer) {
+    create<int64_t>(int64_t{I});
+  }
+  // Floating point. Must be non-narrowing convertible to double.
+  template <typename T,
+            typename =
+                typename std::enable_if<std::is_floating_point<T>::value>::type,
+            double * = nullptr>
+  Value(T D) : Type(T_Double) {
+    create<double>(double{D});
   }
   // Serializable types: with a toJSON(const T&)->Value function, found by ADL.
   template <typename T,
             typename = typename std::enable_if<std::is_same<
-                Value, decltype(toJSON(*(const T *)nullptr))>::value>>
+                Value, decltype(toJSON(*(const T *)nullptr))>::value>,
+            Value * = nullptr>
   Value(const T &V) : Value(toJSON(V)) {}
 
   Value &operator=(const Value &M) {
@@ -319,7 +333,8 @@ public:
       return Null;
     case T_Boolean:
       return Boolean;
-    case T_Number:
+    case T_Double:
+    case T_Integer:
       return Number;
     case T_String:
     case T_StringRef:
@@ -344,12 +359,17 @@ public:
     return llvm::None;
   }
   llvm::Optional<double> getAsNumber() const {
-    if (LLVM_LIKELY(Type == T_Number))
+    if (LLVM_LIKELY(Type == T_Double))
       return as<double>();
+    if (LLVM_LIKELY(Type == T_Integer))
+      return as<int64_t>();
     return llvm::None;
   }
+  // Succeeds if the Value is a Number, and exactly representable as int64_t.
   llvm::Optional<int64_t> getAsInteger() const {
-    if (LLVM_LIKELY(Type == T_Number)) {
+    if (LLVM_LIKELY(Type == T_Integer))
+      return as<int64_t>();
+    if (LLVM_LIKELY(Type == T_Double)) {
       double D = as<double>();
       if (LLVM_LIKELY(std::modf(D, &D) == 0.0 &&
                       D >= double(std::numeric_limits<int64_t>::min()) &&
@@ -407,9 +427,8 @@ private:
   enum ValueType : char {
     T_Null,
     T_Boolean,
-    // FIXME: splitting Number into Double and Integer would allow us to
-    //        round-trip 64-bit integers.
-    T_Number,
+    T_Double,
+    T_Integer,
     T_StringRef,
     T_String,
     T_Object,
@@ -417,7 +436,7 @@ private:
   };
   // All members mutable, see moveFrom().
   mutable ValueType Type;
-  mutable llvm::AlignedCharArrayUnion<bool, double, llvm::StringRef,
+  mutable llvm::AlignedCharArrayUnion<bool, double, int64_t, llvm::StringRef,
                                       std::string, json::Array, json::Object>
       Union;
 };
@@ -499,6 +518,13 @@ inline bool fromJSON(const Value &E, std::string &Out) {
   return false;
 }
 inline bool fromJSON(const Value &E, int &Out) {
+  if (auto S = E.getAsInteger()) {
+    Out = *S;
+    return true;
+  }
+  return false;
+}
+inline bool fromJSON(const Value &E, int64_t &Out) {
   if (auto S = E.getAsInteger()) {
     Out = *S;
     return true;

@@ -227,6 +227,66 @@ TEST(JSONTest, Inspection) {
   }
 }
 
+// Verify special integer handling - we try to preserve exact int64 values.
+TEST(JSONTest, Integers) {
+  struct {
+    const char *Desc;
+    Value Val;
+    const char *Str;
+    llvm::Optional<int64_t> AsInt;
+    llvm::Optional<double> AsNumber;
+  } TestCases[] = {
+      {
+          "Non-integer. Stored as double, not convertible.",
+          double{1.5},
+          "1.5",
+          llvm::None,
+          1.5,
+      },
+
+      {
+          "Integer, not exact double. Stored as int64, convertible.",
+          int64_t{0x4000000000000001},
+          "4611686018427387905",
+          int64_t{0x4000000000000001},
+          double{0x4000000000000000},
+      },
+
+      {
+          "Negative integer, not exact double. Stored as int64, convertible.",
+          int64_t{-0x4000000000000001},
+          "-4611686018427387905",
+          int64_t{-0x4000000000000001},
+          double{-0x4000000000000000},
+      },
+
+      {
+          "Dynamically exact integer. Stored as double, convertible.",
+          double{0x6000000000000000},
+          "6.9175290276410819e+18",
+          int64_t{0x6000000000000000},
+          double{0x6000000000000000},
+      },
+
+      {
+          "Dynamically integer, >64 bits. Stored as double, not convertible.",
+          1.5 * double{0x8000000000000000},
+          "1.3835058055282164e+19",
+          llvm::None,
+          1.5 * double{0x8000000000000000},
+      },
+  };
+  for (const auto &T : TestCases) {
+    EXPECT_EQ(T.Str, s(T.Val)) << T.Desc;
+    llvm::Expected<Value> Doc = parse(T.Str);
+    EXPECT_TRUE(!!Doc) << T.Desc;
+    EXPECT_EQ(Doc->getAsInteger(), T.AsInt) << T.Desc;
+    EXPECT_EQ(Doc->getAsNumber(), T.AsNumber) << T.Desc;
+    EXPECT_EQ(T.Val, *Doc) << T.Desc;
+    EXPECT_EQ(T.Str, s(*Doc)) << T.Desc;
+  }
+}
+
 // Sample struct with typical JSON-mapping rules.
 struct CustomStruct {
   CustomStruct() : B(false) {}
