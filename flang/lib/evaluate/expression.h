@@ -92,6 +92,7 @@ template<int KIND> struct Expr<Category::Integer, KIND> {
   struct Power : public Bin {
     using Bin::Bin;
   };
+  // TODO: R916 type-param-inquiry
 
   CLASS_BOILERPLATE(Expr)
   Expr(const Constant &x) : u{x} {}

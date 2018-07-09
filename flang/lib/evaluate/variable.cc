@@ -21,16 +21,17 @@
 
 namespace Fortran::evaluate {
 
-Triplet::Triplet(std::optional<SubscriptExpr> &&l,
-    std::optional<SubscriptExpr> &&u, std::optional<SubscriptExpr> &&s) {
+Triplet::Triplet(std::optional<SubscriptIntegerExpr> &&l,
+    std::optional<SubscriptIntegerExpr> &&u,
+    std::optional<SubscriptIntegerExpr> &&s) {
   if (l.has_value()) {
-    lower = SubscriptExpr{std::move(*l)};
+    lower = SubscriptIntegerExpr{std::move(*l)};
   }
   if (u.has_value()) {
-    upper = SubscriptExpr{std::move(*u)};
+    upper = SubscriptIntegerExpr{std::move(*u)};
   }
   if (s.has_value()) {
-    stride = SubscriptExpr{std::move(*s)};
+    stride = SubscriptIntegerExpr{std::move(*s)};
   }
 }
 
@@ -114,15 +115,29 @@ std::ostream &ArrayRef::Dump(std::ostream &o) const {
 }
 
 std::ostream &CoarrayRef::Dump(std::ostream &o) const {
-  Emit(o, u);
-  char separator{'['};
-  for (const SubscriptExpr &css : cosubscript) {
+  for (const Symbol *sym : base) {
+    Emit(o, *sym);
+  }
+  char separator{'('};
+  for (const SubscriptIntegerExpr &ss : subscript) {
+    Emit(o << separator, ss);
+    separator = ',';
+  }
+  if (separator == ',') {
+    o << ')';
+  }
+  separator = '[';
+  for (const SubscriptIntegerExpr &css : cosubscript) {
     Emit(o << separator, css);
     separator = ',';
   }
-  Emit(o, stat, "STAT=");
-  Emit(o, team, "TEAM=");
-  Emit(o, teamNumber, "TEAM_NUMBER=");
+  if (stat.has_value()) {
+    Emit(o << separator, stat, "STAT=");
+    separator = ',';
+  }
+  if (team.has_value()) {
+    Emit(o << separator, team, teamIsTeamNumber ? "TEAM_NUMBER=" : "TEAM=");
+  }
   return o << ']';
 }
 

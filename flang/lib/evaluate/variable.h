@@ -15,6 +15,12 @@
 #ifndef FORTRAN_EVALUATE_VARIABLE_H_
 #define FORTRAN_EVALUATE_VARIABLE_H_
 
+// Defines data structures to represent data access and function calls
+// for use in expressions and assignment statements.  Both copy and move
+// semantics are supported.  The representation adheres closely to the
+// Fortran 2018 language standard (q.v.) and uses strong typing to ensure
+// that only admissable combinations can be constructed.
+
 #include "common.h"
 #include "expression-forward.h"
 #include "../common/idioms.h"
@@ -29,9 +35,21 @@ namespace Fortran::evaluate {
 
 using semantics::Symbol;
 
-// TODO: Reference sections in the Standard
-
+// Forward declarations
 struct DataRef;
+struct Variable;
+struct ActualFunctionArg;
+
+// Subscript and cosubscript expressions are of a kind that matches the
+// address size, at least at the top level.
+using SubscriptIntegerExpr =
+    common::Indirection<IntegerExpr<SubscriptInteger::kind>>;
+
+// R913 structure-component & C920: Defined to be a multi-part
+// data-ref whose last part has no subscripts (or image-selector, although
+// that isn't explicit in the document).  Pointer and allocatable components
+// are not explicitly indirected in this representation.
+// Complex components (%RE, %IM) are isolated below in ComplexPart.
 struct Component {
   CLASS_BOILERPLATE(Component)
   Component(const DataRef &b, const Symbol &c) : base{b}, sym{&c} {}
@@ -41,24 +59,30 @@ struct Component {
   const Symbol *sym;
 };
 
-using SubscriptExpr = common::Indirection<DefaultIntegerExpr>;
-
+// R921 subscript-triplet
 struct Triplet {
   CLASS_BOILERPLATE(Triplet)
-  Triplet(std::optional<SubscriptExpr> &&, std::optional<SubscriptExpr> &&,
-      std::optional<SubscriptExpr> &&);
-  std::optional<SubscriptExpr> lower, upper, stride;
+  Triplet(std::optional<SubscriptIntegerExpr> &&,
+      std::optional<SubscriptIntegerExpr> &&,
+      std::optional<SubscriptIntegerExpr> &&);
+  std::optional<SubscriptIntegerExpr> lower, upper, stride;
 };
 
+// R919 subscript when rank 0, R923 vector-subscript when rank 1
 struct Subscript {
   CLASS_BOILERPLATE(Subscript)
-  explicit Subscript(const SubscriptExpr &s) : u{s} {}
-  explicit Subscript(SubscriptExpr &&s) : u{std::move(s)} {}
+  explicit Subscript(const SubscriptIntegerExpr &s) : u{s} {}
+  explicit Subscript(SubscriptIntegerExpr &&s) : u{std::move(s)} {}
   explicit Subscript(const Triplet &t) : u{t} {}
   explicit Subscript(Triplet &&t) : u{std::move(t)} {}
-  std::variant<SubscriptExpr, Triplet> u;
+  std::variant<SubscriptIntegerExpr, Triplet> u;
 };
 
+// R917 array-element, R918 array-section; however, the case of an
+// array-section that is a complex-part-designator is represented here
+// as a ComplexPart instead.  C919 & C925 require that at most one set of
+// subscripts have rank greater than 0, but that is not explicit in
+// these types.
 struct ArrayRef {
   CLASS_BOILERPLATE(ArrayRef)
   ArrayRef(const Symbol &n, std::vector<Subscript> &&ss)
@@ -69,41 +93,59 @@ struct ArrayRef {
   std::vector<Subscript> subscript;
 };
 
-struct Variable;
+// R914 coindexed-named-object
+// R924 image-selector, R926 image-selector-spec.
+// C824 severely limits the usage of derived types with coarray ultimate
+// components: they can't be pointers, allocatables, arrays, coarrays, or
+// function results.  They can be components of other derived types.
+// C930 precludes having both TEAM= and TEAM_NUMBER=.
+// TODO C931 prohibits the use of a coindexed object as a stat-variable.
 struct CoarrayRef {
   CLASS_BOILERPLATE(CoarrayRef)
-  CoarrayRef(const Symbol &n, std::vector<SubscriptExpr> &&s)
-    : u{&n}, cosubscript(std::move(s)) {}
-  CoarrayRef(Component &&c, std::vector<SubscriptExpr> &&s)
-    : u{std::move(c)}, cosubscript(std::move(s)) {}
-  CoarrayRef(ArrayRef &&a, std::vector<SubscriptExpr> &&s)
-    : u{std::move(a)}, cosubscript(std::move(s)) {}
-  std::variant<const Symbol *, Component, ArrayRef> u;
-  std::vector<SubscriptExpr> cosubscript;
-  std::optional<common::Indirection<Variable>> stat, team, teamNumber;
+  CoarrayRef(std::vector<const Symbol *> &&c,
+      std::vector<SubscriptIntegerExpr> &&ss,
+      std::vector<SubscriptIntegerExpr> &&css)
+    : base(std::move(c)), subscript(std::move(ss)),
+      cosubscript(std::move(css)) {}
+  std::vector<const Symbol *> base;
+  std::vector<SubscriptIntegerExpr> subscript, cosubscript;
+  std::optional<common::Indirection<Variable>> stat, team;
+  bool teamIsTeamNumber{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
 
+// R911 data-ref is defined syntactically as a series of part-refs, which
+// is far too expressive if the constraints are ignored.  Here, the possible
+// outcomes are spelled out.  Note that a data-ref cannot include a terminal
+// substring range or complex component designator; use R901 designator
+// for that.
 struct DataRef {
   CLASS_BOILERPLATE(DataRef)
   explicit DataRef(const Symbol &n) : u{&n} {}
   explicit DataRef(Component &&c) : u{std::move(c)} {}
   explicit DataRef(ArrayRef &&a) : u{std::move(a)} {}
-  explicit DataRef(CoarrayRef &&c) : u{std::move(c)} {}
+  explicit DataRef(CoarrayRef &&a) : u{std::move(a)} {}
   std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u;
 };
 
+// R908 substring, R909 parent-string, R910 substring-range.
+// The base object of a substring can be a literal.
+// In the F2018 standard, substrings of array sections are parsed as
+// variants of sections instead.
 struct Substring {
   CLASS_BOILERPLATE(Substring)
-  Substring(DataRef &&d, std::optional<SubscriptExpr> &&f,
-      std::optional<SubscriptExpr> &&l)
+  Substring(DataRef &&d, std::optional<SubscriptIntegerExpr> &&f,
+      std::optional<SubscriptIntegerExpr> &&l)
     : u{std::move(d)}, first{std::move(f)}, last{std::move(l)} {}
-  Substring(std::string &&s, std::optional<SubscriptExpr> &&f,
-      std::optional<SubscriptExpr> &&l)
+  Substring(std::string &&s, std::optional<SubscriptIntegerExpr> &&f,
+      std::optional<SubscriptIntegerExpr> &&l)
     : u{std::move(s)}, first{std::move(f)}, last{std::move(l)} {}
   std::variant<DataRef, std::string> u;
-  std::optional<SubscriptExpr> first, last;
+  std::optional<SubscriptIntegerExpr> first, last;
 };
 
+// R915 complex-part-designator
+// In the F2018 standard, complex parts of array sections are parsed as
+// variants of sections instead.
 struct ComplexPart {
   ENUM_CLASS(Part, RE, IM)
   CLASS_BOILERPLATE(ComplexPart)
@@ -112,6 +154,8 @@ struct ComplexPart {
   Part part;
 };
 
+// R901 designator is the most general data reference object, apart from
+// calls to pointer-valued functions.
 struct Designator {
   CLASS_BOILERPLATE(Designator)
   explicit Designator(DataRef &&d) : u{std::move(d)} {}
@@ -137,7 +181,6 @@ template<typename ARG> struct ProcedureRef {
   std::vector<ArgumentType> argument;
 };
 
-struct ActualFunctionArg;
 using FunctionRef = ProcedureRef<ActualFunctionArg>;
 
 struct Variable {

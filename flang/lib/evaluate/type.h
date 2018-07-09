@@ -115,6 +115,8 @@ using DefaultComplex = typename DefaultReal::Complex;
 using DefaultLogical = Type<Category::Logical, DefaultInteger::kind>;
 using DefaultCharacter = Type<Category::Character, 1>;
 
+using SubscriptInteger = Type<Category::Integer, 8>;
+
 // These templates create instances of std::variant<> that can contain
 // applications of some class template to all of the supported kinds of
 // a category of intrinsic type.
