@@ -691,6 +691,7 @@ static bool unswitchTrivialSwitch(Loop &L, SwitchInst &SI, DominatorTree &DT,
     for (auto Case : SI.cases()) {
       assert(Case.getCaseSuccessor() == CommonSuccBB &&
              "Non-common successor!");
+      (void)Case;
       if (!SkippedFirst) {
         SkippedFirst = true;
         continue;
