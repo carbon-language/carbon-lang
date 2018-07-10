@@ -3,7 +3,7 @@
 
 ; This is to check that backend errors for unsupported features are formatted correctly
 
-; CHECK: error: test.c:2:20: in function bar i32 (): unsupported call to function foo.2
+; CHECK: error: test.c:2:20: in function bar i32 (): unsupported call to function foo
 
 target triple = "r600-unknown-unknown"
 
