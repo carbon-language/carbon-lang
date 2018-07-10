@@ -405,6 +405,20 @@ static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
     break;
   }
 
+  case Type::DependentVector: {
+    const auto *Vec1 = cast<DependentVectorType>(T1);
+    const auto *Vec2 = cast<DependentVectorType>(T2);
+    if (Vec1->getVectorKind() != Vec2->getVectorKind())
+      return false;
+    if (!IsStructurallyEquivalent(Context, Vec1->getSizeExpr(),
+                                  Vec2->getSizeExpr()))
+      return false;
+    if (!IsStructurallyEquivalent(Context, Vec1->getElementType(),
+                                  Vec2->getElementType()))
+      return false;
+    break;
+  }
+
   case Type::Vector:
   case Type::ExtVector: {
     const auto *Vec1 = cast<VectorType>(T1);
