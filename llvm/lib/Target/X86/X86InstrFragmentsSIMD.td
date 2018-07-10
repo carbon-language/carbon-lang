@@ -374,9 +374,6 @@ def X86Movss : SDNode<"X86ISD::MOVSS", SDTShuff2Op>;
 def X86Movlhps : SDNode<"X86ISD::MOVLHPS", SDTShuff2Op>;
 def X86Movhlps : SDNode<"X86ISD::MOVHLPS", SDTShuff2Op>;
 
-def X86Movlps : SDNode<"X86ISD::MOVLPS", SDTShuff2Op>;
-def X86Movlpd : SDNode<"X86ISD::MOVLPD", SDTShuff2Op>;
-
 def SDTPack : SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisInt<0>,
                                    SDTCisVec<1>, SDTCisInt<1>,
                                    SDTCisSameSizeAs<0,1>,
