@@ -372,7 +372,6 @@ def X86Movsd : SDNode<"X86ISD::MOVSD", SDTShuff2Op>;
 def X86Movss : SDNode<"X86ISD::MOVSS", SDTShuff2Op>;
 
 def X86Movlhps : SDNode<"X86ISD::MOVLHPS", SDTShuff2Op>;
-def X86Movlhpd : SDNode<"X86ISD::MOVLHPD", SDTShuff2Op>;
 def X86Movhlps : SDNode<"X86ISD::MOVHLPS", SDTShuff2Op>;
 
 def X86Movlps : SDNode<"X86ISD::MOVLPS", SDTShuff2Op>;
