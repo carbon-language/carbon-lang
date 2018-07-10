@@ -1223,6 +1223,11 @@ static Instruction *foldSelectShuffleWith1Binop(ShuffleVectorInst &Shuf) {
   // shuf X, (bop X, C), M --> bop X, C'
   Instruction *NewBO = BinaryOperator::Create(BOpcode, X, NewC);
   NewBO->copyIRFlags(BO);
+
+  // An undef shuffle mask element may propagate as an undef constant element in
+  // the new binop. That would produce poison where the original code might not.
+  if (Mask->containsUndefElement())
+    NewBO->dropPoisonGeneratingFlags();
   return NewBO;
 }
 

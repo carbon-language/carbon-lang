@@ -36,11 +36,11 @@ define <4 x i32> @add_undef_mask_elt(<4 x i32> %v) {
   ret <4 x i32> %s
 }
 
-; FIXME: Poison flags must be dropped or undef must be replaced with safe constant.
+; Poison flags must be dropped or undef must be replaced with safe constant.
 
 define <4 x i32> @add_nuw_nsw_undef_mask_elt(<4 x i32> %v) {
 ; CHECK-LABEL: @add_nuw_nsw_undef_mask_elt(
-; CHECK-NEXT:    [[S:%.*]] = add nuw nsw <4 x i32> [[V:%.*]], <i32 11, i32 undef, i32 13, i32 0>
+; CHECK-NEXT:    [[S:%.*]] = add <4 x i32> [[V:%.*]], <i32 11, i32 undef, i32 13, i32 0>
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
 ;
   %b = add nuw nsw <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
@@ -63,12 +63,11 @@ define <4 x i32> @sub(<4 x i32> %v) {
 
 ; If any element of the shuffle mask operand is undef, that element of the result is undef.
 ; The shuffle is eliminated in this transform, but we can replace a constant element with undef.
-; FIXME:
 ; Preserve flags when possible. It's not safe to propagate poison-generating flags with undef constants.
 
 define <4 x i32> @mul(<4 x i32> %v) {
 ; CHECK-LABEL: @mul(
-; CHECK-NEXT:    [[S:%.*]] = mul nuw nsw <4 x i32> [[V:%.*]], <i32 undef, i32 12, i32 1, i32 14>
+; CHECK-NEXT:    [[S:%.*]] = mul <4 x i32> [[V:%.*]], <i32 undef, i32 12, i32 1, i32 14>
 ; CHECK-NEXT:    ret <4 x i32> [[S]]
 ;
   %b = mul nsw nuw <4 x i32> %v, <i32 11, i32 12, i32 13, i32 14>
