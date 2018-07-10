@@ -2494,7 +2494,7 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
 
   // Write the string pool.
   for (GdbSymbol &Sym : Symbols)
-    memcpy(Buf + Sym.OutputOff, Sym.Name.val().data(), Sym.Name.size());
+    memcpy(Buf + Sym.OutputOff, Sym.Name.data(), Sym.Name.size());
 }
 
 bool GdbIndexSection::empty() const { return !Out::DebugInfo; }
