@@ -21,16 +21,13 @@ define <4 x i32> @combine_vec_udiv_by_one(<4 x i32> %x) {
   ret <4 x i32> %1
 }
 
-; TODO fold (udiv x, -1) -> select((icmp eq x, -1), 1, 0)
+; fold (udiv x, -1) -> select((icmp eq x, -1), 1, 0)
 define i32 @combine_udiv_by_negone(i32 %x) {
 ; CHECK-LABEL: combine_udiv_by_negone:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    movl %edi, %ecx
-; CHECK-NEXT:    movq %rcx, %rax
-; CHECK-NEXT:    shlq $31, %rax
-; CHECK-NEXT:    addq %rcx, %rax
-; CHECK-NEXT:    shrq $63, %rax
-; CHECK-NEXT:    # kill: def $eax killed $eax killed $rax
+; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:    cmpl $-1, %edi
+; CHECK-NEXT:    sete %al
 ; CHECK-NEXT:    retq
   %1 = udiv i32 %x, -1
   ret i32 %1
@@ -39,37 +36,17 @@ define i32 @combine_udiv_by_negone(i32 %x) {
 define <4 x i32> @combine_vec_udiv_by_negone(<4 x i32> %x) {
 ; SSE-LABEL: combine_vec_udiv_by_negone:
 ; SSE:       # %bb.0:
-; SSE-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; SSE-NEXT:    movdqa {{.*#+}} xmm2 = [2147483649,2147483649,2147483649,2147483649]
-; SSE-NEXT:    pmuludq %xmm2, %xmm1
-; SSE-NEXT:    pmuludq %xmm2, %xmm0
-; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; SSE-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
+; SSE-NEXT:    pcmpeqd %xmm1, %xmm1
+; SSE-NEXT:    pcmpeqd %xmm1, %xmm0
 ; SSE-NEXT:    psrld $31, %xmm0
 ; SSE-NEXT:    retq
 ;
-; AVX1-LABEL: combine_vec_udiv_by_negone:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,3,3]
-; AVX1-NEXT:    vmovdqa {{.*#+}} xmm2 = [2147483649,2147483649,2147483649,2147483649]
-; AVX1-NEXT:    vpmuludq %xmm2, %xmm1, %xmm1
-; AVX1-NEXT:    vpmuludq %xmm2, %xmm0, %xmm0
-; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
-; AVX1-NEXT:    vpsrld $31, %xmm0, %xmm0
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: combine_vec_udiv_by_negone:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpbroadcastd {{.*#+}} xmm1 = [2147483649,2147483649,2147483649,2147483649]
-; AVX2-NEXT:    vpshufd {{.*#+}} xmm2 = xmm1[1,1,3,3]
-; AVX2-NEXT:    vpshufd {{.*#+}} xmm3 = xmm0[1,1,3,3]
-; AVX2-NEXT:    vpmuludq %xmm2, %xmm3, %xmm2
-; AVX2-NEXT:    vpmuludq %xmm1, %xmm0, %xmm0
-; AVX2-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm2[1],xmm0[2],xmm2[3]
-; AVX2-NEXT:    vpsrld $31, %xmm0, %xmm0
-; AVX2-NEXT:    retq
+; AVX-LABEL: combine_vec_udiv_by_negone:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1
+; AVX-NEXT:    vpcmpeqd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vpsrld $31, %xmm0, %xmm0
+; AVX-NEXT:    retq
   %1 = udiv <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
   ret <4 x i32> %1
 }
