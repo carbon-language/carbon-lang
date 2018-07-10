@@ -259,7 +259,7 @@ TEST(CoreAPIsTest, LookupFlagsTest) {
   EXPECT_EQ(SymbolFlags[Bar], BarFlags) << "Incorrect flags returned for Bar";
 }
 
-TEST(CoreAPIsTest, TestAliases) {
+TEST(CoreAPIsTest, TestBasicAliases) {
   ExecutionSession ES;
   auto &V = ES.createVSO("V");
 
@@ -286,6 +286,31 @@ TEST(CoreAPIsTest, TestAliases) {
       << "\"Baz\"'s address should match \"Foo\"'s";
   EXPECT_EQ((*Result)[Qux].getAddress(), QuxSym.getAddress())
       << "The \"Qux\" alias should have been overriden";
+}
+
+TEST(CoreAPIsTest, TestChainedAliases) {
+  ExecutionSession ES;
+  auto &V = ES.createVSO("V");
+
+  auto Foo = ES.getSymbolStringPool().intern("foo");
+  auto FooSym = JITEvaluatedSymbol(1U, JITSymbolFlags::Exported);
+
+  auto Bar = ES.getSymbolStringPool().intern("bar");
+
+  auto Baz = ES.getSymbolStringPool().intern("baz");
+
+  cantFail(V.define(absoluteSymbols({{Foo, FooSym}})));
+  cantFail(V.define(symbolAliases({{Baz, {Bar, JITSymbolFlags::Exported}},
+                                   {Bar, {Foo, JITSymbolFlags::Exported}}})));
+
+  auto Result = lookup({&V}, {Bar, Baz});
+  EXPECT_TRUE(!!Result) << "Unexpected lookup failure";
+  EXPECT_EQ(Result->count(Bar), 1U) << "No result for \"bar\"";
+  EXPECT_EQ(Result->count(Baz), 1U) << "No result for \"baz\"";
+  EXPECT_EQ((*Result)[Bar].getAddress(), FooSym.getAddress())
+      << "\"Bar\"'s address should match \"Foo\"'s";
+  EXPECT_EQ((*Result)[Baz].getAddress(), FooSym.getAddress())
+      << "\"Baz\"'s address should match \"Foo\"'s";
 }
 
 TEST(CoreAPIsTest, TestTrivialCircularDependency) {
