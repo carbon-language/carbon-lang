@@ -235,12 +235,10 @@ constexpr auto scalarIntConstantExpr = scalar(intConstantExpr);
 // R501 program -> program-unit [program-unit]...
 // This is the top-level production for the Fortran language.
 constexpr StartNewSubprogram startNewSubprogram;
-TYPE_PARSER(
-    construct<Program>(
-        // statements consume only trailing noise; consume leading noise here.
-        skipEmptyLines >>
-        some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine)) /
-    consumedAllInput)
+TYPE_PARSER(construct<Program>(
+    // statements consume only trailing noise; consume leading noise here.
+    skipEmptyLines >>
+    some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine)))
 
 // R502 program-unit ->
 //        main-program | external-subprogram | module | submodule | block-data
@@ -663,9 +661,11 @@ TYPE_PARSER(construct<PrivateOrSequence>(Parser<PrivateStmt>{}) ||
     construct<PrivateOrSequence>(Parser<SequenceStmt>{}))
 
 // R730 end-type-stmt -> END TYPE [type-name]
-constexpr auto noNameEnd = "END" >> defaulted(cut >> maybe(name));
+constexpr auto missingOptionalName = defaulted(cut >> maybe(name));
+constexpr auto noNameEnd = "END" >> missingOptionalName;
 constexpr auto bareEnd = noNameEnd / lookAhead(endOfStmt);
-constexpr auto endStmtErrorRecovery = noNameEnd / SkipTo<'\n'>{};
+constexpr auto endStmtErrorRecovery =
+    ("END"_tok / SkipTo<'\n'>{} || consumedAllInput) >> missingOptionalName;
 TYPE_PARSER(construct<EndTypeStmt>(
     recovery("END TYPE" >> maybe(name), endStmtErrorRecovery)))
 
@@ -1881,7 +1881,8 @@ TYPE_CONTEXT_PARSER("ELSEWHERE statement"_en_US,
 
 // R1049 end-where-stmt -> ENDWHERE [where-construct-name]
 TYPE_CONTEXT_PARSER("END WHERE statement"_en_US,
-    construct<EndWhereStmt>("END WHERE" >> maybe(name)))
+    construct<EndWhereStmt>(
+        recovery("END WHERE" >> maybe(name), endStmtErrorRecovery)))
 
 // R1050 forall-construct ->
 //         forall-construct-stmt [forall-body-construct]... end-forall-stmt
@@ -1911,7 +1912,8 @@ TYPE_PARSER(construct<ForallAssignmentStmt>(assignmentStmt) ||
 
 // R1054 end-forall-stmt -> END FORALL [forall-construct-name]
 TYPE_CONTEXT_PARSER("END FORALL statement"_en_US,
-    construct<EndForallStmt>("END FORALL" >> maybe(name)))
+    construct<EndForallStmt>(
+        recovery("END FORALL" >> maybe(name), endStmtErrorRecovery)))
 
 // R1055 forall-stmt -> FORALL concurrent-header forall-assignment-stmt
 TYPE_CONTEXT_PARSER("FORALL statement"_en_US,
@@ -1940,7 +1942,8 @@ TYPE_PARSER(construct<Selector>(variable) / lookAhead(","_tok || ")"_tok) ||
     construct<Selector>(expr))
 
 // R1106 end-associate-stmt -> END ASSOCIATE [associate-construct-name]
-TYPE_PARSER(construct<EndAssociateStmt>("END ASSOCIATE" >> maybe(name)))
+TYPE_PARSER(construct<EndAssociateStmt>(
+    recovery("END ASSOCIATE" >> maybe(name), endStmtErrorRecovery)))
 
 // R1107 block-construct ->
 //         block-stmt [block-specification-part] block end-block-stmt
@@ -1965,7 +1968,8 @@ TYPE_PARSER(construct<BlockStmt>(maybe(name / ":") / "BLOCK"))
 TYPE_PARSER(construct<BlockSpecificationPart>(specificationPart))
 
 // R1110 end-block-stmt -> END BLOCK [block-construct-name]
-TYPE_PARSER(construct<EndBlockStmt>("END BLOCK" >> maybe(name)))
+TYPE_PARSER(construct<EndBlockStmt>(
+    recovery("END BLOCK" >> maybe(name), endStmtErrorRecovery)))
 
 // R1111 change-team-construct -> change-team-stmt block end-change-team-stmt
 TYPE_CONTEXT_PARSER("CHANGE TEAM construct"_en_US,
@@ -2005,14 +2009,15 @@ TYPE_CONTEXT_PARSER("CRITICAL construct"_en_US,
         statement(Parser<EndCriticalStmt>{})))
 
 // R1118 end-critical-stmt -> END CRITICAL [critical-construct-name]
-TYPE_PARSER(construct<EndCriticalStmt>("END CRITICAL" >> maybe(name)))
+TYPE_PARSER(construct<EndCriticalStmt>(
+    recovery("END CRITICAL" >> maybe(name), endStmtErrorRecovery)))
 
 // R1119 do-construct -> do-stmt block end-do
 // R1120 do-stmt -> nonlabel-do-stmt | label-do-stmt
 TYPE_CONTEXT_PARSER("DO construct"_en_US,
     construct<DoConstruct>(
         statement(Parser<NonLabelDoStmt>{}) / EnterNonlabelDoConstruct{}, block,
-        statement(endDoStmt) / LeaveDoConstruct{}))
+        statement(Parser<EndDoStmt>{}) / LeaveDoConstruct{}))
 
 // R1125 concurrent-header ->
 //         ( [integer-type-spec ::] concurrent-control-list
@@ -2065,8 +2070,9 @@ TYPE_CONTEXT_PARSER("nonlabel DO statement"_en_US,
     construct<NonLabelDoStmt>(maybe(name / ":"), "DO" >> maybe(loopControl)))
 
 // R1132 end-do-stmt -> END DO [do-construct-name]
-TYPE_CONTEXT_PARSER(
-    "END DO statement"_en_US, construct<EndDoStmt>("END DO" >> maybe(name)))
+TYPE_CONTEXT_PARSER("END DO statement"_en_US,
+    construct<EndDoStmt>(
+        recovery("END DO" >> maybe(name), endStmtErrorRecovery)))
 
 // R1133 cycle-stmt -> CYCLE [do-construct-name]
 TYPE_CONTEXT_PARSER(
@@ -2092,7 +2098,8 @@ TYPE_CONTEXT_PARSER("IF construct"_en_US,
             block)),
         maybe(construct<IfConstruct::ElseBlock>(
             statement(construct<ElseStmt>("ELSE" >> maybe(name))), block)),
-        statement(construct<EndIfStmt>("END IF" >> maybe(name)))))
+        statement(construct<EndIfStmt>(
+            recovery("END IF" >> maybe(name), endStmtErrorRecovery)))))
 
 // R1139 if-stmt -> IF ( scalar-logical-expr ) action-stmt
 TYPE_CONTEXT_PARSER("IF statement"_en_US,
@@ -2119,7 +2126,8 @@ TYPE_CONTEXT_PARSER("CASE statement"_en_US,
 // R1143 end-select-stmt -> END SELECT [case-construct-name]
 // R1151 end-select-rank-stmt -> END SELECT [select-construct-name]
 // R1155 end-select-type-stmt -> END SELECT [select-construct-name]
-TYPE_PARSER(construct<EndSelectStmt>("END SELECT" >> maybe(name)))
+TYPE_PARSER(construct<EndSelectStmt>(
+    recovery("END SELECT" >> maybe(name), endStmtErrorRecovery)))
 
 // R1145 case-selector -> ( case-value-range-list ) | DEFAULT
 constexpr auto defaultKeyword = construct<Default>("DEFAULT"_tok);
@@ -2910,9 +2918,10 @@ TYPE_PARSER(construct<format::ControlEditDesc>(
 //         [program-stmt] [specification-part] [execution-part]
 //         [internal-subprogram-part] end-program-stmt
 TYPE_CONTEXT_PARSER("main program"_en_US,
-    construct<MainProgram>(maybe(statement(Parser<ProgramStmt>{})),
-        specificationPart, executionPart, maybe(internalSubprogramPart),
-        unterminatedStatement(Parser<EndProgramStmt>{})))
+    skipEmptyLines >> !consumedAllInput >>
+        construct<MainProgram>(maybe(statement(Parser<ProgramStmt>{})),
+            specificationPart, executionPart, maybe(internalSubprogramPart),
+            unterminatedStatement(Parser<EndProgramStmt>{})))
 
 // R1402 program-stmt -> PROGRAM program-name
 // PGI allows empty parentheses after the name.

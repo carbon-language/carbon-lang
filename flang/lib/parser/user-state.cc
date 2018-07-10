@@ -44,7 +44,8 @@ std::optional<CapturedLabelDoStmt::resultType> CapturedLabelDoStmt::Parse(
 
 std::optional<EndDoStmtForCapturedLabelDoStmt::resultType>
 EndDoStmtForCapturedLabelDoStmt::Parse(ParseState &state) {
-  static constexpr auto parser = statement(indirect(Parser<EndDoStmt>{}));
+  static constexpr auto parser =
+      statement(indirect(construct<EndDoStmt>("END DO" >> maybe(name))));
   if (auto enddo = parser.Parse(state)) {
     if (enddo->label.has_value()) {
       if (auto ustate = state.userState()) {

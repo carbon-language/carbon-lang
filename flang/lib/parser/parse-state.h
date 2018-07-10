@@ -154,9 +154,8 @@ public:
   }
 
   void PopContext() {
-    if (context_) {
-      context_ = context_->attachment();
-    }
+    CHECK(context_);
+    context_ = context_->attachment();
   }
 
   void Say(const MessageFixedText &t) { Say(p_, t); }

@@ -36,6 +36,7 @@ template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
 }
 
 constexpr auto endOfLine = "\n"_ch / skipEmptyLines ||
+    consumedAllInput >> pure("\n") ||
     fail<const char *>("expected end of line"_err_en_US);
 
 constexpr auto endOfStmt = space >>

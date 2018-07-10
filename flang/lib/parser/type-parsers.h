@@ -111,7 +111,6 @@ constexpr Parser<Selector> selector;  // R1105
 constexpr Parser<EndSelectStmt> endSelectStmt;  // R1143 & R1151 & R1155
 constexpr Parser<LoopControl> loopControl;  // R1123
 constexpr Parser<ConcurrentHeader> concurrentHeader;  // R1125
-constexpr Parser<EndDoStmt> endDoStmt;  // R1132
 constexpr Parser<IoUnit> ioUnit;  // R1201, R1203
 constexpr Parser<FileUnitNumber> fileUnitNumber;  // R1202
 constexpr Parser<IoControlSpec> ioControlSpec;  // R1213, R1214

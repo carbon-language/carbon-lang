@@ -262,7 +262,7 @@ private:
       ParseState &backtrack) const {
     if constexpr (J <= sizeof...(Ps)) {
       ParseState prevState{std::move(state)};
-      state = std::move(backtrack);
+      state = backtrack;
       const auto &parser{std::get<J>(ps_)};
       static_assert(std::is_same_v<resultType,
           typename std::decay<decltype(parser)>::type::resultType>);
