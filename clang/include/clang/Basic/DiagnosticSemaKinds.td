@@ -6184,6 +6184,12 @@ def err_bad_cxx_cast_bitfield : Error<
 def err_bad_cxx_cast_qualifiers_away : Error<
   "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
   "functional-style cast}0 from %1 to %2 casts away qualifiers">;
+def ext_bad_cxx_cast_qualifiers_away_incoherent : ExtWarn<
+  "ISO C++ does not allow "
+  "%select{const_cast|static_cast|reinterpret_cast|dynamic_cast|C-style cast|"
+  "functional-style cast}0 from %1 to %2 because it casts away qualifiers, "
+  "even though the source and destination types are unrelated">,
+  SFINAEFailure, InGroup<DiagGroup<"cast-qual-unrelated">>;
 def err_bad_const_cast_dest : Error<
   "%select{const_cast||||C-style cast|functional-style cast}0 to %2, "
   "which is not a reference, pointer-to-object, or pointer-to-data-member">;
