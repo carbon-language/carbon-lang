@@ -42,7 +42,7 @@ constexpr size_t gcd(size_t a, size_t b) {
 
 constexpr size_t lcm(size_t a, size_t b) { return a * b / gcd(a, b); }
 
-template <class T> constexpr T nearest_boundary(T number, T multiple) {
+constexpr size_t nearest_boundary(size_t number, size_t multiple) {
   return multiple * ((number / multiple) + (number % multiple ? 1 : 0));
 }
 

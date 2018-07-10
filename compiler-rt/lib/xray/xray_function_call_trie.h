@@ -101,8 +101,6 @@ public:
     NodeIdPair(Node *N, int32_t F) : NodePtr(N), FId(F) {}
   };
 
-  static_assert(sizeof(NodeIdPair) == 16, "Wrong size for NodeIDPair.");
-
   using NodeIdPairArray = Array<NodeIdPair>;
   using NodeIdPairAllocatorType = NodeIdPairArray::AllocatorType;
 
