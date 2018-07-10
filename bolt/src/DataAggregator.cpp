@@ -653,12 +653,18 @@ ErrorOr<LBREntry> DataAggregator::parseLBREntry() {
     return EC;
   StringRef MispredStr = MispredStrRes.get();
   if (MispredStr.size() != 1 ||
-      (MispredStr[0] != 'P' && MispredStr[0] != 'M')) {
+      (MispredStr[0] != 'P' && MispredStr[0] != 'M' && MispredStr[0] != '-')) {
     reportError("expected single char for mispred bit");
     Diag << "Found: " << MispredStr << "\n";
     return make_error_code(llvm::errc::io_error);
   }
   Res.Mispred = MispredStr[0] == 'M';
+
+  static bool MispredWarning = true;;
+  if (MispredStr[0] == '-' && MispredWarning) {
+    errs() << "PERF2BOLT-WARNING: misprediction bit is missing in profile\n";
+    MispredWarning = false;
+  }
 
   auto Rest = parseString(FieldSeparator, true);
   if (std::error_code EC = Rest.getError())

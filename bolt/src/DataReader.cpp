@@ -268,7 +268,7 @@ DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
 }
 
 void DataReader::reportError(StringRef ErrorMsg) {
-  Diag << "Error reading bolt data input file: line " << Line << ", column "
+  Diag << "Error reading BOLT data input file: line " << Line << ", column "
        << Col << ": " << ErrorMsg << '\n';
 }
 
