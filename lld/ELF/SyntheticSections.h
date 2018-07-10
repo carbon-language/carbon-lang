@@ -707,7 +707,7 @@ private:
   uint64_t SymtabSize = 0;
   uint64_t ConstantPoolOffset;
   uint64_t CuVectorsPoolSize = 0;
-  uint64_t StringPoolSize;
+  uint64_t StringPoolSize = 0;
   uint64_t TotalSize;
 
   std::vector<uint32_t> CuVectorOffsets;
