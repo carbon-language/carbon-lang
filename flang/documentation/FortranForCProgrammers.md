@@ -74,7 +74,7 @@ Derived types can be parameterized with integer values that either have
 to be constant at compilation time ("kind" parameters) or deferred to
 execution ("len" parameters).
 
-Derived types can inherit ("extend") from one other derived type, no more.
+Derived types can inherit ("extend") from at most one other derived type.
 They can have user-defined destructors (`FINAL` procedures).
 They can specify default initial values for their components.
 With some work, one can also specify a general constructor function,
@@ -108,7 +108,12 @@ Such variables and derived type components are allocated dynamically.
 They are automatically deallocated when they go out of scope, much
 like C++'s `std::vector<>` class template instances are.
 The array bounds, derived type `LEN` parameters, and even the
-type of an allocatable can be deferred to run time.
+type of an allocatable can all be deferred to run time.
+(If you really want to learn all about modern Fortran, I suggest
+that you study everything that can be done with `ALLOCATABLE` data,
+and follow up all the references that are made in the documentation
+from the description of `ALLOCATABLE` to other topics; it's a feature
+that interacts with much of the rest of the language.)
 
 I/O
 ---
@@ -150,6 +155,22 @@ their own internal procedures.
 As is the case with C++ lambda expressions, internal procedures can
 reference names from their host subprograms.
 
+Modules
+-------
+Modern Fortran has good support for separate compilation and namespace
+management.
+The `module` is the basic unit of compilation, although independent
+subprograms still exist, of course, as well as the main program.
+Modules define types, constants, interfaces, and nested
+subprograms.
+
+Objects from a module are made available for use in another compilation
+unit via the `USE` statement, which has options for limiting the objects
+that are made available as well as for renaming them.
+All references to objects in modules is done with direct names or
+aliases that have been added to the local scope, as Fortran has no means
+of qualifying references with module names.
+
 Arguments
 ---------
 Functions and subroutines have "dummy" arguments that are dynamically
@@ -182,6 +203,20 @@ scope.
 This is the opposite of the assumptions under which a C or C++ compiler must
 labor when trying to optimize code with pointers.
 
+Overloading
+-----------
+Fortran supports a form of overloading via its interface feature.
+By default, an interface is a means for specifying prototypes for a
+set of subroutines and functions.
+But when an interface is named, that name becomes a *generic* name
+for its specific subprograms, and calls via the generic name are
+mapped at compile time to one of the specific subprograms based
+on the types, kinds, and ranks of the actual arguments.
+A similar feature can be used for generic type-bound procedures.
+
+This feature can be used to overload the built-in operators and some
+I/O statements, too.
+
 Polymorphism
 ------------
 Fortran code can be written to accept data of some derived type or
@@ -190,7 +225,8 @@ execution, rather than the usual `TYPE` syntax.
 This is somewhat similar to the use of `virtual` functions in c++.
 
 Fortran's `SELECT TYPE` construct is used to distinguish between
-possible specific types dynamically.
+possible specific types dynamically, when necessary.  It's a
+little like C++17's `std::visit()` on a discriminated union.
 
 Pointers
 --------
@@ -219,6 +255,27 @@ much portability.
 Preprocessing is typically requested by the use of a capitalized filename
 suffix (e.g., "foo.F90") or a compiler command line option.
 
+"Object Oriented" Programming
+-----------------------------
+Fortran doesn't have member functions (or subroutines) in the sense
+of C++ does, in which a function has immediate access to the members
+of a specific instance of a derived type.
+But Fortran does have an analog to C++'s `this` via *type-bound
+procedures*.
+This is a means of binding a particular subprogram name to a derived
+type, possibly with aliasing, in such a way that the subprogram can
+be called as if it were a component of the type (e.g., `X%F(Y)`)
+and receive the object to the left of the `%` as an additional actual argument.
+The object is passed as the first argument by default, but that can be
+changed; indeed, the same specific subprogram can be used for multiple
+type-bound procedures by choosing different dummy arguments to serve as
+the passed object.
+The equivalent of a `static` member function is also available by saying
+that no argument is to be associated with the object via `NOPASS`.
+There's a lot more that can be said about type-bound procedures (e.g., how they
+support overloading) but this should be enough to get you started with
+the most common usage.
+
 Pitfalls
 --------
 Variable initializers, e.g. `INTEGER :: J=123`, are _static_ initializers!
@@ -230,7 +287,7 @@ that will apply to every fresh instance of the variable.
 
 If you see an assignment to an array that's never been declared as such,
 it's probably a definition of a "statement function", which is like
-a parameterized macro definition, e.g. "A(X)=SQRT(X)**3".
+a parameterized macro definition, e.g. `A(X)=SQRT(X)**3`.
 In the original Fortran language, this was the only means for user
 function definitions.
 Today, of course, one should use an external or internal function instead.
@@ -253,4 +310,3 @@ In fact, Fortran can remove function calls from expressions if their
 values are not required to determine the value of the expression's
 result; e.g., if there is a `PRINT` statement in function `F`, it
 may or may not be executed by the assignment statement `X=0*F()`.
-
