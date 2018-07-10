@@ -4162,8 +4162,7 @@ define <8 x double>@test_int_x86_avx512_mask_fixupimm_pd_512(<8 x double> %x0, <
 define <8 x double>@test_int_x86_avx512_mask_fixupimm_pd_512_load(<8 x double> %x0, <8 x double> %x1, <8 x i64>* %x2ptr) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_fixupimm_pd_512_load:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovapd (%rdi), %zmm2
-; CHECK-NEXT:    vfixupimmpd $3, %zmm2, %zmm1, %zmm0
+; CHECK-NEXT:    vfixupimmpd $3, (%rdi), %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %x2 = load <8 x i64>, <8 x i64>* %x2ptr
   %res = call <8 x double> @llvm.x86.avx512.mask.fixupimm.pd.512(<8 x double> %x0, <8 x double> %x1, <8 x i64> %x2, i32 3, i8 -1, i32 4)
@@ -4265,8 +4264,7 @@ define <16 x float>@test_int_x86_avx512_mask_fixupimm_ps_512(<16 x float> %x0, <
 define <16 x float>@test_int_x86_avx512_mask_fixupimm_ps_512_load(<16 x float> %x0, <16 x float> %x1, <16 x i32>* %x2ptr) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_fixupimm_ps_512_load:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovaps (%rdi), %zmm2
-; CHECK-NEXT:    vfixupimmps $5, %zmm2, %zmm1, %zmm0
+; CHECK-NEXT:    vfixupimmps $5, (%rdi), %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %x2 = load <16 x i32>, <16 x i32>* %x2ptr
   %res = call <16 x float> @llvm.x86.avx512.mask.fixupimm.ps.512(<16 x float> %x0, <16 x float> %x1, <16 x i32> %x2, i32 5, i16 -1, i32 4)
