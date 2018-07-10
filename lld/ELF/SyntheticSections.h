@@ -668,7 +668,7 @@ struct GdbIndexChunk {
 
   struct NameTypeEntry {
     llvm::CachedHashStringRef Name;
-    uint8_t Type;
+    uint32_t Type;
   };
 
   InputSection *DebugInfoSec;
@@ -679,9 +679,9 @@ struct GdbIndexChunk {
 
 // The symbol type for the .gdb_index section.
 struct GdbSymbol {
-  uint32_t NameHash;
-  size_t NameOffset;
-  size_t CuVectorIndex;
+  llvm::CachedHashStringRef Name;
+  uint32_t OutputOff;
+  uint32_t CuVectorIdx;
 };
 
 class GdbIndexSection final : public SyntheticSection {
@@ -692,18 +692,11 @@ public:
   bool empty() const override;
 
 private:
-  void fixCuIndex();
-  std::vector<std::vector<uint32_t>> createCuVectors();
-  std::vector<GdbSymbol *> createGdbSymtab();
-
   // A symbol table for this .gdb_index section.
-  std::vector<GdbSymbol *> GdbSymtab;
+  std::vector<GdbSymbol> Symbols;
 
   // CU vector is a part of constant pool area of section.
   std::vector<std::vector<uint32_t>> CuVectors;
-
-  // Symbol table contents.
-  llvm::DenseMap<llvm::CachedHashStringRef, GdbSymbol *> Symbols;
 
   // Each chunk contains information gathered from a debug sections of single
   // object and used to build different areas of gdb index.
@@ -712,12 +705,13 @@ private:
   uint64_t CuListOffset = 24;
   uint64_t CuTypesOffset;
   uint64_t SymtabOffset;
+  uint64_t SymtabSize = 0;
   uint64_t ConstantPoolOffset;
   uint64_t CuVectorsPoolSize = 0;
   uint64_t StringPoolSize;
   uint64_t TotalSize;
 
-  std::vector<size_t> CuVectorOffsets;
+  std::vector<uint32_t> CuVectorOffsets;
 };
 
 template <class ELFT> GdbIndexSection *createGdbIndex();
