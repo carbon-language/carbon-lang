@@ -1280,22 +1280,21 @@ static Instruction *foldSelectShuffle(ShuffleVectorInst &Shuf,
   // The opcodes must be the same. Use a new name to make that clear.
   BinaryOperator::BinaryOps BOpc = Opc0;
 
+  // Select the constant elements needed for the single binop.
+  Constant *Mask = Shuf.getMask();
+  Constant *NewC = ConstantExpr::getShuffleVector(C0, C1, Mask);
+
   // We are moving a binop after a shuffle. When a shuffle has an undefined
   // mask element, the result is undefined, but it is not poison or undefined
   // behavior. That is not necessarily true for div/rem/shift.
-  Constant *Mask = Shuf.getMask();
   bool MightCreatePoisonOrUB =
       Mask->containsUndefElement() &&
       (Instruction::isIntDivRem(BOpc) || Instruction::isShift(BOpc));
+  if (MightCreatePoisonOrUB)
+    NewC = getSafeVectorConstantForBinop(BOpc, NewC, ConstantsAreOp1);
 
-  // Select the constant elements needed for the single binop.
-  Constant *NewC = ConstantExpr::getShuffleVector(C0, C1, Mask);
   Value *V;
   if (X == Y) {
-    // The new binop constant must not have any potential for extra poison/UB.
-    if (MightCreatePoisonOrUB)
-      NewC = getSafeVectorConstantForBinop(BOpc, NewC, ConstantsAreOp1);
-
     // Remove a binop and the shuffle by rearranging the constant:
     // shuffle (op V, C0), (op V, C1), M --> op V, C'
     // shuffle (op C0, V), (op C1, V), M --> op C', V
@@ -1307,9 +1306,13 @@ static Instruction *foldSelectShuffle(ShuffleVectorInst &Shuf,
     if (!B0->hasOneUse() && !B1->hasOneUse())
       return nullptr;
 
-    // Bail out if we can not guarantee safety of the transform.
-    // TODO: We could try harder by replacing the undef mask elements.
-    if (MightCreatePoisonOrUB)
+    // If we use the original shuffle mask and op1 is *variable*, we would be
+    // putting an undef into operand 1 of div/rem/shift. This is either UB or
+    // poison. We do not have to guard against UB when *constants* are op1
+    // because safe constants guarantee that we do not overflow sdiv/srem (and
+    // there's no danger for other opcodes).
+    // TODO: To allow this case, create a new shuffle mask with no undefs.
+    if (MightCreatePoisonOrUB && !ConstantsAreOp1)
       return nullptr;
 
     // Note: In general, we do not create new shuffles in InstCombine because we

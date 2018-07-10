@@ -963,13 +963,12 @@ define <4 x i32> @shl_2_vars_nsw(<4 x i32> %v0, <4 x i32> %v1) {
   ret <4 x i32> %t3
 }
 
-; TODO: Shift by undef is poison. Undef must be replaced by safe constant.
+; Shift by undef is poison. Undef is replaced by safe constant.
 
 define <4 x i32> @shl_2_vars_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
 ; CHECK-LABEL: @shl_2_vars_undef_mask_elt(
-; CHECK-NEXT:    [[T1:%.*]] = shl <4 x i32> [[V0:%.*]], <i32 1, i32 2, i32 3, i32 4>
-; CHECK-NEXT:    [[T2:%.*]] = shl <4 x i32> [[V1:%.*]], <i32 5, i32 6, i32 7, i32 8>
-; CHECK-NEXT:    [[T3:%.*]] = shufflevector <4 x i32> [[T1]], <4 x i32> [[T2]], <4 x i32> <i32 undef, i32 5, i32 2, i32 undef>
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> [[V0:%.*]], <4 x i32> [[V1:%.*]], <4 x i32> <i32 undef, i32 5, i32 2, i32 undef>
+; CHECK-NEXT:    [[T3:%.*]] = shl <4 x i32> [[TMP1]], <i32 0, i32 6, i32 3, i32 0>
 ; CHECK-NEXT:    ret <4 x i32> [[T3]]
 ;
   %t1 = shl <4 x i32> %v0, <i32 1, i32 2, i32 3, i32 4>
@@ -978,13 +977,12 @@ define <4 x i32> @shl_2_vars_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
   ret <4 x i32> %t3
 }
 
-; TODO: Shift by undef is poison. Undef must be replaced by safe constant.
+; Shift by undef is poison. Undef is replaced by safe constant.
 
 define <4 x i32> @shl_2_vars_nsw_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
 ; CHECK-LABEL: @shl_2_vars_nsw_undef_mask_elt(
-; CHECK-NEXT:    [[T1:%.*]] = shl nsw <4 x i32> [[V0:%.*]], <i32 1, i32 2, i32 3, i32 4>
-; CHECK-NEXT:    [[T2:%.*]] = shl nsw <4 x i32> [[V1:%.*]], <i32 5, i32 6, i32 7, i32 8>
-; CHECK-NEXT:    [[T3:%.*]] = shufflevector <4 x i32> [[T1]], <4 x i32> [[T2]], <4 x i32> <i32 undef, i32 5, i32 2, i32 undef>
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> [[V0:%.*]], <4 x i32> [[V1:%.*]], <4 x i32> <i32 undef, i32 5, i32 2, i32 undef>
+; CHECK-NEXT:    [[T3:%.*]] = shl <4 x i32> [[TMP1]], <i32 0, i32 6, i32 3, i32 0>
 ; CHECK-NEXT:    ret <4 x i32> [[T3]]
 ;
   %t1 = shl nsw <4 x i32> %v0, <i32 1, i32 2, i32 3, i32 4>
@@ -1193,11 +1191,12 @@ define <4 x i32> @sdiv_2_vars_exact(<4 x i32> %v0, <4 x i32> %v1) {
   ret <4 x i32> %t3
 }
 
+; Div by undef is UB. Undef is replaced by safe constant.
+
 define <4 x i32> @sdiv_2_vars_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
 ; CHECK-LABEL: @sdiv_2_vars_undef_mask_elt(
-; CHECK-NEXT:    [[T1:%.*]] = sdiv <4 x i32> [[V0:%.*]], <i32 1, i32 2, i32 3, i32 4>
-; CHECK-NEXT:    [[T2:%.*]] = sdiv <4 x i32> [[V1:%.*]], <i32 5, i32 6, i32 7, i32 8>
-; CHECK-NEXT:    [[T3:%.*]] = shufflevector <4 x i32> [[T1]], <4 x i32> [[T2]], <4 x i32> <i32 0, i32 1, i32 6, i32 undef>
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> [[V0:%.*]], <4 x i32> [[V1:%.*]], <4 x i32> <i32 0, i32 1, i32 6, i32 undef>
+; CHECK-NEXT:    [[T3:%.*]] = sdiv <4 x i32> [[TMP1]], <i32 1, i32 2, i32 7, i32 1>
 ; CHECK-NEXT:    ret <4 x i32> [[T3]]
 ;
   %t1 = sdiv <4 x i32> %v0, <i32 1, i32 2, i32 3, i32 4>
@@ -1206,11 +1205,12 @@ define <4 x i32> @sdiv_2_vars_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
   ret <4 x i32> %t3
 }
 
+; Div by undef is UB. Undef is replaced by safe constant.
+
 define <4 x i32> @sdiv_2_vars_exact_undef_mask_elt(<4 x i32> %v0, <4 x i32> %v1) {
 ; CHECK-LABEL: @sdiv_2_vars_exact_undef_mask_elt(
-; CHECK-NEXT:    [[T1:%.*]] = sdiv exact <4 x i32> [[V0:%.*]], <i32 1, i32 2, i32 3, i32 4>
-; CHECK-NEXT:    [[T2:%.*]] = sdiv exact <4 x i32> [[V1:%.*]], <i32 5, i32 6, i32 7, i32 8>
-; CHECK-NEXT:    [[T3:%.*]] = shufflevector <4 x i32> [[T1]], <4 x i32> [[T2]], <4 x i32> <i32 0, i32 1, i32 6, i32 undef>
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> [[V0:%.*]], <4 x i32> [[V1:%.*]], <4 x i32> <i32 0, i32 1, i32 6, i32 undef>
+; CHECK-NEXT:    [[T3:%.*]] = sdiv <4 x i32> [[TMP1]], <i32 1, i32 2, i32 7, i32 1>
 ; CHECK-NEXT:    ret <4 x i32> [[T3]]
 ;
   %t1 = sdiv exact <4 x i32> %v0, <i32 1, i32 2, i32 3, i32 4>
