@@ -2444,9 +2444,9 @@ void GdbIndexSection::writeTo(uint8_t *Buf) {
   Buf += 24;
 
   // Write the CU list.
-  for (GdbIndexChunk &D : Chunks) {
-    for (GdbIndexChunk::CuEntry &Cu : D.CompilationUnits) {
-      write64le(Buf, D.DebugInfoSec->OutSecOff + Cu.CuOffset);
+  for (GdbIndexChunk &Chunk : Chunks) {
+    for (GdbIndexChunk::CuEntry &Cu : Chunk.CompilationUnits) {
+      write64le(Buf, Chunk.DebugInfoSec->OutSecOff + Cu.CuOffset);
       write64le(Buf + 8, Cu.CuLength);
       Buf += 16;
     }
