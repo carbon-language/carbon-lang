@@ -6,7 +6,7 @@ Fortran For C Programmers
 =========================
 
 This note is limited to essential information about Fortran so that
-a C or C++ programmer can get started quickly with the language,
+a C or C++ programmer can get started more quickly with the language,
 at least as a reader, and avoid some common pitfalls when starting
 to write or modify Fortran code.
 Please see other sources to learn about Fortran's rich history,
@@ -48,6 +48,33 @@ Know This At Least
 * The modern language has means for declaring types, data, and subprogram
   interfaces in compiled "modules", as well as legacy mechanisms for
   sharing data and interconnecting subprograms.
+
+A Rosetta Stone
+---------------
+Fortran's language standard and other documentation uses some terminology
+in particular ways that might be unfamiliar.
+
+| Fortran | English |
+| ------- | ------- |
+| Association | Making one name refer to something else |
+| Assumed | Some attribute of an argument or interface that is not known until a call is made |
+| Companion processor | A C compiler |
+| Component | Class member |
+| Deferred | Some attribute of a variable that is not known until an allocation or assignment |
+| Derived type | C++ class |
+| Dummy argument | C++ reference argument |
+| Generic | Overloaded function, resolved by actual arguments |
+| Host procedure | The subprogram that contains this nested one |
+| Implied DO | There's a loop inside a statement |
+| Interface | Prototype |
+| Internal I/O | `sscanf` and `snprintf` |
+| Intrinsic | Built-in type or function |
+| Polymorphic | Dynamically typed |
+| Processor | Fortran compiler |
+| Rank | Number of dimensions that an array has |
+| `SAVE` attribute | Statically allocated |
+| Type-bound procedure | Kind of a C++ member function but not really |
+| Unformatted | Raw binary |
 
 Data Types
 ----------
@@ -159,7 +186,7 @@ Modules
 -------
 Modern Fortran has good support for separate compilation and namespace
 management.
-The `module` is the basic unit of compilation, although independent
+The *module* is the basic unit of compilation, although independent
 subprograms still exist, of course, as well as the main program.
 Modules define types, constants, interfaces, and nested
 subprograms.
@@ -258,20 +285,22 @@ suffix (e.g., "foo.F90") or a compiler command line option.
 "Object Oriented" Programming
 -----------------------------
 Fortran doesn't have member functions (or subroutines) in the sense
-of C++ does, in which a function has immediate access to the members
+that C++ does, in which a function has immediate access to the members
 of a specific instance of a derived type.
 But Fortran does have an analog to C++'s `this` via *type-bound
 procedures*.
 This is a means of binding a particular subprogram name to a derived
 type, possibly with aliasing, in such a way that the subprogram can
 be called as if it were a component of the type (e.g., `X%F(Y)`)
-and receive the object to the left of the `%` as an additional actual argument.
+and receive the object to the left of the `%` as an additional actual argument,
+exactly as if the call had been written `F(X,Y)`.
 The object is passed as the first argument by default, but that can be
 changed; indeed, the same specific subprogram can be used for multiple
 type-bound procedures by choosing different dummy arguments to serve as
 the passed object.
 The equivalent of a `static` member function is also available by saying
 that no argument is to be associated with the object via `NOPASS`.
+
 There's a lot more that can be said about type-bound procedures (e.g., how they
 support overloading) but this should be enough to get you started with
 the most common usage.
@@ -283,10 +312,12 @@ They imply that the variable is stored in static storage, not on the stack,
 and the initialized value lasts only until the variable is assigned.
 One must use an assignment statement to implement a dynamic initializer
 that will apply to every fresh instance of the variable.
+Be especially careful when using initializers in the newish `BLOCK` construct,
+which perpetuates the interpretation as static data.
 (Derived type component initializers, however, do work as expected.)
 
 If you see an assignment to an array that's never been declared as such,
-it's probably a definition of a "statement function", which is like
+it's probably a definition of a *statement function*, which is like
 a parameterized macro definition, e.g. `A(X)=SQRT(X)**3`.
 In the original Fortran language, this was the only means for user
 function definitions.
@@ -295,8 +326,8 @@ Today, of course, one should use an external or internal function instead.
 Fortran expressions don't bind exactly like C's do.
 Watch out for exponentiation with `**`, which of course C lacks; it
 binds more tightly than negation does (e.g., `-2**2` is -4),
-and it binds to the right, unlike any other Fortran or C operator
-(e.g., `2**2**3` is 256, not 64).
+and it binds to the right, unlike what any other Fortran and most
+C operators do; e.g., `2**2**3` is 256, not 64.
 Also dangerous are logical expressions, in which the unary negation
 operator `.NOT.` binds less tightly than the binary `.AND.` and `.OR.`
 operators do.
@@ -310,3 +341,5 @@ In fact, Fortran can remove function calls from expressions if their
 values are not required to determine the value of the expression's
 result; e.g., if there is a `PRINT` statement in function `F`, it
 may or may not be executed by the assignment statement `X=0*F()`.
+(Well, it probably will be, in practice, but compilers always reserve
+the right to optimize better.)
