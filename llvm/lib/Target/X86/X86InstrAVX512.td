@@ -90,16 +90,6 @@ class X86VectorVTInfo<int numelts, ValueType eltvt, RegisterClass rc,
                                           !cast<ComplexPattern>("sse_load_f64"),
                                     ?));
 
-  // The corresponding float type, e.g. v16f32 for v16i32
-  // Note: For EltSize < 32, FloatVT is illegal and TableGen
-  //       fails to compile, so we choose FloatVT = VT
-  ValueType FloatVT = !cast<ValueType>(
-                        !if (!eq (!srl(EltSize,5),0),
-                             VTName,
-                             !if (!eq(TypeVariantName, "i"),
-                                  "v" # NumElts # "f" # EltSize,
-                                  VTName)));
-
   ValueType IntVT = !cast<ValueType>(
                         !if (!eq (!srl(EltSize,5),0),
                              VTName,
@@ -8589,17 +8579,17 @@ multiclass avx512_fp14_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
   let ExeDomain = _.ExeDomain in {
   defm r: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src), OpcodeStr, "$src", "$src",
-                         (_.FloatVT (OpNode _.RC:$src))>, EVEX, T8PD,
+                         (_.VT (OpNode _.RC:$src))>, EVEX, T8PD,
                          Sched<[sched]>;
   defm m: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.MemOp:$src), OpcodeStr, "$src", "$src",
-                         (OpNode (_.FloatVT
+                         (OpNode (_.VT
                            (bitconvert (_.LdFrag addr:$src))))>, EVEX, T8PD,
                          Sched<[sched.Folded, ReadAfterLd]>;
   defm mb: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                           (ins _.ScalarMemOp:$src), OpcodeStr,
                           "${src}"##_.BroadcastStr, "${src}"##_.BroadcastStr,
-                          (OpNode (_.FloatVT
+                          (OpNode (_.VT
                             (X86VBroadcast (_.ScalarLdFrag addr:$src))))>,
                           EVEX, T8PD, EVEX_B, Sched<[sched.Folded, ReadAfterLd]>;
   }
@@ -8688,7 +8678,7 @@ multiclass avx512_fp28_p<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
 
   defm m : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.MemOp:$src), OpcodeStr, "$src", "$src",
-                         (OpNode (_.FloatVT
+                         (OpNode (_.VT
                              (bitconvert (_.LdFrag addr:$src))),
                           (i32 FROUND_CURRENT))>,
                           Sched<[sched.Folded, ReadAfterLd]>;
@@ -8696,7 +8686,7 @@ multiclass avx512_fp28_p<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
   defm mb : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.ScalarMemOp:$src), OpcodeStr,
                          "${src}"##_.BroadcastStr, "${src}"##_.BroadcastStr,
-                         (OpNode (_.FloatVT
+                         (OpNode (_.VT
                                   (X86VBroadcast (_.ScalarLdFrag addr:$src))),
                                  (i32 FROUND_CURRENT))>, EVEX_B,
                          Sched<[sched.Folded, ReadAfterLd]>;
@@ -8760,17 +8750,17 @@ multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr,
   let ExeDomain = _.ExeDomain in {
   defm r: AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _.RC:$src), OpcodeStr, "$src", "$src",
-                         (_.FloatVT (fsqrt _.RC:$src))>, EVEX,
+                         (_.VT (fsqrt _.RC:$src))>, EVEX,
                          Sched<[sched]>;
   defm m: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                          (ins _.MemOp:$src), OpcodeStr, "$src", "$src",
-                         (fsqrt (_.FloatVT
+                         (fsqrt (_.VT
                            (bitconvert (_.LdFrag addr:$src))))>, EVEX,
                            Sched<[sched.Folded, ReadAfterLd]>;
   defm mb: AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                           (ins _.ScalarMemOp:$src), OpcodeStr,
                           "${src}"##_.BroadcastStr, "${src}"##_.BroadcastStr,
-                          (fsqrt (_.FloatVT
+                          (fsqrt (_.VT
                             (X86VBroadcast (_.ScalarLdFrag addr:$src))))>,
                           EVEX, EVEX_B, Sched<[sched.Folded, ReadAfterLd]>;
   }
