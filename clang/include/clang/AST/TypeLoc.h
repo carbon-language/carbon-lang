@@ -1798,12 +1798,6 @@ class VectorTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
                                                        VectorType> {
 };
 
-// FIXME: size expression and attribute locations (or keyword if we
-// ever fully support altivec syntax).
-class DependentVectorTypeLoc
-    : public InheritingConcreteTypeLoc<TypeSpecTypeLoc, DependentVectorTypeLoc,
-                                       DependentVectorType> {};
-
 // FIXME: size expression and attribute locations.
 class ExtVectorTypeLoc : public InheritingConcreteTypeLoc<VectorTypeLoc,
                                                           ExtVectorTypeLoc,
