@@ -17,7 +17,7 @@
 
 #include "AMDGPU.h"
 #include "AMDKernelCodeT.h"
-#include "MCTargetDesc/AMDGPUHSAMetadataStreamer.h"
+#include "AMDGPUHSAMetadataStreamer.h"
 #include "SIProgramInfo.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/AsmPrinter.h"
