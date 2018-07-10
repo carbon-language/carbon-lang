@@ -210,11 +210,12 @@ static uint32_t read_32bit_value() {
 
 static uint32_t read_le_32bit_value() {
   uint32_t val = 0;
+  int i;
 
   if (new_file)
     return (uint32_t)-1;
 
-  for (int i = 0; i < 4; i++)
+  for (i = 0; i < 4; i++)
     val |= write_buffer[cur_pos++] << (8*i);
   return val;
 }
