@@ -1339,12 +1339,13 @@ static Instruction *foldSelectShuffle(ShuffleVectorInst &Shuf,
   // Flags are intersected from the 2 source binops. But there are 2 exceptions:
   // 1. If we changed an opcode, poison conditions might have changed.
   // 2. If the shuffle had undef mask elements, the new binop might have undefs
-  //    where the original code did not. Drop all poison potential to be safe.
+  //    where the original code did not. But if we already made a safe constant,
+  //    then there's no danger.
   NewBO->copyIRFlags(B0);
   NewBO->andIRFlags(B1);
   if (DropNSW)
     NewBO->setHasNoSignedWrap(false);
-  if (Mask->containsUndefElement())
+  if (Mask->containsUndefElement() && !MightCreatePoisonOrUB)
     NewBO->dropPoisonGeneratingFlags();
   return NewBO;
 }
