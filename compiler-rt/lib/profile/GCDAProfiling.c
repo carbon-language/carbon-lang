@@ -178,7 +178,12 @@ static void write_32bit_value(uint32_t i) {
 }
 
 static void write_64bit_value(uint64_t i) {
-  write_bytes((char*)&i, 8);
+  // GCOV uses a lo-/hi-word format even on big-endian systems.
+  // See also GCOVBuffer::readInt64 in LLVM.
+  uint32_t lo = (uint32_t) i;
+  uint32_t hi = (uint32_t) (i >> 32);
+  write_32bit_value(lo);
+  write_32bit_value(hi);
 }
 
 static uint32_t length_of_string(const char *s) {
@@ -203,15 +208,23 @@ static uint32_t read_32bit_value() {
   return val;
 }
 
-static uint64_t read_64bit_value() {
-  uint64_t val;
+static uint32_t read_le_32bit_value() {
+  uint32_t val = 0;
 
   if (new_file)
-    return (uint64_t)-1;
+    return (uint32_t)-1;
 
-  val = *(uint64_t*)&write_buffer[cur_pos];
-  cur_pos += 8;
+  for (int i = 0; i < 4; i++)
+    val |= write_buffer[cur_pos++] << (8*i);
   return val;
+}
+
+static uint64_t read_64bit_value() {
+  // GCOV uses a lo-/hi-word format even on big-endian systems.
+  // See also GCOVBuffer::readInt64 in LLVM.
+  uint32_t lo = read_32bit_value();
+  uint32_t hi = read_32bit_value();
+  return ((uint64_t)hi << 32) | ((uint64_t)lo);
 }
 
 static char *mangle_filename(const char *orig_filename) {
@@ -400,7 +413,7 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
 
   if (!output_file) return;
 
-  val = read_32bit_value();
+  val = read_le_32bit_value();
 
   if (val != (uint32_t)-1) {
     /* There are counters present in the file. Merge them. */
@@ -454,7 +467,7 @@ void llvm_gcda_summary_info() {
 
   if (!output_file) return;
 
-  val = read_32bit_value();
+  val = read_le_32bit_value();
 
   if (val != (uint32_t)-1) {
     /* There are counters present in the file. Merge them. */
