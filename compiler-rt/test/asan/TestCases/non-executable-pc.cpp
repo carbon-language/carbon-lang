@@ -5,6 +5,9 @@
 // Not every OS lists every memory region in MemoryMappingLayout.
 // REQUIRES: linux || freebsd || netbsd
 
+// We don't have non-execute protection on s390 processors before z14.
+// UNSUPPORTED: s390
+
 #include <assert.h>
 
 typedef void void_f();
