@@ -14,4 +14,4 @@ f:
 
 // MAP: DW_AT_name [DW_FORM_string] ("src.s")
 // MAP: DW_AT_comp_dir [DW_FORM_string] ("src_root")
-// MAP: DW_AT_decl_file [DW_FORM_data4] ("src_root/src.s")
+// MAP: DW_AT_decl_file [DW_FORM_data4] ("src_root{{(/|\\)}}src.s")
