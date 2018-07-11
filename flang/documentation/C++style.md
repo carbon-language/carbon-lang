@@ -106,6 +106,7 @@ Use `{braced initializers}` in all circumstances where they work, including
 default data member initialization.  They inhibit implicit truncation.
 Don't use `= expr` initialization just to effect implicit truncation;
 prefer an explicit `static_cast<>`.
+With C++17, braced initializers work fine with `auto` too.
 1. Avoid unsigned types apart from `size_t`, which must be used with care.
 When `int` just obviously works, just use `int`.  When you need something
 bigger than `int`, use `std::int64_t` rather than `long` or `long long`.
