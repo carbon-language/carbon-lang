@@ -123,7 +123,9 @@ bool WebAssemblyAddMissingPrototypes::runOnModule(Module &M) {
         Replacements.emplace_back(&F, NewF);
       } else {
         dbgs() << *U.getUser()->getType() << "\n";
+#ifndef NDEBUG
         U.getUser()->dump();
+#endif
         report_fatal_error(
             "unexpected use of prototypeless function: " + F.getName() + "\n");
       }
