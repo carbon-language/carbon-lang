@@ -483,7 +483,7 @@ while.end:                                        ; preds = %while.cond.while.en
   ret i32 %cnt.0.lcssa
 }
 
-; FIXME: We should not transform this loop. It returns 1 for an input of both
+; We can't easily transform this loop. It returns 1 for an input of both
 ; 0 and 1.
 ;
 ; int ctlz_bad(unsigned n)
@@ -496,15 +496,22 @@ while.end:                                        ; preds = %while.cond.while.en
 ;   return i;
 ; }
 ;
-; ALL:  entry
-; ALL-NEXT:  %0 = call i32 @llvm.ctlz.i32(i32 %n, i1 false)
-; ALL-NEXT:  %1 = sub i32 32, %0
-; ALL-NEXT:  br label %while.cond
-; ALL:  %inc.lcssa = phi i32 [ %1, %while.cond ]
-; ALL:  ret i32 %inc.lcssa
-
 ; Function Attrs: norecurse nounwind readnone uwtable
 define i32 @ctlz_bad(i32 %n) {
+; ALL-LABEL: @ctlz_bad(
+; ALL-NEXT:  entry:
+; ALL-NEXT:    br label [[WHILE_COND:%.*]]
+; ALL:       while.cond:
+; ALL-NEXT:    [[N_ADDR_0:%.*]] = phi i32 [ [[N:%.*]], [[ENTRY:%.*]] ], [ [[SHR:%.*]], [[WHILE_COND]] ]
+; ALL-NEXT:    [[I_0:%.*]] = phi i32 [ 0, [[ENTRY]] ], [ [[INC:%.*]], [[WHILE_COND]] ]
+; ALL-NEXT:    [[SHR]] = lshr i32 [[N_ADDR_0]], 1
+; ALL-NEXT:    [[TOBOOL:%.*]] = icmp eq i32 [[SHR]], 0
+; ALL-NEXT:    [[INC]] = add nsw i32 [[I_0]], 1
+; ALL-NEXT:    br i1 [[TOBOOL]], label [[WHILE_END:%.*]], label [[WHILE_COND]]
+; ALL:       while.end:
+; ALL-NEXT:    [[INC_LCSSA:%.*]] = phi i32 [ [[INC]], [[WHILE_COND]] ]
+; ALL-NEXT:    ret i32 [[INC_LCSSA]]
+;
 entry:
   br label %while.cond
 
