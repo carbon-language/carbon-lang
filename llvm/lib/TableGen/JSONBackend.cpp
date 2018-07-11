@@ -55,7 +55,7 @@ json::Value JSONEmitter::translateInit(const Init &I) {
     json::Array array;
     for (unsigned i = 0, limit = Bits->getNumBits(); i < limit; i++)
       array.push_back(translateInit(*Bits->getBit(i)));
-    return array;
+    return std::move(array);
   } else if (auto *Int = dyn_cast<IntInit>(&I)) {
     return Int->getValue();
   } else if (auto *Str = dyn_cast<StringInit>(&I)) {
@@ -66,7 +66,7 @@ json::Value JSONEmitter::translateInit(const Init &I) {
     json::Array array;
     for (auto val : *List)
       array.push_back(translateInit(*val));
-    return array;
+    return std::move(array);
   }
 
   // Init subclasses that we return as JSON objects containing a
@@ -80,17 +80,17 @@ json::Value JSONEmitter::translateInit(const Init &I) {
   if (auto *Def = dyn_cast<DefInit>(&I)) {
     obj["kind"] = "def";
     obj["def"] = Def->getDef()->getName();
-    return obj;
+    return std::move(obj);
   } else if (auto *Var = dyn_cast<VarInit>(&I)) {
     obj["kind"] = "var";
     obj["var"] = Var->getName();
-    return obj;
+    return std::move(obj);
   } else if (auto *VarBit = dyn_cast<VarBitInit>(&I)) {
     if (auto *Var = dyn_cast<VarInit>(VarBit->getBitVar())) {
       obj["kind"] = "varbit";
       obj["var"] = Var->getName();
       obj["index"] = VarBit->getBitNum();
-      return obj;
+      return std::move(obj);
     }
   } else if (auto *Dag = dyn_cast<DagInit>(&I)) {
     obj["kind"] = "dag";
@@ -108,7 +108,7 @@ json::Value JSONEmitter::translateInit(const Init &I) {
       args.push_back(std::move(arg));
     }
     obj["args"] = std::move(args);
-    return obj;
+    return std::move(obj);
   }
 
   // Final fallback: anything that gets past here is simply given a
@@ -117,7 +117,7 @@ json::Value JSONEmitter::translateInit(const Init &I) {
 
   assert(!I.isConcrete());
   obj["kind"] = "complex";
-  return obj;
+  return std::move(obj);
 }
 
 void JSONEmitter::run(raw_ostream &OS) {
