@@ -47,7 +47,7 @@ public:
   }
   Indirection &operator=(Indirection &&that) {
     CHECK(that.p_ && "move assignment of null Indirection to Indirection");
-    auto tmp = p_;
+    auto tmp{p_};
     p_ = that.p_;
     that.p_ = tmp;
     return *this;
@@ -95,7 +95,7 @@ public:
   }
   Indirection &operator=(Indirection &&that) {
     CHECK(that.p_ && "move assignment of null Indirection to Indirection");
-    auto tmp = p_;
+    auto tmp{p_};
     p_ = that.p_;
     that.p_ = tmp;
     return *this;

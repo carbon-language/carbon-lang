@@ -123,7 +123,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Add(
     yFraction = yFraction.NOT();
     carry = roundingBits.Negate();
   }
-  auto sum = fraction.AddUnsigned(yFraction, carry);
+  auto sum{fraction.AddUnsigned(yFraction, carry)};
   fraction = sum.value;
   if (isNegative == yIsNegative && sum.carry) {
     roundingBits.ShiftRight(sum.value.BTEST(0));
@@ -154,7 +154,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Multiply(
         result.value.word_ = InfinityWord(isNegative);
       }
     } else {
-      auto product = GetFraction().MultiplyUnsigned(y.GetFraction());
+      auto product{GetFraction().MultiplyUnsigned(y.GetFraction())};
       std::int64_t exponent{CombineExponents(y, false)};
       if (exponent < 1) {
         int rshift = 1 - exponent;

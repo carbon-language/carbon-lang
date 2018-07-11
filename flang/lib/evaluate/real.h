@@ -173,7 +173,7 @@ public:
         if (!fraction.IBITS(0, rshift).IsZero()) {
           result.flags.set(RealFlag::Inexact);
         }
-        auto truncated = result.value.ConvertUnsigned(fraction.SHIFTR(rshift));
+        auto truncated{result.value.ConvertUnsigned(fraction.SHIFTR(rshift))};
         if (truncated.overflow) {
           result.flags.set(RealFlag::Overflow);
         } else {
@@ -191,7 +191,7 @@ public:
       if (result.flags.test(RealFlag::Overflow)) {
         result.value = result.value.HUGE();
       } else if (isNegative) {
-        auto negated = result.value.Negate();
+        auto negated{result.value.Negate()};
         if (negated.overflow) {
           result.flags.set(RealFlag::Overflow);
           result.value = result.value.HUGE();

@@ -39,7 +39,7 @@ public:
       if (rshift >= fraction.bits + 2) {
         sticky_ = !fraction.IsZero();
       } else {
-        auto mask = fraction.MASKR(rshift - 2);
+        auto mask{fraction.MASKR(rshift - 2)};
         sticky_ = !fraction.IAND(mask).IsZero();
       }
     }
