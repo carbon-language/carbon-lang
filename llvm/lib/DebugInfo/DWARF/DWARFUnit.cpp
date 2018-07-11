@@ -593,7 +593,8 @@ DWARFDie DWARFUnit::getPreviousSibling(const DWARFDebugInfoEntry *Die) {
     return DWARFDie();
 
   // Find the previous DIE whose depth is the same as the Die's depth.
-  for (size_t I = getDIEIndex(Die) - 1; I >= 0; --I) {
+  for (size_t I = getDIEIndex(Die); I > 0;) {
+    --I;
     if (DieArray[I].getDepth() == Depth - 1)
       return DWARFDie();
     if (DieArray[I].getDepth() == Depth)
