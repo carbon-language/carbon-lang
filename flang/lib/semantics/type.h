@@ -41,8 +41,8 @@ leaves are concrete types:
         ComplexTypeSpec
     DerivedTypeSpec
 
-TypeSpec classes are immutable. For instrinsic types (except character) there
-is a limited number of instances -- one for each kind.
+TypeSpec classes are immutable. For intrinsic types (except character) there
+are a limited number of instances -- one for each kind.
 
 A DerivedTypeSpec is based on a DerivedTypeDef (from a derived type statement)
 with kind and len parameter values provided.

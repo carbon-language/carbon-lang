@@ -24,7 +24,7 @@
 namespace Fortran::evaluate {
 
 // An expression of some specific result type.
-template<Category CAT, int KIND> struct Expr;
+template<Category CAT, int KIND> class Expr;
 
 // An expression of some supported kind of a category of result type.
 template<Category CAT> struct CategoryExpr;
