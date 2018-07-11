@@ -290,7 +290,7 @@ public:
   void Unparse(const Pass &x) { Word("PASS"), Walk("(", x.v, ")"); }
   void Unparse(const Initialization &x) {  // R743 & R805
     std::visit(
-        common::visitors{[&](const ConstantExpr &y) { Put("{"), Walk(y); },
+        common::visitors{[&](const ConstantExpr &y) { Put(" = "), Walk(y); },
             [&](const NullInit &y) { Put(" => "), Walk(y); },
             [&](const InitialDataTarget &y) { Put(" => "), Walk(y); },
             [&](const std::list<common::Indirection<DataStmtValue>> &y) {
