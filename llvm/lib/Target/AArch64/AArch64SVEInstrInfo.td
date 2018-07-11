@@ -112,6 +112,8 @@ let Predicates = [HasSVE] in {
   // Select elements from either vector (predicated)
   defm SEL_ZPZZ    : sve_int_sel_vvv<"sel">;
 
+  defm COMPACT_ZPZ : sve_int_perm_compact<"compact">;
+
   def AND_PPzPP   : sve_int_pred_log<0b0000, "and">;
   def BIC_PPzPP   : sve_int_pred_log<0b0001, "bic">;
   def EOR_PPzPP   : sve_int_pred_log<0b0010, "eor">;

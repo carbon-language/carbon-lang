@@ -2574,6 +2574,28 @@ multiclass sve_int_perm_cpy_v<string asm> {
                   (!cast<Instruction>(NAME # _D) ZPR64:$Zd, PPR3bAny:$Pg, FPR64:$Vn), 1>;
 }
 
+class sve_int_perm_compact<bit sz, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zd), (ins PPR3bAny:$Pg, zprty:$Zn),
+  asm, "\t$Zd, $Pg, $Zn",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zd;
+  bits<5> Zn;
+  let Inst{31-23} = 0b000001011;
+  let Inst{22}    = sz;
+  let Inst{21-13} = 0b100001100;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve_int_perm_compact<string asm> {
+  def _S : sve_int_perm_compact<0b0, asm, ZPR32>;
+  def _D : sve_int_perm_compact<0b1, asm, ZPR64>;
+}
+
+
 //===----------------------------------------------------------------------===//
 // SVE Memory - Contiguous Load Group
 //===----------------------------------------------------------------------===//
