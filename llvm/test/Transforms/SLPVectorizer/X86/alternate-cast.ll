@@ -167,3 +167,110 @@ define <8 x float> @fneg_fabs(<8 x float> %a) {
   %r7 = insertelement <8 x float>   %r6, float %ac7, i32 7
   ret <8 x float> %r7
 }
+
+define <8 x i32> @sext_zext(<8 x i16> %a) {
+; CHECK-LABEL: @sext_zext(
+; CHECK-NEXT:    [[A0:%.*]] = extractelement <8 x i16> [[A:%.*]], i32 0
+; CHECK-NEXT:    [[A1:%.*]] = extractelement <8 x i16> [[A]], i32 1
+; CHECK-NEXT:    [[A2:%.*]] = extractelement <8 x i16> [[A]], i32 2
+; CHECK-NEXT:    [[A3:%.*]] = extractelement <8 x i16> [[A]], i32 3
+; CHECK-NEXT:    [[A4:%.*]] = extractelement <8 x i16> [[A]], i32 4
+; CHECK-NEXT:    [[A5:%.*]] = extractelement <8 x i16> [[A]], i32 5
+; CHECK-NEXT:    [[A6:%.*]] = extractelement <8 x i16> [[A]], i32 6
+; CHECK-NEXT:    [[A7:%.*]] = extractelement <8 x i16> [[A]], i32 7
+; CHECK-NEXT:    [[AB0:%.*]] = sext i16 [[A0]] to i32
+; CHECK-NEXT:    [[AB1:%.*]] = sext i16 [[A1]] to i32
+; CHECK-NEXT:    [[AB2:%.*]] = sext i16 [[A2]] to i32
+; CHECK-NEXT:    [[AB3:%.*]] = sext i16 [[A3]] to i32
+; CHECK-NEXT:    [[AB4:%.*]] = zext i16 [[A4]] to i32
+; CHECK-NEXT:    [[AB5:%.*]] = zext i16 [[A5]] to i32
+; CHECK-NEXT:    [[AB6:%.*]] = zext i16 [[A6]] to i32
+; CHECK-NEXT:    [[AB7:%.*]] = zext i16 [[A7]] to i32
+; CHECK-NEXT:    [[R0:%.*]] = insertelement <8 x i32> undef, i32 [[AB0]], i32 0
+; CHECK-NEXT:    [[R1:%.*]] = insertelement <8 x i32> [[R0]], i32 [[AB1]], i32 1
+; CHECK-NEXT:    [[R2:%.*]] = insertelement <8 x i32> [[R1]], i32 [[AB2]], i32 2
+; CHECK-NEXT:    [[R3:%.*]] = insertelement <8 x i32> [[R2]], i32 [[AB3]], i32 3
+; CHECK-NEXT:    [[R4:%.*]] = insertelement <8 x i32> [[R3]], i32 [[AB4]], i32 4
+; CHECK-NEXT:    [[R5:%.*]] = insertelement <8 x i32> [[R4]], i32 [[AB5]], i32 5
+; CHECK-NEXT:    [[R6:%.*]] = insertelement <8 x i32> [[R5]], i32 [[AB6]], i32 6
+; CHECK-NEXT:    [[R7:%.*]] = insertelement <8 x i32> [[R6]], i32 [[AB7]], i32 7
+; CHECK-NEXT:    ret <8 x i32> [[R7]]
+;
+  %a0 = extractelement <8 x i16> %a, i32 0
+  %a1 = extractelement <8 x i16> %a, i32 1
+  %a2 = extractelement <8 x i16> %a, i32 2
+  %a3 = extractelement <8 x i16> %a, i32 3
+  %a4 = extractelement <8 x i16> %a, i32 4
+  %a5 = extractelement <8 x i16> %a, i32 5
+  %a6 = extractelement <8 x i16> %a, i32 6
+  %a7 = extractelement <8 x i16> %a, i32 7
+  %ab0 = sext i16 %a0 to i32
+  %ab1 = sext i16 %a1 to i32
+  %ab2 = sext i16 %a2 to i32
+  %ab3 = sext i16 %a3 to i32
+  %ab4 = zext i16 %a4 to i32
+  %ab5 = zext i16 %a5 to i32
+  %ab6 = zext i16 %a6 to i32
+  %ab7 = zext i16 %a7 to i32
+  %r0 = insertelement <8 x i32> undef, i32 %ab0, i32 0
+  %r1 = insertelement <8 x i32>   %r0, i32 %ab1, i32 1
+  %r2 = insertelement <8 x i32>   %r1, i32 %ab2, i32 2
+  %r3 = insertelement <8 x i32>   %r2, i32 %ab3, i32 3
+  %r4 = insertelement <8 x i32>   %r3, i32 %ab4, i32 4
+  %r5 = insertelement <8 x i32>   %r4, i32 %ab5, i32 5
+  %r6 = insertelement <8 x i32>   %r5, i32 %ab6, i32 6
+  %r7 = insertelement <8 x i32>   %r6, i32 %ab7, i32 7
+  ret <8 x i32> %r7
+}
+
+define <8 x float> @sitofp_4i32_8i16(<4 x i32> %a, <8 x i16> %b) {
+; CHECK-LABEL: @sitofp_4i32_8i16(
+; CHECK-NEXT:    [[B0:%.*]] = extractelement <8 x i16> [[B:%.*]], i32 0
+; CHECK-NEXT:    [[B1:%.*]] = extractelement <8 x i16> [[B]], i32 1
+; CHECK-NEXT:    [[B2:%.*]] = extractelement <8 x i16> [[B]], i32 2
+; CHECK-NEXT:    [[B3:%.*]] = extractelement <8 x i16> [[B]], i32 3
+; CHECK-NEXT:    [[TMP1:%.*]] = sitofp <4 x i32> [[A:%.*]] to <4 x float>
+; CHECK-NEXT:    [[AB4:%.*]] = sitofp i16 [[B0]] to float
+; CHECK-NEXT:    [[AB5:%.*]] = sitofp i16 [[B1]] to float
+; CHECK-NEXT:    [[AB6:%.*]] = sitofp i16 [[B2]] to float
+; CHECK-NEXT:    [[AB7:%.*]] = sitofp i16 [[B3]] to float
+; CHECK-NEXT:    [[TMP2:%.*]] = extractelement <4 x float> [[TMP1]], i32 0
+; CHECK-NEXT:    [[R0:%.*]] = insertelement <8 x float> undef, float [[TMP2]], i32 0
+; CHECK-NEXT:    [[TMP3:%.*]] = extractelement <4 x float> [[TMP1]], i32 1
+; CHECK-NEXT:    [[R1:%.*]] = insertelement <8 x float> [[R0]], float [[TMP3]], i32 1
+; CHECK-NEXT:    [[TMP4:%.*]] = extractelement <4 x float> [[TMP1]], i32 2
+; CHECK-NEXT:    [[R2:%.*]] = insertelement <8 x float> [[R1]], float [[TMP4]], i32 2
+; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <4 x float> [[TMP1]], i32 3
+; CHECK-NEXT:    [[R3:%.*]] = insertelement <8 x float> [[R2]], float [[TMP5]], i32 3
+; CHECK-NEXT:    [[R4:%.*]] = insertelement <8 x float> [[R3]], float [[AB4]], i32 4
+; CHECK-NEXT:    [[R5:%.*]] = insertelement <8 x float> [[R4]], float [[AB5]], i32 5
+; CHECK-NEXT:    [[R6:%.*]] = insertelement <8 x float> [[R5]], float [[AB6]], i32 6
+; CHECK-NEXT:    [[R7:%.*]] = insertelement <8 x float> [[R6]], float [[AB7]], i32 7
+; CHECK-NEXT:    ret <8 x float> [[R7]]
+;
+  %a0 = extractelement <4 x i32> %a, i32 0
+  %a1 = extractelement <4 x i32> %a, i32 1
+  %a2 = extractelement <4 x i32> %a, i32 2
+  %a3 = extractelement <4 x i32> %a, i32 3
+  %b0 = extractelement <8 x i16> %b, i32 0
+  %b1 = extractelement <8 x i16> %b, i32 1
+  %b2 = extractelement <8 x i16> %b, i32 2
+  %b3 = extractelement <8 x i16> %b, i32 3
+  %ab0 = sitofp i32 %a0 to float
+  %ab1 = sitofp i32 %a1 to float
+  %ab2 = sitofp i32 %a2 to float
+  %ab3 = sitofp i32 %a3 to float
+  %ab4 = sitofp i16 %b0 to float
+  %ab5 = sitofp i16 %b1 to float
+  %ab6 = sitofp i16 %b2 to float
+  %ab7 = sitofp i16 %b3 to float
+  %r0 = insertelement <8 x float> undef, float %ab0, i32 0
+  %r1 = insertelement <8 x float>   %r0, float %ab1, i32 1
+  %r2 = insertelement <8 x float>   %r1, float %ab2, i32 2
+  %r3 = insertelement <8 x float>   %r2, float %ab3, i32 3
+  %r4 = insertelement <8 x float>   %r3, float %ab4, i32 4
+  %r5 = insertelement <8 x float>   %r4, float %ab5, i32 5
+  %r6 = insertelement <8 x float>   %r5, float %ab6, i32 6
+  %r7 = insertelement <8 x float>   %r6, float %ab7, i32 7
+  ret <8 x float> %r7
+}
