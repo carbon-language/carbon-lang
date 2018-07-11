@@ -659,10 +659,11 @@ TYPE_PARSER(construct<PrivateOrSequence>(Parser<PrivateStmt>{}) ||
     construct<PrivateOrSequence>(Parser<SequenceStmt>{}))
 
 // R730 end-type-stmt -> END TYPE [type-name]
-constexpr auto missingOptionalName {defaulted(cut >> maybe(name))};
+constexpr auto missingOptionalName{defaulted(cut >> maybe(name))};
 constexpr auto noNameEnd{"END" >> missingOptionalName};
 constexpr auto bareEnd{noNameEnd / lookAhead(endOfStmt)};
-constexpr auto endStmtErrorRecovery{("END"_tok / SkipTo<'\n'>{} || consumedAllInput) >> missingOptionalName};
+constexpr auto endStmtErrorRecovery{
+    ("END"_tok / SkipTo<'\n'>{} || consumedAllInput) >> missingOptionalName};
 TYPE_PARSER(construct<EndTypeStmt>(
     recovery("END TYPE" >> maybe(name), endStmtErrorRecovery)))
 
