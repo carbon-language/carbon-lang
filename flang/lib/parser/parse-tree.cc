@@ -74,7 +74,7 @@ static Designator MakeArrayElementRef(Name &name, std::list<Expr> &subscripts) {
 }
 
 Designator FunctionReference::ConvertToArrayElementRef() {
-  auto &name = std::get<parser::Name>(std::get<ProcedureDesignator>(v.t).u);
+  auto &name{std::get<parser::Name>(std::get<ProcedureDesignator>(v.t).u)};
   std::list<Expr> args;
   for (auto &arg : std::get<std::list<ActualArgSpec>>(v.t)) {
     std::visit(
@@ -104,15 +104,15 @@ Designator FunctionReference::ConvertToArrayElementRef() {
 // R1544 stmt-function-stmt
 // Convert this stmt-function-stmt to an array element assignment statement.
 Statement<ActionStmt> StmtFunctionStmt::ConvertToAssignment() {
-  auto &funcName = std::get<Name>(t);
-  auto &funcArgs = std::get<std::list<Name>>(t);
-  auto &funcExpr = std::get<Scalar<Expr>>(t).thing;
+  auto &funcName{std::get<Name>(t)};
+  auto &funcArgs{std::get<std::list<Name>>(t)};
+  auto &funcExpr{std::get<Scalar<Expr>>(t).thing};
   std::list<Expr> subscripts;
   for (Name &arg : funcArgs) {
     subscripts.push_back(Expr{common::Indirection{Designator{arg}}});
   }
-  auto &&variable =
-      Variable{common::Indirection{MakeArrayElementRef(funcName, subscripts)}};
+  auto variable{
+      Variable{common::Indirection{MakeArrayElementRef(funcName, subscripts)}}};
   return Statement{std::nullopt,
       ActionStmt{common::Indirection{
           AssignmentStmt{std::move(variable), std::move(funcExpr)}}}};

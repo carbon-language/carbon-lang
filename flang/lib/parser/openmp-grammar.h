@@ -39,7 +39,7 @@
 // OpenMP Directives and Clauses
 namespace Fortran::parser {
 
-constexpr auto beginOmpDirective = skipEmptyLines >> space >> "!$OMP "_sptok;
+constexpr auto beginOmpDirective{skipEmptyLines >> space >> "!$OMP "_sptok};
 
 // OpenMP Clauses
 
@@ -108,21 +108,21 @@ TYPE_PARSER(construct<OmpIfClause>(
     scalarLogicalExpr))
 
 // REDUCTION(reduction-identifier: list)
-constexpr auto reductionBinaryOperator = "+" >>
-        pure(OmpReductionOperator::BinaryOperator::Add) ||
+constexpr auto reductionBinaryOperator{
+    "+" >> pure(OmpReductionOperator::BinaryOperator::Add) ||
     "-" >> pure(OmpReductionOperator::BinaryOperator::Subtract) ||
     "*" >> pure(OmpReductionOperator::BinaryOperator::Multiply) ||
     ".AND." >> pure(OmpReductionOperator::BinaryOperator::AND) ||
     ".OR." >> pure(OmpReductionOperator::BinaryOperator::OR) ||
     ".EQV." >> pure(OmpReductionOperator::BinaryOperator::EQV) ||
-    ".NEQV." >> pure(OmpReductionOperator::BinaryOperator::NEQV);
+    ".NEQV." >> pure(OmpReductionOperator::BinaryOperator::NEQV)};
 
-constexpr auto reductionProcedureOperator = "MIN" >>
-        pure(OmpReductionOperator::ProcedureOperator::MIN) ||
+constexpr auto reductionProcedureOperator{
+    "MIN" >> pure(OmpReductionOperator::ProcedureOperator::MIN) ||
     "MAX" >> pure(OmpReductionOperator::ProcedureOperator::MAX) ||
     "IAND" >> pure(OmpReductionOperator::ProcedureOperator::IAND) ||
     "IOR" >> pure(OmpReductionOperator::ProcedureOperator::IOR) ||
-    "IEOR" >> pure(OmpReductionOperator::ProcedureOperator::IEOR);
+    "IEOR" >> pure(OmpReductionOperator::ProcedureOperator::IEOR)};
 
 TYPE_PARSER(construct<OmpReductionOperator>(reductionBinaryOperator) ||
     construct<OmpReductionOperator>(reductionProcedureOperator))

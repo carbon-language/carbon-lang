@@ -62,8 +62,8 @@ constexpr AnyOfChars operator""_ch(const char str[], std::size_t n) {
   return AnyOfChars{SetOfChars(str, n)};
 }
 
-constexpr auto letter = "abcdefghijklmnopqrstuvwxyz"_ch;
-constexpr auto digit = "0123456789"_ch;
+constexpr auto letter{"abcdefghijklmnopqrstuvwxyz"_ch};
+constexpr auto digit{"0123456789"_ch};
 
 // Skips over optional spaces.  Always succeeds.
 constexpr struct Space {
@@ -221,7 +221,7 @@ struct CharLiteralChar {
   };
   using resultType = Result;
   static std::optional<Result> Parse(ParseState &state) {
-    auto at = state.GetLocation();
+    auto at{state.GetLocation()};
     std::optional<const char *> och{nextCh.Parse(state)};
     if (!och.has_value()) {
       return {};
@@ -250,7 +250,7 @@ struct CharLiteralChar {
     if (IsOctalDigit(ch)) {
       ch -= '0';
       for (int j = (ch > 3 ? 1 : 2); j-- > 0;) {
-        static constexpr auto octalDigit = attempt("01234567"_ch);
+        static constexpr auto octalDigit{attempt("01234567"_ch)};
         och = octalDigit.Parse(state);
         if (och.has_value()) {
           ch = 8 * ch + **och - '0';
@@ -260,11 +260,11 @@ struct CharLiteralChar {
       }
     } else if (ch == 'x' || ch == 'X') {
       ch = 0;
-      static constexpr auto hexDigit = "0123456789abcdefABCDEF"_ch;
+      static constexpr auto hexDigit{"0123456789abcdefABCDEF"_ch};
       och = hexDigit.Parse(state);
       if (och.has_value()) {
         ch = HexadecimalDigitValue(**och);
-        static constexpr auto hexDigit2 = attempt("0123456789abcdefABCDEF"_ch);
+        static constexpr auto hexDigit2{attempt("0123456789abcdefABCDEF"_ch)};
         och = hexDigit2.Parse(state);
         if (och.has_value()) {
           ch = 16 * ch + HexadecimalDigitValue(**och);
@@ -283,10 +283,10 @@ template<char quote> struct CharLiteral {
   using resultType = std::string;
   static std::optional<std::string> Parse(ParseState &state) {
     std::string str;
-    static constexpr auto nextch = attempt(CharLiteralChar{});
+    static constexpr auto nextch{attempt(CharLiteralChar{})};
     while (std::optional<CharLiteralChar::Result> ch{nextch.Parse(state)}) {
       if (ch->ch == quote && !ch->wasEscaped) {
-        static constexpr auto doubled = attempt(AnyOfChars{SetOfChars{quote}});
+        static constexpr auto doubled{attempt(AnyOfChars{SetOfChars{quote}})};
         if (!doubled.Parse(state).has_value()) {
           return {str};
         }
@@ -315,7 +315,7 @@ struct BOZLiteral {
   using resultType = std::uint64_t;
   static std::optional<std::uint64_t> Parse(ParseState &state) {
     std::optional<int> shift;
-    auto baseChar = [&shift](char ch) -> bool {
+    auto baseChar{[&shift](char ch) -> bool {
       switch (ch) {
       case 'b': shift = 1; return true;
       case 'o': shift = 3; return true;
@@ -323,7 +323,7 @@ struct BOZLiteral {
       case 'x': shift = 4; return true;
       default: return false;
       }
-    };
+    }};
 
     space.Parse(state);
     const char *start{state.GetLocation()};
@@ -408,7 +408,7 @@ constexpr struct DigitString {
     }
     std::uint64_t value = **firstDigit - '0';
     bool overflow{false};
-    static constexpr auto getDigit = attempt(digit);
+    static constexpr auto getDigit{attempt(digit)};
     while (auto nextDigit{getDigit.Parse(state)}) {
       if (value > std::numeric_limits<std::uint64_t>::max() / 10) {
         overflow = true;
@@ -473,8 +473,8 @@ struct SignedIntLiteralConstantWithoutKind {
   using resultType = std::int64_t;
   static std::optional<std::int64_t> Parse(ParseState &state) {
     Location at{state.GetLocation()};
-    static constexpr auto minus = attempt("-"_tok);
-    static constexpr auto plus = maybe("+"_tok);
+    static constexpr auto minus{attempt("-"_tok)};
+    static constexpr auto plus{maybe("+"_tok)};
     bool negate{false};
     if (minus.Parse(state)) {
       negate = true;
@@ -508,14 +508,14 @@ struct SignedDigitString {
 struct DigitStringIgnoreSpaces {
   using resultType = std::uint64_t;
   static std::optional<std::uint64_t> Parse(ParseState &state) {
-    static constexpr auto getFirstDigit = space >> digit;
+    static constexpr auto getFirstDigit{space >> digit};
     std::optional<const char *> firstDigit{getFirstDigit.Parse(state)};
     if (!firstDigit.has_value()) {
       return {};
     }
     std::uint64_t value = **firstDigit - '0';
     bool overflow{false};
-    static constexpr auto getDigit = space >> attempt(digit);
+    static constexpr auto getDigit{space >> attempt(digit)};
     while (auto nextDigit{getDigit.Parse(state)}) {
       if (value > std::numeric_limits<std::uint64_t>::max() / 10) {
         overflow = true;
@@ -546,7 +546,7 @@ struct PositiveDigitStringIgnoreSpaces {
 struct SignedDigitStringIgnoreSpaces {
   using resultType = std::int64_t;
   static std::optional<std::int64_t> Parse(ParseState &state) {
-    static constexpr auto getSign = space >> attempt("+-"_ch);
+    static constexpr auto getSign{space >> attempt("+-"_ch)};
     bool negate{false};
     if (std::optional<const char *> sign{getSign.Parse(state)}) {
       negate = **sign == '-';
@@ -568,13 +568,13 @@ struct HollerithLiteral {
     if (!charCount.has_value() || *charCount < 1) {
       return {};
     }
-    static constexpr auto letterH = "h"_ch;
+    static constexpr auto letterH{"h"_ch};
     std::optional<const char *> h{letterH.Parse(state)};
     if (!h.has_value()) {
       return {};
     }
     std::string content;
-    for (auto j = *charCount; j-- > 0;) {
+    for (auto j{*charCount}; j-- > 0;) {
       int bytes{1};
       const char *p{state.GetLocation()};
       if (state.encoding() == Encoding::EUC_JP) {
@@ -707,7 +707,7 @@ constexpr struct FormDirectivesAndEmptyLines {
 } skipEmptyLines;
 
 // R602 underscore -> _
-constexpr auto underscore = "_"_ch;
+constexpr auto underscore{"_"_ch};
 
 // R516 keyword -> name
 // R601 alphanumeric-character -> letter | digit | underscore
@@ -717,18 +717,18 @@ constexpr auto underscore = "_"_ch;
 // PGI and ifort accept '$' in identifiers, even as the initial character.
 // Cray and gfortran accept '$', but not as the first character.
 // Cray accepts '@' as well.
-constexpr auto otherIdChar = underscore / !"'\""_ch || extension("$@"_ch);
-constexpr auto nonDigitIdChar = letter || otherIdChar;
-constexpr auto rawName = nonDigitIdChar >> many(nonDigitIdChar || digit);
+constexpr auto otherIdChar{underscore / !"'\""_ch || extension("$@"_ch)};
+constexpr auto nonDigitIdChar{letter || otherIdChar};
+constexpr auto rawName{nonDigitIdChar >> many(nonDigitIdChar || digit)};
 TYPE_PARSER(space >> sourced(rawName >> construct<Name>()))
-constexpr auto keyword = construct<Keyword>(name);
+constexpr auto keyword{construct<Keyword>(name)};
 
 // R1003 defined-unary-op -> . letter [letter]... .
 // R1023 defined-binary-op -> . letter [letter]... .
 // R1414 local-defined-operator -> defined-unary-op | defined-binary-op
 // R1415 use-defined-operator -> defined-unary-op | defined-binary-op
 // N.B. The name of the operator is captured without the periods around it.
-constexpr auto definedOpNameChar = letter || extension("$@"_ch);
+constexpr auto definedOpNameChar{letter || extension("$@"_ch)};
 TYPE_PARSER(space >> "."_ch >>
     construct<DefinedOpName>(
         sourced(some(definedOpNameChar) >> construct<Name>())) /

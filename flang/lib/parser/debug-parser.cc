@@ -20,8 +20,8 @@
 namespace Fortran::parser {
 
 std::optional<Success> DebugParser::Parse(ParseState &state) const {
-  if (auto ustate = state.userState()) {
-    if (auto out = ustate->debugOutput()) {
+  if (auto ustate{state.userState()}) {
+    if (auto out{ustate->debugOutput()}) {
       std::string note{str_, length_};
       Message message{state.GetLocation(),
           MessageFormattedText{"parser debug: %s"_en_US, note.data()}};

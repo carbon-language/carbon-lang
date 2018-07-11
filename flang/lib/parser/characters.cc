@@ -84,7 +84,7 @@ std::optional<std::size_t> CountCharacters(
 
 std::string QuoteCharacterLiteral(const std::string &str) {
   std::string result{'"'};
-  const auto emit = [&](char ch) { result += ch; };
+  const auto emit{[&](char ch) { result += ch; }};
   for (char ch : str) {
     EmitQuotedChar(ch, emit, emit);
   }

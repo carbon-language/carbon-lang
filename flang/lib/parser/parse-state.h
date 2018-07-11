@@ -148,7 +148,7 @@ public:
   const char *GetLocation() const { return p_; }
 
   void PushContext(MessageFixedText text) {
-    auto m = new Message{p_, text};  // reference-counted
+    auto m{new Message{p_, text}};  // reference-counted
     m->SetContext(context_.get());
     context_ = Message::Reference{m};
   }

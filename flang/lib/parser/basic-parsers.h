@@ -268,8 +268,8 @@ private:
           typename std::decay<decltype(parser)>::type::resultType>);
       result = parser.Parse(state);
       if (!result.has_value()) {
-        auto prevEnd = prevState.GetLocation();
-        auto lastEnd = state.GetLocation();
+        auto prevEnd{prevState.GetLocation()};
+        auto lastEnd{state.GetLocation()};
         if (prevEnd == lastEnd) {
           prevState.messages().Incorporate(state.messages());
           if (state.anyDeferredMessages()) {
@@ -327,8 +327,8 @@ public:
     }
     // Both alternatives failed.  Retain the state (and messages) from the
     // alternative parse that went the furthest.
-    auto paEnd = paState.GetLocation();
-    auto pbEnd = state.GetLocation();
+    auto paEnd{paState.GetLocation()};
+    auto pbEnd{state.GetLocation()};
     if (paEnd > pbEnd) {
       messages.Annex(paState.messages());
       state = std::move(paState);
@@ -421,7 +421,7 @@ public:
   constexpr ManyParser(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     resultType result;
-    auto at = state.GetLocation();
+    auto at{state.GetLocation()};
     while (std::optional<paType> x{parser_.Parse(state)}) {
       result.emplace_back(std::move(*x));
       if (state.GetLocation() <= at) {
@@ -452,7 +452,7 @@ public:
   constexpr SomeParser(const SomeParser &) = default;
   constexpr SomeParser(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    auto start = state.GetLocation();
+    auto start{state.GetLocation()};
     if (std::optional<paType> first{parser_.Parse(state)}) {
       resultType result;
       result.emplace_back(std::move(*first));
@@ -479,7 +479,7 @@ public:
   constexpr SkipManyParser(const SkipManyParser &) = default;
   constexpr SkipManyParser(const PA &parser) : parser_{parser} {}
   std::optional<Success> Parse(ParseState &state) const {
-    for (auto at = state.GetLocation();
+    for (auto at{state.GetLocation()};
          parser_.Parse(state) && state.GetLocation() > at;
          at = state.GetLocation()) {
     }
@@ -954,7 +954,7 @@ public:
   constexpr explicit Construct1(const PA &parser) : parser_{parser} {}
   constexpr Construct1(const Construct1 &) = default;
   std::optional<T> Parse(ParseState &state) const {
-    if (auto ax = parser_.Parse(state)) {
+    if (auto ax{parser_.Parse(state)}) {
       return {T(std::move(*ax))};
     }
     return {};
@@ -988,8 +988,8 @@ public:
   constexpr Construct2(const PA &pa, const PB &pb) : pa_{pa}, pb_{pb} {}
   constexpr Construct2(const Construct2 &) = default;
   std::optional<T> Parse(ParseState &state) const {
-    if (auto ax = pa_.Parse(state)) {
-      if (auto bx = pb_.Parse(state)) {
+    if (auto ax{pa_.Parse(state)}) {
+      if (auto bx{pb_.Parse(state)}) {
         return {T{std::move(*ax), std::move(*bx)}};
       }
     }
@@ -1013,9 +1013,9 @@ public:
     : pa_{pa}, pb_{pb}, pc_{pc} {}
   constexpr Construct3(const Construct3 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax = pa_.Parse(state)) {
-      if (auto bx = pb_.Parse(state)) {
-        if (auto cx = pc_.Parse(state)) {
+    if (auto ax{pa_.Parse(state)}) {
+      if (auto bx{pb_.Parse(state)}) {
+        if (auto cx{pc_.Parse(state)}) {
           return {T{std::move(*ax), std::move(*bx), std::move(*cx)}};
         }
       }
@@ -1043,10 +1043,10 @@ public:
     : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd} {}
   constexpr Construct4(const Construct4 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax = pa_.Parse(state)) {
-      if (auto bx = pb_.Parse(state)) {
-        if (auto cx = pc_.Parse(state)) {
-          if (auto dx = pd_.Parse(state)) {
+    if (auto ax{pa_.Parse(state)}) {
+      if (auto bx{pb_.Parse(state)}) {
+        if (auto cx{pc_.Parse(state)}) {
+          if (auto dx{pd_.Parse(state)}) {
             return {T{std::move(*ax), std::move(*bx), std::move(*cx),
                 std::move(*dx)}};
           }
@@ -1079,11 +1079,11 @@ public:
     : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe} {}
   constexpr Construct5(const Construct5 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax = pa_.Parse(state)) {
-      if (auto bx = pb_.Parse(state)) {
-        if (auto cx = pc_.Parse(state)) {
-          if (auto dx = pd_.Parse(state)) {
-            if (auto ex = pe_.Parse(state)) {
+    if (auto ax{pa_.Parse(state)}) {
+      if (auto bx{pb_.Parse(state)}) {
+        if (auto cx{pc_.Parse(state)}) {
+          if (auto dx{pd_.Parse(state)}) {
+            if (auto ex{pe_.Parse(state)}) {
               return {T{std::move(*ax), std::move(*bx), std::move(*cx),
                   std::move(*dx), std::move(*ex)}};
             }
@@ -1119,12 +1119,12 @@ public:
     : pa_{pa}, pb_{pb}, pc_{pc}, pd_{pd}, pe_{pe}, pf_{pf} {}
   constexpr Construct6(const Construct6 &) = default;
   std::optional<resultType> Parse(ParseState &state) const {
-    if (auto ax = pa_.Parse(state)) {
-      if (auto bx = pb_.Parse(state)) {
-        if (auto cx = pc_.Parse(state)) {
-          if (auto dx = pd_.Parse(state)) {
-            if (auto ex = pe_.Parse(state)) {
-              if (auto fx = pf_.Parse(state)) {
+    if (auto ax{pa_.Parse(state)}) {
+      if (auto bx{pb_.Parse(state)}) {
+        if (auto cx{pc_.Parse(state)}) {
+          if (auto dx{pd_.Parse(state)}) {
+            if (auto ex{pe_.Parse(state)}) {
+              if (auto fx{pf_.Parse(state)}) {
                 return {T{std::move(*ax), std::move(*bx), std::move(*cx),
                     std::move(*dx), std::move(*ex), std::move(*fx)}};
               }
@@ -1242,8 +1242,8 @@ public:
     if (state.strictConformance()) {
       return {};
     }
-    auto at = state.GetLocation();
-    auto result = parser_.Parse(state);
+    auto at{state.GetLocation()};
+    auto result{parser_.Parse(state)};
     if (result.has_value()) {
       state.set_anyConformanceViolation();
       if (state.warnOnNonstandardUsage()) {
@@ -1274,8 +1274,8 @@ public:
     if (state.strictConformance()) {
       return {};
     }
-    auto at = state.GetLocation();
-    auto result = parser_.Parse(state);
+    auto at{state.GetLocation()};
+    auto result{parser_.Parse(state)};
     if (result) {
       state.set_anyConformanceViolation();
       if (state.warnOnDeprecatedUsage()) {
@@ -1301,7 +1301,7 @@ public:
   constexpr SourcedParser(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
     const char *start{state.GetLocation()};
-    auto result = parser_.Parse(state);
+    auto result{parser_.Parse(state)};
     if (result.has_value()) {
       result->source = CharBlock{start, state.GetLocation()};
     }

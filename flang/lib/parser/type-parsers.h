@@ -37,7 +37,7 @@ template<typename A> struct Parser {
   template<> \
   inline std::optional<typename decltype(pexpr)::resultType> \
   Parser<typename decltype(pexpr)::resultType>::Parse(ParseState &state) { \
-    static constexpr auto parser = (pexpr); \
+    static constexpr auto parser{(pexpr)}; \
     return parser.Parse(state); \
   }
 

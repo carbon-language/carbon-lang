@@ -175,10 +175,10 @@ void AllSources::EmitMessage(std::ostream &o, ProvenanceRange range,
               }
               o << '^';
               if (range.size() > 1) {
-                auto last = range.start() + range.size() - 1;
+                auto last{range.start() + range.size() - 1};
                 if (&MapToOrigin(last) == &origin) {
-                  auto endOffset = origin.covers.MemberOffset(last);
-                  auto endPos = inc.source.FindOffsetLineAndColumn(endOffset);
+                  auto endOffset{origin.covers.MemberOffset(last)};
+                  auto endPos{inc.source.FindOffsetLineAndColumn(endOffset)};
                   if (pos.first == endPos.first) {
                     for (int j{pos.second}; j < endPos.second; ++j) {
                       o << '^';
@@ -253,7 +253,7 @@ int AllSources::GetLineNumber(Provenance at) const {
 }
 
 Provenance AllSources::CompilerInsertionProvenance(char ch) {
-  auto iter = compilerInsertionProvenance_.find(ch);
+  auto iter{compilerInsertionProvenance_.find(ch)};
   if (iter != compilerInsertionProvenance_.end()) {
     return iter->second;
   }

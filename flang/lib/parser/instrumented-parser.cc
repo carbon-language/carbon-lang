@@ -30,16 +30,16 @@ bool operator<(const MessageFixedText &x, const MessageFixedText &y) {
 
 bool ParsingLog::Fails(
     const char *at, const MessageFixedText &tag, ParseState &state) {
-  std::size_t offset = reinterpret_cast<std::size_t>(at);
-  auto posIter = perPos_.find(offset);
+  std::size_t offset{reinterpret_cast<std::size_t>(at)};
+  auto posIter{perPos_.find(offset)};
   if (posIter == perPos_.end()) {
     return false;
   }
-  auto tagIter = posIter->second.perTag.find(tag);
+  auto tagIter{posIter->second.perTag.find(tag)};
   if (tagIter == posIter->second.perTag.end()) {
     return false;
   }
-  auto &entry = tagIter->second;
+  auto &entry{tagIter->second};
   if (entry.deferred && !state.deferMessages()) {
     return false;  // don't fail fast, we want to generate messages
   }
@@ -52,8 +52,8 @@ bool ParsingLog::Fails(
 
 void ParsingLog::Note(const char *at, const MessageFixedText &tag, bool pass,
     const ParseState &state) {
-  std::size_t offset = reinterpret_cast<std::size_t>(at);
-  auto &entry = perPos_[offset].perTag[tag];
+  std::size_t offset{reinterpret_cast<std::size_t>(at)};
+  auto &entry{perPos_[offset].perTag[tag]};
   if (++entry.count == 1) {
     entry.pass = pass;
     entry.deferred = state.deferMessages();
@@ -74,7 +74,7 @@ void ParsingLog::Dump(std::ostream &o, const CookedSource &cooked) const {
     const char *at{reinterpret_cast<const char *>(posLog.first)};
     for (const auto &tagLog : posLog.second.perTag) {
       Message{at, tagLog.first}.Emit(o, cooked, true);
-      auto &entry = tagLog.second;
+      auto &entry{tagLog.second};
       o << "  " << (entry.pass ? "pass" : "fail") << " " << entry.count << '\n';
       entry.messages.Emit(o, cooked, "      ");
     }

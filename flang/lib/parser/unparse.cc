@@ -174,7 +174,7 @@ public:
         x.u);
   }
   void Unparse(const CharLiteralConstant &x) {  // R724
-    if (const auto &k = std::get<std::optional<KindParam>>(x.t)) {
+    if (const auto &k{std::get<std::optional<KindParam>>(x.t)}) {
       if (std::holds_alternative<KindParam::Kanji>(k->u)) {
         Word("NC");
       } else {
@@ -227,16 +227,16 @@ public:
     Walk("=", std::get<std::optional<ScalarIntConstantExpr>>(x.t));
   }
   void Unparse(const DataComponentDefStmt &x) {  // R737
-    const auto &dts = std::get<DeclarationTypeSpec>(x.t);
-    const auto &attrs = std::get<std::list<ComponentAttrSpec>>(x.t);
-    const auto &decls = std::get<std::list<ComponentDecl>>(x.t);
+    const auto &dts{std::get<DeclarationTypeSpec>(x.t)};
+    const auto &attrs{std::get<std::list<ComponentAttrSpec>>(x.t)};
+    const auto &decls{std::get<std::list<ComponentDecl>>(x.t)};
     Walk(dts), Walk(", ", attrs, ", ");
     if (!attrs.empty() ||
         (!std::holds_alternative<DeclarationTypeSpec::Record>(dts.u) &&
             std::none_of(
                 decls.begin(), decls.end(), [](const ComponentDecl &d) {
-                  const auto &init =
-                      std::get<std::optional<Initialization>>(d.t);
+                  const auto &init{
+                      std::get<std::optional<Initialization>>(d.t)};
                   return init.has_value() &&
                       std::holds_alternative<
                           std::list<common::Indirection<DataStmtValue>>>(
@@ -290,7 +290,7 @@ public:
   void Unparse(const Pass &x) { Word("PASS"), Walk("(", x.v, ")"); }
   void Unparse(const Initialization &x) {  // R743 & R805
     std::visit(
-        common::visitors{[&](const ConstantExpr &y) { Put(" = "), Walk(y); },
+        common::visitors{[&](const ConstantExpr &y) { Put("{"), Walk(y); },
             [&](const NullInit &y) { Put(" => "), Walk(y); },
             [&](const InitialDataTarget &y) { Put(" => "), Walk(y); },
             [&](const std::list<common::Indirection<DataStmtValue>> &y) {
@@ -389,26 +389,26 @@ public:
   }
 
   void Unparse(const TypeDeclarationStmt &x) {  // R801
-    const auto &dts = std::get<DeclarationTypeSpec>(x.t);
-    const auto &attrs = std::get<std::list<AttrSpec>>(x.t);
-    const auto &decls = std::get<std::list<EntityDecl>>(x.t);
+    const auto &dts{std::get<DeclarationTypeSpec>(x.t)};
+    const auto &attrs{std::get<std::list<AttrSpec>>(x.t)};
+    const auto &decls{std::get<std::list<EntityDecl>>(x.t)};
     Walk(dts), Walk(", ", attrs, ", ");
 
-    static const auto isInitializerOldStyle = [](const Initialization &i) {
+    static const auto isInitializerOldStyle{[](const Initialization &i) {
       return std::holds_alternative<
           std::list<common::Indirection<DataStmtValue>>>(i.u);
-    };
-    static const auto hasAssignmentInitializer = [](const EntityDecl &d) {
+    }};
+    static const auto hasAssignmentInitializer{[](const EntityDecl &d) {
       // Does a declaration have a new-style =x initializer?
-      const auto &init = std::get<std::optional<Initialization>>(d.t);
+      const auto &init{std::get<std::optional<Initialization>>(d.t)};
       return init.has_value() && !isInitializerOldStyle(*init);
-    };
-    static const auto hasSlashDelimitedInitializer = [](const EntityDecl &d) {
+    }};
+    static const auto hasSlashDelimitedInitializer{[](const EntityDecl &d) {
       // Does a declaration have an old-style /x/ initializer?
-      const auto &init = std::get<std::optional<Initialization>>(d.t);
+      const auto &init{std::get<std::optional<Initialization>>(d.t)};
       return init.has_value() && isInitializerOldStyle(*init);
-    };
-    const auto useDoubledColons = [&]() {
+    }};
+    const auto useDoubledColons{[&]() {
       bool isRecord{std::holds_alternative<DeclarationTypeSpec::Record>(dts.u)};
       if (!attrs.empty()) {
         // Attributes after the type require :: before the entities.
@@ -436,7 +436,7 @@ public:
       }
       // Don't use :: with intrinsic types.  Otherwise, use it.
       return !std::holds_alternative<IntrinsicTypeSpec>(dts.u);
-    };
+    }};
 
     if (useDoubledColons()) {
       Put(" ::");
@@ -475,7 +475,7 @@ public:
         x.u);
   }
   void Unparse(const DeferredCoshapeSpecList &x) {  // R810
-    for (auto j = x.v; j > 0; --j) {
+    for (auto j{x.v}; j > 0; --j) {
       Put(':');
       if (j > 1) {
         Put(',');
@@ -503,7 +503,7 @@ public:
   }
   void Post(const AssumedShapeSpec &) { Put(':'); }  // R819
   void Unparse(const DeferredShapeSpecList &x) {  // R820
-    for (auto j = x.v; j > 0; --j) {
+    for (auto j{x.v}; j > 0; --j) {
       Put(':');
       if (j > 1) {
         Put(',');
@@ -647,7 +647,7 @@ public:
   }
   void Unparse(const LetterSpec &x) {  // R865
     Put(*std::get<const char *>(x.t));
-    auto second = std::get<std::optional<const char *>>(x.t);
+    auto second{std::get<std::optional<const char *>>(x.t)};
     if (second.has_value()) {
       Put('-'), Put(**second);
     }
@@ -1558,8 +1558,8 @@ public:
     Put('('), Walk(std::get<std::list<ActualArgSpec>>(x.v.t), ", "), Put(')');
   }
   void Unparse(const CallStmt &x) {  // R1521
-    const auto &pd = std::get<ProcedureDesignator>(x.v.t);
-    const auto &args = std::get<std::list<ActualArgSpec>>(x.v.t);
+    const auto &pd{std::get<ProcedureDesignator>(x.v.t)};
+    const auto &args{std::get<std::list<ActualArgSpec>>(x.v.t)};
     Word("CALL "), Walk(pd);
     if (args.empty()) {
       if (std::holds_alternative<ProcComponentRef>(pd.u)) {
@@ -1608,8 +1608,8 @@ public:
   void Unparse(const SubroutineStmt &x) {  // R1535
     Walk("", std::get<std::list<PrefixSpec>>(x.t), " ", " ");
     Word("SUBROUTINE "), Walk(std::get<Name>(x.t));
-    const auto &args = std::get<std::list<DummyArg>>(x.t);
-    const auto &bind = std::get<std::optional<LanguageBindingSpec>>(x.t);
+    const auto &args{std::get<std::list<DummyArg>>(x.t)};
+    const auto &bind{std::get<std::optional<LanguageBindingSpec>>(x.t)};
     if (args.empty()) {
       Walk(" () ", bind);
     } else {
@@ -1659,7 +1659,7 @@ public:
     Put('\n');
   }
   void Unparse(const CompilerDirective::IgnoreTKR &x) {
-    const auto &list = std::get<std::list<const char *>>(x.t);
+    const auto &list{std::get<std::list<const char *>>(x.t)};
     if (!list.empty()) {
       Put("(");
       for (const char *tkr : list) {
@@ -2052,7 +2052,7 @@ public:
     Walk("(", std::get<std::optional<ArraySpec>>(x.t), ")"), Put(')');
   }
   void Post(const StructureField &x) {
-    if (const auto *def = std::get_if<Statement<DataComponentDefStmt>>(&x.u)) {
+    if (const auto *def{std::get_if<Statement<DataComponentDefStmt>>(&x.u)}) {
       for (const auto &decl :
           std::get<std::list<ComponentDecl>>(def->statement.t)) {
         structureComponents_.insert(std::get<Name>(decl.t).source);

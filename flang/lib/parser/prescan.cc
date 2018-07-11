@@ -197,7 +197,7 @@ void Prescanner::Statement() {
 
 TokenSequence Prescanner::TokenizePreprocessorDirective() {
   CHECK(lineStart_ < limit_ && !inPreprocessorDirective_);
-  auto saveAt = at_;
+  auto saveAt{at_};
   inPreprocessorDirective_ = true;
   BeginSourceLineAndAdvance();
   TokenSequence tokens;
@@ -324,7 +324,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
   } else if (*at_ == ' ' || *at_ == '\t') {
     // Compress white space into a single space character.
     // Discard white space at the end of a line.
-    const auto theSpace = at_;
+    const auto theSpace{at_};
     NextChar();
     SkipSpaces();
     if (*at_ != '\n') {
@@ -448,8 +448,8 @@ bool Prescanner::ExponentAndKind(TokenSequence &tokens) {
 void Prescanner::QuotedCharacterLiteral(TokenSequence &tokens) {
   const char *start{at_}, quote{*start}, *end{at_ + 1};
   inCharLiteral_ = true;
-  const auto emit = [&](char ch) { EmitChar(tokens, ch); };
-  const auto insert = [&](char ch) { EmitInsertedChar(tokens, ch); };
+  const auto emit{[&](char ch) { EmitChar(tokens, ch); }};
+  const auto insert{[&](char ch) { EmitInsertedChar(tokens, ch); }};
   bool escape{false};
   while (true) {
     char ch{*at_};
@@ -681,7 +681,7 @@ bool Prescanner::SkipCommentLine() {
   if (lineStart_ >= limit_) {
     return false;
   }
-  auto lineClass = ClassifyLine(lineStart_);
+  auto lineClass{ClassifyLine(lineStart_)};
   if (lineClass.kind == LineClassification::Kind::Comment) {
     NextLine();
     return true;
@@ -932,7 +932,7 @@ const char *Prescanner::IsCompilerDirectiveSentinel(
       !compilerDirectiveBloomFilter_.test(packed % prime2)) {
     return nullptr;
   }
-  const auto iter = compilerDirectiveSentinels_.find(std::string(sentinel, n));
+  const auto iter{compilerDirectiveSentinels_.find(std::string(sentinel, n))};
   return iter == compilerDirectiveSentinels_.end() ? nullptr : iter->data();
 }
 
