@@ -3297,10 +3297,7 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
   // by skipping the simplification if isIntDivCheap().  When div is not cheap,
   // combine will not return a DIVREM.  Regardless, checking cheapness here
   // makes sense since the simplification results in fatter code.
-  // TODO: replace matchUnaryPredicate with SelectionDAG::isKnownNeverZero(N1).
-  if (ISD::matchUnaryPredicate(
-          N1, [](ConstantSDNode *C) { return !C->isNullValue(); }) &&
-      !TLI.isIntDivCheap(VT, Attr)) {
+  if (DAG.isKnownNeverZero(N1) && !TLI.isIntDivCheap(VT, Attr)) {
     SDValue OptimizedDiv =
         isSigned ? visitSDIVLike(N0, N1, N) : visitUDIVLike(N0, N1, N);
     if (OptimizedDiv.getNode() && OptimizedDiv.getOpcode() != ISD::UDIVREM &&
