@@ -217,7 +217,6 @@ GCNSubtarget::GCNSubtarget(const Triple &TT, StringRef GPU, StringRef FS,
   RegBankInfo.reset(new AMDGPURegisterBankInfo(*getRegisterInfo()));
   InstSelector.reset(new AMDGPUInstructionSelector(
   *this, *static_cast<AMDGPURegisterBankInfo *>(RegBankInfo.get()), TM));
-  initializeSubtargetDependencies(TT, GPU, FS);
 }
 
 unsigned AMDGPUSubtarget::getMaxLocalMemSizeWithWaveCount(unsigned NWaves,
