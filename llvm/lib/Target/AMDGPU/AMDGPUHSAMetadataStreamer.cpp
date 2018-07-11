@@ -212,7 +212,8 @@ Kernel::CodeProps::Metadata MetadataStreamer::getHSACodeProps(
   if (F.getCallingConv() != CallingConv::AMDGPU_KERNEL)
     return HSACodeProps;
 
-  HSACodeProps.mKernargSegmentSize = STM.getKernArgSegmentSize(F);
+  HSACodeProps.mKernargSegmentSize =
+      STM.getKernArgSegmentSize(F, MFI.getExplicitKernArgSize());
   HSACodeProps.mGroupSegmentFixedSize = ProgramInfo.LDSSize;
   HSACodeProps.mPrivateSegmentFixedSize = ProgramInfo.ScratchSize;
   HSACodeProps.mKernargSegmentAlign =
