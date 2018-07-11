@@ -1441,16 +1441,13 @@ template <class ELFT> void Writer<ELFT>::resolveShfLinkOrder() {
         // previous one. This does not require any rewriting of InputSection
         // contents but misses opportunities for fine grained deduplication
         // where only a subset of the InputSection contents can be merged.
-        int Cur = 1;
-        int Prev = 0;
+        size_t Prev = 0;
         // The last one is a sentinel entry which should not be removed.
-        int N = Sections.size() - 1;
-        while (Cur < N) {
-          if (isDuplicateArmExidxSec(Sections[Prev], Sections[Cur]))
-            Sections[Cur] = nullptr;
+        for (size_t I = 1; I < Sections.size() - 1; ++I) {
+          if (isDuplicateArmExidxSec(Sections[Prev], Sections[I]))
+            Sections[I] = nullptr;
           else
-            Prev = Cur;
-          ++Cur;
+            Prev = I;
         }
       }
     }
