@@ -300,6 +300,48 @@ TEST_F(CoreAPIsStandardTest, TestChainedAliases) {
       << "\"Baz\"'s address should match \"Foo\"'s";
 }
 
+TEST_F(CoreAPIsStandardTest, TestBasicReExports) {
+  // Test that the basic use case of re-exporting a single symbol from another
+  // VSO works.
+  cantFail(V.define(absoluteSymbols({{Foo, FooSym}})));
+
+  auto &V2 = ES.createVSO("V2");
+
+  cantFail(V2.define(reexports(V, {{Bar, {Foo, BarSym.getFlags()}}})));
+
+  auto Result = cantFail(lookup({&V2}, Bar));
+  EXPECT_EQ(Result.getAddress(), FooSym.getAddress())
+      << "Re-export Bar for symbol Foo should match FooSym's address";
+}
+
+TEST_F(CoreAPIsStandardTest, TestThatReExportsDontUnnecessarilyMaterialize) {
+  // Test that re-exports do not materialize symbols that have not been queried
+  // for.
+  cantFail(V.define(absoluteSymbols({{Foo, FooSym}})));
+
+  bool BarMaterialized = false;
+  auto BarMU = llvm::make_unique<SimpleMaterializationUnit>(
+      SymbolFlagsMap({{Bar, BarSym.getFlags()}}),
+      [&](MaterializationResponsibility R) {
+        BarMaterialized = true;
+        R.resolve({{Bar, BarSym}});
+        R.finalize();
+      });
+
+  cantFail(V.define(BarMU));
+
+  auto &V2 = ES.createVSO("V2");
+
+  cantFail(V2.define(reexports(
+      V, {{Baz, {Foo, BazSym.getFlags()}}, {Qux, {Bar, QuxSym.getFlags()}}})));
+
+  auto Result = cantFail(lookup({&V2}, Baz));
+  EXPECT_EQ(Result.getAddress(), FooSym.getAddress())
+      << "Re-export Baz for symbol Foo should match FooSym's address";
+
+  EXPECT_FALSE(BarMaterialized) << "Bar should not have been materialized";
+}
+
 TEST_F(CoreAPIsStandardTest, TestTrivialCircularDependency) {
   Optional<MaterializationResponsibility> FooR;
   auto FooMU = llvm::make_unique<SimpleMaterializationUnit>(
