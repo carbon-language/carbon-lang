@@ -2375,11 +2375,7 @@ createSymbols(ArrayRef<std::vector<GdbIndexSection::NameTypeEntry>> NameTypes) {
     for (const NameTypeEntry &Ent : Entries) {
       size_t &Idx = Map[Ent.Name];
       if (Idx) {
-        // gcc 5.4.1 produces a buggy .debug_gnu_pubnames that contains
-        // duplicate entries, so we want to dedup them.
-        std::vector<uint32_t> &Vec = Ret[Idx - 1].CuVector;
-        if (Vec.empty() || Vec.back() != Ent.Type)
-          Vec.push_back(Ent.Type);
+        Ret[Idx - 1].CuVector.push_back(Ent.Type);
         continue;
       }
 
