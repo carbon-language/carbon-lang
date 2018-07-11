@@ -483,3 +483,39 @@ while.end:                                        ; preds = %while.cond.while.en
   ret i32 %cnt.0.lcssa
 }
 
+; FIXME: We should not transform this loop. It returns 1 for an input of both
+; 0 and 1.
+;
+; int ctlz_bad(unsigned n)
+; {
+;   int i = 0;
+;   do {
+;     i++;
+;     n >>= 1;
+;   } while(n != 0) {
+;   return i;
+; }
+;
+; ALL:  entry
+; ALL-NEXT:  %0 = call i32 @llvm.ctlz.i32(i32 %n, i1 false)
+; ALL-NEXT:  %1 = sub i32 32, %0
+; ALL-NEXT:  br label %while.cond
+; ALL:  %inc.lcssa = phi i32 [ %1, %while.cond ]
+; ALL:  ret i32 %inc.lcssa
+
+; Function Attrs: norecurse nounwind readnone uwtable
+define i32 @ctlz_bad(i32 %n) {
+entry:
+  br label %while.cond
+
+while.cond:                                       ; preds = %while.cond, %entry
+  %n.addr.0 = phi i32 [ %n, %entry ], [ %shr, %while.cond ]
+  %i.0 = phi i32 [ 0, %entry ], [ %inc, %while.cond ]
+  %shr = lshr i32 %n.addr.0, 1
+  %tobool = icmp eq i32 %shr, 0
+  %inc = add nsw i32 %i.0, 1
+  br i1 %tobool, label %while.end, label %while.cond
+
+while.end:                                        ; preds = %while.cond
+  ret i32 %inc
+}
