@@ -456,12 +456,16 @@ enum CastAwayConstnessKind {
 
 /// Unwrap one level of types for CastsAwayConstness.
 ///
-/// Like Sema::UnwrapSimilarPointerTypes, this removes one level of
-/// indirection from both types, provided that they're both pointer-like.
-/// Unlike the Sema function, doesn't care if the unwrapped pieces are related.
+/// Like Sema::UnwrapSimilarTypes, this removes one level of indirection from
+/// both types, provided that they're both pointer-like or array-like. Unlike
+/// the Sema function, doesn't care if the unwrapped pieces are related.
 static CastAwayConstnessKind
 unwrapCastAwayConstnessLevel(ASTContext &Context, QualType &T1, QualType &T2) {
-  if (Context.UnwrapSimilarPointerTypes(T1, T2))
+  // Note, even if this returns false, it may have unwrapped some number of
+  // matching "array of" pieces. That's OK, we don't need to check their
+  // cv-qualifiers (that check is covered by checking the qualifiers on the
+  // array types themselves).
+  if (Context.UnwrapSimilarTypes(T1, T2))
     return CastAwayConstnessKind::CACK_Similar;
 
   // Special case: if the destination type is a reference type, unwrap it as
@@ -473,8 +477,11 @@ unwrapCastAwayConstnessLevel(ASTContext &Context, QualType &T1, QualType &T2) {
 
   auto Classify = [](QualType T) {
     if (T->isAnyPointerType()) return 1;
-    if (T->getAs<MemberPointerType>()) return 2;
-    if (T->getAs<BlockPointerType>()) return 3;
+    if (T->isMemberPointerType()) return 2;
+    if (T->isBlockPointerType()) return 3;
+    // We somewhat-arbitrarily don't look through VLA types here. This is at
+    // least consistent with the behavior of UnwrapSimilarTypes.
+    if (T->isConstantArrayType() || T->isIncompleteArrayType()) return 4;
     return 0;
   };
 
@@ -486,8 +493,14 @@ unwrapCastAwayConstnessLevel(ASTContext &Context, QualType &T1, QualType &T2) {
   if (!T2Class)
     return CastAwayConstnessKind::CACK_None;
 
-  T1 = T1->getPointeeType();
-  T2 = T2->getPointeeType();
+  auto Unwrap = [&](QualType T) {
+    if (auto *AT = Context.getAsArrayType(T))
+      return AT->getElementType();
+    return T->getPointeeType();
+  };
+
+  T1 = Unwrap(T1);
+  T2 = Unwrap(T2);
   return T1Class == T2Class ? CastAwayConstnessKind::CACK_SimilarKind
                             : CastAwayConstnessKind::CACK_Incoherent;
 }
@@ -1674,29 +1687,14 @@ static TryCastResult TryConstCast(Sema &Self, ExprResult &SrcExpr,
       msg = diag::err_bad_const_cast_dest;
     return TC_NotApplicable;
   }
-  SrcType = Self.Context.getCanonicalType(SrcType);
 
-  // Unwrap the pointers. Ignore qualifiers. Terminate early if the types are
-  // completely equal.
-  // C++ 5.2.11p3 describes the core semantics of const_cast. All cv specifiers
-  // in multi-level pointers may change, but the level count must be the same,
-  // as must be the final pointee type.
-  while (SrcType != DestType &&
-         Self.Context.UnwrapSimilarPointerTypes(SrcType, DestType)) {
-    Qualifiers SrcQuals, DestQuals;
-    SrcType = Self.Context.getUnqualifiedArrayType(SrcType, SrcQuals);
-    DestType = Self.Context.getUnqualifiedArrayType(DestType, DestQuals);
-    
-    // const_cast is permitted to strip cvr-qualifiers, only. Make sure that
-    // the other qualifiers (e.g., address spaces) are identical.
-    SrcQuals.removeCVRQualifiers();
-    DestQuals.removeCVRQualifiers();
-    if (SrcQuals != DestQuals)
-      return TC_NotApplicable;
-  }
-
-  // Since we're dealing in canonical types, the remainder must be the same.
-  if (SrcType != DestType)
+  // C++ [expr.const.cast]p3:
+  //   "For two similar types T1 and T2, [...]"
+  //
+  // We only allow a const_cast to change cvr-qualifiers, not other kinds of
+  // type qualifiers. (Likewise, we ignore other changes when determining
+  // whether a cast casts away constness.)
+  if (!Self.Context.hasCvrSimilarType(SrcType, DestType))
     return TC_NotApplicable;
 
   if (NeedToMaterializeTemporary)
