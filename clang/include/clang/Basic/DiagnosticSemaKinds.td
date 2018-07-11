@@ -9082,7 +9082,7 @@ def err_coroutine_promise_type_incomplete : Error<
   "this function cannot be a coroutine: %0 is an incomplete type">;
 def err_coroutine_type_missing_specialization : Error<
   "this function cannot be a coroutine: missing definition of "
-  "specialization %q0">;
+  "specialization %0">;
 def err_coroutine_promise_incompatible_return_functions : Error<
   "the coroutine promise type %0 declares both 'return_value' and 'return_void'">;
 def err_coroutine_promise_requires_return_function : Error<
