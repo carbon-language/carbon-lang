@@ -1425,13 +1425,12 @@ template <class ELFT> void Writer<ELFT>::resolveShfLinkOrder() {
     if (!Config->Relocatable && Config->EMachine == EM_ARM &&
         Sec->Type == SHT_ARM_EXIDX) {
 
-      if (!Sections.empty() && isa<ARMExidxSentinelSection>(Sections.back())) {
+      if (auto *Sentinel = dyn_cast<ARMExidxSentinelSection>(Sections.back())) {
         assert(Sections.size() >= 2 &&
                "We should create a sentinel section only if there are "
                "alive regular exidx sections.");
         // The last executable section is required to fill the sentinel.
         // Remember it here so that we don't have to find it again.
-        auto *Sentinel = cast<ARMExidxSentinelSection>(Sections.back());
         Sentinel->Highest = Sections[Sections.size() - 2]->getLinkOrderDep();
       }
 
