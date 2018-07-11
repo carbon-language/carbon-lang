@@ -520,8 +520,6 @@ TEST_F(CoreAPIsStandardTest, DropMaterializerWhenEmpty) {
       },
       [&]() { DestructorRun = true; });
 
-  auto &V = ES.createVSO("V");
-
   cantFail(V.define(MU));
 
   cantFail(V.define(absoluteSymbols({{Foo, FooSym}})));
