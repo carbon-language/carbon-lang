@@ -462,7 +462,7 @@ void ReExportsMaterializationUnit::materialize(
               // FIXME: We're creating a SymbolFlagsMap and a std::map of
               // std::sets just to add one dependency here. This needs a
               // re-think.
-              Resolved.insert(KV.second.Aliasee);
+              Resolved.insert(KV.first);
             }
             QueryInfo->R.resolve(ResolutionMap);
 
