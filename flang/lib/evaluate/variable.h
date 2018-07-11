@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "expression-forward.h"
+#include "intrinsics.h"
 #include "../common/idioms.h"
 #include "../semantics/symbol.h"
 #include <optional>
@@ -41,8 +42,8 @@ struct ActualFunctionArg;
 
 // Subscript and cosubscript expressions are of a kind that matches the
 // address size, at least at the top level.
-using SubscriptIntegerExpr =
-    CopyableIndirection<IntegerExpr<SubscriptInteger::kind>>;
+using SubscriptIntegerExpr = IntegerExpr<SubscriptInteger::kind>;
+using IndirectSubscriptIntegerExpr = CopyableIndirection<SubscriptIntegerExpr>;
 
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
@@ -54,6 +55,7 @@ struct Component {
   Component(const DataRef &b, const Symbol &c) : base{b}, sym{&c} {}
   Component(CopyableIndirection<DataRef> &&b, const Symbol &c)
     : base{std::move(b)}, sym{&c} {}
+  SubscriptIntegerExpr LEN() const;
   CopyableIndirection<DataRef> base;
   const Symbol *sym;
 };
@@ -64,17 +66,19 @@ struct Triplet {
   Triplet(std::optional<SubscriptIntegerExpr> &&,
       std::optional<SubscriptIntegerExpr> &&,
       std::optional<SubscriptIntegerExpr> &&);
-  std::optional<SubscriptIntegerExpr> lower, upper, stride;
+  std::optional<IndirectSubscriptIntegerExpr> lower, upper, stride;
 };
 
 // R919 subscript when rank 0, R923 vector-subscript when rank 1
 struct Subscript {
   CLASS_BOILERPLATE(Subscript)
-  explicit Subscript(const SubscriptIntegerExpr &s) : u{s} {}
-  explicit Subscript(SubscriptIntegerExpr &&s) : u{std::move(s)} {}
+  explicit Subscript(const SubscriptIntegerExpr &s)
+    : u{IndirectSubscriptIntegerExpr::Make(s)} {}
+  explicit Subscript(SubscriptIntegerExpr &&s)
+    : u{IndirectSubscriptIntegerExpr::Make(std::move(s))} {}
   explicit Subscript(const Triplet &t) : u{t} {}
   explicit Subscript(Triplet &&t) : u{std::move(t)} {}
-  std::variant<SubscriptIntegerExpr, Triplet> u;
+  std::variant<IndirectSubscriptIntegerExpr, Triplet> u;
 };
 
 // R917 array-element, R918 array-section; however, the case of an
@@ -88,6 +92,7 @@ struct ArrayRef {
     : u{&n}, subscript(std::move(ss)) {}
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
     : u{std::move(c)}, subscript(std::move(ss)) {}
+  SubscriptIntegerExpr LEN() const;
   std::variant<const Symbol *, Component> u;
   std::vector<Subscript> subscript;
 };
@@ -101,11 +106,10 @@ struct ArrayRef {
 // TODO C931 prohibits the use of a coindexed object as a stat-variable.
 struct CoarrayRef {
   CLASS_BOILERPLATE(CoarrayRef)
-  CoarrayRef(std::vector<const Symbol *> &&c,
-      std::vector<SubscriptIntegerExpr> &&ss,
-      std::vector<SubscriptIntegerExpr> &&css)
-    : base(std::move(c)), subscript(std::move(ss)),
-      cosubscript(std::move(css)) {}
+  CoarrayRef(std::vector<const Symbol *> &&,
+      std::vector<SubscriptIntegerExpr> &&,
+      std::vector<SubscriptIntegerExpr> &&);  // TODO: stat & team?
+  SubscriptIntegerExpr LEN() const;
   std::vector<const Symbol *> base;
   std::vector<SubscriptIntegerExpr> subscript, cosubscript;
   std::optional<CopyableIndirection<Variable>> stat, team;
@@ -113,16 +117,17 @@ struct CoarrayRef {
 };
 
 // R911 data-ref is defined syntactically as a series of part-refs, which
-// is far too expressive if the constraints are ignored.  Here, the possible
-// outcomes are spelled out.  Note that a data-ref cannot include a terminal
-// substring range or complex component designator; use R901 designator
-// for that.
+// would be far too expressive if the constraints were ignored.  Here, the
+// possible outcomes are spelled out.  Note that a data-ref cannot include
+// a terminal substring range or complex component designator; use
+// R901 designator for that.
 struct DataRef {
   CLASS_BOILERPLATE(DataRef)
   explicit DataRef(const Symbol &n) : u{&n} {}
   explicit DataRef(Component &&c) : u{std::move(c)} {}
   explicit DataRef(ArrayRef &&a) : u{std::move(a)} {}
   explicit DataRef(CoarrayRef &&a) : u{std::move(a)} {}
+  SubscriptIntegerExpr LEN() const;
   std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u;
 };
 
@@ -132,14 +137,17 @@ struct DataRef {
 // variants of sections instead.
 struct Substring {
   CLASS_BOILERPLATE(Substring)
-  Substring(DataRef &&d, std::optional<SubscriptIntegerExpr> &&f,
-      std::optional<SubscriptIntegerExpr> &&l)
-    : u{std::move(d)}, first{std::move(f)}, last{std::move(l)} {}
-  Substring(std::string &&s, std::optional<SubscriptIntegerExpr> &&f,
-      std::optional<SubscriptIntegerExpr> &&l)
-    : u{std::move(s)}, first{std::move(f)}, last{std::move(l)} {}
+  Substring(DataRef &&, std::optional<SubscriptIntegerExpr> &&,
+      std::optional<SubscriptIntegerExpr> &&);
+  Substring(std::string &&, std::optional<SubscriptIntegerExpr> &&,
+      std::optional<SubscriptIntegerExpr> &&);
+
+  SubscriptIntegerExpr First() const;
+  SubscriptIntegerExpr Last() const;
+  SubscriptIntegerExpr LEN() const;
+
   std::variant<DataRef, std::string> u;
-  std::optional<SubscriptIntegerExpr> first, last;
+  std::optional<IndirectSubscriptIntegerExpr> first, last;
 };
 
 // R915 complex-part-designator
@@ -165,10 +173,12 @@ struct Designator {
 
 struct ProcedureDesignator {
   CLASS_BOILERPLATE(ProcedureDesignator)
+  explicit ProcedureDesignator(IntrinsicProcedure p) : u{p} {}
   explicit ProcedureDesignator(const Symbol &n) : u{&n} {}
   explicit ProcedureDesignator(const Component &c) : u{c} {}
   explicit ProcedureDesignator(Component &&c) : u{std::move(c)} {}
-  std::variant<const Symbol *, Component> u;
+  SubscriptIntegerExpr LEN() const;
+  std::variant<IntrinsicProcedure, const Symbol *, Component> u;
 };
 
 template<typename ARG> struct ProcedureRef {

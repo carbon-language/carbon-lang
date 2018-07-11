@@ -20,7 +20,6 @@
 // context-independent hash table or sharing of common subexpressions.
 // Both deep copy and move semantics are supported for expression construction
 // and manipulation in place.
-// TODO: elevate some intrinsics to operations
 // TODO: convenience wrappers for constructing conversions
 
 #include "common.h"
@@ -57,7 +56,8 @@ template<typename A, typename B = A> struct Binary {
   Binary(CopyableIndirection<const A> &&a, CopyableIndirection<const B> &&b)
     : x{std::move(a)}, y{std::move(b)} {}
   Binary(A &&a, B &&b) : x{std::move(a)}, y{std::move(b)} {}
-  std::ostream &Dump(std::ostream &, const char *opr) const;
+  std::ostream &Dump(
+      std::ostream &, const char *opr, const char *before = "(") const;
   CopyableIndirection<A> x;
   CopyableIndirection<B> y;
 };
@@ -91,6 +91,12 @@ template<int KIND> struct Expr<Category::Integer, KIND> {
   struct Power : public Bin {
     using Bin::Bin;
   };
+  struct Max : public Bin {
+    using Bin::Bin;
+  };
+  struct Min : public Bin {
+    using Bin::Bin;
+  };
   // TODO: R916 type-param-inquiry
 
   CLASS_BOILERPLATE(Expr)
@@ -110,13 +116,14 @@ template<int KIND> struct Expr<Category::Integer, KIND> {
           (std::is_base_of_v<Un, A> || std::is_base_of_v<Bin, A>),
       A> &&x)
     : u(std::move(x)) {}
+  template<typename A> Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
   void Fold(FoldingContext &);
 
-  // TODO: function reference
-  std::variant<Constant, CopyableIndirection<Designator>,
-      Convert<GenericIntegerExpr>, Convert<GenericRealExpr>, Parentheses,
-      Negate, Add, Subtract, Multiply, Divide, Power>
+  std::variant<Constant, CopyableIndirection<DataRef>,
+      CopyableIndirection<FunctionRef>, Convert<GenericIntegerExpr>,
+      Convert<GenericRealExpr>, Parentheses, Negate, Add, Subtract, Multiply,
+      Divide, Power, Max, Min>
       u;
 };
 
@@ -155,6 +162,12 @@ template<int KIND> struct Expr<Category::Real, KIND> {
   struct IntPower : public Binary<Expr, GenericIntegerExpr> {
     using Binary<Expr, GenericIntegerExpr>::Binary;
   };
+  struct Max : public Bin {
+    using Bin::Bin;
+  };
+  struct Min : public Bin {
+    using Bin::Bin;
+  };
   using CplxUn = Unary<ComplexExpr<KIND>>;
   struct RealPart : public CplxUn {
     using CplxUn::CplxUn;
@@ -174,10 +187,12 @@ template<int KIND> struct Expr<Category::Real, KIND> {
   template<typename A> Expr(const A &x) : u{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  template<typename A> Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
-  // TODO: designators, function references
-  std::variant<Constant, Convert<GenericIntegerExpr>, Convert<GenericRealExpr>,
-      Parentheses, Negate, Add, Subtract, Multiply, Divide, Power, IntPower,
+  std::variant<Constant, CopyableIndirection<DataRef>,
+      CopyableIndirection<ComplexPart>, CopyableIndirection<FunctionRef>,
+      Convert<GenericIntegerExpr>, Convert<GenericRealExpr>, Parentheses,
+      Negate, Add, Subtract, Multiply, Divide, Power, IntPower, Max, Min,
       RealPart, AIMAG>
       u;
 };
@@ -220,28 +235,42 @@ template<int KIND> struct Expr<Category::Complex, KIND> {
   template<typename A> Expr(const A &x) : u{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  template<typename A> Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
-  // TODO: designators, function references
-  std::variant<Constant, Parentheses, Negate, Add, Subtract, Multiply, Divide,
-      Power, IntPower, CMPLX>
+  std::variant<Constant, CopyableIndirection<DataRef>,
+      CopyableIndirection<FunctionRef>, Parentheses, Negate, Add, Subtract,
+      Multiply, Divide, Power, IntPower, CMPLX>
       u;
 };
 
 template<int KIND> struct Expr<Category::Character, KIND> {
   using Result = Type<Category::Character, KIND>;
   using Constant = typename Result::Value;
-  using LengthExpr = IntegerExpr<IntrinsicTypeParameterType::kind>;
+  using Bin = Binary<Expr>;
+  struct Concat : public Bin {
+    using Bin::Bin;
+  };
+  struct Max : public Bin {
+    using Bin::Bin;
+  };
+  struct Min : public Bin {
+    using Bin::Bin;
+  };
 
   CLASS_BOILERPLATE(Expr)
   Expr(const Constant &x) : u{x} {}
   Expr(Constant &&x) : u{std::move(x)} {}
-  Expr(const Expr &x, const Expr &y) : u{Binary<Expr>{x, y}} {}
-  Expr(Expr &&x, Expr &&y) : u{Binary<Expr>{std::move(x), std::move(y)}} {}
+  template<typename A> Expr(const A &x) : u{x} {}
+  template<typename A>
+  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  template<typename A> Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
-  LengthExpr LEN() const;
+  SubscriptIntegerExpr LEN() const;
 
-  // TODO: designators, function references
-  std::variant<Constant, Binary<Expr>> u;
+  std::variant<Constant, CopyableIndirection<DataRef>,
+      CopyableIndirection<Substring>, CopyableIndirection<FunctionRef>, Concat,
+      Max, Min>
+      u;
 };
 
 // The Comparison class template is a helper for constructing logical
@@ -317,9 +346,10 @@ template<> struct Expr<Category::Logical, 1> {
   template<typename A> Expr(const A &x) : u(x) {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  template<typename A> Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
-  // TODO: designators, function references
-  std::variant<Constant, Not, And, Or, Eqv, Neqv,
+  std::variant<Constant, CopyableIndirection<DataRef>,
+      CopyableIndirection<FunctionRef>, Not, And, Or, Eqv, Neqv,
       CategoryComparison<Category::Integer>, CategoryComparison<Category::Real>,
       CategoryComparison<Category::Complex>,
       CategoryComparison<Category::Character>>

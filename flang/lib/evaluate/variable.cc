@@ -25,13 +25,13 @@ Triplet::Triplet(std::optional<SubscriptIntegerExpr> &&l,
     std::optional<SubscriptIntegerExpr> &&u,
     std::optional<SubscriptIntegerExpr> &&s) {
   if (l.has_value()) {
-    lower = SubscriptIntegerExpr{std::move(*l)};
+    lower = IndirectSubscriptIntegerExpr::Make(std::move(*l));
   }
   if (u.has_value()) {
-    upper = SubscriptIntegerExpr{std::move(*u)};
+    upper = IndirectSubscriptIntegerExpr::Make(std::move(*u));
   }
   if (s.has_value()) {
-    stride = SubscriptIntegerExpr{std::move(*s)};
+    stride = IndirectSubscriptIntegerExpr::Make(std::move(*s));
   }
 }
 
@@ -88,6 +88,10 @@ template<> std::ostream &Emit(std::ostream &o, const Symbol &symbol) {
   return o << symbol.name().ToString();
 }
 
+template<> std::ostream &Emit(std::ostream &o, const IntrinsicProcedure &p) {
+  return o << EnumToString(p);
+}
+
 std::ostream &Component::Dump(std::ostream &o) const {
   base->Dump(o);
   return Emit(o << '%', sym);
@@ -119,7 +123,7 @@ std::ostream &CoarrayRef::Dump(std::ostream &o) const {
     Emit(o, *sym);
   }
   char separator{'('};
-  for (const SubscriptIntegerExpr &ss : subscript) {
+  for (const auto &ss : subscript) {
     Emit(o << separator, ss);
     separator = ',';
   }
@@ -127,7 +131,7 @@ std::ostream &CoarrayRef::Dump(std::ostream &o) const {
     o << ')';
   }
   separator = '[';
-  for (const SubscriptIntegerExpr &css : cosubscript) {
+  for (const auto &css : cosubscript) {
     Emit(o << separator, css);
     separator = ',';
   }
@@ -185,4 +189,85 @@ std::ostream &ActualSubroutineArg::Dump(std::ostream &o) const {
 std::ostream &Label::Dump(std::ostream &o) const {
   return o << '*' << std::dec << label;
 }
+
+CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
+    std::vector<SubscriptIntegerExpr> &&ss,
+    std::vector<SubscriptIntegerExpr> &&css)
+  : base(std::move(c)), subscript(std::move(ss)), cosubscript(std::move(css)) {
+  CHECK(!base.empty());
+}
+
+Substring::Substring(DataRef &&d, std::optional<SubscriptIntegerExpr> &&f,
+    std::optional<SubscriptIntegerExpr> &&l)
+  : u{std::move(d)} {
+  if (f.has_value()) {
+    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
+  }
+  if (l.has_value()) {
+    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+  }
+}
+
+Substring::Substring(std::string &&s, std::optional<SubscriptIntegerExpr> &&f,
+    std::optional<SubscriptIntegerExpr> &&l)
+  : u{std::move(s)} {
+  if (f.has_value()) {
+    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
+  }
+  if (l.has_value()) {
+    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+  }
+}
+
+SubscriptIntegerExpr Substring::First() const {
+  if (first.has_value()) {
+    return **first;
+  }
+  return {1};
+}
+
+SubscriptIntegerExpr Substring::Last() const {
+  if (last.has_value()) {
+    return **last;
+  }
+  return std::visit(common::visitors{[](const std::string &s) {
+                                       return SubscriptIntegerExpr{s.size()};
+                                     },
+                        [](const DataRef &x) { return x.LEN(); }},
+      u);
+}
+
+// LEN()
+static SubscriptIntegerExpr SymbolLEN(const Symbol *sym) {
+  return SubscriptIntegerExpr{0};  // TODO
+}
+SubscriptIntegerExpr Component::LEN() const { return SymbolLEN(sym); }
+SubscriptIntegerExpr ArrayRef::LEN() const {
+  return std::visit(
+      common::visitors{[](const Symbol *s) { return SymbolLEN(s); },
+          [](const Component &x) { return x.LEN(); }},
+      u);
+}
+SubscriptIntegerExpr CoarrayRef::LEN() const { return SymbolLEN(base.back()); }
+SubscriptIntegerExpr DataRef::LEN() const {
+  return std::visit(
+      common::visitors{[](const Symbol *s) { return SymbolLEN(s); },
+          [](const auto &x) { return x.LEN(); }},
+      u);
+}
+SubscriptIntegerExpr Substring::LEN() const {
+  return SubscriptIntegerExpr::Max{
+      SubscriptIntegerExpr{0}, Last() - First() + SubscriptIntegerExpr{1}};
+}
+SubscriptIntegerExpr ProcedureDesignator::LEN() const {
+  return std::visit(
+      common::visitors{[](const Symbol *s) { return SymbolLEN(s); },
+          [](const Component &c) { return c.LEN(); },
+          [](const auto &) {
+            CRASH_NO_CASE;
+            return SubscriptIntegerExpr{0};
+          }},
+      u);
+}
+
 }  // namespace Fortran::evaluate

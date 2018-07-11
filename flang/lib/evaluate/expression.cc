@@ -61,15 +61,17 @@ std::ostream &Unary<A>::Dump(std::ostream &o, const char *opr) const {
 }
 
 template<typename A, typename B>
-std::ostream &Binary<A, B>::Dump(std::ostream &o, const char *opr) const {
-  return y->Dump(x->Dump(o << '(') << opr) << ')';
+std::ostream &Binary<A, B>::Dump(
+    std::ostream &o, const char *opr, const char *before) const {
+  return y->Dump(x->Dump(o << before) << opr) << ')';
 }
 
 template<int KIND>
 std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
-          [&](const CopyableIndirection<Designator> &d) { d->Dump(o); },
+          [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
+          [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
@@ -77,6 +79,8 @@ std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
           [&](const Multiply &m) { m.Dump(o, "*"); },
           [&](const Divide &d) { d.Dump(o, "/"); },
           [&](const Power &p) { p.Dump(o, "**"); },
+          [&](const Max &m) { m.Dump(o, ",", "MAX("); },
+          [&](const Min &m) { m.Dump(o, ",", "MIN("); },
           [&](const auto &convert) { DumpExprWithType(o, convert.x->u); }},
       u);
   return o;
@@ -86,6 +90,9 @@ template<int KIND>
 std::ostream &Expr<Category::Real, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
+          [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
+          [&](const CopyableIndirection<ComplexPart> &d) { d->Dump(o); },
+          [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
@@ -94,6 +101,8 @@ std::ostream &Expr<Category::Real, KIND>::Dump(std::ostream &o) const {
           [&](const Divide &d) { d.Dump(o, "/"); },
           [&](const Power &p) { p.Dump(o, "**"); },
           [&](const IntPower &p) { p.Dump(o, "**"); },
+          [&](const Max &m) { m.Dump(o, ",", "MAX("); },
+          [&](const Min &m) { m.Dump(o, ",", "MIN("); },
           [&](const RealPart &z) { z.Dump(o, "REAL("); },
           [&](const AIMAG &p) { p.Dump(o, "AIMAG("); },
           [&](const auto &convert) { DumpExprWithType(o, convert.x->u); }},
@@ -105,6 +114,8 @@ template<int KIND>
 std::ostream &Expr<Category::Complex, KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
+          [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
+          [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
@@ -123,9 +134,10 @@ std::ostream &Expr<Category::Character, KIND>::Dump(std::ostream &o) const {
   std::visit(common::visitors{[&](const Constant &s) {
                                 o << parser::QuoteCharacterLiteral(s);
                               },
-                 [&](const auto &concat) {
-                   concat.y->Dump(concat.x->Dump(o) << "//");
-                 }},
+                 [&](const Concat &concat) { concat.Dump(o, "//"); },
+                 [&](const Max &m) { m.Dump(o, ",", "MAX("); },
+                 [&](const Min &m) { m.Dump(o, ",", "MIN("); },
+                 [&](const auto &ind) { ind->Dump(o); }},
       u);
   return o;
 }
@@ -141,6 +153,8 @@ template<typename A> std::ostream &Comparison<A>::Dump(std::ostream &o) const {
 std::ostream &Expr<Category::Logical, 1>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const bool &tf) { o << (tf ? ".T." : ".F."); },
+          [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
+          [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
           [&](const Not &n) { n.Dump(o, "(.NOT."); },
           [&](const And &a) { a.Dump(o, ".AND."); },
           [&](const Or &a) { a.Dump(o, ".OR."); },
@@ -149,6 +163,28 @@ std::ostream &Expr<Category::Logical, 1>::Dump(std::ostream &o) const {
           [&](const auto &comparison) { comparison.Dump(o); }},
       u);
   return o;
+}
+
+template<int KIND>
+SubscriptIntegerExpr Expr<Category::Character, KIND>::LEN() const {
+  return std::visit(
+      common::visitors{
+          [](const Constant &c) { return SubscriptIntegerExpr{c.size()}; },
+          [](const Concat &c) { return c.x->LEN() + c.y->LEN(); },
+          [](const Max &c) {
+            return SubscriptIntegerExpr{
+                SubscriptIntegerExpr::Max{c.x->LEN(), c.y->LEN()}};
+          },
+          [](const Min &c) {
+            return SubscriptIntegerExpr{
+                SubscriptIntegerExpr::Max{c.x->LEN(), c.y->LEN()}};
+          },
+          [](const CopyableIndirection<DataRef> &dr) { return dr->LEN(); },
+          [](const CopyableIndirection<Substring> &ss) { return ss->LEN(); },
+          [](const CopyableIndirection<FunctionRef> &fr) {
+            return fr->proc.LEN();
+          }},
+      u);
 }
 
 template<int KIND>
@@ -205,24 +241,6 @@ void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
                  },
                  [&](const auto &) {  // TODO: more
                  }},
-      u);
-}
-
-template<int KIND>
-typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
-  // Written thus, instead of with common::visitors{}, to dodge a
-  // bug in g++ 7.2.0 that failed to direct the std::string case to its
-  // specific alternative.
-  return std::visit(
-      [](const auto &x) {
-        if constexpr (std::is_same_v<
-                          const typename CharacterExpr<KIND>::Constant &,
-                          decltype(x)>) {
-          return LengthExpr{static_cast<std::uint64_t>(x.size())};
-        } else {
-          return LengthExpr{LengthExpr::Add{x.x->LEN(), x.y->LEN()}};
-        }
-      },
       u);
 }
 
