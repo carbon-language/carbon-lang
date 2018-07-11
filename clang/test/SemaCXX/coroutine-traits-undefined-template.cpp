@@ -1,5 +1,3 @@
-// test/SemaCXX/coroutine-traits-undefined-template.cpp
-
 // This file contains references to sections of the Coroutines TS, which can be
 // found at http://wg21.link/coroutines.
 
