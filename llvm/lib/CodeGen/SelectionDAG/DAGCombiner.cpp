@@ -3244,6 +3244,8 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
+  EVT CCVT = getSetCCResultType(VT);
+
   bool isSigned = (Opcode == ISD::SREM);
   SDLoc DL(N);
 
@@ -3253,6 +3255,10 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
   if (N0C && N1C)
     if (SDValue Folded = DAG.FoldConstantArithmetic(Opcode, DL, VT, N0C, N1C))
       return Folded;
+  // fold (urem X, -1) -> select(X == -1, 0, x)
+  if (!isSigned && N1C && N1C->getAPIntValue().isAllOnesValue())
+    return DAG.getSelect(DL, VT, DAG.getSetCC(DL, CCVT, N0, N1, ISD::SETEQ),
+                         DAG.getConstant(0, DL, VT), N0);
 
   if (SDValue V = simplifyDivRem(N, DAG))
     return V;
