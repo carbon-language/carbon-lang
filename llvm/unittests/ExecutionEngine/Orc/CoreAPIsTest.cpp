@@ -79,10 +79,10 @@ protected:
   SymbolStringPtr Bar = ES.getSymbolStringPool().intern("bar");
   SymbolStringPtr Baz = ES.getSymbolStringPool().intern("baz");
   SymbolStringPtr Qux = ES.getSymbolStringPool().intern("qux");
-  constexpr static const JITTargetAddress FooAddr = 1U;
-  constexpr static const JITTargetAddress BarAddr = 2U;
-  constexpr static const JITTargetAddress BazAddr = 3U;
-  constexpr static const JITTargetAddress QuxAddr = 4U;
+  static const JITTargetAddress FooAddr = 1U;
+  static const JITTargetAddress BarAddr = 2U;
+  static const JITTargetAddress BazAddr = 3U;
+  static const JITTargetAddress QuxAddr = 4U;
   JITEvaluatedSymbol FooSym =
       JITEvaluatedSymbol(FooAddr, JITSymbolFlags::Exported);
   JITEvaluatedSymbol BarSym =
