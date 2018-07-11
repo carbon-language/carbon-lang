@@ -3591,6 +3591,13 @@ static X86::CondCode isUseDefConvertible(MachineInstr &MI) {
   case X86::TZCNT32rr: case X86::TZCNT32rm:
   case X86::TZCNT64rr: case X86::TZCNT64rm:
     return X86::COND_B;
+  case X86::BSF16rr:
+  case X86::BSF16rm:
+  case X86::BSF32rr:
+  case X86::BSF32rm:
+  case X86::BSF64rr:
+  case X86::BSF64rm:
+    return X86::COND_E;
   }
 }
 
