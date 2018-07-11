@@ -56,6 +56,12 @@ class DynamicTypePropagation:
                     check::PostStmt<CXXNewExpr>,
                     check::PreObjCMessage,
                     check::PostObjCMessage > {
+private:
+  /// This value is set to true, when the Generics checker is turned on.
+  bool CheckGenerics;
+public:
+  DynamicTypePropagation(bool CheckGenerics)
+      : CheckGenerics(CheckGenerics) {}
   const ObjCObjectType *getObjectTypeForAllocAndNew(const ObjCMessageExpr *MsgE,
                                                     CheckerContext &C) const;
 
@@ -107,9 +113,6 @@ public:
   void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
   void checkPreObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
-
-  /// This value is set to true, when the Generics checker is turned on.
-  DefaultBool CheckGenerics;
 };
 } // end anonymous namespace
 
@@ -995,11 +998,9 @@ DynamicTypePropagation::GenericsBugVisitor::VisitNode(const ExplodedNode *N,
 
 /// Register checkers.
 void ento::registerObjCGenericsChecker(CheckerManager &mgr) {
-  DynamicTypePropagation *checker =
-      mgr.registerChecker<DynamicTypePropagation>();
-  checker->CheckGenerics = true;
+  mgr.registerChecker<DynamicTypePropagation>(/*CheckGenerics=*/true);
 }
 
 void ento::registerDynamicTypePropagation(CheckerManager &mgr) {
-  mgr.registerChecker<DynamicTypePropagation>();
+  mgr.registerChecker<DynamicTypePropagation>(/*CheckGenerics=*/false);
 }
