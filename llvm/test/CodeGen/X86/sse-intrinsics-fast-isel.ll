@@ -2614,10 +2614,15 @@ define float @test_mm_sqrt_ss_scalar(float %a0) {
 ; X64-SSE-NEXT:    sqrtss %xmm0, %xmm0 # encoding: [0xf3,0x0f,0x51,0xc0]
 ; X64-SSE-NEXT:    retq # encoding: [0xc3]
 ;
-; X64-AVX-LABEL: test_mm_sqrt_ss_scalar:
-; X64-AVX:       # %bb.0:
-; X64-AVX-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # encoding: [0xc5,0xfa,0x51,0xc0]
-; X64-AVX-NEXT:    retq # encoding: [0xc3]
+; X64-AVX1-LABEL: test_mm_sqrt_ss_scalar:
+; X64-AVX1:       # %bb.0:
+; X64-AVX1-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # encoding: [0xc5,0xfa,0x51,0xc0]
+; X64-AVX1-NEXT:    retq # encoding: [0xc3]
+;
+; X64-AVX512-LABEL: test_mm_sqrt_ss_scalar:
+; X64-AVX512:       # %bb.0:
+; X64-AVX512-NEXT:    vsqrtss %xmm0, %xmm0, %xmm0 # EVEX TO VEX Compression encoding: [0xc5,0xfa,0x51,0xc0]
+; X64-AVX512-NEXT:    retq # encoding: [0xc3]
   %sqrt = call float @llvm.sqrt.f32(float %a0)
   ret float %sqrt
 }
