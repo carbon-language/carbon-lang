@@ -4629,9 +4629,8 @@ define void @fmadd_ss_maskz_memfold(float* %a, float* %b, i8 %c) {
 ; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; CHECK-NEXT:    vfmadd231ss {{.*#+}} xmm0 = (xmm0 * mem) + xmm0
 ; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vxorps %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vmovss %xmm0, %xmm0, %xmm1 {%k1}
-; CHECK-NEXT:    vmovss %xmm1, (%rdi)
+; CHECK-NEXT:    vmovss %xmm0, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
 ; CHECK-NEXT:    retq
   %a.val = load float, float* %a
   %av0 = insertelement <4 x float> undef, float %a.val, i32 0
@@ -4693,9 +4692,8 @@ define void @fmadd_sd_maskz_memfold(double* %a, double* %b, i8 %c) {
 ; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; CHECK-NEXT:    vfmadd231sd {{.*#+}} xmm0 = (xmm0 * mem) + xmm0
 ; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vxorpd %xmm1, %xmm1, %xmm1
-; CHECK-NEXT:    vmovsd %xmm0, %xmm0, %xmm1 {%k1}
-; CHECK-NEXT:    vmovsd %xmm1, (%rdi)
+; CHECK-NEXT:    vmovsd %xmm0, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vmovsd %xmm0, (%rdi)
 ; CHECK-NEXT:    retq
   %a.val = load double, double* %a
   %av0 = insertelement <2 x double> undef, double %a.val, i32 0
