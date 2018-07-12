@@ -2996,18 +2996,22 @@ bool X86FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     if (!isTypeLegal(RetTy, VT))
       return false;
 
-    static const uint16_t CvtOpc[2][2][2] = {
-      { { X86::CVTTSS2SIrr,   X86::VCVTTSS2SIrr   },
-        { X86::CVTTSS2SI64rr, X86::VCVTTSS2SI64rr }  },
-      { { X86::CVTTSD2SIrr,   X86::VCVTTSD2SIrr   },
-        { X86::CVTTSD2SI64rr, X86::VCVTTSD2SI64rr }  }
+    static const uint16_t CvtOpc[3][2][2] = {
+      { { X86::CVTTSS2SIrr,   X86::CVTTSS2SI64rr },
+        { X86::CVTTSD2SIrr,   X86::CVTTSD2SI64rr } },
+      { { X86::VCVTTSS2SIrr,  X86::VCVTTSS2SI64rr },
+        { X86::VCVTTSD2SIrr,  X86::VCVTTSD2SI64rr } },
+      { { X86::VCVTTSS2SIZrr, X86::VCVTTSS2SI64Zrr },
+        { X86::VCVTTSD2SIZrr, X86::VCVTTSD2SI64Zrr } },
     };
-    bool HasAVX = Subtarget->hasAVX();
+    unsigned AVXLevel = Subtarget->hasAVX512() ? 2 :
+                        Subtarget->hasAVX()    ? 1 :
+                                                 0;
     unsigned Opc;
     switch (VT.SimpleTy) {
     default: llvm_unreachable("Unexpected result type.");
-    case MVT::i32: Opc = CvtOpc[IsInputDouble][0][HasAVX]; break;
-    case MVT::i64: Opc = CvtOpc[IsInputDouble][1][HasAVX]; break;
+    case MVT::i32: Opc = CvtOpc[AVXLevel][IsInputDouble][0]; break;
+    case MVT::i64: Opc = CvtOpc[AVXLevel][IsInputDouble][1]; break;
     }
 
     // Check if we can fold insertelement instructions into the convert.
