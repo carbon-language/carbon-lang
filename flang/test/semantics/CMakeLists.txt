@@ -15,7 +15,8 @@
 # Run tests with test_errors.sh. It compiles the test with f18 and compares
 # actual errors produced with expected ones listed in the source.
 
-set(TESTS
+# These test files have expected errors in the source
+set(ERROR_TESTS
   implicit01.f90
   implicit02.f90
   implicit03.f90
@@ -49,6 +50,15 @@ set(TESTS
   resolve24.f90
 )
 
-foreach(test ${TESTS})
+# These test files have expected symbols in the source
+set(SYMBOL_TESTS
+  symbol01.f90
+)
+
+foreach(test ${ERROR_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.sh ${test})
+endforeach()
+
+foreach(test ${SYMBOL_TESTS})
+  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_symbols.sh ${test})
 endforeach()

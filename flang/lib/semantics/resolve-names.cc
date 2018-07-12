@@ -114,8 +114,15 @@ protected:
     case parser::AccessSpec::Kind::Public: return Attr::PUBLIC;
     case parser::AccessSpec::Kind::Private: return Attr::PRIVATE;
     }
-    // unnecessary but g++ warns "control reaches end of non-void function"
-    common::die("unreachable");
+    common::die("unreachable");  // suppress g++ warning
+  }
+  Attr IntentSpecToAttr(const parser::IntentSpec &x) {
+    switch (x.v) {
+    case parser::IntentSpec::Intent::In: return Attr::INTENT_IN;
+    case parser::IntentSpec::Intent::Out: return Attr::INTENT_OUT;
+    case parser::IntentSpec::Intent::InOut: return Attr::INTENT_INOUT;
+    }
+    common::die("unreachable");  // suppress g++ warning
   }
 };
 
@@ -430,6 +437,7 @@ class SubprogramVisitor : public InterfaceVisitor {
 public:
   bool Pre(const parser::StmtFunctionStmt &);
   void Post(const parser::StmtFunctionStmt &);
+  bool Pre(const parser::SubroutineStmt &);
   void Post(const parser::SubroutineStmt &);
   bool Pre(const parser::FunctionStmt &);
   void Post(const parser::FunctionStmt &);
@@ -470,6 +478,7 @@ public:
   bool Pre(const parser::AsynchronousStmt &);
   bool Pre(const parser::ContiguousStmt &);
   bool Pre(const parser::ExternalStmt &);
+  bool Pre(const parser::IntentStmt &);
   bool Pre(const parser::IntrinsicStmt &);
   bool Pre(const parser::OptionalStmt &);
   bool Pre(const parser::ProtectedStmt &);
@@ -751,14 +760,8 @@ bool AttrsVisitor::Pre(const parser::AccessSpec &x) {
   return false;
 }
 bool AttrsVisitor::Pre(const parser::IntentSpec &x) {
-  switch (x.v) {
-  case parser::IntentSpec::Intent::In: attrs_->set(Attr::INTENT_IN); break;
-  case parser::IntentSpec::Intent::Out: attrs_->set(Attr::INTENT_OUT); break;
-  case parser::IntentSpec::Intent::InOut:
-    attrs_->set(Attr::INTENT_IN);
-    attrs_->set(Attr::INTENT_OUT);
-    break;
-  }
+  CHECK(attrs_);
+  attrs_->set(IntentSpecToAttr(x));
   return false;
 }
 
@@ -1524,7 +1527,6 @@ void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
   generic.set(isFunction ? Symbol::Flag::Function : Symbol::Flag::Subroutine);
 }
 
-
 // SubprogramVisitor implementation
 
 bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
@@ -1629,11 +1631,16 @@ void SubprogramVisitor::Post(const parser::InterfaceBody::Function &) {
   EndSubprogram();
 }
 
+bool SubprogramVisitor::Pre(const parser::SubroutineStmt &stmt) {
+  BeginAttrs();
+  return true;
+}
 bool SubprogramVisitor::Pre(const parser::FunctionStmt &stmt) {
   if (!subpNamesOnly_) {
     BeginDeclTypeSpec();
     CHECK(!funcResultName_);
   }
+  BeginAttrs();
   return true;
 }
 
@@ -1641,6 +1648,7 @@ void SubprogramVisitor::Post(const parser::SubroutineStmt &stmt) {
   const auto &name = std::get<parser::Name>(stmt.t);
   Symbol &symbol{*CurrScope().symbol()};
   CHECK(name.source == symbol.name());
+  symbol.attrs() |= EndAttrs();
   auto &details = symbol.details<SubprogramDetails>();
   for (const auto &dummyArg : std::get<std::list<parser::DummyArg>>(stmt.t)) {
     const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
@@ -1654,6 +1662,7 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   const auto &name = std::get<parser::Name>(stmt.t);
   Symbol &symbol{*CurrScope().symbol()};
   CHECK(name.source == symbol.name());
+  symbol.attrs() |= EndAttrs();
   auto &details = symbol.details<SubprogramDetails>();
   for (const auto &dummyName : std::get<std::list<parser::Name>>(stmt.t)) {
     Symbol &dummy{MakeSymbol(dummyName, EntityDetails(true))};
@@ -1806,6 +1815,11 @@ bool DeclarationVisitor::Pre(const parser::ExternalStmt &x) {
     }
   }
   return false;
+}
+bool DeclarationVisitor::Pre(const parser::IntentStmt &x) {
+  auto &intentSpec{std::get<parser::IntentSpec>(x.t)};
+  auto &names{std::get<std::list<parser::Name>>(x.t)};
+  return HandleAttributeStmt(IntentSpecToAttr(intentSpec), names);
 }
 bool DeclarationVisitor::Pre(const parser::IntrinsicStmt &x) {
   return HandleAttributeStmt(Attr::INTRINSIC, x.v);

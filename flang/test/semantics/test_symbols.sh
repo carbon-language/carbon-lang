@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Compile a source file and check errors against those listed in the file.
+# Compile a source file with '-funparse-with-symbols' and verify
+# we get the right symbols in the output, i.e. the output should be
+# the same as the input, except for the copyright comment.
 # Change the compiler by setting the F18 environment variable.
 
 PATH=/usr/bin
 srcdir=$(dirname $0)
-CMD="${F18:-../../tools/f18/f18} -fdebug-resolve-names -fparse-only"
+CMD="${F18:-../../tools/f18/f18} -funparse-with-symbols"
 
 if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"
@@ -27,28 +29,29 @@ fi
 src=$srcdir/$1
 [[ ! -f $src ]] && echo "File not found: $src" && exit 1
 
-temp=$(mktemp --directory --tmpdir=.)
-trap "rm -rf $temp" EXIT
-log=$temp/log
-actual=$temp/actual
-expect=$temp/expect
+if [[ $KEEP ]]; then
+  temp=.
+else
+  temp=$(mktemp --directory --tmpdir=.)
+  trap "rm -rf $temp" EXIT
+fi
+src1=$temp/1.f90
+src2=$temp/2.f90
+src3=$temp/3.f90
 diffs=$temp/diffs
 
-cmd="$CMD $src"
-$cmd > $log 2>&1
+# Strip out blank lines and all comments except "!DEF:" and "!REF:"
+sed -e 's/!\([DR]EF:\)/KEEP \1/' \
+  -e 's/!.*//' -e 's/ *$//' -e '/^$/d' -e 's/KEEP \([DR]EF:\)/!\1/' \
+  $src > $src1
+egrep -v '^ *!' $src1 > $src2  # strip out meaningful comments
+$CMD $src2 > $src3  # compile, inserting comments for symbols
 
-# $actual has errors from the compiler; $expect has them from !ERROR comments in source
-# Format both as "<line>: <text>" so they can be diffed.
-sed -n 's=^[^:]*:\([^:]*\):[^:]*: error: =\1: =p' $log > $actual
-{ echo; cat $src; } | cat -n | sed -n 's=^ *\([0-9]*\)\t *\!ERROR: *=\1: =p' > $expect
-
-if diff -U0 $actual $expect > $diffs; then
+if diff -U999999 $src1 $src3 > $diffs; then
   echo PASS
 else
-  echo "$cmd"
-  < $diffs \
-    sed -n -e 's/^-\([0-9]\)/actual at \1/p' -e 's/^+\([0-9]\)/expect at \1/p' \
-    | sort -n -k 2
+  sed '1,/^\@\@/d' $diffs
+  echo
   echo FAIL
   exit 1
 fi
