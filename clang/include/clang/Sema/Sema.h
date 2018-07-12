@@ -979,15 +979,21 @@ public:
     /// expressions for which we have deferred checking the destructor.
     SmallVector<CXXBindTemporaryExpr *, 8> DelayedDecltypeBinds;
 
+    /// \brief Describes whether we are in an expression constext which we have
+    /// to handle differently.
+    enum ExpressionKind {
+      EK_Decltype, EK_TemplateArgument, EK_Other
+    } ExprContext;
+
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumCleanupObjects,
                                       CleanupInfo ParentCleanup,
                                       Decl *ManglingContextDecl,
-                                      bool IsDecltype)
-      : Context(Context), ParentCleanup(ParentCleanup),
-        IsDecltype(IsDecltype), NumCleanupObjects(NumCleanupObjects),
-        NumTypos(0),
-        ManglingContextDecl(ManglingContextDecl), MangleNumbering() { }
+                                      ExpressionKind ExprContext)
+        : Context(Context), ParentCleanup(ParentCleanup),
+          NumCleanupObjects(NumCleanupObjects), NumTypos(0),
+          ManglingContextDecl(ManglingContextDecl), MangleNumbering(),
+          ExprContext(ExprContext) {}
 
     /// Retrieve the mangling numbering context, used to consistently
     /// number constructs like lambdas for mangling.
@@ -3989,13 +3995,15 @@ public:
   void DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
                              ArrayRef<Expr *> Args);
 
-  void PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
-                                       Decl *LambdaContextDecl = nullptr,
-                                       bool IsDecltype = false);
+  void PushExpressionEvaluationContext(
+      ExpressionEvaluationContext NewContext, Decl *LambdaContextDecl = nullptr,
+      ExpressionEvaluationContextRecord::ExpressionKind Type =
+          ExpressionEvaluationContextRecord::EK_Other);
   enum ReuseLambdaContextDecl_t { ReuseLambdaContextDecl };
-  void PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
-                                       ReuseLambdaContextDecl_t,
-                                       bool IsDecltype = false);
+  void PushExpressionEvaluationContext(
+      ExpressionEvaluationContext NewContext, ReuseLambdaContextDecl_t,
+      ExpressionEvaluationContextRecord::ExpressionKind Type =
+          ExpressionEvaluationContextRecord::EK_Other);
   void PopExpressionEvaluationContext();
 
   void DiscardCleanupsInEvaluationContext();
@@ -10748,25 +10756,25 @@ class EnterExpressionEvaluationContext {
   bool Entered = true;
 
 public:
-
-  EnterExpressionEvaluationContext(Sema &Actions,
-                                   Sema::ExpressionEvaluationContext NewContext,
-                                   Decl *LambdaContextDecl = nullptr,
-                                   bool IsDecltype = false,
-                                   bool ShouldEnter = true)
+  EnterExpressionEvaluationContext(
+      Sema &Actions, Sema::ExpressionEvaluationContext NewContext,
+      Decl *LambdaContextDecl = nullptr,
+      Sema::ExpressionEvaluationContextRecord::ExpressionKind ExprContext =
+          Sema::ExpressionEvaluationContextRecord::EK_Other,
+      bool ShouldEnter = true)
       : Actions(Actions), Entered(ShouldEnter) {
     if (Entered)
       Actions.PushExpressionEvaluationContext(NewContext, LambdaContextDecl,
-                                              IsDecltype);
+                                              ExprContext);
   }
-  EnterExpressionEvaluationContext(Sema &Actions,
-                                   Sema::ExpressionEvaluationContext NewContext,
-                                   Sema::ReuseLambdaContextDecl_t,
-                                   bool IsDecltype = false)
-    : Actions(Actions) {
-    Actions.PushExpressionEvaluationContext(NewContext,
-                                            Sema::ReuseLambdaContextDecl,
-                                            IsDecltype);
+  EnterExpressionEvaluationContext(
+      Sema &Actions, Sema::ExpressionEvaluationContext NewContext,
+      Sema::ReuseLambdaContextDecl_t,
+      Sema::ExpressionEvaluationContextRecord::ExpressionKind ExprContext =
+          Sema::ExpressionEvaluationContextRecord::EK_Other)
+      : Actions(Actions) {
+    Actions.PushExpressionEvaluationContext(
+        NewContext, Sema::ReuseLambdaContextDecl, ExprContext);
   }
 
   enum InitListTag { InitList };
@@ -10780,7 +10788,7 @@ public:
     if (ShouldEnter && Actions.isUnevaluatedContext() &&
         Actions.getLangOpts().CPlusPlus11) {
       Actions.PushExpressionEvaluationContext(
-          Sema::ExpressionEvaluationContext::UnevaluatedList, nullptr, false);
+          Sema::ExpressionEvaluationContext::UnevaluatedList);
       Entered = true;
     }
   }
