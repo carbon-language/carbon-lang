@@ -41,8 +41,11 @@ template<typename A> struct Parser {
     return parser.Parse(state); \
   }
 
+#define CONTEXT_PARSER(contextText, pexpr) \
+  instrumented((contextText), inContext((contextText), (pexpr)))
+
 #define TYPE_CONTEXT_PARSER(contextText, pexpr) \
-  TYPE_PARSER(instrumented((contextText), inContext((contextText), (pexpr))))
+  TYPE_PARSER(CONTEXT_PARSER((contextText), (pexpr)))
 
 // Some specializations of Parser<> are used multiple times, or are
 // of some special importance, so we instantiate them once here and

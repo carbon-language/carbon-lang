@@ -54,27 +54,27 @@ constexpr auto execPartLookAhead{first(actionStmt >> ok, "ASSOCIATE ("_tok,
     "IF ("_tok, "WHERE ("_tok, "FORALL ("_tok)};
 constexpr auto declErrorRecovery{
     stmtErrorRecoveryStart >> !execPartLookAhead >> stmtErrorRecovery};
-TYPE_CONTEXT_PARSER("declaration construct"_en_US,
-    recovery(
-        withMessage("expected declaration construct"_err_en_US,
+TYPE_PARSER(recovery(
+    withMessage("expected declaration construct"_err_en_US,
+        CONTEXT_PARSER("declaration construct"_en_US,
             first(construct<DeclarationConstruct>(specificationConstruct),
                 construct<DeclarationConstruct>(statement(indirect(dataStmt))),
                 construct<DeclarationConstruct>(
                     statement(indirect(formatStmt))),
                 construct<DeclarationConstruct>(statement(indirect(entryStmt))),
                 construct<DeclarationConstruct>(
-                    statement(indirect(Parser<StmtFunctionStmt>{}))))),
-        construct<DeclarationConstruct>(declErrorRecovery)))
+                    statement(indirect(Parser<StmtFunctionStmt>{})))))),
+    construct<DeclarationConstruct>(declErrorRecovery)))
 
 // R507 variant of declaration-construct for use in limitedSpecificationPart.
-constexpr auto limitedDeclarationConstruct{inContext(
-    "declaration construct"_en_US,
-    recovery(withMessage("expected declaration construct"_err_en_US,
-                 first(construct<DeclarationConstruct>(specificationConstruct),
-                     construct<DeclarationConstruct>(
-                         statement(indirect(dataStmt))))),
-        construct<DeclarationConstruct>(
-            stmtErrorRecoveryStart >> stmtErrorRecovery)))};
+constexpr auto limitedDeclarationConstruct{recovery(
+    withMessage("expected declaration construct"_err_en_US,
+        inContext("declaration construct"_en_US,
+            first(construct<DeclarationConstruct>(specificationConstruct),
+                construct<DeclarationConstruct>(
+                    statement(indirect(dataStmt)))))),
+    construct<DeclarationConstruct>(
+        stmtErrorRecoveryStart >> stmtErrorRecovery))};
 
 // R508 specification-construct ->
 //        derived-type-def | enum-def | generic-stmt | interface-block |
@@ -398,19 +398,20 @@ constexpr auto obsoleteExecutionPartConstruct{recovery(ignoredStatementPrefix >>
             parenthesized(nonemptyList(Parser<AllocateShapeSpec>{})) >> ok) >>
         construct<ErrorRecovery>()))};
 
-TYPE_CONTEXT_PARSER("execution part construct"_en_US,
-    recovery(withMessage("expected execution part construct"_err_en_US,
-                 first(construct<ExecutionPartConstruct>(executableConstruct),
-                     construct<ExecutionPartConstruct>(
-                         statement(indirect(formatStmt))),
-                     construct<ExecutionPartConstruct>(
-                         statement(indirect(entryStmt))),
-                     construct<ExecutionPartConstruct>(
-                         statement(indirect(dataStmt))),
-                     extension(construct<ExecutionPartConstruct>(statement(
-                                   indirect(Parser<NamelistStmt>{}))) ||
-                         obsoleteExecutionPartConstruct))),
-        construct<ExecutionPartConstruct>(executionPartErrorRecovery)))
+TYPE_PARSER(recovery(
+    withMessage("expected execution part construct"_err_en_US,
+        CONTEXT_PARSER("execution part construct"_en_US,
+            first(construct<ExecutionPartConstruct>(executableConstruct),
+                construct<ExecutionPartConstruct>(
+                    statement(indirect(formatStmt))),
+                construct<ExecutionPartConstruct>(
+                    statement(indirect(entryStmt))),
+                construct<ExecutionPartConstruct>(
+                    statement(indirect(dataStmt))),
+                extension(construct<ExecutionPartConstruct>(
+                              statement(indirect(Parser<NamelistStmt>{}))) ||
+                    obsoleteExecutionPartConstruct)))),
+    construct<ExecutionPartConstruct>(executionPartErrorRecovery)))
 
 // R509 execution-part -> executable-construct [execution-part-construct]...
 TYPE_CONTEXT_PARSER("execution part"_en_US,

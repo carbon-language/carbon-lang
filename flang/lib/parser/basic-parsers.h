@@ -208,7 +208,7 @@ public:
 
 private:
   const MessageFixedText text_;
-  const PA parser_;
+  const BacktrackingParser<PA> parser_;
 };
 
 template<typename PA>
