@@ -2030,8 +2030,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     auto Section = BC->getSectionForAddress(SymbolAddress);
     dbgs() << "Relocation: offset = 0x"
            << Twine::utohexstr(Rel.getOffset())
-           << "; type = " << Rel.getType()
-           << "; type name = " << TypeName
+           << "; type = " << TypeName
            << "; value = 0x" << Twine::utohexstr(ExtractedValue)
            << "; symbol = " << SymbolName
            << " (" << (Section ? Section->getName() : "") << ")"
@@ -2071,13 +2070,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     }
 
     const auto Address = SymbolAddress + Addend;
-    const bool ForceRelocation =
-      (opts::HotText && (SymbolName == "__hot_start" ||
-                         SymbolName == "__hot_end")) ||
-      (opts::HotData && (SymbolName == "__hot_data_start" ||
-                         SymbolName == "__hot_data_end")) ||
-      SymbolName == "_end" ||
-      Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE;
 
     DEBUG(
        dbgs() << "BOLT-DEBUG: ";
@@ -2115,6 +2107,24 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                    << "\n");
       continue;
     }
+
+    auto ForceRelocation = [&](StringRef SymbolName) {
+      if (opts::HotText && (SymbolName == "__hot_start" ||
+                            SymbolName == "__hot_end"))
+        return true;
+
+      if (opts::HotData && (SymbolName == "__hot_data_start" ||
+                            SymbolName == "__hot_data_end"))
+        return true;
+
+      if (SymbolName == "_end")
+        return true;
+
+      return false;
+    }(SymbolName);
+
+    if (BC->isAArch64() && Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE)
+      ForceRelocation = true;
 
     // TODO: RefSection should be the same as **Rel.getSymbol().getSection()
     auto RefSection = BC->getSectionForAddress(SymbolAddress);
@@ -2163,9 +2173,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       ReferencedSymbol = BC->registerNameAtAddress(Name, 0, 0, 0);
       SymbolAddress = 0;
       Addend = Address;
-      DEBUG(dbgs() << "BOLT-DEBUG: creating relocations for huge pages against"
-                      " symbol " << SymbolName << " with addend " << Addend
-                   << '\n');
+      DEBUG(dbgs() << "BOLT-DEBUG: forcing relocation against symbol "
+                   << SymbolName << " with addend " << Addend << '\n');
     } else if (ReferencedBF) {
       ReferencedSymbol = ReferencedBF->getSymbol();
 
@@ -2357,10 +2366,15 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
               NumDataRelocations < opts::MaxDataRelocations);
     };
 
+    if (IsFromCode && IsAArch64)
+      ForceRelocation = true;
+
+    if (refersToReorderedSection(RefSection) ||
+        (opts::ForceToDataRelocations && checkMaxDataRelocations()))
+      ForceRelocation = true;
+
     if (IsFromCode) {
-      if (ReferencedBF || ForceRelocation || IsAArch64 ||
-          refersToReorderedSection(RefSection) ||
-          (opts::ForceToDataRelocations && checkMaxDataRelocations())) {
+      if (ReferencedBF || ForceRelocation) {
         ContainingBF->addRelocation(Rel.getOffset(),
                                     ReferencedSymbol,
                                     Rel.getType(),
@@ -2370,11 +2384,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from code to data "
                      << ReferencedSymbol->getName() << "\n");
       }
-    } else if (IsToCode) {
-      BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType(),
-                        Addend);
-    } else if (refersToReorderedSection(RefSection) ||
-               (opts::ForceToDataRelocations && checkMaxDataRelocations())) {
+    } else if (IsToCode || ForceRelocation) {
       BC->addRelocation(Rel.getOffset(),
                         ReferencedSymbol,
                         Rel.getType(),

@@ -325,7 +325,7 @@ void ValidateInternalCalls::runOnFunctions(
   // case, we mark this function as non-simple and stop processing it.
   std::set<BinaryFunction *> Invalid;
   for (auto *Function : NeedsValidation) {
-    DEBUG(dbgs() << "Validating " << Function << "\n");
+    DEBUG(dbgs() << "Validating " << *Function << "\n");
     if (!analyzeFunction(*Function)) {
       Invalid.insert(Function);
     }
@@ -336,7 +336,7 @@ void ValidateInternalCalls::runOnFunctions(
     errs() << "BOLT-ERROR: Unsupported internal calls detected in the "
               "following functions:\n";
     for (auto *Function : Invalid) {
-      errs() << "              " << Function << "\n";
+      errs() << "              " << *Function << "\n";
     }
     errs() << "BOLT-ERROR: Unable to proceed in relocation mode\n";
     exit(1);

@@ -644,7 +644,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
 void BinaryFunction::printRelocations(raw_ostream &OS,
                                       uint64_t Offset,
                                       uint64_t Size) const {
-  const char* Sep = " # Relocs: ";
+  const char *Sep = " # Relocs: ";
 
   auto RI = Relocations.lower_bound(Offset);
   while (RI != Relocations.end() && RI->first < Offset + Size) {
