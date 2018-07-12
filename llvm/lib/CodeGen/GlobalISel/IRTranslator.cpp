@@ -26,7 +26,6 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/StackProtector.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -103,9 +102,7 @@ IRTranslator::IRTranslator() : MachineFunctionPass(ID) {
 }
 
 void IRTranslator::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<StackProtector>();
   AU.addRequired<TargetPassConfig>();
-  getSelectionDAGFallbackAnalysisUsage(AU);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -1652,10 +1649,6 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &CurMF) {
 
   assert(&MF->front() == &NewEntryBB &&
          "New entry wasn't next in the list of basic block!");
-
-  // Initialize stack protector information.
-  StackProtector &SP = getAnalysis<StackProtector>();
-  SP.copyToMachineFrameInfo(MF->getFrameInfo());
 
   return false;
 }

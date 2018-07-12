@@ -44,11 +44,6 @@ bool Localizer::shouldLocalize(const MachineInstr &MI) {
   }
 }
 
-void Localizer::getAnalysisUsage(AnalysisUsage &AU) const {
-  getSelectionDAGFallbackAnalysisUsage(AU);
-  MachineFunctionPass::getAnalysisUsage(AU);
-}
-
 bool Localizer::isLocalUse(MachineOperand &MOUse, const MachineInstr &Def,
                            MachineBasicBlock *&InsertMBB) {
   MachineInstr &MIUse = *MOUse.getParent();
