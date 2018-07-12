@@ -11525,6 +11525,37 @@ defm : AVX512_scalar_math_fp_patterns<fsub, "SUBSD", X86Movsd, v2f64x_info, fp64
 defm : AVX512_scalar_math_fp_patterns<fmul, "MULSD", X86Movsd, v2f64x_info, fp64imm0>;
 defm : AVX512_scalar_math_fp_patterns<fdiv, "DIVSD", X86Movsd, v2f64x_info, fp64imm0>;
 
+multiclass AVX512_scalar_unary_math_patterns<SDNode OpNode, string OpcPrefix,
+                                             SDNode Move, X86VectorVTInfo _> {
+  let Predicates = [HasAVX512] in {
+    def : Pat<(_.VT (Move _.VT:$dst,
+                     (scalar_to_vector (OpNode (extractelt _.VT:$src, 0))))),
+              (!cast<Instruction>("V"#OpcPrefix#Zr_Int) _.VT:$dst, _.VT:$src)>;
+  }
+}
+
+defm : AVX512_scalar_unary_math_patterns<fsqrt, "SQRTSS", X86Movss, v4f32x_info>;
+defm : AVX512_scalar_unary_math_patterns<fsqrt, "SQRTSD", X86Movsd, v2f64x_info>;
+
+multiclass AVX512_scalar_unary_math_imm_patterns<SDNode OpNode, string OpcPrefix,
+                                                 SDNode Move, X86VectorVTInfo _,
+                                                 bits<8> ImmV> {
+  let Predicates = [HasAVX512] in {
+    def : Pat<(_.VT (Move _.VT:$dst,
+                     (scalar_to_vector (OpNode (extractelt _.VT:$src, 0))))),
+              (!cast<Instruction>("V"#OpcPrefix#Zr_Int) _.VT:$dst, _.VT:$src,
+                                                        (i32 ImmV))>;
+  }
+}
+
+defm : AVX512_scalar_unary_math_imm_patterns<ffloor, "RNDSCALESS", X86Movss,
+                                             v4f32x_info, 0x01>;
+defm : AVX512_scalar_unary_math_imm_patterns<fceil, "RNDSCALESS", X86Movss,
+                                             v4f32x_info, 0x02>;
+defm : AVX512_scalar_unary_math_imm_patterns<ffloor, "RNDSCALESD", X86Movsd,
+                                             v2f64x_info, 0x01>;
+defm : AVX512_scalar_unary_math_imm_patterns<fceil, "RNDSCALESD", X86Movsd,
+                                             v2f64x_info, 0x02>;
 
 //===----------------------------------------------------------------------===//
 // AES instructions
