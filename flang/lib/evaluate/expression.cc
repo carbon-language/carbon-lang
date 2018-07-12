@@ -81,7 +81,9 @@ std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
           [&](const Power &p) { p.Dump(o, "**"); },
           [&](const Max &m) { m.Dump(o, ",", "MAX("); },
           [&](const Min &m) { m.Dump(o, ",", "MIN("); },
-          [&](const auto &convert) { DumpExprWithType(o, convert.operand().u); }},
+          [&](const auto &convert) {
+            DumpExprWithType(o, convert.operand().u);
+          }},
       u_);
   return o;
 }
@@ -105,7 +107,9 @@ std::ostream &Expr<Category::Real, KIND>::Dump(std::ostream &o) const {
           [&](const Min &m) { m.Dump(o, ",", "MIN("); },
           [&](const RealPart &z) { z.Dump(o, "REAL("); },
           [&](const AIMAG &p) { p.Dump(o, "AIMAG("); },
-          [&](const auto &convert) { DumpExprWithType(o, convert.operand().u); }},
+          [&](const auto &convert) {
+            DumpExprWithType(o, convert.operand().u);
+          }},
       u_);
   return o;
 }
@@ -182,7 +186,7 @@ SubscriptIntegerExpr Expr<Category::Character, KIND>::LEN() const {
           [](const CopyableIndirection<DataRef> &dr) { return dr->LEN(); },
           [](const CopyableIndirection<Substring> &ss) { return ss->LEN(); },
           [](const CopyableIndirection<FunctionRef> &fr) {
-            return fr->proc.LEN();
+            return fr->proc().LEN();
           }},
       u_);
 }

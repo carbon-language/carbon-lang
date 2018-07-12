@@ -61,7 +61,8 @@ std::optional<SubscriptIntegerExpr> Triplet::stride() const {
 CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
     std::vector<SubscriptIntegerExpr> &&ss,
     std::vector<SubscriptIntegerExpr> &&css)
-  : base_(std::move(c)), subscript_(std::move(ss)), cosubscript_(std::move(css)) {
+  : base_(std::move(c)), subscript_(std::move(ss)),
+    cosubscript_(std::move(css)) {
   CHECK(!base_.empty());
 }
 
@@ -78,42 +79,42 @@ CoarrayRef &CoarrayRef::setTeam(Variable &&v, bool isTeamNumber) {
 
 Substring::Substring(DataRef &&d, std::optional<SubscriptIntegerExpr> &&f,
     std::optional<SubscriptIntegerExpr> &&l)
-  : u{std::move(d)} {
+  : u_{std::move(d)} {
   if (f.has_value()) {
-    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
+    first_ = IndirectSubscriptIntegerExpr::Make(std::move(*f));
   }
   if (l.has_value()) {
-    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+    last_ = IndirectSubscriptIntegerExpr::Make(std::move(*l));
   }
 }
 
 Substring::Substring(std::string &&s, std::optional<SubscriptIntegerExpr> &&f,
     std::optional<SubscriptIntegerExpr> &&l)
-  : u{std::move(s)} {
+  : u_{std::move(s)} {
   if (f.has_value()) {
-    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
+    first_ = IndirectSubscriptIntegerExpr::Make(std::move(*f));
   }
   if (l.has_value()) {
-    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+    last_ = IndirectSubscriptIntegerExpr::Make(std::move(*l));
   }
 }
 
-SubscriptIntegerExpr Substring::First() const {
-  if (first.has_value()) {
-    return **first;
+SubscriptIntegerExpr Substring::first() const {
+  if (first_.has_value()) {
+    return **first_;
   }
   return {1};
 }
 
-SubscriptIntegerExpr Substring::Last() const {
-  if (last.has_value()) {
-    return **last;
+SubscriptIntegerExpr Substring::last() const {
+  if (last_.has_value()) {
+    return **last_;
   }
   return std::visit(common::visitors{[](const std::string &s) {
                                        return SubscriptIntegerExpr{s.size()};
                                      },
                         [](const DataRef &x) { return x.LEN(); }},
-      u);
+      u_);
 }
 
 // Variable dumping
@@ -226,29 +227,29 @@ std::ostream &CoarrayRef::Dump(std::ostream &o) const {
   return o << ']';
 }
 
-std::ostream &DataRef::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &DataRef::Dump(std::ostream &o) const { return Emit(o, u_); }
 
 std::ostream &Substring::Dump(std::ostream &o) const {
-  Emit(o, u) << '(';
-  Emit(o, first) << ':';
-  return Emit(o, last);
+  Emit(o, u_) << '(';
+  Emit(o, first_) << ':';
+  return Emit(o, last_);
 }
 
 std::ostream &ComplexPart::Dump(std::ostream &o) const {
-  return complex.Dump(o) << '%' << EnumToString(part);
+  return complex_.Dump(o) << '%' << EnumToString(part_);
 }
 
-std::ostream &Designator::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &Designator::Dump(std::ostream &o) const { return Emit(o, u_); }
 
 std::ostream &ProcedureDesignator::Dump(std::ostream &o) const {
-  return Emit(o, u);
+  return Emit(o, u_);
 }
 
 template<typename ARG>
 std::ostream &ProcedureRef<ARG>::Dump(std::ostream &o) const {
-  Emit(o, proc);
+  Emit(o, proc_);
   char separator{'('};
-  for (const auto &arg : argument) {
+  for (const auto &arg : argument_) {
     Emit(o << separator, arg);
     separator = ',';
   }
@@ -258,13 +259,13 @@ std::ostream &ProcedureRef<ARG>::Dump(std::ostream &o) const {
   return o << ')';
 }
 
-std::ostream &Variable::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &Variable::Dump(std::ostream &o) const { return Emit(o, u_); }
 
 std::ostream &ActualFunctionArg::Dump(std::ostream &o) const {
-  return Emit(o, u);
+  return Emit(o, u_);
 }
 std::ostream &ActualSubroutineArg::Dump(std::ostream &o) const {
-  return Emit(o, u);
+  return Emit(o, u_);
 }
 
 std::ostream &Label::Dump(std::ostream &o) const {
@@ -282,16 +283,18 @@ SubscriptIntegerExpr ArrayRef::LEN() const {
           [](const Component &x) { return x.LEN(); }},
       u_);
 }
-SubscriptIntegerExpr CoarrayRef::LEN() const { return SymbolLEN(*base_.back()); }
+SubscriptIntegerExpr CoarrayRef::LEN() const {
+  return SymbolLEN(*base_.back());
+}
 SubscriptIntegerExpr DataRef::LEN() const {
   return std::visit(
       common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
           [](const auto &x) { return x.LEN(); }},
-      u);
+      u_);
 }
 SubscriptIntegerExpr Substring::LEN() const {
   return SubscriptIntegerExpr::Max{
-      SubscriptIntegerExpr{0}, Last() - First() + SubscriptIntegerExpr{1}};
+      SubscriptIntegerExpr{0}, last() - first() + SubscriptIntegerExpr{1}};
 }
 SubscriptIntegerExpr ProcedureDesignator::LEN() const {
   return std::visit(
@@ -301,7 +304,7 @@ SubscriptIntegerExpr ProcedureDesignator::LEN() const {
             CRASH_NO_CASE;
             return SubscriptIntegerExpr{0};
           }},
-      u);
+      u_);
 }
 
 }  // namespace Fortran::evaluate

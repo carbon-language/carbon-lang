@@ -50,6 +50,7 @@ public:
   const A &operand() const { return *operand_; }
   A &operand() { return *operand_; }
   std::ostream &Dump(std::ostream &, const char *opr) const;
+
 private:
   CopyableIndirection<A> operand_;
 };
@@ -69,6 +70,7 @@ public:
   B &right() { return *right_; }
   std::ostream &Dump(
       std::ostream &, const char *opr, const char *before = "(") const;
+
 private:
   CopyableIndirection<A> left_;
   CopyableIndirection<B> right_;
