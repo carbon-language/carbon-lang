@@ -93,8 +93,8 @@ template<> std::ostream &Emit(std::ostream &o, const IntrinsicProcedure &p) {
 }
 
 std::ostream &Component::Dump(std::ostream &o) const {
-  base->Dump(o);
-  return Emit(o << '%', sym);
+  base_->Dump(o);
+  return Emit(o << '%', symbol_);
 }
 
 std::ostream &Triplet::Dump(std::ostream &o) const {
@@ -238,20 +238,20 @@ SubscriptIntegerExpr Substring::Last() const {
 }
 
 // LEN()
-static SubscriptIntegerExpr SymbolLEN(const Symbol *sym) {
+static SubscriptIntegerExpr SymbolLEN(const Symbol &sym) {
   return SubscriptIntegerExpr{0};  // TODO
 }
-SubscriptIntegerExpr Component::LEN() const { return SymbolLEN(sym); }
+SubscriptIntegerExpr Component::LEN() const { return SymbolLEN(symbol()); }
 SubscriptIntegerExpr ArrayRef::LEN() const {
   return std::visit(
-      common::visitors{[](const Symbol *s) { return SymbolLEN(s); },
+      common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
           [](const Component &x) { return x.LEN(); }},
       u);
 }
-SubscriptIntegerExpr CoarrayRef::LEN() const { return SymbolLEN(base.back()); }
+SubscriptIntegerExpr CoarrayRef::LEN() const { return SymbolLEN(*base.back()); }
 SubscriptIntegerExpr DataRef::LEN() const {
   return std::visit(
-      common::visitors{[](const Symbol *s) { return SymbolLEN(s); },
+      common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
           [](const auto &x) { return x.LEN(); }},
       u);
 }
@@ -261,7 +261,7 @@ SubscriptIntegerExpr Substring::LEN() const {
 }
 SubscriptIntegerExpr ProcedureDesignator::LEN() const {
   return std::visit(
-      common::visitors{[](const Symbol *s) { return SymbolLEN(s); },
+      common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
           [](const Component &c) { return c.LEN(); },
           [](const auto &) {
             CRASH_NO_CASE;

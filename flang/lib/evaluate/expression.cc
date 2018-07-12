@@ -196,7 +196,6 @@ Expr<Category::Integer, KIND>::ConstantValue() const {
   return {};
 }
 
-
 template<int KIND>
 void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
   std::visit(common::visitors{[&](Parentheses &p) {

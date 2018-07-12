@@ -50,15 +50,23 @@ using IndirectSubscriptIntegerExpr = CopyableIndirection<SubscriptIntegerExpr>;
 // that isn't explicit in the document).  Pointer and allocatable components
 // are not explicitly indirected in this representation.
 // Complex components (%RE, %IM) are isolated below in ComplexPart.
-struct Component {
+class Component {
+public:
   CLASS_BOILERPLATE(Component)
-  Component(const DataRef &b, const Symbol &c) : base{b}, sym{&c} {}
+  Component(const DataRef &b, const Symbol &c) : base_{b}, symbol_{&c} {}
+  Component(DataRef &&b, const Symbol &c) : base_{std::move(b)}, symbol_{&c} {}
   Component(CopyableIndirection<DataRef> &&b, const Symbol &c)
-    : base{std::move(b)}, sym{&c} {}
+    : base_{std::move(b)}, symbol_{&c} {}
+  const DataRef &base() const { return *base_; }
+  DataRef &base() { return *base_; }
+  const Symbol &symbol() const { return *symbol_; }
   SubscriptIntegerExpr LEN() const;
-  CopyableIndirection<DataRef> base;
-  const Symbol *sym;
+private:
+  CopyableIndirection<DataRef> base_;
+  const Symbol *symbol_;
 };
+
+// TODO pmk continue data hiding from here...
 
 // R921 subscript-triplet
 struct Triplet {
