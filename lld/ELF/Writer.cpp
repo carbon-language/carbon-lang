@@ -1388,10 +1388,6 @@ static bool isDuplicateArmExidxSec(InputSection *Prev, InputSection *Cur) {
   // consecutive identical entries are rare and the effort to check that they
   // are identical is high.
 
-  if (isa<SyntheticSection>(Cur))
-    // Exidx sentinel section has implicit EXIDX_CANTUNWIND;
-    return PrevEntry.Unwind == 0x1;
-
   ArrayRef<const ExidxEntry> Entries(
       reinterpret_cast<const ExidxEntry *>(Cur->Data.data()),
       Cur->getSize() / sizeof(ExidxEntry));
