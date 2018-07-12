@@ -44,6 +44,8 @@ Extensions, deletions, and legacy features supported
 * Backslash escape character sequences in quoted character literals
 * `D` lines in fixed form as comments or debug code
 * `CONVERT=` on the OPEN statement
+* Leading semicolons are ignored before any statement that
+  could have a label
 
 Extensions and legacy features deliberately not supported
 ---------------------------------------------------------
