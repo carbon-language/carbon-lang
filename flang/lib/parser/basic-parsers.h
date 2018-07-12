@@ -198,17 +198,17 @@ public:
     std::optional<resultType> result{parser_.Parse(state)};
     if (result.has_value()) {
       messages.Annex(state.messages());
-      state.messages() = std::move(messages);
-      return result;
     }
     state.messages() = std::move(messages);
-    state.Say(text_);
-    return {};
+    if (!result.has_value()) {
+      state.Say(text_);
+    }
+    return result;
   }
 
 private:
   const MessageFixedText text_;
-  const BacktrackingParser<PA> parser_;
+  const PA parser_;
 };
 
 template<typename PA>
