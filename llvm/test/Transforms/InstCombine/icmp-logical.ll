@@ -59,9 +59,11 @@ define i1 @masked_or_allones(i32 %A) {
 
 define i1 @masked_and_notA(i32 %A) {
 ; CHECK-LABEL: @masked_and_notA(
-; CHECK-NEXT:    [[MASK2:%.*]] = and i32 [[A:%.*]], 39
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[A:%.*]], 7
+; CHECK-NEXT:    [[MASK2:%.*]] = and i32 [[A]], 39
 ; CHECK-NEXT:    [[TST2:%.*]] = icmp ne i32 [[MASK2]], [[A]]
-; CHECK-NEXT:    ret i1 [[TST2]]
+; CHECK-NEXT:    [[RES:%.*]] = and i1 [[TMP1]], [[TST2]]
+; CHECK-NEXT:    ret i1 [[RES]]
 ;
   %mask1 = and i32 %A, 7
   %tst1 = icmp ne i32 %mask1, %A
