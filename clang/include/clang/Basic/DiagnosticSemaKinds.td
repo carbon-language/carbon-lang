@@ -8181,9 +8181,15 @@ def err_x86_builtin_invalid_rounding : Error<
   "invalid rounding argument">;
 def err_x86_builtin_invalid_scale : Error<
   "scale argument must be 1, 2, 4, or 8">;
+def err_hexagon_builtin_unsupported_cpu : Error<
+  "builtin is not supported on this CPU">;
+def err_hexagon_builtin_requires_hvx : Error<
+  "builtin requires HVX">;
+def err_hexagon_builtin_unsupported_hvx : Error<
+  "builtin is not supported on this version of HVX">;
+
 def err_builtin_target_unsupported : Error<
   "builtin is not supported on this target">;
-
 def err_builtin_longjmp_unsupported : Error<
   "__builtin_longjmp is not supported for the current target">;
 def err_builtin_setjmp_unsupported : Error<
