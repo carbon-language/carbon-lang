@@ -6826,6 +6826,13 @@ multiclass avx512_scalar_fma_patterns<SDNode Op, SDNode RndOp, string Prefix,
                (COPY_TO_REGCLASS _.FRC:$src3, VR128X))>;
 
     def : Pat<(_.VT (Move (_.VT VR128X:$src1), (_.VT (scalar_to_vector
+                (Op _.FRC:$src2, _.FRC:$src3,
+                    (_.EltVT (extractelt (_.VT VR128X:$src1), (iPTR 0)))))))),
+              (!cast<I>(Prefix#"231"#Suffix#"Zr_Int")
+               VR128X:$src1, (COPY_TO_REGCLASS _.FRC:$src2, VR128X),
+               (COPY_TO_REGCLASS _.FRC:$src3, VR128X))>;
+
+    def : Pat<(_.VT (Move (_.VT VR128X:$src1), (_.VT (scalar_to_vector
                 (Op _.FRC:$src2,
                     (_.EltVT (extractelt (_.VT VR128X:$src1), (iPTR 0))),
                     (_.ScalarLdFrag addr:$src3)))))),
@@ -6837,6 +6844,13 @@ multiclass avx512_scalar_fma_patterns<SDNode Op, SDNode RndOp, string Prefix,
                 (Op (_.EltVT (extractelt (_.VT VR128X:$src1), (iPTR 0))),
                     (_.ScalarLdFrag addr:$src3), _.FRC:$src2))))),
               (!cast<I>(Prefix#"132"#Suffix#"Zm_Int")
+               VR128X:$src1, (COPY_TO_REGCLASS _.FRC:$src2, VR128X),
+               addr:$src3)>;
+
+    def : Pat<(_.VT (Move (_.VT VR128X:$src1), (_.VT (scalar_to_vector
+                (Op _.FRC:$src2, (_.ScalarLdFrag addr:$src3),
+                    (_.EltVT (extractelt (_.VT VR128X:$src1), (iPTR 0)))))))),
+              (!cast<I>(Prefix#"231"#Suffix#"Zm_Int")
                VR128X:$src1, (COPY_TO_REGCLASS _.FRC:$src2, VR128X),
                addr:$src3)>;
 
@@ -6944,6 +6958,14 @@ multiclass avx512_scalar_fma_patterns<SDNode Op, SDNode RndOp, string Prefix,
                        (_.EltVT (extractelt (_.VT VR128X:$src1), (iPTR 0))),
                        _.FRC:$src3, (i32 imm:$rc)))))),
               (!cast<I>(Prefix#"213"#Suffix#"Zrb_Int")
+               VR128X:$src1, (COPY_TO_REGCLASS _.FRC:$src2, VR128X),
+               (COPY_TO_REGCLASS _.FRC:$src3, VR128X), imm:$rc)>;
+
+    def : Pat<(_.VT (Move (_.VT VR128X:$src1), (_.VT (scalar_to_vector
+                (RndOp _.FRC:$src2, _.FRC:$src3,
+                       (_.EltVT (extractelt (_.VT VR128X:$src1), (iPTR 0))),
+                       (i32 imm:$rc)))))),
+              (!cast<I>(Prefix#"231"#Suffix#"Zrb_Int")
                VR128X:$src1, (COPY_TO_REGCLASS _.FRC:$src2, VR128X),
                (COPY_TO_REGCLASS _.FRC:$src3, VR128X), imm:$rc)>;
 
