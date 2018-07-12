@@ -39,7 +39,7 @@
 // OpenMP Directives and Clauses
 namespace Fortran::parser {
 
-constexpr auto beginOmpDirective{skipEmptyLines >> space >> "!$OMP "_sptok};
+constexpr auto beginOmpDirective{skipStuffBeforeStatement >> "!$OMP "_sptok};
 
 // OpenMP Clauses
 
@@ -248,7 +248,7 @@ TYPE_PARSER(
     construct<OmpClause>(
         "SCHEDULE"_tok >> parenthesized(Parser<OmpScheduleClause>{})))
 
-TYPE_PARSER(skipEmptyLines >> space >> "!$OMP END"_sptok >>
+TYPE_PARSER(skipStuffBeforeStatement >> "!$OMP END"_sptok >>
     (construct<OmpEndDirective>(Parser<OmpLoopDirective>{})))
 
 // Omp directives enclosing do loop

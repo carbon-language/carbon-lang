@@ -185,6 +185,37 @@ inline constexpr auto inContext(MessageFixedText context, const PA &parser) {
   return MessageContextParser{context, parser};
 }
 
+// If a is a parser, withMessage("..."_en_US, a) runs it unchanged if it
+// succeeds, and overrides its messages with a specific one if it fails.
+template<typename PA> class WithMessageParser {
+public:
+  using resultType = typename PA::resultType;
+  constexpr WithMessageParser(const WithMessageParser &) = default;
+  constexpr WithMessageParser(MessageFixedText t, const PA &p)
+    : text_{t}, parser_{p} {}
+  std::optional<resultType> Parse(ParseState &state) const {
+    Messages messages{std::move(state.messages())};
+    std::optional<resultType> result{parser_.Parse(state)};
+    if (result.has_value()) {
+      messages.Annex(state.messages());
+      state.messages() = std::move(messages);
+      return result;
+    }
+    state.messages() = std::move(messages);
+    state.Say(text_);
+    return {};
+  }
+
+private:
+  const MessageFixedText text_;
+  const BacktrackingParser<PA> parser_;
+};
+
+template<typename PA>
+inline constexpr auto withMessage(MessageFixedText msg, const PA &parser) {
+  return WithMessageParser{msg, parser};
+}
+
 // If a and b are parsers, then a >> b returns a parser that succeeds when
 // b succeeds after a does so, but fails when either a or b does.  The
 // result is taken from b.  Similarly, a / b also succeeds if both a and b

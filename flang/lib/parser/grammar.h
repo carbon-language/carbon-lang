@@ -53,25 +53,28 @@ constexpr auto execPartLookAhead{first(actionStmt >> ok, "ASSOCIATE ("_tok,
     "BLOCK"_tok, "SELECT"_tok, "CHANGE TEAM"_sptok, "CRITICAL"_tok, "DO"_tok,
     "IF ("_tok, "WHERE ("_tok, "FORALL ("_tok)};
 constexpr auto declErrorRecovery{
-    errorRecoveryStart >> !execPartLookAhead >> stmtErrorRecovery};
+    stmtErrorRecoveryStart >> !execPartLookAhead >> stmtErrorRecovery};
 TYPE_CONTEXT_PARSER("declaration construct"_en_US,
     recovery(
-        first(construct<DeclarationConstruct>(specificationConstruct),
-            construct<DeclarationConstruct>(statement(indirect(dataStmt))),
-            construct<DeclarationConstruct>(statement(indirect(formatStmt))),
-            construct<DeclarationConstruct>(statement(indirect(entryStmt))),
-            construct<DeclarationConstruct>(
-                statement(indirect(Parser<StmtFunctionStmt>{})))),
+        withMessage("expected declaration construct"_err_en_US,
+            first(construct<DeclarationConstruct>(specificationConstruct),
+                construct<DeclarationConstruct>(statement(indirect(dataStmt))),
+                construct<DeclarationConstruct>(
+                    statement(indirect(formatStmt))),
+                construct<DeclarationConstruct>(statement(indirect(entryStmt))),
+                construct<DeclarationConstruct>(
+                    statement(indirect(Parser<StmtFunctionStmt>{}))))),
         construct<DeclarationConstruct>(declErrorRecovery)))
 
 // R507 variant of declaration-construct for use in limitedSpecificationPart.
-constexpr auto limitedDeclarationConstruct{
-    inContext("declaration construct"_en_US,
-        recovery(
-            first(construct<DeclarationConstruct>(specificationConstruct),
-                construct<DeclarationConstruct>(statement(indirect(dataStmt)))),
-            construct<DeclarationConstruct>(
-                errorRecoveryStart >> stmtErrorRecovery)))};
+constexpr auto limitedDeclarationConstruct{inContext(
+    "declaration construct"_en_US,
+    recovery(withMessage("expected declaration construct"_err_en_US,
+                 first(construct<DeclarationConstruct>(specificationConstruct),
+                     construct<DeclarationConstruct>(
+                         statement(indirect(dataStmt))))),
+        construct<DeclarationConstruct>(
+            stmtErrorRecoveryStart >> stmtErrorRecovery)))};
 
 // R508 specification-construct ->
 //        derived-type-def | enum-def | generic-stmt | interface-block |
@@ -233,11 +236,15 @@ constexpr auto scalarIntConstantExpr{scalar(intConstantExpr)};
 
 // R501 program -> program-unit [program-unit]...
 // This is the top-level production for the Fortran language.
-constexpr StartNewSubprogram startNewSubprogram;
-TYPE_PARSER(construct<Program>(
-    // statements consume only trailing noise; consume leading noise here.
-    skipEmptyLines >>
-    some(startNewSubprogram >> Parser<ProgramUnit>{} / endOfLine)))
+// F'2018 6.3.1 defines a program unit as a sequence of one or more lines,
+// implying that a line can't be part of two distinct program units.
+// Consequently, a program unit END statement should be the last statement
+// on its line.  We parse those END statements via unterminatedStatement()
+// and then skip over the end of the line here.
+TYPE_PARSER(construct<Program>(some(StartNewSubprogram{} >>
+                Parser<ProgramUnit>{} / skipMany(";"_tok) / space /
+                    recovery(endOfLine, SkipPast<'\n'>{}))) /
+    skipStuffBeforeStatement)
 
 // R502 program-unit ->
 //        main-program | external-subprogram | module | submodule | block-data
@@ -284,15 +291,17 @@ TYPE_PARSER(first(
     construct<ImplicitPartStmt>(statement(indirect(entryStmt)))))
 
 // R512 internal-subprogram -> function-subprogram | subroutine-subprogram
-constexpr auto internalSubprogram{
+// Internal subprograms are not program units, so their END statements
+// can be followed by ';' and another statement on the same line.
+TYPE_CONTEXT_PARSER("internal subprogram"_en_US,
     (construct<InternalSubprogram>(indirect(functionSubprogram)) ||
         construct<InternalSubprogram>(indirect(subroutineSubprogram))) /
-    endOfStmt};
+        recovery(endOfStmt, SkipPast<'\n'>{}))
 
 // R511 internal-subprogram-part -> contains-stmt [internal-subprogram]...
 TYPE_CONTEXT_PARSER("internal subprogram part"_en_US,
     construct<InternalSubprogramPart>(statement(containsStmt),
-        many(startNewSubprogram >> internalSubprogram)))
+        many(StartNewSubprogram{} >> Parser<InternalSubprogram>{})))
 
 // R515 action-stmt ->
 //        allocate-stmt | assignment-stmt | backspace-stmt | call-stmt |
@@ -387,17 +396,20 @@ constexpr auto obsoleteExecutionPartConstruct{recovery(ignoredStatementPrefix >>
     construct<ExecutionPartConstruct>(
         statement("REDIMENSION" >> name >>
             parenthesized(nonemptyList(Parser<AllocateShapeSpec>{})) >> ok) >>
-        errorRecovery))};
+        construct<ErrorRecovery>()))};
 
 TYPE_CONTEXT_PARSER("execution part construct"_en_US,
-    recovery(
-        first(construct<ExecutionPartConstruct>(executableConstruct),
-            construct<ExecutionPartConstruct>(statement(indirect(formatStmt))),
-            construct<ExecutionPartConstruct>(statement(indirect(entryStmt))),
-            construct<ExecutionPartConstruct>(statement(indirect(dataStmt))),
-            extension(construct<ExecutionPartConstruct>(
-                          statement(indirect(Parser<NamelistStmt>{}))) ||
-                obsoleteExecutionPartConstruct)),
+    recovery(withMessage("expected execution part construct"_err_en_US,
+                 first(construct<ExecutionPartConstruct>(executableConstruct),
+                     construct<ExecutionPartConstruct>(
+                         statement(indirect(formatStmt))),
+                     construct<ExecutionPartConstruct>(
+                         statement(indirect(entryStmt))),
+                     construct<ExecutionPartConstruct>(
+                         statement(indirect(dataStmt))),
+                     extension(construct<ExecutionPartConstruct>(statement(
+                                   indirect(Parser<NamelistStmt>{}))) ||
+                         obsoleteExecutionPartConstruct))),
         construct<ExecutionPartConstruct>(executionPartErrorRecovery)))
 
 // R509 execution-part -> executable-construct [execution-part-construct]...
@@ -663,7 +675,7 @@ constexpr auto missingOptionalName{defaulted(cut >> maybe(name))};
 constexpr auto noNameEnd{"END" >> missingOptionalName};
 constexpr auto bareEnd{noNameEnd / lookAhead(endOfStmt)};
 constexpr auto endStmtErrorRecovery{
-    ("END"_tok / SkipTo<'\n'>{} || consumedAllInput) >> missingOptionalName};
+    ("END"_tok / SkipPast<'\n'>{} || consumedAllInput) >> missingOptionalName};
 TYPE_PARSER(construct<EndTypeStmt>(
     recovery("END TYPE" >> maybe(name), endStmtErrorRecovery)))
 
@@ -685,10 +697,11 @@ TYPE_PARSER(construct<TypeParamDecl>(name, maybe("=" >> scalarIntConstantExpr)))
 //        proc-component-def-stmt
 // Accidental extension not enabled here: PGI accepts type-param-def-stmt in
 // component-part of derived-type-def.
-TYPE_PARSER(
-    recovery(construct<ComponentDefStmt>(Parser<DataComponentDefStmt>{}) ||
-            construct<ComponentDefStmt>(Parser<ProcComponentDefStmt>{}),
-        construct<ComponentDefStmt>(stmtErrorRecovery)))
+TYPE_PARSER(recovery(
+    withMessage("expected component definition"_err_en_US,
+        first(construct<ComponentDefStmt>(Parser<DataComponentDefStmt>{}),
+            construct<ComponentDefStmt>(Parser<ProcComponentDefStmt>{}))),
+    construct<ComponentDefStmt>(stmtErrorRecovery)))
 
 // R737 data-component-def-stmt ->
 //        declaration-type-spec [[, component-attr-spec-list] ::]
@@ -773,9 +786,10 @@ TYPE_CONTEXT_PARSER("type bound procedure part"_en_US,
 //        type-bound-procedure-stmt | type-bound-generic-stmt |
 //        final-procedure-stmt
 TYPE_PARSER(recovery(
-    construct<TypeBoundProcBinding>(Parser<TypeBoundProcedureStmt>{}) ||
-        construct<TypeBoundProcBinding>(Parser<TypeBoundGenericStmt>{}) ||
-        construct<TypeBoundProcBinding>(Parser<FinalProcedureStmt>{}),
+    withMessage("expected type bound procedure binding"_err_en_US,
+        first(construct<TypeBoundProcBinding>(Parser<TypeBoundProcedureStmt>{}),
+            construct<TypeBoundProcBinding>(Parser<TypeBoundGenericStmt>{}),
+            construct<TypeBoundProcBinding>(Parser<FinalProcedureStmt>{}))),
     construct<TypeBoundProcBinding>(stmtErrorRecovery)))
 
 // R749 type-bound-procedure-stmt ->
@@ -861,7 +875,7 @@ TYPE_PARSER(
     construct<Enumerator>(namedConstant, maybe("=" >> scalarIntConstantExpr)))
 
 // R763 end-enum-stmt -> END ENUM
-TYPE_PARSER(recovery("END ENUM"_tok, "END" >> SkipTo<'\n'>{}) >>
+TYPE_PARSER(recovery("END ENUM"_tok, "END" >> SkipPast<'\n'>{}) >>
     construct<EndEnumStmt>())
 
 // R764 boz-literal-constant -> binary-constant | octal-constant | hex-constant
@@ -2915,10 +2929,9 @@ TYPE_PARSER(construct<format::ControlEditDesc>(
 //         [program-stmt] [specification-part] [execution-part]
 //         [internal-subprogram-part] end-program-stmt
 TYPE_CONTEXT_PARSER("main program"_en_US,
-    skipEmptyLines >> !consumedAllInput >>
-        construct<MainProgram>(maybe(statement(Parser<ProgramStmt>{})),
-            specificationPart, executionPart, maybe(internalSubprogramPart),
-            unterminatedStatement(Parser<EndProgramStmt>{})))
+    construct<MainProgram>(maybe(statement(Parser<ProgramStmt>{})),
+        specificationPart, executionPart, maybe(internalSubprogramPart),
+        unterminatedStatement(Parser<EndProgramStmt>{})))
 
 // R1402 program-stmt -> PROGRAM program-name
 // PGI allows empty parentheses after the name.
@@ -2951,7 +2964,7 @@ TYPE_CONTEXT_PARSER("END MODULE statement"_en_US,
 // R1407 module-subprogram-part -> contains-stmt [module-subprogram]...
 TYPE_CONTEXT_PARSER("module subprogram part"_en_US,
     construct<ModuleSubprogramPart>(statement(containsStmt),
-        many(startNewSubprogram >> Parser<ModuleSubprogram>{})))
+        many(StartNewSubprogram{} >> Parser<ModuleSubprogram>{})))
 
 // R1408 module-subprogram ->
 //         function-subprogram | subroutine-subprogram |
@@ -3270,7 +3283,7 @@ TYPE_CONTEXT_PARSER("statement function definition"_en_US,
 // Directives, extensions, and deprecated statements
 // !DIR$ IVDEP
 // !DIR$ IGNORE_TKR [ [(tkr...)] name ]...
-constexpr auto beginDirective{skipEmptyLines >> space >> "!"_ch};
+constexpr auto beginDirective{skipStuffBeforeStatement >> "!"_ch};
 constexpr auto endDirective{space >> endOfLine};
 constexpr auto ivdep{construct<CompilerDirective::IVDEP>("DIR$ IVDEP"_tok)};
 constexpr auto ignore_tkr{

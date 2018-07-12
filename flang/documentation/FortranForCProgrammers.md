@@ -63,6 +63,7 @@ in particular ways that might be unfamiliar.
 | Deferred | Some attribute of a variable that is not known until an allocation or assignment |
 | Derived type | C++ class |
 | Dummy argument | C++ reference argument |
+| Final procedure | C++ destructor |
 | Generic | Overloaded function, resolved by actual arguments |
 | Host procedure | The subprogram that contains this nested one |
 | Implied DO | There's a loop inside a statement |

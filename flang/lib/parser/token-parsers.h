@@ -86,7 +86,7 @@ inline void MissingSpace(ParseState &state) {
   if (!state.inFixedForm()) {
     state.set_anyConformanceViolation();
     if (state.warnOnNonstandardUsage()) {
-      state.Say("expected space"_err_en_US);
+      state.Say("expected space"_en_US);
     }
   }
 }
@@ -638,21 +638,6 @@ template<char goal> struct SkipPast {
   }
 };
 
-template<char goal> struct SkipTo {
-  using resultType = Success;
-  constexpr SkipTo() {}
-  constexpr SkipTo(const SkipTo &) {}
-  static std::optional<Success> Parse(ParseState &state) {
-    while (std::optional<const char *> p{state.PeekAtNextChar()}) {
-      if (**p == goal) {
-        return {Success{}};
-      }
-      state.UncheckedAdvance();
-    }
-    return {};
-  }
-};
-
 // A common idiom in the Fortran grammar is an optional item (usually
 // a nonempty comma-separated list) that, if present, must follow a comma
 // and precede a doubled colon.  When the item is absent, the comma must
@@ -669,21 +654,24 @@ inline constexpr auto optionalListBeforeColons(const PA &p) {
       ("::"_tok || !","_tok) >> defaulted(cut >> nonemptyList(p));
 }
 
-// Compiler directives can switch the parser between fixed and free form.
-constexpr struct FormDirectivesAndEmptyLines {
+// Skip over empty lines, leading spaces, and some compiler directives (viz.,
+// the ones that specify the source form) that might appear before the
+// next statement.  Skip over empty statements (bare semicolons) when
+// not in strict standard conformance mode.  Always succeeds.
+constexpr struct SkipStuffBeforeStatement {
   using resultType = Success;
   static std::optional<Success> Parse(ParseState &state) {
     if (UserState * ustate{state.userState()}) {
       if (ParsingLog * log{ustate->log()}) {
+        // Save memory: vacate the parsing log before each statement unless
+        // we're logging the whole parse for debugging.
         if (!ustate->instrumentedParse()) {
-          // Save memory; zap the parsing log before each statement, unless
-          // we're logging the whole parse for debugging.
           log->clear();
         }
       }
     }
     while (std::optional<const char *> at{state.PeekAtNextChar()}) {
-      if (**at == '\n') {
+      if (**at == '\n' || **at == ' ') {
         state.UncheckedAdvance();
       } else if (**at == '!') {
         static const char fixed[] = "!dir$ fixed\n", free[] = "!dir$ free\n";
@@ -698,13 +686,19 @@ constexpr struct FormDirectivesAndEmptyLines {
         } else {
           break;
         }
+      } else if (**at == ';') {
+        state.set_anyConformanceViolation();
+        if (state.warnOnNonstandardUsage()) {
+          state.Say("empty statement"_en_US);
+        }
+        state.UncheckedAdvance();
       } else {
         break;
       }
     }
     return {Success{}};
   }
-} skipEmptyLines;
+} skipStuffBeforeStatement;
 
 // R602 underscore -> _
 constexpr auto underscore{"_"_ch};

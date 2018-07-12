@@ -30,39 +30,37 @@ namespace Fortran::parser {
 constexpr auto label{space >> digitString / spaceCheck};
 
 template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
-  return skipEmptyLines >>
+  return skipStuffBeforeStatement >>
       sourced(construct<Statement<typename PA::resultType>>(
           maybe(label), space >> p));
 }
 
-constexpr auto endOfLine{"\n"_ch / skipEmptyLines ||
-    consumedAllInput >> pure("\n") ||
-    fail<const char *>("expected end of line"_err_en_US)};
+constexpr auto endOfLine{
+    "\n"_ch >> ok || fail("expected end of line"_err_en_US)};
 
 constexpr auto endOfStmt{
-    space >> (";"_ch / skipMany(";"_tok) / maybe(endOfLine) || endOfLine)};
+    space >> (";"_ch >> skipMany(";"_tok) >> space >> maybe("\n"_ch) >> ok ||
+                 endOfLine)};
 
 template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
 }
 
 constexpr auto ignoredStatementPrefix{
-    skipEmptyLines >> maybe(label) >> maybe(name / ":") >> space};
+    skipStuffBeforeStatement >> maybe(label) >> maybe(name / ":") >> space};
 
 // Error recovery within statements: skip to the end of the line,
 // but not over an END or CONTAINS statement.
-constexpr auto errorRecovery{construct<ErrorRecovery>()};
-constexpr auto skipToEndOfLine{SkipTo<'\n'>{} >> errorRecovery};
-constexpr auto stmtErrorRecovery{
-    !"END"_tok >> !"CONTAINS"_tok >> skipToEndOfLine};
+constexpr auto stmtErrorRecovery{!"END"_tok >> !"CONTAINS"_tok >>
+    SkipPast<'\n'>{} >> construct<ErrorRecovery>()};
 
 // Error recovery across statements: skip the line, unless it looks
 // like it might end the containing construct.
-constexpr auto errorRecoveryStart{ignoredStatementPrefix};
-constexpr auto skipBadLine{SkipPast<'\n'>{} >> errorRecovery};
-constexpr auto executionPartErrorRecovery{errorRecoveryStart >> !"END"_tok >>
-    !"CONTAINS"_tok >> !"ELSE"_tok >> !"CASE"_tok >> !"TYPE IS"_tok >>
-    !"CLASS"_tok >> !"RANK"_tok >> skipBadLine};
+constexpr auto stmtErrorRecoveryStart{ignoredStatementPrefix};
+constexpr auto skipBadLine{SkipPast<'\n'>{} >> construct<ErrorRecovery>()};
+constexpr auto executionPartErrorRecovery{stmtErrorRecoveryStart >>
+    !"END"_tok >> !"CONTAINS"_tok >> !"ELSE"_tok >> !"CASE"_tok >>
+    !"TYPE IS"_tok >> !"CLASS"_tok >> !"RANK"_tok >> skipBadLine};
 
 }  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_STMT_PARSER_H_

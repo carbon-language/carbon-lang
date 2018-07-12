@@ -204,9 +204,8 @@ public:
   bool AnyFatalError() const;
 
 private:
-  using listType = std::forward_list<Message>;
-  listType messages_;
-  listType::iterator last_{messages_.before_begin()};
+  std::forward_list<Message> messages_;
+  std::forward_list<Message>::iterator last_{messages_.before_begin()};
 };
 
 }  // namespace Fortran::parser
