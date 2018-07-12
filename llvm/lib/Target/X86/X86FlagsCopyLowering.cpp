@@ -555,7 +555,7 @@ bool X86FlagsCopyLoweringPass::runOnMachineFunction(MachineFunction &MF) {
 
       // If the flags were killed, we're done with this block.
       if (FlagsKilled)
-        break;
+        continue;
 
       // Otherwise we need to scan successors for ones where the flags live-in
       // and queue those up for processing.
