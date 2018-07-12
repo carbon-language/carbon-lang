@@ -21,18 +21,99 @@
 
 namespace Fortran::evaluate {
 
+// Constructors, accessors, mutators
+
 Triplet::Triplet(std::optional<SubscriptIntegerExpr> &&l,
     std::optional<SubscriptIntegerExpr> &&u,
     std::optional<SubscriptIntegerExpr> &&s) {
   if (l.has_value()) {
-    lower = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+    lower_ = IndirectSubscriptIntegerExpr::Make(std::move(*l));
   }
   if (u.has_value()) {
-    upper = IndirectSubscriptIntegerExpr::Make(std::move(*u));
+    upper_ = IndirectSubscriptIntegerExpr::Make(std::move(*u));
   }
   if (s.has_value()) {
-    stride = IndirectSubscriptIntegerExpr::Make(std::move(*s));
+    stride_ = IndirectSubscriptIntegerExpr::Make(std::move(*s));
   }
+}
+
+std::optional<SubscriptIntegerExpr> Triplet::lower() const {
+  if (lower_) {
+    return {**lower_};
+  }
+  return {};
+}
+
+std::optional<SubscriptIntegerExpr> Triplet::upper() const {
+  if (upper_) {
+    return {**upper_};
+  }
+  return {};
+}
+
+std::optional<SubscriptIntegerExpr> Triplet::stride() const {
+  if (stride_) {
+    return {**stride_};
+  }
+  return {};
+}
+
+CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
+    std::vector<SubscriptIntegerExpr> &&ss,
+    std::vector<SubscriptIntegerExpr> &&css)
+  : base_(std::move(c)), subscript_(std::move(ss)), cosubscript_(std::move(css)) {
+  CHECK(!base_.empty());
+}
+
+CoarrayRef &CoarrayRef::setStat(Variable &&v) {
+  stat_ = CopyableIndirection<Variable>::Make(std::move(v));
+  return *this;
+}
+
+CoarrayRef &CoarrayRef::setTeam(Variable &&v, bool isTeamNumber) {
+  team_ = CopyableIndirection<Variable>::Make(std::move(v));
+  teamIsTeamNumber_ = isTeamNumber;
+  return *this;
+}
+
+Substring::Substring(DataRef &&d, std::optional<SubscriptIntegerExpr> &&f,
+    std::optional<SubscriptIntegerExpr> &&l)
+  : u{std::move(d)} {
+  if (f.has_value()) {
+    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
+  }
+  if (l.has_value()) {
+    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+  }
+}
+
+Substring::Substring(std::string &&s, std::optional<SubscriptIntegerExpr> &&f,
+    std::optional<SubscriptIntegerExpr> &&l)
+  : u{std::move(s)} {
+  if (f.has_value()) {
+    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
+  }
+  if (l.has_value()) {
+    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+  }
+}
+
+SubscriptIntegerExpr Substring::First() const {
+  if (first.has_value()) {
+    return **first;
+  }
+  return {1};
+}
+
+SubscriptIntegerExpr Substring::Last() const {
+  if (last.has_value()) {
+    return **last;
+  }
+  return std::visit(common::visitors{[](const std::string &s) {
+                                       return SubscriptIntegerExpr{s.size()};
+                                     },
+                        [](const DataRef &x) { return x.LEN(); }},
+      u);
 }
 
 // Variable dumping
@@ -98,20 +179,20 @@ std::ostream &Component::Dump(std::ostream &o) const {
 }
 
 std::ostream &Triplet::Dump(std::ostream &o) const {
-  Emit(o, lower) << ':';
-  Emit(o, upper);
-  if (stride) {
-    Emit(o << ':', stride);
+  Emit(o, lower_) << ':';
+  Emit(o, upper_);
+  if (stride_) {
+    Emit(o << ':', stride_);
   }
   return o;
 }
 
-std::ostream &Subscript::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &Subscript::Dump(std::ostream &o) const { return Emit(o, u_); }
 
 std::ostream &ArrayRef::Dump(std::ostream &o) const {
-  Emit(o, u);
+  Emit(o, u_);
   char separator{'('};
-  for (const Subscript &ss : subscript) {
+  for (const Subscript &ss : subscript_) {
     ss.Dump(o << separator);
     separator = ',';
   }
@@ -119,11 +200,11 @@ std::ostream &ArrayRef::Dump(std::ostream &o) const {
 }
 
 std::ostream &CoarrayRef::Dump(std::ostream &o) const {
-  for (const Symbol *sym : base) {
+  for (const Symbol *sym : base_) {
     Emit(o, *sym);
   }
   char separator{'('};
-  for (const auto &ss : subscript) {
+  for (const auto &ss : subscript_) {
     Emit(o << separator, ss);
     separator = ',';
   }
@@ -131,16 +212,16 @@ std::ostream &CoarrayRef::Dump(std::ostream &o) const {
     o << ')';
   }
   separator = '[';
-  for (const auto &css : cosubscript) {
+  for (const auto &css : cosubscript_) {
     Emit(o << separator, css);
     separator = ',';
   }
-  if (stat.has_value()) {
-    Emit(o << separator, stat, "STAT=");
+  if (stat_.has_value()) {
+    Emit(o << separator, stat_, "STAT=");
     separator = ',';
   }
-  if (team.has_value()) {
-    Emit(o << separator, team, teamIsTeamNumber ? "TEAM_NUMBER=" : "TEAM=");
+  if (team_.has_value()) {
+    Emit(o << separator, team_, teamIsTeamNumber_ ? "TEAM_NUMBER=" : "TEAM=");
   }
   return o << ']';
 }
@@ -190,53 +271,6 @@ std::ostream &Label::Dump(std::ostream &o) const {
   return o << '*' << std::dec << label;
 }
 
-CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
-    std::vector<SubscriptIntegerExpr> &&ss,
-    std::vector<SubscriptIntegerExpr> &&css)
-  : base(std::move(c)), subscript(std::move(ss)), cosubscript(std::move(css)) {
-  CHECK(!base.empty());
-}
-
-Substring::Substring(DataRef &&d, std::optional<SubscriptIntegerExpr> &&f,
-    std::optional<SubscriptIntegerExpr> &&l)
-  : u{std::move(d)} {
-  if (f.has_value()) {
-    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
-  }
-  if (l.has_value()) {
-    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
-  }
-}
-
-Substring::Substring(std::string &&s, std::optional<SubscriptIntegerExpr> &&f,
-    std::optional<SubscriptIntegerExpr> &&l)
-  : u{std::move(s)} {
-  if (f.has_value()) {
-    first = IndirectSubscriptIntegerExpr::Make(std::move(*f));
-  }
-  if (l.has_value()) {
-    last = IndirectSubscriptIntegerExpr::Make(std::move(*l));
-  }
-}
-
-SubscriptIntegerExpr Substring::First() const {
-  if (first.has_value()) {
-    return **first;
-  }
-  return {1};
-}
-
-SubscriptIntegerExpr Substring::Last() const {
-  if (last.has_value()) {
-    return **last;
-  }
-  return std::visit(common::visitors{[](const std::string &s) {
-                                       return SubscriptIntegerExpr{s.size()};
-                                     },
-                        [](const DataRef &x) { return x.LEN(); }},
-      u);
-}
-
 // LEN()
 static SubscriptIntegerExpr SymbolLEN(const Symbol &sym) {
   return SubscriptIntegerExpr{0};  // TODO
@@ -246,9 +280,9 @@ SubscriptIntegerExpr ArrayRef::LEN() const {
   return std::visit(
       common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
           [](const Component &x) { return x.LEN(); }},
-      u);
+      u_);
 }
-SubscriptIntegerExpr CoarrayRef::LEN() const { return SymbolLEN(*base.back()); }
+SubscriptIntegerExpr CoarrayRef::LEN() const { return SymbolLEN(*base_.back()); }
 SubscriptIntegerExpr DataRef::LEN() const {
   return std::visit(
       common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },

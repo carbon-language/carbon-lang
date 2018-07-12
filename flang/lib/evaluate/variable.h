@@ -66,27 +66,32 @@ private:
   const Symbol *symbol_;
 };
 
-// TODO pmk continue data hiding from here...
-
 // R921 subscript-triplet
-struct Triplet {
+class Triplet {
+public:
   CLASS_BOILERPLATE(Triplet)
   Triplet(std::optional<SubscriptIntegerExpr> &&,
       std::optional<SubscriptIntegerExpr> &&,
       std::optional<SubscriptIntegerExpr> &&);
-  std::optional<IndirectSubscriptIntegerExpr> lower, upper, stride;
+  std::optional<SubscriptIntegerExpr> lower() const;
+  std::optional<SubscriptIntegerExpr> upper() const;
+  std::optional<SubscriptIntegerExpr> stride() const;
+private:
+  std::optional<IndirectSubscriptIntegerExpr> lower_, upper_, stride_;
 };
 
 // R919 subscript when rank 0, R923 vector-subscript when rank 1
-struct Subscript {
+class Subscript {
+public:
   CLASS_BOILERPLATE(Subscript)
   explicit Subscript(const SubscriptIntegerExpr &s)
-    : u{IndirectSubscriptIntegerExpr::Make(s)} {}
+    : u_{IndirectSubscriptIntegerExpr::Make(s)} {}
   explicit Subscript(SubscriptIntegerExpr &&s)
-    : u{IndirectSubscriptIntegerExpr::Make(std::move(s))} {}
-  explicit Subscript(const Triplet &t) : u{t} {}
-  explicit Subscript(Triplet &&t) : u{std::move(t)} {}
-  std::variant<IndirectSubscriptIntegerExpr, Triplet> u;
+    : u_{IndirectSubscriptIntegerExpr::Make(std::move(s))} {}
+  explicit Subscript(const Triplet &t) : u_{t} {}
+  explicit Subscript(Triplet &&t) : u_{std::move(t)} {}
+private:
+  std::variant<IndirectSubscriptIntegerExpr, Triplet> u_;
 };
 
 // R917 array-element, R918 array-section; however, the case of an
@@ -94,15 +99,17 @@ struct Subscript {
 // as a ComplexPart instead.  C919 & C925 require that at most one set of
 // subscripts have rank greater than 0, but that is not explicit in
 // these types.
-struct ArrayRef {
+class ArrayRef {
+public:
   CLASS_BOILERPLATE(ArrayRef)
   ArrayRef(const Symbol &n, std::vector<Subscript> &&ss)
-    : u{&n}, subscript(std::move(ss)) {}
+    : u_{&n}, subscript_(std::move(ss)) {}
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
-    : u{std::move(c)}, subscript(std::move(ss)) {}
+    : u_{std::move(c)}, subscript_(std::move(ss)) {}
   SubscriptIntegerExpr LEN() const;
-  std::variant<const Symbol *, Component> u;
-  std::vector<Subscript> subscript;
+private:
+  std::variant<const Symbol *, Component> u_;
+  std::vector<Subscript> subscript_;
 };
 
 // R914 coindexed-named-object
@@ -112,17 +119,23 @@ struct ArrayRef {
 // function results.  They can be components of other derived types.
 // C930 precludes having both TEAM= and TEAM_NUMBER=.
 // TODO C931 prohibits the use of a coindexed object as a stat-variable.
-struct CoarrayRef {
+class CoarrayRef {
+public:
   CLASS_BOILERPLATE(CoarrayRef)
   CoarrayRef(std::vector<const Symbol *> &&,
       std::vector<SubscriptIntegerExpr> &&,
       std::vector<SubscriptIntegerExpr> &&);  // TODO: stat & team?
+  CoarrayRef &setStat(Variable &&);
+  CoarrayRef &setTeam(Variable &&, bool isTeamNumber = false);
   SubscriptIntegerExpr LEN() const;
-  std::vector<const Symbol *> base;
-  std::vector<SubscriptIntegerExpr> subscript, cosubscript;
-  std::optional<CopyableIndirection<Variable>> stat, team;
-  bool teamIsTeamNumber{false};  // false: TEAM=, true: TEAM_NUMBER=
+private:
+  std::vector<const Symbol *> base_;
+  std::vector<SubscriptIntegerExpr> subscript_, cosubscript_;
+  std::optional<CopyableIndirection<Variable>> stat_, team_;
+  bool teamIsTeamNumber_{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
+
+// TODO pmk continue with data hiding from here
 
 // R911 data-ref is defined syntactically as a series of part-refs, which
 // would be far too expressive if the constraints were ignored.  Here, the
