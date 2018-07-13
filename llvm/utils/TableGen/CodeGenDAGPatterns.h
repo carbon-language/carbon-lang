@@ -333,9 +333,21 @@ struct TypeInfer {
     TypeSetByHwMode &VTS;
   };
 
+  struct SuppressValidation {
+    SuppressValidation(TypeInfer &TI) : Infer(TI), SavedValidate(TI.Validate) {
+      Infer.Validate = false;
+    }
+    ~SuppressValidation() {
+      Infer.Validate = SavedValidate;
+    }
+    TypeInfer &Infer;
+    bool SavedValidate;
+  };
+
   TreePattern &TP;
   unsigned ForceMode;     // Mode to use when set.
   bool CodeGen = false;   // Set during generation of matcher code.
+  bool Validate = true;   // Indicate whether to validate types.
 
 private:
   TypeSetByHwMode getLegalTypes();

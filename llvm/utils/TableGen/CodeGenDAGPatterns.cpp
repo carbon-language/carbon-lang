@@ -808,7 +808,7 @@ TypeSetByHwMode TypeInfer::getLegalTypes() {
 
 #ifndef NDEBUG
 TypeInfer::ValidateOnExit::~ValidateOnExit() {
-  if (!VTS.validate()) {
+  if (Infer.Validate && !VTS.validate()) {
     dbgs() << "Type set is empty for each HW mode:\n"
               "possible type contradiction in the pattern below "
               "(use -print-records with llvm-tblgen to see all "
@@ -3056,9 +3056,15 @@ void CodeGenDAGPatterns::ParsePatternFragments(bool OutFrags) {
     ThePat.InlinePatternFragments();
 
     // Infer as many types as possible.  Don't worry about it if we don't infer
-    // all of them, some may depend on the inputs of the pattern.
-    ThePat.InferAllTypes();
-    ThePat.resetError();
+    // all of them, some may depend on the inputs of the pattern.  Also, don't
+    // validate type sets; validation may cause spurious failures e.g. if a
+    // fragment needs floating-point types but the current target does not have
+    // any (this is only an error if that fragment is ever used!).
+    {
+      TypeInfer::SuppressValidation SV(ThePat.getInfer());
+      ThePat.InferAllTypes();
+      ThePat.resetError();
+    }
 
     // If debugging, print out the pattern fragment result.
     LLVM_DEBUG(ThePat.dump());
