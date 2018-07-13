@@ -312,6 +312,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R)
   isBarrier    = R->getValueAsBit("isBarrier");
   isCall       = R->getValueAsBit("isCall");
   isAdd        = R->getValueAsBit("isAdd");
+  isTrap       = R->getValueAsBit("isTrap");
   canFoldAsLoad = R->getValueAsBit("canFoldAsLoad");
   isPredicable = Operands.isPredicable || R->getValueAsBit("isPredicable");
   isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");
