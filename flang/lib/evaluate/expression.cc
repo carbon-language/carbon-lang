@@ -315,12 +315,14 @@ IntegerExpr<KIND>::Power::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
   if (lc && rc) {
-    auto power{lc->Power(*rc)};
+    PowerWithErrors power{lc->Power(*rc)};
     if (context.messages != nullptr) {
       if (power.divisionByZero) {
         context.messages->Say(context.at, "zero to negative power"_en_US);
       } else if (power.overflow) {
         context.messages->Say(context.at, "integer power overflowed"_en_US);
+      } else if (power.zeroToZero) {
+        context.messages->Say(context.at, "integer 0**0"_en_US);
       }
     }
     return {std::move(power.power)};

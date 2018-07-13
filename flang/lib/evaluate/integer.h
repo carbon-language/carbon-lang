@@ -102,7 +102,7 @@ public:
 
   struct PowerWithErrors {
     Integer power;
-    bool divisionByZero, overflow;
+    bool divisionByZero, overflow, zeroToZero;
   };
 
   // Constructors and value-generating static functions
@@ -886,27 +886,29 @@ public:
   }
 
   constexpr PowerWithErrors Power(const Integer &exponent) const {
+    PowerWithErrors result{1, false, false, false};
     if (exponent.IsZero()) {
       // x**0 -> 1, including the case 0**0, which is not defined specifically
-      // in F'18 afaict; however, other Fortrans tested all produce 1, not 0.
-      // F'77 explicitly states that 0**0 is mathematically undefined.
-      return {1, false, false};
+      // in F'18 afaict; however, other Fortrans tested all produce 1, not 0,
+      // apart from nagfor, which stops with an error at runtime.
+      // Ada, APL, C's pow(), Haskell, Julia, MATLAB, and R all produce 1 too.
+      // F'77 explicitly states that 0**0 is mathematically undefined and
+      // therefore prohibited.
+      result.zeroToZero = IsZero();
     } else if (exponent.IsNegative()) {
       if (IsZero()) {
-        return {MASKR(bits - 1), true, false};  // 0**k -> 1/0 if k < 0
+        result.divisionByZero = true;
+        result.power = MASKR(bits - 1);
       } else if (CompareSigned(Integer{1}) == Ordering::Equal) {
-        return {*this, false, false};  // 1**x -> 1
+        result.power = *this;  // 1**x -> 1
       } else if (CompareSigned(Integer{-1}) == Ordering::Equal) {
         if (exponent.BTEST(0)) {
-          return {*this, false, false};  // (-1)**x -> -1 if x odd
-        } else {
-          return {1, false, false};  // (-1)**x -> 1 if x even
+          result.power = *this;  // (-1)**x -> -1 if x is odd
         }
       } else {
-        return {0, false, false};  // j**k -> 0 if |j| > 1 and k < 0
+        result.power.Clear();  // j**k -> 0 if |j| > 1 and k < 0
       }
     } else {
-      PowerWithErrors result{1, false, false};
       Integer shifted{*this};
       Integer pow{exponent};
       int nbits{bits - pow.LEADZ()};
@@ -922,8 +924,8 @@ public:
           shifted = doubled.value;
         }
       }
-      return result;
     }
+    return result;
   }
 
 private:
