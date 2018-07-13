@@ -571,6 +571,17 @@ StringRef llvm::dwarf::AttributeValueString(uint16_t Attr, unsigned Val) {
   return StringRef();
 }
 
+StringRef llvm::dwarf::AtomValueString(uint16_t Atom, unsigned Val) {
+  switch (Atom) {
+  case DW_ATOM_null:
+    return "NULL";
+  case DW_ATOM_die_tag:
+    return TagString(Val);
+  }
+
+  return StringRef();
+}
+
 StringRef llvm::dwarf::IndexString(unsigned Idx) {
   switch (Idx) {
   default:
