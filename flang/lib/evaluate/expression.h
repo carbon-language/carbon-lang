@@ -51,7 +51,7 @@ public:
   const A &operand() const { return *operand_; }
   A &operand() { return *operand_; }
   std::ostream &Dump(std::ostream &, const char *opr) const;
-  std::optional<CONST> Fold(FoldingContext &);
+  std::optional<CONST> Fold(FoldingContext &);  // folds operand, no result
 
 private:
   CopyableIndirection<A> operand_;
@@ -74,7 +74,7 @@ public:
   B &right() { return *right_; }
   std::ostream &Dump(
       std::ostream &, const char *opr, const char *before = "(") const;
-  std::optional<CONST> Fold(FoldingContext &);
+  std::optional<CONST> Fold(FoldingContext &);  // folds operands, no result
 
 private:
   CopyableIndirection<A> left_;
@@ -85,43 +85,52 @@ template<int KIND> class Expr<Category::Integer, KIND> {
 public:
   using Result = Type<Category::Integer, KIND>;
   using Constant = typename Result::Value;
-  template<typename A> struct Convert : public Unary<A, Constant> {
-    using Unary<A, Constant>::Unary;
+  struct ConvertInteger : public Unary<GenericIntegerExpr, Constant> {
+    using Unary<GenericIntegerExpr, Constant>::Unary;
+    std::optional<Constant> Fold(FoldingContext &);
+  };
+  struct ConvertReal : public Unary<GenericRealExpr, Constant> {
+    using Unary<GenericRealExpr, Constant>::Unary;
   };
   using Un = Unary<Expr, Constant>;
   using Bin = Binary<Expr, Expr, Constant>;
   struct Parentheses : public Un {
-    using Un::Un, Un::operand;
+    using Un::Un;
     std::optional<Constant> Fold(FoldingContext &c) {
-      return operand().Fold(c);
+      return this->operand().Fold(c);
     }
   };
   struct Negate : public Un {
-    using Un::Un, Un::operand;
+    using Un::Un;
     std::optional<Constant> Fold(FoldingContext &);
   };
   struct Add : public Bin {
-    using Bin::Bin, Bin::left, Bin::right;
+    using Bin::Bin;
     std::optional<Constant> Fold(FoldingContext &);
   };
   struct Subtract : public Bin {
-    using Bin::Bin, Bin::Fold;
+    using Bin::Bin;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   struct Multiply : public Bin {
-    using Bin::Bin, Bin::left, Bin::right;
+    using Bin::Bin;
     std::optional<Constant> Fold(FoldingContext &);
   };
   struct Divide : public Bin {
-    using Bin::Bin, Bin::Fold;
+    using Bin::Bin;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   struct Power : public Bin {
-    using Bin::Bin, Bin::Fold;
+    using Bin::Bin;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   struct Max : public Bin {
-    using Bin::Bin, Bin::Fold;
+    using Bin::Bin;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   struct Min : public Bin {
-    using Bin::Bin, Bin::Fold;
+    using Bin::Bin;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   // TODO: R916 type-param-inquiry
 
@@ -130,12 +139,15 @@ public:
   Expr(std::int64_t n) : u_{Constant{n}} {}
   Expr(std::uint64_t n) : u_{Constant{n}} {}
   Expr(int n) : u_{Constant{n}} {}
-  template<Category CAT, int K>
-  Expr(const Expr<CAT, K> &x)
-    : u_{Convert<CategoryExpr<CAT>>{CategoryExpr<CAT>{x}}} {}
-  template<Category CAT, int K>
-  Expr(Expr<CAT, K> &&x)
-    : u_{Convert<CategoryExpr<CAT>>{CategoryExpr<CAT>{std::move(x)}}} {}
+  template<int K>
+  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{GenericIntegerExpr{x}}} {}
+  template<int K>
+  Expr(IntegerExpr<K> &&x)
+    : u_{ConvertInteger{GenericIntegerExpr{std::move(x)}}} {}
+  template<int K>
+  Expr(const RealExpr<K> &x) : u_{ConvertReal{GenericRealExpr{x}}} {}
+  template<int K>
+  Expr(RealExpr<K> &&x) : u_{ConvertReal{GenericRealExpr{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A> &&
@@ -149,9 +161,8 @@ public:
 
 private:
   std::variant<Constant, CopyableIndirection<DataRef>,
-      CopyableIndirection<FunctionRef>, Convert<GenericIntegerExpr>,
-      Convert<GenericRealExpr>, Parentheses, Negate, Add, Subtract, Multiply,
-      Divide, Power, Max, Min>
+      CopyableIndirection<FunctionRef>, ConvertInteger, ConvertReal,
+      Parentheses, Negate, Add, Subtract, Multiply, Divide, Power, Max, Min>
       u_;
 };
 
@@ -162,8 +173,12 @@ public:
   // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
   // and part access operations (resp.).  Conversions between kinds of
   // Complex are done via decomposition to Real and reconstruction.
-  template<typename A> struct Convert : public Unary<A, Constant> {
-    using Unary<A, Constant>::Unary;
+  struct ConvertInteger : public Unary<GenericIntegerExpr, Constant> {
+    using Unary<GenericIntegerExpr, Constant>::Unary;
+    std::optional<Constant> Fold(FoldingContext &);
+  };
+  struct ConvertReal : public Unary<GenericRealExpr, Constant> {
+    using Unary<GenericRealExpr, Constant>::Unary;
   };
   using Un = Unary<Expr, Constant>;
   using Bin = Binary<Expr, Expr, Constant>;
@@ -207,12 +222,15 @@ public:
 
   CLASS_BOILERPLATE(Expr)
   Expr(const Constant &x) : u_{x} {}
-  template<Category CAT, int K>
-  Expr(const Expr<CAT, K> &x)
-    : u_{Convert<CategoryExpr<CAT>>{CategoryExpr<CAT>{x}}} {}
-  template<Category CAT, int K>
-  Expr(Expr<CAT, K> &&x)
-    : u_{Convert<CategoryExpr<CAT>>{CategoryExpr<CAT>{std::move(x)}}} {}
+  template<int K>
+  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{GenericIntegerExpr{x}}} {}
+  template<int K>
+  Expr(IntegerExpr<K> &&x)
+    : u_{ConvertInteger{GenericIntegerExpr{std::move(x)}}} {}
+  template<int K>
+  Expr(const RealExpr<K> &x) : u_{ConvertReal{GenericRealExpr{x}}} {}
+  template<int K>
+  Expr(RealExpr<K> &&x) : u_{ConvertReal{GenericRealExpr{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
@@ -221,9 +239,8 @@ public:
 private:
   std::variant<Constant, CopyableIndirection<DataRef>,
       CopyableIndirection<ComplexPart>, CopyableIndirection<FunctionRef>,
-      Convert<GenericIntegerExpr>, Convert<GenericRealExpr>, Parentheses,
-      Negate, Add, Subtract, Multiply, Divide, Power, IntPower, Max, Min,
-      RealPart, AIMAG>
+      ConvertInteger, ConvertReal, Parentheses, Negate, Add, Subtract, Multiply,
+      Divide, Power, IntPower, Max, Min, RealPart, AIMAG>
       u_;
 };
 

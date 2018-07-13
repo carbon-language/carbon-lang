@@ -100,6 +100,11 @@ public:
     bool divisionByZero, overflow;
   };
 
+  struct PowerWithErrors {
+    Integer power;
+    bool divisionByZero, overflow;
+  };
+
   // Constructors and value-generating static functions
   constexpr Integer() { Clear(); }  // default constructor: zero
   constexpr Integer(const Integer &) = default;
@@ -236,6 +241,21 @@ public:
           result.overflow = (field >> (bits - j)) != 0;
         }
       }
+    }
+    return result;
+  }
+
+  template<typename FROM>
+  static constexpr ValueWithOverflow ConvertSigned(const FROM &that) {
+    ValueWithOverflow result{ConvertUnsigned(that)};
+    if constexpr (bits > FROM::bits) {
+      if (that.IsNegative()) {
+        result.value = result.value.IOR(MASKL(bits - FROM::bits));
+      }
+    } else if constexpr (bits < FROM::bits) {
+      auto back{FROM::template ConvertSigned(result.value)};
+      result.overflow |=
+          back.overflow || back.value.CompareUnsigned(that) != Ordering::Equal;
     }
     return result;
   }
@@ -862,6 +882,47 @@ public:
       return {divided.remainder.AddUnsigned(divisor).value, divided.overflow};
     } else {
       return {divided.remainder, divided.overflow};
+    }
+  }
+
+  constexpr PowerWithErrors Power(const Integer &exponent) const {
+    if (exponent.IsZero()) {
+      // x**0 -> 1, including the case 0**0, which is not defined specifically
+      // in F'18 afaict; however, other Fortrans tested all produce 1, not 0.
+      // F'77 explicitly states that 0**0 is mathematically undefined.
+      return {1, false, false};
+    } else if (exponent.IsNegative()) {
+      if (IsZero()) {
+        return {MASKR(bits - 1), true, false};  // 0**k -> 1/0 if k < 0
+      } else if (CompareSigned(Integer{1}) == Ordering::Equal) {
+        return {*this, false, false};  // 1**x -> 1
+      } else if (CompareSigned(Integer{-1}) == Ordering::Equal) {
+        if (exponent.BTEST(0)) {
+          return {*this, false, false};  // (-1)**x -> -1 if x odd
+        } else {
+          return {1, false, false};  // (-1)**x -> 1 if x even
+        }
+      } else {
+        return {0, false, false};  // j**k -> 0 if |j| > 1 and k < 0
+      }
+    } else {
+      PowerWithErrors result{1, false, false};
+      Integer shifted{*this};
+      Integer pow{exponent};
+      int nbits{bits - pow.LEADZ()};
+      for (int j{0}; j < nbits; ++j) {
+        if (pow.BTEST(j)) {
+          Product product{result.power.MultiplySigned(shifted)};
+          result.power = product.lower;
+          result.overflow |= product.SignedMultiplicationOverflowed();
+        }
+        if (j + 1 < nbits) {
+          ValueWithOverflow doubled{shifted.AddSigned(shifted)};
+          result.overflow |= doubled.overflow;
+          shifted = doubled.value;
+        }
+      }
+      return result;
     }
   }
 

@@ -67,7 +67,7 @@ std::ostream &Binary<A, B, CONST>::Dump(
 }
 
 template<int KIND>
-std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
+std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
@@ -88,8 +88,7 @@ std::ostream &Expr<Category::Integer, KIND>::Dump(std::ostream &o) const {
   return o;
 }
 
-template<int KIND>
-std::ostream &Expr<Category::Real, KIND>::Dump(std::ostream &o) const {
+template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
@@ -115,7 +114,7 @@ std::ostream &Expr<Category::Real, KIND>::Dump(std::ostream &o) const {
 }
 
 template<int KIND>
-std::ostream &Expr<Category::Complex, KIND>::Dump(std::ostream &o) const {
+std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
@@ -134,7 +133,7 @@ std::ostream &Expr<Category::Complex, KIND>::Dump(std::ostream &o) const {
 }
 
 template<int KIND>
-std::ostream &Expr<Category::Character, KIND>::Dump(std::ostream &o) const {
+std::ostream &CharacterExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(common::visitors{[&](const Constant &s) {
                                 o << parser::QuoteCharacterLiteral(s);
                               },
@@ -154,7 +153,7 @@ template<typename A> std::ostream &Comparison<A>::Dump(std::ostream &o) const {
   return this->right().Dump(o) << ')';
 }
 
-std::ostream &Expr<Category::Logical, 1>::Dump(std::ostream &o) const {
+std::ostream &LogicalExpr::Dump(std::ostream &o) const {
   std::visit(
       common::visitors{[&](const bool &tf) { o << (tf ? ".T." : ".F."); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
@@ -169,8 +168,7 @@ std::ostream &Expr<Category::Logical, 1>::Dump(std::ostream &o) const {
   return o;
 }
 
-template<int KIND>
-SubscriptIntegerExpr Expr<Category::Character, KIND>::LEN() const {
+template<int KIND> SubscriptIntegerExpr CharacterExpr<KIND>::LEN() const {
   return std::visit(
       common::visitors{
           [](const Constant &c) { return SubscriptIntegerExpr{c.size()}; },
@@ -215,8 +213,27 @@ IntegerExpr<KIND>::ConstantValue() const {
 
 template<int KIND>
 std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::ConvertInteger::Fold(FoldingContext &context) {
+  return std::visit(
+      [&](auto &x) -> std::optional<typename IntegerExpr<KIND>::Constant> {
+        if (auto c{x.Fold(context)}) {
+          auto converted{Constant::ConvertSigned(*c)};
+          if (converted.overflow && context.messages != nullptr) {
+            context.messages->Say(
+                context.at, "integer conversion overflowed"_en_US);
+          }
+          return {std::move(converted.value)};
+        }
+        // g++ 8.1.0 choked on the legal "return {};" that should be here.
+        return std::optional<typename IntegerExpr<KIND>::Constant>{};
+      },
+      this->operand().u);
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
 IntegerExpr<KIND>::Negate::Fold(FoldingContext &context) {
-  if (auto c{operand().Fold(context)}) {
+  if (auto c{this->operand().Fold(context)}) {
     auto negated{c->Negate()};
     if (negated.overflow && context.messages != nullptr) {
       context.messages->Say(context.at, "integer negation overflowed"_en_US);
@@ -229,8 +246,8 @@ IntegerExpr<KIND>::Negate::Fold(FoldingContext &context) {
 template<int KIND>
 std::optional<typename IntegerExpr<KIND>::Constant>
 IntegerExpr<KIND>::Add::Fold(FoldingContext &context) {
-  auto lc{left().Fold(context)};
-  auto rc{right().Fold(context)};
+  auto lc{this->left().Fold(context)};
+  auto rc{this->right().Fold(context)};
   if (lc && rc) {
     auto sum{lc->AddSigned(*rc)};
     if (sum.overflow && context.messages != nullptr) {
@@ -243,9 +260,24 @@ IntegerExpr<KIND>::Add::Fold(FoldingContext &context) {
 
 template<int KIND>
 std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Subtract::Fold(FoldingContext &context) {
+  auto lc{this->left().Fold(context)};
+  auto rc{this->right().Fold(context)};
+  if (lc && rc) {
+    auto diff{lc->SubtractSigned(*rc)};
+    if (diff.overflow && context.messages != nullptr) {
+      context.messages->Say(context.at, "integer subtraction overflowed"_en_US);
+    }
+    return {std::move(diff.value)};
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
 IntegerExpr<KIND>::Multiply::Fold(FoldingContext &context) {
-  auto lc{left().Fold(context)};
-  auto rc{right().Fold(context)};
+  auto lc{this->left().Fold(context)};
+  auto rc{this->right().Fold(context)};
   if (lc && rc) {
     auto product{lc->MultiplySigned(*rc)};
     if (product.SignedMultiplicationOverflowed() &&
@@ -254,6 +286,72 @@ IntegerExpr<KIND>::Multiply::Fold(FoldingContext &context) {
           context.at, "integer multiplication overflowed"_en_US);
     }
     return {std::move(product.lower)};
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Divide::Fold(FoldingContext &context) {
+  auto lc{this->left().Fold(context)};
+  auto rc{this->right().Fold(context)};
+  if (lc && rc) {
+    auto qr{lc->DivideSigned(*rc)};
+    if (context.messages != nullptr) {
+      if (qr.divisionByZero) {
+        context.messages->Say(context.at, "integer division by zero"_en_US);
+      } else if (qr.overflow) {
+        context.messages->Say(context.at, "integer division overflowed"_en_US);
+      }
+    }
+    return {std::move(qr.quotient)};
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Power::Fold(FoldingContext &context) {
+  auto lc{this->left().Fold(context)};
+  auto rc{this->right().Fold(context)};
+  if (lc && rc) {
+    auto power{lc->Power(*rc)};
+    if (context.messages != nullptr) {
+      if (power.divisionByZero) {
+        context.messages->Say(context.at, "zero to negative power"_en_US);
+      } else if (power.overflow) {
+        context.messages->Say(context.at, "integer power overflowed"_en_US);
+      }
+    }
+    return {std::move(power.power)};
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Max::Fold(FoldingContext &context) {
+  auto lc{this->left().Fold(context)};
+  auto rc{this->right().Fold(context)};
+  if (lc && rc) {
+    if (lc->CompareSigned(*rc) == Ordering::Greater) {
+      return lc;
+    }
+    return rc;
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Min::Fold(FoldingContext &context) {
+  auto lc{this->left().Fold(context)};
+  auto rc{this->right().Fold(context)};
+  if (lc && rc) {
+    if (lc->CompareSigned(*rc) == Ordering::Less) {
+      return lc;
+    }
+    return rc;
   }
   return {};
 }
