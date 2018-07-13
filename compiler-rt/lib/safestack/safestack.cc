@@ -267,8 +267,9 @@ extern "C"
 }
 
 extern "C"
-    __attribute__((visibility("default"), alias("__get_unsafe_stack_bottom")))
-    void *__get_unsafe_stack_start();
+    __attribute__((visibility("default"))) void *__get_unsafe_stack_start() {
+  return unsafe_stack_start;
+}
 
 extern "C"
     __attribute__((visibility("default"))) void *__get_unsafe_stack_ptr() {
