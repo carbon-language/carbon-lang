@@ -113,6 +113,8 @@ let Predicates = [HasSVE] in {
   defm SEL_ZPZZ    : sve_int_sel_vvv<"sel">;
 
   defm COMPACT_ZPZ : sve_int_perm_compact<"compact">;
+  defm INSR_ZR : sve_int_perm_insrs<"insr">;
+  defm INSR_ZV : sve_int_perm_insrv<"insr">;
 
   def AND_PPzPP   : sve_int_pred_log<0b0000, "and">;
   def BIC_PPzPP   : sve_int_pred_log<0b0001, "bic">;

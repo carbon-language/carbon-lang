@@ -658,6 +658,55 @@ multiclass sve_int_perm_tbl<string asm> {
                  (!cast<Instruction>(NAME # _D) ZPR64:$Zd, ZPR64:$Zn, ZPR64:$Zm), 0>;
 }
 
+class sve_int_perm_insrs<bits<2> sz8_64, string asm, ZPRRegOp zprty,
+                         RegisterClass srcRegType>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn, srcRegType:$Rm),
+  asm, "\t$Zdn, $Rm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Rm;
+  bits<5> Zdn;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21-10} = 0b100100001110;
+  let Inst{9-5}   = Rm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve_int_perm_insrs<string asm> {
+  def _B : sve_int_perm_insrs<0b00, asm, ZPR8, GPR32>;
+  def _H : sve_int_perm_insrs<0b01, asm, ZPR16, GPR32>;
+  def _S : sve_int_perm_insrs<0b10, asm, ZPR32, GPR32>;
+  def _D : sve_int_perm_insrs<0b11, asm, ZPR64, GPR64>;
+}
+
+class sve_int_perm_insrv<bits<2> sz8_64, string asm, ZPRRegOp zprty,
+                         RegisterClass srcRegType>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn, srcRegType:$Vm),
+  asm, "\t$Zdn, $Vm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Vm;
+  bits<5> Zdn;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21-10} = 0b110100001110;
+  let Inst{9-5}   = Vm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve_int_perm_insrv<string asm> {
+  def _B : sve_int_perm_insrv<0b00, asm, ZPR8, FPR8>;
+  def _H : sve_int_perm_insrv<0b01, asm, ZPR16, FPR16>;
+  def _S : sve_int_perm_insrv<0b10, asm, ZPR32, FPR32>;
+  def _D : sve_int_perm_insrv<0b11, asm, ZPR64, FPR64>;
+}
+
+
 //===----------------------------------------------------------------------===//
 // SVE Vector Select Group
 //===----------------------------------------------------------------------===//
