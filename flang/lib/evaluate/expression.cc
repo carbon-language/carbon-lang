@@ -224,8 +224,10 @@ IntegerExpr<KIND>::ConvertInteger::Fold(FoldingContext &context) {
           }
           return {std::move(converted.value)};
         }
-        // g++ 8.1.0 choked on the legal "return {};" that should be here.
-        return std::optional<typename IntegerExpr<KIND>::Constant>{};
+        // g++ 8.1.0 choked on the legal "return {};" that should be here,
+        // saying that it may be used uninitialized.
+        std::optional<typename IntegerExpr<KIND>::Constant> result;
+        return std::move(result);
       },
       this->operand().u);
 }
@@ -315,7 +317,7 @@ IntegerExpr<KIND>::Power::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
   if (lc && rc) {
-    PowerWithErrors power{lc->Power(*rc)};
+    typename Constant::PowerWithErrors power{lc->Power(*rc)};
     if (context.messages != nullptr) {
       if (power.divisionByZero) {
         context.messages->Say(context.at, "zero to negative power"_en_US);
