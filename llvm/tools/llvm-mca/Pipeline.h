@@ -62,8 +62,11 @@ class Pipeline {
   void preExecuteStages(const InstRef &IR);
   bool executeStages(InstRef &IR);
   void postExecuteStages(const InstRef &IR);
+  void runCycle();
+
   bool hasWorkToProcess();
-  void runCycle(unsigned Cycle);
+  void notifyCycleBegin();
+  void notifyCycleEnd();
 
 public:
   Pipeline(unsigned DispatchWidth = 0, unsigned RegisterFileSize = 0,
@@ -73,8 +76,6 @@ public:
   void appendStage(std::unique_ptr<Stage> S) { Stages.push_back(std::move(S)); }
   void run();
   void addEventListener(HWEventListener *Listener);
-  void notifyCycleBegin(unsigned Cycle);
-  void notifyCycleEnd(unsigned Cycle);
 };
 } // namespace mca
 
