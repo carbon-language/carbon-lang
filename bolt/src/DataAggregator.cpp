@@ -1083,7 +1083,7 @@ DataAggregator::getFileNameForBuildID(StringRef FileBuildID) {
     if (!IDPair)
       return NoneType();
 
-    if (IDPair->second == FileBuildID)
+    if (IDPair->second.startswith(FileBuildID))
       return sys::path::filename(IDPair->first);
   }
   return NoneType();
