@@ -13,8 +13,9 @@
 # limitations under the License.
 
 
-add_library(FlangSemantics
+add_library(FortranSemantics
   attr.cc
+  expression.cc
   mod-file.cc
   resolve-names.cc
   rewrite-parse-tree.cc
@@ -24,7 +25,7 @@ add_library(FlangSemantics
   unparse-with-symbols.cc
 )
 
-target_link_libraries(FlangSemantics
+target_link_libraries(FortranSemantics
   FortranCommon
   clangBasic
 )
