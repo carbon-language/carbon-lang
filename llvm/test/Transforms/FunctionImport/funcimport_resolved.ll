@@ -12,6 +12,8 @@
 ; Require asserts so we can use -debug-only
 ; REQUIRES: asserts
 
+; REQUIRES: x86-registered-target
+
 ; RUN: opt -module-summary %s -o %t.bc
 ; RUN: opt -module-summary %p/Inputs/funcimport_resolved1.ll -o %t2.bc
 ; RUN: opt -module-summary %p/Inputs/funcimport_resolved2.ll -o %t3.bc
