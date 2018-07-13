@@ -2,6 +2,7 @@
 target datalayout = "e-m:e-p:32:32-i64:64-n32-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
+; CHECK-LABEL: @hoge
 define void @hoge() {
 bb:
   %tmp = sext i32 undef to i64
