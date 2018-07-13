@@ -2642,34 +2642,26 @@ let isCodeGenOnly = 1 in {
 multiclass scalar_math_patterns<SDNode Op, string OpcPrefix, SDNode Move,
                                     ValueType VT, ValueType EltTy,
                                     RegisterClass RC, Predicate BasePredicate> {
-   let Predicates = [BasePredicate] in {
+  let Predicates = [BasePredicate] in {
     // extracted scalar math op with insert via movss/movsd
-    def : Pat<(VT (Move (VT VR128:$dst), (VT (scalar_to_vector
-          (Op (EltTy (extractelt (VT VR128:$dst), (iPTR 0))),
-          RC:$src))))),
-      (!cast<Instruction>(OpcPrefix#rr_Int) VT:$dst,
-          (COPY_TO_REGCLASS RC:$src, VR128))>;
-
-    // vector math op with insert via movss/movsd
     def : Pat<(VT (Move (VT VR128:$dst),
-          (Op (VT VR128:$dst), (VT VR128:$src)))),
-      (!cast<Instruction>(OpcPrefix#rr_Int) VT:$dst, VT:$src)>;
-   }
+                        (VT (scalar_to_vector
+                             (Op (EltTy (extractelt (VT VR128:$dst), (iPTR 0))),
+                                 RC:$src))))),
+              (!cast<Instruction>(OpcPrefix#rr_Int) VT:$dst,
+               (COPY_TO_REGCLASS RC:$src, VR128))>;
+  }
 
-   // Repeat for AVX versions of the instructions.
-   let Predicates = [UseAVX] in {
+  // Repeat for AVX versions of the instructions.
+  let Predicates = [UseAVX] in {
     // extracted scalar math op with insert via movss/movsd
-    def : Pat<(VT (Move (VT VR128:$dst), (VT (scalar_to_vector
-          (Op (EltTy (extractelt (VT VR128:$dst), (iPTR 0))),
-          RC:$src))))),
-      (!cast<Instruction>("V"#OpcPrefix#rr_Int) VT:$dst,
-          (COPY_TO_REGCLASS RC:$src, VR128))>;
-
-    // vector math op with insert via movss/movsd
     def : Pat<(VT (Move (VT VR128:$dst),
-          (Op (VT VR128:$dst), (VT VR128:$src)))),
-      (!cast<Instruction>("V"#OpcPrefix#rr_Int) VT:$dst, VT:$src)>;
-   }
+                        (VT (scalar_to_vector
+                             (Op (EltTy (extractelt (VT VR128:$dst), (iPTR 0))),
+                                 RC:$src))))),
+              (!cast<Instruction>("V"#OpcPrefix#rr_Int) VT:$dst,
+               (COPY_TO_REGCLASS RC:$src, VR128))>;
+  }
 }
 
 defm : scalar_math_patterns<fadd, "ADDSS", X86Movss, v4f32, f32, FR32, UseSSE1>;
