@@ -2138,7 +2138,7 @@ const Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
                 ApplyImplicitRules(y.source, *symbol);
               }
             }
-            return static_cast<const Symbol *>(symbol);
+            return const_cast<const Symbol *>(symbol);
           },
           [=](const common::Indirection<parser::StructureComponent> &y) {
             return ResolveStructureComponent(*y);
@@ -2424,7 +2424,7 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
 void ResolveNames(
     parser::Program &program, const parser::CookedSource &cookedSource) {
   ResolveNamesVisitor visitor;
-  parser::Walk(static_cast<const parser::Program &>(program), visitor);
+  parser::Walk(const_cast<const parser::Program &>(program), visitor);
   if (!visitor.messages().empty()) {
     visitor.messages().Emit(std::cerr, cookedSource);
     return;
