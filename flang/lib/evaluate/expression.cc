@@ -55,13 +55,13 @@ std::ostream &GenericExpr::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
-template<typename A>
-std::ostream &Unary<A>::Dump(std::ostream &o, const char *opr) const {
+template<typename A, typename CONST>
+std::ostream &Unary<A, CONST>::Dump(std::ostream &o, const char *opr) const {
   return operand().Dump(o << opr) << ')';
 }
 
-template<typename A, typename B>
-std::ostream &Binary<A, B>::Dump(
+template<typename A, typename B, typename CONST>
+std::ostream &Binary<A, B, CONST>::Dump(
     std::ostream &o, const char *opr, const char *before) const {
   return right().Dump(left().Dump(o << before) << opr) << ')';
 }
@@ -191,9 +191,22 @@ SubscriptIntegerExpr Expr<Category::Character, KIND>::LEN() const {
       u_);
 }
 
+template<typename A, typename CONST>
+std::optional<CONST> Unary<A, CONST>::Fold(FoldingContext &context) {
+  operand_->Fold(context);
+  return {};
+}
+
+template<typename A, typename B, typename CONST>
+std::optional<CONST> Binary<A, B, CONST>::Fold(FoldingContext &context) {
+  left_->Fold(context);
+  right_->Fold(context);
+  return {};
+}
+
 template<int KIND>
-std::optional<typename Expr<Category::Integer, KIND>::Constant>
-Expr<Category::Integer, KIND>::ConstantValue() const {
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::ConstantValue() const {
   if (auto c{std::get_if<Constant>(&u_)}) {
     return {*c};
   }
@@ -201,59 +214,68 @@ Expr<Category::Integer, KIND>::ConstantValue() const {
 }
 
 template<int KIND>
-void Expr<Category::Integer, KIND>::Fold(FoldingContext &context) {
-  std::visit(common::visitors{[&](Parentheses &p) {
-                                p.operand().Fold(context);
-                                if (auto c{p.operand().ConstantValue()}) {
-                                  u_ = std::move(*c);
-                                }
-                              },
-                 [&](Negate &n) {
-                   n.operand().Fold(context);
-                   if (auto c{n.operand().ConstantValue()}) {
-                     auto negated{c->Negate()};
-                     if (negated.overflow && context.messages != nullptr) {
-                       context.messages->Say(
-                           context.at, "integer negation overflowed"_en_US);
-                     }
-                     u_ = std::move(negated.value);
-                   }
-                 },
-                 [&](Add &a) {
-                   a.left().Fold(context);
-                   a.right().Fold(context);
-                   if (auto xc{a.left().ConstantValue()}) {
-                     if (auto yc{a.right().ConstantValue()}) {
-                       auto sum{xc->AddSigned(*yc)};
-                       if (sum.overflow && context.messages != nullptr) {
-                         context.messages->Say(
-                             context.at, "integer addition overflowed"_en_US);
-                       }
-                       u_ = std::move(sum.value);
-                     }
-                   }
-                 },
-                 [&](Multiply &a) {
-                   a.left().Fold(context);
-                   a.right().Fold(context);
-                   if (auto xc{a.left().ConstantValue()}) {
-                     if (auto yc{a.right().ConstantValue()}) {
-                       auto product{xc->MultiplySigned(*yc)};
-                       if (product.SignedMultiplicationOverflowed() &&
-                           context.messages != nullptr) {
-                         context.messages->Say(context.at,
-                             "integer multiplication overflowed"_en_US);
-                       }
-                       u_ = std::move(product.lower);
-                     }
-                   }
-                 },
-                 [&](Bin &b) {
-                   b.left().Fold(context);
-                   b.right().Fold(context);
-                 },
-                 [&](const auto &) {  // TODO: more
-                 }},
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Negate::Fold(FoldingContext &context) {
+  if (auto c{operand().Fold(context)}) {
+    auto negated{c->Negate()};
+    if (negated.overflow && context.messages != nullptr) {
+      context.messages->Say(context.at, "integer negation overflowed"_en_US);
+    }
+    return {std::move(negated.value)};
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Add::Fold(FoldingContext &context) {
+  auto lc{left().Fold(context)};
+  auto rc{right().Fold(context)};
+  if (lc && rc) {
+    auto sum{lc->AddSigned(*rc)};
+    if (sum.overflow && context.messages != nullptr) {
+      context.messages->Say(context.at, "integer addition overflowed"_en_US);
+    }
+    return {std::move(sum.value)};
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant>
+IntegerExpr<KIND>::Multiply::Fold(FoldingContext &context) {
+  auto lc{left().Fold(context)};
+  auto rc{right().Fold(context)};
+  if (lc && rc) {
+    auto product{lc->MultiplySigned(*rc)};
+    if (product.SignedMultiplicationOverflowed() &&
+        context.messages != nullptr) {
+      context.messages->Say(
+          context.at, "integer multiplication overflowed"_en_US);
+    }
+    return {std::move(product.lower)};
+  }
+  return {};
+}
+
+template<int KIND>
+std::optional<typename IntegerExpr<KIND>::Constant> IntegerExpr<KIND>::Fold(
+    FoldingContext &context) {
+  return std::visit(
+      [&](auto &x) -> std::optional<Constant> {
+        using Ty = typename std::decay<decltype(x)>::type;
+        if constexpr (std::is_same_v<Ty, Constant>) {
+          return {x};
+        }
+        if constexpr (std::is_base_of_v<Un, Ty> || std::is_base_of_v<Bin, Ty>) {
+          auto c{x.Fold(context)};
+          if (c.has_value()) {
+            u_ = *c;
+            return c;
+          }
+        }
+        return {};
+      },
       u_);
 }
 

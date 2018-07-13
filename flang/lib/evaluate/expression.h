@@ -40,9 +40,10 @@ struct FoldingContext {
 };
 
 // Helper base classes for packaging subexpressions.
-template<typename A> class Unary {
+template<typename A, typename CONST = typename A::Constant> class Unary {
 public:
   using Operand = A;
+  using Constant = CONST;
   CLASS_BOILERPLATE(Unary)
   Unary(const A &a) : operand_{a} {}
   Unary(A &&a) : operand_{std::move(a)} {}
@@ -50,15 +51,18 @@ public:
   const A &operand() const { return *operand_; }
   A &operand() { return *operand_; }
   std::ostream &Dump(std::ostream &, const char *opr) const;
+  std::optional<CONST> Fold(FoldingContext &);
 
 private:
   CopyableIndirection<A> operand_;
 };
 
-template<typename A, typename B = A> class Binary {
+template<typename A, typename B = A, typename CONST = typename A::Constant>
+class Binary {
 public:
   using Left = A;
   using Right = B;
+  using Constant = CONST;
   CLASS_BOILERPLATE(Binary)
   Binary(const A &a, const B &b) : left_{a}, right_{b} {}
   Binary(A &&a, B &&b) : left_{std::move(a)}, right_{std::move(b)} {}
@@ -70,6 +74,7 @@ public:
   B &right() { return *right_; }
   std::ostream &Dump(
       std::ostream &, const char *opr, const char *before = "(") const;
+  std::optional<CONST> Fold(FoldingContext &);
 
 private:
   CopyableIndirection<A> left_;
@@ -80,37 +85,43 @@ template<int KIND> class Expr<Category::Integer, KIND> {
 public:
   using Result = Type<Category::Integer, KIND>;
   using Constant = typename Result::Value;
-  template<typename A> struct Convert : public Unary<A> {
-    using Unary<A>::Unary;
+  template<typename A> struct Convert : public Unary<A, Constant> {
+    using Unary<A, Constant>::Unary;
   };
-  using Un = Unary<Expr>;
-  using Bin = Binary<Expr>;
+  using Un = Unary<Expr, Constant>;
+  using Bin = Binary<Expr, Expr, Constant>;
   struct Parentheses : public Un {
-    using Un::Un;
+    using Un::Un, Un::operand;
+    std::optional<Constant> Fold(FoldingContext &c) {
+      return operand().Fold(c);
+    }
   };
   struct Negate : public Un {
-    using Un::Un;
+    using Un::Un, Un::operand;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   struct Add : public Bin {
-    using Bin::Bin;
+    using Bin::Bin, Bin::left, Bin::right;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   struct Subtract : public Bin {
-    using Bin::Bin;
+    using Bin::Bin, Bin::Fold;
   };
   struct Multiply : public Bin {
-    using Bin::Bin;
+    using Bin::Bin, Bin::left, Bin::right;
+    std::optional<Constant> Fold(FoldingContext &);
   };
   struct Divide : public Bin {
-    using Bin::Bin;
+    using Bin::Bin, Bin::Fold;
   };
   struct Power : public Bin {
-    using Bin::Bin;
+    using Bin::Bin, Bin::Fold;
   };
   struct Max : public Bin {
-    using Bin::Bin;
+    using Bin::Bin, Bin::Fold;
   };
   struct Min : public Bin {
-    using Bin::Bin;
+    using Bin::Bin, Bin::Fold;
   };
   // TODO: R916 type-param-inquiry
 
@@ -134,7 +145,7 @@ public:
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
   std::optional<Constant> ConstantValue() const;
-  void Fold(FoldingContext &);
+  std::optional<Constant> Fold(FoldingContext &c);
 
 private:
   std::variant<Constant, CopyableIndirection<DataRef>,
@@ -151,11 +162,11 @@ public:
   // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
   // and part access operations (resp.).  Conversions between kinds of
   // Complex are done via decomposition to Real and reconstruction.
-  template<typename A> struct Convert : public Unary<A> {
-    using Unary<A>::Unary;
+  template<typename A> struct Convert : public Unary<A, Constant> {
+    using Unary<A, Constant>::Unary;
   };
-  using Un = Unary<Expr>;
-  using Bin = Binary<Expr>;
+  using Un = Unary<Expr, Constant>;
+  using Bin = Binary<Expr, Expr, Constant>;
   struct Parentheses : public Un {
     using Un::Un;
   };
@@ -177,8 +188,8 @@ public:
   struct Power : public Bin {
     using Bin::Bin;
   };
-  struct IntPower : public Binary<Expr, GenericIntegerExpr> {
-    using Binary<Expr, GenericIntegerExpr>::Binary;
+  struct IntPower : public Binary<Expr, GenericIntegerExpr, Constant> {
+    using Binary<Expr, GenericIntegerExpr, Constant>::Binary;
   };
   struct Max : public Bin {
     using Bin::Bin;
@@ -186,7 +197,7 @@ public:
   struct Min : public Bin {
     using Bin::Bin;
   };
-  using CplxUn = Unary<ComplexExpr<KIND>>;
+  using CplxUn = Unary<ComplexExpr<KIND>, Constant>;
   struct RealPart : public CplxUn {
     using CplxUn::CplxUn;
   };
@@ -220,8 +231,8 @@ template<int KIND> class Expr<Category::Complex, KIND> {
 public:
   using Result = Type<Category::Complex, KIND>;
   using Constant = typename Result::Value;
-  using Un = Unary<Expr>;
-  using Bin = Binary<Expr>;
+  using Un = Unary<Expr, Constant>;
+  using Bin = Binary<Expr, Expr, Constant>;
   struct Parentheses : public Un {
     using Un::Un;
   };
@@ -243,11 +254,11 @@ public:
   struct Power : public Bin {
     using Bin::Bin;
   };
-  struct IntPower : public Binary<Expr, GenericIntegerExpr> {
-    using Binary<Expr, GenericIntegerExpr>::Binary;
+  struct IntPower : public Binary<Expr, GenericIntegerExpr, Constant> {
+    using Binary<Expr, GenericIntegerExpr, Constant>::Binary;
   };
-  struct CMPLX : public Binary<RealExpr<KIND>> {
-    using Binary<RealExpr<KIND>>::Binary;
+  struct CMPLX : public Binary<RealExpr<KIND>, RealExpr<KIND>, Constant> {
+    using Binary<RealExpr<KIND>, RealExpr<KIND>, Constant>::Binary;
   };
 
   CLASS_BOILERPLATE(Expr)
@@ -268,7 +279,7 @@ template<int KIND> class Expr<Category::Character, KIND> {
 public:
   using Result = Type<Category::Character, KIND>;
   using Constant = typename Result::Value;
-  using Bin = Binary<Expr>;
+  using Bin = Binary<Expr, Expr, Constant>;
   struct Concat : public Bin {
     using Bin::Bin;
   };
@@ -301,12 +312,12 @@ private:
 // categories and kinds of comparable operands.
 ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
 
-template<typename EXPR> struct Comparison : Binary<EXPR> {
+template<typename EXPR> struct Comparison : Binary<EXPR, EXPR, bool> {
   CLASS_BOILERPLATE(Comparison)
   Comparison(RelationalOperator r, const EXPR &a, const EXPR &b)
-    : Binary<EXPR>{a, b}, opr{r} {}
+    : Binary<EXPR, EXPR, bool>{a, b}, opr{r} {}
   Comparison(RelationalOperator r, EXPR &&a, EXPR &&b)
-    : Binary<EXPR>{std::move(a), std::move(b)}, opr{r} {}
+    : Binary<EXPR, EXPR, bool>{std::move(a), std::move(b)}, opr{r} {}
   RelationalOperator opr;
 };
 
@@ -343,10 +354,10 @@ template<Category CAT> struct CategoryComparison {
 template<> class Expr<Category::Logical, 1> {
 public:
   using Constant = bool;
-  struct Not : Unary<Expr> {
-    using Unary<Expr>::Unary;
+  struct Not : Unary<Expr, bool> {
+    using Unary<Expr, Constant>::Unary;
   };
-  using Bin = Binary<Expr, Expr>;
+  using Bin = Binary<Expr, Expr, bool>;
   struct And : public Bin {
     using Bin::Bin;
   };
