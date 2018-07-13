@@ -938,19 +938,25 @@ static bool isDataInvariantLoad(MachineInstr &MI) {
   case X86::SHRX64rm:
 
   // Conversions are believed to be constant time and don't set flags.
-  // FIXME: Add AVX versions.
-  case X86::CVTSD2SI64rm_Int:
-  case X86::CVTSD2SIrm_Int:
-  case X86::CVTSS2SI64rm_Int:
-  case X86::CVTSS2SIrm_Int:
-  case X86::CVTTSD2SI64rm:
-  case X86::CVTTSD2SI64rm_Int:
-  case X86::CVTTSD2SIrm:
-  case X86::CVTTSD2SIrm_Int:
-  case X86::CVTTSS2SI64rm:
-  case X86::CVTTSS2SI64rm_Int:
-  case X86::CVTTSS2SIrm:
-  case X86::CVTTSS2SIrm_Int:
+  case X86::CVTTSD2SI64rm: case X86::VCVTTSD2SI64rm: case X86::VCVTTSD2SI64Zrm:
+  case X86::CVTTSD2SIrm:   case X86::VCVTTSD2SIrm:   case X86::VCVTTSD2SIZrm:
+  case X86::CVTTSS2SI64rm: case X86::VCVTTSS2SI64rm: case X86::VCVTTSS2SI64Zrm:
+  case X86::CVTTSS2SIrm:   case X86::VCVTTSS2SIrm:   case X86::VCVTTSS2SIZrm:
+  case X86::CVTSI2SDrm:    case X86::VCVTSI2SDrm:    case X86::VCVTSI2SDZrm:
+  case X86::CVTSI2SSrm:    case X86::VCVTSI2SSrm:    case X86::VCVTSI2SSZrm:
+  case X86::CVTSI642SDrm:  case X86::VCVTSI642SDrm:  case X86::VCVTSI642SDZrm:
+  case X86::CVTSI642SSrm:  case X86::VCVTSI642SSrm:  case X86::VCVTSI642SSZrm:
+  case X86::CVTSS2SDrm:    case X86::VCVTSS2SDrm:    case X86::VCVTSS2SDZrm:
+  case X86::CVTSD2SSrm:    case X86::VCVTSD2SSrm:    case X86::VCVTSD2SSZrm:
+  // AVX512 added unsigned integer conversions.
+  case X86::VCVTTSD2USI64Zrm:
+  case X86::VCVTTSD2USIZrm:
+  case X86::VCVTTSS2USI64Zrm:
+  case X86::VCVTTSS2USIZrm:
+  case X86::VCVTUSI2SDZrm:
+  case X86::VCVTUSI642SDZrm:
+  case X86::VCVTUSI2SSZrm:
+  case X86::VCVTUSI642SSZrm:
 
   // Loads to register don't set flags.
   case X86::MOV8rm:
