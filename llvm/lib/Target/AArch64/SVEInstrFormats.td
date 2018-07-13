@@ -658,6 +658,28 @@ multiclass sve_int_perm_tbl<string asm> {
                  (!cast<Instruction>(NAME # _D) ZPR64:$Zd, ZPR64:$Zn, ZPR64:$Zm), 0>;
 }
 
+class sve_int_perm_unpk<bits<2> sz16_64, bits<2> opc, string asm,
+                        ZPRRegOp zprty1, ZPRRegOp zprty2>
+: I<(outs zprty1:$Zd), (ins zprty2:$Zn),
+  asm, "\t$Zd, $Zn",
+  "", []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000101;
+  let Inst{23-22} = sz16_64;
+  let Inst{21-18} = 0b1100;
+  let Inst{17-16} = opc;
+  let Inst{15-10} = 0b001110;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve_int_perm_unpk<bits<2> opc, string asm> {
+  def _H : sve_int_perm_unpk<0b01, opc, asm, ZPR16, ZPR8>;
+  def _S : sve_int_perm_unpk<0b10, opc, asm, ZPR32, ZPR16>;
+  def _D : sve_int_perm_unpk<0b11, opc, asm, ZPR64, ZPR32>;
+}
+
 class sve_int_perm_insrs<bits<2> sz8_64, string asm, ZPRRegOp zprty,
                          RegisterClass srcRegType>
 : I<(outs zprty:$Zdn), (ins zprty:$_Zdn, srcRegType:$Rm),
@@ -2356,6 +2378,21 @@ multiclass sve_int_perm_bin_perm_pp<bits<3> opc, string asm> {
   def _H : sve_int_perm_bin_perm_pp<opc, 0b01, asm, PPR16>;
   def _S : sve_int_perm_bin_perm_pp<opc, 0b10, asm, PPR32>;
   def _D : sve_int_perm_bin_perm_pp<opc, 0b11, asm, PPR64>;
+}
+
+class sve_int_perm_punpk<bit opc, string asm>
+: I<(outs PPR16:$Pd), (ins PPR8:$Pn),
+  asm, "\t$Pd, $Pn",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pd;
+  bits<4> Pn;
+  let Inst{31-17} = 0b000001010011000;
+  let Inst{16}    = opc;
+  let Inst{15-9}  = 0b0100000;
+  let Inst{8-5}   = Pn;
+  let Inst{4}     = 0b0;
+  let Inst{3-0}   = Pd;
 }
 
 class sve_int_rdffr_pred<bit s, string asm>
