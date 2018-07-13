@@ -924,10 +924,6 @@ static bool isDataInvariantLoad(MachineInstr &MI) {
   case X86::MULX64rm:
 
   // Arithmetic instructions that are both constant time and don't set flags.
-  case X86::PDEP32rm:
-  case X86::PDEP64rm:
-  case X86::PEXT32rm:
-  case X86::PEXT64rm:
   case X86::RORX32mi:
   case X86::RORX64mi:
   case X86::SARX32rm:
