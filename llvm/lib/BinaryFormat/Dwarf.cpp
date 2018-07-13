@@ -564,6 +564,8 @@ StringRef llvm::dwarf::AttributeValueString(uint16_t Attr, unsigned Val) {
     return InlineCodeString(Val);
   case DW_AT_ordering:
     return ArrayOrderString(Val);
+  case DW_AT_APPLE_runtime_class:
+    return LanguageString(Val);
   }
 
   return StringRef();
