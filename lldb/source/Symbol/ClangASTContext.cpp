@@ -5105,6 +5105,7 @@ lldb::Encoding ClangASTContext::GetEncoding(lldb::opaque_compiler_type_t type,
         .GetEncoding(count);
   case clang::Type::DependentSizedArray:
   case clang::Type::DependentSizedExtVector:
+  case clang::Type::DependentVector:
   case clang::Type::UnresolvedUsing:
   case clang::Type::Attributed:
   case clang::Type::TemplateTypeParm:
@@ -5272,6 +5273,7 @@ lldb::Format ClangASTContext::GetFormat(lldb::opaque_compiler_type_t type) {
         .GetFormat();
   case clang::Type::DependentSizedArray:
   case clang::Type::DependentSizedExtVector:
+  case clang::Type::DependentVector:
   case clang::Type::UnresolvedUsing:
   case clang::Type::Attributed:
   case clang::Type::TemplateTypeParm:
