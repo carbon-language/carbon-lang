@@ -260,6 +260,8 @@ template <typename T> class ArrayRef;
     bool isConvergent : 1;
     bool hasNoSchedulingInfo : 1;
     bool FastISelShouldIgnore : 1;
+    bool hasChain : 1;
+    bool hasChain_Inferred : 1;
 
     std::string DeprecatedReason;
     bool HasComplexDeprecationPredicate;

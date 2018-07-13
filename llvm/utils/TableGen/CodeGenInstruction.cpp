@@ -346,6 +346,10 @@ CodeGenInstruction::CodeGenInstruction(Record *R)
   ImplicitDefs = R->getValueAsListOfDefs("Defs");
   ImplicitUses = R->getValueAsListOfDefs("Uses");
 
+  // This flag is only inferred from the pattern.
+  hasChain = false;
+  hasChain_Inferred = false;
+
   // Parse Constraints.
   ParseConstraints(R->getValueAsString("Constraints"), Operands);
 
