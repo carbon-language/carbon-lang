@@ -232,6 +232,10 @@ static bool isPrimitiveType(const QualType &T) {
 static void printNoteMessage(llvm::raw_ostream &Out,
                              const FieldChainInfo &Chain);
 
+/// Returns with Field's name. This is a helper function to get the correct name
+/// even if Field is a captured lambda variable.
+static StringRef getVariableName(const FieldDecl *Field);
+
 //===----------------------------------------------------------------------===//
 //                  Methods for UninitializedObjectChecker.
 //===----------------------------------------------------------------------===//
@@ -581,22 +585,6 @@ const FieldDecl *FieldChainInfo::getEndOfChain() const {
 // "uninitialized field 'this->x'", but we can't refer to 'x' directly,
 // we need an explicit namespace resolution whether the uninit field was
 // 'D1::x' or 'D2::x'.
-//
-// TODO: If a field in the fieldchain is a captured lambda parameter, this
-// function constructs an empty string for it:
-//
-//   template <class Callable> struct A {
-//     Callable c;
-//     A(const Callable &c, int) : c(c) {}
-//   };
-//
-//   int b; // say that this isn't zero initialized
-//   auto alwaysTrue = [&b](int a) { return true; };
-//
-// A call with these parameters: A<decltype(alwaysTrue)>::A(alwaysTrue, int())
-// will emit a note with the message "uninitialized field: 'this->c.'". If
-// possible, the lambda parameter name should be retrieved or be replaced with a
-// "<lambda parameter>" or something similar.
 void FieldChainInfo::print(llvm::raw_ostream &Out) const {
   if (Chain.isEmpty())
     return;
@@ -604,7 +592,7 @@ void FieldChainInfo::print(llvm::raw_ostream &Out) const {
   const llvm::ImmutableListImpl<const FieldRegion *> *L =
       Chain.getInternalPointer();
   printTail(Out, L->getTail());
-  Out << L->getHead()->getDecl()->getNameAsString();
+  Out << getVariableName(L->getHead()->getDecl());
 }
 
 void FieldChainInfo::printTail(
@@ -615,7 +603,7 @@ void FieldChainInfo::printTail(
 
   printTail(Out, L->getTail());
   const FieldDecl *Field = L->getHead()->getDecl();
-  Out << Field->getNameAsString();
+  Out << getVariableName(Field);
   Out << (Field->getType()->isPointerType() ? "->" : ".");
 }
 
@@ -674,6 +662,21 @@ static void printNoteMessage(llvm::raw_ostream &Out,
     Out << "uninitialized field 'this->";
   Chain.print(Out);
   Out << "'";
+}
+
+static StringRef getVariableName(const FieldDecl *Field) {
+  // If Field is a captured lambda variable, Field->getName() will return with
+  // an empty string. We can however acquire it's name from the lambda's
+  // captures.
+  const auto *CXXParent = dyn_cast<CXXRecordDecl>(Field->getParent());
+
+  if (CXXParent && CXXParent->isLambda()) {
+    assert(CXXParent->captures_begin());
+    auto It = CXXParent->captures_begin() + Field->getFieldIndex();
+    return It->getCapturedVar()->getName();
+  }
+
+  return Field->getName();
 }
 
 void ento::registerUninitializedObjectChecker(CheckerManager &Mgr) {
