@@ -23,6 +23,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
+#include <map>
 
 #include <unistd.h>
 
@@ -309,9 +310,8 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
       exit(1);
     }
   } else if (*FileName != BinaryName) {
-    errs() << "PERF2BOLT-WARNING: build-id matched a different file name. "
-              "Using \"" << *FileName << "\" for profile parsing.\n";
-    BinaryName = *FileName;
+    errs() << "PERF2BOLT-WARNING: build-id matched a different file name\n";
+    BuildIDBinaryName = *FileName;
   } else {
     outs() << "PERF2BOLT: matched build-id and file name\n";
   }
@@ -991,16 +991,8 @@ std::error_code DataAggregator::parseMemEvents() {
   return std::error_code();
 }
 
-ErrorOr<int64_t> DataAggregator::parseTaskPID() {
+ErrorOr<std::pair<StringRef, int64_t>> DataAggregator::parseTaskPID() {
   while (checkAndConsumeFS()) {}
-
-  auto CommNameStr = parseString(FieldSeparator, true);
-  if (std::error_code EC = CommNameStr.getError())
-    return EC;
-  if (CommNameStr.get() != BinaryName.substr(0, 15)) {
-    consumeRestOfLine();
-    return -1;
-  }
 
   auto LineEnd = ParsingBuf.find_first_of("\n");
   if (LineEnd == StringRef::npos) {
@@ -1008,22 +1000,28 @@ ErrorOr<int64_t> DataAggregator::parseTaskPID() {
     Diag << "Found: " << ParsingBuf << "\n";
     return make_error_code(llvm::errc::io_error);
   }
-
   StringRef Line = ParsingBuf.substr(0, LineEnd);
 
-  if (Line.find("PERF_RECORD_COMM") != StringRef::npos) {
-    int64_t PID;
-    StringRef PIDStr = Line.rsplit(':').second.split('/').first;
-    if (PIDStr.getAsInteger(10, PID)) {
-      reportError("expected PID");
-      Diag << "Found: " << PIDStr << "\n";
-      return make_error_code(llvm::errc::io_error);
-    }
-    return PID;
+  if (Line.find("PERF_RECORD_COMM") == StringRef::npos) {
+    consumeRestOfLine();
+    return std::make_pair(StringRef(), -1);
+  }
+
+  auto FileName = Line.split(FieldSeparator).first;
+  if (FileName == "PERF_RECORD_COMM")
+    FileName = Line.rsplit(':').first.rsplit(FieldSeparator).second;
+
+  int64_t PID;
+  StringRef PIDStr = Line.rsplit(':').second.split('/').first;
+  if (PIDStr.getAsInteger(10, PID)) {
+    reportError("expected PID");
+    Diag << "Found: " << PIDStr << "\n";
+    return make_error_code(llvm::errc::io_error);
   }
 
   consumeRestOfLine();
-  return -1;
+
+  return std::make_pair(FileName, PID);
 }
 
 std::error_code DataAggregator::parseTasks() {
@@ -1031,30 +1029,59 @@ std::error_code DataAggregator::parseTasks() {
   NamedRegionTimer T("parseTasks", "Tasks parsing", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
 
+  std::multimap<StringRef, int64_t> BinaryPIDs;
   while (hasData()) {
-    auto PIDRes = parseTaskPID();
-    if (std::error_code EC = PIDRes.getError())
+    auto NamePIDRes = parseTaskPID();
+    if (std::error_code EC = NamePIDRes.getError())
       return EC;
 
-    auto PID = PIDRes.get();
-    if (PID == -1) {
+    auto NamePIDPair = NamePIDRes.get();
+    if (NamePIDPair.second == -1)
       continue;
-    }
 
-    PIDs.insert(PID);
+    BinaryPIDs.insert(NamePIDPair);
   }
+
+  DEBUG(
+    dbgs() << "FileName -> PID mapping:\n";
+    for (const auto &Pair : BinaryPIDs) {
+      dbgs() << "  " << Pair.first << " : " << Pair.second << '\n';
+    }
+  );
+
+  auto NameToUse = BinaryName.substr(0, 15);
+  if (BinaryPIDs.count(NameToUse) == 0 && !BuildIDBinaryName.empty()) {
+    errs() << "PERF2BOLT-WARNING: using \"" << BuildIDBinaryName
+           << "\" for profile matching\n";
+    NameToUse = BuildIDBinaryName.substr(0, 15);
+  }
+
+  auto Range = BinaryPIDs.equal_range(NameToUse);
+  for (auto I = Range.first; I != Range.second; ++I) {
+    PIDs.insert(I->second);
+  }
+
   if (!PIDs.empty()) {
     outs() << "PERF2BOLT: Input binary is associated with " << PIDs.size()
            << " PID(s)\n";
   } else {
     if (errs().has_colors())
-      errs().changeColor(raw_ostream::YELLOW);
-    errs() << "PERF2BOLT-WARNING: Could not bind input binary to a PID - will "
-              "parse all samples in perf data. This could result in corrupted "
-              "samples for the input binary if system-wide profile collection "
-              "was used.\n";
+      errs().changeColor(raw_ostream::RED);
+    errs() << "PERF2BOLT-ERROR: could not find a profile matching binary \""
+           << BinaryName << "\".";
+    if (!BinaryPIDs.empty()) {
+      errs() << " Profile for the following binary name(s) is available:\n";
+      for (auto I = BinaryPIDs.begin(), IE = BinaryPIDs.end(); I != IE;
+           I = BinaryPIDs.upper_bound(I->first)) {
+        errs() << "  " << I->first << '\n';
+      }
+      errs() << "Please rename the input binary.\n";
+    } else {
+      errs() << " Failed to extract any binary name from a profile.\n";
+    }
     if (errs().has_colors())
       errs().resetColor();
+    exit(1);
   }
 
   return std::error_code();
