@@ -2872,6 +2872,8 @@ Instruction *InstCombiner::foldICmpInstWithConstantNotInt(ICmpInst &I) {
 /// Folds:
 ///   x & (-1 >> y) SrcPred x    to    x DstPred (-1 >> y)
 /// The Mask can be a constant, too.
+/// For some predicates, the operands are commutative.
+/// For others, x can only be on a specific side.
 static Value *foldICmpWithLowBitMaskedVal(ICmpInst &I,
                                           InstCombiner::BuilderTy &Builder) {
   ICmpInst::Predicate SrcPred;
@@ -2936,9 +2938,8 @@ static Value *foldICmpWithLowBitMaskedVal(ICmpInst &I,
       return nullptr;         // Ignore the other case.
     DstPred = ICmpInst::Predicate::ICMP_SLE;
     break;
-  // TODO: more folds are possible, https://bugs.llvm.org/show_bug.cgi?id=38123
   default:
-    return nullptr;
+    llvm_unreachable("All possible folds are handled.");
   }
 
   return Builder.CreateICmp(DstPred, X, M);
