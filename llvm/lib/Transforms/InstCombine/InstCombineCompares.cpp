@@ -2924,6 +2924,12 @@ static Value *foldICmpWithLowBitMaskedVal(ICmpInst &I,
       return nullptr;         // Ignore the other case.
     DstPred = ICmpInst::Predicate::ICMP_SLE;
     break;
+  case ICmpInst::Predicate::ICMP_SLT:
+    //  x & (-1 >> y) s< x    ->    x s> (-1 >> y)
+    if (X != I.getOperand(1)) // X must be on RHS of comparison!
+      return nullptr;         // Ignore the other case.
+    DstPred = ICmpInst::Predicate::ICMP_SGT;
+    break;
   case ICmpInst::Predicate::ICMP_SLE:
     //  x s<= x & (-1 >> y)    ->    x s<= (-1 >> y)
     if (X != I.getOperand(0)) // X must be on LHS of comparison!
