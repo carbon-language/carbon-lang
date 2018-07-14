@@ -1533,6 +1533,14 @@ void X86SpeculativeLoadHardeningPass::hardenPostLoad(
   unsigned OrOpCodes[] = {X86::OR8rr, X86::OR16rr, X86::OR32rr, X86::OR64rr};
   unsigned OrOpCode = OrOpCodes[Log2_32(DefRegBytes)];
 
+#ifndef NDEBUG
+  const TargetRegisterClass *OrRegClasses[] = {
+      &X86::GR8RegClass, &X86::GR16RegClass, &X86::GR32RegClass,
+      &X86::GR64RegClass};
+  assert(DefRC->hasSuperClassEq(OrRegClasses[Log2_32(DefRegBytes)]) &&
+         "Cannot define this register with OR instruction!");
+#endif
+
   unsigned SubRegImms[] = {X86::sub_8bit, X86::sub_16bit, X86::sub_32bit};
 
   auto GetStateRegInRC = [&](const TargetRegisterClass &RC) {
