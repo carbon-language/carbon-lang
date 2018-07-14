@@ -9,7 +9,7 @@
 ; with threshold decayed by default 0.7 factor. Test ensures that when we
 ; encounter it again from hot path, we re-enqueue with higher non-decayed
 ; threshold which will allow it to be imported.
-; RUN: opt -function-import -summary-file %t3.thinlto.bc %t.bc -import-instr-limit=10 -import-hot-multiplier=1.0 -import-cold-multiplier=1.0 -S -debug-only=function-import | FileCheck %s --check-prefix=CHECK
+; RUN: opt -function-import -summary-file %t3.thinlto.bc %t.bc -import-instr-limit=10 -import-hot-multiplier=1.0 -import-cold-multiplier=1.0 -S | FileCheck %s --check-prefix=CHECK
 ; CHECK-DAG: define available_externally void @hot()
 ; CHECK-DAG: define available_externally void @calledFromHot()
 
