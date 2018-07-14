@@ -2912,6 +2912,12 @@ static Value *foldICmpWithLowBitMaskedVal(ICmpInst &I,
     assert(X == I.getOperand(0) && "instsimplify took care of commut. variant");
     DstPred = ICmpInst::Predicate::ICMP_ULE;
     break;
+  case ICmpInst::Predicate::ICMP_SGT:
+    //  x s> x & (-1 >> y)    ->    x s> (-1 >> y)
+    if (X != I.getOperand(0)) // X must be on LHS of comparison!
+      return nullptr;         // Ignore the other case.
+    DstPred = ICmpInst::Predicate::ICMP_SGT;
+    break;
   // TODO: more folds are possible, https://bugs.llvm.org/show_bug.cgi?id=38123
   default:
     return nullptr;
