@@ -15,9 +15,8 @@
 
 define i1 @p0(i8 %x) {
 ; CHECK-LABEL: @p0(
-; CHECK-NEXT:    [[TMP0:%.*]] = and i8 [[X:%.*]], 3
-; CHECK-NEXT:    [[RET:%.*]] = icmp uge i8 [[TMP0]], [[X]]
-; CHECK-NEXT:    ret i1 [[RET]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i8 [[X:%.*]], 4
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %tmp0 = and i8 %x, 3
   %ret = icmp uge i8 %tmp0, %x
@@ -27,9 +26,8 @@ define i1 @p0(i8 %x) {
 define i1 @pv(i8 %x, i8 %y) {
 ; CHECK-LABEL: @pv(
 ; CHECK-NEXT:    [[TMP0:%.*]] = lshr i8 -1, [[Y:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = and i8 [[TMP0]], [[X:%.*]]
-; CHECK-NEXT:    [[RET:%.*]] = icmp uge i8 [[TMP1]], [[X]]
-; CHECK-NEXT:    ret i1 [[RET]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp uge i8 [[TMP0]], [[X:%.*]]
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %tmp0 = lshr i8 -1, %y
   %tmp1 = and i8 %tmp0, %x
@@ -43,9 +41,8 @@ define i1 @pv(i8 %x, i8 %y) {
 
 define <2 x i1> @p1_vec_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @p1_vec_splat(
-; CHECK-NEXT:    [[TMP0:%.*]] = and <2 x i8> [[X:%.*]], <i8 3, i8 3>
-; CHECK-NEXT:    [[RET:%.*]] = icmp uge <2 x i8> [[TMP0]], [[X]]
-; CHECK-NEXT:    ret <2 x i1> [[RET]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult <2 x i8> [[X:%.*]], <i8 4, i8 4>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %tmp0 = and <2 x i8> %x, <i8 3, i8 3>
   %ret = icmp uge <2 x i8> %tmp0, %x
@@ -54,9 +51,8 @@ define <2 x i1> @p1_vec_splat(<2 x i8> %x) {
 
 define <2 x i1> @p2_vec_nonsplat(<2 x i8> %x) {
 ; CHECK-LABEL: @p2_vec_nonsplat(
-; CHECK-NEXT:    [[TMP0:%.*]] = and <2 x i8> [[X:%.*]], <i8 3, i8 15>
-; CHECK-NEXT:    [[RET:%.*]] = icmp uge <2 x i8> [[TMP0]], [[X]]
-; CHECK-NEXT:    ret <2 x i1> [[RET]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult <2 x i8> [[X:%.*]], <i8 4, i8 16>
+; CHECK-NEXT:    ret <2 x i1> [[TMP1]]
 ;
   %tmp0 = and <2 x i8> %x, <i8 3, i8 15> ; doesn't have to be splat.
   %ret = icmp uge <2 x i8> %tmp0, %x
@@ -65,9 +61,8 @@ define <2 x i1> @p2_vec_nonsplat(<2 x i8> %x) {
 
 define <3 x i1> @p3_vec_splat_undef(<3 x i8> %x) {
 ; CHECK-LABEL: @p3_vec_splat_undef(
-; CHECK-NEXT:    [[TMP0:%.*]] = and <3 x i8> [[X:%.*]], <i8 3, i8 undef, i8 3>
-; CHECK-NEXT:    [[RET:%.*]] = icmp uge <3 x i8> [[TMP0]], [[X]]
-; CHECK-NEXT:    ret <3 x i1> [[RET]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult <3 x i8> [[X:%.*]], <i8 4, i8 undef, i8 4>
+; CHECK-NEXT:    ret <3 x i1> [[TMP1]]
 ;
   %tmp0 = and <3 x i8> %x, <i8 3, i8 undef, i8 3>
   %ret = icmp uge <3 x i8> %tmp0, %x
@@ -100,9 +95,8 @@ define i1 @cv0(i8 %y) {
 ; CHECK-LABEL: @cv0(
 ; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
 ; CHECK-NEXT:    [[TMP0:%.*]] = lshr i8 -1, [[Y:%.*]]
-; CHECK-NEXT:    [[TMP1:%.*]] = and i8 [[X]], [[TMP0]]
-; CHECK-NEXT:    [[RET:%.*]] = icmp uge i8 [[TMP1]], [[X]]
-; CHECK-NEXT:    ret i1 [[RET]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ule i8 [[X]], [[TMP0]]
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %x = call i8 @gen8()
   %tmp0 = lshr i8 -1, %y
@@ -145,8 +139,8 @@ define i1 @oneuse0(i8 %x) {
 ; CHECK-LABEL: @oneuse0(
 ; CHECK-NEXT:    [[TMP0:%.*]] = and i8 [[X:%.*]], 3
 ; CHECK-NEXT:    call void @use8(i8 [[TMP0]])
-; CHECK-NEXT:    [[RET:%.*]] = icmp uge i8 [[TMP0]], [[X]]
-; CHECK-NEXT:    ret i1 [[RET]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i8 [[X]], 4
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %tmp0 = and i8 %x, 3
   call void @use8(i8 %tmp0)
