@@ -262,7 +262,7 @@ static void computeImportForReferencedGlobals(
           !RefSummary->modulePath().empty() &&
           !GlobalValue::isInterposableLinkage(RefSummary->linkage()) &&
           RefSummary->refs().empty()) {
-        ImportList[RefSummary->modulePath()].insert(VI.getGUID());
+        ImportList[RefSummary->modulePath()][VI.getGUID()] = 1;
         if (ExportLists)
           (*ExportLists)[RefSummary->modulePath()].insert(VI.getGUID());
         break;
@@ -278,8 +278,7 @@ static void computeImportForFunction(
     const unsigned Threshold, const GVSummaryMapTy &DefinedGVSummaries,
     SmallVectorImpl<EdgeInfo> &Worklist,
     FunctionImporter::ImportMapTy &ImportList,
-    StringMap<FunctionImporter::ExportSetTy> *ExportLists,
-    FunctionImporter::ImportThresholdsTy &ImportThresholds) {
+    StringMap<FunctionImporter::ExportSetTy> *ExportLists = nullptr) {
   computeImportForReferencedGlobals(Summary, DefinedGVSummaries, ImportList,
                                     ExportLists);
   static int ImportCount = 0;
@@ -316,85 +315,19 @@ static void computeImportForFunction(
     const auto NewThreshold =
         Threshold * GetBonusMultiplier(Edge.second.getHotness());
 
-    auto IT = ImportThresholds.insert(
-        std::make_pair(VI.getGUID(), std::make_pair(NewThreshold, nullptr)));
-    bool PreviouslyVisited = !IT.second;
-    auto &ProcessedThreshold = IT.first->second.first;
-    auto &CalleeSummary = IT.first->second.second;
-
-    const FunctionSummary *ResolvedCalleeSummary = nullptr;
-    if (CalleeSummary) {
-      assert(PreviouslyVisited);
-      // Since the traversal of the call graph is DFS, we can revisit a function
-      // a second time with a higher threshold. In this case, it is added back
-      // to the worklist with the new threshold (so that its own callee chains
-      // can be considered with the higher threshold).
-      if (NewThreshold <= ProcessedThreshold) {
-        LLVM_DEBUG(
-            dbgs() << "ignored! Target was already imported with Threshold "
-                   << ProcessedThreshold << "\n");
-        continue;
-      }
-      // Update with new larger threshold.
-      ProcessedThreshold = NewThreshold;
-      ResolvedCalleeSummary = cast<FunctionSummary>(CalleeSummary);
-    } else {
-      // If we already rejected importing a callee at the same or higher
-      // threshold, don't waste time calling selectCallee.
-      if (PreviouslyVisited && NewThreshold <= ProcessedThreshold) {
-        LLVM_DEBUG(
-            dbgs() << "ignored! Target was already rejected with Threshold "
-            << ProcessedThreshold << "\n");
-        continue;
-      }
-
-      CalleeSummary = selectCallee(Index, VI.getSummaryList(), NewThreshold,
-                                   Summary.modulePath());
-      if (!CalleeSummary) {
-        // Update with new larger threshold if this was a retry (otherwise
-        // we would have already inserted with NewThreshold above).
-        if (PreviouslyVisited)
-          ProcessedThreshold = NewThreshold;
-        LLVM_DEBUG(
-            dbgs() << "ignored! No qualifying callee with summary found.\n");
-        continue;
-      }
-
-      // "Resolve" the summary
-      CalleeSummary = CalleeSummary->getBaseObject();
-      ResolvedCalleeSummary = cast<FunctionSummary>(CalleeSummary);
-
-      assert(ResolvedCalleeSummary->instCount() <= NewThreshold &&
-             "selectCallee() didn't honor the threshold");
-
-      auto ExportModulePath = ResolvedCalleeSummary->modulePath();
-      auto ILI = ImportList[ExportModulePath].insert(VI.getGUID());
-      // We previously decided to import this GUID definition if it was already
-      // inserted in the set of imports from the exporting module.
-      bool PreviouslyImported = !ILI.second;
-
-      // Make exports in the source module.
-      if (ExportLists) {
-        auto &ExportList = (*ExportLists)[ExportModulePath];
-        ExportList.insert(VI.getGUID());
-        if (!PreviouslyImported) {
-          // This is the first time this function was exported from its source
-          // module, so mark all functions and globals it references as exported
-          // to the outside if they are defined in the same source module.
-          // For efficiency, we unconditionally add all the referenced GUIDs
-          // to the ExportList for this module, and will prune out any not
-          // defined in the module later in a single pass.
-          for (auto &Edge : ResolvedCalleeSummary->calls()) {
-            auto CalleeGUID = Edge.first.getGUID();
-            ExportList.insert(CalleeGUID);
-          }
-          for (auto &Ref : ResolvedCalleeSummary->refs()) {
-            auto GUID = Ref.getGUID();
-            ExportList.insert(GUID);
-          }
-        }
-      }
+    auto *CalleeSummary = selectCallee(Index, VI.getSummaryList(), NewThreshold,
+                                       Summary.modulePath());
+    if (!CalleeSummary) {
+      LLVM_DEBUG(
+          dbgs() << "ignored! No qualifying callee with summary found.\n");
+      continue;
     }
+
+    // "Resolve" the summary
+    const auto *ResolvedCalleeSummary = cast<FunctionSummary>(CalleeSummary->getBaseObject());
+
+    assert(ResolvedCalleeSummary->instCount() <= NewThreshold &&
+           "selectCallee() didn't honor the threshold");
 
     auto GetAdjustedThreshold = [](unsigned Threshold, bool IsHotCallsite) {
       // Adjust the threshold for next level of imported functions.
@@ -409,7 +342,43 @@ static void computeImportForFunction(
         Edge.second.getHotness() == CalleeInfo::HotnessType::Hot;
     const auto AdjThreshold = GetAdjustedThreshold(Threshold, IsHotCallsite);
 
+    auto ExportModulePath = ResolvedCalleeSummary->modulePath();
+    auto &ProcessedThreshold = ImportList[ExportModulePath][VI.getGUID()];
+    /// Since the traversal of the call graph is DFS, we can revisit a function
+    /// a second time with a higher threshold. In this case, it is added back to
+    /// the worklist with the new threshold.
+    if (ProcessedThreshold && ProcessedThreshold >= AdjThreshold) {
+      LLVM_DEBUG(dbgs() << "ignored! Target was already seen with Threshold "
+                        << ProcessedThreshold << "\n");
+      continue;
+    }
+    bool PreviouslyImported = ProcessedThreshold != 0;
+    // Mark this function as imported in this module, with the current Threshold
+    ProcessedThreshold = AdjThreshold;
+
     ImportCount++;
+
+    // Make exports in the source module.
+    if (ExportLists) {
+      auto &ExportList = (*ExportLists)[ExportModulePath];
+      ExportList.insert(VI.getGUID());
+      if (!PreviouslyImported) {
+        // This is the first time this function was exported from its source
+        // module, so mark all functions and globals it references as exported
+        // to the outside if they are defined in the same source module.
+        // For efficiency, we unconditionally add all the referenced GUIDs
+        // to the ExportList for this module, and will prune out any not
+        // defined in the module later in a single pass.
+        for (auto &Edge : ResolvedCalleeSummary->calls()) {
+          auto CalleeGUID = Edge.first.getGUID();
+          ExportList.insert(CalleeGUID);
+        }
+        for (auto &Ref : ResolvedCalleeSummary->refs()) {
+          auto GUID = Ref.getGUID();
+          ExportList.insert(GUID);
+        }
+      }
+    }
 
     // Insert the newly imported function to the worklist.
     Worklist.emplace_back(ResolvedCalleeSummary, AdjThreshold, VI.getGUID());
@@ -426,7 +395,6 @@ static void ComputeImportForModule(
   // Worklist contains the list of function imported in this module, for which
   // we will analyse the callees and may import further down the callgraph.
   SmallVector<EdgeInfo, 128> Worklist;
-  FunctionImporter::ImportThresholdsTy ImportThresholds;
 
   // Populate the worklist with the import for the functions in the current
   // module
@@ -448,7 +416,7 @@ static void ComputeImportForModule(
     LLVM_DEBUG(dbgs() << "Initialize import for " << VI << "\n");
     computeImportForFunction(*FuncSummary, Index, ImportInstrLimit,
                              DefinedGVSummaries, Worklist, ImportList,
-                             ExportLists, ImportThresholds);
+                             ExportLists);
   }
 
   // Process the newly imported functions and add callees to the worklist.
@@ -456,10 +424,17 @@ static void ComputeImportForModule(
     auto FuncInfo = Worklist.pop_back_val();
     auto *Summary = std::get<0>(FuncInfo);
     auto Threshold = std::get<1>(FuncInfo);
+    auto GUID = std::get<2>(FuncInfo);
+
+    // Check if we later added this summary with a higher threshold.
+    // If so, skip this entry.
+    auto ExportModulePath = Summary->modulePath();
+    auto &LatestProcessedThreshold = ImportList[ExportModulePath][GUID];
+    if (LatestProcessedThreshold > Threshold)
+      continue;
 
     computeImportForFunction(*Summary, Index, Threshold, DefinedGVSummaries,
-                             Worklist, ImportList, ExportLists,
-                             ImportThresholds);
+                             Worklist, ImportList, ExportLists);
   }
 }
 
@@ -475,6 +450,11 @@ static bool isGlobalVarSummary(const ModuleSummaryIndex &Index,
 }
 
 static GlobalValue::GUID getGUID(GlobalValue::GUID G) { return G; }
+
+static GlobalValue::GUID
+getGUID(const std::pair<const GlobalValue::GUID, unsigned> &P) {
+  return P.first;
+}
 
 template <class T>
 static unsigned numGlobalVarSummaries(const ModuleSummaryIndex &Index,
@@ -594,8 +574,9 @@ void llvm::ComputeCrossModuleImportForModuleFromIndex(
     // e.g. record required linkage changes.
     if (Summary->modulePath() == ModulePath)
       continue;
-    // Add an entry to provoke importing by thinBackend.
-    ImportList[Summary->modulePath()].insert(GUID);
+    // Doesn't matter what value we plug in to the map, just needs an entry
+    // to provoke importing by thinBackend.
+    ImportList[Summary->modulePath()][GUID] = 1;
   }
 #ifndef NDEBUG
   dumpImportListForModule(Index, ModulePath, ImportList);
@@ -717,10 +698,10 @@ void llvm::gatherImportedSummariesForModule(
     const auto &DefinedGVSummaries =
         ModuleToDefinedGVSummaries.lookup(ILI.first());
     for (auto &GI : ILI.second) {
-      const auto &DS = DefinedGVSummaries.find(GI);
+      const auto &DS = DefinedGVSummaries.find(GI.first);
       assert(DS != DefinedGVSummaries.end() &&
              "Expected a defined summary for imported global value");
-      SummariesForIndex[GI] = DS->second;
+      SummariesForIndex[GI.first] = DS->second;
     }
   }
 }

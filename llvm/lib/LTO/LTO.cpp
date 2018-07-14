@@ -156,7 +156,7 @@ static void computeCacheKey(
 
     AddUint64(Entry.second.size());
     for (auto &Fn : Entry.second)
-      AddUint64(Fn);
+      AddUint64(Fn.first);
   }
 
   // Include the hash for the resolved ODR.
@@ -221,7 +221,7 @@ static void computeCacheKey(
   // so we need to collect their used resolutions as well.
   for (auto &ImpM : ImportList)
     for (auto &ImpF : ImpM.second)
-      AddUsedThings(Index.findSummaryInModule(ImpF, ImpM.first()));
+      AddUsedThings(Index.findSummaryInModule(ImpF.first, ImpM.first()));
 
   auto AddTypeIdSummary = [&](StringRef TId, const TypeIdSummary &S) {
     AddString(TId);
