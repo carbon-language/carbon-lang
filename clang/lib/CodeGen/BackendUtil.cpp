@@ -1127,8 +1127,9 @@ static void runThinLTOBackend(ModuleSummaryIndex *CombinedIndex, Module *M,
     // e.g. record required linkage changes.
     if (Summary->modulePath() == M->getModuleIdentifier())
       continue;
-    // Add an entry to provoke importing by thinBackend.
-    ImportList[Summary->modulePath()].insert(GUID);
+    // Doesn't matter what value we plug in to the map, just needs an entry
+    // to provoke importing by thinBackend.
+    ImportList[Summary->modulePath()][GUID] = 1;
   }
 
   std::vector<std::unique_ptr<llvm::MemoryBuffer>> OwnedImports;
