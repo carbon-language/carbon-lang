@@ -3561,10 +3561,7 @@ void CodeGenDAGPatterns::parseInstructionPattern(
     InstResults.erase(OpName);
   }
 
-  // Loop over the inputs next.  Make a copy of InstInputs so we can destroy
-  // the copy while we're checking the inputs.
-  std::map<std::string, TreePatternNodePtr> InstInputsCheck(InstInputs);
-
+  // Loop over the inputs next.
   std::vector<TreePatternNodePtr> ResultNodeOperands;
   std::vector<Record*> Operands;
   for (unsigned i = NumResults, e = CGI.Operands.size(); i != e; ++i) {
@@ -3573,7 +3570,7 @@ void CodeGenDAGPatterns::parseInstructionPattern(
     if (OpName.empty())
       I.error("Operand #" + Twine(i) + " in operands list has no name!");
 
-    if (!InstInputsCheck.count(OpName)) {
+    if (!InstInputs.count(OpName)) {
       // If this is an operand with a DefaultOps set filled in, we can ignore
       // this.  When we codegen it, we will do so as always executed.
       if (Op.Rec->isSubClassOf("OperandWithDefaultOps")) {
@@ -3585,8 +3582,8 @@ void CodeGenDAGPatterns::parseInstructionPattern(
       I.error("Operand $" + OpName +
                " does not appear in the instruction pattern");
     }
-    TreePatternNodePtr InVal = InstInputsCheck[OpName];
-    InstInputsCheck.erase(OpName);   // It occurred, remove from map.
+    TreePatternNodePtr InVal = InstInputs[OpName];
+    InstInputs.erase(OpName);   // It occurred, remove from map.
 
     if (InVal->isLeaf() && isa<DefInit>(InVal->getLeafValue())) {
       Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
@@ -3614,8 +3611,8 @@ void CodeGenDAGPatterns::parseInstructionPattern(
     ResultNodeOperands.push_back(std::move(OpNode));
   }
 
-  if (!InstInputsCheck.empty())
-    I.error("Input operand $" + InstInputsCheck.begin()->first +
+  if (!InstInputs.empty())
+    I.error("Input operand $" + InstInputs.begin()->first +
             " occurs in pattern but not in operands list!");
 
   TreePatternNodePtr ResultPattern = std::make_shared<TreePatternNode>(
