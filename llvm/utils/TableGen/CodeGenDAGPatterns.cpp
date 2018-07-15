@@ -1803,7 +1803,7 @@ TreePatternNodePtr TreePatternNode::clone() const {
     CChildren.reserve(Children.size());
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
       CChildren.push_back(getChild(i)->clone());
-    New = std::make_shared<TreePatternNode>(getOperator(), CChildren,
+    New = std::make_shared<TreePatternNode>(getOperator(), std::move(CChildren),
                                             getNumTypes());
   }
   New->setName(getName());
@@ -1902,7 +1902,7 @@ void TreePatternNode::InlinePatternFragments(
       for (unsigned i = 0, e = ChildAlternatives.size(); i != e; ++i)
         NewChildren.push_back(ChildAlternatives[i][Idxs[i]]);
       TreePatternNodePtr R = std::make_shared<TreePatternNode>(
-          getOperator(), NewChildren, getNumTypes());
+          getOperator(), std::move(NewChildren), getNumTypes());
 
       // Copy over properties.
       R->setName(getName());
@@ -2743,7 +2743,8 @@ TreePatternNodePtr TreePattern::ParseTreePattern(Init *TheInit,
   }
 
   TreePatternNodePtr Result =
-      std::make_shared<TreePatternNode>(Operator, Children, NumResults);
+      std::make_shared<TreePatternNode>(Operator, std::move(Children),
+                                        NumResults);
   Result->setName(OpName);
 
   if (Dag->getName()) {
@@ -3604,7 +3605,7 @@ void CodeGenDAGPatterns::parseInstructionPattern(
       OpNode->setTransformFn(nullptr);
       std::vector<TreePatternNodePtr> Children;
       Children.push_back(OpNode);
-      OpNode = std::make_shared<TreePatternNode>(Xform, Children,
+      OpNode = std::make_shared<TreePatternNode>(Xform, std::move(Children),
                                                  OpNode->getNumTypes());
     }
 
@@ -3616,7 +3617,7 @@ void CodeGenDAGPatterns::parseInstructionPattern(
             " occurs in pattern but not in operands list!");
 
   TreePatternNodePtr ResultPattern = std::make_shared<TreePatternNode>(
-      I.getRecord(), ResultNodeOperands,
+      I.getRecord(), std::move(ResultNodeOperands),
       GetNumNodeResults(I.getRecord(), *this));
   // Copy fully inferred output node types to instruction result pattern.
   for (unsigned i = 0; i != NumResults; ++i) {
@@ -4019,7 +4020,7 @@ void CodeGenDAGPatterns::ParseOnePattern(Record *TheDef,
       OpNode->setTransformFn(nullptr);
       std::vector<TreePatternNodePtr> Children;
       Children.push_back(OpNode);
-      OpNode = std::make_shared<TreePatternNode>(Xform, Children,
+      OpNode = std::make_shared<TreePatternNode>(Xform, std::move(Children),
                                                  OpNode->getNumTypes());
     }
     ResultNodeOperands.push_back(OpNode);
@@ -4029,7 +4030,7 @@ void CodeGenDAGPatterns::ParseOnePattern(Record *TheDef,
       DstPattern->isLeaf()
           ? DstPattern
           : std::make_shared<TreePatternNode>(DstPattern->getOperator(),
-                                              ResultNodeOperands,
+                                              std::move(ResultNodeOperands),
                                               DstPattern->getNumTypes());
 
   for (unsigned i = 0, e = Result.getOnlyTree()->getNumTypes(); i != e; ++i)
@@ -4252,7 +4253,7 @@ static void CombineChildVariants(
     for (unsigned i = 0, e = ChildVariants.size(); i != e; ++i)
       NewChildren.push_back(ChildVariants[i][Idxs[i]]);
     TreePatternNodePtr R = std::make_shared<TreePatternNode>(
-        Orig->getOperator(), NewChildren, Orig->getNumTypes());
+        Orig->getOperator(), std::move(NewChildren), Orig->getNumTypes());
 
     // Copy over properties.
     R->setName(Orig->getName());
