@@ -283,6 +283,53 @@ static MachineBasicBlock &splitEdge(MachineBasicBlock &MBB,
   return NewMBB;
 }
 
+/// Removing duplicate PHI operands to leave the PHI in a canonical and
+/// predictable form.
+///
+/// FIXME: It's really frustrating that we have to do this, but SSA-form in MIR
+/// isn't what you might expect. We may have multiple entries in PHI nodes for
+/// a single predecessor. This makes CFG-updating extremely complex, so here we
+/// simplify all PHI nodes to a model even simpler than the IR's model: exactly
+/// one entry per predecessor, regardless of how many edges there are.
+static void canonicalizePHIOperands(MachineFunction &MF) {
+  SmallPtrSet<MachineBasicBlock *, 4> Preds;
+  SmallVector<int, 4> DupIndices;
+  for (auto &MBB : MF)
+    for (auto &MI : MBB) {
+      if (!MI.isPHI())
+        break;
+
+      // First we scan the operands of the PHI looking for duplicate entries
+      // a particular predecessor. We retain the operand index of each duplicate
+      // entry found.
+      for (int OpIdx = 1, NumOps = MI.getNumOperands(); OpIdx < NumOps;
+           OpIdx += 2)
+        if (!Preds.insert(MI.getOperand(OpIdx + 1).getMBB()).second)
+          DupIndices.push_back(OpIdx);
+
+      // Now walk the duplicate indices, removing both the block and value. Note
+      // that these are stored as a vector making this element-wise removal
+      // :w
+      // potentially quadratic.
+      //
+      // FIXME: It is really frustrating that we have to use a quadratic
+      // removal algorithm here. There should be a better way, but the use-def
+      // updates required make that impossible using the public API.
+      //
+      // Note that we have to process these backwards so that we don't
+      // invalidate other indices with each removal.
+      while (!DupIndices.empty()) {
+        int OpIdx = DupIndices.pop_back_val();
+        // Remove both the block and value operand, again in reverse order to
+        // preserve indices.
+        MI.RemoveOperand(OpIdx + 1);
+        MI.RemoveOperand(OpIdx);
+      }
+
+      Preds.clear();
+    }
+}
+
 bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
     MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "********** " << getPassName() << " : " << MF.getName()
@@ -401,49 +448,7 @@ bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
   // We're going to need to trace predicate state throughout the function's
   // CFG. Prepare for this by setting up our initial state of PHIs with unique
   // predecessor entries and all the initial predicate state.
-
-  // FIXME: It's really frustrating that we have to do this, but SSA-form in
-  // MIR isn't what you might expect. We may have multiple entries in PHI nodes
-  // for a single predecessor. This makes CFG-updating extremely complex, so
-  // here we simplify all PHI nodes to a model even simpler than the IR's
-  // model: exactly one entry per predecessor, regardless of how many edges
-  // there are.
-  SmallPtrSet<MachineBasicBlock *, 4> Preds;
-  SmallVector<int, 4> DupIndices;
-  for (auto &MBB : MF)
-    for (auto &MI : MBB) {
-      if (!MI.isPHI())
-        break;
-
-      // First we scan the operands of the PHI looking for duplicate entries
-      // a particular predecessor. We retain the operand index of each duplicate
-      // entry found.
-      for (int OpIdx = 1, NumOps = MI.getNumOperands(); OpIdx < NumOps;
-           OpIdx += 2)
-        if (!Preds.insert(MI.getOperand(OpIdx + 1).getMBB()).second)
-          DupIndices.push_back(OpIdx);
-
-      // Now walk the duplicate indices, removing both the block and value. Note
-      // that these are stored as a vector making this element-wise removal
-      // :w
-      // potentially quadratic.
-      //
-      // FIXME: It is really frustrating that we have to use a quadratic
-      // removal algorithm here. There should be a better way, but the use-def
-      // updates required make that impossible using the public API.
-      //
-      // Note that we have to process these backwards so that we don't
-      // invalidate other indices with each removal.
-      while (!DupIndices.empty()) {
-        int OpIdx = DupIndices.pop_back_val();
-        // Remove both the block and value operand, again in reverse order to
-        // preserve indices.
-        MI.RemoveOperand(OpIdx + 1);
-        MI.RemoveOperand(OpIdx);
-      }
-
-      Preds.clear();
-    }
+  canonicalizePHIOperands(MF);
 
   // Track the updated values in an SSA updater to rewrite into SSA form at the
   // end.
