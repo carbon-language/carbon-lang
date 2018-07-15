@@ -8115,7 +8115,7 @@ static SDValue foldExtendedSignBitTest(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
   EVT XVT = X.getValueType();
   // setge X, C is canonicalized to setgt, so we do not need to match that
-  // pattern. The setlt sibling is folded in SimplifySelectCC() becaus it does
+  // pattern. The setlt sibling is folded in SimplifySelectCC() because it does
   // not require the 'not' op.
   if (CC == ISD::SETGT && isAllOnesConstant(Ones) && VT == XVT) {
     // Invert and smear/shift the sign bit:
