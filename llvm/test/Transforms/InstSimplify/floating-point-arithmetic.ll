@@ -474,8 +474,7 @@ declare <2 x double> @llvm.maxnum.v2f64(<2 x double>, <2 x double>)
 
 define double @maxnum_nan_op0(double %x) {
 ; CHECK-LABEL: @maxnum_nan_op0(
-; CHECK-NEXT:    [[R:%.*]] = call double @llvm.maxnum.f64(double 0x7FF8000000000000, double [[X:%.*]])
-; CHECK-NEXT:    ret double [[R]]
+; CHECK-NEXT:    ret double [[X:%.*]]
 ;
   %r = call double @llvm.maxnum.f64(double 0x7ff8000000000000, double %x)
   ret double %r
@@ -483,8 +482,7 @@ define double @maxnum_nan_op0(double %x) {
 
 define double @maxnum_nan_op1(double %x) {
 ; CHECK-LABEL: @maxnum_nan_op1(
-; CHECK-NEXT:    [[R:%.*]] = call double @llvm.maxnum.f64(double [[X:%.*]], double 0x7FF800000000DEAD)
-; CHECK-NEXT:    ret double [[R]]
+; CHECK-NEXT:    ret double [[X:%.*]]
 ;
   %r = call double @llvm.maxnum.f64(double %x, double 0x7ff800000000dead)
   ret double %r
@@ -492,8 +490,7 @@ define double @maxnum_nan_op1(double %x) {
 
 define double @minnum_nan_op0(double %x) {
 ; CHECK-LABEL: @minnum_nan_op0(
-; CHECK-NEXT:    [[R:%.*]] = call double @llvm.minnum.f64(double 0x7FF8000DEAD00000, double [[X:%.*]])
-; CHECK-NEXT:    ret double [[R]]
+; CHECK-NEXT:    ret double [[X:%.*]]
 ;
   %r = call double @llvm.minnum.f64(double 0x7ff8000dead00000, double %x)
   ret double %r
@@ -501,8 +498,7 @@ define double @minnum_nan_op0(double %x) {
 
 define double @minnum_nan_op1(double %x) {
 ; CHECK-LABEL: @minnum_nan_op1(
-; CHECK-NEXT:    [[R:%.*]] = call double @llvm.minnum.f64(double [[X:%.*]], double 0x7FF800DEAD00DEAD)
-; CHECK-NEXT:    ret double [[R]]
+; CHECK-NEXT:    ret double [[X:%.*]]
 ;
   %r = call double @llvm.minnum.f64(double %x, double 0x7ff800dead00dead)
   ret double %r
@@ -510,8 +506,7 @@ define double @minnum_nan_op1(double %x) {
 
 define <2 x double> @maxnum_nan_op0_vec(<2 x double> %x) {
 ; CHECK-LABEL: @maxnum_nan_op0_vec(
-; CHECK-NEXT:    [[R:%.*]] = call <2 x double> @llvm.maxnum.v2f64(<2 x double> <double 0x7FF8000000000000, double undef>, <2 x double> [[X:%.*]])
-; CHECK-NEXT:    ret <2 x double> [[R]]
+; CHECK-NEXT:    ret <2 x double> [[X:%.*]]
 ;
   %r = call <2 x double> @llvm.maxnum.v2f64(<2 x double> <double 0x7ff8000000000000, double undef>, <2 x double> %x)
   ret <2 x double> %r
@@ -519,8 +514,7 @@ define <2 x double> @maxnum_nan_op0_vec(<2 x double> %x) {
 
 define <2 x double> @maxnum_nan_op1_vec(<2 x double> %x) {
 ; CHECK-LABEL: @maxnum_nan_op1_vec(
-; CHECK-NEXT:    [[R:%.*]] = call <2 x double> @llvm.maxnum.v2f64(<2 x double> [[X:%.*]], <2 x double> <double 0x7FF800000000DEAD, double 0x7FF8FFFFFFFFFFFF>)
-; CHECK-NEXT:    ret <2 x double> [[R]]
+; CHECK-NEXT:    ret <2 x double> [[X:%.*]]
 ;
   %r = call <2 x double> @llvm.maxnum.v2f64(<2 x double> %x, <2 x double> <double 0x7ff800000000dead, double 0x7ff8ffffffffffff>)
   ret <2 x double> %r
@@ -528,8 +522,7 @@ define <2 x double> @maxnum_nan_op1_vec(<2 x double> %x) {
 
 define <2 x double> @minnum_nan_op0_vec(<2 x double> %x) {
 ; CHECK-LABEL: @minnum_nan_op0_vec(
-; CHECK-NEXT:    [[R:%.*]] = call <2 x double> @llvm.minnum.v2f64(<2 x double> <double undef, double 0x7FF8000DEAD00000>, <2 x double> [[X:%.*]])
-; CHECK-NEXT:    ret <2 x double> [[R]]
+; CHECK-NEXT:    ret <2 x double> [[X:%.*]]
 ;
   %r = call <2 x double> @llvm.minnum.v2f64(<2 x double> <double undef, double 0x7ff8000dead00000>, <2 x double> %x)
   ret <2 x double> %r
@@ -537,8 +530,7 @@ define <2 x double> @minnum_nan_op0_vec(<2 x double> %x) {
 
 define <2 x double> @minnum_nan_op1_vec(<2 x double> %x) {
 ; CHECK-LABEL: @minnum_nan_op1_vec(
-; CHECK-NEXT:    [[R:%.*]] = call <2 x double> @llvm.minnum.v2f64(<2 x double> [[X:%.*]], <2 x double> <double 0x7FF800DEAD00DEAD, double 0x7FF800DEAD00DEAD>)
-; CHECK-NEXT:    ret <2 x double> [[R]]
+; CHECK-NEXT:    ret <2 x double> [[X:%.*]]
 ;
   %r = call <2 x double> @llvm.minnum.v2f64(<2 x double> %x, <2 x double> <double 0x7ff800dead00dead, double 0x7ff800dead00dead>)
   ret <2 x double> %r
