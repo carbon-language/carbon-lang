@@ -173,6 +173,7 @@ private:
   MachineInstr *
   sinkPostLoadHardenedInst(MachineInstr &MI,
                            SmallPtrSetImpl<MachineInstr *> &HardenedLoads);
+  bool canHardenPostLoad(MachineInstr &MI);
   void hardenPostLoad(MachineInstr &MI, MachineSSAUpdater &PredStateSSA);
   void checkReturnInstr(MachineInstr &MI, MachineSSAUpdater &PredStateSSA);
   void checkCallInstr(MachineInstr &MI, MachineSSAUpdater &PredStateSSA);
@@ -1115,12 +1116,12 @@ void X86SpeculativeLoadHardeningPass::checkAllLoads(
           (IndexReg && LoadDepRegs.test(IndexReg)))
         continue;
 
-      // If post-load hardening is enabled, this load is known to be
-      // data-invariant, and we aren't already going to harden one of the
+      // If post-load hardening is enabled, this load is compatible with
+      // post-load hardening, and we aren't already going to harden one of the
       // address registers, queue it up to be hardened post-load. Notably, even
       // once hardened this won't introduce a useful dependency that could prune
       // out subsequent loads.
-      if (EnablePostLoadHardening && isDataInvariantLoad(MI) &&
+      if (EnablePostLoadHardening && canHardenPostLoad(MI) &&
           !HardenedAddrRegs.count(BaseReg) &&
           !HardenedAddrRegs.count(IndexReg)) {
         HardenPostLoad.insert(&MI);
@@ -1602,6 +1603,25 @@ MachineInstr *X86SpeculativeLoadHardeningPass::sinkPostLoadHardenedInst(
   return MI;
 }
 
+bool X86SpeculativeLoadHardeningPass::canHardenPostLoad(MachineInstr &MI) {
+  if (!isDataInvariantLoad(MI))
+    return false;
+
+  auto &DefOp = MI.getOperand(0);
+  unsigned OldDefReg = DefOp.getReg();
+
+  auto *DefRC = MRI->getRegClass(OldDefReg);
+  int DefRegBytes = TRI->getRegSizeInBits(*DefRC) / 8;
+  if (DefRegBytes > 8)
+    // We don't support post-load hardening of vectors.
+    return false;
+
+  const TargetRegisterClass *GPRRegClasses[] = {
+      &X86::GR8RegClass, &X86::GR16RegClass, &X86::GR32RegClass,
+      &X86::GR64RegClass};
+  return DefRC->hasSuperClassEq(GPRRegClasses[Log2_32(DefRegBytes)]);
+}
+
 // We can harden non-leaking loads into register without touching the address
 // by just hiding all of the loaded bits. We use an `or` instruction to do
 // this because having the poison value be all ones allows us to use the same
@@ -1609,8 +1629,8 @@ MachineInstr *X86SpeculativeLoadHardeningPass::sinkPostLoadHardenedInst(
 // execution and coercing them to one is sufficient.
 void X86SpeculativeLoadHardeningPass::hardenPostLoad(
     MachineInstr &MI, MachineSSAUpdater &PredStateSSA) {
-  assert(isDataInvariantLoad(MI) &&
-         "Cannot get here with a non-invariant load!");
+  assert(canHardenPostLoad(MI) &&
+         "Invalid instruction for post-load hardening!");
 
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc Loc = MI.getDebugLoc();
@@ -1624,14 +1644,6 @@ void X86SpeculativeLoadHardeningPass::hardenPostLoad(
 
   unsigned OrOpCodes[] = {X86::OR8rr, X86::OR16rr, X86::OR32rr, X86::OR64rr};
   unsigned OrOpCode = OrOpCodes[Log2_32(DefRegBytes)];
-
-#ifndef NDEBUG
-  const TargetRegisterClass *OrRegClasses[] = {
-      &X86::GR8RegClass, &X86::GR16RegClass, &X86::GR32RegClass,
-      &X86::GR64RegClass};
-  assert(DefRC->hasSuperClassEq(OrRegClasses[Log2_32(DefRegBytes)]) &&
-         "Cannot define this register with OR instruction!");
-#endif
 
   unsigned SubRegImms[] = {X86::sub_8bit, X86::sub_16bit, X86::sub_32bit};
 
