@@ -55,10 +55,21 @@ set(SYMBOL_TESTS
   symbol01.f90
 )
 
+# These test files have expected .mod file contents in the source
+set(MODFILE_TESTS
+  modfile01.f90
+  modfile02.f90
+  modfile03.f90
+)
+
 foreach(test ${ERROR_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.sh ${test})
 endforeach()
 
 foreach(test ${SYMBOL_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_symbols.sh ${test})
+endforeach()
+
+foreach(test ${MODFILE_TESTS})
+  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_modfile.sh ${test})
 endforeach()
