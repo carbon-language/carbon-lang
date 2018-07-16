@@ -862,3 +862,71 @@ entry:
   call void @sink_v2i64(<2 x i64> %x6)
   ret void
 }
+
+define void @test_deferred_hardening(i32* %ptr1, i32* %ptr2, i32 %x) nounwind {
+; X64-LABEL: test_deferred_hardening:
+; X64:       # %bb.0: # %entry
+; X64-NEXT:    pushq %r14
+; X64-NEXT:    pushq %rbx
+; X64-NEXT:    pushq %rax
+; X64-NEXT:    movq %rsp, %rax
+; X64-NEXT:    movq %rsi, %r14
+; X64-NEXT:    movq %rdi, %rbx
+; X64-NEXT:    movq $-1, %rcx
+; X64-NEXT:    sarq $63, %rax
+; X64-NEXT:    movl (%rdi), %edi
+; X64-NEXT:    incl %edi
+; X64-NEXT:    imull %edx, %edi
+; X64-NEXT:    orl %eax, %edi
+; X64-NEXT:    shlq $47, %rax
+; X64-NEXT:    orq %rax, %rsp
+; X64-NEXT:    callq sink
+; X64-NEXT:    movq %rsp, %rax
+; X64-NEXT:    sarq $63, %rax
+; X64-NEXT:    movl (%rbx), %ecx
+; X64-NEXT:    movl (%r14), %edx
+; X64-NEXT:    leal 1(%rcx,%rdx), %edi
+; X64-NEXT:    orl %eax, %edi
+; X64-NEXT:    shlq $47, %rax
+; X64-NEXT:    orq %rax, %rsp
+; X64-NEXT:    callq sink
+; X64-NEXT:    movq %rsp, %rax
+; X64-NEXT:    sarq $63, %rax
+; X64-NEXT:    shlq $47, %rax
+; X64-NEXT:    orq %rax, %rsp
+; X64-NEXT:    addq $8, %rsp
+; X64-NEXT:    popq %rbx
+; X64-NEXT:    popq %r14
+; X64-NEXT:    retq
+;
+; X64-LFENCE-LABEL: test_deferred_hardening:
+; X64-LFENCE:       # %bb.0: # %entry
+; X64-LFENCE-NEXT:    pushq %r14
+; X64-LFENCE-NEXT:    pushq %rbx
+; X64-LFENCE-NEXT:    pushq %rax
+; X64-LFENCE-NEXT:    movq %rsi, %r14
+; X64-LFENCE-NEXT:    movq %rdi, %rbx
+; X64-LFENCE-NEXT:    movl (%rdi), %edi
+; X64-LFENCE-NEXT:    incl %edi
+; X64-LFENCE-NEXT:    imull %edx, %edi
+; X64-LFENCE-NEXT:    callq sink
+; X64-LFENCE-NEXT:    movl (%rbx), %eax
+; X64-LFENCE-NEXT:    movl (%r14), %ecx
+; X64-LFENCE-NEXT:    leal 1(%rax,%rcx), %edi
+; X64-LFENCE-NEXT:    callq sink
+; X64-LFENCE-NEXT:    addq $8, %rsp
+; X64-LFENCE-NEXT:    popq %rbx
+; X64-LFENCE-NEXT:    popq %r14
+; X64-LFENCE-NEXT:    retq
+entry:
+  %a1 = load i32, i32* %ptr1
+  %a2 = add i32 %a1, 1
+  %a3 = mul i32 %a2, %x
+  call void @sink(i32 %a3)
+  %b1 = load i32, i32* %ptr1
+  %b2 = add i32 %b1, 1
+  %b3 = load i32, i32* %ptr2
+  %b4 = add i32 %b2, %b3
+  call void @sink(i32 %b4)
+  ret void
+}
