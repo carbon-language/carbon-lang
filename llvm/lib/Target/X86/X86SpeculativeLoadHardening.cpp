@@ -1398,29 +1398,104 @@ void X86SpeculativeLoadHardeningPass::hardenLoadAddr(
   }
 
   for (MachineOperand *Op : HardenOpRegs) {
-    auto *OpRC = MRI->getRegClass(Op->getReg());
-
     unsigned OpReg = Op->getReg();
+    auto *OpRC = MRI->getRegClass(OpReg);
     unsigned TmpReg = MRI->createVirtualRegister(OpRC);
 
-    if (!EFLAGSLive) {
-      // Merge our potential poison state into the value with an or.
-      auto OrI = BuildMI(MBB, InsertPt, Loc, TII->get(X86::OR64rr), TmpReg)
-                     .addReg(StateReg)
+    // If this is a vector register, we'll need somewhat custom logic to handle
+    // hardening it.
+    if (!Subtarget->hasVLX() && (OpRC->hasSuperClassEq(&X86::VR128RegClass) ||
+                                 OpRC->hasSuperClassEq(&X86::VR256RegClass))) {
+      assert(Subtarget->hasAVX2() && "AVX2-specific register classes!");
+      bool Is128Bit = OpRC->hasSuperClassEq(&X86::VR128RegClass);
+
+      // Move our state into a vector register.
+      // FIXME: We could skip this at the cost of longer encodings with AVX-512
+      // but that doesn't seem likely worth it.
+      unsigned VStateReg = MRI->createVirtualRegister(&X86::VR128RegClass);
+      auto MovI =
+          BuildMI(MBB, InsertPt, Loc, TII->get(X86::VMOV64toPQIrr), VStateReg)
+              .addReg(StateReg);
+      (void)MovI;
+      ++NumInstsInserted;
+      LLVM_DEBUG(dbgs() << "  Inserting mov: "; MovI->dump(); dbgs() << "\n");
+
+      // Broadcast it across the vector register.
+      unsigned VBStateReg = MRI->createVirtualRegister(OpRC);
+      auto BroadcastI = BuildMI(MBB, InsertPt, Loc,
+                                TII->get(Is128Bit ? X86::VPBROADCASTQrr
+                                                  : X86::VPBROADCASTQYrr),
+                                VBStateReg)
+                            .addReg(VStateReg);
+      (void)BroadcastI;
+      ++NumInstsInserted;
+      LLVM_DEBUG(dbgs() << "  Inserting broadcast: "; BroadcastI->dump();
+                 dbgs() << "\n");
+
+      // Merge our potential poison state into the value with a vector or.
+      auto OrI =
+          BuildMI(MBB, InsertPt, Loc,
+                  TII->get(Is128Bit ? X86::VPORrr : X86::VPORYrr), TmpReg)
+              .addReg(VBStateReg)
+              .addReg(OpReg);
+      (void)OrI;
+      ++NumInstsInserted;
+      LLVM_DEBUG(dbgs() << "  Inserting or: "; OrI->dump(); dbgs() << "\n");
+    } else if (OpRC->hasSuperClassEq(&X86::VR128XRegClass) ||
+               OpRC->hasSuperClassEq(&X86::VR256XRegClass) ||
+               OpRC->hasSuperClassEq(&X86::VR512RegClass)) {
+      assert(Subtarget->hasAVX512() && "AVX512-specific register classes!");
+      bool Is128Bit = OpRC->hasSuperClassEq(&X86::VR128XRegClass);
+      bool Is256Bit = OpRC->hasSuperClassEq(&X86::VR256XRegClass);
+      if (Is128Bit || Is256Bit)
+        assert(Subtarget->hasVLX() && "AVX512VL-specific register classes!");
+
+      // Broadcast our state into a vector register.
+      unsigned VStateReg = MRI->createVirtualRegister(OpRC);
+      unsigned BroadcastOp =
+          Is128Bit ? X86::VPBROADCASTQrZ128r
+                   : Is256Bit ? X86::VPBROADCASTQrZ256r : X86::VPBROADCASTQrZr;
+      auto BroadcastI =
+          BuildMI(MBB, InsertPt, Loc, TII->get(BroadcastOp), VStateReg)
+              .addReg(StateReg);
+      (void)BroadcastI;
+      ++NumInstsInserted;
+      LLVM_DEBUG(dbgs() << "  Inserting broadcast: "; BroadcastI->dump();
+                 dbgs() << "\n");
+
+      // Merge our potential poison state into the value with a vector or.
+      unsigned OrOp = Is128Bit ? X86::VPORQZ128rr
+                               : Is256Bit ? X86::VPORQZ256rr : X86::VPORQZrr;
+      auto OrI = BuildMI(MBB, InsertPt, Loc, TII->get(OrOp), TmpReg)
+                     .addReg(VStateReg)
                      .addReg(OpReg);
-      OrI->addRegisterDead(X86::EFLAGS, TRI);
       ++NumInstsInserted;
       LLVM_DEBUG(dbgs() << "  Inserting or: "; OrI->dump(); dbgs() << "\n");
     } else {
-      // We need to avoid touching EFLAGS so shift out all but the least
-      // significant bit using the instruction that doesn't update flags.
-      auto ShiftI = BuildMI(MBB, InsertPt, Loc, TII->get(X86::SHRX64rr), TmpReg)
-                        .addReg(OpReg)
-                        .addReg(StateReg);
-      (void)ShiftI;
-      ++NumInstsInserted;
-      LLVM_DEBUG(dbgs() << "  Inserting shrx: "; ShiftI->dump();
-                 dbgs() << "\n");
+      // FIXME: Need to support GR32 here for 32-bit code.
+      assert(OpRC->hasSuperClassEq(&X86::GR64RegClass) &&
+             "Not a supported register class for address hardening!");
+
+      if (!EFLAGSLive) {
+        // Merge our potential poison state into the value with an or.
+        auto OrI = BuildMI(MBB, InsertPt, Loc, TII->get(X86::OR64rr), TmpReg)
+                       .addReg(StateReg)
+                       .addReg(OpReg);
+        OrI->addRegisterDead(X86::EFLAGS, TRI);
+        ++NumInstsInserted;
+        LLVM_DEBUG(dbgs() << "  Inserting or: "; OrI->dump(); dbgs() << "\n");
+      } else {
+        // We need to avoid touching EFLAGS so shift out all but the least
+        // significant bit using the instruction that doesn't update flags.
+        auto ShiftI =
+            BuildMI(MBB, InsertPt, Loc, TII->get(X86::SHRX64rr), TmpReg)
+                .addReg(OpReg)
+                .addReg(StateReg);
+        (void)ShiftI;
+        ++NumInstsInserted;
+        LLVM_DEBUG(dbgs() << "  Inserting shrx: "; ShiftI->dump();
+                   dbgs() << "\n");
+      }
     }
 
     // Record this register as checked and update the operand.
