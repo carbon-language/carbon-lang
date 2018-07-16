@@ -102,14 +102,14 @@ static void PrintHelp() {
     Printf("%d\t%s\n", D.Default, D.Description);
   }
   Printf("\nFlags starting with '--' will be ignored and "
-            "will be passed verbatim to subprocesses.\n");
+         "will be passed verbatim to subprocesses.\n");
 }
 
 static const char *FlagValue(const char *Param, const char *Name) {
   size_t Len = strlen(Name);
   if (Param[0] == '-' && strstr(Param + 1, Name) == Param + 1 &&
       Param[Len + 1] == '=')
-      return &Param[Len + 2];
+    return &Param[Len + 2];
   return nullptr;
 }
 
@@ -302,10 +302,10 @@ static std::string GetDedupTokenFromFile(const std::string &Path) {
 }
 
 int CleanseCrashInput(const Vector<std::string> &Args,
-                       const FuzzingOptions &Options) {
+                      const FuzzingOptions &Options) {
   if (Inputs->size() != 1 || !Flags.exact_artifact_path) {
     Printf("ERROR: -cleanse_crash should be given one input file and"
-          " -exact_artifact_path\n");
+           " -exact_artifact_path\n");
     exit(1);
   }
   std::string InputFilePath = Inputs->at(0);
@@ -520,7 +520,7 @@ int AnalyzeDictionary(Fuzzer *F, const Vector<Unit>& Dict,
   for (size_t i = 0; i < Dict.size(); ++i) {
     // Dictionary units with positive score are treated as useful ones.
     if (Scores[i] > 0)
-       continue;
+      continue;
 
     Printf("\"");
     PrintASCII(Dict[i].data(), Dict[i].size(), "\"");
@@ -617,6 +617,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   Options.PrintFinalStats = Flags.print_final_stats;
   Options.PrintCorpusStats = Flags.print_corpus_stats;
   Options.PrintCoverage = Flags.print_coverage;
+  Options.PrintUnstableStats = Flags.print_unstable_stats;
   Options.DumpCoverage = Flags.dump_coverage;
   if (Flags.exit_on_src_pos)
     Options.ExitOnSrcPos = Flags.exit_on_src_pos;

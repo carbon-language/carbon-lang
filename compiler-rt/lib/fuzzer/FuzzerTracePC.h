@@ -68,7 +68,7 @@ struct MemMemTable {
 };
 
 class TracePC {
- public:
+public:
   static const size_t kNumPCs = 1 << 21;
   // How many bits of PC are used from __sanitizer_cov_trace_pc.
   static const size_t kTracePcBits = 18;
@@ -103,6 +103,7 @@ class TracePC {
 
   void PrintCoverage();
   void DumpCoverage();
+  void PrintUnstableStats();
 
   template<class CallBack>
   void IterateCoveredFunctions(CallBack CB);
@@ -135,7 +136,17 @@ class TracePC {
   void SetFocusFunction(const std::string &FuncName);
   bool ObservedFocusFunction();
 
+  void InitializeUnstableCounters();
+  void UpdateUnstableCounters();
+
 private:
+  // Value used to represent unstable edge.
+  static constexpr int16_t kUnstableCounter = -1;
+
+  // Uses 16-bit signed type to be able to accommodate any possible value from
+  // uint8_t counter and -1 constant as well.
+  int16_t UnstableCounters[kNumPCs];
+
   bool UseCounters = false;
   uint32_t UseValueProfileMask = false;
   bool DoPrintNewPCs = false;
@@ -204,27 +215,27 @@ void ForEachNonZeroByte(const uint8_t *Begin, const uint8_t *End,
 // Given a non-zero Counter returns a number in the range [0,7].
 template<class T>
 unsigned CounterToFeature(T Counter) {
-    // Returns a feature number by placing Counters into buckets as illustrated
-    // below.
-    //
-    // Counter bucket: [1] [2] [3] [4-7] [8-15] [16-31] [32-127] [128+]
-    // Feature number:  0   1   2    3     4       5       6       7
-    //
-    // This is a heuristic taken from AFL (see
-    // http://lcamtuf.coredump.cx/afl/technical_details.txt).
-    //
-    // This implementation may change in the future so clients should
-    // not rely on it.
-    assert(Counter);
-    unsigned Bit = 0;
-    /**/ if (Counter >= 128) Bit = 7;
-    else if (Counter >= 32) Bit = 6;
-    else if (Counter >= 16) Bit = 5;
-    else if (Counter >= 8) Bit = 4;
-    else if (Counter >= 4) Bit = 3;
-    else if (Counter >= 3) Bit = 2;
-    else if (Counter >= 2) Bit = 1;
-    return Bit;
+  // Returns a feature number by placing Counters into buckets as illustrated
+  // below.
+  //
+  // Counter bucket: [1] [2] [3] [4-7] [8-15] [16-31] [32-127] [128+]
+  // Feature number:  0   1   2    3     4       5       6       7
+  //
+  // This is a heuristic taken from AFL (see
+  // http://lcamtuf.coredump.cx/afl/technical_details.txt).
+  //
+  // This implementation may change in the future so clients should
+  // not rely on it.
+  assert(Counter);
+  unsigned Bit = 0;
+   /**/ if (Counter >= 128) Bit = 7;
+   else if (Counter >= 32) Bit = 6;
+   else if (Counter >= 16) Bit = 5;
+   else if (Counter >= 8) Bit = 4;
+   else if (Counter >= 4) Bit = 3;
+   else if (Counter >= 3) Bit = 2;
+   else if (Counter >= 2) Bit = 1;
+  return Bit;
 }
 
 template <class Callback>  // void Callback(size_t Feature)
