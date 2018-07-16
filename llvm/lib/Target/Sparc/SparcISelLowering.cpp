@@ -1727,6 +1727,7 @@ SparcTargetLowering::SparcTargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::VAARG             , MVT::Other, Custom);
 
   setOperationAction(ISD::TRAP              , MVT::Other, Legal);
+  setOperationAction(ISD::DEBUGTRAP         , MVT::Other, Legal);
 
   // Use the default implementation.
   setOperationAction(ISD::VACOPY            , MVT::Other, Expand);
