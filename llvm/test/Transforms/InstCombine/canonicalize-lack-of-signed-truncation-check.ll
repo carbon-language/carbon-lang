@@ -15,9 +15,8 @@
 
 define i1 @p0(i8 %x) {
 ; CHECK-LABEL: @p0(
-; CHECK-NEXT:    [[TMP0:%.*]] = shl i8 [[X:%.*]], 4
-; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact i8 [[TMP0]], 4
-; CHECK-NEXT:    [[TMP2:%.*]] = icmp eq i8 [[TMP1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add i8 [[X:%.*]], 8
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult i8 [[TMP1]], 16
 ; CHECK-NEXT:    ret i1 [[TMP2]]
 ;
   %tmp0 = shl i8 %x, 4
@@ -32,9 +31,8 @@ define i1 @p0(i8 %x) {
 
 define <2 x i1> @p1_vec_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @p1_vec_splat(
-; CHECK-NEXT:    [[TMP0:%.*]] = shl <2 x i8> [[X:%.*]], <i8 4, i8 4>
-; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact <2 x i8> [[TMP0]], <i8 4, i8 4>
-; CHECK-NEXT:    [[TMP2:%.*]] = icmp eq <2 x i8> [[TMP1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add <2 x i8> [[X:%.*]], <i8 8, i8 8>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult <2 x i8> [[TMP1]], <i8 16, i8 16>
 ; CHECK-NEXT:    ret <2 x i1> [[TMP2]]
 ;
   %tmp0 = shl <2 x i8> %x, <i8 4, i8 4>
@@ -104,9 +102,8 @@ declare i8 @gen8()
 define i1 @c0() {
 ; CHECK-LABEL: @c0(
 ; CHECK-NEXT:    [[X:%.*]] = call i8 @gen8()
-; CHECK-NEXT:    [[TMP0:%.*]] = shl i8 [[X]], 4
-; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact i8 [[TMP0]], 4
-; CHECK-NEXT:    [[TMP2:%.*]] = icmp eq i8 [[X]], [[TMP1]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add i8 [[X]], 8
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult i8 [[TMP1]], 16
 ; CHECK-NEXT:    ret i1 [[TMP2]]
 ;
   %x = call i8 @gen8()
@@ -126,8 +123,8 @@ define i1 @n_oneuse0(i8 %x) {
 ; CHECK-LABEL: @n_oneuse0(
 ; CHECK-NEXT:    [[TMP0:%.*]] = shl i8 [[X:%.*]], 4
 ; CHECK-NEXT:    call void @use8(i8 [[TMP0]])
-; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact i8 [[TMP0]], 4
-; CHECK-NEXT:    [[TMP2:%.*]] = icmp eq i8 [[TMP1]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add i8 [[X]], 8
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult i8 [[TMP1]], 16
 ; CHECK-NEXT:    ret i1 [[TMP2]]
 ;
   %tmp0 = shl i8 %x, 4
