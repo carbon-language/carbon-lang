@@ -60,6 +60,7 @@ set(MODFILE_TESTS
   modfile01.f90
   modfile02.f90
   modfile03.f90
+  modfile04.f90
 )
 
 foreach(test ${ERROR_TESTS})
