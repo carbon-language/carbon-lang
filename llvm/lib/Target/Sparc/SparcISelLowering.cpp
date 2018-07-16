@@ -1705,6 +1705,9 @@ SparcTargetLowering::SparcTargetLowering(const TargetMachine &TM,
 
     setOperationAction(ISD::UDIV, MVT::i32, Expand);
     setLibcallName(RTLIB::UDIV_I32, ".udiv");
+
+    setLibcallName(RTLIB::SREM_I32, ".rem");
+    setLibcallName(RTLIB::UREM_I32, ".urem");
   }
 
   if (Subtarget->is64Bit()) {
