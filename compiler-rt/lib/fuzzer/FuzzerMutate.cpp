@@ -465,7 +465,6 @@ void MutationDispatcher::RecordSuccessfulMutationSequence() {
     if (!PersistentAutoDictionary.ContainsWord(DE->GetW()))
       PersistentAutoDictionary.push_back({DE->GetW(), 1});
   }
-  RecordUsefulMutations();
 }
 
 void MutationDispatcher::PrintRecommendedDictionary() {
@@ -487,7 +486,7 @@ void MutationDispatcher::PrintRecommendedDictionary() {
 void MutationDispatcher::PrintMutationSequence() {
   Printf("MS: %zd ", CurrentMutatorSequence.size());
   for (auto M : CurrentMutatorSequence)
-    Printf("%s-", M->Name);
+    Printf("%s-", M.Name);
   if (!CurrentDictionaryEntrySequence.empty()) {
     Printf(" DE: ");
     for (auto DE : CurrentDictionaryEntrySequence) {
@@ -515,13 +514,12 @@ size_t MutationDispatcher::MutateImpl(uint8_t *Data, size_t Size,
   // in which case they will return 0.
   // Try several times before returning un-mutated data.
   for (int Iter = 0; Iter < 100; Iter++) {
-    auto M = &Mutators[Rand(Mutators.size())];
-    size_t NewSize = (this->*(M->Fn))(Data, Size, MaxSize);
+    auto M = Mutators[Rand(Mutators.size())];
+    size_t NewSize = (this->*(M.Fn))(Data, Size, MaxSize);
     if (NewSize && NewSize <= MaxSize) {
       if (Options.OnlyASCII)
         ToASCII(Data, NewSize);
       CurrentMutatorSequence.push_back(M);
-      M->TotalCount++;
       return NewSize;
     }
   }
@@ -532,25 +530,6 @@ size_t MutationDispatcher::MutateImpl(uint8_t *Data, size_t Size,
 void MutationDispatcher::AddWordToManualDictionary(const Word &W) {
   ManualDictionary.push_back(
       {W, std::numeric_limits<size_t>::max()});
-}
-
-void MutationDispatcher::RecordUsefulMutations() {
-  for (auto M : CurrentMutatorSequence)
-    M->UsefulCount++;
-}
-
-void MutationDispatcher::PrintMutationStats() {
-  Printf("\nstat::mutation_usefulness:      ");
-  for (size_t i = 0; i < Mutators.size(); i++) {
-    double UsefulPercentage =
-        Mutators[i].TotalCount
-            ? (100.0 * Mutators[i].UsefulCount) / Mutators[i].TotalCount
-            : 0;
-    Printf("%.3f", UsefulPercentage);
-    if (i < Mutators.size() - 1)
-      Printf(",");
-  }
-  Printf("\n");
 }
 
 }  // namespace fuzzer
