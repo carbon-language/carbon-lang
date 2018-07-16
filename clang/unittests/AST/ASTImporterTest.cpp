@@ -2378,7 +2378,7 @@ private:
     auto *ToClass = FirstDeclMatcher<CXXRecordDecl>().match(
         ToTU, ClassMatcher);
 
-    ASSERT_EQ(DeclCounter<CXXMethodDecl>().match(ToClass, MethodMatcher), 1);
+    ASSERT_EQ(DeclCounter<CXXMethodDecl>().match(ToClass, MethodMatcher), 1u);
 
     {
       CXXMethodDecl *Method =
@@ -2386,7 +2386,7 @@ private:
       ToClass->removeDecl(Method);
     }
 
-    ASSERT_EQ(DeclCounter<CXXMethodDecl>().match(ToClass, MethodMatcher), 0);
+    ASSERT_EQ(DeclCounter<CXXMethodDecl>().match(ToClass, MethodMatcher), 0u);
 
     Decl *ImportedClass = nullptr;
     {
