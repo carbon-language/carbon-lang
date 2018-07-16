@@ -398,7 +398,7 @@ namespace {
 class MemorySanitizer : public FunctionPass {
 public:
   // Pass identification, replacement for typeid.
-  static char ID; 
+  static char ID;
 
   MemorySanitizer(int TrackOrigins = 0, bool Recover = false)
       : FunctionPass(ID),
@@ -1109,13 +1109,13 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   ///
   /// Shadow = ShadowBase + Offset
   /// Origin = (OriginBase + Offset) & ~3ULL
-  std::pair<Value *, Value *> getShadowOriginPtrUserspace(
-      Value *Addr, IRBuilder<> &IRB, Type *ShadowTy, unsigned Alignment,
-      Instruction **FirstInsn) {
+  std::pair<Value *, Value *> getShadowOriginPtrUserspace(Value *Addr,
+                                                          IRBuilder<> &IRB,
+                                                          Type *ShadowTy,
+                                                          unsigned Alignment) {
     Value *ShadowOffset = getShadowPtrOffset(Addr, IRB);
     Value *ShadowLong = ShadowOffset;
     uint64_t ShadowBase = MS.MapParams->ShadowBase;
-    *FirstInsn = dyn_cast<Instruction>(ShadowLong);
     if (ShadowBase != 0) {
       ShadowLong =
         IRB.CreateAdd(ShadowLong,
@@ -1145,9 +1145,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                                                  Type *ShadowTy,
                                                  unsigned Alignment,
                                                  bool isStore) {
-    Instruction *FirstInsn = nullptr;
     std::pair<Value *, Value *> ret =
-        getShadowOriginPtrUserspace(Addr, IRB, ShadowTy, Alignment, &FirstInsn);
+        getShadowOriginPtrUserspace(Addr, IRB, ShadowTy, Alignment);
     return ret;
   }
 
