@@ -330,6 +330,37 @@ static void canonicalizePHIOperands(MachineFunction &MF) {
     }
 }
 
+/// Helper to scan a function for loads vulnerable to misspeculation that we
+/// want to harden.
+///
+/// We use this to avoid making changes to functions where there is nothing we
+/// need to do to harden against misspeculation.
+static bool hasVulnerableLoad(MachineFunction &MF) {
+  for (MachineBasicBlock &MBB : MF) {
+    for (MachineInstr &MI : MBB) {
+      // Loads within this basic block after an LFENCE are not at risk of
+      // speculatively executing with invalid predicates from prior control
+      // flow. So break out of this block but continue scanning the function.
+      if (MI.getOpcode() == X86::LFENCE)
+        break;
+
+      // Looking for loads only.
+      if (!MI.mayLoad())
+        continue;
+
+      // An MFENCE is modeled as a load but isn't vulnerable to misspeculation.
+      if (MI.getOpcode() == X86::MFENCE)
+        continue;
+
+      // We found a load.
+      return true;
+    }
+  }
+
+  // No loads found.
+  return false;
+}
+
 bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
     MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "********** " << getPassName() << " : " << MF.getName()
@@ -359,34 +390,14 @@ bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
   auto EntryInsertPt = Entry.SkipPHIsLabelsAndDebug(Entry.begin());
 
   // Do a quick scan to see if we have any checkable loads.
-  bool HasCheckableLoad = false;
-  for (MachineBasicBlock &MBB : MF) {
-    for (MachineInstr &MI : MBB) {
-      // Stop searching blocks at an LFENCE.
-      if (MI.getOpcode() == X86::LFENCE)
-        break;
-
-      // Looking for loads only.
-      if (!MI.mayLoad())
-        continue;
-
-      // An MFENCE is modeled as a load but doesn't require hardening.
-      if (MI.getOpcode() == X86::MFENCE)
-        continue;
-
-      HasCheckableLoad = true;
-      break;
-    }
-    if (HasCheckableLoad)
-      break;
-  }
+  bool HasVulnerableLoad = hasVulnerableLoad(MF);
 
   // See if we have any conditional branching blocks that we will need to trace
   // predicate state through.
   SmallVector<BlockCondInfo, 16> Infos = collectBlockCondInfo(MF);
 
   // If we have no interesting conditions or loads, nothing to do here.
-  if (!HasCheckableLoad && Infos.empty())
+  if (!HasVulnerableLoad && Infos.empty())
     return true;
 
   unsigned PredStateReg;
@@ -402,7 +413,7 @@ bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
 
   // If we have loads being hardened and we've asked for call and ret edges to
   // get a full fence-based mitigation, inject that fence.
-  if (HasCheckableLoad && FenceCallAndRet) {
+  if (HasVulnerableLoad && FenceCallAndRet) {
     // We need to insert an LFENCE at the start of the function to suspend any
     // incoming misspeculation from the caller. This helps two-fold: the caller
     // may not have been protected as this code has been, and this code gets to
