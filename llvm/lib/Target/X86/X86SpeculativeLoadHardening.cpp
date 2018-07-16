@@ -1469,6 +1469,7 @@ void X86SpeculativeLoadHardeningPass::hardenLoadAddr(
       auto OrI = BuildMI(MBB, InsertPt, Loc, TII->get(OrOp), TmpReg)
                      .addReg(VStateReg)
                      .addReg(OpReg);
+      (void)OrI;
       ++NumInstsInserted;
       LLVM_DEBUG(dbgs() << "  Inserting or: "; OrI->dump(); dbgs() << "\n");
     } else {
