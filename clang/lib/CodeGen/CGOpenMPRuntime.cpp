@@ -3970,7 +3970,7 @@ void CGOpenMPRuntime::createOffloadEntriesAndInfoMetadata() {
       if (!CE->getID() || !CE->getAddress()) {
         unsigned DiagID = CGM.getDiags().getCustomDiagID(
             DiagnosticsEngine::Error,
-            "Offloading entry for target region is incorect: either the "
+            "Offloading entry for target region is incorrect: either the "
             "address or the ID is invalid.");
         CGM.getDiags().Report(DiagID);
         continue;
@@ -3983,7 +3983,7 @@ void CGOpenMPRuntime::createOffloadEntriesAndInfoMetadata() {
       if (!CE->getAddress()) {
         unsigned DiagID = CGM.getDiags().getCustomDiagID(
             DiagnosticsEngine::Error,
-            "Offloading entry for declare target varible is inccorect: the "
+            "Offloading entry for declare target variable is incorrect: the "
             "address is invalid.");
         CGM.getDiags().Report(DiagID);
         continue;
