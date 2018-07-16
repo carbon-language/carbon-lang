@@ -12,7 +12,9 @@
 #ifndef LLVM_DEMANGLE_UTILITY_H
 #define LLVM_DEMANGLE_UTILITY_H
 
+#include <cstdlib>
 #include <cstring>
+#include <limits>
 
 // Stream that AST nodes write their string representation into after the AST
 // has been parsed.
