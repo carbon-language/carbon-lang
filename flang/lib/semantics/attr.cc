@@ -24,8 +24,18 @@ void Attrs::CheckValid(const Attrs &allowed) const {
   }
 }
 
+std::string AttrToString(Attr attr) {
+  switch (attr) {
+  case Attr::BIND_C: return "BIND(C)";
+  case Attr::INTENT_IN: return "INTENT(IN)";
+  case Attr::INTENT_INOUT: return "INTENT(INOUT)";
+  case Attr::INTENT_OUT: return "INTENT(OUT)";
+  default: return EnumToString(attr);
+  }
+}
+
 std::ostream &operator<<(std::ostream &o, Attr attr) {
-  return o << EnumToString(attr);
+  return o << AttrToString(attr);
 }
 
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs) {

@@ -14,6 +14,7 @@
 
 #include "resolve-names.h"
 #include "attr.h"
+#include "mod-file.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
 #include "symbol.h"
@@ -750,6 +751,7 @@ Attrs AttrsVisitor::EndAttrs() {
   return result;
 }
 void AttrsVisitor::Post(const parser::LanguageBindingSpec &x) {
+  CHECK(attrs_);
   attrs_->set(Attr::BIND_C);
   if (x.v) {
     // TODO: set langBindingName_ from ScalarDefaultCharConstantExpr
@@ -1159,6 +1161,8 @@ void ScopeHandler::EraseSymbol(const SourceName &name) {
 void ScopeHandler::ApplyImplicitRules(const SourceName &name, Symbol &symbol) {
   if (symbol.has<UnknownDetails>()) {
     symbol.set_details(ObjectEntityDetails{});
+  } else if (symbol.has<EntityDetails>()) {
+    symbol.set_details(ObjectEntityDetails(symbol.get<EntityDetails>()));
   }
   if (auto *details = symbol.detailsIf<ObjectEntityDetails>()) {
     if (!details->type()) {
@@ -1312,7 +1316,7 @@ bool ModuleVisitor::Pre(const parser::Module &x) {
   const auto &name =
       std::get<parser::Statement<parser::ModuleStmt>>(x.t).statement.v;
   auto &symbol = MakeSymbol(name, ModuleDetails{});
-  ModuleDetails &details{symbol.details<ModuleDetails>()};
+  ModuleDetails &details{symbol.get<ModuleDetails>()};
   Scope &modScope{PushScope(Scope::Kind::Module, &symbol)};
   details.set_scope(&modScope);
   MakeSymbol(name, ModuleDetails{details});
@@ -1353,7 +1357,7 @@ void InterfaceVisitor::Post(const parser::InterfaceStmt &) {}
 void InterfaceVisitor::Post(const parser::EndInterfaceStmt &) {
   if (genericSymbol_) {
     if (const auto *proc =
-            genericSymbol_->details<GenericDetails>().CheckSpecific()) {
+            genericSymbol_->get<GenericDetails>().CheckSpecific()) {
       SayAlreadyDeclared(genericSymbol_->name(), *proc);
     }
     genericSymbol_ = nullptr;
@@ -1467,7 +1471,7 @@ void InterfaceVisitor::AddToGeneric(
     return;
   }
   if (symbol == genericSymbol_) {
-    if (auto *specific = genericSymbol_->details<GenericDetails>().specific()) {
+    if (auto *specific = genericSymbol_->get<GenericDetails>().specific()) {
       symbol = specific;
     }
   }
@@ -1485,17 +1489,17 @@ void InterfaceVisitor::AddToGeneric(
   AddToGeneric(*symbol);
 }
 void InterfaceVisitor::AddToGeneric(const Symbol &symbol) {
-  genericSymbol_->details<GenericDetails>().add_specificProc(&symbol);
+  genericSymbol_->get<GenericDetails>().add_specificProc(&symbol);
 }
 void InterfaceVisitor::SetSpecificInGeneric(Symbol &symbol) {
-  genericSymbol_->details<GenericDetails>().set_specific(symbol);
+  genericSymbol_->get<GenericDetails>().set_specific(symbol);
 }
 
 // Check that the specific procedures are all functions or all subroutines.
 // If there is a derived type with the same name they must be functions.
 // Set the corresponding flag on generic.
 void InterfaceVisitor::CheckGenericProcedures(Symbol &generic) {
-  auto &details{generic.details<GenericDetails>()};
+  auto &details{generic.get<GenericDetails>()};
   auto &specifics{details.specificProcs()};
   if (specifics.empty()) {
     if (details.derivedType()) {
@@ -1556,7 +1560,7 @@ bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
   if (occurrence) {
     symbol.add_occurrence(*occurrence);
   }
-  auto &details = symbol.details<SubprogramDetails>();
+  auto &details = symbol.get<SubprogramDetails>();
   for (const auto &dummyName : std::get<std::list<parser::Name>>(x.t)) {
     EntityDetails dummyDetails{true};
     auto it = CurrScope().parent().find(dummyName.source);
@@ -1649,7 +1653,7 @@ void SubprogramVisitor::Post(const parser::SubroutineStmt &stmt) {
   Symbol &symbol{*CurrScope().symbol()};
   CHECK(name.source == symbol.name());
   symbol.attrs() |= EndAttrs();
-  auto &details = symbol.details<SubprogramDetails>();
+  auto &details = symbol.get<SubprogramDetails>();
   for (const auto &dummyArg : std::get<std::list<parser::DummyArg>>(stmt.t)) {
     const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
     CHECK(dummyName != nullptr && "TODO: alternate return indicator");
@@ -1663,7 +1667,7 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   Symbol &symbol{*CurrScope().symbol()};
   CHECK(name.source == symbol.name());
   symbol.attrs() |= EndAttrs();
-  auto &details = symbol.details<SubprogramDetails>();
+  auto &details = symbol.get<SubprogramDetails>();
   for (const auto &dummyName : std::get<std::list<parser::Name>>(stmt.t)) {
     Symbol &dummy{MakeSymbol(dummyName, EntityDetails(true))};
     details.add_dummyArg(dummy);
@@ -1715,7 +1719,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
     symbol = &MakeSymbol(name, SubprogramDetails{});
     symbol->set(subpFlag);
   }
-  auto &details = symbol->details<SubprogramDetails>();
+  auto &details = symbol->get<SubprogramDetails>();
   if (inInterfaceBlock()) {
     details.set_isInterface();
     if (!isAbstract()) {
@@ -2172,7 +2176,7 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
       symbol->attrs().set(Attr::EXTERNAL);
       symbol->set_details(ProcEntityDetails{});
       if (const auto type = GetImplicitType(*symbol)) {
-        symbol->details<ProcEntityDetails>().interface().set_type(*type);
+        symbol->get<ProcEntityDetails>().interface().set_type(*type);
       }
       CHECK(expectedProcFlag_);
       symbol->set(*expectedProcFlag_);
@@ -2285,8 +2289,12 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
   for (auto &pair : CurrScope()) {
     auto &name{pair.first};
     auto &symbol{*pair.second};
-    if (isImplicitNoneType() && NeedsExplicitType(symbol)) {
-      Say(name, "No explicit type declared for '%s'"_err_en_US);
+    if (NeedsExplicitType(symbol)) {
+      if (isImplicitNoneType()) {
+        Say(name, "No explicit type declared for '%s'"_err_en_US);
+      } else {
+        ApplyImplicitRules(name, symbol);
+      }
     }
     if (symbol.has<GenericDetails>()) {
       CheckGenericProcedures(symbol);

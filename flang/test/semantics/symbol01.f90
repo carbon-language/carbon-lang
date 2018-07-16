@@ -19,9 +19,9 @@ module m
  !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram
  private :: f
 contains
- !DEF: /m/s BIND_C, PUBLIC, PURE Subprogram
- !DEF: /m/s/x INTENT_IN Entity
- !DEF: /m/s/y INTENT_INOUT Entity
+ !DEF: /m/s BIND(C), PUBLIC, PURE Subprogram
+ !DEF: /m/s/x INTENT(IN) (implicit) ObjectEntity REAL
+ !DEF: /m/s/y INTENT(INOUT) (implicit) ObjectEntity REAL
  pure subroutine s (x, y) bind(c)
   intent(in) :: x
   intent(inout) :: y

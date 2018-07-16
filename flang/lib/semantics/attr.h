@@ -46,6 +46,9 @@ private:
   friend std::ostream &operator<<(std::ostream &, const Attrs &);
 };
 
+// Return string representation of attr that matches Fortran source.
+std::string AttrToString(Attr attr);
+
 std::ostream &operator<<(std::ostream &o, Attr attr);
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs);
 

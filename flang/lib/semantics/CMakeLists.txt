@@ -15,6 +15,7 @@
 
 add_library(FlangSemantics
   attr.cc
+  mod-file.cc
   resolve-names.cc
   rewrite-parse-tree.cc
   scope.cc

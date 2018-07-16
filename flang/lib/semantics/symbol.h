@@ -250,10 +250,10 @@ public:
   }
 
   // Return a reference to the details which must be of type D.
-  template<typename D> D &details() {
-    return const_cast<D &>(static_cast<const Symbol *>(this)->details<D>());
+  template<typename D> D &get() {
+    return const_cast<D &>(static_cast<const Symbol *>(this)->get<D>());
   }
-  template<typename D> const D &details() const {
+  template<typename D> const D &get() const {
     if (const auto p = detailsIf<D>()) {
       return *p;
     } else {
@@ -262,6 +262,7 @@ public:
     }
   }
 
+  const Details &details() const { return details_; }
   // Assign the details of the symbol from one of the variants.
   // Only allowed in certain cases.
   void set_details(Details &&details);

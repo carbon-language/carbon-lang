@@ -22,6 +22,7 @@
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
 #include "../../lib/semantics/dump-parse-tree.h"
+#include "../../lib/semantics/mod-file.h"
 #include "../../lib/semantics/resolve-names.h"
 #include "../../lib/semantics/unparse-with-symbols.h"
 #include <cerrno>
@@ -205,6 +206,7 @@ std::string CompileFortran(
   if (driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols) {
     Fortran::semantics::ResolveNames(parseTree, parsing.cooked());
+    Fortran::semantics::WriteModFiles();
     if (driver.dumpSymbols) {
       Fortran::semantics::DumpSymbols(std::cout);
     }
