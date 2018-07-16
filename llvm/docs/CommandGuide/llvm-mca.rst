@@ -273,6 +273,14 @@ describes the state of an instruction (e.g., Ready, Dispatched, Executed,
 etc.).  The latter describes a stall hazard (e.g., load stall, store stall,
 scheduler stall, etc.).
 
+In addition to the instruction and stall events.  A listener can also
+subscribe to cycle events (``onCycleStart``, ``onCycleEnd``).  These events
+occur before and after a simulated clock cycle is executed, respectively.
+
+Listeners can also be notified of various resource states within the stages
+of a pipeline, such as resource availability, reservation, and reclaim:
+(``onResourceAvailability``, ``onReservedBuffers``, ``onReleasedBuffers``).
+
 Creating a Custom View
 """"""""""""""""""""""
 To create a  custom view, the user must first inherit from the ``View`` class
