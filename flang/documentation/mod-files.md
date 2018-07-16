@@ -17,7 +17,7 @@ between the module name and extension, e.g. `<modulename>-f18.mod`.
 
 ## Format
 
-The proposed format for module files is a Fortran source.
+The proposed format for module files is Fortran source.
 Declarations of all visibile entities will be included, along with private
 entities that they depend on. Executable statements will be omitted.
 
