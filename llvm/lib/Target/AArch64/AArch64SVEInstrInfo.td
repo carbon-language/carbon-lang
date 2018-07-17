@@ -107,6 +107,19 @@ let Predicates = [HasSVE] in {
   defm FCADD_ZPmZ : sve_fp_fcadd<"fcadd">;
   defm FCMLA_ZPmZZ : sve_fp_fcmla<"fcmla">;
 
+  defm FMLA_ZPmZZ  : sve_fp_3op_p_zds_a<0b00, "fmla">;
+  defm FMLS_ZPmZZ  : sve_fp_3op_p_zds_a<0b01, "fmls">;
+  defm FNMLA_ZPmZZ : sve_fp_3op_p_zds_a<0b10, "fnmla">;
+  defm FNMLS_ZPmZZ : sve_fp_3op_p_zds_a<0b11, "fnmls">;
+
+  defm FMAD_ZPmZZ  : sve_fp_3op_p_zds_b<0b00, "fmad">;
+  defm FMSB_ZPmZZ  : sve_fp_3op_p_zds_b<0b01, "fmsb">;
+  defm FNMAD_ZPmZZ : sve_fp_3op_p_zds_b<0b10, "fnmad">;
+  defm FNMSB_ZPmZZ : sve_fp_3op_p_zds_b<0b11, "fnmsb">;
+
+  defm FMLA_ZZZI : sve_fp_fma_by_indexed_elem<0b0, "fmla">;
+  defm FMLS_ZZZI : sve_fp_fma_by_indexed_elem<0b1, "fmls">;
+
   defm FCMLA_ZZZI : sve_fp_fcmla_by_indexed_elem<"fcmla">;
   defm FMUL_ZZZI   : sve_fp_fmul_by_indexed_elem<"fmul">;
 
