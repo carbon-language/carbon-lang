@@ -958,6 +958,34 @@ multiclass sve_fp_2op_i_p_zds<bits<3> opc, string asm, Operand imm_ty> {
   def _D : sve_fp_2op_i_p_zds<0b11, opc, asm, ZPR64, imm_ty>;
 }
 
+class sve_fp_2op_p_zds<bits<2> sz, bits<4> opc, string asm,
+                       ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins PPR3bAny:$Pg, zprty:$_Zdn, zprty:$Zm),
+  asm, "\t$Zdn, $Pg/m, $_Zdn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zdn;
+  bits<5> Zm;
+  let Inst{31-24} = 0b01100101;
+  let Inst{23-22} = sz;
+  let Inst{21-20} = 0b00;
+  let Inst{19-16} = opc;
+  let Inst{15-13} = 0b100;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve_fp_2op_p_zds<bits<4> opc, string asm> {
+  def _H : sve_fp_2op_p_zds<0b01, opc, asm, ZPR16>;
+  def _S : sve_fp_2op_p_zds<0b10, opc, asm, ZPR32>;
+  def _D : sve_fp_2op_p_zds<0b11, opc, asm, ZPR64>;
+}
+
+
 //===----------------------------------------------------------------------===//
 // SVE Floating Point Multiply - Indexed Group
 //===----------------------------------------------------------------------===//
