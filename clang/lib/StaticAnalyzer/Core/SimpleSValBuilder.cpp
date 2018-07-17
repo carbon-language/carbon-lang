@@ -159,7 +159,8 @@ SVal SimpleSValBuilder::evalCastFromLoc(Loc val, QualType castTy) {
               return nonloc::SymbolVal(SymMgr.getExtentSymbol(FTR));
 
         if (const SymbolicRegion *SymR = R->getSymbolicBase())
-          return nonloc::SymbolVal(SymR->getSymbol());
+          return makeNonLoc(SymR->getSymbol(), BO_NE,
+                            BasicVals.getZeroWithPtrWidth(), castTy);
 
         // FALL-THROUGH
         LLVM_FALLTHROUGH;
