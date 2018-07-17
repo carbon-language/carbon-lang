@@ -254,7 +254,7 @@ public:
     return const_cast<D &>(static_cast<const Symbol *>(this)->get<D>());
   }
   template<typename D> const D &get() const {
-    if (const auto p = detailsIf<D>()) {
+    if (const auto p{detailsIf<D>()}) {
       return *p;
     } else {
       common::die("unexpected %s details at %s(%d)", GetDetailsName().c_str(),

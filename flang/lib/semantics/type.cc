@@ -36,7 +36,7 @@ std::ostream &operator<<(std::ostream &o, const KindParamValue &x) {
 }
 
 const IntConst &IntConst::Make(std::uint64_t value) {
-  auto it = cache.find(value);
+  auto it{cache.find(value)};
   if (it == cache.end()) {
     it = cache.insert({value, IntConst{value}}).first;
   }
@@ -303,9 +303,9 @@ ProcComponentDef::ProcComponentDef(
 }
 std::ostream &operator<<(std::ostream &o, const ProcComponentDef &x) {
   o << "PROCEDURE(";
-  if (auto *symbol = x.interface_.symbol()) {
+  if (auto *symbol{x.interface_.symbol()}) {
     o << symbol->name().ToString();
-  } else if (auto *type = x.interface_.type()) {
+  } else if (auto *type{x.interface_.type()}) {
     o << *type;
   }
   o << "), " << x.attrs_ << " :: " << x.decl_;

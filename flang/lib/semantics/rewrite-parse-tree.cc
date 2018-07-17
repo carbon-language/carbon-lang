@@ -37,7 +37,7 @@ public:
 
   // Fill in name.symbol if there is a corresponding symbol
   void Post(parser::Name &name) {
-    const auto it = symbols_.find(name.source.begin());
+    const auto it{symbols_.find(name.source.begin())};
     if (it != symbols_.end()) {
       name.symbol = it->second;
     }
@@ -48,9 +48,9 @@ public:
 
   // Find mis-parsed statement functions and move to stmtFuncsToConvert list.
   void Post(parser::SpecificationPart &x) {
-    auto &list = std::get<std::list<parser::DeclarationConstruct>>(x.t);
-    for (auto it = list.begin(); it != list.end();) {
-      if (auto stmt = std::get_if<stmtFuncType>(&it->u)) {
+    auto &list{std::get<std::list<parser::DeclarationConstruct>>(x.t)};
+    for (auto it{list.begin()}; it != list.end();) {
+      if (auto stmt{std::get_if<stmtFuncType>(&it->u)}) {
         Symbol *symbol{std::get<parser::Name>(stmt->statement->t).symbol};
         if (symbol && symbol->has<EntityDetails>()) {
           // not a stmt func: remove it here and add to ones to convert
@@ -65,7 +65,7 @@ public:
 
   // Insert converted assignments at start of ExecutionPart.
   bool Pre(parser::ExecutionPart &x) {
-    auto origFirst = x.v.begin();  // insert each elem before origFirst
+    auto origFirst{x.v.begin()};  // insert each elem before origFirst
     for (stmtFuncType &sf : stmtFuncsToConvert) {
       auto &&stmt = sf.statement->ConvertToAssignment();
       stmt.source = sf.source;
@@ -88,8 +88,8 @@ private:
   // should be an array element reference (i.e. the name occurs in an
   // entity declaration, convert it.
   template<typename T> void ConvertFunctionRef(T &x) {
-    auto *funcRef =
-        std::get_if<common::Indirection<parser::FunctionReference>>(&x.u);
+    auto *funcRef{
+        std::get_if<common::Indirection<parser::FunctionReference>>(&x.u)};
     if (!funcRef) {
       return;
     }
@@ -112,7 +112,7 @@ static void CollectSymbols(Scope &scope, symbolMap &symbols) {
   for (auto &pair : scope) {
     Symbol *symbol{pair.second};
     CollectSymbol(*symbol, symbols);
-    if (auto *details = symbol->detailsIf<GenericDetails>()) {
+    if (auto *details{symbol->detailsIf<GenericDetails>()}) {
       if (details->derivedType()) {
         CollectSymbol(*details->derivedType(), symbols);
       }

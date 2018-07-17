@@ -268,7 +268,8 @@ void ModFileWriter::PutUse(const Symbol &symbol) {
 
 // We have "USE local => use" in this module. If attr was added locally
 // (i.e. on local but not on use), also write it out in the mod file.
-void ModFileWriter::PutUseExtraAttr(Attr attr, const Symbol &local, const Symbol &use) {
+void ModFileWriter::PutUseExtraAttr(
+    Attr attr, const Symbol &local, const Symbol &use) {
   if (local.attrs().test(attr) && !use.attrs().test(attr)) {
     PutLower(useExtraAttrs_, AttrToString(attr)) << "::";
     PutLower(useExtraAttrs_, local) << '\n';

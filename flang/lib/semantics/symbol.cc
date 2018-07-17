@@ -44,7 +44,7 @@ void ObjectEntityDetails::set_shape(const ArraySpec &shape) {
 }
 
 ProcEntityDetails::ProcEntityDetails(const EntityDetails &d) {
-  if (auto type = d.type()) {
+  if (auto type{d.type()}) {
     interface_.set_type(*type);
   }
 }
@@ -137,8 +137,8 @@ void Symbol::add_occurrence(const SourceName &name) {
   }
 }
 void Symbol::remove_occurrence(const SourceName &name) {
-  auto end = occurrences_.end();
-  for (auto it = occurrences_.begin(); it != end; ++it) {
+  auto end{occurrences_.end()};
+  for (auto it{occurrences_.begin()}; it != end; ++it) {
     if (it->begin() == name.begin()) {
       occurrences_.erase(it);
       return;
@@ -149,7 +149,7 @@ Symbol &Symbol::GetUltimate() {
   return const_cast<Symbol &>(static_cast<const Symbol *>(this)->GetUltimate());
 }
 const Symbol &Symbol::GetUltimate() const {
-  if (const auto *details = detailsIf<UseDetails>()) {
+  if (const auto *details{detailsIf<UseDetails>()}) {
     return details->symbol().GetUltimate();
   } else {
     return *this;
@@ -232,16 +232,16 @@ std::ostream &operator<<(std::ostream &os, const ObjectEntityDetails &x) {
 }
 
 bool ProcEntityDetails::HasExplicitInterface() const {
-  if (auto *symbol = interface_.symbol()) {
+  if (auto *symbol{interface_.symbol()}) {
     return symbol->HasExplicitInterface();
   }
   return false;
 }
 
 std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
-  if (auto *symbol = x.interface_.symbol()) {
+  if (auto *symbol{x.interface_.symbol()}) {
     os << ' ' << symbol->name().ToString();
-  } else if (auto *type = x.interface_.type()) {
+  } else if (auto *type{x.interface_.type()}) {
     os << ' ' << *type;
   }
   return os;

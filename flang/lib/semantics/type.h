@@ -183,7 +183,7 @@ public:
     : name_{name}, defaultValue_{defaultValue} {}
   const T &Make() { return Make(defaultValue_); }
   const T &Make(KindParamValue kind) {
-    auto it = cache.find(kind);
+    auto it{cache.find(kind)};
     if (it == cache.end()) {
       it = cache.insert(std::make_pair(kind, T{kind})).first;
     }
