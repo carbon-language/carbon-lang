@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 
 class StringView {
   const char *First;
@@ -27,7 +28,7 @@ public:
       : First(First_), Last(Last_) {}
   StringView(const char *First_, size_t Len)
       : First(First_), Last(First_ + Len) {}
-  StringView(const char *Str) : First(Str), Last(Str + strlen(Str)) {}
+  StringView(const char *Str) : First(Str), Last(Str + std::strlen(Str)) {}
   StringView() : First(nullptr), Last(nullptr) {}
 
   StringView substr(size_t From) const {
