@@ -1185,7 +1185,7 @@ TEST_P(ASTImporterTestBase,
 }
 
 TEST_P(ASTImporterTestBase,
-       DISABLED_ImportOfTemplatedDeclShouldImportTheFunctionTemplateDecl) {
+       ImportOfTemplatedDeclShouldImportTheFunctionTemplateDecl) {
   Decl *FromTU = getTuDecl("template<class X> void f(){}", Lang_CXX);
   auto FromFT = FirstDeclMatcher<FunctionTemplateDecl>().match(
       FromTU, functionTemplateDecl());
