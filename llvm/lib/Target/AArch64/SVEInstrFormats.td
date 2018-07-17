@@ -1381,6 +1381,70 @@ multiclass sve_int_bin_pred_arit_1<bits<3> opc, string asm> {
 }
 
 //===----------------------------------------------------------------------===//
+// SVE Integer Multiply-Add Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_mladdsub_vvv_pred<bits<2> sz8_64, bits<1> opc, string asm,
+                                ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins PPR3bAny:$Pg, zprty:$_Zdn, zprty:$Zm, zprty:$Za),
+  asm, "\t$Zdn, $Pg/m, $Zm, $Za",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zdn;
+  bits<5> Za;
+  bits<5> Zm;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = sz8_64;
+  let Inst{21}    = 0b0;
+  let Inst{20-16} = Zm;
+  let Inst{15-14} = 0b11;
+  let Inst{13}    = opc;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Za;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve_int_mladdsub_vvv_pred<bits<1> opc, string asm> {
+  def _B : sve_int_mladdsub_vvv_pred<0b00, opc, asm, ZPR8>;
+  def _H : sve_int_mladdsub_vvv_pred<0b01, opc, asm, ZPR16>;
+  def _S : sve_int_mladdsub_vvv_pred<0b10, opc, asm, ZPR32>;
+  def _D : sve_int_mladdsub_vvv_pred<0b11, opc, asm, ZPR64>;
+}
+
+class sve_int_mlas_vvv_pred<bits<2> sz8_64, bits<1> opc, string asm,
+                            ZPRRegOp zprty>
+: I<(outs zprty:$Zda), (ins PPR3bAny:$Pg, zprty:$_Zda, zprty:$Zn, zprty:$Zm),
+  asm, "\t$Zda, $Pg/m, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zda;
+  bits<5> Zm;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = sz8_64;
+  let Inst{21}    = 0b0;
+  let Inst{20-16} = Zm;
+  let Inst{15-14} = 0b01;
+  let Inst{13}    = opc;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zda;
+
+  let Constraints = "$Zda = $_Zda";
+}
+
+multiclass sve_int_mlas_vvv_pred<bits<1> opc, string asm> {
+  def _B : sve_int_mlas_vvv_pred<0b00, opc, asm, ZPR8>;
+  def _H : sve_int_mlas_vvv_pred<0b01, opc, asm, ZPR16>;
+  def _S : sve_int_mlas_vvv_pred<0b10, opc, asm, ZPR32>;
+  def _D : sve_int_mlas_vvv_pred<0b11, opc, asm, ZPR64>;
+}
+
+//===----------------------------------------------------------------------===//
 // SVE Integer Arithmetic - Unary Predicated Group
 //===----------------------------------------------------------------------===//
 

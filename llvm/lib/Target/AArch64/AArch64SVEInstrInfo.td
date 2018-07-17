@@ -48,6 +48,11 @@ let Predicates = [HasSVE] in {
   defm SQSUB_ZI : sve_int_arith_imm0<0b110, "sqsub">;
   defm UQSUB_ZI : sve_int_arith_imm0<0b111, "uqsub">;
 
+  defm MAD_ZPmZZ : sve_int_mladdsub_vvv_pred<0b0, "mad">;
+  defm MSB_ZPmZZ : sve_int_mladdsub_vvv_pred<0b1, "msb">;
+  defm MLA_ZPmZZ : sve_int_mlas_vvv_pred<0b0, "mla">;
+  defm MLS_ZPmZZ : sve_int_mlas_vvv_pred<0b1, "mls">;
+
   defm ORR_ZI : sve_int_log_imm<0b00, "orr", "orn">;
   defm EOR_ZI : sve_int_log_imm<0b01, "eor", "eon">;
   defm AND_ZI : sve_int_log_imm<0b10, "and", "bic">;
