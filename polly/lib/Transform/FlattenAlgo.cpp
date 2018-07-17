@@ -54,20 +54,19 @@ bool isVariableDim(const isl::basic_map &BMap) {
 
 /// Whether Map's first out dimension is no constant nor piecewise constant.
 bool isVariableDim(const isl::map &Map) {
-  return Map.foreach_basic_map([](isl::basic_map BMap) -> isl::stat {
+  for (isl::basic_map BMap : Map.get_basic_map_list())
     if (isVariableDim(BMap))
-      return isl::stat::error;
-    return isl::stat::ok;
-  }) == isl::stat::ok;
+      return false;
+
+  return true;
 }
 
 /// Whether UMap's first out dimension is no (piecewise) constant.
 bool isVariableDim(const isl::union_map &UMap) {
-  return UMap.foreach_map([](isl::map Map) -> isl::stat {
+  for (isl::map Map : UMap.get_map_list())
     if (isVariableDim(Map))
-      return isl::stat::error;
-    return isl::stat::ok;
-  }) == isl::stat::ok;
+      return false;
+  return true;
 }
 
 /// Compute @p UPwAff - @p Val.
