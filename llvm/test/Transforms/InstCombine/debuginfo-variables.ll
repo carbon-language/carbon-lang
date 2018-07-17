@@ -26,6 +26,17 @@ define i64 @test_used_sext_zext(i16 %A) {
   ret i64 %c2
 }
 
+define i32 @test_cast_select(i1 %cond) {
+; CHECK-LABEL: @test_cast_select(
+; CHECK-NEXT:  [[sel:%.*]] = select i1 %cond, i32 3, i32 5
+; CHECK-NEXT:  call void @llvm.dbg.value(metadata i32 [[sel]], {{.*}}, metadata !DIExpression())
+; CHECK-NEXT:  call void @llvm.dbg.value(metadata i32 [[sel]], {{.*}}, metadata !DIExpression())
+; CHECK-NEXT:  ret i32 [[sel]]
+  %sel = select i1 %cond, i16 3, i16 5
+  %cast = zext i16 %sel to i32
+  ret i32 %cast
+}
+
 define void @test_or(i64 %A) {
 ; CHECK-LABEL: @test_or(
 ; CHECK-NEXT:  call void @llvm.dbg.value(metadata i64 %A, {{.*}}, metadata !DIExpression(DW_OP_constu, 256, DW_OP_or, DW_OP_stack_value))
