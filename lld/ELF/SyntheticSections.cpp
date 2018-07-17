@@ -474,9 +474,7 @@ static void writeCieFde(uint8_t *Buf, ArrayRef<uint8_t> D) {
 }
 
 void EhFrameSection::finalizeContents() {
-  if (this->Size)
-    return; // Already finalized.
-
+  assert(!this->Size); // Not finalized.
   size_t Off = 0;
   for (CieRecord *Rec : CieRecords) {
     Rec->Cie->OutputOff = Off;
