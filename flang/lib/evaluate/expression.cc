@@ -218,7 +218,7 @@ typename CharacterExpr<KIND>::LengthExpr CharacterExpr<KIND>::LEN() const {
         if constexpr (std::is_same_v<
                           const typename CharacterExpr<KIND>::Constant &,
                           decltype(x)>) {
-          return LengthExpr{x.size()};
+          return LengthExpr{static_cast<std::uint64_t>(x.size())};
         } else {
           return LengthExpr{LengthExpr::Add{x.x->LEN(), x.y->LEN()}};
         }

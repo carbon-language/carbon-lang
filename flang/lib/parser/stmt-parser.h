@@ -46,6 +46,23 @@ template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
 }
 
+// This unambiguousStatement() variant of statement() provides better error
+// recovery for contexts containing statements that might have trailing
+// garbage, but it must be used only when no instance of the statement in
+// question could also be a legal prefix of some other statement that might
+// be valid at that point.  It only makes sense to use this within "some()"
+// or "many()" so as to not end the list of statements.
+template<typename PA> inline constexpr auto unambiguousStatement(const PA &p) {
+  return unterminatedStatement(p) /
+      recovery(space >>
+              withMessage("expected end of statement"_err_en_US, endOfStmt),
+          SkipPast<'\n'>{});
+}
+
+constexpr auto forceEndOfStmt{recovery(space >>
+        withMessage("expected end of statement"_err_en_US, lookAhead(";\n"_ch)),
+    SkipTo<'\n'>{})};
+
 constexpr auto ignoredStatementPrefix{
     skipStuffBeforeStatement >> maybe(label) >> maybe(name / ":") >> space};
 

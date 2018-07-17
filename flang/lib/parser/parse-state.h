@@ -49,8 +49,9 @@ public:
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
-      deferMessages_{that.deferMessages_}, anyDeferredMessages_{
-                                               that.anyDeferredMessages_} {}
+      deferMessages_{that.deferMessages_},
+      anyDeferredMessages_{that.anyDeferredMessages_},
+      tokensMatched_{that.tokensMatched_} {}
   ParseState(ParseState &&that)
     : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
@@ -60,8 +61,9 @@ public:
       warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
-      deferMessages_{that.deferMessages_}, anyDeferredMessages_{
-                                               that.anyDeferredMessages_} {}
+      deferMessages_{that.deferMessages_},
+      anyDeferredMessages_{that.anyDeferredMessages_},
+      tokensMatched_{that.tokensMatched_} {}
   ParseState &operator=(const ParseState &that) {
     p_ = that.p_, limit_ = that.limit_, context_ = that.context_;
     userState_ = that.userState_, inFixedForm_ = that.inFixedForm_;
@@ -72,6 +74,7 @@ public:
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
     anyDeferredMessages_ = that.anyDeferredMessages_;
+    tokensMatched_ = that.tokensMatched_;
     return *this;
   }
   ParseState &operator=(ParseState &&that) {
@@ -85,6 +88,7 @@ public:
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
     anyDeferredMessages_ = that.anyDeferredMessages_;
+    tokensMatched_ = that.tokensMatched_;
     return *this;
   }
 
@@ -107,25 +111,25 @@ public:
   }
 
   bool inFixedForm() const { return inFixedForm_; }
-  ParseState &set_inFixedForm(bool yes) {
+  ParseState &set_inFixedForm(bool yes = true) {
     inFixedForm_ = yes;
     return *this;
   }
 
   bool strictConformance() const { return strictConformance_; }
-  ParseState &set_strictConformance(bool yes) {
+  ParseState &set_strictConformance(bool yes = true) {
     strictConformance_ = yes;
     return *this;
   }
 
   bool warnOnNonstandardUsage() const { return warnOnNonstandardUsage_; }
-  ParseState &set_warnOnNonstandardUsage(bool yes) {
+  ParseState &set_warnOnNonstandardUsage(bool yes = true) {
     warnOnNonstandardUsage_ = yes;
     return *this;
   }
 
   bool warnOnDeprecatedUsage() const { return warnOnDeprecatedUsage_; }
-  ParseState &set_warnOnDeprecatedUsage(bool yes) {
+  ParseState &set_warnOnDeprecatedUsage(bool yes = true) {
     warnOnDeprecatedUsage_ = yes;
     return *this;
   }
@@ -137,13 +141,26 @@ public:
   }
 
   bool deferMessages() const { return deferMessages_; }
-  ParseState &set_deferMessages(bool yes) {
+  ParseState &set_deferMessages(bool yes = true) {
     deferMessages_ = yes;
     return *this;
   }
 
   bool anyDeferredMessages() const { return anyDeferredMessages_; }
-  void set_anyDeferredMessages() { anyDeferredMessages_ = true; }
+  ParseState &set_anyDeferredMessages(bool yes = true) {
+    anyDeferredMessages_ = yes;
+    return *this;
+  }
+
+  std::size_t tokensMatched() const { return tokensMatched_; }
+  ParseState &set_tokensMatched(std::size_t n) {
+    tokensMatched_ = n;
+    return *this;
+  }
+  ParseState &TokenMatched() {
+    ++tokensMatched_;
+    return *this;
+  }
 
   const char *GetLocation() const { return p_; }
 
@@ -230,6 +247,7 @@ private:
   bool anyConformanceViolation_{false};
   bool deferMessages_{false};
   bool anyDeferredMessages_{false};
+  std::size_t tokensMatched_{0};
   // NOTE: Any additions or modifications to these data members must also be
   // reflected in the copy and move constructors defined at the top of this
   // class definition!

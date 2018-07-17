@@ -260,9 +260,10 @@ TYPE_PARSER(construct<ProgramUnit>(indirect(functionSubprogram)) ||
 //         [use-stmt]... [import-stmt]... [implicit-part]
 //         [declaration-construct]...
 TYPE_CONTEXT_PARSER("specification part"_en_US,
-    construct<SpecificationPart>(many(statement(indirect(Parser<UseStmt>{}))),
-        many(statement(indirect(Parser<ImportStmt>{}))), implicitPart,
-        many(declarationConstruct)))
+    construct<SpecificationPart>(
+        many(unambiguousStatement(indirect(Parser<UseStmt>{}))),
+        many(unambiguousStatement(indirect(Parser<ImportStmt>{}))),
+        implicitPart, many(declarationConstruct)))
 
 // R504 variant for many contexts (modules, submodules, BLOCK DATA subprograms,
 // and interfaces) which have constraints on their specification parts that
@@ -270,9 +271,10 @@ TYPE_CONTEXT_PARSER("specification part"_en_US,
 // specialized error recovery in the event of a spurious executable
 // statement.
 constexpr auto limitedSpecificationPart{inContext("specification part"_en_US,
-    construct<SpecificationPart>(many(statement(indirect(Parser<UseStmt>{}))),
-        many(statement(indirect(Parser<ImportStmt>{}))), implicitPart,
-        many(limitedDeclarationConstruct)))};
+    construct<SpecificationPart>(
+        many(unambiguousStatement(indirect(Parser<UseStmt>{}))),
+        many(unambiguousStatement(indirect(Parser<ImportStmt>{}))),
+        implicitPart, many(limitedDeclarationConstruct)))};
 
 // R505 implicit-part -> [implicit-part-stmt]... implicit-stmt
 // TODO: Can overshoot; any trailing PARAMETER, FORMAT, & ENTRY
@@ -370,15 +372,17 @@ TYPE_PARSER(first(construct<ActionStmt>(indirect(Parser<AllocateStmt>{})),
 //        do-construct | if-construct | select-rank-construct |
 //        select-type-construct | where-construct | forall-construct
 constexpr auto executableConstruct{
-    first(construct<ExecutableConstruct>(statement(actionStmt)),
+    first(construct<ExecutableConstruct>(CapturedLabelDoStmt{}),
+        construct<ExecutableConstruct>(EndDoStmtForCapturedLabelDoStmt{}),
+        construct<ExecutableConstruct>(indirect(Parser<DoConstruct>{})),
+        // Attempt DO statements before assignment statements for better
+        // error messages in cases like "DO10I=1,(error)".
+        construct<ExecutableConstruct>(statement(actionStmt)),
         construct<ExecutableConstruct>(indirect(Parser<AssociateConstruct>{})),
         construct<ExecutableConstruct>(indirect(Parser<BlockConstruct>{})),
         construct<ExecutableConstruct>(indirect(Parser<CaseConstruct>{})),
         construct<ExecutableConstruct>(indirect(Parser<ChangeTeamConstruct>{})),
         construct<ExecutableConstruct>(indirect(Parser<CriticalConstruct>{})),
-        construct<ExecutableConstruct>(CapturedLabelDoStmt{}),
-        construct<ExecutableConstruct>(EndDoStmtForCapturedLabelDoStmt{}),
-        construct<ExecutableConstruct>(indirect(Parser<DoConstruct>{})),
         construct<ExecutableConstruct>(indirect(Parser<IfConstruct>{})),
         construct<ExecutableConstruct>(indirect(Parser<SelectRankConstruct>{})),
         construct<ExecutableConstruct>(indirect(Parser<SelectTypeConstruct>{})),
@@ -645,9 +649,10 @@ TYPE_PARSER(construct<LogicalLiteralConstant>(
 // R735 component-part -> [component-def-stmt]...
 TYPE_CONTEXT_PARSER("derived type definition"_en_US,
     construct<DerivedTypeDef>(statement(Parser<DerivedTypeStmt>{}),
-        many(statement(Parser<TypeParamDefStmt>{})),
+        many(unambiguousStatement(Parser<TypeParamDefStmt>{})),
         many(statement(Parser<PrivateOrSequence>{})),
-        many(statement(Parser<ComponentDefStmt>{})),
+        many(inContext("component"_en_US,
+            unambiguousStatement(Parser<ComponentDefStmt>{}))),
         maybe(Parser<TypeBoundProcedurePart>{}),
         statement(Parser<EndTypeStmt>{})))
 
@@ -744,10 +749,10 @@ TYPE_PARSER(construct<ComponentArraySpec>(
 //        PROCEDURE ( [proc-interface] ) , proc-component-attr-spec-list
 //          :: proc-decl-list
 TYPE_CONTEXT_PARSER("PROCEDURE component definition statement"_en_US,
-    "PROCEDURE" >>
-        construct<ProcComponentDefStmt>(parenthesized(maybe(procInterface)),
-            "," >> nonemptyList(Parser<ProcComponentAttrSpec>{}) / "::",
-            nonemptyList(procDecl)))
+    construct<ProcComponentDefStmt>(
+        "PROCEDURE" >> parenthesized(maybe(procInterface)),
+        "," >> nonemptyList(Parser<ProcComponentAttrSpec>{}) / "::",
+        nonemptyList(procDecl)))
 
 // R742 proc-component-attr-spec ->
 //        access-spec | NOPASS | PASS [(arg-name)] | POINTER
@@ -781,7 +786,8 @@ TYPE_PARSER(construct<PrivateStmt>("PRIVATE"_tok))
 TYPE_CONTEXT_PARSER("type bound procedure part"_en_US,
     construct<TypeBoundProcedurePart>(statement(containsStmt),
         maybe(statement(Parser<PrivateStmt>{})),
-        many(statement(Parser<TypeBoundProcBinding>{}))))
+        many(inContext("type bound procedure"_en_US,
+            statement(Parser<TypeBoundProcBinding>{})))))
 
 // R748 type-bound-proc-binding ->
 //        type-bound-procedure-stmt | type-bound-generic-stmt |
@@ -860,7 +866,7 @@ TYPE_PARSER(construct<ComponentDataSource>(indirect(expr)))
 //        end-enum-stmt
 TYPE_CONTEXT_PARSER("enum definition"_en_US,
     construct<EnumDef>(statement(Parser<EnumDefStmt>{}),
-        some(statement(Parser<EnumeratorDefStmt>{})),
+        some(unambiguousStatement(Parser<EnumeratorDefStmt>{})),
         statement(Parser<EndEnumStmt>{})))
 
 // R760 enum-def-stmt -> ENUM, BIND(C)
@@ -2104,7 +2110,7 @@ TYPE_CONTEXT_PARSER("IF construct"_en_US,
             "IF" >> parenthesized(scalarLogicalExpr) / "THEN")),
         block,
         many(construct<IfConstruct::ElseIfBlock>(
-            statement(construct<ElseIfStmt>(
+            unambiguousStatement(construct<ElseIfStmt>(
                 "ELSE IF" >> parenthesized(scalarLogicalExpr),
                 "THEN" >> maybe(name))),
             block)),
@@ -2122,7 +2128,7 @@ TYPE_CONTEXT_PARSER("IF statement"_en_US,
 TYPE_CONTEXT_PARSER("SELECT CASE construct"_en_US,
     construct<CaseConstruct>(statement(Parser<SelectCaseStmt>{}),
         many(construct<CaseConstruct::Case>(
-            statement(Parser<CaseStmt>{}), block)),
+            unambiguousStatement(Parser<CaseStmt>{}), block)),
         statement(endSelectStmt)))
 
 // R1141 select-case-stmt -> [case-construct-name :] SELECT CASE ( case-expr
@@ -2166,7 +2172,7 @@ TYPE_PARSER(construct<CaseValueRange>(construct<CaseValueRange::Range>(
 TYPE_CONTEXT_PARSER("SELECT RANK construct"_en_US,
     construct<SelectRankConstruct>(statement(Parser<SelectRankStmt>{}),
         many(construct<SelectRankConstruct::RankCase>(
-            statement(Parser<SelectRankCaseStmt>{}), block)),
+            unambiguousStatement(Parser<SelectRankCaseStmt>{}), block)),
         statement(endSelectStmt)))
 
 // R1149 select-rank-stmt ->
@@ -2193,7 +2199,7 @@ TYPE_CONTEXT_PARSER("RANK case statement"_en_US,
 TYPE_CONTEXT_PARSER("SELECT TYPE construct"_en_US,
     construct<SelectTypeConstruct>(statement(Parser<SelectTypeStmt>{}),
         many(construct<SelectTypeConstruct::TypeCase>(
-            statement(Parser<TypeGuardStmt>{}), block)),
+            unambiguousStatement(Parser<TypeGuardStmt>{}), block)),
         statement(endSelectStmt)))
 
 // R1153 select-type-stmt ->

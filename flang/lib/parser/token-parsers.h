@@ -162,6 +162,7 @@ public:
         return {};
       }
     }
+    state.TokenMatched();
     if (IsLegalInIdentifier(p[-1])) {
       return spaceCheck.Parse(state);
     } else {
@@ -633,6 +634,21 @@ template<char goal> struct SkipPast {
       if (**p == goal) {
         return {Success{}};
       }
+    }
+    return {};
+  }
+};
+
+template<char goal> struct SkipTo {
+  using resultType = Success;
+  constexpr SkipTo() {}
+  constexpr SkipTo(const SkipTo &) {}
+  static std::optional<Success> Parse(ParseState &state) {
+    while (std::optional<const char *> p{state.PeekAtNextChar()}) {
+      if (**p == goal) {
+        return {Success{}};
+      }
+      state.UncheckedAdvance();
     }
     return {};
   }

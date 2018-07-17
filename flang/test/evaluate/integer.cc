@@ -262,7 +262,8 @@ int main() {
   TEST(Integer<128>{123456789}.UnsignedDecimal() == "123456789");
   TEST(Integer<128>{123456789}.SignedDecimal() == "123456789");
   TEST(Integer<128>{-123456789}.SignedDecimal() == "-123456789");
-  TEST(Integer<128>{0x123456789abcdef}.Hexadecimal() == "123456789abcdef");
+  std::uint64_t big{0x123456789abcdef};
+  TEST(Integer<128>{big}.Hexadecimal() == "123456789abcdef");
   exhaustiveTesting<1>();
   exhaustiveTesting<2>();
   exhaustiveTesting<7>();
