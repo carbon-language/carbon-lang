@@ -2350,13 +2350,13 @@ floating-point transformations.
 
 ``nnan``
    No NaNs - Allow optimizations to assume the arguments and result are not
-   NaN. Such optimizations are required to retain defined behavior over
-   NaNs, but the value of the result is undefined.
+   NaN. If an argument is a nan, or the result would be a nan, it produces
+   a :ref:`poison value <poisonvalues>` instead.
 
 ``ninf``
    No Infs - Allow optimizations to assume the arguments and result are not
-   +/-Inf. Such optimizations are required to retain defined behavior over
-   +/-Inf, but the value of the result is undefined.
+   +/-Inf. If an argument is +/-Inf, or the result would be +/-Inf, it
+   produces a :ref:`poison value <poisonvalues>` instead.
 
 ``nsz``
    No Signed Zeros - Allow optimizations to treat the sign of a zero
