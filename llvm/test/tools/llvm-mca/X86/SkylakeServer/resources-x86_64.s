@@ -118,6 +118,9 @@ bsrq %rsi, %rdi
 bsfq (%rax), %rdi
 bsrq (%rax), %rdi
 
+bswap %eax
+bswap %rax
+
 btw  %si, %di
 btcw %si, %di
 btrw %si, %di
@@ -730,6 +733,8 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  1      3     1.00                        bsrq	%rsi, %rdi
 # CHECK-NEXT:  2      8     1.00    *                   bsfq	(%rax), %rdi
 # CHECK-NEXT:  2      8     1.00    *                   bsrq	(%rax), %rdi
+# CHECK-NEXT:  1      1     0.50                        bswapl	%eax
+# CHECK-NEXT:  2      2     0.50                        bswapq	%rax
 # CHECK-NEXT:  1      1     0.50                        btw	%si, %di
 # CHECK-NEXT:  1      1     0.50                        btcw	%si, %di
 # CHECK-NEXT:  1      1     0.50                        btrw	%si, %di
@@ -1197,7 +1202,7 @@ xorq (%rax), %rdi
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]
-# CHECK-NEXT: 60.00   -     430.75 235.75 205.00 205.00 167.00 184.25 415.25 69.00
+# CHECK-NEXT: 60.00   -     431.25 236.75 205.00 205.00 167.00 185.25 415.75 69.00
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    Instructions:
@@ -1303,6 +1308,8 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  -      -      -     1.00    -      -      -      -      -      -     bsrq	%rsi, %rdi
 # CHECK-NEXT:  -      -      -     1.00   0.50   0.50    -      -      -      -     bsfq	(%rax), %rdi
 # CHECK-NEXT:  -      -      -     1.00   0.50   0.50    -      -      -      -     bsrq	(%rax), %rdi
+# CHECK-NEXT:  -      -      -     0.50    -      -      -     0.50    -      -     bswapl	%eax
+# CHECK-NEXT:  -      -     0.50   0.50    -      -      -     0.50   0.50    -     bswapq	%rax
 # CHECK-NEXT:  -      -     0.50    -      -      -      -      -     0.50    -     btw	%si, %di
 # CHECK-NEXT:  -      -     0.50    -      -      -      -      -     0.50    -     btcw	%si, %di
 # CHECK-NEXT:  -      -     0.50    -      -      -      -      -     0.50    -     btrw	%si, %di

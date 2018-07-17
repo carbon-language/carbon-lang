@@ -118,6 +118,9 @@ bsrq %rsi, %rdi
 bsfq (%rax), %rdi
 bsrq (%rax), %rdi
 
+bswap %eax
+bswap %rax
+
 btw  %si, %di
 btcw %si, %di
 btrw %si, %di
@@ -730,6 +733,8 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  8      5     2.00                        bsrq	%rsi, %rdi
 # CHECK-NEXT:  8      8     2.00    *                   bsfq	(%rax), %rdi
 # CHECK-NEXT:  8      8     2.00    *                   bsrq	(%rax), %rdi
+# CHECK-NEXT:  1      1     0.50                        bswapl	%eax
+# CHECK-NEXT:  1      1     0.50                        bswapq	%rax
 # CHECK-NEXT:  1      1     0.50                        btw	%si, %di
 # CHECK-NEXT:  1      1     0.50                        btcw	%si, %di
 # CHECK-NEXT:  1      1     0.50                        btrw	%si, %di
@@ -1201,7 +1206,7 @@ xorq (%rax), %rdi
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]
-# CHECK-NEXT: 462.00 512.00 380.00  -      -      -      -     269.00 64.00  195.00  -      -      -      -
+# CHECK-NEXT: 463.00 513.00 380.00  -      -      -      -     269.00 64.00  195.00  -      -      -      -
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   [12]   [13]   Instructions:
@@ -1307,6 +1312,8 @@ xorq (%rax), %rdi
 # CHECK-NEXT: 2.00   2.00    -      -      -      -      -      -      -      -      -      -      -      -     bsrq	%rsi, %rdi
 # CHECK-NEXT: 2.00   2.00    -      -      -      -      -     1.00    -      -      -      -      -      -     bsfq	(%rax), %rdi
 # CHECK-NEXT: 2.00   2.00    -      -      -      -      -     1.00    -      -      -      -      -      -     bsrq	(%rax), %rdi
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     bswapl	%eax
+# CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     bswapq	%rax
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     btw	%si, %di
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     btcw	%si, %di
 # CHECK-NEXT: 0.50   0.50    -      -      -      -      -      -      -      -      -      -      -      -     btrw	%si, %di

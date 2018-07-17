@@ -118,6 +118,9 @@ bsrq %rsi, %rdi
 bsfq (%rax), %rdi
 bsrq (%rax), %rdi
 
+bswap %eax
+bswap %rax
+
 btw  %si, %di
 btcw %si, %di
 btrw %si, %di
@@ -730,6 +733,8 @@ xorq (%rax), %rdi
 # CHECK-NEXT:  1      16    8.00                        bsrq	%rsi, %rdi
 # CHECK-NEXT:  1      16    8.00    *                   bsfq	(%rax), %rdi
 # CHECK-NEXT:  1      16    8.00    *                   bsrq	(%rax), %rdi
+# CHECK-NEXT:  1      1     1.00                        bswapl	%eax
+# CHECK-NEXT:  1      1     1.00                        bswapq	%rax
 # CHECK-NEXT:  1      1     1.00                        btw	%si, %di
 # CHECK-NEXT:  1      1     1.00                        btcw	%si, %di
 # CHECK-NEXT:  1      1     1.00                        btrw	%si, %di
@@ -1189,7 +1194,7 @@ xorq (%rax), %rdi
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]
-# CHECK-NEXT: 1356.50 1061.50
+# CHECK-NEXT: 1358.50 1061.50
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    Instructions:
@@ -1295,6 +1300,8 @@ xorq (%rax), %rdi
 # CHECK-NEXT: 8.00   8.00   bsrq	%rsi, %rdi
 # CHECK-NEXT: 8.00   8.00   bsfq	(%rax), %rdi
 # CHECK-NEXT: 8.00   8.00   bsrq	(%rax), %rdi
+# CHECK-NEXT: 1.00    -     bswapl	%eax
+# CHECK-NEXT: 1.00    -     bswapq	%rax
 # CHECK-NEXT:  -     1.00   btw	%si, %di
 # CHECK-NEXT:  -     1.00   btcw	%si, %di
 # CHECK-NEXT:  -     1.00   btrw	%si, %di
