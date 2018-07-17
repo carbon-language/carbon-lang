@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,7 @@
 # the same as the input, except for the copyright comment.
 # Change the compiler by setting the F18 environment variable.
 
-PATH=/usr/bin
+PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
 CMD="${F18:-../../tools/f18/f18} -funparse-with-symbols"
 
@@ -29,12 +29,11 @@ fi
 src=$srcdir/$1
 [[ ! -f $src ]] && echo "File not found: $src" && exit 1
 
-if [[ $KEEP ]]; then
-  temp=.
-else
-  temp=$(mktemp --directory --tmpdir=.)
-  trap "rm -rf $temp" EXIT
-fi
+temp=temp-$1
+rm -rf $temp
+mkdir $temp
+[[ $KEEP ]] || trap "rm -rf $temp" EXIT
+
 src1=$temp/1.f90
 src2=$temp/2.f90
 src3=$temp/3.f90

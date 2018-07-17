@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 # Compile a source file and check errors against those listed in the file.
 # Change the compiler by setting the F18 environment variable.
 
-PATH=/usr/bin
+PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
 CMD="${F18:-../../tools/f18/f18} -fdebug-resolve-names -fparse-only"
 
@@ -27,8 +27,11 @@ fi
 src=$srcdir/$1
 [[ ! -f $src ]] && echo "File not found: $src" && exit 1
 
-temp=$(mktemp --directory --tmpdir=.)
-trap "rm -rf $temp" EXIT
+temp=temp-$1
+rm -rf $temp
+mkdir $temp
+[[ $KEEP ]] || trap "rm -rf $temp" EXIT
+
 log=$temp/log
 actual=$temp/actual
 expect=$temp/expect
@@ -40,7 +43,7 @@ $cmd > $log 2>&1
 # $actual has errors from the compiler; $expect has them from !ERROR comments in source
 # Format both as "<line>: <text>" so they can be diffed.
 sed -n 's=^[^:]*:\([^:]*\):[^:]*: error: =\1: =p' $log > $actual
-{ echo; cat $src; } | cat -n | sed -n 's=^ *\([0-9]*\)\t *\!ERROR: *=\1: =p' > $expect
+{ echo; cat $src; } | cat -n | sed -n 's=^ *\([0-9]*\). *\!ERROR: *=\1: =p' > $expect
 
 if diff -U0 $actual $expect > $diffs; then
   echo PASS

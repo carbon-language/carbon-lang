@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
 # Compile a source file and compare generated .mod files against expected.
 
 set -e
-PATH=/usr/bin
+PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
 CMD="${F18:-../../../tools/f18/f18} -fdebug-resolve-names -fparse-only"
 
@@ -27,12 +27,10 @@ fi
 src=$srcdir/$1
 [[ ! -f $src ]] && echo "File not found: $src" && exit 1
 
-if [[ $KEEP ]]; then
-  temp=.
-else
-  temp=$(mktemp --directory --tmpdir=.)
-  trap "rm -rf $temp" EXIT
-fi
+temp=temp-$1
+rm -rf $temp
+mkdir $temp
+[[ $KEEP ]] || trap "rm -rf $temp" EXIT
 
 ( cd $temp && $CMD $src )
 
