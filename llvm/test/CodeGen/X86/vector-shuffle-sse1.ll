@@ -298,9 +298,7 @@ define <4 x float> @shuffle_mem_v4f32_6723(<4 x float> %a, <4 x float>* %pb) {
 define <4 x float> @shuffle_mem_v4f32_4523(<4 x float> %a, <4 x float>* %pb) {
 ; SSE1-LABEL: shuffle_mem_v4f32_4523:
 ; SSE1:       # %bb.0:
-; SSE1-NEXT:    movaps (%rdi), %xmm1
-; SSE1-NEXT:    shufps {{.*#+}} xmm1 = xmm1[0,1],xmm0[2,3]
-; SSE1-NEXT:    movaps %xmm1, %xmm0
+; SSE1-NEXT:    movlps {{.*#+}} xmm0 = mem[0,1],xmm0[2,3]
 ; SSE1-NEXT:    retq
   %b = load <4 x float>, <4 x float>* %pb, align 16
   %shuffle = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 4, i32 5, i32 2, i32 3>
