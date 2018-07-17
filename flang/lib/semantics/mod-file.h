@@ -15,9 +15,6 @@
 #ifndef FORTRAN_SEMANTICS_MOD_FILE_H_
 #define FORTRAN_SEMANTICS_MOD_FILE_H_
 
-#include <filesystem>
-#include <iosfwd>
-
 namespace Fortran::semantics {
 
 void WriteModFiles();

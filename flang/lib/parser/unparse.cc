@@ -1474,7 +1474,7 @@ public:
             }},
         x.u);
   }
-  void Before(const SubmoduleStmt &x) {  // R1417
+  void Unparse(const SubmoduleStmt &x) {  // R1417
     Word("SUBMODULE ("), WalkTupleElements(x.t, ")"), Indent();
   }
   void Unparse(const ParentIdentifier &x) {  // R1418
