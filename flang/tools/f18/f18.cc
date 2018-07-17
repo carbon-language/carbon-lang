@@ -138,12 +138,12 @@ std::string RelocatableName(const DriverOptions &driver, std::string path) {
     return driver.outputPath;
   }
   std::string base{path};
-  auto slash = base.rfind("/");
+  auto slash{base.rfind("/")};
   if (slash != std::string::npos) {
     base = base.substr(slash + 1);
   }
   std::string relo{base};
-  auto dot = base.rfind(".");
+  auto dot{base.rfind(".")};
   if (dot != std::string::npos) {
     relo = base.substr(0, dot);
   }
@@ -156,7 +156,7 @@ int exitStatus{EXIT_SUCCESS};
 std::string CompileFortran(
     std::string path, Fortran::parser::Options options, DriverOptions &driver) {
   if (!driver.forcedForm) {
-    auto dot = path.rfind(".");
+    auto dot{path.rfind(".")};
     if (dot != std::string::npos) {
       std::string suffix{path.substr(dot + 1)};
       options.isFixedForm = suffix == "f" || suffix == "F" || suffix == "ff";
@@ -307,7 +307,7 @@ int main(int argc, char *const argv[]) {
     if (arg.empty()) {
     } else if (arg.at(0) != '-') {
       anyFiles = true;
-      auto dot = arg.rfind(".");
+      auto dot{arg.rfind(".")};
       if (dot == std::string::npos) {
         driver.pgf90Args.push_back(arg);
       } else {
@@ -378,7 +378,7 @@ int main(int argc, char *const argv[]) {
       driver.outputPath = args.front();
       args.pop_front();
     } else if (arg.substr(0, 2) == "-D") {
-      auto eq = arg.find('=');
+      auto eq{arg.find('=')};
       if (eq == std::string::npos) {
         options.predefinitions.emplace_back(arg.substr(2), "1");
       } else {

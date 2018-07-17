@@ -27,7 +27,10 @@
   } \
   void Dump(std::ostream &os, const ns::name &x) { os << x << '\n'; } \
   void Dump(std::ostream &os, const ns::name *x) { \
-    if (x == nullptr) os << "null\n"; else Dump(os, *x); \
+    if (x == nullptr) \
+      os << "null\n"; \
+    else \
+      Dump(os, *x); \
   } \
   void Dump(const ns::name &x) { Dump(std::cerr, x); } \
   void Dump(const ns::name *x) { Dump(std::cerr, *x); }
