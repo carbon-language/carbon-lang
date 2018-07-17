@@ -114,7 +114,7 @@ bool ModFileWriter::WriteOne(const Symbol &modSymbol) {
   std::string path{dir_ + '/' + name + extension};
   std::ofstream os{path};
   PutSymbols(*modSymbol.scope());
-  std::string all{std::move(GetAsString(name))};
+  std::string all{GetAsString(name)};
   auto header{GetHeader(all)};
   os << header << all;
   os.close();
