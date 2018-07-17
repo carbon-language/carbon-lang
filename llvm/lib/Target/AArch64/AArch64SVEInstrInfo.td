@@ -115,6 +115,7 @@ let Predicates = [HasSVE] in {
   defm COMPACT_ZPZ : sve_int_perm_compact<"compact">;
   defm INSR_ZR : sve_int_perm_insrs<"insr">;
   defm INSR_ZV : sve_int_perm_insrv<"insr">;
+  def  EXT_ZZI : sve_int_perm_extract_i<"ext">;
 
   defm SUNPKLO_ZZ : sve_int_perm_unpk<0b00, "sunpklo">;
   defm SUNPKHI_ZZ : sve_int_perm_unpk<0b01, "sunpkhi">;

@@ -728,6 +728,26 @@ multiclass sve_int_perm_insrv<string asm> {
   def _D : sve_int_perm_insrv<0b11, asm, ZPR64, FPR64>;
 }
 
+//===----------------------------------------------------------------------===//
+// SVE Permute - Extract Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_perm_extract_i<string asm>
+: I<(outs ZPR8:$Zdn), (ins ZPR8:$_Zdn, ZPR8:$Zm, imm0_255:$imm8),
+  asm, "\t$Zdn, $_Zdn, $Zm, $imm8",
+  "", []>, Sched<[]> {
+  bits<5> Zdn;
+  bits<5> Zm;
+  bits<8> imm8;
+  let Inst{31-21} = 0b00000101001;
+  let Inst{20-16} = imm8{7-3};
+  let Inst{15-13} = 0b000;
+  let Inst{12-10} = imm8{2-0};
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
 
 //===----------------------------------------------------------------------===//
 // SVE Vector Select Group
