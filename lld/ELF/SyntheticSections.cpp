@@ -368,15 +368,11 @@ EhFrameSection::EhFrameSection()
 // and where their relocations point to.
 template <class ELFT, class RelTy>
 CieRecord *EhFrameSection::addCie(EhSectionPiece &Cie, ArrayRef<RelTy> Rels) {
-  auto *Sec = cast<EhInputSection>(Cie.Sec);
-  if (read32(Cie.data().data() + 4) != 0)
-    fatal(toString(Sec) + ": CIE expected at beginning of .eh_frame");
-
   Symbol *Personality = nullptr;
   unsigned FirstRelI = Cie.FirstRelocation;
   if (FirstRelI != (unsigned)-1)
     Personality =
-        &Sec->template getFile<ELFT>()->getRelocTargetSym(Rels[FirstRelI]);
+        &Cie.Sec->template getFile<ELFT>()->getRelocTargetSym(Rels[FirstRelI]);
 
   // Search for an existing CIE by CIE contents/relocation target pair.
   CieRecord *&Rec = CieMap[{Cie.data(), Personality}];
