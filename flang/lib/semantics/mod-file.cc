@@ -60,6 +60,7 @@ private:
   std::string dir_{"."};
   // The mod file consists of uses, declarations, and contained subprograms:
   std::stringstream uses_;
+  std::stringstream useExtraAttrs_;  // attrs added to used entity
   std::stringstream decls_;
   std::stringstream contains_;
   // Any errors encountered during writing:
@@ -74,6 +75,7 @@ private:
   void PutDerivedType(const Symbol &);
   void PutSubprogram(const Symbol &);
   void PutUse(const Symbol &);
+  void PutUseExtraAttr(Attr, const Symbol &, const Symbol &);
   static void PutEntity(std::ostream &, const Symbol &);
   static void PutObjectEntity(std::ostream &, const Symbol &);
   static void PutProcEntity(std::ostream &, const Symbol &);
@@ -131,6 +133,8 @@ std::string ModFileWriter::GetAsString(const std::string &name) {
   all << "module " << name << '\n';
   all << uses_.str();
   uses_.str(""s);
+  all << useExtraAttrs_.str();
+  useExtraAttrs_.str(""s);
   all << decls_.str();
   decls_.str(""s);
   auto str{contains_.str()};
@@ -251,12 +255,24 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
 
 void ModFileWriter::PutUse(const Symbol &symbol) {
   auto &details{symbol.get<UseDetails>()};
+  auto &use{details.symbol()};
   PutLower(uses_ << "use ", details.module());
   PutLower(uses_ << ",only:", symbol);
-  if (details.symbol().name() != symbol.name()) {
-    PutLower(uses_ << "=>", details.symbol());
+  if (use.name() != symbol.name()) {
+    PutLower(uses_ << "=>", use);
   }
   uses_ << '\n';
+  PutUseExtraAttr(Attr::VOLATILE, symbol, use);
+  PutUseExtraAttr(Attr::ASYNCHRONOUS, symbol, use);
+}
+
+// We have "USE local => use" in this module. If attr was added locally
+// (i.e. on local but not on use), also write it out in the mod file.
+void ModFileWriter::PutUseExtraAttr(Attr attr, const Symbol &local, const Symbol &use) {
+  if (local.attrs().test(attr) && !use.attrs().test(attr)) {
+    PutLower(useExtraAttrs_, AttrToString(attr)) << "::";
+    PutLower(useExtraAttrs_, local) << '\n';
+  }
 }
 
 void ModFileWriter::PutEntity(std::ostream &os, const Symbol &symbol) {
