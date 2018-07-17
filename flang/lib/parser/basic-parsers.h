@@ -29,9 +29,11 @@
 // template functions.  See parser-combinators.txt for documentation.
 
 #include "char-block.h"
+#include "features.h"
 #include "message.h"
 #include "parse-state.h"
 #include "provenance.h"
+#include "user-state.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include <cstring>
@@ -60,8 +62,6 @@ public:
 private:
   const MessageFixedText text_;
 };
-
-class Success {};  // for when one must return something that's present
 
 template<typename A = Success> inline constexpr auto fail(MessageFixedText t) {
   return FailParser<A>{t};
@@ -400,7 +400,8 @@ public:
       messages.Annex(state.messages());
     }
     state.messages() = std::move(messages);
-    return {};
+    std::optional<resultType> result;
+    return result;
   }
 
 private:
@@ -1297,26 +1298,25 @@ constexpr struct NextCh {
   }
 } nextCh;
 
-// If a is a parser for nonstandard usage, extension(a) is a parser that
-// is disabled in strict conformance mode and otherwise sets a violation flag
-// and may emit a warning message, if those are enabled.
-template<typename PA> class NonstandardParser {
+// If a is a parser for some nonstandard language feature LF, extension<LF>(a)
+// is a parser that optionally enabled, sets a strict conformance violation
+// flag, and may emit a warning message, if those are enabled.
+template<LanguageFeature LF, typename PA> class NonstandardParser {
 public:
   using resultType = typename PA::resultType;
   constexpr NonstandardParser(const NonstandardParser &) = default;
   constexpr NonstandardParser(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    if (state.strictConformance()) {
-      return {};
+    if (UserState * ustate{state.userState()}) {
+      if (!ustate->IsEnabled(LF)) {
+        return {};
+      }
     }
     auto at{state.GetLocation()};
     auto result{parser_.Parse(state)};
     if (result.has_value()) {
-      state.set_anyConformanceViolation();
-      if (state.warnOnNonstandardUsage()) {
-        state.Say(
-            CharBlock{at, state.GetLocation()}, "nonstandard usage"_en_US);
-      }
+      state.Nonstandard(
+          CharBlock{at, state.GetLocation()}, LF, "nonstandard usage"_en_US);
     }
     return result;
   }
@@ -1325,29 +1325,30 @@ private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto extension(const PA &parser) {
-  return NonstandardParser<PA>(parser);
+template<LanguageFeature LF = LanguageFeature::Extension, typename PA>
+inline constexpr auto extension(const PA &parser) {
+  return NonstandardParser<LF, PA>(parser);
 }
 
-// If a is a parser for deprecated usage, deprecated(a) is a parser that
-// is disabled if strict standard compliance is enforced,and otherwise
-// sets of violation flag and may emit a warning.
-template<typename PA> class DeprecatedParser {
+// If a is a parser for some deprecated or deleted language feature LF,
+// deprecated<LF>(a) is a parser that is optionally enabled, sets a strict
+// conformance violation flag, and may emit a warning message, if enabled.
+template<LanguageFeature LF, typename PA> class DeprecatedParser {
 public:
   using resultType = typename PA::resultType;
   constexpr DeprecatedParser(const DeprecatedParser &) = default;
   constexpr DeprecatedParser(const PA &parser) : parser_{parser} {}
   std::optional<resultType> Parse(ParseState &state) const {
-    if (state.strictConformance()) {
-      return {};
+    if (UserState * ustate{state.userState()}) {
+      if (!ustate->IsEnabled(LF)) {
+        return {};
+      }
     }
     auto at{state.GetLocation()};
     auto result{parser_.Parse(state)};
-    if (result) {
-      state.set_anyConformanceViolation();
-      if (state.warnOnDeprecatedUsage()) {
-        state.Say(CharBlock{at, state.GetLocation()}, "deprecated usage"_en_US);
-      }
+    if (result.has_value()) {
+      state.Nonstandard(
+          CharBlock{at, state.GetLocation()}, LF, "deprecated usage"_en_US);
     }
     return result;
   }
@@ -1356,8 +1357,9 @@ private:
   const PA parser_;
 };
 
-template<typename PA> inline constexpr auto deprecated(const PA &parser) {
-  return DeprecatedParser<PA>(parser);
+template<LanguageFeature LF = LanguageFeature::Deprecation, typename PA>
+inline constexpr auto deprecated(const PA &parser) {
+  return DeprecatedParser<LF, PA>(parser);
 }
 
 // Parsing objects with "source" members.

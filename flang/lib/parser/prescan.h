@@ -180,7 +180,7 @@ private:
   int fixedFormColumnLimit_{72};
   Encoding encoding_{Encoding::UTF8};
   bool enableOldDebugLines_{false};
-  bool enableBackslashEscapesInCharLiterals_{true};
+  bool enableBackslashEscapesInCharLiterals_{false};
   bool warnOnNonstandardUsage_{false};
   int delimiterNesting_{0};
   int prescannerNesting_{0};

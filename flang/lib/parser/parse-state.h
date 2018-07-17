@@ -22,8 +22,10 @@
 // and recovery during parsing!
 
 #include "characters.h"
+#include "features.h"
 #include "message.h"
 #include "provenance.h"
+#include "user-state.h"
 #include "../common/idioms.h"
 #include <cstddef>
 #include <cstring>
@@ -34,8 +36,6 @@
 
 namespace Fortran::parser {
 
-class UserState;
-
 class ParseState {
 public:
   // TODO: Add a constructor for parsing a normalized module file.
@@ -44,10 +44,7 @@ public:
   ParseState(const ParseState &that)
     : p_{that.p_}, limit_{that.limit_}, context_{that.context_},
       userState_{that.userState_}, inFixedForm_{that.inFixedForm_},
-      encoding_{that.encoding_}, strictConformance_{that.strictConformance_},
-      warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
-      warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
-      anyErrorRecovery_{that.anyErrorRecovery_},
+      encoding_{that.encoding_}, anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
       deferMessages_{that.deferMessages_},
       anyDeferredMessages_{that.anyDeferredMessages_},
@@ -56,9 +53,6 @@ public:
     : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
       inFixedForm_{that.inFixedForm_}, encoding_{that.encoding_},
-      strictConformance_{that.strictConformance_},
-      warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
-      warnOnDeprecatedUsage_{that.warnOnDeprecatedUsage_},
       anyErrorRecovery_{that.anyErrorRecovery_},
       anyConformanceViolation_{that.anyConformanceViolation_},
       deferMessages_{that.deferMessages_},
@@ -67,9 +61,7 @@ public:
   ParseState &operator=(const ParseState &that) {
     p_ = that.p_, limit_ = that.limit_, context_ = that.context_;
     userState_ = that.userState_, inFixedForm_ = that.inFixedForm_;
-    encoding_ = that.encoding_, strictConformance_ = that.strictConformance_;
-    warnOnNonstandardUsage_ = that.warnOnNonstandardUsage_;
-    warnOnDeprecatedUsage_ = that.warnOnDeprecatedUsage_;
+    encoding_ = that.encoding_;
     anyErrorRecovery_ = that.anyErrorRecovery_;
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
@@ -81,9 +73,7 @@ public:
     p_ = that.p_, limit_ = that.limit_, messages_ = std::move(that.messages_);
     context_ = std::move(that.context_);
     userState_ = that.userState_, inFixedForm_ = that.inFixedForm_;
-    encoding_ = that.encoding_, strictConformance_ = that.strictConformance_;
-    warnOnNonstandardUsage_ = that.warnOnNonstandardUsage_;
-    warnOnDeprecatedUsage_ = that.warnOnDeprecatedUsage_;
+    encoding_ = that.encoding_;
     anyErrorRecovery_ = that.anyErrorRecovery_;
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
@@ -113,24 +103,6 @@ public:
   bool inFixedForm() const { return inFixedForm_; }
   ParseState &set_inFixedForm(bool yes = true) {
     inFixedForm_ = yes;
-    return *this;
-  }
-
-  bool strictConformance() const { return strictConformance_; }
-  ParseState &set_strictConformance(bool yes = true) {
-    strictConformance_ = yes;
-    return *this;
-  }
-
-  bool warnOnNonstandardUsage() const { return warnOnNonstandardUsage_; }
-  ParseState &set_warnOnNonstandardUsage(bool yes = true) {
-    warnOnNonstandardUsage_ = yes;
-    return *this;
-  }
-
-  bool warnOnDeprecatedUsage() const { return warnOnDeprecatedUsage_; }
-  ParseState &set_warnOnDeprecatedUsage(bool yes = true) {
-    warnOnDeprecatedUsage_ = yes;
     return *this;
   }
 
@@ -201,6 +173,17 @@ public:
     }
   }
 
+  void Nonstandard(LanguageFeature lf, const MessageFixedText &msg) {
+    Nonstandard(p_, lf, msg);
+  }
+  void Nonstandard(
+      CharBlock range, LanguageFeature lf, const MessageFixedText &msg) {
+    anyConformanceViolation_ = true;
+    if (userState_ != nullptr && userState_->Warn(lf)) {
+      Say(range, msg);
+    }
+  }
+
   bool IsAtEnd() const { return p_ >= limit_; }
 
   const char *UncheckedAdvance(std::size_t n = 1) {
@@ -240,9 +223,6 @@ private:
 
   bool inFixedForm_{false};
   Encoding encoding_{Encoding::UTF8};
-  bool strictConformance_{false};
-  bool warnOnNonstandardUsage_{false};
-  bool warnOnDeprecatedUsage_{false};
   bool anyErrorRecovery_{false};
   bool anyConformanceViolation_{false};
   bool deferMessages_{false};

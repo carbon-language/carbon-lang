@@ -20,9 +20,10 @@
 // parse tree construction so as to avoid any need for representing
 // state in static data.
 
-#include "basic-parsers.h"
 #include "char-block.h"
+#include "features.h"
 #include "parse-tree.h"
+#include "../common/idioms.h"
 #include <cinttypes>
 #include <optional>
 #include <ostream>
@@ -34,6 +35,8 @@ namespace Fortran::parser {
 class CookedSource;
 class ParsingLog;
 class ParseState;
+
+class Success {};  // for when one must return something that's present
 
 class UserState {
 public:
@@ -88,6 +91,41 @@ public:
     return oldStructureComponents_.find(name) != oldStructureComponents_.end();
   }
 
+  UserState &Enable(LanguageFeature f) {
+    enabled_.set(f);
+    return *this;
+  }
+  UserState &Enable(LanguageFeatures fs) {
+    enabled_ |= fs;
+    return *this;
+  }
+  UserState &Disable(LanguageFeature f) {
+    enabled_.reset(f);
+    return *this;
+  }
+  UserState &Disable(LanguageFeatures fs) {
+    enabled_ &= ~fs;
+    return *this;
+  }
+  bool IsEnabled(LanguageFeature f) { return enabled_.test(f); }
+  UserState &EnableWarning(LanguageFeature f) {
+    warning_.set(f);
+    return *this;
+  }
+  UserState &EnableWarnings(LanguageFeatures fs) {
+    warning_ |= fs;
+    return *this;
+  }
+  UserState &DisableWarning(LanguageFeature f) {
+    warning_.reset(f);
+    return *this;
+  }
+  UserState &DisableWarnings(LanguageFeatures fs) {
+    warning_ &= ~fs;
+    return *this;
+  }
+  bool Warn(LanguageFeature f) { return warning_.test(f); }
+
 private:
   const CookedSource &cooked_;
 
@@ -100,6 +138,8 @@ private:
   int nonlabelDoConstructNestingDepth_{0};
 
   std::set<CharBlock> oldStructureComponents_;
+
+  LanguageFeatures enabled_, warning_;
 };
 
 // Definitions of parser classes that manipulate the UserState.

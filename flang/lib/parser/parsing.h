@@ -16,6 +16,7 @@
 #define FORTRAN_PARSER_PARSING_H_
 
 #include "characters.h"
+#include "features.h"
 #include "instrumented-parser.h"
 #include "message.h"
 #include "parse-tree.h"
@@ -35,10 +36,8 @@ struct Options {
 
   bool isFixedForm{false};
   int fixedFormColumns{72};
-  bool enableBackslashEscapes{true};
-  bool enableOldDebugLines{false};
   bool isStrictlyStandard{false};
-  bool enableOpenMP{false};
+  LanguageFeatures enabled, warning;
   Encoding encoding{Encoding::UTF8};
   std::vector<std::string> searchDirectories;
   std::vector<Predefinition> predefinitions;

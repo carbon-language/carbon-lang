@@ -67,11 +67,13 @@ void Parsing::Prescan(const std::string &path, Options options) {
   prescanner.set_fixedForm(options.isFixedForm)
       .set_fixedFormColumnLimit(options.fixedFormColumns)
       .set_encoding(options.encoding)
-      .set_enableBackslashEscapesInCharLiterals(options.enableBackslashEscapes)
-      .set_enableOldDebugLines(options.enableOldDebugLines)
+      .set_enableBackslashEscapesInCharLiterals(  // TODO pmk
+          options.enabled.test(LanguageFeature::BackslashEscapes))
+      .set_enableOldDebugLines(
+          options.enabled.test(LanguageFeature::OldDebugLines))
       .set_warnOnNonstandardUsage(options_.isStrictlyStandard)
       .AddCompilerDirectiveSentinel("dir$");
-  if (options.enableOpenMP) {
+  if (options.enabled.test(LanguageFeature::OpenMP)) {
     prescanner.AddCompilerDirectiveSentinel("$omp");
   }
   ProvenanceRange range{
@@ -100,11 +102,11 @@ void Parsing::Parse(std::ostream *out) {
   userState.set_debugOutput(out)
       .set_instrumentedParse(options_.instrumentedParse)
       .set_log(&log_);
+  userState.Enable(options_.enabled);
+  userState.EnableWarnings(options_.warning);
   ParseState parseState{cooked_};
   parseState.set_inFixedForm(options_.isFixedForm)
       .set_encoding(options_.encoding)
-      .set_warnOnNonstandardUsage(options_.isStrictlyStandard)
-      .set_warnOnDeprecatedUsage(options_.isStrictlyStandard)
       .set_userState(&userState);
   parseTree_ = program.Parse(parseState);
   CHECK(

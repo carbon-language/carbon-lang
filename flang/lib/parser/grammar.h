@@ -152,7 +152,9 @@ constexpr auto namedIntrinsicOperator{
     ".OR." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
     ".EQV." >> pure(DefinedOperator::IntrinsicOperator::EQV) ||
     ".NEQV." >> pure(DefinedOperator::IntrinsicOperator::NEQV) ||
-    extension(".XOR." >> pure(DefinedOperator::IntrinsicOperator::XOR) ||
+    extension<LanguageFeature::XOROperator>(
+        ".XOR." >> pure(DefinedOperator::IntrinsicOperator::XOR)) ||
+    extension<LanguageFeature::LogicalAbbreviations>(
         ".N." >> pure(DefinedOperator::IntrinsicOperator::NOT) ||
         ".A." >> pure(DefinedOperator::IntrinsicOperator::AND) ||
         ".O." >> pure(DefinedOperator::IntrinsicOperator::OR) ||
@@ -635,11 +637,16 @@ TYPE_CONTEXT_PARSER(
 // R725 logical-literal-constant ->
 //        .TRUE. [_ kind-param] | .FALSE. [_ kind-param]
 // Also accept .T. and .F. as extensions.
-TYPE_PARSER(construct<LogicalLiteralConstant>(
-                (".TRUE."_tok || extension(".T."_tok)) >> pure(true),
-                maybe(underscore >> kindParam)) ||
+TYPE_PARSER(
     construct<LogicalLiteralConstant>(
-        (".FALSE."_tok || extension(".F."_tok)) >> pure(false),
+        (".TRUE."_tok ||
+            extension<LanguageFeature::LogicalAbbreviations>(".T."_tok)) >>
+            pure(true),
+        maybe(underscore >> kindParam)) ||
+    construct<LogicalLiteralConstant>(
+        (".FALSE."_tok ||
+            extension<LanguageFeature::LogicalAbbreviations>(".F."_tok)) >>
+            pure(false),
         maybe(underscore >> kindParam)))
 
 // R726 derived-type-def ->
@@ -1792,7 +1799,8 @@ constexpr struct Level5Expr {
           }};
       auto more{".EQV." >> applyLambda(eqv, equivOperand) ||
           ".NEQV." >> applyLambda(neqv, equivOperand) ||
-          extension(".XOR." >> applyLambda(logicalXor, equivOperand))};
+          extension<LanguageFeature::XOROperator>(
+              ".XOR." >> applyLambda(logicalXor, equivOperand))};
       while (std::optional<Expr> next{attempt(more).Parse(state)}) {
         result = std::move(next);
       }

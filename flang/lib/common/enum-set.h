@@ -149,8 +149,8 @@ public:
     bitset_.reset();
     return *this;
   }
-  constexpr EnumSet &reset(enumerationType x, bool value = true) {
-    bitset_.reset(static_cast<std::size_t>(x), value);
+  constexpr EnumSet &reset(enumerationType x) {
+    bitset_.reset(static_cast<std::size_t>(x));
     return *this;
   }
   constexpr EnumSet &flip() {
