@@ -300,8 +300,7 @@ define <2 x double> @floor_v2f64_mask_load(<2 x double>* %ptr, <2 x double> %pas
 ; CHECK-LABEL: floor_v2f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %xmm1
-; CHECK-NEXT:    vrndscalepd $9, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -314,8 +313,7 @@ define <4 x float> @floor_v4f32_mask_load(<4 x float>* %ptr, <4 x float> %passth
 ; CHECK-LABEL: floor_v4f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %xmm1
-; CHECK-NEXT:    vrndscaleps $9, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -328,8 +326,7 @@ define <4 x double> @floor_v4f64_mask_load(<4 x double>* %ptr, <4 x double> %pas
 ; CHECK-LABEL: floor_v4f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %ymm1
-; CHECK-NEXT:    vrndscalepd $9, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -342,8 +339,7 @@ define <8 x float> @floor_v8f32_mask_load(<8 x float>* %ptr, <8 x float> %passth
 ; CHECK-LABEL: floor_v8f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %ymm1
-; CHECK-NEXT:    vrndscaleps $9, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -356,8 +352,7 @@ define <8 x double> @floor_v8f64_mask_load(<8 x double>* %ptr, <8 x double> %pas
 ; CHECK-LABEL: floor_v8f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %zmm1
-; CHECK-NEXT:    vrndscalepd $9, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -370,8 +365,7 @@ define <16 x float> @floor_v16f32_mask_load(<16 x float>* %ptr, <16 x float> %pa
 ; CHECK-LABEL: floor_v16f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %zmm1
-; CHECK-NEXT:    vrndscaleps $9, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -384,8 +378,7 @@ define <2 x double> @floor_v2f64_maskz_load(<2 x double>* %ptr, <2 x i64> %cmp) 
 ; CHECK-LABEL: floor_v2f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %xmm0
-; CHECK-NEXT:    vrndscalepd $9, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -398,8 +391,7 @@ define <4 x float> @floor_v4f32_maskz_load(<4 x float>* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: floor_v4f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %xmm0
-; CHECK-NEXT:    vrndscaleps $9, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -412,8 +404,7 @@ define <4 x double> @floor_v4f64_maskz_load(<4 x double>* %ptr, <4 x i64> %cmp) 
 ; CHECK-LABEL: floor_v4f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %ymm0
-; CHECK-NEXT:    vrndscalepd $9, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -426,8 +417,7 @@ define <8 x float> @floor_v8f32_maskz_load(<8 x float>* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: floor_v8f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %ymm0
-; CHECK-NEXT:    vrndscaleps $9, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -440,8 +430,7 @@ define <8 x double> @floor_v8f64_maskz_load(<8 x double>* %ptr, <8 x i64> %cmp) 
 ; CHECK-LABEL: floor_v8f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $9, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -454,8 +443,7 @@ define <16 x float> @floor_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp
 ; CHECK-LABEL: floor_v16f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $9, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -467,8 +455,7 @@ define <16 x float> @floor_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp
 define <2 x double> @floor_v2f64_broadcast(double* %ptr) {
 ; CHECK-LABEL: floor_v2f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $9, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to2}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <2 x double> undef, double %ps, i32 0
@@ -480,8 +467,7 @@ define <2 x double> @floor_v2f64_broadcast(double* %ptr) {
 define <4 x float> @floor_v4f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: floor_v4f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $9, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to4}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <4 x float> undef, float %ps, i32 0
@@ -493,8 +479,7 @@ define <4 x float> @floor_v4f32_broadcast(float* %ptr) {
 define <4 x double> @floor_v4f64_broadcast(double* %ptr){
 ; CHECK-LABEL: floor_v4f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $9, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to4}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <4 x double> undef, double %ps, i32 0
@@ -506,8 +491,7 @@ define <4 x double> @floor_v4f64_broadcast(double* %ptr){
 define <8 x float> @floor_v8f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: floor_v8f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $9, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to8}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <8 x float> undef, float %ps, i32 0
@@ -519,8 +503,7 @@ define <8 x float> @floor_v8f32_broadcast(float* %ptr) {
 define <8 x double> @floor_v8f64_broadcast(double* %ptr){
 ; CHECK-LABEL: floor_v8f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $9, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to8}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <8 x double> undef, double %ps, i32 0
@@ -532,8 +515,7 @@ define <8 x double> @floor_v8f64_broadcast(double* %ptr){
 define <16 x float> @floor_v16f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: floor_v16f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $9, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to16}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <16 x float> undef, float %ps, i32 0
@@ -546,8 +528,7 @@ define <2 x double> @floor_v2f64_mask_broadcast(double* %ptr, <2 x double> %pass
 ; CHECK-LABEL: floor_v2f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm1 = mem[0,0]
-; CHECK-NEXT:    vrndscalepd $9, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to2}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -562,8 +543,7 @@ define <4 x float> @floor_v4f32_mask_broadcast(float* %ptr, <4 x float> %passthr
 ; CHECK-LABEL: floor_v4f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm1
-; CHECK-NEXT:    vrndscaleps $9, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to4}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -578,8 +558,7 @@ define <4 x double> @floor_v4f64_mask_broadcast(double* %ptr, <4 x double> %pass
 ; CHECK-LABEL: floor_v4f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm1
-; CHECK-NEXT:    vrndscalepd $9, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to4}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -594,8 +573,7 @@ define <8 x float> @floor_v8f32_mask_broadcast(float* %ptr, <8 x float> %passthr
 ; CHECK-LABEL: floor_v8f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm1
-; CHECK-NEXT:    vrndscaleps $9, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to8}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -610,8 +588,7 @@ define <8 x double> @floor_v8f64_mask_broadcast(double* %ptr, <8 x double> %pass
 ; CHECK-LABEL: floor_v8f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm1
-; CHECK-NEXT:    vrndscalepd $9, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to8}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -626,8 +603,7 @@ define <16 x float> @floor_v16f32_mask_broadcast(float* %ptr, <16 x float> %pass
 ; CHECK-LABEL: floor_v16f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm1
-; CHECK-NEXT:    vrndscaleps $9, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to16}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -642,8 +618,7 @@ define <2 x double> @floor_v2f64_maskz_broadcast(double* %ptr, <2 x i64> %cmp) {
 ; CHECK-LABEL: floor_v2f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vrndscalepd $9, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to2}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -658,8 +633,7 @@ define <4 x float> @floor_v4f32_maskz_broadcast(float* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: floor_v4f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vrndscaleps $9, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to4}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -674,8 +648,7 @@ define <4 x double> @floor_v4f64_maskz_broadcast(double* %ptr, <4 x i64> %cmp) {
 ; CHECK-LABEL: floor_v4f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vrndscalepd $9, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to4}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -690,8 +663,7 @@ define <8 x float> @floor_v8f32_maskz_broadcast(float* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: floor_v8f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vrndscaleps $9, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to8}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -706,8 +678,7 @@ define <8 x double> @floor_v8f64_maskz_broadcast(double* %ptr, <8 x i64> %cmp) {
 ; CHECK-LABEL: floor_v8f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $9, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $9, (%rdi){1to8}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -722,8 +693,7 @@ define <16 x float> @floor_v16f32_maskz_broadcast(float* %ptr, <16 x i32> %cmp) 
 ; CHECK-LABEL: floor_v16f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $9, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $9, (%rdi){1to16}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1002,8 +972,7 @@ define <2 x double> @ceil_v2f64_mask_load(<2 x double>* %ptr, <2 x double> %pass
 ; CHECK-LABEL: ceil_v2f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %xmm1
-; CHECK-NEXT:    vrndscalepd $10, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -1016,8 +985,7 @@ define <4 x float> @ceil_v4f32_mask_load(<4 x float>* %ptr, <4 x float> %passthr
 ; CHECK-LABEL: ceil_v4f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %xmm1
-; CHECK-NEXT:    vrndscaleps $10, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -1030,8 +998,7 @@ define <4 x double> @ceil_v4f64_mask_load(<4 x double>* %ptr, <4 x double> %pass
 ; CHECK-LABEL: ceil_v4f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %ymm1
-; CHECK-NEXT:    vrndscalepd $10, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -1044,8 +1011,7 @@ define <8 x float> @ceil_v8f32_mask_load(<8 x float>* %ptr, <8 x float> %passthr
 ; CHECK-LABEL: ceil_v8f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %ymm1
-; CHECK-NEXT:    vrndscaleps $10, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -1058,8 +1024,7 @@ define <8 x double> @ceil_v8f64_mask_load(<8 x double>* %ptr, <8 x double> %pass
 ; CHECK-LABEL: ceil_v8f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %zmm1
-; CHECK-NEXT:    vrndscalepd $10, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -1072,8 +1037,7 @@ define <16 x float> @ceil_v16f32_mask_load(<16 x float>* %ptr, <16 x float> %pas
 ; CHECK-LABEL: ceil_v16f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %zmm1
-; CHECK-NEXT:    vrndscaleps $10, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -1086,8 +1050,7 @@ define <2 x double> @ceil_v2f64_maskz_load(<2 x double>* %ptr, <2 x i64> %cmp) {
 ; CHECK-LABEL: ceil_v2f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %xmm0
-; CHECK-NEXT:    vrndscalepd $10, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -1100,8 +1063,7 @@ define <4 x float> @ceil_v4f32_maskz_load(<4 x float>* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: ceil_v4f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %xmm0
-; CHECK-NEXT:    vrndscaleps $10, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -1114,8 +1076,7 @@ define <4 x double> @ceil_v4f64_maskz_load(<4 x double>* %ptr, <4 x i64> %cmp) {
 ; CHECK-LABEL: ceil_v4f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %ymm0
-; CHECK-NEXT:    vrndscalepd $10, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -1128,8 +1089,7 @@ define <8 x float> @ceil_v8f32_maskz_load(<8 x float>* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: ceil_v8f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %ymm0
-; CHECK-NEXT:    vrndscaleps $10, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -1142,8 +1102,7 @@ define <8 x double> @ceil_v8f64_maskz_load(<8 x double>* %ptr, <8 x i64> %cmp) {
 ; CHECK-LABEL: ceil_v8f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vmovapd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $10, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -1156,8 +1115,7 @@ define <16 x float> @ceil_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp)
 ; CHECK-LABEL: ceil_v16f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vmovaps (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $10, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -1169,8 +1127,7 @@ define <16 x float> @ceil_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp)
 define <2 x double> @ceil_v2f64_broadcast(double* %ptr) {
 ; CHECK-LABEL: ceil_v2f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $10, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to2}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <2 x double> undef, double %ps, i32 0
@@ -1182,8 +1139,7 @@ define <2 x double> @ceil_v2f64_broadcast(double* %ptr) {
 define <4 x float> @ceil_v4f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: ceil_v4f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $10, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to4}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <4 x float> undef, float %ps, i32 0
@@ -1195,8 +1151,7 @@ define <4 x float> @ceil_v4f32_broadcast(float* %ptr) {
 define <4 x double> @ceil_v4f64_broadcast(double* %ptr){
 ; CHECK-LABEL: ceil_v4f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $10, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to4}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <4 x double> undef, double %ps, i32 0
@@ -1208,8 +1163,7 @@ define <4 x double> @ceil_v4f64_broadcast(double* %ptr){
 define <8 x float> @ceil_v8f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: ceil_v8f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $10, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to8}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <8 x float> undef, float %ps, i32 0
@@ -1221,8 +1175,7 @@ define <8 x float> @ceil_v8f32_broadcast(float* %ptr) {
 define <8 x double> @ceil_v8f64_broadcast(double* %ptr){
 ; CHECK-LABEL: ceil_v8f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $10, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to8}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <8 x double> undef, double %ps, i32 0
@@ -1234,8 +1187,7 @@ define <8 x double> @ceil_v8f64_broadcast(double* %ptr){
 define <16 x float> @ceil_v16f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: ceil_v16f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $10, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to16}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <16 x float> undef, float %ps, i32 0
@@ -1248,8 +1200,7 @@ define <2 x double> @ceil_v2f64_mask_broadcast(double* %ptr, <2 x double> %passt
 ; CHECK-LABEL: ceil_v2f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm1 = mem[0,0]
-; CHECK-NEXT:    vrndscalepd $10, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to2}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -1264,8 +1215,7 @@ define <4 x float> @ceil_v4f32_mask_broadcast(float* %ptr, <4 x float> %passthru
 ; CHECK-LABEL: ceil_v4f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm1
-; CHECK-NEXT:    vrndscaleps $10, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to4}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1280,8 +1230,7 @@ define <4 x double> @ceil_v4f64_mask_broadcast(double* %ptr, <4 x double> %passt
 ; CHECK-LABEL: ceil_v4f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm1
-; CHECK-NEXT:    vrndscalepd $10, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to4}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -1296,8 +1245,7 @@ define <8 x float> @ceil_v8f32_mask_broadcast(float* %ptr, <8 x float> %passthru
 ; CHECK-LABEL: ceil_v8f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm1
-; CHECK-NEXT:    vrndscaleps $10, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to8}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1312,8 +1260,7 @@ define <8 x double> @ceil_v8f64_mask_broadcast(double* %ptr, <8 x double> %passt
 ; CHECK-LABEL: ceil_v8f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm1
-; CHECK-NEXT:    vrndscalepd $10, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to8}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -1328,8 +1275,7 @@ define <16 x float> @ceil_v16f32_mask_broadcast(float* %ptr, <16 x float> %passt
 ; CHECK-LABEL: ceil_v16f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm1
-; CHECK-NEXT:    vrndscaleps $10, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to16}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1344,8 +1290,7 @@ define <2 x double> @ceil_v2f64_maskz_broadcast(double* %ptr, <2 x i64> %cmp) {
 ; CHECK-LABEL: ceil_v2f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vrndscalepd $10, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to2}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -1360,8 +1305,7 @@ define <4 x float> @ceil_v4f32_maskz_broadcast(float* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: ceil_v4f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vrndscaleps $10, %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to4}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1376,8 +1320,7 @@ define <4 x double> @ceil_v4f64_maskz_broadcast(double* %ptr, <4 x i64> %cmp) {
 ; CHECK-LABEL: ceil_v4f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vrndscalepd $10, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to4}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -1392,8 +1335,7 @@ define <8 x float> @ceil_v8f32_maskz_broadcast(float* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: ceil_v8f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vrndscaleps $10, %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to8}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1408,8 +1350,7 @@ define <8 x double> @ceil_v8f64_maskz_broadcast(double* %ptr, <8 x i64> %cmp) {
 ; CHECK-LABEL: ceil_v8f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $10, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $10, (%rdi){1to8}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -1424,8 +1365,7 @@ define <16 x float> @ceil_v16f32_maskz_broadcast(float* %ptr, <16 x i32> %cmp) {
 ; CHECK-LABEL: ceil_v16f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $10, %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $10, (%rdi){1to16}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1554,8 +1494,8 @@ define <2 x double> @trunc_v2f64_mask(<2 x double> %p, <2 x double> %passthru, <
 ; CHECK-LABEL: trunc_v2f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm2, %xmm2, %k1
-; CHECK-NEXT:    vroundpd $11, %xmm0, %xmm0
-; CHECK-NEXT:    vblendmpd %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %t = call <2 x double> @llvm.trunc.v2f64(<2 x double> %p)
@@ -1567,8 +1507,8 @@ define <4 x float> @trunc_v4f32_mask(<4 x float> %p, <4 x float> %passthru, <4 x
 ; CHECK-LABEL: trunc_v4f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm2, %xmm2, %k1
-; CHECK-NEXT:    vroundps $11, %xmm0, %xmm0
-; CHECK-NEXT:    vblendmps %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovaps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %t = call <4 x float> @llvm.trunc.v4f32(<4 x float> %p)
@@ -1580,8 +1520,8 @@ define <4 x double> @trunc_v4f64_mask(<4 x double> %p, <4 x double> %passthru, <
 ; CHECK-LABEL: trunc_v4f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm2, %ymm2, %k1
-; CHECK-NEXT:    vroundpd $11, %ymm0, %ymm0
-; CHECK-NEXT:    vblendmpd %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovapd %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %t = call <4 x double> @llvm.trunc.v4f64(<4 x double> %p)
@@ -1593,8 +1533,8 @@ define <8 x float> @trunc_v8f32_mask(<8 x float> %p, <8 x float> %passthru, <8 x
 ; CHECK-LABEL: trunc_v8f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm2, %ymm2, %k1
-; CHECK-NEXT:    vroundps $11, %ymm0, %ymm0
-; CHECK-NEXT:    vblendmps %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovaps %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %t = call <8 x float> @llvm.trunc.v8f32(<8 x float> %p)
@@ -1606,8 +1546,8 @@ define <8 x double> @trunc_v8f64_mask(<8 x double> %p, <8 x double> %passthru, <
 ; CHECK-LABEL: trunc_v8f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm2, %zmm2, %k1
-; CHECK-NEXT:    vrndscalepd $11, %zmm0, %zmm0
-; CHECK-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovapd %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %t = call <8 x double> @llvm.trunc.v8f64(<8 x double> %p)
@@ -1619,8 +1559,8 @@ define <16 x float> @trunc_v16f32_mask(<16 x float> %p, <16 x float> %passthru, 
 ; CHECK-LABEL: trunc_v16f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm2, %zmm2, %k1
-; CHECK-NEXT:    vrndscaleps $11, %zmm0, %zmm0
-; CHECK-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %t = call <16 x float> @llvm.trunc.v16f32(<16 x float> %p)
@@ -1632,8 +1572,7 @@ define <2 x double> @trunc_v2f64_maskz(<2 x double> %p, <2 x i64> %cmp) {
 ; CHECK-LABEL: trunc_v2f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundpd $11, %xmm0, %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %t = call <2 x double> @llvm.trunc.v2f64(<2 x double> %p)
@@ -1645,8 +1584,7 @@ define <4 x float> @trunc_v4f32_maskz(<4 x float> %p, <4 x i32> %cmp) {
 ; CHECK-LABEL: trunc_v4f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundps $11, %xmm0, %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %t = call <4 x float> @llvm.trunc.v4f32(<4 x float> %p)
@@ -1658,8 +1596,7 @@ define <4 x double> @trunc_v4f64_maskz(<4 x double> %p, <4 x i64> %cmp) {
 ; CHECK-LABEL: trunc_v4f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundpd $11, %ymm0, %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, %ymm0, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %t = call <4 x double> @llvm.trunc.v4f64(<4 x double> %p)
@@ -1671,8 +1608,7 @@ define <8 x float> @trunc_v8f32_maskz(<8 x float> %p, <8 x i32> %cmp) {
 ; CHECK-LABEL: trunc_v8f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundps $11, %ymm0, %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, %ymm0, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %t = call <8 x float> @llvm.trunc.v8f32(<8 x float> %p)
@@ -1684,8 +1620,7 @@ define <8 x double> @trunc_v8f64_maskz(<8 x double> %p, <8 x i64> %cmp) {
 ; CHECK-LABEL: trunc_v8f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscalepd $11, %zmm0, %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %t = call <8 x double> @llvm.trunc.v8f64(<8 x double> %p)
@@ -1697,8 +1632,7 @@ define <16 x float> @trunc_v16f32_maskz(<16 x float> %p, <16 x i32> %cmp) {
 ; CHECK-LABEL: trunc_v16f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscaleps $11, %zmm0, %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %t = call <16 x float> @llvm.trunc.v16f32(<16 x float> %p)
@@ -1710,8 +1644,7 @@ define <2 x double> @trunc_v2f64_mask_load(<2 x double>* %ptr, <2 x double> %pas
 ; CHECK-LABEL: trunc_v2f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundpd $11, (%rdi), %xmm1
-; CHECK-NEXT:    vmovapd %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -1724,8 +1657,7 @@ define <4 x float> @trunc_v4f32_mask_load(<4 x float>* %ptr, <4 x float> %passth
 ; CHECK-LABEL: trunc_v4f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundps $11, (%rdi), %xmm1
-; CHECK-NEXT:    vmovaps %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -1738,8 +1670,7 @@ define <4 x double> @trunc_v4f64_mask_load(<4 x double>* %ptr, <4 x double> %pas
 ; CHECK-LABEL: trunc_v4f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundpd $11, (%rdi), %ymm1
-; CHECK-NEXT:    vmovapd %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -1752,8 +1683,7 @@ define <8 x float> @trunc_v8f32_mask_load(<8 x float>* %ptr, <8 x float> %passth
 ; CHECK-LABEL: trunc_v8f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundps $11, (%rdi), %ymm1
-; CHECK-NEXT:    vmovaps %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -1766,8 +1696,7 @@ define <8 x double> @trunc_v8f64_mask_load(<8 x double>* %ptr, <8 x double> %pas
 ; CHECK-LABEL: trunc_v8f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscalepd $11, (%rdi), %zmm1
-; CHECK-NEXT:    vmovapd %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -1780,8 +1709,7 @@ define <16 x float> @trunc_v16f32_mask_load(<16 x float>* %ptr, <16 x float> %pa
 ; CHECK-LABEL: trunc_v16f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscaleps $11, (%rdi), %zmm1
-; CHECK-NEXT:    vmovaps %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -1794,8 +1722,7 @@ define <2 x double> @trunc_v2f64_maskz_load(<2 x double>* %ptr, <2 x i64> %cmp) 
 ; CHECK-LABEL: trunc_v2f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vroundpd $11, (%rdi), %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -1808,8 +1735,7 @@ define <4 x float> @trunc_v4f32_maskz_load(<4 x float>* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: trunc_v4f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vroundps $11, (%rdi), %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -1822,8 +1748,7 @@ define <4 x double> @trunc_v4f64_maskz_load(<4 x double>* %ptr, <4 x i64> %cmp) 
 ; CHECK-LABEL: trunc_v4f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vroundpd $11, (%rdi), %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -1836,8 +1761,7 @@ define <8 x float> @trunc_v8f32_maskz_load(<8 x float>* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: trunc_v8f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vroundps $11, (%rdi), %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -1850,8 +1774,7 @@ define <8 x double> @trunc_v8f64_maskz_load(<8 x double>* %ptr, <8 x i64> %cmp) 
 ; CHECK-LABEL: trunc_v8f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vrndscalepd $11, (%rdi), %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -1864,8 +1787,7 @@ define <16 x float> @trunc_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp
 ; CHECK-LABEL: trunc_v16f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vrndscaleps $11, (%rdi), %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -1877,8 +1799,7 @@ define <16 x float> @trunc_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp
 define <2 x double> @trunc_v2f64_broadcast(double* %ptr) {
 ; CHECK-LABEL: trunc_v2f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $11, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to2}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <2 x double> undef, double %ps, i32 0
@@ -1890,8 +1811,7 @@ define <2 x double> @trunc_v2f64_broadcast(double* %ptr) {
 define <4 x float> @trunc_v4f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: trunc_v4f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $11, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to4}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <4 x float> undef, float %ps, i32 0
@@ -1903,8 +1823,7 @@ define <4 x float> @trunc_v4f32_broadcast(float* %ptr) {
 define <4 x double> @trunc_v4f64_broadcast(double* %ptr){
 ; CHECK-LABEL: trunc_v4f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $11, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to4}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <4 x double> undef, double %ps, i32 0
@@ -1916,8 +1835,7 @@ define <4 x double> @trunc_v4f64_broadcast(double* %ptr){
 define <8 x float> @trunc_v8f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: trunc_v8f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $11, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to8}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <8 x float> undef, float %ps, i32 0
@@ -1929,8 +1847,7 @@ define <8 x float> @trunc_v8f32_broadcast(float* %ptr) {
 define <8 x double> @trunc_v8f64_broadcast(double* %ptr){
 ; CHECK-LABEL: trunc_v8f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $11, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to8}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <8 x double> undef, double %ps, i32 0
@@ -1942,8 +1859,7 @@ define <8 x double> @trunc_v8f64_broadcast(double* %ptr){
 define <16 x float> @trunc_v16f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: trunc_v16f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $11, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to16}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <16 x float> undef, float %ps, i32 0
@@ -1956,9 +1872,7 @@ define <2 x double> @trunc_v2f64_mask_broadcast(double* %ptr, <2 x double> %pass
 ; CHECK-LABEL: trunc_v2f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm1 = mem[0,0]
-; CHECK-NEXT:    vroundpd $11, %xmm1, %xmm1
-; CHECK-NEXT:    vmovapd %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to2}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -1973,9 +1887,7 @@ define <4 x float> @trunc_v4f32_mask_broadcast(float* %ptr, <4 x float> %passthr
 ; CHECK-LABEL: trunc_v4f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm1
-; CHECK-NEXT:    vroundps $11, %xmm1, %xmm1
-; CHECK-NEXT:    vmovaps %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to4}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -1990,9 +1902,7 @@ define <4 x double> @trunc_v4f64_mask_broadcast(double* %ptr, <4 x double> %pass
 ; CHECK-LABEL: trunc_v4f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm1
-; CHECK-NEXT:    vroundpd $11, %ymm1, %ymm1
-; CHECK-NEXT:    vmovapd %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to4}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2007,9 +1917,7 @@ define <8 x float> @trunc_v8f32_mask_broadcast(float* %ptr, <8 x float> %passthr
 ; CHECK-LABEL: trunc_v8f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm1
-; CHECK-NEXT:    vroundps $11, %ymm1, %ymm1
-; CHECK-NEXT:    vmovaps %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to8}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2024,9 +1932,7 @@ define <8 x double> @trunc_v8f64_mask_broadcast(double* %ptr, <8 x double> %pass
 ; CHECK-LABEL: trunc_v8f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm1
-; CHECK-NEXT:    vrndscalepd $11, %zmm1, %zmm1
-; CHECK-NEXT:    vmovapd %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to8}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2041,9 +1947,7 @@ define <16 x float> @trunc_v16f32_mask_broadcast(float* %ptr, <16 x float> %pass
 ; CHECK-LABEL: trunc_v16f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm1
-; CHECK-NEXT:    vrndscaleps $11, %zmm1, %zmm1
-; CHECK-NEXT:    vmovaps %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to16}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2058,9 +1962,7 @@ define <2 x double> @trunc_v2f64_maskz_broadcast(double* %ptr, <2 x i64> %cmp) {
 ; CHECK-LABEL: trunc_v2f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $11, %xmm0, %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to2}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2075,9 +1977,7 @@ define <4 x float> @trunc_v4f32_maskz_broadcast(float* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: trunc_v4f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $11, %xmm0, %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to4}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2092,9 +1992,7 @@ define <4 x double> @trunc_v4f64_maskz_broadcast(double* %ptr, <4 x i64> %cmp) {
 ; CHECK-LABEL: trunc_v4f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $11, %ymm0, %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to4}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2109,9 +2007,7 @@ define <8 x float> @trunc_v8f32_maskz_broadcast(float* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: trunc_v8f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $11, %ymm0, %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to8}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2126,9 +2022,7 @@ define <8 x double> @trunc_v8f64_maskz_broadcast(double* %ptr, <8 x i64> %cmp) {
 ; CHECK-LABEL: trunc_v8f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $11, %zmm0, %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $11, (%rdi){1to8}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2143,9 +2037,7 @@ define <16 x float> @trunc_v16f32_maskz_broadcast(float* %ptr, <16 x i32> %cmp) 
 ; CHECK-LABEL: trunc_v16f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $11, %zmm0, %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $11, (%rdi){1to16}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2274,8 +2166,8 @@ define <2 x double> @rint_v2f64_mask(<2 x double> %p, <2 x double> %passthru, <2
 ; CHECK-LABEL: rint_v2f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm2, %xmm2, %k1
-; CHECK-NEXT:    vroundpd $4, %xmm0, %xmm0
-; CHECK-NEXT:    vblendmpd %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %t = call <2 x double> @llvm.rint.v2f64(<2 x double> %p)
@@ -2287,8 +2179,8 @@ define <4 x float> @rint_v4f32_mask(<4 x float> %p, <4 x float> %passthru, <4 x 
 ; CHECK-LABEL: rint_v4f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm2, %xmm2, %k1
-; CHECK-NEXT:    vroundps $4, %xmm0, %xmm0
-; CHECK-NEXT:    vblendmps %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovaps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %t = call <4 x float> @llvm.rint.v4f32(<4 x float> %p)
@@ -2300,8 +2192,8 @@ define <4 x double> @rint_v4f64_mask(<4 x double> %p, <4 x double> %passthru, <4
 ; CHECK-LABEL: rint_v4f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm2, %ymm2, %k1
-; CHECK-NEXT:    vroundpd $4, %ymm0, %ymm0
-; CHECK-NEXT:    vblendmpd %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovapd %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %t = call <4 x double> @llvm.rint.v4f64(<4 x double> %p)
@@ -2313,8 +2205,8 @@ define <8 x float> @rint_v8f32_mask(<8 x float> %p, <8 x float> %passthru, <8 x 
 ; CHECK-LABEL: rint_v8f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm2, %ymm2, %k1
-; CHECK-NEXT:    vroundps $4, %ymm0, %ymm0
-; CHECK-NEXT:    vblendmps %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovaps %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %t = call <8 x float> @llvm.rint.v8f32(<8 x float> %p)
@@ -2326,8 +2218,8 @@ define <8 x double> @rint_v8f64_mask(<8 x double> %p, <8 x double> %passthru, <8
 ; CHECK-LABEL: rint_v8f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm2, %zmm2, %k1
-; CHECK-NEXT:    vrndscalepd $4, %zmm0, %zmm0
-; CHECK-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovapd %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %t = call <8 x double> @llvm.rint.v8f64(<8 x double> %p)
@@ -2339,8 +2231,8 @@ define <16 x float> @rint_v16f32_mask(<16 x float> %p, <16 x float> %passthru, <
 ; CHECK-LABEL: rint_v16f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm2, %zmm2, %k1
-; CHECK-NEXT:    vrndscaleps $4, %zmm0, %zmm0
-; CHECK-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %t = call <16 x float> @llvm.rint.v16f32(<16 x float> %p)
@@ -2352,8 +2244,7 @@ define <2 x double> @rint_v2f64_maskz(<2 x double> %p, <2 x i64> %cmp) {
 ; CHECK-LABEL: rint_v2f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundpd $4, %xmm0, %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %t = call <2 x double> @llvm.rint.v2f64(<2 x double> %p)
@@ -2365,8 +2256,7 @@ define <4 x float> @rint_v4f32_maskz(<4 x float> %p, <4 x i32> %cmp) {
 ; CHECK-LABEL: rint_v4f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundps $4, %xmm0, %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %t = call <4 x float> @llvm.rint.v4f32(<4 x float> %p)
@@ -2378,8 +2268,7 @@ define <4 x double> @rint_v4f64_maskz(<4 x double> %p, <4 x i64> %cmp) {
 ; CHECK-LABEL: rint_v4f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundpd $4, %ymm0, %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, %ymm0, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %t = call <4 x double> @llvm.rint.v4f64(<4 x double> %p)
@@ -2391,8 +2280,7 @@ define <8 x float> @rint_v8f32_maskz(<8 x float> %p, <8 x i32> %cmp) {
 ; CHECK-LABEL: rint_v8f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundps $4, %ymm0, %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, %ymm0, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %t = call <8 x float> @llvm.rint.v8f32(<8 x float> %p)
@@ -2404,8 +2292,7 @@ define <8 x double> @rint_v8f64_maskz(<8 x double> %p, <8 x i64> %cmp) {
 ; CHECK-LABEL: rint_v8f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscalepd $4, %zmm0, %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %t = call <8 x double> @llvm.rint.v8f64(<8 x double> %p)
@@ -2417,8 +2304,7 @@ define <16 x float> @rint_v16f32_maskz(<16 x float> %p, <16 x i32> %cmp) {
 ; CHECK-LABEL: rint_v16f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscaleps $4, %zmm0, %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %t = call <16 x float> @llvm.rint.v16f32(<16 x float> %p)
@@ -2430,8 +2316,7 @@ define <2 x double> @rint_v2f64_mask_load(<2 x double>* %ptr, <2 x double> %pass
 ; CHECK-LABEL: rint_v2f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundpd $4, (%rdi), %xmm1
-; CHECK-NEXT:    vmovapd %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -2444,8 +2329,7 @@ define <4 x float> @rint_v4f32_mask_load(<4 x float>* %ptr, <4 x float> %passthr
 ; CHECK-LABEL: rint_v4f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundps $4, (%rdi), %xmm1
-; CHECK-NEXT:    vmovaps %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -2458,8 +2342,7 @@ define <4 x double> @rint_v4f64_mask_load(<4 x double>* %ptr, <4 x double> %pass
 ; CHECK-LABEL: rint_v4f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundpd $4, (%rdi), %ymm1
-; CHECK-NEXT:    vmovapd %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -2472,8 +2355,7 @@ define <8 x float> @rint_v8f32_mask_load(<8 x float>* %ptr, <8 x float> %passthr
 ; CHECK-LABEL: rint_v8f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundps $4, (%rdi), %ymm1
-; CHECK-NEXT:    vmovaps %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -2486,8 +2368,7 @@ define <8 x double> @rint_v8f64_mask_load(<8 x double>* %ptr, <8 x double> %pass
 ; CHECK-LABEL: rint_v8f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscalepd $4, (%rdi), %zmm1
-; CHECK-NEXT:    vmovapd %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -2500,8 +2381,7 @@ define <16 x float> @rint_v16f32_mask_load(<16 x float>* %ptr, <16 x float> %pas
 ; CHECK-LABEL: rint_v16f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscaleps $4, (%rdi), %zmm1
-; CHECK-NEXT:    vmovaps %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -2514,8 +2394,7 @@ define <2 x double> @rint_v2f64_maskz_load(<2 x double>* %ptr, <2 x i64> %cmp) {
 ; CHECK-LABEL: rint_v2f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vroundpd $4, (%rdi), %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -2528,8 +2407,7 @@ define <4 x float> @rint_v4f32_maskz_load(<4 x float>* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: rint_v4f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vroundps $4, (%rdi), %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -2542,8 +2420,7 @@ define <4 x double> @rint_v4f64_maskz_load(<4 x double>* %ptr, <4 x i64> %cmp) {
 ; CHECK-LABEL: rint_v4f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vroundpd $4, (%rdi), %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -2556,8 +2433,7 @@ define <8 x float> @rint_v8f32_maskz_load(<8 x float>* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: rint_v8f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vroundps $4, (%rdi), %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -2570,8 +2446,7 @@ define <8 x double> @rint_v8f64_maskz_load(<8 x double>* %ptr, <8 x i64> %cmp) {
 ; CHECK-LABEL: rint_v8f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vrndscalepd $4, (%rdi), %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -2584,8 +2459,7 @@ define <16 x float> @rint_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp)
 ; CHECK-LABEL: rint_v16f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vrndscaleps $4, (%rdi), %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -2597,8 +2471,7 @@ define <16 x float> @rint_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> %cmp)
 define <2 x double> @rint_v2f64_broadcast(double* %ptr) {
 ; CHECK-LABEL: rint_v2f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $4, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to2}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <2 x double> undef, double %ps, i32 0
@@ -2610,8 +2483,7 @@ define <2 x double> @rint_v2f64_broadcast(double* %ptr) {
 define <4 x float> @rint_v4f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: rint_v4f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $4, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to4}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <4 x float> undef, float %ps, i32 0
@@ -2623,8 +2495,7 @@ define <4 x float> @rint_v4f32_broadcast(float* %ptr) {
 define <4 x double> @rint_v4f64_broadcast(double* %ptr){
 ; CHECK-LABEL: rint_v4f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $4, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to4}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <4 x double> undef, double %ps, i32 0
@@ -2636,8 +2507,7 @@ define <4 x double> @rint_v4f64_broadcast(double* %ptr){
 define <8 x float> @rint_v8f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: rint_v8f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $4, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to8}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <8 x float> undef, float %ps, i32 0
@@ -2649,8 +2519,7 @@ define <8 x float> @rint_v8f32_broadcast(float* %ptr) {
 define <8 x double> @rint_v8f64_broadcast(double* %ptr){
 ; CHECK-LABEL: rint_v8f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $4, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to8}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <8 x double> undef, double %ps, i32 0
@@ -2662,8 +2531,7 @@ define <8 x double> @rint_v8f64_broadcast(double* %ptr){
 define <16 x float> @rint_v16f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: rint_v16f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $4, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to16}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <16 x float> undef, float %ps, i32 0
@@ -2676,9 +2544,7 @@ define <2 x double> @rint_v2f64_mask_broadcast(double* %ptr, <2 x double> %passt
 ; CHECK-LABEL: rint_v2f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm1 = mem[0,0]
-; CHECK-NEXT:    vroundpd $4, %xmm1, %xmm1
-; CHECK-NEXT:    vmovapd %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to2}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2693,9 +2559,7 @@ define <4 x float> @rint_v4f32_mask_broadcast(float* %ptr, <4 x float> %passthru
 ; CHECK-LABEL: rint_v4f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm1
-; CHECK-NEXT:    vroundps $4, %xmm1, %xmm1
-; CHECK-NEXT:    vmovaps %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to4}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2710,9 +2574,7 @@ define <4 x double> @rint_v4f64_mask_broadcast(double* %ptr, <4 x double> %passt
 ; CHECK-LABEL: rint_v4f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm1
-; CHECK-NEXT:    vroundpd $4, %ymm1, %ymm1
-; CHECK-NEXT:    vmovapd %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to4}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2727,9 +2589,7 @@ define <8 x float> @rint_v8f32_mask_broadcast(float* %ptr, <8 x float> %passthru
 ; CHECK-LABEL: rint_v8f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm1
-; CHECK-NEXT:    vroundps $4, %ymm1, %ymm1
-; CHECK-NEXT:    vmovaps %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to8}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2744,9 +2604,7 @@ define <8 x double> @rint_v8f64_mask_broadcast(double* %ptr, <8 x double> %passt
 ; CHECK-LABEL: rint_v8f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm1
-; CHECK-NEXT:    vrndscalepd $4, %zmm1, %zmm1
-; CHECK-NEXT:    vmovapd %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to8}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2761,9 +2619,7 @@ define <16 x float> @rint_v16f32_mask_broadcast(float* %ptr, <16 x float> %passt
 ; CHECK-LABEL: rint_v16f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm1
-; CHECK-NEXT:    vrndscaleps $4, %zmm1, %zmm1
-; CHECK-NEXT:    vmovaps %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to16}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2778,9 +2634,7 @@ define <2 x double> @rint_v2f64_maskz_broadcast(double* %ptr, <2 x i64> %cmp) {
 ; CHECK-LABEL: rint_v2f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $4, %xmm0, %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to2}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2795,9 +2649,7 @@ define <4 x float> @rint_v4f32_maskz_broadcast(float* %ptr, <4 x i32> %cmp) {
 ; CHECK-LABEL: rint_v4f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $4, %xmm0, %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to4}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2812,9 +2664,7 @@ define <4 x double> @rint_v4f64_maskz_broadcast(double* %ptr, <4 x i64> %cmp) {
 ; CHECK-LABEL: rint_v4f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $4, %ymm0, %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to4}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2829,9 +2679,7 @@ define <8 x float> @rint_v8f32_maskz_broadcast(float* %ptr, <8 x i32> %cmp) {
 ; CHECK-LABEL: rint_v8f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $4, %ymm0, %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to8}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2846,9 +2694,7 @@ define <8 x double> @rint_v8f64_maskz_broadcast(double* %ptr, <8 x i64> %cmp) {
 ; CHECK-LABEL: rint_v8f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $4, %zmm0, %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $4, (%rdi){1to8}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -2863,9 +2709,7 @@ define <16 x float> @rint_v16f32_maskz_broadcast(float* %ptr, <16 x i32> %cmp) {
 ; CHECK-LABEL: rint_v16f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $4, %zmm0, %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $4, (%rdi){1to16}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -2994,8 +2838,8 @@ define <2 x double> @nearbyint_v2f64_mask(<2 x double> %p, <2 x double> %passthr
 ; CHECK-LABEL: nearbyint_v2f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm2, %xmm2, %k1
-; CHECK-NEXT:    vroundpd $12, %xmm0, %xmm0
-; CHECK-NEXT:    vblendmpd %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %t = call <2 x double> @llvm.nearbyint.v2f64(<2 x double> %p)
@@ -3007,8 +2851,8 @@ define <4 x float> @nearbyint_v4f32_mask(<4 x float> %p, <4 x float> %passthru, 
 ; CHECK-LABEL: nearbyint_v4f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm2, %xmm2, %k1
-; CHECK-NEXT:    vroundps $12, %xmm0, %xmm0
-; CHECK-NEXT:    vblendmps %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovaps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %t = call <4 x float> @llvm.nearbyint.v4f32(<4 x float> %p)
@@ -3020,8 +2864,8 @@ define <4 x double> @nearbyint_v4f64_mask(<4 x double> %p, <4 x double> %passthr
 ; CHECK-LABEL: nearbyint_v4f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm2, %ymm2, %k1
-; CHECK-NEXT:    vroundpd $12, %ymm0, %ymm0
-; CHECK-NEXT:    vblendmpd %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovapd %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %t = call <4 x double> @llvm.nearbyint.v4f64(<4 x double> %p)
@@ -3033,8 +2877,8 @@ define <8 x float> @nearbyint_v8f32_mask(<8 x float> %p, <8 x float> %passthru, 
 ; CHECK-LABEL: nearbyint_v8f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm2, %ymm2, %k1
-; CHECK-NEXT:    vroundps $12, %ymm0, %ymm0
-; CHECK-NEXT:    vblendmps %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovaps %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %t = call <8 x float> @llvm.nearbyint.v8f32(<8 x float> %p)
@@ -3046,8 +2890,8 @@ define <8 x double> @nearbyint_v8f64_mask(<8 x double> %p, <8 x double> %passthr
 ; CHECK-LABEL: nearbyint_v8f64_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm2, %zmm2, %k1
-; CHECK-NEXT:    vrndscalepd $12, %zmm0, %zmm0
-; CHECK-NEXT:    vblendmpd %zmm0, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovapd %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %t = call <8 x double> @llvm.nearbyint.v8f64(<8 x double> %p)
@@ -3059,8 +2903,8 @@ define <16 x float> @nearbyint_v16f32_mask(<16 x float> %p, <16 x float> %passth
 ; CHECK-LABEL: nearbyint_v16f32_mask:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm2, %zmm2, %k1
-; CHECK-NEXT:    vrndscaleps $12, %zmm0, %zmm0
-; CHECK-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %t = call <16 x float> @llvm.nearbyint.v16f32(<16 x float> %p)
@@ -3072,8 +2916,7 @@ define <2 x double> @nearbyint_v2f64_maskz(<2 x double> %p, <2 x i64> %cmp) {
 ; CHECK-LABEL: nearbyint_v2f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundpd $12, %xmm0, %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %t = call <2 x double> @llvm.nearbyint.v2f64(<2 x double> %p)
@@ -3085,8 +2928,7 @@ define <4 x float> @nearbyint_v4f32_maskz(<4 x float> %p, <4 x i32> %cmp) {
 ; CHECK-LABEL: nearbyint_v4f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundps $12, %xmm0, %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %t = call <4 x float> @llvm.nearbyint.v4f32(<4 x float> %p)
@@ -3098,8 +2940,7 @@ define <4 x double> @nearbyint_v4f64_maskz(<4 x double> %p, <4 x i64> %cmp) {
 ; CHECK-LABEL: nearbyint_v4f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundpd $12, %ymm0, %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, %ymm0, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %t = call <4 x double> @llvm.nearbyint.v4f64(<4 x double> %p)
@@ -3111,8 +2952,7 @@ define <8 x float> @nearbyint_v8f32_maskz(<8 x float> %p, <8 x i32> %cmp) {
 ; CHECK-LABEL: nearbyint_v8f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundps $12, %ymm0, %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, %ymm0, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %t = call <8 x float> @llvm.nearbyint.v8f32(<8 x float> %p)
@@ -3124,8 +2964,7 @@ define <8 x double> @nearbyint_v8f64_maskz(<8 x double> %p, <8 x i64> %cmp) {
 ; CHECK-LABEL: nearbyint_v8f64_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscalepd $12, %zmm0, %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %t = call <8 x double> @llvm.nearbyint.v8f64(<8 x double> %p)
@@ -3137,8 +2976,7 @@ define <16 x float> @nearbyint_v16f32_maskz(<16 x float> %p, <16 x i32> %cmp) {
 ; CHECK-LABEL: nearbyint_v16f32_maskz:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscaleps $12, %zmm0, %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %t = call <16 x float> @llvm.nearbyint.v16f32(<16 x float> %p)
@@ -3150,8 +2988,7 @@ define <2 x double> @nearbyint_v2f64_mask_load(<2 x double>* %ptr, <2 x double> 
 ; CHECK-LABEL: nearbyint_v2f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundpd $12, (%rdi), %xmm1
-; CHECK-NEXT:    vmovapd %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -3164,8 +3001,7 @@ define <4 x float> @nearbyint_v4f32_mask_load(<4 x float>* %ptr, <4 x float> %pa
 ; CHECK-LABEL: nearbyint_v4f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vroundps $12, (%rdi), %xmm1
-; CHECK-NEXT:    vmovaps %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi), %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -3178,8 +3014,7 @@ define <4 x double> @nearbyint_v4f64_mask_load(<4 x double>* %ptr, <4 x double> 
 ; CHECK-LABEL: nearbyint_v4f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundpd $12, (%rdi), %ymm1
-; CHECK-NEXT:    vmovapd %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -3192,8 +3027,7 @@ define <8 x float> @nearbyint_v8f32_mask_load(<8 x float>* %ptr, <8 x float> %pa
 ; CHECK-LABEL: nearbyint_v8f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vroundps $12, (%rdi), %ymm1
-; CHECK-NEXT:    vmovaps %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi), %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -3206,8 +3040,7 @@ define <8 x double> @nearbyint_v8f64_mask_load(<8 x double>* %ptr, <8 x double> 
 ; CHECK-LABEL: nearbyint_v8f64_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscalepd $12, (%rdi), %zmm1
-; CHECK-NEXT:    vmovapd %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -3220,8 +3053,7 @@ define <16 x float> @nearbyint_v16f32_mask_load(<16 x float>* %ptr, <16 x float>
 ; CHECK-LABEL: nearbyint_v16f32_mask_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vrndscaleps $12, (%rdi), %zmm1
-; CHECK-NEXT:    vmovaps %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi), %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -3234,8 +3066,7 @@ define <2 x double> @nearbyint_v2f64_maskz_load(<2 x double>* %ptr, <2 x i64> %c
 ; CHECK-LABEL: nearbyint_v2f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vroundpd $12, (%rdi), %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %p = load <2 x double>, <2 x double>* %ptr
@@ -3248,8 +3079,7 @@ define <4 x float> @nearbyint_v4f32_maskz_load(<4 x float>* %ptr, <4 x i32> %cmp
 ; CHECK-LABEL: nearbyint_v4f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vroundps $12, (%rdi), %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi), %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %p = load <4 x float>, <4 x float>* %ptr
@@ -3262,8 +3092,7 @@ define <4 x double> @nearbyint_v4f64_maskz_load(<4 x double>* %ptr, <4 x i64> %c
 ; CHECK-LABEL: nearbyint_v4f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vroundpd $12, (%rdi), %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %p = load <4 x double>, <4 x double>* %ptr
@@ -3276,8 +3105,7 @@ define <8 x float> @nearbyint_v8f32_maskz_load(<8 x float>* %ptr, <8 x i32> %cmp
 ; CHECK-LABEL: nearbyint_v8f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vroundps $12, (%rdi), %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi), %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %p = load <8 x float>, <8 x float>* %ptr
@@ -3290,8 +3118,7 @@ define <8 x double> @nearbyint_v8f64_maskz_load(<8 x double>* %ptr, <8 x i64> %c
 ; CHECK-LABEL: nearbyint_v8f64_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vrndscalepd $12, (%rdi), %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %p = load <8 x double>, <8 x double>* %ptr
@@ -3304,8 +3131,7 @@ define <16 x float> @nearbyint_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> 
 ; CHECK-LABEL: nearbyint_v16f32_maskz_load:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vrndscaleps $12, (%rdi), %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi), %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %p = load <16 x float>, <16 x float>* %ptr
@@ -3317,8 +3143,7 @@ define <16 x float> @nearbyint_v16f32_maskz_load(<16 x float>* %ptr, <16 x i32> 
 define <2 x double> @nearbyint_v2f64_broadcast(double* %ptr) {
 ; CHECK-LABEL: nearbyint_v2f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $12, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to2}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <2 x double> undef, double %ps, i32 0
@@ -3330,8 +3155,7 @@ define <2 x double> @nearbyint_v2f64_broadcast(double* %ptr) {
 define <4 x float> @nearbyint_v4f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: nearbyint_v4f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $12, %xmm0, %xmm0
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to4}, %xmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <4 x float> undef, float %ps, i32 0
@@ -3343,8 +3167,7 @@ define <4 x float> @nearbyint_v4f32_broadcast(float* %ptr) {
 define <4 x double> @nearbyint_v4f64_broadcast(double* %ptr){
 ; CHECK-LABEL: nearbyint_v4f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $12, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to4}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <4 x double> undef, double %ps, i32 0
@@ -3356,8 +3179,7 @@ define <4 x double> @nearbyint_v4f64_broadcast(double* %ptr){
 define <8 x float> @nearbyint_v8f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: nearbyint_v8f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $12, %ymm0, %ymm0
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to8}, %ymm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <8 x float> undef, float %ps, i32 0
@@ -3369,8 +3191,7 @@ define <8 x float> @nearbyint_v8f32_broadcast(float* %ptr) {
 define <8 x double> @nearbyint_v8f64_broadcast(double* %ptr){
 ; CHECK-LABEL: nearbyint_v8f64_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $12, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to8}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load double, double* %ptr
   %pins = insertelement <8 x double> undef, double %ps, i32 0
@@ -3382,8 +3203,7 @@ define <8 x double> @nearbyint_v8f64_broadcast(double* %ptr){
 define <16 x float> @nearbyint_v16f32_broadcast(float* %ptr) {
 ; CHECK-LABEL: nearbyint_v16f32_broadcast:
 ; CHECK:       ## %bb.0:
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $12, %zmm0, %zmm0
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to16}, %zmm0
 ; CHECK-NEXT:    retq
   %ps = load float, float* %ptr
   %pins = insertelement <16 x float> undef, float %ps, i32 0
@@ -3396,9 +3216,7 @@ define <2 x double> @nearbyint_v2f64_mask_broadcast(double* %ptr, <2 x double> %
 ; CHECK-LABEL: nearbyint_v2f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm1 = mem[0,0]
-; CHECK-NEXT:    vroundpd $12, %xmm1, %xmm1
-; CHECK-NEXT:    vmovapd %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to2}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -3413,9 +3231,7 @@ define <4 x float> @nearbyint_v4f32_mask_broadcast(float* %ptr, <4 x float> %pas
 ; CHECK-LABEL: nearbyint_v4f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm1, %xmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm1
-; CHECK-NEXT:    vroundps $12, %xmm1, %xmm1
-; CHECK-NEXT:    vmovaps %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to4}, %xmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -3430,9 +3246,7 @@ define <4 x double> @nearbyint_v4f64_mask_broadcast(double* %ptr, <4 x double> %
 ; CHECK-LABEL: nearbyint_v4f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm1
-; CHECK-NEXT:    vroundpd $12, %ymm1, %ymm1
-; CHECK-NEXT:    vmovapd %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to4}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -3447,9 +3261,7 @@ define <8 x float> @nearbyint_v8f32_mask_broadcast(float* %ptr, <8 x float> %pas
 ; CHECK-LABEL: nearbyint_v8f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm1, %ymm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm1
-; CHECK-NEXT:    vroundps $12, %ymm1, %ymm1
-; CHECK-NEXT:    vmovaps %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to8}, %ymm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -3464,9 +3276,7 @@ define <8 x double> @nearbyint_v8f64_mask_broadcast(double* %ptr, <8 x double> %
 ; CHECK-LABEL: nearbyint_v8f64_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm1
-; CHECK-NEXT:    vrndscalepd $12, %zmm1, %zmm1
-; CHECK-NEXT:    vmovapd %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to8}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -3481,9 +3291,7 @@ define <16 x float> @nearbyint_v16f32_mask_broadcast(float* %ptr, <16 x float> %
 ; CHECK-LABEL: nearbyint_v16f32_mask_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm1, %zmm1, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm1
-; CHECK-NEXT:    vrndscaleps $12, %zmm1, %zmm1
-; CHECK-NEXT:    vmovaps %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to16}, %zmm0 {%k1}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -3498,9 +3306,7 @@ define <2 x double> @nearbyint_v2f64_maskz_broadcast(double* %ptr, <2 x i64> %cm
 ; CHECK-LABEL: nearbyint_v2f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
-; CHECK-NEXT:    vroundpd $12, %xmm0, %xmm0
-; CHECK-NEXT:    vmovapd %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to2}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <2 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -3515,9 +3321,7 @@ define <4 x float> @nearbyint_v4f32_maskz_broadcast(float* %ptr, <4 x i32> %cmp)
 ; CHECK-LABEL: nearbyint_v4f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %xmm0, %xmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %xmm0
-; CHECK-NEXT:    vroundps $12, %xmm0, %xmm0
-; CHECK-NEXT:    vmovaps %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to4}, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -3532,9 +3336,7 @@ define <4 x double> @nearbyint_v4f64_maskz_broadcast(double* %ptr, <4 x i64> %cm
 ; CHECK-LABEL: nearbyint_v4f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %ymm0
-; CHECK-NEXT:    vroundpd $12, %ymm0, %ymm0
-; CHECK-NEXT:    vmovapd %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to4}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <4 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -3549,9 +3351,7 @@ define <8 x float> @nearbyint_v8f32_maskz_broadcast(float* %ptr, <8 x i32> %cmp)
 ; CHECK-LABEL: nearbyint_v8f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %ymm0, %ymm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %ymm0
-; CHECK-NEXT:    vroundps $12, %ymm0, %ymm0
-; CHECK-NEXT:    vmovaps %ymm0, %ymm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to8}, %ymm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
@@ -3566,9 +3366,7 @@ define <8 x double> @nearbyint_v8f64_maskz_broadcast(double* %ptr, <8 x i64> %cm
 ; CHECK-LABEL: nearbyint_v8f64_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmq %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastsd (%rdi), %zmm0
-; CHECK-NEXT:    vrndscalepd $12, %zmm0, %zmm0
-; CHECK-NEXT:    vmovapd %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscalepd $12, (%rdi){1to8}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <8 x i64> %cmp, zeroinitializer
   %ps = load double, double* %ptr
@@ -3583,9 +3381,7 @@ define <16 x float> @nearbyint_v16f32_maskz_broadcast(float* %ptr, <16 x i32> %c
 ; CHECK-LABEL: nearbyint_v16f32_maskz_broadcast:
 ; CHECK:       ## %bb.0:
 ; CHECK-NEXT:    vptestnmd %zmm0, %zmm0, %k1
-; CHECK-NEXT:    vbroadcastss (%rdi), %zmm0
-; CHECK-NEXT:    vrndscaleps $12, %zmm0, %zmm0
-; CHECK-NEXT:    vmovaps %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    vrndscaleps $12, (%rdi){1to16}, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    retq
   %c = icmp eq <16 x i32> %cmp, zeroinitializer
   %ps = load float, float* %ptr
