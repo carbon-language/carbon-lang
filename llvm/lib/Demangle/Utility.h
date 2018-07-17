@@ -14,8 +14,10 @@
 
 #include "StringView.h"
 
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <limits>
 
 // Stream that AST nodes write their string representation into after the AST
