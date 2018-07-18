@@ -1380,6 +1380,13 @@ multiclass sve_int_bin_pred_arit_1<bits<3> opc, string asm> {
   def _D : sve_int_bin_pred_arit_log<0b11, 0b01, opc, asm, ZPR64>;
 }
 
+multiclass sve_int_bin_pred_arit_2<bits<3> opc, string asm> {
+  def _B : sve_int_bin_pred_arit_log<0b00, 0b10, opc, asm, ZPR8>;
+  def _H : sve_int_bin_pred_arit_log<0b01, 0b10, opc, asm, ZPR16>;
+  def _S : sve_int_bin_pred_arit_log<0b10, 0b10, opc, asm, ZPR32>;
+  def _D : sve_int_bin_pred_arit_log<0b11, 0b10, opc, asm, ZPR64>;
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Integer Multiply-Add Group
 //===----------------------------------------------------------------------===//
@@ -1607,8 +1614,8 @@ multiclass sve_int_arith_imm0<bits<3> opc, string asm> {
   def _D : sve_int_arith_imm0<0b11, opc, asm, ZPR64, addsub_imm8_opt_lsl_i64>;
 }
 
-class sve_int_arith_imm1<bits<2> sz8_64, bits<2> opc, string asm,
-                         ZPRRegOp zprty, Operand immtype>
+class sve_int_arith_imm<bits<2> sz8_64, bits<6> opc, string asm,
+                        ZPRRegOp zprty, Operand immtype>
 : I<(outs zprty:$Zdn), (ins zprty:$_Zdn, immtype:$imm),
   asm, "\t$Zdn, $_Zdn, $imm",
   "",
@@ -1617,8 +1624,7 @@ class sve_int_arith_imm1<bits<2> sz8_64, bits<2> opc, string asm,
   bits<8> imm;
   let Inst{31-24} = 0b00100101;
   let Inst{23-22} = sz8_64;
-  let Inst{21-18} = 0b1010;
-  let Inst{17-16} = opc;
+  let Inst{21-16} = opc;
   let Inst{15-13} = 0b110;
   let Inst{12-5} = imm;
   let Inst{4-0} = Zdn;
@@ -1627,10 +1633,17 @@ class sve_int_arith_imm1<bits<2> sz8_64, bits<2> opc, string asm,
 }
 
 multiclass sve_int_arith_imm1<bits<2> opc, string asm, Operand immtype> {
-  def _B : sve_int_arith_imm1<0b00, opc, asm, ZPR8, immtype>;
-  def _H : sve_int_arith_imm1<0b01, opc, asm, ZPR16, immtype>;
-  def _S : sve_int_arith_imm1<0b10, opc, asm, ZPR32, immtype>;
-  def _D : sve_int_arith_imm1<0b11, opc, asm, ZPR64, immtype>;
+  def _B : sve_int_arith_imm<0b00, { 0b1010, opc }, asm, ZPR8, immtype>;
+  def _H : sve_int_arith_imm<0b01, { 0b1010, opc }, asm, ZPR16, immtype>;
+  def _S : sve_int_arith_imm<0b10, { 0b1010, opc }, asm, ZPR32, immtype>;
+  def _D : sve_int_arith_imm<0b11, { 0b1010, opc }, asm, ZPR64, immtype>;
+}
+
+multiclass sve_int_arith_imm2<string asm> {
+  def _B : sve_int_arith_imm<0b00, 0b110000, asm, ZPR8,  simm8>;
+  def _H : sve_int_arith_imm<0b01, 0b110000, asm, ZPR16, simm8>;
+  def _S : sve_int_arith_imm<0b10, 0b110000, asm, ZPR32, simm8>;
+  def _D : sve_int_arith_imm<0b11, 0b110000, asm, ZPR64, simm8>;
 }
 
 //===----------------------------------------------------------------------===//
