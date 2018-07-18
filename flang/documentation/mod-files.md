@@ -17,9 +17,12 @@ between the module name and extension, e.g. `<modulename>-f18.mod`.
 
 ## Format
 
-The proposed format for module files is Fortran source.
-Declarations of all visibile entities will be included, along with private
-entities that they depend on. Executable statements will be omitted.
+Module files will be Fortran source.
+Declarations of all visible entities will be included, along with private
+entities that they depend on.
+Entity declarations that span multiple statements will be collapsed into
+a single *type-declaration-statement*.
+Executable statements will be omitted.
 
 ### Header
 
@@ -43,8 +46,7 @@ Information in the header:
 - Checksum of the body of the current file
 - Modules we depend on and the checksum of their module file when the current
   module file is created
-- Source file dependency information?
-- Compilation options?
+- The source file that produced the `.mod` file? This could be used in error messages.
 
 ### Body
 
@@ -73,7 +75,7 @@ In addition, some private symbols are needed:
 It might be possible to anonymize private names if users don't want them exposed
 in the `.mod` file. (Currently they are readable in PGI `.mod` files.)
 
-#### USE associate
+#### USE association
 
 A module that contains `USE` statements needs them represented in the
 `.mod` file.
@@ -90,11 +92,17 @@ Alternatives:
 
 ## Reading and writing module files
 
-A command-line option (e.g. `-module`) will specified a directory to
-search for `.mod` files and to write them to.
-If not specified it defaults to the current directory.
+### Options
 
-### Writing modules files
+The compiler will have command-line options to specify where to search
+for module files and where to write them. By default it will be the current
+directory for both.
+
+For PGI, `-I` specifies directories to search for include files and module
+files. `-module` specifics a directory to write module files in as well as to
+search for them. gfortran is similar except it uses `-J` instead of `-module`.
+
+### Writing module files
 
 When writing a module file, if the existing one matches what would be written,
 the timestamp is not updated.
@@ -104,9 +112,9 @@ determined the module is valid Fortran.<br>
 **NOTE:** PGI does create `.mod` files sometimes even when the module has a
 compilation error.
 
-When the compiler can get far enough to determine it is compiling a module
-but then encounters an error, it will delete the existing `.mod` file
-if present.
+Question: If the compiler can get far enough to determine it is compiling a module
+but then encounters an error, should it delete the existing `.mod` file?
+PGI does not, gfortran does.
 
 ### Reading module files
 
@@ -122,3 +130,16 @@ When processing `.mod` files we know they are valid Fortran with these propertie
 1. The input (without the header) is already in the "cooked input" format.
 2. No preprocessing is necessary.
 3. No errors can occur.
+
+## Error messages referring to modules
+
+With this design, diagnostics can refer to names in modules and can emit a
+normalized declaration of an entity but not point to its location in the
+source.
+
+If the header includes the source file it came from, that could be included in
+a diagnostic but we still wouldn't have line numbers.
+
+To provide line numbers and character positions or source lines as the user
+wrote them we would have to save some amount of provenance information in the
+module file as well.
