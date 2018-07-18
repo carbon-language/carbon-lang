@@ -118,12 +118,11 @@ struct ProfileRecord {
   const FunctionCallTrie::Node *Node = nullptr;
 
   // Constructor for in-place construction.
-  ProfileRecord(PathAllocator &A, ChunkAllocator &CA,
-                const FunctionCallTrie::Node *N)
+  ProfileRecord(PathAllocator &A, const FunctionCallTrie::Node *N)
       : Path([&] {
           auto P =
               reinterpret_cast<PathArray *>(InternalAlloc(sizeof(PathArray)));
-          new (P) PathArray(A, CA);
+          new (P) PathArray(A);
           return P;
         }()),
         Node(N) {}
@@ -137,18 +136,17 @@ using ProfileRecordArray = Array<ProfileRecord>;
 // the path(s) and the data associated with the path.
 static void populateRecords(ProfileRecordArray &PRs,
                             ProfileRecord::PathAllocator &PA,
-                            ChunkAllocator &CA, const FunctionCallTrie &Trie) {
+                            const FunctionCallTrie &Trie) {
   using StackArray = Array<const FunctionCallTrie::Node *>;
   using StackAllocator = typename StackArray::AllocatorType;
   StackAllocator StackAlloc(profilingFlags()->stack_allocator_max);
-  ChunkAllocator StackChunkAlloc(profilingFlags()->stack_allocator_max);
-  StackArray DFSStack(StackAlloc, StackChunkAlloc);
+  StackArray DFSStack(StackAlloc);
   for (const auto R : Trie.getRoots()) {
     DFSStack.Append(R);
     while (!DFSStack.empty()) {
       auto Node = DFSStack.back();
       DFSStack.trim(1);
-      auto Record = PRs.AppendEmplace(PA, CA, Node);
+      auto Record = PRs.AppendEmplace(PA, Node);
       if (Record == nullptr)
         return;
       DCHECK_NE(Record, nullptr);
@@ -214,10 +212,9 @@ void serialize() {
   for (u32 I = 0; I < ThreadTries->Size(); ++I) {
     using ProfileRecordAllocator = typename ProfileRecordArray::AllocatorType;
     ProfileRecordAllocator PRAlloc(profilingFlags()->global_allocator_max);
-    ChunkAllocator CA(profilingFlags()->global_allocator_max);
     ProfileRecord::PathAllocator PathAlloc(
         profilingFlags()->global_allocator_max);
-    ProfileRecordArray ProfileRecords(PRAlloc, CA);
+    ProfileRecordArray ProfileRecords(PRAlloc);
 
     // First, we want to compute the amount of space we're going to need. We'll
     // use a local allocator and an __xray::Array<...> to store the intermediary
@@ -226,7 +223,7 @@ void serialize() {
     const auto &Trie = *(*ThreadTries)[I].Trie;
     if (Trie.getRoots().empty())
       continue;
-    populateRecords(ProfileRecords, PathAlloc, CA, Trie);
+    populateRecords(ProfileRecords, PathAlloc, Trie);
     DCHECK(!Trie.getRoots().empty());
     DCHECK(!ProfileRecords.empty());
 

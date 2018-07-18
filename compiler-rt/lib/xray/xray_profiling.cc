@@ -57,12 +57,13 @@ struct alignas(64) ProfilingData {
 static pthread_key_t ProfilingKey;
 
 thread_local std::aligned_storage<sizeof(ProfilingData)>::type ThreadStorage{};
-
 static ProfilingData &getThreadLocalData() XRAY_NEVER_INSTRUMENT {
-  if (pthread_getspecific(ProfilingKey) == NULL) {
+  thread_local auto ThreadOnce = [] {
     new (&ThreadStorage) ProfilingData{};
     pthread_setspecific(ProfilingKey, &ThreadStorage);
-  }
+    return false;
+  }();
+  (void)ThreadOnce;
 
   auto &TLD = *reinterpret_cast<ProfilingData *>(&ThreadStorage);
 
