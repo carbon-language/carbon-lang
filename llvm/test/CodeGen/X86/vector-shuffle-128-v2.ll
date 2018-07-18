@@ -1310,8 +1310,7 @@ define <2 x double> @shuffle_mem_v2f64_31(<2 x double> %a, <2 x double>* %b) {
 ;
 ; AVX-LABEL: shuffle_mem_v2f64_31:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps (%rdi), %xmm1
-; AVX-NEXT:    vunpckhpd {{.*#+}} xmm0 = xmm1[1],xmm0[1]
+; AVX-NEXT:    vmovlps {{.*#+}} xmm0 = mem[0,1],xmm0[2,3]
 ; AVX-NEXT:    retq
   %c = load <2 x double>, <2 x double>* %b
   %f = shufflevector <2 x double> %a, <2 x double> %c, <2 x i32> <i32 3, i32 1>
