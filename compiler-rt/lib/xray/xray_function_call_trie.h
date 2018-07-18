@@ -15,6 +15,7 @@
 #ifndef XRAY_FUNCTION_CALL_TRIE_H
 #define XRAY_FUNCTION_CALL_TRIE_H
 
+#include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "xray_profiling_flags.h"
 #include "xray_segmented_array.h"
 #include <memory> // For placement new.
@@ -118,9 +119,9 @@ public:
 
     // We add a constructor here to allow us to inplace-construct through
     // Array<...>'s AppendEmplace.
-    Node(Node *P, NodeIdPairAllocatorType &A, int64_t CC, int64_t CLT,
-         int32_t F)
-        : Parent(P), Callees(A), CallCount(CC), CumulativeLocalTime(CLT),
+    Node(Node *P, NodeIdPairAllocatorType &A, ChunkAllocator &CA, int64_t CC,
+         int64_t CLT, int32_t F)
+        : Parent(P), Callees(A, CA), CallCount(CC), CumulativeLocalTime(CLT),
           FId(F) {}
 
     // TODO: Include the compact histogram.
@@ -152,6 +153,7 @@ public:
     RootAllocatorType *RootAllocator = nullptr;
     ShadowStackAllocatorType *ShadowStackAllocator = nullptr;
     NodeIdPairAllocatorType *NodeIdPairAllocator = nullptr;
+    ChunkAllocator *ChunkAlloc = nullptr;
 
     Allocators() {}
     Allocators(const Allocators &) = delete;
@@ -160,11 +162,12 @@ public:
     Allocators(Allocators &&O)
         : NodeAllocator(O.NodeAllocator), RootAllocator(O.RootAllocator),
           ShadowStackAllocator(O.ShadowStackAllocator),
-          NodeIdPairAllocator(O.NodeIdPairAllocator) {
+          NodeIdPairAllocator(O.NodeIdPairAllocator), ChunkAlloc(O.ChunkAlloc) {
       O.NodeAllocator = nullptr;
       O.RootAllocator = nullptr;
       O.ShadowStackAllocator = nullptr;
       O.NodeIdPairAllocator = nullptr;
+      O.ChunkAlloc = nullptr;
     }
 
     Allocators &operator=(Allocators &&O) {
@@ -188,6 +191,11 @@ public:
         O.NodeIdPairAllocator = this->NodeIdPairAllocator;
         this->NodeIdPairAllocator = Tmp;
       }
+      {
+        auto Tmp = O.ChunkAlloc;
+        O.ChunkAlloc = this->ChunkAlloc;
+        this->ChunkAlloc = Tmp;
+      }
       return *this;
     }
 
@@ -198,18 +206,27 @@ public:
       if (NodeAllocator != nullptr) {
         NodeAllocator->~NodeAllocatorType();
         InternalFree(NodeAllocator);
+        NodeAllocator = nullptr;
       }
       if (RootAllocator != nullptr) {
         RootAllocator->~RootAllocatorType();
         InternalFree(RootAllocator);
+        RootAllocator = nullptr;
       }
       if (ShadowStackAllocator != nullptr) {
         ShadowStackAllocator->~ShadowStackAllocatorType();
         InternalFree(ShadowStackAllocator);
+        ShadowStackAllocator = nullptr;
       }
       if (NodeIdPairAllocator != nullptr) {
         NodeIdPairAllocator->~NodeIdPairAllocatorType();
         InternalFree(NodeIdPairAllocator);
+        NodeIdPairAllocator = nullptr;
+      }
+      if (ChunkAlloc != nullptr) {
+        ChunkAlloc->~ChunkAllocator();
+        InternalFree(ChunkAlloc);
+        ChunkAlloc = nullptr;
       }
     }
   };
@@ -223,24 +240,29 @@ public:
     Allocators A;
     auto NodeAllocator = reinterpret_cast<Allocators::NodeAllocatorType *>(
         InternalAlloc(sizeof(Allocators::NodeAllocatorType)));
-    new (NodeAllocator) Allocators::NodeAllocatorType(Max, 0);
+    new (NodeAllocator) Allocators::NodeAllocatorType(Max);
     A.NodeAllocator = NodeAllocator;
 
     auto RootAllocator = reinterpret_cast<Allocators::RootAllocatorType *>(
         InternalAlloc(sizeof(Allocators::RootAllocatorType)));
-    new (RootAllocator) Allocators::RootAllocatorType(Max, 0);
+    new (RootAllocator) Allocators::RootAllocatorType(Max);
     A.RootAllocator = RootAllocator;
 
     auto ShadowStackAllocator =
         reinterpret_cast<Allocators::ShadowStackAllocatorType *>(
             InternalAlloc(sizeof(Allocators::ShadowStackAllocatorType)));
-    new (ShadowStackAllocator) Allocators::ShadowStackAllocatorType(Max, 0);
+    new (ShadowStackAllocator) Allocators::ShadowStackAllocatorType(Max);
     A.ShadowStackAllocator = ShadowStackAllocator;
 
     auto NodeIdPairAllocator = reinterpret_cast<NodeIdPairAllocatorType *>(
         InternalAlloc(sizeof(NodeIdPairAllocatorType)));
-    new (NodeIdPairAllocator) NodeIdPairAllocatorType(Max, 0);
+    new (NodeIdPairAllocator) NodeIdPairAllocatorType(Max);
     A.NodeIdPairAllocator = NodeIdPairAllocator;
+
+    auto ChunkAlloc = reinterpret_cast<ChunkAllocator *>(
+        InternalAlloc(sizeof(ChunkAllocator)));
+    new (ChunkAlloc) ChunkAllocator(Max);
+    A.ChunkAlloc = ChunkAlloc;
     return A;
   }
 
@@ -249,20 +271,22 @@ private:
   RootArray Roots;
   ShadowStackArray ShadowStack;
   NodeIdPairAllocatorType *NodeIdPairAllocator = nullptr;
+  ChunkAllocator *ChunkAlloc = nullptr;
 
 public:
   explicit FunctionCallTrie(const Allocators &A)
-      : Nodes(*A.NodeAllocator), Roots(*A.RootAllocator),
-        ShadowStack(*A.ShadowStackAllocator),
-        NodeIdPairAllocator(A.NodeIdPairAllocator) {}
+      : Nodes(*A.NodeAllocator, *A.ChunkAlloc),
+        Roots(*A.RootAllocator, *A.ChunkAlloc),
+        ShadowStack(*A.ShadowStackAllocator, *A.ChunkAlloc),
+        NodeIdPairAllocator(A.NodeIdPairAllocator), ChunkAlloc(A.ChunkAlloc) {}
 
   void enterFunction(const int32_t FId, uint64_t TSC) {
     DCHECK_NE(FId, 0);
     // This function primarily deals with ensuring that the ShadowStack is
     // consistent and ready for when an exit event is encountered.
     if (UNLIKELY(ShadowStack.empty())) {
-      auto NewRoot =
-          Nodes.AppendEmplace(nullptr, *NodeIdPairAllocator, 0, 0, FId);
+      auto NewRoot = Nodes.AppendEmplace(nullptr, *NodeIdPairAllocator,
+                                         *ChunkAlloc, 0, 0, FId);
       if (UNLIKELY(NewRoot == nullptr))
         return;
       Roots.Append(NewRoot);
@@ -285,8 +309,8 @@ public:
     }
 
     // This means we've never seen this stack before, create a new node here.
-    auto NewNode =
-        Nodes.AppendEmplace(TopNode, *NodeIdPairAllocator, 0, 0, FId);
+    auto NewNode = Nodes.AppendEmplace(TopNode, *NodeIdPairAllocator,
+                                       *ChunkAlloc, 0, 0, FId);
     if (UNLIKELY(NewNode == nullptr))
       return;
     DCHECK_NE(NewNode, nullptr);
@@ -345,13 +369,14 @@ public:
     using Stack = Array<NodeAndParent>;
 
     typename Stack::AllocatorType StackAllocator(
-        profilingFlags()->stack_allocator_max, 0);
-    Stack DFSStack(StackAllocator);
+        profilingFlags()->stack_allocator_max);
+    ChunkAllocator StackChunkAllocator(profilingFlags()->stack_allocator_max);
+    Stack DFSStack(StackAllocator, StackChunkAllocator);
 
     for (const auto Root : getRoots()) {
       // Add a node in O for this root.
       auto NewRoot = O.Nodes.AppendEmplace(
-          nullptr, *O.NodeIdPairAllocator, Root->CallCount,
+          nullptr, *O.NodeIdPairAllocator, *O.ChunkAlloc, Root->CallCount,
           Root->CumulativeLocalTime, Root->FId);
 
       // Because we cannot allocate more memory we should bail out right away.
@@ -370,8 +395,9 @@ public:
         DFSStack.trim(1);
         for (const auto Callee : NP.Node->Callees) {
           auto NewNode = O.Nodes.AppendEmplace(
-              NP.NewNode, *O.NodeIdPairAllocator, Callee.NodePtr->CallCount,
-              Callee.NodePtr->CumulativeLocalTime, Callee.FId);
+              NP.NewNode, *O.NodeIdPairAllocator, *O.ChunkAlloc,
+              Callee.NodePtr->CallCount, Callee.NodePtr->CumulativeLocalTime,
+              Callee.FId);
           if (UNLIKELY(NewNode == nullptr))
             return;
           NP.NewNode->Callees.AppendEmplace(NewNode, Callee.FId);
@@ -396,16 +422,17 @@ public:
     };
     using Stack = Array<NodeAndTarget>;
     typename Stack::AllocatorType StackAllocator(
-        profilingFlags()->stack_allocator_max, 0);
-    Stack DFSStack(StackAllocator);
+        profilingFlags()->stack_allocator_max);
+    ChunkAllocator CA(profilingFlags()->stack_allocator_max);
+    Stack DFSStack(StackAllocator, CA);
 
     for (const auto Root : getRoots()) {
       Node *TargetRoot = nullptr;
       auto R = O.Roots.find_element(
           [&](const Node *Node) { return Node->FId == Root->FId; });
       if (R == nullptr) {
-        TargetRoot = O.Nodes.AppendEmplace(nullptr, *O.NodeIdPairAllocator, 0,
-                                           0, Root->FId);
+        TargetRoot = O.Nodes.AppendEmplace(nullptr, *O.NodeIdPairAllocator,
+                                           *O.ChunkAlloc, 0, 0, Root->FId);
         if (UNLIKELY(TargetRoot == nullptr))
           return;
 
@@ -429,8 +456,9 @@ public:
                 return C.FId == Callee.FId;
               });
           if (TargetCallee == nullptr) {
-            auto NewTargetNode = O.Nodes.AppendEmplace(
-                NT.TargetNode, *O.NodeIdPairAllocator, 0, 0, Callee.FId);
+            auto NewTargetNode =
+                O.Nodes.AppendEmplace(NT.TargetNode, *O.NodeIdPairAllocator,
+                                      *O.ChunkAlloc, 0, 0, Callee.FId);
 
             if (UNLIKELY(NewTargetNode == nullptr))
               return;

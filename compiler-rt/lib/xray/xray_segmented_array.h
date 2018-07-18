@@ -24,6 +24,13 @@
 #include <utility>
 
 namespace __xray {
+struct Chunk {
+  void *Data;
+  Chunk *Prev;
+  Chunk *Next;
+};
+
+using ChunkAllocator = Allocator<next_pow2(sizeof(Chunk)) * 8>;
 
 /// The Array type provides an interface similar to std::vector<...> but does
 /// not shrink in size. Once constructed, elements can be appended but cannot be
@@ -51,16 +58,10 @@ private:
   // TODO: Consider co-locating the chunk information with the data in the
   // Block, as in an intrusive list -- i.e. putting the next and previous
   // pointer values inside the Block storage.
-  struct Chunk {
-    typename AllocatorType::Block Block;
-    static constexpr size_t Size = N;
-    Chunk *Prev = this;
-    Chunk *Next = this;
-  };
-
   static Chunk SentinelChunk;
 
   AllocatorType *Alloc;
+  ChunkAllocator *ChunkAlloc;
   Chunk *Head = &SentinelChunk;
   Chunk *Tail = &SentinelChunk;
   size_t Size = 0;
@@ -82,30 +83,19 @@ private:
       return FreeChunk;
     }
 
-    auto Block = Alloc->Allocate(ElementStorageSize);
+    auto Block = Alloc->Allocate();
     if (Block.Data == nullptr)
       return nullptr;
 
-    // TODO: Maybe use a separate managed allocator for Chunk instances?
-    auto C = reinterpret_cast<Chunk *>(
-        InternalAlloc(sizeof(Chunk), nullptr, kCacheLineSize));
-    if (C == nullptr)
+    auto ChunkElement = ChunkAlloc->Allocate();
+    if (ChunkElement.Data == nullptr)
       return nullptr;
-    C->Block = Block;
-    C->Prev = &SentinelChunk;
-    C->Next = &SentinelChunk;
+
+    // Placement-new the Chunk element at the appropriate location.
+    auto C = reinterpret_cast<Chunk *>(ChunkElement.Data);
+    Chunk LocalC{Block.Data, &SentinelChunk, &SentinelChunk};
+    internal_memcpy(C, &LocalC, sizeof(LocalC));
     return C;
-  }
-
-  static AllocatorType &GetGlobalAllocator() {
-    static AllocatorType *const GlobalAllocator = [] {
-      AllocatorType *A = reinterpret_cast<AllocatorType *>(
-          InternalAlloc(sizeof(AllocatorType)));
-      new (A) AllocatorType(2 << 10, 0);
-      return A;
-    }();
-
-    return *GlobalAllocator;
   }
 
   Chunk *InitHeadAndTail() {
@@ -201,21 +191,21 @@ private:
     U &operator*() const {
       DCHECK_NE(C, &SentinelChunk);
       auto RelOff = Offset % N;
-      return *reinterpret_cast<U *>(reinterpret_cast<char *>(C->Block.Data) +
+      return *reinterpret_cast<U *>(reinterpret_cast<char *>(C->Data) +
                                     (RelOff * ElementStorageSize));
     }
 
     U *operator->() const {
       DCHECK_NE(C, &SentinelChunk);
       auto RelOff = Offset % N;
-      return reinterpret_cast<U *>(reinterpret_cast<char *>(C->Block.Data) +
+      return reinterpret_cast<U *>(reinterpret_cast<char *>(C->Data) +
                                    (RelOff * ElementStorageSize));
     }
   };
 
 public:
-  explicit Array(AllocatorType &A) : Alloc(&A) {}
-  Array() : Array(GetGlobalAllocator()) {}
+  explicit Array(AllocatorType &A, ChunkAllocator &CA)
+      : Alloc(&A), ChunkAlloc(&CA) {}
 
   Array(const Array &) = delete;
   Array(Array &&O) NOEXCEPT : Alloc(O.Alloc),
@@ -246,9 +236,8 @@ public:
       if (AppendNewChunk() == nullptr)
         return nullptr;
 
-    auto Position =
-        reinterpret_cast<T *>(reinterpret_cast<char *>(Tail->Block.Data) +
-                              (Offset * ElementStorageSize));
+    auto Position = reinterpret_cast<T *>(reinterpret_cast<char *>(Tail->Data) +
+                                          (Offset * ElementStorageSize));
     *Position = E;
     ++Size;
     return Position;
@@ -268,7 +257,7 @@ public:
     }
 
     DCHECK_NE(Tail, &SentinelChunk);
-    auto Position = reinterpret_cast<char *>(LatestChunk->Block.Data) +
+    auto Position = reinterpret_cast<char *>(LatestChunk->Data) +
                     (Offset * ElementStorageSize);
     DCHECK_EQ(reinterpret_cast<uintptr_t>(Position) % ElementStorageSize, 0);
     // In-place construct at Position.
@@ -286,7 +275,7 @@ public:
       Offset -= N;
       DCHECK_NE(C, &SentinelChunk);
     }
-    return *reinterpret_cast<T *>(reinterpret_cast<char *>(C->Block.Data) +
+    return *reinterpret_cast<T *>(reinterpret_cast<char *>(C->Data) +
                                   (Offset * ElementStorageSize));
   }
 
@@ -360,7 +349,8 @@ public:
 // ensure that storage for the SentinelChunk is defined and has a single
 // address.
 template <class T, size_t N>
-typename Array<T, N>::Chunk Array<T, N>::SentinelChunk;
+Chunk Array<T, N>::SentinelChunk{nullptr, &Array<T, N>::SentinelChunk,
+                                 &Array<T, N>::SentinelChunk};
 
 } // namespace __xray
 

@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "xray_profile_collector.h"
+#include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_vector.h"
 #include "xray_profiling_flags.h"
@@ -117,11 +118,12 @@ struct ProfileRecord {
   const FunctionCallTrie::Node *Node = nullptr;
 
   // Constructor for in-place construction.
-  ProfileRecord(PathAllocator &A, const FunctionCallTrie::Node *N)
+  ProfileRecord(PathAllocator &A, ChunkAllocator &CA,
+                const FunctionCallTrie::Node *N)
       : Path([&] {
           auto P =
               reinterpret_cast<PathArray *>(InternalAlloc(sizeof(PathArray)));
-          new (P) PathArray(A);
+          new (P) PathArray(A, CA);
           return P;
         }()),
         Node(N) {}
@@ -135,17 +137,20 @@ using ProfileRecordArray = Array<ProfileRecord>;
 // the path(s) and the data associated with the path.
 static void populateRecords(ProfileRecordArray &PRs,
                             ProfileRecord::PathAllocator &PA,
-                            const FunctionCallTrie &Trie) {
+                            ChunkAllocator &CA, const FunctionCallTrie &Trie) {
   using StackArray = Array<const FunctionCallTrie::Node *>;
   using StackAllocator = typename StackArray::AllocatorType;
-  StackAllocator StackAlloc(profilingFlags()->stack_allocator_max, 0);
-  StackArray DFSStack(StackAlloc);
+  StackAllocator StackAlloc(profilingFlags()->stack_allocator_max);
+  ChunkAllocator StackChunkAlloc(profilingFlags()->stack_allocator_max);
+  StackArray DFSStack(StackAlloc, StackChunkAlloc);
   for (const auto R : Trie.getRoots()) {
     DFSStack.Append(R);
     while (!DFSStack.empty()) {
       auto Node = DFSStack.back();
       DFSStack.trim(1);
-      auto Record = PRs.AppendEmplace(PA, Node);
+      auto Record = PRs.AppendEmplace(PA, CA, Node);
+      if (Record == nullptr)
+        return;
       DCHECK_NE(Record, nullptr);
 
       // Traverse the Node's parents and as we're doing so, get the FIds in
@@ -208,10 +213,11 @@ void serialize() {
   // Then repopulate the global ProfileBuffers.
   for (u32 I = 0; I < ThreadTries->Size(); ++I) {
     using ProfileRecordAllocator = typename ProfileRecordArray::AllocatorType;
-    ProfileRecordAllocator PRAlloc(profilingFlags()->global_allocator_max, 0);
+    ProfileRecordAllocator PRAlloc(profilingFlags()->global_allocator_max);
+    ChunkAllocator CA(profilingFlags()->global_allocator_max);
     ProfileRecord::PathAllocator PathAlloc(
-        profilingFlags()->global_allocator_max, 0);
-    ProfileRecordArray ProfileRecords(PRAlloc);
+        profilingFlags()->global_allocator_max);
+    ProfileRecordArray ProfileRecords(PRAlloc, CA);
 
     // First, we want to compute the amount of space we're going to need. We'll
     // use a local allocator and an __xray::Array<...> to store the intermediary
@@ -220,7 +226,7 @@ void serialize() {
     const auto &Trie = *(*ThreadTries)[I].Trie;
     if (Trie.getRoots().empty())
       continue;
-    populateRecords(ProfileRecords, PathAlloc, Trie);
+    populateRecords(ProfileRecords, PathAlloc, CA, Trie);
     DCHECK(!Trie.getRoots().empty());
     DCHECK(!ProfileRecords.empty());
 
