@@ -233,6 +233,14 @@ def PPCE500Itineraries : ProcessorItineraries<
                                   InstrStage<1, [E500_SU0]>],
                                  [4, 1],
                                  [NoBypass, E500_GPR_Bypass]>,
+  InstrItinData<IIC_FPDGeneral,  [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
+                                  InstrStage<6, [E500_MU]>],
+                                 [9, 1, 1],  // Latency = 6, Repeat rate = 1
+                                 [NoBypass]>,
+  InstrItinData<IIC_FPSGeneral,  [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
+                                  InstrStage<4, [E500_MU]>],
+                                 [7, 1, 1],  // Latency = 4, Repeat rate = 1
+                                 [NoBypass]>,
   InstrItinData<IIC_FPDivD,      [InstrStage<1, [E500_DIS0, E500_DIS1], 0>,
                                   InstrStage<32, [E500_MU]>],
                                  [35, 1, 1], // Latency = 32, Repeat rate = 32

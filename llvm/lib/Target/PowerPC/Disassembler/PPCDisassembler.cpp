@@ -417,6 +417,51 @@ static DecodeStatus decodeMemRIX16Operands(MCInst &Inst, uint64_t Imm,
   return MCDisassembler::Success;
 }
 
+static DecodeStatus decodeSPE8Operands(MCInst &Inst, uint64_t Imm,
+                                         int64_t Address, const void *Decoder) {
+  // Decode the spe8disp field (imm, reg), which has the low 5-bits as the
+  // displacement with 8-byte aligned, and the next 5 bits as the register #.
+
+  uint64_t Base = Imm >> 5;
+  uint64_t Disp = Imm & 0x1F;
+
+  assert(Base < 32 && "Invalid base register");
+
+  Inst.addOperand(MCOperand::createImm(Disp << 3));
+  Inst.addOperand(MCOperand::createReg(GP0Regs[Base]));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus decodeSPE4Operands(MCInst &Inst, uint64_t Imm,
+                                         int64_t Address, const void *Decoder) {
+  // Decode the spe4disp field (imm, reg), which has the low 5-bits as the
+  // displacement with 4-byte aligned, and the next 5 bits as the register #.
+
+  uint64_t Base = Imm >> 5;
+  uint64_t Disp = Imm & 0x1F;
+
+  assert(Base < 32 && "Invalid base register");
+
+  Inst.addOperand(MCOperand::createImm(Disp << 2));
+  Inst.addOperand(MCOperand::createReg(GP0Regs[Base]));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus decodeSPE2Operands(MCInst &Inst, uint64_t Imm,
+                                         int64_t Address, const void *Decoder) {
+  // Decode the spe2disp field (imm, reg), which has the low 5-bits as the
+  // displacement with 2-byte aligned, and the next 5 bits as the register #.
+
+  uint64_t Base = Imm >> 5;
+  uint64_t Disp = Imm & 0x1F;
+
+  assert(Base < 32 && "Invalid base register");
+
+  Inst.addOperand(MCOperand::createImm(Disp << 1));
+  Inst.addOperand(MCOperand::createReg(GP0Regs[Base]));
+  return MCDisassembler::Success;
+}
+
 static DecodeStatus decodeCRBitMOperand(MCInst &Inst, uint64_t Imm,
                                         int64_t Address, const void *Decoder) {
   // The cr bit encoding is 0x80 >> cr_reg_num.
@@ -448,6 +493,11 @@ DecodeStatus PPCDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
   if (STI.getFeatureBits()[PPC::FeatureQPX]) {
     DecodeStatus result =
       decodeInstruction(DecoderTableQPX32, MI, Inst, Address, this, STI);
+    if (result != MCDisassembler::Fail)
+      return result;
+  } else if (STI.getFeatureBits()[PPC::FeatureSPE]) {
+    DecodeStatus result =
+      decodeInstruction(DecoderTableSPE32, MI, Inst, Address, this, STI);
     if (result != MCDisassembler::Fail)
       return result;
   }
