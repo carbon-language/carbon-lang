@@ -1104,6 +1104,7 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
   default: break;
   case PPC::DIR_970:
   case PPC::DIR_A2:
+  case PPC::DIR_E500:
   case PPC::DIR_E500mc:
   case PPC::DIR_E5500:
   case PPC::DIR_PWR4:
@@ -10822,6 +10823,7 @@ unsigned PPCTargetLowering::combineRepeatedFPDivisors() const {
     return 3;
   case PPC::DIR_440:
   case PPC::DIR_A2:
+  case PPC::DIR_E500:
   case PPC::DIR_E500mc:
   case PPC::DIR_E5500:
     return 2;

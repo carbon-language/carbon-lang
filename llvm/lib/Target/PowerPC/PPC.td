@@ -35,6 +35,8 @@ def Directive970 : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_970", "">;
 def Directive32  : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_32", "">;
 def Directive64  : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_64", "">;
 def DirectiveA2  : SubtargetFeature<"", "DarwinDirective", "PPC::DIR_A2", "">;
+def DirectiveE500   : SubtargetFeature<"", "DarwinDirective",
+                                       "PPC::DIR_E500", "">;
 def DirectiveE500mc : SubtargetFeature<"", "DarwinDirective",
                                        "PPC::DIR_E500mc", "">;
 def DirectiveE5500  : SubtargetFeature<"", "DarwinDirective",
@@ -358,6 +360,10 @@ def : ProcessorModel<"g5", G5Model,
                    FeatureFRES, FeatureFRSQRTE,
                    Feature64Bit /*, Feature64BitRegs */,
                    FeatureMFTB, DeprecatedDST]>;
+def : ProcessorModel<"e500", PPCE500Model,
+                  [DirectiveE500,
+                   FeatureICBT, FeatureBookE,
+                   FeatureISEL, FeatureMFTB]>;
 def : ProcessorModel<"e500mc", PPCE500mcModel,
                   [DirectiveE500mc,
                    FeatureSTFIWX, FeatureICBT, FeatureBookE, 
