@@ -1325,7 +1325,7 @@ private:
   const PA parser_;
 };
 
-template<LanguageFeature LF = LanguageFeature::Extension, typename PA>
+template<LanguageFeature LF, typename PA>
 inline constexpr auto extension(const PA &parser) {
   return NonstandardParser<LF, PA>(parser);
 }
@@ -1357,7 +1357,7 @@ private:
   const PA parser_;
 };
 
-template<LanguageFeature LF = LanguageFeature::Deprecation, typename PA>
+template<LanguageFeature LF, typename PA>
 inline constexpr auto deprecated(const PA &parser) {
   return DeprecatedParser<LF, PA>(parser);
 }

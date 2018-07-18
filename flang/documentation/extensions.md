@@ -29,7 +29,7 @@ Extensions, deletions, and legacy features supported by default
 * `X` prefix/suffix as synonym for `Z` on hexadecimal literals
 * `B`, `O`, `Z`, and `X` accepted as suffixes as well as prefixes
 * Triplets allowed in array constructors
-* Old-style `PARAMETER pi=3.14` statement (no parentheses)
+* Old-style `PARAMETER pi=3.14` statement without parentheses
 * `%LOC`, `%VAL`, and `%REF`
 * Leading comma allowed before I/O item list
 * Empty parentheses allowed in `PROGRAM P()`

@@ -23,9 +23,15 @@ namespace Fortran::parser {
 ENUM_CLASS(LanguageFeature, BackslashEscapes, OldDebugLines,
     FixedFormContinuationWithColumn1Ampersand, LogicalAbbreviations,
     XOROperator, PunctuationInNames, OptionalFreeFormSpace, BOZExtensions,
-    EmptyStatement, OpenMP, Extension, Deprecation)
+    EmptyStatement, AlternativeNE, ExecutionPartNamelist, DECStructures,
+    DoubleComplex, Kanji, Byte, StarKind, QuadPrecision, SlashInitialization,
+    TripletInArrayConstructor, MissingColons, SignedComplexLiteral,
+    OldStyleParameter, ComplexConstructor, PercentLOC, SignedPrimary, FileName,
+    Convert, Dispose, IOListLeadingComma, AbbreviatedEditDescriptor,
+    ProgramParentheses, PercentRefAndVal, OmitFunctionDummies, CrayPointer,
+    Hollerith, ArithmeticIF, Assign, AssignedGOTO, Pause, OpenMP)
 
-using LanguageFeatures = common::EnumSet<LanguageFeature, 32>;
+using LanguageFeatures = common::EnumSet<LanguageFeature, 64>;
 
 class LanguageFeatureControl {
 public:
