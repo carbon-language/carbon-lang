@@ -9,6 +9,13 @@
 # CHECK:        SectionHeaderCount: 0 (65541)
 # CHECK-NEXT:   StringTableSectionIndex: 65535 (65539)
 
+## Check that 65539 is really the index of .shstrtab section.
+# RUN: llvm-objdump -section-headers -section=.shstrtab %t \
+# RUN:   | FileCheck %s --check-prefix=SHSTRTAB
+# SHSTRTAB:      Sections:
+# SHSTRTAB-NEXT:  Idx   Name
+# SHSTRTAB-NEXT:  65539 .shstrtab
+
 .macro gen_sections4 x
   .section a\x
   .section b\x
