@@ -766,24 +766,11 @@ def MOVHPDmr : PDI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
 } // SchedRW
 
 let Predicates = [UseAVX] in {
-  // VMOVHPS patterns
-  def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
-            (VMOVHPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4f32 (v2i64 (X86vzload addr:$src2)))),
-            (VMOVHPSrm VR128:$src1, addr:$src2)>;
-
   // Also handle an i64 load because that may get selected as a faster way to
   // load the data.
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
                       (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src2)))))),
             (VMOVHPDrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(store (f64 (extractelt
-                          (bc_v2f64 (v4f32 (X86Movhlps VR128:$src, VR128:$src))),
-                          (iPTR 0))), addr:$dst),
-            (VMOVHPDmr addr:$dst, VR128:$src)>;
 
   def : Pat<(store (f64 (extractelt
                           (v2f64 (X86VPermilpi VR128:$src, (i8 1))),
@@ -792,14 +779,6 @@ let Predicates = [UseAVX] in {
 }
 
 let Predicates = [UseSSE1] in {
-  // MOVHPS patterns
-  def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
-            (MOVHPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4f32 (v2i64 (X86vzload addr:$src2)))),
-            (MOVHPSrm VR128:$src1, addr:$src2)>;
-
   // This pattern helps select MOVHPS on SSE1 only targets. With SSE2 we'll
   // end up with a movsd or bleand instead of shufp.
   // No need for aligned load, we're only loading 64-bits.
@@ -815,11 +794,6 @@ let Predicates = [UseSSE2] in {
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
                       (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src2)))))),
             (MOVHPDrm VR128:$src1, addr:$src2)>;
-
-  def : Pat<(store (f64 (extractelt
-                          (bc_v2f64 (v4f32 (X86Movhlps VR128:$src, VR128:$src))),
-                          (iPTR 0))), addr:$dst),
-            (MOVHPDmr addr:$dst, VR128:$src)>;
 
   def : Pat<(store (f64 (extractelt
                           (v2f64 (X86Shufp VR128:$src, VR128:$src, (i8 1))),
