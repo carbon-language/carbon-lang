@@ -414,10 +414,11 @@ void BinaryFunction::postProcessProfile() {
 
 Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
 BinaryFunction::getFallthroughsInTrace(const LBREntry &FirstLBR,
-                                       const LBREntry &SecondLBR) {
+                                       const LBREntry &SecondLBR,
+                                       uint64_t Count) {
   SmallVector<std::pair<uint64_t, uint64_t>, 16> Res;
 
-  if (!recordTrace(FirstLBR, SecondLBR, 1, &Res))
+  if (!recordTrace(FirstLBR, SecondLBR, Count, &Res))
     return NoneType();
 
   return Res;

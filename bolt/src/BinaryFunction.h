@@ -2138,7 +2138,8 @@ public:
   /// Return a vector of offsets corresponding to a trace in a function
   /// (see recordTrace() above).
   Optional<SmallVector<std::pair<uint64_t, uint64_t>, 16>>
-  getFallthroughsInTrace(const LBREntry &First, const LBREntry &Second);
+  getFallthroughsInTrace(const LBREntry &First, const LBREntry &Second,
+                         uint64_t Count = 1);
 
   /// Returns an estimate of the function's hot part after splitting.
   /// This is a very rough estimate, as with C++ exceptions there are

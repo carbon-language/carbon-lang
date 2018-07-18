@@ -168,9 +168,12 @@ struct FuncBranchData {
   DenseMap<uint64_t, DenseMap<Location, size_t>> InterIndex;
   DenseMap<uint64_t, DenseMap<Location, size_t>> EntryIndex;
 
-  void bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo, bool Mispred);
-  void bumpCallCount(uint64_t OffsetFrom, const Location &To, bool Mispred);
-  void bumpEntryCount(const Location &From, uint64_t OffsetTo, bool Mispred);
+  void bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo, uint64_t Count,
+                       uint64_t Mispreds);
+  void bumpCallCount(uint64_t OffsetFrom, const Location &To, uint64_t Count,
+                     uint64_t Mispreds);
+  void bumpEntryCount(const Location &From, uint64_t OffsetTo, uint64_t Count,
+                      uint64_t Mispreds);
 };
 
 /// MemInfo represents a single memory load from an address \p Addr at an \p

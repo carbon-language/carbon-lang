@@ -44,6 +44,13 @@ BasicAggregation("nl",
   cl::cat(AggregatorCategory));
 
 static cl::opt<bool>
+ReadPreAggregated("pa",
+  cl::desc("skip perf and read data from a pre-aggregated file format"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(AggregatorCategory));
+
+static cl::opt<bool>
 IgnoreBuildID("ignore-build-id",
   cl::desc("continue even if build-ids in input binary and perf.data mismatch"),
   cl::init(false),
@@ -79,6 +86,11 @@ void DataAggregator::start(StringRef PerfDataFilename) {
   this->PerfDataFilename = PerfDataFilename;
   outs() << "PERF2BOLT: Starting data aggregation job for " << PerfDataFilename
          << "\n";
+
+  // Don't launch perf for pre-aggregated files
+  if (opts::ReadPreAggregated)
+    return;
+
   findPerfExecutable();
   launchPerfBranchEventsNoWait();
   launchPerfMemEventsNoWait();
@@ -86,6 +98,9 @@ void DataAggregator::start(StringRef PerfDataFilename) {
 }
 
 void DataAggregator::abort() {
+  if (opts::ReadPreAggregated)
+    return;
+
   std::string Error;
 
   // Kill subprocesses in case they are not finished
@@ -227,6 +242,9 @@ bool DataAggregator::launchPerfTasksNoWait() {
 }
 
 void DataAggregator::processFileBuildID(StringRef FileBuildID) {
+  if (opts::ReadPreAggregated)
+    return;
+
   SmallVector<const char *, 4> Argv;
   SmallVector<char, 256> OutputPath;
   SmallVector<char, 256> ErrPath;
@@ -322,6 +340,9 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
 }
 
 bool DataAggregator::checkPerfDataMagic(StringRef FileName) {
+  if (opts::ReadPreAggregated)
+    return true;
+
   int FD;
   if (sys::fs::openFileForRead(FileName, FD)) {
     return false;
@@ -356,12 +377,47 @@ void DataAggregator::deleteTempFiles() {
   deleteTempFile(PerfTasksOutputPath.data());
 }
 
+bool DataAggregator::processPreAggregated() {
+  std::string Error;
+
+  auto MB = MemoryBuffer::getFileOrSTDIN(PerfDataFilename);
+  if (std::error_code EC = MB.getError()) {
+    errs() << "PERF2BOLT-ERROR: cannot open " << PerfDataFilename << ": "
+           << EC.message() << "\n";
+    exit(1);
+  }
+
+  FileBuf.reset(MB->release());
+  ParsingBuf = FileBuf->getBuffer();
+  Col = 0;
+  Line = 1;
+  if (parseAggregatedLBRSamples()) {
+    outs() << "PERF2BOLT: Failed to parse samples\n";
+    exit(1);
+  }
+
+  // Mark all functions with registered events as having a valid profile.
+  for (auto &BFI : *BFs) {
+    auto &BF = BFI.second;
+    if (BF.getBranchData()) {
+      const auto Flags = opts::BasicAggregation ? BinaryFunction::PF_SAMPLE
+                                                : BinaryFunction::PF_LBR;
+      BF.markProfiled(Flags);
+    }
+  }
+
+  return true;
+}
+
 bool DataAggregator::aggregate(BinaryContext &BC,
                                std::map<uint64_t, BinaryFunction> &BFs) {
   std::string Error;
 
   this->BC = &BC;
   this->BFs = &BFs;
+
+  if (opts::ReadPreAggregated)
+    return processPreAggregated();
 
   outs() << "PERF2BOLT: Waiting for perf tasks collection to finish...\n";
   auto PI1 = sys::Wait(TasksPI, 0, true, &Error);
@@ -517,8 +573,9 @@ DataAggregator::doSample(BinaryFunction &Func, uint64_t Address) {
   return true;
 }
 
-bool
-DataAggregator::doIntraBranch(BinaryFunction &Func, const LBREntry &Branch) {
+bool DataAggregator::doIntraBranch(BinaryFunction &Func, uint64_t From,
+                                   uint64_t To, uint64_t Count,
+                                   uint64_t Mispreds) {
   FuncBranchData *AggrData = Func.getBranchData();
   if (!AggrData) {
     AggrData = &FuncsToBranches[Func.getNames()[0]];
@@ -526,21 +583,19 @@ DataAggregator::doIntraBranch(BinaryFunction &Func, const LBREntry &Branch) {
     Func.setBranchData(AggrData);
   }
 
-  AggrData->bumpBranchCount(Branch.From - Func.getAddress(),
-                            Branch.To - Func.getAddress(),
-                            Branch.Mispred);
+  AggrData->bumpBranchCount(From - Func.getAddress(), To - Func.getAddress(),
+                            Count, Mispreds);
   return true;
 }
 
 bool DataAggregator::doInterBranch(BinaryFunction *FromFunc,
-                                   BinaryFunction *ToFunc,
-                                   const LBREntry &Branch) {
+                                   BinaryFunction *ToFunc, uint64_t From,
+                                   uint64_t To, uint64_t Count,
+                                   uint64_t Mispreds) {
   FuncBranchData *FromAggrData{nullptr};
   FuncBranchData *ToAggrData{nullptr};
   StringRef SrcFunc;
   StringRef DstFunc;
-  auto From = Branch.From;
-  auto To = Branch.To;
   if (FromFunc) {
     SrcFunc = FromFunc->getNames()[0];
     FromAggrData = FromFunc->getBranchData();
@@ -551,7 +606,7 @@ bool DataAggregator::doInterBranch(BinaryFunction *FromFunc,
     }
     From -= FromFunc->getAddress();
 
-    FromFunc->recordExit(From, Branch.Mispred);
+    FromFunc->recordExit(From, Mispreds, Count);
   }
   if (ToFunc) {
     DstFunc = ToFunc->getNames()[0];
@@ -563,44 +618,44 @@ bool DataAggregator::doInterBranch(BinaryFunction *FromFunc,
     }
     To -= ToFunc->getAddress();
 
-    ToFunc->recordEntry(To, Branch.Mispred);
+    ToFunc->recordEntry(To, Mispreds, Count);
   }
 
   if (FromAggrData)
     FromAggrData->bumpCallCount(From, Location(!DstFunc.empty(), DstFunc, To),
-                                Branch.Mispred);
+                                Count, Mispreds);
   if (ToAggrData)
     ToAggrData->bumpEntryCount(Location(!SrcFunc.empty(), SrcFunc, From), To,
-                               Branch.Mispred);
+                               Count, Mispreds);
   return true;
 }
 
-bool DataAggregator::doBranch(const LBREntry &Branch) {
-  auto *FromFunc = getBinaryFunctionContainingAddress(Branch.From);
-  auto *ToFunc = getBinaryFunctionContainingAddress(Branch.To);
+bool DataAggregator::doBranch(uint64_t From, uint64_t To, uint64_t Count,
+                              uint64_t Mispreds) {
+  auto *FromFunc = getBinaryFunctionContainingAddress(From);
+  auto *ToFunc = getBinaryFunctionContainingAddress(To);
   if (!FromFunc && !ToFunc)
     return false;
 
   if (FromFunc == ToFunc) {
-    FromFunc->recordBranch(Branch.From - FromFunc->getAddress(),
-                           Branch.To - FromFunc->getAddress(),
-                           1,
-                           Branch.Mispred);
-    return doIntraBranch(*FromFunc, Branch);
+    FromFunc->recordBranch(From - FromFunc->getAddress(),
+                           To - FromFunc->getAddress(), Count, Mispreds);
+    return doIntraBranch(*FromFunc, From, To, Count, Mispreds);
   }
 
-  return doInterBranch(FromFunc, ToFunc, Branch);
+  return doInterBranch(FromFunc, ToFunc, From, To, Count, Mispreds);
 }
 
-bool DataAggregator::doTrace(const LBREntry &First, const LBREntry &Second) {
+bool DataAggregator::doTrace(const LBREntry &First, const LBREntry &Second,
+                             uint64_t Count) {
   auto *FromFunc = getBinaryFunctionContainingAddress(First.To);
   auto *ToFunc = getBinaryFunctionContainingAddress(Second.From);
   if (!FromFunc || !ToFunc) {
-    ++NumLongRangeTraces;
+    NumLongRangeTraces += Count;
     return false;
   }
   if (FromFunc != ToFunc) {
-    ++NumInvalidTraces;
+    NumInvalidTraces += Count;
     DEBUG(dbgs() << "Trace starting in " << FromFunc->getPrintName() << " @ "
                  << Twine::utohexstr(First.To - FromFunc->getAddress())
                  << " and ending in " << ToFunc->getPrintName() << " @ "
@@ -610,17 +665,15 @@ bool DataAggregator::doTrace(const LBREntry &First, const LBREntry &Second) {
     return false;
   }
 
-  auto FTs = FromFunc->getFallthroughsInTrace(First, Second);
+  auto FTs = FromFunc->getFallthroughsInTrace(First, Second, Count);
   if (!FTs) {
-    ++NumInvalidTraces;
+    NumInvalidTraces += Count;
     return false;
   }
 
   for (const auto &Pair : *FTs) {
-    doIntraBranch(*FromFunc,
-                  LBREntry{Pair.first + FromFunc->getAddress(),
-                           Pair.second + FromFunc->getAddress(),
-                           false});
+    doIntraBranch(*FromFunc, Pair.first + FromFunc->getAddress(),
+                  Pair.second + FromFunc->getAddress(), Count, false);
   }
 
   return true;
@@ -802,6 +855,83 @@ ErrorOr<PerfMemSample> DataAggregator::parseMemSample() {
   return PerfMemSample{PCRes.get(), AddrRes.get()};
 }
 
+ErrorOr<Location> DataAggregator::parseLocationOrOffset() {
+  auto parseOffset = [this]() -> ErrorOr<Location> {
+    auto Res = parseHexField(FieldSeparator);
+    if (std::error_code EC = Res.getError())
+      return EC;
+    return Location(Res.get());
+  };
+
+  auto Sep = ParsingBuf.find_first_of(" \n");
+  if (Sep == StringRef::npos)
+    return parseOffset();
+  auto LookAhead = ParsingBuf.substr(0, Sep);
+  if (LookAhead.find_first_of(":") == StringRef::npos)
+    return parseOffset();
+
+  auto BuildID = parseString(':');
+  if (std::error_code EC = BuildID.getError())
+    return EC;
+  auto Offset = parseHexField(FieldSeparator);
+  if (std::error_code EC = Offset.getError())
+    return EC;
+  return Location(true, BuildID.get(), Offset.get());
+}
+
+ErrorOr<AggregatedLBREntry> DataAggregator::parseAggregatedLBREntry() {
+  while (checkAndConsumeFS()) {}
+
+  auto TypeOrErr = parseString(FieldSeparator);
+  if (std::error_code EC = TypeOrErr.getError())
+    return EC;
+  auto Type{AggregatedLBREntry::BRANCH};
+  if (TypeOrErr.get() == "B") {
+    Type = AggregatedLBREntry::BRANCH;
+  } else if (TypeOrErr.get() == "F") {
+    Type = AggregatedLBREntry::FT;
+  } else if (TypeOrErr.get() == "f") {
+    Type = AggregatedLBREntry::FT_EXTERNAL_ORIGIN;
+  } else {
+    reportError("expected B, F or f");
+    return make_error_code(llvm::errc::io_error);
+  }
+
+  while (checkAndConsumeFS()) {}
+  auto From = parseLocationOrOffset();
+  if (std::error_code EC = From.getError())
+    return EC;
+
+  while (checkAndConsumeFS()) {}
+  auto To = parseLocationOrOffset();
+  if (std::error_code EC = To.getError())
+    return EC;
+
+  while (checkAndConsumeFS()) {}
+  auto Frequency = parseNumberField(FieldSeparator,
+                                    Type != AggregatedLBREntry::BRANCH);
+  if (std::error_code EC = Frequency.getError())
+    return EC;
+
+  uint64_t Mispreds{0};
+  if (Type == AggregatedLBREntry::BRANCH) {
+    while (checkAndConsumeFS()) {}
+    auto MispredsOrErr = parseNumberField(FieldSeparator, true);
+    if (std::error_code EC = MispredsOrErr.getError())
+      return EC;
+    Mispreds = static_cast<uint64_t>(MispredsOrErr.get());
+  }
+
+  if (!checkAndConsumeNewLine()) {
+    reportError("expected end of line");
+    return make_error_code(llvm::errc::io_error);
+  }
+
+  return AggregatedLBREntry{From.get(), To.get(),
+                            static_cast<uint64_t>(Frequency.get()), Mispreds,
+                            Type};
+}
+
 bool DataAggregator::hasData() {
   if (ParsingBuf.size() == 0)
     return false;
@@ -836,7 +966,7 @@ std::error_code DataAggregator::parseBranchEvents() {
         doTrace(LBR, *NextLBR);
         ++NumTraces;
       }
-      doBranch(LBR);
+      doBranch(LBR.From, LBR.To, 1, LBR.Mispred);
       NextLBR = &LBR;
     }
   }
@@ -987,6 +1117,79 @@ std::error_code DataAggregator::parseMemEvents() {
       DEBUG(dbgs() << "Mem event: " << FuncLoc << " = " << AddrLoc << "\n");
     }
   }
+
+  return std::error_code();
+}
+
+std::error_code DataAggregator::parseAggregatedLBRSamples() {
+  outs() << "PERF2BOLT: Aggregating...\n";
+  NamedRegionTimer T("parseAggregated", "Aggregated LBR parsing", TimerGroupName,
+                     TimerGroupDesc, opts::TimeAggregator);
+  uint64_t NumAggrEntries{0};
+  uint64_t NumTraces{0};
+  while (hasData()) {
+    auto AggrEntryRes = parseAggregatedLBREntry();
+    if (std::error_code EC = AggrEntryRes.getError())
+      return EC;
+
+    auto &AggrEntry = AggrEntryRes.get();
+
+    ++NumAggrEntries;
+    switch (AggrEntry.EntryType) {
+    case AggregatedLBREntry::BRANCH:
+      doBranch(AggrEntry.From.Offset, AggrEntry.To.Offset, AggrEntry.Count,
+               AggrEntry.Mispreds);
+      break;
+    case AggregatedLBREntry::FT:
+    case AggregatedLBREntry::FT_EXTERNAL_ORIGIN: {
+      LBREntry First{AggrEntry.EntryType == AggregatedLBREntry::FT
+                         ? AggrEntry.From.Offset
+                         : 0,
+                     AggrEntry.From.Offset, false};
+      LBREntry Second{AggrEntry.To.Offset, AggrEntry.To.Offset, false};
+      doTrace(First, Second, AggrEntry.Count);
+      ++NumTraces;
+      break;
+    }
+    }
+  }
+  outs() << "PERF2BOLT: Read " << NumAggrEntries << " aggregated LBR entries\n";
+  outs() << "PERF2BOLT: Traces mismatching disassembled function contents: "
+         << NumInvalidTraces;
+  float Perc{0.0f};
+  if (NumTraces > 0) {
+    outs() << " (";
+    Perc = NumInvalidTraces * 100.0f / NumTraces;
+    if (outs().has_colors()) {
+      if (Perc > 10.0f) {
+        outs().changeColor(raw_ostream::RED);
+      } else if (Perc > 5.0f) {
+        outs().changeColor(raw_ostream::YELLOW);
+      } else {
+        outs().changeColor(raw_ostream::GREEN);
+      }
+    }
+    outs() << format("%.1f%%", Perc);
+    if (outs().has_colors())
+      outs().resetColor();
+    outs() << ")";
+  }
+  outs() << "\n";
+  if (Perc > 10.0f) {
+    outs() << "\n !! WARNING !! This high mismatch ratio indicates the input "
+              "binary is probably not the same binary used during profiling "
+              "collection. The generated data may be ineffective for improving "
+              "performance.\n\n";
+  }
+
+  outs() << "PERF2BOLT: Out of range traces involving unknown regions: "
+         << NumLongRangeTraces;
+  if (NumTraces > 0) {
+    outs() << format(" (%.1f%%)", NumLongRangeTraces * 100.0f / NumTraces);
+  }
+  outs() << "\n";
+
+  dump();
 
   return std::error_code();
 }

@@ -130,46 +130,44 @@ void FuncSampleData::bumpCount(uint64_t Offset) {
 }
 
 void FuncBranchData::bumpBranchCount(uint64_t OffsetFrom, uint64_t OffsetTo,
-                                     bool Mispred) {
+                                     uint64_t Count, uint64_t Mispreds) {
   auto Iter = IntraIndex[OffsetFrom].find(OffsetTo);
   if (Iter == IntraIndex[OffsetFrom].end()) {
     Data.emplace_back(Location(true, Name, OffsetFrom),
-                      Location(true, Name, OffsetTo), Mispred, 1);
+                      Location(true, Name, OffsetTo), Mispreds, Count);
     IntraIndex[OffsetFrom][OffsetTo] = Data.size() - 1;
     return;
   }
   auto &BI = Data[Iter->second];
-  ++BI.Branches;
-  if (Mispred)
-    ++BI.Mispreds;
+  BI.Branches += Count;
+  BI.Mispreds += Mispreds;
 }
 
 void FuncBranchData::bumpCallCount(uint64_t OffsetFrom, const Location &To,
-                                   bool Mispred) {
+                                   uint64_t Count, uint64_t Mispreds) {
   auto Iter = InterIndex[OffsetFrom].find(To);
   if (Iter == InterIndex[OffsetFrom].end()) {
-    Data.emplace_back(Location(true, Name, OffsetFrom), To, Mispred, 1);
+    Data.emplace_back(Location(true, Name, OffsetFrom), To, Mispreds, Count);
     InterIndex[OffsetFrom][To] = Data.size() - 1;
     return;
   }
   auto &BI = Data[Iter->second];
-  ++BI.Branches;
-  if (Mispred)
-    ++BI.Mispreds;
+  BI.Branches += Count;
+  BI.Mispreds += Mispreds;
 }
 
 void FuncBranchData::bumpEntryCount(const Location &From, uint64_t OffsetTo,
-                                    bool Mispred) {
+                                    uint64_t Count, uint64_t Mispreds) {
   auto Iter = EntryIndex[OffsetTo].find(From);
   if (Iter == EntryIndex[OffsetTo].end()) {
-    EntryData.emplace_back(From, Location(true, Name, OffsetTo), Mispred, 1);
+    EntryData.emplace_back(From, Location(true, Name, OffsetTo), Mispreds,
+                           Count);
     EntryIndex[OffsetTo][From] = EntryData.size() - 1;
     return;
   }
   auto &BI = EntryData[Iter->second];
-  ++BI.Branches;
-  if (Mispred)
-    ++BI.Mispreds;
+  BI.Branches += Count;
+  BI.Mispreds += Mispreds;
 }
 
 void BranchInfo::mergeWith(const BranchInfo &BI) {
@@ -306,9 +304,9 @@ ErrorOr<StringRef> DataReader::parseString(char EndChar, bool EndNl) {
 
   // If EndNl was set and nl was found instead of EndChar, do not consume the
   // new line.
-  bool EndNlInstreadOfEndChar =
+  bool EndNlInsteadOfEndChar =
     ParsingBuf[StringEnd] == '\n' && EndChar != '\n';
-  unsigned End = EndNlInstreadOfEndChar ? StringEnd : StringEnd + 1;
+  unsigned End = EndNlInsteadOfEndChar ? StringEnd : StringEnd + 1;
 
   ParsingBuf = ParsingBuf.drop_front(End);
   if (EndChar == '\n') {
