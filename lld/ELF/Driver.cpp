@@ -294,6 +294,8 @@ static void checkOptions(opt::InputArgList &Args) {
       error("-r and -shared may not be used together");
     if (Config->GcSections)
       error("-r and --gc-sections may not be used together");
+    if (Config->GdbIndex)
+      error("-r and --gdb-index may not be used together");
     if (Config->ICF)
       error("-r and --icf may not be used together");
     if (Config->Pie)
