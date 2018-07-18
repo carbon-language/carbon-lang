@@ -26,6 +26,20 @@ define i1 @p0(i8 %x) {
   ret i1 %tmp2
 }
 
+; Big unusual bit width, https://bugs.llvm.org/show_bug.cgi?id=38204
+define i1 @pb(i65 %x) {
+; CHECK-LABEL: @pb(
+; CHECK-NEXT:    [[TMP0:%.*]] = shl i65 [[X:%.*]], 1
+; CHECK-NEXT:    [[TMP1:%.*]] = ashr exact i65 [[TMP0]], 1
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ne i65 [[TMP1]], [[X]]
+; CHECK-NEXT:    ret i1 [[TMP2]]
+;
+  %tmp0 = shl i65 %x, 1
+  %tmp1 = ashr exact i65 %tmp0, 1
+  %tmp2 = icmp ne i65 %x, %tmp1
+  ret i1 %tmp2
+}
+
 ; ============================================================================ ;
 ; Vector tests
 ; ============================================================================ ;
