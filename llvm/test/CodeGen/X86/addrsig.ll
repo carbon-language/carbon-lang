@@ -25,6 +25,9 @@ declare void @f3() unnamed_addr
 ; CHECK-NOT: .addrsig_sym g3
 @g3 = external unnamed_addr global i32
 
+; CHECK-NOT: .addrsig_sym tls
+@tls = thread_local global i32 0
+
 ; CHECK: .addrsig_sym a1
 @a1 = alias i32, i32* @g1
 ; CHECK-NOT: .addrsig_sym a2
