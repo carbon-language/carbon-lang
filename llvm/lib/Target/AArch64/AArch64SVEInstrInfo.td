@@ -67,6 +67,11 @@ let Predicates = [HasSVE] in {
   defm SMULH_ZPmZ : sve_int_bin_pred_arit_2<0b010, "smulh">;
   defm UMULH_ZPmZ : sve_int_bin_pred_arit_2<0b011, "umulh">;
 
+  defm SDIV_ZPmZ  : sve_int_bin_pred_arit_2_div<0b100, "sdiv">;
+  defm UDIV_ZPmZ  : sve_int_bin_pred_arit_2_div<0b101, "udiv">;
+  defm SDIVR_ZPmZ : sve_int_bin_pred_arit_2_div<0b110, "sdivr">;
+  defm UDIVR_ZPmZ : sve_int_bin_pred_arit_2_div<0b111, "udivr">;
+
   defm SXTB_ZPmZ : sve_int_un_pred_arit_0_h<0b000, "sxtb">;
   defm UXTB_ZPmZ : sve_int_un_pred_arit_0_h<0b001, "uxtb">;
   defm SXTH_ZPmZ : sve_int_un_pred_arit_0_w<0b010, "sxth">;

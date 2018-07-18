@@ -1387,6 +1387,12 @@ multiclass sve_int_bin_pred_arit_2<bits<3> opc, string asm> {
   def _D : sve_int_bin_pred_arit_log<0b11, 0b10, opc, asm, ZPR64>;
 }
 
+// Special case for divides which are not defined for 8b/16b elements.
+multiclass sve_int_bin_pred_arit_2_div<bits<3> opc, string asm> {
+  def _S : sve_int_bin_pred_arit_log<0b10, 0b10, opc, asm, ZPR32>;
+  def _D : sve_int_bin_pred_arit_log<0b11, 0b10, opc, asm, ZPR64>;
+}
+
 //===----------------------------------------------------------------------===//
 // SVE Integer Multiply-Add Group
 //===----------------------------------------------------------------------===//
