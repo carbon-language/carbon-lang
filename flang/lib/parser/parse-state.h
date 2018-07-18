@@ -179,9 +179,16 @@ public:
   void Nonstandard(
       CharBlock range, LanguageFeature lf, const MessageFixedText &msg) {
     anyConformanceViolation_ = true;
-    if (userState_ != nullptr && userState_->Warn(lf)) {
+    if (userState_ != nullptr && userState_->features().ShouldWarn(lf)) {
       Say(range, msg);
     }
+  }
+  bool IsNonstandardOk(LanguageFeature lf, const MessageFixedText &msg) {
+    if (userState_ != nullptr && !userState_->features().IsEnabled(lf)) {
+      return false;
+    }
+    Nonstandard(lf, msg);
+    return true;
   }
 
   bool IsAtEnd() const { return p_ >= limit_; }

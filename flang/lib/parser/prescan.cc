@@ -29,19 +29,17 @@ namespace Fortran::parser {
 
 static constexpr int maxPrescannerNesting{100};
 
-Prescanner::Prescanner(
-    Messages &messages, CookedSource &cooked, Preprocessor &preprocessor)
-  : messages_{messages}, cooked_{cooked}, preprocessor_{preprocessor} {}
+Prescanner::Prescanner(Messages &messages, CookedSource &cooked,
+    Preprocessor &preprocessor, LanguageFeatureControl lfc)
+  : messages_{messages}, cooked_{cooked},
+    preprocessor_{preprocessor}, features_{lfc} {}
 
 Prescanner::Prescanner(const Prescanner &that)
   : messages_{that.messages_}, cooked_{that.cooked_},
-    preprocessor_{that.preprocessor_}, inFixedForm_{that.inFixedForm_},
+    preprocessor_{that.preprocessor_}, features_{that.features_},
+    inFixedForm_{that.inFixedForm_},
     fixedFormColumnLimit_{that.fixedFormColumnLimit_},
-    encoding_{that.encoding_}, enableOldDebugLines_{that.enableOldDebugLines_},
-    enableBackslashEscapesInCharLiterals_{
-        that.enableBackslashEscapesInCharLiterals_},
-    warnOnNonstandardUsage_{that.warnOnNonstandardUsage_},
-    prescannerNesting_{that.prescannerNesting_ + 1},
+    encoding_{that.encoding_}, prescannerNesting_{that.prescannerNesting_ + 1},
     compilerDirectiveBloomFilter_{that.compilerDirectiveBloomFilter_},
     compilerDirectiveSentinels_{that.compilerDirectiveSentinels_} {}
 
@@ -451,11 +449,11 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence &tokens) {
   const auto emit{[&](char ch) { EmitChar(tokens, ch); }};
   const auto insert{[&](char ch) { EmitInsertedChar(tokens, ch); }};
   bool escape{false};
+  bool escapesEnabled{features_.IsEnabled(LanguageFeature::BackslashEscapes)};
   while (true) {
     char ch{*at_};
-    escape = !escape && ch == '\\' && enableBackslashEscapesInCharLiterals_;
-    EmitQuotedChar(
-        ch, emit, insert, false, !enableBackslashEscapesInCharLiterals_);
+    escape = !escape && ch == '\\' && escapesEnabled;
+    EmitQuotedChar(ch, emit, insert, false, !escapesEnabled);
     while (PadOutCharacterLiteral(tokens)) {
     }
     if (*at_ == '\n') {
@@ -548,7 +546,8 @@ bool Prescanner::IsFixedFormCommentLine(const char *start) const {
   char ch{*p};
   if (ch == '*' || ch == 'C' || ch == 'c' ||
       ch == '%' ||  // VAX %list, %eject, &c.
-      ((ch == 'D' || ch == 'd') && !enableOldDebugLines_)) {
+      ((ch == 'D' || ch == 'd') &&
+          !features_.IsEnabled(LanguageFeature::OldDebugLines))) {
     return true;
   }
   bool anyTabs{false};
@@ -733,9 +732,12 @@ const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
     return nullptr;
   } else {
     // Normal case: not in a compiler directive.
-    if (col1 == '&') {
+    if (col1 == '&' &&
+        features_.IsEnabled(
+            LanguageFeature::FixedFormContinuationWithColumn1Ampersand)) {
       // Extension: '&' as continuation marker
-      if (warnOnNonstandardUsage_) {
+      if (features_.ShouldWarn(
+              LanguageFeature::FixedFormContinuationWithColumn1Ampersand)) {
         Say("nonstandard usage"_en_US, GetProvenance(lineStart_));
       }
       return lineStart_ + 1;

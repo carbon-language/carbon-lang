@@ -40,9 +40,11 @@ class Success {};  // for when one must return something that's present
 
 class UserState {
 public:
-  explicit UserState(const CookedSource &cooked) : cooked_{cooked} {}
+  UserState(const CookedSource &cooked, LanguageFeatureControl features)
+    : cooked_{cooked}, features_{features} {}
 
   const CookedSource &cooked() const { return cooked_; }
+  const LanguageFeatureControl &features() const { return features_; }
 
   std::ostream *debugOutput() const { return debugOutput_; }
   UserState &set_debugOutput(std::ostream *out) {
@@ -91,41 +93,6 @@ public:
     return oldStructureComponents_.find(name) != oldStructureComponents_.end();
   }
 
-  UserState &Enable(LanguageFeature f) {
-    enabled_.set(f);
-    return *this;
-  }
-  UserState &Enable(LanguageFeatures fs) {
-    enabled_ |= fs;
-    return *this;
-  }
-  UserState &Disable(LanguageFeature f) {
-    enabled_.reset(f);
-    return *this;
-  }
-  UserState &Disable(LanguageFeatures fs) {
-    enabled_ &= ~fs;
-    return *this;
-  }
-  bool IsEnabled(LanguageFeature f) { return enabled_.test(f); }
-  UserState &EnableWarning(LanguageFeature f) {
-    warning_.set(f);
-    return *this;
-  }
-  UserState &EnableWarnings(LanguageFeatures fs) {
-    warning_ |= fs;
-    return *this;
-  }
-  UserState &DisableWarning(LanguageFeature f) {
-    warning_.reset(f);
-    return *this;
-  }
-  UserState &DisableWarnings(LanguageFeatures fs) {
-    warning_ &= ~fs;
-    return *this;
-  }
-  bool Warn(LanguageFeature f) { return warning_.test(f); }
-
 private:
   const CookedSource &cooked_;
 
@@ -139,7 +106,7 @@ private:
 
   std::set<CharBlock> oldStructureComponents_;
 
-  LanguageFeatures enabled_, warning_;
+  LanguageFeatureControl features_;
 };
 
 // Definitions of parser classes that manipulate the UserState.

@@ -23,6 +23,7 @@
 // inclusion, and driving the Fortran source preprocessor.
 
 #include "characters.h"
+#include "features.h"
 #include "message.h"
 #include "provenance.h"
 #include "token-sequence.h"
@@ -38,7 +39,8 @@ class Preprocessor;
 
 class Prescanner {
 public:
-  Prescanner(Messages &, CookedSource &, Preprocessor &);
+  Prescanner(
+      Messages &, CookedSource &, Preprocessor &, LanguageFeatureControl);
   Prescanner(const Prescanner &);
 
   Messages &messages() const { return messages_; }
@@ -51,20 +53,8 @@ public:
     encoding_ = code;
     return *this;
   }
-  Prescanner &set_enableOldDebugLines(bool yes) {
-    enableOldDebugLines_ = yes;
-    return *this;
-  }
-  Prescanner &set_enableBackslashEscapesInCharLiterals(bool yes) {
-    enableBackslashEscapesInCharLiterals_ = yes;
-    return *this;
-  }
   Prescanner &set_fixedFormColumnLimit(int limit) {
     fixedFormColumnLimit_ = limit;
-    return *this;
-  }
-  Prescanner &set_warnOnNonstandardUsage(bool yes) {
-    warnOnNonstandardUsage_ = yes;
     return *this;
   }
 
@@ -176,12 +166,10 @@ private:
   Messages &messages_;
   CookedSource &cooked_;
   Preprocessor &preprocessor_;
+  LanguageFeatureControl features_;
   bool inFixedForm_{false};
   int fixedFormColumnLimit_{72};
   Encoding encoding_{Encoding::UTF8};
-  bool enableOldDebugLines_{false};
-  bool enableBackslashEscapesInCharLiterals_{false};
-  bool warnOnNonstandardUsage_{false};
   int delimiterNesting_{0};
   int prescannerNesting_{0};
 

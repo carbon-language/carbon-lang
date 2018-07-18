@@ -300,13 +300,6 @@ int main(int argc, char *const argv[]) {
   options.predefinitions.emplace_back("__F18_MINOR__", "1");
   options.predefinitions.emplace_back("__F18_PATCHLEVEL__", "1");
 
-  options.enabled.set(Fortran::parser::LanguageFeature::PunctuationInNames);
-  options.enabled.set(Fortran::parser::LanguageFeature::OptionalFreeFormSpace);
-  options.enabled.set(Fortran::parser::LanguageFeature::BOZExtensions);
-  options.enabled.set(Fortran::parser::LanguageFeature::EmptyStatement);
-  options.enabled.set(Fortran::parser::LanguageFeature::Extension);  // pmk
-  options.enabled.set(Fortran::parser::LanguageFeature::Deprecation);
-
   std::vector<std::string> fortranSources, otherSources, relocatables;
   bool anyFiles{false};
 
@@ -350,23 +343,27 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-Mextend") {
       options.fixedFormColumns = 132;
     } else if (arg == "-Mbackslash") {
-      options.enabled.reset(Fortran::parser::LanguageFeature::BackslashEscapes);
+      options.features.Enable(
+          Fortran::parser::LanguageFeature::BackslashEscapes, false);
     } else if (arg == "-Mnobackslash") {
-      options.enabled.set(Fortran::parser::LanguageFeature::BackslashEscapes);
+      options.features.Enable(
+          Fortran::parser::LanguageFeature::BackslashEscapes);
     } else if (arg == "-Mstandard") {
-      options.isStrictlyStandard = true;
+      options.features.WarnOnAllNonstandard();
     } else if (arg == "-fopenmp") {
-      options.enabled.set(Fortran::parser::LanguageFeature::OpenMP);
+      options.features.Enable(Fortran::parser::LanguageFeature::OpenMP);
     } else if (arg == "-Werror") {
       driver.warningsAreErrors = true;
     } else if (arg == "-ed") {
-      options.enabled.set(Fortran::parser::LanguageFeature::OldDebugLines);
+      options.features.Enable(Fortran::parser::LanguageFeature::OldDebugLines);
     } else if (arg == "-E") {
       driver.dumpCookedChars = true;
     } else if (arg == "-fbackslash") {
-      options.enabled.set(Fortran::parser::LanguageFeature::BackslashEscapes);
+      options.features.Enable(
+          Fortran::parser::LanguageFeature::BackslashEscapes);
     } else if (arg == "-fno-backslash") {
-      options.enabled.reset(Fortran::parser::LanguageFeature::BackslashEscapes);
+      options.features.Enable(
+          Fortran::parser::LanguageFeature::BackslashEscapes, false);
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
@@ -448,8 +445,7 @@ int main(int argc, char *const argv[]) {
   driver.encoding = options.encoding;
 
   if (options.isStrictlyStandard) {
-    options.warning |= options.enabled;
-    options.warning.reset(Fortran::parser::LanguageFeature::OpenMP);
+    options.features.WarnOnAllNonstandard();
   }
 
   if (!anyFiles) {

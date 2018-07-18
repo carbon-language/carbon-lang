@@ -296,17 +296,6 @@ template<char quote> struct CharLiteral {
   }
 };
 
-static bool IsNonstandardBOZOk(ParseState &state) {
-  if (UserState * ustate{state.userState()}) {
-    if (!ustate->IsEnabled(LanguageFeature::BOZExtensions)) {
-      return false;
-    }
-  }
-  state.Nonstandard(
-      LanguageFeature::BOZExtensions, "nonstandard BOZ literal"_en_US);
-  return true;
-}
-
 // Parse "BOZ" binary literal quoted constants.
 // As extensions, support X as an alternate hexadecimal marker, and allow
 // BOZX markers to appear as suffixes.
@@ -330,7 +319,9 @@ struct BOZLiteral {
     if (!at.has_value()) {
       return {};
     }
-    if (**at == 'x' && !IsNonstandardBOZOk(state)) {
+    if (**at == 'x' &&
+        !state.IsNonstandardOk(
+            LanguageFeature::BOZExtensions, "nonstandard BOZ literal"_en_US)) {
       return {};
     }
     if (baseChar(**at)) {
@@ -365,8 +356,9 @@ struct BOZLiteral {
 
     if (!shift.has_value()) {
       // extension: base allowed to appear as suffix, too
-      if (!IsNonstandardBOZOk(state) ||
-          !(at = nextCh.Parse(state)).has_value() || !baseChar(**at)) {
+      if (!(at = nextCh.Parse(state)).has_value() || !baseChar(**at) ||
+          !state.IsNonstandardOk(LanguageFeature::BOZExtensions,
+              "nonstandard BOZ literal"_en_US)) {
         return {};
       }
       spaceCheck.Parse(state);
@@ -700,9 +692,9 @@ constexpr struct SkipStuffBeforeStatement {
         } else {
           break;
         }
-      } else if (**at == ';') {
-        state.Nonstandard(
-            LanguageFeature::EmptyStatement, "empty statement"_en_US);
+      } else if (**at == ';' &&
+          state.IsNonstandardOk(
+              LanguageFeature::EmptyStatement, "empty statement"_en_US)) {
         state.UncheckedAdvance();
       } else {
         break;
