@@ -1826,8 +1826,8 @@ void llvm::PrintSectionHeaders(const ObjectFile *Obj) {
     std::string Type = (std::string(Text ? "TEXT " : "") +
                         (Data ? "DATA " : "") + (BSS ? "BSS" : ""));
     outs() << format("%3d %-13s %08" PRIx64 " %016" PRIx64 " %s\n",
-                     Section.getIndex(), Name.str().c_str(), Size, Address,
-                     Type.c_str());
+                     (unsigned)Section.getIndex(), Name.str().c_str(), Size,
+                     Address, Type.c_str());
   }
 }
 
