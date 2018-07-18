@@ -30,7 +30,9 @@ using LanguageFeatures = common::EnumSet<LanguageFeature, 32>;
 class LanguageFeatureControl {
 public:
   LanguageFeatureControl() {
+    // These features must be explicitly enabled by command line options.
     disable_.set(LanguageFeature::OldDebugLines);
+    disable_.set(LanguageFeature::OpenMP);
     // These features, if enabled, conflict with valid standard usage.
     disable_.set(LanguageFeature::LogicalAbbreviations);
     disable_.set(LanguageFeature::XOROperator);
