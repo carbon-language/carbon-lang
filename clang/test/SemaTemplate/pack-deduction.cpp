@@ -152,7 +152,7 @@ namespace partial_full_mix {
   pair<tuple<int, float>, tuple<char, double>> k4 = A<int, float>().g<char>(pair<int, char>(), pair<float, double>(), pair<void, long>()); // expected-error {{no match}}
 
   // FIXME: We should accept this by treating the pack of pairs as having a fixed length of 2 here.
-  tuple<int[2], int[4]> k5 = A<int[1], int[3]>::h<int[2]>(tuple<pair<int[1], int[2]>, pair<int[3], int[4]>, pair<int[5], int[5]>>()); // expected-error {{no match}}
+  tuple<int[2], int[4]> k5 = A<int[1], int[3]>::h<int[2]>(tuple<pair<int[1], int[2]>, pair<int[3], int[4]>, pair<int, int>>()); // expected-error {{no match}}
 }
 
 namespace substitution_vs_function_deduction {
