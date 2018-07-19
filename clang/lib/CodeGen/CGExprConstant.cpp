@@ -664,7 +664,7 @@ EmitArrayConstant(CodeGenModule &CGM, const ConstantArrayType *DestType,
     // struct of two arrays (the nonzero data and the zeroinitializer).
     if (CommonElementType && NonzeroLength >= 8) {
       llvm::Constant *Initial = llvm::ConstantArray::get(
-          llvm::ArrayType::get(CommonElementType, ArrayBound),
+          llvm::ArrayType::get(CommonElementType, NonzeroLength),
           makeArrayRef(Elements).take_front(NonzeroLength));
       Elements.resize(2);
       Elements[0] = Initial;

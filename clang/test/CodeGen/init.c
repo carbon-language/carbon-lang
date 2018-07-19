@@ -86,6 +86,17 @@ const char large_array_with_zeroes[1000] = {
   'a', 'b', 'c', 1, 2, 3, 'x', 'y', 'z', 'z', 'y', [20] = 'q'
 };
 
+char global;
+
+// CHECK-DAG: @large_array_with_zeroes_2 = global <{ [10 x i8*], [90 x i8*] }> <{ [10 x i8*] [i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* @global], [90 x i8*] zeroinitializer }>
+const void *large_array_with_zeroes_2[100] = {
+  [9] = &global
+};
+// CHECK-DAG: @large_array_with_zeroes_3 = global <{ [10 x i8*], [990 x i8*] }> <{ [10 x i8*] [i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* null, i8* @global], [990 x i8*] zeroinitializer }>
+const void *large_array_with_zeroes_3[1000] = {
+  [9] = &global
+};
+
 // PR279 comment #3
 char test8(int X) {
   char str[100000] = "abc"; // tail should be memset.
