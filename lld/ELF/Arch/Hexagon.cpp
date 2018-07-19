@@ -53,6 +53,7 @@ static uint32_t applyMask(uint32_t Mask, uint32_t Data) {
 RelExpr Hexagon::getRelExpr(RelType Type, const Symbol &S,
                             const uint8_t *Loc) const {
   switch (Type) {
+  case R_HEX_B15_PCREL:
   case R_HEX_B22_PCREL:
   case R_HEX_B22_PCREL_X:
   case R_HEX_B32_PCREL_X:
@@ -67,6 +68,9 @@ static void or32le(uint8_t *P, int32_t V) { write32le(P, read32le(P) | V); }
 void Hexagon::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
   switch (Type) {
   case R_HEX_NONE:
+    break;
+  case R_HEX_B15_PCREL:
+    or32le(Loc, applyMask(0x00df20fe, Val >> 2));
     break;
   case R_HEX_B22_PCREL:
     or32le(Loc, applyMask(0x1ff3ffe, Val >> 2));
