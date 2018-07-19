@@ -340,6 +340,14 @@ bool Vectorizer::isConsecutiveAccess(Value *A, Value *B) {
   if (X == PtrSCEVB)
     return true;
 
+  // The above check will not catch the cases where one of the pointers is
+  // factorized but the other one is not, such as (C + (S * (A + B))) vs
+  // (AS + BS). Get the minus scev. That will allow re-combining the expresions
+  // and getting the simplified difference.
+  const SCEV *Dist = SE.getMinusSCEV(PtrSCEVB, PtrSCEVA);
+  if (C == Dist)
+    return true;
+
   // Sometimes even this doesn't work, because SCEV can't always see through
   // patterns that look like (gep (ext (add (shl X, C1), C2))). Try checking
   // things the hard way.
