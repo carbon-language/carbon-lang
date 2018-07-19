@@ -74,6 +74,7 @@ private:
   void PutSymbol(const Symbol &);
   void PutDerivedType(const Symbol &);
   void PutSubprogram(const Symbol &);
+  void PutGeneric(const Symbol &);
   void PutUse(const Symbol &);
   void PutUseExtraAttr(Attr, const Symbol &, const Symbol &);
   static void PutEntity(std::ostream &, const Symbol &);
@@ -205,6 +206,7 @@ void ModFileWriter::PutSymbol(const Symbol &symbol) {
           [&](const ModuleDetails &) { /* should be current module */ },
           [&](const DerivedTypeDetails &) { PutDerivedType(symbol); },
           [&](const SubprogramDetails &) { PutSubprogram(symbol); },
+          [&](const GenericDetails &) { PutGeneric(symbol); },
           [&](const UseDetails &) { PutUse(symbol); },
           [&](const UseErrorDetails &) {},
           [&](const auto &) { PutEntity(decls_, symbol); }},
@@ -226,31 +228,48 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
     bindAttrs.set(Attr::BIND_C, true);
     attrs.set(Attr::BIND_C, false);
   }
-  PutAttrs(contains_, attrs, ""s, " "s);
+  bool isExternal{attrs.test(Attr::EXTERNAL)};
+  std::ostream &os{isExternal ? decls_ : contains_};
+  if (isExternal) {
+    os << "interface\n";
+  }
+  PutAttrs(os, attrs, ""s, " "s);
   auto &details{symbol.get<SubprogramDetails>()};
-  contains_ << (details.isFunction() ? "function " : "subroutine ");
-  PutLower(contains_, symbol) << '(';
+  os << (details.isFunction() ? "function " : "subroutine ");
+  PutLower(os, symbol) << '(';
   int n = 0;
   for (const auto &dummy : details.dummyArgs()) {
-    if (n++ > 0) contains_ << ',';
-    PutLower(contains_, *dummy);
+    if (n++ > 0) os << ',';
+    PutLower(os, *dummy);
   }
-  contains_ << ')';
-  PutAttrs(contains_, bindAttrs, " "s, ""s);
+  os << ')';
+  PutAttrs(os, bindAttrs, " "s, ""s);
   if (details.isFunction()) {
     const Symbol &result{details.result()};
     if (result.name() != symbol.name()) {
-      PutLower(contains_ << " result(", result) << ')';
+      PutLower(os << " result(", result) << ')';
     }
-    contains_ << '\n';
-    PutEntity(contains_, details.result());
+    os << '\n';
+    PutEntity(os, details.result());
   } else {
-    contains_ << '\n';
+    os << '\n';
   }
   for (const auto &dummy : details.dummyArgs()) {
-    PutEntity(contains_, *dummy);
+    PutEntity(os, *dummy);
   }
-  contains_ << "end\n";
+  os << "end\n";
+  if (isExternal) {
+    os << "end interface\n";
+  }
+}
+
+void ModFileWriter::PutGeneric(const Symbol &symbol) {
+  auto &details{symbol.get<GenericDetails>()};
+  PutLower(decls_ << "interface ", symbol) << '\n';
+  for (auto *specific : details.specificProcs()) {
+    PutLower(decls_ << "procedure::", *specific) << '\n';
+  }
+  decls_ << "end interface\n";
 }
 
 void ModFileWriter::PutUse(const Symbol &symbol) {
@@ -282,7 +301,10 @@ void ModFileWriter::PutEntity(std::ostream &os, const Symbol &symbol) {
           [&](const EntityDetails &) { PutObjectEntity(os, symbol); },
           [&](const ObjectEntityDetails &) { PutObjectEntity(os, symbol); },
           [&](const ProcEntityDetails &) { PutProcEntity(os, symbol); },
-          [](const auto &) { CHECK(!"invalid details"); },
+          [&](const auto &) {
+            common::die("ModFileWriter::PutEntity: unexpected details: %s",
+                DetailsToString(symbol.details()).c_str());
+          },
       },
       symbol.details());
 }

@@ -219,6 +219,7 @@ using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     ObjectEntityDetails, ProcEntityDetails, DerivedTypeDetails, UseDetails,
     UseErrorDetails, GenericDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
+std::string DetailsToString(const Details &);
 
 class Symbol {
 public:

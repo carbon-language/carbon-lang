@@ -536,6 +536,7 @@ private:
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   void DeclareObjectEntity(const parser::Name &, Attrs);
   void DeclareProcEntity(const parser::Name &, Attrs, ProcInterface &&);
+  bool ConvertToProcEntity(Symbol &);
 
   // Set the type of an entity or report an error.
   void SetType(
@@ -1792,6 +1793,9 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
     if (auto &type{GetDeclTypeSpec()}) {
       SetType(name.source, symbol, *type);
     }
+    if (attrs.test(Attr::EXTERNAL)) {
+      ConvertToProcEntity(symbol);
+    }
   }
 }
 
@@ -1805,14 +1809,7 @@ bool DeclarationVisitor::Pre(const parser::ExternalStmt &x) {
   HandleAttributeStmt(Attr::EXTERNAL, x.v);
   for (const auto &name : x.v) {
     auto *symbol{FindSymbol(name.source)};
-    if (symbol->has<ProcEntityDetails>()) {
-      // nothing to do
-    } else if (symbol->has<UnknownDetails>()) {
-      symbol->set_details(ProcEntityDetails{});
-    } else if (auto *details{symbol->detailsIf<EntityDetails>()}) {
-      symbol->set_details(ProcEntityDetails(*details));
-      symbol->set(Symbol::Flag::Function);
-    } else {
+    if (!ConvertToProcEntity(*symbol)) {
       Say2(name.source, "EXTERNAL attribute not allowed on '%s'"_err_en_US,
           symbol->name(), "Declaration of '%s'"_en_US);
     }
@@ -1857,6 +1854,20 @@ bool DeclarationVisitor::HandleAttributeStmt(
     }
   }
   return false;
+}
+// Convert symbol to be a ProcEntity or return false if it can't be.
+bool DeclarationVisitor::ConvertToProcEntity(Symbol &symbol) {
+  if (symbol.has<ProcEntityDetails>()) {
+    // nothing to do
+  } else if (symbol.has<UnknownDetails>()) {
+    symbol.set_details(ProcEntityDetails{});
+  } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
+    symbol.set_details(ProcEntityDetails(*details));
+    symbol.set(Symbol::Flag::Function);
+  } else {
+    return false;
+  }
+  return true;
 }
 
 void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
@@ -2184,6 +2195,7 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
     } else if (CheckUseError(name->source, *symbol)) {
       // error was reported
     } else {
+      symbol = &symbol->GetUltimate();
       if (auto *details{symbol->detailsIf<EntityDetails>()}) {
         symbol->set_details(ProcEntityDetails(*details));
         symbol->set(Symbol::Flag::Function);

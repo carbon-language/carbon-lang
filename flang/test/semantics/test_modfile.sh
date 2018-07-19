@@ -54,7 +54,7 @@ for mod in $expected_files; do
     exit 1
   fi
   sed '/^!mod\$/d' $temp/$mod > $actual
-  sed '1,/^!Expect: '"$mod"'/d' $src | sed -e '/^$/,$d' -e 's/^!//' > $expect
+  sed '1,/^!Expect: '"$mod"'/d' $src | sed -e '/^$/,$d' -e 's/^! *//' > $expect
   if ! diff -U999999 $actual $expect > $diffs; then
     echo "Module file $mod differs from expected:"
     sed '1,2d' $diffs

@@ -84,7 +84,7 @@ const Symbol *GenericDetails::CheckSpecific() const {
 
 // The name of the kind of details for this symbol.
 // This is primarily for debugging.
-static std::string DetailsToString(const Details &details) {
+std::string DetailsToString(const Details &details) {
   return std::visit(
       common::visitors{
           [](const UnknownDetails &) { return "Unknown"; },
