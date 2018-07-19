@@ -6932,7 +6932,7 @@ private:
     bool IsExpressionFirstInfo = true;
     Address BP = Address::invalid();
 
-    if (const auto *ME = dyn_cast<MemberExpr>(I->getAssociatedExpression())) {
+    if (isa<MemberExpr>(I->getAssociatedExpression())) {
       // The base is the 'this' pointer. The content of the pointer is going
       // to be the base of the field being mapped.
       BP = CGF.LoadCXXThisAddress();
