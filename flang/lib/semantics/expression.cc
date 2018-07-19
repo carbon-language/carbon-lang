@@ -44,7 +44,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
   std::optional<evaluate::GenericExpr> result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
     result->Fold(ea.context());
-    if (!result->ConstantValue().has_value()) {
+    if (!result->ScalarValue().has_value()) {
       ea.Say("must be constant"_err_en_US);
       return {};
     }
@@ -84,8 +84,8 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
               parser::Integer<parser::Constant<parser::Name>>> &n) {
             if (std::optional<evaluate::GenericExpr> oge{
                     AnalyzeHelper(*this, n)}) {
-              if (std::optional<evaluate::GenericConstant> ogc{
-                      oge->ConstantValue()}) {
+              if (std::optional<evaluate::GenericScalar> ogs{
+                      oge->ScalarValue()}) {
                 // TODO pmk more here next
               }
             }

@@ -128,5 +128,14 @@ template<typename A> struct ListItemCount {
         static_cast<int>(e), #__VA_ARGS__); \
   }
 
+// If a variant holds a value of a particular type, return a copy in a
+// std::optional<>.
+template<typename A, typename VARIANT>
+std::optional<A> GetIf(const VARIANT &u) {
+  if (const A *x{std::get_if<A>(&u)}) {
+    return {*x};
+  }
+  return {};
+}
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_IDIOMS_H_

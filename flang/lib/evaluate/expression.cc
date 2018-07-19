@@ -24,6 +24,7 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
+// Dumping
 template<typename... A>
 std::ostream &DumpExprWithType(std::ostream &o, const std::variant<A...> &u) {
   std::visit(
@@ -69,7 +70,7 @@ std::ostream &Binary<A, B, CONST>::Dump(
 template<int KIND>
 std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const Constant &n) { o << n.SignedDecimal(); },
+      common::visitors{[&](const Scalar &n) { o << n.SignedDecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
           [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
@@ -90,7 +91,7 @@ std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
 
 template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
+      common::visitors{[&](const Scalar &n) { o << n.DumpHexadecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
           [&](const CopyableIndirection<ComplexPart> &d) { d->Dump(o); },
           [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
@@ -116,7 +117,7 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
 template<int KIND>
 std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
   std::visit(
-      common::visitors{[&](const Constant &n) { o << n.DumpHexadecimal(); },
+      common::visitors{[&](const Scalar &n) { o << n.DumpHexadecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
           [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
           [&](const Parentheses &p) { p.Dump(o, "("); },
@@ -134,7 +135,7 @@ std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
 
 template<int KIND>
 std::ostream &CharacterExpr<KIND>::Dump(std::ostream &o) const {
-  std::visit(common::visitors{[&](const Constant &s) {
+  std::visit(common::visitors{[&](const Scalar &s) {
                                 o << parser::QuoteCharacterLiteral(s);
                               },
                  [&](const Concat &concat) { concat.Dump(o, "//"); },
@@ -168,10 +169,11 @@ std::ostream &LogicalExpr::Dump(std::ostream &o) const {
   return o;
 }
 
+// LEN()
 template<int KIND> SubscriptIntegerExpr CharacterExpr<KIND>::LEN() const {
   return std::visit(
       common::visitors{
-          [](const Constant &c) { return SubscriptIntegerExpr{c.size()}; },
+          [](const Scalar &c) { return SubscriptIntegerExpr{c.size()}; },
           [](const Concat &c) { return c.left().LEN() + c.right().LEN(); },
           [](const Max &c) {
             return SubscriptIntegerExpr{
@@ -189,35 +191,37 @@ template<int KIND> SubscriptIntegerExpr CharacterExpr<KIND>::LEN() const {
       u_);
 }
 
-template<typename A, typename CONST>
-std::optional<CONST> Unary<A, CONST>::Fold(FoldingContext &context) {
+// Rank
+template<typename A, typename B, typename SCALAR>
+int Binary<A, B, SCALAR>::Rank() const {
+  int lrank{left_.Rank()};
+  if (lrank > 0) {
+    return lrank;
+  }
+  return right_.Rank();
+}
+
+// Folding
+template<typename A, typename SCALAR>
+std::optional<SCALAR> Unary<A, SCALAR>::Fold(FoldingContext &context) {
   operand_->Fold(context);
   return {};
 }
 
-template<typename A, typename B, typename CONST>
-std::optional<CONST> Binary<A, B, CONST>::Fold(FoldingContext &context) {
+template<typename A, typename B, typename SCALAR>
+std::optional<SCALAR> Binary<A, B, SCALAR>::Fold(FoldingContext &context) {
   left_->Fold(context);
   right_->Fold(context);
   return {};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
-IntegerExpr<KIND>::ConstantValue() const {
-  if (auto c{std::get_if<Constant>(&u_)}) {
-    return {*c};
-  }
-  return {};
-}
-
-template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::ConvertInteger::Fold(FoldingContext &context) {
   return std::visit(
-      [&](auto &x) -> std::optional<typename IntegerExpr<KIND>::Constant> {
+      [&](auto &x) -> std::optional<typename IntegerExpr<KIND>::Scalar> {
         if (auto c{x.Fold(context)}) {
-          auto converted{Constant::ConvertSigned(*c)};
+          auto converted{Scalar::ConvertSigned(*c)};
           if (converted.overflow && context.messages != nullptr) {
             context.messages->Say(
                 context.at, "integer conversion overflowed"_en_US);
@@ -226,14 +230,14 @@ IntegerExpr<KIND>::ConvertInteger::Fold(FoldingContext &context) {
         }
         // g++ 8.1.0 choked on the legal "return {};" that should be here,
         // saying that it may be used uninitialized.
-        std::optional<typename IntegerExpr<KIND>::Constant> result;
+        std::optional<typename IntegerExpr<KIND>::Scalar> result;
         return std::move(result);
       },
       this->operand().u);
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Negate::Fold(FoldingContext &context) {
   if (auto c{this->operand().Fold(context)}) {
     auto negated{c->Negate()};
@@ -246,7 +250,7 @@ IntegerExpr<KIND>::Negate::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Add::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
@@ -261,7 +265,7 @@ IntegerExpr<KIND>::Add::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Subtract::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
@@ -276,7 +280,7 @@ IntegerExpr<KIND>::Subtract::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Multiply::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
@@ -293,7 +297,7 @@ IntegerExpr<KIND>::Multiply::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Divide::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
@@ -312,12 +316,12 @@ IntegerExpr<KIND>::Divide::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Power::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
   if (lc && rc) {
-    typename Constant::PowerWithErrors power{lc->Power(*rc)};
+    typename Scalar::PowerWithErrors power{lc->Power(*rc)};
     if (context.messages != nullptr) {
       if (power.divisionByZero) {
         context.messages->Say(context.at, "zero to negative power"_en_US);
@@ -333,7 +337,7 @@ IntegerExpr<KIND>::Power::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Max::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
@@ -347,7 +351,7 @@ IntegerExpr<KIND>::Max::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant>
+std::optional<typename IntegerExpr<KIND>::Scalar>
 IntegerExpr<KIND>::Min::Fold(FoldingContext &context) {
   auto lc{this->left().Fold(context)};
   auto rc{this->right().Fold(context)};
@@ -361,12 +365,12 @@ IntegerExpr<KIND>::Min::Fold(FoldingContext &context) {
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Constant> IntegerExpr<KIND>::Fold(
+std::optional<typename IntegerExpr<KIND>::Scalar> IntegerExpr<KIND>::Fold(
     FoldingContext &context) {
   return std::visit(
-      [&](auto &x) -> std::optional<Constant> {
+      [&](auto &x) -> std::optional<Scalar> {
         using Ty = typename std::decay<decltype(x)>::type;
-        if constexpr (std::is_same_v<Ty, Constant>) {
+        if constexpr (std::is_same_v<Ty, Scalar>) {
           return {x};
         }
         if constexpr (std::is_base_of_v<Un, Ty> || std::is_base_of_v<Bin, Ty>) {
@@ -381,61 +385,27 @@ std::optional<typename IntegerExpr<KIND>::Constant> IntegerExpr<KIND>::Fold(
       u_);
 }
 
-template<int KIND>
-std::optional<typename RealExpr<KIND>::Constant>
-RealExpr<KIND>::ConstantValue() const {
-  if (auto c{std::get_if<Constant>(&u_)}) {
-    return {*c};
-  }
-  return {};
-}
-
 template<int KIND> void RealExpr<KIND>::Fold(FoldingContext &context) {
   // TODO
-}
-
-template<int KIND>
-std::optional<typename ComplexExpr<KIND>::Constant>
-ComplexExpr<KIND>::ConstantValue() const {
-  if (auto c{std::get_if<Constant>(&u_)}) {
-    return {*c};
-  }
-  return {};
 }
 
 template<int KIND> void ComplexExpr<KIND>::Fold(FoldingContext &context) {
   // TODO
 }
 
-template<int KIND>
-std::optional<typename CharacterExpr<KIND>::Constant>
-CharacterExpr<KIND>::ConstantValue() const {
-  if (auto c{std::get_if<Constant>(&u_)}) {
-    return {*c};
-  }
-  return {};
-}
-
 template<int KIND> void CharacterExpr<KIND>::Fold(FoldingContext &context) {
   // TODO
-}
-
-std::optional<bool> LogicalExpr::ConstantValue() const {
-  if (auto c{std::get_if<bool>(&u_)}) {
-    return {*c};
-  }
-  return {};
 }
 
 void LogicalExpr::Fold(FoldingContext &context) {
   // TODO and comparisons too
 }
 
-std::optional<GenericConstant> GenericExpr::ConstantValue() const {
+std::optional<GenericScalar> GenericExpr::ScalarValue() const {
   return std::visit(
-      [](const auto &x) -> std::optional<GenericConstant> {
-        if (auto c{x.ConstantValue()}) {
-          return {GenericConstant{std::move(*c)}};
+      [](const auto &x) -> std::optional<GenericScalar> {
+        if (auto c{x.ScalarValue()}) {
+          return {GenericScalar{std::move(*c)}};
         }
         return {};
       },
@@ -443,11 +413,11 @@ std::optional<GenericConstant> GenericExpr::ConstantValue() const {
 }
 
 template<Category CAT>
-std::optional<CategoryConstant<CAT>> CategoryExpr<CAT>::ConstantValue() const {
+std::optional<CategoryScalar<CAT>> CategoryExpr<CAT>::ScalarValue() const {
   return std::visit(
-      [](const auto &x) -> std::optional<CategoryConstant<CAT>> {
-        if (auto c{x.ConstantValue()}) {
-          return {CategoryConstant<CAT>{std::move(*c)}};
+      [](const auto &x) -> std::optional<CategoryScalar<CAT>> {
+        if (auto c{x.ScalarValue()}) {
+          return {CategoryScalar<CAT>{std::move(*c)}};
         }
         return {};
       },
