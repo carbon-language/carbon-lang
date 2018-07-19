@@ -349,7 +349,6 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-Mbackslash") {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes, false);
-      driver.pgf90Args.push_back(arg);
     } else if (arg == "-Mnobackslash") {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes);
@@ -369,7 +368,6 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-fno-backslash") {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes, false);
-      driver.pgf90Args.push_back("-Mbackslash");
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
@@ -452,6 +450,9 @@ int main(int argc, char *const argv[]) {
 
   if (options.isStrictlyStandard) {
     options.features.WarnOnAllNonstandard();
+  }
+  if (!options.features.IsEnabled(Fortran::parser::LanguageFeature::BackslashEscapes)) {
+    driver.pgf90Args.push_back("-Mbackslash");
   }
 
   if (!anyFiles) {
