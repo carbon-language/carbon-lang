@@ -3589,6 +3589,9 @@ def note_ovl_candidate_bad_deduction : Note<
     "candidate template ignored: failed template argument deduction">;
 def note_ovl_candidate_incomplete_deduction : Note<"candidate template ignored: "
     "couldn't infer template argument %0">;
+def note_ovl_candidate_incomplete_deduction_pack : Note<"candidate template ignored: "
+    "deduced too few arguments for expanded pack %0; no argument for %ordinal1 "
+    "expanded parameter in deduced argument pack %2">;
 def note_ovl_candidate_inconsistent_deduction : Note<
     "candidate template ignored: deduced conflicting %select{types|values|"
     "templates}0 for parameter %1%diff{ ($ vs. $)|}2,3">;
@@ -4462,6 +4465,9 @@ def err_pack_expansion_length_conflict : Error<
 def err_pack_expansion_length_conflict_multilevel : Error<
   "pack expansion contains parameter pack %0 that has a different "
   "length (%1 vs. %2) from outer parameter packs">;
+def err_pack_expansion_length_conflict_partial : Error<
+  "pack expansion contains parameter pack %0 that has a different "
+  "length (at least %1 vs. %2) from outer parameter packs">;
 def err_pack_expansion_member_init : Error<
   "pack expansion for initialization of member %0">;
 
