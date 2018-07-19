@@ -369,8 +369,7 @@ extern template struct Comparison<CharacterExpr<1>>;
 template<Category CAT> struct CategoryComparison {
   CLASS_BOILERPLATE(CategoryComparison)
   template<int KIND> using KindComparison = Comparison<Expr<CAT, KIND>>;
-  template<int KIND>
-  CategoryComparison(const KindComparison<KIND> &x) : u{x} {}
+  template<int KIND> CategoryComparison(const KindComparison<KIND> &x) : u{x} {}
   template<int KIND>
   CategoryComparison(KindComparison<KIND> &&x) : u{std::move(x)} {}
   std::optional<bool> Fold(FoldingContext &c);
@@ -445,7 +444,9 @@ template<Category CAT> struct CategoryConstant {
   CLASS_BOILERPLATE(CategoryConstant)
   template<int KIND> using KindConstant = typename Expr<CAT, KIND>::Constant;
   template<typename A> CategoryConstant(const A &x) : u{x} {}
-  template<typename A> CategoryConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  template<typename A>
+  CategoryConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
   typename KindsVariant<CAT, KindConstant>::type u;
 };
 
@@ -453,14 +454,19 @@ template<Category CAT> struct CategoryConstant {
 struct GenericConstant {
   CLASS_BOILERPLATE(GenericConstant)
   template<Category CAT, int KIND>
-  GenericConstant(const typename Expr<CAT, KIND>::Constant &x) : u{CategoryConstant<CAT>{x}} {}
+  GenericConstant(const typename Expr<CAT, KIND>::Constant &x)
+    : u{CategoryConstant<CAT>{x}} {}
   template<Category CAT, int KIND>
-  GenericConstant(typename Expr<CAT, KIND>::Constant &&x) : u{CategoryConstant<CAT>{std::move(x)}} {}
+  GenericConstant(typename Expr<CAT, KIND>::Constant &&x)
+    : u{CategoryConstant<CAT>{std::move(x)}} {}
   template<typename A> GenericConstant(const A &x) : u{x} {}
   template<typename A>
   GenericConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
-  std::variant<CategoryConstant<Category::Integer>, CategoryConstant<Category::Real>, CategoryConstant<Category::Complex>, CategoryConstant<Category::Character>, bool> u;
+  std::variant<CategoryConstant<Category::Integer>,
+      CategoryConstant<Category::Real>, CategoryConstant<Category::Complex>,
+      CategoryConstant<Category::Character>, bool>
+      u;
 };
 
 // Dynamically polymorphic expressions that can hold any supported kind

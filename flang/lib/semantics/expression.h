@@ -32,8 +32,7 @@ public:
   evaluate::FoldingContext &context() { return context_; }
   KindParam defaultIntegerKind() const { return defaultIntegerKind_; }
 
-  template<typename M>
-  void Say(const M &msg) {
+  template<typename M> void Say(const M &msg) {
     if (context_.messages != nullptr) {
       context_.messages->Say(context_.at, msg);
     }
@@ -42,7 +41,8 @@ public:
   // Performs semantic checking on an expression.  If successful,
   // returns its typed expression representation.
   std::optional<evaluate::GenericExpr> Analyze(const parser::Expr &);
-  KindParam Analyze(const std::optional<parser::KindParam> &, KindParam defaultKind, KindParam kanjiKind = -1 /* not allowed here */);
+  KindParam Analyze(const std::optional<parser::KindParam> &,
+      KindParam defaultKind, KindParam kanjiKind = -1 /* not allowed here */);
 
 private:
   evaluate::FoldingContext context_;

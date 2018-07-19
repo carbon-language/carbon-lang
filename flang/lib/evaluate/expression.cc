@@ -432,29 +432,34 @@ void LogicalExpr::Fold(FoldingContext &context) {
 }
 
 std::optional<GenericConstant> GenericExpr::ConstantValue() const {
-  return std::visit([](const auto &x) -> std::optional<GenericConstant> {
-    if (auto c{x.ConstantValue()}) {
-      return {GenericConstant{std::move(*c)}};
-    }
-    return {};
-  }, u);
+  return std::visit(
+      [](const auto &x) -> std::optional<GenericConstant> {
+        if (auto c{x.ConstantValue()}) {
+          return {GenericConstant{std::move(*c)}};
+        }
+        return {};
+      },
+      u);
 }
 
-template<Category CAT> std::optional<CategoryConstant<CAT>> CategoryExpr<CAT>::ConstantValue() const {
-  return std::visit([](const auto &x) -> std::optional<CategoryConstant<CAT>> {
-    if (auto c{x.ConstantValue()}) {
-      return {CategoryConstant<CAT>{std::move(*c)}};
-    }
-    return {};
-  }, u);
+template<Category CAT>
+std::optional<CategoryConstant<CAT>> CategoryExpr<CAT>::ConstantValue() const {
+  return std::visit(
+      [](const auto &x) -> std::optional<CategoryConstant<CAT>> {
+        if (auto c{x.ConstantValue()}) {
+          return {CategoryConstant<CAT>{std::move(*c)}};
+        }
+        return {};
+      },
+      u);
 }
 
 template<Category CAT> void CategoryExpr<CAT>::Fold(FoldingContext &context) {
-  std::visit([&](auto &x){ x.Fold(context); }, u);
+  std::visit([&](auto &x) { x.Fold(context); }, u);
 }
 
 void GenericExpr::Fold(FoldingContext &context) {
-  std::visit([&](auto &x){ x.Fold(context); }, u);
+  std::visit([&](auto &x) { x.Fold(context); }, u);
 }
 
 template struct CategoryExpr<Category::Integer>;

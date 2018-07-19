@@ -20,13 +20,14 @@ using namespace Fortran::parser::literals;
 namespace Fortran::semantics {
 
 template<typename A>
-std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea, const A &tree) {
+std::optional<evaluate::GenericExpr> AnalyzeHelper(
+    ExpressionAnalyzer &ea, const A &tree) {
   return ea.Analyze(tree);
 }
 
 template<typename A>
-std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
-  const parser::Scalar<A> &tree) {
+std::optional<evaluate::GenericExpr> AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Scalar<A> &tree) {
   std::optional<evaluate::GenericExpr> result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
     if (result->Rank() > 1) {
@@ -38,8 +39,8 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
 }
 
 template<typename A>
-std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
-  const parser::Constant<A> &tree) {
+std::optional<evaluate::GenericExpr> AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Constant<A> &tree) {
   std::optional<evaluate::GenericExpr> result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
     result->Fold(ea.context());
@@ -52,68 +53,84 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
 }
 
 template<typename A>
-std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
-  const parser::Integer<A> &tree) {
+std::optional<evaluate::GenericExpr> AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
   std::optional<evaluate::GenericExpr> result{AnalyzeHelper(ea, tree.thing)};
-  if (result.has_value() && !std::holds_alternative<evaluate::GenericIntegerExpr>(result->u)) {
+  if (result.has_value() &&
+      !std::holds_alternative<evaluate::GenericIntegerExpr>(result->u)) {
     ea.Say("must be integer"_err_en_US);
     return {};
   }
   return result;
 }
 
-template<> std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
-  const parser::Name &n) {
+template<>
+std::optional<evaluate::GenericExpr> AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Name &n) {
   // TODO
   return {};
 }
 
-ExpressionAnalyzer::KindParam
-ExpressionAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
-                            KindParam defaultKind, KindParam kanjiKind) {
+ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
+    const std::optional<parser::KindParam> &kindParam, KindParam defaultKind,
+    KindParam kanjiKind) {
   if (!kindParam.has_value()) {
     return defaultKind;
   }
-  return std::visit(common::visitors{[](std::uint64_t k) { return static_cast<KindParam>(k); },
-    [&](const parser::Scalar<parser::Integer<parser::Constant<parser::Name>>> &n) {
-      if (std::optional<evaluate::GenericExpr> oge{AnalyzeHelper(*this, n)}) {
-        if (std::optional<evaluate::GenericConstant> ogc{oge->ConstantValue()}) {
-          // TODO pmk more here next
-        }
-      }
-      return defaultKind;
-    },
-    [&](parser::KindParam::Kanji) {
-      if (kanjiKind >= 0) {
-        return kanjiKind;
-      }
-      Say("Kanji not allowed here"_err_en_US);
-      return defaultKind; }}, kindParam->u);
+  return std::visit(
+      common::visitors{
+          [](std::uint64_t k) { return static_cast<KindParam>(k); },
+          [&](const parser::Scalar<
+              parser::Integer<parser::Constant<parser::Name>>> &n) {
+            if (std::optional<evaluate::GenericExpr> oge{
+                    AnalyzeHelper(*this, n)}) {
+              if (std::optional<evaluate::GenericConstant> ogc{
+                      oge->ConstantValue()}) {
+                // TODO pmk more here next
+              }
+            }
+            return defaultKind;
+          },
+          [&](parser::KindParam::Kanji) {
+            if (kanjiKind >= 0) {
+              return kanjiKind;
+            }
+            Say("Kanji not allowed here"_err_en_US);
+            return defaultKind;
+          }},
+      kindParam->u);
 }
 
-template<> std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
-    const parser::IntLiteralConstant &x) {
+template<>
+std::optional<evaluate::GenericExpr> AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::IntLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
-                       ea.defaultIntegerKind())};
+      ea.defaultIntegerKind())};
   std::uint64_t value{std::get<std::uint64_t>(x.t)};
   switch (kind) {
-#define CASE(k) case k: return {evaluate::GenericExpr{evaluate::GenericIntegerExpr{evaluate::IntegerExpr<k>{value}}}};
-  FOR_EACH_INTEGER_KIND(CASE,)
+#define CASE(k) \
+  case k: \
+    return {evaluate::GenericExpr{ \
+        evaluate::GenericIntegerExpr{evaluate::IntegerExpr<k>{value}}}};
+    FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:
     ea.Say(parser::MessageFormattedText{
-            "unimplemented INTEGER kind (%ju)"_err_en_US,
-            static_cast<std::uintmax_t>(kind)});
+        "unimplemented INTEGER kind (%ju)"_err_en_US,
+        static_cast<std::uintmax_t>(kind)});
     return {};
   }
 }
 
-template<> std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer &ea,
-    const parser::LiteralConstant &x) {
+template<>
+std::optional<evaluate::GenericExpr> AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::LiteralConstant &x) {
   return std::visit(
-      common::visitors{
-          [&](const parser::IntLiteralConstant &c) { return AnalyzeHelper(ea, c); },
-          // TODO next [&](const parser::RealLiteralConstant &c) { return AnalyzeHelper(ea, c); },
+      common::visitors{[&](const parser::IntLiteralConstant &c) {
+                         return AnalyzeHelper(ea, c);
+                       },
+          // TODO next [&](const parser::RealLiteralConstant &c) { return
+          // AnalyzeHelper(ea, c); },
           // TODO: remaining cases
           [&](const auto &) { return std::optional<evaluate::GenericExpr>{}; }},
       x.u);
@@ -122,8 +139,9 @@ template<> std::optional<evaluate::GenericExpr> AnalyzeHelper(ExpressionAnalyzer
 std::optional<evaluate::GenericExpr> ExpressionAnalyzer::Analyze(
     const parser::Expr &x) {
   return std::visit(
-      common::visitors{
-          [&](const parser::LiteralConstant &c) { return AnalyzeHelper(*this, c); },
+      common::visitors{[&](const parser::LiteralConstant &c) {
+                         return AnalyzeHelper(*this, c);
+                       },
           // TODO: remaining cases
           [&](const auto &) { return std::optional<evaluate::GenericExpr>{}; }},
       x.u);

@@ -120,11 +120,11 @@ using SubscriptInteger = Type<Category::Integer, 8>;
 // These macros invoke other macros on each of the supported kinds of
 // a given category.
 #define COMMA ,
-#define FOR_EACH_INTEGER_KIND(M,SEP) M(1) SEP M(2) SEP M(4) SEP M(8) SEP M(16)
-#define FOR_EACH_REAL_KIND(M,SEP) M(2) SEP M(4) SEP M(8) SEP M(10) SEP M(16)
-#define FOR_EACH_COMPLEX_KIND(M,SEP) FOR_EACH_REAL_KIND(M,SEP)
-#define FOR_EACH_CHARACTER_KIND(M,SEP) M(1)
-#define FOR_EACH_LOGICAL_KIND(M,SEP) M(1) SEP M(2) SEP M(4) SEP M(8)
+#define FOR_EACH_INTEGER_KIND(M, SEP) M(1) SEP M(2) SEP M(4) SEP M(8) SEP M(16)
+#define FOR_EACH_REAL_KIND(M, SEP) M(2) SEP M(4) SEP M(8) SEP M(10) SEP M(16)
+#define FOR_EACH_COMPLEX_KIND(M, SEP) FOR_EACH_REAL_KIND(M, SEP)
+#define FOR_EACH_CHARACTER_KIND(M, SEP) M(1)
+#define FOR_EACH_LOGICAL_KIND(M, SEP) M(1) SEP M(2) SEP M(4) SEP M(8)
 
 // These templates create instances of std::variant<> that can contain
 // applications of some class template to all of the supported kinds of
@@ -132,7 +132,7 @@ using SubscriptInteger = Type<Category::Integer, 8>;
 #define TKIND(K) T<K>
 template<Category CAT, template<int> class T> struct KindsVariant;
 template<template<int> class T> struct KindsVariant<Category::Integer, T> {
-  using type = std::variant<FOR_EACH_INTEGER_KIND(TKIND,COMMA)>;
+  using type = std::variant<FOR_EACH_INTEGER_KIND(TKIND, COMMA)>;
 };
 // TODO use FOR_EACH...
 template<template<int> class T> struct KindsVariant<Category::Real, T> {
