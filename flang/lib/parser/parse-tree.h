@@ -62,7 +62,7 @@ class Symbol;
 }  // namespace Fortran::semantics
 
 namespace Fortran::evaluate {
-class GenericExpr;
+struct GenericExpr;
 }  // namespace Fortran::evaluate
 
 // Most non-template classes in this file use these default definitions

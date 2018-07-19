@@ -25,17 +25,28 @@ namespace Fortran::semantics {
 
 class ExpressionAnalyzer {
 public:
-  ExpressionAnalyzer(parser::Messages &m, std::uint64_t dIK)
-    : messages_{m}, defaultIntegerKind_{dIK} {}
+  using KindParam = std::int64_t;
+  ExpressionAnalyzer(evaluate::FoldingContext &c, KindParam dIK)
+    : context_{c}, defaultIntegerKind_{dIK} {}
+
+  evaluate::FoldingContext &context() { return context_; }
+  KindParam defaultIntegerKind() const { return defaultIntegerKind_; }
+
+  template<typename M>
+  void Say(const M &msg) {
+    if (context_.messages != nullptr) {
+      context_.messages->Say(context_.at, msg);
+    }
+  }
+
+  // Performs semantic checking on an expression.  If successful,
+  // returns its typed expression representation.
   std::optional<evaluate::GenericExpr> Analyze(const parser::Expr &);
-  std::optional<evaluate::GenericExpr> Analyze(
-      const parser::IntLiteralConstant &);
-  std::optional<evaluate::GenericExpr> Analyze(const parser::LiteralConstant &);
+  KindParam Analyze(const std::optional<parser::KindParam> &, KindParam defaultKind, KindParam kanjiKind = -1 /* not allowed here */);
 
 private:
-  parser::Messages &messages_;
-  const parser::CharBlock at_;
-  std::uint64_t defaultIntegerKind_{4};
+  evaluate::FoldingContext context_;
+  KindParam defaultIntegerKind_{4};
 };
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

@@ -113,6 +113,8 @@ public:
 
   Message(ProvenanceRange pr, const MessageFixedText &t)
     : location_{pr}, text_{t} {}
+  Message(ProvenanceRange pr, const MessageFormattedText &s)
+    : location_{pr}, text_{std::move(s)} {}
   Message(ProvenanceRange pr, MessageFormattedText &&s)
     : location_{pr}, text_{std::move(s)} {}
   Message(ProvenanceRange pr, const MessageExpectedText &t)
@@ -120,6 +122,8 @@ public:
 
   Message(CharBlock csr, const MessageFixedText &t)
     : location_{csr}, text_{t} {}
+  Message(CharBlock csr, const MessageFormattedText &s)
+    : location_{csr}, text_{std::move(s)} {}
   Message(CharBlock csr, MessageFormattedText &&s)
     : location_{csr}, text_{std::move(s)} {}
   Message(CharBlock csr, const MessageExpectedText &t)

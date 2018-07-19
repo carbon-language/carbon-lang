@@ -381,6 +381,87 @@ std::optional<typename IntegerExpr<KIND>::Constant> IntegerExpr<KIND>::Fold(
       u_);
 }
 
+template<int KIND>
+std::optional<typename RealExpr<KIND>::Constant>
+RealExpr<KIND>::ConstantValue() const {
+  if (auto c{std::get_if<Constant>(&u_)}) {
+    return {*c};
+  }
+  return {};
+}
+
+template<int KIND> void RealExpr<KIND>::Fold(FoldingContext &context) {
+  // TODO
+}
+
+template<int KIND>
+std::optional<typename ComplexExpr<KIND>::Constant>
+ComplexExpr<KIND>::ConstantValue() const {
+  if (auto c{std::get_if<Constant>(&u_)}) {
+    return {*c};
+  }
+  return {};
+}
+
+template<int KIND> void ComplexExpr<KIND>::Fold(FoldingContext &context) {
+  // TODO
+}
+
+template<int KIND>
+std::optional<typename CharacterExpr<KIND>::Constant>
+CharacterExpr<KIND>::ConstantValue() const {
+  if (auto c{std::get_if<Constant>(&u_)}) {
+    return {*c};
+  }
+  return {};
+}
+
+template<int KIND> void CharacterExpr<KIND>::Fold(FoldingContext &context) {
+  // TODO
+}
+
+std::optional<bool> LogicalExpr::ConstantValue() const {
+  if (auto c{std::get_if<bool>(&u_)}) {
+    return {*c};
+  }
+  return {};
+}
+
+void LogicalExpr::Fold(FoldingContext &context) {
+  // TODO and comparisons too
+}
+
+std::optional<GenericConstant> GenericExpr::ConstantValue() const {
+  return std::visit([](const auto &x) -> std::optional<GenericConstant> {
+    if (auto c{x.ConstantValue()}) {
+      return {GenericConstant{std::move(*c)}};
+    }
+    return {};
+  }, u);
+}
+
+template<Category CAT> std::optional<CategoryConstant<CAT>> CategoryExpr<CAT>::ConstantValue() const {
+  return std::visit([](const auto &x) -> std::optional<CategoryConstant<CAT>> {
+    if (auto c{x.ConstantValue()}) {
+      return {CategoryConstant<CAT>{std::move(*c)}};
+    }
+    return {};
+  }, u);
+}
+
+template<Category CAT> void CategoryExpr<CAT>::Fold(FoldingContext &context) {
+  std::visit([&](auto &x){ x.Fold(context); }, u);
+}
+
+void GenericExpr::Fold(FoldingContext &context) {
+  std::visit([&](auto &x){ x.Fold(context); }, u);
+}
+
+template struct CategoryExpr<Category::Integer>;
+template struct CategoryExpr<Category::Real>;
+template struct CategoryExpr<Category::Complex>;
+template struct CategoryExpr<Category::Character>;
+
 template class Expr<Category::Integer, 1>;
 template class Expr<Category::Integer, 2>;
 template class Expr<Category::Integer, 4>;

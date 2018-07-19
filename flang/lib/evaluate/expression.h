@@ -236,6 +236,9 @@ public:
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
+  std::optional<Constant> ConstantValue() const;
+  void Fold(FoldingContext &c);
+
 private:
   std::variant<Constant, CopyableIndirection<DataRef>,
       CopyableIndirection<ComplexPart>, CopyableIndirection<FunctionRef>,
@@ -285,6 +288,9 @@ public:
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
+  std::optional<Constant> ConstantValue() const;
+  void Fold(FoldingContext &c);
+
 private:
   std::variant<Constant, CopyableIndirection<DataRef>,
       CopyableIndirection<FunctionRef>, Parentheses, Negate, Add, Subtract,
@@ -315,6 +321,8 @@ public:
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
+  std::optional<Constant> ConstantValue() const;
+  void Fold(FoldingContext &c);
   SubscriptIntegerExpr LEN() const;
 
 private:
@@ -335,6 +343,7 @@ template<typename EXPR> struct Comparison : Binary<EXPR, EXPR, bool> {
     : Binary<EXPR, EXPR, bool>{a, b}, opr{r} {}
   Comparison(RelationalOperator r, EXPR &&a, EXPR &&b)
     : Binary<EXPR, EXPR, bool>{std::move(a), std::move(b)}, opr{r} {}
+  std::optional<bool> Fold(FoldingContext &c);
   RelationalOperator opr;
 };
 
@@ -359,11 +368,12 @@ extern template struct Comparison<CharacterExpr<1>>;
 // of a specific category.
 template<Category CAT> struct CategoryComparison {
   CLASS_BOILERPLATE(CategoryComparison)
+  template<int KIND> using KindComparison = Comparison<Expr<CAT, KIND>>;
   template<int KIND>
-  CategoryComparison(const Comparison<Expr<CAT, KIND>> &x) : u{x} {}
+  CategoryComparison(const KindComparison<KIND> &x) : u{x} {}
   template<int KIND>
-  CategoryComparison(Comparison<Expr<CAT, KIND>> &&x) : u{std::move(x)} {}
-  template<int K> using KindComparison = Comparison<Expr<CAT, K>>;
+  CategoryComparison(KindComparison<KIND> &&x) : u{std::move(x)} {}
+  std::optional<bool> Fold(FoldingContext &c);
   typename KindsVariant<CAT, KindComparison>::type u;
 };
 
@@ -372,7 +382,7 @@ template<> class Expr<Category::Logical, 1> {
 public:
   using Constant = bool;
   struct Not : Unary<Expr, bool> {
-    using Unary<Expr, Constant>::Unary;
+    using Unary<Expr, bool>::Unary;
   };
   using Bin = Binary<Expr, Expr, bool>;
   struct And : public Bin {
@@ -389,7 +399,7 @@ public:
   };
 
   CLASS_BOILERPLATE(Expr)
-  Expr(Constant x) : u_{x} {}
+  Expr(bool x) : u_{x} {}
   template<Category CAT, int KIND>
   Expr(const Comparison<Expr<CAT, KIND>> &x) : u_{CategoryComparison<CAT>{x}} {}
   template<Category CAT, int KIND>
@@ -400,8 +410,11 @@ public:
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
+  std::optional<bool> ConstantValue() const;
+  void Fold(FoldingContext &c);
+
 private:
-  std::variant<Constant, CopyableIndirection<DataRef>,
+  std::variant<bool, CopyableIndirection<DataRef>,
       CopyableIndirection<FunctionRef>, Not, And, Or, Eqv, Neqv,
       CategoryComparison<Category::Integer>, CategoryComparison<Category::Real>,
       CategoryComparison<Category::Complex>,
@@ -427,17 +440,43 @@ extern template class Expr<Category::Complex, 16>;
 extern template class Expr<Category::Character, 1>;
 extern template class Expr<Category::Logical, 1>;
 
+// Holds a constant of any kind in an intrinsic type category.
+template<Category CAT> struct CategoryConstant {
+  CLASS_BOILERPLATE(CategoryConstant)
+  template<int KIND> using KindConstant = typename Expr<CAT, KIND>::Constant;
+  template<typename A> CategoryConstant(const A &x) : u{x} {}
+  template<typename A> CategoryConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  typename KindsVariant<CAT, KindConstant>::type u;
+};
+
+// Holds a constant of any intrinsic category and size.
+struct GenericConstant {
+  CLASS_BOILERPLATE(GenericConstant)
+  template<Category CAT, int KIND>
+  GenericConstant(const typename Expr<CAT, KIND>::Constant &x) : u{CategoryConstant<CAT>{x}} {}
+  template<Category CAT, int KIND>
+  GenericConstant(typename Expr<CAT, KIND>::Constant &&x) : u{CategoryConstant<CAT>{std::move(x)}} {}
+  template<typename A> GenericConstant(const A &x) : u{x} {}
+  template<typename A>
+  GenericConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
+  std::variant<CategoryConstant<Category::Integer>, CategoryConstant<Category::Real>, CategoryConstant<Category::Complex>, CategoryConstant<Category::Character>, bool> u;
+};
+
 // Dynamically polymorphic expressions that can hold any supported kind
-// of a specific category.
+// of a specific intrinsic type category.
 template<Category CAT> struct CategoryExpr {
   CLASS_BOILERPLATE(CategoryExpr)
-  template<int KIND> CategoryExpr(const Expr<CAT, KIND> &x) : u{x} {}
-  template<int KIND> CategoryExpr(Expr<CAT, KIND> &&x) : u{std::move(x)} {}
-  template<int K> using KindExpr = Expr<CAT, K>;
+  template<int KIND> using KindExpr = Expr<CAT, KIND>;
+  template<int KIND> CategoryExpr(const KindExpr<KIND> &x) : u{x} {}
+  template<int KIND> CategoryExpr(KindExpr<KIND> &&x) : u{std::move(x)} {}
+  std::optional<CategoryConstant<CAT>> ConstantValue() const;
+  void Fold(FoldingContext &);
   typename KindsVariant<CAT, KindExpr>::type u;
 };
 
-// A completely generic expression, polymorphic across the type categories.
+// A completely generic expression, polymorphic across the intrinsic type
+// categories and each of their kinds.
 struct GenericExpr {
   CLASS_BOILERPLATE(GenericExpr)
   template<Category CAT, int KIND>
@@ -448,6 +487,9 @@ struct GenericExpr {
   template<typename A>
   GenericExpr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
+  std::optional<GenericConstant> ConstantValue() const;
+  void Fold(FoldingContext &);
+  int Rank() const { return 1; }  // TODO
   std::variant<GenericIntegerExpr, GenericRealExpr, GenericComplexExpr,
       GenericCharacterExpr, LogicalExpr>
       u;
