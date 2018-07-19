@@ -2908,7 +2908,7 @@ std::shared_ptr<PathDiagnosticPiece> MallocChecker::MallocBugVisitor::VisitNode(
                                                   "Returned allocated memory");
     } else if (isReleased(RS, RSPrev, S)) {
       const auto Family = RS->getAllocationFamily();
-      switch(Family) {
+      switch (Family) {
         case AF_Alloca:
         case AF_Malloc:
         case AF_CXXNew:
@@ -2916,9 +2916,25 @@ std::shared_ptr<PathDiagnosticPiece> MallocChecker::MallocBugVisitor::VisitNode(
         case AF_IfNameIndex:
           Msg = "Memory is released";
           break;
-        case AF_InternalBuffer:
-          Msg = "Internal buffer is released because the object was destroyed";
+        case AF_InternalBuffer: {
+          SmallString<256> Buf;
+          llvm::raw_svector_ostream OS(Buf);
+          OS << "Inner pointer invalidated by call to ";
+          if (N->getLocation().getKind() == ProgramPoint::PostImplicitCallKind) {
+            OS << "destructor";
+          } else {
+            OS << "'";
+            const Stmt *S = RS->getStmt();
+            if (const auto *MemCallE = dyn_cast<CXXMemberCallExpr>(S)) {
+              OS << MemCallE->getMethodDecl()->getNameAsString();
+            } else if (const auto *OpCallE = dyn_cast<CXXOperatorCallExpr>(S)) {
+              OS << OpCallE->getDirectCallee()->getNameAsString();
+            }
+            OS << "'";
+          }
+          Msg = OS.str().data();
           break;
+        }
         case AF_None:
           llvm_unreachable("Unhandled allocation family!");
       }
