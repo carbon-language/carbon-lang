@@ -39,7 +39,9 @@ public:
     // These features must be explicitly enabled by command line options.
     disable_.set(LanguageFeature::OldDebugLines);
     disable_.set(LanguageFeature::OpenMP);
-    // These features, if enabled, conflict with valid standard usage.
+    // These features, if enabled, conflict with valid standard usage,
+    // so there are disabled here by default.
+    disable_.set(LanguageFeature::BackslashEscapes);
     disable_.set(LanguageFeature::LogicalAbbreviations);
     disable_.set(LanguageFeature::XOROperator);
   }

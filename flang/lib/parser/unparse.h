@@ -31,7 +31,7 @@ using preStatementType =
 /// Convert parsed program to out as Fortran.
 void Unparse(std::ostream &out, const Program &program,
     Encoding encoding = Encoding::UTF8, bool capitalizeKeywords = true,
-    preStatementType *preStatement = nullptr);
+    bool backslashEscapes = true, preStatementType *preStatement = nullptr);
 
 }  // namespace Fortran::parser
 

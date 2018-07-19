@@ -31,9 +31,10 @@ namespace Fortran::parser {
 class UnparseVisitor {
 public:
   UnparseVisitor(std::ostream &out, int indentationAmount, Encoding encoding,
-      bool capitalize, preStatementType *preStatement)
+      bool capitalize, bool backslashEscapes, preStatementType *preStatement)
     : out_{out}, indentationAmount_{indentationAmount}, encoding_{encoding},
-      capitalizeKeywords_{capitalize}, preStatement_{preStatement} {}
+      capitalizeKeywords_{capitalize}, backslashEscapes_{backslashEscapes},
+      preStatement_{preStatement} {}
 
   // In nearly all cases, this code avoids defining Boolean-valued Pre()
   // callbacks for the parse tree walking framework in favor of two void
@@ -181,7 +182,8 @@ public:
         Walk(*k), Put('_');
       }
     }
-    Put(QuoteCharacterLiteral(std::get<std::string>(x.t)));
+    Put(QuoteCharacterLiteral(
+        std::get<std::string>(x.t), true, backslashEscapes_));
   }
   void Before(const HollerithLiteralConstant &x) {
     std::optional<std::size_t> chars{CountCharacters(x.v.data(), x.v.size(),
@@ -1352,7 +1354,8 @@ public:
       Walk(*x.repeatCount);
     }
     std::visit(common::visitors{[&](const std::string &y) {
-                                  Put(QuoteCharacterLiteral(y));
+                                  Put(QuoteCharacterLiteral(
+                                      y, true, backslashEscapes_));
                                 },
                    [&](const std::list<format::FormatItem> &y) {
                      Walk("(", y, ",", ")");
@@ -2205,6 +2208,7 @@ private:
   std::set<CharBlock> structureComponents_;
   Encoding encoding_{Encoding::UTF8};
   bool capitalizeKeywords_{true};
+  bool backslashEscapes_{false};
   preStatementType *preStatement_{nullptr};
 };
 
@@ -2259,8 +2263,10 @@ void UnparseVisitor::Word(const char *str) {
 void UnparseVisitor::Word(const std::string &str) { Word(str.c_str()); }
 
 void Unparse(std::ostream &out, const Program &program, Encoding encoding,
-    bool capitalizeKeywords, preStatementType *preStatement) {
-  UnparseVisitor visitor{out, 1, encoding, capitalizeKeywords, preStatement};
+    bool capitalizeKeywords, bool backslashEscapes,
+    preStatementType *preStatement) {
+  UnparseVisitor visitor{
+      out, 1, encoding, capitalizeKeywords, backslashEscapes, preStatement};
   Walk(program, visitor);
   visitor.Done();
 }

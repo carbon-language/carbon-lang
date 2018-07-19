@@ -148,7 +148,7 @@ void UnparseWithSymbols(std::ostream &out, const parser::Program &program,
       [&](const parser::CharBlock &location, std::ostream &out, int indent) {
         visitor.PrintSymbols(location, out, indent);
       }};
-  parser::Unparse(out, program, encoding, false, &preStatement);
+  parser::Unparse(out, program, encoding, false, true, &preStatement);
 }
 
 }  // namespace Fortran::semantics

@@ -221,7 +221,9 @@ std::string CompileFortran(
     Fortran::semantics::DumpTree(std::cout, parseTree);
   }
   if (driver.dumpUnparse) {
-    Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/);
+    Unparse(std::cout, parseTree, driver.encoding, true /*capitalize*/,
+        options.features.IsEnabled(
+            Fortran::parser::LanguageFeature::BackslashEscapes));
     return {};
   }
   if (driver.parseOnly) {
@@ -236,7 +238,9 @@ std::string CompileFortran(
   {
     std::ofstream tmpSource;
     tmpSource.open(tmpSourcePath);
-    Unparse(tmpSource, parseTree, driver.encoding);
+    Unparse(tmpSource, parseTree, driver.encoding, true /*capitalize*/,
+        options.features.IsEnabled(
+            Fortran::parser::LanguageFeature::BackslashEscapes));
   }
 
   if (ParentProcess()) {
@@ -345,6 +349,7 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-Mbackslash") {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes, false);
+      driver.pgf90Args.push_back(arg);
     } else if (arg == "-Mnobackslash") {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes);
@@ -364,6 +369,7 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-fno-backslash") {
       options.features.Enable(
           Fortran::parser::LanguageFeature::BackslashEscapes, false);
+      driver.pgf90Args.push_back("-Mbackslash");
     } else if (arg == "-fdebug-dump-provenance") {
       driver.dumpProvenance = true;
     } else if (arg == "-fdebug-dump-parse-tree") {
