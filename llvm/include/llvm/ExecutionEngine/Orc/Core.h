@@ -577,7 +577,7 @@ public:
 
   /// Search the given VSO for the symbols in Symbols. If found, store
   ///        the flags for each symbol in Flags. Returns any unresolved symbols.
-  SymbolNameSet lookupFlags(SymbolFlagsMap &Flags, const SymbolNameSet &Names);
+  SymbolFlagsMap lookupFlags(const SymbolNameSet &Names);
 
   /// Search the given VSOs in order for the symbols in Symbols. Results
   ///        (once they become available) will be returned via the given Query.

@@ -48,8 +48,7 @@ JITSymbolResolverAdapter::lookupFlags(const LookupSet &Symbols) {
   for (auto &S : Symbols)
     InternedSymbols.insert(ES.getSymbolStringPool().intern(S));
 
-  SymbolFlagsMap SymbolFlags;
-  R.lookupFlags(SymbolFlags, InternedSymbols);
+  SymbolFlagsMap SymbolFlags = R.lookupFlags(InternedSymbols);
   LookupFlagsResult Result;
   for (auto &KV : SymbolFlags) {
     ResolvedStrings.insert(KV.first);

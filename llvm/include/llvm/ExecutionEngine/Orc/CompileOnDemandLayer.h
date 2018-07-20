@@ -499,20 +499,29 @@ private:
     };
 
     auto GVsResolver = createSymbolResolver(
-        [&LD, LegacyLookup](SymbolFlagsMap &SymbolFlags,
-                            const SymbolNameSet &Symbols) {
-          auto NotFoundViaLegacyLookup =
-              lookupFlagsWithLegacyFn(SymbolFlags, Symbols, LegacyLookup);
+        [&LD, LegacyLookup](const SymbolNameSet &Symbols) {
+          auto SymbolFlags = lookupFlagsWithLegacyFn(Symbols, LegacyLookup);
 
-          if (!NotFoundViaLegacyLookup) {
-            logAllUnhandledErrors(NotFoundViaLegacyLookup.takeError(), errs(),
+          if (!SymbolFlags) {
+            logAllUnhandledErrors(SymbolFlags.takeError(), errs(),
                                   "CODLayer/GVsResolver flags lookup failed: ");
-            SymbolFlags.clear();
-            return SymbolNameSet();
+            return SymbolFlagsMap();
           }
 
-          return LD.BackingResolver->lookupFlags(SymbolFlags,
-                                                 *NotFoundViaLegacyLookup);
+          if (SymbolFlags->size() == Symbols.size())
+            return *SymbolFlags;
+
+          SymbolNameSet NotFoundViaLegacyLookup;
+          for (auto &S : Symbols)
+            if (!SymbolFlags->count(S))
+              NotFoundViaLegacyLookup.insert(S);
+          auto SymbolFlags2 =
+              LD.BackingResolver->lookupFlags(NotFoundViaLegacyLookup);
+
+          for (auto &KV : SymbolFlags2)
+            (*SymbolFlags)[KV.first] = std::move(KV.second);
+
+          return *SymbolFlags;
         },
         [this, &LD,
          LegacyLookup](std::shared_ptr<AsynchronousSymbolQuery> Query,
@@ -659,18 +668,29 @@ private:
 
     // Create memory manager and symbol resolver.
     auto Resolver = createSymbolResolver(
-        [&LD, LegacyLookup](SymbolFlagsMap &SymbolFlags,
-                            const SymbolNameSet &Symbols) {
-          auto NotFoundViaLegacyLookup =
-              lookupFlagsWithLegacyFn(SymbolFlags, Symbols, LegacyLookup);
-          if (!NotFoundViaLegacyLookup) {
-            logAllUnhandledErrors(NotFoundViaLegacyLookup.takeError(), errs(),
+        [&LD, LegacyLookup](const SymbolNameSet &Symbols) {
+          auto SymbolFlags = lookupFlagsWithLegacyFn(Symbols, LegacyLookup);
+          if (!SymbolFlags) {
+            logAllUnhandledErrors(SymbolFlags.takeError(), errs(),
                                   "CODLayer/SubResolver flags lookup failed: ");
-            SymbolFlags.clear();
-            return SymbolNameSet();
+            return SymbolFlagsMap();
           }
-          return LD.BackingResolver->lookupFlags(SymbolFlags,
-                                                 *NotFoundViaLegacyLookup);
+
+          if (SymbolFlags->size() == Symbols.size())
+            return *SymbolFlags;
+
+          SymbolNameSet NotFoundViaLegacyLookup;
+          for (auto &S : Symbols)
+            if (!SymbolFlags->count(S))
+              NotFoundViaLegacyLookup.insert(S);
+
+          auto SymbolFlags2 =
+              LD.BackingResolver->lookupFlags(NotFoundViaLegacyLookup);
+
+          for (auto &KV : SymbolFlags2)
+            (*SymbolFlags)[KV.first] = std::move(KV.second);
+
+          return *SymbolFlags;
         },
         [this, &LD, LegacyLookup](std::shared_ptr<AsynchronousSymbolQuery> Q,
                                   SymbolNameSet Symbols) {

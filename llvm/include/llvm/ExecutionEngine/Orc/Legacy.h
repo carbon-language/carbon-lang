@@ -33,8 +33,7 @@ public:
 
   /// Returns the flags for each symbol in Symbols that can be found,
   ///        along with the set of symbol that could not be found.
-  virtual SymbolNameSet lookupFlags(SymbolFlagsMap &Flags,
-                                    const SymbolNameSet &Symbols) = 0;
+  virtual SymbolFlagsMap lookupFlags(const SymbolNameSet &Symbols) = 0;
 
   /// For each symbol in Symbols that can be found, assigns that symbols
   ///        value in Query. Returns the set of symbols that could not be found.
@@ -55,9 +54,8 @@ public:
       : LookupFlags(std::forward<LookupFlagsFnRef>(LookupFlags)),
         Lookup(std::forward<LookupFnRef>(Lookup)) {}
 
-  SymbolNameSet lookupFlags(SymbolFlagsMap &Flags,
-                            const SymbolNameSet &Symbols) final {
-    return LookupFlags(Flags, Symbols);
+  SymbolFlagsMap lookupFlags(const SymbolNameSet &Symbols) final {
+    return LookupFlags(Symbols);
   }
 
   SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
@@ -111,21 +109,18 @@ private:
 ///
 /// Useful for implementing lookupFlags bodies that query legacy resolvers.
 template <typename FindSymbolFn>
-Expected<SymbolNameSet> lookupFlagsWithLegacyFn(SymbolFlagsMap &SymbolFlags,
-                                                const SymbolNameSet &Symbols,
-                                                FindSymbolFn FindSymbol) {
-  SymbolNameSet SymbolsNotFound;
+Expected<SymbolFlagsMap> lookupFlagsWithLegacyFn(const SymbolNameSet &Symbols,
+                                                 FindSymbolFn FindSymbol) {
+  SymbolFlagsMap SymbolFlags;
 
   for (auto &S : Symbols) {
     if (JITSymbol Sym = FindSymbol(*S))
       SymbolFlags[S] = Sym.getFlags();
     else if (auto Err = Sym.takeError())
       return std::move(Err);
-    else
-      SymbolsNotFound.insert(S);
   }
 
-  return SymbolsNotFound;
+  return SymbolFlags;
 }
 
 /// Use the given legacy-style FindSymbol function (i.e. a function that
@@ -182,14 +177,12 @@ public:
       : ES(ES), LegacyLookup(std::move(LegacyLookup)),
         ReportError(std::move(ReportError)) {}
 
-  SymbolNameSet lookupFlags(SymbolFlagsMap &Flags,
-                            const SymbolNameSet &Symbols) final {
-    if (auto RemainingSymbols =
-            lookupFlagsWithLegacyFn(Flags, Symbols, LegacyLookup))
-      return std::move(*RemainingSymbols);
+  SymbolFlagsMap lookupFlags(const SymbolNameSet &Symbols) final {
+    if (auto SymbolFlags = lookupFlagsWithLegacyFn(Symbols, LegacyLookup))
+      return std::move(*SymbolFlags);
     else {
-      ReportError(RemainingSymbols.takeError());
-      return Symbols;
+      ReportError(SymbolFlags.takeError());
+      return SymbolFlagsMap();
     }
   }
 

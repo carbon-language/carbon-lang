@@ -215,11 +215,8 @@ TEST_F(CoreAPIsStandardTest, LookupFlagsTest) {
 
   SymbolNameSet Names({Foo, Bar, Baz});
 
-  SymbolFlagsMap SymbolFlags;
-  auto SymbolsNotFound = V.lookupFlags(SymbolFlags, Names);
+  auto SymbolFlags = V.lookupFlags(Names);
 
-  EXPECT_EQ(SymbolsNotFound.size(), 1U) << "Expected one not-found symbol";
-  EXPECT_EQ(SymbolsNotFound.count(Baz), 1U) << "Expected Baz to be not-found";
   EXPECT_EQ(SymbolFlags.size(), 2U)
       << "Returned symbol flags contains unexpected results";
   EXPECT_EQ(SymbolFlags.count(Foo), 1U) << "Missing lookupFlags result for Foo";

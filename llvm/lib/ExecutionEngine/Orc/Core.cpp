@@ -522,11 +522,14 @@ ReExportsMaterializationUnit::extractFlags(const SymbolAliasMap &Aliases) {
 
 Expected<SymbolAliasMap>
 buildSimpleReexportsAliasMap(VSO &SourceV, const SymbolNameSet &Symbols) {
-  SymbolFlagsMap Flags;
-  auto Unresolved = SourceV.lookupFlags(Flags, Symbols);
+  auto Flags = SourceV.lookupFlags(Symbols);
 
-  if (!Unresolved.empty())
+  if (Flags.size() != Symbols.size()) {
+    SymbolNameSet Unresolved = Symbols;
+    for (auto &KV : Flags)
+      Unresolved.erase(KV.first);
     return make_error<SymbolsNotFound>(std::move(Unresolved));
+  }
 
   SymbolAliasMap Result;
   for (auto &Name : Symbols) {
@@ -900,22 +903,20 @@ void VSO::removeFromSearchOrder(VSO &V) {
   });
 }
 
-SymbolNameSet VSO::lookupFlags(SymbolFlagsMap &Flags,
-                               const SymbolNameSet &Names) {
+SymbolFlagsMap VSO::lookupFlags(const SymbolNameSet &Names) {
   return ES.runSessionLocked([&, this]() {
-    auto Unresolved = lookupFlagsImpl(Flags, Names);
+    SymbolFlagsMap Result;
+    auto Unresolved = lookupFlagsImpl(Result, Names);
     if (FallbackDefinitionGenerator && !Unresolved.empty()) {
       auto FallbackDefs = FallbackDefinitionGenerator(*this, Unresolved);
       if (!FallbackDefs.empty()) {
-        auto Unresolved2 = lookupFlagsImpl(Flags, FallbackDefs);
+        auto Unresolved2 = lookupFlagsImpl(Result, FallbackDefs);
         (void)Unresolved2;
         assert(Unresolved2.empty() &&
                "All fallback defs should have been found by lookupFlagsImpl");
-        for (auto &D : FallbackDefs)
-          Unresolved.erase(D);
       }
     };
-    return Unresolved;
+    return Result;
   });
 }
 

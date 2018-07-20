@@ -22,17 +22,14 @@ TEST_F(LegacyAPIsStandardTest, TestLambdaSymbolResolver) {
   cantFail(V.define(absoluteSymbols({{Foo, FooSym}, {Bar, BarSym}})));
 
   auto Resolver = createSymbolResolver(
-      [&](SymbolFlagsMap &SymbolFlags, const SymbolNameSet &Symbols) {
-        return V.lookupFlags(SymbolFlags, Symbols);
-      },
+      [&](const SymbolNameSet &Symbols) { return V.lookupFlags(Symbols); },
       [&](std::shared_ptr<AsynchronousSymbolQuery> Q, SymbolNameSet Symbols) {
         return V.lookup(std::move(Q), Symbols);
       });
 
   SymbolNameSet Symbols({Foo, Bar, Baz});
 
-  SymbolFlagsMap SymbolFlags;
-  SymbolNameSet SymbolsNotFound = Resolver->lookupFlags(SymbolFlags, Symbols);
+  SymbolFlagsMap SymbolFlags = Resolver->lookupFlags(Symbols);
 
   EXPECT_EQ(SymbolFlags.size(), 2U)
       << "lookupFlags returned the wrong number of results";
@@ -42,10 +39,6 @@ TEST_F(LegacyAPIsStandardTest, TestLambdaSymbolResolver) {
       << "Incorrect lookupFlags result for Foo";
   EXPECT_EQ(SymbolFlags[Bar], BarSym.getFlags())
       << "Incorrect lookupFlags result for Bar";
-  EXPECT_EQ(SymbolsNotFound.size(), 1U)
-      << "Expected one symbol not found in lookupFlags";
-  EXPECT_EQ(SymbolsNotFound.count(Baz), 1U)
-      << "Expected baz not to be found in lookupFlags";
 
   bool OnResolvedRun = false;
 
@@ -86,9 +79,8 @@ TEST(LegacyAPIInteropTest, QueryAgainstVSO) {
   JITEvaluatedSymbol FooSym(0xdeadbeef, JITSymbolFlags::Exported);
   cantFail(V.define(absoluteSymbols({{Foo, FooSym}})));
 
-  auto LookupFlags = [&](SymbolFlagsMap &SymbolFlags,
-                         const SymbolNameSet &Names) {
-    return V.lookupFlags(SymbolFlags, Names);
+  auto LookupFlags = [&](const SymbolNameSet &Names) {
+    return V.lookupFlags(Names);
   };
 
   auto Lookup = [&](std::shared_ptr<AsynchronousSymbolQuery> Query,
@@ -153,19 +145,14 @@ TEST(LegacyAPIInteropTset, LegacyLookupHelpersFn) {
 
   SymbolNameSet Symbols({Foo, Bar, Baz});
 
-  SymbolFlagsMap SymbolFlags;
-  auto SymbolsNotFound =
-      lookupFlagsWithLegacyFn(SymbolFlags, Symbols, LegacyLookup);
+  auto SymbolFlags = lookupFlagsWithLegacyFn(Symbols, LegacyLookup);
 
-  EXPECT_TRUE(!!SymbolsNotFound) << "lookupFlagsWithLegacy failed unexpectedly";
-  EXPECT_EQ(SymbolFlags.size(), 2U) << "Wrong number of flags returned";
-  EXPECT_EQ(SymbolFlags.count(Foo), 1U) << "Flags for foo missing";
-  EXPECT_EQ(SymbolFlags.count(Bar), 1U) << "Flags for foo missing";
-  EXPECT_EQ(SymbolFlags[Foo], FooFlags) << "Wrong flags for foo";
-  EXPECT_EQ(SymbolFlags[Bar], BarFlags) << "Wrong flags for foo";
-  EXPECT_EQ(SymbolsNotFound->size(), 1U) << "Expected one symbol not found";
-  EXPECT_EQ(SymbolsNotFound->count(Baz), 1U)
-      << "Expected symbol baz to be not found";
+  EXPECT_TRUE(!!SymbolFlags) << "Expected lookupFlagsWithLegacyFn to succeed";
+  EXPECT_EQ(SymbolFlags->size(), 2U) << "Wrong number of flags returned";
+  EXPECT_EQ(SymbolFlags->count(Foo), 1U) << "Flags for foo missing";
+  EXPECT_EQ(SymbolFlags->count(Bar), 1U) << "Flags for foo missing";
+  EXPECT_EQ((*SymbolFlags)[Foo], FooFlags) << "Wrong flags for foo";
+  EXPECT_EQ((*SymbolFlags)[Bar], BarFlags) << "Wrong flags for foo";
   EXPECT_FALSE(BarMaterialized)
       << "lookupFlags should not have materialized bar";
 

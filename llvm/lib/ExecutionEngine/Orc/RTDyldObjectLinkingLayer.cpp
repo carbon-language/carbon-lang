@@ -64,7 +64,7 @@ public:
         return;
 
       assert(VSOs.front() && "VSOList entry can not be null");
-      VSOs.front()->lookupFlags(InternedResult, InternedSymbols);
+      InternedResult = VSOs.front()->lookupFlags(InternedSymbols);
     });
 
     LookupFlagsResult Result;
