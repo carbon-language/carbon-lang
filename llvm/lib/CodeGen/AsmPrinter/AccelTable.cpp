@@ -698,12 +698,12 @@ void DWARF5AccelTableStaticData::print(raw_ostream &OS) const {
 }
 
 void AppleAccelTableOffsetData::print(raw_ostream &OS) const {
-  OS << "  Offset: " << Die->getOffset() << "\n";
+  OS << "  Offset: " << Die.getOffset() << "\n";
 }
 
 void AppleAccelTableTypeData::print(raw_ostream &OS) const {
-  OS << "  Offset: " << Die->getOffset() << "\n";
-  OS << "  Tag: " << dwarf::TagString(Die->getTag()) << "\n";
+  OS << "  Offset: " << Die.getOffset() << "\n";
+  OS << "  Tag: " << dwarf::TagString(Die.getTag()) << "\n";
 }
 
 void AppleAccelTableStaticOffsetData::print(raw_ostream &OS) const {
