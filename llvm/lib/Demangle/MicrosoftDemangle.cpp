@@ -1067,7 +1067,7 @@ CallingConv Demangler::demangleCallingConvention() {
   }
 
   return CallingConv::None;
-};
+}
 
 StorageClass Demangler::demangleVariableStorageClass() {
   assert(std::isdigit(MangledName.front()));
