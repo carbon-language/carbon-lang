@@ -38871,10 +38871,16 @@ static SDValue combineAdd(SDNode *N, SelectionDAG &DAG,
     return MAdd;
 
   // Try to synthesize horizontal adds from adds of shuffles.
-  if (((Subtarget.hasSSSE3() && (VT == MVT::v8i16 || VT == MVT::v4i32)) ||
-       (Subtarget.hasInt256() && (VT == MVT::v16i16 || VT == MVT::v8i32))) &&
-      isHorizontalBinOp(Op0, Op1, true))
-    return DAG.getNode(X86ISD::HADD, SDLoc(N), VT, Op0, Op1);
+  if ((VT == MVT::v8i16 || VT == MVT::v4i32 || VT == MVT::v16i16 ||
+       VT == MVT::v8i32) &&
+      Subtarget.hasSSSE3() && isHorizontalBinOp(Op0, Op1, true)) {
+    auto HADDBuilder = [](SelectionDAG &DAG, const SDLoc &DL,
+                          ArrayRef<SDValue> Ops) {
+      return DAG.getNode(X86ISD::HADD, DL, Ops[0].getValueType(), Ops);
+    };
+    return SplitOpsAndApply(DAG, Subtarget, SDLoc(N), VT, {Op0, Op1},
+                            HADDBuilder);
+  }
 
   if (SDValue V = combineIncDecVector(N, DAG))
     return V;
@@ -38996,10 +39002,16 @@ static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
 
   // Try to synthesize horizontal subs from subs of shuffles.
   EVT VT = N->getValueType(0);
-  if (((Subtarget.hasSSSE3() && (VT == MVT::v8i16 || VT == MVT::v4i32)) ||
-       (Subtarget.hasInt256() && (VT == MVT::v16i16 || VT == MVT::v8i32))) &&
-      isHorizontalBinOp(Op0, Op1, false))
-    return DAG.getNode(X86ISD::HSUB, SDLoc(N), VT, Op0, Op1);
+  if ((VT == MVT::v8i16 || VT == MVT::v4i32 || VT == MVT::v16i16 ||
+       VT == MVT::v8i32) &&
+      Subtarget.hasSSSE3() && isHorizontalBinOp(Op0, Op1, false)) {
+    auto HSUBBuilder = [](SelectionDAG &DAG, const SDLoc &DL,
+                          ArrayRef<SDValue> Ops) {
+      return DAG.getNode(X86ISD::HSUB, DL, Ops[0].getValueType(), Ops);
+    };
+    return SplitOpsAndApply(DAG, Subtarget, SDLoc(N), VT, {Op0, Op1},
+                            HSUBBuilder);
+  }
 
   if (SDValue V = combineIncDecVector(N, DAG))
     return V;
