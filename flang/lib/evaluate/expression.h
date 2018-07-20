@@ -132,7 +132,7 @@ private:
 
 // Per-category expressions
 
-template<int KIND> class Expr<Category::Integer, KIND> {
+template<int KIND> class Expr<Type<Category::Integer, KIND>> {
 public:
   using Result = Type<Category::Integer, KIND>;
   using Scalar = typename Result::Value;
@@ -241,7 +241,7 @@ private:
       u_;
 };
 
-template<int KIND> class Expr<Category::Real, KIND> {
+template<int KIND> class Expr<Type<Category::Real, KIND>> {
 public:
   using Result = Type<Category::Real, KIND>;
   using Scalar = typename Result::Value;
@@ -339,7 +339,7 @@ private:
       u_;
 };
 
-template<int KIND> class Expr<Category::Complex, KIND> {
+template<int KIND> class Expr<Type<Category::Complex, KIND>> {
 public:
   using Result = Type<Category::Complex, KIND>;
   using Scalar = typename Result::Value;
@@ -398,7 +398,7 @@ private:
       u_;
 };
 
-template<int KIND> class Expr<Category::Character, KIND> {
+template<int KIND> class Expr<Type<Category::Character, KIND>> {
 public:
   using Result = Type<Category::Character, KIND>;
   using Scalar = typename Result::Value;
@@ -476,7 +476,7 @@ extern template struct Comparison<CharacterExpr<1>>;
 // the same supported kind of a particular type category.
 template<Category CAT> struct CategoryComparison {
   CLASS_BOILERPLATE(CategoryComparison)
-  template<int KIND> using KindComparison = Comparison<Expr<CAT, KIND>>;
+  template<int KIND> using KindComparison = Comparison<Expr<Type<CAT, KIND>>>;
   template<int KIND> CategoryComparison(const KindComparison<KIND> &x) : u{x} {}
   template<int KIND>
   CategoryComparison(KindComparison<KIND> &&x) : u{std::move(x)} {}
@@ -485,7 +485,7 @@ template<Category CAT> struct CategoryComparison {
 };
 
 // No need to distinguish the various kinds of LOGICAL expression results.
-template<> class Expr<Category::Logical, 1> {
+template<> class Expr<Type<Category::Logical, 1>> {
 public:
   using Result = Type<Category::Logical, 1>;
   using Scalar = bool;
@@ -511,9 +511,10 @@ public:
   CLASS_BOILERPLATE(Expr)
   Expr(bool x) : u_{x} {}
   template<Category CAT, int KIND>
-  Expr(const Comparison<Expr<CAT, KIND>> &x) : u_{CategoryComparison<CAT>{x}} {}
+  Expr(const Comparison<Expr<Type<CAT, KIND>>> &x)
+    : u_{CategoryComparison<CAT>{x}} {}
   template<Category CAT, int KIND>
-  Expr(Comparison<Expr<CAT, KIND>> &&x)
+  Expr(Comparison<Expr<Type<CAT, KIND>>> &&x)
     : u_{CategoryComparison<CAT>{std::move(x)}} {}
   template<typename A> Expr(const A &x) : u_(x) {}
   template<typename A>
@@ -532,23 +533,23 @@ private:
       u_;
 };
 
-extern template class Expr<Category::Integer, 1>;
-extern template class Expr<Category::Integer, 2>;
-extern template class Expr<Category::Integer, 4>;
-extern template class Expr<Category::Integer, 8>;
-extern template class Expr<Category::Integer, 16>;
-extern template class Expr<Category::Real, 2>;
-extern template class Expr<Category::Real, 4>;
-extern template class Expr<Category::Real, 8>;
-extern template class Expr<Category::Real, 10>;
-extern template class Expr<Category::Real, 16>;
-extern template class Expr<Category::Complex, 2>;
-extern template class Expr<Category::Complex, 4>;
-extern template class Expr<Category::Complex, 8>;
-extern template class Expr<Category::Complex, 10>;
-extern template class Expr<Category::Complex, 16>;
-extern template class Expr<Category::Character, 1>;
-extern template class Expr<Category::Logical, 1>;
+extern template class Expr<Type<Category::Integer, 1>>;
+extern template class Expr<Type<Category::Integer, 2>>;
+extern template class Expr<Type<Category::Integer, 4>>;
+extern template class Expr<Type<Category::Integer, 8>>;
+extern template class Expr<Type<Category::Integer, 16>>;
+extern template class Expr<Type<Category::Real, 2>>;
+extern template class Expr<Type<Category::Real, 4>>;
+extern template class Expr<Type<Category::Real, 8>>;
+extern template class Expr<Type<Category::Real, 10>>;
+extern template class Expr<Type<Category::Real, 16>>;
+extern template class Expr<Type<Category::Complex, 2>>;
+extern template class Expr<Type<Category::Complex, 4>>;
+extern template class Expr<Type<Category::Complex, 8>>;
+extern template class Expr<Type<Category::Complex, 10>>;
+extern template class Expr<Type<Category::Complex, 16>>;
+extern template class Expr<Type<Category::Character, 1>>;
+extern template class Expr<Type<Category::Logical, 1>>;
 
 // Dynamically polymorphic expressions that can hold any supported kind
 // of a specific intrinsic type category.
@@ -557,7 +558,7 @@ template<Category CAT> struct CategoryExpr {
   using Scalar = CategoryScalar<CAT>;
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(CategoryExpr)
-  template<int KIND> using KindExpr = Expr<CAT, KIND>;
+  template<int KIND> using KindExpr = Expr<Type<CAT, KIND>>;
   template<int KIND> CategoryExpr(const KindExpr<KIND> &x) : u{x} {}
   template<int KIND> CategoryExpr(KindExpr<KIND> &&x) : u{std::move(x)} {}
   std::optional<Scalar> ScalarValue() const;
@@ -572,9 +573,9 @@ struct GenericExpr {
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(GenericExpr)
   template<Category CAT, int KIND>
-  GenericExpr(const Expr<CAT, KIND> &x) : u{CategoryExpr<CAT>{x}} {}
+  GenericExpr(const Expr<Type<CAT, KIND>> &x) : u{CategoryExpr<CAT>{x}} {}
   template<Category CAT, int KIND>
-  GenericExpr(Expr<CAT, KIND> &&x) : u{CategoryExpr<CAT>{std::move(x)}} {}
+  GenericExpr(Expr<Type<CAT, KIND>> &&x) : u{CategoryExpr<CAT>{std::move(x)}} {}
   template<typename A> GenericExpr(const A &x) : u{x} {}
   template<typename A>
   GenericExpr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)

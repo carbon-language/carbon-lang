@@ -24,18 +24,17 @@
 namespace Fortran::evaluate {
 
 // An expression of some specific result type.
-template<Category CAT, int KIND> class Expr;
-
-// An expression whose result is of some dynamic supported kind of a
-// particular category.
-template<Category CAT> struct CategoryExpr;
-
-template<int KIND> using IntegerExpr = Expr<Category::Integer, KIND>;
+template<typename A> class Expr;
+template<int KIND> using IntegerExpr = Expr<Type<Category::Integer, KIND>>;
 using DefaultIntegerExpr = IntegerExpr<DefaultInteger::kind>;
-template<int KIND> using RealExpr = Expr<Category::Real, KIND>;
-template<int KIND> using ComplexExpr = Expr<Category::Complex, KIND>;
-template<int KIND> using CharacterExpr = Expr<Category::Character, KIND>;
-using LogicalExpr = Expr<Category::Logical, 1>;
+template<int KIND> using RealExpr = Expr<Type<Category::Real, KIND>>;
+template<int KIND> using ComplexExpr = Expr<Type<Category::Complex, KIND>>;
+template<int KIND> using CharacterExpr = Expr<Type<Category::Character, KIND>>;
+using LogicalExpr = Expr<Type<Category::Logical, 1>>;
+
+// An expression whose result is of a particular type category and
+// any supported kind.
+template<Category CAT> struct CategoryExpr;
 using GenericIntegerExpr = CategoryExpr<Category::Integer>;
 using GenericRealExpr = CategoryExpr<Category::Real>;
 using GenericComplexExpr = CategoryExpr<Category::Complex>;
