@@ -1110,9 +1110,7 @@ define <2 x i64> @constant_shift_v2i64(<2 x i64> %a) nounwind {
 ;
 ; XOP-LABEL: constant_shift_v2i64:
 ; XOP:       # %bb.0:
-; XOP-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; XOP-NEXT:    vpsubq {{.*}}(%rip), %xmm1, %xmm1
-; XOP-NEXT:    vpshaq %xmm1, %xmm0, %xmm0
+; XOP-NEXT:    vpshaq {{.*}}(%rip), %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
 ; AVX512-LABEL: constant_shift_v2i64:
@@ -1281,9 +1279,7 @@ define <8 x i16> @constant_shift_v8i16(<8 x i16> %a) nounwind {
 ;
 ; XOP-LABEL: constant_shift_v8i16:
 ; XOP:       # %bb.0:
-; XOP-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; XOP-NEXT:    vpsubw {{.*}}(%rip), %xmm1, %xmm1
-; XOP-NEXT:    vpshaw %xmm1, %xmm0, %xmm0
+; XOP-NEXT:    vpshaw {{.*}}(%rip), %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: constant_shift_v8i16:
@@ -1462,9 +1458,7 @@ define <16 x i8> @constant_shift_v16i8(<16 x i8> %a) nounwind {
 ;
 ; XOP-LABEL: constant_shift_v16i8:
 ; XOP:       # %bb.0:
-; XOP-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; XOP-NEXT:    vpsubb {{.*}}(%rip), %xmm1, %xmm1
-; XOP-NEXT:    vpshab %xmm1, %xmm0, %xmm0
+; XOP-NEXT:    vpshab {{.*}}(%rip), %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: constant_shift_v16i8:
@@ -1601,9 +1595,7 @@ define <2 x i64> @splatconstant_shift_v2i64(<2 x i64> %a) nounwind {
 ;
 ; XOP-LABEL: splatconstant_shift_v2i64:
 ; XOP:       # %bb.0:
-; XOP-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; XOP-NEXT:    vpsubq {{.*}}(%rip), %xmm1, %xmm1
-; XOP-NEXT:    vpshaq %xmm1, %xmm0, %xmm0
+; XOP-NEXT:    vpshaq {{.*}}(%rip), %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
 ; AVX512-LABEL: splatconstant_shift_v2i64:
@@ -1721,9 +1713,7 @@ define <16 x i8> @splatconstant_shift_v16i8(<16 x i8> %a) nounwind {
 ;
 ; XOP-LABEL: splatconstant_shift_v16i8:
 ; XOP:       # %bb.0:
-; XOP-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; XOP-NEXT:    vpsubb {{.*}}(%rip), %xmm1, %xmm1
-; XOP-NEXT:    vpshab %xmm1, %xmm0, %xmm0
+; XOP-NEXT:    vpshab {{.*}}(%rip), %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
 ; AVX512-LABEL: splatconstant_shift_v16i8:
