@@ -30635,24 +30635,13 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
 
   switch (Opcode) {
   case X86ISD::VBROADCAST: {
-    // If broadcasting from another shuffle, attempt to simplify it.
     // TODO - we really need a general SimplifyDemandedVectorElts mechanism.
-    SDValue Src = N.getOperand(0);
-    SDValue BC = peekThroughBitcasts(Src);
-    EVT SrcVT = Src.getValueType();
-    EVT BCVT = BC.getValueType();
-    if (isTargetShuffle(BC.getOpcode()) &&
-        VT.getScalarSizeInBits() % BCVT.getScalarSizeInBits() == 0) {
-      unsigned Scale = VT.getScalarSizeInBits() / BCVT.getScalarSizeInBits();
-      SmallVector<int, 16> DemandedMask(BCVT.getVectorNumElements(),
-                                        SM_SentinelUndef);
-      for (unsigned i = 0; i != Scale; ++i)
-        DemandedMask[i] = i;
-      if (SDValue Res = combineX86ShufflesRecursively(
-              {BC}, 0, BC, DemandedMask, {}, /*Depth*/ 1,
-              /*HasVarMask*/ false, DAG, Subtarget))
-        return DAG.getNode(X86ISD::VBROADCAST, DL, VT,
-                           DAG.getBitcast(SrcVT, Res));
+    APInt KnownUndef, KnownZero;
+    APInt DemandedMask(APInt::getAllOnesValue(VT.getVectorNumElements()));
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    if (TLI.SimplifyDemandedVectorElts(N, DemandedMask, KnownUndef, KnownZero,
+                                       DCI)) {
+      return SDValue(N.getNode(), 0);
     }
     return SDValue();
   }
@@ -31296,6 +31285,41 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
   }
 
   return SDValue();
+}
+
+bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
+    SDValue Op, const APInt &DemandedElts, APInt &KnownUndef, APInt &KnownZero,
+    TargetLoweringOpt &TLO, unsigned Depth) const {
+
+  if (X86ISD::VBROADCAST != Op.getOpcode())
+    return false;
+
+  EVT VT = Op.getValueType();
+  SDValue Src = Op.getOperand(0);
+  SDValue BC = peekThroughBitcasts(Src);
+  EVT SrcVT = Src.getValueType();
+  EVT BCVT = BC.getValueType();
+
+  if (!isTargetShuffle(BC.getOpcode()) ||
+      (VT.getScalarSizeInBits() % BCVT.getScalarSizeInBits()) != 0)
+    return false;
+
+  unsigned Scale = VT.getScalarSizeInBits() / BCVT.getScalarSizeInBits();
+  SmallVector<int, 16> DemandedMask(BCVT.getVectorNumElements(),
+                                    SM_SentinelUndef);
+  for (unsigned i = 0; i != Scale; ++i)
+    DemandedMask[i] = i;
+
+  if (SDValue Res = combineX86ShufflesRecursively(
+          {BC}, 0, BC, DemandedMask, {}, Depth + 1, /*HasVarMask*/ false,
+          TLO.DAG, Subtarget)) {
+    SDLoc DL(Op);
+    Res = TLO.DAG.getNode(X86ISD::VBROADCAST, DL, VT,
+                          TLO.DAG.getBitcast(SrcVT, Res));
+    return TLO.CombineTo(Op, Res);
+  }
+
+  return false;
 }
 
 /// Check if a vector extract from a target-specific shuffle of a load can be
