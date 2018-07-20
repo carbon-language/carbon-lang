@@ -178,11 +178,11 @@ class OrcMCJITReplacement : public ExecutionEngine {
             Query->notifySymbolReady();
             NewSymbolsResolved = true;
           } else {
-            M.ES.failQuery(*Query, Addr.takeError());
+            M.ES.legacyFailQuery(*Query, Addr.takeError());
             return SymbolNameSet();
           }
         } else if (auto Err = Sym.takeError()) {
-          M.ES.failQuery(*Query, std::move(Err));
+          M.ES.legacyFailQuery(*Query, std::move(Err));
           return SymbolNameSet();
         } else {
           if (auto Sym2 = M.ClientResolver->findSymbol(*S)) {
@@ -191,11 +191,11 @@ class OrcMCJITReplacement : public ExecutionEngine {
               Query->notifySymbolReady();
               NewSymbolsResolved = true;
             } else {
-              M.ES.failQuery(*Query, Addr.takeError());
+              M.ES.legacyFailQuery(*Query, Addr.takeError());
               return SymbolNameSet();
             }
           } else if (auto Err = Sym2.takeError()) {
-            M.ES.failQuery(*Query, std::move(Err));
+            M.ES.legacyFailQuery(*Query, std::move(Err));
             return SymbolNameSet();
           } else
             UnresolvedSymbols.insert(S);

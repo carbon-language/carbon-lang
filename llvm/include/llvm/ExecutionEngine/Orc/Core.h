@@ -69,7 +69,22 @@ raw_ostream &operator<<(raw_ostream &OS, const SymbolDependenceMap &Deps);
 /// A list of VSO pointers.
 using VSOList = std::vector<VSO *>;
 
+/// Render a VSOList.
 raw_ostream &operator<<(raw_ostream &OS, const VSOList &VSOs);
+
+/// Callback to notify client that symbols have been resolved.
+using SymbolsResolvedCallback = std::function<void(Expected<SymbolMap>)>;
+
+/// Callback to notify client that symbols are ready for execution.
+using SymbolsReadyCallback = std::function<void(Error)>;
+
+/// Callback to register the dependencies for a given query.
+using RegisterDependenciesFunction =
+    std::function<void(const SymbolDependenceMap &)>;
+
+/// This can be used as the value for a RegisterDependenciesFunction if there
+/// are no dependants to register with.
+extern RegisterDependenciesFunction NoDependenciesToRegister;
 
 /// Used to notify a VSO that the given set of symbols failed to materialize.
 class FailedToMaterialize : public ErrorInfo<FailedToMaterialize> {
@@ -121,6 +136,9 @@ public:
   /// Returns the target VSO that these symbols are being materialized
   ///        into.
   VSO &getTargetVSO() const { return V; }
+
+  /// Returns the symbol flags map for this responsibility instance.
+  SymbolFlagsMap getSymbols() { return SymbolFlags; }
 
   /// Returns the names of any symbols covered by this
   /// MaterializationResponsibility object that have queries pending. This
@@ -223,6 +241,9 @@ private:
   virtual void discard(const VSO &V, SymbolStringPtr Name) = 0;
 };
 
+using MaterializationUnitList =
+    std::vector<std::unique_ptr<MaterializationUnit>>;
+
 /// A MaterializationUnit implementation for pre-existing absolute symbols.
 ///
 /// All symbols will be resolved and marked ready as soon as the unit is
@@ -322,6 +343,9 @@ buildSimpleReexportsAliasMap(VSO &SourceV, const SymbolNameSet &Symbols);
 
 /// Base utilities for ExecutionSession.
 class ExecutionSessionBase {
+  // FIXME: Remove this when we remove the old ORC layers.
+  friend class VSO;
+
 public:
   /// For reporting errors.
   using ErrorReporter = std::function<void(Error)>;
@@ -372,11 +396,50 @@ public:
   void releaseVModule(VModuleKey Key) { /* FIXME: Recycle keys */
   }
 
-  /// Cause the given query to fail with the given Error.
+  void legacyFailQuery(AsynchronousSymbolQuery &Q, Error Err);
+
+  using LegacyAsyncLookupFunction = std::function<SymbolNameSet(
+      std::shared_ptr<AsynchronousSymbolQuery> Q, SymbolNameSet Names)>;
+
+  /// A legacy lookup function for JITSymbolResolverAdapter.
+  /// Do not use -- this will be removed soon.
+  Expected<SymbolMap>
+  legacyLookup(ExecutionSessionBase &ES, LegacyAsyncLookupFunction AsyncLookup,
+               SymbolNameSet Names, bool WaiUntilReady,
+               RegisterDependenciesFunction RegisterDependencies);
+
+  /// Search the given VSO list for the given symbols.
   ///
-  /// This should only be used by legacy APIs and will be deprecated in the
-  /// future.
-  void failQuery(AsynchronousSymbolQuery &Q, Error Err);
+  ///
+  /// The OnResolve callback will be called once all requested symbols are
+  /// resolved, or if an error occurs prior to resolution.
+  ///
+  /// The OnReady callback will be called once all requested symbols are ready,
+  /// or if an error occurs after resolution but before all symbols are ready.
+  ///
+  /// If all symbols are found, the RegisterDependencies function will be called
+  /// while the session lock is held. This gives clients a chance to register
+  /// dependencies for on the queried symbols for any symbols they are
+  /// materializing (if a MaterializationResponsibility instance is present,
+  /// this can be implemented by calling
+  /// MaterializationResponsibility::addDependencies). If there are no
+  /// dependenant symbols for this query (e.g. it is being made by a top level
+  /// client to get an address to call) then the value NoDependenciesToRegister
+  /// can be used.
+  void lookup(const VSOList &VSOs, const SymbolNameSet &Symbols,
+              SymbolsResolvedCallback OnResolve, SymbolsReadyCallback OnReady,
+              RegisterDependenciesFunction RegisterDependencies);
+
+  /// Blocking version of lookup above. Returns the resolved symbol map.
+  /// If WaitUntilReady is true (the default), will not return until all
+  /// requested symbols are ready (or an error occurs). If WaitUntilReady is
+  /// false, will return as soon as all requested symbols are resolved,
+  /// or an error occurs. If WaitUntilReady is false and an error occurs
+  /// after resolution, the function will return a success value, but the
+  /// error will be reported via reportErrors.
+  Expected<SymbolMap> lookup(const VSOList &VSOs, const SymbolNameSet &Symbols,
+                             RegisterDependenciesFunction RegisterDependencies,
+                             bool WaitUntilReady = true);
 
   /// Materialize the given unit.
   void dispatchMaterialization(VSO &V,
@@ -394,12 +457,20 @@ private:
     MU->doMaterialize(V);
   }
 
+  void runOutstandingMUs();
+
   mutable std::recursive_mutex SessionMutex;
   std::shared_ptr<SymbolStringPool> SSP;
   VModuleKey LastKey = 0;
   ErrorReporter ReportError = logErrorsToStdErr;
   DispatchMaterializationFunction DispatchMaterialization =
       materializeOnCurrentThread;
+
+  // FIXME: Remove this (and runOutstandingMUs) once the linking layer works
+  //        with callbacks from asynchronous queries.
+  mutable std::recursive_mutex OutstandingMUsMutex;
+  std::vector<std::pair<VSO *, std::unique_ptr<MaterializationUnit>>>
+      OutstandingMUs;
 };
 
 /// A symbol query that returns results via a callback when results are
@@ -411,21 +482,6 @@ class AsynchronousSymbolQuery {
   friend class VSO;
 
 public:
-  class ResolutionResult {
-  public:
-    ResolutionResult(SymbolMap Symbols, const SymbolDependenceMap &Dependencies)
-        : Symbols(std::move(Symbols)), Dependencies(Dependencies) {}
-
-    SymbolMap Symbols;
-    const SymbolDependenceMap &Dependencies;
-  };
-
-  /// Callback to notify client that symbols have been resolved.
-  using SymbolsResolvedCallback =
-      std::function<void(Expected<ResolutionResult>)>;
-
-  /// Callback to notify client that symbols are ready for execution.
-  using SymbolsReadyCallback = std::function<void(Error)>;
 
   /// Create a query for the given symbols, notify-resolved and
   ///        notify-ready callbacks.
@@ -485,6 +541,7 @@ private:
 class VSO {
   friend class AsynchronousSymbolQuery;
   friend class ExecutionSession;
+  friend class ExecutionSessionBase;
   friend class MaterializationResponsibility;
 public:
   using FallbackDefinitionGeneratorFunction =
@@ -492,9 +549,6 @@ public:
 
   using AsynchronousSymbolQuerySet =
       std::set<std::shared_ptr<AsynchronousSymbolQuery>>;
-
-  using MaterializationUnitList =
-      std::vector<std::unique_ptr<MaterializationUnit>>;
 
   VSO(const VSO &) = delete;
   VSO &operator=(const VSO &) = delete;
@@ -547,8 +601,10 @@ public:
   void removeFromSearchOrder(VSO &V);
 
   /// Do something with the search order (run under the session lock).
-  template <typename Func> void withSearchOrderDo(Func F) {
-    ES.runSessionLocked([&]() { F(SearchOrder); });
+  template <typename Func>
+  auto withSearchOrderDo(Func &&F)
+      -> decltype(F(std::declval<const VSOList &>())) {
+    return ES.runSessionLocked([&]() { return F(SearchOrder); });
   }
 
   /// Define all symbols provided by the materialization unit to be part
@@ -579,6 +635,10 @@ public:
   ///        the flags for each symbol in Flags. Returns any unresolved symbols.
   SymbolFlagsMap lookupFlags(const SymbolNameSet &Names);
 
+  /// Dump current VSO state to OS.
+  void dump(raw_ostream &OS);
+
+  /// FIXME: Remove this when we remove the old ORC layers.
   /// Search the given VSOs in order for the symbols in Symbols. Results
   ///        (once they become available) will be returned via the given Query.
   ///
@@ -586,11 +646,8 @@ public:
   /// and the query will not be applied. The Query is not failed and can be
   /// re-used in a subsequent lookup once the symbols have been added, or
   /// manually failed.
-  SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Q,
-                       SymbolNameSet Names);
-
-  /// Dump current VSO state to OS.
-  void dump(raw_ostream &OS);
+  SymbolNameSet legacyLookup(std::shared_ptr<AsynchronousSymbolQuery> Q,
+                             SymbolNameSet Names);
 
 private:
   using AsynchronousSymbolQueryList =
@@ -629,6 +686,12 @@ private:
   SymbolNameSet lookupFlagsImpl(SymbolFlagsMap &Flags,
                                 const SymbolNameSet &Names);
 
+  void lodgeQuery(std::shared_ptr<AsynchronousSymbolQuery> &Q,
+                  SymbolNameSet &Unresolved, MaterializationUnitList &MUs);
+
+  void lodgeQueryImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
+                      SymbolNameSet &Unresolved, MaterializationUnitList &MUs);
+
   LookupImplActionFlags
   lookupImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
              std::vector<std::unique_ptr<MaterializationUnit>> &MUs,
@@ -647,16 +710,14 @@ private:
 
   SymbolNameSet getRequestedSymbols(const SymbolFlagsMap &SymbolFlags);
 
-  void addDependencies(const SymbolFlagsMap &Dependents,
-                       const SymbolDependenceMap &Dependencies);
+  void addDependencies(const SymbolStringPtr &Name,
+                       const SymbolDependenceMap &Dependants);
 
   void resolve(const SymbolMap &Resolved);
 
   void finalize(const SymbolFlagsMap &Finalized);
 
   void notifyFailed(const SymbolNameSet &FailedSymbols);
-
-  void runOutstandingMUs();
 
   ExecutionSessionBase &ES;
   std::string VSOName;
@@ -665,11 +726,6 @@ private:
   MaterializingInfosMap MaterializingInfos;
   FallbackDefinitionGeneratorFunction FallbackDefinitionGenerator;
   VSOList SearchOrder;
-
-  // FIXME: Remove this (and runOutstandingMUs) once the linking layer works
-  //        with callbacks from asynchronous queries.
-  mutable std::recursive_mutex OutstandingMUsMutex;
-  std::vector<std::unique_ptr<MaterializationUnit>> OutstandingMUs;
 };
 
 /// An ExecutionSession represents a running JIT program.
@@ -692,15 +748,6 @@ public:
 private:
   std::vector<std::unique_ptr<VSO>> VSOs;
 };
-
-using AsynchronousLookupFunction = std::function<SymbolNameSet(
-    std::shared_ptr<AsynchronousSymbolQuery> Q, SymbolNameSet Names)>;
-
-/// Perform a blocking lookup on the given symbols.
-Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
-                                   AsynchronousLookupFunction AsyncLookup,
-                                   SymbolNameSet Names, bool WaiUntilReady,
-                                   MaterializationResponsibility *MR = nullptr);
 
 /// Look up the given names in the given VSOs.
 /// VSOs will be searched in order and no VSO pointer may be null.
