@@ -184,12 +184,20 @@ private:
 class GenericDetails {
 public:
   using listType = std::list<const Symbol *>;
+  using procNamesType = std::list<std::pair<const SourceName *, bool>>;
+
   GenericDetails() {}
   GenericDetails(const listType &specificProcs);
   GenericDetails(Symbol *specific) : specific_{specific} {}
 
   const listType specificProcs() const { return specificProcs_; }
+  const procNamesType specificProcNames() const { return specificProcNames_; }
+
   void add_specificProc(const Symbol *proc) { specificProcs_.push_back(proc); }
+  void add_specificProcName(const SourceName &name, bool isModuleProc) {
+    specificProcNames_.emplace_back(&name, isModuleProc);
+  }
+  void ClearSpecificProcNames() { specificProcNames_.clear(); }
 
   Symbol *specific() { return specific_; }
   void set_specific(Symbol &specific);
@@ -206,6 +214,8 @@ public:
 private:
   // all of the specific procedures for this generic
   listType specificProcs_;
+  // specific procs referenced by name and whether it's a module proc
+  procNamesType specificProcNames_;
   // a specific procedure with the same name as this generic, if any
   Symbol *specific_{nullptr};
   // a derived type with the same name as this generic, if any

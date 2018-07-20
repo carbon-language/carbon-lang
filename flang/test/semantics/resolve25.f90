@@ -12,50 +12,28 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-! Check modfile generation for generic interfaces
 module m
   interface foo
     subroutine s1(x)
+      real x
+    end
+    !ERROR: 's2' is not a module procedure
+    module procedure s2
+    !ERROR: Procedure 's3' not found
+    procedure s3
+    !ERROR: Procedure 's1' is already specified in generic 'foo'
+    procedure s1
+  end interface
+  interface
+    subroutine s4(x)
       real x
     end subroutine
     subroutine s2(x)
       complex x
     end subroutine
   end interface
-  interface bar
-    procedure :: s1
-    procedure :: s2
-    procedure :: s3
-    procedure :: s4
-  end interface
-contains
-  subroutine s3(x)
-    logical x
-  end
-  subroutine s4(x)
-    integer x
-  end
-end
-
-!Expect: m.mod
-!module m
-! generic::foo=>s1,s2
-! interface
-!  subroutine s1(x)
-!   real::x
-!  end
-! end interface
-! interface
-!  subroutine s2(x)
-!   complex::x
-!  end
-! end interface
-! generic::bar=>s1,s2,s3,s4
-!contains
-! subroutine s3(x)
-!  logical::x
-! end
-! subroutine s4(x)
-!  integer::x
-! end
-!end
+  generic :: bar => s4
+  generic :: bar => s2
+  !ERROR: Procedure 's4' is already specified in generic 'bar'
+  generic :: bar => s4
+end module

@@ -265,11 +265,15 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
 
 void ModFileWriter::PutGeneric(const Symbol &symbol) {
   auto &details{symbol.get<GenericDetails>()};
-  PutLower(decls_ << "interface ", symbol) << '\n';
+  decls_ << "generic";
+  PutAttrs(decls_, symbol.attrs());
+  PutLower(decls_ << "::", symbol) << "=>";
+  int n = 0;
   for (auto *specific : details.specificProcs()) {
-    PutLower(decls_ << "procedure::", *specific) << '\n';
+    if (n++ > 0) decls_ << ',';
+    PutLower(decls_, *specific);
   }
-  decls_ << "end interface\n";
+  decls_ << '\n';
 }
 
 void ModFileWriter::PutUse(const Symbol &symbol) {
