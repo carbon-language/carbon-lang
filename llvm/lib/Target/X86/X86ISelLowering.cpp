@@ -29400,13 +29400,13 @@ static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
         (AllowFloatDomain || !Subtarget.hasSSE41())) {
       std::swap(V1, V2);
       Shuffle = X86ISD::MOVSD;
-      SrcVT = DstVT = MaskVT;
+      SrcVT = DstVT = MVT::v2f64;
       return true;
     }
     if (isTargetShuffleEquivalent(Mask, {4, 1, 2, 3}) &&
         (AllowFloatDomain || !Subtarget.hasSSE41())) {
       Shuffle = X86ISD::MOVSS;
-      SrcVT = DstVT = MaskVT;
+      SrcVT = DstVT = MVT::v4f32;
       return true;
     }
   }
@@ -30713,28 +30713,6 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
         DCI.AddToWorklist(SclVec.getNode());
         return DAG.getNode(Opcode, DL, VT, N0, SclVec);
       }
-    }
-
-    SDValue V0 = peekThroughBitcasts(N0);
-    SDValue V1 = peekThroughBitcasts(N1);
-    bool isZero0 = ISD::isBuildVectorAllZeros(V0.getNode());
-    bool isZero1 = ISD::isBuildVectorAllZeros(V1.getNode());
-    if (isZero0 && isZero1)
-      return SDValue();
-
-    // We often lower to MOVSD/MOVSS from integer as well as native float
-    // types; remove unnecessary domain-crossing bitcasts if we can to make it
-    // easier to combine shuffles later on. We've already accounted for the
-    // domain switching cost when we decided to lower with it.
-    bool isFloat = VT.isFloatingPoint();
-    bool isFloat0 = V0.getSimpleValueType().isFloatingPoint();
-    bool isFloat1 = V1.getSimpleValueType().isFloatingPoint();
-    if ((isFloat != isFloat0 || isZero0) && (isFloat != isFloat1 || isZero1)) {
-      MVT NewVT = isFloat ? (X86ISD::MOVSD == Opcode ? MVT::v2i64 : MVT::v4i32)
-                          : (X86ISD::MOVSD == Opcode ? MVT::v2f64 : MVT::v4f32);
-      V0 = DAG.getBitcast(NewVT, V0);
-      V1 = DAG.getBitcast(NewVT, V1);
-      return DAG.getBitcast(VT, DAG.getNode(Opcode, DL, NewVT, V0, V1));
     }
 
     return SDValue();
