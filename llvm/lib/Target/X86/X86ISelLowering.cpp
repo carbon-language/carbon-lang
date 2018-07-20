@@ -31144,8 +31144,8 @@ static SDValue foldShuffleOfHorizOp(SDNode *N) {
   // lanes of each operand as:
   // v4X32: A[0] + A[1] , A[2] + A[3] , B[0] + B[1] , B[2] + B[3]
   // ...similarly for v2f64 and v8i16.
-  // TODO: 256-bit is not the same because...x86.
-  if (HOp.getOperand(0) != HOp.getOperand(1) || HOp.getValueSizeInBits() != 128)
+  // TODO: Handle UNDEF operands.
+  if (HOp.getOperand(0) != HOp.getOperand(1))
     return SDValue();
 
   // When the operands of a horizontal math op are identical, the low half of
@@ -31156,9 +31156,15 @@ static SDValue foldShuffleOfHorizOp(SDNode *N) {
   // TODO: Other mask possibilities like {1,1} and {1,0} could be added here,
   // but this should be tied to whatever horizontal op matching and shuffle
   // canonicalization are producing.
-  if (isTargetShuffleEquivalent(Mask, { 0, 0 }) ||
-      isTargetShuffleEquivalent(Mask, { 0, 1, 0, 1 }) ||
-      isTargetShuffleEquivalent(Mask, { 0, 1, 2, 3, 0, 1, 2, 3 }))
+  if (HOp.getValueSizeInBits() == 128 &&
+      (isTargetShuffleEquivalent(Mask, {0, 0}) ||
+       isTargetShuffleEquivalent(Mask, {0, 1, 0, 1}) ||
+       isTargetShuffleEquivalent(Mask, {0, 1, 2, 3, 0, 1, 2, 3})))
+    return HOp;
+
+  if (HOp.getValueSizeInBits() == 256 &&
+      (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2}) ||
+       isTargetShuffleEquivalent(Mask, {0, 1, 0, 1, 4, 5, 4, 5})))
     return HOp;
 
   return SDValue();
