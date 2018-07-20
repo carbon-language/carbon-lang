@@ -12,6 +12,8 @@
 namespace llvm {
 namespace orc {
 
+void SymbolResolver::anchor() {}
+
 JITSymbolResolverAdapter::JITSymbolResolverAdapter(
     ExecutionSession &ES, SymbolResolver &R, MaterializationResponsibility *MR)
     : ES(ES), R(R), MR(MR) {}

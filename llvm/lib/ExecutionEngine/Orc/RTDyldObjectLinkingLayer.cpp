@@ -9,13 +9,85 @@
 
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 
+namespace {
+
+using namespace llvm;
+using namespace llvm::orc;
+
+class VSOSearchOrderResolver : public JITSymbolResolver {
+public:
+  VSOSearchOrderResolver(ExecutionSession &ES,
+                         MaterializationResponsibility &MR)
+      : ES(ES), MR(MR) {}
+
+  Expected<LookupResult> lookup(const LookupSet &Symbols) {
+    SymbolNameSet InternedSymbols;
+
+    for (auto &S : Symbols)
+      InternedSymbols.insert(ES.getSymbolStringPool().intern(S));
+
+    auto AsyncLookup = [&](std::shared_ptr<AsynchronousSymbolQuery> Q,
+                           SymbolNameSet Names) {
+      SymbolNameSet Unresolved = std::move(Names);
+      MR.getTargetVSO().withSearchOrderDo([&](const VSOList &SearchOrder) {
+        for (auto *V : SearchOrder) {
+          assert(V && "VSOList entry can not be null");
+          Unresolved = V->lookup(Q, std::move(Unresolved));
+        }
+      });
+      return Unresolved;
+    };
+
+    auto InternedResult = blockingLookup(
+        ES, std::move(AsyncLookup), std::move(InternedSymbols), false, &MR);
+
+    if (!InternedResult)
+      return InternedResult.takeError();
+
+    LookupResult Result;
+    for (auto &KV : *InternedResult)
+      Result[*KV.first] = std::move(KV.second);
+
+    return Result;
+  }
+
+  Expected<LookupFlagsResult> lookupFlags(const LookupSet &Symbols) {
+    SymbolNameSet InternedSymbols;
+
+    for (auto &S : Symbols)
+      InternedSymbols.insert(ES.getSymbolStringPool().intern(S));
+
+    SymbolFlagsMap InternedResult;
+    MR.getTargetVSO().withSearchOrderDo([&](const VSOList &VSOs) {
+      // An empty search order is pathalogical, but allowed.
+      if (VSOs.empty())
+        return;
+
+      assert(VSOs.front() && "VSOList entry can not be null");
+      VSOs.front()->lookupFlags(InternedResult, InternedSymbols);
+    });
+
+    LookupFlagsResult Result;
+    for (auto &KV : InternedResult)
+      Result[*KV.first] = std::move(KV.second);
+
+    return Result;
+  }
+
+private:
+  ExecutionSession &ES;
+  MaterializationResponsibility &MR;
+};
+
+} // end anonymous namespace
+
 namespace llvm {
 namespace orc {
 
 RTDyldObjectLinkingLayer2::RTDyldObjectLinkingLayer2(
-    ExecutionSession &ES, ResourcesGetterFunction GetResources,
+    ExecutionSession &ES, GetMemoryManagerFunction GetMemoryManager,
     NotifyLoadedFunction NotifyLoaded, NotifyFinalizedFunction NotifyFinalized)
-    : ObjectLayer(ES), GetResources(std::move(GetResources)),
+    : ObjectLayer(ES), GetMemoryManager(GetMemoryManager),
       NotifyLoaded(std::move(NotifyLoaded)),
       NotifyFinalized(std::move(NotifyFinalized)), ProcessAllSections(false) {}
 
@@ -32,11 +104,10 @@ void RTDyldObjectLinkingLayer2::emit(MaterializationResponsibility R,
     R.failMaterialization();
   }
 
-  auto Resources = GetResources(K);
+  auto MemoryManager = GetMemoryManager(K);
 
-  JITSymbolResolverAdapter ResolverAdapter(ES, *Resources.Resolver, &R);
-  auto RTDyld =
-      llvm::make_unique<RuntimeDyld>(*Resources.MemMgr, ResolverAdapter);
+  VSOSearchOrderResolver Resolver(ES, R);
+  auto RTDyld = llvm::make_unique<RuntimeDyld>(*MemoryManager, Resolver);
   RTDyld->setProcessAllSections(ProcessAllSections);
 
   {
@@ -48,7 +119,7 @@ void RTDyldObjectLinkingLayer2::emit(MaterializationResponsibility R,
 
     assert(!MemMgrs.count(K) &&
            "A memory manager already exists for this key?");
-    MemMgrs[K] = Resources.MemMgr;
+    MemMgrs[K] = std::move(MemoryManager);
   }
 
   auto Info = RTDyld->loadObject(**ObjFile);

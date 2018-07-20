@@ -24,7 +24,6 @@ char FailedToMaterialize::ID = 0;
 char SymbolsNotFound::ID = 0;
 
 void MaterializationUnit::anchor() {}
-void SymbolResolver::anchor() {}
 
 raw_ostream &operator<<(raw_ostream &OS, const JITSymbolFlags &Flags) {
   if (Flags.isWeak())
@@ -96,6 +95,20 @@ raw_ostream &operator<<(raw_ostream &OS, const SymbolDependenceMap &Deps) {
       OS << ", { " << KV.first->getName() << ": " << KV.second << " }";
   }
   OS << " }";
+  return OS;
+}
+
+raw_ostream &operator<<(raw_ostream &OS, const VSOList &VSOs) {
+  OS << "[";
+  if (!VSOs.empty()) {
+    assert(VSOs.front() && "VSOList entries must not be null");
+    OS << " " << VSOs.front()->getName();
+    for (auto *V : make_range(std::next(VSOs.begin()), VSOs.end())) {
+      assert(V && "VSOList entries must not be null");
+      OS << ", " << V->getName();
+    }
+  }
+  OS << " ]";
   return OS;
 }
 
@@ -859,6 +872,34 @@ void VSO::runOutstandingMUs() {
   }
 }
 
+void VSO::setSearchOrder(VSOList NewSearchOrder, bool SearchThisVSOFirst) {
+  if (SearchThisVSOFirst && NewSearchOrder.front() != this)
+    NewSearchOrder.insert(NewSearchOrder.begin(), this);
+
+  ES.runSessionLocked([&]() { SearchOrder = std::move(NewSearchOrder); });
+}
+
+void VSO::addToSearchOrder(VSO &V) {
+  ES.runSessionLocked([&]() { SearchOrder.push_back(&V); });
+}
+
+void VSO::replaceInSearchOrder(VSO &OldV, VSO &NewV) {
+  ES.runSessionLocked([&]() {
+    auto I = std::find(SearchOrder.begin(), SearchOrder.end(), &OldV);
+
+    if (I != SearchOrder.end())
+      *I = &NewV;
+  });
+}
+
+void VSO::removeFromSearchOrder(VSO &V) {
+  ES.runSessionLocked([&]() {
+    auto I = std::find(SearchOrder.begin(), SearchOrder.end(), &V);
+    if (I != SearchOrder.end())
+      SearchOrder.erase(I);
+  });
+}
+
 SymbolNameSet VSO::lookupFlags(SymbolFlagsMap &Flags,
                                const SymbolNameSet &Names) {
   return ES.runSessionLocked([&, this]() {
@@ -1064,6 +1105,11 @@ void VSO::dump(raw_ostream &OS) {
         OS << "        " << KV2.first->getName() << ": " << KV2.second << "\n";
     }
   });
+}
+
+VSO::VSO(ExecutionSessionBase &ES, std::string Name)
+    : ES(ES), VSOName(std::move(Name)) {
+  SearchOrder.push_back(this);
 }
 
 Error VSO::defineImpl(MaterializationUnit &MU) {

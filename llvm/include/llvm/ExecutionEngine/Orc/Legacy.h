@@ -20,6 +20,74 @@
 namespace llvm {
 namespace orc {
 
+/// SymbolResolver is a composable interface for looking up symbol flags
+///        and addresses using the AsynchronousSymbolQuery type. It will
+///        eventually replace the LegacyJITSymbolResolver interface as the
+///        stardard ORC symbol resolver type.
+///
+/// FIXME: SymbolResolvers should go away and be replaced with VSOs with
+///        defenition generators.
+class SymbolResolver {
+public:
+  virtual ~SymbolResolver() = default;
+
+  /// Returns the flags for each symbol in Symbols that can be found,
+  ///        along with the set of symbol that could not be found.
+  virtual SymbolNameSet lookupFlags(SymbolFlagsMap &Flags,
+                                    const SymbolNameSet &Symbols) = 0;
+
+  /// For each symbol in Symbols that can be found, assigns that symbols
+  ///        value in Query. Returns the set of symbols that could not be found.
+  virtual SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
+                               SymbolNameSet Symbols) = 0;
+
+private:
+  virtual void anchor();
+};
+
+/// Implements SymbolResolver with a pair of supplied function objects
+///        for convenience. See createSymbolResolver.
+template <typename LookupFlagsFn, typename LookupFn>
+class LambdaSymbolResolver final : public SymbolResolver {
+public:
+  template <typename LookupFlagsFnRef, typename LookupFnRef>
+  LambdaSymbolResolver(LookupFlagsFnRef &&LookupFlags, LookupFnRef &&Lookup)
+      : LookupFlags(std::forward<LookupFlagsFnRef>(LookupFlags)),
+        Lookup(std::forward<LookupFnRef>(Lookup)) {}
+
+  SymbolNameSet lookupFlags(SymbolFlagsMap &Flags,
+                            const SymbolNameSet &Symbols) final {
+    return LookupFlags(Flags, Symbols);
+  }
+
+  SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
+                       SymbolNameSet Symbols) final {
+    return Lookup(std::move(Query), std::move(Symbols));
+  }
+
+private:
+  LookupFlagsFn LookupFlags;
+  LookupFn Lookup;
+};
+
+/// Creates a SymbolResolver implementation from the pair of supplied
+///        function objects.
+template <typename LookupFlagsFn, typename LookupFn>
+std::unique_ptr<LambdaSymbolResolver<
+    typename std::remove_cv<
+        typename std::remove_reference<LookupFlagsFn>::type>::type,
+    typename std::remove_cv<
+        typename std::remove_reference<LookupFn>::type>::type>>
+createSymbolResolver(LookupFlagsFn &&LookupFlags, LookupFn &&Lookup) {
+  using LambdaSymbolResolverImpl = LambdaSymbolResolver<
+      typename std::remove_cv<
+          typename std::remove_reference<LookupFlagsFn>::type>::type,
+      typename std::remove_cv<
+          typename std::remove_reference<LookupFn>::type>::type>;
+  return llvm::make_unique<LambdaSymbolResolverImpl>(
+      std::forward<LookupFlagsFn>(LookupFlags), std::forward<LookupFn>(Lookup));
+}
+
 class JITSymbolResolverAdapter : public JITSymbolResolver {
 public:
   JITSymbolResolverAdapter(ExecutionSession &ES, SymbolResolver &R,

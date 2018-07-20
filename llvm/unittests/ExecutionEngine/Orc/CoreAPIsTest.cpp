@@ -11,13 +11,14 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/ExecutionEngine/Orc/Core.h"
 #include "llvm/ExecutionEngine/Orc/OrcError.h"
-#include "gtest/gtest.h"
 
 #include <set>
 #include <thread>
 
 using namespace llvm;
 using namespace llvm::orc;
+
+class CoreAPIsStandardTest : public CoreAPIsBasedStandardTest {};
 
 namespace {
 
@@ -58,45 +59,6 @@ private:
   DestructorFunction Destructor;
 };
 
-// CoreAPIsStandardTest that saves a bunch of boilerplate by providing the
-// following:
-//
-// (1) ES -- An ExecutionSession
-// (2) Foo, Bar, Baz, Qux -- SymbolStringPtrs for strings "foo", "bar", "baz",
-//     and "qux" respectively.
-// (3) FooAddr, BarAddr, BazAddr, QuxAddr -- Dummy addresses. Guaranteed
-//     distinct and non-null.
-// (4) FooSym, BarSym, BazSym, QuxSym -- JITEvaluatedSymbols with FooAddr,
-//     BarAddr, BazAddr, and QuxAddr respectively. All with default strong,
-//     linkage and non-hidden visibility.
-// (5) V -- A VSO associated with ES.
-class CoreAPIsStandardTest : public testing::Test {
-public:
-protected:
-  ExecutionSession ES;
-  VSO &V = ES.createVSO("V");
-  SymbolStringPtr Foo = ES.getSymbolStringPool().intern("foo");
-  SymbolStringPtr Bar = ES.getSymbolStringPool().intern("bar");
-  SymbolStringPtr Baz = ES.getSymbolStringPool().intern("baz");
-  SymbolStringPtr Qux = ES.getSymbolStringPool().intern("qux");
-  static const JITTargetAddress FooAddr = 1U;
-  static const JITTargetAddress BarAddr = 2U;
-  static const JITTargetAddress BazAddr = 3U;
-  static const JITTargetAddress QuxAddr = 4U;
-  JITEvaluatedSymbol FooSym =
-      JITEvaluatedSymbol(FooAddr, JITSymbolFlags::Exported);
-  JITEvaluatedSymbol BarSym =
-      JITEvaluatedSymbol(BarAddr, JITSymbolFlags::Exported);
-  JITEvaluatedSymbol BazSym =
-      JITEvaluatedSymbol(BazAddr, JITSymbolFlags::Exported);
-  JITEvaluatedSymbol QuxSym =
-      JITEvaluatedSymbol(QuxAddr, JITSymbolFlags::Exported);
-};
-
-const JITTargetAddress CoreAPIsStandardTest::FooAddr;
-const JITTargetAddress CoreAPIsStandardTest::BarAddr;
-const JITTargetAddress CoreAPIsStandardTest::BazAddr;
-const JITTargetAddress CoreAPIsStandardTest::QuxAddr;
 
 TEST_F(CoreAPIsStandardTest, AsynchronousSymbolQuerySuccessfulResolutionOnly) {
   bool OnResolutionRun = false;
@@ -621,65 +583,6 @@ TEST_F(CoreAPIsStandardTest, FailResolution) {
                           << ErrMsg;
                     });
   }
-}
-
-TEST_F(CoreAPIsStandardTest, TestLambdaSymbolResolver) {
-  cantFail(V.define(absoluteSymbols({{Foo, FooSym}, {Bar, BarSym}})));
-
-  auto Resolver = createSymbolResolver(
-      [&](SymbolFlagsMap &SymbolFlags, const SymbolNameSet &Symbols) {
-        return V.lookupFlags(SymbolFlags, Symbols);
-      },
-      [&](std::shared_ptr<AsynchronousSymbolQuery> Q, SymbolNameSet Symbols) {
-        return V.lookup(std::move(Q), Symbols);
-      });
-
-  SymbolNameSet Symbols({Foo, Bar, Baz});
-
-  SymbolFlagsMap SymbolFlags;
-  SymbolNameSet SymbolsNotFound = Resolver->lookupFlags(SymbolFlags, Symbols);
-
-  EXPECT_EQ(SymbolFlags.size(), 2U)
-      << "lookupFlags returned the wrong number of results";
-  EXPECT_EQ(SymbolFlags.count(Foo), 1U) << "Missing lookupFlags result for foo";
-  EXPECT_EQ(SymbolFlags.count(Bar), 1U) << "Missing lookupFlags result for bar";
-  EXPECT_EQ(SymbolFlags[Foo], FooSym.getFlags())
-      << "Incorrect lookupFlags result for Foo";
-  EXPECT_EQ(SymbolFlags[Bar], BarSym.getFlags())
-      << "Incorrect lookupFlags result for Bar";
-  EXPECT_EQ(SymbolsNotFound.size(), 1U)
-      << "Expected one symbol not found in lookupFlags";
-  EXPECT_EQ(SymbolsNotFound.count(Baz), 1U)
-      << "Expected baz not to be found in lookupFlags";
-
-  bool OnResolvedRun = false;
-
-  auto OnResolved =
-      [&](Expected<AsynchronousSymbolQuery::ResolutionResult> Result) {
-        OnResolvedRun = true;
-        EXPECT_TRUE(!!Result) << "Unexpected error";
-        EXPECT_EQ(Result->Symbols.size(), 2U)
-            << "Unexpected number of resolved symbols";
-        EXPECT_EQ(Result->Symbols.count(Foo), 1U)
-            << "Missing lookup result for foo";
-        EXPECT_EQ(Result->Symbols.count(Bar), 1U)
-            << "Missing lookup result for bar";
-        EXPECT_EQ(Result->Symbols[Foo].getAddress(), FooSym.getAddress())
-            << "Incorrect address for foo";
-        EXPECT_EQ(Result->Symbols[Bar].getAddress(), BarSym.getAddress())
-            << "Incorrect address for bar";
-      };
-  auto OnReady = [&](Error Err) {
-    EXPECT_FALSE(!!Err) << "Finalization should never fail in this test";
-  };
-
-  auto Q = std::make_shared<AsynchronousSymbolQuery>(SymbolNameSet({Foo, Bar}),
-                                                     OnResolved, OnReady);
-  auto Unresolved = Resolver->lookup(std::move(Q), Symbols);
-
-  EXPECT_EQ(Unresolved.size(), 1U) << "Expected one unresolved symbol";
-  EXPECT_EQ(Unresolved.count(Baz), 1U) << "Expected baz to not be resolved";
-  EXPECT_TRUE(OnResolvedRun) << "OnResolved was never run";
 }
 
 TEST_F(CoreAPIsStandardTest, TestLookupWithUnthreadedMaterialization) {

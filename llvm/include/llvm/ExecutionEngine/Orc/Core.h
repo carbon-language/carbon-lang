@@ -66,6 +66,11 @@ using SymbolDependenceMap = std::map<VSO *, SymbolNameSet>;
 /// Render a SymbolDependendeMap.
 raw_ostream &operator<<(raw_ostream &OS, const SymbolDependenceMap &Deps);
 
+/// A list of VSO pointers.
+using VSOList = std::vector<VSO *>;
+
+raw_ostream &operator<<(raw_ostream &OS, const VSOList &VSOs);
+
 /// Used to notify a VSO that the given set of symbols failed to materialize.
 class FailedToMaterialize : public ErrorInfo<FailedToMaterialize> {
 public:
@@ -471,74 +476,6 @@ private:
   size_t NotYetReadyCount;
 };
 
-/// SymbolResolver is a composable interface for looking up symbol flags
-///        and addresses using the AsynchronousSymbolQuery type. It will
-///        eventually replace the LegacyJITSymbolResolver interface as the
-///        stardard ORC symbol resolver type.
-///
-/// FIXME: SymbolResolvers should go away and be replaced with VSOs with
-///        defenition generators.
-class SymbolResolver {
-public:
-  virtual ~SymbolResolver() = default;
-
-  /// Returns the flags for each symbol in Symbols that can be found,
-  ///        along with the set of symbol that could not be found.
-  virtual SymbolNameSet lookupFlags(SymbolFlagsMap &Flags,
-                                    const SymbolNameSet &Symbols) = 0;
-
-  /// For each symbol in Symbols that can be found, assigns that symbols
-  ///        value in Query. Returns the set of symbols that could not be found.
-  virtual SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
-                               SymbolNameSet Symbols) = 0;
-
-private:
-  virtual void anchor();
-};
-
-/// Implements SymbolResolver with a pair of supplied function objects
-///        for convenience. See createSymbolResolver.
-template <typename LookupFlagsFn, typename LookupFn>
-class LambdaSymbolResolver final : public SymbolResolver {
-public:
-  template <typename LookupFlagsFnRef, typename LookupFnRef>
-  LambdaSymbolResolver(LookupFlagsFnRef &&LookupFlags, LookupFnRef &&Lookup)
-      : LookupFlags(std::forward<LookupFlagsFnRef>(LookupFlags)),
-        Lookup(std::forward<LookupFnRef>(Lookup)) {}
-
-  SymbolNameSet lookupFlags(SymbolFlagsMap &Flags,
-                            const SymbolNameSet &Symbols) final {
-    return LookupFlags(Flags, Symbols);
-  }
-
-  SymbolNameSet lookup(std::shared_ptr<AsynchronousSymbolQuery> Query,
-                       SymbolNameSet Symbols) final {
-    return Lookup(std::move(Query), std::move(Symbols));
-  }
-
-private:
-  LookupFlagsFn LookupFlags;
-  LookupFn Lookup;
-};
-
-/// Creates a SymbolResolver implementation from the pair of supplied
-///        function objects.
-template <typename LookupFlagsFn, typename LookupFn>
-std::unique_ptr<LambdaSymbolResolver<
-    typename std::remove_cv<
-        typename std::remove_reference<LookupFlagsFn>::type>::type,
-    typename std::remove_cv<
-        typename std::remove_reference<LookupFn>::type>::type>>
-createSymbolResolver(LookupFlagsFn &&LookupFlags, LookupFn &&Lookup) {
-  using LambdaSymbolResolverImpl = LambdaSymbolResolver<
-      typename std::remove_cv<
-          typename std::remove_reference<LookupFlagsFn>::type>::type,
-      typename std::remove_cv<
-          typename std::remove_reference<LookupFn>::type>::type>;
-  return llvm::make_unique<LambdaSymbolResolverImpl>(
-      std::forward<LookupFlagsFn>(LookupFlags), std::forward<LookupFn>(Lookup));
-}
-
 /// A symbol table that supports asynchoronous symbol queries.
 ///
 /// Represents a virtual shared object. Instances can not be copied or moved, so
@@ -576,6 +513,42 @@ public:
   void setFallbackDefinitionGenerator(
       FallbackDefinitionGeneratorFunction FallbackDefinitionGenerator) {
     this->FallbackDefinitionGenerator = std::move(FallbackDefinitionGenerator);
+  }
+
+  /// Set the search order to be used when fixing up definitions in VSO.
+  /// This will replace the previous search order, and apply to any symbol
+  /// resolutions made for definitions in this VSO after the call to
+  /// setSearchOrder (even if the definition itself was added before the
+  /// call).
+  ///
+  /// If SearchThisVSOFirst is set, which by default it is, then this VSO will
+  /// add itself to the beginning of the SearchOrder (Clients should *not*
+  /// put this VSO in the list in this case, to avoid redundant lookups).
+  ///
+  /// If SearchThisVSOFirst is false then the search order will be used as
+  /// given. The main motivation for this feature is to support deliberate
+  /// shadowing of symbols in this VSO by a facade VSO. For example, the
+  /// facade may resolve function names to stubs, and the stubs may compile
+  /// lazily by looking up symbols in this dylib. Adding the facade dylib
+  /// as the first in the search order (instead of this dylib) ensures that
+  /// definitions within this dylib resolve to the lazy-compiling stubs,
+  /// rather than immediately materializing the definitions in this dylib.
+  void setSearchOrder(VSOList NewSearchOrder, bool SearchThisVSOFirst = true);
+
+  /// Add the given VSO to the search order for definitions in this VSO.
+  void addToSearchOrder(VSO &V);
+
+  /// Replace OldV with NewV in the search order if OldV is present. Otherwise
+  /// this operation is a no-op.
+  void replaceInSearchOrder(VSO &OldV, VSO &NewV);
+
+  /// Remove the given VSO from the search order for this VSO if it is
+  /// present. Otherwise this operation is a no-op.
+  void removeFromSearchOrder(VSO &V);
+
+  /// Do something with the search order (run under the session lock).
+  template <typename Func> void withSearchOrderDo(Func F) {
+    ES.runSessionLocked([&]() { F(SearchOrder); });
   }
 
   /// Define all symbols provided by the materialization unit to be part
@@ -649,8 +622,7 @@ private:
     LLVM_MARK_AS_BITMASK_ENUM(NotifyFullyReady)
   };
 
-  VSO(ExecutionSessionBase &ES, std::string Name)
-      : ES(ES), VSOName(std::move(Name)) {}
+  VSO(ExecutionSessionBase &ES, std::string Name);
 
   Error defineImpl(MaterializationUnit &MU);
 
@@ -692,6 +664,7 @@ private:
   UnmaterializedInfosMap UnmaterializedInfos;
   MaterializingInfosMap MaterializingInfos;
   FallbackDefinitionGeneratorFunction FallbackDefinitionGenerator;
+  VSOList SearchOrder;
 
   // FIXME: Remove this (and runOutstandingMUs) once the linking layer works
   //        with callbacks from asynchronous queries.
@@ -728,8 +701,6 @@ Expected<SymbolMap> blockingLookup(ExecutionSessionBase &ES,
                                    AsynchronousLookupFunction AsyncLookup,
                                    SymbolNameSet Names, bool WaiUntilReady,
                                    MaterializationResponsibility *MR = nullptr);
-
-using VSOList = std::vector<VSO *>;
 
 /// Look up the given names in the given VSOs.
 /// VSOs will be searched in order and no VSO pointer may be null.

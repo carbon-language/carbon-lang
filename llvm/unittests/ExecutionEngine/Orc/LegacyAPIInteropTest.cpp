@@ -14,7 +14,68 @@
 using namespace llvm;
 using namespace llvm::orc;
 
+class LegacyAPIsStandardTest : public CoreAPIsBasedStandardTest {};
+
 namespace {
+
+TEST_F(LegacyAPIsStandardTest, TestLambdaSymbolResolver) {
+  cantFail(V.define(absoluteSymbols({{Foo, FooSym}, {Bar, BarSym}})));
+
+  auto Resolver = createSymbolResolver(
+      [&](SymbolFlagsMap &SymbolFlags, const SymbolNameSet &Symbols) {
+        return V.lookupFlags(SymbolFlags, Symbols);
+      },
+      [&](std::shared_ptr<AsynchronousSymbolQuery> Q, SymbolNameSet Symbols) {
+        return V.lookup(std::move(Q), Symbols);
+      });
+
+  SymbolNameSet Symbols({Foo, Bar, Baz});
+
+  SymbolFlagsMap SymbolFlags;
+  SymbolNameSet SymbolsNotFound = Resolver->lookupFlags(SymbolFlags, Symbols);
+
+  EXPECT_EQ(SymbolFlags.size(), 2U)
+      << "lookupFlags returned the wrong number of results";
+  EXPECT_EQ(SymbolFlags.count(Foo), 1U) << "Missing lookupFlags result for foo";
+  EXPECT_EQ(SymbolFlags.count(Bar), 1U) << "Missing lookupFlags result for bar";
+  EXPECT_EQ(SymbolFlags[Foo], FooSym.getFlags())
+      << "Incorrect lookupFlags result for Foo";
+  EXPECT_EQ(SymbolFlags[Bar], BarSym.getFlags())
+      << "Incorrect lookupFlags result for Bar";
+  EXPECT_EQ(SymbolsNotFound.size(), 1U)
+      << "Expected one symbol not found in lookupFlags";
+  EXPECT_EQ(SymbolsNotFound.count(Baz), 1U)
+      << "Expected baz not to be found in lookupFlags";
+
+  bool OnResolvedRun = false;
+
+  auto OnResolved =
+      [&](Expected<AsynchronousSymbolQuery::ResolutionResult> Result) {
+        OnResolvedRun = true;
+        EXPECT_TRUE(!!Result) << "Unexpected error";
+        EXPECT_EQ(Result->Symbols.size(), 2U)
+            << "Unexpected number of resolved symbols";
+        EXPECT_EQ(Result->Symbols.count(Foo), 1U)
+            << "Missing lookup result for foo";
+        EXPECT_EQ(Result->Symbols.count(Bar), 1U)
+            << "Missing lookup result for bar";
+        EXPECT_EQ(Result->Symbols[Foo].getAddress(), FooSym.getAddress())
+            << "Incorrect address for foo";
+        EXPECT_EQ(Result->Symbols[Bar].getAddress(), BarSym.getAddress())
+            << "Incorrect address for bar";
+      };
+  auto OnReady = [&](Error Err) {
+    EXPECT_FALSE(!!Err) << "Finalization should never fail in this test";
+  };
+
+  auto Q = std::make_shared<AsynchronousSymbolQuery>(SymbolNameSet({Foo, Bar}),
+                                                     OnResolved, OnReady);
+  auto Unresolved = Resolver->lookup(std::move(Q), Symbols);
+
+  EXPECT_EQ(Unresolved.size(), 1U) << "Expected one unresolved symbol";
+  EXPECT_EQ(Unresolved.count(Baz), 1U) << "Expected baz to not be resolved";
+  EXPECT_TRUE(OnResolvedRun) << "OnResolved was never run";
+}
 
 TEST(LegacyAPIInteropTest, QueryAgainstVSO) {
 
