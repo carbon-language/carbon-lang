@@ -432,7 +432,6 @@ define <16 x i16> @hadd_v16i16b(<16 x i16> %a) {
 ; AVX2-LABEL: hadd_v16i16b:
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vphaddw %ymm0, %ymm0, %ymm0
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[0,1,0,1,4,5,4,5]
 ; AVX2-NEXT:    retq
   %a0 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 undef, i32 undef, i32 undef, i32 undef, i32 8, i32 10, i32 12, i32 14, i32 undef, i32 undef, i32 undef, i32 undef>
   %a1 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 9, i32 11, i32 13, i32 15, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -513,7 +512,6 @@ define <16 x i16> @hsub_v16i16b(<16 x i16> %a) {
 ; AVX2-LABEL: hsub_v16i16b:
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vphsubw %ymm0, %ymm0, %ymm0
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[0,1,0,1,4,5,4,5]
 ; AVX2-NEXT:    retq
   %a0 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 undef, i32 undef, i32 undef, i32 undef, i32 8, i32 10, i32 12, i32 14, i32 undef, i32 undef, i32 undef, i32 undef>
   %a1 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 9, i32 11, i32 13, i32 15, i32 undef, i32 undef, i32 undef, i32 undef>

@@ -31164,7 +31164,9 @@ static SDValue foldShuffleOfHorizOp(SDNode *N) {
 
   if (HOp.getValueSizeInBits() == 256 &&
       (isTargetShuffleEquivalent(Mask, {0, 0, 2, 2}) ||
-       isTargetShuffleEquivalent(Mask, {0, 1, 0, 1, 4, 5, 4, 5})))
+       isTargetShuffleEquivalent(Mask, {0, 1, 0, 1, 4, 5, 4, 5}) ||
+       isTargetShuffleEquivalent(
+           Mask, {0, 1, 2, 3, 0, 1, 2, 3, 8, 9, 10, 11, 8, 9, 10, 11})))
     return HOp;
 
   return SDValue();
