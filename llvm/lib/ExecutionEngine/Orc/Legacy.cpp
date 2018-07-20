@@ -29,14 +29,8 @@ JITSymbolResolverAdapter::lookup(const LookupSet &Symbols) {
     return R.lookup(std::move(Q), std::move(Unresolved));
   };
 
-  auto RegisterDependencies = [&](const SymbolDependenceMap &Deps) {
-    if (MR)
-      MR->addDependencies(Deps);
-  };
-
-  auto InternedResult =
-      ES.legacyLookup(ES, std::move(LookupFn), std::move(InternedSymbols),
-                      false, RegisterDependencies);
+  auto InternedResult = blockingLookup(ES, std::move(LookupFn),
+                                       std::move(InternedSymbols), false, MR);
 
   if (!InternedResult)
     return InternedResult.takeError();

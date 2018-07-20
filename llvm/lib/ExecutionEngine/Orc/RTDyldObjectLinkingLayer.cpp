@@ -16,23 +16,30 @@ using namespace llvm::orc;
 
 class VSOSearchOrderResolver : public JITSymbolResolver {
 public:
-  VSOSearchOrderResolver(MaterializationResponsibility &MR) : MR(MR) {}
+  VSOSearchOrderResolver(ExecutionSession &ES,
+                         MaterializationResponsibility &MR)
+      : ES(ES), MR(MR) {}
 
   Expected<LookupResult> lookup(const LookupSet &Symbols) {
-    auto &ES = MR.getTargetVSO().getExecutionSession();
     SymbolNameSet InternedSymbols;
 
     for (auto &S : Symbols)
       InternedSymbols.insert(ES.getSymbolStringPool().intern(S));
 
-    auto RegisterDependencies = [&](const SymbolDependenceMap &Deps) {
-      MR.addDependencies(Deps);
+    auto AsyncLookup = [&](std::shared_ptr<AsynchronousSymbolQuery> Q,
+                           SymbolNameSet Names) {
+      SymbolNameSet Unresolved = std::move(Names);
+      MR.getTargetVSO().withSearchOrderDo([&](const VSOList &SearchOrder) {
+        for (auto *V : SearchOrder) {
+          assert(V && "VSOList entry can not be null");
+          Unresolved = V->lookup(Q, std::move(Unresolved));
+        }
+      });
+      return Unresolved;
     };
 
-    auto InternedResult =
-        MR.getTargetVSO().withSearchOrderDo([&](const VSOList &VSOs) {
-          return ES.lookup(VSOs, InternedSymbols, RegisterDependencies, false);
-        });
+    auto InternedResult = blockingLookup(
+        ES, std::move(AsyncLookup), std::move(InternedSymbols), false, &MR);
 
     if (!InternedResult)
       return InternedResult.takeError();
@@ -45,8 +52,6 @@ public:
   }
 
   Expected<LookupFlagsResult> lookupFlags(const LookupSet &Symbols) {
-    auto &ES = MR.getTargetVSO().getExecutionSession();
-
     SymbolNameSet InternedSymbols;
 
     for (auto &S : Symbols)
@@ -70,6 +75,7 @@ public:
   }
 
 private:
+  ExecutionSession &ES;
   MaterializationResponsibility &MR;
 };
 
@@ -100,7 +106,7 @@ void RTDyldObjectLinkingLayer2::emit(MaterializationResponsibility R,
 
   auto MemoryManager = GetMemoryManager(K);
 
-  VSOSearchOrderResolver Resolver(R);
+  VSOSearchOrderResolver Resolver(ES, R);
   auto RTDyld = llvm::make_unique<RuntimeDyld>(*MemoryManager, Resolver);
   RTDyld->setProcessAllSections(ProcessAllSections);
 

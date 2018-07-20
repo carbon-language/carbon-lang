@@ -146,11 +146,11 @@ lookupWithLegacyFn(ExecutionSession &ES, AsynchronousSymbolQuery &Query,
         Query.notifySymbolReady();
         NewSymbolsResolved = true;
       } else {
-        ES.legacyFailQuery(Query, Addr.takeError());
+        ES.failQuery(Query, Addr.takeError());
         return SymbolNameSet();
       }
     } else if (auto Err = Sym.takeError()) {
-      ES.legacyFailQuery(Query, std::move(Err));
+      ES.failQuery(Query, std::move(Err));
       return SymbolNameSet();
     } else
       SymbolsNotFound.insert(S);
