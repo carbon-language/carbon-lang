@@ -24,7 +24,7 @@ TEST_F(LegacyAPIsStandardTest, TestLambdaSymbolResolver) {
   auto Resolver = createSymbolResolver(
       [&](const SymbolNameSet &Symbols) { return V.lookupFlags(Symbols); },
       [&](std::shared_ptr<AsynchronousSymbolQuery> Q, SymbolNameSet Symbols) {
-        return V.lookup(std::move(Q), Symbols);
+        return V.legacyLookup(std::move(Q), Symbols);
       });
 
   SymbolNameSet Symbols({Foo, Bar, Baz});
@@ -42,21 +42,17 @@ TEST_F(LegacyAPIsStandardTest, TestLambdaSymbolResolver) {
 
   bool OnResolvedRun = false;
 
-  auto OnResolved =
-      [&](Expected<AsynchronousSymbolQuery::ResolutionResult> Result) {
-        OnResolvedRun = true;
-        EXPECT_TRUE(!!Result) << "Unexpected error";
-        EXPECT_EQ(Result->Symbols.size(), 2U)
-            << "Unexpected number of resolved symbols";
-        EXPECT_EQ(Result->Symbols.count(Foo), 1U)
-            << "Missing lookup result for foo";
-        EXPECT_EQ(Result->Symbols.count(Bar), 1U)
-            << "Missing lookup result for bar";
-        EXPECT_EQ(Result->Symbols[Foo].getAddress(), FooSym.getAddress())
-            << "Incorrect address for foo";
-        EXPECT_EQ(Result->Symbols[Bar].getAddress(), BarSym.getAddress())
-            << "Incorrect address for bar";
-      };
+  auto OnResolved = [&](Expected<SymbolMap> Result) {
+    OnResolvedRun = true;
+    EXPECT_TRUE(!!Result) << "Unexpected error";
+    EXPECT_EQ(Result->size(), 2U) << "Unexpected number of resolved symbols";
+    EXPECT_EQ(Result->count(Foo), 1U) << "Missing lookup result for foo";
+    EXPECT_EQ(Result->count(Bar), 1U) << "Missing lookup result for bar";
+    EXPECT_EQ((*Result)[Foo].getAddress(), FooSym.getAddress())
+        << "Incorrect address for foo";
+    EXPECT_EQ((*Result)[Bar].getAddress(), BarSym.getAddress())
+        << "Incorrect address for bar";
+  };
   auto OnReady = [&](Error Err) {
     EXPECT_FALSE(!!Err) << "Finalization should never fail in this test";
   };
@@ -85,7 +81,7 @@ TEST(LegacyAPIInteropTest, QueryAgainstVSO) {
 
   auto Lookup = [&](std::shared_ptr<AsynchronousSymbolQuery> Query,
                     SymbolNameSet Symbols) {
-    return V.lookup(std::move(Query), Symbols);
+    return V.legacyLookup(std::move(Query), Symbols);
   };
 
   auto UnderlyingResolver =
@@ -158,22 +154,18 @@ TEST(LegacyAPIInteropTset, LegacyLookupHelpersFn) {
 
   bool OnResolvedRun = false;
   bool OnReadyRun = false;
-  auto OnResolved =
-      [&](Expected<AsynchronousSymbolQuery::ResolutionResult> Result) {
-        OnResolvedRun = true;
-        EXPECT_TRUE(!!Result) << "lookuWithLegacy failed to resolve";
+  auto OnResolved = [&](Expected<SymbolMap> Result) {
+    OnResolvedRun = true;
+    EXPECT_TRUE(!!Result) << "lookuWithLegacy failed to resolve";
 
-        auto &Resolved = Result->Symbols;
-        EXPECT_EQ(Resolved.size(), 2U) << "Wrong number of symbols resolved";
-        EXPECT_EQ(Resolved.count(Foo), 1U) << "Result for foo missing";
-        EXPECT_EQ(Resolved.count(Bar), 1U) << "Result for bar missing";
-        EXPECT_EQ(Resolved[Foo].getAddress(), FooAddr)
-            << "Wrong address for foo";
-        EXPECT_EQ(Resolved[Foo].getFlags(), FooFlags) << "Wrong flags for foo";
-        EXPECT_EQ(Resolved[Bar].getAddress(), BarAddr)
-            << "Wrong address for bar";
-        EXPECT_EQ(Resolved[Bar].getFlags(), BarFlags) << "Wrong flags for bar";
-      };
+    EXPECT_EQ(Result->size(), 2U) << "Wrong number of symbols resolved";
+    EXPECT_EQ(Result->count(Foo), 1U) << "Result for foo missing";
+    EXPECT_EQ(Result->count(Bar), 1U) << "Result for bar missing";
+    EXPECT_EQ((*Result)[Foo].getAddress(), FooAddr) << "Wrong address for foo";
+    EXPECT_EQ((*Result)[Foo].getFlags(), FooFlags) << "Wrong flags for foo";
+    EXPECT_EQ((*Result)[Bar].getAddress(), BarAddr) << "Wrong address for bar";
+    EXPECT_EQ((*Result)[Bar].getFlags(), BarFlags) << "Wrong flags for bar";
+  };
   auto OnReady = [&](Error Err) {
     EXPECT_FALSE(!!Err) << "Finalization unexpectedly failed";
     OnReadyRun = true;
