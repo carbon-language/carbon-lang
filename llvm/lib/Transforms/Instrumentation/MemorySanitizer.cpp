@@ -918,9 +918,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       StoreInst *NewSI = IRB.CreateAlignedStore(Shadow, ShadowPtr, Alignment);
       LLVM_DEBUG(dbgs() << "  STORE: " << *NewSI << "\n");
 
-      if (ClCheckAccessAddress)
-        insertShadowCheck(Addr, NewSI);
-
       if (SI->isAtomic())
         SI->setOrdering(addReleaseOrdering(SI->getOrdering()));
 
@@ -1024,12 +1021,12 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                                InstrumentationList.size() + StoreList.size() >
                                    (unsigned)ClInstrumentationWithCallThreshold;
 
-    // Delayed instrumentation of StoreInst.
-    // This may add new checks to be inserted later.
-    materializeStores(InstrumentWithCalls);
-
     // Insert shadow value checks.
     materializeChecks(InstrumentWithCalls);
+
+    // Delayed instrumentation of StoreInst.
+    // This may not add new address checks.
+    materializeStores(InstrumentWithCalls);
 
     return true;
   }
@@ -1490,6 +1487,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// Optionally, checks that the store address is fully defined.
   void visitStoreInst(StoreInst &I) {
     StoreList.push_back(&I);
+    if (ClCheckAccessAddress)
+      insertShadowCheck(I.getPointerOperand(), &I);
   }
 
   void handleCASOrRMW(Instruction &I) {
