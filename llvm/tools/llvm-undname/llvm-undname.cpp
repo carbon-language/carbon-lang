@@ -39,7 +39,7 @@ static void demangle(const std::string &S) {
     errs() << "Error: Invalid mangled name\n";
   }
   std::free(ResultBuf);
-};
+}
 
 int main(int argc, char **argv) {
   InitLLVM X(argc, argv);
