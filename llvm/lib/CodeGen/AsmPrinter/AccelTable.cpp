@@ -582,12 +582,12 @@ void llvm::emitDWARF5AccelTable(
 }
 
 void AppleAccelTableOffsetData::emit(AsmPrinter *Asm) const {
-  Asm->emitInt32(Die->getDebugSectionOffset());
+  Asm->emitInt32(Die.getDebugSectionOffset());
 }
 
 void AppleAccelTableTypeData::emit(AsmPrinter *Asm) const {
-  Asm->emitInt32(Die->getDebugSectionOffset());
-  Asm->emitInt16(Die->getTag());
+  Asm->emitInt32(Die.getDebugSectionOffset());
+  Asm->emitInt16(Die.getTag());
   Asm->emitInt8(0);
 }
 
