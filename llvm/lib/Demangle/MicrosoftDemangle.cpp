@@ -228,7 +228,7 @@ struct Name {
 
 struct PointerType : public Type {
   Type *clone(ArenaAllocator &Arena) const override;
-  void outputPre(OutputStream &OS);
+  void outputPre(OutputStream &OS) override;
   void outputPost(OutputStream &OS) override;
 
   bool isMemberPointer() const { return false; }
@@ -240,8 +240,8 @@ struct PointerType : public Type {
 
 struct FunctionType : public Type {
   Type *clone(ArenaAllocator &Arena) const override;
-  void outputPre(OutputStream &OS);
-  void outputPost(OutputStream &OS);
+  void outputPre(OutputStream &OS) override;
+  void outputPost(OutputStream &OS) override;
 
   Type *ReturnType = nullptr;
   // If this is a reference, the type of reference.
