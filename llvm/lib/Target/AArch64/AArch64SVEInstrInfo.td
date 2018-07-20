@@ -145,6 +145,8 @@ let Predicates = [HasSVE] in {
   defm FNMAD_ZPmZZ : sve_fp_3op_p_zds_b<0b10, "fnmad">;
   defm FNMSB_ZPmZZ : sve_fp_3op_p_zds_b<0b11, "fnmsb">;
 
+  defm FTMAD_ZZI : sve_fp_ftmad<"ftmad">;
+
   defm FMLA_ZZZI : sve_fp_fma_by_indexed_elem<0b0, "fmla">;
   defm FMLS_ZZZI : sve_fp_fma_by_indexed_elem<0b1, "fmls">;
 

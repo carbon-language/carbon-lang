@@ -985,6 +985,31 @@ multiclass sve_fp_2op_p_zds<bits<4> opc, string asm> {
   def _D : sve_fp_2op_p_zds<0b11, opc, asm, ZPR64>;
 }
 
+class sve_fp_ftmad<bits<2> sz, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zdn), (ins zprty:$_Zdn, zprty:$Zm, imm0_7:$imm3),
+  asm, "\t$Zdn, $_Zdn, $Zm, $imm3",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zdn;
+  bits<5> Zm;
+  bits<3> imm3;
+  let Inst{31-24} = 0b01100101;
+  let Inst{23-22} = sz;
+  let Inst{21-19} = 0b010;
+  let Inst{18-16} = imm3;
+  let Inst{15-10} = 0b100000;
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Zdn;
+
+  let Constraints = "$Zdn = $_Zdn";
+}
+
+multiclass sve_fp_ftmad<string asm> {
+  def _H : sve_fp_ftmad<0b01, asm, ZPR16>;
+  def _S : sve_fp_ftmad<0b10, asm, ZPR32>;
+  def _D : sve_fp_ftmad<0b11, asm, ZPR64>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // SVE Floating Point Arithmetic - Unpredicated Group
