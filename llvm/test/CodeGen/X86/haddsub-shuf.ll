@@ -377,6 +377,70 @@ define <8 x i16> @hadd_v8i16(<8 x i16> %a) {
   ret <8 x i16> %shuf
 }
 
+define <16 x i16> @hadd_v16i16a(<16 x i16> %a) {
+; SSSE3-LABEL: hadd_v16i16a:
+; SSSE3:       # %bb.0:
+; SSSE3-NEXT:    movdqa %xmm0, %xmm2
+; SSSE3-NEXT:    phaddw %xmm1, %xmm2
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,1,0,1]
+; SSSE3-NEXT:    movdqa %xmm2, %xmm1
+; SSSE3-NEXT:    retq
+;
+; AVX1-LABEL: hadd_v16i16a:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVX1-NEXT:    vphaddw %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[0,1,0,1]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: hadd_v16i16a:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX2-NEXT:    vphaddw %xmm1, %xmm0, %xmm0
+; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,2,1]
+; AVX2-NEXT:    retq
+  %a0 = shufflevector <16 x i16> %a, <16 x i16> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  %a1 = shufflevector <16 x i16> %a, <16 x i16> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  %hop = add <8 x i16> %a0, %a1
+  %shuf = shufflevector <8 x i16> %hop, <8 x i16> undef, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 4, i32 5, i32 6, i32 7>
+  ret <16 x i16> %shuf
+}
+
+define <16 x i16> @hadd_v16i16b(<16 x i16> %a) {
+; SSSE3-LABEL: hadd_v16i16b:
+; SSSE3:       # %bb.0:
+; SSSE3-NEXT:    phaddw %xmm0, %xmm0
+; SSSE3-NEXT:    phaddw %xmm1, %xmm1
+; SSSE3-NEXT:    retq
+;
+; AVX1-LABEL: hadd_v16i16b:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vmovdqa {{.*#+}} xmm1 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm2
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; AVX1-NEXT:    vpshufb %xmm1, %xmm3, %xmm1
+; AVX1-NEXT:    vmovdqa {{.*#+}} xmm4 = [2,3,6,7,10,11,14,15,14,15,10,11,12,13,14,15]
+; AVX1-NEXT:    vpshufb %xmm4, %xmm0, %xmm0
+; AVX1-NEXT:    vpaddw %xmm0, %xmm2, %xmm0
+; AVX1-NEXT:    vpshufb %xmm4, %xmm3, %xmm2
+; AVX1-NEXT:    vpaddw %xmm2, %xmm1, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    vmovddup {{.*#+}} ymm0 = ymm0[0,0,2,2]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: hadd_v16i16b:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vphaddw %ymm0, %ymm0, %ymm0
+; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[0,1,0,1,4,5,4,5]
+; AVX2-NEXT:    retq
+  %a0 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 undef, i32 undef, i32 undef, i32 undef, i32 8, i32 10, i32 12, i32 14, i32 undef, i32 undef, i32 undef, i32 undef>
+  %a1 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 9, i32 11, i32 13, i32 15, i32 undef, i32 undef, i32 undef, i32 undef>
+  %hop = add <16 x i16> %a0, %a1
+  %shuf = shufflevector <16 x i16> %hop, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11, i32 8, i32 9, i32 10, i32 11>
+  ret <16 x i16> %shuf
+}
+
 define <8 x i16> @hsub_v8i16(<8 x i16> %a) {
 ; SSSE3-LABEL: hsub_v8i16:
 ; SSSE3:       # %bb.0:
@@ -394,3 +458,66 @@ define <8 x i16> @hsub_v8i16(<8 x i16> %a) {
   ret <8 x i16> %shuf
 }
 
+define <16 x i16> @hsub_v16i16a(<16 x i16> %a) {
+; SSSE3-LABEL: hsub_v16i16a:
+; SSSE3:       # %bb.0:
+; SSSE3-NEXT:    movdqa %xmm0, %xmm2
+; SSSE3-NEXT:    phsubw %xmm1, %xmm2
+; SSSE3-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[0,1,0,1]
+; SSSE3-NEXT:    movdqa %xmm2, %xmm1
+; SSSE3-NEXT:    retq
+;
+; AVX1-LABEL: hsub_v16i16a:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVX1-NEXT:    vphsubw %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[0,1,0,1]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: hsub_v16i16a:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX2-NEXT:    vphsubw %xmm1, %xmm0, %xmm0
+; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,0,2,1]
+; AVX2-NEXT:    retq
+  %a0 = shufflevector <16 x i16> %a, <16 x i16> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  %a1 = shufflevector <16 x i16> %a, <16 x i16> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  %hop = sub <8 x i16> %a0, %a1
+  %shuf = shufflevector <8 x i16> %hop, <8 x i16> undef, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef, i32 4, i32 5, i32 6, i32 7>
+  ret <16 x i16> %shuf
+}
+
+define <16 x i16> @hsub_v16i16b(<16 x i16> %a) {
+; SSSE3-LABEL: hsub_v16i16b:
+; SSSE3:       # %bb.0:
+; SSSE3-NEXT:    phsubw %xmm0, %xmm0
+; SSSE3-NEXT:    phsubw %xmm1, %xmm1
+; SSSE3-NEXT:    retq
+;
+; AVX1-LABEL: hsub_v16i16b:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vmovdqa {{.*#+}} xmm1 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
+; AVX1-NEXT:    vpshufb %xmm1, %xmm0, %xmm2
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm3
+; AVX1-NEXT:    vpshufb %xmm1, %xmm3, %xmm1
+; AVX1-NEXT:    vmovdqa {{.*#+}} xmm4 = [2,3,6,7,10,11,14,15,14,15,10,11,12,13,14,15]
+; AVX1-NEXT:    vpshufb %xmm4, %xmm0, %xmm0
+; AVX1-NEXT:    vpsubw %xmm0, %xmm2, %xmm0
+; AVX1-NEXT:    vpshufb %xmm4, %xmm3, %xmm2
+; AVX1-NEXT:    vpsubw %xmm2, %xmm1, %xmm1
+; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    vmovddup {{.*#+}} ymm0 = ymm0[0,0,2,2]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: hsub_v16i16b:
+; AVX2:       # %bb.0:
+; AVX2-NEXT:    vphsubw %ymm0, %ymm0, %ymm0
+; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[0,1,0,1,4,5,4,5]
+; AVX2-NEXT:    retq
+  %a0 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 0, i32 2, i32 4, i32 6, i32 undef, i32 undef, i32 undef, i32 undef, i32 8, i32 10, i32 12, i32 14, i32 undef, i32 undef, i32 undef, i32 undef>
+  %a1 = shufflevector <16 x i16> %a, <16 x i16> undef, <16 x i32> <i32 1, i32 3, i32 5, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 9, i32 11, i32 13, i32 15, i32 undef, i32 undef, i32 undef, i32 undef>
+  %hop = sub <16 x i16> %a0, %a1
+  %shuf = shufflevector <16 x i16> %hop, <16 x i16> undef, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 0, i32 1, i32 2, i32 3, i32 8, i32 9, i32 10, i32 11, i32 8, i32 9, i32 10, i32 11>
+  ret <16 x i16> %shuf
+}
