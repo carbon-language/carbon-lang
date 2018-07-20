@@ -167,7 +167,7 @@ enum FuncClass : uint8_t {
   Global = 1 << 3,
   Static = 1 << 4,
   Virtual = 1 << 5,
-  FFar = 1 << 6,
+  Far = 1 << 6,
 };
 
 namespace {
@@ -494,6 +494,7 @@ void PointerType::outputPre(OutputStream &OS) {
   else
     OS << "&";
 
+  // FIXME: We should output this, but it requires updating lots of tests.
   // if (Ty.Quals & Q_Pointer64)
   //  OS << " __ptr64";
   if (Quals & Q_Restrict)
@@ -625,18 +626,21 @@ private:
   ReferenceKind demangleReferenceKind();
 
   Qualifiers demangleFunctionQualifiers();
-  Qualifiers demangleVariablQ_ifiers();
-  Qualifiers demangleReturnTypQ_ifiers();
+  Qualifiers demangleVariablQualifiers();
+  Qualifiers demangleReturnTypQualifiers();
 
   Qualifiers demangleQualifiers(
       QualifierMangleLocation Location = QualifierMangleLocation::Detect);
+
+  // The result is written to this stream.
+  OutputStream OS;
 
   // Mangled symbol. demangle* functions shorten this string
   // as they parse it.
   StringView MangledName;
 
   // A parsed mangled symbol.
-  Type *SymbolType;
+  Type *SymbolType = nullptr;
 
   // The main symbol name. (e.g. "ns::foo" in "int ns::foo()".)
   Name *SymbolName = nullptr;
@@ -648,9 +652,6 @@ private:
   // special name @[0-9]. This is a storage for the first 10 BackReferences.
   StringView BackReferences[10];
   size_t BackRefCount = 0;
-
-  // The result is written to this stream.
-  OutputStream OS;
 };
 } // namespace
 
@@ -969,7 +970,7 @@ int Demangler::demangleFunctionClass() {
   case 'A':
     return Private;
   case 'B':
-    return Private | FFar;
+    return Private | Far;
   case 'C':
     return Private | Static;
   case 'D':
@@ -981,31 +982,31 @@ int Demangler::demangleFunctionClass() {
   case 'I':
     return Protected;
   case 'J':
-    return Protected | FFar;
+    return Protected | Far;
   case 'K':
     return Protected | Static;
   case 'L':
-    return Protected | Static | FFar;
+    return Protected | Static | Far;
   case 'M':
     return Protected | Virtual;
   case 'N':
-    return Protected | Virtual | FFar;
+    return Protected | Virtual | Far;
   case 'Q':
     return Public;
   case 'R':
-    return Public | FFar;
+    return Public | Far;
   case 'S':
     return Public | Static;
   case 'T':
-    return Public | Static | FFar;
+    return Public | Static | Far;
   case 'U':
     return Public | Virtual;
   case 'V':
-    return Public | Virtual | FFar;
+    return Public | Virtual | Far;
   case 'Y':
     return Global;
   case 'Z':
-    return Global | FFar;
+    return Global | Far;
   }
 
   Error = true;
@@ -1082,7 +1083,7 @@ StorageClass Demangler::demangleVariableStorageClass() {
   return StorageClass::None;
 }
 
-Qualifiers Demangler::demangleVariablQ_ifiers() {
+Qualifiers Demangler::demangleVariablQualifiers() {
   SwapAndRestore<StringView> RestoreOnError(MangledName, MangledName);
   RestoreOnError.shouldRestore(false);
 
@@ -1110,7 +1111,7 @@ Qualifiers Demangler::demangleVariablQ_ifiers() {
   return Q_None;
 }
 
-Qualifiers Demangler::demangleReturnTypQ_ifiers() {
+Qualifiers Demangler::demangleReturnTypQualifiers() {
   if (!MangledName.consumeFront("?"))
     return Q_None;
 
@@ -1307,6 +1308,10 @@ Type *Demangler::demangleBasicType() {
     Ty->Prim = PrimTy::Ldouble;
     break;
   case '_': {
+    if (MangledName.empty()) {
+      Error = true;
+      return nullptr;
+    }
     switch (MangledName.popFront()) {
     case 'N':
       Ty->Prim = PrimTy::Bool;
@@ -1320,6 +1325,8 @@ Type *Demangler::demangleBasicType() {
     case 'W':
       Ty->Prim = PrimTy::Wchar;
       break;
+    default:
+      assert(false);
     }
     break;
   }

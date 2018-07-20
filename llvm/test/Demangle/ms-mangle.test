@@ -3,9 +3,6 @@
 
 ; CHECK-NOT: Invalid mangled name
 
-?k@@3PTfoo@@DT1
-
-
 ?a@@3HA
 ; CHECK: int a
 
