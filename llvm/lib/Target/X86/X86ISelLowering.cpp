@@ -30830,7 +30830,7 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
 
   // Nuke no-op shuffles that show up after combining.
   if (isNoopShuffleMask(Mask))
-    return DCI.CombineTo(N.getNode(), N.getOperand(0), /*AddTo*/ true);
+    return N.getOperand(0);
 
   // Look for simplifications involving one or two shuffle instructions.
   SDValue V = N.getOperand(0);
@@ -31286,9 +31286,8 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
     // a particular chain.
     if (SDValue Res = combineX86ShufflesRecursively(
             {Op}, 0, Op, {0}, {}, /*Depth*/ 1,
-            /*HasVarMask*/ false, DAG, Subtarget)) {
-      return DCI.CombineTo(N, Res);
-    }
+            /*HasVarMask*/ false, DAG, Subtarget))
+      return Res;
   }
 
   return SDValue();
@@ -34259,9 +34258,8 @@ static SDValue combineVectorPack(SDNode *N, SelectionDAG &DAG,
   SDValue Op(N, 0);
   if (SDValue Res =
           combineX86ShufflesRecursively({Op}, 0, Op, {0}, {}, /*Depth*/ 1,
-                                        /*HasVarMask*/ false, DAG, Subtarget)) {
-    return DCI.CombineTo(N, Res);
-  }
+                                        /*HasVarMask*/ false, DAG, Subtarget))
+    return Res;
 
   return SDValue();
 }
@@ -34320,9 +34318,8 @@ static SDValue combineVectorShiftImm(SDNode *N, SelectionDAG &DAG,
     SDValue Op(N, 0);
     if (SDValue Res = combineX86ShufflesRecursively(
             {Op}, 0, Op, {0}, {}, /*Depth*/ 1,
-            /*HasVarMask*/ false, DAG, Subtarget)) {
-      return DCI.CombineTo(N, Res);
-    }
+            /*HasVarMask*/ false, DAG, Subtarget))
+      return Res;
   }
 
   // Constant Folding.
@@ -34360,9 +34357,8 @@ static SDValue combineVectorInsert(SDNode *N, SelectionDAG &DAG,
   SDValue Op(N, 0);
   if (SDValue Res =
           combineX86ShufflesRecursively({Op}, 0, Op, {0}, {}, /*Depth*/ 1,
-                                        /*HasVarMask*/ false, DAG, Subtarget)) {
-    return DCI.CombineTo(N, Res);
-  }
+                                        /*HasVarMask*/ false, DAG, Subtarget))
+    return Res;
 
   return SDValue();
 }
@@ -34816,9 +34812,8 @@ static SDValue combineAnd(SDNode *N, SelectionDAG &DAG,
     SDValue Op(N, 0);
     if (SDValue Res = combineX86ShufflesRecursively(
             {Op}, 0, Op, {0}, {}, /*Depth*/ 1,
-            /*HasVarMask*/ false, DAG, Subtarget)) {
-      return DCI.CombineTo(N, Res);
-    }
+            /*HasVarMask*/ false, DAG, Subtarget))
+      return Res;
   }
 
   // Attempt to combine a scalar bitmask AND with an extracted shuffle.
@@ -37226,9 +37221,8 @@ static SDValue combineAndnp(SDNode *N, SelectionDAG &DAG,
     SDValue Op(N, 0);
     if (SDValue Res = combineX86ShufflesRecursively(
             {Op}, 0, Op, {0}, {}, /*Depth*/ 1,
-            /*HasVarMask*/ false, DAG, Subtarget)) {
-      return DCI.CombineTo(N, Res);
-    }
+            /*HasVarMask*/ false, DAG, Subtarget))
+      return Res;
   }
 
   return SDValue();
