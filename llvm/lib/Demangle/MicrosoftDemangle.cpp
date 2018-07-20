@@ -46,21 +46,28 @@ public:
     }
   }
 
-  void *alloc(size_t Size) {
+  template <typename T, typename... Args> T *alloc(Args &&... ConstructorArgs) {
+
+    size_t Size = sizeof(T);
     assert(Size < Unit);
     assert(Head && Head->Buf);
 
-    uint8_t *P = Head->Buf + Head->Used;
-    Head->Used += Size;
+    size_t P = (size_t)Head->Buf + Head->Used;
+    uintptr_t AlignedP =
+        (((size_t)P + alignof(T) - 1) & ~(size_t)(alignof(T) - 1));
+    uint8_t *PP = (uint8_t *)AlignedP;
+    size_t Adjustment = AlignedP - P;
+
+    Head->Used += Size + Adjustment;
     if (Head->Used < Unit)
-      return P;
+      return new (PP) T(std::forward<Args>(ConstructorArgs)...);
 
     AllocatorNode *NewHead = new AllocatorNode;
     NewHead->Buf = new uint8_t[ArenaAllocator::Unit];
     NewHead->Next = Head;
     Head = NewHead;
     NewHead->Used = Size;
-    return NewHead->Buf;
+    return new (NewHead->Buf) T(std::forward<Args>(ConstructorArgs)...);
   }
 
 private:
@@ -83,8 +90,6 @@ static void outputSpaceIfNecessary(OutputStream &OS) {
   if (isalnum(C) || C == '>')
     OS << " ";
 }
-
-void *operator new(size_t Size, ArenaAllocator &A) { return A.alloc(Size); }
 
 // Storage classes
 enum Qualifiers : uint8_t {
@@ -374,7 +379,7 @@ static void outputName(OutputStream &OS, const Name *TheName) {
 namespace {
 
 Type *Type::clone(ArenaAllocator &Arena) const {
-  return new (Arena) Type(*this);
+  return Arena.alloc<Type>(*this);
 }
 
 // Write the "first half" of a given type.
@@ -471,7 +476,7 @@ void Type::outputPre(OutputStream &OS) {
 void Type::outputPost(OutputStream &OS) {}
 
 Type *PointerType::clone(ArenaAllocator &Arena) const {
-  return new (Arena) PointerType(*this);
+  return Arena.alloc<PointerType>(*this);
 }
 
 void PointerType::outputPre(OutputStream &OS) {
@@ -509,7 +514,7 @@ void PointerType::outputPost(OutputStream &OS) {
 }
 
 Type *FunctionType::clone(ArenaAllocator &Arena) const {
-  return new (Arena) FunctionType(*this);
+  return Arena.alloc<FunctionType>(*this);
 }
 
 void FunctionType::outputPre(OutputStream &OS) {
@@ -536,7 +541,7 @@ void FunctionType::outputPost(OutputStream &OS) {
 }
 
 Type *UdtType::clone(ArenaAllocator &Arena) const {
-  return new (Arena) UdtType(*this);
+  return Arena.alloc<UdtType>(*this);
 }
 
 void UdtType::outputPre(OutputStream &OS) {
@@ -561,7 +566,7 @@ void UdtType::outputPre(OutputStream &OS) {
 }
 
 Type *ArrayType::clone(ArenaAllocator &Arena) const {
-  return new (Arena) ArrayType(*this);
+  return Arena.alloc<ArrayType>(*this);
 }
 
 void ArrayType::outputPre(OutputStream &OS) {
@@ -659,9 +664,9 @@ private:
 void Demangler::parse() {
   // MSVC-style mangled symbols must start with '?'.
   if (!MangledName.consumeFront("?")) {
-    SymbolName = new (Arena) Name;
+    SymbolName = Arena.alloc<Name>();
     SymbolName->Str = MangledName;
-    SymbolType = new (Arena) Type;
+    SymbolType = Arena.alloc<Type>();
     SymbolType->Prim = PrimTy::Unknown;
   }
 
@@ -832,7 +837,7 @@ Name *Demangler::demangleName() {
   Name *Head = nullptr;
 
   while (!MangledName.consumeFront("@")) {
-    Name *Elem = new (Arena) Name;
+    Name *Elem = Arena.alloc<Name>();
 
     assert(!Error);
     demangleNamePiece(*Elem, Head == nullptr);
@@ -1239,7 +1244,7 @@ ReferenceKind Demangler::demangleReferenceKind() {
 }
 
 Type *Demangler::demangleFunctionEncoding() {
-  FunctionType *FTy = new (Arena) FunctionType;
+  FunctionType *FTy = Arena.alloc<FunctionType>();
 
   FTy->Prim = PrimTy::Function;
   FTy->FunctionClass = (FuncClass)demangleFunctionClass();
@@ -1265,7 +1270,7 @@ Type *Demangler::demangleFunctionEncoding() {
 
 // Reads a primitive type.
 Type *Demangler::demangleBasicType() {
-  Type *Ty = new (Arena) Type;
+  Type *Ty = Arena.alloc<Type>();
 
   switch (MangledName.popFront()) {
   case 'X':
@@ -1335,7 +1340,7 @@ Type *Demangler::demangleBasicType() {
 }
 
 UdtType *Demangler::demangleClassType() {
-  UdtType *UTy = new (Arena) UdtType;
+  UdtType *UTy = Arena.alloc<UdtType>();
 
   switch (MangledName.popFront()) {
   case 'T':
@@ -1365,7 +1370,7 @@ UdtType *Demangler::demangleClassType() {
 // <pointer-type> ::= E? <pointer-cvr-qualifiers> <ext-qualifiers> <type>
 //                       # the E is required for 64-bit non-static pointers
 PointerType *Demangler::demanglePointerType() {
-  PointerType *Pointer = new (Arena) PointerType;
+  PointerType *Pointer = Arena.alloc<PointerType>();
 
   Pointer->Quals = Q_None;
   switch (MangledName.popFront()) {
@@ -1392,7 +1397,7 @@ PointerType *Demangler::demanglePointerType() {
   }
 
   if (MangledName.consumeFront("6")) {
-    FunctionType *FTy = new (Arena) FunctionType;
+    FunctionType *FTy = Arena.alloc<FunctionType>();
     FTy->Prim = PrimTy::Function;
     FTy->CallConvention = demangleCallingConvention();
 
@@ -1435,12 +1440,12 @@ ArrayType *Demangler::demangleArrayType() {
     return nullptr;
   }
 
-  ArrayType *ATy = new (Arena) ArrayType;
+  ArrayType *ATy = Arena.alloc<ArrayType>();
   ArrayType *Dim = ATy;
   for (int I = 0; I < Dimension; ++I) {
     Dim->Prim = PrimTy::Array;
     Dim->ArrayDimension = demangleNumber();
-    Dim->NextDimension = new (Arena) ArrayType;
+    Dim->NextDimension = Arena.alloc<ArrayType>();
     Dim = Dim->NextDimension;
   }
 
@@ -1476,7 +1481,7 @@ ParamList Demangler::demangleParameterList() {
       }
       MangledName = MangledName.dropFront();
 
-      *Current = new (Arena) ParamList;
+      *Current = Arena.alloc<ParamList>();
       (*Current)->Current = BackRef[N]->clone(Arena);
       Current = &(*Current)->Next;
       continue;
@@ -1484,7 +1489,7 @@ ParamList Demangler::demangleParameterList() {
 
     size_t ArrayDimension = MangledName.size();
 
-    *Current = new (Arena) ParamList;
+    *Current = Arena.alloc<ParamList>();
     (*Current)->Current = demangleType(QualifierMangleMode::Drop);
 
     // Single-letter types are ignored for backreferences because
