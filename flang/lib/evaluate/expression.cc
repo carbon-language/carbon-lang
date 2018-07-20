@@ -56,35 +56,36 @@ std::ostream &GenericExpr::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
-template<typename A, typename CONST>
-std::ostream &Unary<A, CONST>::Dump(std::ostream &o, const char *opr) const {
+template<typename CRTP, typename RESULT, typename A, typename ASCALAR>
+std::ostream &Unary<CRTP, RESULT, A, ASCALAR>::Dump(
+    std::ostream &o, const char *opr) const {
   return operand().Dump(o << opr) << ')';
 }
 
-template<typename A, typename B, typename CONST>
-std::ostream &Binary<A, B, CONST>::Dump(
+template<typename CRTP, typename RESULT, typename A, typename B,
+    typename ASCALAR, typename BSCALAR>
+std::ostream &Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Dump(
     std::ostream &o, const char *opr, const char *before) const {
   return right().Dump(left().Dump(o << before) << opr) << ')';
 }
 
 template<int KIND>
 std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
-  std::visit(
-      common::visitors{[&](const Scalar &n) { o << n.SignedDecimal(); },
-          [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
-          [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-          [&](const Parentheses &p) { p.Dump(o, "("); },
-          [&](const Negate &n) { n.Dump(o, "(-"); },
-          [&](const Add &a) { a.Dump(o, "+"); },
-          [&](const Subtract &s) { s.Dump(o, "-"); },
-          [&](const Multiply &m) { m.Dump(o, "*"); },
-          [&](const Divide &d) { d.Dump(o, "/"); },
-          [&](const Power &p) { p.Dump(o, "**"); },
-          [&](const Max &m) { m.Dump(o, ",", "MAX("); },
-          [&](const Min &m) { m.Dump(o, ",", "MIN("); },
-          [&](const auto &convert) {
-            DumpExprWithType(o, convert.operand().u);
-          }},
+  std::visit(common::visitors{[&](const Scalar &n) { o << n.SignedDecimal(); },
+                 [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
+                 [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
+                 [&](const Parentheses &p) { p.Dump(o, "("); },
+                 [&](const Negate &n) { n.Dump(o, "(-"); },
+                 [&](const Add &a) { a.Dump(o, "+"); },
+                 [&](const Subtract &s) { s.Dump(o, "-"); },
+                 [&](const Multiply &m) { m.Dump(o, "*"); },
+                 [&](const Divide &d) { d.Dump(o, "/"); },
+                 [&](const Power &p) { p.Dump(o, "**"); },
+                 [&](const Max &m) { m.Dump(o, ",", "MAX("); },
+                 [&](const Min &m) { m.Dump(o, ",", "MIN("); },
+                 [&](const auto &convert) {
+                   DumpExprWithType(o, convert.operand().u);
+                 }},
       u_);
   return o;
 }
@@ -192,8 +193,9 @@ template<int KIND> SubscriptIntegerExpr CharacterExpr<KIND>::LEN() const {
 }
 
 // Rank
-template<typename A, typename B, typename SCALAR>
-int Binary<A, B, SCALAR>::Rank() const {
+template<typename CRTP, typename RESULT, typename A, typename B,
+    typename ASCALAR, typename BSCALAR>
+int Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Rank() const {
   int lrank{left_.Rank()};
   if (lrank > 0) {
     return lrank;
@@ -202,178 +204,153 @@ int Binary<A, B, SCALAR>::Rank() const {
 }
 
 // Folding
-template<typename A, typename SCALAR>
-std::optional<SCALAR> Unary<A, SCALAR>::Fold(FoldingContext &context) {
-  operand_->Fold(context);
+template<typename CRTP, typename RESULT, typename A, typename ASCALAR>
+auto Unary<CRTP, RESULT, A, ASCALAR>::Fold(FoldingContext &context)
+    -> std::optional<Scalar> {
+  if (std::optional<OperandScalar> c{operand_->Fold(context)}) {
+    return static_cast<CRTP *>(this)->FoldScalar(context, *c);
+  }
   return {};
 }
 
-template<typename A, typename B, typename SCALAR>
-std::optional<SCALAR> Binary<A, B, SCALAR>::Fold(FoldingContext &context) {
-  left_->Fold(context);
-  right_->Fold(context);
+template<typename CRTP, typename RESULT, typename A, typename B,
+    typename ASCALAR, typename BSCALAR>
+auto Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Fold(FoldingContext &context)
+    -> std::optional<Scalar> {
+  std::optional<LeftScalar> lc{left_->Fold(context)};
+  std::optional<RightScalar> rc{right_->Fold(context)};
+  if (lc.has_value() && rc.has_value()) {
+    return static_cast<CRTP *>(this)->FoldScalar(context, *lc, *rc);
+  }
   return {};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::ConvertInteger::Fold(FoldingContext &context) {
+auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
+    const CategoryScalar<Category::Integer> &c) -> std::optional<Scalar> {
   return std::visit(
-      [&](auto &x) -> std::optional<typename IntegerExpr<KIND>::Scalar> {
-        if (auto c{x.Fold(context)}) {
-          auto converted{Scalar::ConvertSigned(*c)};
-          if (converted.overflow && context.messages != nullptr) {
-            context.messages->Say(
-                context.at, "integer conversion overflowed"_en_US);
-          }
-          return {std::move(converted.value)};
+      [&](auto &x) -> std::optional<Scalar> {
+        auto converted{Scalar::ConvertSigned(x)};
+        if (converted.overflow && context.messages != nullptr) {
+          context.messages->Say(
+              context.at, "integer conversion overflowed"_en_US);
+          return {};
         }
-        // g++ 8.1.0 choked on the legal "return {};" that should be here,
-        // saying that it may be used uninitialized.
-        std::optional<typename IntegerExpr<KIND>::Scalar> result;
-        return std::move(result);
+        return {std::move(converted.value)};
       },
-      this->operand().u);
+      c.u);
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Negate::Fold(FoldingContext &context) {
-  if (auto c{this->operand().Fold(context)}) {
-    auto negated{c->Negate()};
-    if (negated.overflow && context.messages != nullptr) {
-      context.messages->Say(context.at, "integer negation overflowed"_en_US);
-    }
-    return {std::move(negated.value)};
+auto IntegerExpr<KIND>::Negate::FoldScalar(
+    FoldingContext &context, const Scalar &c) -> std::optional<Scalar> {
+  auto negated{c.Negate()};
+  if (negated.overflow && context.messages != nullptr) {
+    context.messages->Say(context.at, "integer negation overflowed"_en_US);
+    return {};
   }
-  return {};
+  return {std::move(negated.value)};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Add::Fold(FoldingContext &context) {
-  auto lc{this->left().Fold(context)};
-  auto rc{this->right().Fold(context)};
-  if (lc && rc) {
-    auto sum{lc->AddSigned(*rc)};
-    if (sum.overflow && context.messages != nullptr) {
-      context.messages->Say(context.at, "integer addition overflowed"_en_US);
-    }
-    return {std::move(sum.value)};
+auto IntegerExpr<KIND>::Add::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  auto sum{a.AddSigned(b)};
+  if (sum.overflow && context.messages != nullptr) {
+    context.messages->Say(context.at, "integer addition overflowed"_en_US);
+    return {};
   }
-  return {};
+  return {std::move(sum.value)};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Subtract::Fold(FoldingContext &context) {
-  auto lc{this->left().Fold(context)};
-  auto rc{this->right().Fold(context)};
-  if (lc && rc) {
-    auto diff{lc->SubtractSigned(*rc)};
-    if (diff.overflow && context.messages != nullptr) {
-      context.messages->Say(context.at, "integer subtraction overflowed"_en_US);
-    }
-    return {std::move(diff.value)};
+auto IntegerExpr<KIND>::Subtract::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  auto diff{a.SubtractSigned(b)};
+  if (diff.overflow && context.messages != nullptr) {
+    context.messages->Say(context.at, "integer subtraction overflowed"_en_US);
+    return {};
   }
-  return {};
+  return {std::move(diff.value)};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Multiply::Fold(FoldingContext &context) {
-  auto lc{this->left().Fold(context)};
-  auto rc{this->right().Fold(context)};
-  if (lc && rc) {
-    auto product{lc->MultiplySigned(*rc)};
-    if (product.SignedMultiplicationOverflowed() &&
-        context.messages != nullptr) {
-      context.messages->Say(
-          context.at, "integer multiplication overflowed"_en_US);
-    }
-    return {std::move(product.lower)};
+auto IntegerExpr<KIND>::Multiply::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  auto product{a.MultiplySigned(b)};
+  if (product.SignedMultiplicationOverflowed() && context.messages != nullptr) {
+    context.messages->Say(
+        context.at, "integer multiplication overflowed"_en_US);
+    return {};
   }
-  return {};
+  return {std::move(product.lower)};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Divide::Fold(FoldingContext &context) {
-  auto lc{this->left().Fold(context)};
-  auto rc{this->right().Fold(context)};
-  if (lc && rc) {
-    auto qr{lc->DivideSigned(*rc)};
-    if (context.messages != nullptr) {
-      if (qr.divisionByZero) {
-        context.messages->Say(context.at, "integer division by zero"_en_US);
-      } else if (qr.overflow) {
-        context.messages->Say(context.at, "integer division overflowed"_en_US);
-      }
+auto IntegerExpr<KIND>::Divide::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  auto qr{a.DivideSigned(b)};
+  if (context.messages != nullptr) {
+    if (qr.divisionByZero) {
+      context.messages->Say(context.at, "integer division by zero"_en_US);
+      return {};
     }
-    return {std::move(qr.quotient)};
-  }
-  return {};
-}
-
-template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Power::Fold(FoldingContext &context) {
-  auto lc{this->left().Fold(context)};
-  auto rc{this->right().Fold(context)};
-  if (lc && rc) {
-    typename Scalar::PowerWithErrors power{lc->Power(*rc)};
-    if (context.messages != nullptr) {
-      if (power.divisionByZero) {
-        context.messages->Say(context.at, "zero to negative power"_en_US);
-      } else if (power.overflow) {
-        context.messages->Say(context.at, "integer power overflowed"_en_US);
-      } else if (power.zeroToZero) {
-        context.messages->Say(context.at, "integer 0**0"_en_US);
-      }
+    if (qr.overflow) {
+      context.messages->Say(context.at, "integer division overflowed"_en_US);
+      return {};
     }
-    return {std::move(power.power)};
   }
-  return {};
+  return {std::move(qr.quotient)};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Max::Fold(FoldingContext &context) {
-  auto lc{this->left().Fold(context)};
-  auto rc{this->right().Fold(context)};
-  if (lc && rc) {
-    if (lc->CompareSigned(*rc) == Ordering::Greater) {
-      return lc;
+auto IntegerExpr<KIND>::Power::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  typename Scalar::PowerWithErrors power{a.Power(b)};
+  if (context.messages != nullptr) {
+    if (power.divisionByZero) {
+      context.messages->Say(context.at, "zero to negative power"_en_US);
+      return {};
     }
-    return rc;
-  }
-  return {};
-}
-
-template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar>
-IntegerExpr<KIND>::Min::Fold(FoldingContext &context) {
-  auto lc{this->left().Fold(context)};
-  auto rc{this->right().Fold(context)};
-  if (lc && rc) {
-    if (lc->CompareSigned(*rc) == Ordering::Less) {
-      return lc;
+    if (power.overflow) {
+      context.messages->Say(context.at, "integer power overflowed"_en_US);
+      return {};
     }
-    return rc;
+    if (power.zeroToZero) {
+      context.messages->Say(context.at, "integer 0**0"_en_US);
+      return {};
+    }
   }
-  return {};
+  return {std::move(power.power)};
 }
 
 template<int KIND>
-std::optional<typename IntegerExpr<KIND>::Scalar> IntegerExpr<KIND>::Fold(
-    FoldingContext &context) {
+auto IntegerExpr<KIND>::Max::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  if (a.CompareSigned(b) == Ordering::Greater) {
+    return {a};
+  }
+  return {b};
+}
+
+template<int KIND>
+auto IntegerExpr<KIND>::Min::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  if (a.CompareSigned(b) == Ordering::Less) {
+    return {a};
+  }
+  return {b};
+}
+
+template<int KIND>
+auto IntegerExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         using Ty = typename std::decay<decltype(x)>::type;
         if constexpr (std::is_same_v<Ty, Scalar>) {
           return {x};
         }
-        if constexpr (std::is_base_of_v<Un, Ty> || std::is_base_of_v<Bin, Ty>) {
+        if constexpr (evaluate::FoldableTrait<Ty>) {
           auto c{x.Fold(context)};
           if (c.has_value()) {
             u_ = *c;
@@ -385,20 +362,24 @@ std::optional<typename IntegerExpr<KIND>::Scalar> IntegerExpr<KIND>::Fold(
       u_);
 }
 
-template<int KIND> void RealExpr<KIND>::Fold(FoldingContext &context) {
-  // TODO
+template<int KIND>
+auto RealExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
+  return {};  // TODO
 }
 
-template<int KIND> void ComplexExpr<KIND>::Fold(FoldingContext &context) {
-  // TODO
+template<int KIND>
+auto ComplexExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
+  return {};  // TODO
 }
 
-template<int KIND> void CharacterExpr<KIND>::Fold(FoldingContext &context) {
-  // TODO
+template<int KIND>
+auto CharacterExpr<KIND>::Fold(FoldingContext &context)
+    -> std::optional<Scalar> {
+  return {};  // TODO
 }
 
-void LogicalExpr::Fold(FoldingContext &context) {
-  // TODO and comparisons too
+std::optional<bool> LogicalExpr::Fold(FoldingContext &context) {
+  return {};  // TODO and comparisons too
 }
 
 std::optional<GenericScalar> GenericExpr::ScalarValue() const {
@@ -413,23 +394,38 @@ std::optional<GenericScalar> GenericExpr::ScalarValue() const {
 }
 
 template<Category CAT>
-std::optional<CategoryScalar<CAT>> CategoryExpr<CAT>::ScalarValue() const {
+auto CategoryExpr<CAT>::ScalarValue() const -> std::optional<Scalar> {
   return std::visit(
-      [](const auto &x) -> std::optional<CategoryScalar<CAT>> {
+      [](const auto &x) -> std::optional<Scalar> {
         if (auto c{x.ScalarValue()}) {
-          return {CategoryScalar<CAT>{std::move(*c)}};
+          return {Scalar{std::move(*c)}};
         }
         return {};
       },
       u);
 }
 
-template<Category CAT> void CategoryExpr<CAT>::Fold(FoldingContext &context) {
-  std::visit([&](auto &x) { x.Fold(context); }, u);
+template<Category CAT>
+auto CategoryExpr<CAT>::Fold(FoldingContext &context) -> std::optional<Scalar> {
+  return std::visit(
+      [&](auto &x) -> std::optional<Scalar> {
+        if (auto c{x.Fold(context)}) {
+          return {Scalar{std::move(*c)}};
+        }
+        return {};
+      },
+      u);
 }
 
-void GenericExpr::Fold(FoldingContext &context) {
-  std::visit([&](auto &x) { x.Fold(context); }, u);
+std::optional<GenericScalar> GenericExpr::Fold(FoldingContext &context) {
+  return std::visit(
+      [&](auto &x) -> std::optional<GenericScalar> {
+        if (auto c{x.Fold(context)}) {
+          return {GenericScalar{std::move(*c)}};
+        }
+        return {};
+      },
+      u);
 }
 
 template struct CategoryExpr<Category::Integer>;
