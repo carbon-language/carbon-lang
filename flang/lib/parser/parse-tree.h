@@ -249,10 +249,9 @@ struct AssignStmt;
 struct AssignedGotoStmt;
 struct PauseStmt;
 struct OpenMPConstruct;
-struct OmpClause;
-struct OmpStandaloneDirective;
-struct OmpLoopDirective;
-struct OmpEndDirective;
+struct OpenMPDeclarativeConstruct;
+struct OmpBlockDirective;
+struct OpenMPEndLoopDirective;
 
 // Cooked character stream locations
 using Location = const char *;
@@ -260,7 +259,7 @@ using Location = const char *;
 // Implicit definitions of the Standard
 
 // R403 scalar-xyz -> xyz
-// These class template wrappers correspond to the Standard's modifiers
+// These template class wrappers correspond to the Standard's modifiers
 // scalar-xyz, constant-xzy, int-xzy, default-char-xyz, & logical-xyz.
 // TODO: Implement as wrappers instead, or maybe remove.
 template<typename A> struct Scalar {
@@ -365,7 +364,8 @@ struct SpecificationConstruct {
       Statement<common::Indirection<ProcedureDeclarationStmt>>,
       Statement<OtherSpecificationStmt>,
       Statement<common::Indirection<TypeDeclarationStmt>>,
-      common::Indirection<StructureDef>, common::Indirection<OpenMPConstruct>,
+      common::Indirection<StructureDef>,
+      common::Indirection<OpenMPDeclarativeConstruct>,
       common::Indirection<CompilerDirective>>
       u;
 };
@@ -403,7 +403,8 @@ struct DeclarationConstruct {
 // from the implicit part to the declaration constructs
 struct SpecificationPart {
   TUPLE_CLASS_BOILERPLATE(SpecificationPart);
-  std::tuple<std::list<Statement<common::Indirection<UseStmt>>>,
+  std::tuple<std::list<OpenMPDeclarativeConstruct>,
+      std::list<Statement<common::Indirection<UseStmt>>>,
       std::list<Statement<common::Indirection<ImportStmt>>>, ImplicitPart,
       std::list<DeclarationConstruct>>
       t;
@@ -487,7 +488,8 @@ struct ExecutableConstruct {
       common::Indirection<SelectTypeConstruct>,
       common::Indirection<WhereConstruct>, common::Indirection<ForallConstruct>,
       common::Indirection<CompilerDirective>,
-      common::Indirection<OpenMPConstruct>>
+      common::Indirection<OpenMPConstruct>,
+      common::Indirection<OpenMPEndLoopDirective>>
       u;
 };
 
@@ -829,7 +831,7 @@ struct LiteralConstant {
 };
 
 // R604 constant ->  literal-constant | named-constant
-// Renamed to dodge a clash with Constant<> class template.
+// Renamed to dodge a clash with Constant<> template class.
 struct ConstantValue {
   UNION_CLASS_BOILERPLATE(ConstantValue);
   std::variant<LiteralConstant, NamedConstant> u;
@@ -3236,18 +3238,27 @@ struct OmpDefaultClause {
   WRAPPER_CLASS_BOILERPLATE(OmpDefaultClause, Type);
 };
 
-// List -> variable-name | / common-block /
-struct OmpNameList {
-  TUPLE_CLASS_BOILERPLATE(OmpNameList);
+// variable-name | / common-block / | array-sections
+struct OmpObject {
+  TUPLE_CLASS_BOILERPLATE(OmpObject);
   ENUM_CLASS(Kind, Object, Common)
-  std::tuple<Kind, Name> t;
+  std::tuple<Kind, Designator> t;
 };
 
-// MAP((TO | FROM | TOFROM | ALLOC | RELEASE | DELETE) : list)
+WRAPPER_CLASS(OmpObjectList, std::list<OmpObject>);
+
+// map-type ->(TO | FROM | TOFROM | ALLOC | RELEASE | DELETE)
+struct OmpMapType {
+  TUPLE_CLASS_BOILERPLATE(OmpMapType);
+  EMPTY_CLASS(Always);
+  ENUM_CLASS(Type, To, From, Tofrom, Alloc, Release, Delete)
+  std::tuple<std::optional<Always>, Type> t;
+};
+
+// MAP ( map-type : list)
 struct OmpMapClause {
   TUPLE_CLASS_BOILERPLATE(OmpMapClause);
-  ENUM_CLASS(Type, To, From, Tofrom, Alloc, Release, Delete)
-  std::tuple<std::optional<Type>, std::list<Name>> t;
+  std::tuple<std::optional<OmpMapType>, OmpObjectList> t;
 };
 
 // schedule-modifier-type -> MONOTONIC | NONMONOTONIC | SIMD
@@ -3293,7 +3304,7 @@ struct OmpLinearModifier {
   WRAPPER_CLASS_BOILERPLATE(OmpLinearModifier, Type);
 };
 
-// LINEAR((modifier(list) | (list)) [: linear-step])
+// LINEAR((linear-modifier(list) | (list)) [: linear-step])
 struct OmpLinearClause {
   UNION_CLASS_BOILERPLATE(OmpLinearClause);
   struct WithModifier {
@@ -3316,13 +3327,11 @@ struct OmpLinearClause {
   std::variant<WithModifier, WithoutModifier> u;
 };
 
-// reduction-identifier -> "+", "-", "*", .AND., .OR., .EQV., .NEQV.,
-// MIN, MAX, IAND, IOR, IEOR
+// reduction-identifier -> Add, Subtract, Multiply, .and., .or., .eqv., .neqv.,
+// min, max, iand, ior, ieor
 struct OmpReductionOperator {
   UNION_CLASS_BOILERPLATE(OmpReductionOperator);
-  ENUM_CLASS(ProcedureOperator, MIN, MAX, IAND, IOR, IEOR)
-  ENUM_CLASS(BinaryOperator, Add, Subtract, Multiply, AND, OR, EQV, NEQV)
-  std::variant<ProcedureOperator, BinaryOperator> u;
+  std::variant<common::Indirection<DefinedOperator>, ProcedureDesignator> u;
 };
 
 // REDUCTION(reduction-identifier: list)
@@ -3331,16 +3340,13 @@ struct OmpReductionClause {
   std::tuple<OmpReductionOperator, std::list<Designator>> t;
 };
 
-// DEPEND(SOURCE | SINK: vec | DEPEND((IN | OUT | INOUT) : list)
-//  vec -> iterator_variable [ +/- d1], x2 [ +/- d2], ...
-//  d1 -> non-negative-constant
-//  list -> names | array-sections
-
+//  depend-vec-length -> +/- non-negative-constant
 struct OmpDependSinkVecLength {
   TUPLE_CLASS_BOILERPLATE(OmpDependSinkVecLength);
   std::tuple<common::Indirection<DefinedOperator>, ScalarIntConstantExpr> t;
 };
 
+//  depend-vec -> iterator_variable [+/- depend-vec-length]
 struct OmpDependSinkVec {
   TUPLE_CLASS_BOILERPLATE(OmpDependSinkVec);
   std::tuple<Name, std::optional<OmpDependSinkVecLength>> t;
@@ -3351,6 +3357,7 @@ struct OmpDependenceType {
   WRAPPER_CLASS_BOILERPLATE(OmpDependenceType, Type);
 };
 
+// DEPEND(SOURCE | SINK: vec | DEPEND((IN | OUT | INOUT) : list)
 struct OmpDependClause {
   UNION_CLASS_BOILERPLATE(OmpDependClause);
   EMPTY_CLASS(Source);
@@ -3362,6 +3369,9 @@ struct OmpDependClause {
   std::variant<Source, Sink, InOut> u;
 };
 
+// NOWAIT
+EMPTY_CLASS(OmpNowait);
+
 // OpenMP Clauses
 struct OmpClause {
   UNION_CLASS_BOILERPLATE(OmpClause);
@@ -3370,35 +3380,33 @@ struct OmpClause {
   EMPTY_CLASS(Mergeable);
   EMPTY_CLASS(Nogroup);
   EMPTY_CLASS(Notinbranch);
-  EMPTY_CLASS(Nowait);
   EMPTY_CLASS(Untied);
   WRAPPER_CLASS(Collapse, ScalarIntConstantExpr);
-  WRAPPER_CLASS(Copyin, std::list<OmpNameList>);
-  WRAPPER_CLASS(Copyprivate, std::list<OmpNameList>);
+  WRAPPER_CLASS(Copyin, OmpObjectList);
+  WRAPPER_CLASS(Copyprivate, OmpObjectList);
   WRAPPER_CLASS(Device, ScalarIntExpr);
   WRAPPER_CLASS(DistSchedule, ScalarIntExpr);
   WRAPPER_CLASS(Final, ScalarIntExpr);
-  WRAPPER_CLASS(Firstprivate, std::list<OmpNameList>);
+  WRAPPER_CLASS(Firstprivate, OmpObjectList);
   WRAPPER_CLASS(From, std::list<Designator>);
   WRAPPER_CLASS(Grainsize, ScalarIntExpr);
-  WRAPPER_CLASS(Lastprivate, std::list<OmpNameList>);
-  WRAPPER_CLASS(Link, std::list<Name>);
+  WRAPPER_CLASS(Lastprivate, OmpObjectList);
   WRAPPER_CLASS(NumTasks, ScalarIntExpr);
   WRAPPER_CLASS(NumTeams, ScalarIntExpr);
   WRAPPER_CLASS(NumThreads, ScalarIntExpr);
   WRAPPER_CLASS(Ordered, std::optional<ScalarIntConstantExpr>);
   WRAPPER_CLASS(Priority, ScalarIntExpr);
-  WRAPPER_CLASS(Private, std::list<OmpNameList>);
+  WRAPPER_CLASS(Private, OmpObjectList);
   WRAPPER_CLASS(Safelen, ScalarIntConstantExpr);
-  WRAPPER_CLASS(Shared, std::list<OmpNameList>);
+  WRAPPER_CLASS(Shared, OmpObjectList);
   WRAPPER_CLASS(Simdlen, ScalarIntConstantExpr);
   WRAPPER_CLASS(ThreadLimit, ScalarIntExpr);
   WRAPPER_CLASS(To, std::list<Designator>);
   WRAPPER_CLASS(Uniform, std::list<Name>);
   WRAPPER_CLASS(UseDevicePtr, std::list<Name>);
-  std::variant<Defaultmap, Inbranch, Mergeable, Nogroup, Notinbranch, Nowait,
+  std::variant<Defaultmap, Inbranch, Mergeable, Nogroup, Notinbranch, OmpNowait,
       Untied, Collapse, Copyin, Copyprivate, Device, DistSchedule, Final,
-      Firstprivate, From, Grainsize, Lastprivate, Link, NumTasks, NumTeams,
+      Firstprivate, From, Grainsize, Lastprivate, NumTasks, NumTeams,
       NumThreads, Ordered, Priority, Private, Safelen, Shared, Simdlen,
       ThreadLimit, To, Uniform, UseDevicePtr, OmpAlignedClause,
       OmpDefaultClause, OmpDependClause, OmpIfClause, OmpLinearClause,
@@ -3406,32 +3414,202 @@ struct OmpClause {
       u;
 };
 
+WRAPPER_CLASS(OmpClauseList, std::list<OmpClause>);
+
+// SECTIONS, PARALLEL SECTIONS
+WRAPPER_CLASS(OmpEndSections, std::optional<OmpNowait>);
+WRAPPER_CLASS(OmpEndParallelSections, std::optional<OmpNowait>);
+EMPTY_CLASS(OmpSection);
+
+struct OpenMPSectionsConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPSectionsConstruct);
+  std::tuple<OmpClauseList, Block, OmpEndSections> t;
+};
+
+struct OpenMPParallelSectionsConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPParallelSectionsConstruct);
+  std::tuple<OmpClauseList, Block, OmpEndParallelSections> t;
+};
+
+// WORKSHARE
+EMPTY_CLASS(OmpEndWorkshare);
+struct OpenMPWorkshareConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPWorkshareConstruct);
+  std::tuple<Block, std::optional<OmpNowait>> t;
+};
+
+// SINGLE
+WRAPPER_CLASS(OmpEndSingle, OmpClauseList);
+struct OpenMPSingleConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPSingleConstruct);
+  std::tuple<OmpClauseList, Block, OmpEndSingle> t;
+};
+
+// OpenMP directive enclosing block
+struct OmpBlockDirective {
+  UNION_CLASS_BOILERPLATE(OmpBlockDirective);
+  EMPTY_CLASS(Master);
+  EMPTY_CLASS(Ordered);
+  EMPTY_CLASS(ParallelWorkshare);
+  EMPTY_CLASS(Parallel);
+  EMPTY_CLASS(TargetData);
+  EMPTY_CLASS(TargetParallel);
+  EMPTY_CLASS(TargetTeams);
+  EMPTY_CLASS(Target);
+  EMPTY_CLASS(Taskgroup);
+  EMPTY_CLASS(Task);
+  EMPTY_CLASS(Teams);
+  std::variant<Master, Ordered, ParallelWorkshare, Parallel, TargetData,
+      TargetParallel, TargetTeams, Target, Taskgroup, Task, Teams>
+      u;
+};
+
+struct OmpDeclareTargetMapType {
+  ENUM_CLASS(Type, Link, To)
+  WRAPPER_CLASS_BOILERPLATE(OmpDeclareTargetMapType, Type);
+};
+
+struct OpenMPDeclareTargetConstruct {
+  UNION_CLASS_BOILERPLATE(OpenMPDeclareTargetConstruct);
+  struct WithClause {
+    BOILERPLATE(WithClause);
+    WithClause(OmpDeclareTargetMapType &&m, OmpObjectList &&n)
+      : maptype(std::move(m)), names(std::move(n)) {}
+    OmpDeclareTargetMapType maptype;
+    OmpObjectList names;
+  };
+  struct WithExtendedList {
+    BOILERPLATE(WithExtendedList);
+    WithExtendedList(OmpObjectList &&n) : names(std::move(n)) {}
+    OmpObjectList names;
+  };
+  EMPTY_CLASS(Implicit);
+  std::variant<WithClause, WithExtendedList, Implicit> u;
+};
+
+struct OmpReductionCombiner {
+  UNION_CLASS_BOILERPLATE(OmpReductionCombiner);
+  WRAPPER_CLASS(FunctionCombiner, Call);
+  std::variant<AssignmentStmt, FunctionCombiner> u;
+};
+
+WRAPPER_CLASS(OmpReductionInitializerClause, common::Indirection<Expr>);
+
+struct OpenMPDeclareReductionConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPDeclareReductionConstruct);
+  std::tuple<OmpReductionOperator, std::list<DeclarationTypeSpec>,
+      OmpReductionCombiner, std::optional<OmpReductionInitializerClause>>
+      t;
+};
+
+struct OpenMPDeclareSimdConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPDeclareSimdConstruct);
+  std::tuple<std::optional<Name>, OmpClauseList> t;
+};
+
+struct OpenMPDeclarativeConstruct {
+  UNION_CLASS_BOILERPLATE(OpenMPDeclarativeConstruct);
+  WRAPPER_CLASS(Threadprivate, OmpObjectList);
+  std::variant<OpenMPDeclareReductionConstruct, OpenMPDeclareSimdConstruct,
+      OpenMPDeclareTargetConstruct, Threadprivate>
+      u;
+};
+
+// CRITICAL [Name] <block> END CRITICAL [Name]
+WRAPPER_CLASS(OmpEndCritical, std::optional<Name>);
+struct OpenMPCriticalConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPCriticalConstruct);
+  WRAPPER_CLASS(Hint, ConstantExpr);
+  std::tuple<std::optional<Name>, std::optional<Hint>, Block, OmpEndCritical> t;
+};
+
+// END ATOMIC
+EMPTY_CLASS(OmpEndAtomic);
+
+// ATOMIC READ
+struct OmpAtomicRead {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicRead);
+  EMPTY_CLASS(SeqCst1);
+  EMPTY_CLASS(SeqCst2);
+  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>,
+      Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
+      t;
+};
+
+// ATOMIC WRITE
+struct OmpAtomicWrite {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicWrite);
+  EMPTY_CLASS(SeqCst1);
+  EMPTY_CLASS(SeqCst2);
+  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>,
+      Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
+      t;
+};
+
+// ATOMIC UPDATE
+struct OmpAtomicUpdate {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicUpdate);
+  EMPTY_CLASS(SeqCst1);
+  EMPTY_CLASS(SeqCst2);
+  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>,
+      Statement<AssignmentStmt>, std::optional<OmpEndAtomic>>
+      t;
+};
+
+// ATOMIC CAPTURE
+struct OmpAtomicCapture {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomicCapture);
+  EMPTY_CLASS(SeqCst1);
+  EMPTY_CLASS(SeqCst2);
+  WRAPPER_CLASS(Stmt1, Statement<AssignmentStmt>);
+  WRAPPER_CLASS(Stmt2, Statement<AssignmentStmt>);
+  std::tuple<std::optional<SeqCst1>, std::optional<SeqCst2>, Stmt1, Stmt2,
+      OmpEndAtomic>
+      t;
+};
+
+// ATOMIC
+struct OmpAtomic {
+  TUPLE_CLASS_BOILERPLATE(OmpAtomic);
+  EMPTY_CLASS(SeqCst);
+  std::tuple<std::optional<SeqCst>, Statement<AssignmentStmt>,
+      std::optional<OmpEndAtomic>>
+      t;
+};
+
+struct OpenMPAtomicConstruct {
+  UNION_CLASS_BOILERPLATE(OpenMPAtomicConstruct);
+  std::variant<OmpAtomicRead, OmpAtomicWrite, OmpAtomicCapture, OmpAtomicUpdate,
+      OmpAtomic>
+      u;
+};
+
 struct OmpLoopDirective {
   UNION_CLASS_BOILERPLATE(OmpLoopDirective);
-  WRAPPER_CLASS(DistributeParallelDoSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(DistributeParallelDo, std::list<OmpClause>);
-  WRAPPER_CLASS(DistributeSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(Distribute, std::list<OmpClause>);
-  WRAPPER_CLASS(DoSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(Do, std::list<OmpClause>);
-  WRAPPER_CLASS(ParallelDoSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(ParallelDo, std::list<OmpClause>);
-  WRAPPER_CLASS(Simd, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetParallelDoSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetParallelDo, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetTeamsDistributeParallelDoSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetTeamsDistributeParallelDo, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetTeamsDistributeSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetTeamsDistribute, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(TaskloopSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(Taskloop, std::list<OmpClause>);
-  WRAPPER_CLASS(TeamsDistributeParallelDoSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(TeamsDistributeParallelDo, std::list<OmpClause>);
-  WRAPPER_CLASS(TeamsDistributeSimd, std::list<OmpClause>);
-  WRAPPER_CLASS(TeamsDistribute, std::list<OmpClause>);
+  EMPTY_CLASS(DistributeParallelDoSimd);
+  EMPTY_CLASS(DistributeParallelDo);
+  EMPTY_CLASS(DistributeSimd);
+  EMPTY_CLASS(Distribute);
+  EMPTY_CLASS(ParallelDoSimd);
+  EMPTY_CLASS(ParallelDo);
+  EMPTY_CLASS(Do);
+  EMPTY_CLASS(DoSimd);
+  EMPTY_CLASS(Simd);
+  EMPTY_CLASS(TargetParallelDoSimd);
+  EMPTY_CLASS(TargetParallelDo);
+  EMPTY_CLASS(TargetTeamsDistributeParallelDoSimd);
+  EMPTY_CLASS(TargetTeamsDistributeParallelDo);
+  EMPTY_CLASS(TargetTeamsDistributeSimd);
+  EMPTY_CLASS(TargetTeamsDistribute);
+  EMPTY_CLASS(TargetSimd);
+  EMPTY_CLASS(TaskloopSimd);
+  EMPTY_CLASS(Taskloop);
+  EMPTY_CLASS(TeamsDistributeParallelDoSimd);
+  EMPTY_CLASS(TeamsDistributeParallelDo);
+  EMPTY_CLASS(TeamsDistributeSimd);
+  EMPTY_CLASS(TeamsDistribute);
   std::variant<DistributeParallelDoSimd, DistributeParallelDo, DistributeSimd,
-      Distribute, DoSimd, Do, ParallelDoSimd, ParallelDo, Simd,
+      Distribute, ParallelDoSimd, ParallelDo, Do, DoSimd, Simd,
       TargetParallelDoSimd, TargetParallelDo,
       TargetTeamsDistributeParallelDoSimd, TargetTeamsDistributeParallelDo,
       TargetTeamsDistributeSimd, TargetTeamsDistribute, TargetSimd,
@@ -3440,40 +3618,81 @@ struct OmpLoopDirective {
       u;
 };
 
+// Cancel/Cancellation type
+struct OmpCancelType {
+  ENUM_CLASS(Type, Parallel, Sections, Do, Taskgroup)
+  WRAPPER_CLASS_BOILERPLATE(OmpCancelType, Type);
+};
+
+// CANCELLATION POINT
+WRAPPER_CLASS(OpenMPCancellationPointConstruct, OmpCancelType);
+
+// CANCEL
+struct OpenMPCancelConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPCancelConstruct);
+  WRAPPER_CLASS(If, ScalarLogicalExpr);
+  std::tuple<OmpCancelType, std::optional<If>> t;
+};
+
+// FLUSH
+WRAPPER_CLASS(OpenMPFlushConstruct, std::optional<OmpObjectList>);
+
+// Standalone constructs
 struct OmpStandaloneDirective {
   UNION_CLASS_BOILERPLATE(OmpStandaloneDirective);
-  WRAPPER_CLASS(Barrier, std::list<OmpClause>);
-  WRAPPER_CLASS(CancellationPoint, std::list<OmpClause>);
-  WRAPPER_CLASS(Cancel, std::list<OmpClause>);
-  WRAPPER_CLASS(Flush, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetEnterData, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetExitData, std::list<OmpClause>);
-  WRAPPER_CLASS(TargetUpdate, std::list<OmpClause>);
-  WRAPPER_CLASS(Taskwait, std::list<OmpClause>);
-  WRAPPER_CLASS(Taskyield, std::list<OmpClause>);
-  std::variant<Barrier, CancellationPoint, Cancel, Flush, TargetEnterData,
-      TargetExitData, TargetUpdate, Taskwait, Taskyield>
+  EMPTY_CLASS(TargetEnterData);
+  EMPTY_CLASS(TargetExitData);
+  EMPTY_CLASS(TargetUpdate);
+  std::variant<TargetEnterData, TargetExitData, TargetUpdate> u;
+};
+
+EMPTY_CLASS(OpenMPTaskyieldConstruct);
+EMPTY_CLASS(OpenMPTaskwaitConstruct);
+EMPTY_CLASS(OpenMPBarrierConstruct);
+WRAPPER_CLASS(OmpEndBlockDirective, common::Indirection<OmpBlockDirective>);
+
+// DO / DO SIMD
+WRAPPER_CLASS(OmpEndDoSimd, std::optional<OmpNowait>);
+WRAPPER_CLASS(OmpEndDo, std::optional<OmpNowait>);
+struct OpenMPEndLoopDirective {
+  UNION_CLASS_BOILERPLATE(OpenMPEndLoopDirective);
+  std::variant<common::Indirection<OmpEndDoSimd>, common::Indirection<OmpEndDo>,
+      common::Indirection<OmpLoopDirective>>
       u;
 };
 
-struct OmpEndDirective {
-  UNION_CLASS_BOILERPLATE(OmpEndDirective);
-  std::variant<OmpLoopDirective> u;
+struct OpenMPBlockConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPBlockConstruct);
+  std::tuple<OmpBlockDirective, OmpClauseList, Block, OmpEndBlockDirective> t;
 };
 
 struct OpenMPLoopConstruct {
   TUPLE_CLASS_BOILERPLATE(OpenMPLoopConstruct);
-  std::tuple<Statement<OmpLoopDirective>, DoConstruct,
-      std::optional<OmpEndDirective>>
-      t;
+  std::tuple<OmpLoopDirective, OmpClauseList> t;
 };
 
-WRAPPER_CLASS(OpenMPStandaloneConstruct, Statement<OmpStandaloneDirective>);
+struct OpenMPStandaloneConstruct {
+  TUPLE_CLASS_BOILERPLATE(OpenMPStandaloneConstruct);
+  std::tuple<OmpStandaloneDirective, OmpClauseList> t;
+};
 
 struct OpenMPConstruct {
   UNION_CLASS_BOILERPLATE(OpenMPConstruct);
   std::variant<common::Indirection<OpenMPStandaloneConstruct>,
-      common::Indirection<OpenMPLoopConstruct>>
+      common::Indirection<OpenMPBarrierConstruct>,
+      common::Indirection<OpenMPTaskwaitConstruct>,
+      common::Indirection<OpenMPTaskyieldConstruct>,
+      common::Indirection<OpenMPSingleConstruct>,
+      common::Indirection<OpenMPSectionsConstruct>,
+      common::Indirection<OpenMPParallelSectionsConstruct>,
+      common::Indirection<OpenMPWorkshareConstruct>,
+      common::Indirection<OpenMPLoopConstruct>,
+      common::Indirection<OpenMPBlockConstruct>,
+      common::Indirection<OpenMPCancellationPointConstruct>,
+      common::Indirection<OpenMPCancelConstruct>,
+      common::Indirection<OpenMPFlushConstruct>,
+      common::Indirection<OpenMPAtomicConstruct>,
+      common::Indirection<OpenMPCriticalConstruct>, OmpSection>
       u;
 };
 

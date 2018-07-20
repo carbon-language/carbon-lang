@@ -672,7 +672,6 @@ void Walk(format::IntrinsicTypeDataEditDesc &x, M &mutator) {
     mutator.Post(x);
   }
 }
-
 template<typename V>
 void Walk(const OmpLinearClause::WithModifier &x, V &visitor) {
   if (visitor.Pre(x)) {
@@ -703,6 +702,35 @@ void Walk(OmpLinearClause::WithoutModifier &x, M &mutator) {
   if (mutator.Pre(x)) {
     Walk(x.names, mutator);
     Walk(x.step, mutator);
+    mutator.Post(x);
+  }
+}
+template<typename V>
+void Walk(const OpenMPDeclareTargetConstruct::WithClause &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.maptype, visitor);
+    Walk(x.names, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(OpenMPDeclareTargetConstruct::WithClause &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.maptype, mutator);
+    Walk(x.names, mutator);
+    mutator.Post(x);
+  }
+}
+template<typename V>
+void Walk(const OpenMPDeclareTargetConstruct::WithExtendedList &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    Walk(x.names, visitor);
+    visitor.Post(x);
+  }
+}
+template<typename M>
+void Walk(OpenMPDeclareTargetConstruct::WithExtendedList &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    Walk(x.names, mutator);
     mutator.Post(x);
   }
 }
