@@ -242,6 +242,29 @@ auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
 }
 
 template<int KIND>
+auto IntegerExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
+    const CategoryScalar<Category::Real> &c) -> std::optional<Scalar> {
+  return std::visit(
+      [&](auto &x) -> std::optional<Scalar> {
+        auto converted{x.template ToInteger<Scalar>()};
+        if (context.messages != nullptr) {
+          if (converted.flags.test(RealFlag::Overflow)) {
+            context.messages->Say(
+                context.at, "real->integer conversion overflowed"_en_US);
+            return {};
+          }
+          if (converted.flags.test(RealFlag::InvalidArgument)) {
+            context.messages->Say(
+                context.at, "real->integer conversion: invalid argument"_en_US);
+            return {};
+          }
+        }
+        return {std::move(converted.value)};
+      },
+      c.u);
+}
+
+template<int KIND>
 auto IntegerExpr<KIND>::Negate::FoldScalar(
     FoldingContext &context, const Scalar &c) -> std::optional<Scalar> {
   auto negated{c.Negate()};

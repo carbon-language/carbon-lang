@@ -152,9 +152,7 @@ public:
     using Unary<ConvertReal, Result, GenericRealExpr,
         CategoryScalar<Category::Real>>::Unary;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const CategoryScalar<Category::Real> &) {
-      return {};
-    }  // TODO
+        FoldingContext &, const CategoryScalar<Category::Real> &);
   };
 
   template<typename CRTP> using Un = Unary<CRTP, Result, Expr>;
