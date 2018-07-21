@@ -179,8 +179,11 @@ public:
   /// threads, or different kinds of materialization processes.
   MaterializationResponsibility delegate(const SymbolNameSet &Symbols);
 
-  /// Add dependencies for the symbols in this dylib.
-  void addDependencies(const SymbolDependenceMap &Dependencies);
+  void addDependencies(const SymbolStringPtr &Name,
+                       const SymbolDependenceMap &Dependencies);
+
+  /// Add dependencies that apply to all symbols covered by this instance.
+  void addDependenciesForAll(const SymbolDependenceMap &Dependencies);
 
 private:
   /// Create a MaterializationResponsibility for the given VSO and

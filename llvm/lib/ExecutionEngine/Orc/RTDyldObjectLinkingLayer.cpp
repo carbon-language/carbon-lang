@@ -26,7 +26,7 @@ public:
       InternedSymbols.insert(ES.getSymbolStringPool().intern(S));
 
     auto RegisterDependencies = [&](const SymbolDependenceMap &Deps) {
-      MR.addDependencies(Deps);
+      MR.addDependenciesForAll(Deps);
     };
 
     auto InternedResult =

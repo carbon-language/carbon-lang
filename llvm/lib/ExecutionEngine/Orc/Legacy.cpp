@@ -31,7 +31,7 @@ JITSymbolResolverAdapter::lookup(const LookupSet &Symbols) {
 
   auto RegisterDependencies = [&](const SymbolDependenceMap &Deps) {
     if (MR)
-      MR->addDependencies(Deps);
+      MR->addDependenciesForAll(Deps);
   };
 
   auto InternedResult =

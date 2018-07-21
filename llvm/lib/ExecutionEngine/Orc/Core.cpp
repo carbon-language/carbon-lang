@@ -11,6 +11,7 @@
 #include "llvm/Config/llvm-config.h"
 #include "llvm/ExecutionEngine/Orc/OrcError.h"
 #include "llvm/IR/Mangler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 
 #if LLVM_ENABLE_THREADS
@@ -685,6 +686,13 @@ MaterializationResponsibility::delegate(const SymbolNameSet &Symbols) {
 }
 
 void MaterializationResponsibility::addDependencies(
+    const SymbolStringPtr &Name, const SymbolDependenceMap &Dependencies) {
+  assert(SymbolFlags.count(Name) &&
+         "Symbol not covered by this MaterializationResponsibility instance");
+  V.addDependencies(Name, Dependencies);
+}
+
+void MaterializationResponsibility::addDependenciesForAll(
     const SymbolDependenceMap &Dependencies) {
   for (auto &KV : SymbolFlags)
     V.addDependencies(KV.first, Dependencies);
@@ -797,8 +805,25 @@ void ReExportsMaterializationUnit::materialize(
 
     QueryInfos.pop_back();
 
-    auto RegisterDependencies = [&](const SymbolDependenceMap &Deps) {
-      R.addDependencies(Deps);
+    auto RegisterDependencies = [QueryInfo,
+                                 &SrcV](const SymbolDependenceMap &Deps) {
+      // If there were no materializing symbols, just bail out.
+      if (Deps.empty())
+        return;
+
+      // Otherwise the only deps should be on SrcV.
+      assert(Deps.size() == 1 && Deps.count(&SrcV) &&
+             "Unexpected dependencies for reexports");
+
+      auto &SrcVDeps = Deps.find(&SrcV)->second;
+      SymbolDependenceMap PerAliasDepsMap;
+      auto &PerAliasDeps = PerAliasDepsMap[&SrcV];
+
+      for (auto &KV : QueryInfo->Aliases)
+        if (SrcVDeps.count(KV.second.Aliasee)) {
+          PerAliasDeps = {KV.second.Aliasee};
+          QueryInfo->R.addDependencies(KV.first, PerAliasDepsMap);
+        }
     };
 
     auto OnResolve = [QueryInfo](Expected<SymbolMap> Result) {
@@ -979,6 +1004,15 @@ void VSO::addDependencies(const SymbolStringPtr &Name,
     auto &DepsOnOtherVSO = MI.UnfinalizedDependencies[&OtherVSO];
 
     for (auto &OtherSymbol : KV.second) {
+#ifndef NDEBUG
+      // Assert that this symbol exists and has not been finalized already.
+      auto SymI = OtherVSO.Symbols.find(OtherSymbol);
+      assert(SymI != OtherVSO.Symbols.end() &&
+             (SymI->second.getFlags().isLazy() ||
+              SymI->second.getFlags().isMaterializing()) &&
+             "Dependency on finalized symbol");
+#endif
+
       auto &OtherMI = OtherVSO.MaterializingInfos[OtherSymbol];
 
       if (OtherMI.IsFinalized)
