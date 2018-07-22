@@ -110,4 +110,4 @@
 // Check ARM float ABI
 // RUN: %clang -target arm-unknown-openbsd -### -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-ARM-FLOAT-ABI %s
-// CHECK-ARM-FLOAT-ABI: "-mfloat-abi" "soft"
+// CHECK-ARM-FLOAT-ABI: "-mfloat-abi" "softfp"
