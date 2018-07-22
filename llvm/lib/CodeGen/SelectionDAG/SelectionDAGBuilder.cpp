@@ -2757,7 +2757,7 @@ static bool isVectorReductionOp(const User *I) {
           return false;
 
         const ConstantInt *Val = dyn_cast<ConstantInt>(U->getOperand(1));
-        if (!Val || Val->getZExtValue() != 0)
+        if (!Val || !Val->isZero())
           return false;
 
         ReduxExtracted = true;
