@@ -988,6 +988,7 @@ def FRINTP_S32 : SInst<"vrndp", "dd", "fQf">;
 def FRINTM_S32 : SInst<"vrndm", "dd", "fQf">;
 def FRINTX_S32 : SInst<"vrndx", "dd", "fQf">;
 def FRINTZ_S32 : SInst<"vrnd", "dd", "fQf">;
+def FRINTI_S32 : SInst<"vrndi", "dd", "fQf">;
 }
 
 let ArchGuard = "__ARM_ARCH >= 8 && defined(__aarch64__) && defined(__ARM_FEATURE_DIRECTED_ROUNDING)" in {
@@ -997,7 +998,7 @@ def FRINTP_S64 : SInst<"vrndp", "dd", "dQd">;
 def FRINTM_S64 : SInst<"vrndm", "dd", "dQd">;
 def FRINTX_S64 : SInst<"vrndx", "dd", "dQd">;
 def FRINTZ_S64 : SInst<"vrnd", "dd", "dQd">;
-def FRINTI_S64 : SInst<"vrndi", "dd", "fdQfQd">;
+def FRINTI_S64 : SInst<"vrndi", "dd", "dQd">;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
