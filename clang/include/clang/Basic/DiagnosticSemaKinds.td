@@ -7897,14 +7897,12 @@ def warn_new_dangling_initializer_list : Warning<
   InGroup<DanglingInitializerList>;
 def warn_unsupported_temporary_not_extended : Warning<
   "sorry, lifetime extension of temporary created "
-  "%select{by aggregate initialization using default member initializer|"
-  "within conditional expression}0 "
+  "by aggregate initialization using default member initializer "
   "is not supported; lifetime of temporary "
   "will end at the end of the full-expression">, InGroup<DanglingField>;
 def warn_unsupported_init_list_not_extended : Warning<
   "sorry, lifetime extension of backing array of initializer list created "
-  "%select{by aggregate initialization using default member initializer|"
-  "within conditional expression}0 "
+  "by aggregate initialization using default member initializer "
   "is not supported; lifetime of backing array will end at the end of the "
   "full-expression">, InGroup<DanglingInitializerList>;
 

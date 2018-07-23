@@ -229,7 +229,7 @@ void test()
   // be properly tested at runtime, though.
 
   const Abstract &abstract1 = true ? static_cast<const Abstract&>(Derived1()) : Derived2(); // expected-error {{allocating an object of abstract class type 'const Abstract'}}
-  const Abstract &abstract2 = true ? static_cast<const Abstract&>(Derived1()) : throw 3; // expected-warning-re {{sorry, lifetime extension {{.*}} not supported}}
+  const Abstract &abstract2 = true ? static_cast<const Abstract&>(Derived1()) : throw 3;
 }
 
 namespace PR6595 {
@@ -401,15 +401,11 @@ namespace lifetime_extension {
   struct C : A { C(); ~C(); };
 
   void f(bool b) {
-    // expected-warning@+1 2{{sorry, lifetime extension of temporary created within conditional expression is not supported}}
     A &&r = b ? static_cast<A&&>(B()) : static_cast<A&&>(C());
   }
 
   struct D { A &&a; };
   void f_indirect(bool b) {
-#if __cplusplus >= 201702L
-    // expected-warning@+2 2{{sorry, lifetime extension of temporary created within conditional expression is not supported}}
-#endif
     D d = b ? D{B()} : D{C()};
   }
 }

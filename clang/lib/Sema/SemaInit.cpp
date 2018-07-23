@@ -6362,7 +6362,6 @@ using Local = Expr*;
 struct IndirectLocalPathEntry {
   enum EntryKind {
     DefaultInit,
-    Conditional,
     AddressOf,
     VarInit,
     LValToRVal,
@@ -6498,7 +6497,6 @@ static void visitLocalsRetainedByReferenceBinding(IndirectLocalPath &Path,
 
   case Stmt::ConditionalOperatorClass:
   case Stmt::BinaryConditionalOperatorClass: {
-    Path.push_back({IndirectLocalPathEntry::Conditional, Init});
     auto *C = cast<AbstractConditionalOperator>(Init);
     if (!C->getTrueExpr()->getType()->isVoidType())
       visitLocalsRetainedByReferenceBinding(Path, C->getTrueExpr(), RK, Visit);
@@ -6685,7 +6683,6 @@ static void visitLocalsRetainedByInitializer(IndirectLocalPath &Path,
 
   case Stmt::ConditionalOperatorClass:
   case Stmt::BinaryConditionalOperatorClass: {
-    Path.push_back({IndirectLocalPathEntry::Conditional, Init});
     auto *C = cast<AbstractConditionalOperator>(Init);
     // In C++, we can have a throw-expression operand, which has 'void' type
     // and isn't interesting from a lifetime perspective.
@@ -6717,8 +6714,7 @@ static void visitLocalsRetainedByInitializer(IndirectLocalPath &Path,
 /// supposed to lifetime-extend along (but don't).
 static bool shouldLifetimeExtendThroughPath(const IndirectLocalPath &Path) {
   for (auto Elem : Path) {
-    if (Elem.Kind != IndirectLocalPathEntry::DefaultInit &&
-        Elem.Kind != IndirectLocalPathEntry::Conditional)
+    if (Elem.Kind != IndirectLocalPathEntry::DefaultInit)
       return false;
   }
   return true;
@@ -6731,7 +6727,6 @@ static SourceRange nextPathEntryRange(const IndirectLocalPath &Path, unsigned I,
     switch (Path[I].Kind) {
     case IndirectLocalPathEntry::AddressOf:
     case IndirectLocalPathEntry::LValToRVal:
-    case IndirectLocalPathEntry::Conditional:
       // These exist primarily to mark the path as not permitting or
       // supporting lifetime extension.
       break;
@@ -6791,7 +6786,6 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
         Diag(DiagLoc, RK == RK_ReferenceBinding
                           ? diag::warn_unsupported_temporary_not_extended
                           : diag::warn_unsupported_init_list_not_extended)
-            << (Path.front().Kind == IndirectLocalPathEntry::Conditional)
             << DiagRange;
       } else {
         // FIXME: Warn on this.
@@ -6898,7 +6892,6 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
       switch (Elem.Kind) {
       case IndirectLocalPathEntry::AddressOf:
       case IndirectLocalPathEntry::LValToRVal:
-      case IndirectLocalPathEntry::Conditional:
         // These exist primarily to mark the path as not permitting or
         // supporting lifetime extension.
         break;
