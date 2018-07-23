@@ -3275,9 +3275,9 @@ Example
 matcher = objcMessagaeExpr(isInstanceMessage())
 matches
   NSString *x = @"hello";
-  [x containsString:@"h"]
+  [x containsString:@"h"];
 but not
-  [NSString stringWithFormat:@"format"]
+  [NSString stringWithFormat:@"format"];
 </pre></td></tr>
 
 
@@ -5894,7 +5894,7 @@ and the inner matcher matches on that instance.
 
 For example the method call in
   NSString *x = @"hello";
-  [x containsString:@"h"]
+  [x containsString:@"h"];
 is matched by
 objcMessageExpr(hasReceiver(declRefExpr(to(varDecl(hasName("x"))))))
 </pre></td></tr>
@@ -6564,7 +6564,7 @@ type of the matched node.
 For example, in:
   class A {};
   using B = A;
-The matcher type(hasUnqualifeidDesugaredType(recordType())) matches
+The matcher type(hasUnqualifiedDesugaredType(recordType())) matches
 both B and A.
 </pre></td></tr>
 
