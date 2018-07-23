@@ -98,8 +98,6 @@ public:
 
   ARMCodeGenPrepare() : FunctionPass(ID) {}
 
-  ~ARMCodeGenPrepare() { delete Promoter; }
-
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<TargetPassConfig>();
   }
