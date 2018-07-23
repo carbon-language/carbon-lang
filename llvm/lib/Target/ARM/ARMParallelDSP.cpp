@@ -64,6 +64,7 @@ namespace {
     bool          ReadOnly = true;
 
     OpChain(Instruction *I, ValueList &vl) : Root(I), AllValues(vl) { }
+    virtual ~OpChain() = default;
 
     void SetMemoryLocations() {
       const auto Size = MemoryLocation::UnknownSize;
