@@ -173,5 +173,5 @@ void testCastVoidPtrToIntPtrThroughUIntTypedAssignment() {
 }
 
 void testLocNonLocSymbolAssume(int a, int *b) {
-  if ((int)b < a) {}
+  if ((int)b < a) {} // no-crash
 }
