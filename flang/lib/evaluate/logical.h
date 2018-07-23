@@ -24,7 +24,9 @@ template<int BITS> class Logical {
 public:
   static constexpr int bits{BITS};
   constexpr Logical() {}  // .FALSE.
+  constexpr Logical(const Logical &that) = default;
   constexpr Logical(bool truth) : word_{-std::uint64_t{truth}} {}
+  constexpr Logical &operator=(const Logical &) = default;
 
   // For static expression evaluation, all the bits will have the same value.
   constexpr bool IsTrue() const { return word_.BTEST(0); }

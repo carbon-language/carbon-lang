@@ -43,7 +43,7 @@ std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
 }
 
 template<Category CAT>
-std::ostream &CategoryExpr<CAT>::Dump(std::ostream &o) const {
+std::ostream &Expr<AnyKindType<CAT>>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
@@ -56,15 +56,14 @@ std::ostream &GenericExpr::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
-template<typename CRTP, typename RESULT, typename A, typename ASCALAR>
-std::ostream &Unary<CRTP, RESULT, A, ASCALAR>::Dump(
+template<typename CRTP, typename RESULT, typename A>
+std::ostream &Unary<CRTP, RESULT, A>::Dump(
     std::ostream &o, const char *opr) const {
   return operand().Dump(o << opr) << ')';
 }
 
-template<typename CRTP, typename RESULT, typename A, typename B,
-    typename ASCALAR, typename BSCALAR>
-std::ostream &Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Dump(
+template<typename CRTP, typename RESULT, typename A, typename B>
+std::ostream &Binary<CRTP, RESULT, A, B>::Dump(
     std::ostream &o, const char *opr, const char *before) const {
   return right().Dump(left().Dump(o << before) << opr) << ')';
 }
@@ -148,24 +147,25 @@ std::ostream &CharacterExpr<KIND>::Dump(std::ostream &o) const {
 }
 
 template<typename A> std::ostream &Comparison<A>::Dump(std::ostream &o) const {
-  using Ty = typename A::Result;
-  o << '(' << Ty::Dump() << "::";
-  this->left().Dump(o);  // TODO: is this-> still needed?  Also below.
+  o << '(' << A::Dump() << "::";
+  this->left().Dump(o);
   o << '.' << EnumToString(this->opr) << '.';
   return this->right().Dump(o) << ')';
 }
 
-std::ostream &LogicalExpr::Dump(std::ostream &o) const {
-  std::visit(
-      common::visitors{[&](const bool &tf) { o << (tf ? ".T." : ".F."); },
-          [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
-          [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-          [&](const Not &n) { n.Dump(o, "(.NOT."); },
-          [&](const And &a) { a.Dump(o, ".AND."); },
-          [&](const Or &a) { a.Dump(o, ".OR."); },
-          [&](const Eqv &a) { a.Dump(o, ".EQV."); },
-          [&](const Neqv &a) { a.Dump(o, ".NEQV."); },
-          [&](const auto &comparison) { comparison.Dump(o); }},
+template<int KIND>
+std::ostream &LogicalExpr<KIND>::Dump(std::ostream &o) const {
+  std::visit(common::visitors{[&](const Scalar &tf) {
+                                o << (tf.IsTrue() ? ".TRUE." : ".FALSE.");
+                              },
+                 [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
+                 [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
+                 [&](const Not &n) { n.Dump(o, "(.NOT."); },
+                 [&](const And &a) { a.Dump(o, ".AND."); },
+                 [&](const Or &a) { a.Dump(o, ".OR."); },
+                 [&](const Eqv &a) { a.Dump(o, ".EQV."); },
+                 [&](const Neqv &a) { a.Dump(o, ".NEQV."); },
+                 [&](const auto &comparison) { comparison.Dump(o); }},
       u_);
   return o;
 }
@@ -193,9 +193,8 @@ template<int KIND> SubscriptIntegerExpr CharacterExpr<KIND>::LEN() const {
 }
 
 // Rank
-template<typename CRTP, typename RESULT, typename A, typename B,
-    typename ASCALAR, typename BSCALAR>
-int Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Rank() const {
+template<typename CRTP, typename RESULT, typename A, typename B>
+int Binary<CRTP, RESULT, A, B>::Rank() const {
   int lrank{left_.Rank()};
   if (lrank > 0) {
     return lrank;
@@ -204,18 +203,17 @@ int Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Rank() const {
 }
 
 // Folding
-template<typename CRTP, typename RESULT, typename A, typename ASCALAR>
-auto Unary<CRTP, RESULT, A, ASCALAR>::Fold(FoldingContext &context)
+template<typename CRTP, typename RESULT, typename A>
+auto Unary<CRTP, RESULT, A>::Fold(FoldingContext &context)
     -> std::optional<Scalar> {
-  if (std::optional<OperandScalar> c{operand_->Fold(context)}) {
+  if (std::optional<OperandScalarConstant> c{operand_->Fold(context)}) {
     return static_cast<CRTP *>(this)->FoldScalar(context, *c);
   }
   return {};
 }
 
-template<typename CRTP, typename RESULT, typename A, typename B,
-    typename ASCALAR, typename BSCALAR>
-auto Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Fold(FoldingContext &context)
+template<typename CRTP, typename RESULT, typename A, typename B>
+auto Binary<CRTP, RESULT, A, B>::Fold(FoldingContext &context)
     -> std::optional<Scalar> {
   std::optional<LeftScalar> lc{left_->Fold(context)};
   std::optional<RightScalar> rc{right_->Fold(context)};
@@ -227,7 +225,7 @@ auto Binary<CRTP, RESULT, A, B, ASCALAR, BSCALAR>::Fold(FoldingContext &context)
 
 template<int KIND>
 auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
-    const CategoryScalar<Category::Integer> &c) -> std::optional<Scalar> {
+    const ScalarConstant<Category::Integer> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::ConvertSigned(x)};
@@ -243,7 +241,7 @@ auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto IntegerExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
-    const CategoryScalar<Category::Real> &c) -> std::optional<Scalar> {
+    const ScalarConstant<Category::Real> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{x.template ToInteger<Scalar>()};
@@ -401,8 +399,74 @@ auto CharacterExpr<KIND>::Fold(FoldingContext &context)
   return {};  // TODO
 }
 
-std::optional<bool> LogicalExpr::Fold(FoldingContext &context) {
-  return {};  // TODO and comparisons too
+template<typename A>
+auto Comparison<A>::FoldScalar(FoldingContext &c,
+    const OperandScalarConstant &a, const OperandScalarConstant &b)
+    -> std::optional<Scalar> {
+  if constexpr (A::category == Category::Integer) {
+    switch (a.CompareSigned(b)) {
+    case Ordering::Less:
+      return {opr == RelationalOperator::LE || opr == RelationalOperator::LE ||
+          opr == RelationalOperator::NE};
+    case Ordering::Equal:
+      return {opr == RelationalOperator::LE || opr == RelationalOperator::EQ ||
+          opr == RelationalOperator::GE};
+    case Ordering::Greater:
+      return {opr == RelationalOperator::NE || opr == RelationalOperator::GE ||
+          opr == RelationalOperator::GT};
+    }
+  }
+  return {};
+}
+
+template<int KIND>
+auto LogicalExpr<KIND>::Not::FoldScalar(
+    FoldingContext &context, const Scalar &x) -> std::optional<Scalar> {
+  return {Scalar{!x.IsTrue()}};
+}
+
+template<int KIND>
+auto LogicalExpr<KIND>::And::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  return {Scalar{a.IsTrue() && b.IsTrue()}};
+}
+
+template<int KIND>
+auto LogicalExpr<KIND>::Or::FoldScalar(FoldingContext &context, const Scalar &a,
+    const Scalar &b) -> std::optional<Scalar> {
+  return {Scalar{a.IsTrue() || b.IsTrue()}};
+}
+
+template<int KIND>
+auto LogicalExpr<KIND>::Eqv::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  return {Scalar{a.IsTrue() == b.IsTrue()}};
+}
+
+template<int KIND>
+auto LogicalExpr<KIND>::Neqv::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  return {Scalar{a.IsTrue() != b.IsTrue()}};
+}
+
+template<int KIND>
+auto LogicalExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
+  return std::visit(
+      [&](auto &x) -> std::optional<Scalar> {
+        using Ty = typename std::decay<decltype(x)>::type;
+        if constexpr (std::is_same_v<Ty, Scalar>) {
+          return {x};
+        }
+        if constexpr (evaluate::FoldableTrait<Ty>) {
+          std::optional<Scalar> c{x.Fold(context)};
+          if (c.has_value()) {
+            u_ = *c;
+            return c;
+          }
+        }
+        return {};
+      },
+      u_);
 }
 
 std::optional<GenericScalar> GenericExpr::ScalarValue() const {
@@ -417,25 +481,30 @@ std::optional<GenericScalar> GenericExpr::ScalarValue() const {
 }
 
 template<Category CAT>
-auto CategoryExpr<CAT>::ScalarValue() const -> std::optional<Scalar> {
+auto Expr<AnyKindType<CAT>>::ScalarValue() const -> std::optional<Scalar> {
   return std::visit(
       [](const auto &x) -> std::optional<Scalar> {
         if (auto c{x.ScalarValue()}) {
           return {Scalar{std::move(*c)}};
         }
-        return {};
+        std::optional<Scalar> avoidBogusGCCWarning;  // ... with return {};
+        return avoidBogusGCCWarning;
+        ;
       },
       u);
 }
 
 template<Category CAT>
-auto CategoryExpr<CAT>::Fold(FoldingContext &context) -> std::optional<Scalar> {
+auto Expr<AnyKindType<CAT>>::Fold(FoldingContext &context)
+    -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         if (auto c{x.Fold(context)}) {
           return {Scalar{std::move(*c)}};
         }
-        return {};
+        std::optional<Scalar> avoidBogusGCCWarning;  // ... with return {};
+        return avoidBogusGCCWarning;
+        ;
       },
       u);
 }
@@ -451,10 +520,11 @@ std::optional<GenericScalar> GenericExpr::Fold(FoldingContext &context) {
       u);
 }
 
-template struct CategoryExpr<Category::Integer>;
-template struct CategoryExpr<Category::Real>;
-template struct CategoryExpr<Category::Complex>;
-template struct CategoryExpr<Category::Character>;
+template class Expr<AnyKindType<Category::Integer>>;
+template class Expr<AnyKindType<Category::Real>>;
+template class Expr<AnyKindType<Category::Complex>>;
+template class Expr<AnyKindType<Category::Character>>;
+template class Expr<AnyKindType<Category::Logical>>;
 
 template class Expr<Type<Category::Integer, 1>>;
 template class Expr<Type<Category::Integer, 2>>;
@@ -473,21 +543,24 @@ template class Expr<Type<Category::Complex, 10>>;
 template class Expr<Type<Category::Complex, 16>>;
 template class Expr<Type<Category::Character, 1>>;
 template class Expr<Type<Category::Logical, 1>>;
+template class Expr<Type<Category::Logical, 2>>;
+template class Expr<Type<Category::Logical, 4>>;
+template class Expr<Type<Category::Logical, 8>>;
 
-template struct Comparison<IntegerExpr<1>>;
-template struct Comparison<IntegerExpr<2>>;
-template struct Comparison<IntegerExpr<4>>;
-template struct Comparison<IntegerExpr<8>>;
-template struct Comparison<IntegerExpr<16>>;
-template struct Comparison<RealExpr<2>>;
-template struct Comparison<RealExpr<4>>;
-template struct Comparison<RealExpr<8>>;
-template struct Comparison<RealExpr<10>>;
-template struct Comparison<RealExpr<16>>;
-template struct Comparison<ComplexExpr<2>>;
-template struct Comparison<ComplexExpr<4>>;
-template struct Comparison<ComplexExpr<8>>;
-template struct Comparison<ComplexExpr<10>>;
-template struct Comparison<ComplexExpr<16>>;
-template struct Comparison<CharacterExpr<1>>;
+template struct Comparison<Type<Category::Integer, 1>>;
+template struct Comparison<Type<Category::Integer, 2>>;
+template struct Comparison<Type<Category::Integer, 4>>;
+template struct Comparison<Type<Category::Integer, 8>>;
+template struct Comparison<Type<Category::Integer, 16>>;
+template struct Comparison<Type<Category::Real, 2>>;
+template struct Comparison<Type<Category::Real, 4>>;
+template struct Comparison<Type<Category::Real, 8>>;
+template struct Comparison<Type<Category::Real, 10>>;
+template struct Comparison<Type<Category::Real, 16>>;
+template struct Comparison<Type<Category::Complex, 2>>;
+template struct Comparison<Type<Category::Complex, 4>>;
+template struct Comparison<Type<Category::Complex, 8>>;
+template struct Comparison<Type<Category::Complex, 10>>;
+template struct Comparison<Type<Category::Complex, 16>>;
+template struct Comparison<Type<Category::Character, 1>>;
 }  // namespace Fortran::evaluate

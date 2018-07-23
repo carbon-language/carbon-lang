@@ -30,7 +30,7 @@
 
 namespace Fortran::evaluate {
 
-ENUM_CLASS(Category, Integer, Real, Complex, Logical, Character, Derived)
+ENUM_CLASS(Category, Integer, Real, Complex, Character, Logical, Derived)
 
 template<Category C, int KIND> struct TypeBase {
   static constexpr Category category{C};
@@ -84,12 +84,6 @@ struct Type<Category::Complex, KIND>
   using Value = value::Complex<typename Part::Value>;
 };
 
-template<int KIND>
-struct Type<Category::Logical, KIND>
-  : public TypeBase<Category::Logical, KIND> {
-  using Value = value::Logical<8 * KIND>;
-};
-
 template<int KIND> struct Type<Category::Character, KIND> {
   static constexpr Category category{Category::Character};
   static constexpr int kind{KIND};
@@ -98,6 +92,12 @@ template<int KIND> struct Type<Category::Character, KIND> {
   static std::string Dump() {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
+};
+
+template<int KIND>
+struct Type<Category::Logical, KIND>
+  : public TypeBase<Category::Logical, KIND> {
+  using Value = value::Logical<8 * KIND>;
 };
 
 // Default REAL just simply has to be IEEE-754 single precision today.
@@ -119,10 +119,11 @@ using SubscriptInteger = Type<Category::Integer, 8>;
 
 // These macros invoke other macros on each of the supported kinds of
 // a given category.
+// TODO larger CHARACTER kinds, incl. Kanji
 #define COMMA ,
 #define FOR_EACH_INTEGER_KIND(M, SEP) M(1) SEP M(2) SEP M(4) SEP M(8) SEP M(16)
 #define FOR_EACH_REAL_KIND(M, SEP) M(2) SEP M(4) SEP M(8) SEP M(10) SEP M(16)
-#define FOR_EACH_COMPLEX_KIND(M, SEP) FOR_EACH_REAL_KIND(M, SEP)
+#define FOR_EACH_COMPLEX_KIND(M, SEP) M(2) SEP M(4) SEP M(8) SEP M(10) SEP M(16)
 #define FOR_EACH_CHARACTER_KIND(M, SEP) M(1)
 #define FOR_EACH_LOGICAL_KIND(M, SEP) M(1) SEP M(2) SEP M(4) SEP M(8)
 
@@ -134,19 +135,55 @@ template<Category CAT, template<int> class T> struct KindsVariant;
 template<template<int> class T> struct KindsVariant<Category::Integer, T> {
   using type = std::variant<FOR_EACH_INTEGER_KIND(TKIND, COMMA)>;
 };
-// TODO use FOR_EACH...
 template<template<int> class T> struct KindsVariant<Category::Real, T> {
-  using type = std::variant<T<2>, T<4>, T<8>, T<10>, T<16>>;
+  using type = std::variant<FOR_EACH_REAL_KIND(TKIND, COMMA)>;
 };
 template<template<int> class T> struct KindsVariant<Category::Complex, T> {
-  using type = typename KindsVariant<Category::Real, T>::type;
+  using type = std::variant<FOR_EACH_COMPLEX_KIND(TKIND, COMMA)>;
 };
 template<template<int> class T> struct KindsVariant<Category::Character, T> {
-  using type = std::variant<T<1>>;  // TODO larger CHARACTER kinds, incl. Kanji
+  using type = std::variant<FOR_EACH_CHARACTER_KIND(TKIND, COMMA)>;
 };
 template<template<int> class T> struct KindsVariant<Category::Logical, T> {
-  using type = std::variant<T<1>, T<2>, T<4>, T<8>>;
+  using type = std::variant<FOR_EACH_LOGICAL_KIND(TKIND, COMMA)>;
 };
 #undef TKIND
+
+// Holds a scalar constant of any kind within a particular intrinsic type
+// category.
+template<Category CAT> struct ScalarConstant {
+  CLASS_BOILERPLATE(ScalarConstant)
+  template<int KIND> using KindScalar = typename Type<CAT, KIND>::Value;
+  template<typename A> ScalarConstant(const A &x) : u{x} {}
+  template<typename A>
+  ScalarConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
+  typename KindsVariant<CAT, KindScalar>::type u;
+};
+
+// Holds a scalar constant of any intrinsic category and size.
+struct GenericScalar {
+  CLASS_BOILERPLATE(GenericScalar)
+  template<Category CAT, int KIND>
+  GenericScalar(const typename Type<CAT, KIND>::Value &x)
+    : u{ScalarConstant<CAT>{x}} {}
+  template<Category CAT, int KIND>
+  GenericScalar(typename Type<CAT, KIND>::Value &&x)
+    : u{ScalarConstant<CAT>{std::move(x)}} {}
+  template<typename A> GenericScalar(const A &x) : u{x} {}
+  template<typename A>
+  GenericScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
+  std::variant<ScalarConstant<Category::Integer>,
+      ScalarConstant<Category::Real>, ScalarConstant<Category::Complex>,
+      ScalarConstant<Category::Character>, ScalarConstant<Category::Logical>>
+      u;
+};
+
+// Represents a type that any supported kind within a particular category.
+template<Category CAT> struct AnyKindType {
+  static constexpr Category category{CAT};
+  using Value = ScalarConstant<CAT>;
+};
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

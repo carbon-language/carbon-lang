@@ -57,7 +57,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
   std::optional<evaluate::GenericExpr> result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value() &&
-      !std::holds_alternative<evaluate::GenericIntegerExpr>(result->u)) {
+      !std::holds_alternative<evaluate::AnyKindIntegerExpr>(result->u)) {
     ea.Say("must be integer"_err_en_US);
     return {};
   }
@@ -111,7 +111,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
 #define CASE(k) \
   case k: \
     return {evaluate::GenericExpr{ \
-        evaluate::GenericIntegerExpr{evaluate::IntegerExpr<k>{value}}}};
+        evaluate::AnyKindIntegerExpr{evaluate::IntegerExpr<k>{value}}}};
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:

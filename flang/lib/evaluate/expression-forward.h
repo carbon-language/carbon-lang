@@ -30,15 +30,15 @@ using DefaultIntegerExpr = IntegerExpr<DefaultInteger::kind>;
 template<int KIND> using RealExpr = Expr<Type<Category::Real, KIND>>;
 template<int KIND> using ComplexExpr = Expr<Type<Category::Complex, KIND>>;
 template<int KIND> using CharacterExpr = Expr<Type<Category::Character, KIND>>;
-using LogicalExpr = Expr<Type<Category::Logical, 1>>;
+template<int KIND> using LogicalExpr = Expr<Type<Category::Logical, KIND>>;
 
-// An expression whose result is of a particular type category and
-// any supported kind.
-template<Category CAT> struct CategoryExpr;
-using GenericIntegerExpr = CategoryExpr<Category::Integer>;
-using GenericRealExpr = CategoryExpr<Category::Real>;
-using GenericComplexExpr = CategoryExpr<Category::Complex>;
-using GenericCharacterExpr = CategoryExpr<Category::Character>;
+// An expression whose result is within one particular type category and
+// of any supported kind.
+using AnyKindIntegerExpr = Expr<AnyKindType<Category::Integer>>;
+using AnyKindRealExpr = Expr<AnyKindType<Category::Real>>;
+using AnyKindComplexExpr = Expr<AnyKindType<Category::Complex>>;
+using AnyKindCharacterExpr = Expr<AnyKindType<Category::Character>>;
+using AnyKindLogicalExpr = Expr<AnyKindType<Category::Logical>>;
 
 // A completely generic expression.
 struct GenericExpr;
