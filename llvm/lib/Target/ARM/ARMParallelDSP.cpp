@@ -47,7 +47,7 @@ namespace {
   struct BinOpChain;
   struct Reduction;
 
-  using OpChainList     = SmallVector<OpChain*, 8>;
+  using OpChainList     = SmallVector<std::unique_ptr<OpChain>, 8>;
   using ReductionList   = SmallVector<Reduction, 8>;
   using ValueList       = SmallVector<Value*, 8>;
   using MemInstList     = SmallVector<Instruction*, 8>;
@@ -333,8 +333,8 @@ ARMParallelDSP::CreateParallelMACPairs(OpChainList &Candidates) {
   // We can compare all elements, but then we need to compare and evaluate
   // different solutions.
   for(unsigned i=0; i<Elems-1; i+=2) {
-    BinOpChain *PMul0 = static_cast<BinOpChain*>(Candidates[i]);
-    BinOpChain *PMul1 = static_cast<BinOpChain*>(Candidates[i+1]);
+    BinOpChain *PMul0 = static_cast<BinOpChain*>(Candidates[i].get());
+    BinOpChain *PMul1 = static_cast<BinOpChain*>(Candidates[i+1].get());
     const Instruction *Mul0 = PMul0->Root;
     const Instruction *Mul1 = PMul1->Root;
 
@@ -456,7 +456,7 @@ static void AddMACCandidate(OpChainList &Candidates,
   if (IsNarrowSequence<16>(MulOp0, LHS) &&
       IsNarrowSequence<16>(MulOp1, RHS)) {
     LLVM_DEBUG(dbgs() << "OK, found narrow mul: "; Mul->dump());
-    Candidates.push_back(new BinOpChain(Mul, LHS, RHS));
+    Candidates.push_back(make_unique<BinOpChain>(Mul, LHS, RHS));
   }
 }
 
@@ -507,7 +507,7 @@ static void AliasCandidates(BasicBlock *Header, Instructions &Reads,
 static bool AreAliased(AliasAnalysis *AA, Instructions &Reads,
                        Instructions &Writes, OpChainList &MACCandidates) {
   LLVM_DEBUG(dbgs() << "Alias checks:\n");
-  for (auto *MAC : MACCandidates) {
+  for (auto &MAC : MACCandidates) {
     LLVM_DEBUG(dbgs() << "mul: "; MAC->Root->dump());
 
     // At the moment, we allow only simple chains that only consist of reads,
@@ -536,7 +536,7 @@ static bool AreAliased(AliasAnalysis *AA, Instructions &Reads,
 }
 
 static bool CheckMACMemory(OpChainList &Candidates) {
-  for (auto *C : Candidates) {
+  for (auto &C : Candidates) {
     // A mul has 2 operands, and a narrow op consist of sext and a load; thus
     // we expect at least 4 items in this operand value list.
     if (C->size() < 4) {
@@ -544,8 +544,8 @@ static bool CheckMACMemory(OpChainList &Candidates) {
       return false;
     }
     C->SetMemoryLocations();
-    ValueList &LHS = static_cast<BinOpChain*>(C)->LHS;
-    ValueList &RHS = static_cast<BinOpChain*>(C)->RHS;
+    ValueList &LHS = static_cast<BinOpChain*>(C.get())->LHS;
+    ValueList &RHS = static_cast<BinOpChain*>(C.get())->RHS;
 
     // Use +=2 to skip over the expected extend instructions.
     for (unsigned i = 0, e = LHS.size(); i < e; i += 2) {
@@ -604,7 +604,7 @@ bool ARMParallelDSP::MatchSMLAD(Function &F) {
     if (!CheckMACMemory(MACCandidates))
       continue;
 
-    R.MACCandidates = MACCandidates;
+    R.MACCandidates = std::move(MACCandidates);
 
     LLVM_DEBUG(dbgs() << "MAC candidates:\n";
       for (auto &M : R.MACCandidates)
@@ -623,8 +623,6 @@ bool ARMParallelDSP::MatchSMLAD(Function &F) {
       return false;
     PMACPairList PMACPairs = CreateParallelMACPairs(R.MACCandidates);
     Changed |= InsertParallelMACs(R, PMACPairs);
-    for (auto *C : R.MACCandidates)
-      delete C;
   }
 
   LLVM_DEBUG(if (Changed) dbgs() << "Header block:\n"; Header->dump(););
