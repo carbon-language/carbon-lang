@@ -1020,6 +1020,7 @@ static void warnBracedScalarInit(Sema &S, const InitializedEntity &Entity,
   case InitializedEntity::EK_BlockElement:
   case InitializedEntity::EK_LambdaToBlockConversionBlockElement:
   case InitializedEntity::EK_Binding:
+  case InitializedEntity::EK_StmtExprResult:
     llvm_unreachable("unexpected braced scalar init");
   }
 
@@ -3000,6 +3001,7 @@ DeclarationName InitializedEntity::getName() const {
     return DeclarationName(Capture.VarID);
       
   case EK_Result:
+  case EK_StmtExprResult:
   case EK_Exception:
   case EK_New:
   case EK_Temporary:
@@ -3030,6 +3032,7 @@ ValueDecl *InitializedEntity::getDecl() const {
     return reinterpret_cast<ParmVarDecl*>(Parameter & ~0x1);
 
   case EK_Result:
+  case EK_StmtExprResult:
   case EK_Exception:
   case EK_New:
   case EK_Temporary:
@@ -3055,6 +3058,7 @@ bool InitializedEntity::allowsNRVO() const {
   case EK_Exception:
     return LocAndNRVO.NRVO;
 
+  case EK_StmtExprResult:
   case EK_Variable:
   case EK_Parameter:
   case EK_Parameter_CF_Audited:
@@ -3090,6 +3094,7 @@ unsigned InitializedEntity::dumpImpl(raw_ostream &OS) const {
   case EK_Parameter_CF_Audited: OS << "CF audited function Parameter";
     break;
   case EK_Result: OS << "Result"; break;
+  case EK_StmtExprResult: OS << "StmtExprResult"; break;
   case EK_Exception: OS << "Exception"; break;
   case EK_Member: OS << "Member"; break;
   case EK_Binding: OS << "Binding"; break;
@@ -3534,7 +3539,8 @@ static void MaybeProduceObjCObject(Sema &S,
   /// retainable type, then returns need to immediately retain the
   /// object.  If an autorelease is required, it will be done at the
   /// last instant.
-  } else if (Entity.getKind() == InitializedEntity::EK_Result) {
+  } else if (Entity.getKind() == InitializedEntity::EK_Result ||
+             Entity.getKind() == InitializedEntity::EK_StmtExprResult) {
     if (!Entity.getType()->isObjCRetainableType())
       return;
 
@@ -5632,6 +5638,7 @@ getAssignmentAction(const InitializedEntity &Entity, bool Diagnose = false) {
     return !Diagnose ? Sema::AA_Passing : Sema::AA_Passing_CFAudited;
       
   case InitializedEntity::EK_Result:
+  case InitializedEntity::EK_StmtExprResult: // FIXME: Not quite right.
     return Sema::AA_Returning;
 
   case InitializedEntity::EK_Temporary:
@@ -5661,6 +5668,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_Member:
   case InitializedEntity::EK_Result:
+  case InitializedEntity::EK_StmtExprResult:
   case InitializedEntity::EK_New:
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_Base:
@@ -5690,6 +5698,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
 static bool shouldDestroyEntity(const InitializedEntity &Entity) {
   switch (Entity.getKind()) {
     case InitializedEntity::EK_Result:
+    case InitializedEntity::EK_StmtExprResult:
     case InitializedEntity::EK_New:
     case InitializedEntity::EK_Base:
     case InitializedEntity::EK_Delegating:
@@ -5721,6 +5730,7 @@ static SourceLocation getInitializationLoc(const InitializedEntity &Entity,
                                            Expr *Initializer) {
   switch (Entity.getKind()) {
   case InitializedEntity::EK_Result:
+  case InitializedEntity::EK_StmtExprResult:
     return Entity.getReturnLoc();
 
   case InitializedEntity::EK_Exception:
@@ -6168,6 +6178,7 @@ InitializedEntityOutlivesFullExpression(const InitializedEntity &Entity) {
   switch (Top->getKind()) {
   case InitializedEntity::EK_Variable:
   case InitializedEntity::EK_Result:
+  case InitializedEntity::EK_StmtExprResult:
   case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_Member:
   case InitializedEntity::EK_Binding:
@@ -6215,6 +6226,10 @@ enum LifetimeKind {
   /// The lifetime of a temporary bound to this entity ends too soon, because
   /// the entity is a return object.
   LK_Return,
+
+  /// The lifetime of a temporary bound to this entity ends too soon, because
+  /// the entity is the result of a statement expression.
+  LK_StmtExprResult,
 
   /// This is a mem-initializer: if it would extend a temporary (other than via
   /// a default member initializer), the program is ill-formed.
@@ -6273,6 +6288,11 @@ static LifetimeResult getEntityLifetime(
     //      function return statement is not extended; the temporary is
     //      destroyed at the end of the full-expression in the return statement.
     return {nullptr, LK_Return};
+
+  case InitializedEntity::EK_StmtExprResult:
+    // FIXME: Should we lifetime-extend through the result of a statement
+    // expression?
+    return {nullptr, LK_StmtExprResult};
 
   case InitializedEntity::EK_New:
     //   -- A temporary bound to a reference in a new-initializer persists
@@ -6582,6 +6602,7 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
         break;
 
       case LK_Return:
+      case LK_StmtExprResult:
         // FIXME: Move -Wreturn-stack-address checks here.
         return false;
       }
@@ -6660,6 +6681,7 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
       break;
 
     case LK_Return:
+    case LK_StmtExprResult:
       // FIXME: Move -Wreturn-stack-address checks here.
       return false;
     }
