@@ -10,9 +10,9 @@ xor %bx, %dx
 
 # CHECK:      Iterations:        1500
 # CHECK-NEXT: Instructions:      4500
-# CHECK-NEXT: Total Cycles:      1129
+# CHECK-NEXT: Total Cycles:      4503
 # CHECK-NEXT: Dispatch Width:    4
-# CHECK-NEXT: IPC:               3.99
+# CHECK-NEXT: IPC:               1.00
 # CHECK-NEXT: Block RThroughput: 0.8
 
 # CHECK:      Instruction Info:
@@ -48,31 +48,32 @@ xor %bx, %dx
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   Instructions:
-# CHECK-NEXT:  -      -      -     0.25   0.75    -      -      -      -      -      -      -     addw	%cx, %dx
-# CHECK-NEXT:  -      -     0.25    -      -     0.75    -      -      -      -      -      -     movw	%ax, %dx
-# CHECK-NEXT:  -      -     0.50   0.50    -      -      -      -      -      -      -      -     xorw	%bx, %dx
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     addw	%cx, %dx
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     movw	%ax, %dx
+# CHECK-NEXT:  -      -     0.25   0.25   0.25   0.25    -      -      -      -      -      -     xorw	%bx, %dx
 
 # CHECK:      Timeline view:
-# CHECK-NEXT: Index     012345678
+# CHECK-NEXT:                     0123456789
+# CHECK-NEXT: Index     0123456789          0
 
-# CHECK:      [0,0]     DeER .  .   addw	%cx, %dx
-# CHECK-NEXT: [0,1]     DeER .  .   movw	%ax, %dx
-# CHECK-NEXT: [0,2]     D=eER.  .   xorw	%bx, %dx
-# CHECK-NEXT: [1,0]     D==eER  .   addw	%cx, %dx
-# CHECK-NEXT: [1,1]     .DeE-R  .   movw	%ax, %dx
-# CHECK-NEXT: [1,2]     .D=eER  .   xorw	%bx, %dx
-# CHECK-NEXT: [2,0]     .D==eER .   addw	%cx, %dx
-# CHECK-NEXT: [2,1]     .DeE--R .   movw	%ax, %dx
-# CHECK-NEXT: [2,2]     . DeE-R .   xorw	%bx, %dx
-# CHECK-NEXT: [3,0]     . D=eER .   addw	%cx, %dx
-# CHECK-NEXT: [3,1]     . DeE-R .   movw	%ax, %dx
-# CHECK-NEXT: [3,2]     . D=eER .   xorw	%bx, %dx
-# CHECK-NEXT: [4,0]     .  D=eER.   addw	%cx, %dx
-# CHECK-NEXT: [4,1]     .  DeE-R.   movw	%ax, %dx
-# CHECK-NEXT: [4,2]     .  D=eER.   xorw	%bx, %dx
-# CHECK-NEXT: [5,0]     .  D==eER   addw	%cx, %dx
-# CHECK-NEXT: [5,1]     .   DeE-R   movw	%ax, %dx
-# CHECK-NEXT: [5,2]     .   D=eER   xorw	%bx, %dx
+# CHECK:      [0,0]     DeER .    .    .    .   addw	%cx, %dx
+# CHECK-NEXT: [0,1]     D=eER.    .    .    .   movw	%ax, %dx
+# CHECK-NEXT: [0,2]     D==eER    .    .    .   xorw	%bx, %dx
+# CHECK-NEXT: [1,0]     D===eER   .    .    .   addw	%cx, %dx
+# CHECK-NEXT: [1,1]     .D===eER  .    .    .   movw	%ax, %dx
+# CHECK-NEXT: [1,2]     .D====eER .    .    .   xorw	%bx, %dx
+# CHECK-NEXT: [2,0]     .D=====eER.    .    .   addw	%cx, %dx
+# CHECK-NEXT: [2,1]     .D======eER    .    .   movw	%ax, %dx
+# CHECK-NEXT: [2,2]     . D======eER   .    .   xorw	%bx, %dx
+# CHECK-NEXT: [3,0]     . D=======eER  .    .   addw	%cx, %dx
+# CHECK-NEXT: [3,1]     . D========eER .    .   movw	%ax, %dx
+# CHECK-NEXT: [3,2]     . D=========eER.    .   xorw	%bx, %dx
+# CHECK-NEXT: [4,0]     .  D=========eER    .   addw	%cx, %dx
+# CHECK-NEXT: [4,1]     .  D==========eER   .   movw	%ax, %dx
+# CHECK-NEXT: [4,2]     .  D===========eER  .   xorw	%bx, %dx
+# CHECK-NEXT: [5,0]     .  D============eER .   addw	%cx, %dx
+# CHECK-NEXT: [5,1]     .   D============eER.   movw	%ax, %dx
+# CHECK-NEXT: [5,2]     .   D=============eER   xorw	%bx, %dx
 
 # CHECK:      Average Wait times (based on the timeline view):
 # CHECK-NEXT: [0]: Executions
@@ -81,6 +82,6 @@ xor %bx, %dx
 # CHECK-NEXT: [3]: Average time elapsed from WB until retire stage
 
 # CHECK:            [0]    [1]    [2]    [3]
-# CHECK-NEXT: 0.     6     2.3    0.2    0.0       addw	%cx, %dx
-# CHECK-NEXT: 1.     6     1.0    1.0    1.0       movw	%ax, %dx
-# CHECK-NEXT: 2.     6     1.8    0.0    0.2       xorw	%bx, %dx
+# CHECK-NEXT: 0.     6     7.0    0.2    0.0       addw	%cx, %dx
+# CHECK-NEXT: 1.     6     7.7    0.0    0.0       movw	%ax, %dx
+# CHECK-NEXT: 2.     6     8.5    0.0    0.0       xorw	%bx, %dx

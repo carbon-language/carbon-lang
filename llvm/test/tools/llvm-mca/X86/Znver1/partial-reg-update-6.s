@@ -12,9 +12,9 @@ lzcnt 2(%rsp), %cx
 
 # CHECK:      Iterations:        1500
 # CHECK-NEXT: Instructions:      4500
-# CHECK-NEXT: Total Cycles:      4507
+# CHECK-NEXT: Total Cycles:      10503
 # CHECK-NEXT: Dispatch Width:    4
-# CHECK-NEXT: IPC:               1.00
+# CHECK-NEXT: IPC:               0.43
 # CHECK-NEXT: Block RThroughput: 1.3
 
 # CHECK:      Instruction Info:
@@ -46,7 +46,7 @@ lzcnt 2(%rsp), %cx
 
 # CHECK:      Resource pressure per iteration:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]
-# CHECK-NEXT: 1.00   1.00   0.66   1.00   0.67   0.67    -      -      -      -      -     1.00
+# CHECK-NEXT: 1.00   1.00   0.67   1.00   0.67   0.67    -      -      -      -      -     1.00
 
 # CHECK:      Resource pressure by instruction:
 # CHECK-NEXT: [0]    [1]    [2]    [3]    [4]    [5]    [6]    [7]    [8]    [9]    [10]   [11]   Instructions:
@@ -55,21 +55,21 @@ lzcnt 2(%rsp), %cx
 # CHECK-NEXT: 1.00    -     0.33    -     0.33   0.33    -      -      -      -      -      -     lzcntw	2(%rsp), %cx
 
 # CHECK:      Timeline view:
-# CHECK-NEXT:                     012345678
-# CHECK-NEXT: Index     0123456789
+# CHECK-NEXT:                     0123456789          0
+# CHECK-NEXT: Index     0123456789          0123456789
 
-# CHECK:      [0,0]     DeeeER    .    .  .   imull	%edx, %ecx
-# CHECK-NEXT: [0,1]     DeeeeeeER .    .  .   lzcntw	(%rsp), %cx
-# CHECK-NEXT: [0,2]     .DeeeeeeER.    .  .   lzcntw	2(%rsp), %cx
-# CHECK-NEXT: [1,0]     .D======eeeER  .  .   imull	%edx, %ecx
-# CHECK-NEXT: [1,1]     . DeeeeeeE--R  .  .   lzcntw	(%rsp), %cx
-# CHECK-NEXT: [1,2]     . DeeeeeeE--R  .  .   lzcntw	2(%rsp), %cx
-# CHECK-NEXT: [2,0]     .  D=======eeeER  .   imull	%edx, %ecx
-# CHECK-NEXT: [2,1]     .  DeeeeeeE----R  .   lzcntw	(%rsp), %cx
-# CHECK-NEXT: [2,2]     .   DeeeeeeE---R  .   lzcntw	2(%rsp), %cx
-# CHECK-NEXT: [3,0]     .   D=========eeeER   imull	%edx, %ecx
-# CHECK-NEXT: [3,1]     .    DeeeeeeE-----R   lzcntw	(%rsp), %cx
-# CHECK-NEXT: [3,2]     .    DeeeeeeE-----R   lzcntw	2(%rsp), %cx
+# CHECK:      [0,0]     DeeeER    .    .    .    .    .   imull	%edx, %ecx
+# CHECK-NEXT: [0,1]     DeeeeeeER .    .    .    .    .   lzcntw	(%rsp), %cx
+# CHECK-NEXT: [0,2]     .DeeeeeeER.    .    .    .    .   lzcntw	2(%rsp), %cx
+# CHECK-NEXT: [1,0]     .D======eeeER  .    .    .    .   imull	%edx, %ecx
+# CHECK-NEXT: [1,1]     . D=====eeeeeeER    .    .    .   lzcntw	(%rsp), %cx
+# CHECK-NEXT: [1,2]     . D======eeeeeeER   .    .    .   lzcntw	2(%rsp), %cx
+# CHECK-NEXT: [2,0]     .  D===========eeeER.    .    .   imull	%edx, %ecx
+# CHECK-NEXT: [2,1]     .  D===========eeeeeeER  .    .   lzcntw	(%rsp), %cx
+# CHECK-NEXT: [2,2]     .   D===========eeeeeeER .    .   lzcntw	2(%rsp), %cx
+# CHECK-NEXT: [3,0]     .   D=================eeeER   .   imull	%edx, %ecx
+# CHECK-NEXT: [3,1]     .    D================eeeeeeER.   lzcntw	(%rsp), %cx
+# CHECK-NEXT: [3,2]     .    D=================eeeeeeER   lzcntw	2(%rsp), %cx
 
 # CHECK:      Average Wait times (based on the timeline view):
 # CHECK-NEXT: [0]: Executions
@@ -78,6 +78,6 @@ lzcnt 2(%rsp), %cx
 # CHECK-NEXT: [3]: Average time elapsed from WB until retire stage
 
 # CHECK:            [0]    [1]    [2]    [3]
-# CHECK-NEXT: 0.     4     6.5    0.3    0.0       imull	%edx, %ecx
-# CHECK-NEXT: 1.     4     1.0    1.0    2.8       lzcntw	(%rsp), %cx
-# CHECK-NEXT: 2.     4     1.0    1.0    2.5       lzcntw	2(%rsp), %cx
+# CHECK-NEXT: 0.     4     9.5    0.3    0.0       imull	%edx, %ecx
+# CHECK-NEXT: 1.     4     9.0    0.0    0.0       lzcntw	(%rsp), %cx
+# CHECK-NEXT: 2.     4     9.5    0.0    0.0       lzcntw	2(%rsp), %cx
