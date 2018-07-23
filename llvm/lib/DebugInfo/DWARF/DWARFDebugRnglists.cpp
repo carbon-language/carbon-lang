@@ -24,10 +24,12 @@ static Error createError(char const *Fmt, const Ts &... Vals) {
   return make_error<StringError>(Stream.str(), inconvertibleErrorCode());
 }
 
+namespace llvm {   // workaround for gcc bug
 template <>
 Error DWARFListType<RangeListEntry>::createError(const char *Fmt, const char *s,
                                                  uint32_t Val) {
   return ::createError(Fmt, s, Val);
+}
 }
 
 Error RangeListEntry::extract(DWARFDataExtractor Data, uint32_t End,
