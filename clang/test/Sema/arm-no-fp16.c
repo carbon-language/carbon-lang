@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple thumbv7-none-eabi %s -target-feature +neon -target-feature -fp16 -fsyntax-only -verify
+// RUN: %clang_cc1 -triple thumbv7-none-eabi %s -target-feature +neon \
+// RUN:   -fallow-half-arguments-and-returns -target-feature -fp16 \
+// RUN:   -fsyntax-only -verify
 
 #include <arm_neon.h>
 
@@ -64,4 +66,20 @@ float16x4_t test_vrndx_f16(float16x4_t a) {
 
 float16x8_t test_vrndxq_f16(float16x8_t a) {
   return vrndxq_f16(a); // expected-warning{{implicit declaration of function 'vrndxq_f16'}} expected-error{{returning 'int' from a function with incompatible result type 'float16x8_t'}}
+}
+
+float16x4_t test_vmaxnm_f16(float16x4_t a, float16x4_t b) {
+  return vmaxnm_f16(a, b); // expected-warning{{implicit declaration of function 'vmaxnm_f16'}} expected-error{{returning 'int' from a function with incompatible result type 'float16x4_t'}}
+}
+
+float16x8_t test_vmaxnmq_f16(float16x8_t a, float16x8_t b) {
+  return vmaxnmq_f16(a, b); // expected-warning{{implicit declaration of function 'vmaxnmq_f16'}} expected-error{{returning 'int' from a function with incompatible result type 'float16x8_t'}}
+}
+
+float16x4_t test_vminnm_f16(float16x4_t a, float16x4_t b) {
+  return vminnm_f16(a, b); // expected-warning{{implicit declaration of function 'vminnm_f16'}} expected-error{{returning 'int' from a function with incompatible result type 'float16x4_t'}}
+}
+
+float16x8_t test_vminnmq_f16(float16x8_t a, float16x8_t b) {
+  return vminnmq_f16(a, b); // expected-warning{{implicit declaration of function 'vminnmq_f16'}} expected-error{{returning 'int' from a function with incompatible result type 'float16x8_t'}}
 }

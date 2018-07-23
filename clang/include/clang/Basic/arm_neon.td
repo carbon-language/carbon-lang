@@ -1466,8 +1466,10 @@ let ArchGuard = "defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)" in {
   // Max/Min
   def VMAXH         : SInst<"vmax", "ddd", "hQh">;
   def VMINH         : SInst<"vmin", "ddd", "hQh">;
-  def FMAXNMH       : SInst<"vmaxnm", "ddd", "hQh">;
-  def FMINNMH       : SInst<"vminnm", "ddd", "hQh">;
+  let ArchGuard = "__ARM_ARCH >= 8 && defined(__ARM_FEATURE_NUMERIC_MAXMIN) && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)" in {
+    def FMAXNMH       : SInst<"vmaxnm", "ddd", "hQh">;
+    def FMINNMH       : SInst<"vminnm", "ddd", "hQh">;
+  }
 
   // Multiplication/Division
   def VMULH         : SOpInst<"vmul", "ddd", "hQh", OP_MUL>;
