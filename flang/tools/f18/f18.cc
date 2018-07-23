@@ -356,6 +356,7 @@ int main(int argc, char *const argv[]) {
       options.features.WarnOnAllNonstandard();
     } else if (arg == "-fopenmp") {
       options.features.Enable(Fortran::parser::LanguageFeature::OpenMP);
+      options.predefinitions.emplace_back("_OPENMP", "201511");
     } else if (arg == "-Werror") {
       driver.warningsAreErrors = true;
     } else if (arg == "-ed") {
