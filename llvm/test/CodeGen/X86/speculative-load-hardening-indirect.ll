@@ -37,9 +37,6 @@ define i32 @test_indirect_tail_call(i32 ()** %ptr) nounwind {
 ; X64-NEXT:    movq %rsp, %rax
 ; X64-NEXT:    movq $-1, %rcx
 ; X64-NEXT:    sarq $63, %rax
-; X64-NEXT:    movq %rax, %rcx
-; X64-NEXT:    shlq $47, %rcx
-; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    shlq $47, %rax
 ; X64-NEXT:    orq %rax, %rsp
 ; X64-NEXT:    jmpq *(%rdi) # TAILCALL
@@ -77,9 +74,6 @@ define i32 @test_indirect_tail_call_global() nounwind {
 ; X64-NEXT:    movq %rsp, %rax
 ; X64-NEXT:    movq $-1, %rcx
 ; X64-NEXT:    sarq $63, %rax
-; X64-NEXT:    movq %rax, %rcx
-; X64-NEXT:    shlq $47, %rcx
-; X64-NEXT:    orq %rcx, %rsp
 ; X64-NEXT:    shlq $47, %rax
 ; X64-NEXT:    orq %rax, %rsp
 ; X64-NEXT:    jmpq *{{.*}}(%rip) # TAILCALL
