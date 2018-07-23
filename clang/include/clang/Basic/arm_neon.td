@@ -1417,12 +1417,14 @@ let ArchGuard = "defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)" in {
   def VCVTP_U16    : SInst<"vcvtp_u16", "ud", "hQh">;
 
   // Vector rounding
-  def FRINTZH      : SInst<"vrnd",  "dd", "hQh">;
-  def FRINTNH      : SInst<"vrndn", "dd", "hQh">;
-  def FRINTAH      : SInst<"vrnda", "dd", "hQh">;
-  def FRINTPH      : SInst<"vrndp", "dd", "hQh">;
-  def FRINTMH      : SInst<"vrndm", "dd", "hQh">;
-  def FRINTXH      : SInst<"vrndx", "dd", "hQh">;
+  let ArchGuard = "__ARM_ARCH >= 8 && defined(__ARM_FEATURE_DIRECTED_ROUNDING) && defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)" in {
+    def FRINTZH      : SInst<"vrnd",  "dd", "hQh">;
+    def FRINTNH      : SInst<"vrndn", "dd", "hQh">;
+    def FRINTAH      : SInst<"vrnda", "dd", "hQh">;
+    def FRINTPH      : SInst<"vrndp", "dd", "hQh">;
+    def FRINTMH      : SInst<"vrndm", "dd", "hQh">;
+    def FRINTXH      : SInst<"vrndx", "dd", "hQh">;
+  }
 
   // Misc.
   def VABSH        : SInst<"vabs", "dd", "hQh">;
