@@ -6362,6 +6362,7 @@ using Local = Expr*;
 struct IndirectLocalPathEntry {
   enum EntryKind {
     DefaultInit,
+    Conditional,
     AddressOf,
     VarInit,
     LValToRVal,
@@ -6497,6 +6498,7 @@ static void visitLocalsRetainedByReferenceBinding(IndirectLocalPath &Path,
 
   case Stmt::ConditionalOperatorClass:
   case Stmt::BinaryConditionalOperatorClass: {
+    Path.push_back({IndirectLocalPathEntry::Conditional, Init});
     auto *C = cast<AbstractConditionalOperator>(Init);
     if (!C->getTrueExpr()->getType()->isVoidType())
       visitLocalsRetainedByReferenceBinding(Path, C->getTrueExpr(), RK, Visit);
@@ -6683,6 +6685,7 @@ static void visitLocalsRetainedByInitializer(IndirectLocalPath &Path,
 
   case Stmt::ConditionalOperatorClass:
   case Stmt::BinaryConditionalOperatorClass: {
+    Path.push_back({IndirectLocalPathEntry::Conditional, Init});
     auto *C = cast<AbstractConditionalOperator>(Init);
     // In C++, we can have a throw-expression operand, which has 'void' type
     // and isn't interesting from a lifetime perspective.
@@ -6714,10 +6717,31 @@ static void visitLocalsRetainedByInitializer(IndirectLocalPath &Path,
 /// supposed to lifetime-extend along (but don't).
 static bool shouldLifetimeExtendThroughPath(const IndirectLocalPath &Path) {
   for (auto Elem : Path) {
-    if (Elem.Kind != IndirectLocalPathEntry::DefaultInit)
+    if (Elem.Kind != IndirectLocalPathEntry::DefaultInit &&
+        Elem.Kind != IndirectLocalPathEntry::Conditional)
       return false;
   }
   return true;
+}
+
+/// Find the range for the first interesting entry in the path at or after I.
+static SourceRange nextPathEntryRange(const IndirectLocalPath &Path, unsigned I,
+                                      Expr *E) {
+  for (unsigned N = Path.size(); I != N; ++I) {
+    switch (Path[I].Kind) {
+    case IndirectLocalPathEntry::AddressOf:
+    case IndirectLocalPathEntry::LValToRVal:
+    case IndirectLocalPathEntry::Conditional:
+      // These exist primarily to mark the path as not permitting or
+      // supporting lifetime extension.
+      break;
+
+    case IndirectLocalPathEntry::DefaultInit:
+    case IndirectLocalPathEntry::VarInit:
+      return Path[I].E->getSourceRange();
+    }
+  }
+  return E->getSourceRange();
 }
 
 void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
@@ -6733,9 +6757,8 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
 
   auto TemporaryVisitor = [&](IndirectLocalPath &Path, Local L,
                               ReferenceKind RK) -> bool {
-    Expr *First = Path.empty() ? L : Path.front().E;
-    SourceLocation DiagLoc = First->getLocStart();
-    SourceRange DiagRange = First->getSourceRange();
+    SourceRange DiagRange = nextPathEntryRange(Path, 0, L);
+    SourceLocation DiagLoc = DiagRange.getBegin();
 
     switch (LK) {
     case LK_FullExpression:
@@ -6761,13 +6784,14 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
         // We're supposed to lifetime-extend the temporary along this path (per
         // the resolution of DR1815), but we don't support that yet.
         //
-        // FIXME: Properly handle this situation. Perhaps the easiest approach
+        // FIXME: Properly handle these situations.
+        // For the default member initializer case, perhaps the easiest approach
         // would be to clone the initializer expression on each use that would
         // lifetime extend its temporaries.
-        Diag(DiagLoc,
-             RK == RK_ReferenceBinding
-                 ? diag::warn_default_member_init_temporary_not_extended
-                 : diag::warn_default_member_init_init_list_not_extended)
+        Diag(DiagLoc, RK == RK_ReferenceBinding
+                          ? diag::warn_unsupported_temporary_not_extended
+                          : diag::warn_unsupported_init_list_not_extended)
+            << (Path.front().Kind == IndirectLocalPathEntry::Conditional)
             << DiagRange;
       } else {
         // FIXME: Warn on this.
@@ -6871,31 +6895,26 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
     for (unsigned I = 0; I != Path.size(); ++I) {
       auto Elem = Path[I];
 
-      // Highlight the range of the next step within this path element.
-      SourceRange Range;
-      if (I < Path.size() - 1)
-        Range = Path[I + 1].E->getSourceRange();
-      else
-        Range = L->getSourceRange();
-
       switch (Elem.Kind) {
       case IndirectLocalPathEntry::AddressOf:
       case IndirectLocalPathEntry::LValToRVal:
-        // These exist primarily to mark the path as not permitting lifetime
-        // extension.
+      case IndirectLocalPathEntry::Conditional:
+        // These exist primarily to mark the path as not permitting or
+        // supporting lifetime extension.
         break;
 
       case IndirectLocalPathEntry::DefaultInit: {
         auto *FD = cast<FieldDecl>(Elem.D);
         Diag(FD->getLocation(), diag::note_init_with_default_member_initalizer)
-            << FD << Range;
+            << FD << nextPathEntryRange(Path, I + 1, L);
         break;
       }
 
       case IndirectLocalPathEntry::VarInit:
         const VarDecl *VD = cast<VarDecl>(Elem.D);
         Diag(VD->getLocation(), diag::note_local_var_initializer)
-            << VD->getType()->isReferenceType() << VD->getDeclName() << Range;
+            << VD->getType()->isReferenceType() << VD->getDeclName()
+            << nextPathEntryRange(Path, I + 1, L);
         break;
       }
     }

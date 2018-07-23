@@ -7895,13 +7895,16 @@ def warn_new_dangling_initializer_list : Warning<
   "the allocated initializer list}0 "
   "will be destroyed at the end of the full-expression">,
   InGroup<DanglingInitializerList>;
-def warn_default_member_init_temporary_not_extended : Warning<
-  "sorry, lifetime extension of temporary created by aggregate initialization "
-  "using default member initializer is not supported; lifetime of temporary "
+def warn_unsupported_temporary_not_extended : Warning<
+  "sorry, lifetime extension of temporary created "
+  "%select{by aggregate initialization using default member initializer|"
+  "within conditional expression}0 "
+  "is not supported; lifetime of temporary "
   "will end at the end of the full-expression">, InGroup<DanglingField>;
-def warn_default_member_init_init_list_not_extended : Warning<
-  "sorry, lifetime extension of backing array of initializer list "
-  "created by aggregate initialization using default member initializer "
+def warn_unsupported_init_list_not_extended : Warning<
+  "sorry, lifetime extension of backing array of initializer list created "
+  "%select{by aggregate initialization using default member initializer|"
+  "within conditional expression}0 "
   "is not supported; lifetime of backing array will end at the end of the "
   "full-expression">, InGroup<DanglingInitializerList>;
 
