@@ -7849,8 +7849,8 @@ def warn_null_ret : Warning<
 
 // CHECK: returning address/reference of stack memory
 def warn_ret_stack_addr_ref : Warning<
-  "%select{address of|reference to}0 stack memory associated with local "
-  "variable %1 returned">,
+  "%select{address of|reference to}0 stack memory associated with "
+  "%select{local variable|parameter}2 %1 returned">,
   InGroup<ReturnStackAddress>;
 def warn_ret_local_temp_addr_ref : Warning<
   "returning %select{address of|reference to}0 local temporary object">,
@@ -7860,8 +7860,10 @@ def warn_ret_addr_label : Warning<
   InGroup<ReturnStackAddress>;
 def err_ret_local_block : Error<
   "returning block that lives on the local stack">;
-def note_ref_var_local_bind : Note<
-  "binding reference variable %0 here">;
+def note_local_var_initializer : Note<
+  "%select{via initialization of|binding reference}0 variable %1 here">;
+def note_init_with_default_member_initalizer : Note<
+  "initializing field %0 with default member initializer">;
 
 // Check for initializing a member variable with the address or a reference to
 // a constructor parameter.
@@ -7902,8 +7904,6 @@ def warn_default_member_init_init_list_not_extended : Warning<
   "created by aggregate initialization using default member initializer "
   "is not supported; lifetime of backing array will end at the end of the "
   "full-expression">, InGroup<DanglingInitializerList>;
-def note_in_default_member_initalizer_here : Note<
-  "in default member initializer for field %0 used here">;
 
 // For non-floating point, expressions of the form x == x or x != x
 // should result in a warning, since these always evaluate to a constant.
