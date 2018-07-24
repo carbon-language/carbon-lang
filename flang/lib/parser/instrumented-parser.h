@@ -66,8 +66,7 @@ public:
         Messages messages{std::move(state.messages())};
         std::optional<resultType> result{parser_.Parse(state)};
         log->Note(at, tag_, result.has_value(), state);
-        messages.Annex(state.messages());
-        state.messages() = std::move(messages);
+        state.messages().Restore(std::move(messages));
         return result;
       }
     }

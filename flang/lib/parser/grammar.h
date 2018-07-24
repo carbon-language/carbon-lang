@@ -49,9 +49,10 @@ namespace Fortran::parser {
 // R507 declaration-construct ->
 //        specification-construct | data-stmt | format-stmt |
 //        entry-stmt | stmt-function-stmt
-constexpr auto execPartLookAhead{first(actionStmt >> ok, openmpEndLoopDirective >> ok, openmpConstruct >> ok, "ASSOCIATE ("_tok,
-    "BLOCK"_tok, "SELECT"_tok, "CHANGE TEAM"_sptok, "CRITICAL"_tok, "DO"_tok,
-    "IF ("_tok, "WHERE ("_tok, "FORALL ("_tok)};
+constexpr auto execPartLookAhead{
+    first(actionStmt >> ok, openmpEndLoopDirective >> ok, openmpConstruct >> ok,
+        "ASSOCIATE ("_tok, "BLOCK"_tok, "SELECT"_tok, "CHANGE TEAM"_sptok,
+        "CRITICAL"_tok, "DO"_tok, "IF ("_tok, "WHERE ("_tok, "FORALL ("_tok)};
 constexpr auto declErrorRecovery{
     stmtErrorRecoveryStart >> !execPartLookAhead >> stmtErrorRecovery};
 TYPE_PARSER(recovery(

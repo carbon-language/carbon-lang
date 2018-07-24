@@ -713,7 +713,8 @@ void Walk(const OpenMPDeclareTargetConstruct::WithClause &x, V &visitor) {
     visitor.Post(x);
   }
 }
-template<typename M> void Walk(OpenMPDeclareTargetConstruct::WithClause &x, M &mutator) {
+template<typename M>
+void Walk(OpenMPDeclareTargetConstruct::WithClause &x, M &mutator) {
   if (mutator.Pre(x)) {
     Walk(x.maptype, mutator);
     Walk(x.names, mutator);

@@ -96,11 +96,11 @@ public:
     ParseState backtrack{state};
     std::optional<resultType> result{parser_.Parse(state)};
     if (result.has_value()) {
-      messages.Annex(state.messages());
+      state.messages().Restore(std::move(messages));
     } else {
       state = std::move(backtrack);
+      state.messages() = std::move(messages);
     }
-    state.messages() = std::move(messages);
     return result;
   }
 
@@ -296,8 +296,7 @@ public:
     if (!result.has_value()) {
       ParseRest<1>(result, state, backtrack);
     }
-    messages.Annex(state.messages());
-    state.messages() = std::move(messages);
+    state.messages().Restore(std::move(messages));
     return result;
   }
 
@@ -313,23 +312,7 @@ private:
           typename std::decay<decltype(parser)>::type::resultType>);
       result = parser.Parse(state);
       if (!result.has_value()) {
-        if (prevState.tokensMatched() > backtrack.tokensMatched()) {
-          if (state.tokensMatched() > backtrack.tokensMatched()) {
-            auto prevEnd{prevState.GetLocation()};
-            auto lastEnd{state.GetLocation()};
-            if (prevEnd == lastEnd) {
-              prevState.messages().Incorporate(state.messages());
-              if (state.anyDeferredMessages()) {
-                prevState.set_anyDeferredMessages();
-              }
-            }
-            if (prevEnd >= lastEnd) {
-              state = std::move(prevState);
-            }
-          } else {
-            state = std::move(prevState);
-          }
-        }
+        state.CombineFailedParses(prevState, backtrack.tokensMatched());
         ParseRest<J + 1>(result, state, backtrack);
       }
     }
@@ -365,41 +348,17 @@ public:
     Messages messages{std::move(state.messages())};
     ParseState backtrack{state};
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
-      messages.Annex(state.messages());
-      state.messages() = std::move(messages);
+      state.messages().Restore(std::move(messages));
       return ax;
     }
     ParseState paState{std::move(state)};
     state = std::move(backtrack);
     if (std::optional<resultType> bx{pb_.Parse(state)}) {
-      messages.Annex(state.messages());
-      state.messages() = std::move(messages);
+      state.messages().Restore(std::move(messages));
       return bx;
     }
-    // Both alternatives failed.  Retain the state (and messages) from the
-    // alternative parse that went the furthest and matched a token.
-    if (paState.tokensMatched() > backtrack.tokensMatched()) {
-      if (state.tokensMatched() > backtrack.tokensMatched()) {
-        auto paEnd{paState.GetLocation()};
-        auto pbEnd{state.GetLocation()};
-        if (paEnd > pbEnd) {
-          messages.Annex(paState.messages());
-          state = std::move(paState);
-        } else if (paEnd < pbEnd) {
-          messages.Annex(state.messages());
-        } else {
-          // It's a tie.
-          paState.messages().Incorporate(state.messages());
-          messages.Annex(paState.messages());
-        }
-      } else {
-        messages.Annex(paState.messages());
-        state = std::move(paState);
-      }
-    } else if (state.tokensMatched() > backtrack.tokensMatched()) {
-      messages.Annex(state.messages());
-    }
-    state.messages() = std::move(messages);
+    state.CombineFailedParses(paState, backtrack.tokensMatched());
+    state.messages().Restore(std::move(messages));
     std::optional<resultType> result;
     return result;
   }
@@ -443,8 +402,7 @@ public:
     }
     Messages messages{std::move(state.messages())};
     if (std::optional<resultType> ax{pa_.Parse(state)}) {
-      messages.Annex(state.messages());
-      state.messages() = std::move(messages);
+      state.messages().Restore(std::move(messages));
       return ax;
     }
     messages.Annex(state.messages());

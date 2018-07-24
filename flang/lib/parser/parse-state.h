@@ -218,6 +218,22 @@ public:
     return remain;
   }
 
+  void CombineFailedParses(ParseState &prev, std::size_t origTokensMatched) {
+    if (prev.tokensMatched_ > origTokensMatched) {
+      if (tokensMatched_ > origTokensMatched) {
+        if (prev.p_ == p_) {
+          prev.messages_.Incorporate(messages_);
+          prev.anyDeferredMessages_ |= anyDeferredMessages_;
+        }
+        if (prev.p_ >= p_) {
+          *this = std::move(prev);
+        }
+      } else {
+        *this = std::move(prev);
+      }
+    }
+  }
+
 private:
   // Text remaining to be parsed
   const char *p_{nullptr}, *limit_{nullptr};

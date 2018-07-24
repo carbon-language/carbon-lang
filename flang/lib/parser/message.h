@@ -196,6 +196,11 @@ public:
     }
   }
 
+  void Restore(Messages &&that) {
+    that.Annex(*this);
+    *this = std::move(that);
+  }
+
   void Incorporate(Messages &);
   void Copy(const Messages &);
   void Emit(std::ostream &, const CookedSource &cooked,
