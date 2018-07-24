@@ -144,10 +144,13 @@ define i32 @mult(i32, i32) local_unnamed_addr #0 {
 ; X86-NEXT:    retl
 ; X86-NEXT:  .LBB0_25:
 ; X86-NEXT:    .cfi_def_cfa_offset 8
-; X86-NEXT:    leal (%eax,%eax,4), %ecx
-; X86-NEXT:    shll $2, %ecx
-; X86-NEXT:    jmp .LBB0_12
+; X86-NEXT:    leal (%eax,%eax,8), %ecx
+; X86-NEXT:    leal (%eax,%ecx,2), %eax
+; X86-NEXT:    popl %esi
+; X86-NEXT:    .cfi_def_cfa_offset 4
+; X86-NEXT:    retl
 ; X86-NEXT:  .LBB0_26:
+; X86-NEXT:    .cfi_def_cfa_offset 8
 ; X86-NEXT:    shll $2, %eax
 ; X86-NEXT:    leal (%eax,%eax,4), %eax
 ; X86-NEXT:    popl %esi
@@ -330,9 +333,10 @@ define i32 @mult(i32, i32) local_unnamed_addr #0 {
 ; X64-HSW-NEXT:    # kill: def $eax killed $eax killed $rax
 ; X64-HSW-NEXT:    retq
 ; X64-HSW-NEXT:  .LBB0_22:
-; X64-HSW-NEXT:    leal (%rax,%rax,4), %ecx
-; X64-HSW-NEXT:    shll $2, %ecx
-; X64-HSW-NEXT:    jmp .LBB0_8
+; X64-HSW-NEXT:    leal (%rax,%rax,8), %ecx
+; X64-HSW-NEXT:    leal (%rax,%rcx,2), %eax
+; X64-HSW-NEXT:    # kill: def $eax killed $eax killed $rax
+; X64-HSW-NEXT:    retq
 ; X64-HSW-NEXT:  .LBB0_23:
 ; X64-HSW-NEXT:    shll $2, %eax
 ; X64-HSW-NEXT:    leal (%rax,%rax,4), %eax
