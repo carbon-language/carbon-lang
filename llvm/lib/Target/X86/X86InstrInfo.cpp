@@ -7557,30 +7557,35 @@ enum MachineOutlinerClass {
   MachineOutlinerTailCall
 };
 
-outliner::TargetCostInfo
-X86InstrInfo::getOutliningCandidateInfo(
-  std::vector<outliner::Candidate> &RepeatedSequenceLocs) const {
-  unsigned SequenceSize = std::accumulate(
-      RepeatedSequenceLocs[0].front(), std::next(RepeatedSequenceLocs[0].back()),
-      0, [](unsigned Sum, const MachineInstr &MI) {
-        // FIXME: x86 doesn't implement getInstSizeInBytes, so we can't
-        // tell the cost.  Just assume each instruction is one byte.
-        if (MI.isDebugInstr() || MI.isKill())
-          return Sum;
-        return Sum + 1;
-      });
+outliner::TargetCostInfo X86InstrInfo::getOutliningCandidateInfo(
+    std::vector<outliner::Candidate> &RepeatedSequenceLocs) const {
+  unsigned SequenceSize =
+      std::accumulate(RepeatedSequenceLocs[0].front(),
+                      std::next(RepeatedSequenceLocs[0].back()), 0,
+                      [](unsigned Sum, const MachineInstr &MI) {
+                        // FIXME: x86 doesn't implement getInstSizeInBytes, so
+                        // we can't tell the cost.  Just assume each instruction
+                        // is one byte.
+                        if (MI.isDebugInstr() || MI.isKill())
+                          return Sum;
+                        return Sum + 1;
+                      });
 
   // FIXME: Use real size in bytes for call and ret instructions.
-  if (RepeatedSequenceLocs[0].back()->isTerminator())
-    return outliner::TargetCostInfo(SequenceSize,
-                               1, // Number of bytes to emit call.
-                               0, // Number of bytes to emit frame.
-                               MachineOutlinerTailCall, // Type of call.
-                               MachineOutlinerTailCall // Type of frame.
-                              );
+  if (RepeatedSequenceLocs[0].back()->isTerminator()) {
+    for (outliner::Candidate &C : RepeatedSequenceLocs)
+      C.setCallInfo(MachineOutlinerTailCall, 1);
 
-  return outliner::TargetCostInfo(SequenceSize, 1, 1, MachineOutlinerDefault,
-                             MachineOutlinerDefault);
+    return outliner::TargetCostInfo(SequenceSize,
+                                    0, // Number of bytes to emit frame.
+                                    MachineOutlinerTailCall // Type of frame.
+    );
+  }
+
+  for (outliner::Candidate &C : RepeatedSequenceLocs)
+    C.setCallInfo(MachineOutlinerDefault, 1);
+
+  return outliner::TargetCostInfo(SequenceSize, 1, MachineOutlinerDefault);
 }
 
 bool X86InstrInfo::isFunctionSafeToOutlineFrom(MachineFunction &MF,
@@ -7683,9 +7688,9 @@ MachineBasicBlock::iterator
 X86InstrInfo::insertOutlinedCall(Module &M, MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator &It,
                                  MachineFunction &MF,
-                                 const outliner::TargetCostInfo &TCI) const {
+                                 const outliner::Candidate &C) const {
   // Is it a tail call?
-  if (TCI.CallConstructionID == MachineOutlinerTailCall) {
+  if (C.CallConstructionID == MachineOutlinerTailCall) {
     // Yes, just insert a JMP.
     It = MBB.insert(It,
                   BuildMI(MF, DebugLoc(), get(X86::JMP_1))

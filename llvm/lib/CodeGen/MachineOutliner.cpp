@@ -1279,7 +1279,7 @@ bool MachineOutliner::outline(
     const TargetInstrInfo &TII = *STI.getInstrInfo();
 
     // Insert a call to the new function and erase the old sequence.
-    auto CallInst = TII.insertOutlinedCall(M, MBB, StartIt, *OF.MF, C.TCI);
+    auto CallInst = TII.insertOutlinedCall(M, MBB, StartIt, *OF.MF, C);
 
     // If the caller tracks liveness, then we need to make sure that anything
     // we outline doesn't break liveness assumptions.
