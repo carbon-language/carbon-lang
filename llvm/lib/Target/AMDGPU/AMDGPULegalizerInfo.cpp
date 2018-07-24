@@ -172,7 +172,7 @@ AMDGPULegalizerInfo::AMDGPULegalizerInfo(const GCNSubtarget &ST,
   }
 
   // FIXME: Doesn't handle extract of illegal sizes.
-  getActionDefinitionsBuilder(G_EXTRACT)
+  getActionDefinitionsBuilder({G_EXTRACT, G_INSERT})
     .legalIf([=](const LegalityQuery &Query) {
         const LLT &Ty0 = Query.Types[0];
         const LLT &Ty1 = Query.Types[1];
