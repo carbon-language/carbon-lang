@@ -6774,7 +6774,7 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
     }
 
     case LK_MemInitializer: {
-      if (auto *MTE = dyn_cast<MaterializeTemporaryExpr>(L)) {
+      if (isa<MaterializeTemporaryExpr>(L)) {
         // Under C++ DR1696, if a mem-initializer (or a default member
         // initializer used by the absence of one) would lifetime-extend a
         // temporary, the program is ill-formed.
@@ -6833,7 +6833,7 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
     }
 
     case LK_New:
-      if (auto *MTE = dyn_cast<MaterializeTemporaryExpr>(L)) {
+      if (isa<MaterializeTemporaryExpr>(L)) {
         Diag(DiagLoc, RK == RK_ReferenceBinding
                           ? diag::warn_new_dangling_reference
                           : diag::warn_new_dangling_initializer_list)
