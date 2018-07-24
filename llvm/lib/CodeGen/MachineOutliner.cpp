@@ -710,22 +710,28 @@ struct MachineOutliner : public ModulePass {
     initializeMachineOutlinerPass(*PassRegistry::getPassRegistry());
   }
 
+  /// Remark output explaining that not outlining a set of candidates would be
+  /// better than outlining that set.
+  void emitNotOutliningCheaperRemark(
+      unsigned StringLen, std::vector<Candidate> &CandidatesForRepeatedSeq,
+      OutlinedFunction &OF);
+
   /// Find all repeated substrings that satisfy the outlining cost model.
   ///
   /// If a substring appears at least twice, then it must be represented by
-  /// an internal node which appears in at least two suffixes. Each suffix is
-  /// represented by a leaf node. To do this, we visit each internal node in
-  /// the tree, using the leaf children of each internal node. If an internal
-  /// node represents a beneficial substring, then we use each of its leaf
-  /// children to find the locations of its substring.
+  /// an internal node which appears in at least two suffixes. Each suffix
+  /// is represented by a leaf node. To do this, we visit each internal node
+  /// in the tree, using the leaf children of each internal node. If an
+  /// internal node represents a beneficial substring, then we use each of
+  /// its leaf children to find the locations of its substring.
   ///
   /// \param ST A suffix tree to query.
   /// \param TII TargetInstrInfo for the target.
   /// \param Mapper Contains outlining mapping information.
   /// \param[out] CandidateList Filled with candidates representing each
   /// beneficial substring.
-  /// \param[out] FunctionList Filled with a list of \p OutlinedFunctions each
-  /// type of candidate.
+  /// \param[out] FunctionList Filled with a list of \p OutlinedFunctions
+  /// each type of candidate.
   ///
   /// \returns The length of the longest candidate found.
   unsigned
@@ -823,6 +829,36 @@ ModulePass *createMachineOutlinerPass(bool RunOnAllFunctions) {
 INITIALIZE_PASS(MachineOutliner, DEBUG_TYPE, "Machine Function Outliner", false,
                 false)
 
+void MachineOutliner::emitNotOutliningCheaperRemark(
+    unsigned StringLen, std::vector<Candidate> &CandidatesForRepeatedSeq,
+    OutlinedFunction &OF) {
+  Candidate &C = CandidatesForRepeatedSeq.front();
+  MachineOptimizationRemarkEmitter MORE(*(C.getMF()), nullptr);
+  MORE.emit([&]() {
+    MachineOptimizationRemarkMissed R(DEBUG_TYPE, "NotOutliningCheaper",
+                                      C.front()->getDebugLoc(), C.getMBB());
+    R << "Did not outline " << NV("Length", StringLen) << " instructions"
+      << " from " << NV("NumOccurrences", CandidatesForRepeatedSeq.size())
+      << " locations."
+      << " Bytes from outlining all occurrences ("
+      << NV("OutliningCost", OF.getOutliningCost()) << ")"
+      << " >= Unoutlined instruction bytes ("
+      << NV("NotOutliningCost", OF.getNotOutlinedCost()) << ")"
+      << " (Also found at: ";
+
+    // Tell the user the other places the candidate was found.
+    for (unsigned i = 1, e = CandidatesForRepeatedSeq.size(); i < e; i++) {
+      R << NV((Twine("OtherStartLoc") + Twine(i)).str(),
+              CandidatesForRepeatedSeq[i].front()->getDebugLoc());
+      if (i != e - 1)
+        R << ", ";
+    }
+
+    R << ")";
+    return R;
+  });
+}
+
 unsigned MachineOutliner::findCandidates(
     SuffixTree &ST, const TargetInstrInfo &TII, InstructionMapper &Mapper,
     std::vector<std::shared_ptr<Candidate>> &CandidateList,
@@ -916,41 +952,12 @@ unsigned MachineOutliner::findCandidates(
     std::vector<unsigned> Seq;
     for (unsigned i = Leaf->SuffixIdx; i < Leaf->SuffixIdx + StringLen; i++)
       Seq.push_back(ST.Str[i]);
-    OutlinedFunction OF(FunctionList.size(), CandidatesForRepeatedSeq,
-                        Seq, TCI);
+    OutlinedFunction OF(FunctionList.size(), CandidatesForRepeatedSeq, Seq,
+                        TCI);
 
     // Is it better to outline this candidate than not?
     if (OF.getBenefit() < 1) {
-      // Outlining this candidate would take more instructions than not
-      // outlining.
-      // Emit a remark explaining why we didn't outline this candidate.
-      Candidate &C = CandidatesForRepeatedSeq.front();
-      MachineOptimizationRemarkEmitter MORE(*(C.getMF()), nullptr);
-      MORE.emit([&]() {
-        MachineOptimizationRemarkMissed R(DEBUG_TYPE, "NotOutliningCheaper",
-                                          C.front()->getDebugLoc(), C.getMBB());
-        R << "Did not outline " << NV("Length", StringLen) << " instructions"
-          << " from " << NV("NumOccurrences", CandidatesForRepeatedSeq.size())
-          << " locations."
-          << " Bytes from outlining all occurrences ("
-          << NV("OutliningCost", OF.getOutliningCost()) << ")"
-          << " >= Unoutlined instruction bytes ("
-          << NV("NotOutliningCost", OF.getNotOutlinedCost()) << ")"
-          << " (Also found at: ";
-
-        // Tell the user the other places the candidate was found.
-        for (unsigned i = 1, e = CandidatesForRepeatedSeq.size(); i < e; i++) {
-          R << NV((Twine("OtherStartLoc") + Twine(i)).str(),
-                  CandidatesForRepeatedSeq[i].front()->getDebugLoc());
-          if (i != e - 1)
-            R << ", ";
-        }
-
-        R << ")";
-        return R;
-      });
-
-      // Move to the next candidate.
+      emitNotOutliningCheaperRemark(StringLen, CandidatesForRepeatedSeq, OF);
       continue;
     }
 
