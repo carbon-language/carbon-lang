@@ -1884,35 +1884,30 @@ void X86SpeculativeLoadHardeningPass::hardenPostLoad(MachineInstr &MI) {
   auto *DefRC = MRI->getRegClass(OldDefReg);
   int DefRegBytes = TRI->getRegSizeInBits(*DefRC) / 8;
 
-  unsigned OrOpCodes[] = {X86::OR8rr, X86::OR16rr, X86::OR32rr, X86::OR64rr};
-  unsigned OrOpCode = OrOpCodes[Log2_32(DefRegBytes)];
+  unsigned StateReg = PS->SSA.GetValueAtEndOfBlock(&MBB);
 
-  unsigned SubRegImms[] = {X86::sub_8bit, X86::sub_16bit, X86::sub_32bit};
-
-  auto GetStateRegInRC = [&](const TargetRegisterClass &RC) {
-    unsigned StateReg = PS->SSA.GetValueAtEndOfBlock(&MBB);
-
-    int Bytes = TRI->getRegSizeInBits(RC) / 8;
-    // FIXME: Need to teach this about 32-bit mode.
-    if (Bytes != 8) {
-      unsigned SubRegImm = SubRegImms[Log2_32(Bytes)];
-      unsigned NarrowStateReg = MRI->createVirtualRegister(&RC);
-      BuildMI(MBB, MI.getIterator(), Loc, TII->get(TargetOpcode::COPY),
-              NarrowStateReg)
-          .addReg(StateReg, 0, SubRegImm);
-      StateReg = NarrowStateReg;
-    }
-    return StateReg;
-  };
+  // FIXME: Need to teach this about 32-bit mode.
+  if (DefRegBytes != 8) {
+    unsigned SubRegImms[] = {X86::sub_8bit, X86::sub_16bit, X86::sub_32bit};
+    unsigned SubRegImm = SubRegImms[Log2_32(DefRegBytes)];
+    unsigned NarrowStateReg = MRI->createVirtualRegister(DefRC);
+    BuildMI(MBB, MI.getIterator(), Loc, TII->get(TargetOpcode::COPY),
+            NarrowStateReg)
+        .addReg(StateReg, 0, SubRegImm);
+    StateReg = NarrowStateReg;
+  }
 
   auto InsertPt = std::next(MI.getIterator());
+
   unsigned FlagsReg = 0;
   if (isEFLAGSLive(MBB, InsertPt, *TRI))
     FlagsReg = saveEFLAGS(MBB, InsertPt, Loc);
 
-  unsigned StateReg = GetStateRegInRC(*DefRC);
   unsigned NewDefReg = MRI->createVirtualRegister(DefRC);
   DefOp.setReg(NewDefReg);
+
+  unsigned OrOpCodes[] = {X86::OR8rr, X86::OR16rr, X86::OR32rr, X86::OR64rr};
+  unsigned OrOpCode = OrOpCodes[Log2_32(DefRegBytes)];
   auto OrI = BuildMI(MBB, InsertPt, Loc, TII->get(OrOpCode), OldDefReg)
                  .addReg(StateReg)
                  .addReg(NewDefReg);
