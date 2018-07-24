@@ -257,6 +257,7 @@ bool Relocation::isPCRelative(uint64_t Type) {
 
   case ELF::R_X86_64_PC8:
   case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_PC64:
   case ELF::R_X86_64_GOTPCREL:
   case ELF::R_X86_64_PLT32:
   case ELF::R_X86_64_GOTTPOFF:
