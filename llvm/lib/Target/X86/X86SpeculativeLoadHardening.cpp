@@ -1866,11 +1866,13 @@ bool X86SpeculativeLoadHardeningPass::canHardenRegister(unsigned Reg) {
   return RC->hasSuperClassEq(GPRRegClasses[Log2_32(RegBytes)]);
 }
 
-// We can harden non-leaking loads into register without touching the address
-// by just hiding all of the loaded bits. We use an `or` instruction to do
-// this because having the poison value be all ones allows us to use the same
-// value below. And the goal is just for the loaded bits to not be exposed to
-// execution and coercing them to one is sufficient.
+/// Harden a load by hardening the loaded value in the defined register.
+///
+/// We can harden a non-leaking load into a register without touching the
+/// address by just hiding all of the loaded bits during misspeculation. We use
+/// an `or` instruction to do this because we set up our poison value as all
+/// ones. And the goal is just for the loaded bits to not be exposed to
+/// execution and coercing them to one is sufficient.
 void X86SpeculativeLoadHardeningPass::hardenPostLoad(MachineInstr &MI) {
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc Loc = MI.getDebugLoc();
