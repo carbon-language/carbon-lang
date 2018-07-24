@@ -19,6 +19,7 @@
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -4652,6 +4653,32 @@ static void addOperands(MachineInstrBuilder &MIB, ArrayRef<MachineOperand> MOs,
   }
 }
 
+static void updateOperandRegConstraints(MachineFunction &MF,
+                                        MachineInstr &NewMI,
+                                        const TargetInstrInfo &TII) {
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  const TargetRegisterInfo &TRI = *MRI.getTargetRegisterInfo();
+
+  for (int Idx : llvm::seq<int>(0, NewMI.getNumOperands())) {
+    MachineOperand &MO = NewMI.getOperand(Idx);
+    // We only need to update constraints on virtual register operands.
+    if (!MO.isReg())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!TRI.isVirtualRegister(Reg))
+      continue;
+
+    auto *NewRC = MRI.constrainRegClass(
+        Reg, TII.getRegClass(NewMI.getDesc(), Idx, &TRI, MF));
+    if (!NewRC) {
+      LLVM_DEBUG(
+          dbgs() << "WARNING: Unable to update register constraint for operand "
+                 << Idx << " of instruction:\n";
+          NewMI.dump(); dbgs() << "\n");
+    }
+  }
+}
+
 static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
                                      ArrayRef<MachineOperand> MOs,
                                      MachineBasicBlock::iterator InsertPt,
@@ -4674,6 +4701,8 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
     MachineOperand &MO = MI.getOperand(i);
     MIB.add(MO);
   }
+
+  updateOperandRegConstraints(MF, *NewMI, TII);
 
   MachineBasicBlock *MBB = InsertPt->getParent();
   MBB->insert(InsertPt, NewMI);
@@ -4700,6 +4729,8 @@ static MachineInstr *FuseInst(MachineFunction &MF, unsigned Opcode,
       MIB.add(MO);
     }
   }
+
+  updateOperandRegConstraints(MF, *NewMI, TII);
 
   MachineBasicBlock *MBB = InsertPt->getParent();
   MBB->insert(InsertPt, NewMI);
