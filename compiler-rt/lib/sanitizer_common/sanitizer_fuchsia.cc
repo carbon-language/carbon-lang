@@ -171,8 +171,9 @@ static void *DoAnonymousMmapOrDie(uptr size, const char *mem_type,
 
   // TODO(mcgrathr): Maybe allocate a VMAR for all sanitizer heap and use that?
   uintptr_t addr;
-  status = _zx_vmar_map(_zx_vmar_root_self(), 0, vmo, 0, size,
-                        ZX_VM_FLAG_PERM_READ | ZX_VM_FLAG_PERM_WRITE, &addr);
+  status =
+      _zx_vmar_map_old(_zx_vmar_root_self(), 0, vmo, 0, size,
+                       ZX_VM_FLAG_PERM_READ | ZX_VM_FLAG_PERM_WRITE, &addr);
   _zx_handle_close(vmo);
 
   if (status != ZX_OK) {
@@ -206,10 +207,10 @@ uptr ReservedAddressRange::Init(uptr init_size, const char *name,
   uintptr_t base;
   zx_handle_t vmar;
   zx_status_t status =
-      _zx_vmar_allocate(_zx_vmar_root_self(), 0, init_size,
-                        ZX_VM_FLAG_CAN_MAP_READ | ZX_VM_FLAG_CAN_MAP_WRITE |
-                            ZX_VM_FLAG_CAN_MAP_SPECIFIC,
-                        &vmar, &base);
+      _zx_vmar_allocate_old(_zx_vmar_root_self(), 0, init_size,
+                            ZX_VM_FLAG_CAN_MAP_READ | ZX_VM_FLAG_CAN_MAP_WRITE |
+                                ZX_VM_FLAG_CAN_MAP_SPECIFIC,
+                            &vmar, &base);
   if (status != ZX_OK)
     ReportMmapFailureAndDie(init_size, name, "zx_vmar_allocate", status);
   base_ = reinterpret_cast<void *>(base);
@@ -235,7 +236,7 @@ static uptr DoMmapFixedOrDie(zx_handle_t vmar, uptr fixed_addr, uptr map_size,
   DCHECK_GE(base + size_, map_size + offset);
   uintptr_t addr;
 
-  status = _zx_vmar_map(
+  status = _zx_vmar_map_old(
       vmar, offset, vmo, 0, map_size,
       ZX_VM_FLAG_PERM_READ | ZX_VM_FLAG_PERM_WRITE | ZX_VM_FLAG_SPECIFIC,
       &addr);
@@ -316,8 +317,9 @@ void *MmapAlignedOrDieOnFatalError(uptr size, uptr alignment,
   // beginning of the VMO, and unmap the excess before and after.
   size_t map_size = size + alignment;
   uintptr_t addr;
-  status = _zx_vmar_map(_zx_vmar_root_self(), 0, vmo, 0, map_size,
-                        ZX_VM_FLAG_PERM_READ | ZX_VM_FLAG_PERM_WRITE, &addr);
+  status =
+      _zx_vmar_map_old(_zx_vmar_root_self(), 0, vmo, 0, map_size,
+                       ZX_VM_FLAG_PERM_READ | ZX_VM_FLAG_PERM_WRITE, &addr);
   if (status == ZX_OK) {
     uintptr_t map_addr = addr;
     uintptr_t map_end = map_addr + map_size;
@@ -329,11 +331,11 @@ void *MmapAlignedOrDieOnFatalError(uptr size, uptr alignment,
                                    sizeof(info), NULL, NULL);
       if (status == ZX_OK) {
         uintptr_t new_addr;
-        status =
-            _zx_vmar_map(_zx_vmar_root_self(), addr - info.base, vmo, 0, size,
-                         ZX_VM_FLAG_PERM_READ | ZX_VM_FLAG_PERM_WRITE |
-                             ZX_VM_FLAG_SPECIFIC_OVERWRITE,
-                         &new_addr);
+        status = _zx_vmar_map_old(_zx_vmar_root_self(), addr - info.base, vmo,
+                                  0, size,
+                                  ZX_VM_FLAG_PERM_READ | ZX_VM_FLAG_PERM_WRITE |
+                                      ZX_VM_FLAG_SPECIFIC_OVERWRITE,
+                                  &new_addr);
         if (status == ZX_OK) CHECK_EQ(new_addr, addr);
       }
     }
@@ -393,8 +395,8 @@ bool ReadFileToBuffer(const char *file_name, char **buff, uptr *buff_size,
       if (vmo_size < max_len) max_len = vmo_size;
       size_t map_size = RoundUpTo(max_len, PAGE_SIZE);
       uintptr_t addr;
-      status = _zx_vmar_map(_zx_vmar_root_self(), 0, vmo, 0, map_size,
-                            ZX_VM_FLAG_PERM_READ, &addr);
+      status = _zx_vmar_map_old(_zx_vmar_root_self(), 0, vmo, 0, map_size,
+                                ZX_VM_FLAG_PERM_READ, &addr);
       if (status == ZX_OK) {
         *buff = reinterpret_cast<char *>(addr);
         *buff_size = map_size;
