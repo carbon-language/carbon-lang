@@ -22,7 +22,6 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
-#include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Analysis/AnalysisDeclContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CFGStmtMap.h"
@@ -307,26 +306,15 @@ public:
 
     CallEventRef<> Call =
         BRC.getStateManager().getCallEventManager().getCaller(SCtx, State);
+
     const PrintingPolicy &PP = BRC.getASTContext().getPrintingPolicy();
     const SourceManager &SM = BRC.getSourceManager();
-
-    // Region of interest corresponds to an IVar, exiting a method
-    // which could have written into that IVar, but did not.
-    if (const auto *MC = dyn_cast<ObjCMethodCall>(Call))
-      if (const auto *IvarR = dyn_cast<ObjCIvarRegion>(RegionOfInterest))
-        if (potentiallyWritesIntoIvar(Call->getRuntimeDefinition().getDecl(),
-                                      IvarR->getDecl()) &&
-            !isRegionOfInterestModifiedInFrame(N))
-          return notModifiedMemberDiagnostics(
-              Ctx, SM, PP, *CallExitLoc, Call,
-              MC->getReceiverSVal().getAsRegion());
-
     if (const auto *CCall = dyn_cast<CXXConstructorCall>(Call)) {
       const MemRegion *ThisRegion = CCall->getCXXThisVal().getAsRegion();
       if (RegionOfInterest->isSubRegionOf(ThisRegion)
           && !CCall->getDecl()->isImplicit()
           && !isRegionOfInterestModifiedInFrame(N))
-        return notModifiedMemberDiagnostics(Ctx, SM, PP, *CallExitLoc,
+        return notModifiedInConstructorDiagnostics(Ctx, SM, PP, *CallExitLoc,
                                                    CCall, ThisRegion);
     }
 
@@ -343,7 +331,7 @@ public:
           if (isRegionOfInterestModifiedInFrame(N))
             return nullptr;
 
-          return notModifiedParameterDiagnostics(
+          return notModifiedDiagnostics(
               Ctx, SM, PP, *CallExitLoc, Call, PVD, R, IndirectionLevel);
         }
         QualType PT = T->getPointeeType();
@@ -358,22 +346,6 @@ public:
   }
 
 private:
-
-  /// \return Whether the method declaration \p Parent
-  /// syntactically has a binary operation writing into the ivar \p Ivar.
-  bool potentiallyWritesIntoIvar(const Decl *Parent,
-                                 const ObjCIvarDecl *Ivar) {
-    using namespace ast_matchers;
-    if (!Parent)
-      return false;
-    StatementMatcher WriteIntoIvarM = binaryOperator(
-        hasOperatorName("="), hasLHS(ignoringParenImpCasts(objcIvarRefExpr(
-                                  hasDeclaration(equalsNode(Ivar))))));
-    StatementMatcher ParentM = stmt(hasDescendant(WriteIntoIvarM));
-    auto Matches = match(ParentM, *Parent->getBody(), Parent->getASTContext());
-    return !Matches.empty();
-  }
-
   /// Check and lazily calculate whether the region of interest is
   /// modified in the stack frame to which \p N belongs.
   /// The calculation is cached in FramesModifyingRegion.
@@ -442,21 +414,19 @@ private:
            Ty->getPointeeType().getCanonicalType().isConstQualified();
   }
 
-  /// \return Diagnostics piece for the member field not modified
-  /// in a given function.
-  std::shared_ptr<PathDiagnosticPiece> notModifiedMemberDiagnostics(
+  std::shared_ptr<PathDiagnosticPiece> notModifiedInConstructorDiagnostics(
       const LocationContext *Ctx,
       const SourceManager &SM,
       const PrintingPolicy &PP,
       CallExitBegin &CallExitLoc,
-      CallEventRef<> Call,
+      const CXXConstructorCall *Call,
       const MemRegion *ArgRegion) {
-    const char *TopRegionName = isa<ObjCMethodCall>(Call) ? "self" : "this";
     SmallString<256> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     os << DiagnosticsMsg;
-    bool out = prettyPrintRegionName(TopRegionName, "->", /*IsReference=*/true,
-                                     /*IndirectionLevel=*/1, ArgRegion, os, PP);
+    bool out = prettyPrintRegionName(
+        "this", "->", /*IsReference=*/true,
+        /*IndirectionLevel=*/1, ArgRegion, os, PP);
 
     // Return nothing if we have failed to pretty-print.
     if (!out)
@@ -464,16 +434,14 @@ private:
 
     os << "'";
     PathDiagnosticLocation L =
-        getPathDiagnosticLocation(CallExitLoc.getReturnStmt(), SM, Ctx, Call);
+        getPathDiagnosticLocation(nullptr, SM, Ctx, Call);
     return std::make_shared<PathDiagnosticEventPiece>(L, os.str());
   }
 
-  /// \return Diagnostics piece for the parameter \p PVD not modified
-  /// in a given function.
   /// \p IndirectionLevel How many times \c ArgRegion has to be dereferenced
   /// before we get to the super region of \c RegionOfInterest
   std::shared_ptr<PathDiagnosticPiece>
-  notModifiedParameterDiagnostics(const LocationContext *Ctx,
+  notModifiedDiagnostics(const LocationContext *Ctx,
                          const SourceManager &SM,
                          const PrintingPolicy &PP,
                          CallExitBegin &CallExitLoc,
@@ -513,8 +481,8 @@ private:
 
   /// Pretty-print region \p ArgRegion starting from parent to \p os.
   /// \return whether printing has succeeded
-  bool prettyPrintRegionName(StringRef TopRegionName,
-                             StringRef Sep,
+  bool prettyPrintRegionName(const char *TopRegionName,
+                             const char *Sep,
                              bool IsReference,
                              int IndirectionLevel,
                              const MemRegion *ArgRegion,
@@ -523,8 +491,7 @@ private:
     SmallVector<const MemRegion *, 5> Subregions;
     const MemRegion *R = RegionOfInterest;
     while (R != ArgRegion) {
-      if (!(isa<FieldRegion>(R) || isa<CXXBaseObjectRegion>(R) ||
-            isa<ObjCIvarRegion>(R)))
+      if (!(isa<FieldRegion>(R) || isa<CXXBaseObjectRegion>(R)))
         return false; // Pattern-matching failed.
       Subregions.push_back(R);
       R = cast<SubRegion>(R)->getSuperRegion();
@@ -551,10 +518,6 @@ private:
       if (const auto *FR = dyn_cast<FieldRegion>(*I)) {
         os << Sep;
         FR->getDecl()->getDeclName().print(os, PP);
-        Sep = ".";
-      } else if (const auto *IR = dyn_cast<ObjCIvarRegion>(*I)) {
-        os << "->";
-        IR->getDecl()->getDeclName().print(os, PP);
         Sep = ".";
       } else if (isa<CXXBaseObjectRegion>(*I)) {
         continue; // Just keep going up to the base region.
