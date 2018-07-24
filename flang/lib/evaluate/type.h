@@ -180,7 +180,7 @@ struct GenericScalar {
       u;
 };
 
-// Represents a type that any supported kind within a particular category.
+// Represents a type of any supported kind within a particular category.
 template<Category CAT> struct AnyKindType {
   static constexpr Category category{CAT};
   using Value = ScalarConstant<CAT>;
