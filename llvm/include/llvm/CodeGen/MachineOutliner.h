@@ -209,10 +209,19 @@ public:
                                             : NotOutlinedCost - OutlinedCost;
   }
 
-  OutlinedFunction(unsigned Name, unsigned OccurrenceCount,
+  OutlinedFunction(unsigned Name, std::vector<Candidate> &Cands,
                    const std::vector<unsigned> &Sequence, TargetCostInfo &TCI)
-      : OccurrenceCount(OccurrenceCount), Name(Name), Sequence(Sequence),
-        TCI(TCI) {}
+      : Name(Name), Sequence(Sequence), TCI(TCI) {
+    OccurrenceCount = Cands.size();
+    for (Candidate &C : Cands)
+      Candidates.push_back(std::make_shared<outliner::Candidate>(C));
+
+    unsigned B = getBenefit();
+    for (std::shared_ptr<Candidate> &C : Candidates) {
+      C->Benefit = B;
+      C->TCI = TCI;
+    }
+  }
 };
 } // namespace outliner
 } // namespace llvm

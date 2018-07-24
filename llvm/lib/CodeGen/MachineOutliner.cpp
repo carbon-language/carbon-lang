@@ -916,12 +916,11 @@ unsigned MachineOutliner::findCandidates(
     std::vector<unsigned> Seq;
     for (unsigned i = Leaf->SuffixIdx; i < Leaf->SuffixIdx + StringLen; i++)
       Seq.push_back(ST.Str[i]);
-    OutlinedFunction OF(FunctionList.size(), CandidatesForRepeatedSeq.size(),
+    OutlinedFunction OF(FunctionList.size(), CandidatesForRepeatedSeq,
                         Seq, TCI);
-    unsigned Benefit = OF.getBenefit();
 
     // Is it better to outline this candidate than not?
-    if (Benefit < 1) {
+    if (OF.getBenefit() < 1) {
       // Outlining this candidate would take more instructions than not
       // outlining.
       // Emit a remark explaining why we didn't outline this candidate.
@@ -958,19 +957,11 @@ unsigned MachineOutliner::findCandidates(
     if (StringLen > MaxLen)
       MaxLen = StringLen;
 
-    // At this point, the candidate class is seen as beneficial. Set their
-    // benefit values and save them in the candidate list.
-    std::vector<std::shared_ptr<Candidate>> CandidatesForFn;
-    for (Candidate &C : CandidatesForRepeatedSeq) {
-      C.Benefit = Benefit;
-      C.TCI = TCI;
-      std::shared_ptr<Candidate> Cptr = std::make_shared<Candidate>(C);
-      CandidateList.push_back(Cptr);
-      CandidatesForFn.push_back(Cptr);
-    }
-
+    // The function is beneficial. Save its candidates to the candidate list
+    // for pruning.
+    for (std::shared_ptr<Candidate> &C : OF.Candidates)
+      CandidateList.push_back(C);
     FunctionList.push_back(OF);
-    FunctionList.back().Candidates = CandidatesForFn;
 
     // Move to the next function.
     Parent.IsInTree = false;
