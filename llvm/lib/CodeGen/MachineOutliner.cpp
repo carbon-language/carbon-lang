@@ -947,13 +947,12 @@ unsigned MachineOutliner::findCandidates(
     // We've found something we might want to outline.
     // Create an OutlinedFunction to store it and check if it'd be beneficial
     // to outline.
-    TargetCostInfo TCI =
-        TII.getOutliningCandidateInfo(CandidatesForRepeatedSeq);
+    OutlinedFunction OF = TII.getOutliningCandidateInfo(CandidatesForRepeatedSeq);
     std::vector<unsigned> Seq;
     for (unsigned i = Leaf->SuffixIdx; i < Leaf->SuffixIdx + StringLen; i++)
       Seq.push_back(ST.Str[i]);
-    OutlinedFunction OF(FunctionList.size(), CandidatesForRepeatedSeq, Seq,
-                        TCI);
+    OF.Sequence = Seq;
+    OF.Name = FunctionList.size();
 
     // Is it better to outline this candidate than not?
     if (OF.getBenefit() < 1) {
@@ -1166,7 +1165,7 @@ MachineOutliner::createOutlinedFunction(Module &M, const OutlinedFunction &OF,
     MBB.insert(MBB.end(), NewMI);
   }
 
-  TII.buildOutlinedFrame(MBB, MF, OF.TCI);
+  TII.buildOutlinedFrame(MBB, MF, OF);
 
   // If there's a DISubprogram associated with this outlined function, then
   // emit debug info for the outlined function.
