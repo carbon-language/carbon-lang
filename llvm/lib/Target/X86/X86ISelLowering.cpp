@@ -33922,14 +33922,20 @@ static SDValue combineMul(SDNode *N, SelectionDAG &DAG,
             DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
                         DAG.getConstant(Log2_64(NumSign * SignMulAmt - 1), DL,
                                         MVT::i8)));
+        // To negate, subtract the number from zero
+        if (SignMulAmt < 0)
+          NewMul = DAG.getNode(ISD::SUB, DL, VT,
+                               DAG.getConstant(0, DL, VT), NewMul);
       } else if (IsPowerOf2_64MinusOne) {
         // (mul x, 2^N - 1) => (sub (shl x, N), x)
-        NewMul = DAG.getNode(
-            ISD::SUB, DL, VT,
-            DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
-                        DAG.getConstant(Log2_64(NumSign * SignMulAmt + 1), DL,
-                                        MVT::i8)),
-            N->getOperand(0));
+        NewMul = DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
+                             DAG.getConstant(Log2_64(NumSign * SignMulAmt + 1),
+                                             DL, MVT::i8));
+        // To negate, reverse the operands of the subtract.
+        if (SignMulAmt < 0)
+          NewMul = DAG.getNode(ISD::SUB, DL, VT, N->getOperand(0), NewMul);
+        else
+          NewMul = DAG.getNode(ISD::SUB, DL, VT, NewMul, N->getOperand(0));
       } else if (IsPowerOf2_64MinusTwo && NumSign == 1) {
         // (mul x, 2^N - 1) => (sub (shl x, N), x)
         NewMul = DAG.getNode(ISD::SHL, DL, VT, N->getOperand(0),
@@ -33938,10 +33944,6 @@ static SDValue combineMul(SDNode *N, SelectionDAG &DAG,
         NewMul = DAG.getNode(ISD::SUB, DL, VT, NewMul, N->getOperand(0));
         NewMul = DAG.getNode(ISD::SUB, DL, VT, NewMul, N->getOperand(0));
       }
-      // To negate, subtract the number from zero
-      if (NewMul && NumSign == -1)
-        NewMul =
-            DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), NewMul);
     }
   }
 
