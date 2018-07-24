@@ -35,8 +35,8 @@ namespace Fortran::evaluate {
 
 CLASS_TRAIT(FoldableTrait);
 struct FoldingContext {
-  const parser::CharBlock &at;
-  parser::Messages *messages;
+  parser::ContextualMessages &messages;
+  Rounding rounding{Rounding::TiesToEven};
 };
 
 // Helper base classes for packaging subexpressions.
@@ -227,43 +227,68 @@ public:
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
   struct Parentheses : public Un<Parentheses> {
     using Un<Parentheses>::Un;
+    static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &x) {
+      return {x};
+    }
   };
   struct Negate : public Un<Negate> {
     using Un<Negate>::Un;
+    static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &);
   };
   struct Add : public Bin<Add> {
     using Bin<Add>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Subtract : public Bin<Subtract> {
     using Bin<Subtract>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Multiply : public Bin<Multiply> {
     using Bin<Multiply>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Divide : public Bin<Divide> {
     using Bin<Divide>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Power : public Bin<Power> {
     using Bin<Power>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct IntPower
     : public Binary<IntPower, Result, Result, AnyKindType<Category::Integer>> {
     using Binary<IntPower, Result, Result,
         AnyKindType<Category::Integer>>::Binary;
+    static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &,
+        const ScalarConstant<Category::Integer> &);
   };
   struct Max : public Bin<Max> {
     using Bin<Max>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Min : public Bin<Min> {
     using Bin<Min>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
-  template<typename CRTP>
-  using CplxUn = Unary<CRTP, Result, Type<Category::Complex, KIND>>;
+  using Cplx = Type<Category::Complex, KIND>;
+  using CplxScalar = typename Cplx::Value;
+  template<typename CRTP> using CplxUn = Unary<CRTP, Result, Cplx>;
   struct RealPart : public CplxUn<RealPart> {
     using CplxUn<RealPart>::CplxUn;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const CplxScalar &);
   };
   struct AIMAG : public CplxUn<AIMAG> {
     using CplxUn<AIMAG>::CplxUn;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const CplxScalar &);
   };
 
   CLASS_BOILERPLATE(Expr)

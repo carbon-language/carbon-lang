@@ -16,6 +16,7 @@
 #include "variable.h"
 #include "../common/idioms.h"
 #include "../parser/characters.h"
+#include "../parser/message.h"
 #include <ostream>
 #include <string>
 #include <type_traits>
@@ -229,9 +230,8 @@ auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::ConvertSigned(x)};
-        if (converted.overflow && context.messages != nullptr) {
-          context.messages->Say(
-              context.at, "integer conversion overflowed"_en_US);
+        if (converted.overflow) {
+          context.messages.Say("integer conversion overflowed"_en_US);
           return {};
         }
         return {std::move(converted.value)};
@@ -245,17 +245,14 @@ auto IntegerExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{x.template ToInteger<Scalar>()};
-        if (context.messages != nullptr) {
-          if (converted.flags.test(RealFlag::Overflow)) {
-            context.messages->Say(
-                context.at, "real->integer conversion overflowed"_en_US);
-            return {};
-          }
-          if (converted.flags.test(RealFlag::InvalidArgument)) {
-            context.messages->Say(
-                context.at, "real->integer conversion: invalid argument"_en_US);
-            return {};
-          }
+        if (converted.flags.test(RealFlag::Overflow)) {
+          context.messages.Say("real->integer conversion overflowed"_en_US);
+          return {};
+        }
+        if (converted.flags.test(RealFlag::InvalidArgument)) {
+          context.messages.Say(
+              "real->integer conversion: invalid argument"_en_US);
+          return {};
         }
         return {std::move(converted.value)};
       },
@@ -266,8 +263,8 @@ template<int KIND>
 auto IntegerExpr<KIND>::Negate::FoldScalar(
     FoldingContext &context, const Scalar &c) -> std::optional<Scalar> {
   auto negated{c.Negate()};
-  if (negated.overflow && context.messages != nullptr) {
-    context.messages->Say(context.at, "integer negation overflowed"_en_US);
+  if (negated.overflow) {
+    context.messages.Say("integer negation overflowed"_en_US);
     return {};
   }
   return {std::move(negated.value)};
@@ -277,8 +274,8 @@ template<int KIND>
 auto IntegerExpr<KIND>::Add::FoldScalar(FoldingContext &context,
     const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
   auto sum{a.AddSigned(b)};
-  if (sum.overflow && context.messages != nullptr) {
-    context.messages->Say(context.at, "integer addition overflowed"_en_US);
+  if (sum.overflow) {
+    context.messages.Say("integer addition overflowed"_en_US);
     return {};
   }
   return {std::move(sum.value)};
@@ -288,8 +285,8 @@ template<int KIND>
 auto IntegerExpr<KIND>::Subtract::FoldScalar(FoldingContext &context,
     const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
   auto diff{a.SubtractSigned(b)};
-  if (diff.overflow && context.messages != nullptr) {
-    context.messages->Say(context.at, "integer subtraction overflowed"_en_US);
+  if (diff.overflow) {
+    context.messages.Say("integer subtraction overflowed"_en_US);
     return {};
   }
   return {std::move(diff.value)};
@@ -299,9 +296,8 @@ template<int KIND>
 auto IntegerExpr<KIND>::Multiply::FoldScalar(FoldingContext &context,
     const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
   auto product{a.MultiplySigned(b)};
-  if (product.SignedMultiplicationOverflowed() && context.messages != nullptr) {
-    context.messages->Say(
-        context.at, "integer multiplication overflowed"_en_US);
+  if (product.SignedMultiplicationOverflowed()) {
+    context.messages.Say("integer multiplication overflowed"_en_US);
     return {};
   }
   return {std::move(product.lower)};
@@ -311,15 +307,13 @@ template<int KIND>
 auto IntegerExpr<KIND>::Divide::FoldScalar(FoldingContext &context,
     const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
   auto qr{a.DivideSigned(b)};
-  if (context.messages != nullptr) {
-    if (qr.divisionByZero) {
-      context.messages->Say(context.at, "integer division by zero"_en_US);
-      return {};
-    }
-    if (qr.overflow) {
-      context.messages->Say(context.at, "integer division overflowed"_en_US);
-      return {};
-    }
+  if (qr.divisionByZero) {
+    context.messages.Say("integer division by zero"_en_US);
+    return {};
+  }
+  if (qr.overflow) {
+    context.messages.Say("integer division overflowed"_en_US);
+    return {};
   }
   return {std::move(qr.quotient)};
 }
@@ -328,19 +322,17 @@ template<int KIND>
 auto IntegerExpr<KIND>::Power::FoldScalar(FoldingContext &context,
     const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
   typename Scalar::PowerWithErrors power{a.Power(b)};
-  if (context.messages != nullptr) {
-    if (power.divisionByZero) {
-      context.messages->Say(context.at, "zero to negative power"_en_US);
-      return {};
-    }
-    if (power.overflow) {
-      context.messages->Say(context.at, "integer power overflowed"_en_US);
-      return {};
-    }
-    if (power.zeroToZero) {
-      context.messages->Say(context.at, "integer 0**0"_en_US);
-      return {};
-    }
+  if (power.divisionByZero) {
+    context.messages.Say("zero to negative power"_en_US);
+    return {};
+  }
+  if (power.overflow) {
+    context.messages.Say("integer power overflowed"_en_US);
+    return {};
+  }
+  if (power.zeroToZero) {
+    context.messages.Say("integer 0**0"_en_US);
+    return {};
   }
   return {std::move(power.power)};
 }
@@ -383,9 +375,150 @@ auto IntegerExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
       u_);
 }
 
+static void RealFlagWarnings(
+    FoldingContext &context, const RealFlags &flags, const char *operation) {
+  if (flags.test(RealFlag::Overflow)) {
+    context.messages.Say(
+        parser::MessageFormattedText("overflow on %s"_en_US, operation));
+  }
+  if (flags.test(RealFlag::DivideByZero)) {
+    context.messages.Say(parser::MessageFormattedText(
+        "division by zero on %s"_en_US, operation));
+  }
+  if (flags.test(RealFlag::InvalidArgument)) {
+    context.messages.Say(parser::MessageFormattedText(
+        "invalid argument on %s"_en_US, operation));
+  }
+  if (flags.test(RealFlag::Underflow)) {
+    context.messages.Say(
+        parser::MessageFormattedText("underflow on %s"_en_US, operation));
+  }
+}
+
+template<int KIND>
+auto RealExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
+    const ScalarConstant<Category::Integer> &c) -> std::optional<Scalar> {
+  return std::visit(
+      [&](auto &x) -> std::optional<Scalar> {
+        auto converted{Scalar::FromInteger(x)};
+        RealFlagWarnings(context, converted.flags, "integer->real conversion");
+        return {std::move(converted.value)};
+      },
+      c.u);
+}
+
+template<int KIND>
+auto RealExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
+    const ScalarConstant<Category::Real> &c) -> std::optional<Scalar> {
+  return std::visit(
+      [&](auto &x) -> std::optional<Scalar> {
+        auto converted{Scalar::Convert(x)};
+        RealFlagWarnings(context, converted.flags, "real conversion");
+        return {std::move(converted.value)};
+      },
+      c.u);
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Negate::FoldScalar(
+    FoldingContext &context, const Scalar &c) -> std::optional<Scalar> {
+  return {c.Negate()};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Add::FoldScalar(FoldingContext &context, const Scalar &a,
+    const Scalar &b) -> std::optional<Scalar> {
+  auto sum{a.Add(b, context.rounding)};
+  RealFlagWarnings(context, sum.flags, "real addition");
+  return {std::move(sum.value)};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Subtract::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  auto difference{a.Subtract(b, context.rounding)};
+  RealFlagWarnings(context, difference.flags, "real subtraction");
+  return {std::move(difference.value)};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Multiply::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  auto product{a.Multiply(b, context.rounding)};
+  RealFlagWarnings(context, product.flags, "real multiplication");
+  return {std::move(product.value)};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Divide::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  auto quotient{a.Divide(b, context.rounding)};
+  RealFlagWarnings(context, quotient.flags, "real division");
+  return {std::move(quotient.value)};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Power::FoldScalar(FoldingContext &context, const Scalar &a,
+    const Scalar &b) -> std::optional<Scalar> {
+  return {};  // TODO
+}
+
+template<int KIND>
+auto RealExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
+    const Scalar &a, const ScalarConstant<Category::Integer> &b)
+    -> std::optional<Scalar> {
+  return {};  // TODO
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Max::FoldScalar(FoldingContext &context, const Scalar &a,
+    const Scalar &b) -> std::optional<Scalar> {
+  if (b.IsNotANumber() || a.Compare(b) == Relation::Less) {
+    return {b};
+  }
+  return {a};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::Min::FoldScalar(FoldingContext &context, const Scalar &a,
+    const Scalar &b) -> std::optional<Scalar> {
+  if (b.IsNotANumber() || a.Compare(b) == Relation::Greater) {
+    return {b};
+  }
+  return {a};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::RealPart::FoldScalar(
+    FoldingContext &context, const CplxScalar &z) -> std::optional<Scalar> {
+  return {z.REAL()};
+}
+
+template<int KIND>
+auto RealExpr<KIND>::AIMAG::FoldScalar(
+    FoldingContext &context, const CplxScalar &z) -> std::optional<Scalar> {
+  return {z.AIMAG()};
+}
+
+// TODO: generalize over Expr<A> rather than instantiating same for each
 template<int KIND>
 auto RealExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
-  return {};  // TODO
+  return std::visit(
+      [&](auto &x) -> std::optional<Scalar> {
+        using Ty = typename std::decay<decltype(x)>::type;
+        if constexpr (std::is_same_v<Ty, Scalar>) {
+          return {x};
+        }
+        if constexpr (evaluate::FoldableTrait<Ty>) {
+          auto c{x.Fold(context)};
+          if (c.has_value()) {
+            u_ = *c;
+            return c;
+          }
+        }
+        return {};
+      },
+      u_);
 }
 
 template<int KIND>
@@ -416,6 +549,21 @@ auto Comparison<A>::FoldScalar(FoldingContext &c,
           opr == RelationalOperator::GT};
     }
   }
+  if constexpr (A::category == Category::Real) {
+    switch (a.Compare(b)) {
+    case Relation::Less:
+      return {opr == RelationalOperator::LE || opr == RelationalOperator::LE ||
+          opr == RelationalOperator::NE};
+    case Relation::Equal:
+      return {opr == RelationalOperator::LE || opr == RelationalOperator::EQ ||
+          opr == RelationalOperator::GE};
+    case Relation::Greater:
+      return {opr == RelationalOperator::NE || opr == RelationalOperator::GE ||
+          opr == RelationalOperator::GT};
+    case Relation::Unordered: return {};
+    }
+  }
+  // TODO complex and character comparisons
   return {};
 }
 

@@ -44,12 +44,14 @@ public:
   static constexpr std::uint64_t maxExponent{(1 << exponentBits) - 1};
   static constexpr std::uint64_t exponentBias{maxExponent / 2};
 
+  template<typename W, int P, bool I> friend class Real;
+
   constexpr Real() {}  // +0.0
   constexpr Real(const Real &) = default;
   constexpr Real(const Word &bits) : word_{bits} {}
   constexpr Real &operator=(const Real &) = default;
 
-  // TODO conversion from (or to?) (other) real types
+  // TODO: facility to flush denormal results to zero
   // TODO AINT/ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
   // HUGE, INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
   // PRECISION, HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN
@@ -199,6 +201,31 @@ public:
           result.value = negated.value;
         }
       }
+    }
+    return result;
+  }
+
+  template<typename A>
+  static ValueWithRealFlags<Real> Convert(
+      const A &x, Rounding rounding = Rounding::TiesToEven) {
+    bool isNegative{x.IsNegative()};
+    A absX{x};
+    if (isNegative) {
+      absX = x.Negate();
+    }
+    ValueWithRealFlags<Real> result;
+    std::uint64_t exponent{exponentBias + x.Exponent() - A::exponentBias};
+    int bitsLost{A::precision - precision};
+    typename A::Fraction xFraction{x.GetFraction()};
+    if (bitsLost <= 0) {
+      Fraction fraction{Fraction::ConvertUnsigned(xFraction).value};
+      result.flags |= result.value.Normalize(isNegative, exponent, fraction);
+    } else {
+      Fraction fraction{
+          Fraction::ConvertUnsigned(xFraction.SHIFTR(bitsLost)).value};
+      result.flags |= result.value.Normalize(isNegative, exponent, fraction);
+      RoundingBits roundingBits{xFraction, bitsLost};
+      result.flags |= result.value.Round(rounding, roundingBits);
     }
     return result;
   }

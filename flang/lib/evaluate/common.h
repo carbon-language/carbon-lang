@@ -115,6 +115,7 @@ using HostUnsignedInt =
 // - There are full copy and move semantics for construction and assignment.
 // - There's a Dump(std::ostream &) member function.
 #define CLASS_BOILERPLATE(t) \
+  t() = delete; \
   t(const t &) = default; \
   t(t &&) = default; \
   t &operator=(const t &) = default; \

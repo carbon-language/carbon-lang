@@ -31,7 +31,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
   std::optional<evaluate::GenericExpr> result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
     if (result->Rank() > 1) {
-      ea.Say("must be scalar"_err_en_US);
+      ea.context().messages.Say("must be scalar"_err_en_US);
       return {};
     }
   }
@@ -45,7 +45,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
   if (result.has_value()) {
     result->Fold(ea.context());
     if (!result->ScalarValue().has_value()) {
-      ea.Say("must be constant"_err_en_US);
+      ea.context().messages.Say("must be constant"_err_en_US);
       return {};
     }
   }
@@ -58,7 +58,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
   std::optional<evaluate::GenericExpr> result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value() &&
       !std::holds_alternative<evaluate::AnyKindIntegerExpr>(result->u)) {
-    ea.Say("must be integer"_err_en_US);
+    ea.context().messages.Say("must be integer"_err_en_US);
     return {};
   }
   return result;
@@ -95,7 +95,7 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
             if (kanjiKind >= 0) {
               return kanjiKind;
             }
-            Say("Kanji not allowed here"_err_en_US);
+            context().messages.Say("Kanji not allowed here"_err_en_US);
             return defaultKind;
           }},
       kindParam->u);
@@ -115,7 +115,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:
-    ea.Say(parser::MessageFormattedText{
+    ea.context().messages.Say(parser::MessageFormattedText{
         "unimplemented INTEGER kind (%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind)});
     return {};
