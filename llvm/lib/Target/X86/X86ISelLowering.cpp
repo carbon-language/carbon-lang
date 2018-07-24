@@ -33716,6 +33716,9 @@ static SDValue combineMulSpecial(uint64_t MulAmt, SDNode *N, SelectionDAG &DAG,
   case 21:
     // mul x, 21 => add ((shl (mul x, 5), 2), x)
     return combineMulShlAddOrSub(5, 2, /*isAdd*/ true);
+  case 41:
+    // mul x, 41 => add ((shl (mul x, 5), 3), x)
+    return combineMulShlAddOrSub(5, 3, /*isAdd*/ true);
   case 22:
     // mul x, 22 => add (add ((shl (mul x, 5), 2), x), x)
     return DAG.getNode(ISD::ADD, DL, VT, N->getOperand(0),
@@ -33723,6 +33726,12 @@ static SDValue combineMulSpecial(uint64_t MulAmt, SDNode *N, SelectionDAG &DAG,
   case 19:
     // mul x, 19 => add ((shl (mul x, 9), 1), x)
     return combineMulShlAddOrSub(9, 1, /*isAdd*/ true);
+  case 37:
+    // mul x, 37 => add ((shl (mul x, 9), 2), x)
+    return combineMulShlAddOrSub(9, 2, /*isAdd*/ true);
+  case 73:
+    // mul x, 73 => add ((shl (mul x, 9), 3), x)
+    return combineMulShlAddOrSub(9, 3, /*isAdd*/ true);
   case 13:
     // mul x, 13 => add ((shl (mul x, 3), 2), x)
     return combineMulShlAddOrSub(3, 2, /*isAdd*/ true);
