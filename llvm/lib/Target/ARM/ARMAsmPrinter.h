@@ -102,7 +102,7 @@ public:
   void EmitXXStructor(const DataLayout &DL, const Constant *CV) override;
   void EmitGlobalVariable(const GlobalVariable *GV) override;
 
-  MCSymbol *GetCPISymbol(unsigned CPID) const;
+  MCSymbol *GetCPISymbol(unsigned CPID) const override;
 
   // lowerOperand - Convert a MachineOperand into the equivalent MCOperand.
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
