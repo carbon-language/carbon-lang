@@ -12,6 +12,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTConstraintManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTContext.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SMTSort.h"
 
 #include "clang/Config/config.h"
 
@@ -84,27 +85,26 @@ public:
   }
 }; // end class Z3Context
 
-class Z3Sort {
-  friend class Z3Expr;
+class Z3Sort : public SMTSort {
   friend class Z3Solver;
 
   Z3Context &Context;
 
   Z3_sort Sort;
 
-  Z3Sort(Z3Context &C, Z3_sort ZS) : Context(C), Sort(ZS) {
-    assert(C.Context != nullptr);
+  Z3Sort(Z3Context &C, Z3_sort ZS) : SMTSort(), Context(C), Sort(ZS) {
     Z3_inc_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
   }
 
 public:
   /// Override implicit copy constructor for correct reference counting.
-  Z3Sort(const Z3Sort &Copy) : Context(Copy.Context), Sort(Copy.Sort) {
+  Z3Sort(const Z3Sort &Copy)
+      : SMTSort(), Context(Copy.Context), Sort(Copy.Sort) {
     Z3_inc_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
   }
 
   /// Provide move constructor
-  Z3Sort(Z3Sort &&Move) : Context(Move.Context), Sort(nullptr) {
+  Z3Sort(Z3Sort &&Move) : SMTSort(), Context(Move.Context), Sort(nullptr) {
     *this = std::move(Move);
   }
 
@@ -124,24 +124,30 @@ public:
       Z3_dec_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
   }
 
-  Z3_sort_kind getSortKind() const {
-    return Z3_get_sort_kind(Context.Context, Sort);
+  bool isBitvectorSortImpl() const override {
+    return (Z3_get_sort_kind(Context.Context, Sort) == Z3_BV_SORT);
   }
 
-  unsigned getBitvectorSortSize() const {
-    assert(getSortKind() == Z3_BV_SORT && "Not a bitvector sort!");
+  bool isFloatSortImpl() const override {
+    return (Z3_get_sort_kind(Context.Context, Sort) == Z3_FLOATING_POINT_SORT);
+  }
+
+  bool isBooleanSortImpl() const override {
+    return (Z3_get_sort_kind(Context.Context, Sort) == Z3_BOOL_SORT);
+  }
+
+  unsigned getBitvectorSortSizeImpl() const override {
     return Z3_get_bv_sort_size(Context.Context, Sort);
   }
 
-  unsigned getFloatSortSize() const {
-    assert(getSortKind() == Z3_FLOATING_POINT_SORT &&
-           "Not a floating-point sort!");
+  unsigned getFloatSortSizeImpl() const override {
     return Z3_fpa_get_ebits(Context.Context, Sort) +
            Z3_fpa_get_sbits(Context.Context, Sort);
   }
 
-  bool operator==(const Z3Sort &Other) const {
-    return Z3_is_eq_sort(Context.Context, Sort, Other.Sort);
+  bool equal_to(SMTSort const &Other) const override {
+    return Z3_is_eq_sort(Context.Context, Sort,
+                         static_cast<const Z3Sort &>(Other).Sort);
   }
 
   Z3Sort &operator=(const Z3Sort &Move) {
@@ -151,11 +157,9 @@ public:
     return *this;
   }
 
-  void print(raw_ostream &OS) const {
+  void print(raw_ostream &OS) const override {
     OS << Z3_sort_to_string(Context.Context, Sort);
   }
-
-  LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
 }; // end class Z3Sort
 
 class Z3Expr {
@@ -804,8 +808,7 @@ public:
   /// Construct an APFloat from a Z3Expr, given the AST representation
   bool toAPFloat(const Z3Sort &Sort, const Z3_ast &AST, llvm::APFloat &Float,
                  bool useSemantics = true) {
-    assert(Sort.getSortKind() == Z3_FLOATING_POINT_SORT &&
-           "Unsupported sort to floating-point!");
+    assert(Sort.isFloatSort() && "Unsupported sort to floating-point!");
 
     llvm::APSInt Int(Sort.getFloatSortSize(), true);
     const llvm::fltSemantics &Semantics =
@@ -828,10 +831,7 @@ public:
   /// Construct an APSInt from a Z3Expr, given the AST representation
   bool toAPSInt(const Z3Sort &Sort, const Z3_ast &AST, llvm::APSInt &Int,
                 bool useSemantics = true) {
-    switch (Sort.getSortKind()) {
-    default:
-      llvm_unreachable("Unsupported sort to integer!");
-    case Z3_BV_SORT: {
+    if (Sort.isBitvectorSort()) {
       if (useSemantics && Int.getBitWidth() != Sort.getBitvectorSortSize()) {
         assert(false && "Bitvector types don't match!");
         return false;
@@ -859,11 +859,13 @@ public:
       }
       return true;
     }
-    case Z3_BOOL_SORT:
+
+    if (Sort.isBooleanSort()) {
       if (useSemantics && Int.getBitWidth() < 1) {
         assert(false && "Boolean type doesn't match!");
         return false;
       }
+
       Int = llvm::APSInt(
           llvm::APInt(Int.getBitWidth(),
                       Z3_get_bool_value(Context.Context, AST) == Z3_L_TRUE ? 1
@@ -871,6 +873,8 @@ public:
           Int.isUnsigned());
       return true;
     }
+
+    llvm_unreachable("Unsupported sort to integer!");
   }
 
   /// Given an expression and a model, extract the value of this operand in
