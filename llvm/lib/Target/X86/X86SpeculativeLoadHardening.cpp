@@ -541,24 +541,6 @@ bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
       PS->SSA.RewriteUse(Op);
     }
 
-  // If we are hardening interprocedurally, find each returning block and
-  // protect the caller from being returned to through misspeculation.
-  if (HardenInterprocedurally)
-    for (MachineBasicBlock &MBB : MF) {
-      if (MBB.empty())
-        continue;
-
-      MachineInstr &MI = MBB.back();
-
-      // We only care about returns that are not also calls. For calls, that
-      // happen to also be returns (tail calls) we will have already handled
-      // them as calls.
-      if (!MI.isReturn() || MI.isCall())
-        continue;
-
-      hardenReturnInstr(MI);
-    }
-
   LLVM_DEBUG(dbgs() << "Final speculative load hardened function:\n"; MF.dump();
              dbgs() << "\n"; MF.verify(this));
   return true;
@@ -1588,16 +1570,24 @@ void X86SpeculativeLoadHardeningPass::tracePredStateThroughBlocksAndHarden(
           hardenIndirectCallOrJumpInstr(MI, AddrRegToHardenedReg);
       }
 
-      // After we finish processing the instruction and doing any hardening
-      // necessary for it, we need to handle transferring the predicate state
-      // into a call and recovering it after the call returns (if it returns).
-      if (!MI.isCall())
-        continue;
-
-      // If we're not hardening interprocedurally, we can just skip calls.
+      // After we finish hardening loads we handle interprocedural hardening if
+      // enabled and relevant for this instruction.
       if (!HardenInterprocedurally)
         continue;
+      if (!MI.isCall() && !MI.isReturn())
+        continue;
 
+      // If this is a direct return (IE, not a tail call) just directly harden
+      // it.
+      if (MI.isReturn() && !MI.isCall()) {
+        hardenReturnInstr(MI);
+        continue;
+      }
+
+      // Otherwise we have a call. We need to handle transferring the predicate
+      // state into a call and recovering it after the call returns unless this
+      // is a tail call.
+      assert(MI.isCall() && "Should only reach here for calls!");
       auto InsertPt = MI.getIterator();
       DebugLoc Loc = MI.getDebugLoc();
 
@@ -1607,11 +1597,12 @@ void X86SpeculativeLoadHardeningPass::tracePredStateThroughBlocksAndHarden(
       unsigned StateReg = PS->SSA.GetValueAtEndOfBlock(&MBB);
       mergePredStateIntoSP(MBB, InsertPt, Loc, StateReg);
 
-      // If this call is also a return (because it is a tail call) we're done.
+      // If this call is also a return, it is a tail call and we don't need
+      // anything else to handle it so just continue.
       if (MI.isReturn())
         continue;
 
-      // Otherwise we need to step past the call and recover the predicate
+      // We need to step past the call and recover the predicate
       // state from SP after the return, and make this new state available.
       ++InsertPt;
       unsigned NewStateReg = extractPredStateFromSP(MBB, InsertPt, Loc);
