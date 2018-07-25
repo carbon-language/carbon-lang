@@ -12,6 +12,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTConstraintManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTContext.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SMTExpr.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTSort.h"
 
 #include "clang/Config/config.h"
@@ -162,40 +163,25 @@ public:
   }
 }; // end class Z3Sort
 
-class Z3Expr {
-  friend class Z3Model;
+class Z3Expr : public SMTExpr {
   friend class Z3Solver;
 
   Z3Context &Context;
 
   Z3_ast AST;
 
-  Z3Expr(Z3Context &C, Z3_ast ZA) : Context(C), AST(ZA) {
-    assert(C.Context != nullptr);
+  Z3Expr(Z3Context &C, Z3_ast ZA) : SMTExpr(), Context(C), AST(ZA) {
     Z3_inc_ref(Context.Context, AST);
-  }
-
-  // Determine whether two float semantics are equivalent
-  static bool areEquivalent(const llvm::fltSemantics &LHS,
-                            const llvm::fltSemantics &RHS) {
-    return (llvm::APFloat::semanticsPrecision(LHS) ==
-            llvm::APFloat::semanticsPrecision(RHS)) &&
-           (llvm::APFloat::semanticsMinExponent(LHS) ==
-            llvm::APFloat::semanticsMinExponent(RHS)) &&
-           (llvm::APFloat::semanticsMaxExponent(LHS) ==
-            llvm::APFloat::semanticsMaxExponent(RHS)) &&
-           (llvm::APFloat::semanticsSizeInBits(LHS) ==
-            llvm::APFloat::semanticsSizeInBits(RHS));
   }
 
 public:
   /// Override implicit copy constructor for correct reference counting.
-  Z3Expr(const Z3Expr &Copy) : Context(Copy.Context), AST(Copy.AST) {
+  Z3Expr(const Z3Expr &Copy) : SMTExpr(), Context(Copy.Context), AST(Copy.AST) {
     Z3_inc_ref(Context.Context, AST);
   }
 
   /// Provide move constructor
-  Z3Expr(Z3Expr &&Move) : Context(Move.Context), AST(nullptr) {
+  Z3Expr(Z3Expr &&Move) : SMTExpr(), Context(Move.Context), AST(nullptr) {
     *this = std::move(Move);
   }
 
@@ -215,40 +201,18 @@ public:
       Z3_dec_ref(Context.Context, AST);
   }
 
-  /// Get the corresponding IEEE floating-point type for a given bitwidth.
-  static const llvm::fltSemantics &getFloatSemantics(unsigned BitWidth) {
-    switch (BitWidth) {
-    default:
-      llvm_unreachable("Unsupported floating-point semantics!");
-      break;
-    case 16:
-      return llvm::APFloat::IEEEhalf();
-    case 32:
-      return llvm::APFloat::IEEEsingle();
-    case 64:
-      return llvm::APFloat::IEEEdouble();
-    case 128:
-      return llvm::APFloat::IEEEquad();
-    }
-  }
-
-  void Profile(llvm::FoldingSetNodeID &ID) const {
+  void Profile(llvm::FoldingSetNodeID &ID) const override {
     ID.AddInteger(Z3_get_ast_hash(Context.Context, AST));
   }
 
-  bool operator<(const Z3Expr &Other) const {
-    llvm::FoldingSetNodeID ID1, ID2;
-    Profile(ID1);
-    Other.Profile(ID2);
-    return ID1 < ID2;
-  }
-
   /// Comparison of AST equality, not model equivalence.
-  bool operator==(const Z3Expr &Other) const {
+  bool equal_to(SMTExpr const &Other) const override {
     assert(Z3_is_eq_sort(Context.Context, Z3_get_sort(Context.Context, AST),
-                         Z3_get_sort(Context.Context, Other.AST)) &&
+                         Z3_get_sort(Context.Context,
+                                     static_cast<const Z3Expr &>(Other).AST)) &&
            "AST's must have the same sort");
-    return Z3_is_eq_ast(Context.Context, AST, Other.AST);
+    return Z3_is_eq_ast(Context.Context, AST,
+                        static_cast<const Z3Expr &>(Other).AST);
   }
 
   /// Override implicit move constructor for correct reference counting.
@@ -259,11 +223,9 @@ public:
     return *this;
   }
 
-  void print(raw_ostream &OS) const {
+  void print(raw_ostream &OS) const override {
     OS << Z3_ast_to_string(Context.Context, AST);
   }
-
-  LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
 }; // end class Z3Expr
 
 class Z3Model {
@@ -311,6 +273,36 @@ public:
 
   LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
 }; // end class Z3Model
+
+/// Get the corresponding IEEE floating-point type for a given bitwidth.
+static const llvm::fltSemantics &getFloatSemantics(unsigned BitWidth) {
+  switch (BitWidth) {
+  default:
+    llvm_unreachable("Unsupported floating-point semantics!");
+    break;
+  case 16:
+    return llvm::APFloat::IEEEhalf();
+  case 32:
+    return llvm::APFloat::IEEEsingle();
+  case 64:
+    return llvm::APFloat::IEEEdouble();
+  case 128:
+    return llvm::APFloat::IEEEquad();
+  }
+}
+
+// Determine whether two float semantics are equivalent
+static bool areEquivalent(const llvm::fltSemantics &LHS,
+                          const llvm::fltSemantics &RHS) {
+  return (llvm::APFloat::semanticsPrecision(LHS) ==
+          llvm::APFloat::semanticsPrecision(RHS)) &&
+         (llvm::APFloat::semanticsMinExponent(LHS) ==
+          llvm::APFloat::semanticsMinExponent(RHS)) &&
+         (llvm::APFloat::semanticsMaxExponent(LHS) ==
+          llvm::APFloat::semanticsMaxExponent(RHS)) &&
+         (llvm::APFloat::semanticsSizeInBits(LHS) ==
+          llvm::APFloat::semanticsSizeInBits(RHS));
+}
 
 class Z3Solver {
   friend class Z3ConstraintManager;
@@ -812,14 +804,13 @@ public:
 
     llvm::APSInt Int(Sort.getFloatSortSize(), true);
     const llvm::fltSemantics &Semantics =
-        Z3Expr::getFloatSemantics(Sort.getFloatSortSize());
+        getFloatSemantics(Sort.getFloatSortSize());
     Z3Sort BVSort = getBitvectorSort(Sort.getFloatSortSize());
     if (!toAPSInt(BVSort, AST, Int, true)) {
       return false;
     }
 
-    if (useSemantics &&
-        !Z3Expr::areEquivalent(Float.getSemantics(), Semantics)) {
+    if (useSemantics && !areEquivalent(Float.getSemantics(), Semantics)) {
       assert(false && "Floating-point types don't match!");
       return false;
     }
