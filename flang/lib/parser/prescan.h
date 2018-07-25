@@ -136,7 +136,7 @@ private:
     return inFixedForm_ && !inPreprocessorDirective_ && !InCompilerDirective();
   }
 
-  void LabelField(TokenSequence &);
+  void LabelField(TokenSequence &, int outCol = 1);
   void SkipToEndOfLine();
   void NextChar();
   void SkipSpaces();

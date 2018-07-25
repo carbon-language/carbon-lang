@@ -106,7 +106,7 @@ void Prescanner::Statement() {
     return;
   case LineClassification::Kind::CompilerDirective:
     directiveSentinel_ = line.sentinel;
-    CHECK(directiveSentinel_ != nullptr);
+    CHECK(InCompilerDirective());
     BeginSourceLineAndAdvance();
     if (inFixedForm_) {
       CHECK(IsFixedFormCommentChar(*at_));
@@ -116,17 +116,29 @@ void Prescanner::Statement() {
       }
       CHECK(*at_ == '!');
     }
-    EmitChar(tokens, '!');
-    ++at_, ++column_;
-    for (const char *sp{directiveSentinel_}; *sp != '\0';
-         ++sp, ++at_, ++column_) {
-      EmitChar(tokens, *sp);
-    }
-    if (*at_ == ' ') {
-      EmitChar(tokens, ' ');
+    if (directiveSentinel_[0] == '$' && directiveSentinel_[1] == '\0') {
+      // OpenMP conditional compilation line.  Remove the sentinel and then
+      // treat the line as if it were normal source.
+      at_ += 2, column_ += 2;
+      if (inFixedForm_) {
+        LabelField(tokens);
+      } else {
+        SkipSpaces();
+      }
+    } else {
+      // Compiler directive.  Emit normalized sentinel.
+      EmitChar(tokens, '!');
       ++at_, ++column_;
+      for (const char *sp{directiveSentinel_}; *sp != '\0';
+           ++sp, ++at_, ++column_) {
+        EmitChar(tokens, *sp);
+      }
+      if (*at_ == ' ') {
+        EmitChar(tokens, ' ');
+        ++at_, ++column_;
+      }
+      tokens.CloseToken();
     }
-    tokens.CloseToken();
     break;
   case LineClassification::Kind::Source:
     BeginSourceLineAndAdvance();
@@ -232,8 +244,7 @@ void Prescanner::NextLine() {
   }
 }
 
-void Prescanner::LabelField(TokenSequence &token) {
-  int outCol{1};
+void Prescanner::LabelField(TokenSequence &token, int outCol) {
   for (; *at_ != '\n' && column_ <= 6; ++at_) {
     if (*at_ == '\t') {
       ++at_;
@@ -241,7 +252,7 @@ void Prescanner::LabelField(TokenSequence &token) {
       break;
     }
     if (*at_ != ' ' &&
-        (*at_ != '0' || column_ != 6)) {  // '0' in column 6 becomes space
+        !(*at_ == '0' && column_ == 6)) {  // '0' in column 6 becomes space
       EmitChar(token, *at_);
       ++outCol;
     }
@@ -544,8 +555,7 @@ bool Prescanner::PadOutCharacterLiteral(TokenSequence &tokens) {
 bool Prescanner::IsFixedFormCommentLine(const char *start) const {
   const char *p{start};
   char ch{*p};
-  if (ch == '*' || ch == 'C' || ch == 'c' ||
-      ch == '%' ||  // VAX %list, %eject, &c.
+  if (IsFixedFormCommentChar(ch) || ch == '%' ||  // VAX %list, %eject, &c.
       ((ch == 'D' || ch == 'd') &&
           !features_.IsEnabled(LanguageFeature::OldDebugLines))) {
     return true;
@@ -702,7 +712,7 @@ const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
   }
   tabInCurrentLine_ = false;
   char col1{*lineStart_};
-  if (directiveSentinel_ != nullptr) {
+  if (InCompilerDirective()) {
     // Must be a continued compiler directive.
     if (!IsFixedFormCommentChar(col1)) {
       return nullptr;
@@ -724,7 +734,7 @@ const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
     }
     char col6{lineStart_[5]};
     if (col6 != '\n' && col6 != '\t' && col6 != ' ' && col6 != '0') {
-      if (lineStart_[6] != ' ' && mightNeedSpace && InCompilerDirective()) {
+      if (lineStart_[6] != ' ' && mightNeedSpace) {
         insertASpace_ = true;
       }
       return lineStart_ + 6;
@@ -769,7 +779,7 @@ const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
   }
   for (; *p == ' ' || *p == '\t'; ++p) {
   }
-  if (directiveSentinel_ != nullptr) {
+  if (InCompilerDirective()) {
     if (*p++ != '!') {
       return nullptr;
     }
@@ -853,25 +863,35 @@ Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
     return {};
   }
   char sentinel[5], *sp{sentinel};
-  for (int col{2}; col < 6; ++col) {
-    char ch{*p++};
-    if (ch == '\n') {
-      return {};
-    }
-    if (ch == '\t') {
-      break;
-    }
-    if (ch != ' ') {
-      *sp++ = ToLowerCaseLetter(ch);
+  int column{2};
+  for (; column < 6; ++column, ++p) {
+    if (*p != ' ') {
+      if (*p == '\n' || *p == '\t') {
+        break;
+      }
+      if (sp == sentinel + 1 && sentinel[0] == '$' && IsDecimalDigit(*p)) {
+        // OpenMP conditional compilation line: leave the label alone
+        break;
+      }
+      *sp++ = ToLowerCaseLetter(*p);
     }
   }
-  if (*p != ' ' && *p != '\t' && *p != '0') {
+  if (column == 6) {
+    if (*p == ' ' || *p == '\t' || *p == '0') {
+      ++p;
+    } else {
+      // This is a Continuation line, not an initial directive line.
+      return {};
+    }
+  }
+  if (sp == sentinel) {
     return {};
   }
   *sp = '\0';
-  if (const char *sp{IsCompilerDirectiveSentinel(sentinel)}) {
-    return {
-        LineClassification{LineClassification::Kind::CompilerDirective, 6, sp}};
+  if (const char *ss{IsCompilerDirectiveSentinel(sentinel)}) {
+    std::size_t payloadOffset = p - start;
+    return {LineClassification{
+        LineClassification::Kind::CompilerDirective, payloadOffset, ss}};
   }
   return {};
 }

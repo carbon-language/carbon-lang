@@ -70,6 +70,7 @@ void Parsing::Prescan(const std::string &path, Options options) {
       .AddCompilerDirectiveSentinel("dir$");
   if (options.features.IsEnabled(LanguageFeature::OpenMP)) {
     prescanner.AddCompilerDirectiveSentinel("$omp");
+    prescanner.AddCompilerDirectiveSentinel("$");  // OMP conditional line
   }
   ProvenanceRange range{
       allSources_.AddIncludedFile(*sourceFile, ProvenanceRange{})};
