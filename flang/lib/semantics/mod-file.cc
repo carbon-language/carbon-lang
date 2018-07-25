@@ -15,7 +15,11 @@
 #include "mod-file.h"
 #include "scope.h"
 #include "symbol.h"
+#include "../parser/grammar.h"
 #include "../parser/message.h"
+#include "../parser/openmp-grammar.h"
+#include "../parser/preprocessor.h"
+#include "../parser/prescan.h"
 #include <algorithm>
 #include <cerrno>
 #include <fstream>
@@ -23,18 +27,28 @@
 #include <ostream>
 #include <set>
 #include <sstream>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <vector>
 
 namespace Fortran::semantics {
 
 using namespace parser::literals;
 
+// The extension used for module files.
+static constexpr auto extension{".mod"};
+// The initial characters of a file that identify it as a .mod file.
+static constexpr auto magic{"!mod$"};
+// Construct the path to a module file.
+static std::string ModFilePath(const std::string &, const std::string &);
+// Helpers for creating error messages.
+static parser::Message Error(
+    const SourceName &, parser::MessageFixedText, const std::string &);
+static parser::Message Error(const SourceName &, parser::MessageFixedText,
+    const std::string &, const std::string &);
+
 class ModFileWriter {
 public:
-  // The initial characters of a file that identify it as a .mod file.
-  static constexpr auto magic{"!mod$"};
-  static constexpr auto extension{".mod"};
-
   // The .mod file format version number.
   void set_version(int version) { version_ = version; }
   // The directory to write .mod files in.
@@ -103,7 +117,9 @@ bool ModFileWriter::WriteAll() {
   for (const auto &scope : Scope::globalScope.children()) {
     if (scope.kind() == Scope::Kind::Module) {
       auto &symbol{*scope.symbol()};  // symbol must be present for module
-      WriteOne(symbol);
+      if (!symbol.test(Symbol::Flag::ModFile)) {
+        WriteOne(symbol);
+      }
     }
   }
   return errors_.empty();
@@ -112,7 +128,7 @@ bool ModFileWriter::WriteAll() {
 bool ModFileWriter::WriteOne(const Symbol &modSymbol) {
   CHECK(modSymbol.has<ModuleDetails>());
   auto name{parser::ToLowerCaseLetters(modSymbol.name().ToString())};
-  std::string path{dir_ + '/' + name + extension};
+  std::string path{ModFilePath(dir_, name)};
   std::ofstream os{path};
   PutSymbols(*modSymbol.scope());
   std::string all{GetAsString(name)};
@@ -395,5 +411,104 @@ std::string ModFileWriter::CheckSum(const std::string &str) {
 }
 
 void WriteModFiles() { ModFileWriter{}.WriteAll(std::cerr); }
+
+bool ModFileReader::Read(const SourceName &modName) {
+  auto path{FindModFile(modName)};
+  if (!path.has_value()) {
+    return false;
+  }
+  if (!Prescan(modName, *path)) {
+    return false;
+  }
+  parser::ParseState parseState{*cooked_};
+  auto parseTree{parser::program.Parse(parseState)};
+  if (!parseState.messages().empty()) {
+    errors_.emplace_back(modName,
+        parser::MessageFormattedText{
+            "Module file for '%s' is corrupt: %s"_err_en_US,
+            modName.ToString().data(), path->data()});
+    return false;
+  }
+  ResolveNames(*parseTree, *cooked_, directories_);
+  const auto &it{Scope::globalScope.find(modName)};
+  if (it == Scope::globalScope.end()) {
+    return false;
+  }
+  auto &modSymbol{*it->second};
+  modSymbol.scope()->set_cookedSource(std::move(cooked_));
+  modSymbol.set(Symbol::Flag::ModFile);
+  return true;
+}
+
+// Look for the .mod file for this module in the search directories.
+// Add to errors_ if not found.
+std::optional<std::string> ModFileReader::FindModFile(
+    const SourceName &modName) {
+  auto error{Error(modName, "Cannot find module file for '%s'"_err_en_US,
+      modName.ToString())};
+  for (auto &dir : directories_) {
+    std::string path{ModFilePath(dir, modName.ToString())};
+    std::ifstream ifstream{path};
+    if (!ifstream.good()) {
+      error.Attach(Error(
+          modName, "%s: %s"_en_US, path, std::string{std::strerror(errno)}));
+    } else {
+      std::string line;
+      ifstream >> line;
+      if (std::equal(line.begin(), line.end(), std::string{magic}.begin())) {
+        return path;  // success
+      }
+      error.Attach(Error(modName, "%s: Not a valid module file"_en_US, path));
+    }
+  }
+  errors_.push_back(error);
+  return std::nullopt;
+}
+
+bool ModFileReader::Prescan(
+    const SourceName &modName, const std::string &path) {
+  std::stringstream fileError;
+  const auto *sourceFile{allSources_.Open(path, &fileError)};
+  if (sourceFile == nullptr) {
+    errors_.push_back(
+        Error(modName, "Cannot read %s: %s"_err_en_US, path, fileError.str()));
+    return false;
+  }
+  parser::Preprocessor preprocessor{allSources_};
+  parser::Messages messages;
+  parser::Prescanner prescanner{messages, *cooked_, preprocessor, {}};
+  parser::ProvenanceRange range{
+      allSources_.AddIncludedFile(*sourceFile, parser::ProvenanceRange{})};
+  prescanner.Prescan(range);
+  if (!messages.empty()) {
+    errors_.push_back(
+        Error(modName, "Module file for '%s' is corrupt: %s"_err_en_US,
+            modName.ToString(), path));
+    return false;
+  }
+  cooked_->Marshal();
+  return true;
+}
+
+static std::string ModFilePath(
+    const std::string &dir, const std::string &modName) {
+  if (dir == "."s) {
+    return modName + extension;
+  } else {
+    return dir + '/' + modName + extension;
+  }
+}
+
+static parser::Message Error(const SourceName &location,
+    parser::MessageFixedText fixedText, const std::string &arg) {
+  return parser::Message{
+      location, parser::MessageFormattedText{fixedText, arg.data()}};
+}
+static parser::Message Error(const SourceName &location,
+    parser::MessageFixedText fixedText, const std::string &arg1,
+    const std::string &arg2) {
+  return parser::Message{location,
+      parser::MessageFormattedText{fixedText, arg1.data(), arg2.data()}};
+}
 
 }  // namespace Fortran::semantics

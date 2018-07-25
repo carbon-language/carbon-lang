@@ -102,6 +102,11 @@ For PGI, `-I` specifies directories to search for include files and module
 files. `-module` specifics a directory to write module files in as well as to
 search for them. gfortran is similar except it uses `-J` instead of `-module`.
 
+The search order for module files is:
+1. The `-module` directory (Note: for gfortran the `-J` directory is not searched).
+2. The current directory
+3. The `-I` directories in the order they appear on the command line
+
 ### Writing module files
 
 When writing a module file, if the existing one matches what would be written,

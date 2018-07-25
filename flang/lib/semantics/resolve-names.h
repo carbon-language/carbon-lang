@@ -16,6 +16,7 @@
 #define FORTRAN_SEMANTICS_RESOLVE_NAMES_H_
 
 #include <iosfwd>
+#include <vector>
 
 namespace Fortran::parser {
 struct Program;
@@ -24,7 +25,8 @@ class CookedSource;
 
 namespace Fortran::semantics {
 
-void ResolveNames(parser::Program &, const parser::CookedSource &);
+void ResolveNames(parser::Program &, const parser::CookedSource &,
+    const std::vector<std::string> &);
 void DumpSymbols(std::ostream &);
 
 }  // namespace Fortran::semantics

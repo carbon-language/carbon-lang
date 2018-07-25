@@ -27,6 +27,7 @@
 #include <ostream>
 #include <set>
 #include <stack>
+#include <vector>
 
 namespace Fortran::semantics {
 
@@ -387,6 +388,10 @@ public:
   bool Pre(const parser::UseStmt &);
   void Post(const parser::UseStmt &);
 
+  void add_searchDirectory(const std::string &dir) {
+    searchDirectories_.push_back(dir);
+  }
+
 private:
   // The default access spec for this module.
   Attr defaultAccess_{Attr::PUBLIC};
@@ -394,9 +399,12 @@ private:
   const SourceName *prevAccessStmt_{nullptr};
   // The scope of the module during a UseStmt
   const Scope *useModuleScope_{nullptr};
+  // Directories to search for .mod files
+  std::vector<std::string> searchDirectories_;
+
   void SetAccess(const parser::Name &, Attr);
   void ApplyDefaultAccess();
-
+  const Scope *FindModule(const SourceName &);
   void AddUse(const parser::Rename::Names &);
   void AddUse(const parser::Name &);
   // Record a use from useModuleScope_ of useName as localName. location is
@@ -1223,20 +1231,8 @@ bool ModuleVisitor::Pre(const parser::Rename::Names &x) {
 
 // Set useModuleScope_ to the Scope of the module being used.
 bool ModuleVisitor::Pre(const parser::UseStmt &x) {
-  // x.nature = UseStmt::ModuleNature::Intrinsic or Non_Intrinsic
-  const auto it{Scope::globalScope.find(x.moduleName.source)};
-  if (it == Scope::globalScope.end()) {
-    Say(x.moduleName, "Module '%s' not found"_err_en_US);
-    return false;
-  }
-  const auto *details{it->second->detailsIf<ModuleDetails>()};
-  if (!details) {
-    Say(x.moduleName, "'%s' is not a module"_err_en_US);
-    return false;
-  }
-  useModuleScope_ = details->scope();
-  CHECK(useModuleScope_);
-  return true;
+  useModuleScope_ = FindModule(x.moduleName.source);
+  return useModuleScope_ != nullptr;
 }
 void ModuleVisitor::Post(const parser::UseStmt &x) {
   if (const auto *list{std::get_if<std::list<parser::Rename>>(&x.u)}) {
@@ -1268,6 +1264,30 @@ void ModuleVisitor::Post(const parser::UseStmt &x) {
     }
   }
   useModuleScope_ = nullptr;
+}
+
+// Find the module with this name and return its scope.
+// May have to read a .mod file to find it.
+// Return nullptr on error, after reporting it.
+const Scope *ModuleVisitor::FindModule(const SourceName &name) {
+  auto it{Scope::globalScope.find(name)};
+  if (it == Scope::globalScope.end()) {
+    ModFileReader reader{searchDirectories_};
+    if (!reader.Read(name)) {
+      for (auto &error : reader.errors()) {
+        Say(std::move(error));
+      }
+      return nullptr;
+    }
+    it = Scope::globalScope.find(name);
+    CHECK(it != Scope::globalScope.end());  // else would have reported error
+  }
+  const auto *details{it->second->detailsIf<ModuleDetails>()};
+  if (!details) {
+    Say(name, "'%s' is not a module"_err_en_US);
+    return nullptr;
+  }
+  return details->scope();
 }
 
 void ModuleVisitor::AddUse(const parser::Rename::Names &names) {
@@ -1468,7 +1488,7 @@ void InterfaceVisitor::Post(const parser::GenericStmt &x) {
 void InterfaceVisitor::AddToGeneric(
     const parser::Name &name, bool expectModuleProc) {
   genericSymbol_->get<GenericDetails>().add_specificProcName(
-          name.source, expectModuleProc);
+      name.source, expectModuleProc);
 }
 void InterfaceVisitor::AddToGeneric(const Symbol &symbol) {
   genericSymbol_->get<GenericDetails>().add_specificProc(&symbol);
@@ -2421,9 +2441,13 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
   CHECK(!GetDeclTypeSpec());
 }
 
-void ResolveNames(
-    parser::Program &program, const parser::CookedSource &cookedSource) {
+void ResolveNames(parser::Program &program,
+    const parser::CookedSource &cookedSource,
+    const std::vector<std::string> &searchDirectories) {
   ResolveNamesVisitor visitor;
+  for (auto &dir : searchDirectories) {
+    visitor.add_searchDirectory(dir);
+  }
   parser::Walk(const_cast<const parser::Program &>(program), visitor);
   if (!visitor.messages().empty()) {
     visitor.messages().Emit(std::cerr, cookedSource);

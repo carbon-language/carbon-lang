@@ -60,8 +60,8 @@ std::ostream &operator<<(std::ostream &os, const Scope &scope) {
   }
   os << scope.children_.size() << " children\n";
   for (const auto &pair : scope.symbols_) {
-    const auto &symbol{pair.second};
-    os << "  " << symbol << '\n';
+    const auto *symbol{pair.second};
+    os << "  " << *symbol << '\n';
   }
   return os;
 }

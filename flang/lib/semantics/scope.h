@@ -106,6 +106,11 @@ public:
 
   DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
 
+  std::unique_ptr<parser::CookedSource> cooked_;
+  void set_cookedSource(std::unique_ptr<parser::CookedSource> cooked) {
+    cooked_ = std::move(cooked);
+  }
+
 private:
   Scope &parent_;
   const Kind kind_;

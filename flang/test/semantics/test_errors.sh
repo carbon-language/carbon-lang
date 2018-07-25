@@ -18,7 +18,7 @@
 
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
-CMD="${F18:-../../tools/f18/f18} -fdebug-resolve-names -fparse-only"
+CMD="${F18:-../../../tools/f18/f18} -fdebug-resolve-names -fparse-only"
 
 if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"
@@ -38,7 +38,7 @@ expect=$temp/expect
 diffs=$temp/diffs
 
 cmd="$CMD $src"
-$cmd > $log 2>&1
+( cd $temp; $cmd ) > $log 2>&1
 [[ $? -ge 128 ]] && exit 1
 
 # $actual has errors from the compiler; $expect has them from !ERROR comments in source

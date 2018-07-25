@@ -233,7 +233,7 @@ std::string DetailsToString(const Details &);
 
 class Symbol {
 public:
-  ENUM_CLASS(Flag, Function, Subroutine, Implicit);
+  ENUM_CLASS(Flag, Function, Subroutine, Implicit, ModFile);
   using Flags = common::EnumSet<Flag, Flag_enumSize>;
 
   const Scope &owner() const { return *owner_; }

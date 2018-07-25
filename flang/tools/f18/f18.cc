@@ -206,7 +206,9 @@ std::string CompileFortran(
   }
   if (driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols) {
-    Fortran::semantics::ResolveNames(parseTree, parsing.cooked());
+    std::vector<std::string> directories{options.searchDirectories};
+    directories.insert(directories.begin(), "."s);
+    Fortran::semantics::ResolveNames(parseTree, parsing.cooked(), directories);
     Fortran::semantics::WriteModFiles();
     if (driver.dumpSymbols) {
       Fortran::semantics::DumpSymbols(std::cout);
@@ -452,7 +454,8 @@ int main(int argc, char *const argv[]) {
   if (options.isStrictlyStandard) {
     options.features.WarnOnAllNonstandard();
   }
-  if (!options.features.IsEnabled(Fortran::parser::LanguageFeature::BackslashEscapes)) {
+  if (!options.features.IsEnabled(
+          Fortran::parser::LanguageFeature::BackslashEscapes)) {
     driver.pgf90Args.push_back("-Mbackslash");
   }
 
