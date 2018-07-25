@@ -621,9 +621,51 @@ auto ComplexExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
 }
 
 template<int KIND>
+auto CharacterExpr<KIND>::Concat::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  if constexpr (KIND == 1) {
+    return {a + b};
+  }
+  return std::nullopt;
+}
+
+template<int KIND>
+auto CharacterExpr<KIND>::Max::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  if (Compare(a, b) == Ordering::Less) {
+    return {b};
+  }
+  return {a};
+}
+
+template<int KIND>
+auto CharacterExpr<KIND>::Min::FoldScalar(FoldingContext &context,
+    const Scalar &a, const Scalar &b) -> std::optional<Scalar> {
+  if (Compare(a, b) == Ordering::Greater) {
+    return {b};
+  }
+  return {a};
+}
+
+template<int KIND>
 auto CharacterExpr<KIND>::Fold(FoldingContext &context)
     -> std::optional<Scalar> {
-  return std::nullopt;  // TODO
+  return std::visit(
+      [&](auto &x) -> std::optional<Scalar> {
+        using Ty = typename std::decay<decltype(x)>::type;
+        if constexpr (std::is_same_v<Ty, Scalar>) {
+          return {x};
+        }
+        if constexpr (evaluate::FoldableTrait<Ty>) {
+          auto c{x.Fold(context)};
+          if (c.has_value()) {
+            u_ = *c;
+            return c;
+          }
+        }
+        return std::nullopt;
+      },
+      u_);
 }
 
 template<typename A>

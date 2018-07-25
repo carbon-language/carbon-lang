@@ -405,12 +405,18 @@ public:
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
   struct Concat : public Bin<Concat> {
     using Bin<Concat>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Max : public Bin<Max> {
     using Bin<Max>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Min : public Bin<Min> {
     using Bin<Min>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
 
   CLASS_BOILERPLATE(Expr)
