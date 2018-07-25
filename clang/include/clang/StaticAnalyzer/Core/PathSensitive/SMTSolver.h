@@ -954,6 +954,8 @@ public:
 
 using SMTSolverRef = std::shared_ptr<SMTSolver>;
 
+std::unique_ptr<SMTSolver> CreateZ3Solver();
+
 } // namespace ento
 } // namespace clang
 

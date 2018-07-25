@@ -15,31 +15,6 @@
 using namespace clang;
 using namespace ento;
 
-void SMTConstraintManager::addRangeConstraints(ConstraintRangeTy CR) {
-  ASTContext &Ctx = getBasicVals().getContext();
-  Solver->reset();
-
-  for (const auto &I : CR) {
-    SymbolRef Sym = I.first;
-
-    SMTExprRef Constraints = Solver->fromBoolean(false);
-    for (const auto &Range : I.second) {
-      SMTExprRef SymRange = Solver->getRangeExpr(Ctx, Sym, Range.From(),
-                                                 Range.To(), /*InRange=*/true);
-
-      // FIXME: the last argument (isSigned) is not used when generating the
-      // or expression, as both arguments are booleans
-      Constraints =
-          Solver->fromBinOp(Constraints, BO_LOr, SymRange, /*IsSigned=*/true);
-    }
-    Solver->addConstraint(Constraints);
-  }
-}
-
-clang::ento::ConditionTruthVal SMTConstraintManager::isModelFeasible() {
-  return Solver->check();
-}
-
 ProgramStateRef SMTConstraintManager::assumeSym(ProgramStateRef State,
                                                 SymbolRef Sym,
                                                 bool Assumption) {

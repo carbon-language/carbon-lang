@@ -54,14 +54,6 @@ public:
   const llvm::APSInt *getSymVal(ProgramStateRef State,
                                 SymbolRef Sym) const override;
 
-  /// Converts the ranged constraints of a set of symbols to SMT
-  ///
-  /// \param CR The set of constraints.
-  void addRangeConstraints(clang::ento::ConstraintRangeTy CR);
-
-  /// Checks if the added constraints are satisfiable
-  clang::ento::ConditionTruthVal isModelFeasible();
-
   /// Dumps SMT formula
   LLVM_DUMP_METHOD void dump() const { Solver->dump(); }
 
