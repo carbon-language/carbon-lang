@@ -64,48 +64,55 @@ public:
   ~Z3Config() { Z3_del_config(Config); }
 }; // end class Z3Config
 
+void Z3ErrorHandler(Z3_context Context, Z3_error_code Error) {
+  llvm::report_fatal_error("Z3 error: " +
+                           llvm::Twine(Z3_get_error_msg_ex(Context, Error)));
+}
+
 class Z3Context : public SMTContext {
 public:
-  static Z3_context ZC;
+  Z3_context Context;
 
   Z3Context() : SMTContext() {
     Context = Z3_mk_context_rc(Z3Config().Config);
-    ZC = Context;
+    Z3_set_error_handler(Context, Z3ErrorHandler);
   }
 
-  ~Z3Context() {
-    Z3_del_context(ZC);
+  virtual ~Z3Context() {
+    Z3_del_context(Context);
     Context = nullptr;
   }
-
-protected:
-  Z3_context Context;
 }; // end class Z3Context
 
 class Z3Sort {
   friend class Z3Expr;
+  friend class Z3Solver;
+
+  Z3Context &Context;
 
   Z3_sort Sort;
 
-  Z3Sort() : Sort(nullptr) {}
-  Z3Sort(Z3_sort ZS) : Sort(ZS) {
-    Z3_inc_ref(Z3Context::ZC, reinterpret_cast<Z3_ast>(Sort));
+  Z3Sort(Z3Context &C, Z3_sort ZS) : Context(C), Sort(ZS) {
+    assert(C.Context != nullptr);
+    Z3_inc_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
   }
 
 public:
   /// Override implicit copy constructor for correct reference counting.
-  Z3Sort(const Z3Sort &Copy) : Sort(Copy.Sort) {
-    Z3_inc_ref(Z3Context::ZC, reinterpret_cast<Z3_ast>(Sort));
+  Z3Sort(const Z3Sort &Copy) : Context(Copy.Context), Sort(Copy.Sort) {
+    Z3_inc_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
   }
 
   /// Provide move constructor
-  Z3Sort(Z3Sort &&Move) : Sort(nullptr) { *this = std::move(Move); }
+  Z3Sort(Z3Sort &&Move) : Context(Move.Context), Sort(nullptr) {
+    *this = std::move(Move);
+  }
 
   /// Provide move assignment constructor
   Z3Sort &operator=(Z3Sort &&Move) {
     if (this != &Move) {
       if (Sort)
-        Z3_dec_ref(Z3Context::ZC, reinterpret_cast<Z3_ast>(Sort));
+        Z3_dec_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
       Sort = Move.Sort;
       Move.Sort = nullptr;
     }
@@ -114,75 +121,38 @@ public:
 
   ~Z3Sort() {
     if (Sort)
-      Z3_dec_ref(Z3Context::ZC, reinterpret_cast<Z3_ast>(Sort));
-  }
-
-  // Return a boolean sort.
-  static Z3Sort getBoolSort() { return Z3Sort(Z3_mk_bool_sort(Z3Context::ZC)); }
-
-  // Return an appropriate bitvector sort for the given bitwidth.
-  static Z3Sort getBitvectorSort(unsigned BitWidth) {
-    return Z3Sort(Z3_mk_bv_sort(Z3Context::ZC, BitWidth));
-  }
-
-  // Return an appropriate floating-point sort for the given bitwidth.
-  static Z3Sort getFloatSort(unsigned BitWidth) {
-    Z3_sort Sort;
-
-    switch (BitWidth) {
-    default:
-      llvm_unreachable("Unsupported floating-point bitwidth!");
-      break;
-    case 16:
-      Sort = Z3_mk_fpa_sort_16(Z3Context::ZC);
-      break;
-    case 32:
-      Sort = Z3_mk_fpa_sort_32(Z3Context::ZC);
-      break;
-    case 64:
-      Sort = Z3_mk_fpa_sort_64(Z3Context::ZC);
-      break;
-    case 128:
-      Sort = Z3_mk_fpa_sort_128(Z3Context::ZC);
-      break;
-    }
-    return Z3Sort(Sort);
-  }
-
-  // Return an appropriate sort for the given AST.
-  static Z3Sort getSort(Z3_ast AST) {
-    return Z3Sort(Z3_get_sort(Z3Context::ZC, AST));
+      Z3_dec_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
   }
 
   Z3_sort_kind getSortKind() const {
-    return Z3_get_sort_kind(Z3Context::ZC, Sort);
+    return Z3_get_sort_kind(Context.Context, Sort);
   }
 
   unsigned getBitvectorSortSize() const {
     assert(getSortKind() == Z3_BV_SORT && "Not a bitvector sort!");
-    return Z3_get_bv_sort_size(Z3Context::ZC, Sort);
+    return Z3_get_bv_sort_size(Context.Context, Sort);
   }
 
   unsigned getFloatSortSize() const {
     assert(getSortKind() == Z3_FLOATING_POINT_SORT &&
            "Not a floating-point sort!");
-    return Z3_fpa_get_ebits(Z3Context::ZC, Sort) +
-           Z3_fpa_get_sbits(Z3Context::ZC, Sort);
+    return Z3_fpa_get_ebits(Context.Context, Sort) +
+           Z3_fpa_get_sbits(Context.Context, Sort);
   }
 
   bool operator==(const Z3Sort &Other) const {
-    return Z3_is_eq_sort(Z3Context::ZC, Sort, Other.Sort);
+    return Z3_is_eq_sort(Context.Context, Sort, Other.Sort);
   }
 
   Z3Sort &operator=(const Z3Sort &Move) {
-    Z3_inc_ref(Z3Context::ZC, reinterpret_cast<Z3_ast>(Move.Sort));
-    Z3_dec_ref(Z3Context::ZC, reinterpret_cast<Z3_ast>(Sort));
+    Z3_inc_ref(Context.Context, reinterpret_cast<Z3_ast>(Move.Sort));
+    Z3_dec_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
     Sort = Move.Sort;
     return *this;
   }
 
   void print(raw_ostream &OS) const {
-    OS << Z3_sort_to_string(Z3Context::ZC, Sort);
+    OS << Z3_sort_to_string(Context.Context, Sort);
   }
 
   LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
@@ -192,14 +162,13 @@ class Z3Expr {
   friend class Z3Model;
   friend class Z3Solver;
 
+  Z3Context &Context;
+
   Z3_ast AST;
 
-  Z3Expr(Z3_ast ZA) : AST(ZA) { Z3_inc_ref(Z3Context::ZC, AST); }
-
-  // Return an appropriate floating-point rounding mode.
-  static Z3Expr getFloatRoundingMode() {
-    // TODO: Don't assume nearest ties to even rounding mode
-    return Z3Expr(Z3_mk_fpa_rne(Z3Context::ZC));
+  Z3Expr(Z3Context &C, Z3_ast ZA) : Context(C), AST(ZA) {
+    assert(C.Context != nullptr);
+    Z3_inc_ref(Context.Context, AST);
   }
 
   // Determine whether two float semantics are equivalent
@@ -217,16 +186,20 @@ class Z3Expr {
 
 public:
   /// Override implicit copy constructor for correct reference counting.
-  Z3Expr(const Z3Expr &Copy) : AST(Copy.AST) { Z3_inc_ref(Z3Context::ZC, AST); }
+  Z3Expr(const Z3Expr &Copy) : Context(Copy.Context), AST(Copy.AST) {
+    Z3_inc_ref(Context.Context, AST);
+  }
 
   /// Provide move constructor
-  Z3Expr(Z3Expr &&Move) : AST(nullptr) { *this = std::move(Move); }
+  Z3Expr(Z3Expr &&Move) : Context(Move.Context), AST(nullptr) {
+    *this = std::move(Move);
+  }
 
   /// Provide move assignment constructor
   Z3Expr &operator=(Z3Expr &&Move) {
     if (this != &Move) {
       if (AST)
-        Z3_dec_ref(Z3Context::ZC, AST);
+        Z3_dec_ref(Context.Context, AST);
       AST = Move.AST;
       Move.AST = nullptr;
     }
@@ -235,7 +208,7 @@ public:
 
   ~Z3Expr() {
     if (AST)
-      Z3_dec_ref(Z3Context::ZC, AST);
+      Z3_dec_ref(Context.Context, AST);
   }
 
   /// Get the corresponding IEEE floating-point type for a given bitwidth.
@@ -255,466 +228,8 @@ public:
     }
   }
 
-  /// Construct a Z3Expr from a unary operator, given a Z3_context.
-  static Z3Expr fromUnOp(const UnaryOperator::Opcode Op, const Z3Expr &Exp) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    case UO_Minus:
-      AST = Z3_mk_bvneg(Z3Context::ZC, Exp.AST);
-      break;
-
-    case UO_Not:
-      AST = Z3_mk_bvnot(Z3Context::ZC, Exp.AST);
-      break;
-
-    case UO_LNot:
-      AST = Z3_mk_not(Z3Context::ZC, Exp.AST);
-      break;
-    }
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a floating-point unary operator, given a
-  /// Z3_context.
-  static Z3Expr fromFloatUnOp(const UnaryOperator::Opcode Op,
-                              const Z3Expr &Exp) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    case UO_Minus:
-      AST = Z3_mk_fpa_neg(Z3Context::ZC, Exp.AST);
-      break;
-
-    case UO_LNot:
-      return Z3Expr::fromUnOp(Op, Exp);
-    }
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a n-ary binary operator.
-  static Z3Expr fromNBinOp(const BinaryOperator::Opcode Op,
-                           const std::vector<Z3_ast> &ASTs) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    case BO_LAnd:
-      AST = Z3_mk_and(Z3Context::ZC, ASTs.size(), ASTs.data());
-      break;
-
-    case BO_LOr:
-      AST = Z3_mk_or(Z3Context::ZC, ASTs.size(), ASTs.data());
-      break;
-    }
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a binary operator, given a Z3_context.
-  static Z3Expr fromBinOp(const Z3Expr &LHS, const BinaryOperator::Opcode Op,
-                          const Z3Expr &RHS, bool isSigned) {
-    Z3_ast AST;
-
-    assert(Z3Sort::getSort(LHS.AST) == Z3Sort::getSort(RHS.AST) &&
-           "AST's must have the same sort!");
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    // Multiplicative operators
-    case BO_Mul:
-      AST = Z3_mk_bvmul(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_Div:
-      AST = isSigned ? Z3_mk_bvsdiv(Z3Context::ZC, LHS.AST, RHS.AST)
-                     : Z3_mk_bvudiv(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_Rem:
-      AST = isSigned ? Z3_mk_bvsrem(Z3Context::ZC, LHS.AST, RHS.AST)
-                     : Z3_mk_bvurem(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-
-    // Additive operators
-    case BO_Add:
-      AST = Z3_mk_bvadd(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_Sub:
-      AST = Z3_mk_bvsub(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-
-    // Bitwise shift operators
-    case BO_Shl:
-      AST = Z3_mk_bvshl(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_Shr:
-      AST = isSigned ? Z3_mk_bvashr(Z3Context::ZC, LHS.AST, RHS.AST)
-                     : Z3_mk_bvlshr(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-
-    // Relational operators
-    case BO_LT:
-      AST = isSigned ? Z3_mk_bvslt(Z3Context::ZC, LHS.AST, RHS.AST)
-                     : Z3_mk_bvult(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_GT:
-      AST = isSigned ? Z3_mk_bvsgt(Z3Context::ZC, LHS.AST, RHS.AST)
-                     : Z3_mk_bvugt(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_LE:
-      AST = isSigned ? Z3_mk_bvsle(Z3Context::ZC, LHS.AST, RHS.AST)
-                     : Z3_mk_bvule(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_GE:
-      AST = isSigned ? Z3_mk_bvsge(Z3Context::ZC, LHS.AST, RHS.AST)
-                     : Z3_mk_bvuge(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-
-    // Equality operators
-    case BO_EQ:
-      AST = Z3_mk_eq(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_NE:
-      return Z3Expr::fromUnOp(UO_LNot,
-                              Z3Expr::fromBinOp(LHS, BO_EQ, RHS, isSigned));
-      break;
-
-    // Bitwise operators
-    case BO_And:
-      AST = Z3_mk_bvand(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_Xor:
-      AST = Z3_mk_bvxor(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_Or:
-      AST = Z3_mk_bvor(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-
-    // Logical operators
-    case BO_LAnd:
-    case BO_LOr: {
-      std::vector<Z3_ast> Args = {LHS.AST, RHS.AST};
-      return Z3Expr::fromNBinOp(Op, Args);
-    }
-    }
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a special floating-point binary operator, given
-  /// a Z3_context.
-  static Z3Expr fromFloatSpecialBinOp(const Z3Expr &LHS,
-                                      const BinaryOperator::Opcode Op,
-                                      const llvm::APFloat::fltCategory &RHS) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    // Equality operators
-    case BO_EQ:
-      switch (RHS) {
-      case llvm::APFloat::fcInfinity:
-        AST = Z3_mk_fpa_is_infinite(Z3Context::ZC, LHS.AST);
-        break;
-      case llvm::APFloat::fcNaN:
-        AST = Z3_mk_fpa_is_nan(Z3Context::ZC, LHS.AST);
-        break;
-      case llvm::APFloat::fcNormal:
-        AST = Z3_mk_fpa_is_normal(Z3Context::ZC, LHS.AST);
-        break;
-      case llvm::APFloat::fcZero:
-        AST = Z3_mk_fpa_is_zero(Z3Context::ZC, LHS.AST);
-        break;
-      }
-      break;
-    case BO_NE:
-      return Z3Expr::fromFloatUnOp(
-          UO_LNot, Z3Expr::fromFloatSpecialBinOp(LHS, BO_EQ, RHS));
-      break;
-    }
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a floating-point binary operator, given a
-  /// Z3_context.
-  static Z3Expr fromFloatBinOp(const Z3Expr &LHS,
-                               const BinaryOperator::Opcode Op,
-                               const Z3Expr &RHS) {
-    Z3_ast AST;
-
-    assert(Z3Sort::getSort(LHS.AST) == Z3Sort::getSort(RHS.AST) &&
-           "AST's must have the same sort!");
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    // Multiplicative operators
-    case BO_Mul: {
-      Z3Expr RoundingMode = Z3Expr::getFloatRoundingMode();
-      AST = Z3_mk_fpa_mul(Z3Context::ZC, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-    case BO_Div: {
-      Z3Expr RoundingMode = Z3Expr::getFloatRoundingMode();
-      AST = Z3_mk_fpa_div(Z3Context::ZC, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-    case BO_Rem:
-      AST = Z3_mk_fpa_rem(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-
-    // Additive operators
-    case BO_Add: {
-      Z3Expr RoundingMode = Z3Expr::getFloatRoundingMode();
-      AST = Z3_mk_fpa_add(Z3Context::ZC, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-    case BO_Sub: {
-      Z3Expr RoundingMode = Z3Expr::getFloatRoundingMode();
-      AST = Z3_mk_fpa_sub(Z3Context::ZC, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-
-    // Relational operators
-    case BO_LT:
-      AST = Z3_mk_fpa_lt(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_GT:
-      AST = Z3_mk_fpa_gt(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_LE:
-      AST = Z3_mk_fpa_leq(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_GE:
-      AST = Z3_mk_fpa_geq(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-
-    // Equality operators
-    case BO_EQ:
-      AST = Z3_mk_fpa_eq(Z3Context::ZC, LHS.AST, RHS.AST);
-      break;
-    case BO_NE:
-      return Z3Expr::fromFloatUnOp(UO_LNot,
-                                   Z3Expr::fromFloatBinOp(LHS, BO_EQ, RHS));
-      break;
-
-    // Logical operators
-    case BO_LAnd:
-    case BO_LOr:
-      return Z3Expr::fromBinOp(LHS, Op, RHS, false);
-    }
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a SymbolData, given a Z3_context.
-  static Z3Expr fromData(const SymbolID ID, bool isBool, bool isFloat,
-                         uint64_t BitWidth) {
-    llvm::Twine Name = "$" + llvm::Twine(ID);
-
-    Z3Sort Sort;
-    if (isBool)
-      Sort = Z3Sort::getBoolSort();
-    else if (isFloat)
-      Sort = Z3Sort::getFloatSort(BitWidth);
-    else
-      Sort = Z3Sort::getBitvectorSort(BitWidth);
-
-    Z3_symbol Symbol = Z3_mk_string_symbol(Z3Context::ZC, Name.str().c_str());
-    Z3_ast AST = Z3_mk_const(Z3Context::ZC, Symbol, Sort.Sort);
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a SymbolCast, given a Z3_context.
-  static Z3Expr fromCast(const Z3Expr &Exp, QualType ToTy, uint64_t ToBitWidth,
-                         QualType FromTy, uint64_t FromBitWidth) {
-    Z3_ast AST;
-
-    if ((FromTy->isIntegralOrEnumerationType() &&
-         ToTy->isIntegralOrEnumerationType()) ||
-        (FromTy->isAnyPointerType() ^ ToTy->isAnyPointerType()) ||
-        (FromTy->isBlockPointerType() ^ ToTy->isBlockPointerType()) ||
-        (FromTy->isReferenceType() ^ ToTy->isReferenceType())) {
-      // Special case: Z3 boolean type is distinct from bitvector type, so
-      // must use if-then-else expression instead of direct cast
-      if (FromTy->isBooleanType()) {
-        assert(ToBitWidth > 0 && "BitWidth must be positive!");
-        Z3Expr Zero = Z3Expr::fromInt("0", ToBitWidth);
-        Z3Expr One = Z3Expr::fromInt("1", ToBitWidth);
-        AST = Z3_mk_ite(Z3Context::ZC, Exp.AST, One.AST, Zero.AST);
-      } else if (ToBitWidth > FromBitWidth) {
-        AST = FromTy->isSignedIntegerOrEnumerationType()
-                  ? Z3_mk_sign_ext(Z3Context::ZC, ToBitWidth - FromBitWidth,
-                                   Exp.AST)
-                  : Z3_mk_zero_ext(Z3Context::ZC, ToBitWidth - FromBitWidth,
-                                   Exp.AST);
-      } else if (ToBitWidth < FromBitWidth) {
-        AST = Z3_mk_extract(Z3Context::ZC, ToBitWidth - 1, 0, Exp.AST);
-      } else {
-        // Both are bitvectors with the same width, ignore the type cast
-        return Exp;
-      }
-    } else if (FromTy->isRealFloatingType() && ToTy->isRealFloatingType()) {
-      if (ToBitWidth != FromBitWidth) {
-        Z3Expr RoundingMode = Z3Expr::getFloatRoundingMode();
-        Z3Sort Sort = Z3Sort::getFloatSort(ToBitWidth);
-        AST = Z3_mk_fpa_to_fp_float(Z3Context::ZC, RoundingMode.AST, Exp.AST,
-                                    Sort.Sort);
-      } else {
-        return Exp;
-      }
-    } else if (FromTy->isIntegralOrEnumerationType() &&
-               ToTy->isRealFloatingType()) {
-      Z3Expr RoundingMode = Z3Expr::getFloatRoundingMode();
-      Z3Sort Sort = Z3Sort::getFloatSort(ToBitWidth);
-      AST = FromTy->isSignedIntegerOrEnumerationType()
-                ? Z3_mk_fpa_to_fp_signed(Z3Context::ZC, RoundingMode.AST,
-                                         Exp.AST, Sort.Sort)
-                : Z3_mk_fpa_to_fp_unsigned(Z3Context::ZC, RoundingMode.AST,
-                                           Exp.AST, Sort.Sort);
-    } else if (FromTy->isRealFloatingType() &&
-               ToTy->isIntegralOrEnumerationType()) {
-      Z3Expr RoundingMode = Z3Expr::getFloatRoundingMode();
-      AST = ToTy->isSignedIntegerOrEnumerationType()
-                ? Z3_mk_fpa_to_sbv(Z3Context::ZC, RoundingMode.AST, Exp.AST,
-                                   ToBitWidth)
-                : Z3_mk_fpa_to_ubv(Z3Context::ZC, RoundingMode.AST, Exp.AST,
-                                   ToBitWidth);
-    } else {
-      llvm_unreachable("Unsupported explicit type cast!");
-    }
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a boolean, given a Z3_context.
-  static Z3Expr fromBoolean(const bool Bool) {
-    Z3_ast AST = Bool ? Z3_mk_true(Z3Context::ZC) : Z3_mk_false(Z3Context::ZC);
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from a finite APFloat, given a Z3_context.
-  static Z3Expr fromAPFloat(const llvm::APFloat &Float) {
-    Z3_ast AST;
-    Z3Sort Sort = Z3Sort::getFloatSort(
-        llvm::APFloat::semanticsSizeInBits(Float.getSemantics()));
-
-    llvm::APSInt Int = llvm::APSInt(Float.bitcastToAPInt(), true);
-    Z3Expr Z3Int = Z3Expr::fromAPSInt(Int);
-    AST = Z3_mk_fpa_to_fp_bv(Z3Context::ZC, Z3Int.AST, Sort.Sort);
-
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from an APSInt, given a Z3_context.
-  static Z3Expr fromAPSInt(const llvm::APSInt &Int) {
-    Z3Sort Sort = Z3Sort::getBitvectorSort(Int.getBitWidth());
-    Z3_ast AST =
-        Z3_mk_numeral(Z3Context::ZC, Int.toString(10).c_str(), Sort.Sort);
-    return Z3Expr(AST);
-  }
-
-  /// Construct a Z3Expr from an integer, given a Z3_context.
-  static Z3Expr fromInt(const char *Int, uint64_t BitWidth) {
-    Z3Sort Sort = Z3Sort::getBitvectorSort(BitWidth);
-    Z3_ast AST = Z3_mk_numeral(Z3Context::ZC, Int, Sort.Sort);
-    return Z3Expr(AST);
-  }
-
-  /// Construct an APFloat from a Z3Expr, given the AST representation
-  static bool toAPFloat(const Z3Sort &Sort, const Z3_ast &AST,
-                        llvm::APFloat &Float, bool useSemantics = true) {
-    assert(Sort.getSortKind() == Z3_FLOATING_POINT_SORT &&
-           "Unsupported sort to floating-point!");
-
-    llvm::APSInt Int(Sort.getFloatSortSize(), true);
-    const llvm::fltSemantics &Semantics =
-        Z3Expr::getFloatSemantics(Sort.getFloatSortSize());
-    Z3Sort BVSort = Z3Sort::getBitvectorSort(Sort.getFloatSortSize());
-    if (!Z3Expr::toAPSInt(BVSort, AST, Int, true)) {
-      return false;
-    }
-
-    if (useSemantics &&
-        !Z3Expr::areEquivalent(Float.getSemantics(), Semantics)) {
-      assert(false && "Floating-point types don't match!");
-      return false;
-    }
-
-    Float = llvm::APFloat(Semantics, Int);
-    return true;
-  }
-
-  /// Construct an APSInt from a Z3Expr, given the AST representation
-  static bool toAPSInt(const Z3Sort &Sort, const Z3_ast &AST, llvm::APSInt &Int,
-                       bool useSemantics = true) {
-    switch (Sort.getSortKind()) {
-    default:
-      llvm_unreachable("Unsupported sort to integer!");
-    case Z3_BV_SORT: {
-      if (useSemantics && Int.getBitWidth() != Sort.getBitvectorSortSize()) {
-        assert(false && "Bitvector types don't match!");
-        return false;
-      }
-
-      uint64_t Value[2];
-      // Force cast because Z3 defines __uint64 to be a unsigned long long
-      // type, which isn't compatible with a unsigned long type, even if they
-      // are the same size.
-      Z3_get_numeral_uint64(Z3Context::ZC, AST,
-                            reinterpret_cast<__uint64 *>(&Value[0]));
-      if (Sort.getBitvectorSortSize() <= 64) {
-        Int = llvm::APSInt(llvm::APInt(Int.getBitWidth(), Value[0]),
-                           Int.isUnsigned());
-      } else if (Sort.getBitvectorSortSize() == 128) {
-        Z3Expr ASTHigh = Z3Expr(Z3_mk_extract(Z3Context::ZC, 127, 64, AST));
-        Z3_get_numeral_uint64(Z3Context::ZC, AST,
-                              reinterpret_cast<__uint64 *>(&Value[1]));
-        Int = llvm::APSInt(llvm::APInt(Int.getBitWidth(), Value),
-                           Int.isUnsigned());
-      } else {
-        assert(false && "Bitwidth not supported!");
-        return false;
-      }
-      return true;
-    }
-    case Z3_BOOL_SORT:
-      if (useSemantics && Int.getBitWidth() < 1) {
-        assert(false && "Boolean type doesn't match!");
-        return false;
-      }
-      Int = llvm::APSInt(
-          llvm::APInt(Int.getBitWidth(),
-                      Z3_get_bool_value(Z3Context::ZC, AST) == Z3_L_TRUE ? 1
-                                                                         : 0),
-          Int.isUnsigned());
-      return true;
-    }
-  }
-
   void Profile(llvm::FoldingSetNodeID &ID) const {
-    ID.AddInteger(Z3_get_ast_hash(Z3Context::ZC, AST));
+    ID.AddInteger(Z3_get_ast_hash(Context.Context, AST));
   }
 
   bool operator<(const Z3Expr &Other) const {
@@ -726,46 +241,55 @@ public:
 
   /// Comparison of AST equality, not model equivalence.
   bool operator==(const Z3Expr &Other) const {
-    assert(Z3_is_eq_sort(Z3Context::ZC, Z3_get_sort(Z3Context::ZC, AST),
-                         Z3_get_sort(Z3Context::ZC, Other.AST)) &&
+    assert(Z3_is_eq_sort(Context.Context, Z3_get_sort(Context.Context, AST),
+                         Z3_get_sort(Context.Context, Other.AST)) &&
            "AST's must have the same sort");
-    return Z3_is_eq_ast(Z3Context::ZC, AST, Other.AST);
+    return Z3_is_eq_ast(Context.Context, AST, Other.AST);
   }
 
   /// Override implicit move constructor for correct reference counting.
   Z3Expr &operator=(const Z3Expr &Move) {
-    Z3_inc_ref(Z3Context::ZC, Move.AST);
-    Z3_dec_ref(Z3Context::ZC, AST);
+    Z3_inc_ref(Context.Context, Move.AST);
+    Z3_dec_ref(Context.Context, AST);
     AST = Move.AST;
     return *this;
   }
 
   void print(raw_ostream &OS) const {
-    OS << Z3_ast_to_string(Z3Context::ZC, AST);
+    OS << Z3_ast_to_string(Context.Context, AST);
   }
 
   LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
 }; // end class Z3Expr
 
 class Z3Model {
+  friend class Z3Solver;
+
+  Z3Context &Context;
+
   Z3_model Model;
 
 public:
-  Z3Model(Z3_model ZM) : Model(ZM) { Z3_model_inc_ref(Z3Context::ZC, Model); }
+  Z3Model(Z3Context &C, Z3_model ZM) : Context(C), Model(ZM) {
+    assert(C.Context != nullptr);
+    Z3_model_inc_ref(Context.Context, Model);
+  }
 
   /// Override implicit copy constructor for correct reference counting.
-  Z3Model(const Z3Model &Copy) : Model(Copy.Model) {
-    Z3_model_inc_ref(Z3Context::ZC, Model);
+  Z3Model(const Z3Model &Copy) : Context(Copy.Context), Model(Copy.Model) {
+    Z3_model_inc_ref(Context.Context, Model);
   }
 
   /// Provide move constructor
-  Z3Model(Z3Model &&Move) : Model(nullptr) { *this = std::move(Move); }
+  Z3Model(Z3Model &&Move) : Context(Move.Context), Model(nullptr) {
+    *this = std::move(Move);
+  }
 
   /// Provide move assignment constructor
   Z3Model &operator=(Z3Model &&Move) {
     if (this != &Move) {
       if (Model)
-        Z3_model_dec_ref(Z3Context::ZC, Model);
+        Z3_model_dec_ref(Context.Context, Model);
       Model = Move.Model;
       Move.Model = nullptr;
     }
@@ -774,35 +298,11 @@ public:
 
   ~Z3Model() {
     if (Model)
-      Z3_model_dec_ref(Z3Context::ZC, Model);
-  }
-
-  /// Given an expression, extract the value of this operand in the model.
-  bool getInterpretation(const Z3Expr &Exp, llvm::APSInt &Int) const {
-    Z3_func_decl Func =
-        Z3_get_app_decl(Z3Context::ZC, Z3_to_app(Z3Context::ZC, Exp.AST));
-    if (Z3_model_has_interp(Z3Context::ZC, Model, Func) != Z3_L_TRUE)
-      return false;
-
-    Z3_ast Assign = Z3_model_get_const_interp(Z3Context::ZC, Model, Func);
-    Z3Sort Sort = Z3Sort::getSort(Assign);
-    return Z3Expr::toAPSInt(Sort, Assign, Int, true);
-  }
-
-  /// Given an expression, extract the value of this operand in the model.
-  bool getInterpretation(const Z3Expr &Exp, llvm::APFloat &Float) const {
-    Z3_func_decl Func =
-        Z3_get_app_decl(Z3Context::ZC, Z3_to_app(Z3Context::ZC, Exp.AST));
-    if (Z3_model_has_interp(Z3Context::ZC, Model, Func) != Z3_L_TRUE)
-      return false;
-
-    Z3_ast Assign = Z3_model_get_const_interp(Z3Context::ZC, Model, Func);
-    Z3Sort Sort = Z3Sort::getSort(Assign);
-    return Z3Expr::toAPFloat(Sort, Assign, Float, true);
+      Z3_model_dec_ref(Context.Context, Model);
   }
 
   void print(raw_ostream &OS) const {
-    OS << Z3_model_to_string(Z3Context::ZC, Model);
+    OS << Z3_model_to_string(Context.Context, Model);
   }
 
   LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
@@ -811,26 +311,30 @@ public:
 class Z3Solver {
   friend class Z3ConstraintManager;
 
+  Z3Context Context;
+
   Z3_solver Solver;
 
-  Z3Solver(Z3_solver ZS) : Solver(ZS) {
-    Z3_solver_inc_ref(Z3Context::ZC, Solver);
+  Z3Solver() : Solver(Z3_mk_simple_solver(Context.Context)) {
+    Z3_solver_inc_ref(Context.Context, Solver);
   }
 
 public:
   /// Override implicit copy constructor for correct reference counting.
-  Z3Solver(const Z3Solver &Copy) : Solver(Copy.Solver) {
-    Z3_solver_inc_ref(Z3Context::ZC, Solver);
+  Z3Solver(const Z3Solver &Copy) : Context(Copy.Context), Solver(Copy.Solver) {
+    Z3_solver_inc_ref(Context.Context, Solver);
   }
 
   /// Provide move constructor
-  Z3Solver(Z3Solver &&Move) : Solver(nullptr) { *this = std::move(Move); }
+  Z3Solver(Z3Solver &&Move) : Context(Move.Context), Solver(nullptr) {
+    *this = std::move(Move);
+  }
 
   /// Provide move assignment constructor
   Z3Solver &operator=(Z3Solver &&Move) {
     if (this != &Move) {
       if (Solver)
-        Z3_solver_dec_ref(Z3Context::ZC, Solver);
+        Z3_solver_dec_ref(Context.Context, Solver);
       Solver = Move.Solver;
       Move.Solver = nullptr;
     }
@@ -839,12 +343,62 @@ public:
 
   ~Z3Solver() {
     if (Solver)
-      Z3_solver_dec_ref(Z3Context::ZC, Solver);
+      Z3_solver_dec_ref(Context.Context, Solver);
   }
 
   /// Given a constraint, add it to the solver
   void addConstraint(const Z3Expr &Exp) {
-    Z3_solver_assert(Z3Context::ZC, Solver, Exp.AST);
+    Z3_solver_assert(Context.Context, Solver, Exp.AST);
+  }
+
+  // Return a boolean sort.
+  Z3Sort getBoolSort() {
+    return Z3Sort(Context, Z3_mk_bool_sort(Context.Context));
+  }
+
+  // Return an appropriate bitvector sort for the given bitwidth.
+  Z3Sort getBitvectorSort(unsigned BitWidth) {
+    return Z3Sort(Context, Z3_mk_bv_sort(Context.Context, BitWidth));
+  }
+
+  // Return an appropriate floating-point sort for the given bitwidth.
+  Z3Sort getFloatSort(unsigned BitWidth) {
+    Z3_sort Sort;
+
+    switch (BitWidth) {
+    default:
+      llvm_unreachable("Unsupported floating-point bitwidth!");
+      break;
+    case 16:
+      Sort = Z3_mk_fpa_sort_16(Context.Context);
+      break;
+    case 32:
+      Sort = Z3_mk_fpa_sort_32(Context.Context);
+      break;
+    case 64:
+      Sort = Z3_mk_fpa_sort_64(Context.Context);
+      break;
+    case 128:
+      Sort = Z3_mk_fpa_sort_128(Context.Context);
+      break;
+    }
+    return Z3Sort(Context, Sort);
+  }
+
+  // Return an appropriate sort, given a QualType
+  Z3Sort MkSort(const QualType &Ty, unsigned BitWidth) {
+    if (Ty->isBooleanType())
+      return getBoolSort();
+
+    if (Ty->isRealFloatingType())
+      return getFloatSort(BitWidth);
+
+    return getBitvectorSort(BitWidth);
+  }
+
+  // Return an appropriate sort for the given AST.
+  Z3Sort getSort(Z3_ast AST) {
+    return Z3Sort(Context, Z3_get_sort(Context.Context, AST));
   }
 
   /// Given a program state, construct the logical conjunction and add it to
@@ -861,54 +415,537 @@ public:
       while (I != IE)
         ASTs.push_back(I++->second.AST);
 
-      Z3Expr Conj = Z3Expr::fromNBinOp(BO_LAnd, ASTs);
+      Z3Expr Conj = fromNBinOp(BO_LAnd, ASTs);
       addConstraint(Conj);
     }
   }
 
+  // Return an appropriate floating-point rounding mode.
+  Z3Expr getFloatRoundingMode() {
+    // TODO: Don't assume nearest ties to even rounding mode
+    return Z3Expr(Context, Z3_mk_fpa_rne(Context.Context));
+  }
+
+  /// Construct a Z3Expr from a unary operator, given a Z3_context.
+  Z3Expr fromUnOp(const UnaryOperator::Opcode Op, const Z3Expr &Exp) {
+    Z3_ast AST;
+
+    switch (Op) {
+    default:
+      llvm_unreachable("Unimplemented opcode");
+      break;
+
+    case UO_Minus:
+      AST = Z3_mk_bvneg(Context.Context, Exp.AST);
+      break;
+
+    case UO_Not:
+      AST = Z3_mk_bvnot(Context.Context, Exp.AST);
+      break;
+
+    case UO_LNot:
+      AST = Z3_mk_not(Context.Context, Exp.AST);
+      break;
+    }
+
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a floating-point unary operator, given a
+  /// Z3_context.
+  Z3Expr fromFloatUnOp(const UnaryOperator::Opcode Op, const Z3Expr &Exp) {
+    Z3_ast AST;
+
+    switch (Op) {
+    default:
+      llvm_unreachable("Unimplemented opcode");
+      break;
+
+    case UO_Minus:
+      AST = Z3_mk_fpa_neg(Context.Context, Exp.AST);
+      break;
+
+    case UO_LNot:
+      return fromUnOp(Op, Exp);
+    }
+
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a n-ary binary operator.
+  Z3Expr fromNBinOp(const BinaryOperator::Opcode Op,
+                    const std::vector<Z3_ast> &ASTs) {
+    Z3_ast AST;
+
+    switch (Op) {
+    default:
+      llvm_unreachable("Unimplemented opcode");
+      break;
+
+    case BO_LAnd:
+      AST = Z3_mk_and(Context.Context, ASTs.size(), ASTs.data());
+      break;
+
+    case BO_LOr:
+      AST = Z3_mk_or(Context.Context, ASTs.size(), ASTs.data());
+      break;
+    }
+
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a binary operator, given a Z3_context.
+  Z3Expr fromBinOp(const Z3Expr &LHS, const BinaryOperator::Opcode Op,
+                   const Z3Expr &RHS, bool isSigned) {
+    Z3_ast AST;
+
+    assert(getSort(LHS.AST) == getSort(RHS.AST) &&
+           "AST's must have the same sort!");
+
+    switch (Op) {
+    default:
+      llvm_unreachable("Unimplemented opcode");
+      break;
+
+      // Multiplicative operators
+    case BO_Mul:
+      AST = Z3_mk_bvmul(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_Div:
+      AST = isSigned ? Z3_mk_bvsdiv(Context.Context, LHS.AST, RHS.AST)
+                     : Z3_mk_bvudiv(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_Rem:
+      AST = isSigned ? Z3_mk_bvsrem(Context.Context, LHS.AST, RHS.AST)
+                     : Z3_mk_bvurem(Context.Context, LHS.AST, RHS.AST);
+      break;
+
+      // Additive operators
+    case BO_Add:
+      AST = Z3_mk_bvadd(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_Sub:
+      AST = Z3_mk_bvsub(Context.Context, LHS.AST, RHS.AST);
+      break;
+
+      // Bitwise shift operators
+    case BO_Shl:
+      AST = Z3_mk_bvshl(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_Shr:
+      AST = isSigned ? Z3_mk_bvashr(Context.Context, LHS.AST, RHS.AST)
+                     : Z3_mk_bvlshr(Context.Context, LHS.AST, RHS.AST);
+      break;
+
+      // Relational operators
+    case BO_LT:
+      AST = isSigned ? Z3_mk_bvslt(Context.Context, LHS.AST, RHS.AST)
+                     : Z3_mk_bvult(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_GT:
+      AST = isSigned ? Z3_mk_bvsgt(Context.Context, LHS.AST, RHS.AST)
+                     : Z3_mk_bvugt(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_LE:
+      AST = isSigned ? Z3_mk_bvsle(Context.Context, LHS.AST, RHS.AST)
+                     : Z3_mk_bvule(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_GE:
+      AST = isSigned ? Z3_mk_bvsge(Context.Context, LHS.AST, RHS.AST)
+                     : Z3_mk_bvuge(Context.Context, LHS.AST, RHS.AST);
+      break;
+
+      // Equality operators
+    case BO_EQ:
+      AST = Z3_mk_eq(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_NE:
+      return fromUnOp(UO_LNot, fromBinOp(LHS, BO_EQ, RHS, isSigned));
+      break;
+
+      // Bitwise operators
+    case BO_And:
+      AST = Z3_mk_bvand(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_Xor:
+      AST = Z3_mk_bvxor(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_Or:
+      AST = Z3_mk_bvor(Context.Context, LHS.AST, RHS.AST);
+      break;
+
+      // Logical operators
+    case BO_LAnd:
+    case BO_LOr: {
+      std::vector<Z3_ast> Args = {LHS.AST, RHS.AST};
+      return fromNBinOp(Op, Args);
+    }
+    }
+
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a special floating-point binary operator, given
+  /// a Z3_context.
+  Z3Expr fromFloatSpecialBinOp(const Z3Expr &LHS,
+                               const BinaryOperator::Opcode Op,
+                               const llvm::APFloat::fltCategory &RHS) {
+    Z3_ast AST;
+
+    switch (Op) {
+    default:
+      llvm_unreachable("Unimplemented opcode");
+      break;
+
+      // Equality operators
+    case BO_EQ:
+      switch (RHS) {
+      case llvm::APFloat::fcInfinity:
+        AST = Z3_mk_fpa_is_infinite(Context.Context, LHS.AST);
+        break;
+      case llvm::APFloat::fcNaN:
+        AST = Z3_mk_fpa_is_nan(Context.Context, LHS.AST);
+        break;
+      case llvm::APFloat::fcNormal:
+        AST = Z3_mk_fpa_is_normal(Context.Context, LHS.AST);
+        break;
+      case llvm::APFloat::fcZero:
+        AST = Z3_mk_fpa_is_zero(Context.Context, LHS.AST);
+        break;
+      }
+      break;
+    case BO_NE:
+      return fromFloatUnOp(UO_LNot, fromFloatSpecialBinOp(LHS, BO_EQ, RHS));
+      break;
+    }
+
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a floating-point binary operator, given a
+  /// Z3_context.
+  Z3Expr fromFloatBinOp(const Z3Expr &LHS, const BinaryOperator::Opcode Op,
+                        const Z3Expr &RHS) {
+    Z3_ast AST;
+
+    assert(getSort(LHS.AST) == getSort(RHS.AST) &&
+           "AST's must have the same sort!");
+
+    switch (Op) {
+    default:
+      llvm_unreachable("Unimplemented opcode");
+      break;
+
+      // Multiplicative operators
+    case BO_Mul: {
+      Z3Expr RoundingMode = getFloatRoundingMode();
+      AST = Z3_mk_fpa_mul(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
+      break;
+    }
+    case BO_Div: {
+      Z3Expr RoundingMode = getFloatRoundingMode();
+      AST = Z3_mk_fpa_div(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
+      break;
+    }
+    case BO_Rem:
+      AST = Z3_mk_fpa_rem(Context.Context, LHS.AST, RHS.AST);
+      break;
+
+      // Additive operators
+    case BO_Add: {
+      Z3Expr RoundingMode = getFloatRoundingMode();
+      AST = Z3_mk_fpa_add(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
+      break;
+    }
+    case BO_Sub: {
+      Z3Expr RoundingMode = getFloatRoundingMode();
+      AST = Z3_mk_fpa_sub(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
+      break;
+    }
+
+      // Relational operators
+    case BO_LT:
+      AST = Z3_mk_fpa_lt(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_GT:
+      AST = Z3_mk_fpa_gt(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_LE:
+      AST = Z3_mk_fpa_leq(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_GE:
+      AST = Z3_mk_fpa_geq(Context.Context, LHS.AST, RHS.AST);
+      break;
+
+      // Equality operators
+    case BO_EQ:
+      AST = Z3_mk_fpa_eq(Context.Context, LHS.AST, RHS.AST);
+      break;
+    case BO_NE:
+      return fromFloatUnOp(UO_LNot, fromFloatBinOp(LHS, BO_EQ, RHS));
+      break;
+
+      // Logical operators
+    case BO_LAnd:
+    case BO_LOr:
+      return fromBinOp(LHS, Op, RHS, false);
+    }
+
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a SymbolData, given a Z3_context.
+  Z3Expr fromData(const SymbolID ID, const QualType &Ty, uint64_t BitWidth) {
+    llvm::Twine Name = "$" + llvm::Twine(ID);
+
+    Z3Sort Sort = MkSort(Ty, BitWidth);
+
+    Z3_symbol Symbol = Z3_mk_string_symbol(Context.Context, Name.str().c_str());
+    Z3_ast AST = Z3_mk_const(Context.Context, Symbol, Sort.Sort);
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a SymbolCast, given a Z3_context.
+  Z3Expr fromCast(const Z3Expr &Exp, QualType ToTy, uint64_t ToBitWidth,
+                  QualType FromTy, uint64_t FromBitWidth) {
+    Z3_ast AST;
+
+    if ((FromTy->isIntegralOrEnumerationType() &&
+         ToTy->isIntegralOrEnumerationType()) ||
+        (FromTy->isAnyPointerType() ^ ToTy->isAnyPointerType()) ||
+        (FromTy->isBlockPointerType() ^ ToTy->isBlockPointerType()) ||
+        (FromTy->isReferenceType() ^ ToTy->isReferenceType())) {
+      // Special case: Z3 boolean type is distinct from bitvector type, so
+      // must use if-then-else expression instead of direct cast
+      if (FromTy->isBooleanType()) {
+        assert(ToBitWidth > 0 && "BitWidth must be positive!");
+        Z3Expr Zero = fromInt("0", ToBitWidth);
+        Z3Expr One = fromInt("1", ToBitWidth);
+        AST = Z3_mk_ite(Context.Context, Exp.AST, One.AST, Zero.AST);
+      } else if (ToBitWidth > FromBitWidth) {
+        AST = FromTy->isSignedIntegerOrEnumerationType()
+                  ? Z3_mk_sign_ext(Context.Context, ToBitWidth - FromBitWidth,
+                                   Exp.AST)
+                  : Z3_mk_zero_ext(Context.Context, ToBitWidth - FromBitWidth,
+                                   Exp.AST);
+      } else if (ToBitWidth < FromBitWidth) {
+        AST = Z3_mk_extract(Context.Context, ToBitWidth - 1, 0, Exp.AST);
+      } else {
+        // Both are bitvectors with the same width, ignore the type cast
+        return Exp;
+      }
+    } else if (FromTy->isRealFloatingType() && ToTy->isRealFloatingType()) {
+      if (ToBitWidth != FromBitWidth) {
+        Z3Expr RoundingMode = getFloatRoundingMode();
+        Z3Sort Sort = getFloatSort(ToBitWidth);
+        AST = Z3_mk_fpa_to_fp_float(Context.Context, RoundingMode.AST, Exp.AST,
+                                    Sort.Sort);
+      } else {
+        return Exp;
+      }
+    } else if (FromTy->isIntegralOrEnumerationType() &&
+               ToTy->isRealFloatingType()) {
+      Z3Expr RoundingMode = getFloatRoundingMode();
+      Z3Sort Sort = getFloatSort(ToBitWidth);
+      AST = FromTy->isSignedIntegerOrEnumerationType()
+                ? Z3_mk_fpa_to_fp_signed(Context.Context, RoundingMode.AST,
+                                         Exp.AST, Sort.Sort)
+                : Z3_mk_fpa_to_fp_unsigned(Context.Context, RoundingMode.AST,
+                                           Exp.AST, Sort.Sort);
+    } else if (FromTy->isRealFloatingType() &&
+               ToTy->isIntegralOrEnumerationType()) {
+      Z3Expr RoundingMode = getFloatRoundingMode();
+      AST = ToTy->isSignedIntegerOrEnumerationType()
+                ? Z3_mk_fpa_to_sbv(Context.Context, RoundingMode.AST, Exp.AST,
+                                   ToBitWidth)
+                : Z3_mk_fpa_to_ubv(Context.Context, RoundingMode.AST, Exp.AST,
+                                   ToBitWidth);
+    } else {
+      llvm_unreachable("Unsupported explicit type cast!");
+    }
+
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a boolean, given a Z3_context.
+  Z3Expr fromBoolean(const bool Bool) {
+    Z3_ast AST =
+        Bool ? Z3_mk_true(Context.Context) : Z3_mk_false(Context.Context);
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from a finite APFloat, given a Z3_context.
+  Z3Expr fromAPFloat(const llvm::APFloat &Float) {
+    Z3_ast AST;
+    Z3Sort Sort =
+        getFloatSort(llvm::APFloat::semanticsSizeInBits(Float.getSemantics()));
+
+    llvm::APSInt Int = llvm::APSInt(Float.bitcastToAPInt(), false);
+    Z3Expr Z3Int = fromAPSInt(Int);
+    AST = Z3_mk_fpa_to_fp_bv(Context.Context, Z3Int.AST, Sort.Sort);
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from an APSInt, given a Z3_context.
+  Z3Expr fromAPSInt(const llvm::APSInt &Int) {
+    Z3Sort Sort = getBitvectorSort(Int.getBitWidth());
+    Z3_ast AST =
+        Z3_mk_numeral(Context.Context, Int.toString(10).c_str(), Sort.Sort);
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct a Z3Expr from an integer, given a Z3_context.
+  Z3Expr fromInt(const char *Int, uint64_t BitWidth) {
+    Z3Sort Sort = getBitvectorSort(BitWidth);
+    Z3_ast AST = Z3_mk_numeral(Context.Context, Int, Sort.Sort);
+    return Z3Expr(Context, AST);
+  }
+
+  /// Construct an APFloat from a Z3Expr, given the AST representation
+  bool toAPFloat(const Z3Sort &Sort, const Z3_ast &AST, llvm::APFloat &Float,
+                 bool useSemantics = true) {
+    assert(Sort.getSortKind() == Z3_FLOATING_POINT_SORT &&
+           "Unsupported sort to floating-point!");
+
+    llvm::APSInt Int(Sort.getFloatSortSize(), true);
+    const llvm::fltSemantics &Semantics =
+        Z3Expr::getFloatSemantics(Sort.getFloatSortSize());
+    Z3Sort BVSort = getBitvectorSort(Sort.getFloatSortSize());
+    if (!toAPSInt(BVSort, AST, Int, true)) {
+      return false;
+    }
+
+    if (useSemantics &&
+        !Z3Expr::areEquivalent(Float.getSemantics(), Semantics)) {
+      assert(false && "Floating-point types don't match!");
+      return false;
+    }
+
+    Float = llvm::APFloat(Semantics, Int);
+    return true;
+  }
+
+  /// Construct an APSInt from a Z3Expr, given the AST representation
+  bool toAPSInt(const Z3Sort &Sort, const Z3_ast &AST, llvm::APSInt &Int,
+                bool useSemantics = true) {
+    switch (Sort.getSortKind()) {
+    default:
+      llvm_unreachable("Unsupported sort to integer!");
+    case Z3_BV_SORT: {
+      if (useSemantics && Int.getBitWidth() != Sort.getBitvectorSortSize()) {
+        assert(false && "Bitvector types don't match!");
+        return false;
+      }
+
+      uint64_t Value[2];
+      // Force cast because Z3 defines __uint64 to be a unsigned long long
+      // type, which isn't compatible with a unsigned long type, even if they
+      // are the same size.
+      Z3_get_numeral_uint64(Context.Context, AST,
+                            reinterpret_cast<__uint64 *>(&Value[0]));
+      if (Sort.getBitvectorSortSize() <= 64) {
+        Int = llvm::APSInt(llvm::APInt(Int.getBitWidth(), Value[0]),
+                           Int.isUnsigned());
+      } else if (Sort.getBitvectorSortSize() == 128) {
+        Z3Expr ASTHigh =
+            Z3Expr(Context, Z3_mk_extract(Context.Context, 127, 64, AST));
+        Z3_get_numeral_uint64(Context.Context, AST,
+                              reinterpret_cast<__uint64 *>(&Value[1]));
+        Int = llvm::APSInt(llvm::APInt(Int.getBitWidth(), Value),
+                           Int.isUnsigned());
+      } else {
+        assert(false && "Bitwidth not supported!");
+        return false;
+      }
+      return true;
+    }
+    case Z3_BOOL_SORT:
+      if (useSemantics && Int.getBitWidth() < 1) {
+        assert(false && "Boolean type doesn't match!");
+        return false;
+      }
+      Int = llvm::APSInt(
+          llvm::APInt(Int.getBitWidth(),
+                      Z3_get_bool_value(Context.Context, AST) == Z3_L_TRUE ? 1
+                                                                           : 0),
+          Int.isUnsigned());
+      return true;
+    }
+  }
+
+  /// Given an expression and a model, extract the value of this operand in
+  /// the model.
+  bool getInterpretation(const Z3Model Model, const Z3Expr &Exp,
+                         llvm::APSInt &Int) {
+    Z3_func_decl Func =
+        Z3_get_app_decl(Context.Context, Z3_to_app(Context.Context, Exp.AST));
+    if (Z3_model_has_interp(Context.Context, Model.Model, Func) != Z3_L_TRUE)
+      return false;
+
+    Z3_ast Assign =
+        Z3_model_get_const_interp(Context.Context, Model.Model, Func);
+    Z3Sort Sort = getSort(Assign);
+    return toAPSInt(Sort, Assign, Int, true);
+  }
+
+  /// Given an expression and a model, extract the value of this operand in
+  /// the model.
+  bool getInterpretation(const Z3Model Model, const Z3Expr &Exp,
+                         llvm::APFloat &Float) {
+    Z3_func_decl Func =
+        Z3_get_app_decl(Context.Context, Z3_to_app(Context.Context, Exp.AST));
+    if (Z3_model_has_interp(Context.Context, Model.Model, Func) != Z3_L_TRUE)
+      return false;
+
+    Z3_ast Assign =
+        Z3_model_get_const_interp(Context.Context, Model.Model, Func);
+    Z3Sort Sort = getSort(Assign);
+    return toAPFloat(Sort, Assign, Float, true);
+  }
+
+  // Callback function for doCast parameter on APSInt type.
+  llvm::APSInt castAPSInt(const llvm::APSInt &V, QualType ToTy,
+                          uint64_t ToWidth, QualType FromTy,
+                          uint64_t FromWidth) {
+    APSIntType TargetType(ToWidth, !ToTy->isSignedIntegerOrEnumerationType());
+    return TargetType.convert(V);
+  }
+
   /// Check if the constraints are satisfiable
-  Z3_lbool check() { return Z3_solver_check(Z3Context::ZC, Solver); }
+  Z3_lbool check() { return Z3_solver_check(Context.Context, Solver); }
 
   /// Push the current solver state
-  void push() { return Z3_solver_push(Z3Context::ZC, Solver); }
+  void push() { return Z3_solver_push(Context.Context, Solver); }
 
   /// Pop the previous solver state
   void pop(unsigned NumStates = 1) {
-    assert(Z3_solver_get_num_scopes(Z3Context::ZC, Solver) >= NumStates);
-    return Z3_solver_pop(Z3Context::ZC, Solver, NumStates);
+    assert(Z3_solver_get_num_scopes(Context.Context, Solver) >= NumStates);
+    return Z3_solver_pop(Context.Context, Solver, NumStates);
   }
 
   /// Get a model from the solver. Caller should check the model is
   /// satisfiable.
   Z3Model getModel() {
-    return Z3Model(Z3_solver_get_model(Z3Context::ZC, Solver));
+    return Z3Model(Context, Z3_solver_get_model(Context.Context, Solver));
   }
 
   /// Reset the solver and remove all constraints.
-  void reset() { Z3_solver_reset(Z3Context::ZC, Solver); }
+  void reset() { Z3_solver_reset(Context.Context, Solver); }
 
   void print(raw_ostream &OS) const {
-    OS << Z3_solver_to_string(Z3Context::ZC, Solver);
+    OS << Z3_solver_to_string(Context.Context, Solver);
   }
 
   LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
 }; // end class Z3Solver
 
-void Z3ErrorHandler(Z3_context Context, Z3_error_code Error) {
-  llvm::report_fatal_error("Z3 error: " +
-                           llvm::Twine(Z3_get_error_msg_ex(Context, Error)));
-}
-
 class Z3ConstraintManager : public SMTConstraintManager {
-  Z3Context Context;
   mutable Z3Solver Solver;
 
 public:
   Z3ConstraintManager(SubEngine *SE, SValBuilder &SB)
-      : SMTConstraintManager(SE, SB),
-        Solver(Z3_mk_simple_solver(Z3Context::ZC)) {
-    Z3_set_error_handler(Z3Context::ZC, Z3ErrorHandler);
-  }
+      : SMTConstraintManager(SE, SB) {}
+
   //===------------------------------------------------------------------===//
   // Implementation for Refutation.
   //===------------------------------------------------------------------===//
@@ -1025,25 +1062,18 @@ private:
   // Perform implicit integer type conversion.
   // May modify all input parameters.
   // TODO: Refactor to use Sema::handleIntegerConversion()
-  template <typename T,
-            T(doCast)(const T &, QualType, uint64_t, QualType, uint64_t)>
+  template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
+                                              QualType, uint64_t)>
   void doIntTypeConversion(T &LHS, QualType &LTy, T &RHS, QualType &RTy) const;
 
   // Perform implicit floating-point type conversion.
   // May modify all input parameters.
   // TODO: Refactor to use Sema::handleFloatConversion()
-  template <typename T,
-            T(doCast)(const T &, QualType, uint64_t, QualType, uint64_t)>
+  template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
+                                              QualType, uint64_t)>
   void doFloatTypeConversion(T &LHS, QualType &LTy, T &RHS,
                              QualType &RTy) const;
-
-  // Callback function for doCast parameter on APSInt type.
-  static llvm::APSInt castAPSInt(const llvm::APSInt &V, QualType ToTy,
-                                 uint64_t ToWidth, QualType FromTy,
-                                 uint64_t FromWidth);
 }; // end class Z3ConstraintManager
-
-Z3_context Z3Context::ZC;
 
 } // end anonymous namespace
 
@@ -1169,14 +1199,14 @@ const llvm::APSInt *Z3ConstraintManager::getSymVal(ProgramStateRef State,
 
     Z3Model Model = Solver.getModel();
     // Model does not assign interpretation
-    if (!Model.getInterpretation(Exp, Value))
+    if (!Solver.getInterpretation(Model, Exp, Value))
       return nullptr;
 
     // A value has been obtained, check if it is the only value
-    Z3Expr NotExp = Z3Expr::fromBinOp(
+    Z3Expr NotExp = Solver.fromBinOp(
         Exp, BO_NE,
-        Ty->isBooleanType() ? Z3Expr::fromBoolean(Value.getBoolValue())
-                            : Z3Expr::fromAPSInt(Value),
+        Ty->isBooleanType() ? Solver.fromBoolean(Value.getBoolValue())
+                            : Solver.fromAPSInt(Value),
         false);
 
     Solver.addConstraint(NotExp);
@@ -1219,8 +1249,8 @@ const llvm::APSInt *Z3ConstraintManager::getSymVal(ProgramStateRef State,
     QualType LTy, RTy;
     std::tie(ConvertedLHS, LTy) = fixAPSInt(*LHS);
     std::tie(ConvertedRHS, RTy) = fixAPSInt(*RHS);
-    doIntTypeConversion<llvm::APSInt, Z3ConstraintManager::castAPSInt>(
-        ConvertedLHS, LTy, ConvertedRHS, RTy);
+    doIntTypeConversion<llvm::APSInt, &Z3Solver::castAPSInt>(ConvertedLHS, LTy,
+                                                             ConvertedRHS, RTy);
     return BVF.evalAPSInt(BSE->getOpcode(), ConvertedLHS, ConvertedRHS);
   }
 
@@ -1242,10 +1272,12 @@ Z3ConstraintManager::removeDeadBindings(ProgramStateRef State,
 }
 
 void Z3ConstraintManager::addRangeConstraints(ConstraintRangeTy CR) {
+  Solver.reset();
+
   for (const auto &I : CR) {
     SymbolRef Sym = I.first;
 
-    Z3Expr Constraints = Z3Expr::fromBoolean(false);
+    Z3Expr Constraints = Solver.fromBoolean(false);
     for (const auto &Range : I.second) {
       Z3Expr SymRange =
           getZ3RangeExpr(Sym, Range.From(), Range.To(), /*InRange=*/true);
@@ -1253,7 +1285,7 @@ void Z3ConstraintManager::addRangeConstraints(ConstraintRangeTy CR) {
       // FIXME: the last argument (isSigned) is not used when generating the
       // or expression, as both arguments are booleans
       Constraints =
-          Z3Expr::fromBinOp(Constraints, BO_LOr, SymRange, /*IsSigned=*/true);
+          Solver.fromBinOp(Constraints, BO_LOr, SymRange, /*IsSigned=*/true);
     }
     Solver.addConstraint(Constraints);
   }
@@ -1266,10 +1298,7 @@ clang::ento::ConditionTruthVal Z3ConstraintManager::isModelFeasible() {
   return ConditionTruthVal();
 }
 
-LLVM_DUMP_METHOD void Z3ConstraintManager::dump() const
-{
-  Solver.dump();
-}
+LLVM_DUMP_METHOD void Z3ConstraintManager::dump() const { Solver.dump(); }
 
 //===------------------------------------------------------------------===//
 // Internal implementation.
@@ -1303,7 +1332,7 @@ Z3Expr Z3ConstraintManager::getZ3Expr(SymbolRef Sym, QualType *RetTy,
 }
 
 Z3Expr Z3ConstraintManager::getZ3NotExpr(const Z3Expr &Exp) const {
-  return Z3Expr::fromUnOp(UO_LNot, Exp);
+  return Solver.fromUnOp(UO_LNot, Exp);
 }
 
 Z3Expr Z3ConstraintManager::getZ3ZeroExpr(const Z3Expr &Exp, QualType Ty,
@@ -1311,17 +1340,16 @@ Z3Expr Z3ConstraintManager::getZ3ZeroExpr(const Z3Expr &Exp, QualType Ty,
   ASTContext &Ctx = getBasicVals().getContext();
   if (Ty->isRealFloatingType()) {
     llvm::APFloat Zero = llvm::APFloat::getZero(Ctx.getFloatTypeSemantics(Ty));
-    return Z3Expr::fromFloatBinOp(Exp, Assumption ? BO_EQ : BO_NE,
-                                  Z3Expr::fromAPFloat(Zero));
+    return Solver.fromFloatBinOp(Exp, Assumption ? BO_EQ : BO_NE,
+                                 Solver.fromAPFloat(Zero));
   } else if (Ty->isIntegralOrEnumerationType() || Ty->isAnyPointerType() ||
              Ty->isBlockPointerType() || Ty->isReferenceType()) {
     bool isSigned = Ty->isSignedIntegerOrEnumerationType();
     // Skip explicit comparison for boolean types
     if (Ty->isBooleanType())
       return Assumption ? getZ3NotExpr(Exp) : Exp;
-    return Z3Expr::fromBinOp(Exp, Assumption ? BO_EQ : BO_NE,
-                             Z3Expr::fromInt("0", Ctx.getTypeSize(Ty)),
-                             isSigned);
+    return Solver.fromBinOp(Exp, Assumption ? BO_EQ : BO_NE,
+                            Solver.fromInt("0", Ctx.getTypeSize(Ty)), isSigned);
   }
 
   llvm_unreachable("Unsupported type for zero value!");
@@ -1360,15 +1388,14 @@ Z3Expr Z3ConstraintManager::getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
 Z3Expr Z3ConstraintManager::getZ3DataExpr(const SymbolID ID,
                                           QualType Ty) const {
   ASTContext &Ctx = getBasicVals().getContext();
-  return Z3Expr::fromData(ID, Ty->isBooleanType(), Ty->isRealFloatingType(),
-                          Ctx.getTypeSize(Ty));
+  return Solver.fromData(ID, Ty, Ctx.getTypeSize(Ty));
 }
 
 Z3Expr Z3ConstraintManager::getZ3CastExpr(const Z3Expr &Exp, QualType FromTy,
                                           QualType ToTy) const {
   ASTContext &Ctx = getBasicVals().getContext();
-  return Z3Expr::fromCast(Exp, ToTy, Ctx.getTypeSize(ToTy), FromTy,
-                          Ctx.getTypeSize(FromTy));
+  return Solver.fromCast(Exp, ToTy, Ctx.getTypeSize(ToTy), FromTy,
+                         Ctx.getTypeSize(FromTy));
 }
 
 Z3Expr Z3ConstraintManager::getZ3SymBinExpr(const BinarySymExpr *BSE,
@@ -1381,12 +1408,12 @@ Z3Expr Z3ConstraintManager::getZ3SymBinExpr(const BinarySymExpr *BSE,
     Z3Expr LHS = getZ3SymExpr(SIE->getLHS(), &LTy, hasComparison);
     llvm::APSInt NewRInt;
     std::tie(NewRInt, RTy) = fixAPSInt(SIE->getRHS());
-    Z3Expr RHS = Z3Expr::fromAPSInt(NewRInt);
+    Z3Expr RHS = Solver.fromAPSInt(NewRInt);
     return getZ3BinExpr(LHS, LTy, Op, RHS, RTy, RetTy);
   } else if (const IntSymExpr *ISE = dyn_cast<IntSymExpr>(BSE)) {
     llvm::APSInt NewLInt;
     std::tie(NewLInt, LTy) = fixAPSInt(ISE->getLHS());
-    Z3Expr LHS = Z3Expr::fromAPSInt(NewLInt);
+    Z3Expr LHS = Solver.fromAPSInt(NewLInt);
     Z3Expr RHS = getZ3SymExpr(ISE->getRHS(), &RTy, hasComparison);
     return getZ3BinExpr(LHS, LTy, Op, RHS, RTy, RetTy);
   } else if (const SymSymExpr *SSM = dyn_cast<SymSymExpr>(BSE)) {
@@ -1425,9 +1452,9 @@ Z3Expr Z3ConstraintManager::getZ3BinExpr(const Z3Expr &LHS, QualType LTy,
   }
 
   return LTy->isRealFloatingType()
-             ? Z3Expr::fromFloatBinOp(NewLHS, Op, NewRHS)
-             : Z3Expr::fromBinOp(NewLHS, Op, NewRHS,
-                                 LTy->isSignedIntegerOrEnumerationType());
+             ? Solver.fromFloatBinOp(NewLHS, Op, NewRHS)
+             : Solver.fromBinOp(NewLHS, Op, NewRHS,
+                                LTy->isSignedIntegerOrEnumerationType());
 }
 
 Z3Expr Z3ConstraintManager::getZ3RangeExpr(SymbolRef Sym,
@@ -1438,7 +1465,7 @@ Z3Expr Z3ConstraintManager::getZ3RangeExpr(SymbolRef Sym,
   QualType FromTy;
   llvm::APSInt NewFromInt;
   std::tie(NewFromInt, FromTy) = fixAPSInt(From);
-  Z3Expr FromExp = Z3Expr::fromAPSInt(NewFromInt);
+  Z3Expr FromExp = Solver.fromAPSInt(NewFromInt);
 
   // Convert symbol
   QualType SymTy;
@@ -1452,7 +1479,7 @@ Z3Expr Z3ConstraintManager::getZ3RangeExpr(SymbolRef Sym,
   QualType ToTy;
   llvm::APSInt NewToInt;
   std::tie(NewToInt, ToTy) = fixAPSInt(To);
-  Z3Expr ToExp = Z3Expr::fromAPSInt(NewToInt);
+  Z3Expr ToExp = Solver.fromAPSInt(NewToInt);
   assert(FromTy == ToTy && "Range values have different types!");
 
   // Construct two (in)equalities, and a logical and/or
@@ -1461,8 +1488,8 @@ Z3Expr Z3ConstraintManager::getZ3RangeExpr(SymbolRef Sym,
   Z3Expr RHS = getZ3BinExpr(Exp, SymTy, InRange ? BO_LE : BO_GT, ToExp, ToTy,
                             /*RetTy=*/nullptr);
 
-  return Z3Expr::fromBinOp(LHS, InRange ? BO_LAnd : BO_LOr, RHS,
-                           SymTy->isSignedIntegerOrEnumerationType());
+  return Solver.fromBinOp(LHS, InRange ? BO_LAnd : BO_LOr, RHS,
+                          SymTy->isSignedIntegerOrEnumerationType());
 }
 
 //===------------------------------------------------------------------===//
@@ -1499,9 +1526,11 @@ void Z3ConstraintManager::doTypeConversion(Z3Expr &LHS, Z3Expr &RHS,
   if (LTy->isIntegralOrEnumerationType() &&
       RTy->isIntegralOrEnumerationType()) {
     if (LTy->isArithmeticType() && RTy->isArithmeticType())
-      return doIntTypeConversion<Z3Expr, Z3Expr::fromCast>(LHS, LTy, RHS, RTy);
+      return doIntTypeConversion<Z3Expr, &Z3Solver::fromCast>(LHS, LTy, RHS,
+                                                              RTy);
   } else if (LTy->isRealFloatingType() || RTy->isRealFloatingType()) {
-    return doFloatTypeConversion<Z3Expr, Z3Expr::fromCast>(LHS, LTy, RHS, RTy);
+    return doFloatTypeConversion<Z3Expr, &Z3Solver::fromCast>(LHS, LTy, RHS,
+                                                              RTy);
   } else if ((LTy->isAnyPointerType() || RTy->isAnyPointerType()) ||
              (LTy->isBlockPointerType() || RTy->isBlockPointerType()) ||
              (LTy->isReferenceType() || RTy->isReferenceType())) {
@@ -1518,10 +1547,10 @@ void Z3ConstraintManager::doTypeConversion(Z3Expr &LHS, Z3Expr &RHS,
         (LTy->isReferenceType() ^ RTy->isReferenceType())) {
       if (LTy->isNullPtrType() || LTy->isBlockPointerType() ||
           LTy->isReferenceType()) {
-        LHS = Z3Expr::fromCast(LHS, RTy, RBitWidth, LTy, LBitWidth);
+        LHS = Solver.fromCast(LHS, RTy, RBitWidth, LTy, LBitWidth);
         LTy = RTy;
       } else {
-        RHS = Z3Expr::fromCast(RHS, LTy, LBitWidth, RTy, RBitWidth);
+        RHS = Solver.fromCast(RHS, LTy, LBitWidth, RTy, RBitWidth);
         RTy = LTy;
       }
     }
@@ -1552,8 +1581,8 @@ void Z3ConstraintManager::doTypeConversion(Z3Expr &LHS, Z3Expr &RHS,
   // TODO: Refine behavior for invalid type casts
 }
 
-template <typename T,
-          T(doCast)(const T &, QualType, uint64_t, QualType, uint64_t)>
+template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
+                                            QualType, uint64_t)>
 void Z3ConstraintManager::doIntTypeConversion(T &LHS, QualType &LTy, T &RHS,
                                               QualType &RTy) const {
   ASTContext &Ctx = getBasicVals().getContext();
@@ -1566,14 +1595,14 @@ void Z3ConstraintManager::doIntTypeConversion(T &LHS, QualType &LTy, T &RHS,
   if (LTy->isPromotableIntegerType()) {
     QualType NewTy = Ctx.getPromotedIntegerType(LTy);
     uint64_t NewBitWidth = Ctx.getTypeSize(NewTy);
-    LHS = (*doCast)(LHS, NewTy, NewBitWidth, LTy, LBitWidth);
+    LHS = (Solver.*doCast)(LHS, NewTy, NewBitWidth, LTy, LBitWidth);
     LTy = NewTy;
     LBitWidth = NewBitWidth;
   }
   if (RTy->isPromotableIntegerType()) {
     QualType NewTy = Ctx.getPromotedIntegerType(RTy);
     uint64_t NewBitWidth = Ctx.getTypeSize(NewTy);
-    RHS = (*doCast)(RHS, NewTy, NewBitWidth, RTy, RBitWidth);
+    RHS = (Solver.*doCast)(RHS, NewTy, NewBitWidth, RTy, RBitWidth);
     RTy = NewTy;
     RBitWidth = NewBitWidth;
   }
@@ -1590,20 +1619,20 @@ void Z3ConstraintManager::doIntTypeConversion(T &LHS, QualType &LTy, T &RHS,
   if (isLSignedTy == isRSignedTy) {
     // Same signedness; use the higher-ranked type
     if (order == 1) {
-      RHS = (*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+      RHS = (Solver.*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
       RTy = LTy;
     } else {
-      LHS = (*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+      LHS = (Solver.*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
       LTy = RTy;
     }
   } else if (order != (isLSignedTy ? 1 : -1)) {
     // The unsigned type has greater than or equal rank to the
     // signed type, so use the unsigned type
     if (isRSignedTy) {
-      RHS = (*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+      RHS = (Solver.*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
       RTy = LTy;
     } else {
-      LHS = (*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+      LHS = (Solver.*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
       LTy = RTy;
     }
   } else if (LBitWidth != RBitWidth) {
@@ -1611,10 +1640,10 @@ void Z3ConstraintManager::doIntTypeConversion(T &LHS, QualType &LTy, T &RHS,
     // means the signed type is larger than the unsigned type, so
     // use the signed type.
     if (isLSignedTy) {
-      RHS = (*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+      RHS = (Solver.*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
       RTy = LTy;
     } else {
-      LHS = (*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+      LHS = (Solver.*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
       LTy = RTy;
     }
   } else {
@@ -1623,15 +1652,15 @@ void Z3ConstraintManager::doIntTypeConversion(T &LHS, QualType &LTy, T &RHS,
     // on most 32-bit systems).  Use the unsigned type corresponding
     // to the signed type.
     QualType NewTy = Ctx.getCorrespondingUnsignedType(isLSignedTy ? LTy : RTy);
-    RHS = (*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+    RHS = (Solver.*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
     RTy = NewTy;
-    LHS = (*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+    LHS = (Solver.*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
     LTy = NewTy;
   }
 }
 
-template <typename T,
-          T(doCast)(const T &, QualType, uint64_t, QualType, uint64_t)>
+template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
+                                            QualType, uint64_t)>
 void Z3ConstraintManager::doFloatTypeConversion(T &LHS, QualType &LTy, T &RHS,
                                                 QualType &RTy) const {
   ASTContext &Ctx = getBasicVals().getContext();
@@ -1641,12 +1670,12 @@ void Z3ConstraintManager::doFloatTypeConversion(T &LHS, QualType &LTy, T &RHS,
 
   // Perform float-point type promotion
   if (!LTy->isRealFloatingType()) {
-    LHS = (*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+    LHS = (Solver.*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
     LTy = RTy;
     LBitWidth = RBitWidth;
   }
   if (!RTy->isRealFloatingType()) {
-    RHS = (*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+    RHS = (Solver.*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
     RTy = LTy;
     RBitWidth = LBitWidth;
   }
@@ -1659,22 +1688,14 @@ void Z3ConstraintManager::doFloatTypeConversion(T &LHS, QualType &LTy, T &RHS,
   // Note: Safe to skip updating bitwidth because this must terminate
   int order = Ctx.getFloatingTypeOrder(LTy, RTy);
   if (order > 0) {
-    RHS = Z3Expr::fromCast(RHS, LTy, LBitWidth, RTy, RBitWidth);
+    RHS = (Solver.*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
     RTy = LTy;
   } else if (order == 0) {
-    LHS = Z3Expr::fromCast(LHS, RTy, RBitWidth, LTy, LBitWidth);
+    LHS = (Solver.*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
     LTy = RTy;
   } else {
     llvm_unreachable("Unsupported floating-point type cast!");
   }
-}
-
-llvm::APSInt Z3ConstraintManager::castAPSInt(const llvm::APSInt &V,
-                                             QualType ToTy, uint64_t ToWidth,
-                                             QualType FromTy,
-                                             uint64_t FromWidth) {
-  APSIntType TargetType(ToWidth, !ToTy->isSignedIntegerOrEnumerationType());
-  return TargetType.convert(V);
 }
 
 //==------------------------------------------------------------------------==/
