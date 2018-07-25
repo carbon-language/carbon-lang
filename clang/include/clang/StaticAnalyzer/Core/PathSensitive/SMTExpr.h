@@ -15,7 +15,8 @@
 #ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_SMTEXPR_H
 #define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_SMTEXPR_H
 
-#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
+#include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/FoldingSet.h"
 
 namespace clang {
 namespace ento {

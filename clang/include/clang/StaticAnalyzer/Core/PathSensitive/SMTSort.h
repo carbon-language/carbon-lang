@@ -15,6 +15,8 @@
 #ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_SMTSORT_H
 #define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_SMTSORT_H
 
+#include "clang/Basic/TargetInfo.h"
+
 namespace clang {
 namespace ento {
 
