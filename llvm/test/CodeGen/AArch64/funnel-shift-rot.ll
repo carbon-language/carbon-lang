@@ -163,11 +163,7 @@ define i32 @rotr_i32(i32 %x, i32 %z) {
 define i64 @rotr_i64(i64 %x, i64 %z) {
 ; CHECK-LABEL: rotr_i64:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    orr w9, wzr, #0x40
-; CHECK-NEXT:    sub w9, w9, w1
-; CHECK-NEXT:    lsr x8, x0, x1
-; CHECK-NEXT:    lsl x9, x0, x9
-; CHECK-NEXT:    orr x0, x9, x8
+; CHECK-NEXT:    ror x0, x0, x1
 ; CHECK-NEXT:    ret
   %f = call i64 @llvm.fshr.i64(i64 %x, i64 %x, i64 %z)
   ret i64 %f
