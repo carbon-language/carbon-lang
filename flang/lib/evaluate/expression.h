@@ -36,7 +36,7 @@ namespace Fortran::evaluate {
 CLASS_TRAIT(FoldableTrait);
 struct FoldingContext {
   parser::ContextualMessages &messages;
-  Rounding rounding{Rounding::TiesToEven};
+  Rounding rounding{defaultRounding};
   bool flushDenormalsToZero{false};
 };
 
@@ -330,31 +330,52 @@ public:
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
   struct Parentheses : public Un<Parentheses> {
     using Un<Parentheses>::Un;
+    static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &x) {
+      return {x};
+    }
   };
   struct Negate : public Un<Negate> {
     using Un<Negate>::Un;
+    static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &);
   };
   struct Add : public Bin<Add> {
     using Bin<Add>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Subtract : public Bin<Subtract> {
     using Bin<Subtract>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Multiply : public Bin<Multiply> {
     using Bin<Multiply>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Divide : public Bin<Divide> {
     using Bin<Divide>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct Power : public Bin<Power> {
     using Bin<Power>::Bin;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const Scalar &, const Scalar &);
   };
   struct IntPower
-    : public Binary<IntPower, Result, AnyKindType<Category::Integer>> {
-    using Binary<IntPower, Result, AnyKindType<Category::Integer>>::Binary;
+    : public Binary<IntPower, Result, Result, AnyKindType<Category::Integer>> {
+    using Binary<IntPower, Result, Result,
+        AnyKindType<Category::Integer>>::Binary;
+    static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &,
+        const ScalarConstant<Category::Integer> &);
   };
-  struct CMPLX : public Binary<CMPLX, Result, Type<Category::Real, KIND>> {
-    using Binary<CMPLX, Result, Type<Category::Real, KIND>>::Binary;
+  using Part = Type<Category::Real, KIND>;
+  using PartScalar = typename Part::Value;
+  struct CMPLX : public Binary<CMPLX, Result, Part> {
+    using Binary<CMPLX, Result, Part>::Binary;
+    static std::optional<Scalar> FoldScalar(
+        FoldingContext &, const PartScalar &, const PartScalar &);
   };
 
   CLASS_BOILERPLATE(Expr)

@@ -41,21 +41,21 @@ std::optional<SubscriptIntegerExpr> Triplet::lower() const {
   if (lower_) {
     return {**lower_};
   }
-  return {};
+  return std::nullopt;
 }
 
 std::optional<SubscriptIntegerExpr> Triplet::upper() const {
   if (upper_) {
     return {**upper_};
   }
-  return {};
+  return std::nullopt;
 }
 
 std::optional<SubscriptIntegerExpr> Triplet::stride() const {
   if (stride_) {
     return {**stride_};
   }
-  return {};
+  return std::nullopt;
 }
 
 CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,

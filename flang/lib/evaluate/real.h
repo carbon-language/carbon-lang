@@ -50,6 +50,7 @@ public:
   constexpr Real(const Real &) = default;
   constexpr Real(const Word &bits) : word_{bits} {}
   constexpr Real &operator=(const Real &) = default;
+  constexpr Real &operator=(Real &&) = default;
 
   // TODO: facility to flush denormal results to zero
   // TODO AINT/ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
@@ -87,20 +88,20 @@ public:
 
   Relation Compare(const Real &) const;
   ValueWithRealFlags<Real> Add(
-      const Real &, Rounding rounding = Rounding::TiesToEven) const;
+      const Real &, Rounding rounding = defaultRounding) const;
   ValueWithRealFlags<Real> Subtract(
-      const Real &y, Rounding rounding = Rounding::TiesToEven) const {
+      const Real &y, Rounding rounding = defaultRounding) const {
     return Add(y.Negate(), rounding);
   }
   ValueWithRealFlags<Real> Multiply(
-      const Real &, Rounding rounding = Rounding::TiesToEven) const;
+      const Real &, Rounding rounding = defaultRounding) const;
   ValueWithRealFlags<Real> Divide(
-      const Real &, Rounding rounding = Rounding::TiesToEven) const;
+      const Real &, Rounding rounding = defaultRounding) const;
 
   // SQRT(x**2 + y**2) but computed so as to avoid spurious overflow
   // TODO: needed for CABS
   ValueWithRealFlags<Real> HYPOT(
-      const Real &, Rounding rounding = Rounding::TiesToEven) const;
+      const Real &, Rounding rounding = defaultRounding) const;
 
   template<typename INT> constexpr INT EXPONENT() const {
     std::uint64_t exponent{Exponent()};
@@ -115,6 +116,13 @@ public:
     Real epsilon;
     epsilon.Normalize(false, exponentBias - precision, Fraction::MASKL(1));
     return epsilon;
+  }
+
+  constexpr Real FlushDenormalToZero() const {
+    if (IsDenormal()) {
+      return Real{};
+    }
+    return *this;
   }
 
   // TODO: Configurable NaN representations
@@ -136,7 +144,7 @@ public:
 
   template<typename INT>
   static ValueWithRealFlags<Real> FromInteger(
-      const INT &n, Rounding rounding = Rounding::TiesToEven) {
+      const INT &n, Rounding rounding = defaultRounding) {
     bool isNegative{n.IsNegative()};
     INT absN{n};
     if (isNegative) {
@@ -224,7 +232,7 @@ public:
 
   template<typename A>
   static ValueWithRealFlags<Real> Convert(
-      const A &x, Rounding rounding = Rounding::TiesToEven) {
+      const A &x, Rounding rounding = defaultRounding) {
     bool isNegative{x.IsNegative()};
     A absX{x};
     if (isNegative) {
@@ -307,7 +315,7 @@ private:
   // a maximal exponent and zero fraction doesn't signify infinity, although
   // this member function will detect overflow and encode infinities).
   RealFlags Normalize(bool negative, std::uint64_t exponent,
-      const Fraction &fraction, Rounding rounding = Rounding::TiesToEven,
+      const Fraction &fraction, Rounding rounding = defaultRounding,
       RoundingBits *roundingBits = nullptr);
 
   // Rounds a result, if necessary, in place.

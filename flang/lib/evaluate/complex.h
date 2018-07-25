@@ -29,6 +29,8 @@ public:
   constexpr Complex(const Complex &) = default;
   constexpr Complex(const Part &r, const Part &i) : re_{r}, im_{i} {}
   explicit constexpr Complex(const Part &r) : re_{r} {}
+  constexpr Complex &operator=(const Complex &) = default;
+  constexpr Complex &operator=(Complex &&) = default;
 
   constexpr const Part &REAL() const { return re_; }
   constexpr const Part &AIMAG() const { return im_; }
@@ -40,10 +42,43 @@ public:
         im_.Compare(that.im_) == Relation::Equal;
   }
 
-  ValueWithRealFlags<Complex> Add(const Complex &) const;
-  ValueWithRealFlags<Complex> Subtract(const Complex &) const;
-  ValueWithRealFlags<Complex> Multiply(const Complex &) const;
-  ValueWithRealFlags<Complex> Divide(const Complex &) const;
+  constexpr bool IsZero() const { return re_.IsZero() || im_.IsZero(); }
+
+  constexpr bool IsInfinite() const {
+    return re_.IsInfinite() || im_.IsInfinite();
+  }
+
+  constexpr bool IsNotANumber() const {
+    return re_.IsNotANumber() || im_.IsNotANumber();
+  }
+
+  constexpr bool IsSignalingNaN() const {
+    return re_.IsSignalingNaN() || im_.IsSignalingNaN();
+  }
+
+  template<typename INT>
+  static ValueWithRealFlags<Complex> FromInteger(
+      const INT &n, Rounding rounding = defaultRounding) {
+    ValueWithRealFlags<Complex> result;
+    result.value.re_ =
+        Part::FromInteger(n, rounding).AccumulateFlags(result.flags);
+    return result;
+  }
+
+  ValueWithRealFlags<Complex> Add(
+      const Complex &, Rounding rounding = defaultRounding) const;
+  ValueWithRealFlags<Complex> Subtract(
+      const Complex &, Rounding rounding = defaultRounding) const;
+  ValueWithRealFlags<Complex> Multiply(
+      const Complex &, Rounding rounding = defaultRounding) const;
+  ValueWithRealFlags<Complex> Divide(
+      const Complex &, Rounding rounding = defaultRounding) const;
+
+  constexpr Complex FlushDenormalToZero() const {
+    return {re_.FlushDenormalToZero(), im_.FlushDenormalToZero()};
+  }
+
+  static constexpr Complex NaN() { return {Part::NaN(), Part::NaN()}; }
 
   std::string DumpHexadecimal() const;
   // TODO: (C)ABS once Real::HYPOT is done

@@ -22,8 +22,8 @@
 namespace Fortran::evaluate {
 
 template<typename REAL, typename INT>
-ValueWithRealFlags<REAL> IntPower(const REAL &base, const INT &power,
-    Rounding rounding = Rounding::TiesToEven) {
+ValueWithRealFlags<REAL> IntPower(
+    const REAL &base, const INT &power, Rounding rounding = defaultRounding) {
   REAL one{REAL::FromInteger(INT{1}).value};
   ValueWithRealFlags<REAL> result;
   result.value = one;

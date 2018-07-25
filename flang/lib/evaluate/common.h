@@ -82,6 +82,8 @@ template<typename A> struct ValueWithRealFlags {
 
 ENUM_CLASS(Rounding, TiesToEven, ToZero, Down, Up, TiesAwayFromZero)
 
+static constexpr Rounding defaultRounding{Rounding::TiesToEven};
+
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 constexpr bool IsHostLittleEndian{false};
 #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__

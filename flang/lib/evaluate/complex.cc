@@ -17,36 +17,40 @@
 namespace Fortran::evaluate::value {
 
 template<typename R>
-ValueWithRealFlags<Complex<R>> Complex<R>::Add(const Complex &that) const {
+ValueWithRealFlags<Complex<R>> Complex<R>::Add(
+    const Complex &that, Rounding rounding) const {
   RealFlags flags;
-  Part reSum{re_.Add(that.re_).AccumulateFlags(flags)};
-  Part imSum{im_.Add(that.im_).AccumulateFlags(flags)};
+  Part reSum{re_.Add(that.re_, rounding).AccumulateFlags(flags)};
+  Part imSum{im_.Add(that.im_, rounding).AccumulateFlags(flags)};
   return {Complex{reSum, imSum}, flags};
 }
 
 template<typename R>
-ValueWithRealFlags<Complex<R>> Complex<R>::Subtract(const Complex &that) const {
+ValueWithRealFlags<Complex<R>> Complex<R>::Subtract(
+    const Complex &that, Rounding rounding) const {
   RealFlags flags;
-  Part reDiff{re_.Subtract(that.re_).AccumulateFlags(flags)};
-  Part imDiff{im_.Subtract(that.im_).AccumulateFlags(flags)};
+  Part reDiff{re_.Subtract(that.re_, rounding).AccumulateFlags(flags)};
+  Part imDiff{im_.Subtract(that.im_, rounding).AccumulateFlags(flags)};
   return {Complex{reDiff, imDiff}, flags};
 }
 
 template<typename R>
-ValueWithRealFlags<Complex<R>> Complex<R>::Multiply(const Complex &that) const {
+ValueWithRealFlags<Complex<R>> Complex<R>::Multiply(
+    const Complex &that, Rounding rounding) const {
   // (a + ib)*(c + id) -> ac - bd + i(ad + bc)
   RealFlags flags;
-  Part ac{re_.Multiply(that.re_).AccumulateFlags(flags)};
-  Part bd{im_.Multiply(that.im_).AccumulateFlags(flags)};
-  Part ad{re_.Multiply(that.im_).AccumulateFlags(flags)};
-  Part bc{im_.Multiply(that.re_).AccumulateFlags(flags)};
-  Part acbd{ac.Subtract(bd).AccumulateFlags(flags)};
-  Part adbc{ad.Add(bc).AccumulateFlags(flags)};
+  Part ac{re_.Multiply(that.re_, rounding).AccumulateFlags(flags)};
+  Part bd{im_.Multiply(that.im_, rounding).AccumulateFlags(flags)};
+  Part ad{re_.Multiply(that.im_, rounding).AccumulateFlags(flags)};
+  Part bc{im_.Multiply(that.re_, rounding).AccumulateFlags(flags)};
+  Part acbd{ac.Subtract(bd, rounding).AccumulateFlags(flags)};
+  Part adbc{ad.Add(bc, rounding).AccumulateFlags(flags)};
   return {Complex{acbd, adbc}, flags};
 }
 
 template<typename R>
-ValueWithRealFlags<Complex<R>> Complex<R>::Divide(const Complex &that) const {
+ValueWithRealFlags<Complex<R>> Complex<R>::Divide(
+    const Complex &that, Rounding rounding) const {
   // (a + ib)/(c + id) -> [(a+ib)*(c-id)] / [(c+id)*(c-id)]
   //   -> [ac+bd+i(bc-ad)] / (cc+dd)
   //   -> ((ac+bd)/(cc+dd)) + i((bc-ad)/(cc+dd))
@@ -55,30 +59,30 @@ ValueWithRealFlags<Complex<R>> Complex<R>::Divide(const Complex &that) const {
   RealFlags flags;
   bool cGEd{that.re_.ABS().Compare(that.im_.ABS()) != Relation::Less};
   if (cGEd) {
-    scale = that.im_.Divide(that.re_).AccumulateFlags(flags);
+    scale = that.im_.Divide(that.re_, rounding).AccumulateFlags(flags);
   } else {
-    scale = that.re_.Divide(that.im_).AccumulateFlags(flags);
+    scale = that.re_.Divide(that.im_, rounding).AccumulateFlags(flags);
   }
   Part den;
   if (cGEd) {
-    Part dS{scale.Multiply(that.im_).AccumulateFlags(flags)};
-    den = dS.Add(that.re_).AccumulateFlags(flags);
+    Part dS{scale.Multiply(that.im_, rounding).AccumulateFlags(flags)};
+    den = dS.Add(that.re_, rounding).AccumulateFlags(flags);
   } else {
-    Part cS{scale.Multiply(that.re_).AccumulateFlags(flags)};
-    den = cS.Add(that.im_).AccumulateFlags(flags);
+    Part cS{scale.Multiply(that.re_, rounding).AccumulateFlags(flags)};
+    den = cS.Add(that.im_, rounding).AccumulateFlags(flags);
   }
-  Part aS{scale.Multiply(re_).AccumulateFlags(flags)};
-  Part bS{scale.Multiply(im_).AccumulateFlags(flags)};
+  Part aS{scale.Multiply(re_, rounding).AccumulateFlags(flags)};
+  Part bS{scale.Multiply(im_, rounding).AccumulateFlags(flags)};
   Part re1, im1;
   if (cGEd) {
-    re1 = re_.Add(bS).AccumulateFlags(flags);
-    im1 = im_.Subtract(aS).AccumulateFlags(flags);
+    re1 = re_.Add(bS, rounding).AccumulateFlags(flags);
+    im1 = im_.Subtract(aS, rounding).AccumulateFlags(flags);
   } else {
-    re1 = aS.Add(im_).AccumulateFlags(flags);
-    im1 = bS.Subtract(re_).AccumulateFlags(flags);
+    re1 = aS.Add(im_, rounding).AccumulateFlags(flags);
+    im1 = bS.Subtract(re_, rounding).AccumulateFlags(flags);
   }
-  Part re{re1.Divide(den).AccumulateFlags(flags)};
-  Part im{im1.Divide(den).AccumulateFlags(flags)};
+  Part re{re1.Divide(den, rounding).AccumulateFlags(flags)};
+  Part im{im1.Divide(den, rounding).AccumulateFlags(flags)};
   return {Complex{re, im}, flags};
 }
 
