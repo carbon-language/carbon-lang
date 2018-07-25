@@ -22,6 +22,7 @@ ThreadSanitizer is supported on the following OS:
 * Linux
 * NetBSD
 * FreeBSD
+
 Support for other 64-bit architectures is possible, contributions are welcome.
 Support for 32-bit platforms is problematic and is not planned.
 
