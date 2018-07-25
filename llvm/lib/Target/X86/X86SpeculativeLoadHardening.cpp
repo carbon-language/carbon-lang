@@ -70,6 +70,8 @@ STATISTIC(NumAddrRegsHardened,
           "Number of address mode used registers hardaned");
 STATISTIC(NumPostLoadRegsHardened,
           "Number of post-load register values hardened");
+STATISTIC(NumCallsOrJumpsHardened,
+          "Number of calls or jumps requiring extra hardening");
 STATISTIC(NumInstsInserted, "Number of instructions inserted");
 STATISTIC(NumLFENCEsInserted, "Number of lfence instructions inserted");
 
@@ -104,6 +106,13 @@ static cl::opt<bool>
                 cl::desc("Sanitize loads from memory. When disable, no "
                          "significant security is provided."),
                 cl::init(true), cl::Hidden);
+
+static cl::opt<bool> HardenIndirectCallsAndJumps(
+    PASS_KEY "-indirect",
+    cl::desc("Harden indirect calls and jumps against using speculatively "
+             "stored attacker controlled addresses. This is designed to "
+             "mitigate Spectre v1.2 style attacks."),
+    cl::init(true), cl::Hidden);
 
 namespace llvm {
 
@@ -168,6 +177,8 @@ private:
   SmallVector<MachineInstr *, 16>
   tracePredStateThroughCFG(MachineFunction &MF, ArrayRef<BlockCondInfo> Infos);
 
+  void unfoldCallAndJumpLoads(MachineFunction &MF);
+
   void hardenAllLoads(MachineFunction &MF);
 
   unsigned saveEFLAGS(MachineBasicBlock &MBB,
@@ -196,6 +207,9 @@ private:
                                  DebugLoc Loc);
   unsigned hardenPostLoad(MachineInstr &MI);
   void hardenReturnInstr(MachineInstr &MI);
+  void hardenIndirectCallOrJumpInstr(
+      MachineInstr &MI,
+      SmallDenseMap<unsigned, unsigned, 32> &AddrRegToHardenedReg);
 };
 
 } // end anonymous namespace
@@ -507,6 +521,11 @@ bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
     }
   }
 
+  // If we are going to harden calls and jumps we need to unfold their memory
+  // operands.
+  if (HardenIndirectCallsAndJumps)
+    unfoldCallAndJumpLoads(MF);
+
   // Now harden all of the loads in the function using the predicate state.
   hardenAllLoads(MF);
 
@@ -815,6 +834,110 @@ X86SpeculativeLoadHardeningPass::tracePredStateThroughCFG(
   }
 
   return CMovs;
+}
+
+/// Compute the register class for the unfolded load.
+///
+/// FIXME: This should probably live in X86InstrInfo, potentially by adding
+/// a way to unfold into a newly created vreg rather than requiring a register
+/// input.
+static const TargetRegisterClass *
+getRegClassForUnfoldedLoad(MachineFunction &MF, const X86InstrInfo &TII,
+                           unsigned Opcode) {
+  unsigned Index;
+  unsigned UnfoldedOpc = TII.getOpcodeAfterMemoryUnfold(
+      Opcode, /*UnfoldLoad*/ true, /*UnfoldStore*/ false, &Index);
+  const MCInstrDesc &MCID = TII.get(UnfoldedOpc);
+  return TII.getRegClass(MCID, Index, &TII.getRegisterInfo(), MF);
+}
+
+void X86SpeculativeLoadHardeningPass::unfoldCallAndJumpLoads(
+    MachineFunction &MF) {
+  for (MachineBasicBlock &MBB : MF)
+    for (auto MII = MBB.instr_begin(), MIE = MBB.instr_end(); MII != MIE;) {
+      // Grab a reference and increment the iterator so we can remove this
+      // instruction if needed without disturbing the iteration.
+      MachineInstr &MI = *MII++;
+
+      // Must either be a call or a branch.
+      if (!MI.isCall() && !MI.isBranch())
+        continue;
+      // We only care about loading variants of these instructions.
+      if (!MI.mayLoad())
+        continue;
+
+      switch (MI.getOpcode()) {
+      default: {
+        LLVM_DEBUG(
+            dbgs() << "ERROR: Found an unexpected loading branch or call "
+                      "instruction:\n";
+            MI.dump(); dbgs() << "\n");
+        report_fatal_error("Unexpected loading branch or call!");
+      }
+
+      case X86::FARCALL16m:
+      case X86::FARCALL32m:
+      case X86::FARCALL64:
+      case X86::FARJMP16m:
+      case X86::FARJMP32m:
+      case X86::FARJMP64:
+        // We cannot mitigate far jumps or calls, but we also don't expect them
+        // to be vulnerable to Spectre v1.2 style attacks.
+        continue;
+
+      case X86::CALL16m:
+      case X86::CALL16m_NT:
+      case X86::CALL32m:
+      case X86::CALL32m_NT:
+      case X86::CALL64m:
+      case X86::CALL64m_NT:
+      case X86::JMP16m:
+      case X86::JMP16m_NT:
+      case X86::JMP32m:
+      case X86::JMP32m_NT:
+      case X86::JMP64m:
+      case X86::JMP64m_NT:
+      case X86::TAILJMPm64:
+      case X86::TAILJMPm64_REX:
+      case X86::TAILJMPm:
+      case X86::TCRETURNmi64:
+      case X86::TCRETURNmi: {
+        // Use the generic unfold logic now that we know we're dealing with
+        // expected instructions.
+        // FIXME: We don't have test coverage for all of these!
+        auto *UnfoldedRC = getRegClassForUnfoldedLoad(MF, *TII, MI.getOpcode());
+        if (!UnfoldedRC) {
+          LLVM_DEBUG(dbgs()
+                         << "ERROR: Unable to unfold load from instruction:\n";
+                     MI.dump(); dbgs() << "\n");
+          report_fatal_error("Unable to unfold load!");
+        }
+        unsigned Reg = MRI->createVirtualRegister(UnfoldedRC);
+        SmallVector<MachineInstr *, 2> NewMIs;
+        // If we were able to compute an unfolded reg class, any failure here
+        // is just a programming error so just assert.
+        bool Unfolded =
+            TII->unfoldMemoryOperand(MF, MI, Reg, /*UnfoldLoad*/ true,
+                                     /*UnfoldStore*/ false, NewMIs);
+        (void)Unfolded;
+        assert(Unfolded &&
+               "Computed unfolded register class but failed to unfold");
+        // Now stitch the new instructions into place and erase the old one.
+        for (auto *NewMI : NewMIs)
+          MBB.insert(MI.getIterator(), NewMI);
+        MI.eraseFromParent();
+        LLVM_DEBUG({
+          dbgs() << "Unfolded load successfully into:\n";
+          for (auto *NewMI : NewMIs) {
+            NewMI->dump();
+            dbgs() << "\n";
+          }
+        });
+        continue;
+      }
+      }
+      llvm_unreachable("Escaped switch with default!");
+    }
 }
 
 /// Returns true if the instruction has no behavior (specified or otherwise)
@@ -1441,6 +1564,14 @@ void X86SpeculativeLoadHardeningPass::hardenAllLoads(MachineFunction &MF) {
         continue;
       }
 
+      // Check for an indirect call or branch that may need its input hardened
+      // even if we couldn't find the specific load used, or were able to avoid
+      // hardening it for some reason. Note that here we cannot break out
+      // afterward as we may still need to handle any call aspect of this
+      // instruction.
+      if ((MI.isCall() || MI.isBranch()) && HardenIndirectCallsAndJumps)
+        hardenIndirectCallOrJumpInstr(MI, AddrRegToHardenedReg);
+
       // After we finish processing the instruction and doing any hardening
       // necessary for it, we need to handle transferring the predicate state
       // into a call and recovering it after the call returns (if it returns).
@@ -2008,6 +2139,75 @@ void X86SpeculativeLoadHardeningPass::hardenReturnInstr(MachineInstr &MI) {
   // pointers canonical) and merge it into RSP. This will allow the caller to
   // extract it when we return (speculatively).
   mergePredStateIntoSP(MBB, InsertPt, Loc, PS->SSA.GetValueAtEndOfBlock(&MBB));
+}
+
+/// An attacker may speculatively store over a value that is then speculatively
+/// loaded and used as the target of an indirect call or jump instruction. This
+/// is called Spectre v1.2 or Bounds Check Bypass Store (BCBS) and is described
+/// in this paper:
+/// https://people.csail.mit.edu/vlk/spectre11.pdf
+///
+/// When this happens, the speculative execution of the call or jump will end up
+/// being steered to this attacker controlled address. While most such loads
+/// will be adequately hardened already, we want to ensure that they are
+/// definitively treated as needing post-load hardening. While address hardening
+/// is sufficient to prevent secret data from leaking to the attacker, it may
+/// not be sufficient to prevent an attacker from steering speculative
+/// execution. We forcibly unfolded all relevant loads above and so will always
+/// have an opportunity to post-load harden here, we just need to scan for cases
+/// not already flagged and add them.
+void X86SpeculativeLoadHardeningPass::hardenIndirectCallOrJumpInstr(
+    MachineInstr &MI,
+    SmallDenseMap<unsigned, unsigned, 32> &AddrRegToHardenedReg) {
+  switch (MI.getOpcode()) {
+  case X86::FARCALL16m:
+  case X86::FARCALL32m:
+  case X86::FARCALL64:
+  case X86::FARJMP16m:
+  case X86::FARJMP32m:
+  case X86::FARJMP64:
+    // We don't need to harden either far calls or far jumps as they are
+    // safe from Spectre.
+    return;
+
+  default:
+    break;
+  }
+
+  // We should never see a loading instruction at this point, as those should
+  // have been unfolded.
+  assert(!MI.mayLoad() && "Found a lingering loading instruction!");
+
+  // If the first operand isn't a register, this is a branch or call
+  // instruction with an immediate operand which doesn't need to be hardened.
+  if (!MI.getOperand(0).isReg())
+    return;
+
+  // For all of these, the target register is the first operand of the
+  // instruction.
+  auto &TargetOp = MI.getOperand(0);
+  unsigned OldTargetReg = TargetOp.getReg();
+
+  // Try to lookup a hardened version of this register. We retain a reference
+  // here as we want to update the map to track any newly computed hardened
+  // register.
+  unsigned &HardenedTargetReg = AddrRegToHardenedReg[OldTargetReg];
+
+  // If we don't have a hardened register yet, compute one. Otherwise, just use
+  // the already hardened register.
+  //
+  // FIXME: It is a little suspect that we use partially hardened registers that
+  // only feed addresses. The complexity of partial hardening with SHRX
+  // continues to pile up. Should definitively measure its value and consider
+  // eliminating it.
+  if (!HardenedTargetReg)
+    HardenedTargetReg = hardenValueInRegister(
+        OldTargetReg, *MI.getParent(), MI.getIterator(), MI.getDebugLoc());
+
+  // Set the target operand to the hardened register.
+  TargetOp.setReg(HardenedTargetReg);
+
+  ++NumCallsOrJumpsHardened;
 }
 
 INITIALIZE_PASS_BEGIN(X86SpeculativeLoadHardeningPass, DEBUG_TYPE,
