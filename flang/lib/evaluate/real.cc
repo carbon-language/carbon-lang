@@ -43,7 +43,7 @@ Relation Real<W, P, IM>::Compare(const Real &y) const {
       }
     } else {
       // same sign
-      Ordering order{CompareUnsigned(Exponent(), y.Exponent())};
+      Ordering order{evaluate::Compare(Exponent(), y.Exponent())};
       if (order == Ordering::Equal) {
         order = GetSignificand().CompareUnsigned(y.GetSignificand());
       }

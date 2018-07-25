@@ -26,7 +26,7 @@ namespace Fortran::evaluate {
 ENUM_CLASS(Ordering, Less, Equal, Greater)
 ENUM_CLASS(Relation, Less, Equal, Greater, Unordered)
 
-static constexpr Ordering CompareUnsigned(std::uint64_t x, std::uint64_t y) {
+template<typename A> static constexpr Ordering Compare(const A &x, const A &y) {
   if (x < y) {
     return Ordering::Less;
   } else if (x > y) {

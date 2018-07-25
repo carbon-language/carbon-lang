@@ -42,7 +42,7 @@ a container).
 letters, internal camelCase capitalization, and a trailing underscore,
 e.g. `DoubleEntryBookkeepingSystem myLedger_;`.  POD structures with
 only public data members shouldn't use trailing underscores, since they
-don't have class functions in which data members need to be distinguishable.
+don't have class functions from which data members need to be distinguishable.
 1. Accessor member functions are named with the non-public data member's name,
 less the trailing underscore.  Mutator member functions are named `set_...`
 and should return `*this`.  Don't define accessors or mutators needlessly.
@@ -98,6 +98,7 @@ the idiom of wrapping them with extra parentheses.
 ### C++ language
 Use *C++17*, unless some compiler to which we must be portable lacks a feature
 you are considering.
+However:
 1. Never throw or catch exceptions.
 1. Never use run-time type information or `dynamic_cast<>`.
 1. Never declare static data that executes a constructor.
@@ -114,13 +115,17 @@ that the function's result type is a `std::optional<>`.
 When `int` just obviously works, just use `int`.  When you need something
 bigger than `int`, use `std::int64_t` rather than `long` or `long long`.
 1. Use namespaces to avoid conflicts with client code.  Use one top-level
-project namespace.  Don't introduce needless nested namespaces within a
+`Fortran` project namespace.  Don't introduce needless nested namespaces within the
 project when names don't conflict or better solutions exist.  Never use
-`using namespace ...;`, especially not `using namespace std;`.  Access
-STL entities with names like `std::unique_ptr<>`, without a leading `::`.
-1. Prefer static functions to functions in anonymous namespaces in source files.
+`using namespace ...;` outside test code; never use `using namespace std;`
+anywhere.  Access STL entities with names like `std::unique_ptr<>`,
+without a leading `::`.
+1. Prefer `static` functions over functions in anonymous namespaces in source files.
 1. Use `auto` judiciously.  When the type of a local variable is known,
 monomorphic, and easy to type, be explicit rather than using `auto`.
+Don't use `auto` functions unless the type of the result of an outlined member
+function definition can be more clear due to its use of types declared in the
+class.
 1. Use move semantics and smart pointers to make dynamic memory ownership
 clear.  Consider reworking any code that uses `malloc()` or a (non-placement)
 `operator new`.
@@ -130,14 +135,16 @@ and `int`).  Use non-`const` pointers for output arguments.  Put output argument
 last (_pace_ the standard C library conventions for `memcpy()` & al.).
 1. Prefer `typename` to `class` in template argument declarations.
 1. Prefer `enum class` to plain `enum` wherever `enum class` will work.
+We have an `ENUM_CLASS` macro that helps capture the names of constants.
 1. Use `constexpr` and `const` generously.
 1. When a `switch()` statement's labels do not cover all possible case values
 explicitly, it should contains either a `default:;` at its end or a
-`default:` label that obviously crashes.
+`default:` label that obviously crashes; we have a `CRASH_NO_CASE` macro
+for such situations.
 #### Classes
 1. Define POD structures with `struct`.
 1. Don't use `this->` in (non-static) member functions, unless forced to
-do so in a template.
+do so in a template member function.
 1. Define accessor and mutator member functions (implicitly) inline in the
 class, after constructors and assignments.  Don't needlessly define
 (implicit) inline member functions in classes unless they really solve a
@@ -149,7 +156,7 @@ and move constructors/assignment is present, don't declare them and they
 will be implicitly deleted.  When neither copy nor move constructors
 or assignments should exist for a class, explicitly `=delete` all of them.
 1. Make single-argument constructors (other than copy and move constructors)
-explicit unless you really want to define an implicit conversion.
+'explicit' unless you really want to define an implicit conversion.
 #### Overall design preferences
 Don't use dynamic solutions to solve problems that can be solved at
 build time; don't solve build time problems by writing programs that

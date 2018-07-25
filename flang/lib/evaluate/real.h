@@ -52,7 +52,6 @@ public:
   constexpr Real &operator=(const Real &) = default;
   constexpr Real &operator=(Real &&) = default;
 
-  // TODO: facility to flush denormal results to zero
   // TODO AINT/ANINT, CEILING, FLOOR, DIM, MAX, MIN, DPROD, FRACTION
   // HUGE, INT/NINT, MAXEXPONENT, MINEXPONENT, NEAREST, OUT_OF_RANGE,
   // PRECISION, HUGE, TINY, RRSPACING/SPACING, SCALE, SET_EXPONENT, SIGN

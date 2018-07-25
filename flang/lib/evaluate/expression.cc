@@ -657,7 +657,24 @@ auto Comparison<A>::FoldScalar(FoldingContext &c,
     case Relation::Unordered: return std::nullopt;
     }
   }
-  // TODO complex and character comparisons
+  if constexpr (A::category == Category::Complex) {
+    bool eqOk{opr == RelationalOperator::LE || opr == RelationalOperator::EQ ||
+        opr == RelationalOperator::GE};
+    return {eqOk == a.Equals(b)};
+  }
+  if constexpr (A::category == Category::Character) {
+    switch (Compare(a, b)) {
+    case Ordering::Less:
+      return {opr == RelationalOperator::LE || opr == RelationalOperator::LE ||
+          opr == RelationalOperator::NE};
+    case Ordering::Equal:
+      return {opr == RelationalOperator::LE || opr == RelationalOperator::EQ ||
+          opr == RelationalOperator::GE};
+    case Ordering::Greater:
+      return {opr == RelationalOperator::NE || opr == RelationalOperator::GE ||
+          opr == RelationalOperator::GT};
+    }
+  }
   return std::nullopt;
 }
 
