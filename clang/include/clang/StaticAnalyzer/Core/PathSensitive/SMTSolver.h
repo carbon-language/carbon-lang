@@ -318,6 +318,420 @@ public:
     return TargetType.convert(V);
   }
 
+  // Generate a Z3Expr that represents the given symbolic expression.
+  // Sets the hasComparison parameter if the expression has a comparison
+  // operator.
+  // Sets the RetTy parameter to the final return type after promotions and
+  // casts.
+  SMTExprRef getExpr(ASTContext &Ctx, SymbolRef Sym, QualType *RetTy = nullptr,
+                     bool *hasComparison = nullptr) {
+    if (hasComparison) {
+      *hasComparison = false;
+    }
+
+    return getSymExpr(Ctx, Sym, RetTy, hasComparison);
+  }
+
+  // Generate a Z3Expr that compares the expression to zero.
+  SMTExprRef getZeroExpr(ASTContext &Ctx, const SMTExprRef &Exp, QualType Ty,
+                         bool Assumption) {
+
+    if (Ty->isRealFloatingType()) {
+      llvm::APFloat Zero =
+          llvm::APFloat::getZero(Ctx.getFloatTypeSemantics(Ty));
+      return fromFloatBinOp(Exp, Assumption ? BO_EQ : BO_NE, fromAPFloat(Zero));
+    }
+
+    if (Ty->isIntegralOrEnumerationType() || Ty->isAnyPointerType() ||
+        Ty->isBlockPointerType() || Ty->isReferenceType()) {
+
+      // Skip explicit comparison for boolean types
+      bool isSigned = Ty->isSignedIntegerOrEnumerationType();
+      if (Ty->isBooleanType())
+        return Assumption ? fromUnOp(UO_LNot, Exp) : Exp;
+
+      return fromBinOp(Exp, Assumption ? BO_EQ : BO_NE,
+                       fromInt("0", Ctx.getTypeSize(Ty)), isSigned);
+    }
+
+    llvm_unreachable("Unsupported type for zero value!");
+  }
+
+  // Recursive implementation to unpack and generate symbolic expression.
+  // Sets the hasComparison and RetTy parameters. See getZ3Expr().
+  SMTExprRef getSymExpr(ASTContext &Ctx, SymbolRef Sym, QualType *RetTy,
+                        bool *hasComparison) {
+    if (const SymbolData *SD = dyn_cast<SymbolData>(Sym)) {
+      if (RetTy)
+        *RetTy = Sym->getType();
+
+      return getDataExpr(Ctx, SD->getSymbolID(), Sym->getType());
+    }
+
+    if (const SymbolCast *SC = dyn_cast<SymbolCast>(Sym)) {
+      if (RetTy)
+        *RetTy = Sym->getType();
+
+      QualType FromTy;
+      SMTExprRef Exp =
+          getSymExpr(Ctx, SC->getOperand(), &FromTy, hasComparison);
+      // Casting an expression with a comparison invalidates it. Note that this
+      // must occur after the recursive call above.
+      // e.g. (signed char) (x > 0)
+      if (hasComparison)
+        *hasComparison = false;
+      return getCastExpr(Ctx, Exp, FromTy, Sym->getType());
+    }
+
+    if (const BinarySymExpr *BSE = dyn_cast<BinarySymExpr>(Sym)) {
+      SMTExprRef Exp = getSymBinExpr(Ctx, BSE, hasComparison, RetTy);
+      // Set the hasComparison parameter, in post-order traversal order.
+      if (hasComparison)
+        *hasComparison = BinaryOperator::isComparisonOp(BSE->getOpcode());
+      return Exp;
+    }
+
+    llvm_unreachable("Unsupported SymbolRef type!");
+  }
+
+  // Wrapper to generate Z3Expr from SymbolData.
+  SMTExprRef getDataExpr(ASTContext &Ctx, const SymbolID ID, QualType Ty) {
+    return fromData(ID, Ty, Ctx.getTypeSize(Ty));
+  }
+
+  // Wrapper to generate Z3Expr from SymbolCast.
+  SMTExprRef getCastExpr(ASTContext &Ctx, const SMTExprRef &Exp,
+                         QualType FromTy, QualType ToTy) {
+
+    return fromCast(Exp, ToTy, Ctx.getTypeSize(ToTy), FromTy,
+                    Ctx.getTypeSize(FromTy));
+  }
+
+  // Wrapper to generate Z3Expr from BinarySymExpr.
+  // Sets the hasComparison and RetTy parameters. See getZ3Expr().
+  SMTExprRef getSymBinExpr(ASTContext &Ctx, const BinarySymExpr *BSE,
+                           bool *hasComparison, QualType *RetTy) {
+    QualType LTy, RTy;
+    BinaryOperator::Opcode Op = BSE->getOpcode();
+
+    if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(BSE)) {
+      SMTExprRef LHS = getSymExpr(Ctx, SIE->getLHS(), &LTy, hasComparison);
+      llvm::APSInt NewRInt;
+      std::tie(NewRInt, RTy) = fixAPSInt(Ctx, SIE->getRHS());
+      SMTExprRef RHS = fromAPSInt(NewRInt);
+      return getBinExpr(Ctx, LHS, LTy, Op, RHS, RTy, RetTy);
+    }
+
+    if (const IntSymExpr *ISE = dyn_cast<IntSymExpr>(BSE)) {
+      llvm::APSInt NewLInt;
+      std::tie(NewLInt, LTy) = fixAPSInt(Ctx, ISE->getLHS());
+      SMTExprRef LHS = fromAPSInt(NewLInt);
+      SMTExprRef RHS = getSymExpr(Ctx, ISE->getRHS(), &RTy, hasComparison);
+      return getBinExpr(Ctx, LHS, LTy, Op, RHS, RTy, RetTy);
+    }
+
+    if (const SymSymExpr *SSM = dyn_cast<SymSymExpr>(BSE)) {
+      SMTExprRef LHS = getSymExpr(Ctx, SSM->getLHS(), &LTy, hasComparison);
+      SMTExprRef RHS = getSymExpr(Ctx, SSM->getRHS(), &RTy, hasComparison);
+      return getBinExpr(Ctx, LHS, LTy, Op, RHS, RTy, RetTy);
+    }
+
+    llvm_unreachable("Unsupported BinarySymExpr type!");
+  }
+
+  // Wrapper to generate Z3Expr from unpacked binary symbolic expression.
+  // Sets the RetTy parameter. See getZ3Expr().
+  SMTExprRef getBinExpr(ASTContext &Ctx, const SMTExprRef &LHS, QualType LTy,
+                        BinaryOperator::Opcode Op, const SMTExprRef &RHS,
+                        QualType RTy, QualType *RetTy) {
+    SMTExprRef NewLHS = LHS;
+    SMTExprRef NewRHS = RHS;
+    doTypeConversion(Ctx, NewLHS, NewRHS, LTy, RTy);
+
+    // Update the return type parameter if the output type has changed.
+    if (RetTy) {
+      // A boolean result can be represented as an integer type in C/C++, but at
+      // this point we only care about the Z3 type. Set it as a boolean type to
+      // avoid subsequent Z3 errors.
+      if (BinaryOperator::isComparisonOp(Op) ||
+          BinaryOperator::isLogicalOp(Op)) {
+
+        *RetTy = Ctx.BoolTy;
+      } else {
+        *RetTy = LTy;
+      }
+
+      // If the two operands are pointers and the operation is a subtraction,
+      // the result is of type ptrdiff_t, which is signed
+      if (LTy->isAnyPointerType() && RTy->isAnyPointerType() && Op == BO_Sub) {
+        *RetTy = Ctx.getPointerDiffType();
+      }
+    }
+
+    return LTy->isRealFloatingType()
+               ? fromFloatBinOp(NewLHS, Op, NewRHS)
+               : fromBinOp(NewLHS, Op, NewRHS,
+                           LTy->isSignedIntegerOrEnumerationType());
+  }
+
+  // Wrapper to generate Z3Expr from a range. If From == To, an equality will
+  // be created instead.
+  SMTExprRef getRangeExpr(ASTContext &Ctx, SymbolRef Sym,
+                          const llvm::APSInt &From, const llvm::APSInt &To,
+                          bool InRange) {
+    // Convert lower bound
+    QualType FromTy;
+    llvm::APSInt NewFromInt;
+    std::tie(NewFromInt, FromTy) = fixAPSInt(Ctx, From);
+    SMTExprRef FromExp = fromAPSInt(NewFromInt);
+
+    // Convert symbol
+    QualType SymTy;
+    SMTExprRef Exp = getExpr(Ctx, Sym, &SymTy);
+
+    // Construct single (in)equality
+    if (From == To)
+      return getBinExpr(Ctx, Exp, SymTy, InRange ? BO_EQ : BO_NE, FromExp,
+                        FromTy,
+                        /*RetTy=*/nullptr);
+
+    QualType ToTy;
+    llvm::APSInt NewToInt;
+    std::tie(NewToInt, ToTy) = fixAPSInt(Ctx, To);
+    SMTExprRef ToExp = fromAPSInt(NewToInt);
+    assert(FromTy == ToTy && "Range values have different types!");
+
+    // Construct two (in)equalities, and a logical and/or
+    SMTExprRef LHS = getBinExpr(Ctx, Exp, SymTy, InRange ? BO_GE : BO_LT,
+                                FromExp, FromTy, /*RetTy=*/nullptr);
+    SMTExprRef RHS =
+        getBinExpr(Ctx, Exp, SymTy, InRange ? BO_LE : BO_GT, ToExp, ToTy,
+                   /*RetTy=*/nullptr);
+
+    return fromBinOp(LHS, InRange ? BO_LAnd : BO_LOr, RHS,
+                     SymTy->isSignedIntegerOrEnumerationType());
+  }
+
+  // Recover the QualType of an APSInt.
+  // TODO: Refactor to put elsewhere
+  QualType getAPSIntType(ASTContext &Ctx, const llvm::APSInt &Int) {
+
+    return Ctx.getIntTypeForBitwidth(Int.getBitWidth(), Int.isSigned());
+  }
+
+  // Get the QualTy for the input APSInt, and fix it if it has a bitwidth of 1.
+  std::pair<llvm::APSInt, QualType> fixAPSInt(ASTContext &Ctx,
+                                              const llvm::APSInt &Int) {
+    llvm::APSInt NewInt;
+
+    // FIXME: This should be a cast from a 1-bit integer type to a boolean type,
+    // but the former is not available in Clang. Instead, extend the APSInt
+    // directly.
+    if (Int.getBitWidth() == 1 && getAPSIntType(Ctx, Int).isNull()) {
+
+      NewInt = Int.extend(Ctx.getTypeSize(Ctx.BoolTy));
+    } else
+      NewInt = Int;
+
+    return std::make_pair(NewInt, getAPSIntType(Ctx, NewInt));
+  }
+
+  // Perform implicit type conversion on binary symbolic expressions.
+  // May modify all input parameters.
+  // TODO: Refactor to use built-in conversion functions
+  void doTypeConversion(ASTContext &Ctx, SMTExprRef &LHS, SMTExprRef &RHS,
+                        QualType &LTy, QualType &RTy) {
+    assert(!LTy.isNull() && !RTy.isNull() && "Input type is null!");
+
+    // Perform type conversion
+    if ((LTy->isIntegralOrEnumerationType() &&
+         RTy->isIntegralOrEnumerationType()) &&
+        (LTy->isArithmeticType() && RTy->isArithmeticType())) {
+      doIntTypeConversion<SMTExprRef, &SMTSolver::fromCast>(Ctx, LHS, LTy, RHS,
+                                                            RTy);
+      return;
+    }
+
+    if (LTy->isRealFloatingType() || RTy->isRealFloatingType()) {
+      doFloatTypeConversion<SMTExprRef, &SMTSolver::fromCast>(Ctx, LHS, LTy,
+                                                              RHS, RTy);
+      return;
+    }
+
+    if ((LTy->isAnyPointerType() || RTy->isAnyPointerType()) ||
+        (LTy->isBlockPointerType() || RTy->isBlockPointerType()) ||
+        (LTy->isReferenceType() || RTy->isReferenceType())) {
+      // TODO: Refactor to Sema::FindCompositePointerType(), and
+      // Sema::CheckCompareOperands().
+
+      uint64_t LBitWidth = Ctx.getTypeSize(LTy);
+      uint64_t RBitWidth = Ctx.getTypeSize(RTy);
+
+      // Cast the non-pointer type to the pointer type.
+      // TODO: Be more strict about this.
+      if ((LTy->isAnyPointerType() ^ RTy->isAnyPointerType()) ||
+          (LTy->isBlockPointerType() ^ RTy->isBlockPointerType()) ||
+          (LTy->isReferenceType() ^ RTy->isReferenceType())) {
+        if (LTy->isNullPtrType() || LTy->isBlockPointerType() ||
+            LTy->isReferenceType()) {
+          LHS = fromCast(LHS, RTy, RBitWidth, LTy, LBitWidth);
+          LTy = RTy;
+        } else {
+          RHS = fromCast(RHS, LTy, LBitWidth, RTy, RBitWidth);
+          RTy = LTy;
+        }
+      }
+
+      // Cast the void pointer type to the non-void pointer type.
+      // For void types, this assumes that the casted value is equal to the
+      // value of the original pointer, and does not account for alignment
+      // requirements.
+      if (LTy->isVoidPointerType() ^ RTy->isVoidPointerType()) {
+        assert((Ctx.getTypeSize(LTy) == Ctx.getTypeSize(RTy)) &&
+               "Pointer types have different bitwidths!");
+        if (RTy->isVoidPointerType())
+          RTy = LTy;
+        else
+          LTy = RTy;
+      }
+
+      if (LTy == RTy)
+        return;
+    }
+
+    // Fallback: for the solver, assume that these types don't really matter
+    if ((LTy.getCanonicalType() == RTy.getCanonicalType()) ||
+        (LTy->isObjCObjectPointerType() && RTy->isObjCObjectPointerType())) {
+      LTy = RTy;
+      return;
+    }
+
+    // TODO: Refine behavior for invalid type casts
+  }
+
+  // Perform implicit integer type conversion.
+  // May modify all input parameters.
+  // TODO: Refactor to use Sema::handleIntegerConversion()
+  template <typename T, T (SMTSolver::*doCast)(const T &, QualType, uint64_t,
+                                               QualType, uint64_t)>
+  void doIntTypeConversion(ASTContext &Ctx, T &LHS, QualType &LTy, T &RHS,
+                           QualType &RTy) {
+
+    uint64_t LBitWidth = Ctx.getTypeSize(LTy);
+    uint64_t RBitWidth = Ctx.getTypeSize(RTy);
+
+    assert(!LTy.isNull() && !RTy.isNull() && "Input type is null!");
+    // Always perform integer promotion before checking type equality.
+    // Otherwise, e.g. (bool) a + (bool) b could trigger a backend assertion
+    if (LTy->isPromotableIntegerType()) {
+      QualType NewTy = Ctx.getPromotedIntegerType(LTy);
+      uint64_t NewBitWidth = Ctx.getTypeSize(NewTy);
+      LHS = (this->*doCast)(LHS, NewTy, NewBitWidth, LTy, LBitWidth);
+      LTy = NewTy;
+      LBitWidth = NewBitWidth;
+    }
+    if (RTy->isPromotableIntegerType()) {
+      QualType NewTy = Ctx.getPromotedIntegerType(RTy);
+      uint64_t NewBitWidth = Ctx.getTypeSize(NewTy);
+      RHS = (this->*doCast)(RHS, NewTy, NewBitWidth, RTy, RBitWidth);
+      RTy = NewTy;
+      RBitWidth = NewBitWidth;
+    }
+
+    if (LTy == RTy)
+      return;
+
+    // Perform integer type conversion
+    // Note: Safe to skip updating bitwidth because this must terminate
+    bool isLSignedTy = LTy->isSignedIntegerOrEnumerationType();
+    bool isRSignedTy = RTy->isSignedIntegerOrEnumerationType();
+
+    int order = Ctx.getIntegerTypeOrder(LTy, RTy);
+    if (isLSignedTy == isRSignedTy) {
+      // Same signedness; use the higher-ranked type
+      if (order == 1) {
+        RHS = (this->*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+        RTy = LTy;
+      } else {
+        LHS = (this->*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+        LTy = RTy;
+      }
+    } else if (order != (isLSignedTy ? 1 : -1)) {
+      // The unsigned type has greater than or equal rank to the
+      // signed type, so use the unsigned type
+      if (isRSignedTy) {
+        RHS = (this->*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+        RTy = LTy;
+      } else {
+        LHS = (this->*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+        LTy = RTy;
+      }
+    } else if (LBitWidth != RBitWidth) {
+      // The two types are different widths; if we are here, that
+      // means the signed type is larger than the unsigned type, so
+      // use the signed type.
+      if (isLSignedTy) {
+        RHS = (this->*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+        RTy = LTy;
+      } else {
+        LHS = (this->*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+        LTy = RTy;
+      }
+    } else {
+      // The signed type is higher-ranked than the unsigned type,
+      // but isn't actually any bigger (like unsigned int and long
+      // on most 32-bit systems).  Use the unsigned type corresponding
+      // to the signed type.
+      QualType NewTy =
+          Ctx.getCorrespondingUnsignedType(isLSignedTy ? LTy : RTy);
+      RHS = (this->*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+      RTy = NewTy;
+      LHS = (this->*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+      LTy = NewTy;
+    }
+  }
+
+  // Perform implicit floating-point type conversion.
+  // May modify all input parameters.
+  // TODO: Refactor to use Sema::handleFloatConversion()
+  template <typename T, T (SMTSolver::*doCast)(const T &, QualType, uint64_t,
+                                               QualType, uint64_t)>
+  void doFloatTypeConversion(ASTContext &Ctx, T &LHS, QualType &LTy, T &RHS,
+                             QualType &RTy) {
+
+    uint64_t LBitWidth = Ctx.getTypeSize(LTy);
+    uint64_t RBitWidth = Ctx.getTypeSize(RTy);
+
+    // Perform float-point type promotion
+    if (!LTy->isRealFloatingType()) {
+      LHS = (this->*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+      LTy = RTy;
+      LBitWidth = RBitWidth;
+    }
+    if (!RTy->isRealFloatingType()) {
+      RHS = (this->*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+      RTy = LTy;
+      RBitWidth = LBitWidth;
+    }
+
+    if (LTy == RTy)
+      return;
+
+    // If we have two real floating types, convert the smaller operand to the
+    // bigger result
+    // Note: Safe to skip updating bitwidth because this must terminate
+    int order = Ctx.getFloatingTypeOrder(LTy, RTy);
+    if (order > 0) {
+      RHS = (this->*doCast)(RHS, LTy, LBitWidth, RTy, RBitWidth);
+      RTy = LTy;
+    } else if (order == 0) {
+      LHS = (this->*doCast)(LHS, RTy, RBitWidth, LTy, LBitWidth);
+      LTy = RTy;
+    } else {
+      llvm_unreachable("Unsupported floating-point type cast!");
+    }
+  }
+
   // Return a boolean sort.
   virtual SMTSortRef getBoolSort() = 0;
 
