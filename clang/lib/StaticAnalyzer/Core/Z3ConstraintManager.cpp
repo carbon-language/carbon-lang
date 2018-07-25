@@ -11,6 +11,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTConstraintManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SMTContext.h"
 
 #include "clang/Config/config.h"
 
@@ -63,19 +64,22 @@ public:
   ~Z3Config() { Z3_del_config(Config); }
 }; // end class Z3Config
 
-class Z3Context {
-  Z3_context ZC_P;
-
+class Z3Context : public SMTContext {
 public:
   static Z3_context ZC;
 
-  Z3Context() : ZC_P(Z3_mk_context_rc(Z3Config().Config)) { ZC = ZC_P; }
+  Z3Context() : SMTContext() {
+    Context = Z3_mk_context_rc(Z3Config().Config);
+    ZC = Context;
+  }
 
   ~Z3Context() {
     Z3_del_context(ZC);
-    Z3_finalize_memory();
-    ZC_P = nullptr;
+    Context = nullptr;
   }
+
+protected:
+  Z3_context Context;
 }; // end class Z3Context
 
 class Z3Sort {
