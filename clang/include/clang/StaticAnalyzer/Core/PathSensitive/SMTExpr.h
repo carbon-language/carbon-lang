@@ -21,6 +21,7 @@
 namespace clang {
 namespace ento {
 
+/// Generic base class for SMT exprs
 class SMTExpr {
 public:
   SMTExpr() = default;
@@ -47,9 +48,12 @@ public:
   LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
 
 protected:
+  /// Query the SMT solver and returns true if two sorts are equal (same kind
+  /// and bit width). This does not check if the two sorts are the same objects.
   virtual bool equal_to(SMTExpr const &other) const = 0;
 };
 
+/// Shared pointer for SMTExprs, used by SMTSolver API.
 using SMTExprRef = std::shared_ptr<SMTExpr>;
 
 } // namespace ento
