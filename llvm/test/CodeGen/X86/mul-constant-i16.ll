@@ -702,6 +702,30 @@ define i16 @test_mul_by_62(i16 %x) {
   ret i16 %mul
 }
 
+define i16 @test_mul_by_66(i16 %x) {
+; X86-LABEL: test_mul_by_66:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NEXT:    movl %ecx, %eax
+; X86-NEXT:    shll $6, %eax
+; X86-NEXT:    addl %ecx, %eax
+; X86-NEXT:    addl %ecx, %eax
+; X86-NEXT:    # kill: def $ax killed $ax killed $eax
+; X86-NEXT:    retl
+;
+; X64-LABEL: test_mul_by_66:
+; X64:       # %bb.0:
+; X64-NEXT:    # kill: def $edi killed $edi def $rdi
+; X64-NEXT:    movl %edi, %eax
+; X64-NEXT:    shll $6, %eax
+; X64-NEXT:    leal (%rax,%rdi), %eax
+; X64-NEXT:    addl %edi, %eax
+; X64-NEXT:    # kill: def $ax killed $ax killed $eax
+; X64-NEXT:    retq
+  %mul = mul nsw i16 %x, 66
+  ret i16 %mul
+}
+
 define i16 @test_mul_by_73(i16 %x) {
 ; X86-LABEL: test_mul_by_73:
 ; X86:       # %bb.0:
