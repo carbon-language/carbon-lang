@@ -602,14 +602,14 @@ std::optional<std::size_t> Prescanner::IsIncludeLine(const char *start) const {
   const char *p{SkipWhiteSpace(start)};
   for (char ch : "include"s) {
     if (ToLowerCaseLetter(*p++) != ch) {
-      return {};
+      return std::nullopt;
     }
   }
   p = SkipWhiteSpace(p);
   if (*p == '"' || *p == '\'') {
     return {p - start};
   }
-  return {};
+  return std::nullopt;
 }
 
 void Prescanner::FortranInclude(const char *firstQuote) {
@@ -856,7 +856,7 @@ Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
   const char *p{start};
   char col1{*p++};
   if (!IsFixedFormCommentChar(col1)) {
-    return {};
+    return std::nullopt;
   }
   char sentinel[5], *sp{sentinel};
   int column{2};
@@ -877,11 +877,11 @@ Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
       ++p;
     } else {
       // This is a Continuation line, not an initial directive line.
-      return {};
+      return std::nullopt;
     }
   }
   if (sp == sentinel) {
-    return {};
+    return std::nullopt;
   }
   *sp = '\0';
   if (const char *ss{IsCompilerDirectiveSentinel(sentinel)}) {
@@ -889,7 +889,7 @@ Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
     return {LineClassification{
         LineClassification::Kind::CompilerDirective, payloadOffset, ss}};
   }
-  return {};
+  return std::nullopt;
 }
 
 std::optional<Prescanner::LineClassification>
@@ -897,7 +897,7 @@ Prescanner::IsFreeFormCompilerDirectiveLine(const char *start) const {
   char sentinel[8];
   const char *p{SkipWhiteSpace(start)};
   if (*p++ != '!') {
-    return {};
+    return std::nullopt;
   }
   for (std::size_t j{0}; j + 1 < sizeof sentinel; ++p, ++j) {
     if (*p == '\n') {
@@ -921,7 +921,7 @@ Prescanner::IsFreeFormCompilerDirectiveLine(const char *start) const {
     }
     sentinel[j] = ToLowerCaseLetter(*p);
   }
-  return {};
+  return std::nullopt;
 }
 
 Prescanner &Prescanner::AddCompilerDirectiveSentinel(const std::string &dir) {

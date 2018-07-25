@@ -113,7 +113,7 @@ inline constexpr std::optional<char> BackslashEscapeValue(char ch) {
   case '"':
   case '\'':
   case '\\': return {ch};
-  default: return {};
+  default: return std::nullopt;
   }
 }
 
@@ -129,7 +129,7 @@ inline constexpr std::optional<char> BackslashEscapeChar(char ch) {
   case '"':
   case '\'':
   case '\\': return {ch};
-  default: return {};
+  default: return std::nullopt;
   }
 }
 

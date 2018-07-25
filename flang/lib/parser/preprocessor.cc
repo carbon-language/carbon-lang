@@ -236,7 +236,7 @@ std::optional<TokenSequence> Preprocessor::MacroReplacement(
     }
   }
   if (j == tokens) {
-    return {};  // input contains nothing that would be replaced
+    return std::nullopt;  // input contains nothing that would be replaced
   }
   TokenSequence result{input, 0, j};
   for (; j < tokens; ++j) {

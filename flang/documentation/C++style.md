@@ -102,11 +102,14 @@ you are considering.
 1. Never use run-time type information or `dynamic_cast<>`.
 1. Never declare static data that executes a constructor.
    (This is why `#include <iostream>` is contraindicated.)
-Use `{braced initializers}` in all circumstances where they work, including
+1. Use `{braced initializers}` in all circumstances where they work, including
 default data member initialization.  They inhibit implicit truncation.
 Don't use `= expr` initialization just to effect implicit truncation;
 prefer an explicit `static_cast<>`.
 With C++17, braced initializers work fine with `auto` too.
+Sometimes, however, there are better alternatives to empty braces;
+e.g., prefer `return std::nullopt;` to `return {};` to make it more clear
+that the function's result type is a `std::optional<>`.
 1. Avoid unsigned types apart from `size_t`, which must be used with care.
 When `int` just obviously works, just use `int`.  When you need something
 bigger than `int`, use `std::int64_t` rather than `long` or `long long`.
@@ -133,7 +136,8 @@ explicitly, it should contains either a `default:;` at its end or a
 `default:` label that obviously crashes.
 #### Classes
 1. Define POD structures with `struct`.
-1. Don't use `this->` in (non-static) member functions.
+1. Don't use `this->` in (non-static) member functions, unless forced to
+do so in a template.
 1. Define accessor and mutator member functions (implicitly) inline in the
 class, after constructors and assignments.  Don't needlessly define
 (implicit) inline member functions in classes unless they really solve a

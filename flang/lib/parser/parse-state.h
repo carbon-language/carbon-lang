@@ -197,14 +197,14 @@ public:
 
   std::optional<const char *> GetNextChar() {
     if (p_ >= limit_) {
-      return {};
+      return std::nullopt;
     }
     return {UncheckedAdvance()};
   }
 
   std::optional<const char *> PeekAtNextChar() const {
     if (p_ >= limit_) {
-      return {};
+      return std::nullopt;
     }
     return {p_};
   }

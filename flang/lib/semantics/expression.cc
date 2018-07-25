@@ -32,7 +32,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
   if (result.has_value()) {
     if (result->Rank() > 1) {
       ea.context().messages.Say("must be scalar"_err_en_US);
-      return {};
+      return std::nullopt;
     }
   }
   return result;
@@ -46,7 +46,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
     result->Fold(ea.context());
     if (!result->ScalarValue().has_value()) {
       ea.context().messages.Say("must be constant"_err_en_US);
-      return {};
+      return std::nullopt;
     }
   }
   return result;
@@ -59,7 +59,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
   if (result.has_value() &&
       !std::holds_alternative<evaluate::AnyKindIntegerExpr>(result->u)) {
     ea.context().messages.Say("must be integer"_err_en_US);
-    return {};
+    return std::nullopt;
   }
   return result;
 }
@@ -68,7 +68,7 @@ template<>
 std::optional<evaluate::GenericExpr> AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Name &n) {
   // TODO
-  return {};
+  return std::nullopt;
 }
 
 ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
@@ -118,7 +118,7 @@ std::optional<evaluate::GenericExpr> AnalyzeHelper(
     ea.context().messages.Say(parser::MessageFormattedText{
         "unimplemented INTEGER kind (%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind)});
-    return {};
+    return std::nullopt;
   }
 }
 

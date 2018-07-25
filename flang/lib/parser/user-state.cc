@@ -56,7 +56,7 @@ EndDoStmtForCapturedLabelDoStmt::Parse(ParseState &state) {
       }
     }
   }
-  return {};
+  return std::nullopt;
 }
 
 std::optional<Success> EnterNonlabelDoConstruct::Parse(ParseState &state) {
@@ -81,7 +81,7 @@ std::optional<Name> OldStructureComponentName::Parse(ParseState &state) {
       }
     }
   }
-  return {};
+  return std::nullopt;
 }
 
 std::optional<DataComponentDefStmt> StructureComponents::Parse(

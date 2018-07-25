@@ -36,7 +36,7 @@ std::optional<int> UTF8CharacterBytes(const char *p) {
       return {2};
     }
   }
-  return {};
+  return std::nullopt;
 }
 
 std::optional<int> EUC_JPCharacterBytes(const char *p) {
@@ -64,7 +64,7 @@ std::optional<int> EUC_JPCharacterBytes(const char *p) {
       return {3};
     }
   }
-  return {};
+  return std::nullopt;
 }
 
 std::optional<std::size_t> CountCharacters(
@@ -75,7 +75,7 @@ std::optional<std::size_t> CountCharacters(
     ++chars;
     std::optional<int> cb{cbf(p)};
     if (!cb.has_value()) {
-      return {};
+      return std::nullopt;
     }
     p += *cb;
   }

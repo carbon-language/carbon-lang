@@ -61,7 +61,7 @@ public:
       if (ParsingLog * log{ustate->log()}) {
         const char *at{state.GetLocation()};
         if (log->Fails(at, tag_, state)) {
-          return {};
+          return std::nullopt;
         }
         Messages messages{std::move(state.messages())};
         std::optional<resultType> result{parser_.Parse(state)};
