@@ -37,6 +37,7 @@ CLASS_TRAIT(FoldableTrait);
 struct FoldingContext {
   parser::ContextualMessages &messages;
   Rounding rounding{Rounding::TiesToEven};
+  bool flushDenormalsToZero{false};
 };
 
 // Helper base classes for packaging subexpressions.

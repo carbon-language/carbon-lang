@@ -102,7 +102,7 @@ public:
 
   struct PowerWithErrors {
     Integer power;
-    bool divisionByZero, overflow, zeroToZero;
+    bool divisionByZero{false}, overflow{false}, zeroToZero{false};
   };
 
   // Constructors and value-generating static functions

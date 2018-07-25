@@ -117,6 +117,23 @@ public:
     return epsilon;
   }
 
+  // TODO: Configurable NaN representations
+  static constexpr Real NaN() {
+    return {Word{maxExponent}
+                .SHIFTL(significandBits)
+                .IBSET(significandBits - 1)
+                .IBSET(significandBits - 2)};
+  }
+
+  static constexpr Real Infinity(bool negative) {
+    Word infinity{maxExponent};
+    infinity = infinity.SHIFTL(significandBits);
+    if (negative) {
+      infinity = infinity.IBSET(infinity.bits - 1);
+    }
+    return {infinity};
+  }
+
   template<typename INT>
   static ValueWithRealFlags<Real> FromInteger(
       const INT &n, Rounding rounding = Rounding::TiesToEven) {
@@ -283,23 +300,6 @@ private:
     top = doubled.value;
     msb = doubled.carry;
     return greaterOrEqual;
-  }
-
-  // TODO: Configurable NaN representations
-  static constexpr Word NaNWord() {
-    return Word{maxExponent}
-        .SHIFTL(significandBits)
-        .IBSET(significandBits - 1)
-        .IBSET(significandBits - 2);
-  }
-
-  static constexpr Word InfinityWord(bool negative) {
-    Word infinity{maxExponent};
-    infinity = infinity.SHIFTL(significandBits);
-    if (negative) {
-      infinity = infinity.IBSET(infinity.bits - 1);
-    }
-    return infinity;
   }
 
   // Normalizes and marshals the fields of a floating-point number in place.
