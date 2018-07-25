@@ -25,28 +25,6 @@ using namespace ento;
 
 #include <z3.h>
 
-// Forward declarations
-namespace {
-class Z3Expr;
-class ConstraintZ3 {};
-} // end anonymous namespace
-
-typedef llvm::ImmutableSet<std::pair<SymbolRef, Z3Expr>> ConstraintZ3Ty;
-
-// Expansion of REGISTER_TRAIT_WITH_PROGRAMSTATE(ConstraintZ3, Z3SetPair)
-namespace clang {
-namespace ento {
-template <>
-struct ProgramStateTrait<ConstraintZ3>
-    : public ProgramStatePartialTrait<ConstraintZ3Ty> {
-  static void *GDMIndex() {
-    static int Index;
-    return &Index;
-  }
-};
-} // end namespace ento
-} // end namespace clang
-
 namespace {
 
 class Z3Config {
@@ -312,6 +290,13 @@ static bool areEquivalent(const llvm::fltSemantics &LHS,
          (llvm::APFloat::semanticsSizeInBits(LHS) ==
           llvm::APFloat::semanticsSizeInBits(RHS));
 }
+
+} // end anonymous namespace
+
+typedef llvm::ImmutableSet<std::pair<SymbolRef, Z3Expr>> ConstraintZ3Ty;
+REGISTER_TRAIT_WITH_PROGRAMSTATE(ConstraintZ3, ConstraintZ3Ty)
+
+namespace {
 
 class Z3Solver : public SMTSolver {
   friend class Z3ConstraintManager;
