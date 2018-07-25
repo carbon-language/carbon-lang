@@ -33701,7 +33701,8 @@ static SDValue combineMulSpecial(uint64_t MulAmt, SDNode *N, SelectionDAG &DAG,
   auto combineMulMulAddOrSub = [&](int Mul1, int Mul2, bool isAdd) {
     SDValue Result = DAG.getNode(X86ISD::MUL_IMM, DL, VT, N->getOperand(0),
                                  DAG.getConstant(Mul1, DL, VT));
-    Result = DAG.getNode(ISD::MUL, DL, VT, Result, DAG.getConstant(Mul2, DL, VT));
+    Result = DAG.getNode(X86ISD::MUL_IMM, DL, VT, Result,
+                         DAG.getConstant(Mul2, DL, VT));
     Result = DAG.getNode(isAdd ? ISD::ADD : ISD::SUB, DL, VT, Result,
                          N->getOperand(0));
     return Result;
