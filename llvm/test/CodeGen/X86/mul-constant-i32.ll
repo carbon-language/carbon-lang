@@ -1836,11 +1836,10 @@ define i32 @test_mul_by_62(i32 %x) {
 define i32 @test_mul_by_66(i32 %x) {
 ; X86-LABEL: test_mul_by_66:
 ; X86:       # %bb.0:
-; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X86-NEXT:    movl %ecx, %eax
-; X86-NEXT:    shll $6, %eax
-; X86-NEXT:    addl %ecx, %eax
-; X86-NEXT:    addl %ecx, %eax
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl %eax, %ecx
+; X86-NEXT:    shll $6, %ecx
+; X86-NEXT:    leal (%ecx,%eax,2), %eax
 ; X86-NEXT:    retl
 ;
 ; X64-HSW-LABEL: test_mul_by_66:
@@ -1848,8 +1847,7 @@ define i32 @test_mul_by_66(i32 %x) {
 ; X64-HSW-NEXT:    # kill: def $edi killed $edi def $rdi
 ; X64-HSW-NEXT:    movl %edi, %eax # sched: [1:0.25]
 ; X64-HSW-NEXT:    shll $6, %eax # sched: [1:0.50]
-; X64-HSW-NEXT:    leal (%rax,%rdi), %eax # sched: [1:0.50]
-; X64-HSW-NEXT:    addl %edi, %eax # sched: [1:0.25]
+; X64-HSW-NEXT:    leal (%rax,%rdi,2), %eax # sched: [1:0.50]
 ; X64-HSW-NEXT:    retq # sched: [7:1.00]
 ;
 ; X64-JAG-LABEL: test_mul_by_66:
@@ -1857,8 +1855,7 @@ define i32 @test_mul_by_66(i32 %x) {
 ; X64-JAG-NEXT:    # kill: def $edi killed $edi def $rdi
 ; X64-JAG-NEXT:    movl %edi, %eax # sched: [1:0.50]
 ; X64-JAG-NEXT:    shll $6, %eax # sched: [1:0.50]
-; X64-JAG-NEXT:    leal (%rax,%rdi), %eax # sched: [1:0.50]
-; X64-JAG-NEXT:    addl %edi, %eax # sched: [1:0.50]
+; X64-JAG-NEXT:    leal (%rax,%rdi,2), %eax # sched: [2:1.00]
 ; X64-JAG-NEXT:    retq # sched: [4:1.00]
 ;
 ; X86-NOOPT-LABEL: test_mul_by_66:
@@ -1940,6 +1937,63 @@ define i32 @test_mul_by_73(i32 %x) {
 ; SLM-NOOPT-NEXT:    imull $73, %edi, %eax # sched: [3:1.00]
 ; SLM-NOOPT-NEXT:    retq # sched: [4:1.00]
   %mul = mul nsw i32 %x, 73
+  ret i32 %mul
+}
+
+define i32 @test_mul_by_520(i32 %x) {
+; X86-LABEL: test_mul_by_520:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl %eax, %ecx
+; X86-NEXT:    shll $9, %ecx
+; X86-NEXT:    leal (%ecx,%eax,8), %eax
+; X86-NEXT:    retl
+;
+; X64-HSW-LABEL: test_mul_by_520:
+; X64-HSW:       # %bb.0:
+; X64-HSW-NEXT:    # kill: def $edi killed $edi def $rdi
+; X64-HSW-NEXT:    movl %edi, %eax # sched: [1:0.25]
+; X64-HSW-NEXT:    shll $9, %eax # sched: [1:0.50]
+; X64-HSW-NEXT:    leal (%rax,%rdi,8), %eax # sched: [1:0.50]
+; X64-HSW-NEXT:    retq # sched: [7:1.00]
+;
+; X64-JAG-LABEL: test_mul_by_520:
+; X64-JAG:       # %bb.0:
+; X64-JAG-NEXT:    # kill: def $edi killed $edi def $rdi
+; X64-JAG-NEXT:    movl %edi, %eax # sched: [1:0.50]
+; X64-JAG-NEXT:    shll $9, %eax # sched: [1:0.50]
+; X64-JAG-NEXT:    leal (%rax,%rdi,8), %eax # sched: [2:1.00]
+; X64-JAG-NEXT:    retq # sched: [4:1.00]
+;
+; X86-NOOPT-LABEL: test_mul_by_520:
+; X86-NOOPT:       # %bb.0:
+; X86-NOOPT-NEXT:    imull $520, {{[0-9]+}}(%esp), %eax # imm = 0x208
+; X86-NOOPT-NEXT:    retl
+;
+; HSW-NOOPT-LABEL: test_mul_by_520:
+; HSW-NOOPT:       # %bb.0:
+; HSW-NOOPT-NEXT:    imull $520, %edi, %eax # imm = 0x208
+; HSW-NOOPT-NEXT:    # sched: [3:1.00]
+; HSW-NOOPT-NEXT:    retq # sched: [7:1.00]
+;
+; JAG-NOOPT-LABEL: test_mul_by_520:
+; JAG-NOOPT:       # %bb.0:
+; JAG-NOOPT-NEXT:    imull $520, %edi, %eax # imm = 0x208
+; JAG-NOOPT-NEXT:    # sched: [3:1.00]
+; JAG-NOOPT-NEXT:    retq # sched: [4:1.00]
+;
+; X64-SLM-LABEL: test_mul_by_520:
+; X64-SLM:       # %bb.0:
+; X64-SLM-NEXT:    imull $520, %edi, %eax # imm = 0x208
+; X64-SLM-NEXT:    # sched: [3:1.00]
+; X64-SLM-NEXT:    retq # sched: [4:1.00]
+;
+; SLM-NOOPT-LABEL: test_mul_by_520:
+; SLM-NOOPT:       # %bb.0:
+; SLM-NOOPT-NEXT:    imull $520, %edi, %eax # imm = 0x208
+; SLM-NOOPT-NEXT:    # sched: [3:1.00]
+; SLM-NOOPT-NEXT:    retq # sched: [4:1.00]
+  %mul = mul nsw i32 %x, 520
   ret i32 %mul
 }
 
