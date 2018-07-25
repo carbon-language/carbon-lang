@@ -13,6 +13,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTConstraintManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTExpr.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/SMTSolver.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SMTSort.h"
 
 #include "clang/Config/config.h"
@@ -93,11 +94,11 @@ class Z3Sort : public SMTSort {
 
   Z3_sort Sort;
 
+public:
   Z3Sort(Z3Context &C, Z3_sort ZS) : SMTSort(), Context(C), Sort(ZS) {
     Z3_inc_ref(Context.Context, reinterpret_cast<Z3_ast>(Sort));
   }
 
-public:
   /// Override implicit copy constructor for correct reference counting.
   Z3Sort(const Z3Sort &Copy)
       : SMTSort(), Context(Copy.Context), Sort(Copy.Sort) {
@@ -163,6 +164,10 @@ public:
   }
 }; // end class Z3Sort
 
+static const Z3Sort &toZ3Sort(const SMTSort &S) {
+  return static_cast<const Z3Sort &>(S);
+}
+
 class Z3Expr : public SMTExpr {
   friend class Z3Solver;
 
@@ -170,11 +175,11 @@ class Z3Expr : public SMTExpr {
 
   Z3_ast AST;
 
+public:
   Z3Expr(Z3Context &C, Z3_ast ZA) : SMTExpr(), Context(C), AST(ZA) {
     Z3_inc_ref(Context.Context, AST);
   }
 
-public:
   /// Override implicit copy constructor for correct reference counting.
   Z3Expr(const Z3Expr &Copy) : SMTExpr(), Context(Copy.Context), AST(Copy.AST) {
     Z3_inc_ref(Context.Context, AST);
@@ -227,6 +232,10 @@ public:
     OS << Z3_ast_to_string(Context.Context, AST);
   }
 }; // end class Z3Expr
+
+static const Z3Expr &toZ3Expr(const SMTExpr &E) {
+  return static_cast<const Z3Expr &>(E);
+}
 
 class Z3Model {
   friend class Z3Solver;
@@ -304,25 +313,27 @@ static bool areEquivalent(const llvm::fltSemantics &LHS,
           llvm::APFloat::semanticsSizeInBits(RHS));
 }
 
-class Z3Solver {
+class Z3Solver : public SMTSolver {
   friend class Z3ConstraintManager;
 
   Z3Context Context;
 
   Z3_solver Solver;
 
-  Z3Solver() : Solver(Z3_mk_simple_solver(Context.Context)) {
+  Z3Solver() : SMTSolver(), Solver(Z3_mk_simple_solver(Context.Context)) {
     Z3_solver_inc_ref(Context.Context, Solver);
   }
 
 public:
   /// Override implicit copy constructor for correct reference counting.
-  Z3Solver(const Z3Solver &Copy) : Context(Copy.Context), Solver(Copy.Solver) {
+  Z3Solver(const Z3Solver &Copy)
+      : SMTSolver(), Context(Copy.Context), Solver(Copy.Solver) {
     Z3_solver_inc_ref(Context.Context, Solver);
   }
 
   /// Provide move constructor
-  Z3Solver(Z3Solver &&Move) : Context(Move.Context), Solver(nullptr) {
+  Z3Solver(Z3Solver &&Move)
+      : SMTSolver(), Context(Move.Context), Solver(nullptr) {
     *this = std::move(Move);
   }
 
@@ -342,470 +353,460 @@ public:
       Z3_solver_dec_ref(Context.Context, Solver);
   }
 
-  /// Given a constraint, add it to the solver
-  void addConstraint(const Z3Expr &Exp) {
-    Z3_solver_assert(Context.Context, Solver, Exp.AST);
+  void addConstraint(const SMTExprRef &Exp) const override {
+    Z3_solver_assert(Context.Context, Solver, toZ3Expr(*Exp).AST);
   }
 
-  // Return a boolean sort.
-  Z3Sort getBoolSort() {
-    return Z3Sort(Context, Z3_mk_bool_sort(Context.Context));
+  SMTSortRef getBoolSort() override {
+    return std::make_shared<Z3Sort>(Context, Z3_mk_bool_sort(Context.Context));
   }
 
-  // Return an appropriate bitvector sort for the given bitwidth.
-  Z3Sort getBitvectorSort(unsigned BitWidth) {
-    return Z3Sort(Context, Z3_mk_bv_sort(Context.Context, BitWidth));
+  SMTSortRef getBitvectorSort(unsigned BitWidth) override {
+    return std::make_shared<Z3Sort>(Context,
+                                    Z3_mk_bv_sort(Context.Context, BitWidth));
   }
 
-  // Return an appropriate floating-point sort for the given bitwidth.
-  Z3Sort getFloatSort(unsigned BitWidth) {
-    Z3_sort Sort;
-
-    switch (BitWidth) {
-    default:
-      llvm_unreachable("Unsupported floating-point bitwidth!");
-      break;
-    case 16:
-      Sort = Z3_mk_fpa_sort_16(Context.Context);
-      break;
-    case 32:
-      Sort = Z3_mk_fpa_sort_32(Context.Context);
-      break;
-    case 64:
-      Sort = Z3_mk_fpa_sort_64(Context.Context);
-      break;
-    case 128:
-      Sort = Z3_mk_fpa_sort_128(Context.Context);
-      break;
-    }
-    return Z3Sort(Context, Sort);
+  SMTSortRef getSort(const SMTExprRef &Exp) override {
+    return std::make_shared<Z3Sort>(
+        Context, Z3_get_sort(Context.Context, toZ3Expr(*Exp).AST));
   }
 
-  // Return an appropriate sort, given a QualType
-  Z3Sort MkSort(const QualType &Ty, unsigned BitWidth) {
-    if (Ty->isBooleanType())
-      return getBoolSort();
-
-    if (Ty->isRealFloatingType())
-      return getFloatSort(BitWidth);
-
-    return getBitvectorSort(BitWidth);
+  SMTSortRef getFloat16Sort() override {
+    return std::make_shared<Z3Sort>(Context,
+                                    Z3_mk_fpa_sort_16(Context.Context));
   }
 
-  // Return an appropriate sort for the given AST.
-  Z3Sort getSort(Z3_ast AST) {
-    return Z3Sort(Context, Z3_get_sort(Context.Context, AST));
+  SMTSortRef getFloat32Sort() override {
+    return std::make_shared<Z3Sort>(Context,
+                                    Z3_mk_fpa_sort_32(Context.Context));
   }
 
-  /// Given a program state, construct the logical conjunction and add it to
-  /// the solver
-  void addStateConstraints(ProgramStateRef State) {
-    // TODO: Don't add all the constraints, only the relevant ones
-    ConstraintZ3Ty CZ = State->get<ConstraintZ3>();
-    ConstraintZ3Ty::iterator I = CZ.begin(), IE = CZ.end();
-
-    // Construct the logical AND of all the constraints
-    if (I != IE) {
-      std::vector<Z3_ast> ASTs;
-
-      while (I != IE)
-        ASTs.push_back(I++->second.AST);
-
-      Z3Expr Conj = fromNBinOp(BO_LAnd, ASTs);
-      addConstraint(Conj);
-    }
+  SMTSortRef getFloat64Sort() override {
+    return std::make_shared<Z3Sort>(Context,
+                                    Z3_mk_fpa_sort_64(Context.Context));
   }
 
-  // Return an appropriate floating-point rounding mode.
-  Z3Expr getFloatRoundingMode() {
-    // TODO: Don't assume nearest ties to even rounding mode
-    return Z3Expr(Context, Z3_mk_fpa_rne(Context.Context));
+  SMTSortRef getFloat128Sort() override {
+    return std::make_shared<Z3Sort>(Context,
+                                    Z3_mk_fpa_sort_128(Context.Context));
   }
 
-  /// Construct a Z3Expr from a unary operator, given a Z3_context.
-  Z3Expr fromUnOp(const UnaryOperator::Opcode Op, const Z3Expr &Exp) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    case UO_Minus:
-      AST = Z3_mk_bvneg(Context.Context, Exp.AST);
-      break;
-
-    case UO_Not:
-      AST = Z3_mk_bvnot(Context.Context, Exp.AST);
-      break;
-
-    case UO_LNot:
-      AST = Z3_mk_not(Context.Context, Exp.AST);
-      break;
-    }
-
-    return Z3Expr(Context, AST);
+  SMTExprRef newExprRef(const SMTExpr &E) const override {
+    return std::make_shared<Z3Expr>(toZ3Expr(E));
   }
 
-  /// Construct a Z3Expr from a floating-point unary operator, given a
-  /// Z3_context.
-  Z3Expr fromFloatUnOp(const UnaryOperator::Opcode Op, const Z3Expr &Exp) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    case UO_Minus:
-      AST = Z3_mk_fpa_neg(Context.Context, Exp.AST);
-      break;
-
-    case UO_LNot:
-      return fromUnOp(Op, Exp);
-    }
-
-    return Z3Expr(Context, AST);
+  SMTExprRef mkBVNeg(const SMTExprRef &Exp) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvneg(Context.Context, toZ3Expr(*Exp).AST)));
   }
 
-  /// Construct a Z3Expr from a n-ary binary operator.
-  Z3Expr fromNBinOp(const BinaryOperator::Opcode Op,
-                    const std::vector<Z3_ast> &ASTs) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-    case BO_LAnd:
-      AST = Z3_mk_and(Context.Context, ASTs.size(), ASTs.data());
-      break;
-
-    case BO_LOr:
-      AST = Z3_mk_or(Context.Context, ASTs.size(), ASTs.data());
-      break;
-    }
-
-    return Z3Expr(Context, AST);
+  SMTExprRef mkBVNot(const SMTExprRef &Exp) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvnot(Context.Context, toZ3Expr(*Exp).AST)));
   }
 
-  /// Construct a Z3Expr from a binary operator, given a Z3_context.
-  Z3Expr fromBinOp(const Z3Expr &LHS, const BinaryOperator::Opcode Op,
-                   const Z3Expr &RHS, bool isSigned) {
-    Z3_ast AST;
-
-    assert(getSort(LHS.AST) == getSort(RHS.AST) &&
-           "AST's must have the same sort!");
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-      // Multiplicative operators
-    case BO_Mul:
-      AST = Z3_mk_bvmul(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_Div:
-      AST = isSigned ? Z3_mk_bvsdiv(Context.Context, LHS.AST, RHS.AST)
-                     : Z3_mk_bvudiv(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_Rem:
-      AST = isSigned ? Z3_mk_bvsrem(Context.Context, LHS.AST, RHS.AST)
-                     : Z3_mk_bvurem(Context.Context, LHS.AST, RHS.AST);
-      break;
-
-      // Additive operators
-    case BO_Add:
-      AST = Z3_mk_bvadd(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_Sub:
-      AST = Z3_mk_bvsub(Context.Context, LHS.AST, RHS.AST);
-      break;
-
-      // Bitwise shift operators
-    case BO_Shl:
-      AST = Z3_mk_bvshl(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_Shr:
-      AST = isSigned ? Z3_mk_bvashr(Context.Context, LHS.AST, RHS.AST)
-                     : Z3_mk_bvlshr(Context.Context, LHS.AST, RHS.AST);
-      break;
-
-      // Relational operators
-    case BO_LT:
-      AST = isSigned ? Z3_mk_bvslt(Context.Context, LHS.AST, RHS.AST)
-                     : Z3_mk_bvult(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_GT:
-      AST = isSigned ? Z3_mk_bvsgt(Context.Context, LHS.AST, RHS.AST)
-                     : Z3_mk_bvugt(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_LE:
-      AST = isSigned ? Z3_mk_bvsle(Context.Context, LHS.AST, RHS.AST)
-                     : Z3_mk_bvule(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_GE:
-      AST = isSigned ? Z3_mk_bvsge(Context.Context, LHS.AST, RHS.AST)
-                     : Z3_mk_bvuge(Context.Context, LHS.AST, RHS.AST);
-      break;
-
-      // Equality operators
-    case BO_EQ:
-      AST = Z3_mk_eq(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_NE:
-      return fromUnOp(UO_LNot, fromBinOp(LHS, BO_EQ, RHS, isSigned));
-      break;
-
-      // Bitwise operators
-    case BO_And:
-      AST = Z3_mk_bvand(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_Xor:
-      AST = Z3_mk_bvxor(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_Or:
-      AST = Z3_mk_bvor(Context.Context, LHS.AST, RHS.AST);
-      break;
-
-      // Logical operators
-    case BO_LAnd:
-    case BO_LOr: {
-      std::vector<Z3_ast> Args = {LHS.AST, RHS.AST};
-      return fromNBinOp(Op, Args);
-    }
-    }
-
-    return Z3Expr(Context, AST);
+  SMTExprRef mkNot(const SMTExprRef &Exp) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_not(Context.Context, toZ3Expr(*Exp).AST)));
   }
 
-  /// Construct a Z3Expr from a special floating-point binary operator, given
-  /// a Z3_context.
-  Z3Expr fromFloatSpecialBinOp(const Z3Expr &LHS,
-                               const BinaryOperator::Opcode Op,
-                               const llvm::APFloat::fltCategory &RHS) {
-    Z3_ast AST;
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-      // Equality operators
-    case BO_EQ:
-      switch (RHS) {
-      case llvm::APFloat::fcInfinity:
-        AST = Z3_mk_fpa_is_infinite(Context.Context, LHS.AST);
-        break;
-      case llvm::APFloat::fcNaN:
-        AST = Z3_mk_fpa_is_nan(Context.Context, LHS.AST);
-        break;
-      case llvm::APFloat::fcNormal:
-        AST = Z3_mk_fpa_is_normal(Context.Context, LHS.AST);
-        break;
-      case llvm::APFloat::fcZero:
-        AST = Z3_mk_fpa_is_zero(Context.Context, LHS.AST);
-        break;
-      }
-      break;
-    case BO_NE:
-      return fromFloatUnOp(UO_LNot, fromFloatSpecialBinOp(LHS, BO_EQ, RHS));
-      break;
-    }
-
-    return Z3Expr(Context, AST);
+  SMTExprRef mkBVAdd(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvadd(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
   }
 
-  /// Construct a Z3Expr from a floating-point binary operator, given a
-  /// Z3_context.
-  Z3Expr fromFloatBinOp(const Z3Expr &LHS, const BinaryOperator::Opcode Op,
-                        const Z3Expr &RHS) {
-    Z3_ast AST;
-
-    assert(getSort(LHS.AST) == getSort(RHS.AST) &&
-           "AST's must have the same sort!");
-
-    switch (Op) {
-    default:
-      llvm_unreachable("Unimplemented opcode");
-      break;
-
-      // Multiplicative operators
-    case BO_Mul: {
-      Z3Expr RoundingMode = getFloatRoundingMode();
-      AST = Z3_mk_fpa_mul(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-    case BO_Div: {
-      Z3Expr RoundingMode = getFloatRoundingMode();
-      AST = Z3_mk_fpa_div(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-    case BO_Rem:
-      AST = Z3_mk_fpa_rem(Context.Context, LHS.AST, RHS.AST);
-      break;
-
-      // Additive operators
-    case BO_Add: {
-      Z3Expr RoundingMode = getFloatRoundingMode();
-      AST = Z3_mk_fpa_add(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-    case BO_Sub: {
-      Z3Expr RoundingMode = getFloatRoundingMode();
-      AST = Z3_mk_fpa_sub(Context.Context, RoundingMode.AST, LHS.AST, RHS.AST);
-      break;
-    }
-
-      // Relational operators
-    case BO_LT:
-      AST = Z3_mk_fpa_lt(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_GT:
-      AST = Z3_mk_fpa_gt(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_LE:
-      AST = Z3_mk_fpa_leq(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_GE:
-      AST = Z3_mk_fpa_geq(Context.Context, LHS.AST, RHS.AST);
-      break;
-
-      // Equality operators
-    case BO_EQ:
-      AST = Z3_mk_fpa_eq(Context.Context, LHS.AST, RHS.AST);
-      break;
-    case BO_NE:
-      return fromFloatUnOp(UO_LNot, fromFloatBinOp(LHS, BO_EQ, RHS));
-      break;
-
-      // Logical operators
-    case BO_LAnd:
-    case BO_LOr:
-      return fromBinOp(LHS, Op, RHS, false);
-    }
-
-    return Z3Expr(Context, AST);
+  SMTExprRef mkBVSub(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvsub(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
   }
 
-  /// Construct a Z3Expr from a SymbolData, given a Z3_context.
-  Z3Expr fromData(const SymbolID ID, const QualType &Ty, uint64_t BitWidth) {
-    llvm::Twine Name = "$" + llvm::Twine(ID);
-
-    Z3Sort Sort = MkSort(Ty, BitWidth);
-
-    Z3_symbol Symbol = Z3_mk_string_symbol(Context.Context, Name.str().c_str());
-    Z3_ast AST = Z3_mk_const(Context.Context, Symbol, Sort.Sort);
-    return Z3Expr(Context, AST);
+  SMTExprRef mkBVMul(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvmul(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
   }
 
-  /// Construct a Z3Expr from a SymbolCast, given a Z3_context.
-  Z3Expr fromCast(const Z3Expr &Exp, QualType ToTy, uint64_t ToBitWidth,
-                  QualType FromTy, uint64_t FromBitWidth) {
-    Z3_ast AST;
-
-    if ((FromTy->isIntegralOrEnumerationType() &&
-         ToTy->isIntegralOrEnumerationType()) ||
-        (FromTy->isAnyPointerType() ^ ToTy->isAnyPointerType()) ||
-        (FromTy->isBlockPointerType() ^ ToTy->isBlockPointerType()) ||
-        (FromTy->isReferenceType() ^ ToTy->isReferenceType())) {
-      // Special case: Z3 boolean type is distinct from bitvector type, so
-      // must use if-then-else expression instead of direct cast
-      if (FromTy->isBooleanType()) {
-        assert(ToBitWidth > 0 && "BitWidth must be positive!");
-        Z3Expr Zero = fromInt("0", ToBitWidth);
-        Z3Expr One = fromInt("1", ToBitWidth);
-        AST = Z3_mk_ite(Context.Context, Exp.AST, One.AST, Zero.AST);
-      } else if (ToBitWidth > FromBitWidth) {
-        AST = FromTy->isSignedIntegerOrEnumerationType()
-                  ? Z3_mk_sign_ext(Context.Context, ToBitWidth - FromBitWidth,
-                                   Exp.AST)
-                  : Z3_mk_zero_ext(Context.Context, ToBitWidth - FromBitWidth,
-                                   Exp.AST);
-      } else if (ToBitWidth < FromBitWidth) {
-        AST = Z3_mk_extract(Context.Context, ToBitWidth - 1, 0, Exp.AST);
-      } else {
-        // Both are bitvectors with the same width, ignore the type cast
-        return Exp;
-      }
-    } else if (FromTy->isRealFloatingType() && ToTy->isRealFloatingType()) {
-      if (ToBitWidth != FromBitWidth) {
-        Z3Expr RoundingMode = getFloatRoundingMode();
-        Z3Sort Sort = getFloatSort(ToBitWidth);
-        AST = Z3_mk_fpa_to_fp_float(Context.Context, RoundingMode.AST, Exp.AST,
-                                    Sort.Sort);
-      } else {
-        return Exp;
-      }
-    } else if (FromTy->isIntegralOrEnumerationType() &&
-               ToTy->isRealFloatingType()) {
-      Z3Expr RoundingMode = getFloatRoundingMode();
-      Z3Sort Sort = getFloatSort(ToBitWidth);
-      AST = FromTy->isSignedIntegerOrEnumerationType()
-                ? Z3_mk_fpa_to_fp_signed(Context.Context, RoundingMode.AST,
-                                         Exp.AST, Sort.Sort)
-                : Z3_mk_fpa_to_fp_unsigned(Context.Context, RoundingMode.AST,
-                                           Exp.AST, Sort.Sort);
-    } else if (FromTy->isRealFloatingType() &&
-               ToTy->isIntegralOrEnumerationType()) {
-      Z3Expr RoundingMode = getFloatRoundingMode();
-      AST = ToTy->isSignedIntegerOrEnumerationType()
-                ? Z3_mk_fpa_to_sbv(Context.Context, RoundingMode.AST, Exp.AST,
-                                   ToBitWidth)
-                : Z3_mk_fpa_to_ubv(Context.Context, RoundingMode.AST, Exp.AST,
-                                   ToBitWidth);
-    } else {
-      llvm_unreachable("Unsupported explicit type cast!");
-    }
-
-    return Z3Expr(Context, AST);
+  SMTExprRef mkBVSRem(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvsrem(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
   }
 
-  /// Construct a Z3Expr from a boolean, given a Z3_context.
-  Z3Expr fromBoolean(const bool Bool) {
-    Z3_ast AST =
-        Bool ? Z3_mk_true(Context.Context) : Z3_mk_false(Context.Context);
-    return Z3Expr(Context, AST);
+  SMTExprRef mkBVURem(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvurem(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
   }
 
-  /// Construct a Z3Expr from a finite APFloat, given a Z3_context.
-  Z3Expr fromAPFloat(const llvm::APFloat &Float) {
-    Z3_ast AST;
-    Z3Sort Sort =
+  SMTExprRef mkBVSDiv(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvsdiv(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVUDiv(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvudiv(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVShl(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvshl(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVAshr(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvashr(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVLshr(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvlshr(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVXor(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvxor(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVOr(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvor(Context.Context, toZ3Expr(*LHS).AST,
+                                   toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVAnd(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvand(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVUlt(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvult(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVSlt(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvslt(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVUgt(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvugt(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVSgt(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvsgt(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVUle(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvule(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVSle(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvsle(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVUge(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvuge(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkBVSge(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_bvsge(Context.Context, toZ3Expr(*LHS).AST,
+                                    toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkAnd(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    Z3_ast Args[2] = {toZ3Expr(*LHS).AST, toZ3Expr(*RHS).AST};
+    return newExprRef(Z3Expr(Context, Z3_mk_and(Context.Context, 2, Args)));
+  }
+
+  SMTExprRef mkOr(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    Z3_ast Args[2] = {toZ3Expr(*LHS).AST, toZ3Expr(*RHS).AST};
+    return newExprRef(Z3Expr(Context, Z3_mk_or(Context.Context, 2, Args)));
+  }
+
+  SMTExprRef mkEqual(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_eq(Context.Context, toZ3Expr(*LHS).AST,
+                                 toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkFPNeg(const SMTExprRef &Exp) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_neg(Context.Context, toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkFPIsInfinite(const SMTExprRef &Exp) override {
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_fpa_is_infinite(Context.Context, toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkFPIsNaN(const SMTExprRef &Exp) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_is_nan(Context.Context, toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkFPIsNormal(const SMTExprRef &Exp) override {
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_fpa_is_normal(Context.Context, toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkFPIsZero(const SMTExprRef &Exp) override {
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_fpa_is_zero(Context.Context, toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkFPMul(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(
+        Z3Expr(Context,
+               Z3_mk_fpa_mul(Context.Context, toZ3Expr(*LHS).AST,
+                             toZ3Expr(*RHS).AST, toZ3Expr(*RoundingMode).AST)));
+  }
+
+  SMTExprRef mkFPDiv(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(
+        Z3Expr(Context,
+               Z3_mk_fpa_div(Context.Context, toZ3Expr(*LHS).AST,
+                             toZ3Expr(*RHS).AST, toZ3Expr(*RoundingMode).AST)));
+  }
+
+  SMTExprRef mkFPRem(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_rem(Context.Context, toZ3Expr(*LHS).AST,
+                                      toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkFPAdd(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(
+        Z3Expr(Context,
+               Z3_mk_fpa_add(Context.Context, toZ3Expr(*LHS).AST,
+                             toZ3Expr(*RHS).AST, toZ3Expr(*RoundingMode).AST)));
+  }
+
+  SMTExprRef mkFPSub(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(
+        Z3Expr(Context,
+               Z3_mk_fpa_sub(Context.Context, toZ3Expr(*LHS).AST,
+                             toZ3Expr(*RHS).AST, toZ3Expr(*RoundingMode).AST)));
+  }
+
+  SMTExprRef mkFPLt(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_lt(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkFPGt(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_gt(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkFPLe(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_leq(Context.Context, toZ3Expr(*LHS).AST,
+                                      toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkFPGe(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_geq(Context.Context, toZ3Expr(*LHS).AST,
+                                      toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkFPEqual(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_fpa_eq(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkIte(const SMTExprRef &Cond, const SMTExprRef &T,
+                   const SMTExprRef &F) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_ite(Context.Context, toZ3Expr(*Cond).AST,
+                                  toZ3Expr(*T).AST, toZ3Expr(*F).AST)));
+  }
+
+  SMTExprRef mkSignExt(unsigned i, const SMTExprRef &Exp) override {
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_sign_ext(Context.Context, i, toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkZeroExt(unsigned i, const SMTExprRef &Exp) override {
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_zero_ext(Context.Context, i, toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkExtract(unsigned High, unsigned Low,
+                       const SMTExprRef &Exp) override {
+    return newExprRef(Z3Expr(Context, Z3_mk_extract(Context.Context, High, Low,
+                                                    toZ3Expr(*Exp).AST)));
+  }
+
+  SMTExprRef mkConcat(const SMTExprRef &LHS, const SMTExprRef &RHS) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_concat(Context.Context, toZ3Expr(*LHS).AST,
+                                     toZ3Expr(*RHS).AST)));
+  }
+
+  SMTExprRef mkFPtoFP(const SMTExprRef &From, const SMTSortRef &To) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(Z3Expr(
+        Context,
+        Z3_mk_fpa_to_fp_float(Context.Context, toZ3Expr(*RoundingMode).AST,
+                              toZ3Expr(*From).AST, toZ3Sort(*To).Sort)));
+  }
+
+  SMTExprRef mkFPtoSBV(const SMTExprRef &From, const SMTSortRef &To) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(Z3Expr(
+        Context,
+        Z3_mk_fpa_to_fp_signed(Context.Context, toZ3Expr(*RoundingMode).AST,
+                               toZ3Expr(*From).AST, toZ3Sort(*To).Sort)));
+  }
+
+  SMTExprRef mkFPtoUBV(const SMTExprRef &From, const SMTSortRef &To) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(Z3Expr(
+        Context,
+        Z3_mk_fpa_to_fp_unsigned(Context.Context, toZ3Expr(*RoundingMode).AST,
+                                 toZ3Expr(*From).AST, toZ3Sort(*To).Sort)));
+  }
+
+  SMTExprRef mkSBVtoFP(const SMTExprRef &From, unsigned ToWidth) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_fpa_to_sbv(Context.Context, toZ3Expr(*RoundingMode).AST,
+                                  toZ3Expr(*From).AST, ToWidth)));
+  }
+
+  SMTExprRef mkUBVtoFP(const SMTExprRef &From, unsigned ToWidth) override {
+    SMTExprRef RoundingMode = getFloatRoundingMode();
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_fpa_to_ubv(Context.Context, toZ3Expr(*RoundingMode).AST,
+                                  toZ3Expr(*From).AST, ToWidth)));
+  }
+
+  SMTExprRef mkBoolean(const bool b) override {
+    return newExprRef(Z3Expr(Context, b ? Z3_mk_true(Context.Context)
+                                        : Z3_mk_false(Context.Context)));
+  }
+
+  SMTExprRef mkBitvector(const llvm::APSInt Int, unsigned BitWidth) override {
+    const SMTSortRef Sort = getBitvectorSort(BitWidth);
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_numeral(Context.Context, Int.toString(10).c_str(),
+                                      toZ3Sort(*Sort).Sort)));
+  }
+
+  SMTExprRef mkFloat(const llvm::APFloat Float) override {
+    SMTSortRef Sort =
         getFloatSort(llvm::APFloat::semanticsSizeInBits(Float.getSemantics()));
 
     llvm::APSInt Int = llvm::APSInt(Float.bitcastToAPInt(), false);
-    Z3Expr Z3Int = fromAPSInt(Int);
-    AST = Z3_mk_fpa_to_fp_bv(Context.Context, Z3Int.AST, Sort.Sort);
-    return Z3Expr(Context, AST);
+    SMTExprRef Z3Int = mkBitvector(Int, Int.getBitWidth());
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_fpa_to_fp_bv(Context.Context, toZ3Expr(*Z3Int).AST,
+                                    toZ3Sort(*Sort).Sort)));
+  }
+
+  SMTExprRef mkSymbol(const char *Name, SMTSortRef Sort) override {
+    return newExprRef(
+        Z3Expr(Context, Z3_mk_const(Context.Context,
+                                    Z3_mk_string_symbol(Context.Context, Name),
+                                    toZ3Sort(*Sort).Sort)));
+  }
+
+  const llvm::APSInt getBitvector(const SMTExprRef &Exp) override {
+    // FIXME: this returns a string and the bitWidth is overridden
+    return llvm::APSInt(
+        Z3_get_numeral_string(Context.Context, toZ3Expr(*Exp).AST));
+  }
+
+  bool getBoolean(const SMTExprRef &Exp) override {
+    return Z3_get_bool_value(Context.Context, toZ3Expr(*Exp).AST) == Z3_L_TRUE;
+  }
+
+  // Return an appropriate floating-point rounding mode.
+  SMTExprRef getFloatRoundingMode() override {
+    // TODO: Don't assume nearest ties to even rounding mode
+    return newExprRef(Z3Expr(Context, Z3_mk_fpa_rne(Context.Context)));
+  }
+
+  /// Construct a Z3Expr from a SymbolData, given a Z3_context.
+  SMTExprRef fromData(const SymbolID ID, const QualType &Ty,
+                      uint64_t BitWidth) override {
+    llvm::Twine Name = "$" + llvm::Twine(ID);
+    return mkSymbol(Name.str().c_str(), mkSort(Ty, BitWidth));
+  }
+
+  /// Construct a Z3Expr from a boolean, given a Z3_context.
+  SMTExprRef fromBoolean(const bool Bool) override {
+    Z3_ast AST =
+        Bool ? Z3_mk_true(Context.Context) : Z3_mk_false(Context.Context);
+    return newExprRef(Z3Expr(Context, AST));
+  }
+
+  /// Construct a Z3Expr from a finite APFloat, given a Z3_context.
+  SMTExprRef fromAPFloat(const llvm::APFloat &Float) override {
+    SMTSortRef Sort =
+        getFloatSort(llvm::APFloat::semanticsSizeInBits(Float.getSemantics()));
+
+    llvm::APSInt Int = llvm::APSInt(Float.bitcastToAPInt(), false);
+    SMTExprRef Z3Int = fromAPSInt(Int);
+    return newExprRef(Z3Expr(
+        Context, Z3_mk_fpa_to_fp_bv(Context.Context, toZ3Expr(*Z3Int).AST,
+                                    toZ3Sort(*Sort).Sort)));
   }
 
   /// Construct a Z3Expr from an APSInt, given a Z3_context.
-  Z3Expr fromAPSInt(const llvm::APSInt &Int) {
-    Z3Sort Sort = getBitvectorSort(Int.getBitWidth());
-    Z3_ast AST =
-        Z3_mk_numeral(Context.Context, Int.toString(10).c_str(), Sort.Sort);
-    return Z3Expr(Context, AST);
+  SMTExprRef fromAPSInt(const llvm::APSInt &Int) override {
+    SMTSortRef Sort = getBitvectorSort(Int.getBitWidth());
+    Z3_ast AST = Z3_mk_numeral(Context.Context, Int.toString(10).c_str(),
+                               toZ3Sort(*Sort).Sort);
+    return newExprRef(Z3Expr(Context, AST));
   }
 
   /// Construct a Z3Expr from an integer, given a Z3_context.
-  Z3Expr fromInt(const char *Int, uint64_t BitWidth) {
-    Z3Sort Sort = getBitvectorSort(BitWidth);
-    Z3_ast AST = Z3_mk_numeral(Context.Context, Int, Sort.Sort);
-    return Z3Expr(Context, AST);
+  SMTExprRef fromInt(const char *Int, uint64_t BitWidth) override {
+    SMTSortRef Sort = getBitvectorSort(BitWidth);
+    Z3_ast AST = Z3_mk_numeral(Context.Context, Int, toZ3Sort(*Sort).Sort);
+    return newExprRef(Z3Expr(Context, AST));
   }
 
-  /// Construct an APFloat from a Z3Expr, given the AST representation
-  bool toAPFloat(const Z3Sort &Sort, const Z3_ast &AST, llvm::APFloat &Float,
-                 bool useSemantics = true) {
-    assert(Sort.isFloatSort() && "Unsupported sort to floating-point!");
+  bool toAPFloat(const SMTSortRef &Sort, const SMTExprRef &AST,
+                 llvm::APFloat &Float, bool useSemantics) {
+    assert(Sort->isFloatSort() && "Unsupported sort to floating-point!");
 
-    llvm::APSInt Int(Sort.getFloatSortSize(), true);
+    llvm::APSInt Int(Sort->getFloatSortSize(), true);
     const llvm::fltSemantics &Semantics =
-        getFloatSemantics(Sort.getFloatSortSize());
-    Z3Sort BVSort = getBitvectorSort(Sort.getFloatSortSize());
+        getFloatSemantics(Sort->getFloatSortSize());
+    SMTSortRef BVSort = getBitvectorSort(Sort->getFloatSortSize());
     if (!toAPSInt(BVSort, AST, Int, true)) {
       return false;
     }
@@ -819,11 +820,10 @@ public:
     return true;
   }
 
-  /// Construct an APSInt from a Z3Expr, given the AST representation
-  bool toAPSInt(const Z3Sort &Sort, const Z3_ast &AST, llvm::APSInt &Int,
-                bool useSemantics = true) {
-    if (Sort.isBitvectorSort()) {
-      if (useSemantics && Int.getBitWidth() != Sort.getBitvectorSortSize()) {
+  bool toAPSInt(const SMTSortRef &Sort, const SMTExprRef &AST,
+                llvm::APSInt &Int, bool useSemantics) {
+    if (Sort->isBitvectorSort()) {
+      if (useSemantics && Int.getBitWidth() != Sort->getBitvectorSortSize()) {
         assert(false && "Bitvector types don't match!");
         return false;
       }
@@ -832,15 +832,14 @@ public:
       // Force cast because Z3 defines __uint64 to be a unsigned long long
       // type, which isn't compatible with a unsigned long type, even if they
       // are the same size.
-      Z3_get_numeral_uint64(Context.Context, AST,
+      Z3_get_numeral_uint64(Context.Context, toZ3Expr(*AST).AST,
                             reinterpret_cast<__uint64 *>(&Value[0]));
-      if (Sort.getBitvectorSortSize() <= 64) {
+      if (Sort->getBitvectorSortSize() <= 64) {
         Int = llvm::APSInt(llvm::APInt(Int.getBitWidth(), Value[0]),
                            Int.isUnsigned());
-      } else if (Sort.getBitvectorSortSize() == 128) {
-        Z3Expr ASTHigh =
-            Z3Expr(Context, Z3_mk_extract(Context.Context, 127, 64, AST));
-        Z3_get_numeral_uint64(Context.Context, AST,
+      } else if (Sort->getBitvectorSortSize() == 128) {
+        SMTExprRef ASTHigh = mkExtract(127, 64, AST);
+        Z3_get_numeral_uint64(Context.Context, toZ3Expr(*AST).AST,
                               reinterpret_cast<__uint64 *>(&Value[1]));
         Int = llvm::APSInt(llvm::APInt(Int.getBitWidth(), Value),
                            Int.isUnsigned());
@@ -851,17 +850,14 @@ public:
       return true;
     }
 
-    if (Sort.isBooleanSort()) {
+    if (Sort->isBooleanSort()) {
       if (useSemantics && Int.getBitWidth() < 1) {
         assert(false && "Boolean type doesn't match!");
         return false;
       }
 
-      Int = llvm::APSInt(
-          llvm::APInt(Int.getBitWidth(),
-                      Z3_get_bool_value(Context.Context, AST) == Z3_L_TRUE ? 1
-                                                                           : 0),
-          Int.isUnsigned());
+      Int = llvm::APSInt(llvm::APInt(Int.getBitWidth(), getBoolean(AST)),
+                         Int.isUnsigned());
       return true;
     }
 
@@ -870,50 +866,53 @@ public:
 
   /// Given an expression and a model, extract the value of this operand in
   /// the model.
-  bool getInterpretation(const Z3Model Model, const Z3Expr &Exp,
-                         llvm::APSInt &Int) {
-    Z3_func_decl Func =
-        Z3_get_app_decl(Context.Context, Z3_to_app(Context.Context, Exp.AST));
+  bool getInterpretation(const SMTExprRef &Exp, llvm::APSInt &Int) override {
+    Z3Model Model = getModel();
+    Z3_func_decl Func = Z3_get_app_decl(
+        Context.Context, Z3_to_app(Context.Context, toZ3Expr(*Exp).AST));
     if (Z3_model_has_interp(Context.Context, Model.Model, Func) != Z3_L_TRUE)
       return false;
 
-    Z3_ast Assign =
-        Z3_model_get_const_interp(Context.Context, Model.Model, Func);
-    Z3Sort Sort = getSort(Assign);
+    SMTExprRef Assign = newExprRef(
+        Z3Expr(Context,
+               Z3_model_get_const_interp(Context.Context, Model.Model, Func)));
+    SMTSortRef Sort = getSort(Assign);
     return toAPSInt(Sort, Assign, Int, true);
   }
 
   /// Given an expression and a model, extract the value of this operand in
   /// the model.
-  bool getInterpretation(const Z3Model Model, const Z3Expr &Exp,
-                         llvm::APFloat &Float) {
-    Z3_func_decl Func =
-        Z3_get_app_decl(Context.Context, Z3_to_app(Context.Context, Exp.AST));
+  bool getInterpretation(const SMTExprRef &Exp, llvm::APFloat &Float) override {
+    Z3Model Model = getModel();
+    Z3_func_decl Func = Z3_get_app_decl(
+        Context.Context, Z3_to_app(Context.Context, toZ3Expr(*Exp).AST));
     if (Z3_model_has_interp(Context.Context, Model.Model, Func) != Z3_L_TRUE)
       return false;
 
-    Z3_ast Assign =
-        Z3_model_get_const_interp(Context.Context, Model.Model, Func);
-    Z3Sort Sort = getSort(Assign);
+    SMTExprRef Assign = newExprRef(
+        Z3Expr(Context,
+               Z3_model_get_const_interp(Context.Context, Model.Model, Func)));
+    SMTSortRef Sort = getSort(Assign);
     return toAPFloat(Sort, Assign, Float, true);
   }
 
-  // Callback function for doCast parameter on APSInt type.
-  llvm::APSInt castAPSInt(const llvm::APSInt &V, QualType ToTy,
-                          uint64_t ToWidth, QualType FromTy,
-                          uint64_t FromWidth) {
-    APSIntType TargetType(ToWidth, !ToTy->isSignedIntegerOrEnumerationType());
-    return TargetType.convert(V);
+  /// Check if the constraints are satisfiable
+  ConditionTruthVal check() const override {
+    Z3_lbool res = Z3_solver_check(Context.Context, Solver);
+    if (res == Z3_L_TRUE)
+      return true;
+
+    if (res == Z3_L_FALSE)
+      return false;
+
+    return ConditionTruthVal();
   }
 
-  /// Check if the constraints are satisfiable
-  Z3_lbool check() { return Z3_solver_check(Context.Context, Solver); }
-
   /// Push the current solver state
-  void push() { return Z3_solver_push(Context.Context, Solver); }
+  void push() override { return Z3_solver_push(Context.Context, Solver); }
 
   /// Pop the previous solver state
-  void pop(unsigned NumStates = 1) {
+  void pop(unsigned NumStates = 1) override {
     assert(Z3_solver_get_num_scopes(Context.Context, Solver) >= NumStates);
     return Z3_solver_pop(Context.Context, Solver, NumStates);
   }
@@ -925,13 +924,11 @@ public:
   }
 
   /// Reset the solver and remove all constraints.
-  void reset() { Z3_solver_reset(Context.Context, Solver); }
+  void reset() const override { Z3_solver_reset(Context.Context, Solver); }
 
-  void print(raw_ostream &OS) const {
+  void print(raw_ostream &OS) const override {
     OS << Z3_solver_to_string(Context.Context, Solver);
   }
-
-  LLVM_DUMP_METHOD void dump() const { print(llvm::errs()); }
 }; // end class Z3Solver
 
 class Z3ConstraintManager : public SMTConstraintManager {
@@ -988,54 +985,60 @@ private:
   // Internal implementation.
   //===------------------------------------------------------------------===//
 
+  /// Given a program state, construct the logical conjunction and add it to
+  /// the solver
+  void addStateConstraints(ProgramStateRef State) const;
+
   // Check whether a new model is satisfiable, and update the program state.
   ProgramStateRef assumeZ3Expr(ProgramStateRef State, SymbolRef Sym,
-                               const Z3Expr &Exp);
+                               const SMTExprRef &Exp);
 
   // Generate and check a Z3 model, using the given constraint.
-  Z3_lbool checkZ3Model(ProgramStateRef State, const Z3Expr &Exp) const;
+  ConditionTruthVal checkZ3Model(ProgramStateRef State,
+                                 const SMTExprRef &Exp) const;
 
   // Generate a Z3Expr that represents the given symbolic expression.
   // Sets the hasComparison parameter if the expression has a comparison
   // operator.
   // Sets the RetTy parameter to the final return type after promotions and
   // casts.
-  Z3Expr getZ3Expr(SymbolRef Sym, QualType *RetTy = nullptr,
-                   bool *hasComparison = nullptr) const;
+  SMTExprRef getZ3Expr(SymbolRef Sym, QualType *RetTy = nullptr,
+                       bool *hasComparison = nullptr) const;
 
   // Generate a Z3Expr that takes the logical not of an expression.
-  Z3Expr getZ3NotExpr(const Z3Expr &Exp) const;
+  SMTExprRef getZ3NotExpr(const SMTExprRef &Exp) const;
 
   // Generate a Z3Expr that compares the expression to zero.
-  Z3Expr getZ3ZeroExpr(const Z3Expr &Exp, QualType RetTy,
-                       bool Assumption) const;
+  SMTExprRef getZ3ZeroExpr(const SMTExprRef &Exp, QualType RetTy,
+                           bool Assumption) const;
 
   // Recursive implementation to unpack and generate symbolic expression.
   // Sets the hasComparison and RetTy parameters. See getZ3Expr().
-  Z3Expr getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
-                      bool *hasComparison) const;
+  SMTExprRef getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
+                          bool *hasComparison) const;
 
   // Wrapper to generate Z3Expr from SymbolData.
-  Z3Expr getZ3DataExpr(const SymbolID ID, QualType Ty) const;
+  SMTExprRef getZ3DataExpr(const SymbolID ID, QualType Ty) const;
 
   // Wrapper to generate Z3Expr from SymbolCast.
-  Z3Expr getZ3CastExpr(const Z3Expr &Exp, QualType FromTy, QualType Ty) const;
+  SMTExprRef getZ3CastExpr(const SMTExprRef &Exp, QualType FromTy,
+                           QualType Ty) const;
 
   // Wrapper to generate Z3Expr from BinarySymExpr.
   // Sets the hasComparison and RetTy parameters. See getZ3Expr().
-  Z3Expr getZ3SymBinExpr(const BinarySymExpr *BSE, bool *hasComparison,
-                         QualType *RetTy) const;
+  SMTExprRef getZ3SymBinExpr(const BinarySymExpr *BSE, bool *hasComparison,
+                             QualType *RetTy) const;
 
   // Wrapper to generate Z3Expr from unpacked binary symbolic expression.
   // Sets the RetTy parameter. See getZ3Expr().
-  Z3Expr getZ3BinExpr(const Z3Expr &LHS, QualType LTy,
-                      BinaryOperator::Opcode Op, const Z3Expr &RHS,
-                      QualType RTy, QualType *RetTy) const;
+  SMTExprRef getZ3BinExpr(const SMTExprRef &LHS, QualType LTy,
+                          BinaryOperator::Opcode Op, const SMTExprRef &RHS,
+                          QualType RTy, QualType *RetTy) const;
 
   // Wrapper to generate Z3Expr from a range. If From == To, an equality will
   // be created instead.
-  Z3Expr getZ3RangeExpr(SymbolRef Sym, const llvm::APSInt &From,
-                        const llvm::APSInt &To, bool InRange);
+  SMTExprRef getZ3RangeExpr(SymbolRef Sym, const llvm::APSInt &From,
+                            const llvm::APSInt &To, bool InRange);
 
   //===------------------------------------------------------------------===//
   // Helper functions.
@@ -1051,33 +1054,49 @@ private:
   // Perform implicit type conversion on binary symbolic expressions.
   // May modify all input parameters.
   // TODO: Refactor to use built-in conversion functions
-  void doTypeConversion(Z3Expr &LHS, Z3Expr &RHS, QualType &LTy,
+  void doTypeConversion(SMTExprRef &LHS, SMTExprRef &RHS, QualType &LTy,
                         QualType &RTy) const;
 
   // Perform implicit integer type conversion.
   // May modify all input parameters.
   // TODO: Refactor to use Sema::handleIntegerConversion()
-  template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
-                                              QualType, uint64_t)>
+  template <typename T, T (SMTSolver::*doCast)(const T &, QualType, uint64_t,
+                                               QualType, uint64_t)>
   void doIntTypeConversion(T &LHS, QualType &LTy, T &RHS, QualType &RTy) const;
 
   // Perform implicit floating-point type conversion.
   // May modify all input parameters.
   // TODO: Refactor to use Sema::handleFloatConversion()
-  template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
-                                              QualType, uint64_t)>
+  template <typename T, T (SMTSolver::*doCast)(const T &, QualType, uint64_t,
+                                               QualType, uint64_t)>
   void doFloatTypeConversion(T &LHS, QualType &LTy, T &RHS,
                              QualType &RTy) const;
 }; // end class Z3ConstraintManager
 
 } // end anonymous namespace
 
+void Z3ConstraintManager::addStateConstraints(ProgramStateRef State) const {
+  // TODO: Don't add all the constraints, only the relevant ones
+  ConstraintZ3Ty CZ = State->get<ConstraintZ3>();
+  ConstraintZ3Ty::iterator I = CZ.begin(), IE = CZ.end();
+
+  // Construct the logical AND of all the constraints
+  if (I != IE) {
+    std::vector<SMTExprRef> ASTs;
+
+    while (I != IE)
+      ASTs.push_back(Solver.newExprRef(Z3Expr(I++->second)));
+
+    Solver.addConstraint(Solver.fromNBinOp(BO_LAnd, ASTs));
+  }
+}
+
 ProgramStateRef Z3ConstraintManager::assumeSym(ProgramStateRef State,
                                                SymbolRef Sym, bool Assumption) {
   QualType RetTy;
   bool hasComparison;
 
-  Z3Expr Exp = getZ3Expr(Sym, &RetTy, &hasComparison);
+  SMTExprRef Exp = getZ3Expr(Sym, &RetTy, &hasComparison);
   // Create zero comparison for implicit boolean cast, with reversed assumption
   if (!hasComparison && !RetTy->isBooleanType())
     return assumeZ3Expr(State, Sym, getZ3ZeroExpr(Exp, RetTy, !Assumption));
@@ -1145,27 +1164,29 @@ ConditionTruthVal Z3ConstraintManager::checkNull(ProgramStateRef State,
                                                  SymbolRef Sym) {
   QualType RetTy;
   // The expression may be casted, so we cannot call getZ3DataExpr() directly
-  Z3Expr VarExp = getZ3Expr(Sym, &RetTy);
-  Z3Expr Exp = getZ3ZeroExpr(VarExp, RetTy, true);
+  SMTExprRef VarExp = getZ3Expr(Sym, &RetTy);
+  SMTExprRef Exp = getZ3ZeroExpr(VarExp, RetTy, true);
+
   // Negate the constraint
-  Z3Expr NotExp = getZ3ZeroExpr(VarExp, RetTy, false);
+  SMTExprRef NotExp = getZ3ZeroExpr(VarExp, RetTy, false);
 
   Solver.reset();
-  Solver.addStateConstraints(State);
+  addStateConstraints(State);
 
   Solver.push();
   Solver.addConstraint(Exp);
-  Z3_lbool isSat = Solver.check();
+  ConditionTruthVal isSat = Solver.check();
 
   Solver.pop();
   Solver.addConstraint(NotExp);
-  Z3_lbool isNotSat = Solver.check();
+  ConditionTruthVal isNotSat = Solver.check();
 
   // Zero is the only possible solution
-  if (isSat == Z3_L_TRUE && isNotSat == Z3_L_FALSE)
+  if (isSat.isConstrainedTrue() && isNotSat.isConstrainedFalse())
     return true;
+
   // Zero is not a solution
-  else if (isSat == Z3_L_FALSE && isNotSat == Z3_L_TRUE)
+  if (isSat.isConstrainedFalse() && isNotSat.isConstrainedTrue())
     return false;
 
   // Zero may be a solution
@@ -1183,29 +1204,31 @@ const llvm::APSInt *Z3ConstraintManager::getSymVal(ProgramStateRef State,
     llvm::APSInt Value(Ctx.getTypeSize(Ty),
                        !Ty->isSignedIntegerOrEnumerationType());
 
-    Z3Expr Exp = getZ3DataExpr(SD->getSymbolID(), Ty);
+    SMTExprRef Exp = getZ3DataExpr(SD->getSymbolID(), Ty);
 
     Solver.reset();
-    Solver.addStateConstraints(State);
+    addStateConstraints(State);
 
     // Constraints are unsatisfiable
-    if (Solver.check() != Z3_L_TRUE)
+    ConditionTruthVal isSat = Solver.check();
+    if (!isSat.isConstrainedTrue())
       return nullptr;
 
-    Z3Model Model = Solver.getModel();
     // Model does not assign interpretation
-    if (!Solver.getInterpretation(Model, Exp, Value))
+    if (!Solver.getInterpretation(Exp, Value))
       return nullptr;
 
     // A value has been obtained, check if it is the only value
-    Z3Expr NotExp = Solver.fromBinOp(
+    SMTExprRef NotExp = Solver.fromBinOp(
         Exp, BO_NE,
         Ty->isBooleanType() ? Solver.fromBoolean(Value.getBoolValue())
                             : Solver.fromAPSInt(Value),
         false);
 
     Solver.addConstraint(NotExp);
-    if (Solver.check() == Z3_L_TRUE)
+
+    ConditionTruthVal isNotSat = Solver.check();
+    if (isNotSat.isConstrainedTrue())
       return nullptr;
 
     // This is the only solution, store it
@@ -1244,8 +1267,8 @@ const llvm::APSInt *Z3ConstraintManager::getSymVal(ProgramStateRef State,
     QualType LTy, RTy;
     std::tie(ConvertedLHS, LTy) = fixAPSInt(*LHS);
     std::tie(ConvertedRHS, RTy) = fixAPSInt(*RHS);
-    doIntTypeConversion<llvm::APSInt, &Z3Solver::castAPSInt>(ConvertedLHS, LTy,
-                                                             ConvertedRHS, RTy);
+    doIntTypeConversion<llvm::APSInt, &SMTSolver::castAPSInt>(
+        ConvertedLHS, LTy, ConvertedRHS, RTy);
     return BVF.evalAPSInt(BSE->getOpcode(), ConvertedLHS, ConvertedRHS);
   }
 
@@ -1272,9 +1295,9 @@ void Z3ConstraintManager::addRangeConstraints(ConstraintRangeTy CR) {
   for (const auto &I : CR) {
     SymbolRef Sym = I.first;
 
-    Z3Expr Constraints = Solver.fromBoolean(false);
+    SMTExprRef Constraints = Solver.fromBoolean(false);
     for (const auto &Range : I.second) {
-      Z3Expr SymRange =
+      SMTExprRef SymRange =
           getZ3RangeExpr(Sym, Range.From(), Range.To(), /*InRange=*/true);
 
       // FIXME: the last argument (isSigned) is not used when generating the
@@ -1287,10 +1310,7 @@ void Z3ConstraintManager::addRangeConstraints(ConstraintRangeTy CR) {
 }
 
 clang::ento::ConditionTruthVal Z3ConstraintManager::isModelFeasible() {
-  if (Solver.check() == Z3_L_FALSE)
-    return false;
-
-  return ConditionTruthVal();
+  return Solver.check();
 }
 
 LLVM_DUMP_METHOD void Z3ConstraintManager::dump() const { Solver.dump(); }
@@ -1301,24 +1321,25 @@ LLVM_DUMP_METHOD void Z3ConstraintManager::dump() const { Solver.dump(); }
 
 ProgramStateRef Z3ConstraintManager::assumeZ3Expr(ProgramStateRef State,
                                                   SymbolRef Sym,
-                                                  const Z3Expr &Exp) {
+                                                  const SMTExprRef &Exp) {
   // Check the model, avoid simplifying AST to save time
-  if (checkZ3Model(State, Exp) == Z3_L_TRUE)
-    return State->add<ConstraintZ3>(std::make_pair(Sym, Exp));
+  if (checkZ3Model(State, Exp).isConstrainedTrue())
+    return State->add<ConstraintZ3>(std::make_pair(Sym, toZ3Expr(*Exp)));
 
   return nullptr;
 }
 
-Z3_lbool Z3ConstraintManager::checkZ3Model(ProgramStateRef State,
-                                           const Z3Expr &Exp) const {
+ConditionTruthVal
+Z3ConstraintManager::checkZ3Model(ProgramStateRef State,
+                                  const SMTExprRef &Exp) const {
   Solver.reset();
   Solver.addConstraint(Exp);
-  Solver.addStateConstraints(State);
+  addStateConstraints(State);
   return Solver.check();
 }
 
-Z3Expr Z3ConstraintManager::getZ3Expr(SymbolRef Sym, QualType *RetTy,
-                                      bool *hasComparison) const {
+SMTExprRef Z3ConstraintManager::getZ3Expr(SymbolRef Sym, QualType *RetTy,
+                                          bool *hasComparison) const {
   if (hasComparison) {
     *hasComparison = false;
   }
@@ -1326,12 +1347,13 @@ Z3Expr Z3ConstraintManager::getZ3Expr(SymbolRef Sym, QualType *RetTy,
   return getZ3SymExpr(Sym, RetTy, hasComparison);
 }
 
-Z3Expr Z3ConstraintManager::getZ3NotExpr(const Z3Expr &Exp) const {
+SMTExprRef Z3ConstraintManager::getZ3NotExpr(const SMTExprRef &Exp) const {
   return Solver.fromUnOp(UO_LNot, Exp);
 }
 
-Z3Expr Z3ConstraintManager::getZ3ZeroExpr(const Z3Expr &Exp, QualType Ty,
-                                          bool Assumption) const {
+SMTExprRef Z3ConstraintManager::getZ3ZeroExpr(const SMTExprRef &Exp,
+                                              QualType Ty,
+                                              bool Assumption) const {
   ASTContext &Ctx = getBasicVals().getContext();
   if (Ty->isRealFloatingType()) {
     llvm::APFloat Zero = llvm::APFloat::getZero(Ctx.getFloatTypeSemantics(Ty));
@@ -1350,8 +1372,8 @@ Z3Expr Z3ConstraintManager::getZ3ZeroExpr(const Z3Expr &Exp, QualType Ty,
   llvm_unreachable("Unsupported type for zero value!");
 }
 
-Z3Expr Z3ConstraintManager::getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
-                                         bool *hasComparison) const {
+SMTExprRef Z3ConstraintManager::getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
+                                             bool *hasComparison) const {
   if (const SymbolData *SD = dyn_cast<SymbolData>(Sym)) {
     if (RetTy)
       *RetTy = Sym->getType();
@@ -1362,7 +1384,7 @@ Z3Expr Z3ConstraintManager::getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
       *RetTy = Sym->getType();
 
     QualType FromTy;
-    Z3Expr Exp = getZ3SymExpr(SC->getOperand(), &FromTy, hasComparison);
+    SMTExprRef Exp = getZ3SymExpr(SC->getOperand(), &FromTy, hasComparison);
     // Casting an expression with a comparison invalidates it. Note that this
     // must occur after the recursive call above.
     // e.g. (signed char) (x > 0)
@@ -1370,7 +1392,7 @@ Z3Expr Z3ConstraintManager::getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
       *hasComparison = false;
     return getZ3CastExpr(Exp, FromTy, Sym->getType());
   } else if (const BinarySymExpr *BSE = dyn_cast<BinarySymExpr>(Sym)) {
-    Z3Expr Exp = getZ3SymBinExpr(BSE, hasComparison, RetTy);
+    SMTExprRef Exp = getZ3SymBinExpr(BSE, hasComparison, RetTy);
     // Set the hasComparison parameter, in post-order traversal order.
     if (hasComparison)
       *hasComparison = BinaryOperator::isComparisonOp(BSE->getOpcode());
@@ -1380,52 +1402,52 @@ Z3Expr Z3ConstraintManager::getZ3SymExpr(SymbolRef Sym, QualType *RetTy,
   llvm_unreachable("Unsupported SymbolRef type!");
 }
 
-Z3Expr Z3ConstraintManager::getZ3DataExpr(const SymbolID ID,
-                                          QualType Ty) const {
+SMTExprRef Z3ConstraintManager::getZ3DataExpr(const SymbolID ID,
+                                              QualType Ty) const {
   ASTContext &Ctx = getBasicVals().getContext();
   return Solver.fromData(ID, Ty, Ctx.getTypeSize(Ty));
 }
 
-Z3Expr Z3ConstraintManager::getZ3CastExpr(const Z3Expr &Exp, QualType FromTy,
-                                          QualType ToTy) const {
+SMTExprRef Z3ConstraintManager::getZ3CastExpr(const SMTExprRef &Exp,
+                                              QualType FromTy,
+                                              QualType ToTy) const {
   ASTContext &Ctx = getBasicVals().getContext();
   return Solver.fromCast(Exp, ToTy, Ctx.getTypeSize(ToTy), FromTy,
                          Ctx.getTypeSize(FromTy));
 }
 
-Z3Expr Z3ConstraintManager::getZ3SymBinExpr(const BinarySymExpr *BSE,
-                                            bool *hasComparison,
-                                            QualType *RetTy) const {
+SMTExprRef Z3ConstraintManager::getZ3SymBinExpr(const BinarySymExpr *BSE,
+                                                bool *hasComparison,
+                                                QualType *RetTy) const {
   QualType LTy, RTy;
   BinaryOperator::Opcode Op = BSE->getOpcode();
 
   if (const SymIntExpr *SIE = dyn_cast<SymIntExpr>(BSE)) {
-    Z3Expr LHS = getZ3SymExpr(SIE->getLHS(), &LTy, hasComparison);
+    SMTExprRef LHS = getZ3SymExpr(SIE->getLHS(), &LTy, hasComparison);
     llvm::APSInt NewRInt;
     std::tie(NewRInt, RTy) = fixAPSInt(SIE->getRHS());
-    Z3Expr RHS = Solver.fromAPSInt(NewRInt);
+    SMTExprRef RHS = Solver.fromAPSInt(NewRInt);
     return getZ3BinExpr(LHS, LTy, Op, RHS, RTy, RetTy);
   } else if (const IntSymExpr *ISE = dyn_cast<IntSymExpr>(BSE)) {
     llvm::APSInt NewLInt;
     std::tie(NewLInt, LTy) = fixAPSInt(ISE->getLHS());
-    Z3Expr LHS = Solver.fromAPSInt(NewLInt);
-    Z3Expr RHS = getZ3SymExpr(ISE->getRHS(), &RTy, hasComparison);
+    SMTExprRef LHS = Solver.fromAPSInt(NewLInt);
+    SMTExprRef RHS = getZ3SymExpr(ISE->getRHS(), &RTy, hasComparison);
     return getZ3BinExpr(LHS, LTy, Op, RHS, RTy, RetTy);
   } else if (const SymSymExpr *SSM = dyn_cast<SymSymExpr>(BSE)) {
-    Z3Expr LHS = getZ3SymExpr(SSM->getLHS(), &LTy, hasComparison);
-    Z3Expr RHS = getZ3SymExpr(SSM->getRHS(), &RTy, hasComparison);
+    SMTExprRef LHS = getZ3SymExpr(SSM->getLHS(), &LTy, hasComparison);
+    SMTExprRef RHS = getZ3SymExpr(SSM->getRHS(), &RTy, hasComparison);
     return getZ3BinExpr(LHS, LTy, Op, RHS, RTy, RetTy);
   } else {
     llvm_unreachable("Unsupported BinarySymExpr type!");
   }
 }
 
-Z3Expr Z3ConstraintManager::getZ3BinExpr(const Z3Expr &LHS, QualType LTy,
-                                         BinaryOperator::Opcode Op,
-                                         const Z3Expr &RHS, QualType RTy,
-                                         QualType *RetTy) const {
-  Z3Expr NewLHS = LHS;
-  Z3Expr NewRHS = RHS;
+SMTExprRef Z3ConstraintManager::getZ3BinExpr(
+    const SMTExprRef &LHS, QualType LTy, BinaryOperator::Opcode Op,
+    const SMTExprRef &RHS, QualType RTy, QualType *RetTy) const {
+  SMTExprRef NewLHS = LHS;
+  SMTExprRef NewRHS = RHS;
   doTypeConversion(NewLHS, NewRHS, LTy, RTy);
   // Update the return type parameter if the output type has changed.
   if (RetTy) {
@@ -1452,19 +1474,19 @@ Z3Expr Z3ConstraintManager::getZ3BinExpr(const Z3Expr &LHS, QualType LTy,
                                 LTy->isSignedIntegerOrEnumerationType());
 }
 
-Z3Expr Z3ConstraintManager::getZ3RangeExpr(SymbolRef Sym,
-                                           const llvm::APSInt &From,
-                                           const llvm::APSInt &To,
-                                           bool InRange) {
+SMTExprRef Z3ConstraintManager::getZ3RangeExpr(SymbolRef Sym,
+                                               const llvm::APSInt &From,
+                                               const llvm::APSInt &To,
+                                               bool InRange) {
   // Convert lower bound
   QualType FromTy;
   llvm::APSInt NewFromInt;
   std::tie(NewFromInt, FromTy) = fixAPSInt(From);
-  Z3Expr FromExp = Solver.fromAPSInt(NewFromInt);
+  SMTExprRef FromExp = Solver.fromAPSInt(NewFromInt);
 
   // Convert symbol
   QualType SymTy;
-  Z3Expr Exp = getZ3Expr(Sym, &SymTy);
+  SMTExprRef Exp = getZ3Expr(Sym, &SymTy);
 
   // Construct single (in)equality
   if (From == To)
@@ -1474,14 +1496,15 @@ Z3Expr Z3ConstraintManager::getZ3RangeExpr(SymbolRef Sym,
   QualType ToTy;
   llvm::APSInt NewToInt;
   std::tie(NewToInt, ToTy) = fixAPSInt(To);
-  Z3Expr ToExp = Solver.fromAPSInt(NewToInt);
+  SMTExprRef ToExp = Solver.fromAPSInt(NewToInt);
   assert(FromTy == ToTy && "Range values have different types!");
 
   // Construct two (in)equalities, and a logical and/or
-  Z3Expr LHS = getZ3BinExpr(Exp, SymTy, InRange ? BO_GE : BO_LT, FromExp,
-                            FromTy, /*RetTy=*/nullptr);
-  Z3Expr RHS = getZ3BinExpr(Exp, SymTy, InRange ? BO_LE : BO_GT, ToExp, ToTy,
-                            /*RetTy=*/nullptr);
+  SMTExprRef LHS = getZ3BinExpr(Exp, SymTy, InRange ? BO_GE : BO_LT, FromExp,
+                                FromTy, /*RetTy=*/nullptr);
+  SMTExprRef RHS =
+      getZ3BinExpr(Exp, SymTy, InRange ? BO_LE : BO_GT, ToExp, ToTy,
+                   /*RetTy=*/nullptr);
 
   return Solver.fromBinOp(LHS, InRange ? BO_LAnd : BO_LOr, RHS,
                           SymTy->isSignedIntegerOrEnumerationType());
@@ -1512,7 +1535,7 @@ Z3ConstraintManager::fixAPSInt(const llvm::APSInt &Int) const {
   return std::make_pair(NewInt, getAPSIntType(NewInt));
 }
 
-void Z3ConstraintManager::doTypeConversion(Z3Expr &LHS, Z3Expr &RHS,
+void Z3ConstraintManager::doTypeConversion(SMTExprRef &LHS, SMTExprRef &RHS,
                                            QualType &LTy, QualType &RTy) const {
   ASTContext &Ctx = getBasicVals().getContext();
 
@@ -1520,12 +1543,13 @@ void Z3ConstraintManager::doTypeConversion(Z3Expr &LHS, Z3Expr &RHS,
   // Perform type conversion
   if (LTy->isIntegralOrEnumerationType() &&
       RTy->isIntegralOrEnumerationType()) {
-    if (LTy->isArithmeticType() && RTy->isArithmeticType())
-      return doIntTypeConversion<Z3Expr, &Z3Solver::fromCast>(LHS, LTy, RHS,
-                                                              RTy);
+    if (LTy->isArithmeticType() && RTy->isArithmeticType()) {
+      doIntTypeConversion<SMTExprRef, &Z3Solver::fromCast>(LHS, LTy, RHS, RTy);
+      return;
+    }
   } else if (LTy->isRealFloatingType() || RTy->isRealFloatingType()) {
-    return doFloatTypeConversion<Z3Expr, &Z3Solver::fromCast>(LHS, LTy, RHS,
-                                                              RTy);
+    doFloatTypeConversion<SMTExprRef, &Z3Solver::fromCast>(LHS, LTy, RHS, RTy);
+    return;
   } else if ((LTy->isAnyPointerType() || RTy->isAnyPointerType()) ||
              (LTy->isBlockPointerType() || RTy->isBlockPointerType()) ||
              (LTy->isReferenceType() || RTy->isReferenceType())) {
@@ -1576,8 +1600,8 @@ void Z3ConstraintManager::doTypeConversion(Z3Expr &LHS, Z3Expr &RHS,
   // TODO: Refine behavior for invalid type casts
 }
 
-template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
-                                            QualType, uint64_t)>
+template <typename T, T (SMTSolver::*doCast)(const T &, QualType, uint64_t,
+                                             QualType, uint64_t)>
 void Z3ConstraintManager::doIntTypeConversion(T &LHS, QualType &LTy, T &RHS,
                                               QualType &RTy) const {
   ASTContext &Ctx = getBasicVals().getContext();
@@ -1654,8 +1678,8 @@ void Z3ConstraintManager::doIntTypeConversion(T &LHS, QualType &LTy, T &RHS,
   }
 }
 
-template <typename T, T (Z3Solver::*doCast)(const T &, QualType, uint64_t,
-                                            QualType, uint64_t)>
+template <typename T, T (SMTSolver::*doCast)(const T &, QualType, uint64_t,
+                                             QualType, uint64_t)>
 void Z3ConstraintManager::doFloatTypeConversion(T &LHS, QualType &LTy, T &RHS,
                                                 QualType &RTy) const {
   ASTContext &Ctx = getBasicVals().getContext();
