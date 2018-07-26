@@ -34,6 +34,7 @@ add_llvm_library(LLVMBOLTPasses
   StokeInfo.cpp
   ValidateInternalCalls.cpp
   VeneerElimination.cpp
+  RetpolineInsertion.cpp
 
   DEPENDS
   intrinsics_gen

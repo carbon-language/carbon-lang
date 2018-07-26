@@ -23,6 +23,7 @@
 #include "Passes/ReorderFunctions.h"
 #include "Passes/ReorderData.h"
 #include "Passes/StokeInfo.h"
+#include "Passes/RetpolineInsertion.h"
 #include "Passes/ValidateInternalCalls.h"
 #include "Passes/VeneerElimination.h"
 #include "llvm/Support/Timer.h"
@@ -282,6 +283,13 @@ static llvm::cl::opt<bool>
     cl::ZeroOrMore,
     cl::cat(BoltOptCategory));
 
+static llvm::cl::opt<bool>
+  PrintRetpolineInsertion("print-retpoline-insertion",
+    cl::desc("print functions after retpoline insertion pass"),
+    cl::init(false),
+    cl::ZeroOrMore,
+    cl::cat(BoltCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -467,6 +475,9 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<FrameOptimizerPass>(PrintFOP));
 
   Manager.registerPass(llvm::make_unique<AllocCombinerPass>(PrintFOP));
+
+  Manager.registerPass(
+      llvm::make_unique<RetpolineInsertion>(PrintRetpolineInsertion));
 
   // Thighten branches according to offset differences between branch and
   // targets. No extra instructions after this pass, otherwise we may have

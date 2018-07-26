@@ -253,7 +253,7 @@ public:
 
   DataReader &DR;
 
-  /// Indicates if relocations are availabe for usage.
+  /// Indicates if relocations are available for usage.
   bool HasRelocations{false};
 
   /// Sum of execution count of all functions

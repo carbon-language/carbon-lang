@@ -321,6 +321,51 @@ public:
     return Analysis->isIndirectBranch(Inst);
   }
 
+  /// Returns true if the instruction is memory indirect call or jump
+  virtual bool isBranchOnMem(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Returns true if the instruction is register indirect call or jump
+  virtual bool isBranchOnReg(const MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  /// Creates x86 pause instruction.
+  virtual void createPause(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+  }
+
+  virtual void createLfence(MCInst &Inst) const {
+    llvm_unreachable("not implemented");
+  }
+
+  virtual void createPushRegister(MCInst &Inst, MCPhysReg Reg,
+                                  unsigned Size) const {
+    llvm_unreachable("not implemented");
+  }
+
+  virtual void createPopRegister(MCInst &Inst, MCPhysReg Reg,
+                                 unsigned Size) const {
+    llvm_unreachable("not implemented");
+  }
+
+  virtual bool createDirectCall(MCInst &Inst, const MCSymbol *Target,
+                                MCContext *Ctx) {
+    llvm_unreachable("not implemented");
+    return false;
+  }
+
+  virtual MCPhysReg getX86R11() const {
+    llvm_unreachable("not implemented");
+  }
+
+  virtual MCPhysReg getX86NoRegister() const {
+    llvm_unreachable("not implemented");
+  }
+
   virtual bool isIndirectCall(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return false;
@@ -1254,7 +1299,8 @@ public:
 
   virtual bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int Scale,
                           const MCPhysReg &IndexReg, int Offset,
-                          const MCPhysReg &DstReg, int Size) const {
+                          const MCExpr *OffsetExpr, const MCPhysReg &DstReg,
+                          int Size) const {
     llvm_unreachable("not implemented");
     return false;
   }

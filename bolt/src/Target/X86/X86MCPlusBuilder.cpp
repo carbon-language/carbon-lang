@@ -2660,13 +2660,13 @@ public:
                               int Offset, const MCPhysReg &DstReg,
                               int Size) const override {
     return createLoad(Inst, StackReg, /*Scale=*/1, /*IndexReg=*/X86::NoRegister,
-                      Offset, DstReg, Size);
+                      Offset, nullptr, DstReg, Size);
   }
 
-  bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg,
-                  int Scale, const MCPhysReg &IndexReg,
-                  int Offset, const MCPhysReg &DstReg,
-                  int Size) const override {
+  bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int Scale,
+                          const MCPhysReg &IndexReg, int Offset,
+                          const MCExpr *OffsetExpr, const MCPhysReg &DstReg,
+                          int Size) const{
     unsigned NewOpcode;
     switch (Size) {
       default:
@@ -2681,7 +2681,10 @@ public:
     Inst.addOperand(MCOperand::createReg(BaseReg));
     Inst.addOperand(MCOperand::createImm(Scale));
     Inst.addOperand(MCOperand::createReg(IndexReg));
-    Inst.addOperand(MCOperand::createImm(Offset)); // Displacement
+    if (OffsetExpr)
+      Inst.addOperand(MCOperand::createExpr(OffsetExpr)); // Displacement
+    else
+      Inst.addOperand(MCOperand::createImm(Offset)); // Displacement
     Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
     return true;
   }
@@ -2876,6 +2879,91 @@ public:
     Inst.getOperand(0) = MCOperand::createExpr(
         MCSymbolRefExpr::create(TBB, MCSymbolRefExpr::VK_None, *Ctx));
     return true;
+  }
+
+  MCPhysReg getX86R11() const override {
+    return X86::R11;
+  }
+
+  MCPhysReg getX86NoRegister() const override {
+    return X86::NoRegister;
+  }
+
+  void createPause(MCInst &Inst) const override {
+    Inst.clear();
+    Inst.setOpcode(X86::PAUSE);
+  }
+
+  void createLfence(MCInst &Inst) const override {
+    Inst.clear();
+    Inst.setOpcode(X86::LFENCE);
+  }
+
+  bool createDirectCall(MCInst &Inst, const MCSymbol *Target,
+                        MCContext *Ctx) override {
+    Inst.clear();
+    Inst.setOpcode(X86::CALL64pcrel32);
+    Inst.addOperand(MCOperand::createExpr(
+        MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
+    return true;
+  }
+
+  void createShortJmp(std::vector<MCInst> &Seq, const MCSymbol *Target,
+                      MCContext *Ctx) const override {
+    Seq.clear();
+    MCInst Inst;
+    Inst.setOpcode(X86::JMP_1);
+    Inst.addOperand(MCOperand::createExpr(
+        MCSymbolRefExpr::create(Target, MCSymbolRefExpr::VK_None, *Ctx)));
+    Seq.emplace_back(Inst);
+  }
+
+  bool isBranchOnMem(const MCInst &Inst) const override {
+    auto OpCode = Inst.getOpcode();
+    if (OpCode == X86::CALL64m || OpCode == X86::TAILJMPm ||
+        OpCode == X86::JMP64m)
+      return true;
+
+    return false;
+  }
+
+  bool isBranchOnReg(const MCInst &Inst) const override {
+    auto OpCode = Inst.getOpcode();
+    if (OpCode == X86::CALL64r || OpCode == X86::TAILJMPr ||
+        OpCode == X86::JMP64r)
+      return true;
+
+    return false;
+  }
+
+  void createPushRegister(MCInst &Inst, MCPhysReg Reg,
+                          unsigned Size) const override {
+    Inst.clear();
+    unsigned NewOpcode = 0;
+    switch (Size) {
+    case 2: NewOpcode = X86::PUSH16r;  break;
+    case 4: NewOpcode = X86::PUSH32r;  break;
+    case 8: NewOpcode = X86::PUSH64r;  break;
+    default:
+      assert(false);
+    }
+    Inst.setOpcode(NewOpcode);
+    Inst.addOperand(MCOperand::createReg(Reg));
+  }
+
+  void createPopRegister(MCInst &Inst, MCPhysReg Reg,
+                         unsigned Size) const override {
+    Inst.clear();
+    unsigned NewOpcode = 0;
+    switch (Size) {
+    case 2: NewOpcode = X86::POP16r;  break;
+    case 4: NewOpcode = X86::POP32r;  break;
+    case 8: NewOpcode = X86::POP64r;  break;
+    default:
+      assert(false);
+    }
+    Inst.setOpcode(NewOpcode);
+    Inst.addOperand(MCOperand::createReg(Reg));
   }
 
   ICPdata indirectCallPromotion(
