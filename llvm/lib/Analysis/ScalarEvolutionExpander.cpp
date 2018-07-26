@@ -2159,8 +2159,9 @@ Value *SCEVExpander::generateOverflowCheck(const SCEVAddRecExpr *AR,
   const SCEV *Step = AR->getStepRecurrence(SE);
   const SCEV *Start = AR->getStart();
 
+  Type *ARTy = AR->getType();
   unsigned SrcBits = SE.getTypeSizeInBits(ExitCount->getType());
-  unsigned DstBits = SE.getTypeSizeInBits(AR->getType());
+  unsigned DstBits = SE.getTypeSizeInBits(ARTy);
 
   // The expression {Start,+,Step} has nusw/nssw if
   //   Step < 0, Start - |Step| * Backedge <= Start
@@ -2172,11 +2173,12 @@ Value *SCEVExpander::generateOverflowCheck(const SCEVAddRecExpr *AR,
   Value *TripCountVal = expandCodeFor(ExitCount, CountTy, Loc);
 
   IntegerType *Ty =
-      IntegerType::get(Loc->getContext(), SE.getTypeSizeInBits(AR->getType()));
+      IntegerType::get(Loc->getContext(), SE.getTypeSizeInBits(ARTy));
+  Type *ARExpandTy = DL.isNonIntegralPointerType(ARTy) ? ARTy : Ty;
 
   Value *StepValue = expandCodeFor(Step, Ty, Loc);
   Value *NegStepValue = expandCodeFor(SE.getNegativeSCEV(Step), Ty, Loc);
-  Value *StartValue = expandCodeFor(Start, Ty, Loc);
+  Value *StartValue = expandCodeFor(Start, ARExpandTy, Loc);
 
   ConstantInt *Zero =
       ConstantInt::get(Loc->getContext(), APInt::getNullValue(DstBits));
@@ -2199,8 +2201,18 @@ Value *SCEVExpander::generateOverflowCheck(const SCEVAddRecExpr *AR,
   // Compute:
   //   Start + |Step| * Backedge < Start
   //   Start - |Step| * Backedge > Start
-  Value *Add = Builder.CreateAdd(StartValue, MulV);
-  Value *Sub = Builder.CreateSub(StartValue, MulV);
+  Value *Add = nullptr, *Sub = nullptr;
+  if (PointerType *ARPtrTy = dyn_cast<PointerType>(ARExpandTy)) {
+    const SCEV *MulS = SE.getSCEV(MulV);
+    const SCEV *NegMulS = SE.getNegativeSCEV(MulS);
+    Add = Builder.CreateBitCast(expandAddToGEP(MulS, ARPtrTy, Ty, StartValue),
+                                ARPtrTy);
+    Sub = Builder.CreateBitCast(
+        expandAddToGEP(NegMulS, ARPtrTy, Ty, StartValue), ARPtrTy);
+  } else {
+    Add = Builder.CreateAdd(StartValue, MulV);
+    Sub = Builder.CreateSub(StartValue, MulV);
+  }
 
   Value *EndCompareGT = Builder.CreateICmp(
       Signed ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT, Sub, StartValue);
