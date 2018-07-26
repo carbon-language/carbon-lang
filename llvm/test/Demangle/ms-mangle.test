@@ -12,6 +12,10 @@
 ?anonymous@?A@N@@3HA
 ; CHECK: int N::`anonymous namespace'::anonymous
 
+; FIXME: Reference Temporaries
+; ?$RT1@NeedsReferenceTemporary@@3ABHB
+; ?$RT1@NeedsReferenceTemporary@@3AEBHEB
+
 ?_c@@YAHXZ
 ; CHECK: int __cdecl _c(void)
 
@@ -149,6 +153,13 @@
 ?zeta@@YAXP6AHHH@Z@Z
 ; CHECK: void __cdecl zeta(int __cdecl (*)(int, int))
 
+; FIXME: We don't support blocks yet.
+
+; ?eta@@YAXP_EAHHH@Z@Z
+; FIXME: void eta(int (^)(int, int))
+; ?theta@@YAXP_EAHHH@Z@Z
+; FIXME: void theta(int(int,int)^ block)
+
 ??2@YAPAXI@Z
 ; CHECK: void * __cdecl operator new(unsigned int)
 
@@ -254,12 +265,18 @@
 ?s6@PR13182@@3PBQBDB
 ; CHECK: char const *const *PR13182::s6
 
-; FIXME-EXTERNC: We don't properly support static locals in extern c functions yet.
+; FIXME: We don't properly support static locals in functions yet.
 ; ?local@?1??extern_c_func@@9@4HA
-; FIXME-EXTERNC: int `extern_c_func'::`2'::local
+; FIXME: int `extern_c_func'::`2'::local
 
 ; ?local@?1??extern_c_func@@9@4HA
-; FIXME-EXTERNC: int `extern_c_func'::`2'::local
+; FIXME: int `extern_c_func'::`2'::local
+
+; ?v@?1??f@@YAHXZ@4U<unnamed-type-v>@?1??1@YAHXZ@A
+; FIXME: struct `int __cdecl f(void)'::`2'::<unnamed-type-v> `int __cdecl f(void)'::`2'::v
+
+; ?v@?1???$f@H@@YAHXZ@4U<unnamed-type-v>@?1???$f@H@@YAHXZ@A
+; FIXME: struct `int __cdecl f<int>(void)'::`2'::<unnamed-type-v> `int __cdecl f<int>(void)'::`2'::v
 
 ??2OverloadedNewDelete@@SAPAXI@Z
 ; CHECK: static void * __cdecl OverloadedNewDelete::operator new(unsigned int)
@@ -311,13 +328,15 @@
 ?vector_func@@YQXXZ
 ; CHECK: void __vectorcall vector_func(void)
 
-; FIXME-EXTERNC: We don't support extern C funcs currently.
+; FIXME: We don't support extern C funcs currently.
 ; ??$fn_tmpl@$1?extern_c_func@@YAXXZ@@YAXXZ
-; FIXME-EXTERNC: void __cdecl fn_tmpl<&void __cdecl extern_c_func(void)>(void)
+; FIXME: void __cdecl fn_tmpl<&void __cdecl extern_c_func(void)>(void)
 
 ; ?overloaded_fn@@$$J0YAXXZ
 ; FIXME-EXTERNC: extern \"C\" void __cdecl overloaded_fn(void)
 
+; ?f@UnnamedType@@YAXQAPAU<unnamed-type-T1>@S@1@@Z
+; FIXME: void __cdecl UnnamedType::f(struct UnnamedType::S::<unnamed-type-T1> ** const)
 
 ?f@UnnamedType@@YAXUT2@S@1@@Z
 ; CHECK: void __cdecl UnnamedType::f(struct UnnamedType::S::T2)
@@ -339,6 +358,18 @@
 
 ?f@UnnamedType@@YAXUT5@S@1@@Z
 ; CHECK: void __cdecl UnnamedType::f(struct UnnamedType::S::T5)
+
+
+; ?foo@PassObjectSize@@YAHQAHW4__pass_object_size0@__clang@@@Z
+; FIXME: int foo(int *const i __attribute__((pass_object_size(0))));
+; ?bar@PassObjectSize@@YAHQAHW4__pass_object_size1@__clang@@@Z
+; FIXME: int bar(int *const i __attribute__((pass_object_size(1))));
+; ?qux@PassObjectSize@@YAHQAHW4__pass_object_size1@__clang@@0W4__pass_object_size0@3@@Z
+; FIXME: int qux(int *const i __attribute__((pass_object_size(1))), int *const j __attribute__((pass_object_size(0))));
+; ?zot@PassObjectSize@@YAHQAHW4__pass_object_size1@__clang@@01@Z
+; FIXME: int zot(int *const i __attribute__((pass_object_size(1))), int *const j __attribute__((pass_object_size(1))));
+
+
 
 ?f@Atomic@@YAXU?$_Atomic@H@__clang@@@Z
 ; CHECK: void __cdecl Atomic::f(struct __clang::_Atomic<int>)
