@@ -96,7 +96,7 @@ bool RegUsageInfoCollector::runOnMachineFunction(MachineFunction &MF) {
   // Compute the size of the bit vector to represent all the registers.
   // The bit vector is broken into 32-bit chunks, thus takes the ceil of
   // the number of registers divided by 32 for the size.
-  unsigned RegMaskSize = (TRI->getNumRegs() + 31) / 32;
+  unsigned RegMaskSize = MachineOperand::getRegMaskSize(TRI->getNumRegs());
   RegMask.resize(RegMaskSize, 0xFFFFFFFF);
 
   const Function &F = MF.getFunction();
