@@ -187,6 +187,8 @@ struct Type;
 // Represents a list of parameters (template params or function arguments.
 // It's represented as a linked list.
 struct ParamList {
+  bool IsVariadic = false;
+
   Type *Current = nullptr;
 
   ParamList *Next = nullptr;
@@ -382,6 +384,11 @@ static void outputCallingConvention(OutputStream &OS, CallingConv CC) {
 
 // Write a function or template parameter list.
 static void outputParameterList(OutputStream &OS, const ParamList &Params) {
+  if (!Params.Current) {
+    OS << "void";
+    return;
+  }
+
   const ParamList *Head = &Params;
   while (Head) {
     Type::outputPre(OS, *Head->Current);
@@ -621,8 +628,10 @@ void FunctionType::outputPre(OutputStream &OS) {
       OS << "static ";
   }
 
-  if (ReturnType)
+  if (ReturnType) {
     Type::outputPre(OS, *ReturnType);
+    OS << " ";
+  }
 
   outputCallingConvention(OS, CallConvention);
 }
@@ -635,6 +644,9 @@ void FunctionType::outputPost(OutputStream &OS) {
     OS << " const";
   if (Quals & Q_Volatile)
     OS << " volatile";
+
+  if (ReturnType)
+    Type::outputPost(OS, *ReturnType);
   return;
 }
 
@@ -711,6 +723,7 @@ private:
   UdtType *demangleClassType();
   PointerType *demanglePointerType();
   MemberPointerType *demangleMemberPointerType();
+  FunctionType *demangleFunctionType(bool HasThisQuals);
 
   ArrayType *demangleArrayType();
 
@@ -724,10 +737,11 @@ private:
   Name *demangleName();
   void demangleOperator(Name *);
   StringView demangleOperatorName();
-  int demangleFunctionClass();
+  FuncClass demangleFunctionClass();
   CallingConv demangleCallingConvention();
   StorageClass demangleVariableStorageClass();
   ReferenceKind demangleReferenceKind();
+  void demangleThrowSpecification();
 
   std::pair<Qualifiers, bool> demangleQualifiers();
 
@@ -904,10 +918,6 @@ void Demangler::demangleNamePiece(Name &Node, bool IsHead) {
     // Class template.
     Node.Str = demangleString(false);
     Node.TemplateParams = demangleParameterList();
-    if (!MangledName.consumeFront('@')) {
-      Error = true;
-      return;
-    }
   } else if (!IsHead && MangledName.consumeFront("?A")) {
     // Anonymous namespace starts with ?A.  So does overloaded operator[],
     // but the distinguishing factor is that namespace themselves are not
@@ -1067,7 +1077,7 @@ StringView Demangler::demangleOperatorName() {
   return "";
 }
 
-int Demangler::demangleFunctionClass() {
+FuncClass Demangler::demangleFunctionClass() {
   SwapAndRestore<StringView> RestoreOnError(MangledName, MangledName);
   RestoreOnError.shouldRestore(false);
 
@@ -1075,48 +1085,48 @@ int Demangler::demangleFunctionClass() {
   case 'A':
     return Private;
   case 'B':
-    return Private | Far;
+    return FuncClass(Private | Far);
   case 'C':
-    return Private | Static;
+    return FuncClass(Private | Static);
   case 'D':
-    return Private | Static;
+    return FuncClass(Private | Static);
   case 'E':
-    return Private | Virtual;
+    return FuncClass(Private | Virtual);
   case 'F':
-    return Private | Virtual;
+    return FuncClass(Private | Virtual);
   case 'I':
     return Protected;
   case 'J':
-    return Protected | Far;
+    return FuncClass(Protected | Far);
   case 'K':
-    return Protected | Static;
+    return FuncClass(Protected | Static);
   case 'L':
-    return Protected | Static | Far;
+    return FuncClass(Protected | Static | Far);
   case 'M':
-    return Protected | Virtual;
+    return FuncClass(Protected | Virtual);
   case 'N':
-    return Protected | Virtual | Far;
+    return FuncClass(Protected | Virtual | Far);
   case 'Q':
     return Public;
   case 'R':
-    return Public | Far;
+    return FuncClass(Public | Far);
   case 'S':
-    return Public | Static;
+    return FuncClass(Public | Static);
   case 'T':
-    return Public | Static | Far;
+    return FuncClass(Public | Static | Far);
   case 'U':
-    return Public | Virtual;
+    return FuncClass(Public | Virtual);
   case 'V':
-    return Public | Virtual | Far;
+    return FuncClass(Public | Virtual | Far);
   case 'Y':
     return Global;
   case 'Z':
-    return Global | Far;
+    return FuncClass(Global | Far);
   }
 
   Error = true;
   RestoreOnError.shouldRestore(true);
-  return 0;
+  return Public;
 }
 
 CallingConv Demangler::demangleCallingConvention() {
@@ -1241,15 +1251,6 @@ Type *Demangler::demangleType(QualifierMangleMode QMM) {
   return Ty;
 }
 
-static bool functionHasThisPtr(const FunctionType &Ty) {
-  assert(Ty.Prim == PrimTy::Function);
-  if (Ty.FunctionClass & Global)
-    return false;
-  if (Ty.FunctionClass & Static)
-    return false;
-  return true;
-}
-
 ReferenceKind Demangler::demangleReferenceKind() {
   if (MangledName.consumeFront('G'))
     return ReferenceKind::LValueRef;
@@ -1258,12 +1259,18 @@ ReferenceKind Demangler::demangleReferenceKind() {
   return ReferenceKind::None;
 }
 
-Type *Demangler::demangleFunctionEncoding() {
-  FunctionType *FTy = Arena.alloc<FunctionType>();
+void Demangler::demangleThrowSpecification() {
+  if (MangledName.consumeFront('Z'))
+    return;
 
+  Error = true;
+}
+
+FunctionType *Demangler::demangleFunctionType(bool HasThisQuals) {
+  FunctionType *FTy = Arena.alloc<FunctionType>();
   FTy->Prim = PrimTy::Function;
-  FTy->FunctionClass = (FuncClass)demangleFunctionClass();
-  if (functionHasThisPtr(*FTy)) {
+
+  if (HasThisQuals) {
     FTy->Quals = demanglePointerExtQualifiers();
     FTy->RefKind = demangleReferenceKind();
     FTy->Quals = Qualifiers(FTy->Quals | demangleQualifiers().first);
@@ -1279,6 +1286,18 @@ Type *Demangler::demangleFunctionEncoding() {
     FTy->ReturnType = demangleType(QualifierMangleMode::Result);
 
   FTy->Params = demangleParameterList();
+
+  demangleThrowSpecification();
+
+  return FTy;
+}
+
+Type *Demangler::demangleFunctionEncoding() {
+  FuncClass FC = demangleFunctionClass();
+
+  bool HasThisQuals = !(FC & (Global | Static));
+  FunctionType *FTy = demangleFunctionType(HasThisQuals);
+  FTy->FunctionClass = FC;
 
   return FTy;
 }
@@ -1445,14 +1464,20 @@ MemberPointerType *Demangler::demangleMemberPointerType() {
   Qualifiers ExtQuals = demanglePointerExtQualifiers();
   Pointer->Quals = Qualifiers(Pointer->Quals | ExtQuals);
 
-  Qualifiers PointeeQuals = Q_None;
-  bool IsMember = false;
-  std::tie(PointeeQuals, IsMember) = demangleQualifiers();
-  assert(IsMember);
-  Pointer->MemberName = demangleName();
+  if (MangledName.consumeFront("8")) {
+    Pointer->MemberName = demangleName();
+    Pointer->Pointee = demangleFunctionType(true);
+  } else {
+    Qualifiers PointeeQuals = Q_None;
+    bool IsMember = false;
+    std::tie(PointeeQuals, IsMember) = demangleQualifiers();
+    assert(IsMember);
+    Pointer->MemberName = demangleName();
 
-  Pointer->Pointee = demangleType(QualifierMangleMode::Drop);
-  Pointer->Pointee->Quals = PointeeQuals;
+    Pointer->Pointee = demangleType(QualifierMangleMode::Drop);
+    Pointer->Pointee->Quals = PointeeQuals;
+  }
+
   return Pointer;
 }
 
@@ -1507,6 +1532,12 @@ ParamList Demangler::demangleParameterList() {
   Type *BackRef[10];
   int Idx = 0;
 
+  // Empty parameter list.
+  // FIXME: Will this cause problems if demangleParameterList() is called in the
+  // context of a template parameter list?
+  if (MangledName.consumeFront('X'))
+    return {};
+
   ParamList *Head;
   ParamList **Current = &Head;
   while (!Error && !MangledName.startsWith('@') &&
@@ -1537,7 +1568,22 @@ ParamList Demangler::demangleParameterList() {
     Current = &(*Current)->Next;
   }
 
-  return *Head;
+  if (Error)
+    return {};
+
+  // A non-empty parameter list is terminated by either 'Z' (variadic) parameter
+  // list or '@' (non variadic).  Careful not to consume "@Z", as in that case
+  // the following Z could be a throw specifier.
+  if (MangledName.consumeFront('@'))
+    return *Head;
+
+  if (MangledName.consumeFront('Z')) {
+    Head->IsVariadic = true;
+    return *Head;
+  }
+
+  Error = true;
+  return {};
 }
 
 void Demangler::output() {
