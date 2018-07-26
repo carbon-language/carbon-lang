@@ -1571,7 +1571,7 @@ ParamList Demangler::demangleFunctionParameterList() {
          !MangledName.startsWith('Z')) {
 
     if (startsWithDigit(MangledName)) {
-      int N = MangledName[0] - '0';
+      size_t N = MangledName[0] - '0';
       if (N >= FunctionParamBackRefCount) {
         Error = true;
         return {};
