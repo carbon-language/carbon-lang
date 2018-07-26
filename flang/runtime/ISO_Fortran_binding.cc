@@ -48,7 +48,10 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
   if (descriptor->rank > CFI_MAX_RANK) {
     return CFI_INVALID_RANK;
   }
-  // TODO: CFI_INVALID_TYPE?
+  if (descriptor->type < CFI_type_signed_char ||
+      descriptor->type > CFI_type_struct) {
+    return CFI_INVALID_TYPE;
+  }
   if (descriptor->type != CFI_type_cptr) {
     elem_len = descriptor->elem_len;
     if (elem_len <= 0) {
@@ -72,6 +75,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
     return CFI_ERROR_MEM_ALLOCATION;
   }
   descriptor->base_addr = p;
+  descriptor->elem_len = elem_len;
   return CFI_SUCCESS;
 }
 
@@ -92,6 +96,48 @@ int CFI_deallocate(CFI_cdesc_t *descriptor) {
   return CFI_SUCCESS;
 }
 
+static constexpr std::size_t MinElemLen(CFI_type_t type) {
+  std::size_t minElemLen{0};
+  switch (type) {
+  case CFI_type_signed_char: minElemLen = sizeof(signed char); break;
+  case CFI_type_short: minElemLen = sizeof(short); break;
+  case CFI_type_int: minElemLen = sizeof(int); break;
+  case CFI_type_long: minElemLen = sizeof(long); break;
+  case CFI_type_long_long: minElemLen = sizeof(long long); break;
+  case CFI_type_size_t: minElemLen = sizeof(std::size_t); break;
+  case CFI_type_int8_t: minElemLen = sizeof(std::int8_t); break;
+  case CFI_type_int16_t: minElemLen = sizeof(std::int16_t); break;
+  case CFI_type_int32_t: minElemLen = sizeof(std::int32_t); break;
+  case CFI_type_int64_t: minElemLen = sizeof(std::int64_t); break;
+  case CFI_type_int128_t: minElemLen = 2 * sizeof(std::int64_t); break;
+  case CFI_type_int_least8_t: minElemLen = sizeof(std::int_least8_t); break;
+  case CFI_type_int_least16_t: minElemLen = sizeof(std::int_least16_t); break;
+  case CFI_type_int_least32_t: minElemLen = sizeof(std::int_least32_t); break;
+  case CFI_type_int_least64_t: minElemLen = sizeof(std::int_least64_t); break;
+  case CFI_type_int_least128_t:
+    minElemLen = 2 * sizeof(std::int_least64_t);
+    break;
+  case CFI_type_int_fast8_t: minElemLen = sizeof(std::int_fast8_t); break;
+  case CFI_type_int_fast16_t: minElemLen = sizeof(std::int_fast16_t); break;
+  case CFI_type_int_fast32_t: minElemLen = sizeof(std::int_fast32_t); break;
+  case CFI_type_int_fast64_t: minElemLen = sizeof(std::int_fast64_t); break;
+  case CFI_type_intmax_t: minElemLen = sizeof(std::intmax_t); break;
+  case CFI_type_intptr_t: minElemLen = sizeof(std::intptr_t); break;
+  case CFI_type_ptrdiff_t: minElemLen = sizeof(std::ptrdiff_t); break;
+  case CFI_type_float: minElemLen = sizeof(float); break;
+  case CFI_type_double: minElemLen = sizeof(double); break;
+  case CFI_type_long_double: minElemLen = sizeof(long double); break;
+  case CFI_type_float_Complex: minElemLen = 2 * sizeof(float); break;
+  case CFI_type_double_Complex: minElemLen = 2 * sizeof(double); break;
+  case CFI_type_long_double_Complex:
+    minElemLen = 2 * sizeof(long double);
+    break;
+  case CFI_type_Bool: minElemLen = 1; break;
+  case CFI_type_char: minElemLen = sizeof(char); break;
+  }
+  return minElemLen;
+}
+
 int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
     CFI_attribute_t attribute, CFI_type_t type, std::size_t elem_len,
     CFI_rank_t rank, const CFI_index_t extents[]) {
@@ -107,9 +153,14 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   if (rank > 0 && base_addr != nullptr && extents == nullptr) {
     return CFI_INVALID_EXTENT;
   }
-  if (type != CFI_type_struct && type != CFI_type_other &&
-      type != CFI_type_cptr) {
-    // TODO: force value of elem_len
+  if (type < CFI_type_signed_char || type > CFI_type_struct) {
+    return CFI_INVALID_TYPE;
+  }
+  std::size_t minElemLen{MinElemLen(type)};
+  if (minElemLen > 0) {
+    elem_len = minElemLen;
+  } else if (elem_len <= 0) {
+    return CFI_INVALID_ELEM_LEN;
   }
   descriptor->base_addr = base_addr;
   descriptor->elem_len = elem_len;

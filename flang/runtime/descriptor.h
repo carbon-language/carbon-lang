@@ -31,17 +31,21 @@
 namespace Fortran::runtime {
 
 class DerivedTypeSpecialization;
-class DescriptorAddendum;
+
+using TypeParameterValue = ISO::CFI_index_t;
+using SubscriptValue = ISO::CFI_index_t;
 
 // A C++ view of the sole interoperable standard descriptor (ISO_cdesc_t)
 // and its type and per-dimension information.
 
 class TypeCode {
 public:
-  enum class Form { Integer, Real, Complex, Logical, Character, Derived };
+  enum class Form { Integer, Real, Complex, Character, Logical, Derived };
 
   TypeCode() {}
   explicit TypeCode(ISO::CFI_type_t t) : raw_{t} {}
+  TypeCode(Form, int);
+
   int raw() const { return raw_; }
 
   constexpr bool IsValid() const {
@@ -57,13 +61,11 @@ public:
     return raw_ >= CFI_type_float_Complex &&
         raw_ <= CFI_type_long_double_Complex;
   }
-  constexpr bool IsLogical() const { return raw_ == CFI_type_Bool; }
   constexpr bool IsCharacter() const { return raw_ == CFI_type_cptr; }
+  constexpr bool IsLogical() const { return raw_ == CFI_type_Bool; }
   constexpr bool IsDerived() const { return raw_ == CFI_type_struct; }
 
-  constexpr bool IsIntrinsic() const {
-    return IsValid() && !IsDerived();
-  }
+  constexpr bool IsIntrinsic() const { return IsValid() && !IsDerived(); }
 
   constexpr Form GetForm() const {
     if (IsInteger()) {
@@ -75,11 +77,11 @@ public:
     if (IsComplex()) {
       return Form::Complex;
     }
-    if (IsLogical()) {
-      return Form::Logical;
-    }
     if (IsCharacter()) {
       return Form::Character;
+    }
+    if (IsLogical()) {
+      return Form::Logical;
     }
     return Form::Derived;
   }
@@ -90,38 +92,77 @@ private:
 
 class Dimension {
 public:
-  std::int64_t LowerBound() const { return raw_.lower_bound; }
-  std::int64_t Extent() const { return raw_.extent; }
-  std::int64_t UpperBound() const { return LowerBound() + Extent() - 1; }
-  std::int64_t ByteStride() const { return raw_.sm; }
+  SubscriptValue LowerBound() const { return raw_.lower_bound; }
+  SubscriptValue Extent() const { return raw_.extent; }
+  SubscriptValue UpperBound() const { return LowerBound() + Extent() - 1; }
+  SubscriptValue ByteStride() const { return raw_.sm; }
 
 private:
   ISO::CFI_dim_t raw_;
 };
 static_assert(sizeof(Dimension) == sizeof(ISO::CFI_dim_t));
 
-class Descriptor {
+// The storage for this object follows the last used dim[] entry in a
+// DescriptorView (CFI_cdesc_t) generic descriptor; this is why that class
+// cannot be defined as a derivation or encapsulation of the standard
+// argument descriptor.  Space matters here, since dynamic descriptors
+// can serve as components of derived type instances.  The presence of
+// this structure is implied by (CFI_cdesc_t.attribute & ADDENDUM) != 0,
+// and the number of elements in the len_[] array is determined by
+// DerivedType::lenParameters().
+class DescriptorAddendum {
 public:
-  Descriptor(TypeCode t, std::size_t elementBytes, int rank = 0) {
-    raw_.base_addr = nullptr;
-    raw_.elem_len = elementBytes;
-    raw_.version = CFI_VERSION;
-    raw_.rank = rank;
-    raw_.type = t.raw();
-    raw_.attribute = 0;
-  }
-  Descriptor(const DerivedTypeSpecialization &, int rank = 0);
+  explicit DescriptorAddendum(const DerivedTypeSpecialization &dts)
+    : derivedTypeSpecialization_{&dts} {}
 
-  void Check() const;
-
-  template<typename A> A &Element(std::size_t offset = 0) const {
-    auto p = reinterpret_cast<char *>(raw_.base_addr);
-    return *reinterpret_cast<A *>(p + offset);
+  DescriptorAddendum &set_derivedTypeSpecialization(
+      const DerivedTypeSpecialization &dts) {
+    derivedTypeSpecialization_ = &dts;
+    return *this;
   }
 
+  const DerivedTypeSpecialization *derivedTypeSpecialization() const {
+    return derivedTypeSpecialization_;
+  }
+
+  TypeParameterValue LenParameterValue(int which) const { return len_[which]; }
+  static constexpr std::size_t SizeInBytes(int lenParameters) {
+    return sizeof(DescriptorAddendum) - sizeof(TypeParameterValue) +
+        lenParameters * sizeof(TypeParameterValue);
+  }
+  std::size_t SizeInBytes() const;
+
+  void SetLenParameterValue(int which, TypeParameterValue x) {
+    len_[which] = x;
+  }
+
+private:
+  const DerivedTypeSpecialization *derivedTypeSpecialization_{nullptr};
+  TypeParameterValue len_[1];  // must be the last component
+  // The LEN type parameter values can also include captured values of
+  // specification expressions that were used for bounds and for LEN type
+  // parameters of components.  The values have been truncated to the LEN
+  // type parameter's type, if shorter than 64 bits, then sign-extended.
+};
+
+// A C++ view of a standard descriptor object.  Do not use for actually
+// allocating a descriptor, as its size cannot be known at compilation
+// time -- see Descriptor below for that.
+class DescriptorView {
+public:
+  DescriptorView() = delete;
+  ~DescriptorView() = delete;
+
+  ISO::CFI_cdesc_t &raw() { return raw_; }
+  const ISO::CFI_cdesc_t &raw() const { return raw_; }
   std::size_t ElementBytes() const { return raw_.elem_len; }
   int rank() const { return raw_.rank; }
   TypeCode type() const { return TypeCode{raw_.type}; }
+
+  DescriptorView &set_base_addr(void *p) {
+    raw_.base_addr = p;
+    return *this;
+  }
 
   bool IsPointer() const {
     return (raw_.attribute & CFI_attribute_pointer) != 0;
@@ -151,6 +192,12 @@ public:
     return *reinterpret_cast<const Dimension *>(&raw_.dim[dim]);
   }
 
+  std::size_t SubscriptByteOffset(
+      int dim, SubscriptValue subscriptValue) const {
+    const Dimension &dimension{GetDimension(dim)};
+    return (subscriptValue - dimension.LowerBound()) * dimension.ByteStride();
+  }
+
   DescriptorAddendum *Addendum() {
     if ((raw_.attribute & ADDENDUM) != 0) {
       return reinterpret_cast<DescriptorAddendum *>(&GetDimension(rank()));
@@ -167,7 +214,35 @@ public:
     }
   }
 
+  void SetDerivedTypeSpecialization(const DerivedTypeSpecialization &);
+
+  void SetLenParameterValue(int, TypeParameterValue);
+
+  static constexpr std::size_t SizeInBytes(
+      int rank, bool nontrivialType = false, int lengthTypeParameters = 0) {
+    std::size_t bytes{sizeof(DescriptorView) - sizeof(Dimension)};
+    bytes += rank * sizeof(Dimension);
+    if (nontrivialType || lengthTypeParameters > 0) {
+      bytes += DescriptorAddendum::SizeInBytes(lengthTypeParameters);
+    }
+    return bytes;
+  }
   std::size_t SizeInBytes() const;
+
+  void Check() const;
+
+  int Establish(TypeCode t, std::size_t elementBytes, void *p = nullptr,
+      int rank = 0, const SubscriptValue *extent = nullptr);
+  int Establish(TypeCode::Form f, int kind, void *p = nullptr, int rank = 0,
+      const SubscriptValue *extent = nullptr);
+  int Establish(const DerivedTypeSpecialization &, void *p = nullptr,
+      int rank = 0, const SubscriptValue *extent = nullptr);
+  // TODO: creation of sections
+
+  template<typename A> A &Element(std::size_t offset = 0) const {
+    auto p = reinterpret_cast<char *>(raw_.base_addr);
+    return *reinterpret_cast<A *>(p + offset);
+  }
 
 private:
   // These values must coexist with the ISO_Fortran_binding.h definitions
@@ -187,7 +262,7 @@ private:
 
   ISO::CFI_cdesc_t raw_;
 };
-static_assert(sizeof(Descriptor) == sizeof(ISO::CFI_cdesc_t));
+static_assert(sizeof(DescriptorView) == sizeof(ISO::CFI_cdesc_t));
 
 // Static type information is suitable for loading in a read-only section.
 // Information about intrinsic types is inferable from raw CFI_type_t
@@ -200,18 +275,19 @@ public:
   const char *name() const { return name_; }
   const TypeCode typeCode() const { return typeCode_; }
   bool isLenTypeParameter() const { return isLenTypeParameter_; }
-  std::size_t which() const { return which_; }
-  std::int64_t defaultValue() const { return defaultValue_; }
+  int which() const { return which_; }
+  TypeParameterValue defaultValue() const { return defaultValue_; }
 
-  std::int64_t KindParameterValue(const DerivedTypeSpecialization &) const;
-  std::int64_t Value(const Descriptor &) const;
+  TypeParameterValue KindParameterValue(
+      const DerivedTypeSpecialization &) const;
+  TypeParameterValue Value(const DescriptorView &) const;
 
 private:
   const char *name_;
   TypeCode typeCode_;  // INTEGER, but not necessarily default kind
   bool isLenTypeParameter_;  // whether value is in dynamic descriptor
-  std::size_t which_;  // index of this parameter in kind/len array
-  std::int64_t defaultValue_;
+  int which_;  // index of this parameter in kind/len array
+  TypeParameterValue defaultValue_;
 };
 
 // Components that have any need for a descriptor will either reference
@@ -227,7 +303,7 @@ class Component {
 public:
   const char *name() const { return name_; }
   TypeCode typeCode() const { return typeCode_; }
-  const Descriptor *staticDescriptor() const { return staticDescriptor_; }
+  const DescriptorView *staticDescriptor() const { return staticDescriptor_; }
   bool IsParent() const { return (flags_ & PARENT) != 0; }
   bool IsPrivate() const { return (flags_ & PRIVATE) != 0; }
   bool IsDescriptor() const { return (flags_ & IS_DESCRIPTOR) != 0; }
@@ -237,7 +313,7 @@ private:
   const char *name_{nullptr};
   std::uint32_t flags_{0};
   TypeCode typeCode_{CFI_type_other};
-  const Descriptor *staticDescriptor_{nullptr};
+  const DescriptorView *staticDescriptor_{nullptr};
 };
 
 struct ExecutableCode {
@@ -267,20 +343,19 @@ struct DefinedAssignment {
 // the execution of FINAL subroutines.
 class DerivedType {
 public:
-  DerivedType(const char *n, std::size_t kps, std::size_t lps,
-      const TypeParameter *tp, std::size_t cs, const Component *ca,
-      std::size_t tbps, const TypeBoundProcedure *tbp, std::size_t das,
+  DerivedType(const char *n, int kps, int lps, const TypeParameter *tp, int cs,
+      const Component *ca, int tbps, const TypeBoundProcedure *tbp, int das,
       const DefinedAssignment *da)
     : name_{n}, kindParameters_{kps}, lenParameters_{lps}, components_{cs},
-      typeParameter_{tp}, typeBoundProcedure_{tbp}, definedAssignments_{das},
-      definedAssignment_{da} {}
+      typeParameter_{tp}, typeBoundProcedures_{tbps}, typeBoundProcedure_{tbp},
+      definedAssignments_{das}, definedAssignment_{da} {}
 
   const char *name() const { return name_; }
-  std::size_t kindParameters() const { return kindParameters_; }
-  std::size_t lenParameters() const { return lenParameters_; }
+  int kindParameters() const { return kindParameters_; }
+  int lenParameters() const { return lenParameters_; }
   const TypeParameter &typeParameter(int n) const { return typeParameter_[n]; }
-  std::size_t components() const { return components_; }
-  std::size_t typeBoundProcedures() const { return typeBoundProcedures_; }
+  int components() const { return components_; }
+  int typeBoundProcedures() const { return typeBoundProcedures_; }
   const TypeBoundProcedure &typeBoundProcedure(int n) const {
     return typeBoundProcedure_[n];
   }
@@ -302,6 +377,7 @@ public:
   bool AnyPrivate() const;
   bool IsSequence() const { return (flags_ & SEQUENCE) != 0; }
   bool IsBindC() const { return (flags_ & BIND_C) != 0; }
+  bool IsNonTrivial() const;
 
   // TODO: assignment
   // TODO: finalization
@@ -309,19 +385,19 @@ public:
 private:
   enum Flag { SEQUENCE = 1, BIND_C = 2 };
 
-  const char *name_;  // NUL-terminated constant text
+  const char *name_{""};  // NUL-terminated constant text
   std::uint64_t flags_{0};  // needed for IsSameType() correct semantics
-  std::size_t kindParameters_;
-  std::size_t lenParameters_;
-  std::size_t components_;  // *not* including type parameters
-  std::size_t typeBoundProcedures_;
-  const TypeParameter *typeParameter_;  // array
-  const Component *component_;  // array
-  const TypeBoundProcedure
-      *typeBoundProcedure_;  // array of overridable TBP bindings
+  int kindParameters_{0};
+  int lenParameters_{0};
+  int components_{0};  // *not* including type parameters
+  const TypeParameter *typeParameter_{nullptr};  // array
+  const Component *component_{nullptr};  // array
+  int typeBoundProcedures_{0};
+  const TypeBoundProcedure *typeBoundProcedure_{
+      nullptr};  // array of overridable TBP bindings
   ExecutableCode finalSubroutine_;  // can be null
-  std::size_t definedAssignments_;
-  const DefinedAssignment *definedAssignment_;  // array
+  int definedAssignments_{0};
+  const DefinedAssignment *definedAssignment_{nullptr};  // array
 };
 
 class ComponentSpecialization {
@@ -332,12 +408,12 @@ public:
   template<typename A> const A *Locate(const char *instance) const {
     return reinterpret_cast<const A *>(instance + offset_);
   }
-  const Descriptor *GetDescriptor(
+  const DescriptorView *GetDescriptorView(
       const Component &c, const char *instance) const {
-    if (const Descriptor * staticDescriptor{c.staticDescriptor()}) {
+    if (const DescriptorView * staticDescriptor{c.staticDescriptor()}) {
       return staticDescriptor;
     } else if (c.IsDescriptor()) {
-      return Locate<const Descriptor>(instance);
+      return Locate<const DescriptorView>(instance);
     } else {
       return nullptr;
     }
@@ -354,14 +430,14 @@ private:
 class DerivedTypeSpecialization {
 public:
   DerivedTypeSpecialization(const DerivedType &dt, std::size_t n,
-      const char *init, const std::int64_t *kp,
+      const char *init, const TypeParameterValue *kp,
       const ComponentSpecialization *cs)
     : derivedType_{dt}, bytes_{n}, initializer_{init}, kindParameterValue_{kp},
       componentSpecialization_{cs} {}
   const DerivedType &derivedType() const { return derivedType_; }
 
   std::size_t SizeInBytes() const { return bytes_; }
-  std::int64_t KindParameterValue(int n) const {
+  TypeParameterValue KindParameterValue(int n) const {
     return kindParameterValue_[n];
   }
   const ComponentSpecialization &GetComponent(int n) const {
@@ -376,51 +452,8 @@ private:
   const DerivedType &derivedType_;
   std::size_t bytes_;  // allocation size of one scalar instance, w/ alignment
   const char *initializer_;  // can be null; includes base components
-  const std::int64_t *kindParameterValue_;  // array
+  const TypeParameterValue *kindParameterValue_;  // array
   const ComponentSpecialization *componentSpecialization_;  // array
-};
-
-// The storage for this object follows the last used dim[] entry in a
-// Descriptor (CFI_cdesc_t) generic descriptor; that is why this class
-// cannot be defined as a derivation or encapsulation of the standard
-// argument descriptor.  Space matters here, since dynamic descriptors
-// can serve as components of derived type instances.  The presence of
-// this structure is implied by (CFI_cdesc_t.attribute & ADDENDUM) != 0,
-// and the number of elements in the len_[] array is determined by
-// DerivedType::lenParameters().
-class DescriptorAddendum {
-public:
-  explicit DescriptorAddendum(const DerivedTypeSpecialization *dts)
-    : derivedTypeSpecialization_{dts} {}
-
-  DescriptorAddendum &set_derivedTypeSpecialization(
-      const DerivedTypeSpecialization *dts) {
-    derivedTypeSpecialization_ = dts;
-    return *this;
-  }
-
-  const DerivedTypeSpecialization *derivedTypeSpecialization() const {
-    return derivedTypeSpecialization_;
-  }
-
-  std::int64_t LenParameterValue(std::size_t n) const { return len_[n]; }
-  std::size_t SizeOfAddendumInBytes() const {
-    return sizeof *this - sizeof len_[0] +
-        derivedTypeSpecialization_->derivedType().lenParameters() *
-        sizeof len_[0];
-  }
-
-  void SetLenParameterValue(std::size_t which, std::int64_t x) {
-    len_[which] = x;
-  }
-
-private:
-  const DerivedTypeSpecialization *derivedTypeSpecialization_{nullptr};
-  std::int64_t len_[1];  // must be the last component
-  // The LEN type parameter values can also include captured values of
-  // specification expressions that were used for bounds and for LEN type
-  // parameters of components.  The values have been truncated to the LEN
-  // type parameter's type, if shorter than 64 bits, then sign-extended.
 };
 
 // Procedure pointers have static links for host association.
@@ -431,6 +464,57 @@ struct ProcedurePointer {
 };
 
 // TODO: coarray hooks
+
+template<int MAX_RANK = CFI_MAX_RANK,
+    bool NONTRIVIAL_DERIVED_TYPE_ALLOWED = false, int MAX_LEN_PARMS = 0>
+class alignas(DescriptorView) Descriptor {
+public:
+  static constexpr int maxRank{MAX_RANK};
+  static constexpr int maxLengthTypeParameters{MAX_LEN_PARMS};
+  static constexpr bool hasAddendum{
+      NONTRIVIAL_DERIVED_TYPE_ALLOWED || MAX_LEN_PARMS > 0};
+
+  Descriptor(TypeCode t, std::size_t elementBytes, int rank = maxRank,
+      const SubscriptValue *extent = nullptr) {
+    View().Establish(t, elementBytes, rank, extent);
+  }
+  Descriptor(TypeCode::Form f, int kind, int rank = maxRank,
+      const SubscriptValue *extent = nullptr) {
+    View().Establish(f, kind, rank, extent);
+  }
+  Descriptor(const DerivedTypeSpecialization &dts, int rank = maxRank,
+      const SubscriptValue *extent = nullptr) {
+    View().Establish(dts, rank, extent);
+  }
+
+  DescriptorView &View() {
+    return *reinterpret_cast<DescriptorView *>(storage_);
+  }
+  const DescriptorView &View() const {
+    return *reinterpret_cast<const DescriptorView *>(storage_);
+  }
+
+private:
+  static constexpr std::size_t byteSize{DescriptorView::SizeInBytes(
+      maxRank, hasAddendum, maxLengthTypeParameters)};
+  char storage_[byteSize];
+};
+
+// A owning pointer to a whole object whose data are contiguous with and
+// preceded in memory by a descriptor.
+class Object {
+public:
+  ~Object();
+  bool Create(TypeCode::Form f, int kind, int rank = 0,
+      const SubscriptValue *extent = nullptr);
+  bool Create(const DerivedTypeSpecialization &, int rank = 0,
+      const SubscriptValue *lenParamsAndExtents = nullptr);
+  bool Exists() const { return p_ != nullptr; }
+  const DescriptorView &descriptorView() const { return *p_; }
+
+private:
+  DescriptorView *p_;
+};
 
 }  // namespace Fortran::runtime
 #endif  // FORTRAN_RUNTIME_DESCRIPTOR_H_
