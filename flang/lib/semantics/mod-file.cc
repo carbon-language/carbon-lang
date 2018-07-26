@@ -364,15 +364,14 @@ bool ModFileReader::Read(const SourceName &modName) {
             modName.ToString(), *path));
     return false;
   }
-  std::unique_ptr<parser::CookedSource> cooked_{parsing.MoveCooked()};
-  ResolveNames(*parseTree, *cooked_, directories_);
+  ResolveNames(*parseTree, parsing.cooked(), directories_);
 
   const auto &it{Scope::globalScope.find(modName)};
   if (it == Scope::globalScope.end()) {
     return false;
   }
   auto &modSymbol{*it->second};
-  modSymbol.scope()->set_cookedSource(std::move(cooked_));
+  modSymbol.scope()->set_chars(parsing.cooked().MoveChars());
   modSymbol.set(Symbol::Flag::ModFile);
   return true;
 }

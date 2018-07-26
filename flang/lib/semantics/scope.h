@@ -18,7 +18,6 @@
 #include "attr.h"
 #include "symbol.h"
 #include "../common/idioms.h"
-#include "../parser/parse-tree.h"
 #include <list>
 #include <map>
 #include <string>
@@ -106,9 +105,10 @@ public:
 
   DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
 
-  std::unique_ptr<parser::CookedSource> cooked_;
-  void set_cookedSource(std::unique_ptr<parser::CookedSource> cooked) {
-    cooked_ = std::move(cooked);
+  // For modules read from module files, this is the stream of characters
+  // that are referenced by SourceName objects.
+  void set_chars(std::unique_ptr<std::vector<char>> chars) {
+    chars_ = std::move(chars);
   }
 
 private:
@@ -118,6 +118,7 @@ private:
   std::list<Scope> children_;
   mapType symbols_;
   std::list<DerivedTypeSpec> derivedTypeSpecs_;
+  std::unique_ptr<std::vector<char>> chars_;
 
   // Storage for all Symbols. Every Symbol is in allSymbols and every Symbol*
   // or Symbol& points to one in there.

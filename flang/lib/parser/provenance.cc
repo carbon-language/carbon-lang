@@ -303,19 +303,19 @@ const AllSources::Origin &AllSources::MapToOrigin(Provenance at) const {
 }
 
 ProvenanceRange CookedSource::GetProvenanceRange(CharBlock cookedRange) const {
-  ProvenanceRange first{provenanceMap_.Map(cookedRange.begin() - &data_[0])};
+  ProvenanceRange first{provenanceMap_.Map(cookedRange.begin() - &(*data_)[0])};
   if (cookedRange.size() <= first.size()) {
     return first.Prefix(cookedRange.size());
   }
-  ProvenanceRange last{provenanceMap_.Map(cookedRange.end() - &data_[0])};
+  ProvenanceRange last{provenanceMap_.Map(cookedRange.end() - &(*data_)[0])};
   return {first.start(), last.start() - first.start()};
 }
 
 void CookedSource::Marshal() {
   CHECK(provenanceMap_.size() == buffer_.size());
   provenanceMap_.Put(allSources_.AddCompilerInsertion("(after end of source)"));
-  data_.resize(buffer_.size());
-  char *p{&data_[0]};
+  data_ = std::make_unique<std::vector<char>>(buffer_.size());
+  char *p{&(*data_)[0]};
   for (char ch : buffer_) {
     *p++ = ch;
   }

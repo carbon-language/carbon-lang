@@ -92,9 +92,6 @@ public:
 
 private:
   std::vector<std::string> directories_;
-  parser::AllSources allSources_;
-  std::unique_ptr<parser::CookedSource> cooked_{
-      std::make_unique<parser::CookedSource>(allSources_)};
   std::vector<parser::Message> errors_;
 
   std::optional<std::string> FindModFile(const SourceName &);

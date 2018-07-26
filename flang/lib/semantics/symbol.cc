@@ -19,9 +19,6 @@
 
 namespace Fortran::semantics {
 
-std::ostream &operator<<(std::ostream &os, const parser::Name &name) {
-  return os << name.ToString();
-}
 std::ostream &operator<<(std::ostream &os, const parser::CharBlock &name) {
   return os << name.ToString();
 }
