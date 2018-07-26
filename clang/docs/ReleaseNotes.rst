@@ -226,7 +226,7 @@ OpenMP Support in Clang
   option will be forwarded to the respective OpenMP device offloading toolchain
   described by the triple. For example passing the compute capability to
   the OpenMP NVPTX offloading toolchain can be done as follows:
-  `-Xopenmp-target=nvptx62-nvidia-cuda -march=sm_60`. For the case when only one
+  `-Xopenmp-target=nvptx64-nvidia-cuda -march=sm_60`. For the case when only one
   target offload toolchain is specified under the `-fopenmp-targets=<triples>`
   option, then the triple can be skipped: `-Xopenmp-target -march=sm_60`.
 
