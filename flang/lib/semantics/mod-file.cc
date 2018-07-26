@@ -15,11 +15,8 @@
 #include "mod-file.h"
 #include "scope.h"
 #include "symbol.h"
-#include "../parser/grammar.h"
 #include "../parser/message.h"
-#include "../parser/openmp-grammar.h"
-#include "../parser/preprocessor.h"
-#include "../parser/prescan.h"
+#include "../parser/parsing.h"
 #include <algorithm>
 #include <cerrno>
 #include <fstream>
@@ -27,8 +24,6 @@
 #include <ostream>
 #include <set>
 #include <sstream>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <vector>
 
 namespace Fortran::semantics {
@@ -358,19 +353,20 @@ bool ModFileReader::Read(const SourceName &modName) {
   if (!path.has_value()) {
     return false;
   }
-  if (!Prescan(modName, *path)) {
+  parser::Parsing parsing;
+  parsing.Prescan(*path, {});
+  parsing.Parse(&std::cout);
+  auto &parseTree{parsing.parseTree()};
+  if (!parsing.messages().empty() || !parsing.consumedWholeFile() ||
+      !parseTree.has_value()) {
+    errors_.push_back(
+        Error(modName, "Module file for '%s' is corrupt: %s"_err_en_US,
+            modName.ToString(), *path));
     return false;
   }
-  parser::ParseState parseState{*cooked_};
-  auto parseTree{parser::program.Parse(parseState)};
-  if (!parseState.messages().empty()) {
-    errors_.emplace_back(modName,
-        parser::MessageFormattedText{
-            "Module file for '%s' is corrupt: %s"_err_en_US,
-            modName.ToString().data(), path->data()});
-    return false;
-  }
+  std::unique_ptr<parser::CookedSource> cooked_{parsing.MoveCooked()};
   ResolveNames(*parseTree, *cooked_, directories_);
+
   const auto &it{Scope::globalScope.find(modName)};
   if (it == Scope::globalScope.end()) {
     return false;
@@ -405,31 +401,6 @@ std::optional<std::string> ModFileReader::FindModFile(
   }
   errors_.push_back(error);
   return std::nullopt;
-}
-
-bool ModFileReader::Prescan(
-    const SourceName &modName, const std::string &path) {
-  std::stringstream fileError;
-  const auto *sourceFile{allSources_.Open(path, &fileError)};
-  if (sourceFile == nullptr) {
-    errors_.push_back(
-        Error(modName, "Cannot read %s: %s"_err_en_US, path, fileError.str()));
-    return false;
-  }
-  parser::Preprocessor preprocessor{allSources_};
-  parser::Messages messages;
-  parser::Prescanner prescanner{messages, *cooked_, preprocessor, {}};
-  parser::ProvenanceRange range{
-      allSources_.AddIncludedFile(*sourceFile, parser::ProvenanceRange{})};
-  prescanner.Prescan(range);
-  if (!messages.empty()) {
-    errors_.push_back(
-        Error(modName, "Module file for '%s' is corrupt: %s"_err_en_US,
-            modName.ToString(), path));
-    return false;
-  }
-  cooked_->Marshal();
-  return true;
 }
 
 static std::string ModFilePath(

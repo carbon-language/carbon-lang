@@ -63,7 +63,7 @@ void Parsing::Prescan(const std::string &path, Options options) {
       preprocessor.Undefine(predef.first);
     }
   }
-  Prescanner prescanner{messages_, cooked_, preprocessor, options.features};
+  Prescanner prescanner{messages_, *cooked_, preprocessor, options.features};
   prescanner.set_fixedForm(options.isFixedForm)
       .set_fixedFormColumnLimit(options.fixedFormColumns)
       .set_encoding(options.encoding)
@@ -75,30 +75,30 @@ void Parsing::Prescan(const std::string &path, Options options) {
   ProvenanceRange range{
       allSources_.AddIncludedFile(*sourceFile, ProvenanceRange{})};
   prescanner.Prescan(range);
-  cooked_.Marshal();
+  cooked_->Marshal();
 }
 
 void Parsing::DumpCookedChars(std::ostream &out) const {
-  UserState userState{cooked_, LanguageFeatureControl{}};
-  ParseState parseState{cooked_};
+  UserState userState{*cooked_, LanguageFeatureControl{}};
+  ParseState parseState{*cooked_};
   parseState.set_inFixedForm(options_.isFixedForm).set_userState(&userState);
   while (std::optional<const char *> p{parseState.GetNextChar()}) {
     out << **p;
   }
 }
 
-void Parsing::DumpProvenance(std::ostream &out) const { cooked_.Dump(out); }
+void Parsing::DumpProvenance(std::ostream &out) const { cooked_->Dump(out); }
 
 void Parsing::DumpParsingLog(std::ostream &out) const {
-  log_.Dump(out, cooked_);
+  log_.Dump(out, *cooked_);
 }
 
 void Parsing::Parse(std::ostream *out) {
-  UserState userState{cooked_, options_.features};
+  UserState userState{*cooked_, options_.features};
   userState.set_debugOutput(out)
       .set_instrumentedParse(options_.instrumentedParse)
       .set_log(&log_);
-  ParseState parseState{cooked_};
+  ParseState parseState{*cooked_};
   parseState.set_inFixedForm(options_.isFixedForm)
       .set_encoding(options_.encoding)
       .set_userState(&userState);
@@ -115,12 +115,12 @@ void Parsing::ClearLog() { log_.clear(); }
 bool Parsing::ForTesting(std::string path, std::ostream &err) {
   Prescan(path, Options{});
   if (messages_.AnyFatalError()) {
-    messages_.Emit(err, cooked_);
+    messages_.Emit(err, *cooked_);
     err << "could not scan " << path << '\n';
     return false;
   }
   Parse();
-  messages_.Emit(err, cooked_);
+  messages_.Emit(err, *cooked_);
   if (!consumedWholeFile_) {
     EmitMessage(err, finalRestingPlace_, "parser FAIL; final position");
     return false;

@@ -50,7 +50,8 @@ public:
 
   bool consumedWholeFile() const { return consumedWholeFile_; }
   const char *finalRestingPlace() const { return finalRestingPlace_; }
-  CookedSource &cooked() { return cooked_; }
+  CookedSource &cooked() { return *cooked_; }
+  std::unique_ptr<CookedSource> MoveCooked() { return std::move(cooked_); }
   Messages &messages() { return messages_; }
   std::optional<Program> &parseTree() { return parseTree_; }
 
@@ -64,7 +65,7 @@ public:
   void EmitMessage(std::ostream &o, const char *at, const std::string &message,
       bool echoSourceLine = false) const {
     allSources_.EmitMessage(
-        o, cooked_.GetProvenanceRange(at).start(), message, echoSourceLine);
+        o, cooked_->GetProvenanceRange(at).start(), message, echoSourceLine);
   }
 
   bool ForTesting(std::string path, std::ostream &);
@@ -72,7 +73,8 @@ public:
 private:
   Options options_;
   AllSources allSources_;
-  CookedSource cooked_{allSources_};
+  std::unique_ptr<parser::CookedSource> cooked_{
+      std::make_unique<parser::CookedSource>(allSources_)};
   Messages messages_;
   bool consumedWholeFile_{false};
   const char *finalRestingPlace_{nullptr};
