@@ -137,16 +137,16 @@
 
 ?foo_p6ahxz@@YAXP6AHXZ@Z
 ?foo_p6ahxz@@YAXP6AHXZ@Z
-; CHECK: void __cdecl foo_p6ahxz(int __cdecl (*)(void))
+; CHECK: void __cdecl foo_p6ahxz(int (__cdecl *)(void))
 
 ?foo_a6ahxz@@YAXA6AHXZ@Z
 ?foo_a6ahxz@@YAXA6AHXZ@Z
-; CHECK: void __cdecl foo_a6ahxz(int __cdecl (&)(void))
+; CHECK: void __cdecl foo_a6ahxz(int (__cdecl &)(void))
 
 ; FIXME: We don't support rvalue references yet
 ; ?foo_q6ahxz@@YAX$$Q6AHXZ@Z
 ; ?foo_q6ahxz@@YAX$$Q6AHXZ@Z
-; FIXME: void __cdecl foo_q6ahxz(int __cdecl (&&)(void))
+; FIXME: void __cdecl foo_q6ahxz(int (__cdecl &&)(void))
 
 ?foo_qay04h@@YAXQAY04H@Z
 ?foo_qay04h@@YAXQEAY04H@Z
@@ -178,19 +178,19 @@
 
 ?foo_fnptrconst@@YAXP6AXQAH@Z@Z
 ?foo_fnptrconst@@YAXP6AXQEAH@Z@Z
-; CHECK: void __cdecl foo_fnptrconst(void __cdecl (*)(int *const))
+; CHECK: void __cdecl foo_fnptrconst(void (__cdecl *)(int *const))
 
 ?foo_fnptrarray@@YAXP6AXQAH@Z@Z
 ?foo_fnptrarray@@YAXP6AXQEAH@Z@Z
-; CHECK: void __cdecl foo_fnptrarray(void __cdecl (*)(int *const))
+; CHECK: void __cdecl foo_fnptrarray(void (__cdecl *)(int *const))
 
 ; ?foo_fnptrbackref1@@YAXP6AXQAH@Z1@Z
 ; ?foo_fnptrbackref1@@YAXP6AXQEAH@Z1@Z
-; FIXME: void __cdecl foo_fnptrbackref1(void __cdecl (*)(int *const), void __cdecl (*)(int *const))
+; FIXME: void __cdecl foo_fnptrbackref1(void (__cdecl *)(int *const), void (__cdecl *)(int *const))
 
 ; ?foo_fnptrbackref2@@YAXP6AXQAH@Z1@Z
 ; ?foo_fnptrbackref2@@YAXP6AXQEAH@Z1@Z
-; FIXME: void __cdecl foo_fnptrbackref2(void __cdecl (*)(int *const), void __cdecl (*)(int *const))
+; FIXME: void __cdecl foo_fnptrbackref2(void (__cdecl *)(int *const), void (__cdecl *)(int *const))
 
 ; ?foo_fnptrbackref3@@YAXP6AXQAH@Z1@Z
 ; ?foo_fnptrbackref3@@YAXP6AXQEAH@Z1@Z
@@ -202,7 +202,7 @@
 
 ?ret_fnptrarray@@YAP6AXQAH@ZXZ
 ?ret_fnptrarray@@YAP6AXQEAH@ZXZ
-; CHECK: void __cdecl (* __cdecl ret_fnptrarray(void))(int *const)
+; CHECK: void (__cdecl * __cdecl ret_fnptrarray(void))(int *const)
 
 ; The first argument gets mangled as-if it were written int *const
 ; The second arg should not form a backref because it isn't qualified
@@ -217,7 +217,7 @@
 ; Pointer to function types don't backref with function types
 ?mangle_no_backref2@@YAXP6AXXZP6AXXZ@Z
 ?mangle_no_backref2@@YAXP6AXXZP6AXXZ@Z
-; CHECK: void __cdecl mangle_no_backref2(void __cdecl (*)(void), void __cdecl (*)(void))
+; CHECK: void __cdecl mangle_no_backref2(void (__cdecl *)(void), void (__cdecl *)(void))
 
 ?mangle_yes_backref0@@YAXQAH0@Z
 ?mangle_yes_backref0@@YAXQEAH0@Z
@@ -229,11 +229,11 @@
 
 ?mangle_yes_backref2@@YAXQBQ6AXXZ0@Z
 ?mangle_yes_backref2@@YAXQEBQ6AXXZ0@Z
-; CHECK: void __cdecl mangle_yes_backref2(void __cdecl (*const *const)(void), void __cdecl (*const *const)(void))
+; CHECK: void __cdecl mangle_yes_backref2(void (__cdecl *const *const)(void), void (__cdecl *const *const)(void))
 
 ?mangle_yes_backref3@@YAXQAP6AXXZ0@Z
 ?mangle_yes_backref3@@YAXQEAP6AXXZ0@Z
-; CHECK: void __cdecl mangle_yes_backref3(void __cdecl (**const)(void), void __cdecl (**const)(void))
+; CHECK: void __cdecl mangle_yes_backref3(void (__cdecl **const)(void), void (__cdecl **const)(void))
 
 ?mangle_yes_backref4@@YAXQIAH0@Z
 ?mangle_yes_backref4@@YAXQEIAH0@Z

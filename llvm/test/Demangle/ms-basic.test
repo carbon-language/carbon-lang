@@ -30,13 +30,13 @@
 ; CHECK: void __cdecl x(float, int)
 
 ?x@@3P6AHMNH@ZEA
-; CHECK: int __cdecl (*x)(float, double, int)
+; CHECK: int (__cdecl *x)(float, double, int)
 
 ?x@@3P6AHP6AHM@ZN@ZEA
-; CHECK: int __cdecl (*x)(int __cdecl (*)(float), double)
+; CHECK: int (__cdecl *x)(int (__cdecl *)(float), double)
 
 ?x@@3P6AHP6AHM@Z0@ZEA
-; CHECK: int __cdecl (*x)(int __cdecl (*)(float), int __cdecl (*)(float))
+; CHECK: int (__cdecl *x)(int (__cdecl *)(float), int (__cdecl *)(float))
 
 ?x@ns@@3HA
 ; CHECK: int ns::x
@@ -87,7 +87,7 @@
 ; CHECK: class klass instance
 
 ?instance$initializer$@@3P6AXXZEA
-; CHECK: void __cdecl (*instance$initializer$)(void)
+; CHECK: void (__cdecl *instance$initializer$)(void)
 
 ??0klass@@QEAA@XZ
 ; CHECK: __cdecl klass::klass(void)

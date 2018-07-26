@@ -91,13 +91,13 @@
 ; CHECK: int (*i)[20]
 
 ?FunArr@@3PAY0BE@P6AHHH@ZA
-; CHECK: int __cdecl (*(*FunArr)[20])(int, int)
+; CHECK: int (__cdecl *(*FunArr)[20])(int, int)
 
 ?j@@3P6GHCE@ZA
-; CHECK: int __stdcall (*j)(signed char, unsigned char)
+; CHECK: int (__stdcall *j)(signed char, unsigned char)
 
 ?funptr@@YAP6AHXZXZ
-; CHECK: int __cdecl (* __cdecl funptr(void))(void)
+; CHECK: int (__cdecl * __cdecl funptr(void))(void)
 
 ?k@@3PTfoo@@DT1@
 ; CHECK: char const volatile foo::*k
@@ -106,7 +106,7 @@
 ; CHECK: char const volatile foo::*k
 
 ?l@@3P8foo@@AEHH@ZQ1@
-; CHECK: int __thiscall (foo::*l)(int)
+; CHECK: int (__thiscall foo::*l)(int)
 
 ?g_cInt@@3HB
 ; CHECK: int const g_cInt
@@ -148,10 +148,10 @@
 ; CHECK: void __cdecl epsilon(int (*const)[10][20])
 
 ?zeta@@YAXP6AHHH@Z@Z
-; CHECK: void __cdecl zeta(int __cdecl (*)(int, int))
+; CHECK: void __cdecl zeta(int (__cdecl *)(int, int))
 
 ?zeta@@YAXP6AHHH@Z@Z
-; CHECK: void __cdecl zeta(int __cdecl (*)(int, int))
+; CHECK: void __cdecl zeta(int (__cdecl *)(int, int))
 
 ; FIXME: We don't support blocks yet.
 
@@ -195,40 +195,40 @@
 ; CHECK: int B::*volatile memptr3
 
 ?funmemptr1@@3RESB@@R6AHXZES1@
-; CHECK: int __cdecl (*volatile B::*volatile funmemptr1)(void)
+; CHECK: int (__cdecl *volatile B::*volatile funmemptr1)(void)
 
 ?funmemptr2@@3PESB@@R6AHXZES1@
-; CHECK: int __cdecl (*volatile B::*funmemptr2)(void)
+; CHECK: int (__cdecl *volatile B::*funmemptr2)(void)
 
 ?funmemptr3@@3REQB@@P6AHXZEQ1@
-; CHECK: int __cdecl (*B::*volatile funmemptr3)(void)
+; CHECK: int (__cdecl *B::*volatile funmemptr3)(void)
 
 ?memptrtofun1@@3R8B@@EAAXXZEQ1@
-; CHECK: void __cdecl (B::*volatile memptrtofun1)(void)
+; CHECK: void (__cdecl B::*volatile memptrtofun1)(void)
 
 ?memptrtofun2@@3P8B@@EAAXXZEQ1@
-; CHECK: void __cdecl (B::*memptrtofun2)(void)
+; CHECK: void (__cdecl B::*memptrtofun2)(void)
 
 ?memptrtofun3@@3P8B@@EAAXXZEQ1@
-; CHECK: void __cdecl (B::*memptrtofun3)(void)
+; CHECK: void (__cdecl B::*memptrtofun3)(void)
 
 ?memptrtofun4@@3R8B@@EAAHXZEQ1@
-; CHECK: int __cdecl (B::*volatile memptrtofun4)(void)
+; CHECK: int (__cdecl B::*volatile memptrtofun4)(void)
 
 ?memptrtofun5@@3P8B@@EAA?CHXZEQ1@
-; CHECK: int volatile __cdecl (B::*memptrtofun5)(void)
+; CHECK: int volatile (__cdecl B::*memptrtofun5)(void)
 
 ?memptrtofun6@@3P8B@@EAA?BHXZEQ1@
-; CHECK: int const __cdecl (B::*memptrtofun6)(void)
+; CHECK: int const (__cdecl B::*memptrtofun6)(void)
 
 ?memptrtofun7@@3R8B@@EAAP6AHXZXZEQ1@
-; CHECK: int __cdecl (* __cdecl (B::*volatile memptrtofun7)(void))(void)
+; CHECK: int (__cdecl * (__cdecl B::*volatile memptrtofun7)(void))(void)
 
 ?memptrtofun8@@3P8B@@EAAR6AHXZXZEQ1@
-; CHECK: int __cdecl (*volatile __cdecl (B::*memptrtofun8)(void))(void)
+; CHECK: int (__cdecl *volatile (__cdecl B::*memptrtofun8)(void))(void)
 
 ?memptrtofun9@@3P8B@@EAAQ6AHXZXZEQ1@
-; CHECK: int __cdecl (*const __cdecl (B::*memptrtofun9)(void))(void)
+; CHECK: int (__cdecl *const (__cdecl B::*memptrtofun9)(void))(void)
 
 
 ?fooE@@YA?AW4E@@XZ

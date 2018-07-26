@@ -265,6 +265,10 @@ struct FunctionType : public Type {
   void outputPre(OutputStream &OS) override;
   void outputPost(OutputStream &OS) override;
 
+  // True if this FunctionType instance is the Pointee of a PointerType or
+  // MemberPointerType.
+  bool IsFunctionPointer = false;
+
   Type *ReturnType = nullptr;
   // If this is a reference, the type of reference.
   ReferenceKind RefKind;
@@ -556,6 +560,34 @@ Type *PointerType::clone(ArenaAllocator &Arena) const {
   return Arena.alloc<PointerType>(*this);
 }
 
+static void outputPointerIndicator(OutputStream &OS, PointerAffinity Affinity,
+                                   const Name *MemberName,
+                                   const Type *Pointee) {
+  // "[]" and "()" (for function parameters) take precedence over "*",
+  // so "int *x(int)" means "x is a function returning int *". We need
+  // parentheses to supercede the default precedence. (e.g. we want to
+  // emit something like "int (*x)(int)".)
+  if (Pointee->Prim == PrimTy::Function || Pointee->Prim == PrimTy::Array) {
+    OS << "(";
+    if (Pointee->Prim == PrimTy::Function) {
+      const FunctionType *FTy = static_cast<const FunctionType *>(Pointee);
+      assert(FTy->IsFunctionPointer);
+      outputCallingConvention(OS, FTy->CallConvention);
+      OS << " ";
+    }
+  }
+
+  if (MemberName) {
+    outputName(OS, MemberName);
+    OS << "::";
+  }
+
+  if (Affinity == PointerAffinity::Pointer)
+    OS << "*";
+  else
+    OS << "&";
+}
+
 void PointerType::outputPre(OutputStream &OS) {
   Type::outputPre(OS, *Pointee);
 
@@ -564,17 +596,10 @@ void PointerType::outputPre(OutputStream &OS) {
   if (Quals & Q_Unaligned)
     OS << "__unaligned ";
 
-  // "[]" and "()" (for function parameters) take precedence over "*",
-  // so "int *x(int)" means "x is a function returning int *". We need
-  // parentheses to supercede the default precedence. (e.g. we want to
-  // emit something like "int (*x)(int)".)
-  if (Pointee->Prim == PrimTy::Function || Pointee->Prim == PrimTy::Array)
-    OS << "(";
+  PointerAffinity Affinity = (Prim == PrimTy::Ptr) ? PointerAffinity::Pointer
+                                                   : PointerAffinity::Reference;
 
-  if (Prim == PrimTy::Ptr)
-    OS << "*";
-  else
-    OS << "&";
+  outputPointerIndicator(OS, Affinity, nullptr, Pointee);
 
   // FIXME: We should output this, but it requires updating lots of tests.
   // if (Ty.Quals & Q_Pointer64)
@@ -597,15 +622,7 @@ void MemberPointerType::outputPre(OutputStream &OS) {
 
   outputSpaceIfNecessary(OS);
 
-  // "[]" and "()" (for function parameters) take precedence over "*",
-  // so "int *x(int)" means "x is a function returning int *". We need
-  // parentheses to supercede the default precedence. (e.g. we want to
-  // emit something like "int (*x)(int)".)
-  if (Pointee->Prim == PrimTy::Function || Pointee->Prim == PrimTy::Array)
-    OS << "(";
-
-  outputName(OS, MemberName);
-  OS << "::*";
+  outputPointerIndicator(OS, PointerAffinity::Pointer, MemberName, Pointee);
 
   // FIXME: We should output this, but it requires updating lots of tests.
   // if (Ty.Quals & Q_Pointer64)
@@ -636,7 +653,11 @@ void FunctionType::outputPre(OutputStream &OS) {
     OS << " ";
   }
 
-  outputCallingConvention(OS, CallConvention);
+  // Function pointers print the calling convention as void (__cdecl *)(params)
+  // rather than void __cdecl (*)(params).  So we need to let the PointerType
+  // class handle this.
+  if (!IsFunctionPointer)
+    outputCallingConvention(OS, CallConvention);
 }
 
 void FunctionType::outputPost(OutputStream &OS) {
@@ -726,7 +747,7 @@ private:
   UdtType *demangleClassType();
   PointerType *demanglePointerType();
   MemberPointerType *demangleMemberPointerType();
-  FunctionType *demangleFunctionType(bool HasThisQuals);
+  FunctionType *demangleFunctionType(bool HasThisQuals, bool IsFunctionPointer);
 
   ArrayType *demangleArrayType();
 
@@ -1269,9 +1290,11 @@ void Demangler::demangleThrowSpecification() {
   Error = true;
 }
 
-FunctionType *Demangler::demangleFunctionType(bool HasThisQuals) {
+FunctionType *Demangler::demangleFunctionType(bool HasThisQuals,
+                                              bool IsFunctionPointer) {
   FunctionType *FTy = Arena.alloc<FunctionType>();
   FTy->Prim = PrimTy::Function;
+  FTy->IsFunctionPointer = IsFunctionPointer;
 
   if (HasThisQuals) {
     FTy->Quals = demanglePointerExtQualifiers();
@@ -1299,7 +1322,7 @@ Type *Demangler::demangleFunctionEncoding() {
   FuncClass FC = demangleFunctionClass();
 
   bool HasThisQuals = !(FC & (Global | Static));
-  FunctionType *FTy = demangleFunctionType(HasThisQuals);
+  FunctionType *FTy = demangleFunctionType(HasThisQuals, false);
   FTy->FunctionClass = FC;
 
   return FTy;
@@ -1435,17 +1458,7 @@ PointerType *Demangler::demanglePointerType() {
   Pointer->Prim =
       (Affinity == PointerAffinity::Pointer) ? PrimTy::Ptr : PrimTy::Ref;
   if (MangledName.consumeFront("6")) {
-    FunctionType *FTy = Arena.alloc<FunctionType>();
-    FTy->Prim = PrimTy::Function;
-    FTy->CallConvention = demangleCallingConvention();
-
-    FTy->ReturnType = demangleType(QualifierMangleMode::Drop);
-    FTy->Params = demangleParameterList();
-
-    if (!MangledName.consumeFront("@Z"))
-      MangledName.consumeFront("Z");
-
-    Pointer->Pointee = FTy;
+    Pointer->Pointee = demangleFunctionType(false, true);
     return Pointer;
   }
 
@@ -1469,7 +1482,7 @@ MemberPointerType *Demangler::demangleMemberPointerType() {
 
   if (MangledName.consumeFront("8")) {
     Pointer->MemberName = demangleName();
-    Pointer->Pointee = demangleFunctionType(true);
+    Pointer->Pointee = demangleFunctionType(true, true);
   } else {
     Qualifiers PointeeQuals = Q_None;
     bool IsMember = false;
