@@ -329,6 +329,8 @@ void initializeReassociateLegacyPassPass(PassRegistry&);
 void initializeRegAllocFastPass(PassRegistry&);
 void initializeRegBankSelectPass(PassRegistry&);
 void initializeRegToMemPass(PassRegistry&);
+void initializeRegUsageInfoCollectorPass(PassRegistry&);
+void initializeRegUsageInfoPropagationPass(PassRegistry&);
 void initializeRegionInfoPassPass(PassRegistry&);
 void initializeRegionOnlyPrinterPass(PassRegistry&);
 void initializeRegionOnlyViewerPass(PassRegistry&);
