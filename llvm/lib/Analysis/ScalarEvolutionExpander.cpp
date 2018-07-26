@@ -589,6 +589,12 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
   return expand(SE.getAddExpr(Ops));
 }
 
+Value *SCEVExpander::expandAddToGEP(const SCEV *Op, PointerType *PTy, Type *Ty,
+                                    Value *V) {
+  const SCEV *const Ops[1] = {Op};
+  return expandAddToGEP(Ops, Ops + 1, PTy, Ty, V);
+}
+
 /// PickMostRelevantLoop - Given two loops pick the one that's most relevant for
 /// SCEV expansion. If they are nested, this is the most nested. If they are
 /// neighboring, pick the later.
@@ -1036,8 +1042,7 @@ Value *SCEVExpander::expandIVInc(PHINode *PN, Value *StepV, const Loop *L,
     if (!isa<ConstantInt>(StepV))
       GEPPtrTy = PointerType::get(Type::getInt1Ty(SE.getContext()),
                                   GEPPtrTy->getAddressSpace());
-    const SCEV *const StepArray[1] = { SE.getSCEV(StepV) };
-    IncV = expandAddToGEP(StepArray, StepArray+1, GEPPtrTy, IntTy, PN);
+    IncV = expandAddToGEP(SE.getSCEV(StepV), GEPPtrTy, IntTy, PN);
     if (IncV->getType() != PN->getType()) {
       IncV = Builder.CreateBitCast(IncV, PN->getType());
       rememberInstruction(IncV);
@@ -1443,12 +1448,9 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
     if (PointerType *PTy = dyn_cast<PointerType>(ExpandTy)) {
       if (Result->getType()->isIntegerTy()) {
         Value *Base = expandCodeFor(PostLoopOffset, ExpandTy);
-        const SCEV *const OffsetArray[1] = {SE.getUnknown(Result)};
-        Result = expandAddToGEP(OffsetArray, OffsetArray + 1, PTy, IntTy, Base);
+        Result = expandAddToGEP(SE.getUnknown(Result), PTy, IntTy, Base);
       } else {
-        const SCEV *const OffsetArray[1] = {PostLoopOffset};
-        Result =
-            expandAddToGEP(OffsetArray, OffsetArray + 1, PTy, IntTy, Result);
+        Result = expandAddToGEP(PostLoopOffset, PTy, IntTy, Result);
       }
     } else {
       Result = InsertNoopCastOfTo(Result, IntTy);
@@ -1500,9 +1502,9 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
     // Turn things like ptrtoint+arithmetic+inttoptr into GEP. See the
     // comments on expandAddToGEP for details.
     const SCEV *Base = S->getStart();
-    const SCEV *RestArray[1] = { Rest };
     // Dig into the expression to find the pointer base for a GEP.
-    ExposePointerBase(Base, RestArray[0], SE);
+    const SCEV *ExposedRest = Rest;
+    ExposePointerBase(Base, ExposedRest, SE);
     // If we found a pointer, expand the AddRec with a GEP.
     if (PointerType *PTy = dyn_cast<PointerType>(Base->getType())) {
       // Make sure the Base isn't something exotic, such as a multiplied
@@ -1511,7 +1513,7 @@ Value *SCEVExpander::visitAddRecExpr(const SCEVAddRecExpr *S) {
       if (!isa<SCEVMulExpr>(Base) && !isa<SCEVUDivExpr>(Base)) {
         Value *StartV = expand(Base);
         assert(StartV->getType() == PTy && "Pointer type mismatch for GEP!");
-        return expandAddToGEP(RestArray, RestArray+1, PTy, Ty, StartV);
+        return expandAddToGEP(ExposedRest, PTy, Ty, StartV);
       }
     }
 
