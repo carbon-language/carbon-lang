@@ -15,20 +15,69 @@
 #ifndef FORTRAN_SEMANTICS_MOD_FILE_H_
 #define FORTRAN_SEMANTICS_MOD_FILE_H_
 
+#include "attr.h"
 #include "resolve-names.h"
-#include "../parser/char-block.h"
 #include "../parser/message.h"
-#include "../parser/parse-tree.h"
-#include "../parser/parsing.h"
 #include "../parser/provenance.h"
-#include <iostream>
+#include <iosfwd>
+#include <set>
+#include <sstream>
 #include <string>
+#include <vector>
+
+namespace Fortran::parser {
+class CharBlock;
+}
 
 namespace Fortran::semantics {
 
 using SourceName = parser::CharBlock;
+class Symbol;
+class Scope;
 
-void WriteModFiles();
+class ModFileWriter {
+public:
+  // The .mod file format version number.
+  void set_version(int version) { version_ = version; }
+  // The directory to write .mod files in.
+  void set_directory(const std::string &dir) { dir_ = dir; }
+
+  // Errors encountered during writing. Non-empty if WriteAll returns false.
+  const std::vector<parser::MessageFormattedText> &errors() const {
+    return errors_;
+  }
+
+  // Write out all .mod files; if error return false.
+  bool WriteAll();
+  // Write out .mod file for one module; if error return false.
+  bool WriteOne(const Symbol &);
+
+private:
+  using symbolSet = std::set<const Symbol *>;
+  using symbolVector = std::vector<const Symbol *>;
+
+  int version_{1};
+  std::string dir_{"."};
+  // The mod file consists of uses, declarations, and contained subprograms:
+  std::stringstream uses_;
+  std::stringstream useExtraAttrs_;  // attrs added to used entity
+  std::stringstream decls_;
+  std::stringstream contains_;
+  // Any errors encountered during writing:
+  std::vector<parser::MessageFormattedText> errors_;
+
+  std::string GetAsString(const std::string &);
+  std::string GetHeader(const std::string &);
+  void PutSymbols(const Scope &);
+  symbolVector SortSymbols(const symbolSet);
+  symbolSet CollectSymbols(const Scope &);
+  void PutSymbol(const Symbol &);
+  void PutDerivedType(const Symbol &);
+  void PutSubprogram(const Symbol &);
+  void PutGeneric(const Symbol &);
+  void PutUse(const Symbol &);
+  void PutUseExtraAttr(Attr, const Symbol &, const Symbol &);
+};
 
 class ModFileReader {
 public:
@@ -39,14 +88,14 @@ public:
   // Find and read the module file for modName.
   // Return true on success; otherwise errors() reports the problems.
   bool Read(const SourceName &modName);
-  std::list<parser::Message> &errors() { return errors_; }
+  std::vector<parser::Message> &errors() { return errors_; }
 
 private:
   std::vector<std::string> directories_;
   parser::AllSources allSources_;
   std::unique_ptr<parser::CookedSource> cooked_{
       std::make_unique<parser::CookedSource>(allSources_)};
-  std::list<parser::Message> errors_;
+  std::vector<parser::Message> errors_;
 
   std::optional<std::string> FindModFile(const SourceName &);
   bool Prescan(const SourceName &, const std::string &);

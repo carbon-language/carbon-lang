@@ -47,71 +47,16 @@ static parser::Message Error(
 static parser::Message Error(const SourceName &, parser::MessageFixedText,
     const std::string &, const std::string &);
 
-class ModFileWriter {
-public:
-  // The .mod file format version number.
-  void set_version(int version) { version_ = version; }
-  // The directory to write .mod files in.
-  void set_directory(const std::string &dir) { dir_ = dir; }
-
-  // Errors encountered during writing. Non-empty if WriteAll returns false.
-  const std::list<parser::MessageFormattedText> &errors() const {
-    return errors_;
-  }
-
-  // Write out all .mod files; if error return false and report them on ostream.
-  bool WriteAll(std::ostream &);
-  // Write out all .mod files; if error return false.
-  bool WriteAll();
-  // Write out .mod file for one module; if error return false.
-  bool WriteOne(const Symbol &);
-
-private:
-  using symbolSet = std::set<const Symbol *>;
-  using symbolVector = std::vector<const Symbol *>;
-
-  int version_{1};
-  std::string dir_{"."};
-  // The mod file consists of uses, declarations, and contained subprograms:
-  std::stringstream uses_;
-  std::stringstream useExtraAttrs_;  // attrs added to used entity
-  std::stringstream decls_;
-  std::stringstream contains_;
-  // Any errors encountered during writing:
-  std::list<parser::MessageFormattedText> errors_;
-
-  std::string GetAsString(const std::string &);
-  std::string GetHeader(const std::string &);
-  void PutSymbols(const Scope &);
-  symbolVector SortSymbols(const symbolSet);
-  symbolSet CollectSymbols(const Scope &);
-  void PutSymbol(const Symbol &);
-  void PutDerivedType(const Symbol &);
-  void PutSubprogram(const Symbol &);
-  void PutGeneric(const Symbol &);
-  void PutUse(const Symbol &);
-  void PutUseExtraAttr(Attr, const Symbol &, const Symbol &);
-  static void PutEntity(std::ostream &, const Symbol &);
-  static void PutObjectEntity(std::ostream &, const Symbol &);
-  static void PutProcEntity(std::ostream &, const Symbol &);
-  static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
-  static std::ostream &PutAttrs(std::ostream &, Attrs,
-      std::string before = ","s, std::string after = ""s);
-  static std::ostream &PutLower(std::ostream &, const Symbol &);
-  static std::ostream &PutLower(std::ostream &, const DeclTypeSpec &);
-  static std::ostream &PutLower(std::ostream &, const std::string &);
-  static std::string CheckSum(const std::string &);
-};
-
-bool ModFileWriter::WriteAll(std::ostream &os) {
-  if (!WriteAll()) {
-    for (auto &message : errors()) {
-      std::cerr << message.string() << '\n';
-    }
-    return false;
-  }
-  return true;
-}
+static void PutEntity(std::ostream &, const Symbol &);
+static void PutObjectEntity(std::ostream &, const Symbol &);
+static void PutProcEntity(std::ostream &, const Symbol &);
+static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
+static std::ostream &PutAttrs(
+    std::ostream &, Attrs, std::string before = ","s, std::string after = ""s);
+static std::ostream &PutLower(std::ostream &, const Symbol &);
+static std::ostream &PutLower(std::ostream &, const DeclTypeSpec &);
+static std::ostream &PutLower(std::ostream &, const std::string &);
+static std::string CheckSum(const std::string &);
 
 bool ModFileWriter::WriteAll() {
   for (const auto &scope : Scope::globalScope.children()) {
@@ -315,21 +260,21 @@ void ModFileWriter::PutUseExtraAttr(
   }
 }
 
-void ModFileWriter::PutEntity(std::ostream &os, const Symbol &symbol) {
+void PutEntity(std::ostream &os, const Symbol &symbol) {
   std::visit(
       common::visitors{
           [&](const EntityDetails &) { PutObjectEntity(os, symbol); },
           [&](const ObjectEntityDetails &) { PutObjectEntity(os, symbol); },
           [&](const ProcEntityDetails &) { PutProcEntity(os, symbol); },
           [&](const auto &) {
-            common::die("ModFileWriter::PutEntity: unexpected details: %s",
+            common::die("PutEntity: unexpected details: %s",
                 DetailsToString(symbol.details()).c_str());
           },
       },
       symbol.details());
 }
 
-void ModFileWriter::PutObjectEntity(std::ostream &os, const Symbol &symbol) {
+void PutObjectEntity(std::ostream &os, const Symbol &symbol) {
   PutEntity(os, symbol, [&]() {
     auto *type{symbol.GetType()};
     CHECK(type);
@@ -337,7 +282,7 @@ void ModFileWriter::PutObjectEntity(std::ostream &os, const Symbol &symbol) {
   });
 }
 
-void ModFileWriter::PutProcEntity(std::ostream &os, const Symbol &symbol) {
+void PutProcEntity(std::ostream &os, const Symbol &symbol) {
   const ProcInterface &interface{symbol.get<ProcEntityDetails>().interface()};
   PutEntity(os, symbol, [&]() {
     os << "procedure(";
@@ -352,7 +297,7 @@ void ModFileWriter::PutProcEntity(std::ostream &os, const Symbol &symbol) {
 
 // Write an entity (object or procedure) declaration.
 // writeType is called to write out the type.
-void ModFileWriter::PutEntity(
+void PutEntity(
     std::ostream &os, const Symbol &symbol, std::function<void()> writeType) {
   writeType();
   PutAttrs(os, symbol.attrs());
@@ -361,7 +306,7 @@ void ModFileWriter::PutEntity(
 
 // Put out each attribute to os, surrounded by `before` and `after` and
 // mapped to lower case.
-std::ostream &ModFileWriter::PutAttrs(
+std::ostream &PutAttrs(
     std::ostream &os, Attrs attrs, std::string before, std::string after) {
   attrs.set(Attr::PUBLIC, false);  // no need to write PUBLIC
   attrs.set(Attr::EXTERNAL, false);  // no need to write EXTERNAL
@@ -374,19 +319,17 @@ std::ostream &ModFileWriter::PutAttrs(
   return os;
 }
 
-std::ostream &ModFileWriter::PutLower(std::ostream &os, const Symbol &symbol) {
+std::ostream &PutLower(std::ostream &os, const Symbol &symbol) {
   return PutLower(os, symbol.name().ToString());
 }
 
-std::ostream &ModFileWriter::PutLower(
-    std::ostream &os, const DeclTypeSpec &type) {
+std::ostream &PutLower(std::ostream &os, const DeclTypeSpec &type) {
   std::stringstream s;
   s << type;
   return PutLower(os, s.str());
 }
 
-std::ostream &ModFileWriter::PutLower(
-    std::ostream &os, const std::string &str) {
+std::ostream &PutLower(std::ostream &os, const std::string &str) {
   for (char c : str) {
     os << parser::ToLowerCaseLetter(c);
   }
@@ -396,7 +339,7 @@ std::ostream &ModFileWriter::PutLower(
 // Compute a simple hash of the contents of a module file and
 // return it as a string of hex digits.
 // This uses the Fowler-Noll-Vo hash function.
-std::string ModFileWriter::CheckSum(const std::string &str) {
+std::string CheckSum(const std::string &str) {
   std::uint64_t hash{0xcbf29ce484222325ull};
   for (char c : str) {
     hash ^= c & 0xff;
@@ -409,8 +352,6 @@ std::string ModFileWriter::CheckSum(const std::string &str) {
   }
   return result;
 }
-
-void WriteModFiles() { ModFileWriter{}.WriteAll(std::cerr); }
 
 bool ModFileReader::Read(const SourceName &modName) {
   auto path{FindModFile(modName)};
@@ -456,6 +397,7 @@ std::optional<std::string> ModFileReader::FindModFile(
       std::string line;
       ifstream >> line;
       if (std::equal(line.begin(), line.end(), std::string{magic}.begin())) {
+        // TODO: verify reset of header line: version, checksum, etc.
         return path;  // success
       }
       error.Attach(Error(modName, "%s: Not a valid module file"_en_US, path));

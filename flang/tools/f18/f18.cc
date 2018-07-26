@@ -79,6 +79,7 @@ struct DriverOptions {
   bool verbose{false};  // -v
   bool compileOnly{false};  // -c
   std::string outputPath;  // -o path
+  std::string moduleDirectory{"."s};  // -module dir
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
   bool warningsAreErrors{false};  // -Werror
   Fortran::parser::Encoding encoding{Fortran::parser::Encoding::UTF8};
@@ -208,8 +209,17 @@ std::string CompileFortran(
       driver.dumpUnparseWithSymbols) {
     std::vector<std::string> directories{options.searchDirectories};
     directories.insert(directories.begin(), "."s);
+    if (driver.moduleDirectory != "."s) {
+      directories.insert(directories.begin(), driver.moduleDirectory);
+    }
     Fortran::semantics::ResolveNames(parseTree, parsing.cooked(), directories);
-    Fortran::semantics::WriteModFiles();
+    Fortran::semantics::ModFileWriter writer;
+    writer.set_directory(driver.moduleDirectory);
+    if (!writer.WriteAll()) {
+      for (const auto &message : writer.errors()) {
+        std::cerr << message.string() << '\n';
+      }
+    }
     if (driver.dumpSymbols) {
       Fortran::semantics::DumpSymbols(std::cout);
     }
@@ -444,6 +454,10 @@ int main(int argc, char *const argv[]) {
         args.pop_front();
       } else if (arg.substr(0, 2) == "-I") {
         options.searchDirectories.push_back(arg.substr(2));
+      } else if (arg == "-module") {
+        driver.moduleDirectory = args.front();
+        driver.pgf90Args.push_back(driver.moduleDirectory);
+        args.pop_front();
       } else if (arg == "-Mx,125,4") {  // PGI "all Kanji" mode
         options.encoding = Fortran::parser::Encoding::EUC_JP;
       }
