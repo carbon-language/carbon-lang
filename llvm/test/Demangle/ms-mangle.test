@@ -82,10 +82,10 @@
 ; CHECK: int const *const h2
 
 ?h3@@3QIAHIA
-; CHECK: int * __restrict const h3
+; CHECK: int *const __restrict h3
 
 ?h3@@3QEIAHEIA
-; CHECK: int * __restrict const h3
+; CHECK: int *const __restrict h3
 
 ?i@@3PAY0BE@HA
 ; CHECK: int (*i)[20]

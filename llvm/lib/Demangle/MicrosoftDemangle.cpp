@@ -483,6 +483,11 @@ void Type::outputPre(OutputStream &OS, Type &Ty) {
     outputSpaceIfNecessary(OS);
     OS << "volatile";
   }
+
+  if (Ty.Quals & Q_Restrict) {
+    outputSpaceIfNecessary(OS);
+    OS << "__restrict";
+  }
 }
 
 // Write the "second half" of a given type.
@@ -574,8 +579,6 @@ void PointerType::outputPre(OutputStream &OS) {
   // FIXME: We should output this, but it requires updating lots of tests.
   // if (Ty.Quals & Q_Pointer64)
   //  OS << " __ptr64";
-  if (Quals & Q_Restrict)
-    OS << " __restrict";
 }
 
 void PointerType::outputPost(OutputStream &OS) {
