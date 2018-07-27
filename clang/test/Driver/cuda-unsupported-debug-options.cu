@@ -1,6 +1,7 @@
 // REQUIRES: clang-driver
 // REQUIRES: x86-registered-target
 // REQUIRES: nvptx-registered-target
+// REQUIRES: zlib
 
 // RUN: %clang -### -target x86_64-linux-gnu -c %s -g -gz 2>&1 | FileCheck %s
 // RUN: %clang -### -target x86_64-linux-gnu -c %s -gdwarf -fdebug-info-for-profiling 2>&1 | FileCheck %s
