@@ -27,6 +27,22 @@ define i32 @add_zext_ifpos(i32 %x) {
   ret i32 %r
 }
 
+define <4 x i32> @add_zext_ifpos_vec_splat(<4 x i32> %x) {
+; CHECK-LABEL: add_zext_ifpos_vec_splat:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vspltisb 3, -1
+; CHECK-NEXT:    addis 3, 2, .LCPI2_0@toc@ha
+; CHECK-NEXT:    addi 3, 3, .LCPI2_0@toc@l
+; CHECK-NEXT:    vcmpgtsw 2, 2, 3
+; CHECK-NEXT:    lvx 3, 0, 3
+; CHECK-NEXT:    vsubuwm 2, 3, 2
+; CHECK-NEXT:    blr
+  %c = icmp sgt <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %e = zext <4 x i1> %c to <4 x i32>
+  %r = add <4 x i32> %e, <i32 41, i32 41, i32 41, i32 41>
+  ret <4 x i32> %r
+}
+
 define i32 @sel_ifpos_tval_bigger(i32 %x) {
 ; CHECK-LABEL: sel_ifpos_tval_bigger:
 ; CHECK:       # %bb.0:
@@ -62,6 +78,22 @@ define i32 @add_sext_ifpos(i32 %x) {
   %e = sext i1 %c to i32
   %r = add i32 %e, 42
   ret i32 %r
+}
+
+define <4 x i32> @add_sext_ifpos_vec_splat(<4 x i32> %x) {
+; CHECK-LABEL: add_sext_ifpos_vec_splat:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vspltisb 3, -1
+; CHECK-NEXT:    addis 3, 2, .LCPI6_0@toc@ha
+; CHECK-NEXT:    addi 3, 3, .LCPI6_0@toc@l
+; CHECK-NEXT:    vcmpgtsw 2, 2, 3
+; CHECK-NEXT:    lvx 3, 0, 3
+; CHECK-NEXT:    vadduwm 2, 2, 3
+; CHECK-NEXT:    blr
+  %c = icmp sgt <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %e = sext <4 x i1> %c to <4 x i32>
+  %r = add <4 x i32> %e, <i32 42, i32 42, i32 42, i32 42>
+  ret <4 x i32> %r
 }
 
 define i32 @sel_ifpos_fval_bigger(i32 %x) {
@@ -147,5 +179,69 @@ define i32 @sel_ifneg_fval_bigger(i32 %x) {
   %c = icmp slt i32 %x, 0
   %r = select i1 %c, i32 41, i32 42
   ret i32 %r
+}
+
+define i32 @add_lshr_not(i32 %x) {
+; CHECK-LABEL: add_lshr_not:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    nor 3, 3, 3
+; CHECK-NEXT:    srwi 3, 3, 31
+; CHECK-NEXT:    addi 3, 3, 41
+; CHECK-NEXT:    blr
+  %not = xor i32 %x, -1
+  %sh = lshr i32 %not, 31
+  %r = add i32 %sh, 41
+  ret i32 %r
+}
+
+define <4 x i32> @add_lshr_not_vec_splat(<4 x i32> %x) {
+; CHECK-LABEL: add_lshr_not_vec_splat:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vspltisw 3, -16
+; CHECK-NEXT:    vspltisw 4, 15
+; CHECK-NEXT:    addis 3, 2, .LCPI15_0@toc@ha
+; CHECK-NEXT:    xxlnor 34, 34, 34
+; CHECK-NEXT:    addi 3, 3, .LCPI15_0@toc@l
+; CHECK-NEXT:    vsubuwm 3, 4, 3
+; CHECK-NEXT:    vsrw 2, 2, 3
+; CHECK-NEXT:    lvx 3, 0, 3
+; CHECK-NEXT:    xxlor 34, 34, 35
+; CHECK-NEXT:    blr
+  %c = xor <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %e = lshr <4 x i32> %c, <i32 31, i32 31, i32 31, i32 31>
+  %r = add <4 x i32> %e, <i32 42, i32 42, i32 42, i32 42>
+  ret <4 x i32> %r
+}
+
+define i32 @sub_lshr_not(i32 %x) {
+; CHECK-LABEL: sub_lshr_not:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    nor 3, 3, 3
+; CHECK-NEXT:    srwi 3, 3, 31
+; CHECK-NEXT:    subfic 3, 3, 43
+; CHECK-NEXT:    blr
+  %not = xor i32 %x, -1
+  %sh = lshr i32 %not, 31
+  %r = sub i32 43, %sh
+  ret i32 %r
+}
+
+define <4 x i32> @sub_lshr_not_vec_splat(<4 x i32> %x) {
+; CHECK-LABEL: sub_lshr_not_vec_splat:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vspltisw 3, -16
+; CHECK-NEXT:    vspltisw 4, 15
+; CHECK-NEXT:    addis 3, 2, .LCPI17_0@toc@ha
+; CHECK-NEXT:    xxlnor 34, 34, 34
+; CHECK-NEXT:    addi 3, 3, .LCPI17_0@toc@l
+; CHECK-NEXT:    vsubuwm 3, 4, 3
+; CHECK-NEXT:    vsrw 2, 2, 3
+; CHECK-NEXT:    lvx 3, 0, 3
+; CHECK-NEXT:    vsubuwm 2, 3, 2
+; CHECK-NEXT:    blr
+  %c = xor <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %e = lshr <4 x i32> %c, <i32 31, i32 31, i32 31, i32 31>
+  %r = sub <4 x i32> <i32 42, i32 42, i32 42, i32 42>, %e
+  ret <4 x i32> %r
 }
 
