@@ -134,28 +134,32 @@ std::string Message::ToString() const {
       text_);
 }
 
-ProvenanceRange Message::GetProvenanceRange(const CookedSource &cooked) const {
+std::optional<ProvenanceRange> Message::GetProvenanceRange(
+    const CookedSource &cooked) const {
   return std::visit(common::visitors{[&](const CharBlock &cb) {
                                        return cooked.GetProvenanceRange(cb);
                                      },
-                        [](const ProvenanceRange &pr) { return pr; }},
+                        [](const ProvenanceRange &pr) {
+                          return std::optional<ProvenanceRange>{pr};
+                        }},
       location_);
 }
 
 void Message::Emit(
     std::ostream &o, const CookedSource &cooked, bool echoSourceLine) const {
-  ProvenanceRange provenanceRange{GetProvenanceRange(cooked)};
+  std::optional<ProvenanceRange> provenanceRange{GetProvenanceRange(cooked)};
   std::string text;
   if (IsFatal()) {
     text += "error: ";
   }
   text += ToString();
-  AllSources &sources{cooked.allSources()};
+  const AllSources &sources{cooked.allSources()};
   sources.EmitMessage(o, provenanceRange, text, echoSourceLine);
   if (attachmentIsContext_) {
     for (const Message *context{attachment_.get()}; context != nullptr;
          context = context->attachment_.get()) {
-      ProvenanceRange contextProvenance{context->GetProvenanceRange(cooked)};
+      std::optional<ProvenanceRange> contextProvenance{
+          context->GetProvenanceRange(cooked)};
       text = "in the context: ";
       text += context->ToString();
       // TODO: don't echo the source lines of a context when it's the

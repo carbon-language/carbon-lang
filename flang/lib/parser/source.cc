@@ -203,22 +203,12 @@ bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
   if (bytes_ == 0) {
     // empty file
     content_ = nullptr;
-    return true;
+  } else {
+    buffer_ = buffer.MarshalNormalized();  // no '\r' chars, ensure final '\n'
+    content_ = buffer_.data();
+    bytes_ = buffer_.size();
+    lineStart_ = FindLineStarts(content_, bytes_);
   }
-
-  char *contig{new char[bytes_ + 1 /* for extra newline if needed */]};
-  content_ = contig;
-  char *to{contig};
-  for (char ch : buffer) {
-    if (ch != '\r') {
-      *to++ = ch;
-    }
-  }
-  if (to == contig || to[-1] != '\n') {
-    *to++ = '\n';  // supply a missing terminal newline
-  }
-  bytes_ = to - contig;
-  lineStart_ = FindLineStarts(content_, bytes_);
   return true;
 }
 

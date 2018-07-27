@@ -59,69 +59,17 @@ public:
   void Put(const std::string &);
   void Put(char x) { Put(&x, 1); }
 
+  std::string Marshal() const;
+
+  // Removes carriage returns ('\r') and ensures a final line feed ('\n').
+  std::string MarshalNormalized() const;
+
 private:
   struct Block {
     static constexpr std::size_t capacity{1 << 20};
     char data[capacity];
   };
 
-public:
-  class iterator {
-  public:
-    iterator() {}
-    iterator(std::forward_list<Block>::const_iterator block, int offset)
-      : block_{block}, offset_{offset} {}
-    iterator(const iterator &that)
-      : block_{that.block_}, offset_{that.offset_} {}
-    iterator &operator=(const iterator &that) {
-      block_ = that.block_;
-      offset_ = that.offset_;
-      return *this;
-    }
-    const char &operator*() const { return block_->data[offset_]; }
-    iterator &operator++(/*++prefix*/) {
-      if (++offset_ == Block::capacity) {
-        ++block_;
-        offset_ = 0;
-      }
-      return *this;
-    }
-    iterator operator++(int /*postfix++*/) {
-      iterator result{*this};
-      ++*this;
-      return result;
-    }
-    iterator &operator+=(std::size_t n) {
-      while (n >= Block::capacity - offset_) {
-        n -= Block::capacity - offset_;
-        offset_ = 0;
-        ++block_;
-      }
-      offset_ += n;
-      return *this;
-    }
-    bool operator==(const iterator &that) const {
-      return block_ == that.block_ && offset_ == that.offset_;
-    }
-    bool operator!=(const iterator &that) const {
-      return block_ != that.block_ || offset_ != that.offset_;
-    }
-
-  private:
-    std::forward_list<Block>::const_iterator block_;
-    int offset_;
-  };
-
-  iterator begin() const { return iterator(blocks_.begin(), 0); }
-  iterator end() const {
-    int offset = LastBlockOffset();
-    if (offset != 0 || lastBlockEmpty_) {
-      return iterator(last_, offset);
-    }
-    return iterator(blocks_.end(), 0);
-  }
-
-private:
   int LastBlockOffset() const { return bytes_ % Block::capacity; }
   std::forward_list<Block> blocks_;
   std::forward_list<Block>::iterator last_{blocks_.end()};

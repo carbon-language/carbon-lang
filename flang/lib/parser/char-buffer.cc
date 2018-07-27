@@ -53,4 +53,42 @@ void CharBuffer::Put(const char *data, std::size_t n) {
 
 void CharBuffer::Put(const std::string &str) { Put(str.data(), str.size()); }
 
+std::string CharBuffer::Marshal() const {
+  std::string result;
+  std::size_t bytes{bytes_};
+  result.reserve(bytes);
+  for (const Block &block : blocks_) {
+    std::size_t chunk{std::min(bytes, Block::capacity)};
+    for (std::size_t j{0}; j < chunk; ++j) {
+      result += block.data[j];
+    }
+    bytes -= chunk;
+  }
+  result.shrink_to_fit();
+  CHECK(result.size() == bytes_);
+  return result;
+}
+
+std::string CharBuffer::MarshalNormalized() const {
+  std::string result;
+  std::size_t bytes{bytes_};
+  result.reserve(bytes + 1 /* for terminal line feed */);
+  char ch{'\0'};
+  for (const Block &block : blocks_) {
+    std::size_t chunk{std::min(bytes, Block::capacity)};
+    for (std::size_t j{0}; j < chunk; ++j) {
+      ch = block.data[j];
+      if (ch != '\r') {
+        result += ch;
+      }
+    }
+    bytes -= chunk;
+  }
+  if (ch != '\n') {
+    result += '\n';
+  }
+  result.shrink_to_fit();
+  return result;
+}
+
 }  // namespace Fortran::parser

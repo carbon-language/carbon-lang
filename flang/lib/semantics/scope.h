@@ -107,7 +107,7 @@ public:
 
   // For modules read from module files, this is the stream of characters
   // that are referenced by SourceName objects.
-  void set_chars(std::vector<char> chars) {
+  void set_chars(std::string &&chars) {
     chars_ = std::move(chars);
   }
 
@@ -118,7 +118,7 @@ private:
   std::list<Scope> children_;
   mapType symbols_;
   std::list<DerivedTypeSpec> derivedTypeSpecs_;
-  std::vector<char> chars_;
+  std::string chars_;
 
   // Storage for all Symbols. Every Symbol is in allSymbols and every Symbol*
   // or Symbol& points to one in there.

@@ -40,7 +40,7 @@ class ParseState {
 public:
   // TODO: Add a constructor for parsing a normalized module file.
   ParseState(const CookedSource &cooked)
-    : p_{&cooked[0]}, limit_{p_ + cooked.size()} {}
+    : p_{&cooked.data().front()}, limit_{&cooked.data().back() + 1} {}
   ParseState(const ParseState &that)
     : p_{that.p_}, limit_{that.limit_}, context_{that.context_},
       userState_{that.userState_}, inFixedForm_{that.inFixedForm_},

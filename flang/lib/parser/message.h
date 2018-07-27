@@ -144,7 +144,7 @@ public:
   bool SortBefore(const Message &that) const;
   bool IsFatal() const;
   std::string ToString() const;
-  ProvenanceRange GetProvenanceRange(const CookedSource &) const;
+  std::optional<ProvenanceRange> GetProvenanceRange(const CookedSource &) const;
   void Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
 

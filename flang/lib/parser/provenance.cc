@@ -149,15 +149,20 @@ ProvenanceRange AllSources::AddCompilerInsertion(std::string text) {
   return covers;
 }
 
-void AllSources::EmitMessage(std::ostream &o, ProvenanceRange range,
-    const std::string &message, bool echoSourceLine) const {
-  CHECK(IsValid(range));
-  const Origin &origin{MapToOrigin(range.start())};
+void AllSources::EmitMessage(std::ostream &o,
+    const std::optional<ProvenanceRange> &range, const std::string &message,
+    bool echoSourceLine) const {
+  if (!range.has_value()) {
+    o << message << '\n';
+    return;
+  }
+  CHECK(IsValid(*range));
+  const Origin &origin{MapToOrigin(range->start())};
   std::visit(
       common::visitors{
           [&](const Inclusion &inc) {
             o << inc.source.path();
-            std::size_t offset{origin.covers.MemberOffset(range.start())};
+            std::size_t offset{origin.covers.MemberOffset(range->start())};
             std::pair<int, int> pos{inc.source.FindOffsetLineAndColumn(offset)};
             o << ':' << pos.first << ':' << pos.second;
             o << ": " << message << '\n';
@@ -174,8 +179,8 @@ void AllSources::EmitMessage(std::ostream &o, ProvenanceRange range,
                 o << (ch == '\t' ? '\t' : ' ');
               }
               o << '^';
-              if (range.size() > 1) {
-                auto last{range.start() + range.size() - 1};
+              if (range->size() > 1) {
+                auto last{range->start() + range->size() - 1};
                 if (&MapToOrigin(last) == &origin) {
                   auto endOffset{origin.covers.MemberOffset(last)};
                   auto endPos{inc.source.FindOffsetLineAndColumn(endOffset)};
@@ -201,7 +206,7 @@ void AllSources::EmitMessage(std::ostream &o, ProvenanceRange range,
             if (echoSourceLine) {
               o << "that expanded to:\n  " << mac.expansion << "\n  ";
               for (std::size_t j{0};
-                   origin.covers.OffsetMember(j) < range.start(); ++j) {
+                   origin.covers.OffsetMember(j) < range->start(); ++j) {
                 o << (mac.expansion[j] == '\t' ? '\t' : ' ');
               }
               o << "^\n";
@@ -302,23 +307,26 @@ const AllSources::Origin &AllSources::MapToOrigin(Provenance at) const {
   return origin_[low];
 }
 
-ProvenanceRange CookedSource::GetProvenanceRange(CharBlock cookedRange) const {
+CookedSource::CookedSource() {}
+CookedSource::~CookedSource() {}
+
+std::optional<ProvenanceRange> CookedSource::GetProvenanceRange(
+    CharBlock cookedRange) const {
+  if (!IsValid(cookedRange)) {
+    return std::nullopt;
+  }
   ProvenanceRange first{provenanceMap_.Map(cookedRange.begin() - &data_[0])};
   if (cookedRange.size() <= first.size()) {
     return first.Prefix(cookedRange.size());
   }
   ProvenanceRange last{provenanceMap_.Map(cookedRange.end() - &data_[0])};
-  return {first.start(), last.start() - first.start()};
+  return {ProvenanceRange{first.start(), last.start() - first.start()}};
 }
 
 void CookedSource::Marshal() {
   CHECK(provenanceMap_.size() == buffer_.size());
   provenanceMap_.Put(allSources_.AddCompilerInsertion("(after end of source)"));
-  data_.resize(buffer_.size());
-  char *p{&data_[0]};
-  for (char ch : buffer_) {
-    *p++ = ch;
-  }
+  data_ = buffer_.Marshal();
   buffer_.clear();
 }
 

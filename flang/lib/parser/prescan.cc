@@ -219,7 +219,8 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
 }
 
 void Prescanner::Say(Message &&message) {
-  CHECK(cooked_.IsValid(message.GetProvenanceRange(cooked_)));
+  std::optional<ProvenanceRange> range{message.GetProvenanceRange(cooked_)};
+  CHECK(!range.has_value() || cooked_.IsValid(*range));
   messages_.Put(std::move(message));
 }
 

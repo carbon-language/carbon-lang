@@ -63,16 +63,15 @@ public:
 
   void EmitMessage(std::ostream &o, const char *at, const std::string &message,
       bool echoSourceLine = false) const {
-    allSources_.EmitMessage(
-        o, cooked_.GetProvenanceRange(at).start(), message, echoSourceLine);
+    cooked_.allSources().EmitMessage(
+        o, cooked_.GetProvenanceRange(CharBlock(at)), message, echoSourceLine);
   }
 
   bool ForTesting(std::string path, std::ostream &);
 
 private:
   Options options_;
-  AllSources allSources_;
-  CookedSource cooked_{allSources_};
+  CookedSource cooked_;
   Messages messages_;
   bool consumedWholeFile_{false};
   const char *finalRestingPlace_{nullptr};
