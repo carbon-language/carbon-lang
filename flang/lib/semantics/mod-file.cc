@@ -371,7 +371,7 @@ bool ModFileReader::Read(const SourceName &modName) {
     return false;
   }
   auto &modSymbol{*it->second};
-  modSymbol.scope()->set_chars(parsing.cooked().data());
+  modSymbol.scope()->set_chars(std::string{parsing.cooked().data()});
   modSymbol.set(Symbol::Flag::ModFile);
   return true;
 }
