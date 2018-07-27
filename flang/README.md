@@ -104,7 +104,7 @@ Release builds execute quickly.
 
 ```
 cd where/you/want/the/source
-git clone https://github.com/ThePortlandGroup/f18.git
+git clone https://github.com/flang-compiler/f18.git
 ```
 ### Build F18
 ```
