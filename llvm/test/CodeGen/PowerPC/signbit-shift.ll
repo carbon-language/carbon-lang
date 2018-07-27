@@ -17,9 +17,8 @@ define i32 @zext_ifpos(i32 %x) {
 define i32 @add_zext_ifpos(i32 %x) {
 ; CHECK-LABEL: add_zext_ifpos:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    nor 3, 3, 3
-; CHECK-NEXT:    srwi 3, 3, 31
-; CHECK-NEXT:    addi 3, 3, 41
+; CHECK-NEXT:    srawi 3, 3, 31
+; CHECK-NEXT:    addi 3, 3, 42
 ; CHECK-NEXT:    blr
   %c = icmp sgt i32 %x, -1
   %e = zext i1 %c to i32
@@ -184,9 +183,8 @@ define i32 @sel_ifneg_fval_bigger(i32 %x) {
 define i32 @add_lshr_not(i32 %x) {
 ; CHECK-LABEL: add_lshr_not:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    nor 3, 3, 3
-; CHECK-NEXT:    srwi 3, 3, 31
-; CHECK-NEXT:    addi 3, 3, 41
+; CHECK-NEXT:    srawi 3, 3, 31
+; CHECK-NEXT:    addi 3, 3, 42
 ; CHECK-NEXT:    blr
   %not = xor i32 %x, -1
   %sh = lshr i32 %not, 31
@@ -200,12 +198,11 @@ define <4 x i32> @add_lshr_not_vec_splat(<4 x i32> %x) {
 ; CHECK-NEXT:    vspltisw 3, -16
 ; CHECK-NEXT:    vspltisw 4, 15
 ; CHECK-NEXT:    addis 3, 2, .LCPI15_0@toc@ha
-; CHECK-NEXT:    xxlnor 34, 34, 34
 ; CHECK-NEXT:    addi 3, 3, .LCPI15_0@toc@l
 ; CHECK-NEXT:    vsubuwm 3, 4, 3
-; CHECK-NEXT:    vsrw 2, 2, 3
+; CHECK-NEXT:    vsraw 2, 2, 3
 ; CHECK-NEXT:    lvx 3, 0, 3
-; CHECK-NEXT:    xxlor 34, 34, 35
+; CHECK-NEXT:    vadduwm 2, 2, 3
 ; CHECK-NEXT:    blr
   %c = xor <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
   %e = lshr <4 x i32> %c, <i32 31, i32 31, i32 31, i32 31>
@@ -216,9 +213,8 @@ define <4 x i32> @add_lshr_not_vec_splat(<4 x i32> %x) {
 define i32 @sub_lshr_not(i32 %x) {
 ; CHECK-LABEL: sub_lshr_not:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    nor 3, 3, 3
 ; CHECK-NEXT:    srwi 3, 3, 31
-; CHECK-NEXT:    subfic 3, 3, 43
+; CHECK-NEXT:    ori 3, 3, 42
 ; CHECK-NEXT:    blr
   %not = xor i32 %x, -1
   %sh = lshr i32 %not, 31
@@ -232,12 +228,11 @@ define <4 x i32> @sub_lshr_not_vec_splat(<4 x i32> %x) {
 ; CHECK-NEXT:    vspltisw 3, -16
 ; CHECK-NEXT:    vspltisw 4, 15
 ; CHECK-NEXT:    addis 3, 2, .LCPI17_0@toc@ha
-; CHECK-NEXT:    xxlnor 34, 34, 34
 ; CHECK-NEXT:    addi 3, 3, .LCPI17_0@toc@l
 ; CHECK-NEXT:    vsubuwm 3, 4, 3
 ; CHECK-NEXT:    vsrw 2, 2, 3
 ; CHECK-NEXT:    lvx 3, 0, 3
-; CHECK-NEXT:    vsubuwm 2, 3, 2
+; CHECK-NEXT:    vadduwm 2, 2, 3
 ; CHECK-NEXT:    blr
   %c = xor <4 x i32> %x, <i32 -1, i32 -1, i32 -1, i32 -1>
   %e = lshr <4 x i32> %c, <i32 31, i32 31, i32 31, i32 31>
