@@ -222,8 +222,29 @@ define <4 x i32> @sub_lshr_not_vec_splat(<4 x i32> %x) {
   ret <4 x i32> %r
 }
 
-define i32 @sub_lshr(i32 %x) {
+define i32 @sub_lshr(i32 %x, i32 %y) {
 ; CHECK-LABEL: sub_lshr:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    sub w0, w1, w0, lsr #31
+; CHECK-NEXT:    ret
+  %sh = lshr i32 %x, 31
+  %r = sub i32 %y, %sh
+  ret i32 %r
+}
+
+define <4 x i32> @sub_lshr_vec(<4 x i32> %x, <4 x i32> %y) {
+; CHECK-LABEL: sub_lshr_vec:
+; CHECK:       // %bb.0:
+; CHECK-NEXT:    ushr v0.4s, v0.4s, #31
+; CHECK-NEXT:    sub v0.4s, v1.4s, v0.4s
+; CHECK-NEXT:    ret
+  %sh = lshr <4 x i32> %x, <i32 31, i32 31, i32 31, i32 31>
+  %r = sub <4 x i32> %y, %sh
+  ret <4 x i32> %r
+}
+
+define i32 @sub_const_op_lshr(i32 %x) {
+; CHECK-LABEL: sub_const_op_lshr:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    mov w8, #43
 ; CHECK-NEXT:    sub w0, w8, w0, lsr #31
@@ -233,15 +254,15 @@ define i32 @sub_lshr(i32 %x) {
   ret i32 %r
 }
 
-define <4 x i32> @sub_lshr_vec_splat(<4 x i32> %x) {
-; CHECK-LABEL: sub_lshr_vec_splat:
+define <4 x i32> @sub_const_op_lshr_vec(<4 x i32> %x) {
+; CHECK-LABEL: sub_const_op_lshr_vec:
 ; CHECK:       // %bb.0:
 ; CHECK-NEXT:    ushr v0.4s, v0.4s, #31
 ; CHECK-NEXT:    movi v1.4s, #42
 ; CHECK-NEXT:    sub v0.4s, v1.4s, v0.4s
 ; CHECK-NEXT:    ret
-  %e = lshr <4 x i32> %x, <i32 31, i32 31, i32 31, i32 31>
-  %r = sub <4 x i32> <i32 42, i32 42, i32 42, i32 42>, %e
+  %sh = lshr <4 x i32> %x, <i32 31, i32 31, i32 31, i32 31>
+  %r = sub <4 x i32> <i32 42, i32 42, i32 42, i32 42>, %sh
   ret <4 x i32> %r
 }
 
