@@ -4066,3 +4066,54 @@ class sve_int_bin_cons_misc_0_c<bits<8> opc, string asm, ZPRRegOp zprty>
   let Inst{9-5}   = Zn;
   let Inst{4-0}   = Zd;
 }
+
+//===----------------------------------------------------------------------===//
+// SVE Integer Reduction Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_reduce<bits<2> sz8_32, bits<2> fmt, bits<3> opc, string asm,
+                     ZPRRegOp zprty, RegisterClass regtype>
+: I<(outs regtype:$Vd), (ins PPR3bAny:$Pg, zprty:$Zn),
+  asm, "\t$Vd, $Pg, $Zn",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Vd;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = sz8_32;
+  let Inst{21}    = 0b0;
+  let Inst{20-19} = fmt;
+  let Inst{18-16} = opc;
+  let Inst{15-13} = 0b001;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Vd;
+}
+
+multiclass sve_int_reduce_0_saddv<bits<3> opc, string asm> {
+  def _B : sve_int_reduce<0b00, 0b00, opc, asm, ZPR8, FPR64>;
+  def _H : sve_int_reduce<0b01, 0b00, opc, asm, ZPR16, FPR64>;
+  def _S : sve_int_reduce<0b10, 0b00, opc, asm, ZPR32, FPR64>;
+}
+
+multiclass sve_int_reduce_0_uaddv<bits<3> opc, string asm> {
+  def _B : sve_int_reduce<0b00, 0b00, opc, asm, ZPR8, FPR64>;
+  def _H : sve_int_reduce<0b01, 0b00, opc, asm, ZPR16, FPR64>;
+  def _S : sve_int_reduce<0b10, 0b00, opc, asm, ZPR32, FPR64>;
+  def _D : sve_int_reduce<0b11, 0b00, opc, asm, ZPR64, FPR64>;
+}
+
+multiclass sve_int_reduce_1<bits<3> opc, string asm> {
+  def _B : sve_int_reduce<0b00, 0b01, opc, asm, ZPR8, FPR8>;
+  def _H : sve_int_reduce<0b01, 0b01, opc, asm, ZPR16, FPR16>;
+  def _S : sve_int_reduce<0b10, 0b01, opc, asm, ZPR32, FPR32>;
+  def _D : sve_int_reduce<0b11, 0b01, opc, asm, ZPR64, FPR64>;
+}
+
+multiclass sve_int_reduce_2<bits<3> opc, string asm> {
+  def _B : sve_int_reduce<0b00, 0b11, opc, asm, ZPR8, FPR8>;
+  def _H : sve_int_reduce<0b01, 0b11, opc, asm, ZPR16, FPR16>;
+  def _S : sve_int_reduce<0b10, 0b11, opc, asm, ZPR32, FPR32>;
+  def _D : sve_int_reduce<0b11, 0b11, opc, asm, ZPR64, FPR64>;
+}
