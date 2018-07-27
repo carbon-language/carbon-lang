@@ -158,6 +158,14 @@ let Predicates = [HasSVE] in {
   defm FCMLA_ZZZI : sve_fp_fcmla_by_indexed_elem<"fcmla">;
   defm FMUL_ZZZI   : sve_fp_fmul_by_indexed_elem<"fmul">;
 
+  // SVE floating point reductions.
+  defm FADDA_VPZ   : sve_fp_2op_p_vd<0b000, "fadda">;
+  defm FADDV_VPZ   : sve_fp_fast_red<0b000, "faddv">;
+  defm FMAXNMV_VPZ : sve_fp_fast_red<0b100, "fmaxnmv">;
+  defm FMINNMV_VPZ : sve_fp_fast_red<0b101, "fminnmv">;
+  defm FMAXV_VPZ   : sve_fp_fast_red<0b110, "fmaxv">;
+  defm FMINV_VPZ   : sve_fp_fast_red<0b111, "fminv">;
+
   // Splat immediate (unpredicated)
   defm DUP_ZI   : sve_int_dup_imm<"dup">;
   defm FDUP_ZI  : sve_int_dup_fpimm<"fdup">;

@@ -2083,6 +2083,68 @@ multiclass sve_int_ucmp_vi<bits<2> opc, string asm> {
 
 
 //===----------------------------------------------------------------------===//
+// SVE Floating Point Fast Reduction Group
+//===----------------------------------------------------------------------===//
+
+class sve_fp_fast_red<bits<2> sz, bits<3> opc, string asm,
+                      ZPRRegOp zprty, RegisterClass dstRegClass>
+: I<(outs dstRegClass:$Vd), (ins PPR3bAny:$Pg, zprty:$Zn),
+  asm, "\t$Vd, $Pg, $Zn",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zn;
+  bits<5> Vd;
+  bits<3> Pg;
+  let Inst{31-24} = 0b01100101;
+  let Inst{23-22} = sz;
+  let Inst{21-19} = 0b000;
+  let Inst{18-16} = opc;
+  let Inst{15-13} = 0b001;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Vd;
+}
+
+multiclass sve_fp_fast_red<bits<3> opc, string asm> {
+  def _H : sve_fp_fast_red<0b01, opc, asm, ZPR16, FPR16>;
+  def _S : sve_fp_fast_red<0b10, opc, asm, ZPR32, FPR32>;
+  def _D : sve_fp_fast_red<0b11, opc, asm, ZPR64, FPR64>;
+}
+
+
+//===----------------------------------------------------------------------===//
+// SVE Floating Point Accumulating Reduction Group
+//===----------------------------------------------------------------------===//
+
+class sve_fp_2op_p_vd<bits<2> sz, bits<3> opc, string asm,
+                      ZPRRegOp zprty, RegisterClass dstRegClass>
+: I<(outs dstRegClass:$Vdn), (ins PPR3bAny:$Pg, dstRegClass:$_Vdn, zprty:$Zm),
+  asm, "\t$Vdn, $Pg, $_Vdn, $Zm",
+  "",
+  []>,
+  Sched<[]> {
+  bits<3> Pg;
+  bits<5> Vdn;
+  bits<5> Zm;
+  let Inst{31-24} = 0b01100101;
+  let Inst{23-22} = sz;
+  let Inst{21-19} = 0b011;
+  let Inst{18-16} = opc;
+  let Inst{15-13} = 0b001;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zm;
+  let Inst{4-0}   = Vdn;
+
+  let Constraints = "$Vdn = $_Vdn";
+}
+
+multiclass sve_fp_2op_p_vd<bits<3> opc, string asm> {
+  def _H : sve_fp_2op_p_vd<0b01, opc, asm, ZPR16, FPR16>;
+  def _S : sve_fp_2op_p_vd<0b10, opc, asm, ZPR32, FPR32>;
+  def _D : sve_fp_2op_p_vd<0b11, opc, asm, ZPR64, FPR64>;
+}
+
+//===----------------------------------------------------------------------===//
 // SVE Floating Point Compare - Vectors Group
 //===----------------------------------------------------------------------===//
 
