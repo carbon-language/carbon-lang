@@ -103,7 +103,7 @@ private:
 static_assert(sizeof(Dimension) == sizeof(ISO::CFI_dim_t));
 
 // The storage for this object follows the last used dim[] entry in a
-// DescriptorView (CFI_cdesc_t) generic descriptor; this is why that class
+// Descriptor (CFI_cdesc_t) generic descriptor; this is why that class
 // cannot be defined as a derivation or encapsulation of the standard
 // argument descriptor.  Space matters here, since dynamic descriptors
 // can serve as components of derived type instances.  The presence of
@@ -145,13 +145,25 @@ private:
   // type parameter's type, if shorter than 64 bits, then sign-extended.
 };
 
-// A C++ view of a standard descriptor object.  Do not use for actually
-// allocating a descriptor, as its size cannot be known at compilation
-// time -- see Descriptor below for that.
-class DescriptorView {
+// A C++ view of a standard descriptor object.
+class Descriptor {
 public:
-  DescriptorView() = delete;
-  ~DescriptorView() = delete;
+  Descriptor(TypeCode t, std::size_t elementBytes, void *p = nullptr,
+      int rank = CFI_MAX_RANK, const SubscriptValue *extent = nullptr);
+  Descriptor(TypeCode::Form f, int kind, void *p = nullptr,
+      int rank = CFI_MAX_RANK, const SubscriptValue *extent = nullptr);
+  Descriptor(const DerivedTypeSpecialization &dts, void *p = nullptr,
+      int rank = CFI_MAX_RANK, const SubscriptValue *extent = nullptr);
+
+  static Descriptor *Create(TypeCode t, std::size_t elementBytes,
+      void *p = nullptr, int rank = CFI_MAX_RANK,
+      const SubscriptValue *extent = nullptr);
+  static Descriptor *Create(TypeCode::Form f, int kind, void *p = nullptr,
+      int rank = CFI_MAX_RANK, const SubscriptValue *extent = nullptr);
+  static Descriptor *Create(const DerivedTypeSpecialization &dts,
+      void *p = nullptr, int rank = CFI_MAX_RANK,
+      const SubscriptValue *extent = nullptr);
+  void Destroy();
 
   ISO::CFI_cdesc_t &raw() { return raw_; }
   const ISO::CFI_cdesc_t &raw() const { return raw_; }
@@ -159,7 +171,7 @@ public:
   int rank() const { return raw_.rank; }
   TypeCode type() const { return TypeCode{raw_.type}; }
 
-  DescriptorView &set_base_addr(void *p) {
+  Descriptor &set_base_addr(void *p) {
     raw_.base_addr = p;
     return *this;
   }
@@ -220,7 +232,7 @@ public:
 
   static constexpr std::size_t SizeInBytes(
       int rank, bool nontrivialType = false, int lengthTypeParameters = 0) {
-    std::size_t bytes{sizeof(DescriptorView) - sizeof(Dimension)};
+    std::size_t bytes{sizeof(Descriptor) - sizeof(Dimension)};
     bytes += rank * sizeof(Dimension);
     if (nontrivialType || lengthTypeParameters > 0) {
       bytes += DescriptorAddendum::SizeInBytes(lengthTypeParameters);
@@ -231,12 +243,6 @@ public:
 
   void Check() const;
 
-  int Establish(TypeCode t, std::size_t elementBytes, void *p = nullptr,
-      int rank = 0, const SubscriptValue *extent = nullptr);
-  int Establish(TypeCode::Form f, int kind, void *p = nullptr, int rank = 0,
-      const SubscriptValue *extent = nullptr);
-  int Establish(const DerivedTypeSpecialization &, void *p = nullptr,
-      int rank = 0, const SubscriptValue *extent = nullptr);
   // TODO: creation of sections
 
   template<typename A> A &Element(std::size_t offset = 0) const {
@@ -262,7 +268,7 @@ private:
 
   ISO::CFI_cdesc_t raw_;
 };
-static_assert(sizeof(DescriptorView) == sizeof(ISO::CFI_cdesc_t));
+static_assert(sizeof(Descriptor) == sizeof(ISO::CFI_cdesc_t));
 
 // Static type information is suitable for residence in a read-only section.
 // Information about intrinsic types is inferable from raw CFI_type_t
@@ -280,7 +286,7 @@ public:
 
   TypeParameterValue KindParameterValue(
       const DerivedTypeSpecialization &) const;
-  TypeParameterValue Value(const DescriptorView &) const;
+  TypeParameterValue Value(const Descriptor &) const;
 
 private:
   const char *name_;
@@ -303,7 +309,7 @@ class Component {
 public:
   const char *name() const { return name_; }
   TypeCode typeCode() const { return typeCode_; }
-  const DescriptorView *staticDescriptor() const { return staticDescriptor_; }
+  const Descriptor *staticDescriptor() const { return staticDescriptor_; }
   bool IsParent() const { return (flags_ & PARENT) != 0; }
   bool IsPrivate() const { return (flags_ & PRIVATE) != 0; }
   bool IsDescriptor() const { return (flags_ & IS_DESCRIPTOR) != 0; }
@@ -313,7 +319,7 @@ private:
   const char *name_{nullptr};
   std::uint32_t flags_{0};
   TypeCode typeCode_{CFI_type_other};
-  const DescriptorView *staticDescriptor_{nullptr};
+  const Descriptor *staticDescriptor_{nullptr};
 };
 
 struct ExecutableCode {
@@ -348,7 +354,11 @@ public:
       const DefinedAssignment *da)
     : name_{n}, kindParameters_{kps}, lenParameters_{lps}, components_{cs},
       typeParameter_{tp}, typeBoundProcedures_{tbps}, typeBoundProcedure_{tbp},
-      definedAssignments_{das}, definedAssignment_{da} {}
+      definedAssignments_{das}, definedAssignment_{da} {
+    if (IsNontrivialAnalysis()) {
+      flags_ |= NONTRIVIAL;
+    }
+  }
 
   const char *name() const { return name_; }
   int kindParameters() const { return kindParameters_; }
@@ -377,16 +387,20 @@ public:
   bool AnyPrivate() const;
   bool IsSequence() const { return (flags_ & SEQUENCE) != 0; }
   bool IsBindC() const { return (flags_ & BIND_C) != 0; }
-  bool IsNonTrivial() const;
+  bool IsNontrivial() const { return (flags_ & NONTRIVIAL) != 0; }
 
   // TODO: assignment
   // TODO: finalization
 
 private:
-  enum Flag { SEQUENCE = 1, BIND_C = 2 };
+  enum Flag { SEQUENCE = 1, BIND_C = 2, NONTRIVIAL = 4 };
+
+  // True when any descriptor of data of this derived type will require
+  // an addendum pointing to a DerivedTypeSpecialization &/or values of
+  // length type parameters.  Conservative.
+  bool IsNontrivialAnalysis() const;
 
   const char *name_{""};  // NUL-terminated constant text
-  std::uint64_t flags_{0};  // needed for IsSameType() correct semantics
   int kindParameters_{0};
   int lenParameters_{0};
   int components_{0};  // *not* including type parameters
@@ -398,6 +412,7 @@ private:
   ExecutableCode finalSubroutine_;  // can be null
   int definedAssignments_{0};
   const DefinedAssignment *definedAssignment_{nullptr};  // array
+  std::uint64_t flags_{0};
 };
 
 class ComponentSpecialization {
@@ -408,12 +423,12 @@ public:
   template<typename A> const A *Locate(const char *instance) const {
     return reinterpret_cast<const A *>(instance + offset_);
   }
-  const DescriptorView *GetDescriptorView(
+  const Descriptor *GetDescriptor(
       const Component &c, const char *instance) const {
-    if (const DescriptorView * staticDescriptor{c.staticDescriptor()}) {
+    if (const Descriptor * staticDescriptor{c.staticDescriptor()}) {
       return staticDescriptor;
     } else if (c.IsDescriptor()) {
-      return Locate<const DescriptorView>(instance);
+      return Locate<const Descriptor>(instance);
     } else {
       return nullptr;
     }
@@ -434,6 +449,7 @@ public:
       const ComponentSpecialization *cs)
     : derivedType_{dt}, bytes_{n}, initializer_{init}, kindParameterValue_{kp},
       componentSpecialization_{cs} {}
+
   const DerivedType &derivedType() const { return derivedType_; }
 
   std::size_t SizeInBytes() const { return bytes_; }
@@ -463,63 +479,29 @@ struct ProcedurePointer {
   void *staticLink;
 };
 
-// TODO: coarray hooks
-
-
-// TODO: Change mind on this class template.  Restore DescriptorView -> Descriptor,
-// its constructors, and add a factory static member function and a destructor
-// that cleans up a non-pointer.
-
 template<int MAX_RANK = CFI_MAX_RANK,
     bool NONTRIVIAL_DERIVED_TYPE_ALLOWED = false, int MAX_LEN_PARMS = 0>
-class alignas(DescriptorView) Descriptor {
+class alignas(Descriptor) StaticDescriptor {
 public:
   static constexpr int maxRank{MAX_RANK};
   static constexpr int maxLengthTypeParameters{MAX_LEN_PARMS};
   static constexpr bool hasAddendum{
       NONTRIVIAL_DERIVED_TYPE_ALLOWED || MAX_LEN_PARMS > 0};
 
-  Descriptor(TypeCode t, std::size_t elementBytes, int rank = maxRank,
-      const SubscriptValue *extent = nullptr) {
-    View().Establish(t, elementBytes, rank, extent);
-  }
-  Descriptor(TypeCode::Form f, int kind, int rank = maxRank,
-      const SubscriptValue *extent = nullptr) {
-    View().Establish(f, kind, rank, extent);
-  }
-  Descriptor(const DerivedTypeSpecialization &dts, int rank = maxRank,
-      const SubscriptValue *extent = nullptr) {
-    View().Establish(dts, rank, extent);
+  Descriptor &descriptor() { return *reinterpret_cast<Descriptor *>(this); }
+  const Descriptor &descriptor() const {
+    return *reinterpret_cast<const Descriptor *>(this);
   }
 
-  DescriptorView &View() {
-    return *reinterpret_cast<DescriptorView *>(storage_);
-  }
-  const DescriptorView &View() const {
-    return *reinterpret_cast<const DescriptorView *>(storage_);
-  }
+  // Usage with placement new:
+  //   StaticDescriptor<R,NT,LP> staticDescriptor;
+  //   new(staticDescriptor.storage()) Descriptor{ .... }
+  char *storage() const { return storage_; }
 
 private:
-  static constexpr std::size_t byteSize{DescriptorView::SizeInBytes(
-      maxRank, hasAddendum, maxLengthTypeParameters)};
+  static constexpr std::size_t byteSize{
+      Descriptor::SizeInBytes(maxRank, hasAddendum, maxLengthTypeParameters)};
   char storage_[byteSize];
 };
-
-// A owning pointer to a whole object whose data are contiguous with and
-// preceded in memory by a descriptor.
-class Object {
-public:
-  ~Object();
-  bool Create(TypeCode::Form f, int kind, int rank = 0,
-      const SubscriptValue *extent = nullptr);
-  bool Create(const DerivedTypeSpecialization &, int rank = 0,
-      const SubscriptValue *lenParamsAndExtents = nullptr);
-  bool Exists() const { return p_ != nullptr; }
-  const DescriptorView &descriptorView() const { return *p_; }
-
-private:
-  DescriptorView *p_;
-};
-
 }  // namespace Fortran::runtime
 #endif  // FORTRAN_RUNTIME_DESCRIPTOR_H_
