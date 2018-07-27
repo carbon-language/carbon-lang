@@ -154,8 +154,6 @@
 ; CHECK-NEXT:       Insert fentry calls
 ; CHECK-NEXT:       Insert XRay ops
 ; CHECK-NEXT:       Implement the 'patchable-function' attribute
-; CHECK-NEXT:     Machine Outliner
-; CHECK-NEXT:     FunctionPass Manager
 ; CHECK-NEXT:       Lazy Machine Block Frequency Analysis
 ; CHECK-NEXT:       Machine Optimization Remark Emitter
 ; CHECK-NEXT:       AArch64 Assembly Printer
