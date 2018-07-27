@@ -204,9 +204,9 @@ bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
     // empty file
     content_ = nullptr;
   } else {
-    buffer_ = buffer.MarshalNormalized();  // no '\r' chars, ensure final '\n'
-    content_ = buffer_.data();
-    bytes_ = buffer_.size();
+    normalized_ = buffer.MarshalNormalized();
+    content_ = normalized_.data();
+    bytes_ = normalized_.size();
     lineStart_ = FindLineStarts(content_, bytes_);
   }
   return true;
@@ -216,6 +216,8 @@ void SourceFile::Close() {
   if (useMMap && isMemoryMapped_) {
     munmap(reinterpret_cast<void *>(const_cast<char *>(content_)), bytes_);
     isMemoryMapped_ = false;
+  } else if (!normalized_.empty()) {
+    normalized_.clear();
   } else if (content_ != nullptr) {
     delete[] content_;
   }

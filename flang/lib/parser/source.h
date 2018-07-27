@@ -57,7 +57,7 @@ private:
   const char *content_{nullptr};
   std::size_t bytes_{0};
   std::vector<std::size_t> lineStart_;
-  std::string buffer_;
+  std::string normalized_;
 };
 
 }  // namespace Fortran::parser
