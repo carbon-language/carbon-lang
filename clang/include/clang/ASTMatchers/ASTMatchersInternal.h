@@ -41,6 +41,7 @@
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/NestedNameSpecifier.h"
