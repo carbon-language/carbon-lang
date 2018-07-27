@@ -353,6 +353,7 @@ bool ModFileReader::Read(const SourceName &modName) {
   if (!path.has_value()) {
     return false;
   }
+  // TODO: Construct parsing with an AllSources reference to share provenance
   parser::Parsing parsing;
   parsing.Prescan(*path, {});
   parsing.Parse(&std::cout);

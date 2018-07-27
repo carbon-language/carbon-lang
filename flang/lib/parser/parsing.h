@@ -46,7 +46,10 @@ struct Options {
 
 class Parsing {
 public:
-  Parsing() {}
+  Parsing();
+  explicit Parsing(AllSources &);  // to share an extant AllSources instance
+
+  ~Parsing();
 
   bool consumedWholeFile() const { return consumedWholeFile_; }
   const char *finalRestingPlace() const { return finalRestingPlace_; }

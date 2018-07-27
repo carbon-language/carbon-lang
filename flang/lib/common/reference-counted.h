@@ -21,7 +21,7 @@
 
 namespace Fortran::common {
 
-// A base class for reference-counted objects.
+// A base class for reference-counted objects.  Must be public.
 template<typename A> class ReferenceCounted {
 public:
   ReferenceCounted() {}
