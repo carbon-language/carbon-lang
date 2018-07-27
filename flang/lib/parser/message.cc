@@ -134,6 +134,18 @@ std::string Message::ToString() const {
       text_);
 }
 
+void Message::ResolveProvenances(const CookedSource &cooked) {
+  if (CharBlock * cb{std::get_if<CharBlock>(&location_)}) {
+    if (std::optional<ProvenanceRange> resolved{
+            cooked.GetProvenanceRange(*cb)}) {
+      location_ = *resolved;
+    }
+  }
+  if (Message * attachment{attachment_.get()}) {
+    attachment->ResolveProvenances(cooked);
+  }
+}
+
 std::optional<ProvenanceRange> Message::GetProvenanceRange(
     const CookedSource &cooked) const {
   return std::visit(common::visitors{[&](const CharBlock &cb) {
@@ -218,6 +230,12 @@ void Messages::Copy(const Messages &that) {
   for (const Message &m : that.messages_) {
     Message copy{m};
     Put(std::move(copy));
+  }
+}
+
+void Messages::ResolveProvenances(const CookedSource &cooked) {
+  for (Message &m : messages_) {
+    m.ResolveProvenances(cooked);
   }
 }
 

@@ -144,6 +144,7 @@ public:
   bool SortBefore(const Message &that) const;
   bool IsFatal() const;
   std::string ToString() const;
+  void ResolveProvenances(const CookedSource &);
   std::optional<ProvenanceRange> GetProvenanceRange(const CookedSource &) const;
   void Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
@@ -207,6 +208,7 @@ public:
 
   void Incorporate(Messages &);
   void Copy(const Messages &);
+  void ResolveProvenances(const CookedSource &);
   void Emit(std::ostream &, const CookedSource &cooked,
       bool echoSourceLines = true) const;
 
