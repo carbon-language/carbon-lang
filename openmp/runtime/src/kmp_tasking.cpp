@@ -1596,6 +1596,61 @@ kmp_int32 __kmpc_omp_task(ident_t *loc_ref, kmp_int32 gtid,
   return res;
 }
 
+// __kmp_omp_taskloop_task: Wrapper around __kmp_omp_task to schedule
+// a taskloop task with the correct OMPT return address
+//
+// loc_ref: location of original task pragma (ignored)
+// gtid: Global Thread ID of encountering thread
+// new_task: non-thread-switchable task thunk allocated by
+// __kmp_omp_task_alloc()
+// codeptr_ra: return address for OMPT callback
+// Returns:
+//    TASK_CURRENT_NOT_QUEUED (0) if did not suspend and queue current task to
+//    be resumed later.
+//    TASK_CURRENT_QUEUED (1) if suspended and queued the current task to be
+//    resumed later.
+kmp_int32 __kmp_omp_taskloop_task(ident_t *loc_ref, kmp_int32 gtid,
+                                  kmp_task_t *new_task, void *codeptr_ra) {
+  kmp_int32 res;
+  KMP_SET_THREAD_STATE_BLOCK(EXPLICIT_TASK);
+
+#if KMP_DEBUG || OMPT_SUPPORT
+  kmp_taskdata_t *new_taskdata = KMP_TASK_TO_TASKDATA(new_task);
+#endif
+  KA_TRACE(10, ("__kmpc_omp_task(enter): T#%d loc=%p task=%p\n", gtid, loc_ref,
+                new_taskdata));
+
+#if OMPT_SUPPORT
+  kmp_taskdata_t *parent = NULL;
+  if (UNLIKELY(ompt_enabled.enabled && !new_taskdata->td_flags.started)) {
+    parent = new_taskdata->td_parent;
+    if (!parent->ompt_task_info.frame.enter_frame)
+      parent->ompt_task_info.frame.enter_frame = OMPT_GET_FRAME_ADDRESS(1);
+    if (ompt_enabled.ompt_callback_task_create) {
+      ompt_data_t task_data = ompt_data_none;
+      ompt_callbacks.ompt_callback(ompt_callback_task_create)(
+          parent ? &(parent->ompt_task_info.task_data) : &task_data,
+          parent ? &(parent->ompt_task_info.frame) : NULL,
+          &(new_taskdata->ompt_task_info.task_data),
+          ompt_task_explicit | TASK_TYPE_DETAILS_FORMAT(new_taskdata), 0,
+          codeptr_ra);
+    }
+  }
+#endif
+
+  res = __kmp_omp_task(gtid, new_task, true);
+
+  KA_TRACE(10, ("__kmpc_omp_task(exit): T#%d returning "
+                "TASK_CURRENT_NOT_QUEUED: loc=%p task=%p\n",
+                gtid, loc_ref, new_taskdata));
+#if OMPT_SUPPORT
+  if (UNLIKELY(ompt_enabled.enabled && parent != NULL)) {
+    parent->ompt_task_info.frame.enter_frame = NULL;
+  }
+#endif
+  return res;
+}
+
 template <bool ompt>
 static kmp_int32 __kmpc_omp_taskwait_template(ident_t *loc_ref, kmp_int32 gtid,
                                               void *frame_address,
@@ -3680,23 +3735,28 @@ public:
 
 // __kmp_taskloop_linear: Start tasks of the taskloop linearly
 //
-// loc       Source location information
-// gtid      Global thread ID
-// task      Pattern task, exposes the loop iteration range
-// lb        Pointer to loop lower bound in task structure
-// ub        Pointer to loop upper bound in task structure
-// st        Loop stride
-// ub_glob   Global upper bound (used for lastprivate check)
-// num_tasks Number of tasks to execute
-// grainsize Number of loop iterations per task
-// extras    Number of chunks with grainsize+1 iterations
-// tc        Iterations count
-// task_dup  Tasks duplication routine
+// loc        Source location information
+// gtid       Global thread ID
+// task       Pattern task, exposes the loop iteration range
+// lb         Pointer to loop lower bound in task structure
+// ub         Pointer to loop upper bound in task structure
+// st         Loop stride
+// ub_glob    Global upper bound (used for lastprivate check)
+// num_tasks  Number of tasks to execute
+// grainsize  Number of loop iterations per task
+// extras     Number of chunks with grainsize+1 iterations
+// tc         Iterations count
+// task_dup   Tasks duplication routine
+// codeptr_ra Return address for OMPT events
 void __kmp_taskloop_linear(ident_t *loc, int gtid, kmp_task_t *task,
                            kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
                            kmp_uint64 ub_glob, kmp_uint64 num_tasks,
                            kmp_uint64 grainsize, kmp_uint64 extras,
-                           kmp_uint64 tc, void *task_dup) {
+                           kmp_uint64 tc,
+#if OMPT_SUPPORT
+                           void *codeptr_ra,
+#endif
+                           void *task_dup) {
   KMP_COUNT_BLOCK(OMP_TASKLOOP);
   KMP_TIME_PARTITIONED_BLOCK(OMP_taskloop_scheduling);
   p_task_dup_t ptask_dup = (p_task_dup_t)task_dup;
@@ -3764,7 +3824,12 @@ void __kmp_taskloop_linear(ident_t *loc, int gtid, kmp_task_t *task,
               gtid, i, next_task, lower, upper, st,
               next_task_bounds.get_lower_offset(),
               next_task_bounds.get_upper_offset()));
+#if OMPT_SUPPORT
+    __kmp_omp_taskloop_task(NULL, gtid, next_task,
+                           codeptr_ra); // schedule new task
+#else
     __kmp_omp_task(gtid, next_task, true); // schedule new task
+#endif
     lower = upper + st; // adjust lower bound for the next iteration
   }
   // free the pattern task and exit
@@ -3787,11 +3852,17 @@ typedef struct __taskloop_params {
   kmp_uint64 extras;
   kmp_uint64 tc;
   kmp_uint64 num_t_min;
+#if OMPT_SUPPORT
+  void *codeptr_ra;
+#endif
 } __taskloop_params_t;
 
 void __kmp_taskloop_recur(ident_t *, int, kmp_task_t *, kmp_uint64 *,
                           kmp_uint64 *, kmp_int64, kmp_uint64, kmp_uint64,
                           kmp_uint64, kmp_uint64, kmp_uint64, kmp_uint64,
+#if OMPT_SUPPORT
+                          void *,
+#endif
                           void *);
 
 // Execute part of the the taskloop submitted as a task.
@@ -3810,6 +3881,9 @@ int __kmp_taskloop_task(int gtid, void *ptask) {
   kmp_uint64 extras = p->extras;
   kmp_uint64 tc = p->tc;
   kmp_uint64 num_t_min = p->num_t_min;
+#if OMPT_SUPPORT
+  void *codeptr_ra = p->codeptr_ra;
+#endif
 #if KMP_DEBUG
   kmp_taskdata_t *taskdata = KMP_TASK_TO_TASKDATA(task);
   KMP_DEBUG_ASSERT(task != NULL);
@@ -3821,10 +3895,18 @@ int __kmp_taskloop_task(int gtid, void *ptask) {
   KMP_DEBUG_ASSERT(num_tasks * 2 + 1 > num_t_min);
   if (num_tasks > num_t_min)
     __kmp_taskloop_recur(NULL, gtid, task, lb, ub, st, ub_glob, num_tasks,
-                         grainsize, extras, tc, num_t_min, task_dup);
+                         grainsize, extras, tc, num_t_min,
+#if OMPT_SUPPORT
+                         codeptr_ra,
+#endif
+                         task_dup);
   else
     __kmp_taskloop_linear(NULL, gtid, task, lb, ub, st, ub_glob, num_tasks,
-                          grainsize, extras, tc, task_dup);
+                          grainsize, extras, tc,
+#if OMPT_SUPPORT
+                          codeptr_ra,
+#endif
+                          task_dup);
 
   KA_TRACE(40, ("__kmp_taskloop_task(exit): T#%d\n", gtid));
   return 0;
@@ -3833,24 +3915,29 @@ int __kmp_taskloop_task(int gtid, void *ptask) {
 // Schedule part of the the taskloop as a task,
 // execute the rest of the the taskloop.
 //
-// loc       Source location information
-// gtid      Global thread ID
-// task      Pattern task, exposes the loop iteration range
-// lb        Pointer to loop lower bound in task structure
-// ub        Pointer to loop upper bound in task structure
-// st        Loop stride
-// ub_glob   Global upper bound (used for lastprivate check)
-// num_tasks Number of tasks to execute
-// grainsize Number of loop iterations per task
-// extras    Number of chunks with grainsize+1 iterations
-// tc        Iterations count
-// num_t_min Threashold to launch tasks recursively
-// task_dup  Tasks duplication routine
+// loc        Source location information
+// gtid       Global thread ID
+// task       Pattern task, exposes the loop iteration range
+// lb         Pointer to loop lower bound in task structure
+// ub         Pointer to loop upper bound in task structure
+// st         Loop stride
+// ub_glob    Global upper bound (used for lastprivate check)
+// num_tasks  Number of tasks to execute
+// grainsize  Number of loop iterations per task
+// extras     Number of chunks with grainsize+1 iterations
+// tc         Iterations count
+// num_t_min  Threashold to launch tasks recursively
+// task_dup   Tasks duplication routine
+// codeptr_ra Return address for OMPT events
 void __kmp_taskloop_recur(ident_t *loc, int gtid, kmp_task_t *task,
                           kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
                           kmp_uint64 ub_glob, kmp_uint64 num_tasks,
                           kmp_uint64 grainsize, kmp_uint64 extras,
-                          kmp_uint64 tc, kmp_uint64 num_t_min, void *task_dup) {
+                          kmp_uint64 tc, kmp_uint64 num_t_min,
+#if OMPT_SUPPORT
+                          void *codeptr_ra,
+#endif
+                          void *task_dup) {
 #if KMP_DEBUG
   kmp_taskdata_t *taskdata = KMP_TASK_TO_TASKDATA(task);
   KMP_DEBUG_ASSERT(task != NULL);
@@ -3920,15 +4007,32 @@ void __kmp_taskloop_recur(ident_t *loc, int gtid, kmp_task_t *task,
   p->extras = ext1;
   p->tc = tc1;
   p->num_t_min = num_t_min;
-  __kmp_omp_task(gtid, new_task, true); // schedule new task
+#if OMPT_SUPPORT
+  p->codeptr_ra = codeptr_ra;
+#endif
+
+#if OMPT_SUPPORT
+  // schedule new task with correct return address for OMPT events
+  __kmp_omp_taskloop_task(NULL, gtid, new_task, codeptr_ra);
+#else
+  __kmp_omp_task(NULL, gtid, new_task); // schedule new task
+#endif
 
   // execute the 1st half of current subrange
   if (n_tsk0 > num_t_min)
     __kmp_taskloop_recur(loc, gtid, task, lb, ub, st, ub_glob, n_tsk0, gr_size0,
-                         ext0, tc0, num_t_min, task_dup);
+                         ext0, tc0, num_t_min,
+#if OMPT_SUPPORT
+                         codeptr_ra,
+#endif
+                         task_dup);
   else
     __kmp_taskloop_linear(loc, gtid, task, lb, ub, st, ub_glob, n_tsk0,
-                          gr_size0, ext0, tc0, task_dup);
+                          gr_size0, ext0, tc0,
+#if OMPT_SUPPORT
+                          codeptr_ra,
+#endif
+                          task_dup);
 
   KA_TRACE(40, ("__kmpc_taskloop_recur(exit): T#%d\n", gtid));
 }
@@ -3954,16 +4058,6 @@ void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, int if_val,
                      int sched, kmp_uint64 grainsize, void *task_dup) {
   kmp_taskdata_t *taskdata = KMP_TASK_TO_TASKDATA(task);
   KMP_DEBUG_ASSERT(task != NULL);
-
-#if OMPT_SUPPORT && OMPT_OPTIONAL
-  ompt_team_info_t *team_info = __ompt_get_teaminfo(0, NULL);
-  ompt_task_info_t *task_info = __ompt_get_task_info_object(0);
-  if (ompt_enabled.ompt_callback_work) {
-    ompt_callbacks.ompt_callback(ompt_callback_work)(
-        ompt_work_taskloop, ompt_scope_begin, &(team_info->parallel_data),
-        &(task_info->task_data), 0, OMPT_GET_RETURN_ADDRESS(0));
-  }
-#endif
 
   if (nogroup == 0) {
 #if OMPT_SUPPORT && OMPT_OPTIONAL
@@ -4005,6 +4099,17 @@ void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, int if_val,
     __kmp_task_finish<false>(gtid, task, current_task);
     return;
   }
+
+#if OMPT_SUPPORT && OMPT_OPTIONAL
+  ompt_team_info_t *team_info = __ompt_get_teaminfo(0, NULL);
+  ompt_task_info_t *task_info = __ompt_get_task_info_object(0);
+  if (ompt_enabled.ompt_callback_work) {
+    ompt_callbacks.ompt_callback(ompt_callback_work)(
+        ompt_work_taskloop, ompt_scope_begin, &(team_info->parallel_data),
+        &(task_info->task_data), tc, OMPT_GET_RETURN_ADDRESS(0));
+  }
+#endif
+
   if (num_tasks_min == 0)
     // TODO: can we choose better default heuristic?
     num_tasks_min =
@@ -4051,33 +4156,44 @@ void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, int if_val,
   if (if_val == 0) { // if(0) specified, mark task as serial
     taskdata->td_flags.task_serial = 1;
     taskdata->td_flags.tiedness = TASK_TIED; // AC: serial task cannot be untied
-#if OMPT_SUPPORT && OMPT_OPTIONAL
-    OMPT_STORE_RETURN_ADDRESS(gtid);
-#endif
     // always start serial tasks linearly
     __kmp_taskloop_linear(loc, gtid, task, lb, ub, st, ub_glob, num_tasks,
-                          grainsize, extras, tc, task_dup);
+                          grainsize, extras, tc,
+#if OMPT_SUPPORT
+                          OMPT_GET_RETURN_ADDRESS(0),
+#endif
+                          task_dup);
     // !taskdata->td_flags.native => currently force linear spawning of tasks
     // for GOMP_taskloop
   } else if (num_tasks > num_tasks_min && !taskdata->td_flags.native) {
     KA_TRACE(20, ("__kmpc_taskloop: T#%d, go recursive: tc %llu, #tasks %llu"
                   "(%lld), grain %llu, extras %llu\n",
                   gtid, tc, num_tasks, num_tasks_min, grainsize, extras));
-#if OMPT_SUPPORT && OMPT_OPTIONAL
-    OMPT_STORE_RETURN_ADDRESS(gtid);
-#endif
     __kmp_taskloop_recur(loc, gtid, task, lb, ub, st, ub_glob, num_tasks,
-                         grainsize, extras, tc, num_tasks_min, task_dup);
+                         grainsize, extras, tc, num_tasks_min,
+#if OMPT_SUPPORT
+                         OMPT_GET_RETURN_ADDRESS(0),
+#endif
+                         task_dup);
   } else {
     KA_TRACE(20, ("__kmpc_taskloop: T#%d, go linear: tc %llu, #tasks %llu"
                   "(%lld), grain %llu, extras %llu\n",
                   gtid, tc, num_tasks, num_tasks_min, grainsize, extras));
-#if OMPT_SUPPORT && OMPT_OPTIONAL
-    OMPT_STORE_RETURN_ADDRESS(gtid);
-#endif
     __kmp_taskloop_linear(loc, gtid, task, lb, ub, st, ub_glob, num_tasks,
-                          grainsize, extras, tc, task_dup);
+                          grainsize, extras, tc,
+#if OMPT_SUPPORT
+                          OMPT_GET_RETURN_ADDRESS(0),
+#endif
+                          task_dup);
   }
+
+#if OMPT_SUPPORT && OMPT_OPTIONAL
+  if (ompt_enabled.ompt_callback_work) {
+    ompt_callbacks.ompt_callback(ompt_callback_work)(
+        ompt_work_taskloop, ompt_scope_end, &(team_info->parallel_data),
+        &(task_info->task_data), tc, OMPT_GET_RETURN_ADDRESS(0));
+  }
+#endif
 
   if (nogroup == 0) {
 #if OMPT_SUPPORT && OMPT_OPTIONAL
@@ -4085,13 +4201,6 @@ void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, int if_val,
 #endif
     __kmpc_end_taskgroup(loc, gtid);
   }
-#if OMPT_SUPPORT && OMPT_OPTIONAL
-  if (ompt_enabled.ompt_callback_work) {
-    ompt_callbacks.ompt_callback(ompt_callback_work)(
-        ompt_work_taskloop, ompt_scope_end, &(team_info->parallel_data),
-        &(task_info->task_data), 0, OMPT_GET_RETURN_ADDRESS(0));
-  }
-#endif
   KA_TRACE(20, ("__kmpc_taskloop(exit): T#%d\n", gtid));
 }
 
