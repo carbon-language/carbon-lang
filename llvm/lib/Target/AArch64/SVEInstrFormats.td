@@ -3959,3 +3959,48 @@ multiclass sve_int_bin_cons_misc_0_a_64_lsl<bits<2> opc, string asm> {
   def _2 : sve_int_bin_cons_misc_0_a<opc, 0b10, asm, ZPR64, ZPR64ExtLSL32>;
   def _3 : sve_int_bin_cons_misc_0_a<opc, 0b11, asm, ZPR64, ZPR64ExtLSL64>;
 }
+
+
+//===----------------------------------------------------------------------===//
+// SVE Integer Misc - Unpredicated Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_bin_cons_misc_0_b<bits<2> sz, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zd), (ins zprty:$Zn, zprty:$Zm),
+  asm, "\t$Zd, $Zn, $Zm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zm;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = sz;
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Zm;
+  let Inst{15-10} = 0b101100;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve_int_bin_cons_misc_0_b<string asm> {
+  def _H : sve_int_bin_cons_misc_0_b<0b01, asm, ZPR16>;
+  def _S : sve_int_bin_cons_misc_0_b<0b10, asm, ZPR32>;
+  def _D : sve_int_bin_cons_misc_0_b<0b11, asm, ZPR64>;
+}
+
+class sve_int_bin_cons_misc_0_c<bits<8> opc, string asm, ZPRRegOp zprty>
+: I<(outs zprty:$Zd), (ins zprty:$Zn),
+  asm, "\t$Zd, $Zn",
+  "",
+  []>, Sched<[]> {
+  bits<5> Zd;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = opc{7-6};
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = opc{5-1};
+  let Inst{15-11} = 0b10111;
+  let Inst{10}    = opc{0};
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}

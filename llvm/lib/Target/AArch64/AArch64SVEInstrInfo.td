@@ -135,6 +135,8 @@ let Predicates = [HasSVE] in {
   defm FRECPS_ZZZ  : sve_fp_3op_u_zd<0b110, "frecps">;
   defm FRSQRTS_ZZZ : sve_fp_3op_u_zd<0b111, "frsqrts">;
 
+  defm FTSSEL_ZZZ : sve_int_bin_cons_misc_0_b<"ftssel">;
+
   defm FCADD_ZPmZ : sve_fp_fcadd<"fcadd">;
   defm FCMLA_ZPmZZ : sve_fp_fcmla<"fcmla">;
 
@@ -198,6 +200,10 @@ let Predicates = [HasSVE] in {
 
   def  PUNPKLO_PP : sve_int_perm_punpk<0b0, "punpklo">;
   def  PUNPKHI_PP : sve_int_perm_punpk<0b1, "punpkhi">;
+
+  def FEXPA_ZZ_H : sve_int_bin_cons_misc_0_c<0b01000000, "fexpa", ZPR16>;
+  def FEXPA_ZZ_S : sve_int_bin_cons_misc_0_c<0b10000000, "fexpa", ZPR32>;
+  def FEXPA_ZZ_D : sve_int_bin_cons_misc_0_c<0b11000000, "fexpa", ZPR64>;
 
   def AND_PPzPP   : sve_int_pred_log<0b0000, "and">;
   def BIC_PPzPP   : sve_int_pred_log<0b0001, "bic">;
