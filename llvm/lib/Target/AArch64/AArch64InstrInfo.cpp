@@ -5478,3 +5478,8 @@ MachineBasicBlock::iterator AArch64InstrInfo::insertOutlinedCall(
 
   return CallPt;
 }
+
+bool AArch64InstrInfo::shouldOutlineFromFunctionByDefault(
+  MachineFunction &MF) const {
+  return MF.getFunction().optForMinSize();
+}
