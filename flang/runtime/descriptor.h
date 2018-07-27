@@ -264,7 +264,7 @@ private:
 };
 static_assert(sizeof(DescriptorView) == sizeof(ISO::CFI_cdesc_t));
 
-// Static type information is suitable for loading in a read-only section.
+// Static type information is suitable for residence in a read-only section.
 // Information about intrinsic types is inferable from raw CFI_type_t
 // type codes (packaged as TypeCode above).
 // Information about derived types and their KIND parameter specializations
@@ -464,6 +464,11 @@ struct ProcedurePointer {
 };
 
 // TODO: coarray hooks
+
+
+// TODO: Change mind on this class template.  Restore DescriptorView -> Descriptor,
+// its constructors, and add a factory static member function and a destructor
+// that cleans up a non-pointer.
 
 template<int MAX_RANK = CFI_MAX_RANK,
     bool NONTRIVIAL_DERIVED_TYPE_ALLOWED = false, int MAX_LEN_PARMS = 0>
