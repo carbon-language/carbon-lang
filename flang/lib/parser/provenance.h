@@ -184,14 +184,14 @@ class CookedSource {
 public:
   explicit CookedSource(AllSources &sources) : allSources_{sources} {}
 
-  std::size_t size() const { return data_->size(); }
-  const char &operator[](std::size_t n) const { return (*data_)[n]; }
-  const char &at(std::size_t n) const { return data_->at(n); }
+  std::size_t size() const { return data_.size(); }
+  const char &operator[](std::size_t n) const { return data_[n]; }
+  const char &at(std::size_t n) const { return data_.at(n); }
 
   AllSources &allSources() const { return allSources_; }
 
   bool IsValid(const char *p) const {
-    return p >= &data_->front() && p <= &data_->back() + 1;
+    return p >= &data_.front() && p <= &data_.back() + 1;
   }
   bool IsValid(CharBlock range) const {
     return !range.empty() && IsValid(range.begin()) && IsValid(range.end() - 1);
@@ -211,14 +211,13 @@ public:
     provenanceMap_.Put(pm);
   }
   void Marshal();  // marshals all text into one contiguous block
-  std::unique_ptr<std::vector<char>> MoveChars() { return std::move(data_); }
+  std::vector<char> MoveChars() { return std::move(data_); }
   std::ostream &Dump(std::ostream &) const;
 
 private:
   AllSources &allSources_;
   CharBuffer buffer_;  // before Marshal()
-  // all source, prescanned and preprocessed:
-  std::unique_ptr<std::vector<char>> data_;
+  std::vector<char> data_;  // all of it, prescanned and preprocessed
   OffsetToProvenanceMappings provenanceMap_;
 };
 
