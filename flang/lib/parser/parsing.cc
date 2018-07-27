@@ -78,8 +78,8 @@ void Parsing::Prescan(const std::string &path, Options options) {
     prescanner.AddCompilerDirectiveSentinel("$omp");
     prescanner.AddCompilerDirectiveSentinel("$");  // OMP conditional line
   }
-  ProvenanceRange range{
-      allSources.AddIncludedFile(*sourceFile, ProvenanceRange{})};
+  ProvenanceRange range{allSources.AddIncludedFile(
+      *sourceFile, ProvenanceRange{}, options.isModuleFile)};
   prescanner.Prescan(range);
   cooked_.Marshal();
 }

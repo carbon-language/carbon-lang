@@ -42,6 +42,7 @@ struct Options {
   std::vector<std::string> searchDirectories;
   std::vector<Predefinition> predefinitions;
   bool instrumentedParse{false};
+  bool isModuleFile{false};
 };
 
 class Parsing {
