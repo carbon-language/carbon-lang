@@ -945,11 +945,7 @@ void AMDGPUTargetLowering::analyzeFormalArgumentsCompute(
       unsigned NumRegs =
         getNumRegistersForCallingConv(Ctx, ArgVT);
 
-      if (!Subtarget->isAmdHsaOS() &&
-          (ArgVT == MVT::i16 || ArgVT == MVT::i8 || ArgVT == MVT::f16)) {
-        // The ABI says the caller will extend these values to 32-bits.
-        MemVT = ArgVT.isInteger() ? MVT::i32 : MVT::f32;
-      } else if (NumRegs == 1) {
+      if (NumRegs == 1) {
         // This argument is not split, so the IR type is the memory type.
         if (ArgVT.isExtended()) {
           // We have an extended type, like i24, so we should just use the
