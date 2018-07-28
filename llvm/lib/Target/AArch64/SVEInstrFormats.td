@@ -4117,3 +4117,88 @@ multiclass sve_int_reduce_2<bits<3> opc, string asm> {
   def _S : sve_int_reduce<0b10, 0b11, opc, asm, ZPR32, FPR32>;
   def _D : sve_int_reduce<0b11, 0b11, opc, asm, ZPR64, FPR64>;
 }
+
+
+//===----------------------------------------------------------------------===//
+// SVE Propagate Break Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_brkp<bits<2> opc, string asm>
+: I<(outs PPR8:$Pd), (ins PPRAny:$Pg, PPR8:$Pn, PPR8:$Pm),
+  asm, "\t$Pd, $Pg/z, $Pn, $Pm",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pd;
+  bits<4> Pg;
+  bits<4> Pm;
+  bits<4> Pn;
+  let Inst{31-24} = 0b00100101;
+  let Inst{23}    = 0b0;
+  let Inst{22}    = opc{1};
+  let Inst{21-20} = 0b00;
+  let Inst{19-16} = Pm;
+  let Inst{15-14} = 0b11;
+  let Inst{13-10} = Pg;
+  let Inst{9}     = 0b0;
+  let Inst{8-5}   = Pn;
+  let Inst{4}     = opc{0};
+  let Inst{3-0}   = Pd;
+
+  let Defs = !if(!eq (opc{1}, 1), [NZCV], []);
+}
+
+
+//===----------------------------------------------------------------------===//
+// SVE Partition Break Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_brkn<bit S, string asm>
+: I<(outs PPR8:$Pdm), (ins PPRAny:$Pg, PPR8:$Pn, PPR8:$_Pdm),
+  asm, "\t$Pdm, $Pg/z, $Pn, $_Pdm",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pdm;
+  bits<4> Pg;
+  bits<4> Pn;
+  let Inst{31-23} = 0b001001010;
+  let Inst{22}    = S;
+  let Inst{21-14} = 0b01100001;
+  let Inst{13-10} = Pg;
+  let Inst{9}     = 0b0;
+  let Inst{8-5}   = Pn;
+  let Inst{4}     = 0b0;
+  let Inst{3-0}   = Pdm;
+
+  let Constraints = "$Pdm = $_Pdm";
+  let Defs = !if(!eq (S, 0b1), [NZCV], []);
+}
+
+class sve_int_break<bits<3> opc, string asm, string suffix, dag iops>
+: I<(outs PPR8:$Pd), iops,
+  asm, "\t$Pd, $Pg"#suffix#", $Pn",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pd;
+  bits<4> Pg;
+  bits<4> Pn;
+  let Inst{31-24} = 0b00100101;
+  let Inst{23-22} = opc{2-1};
+  let Inst{21-14} = 0b01000001;
+  let Inst{13-10} = Pg;
+  let Inst{9}     = 0b0;
+  let Inst{8-5}   = Pn;
+  let Inst{4}     = opc{0};
+  let Inst{3-0}   = Pd;
+
+  let Constraints = !if(!eq (opc{0}, 1), "$Pd = $_Pd", "");
+  let Defs = !if(!eq (opc{1}, 1), [NZCV], []);
+
+}
+
+multiclass sve_int_break_m<bits<3> opc, string asm> {
+  def NAME : sve_int_break<opc, asm, "/m", (ins PPR8:$_Pd, PPRAny:$Pg, PPR8:$Pn)>;
+}
+
+multiclass sve_int_break_z<bits<3> opc, string asm> {
+  def NAME : sve_int_break<opc, asm, "/z", (ins PPRAny:$Pg, PPR8:$Pn)>;
+}

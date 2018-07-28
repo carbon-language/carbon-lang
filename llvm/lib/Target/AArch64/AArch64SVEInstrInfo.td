@@ -224,6 +224,21 @@ let Predicates = [HasSVE] in {
   def FEXPA_ZZ_S : sve_int_bin_cons_misc_0_c<0b10000000, "fexpa", ZPR32>;
   def FEXPA_ZZ_D : sve_int_bin_cons_misc_0_c<0b11000000, "fexpa", ZPR64>;
 
+  def BRKPA_PPzPP  : sve_int_brkp<0b00, "brkpa">;
+  def BRKPAS_PPzPP : sve_int_brkp<0b10, "brkpas">;
+  def BRKPB_PPzPP  : sve_int_brkp<0b01, "brkpb">;
+  def BRKPBS_PPzPP : sve_int_brkp<0b11, "brkpbs">;
+
+  def BRKN_PPzP    : sve_int_brkn<0b0, "brkn">;
+  def BRKNS_PPzP   : sve_int_brkn<0b1, "brkns">;
+
+  defm BRKA_PPzP  : sve_int_break_z<0b000, "brka">;
+  defm BRKA_PPmP  : sve_int_break_m<0b001, "brka">;
+  defm BRKAS_PPzP : sve_int_break_z<0b010, "brkas">;
+  defm BRKB_PPzP  : sve_int_break_z<0b100, "brkb">;
+  defm BRKB_PPmP  : sve_int_break_m<0b101, "brkb">;
+  defm BRKBS_PPzP : sve_int_break_z<0b110, "brkbs">;
+
   def AND_PPzPP   : sve_int_pred_log<0b0000, "and">;
   def BIC_PPzPP   : sve_int_pred_log<0b0001, "bic">;
   def EOR_PPzPP   : sve_int_pred_log<0b0010, "eor">;
