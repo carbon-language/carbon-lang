@@ -306,7 +306,8 @@ public:
 
   // Helpers to make a Symbol in the current scope
   template<typename D>
-  Symbol &MakeSymbol(const SourceName &name, const Attrs &attrs, D &&details) {
+  Symbol &MakeSymbol(
+      const SourceName &name, const Attrs &attrs, const D &details) {
     // Note: don't use FindSymbol here. If this is a derived type scope,
     // we want to detect if the name is already declared as a component.
     const auto &it{CurrScope().find(name)};
@@ -348,18 +349,19 @@ public:
   }
   template<typename D>
   Symbol &MakeSymbol(
-      const parser::Name &name, const Attrs &attrs, D &&details) {
-    return MakeSymbol(name.source, attrs, std::move(details));
+      const parser::Name &name, const Attrs &attrs, const D &details) {
+    return MakeSymbol(name.source, attrs, details);
   }
   template<typename D>
-  Symbol &MakeSymbol(const parser::Name &name, D &&details) {
+  Symbol &MakeSymbol(const parser::Name &name, const D &details) {
     return MakeSymbol(name, Attrs(), details);
   }
-  template<typename D> Symbol &MakeSymbol(const SourceName &name, D &&details) {
+  template<typename D>
+  Symbol &MakeSymbol(const SourceName &name, const D &details) {
     return MakeSymbol(name, Attrs(), details);
   }
   Symbol &MakeSymbol(const SourceName &name, Attrs attrs = Attrs{}) {
-    return MakeSymbol(name, attrs, UnknownDetails());
+    return MakeSymbol(name, attrs, UnknownDetails{});
   }
 
 protected:
@@ -545,7 +547,7 @@ private:
   // Handle a statement that sets an attribute on a list of names.
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   void DeclareObjectEntity(const parser::Name &, Attrs);
-  void DeclareProcEntity(const parser::Name &, Attrs, ProcInterface &&);
+  void DeclareProcEntity(const parser::Name &, Attrs, const ProcInterface &);
   bool ConvertToProcEntity(Symbol &);
 
   // Set the type of an entity or report an error.
@@ -1173,7 +1175,7 @@ void ScopeHandler::ApplyImplicitRules(const SourceName &name, Symbol &symbol) {
   if (symbol.has<UnknownDetails>()) {
     symbol.set_details(ObjectEntityDetails{});
   } else if (symbol.has<EntityDetails>()) {
-    symbol.set_details(ObjectEntityDetails(symbol.get<EntityDetails>()));
+    symbol.set_details(ObjectEntityDetails{symbol.get<EntityDetails>()});
   }
   if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
     if (!details->type()) {
@@ -1412,7 +1414,7 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
       details.set_derivedType(*genericSymbol_);
       EraseSymbol(*genericName);
       genericSymbol_ = &MakeSymbol(*genericName);
-      genericSymbol_->set_details(std::move(details));
+      genericSymbol_->set_details(details);
     } else if (!genericSymbol_->isSubprogram()) {
       SayAlreadyDeclared(*genericName, *genericSymbol_);
       EraseSymbol(*genericName);
@@ -1616,7 +1618,7 @@ bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
         }
       }
     }
-    details.add_dummyArg(MakeSymbol(dummyName, std::move(dummyDetails)));
+    details.add_dummyArg(MakeSymbol(dummyName, dummyDetails));
   }
   EraseSymbol(name.source);  // added by PushSubprogramScope
   EntityDetails resultDetails;
@@ -1776,7 +1778,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
   }
   PushScope(Scope::Kind::Subprogram, symbol);
   // can't reuse this name inside subprogram:
-  MakeSymbol(name, SubprogramDetails(details)).set(subpFlag);
+  MakeSymbol(name, details).set(subpFlag);
   return *symbol;
 }
 
@@ -1922,7 +1924,7 @@ void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
 }
 
 void DeclarationVisitor::DeclareProcEntity(
-    const parser::Name &name, Attrs attrs, ProcInterface &&interface) {
+    const parser::Name &name, Attrs attrs, const ProcInterface &interface) {
   Symbol &symbol{DeclareEntity<ProcEntityDetails>(name, attrs)};
   if (auto *details{symbol.detailsIf<ProcEntityDetails>()}) {
     if (interface.type()) {
@@ -1932,7 +1934,7 @@ void DeclarationVisitor::DeclareProcEntity(
               ? Symbol::Flag::Function
               : Symbol::Flag::Subroutine);
     }
-    details->set_interface(std::move(interface));
+    details->set_interface(interface);
     symbol.attrs().set(Attr::EXTERNAL);
   }
 }
@@ -2056,9 +2058,9 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
   }
   if (derivedTypeData_) {
     derivedTypeData_->procComps.emplace_back(
-        ProcDecl{name.source}, GetAttrs(), std::move(interface));
+        ProcDecl{name.source}, GetAttrs(), interface);
   } else {
-    DeclareProcEntity(name, GetAttrs(), std::move(interface));
+    DeclareProcEntity(name, GetAttrs(), interface);
   }
 }
 

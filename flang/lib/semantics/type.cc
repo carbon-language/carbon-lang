@@ -269,25 +269,13 @@ std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
   }
 }
 
-ProcInterface::ProcInterface(const ProcInterface &that)
-  : symbol_{that.symbol_} {
-  if (that.type_) {
-    set_type(*that.type_);
-  }
-}
-ProcInterface &ProcInterface::operator=(ProcInterface &&that) {
-  symbol_ = that.symbol_;
-  type_ = std::move(that.type_);
-  return *this;
-}
-
 void ProcInterface::set_symbol(const Symbol &symbol) {
   CHECK(!type_);
   symbol_ = &symbol;
 }
 void ProcInterface::set_type(const DeclTypeSpec &type) {
   CHECK(!symbol_);
-  type_ = std::make_unique<DeclTypeSpec>(type);
+  type_ = type;
 }
 
 std::ostream &operator<<(std::ostream &o, const ProcDecl &x) {
@@ -295,8 +283,8 @@ std::ostream &operator<<(std::ostream &o, const ProcDecl &x) {
 }
 
 ProcComponentDef::ProcComponentDef(
-    const ProcDecl &decl, Attrs attrs, ProcInterface &&interface)
-  : decl_{decl}, attrs_{attrs}, interface_{std::move(interface)} {
+    const ProcDecl &decl, Attrs attrs, const ProcInterface &interface)
+  : decl_{decl}, attrs_{attrs}, interface_{interface} {
   CHECK(attrs_.test(Attr::POINTER));
   attrs_.CheckValid(
       {Attr::PUBLIC, Attr::PRIVATE, Attr::NOPASS, Attr::POINTER, Attr::PASS});

@@ -105,9 +105,9 @@ const std::string Symbol::GetDetailsName() const {
   return DetailsToString(details_);
 }
 
-void Symbol::set_details(Details &&details) {
+void Symbol::set_details(const Details &details) {
   CHECK(CanReplaceDetails(details));
-  details_.swap(details);
+  details_ = details;
 }
 
 bool Symbol::CanReplaceDetails(const Details &details) const {
