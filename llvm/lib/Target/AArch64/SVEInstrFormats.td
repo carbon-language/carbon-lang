@@ -282,6 +282,47 @@ let Predicates = [HasSVE] in {
 
 
 //===----------------------------------------------------------------------===//
+// SVE Predicate Misc Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_pfalse<bits<6> opc, string asm>
+: I<(outs PPR8:$Pd), (ins),
+  asm, "\t$Pd",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pd;
+  let Inst{31-24} = 0b00100101;
+  let Inst{23-22} = opc{5-4};
+  let Inst{21-19} = 0b011;
+  let Inst{18-16} = opc{3-1};
+  let Inst{15-10} = 0b111001;
+  let Inst{9}     = opc{0};
+  let Inst{8-4}   = 0b00000;
+  let Inst{3-0}   = Pd;
+}
+
+class sve_int_ptest<bits<6> opc, string asm>
+: I<(outs), (ins PPRAny:$Pg, PPR8:$Pn),
+  asm, "\t$Pg, $Pn",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pg;
+  bits<4> Pn;
+  let Inst{31-24} = 0b00100101;
+  let Inst{23-22} = opc{5-4};
+  let Inst{21-19} = 0b010;
+  let Inst{18-16} = opc{3-1};
+  let Inst{15-14} = 0b11;
+  let Inst{13-10} = Pg;
+  let Inst{9}     = opc{0};
+  let Inst{8-5}   = Pn;
+  let Inst{4-0}   = 0b00000;
+
+  let Defs = [NZCV];
+}
+
+
+//===----------------------------------------------------------------------===//
 // SVE Predicate Count Group
 //===----------------------------------------------------------------------===//
 
@@ -4202,3 +4243,4 @@ multiclass sve_int_break_m<bits<3> opc, string asm> {
 multiclass sve_int_break_z<bits<3> opc, string asm> {
   def NAME : sve_int_break<opc, asm, "/z", (ins PPRAny:$Pg, PPR8:$Pn)>;
 }
+

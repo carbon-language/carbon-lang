@@ -239,6 +239,9 @@ let Predicates = [HasSVE] in {
   defm BRKB_PPmP  : sve_int_break_m<0b101, "brkb">;
   defm BRKBS_PPzP : sve_int_break_z<0b110, "brkbs">;
 
+  def PTEST_PP : sve_int_ptest<0b010000, "ptest">;
+  def PFALSE   : sve_int_pfalse<0b000000, "pfalse">;
+
   def AND_PPzPP   : sve_int_pred_log<0b0000, "and">;
   def BIC_PPzPP   : sve_int_pred_log<0b0001, "bic">;
   def EOR_PPzPP   : sve_int_pred_log<0b0010, "eor">;
