@@ -907,6 +907,7 @@ void AMDGPUTargetLowering::analyzeFormalArgumentsCompute(
   LLVMContext &Ctx = Fn.getParent()->getContext();
   const AMDGPUSubtarget &ST = AMDGPUSubtarget::get(MF);
   const unsigned ExplicitOffset = ST.getExplicitKernelArgOffset(Fn);
+  CallingConv::ID CC = Fn.getCallingConv();
 
   unsigned MaxAlign = 1;
   uint64_t ExplicitArgOffset = 0;
@@ -940,10 +941,8 @@ void AMDGPUTargetLowering::analyzeFormalArgumentsCompute(
 
       EVT ArgVT = ValueVTs[Value];
       EVT MemVT = ArgVT;
-      MVT RegisterVT =
-        getRegisterTypeForCallingConv(Ctx, ArgVT);
-      unsigned NumRegs =
-        getNumRegistersForCallingConv(Ctx, ArgVT);
+      MVT RegisterVT = getRegisterTypeForCallingConv(Ctx, CC, ArgVT);
+      unsigned NumRegs = getNumRegistersForCallingConv(Ctx, CC, ArgVT);
 
       if (NumRegs == 1) {
         // This argument is not split, so the IR type is the memory type.
