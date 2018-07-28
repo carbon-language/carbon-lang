@@ -5,11 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @select_or_icmp(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @select_or_icmp(
-; CHECK-NEXT:    [[A:%.*]] = icmp ne i32 [[X:%.*]], [[Z:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = icmp ne i32 [[Y:%.*]], [[Z]]
-; CHECK-NEXT:    [[C:%.*]] = or i1 [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select i1 [[C]], i32 [[Z]], i32 [[X]]
-; CHECK-NEXT:    ret i32 [[D]]
+; CHECK-NEXT:    ret i32 [[Z:%.*]]
 ;
   %A = icmp ne i32 %x, %z
   %B = icmp ne i32 %y, %z
@@ -20,11 +16,7 @@ define i32 @select_or_icmp(i32 %x, i32 %y, i32 %z) {
 
 define <2 x i8> @select_or_icmp_vec(<2 x i8> %x, <2 x i8> %y, <2 x i8> %z) {
 ; CHECK-LABEL: @select_or_icmp_vec(
-; CHECK-NEXT:    [[A:%.*]] = icmp ne <2 x i8> [[X:%.*]], [[Z:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = icmp ne <2 x i8> [[Y:%.*]], [[Z]]
-; CHECK-NEXT:    [[C:%.*]] = or <2 x i1> [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select <2 x i1> [[C]], <2 x i8> [[Z]], <2 x i8> [[X]]
-; CHECK-NEXT:    ret <2 x i8> [[D]]
+; CHECK-NEXT:    ret <2 x i8> [[Z:%.*]]
 ;
   %A = icmp ne <2 x i8> %x, %z
   %B = icmp ne <2 x i8> %y, %z
@@ -35,11 +27,7 @@ define <2 x i8> @select_or_icmp_vec(<2 x i8> %x, <2 x i8> %y, <2 x i8> %z) {
 
 define i32 @select_or_icmp2(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @select_or_icmp2(
-; CHECK-NEXT:    [[A:%.*]] = icmp ne i32 [[X:%.*]], [[Z:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = icmp ne i32 [[Y:%.*]], [[Z]]
-; CHECK-NEXT:    [[C:%.*]] = or i1 [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select i1 [[C]], i32 [[Z]], i32 [[Y]]
-; CHECK-NEXT:    ret i32 [[D]]
+; CHECK-NEXT:    ret i32 [[Z:%.*]]
 ;
   %A = icmp ne i32 %x, %z
   %B = icmp ne i32 %y, %z
@@ -50,11 +38,7 @@ define i32 @select_or_icmp2(i32 %x, i32 %y, i32 %z) {
 
 define i32 @select_or_inv_icmp(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @select_or_inv_icmp(
-; CHECK-NEXT:    [[A:%.*]] = icmp ne i32 [[X:%.*]], [[Z:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = icmp ne i32 [[Y:%.*]], [[Z]]
-; CHECK-NEXT:    [[C:%.*]] = or i1 [[B]], [[A]]
-; CHECK-NEXT:    [[D:%.*]] = select i1 [[C]], i32 [[Z]], i32 [[X]]
-; CHECK-NEXT:    ret i32 [[D]]
+; CHECK-NEXT:    ret i32 [[Z:%.*]]
 ;
   %A = icmp ne i32 %x, %z
   %B = icmp ne i32 %y, %z
@@ -65,11 +49,7 @@ define i32 @select_or_inv_icmp(i32 %x, i32 %y, i32 %z) {
 
 define i32 @select_or_icmp_inv(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @select_or_icmp_inv(
-; CHECK-NEXT:    [[A:%.*]] = icmp ne i32 [[Z:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = icmp ne i32 [[Z]], [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = or i1 [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select i1 [[C]], i32 [[Z]], i32 [[X]]
-; CHECK-NEXT:    ret i32 [[D]]
+; CHECK-NEXT:    ret i32 [[Z:%.*]]
 ;
   %A = icmp ne i32 %z, %x
   %B = icmp ne i32 %z, %y
