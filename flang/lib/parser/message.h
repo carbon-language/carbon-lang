@@ -144,10 +144,14 @@ public:
   bool SortBefore(const Message &that) const;
   bool IsFatal() const;
   std::string ToString() const;
-  void ResolveProvenances(const CookedSource &);
   std::optional<ProvenanceRange> GetProvenanceRange(const CookedSource &) const;
   void Emit(
       std::ostream &, const CookedSource &, bool echoSourceLine = true) const;
+
+  // If this Message or any of its attachments locates itself via a CharBlock
+  // within a particular CookedSource, replace its location with the
+  // corresponding ProvenanceRange.
+  void ResolveProvenances(const CookedSource &);
 
   void Incorporate(Message &);
 

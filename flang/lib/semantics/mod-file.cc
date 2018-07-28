@@ -374,8 +374,8 @@ bool ModFileReader::Read(const SourceName &modName) {
     return false;
   }
   auto &modSymbol{*it->second};
-  // TODO: Preserve the CookedSource rather than a copy of its string.
-  modSymbol.scope()->set_chars(std::string{parsing.cooked().data()});
+  // TODO: Preserve the CookedSource rather than acquiring its string.
+  modSymbol.scope()->set_chars(std::string{parsing.cooked().AcquireData()});
   modSymbol.set(Symbol::Flag::ModFile);
   return true;
 }
