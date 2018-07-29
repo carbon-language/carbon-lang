@@ -2178,6 +2178,41 @@ class sve_int_cterm<bit sz, bit opc, string asm, RegisterClass rt>
   let Defs = [NZCV];
 }
 
+class sve_int_while_rr<bits<2> sz8_64, bits<4> opc, string asm,
+                       RegisterClass gprty, PPRRegOp pprty>
+: I<(outs pprty:$Pd), (ins gprty:$Rn, gprty:$Rm),
+  asm, "\t$Pd, $Rn, $Rm",
+  "", []>, Sched<[]> {
+  bits<4> Pd;
+  bits<5> Rm;
+  bits<5> Rn;
+  let Inst{31-24} = 0b00100101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Rm;
+  let Inst{15-13} = 0b000;
+  let Inst{12-10} = opc{3-1};
+  let Inst{9-5}   = Rn;
+  let Inst{4}     = opc{0};
+  let Inst{3-0}   = Pd;
+
+  let Defs = [NZCV];
+}
+
+multiclass sve_int_while4_rr<bits<3> opc, string asm> {
+  def _B : sve_int_while_rr<0b00, { 0, opc }, asm, GPR32, PPR8>;
+  def _H : sve_int_while_rr<0b01, { 0, opc }, asm, GPR32, PPR16>;
+  def _S : sve_int_while_rr<0b10, { 0, opc }, asm, GPR32, PPR32>;
+  def _D : sve_int_while_rr<0b11, { 0, opc }, asm, GPR32, PPR64>;
+}
+
+multiclass sve_int_while8_rr<bits<3> opc, string asm> {
+  def _B : sve_int_while_rr<0b00, { 1, opc }, asm, GPR64, PPR8>;
+  def _H : sve_int_while_rr<0b01, { 1, opc }, asm, GPR64, PPR16>;
+  def _S : sve_int_while_rr<0b10, { 1, opc }, asm, GPR64, PPR32>;
+  def _D : sve_int_while_rr<0b11, { 1, opc }, asm, GPR64, PPR64>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // SVE Floating Point Fast Reduction Group

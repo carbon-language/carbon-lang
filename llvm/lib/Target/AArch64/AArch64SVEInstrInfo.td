@@ -751,6 +751,16 @@ let Predicates = [HasSVE] in {
   defm FCMEQ_PPzZ0 : sve_fp_2op_p_pd<0b100, "fcmeq">;
   defm FCMNE_PPzZ0 : sve_fp_2op_p_pd<0b110, "fcmne">;
 
+  defm WHILELT_PWW : sve_int_while4_rr<0b010, "whilelt">;
+  defm WHILELE_PWW : sve_int_while4_rr<0b011, "whilele">;
+  defm WHILELO_PWW : sve_int_while4_rr<0b110, "whilelo">;
+  defm WHILELS_PWW : sve_int_while4_rr<0b111, "whilels">;
+
+  defm WHILELT_PXX : sve_int_while8_rr<0b010, "whilelt">;
+  defm WHILELE_PXX : sve_int_while8_rr<0b011, "whilele">;
+  defm WHILELO_PXX : sve_int_while8_rr<0b110, "whilelo">;
+  defm WHILELS_PXX : sve_int_while8_rr<0b111, "whilels">;
+
   def CTERMEQ_WW : sve_int_cterm<0b0, 0b0, "ctermeq", GPR32>;
   def CTERMNE_WW : sve_int_cterm<0b0, 0b1, "ctermne", GPR32>;
   def CTERMEQ_XX : sve_int_cterm<0b1, 0b0, "ctermeq", GPR64>;
