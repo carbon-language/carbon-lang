@@ -454,8 +454,7 @@ declare <2 x i8> @llvm.fshr.v2i8(<2 x i8>, <2 x i8>, <2 x i8>)
 
 define i8 @fshl_no_shift(i8 %x, i8 %y) {
 ; CHECK-LABEL: @fshl_no_shift(
-; CHECK-NEXT:    [[Z:%.*]] = call i8 @llvm.fshl.i8(i8 [[X:%.*]], i8 [[Y:%.*]], i8 0)
-; CHECK-NEXT:    ret i8 [[Z]]
+; CHECK-NEXT:    ret i8 [[X:%.*]]
 ;
   %z = call i8 @llvm.fshl.i8(i8 %x, i8 %y, i8 0)
   ret i8 %z
@@ -463,8 +462,7 @@ define i8 @fshl_no_shift(i8 %x, i8 %y) {
 
 define i9 @fshr_no_shift(i9 %x, i9 %y) {
 ; CHECK-LABEL: @fshr_no_shift(
-; CHECK-NEXT:    [[Z:%.*]] = call i9 @llvm.fshr.i9(i9 [[X:%.*]], i9 [[Y:%.*]], i9 0)
-; CHECK-NEXT:    ret i9 [[Z]]
+; CHECK-NEXT:    ret i9 [[Y:%.*]]
 ;
   %z = call i9 @llvm.fshr.i9(i9 %x, i9 %y, i9 0)
   ret i9 %z
@@ -472,8 +470,7 @@ define i9 @fshr_no_shift(i9 %x, i9 %y) {
 
 define i8 @fshl_no_shift_modulo_bitwidth(i8 %x, i8 %y) {
 ; CHECK-LABEL: @fshl_no_shift_modulo_bitwidth(
-; CHECK-NEXT:    [[Z:%.*]] = call i8 @llvm.fshl.i8(i8 [[X:%.*]], i8 [[Y:%.*]], i8 40)
-; CHECK-NEXT:    ret i8 [[Z]]
+; CHECK-NEXT:    ret i8 [[X:%.*]]
 ;
   %z = call i8 @llvm.fshl.i8(i8 %x, i8 %y, i8 40)
   ret i8 %z
@@ -481,8 +478,7 @@ define i8 @fshl_no_shift_modulo_bitwidth(i8 %x, i8 %y) {
 
 define i9 @fshr_no_shift_modulo_bitwidth(i9 %x, i9 %y) {
 ; CHECK-LABEL: @fshr_no_shift_modulo_bitwidth(
-; CHECK-NEXT:    [[Z:%.*]] = call i9 @llvm.fshr.i9(i9 [[X:%.*]], i9 [[Y:%.*]], i9 189)
-; CHECK-NEXT:    ret i9 [[Z]]
+; CHECK-NEXT:    ret i9 [[Y:%.*]]
 ;
   %z = call i9 @llvm.fshr.i9(i9 %x, i9 %y, i9 189)
   ret i9 %z
@@ -490,8 +486,7 @@ define i9 @fshr_no_shift_modulo_bitwidth(i9 %x, i9 %y) {
 
 define <2 x i7> @fshl_no_shift_modulo_bitwidth_splat(<2 x i7> %x, <2 x i7> %y) {
 ; CHECK-LABEL: @fshl_no_shift_modulo_bitwidth_splat(
-; CHECK-NEXT:    [[Z:%.*]] = call <2 x i7> @llvm.fshl.v2i7(<2 x i7> [[X:%.*]], <2 x i7> [[Y:%.*]], <2 x i7> <i7 21, i7 21>)
-; CHECK-NEXT:    ret <2 x i7> [[Z]]
+; CHECK-NEXT:    ret <2 x i7> [[X:%.*]]
 ;
   %z = call <2 x i7> @llvm.fshl.v2i7(<2 x i7> %x, <2 x i7> %y, <2 x i7> <i7 21, i7 21>)
   ret <2 x i7> %z
@@ -499,8 +494,7 @@ define <2 x i7> @fshl_no_shift_modulo_bitwidth_splat(<2 x i7> %x, <2 x i7> %y) {
 
 define <2 x i8> @fshr_no_shift_modulo_bitwidth_splat(<2 x i8> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @fshr_no_shift_modulo_bitwidth_splat(
-; CHECK-NEXT:    [[Z:%.*]] = call <2 x i8> @llvm.fshr.v2i8(<2 x i8> [[X:%.*]], <2 x i8> [[Y:%.*]], <2 x i8> <i8 72, i8 72>)
-; CHECK-NEXT:    ret <2 x i8> [[Z]]
+; CHECK-NEXT:    ret <2 x i8> [[Y:%.*]]
 ;
   %z = call <2 x i8> @llvm.fshr.v2i8(<2 x i8> %x, <2 x i8> %y, <2 x i8> <i8 72, i8 72>)
   ret <2 x i8> %z

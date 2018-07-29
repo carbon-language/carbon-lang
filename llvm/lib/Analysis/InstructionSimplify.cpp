@@ -4775,6 +4775,19 @@ static Value *simplifyIntrinsic(Function *F, IterTy ArgBegin, IterTy ArgEnd,
       return PassthruArg;
     return nullptr;
   }
+  case Intrinsic::fshl:
+  case Intrinsic::fshr: {
+    Value *ShAmtArg = ArgBegin[2];
+    const APInt *ShAmtC;
+    if (match(ShAmtArg, m_APInt(ShAmtC))) {
+      // If there's effectively no shift, return the 1st arg or 2nd arg.
+      // TODO: For vectors, we could check each element of a non-splat constant.
+      APInt BitWidth = APInt(ShAmtC->getBitWidth(), ShAmtC->getBitWidth());
+      if (ShAmtC->urem(BitWidth).isNullValue())
+        return ArgBegin[IID == Intrinsic::fshl ? 0 : 1];
+    }
+    return nullptr;
+  }
   default:
     return nullptr;
   }
