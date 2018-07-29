@@ -321,6 +321,38 @@ class sve_int_ptest<bits<6> opc, string asm>
   let Defs = [NZCV];
 }
 
+class sve_int_pfirst_next<bits<2> sz8_64, bits<5> opc, string asm,
+                          PPRRegOp pprty>
+: I<(outs pprty:$Pdn), (ins PPRAny:$Pg, pprty:$_Pdn),
+  asm, "\t$Pdn, $Pg, $_Pdn",
+  "",
+  []>, Sched<[]> {
+  bits<4> Pdn;
+  bits<4> Pg;
+  let Inst{31-24} = 0b00100101;
+  let Inst{23-22} = sz8_64;
+  let Inst{21-19} = 0b011;
+  let Inst{18-16} = opc{4-2};
+  let Inst{15-11} = 0b11000;
+  let Inst{10-9}  = opc{1-0};
+  let Inst{8-5}   = Pg;
+  let Inst{4}     = 0;
+  let Inst{3-0}   = Pdn;
+
+  let Constraints = "$Pdn = $_Pdn";
+  let Defs = [NZCV];
+}
+
+multiclass sve_int_pfirst<bits<5> opc, string asm> {
+  def : sve_int_pfirst_next<0b01, opc, asm, PPR8>;
+}
+
+multiclass sve_int_pnext<bits<5> opc, string asm> {
+  def _B : sve_int_pfirst_next<0b00, opc, asm, PPR8>;
+  def _H : sve_int_pfirst_next<0b01, opc, asm, PPR16>;
+  def _S : sve_int_pfirst_next<0b10, opc, asm, PPR32>;
+  def _D : sve_int_pfirst_next<0b11, opc, asm, PPR64>;
+}
 
 //===----------------------------------------------------------------------===//
 // SVE Predicate Count Group
@@ -2120,6 +2152,30 @@ multiclass sve_int_ucmp_vi<bits<2> opc, string asm> {
   def _H : sve_int_ucmp_vi<0b01, opc, asm, PPR16, ZPR16, imm0_127>;
   def _S : sve_int_ucmp_vi<0b10, opc, asm, PPR32, ZPR32, imm0_127>;
   def _D : sve_int_ucmp_vi<0b11, opc, asm, PPR64, ZPR64, imm0_127>;
+}
+
+
+//===----------------------------------------------------------------------===//
+// SVE Integer Compare - Scalars Group
+//===----------------------------------------------------------------------===//
+
+class sve_int_cterm<bit sz, bit opc, string asm, RegisterClass rt>
+: I<(outs), (ins rt:$Rn, rt:$Rm),
+  asm, "\t$Rn, $Rm",
+  "",
+  []>, Sched<[]> {
+  bits<5> Rm;
+  bits<5> Rn;
+  let Inst{31-23} = 0b001001011;
+  let Inst{22}    = sz;
+  let Inst{21}    = 0b1;
+  let Inst{20-16} = Rm;
+  let Inst{15-10} = 0b001000;
+  let Inst{9-5}   = Rn;
+  let Inst{4}     = opc;
+  let Inst{3-0}   = 0b0000;
+
+  let Defs = [NZCV];
 }
 
 

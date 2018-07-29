@@ -241,6 +241,8 @@ let Predicates = [HasSVE] in {
 
   def PTEST_PP : sve_int_ptest<0b010000, "ptest">;
   def PFALSE   : sve_int_pfalse<0b000000, "pfalse">;
+  defm PFIRST  : sve_int_pfirst<0b00000, "pfirst">;
+  defm PNEXT   : sve_int_pnext<0b00110, "pnext">;
 
   def AND_PPzPP   : sve_int_pred_log<0b0000, "and">;
   def BIC_PPzPP   : sve_int_pred_log<0b0001, "bic">;
@@ -748,6 +750,11 @@ let Predicates = [HasSVE] in {
   defm FCMLE_PPzZ0 : sve_fp_2op_p_pd<0b011, "fcmle">;
   defm FCMEQ_PPzZ0 : sve_fp_2op_p_pd<0b100, "fcmeq">;
   defm FCMNE_PPzZ0 : sve_fp_2op_p_pd<0b110, "fcmne">;
+
+  def CTERMEQ_WW : sve_int_cterm<0b0, 0b0, "ctermeq", GPR32>;
+  def CTERMNE_WW : sve_int_cterm<0b0, 0b1, "ctermne", GPR32>;
+  def CTERMEQ_XX : sve_int_cterm<0b1, 0b0, "ctermeq", GPR64>;
+  def CTERMNE_XX : sve_int_cterm<0b1, 0b1, "ctermne", GPR64>;
 
   def RDVLI_XI  : sve_int_read_vl_a<0b0, 0b11111, "rdvl">;
   def ADDVL_XXI : sve_int_arith_vl<0b0, "addvl">;
