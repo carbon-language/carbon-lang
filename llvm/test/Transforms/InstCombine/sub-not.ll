@@ -108,3 +108,38 @@ define <2 x i8> @sub_inc_vec(<2 x i8> %x, <2 x i8> %y) {
   ret <2 x i8> %r
 }
 
+define i8 @sub_dec(i8 %x, i8 %y) {
+; CHECK-LABEL: @sub_dec(
+; CHECK-NEXT:    [[S:%.*]] = add i8 [[X:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = sub i8 [[S]], [[Y:%.*]]
+; CHECK-NEXT:    ret i8 [[R]]
+;
+  %s = add i8 %x, -1
+  %r = sub i8 %s, %y
+  ret i8 %r
+}
+
+define i8 @sub_dec_extra_use(i8 %x, i8 %y) {
+; CHECK-LABEL: @sub_dec_extra_use(
+; CHECK-NEXT:    [[S:%.*]] = add i8 [[X:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = sub i8 [[S]], [[Y:%.*]]
+; CHECK-NEXT:    call void @use(i8 [[S]])
+; CHECK-NEXT:    ret i8 [[R]]
+;
+  %s = add i8 %x, -1
+  %r = sub i8 %s, %y
+  call void @use(i8 %s)
+  ret i8 %r
+}
+
+define <2 x i8> @sub_dec_vec(<2 x i8> %x, <2 x i8> %y) {
+; CHECK-LABEL: @sub_dec_vec(
+; CHECK-NEXT:    [[S:%.*]] = add <2 x i8> [[X:%.*]], <i8 undef, i8 -1>
+; CHECK-NEXT:    [[R:%.*]] = sub <2 x i8> [[S]], [[Y:%.*]]
+; CHECK-NEXT:    ret <2 x i8> [[R]]
+;
+  %s = add <2 x i8> %x, <i8 undef, i8 -1>
+  %r = sub <2 x i8> %s, %y
+  ret <2 x i8> %r
+}
+
