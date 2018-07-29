@@ -75,8 +75,8 @@ define <2 x i8> @dec_sub_vec(<2 x i8> %x, <2 x i8> %y) {
 
 define i8 @sub_inc(i8 %x, i8 %y) {
 ; CHECK-LABEL: @sub_inc(
-; CHECK-NEXT:    [[S:%.*]] = add i8 [[X:%.*]], 1
-; CHECK-NEXT:    [[R:%.*]] = sub i8 [[Y:%.*]], [[S]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[X:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = add i8 [[TMP1]], [[Y:%.*]]
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %s = add i8 %x, 1
@@ -99,8 +99,8 @@ define i8 @sub_inc_extra_use(i8 %x, i8 %y) {
 
 define <2 x i8> @sub_inc_vec(<2 x i8> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @sub_inc_vec(
-; CHECK-NEXT:    [[S:%.*]] = add <2 x i8> [[X:%.*]], <i8 undef, i8 1>
-; CHECK-NEXT:    [[R:%.*]] = sub <2 x i8> [[Y:%.*]], [[S]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor <2 x i8> [[X:%.*]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[R:%.*]] = add <2 x i8> [[TMP1]], [[Y:%.*]]
 ; CHECK-NEXT:    ret <2 x i8> [[R]]
 ;
   %s = add <2 x i8> %x, <i8 undef, i8 1>
@@ -110,8 +110,8 @@ define <2 x i8> @sub_inc_vec(<2 x i8> %x, <2 x i8> %y) {
 
 define i8 @sub_dec(i8 %x, i8 %y) {
 ; CHECK-LABEL: @sub_dec(
-; CHECK-NEXT:    [[S:%.*]] = add i8 [[X:%.*]], -1
-; CHECK-NEXT:    [[R:%.*]] = sub i8 [[S]], [[Y:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[Y:%.*]], -1
+; CHECK-NEXT:    [[R:%.*]] = add i8 [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %s = add i8 %x, -1
@@ -134,8 +134,8 @@ define i8 @sub_dec_extra_use(i8 %x, i8 %y) {
 
 define <2 x i8> @sub_dec_vec(<2 x i8> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @sub_dec_vec(
-; CHECK-NEXT:    [[S:%.*]] = add <2 x i8> [[X:%.*]], <i8 undef, i8 -1>
-; CHECK-NEXT:    [[R:%.*]] = sub <2 x i8> [[S]], [[Y:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor <2 x i8> [[Y:%.*]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[R:%.*]] = add <2 x i8> [[TMP1]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i8> [[R]]
 ;
   %s = add <2 x i8> %x, <i8 undef, i8 -1>
