@@ -327,6 +327,13 @@ void Prescanner::SkipSpaces() {
   insertASpace_ = false;
 }
 
+const char *Prescanner::SkipWhiteSpace(const char *p) {
+  while (*p == ' ' || *p == '\t') {
+    ++p;
+  }
+  return p;
+}
+
 bool Prescanner::NextToken(TokenSequence &tokens) {
   CHECK(at_ >= start_ && at_ < limit_);
   if (InFixedFormSource()) {
@@ -396,12 +403,14 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     }
     preventHollerith_ = false;
   } else if (IsLegalInIdentifier(*at_)) {
+    // Subtle: Don't misrecognize labeled DO statement label as Hollerith
+    // when the loop control variable starts with 'H'.
+    preventHollerith_ = true;
     while (IsLegalInIdentifier(EmitCharAndAdvance(tokens, *at_))) {
     }
     if (*at_ == '\'' || *at_ == '"') {
       QuotedCharacterLiteral(tokens);
     }
-    preventHollerith_ = false;
   } else if (*at_ == '*') {
     if (EmitCharAndAdvance(tokens, '*') == '*') {
       EmitCharAndAdvance(tokens, '*');
@@ -585,25 +594,18 @@ bool Prescanner::IsFixedFormCommentLine(const char *start) const {
 }
 
 bool Prescanner::IsFreeFormComment(const char *p) const {
-  while (*p == ' ' || *p == '\t') {
-    ++p;
-  }
+  p = SkipWhiteSpace(p);
   return *p == '!' || *p == '\n';
 }
 
 std::optional<std::size_t> Prescanner::IsIncludeLine(const char *start) const {
-  const char *p{start};
-  while (*p == ' ' || *p == '\t') {
-    ++p;
-  }
+  const char *p{SkipWhiteSpace(start)};
   for (char ch : "include"s) {
     if (ToLowerCaseLetter(*p++) != ch) {
       return {};
     }
   }
-  while (*p == ' ' || *p == '\t') {
-    ++p;
-  }
+  p = SkipWhiteSpace(p);
   if (*p == '"' || *p == '\'') {
     return {p - start};
   }
@@ -631,8 +633,7 @@ void Prescanner::FortranInclude(const char *firstQuote) {
         GetProvenanceRange(firstQuote, p));
     return;
   }
-  for (++p; *p == ' ' || *p == '\t'; ++p) {
-  }
+  p = SkipWhiteSpace(p + 1);
   if (*p != '\n' && *p != '!') {
     const char *garbage{p};
     for (; *p != '\n' && *p != '!'; ++p) {
@@ -672,15 +673,12 @@ const char *Prescanner::IsPreprocessorDirectiveLine(const char *start) const {
       return nullptr;
     }
   } else {
-    for (; *p == ' ' || *p == '\t'; ++p) {
-    }
+    p = SkipWhiteSpace(p);
     if (*p != '#') {
       return nullptr;
     }
   }
-  for (++p; *p == ' ' || *p == '\t'; ++p) {
-  }
-  return p;
+  return SkipWhiteSpace(p + 1);
 }
 
 bool Prescanner::IsNextLinePreprocessorDirective() const {
@@ -778,8 +776,7 @@ const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
   if (p >= limit_) {
     return nullptr;
   }
-  for (; *p == ' ' || *p == '\t'; ++p) {
-  }
+  p = SkipWhiteSpace(p);
   if (InCompilerDirective()) {
     if (*p++ != '!') {
       return nullptr;
@@ -789,8 +786,7 @@ const char *Prescanner::FreeFormContinuationLine(bool ampersand) {
         return nullptr;
       }
     }
-    for (; *p == ' ' || *p == '\t'; ++p) {
-    }
+    p = SkipWhiteSpace(p);
     if (*p == '&') {
       if (!ampersand) {
         insertASpace_ = true;
@@ -840,8 +836,7 @@ bool Prescanner::FreeFormContinuation() {
   const char *p{at_};
   bool ampersand{*p == '&'};
   if (ampersand) {
-    for (++p; *p == ' ' || *p == '\t'; ++p) {
-    }
+    p = SkipWhiteSpace(p + 1);
   }
   if (*p != '\n' && (inCharLiteral_ || *p != '!')) {
     return false;
@@ -900,10 +895,7 @@ Prescanner::IsFixedFormCompilerDirectiveLine(const char *start) const {
 std::optional<Prescanner::LineClassification>
 Prescanner::IsFreeFormCompilerDirectiveLine(const char *start) const {
   char sentinel[8];
-  const char *p{start};
-  while (*p == ' ' || *p == '\t') {
-    ++p;
-  }
+  const char *p{SkipWhiteSpace(start)};
   if (*p++ != '!') {
     return {};
   }
@@ -916,8 +908,7 @@ Prescanner::IsFreeFormCompilerDirectiveLine(const char *start) const {
         break;
       }
       sentinel[j] = '\0';
-      for (++p; *p == ' ' || *p == '\t'; ++p) {
-      }
+      p = SkipWhiteSpace(p + 1);
       if (*p == '!') {
         break;
       }

@@ -140,6 +140,7 @@ private:
   void SkipToEndOfLine();
   void NextChar();
   void SkipSpaces();
+  static const char *SkipWhiteSpace(const char *);
   bool NextToken(TokenSequence &);
   bool ExponentAndKind(TokenSequence &);
   void QuotedCharacterLiteral(TokenSequence &);
