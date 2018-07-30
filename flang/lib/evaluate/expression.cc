@@ -174,8 +174,12 @@ std::ostream &LogicalExpr<KIND>::Dump(std::ostream &o) const {
 // LEN()
 template<int KIND> SubscriptIntegerExpr CharacterExpr<KIND>::LEN() const {
   return std::visit(
-      common::visitors{
-          [](const Scalar &c) { return SubscriptIntegerExpr{c.size()}; },
+      common::visitors{[](const Scalar &c) {
+                         // std::string::size_type isn't convertible to uint64_t
+                         // on Darwin
+                         return SubscriptIntegerExpr{
+                             static_cast<std::uint64_t>(c.size())};
+                       },
           [](const Concat &c) { return c.left().LEN() + c.right().LEN(); },
           [](const Max &c) {
             return SubscriptIntegerExpr{

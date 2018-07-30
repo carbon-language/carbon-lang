@@ -110,10 +110,14 @@ SubscriptIntegerExpr Substring::last() const {
   if (last_.has_value()) {
     return **last_;
   }
-  return std::visit(common::visitors{[](const std::string &s) {
-                                       return SubscriptIntegerExpr{s.size()};
-                                     },
-                        [](const DataRef &x) { return x.LEN(); }},
+  return std::visit(
+      common::visitors{[](const std::string &s) {
+                         // std::string::size_type isn't convertible to uint64_t
+                         // on Darwin
+                         return SubscriptIntegerExpr{
+                             static_cast<std::uint64_t>(s.size())};
+                       },
+          [](const DataRef &x) { return x.LEN(); }},
       u_);
 }
 
