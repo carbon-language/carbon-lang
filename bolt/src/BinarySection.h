@@ -277,15 +277,16 @@ public:
   bool hasSectionRef() const { return Section != SectionRef(); }
   SectionRef getSectionRef() const { return Section; }
 
-  /// Does this section contain the given /p Addr?
+  /// Does this section contain the given \p Address?
   /// Note: this is in terms of the original mapped binary addresses.
-  bool containsAddress(uint64_t Addr) const {
-    return getAddress() <= Addr && Addr < getEndAddress();
+  bool containsAddress(uint64_t Address) const {
+    return getAddress() <= Address && Address < getEndAddress();
   }
-  /// Does this section contain the range given by /p Addr and /p Sz?
+
+  /// Does this section contain the range [\p Address, \p Address + \p Size)?
   /// Note: this is in terms of the original mapped binary addresses.
-  bool containsRange(uint64_t Addr, uint64_t Sz) const {
-    return getAddress() <= Addr && Addr + Sz <= getEndAddress();
+  bool containsRange(uint64_t Address, uint64_t Size) const {
+    return containsAddress(Address) && Address + Size <= getEndAddress();
   }
 
   /// Iterate over all non-pending relocations for this section.

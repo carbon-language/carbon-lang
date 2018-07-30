@@ -166,7 +166,7 @@ public:
             (getAddress() == Address && !getSize()));
   }
   bool containsRange(uint64_t Address, uint64_t Size) const {
-    return (getAddress() <= Address && Address + Size <= getEndAddress());
+    return containsAddress(Address) && Address + Size <= getEndAddress();
   }
 
   const BinaryData *getParent() const {
