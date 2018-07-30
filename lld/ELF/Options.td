@@ -58,8 +58,8 @@ defm allow_multiple_definition: B<"allow-multiple-definition",
     "Do not allow multiple definitions (default)">;
 
 defm apply_dynamic_relocs: B<"apply-dynamic-relocs",
-    "Apply dynamic relocations to place",
-    "Do not apply dynamic relocations to place">;
+    "Apply link-time values for dynamic relocations",
+    "Do not apply link-time values for dynamic relocations (default)">;
 
 defm as_needed: B<"as-needed",
     "Only set DT_NEEDED for shared libraries if used",
