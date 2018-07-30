@@ -25,10 +25,13 @@
 ; Verify that we only populate MachineBFI on behalf of ORE when hotness is
 ; requested.  (This hard-codes the previous pass to the Assembly Printer,
 ; please adjust accordingly.)
+; Lazy Machine Block Frequency Analysis is handled using a CHECK-DAG rather than
+; a CHECK-NEXT because on Windows, the 'Verify generated machine code' pass is
+; also inserted.
 
 ; HOTNESS:      Freeing Pass 'Machine Outliner'
 ; HOTNESS-NEXT:  Executing Pass 'Function Pass Manager'
-; HOTNESS-NEXT: Executing Pass 'Lazy Machine Block Frequency Analysis'
+; HOTNESS-DAG: Executing Pass 'Lazy Machine Block Frequency Analysis'
 ; HOTNESS-NEXT: Executing Pass 'Machine Optimization Remark Emitter'
 ; HOTNESS-NEXT: Building MachineBlockFrequencyInfo on the fly
 ; HOTNESS-NEXT: Building LoopInfo on the fly
@@ -43,7 +46,7 @@
 
 ; NO_HOTNESS:      Freeing Pass 'Machine Outliner'
 ; NO_HOTNESS-NEXT:  Executing Pass 'Function Pass Manager'
-; NO_HOTNESS-NEXT: Executing Pass 'Lazy Machine Block Frequency Analysis'
+; NO_HOTNESS-DAG: Executing Pass 'Lazy Machine Block Frequency Analysis'
 ; NO_HOTNESS-NEXT: Executing Pass 'Machine Optimization Remark Emitter'
 ; NO_HOTNESS-NEXT: Executing Pass 'AArch64 Assembly Printer'
 
