@@ -135,7 +135,7 @@ std::optional<A> GetIf(const VARIANT &u) {
   if (const A * x{std::get_if<A>(&u)}) {
     return {*x};
   }
-  return {};
+  return std::nullopt;
 }
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_IDIOMS_H_
