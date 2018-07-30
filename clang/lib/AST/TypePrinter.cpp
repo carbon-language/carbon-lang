@@ -1489,36 +1489,6 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
     break;
   }
 
-  case AttributedType::attr_objc_gc: {
-    OS << "objc_gc(";
-
-    QualType tmp = T->getEquivalentType();
-    while (tmp.getObjCGCAttr() == Qualifiers::GCNone) {
-      QualType next = tmp->getPointeeType();
-      if (next == tmp) break;
-      tmp = next;
-    }
-
-    if (tmp.isObjCGCWeak())
-      OS << "weak";
-    else
-      OS << "strong";
-    OS << ')';
-    break;
-  }
-
-  case AttributedType::attr_objc_ownership:
-    OS << "objc_ownership(";
-    switch (T->getEquivalentType().getObjCLifetime()) {
-    case Qualifiers::OCL_None: llvm_unreachable("no ownership!");
-    case Qualifiers::OCL_ExplicitNone: OS << "none"; break;
-    case Qualifiers::OCL_Strong: OS << "strong"; break;
-    case Qualifiers::OCL_Weak: OS << "weak"; break;
-    case Qualifiers::OCL_Autoreleasing: OS << "autoreleasing"; break;
-    }
-    OS << ')';
-    break;
-
   case AttributedType::attr_ns_returns_retained:
     OS << "ns_returns_retained";
     break;
