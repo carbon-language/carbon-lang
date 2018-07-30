@@ -3494,6 +3494,9 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, const APInt &Divisor,
                               DAG.getConstant(magics.m, dl, VT)).getNode(), 1);
   else
     return SDValue();       // No mulhs or equvialent
+
+  Created.push_back(Q.getNode());
+
   // If d > 0 and m < 0, add the numerator
   if (Divisor.isStrictlyPositive() && magics.m.isNegative()) {
     Q = DAG.getNode(ISD::ADD, dl, VT, Q, N->getOperand(0));
