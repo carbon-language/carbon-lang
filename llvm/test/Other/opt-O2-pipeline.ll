@@ -58,7 +58,12 @@
 ; CHECK-NEXT:         Function Alias Analysis Results
 ; CHECK-NEXT:         Memory SSA
 ; CHECK-NEXT:         Early CSE w/ MemorySSA
+; CHECK-NEXT:         Post-Dominator Tree Construction
+; CHECK-NEXT:         Function Alias Analysis Results
+; CHECK-NEXT:         Memory Dependence Analysis
+; CHECK-NEXT:         Early GVN Hoisting of Expressions
 ; CHECK-NEXT:         Speculatively execute instructions if target has divergent branches
+; CHECK-NEXT:         Basic Alias Analysis (stateless AA impl)
 ; CHECK-NEXT:         Function Alias Analysis Results
 ; CHECK-NEXT:         Lazy Value Information Analysis
 ; CHECK-NEXT:         Jump Threading
