@@ -262,6 +262,14 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
   int gtid = __kmp_entry_gtid();
 
 #if (KMP_STATS_ENABLED)
+  // If we were in a serial region, then stop the serial timer, record
+  // the event, and start parallel region timer
+  stats_state_e previous_state = KMP_GET_THREAD_STATE();
+  if (previous_state == stats_state_e::SERIAL_REGION) {
+    KMP_EXCHANGE_PARTITIONED_TIMER(OMP_parallel_overhead);
+  } else {
+    KMP_PUSH_PARTITIONED_TIMER(OMP_parallel_overhead);
+  }
   int inParallel = __kmpc_in_parallel(loc);
   if (inParallel) {
     KMP_COUNT_BLOCK(OMP_NESTED_PARALLEL);
@@ -318,6 +326,14 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
 
     va_end(ap);
   }
+
+#if KMP_STATS_ENABLED
+  if (previous_state == stats_state_e::SERIAL_REGION) {
+    KMP_EXCHANGE_PARTITIONED_TIMER(OMP_serial);
+  } else {
+    KMP_POP_PARTITIONED_TIMER();
+  }
+#endif // KMP_STATS_ENABLED
 }
 
 #if OMP_40_ENABLED
@@ -1115,8 +1131,6 @@ void __kmpc_critical(ident_t *loc, kmp_int32 global_tid,
   __kmpc_critical_with_hint(loc, global_tid, crit, omp_lock_hint_none);
 #else
   KMP_COUNT_BLOCK(OMP_CRITICAL);
-  KMP_TIME_PARTITIONED_BLOCK(
-      OMP_critical_wait); /* Time spent waiting to enter the critical section */
 #if OMPT_SUPPORT && OMPT_OPTIONAL
   omp_state_t prev_state = omp_state_undefined;
   ompt_thread_info_t ti;
@@ -1127,6 +1141,7 @@ void __kmpc_critical(ident_t *loc, kmp_int32 global_tid,
 
   // TODO: add THR_OVHD_STATE
 
+  KMP_PUSH_PARTITIONED_TIMER(OMP_critical_wait);
   KMP_CHECK_USER_LOCK_INIT();
 
   if ((__kmp_user_lock_kind == lk_tas) &&
@@ -1193,8 +1208,9 @@ void __kmpc_critical(ident_t *loc, kmp_int32 global_tid,
     }
   }
 #endif
+  KMP_POP_PARTITIONED_TIMER();
 
-  KMP_START_EXPLICIT_TIMER(OMP_critical);
+  KMP_PUSH_PARTITIONED_TIMER(OMP_critical);
   KA_TRACE(15, ("__kmpc_critical: done T#%d\n", global_tid));
 #endif // KMP_USE_DYNAMIC_LOCK
 }
@@ -1345,6 +1361,7 @@ void __kmpc_critical_with_hint(ident_t *loc, kmp_int32 global_tid,
 
   kmp_dyna_lock_t *lk = (kmp_dyna_lock_t *)crit;
   // Check if it is initialized.
+  KMP_PUSH_PARTITIONED_TIMER(OMP_critical_wait);
   if (*lk == 0) {
     kmp_dyna_lockseq_t lckseq = __kmp_map_hint_to_lock(hint);
     if (KMP_IS_D_LOCK(lckseq)) {
@@ -1422,6 +1439,7 @@ void __kmpc_critical_with_hint(ident_t *loc, kmp_int32 global_tid,
 #endif
     KMP_I_LOCK_FUNC(ilk, set)(lck, global_tid);
   }
+  KMP_POP_PARTITIONED_TIMER();
 
 #if USE_ITT_BUILD
   __kmp_itt_critical_acquired(lck);
@@ -1753,6 +1771,7 @@ void __kmpc_end_single(ident_t *loc, kmp_int32 global_tid) {
 Mark the end of a statically scheduled loop.
 */
 void __kmpc_for_static_fini(ident_t *loc, kmp_int32 global_tid) {
+  KMP_POP_PARTITIONED_TIMER();
   KE_TRACE(10, ("__kmpc_for_static_fini called T#%d\n", global_tid));
 
 #if OMPT_SUPPORT && OMPT_OPTIONAL
@@ -1779,7 +1798,6 @@ void __kmpc_for_static_fini(ident_t *loc, kmp_int32 global_tid) {
         &(task_info->task_data), 0, OMPT_GET_RETURN_ADDRESS(0));
   }
 #endif
-
   if (__kmp_env_consistency_check)
     __kmp_pop_workshare(global_tid, ct_pdo, loc);
 }
