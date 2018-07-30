@@ -80,5 +80,14 @@ constexpr auto executionPartErrorRecovery{stmtErrorRecoveryStart >>
     !"TYPE IS"_tok >> !"CLASS"_tok >> !"RANK"_tok >>
     !("!$OMP "_sptok >> "END"_tok) >> skipBadLine};
 
+// END statement error recovery
+constexpr auto missingOptionalName{defaulted(cut >> maybe(name))};
+constexpr auto noNameEnd{"END" >> missingOptionalName};
+constexpr auto bareEnd{noNameEnd / lookAhead(endOfStmt)};
+constexpr auto endStmtErrorRecovery{
+    ("END"_tok / SkipPast<'\n'>{} || consumedAllInput) >> missingOptionalName};
+constexpr auto unterminatedEndStmtErrorRecovery{
+    ("END"_tok / SkipTo<'\n'>{} || consumedAllInput) >> missingOptionalName};
+
 }  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_STMT_PARSER_H_
