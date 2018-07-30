@@ -3017,7 +3017,7 @@ struct kmp_adaptive_backoff_params_t {
 extern kmp_adaptive_backoff_params_t __kmp_adaptive_backoff_params;
 
 #if KMP_DEBUG_ADAPTIVE_LOCKS
-extern char *__kmp_speculative_statsfile;
+extern const char *__kmp_speculative_statsfile;
 #endif
 
 #endif // KMP_USE_ADAPTIVE_LOCKS
