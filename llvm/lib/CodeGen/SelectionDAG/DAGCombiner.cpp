@@ -3346,12 +3346,14 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
     if (DAG.isKnownToBeAPowerOfTwo(N1)) {
       // fold (urem x, pow2) -> (and x, pow2-1)
       SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N1, NegOne);
+      AddToWorklist(Add.getNode());
       return DAG.getNode(ISD::AND, DL, VT, N0, Add);
     }
     if (N1.getOpcode() == ISD::SHL &&
         DAG.isKnownToBeAPowerOfTwo(N1.getOperand(0))) {
       // fold (urem x, (shl pow2, y)) -> (and x, (add (shl pow2, y), -1))
       SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N1, NegOne);
+      AddToWorklist(Add.getNode());
       return DAG.getNode(ISD::AND, DL, VT, N0, Add);
     }
   }
@@ -3371,7 +3373,10 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
     if (OptimizedDiv.getNode() && OptimizedDiv.getOpcode() != ISD::UDIVREM &&
         OptimizedDiv.getOpcode() != ISD::SDIVREM) {
       SDValue Mul = DAG.getNode(ISD::MUL, DL, VT, OptimizedDiv, N1);
-      return DAG.getNode(ISD::SUB, DL, VT, N0, Mul);
+      SDValue Sub = DAG.getNode(ISD::SUB, DL, VT, N0, Mul);
+      AddToWorklist(OptimizedDiv.getNode());
+      AddToWorklist(Mul.getNode());
+      return Sub;
     }
   }
 
@@ -5122,6 +5127,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     if (SDValue COR = DAG.FoldConstantArithmetic(
             ISD::OR, SDLoc(N1), VT, N1.getNode(), N0.getOperand(1).getNode())) {
       SDValue IOR = DAG.getNode(ISD::OR, SDLoc(N0), VT, N0.getOperand(0), N1);
+      AddToWorklist(IOR.getNode());
       return DAG.getNode(ISD::AND, SDLoc(N), VT, COR, IOR);
     }
   }
@@ -6017,6 +6023,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
     SDLoc DL(N0);
     V = DAG.getNode(ISD::XOR, DL, V.getValueType(), V,
                     DAG.getConstant(1, DL, V.getValueType()));
+    AddToWorklist(V.getNode());
     return DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N), VT, V);
   }
 
@@ -6028,6 +6035,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       unsigned NewOpcode = N0.getOpcode() == ISD::AND ? ISD::OR : ISD::AND;
       LHS = DAG.getNode(ISD::XOR, SDLoc(LHS), VT, LHS, N1); // LHS = ~LHS
       RHS = DAG.getNode(ISD::XOR, SDLoc(RHS), VT, RHS, N1); // RHS = ~RHS
+      AddToWorklist(LHS.getNode()); AddToWorklist(RHS.getNode());
       return DAG.getNode(NewOpcode, SDLoc(N), VT, LHS, RHS);
     }
   }
@@ -6039,6 +6047,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       unsigned NewOpcode = N0.getOpcode() == ISD::AND ? ISD::OR : ISD::AND;
       LHS = DAG.getNode(ISD::XOR, SDLoc(LHS), VT, LHS, N1); // LHS = ~LHS
       RHS = DAG.getNode(ISD::XOR, SDLoc(RHS), VT, RHS, N1); // RHS = ~RHS
+      AddToWorklist(LHS.getNode()); AddToWorklist(RHS.getNode());
       return DAG.getNode(NewOpcode, SDLoc(N), VT, LHS, RHS);
     }
   }
@@ -6047,6 +6056,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       N0->getOperand(1) == N1) {
     SDValue X = N0->getOperand(0);
     SDValue NotX = DAG.getNOT(SDLoc(X), X, VT);
+    AddToWorklist(NotX.getNode());
     return DAG.getNode(ISD::AND, SDLoc(N), VT, NotX, N1);
   }
 
@@ -6407,6 +6417,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
           SDValue NewSHL = DAG.getNode(ISD::SHL, DL, NewOp0.getValueType(),
                                        NewOp0,
                                        DAG.getConstant(c2, DL, CountVT));
+          AddToWorklist(NewSHL.getNode());
           return DAG.getNode(ISD::ZERO_EXTEND, SDLoc(N0), VT, NewSHL);
         }
       }
@@ -6477,6 +6488,8 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       isConstantOrConstantVector(N0.getOperand(1), /* No Opaques */ true)) {
     SDValue Shl0 = DAG.getNode(ISD::SHL, SDLoc(N0), VT, N0.getOperand(0), N1);
     SDValue Shl1 = DAG.getNode(ISD::SHL, SDLoc(N1), VT, N0.getOperand(1), N1);
+    AddToWorklist(Shl0.getNode());
+    AddToWorklist(Shl1.getNode());
     return DAG.getNode(N0.getOpcode(), SDLoc(N), VT, Shl0, Shl1);
   }
 
@@ -6758,6 +6771,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     SDLoc DL(N);
     SDValue Mask =
         DAG.getNode(ISD::SRL, DL, VT, DAG.getAllOnesConstant(DL, VT), N1);
+    AddToWorklist(Mask.getNode());
     return DAG.getNode(ISD::AND, DL, VT, N0.getOperand(0), Mask);
   }
 
@@ -6776,6 +6790,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
                                        N0.getOperand(0),
                           DAG.getConstant(ShiftAmt, DL0,
                                           getShiftAmountTy(SmallVT)));
+      AddToWorklist(SmallShift.getNode());
       APInt Mask = APInt::getLowBitsSet(OpSizeInBits, OpSizeInBits - ShiftAmt);
       SDLoc DL(N);
       return DAG.getNode(ISD::AND, DL, VT,
@@ -6820,6 +6835,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
         Op = DAG.getNode(ISD::SRL, DL, VT, Op,
                   DAG.getConstant(ShAmt, DL,
                                   getShiftAmountTy(Op.getValueType())));
+        AddToWorklist(Op.getNode());
       }
 
       SDLoc DL(N);
@@ -7145,11 +7161,13 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   // fold (select C, 0, X) -> (and (not C), X)
   if (VT == VT0 && VT == MVT::i1 && isNullConstant(N1)) {
     SDValue NOTNode = DAG.getNOT(SDLoc(N0), N0, VT);
+    AddToWorklist(NOTNode.getNode());
     return DAG.getNode(ISD::AND, DL, VT, NOTNode, N2);
   }
   // fold (select C, X, 1) -> (or (not C), X)
   if (VT == VT0 && VT == MVT::i1 && isOneConstant(N2)) {
     SDValue NOTNode = DAG.getNOT(SDLoc(N0), N0, VT);
+    AddToWorklist(NOTNode.getNode());
     return DAG.getNode(ISD::OR, DL, VT, NOTNode, N1);
   }
   // fold (select X, Y, X) -> (and X, Y)
@@ -7721,6 +7739,8 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
           ISD::SRA, DL, VT, LHS,
           DAG.getConstant(VT.getScalarSizeInBits() - 1, DL, VT));
       SDValue Add = DAG.getNode(ISD::ADD, DL, VT, LHS, Shift);
+      AddToWorklist(Shift.getNode());
+      AddToWorklist(Add.getNode());
       return DAG.getNode(ISD::XOR, DL, VT, Add, Shift);
     }
 
@@ -9436,8 +9456,10 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
       EVT AmtVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
 
       SDValue Trunc = DAG.getNode(ISD::TRUNCATE, SL, VT, N0.getOperand(0));
-      if (AmtVT != Amt.getValueType())
+      if (AmtVT != Amt.getValueType()) {
         Amt = DAG.getZExtOrTrunc(Amt, SL, AmtVT);
+        AddToWorklist(Amt.getNode());
+      }
       return DAG.getNode(ISD::SHL, SL, VT, Trunc, Amt);
     }
   }
@@ -9541,6 +9563,7 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
           continue;
         }
         SDValue NV = DAG.getNode(ISD::TRUNCATE, SDLoc(V), VTs[i], V);
+        AddToWorklist(NV.getNode());
         Opnds.push_back(NV);
       }
       return DAG.getNode(ISD::CONCAT_VECTORS, SDLoc(N), VT, Opnds);
@@ -10844,9 +10867,10 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   } // enable-unsafe-fp-math
 
   // FADD -> FMA combines:
-  if (SDValue Fused = visitFADDForFMACombine(N))
+  if (SDValue Fused = visitFADDForFMACombine(N)) {
+    AddToWorklist(Fused.getNode());
     return Fused;
-
+  }
   return SDValue();
 }
 
@@ -10918,8 +10942,10 @@ SDValue DAGCombiner::visitFSUB(SDNode *N) {
   }
 
   // FSUB -> FMA combines:
-  if (SDValue Fused = visitFSUBForFMACombine(N))
+  if (SDValue Fused = visitFSUBForFMACombine(N)) {
+    AddToWorklist(Fused.getNode());
     return Fused;
+  }
 
   return SDValue();
 }
@@ -11068,8 +11094,10 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   }
 
   // FMUL -> FMA combines:
-  if (SDValue Fused = visitFMULForFMADistributiveCombine(N))
+  if (SDValue Fused = visitFMULForFMADistributiveCombine(N)) {
+    AddToWorklist(Fused.getNode());
     return Fused;
+  }
 
   return SDValue();
 }
@@ -11144,6 +11172,7 @@ SDValue DAGCombiner::visitFMA(SDNode *N) {
     if (N1CFP->isExactlyValue(-1.0) &&
         (!LegalOperations || TLI.isOperationLegal(ISD::FNEG, VT))) {
       SDValue RHSNeg = DAG.getNode(ISD::FNEG, DL, VT, N0);
+      AddToWorklist(RHSNeg.getNode());
       // TODO: The FMA node should have flags that propagate to this node.
       return DAG.getNode(ISD::FADD, DL, VT, N2, RHSNeg);
     }
@@ -11295,6 +11324,7 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
       if (SDValue RV = buildRsqrtEstimate(N1.getOperand(0).getOperand(0),
                                           Flags)) {
         RV = DAG.getNode(ISD::FP_EXTEND, SDLoc(N1), VT, RV);
+        AddToWorklist(RV.getNode());
         return DAG.getNode(ISD::FMUL, DL, VT, N0, RV, Flags);
       }
     } else if (N1.getOpcode() == ISD::FP_ROUND &&
@@ -11302,6 +11332,7 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
       if (SDValue RV = buildRsqrtEstimate(N1.getOperand(0).getOperand(0),
                                           Flags)) {
         RV = DAG.getNode(ISD::FP_ROUND, SDLoc(N1), VT, RV, N1.getOperand(1));
+        AddToWorklist(RV.getNode());
         return DAG.getNode(ISD::FMUL, DL, VT, N0, RV, Flags);
       }
     } else if (N1.getOpcode() == ISD::FMUL) {
@@ -11321,15 +11352,17 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
         // x / (y * sqrt(z)) -> x * (rsqrt(z) / y)
         if (SDValue RV = buildRsqrtEstimate(SqrtOp.getOperand(0), Flags)) {
           RV = DAG.getNode(ISD::FDIV, SDLoc(N1), VT, RV, OtherOp, Flags);
+          AddToWorklist(RV.getNode());
           return DAG.getNode(ISD::FMUL, DL, VT, N0, RV, Flags);
         }
       }
     }
 
     // Fold into a reciprocal estimate and multiply instead of a real divide.
-    if (SDValue RV = BuildReciprocalEstimate(N1, Flags))
+    if (SDValue RV = BuildReciprocalEstimate(N1, Flags)) {
+      AddToWorklist(RV.getNode());
       return DAG.getNode(ISD::FMUL, DL, VT, N0, RV, Flags);
-
+    }
   }
 
   // (fdiv (fneg X), (fneg Y)) -> (fdiv X, Y)
@@ -11689,6 +11722,7 @@ SDValue DAGCombiner::visitFP_ROUND(SDNode *N) {
   if (N0.getOpcode() == ISD::FCOPYSIGN && N0.getNode()->hasOneUse()) {
     SDValue Tmp = DAG.getNode(ISD::FP_ROUND, SDLoc(N0), VT,
                               N0.getOperand(0), N1);
+    AddToWorklist(Tmp.getNode());
     return DAG.getNode(ISD::FCOPYSIGN, SDLoc(N), VT,
                        Tmp, N0.getOperand(1));
   }
@@ -11848,6 +11882,7 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
       SDLoc DL0(N0);
       Int = DAG.getNode(ISD::XOR, DL0, IntVT, Int,
                         DAG.getConstant(SignMask, DL0, IntVT));
+      AddToWorklist(Int.getNode());
       return DAG.getBitcast(VT, Int);
     }
   }
@@ -11952,6 +11987,7 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
       SDLoc DL(N0);
       Int = DAG.getNode(ISD::AND, DL, IntVT, Int,
                         DAG.getConstant(SignMask, DL, IntVT));
+      AddToWorklist(Int.getNode());
       return DAG.getBitcast(N->getValueType(0), Int);
     }
   }
@@ -14960,6 +14996,7 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
       // Swap nodes.
       SDValue NewOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT,
                                   InVec.getOperand(0), InVal, EltNo);
+      AddToWorklist(NewOp.getNode());
       return DAG.getNode(ISD::INSERT_VECTOR_ELT, SDLoc(InVec.getNode()),
                          VT, NewOp, InVec.getOperand(1), InVec.getOperand(2));
     }
@@ -17345,6 +17382,7 @@ SDValue DAGCombiner::visitINSERT_SUBVECTOR(SDNode *N) {
       // Swap nodes.
       SDValue NewOp = DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(N), VT,
                                   N0.getOperand(0), N1, N2);
+      AddToWorklist(NewOp.getNode());
       return DAG.getNode(ISD::INSERT_SUBVECTOR, SDLoc(N0.getNode()),
                          VT, NewOp, N0.getOperand(1), N0.getOperand(2));
     }
