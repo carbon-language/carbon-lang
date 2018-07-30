@@ -2839,7 +2839,7 @@ static Value *emitPointerArithmetic(CodeGenFunction &CGF,
   //
   if (BinaryOperator::isNullPointerArithmeticExtension(CGF.getContext(),
                                                        op.Opcode,
-                                                       expr->getLHS(), 
+                                                       expr->getLHS(),
                                                        expr->getRHS()))
     return CGF.Builder.CreateIntToPtr(index, pointer->getType());
 

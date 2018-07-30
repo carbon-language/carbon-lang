@@ -124,10 +124,10 @@ private:
 
     /// BaseSharingVBPtr - The base we share vbptr with.
     const CXXRecordDecl *BaseSharingVBPtr;
-    
+
     /// FIXME: This should really use a SmallPtrMap, once we have one in LLVM :)
     using BaseOffsetsMapTy = llvm::DenseMap<const CXXRecordDecl *, CharUnits>;
-    
+
     /// BaseOffsets - Contains a map from base classes to their offset.
     BaseOffsetsMapTy BaseOffsets;
 
@@ -168,7 +168,7 @@ private:
   ~ASTRecordLayout() = default;
 
   void Destroy(ASTContext &Ctx);
-  
+
 public:
   ASTRecordLayout(const ASTRecordLayout &) = delete;
   ASTRecordLayout &operator=(const ASTRecordLayout &) = delete;
@@ -269,7 +269,7 @@ public:
     assert(CXXInfo && "Record layout does not have C++ specific info!");
     return CXXInfo->HasExtendableVFPtr;
   }
-  
+
   /// hasOwnVBPtr - Does this class provide its own virtual-base
   /// table pointer, rather than inheriting one from a primary base
   /// class?

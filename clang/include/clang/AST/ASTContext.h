@@ -1528,7 +1528,7 @@ public:
   /// The sizeof operator requires this (C99 6.5.3.4p4).
   CanQualType getSizeType() const;
 
-  /// Return the unique signed counterpart of 
+  /// Return the unique signed counterpart of
   /// the integer type corresponding to size_t.
   CanQualType getSignedSizeType() const;
 
