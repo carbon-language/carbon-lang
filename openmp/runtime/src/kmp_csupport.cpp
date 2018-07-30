@@ -3782,7 +3782,7 @@ Expect compiler send us inclusive bounds,
 e.g. for(i=2;i<9;i+=2) lo=2, up=8, st=2.
 */
 void __kmpc_doacross_init(ident_t *loc, int gtid, int num_dims,
-                          struct kmp_dim *dims) {
+                          const struct kmp_dim *dims) {
   int j, idx;
   kmp_int64 last, trace_count;
   kmp_info_t *th = __kmp_threads[gtid];
@@ -3901,7 +3901,7 @@ void __kmpc_doacross_init(ident_t *loc, int gtid, int num_dims,
   KA_TRACE(20, ("__kmpc_doacross_init() exit: T#%d\n", gtid));
 }
 
-void __kmpc_doacross_wait(ident_t *loc, int gtid, long long *vec) {
+void __kmpc_doacross_wait(ident_t *loc, int gtid, const kmp_int64 *vec) {
   kmp_int32 shft, num_dims, i;
   kmp_uint32 flag;
   kmp_int64 iter_number; // iteration number of "collapsed" loop nest
@@ -3994,7 +3994,7 @@ void __kmpc_doacross_wait(ident_t *loc, int gtid, long long *vec) {
             gtid, (iter_number << 5) + shft));
 }
 
-void __kmpc_doacross_post(ident_t *loc, int gtid, long long *vec) {
+void __kmpc_doacross_post(ident_t *loc, int gtid, const kmp_int64 *vec) {
   kmp_int32 shft, num_dims, i;
   kmp_uint32 flag;
   kmp_int64 iter_number; // iteration number of "collapsed" loop nest
@@ -4076,6 +4076,7 @@ void __kmpc_doacross_fini(ident_t *loc, int gtid) {
         __kmp_dispatch_num_buffers; // free buffer for future re-use
   }
   // free private resources (need to keep buffer index forever)
+  pr_buf->th_doacross_flags = NULL;
   __kmp_thread_free(th, (void *)pr_buf->th_doacross_info);
   pr_buf->th_doacross_info = NULL;
   KA_TRACE(20, ("__kmpc_doacross_fini() exit: T#%d\n", gtid));

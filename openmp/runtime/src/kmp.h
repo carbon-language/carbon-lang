@@ -3807,11 +3807,12 @@ struct kmp_dim { // loop bounds info casted to kmp_int64
   kmp_int64 st; // stride
 };
 KMP_EXPORT void __kmpc_doacross_init(ident_t *loc, kmp_int32 gtid,
-                                     kmp_int32 num_dims, struct kmp_dim *dims);
+                                     kmp_int32 num_dims,
+                                     const struct kmp_dim *dims);
 KMP_EXPORT void __kmpc_doacross_wait(ident_t *loc, kmp_int32 gtid,
-                                     kmp_int64 *vec);
+                                     const kmp_int64 *vec);
 KMP_EXPORT void __kmpc_doacross_post(ident_t *loc, kmp_int32 gtid,
-                                     kmp_int64 *vec);
+                                     const kmp_int64 *vec);
 KMP_EXPORT void __kmpc_doacross_fini(ident_t *loc, kmp_int32 gtid);
 #endif
 
