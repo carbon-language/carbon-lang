@@ -897,9 +897,9 @@ public:
 
 class DeclRegion : public TypedValueRegion {
 protected:
-  const Decl *D;
+  const ValueDecl *D;
 
-  DeclRegion(const Decl *d, const MemRegion *sReg, Kind k)
+  DeclRegion(const ValueDecl *d, const MemRegion *sReg, Kind k)
       : TypedValueRegion(sReg, k), D(d) {
     assert(classof(this));
     assert(d);
@@ -909,7 +909,7 @@ protected:
                       const MemRegion* superRegion, Kind k);
 
 public:
-  const Decl *getDecl() const { return D; }
+  const ValueDecl *getDecl() const { return D; }
   void Profile(llvm::FoldingSetNodeID& ID) const override;
 
   static bool classof(const MemRegion* R) {
