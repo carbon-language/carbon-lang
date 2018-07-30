@@ -974,6 +974,7 @@ llvm::DIType *CGDebugInfo::CreateType(const BlockPointerType *Ty,
   if (CGM.getLangOpts().OpenCL) {
     FType = CGM.getContext().IntTy;
     EltTys.push_back(CreateMemberType(Unit, FType, "__size", &FieldOffset));
+    FieldSize = CGM.getContext().getTypeSize(Ty);
     EltTys.push_back(CreateMemberType(Unit, FType, "__align", &FieldOffset));
   } else {
     FType = CGM.getContext().getPointerType(CGM.getContext().VoidTy);
