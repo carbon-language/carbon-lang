@@ -220,6 +220,9 @@ let Predicates = [HasSVE] in {
   def  PUNPKLO_PP : sve_int_perm_punpk<0b0, "punpklo">;
   def  PUNPKHI_PP : sve_int_perm_punpk<0b1, "punpkhi">;
 
+  defm MOVPRFX_ZPzZ : sve_int_movprfx_pred_zero<0b000, "movprfx">;
+  defm MOVPRFX_ZPmZ : sve_int_movprfx_pred_merge<0b001, "movprfx">;
+  def MOVPRFX_ZZ : sve_int_bin_cons_misc_0_c<0b00000001, "movprfx", ZPRAny>;
   def FEXPA_ZZ_H : sve_int_bin_cons_misc_0_c<0b01000000, "fexpa", ZPR16>;
   def FEXPA_ZZ_S : sve_int_bin_cons_misc_0_c<0b10000000, "fexpa", ZPR32>;
   def FEXPA_ZZ_D : sve_int_bin_cons_misc_0_c<0b11000000, "fexpa", ZPR64>;

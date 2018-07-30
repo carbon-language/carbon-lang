@@ -4250,6 +4250,48 @@ multiclass sve_int_reduce_2<bits<3> opc, string asm> {
   def _D : sve_int_reduce<0b11, 0b11, opc, asm, ZPR64, FPR64>;
 }
 
+class sve_int_movprfx_pred<bits<2> sz8_32, bits<3> opc, string asm,
+                           ZPRRegOp zprty, string pg_suffix, dag iops>
+: I<(outs zprty:$Zd), iops,
+  asm, "\t$Zd, $Pg"#pg_suffix#", $Zn",
+  "",
+  []>, Sched<[]> {
+  bits<3> Pg;
+  bits<5> Zd;
+  bits<5> Zn;
+  let Inst{31-24} = 0b00000100;
+  let Inst{23-22} = sz8_32;
+  let Inst{21-19} = 0b010;
+  let Inst{18-16} = opc;
+  let Inst{15-13} = 0b001;
+  let Inst{12-10} = Pg;
+  let Inst{9-5}   = Zn;
+  let Inst{4-0}   = Zd;
+}
+
+multiclass sve_int_movprfx_pred_merge<bits<3> opc, string asm> {
+let Constraints = "$Zd = $_Zd" in {
+  def _B : sve_int_movprfx_pred<0b00, opc, asm, ZPR8, "/m",
+                                (ins ZPR8:$_Zd, PPR3bAny:$Pg, ZPR8:$Zn)>;
+  def _H : sve_int_movprfx_pred<0b01, opc, asm, ZPR16, "/m",
+                                (ins ZPR16:$_Zd, PPR3bAny:$Pg, ZPR16:$Zn)>;
+  def _S : sve_int_movprfx_pred<0b10, opc, asm, ZPR32, "/m",
+                                (ins ZPR32:$_Zd, PPR3bAny:$Pg, ZPR32:$Zn)>;
+  def _D : sve_int_movprfx_pred<0b11, opc, asm, ZPR64, "/m",
+                                (ins ZPR64:$_Zd, PPR3bAny:$Pg, ZPR64:$Zn)>;
+}
+}
+
+multiclass sve_int_movprfx_pred_zero<bits<3> opc, string asm> {
+  def _B : sve_int_movprfx_pred<0b00, opc, asm, ZPR8, "/z",
+                                (ins PPR3bAny:$Pg, ZPR8:$Zn)>;
+  def _H : sve_int_movprfx_pred<0b01, opc, asm, ZPR16, "/z",
+                                (ins PPR3bAny:$Pg, ZPR16:$Zn)>;
+  def _S : sve_int_movprfx_pred<0b10, opc, asm, ZPR32, "/z",
+                                (ins PPR3bAny:$Pg, ZPR32:$Zn)>;
+  def _D : sve_int_movprfx_pred<0b11, opc, asm, ZPR64, "/z",
+                                (ins PPR3bAny:$Pg, ZPR64:$Zn)>;
+}
 
 //===----------------------------------------------------------------------===//
 // SVE Propagate Break Group
