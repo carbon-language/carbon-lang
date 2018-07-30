@@ -29,6 +29,17 @@ void runloop_init_before() { // Warning: object created before the loop.
   }
 }
 
+void runloop_init_before_separate_pool() { // No warning: separate autorelease pool.
+  @autoreleasepool {
+    NSObject *object;
+    @autoreleasepool {
+      object = [[NSObject alloc] init]; // no-warning
+    }
+    (void) object;
+    [[NSRunLoop mainRunLoop] run]; 
+  }
+}
+
 void xpcmain_init_before() { // Warning: object created before the loop.
   @autoreleasepool {
     NSObject *object = [[NSObject alloc] init]; // expected-warning{{Temporary objects allocated in the autorelease pool followed by the launch of xpc_main may never get released; consider moving them to a separate autorelease pool}}

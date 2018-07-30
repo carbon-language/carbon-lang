@@ -45,6 +45,7 @@ const char * RunLoopBind = "NSRunLoopM";
 const char * RunLoopRunBind = "RunLoopRunM";
 const char * OtherMsgBind = "OtherMessageSentM";
 const char * AutoreleasePoolBind = "AutoreleasePoolM";
+const char * OtherStmtAutoreleasePoolBind = "OtherAutoreleasePoolM";
 
 class RunLoopAutoreleaseLeakChecker : public Checker<check::ASTCodeBody> {
 
@@ -111,17 +112,20 @@ static void emitDiagnostics(BoundNodes &Match,
 
   const auto *AP =
       Match.getNodeAs<ObjCAutoreleasePoolStmt>(AutoreleasePoolBind);
+  const auto *OAP =
+      Match.getNodeAs<ObjCAutoreleasePoolStmt>(OtherStmtAutoreleasePoolBind);
   bool HasAutoreleasePool = (AP != nullptr);
 
   const auto *RL = Match.getNodeAs<ObjCMessageExpr>(RunLoopBind);
   const auto *RLR = Match.getNodeAs<Stmt>(RunLoopRunBind);
   assert(RLR && "Run loop launch not found");
-
   assert(ME != RLR);
-  if (HasAutoreleasePool && seenBefore(AP, RLR, ME))
+
+  // Launch of run loop occurs before the message-sent expression is seen.
+  if (seenBefore(DeclBody, RLR, ME))
     return;
 
-  if (!HasAutoreleasePool && seenBefore(DeclBody, RLR, ME))
+  if (HasAutoreleasePool && (OAP != AP))
     return;
 
   PathDiagnosticLocation Location = PathDiagnosticLocation::createBegin(
@@ -170,7 +174,8 @@ static void
 checkTempObjectsInSamePool(const Decl *D, AnalysisManager &AM, BugReporter &BR,
                            const RunLoopAutoreleaseLeakChecker *Chkr) {
   StatementMatcher RunLoopRunM = getRunLoopRunM();
-  StatementMatcher OtherMessageSentM = getOtherMessageSentM();
+  StatementMatcher OtherMessageSentM = getOtherMessageSentM(
+    hasAncestor(autoreleasePoolStmt().bind(OtherStmtAutoreleasePoolBind)));
 
   StatementMatcher RunLoopInAutorelease =
       autoreleasePoolStmt(
