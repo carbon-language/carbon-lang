@@ -46,8 +46,7 @@ const char * RunLoopRunBind = "RunLoopRunM";
 const char * OtherMsgBind = "OtherMessageSentM";
 const char * AutoreleasePoolBind = "AutoreleasePoolM";
 
-class RunLoopAutoreleaseLeakChecker : public Checker<
-                                      check::ASTCodeBody> {
+class RunLoopAutoreleaseLeakChecker : public Checker<check::ASTCodeBody> {
 
 public:
   void checkASTCodeBody(const Decl *D,
@@ -66,6 +65,8 @@ static TriBoolTy
 seenBeforeRec(const Stmt *Parent, const Stmt *A, const Stmt *B,
               MemoizationMapTy &Memoization) {
   for (const Stmt *C : Parent->children()) {
+    if (!C) continue;
+
     if (C == A)
       return true;
 
