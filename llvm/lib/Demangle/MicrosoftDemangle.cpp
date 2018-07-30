@@ -29,6 +29,8 @@
 // the demangler is 3x faster with this allocator compared to one with
 // STL containers.
 namespace {
+  constexpr size_t AllocUnit = 4096;
+
 class ArenaAllocator {
   struct AllocatorNode {
     uint8_t *Buf = nullptr;
@@ -47,7 +49,7 @@ class ArenaAllocator {
   }
 
 public:
-  ArenaAllocator() { addNode(Unit); }
+  ArenaAllocator() { addNode(AllocUnit); }
 
   ~ArenaAllocator() {
     while (Head) {
@@ -67,7 +69,7 @@ public:
       // It's possible we need a buffer which is larger than our default unit
       // size, so we need to be careful to add a node with capacity that is at
       // least as large as what we need.
-      addNode(std::max(Unit, Length));
+      addNode(std::max(AllocUnit, Length));
       Head->Used = Length;
       Buf = Head->Buf;
     }
@@ -90,14 +92,12 @@ public:
     if (Head->Used < Head->Capacity)
       return new (PP) T(std::forward<Args>(ConstructorArgs)...);
 
-    addNode(ArenaAllocator::Unit);
+    addNode(AllocUnit);
     Head->Used = Size;
     return new (Head->Buf) T(std::forward<Args>(ConstructorArgs)...);
   }
 
 private:
-  static constexpr size_t Unit = 4096;
-
   AllocatorNode *Head = nullptr;
 };
 } // namespace
