@@ -312,11 +312,11 @@ def compareStats(resultsA, resultsB):
             # Only apply highlighting when writing to TTY and it's not Windows
             if sys.stdout.isatty() and os.name != 'nt':
                 if valB != 0:
-                  ratio = (valB - valA) / valB
-                  if ratio < -0.2:
-                      report = Colors.GREEN + report + Colors.CLEAR
-                  elif ratio > 0.2:
-                      report = Colors.RED + report + Colors.CLEAR
+                    ratio = (valB - valA) / valB
+                    if ratio < -0.2:
+                        report = Colors.GREEN + report + Colors.CLEAR
+                    elif ratio > 0.2:
+                        report = Colors.RED + report + Colors.CLEAR
             print "\t %s %s" % (kkey, report)
 
 def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True,
