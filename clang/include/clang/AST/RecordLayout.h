@@ -71,6 +71,10 @@ private:
   // Alignment - Alignment of record in characters.
   CharUnits Alignment;
 
+  // UnadjustedAlignment - Maximum of the alignments of the record members in
+  // characters.
+  CharUnits UnadjustedAlignment;
+
   /// RequiredAlignment - The required alignment of the object.  In the MS-ABI
   /// the __declspec(align()) trumps #pramga pack and must always be obeyed.
   CharUnits RequiredAlignment;
@@ -136,6 +140,7 @@ private:
   CXXRecordLayoutInfo *CXXInfo = nullptr;
 
   ASTRecordLayout(const ASTContext &Ctx, CharUnits size, CharUnits alignment,
+                  CharUnits unadjustedAlignment,
                   CharUnits requiredAlignment, CharUnits datasize,
                   ArrayRef<uint64_t> fieldoffsets);
 
@@ -144,6 +149,7 @@ private:
   // Constructor for C++ records.
   ASTRecordLayout(const ASTContext &Ctx,
                   CharUnits size, CharUnits alignment,
+                  CharUnits unadjustedAlignment,
                   CharUnits requiredAlignment,
                   bool hasOwnVFPtr, bool hasExtendableVFPtr,
                   CharUnits vbptroffset,
@@ -169,6 +175,10 @@ public:
 
   /// getAlignment - Get the record alignment in characters.
   CharUnits getAlignment() const { return Alignment; }
+
+  /// getUnadjustedAlignment - Get the record alignment in characters, before
+  /// alignment adjustement.
+  CharUnits getUnadjustedAlignment() const { return UnadjustedAlignment; }
 
   /// getSize - Get the record size in characters.
   CharUnits getSize() const { return Size; }

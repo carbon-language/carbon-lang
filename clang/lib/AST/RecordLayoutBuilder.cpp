@@ -582,6 +582,9 @@ protected:
   /// The alignment if attribute packed is not used.
   CharUnits UnpackedAlignment;
 
+  /// \brief The maximum of the alignments of top-level members.
+  CharUnits UnadjustedAlignment;
+
   SmallVector<uint64_t, 16> FieldOffsets;
 
   /// Whether the external AST source has provided a layout for this
@@ -662,6 +665,7 @@ protected:
                              EmptySubobjectMap *EmptySubobjects)
       : Context(Context), EmptySubobjects(EmptySubobjects), Size(0),
         Alignment(CharUnits::One()), UnpackedAlignment(CharUnits::One()),
+        UnadjustedAlignment(CharUnits::One()),
         UseExternalLayout(false), InferAlignment(false), Packed(false),
         IsUnion(false), IsMac68kAlign(false), IsMsStruct(false),
         UnfilledBitsInLastUnit(0), LastBitfieldTypeSize(0),
@@ -1707,7 +1711,9 @@ void ItaniumRecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   setSize(std::max(getSizeInBits(), getDataSizeInBits()));
 
   // Remember max struct/class alignment.
-  UpdateAlignment(Context.toCharUnitsFromBits(FieldAlign), 
+  UnadjustedAlignment =
+      std::max(UnadjustedAlignment, Context.toCharUnitsFromBits(FieldAlign));
+  UpdateAlignment(Context.toCharUnitsFromBits(FieldAlign),
                   Context.toCharUnitsFromBits(UnpackedFieldAlign));
 }
 
@@ -1862,6 +1868,7 @@ void ItaniumRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   setSize(std::max(getSizeInBits(), getDataSizeInBits()));
 
   // Remember max struct/class alignment.
+  UnadjustedAlignment = std::max(UnadjustedAlignment, FieldAlign);
   UpdateAlignment(FieldAlign, UnpackedFieldAlign);
 }
 
@@ -2988,7 +2995,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     if (const auto *RD = dyn_cast<CXXRecordDecl>(D)) {
       Builder.cxxLayout(RD);
       NewEntry = new (*this) ASTRecordLayout(
-          *this, Builder.Size, Builder.Alignment, Builder.RequiredAlignment,
+          *this, Builder.Size, Builder.Alignment, Builder.Alignment,
+          Builder.RequiredAlignment,
           Builder.HasOwnVFPtr, Builder.HasOwnVFPtr || Builder.PrimaryBase,
           Builder.VBPtrOffset, Builder.DataSize, Builder.FieldOffsets,
           Builder.NonVirtualSize, Builder.Alignment, CharUnits::Zero(),
@@ -2998,7 +3006,8 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
     } else {
       Builder.layout(D);
       NewEntry = new (*this) ASTRecordLayout(
-          *this, Builder.Size, Builder.Alignment, Builder.RequiredAlignment,
+          *this, Builder.Size, Builder.Alignment, Builder.Alignment,
+          Builder.RequiredAlignment,
           Builder.Size, Builder.FieldOffsets);
     }
   } else {
@@ -3019,7 +3028,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
       CharUnits NonVirtualSize =
           skipTailPadding ? DataSize : Builder.NonVirtualSize;
       NewEntry = new (*this) ASTRecordLayout(
-          *this, Builder.getSize(), Builder.Alignment,
+          *this, Builder.getSize(), Builder.Alignment, Builder.UnadjustedAlignment,
           /*RequiredAlignment : used by MS-ABI)*/
           Builder.Alignment, Builder.HasOwnVFPtr, RD->isDynamicClass(),
           CharUnits::fromQuantity(-1), DataSize, Builder.FieldOffsets,
@@ -3032,7 +3041,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
       Builder.Layout(D);
 
       NewEntry = new (*this) ASTRecordLayout(
-          *this, Builder.getSize(), Builder.Alignment,
+          *this, Builder.getSize(), Builder.Alignment, Builder.UnadjustedAlignment,
           /*RequiredAlignment : used by MS-ABI)*/
           Builder.Alignment, Builder.getSize(), Builder.FieldOffsets);
     }
@@ -3186,6 +3195,7 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
   const ASTRecordLayout *NewEntry =
     new (*this) ASTRecordLayout(*this, Builder.getSize(),
                                 Builder.Alignment,
+                                Builder.UnadjustedAlignment,
                                 /*RequiredAlignment : used by MS-ABI)*/
                                 Builder.Alignment,
                                 Builder.getDataSize(),

@@ -5063,7 +5063,13 @@ ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
     if (getTarget().isRenderScriptTarget()) {
       return coerceToIntArray(Ty, getContext(), getVMContext());
     }
-    unsigned Alignment = getContext().getTypeAlign(Ty);
+    unsigned Alignment;
+    if (Kind == AArch64ABIInfo::AAPCS) {
+      Alignment = getContext().getTypeUnadjustedAlign(Ty);
+      Alignment = Alignment < 128 ? 64 : 128;
+    } else {
+      Alignment = getContext().getTypeAlign(Ty);
+    }
     Size = llvm::alignTo(Size, 64); // round up to multiple of 8 bytes
 
     // We use a pair of i64 for 16-byte aggregate with 8-byte alignment.
@@ -5801,11 +5807,14 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   // most 8-byte. We realign the indirect argument if type alignment is bigger
   // than ABI alignment.
   uint64_t ABIAlign = 4;
-  uint64_t TyAlign = getContext().getTypeAlign(Ty) / 8;
+  uint64_t TyAlign;
   if (getABIKind() == ARMABIInfo::AAPCS_VFP ||
-       getABIKind() == ARMABIInfo::AAPCS)
+      getABIKind() == ARMABIInfo::AAPCS) {
+    TyAlign = getContext().getTypeUnadjustedAlignInChars(Ty).getQuantity();
     ABIAlign = std::min(std::max(TyAlign, (uint64_t)4), (uint64_t)8);
-
+  } else {
+    TyAlign = getContext().getTypeAlignInChars(Ty).getQuantity();
+  }
   if (getContext().getTypeSizeInChars(Ty) > CharUnits::fromQuantity(64)) {
     assert(getABIKind() != ARMABIInfo::AAPCS16_VFP && "unexpected byval");
     return ABIArgInfo::getIndirect(CharUnits::fromQuantity(ABIAlign),
@@ -5824,7 +5833,7 @@ ABIArgInfo ARMABIInfo::classifyArgumentType(QualType Ty,
   unsigned SizeRegs;
   // FIXME: Try to match the types of the arguments more accurately where
   // we can.
-  if (getContext().getTypeAlign(Ty) <= 32) {
+  if (TyAlign <= 4) {
     ElemTy = llvm::Type::getInt32Ty(getVMContext());
     SizeRegs = (getContext().getTypeSize(Ty) + 31) / 32;
   } else {

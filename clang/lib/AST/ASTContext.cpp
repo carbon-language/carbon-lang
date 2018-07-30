@@ -2056,6 +2056,27 @@ TypeInfo ASTContext::getTypeInfoImpl(const Type *T) const {
   return TypeInfo(Width, Align, AlignIsRequired);
 }
 
+unsigned ASTContext::getTypeUnadjustedAlign(const Type *T) const {
+  UnadjustedAlignMap::iterator I = MemoizedUnadjustedAlign.find(T);
+  if (I != MemoizedUnadjustedAlign.end())
+    return I->second;
+
+  unsigned UnadjustedAlign;
+  if (const auto *RT = T->getAs<RecordType>()) {
+    const RecordDecl *RD = RT->getDecl();
+    const ASTRecordLayout &Layout = getASTRecordLayout(RD);
+    UnadjustedAlign = toBits(Layout.getUnadjustedAlignment());
+  } else if (const auto *ObjCI = T->getAs<ObjCInterfaceType>()) {
+    const ASTRecordLayout &Layout = getASTObjCInterfaceLayout(ObjCI->getDecl());
+    UnadjustedAlign = toBits(Layout.getUnadjustedAlignment());
+  } else {
+    UnadjustedAlign = getTypeAlign(T);
+  }
+
+  MemoizedUnadjustedAlign[T] = UnadjustedAlign;
+  return UnadjustedAlign;
+}
+
 unsigned ASTContext::getOpenMPDefaultSimdAlign(QualType T) const {
   unsigned SimdAlign = getTargetInfo().getSimdDefaultAlign();
   // Target ppc64 with QPX: simd default alignment for pointer to double is 32.
@@ -2093,6 +2114,16 @@ CharUnits ASTContext::getTypeAlignInChars(QualType T) const {
 }
 CharUnits ASTContext::getTypeAlignInChars(const Type *T) const {
   return toCharUnitsFromBits(getTypeAlign(T));
+}
+
+/// getTypeUnadjustedAlignInChars - Return the ABI-specified alignment of a
+/// type, in characters, before alignment adustments. This method does
+/// not work on incomplete types.
+CharUnits ASTContext::getTypeUnadjustedAlignInChars(QualType T) const {
+  return toCharUnitsFromBits(getTypeUnadjustedAlign(T));
+}
+CharUnits ASTContext::getTypeUnadjustedAlignInChars(const Type *T) const {
+  return toCharUnitsFromBits(getTypeUnadjustedAlign(T));
 }
 
 /// getPreferredTypeAlign - Return the "preferred" alignment of the specified
