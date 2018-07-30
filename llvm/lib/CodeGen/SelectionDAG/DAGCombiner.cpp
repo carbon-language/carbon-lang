@@ -4203,8 +4203,8 @@ bool DAGCombiner::SearchForAndLoads(SDNode *N,
     // Allow one node which will masked along with any loads found.
     if (NodeToMask)
       return false;
- 
-    // Also ensure that the node to be masked only produces one data result. 
+
+    // Also ensure that the node to be masked only produces one data result.
     NodeToMask = Op.getNode();
     if (NodeToMask->getNumValues() > 1) {
       bool HasValue = false;
@@ -5479,7 +5479,7 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, const SDLoc &DL) {
     return nullptr;
 
   // At this point we've matched or extracted a shift op on each side.
-  
+
   if (LHSShift.getOperand(0) != RHSShift.getOperand(0))
     return nullptr;   // Not shifting the same value.
 
@@ -10392,7 +10392,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
                                                  N10.getOperand(0))),
                          DAG.getNode(ISD::FP_EXTEND, SL, VT,
                                      N10.getOperand(1)),
-                         N0, Flags);          
+                         N0, Flags);
     }
   }
 
@@ -10455,7 +10455,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
                                      N0.getOperand(2).getOperand(0),
                                      N0.getOperand(2).getOperand(1),
                                      DAG.getNode(ISD::FNEG, SL, VT,
-                                                 N1), Flags), Flags);          
+                                                 N1), Flags), Flags);
     }
 
     // fold (fsub x, (fma y, z, (fmul u, v)))
@@ -10470,7 +10470,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
                          N1.getOperand(1),
                          DAG.getNode(PreferredFusedOpcode, SL, VT,
                                      DAG.getNode(ISD::FNEG, SL, VT, N20),
-                                     N21, N0, Flags), Flags);      
+                                     N21, N0, Flags), Flags);
     }
 
 
@@ -10490,7 +10490,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
                                          DAG.getNode(ISD::FP_EXTEND, SL, VT,
                                                      N020.getOperand(1)),
                                          DAG.getNode(ISD::FNEG, SL, VT,
-                                                     N1), Flags), Flags);              
+                                                     N1), Flags), Flags);
         }
       }
     }
@@ -10518,7 +10518,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
                                          DAG.getNode(ISD::FP_EXTEND, SL, VT,
                                                      N002.getOperand(1)),
                                          DAG.getNode(ISD::FNEG, SL, VT,
-                                                     N1), Flags), Flags);              
+                                                     N1), Flags), Flags);
         }
       }
     }
@@ -10541,7 +10541,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
                                                                VT, N1200)),
                                        DAG.getNode(ISD::FP_EXTEND, SL, VT,
                                                    N1201),
-                                       N0, Flags), Flags);        
+                                       N0, Flags), Flags);
       }
     }
 
@@ -10572,7 +10572,7 @@ SDValue DAGCombiner::visitFSUBForFMACombine(SDNode *N) {
                                                                VT, N1020)),
                                        DAG.getNode(ISD::FP_EXTEND, SL, VT,
                                                    N1021),
-                                       N0, Flags), Flags);        
+                                       N0, Flags), Flags);
       }
     }
   }
@@ -10628,7 +10628,7 @@ SDValue DAGCombiner::visitFMULForFMADistributiveCombine(SDNode *N) {
                            Y, Flags);
       if (XC1 && XC1->isExactlyValue(-1.0))
         return DAG.getNode(PreferredFusedOpcode, SL, VT, X.getOperand(0), Y,
-                           DAG.getNode(ISD::FNEG, SL, VT, Y), Flags);      
+                           DAG.getNode(ISD::FNEG, SL, VT, Y), Flags);
     }
     return SDValue();
   };
@@ -10652,7 +10652,7 @@ SDValue DAGCombiner::visitFMULForFMADistributiveCombine(SDNode *N) {
       if (XC0 && XC0->isExactlyValue(-1.0))
         return DAG.getNode(PreferredFusedOpcode, SL, VT,
                            DAG.getNode(ISD::FNEG, SL, VT, X.getOperand(1)), Y,
-                           DAG.getNode(ISD::FNEG, SL, VT, Y), Flags);      
+                           DAG.getNode(ISD::FNEG, SL, VT, Y), Flags);
 
       auto XC1 = isConstOrConstSplatFP(X.getOperand(1));
       if (XC1 && XC1->isExactlyValue(+1.0))
@@ -10957,12 +10957,12 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
   if (SDValue NewSel = foldBinOpIntoSelect(N))
     return NewSel;
 
-  if (Options.UnsafeFPMath || 
+  if (Options.UnsafeFPMath ||
       (Flags.hasNoNaNs() && Flags.hasNoSignedZeros())) {
     // fold (fmul A, 0) -> 0
     if (N1CFP && N1CFP->isZero())
       return N1;
-  } 
+  }
 
   if (Options.UnsafeFPMath || Flags.hasAllowReassociation()) {
     // fmul (fmul X, C1), C2 -> fmul X, C1 * C2
@@ -11370,7 +11370,7 @@ SDValue DAGCombiner::visitFREM(SDNode *N) {
 
 SDValue DAGCombiner::visitFSQRT(SDNode *N) {
   SDNodeFlags Flags = N->getFlags();
-  if (!DAG.getTarget().Options.UnsafeFPMath && 
+  if (!DAG.getTarget().Options.UnsafeFPMath &&
       !Flags.hasApproximateFuncs())
     return SDValue();
 

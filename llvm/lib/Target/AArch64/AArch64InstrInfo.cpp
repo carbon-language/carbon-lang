@@ -5142,7 +5142,7 @@ AArch64InstrInfo::getMachineOutlinerMBBFlags(MachineBasicBlock &MBB) const {
                 MBB.rend(),
                 [&LRU](MachineInstr &MI) { LRU.accumulate(MI); });
 
-  if (!LRU.available(AArch64::LR)) 
+  if (!LRU.available(AArch64::LR))
       Flags |= MachineOutlinerMBBFlags::LRUnavailableSomewhere;
 
   return Flags;
@@ -5168,14 +5168,14 @@ AArch64InstrInfo::getOutliningType(MachineBasicBlock::iterator &MIT,
   // ahead and skip over them.
   if (MI.isKill())
     return outliner::InstrType::Invisible;
-  
+
   // Is this a terminator for a basic block?
   if (MI.isTerminator()) {
 
     // Is this the end of a function?
     if (MI.getParent()->succ_empty())
       return outliner::InstrType::Legal;
-    
+
     // It's not, so don't outline it.
     return outliner::InstrType::Illegal;
   }
