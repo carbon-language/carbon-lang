@@ -3451,7 +3451,7 @@ static SDValue BuildExactSDIV(const TargetLowering &TLI, SDValue Op1, APInt d,
 
 SDValue TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
                                       SelectionDAG &DAG,
-                                      std::vector<SDNode *> *Created) const {
+                                      std::vector<SDNode *> &Created) const {
   AttributeList Attr = DAG.getMachineFunction().getFunction().getAttributes();
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (TLI.isIntDivCheap(N->getValueType(0), Attr))
