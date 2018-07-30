@@ -246,6 +246,9 @@ public:
   bool isTLS() const {
     return (ELFFlags & ELF::SHF_TLS);
   }
+  bool isTBSS() const {
+    return isBSS() && isTLS();
+  }
   bool isNote() const { return ELFType == ELF::SHT_NOTE; }
   bool isStrTab() const { return ELFType == ELF::SHT_STRTAB; }
   bool isSymTab() const { return ELFType == ELF::SHT_SYMTAB; }
@@ -257,7 +260,7 @@ public:
             ELFType == ELF::SHT_PROGBITS);
   }
   bool isAllocatable() const {
-    return (ELFFlags & ELF::SHF_ALLOC);
+    return (ELFFlags & ELF::SHF_ALLOC) && !isTBSS();
   }
   bool isLocal() const { return IsLocal; }
   bool isReordered() const { return IsReordered; }

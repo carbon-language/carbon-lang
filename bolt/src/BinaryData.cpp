@@ -113,8 +113,10 @@ void BinaryData::printBrief(raw_ostream &OS) const {
     OS << ")";
   }
 
-  if (opts::Verbosity > 1 && Parent) {
-    OS << " (" << Parent->getName() << "/" << Parent->getSize() << ")";
+  if (Parent) {
+    OS << " (parent: ";
+    Parent->printBrief(OS);
+    OS << ")";
   }
 
   OS << ", 0x" << Twine::utohexstr(getAddress())

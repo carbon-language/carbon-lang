@@ -158,7 +158,7 @@ void BinaryContext::updateObjectNesting(BinaryDataMapType::iterator GAI) {
     auto Itr = std::next(GAI);
     while (Itr != BinaryDataMap.end() &&
            BD->containsRange(Itr->second->getAddress(),
-                                   Itr->second->getSize())) {
+                             Itr->second->getSize())) {
       Itr->second->Parent = BD;
       ++Itr;
     }
@@ -391,7 +391,7 @@ void BinaryContext::postProcessSymbolTable() {
         !BD->getSize() &&
         !BD->isAbsolute() &&
         BD->getSection()) {
-      errs() << "BOLT-WARNING: zero sized top level symbol: " << *BD << "\n";
+      errs() << "BOLT-WARNING: zero-sized top level symbol: " << *BD << "\n";
       Valid = false;
     }
   }
