@@ -1859,7 +1859,7 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   auto SymbolIter = Rel.getSymbol();
   assert(SymbolIter != InputFile->symbol_end() &&
          "relocation symbol must exist");
-  auto Symbol = *SymbolIter;
+  const auto &Symbol = *SymbolIter;
   SymbolName = cantFail(Symbol.getName());
   SymbolAddress = cantFail(Symbol.getAddress());
   Addend = getRelocationAddend(InputFile, Rel);
@@ -1920,67 +1920,24 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
     }
   }
 
-  if (!IsPCRelative && Addend != 0 && IsFromCode && !SymbolIsSection) {
-    // TODO: RefSection should be the same as **(Symbol.getSection()).
-    auto RefSection = BC->getSectionForAddress(SymbolAddress);
-    if (RefSection && RefSection->isText()) {
-      if (opts::Verbosity > 1) {
-        SmallString<16> TypeName;
-        Rel.getTypeName(TypeName);
-        errs() << "BOLT-WARNING: detected absolute reference from code into "
-               << "a middle of a function:\n"
-               << " offset = 0x" << Twine::utohexstr(Rel.getOffset())
-               << "; type = " << Rel.getType()
-               << "; type name = " << TypeName
-               << "; value = 0x" << Twine::utohexstr(ExtractedValue)
-               << "; symbol = " << SymbolName
-               << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
-               << "; symbol section = " << RefSection->getName()
-               << "; addend = 0x" << Twine::utohexstr(Addend)
-               << "; address = 0x" << Twine::utohexstr(SymbolAddress + Addend)
-               << '\n';
-      }
-      assert(truncateToSize(ExtractedValue, RelSize) ==
-               truncateToSize(SymbolAddress + Addend, RelSize) &&
-             "value mismatch");
-    }
-  }
+  auto verifyExtractedValue = [&]() {
+    if (IsAArch64)
+      return true;
 
-  DEBUG(
-    if (!Relocation::isTLS(Rel.getType()) &&
-        SymbolName != "__hot_start" &&
-        SymbolName != "__hot_end" &&
-        truncateToSize(ExtractedValue, RelSize) !=
-          truncateToSize(SymbolAddress + Addend - PCRelOffset, RelSize)) {
-      auto Section = cantFail(Symbol.getSection());
-      SmallString<16> TypeName;
-      Rel.getTypeName(TypeName);
-      dbgs() << "BOLT-DEBUG: Mismatch between extracted value and relocation "
-             << "data:\n"
-             << "BOLT-DEBUG: offset = 0x"
-             << Twine::utohexstr(Rel.getOffset())
-             << "; type = " << Rel.getType()
-             << "; type name = " << TypeName
-             << "; value = 0x" << Twine::utohexstr(ExtractedValue)
-             << "; symbol = " << SymbolName
-             << "; symbol type = " << cantFail(Symbol.getType())
-             << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
-             << "; orig symbol address = 0x"
-             << Twine::utohexstr(cantFail(Symbol.getAddress()))
-             << "; symbol section = " << getSectionName(*Section)
-             << "; addend = 0x" << Twine::utohexstr(Addend)
-             << "; original addend = 0x"
-             << Twine::utohexstr(getRelocationAddend(InputFile, Rel))
-             << '\n';
-    });
+    if (SymbolName == "__hot_start" || SymbolName == "__hot_end")
+      return true;
 
-  assert((IsAArch64 ||
-          Relocation::isTLS(Rel.getType()) ||
-          SymbolName == "__hot_start" ||
-          SymbolName == "__hot_end" ||
-          truncateToSize(ExtractedValue, RelSize) ==
-            truncateToSize(SymbolAddress + Addend - PCRelOffset, RelSize)) &&
-         "extracted relocation value should match relocation components");
+    if (Relocation::isTLS(Rel.getType()))
+      return true;
+
+    if (cantFail(Symbol.getType()) == SymbolRef::ST_Other)
+      return true;
+
+    return truncateToSize(ExtractedValue, RelSize) ==
+           truncateToSize(SymbolAddress + Addend - PCRelOffset, RelSize);
+  };
+
+  assert(verifyExtractedValue() && "mismatched extracted relocation value");
 
   return true;
 }
