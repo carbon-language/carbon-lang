@@ -33,11 +33,21 @@ class ArenaAllocator {
   struct AllocatorNode {
     uint8_t *Buf = nullptr;
     size_t Used = 0;
+    size_t Capacity = 0;
     AllocatorNode *Next = nullptr;
   };
 
+  void addNode(size_t Capacity) {
+    AllocatorNode *NewHead = new AllocatorNode;
+    NewHead->Buf = new uint8_t[Capacity];
+    NewHead->Next = Head;
+    NewHead->Capacity = Capacity;
+    Head = NewHead;
+    NewHead->Used = 0;
+  }
+
 public:
-  ArenaAllocator() : Head(new AllocatorNode) { Head->Buf = new uint8_t[Unit]; }
+  ArenaAllocator() { addNode(Unit); }
 
   ~ArenaAllocator() {
     while (Head) {
@@ -49,10 +59,25 @@ public:
     }
   }
 
+  char *allocUnalignedBuffer(size_t Length) {
+    uint8_t *Buf = Head->Buf + Head->Used;
+
+    Head->Used += Length;
+    if (Head->Used > Head->Capacity) {
+      // It's possible we need a buffer which is larger than our default unit
+      // size, so we need to be careful to add a node with capacity that is at
+      // least as large as what we need.
+      addNode(std::max(Unit, Length));
+      Head->Used = Length;
+      Buf = Head->Buf;
+    }
+
+    return reinterpret_cast<char *>(Buf);
+  }
+
   template <typename T, typename... Args> T *alloc(Args &&... ConstructorArgs) {
 
     size_t Size = sizeof(T);
-    assert(Size < Unit);
     assert(Head && Head->Buf);
 
     size_t P = (size_t)Head->Buf + Head->Used;
@@ -62,15 +87,12 @@ public:
     size_t Adjustment = AlignedP - P;
 
     Head->Used += Size + Adjustment;
-    if (Head->Used < Unit)
+    if (Head->Used < Head->Capacity)
       return new (PP) T(std::forward<Args>(ConstructorArgs)...);
 
-    AllocatorNode *NewHead = new AllocatorNode;
-    NewHead->Buf = new uint8_t[ArenaAllocator::Unit];
-    NewHead->Next = Head;
-    Head = NewHead;
-    NewHead->Used = Size;
-    return new (NewHead->Buf) T(std::forward<Args>(ConstructorArgs)...);
+    addNode(ArenaAllocator::Unit);
+    Head->Used = Size;
+    return new (Head->Buf) T(std::forward<Args>(ConstructorArgs)...);
   }
 
 private:
@@ -384,6 +406,47 @@ static void outputCallingConvention(OutputStream &OS, CallingConv CC) {
   default:
     break;
   }
+}
+
+static bool startsWithLocalScopePattern(StringView S) {
+  if (!S.consumeFront('?'))
+    return false;
+  if (S.size() < 2)
+    return false;
+
+  size_t End = S.find('?');
+  if (End == StringView::npos)
+    return false;
+  StringView Candidate = S.substr(0, End);
+  if (Candidate.empty())
+    return false;
+
+  // \?[0-9]\?
+  // ?@? is the discriminator 0.
+  if (Candidate.size() == 1)
+    return Candidate[0] == '@' || (Candidate[0] >= '0' && Candidate[0] <= '9');
+
+  // If it's not 0-9, then it's an encoded number terminated with an @
+  if (Candidate.back() != '@')
+    return false;
+  Candidate = Candidate.dropBack();
+
+  // An encoded number starts with B-P and all subsequent digits are in A-P.
+  // Note that the reason the first digit cannot be A is two fold.  First, it
+  // would create an ambiguity with ?A which delimits the beginning of an
+  // anonymous namespace.  Second, A represents 0, and you don't start a multi
+  // digit number with a leading 0.  Presumably the anonymous namespace
+  // ambiguity is also why single digit encoded numbers use 0-9 rather than A-J.
+  if (Candidate[0] < 'B' || Candidate[0] > 'P')
+    return false;
+  Candidate = Candidate.dropFront();
+  while (!Candidate.empty()) {
+    if (Candidate[0] < 'A' || Candidate[0] > 'P')
+      return false;
+    Candidate = Candidate.dropFront();
+  }
+
+  return true;
 }
 
 // Write a function or template parameter list.
@@ -763,6 +826,10 @@ private:
   int demangleNumber(StringView &MangledName);
 
   void memorizeString(StringView s);
+
+  /// Allocate a copy of \p Borrowed into memory that we own.
+  StringView copyString(StringView Borrowed);
+
   Name *demangleFullyQualifiedTypeName(StringView &MangledName);
   Name *demangleFullyQualifiedSymbolName(StringView &MangledName);
 
@@ -777,6 +844,7 @@ private:
   Name *demangleOperatorName(StringView &MangledName);
   Name *demangleSimpleName(StringView &MangledName, bool Memorize);
   Name *demangleAnonymousNamespaceName(StringView &MangledName);
+  Name *demangleLocallyScopedNamePiece(StringView &MangledName);
 
   void demangleOperator(StringView &MangledName, Name *);
   FuncClass demangleFunctionClass(StringView &MangledName);
@@ -812,6 +880,13 @@ private:
   size_t BackRefCount = 0;
 };
 } // namespace
+
+StringView Demangler::copyString(StringView Borrowed) {
+  char *Stable = Arena.allocUnalignedBuffer(Borrowed.size() + 1);
+  std::strcpy(Stable, Borrowed.begin());
+
+  return {Stable, Borrowed.size()};
+}
 
 // Parser entry point.
 Symbol *Demangler::parse(StringView &MangledName) {
@@ -956,6 +1031,18 @@ Name *Demangler::demangleClassTemplateName(StringView &MangledName) {
 
   Name *Node = demangleSimpleName(MangledName, false);
   Node->TemplateParams = demangleTemplateParameterList(MangledName);
+
+  // Render this class template name into a string buffer so that we can
+  // memorize it for the purpose of back-referencing.
+  OutputStream OS = OutputStream::create(nullptr, nullptr, 1024);
+  outputName(OS, Node);
+  OS << '\0';
+  char *Name = OS.getBuffer();
+
+  StringView Owned = copyString(Name);
+  memorizeString(Owned);
+  std::free(Name);
+
   return Node;
 }
 
@@ -1103,6 +1190,34 @@ Name *Demangler::demangleAnonymousNamespaceName(StringView &MangledName) {
   return nullptr;
 }
 
+Name *Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
+  assert(startsWithLocalScopePattern(MangledName));
+
+  Name *Node = Arena.alloc<Name>();
+  MangledName.consumeFront('?');
+  int ScopeIdentifier = demangleNumber(MangledName);
+
+  // One ? to terminate the number
+  MangledName.consumeFront('?');
+
+  assert(!Error);
+  Symbol *Scope = parse(MangledName);
+  if (Error)
+    return nullptr;
+
+  // Render the parent symbol's name into a buffer.
+  OutputStream OS = OutputStream::create(nullptr, nullptr, 1024);
+  OS << '`';
+  output(Scope, OS);
+  OS << '\'';
+  OS << "::`" << ScopeIdentifier << "'";
+  OS << '\0';
+  char *Result = OS.getBuffer();
+  Node->Str = copyString(Result);
+  std::free(Result);
+  return Node;
+}
+
 // Parses a type name in the form of A@B@C@@ which represents C::B::A.
 Name *Demangler::demangleFullyQualifiedTypeName(StringView &MangledName) {
   Name *TypeName = demangleUnqualifiedTypeName(MangledName);
@@ -1140,6 +1255,10 @@ Name *Demangler::demangleUnqualifiedTypeName(StringView &MangledName) {
 }
 
 Name *Demangler::demangleUnqualifiedSymbolName(StringView &MangledName) {
+  if (startsWithDigit(MangledName))
+    return demangleBackRefName(MangledName);
+  if (MangledName.startsWith("?$"))
+    return demangleClassTemplateName(MangledName);
   if (MangledName.startsWith('?'))
     return demangleOperatorName(MangledName);
   return demangleSimpleName(MangledName, true);
@@ -1154,6 +1273,9 @@ Name *Demangler::demangleNameScopePiece(StringView &MangledName) {
 
   if (MangledName.startsWith("?A"))
     return demangleAnonymousNamespaceName(MangledName);
+
+  if (startsWithLocalScopePattern(MangledName))
+    return demangleLocallyScopedNamePiece(MangledName);
 
   return demangleSimpleName(MangledName, true);
 }
@@ -1727,9 +1849,6 @@ void Demangler::output(const Symbol *S, OutputStream &OS) {
   Type::outputPre(OS, *S->SymbolType);
   outputName(OS, S->SymbolName);
   Type::outputPost(OS, *S->SymbolType);
-
-  // Null terminate the buffer.
-  OS << '\0';
 }
 
 char *llvm::microsoftDemangle(const char *MangledName, char *Buf, size_t *N,
@@ -1745,5 +1864,6 @@ char *llvm::microsoftDemangle(const char *MangledName, char *Buf, size_t *N,
 
   OutputStream OS = OutputStream::create(Buf, N, 1024);
   D.output(S, OS);
+  OS << '\0';
   return OS.getBuffer();
 }
