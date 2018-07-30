@@ -1730,7 +1730,7 @@ define amdgpu_kernel void @v_fneg_nearbyint_f32(float addrspace(1)* %out, float 
 
 ; GCN-LABEL: {{^}}v_fneg_canonicalize_f32:
 ; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
-; GCN: v_mul_f32_e64 [[RESULT:v[0-9]+]], 1.0, -[[A]]
+; GCN: v_mul_f32_e32 [[RESULT:v[0-9]+]], -1.0, [[A]]
 ; GCN: buffer_store_dword [[RESULT]]
 define amdgpu_kernel void @v_fneg_canonicalize_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
   %tid = call i32 @llvm.amdgcn.workitem.id.x()
