@@ -287,10 +287,30 @@ for a total of 900 dynamically executed instructions.
 The report is structured in three main sections.  The first section collects a
 few performance numbers; the goal of this section is to give a very quick
 overview of the performance throughput. In this example, the two important
-performance indicators are the predicted total number of cycles, and the IPC.
-IPC is probably the most important throughput indicator. A big delta between
-the Dispatch Width and the computed IPC is an indicator of potential
-performance issues.
+performance indicators are **IPC** and **Block RThroughput** (Block Reciprocal
+Throughput).
+
+IPC is computed dividing the total number of simulated instructions by the total
+number of cycles.  A delta between Dispatch Width and IPC is an indicator of a
+performance issue. In the absence of loop-carried data dependencies, the
+observed IPC tends to a theoretical maximum which can be computed by dividing
+the number of instructions of a single iteration by the *Block RThroughput*.
+
+IPC is bounded from above by the dispatch width. That is because the dispatch
+width limits the maximum size of a dispatch group. IPC is also limited by the
+amount of hardware parallelism. The availability of hardware resources affects
+the resource pressure distribution, and it limits the number of instructions
+that can be executed in parallel every cycle.  A delta between Dispatch
+Width and the theoretical maximum IPC is an indicator of a performance
+bottleneck caused by the lack of hardware resources. In general, the lower the
+Block RThroughput, the better.
+
+In this example, ``Instructions per iteration/Block RThroughput`` is 1.50. Since
+there are no loop-carried dependencies, the observed IPC is expected to approach
+1.50 when the number of iterations tends to infinity. The delta between the
+Dispatch Width (2.00), and the theoretical maximum IPC (1.50) is an indicator of
+a performance bottleneck caused by the lack of hardware resources, and the
+*Resource pressure view* can help to identify the problematic resource usage.
 
 The second section of the report shows the latency and reciprocal
 throughput of every instruction in the sequence. That section also reports
