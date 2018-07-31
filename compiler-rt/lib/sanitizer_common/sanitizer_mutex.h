@@ -74,7 +74,7 @@ class SpinMutex : public StaticSpinMutex {
 class BlockingMutex {
  public:
   explicit constexpr BlockingMutex(LinkerInitialized)
-      : opaque_storage_ {0, }, owner_{0} {}
+      : opaque_storage_ {0, }, owner_ {0} {}
   BlockingMutex();
   void Lock();
   void Unlock();
