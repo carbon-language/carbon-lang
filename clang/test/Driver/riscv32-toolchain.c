@@ -19,7 +19,7 @@
 // C-RV32-BAREMETAL-ILP32: "{{.*}}/Inputs/basic_riscv32_tree/lib/gcc/riscv32-unknown-elf/8.0.1{{/|\\\\}}crtend.o"
 
 // RUN: %clangxx %s -### -no-canonical-prefixes \
-// RUN:   -target riscv32-unknown-elf \
+// RUN:   -target riscv32-unknown-elf -stdlib=libstdc++ \
 // RUN:   --gcc-toolchain=%S/Inputs/basic_riscv32_tree \
 // RUN:   --sysroot=%S/Inputs/basic_riscv32_tree/riscv32-unknown-elf 2>&1 \
 // RUN:   | FileCheck -check-prefix=CXX-RV32-BAREMETAL-ILP32 %s
