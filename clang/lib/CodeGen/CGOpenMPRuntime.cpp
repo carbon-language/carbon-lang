@@ -8109,6 +8109,19 @@ void CGOpenMPRuntime::registerTargetGlobalVariable(const VarDecl *VD,
       VarName = CGM.getMangledName(VD);
       VarSize = CGM.getContext().getTypeSizeInChars(VD->getType());
       Linkage = CGM.getLLVMLinkageVarDefinition(VD, /*IsConstant=*/false);
+      // Temp solution to prevent optimizations of the internal variables.
+      if (CGM.getLangOpts().OpenMPIsDevice && !VD->isExternallyVisible()) {
+        std::string RefName = getName({VarName, "ref"});
+        if (!CGM.GetGlobalValue(RefName)) {
+          llvm::Constant *AddrRef =
+              getOrCreateInternalVariable(Addr->getType(), RefName);
+          auto *GVAddrRef = cast<llvm::GlobalVariable>(AddrRef);
+          GVAddrRef->setConstant(/*Val=*/true);
+          GVAddrRef->setLinkage(llvm::GlobalValue::InternalLinkage);
+          GVAddrRef->setInitializer(Addr);
+          CGM.addCompilerUsedGlobal(GVAddrRef);
+        }
+      }
       break;
     case OMPDeclareTargetDeclAttr::MT_Link:
       Flags = OffloadEntriesInfoManagerTy::OMPTargetGlobalVarEntryLink;
