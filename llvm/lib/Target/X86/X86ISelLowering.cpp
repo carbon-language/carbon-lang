@@ -23511,6 +23511,24 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     if (SDValue Scale = convertShiftLeftToScale(Amt, dl, Subtarget, DAG))
       return DAG.getNode(ISD::MUL, dl, VT, R, Scale);
 
+  // Constant ISD::SRL can be performed efficiently on vXi8/vXi16 vectors as we
+  // can replace with ISD::MULHU, creating scale factor from (NumEltBits - Amt).
+  // TODO: Improve support for the shift by zero special case.
+  if (Op.getOpcode() == ISD::SRL && ConstantAmt &&
+      ((Subtarget.hasSSE41() && VT == MVT::v8i16) ||
+       DAG.isKnownNeverZero(Amt)) &&
+      (VT == MVT::v16i8 || VT == MVT::v8i16 ||
+       ((VT == MVT::v32i8 || VT == MVT::v16i16) && Subtarget.hasInt256()))) {
+    SDValue EltBits = DAG.getConstant(VT.getScalarSizeInBits(), dl, VT);
+    SDValue RAmt = DAG.getNode(ISD::SUB, dl, VT, EltBits, Amt);
+    if (SDValue Scale = convertShiftLeftToScale(RAmt, dl, Subtarget, DAG)) {
+      SDValue Zero = DAG.getConstant(0, dl, VT);
+      SDValue ZAmt = DAG.getSetCC(dl, VT, Amt, Zero, ISD::SETEQ);
+      SDValue Res = DAG.getNode(ISD::MULHU, dl, VT, R, Scale);
+      return DAG.getSelect(dl, VT, ZAmt, R, Res);
+    }
+  }
+
   // v4i32 Non Uniform Shifts.
   // If the shift amount is constant we can shift each lane using the SSE2
   // immediate shifts, else we need to zero-extend each lane to the lower i64
