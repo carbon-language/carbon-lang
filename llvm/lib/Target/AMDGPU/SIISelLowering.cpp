@@ -6845,8 +6845,16 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
   SDNode *N,
   DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
-  ConstantFPSDNode *CFP = isConstOrConstSplatFP(N->getOperand(0));
+  SDValue N0 = N->getOperand(0);
 
+  // fcanonicalize undef -> qnan
+  if (N0.isUndef()) {
+    EVT VT = N->getValueType(0);
+    APFloat QNaN = APFloat::getQNaN(SelectionDAG::EVTToAPFloatSemantics(VT));
+    return DAG.getConstantFP(QNaN, SDLoc(N), VT);
+  }
+
+  ConstantFPSDNode *CFP = isConstOrConstSplatFP(N0);
   if (!CFP) {
     SDValue N0 = N->getOperand(0);
     EVT VT = N0.getValueType().getScalarType();
@@ -6899,7 +6907,7 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
       return DAG.getConstantFP(CanonicalQNaN, SDLoc(N), VT);
   }
 
-  return N->getOperand(0);
+  return N0;
 }
 
 static unsigned minMaxOpcToMin3Max3Opc(unsigned Opc) {
