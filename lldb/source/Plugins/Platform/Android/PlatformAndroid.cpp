@@ -95,7 +95,7 @@ PlatformSP PlatformAndroid::CreateInstance(bool force, const ArchSpec *arch) {
     }
 
     if (create) {
-      switch (triple.getOS()) {
+      switch (triple.getEnvironment()) {
       case llvm::Triple::Android:
         break;
 
@@ -103,8 +103,8 @@ PlatformSP PlatformAndroid::CreateInstance(bool force, const ArchSpec *arch) {
       // Only accept "unknown" for the OS if the host is android and it
       // "unknown" wasn't specified (it was just returned because it was NOT
       // specified)
-      case llvm::Triple::OSType::UnknownOS:
-        create = !arch->TripleOSWasSpecified();
+      case llvm::Triple::EnvironmentType::UnknownEnvironment:
+        create = !arch->TripleEnvironmentWasSpecified();
         break;
 #endif
       default:
