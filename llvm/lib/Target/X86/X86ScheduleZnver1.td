@@ -198,7 +198,6 @@ defm : ZnWriteResPair<WriteCMOV2,  [ZnALU], 1>;
 def  : WriteRes<WriteSETCC,  [ZnALU]>;
 def  : WriteRes<WriteSETCCStore,  [ZnALU, ZnAGU]>;
 defm : X86WriteRes<WriteLAHFSAHF, [ZnALU], 2, [1], 2>;
-def  : WriteRes<WriteBitTest,[ZnALU]>;
 
 // Bit counts.
 defm : ZnWriteResPair<WriteBSF, [ZnALU], 3>;
