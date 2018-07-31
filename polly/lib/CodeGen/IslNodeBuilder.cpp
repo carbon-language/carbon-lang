@@ -422,7 +422,7 @@ void IslNodeBuilder::createMark(__isl_take isl_ast_node *Node) {
     if (Vector && 1 < VectorWidth && VectorWidth <= 16)
       createForVector(Child, VectorWidth);
     else
-      createForSequential(Child, true);
+      createForSequential(isl::manage(Child), true);
     isl_id_free(Id);
     return;
   }
@@ -515,20 +515,16 @@ static bool IsLoopVectorizerDisabled(isl::ast_node Node) {
   return false;
 }
 
-void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
-                                         bool MarkParallel) {
-  isl_ast_node *Body;
-  isl_ast_expr *Init, *Inc, *Iterator, *UB;
-  isl_id *IteratorID;
+void IslNodeBuilder::createForSequential(isl::ast_node For, bool MarkParallel) {
   Value *ValueLB, *ValueUB, *ValueInc;
   Type *MaxType;
   BasicBlock *ExitBlock;
   Value *IV;
   CmpInst::Predicate Predicate;
 
-  bool LoopVectorizerDisabled = IsLoopVectorizerDisabled(isl::manage_copy(For));
+  bool LoopVectorizerDisabled = IsLoopVectorizerDisabled(For);
 
-  Body = isl_ast_node_for_get_body(For);
+  isl::ast_node Body = For.for_get_body();
 
   // isl_ast_node_for_is_degenerate(For)
   //
@@ -536,17 +532,17 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
   //       However, for now we just reuse the logic for normal loops, which will
   //       create a loop with a single iteration.
 
-  Init = isl_ast_node_for_get_init(For);
-  Inc = isl_ast_node_for_get_inc(For);
-  Iterator = isl_ast_node_for_get_iterator(For);
-  IteratorID = isl_ast_expr_get_id(Iterator);
-  UB = getUpperBound(isl::manage_copy(For), Predicate).release();
+  isl::ast_expr Init = For.for_get_init();
+  isl::ast_expr Inc = For.for_get_inc();
+  isl::ast_expr Iterator = For.for_get_iterator();
+  isl::id IteratorID = Iterator.get_id();
+  isl::ast_expr UB = getUpperBound(For, Predicate);
 
-  ValueLB = ExprBuilder.create(Init);
-  ValueUB = ExprBuilder.create(UB);
-  ValueInc = ExprBuilder.create(Inc);
+  ValueLB = ExprBuilder.create(Init.release());
+  ValueUB = ExprBuilder.create(UB.release());
+  ValueInc = ExprBuilder.create(Inc.release());
 
-  MaxType = ExprBuilder.getType(Iterator);
+  MaxType = ExprBuilder.getType(Iterator.get());
   MaxType = ExprBuilder.getWidestType(MaxType, ValueLB->getType());
   MaxType = ExprBuilder.getWidestType(MaxType, ValueUB->getType());
   MaxType = ExprBuilder.getWidestType(MaxType, ValueInc->getType());
@@ -565,19 +561,15 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
   IV = createLoop(ValueLB, ValueUB, ValueInc, Builder, LI, DT, ExitBlock,
                   Predicate, &Annotator, MarkParallel, UseGuardBB,
                   LoopVectorizerDisabled);
-  IDToValue[IteratorID] = IV;
+  IDToValue[IteratorID.get()] = IV;
 
-  create(Body);
+  create(Body.release());
 
   Annotator.popLoop(MarkParallel);
 
-  IDToValue.erase(IDToValue.find(IteratorID));
+  IDToValue.erase(IDToValue.find(IteratorID.get()));
 
   Builder.SetInsertPoint(&ExitBlock->front());
-
-  isl_ast_node_free(For);
-  isl_ast_expr_free(Iterator);
-  isl_id_free(IteratorID);
 
   SequentialLoops++;
 }
@@ -778,7 +770,7 @@ void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
   }
   bool Parallel =
       (IslAstInfo::isParallel(For) && !IslAstInfo::isReductionParallel(For));
-  createForSequential(For, Parallel);
+  createForSequential(isl::manage(For), Parallel);
 }
 
 void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
