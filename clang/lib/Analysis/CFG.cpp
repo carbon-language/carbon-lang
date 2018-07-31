@@ -743,6 +743,19 @@ private:
 
   void addLocalScopeAndDtors(Stmt *S);
 
+  const ConstructionContext *retrieveAndCleanupConstructionContext(Expr *E) {
+    if (!BuildOpts.AddRichCXXConstructors)
+      return nullptr;
+
+    const ConstructionContextLayer *Layer = ConstructionContextMap.lookup(E);
+    if (!Layer)
+      return nullptr;
+
+    cleanupConstructionContext(E);
+    return ConstructionContext::createFromLayers(cfg->getBumpVectorContext(),
+                                                 Layer);
+  }
+
   // Interface to CFGBlock - adding CFGElements.
 
   void appendStmt(CFGBlock *B, const Stmt *S) {
@@ -755,16 +768,10 @@ private:
   }
 
   void appendConstructor(CFGBlock *B, CXXConstructExpr *CE) {
-    if (BuildOpts.AddRichCXXConstructors) {
-      if (const ConstructionContextLayer *Layer =
-              ConstructionContextMap.lookup(CE)) {
-        cleanupConstructionContext(CE);
-        if (const auto *CC = ConstructionContext::createFromLayers(
-                cfg->getBumpVectorContext(), Layer)) {
-          B->appendConstructor(CE, CC, cfg->getBumpVectorContext());
-          return;
-        }
-      }
+    if (const ConstructionContext *CC =
+            retrieveAndCleanupConstructionContext(CE)) {
+      B->appendConstructor(CE, CC, cfg->getBumpVectorContext());
+      return;
     }
 
     // No valid construction context found. Fall back to statement.
@@ -775,18 +782,10 @@ private:
     if (alwaysAdd(CE) && cachedEntry)
       cachedEntry->second = B;
 
-    if (BuildOpts.AddRichCXXConstructors) {
-      if (CFGCXXRecordTypedCall::isCXXRecordTypedCall(CE, *Context)) {
-        if (const ConstructionContextLayer *Layer =
-                ConstructionContextMap.lookup(CE)) {
-          cleanupConstructionContext(CE);
-          if (const auto *CC = ConstructionContext::createFromLayers(
-                  cfg->getBumpVectorContext(), Layer)) {
-            B->appendCXXRecordTypedCall(CE, CC, cfg->getBumpVectorContext());
-            return;
-          }
-        }
-      }
+    if (const ConstructionContext *CC =
+            retrieveAndCleanupConstructionContext(CE)) {
+      B->appendCXXRecordTypedCall(CE, CC, cfg->getBumpVectorContext());
+      return;
     }
 
     // No valid construction context found. Fall back to statement.
@@ -807,6 +806,20 @@ private:
 
   void appendMemberDtor(CFGBlock *B, FieldDecl *FD) {
     B->appendMemberDtor(FD, cfg->getBumpVectorContext());
+  }
+
+  void appendObjCMessage(CFGBlock *B, ObjCMessageExpr *ME) {
+    if (alwaysAdd(ME) && cachedEntry)
+      cachedEntry->second = B;
+
+    if (const ConstructionContext *CC =
+            retrieveAndCleanupConstructionContext(ME)) {
+      B->appendCXXRecordTypedCall(ME, CC, cfg->getBumpVectorContext());
+      return;
+    }
+
+    B->appendStmt(const_cast<ObjCMessageExpr *>(ME),
+                  cfg->getBumpVectorContext());
   }
 
   void appendTemporaryDtor(CFGBlock *B, CXXBindTemporaryExpr *E) {
@@ -1254,6 +1267,8 @@ static const VariableArrayType *FindVA(const Type *t) {
 
 void CFGBuilder::consumeConstructionContext(
     const ConstructionContextLayer *Layer, Expr *E) {
+  assert((isa<CXXConstructExpr>(E) || isa<CallExpr>(E) ||
+          isa<ObjCMessageExpr>(E)) && "Expression cannot construct an object!");
   if (const ConstructionContextLayer *PreviouslyStoredLayer =
           ConstructionContextMap.lookup(E)) {
     (void)PreviouslyStoredLayer;
@@ -1297,10 +1312,11 @@ void CFGBuilder::findConstructionContexts(
   case Stmt::CallExprClass:
   case Stmt::CXXMemberCallExprClass:
   case Stmt::CXXOperatorCallExprClass:
-  case Stmt::UserDefinedLiteralClass: {
-    auto *CE = cast<CallExpr>(Child);
-    if (CFGCXXRecordTypedCall::isCXXRecordTypedCall(CE, *Context))
-      consumeConstructionContext(Layer, CE);
+  case Stmt::UserDefinedLiteralClass:
+  case Stmt::ObjCMessageExprClass: {
+    auto *E = cast<Expr>(Child);
+    if (CFGCXXRecordTypedCall::isCXXRecordTypedCall(E))
+      consumeConstructionContext(Layer, E);
     break;
   }
   case Stmt::ExprWithCleanupsClass: {
@@ -3605,7 +3621,7 @@ CFGBlock *CFGBuilder::VisitObjCMessageExpr(ObjCMessageExpr *ME,
   findConstructionContextsForArguments(ME);
 
   autoCreateBlock();
-  appendStmt(Block, ME);
+  appendObjCMessage(Block, ME);
 
   return VisitChildren(ME);
 }
