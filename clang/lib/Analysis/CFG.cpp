@@ -697,7 +697,8 @@ private:
       Expr *Arg = E->getArg(i);
       if (Arg->getType()->getAsCXXRecordDecl() && !Arg->isGLValue())
         findConstructionContexts(
-            ConstructionContextLayer::create(cfg->getBumpVectorContext(), E, i),
+            ConstructionContextLayer::create(cfg->getBumpVectorContext(),
+                                             ConstructionContextItem(E, i)),
             Arg);
     }
   }
@@ -1286,9 +1287,9 @@ void CFGBuilder::findConstructionContexts(
   if (!Child)
     return;
 
-  auto withExtraLayer = [this, Layer](Stmt *S, unsigned Index = 0) {
-    return ConstructionContextLayer::create(cfg->getBumpVectorContext(), S,
-                                            Index, Layer);
+  auto withExtraLayer = [this, Layer](const ConstructionContextItem &Item) {
+    return ConstructionContextLayer::create(cfg->getBumpVectorContext(), Item,
+                                            Layer);
   };
 
   switch(Child->getStmtClass()) {
@@ -1348,18 +1349,17 @@ void CFGBuilder::findConstructionContexts(
     // it indicates the beginning of a temporary object construction context,
     // so it shouldn't be found in the middle. However, if it is the beginning
     // of an elidable copy or move construction context, we need to include it.
-    if (const auto *CE =
-            dyn_cast_or_null<CXXConstructExpr>(Layer->getTriggerStmt())) {
-      if (CE->isElidable()) {
-        auto *MTE = cast<MaterializeTemporaryExpr>(Child);
-        findConstructionContexts(withExtraLayer(MTE), MTE->GetTemporaryExpr());
-      }
+    if (Layer->getItem().getKind() ==
+        ConstructionContextItem::ElidableConstructorKind) {
+      auto *MTE = cast<MaterializeTemporaryExpr>(Child);
+      findConstructionContexts(withExtraLayer(MTE), MTE->GetTemporaryExpr());
     }
     break;
   }
   case Stmt::ConditionalOperatorClass: {
     auto *CO = cast<ConditionalOperator>(Child);
-    if (!dyn_cast_or_null<MaterializeTemporaryExpr>(Layer->getTriggerStmt())) {
+    if (Layer->getItem().getKind() !=
+        ConstructionContextItem::MaterializationKind) {
       // If the object returned by the conditional operator is not going to be a
       // temporary object that needs to be immediately materialized, then
       // it must be C++17 with its mandatory copy elision. Do not yet promise
@@ -3221,8 +3221,7 @@ CFGBlock *CFGBuilder::VisitForStmt(ForStmt *F) {
           const DeclStmt *DS = F->getConditionVariableDeclStmt();
           assert(DS->isSingleDecl());
           findConstructionContexts(
-              ConstructionContextLayer::create(cfg->getBumpVectorContext(),
-                                               const_cast<DeclStmt *>(DS)),
+              ConstructionContextLayer::create(cfg->getBumpVectorContext(), DS),
               Init);
           appendStmt(Block, DS);
           EntryConditionBlock = addStmt(Init);
