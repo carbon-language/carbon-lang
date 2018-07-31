@@ -41,6 +41,12 @@ private:
   /// new-expression triggers construction of the newly allocated object(s).
   TriggerTy Trigger;
 
+  /// If a single trigger statement triggers multiple constructors, they are
+  /// usually being enumerated. This covers function argument constructors
+  /// triggered by a call-expression and items in an initializer list triggered
+  /// by an init-list-expression.
+  unsigned Index;
+
   /// Sometimes a single trigger is not enough to describe the construction
   /// site. In this case we'd have a chain of "partial" construction context
   /// layers.
@@ -55,13 +61,13 @@ private:
   /// Not all of these are currently supported.
   const ConstructionContextLayer *Parent = nullptr;
 
-  ConstructionContextLayer(TriggerTy Trigger,
-                          const ConstructionContextLayer *Parent)
-      : Trigger(Trigger), Parent(Parent) {}
+  ConstructionContextLayer(TriggerTy Trigger, unsigned Index,
+                           const ConstructionContextLayer *Parent)
+      : Trigger(Trigger), Index(Index), Parent(Parent) {}
 
 public:
   static const ConstructionContextLayer *
-  create(BumpVectorContext &C, TriggerTy Trigger,
+  create(BumpVectorContext &C, TriggerTy Trigger, unsigned Index = 0,
          const ConstructionContextLayer *Parent = nullptr);
 
   const ConstructionContextLayer *getParent() const { return Parent; }
@@ -75,11 +81,13 @@ public:
     return Trigger.dyn_cast<CXXCtorInitializer *>();
   }
 
+  unsigned getIndex() const { return Index; }
+
   /// Returns true if these layers are equal as individual layers, even if
   /// their parents are different.
   bool isSameLayer(const ConstructionContextLayer *Other) const {
     assert(Other);
-    return (Trigger == Other->Trigger);
+    return (Trigger == Other->Trigger && Index == Other->Index);
   }
 
   /// See if Other is a proper initial segment of this construction context
@@ -114,7 +122,8 @@ public:
     SimpleReturnedValueKind,
     CXX17ElidedCopyReturnedValueKind,
     RETURNED_VALUE_BEGIN = SimpleReturnedValueKind,
-    RETURNED_VALUE_END = CXX17ElidedCopyReturnedValueKind
+    RETURNED_VALUE_END = CXX17ElidedCopyReturnedValueKind,
+    ArgumentKind
   };
 
 protected:
@@ -466,6 +475,32 @@ public:
 
   static bool classof(const ConstructionContext *CC) {
     return CC->getKind() == CXX17ElidedCopyReturnedValueKind;
+  }
+};
+
+class ArgumentConstructionContext : public ConstructionContext {
+  const Expr *CE; // The call of which the context is an argument.
+  unsigned Index; // Which argument we're constructing.
+  const CXXBindTemporaryExpr *BTE; // Whether the object needs to be destroyed.
+
+  friend class ConstructionContext; // Allows to create<>() itself.
+
+  explicit ArgumentConstructionContext(const Expr *CE, unsigned Index,
+                                       const CXXBindTemporaryExpr *BTE)
+      : ConstructionContext(ArgumentKind), CE(CE),
+        Index(Index), BTE(BTE) {
+    assert(isa<CallExpr>(CE) || isa<CXXConstructExpr>(CE) ||
+           isa<ObjCMessageExpr>(CE));
+    // BTE is optional.
+  }
+
+public:
+  const Expr *getCallLikeExpr() const { return CE; }
+  unsigned getIndex() const { return Index; }
+  const CXXBindTemporaryExpr *getCXXBindTemporaryExpr() const { return BTE; }
+
+  static bool classof(const ConstructionContext *CC) {
+    return CC->getKind() == ArgumentKind;
   }
 };
 

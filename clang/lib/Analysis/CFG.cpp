@@ -693,16 +693,13 @@ private:
                 std::is_same<CallLikeExpr, CXXConstructExpr>::value ||
                 std::is_same<CallLikeExpr, ObjCMessageExpr>::value>>
   void findConstructionContextsForArguments(CallLikeExpr *E) {
-    // A stub for the code that'll eventually be used for finding construction
-    // contexts for constructors of C++ object-type arguments passed into
-    // call-like expression E.
-    // FIXME: Once actually implemented, this construction context layer should
-    // include the index of the argument as well.
-    for (auto Arg : E->arguments())
+    for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
+      Expr *Arg = E->getArg(i);
       if (Arg->getType()->getAsCXXRecordDecl() && !Arg->isGLValue())
         findConstructionContexts(
-            ConstructionContextLayer::create(cfg->getBumpVectorContext(), E),
+            ConstructionContextLayer::create(cfg->getBumpVectorContext(), E, i),
             Arg);
+    }
   }
 
   // Unset the construction context after consuming it. This is done immediately
@@ -1289,9 +1286,9 @@ void CFGBuilder::findConstructionContexts(
   if (!Child)
     return;
 
-  auto withExtraLayer = [this, Layer](Stmt *S) {
+  auto withExtraLayer = [this, Layer](Stmt *S, unsigned Index = 0) {
     return ConstructionContextLayer::create(cfg->getBumpVectorContext(), S,
-                                            Layer);
+                                            Index, Layer);
   };
 
   switch(Child->getStmtClass()) {
@@ -5012,7 +5009,7 @@ static void print_construction_context(raw_ostream &OS,
     OS << ", ";
     const auto *SICC = cast<SimpleConstructorInitializerConstructionContext>(CC);
     print_initializer(OS, Helper, SICC->getCXXCtorInitializer());
-    break;
+    return;
   }
   case ConstructionContext::CXX17ElidedCopyConstructorInitializerKind: {
     OS << ", ";
@@ -5062,6 +5059,17 @@ static void print_construction_context(raw_ostream &OS,
     Stmts.push_back(TOCC->getMaterializedTemporaryExpr());
     Stmts.push_back(TOCC->getConstructorAfterElision());
     break;
+  }
+  case ConstructionContext::ArgumentKind: {
+    const auto *ACC = cast<ArgumentConstructionContext>(CC);
+    if (const Stmt *BTE = ACC->getCXXBindTemporaryExpr()) {
+      OS << ", ";
+      Helper.handledStmt(const_cast<Stmt *>(BTE), OS);
+    }
+    OS << ", ";
+    Helper.handledStmt(const_cast<Expr *>(ACC->getCallLikeExpr()), OS);
+    OS << "+" << ACC->getIndex();
+    return;
   }
   }
   for (auto I: Stmts)

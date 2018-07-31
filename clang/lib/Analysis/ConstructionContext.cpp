@@ -21,10 +21,11 @@ using namespace clang;
 
 const ConstructionContextLayer *
 ConstructionContextLayer::create(BumpVectorContext &C, TriggerTy Trigger,
+                                 unsigned Index,
                                  const ConstructionContextLayer *Parent) {
   ConstructionContextLayer *CC =
       C.getAllocator().Allocate<ConstructionContextLayer>();
-  return new (CC) ConstructionContextLayer(Trigger, Parent);
+  return new (CC) ConstructionContextLayer(Trigger, Index, Parent);
 }
 
 bool ConstructionContextLayer::isStrictlyMoreSpecificThan(
@@ -111,11 +112,14 @@ const ConstructionContext *ConstructionContext::createFromLayers(
         }
         assert(ParentLayer->isLast());
 
-        // This is a constructor into a function argument. Not implemented yet.
+        // This is a constructor into a function argument.
         if (isa<CallExpr>(ParentLayer->getTriggerStmt()) ||
             isa<CXXConstructExpr>(ParentLayer->getTriggerStmt()) ||
-            isa<ObjCMessageExpr>(ParentLayer->getTriggerStmt()))
-          return nullptr;
+            isa<ObjCMessageExpr>(ParentLayer->getTriggerStmt())) {
+          return create<ArgumentConstructionContext>(
+              C, cast<Expr>(ParentLayer->getTriggerStmt()),
+              ParentLayer->getIndex(), BTE);
+        }
         // This is C++17 copy-elided construction into return statement.
         if (auto *RS = dyn_cast<ReturnStmt>(ParentLayer->getTriggerStmt())) {
           assert(!RS->getRetValue()->getType().getCanonicalType()
@@ -175,11 +179,15 @@ const ConstructionContext *ConstructionContext::createFromLayers(
       assert(TopLayer->isLast());
       return create<SimpleReturnedValueConstructionContext>(C, RS);
     }
-    // This is a constructor into a function argument. Not implemented yet.
+    // This is a constructor into a function argument.
     if (isa<CallExpr>(TopLayer->getTriggerStmt()) ||
         isa<CXXConstructExpr>(TopLayer->getTriggerStmt()) ||
-        isa<ObjCMessageExpr>(TopLayer->getTriggerStmt()))
-      return nullptr;
+        isa<ObjCMessageExpr>(TopLayer->getTriggerStmt())) {
+      assert(TopLayer->isLast());
+      return create<ArgumentConstructionContext>(
+          C, cast<Expr>(TopLayer->getTriggerStmt()), TopLayer->getIndex(),
+          /*BTE=*/nullptr);
+    }
     llvm_unreachable("Unexpected construction context with statement!");
   } else if (const CXXCtorInitializer *I = TopLayer->getTriggerInit()) {
     assert(TopLayer->isLast());
