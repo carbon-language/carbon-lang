@@ -420,6 +420,8 @@ public:
       state.set_anyDeferredMessages();
     }
     if (bx.has_value()) {
+      // Error recovery situations must also produce messages.
+      CHECK(state.anyDeferredMessages() || state.messages().AnyFatalError());
       state.set_anyErrorRecovery();
     }
     return bx;

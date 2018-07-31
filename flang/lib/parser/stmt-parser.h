@@ -38,9 +38,11 @@ template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
 constexpr auto endOfLine{
     "\n"_ch >> ok || fail("expected end of line"_err_en_US)};
 
+constexpr auto semicolons{";"_ch >> skipMany(";"_tok) / space / maybe("\n"_ch)};
 constexpr auto endOfStmt{
-    space >> (";"_ch >> skipMany(";"_tok) >> space >> maybe("\n"_ch) >> ok ||
-                 endOfLine)};
+    space >> withMessage("expected end of statement"_err_en_US,
+                 semicolons || endOfLine)};
+constexpr auto forceEndOfStmt{recovery(endOfStmt, SkipPast<'\n'>{})};
 
 template<typename PA> inline constexpr auto statement(const PA &p) {
   return unterminatedStatement(p) / endOfStmt;
@@ -53,15 +55,8 @@ template<typename PA> inline constexpr auto statement(const PA &p) {
 // be valid at that point.  It only makes sense to use this within "some()"
 // or "many()" so as to not end the list of statements.
 template<typename PA> inline constexpr auto unambiguousStatement(const PA &p) {
-  return unterminatedStatement(p) /
-      recovery(space >>
-              withMessage("expected end of statement"_err_en_US, endOfStmt),
-          SkipPast<'\n'>{});
+  return unterminatedStatement(p) / forceEndOfStmt;
 }
-
-constexpr auto forceEndOfStmt{recovery(space >>
-        withMessage("expected end of statement"_err_en_US, lookAhead(";\n"_ch)),
-    SkipTo<'\n'>{})};
 
 constexpr auto ignoredStatementPrefix{
     skipStuffBeforeStatement >> maybe(label) >> maybe(name / ":") >> space};
@@ -83,7 +78,10 @@ constexpr auto executionPartErrorRecovery{stmtErrorRecoveryStart >>
 // END statement error recovery
 constexpr auto missingOptionalName{defaulted(cut >> maybe(name))};
 constexpr auto noNameEnd{"END" >> missingOptionalName};
-constexpr auto bareEnd{noNameEnd / lookAhead(endOfStmt)};
+constexpr auto atEndOfStmt{space >>
+    withMessage("expected end of statement"_err_en_US, lookAhead(";\n"_ch))};
+constexpr auto bareEnd{noNameEnd / recovery(atEndOfStmt, SkipTo<'\n'>{})};
+
 constexpr auto endStmtErrorRecovery{
     ("END"_tok >> SkipPast<'\n'>{} || consumedAllInput) >> missingOptionalName};
 constexpr auto progUnitEndStmtErrorRecovery{

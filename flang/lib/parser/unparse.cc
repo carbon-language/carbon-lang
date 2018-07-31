@@ -190,9 +190,9 @@ public:
         encoding_ == Encoding::EUC_JP ? EUC_JPCharacterBytes
                                       : UTF8CharacterBytes)};
     if (chars.has_value()) {
-      Pre(*chars);
+      Unparse(*chars);
     } else {
-      Pre(x.v.size());
+      Unparse(x.v.size());
     }
     Put('H');
   }
