@@ -9371,6 +9371,12 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveAlign(DirectiveID.getLoc()); // Use Generic on failure.
   else if (IDVal == ".thumb_set")
     parseDirectiveThumbSet(DirectiveID.getLoc());
+  else if (IDVal == ".inst")
+    parseDirectiveInst(DirectiveID.getLoc());
+  else if (IDVal == ".inst.n")
+    parseDirectiveInst(DirectiveID.getLoc(), 'n');
+  else if (IDVal == ".inst.w")
+    parseDirectiveInst(DirectiveID.getLoc(), 'w');
   else if (!IsMachO && !IsCOFF) {
     if (IDVal == ".arch")
       parseDirectiveArch(DirectiveID.getLoc());
@@ -9382,12 +9388,6 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
       parseDirectiveFPU(DirectiveID.getLoc());
     else if (IDVal == ".fnstart")
       parseDirectiveFnStart(DirectiveID.getLoc());
-    else if (IDVal == ".inst")
-      parseDirectiveInst(DirectiveID.getLoc());
-    else if (IDVal == ".inst.n")
-      parseDirectiveInst(DirectiveID.getLoc(), 'n');
-    else if (IDVal == ".inst.w")
-      parseDirectiveInst(DirectiveID.getLoc(), 'w');
     else if (IDVal == ".object_arch")
       parseDirectiveObjectArch(DirectiveID.getLoc());
     else if (IDVal == ".tlsdescseq")
