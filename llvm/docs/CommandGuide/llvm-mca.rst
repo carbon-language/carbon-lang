@@ -114,8 +114,8 @@ option specifies "``-``", then the output will also be sent to standard output.
 .. option:: -register-file-size=<size>
 
  Specify the size of the register file. When specified, this flag limits how
- many temporary registers are available for register renaming purposes. A value
- of zero for this flag means "unlimited number of temporary registers".
+ many physical registers are available for register renaming purposes. A value
+ of zero for this flag means "unlimited number of physical registers".
 
 .. option:: -iterations=<number of iterations>
 
@@ -431,7 +431,7 @@ Parallelism).
 In the dot-product example, there are anti-dependencies introduced by
 instructions from different iterations.  However, those dependencies can be
 removed at register renaming stage (at the cost of allocating register aliases,
-and therefore consuming temporary registers).
+and therefore consuming physical registers).
 
 Table *Average Wait times* helps diagnose performance issues that are caused by
 the presence of long latency instructions and potentially long data dependencies
@@ -670,7 +670,7 @@ When instructions are executed, the retire control unit flags the
 instruction as "ready to retire."
 
 Instructions are retired in program order.  The register file is notified of
-the retirement so that it can free the temporary registers that were allocated
+the retirement so that it can free the physical registers that were allocated
 for the instruction during the register renaming stage.
 
 Load/Store Unit and Memory Consistency Model
