@@ -31,9 +31,9 @@ constexpr uptr ExpectedProfilingVersion = 0x20180424;
 struct ExpectedProfilingFileHeader {
   const u64 MagicBytes = 0x7872617970726f66; // Identifier for XRay profiling
                                              // files 'xrayprof' in hex.
-  const uptr Version = ExpectedProfilingVersion;
-  uptr Timestamp = 0;
-  uptr PID = 0;
+  const u64 Version = ExpectedProfilingVersion;
+  u64 Timestamp = 0;
+  u64 PID = 0;
 };
 
 void ValidateFileHeaderBlock(XRayBuffer B) {
