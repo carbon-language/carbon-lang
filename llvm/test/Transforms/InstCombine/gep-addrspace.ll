@@ -65,3 +65,22 @@ define { i8, i8 } @inbounds_after_addrspacecast() {
   ret { i8, i8 } %insert
 }
 
+
+declare spir_func <16 x i32> @my_extern_func()
+
+; check that a bitcast is not generated when we need an addrspace cast
+define void @bitcast_after_gep(<16 x i32>* %t0) {
+; CHECK-LABEL: @bitcast_after_gep(
+; CHECK-NEXT:    [[T4:%.*]] = addrspacecast <16 x i32>* [[T0:%.*]] to <16 x i32> addrspace(3)*
+; CHECK-NEXT:    [[CALL:%.*]] = call spir_func <16 x i32> @my_extern_func()
+; CHECK-NEXT:    store <16 x i32> [[CALL]], <16 x i32> addrspace(3)* [[T4]], align 64
+; CHECK-NEXT:    ret void
+;
+  %t1 = bitcast <16 x i32>* %t0 to [16 x i32]*
+  %t2 = addrspacecast [16 x i32]* %t1 to [16 x i32] addrspace(3)*
+  %t3 = getelementptr inbounds [16 x i32], [16 x i32] addrspace(3)* %t2, i64 0, i64 0
+  %t4 = bitcast i32 addrspace(3)* %t3 to <16 x i32> addrspace(3)*
+  %call = call spir_func <16 x i32> @my_extern_func()
+  store <16 x i32> %call, <16 x i32> addrspace(3)* %t4
+  ret void
+}
