@@ -286,10 +286,10 @@ define amdgpu_kernel void @test_call_external_void_func_v3i64() #0 {
 ; FIXME: Immedites should fold directly into v_mov_b32s
 ; GCN-LABEL: {{^}}test_call_external_void_func_v4i64:
 ; GCN: buffer_load_dwordx4 v[0:3]
-; GCN: v_mov_b32_e32 v4, s
-; GCN: v_mov_b32_e32 v5, s
-; GCN: v_mov_b32_e32 v6, s
-; GCN: v_mov_b32_e32 v7, s
+; GCN-DAG: v_mov_b32_e32 v4, s
+; GCN-DAG: v_mov_b32_e32 v5, s
+; GCN-DAG: v_mov_b32_e32 v6, s
+; GCN-DAG: v_mov_b32_e32 v7, s
 
 ; GCN: s_waitcnt
 ; GCN-NEXT: s_swappc_b64
@@ -358,6 +358,15 @@ define amdgpu_kernel void @test_call_external_void_func_v2i32() #0 {
   ret void
 }
 
+; GCN-LABEL: {{^}}test_call_external_void_func_v2i32_imm:
+; GCN-DAG: v_mov_b32_e32 v0, 1
+; GCN-DAG: v_mov_b32_e32 v1, 2
+; GCN: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v2i32_imm() #0 {
+  call void @external_void_func_v2i32(<2 x i32> <i32 1, i32 2>)
+  ret void
+}
+
 ; GCN-LABEL: {{^}}test_call_external_void_func_v3i32_imm:
 ; HSA-DAG: s_mov_b32 s33, s9
 ; MESA-DAG: s_mov_b32 s33, s3{{$}}
@@ -393,6 +402,17 @@ define amdgpu_kernel void @test_call_external_void_func_v4i32() #0 {
   ret void
 }
 
+; GCN-LABEL: {{^}}test_call_external_void_func_v4i32_imm:
+; GCN-DAG: v_mov_b32_e32 v0, 1
+; GCN-DAG: v_mov_b32_e32 v1, 2
+; GCN-DAG: v_mov_b32_e32 v2, 3
+; GCN-DAG: v_mov_b32_e32 v3, 4
+; GCN: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v4i32_imm() #0 {
+  call void @external_void_func_v4i32(<4 x i32> <i32 1, i32 2, i32 3, i32 4>)
+  ret void
+}
+
 ; GCN-LABEL: {{^}}test_call_external_void_func_v8i32:
 ; GCN-DAG: buffer_load_dwordx4 v[0:3], off
 ; GCN-DAG: buffer_load_dwordx4 v[4:7], off
@@ -402,6 +422,21 @@ define amdgpu_kernel void @test_call_external_void_func_v8i32() #0 {
   %ptr = load <8 x i32> addrspace(1)*, <8 x i32> addrspace(1)* addrspace(4)* undef
   %val = load <8 x i32>, <8 x i32> addrspace(1)* %ptr
   call void @external_void_func_v8i32(<8 x i32> %val)
+  ret void
+}
+
+; GCN-LABEL: {{^}}test_call_external_void_func_v8i32_imm:
+; GCN-DAG: v_mov_b32_e32 v0, 1
+; GCN-DAG: v_mov_b32_e32 v1, 2
+; GCN-DAG: v_mov_b32_e32 v2, 3
+; GCN-DAG: v_mov_b32_e32 v3, 4
+; GCN-DAG: v_mov_b32_e32 v4, 5
+; GCN-DAG: v_mov_b32_e32 v5, 6
+; GCN-DAG: v_mov_b32_e32 v6, 7
+; GCN-DAG: v_mov_b32_e32 v7, 8
+; GCN: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v8i32_imm() #0 {
+  call void @external_void_func_v8i32(<8 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8>)
   ret void
 }
 

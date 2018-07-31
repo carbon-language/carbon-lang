@@ -697,10 +697,11 @@ bool SITargetLowering::isShuffleMaskLegal(ArrayRef<int>, EVT) const {
 MVT SITargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
                                                     CallingConv::ID CC,
                                                     EVT VT) const {
-  if (CC != CallingConv::AMDGPU_KERNEL &&
-      VT.isVector() && VT.getVectorNumElements() == 3) {
+  // TODO: Consider splitting all arguments into 32-bit pieces.
+  if (CC != CallingConv::AMDGPU_KERNEL && VT.isVector()) {
     EVT ScalarVT = VT.getScalarType();
-    if (ScalarVT.getSizeInBits() == 32)
+    unsigned Size = ScalarVT.getSizeInBits();
+    if (Size == 32 || Size == 64)
       return ScalarVT.getSimpleVT();
   }
 
@@ -710,11 +711,11 @@ MVT SITargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
 unsigned SITargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
                                                          CallingConv::ID CC,
                                                          EVT VT) const {
-  if (CC != CallingConv::AMDGPU_KERNEL &&
-      VT.isVector() && VT.getVectorNumElements() == 3) {
+  if (CC != CallingConv::AMDGPU_KERNEL && VT.isVector()) {
     EVT ScalarVT = VT.getScalarType();
-    if (ScalarVT.getSizeInBits() == 32)
-      return 3;
+    unsigned Size = ScalarVT.getSizeInBits();
+    if (Size == 32 || Size == 64)
+      return VT.getVectorNumElements();
   }
 
   return TargetLowering::getNumRegistersForCallingConv(Context, CC, VT);
@@ -724,14 +725,13 @@ unsigned SITargetLowering::getVectorTypeBreakdownForCallingConv(
   LLVMContext &Context, CallingConv::ID CC,
   EVT VT, EVT &IntermediateVT,
   unsigned &NumIntermediates, MVT &RegisterVT) const {
-
-  if (CC != CallingConv::AMDGPU_KERNEL && VT.getVectorNumElements() == 3) {
+  if (CC != CallingConv::AMDGPU_KERNEL && VT.isVector()) {
     EVT ScalarVT = VT.getScalarType();
-    if (ScalarVT.getSizeInBits() == 32 ||
-        ScalarVT.getSizeInBits() == 64) {
+    unsigned Size = ScalarVT.getSizeInBits();
+    if (Size == 32 || Size == 64) {
       RegisterVT = ScalarVT.getSimpleVT();
       IntermediateVT = RegisterVT;
-      NumIntermediates = 3;
+      NumIntermediates = VT.getVectorNumElements();
       return NumIntermediates;
     }
   }
@@ -1314,6 +1314,8 @@ static void processShaderInputArgs(SmallVectorImpl<ISD::InputArg> &Splits,
   for (unsigned I = 0, E = Ins.size(), PSInputNum = 0; I != E; ++I) {
     const ISD::InputArg *Arg = &Ins[I];
 
+    assert(!Arg->VT.isVector() && "vector type argument should have been split");
+
     // First check if it's a PS input addr.
     if (CallConv == CallingConv::AMDGPU_PS &&
         !Arg->Flags.isInReg() && !Arg->Flags.isByVal() && PSInputNum <= 15) {
@@ -1347,25 +1349,7 @@ static void processShaderInputArgs(SmallVectorImpl<ISD::InputArg> &Splits,
       ++PSInputNum;
     }
 
-    // Second split vertices into their elements.
-    if (Arg->VT.isVector()) {
-      ISD::InputArg NewArg = *Arg;
-      NewArg.Flags.setSplit();
-      NewArg.VT = Arg->VT.getVectorElementType();
-
-      // We REALLY want the ORIGINAL number of vertex elements here, e.g. a
-      // three or five element vertex only needs three or five registers,
-      // NOT four or eight.
-      Type *ParamType = FType->getParamType(Arg->getOrigArgIndex());
-      unsigned NumElements = ParamType->getVectorNumElements();
-
-      for (unsigned J = 0; J != NumElements; ++J) {
-        Splits.push_back(NewArg);
-        NewArg.PartOffset += NewArg.VT.getStoreSize();
-      }
-    } else {
-      Splits.push_back(*Arg);
-    }
+    Splits.push_back(*Arg);
   }
 }
 
