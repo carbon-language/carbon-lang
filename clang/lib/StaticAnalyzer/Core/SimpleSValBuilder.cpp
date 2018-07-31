@@ -1291,6 +1291,17 @@ SVal SimpleSValBuilder::simplifySVal(ProgramStateRef State, SVal V) {
       if (I != Cached.end())
         return I->second;
 
+      // For now don't try to simplify mixed Loc/NonLoc expressions
+      // because they often appear from LocAsInteger operations
+      // and we don't know how to combine a LocAsInteger
+      // with a concrete value.
+      if (Loc::isLocType(S->getLHS()->getType()) !=
+          Loc::isLocType(S->getRHS()->getType())) {
+        SVal V = SVB.makeSymbolVal(S);
+        Cached[S] = V;
+        return V;
+      }
+
       SVal LHS = Visit(S->getLHS());
       SVal RHS = Visit(S->getRHS());
       if (isUnchanged(S->getLHS(), LHS) && isUnchanged(S->getRHS(), RHS)) {
