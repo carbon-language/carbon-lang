@@ -701,8 +701,11 @@ MVT SITargetLowering::getRegisterTypeForCallingConv(LLVMContext &Context,
   if (CC != CallingConv::AMDGPU_KERNEL && VT.isVector()) {
     EVT ScalarVT = VT.getScalarType();
     unsigned Size = ScalarVT.getSizeInBits();
-    if (Size == 32 || Size == 64)
+    if (Size == 32)
       return ScalarVT.getSimpleVT();
+
+    if (Size == 64)
+      return MVT::i32;
 
     if (Size == 16 &&
         Subtarget->has16BitInsts() &&
@@ -721,8 +724,11 @@ unsigned SITargetLowering::getNumRegistersForCallingConv(LLVMContext &Context,
     EVT ScalarVT = VT.getScalarType();
     unsigned Size = ScalarVT.getSizeInBits();
 
-    if (Size == 32 || Size == 64)
+    if (Size == 32)
       return NumElts;
+
+    if (Size == 64)
+      return 2 * NumElts;
 
     // FIXME: Fails to break down as we want with v3.
     if (Size == 16 && Subtarget->has16BitInsts() && isPowerOf2_32(NumElts))
@@ -740,10 +746,17 @@ unsigned SITargetLowering::getVectorTypeBreakdownForCallingConv(
     unsigned NumElts = VT.getVectorNumElements();
     EVT ScalarVT = VT.getScalarType();
     unsigned Size = ScalarVT.getSizeInBits();
-    if (Size == 32 || Size == 64) {
+    if (Size == 32) {
       RegisterVT = ScalarVT.getSimpleVT();
       IntermediateVT = RegisterVT;
       NumIntermediates = NumElts;
+      return NumIntermediates;
+    }
+
+    if (Size == 64) {
+      RegisterVT = MVT::i32;
+      IntermediateVT = RegisterVT;
+      NumIntermediates = 2 * NumElts;
       return NumIntermediates;
     }
 
