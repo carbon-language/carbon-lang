@@ -14,5 +14,7 @@
 
 add_library(FortranRuntime
   ISO_Fortran_binding.cc
+  derived-type.cc
   descriptor.cc
+  type-code.cc
 )

@@ -12,113 +12,78 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// TODO: Not complete; exists to check compilability of descriptor.h
-
 #include "descriptor.h"
+#include <cassert>
 #include <cstdlib>
-#include <new>
 
 namespace Fortran::runtime {
 
-TypeCode::TypeCode(TypeCode::Form f, int kind) {
-  switch (f) {
-  case Form::Integer:
-    switch (kind) {
-    case 1: raw_ = CFI_type_int8_t; break;
-    case 2: raw_ = CFI_type_int16_t; break;
-    case 4: raw_ = CFI_type_int32_t; break;
-    case 8: raw_ = CFI_type_int64_t; break;
-    case 16: raw_ = CFI_type_int128_t; break;
-    }
-    break;
-  case Form::Real:
-    switch (kind) {
-    case 4: raw_ = CFI_type_float; break;
-    case 8: raw_ = CFI_type_double; break;
-    case 10:
-    case 16: raw_ = CFI_type_long_double; break;
-    }
-    break;
-  case Form::Complex:
-    switch (kind) {
-    case 4: raw_ = CFI_type_float_Complex; break;
-    case 8: raw_ = CFI_type_double_Complex; break;
-    case 10:
-    case 16: raw_ = CFI_type_long_double_Complex; break;
-    }
-    break;
-  case Form::Character:
-    if (kind == 1) {
-      raw_ = CFI_type_cptr;
-    }
-    break;
-  case Form::Logical:
-    switch (kind) {
-    case 1: raw_ = CFI_type_Bool; break;
-    case 2: raw_ = CFI_type_int16_t; break;
-    case 4: raw_ = CFI_type_int32_t; break;
-    case 8: raw_ = CFI_type_int64_t; break;
-    }
-    break;
-  case Form::Derived: raw_ = CFI_type_struct; break;
-  }
-}
+Descriptor::~Descriptor() { assert(!(Attributes() & CREATED)); }
 
-std::size_t DescriptorAddendum::SizeInBytes() const {
-  return SizeInBytes(derivedTypeSpecialization_->derivedType().lenParameters());
-}
-
-Descriptor::Descriptor(TypeCode t, std::size_t elementBytes, void *p, int rank,
-    const SubscriptValue *extent) {
-  CFI_establish(
+int Descriptor::Establish(TypeCode t, std::size_t elementBytes, void *p,
+    int rank, const SubscriptValue *extent) {
+  return CFI_establish(
       &raw_, p, CFI_attribute_other, t.raw(), elementBytes, rank, extent);
 }
 
-Descriptor::Descriptor(TypeCode::Form f, int kind, void *p, int rank,
+int Descriptor::Establish(TypeCode::Form f, int kind, void *p, int rank,
     const SubscriptValue *extent) {
   std::size_t elementBytes = kind;
   if (f == TypeCode::Form::Complex) {
     elementBytes *= 2;
   }
-  ISO::CFI_establish(&raw_, p, CFI_attribute_other, TypeCode(f, kind).raw(),
-      elementBytes, rank, extent);
+  return ISO::CFI_establish(&raw_, p, CFI_attribute_other,
+      TypeCode(f, kind).raw(), elementBytes, rank, extent);
 }
 
-Descriptor::Descriptor(const DerivedTypeSpecialization &dts, void *p, int rank,
-    const SubscriptValue *extent) {
-  ISO::CFI_establish(
-      &raw_, p, ADDENDUM, CFI_type_struct, dts.SizeInBytes(), rank, extent);
-  Addendum()->set_derivedTypeSpecialization(dts);
+int Descriptor::Establish(
+    const DerivedType &dt, void *p, int rank, const SubscriptValue *extent) {
+  int result{ISO::CFI_establish(
+      &raw_, p, ADDENDUM, CFI_type_struct, dt.SizeInBytes(), rank, extent)};
+  Addendum()->set_derivedType(dt);
+  return result;
 }
 
 Descriptor *Descriptor::Create(TypeCode t, std::size_t elementBytes, void *p,
     int rank, const SubscriptValue *extent) {
-  return new (new char[SizeInBytes(rank)])
-      Descriptor{t, elementBytes, p, rank, extent};
+  std::size_t bytes{SizeInBytes(rank)};
+  Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
+  result->Establish(t, elementBytes, p, rank, extent);
+  result->Attributes() |= CREATED;
+  return result;
 }
 
 Descriptor *Descriptor::Create(TypeCode::Form f, int kind, void *p, int rank,
     const SubscriptValue *extent) {
-  return new (new char[SizeInBytes(rank)]) Descriptor{f, kind, p, rank, extent};
+  std::size_t bytes{SizeInBytes(rank)};
+  Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
+  result->Establish(f, kind, p, rank, extent);
+  result->Attributes() |= CREATED;
+  return result;
 }
 
-Descriptor *Descriptor::Create(const DerivedTypeSpecialization &dts, void *p,
-    int rank, const SubscriptValue *extent) {
-  const DerivedType &derivedType{dts.derivedType()};
-  return new (new char[SizeInBytes(rank, derivedType.IsNontrivial(),
-      derivedType.lenParameters())]) Descriptor{dts, p, rank, extent};
+Descriptor *Descriptor::Create(
+    const DerivedType &dt, void *p, int rank, const SubscriptValue *extent) {
+  std::size_t bytes{SizeInBytes(rank, dt.IsNontrivial(), dt.lenParameters())};
+  Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
+  result->Establish(dt, p, rank, extent);
+  result->Attributes() |= CREATED;
+  return result;
 }
 
-void Descriptor::Destroy() { delete[] reinterpret_cast<char *>(this); }
+void Descriptor::Destroy() {
+  if (Attributes() & CREATED) {
+    delete[] reinterpret_cast<char *>(this);
+  }
+}
 
-void Descriptor::SetDerivedTypeSpecialization(
-    const DerivedTypeSpecialization &dts) {
-  raw_.attribute |= ADDENDUM;
-  Addendum()->set_derivedTypeSpecialization(dts);
+void Descriptor::SetDerivedType(const DerivedType &dt) {
+  Attributes() |= ADDENDUM;
+  Addendum()->set_derivedType(dt);
 }
 
 void Descriptor::SetLenParameterValue(int which, TypeParameterValue x) {
-  raw_.attribute |= ADDENDUM;
+  Attributes() |= ADDENDUM;
   Addendum()->SetLenParameterValue(which, x);
 }
 
@@ -128,40 +93,14 @@ std::size_t Descriptor::SizeInBytes() const {
       (addendum ? addendum->SizeInBytes() : 0);
 }
 
-TypeParameterValue TypeParameter::KindParameterValue(
-    const DerivedTypeSpecialization &specialization) const {
-  return specialization.KindParameterValue(which_);
+void Descriptor::Check() const {
+  // TODO
 }
 
-TypeParameterValue TypeParameter::Value(const Descriptor &descriptor) const {
-  const DescriptorAddendum &addendum{*descriptor.Addendum()};
-  if (isLenTypeParameter_) {
-    return addendum.LenParameterValue(which_);
-  } else {
-    return KindParameterValue(*addendum.derivedTypeSpecialization());
+std::size_t DescriptorAddendum::SizeInBytes() const {
+  if (derivedType_ == nullptr) {
+    return 0;
   }
-}
-
-bool DerivedType::IsNontrivialAnalysis() const {
-  if (kindParameters_ > 0 || lenParameters_ > 0 || typeBoundProcedures_ > 0 ||
-      definedAssignments_ > 0 || finalSubroutine_.host != 0) {
-    return true;
-  }
-  for (int j{0}; j < components_; ++j) {
-    if (component_[j].IsDescriptor()) {
-      return true;
-    }
-    if (const Descriptor * staticDescriptor{component_[j].staticDescriptor()}) {
-      if (const DescriptorAddendum * addendum{staticDescriptor->Addendum()}) {
-        if (const DerivedTypeSpecialization *
-            dts{addendum->derivedTypeSpecialization()}) {
-          if (dts->derivedType().IsNontrivial()) {
-            return true;
-          }
-        }
-      }
-    }
-  }
-  return false;
+  return SizeInBytes(derivedType_->lenParameters());
 }
 }  // namespace Fortran::runtime
