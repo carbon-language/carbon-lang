@@ -24,9 +24,14 @@ declare void @external_void_func_v4i64(<4 x i64>) #0
 declare void @external_void_func_f16(half) #0
 declare void @external_void_func_f32(float) #0
 declare void @external_void_func_f64(double) #0
+declare void @external_void_func_v2f32(<2 x float>) #0
 
 declare void @external_void_func_v2i16(<2 x i16>) #0
 declare void @external_void_func_v2f16(<2 x half>) #0
+declare void @external_void_func_v3i16(<3 x i16>) #0
+declare void @external_void_func_v3f16(<3 x half>) #0
+declare void @external_void_func_v4i16(<4 x i16>) #0
+declare void @external_void_func_v4f16(<4 x half>) #0
 
 declare void @external_void_func_v2i32(<2 x i32>) #0
 declare void @external_void_func_v3i32(<3 x i32>) #0
@@ -319,6 +324,15 @@ define amdgpu_kernel void @test_call_external_void_func_f32_imm() #0 {
   ret void
 }
 
+; GCN-LABEL: {{^}}test_call_external_void_func_v2f32_imm:
+; GCN-DAG: v_mov_b32_e32 v0, 1.0
+; GCN-DAG: v_mov_b32_e32 v1, 2.0
+; GCN: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v2f32_imm() #0 {
+  call void @external_void_func_v2f32(<2 x float> <float 1.0, float 2.0>)
+  ret void
+}
+
 ; GCN-LABEL: {{^}}test_call_external_void_func_f64_imm:
 ; GCN: v_mov_b32_e32 v0, 0{{$}}
 ; GCN: v_mov_b32_e32 v1, 0x40100000
@@ -335,6 +349,49 @@ define amdgpu_kernel void @test_call_external_void_func_f64_imm() #0 {
 define amdgpu_kernel void @test_call_external_void_func_v2i16() #0 {
   %val = load <2 x i16>, <2 x i16> addrspace(1)* undef
   call void @external_void_func_v2i16(<2 x i16> %val)
+  ret void
+}
+
+; GCN-LABEL: {{^}}test_call_external_void_func_v3i16:
+; GFX9: buffer_load_dwordx2 v[0:1]
+; GFX9-NOT: v0
+; GFX9-NOT: v1
+; GFX9: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v3i16() #0 {
+  %val = load <3 x i16>, <3 x i16> addrspace(1)* undef
+  call void @external_void_func_v3i16(<3 x i16> %val)
+  ret void
+}
+
+; FIXME: materialize constant directly in VGPR
+; GCN-LABEL: {{^}}test_call_external_void_func_v3i16_imm:
+; GFX9-DAG: s_mov_b32 [[K01:s[0-9]+]], 0x20001
+; GFX9-DAG: s_pack_ll_b32_b16 [[K23:s[0-9]+]], 3, s{{[0-9]+}}
+; GFX9: v_mov_b32_e32 v0, [[K01]]
+; GFX9: v_mov_b32_e32 v1, [[K23]]
+; GFX9: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v3i16_imm() #0 {
+  call void @external_void_func_v3i16(<3 x i16> <i16 1, i16 2, i16 3>)
+  ret void
+}
+
+; GCN-LABEL: {{^}}test_call_external_void_func_v4i16:
+; GFX9: buffer_load_dwordx2 v[0:1]
+; GFX9-NOT: v0
+; GFX9-NOT: v1
+; GFX9: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v4i16() #0 {
+  %val = load <4 x i16>, <4 x i16> addrspace(1)* undef
+  call void @external_void_func_v4i16(<4 x i16> %val)
+  ret void
+}
+
+; GCN-LABEL: {{^}}test_call_external_void_func_v4i16_imm:
+; GFX9-DAG: v_mov_b32_e32 v0, 0x20001
+; GFX9-DAG: v_mov_b32_e32 v1, 0x40003
+; GFX9: s_swappc_b64
+define amdgpu_kernel void @test_call_external_void_func_v4i16_imm() #0 {
+  call void @external_void_func_v4i16(<4 x i16> <i16 1, i16 2, i16 3, i16 4>)
   ret void
 }
 
