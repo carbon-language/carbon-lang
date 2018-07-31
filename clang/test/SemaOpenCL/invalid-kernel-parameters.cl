@@ -9,7 +9,35 @@ kernel void half_arg(half x) { } // expected-error{{declaring function parameter
 // bool, half, size_t, ptrdiff_t, intptr_t, and uintptr_t
 // or a struct / union with any of these types in them
 
-// TODO: Ban int types, size_t, ptrdiff_t ...
+typedef __SIZE_TYPE__ size_t; // expected-note{{'size_t' (aka 'unsigned int') declared here}}
+                              // expected-note@-1{{'size_t' (aka 'unsigned int') declared here}}
+typedef __PTRDIFF_TYPE__ ptrdiff_t; // expected-note{{'ptrdiff_t' (aka 'int') declared here}}
+typedef __INTPTR_TYPE__ intptr_t; // expected-note{{'intptr_t' (aka 'int') declared here}}
+typedef __UINTPTR_TYPE__ uintptr_t; // expected-note{{'uintptr_t' (aka 'unsigned int') declared here}}
+
+kernel void size_t_arg(size_t x) {} // expected-error{{'size_t' (aka 'unsigned int') cannot be used as the type of a kernel parameter}}
+
+kernel void ptrdiff_t_arg(ptrdiff_t x) {} // expected-error{{'ptrdiff_t' (aka 'int') cannot be used as the type of a kernel parameter}}
+
+kernel void intptr_t_arg(intptr_t x) {} // expected-error{{'intptr_t' (aka 'int') cannot be used as the type of a kernel parameter}}
+
+kernel void uintptr_t_arg(uintptr_t x) {} // expected-error{{'uintptr_t' (aka 'unsigned int') cannot be used as the type of a kernel parameter}}
+
+typedef size_t size_ty;
+struct SizeTStruct { // expected-note{{within field of type 'SizeTStruct' declared here}}
+  size_ty s; // expected-note{{field of illegal type 'size_ty' (aka 'unsigned int') declared here}}
+};
+kernel void size_t_struct_arg(struct SizeTStruct x) {} // expected-error{{'struct SizeTStruct' cannot be used as the type of a kernel parameter}}
+
+union SizeTUnion { // expected-note{{within field of type 'SizeTUnion' declared here}}
+  size_t s; // expected-note{{field of illegal type 'size_t' (aka 'unsigned int') declared here}}
+  float f;
+};
+kernel void size_t_union_arg(union SizeTUnion x) {} // expected-error{{'union SizeTUnion' cannot be used as the type of a kernel parameter}}
+
+typedef size_t s_ty; // expected-note{{'s_ty' (aka 'unsigned int') declared here}}
+typedef s_ty ss_ty; // expected-note{{'ss_ty' (aka 'unsigned int') declared here}}
+kernel void typedef_to_size_t(ss_ty s) {} // expected-error{{'ss_ty' (aka 'unsigned int') cannot be used as the type of a kernel parameter}}
 
 kernel void bool_arg(bool x) { } // expected-error{{'bool' cannot be used as the type of a kernel parameter}}
 

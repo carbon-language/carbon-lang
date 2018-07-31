@@ -8049,6 +8049,29 @@ enum OpenCLParamType {
   RecordKernelParam
 };
 
+static bool isOpenCLSizeDependentType(ASTContext &C, QualType Ty) {
+  // Size dependent types are just typedefs to normal integer types
+  // (e.g. unsigned long), so we cannot distinguish them from other typedefs to
+  // integers other than by their names.
+  StringRef SizeTypeNames[] = {"size_t", "intptr_t", "uintptr_t", "ptrdiff_t"};
+
+  // Remove typedefs one by one until we reach a typedef
+  // for a size dependent type.
+  QualType DesugaredTy = Ty;
+  do {
+    ArrayRef<StringRef> Names(SizeTypeNames);
+    auto Match =
+        std::find(Names.begin(), Names.end(), DesugaredTy.getAsString());
+    if (Names.end() != Match)
+      return true;
+
+    Ty = DesugaredTy;
+    DesugaredTy = Ty.getSingleStepDesugaredType(C);
+  } while (DesugaredTy != Ty);
+
+  return false;
+}
+
 static OpenCLParamType getOpenCLKernelParameterType(Sema &S, QualType PT) {
   if (PT->isPointerType()) {
     QualType PointeeType = PT->getPointeeType();
@@ -8061,8 +8084,13 @@ static OpenCLParamType getOpenCLKernelParameterType(Sema &S, QualType PT) {
     return PtrKernelParam;
   }
 
-  // TODO: Forbid the other integer types (size_t, ptrdiff_t...) when they can
-  // be used as builtin types.
+  // OpenCL v1.2 s6.9.k:
+  // Arguments to kernel functions in a program cannot be declared with the
+  // built-in scalar types bool, half, size_t, ptrdiff_t, intptr_t, and
+  // uintptr_t or a struct and/or union that contain fields declared to be one
+  // of these built-in scalar types.
+  if (isOpenCLSizeDependentType(S.getASTContext(), PT))
+    return InvalidKernelParam;
 
   if (PT->isImageType())
     return PtrKernelParam;
@@ -8133,8 +8161,20 @@ static void checkIsValidOpenCLKernelParameter(
     // of event_t type.
     // Do not diagnose half type since it is diagnosed as invalid argument
     // type for any function elsewhere.
-    if (!PT->isHalfType())
+    if (!PT->isHalfType()) {
       S.Diag(Param->getLocation(), diag::err_bad_kernel_param_type) << PT;
+
+      // Explain what typedefs are involved.
+      const TypedefType *Typedef = nullptr;
+      while ((Typedef = PT->getAs<TypedefType>())) {
+        SourceLocation Loc = Typedef->getDecl()->getLocation();
+        // SourceLocation may be invalid for a built-in type.
+        if (Loc.isValid())
+          S.Diag(Loc, diag::note_entity_declared_at) << PT;
+        PT = Typedef->desugar();
+      }
+    }
+
     D.setInvalidType();
     return;
 
