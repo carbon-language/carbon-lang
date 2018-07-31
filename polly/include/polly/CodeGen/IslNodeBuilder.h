@@ -259,7 +259,7 @@ protected:
   ///
   /// NumIter is a non-negative integer value. Condition can have
   /// isl_ast_op_lt type.
-  int getNumberOfIterations(__isl_keep isl_ast_node *For);
+  int getNumberOfIterations(isl::ast_node For);
 
   /// Compute the values and loops referenced in this subtree.
   ///

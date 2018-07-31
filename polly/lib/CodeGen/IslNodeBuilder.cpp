@@ -156,51 +156,39 @@ static bool checkIslAstExprInt(__isl_take isl_ast_expr *Expr,
   return true;
 }
 
-int IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
-  assert(isl_ast_node_get_type(For) == isl_ast_node_for);
-  auto Body = isl_ast_node_for_get_body(For);
+int IslNodeBuilder::getNumberOfIterations(isl::ast_node For) {
+  assert(isl_ast_node_get_type(For.get()) == isl_ast_node_for);
+  isl::ast_node Body = For.for_get_body();
 
   // First, check if we can actually handle this code.
-  switch (isl_ast_node_get_type(Body)) {
+  switch (isl_ast_node_get_type(Body.get())) {
   case isl_ast_node_user:
     break;
   case isl_ast_node_block: {
-    isl_ast_node_list *List = isl_ast_node_block_get_children(Body);
-    for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i) {
-      isl_ast_node *Node = isl_ast_node_list_get_ast_node(List, i);
-      int Type = isl_ast_node_get_type(Node);
-      isl_ast_node_free(Node);
-      if (Type != isl_ast_node_user) {
-        isl_ast_node_list_free(List);
-        isl_ast_node_free(Body);
+    isl::ast_node_list List = Body.block_get_children();
+    for (isl::ast_node Node : List) {
+      isl_ast_node_type NodeType = isl_ast_node_get_type(Node.get());
+      if (NodeType != isl_ast_node_user)
         return -1;
-      }
     }
-    isl_ast_node_list_free(List);
     break;
   }
   default:
-    isl_ast_node_free(Body);
     return -1;
   }
-  isl_ast_node_free(Body);
 
-  auto Init = isl_ast_node_for_get_init(For);
-  if (!checkIslAstExprInt(Init, isl_val_is_zero))
+  isl::ast_expr Init = For.for_get_init();
+  if (!checkIslAstExprInt(Init.release(), isl_val_is_zero))
     return -1;
-  auto Inc = isl_ast_node_for_get_inc(For);
-  if (!checkIslAstExprInt(Inc, isl_val_is_one))
+  isl::ast_expr Inc = For.for_get_inc();
+  if (!checkIslAstExprInt(Inc.release(), isl_val_is_one))
     return -1;
   CmpInst::Predicate Predicate;
-  auto UB = getUpperBound(isl::manage_copy(For), Predicate).release();
-  if (isl_ast_expr_get_type(UB) != isl_ast_expr_int) {
-    isl_ast_expr_free(UB);
+  isl::ast_expr UB = getUpperBound(For, Predicate);
+  if (isl_ast_expr_get_type(UB.get()) != isl_ast_expr_int)
     return -1;
-  }
-  auto UpVal = isl_ast_expr_get_val(UB);
-  isl_ast_expr_free(UB);
-  int NumberIterations = isl_val_get_num_si(UpVal);
-  isl_val_free(UpVal);
+  isl::val UpVal = UB.get_val();
+  int NumberIterations = UpVal.get_num_si();
   if (NumberIterations < 0)
     return -1;
   if (Predicate == CmpInst::ICMP_SLT)
@@ -418,7 +406,7 @@ void IslNodeBuilder::createMark(__isl_take isl_ast_node *Node) {
   if (strcmp(isl_id_get_name(Id), "SIMD") == 0 &&
       isl_ast_node_get_type(Child) == isl_ast_node_for) {
     bool Vector = PollyVectorizerChoice == VECTORIZER_POLLY;
-    int VectorWidth = getNumberOfIterations(Child);
+    int VectorWidth = getNumberOfIterations(isl::manage_copy(Child));
     if (Vector && 1 < VectorWidth && VectorWidth <= 16)
       createForVector(Child, VectorWidth);
     else
@@ -757,7 +745,7 @@ void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
 
   if (Vector && IslAstInfo::isInnermostParallel(For) &&
       !IslAstInfo::isReductionParallel(For)) {
-    int VectorWidth = getNumberOfIterations(For);
+    int VectorWidth = getNumberOfIterations(isl::manage_copy(For));
     if (1 < VectorWidth && VectorWidth <= 16 && !hasPartialAccesses(For)) {
       createForVector(For, VectorWidth);
       return;
