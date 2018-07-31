@@ -83,9 +83,9 @@ PlatformSP PlatformAndroid::CreateInstance(bool force, const ArchSpec *arch) {
       break;
 
 #if defined(__ANDROID__)
-    // Only accept "unknown" for the vendor if the host is android and it
+    // Only accept "unknown" for the vendor if the host is android and if
     // "unknown" wasn't specified (it was just returned because it was NOT
-    // specified_
+    // specified).
     case llvm::Triple::VendorType::UnknownVendor:
       create = !arch->TripleVendorWasSpecified();
       break;
