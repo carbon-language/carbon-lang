@@ -569,6 +569,7 @@ private:
   CFGBlock *VisitObjCAtTryStmt(ObjCAtTryStmt *S);
   CFGBlock *VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *S);
   CFGBlock *VisitObjCForCollectionStmt(ObjCForCollectionStmt *S);
+  CFGBlock *VisitObjCMessageExpr(ObjCMessageExpr *E, AddStmtChoice asc);
   CFGBlock *VisitPseudoObjectExpr(PseudoObjectExpr *E);
   CFGBlock *VisitReturnStmt(ReturnStmt *R);
   CFGBlock *VisitSEHExceptStmt(SEHExceptStmt *S);
@@ -682,6 +683,27 @@ private:
   // is found, the function recurses into that.
   void findConstructionContexts(const ConstructionContextLayer *Layer,
                                 Stmt *Child);
+
+  // Scan all arguments of a call expression for a construction context.
+  // These sorts of call expressions don't have a common superclass,
+  // hence strict duck-typing.
+  template <typename CallLikeExpr,
+            typename = typename std::enable_if<
+                std::is_same<CallLikeExpr, CallExpr>::value ||
+                std::is_same<CallLikeExpr, CXXConstructExpr>::value ||
+                std::is_same<CallLikeExpr, ObjCMessageExpr>::value>>
+  void findConstructionContextsForArguments(CallLikeExpr *E) {
+    // A stub for the code that'll eventually be used for finding construction
+    // contexts for constructors of C++ object-type arguments passed into
+    // call-like expression E.
+    // FIXME: Once actually implemented, this construction context layer should
+    // include the index of the argument as well.
+    for (auto Arg : E->arguments())
+      if (Arg->getType()->getAsCXXRecordDecl() && !Arg->isGLValue())
+        findConstructionContexts(
+            ConstructionContextLayer::create(cfg->getBumpVectorContext(), E),
+            Arg);
+  }
 
   // Unset the construction context after consuming it. This is done immediately
   // after adding the CFGConstructor or CFGCXXRecordTypedCall element, so
@@ -2101,6 +2123,9 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
     case Stmt::ObjCForCollectionStmtClass:
       return VisitObjCForCollectionStmt(cast<ObjCForCollectionStmt>(S));
 
+    case Stmt::ObjCMessageExprClass:
+      return VisitObjCMessageExpr(cast<ObjCMessageExpr>(S), asc);
+
     case Stmt::OpaqueValueExprClass:
       return Block;
 
@@ -2383,12 +2408,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
     if (!boundType.isNull()) calleeType = boundType;
   }
 
-  // FIXME: Once actually implemented, this construction context layer should
-  // include the number of the argument as well.
-  for (auto Arg: C->arguments()) {
-    findConstructionContexts(
-        ConstructionContextLayer::create(cfg->getBumpVectorContext(), C), Arg);
-  }
+  findConstructionContextsForArguments(C);
 
   // If this is a call to a no-return function, this stops the block here.
   bool NoReturn = getFunctionExtInfo(*calleeType).getNoReturn();
@@ -3580,6 +3600,16 @@ CFGBlock *CFGBuilder::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
   return VisitStmt(S, AddStmtChoice::AlwaysAdd);
 }
 
+CFGBlock *CFGBuilder::VisitObjCMessageExpr(ObjCMessageExpr *ME,
+                                           AddStmtChoice asc) {
+  findConstructionContextsForArguments(ME);
+
+  autoCreateBlock();
+  appendStmt(Block, ME);
+
+  return VisitChildren(ME);
+}
+
 CFGBlock *CFGBuilder::VisitCXXThrowExpr(CXXThrowExpr *T) {
   // If we were in the middle of a block we stop processing that block.
   if (badCFG)
@@ -4244,6 +4274,11 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E,
 
 CFGBlock *CFGBuilder::VisitCXXConstructExpr(CXXConstructExpr *C,
                                             AddStmtChoice asc) {
+  // If the constructor takes objects as arguments by value, we need to properly
+  // construct these objects. Construction contexts we find here aren't for the
+  // constructor C, they're for its arguments only.
+  findConstructionContextsForArguments(C);
+
   autoCreateBlock();
   appendConstructor(Block, C);
 
