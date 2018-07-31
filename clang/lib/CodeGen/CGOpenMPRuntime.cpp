@@ -3750,11 +3750,13 @@ CGOpenMPRuntime::createOffloadingBinaryDescriptorRegistration() {
     StringRef T = Device.getTriple();
     std::string BeginName = getName({"omp_offloading", "img_start", ""});
     auto *ImgBegin = new llvm::GlobalVariable(
-        M, CGM.Int8Ty, /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage,
+        M, CGM.Int8Ty, /*isConstant=*/true,
+        llvm::GlobalValue::ExternalWeakLinkage,
         /*Initializer=*/nullptr, Twine(BeginName).concat(T));
     std::string EndName = getName({"omp_offloading", "img_end", ""});
     auto *ImgEnd = new llvm::GlobalVariable(
-        M, CGM.Int8Ty, /*isConstant=*/true, llvm::GlobalValue::ExternalLinkage,
+        M, CGM.Int8Ty, /*isConstant=*/true,
+        llvm::GlobalValue::ExternalWeakLinkage,
         /*Initializer=*/nullptr, Twine(EndName).concat(T));
 
     llvm::Constant *Data[] = {ImgBegin, ImgEnd, HostEntriesBegin,
