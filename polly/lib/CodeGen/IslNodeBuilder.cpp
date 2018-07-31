@@ -100,21 +100,16 @@ static cl::opt<int> PollyTargetFirstLevelCacheLineSize(
     cl::desc("The size of the first level cache line size specified in bytes."),
     cl::Hidden, cl::init(64), cl::ZeroOrMore, cl::cat(PollyCategory));
 
-__isl_give isl_ast_expr *
-IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
-                              ICmpInst::Predicate &Predicate) {
-  isl_id *UBID, *IteratorID;
-  isl_ast_expr *Cond, *Iterator, *UB, *Arg0;
-  isl_ast_op_type Type;
-
-  Cond = isl_ast_node_for_get_cond(For);
-  Iterator = isl_ast_node_for_get_iterator(For);
-  assert(isl_ast_expr_get_type(Cond) == isl_ast_expr_op &&
+isl::ast_expr IslNodeBuilder::getUpperBound(isl::ast_node For,
+                                            ICmpInst::Predicate &Predicate) {
+  isl::ast_expr Cond = For.for_get_cond();
+  isl::ast_expr Iterator = For.for_get_iterator();
+  assert(isl_ast_expr_get_type(Cond.get()) == isl_ast_expr_op &&
          "conditional expression is not an atomic upper bound");
 
-  Type = isl_ast_expr_get_op_type(Cond);
+  isl_ast_op_type OpType = isl_ast_expr_get_op_type(Cond.get());
 
-  switch (Type) {
+  switch (OpType) {
   case isl_ast_op_le:
     Predicate = ICmpInst::ICMP_SLE;
     break;
@@ -125,30 +120,22 @@ IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
     llvm_unreachable("Unexpected comparison type in loop condition");
   }
 
-  Arg0 = isl_ast_expr_get_op_arg(Cond, 0);
+  isl::ast_expr Arg0 = Cond.get_op_arg(0);
 
-  assert(isl_ast_expr_get_type(Arg0) == isl_ast_expr_id &&
+  assert(isl_ast_expr_get_type(Arg0.get()) == isl_ast_expr_id &&
          "conditional expression is not an atomic upper bound");
 
-  UBID = isl_ast_expr_get_id(Arg0);
+  isl::id UBID = Arg0.get_id();
 
-  assert(isl_ast_expr_get_type(Iterator) == isl_ast_expr_id &&
+  assert(isl_ast_expr_get_type(Iterator.get()) == isl_ast_expr_id &&
          "Could not get the iterator");
 
-  IteratorID = isl_ast_expr_get_id(Iterator);
+  isl::id IteratorID = Iterator.get_id();
 
-  assert(UBID == IteratorID &&
+  assert(UBID.get() == IteratorID.get() &&
          "conditional expression is not an atomic upper bound");
 
-  UB = isl_ast_expr_get_op_arg(Cond, 1);
-
-  isl_ast_expr_free(Cond);
-  isl_ast_expr_free(Iterator);
-  isl_ast_expr_free(Arg0);
-  isl_id_free(IteratorID);
-  isl_id_free(UBID);
-
-  return UB;
+  return Cond.get_op_arg(1);
 }
 
 /// Return true if a return value of Predicate is true for the value represented
@@ -205,7 +192,7 @@ int IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
   if (!checkIslAstExprInt(Inc, isl_val_is_one))
     return -1;
   CmpInst::Predicate Predicate;
-  auto UB = getUpperBound(For, Predicate);
+  auto UB = getUpperBound(isl::manage_copy(For), Predicate).release();
   if (isl_ast_expr_get_type(UB) != isl_ast_expr_int) {
     isl_ast_expr_free(UB);
     return -1;
@@ -553,7 +540,7 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For,
   Inc = isl_ast_node_for_get_inc(For);
   Iterator = isl_ast_node_for_get_iterator(For);
   IteratorID = isl_ast_expr_get_id(Iterator);
-  UB = getUpperBound(For, Predicate);
+  UB = getUpperBound(isl::manage_copy(For), Predicate).release();
 
   ValueLB = ExprBuilder.create(Init);
   ValueUB = ExprBuilder.create(UB);
@@ -661,7 +648,7 @@ void IslNodeBuilder::createForParallel(__isl_take isl_ast_node *For) {
   Inc = isl_ast_node_for_get_inc(For);
   Iterator = isl_ast_node_for_get_iterator(For);
   IteratorID = isl_ast_expr_get_id(Iterator);
-  UB = getUpperBound(For, Predicate);
+  UB = getUpperBound(isl::manage_copy(For), Predicate).release();
 
   ValueLB = ExprBuilder.create(Init);
   ValueUB = ExprBuilder.create(UB);

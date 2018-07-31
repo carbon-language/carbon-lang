@@ -248,8 +248,7 @@ protected:
   //    of loop iterations.
   //
   // 3. With the existing code, upper bounds have been easier to implement.
-  __isl_give isl_ast_expr *getUpperBound(__isl_keep isl_ast_node *For,
-                                         CmpInst::Predicate &Predicate);
+  isl::ast_expr getUpperBound(isl::ast_node For, CmpInst::Predicate &Predicate);
 
   /// Return non-negative number of iterations in case of the following form
   /// of a loop and -1 otherwise.
