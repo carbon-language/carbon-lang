@@ -8079,6 +8079,15 @@ static OpenCLParamType getOpenCLKernelParameterType(Sema &S, QualType PT) {
   if (PT->isRecordType())
     return RecordKernelParam;
 
+  // Look into an array argument to check if it has a forbidden type.
+  if (PT->isArrayType()) {
+    const Type *UnderlyingTy = PT->getPointeeOrArrayElementType();
+    // Call ourself to check an underlying type of an array. Since the
+    // getPointeeOrArrayElementType returns an innermost type which is not an
+    // array, this recusive call only happens once.
+    return getOpenCLKernelParameterType(S, QualType(UnderlyingTy, 0));
+  }
+
   return ValidKernelParam;
 }
 
@@ -8146,9 +8155,14 @@ static void checkIsValidOpenCLKernelParameter(
   SmallVector<const FieldDecl *, 4> HistoryStack;
   HistoryStack.push_back(nullptr);
 
-  const RecordDecl *PD = PT->castAs<RecordType>()->getDecl();
-  VisitStack.push_back(PD);
+  // At this point we already handled everything except of a RecordType or
+  // an ArrayType of a RecordType.
+  assert((PT->isArrayType() || PT->isRecordType()) && "Unexpected type.");
+  const RecordType *RecTy =
+      PT->getPointeeOrArrayElementType()->getAs<RecordType>();
+  const RecordDecl *OrigRecDecl = RecTy->getDecl();
 
+  VisitStack.push_back(RecTy->getDecl());
   assert(VisitStack.back() && "First decl null?");
 
   do {
@@ -8167,7 +8181,15 @@ static void checkIsValidOpenCLKernelParameter(
     const RecordDecl *RD;
     if (const FieldDecl *Field = dyn_cast<FieldDecl>(Next)) {
       HistoryStack.push_back(Field);
-      RD = Field->getType()->castAs<RecordType>()->getDecl();
+
+      QualType FieldTy = Field->getType();
+      // Other field types (known to be valid or invalid) are handled while we
+      // walk around RecordDecl::fields().
+      assert((FieldTy->isArrayType() || FieldTy->isRecordType()) &&
+             "Unexpected type.");
+      const Type *FieldRecTy = FieldTy->getPointeeOrArrayElementType();
+
+      RD = FieldRecTy->castAs<RecordType>()->getDecl();
     } else {
       RD = cast<RecordDecl>(Next);
     }
@@ -8204,8 +8226,8 @@ static void checkIsValidOpenCLKernelParameter(
         S.Diag(Param->getLocation(), diag::err_bad_kernel_param_type) << PT;
       }
 
-      S.Diag(PD->getLocation(), diag::note_within_field_of_type)
-        << PD->getDeclName();
+      S.Diag(OrigRecDecl->getLocation(), diag::note_within_field_of_type)
+          << OrigRecDecl->getDeclName();
 
       // We have an error, now let's go back up through history and show where
       // the offending field came from

@@ -136,3 +136,16 @@ struct AlsoUser // expected-note{{within field of type 'AlsoUser' declared here}
 };
 
 kernel void pointer_in_nested_struct_arg_2(struct Valid valid, struct NestedPointer arg, struct AlsoUser also) { } // expected-error 2 {{struct kernel parameters may not contain pointers}}
+
+struct ArrayOfPtr // expected-note{{within field of type 'ArrayOfPtr' declared here}}
+{
+  float *arr[3]; // expected-note{{field of illegal type 'float *[3]' declared here}}
+                 // expected-note@-1{{field of illegal type 'float *[3]' declared here}}
+};
+kernel void array_of_ptr(struct ArrayOfPtr arr) {} // expected-error{{struct kernel parameters may not contain pointers}}
+
+struct ArrayOfStruct // expected-note{{within field of type 'ArrayOfStruct' declared here}}
+{
+  struct ArrayOfPtr arr[3]; // expected-note{{within field of type 'struct ArrayOfPtr [3]' declared here}}
+};
+kernel void array_of_struct(struct ArrayOfStruct arr) {} // expected-error{{struct kernel parameters may not contain pointers}}
