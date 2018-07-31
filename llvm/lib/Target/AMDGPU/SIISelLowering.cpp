@@ -6800,10 +6800,6 @@ static bool isCanonicalized(SelectionDAG &DAG, SDValue Op,
     return Op.getOperand(0).getValueType().getScalarType() != MVT::f16 ||
            ST->hasFP16Denormals();
 
-  case ISD::FP16_TO_FP:
-  case ISD::FP_TO_FP16:
-    return ST->hasFP16Denormals();
-
   // It can/will be lowered or combined as a bit operation.
   // Need to check their input recursively to handle.
   case ISD::FNEG:
