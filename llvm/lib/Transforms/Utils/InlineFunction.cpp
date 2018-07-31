@@ -84,15 +84,13 @@ PreserveAlignmentAssumptions("preserve-alignment-assumptions-during-inlining",
   cl::init(true), cl::Hidden,
   cl::desc("Convert align attributes to assumptions during inlining."));
 
-llvm::InlineResult llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI,
-                                        AAResults *CalleeAAR,
-                                        bool InsertLifetime) {
+bool llvm::InlineFunction(CallInst *CI, InlineFunctionInfo &IFI,
+                          AAResults *CalleeAAR, bool InsertLifetime) {
   return InlineFunction(CallSite(CI), IFI, CalleeAAR, InsertLifetime);
 }
 
-llvm::InlineResult llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
-                                        AAResults *CalleeAAR,
-                                        bool InsertLifetime) {
+bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
+                          AAResults *CalleeAAR, bool InsertLifetime) {
   return InlineFunction(CallSite(II), IFI, CalleeAAR, InsertLifetime);
 }
 
@@ -1493,10 +1491,9 @@ static void updateCalleeCount(BlockFrequencyInfo *CallerBFI, BasicBlock *CallBB,
 /// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
 /// exists in the instruction stream.  Similarly this will inline a recursive
 /// function by one level.
-llvm::InlineResult llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
-                                        AAResults *CalleeAAR,
-                                        bool InsertLifetime,
-                                        Function *ForwardVarArgsTo) {
+bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
+                          AAResults *CalleeAAR, bool InsertLifetime,
+                          Function *ForwardVarArgsTo) {
   Instruction *TheCall = CS.getInstruction();
   assert(TheCall->getParent() && TheCall->getFunction()
          && "Instruction not in function!");
@@ -1507,7 +1504,7 @@ llvm::InlineResult llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   Function *CalledFunc = CS.getCalledFunction();
   if (!CalledFunc ||               // Can't inline external function or indirect
       CalledFunc->isDeclaration()) // call!
-    return "external or indirect";
+    return false;
 
   // The inliner does not know how to inline through calls with operand bundles
   // in general ...
@@ -1521,7 +1518,7 @@ llvm::InlineResult llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       if (Tag == LLVMContext::OB_funclet)
         continue;
 
-      return "unsupported operand bundle";
+      return false;
     }
   }
 
@@ -1540,7 +1537,7 @@ llvm::InlineResult llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     if (!Caller->hasGC())
       Caller->setGC(CalledFunc->getGC());
     else if (CalledFunc->getGC() != Caller->getGC())
-      return "incompatible GC";
+      return false;
   }
 
   // Get the personality function from the callee if it contains a landing pad.
@@ -1564,7 +1561,7 @@ llvm::InlineResult llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     // TODO: This isn't 100% true. Some personality functions are proper
     //       supersets of others and can be used in place of the other.
     else if (CalledPersonality != CallerPersonality)
-      return "incompatible personality";
+      return false;
   }
 
   // We need to figure out which funclet the callsite was in so that we may
@@ -1589,7 +1586,7 @@ llvm::InlineResult llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
             // for catchpads.
             for (const BasicBlock &CalledBB : *CalledFunc) {
               if (isa<CatchSwitchInst>(CalledBB.getFirstNonPHI()))
-                return "catch in cleanup funclet";
+                return false;
             }
           }
         } else if (isAsynchronousEHPersonality(Personality)) {
@@ -1597,7 +1594,7 @@ llvm::InlineResult llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
           // funclet in the callee.
           for (const BasicBlock &CalledBB : *CalledFunc) {
             if (CalledBB.isEHPad())
-              return "SEH in cleanup funclet";
+              return false;
           }
         }
       }
