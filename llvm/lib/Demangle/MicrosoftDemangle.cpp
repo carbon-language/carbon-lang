@@ -978,11 +978,14 @@ Symbol *Demangler::parse(StringView &MangledName) {
   // What follows is a main symbol name. This may include
   // namespaces or class BackReferences.
   S->SymbolName = demangleFullyQualifiedSymbolName(MangledName);
-
+  if (Error)
+    return nullptr;
   // Read a variable.
   S->SymbolType = startsWithDigit(MangledName)
                       ? demangleVariableEncoding(MangledName)
                       : demangleFunctionEncoding(MangledName);
+  if (Error)
+    return nullptr;
 
   return S;
 }
@@ -1103,7 +1106,12 @@ Name *Demangler::demangleClassTemplateName(StringView &MangledName) {
   MangledName.consumeFront("?$");
 
   Name *Node = demangleSimpleName(MangledName, false);
+  if (Error)
+    return nullptr;
+
   Node->TParams = demangleTemplateParameterList(MangledName);
+  if (Error)
+    return nullptr;
 
   // Render this class template name into a string buffer so that we can
   // memorize it for the purpose of back-referencing.
@@ -1318,9 +1326,13 @@ Name *Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
 // Parses a type name in the form of A@B@C@@ which represents C::B::A.
 Name *Demangler::demangleFullyQualifiedTypeName(StringView &MangledName) {
   Name *TypeName = demangleUnqualifiedTypeName(MangledName);
+  if (Error)
+    return nullptr;
   assert(TypeName);
 
   Name *QualName = demangleNameScopeChain(MangledName, TypeName);
+  if (Error)
+    return nullptr;
   assert(QualName);
   return QualName;
 }
@@ -1330,9 +1342,13 @@ Name *Demangler::demangleFullyQualifiedTypeName(StringView &MangledName) {
 // so we separate out the implementations for flexibility.
 Name *Demangler::demangleFullyQualifiedSymbolName(StringView &MangledName) {
   Name *SymbolName = demangleUnqualifiedSymbolName(MangledName);
+  if (Error)
+    return nullptr;
   assert(SymbolName);
 
   Name *QualName = demangleNameScopeChain(MangledName, SymbolName);
+  if (Error)
+    return nullptr;
   assert(QualName);
   return QualName;
 }
@@ -1964,9 +1980,7 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
     // Empty parameter pack.
     if (MangledName.consumeFront("$S") || MangledName.consumeFront("$$V") ||
         MangledName.consumeFront("$$$V")) {
-      if (!MangledName.startsWith('@'))
-        Error = true;
-      continue;
+      break;
     }
 
     if (MangledName.consumeFront("$$Y")) {
@@ -1980,19 +1994,21 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
       (*Current)->ParamType =
           demangleType(MangledName, QualifierMangleMode::Drop);
     }
+    if (Error)
+      return nullptr;
 
     Current = &(*Current)->Next;
   }
 
   if (Error)
-    return {};
+    return nullptr;
 
   // Template parameter lists cannot be variadic, so it can only be terminated
   // by @.
   if (MangledName.consumeFront('@'))
     return Head;
   Error = true;
-  return {};
+  return nullptr;
 }
 
 void Demangler::output(const Symbol *S, OutputStream &OS) {
@@ -2024,13 +2040,15 @@ char *llvm::microsoftDemangle(const char *MangledName, char *Buf, size_t *N,
   StringView Name{MangledName};
   Symbol *S = D.parse(Name);
 
-  if (D.Error)
-    *Status = llvm::demangle_invalid_mangled_name;
-  else
-    *Status = llvm::demangle_success;
-
   OutputStream OS = OutputStream::create(Buf, N, 1024);
-  D.output(S, OS);
+  if (D.Error) {
+    OS << MangledName;
+    *Status = llvm::demangle_invalid_mangled_name;
+  } else {
+    D.output(S, OS);
+    *Status = llvm::demangle_success;
+  }
+
   OS << '\0';
   return OS.getBuffer();
 }
