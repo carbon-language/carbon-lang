@@ -1711,8 +1711,11 @@ private:
 /// contains all of the information known about the function. Other,
 /// previous declarations of the function are available via the
 /// getPreviousDecl() chain.
-class FunctionDecl : public DeclaratorDecl, public DeclContext,
+class FunctionDecl : public DeclaratorDecl,
+                     public DeclContext,
                      public Redeclarable<FunctionDecl> {
+  // This class stores some data in DeclContext::FunctionDeclBits
+  // to save some space. Use the provided accessors to access it.
 public:
   /// The kind of templated function a FunctionDecl can be.
   enum TemplatedKind {
@@ -1731,64 +1734,6 @@ private:
 
   LazyDeclStmtPtr Body;
 
-  // FIXME: This can be packed into the bitfields in DeclContext.
-  // NOTE: VC++ packs bitfields poorly if the types differ.
-  unsigned SClass : 3;
-  unsigned IsInline : 1;
-  unsigned IsInlineSpecified : 1;
-
-protected:
-  // This is shared by CXXConstructorDecl, CXXConversionDecl, and
-  // CXXDeductionGuideDecl.
-  unsigned IsExplicitSpecified : 1;
-
-private:
-  unsigned IsVirtualAsWritten : 1;
-  unsigned IsPure : 1;
-  unsigned HasInheritedPrototype : 1;
-  unsigned HasWrittenPrototype : 1;
-  unsigned IsDeleted : 1;
-  unsigned IsTrivial : 1; // sunk from CXXMethodDecl
-
-  /// This flag indicates whether this function is trivial for the purpose of
-  /// calls. This is meaningful only when this function is a copy/move
-  /// constructor or a destructor.
-  unsigned IsTrivialForCall : 1;
-
-  unsigned IsDefaulted : 1; // sunk from CXXMethoDecl
-  unsigned IsExplicitlyDefaulted : 1; //sunk from CXXMethodDecl
-  unsigned HasImplicitReturnZero : 1;
-  unsigned IsLateTemplateParsed : 1;
-  unsigned IsConstexpr : 1;
-  unsigned InstantiationIsPending : 1;
-
-  /// Indicates if the function uses __try.
-  unsigned UsesSEHTry : 1;
-
-  /// Indicates if the function was a definition but its body was
-  /// skipped.
-  unsigned HasSkippedBody : 1;
-
-  /// Indicates if the function declaration will have a body, once we're done
-  /// parsing it.
-  unsigned WillHaveBody : 1;
-
-  /// Indicates that this function is a multiversioned function using attribute
-  /// 'target'.
-  unsigned IsMultiVersion : 1;
-
-protected:
-  /// [C++17] Only used by CXXDeductionGuideDecl. Declared here to avoid
-  /// increasing the size of CXXDeductionGuideDecl by the size of an unsigned
-  /// int as opposed to adding a single bit to FunctionDecl.
-  /// Indicates that the Deduction Guide is the implicitly generated 'copy
-  /// deduction candidate' (is used during overload resolution).
-  unsigned IsCopyDeductionCandidate : 1;
-
-private:
-
-  /// Store the ODRHash after first calculation.
-  unsigned HasODRHash : 1;
   unsigned ODRHash;
 
   /// End part of this FunctionDecl's source range.
@@ -1858,25 +1803,22 @@ private:
 
   void setParams(ASTContext &C, ArrayRef<ParmVarDecl *> NewParamInfo);
 
+  // This is unfortunately needed because ASTDeclWriter::VisitFunctionDecl
+  // need to access this bit but we want to avoid making ASTDeclWriter
+  // a friend of FunctionDeclBitfields just for this.
+  bool isDeletedBit() const { return FunctionDeclBits.IsDeleted; }
+
+  /// Whether an ODRHash has been stored.
+  bool hasODRHash() const { return FunctionDeclBits.HasODRHash; }
+
+  /// State that an ODRHash has been stored.
+  void setHasODRHash(bool B = true) { FunctionDeclBits.HasODRHash = B; }
+
 protected:
   FunctionDecl(Kind DK, ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
                const DeclarationNameInfo &NameInfo, QualType T,
                TypeSourceInfo *TInfo, StorageClass S, bool isInlineSpecified,
-               bool isConstexprSpecified)
-      : DeclaratorDecl(DK, DC, NameInfo.getLoc(), NameInfo.getName(), T, TInfo,
-                       StartLoc),
-        DeclContext(DK), redeclarable_base(C), SClass(S),
-        IsInline(isInlineSpecified), IsInlineSpecified(isInlineSpecified),
-        IsExplicitSpecified(false), IsVirtualAsWritten(false), IsPure(false),
-        HasInheritedPrototype(false), HasWrittenPrototype(true),
-        IsDeleted(false), IsTrivial(false), IsTrivialForCall(false),
-        IsDefaulted(false),
-        IsExplicitlyDefaulted(false), HasImplicitReturnZero(false),
-        IsLateTemplateParsed(false), IsConstexpr(isConstexprSpecified),
-        InstantiationIsPending(false), UsesSEHTry(false), HasSkippedBody(false),
-        WillHaveBody(false), IsMultiVersion(false),
-        IsCopyDeductionCandidate(false), HasODRHash(false), ODRHash(0),
-        EndRangeLoc(NameInfo.getEndLoc()), DNLoc(NameInfo.getInfo()) {}
+               bool isConstexprSpecified);
 
   using redeclarable_base = Redeclarable<FunctionDecl>;
 
@@ -2015,13 +1957,13 @@ public:
   /// This does not determine whether the function has been defined (e.g., in a
   /// previous definition); for that information, use isDefined.
   bool isThisDeclarationADefinition() const {
-    return IsDeleted || IsDefaulted || Body || HasSkippedBody ||
-           IsLateTemplateParsed || WillHaveBody || hasDefiningAttr();
+    return isDeletedAsWritten() || isDefaulted() || Body || hasSkippedBody() ||
+           isLateTemplateParsed() || willHaveBody() || hasDefiningAttr();
   }
 
   /// Returns whether this specific declaration of the function has a body.
   bool doesThisDeclarationHaveABody() const {
-    return Body || IsLateTemplateParsed;
+    return Body || isLateTemplateParsed();
   }
 
   void setBody(Stmt *B);
@@ -2031,62 +1973,102 @@ public:
   bool isVariadic() const;
 
   /// Whether this function is marked as virtual explicitly.
-  bool isVirtualAsWritten() const { return IsVirtualAsWritten; }
-  void setVirtualAsWritten(bool V) { IsVirtualAsWritten = V; }
+  bool isVirtualAsWritten() const {
+    return FunctionDeclBits.IsVirtualAsWritten;
+  }
+
+  /// State that this function is marked as virtual explicitly.
+  void setVirtualAsWritten(bool V) { FunctionDeclBits.IsVirtualAsWritten = V; }
 
   /// Whether this virtual function is pure, i.e. makes the containing class
   /// abstract.
-  bool isPure() const { return IsPure; }
+  bool isPure() const { return FunctionDeclBits.IsPure; }
   void setPure(bool P = true);
 
   /// Whether this templated function will be late parsed.
-  bool isLateTemplateParsed() const { return IsLateTemplateParsed; }
-  void setLateTemplateParsed(bool ILT = true) { IsLateTemplateParsed = ILT; }
+  bool isLateTemplateParsed() const {
+    return FunctionDeclBits.IsLateTemplateParsed;
+  }
+
+  /// State that this templated function will be late parsed.
+  void setLateTemplateParsed(bool ILT = true) {
+    FunctionDeclBits.IsLateTemplateParsed = ILT;
+  }
 
   /// Whether this function is "trivial" in some specialized C++ senses.
   /// Can only be true for default constructors, copy constructors,
   /// copy assignment operators, and destructors.  Not meaningful until
   /// the class has been fully built by Sema.
-  bool isTrivial() const { return IsTrivial; }
-  void setTrivial(bool IT) { IsTrivial = IT; }
+  bool isTrivial() const { return FunctionDeclBits.IsTrivial; }
+  void setTrivial(bool IT) { FunctionDeclBits.IsTrivial = IT; }
 
-  bool isTrivialForCall() const { return IsTrivialForCall; }
-  void setTrivialForCall(bool IT) { IsTrivialForCall = IT; }
+  bool isTrivialForCall() const { return FunctionDeclBits.IsTrivialForCall; }
+  void setTrivialForCall(bool IT) { FunctionDeclBits.IsTrivialForCall = IT; }
 
   /// Whether this function is defaulted per C++0x. Only valid for
   /// special member functions.
-  bool isDefaulted() const { return IsDefaulted; }
-  void setDefaulted(bool D = true) { IsDefaulted = D; }
+  bool isDefaulted() const { return FunctionDeclBits.IsDefaulted; }
+  void setDefaulted(bool D = true) { FunctionDeclBits.IsDefaulted = D; }
 
   /// Whether this function is explicitly defaulted per C++0x. Only valid
   /// for special member functions.
-  bool isExplicitlyDefaulted() const { return IsExplicitlyDefaulted; }
-  void setExplicitlyDefaulted(bool ED = true) { IsExplicitlyDefaulted = ED; }
+  bool isExplicitlyDefaulted() const {
+    return FunctionDeclBits.IsExplicitlyDefaulted;
+  }
+
+  /// State that this function is explicitly defaulted per C++0x. Only valid
+  /// for special member functions.
+  void setExplicitlyDefaulted(bool ED = true) {
+    FunctionDeclBits.IsExplicitlyDefaulted = ED;
+  }
 
   /// Whether falling off this function implicitly returns null/zero.
   /// If a more specific implicit return value is required, front-ends
   /// should synthesize the appropriate return statements.
-  bool hasImplicitReturnZero() const { return HasImplicitReturnZero; }
-  void setHasImplicitReturnZero(bool IRZ) { HasImplicitReturnZero = IRZ; }
+  bool hasImplicitReturnZero() const {
+    return FunctionDeclBits.HasImplicitReturnZero;
+  }
+
+  /// State that falling off this function implicitly returns null/zero.
+  /// If a more specific implicit return value is required, front-ends
+  /// should synthesize the appropriate return statements.
+  void setHasImplicitReturnZero(bool IRZ) {
+    FunctionDeclBits.HasImplicitReturnZero = IRZ;
+  }
 
   /// Whether this function has a prototype, either because one
   /// was explicitly written or because it was "inherited" by merging
   /// a declaration without a prototype with a declaration that has a
   /// prototype.
   bool hasPrototype() const {
-    return HasWrittenPrototype || HasInheritedPrototype;
+    return hasWrittenPrototype() || hasInheritedPrototype();
   }
 
-  bool hasWrittenPrototype() const { return HasWrittenPrototype; }
+  /// Whether this function has a written prototype.
+  bool hasWrittenPrototype() const {
+    return FunctionDeclBits.HasWrittenPrototype;
+  }
+
+  /// State that this function has a written prototype.
+  void setHasWrittenPrototype(bool P = true) {
+    FunctionDeclBits.HasWrittenPrototype = P;
+  }
 
   /// Whether this function inherited its prototype from a
   /// previous declaration.
-  bool hasInheritedPrototype() const { return HasInheritedPrototype; }
-  void setHasInheritedPrototype(bool P = true) { HasInheritedPrototype = P; }
+  bool hasInheritedPrototype() const {
+    return FunctionDeclBits.HasInheritedPrototype;
+  }
+
+  /// State that this function inherited its prototype from a
+  /// previous declaration.
+  void setHasInheritedPrototype(bool P = true) {
+    FunctionDeclBits.HasInheritedPrototype = P;
+  }
 
   /// Whether this is a (C++11) constexpr function or constexpr constructor.
-  bool isConstexpr() const { return IsConstexpr; }
-  void setConstexpr(bool IC) { IsConstexpr = IC; }
+  bool isConstexpr() const { return FunctionDeclBits.IsConstexpr; }
+  void setConstexpr(bool IC) { FunctionDeclBits.IsConstexpr = IC; }
 
   /// Whether the instantiation of this function is pending.
   /// This bit is set when the decision to instantiate this function is made
@@ -2094,12 +2076,19 @@ public:
   /// cases where instantiation did not happen because the template definition
   /// was not seen in this TU. This bit remains set in those cases, under the
   /// assumption that the instantiation will happen in some other TU.
-  bool instantiationIsPending() const { return InstantiationIsPending; }
-  void setInstantiationIsPending(bool IC) { InstantiationIsPending = IC; }
+  bool instantiationIsPending() const {
+    return FunctionDeclBits.InstantiationIsPending;
+  }
+
+  /// State that the instantiation of this function is pending.
+  /// (see instantiationIsPending)
+  void setInstantiationIsPending(bool IC) {
+    FunctionDeclBits.InstantiationIsPending = IC;
+  }
 
   /// Indicates the function uses __try.
-  bool usesSEHTry() const { return UsesSEHTry; }
-  void setUsesSEHTry(bool UST) { UsesSEHTry = UST; }
+  bool usesSEHTry() const { return FunctionDeclBits.UsesSEHTry; }
+  void setUsesSEHTry(bool UST) { FunctionDeclBits.UsesSEHTry = UST; }
 
   /// Whether this function has been deleted.
   ///
@@ -2120,9 +2109,15 @@ public:
   /// };
   /// @endcode
   // If a function is deleted, its first declaration must be.
-  bool isDeleted() const { return getCanonicalDecl()->IsDeleted; }
-  bool isDeletedAsWritten() const { return IsDeleted && !IsDefaulted; }
-  void setDeletedAsWritten(bool D = true) { IsDeleted = D; }
+  bool isDeleted() const {
+    return getCanonicalDecl()->FunctionDeclBits.IsDeleted;
+  }
+
+  bool isDeletedAsWritten() const {
+    return FunctionDeclBits.IsDeleted && !isDefaulted();
+  }
+
+  void setDeletedAsWritten(bool D = true) { FunctionDeclBits.IsDeleted = D; }
 
   /// Determines whether this function is "main", which is the
   /// entry point into an executable program.
@@ -2193,20 +2188,24 @@ public:
   bool isNoReturn() const;
 
   /// True if the function was a definition but its body was skipped.
-  bool hasSkippedBody() const { return HasSkippedBody; }
-  void setHasSkippedBody(bool Skipped = true) { HasSkippedBody = Skipped; }
+  bool hasSkippedBody() const { return FunctionDeclBits.HasSkippedBody; }
+  void setHasSkippedBody(bool Skipped = true) {
+    FunctionDeclBits.HasSkippedBody = Skipped;
+  }
 
   /// True if this function will eventually have a body, once it's fully parsed.
-  bool willHaveBody() const { return WillHaveBody; }
-  void setWillHaveBody(bool V = true) { WillHaveBody = V; }
+  bool willHaveBody() const { return FunctionDeclBits.WillHaveBody; }
+  void setWillHaveBody(bool V = true) { FunctionDeclBits.WillHaveBody = V; }
 
   /// True if this function is considered a multiversioned function.
-  bool isMultiVersion() const { return getCanonicalDecl()->IsMultiVersion; }
+  bool isMultiVersion() const {
+    return getCanonicalDecl()->FunctionDeclBits.IsMultiVersion;
+  }
 
   /// Sets the multiversion state for this declaration and all of its
   /// redeclarations.
   void setIsMultiVersion(bool V = true) {
-    getCanonicalDecl()->IsMultiVersion = V;
+    getCanonicalDecl()->FunctionDeclBits.IsMultiVersion = V;
   }
 
   /// True if this function is a multiversioned dispatch function as a part of
@@ -2296,27 +2295,42 @@ public:
 
   /// Returns the storage class as written in the source. For the
   /// computed linkage of symbol, see getLinkage.
-  StorageClass getStorageClass() const { return StorageClass(SClass); }
+  StorageClass getStorageClass() const {
+    return static_cast<StorageClass>(FunctionDeclBits.SClass);
+  }
+
+  /// Sets the storage class as written in the source.
+  void setStorageClass(StorageClass SClass) {
+    FunctionDeclBits.SClass = SClass;
+  }
 
   /// Determine whether the "inline" keyword was specified for this
   /// function.
-  bool isInlineSpecified() const { return IsInlineSpecified; }
+  bool isInlineSpecified() const { return FunctionDeclBits.IsInlineSpecified; }
 
   /// Set whether the "inline" keyword was specified for this function.
   void setInlineSpecified(bool I) {
-    IsInlineSpecified = I;
-    IsInline = I;
+    FunctionDeclBits.IsInlineSpecified = I;
+    FunctionDeclBits.IsInline = I;
   }
 
   /// Flag that this function is implicitly inline.
-  void setImplicitlyInline() {
-    IsInline = true;
-  }
+  void setImplicitlyInline(bool I = true) { FunctionDeclBits.IsInline = I; }
 
   /// Determine whether this function should be inlined, because it is
   /// either marked "inline" or "constexpr" or is a member function of a class
   /// that was defined in the class body.
-  bool isInlined() const { return IsInline; }
+  bool isInlined() const { return FunctionDeclBits.IsInline; }
+
+  /// Whether this function is marked as explicit explicitly.
+  bool isExplicitSpecified() const {
+    return FunctionDeclBits.IsExplicitSpecified;
+  }
+
+  /// State that this function is marked as explicit explicitly.
+  void setExplicitSpecified(bool ExpSpec = true) {
+    FunctionDeclBits.IsExplicitSpecified = ExpSpec;
+  }
 
   bool isInlineDefinitionExternallyVisible() const;
 

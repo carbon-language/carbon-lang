@@ -2609,6 +2609,38 @@ unsigned ParmVarDecl::getParameterIndexLarge() const {
 // FunctionDecl Implementation
 //===----------------------------------------------------------------------===//
 
+FunctionDecl::FunctionDecl(Kind DK, ASTContext &C, DeclContext *DC,
+                           SourceLocation StartLoc,
+                           const DeclarationNameInfo &NameInfo, QualType T,
+                           TypeSourceInfo *TInfo, StorageClass S,
+                           bool isInlineSpecified, bool isConstexprSpecified)
+    : DeclaratorDecl(DK, DC, NameInfo.getLoc(), NameInfo.getName(), T, TInfo,
+                     StartLoc),
+      DeclContext(DK), redeclarable_base(C), ODRHash(0),
+      EndRangeLoc(NameInfo.getEndLoc()), DNLoc(NameInfo.getInfo()) {
+  setStorageClass(S);
+  setInlineSpecified(isInlineSpecified);
+  setExplicitSpecified(false);
+  setVirtualAsWritten(false);
+  setPure(false);
+  setHasInheritedPrototype(false);
+  setHasWrittenPrototype(true);
+  setDeletedAsWritten(false);
+  setTrivial(false);
+  setTrivialForCall(false);
+  setDefaulted(false);
+  setExplicitlyDefaulted(false);
+  setHasImplicitReturnZero(false);
+  setLateTemplateParsed(false);
+  setConstexpr(isConstexprSpecified);
+  setInstantiationIsPending(false);
+  setUsesSEHTry(false);
+  setHasSkippedBody(false);
+  setWillHaveBody(false);
+  setIsMultiVersion(false);
+  setHasODRHash(false);
+}
+
 void FunctionDecl::getNameForDiagnostic(
     raw_ostream &OS, const PrintingPolicy &Policy, bool Qualified) const {
   NamedDecl::getNameForDiagnostic(OS, Policy, Qualified);
@@ -2676,7 +2708,7 @@ void FunctionDecl::setBody(Stmt *B) {
 }
 
 void FunctionDecl::setPure(bool P) {
-  IsPure = P;
+  FunctionDeclBits.IsPure = P;
   if (P)
     if (auto *Parent = dyn_cast<CXXRecordDecl>(getDeclContext()))
       Parent->markedVirtualFunctionPure();
@@ -2892,8 +2924,8 @@ FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
     FunTmpl->setPreviousDecl(PrevFunTmpl);
   }
 
-  if (PrevDecl && PrevDecl->IsInline)
-    IsInline = true;
+  if (PrevDecl && PrevDecl->isInlined())
+    setImplicitlyInline(true);
 }
 
 FunctionDecl *FunctionDecl::getCanonicalDecl() { return getFirstDecl(); }
@@ -3664,23 +3696,23 @@ unsigned FunctionDecl::getMemoryFunctionKind() const {
 }
 
 unsigned FunctionDecl::getODRHash() const {
-  assert(HasODRHash);
+  assert(hasODRHash());
   return ODRHash;
 }
 
 unsigned FunctionDecl::getODRHash() {
-  if (HasODRHash)
+  if (hasODRHash())
     return ODRHash;
 
   if (auto *FT = getInstantiatedFromMemberFunction()) {
-    HasODRHash = true;
+    setHasODRHash(true);
     ODRHash = FT->getODRHash();
     return ODRHash;
   }
 
   class ODRHash Hash;
   Hash.AddFunctionDecl(this);
-  HasODRHash = true;
+  setHasODRHash(true);
   ODRHash = Hash.CalculateHash();
   return ODRHash;
 }
@@ -4350,7 +4382,7 @@ FunctionDecl *FunctionDecl::Create(ASTContext &C, DeclContext *DC,
   FunctionDecl *New =
       new (C, DC) FunctionDecl(Function, C, DC, StartLoc, NameInfo, T, TInfo,
                                SC, isInlineSpecified, isConstexprSpecified);
-  New->HasWrittenPrototype = hasWrittenPrototype;
+  New->setHasWrittenPrototype(hasWrittenPrototype);
   return New;
 }
 

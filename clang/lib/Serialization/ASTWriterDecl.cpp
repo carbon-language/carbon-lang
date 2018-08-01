@@ -529,26 +529,25 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
 
   // FunctionDecl's body is handled last at ASTWriterDecl::Visit,
   // after everything else is written.
-
-  Record.push_back((int)D->SClass); // FIXME: stable encoding
-  Record.push_back(D->IsInline);
-  Record.push_back(D->IsInlineSpecified);
-  Record.push_back(D->IsExplicitSpecified);
-  Record.push_back(D->IsVirtualAsWritten);
-  Record.push_back(D->IsPure);
-  Record.push_back(D->HasInheritedPrototype);
-  Record.push_back(D->HasWrittenPrototype);
-  Record.push_back(D->IsDeleted);
-  Record.push_back(D->IsTrivial);
-  Record.push_back(D->IsTrivialForCall);
-  Record.push_back(D->IsDefaulted);
-  Record.push_back(D->IsExplicitlyDefaulted);
-  Record.push_back(D->HasImplicitReturnZero);
-  Record.push_back(D->IsConstexpr);
-  Record.push_back(D->UsesSEHTry);
-  Record.push_back(D->HasSkippedBody);
-  Record.push_back(D->IsMultiVersion);
-  Record.push_back(D->IsLateTemplateParsed);
+  Record.push_back(static_cast<int>(D->getStorageClass())); // FIXME: stable encoding
+  Record.push_back(D->isInlineSpecified());
+  Record.push_back(D->isInlined());
+  Record.push_back(D->isExplicitSpecified());
+  Record.push_back(D->isVirtualAsWritten());
+  Record.push_back(D->isPure());
+  Record.push_back(D->hasInheritedPrototype());
+  Record.push_back(D->hasWrittenPrototype());
+  Record.push_back(D->isDeletedBit());
+  Record.push_back(D->isTrivial());
+  Record.push_back(D->isTrivialForCall());
+  Record.push_back(D->isDefaulted());
+  Record.push_back(D->isExplicitlyDefaulted());
+  Record.push_back(D->hasImplicitReturnZero());
+  Record.push_back(D->isConstexpr());
+  Record.push_back(D->usesSEHTry());
+  Record.push_back(D->hasSkippedBody());
+  Record.push_back(D->isMultiVersion());
+  Record.push_back(D->isLateTemplateParsed());
   Record.push_back(D->getLinkageInternal());
   Record.AddSourceLocation(D->getLocEnd());
 
@@ -628,7 +627,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
 
 void ASTDeclWriter::VisitCXXDeductionGuideDecl(CXXDeductionGuideDecl *D) {
   VisitFunctionDecl(D);
-  Record.push_back(D->IsCopyDeductionCandidate);
+  Record.push_back(D->isCopyDeductionCandidate());
   Code = serialization::DECL_CXX_DEDUCTION_GUIDE;
 }
 
