@@ -878,6 +878,8 @@ public:
   // True if an error occurred.
   bool Error = false;
 
+  void dumpBackReferences();
+
 private:
   Type *demangleVariableEncoding(StringView &MangledName);
   Type *demangleFunctionEncoding(StringView &MangledName);
@@ -2046,12 +2048,43 @@ void Demangler::output(const Symbol *S, OutputStream &OS) {
   Type::outputPost(OS, *S->SymbolType);
 }
 
+void Demangler::dumpBackReferences() {
+  printf("%d function parameter backreferences\n",
+         (int)FunctionParamBackRefCount);
+
+  // Create an output stream so we can render each type.
+  OutputStream OS = OutputStream::create(nullptr, 0, 1024);
+  for (size_t I = 0; I < FunctionParamBackRefCount; ++I) {
+    OS.setCurrentPosition(0);
+
+    Type *T = FunctionParamBackRefs[I];
+    Type::outputPre(OS, *T);
+    Type::outputPost(OS, *T);
+
+    printf("  [%d] - %*s\n", (int)I, (int)OS.getCurrentPosition(),
+           OS.getBuffer());
+  }
+  std::free(OS.getBuffer());
+
+  if (FunctionParamBackRefCount > 0)
+    printf("\n");
+  printf("%d name backreferences\n", (int)BackRefCount);
+  for (size_t I = 0; I < BackRefCount; ++I) {
+    printf("  [%d] - %*s\n", (int)I, (int)BackReferences[I].size(),
+           BackReferences[I].begin());
+  }
+  if (BackRefCount > 0)
+    printf("\n");
+}
+
 char *llvm::microsoftDemangle(const char *MangledName, char *Buf, size_t *N,
-                              int *Status) {
+                              int *Status, MSDemangleFlags Flags) {
   Demangler D;
   StringView Name{MangledName};
   Symbol *S = D.parse(Name);
 
+  if (Flags & MSDF_DumpBackrefs)
+    D.dumpBackReferences();
   OutputStream OS = OutputStream::create(Buf, N, 1024);
   if (D.Error) {
     OS << MangledName;
