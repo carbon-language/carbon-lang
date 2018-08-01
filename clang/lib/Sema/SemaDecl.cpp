@@ -6012,7 +6012,8 @@ static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
   // Check the attributes on the function type, if any.
   if (const auto *FD = dyn_cast<FunctionDecl>(&ND)) {
     for (TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc();
-         auto ATL = TL.getAsAdjusted<AttributedTypeLoc>();
+         auto ATL = TL ? TL.getAsAdjusted<AttributedTypeLoc>()
+                       : AttributedTypeLoc();
          TL = ATL.getModifiedLoc()) {
       // The [[lifetimebound]] attribute can be applied to the implicit object
       // parameter of a non-static member function (other than a ctor or dtor)
