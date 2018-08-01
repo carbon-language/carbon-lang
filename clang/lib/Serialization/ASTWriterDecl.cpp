@@ -1275,7 +1275,7 @@ void ASTDeclWriter::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   // Store (what we currently believe to be) the key function to avoid
   // deserializing every method so we can compute it.
-  if (D->IsCompleteDefinition)
+  if (D->isCompleteDefinition())
     Record.AddDeclRef(Context.getCurrentKeyFunction(D));
 
   Code = serialization::DECL_CXX_RECORD;

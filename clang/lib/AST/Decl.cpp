@@ -3767,6 +3767,22 @@ void FieldDecl::setCapturedVLAType(const VariableArrayType *VLAType) {
 // TagDecl Implementation
 //===----------------------------------------------------------------------===//
 
+TagDecl::TagDecl(Kind DK, TagKind TK, const ASTContext &C, DeclContext *DC,
+                 SourceLocation L, IdentifierInfo *Id, TagDecl *PrevDecl,
+                 SourceLocation StartL)
+    : TypeDecl(DK, DC, L, Id, StartL), DeclContext(DK), redeclarable_base(C),
+      TypedefNameDeclOrQualifier((TypedefNameDecl *)nullptr) {
+  assert((DK != Enum || TK == TTK_Enum) &&
+         "EnumDecl not matched with TTK_Enum");
+  setPreviousDecl(PrevDecl);
+  setTagKind(TK);
+  setCompleteDefinition(false);
+  setBeingDefined(false);
+  setEmbeddedInDeclarator(false);
+  setFreeStanding(false);
+  setCompleteDefinitionRequired(false);
+}
+
 SourceLocation TagDecl::getOuterLocStart() const {
   return getTemplateOrInnerLocStart(this);
 }
@@ -3789,7 +3805,7 @@ void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) {
 }
 
 void TagDecl::startDefinition() {
-  IsBeingDefined = true;
+  setBeingDefined(true);
 
   if (auto *D = dyn_cast<CXXRecordDecl>(this)) {
     struct CXXRecordDecl::DefinitionData *Data =
@@ -3804,8 +3820,8 @@ void TagDecl::completeDefinition() {
           cast<CXXRecordDecl>(this)->hasDefinition()) &&
          "definition completed but not started");
 
-  IsCompleteDefinition = true;
-  IsBeingDefined = false;
+  setCompleteDefinition(true);
+  setBeingDefined(false);
 
   if (ASTMutationListener *L = getASTMutationListener())
     L->CompletedTagDefinition(this);
@@ -3816,7 +3832,7 @@ TagDecl *TagDecl::getDefinition() const {
     return const_cast<TagDecl *>(this);
 
   // If it's possible for us to have an out-of-date definition, check now.
-  if (MayHaveOutOfDateDef) {
+  if (mayHaveOutOfDateDef()) {
     if (IdentifierInfo *II = getIdentifier()) {
       if (II->isOutOfDate()) {
         updateOutOfDate(*II);
@@ -3869,6 +3885,21 @@ void TagDecl::setTemplateParameterListsInfo(
 // EnumDecl Implementation
 //===----------------------------------------------------------------------===//
 
+EnumDecl::EnumDecl(ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
+                   SourceLocation IdLoc, IdentifierInfo *Id, EnumDecl *PrevDecl,
+                   bool Scoped, bool ScopedUsingClassTag, bool Fixed)
+    : TagDecl(Enum, TTK_Enum, C, DC, IdLoc, Id, PrevDecl, StartLoc) {
+  assert(Scoped || !ScopedUsingClassTag);
+  IntegerType = nullptr;
+  setNumPositiveBits(0);
+  setNumNegativeBits(0);
+  setScoped(Scoped);
+  setScopedUsingClassTag(ScopedUsingClassTag);
+  setFixed(Fixed);
+  setHasODRHash(false);
+  ODRHash = 0;
+}
+
 void EnumDecl::anchor() {}
 
 EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC,
@@ -3878,7 +3909,7 @@ EnumDecl *EnumDecl::Create(ASTContext &C, DeclContext *DC,
                            bool IsScopedUsingClassTag, bool IsFixed) {
   auto *Enum = new (C, DC) EnumDecl(C, DC, StartLoc, IdLoc, Id, PrevDecl,
                                     IsScoped, IsScopedUsingClassTag, IsFixed);
-  Enum->MayHaveOutOfDateDef = C.getLangOpts().Modules;
+  Enum->setMayHaveOutOfDateDef(C.getLangOpts().Modules);
   C.getTypeDeclType(Enum, PrevDecl);
   return Enum;
 }
@@ -3887,7 +3918,7 @@ EnumDecl *EnumDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   EnumDecl *Enum =
       new (C, ID) EnumDecl(C, nullptr, SourceLocation(), SourceLocation(),
                            nullptr, nullptr, false, false, false);
-  Enum->MayHaveOutOfDateDef = C.getLangOpts().Modules;
+  Enum->setMayHaveOutOfDateDef(C.getLangOpts().Modules);
   return Enum;
 }
 
@@ -3971,12 +4002,12 @@ void EnumDecl::setInstantiationOfMemberEnum(ASTContext &C, EnumDecl *ED,
 }
 
 unsigned EnumDecl::getODRHash() {
-  if (HasODRHash)
+  if (hasODRHash())
     return ODRHash;
 
   class ODRHash Hash;
   Hash.AddEnumDecl(this);
-  HasODRHash = true;
+  setHasODRHash(true);
   ODRHash = Hash.CalculateHash();
   return ODRHash;
 }
@@ -3989,14 +4020,18 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, const ASTContext &C,
                        DeclContext *DC, SourceLocation StartLoc,
                        SourceLocation IdLoc, IdentifierInfo *Id,
                        RecordDecl *PrevDecl)
-    : TagDecl(DK, TK, C, DC, IdLoc, Id, PrevDecl, StartLoc),
-      HasFlexibleArrayMember(false), AnonymousStructOrUnion(false),
-      HasObjectMember(false), HasVolatileMember(false),
-      LoadedFieldsFromExternalStorage(false),
-      NonTrivialToPrimitiveDefaultInitialize(false),
-      NonTrivialToPrimitiveCopy(false), NonTrivialToPrimitiveDestroy(false),
-      ParamDestroyedInCallee(false), ArgPassingRestrictions(APK_CanPassInRegs) {
-  assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
+    : TagDecl(DK, TK, C, DC, IdLoc, Id, PrevDecl, StartLoc) {
+  assert(classof(static_cast<Decl *>(this)) && "Invalid Kind!");
+  setHasFlexibleArrayMember(false);
+  setAnonymousStructOrUnion(false);
+  setHasObjectMember(false);
+  setHasVolatileMember(false);
+  setHasLoadedFieldsFromExternalStorage(false);
+  setNonTrivialToPrimitiveDefaultInitialize(false);
+  setNonTrivialToPrimitiveCopy(false);
+  setNonTrivialToPrimitiveDestroy(false);
+  setParamDestroyedInCallee(false);
+  setArgPassingRestrictions(APK_CanPassInRegs);
 }
 
 RecordDecl *RecordDecl::Create(const ASTContext &C, TagKind TK, DeclContext *DC,
@@ -4004,7 +4039,7 @@ RecordDecl *RecordDecl::Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                                IdentifierInfo *Id, RecordDecl* PrevDecl) {
   RecordDecl *R = new (C, DC) RecordDecl(Record, TK, C, DC,
                                          StartLoc, IdLoc, Id, PrevDecl);
-  R->MayHaveOutOfDateDef = C.getLangOpts().Modules;
+  R->setMayHaveOutOfDateDef(C.getLangOpts().Modules);
 
   C.getTypeDeclType(R, PrevDecl);
   return R;
@@ -4014,7 +4049,7 @@ RecordDecl *RecordDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
   RecordDecl *R =
       new (C, ID) RecordDecl(Record, TTK_Struct, C, nullptr, SourceLocation(),
                              SourceLocation(), nullptr, nullptr);
-  R->MayHaveOutOfDateDef = C.getLangOpts().Modules;
+  R->setMayHaveOutOfDateDef(C.getLangOpts().Modules);
   return R;
 }
 
@@ -4038,7 +4073,7 @@ void RecordDecl::setCapturedRecord() {
 }
 
 RecordDecl::field_iterator RecordDecl::field_begin() const {
-  if (hasExternalLexicalStorage() && !LoadedFieldsFromExternalStorage)
+  if (hasExternalLexicalStorage() && !hasLoadedFieldsFromExternalStorage())
     LoadFieldsFromExternalStorage();
 
   return field_iterator(decl_iterator(FirstDecl));
@@ -4066,7 +4101,7 @@ void RecordDecl::LoadFieldsFromExternalStorage() const {
   ExternalASTSource::Deserializing TheFields(Source);
 
   SmallVector<Decl*, 64> Decls;
-  LoadedFieldsFromExternalStorage = true;
+  setHasLoadedFieldsFromExternalStorage(true);
   Source->FindExternalLexicalDecls(this, [](Decl::Kind K) {
     return FieldDecl::classofKind(K) || IndirectFieldDecl::classofKind(K);
   }, Decls);

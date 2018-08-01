@@ -3014,62 +3014,14 @@ public:
 };
 
 /// Represents the declaration of a struct/union/class/enum.
-class TagDecl
-  : public TypeDecl, public DeclContext, public Redeclarable<TagDecl> {
+class TagDecl : public TypeDecl,
+                public DeclContext,
+                public Redeclarable<TagDecl> {
+  // This class stores some data in DeclContext::TagDeclBits
+  // to save some space. Use the provided accessors to access it.
 public:
   // This is really ugly.
   using TagKind = TagTypeKind;
-
-private:
-  // FIXME: This can be packed into the bitfields in Decl.
-  /// The TagKind enum.
-  unsigned TagDeclKind : 3;
-
-  /// True if this is a definition ("struct foo {};"), false if it is a
-  /// declaration ("struct foo;").  It is not considered a definition
-  /// until the definition has been fully processed.
-  unsigned IsCompleteDefinition : 1;
-
-protected:
-  /// True if this is currently being defined.
-  unsigned IsBeingDefined : 1;
-
-private:
-  /// True if this tag declaration is "embedded" (i.e., defined or declared
-  /// for the very first time) in the syntax of a declarator.
-  unsigned IsEmbeddedInDeclarator : 1;
-
-  /// True if this tag is free standing, e.g. "struct foo;".
-  unsigned IsFreeStanding : 1;
-
-protected:
-  // These are used by (and only defined for) EnumDecl.
-  unsigned NumPositiveBits : 8;
-  unsigned NumNegativeBits : 8;
-
-  /// True if this tag declaration is a scoped enumeration. Only
-  /// possible in C++11 mode.
-  unsigned IsScoped : 1;
-
-  /// If this tag declaration is a scoped enum,
-  /// then this is true if the scoped enum was declared using the class
-  /// tag, false if it was declared with the struct tag. No meaning is
-  /// associated if this tag declaration is not a scoped enum.
-  unsigned IsScopedUsingClassTag : 1;
-
-  /// True if this is an enumeration with fixed underlying type. Only
-  /// possible in C++11, Microsoft extensions, or Objective C mode.
-  unsigned IsFixed : 1;
-
-  /// Indicates whether it is possible for declarations of this kind
-  /// to have an out-of-date definition.
-  ///
-  /// This option is only enabled when modules are enabled.
-  unsigned MayHaveOutOfDateDef : 1;
-
-  /// Has the full definition of this type been required by a use somewhere in
-  /// the TU.
-  unsigned IsCompleteDefinitionRequired : 1;
 
 private:
   SourceRange BraceRange;
@@ -3097,16 +3049,7 @@ private:
 protected:
   TagDecl(Kind DK, TagKind TK, const ASTContext &C, DeclContext *DC,
           SourceLocation L, IdentifierInfo *Id, TagDecl *PrevDecl,
-          SourceLocation StartL)
-      : TypeDecl(DK, DC, L, Id, StartL), DeclContext(DK), redeclarable_base(C),
-        TagDeclKind(TK), IsCompleteDefinition(false), IsBeingDefined(false),
-        IsEmbeddedInDeclarator(false), IsFreeStanding(false),
-        IsCompleteDefinitionRequired(false),
-        TypedefNameDeclOrQualifier((TypedefNameDecl *)nullptr) {
-    assert((DK != Enum || TK == TTK_Enum) &&
-           "EnumDecl not matched with TTK_Enum");
-    setPreviousDecl(PrevDecl);
-  }
+          SourceLocation StartL);
 
   using redeclarable_base = Redeclarable<TagDecl>;
 
@@ -3126,6 +3069,17 @@ protected:
   ///
   /// This is a helper function for derived classes.
   void completeDefinition();
+
+  /// True if this decl is currently being defined.
+  void setBeingDefined(bool V = true) { TagDeclBits.IsBeingDefined = V; }
+
+  /// Indicates whether it is possible for declarations of this kind
+  /// to have an out-of-date definition.
+  ///
+  /// This option is only enabled when modules are enabled.
+  void setMayHaveOutOfDateDef(bool V = true) {
+    TagDeclBits.MayHaveOutOfDateDef = V;
+  }
 
 public:
   friend class ASTDeclReader;
@@ -3165,32 +3119,53 @@ public:
   }
 
   /// Return true if this decl has its body fully specified.
-  bool isCompleteDefinition() const {
-    return IsCompleteDefinition;
+  bool isCompleteDefinition() const { return TagDeclBits.IsCompleteDefinition; }
+
+  /// True if this decl has its body fully specified.
+  void setCompleteDefinition(bool V = true) {
+    TagDeclBits.IsCompleteDefinition = V;
   }
 
   /// Return true if this complete decl is
   /// required to be complete for some existing use.
   bool isCompleteDefinitionRequired() const {
-    return IsCompleteDefinitionRequired;
+    return TagDeclBits.IsCompleteDefinitionRequired;
+  }
+
+  /// True if this complete decl is
+  /// required to be complete for some existing use.
+  void setCompleteDefinitionRequired(bool V = true) {
+    TagDeclBits.IsCompleteDefinitionRequired = V;
   }
 
   /// Return true if this decl is currently being defined.
-  bool isBeingDefined() const {
-    return IsBeingDefined;
-  }
+  bool isBeingDefined() const { return TagDeclBits.IsBeingDefined; }
 
+  /// True if this tag declaration is "embedded" (i.e., defined or declared
+  /// for the very first time) in the syntax of a declarator.
   bool isEmbeddedInDeclarator() const {
-    return IsEmbeddedInDeclarator;
-  }
-  void setEmbeddedInDeclarator(bool isInDeclarator) {
-    IsEmbeddedInDeclarator = isInDeclarator;
+    return TagDeclBits.IsEmbeddedInDeclarator;
   }
 
-  bool isFreeStanding() const { return IsFreeStanding; }
-  void setFreeStanding(bool isFreeStanding = true) {
-    IsFreeStanding = isFreeStanding;
+  /// True if this tag declaration is "embedded" (i.e., defined or declared
+  /// for the very first time) in the syntax of a declarator.
+  void setEmbeddedInDeclarator(bool isInDeclarator) {
+    TagDeclBits.IsEmbeddedInDeclarator = isInDeclarator;
   }
+
+  /// True if this tag is free standing, e.g. "struct foo;".
+  bool isFreeStanding() const { return TagDeclBits.IsFreeStanding; }
+
+  /// True if this tag is free standing, e.g. "struct foo;".
+  void setFreeStanding(bool isFreeStanding = true) {
+    TagDeclBits.IsFreeStanding = isFreeStanding;
+  }
+
+  /// Indicates whether it is possible for declarations of this kind
+  /// to have an out-of-date definition.
+  ///
+  /// This option is only enabled when modules are enabled.
+  bool mayHaveOutOfDateDef() const { return TagDeclBits.MayHaveOutOfDateDef; }
 
   /// Whether this declaration declares a type that is
   /// dependent, i.e., a type that somehow depends on template
@@ -3214,21 +3189,15 @@ public:
   ///  the struct/union/class/enum.
   TagDecl *getDefinition() const;
 
-  void setCompleteDefinition(bool V) { IsCompleteDefinition = V; }
-
-  void setCompleteDefinitionRequired(bool V = true) {
-    IsCompleteDefinitionRequired = V;
-  }
-
   StringRef getKindName() const {
     return TypeWithKeyword::getTagTypeKindName(getTagKind());
   }
 
   TagKind getTagKind() const {
-    return TagKind(TagDeclKind);
+    return static_cast<TagKind>(TagDeclBits.TagDeclKind);
   }
 
-  void setTagKind(TagKind TK) { TagDeclKind = TK; }
+  void setTagKind(TagKind TK) { TagDeclBits.TagDeclKind = TK; }
 
   bool isStruct() const { return getTagKind() == TTK_Struct; }
   bool isInterface() const { return getTagKind() == TTK_Interface; }
@@ -3308,6 +3277,9 @@ public:
 /// with a fixed underlying type, and in C we allow them to be forward-declared
 /// with no underlying type as an extension.
 class EnumDecl : public TagDecl {
+  // This class stores some data in DeclContext::EnumDeclBits
+  // to save some space. Use the provided accessors to access it.
+
   /// This represent the integer type that the enum corresponds
   /// to for code generation purposes.  Note that the enumerator constants may
   /// have a different type than this does.
@@ -3336,28 +3308,50 @@ class EnumDecl : public TagDecl {
   MemberSpecializationInfo *SpecializationInfo = nullptr;
 
   /// Store the ODRHash after first calculation.
-  unsigned HasODRHash : 1;
+  /// The corresponding flag HasODRHash is in EnumDeclBits
+  /// and can be accessed with the provided accessors.
   unsigned ODRHash;
 
   EnumDecl(ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
            SourceLocation IdLoc, IdentifierInfo *Id, EnumDecl *PrevDecl,
-           bool Scoped, bool ScopedUsingClassTag, bool Fixed)
-      : TagDecl(Enum, TTK_Enum, C, DC, IdLoc, Id, PrevDecl, StartLoc) {
-    assert(Scoped || !ScopedUsingClassTag);
-    IntegerType = (const Type *)nullptr;
-    NumNegativeBits = 0;
-    NumPositiveBits = 0;
-    IsScoped = Scoped;
-    IsScopedUsingClassTag = ScopedUsingClassTag;
-    IsFixed = Fixed;
-    HasODRHash = false;
-    ODRHash = 0;
-  }
+           bool Scoped, bool ScopedUsingClassTag, bool Fixed);
 
   void anchor() override;
 
   void setInstantiationOfMemberEnum(ASTContext &C, EnumDecl *ED,
                                     TemplateSpecializationKind TSK);
+
+  /// Sets the width in bits required to store all the
+  /// non-negative enumerators of this enum.
+  void setNumPositiveBits(unsigned Num) {
+    EnumDeclBits.NumPositiveBits = Num;
+    assert(EnumDeclBits.NumPositiveBits == Num && "can't store this bitcount");
+  }
+
+  /// Returns the width in bits required to store all the
+  /// negative enumerators of this enum. (see getNumNegativeBits)
+  void setNumNegativeBits(unsigned Num) { EnumDeclBits.NumNegativeBits = Num; }
+
+  /// True if this tag declaration is a scoped enumeration. Only
+  /// possible in C++11 mode.
+  void setScoped(bool Scoped = true) { EnumDeclBits.IsScoped = Scoped; }
+
+  /// If this tag declaration is a scoped enum,
+  /// then this is true if the scoped enum was declared using the class
+  /// tag, false if it was declared with the struct tag. No meaning is
+  /// associated if this tag declaration is not a scoped enum.
+  void setScopedUsingClassTag(bool ScopedUCT = true) {
+    EnumDeclBits.IsScopedUsingClassTag = ScopedUCT;
+  }
+
+  /// True if this is an Objective-C, C++11, or
+  /// Microsoft-style enumeration with a fixed underlying type.
+  void setFixed(bool Fixed = true) { EnumDeclBits.IsFixed = Fixed; }
+
+  /// True if a valid hash is stored in ODRHash.
+  bool hasODRHash() const { return EnumDeclBits.HasODRHash; }
+  void setHasODRHash(bool Hash = true) { EnumDeclBits.HasODRHash = Hash; }
+
 public:
   friend class ASTDeclReader;
 
@@ -3462,13 +3456,7 @@ public:
 
   /// Returns the width in bits required to store all the
   /// non-negative enumerators of this enum.
-  unsigned getNumPositiveBits() const {
-    return NumPositiveBits;
-  }
-  void setNumPositiveBits(unsigned Num) {
-    NumPositiveBits = Num;
-    assert(NumPositiveBits == Num && "can't store this bitcount");
-  }
+  unsigned getNumPositiveBits() const { return EnumDeclBits.NumPositiveBits; }
 
   /// Returns the width in bits required to store all the
   /// negative enumerators of this enum.  These widths include
@@ -3479,28 +3467,19 @@ public:
   ///                       -1     1111111                     1
   ///                      -10     1110110                     5
   ///                     -101     1001011                     8
-  unsigned getNumNegativeBits() const {
-    return NumNegativeBits;
-  }
-  void setNumNegativeBits(unsigned Num) {
-    NumNegativeBits = Num;
-  }
+  unsigned getNumNegativeBits() const { return EnumDeclBits.NumNegativeBits; }
 
   /// Returns true if this is a C++11 scoped enumeration.
-  bool isScoped() const {
-    return IsScoped;
-  }
+  bool isScoped() const { return EnumDeclBits.IsScoped; }
 
   /// Returns true if this is a C++11 scoped enumeration.
   bool isScopedUsingClassTag() const {
-    return IsScopedUsingClassTag;
+    return EnumDeclBits.IsScopedUsingClassTag;
   }
 
   /// Returns true if this is an Objective-C, C++11, or
   /// Microsoft-style enumeration with a fixed underlying type.
-  bool isFixed() const {
-    return IsFixed;
-  }
+  bool isFixed() const { return EnumDeclBits.IsFixed; }
 
   unsigned getODRHash();
 
@@ -3565,7 +3544,10 @@ public:
 ///   union Y { int A, B; };     // Has body with members A and B (FieldDecls).
 /// This decl will be marked invalid if *any* members are invalid.
 class RecordDecl : public TagDecl {
+  // This class stores some data in DeclContext::RecordDeclBits
+  // to save some space. Use the provided accessors to access it.
 public:
+  friend class DeclContext;
   /// Enum that represents the different ways arguments are passed to and
   /// returned from function calls. This takes into account the target-specific
   /// and version-specific rules along with the rules determined by the
@@ -3588,46 +3570,6 @@ public:
     /// indirectly.
     APK_CanNeverPassInRegs
   };
-
-private:
-  friend class DeclContext;
-
-  // FIXME: This can be packed into the bitfields in Decl.
-  /// This is true if this struct ends with a flexible
-  /// array member (e.g. int X[]) or if this union contains a struct that does.
-  /// If so, this cannot be contained in arrays or other structs as a member.
-  unsigned HasFlexibleArrayMember : 1;
-
-  /// Whether this is the type of an anonymous struct or union.
-  unsigned AnonymousStructOrUnion : 1;
-
-  /// This is true if this struct has at least one member
-  /// containing an Objective-C object pointer type.
-  unsigned HasObjectMember : 1;
-
-  /// This is true if struct has at least one member of
-  /// 'volatile' type.
-  unsigned HasVolatileMember : 1;
-
-  /// Whether the field declarations of this record have been loaded
-  /// from external storage. To avoid unnecessary deserialization of
-  /// methods/nested types we allow deserialization of just the fields
-  /// when needed.
-  mutable unsigned LoadedFieldsFromExternalStorage : 1;
-
-  /// Basic properties of non-trivial C structs.
-  unsigned NonTrivialToPrimitiveDefaultInitialize : 1;
-  unsigned NonTrivialToPrimitiveCopy : 1;
-  unsigned NonTrivialToPrimitiveDestroy : 1;
-
-  /// Indicates whether this struct is destroyed in the callee.
-  ///
-  /// Please note that MSVC won't merge adjacent bitfields if they don't have
-  /// the same type.
-  unsigned ParamDestroyedInCallee : 1;
-
-  /// Represents the way this type is passed to a function.
-  unsigned ArgPassingRestrictions : 2;
 
 protected:
   RecordDecl(Kind DK, TagKind TK, const ASTContext &C, DeclContext *DC,
@@ -3655,8 +3597,13 @@ public:
     return const_cast<RecordDecl*>(this)->getMostRecentDecl();
   }
 
-  bool hasFlexibleArrayMember() const { return HasFlexibleArrayMember; }
-  void setHasFlexibleArrayMember(bool V) { HasFlexibleArrayMember = V; }
+  bool hasFlexibleArrayMember() const {
+    return RecordDeclBits.HasFlexibleArrayMember;
+  }
+
+  void setHasFlexibleArrayMember(bool V) {
+    RecordDeclBits.HasFlexibleArrayMember = V;
+  }
 
   /// Whether this is an anonymous struct or union. To be an anonymous
   /// struct or union, it must have been declared without a name and
@@ -3669,47 +3616,54 @@ public:
   ///  union X { int i; float f; };
   ///  union { int i; float f; } obj;
   /// @endcode
-  bool isAnonymousStructOrUnion() const { return AnonymousStructOrUnion; }
-  void setAnonymousStructOrUnion(bool Anon) {
-    AnonymousStructOrUnion = Anon;
+  bool isAnonymousStructOrUnion() const {
+    return RecordDeclBits.AnonymousStructOrUnion;
   }
 
-  bool hasObjectMember() const { return HasObjectMember; }
-  void setHasObjectMember (bool val) { HasObjectMember = val; }
+  void setAnonymousStructOrUnion(bool Anon) {
+    RecordDeclBits.AnonymousStructOrUnion = Anon;
+  }
 
-  bool hasVolatileMember() const { return HasVolatileMember; }
-  void setHasVolatileMember (bool val) { HasVolatileMember = val; }
+  bool hasObjectMember() const { return RecordDeclBits.HasObjectMember; }
+  void setHasObjectMember(bool val) { RecordDeclBits.HasObjectMember = val; }
+
+  bool hasVolatileMember() const { return RecordDeclBits.HasVolatileMember; }
+
+  void setHasVolatileMember(bool val) {
+    RecordDeclBits.HasVolatileMember = val;
+  }
 
   bool hasLoadedFieldsFromExternalStorage() const {
-    return LoadedFieldsFromExternalStorage;
+    return RecordDeclBits.LoadedFieldsFromExternalStorage;
   }
-  void setHasLoadedFieldsFromExternalStorage(bool val) {
-    LoadedFieldsFromExternalStorage = val;
+
+  void setHasLoadedFieldsFromExternalStorage(bool val) const {
+    RecordDeclBits.LoadedFieldsFromExternalStorage = val;
   }
 
   /// Functions to query basic properties of non-trivial C structs.
   bool isNonTrivialToPrimitiveDefaultInitialize() const {
-    return NonTrivialToPrimitiveDefaultInitialize;
+    return RecordDeclBits.NonTrivialToPrimitiveDefaultInitialize;
   }
 
   void setNonTrivialToPrimitiveDefaultInitialize(bool V) {
-    NonTrivialToPrimitiveDefaultInitialize = V;
+    RecordDeclBits.NonTrivialToPrimitiveDefaultInitialize = V;
   }
 
   bool isNonTrivialToPrimitiveCopy() const {
-    return NonTrivialToPrimitiveCopy;
+    return RecordDeclBits.NonTrivialToPrimitiveCopy;
   }
 
   void setNonTrivialToPrimitiveCopy(bool V) {
-    NonTrivialToPrimitiveCopy = V;
+    RecordDeclBits.NonTrivialToPrimitiveCopy = V;
   }
 
   bool isNonTrivialToPrimitiveDestroy() const {
-    return NonTrivialToPrimitiveDestroy;
+    return RecordDeclBits.NonTrivialToPrimitiveDestroy;
   }
 
   void setNonTrivialToPrimitiveDestroy(bool V) {
-    NonTrivialToPrimitiveDestroy = V;
+    RecordDeclBits.NonTrivialToPrimitiveDestroy = V;
   }
 
   /// Determine whether this class can be passed in registers. In C++ mode,
@@ -3720,19 +3674,19 @@ public:
   }
 
   ArgPassingKind getArgPassingRestrictions() const {
-    return static_cast<ArgPassingKind>(ArgPassingRestrictions);
+    return static_cast<ArgPassingKind>(RecordDeclBits.ArgPassingRestrictions);
   }
 
   void setArgPassingRestrictions(ArgPassingKind Kind) {
-    ArgPassingRestrictions = static_cast<uint8_t>(Kind);
+    RecordDeclBits.ArgPassingRestrictions = Kind;
   }
 
   bool isParamDestroyedInCallee() const {
-    return ParamDestroyedInCallee;
+    return RecordDeclBits.ParamDestroyedInCallee;
   }
 
   void setParamDestroyedInCallee(bool V) {
-    ParamDestroyedInCallee = V;
+    RecordDeclBits.ParamDestroyedInCallee = V;
   }
 
   /// Determines whether this declaration represents the

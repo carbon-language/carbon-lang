@@ -128,7 +128,7 @@ CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
                                      bool DelayTypeCreation) {
   auto *R = new (C, DC) CXXRecordDecl(CXXRecord, TK, C, DC, StartLoc, IdLoc, Id,
                                       PrevDecl);
-  R->MayHaveOutOfDateDef = C.getLangOpts().Modules;
+  R->setMayHaveOutOfDateDef(C.getLangOpts().Modules);
 
   // FIXME: DelayTypeCreation seems like such a hack
   if (!DelayTypeCreation)
@@ -143,11 +143,11 @@ CXXRecordDecl::CreateLambda(const ASTContext &C, DeclContext *DC,
                             LambdaCaptureDefault CaptureDefault) {
   auto *R = new (C, DC) CXXRecordDecl(CXXRecord, TTK_Class, C, DC, Loc, Loc,
                                       nullptr, nullptr);
-  R->IsBeingDefined = true;
+  R->setBeingDefined(true);
   R->DefinitionData =
       new (C) struct LambdaDefinitionData(R, Info, Dependent, IsGeneric,
                                           CaptureDefault);
-  R->MayHaveOutOfDateDef = false;
+  R->setMayHaveOutOfDateDef(false);
   R->setImplicit(true);
   C.getTypeDeclType(R, /*PrevDecl=*/nullptr);
   return R;
@@ -158,7 +158,7 @@ CXXRecordDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
   auto *R = new (C, ID) CXXRecordDecl(
       CXXRecord, TTK_Struct, C, nullptr, SourceLocation(), SourceLocation(),
       nullptr, nullptr);
-  R->MayHaveOutOfDateDef = false;
+  R->setMayHaveOutOfDateDef(false);
   return R;
 }
 

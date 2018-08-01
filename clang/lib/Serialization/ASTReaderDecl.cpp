@@ -742,16 +742,16 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   ED->setPromotionType(Record.readType());
   ED->setNumPositiveBits(Record.readInt());
   ED->setNumNegativeBits(Record.readInt());
-  ED->IsScoped = Record.readInt();
-  ED->IsScopedUsingClassTag = Record.readInt();
-  ED->IsFixed = Record.readInt();
+  ED->setScoped(Record.readInt());
+  ED->setScopedUsingClassTag(Record.readInt());
+  ED->setFixed(Record.readInt());
 
-  ED->HasODRHash = true;
+  ED->setHasODRHash(true);
   ED->ODRHash = Record.readInt();
 
   // If this is a definition subject to the ODR, and we already have a
   // definition, merge this one into it.
-  if (ED->IsCompleteDefinition &&
+  if (ED->isCompleteDefinition() &&
       Reader.getContext().getLangOpts().Modules &&
       Reader.getContext().getLangOpts().CPlusPlus) {
     EnumDecl *&OldDef = Reader.EnumDefinitions[ED->getCanonicalDecl()];
@@ -767,7 +767,7 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
     }
     if (OldDef) {
       Reader.MergedDeclContexts.insert(std::make_pair(ED, OldDef));
-      ED->IsCompleteDefinition = false;
+      ED->setCompleteDefinition(false);
       Reader.mergeDefinitionVisibility(OldDef, ED);
       if (OldDef->getODRHash() != ED->getODRHash())
         Reader.PendingEnumOdrMergeFailures[OldDef].push_back(ED);
@@ -1744,7 +1744,7 @@ void ASTDeclReader::MergeDefinitionData(
     Reader.MergedDeclContexts.insert(std::make_pair(MergeDD.Definition,
                                                     DD.Definition));
     Reader.PendingDefinitions.erase(MergeDD.Definition);
-    MergeDD.Definition->IsCompleteDefinition = false;
+    MergeDD.Definition->setCompleteDefinition(false);
     Reader.mergeDefinitionVisibility(DD.Definition, MergeDD.Definition);
     assert(Reader.Lookups.find(MergeDD.Definition) == Reader.Lookups.end() &&
            "already loaded pending lookups for merged definition");
@@ -1884,7 +1884,7 @@ void ASTDeclReader::ReadCXXRecordDefinition(CXXRecordDecl *D, bool Update) {
   }
 
   // Mark this declaration as being a definition.
-  D->IsCompleteDefinition = true;
+  D->setCompleteDefinition(true);
 
   // If this is not the first declaration or is an update record, we can have
   // other redeclarations already. Make a note that we need to propagate the
@@ -1946,7 +1946,7 @@ ASTDeclReader::VisitCXXRecordDeclImpl(CXXRecordDecl *D) {
   // compute it.
   if (WasDefinition) {
     DeclID KeyFn = ReadDeclID();
-    if (KeyFn && D->IsCompleteDefinition)
+    if (KeyFn && D->isCompleteDefinition())
       // FIXME: This is wrong for the ARM ABI, where some other module may have
       // made this function no longer be a key function. We need an update
       // record or similar for that case.
@@ -3076,7 +3076,7 @@ DeclContext *ASTDeclReader::getPrimaryContextForMerging(ASTReader &Reader,
     // we load the update record.
     if (!DD) {
       DD = new (Reader.getContext()) struct CXXRecordDecl::DefinitionData(RD);
-      RD->IsCompleteDefinition = true;
+      RD->setCompleteDefinition(true);
       RD->DefinitionData = DD;
       RD->getCanonicalDecl()->DefinitionData = DD;
 
