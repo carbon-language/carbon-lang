@@ -385,3 +385,32 @@ define <4 x i32> @rotr_v4i32_shift_by_bitwidth(<4 x i32> %x) nounwind {
   ret <4 x i32> %f
 }
 
+; FIXME: Non power-of-2 types can't use the negated shift amount to avoid a select.
+
+declare i7 @llvm.fshl.i7(i7, i7, i7)
+declare i7 @llvm.fshr.i7(i7, i7, i7)
+
+; extract(concat(0b1110000, 0b1110000) << 9) = 0b1000011
+; Try an oversized shift to test modulo functionality.
+
+define i7 @fshl_i7() {
+; ANY-LABEL: fshl_i7:
+; ANY:       # %bb.0:
+; ANY-NEXT:    movb $112, %al
+; ANY-NEXT:    ret{{[l|q]}}
+  %f = call i7 @llvm.fshl.i7(i7 112, i7 112, i7 9)
+  ret i7 %f
+}
+
+; extract(concat(0b1110001, 0b1110001) >> 16) = 0b0111100
+; Try an oversized shift to test modulo functionality.
+
+define i7 @fshr_i7() {
+; ANY-LABEL: fshr_i7:
+; ANY:       # %bb.0:
+; ANY-NEXT:    movb $125, %al
+; ANY-NEXT:    ret{{[l|q]}}
+  %f = call i7 @llvm.fshr.i7(i7 113, i7 113, i7 16)
+  ret i7 %f
+}
+
