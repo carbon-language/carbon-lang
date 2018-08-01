@@ -954,7 +954,13 @@ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
   MCContext &Context = Layout.getAssembler().getContext();
   uint64_t OldSize = DF.getContents().size();
   int64_t AddrDelta;
-  bool Abs = DF.getAddrDelta().evaluateAsAbsolute(AddrDelta, Layout);
+  bool Abs;
+  if (getBackend().requiresDiffExpressionRelocations())
+    Abs = DF.getAddrDelta().evaluateAsAbsolute(AddrDelta, Layout);
+  else {
+    Abs = DF.getAddrDelta().evaluateKnownAbsolute(AddrDelta, Layout);
+    assert(Abs && "We created a line delta with an invalid expression");
+  }
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
   SmallVectorImpl<char> &Data = DF.getContents();
