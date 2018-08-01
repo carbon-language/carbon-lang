@@ -13,6 +13,7 @@ def B : JoinedOrSeparate<["-"], "B">,
 defm input_target : Eq<"input-target">,
                     HelpText<"Format of the input file">,
                     Values<"binary">;
+def I : JoinedOrSeparate<[ "-" ], "I">, Alias<input_target>;
 defm output_target : Eq<"output-target">,
                      HelpText<"Format of the output file">,
                      Values<"binary">;
