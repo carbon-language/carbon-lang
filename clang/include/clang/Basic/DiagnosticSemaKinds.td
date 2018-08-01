@@ -7854,6 +7854,13 @@ def warn_null_ret : Warning<
   "null returned from %select{function|method}0 that requires a non-null return value">,
   InGroup<NonNull>;
 
+def err_lifetimebound_no_object_param : Error<
+  "'lifetimebound' attribute cannot be applied; %select{static |non-}0member "
+  "function has no implicit object parameter">;
+def err_lifetimebound_ctor_dtor : Error<
+  "'lifetimebound' attribute cannot be applied to a "
+  "%select{constructor|destructor}0">;
+
 // CHECK: returning address/reference of stack memory
 def warn_ret_stack_addr_ref : Warning<
   "%select{address of|reference to}0 stack memory associated with "
