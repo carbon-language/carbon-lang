@@ -253,7 +253,7 @@ std::pair<ProgramStateRef, SVal> ExprEngine::prepareForObjectConstruction(
         State = PreElideState;
         CallOpts = PreElideCallOpts;
       }
-      LLVM_FALLTHROUGH
+      LLVM_FALLTHROUGH;
     }
     case ConstructionContext::SimpleTemporaryObjectKind: {
       const auto *TCC = cast<TemporaryObjectConstructionContext>(CC);
