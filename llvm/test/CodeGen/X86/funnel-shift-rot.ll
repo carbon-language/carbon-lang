@@ -386,7 +386,7 @@ define <4 x i32> @rotr_v4i32_shift_by_bitwidth(<4 x i32> %x) nounwind {
   ret <4 x i32> %f
 }
 
-; FIXME: Non power-of-2 types can't use the negated shift amount to avoid a select.
+; Non power-of-2 types can't use the negated shift amount to avoid a select.
 
 declare i7 @llvm.fshl.i7(i7, i7, i7)
 declare i7 @llvm.fshr.i7(i7, i7, i7)
