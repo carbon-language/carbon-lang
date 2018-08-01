@@ -221,8 +221,8 @@ template <class ELFT>
 Defined *InputSectionBase::getEnclosingFunction(uint64_t Offset) {
   for (Symbol *B : File->getSymbols())
     if (Defined *D = dyn_cast<Defined>(B))
-      if (D->Section == this && D->Type == STT_FUNC &&
-          D->Value <= Offset && Offset < D->Value + D->Size)
+      if (D->Section == this && D->Type == STT_FUNC && D->Value <= Offset &&
+          Offset < D->Value + D->Size)
         return D;
   return nullptr;
 }
@@ -671,7 +671,7 @@ static uint64_t getRelocTargetVA(const InputFile *File, RelType Type, int64_t A,
   case R_TLSLD_GOT_FROM_END:
     return InX::Got->getTlsIndexOff() + A - InX::Got->getSize();
   case R_TLSLD_GOT:
-      return InX::Got->getTlsIndexOff() + A;
+    return InX::Got->getTlsIndexOff() + A;
   case R_TLSLD_PC:
     return InX::Got->getTlsIndexVA() + A - P;
   }
