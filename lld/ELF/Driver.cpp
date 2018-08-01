@@ -497,11 +497,14 @@ static Target2Policy getTarget2(opt::InputArgList &Args) {
 }
 
 static bool isOutputFormatBinary(opt::InputArgList &Args) {
-  StringRef S = Args.getLastArgValue(OPT_oformat, "elf");
-  if (S == "binary")
-    return true;
-  if (S != "elf")
+  if (auto *Arg = Args.getLastArg(OPT_oformat)) {
+    StringRef S = Arg->getValue();
+    if (S == "binary")
+      return true;
+    if (S.startswith("elf"))
+      return false;
     error("unknown --oformat value: " + S);
+  }
   return false;
 }
 
