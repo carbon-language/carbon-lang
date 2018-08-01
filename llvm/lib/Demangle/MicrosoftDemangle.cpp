@@ -204,6 +204,8 @@ enum FuncClass : uint8_t {
   Far = 1 << 6,
 };
 
+enum class SymbolCategory { Function, Variable };
+
 namespace {
 
 struct Type;
@@ -265,12 +267,10 @@ struct Name {
   // Name read from an MangledName string.
   StringView Str;
 
-  // Overloaded operators are represented as special BackReferences in mangled
-  // symbols. If this is an operator name, "op" has an operator name (e.g.
-  // ">>"). Otherwise, empty.
-  StringView Operator;
+  bool IsTemplateInstantiation = false;
+  bool IsOperator = false;
 
-  // Template parameters. Null if not a template.
+  // Template parameters. Only valid if Flags contains NF_TemplateInstantiation.
   TemplateParams *TParams = nullptr;
 
   // Nested BackReferences (e.g. "A::B::C") are represented as a linked list.
@@ -541,24 +541,24 @@ static void outputName(OutputStream &OS, const Name *TheName) {
   for (; TheName->Next; TheName = TheName->Next) {
     Previous = TheName;
     OS << TheName->Str;
-    if (TheName->TParams)
+    if (TheName->IsTemplateInstantiation)
       outputParameterList(OS, *TheName->TParams);
     OS << "::";
   }
 
   // Print out a regular name.
-  if (TheName->Operator.empty()) {
+  if (!TheName->IsOperator) {
     OS << TheName->Str;
-    if (TheName->TParams)
+    if (TheName->IsTemplateInstantiation)
       outputParameterList(OS, *TheName->TParams);
     return;
   }
 
   // Print out ctor or dtor.
-  if (TheName->Operator == "dtor")
+  if (TheName->Str == "dtor")
     OS << "~";
 
-  if (TheName->Operator == "ctor" || TheName->Operator == "dtor") {
+  if (TheName->Str == "ctor" || TheName->Str == "dtor") {
     OS << Previous->Str;
     if (Previous->TParams)
       outputParameterList(OS, *Previous->TParams);
@@ -566,9 +566,9 @@ static void outputName(OutputStream &OS, const Name *TheName) {
   }
 
   // Print out an overloaded operator.
-  if (!TheName->Str.empty())
-    OS << TheName->Str << "::";
-  OS << "operator" << TheName->Operator;
+  OS << "operator" << TheName->Str;
+  if (TheName->IsTemplateInstantiation)
+    outputParameterList(OS, *TheName->TParams);
 }
 
 namespace {
@@ -853,6 +853,8 @@ void ArrayType::outputPost(OutputStream &OS) {
 }
 
 struct Symbol {
+  SymbolCategory Category;
+
   Name *SymbolName = nullptr;
   Type *SymbolType = nullptr;
 };
@@ -906,14 +908,14 @@ private:
   Name *demangleFullyQualifiedTypeName(StringView &MangledName);
   Name *demangleFullyQualifiedSymbolName(StringView &MangledName);
 
-  Name *demangleUnqualifiedTypeName(StringView &MangledName);
-  Name *demangleUnqualifiedSymbolName(StringView &MangledName);
+  Name *demangleUnqualifiedTypeName(StringView &MangledName, bool Memorize);
+  Name *demangleUnqualifiedSymbolName(StringView &MangledName, bool Memorize);
 
   Name *demangleNameScopeChain(StringView &MangledName, Name *UnqualifiedName);
   Name *demangleNameScopePiece(StringView &MangledName);
 
   Name *demangleBackRefName(StringView &MangledName);
-  Name *demangleClassTemplateName(StringView &MangledName);
+  Name *demangleTemplateInstantiationName(StringView &MangledName);
   Name *demangleOperatorName(StringView &MangledName);
   Name *demangleSimpleName(StringView &MangledName, bool Memorize);
   Name *demangleAnonymousNamespaceName(StringView &MangledName);
@@ -981,9 +983,14 @@ Symbol *Demangler::parse(StringView &MangledName) {
   if (Error)
     return nullptr;
   // Read a variable.
-  S->SymbolType = startsWithDigit(MangledName)
-                      ? demangleVariableEncoding(MangledName)
-                      : demangleFunctionEncoding(MangledName);
+  if (startsWithDigit(MangledName)) {
+    S->Category = SymbolCategory::Variable;
+    S->SymbolType = demangleVariableEncoding(MangledName);
+  } else {
+    S->Category = SymbolCategory::Function;
+    S->SymbolType = demangleFunctionEncoding(MangledName);
+  }
+
   if (Error)
     return nullptr;
 
@@ -1101,17 +1108,19 @@ Name *Demangler::demangleBackRefName(StringView &MangledName) {
   return Node;
 }
 
-Name *Demangler::demangleClassTemplateName(StringView &MangledName) {
+Name *Demangler::demangleTemplateInstantiationName(StringView &MangledName) {
   assert(MangledName.startsWith("?$"));
   MangledName.consumeFront("?$");
 
-  Name *Node = demangleSimpleName(MangledName, false);
+  Name *Node = demangleUnqualifiedSymbolName(MangledName, false);
   if (Error)
     return nullptr;
 
   Node->TParams = demangleTemplateParameterList(MangledName);
   if (Error)
     return nullptr;
+
+  Node->IsTemplateInstantiation = true;
 
   // Render this class template name into a string buffer so that we can
   // memorize it for the purpose of back-referencing.
@@ -1250,7 +1259,8 @@ Name *Demangler::demangleOperatorName(StringView &MangledName) {
   };
 
   Name *Node = Arena.alloc<Name>();
-  Node->Operator = NameString();
+  Node->Str = NameString();
+  Node->IsOperator = true;
   return Node;
 }
 
@@ -1325,7 +1335,7 @@ Name *Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
 
 // Parses a type name in the form of A@B@C@@ which represents C::B::A.
 Name *Demangler::demangleFullyQualifiedTypeName(StringView &MangledName) {
-  Name *TypeName = demangleUnqualifiedTypeName(MangledName);
+  Name *TypeName = demangleUnqualifiedTypeName(MangledName, true);
   if (Error)
     return nullptr;
   assert(TypeName);
@@ -1341,7 +1351,7 @@ Name *Demangler::demangleFullyQualifiedTypeName(StringView &MangledName) {
 // Symbol names have slightly different rules regarding what can appear
 // so we separate out the implementations for flexibility.
 Name *Demangler::demangleFullyQualifiedSymbolName(StringView &MangledName) {
-  Name *SymbolName = demangleUnqualifiedSymbolName(MangledName);
+  Name *SymbolName = demangleUnqualifiedSymbolName(MangledName, true);
   if (Error)
     return nullptr;
   assert(SymbolName);
@@ -1353,7 +1363,8 @@ Name *Demangler::demangleFullyQualifiedSymbolName(StringView &MangledName) {
   return QualName;
 }
 
-Name *Demangler::demangleUnqualifiedTypeName(StringView &MangledName) {
+Name *Demangler::demangleUnqualifiedTypeName(StringView &MangledName,
+                                             bool Memorize) {
   // An inner-most name can be a back-reference, because a fully-qualified name
   // (e.g. Scope + Inner) can contain other fully qualified names inside of
   // them (for example template parameters), and these nested parameters can
@@ -1362,19 +1373,20 @@ Name *Demangler::demangleUnqualifiedTypeName(StringView &MangledName) {
     return demangleBackRefName(MangledName);
 
   if (MangledName.startsWith("?$"))
-    return demangleClassTemplateName(MangledName);
+    return demangleTemplateInstantiationName(MangledName);
 
-  return demangleSimpleName(MangledName, true);
+  return demangleSimpleName(MangledName, Memorize);
 }
 
-Name *Demangler::demangleUnqualifiedSymbolName(StringView &MangledName) {
+Name *Demangler::demangleUnqualifiedSymbolName(StringView &MangledName,
+                                               bool Memorize) {
   if (startsWithDigit(MangledName))
     return demangleBackRefName(MangledName);
   if (MangledName.startsWith("?$"))
-    return demangleClassTemplateName(MangledName);
+    return demangleTemplateInstantiationName(MangledName);
   if (MangledName.startsWith('?'))
     return demangleOperatorName(MangledName);
-  return demangleSimpleName(MangledName, true);
+  return demangleSimpleName(MangledName, Memorize);
 }
 
 Name *Demangler::demangleNameScopePiece(StringView &MangledName) {
@@ -1382,7 +1394,7 @@ Name *Demangler::demangleNameScopePiece(StringView &MangledName) {
     return demangleBackRefName(MangledName);
 
   if (MangledName.startsWith("?$"))
-    return demangleClassTemplateName(MangledName);
+    return demangleTemplateInstantiationName(MangledName);
 
   if (MangledName.startsWith("?A"))
     return demangleAnonymousNamespaceName(MangledName);
