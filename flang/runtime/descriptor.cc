@@ -18,73 +18,77 @@
 
 namespace Fortran::runtime {
 
-Descriptor::~Descriptor() { assert(!(Attributes() & CREATED)); }
-
-int Descriptor::Establish(TypeCode t, std::size_t elementBytes, void *p,
-    int rank, const SubscriptValue *extent) {
-  return CFI_establish(
-      &raw_, p, CFI_attribute_other, t.raw(), elementBytes, rank, extent);
+Descriptor::~Descriptor() {
+  // Descriptors created by Descriptor::Create() must be destroyed by
+  // Descriptor::Destroy(), not by the default destructor, so that
+  // the array variant operator delete[] is properly used.
+  assert(!(Addendum() && (Addendum()->flags() & DescriptorAddendum::Created)));
 }
 
-int Descriptor::Establish(
-    TypeCategory c, int kind, void *p, int rank, const SubscriptValue *extent) {
+int Descriptor::Establish(TypeCode t, std::size_t elementBytes, void *p,
+    int rank, const SubscriptValue *extent, ISO::CFI_attribute_t attribute,
+    bool addendum) {
+  int result{
+      CFI_establish(&raw_, p, attribute, t.raw(), elementBytes, rank, extent)};
+  raw_.f18Addendum = addendum;
+  return result;
+}
+
+int Descriptor::Establish(TypeCategory c, int kind, void *p, int rank,
+    const SubscriptValue *extent, ISO::CFI_attribute_t attribute,
+    bool addendum) {
   std::size_t elementBytes = kind;
   if (c == TypeCategory::Complex) {
     elementBytes *= 2;
   }
-  return ISO::CFI_establish(&raw_, p, CFI_attribute_other,
-      TypeCode(c, kind).raw(), elementBytes, rank, extent);
+  int result{ISO::CFI_establish(&raw_, p, attribute, TypeCode(c, kind).raw(),
+      elementBytes, rank, extent)};
+  raw_.f18Addendum = addendum;
+  return result;
 }
 
-int Descriptor::Establish(
-    const DerivedType &dt, void *p, int rank, const SubscriptValue *extent) {
+int Descriptor::Establish(const DerivedType &dt, void *p, int rank,
+    const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
   int result{ISO::CFI_establish(
-      &raw_, p, ADDENDUM, CFI_type_struct, dt.SizeInBytes(), rank, extent)};
+      &raw_, p, attribute, CFI_type_struct, dt.SizeInBytes(), rank, extent)};
+  raw_.f18Addendum = true;
   Addendum()->set_derivedType(dt);
   return result;
 }
 
 Descriptor *Descriptor::Create(TypeCode t, std::size_t elementBytes, void *p,
-    int rank, const SubscriptValue *extent) {
+    int rank, const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
   std::size_t bytes{SizeInBytes(rank)};
   Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
-  result->Establish(t, elementBytes, p, rank, extent);
-  result->Attributes() |= CREATED;
+  result->Establish(t, elementBytes, p, rank, extent, attribute, true);
+  result->Addendum()->flags() |= DescriptorAddendum::Created;
   return result;
 }
 
-Descriptor *Descriptor::Create(
-    TypeCategory c, int kind, void *p, int rank, const SubscriptValue *extent) {
+Descriptor *Descriptor::Create(TypeCategory c, int kind, void *p, int rank,
+    const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
   std::size_t bytes{SizeInBytes(rank)};
   Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
-  result->Establish(c, kind, p, rank, extent);
-  result->Attributes() |= CREATED;
+  result->Establish(c, kind, p, rank, extent, attribute, true);
+  result->Addendum()->flags() |= DescriptorAddendum::Created;
   return result;
 }
 
-Descriptor *Descriptor::Create(
-    const DerivedType &dt, void *p, int rank, const SubscriptValue *extent) {
+Descriptor *Descriptor::Create(const DerivedType &dt, void *p, int rank,
+    const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
   std::size_t bytes{SizeInBytes(rank, dt.IsNontrivial(), dt.lenParameters())};
   Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
-  result->Establish(dt, p, rank, extent);
-  result->Attributes() |= CREATED;
+  result->Establish(dt, p, rank, extent, attribute);
+  result->Addendum()->flags() |= DescriptorAddendum::Created;
   return result;
 }
 
 void Descriptor::Destroy() {
-  if (Attributes() & CREATED) {
-    delete[] reinterpret_cast<char *>(this);
+  if (const DescriptorAddendum * addendum{Addendum()}) {
+    if (addendum->flags() & DescriptorAddendum::Created) {
+      delete[] reinterpret_cast<char *>(this);
+    }
   }
-}
-
-void Descriptor::SetDerivedType(const DerivedType &dt) {
-  Attributes() |= ADDENDUM;
-  Addendum()->set_derivedType(dt);
-}
-
-void Descriptor::SetLenParameterValue(int which, TypeParameterValue x) {
-  Attributes() |= ADDENDUM;
-  Addendum()->SetLenParameterValue(which, x);
 }
 
 std::size_t Descriptor::SizeInBytes() const {
@@ -98,9 +102,6 @@ void Descriptor::Check() const {
 }
 
 std::size_t DescriptorAddendum::SizeInBytes() const {
-  if (derivedType_ == nullptr) {
-    return 0;
-  }
   return SizeInBytes(derivedType_->lenParameters());
 }
 }  // namespace Fortran::runtime

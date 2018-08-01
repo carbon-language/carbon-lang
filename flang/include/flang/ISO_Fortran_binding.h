@@ -127,6 +127,7 @@ typedef struct CFI_cdesc_t {
   CFI_rank_t rank; /* [0 .. CFI_MAX_RANK] */
   CFI_type_t type;
   CFI_attribute_t attribute;
+  unsigned char f18Addendum;
   CFI_dim_t dim[CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY]; /* must appear last */
 } CFI_cdesc_t;
 
