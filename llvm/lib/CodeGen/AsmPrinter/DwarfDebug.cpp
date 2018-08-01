@@ -886,8 +886,7 @@ void DwarfDebug::endModule() {
     emitDebugInfoDWO();
     emitDebugAbbrevDWO();
     emitDebugLineDWO();
-    // Emit DWO addresses.
-    AddrPool.emit(*Asm, Asm->getObjFileLowering().getDwarfAddrSection());
+    emitDebugAddr();
   }
 
   // Emit info into the dwarf accelerator table sections.
@@ -2295,6 +2294,12 @@ void DwarfDebug::emitDebugStrDWO() {
   MCSection *OffSec = Asm->getObjFileLowering().getDwarfStrOffDWOSection();
   InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
                          OffSec, /* UseRelativeOffsets = */ false);
+}
+
+// Emit DWO addresses.
+void DwarfDebug::emitDebugAddr() {
+  assert(useSplitDwarf() && "No split dwarf?");
+  AddrPool.emit(*Asm, Asm->getObjFileLowering().getDwarfAddrSection());
 }
 
 MCDwarfDwoLineTable *DwarfDebug::getDwoLineTable(const DwarfCompileUnit &CU) {
