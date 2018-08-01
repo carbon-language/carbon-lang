@@ -15793,7 +15793,7 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const {
   Result = DAG.getNode(getGlobalWrapperKind(), DL, PtrVT, Result);
 
   // With PIC, the address is actually $g + Offset.
-  if (isPositionIndependent() && !Subtarget.is64Bit()) {
+  if (OpFlag) {
     Result =
         DAG.getNode(ISD::ADD, DL, PtrVT,
                     DAG.getNode(X86ISD::GlobalBaseReg, SDLoc(), PtrVT), Result);
