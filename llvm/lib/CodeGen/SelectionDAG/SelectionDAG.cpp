@@ -8318,6 +8318,64 @@ void SDNode::intersectFlagsWith(const SDNodeFlags Flags) {
   this->Flags.intersectWith(Flags);
 }
 
+SDValue
+SelectionDAG::matchBinOpReduction(SDNode *Extract, ISD::NodeType &BinOp,
+                                  ArrayRef<ISD::NodeType> CandidateBinOps) {
+  // The pattern must end in an extract from index 0.
+  if (Extract->getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
+      !isNullConstant(Extract->getOperand(1)))
+    return SDValue();
+
+  SDValue Op = Extract->getOperand(0);
+  unsigned Stages = Log2_32(Op.getValueType().getVectorNumElements());
+
+  // Match against one of the candidate binary ops.
+  if (llvm::none_of(CandidateBinOps, [Op](ISD::NodeType BinOp) {
+        return Op.getOpcode() == unsigned(BinOp);
+      }))
+    return SDValue();
+
+  // At each stage, we're looking for something that looks like:
+  // %s = shufflevector <8 x i32> %op, <8 x i32> undef,
+  //                    <8 x i32> <i32 2, i32 3, i32 undef, i32 undef,
+  //                               i32 undef, i32 undef, i32 undef, i32 undef>
+  // %a = binop <8 x i32> %op, %s
+  // Where the mask changes according to the stage. E.g. for a 3-stage pyramid,
+  // we expect something like:
+  // <4,5,6,7,u,u,u,u>
+  // <2,3,u,u,u,u,u,u>
+  // <1,u,u,u,u,u,u,u>
+  unsigned CandidateBinOp = Op.getOpcode();
+  for (unsigned i = 0; i < Stages; ++i) {
+    if (Op.getOpcode() != CandidateBinOp)
+      return SDValue();
+
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+
+    ShuffleVectorSDNode *Shuffle = dyn_cast<ShuffleVectorSDNode>(Op0);
+    if (Shuffle) {
+      Op = Op1;
+    } else {
+      Shuffle = dyn_cast<ShuffleVectorSDNode>(Op1);
+      Op = Op0;
+    }
+
+    // The first operand of the shuffle should be the same as the other operand
+    // of the binop.
+    if (!Shuffle || Shuffle->getOperand(0) != Op)
+      return SDValue();
+
+    // Verify the shuffle has the expected (at this stage of the pyramid) mask.
+    for (int Index = 0, MaskEnd = 1 << i; Index < MaskEnd; ++Index)
+      if (Shuffle->getMaskElt(Index) != MaskEnd + Index)
+        return SDValue();
+  }
+
+  BinOp = (ISD::NodeType)CandidateBinOp;
+  return Op;
+}
+
 SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
   assert(N->getNumValues() == 1 &&
          "Can't unroll a vector with multiple results!");
