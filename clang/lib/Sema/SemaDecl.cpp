@@ -6011,9 +6011,12 @@ static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
 
   // Check the attributes on the function type, if any.
   if (const auto *FD = dyn_cast<FunctionDecl>(&ND)) {
+    // Don't declare this variable in the second operand of the for-statement;
+    // GCC miscompiles that by ending its lifetime before evaluating the
+    // third operand. See gcc.gnu.org/PR86769.
+    AttributedTypeLoc ATL;
     for (TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc();
-         auto ATL = TL ? TL.getAsAdjusted<AttributedTypeLoc>()
-                       : AttributedTypeLoc();
+         (ATL = TL.getAsAdjusted<AttributedTypeLoc>());
          TL = ATL.getModifiedLoc()) {
       // The [[lifetimebound]] attribute can be applied to the implicit object
       // parameter of a non-static member function (other than a ctor or dtor)
