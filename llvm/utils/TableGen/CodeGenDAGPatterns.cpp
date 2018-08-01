@@ -3959,7 +3959,7 @@ static TreePatternNodePtr PromoteXForms(TreePatternNodePtr N) {
   if (!N->isLeaf())
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
       TreePatternNodePtr Child = N->getChildShared(i);
-      N->setChild(i, std::move(PromoteXForms(Child)));
+      N->setChild(i, PromoteXForms(Child));
     }
   return N;
 }
