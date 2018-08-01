@@ -173,7 +173,7 @@ static json::Value getJSON(Scop &S) {
   }
 
   root["statements"] = std::move(Statements);
-  return root;
+  return json::Value(std::move(root));
 }
 
 static void exportScop(Scop &S) {
