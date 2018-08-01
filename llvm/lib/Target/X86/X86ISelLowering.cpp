@@ -33395,10 +33395,13 @@ static SDValue combineCMov(SDNode *N, SelectionDAG &DAG,
     SDValue Add = TrueOp;
     SDValue Const = FalseOp;
     // Canonicalize the condition code for easier matching and output.
-    if (CC == X86::COND_E) {
+    if (CC == X86::COND_E)
       std::swap(Add, Const);
-      CC = X86::COND_NE;
-    }
+
+    // We might have replaced the constant in the cmov with the LHS of the
+    // compare. If so change it to the RHS of the compare.
+    if (Const == Cond.getOperand(0))
+      Const = Cond.getOperand(1);
 
     // Ok, now make sure that Add is (add (cttz X), C2) and Const is a constant.
     if (isa<ConstantSDNode>(Const) && Add.getOpcode() == ISD::ADD &&
@@ -33410,7 +33413,8 @@ static SDValue combineCMov(SDNode *N, SelectionDAG &DAG,
       // This should constant fold.
       SDValue Diff = DAG.getNode(ISD::SUB, DL, VT, Const, Add.getOperand(1));
       SDValue CMov = DAG.getNode(X86ISD::CMOV, DL, VT, Diff, Add.getOperand(0),
-                                 DAG.getConstant(CC, DL, MVT::i8), Cond);
+                                 DAG.getConstant(X86::COND_NE, DL, MVT::i8),
+                                 Cond);
       return DAG.getNode(ISD::ADD, DL, VT, CMov, Add.getOperand(1));
     }
   }
