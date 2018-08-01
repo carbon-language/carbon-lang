@@ -6847,8 +6847,9 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
           return false;
 
         Diag(DiagLoc, diag::warn_dangling_variable)
-            << RK << !Entity.getParent() << ExtendingEntity->getDecl()
-            << Init->isGLValue() << DiagRange;
+            << RK << !Entity.getParent()
+            << ExtendingEntity->getDecl()->isImplicit()
+            << ExtendingEntity->getDecl() << Init->isGLValue() << DiagRange;
       }
       break;
     }
@@ -6969,7 +6970,8 @@ void Sema::checkInitializerLifetime(const InitializedEntity &Entity,
       case IndirectLocalPathEntry::VarInit:
         const VarDecl *VD = cast<VarDecl>(Elem.D);
         Diag(VD->getLocation(), diag::note_local_var_initializer)
-            << VD->getType()->isReferenceType() << VD->getDeclName()
+            << VD->getType()->isReferenceType()
+            << VD->isImplicit() << VD->getDeclName()
             << nextPathEntryRange(Path, I + 1, L);
         break;
       }
