@@ -842,8 +842,7 @@ void InputSectionBase::relocateAlloc(uint8_t *Buf, uint8_t *BufEnd) {
 // For each function-defining prologue, find any calls to __morestack,
 // and replace them with calls to __morestack_non_split.
 static void switchMorestackCallsToMorestackNonSplit(
-    llvm::DenseSet<Defined *>& Prologues,
-    std::vector<Relocation *>& MorestackCalls) {
+    DenseSet<Defined *> &Prologues, std::vector<Relocation *> &MorestackCalls) {
 
   // If the target adjusted a function's prologue, all calls to
   // __morestack inside that function should be switched to
@@ -873,9 +872,8 @@ static void switchMorestackCallsToMorestackNonSplit(
   }
 }
 
-static bool
-enclosingPrologueAdjusted(uint64_t Offset,
-                          const llvm::DenseSet<Defined *> &Prologues) {
+static bool enclosingPrologueAdjusted(uint64_t Offset,
+                                      const DenseSet<Defined *> &Prologues) {
   for (Defined *F : Prologues)
     if (F->Value <= Offset && Offset < F->Value + F->Size)
       return true;
@@ -891,7 +889,7 @@ void InputSectionBase::adjustSplitStackFunctionPrologues(uint8_t *Buf,
                                                          uint8_t *End) {
   if (!getFile<ELFT>()->SplitStack)
     return;
-  llvm::DenseSet<Defined *> AdjustedPrologues;
+  DenseSet<Defined *> AdjustedPrologues;
   std::vector<Relocation *> MorestackCalls;
 
   for (Relocation &Rel : Relocations) {
