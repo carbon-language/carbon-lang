@@ -2466,6 +2466,15 @@ bool CXXConversionDecl::isLambdaToBlockPointerConversion() const {
          getConversionType()->isBlockPointerType();
 }
 
+LinkageSpecDecl::LinkageSpecDecl(DeclContext *DC, SourceLocation ExternLoc,
+                                 SourceLocation LangLoc, LanguageIDs lang,
+                                 bool HasBraces)
+    : Decl(LinkageSpec, DC, LangLoc), DeclContext(LinkageSpec),
+      ExternLoc(ExternLoc), RBraceLoc(SourceLocation()) {
+  setLanguage(lang);
+  LinkageSpecDeclBits.HasBraces = HasBraces;
+}
+
 void LinkageSpecDecl::anchor() {}
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,

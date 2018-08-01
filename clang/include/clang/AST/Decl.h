@@ -3823,6 +3823,8 @@ public:
 /// unnamed FunctionDecl.  For example:
 /// ^{ statement-body }   or   ^(int arg1, float arg2){ statement-body }
 class BlockDecl : public Decl, public DeclContext {
+  // This class stores some data in DeclContext::BlockDeclBits
+  // to save some space. Use the provided accessors to access it.
 public:
   /// A class which contains all the information about a particular
   /// captured value.
@@ -3863,16 +3865,6 @@ public:
   };
 
 private:
-  // FIXME: This can be packed into the bitfields in Decl.
-  bool IsVariadic : 1;
-  bool CapturesCXXThis : 1;
-  bool BlockMissingReturnType : 1;
-  bool IsConversionFromLambda : 1;
-
-  /// A bit that indicates this block is passed directly to a function as a
-  /// non-escaping parameter.
-  bool DoesNotEscape : 1;
-
   /// A new[]'d array of pointers to ParmVarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
   /// no formals.
@@ -3889,10 +3881,7 @@ private:
   Decl *ManglingContextDecl = nullptr;
 
 protected:
-  BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
-      : Decl(Block, DC, CaretLoc), DeclContext(Block), IsVariadic(false),
-        CapturesCXXThis(false), BlockMissingReturnType(true),
-        IsConversionFromLambda(false), DoesNotEscape(false) {}
+  BlockDecl(DeclContext *DC, SourceLocation CaretLoc);
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L);
@@ -3900,8 +3889,8 @@ public:
 
   SourceLocation getCaretLocation() const { return getLocation(); }
 
-  bool isVariadic() const { return IsVariadic; }
-  void setIsVariadic(bool value) { IsVariadic = value; }
+  bool isVariadic() const { return BlockDeclBits.IsVariadic; }
+  void setIsVariadic(bool value) { BlockDeclBits.IsVariadic = value; }
 
   CompoundStmt *getCompoundBody() const { return (CompoundStmt*) Body; }
   Stmt *getBody() const override { return (Stmt*) Body; }
@@ -3944,7 +3933,7 @@ public:
 
   /// True if this block (or its nested blocks) captures
   /// anything of local storage from its enclosing scopes.
-  bool hasCaptures() const { return NumCaptures != 0 || CapturesCXXThis; }
+  bool hasCaptures() const { return NumCaptures || capturesCXXThis(); }
 
   /// Returns the number of captured variables.
   /// Does not include an entry for 'this'.
@@ -3957,15 +3946,27 @@ public:
   capture_const_iterator capture_begin() const { return captures().begin(); }
   capture_const_iterator capture_end() const { return captures().end(); }
 
-  bool capturesCXXThis() const { return CapturesCXXThis; }
-  bool blockMissingReturnType() const { return BlockMissingReturnType; }
-  void setBlockMissingReturnType(bool val) { BlockMissingReturnType = val; }
+  bool capturesCXXThis() const { return BlockDeclBits.CapturesCXXThis; }
+  void setCapturesCXXThis(bool B = true) { BlockDeclBits.CapturesCXXThis = B; }
 
-  bool isConversionFromLambda() const { return IsConversionFromLambda; }
-  void setIsConversionFromLambda(bool val) { IsConversionFromLambda = val; }
+  bool blockMissingReturnType() const {
+    return BlockDeclBits.BlockMissingReturnType;
+  }
 
-  bool doesNotEscape() const { return DoesNotEscape; }
-  void setDoesNotEscape() { DoesNotEscape = true; }
+  void setBlockMissingReturnType(bool val = true) {
+    BlockDeclBits.BlockMissingReturnType = val;
+  }
+
+  bool isConversionFromLambda() const {
+    return BlockDeclBits.IsConversionFromLambda;
+  }
+
+  void setIsConversionFromLambda(bool val = true) {
+    BlockDeclBits.IsConversionFromLambda = val;
+  }
+
+  bool doesNotEscape() const { return BlockDeclBits.DoesNotEscape; }
+  void setDoesNotEscape(bool B = true) { BlockDeclBits.DoesNotEscape = B; }
 
   bool capturesVariable(const VarDecl *var) const;
 

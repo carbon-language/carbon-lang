@@ -4215,6 +4215,15 @@ const FieldDecl *RecordDecl::findFirstNamedDataMember() const {
 // BlockDecl Implementation
 //===----------------------------------------------------------------------===//
 
+BlockDecl::BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
+    : Decl(Block, DC, CaretLoc), DeclContext(Block) {
+  setIsVariadic(false);
+  setCapturesCXXThis(false);
+  setBlockMissingReturnType(true);
+  setIsConversionFromLambda(false);
+  setDoesNotEscape(false);
+}
+
 void BlockDecl::setParams(ArrayRef<ParmVarDecl *> NewParamInfo) {
   assert(!ParamInfo && "Already has param info!");
 
@@ -4228,7 +4237,7 @@ void BlockDecl::setParams(ArrayRef<ParmVarDecl *> NewParamInfo) {
 
 void BlockDecl::setCaptures(ASTContext &Context, ArrayRef<Capture> Captures,
                             bool CapturesCXXThis) {
-  this->CapturesCXXThis = CapturesCXXThis;
+  this->setCapturesCXXThis(CapturesCXXThis);
   this->NumCaptures = Captures.size();
 
   if (Captures.empty()) {

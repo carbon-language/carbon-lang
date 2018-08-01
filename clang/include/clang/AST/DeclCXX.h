@@ -2816,7 +2816,8 @@ public:
 /// \endcode
 class LinkageSpecDecl : public Decl, public DeclContext {
   virtual void anchor();
-
+  // This class stores some data in DeclContext::LinkageSpecDeclBits to save
+  // some space. Use the provided accessors to access it.
 public:
   /// Represents the language in a linkage specification.
   ///
@@ -2830,16 +2831,6 @@ public:
   };
 
 private:
-  /// The language for this linkage specification.
-  unsigned Language : 3;
-
-  /// True if this linkage spec has braces.
-  ///
-  /// This is needed so that hasBraces() returns the correct result while the
-  /// linkage spec body is being parsed.  Once RBraceLoc has been set this is
-  /// not used, so it doesn't need to be serialized.
-  unsigned HasBraces : 1;
-
   /// The source location for the extern keyword.
   SourceLocation ExternLoc;
 
@@ -2847,10 +2838,7 @@ private:
   SourceLocation RBraceLoc;
 
   LinkageSpecDecl(DeclContext *DC, SourceLocation ExternLoc,
-                  SourceLocation LangLoc, LanguageIDs lang, bool HasBraces)
-      : Decl(LinkageSpec, DC, LangLoc), DeclContext(LinkageSpec),
-        Language(lang), HasBraces(HasBraces), ExternLoc(ExternLoc),
-        RBraceLoc(SourceLocation()) {}
+                  SourceLocation LangLoc, LanguageIDs lang, bool HasBraces);
 
 public:
   static LinkageSpecDecl *Create(ASTContext &C, DeclContext *DC,
@@ -2860,16 +2848,18 @@ public:
   static LinkageSpecDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   /// Return the language specified by this linkage specification.
-  LanguageIDs getLanguage() const { return LanguageIDs(Language); }
+  LanguageIDs getLanguage() const {
+    return static_cast<LanguageIDs>(LinkageSpecDeclBits.Language);
+  }
 
   /// Set the language specified by this linkage specification.
-  void setLanguage(LanguageIDs L) { Language = L; }
+  void setLanguage(LanguageIDs L) { LinkageSpecDeclBits.Language = L; }
 
   /// Determines whether this linkage specification had braces in
   /// its syntactic form.
   bool hasBraces() const {
-    assert(!RBraceLoc.isValid() || HasBraces);
-    return HasBraces;
+    assert(!RBraceLoc.isValid() || LinkageSpecDeclBits.HasBraces);
+    return LinkageSpecDeclBits.HasBraces;
   }
 
   SourceLocation getExternLoc() const { return ExternLoc; }
@@ -2877,7 +2867,7 @@ public:
   void setExternLoc(SourceLocation L) { ExternLoc = L; }
   void setRBraceLoc(SourceLocation L) {
     RBraceLoc = L;
-    HasBraces = RBraceLoc.isValid();
+    LinkageSpecDeclBits.HasBraces = RBraceLoc.isValid();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY {
