@@ -25,20 +25,21 @@ namespace Fortran::evaluate {
 
 // An expression of some specific result type.
 template<typename A> class Expr;
-template<int KIND> using IntegerExpr = Expr<Type<Category::Integer, KIND>>;
+template<int KIND> using IntegerExpr = Expr<Type<TypeCategory::Integer, KIND>>;
 using DefaultIntegerExpr = IntegerExpr<DefaultInteger::kind>;
-template<int KIND> using RealExpr = Expr<Type<Category::Real, KIND>>;
-template<int KIND> using ComplexExpr = Expr<Type<Category::Complex, KIND>>;
-template<int KIND> using CharacterExpr = Expr<Type<Category::Character, KIND>>;
-template<int KIND> using LogicalExpr = Expr<Type<Category::Logical, KIND>>;
+template<int KIND> using RealExpr = Expr<Type<TypeCategory::Real, KIND>>;
+template<int KIND> using ComplexExpr = Expr<Type<TypeCategory::Complex, KIND>>;
+template<int KIND>
+using CharacterExpr = Expr<Type<TypeCategory::Character, KIND>>;
+template<int KIND> using LogicalExpr = Expr<Type<TypeCategory::Logical, KIND>>;
 
 // An expression whose result is within one particular type category and
 // of any supported kind.
-using AnyKindIntegerExpr = Expr<AnyKindType<Category::Integer>>;
-using AnyKindRealExpr = Expr<AnyKindType<Category::Real>>;
-using AnyKindComplexExpr = Expr<AnyKindType<Category::Complex>>;
-using AnyKindCharacterExpr = Expr<AnyKindType<Category::Character>>;
-using AnyKindLogicalExpr = Expr<AnyKindType<Category::Logical>>;
+using AnyKindIntegerExpr = Expr<AnyKindType<TypeCategory::Integer>>;
+using AnyKindRealExpr = Expr<AnyKindType<TypeCategory::Real>>;
+using AnyKindComplexExpr = Expr<AnyKindType<TypeCategory::Complex>>;
+using AnyKindCharacterExpr = Expr<AnyKindType<TypeCategory::Character>>;
+using AnyKindLogicalExpr = Expr<AnyKindType<TypeCategory::Logical>>;
 
 // A completely generic expression.
 struct GenericExpr;

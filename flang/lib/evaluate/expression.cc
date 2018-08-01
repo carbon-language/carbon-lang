@@ -44,12 +44,12 @@ std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
   return o;
 }
 
-template<Category CAT>
+template<TypeCategory CAT>
 std::ostream &Expr<AnyKindType<CAT>>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
-template<Category CAT>
+template<TypeCategory CAT>
 std::ostream &CategoryComparison<CAT>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
@@ -231,7 +231,7 @@ auto Binary<CRTP, RESULT, A, B>::Fold(FoldingContext &context)
 
 template<int KIND>
 auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
-    const ScalarConstant<Category::Integer> &c) -> std::optional<Scalar> {
+    const ScalarConstant<TypeCategory::Integer> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::ConvertSigned(x)};
@@ -246,7 +246,7 @@ auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto IntegerExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
-    const ScalarConstant<Category::Real> &c) -> std::optional<Scalar> {
+    const ScalarConstant<TypeCategory::Real> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{x.template ToInteger<Scalar>()};
@@ -402,7 +402,7 @@ static void RealFlagWarnings(
 
 template<int KIND>
 auto RealExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
-    const ScalarConstant<Category::Integer> &c) -> std::optional<Scalar> {
+    const ScalarConstant<TypeCategory::Integer> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::FromInteger(x)};
@@ -414,7 +414,7 @@ auto RealExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto RealExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
-    const ScalarConstant<Category::Real> &c) -> std::optional<Scalar> {
+    const ScalarConstant<TypeCategory::Real> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::Convert(x)};
@@ -470,7 +470,7 @@ auto RealExpr<KIND>::Power::FoldScalar(FoldingContext &context, const Scalar &a,
 
 template<int KIND>
 auto RealExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
-    const Scalar &a, const ScalarConstant<Category::Integer> &b)
+    const Scalar &a, const ScalarConstant<TypeCategory::Integer> &b)
     -> std::optional<Scalar> {
   return std::visit(
       [&](const auto &pow) -> std::optional<Scalar> {
@@ -580,7 +580,7 @@ auto ComplexExpr<KIND>::Power::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto ComplexExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
-    const Scalar &a, const ScalarConstant<Category::Integer> &b)
+    const Scalar &a, const ScalarConstant<TypeCategory::Integer> &b)
     -> std::optional<Scalar> {
   return std::visit(
       [&](const auto &pow) -> std::optional<Scalar> {
@@ -672,7 +672,7 @@ template<typename A>
 auto Comparison<A>::FoldScalar(FoldingContext &c,
     const OperandScalarConstant &a, const OperandScalarConstant &b)
     -> std::optional<Scalar> {
-  if constexpr (A::category == Category::Integer) {
+  if constexpr (A::category == TypeCategory::Integer) {
     switch (a.CompareSigned(b)) {
     case Ordering::Less:
       return {opr == RelationalOperator::LE || opr == RelationalOperator::LE ||
@@ -685,7 +685,7 @@ auto Comparison<A>::FoldScalar(FoldingContext &c,
           opr == RelationalOperator::GT};
     }
   }
-  if constexpr (A::category == Category::Real) {
+  if constexpr (A::category == TypeCategory::Real) {
     switch (a.Compare(b)) {
     case Relation::Less:
       return {opr == RelationalOperator::LE || opr == RelationalOperator::LE ||
@@ -699,12 +699,12 @@ auto Comparison<A>::FoldScalar(FoldingContext &c,
     case Relation::Unordered: return std::nullopt;
     }
   }
-  if constexpr (A::category == Category::Complex) {
+  if constexpr (A::category == TypeCategory::Complex) {
     bool eqOk{opr == RelationalOperator::LE || opr == RelationalOperator::EQ ||
         opr == RelationalOperator::GE};
     return {eqOk == a.Equals(b)};
   }
-  if constexpr (A::category == Category::Character) {
+  if constexpr (A::category == TypeCategory::Character) {
     switch (Compare(a, b)) {
     case Ordering::Less:
       return {opr == RelationalOperator::LE || opr == RelationalOperator::LE ||
@@ -781,7 +781,7 @@ std::optional<GenericScalar> GenericExpr::ScalarValue() const {
       u);
 }
 
-template<Category CAT>
+template<TypeCategory CAT>
 auto Expr<AnyKindType<CAT>>::ScalarValue() const -> std::optional<Scalar> {
   return std::visit(
       [](const auto &x) -> std::optional<Scalar> {
@@ -793,7 +793,7 @@ auto Expr<AnyKindType<CAT>>::ScalarValue() const -> std::optional<Scalar> {
       u);
 }
 
-template<Category CAT>
+template<TypeCategory CAT>
 auto Expr<AnyKindType<CAT>>::Fold(FoldingContext &context)
     -> std::optional<Scalar> {
   return std::visit(
@@ -817,47 +817,47 @@ std::optional<GenericScalar> GenericExpr::Fold(FoldingContext &context) {
       u);
 }
 
-template class Expr<AnyKindType<Category::Integer>>;
-template class Expr<AnyKindType<Category::Real>>;
-template class Expr<AnyKindType<Category::Complex>>;
-template class Expr<AnyKindType<Category::Character>>;
-template class Expr<AnyKindType<Category::Logical>>;
+template class Expr<AnyKindType<TypeCategory::Integer>>;
+template class Expr<AnyKindType<TypeCategory::Real>>;
+template class Expr<AnyKindType<TypeCategory::Complex>>;
+template class Expr<AnyKindType<TypeCategory::Character>>;
+template class Expr<AnyKindType<TypeCategory::Logical>>;
 
-template class Expr<Type<Category::Integer, 1>>;
-template class Expr<Type<Category::Integer, 2>>;
-template class Expr<Type<Category::Integer, 4>>;
-template class Expr<Type<Category::Integer, 8>>;
-template class Expr<Type<Category::Integer, 16>>;
-template class Expr<Type<Category::Real, 2>>;
-template class Expr<Type<Category::Real, 4>>;
-template class Expr<Type<Category::Real, 8>>;
-template class Expr<Type<Category::Real, 10>>;
-template class Expr<Type<Category::Real, 16>>;
-template class Expr<Type<Category::Complex, 2>>;
-template class Expr<Type<Category::Complex, 4>>;
-template class Expr<Type<Category::Complex, 8>>;
-template class Expr<Type<Category::Complex, 10>>;
-template class Expr<Type<Category::Complex, 16>>;
-template class Expr<Type<Category::Character, 1>>;
-template class Expr<Type<Category::Logical, 1>>;
-template class Expr<Type<Category::Logical, 2>>;
-template class Expr<Type<Category::Logical, 4>>;
-template class Expr<Type<Category::Logical, 8>>;
+template class Expr<Type<TypeCategory::Integer, 1>>;
+template class Expr<Type<TypeCategory::Integer, 2>>;
+template class Expr<Type<TypeCategory::Integer, 4>>;
+template class Expr<Type<TypeCategory::Integer, 8>>;
+template class Expr<Type<TypeCategory::Integer, 16>>;
+template class Expr<Type<TypeCategory::Real, 2>>;
+template class Expr<Type<TypeCategory::Real, 4>>;
+template class Expr<Type<TypeCategory::Real, 8>>;
+template class Expr<Type<TypeCategory::Real, 10>>;
+template class Expr<Type<TypeCategory::Real, 16>>;
+template class Expr<Type<TypeCategory::Complex, 2>>;
+template class Expr<Type<TypeCategory::Complex, 4>>;
+template class Expr<Type<TypeCategory::Complex, 8>>;
+template class Expr<Type<TypeCategory::Complex, 10>>;
+template class Expr<Type<TypeCategory::Complex, 16>>;
+template class Expr<Type<TypeCategory::Character, 1>>;
+template class Expr<Type<TypeCategory::Logical, 1>>;
+template class Expr<Type<TypeCategory::Logical, 2>>;
+template class Expr<Type<TypeCategory::Logical, 4>>;
+template class Expr<Type<TypeCategory::Logical, 8>>;
 
-template struct Comparison<Type<Category::Integer, 1>>;
-template struct Comparison<Type<Category::Integer, 2>>;
-template struct Comparison<Type<Category::Integer, 4>>;
-template struct Comparison<Type<Category::Integer, 8>>;
-template struct Comparison<Type<Category::Integer, 16>>;
-template struct Comparison<Type<Category::Real, 2>>;
-template struct Comparison<Type<Category::Real, 4>>;
-template struct Comparison<Type<Category::Real, 8>>;
-template struct Comparison<Type<Category::Real, 10>>;
-template struct Comparison<Type<Category::Real, 16>>;
-template struct Comparison<Type<Category::Complex, 2>>;
-template struct Comparison<Type<Category::Complex, 4>>;
-template struct Comparison<Type<Category::Complex, 8>>;
-template struct Comparison<Type<Category::Complex, 10>>;
-template struct Comparison<Type<Category::Complex, 16>>;
-template struct Comparison<Type<Category::Character, 1>>;
+template struct Comparison<Type<TypeCategory::Integer, 1>>;
+template struct Comparison<Type<TypeCategory::Integer, 2>>;
+template struct Comparison<Type<TypeCategory::Integer, 4>>;
+template struct Comparison<Type<TypeCategory::Integer, 8>>;
+template struct Comparison<Type<TypeCategory::Integer, 16>>;
+template struct Comparison<Type<TypeCategory::Real, 2>>;
+template struct Comparison<Type<TypeCategory::Real, 4>>;
+template struct Comparison<Type<TypeCategory::Real, 8>>;
+template struct Comparison<Type<TypeCategory::Real, 10>>;
+template struct Comparison<Type<TypeCategory::Real, 16>>;
+template struct Comparison<Type<TypeCategory::Complex, 2>>;
+template struct Comparison<Type<TypeCategory::Complex, 4>>;
+template struct Comparison<Type<TypeCategory::Complex, 8>>;
+template struct Comparison<Type<TypeCategory::Complex, 10>>;
+template struct Comparison<Type<TypeCategory::Complex, 16>>;
+template struct Comparison<Type<TypeCategory::Character, 1>>;
 }  // namespace Fortran::evaluate

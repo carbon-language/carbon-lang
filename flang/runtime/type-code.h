@@ -16,16 +16,17 @@
 #define FORTRAN_RUNTIME_TYPE_CODE_H_
 
 #include "../include/flang/ISO_Fortran_binding.h"
+#include "../lib/common/fortran.h"
 
 namespace Fortran::runtime {
 
+using common::TypeCategory;
+
 class TypeCode {
 public:
-  enum class Form { Integer, Real, Complex, Character, Logical, Derived };
-
   TypeCode() {}
   explicit TypeCode(ISO::CFI_type_t t) : raw_{t} {}
-  TypeCode(Form, int);
+  TypeCode(TypeCategory, int);
 
   int raw() const { return raw_; }
 
@@ -48,23 +49,23 @@ public:
 
   constexpr bool IsIntrinsic() const { return IsValid() && !IsDerived(); }
 
-  constexpr Form GetForm() const {
+  constexpr TypeCategory Categorize() const {
     if (IsInteger()) {
-      return Form::Integer;
+      return TypeCategory::Integer;
     }
     if (IsReal()) {
-      return Form::Real;
+      return TypeCategory::Real;
     }
     if (IsComplex()) {
-      return Form::Complex;
+      return TypeCategory::Complex;
     }
     if (IsCharacter()) {
-      return Form::Character;
+      return TypeCategory::Character;
     }
     if (IsLogical()) {
-      return Form::Logical;
+      return TypeCategory::Logical;
     }
-    return Form::Derived;
+    return TypeCategory::Derived;
   }
 
 private:

@@ -26,14 +26,14 @@ int Descriptor::Establish(TypeCode t, std::size_t elementBytes, void *p,
       &raw_, p, CFI_attribute_other, t.raw(), elementBytes, rank, extent);
 }
 
-int Descriptor::Establish(TypeCode::Form f, int kind, void *p, int rank,
-    const SubscriptValue *extent) {
+int Descriptor::Establish(
+    TypeCategory c, int kind, void *p, int rank, const SubscriptValue *extent) {
   std::size_t elementBytes = kind;
-  if (f == TypeCode::Form::Complex) {
+  if (c == TypeCategory::Complex) {
     elementBytes *= 2;
   }
   return ISO::CFI_establish(&raw_, p, CFI_attribute_other,
-      TypeCode(f, kind).raw(), elementBytes, rank, extent);
+      TypeCode(c, kind).raw(), elementBytes, rank, extent);
 }
 
 int Descriptor::Establish(
@@ -53,11 +53,11 @@ Descriptor *Descriptor::Create(TypeCode t, std::size_t elementBytes, void *p,
   return result;
 }
 
-Descriptor *Descriptor::Create(TypeCode::Form f, int kind, void *p, int rank,
-    const SubscriptValue *extent) {
+Descriptor *Descriptor::Create(
+    TypeCategory c, int kind, void *p, int rank, const SubscriptValue *extent) {
   std::size_t bytes{SizeInBytes(rank)};
   Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
-  result->Establish(f, kind, p, rank, extent);
+  result->Establish(c, kind, p, rank, extent);
   result->Attributes() |= CREATED;
   return result;
 }

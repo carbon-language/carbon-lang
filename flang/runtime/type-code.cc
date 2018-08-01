@@ -16,9 +16,9 @@
 
 namespace Fortran::runtime {
 
-TypeCode::TypeCode(TypeCode::Form f, int kind) {
+TypeCode::TypeCode(TypeCategory f, int kind) {
   switch (f) {
-  case Form::Integer:
+  case TypeCategory::Integer:
     switch (kind) {
     case 1: raw_ = CFI_type_int8_t; break;
     case 2: raw_ = CFI_type_int16_t; break;
@@ -27,7 +27,7 @@ TypeCode::TypeCode(TypeCode::Form f, int kind) {
     case 16: raw_ = CFI_type_int128_t; break;
     }
     break;
-  case Form::Real:
+  case TypeCategory::Real:
     switch (kind) {
     case 4: raw_ = CFI_type_float; break;
     case 8: raw_ = CFI_type_double; break;
@@ -35,7 +35,7 @@ TypeCode::TypeCode(TypeCode::Form f, int kind) {
     case 16: raw_ = CFI_type_long_double; break;
     }
     break;
-  case Form::Complex:
+  case TypeCategory::Complex:
     switch (kind) {
     case 4: raw_ = CFI_type_float_Complex; break;
     case 8: raw_ = CFI_type_double_Complex; break;
@@ -43,12 +43,12 @@ TypeCode::TypeCode(TypeCode::Form f, int kind) {
     case 16: raw_ = CFI_type_long_double_Complex; break;
     }
     break;
-  case Form::Character:
+  case TypeCategory::Character:
     if (kind == 1) {
       raw_ = CFI_type_cptr;
     }
     break;
-  case Form::Logical:
+  case TypeCategory::Logical:
     switch (kind) {
     case 1: raw_ = CFI_type_Bool; break;
     case 2: raw_ = CFI_type_int16_t; break;
@@ -56,7 +56,7 @@ TypeCode::TypeCode(TypeCode::Form f, int kind) {
     case 8: raw_ = CFI_type_int64_t; break;
     }
     break;
-  case Form::Derived: raw_ = CFI_type_struct; break;
+  case TypeCategory::Derived: raw_ = CFI_type_struct; break;
   }
 }
 

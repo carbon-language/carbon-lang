@@ -108,15 +108,15 @@ public:
 
   int Establish(TypeCode t, std::size_t elementBytes, void *p = nullptr,
       int rank = maxRank, const SubscriptValue *extent = nullptr);
-  int Establish(TypeCode::Form f, int kind, void *p = nullptr,
-      int rank = maxRank, const SubscriptValue *extent = nullptr);
+  int Establish(TypeCategory, int kind, void *p = nullptr, int rank = maxRank,
+      const SubscriptValue *extent = nullptr);
   int Establish(const DerivedType &dt, void *p = nullptr, int rank = maxRank,
       const SubscriptValue *extent = nullptr);
 
   static Descriptor *Create(TypeCode t, std::size_t elementBytes,
       void *p = nullptr, int rank = maxRank,
       const SubscriptValue *extent = nullptr);
-  static Descriptor *Create(TypeCode::Form f, int kind, void *p = nullptr,
+  static Descriptor *Create(TypeCategory, int kind, void *p = nullptr,
       int rank = maxRank, const SubscriptValue *extent = nullptr);
   static Descriptor *Create(const DerivedType &dt, void *p = nullptr,
       int rank = maxRank, const SubscriptValue *extent = nullptr);

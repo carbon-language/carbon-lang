@@ -119,8 +119,7 @@ struct GenericExpr;
     WRAPPER_CLASS_BOILERPLATE(classname, type); \
   }
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 
 // These are the unavoidable recursively-defined productions of Fortran.
 // Some references to the representations of their parses require
@@ -3701,6 +3700,5 @@ struct OpenMPConstruct {
       u;
 };
 
-}  // namespace parser
-}  // namespace Fortran
+}  // namespace Fortran::parser
 #endif  // FORTRAN_PARSER_PARSE_TREE_H_

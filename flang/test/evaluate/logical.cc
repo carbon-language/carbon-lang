@@ -18,8 +18,8 @@
 
 template<int KIND> void testKind() {
   using Type =
-      Fortran::evaluate::Type<Fortran::evaluate::Category::Logical, KIND>;
-  TEST(Type::category == Fortran::evaluate::Category::Logical);
+      Fortran::evaluate::Type<Fortran::common::TypeCategory::Logical, KIND>;
+  TEST(Type::category == Fortran::common::TypeCategory::Logical);
   TEST(Type::kind == KIND);
   TEST(!Type::hasLen);
   using Value = typename Type::Value;
