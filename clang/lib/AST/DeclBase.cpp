@@ -154,11 +154,11 @@ void Decl::setInvalidDecl(bool Invalid) {
 
 const char *DeclContext::getDeclKindName() const {
   switch (getDeclKind()) {
-  default: llvm_unreachable("Declaration context not in DeclNodes.inc!");
 #define DECL(DERIVED, BASE) case Decl::DERIVED: return #DERIVED;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
   }
+  llvm_unreachable("Declaration context not in DeclNodes.inc!");
 }
 
 bool Decl::StatisticsEnabled = false;
