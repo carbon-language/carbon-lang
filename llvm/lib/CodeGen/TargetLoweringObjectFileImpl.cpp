@@ -455,7 +455,6 @@ static MCSectionELF *selectELFSectionForGlobal(
     Group = C->getName();
   }
 
-  bool UniqueSectionNames = TM.getUniqueSectionNames();
   SmallString<128> Name;
   if (Kind.isMergeableCString()) {
     // We also need alignment here.
@@ -479,16 +478,17 @@ static MCSectionELF *selectELFSectionForGlobal(
       Name += *OptionalPrefix;
   }
 
-  if (EmitUniqueSection && UniqueSectionNames) {
-    Name.push_back('.');
-    TM.getNameWithPrefix(Name, GO, Mang, true);
-  }
   unsigned UniqueID = MCContext::GenericSectionID;
-  if (EmitUniqueSection && !UniqueSectionNames) {
-    UniqueID = *NextUniqueID;
-    (*NextUniqueID)++;
+  if (EmitUniqueSection) {
+    if (TM.getUniqueSectionNames()) {
+      Name.push_back('.');
+      TM.getNameWithPrefix(Name, GO, Mang, true /*MayAlwaysUsePrivate*/);
+    } else {
+      UniqueID = *NextUniqueID;
+      (*NextUniqueID)++;
+    }
   }
-  // Use 0 as the unique ID for execute-only text
+  // Use 0 as the unique ID for execute-only text.
   if (Kind.isExecuteOnly())
     UniqueID = 0;
   return Ctx.getELFSection(Name, getELFSectionType(Name, Kind), Flags,
