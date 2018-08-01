@@ -1007,18 +1007,18 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setVariadic(Record.readInt());
   MD->setPropertyAccessor(Record.readInt());
   MD->setDefined(Record.readInt());
-  MD->IsOverriding = Record.readInt();
-  MD->HasSkippedBody = Record.readInt();
+  MD->setOverriding(Record.readInt());
+  MD->setHasSkippedBody(Record.readInt());
 
-  MD->IsRedeclaration = Record.readInt();
-  MD->HasRedeclaration = Record.readInt();
-  if (MD->HasRedeclaration)
+  MD->setIsRedeclaration(Record.readInt());
+  MD->setHasRedeclaration(Record.readInt());
+  if (MD->hasRedeclaration())
     Reader.getContext().setObjCMethodRedeclaration(MD,
                                        ReadDeclAs<ObjCMethodDecl>());
 
   MD->setDeclImplementation((ObjCMethodDecl::ImplementationControl)Record.readInt());
   MD->setObjCDeclQualifier((Decl::ObjCDeclQualifier)Record.readInt());
-  MD->SetRelatedResultType(Record.readInt());
+  MD->setRelatedResultType(Record.readInt());
   MD->setReturnType(Record.readType());
   MD->setReturnTypeSourceInfo(GetTypeSourceInfo());
   MD->DeclEndLoc = ReadSourceLocation();
@@ -1028,7 +1028,7 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   for (unsigned I = 0; I != NumParams; ++I)
     Params.push_back(ReadDeclAs<ParmVarDecl>());
 
-  MD->SelLocsKind = Record.readInt();
+  MD->setSelLocsKind((SelectorLocationsKind)Record.readInt());
   unsigned NumStoredSelLocs = Record.readInt();
   SmallVector<SourceLocation, 16> SelLocs;
   SelLocs.reserve(NumStoredSelLocs);

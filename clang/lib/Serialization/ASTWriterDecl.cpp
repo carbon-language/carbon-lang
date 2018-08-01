@@ -647,12 +647,12 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.push_back(D->isVariadic());
   Record.push_back(D->isPropertyAccessor());
   Record.push_back(D->isDefined());
-  Record.push_back(D->IsOverriding);
-  Record.push_back(D->HasSkippedBody);
+  Record.push_back(D->isOverriding());
+  Record.push_back(D->hasSkippedBody());
 
-  Record.push_back(D->IsRedeclaration);
-  Record.push_back(D->HasRedeclaration);
-  if (D->HasRedeclaration) {
+  Record.push_back(D->isRedeclaration());
+  Record.push_back(D->hasRedeclaration());
+  if (D->hasRedeclaration()) {
     assert(Context.getObjCMethodRedeclaration(D));
     Record.AddDeclRef(Context.getObjCMethodRedeclaration(D));
   }
@@ -669,7 +669,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   for (const auto *P : D->parameters())
     Record.AddDeclRef(P);
 
-  Record.push_back(D->SelLocsKind);
+  Record.push_back(D->getSelLocsKind());
   unsigned NumStoredSelLocs = D->getNumStoredSelLocs();
   SourceLocation *SelLocs = D->getStoredSelLocs();
   Record.push_back(NumStoredSelLocs);
