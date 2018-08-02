@@ -663,8 +663,9 @@ static uint64_t getRelocTargetVA(const InputFile *File, RelType Type, int64_t A,
     return InX::Got->getTlsIndexOff() + A;
   case R_TLSLD_PC:
     return InX::Got->getTlsIndexVA() + A - P;
+  default:
+    llvm_unreachable("invalid expression");
   }
-  llvm_unreachable("Invalid expression");
 }
 
 // This function applies relocations to sections without SHF_ALLOC bit.
