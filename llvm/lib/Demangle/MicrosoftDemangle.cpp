@@ -210,6 +210,7 @@ enum class SymbolCategory { Function, Variable };
 namespace {
 
 struct NameResolver {
+  virtual ~NameResolver() = default;
   virtual StringView resolve(StringView S) = 0;
 };
 
