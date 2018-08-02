@@ -24,6 +24,9 @@
 #include <ostream>
 #include <set>
 #include <sstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vector>
 
 namespace Fortran::semantics {
@@ -54,6 +57,7 @@ static std::ostream &PutLower(std::ostream &, const Symbol &);
 static std::ostream &PutLower(std::ostream &, const DeclTypeSpec &);
 static std::ostream &PutLower(std::ostream &, const std::string &);
 static std::string CheckSum(const std::string &);
+static bool MakeReadonly(const std::string &);
 
 bool ModFileWriter::WriteAll() {
   WriteChildren(Scope::globalScope);
@@ -75,6 +79,7 @@ void ModFileWriter::WriteOne(const Scope &scope) {
     auto *ancestor{symbol->get<ModuleDetails>().ancestor()};
     auto ancestorName{ancestor ? ancestor->name().ToString() : ""s};
     auto path{ModFilePath(dir_, symbol->name(), ancestorName)};
+    unlink(path.data());
     std::ofstream os{path};
     PutSymbols(scope);
     std::string all{GetAsString(*symbol)};
@@ -85,6 +90,10 @@ void ModFileWriter::WriteOne(const Scope &scope) {
       errors_.emplace_back(
           "Error writing %s: %s"_err_en_US, path.c_str(), std::strerror(errno));
       return;
+    }
+    if (!MakeReadonly(path)) {
+      errors_.emplace_back("Error changing permissions on %s: %s"_en_US,
+          path.c_str(), std::strerror(errno));
     }
   }
   WriteChildren(scope);  // write out submodules
@@ -476,6 +485,16 @@ static std::string ModFilePath(const std::string &dir, const SourceName &name,
   }
   PutLower(path, name.ToString()) << extension;
   return path.str();
+}
+
+static bool MakeReadonly(const std::string &path) {
+  struct stat statbuf;
+  if (stat(path.c_str(), &statbuf) != 0) {
+    return false;
+  }
+  auto mode{statbuf.st_mode};
+  mode &= S_IRUSR | S_IRGRP | S_IROTH;
+  return chmod(path.data(), mode) == 0;
 }
 
 static parser::Message Error(const SourceName &location,
