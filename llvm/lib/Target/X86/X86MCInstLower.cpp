@@ -631,6 +631,14 @@ ReSimplify:
   case X86::RELEASE_DEC16m:    OutMI.setOpcode(X86::DEC16m);    goto ReSimplify;
   case X86::RELEASE_DEC32m:    OutMI.setOpcode(X86::DEC32m);    goto ReSimplify;
   case X86::RELEASE_DEC64m:    OutMI.setOpcode(X86::DEC64m);    goto ReSimplify;
+  case X86::RELEASE_NOT8m:     OutMI.setOpcode(X86::NOT8m);     goto ReSimplify;
+  case X86::RELEASE_NOT16m:    OutMI.setOpcode(X86::NOT16m);    goto ReSimplify;
+  case X86::RELEASE_NOT32m:    OutMI.setOpcode(X86::NOT32m);    goto ReSimplify;
+  case X86::RELEASE_NOT64m:    OutMI.setOpcode(X86::NOT64m);    goto ReSimplify;
+  case X86::RELEASE_NEG8m:     OutMI.setOpcode(X86::NEG8m);     goto ReSimplify;
+  case X86::RELEASE_NEG16m:    OutMI.setOpcode(X86::NEG16m);    goto ReSimplify;
+  case X86::RELEASE_NEG32m:    OutMI.setOpcode(X86::NEG32m);    goto ReSimplify;
+  case X86::RELEASE_NEG64m:    OutMI.setOpcode(X86::NEG64m);    goto ReSimplify;
 
   // We don't currently select the correct instruction form for instructions
   // which have a short %eax, etc. form. Handle this by custom lowering, for

@@ -1508,13 +1508,13 @@ define void @dec_32_seq_cst(i32* %p) {
 define void @not_8(i8* %p) {
 ; X64-LABEL: not_8:
 ; X64:       # %bb.0:
-; X64-NEXT:    xorb $-1, (%rdi)
+; X64-NEXT:    notb (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: not_8:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    xorb $-1, (%eax)
+; X32-NEXT:    notb (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i8, i8* %p seq_cst, align 1
   %2 = xor i8 %1, -1
@@ -1548,13 +1548,13 @@ define void @not_16(i16* %p) {
 define void @not_32(i32* %p) {
 ; X64-LABEL: not_32:
 ; X64:       # %bb.0:
-; X64-NEXT:    xorl $-1, (%rdi)
+; X64-NEXT:    notl (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: not_32:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    xorl $-1, (%eax)
+; X32-NEXT:    notl (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i32, i32* %p acquire, align 4
   %2 = xor i32 %1, -1
@@ -1565,7 +1565,7 @@ define void @not_32(i32* %p) {
 define void @not_64(i64* %p) {
 ; X64-LABEL: not_64:
 ; X64:       # %bb.0:
-; X64-NEXT:    xorq $-1, (%rdi)
+; X64-NEXT:    notq (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: not_64:
@@ -1632,17 +1632,13 @@ define void @not_32_seq_cst(i32* %p) {
 define void @neg_8(i8* %p) {
 ; X64-LABEL: neg_8:
 ; X64:       # %bb.0:
-; X64-NEXT:    movb (%rdi), %al
-; X64-NEXT:    negb %al
-; X64-NEXT:    movb %al, (%rdi)
+; X64-NEXT:    negb (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: neg_8:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movb (%eax), %cl
-; X32-NEXT:    negb %cl
-; X32-NEXT:    movb %cl, (%eax)
+; X32-NEXT:    negb (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i8, i8* %p seq_cst, align 1
   %2 = sub i8 0, %1
@@ -1676,17 +1672,13 @@ define void @neg_16(i16* %p) {
 define void @neg_32(i32* %p) {
 ; X64-LABEL: neg_32:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl (%rdi), %eax
-; X64-NEXT:    negl %eax
-; X64-NEXT:    movl %eax, (%rdi)
+; X64-NEXT:    negl (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: neg_32:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movl (%eax), %ecx
-; X32-NEXT:    negl %ecx
-; X32-NEXT:    movl %ecx, (%eax)
+; X32-NEXT:    negl (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i32, i32* %p acquire, align 4
   %2 = sub i32 0, %1
@@ -1697,9 +1689,7 @@ define void @neg_32(i32* %p) {
 define void @neg_64(i64* %p) {
 ; X64-LABEL: neg_64:
 ; X64:       # %bb.0:
-; X64-NEXT:    movq (%rdi), %rax
-; X64-NEXT:    negq %rax
-; X64-NEXT:    movq %rax, (%rdi)
+; X64-NEXT:    negq (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: neg_64:

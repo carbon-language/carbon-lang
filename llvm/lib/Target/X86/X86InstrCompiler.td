@@ -974,23 +974,20 @@ let Defs = [EFLAGS], Predicates = [UseIncDec], SchedRW = [WriteMicrocoded] in {
       (add (atomic_load_32 addr:$dst), (i32 -1)),
       (add (atomic_load_64 addr:$dst), (i64 -1))>;
 }
-/*
-TODO: These don't work because the type inference of TableGen fails.
-TODO: find a way to fix it.
+
 let Defs = [EFLAGS] in {
   defm RELEASE_NEG : RELEASE_UNOP<
-      (ineg (atomic_load_8  addr:$dst)),
-      (ineg (atomic_load_16 addr:$dst)),
-      (ineg (atomic_load_32 addr:$dst)),
-      (ineg (atomic_load_64 addr:$dst))>;
+      (ineg (i8 (atomic_load_8  addr:$dst))),
+      (ineg (i16 (atomic_load_16 addr:$dst))),
+      (ineg (i32 (atomic_load_32 addr:$dst))),
+      (ineg (i64 (atomic_load_64 addr:$dst)))>;
 }
 // NOT doesn't set flags.
 defm RELEASE_NOT : RELEASE_UNOP<
-    (not (atomic_load_8  addr:$dst)),
-    (not (atomic_load_16 addr:$dst)),
-    (not (atomic_load_32 addr:$dst)),
-    (not (atomic_load_64 addr:$dst))>;
-*/
+    (not (i8 (atomic_load_8  addr:$dst))),
+    (not (i16 (atomic_load_16 addr:$dst))),
+    (not (i32 (atomic_load_32 addr:$dst))),
+    (not (i64 (atomic_load_64 addr:$dst)))>;
 
 let SchedRW = [WriteMicrocoded] in {
 def RELEASE_MOV8mi : I<0, Pseudo, (outs), (ins i8mem:$dst, i8imm:$src),
