@@ -327,7 +327,7 @@ template<typename... Ps> inline constexpr auto first(const Ps &... ps) {
   return AlternativesParser<Ps...>{ps...};
 }
 
-#if !__GNUC__ || __clang__
+#if !__GNUC__ || __clang__ || ((100 * __GNUC__ + __GNUC__MINOR__) >= 802)
 // Implement operator|| with first(), unless compiling with g++,
 // which can segfault at compile time and needs to continue to use
 // the original implementation of operator|| as of gcc-8.1.0.
@@ -335,7 +335,7 @@ template<typename PA, typename PB>
 inline constexpr auto operator||(const PA &pa, const PB &pb) {
   return first(pa, pb);
 }
-#else  // g++ only: original implementation
+#else  // g++ <= 8.1.0 only: original implementation
 // If a and b are parsers, then a || b returns a parser that succeeds if
 // a does so, or if a fails and b succeeds.  The result types of the parsers
 // must be the same type.  If a succeeds, b is not attempted.

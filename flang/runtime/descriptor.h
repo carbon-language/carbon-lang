@@ -70,16 +70,24 @@ public:
     LeadingDimensionContiguous = 0x040,  // only leading dimension contiguous
   };
 
-  explicit DescriptorAddendum(const DerivedType &dt, std::uint64_t flags = 0)
-    : derivedType_{&dt}, flags_{flags} {}
+  explicit DescriptorAddendum(
+      const DerivedType *dt = nullptr, std::uint64_t flags = 0)
+    : derivedType_{dt}, flags_{flags} {}
 
   const DerivedType *derivedType() const { return derivedType_; }
-  DescriptorAddendum &set_derivedType(const DerivedType &dt) {
-    derivedType_ = &dt;
+  DescriptorAddendum &set_derivedType(const DerivedType *dt) {
+    derivedType_ = dt;
     return *this;
   }
   std::uint64_t &flags() { return flags_; }
   const std::uint64_t &flags() const { return flags_; }
+
+  std::size_t LenParameters() const {
+    if (derivedType_ != nullptr) {
+      return derivedType_->lenParameters();
+    }
+    return 0;
+  }
 
   TypeParameterValue LenParameterValue(int which) const { return len_[which]; }
   static constexpr std::size_t SizeInBytes(int lenParameters) {
@@ -118,15 +126,15 @@ public:
 
   ~Descriptor();
 
-  int Establish(TypeCode t, std::size_t elementBytes, void *p = nullptr,
+  void Establish(TypeCode t, std::size_t elementBytes, void *p = nullptr,
       int rank = maxRank, const SubscriptValue *extent = nullptr,
       ISO::CFI_attribute_t attribute = CFI_attribute_other,
       bool addendum = false);
-  int Establish(TypeCategory, int kind, void *p = nullptr, int rank = maxRank,
+  void Establish(TypeCategory, int kind, void *p = nullptr, int rank = maxRank,
       const SubscriptValue *extent = nullptr,
       ISO::CFI_attribute_t attribute = CFI_attribute_other,
       bool addendum = false);
-  int Establish(const DerivedType &dt, void *p = nullptr, int rank = maxRank,
+  void Establish(const DerivedType &dt, void *p = nullptr, int rank = maxRank,
       const SubscriptValue *extent = nullptr,
       ISO::CFI_attribute_t attribute = CFI_attribute_other);
 
@@ -142,7 +150,7 @@ public:
       ISO::CFI_attribute_t attribute = CFI_attribute_other);
 
   // Descriptor instances allocated via Create() above must be deallocated
-  // by calling Destroy() so that operator delete[] is invoked.
+  // by calling Destroy().
   void Destroy();
 
   ISO::CFI_cdesc_t &raw() { return raw_; }
@@ -174,6 +182,41 @@ public:
     return (subscriptValue - dimension.LowerBound()) * dimension.ByteStride();
   }
 
+  std::size_t SubscriptsToByteOffset(const SubscriptValue *subscript) const {
+    std::size_t offset{0};
+    for (int j{0}; j < raw_.rank; ++j) {
+      offset += SubscriptByteOffset(j, subscript[j]);
+    }
+    return offset;
+  }
+
+  template<typename A> A *Element(std::size_t offset) const {
+    return reinterpret_cast<A *>(
+        reinterpret_cast<char *>(raw_.base_addr) + offset);
+  }
+
+  template<typename A> A *Element(const SubscriptValue *subscript) const {
+    return Element<A>(SubscriptsToByteOffset(subscript));
+  }
+
+  void GetLowerBounds(SubscriptValue *subscript) const {
+    for (int j{0}; j < raw_.rank; ++j) {
+      subscript[j] = GetDimension(j).LowerBound();
+    }
+  }
+
+  void IncrementSubscripts(
+      SubscriptValue *subscript, const int *permutation = nullptr) const {
+    for (int j{0}; j < raw_.rank; ++j) {
+      int k{permutation ? permutation[j] : j};
+      const Dimension &dim{GetDimension(k)};
+      if (subscript[k]++ < dim.UpperBound()) {
+        break;
+      }
+      subscript[k] = dim.LowerBound();
+    }
+  }
+
   DescriptorAddendum *Addendum() {
     if (raw_.f18Addendum != 0) {
       return reinterpret_cast<DescriptorAddendum *>(&GetDimension(rank()));
@@ -199,16 +242,24 @@ public:
     }
     return bytes;
   }
+
   std::size_t SizeInBytes() const;
+
+  std::size_t Elements() const;
+
+  bool IsContiguous() const {
+    if (raw_.attribute == CFI_attribute_allocatable) {
+      return true;
+    }
+    if (const DescriptorAddendum * addendum{Addendum()}) {
+      return (addendum->flags() & DescriptorAddendum::AllContiguous) != 0;
+    }
+    return false;
+  }
 
   void Check() const;
 
   // TODO: creation of array sections
-
-  template<typename A> A &Element(std::size_t offset = 0) const {
-    auto p = reinterpret_cast<char *>(raw_.base_addr);
-    return *reinterpret_cast<A *>(p + offset);
-  }
 
 private:
   ISO::CFI_cdesc_t raw_;
@@ -216,12 +267,11 @@ private:
 static_assert(sizeof(Descriptor) == sizeof(ISO::CFI_cdesc_t));
 
 // Properly configured instances of StaticDescriptor will occupy the
-// exact amount of storage required for the descriptor based on its
-// number of dimensions and whether it requires an addendum.  To build
-// such a static descriptor, declare an instance of StaticDescriptor<>,
-// extract a reference to the Descriptor via the descriptor() accessor,
-// and then built a Descriptor therein via descriptor.Establish().
-// e.g.:
+// exact amount of storage required for the descriptor, its dimensional
+// information, and possible addendum.  To build such a static descriptor,
+// declare an instance of StaticDescriptor<>, extract a reference to its
+// descriptor via the descriptor() accessor, and then built a Descriptor
+// therein via descriptor.Establish(), e.g.:
 //   StaticDescriptor<R,A,LP> statDesc;
 //   Descriptor &descriptor{statDesc.descriptor()};
 //   descriptor.Establish( ... );
@@ -240,9 +290,10 @@ public:
   }
 
   void Check() {
-    assert(descriptor().SizeInBytes() <= byteSize);
     assert(descriptor().rank() <= maxRank);
+    assert(descriptor().SizeInBytes() <= byteSize);
     if (DescriptorAddendum * addendum{descriptor().Addendum()}) {
+      assert(hasAddendum);
       if (const DerivedType * dt{addendum->derivedType()}) {
         assert(dt->lenParameters() <= maxLengthTypeParameters);
       } else {
@@ -252,6 +303,7 @@ public:
       assert(!hasAddendum);
       assert(maxLengthTypeParameters == 0);
     }
+    descriptor().Check();
   }
 
 private:

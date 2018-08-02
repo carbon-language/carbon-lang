@@ -51,7 +51,7 @@ typedef ptrdiff_t CFI_index_t;
     CFI_dim_t dim[rank]; \
   };
 
-typedef unsigned short CFI_attribute_t;
+typedef unsigned char CFI_attribute_t;
 #define CFI_attribute_pointer 1
 #define CFI_attribute_allocatable 2
 #define CFI_attribute_other 0 /* neither pointer nor allocatable */

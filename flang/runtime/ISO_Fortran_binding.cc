@@ -144,9 +144,6 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   if ((attribute & ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
     return CFI_INVALID_ATTRIBUTE;
   }
-  if ((attribute & CFI_attribute_allocatable) != 0 && base_addr != nullptr) {
-    return CFI_ERROR_BASE_ADDR_NOT_NULL;
-  }
   if (rank > CFI_MAX_RANK) {
     return CFI_INVALID_RANK;
   }
@@ -166,7 +163,9 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
   descriptor->elem_len = elem_len;
   descriptor->version = CFI_VERSION;
   descriptor->rank = rank;
+  descriptor->type = type;
   descriptor->attribute = attribute;
+  descriptor->f18Addendum = 0;
   std::size_t byteSize{elem_len};
   for (std::size_t j{0}; j < rank; ++j) {
     descriptor->dim[j].lower_bound = 1;

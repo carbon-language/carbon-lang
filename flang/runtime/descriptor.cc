@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "descriptor.h"
+#include "../lib/common/idioms.h"
 #include <cassert>
 #include <cstdlib>
 
@@ -25,41 +26,45 @@ Descriptor::~Descriptor() {
   assert(!(Addendum() && (Addendum()->flags() & DescriptorAddendum::Created)));
 }
 
-int Descriptor::Establish(TypeCode t, std::size_t elementBytes, void *p,
+void Descriptor::Establish(TypeCode t, std::size_t elementBytes, void *p,
     int rank, const SubscriptValue *extent, ISO::CFI_attribute_t attribute,
     bool addendum) {
-  int result{
-      CFI_establish(&raw_, p, attribute, t.raw(), elementBytes, rank, extent)};
+  CHECK(ISO::CFI_establish(&raw_, p, attribute, t.raw(), elementBytes, rank,
+            extent) == CFI_SUCCESS);
   raw_.f18Addendum = addendum;
-  return result;
+  if (addendum) {
+    new (Addendum()) DescriptorAddendum{};
+  }
 }
 
-int Descriptor::Establish(TypeCategory c, int kind, void *p, int rank,
+void Descriptor::Establish(TypeCategory c, int kind, void *p, int rank,
     const SubscriptValue *extent, ISO::CFI_attribute_t attribute,
     bool addendum) {
   std::size_t elementBytes = kind;
   if (c == TypeCategory::Complex) {
     elementBytes *= 2;
   }
-  int result{ISO::CFI_establish(&raw_, p, attribute, TypeCode(c, kind).raw(),
-      elementBytes, rank, extent)};
+  CHECK(ISO::CFI_establish(&raw_, p, attribute, TypeCode(c, kind).raw(),
+            elementBytes, rank, extent) == CFI_SUCCESS);
   raw_.f18Addendum = addendum;
-  return result;
+  if (addendum) {
+    new (Addendum()) DescriptorAddendum{};
+  }
 }
 
-int Descriptor::Establish(const DerivedType &dt, void *p, int rank,
+void Descriptor::Establish(const DerivedType &dt, void *p, int rank,
     const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
-  int result{ISO::CFI_establish(
-      &raw_, p, attribute, CFI_type_struct, dt.SizeInBytes(), rank, extent)};
+  CHECK(ISO::CFI_establish(&raw_, p, attribute, CFI_type_struct,
+            dt.SizeInBytes(), rank, extent) == CFI_SUCCESS);
   raw_.f18Addendum = true;
-  Addendum()->set_derivedType(dt);
-  return result;
+  new (Addendum()) DescriptorAddendum{&dt};
 }
 
 Descriptor *Descriptor::Create(TypeCode t, std::size_t elementBytes, void *p,
     int rank, const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
-  std::size_t bytes{SizeInBytes(rank)};
-  Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
+  std::size_t bytes{SizeInBytes(rank, true)};
+  Descriptor *result{reinterpret_cast<Descriptor *>(std::malloc(bytes))};
+  CHECK(result != nullptr);
   result->Establish(t, elementBytes, p, rank, extent, attribute, true);
   result->Addendum()->flags() |= DescriptorAddendum::Created;
   return result;
@@ -67,8 +72,9 @@ Descriptor *Descriptor::Create(TypeCode t, std::size_t elementBytes, void *p,
 
 Descriptor *Descriptor::Create(TypeCategory c, int kind, void *p, int rank,
     const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
-  std::size_t bytes{SizeInBytes(rank)};
-  Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
+  std::size_t bytes{SizeInBytes(rank, true)};
+  Descriptor *result{reinterpret_cast<Descriptor *>(std::malloc(bytes))};
+  CHECK(result != nullptr);
   result->Establish(c, kind, p, rank, extent, attribute, true);
   result->Addendum()->flags() |= DescriptorAddendum::Created;
   return result;
@@ -76,8 +82,9 @@ Descriptor *Descriptor::Create(TypeCategory c, int kind, void *p, int rank,
 
 Descriptor *Descriptor::Create(const DerivedType &dt, void *p, int rank,
     const SubscriptValue *extent, ISO::CFI_attribute_t attribute) {
-  std::size_t bytes{SizeInBytes(rank, dt.IsNontrivial(), dt.lenParameters())};
-  Descriptor *result{reinterpret_cast<Descriptor *>(new char[bytes])};
+  std::size_t bytes{SizeInBytes(rank, true, dt.lenParameters())};
+  Descriptor *result{reinterpret_cast<Descriptor *>(std::malloc(bytes))};
+  CHECK(result != nullptr);
   result->Establish(dt, p, rank, extent, attribute);
   result->Addendum()->flags() |= DescriptorAddendum::Created;
   return result;
@@ -86,7 +93,7 @@ Descriptor *Descriptor::Create(const DerivedType &dt, void *p, int rank,
 void Descriptor::Destroy() {
   if (const DescriptorAddendum * addendum{Addendum()}) {
     if (addendum->flags() & DescriptorAddendum::Created) {
-      delete[] reinterpret_cast<char *>(this);
+      std::free(reinterpret_cast<void *>(this));
     }
   }
 }
@@ -97,11 +104,20 @@ std::size_t Descriptor::SizeInBytes() const {
       (addendum ? addendum->SizeInBytes() : 0);
 }
 
+std::size_t Descriptor::Elements() const {
+  int n{rank()};
+  std::size_t elements{1};
+  for (int j{0}; j < n; ++j) {
+    elements *= GetDimension(j).Extent();
+  }
+  return elements;
+}
+
 void Descriptor::Check() const {
   // TODO
 }
 
 std::size_t DescriptorAddendum::SizeInBytes() const {
-  return SizeInBytes(derivedType_->lenParameters());
+  return SizeInBytes(LenParameters());
 }
 }  // namespace Fortran::runtime

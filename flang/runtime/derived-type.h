@@ -122,8 +122,9 @@ struct DefinedAssignment {
 // the execution of FINAL subroutines.
 class DerivedType {
 public:
-  DerivedType(const char *n, int kps, int lps, const TypeParameter *tp, int cs,
-      const Component *ca, int tbps, const TypeBoundProcedure *tbp, int das,
+  DerivedType(const char *n, std::size_t kps, std::size_t lps,
+      const TypeParameter *tp, std::size_t cs, const Component *ca,
+      std::size_t tbps, const TypeBoundProcedure *tbp, std::size_t das,
       const DefinedAssignment *da, std::size_t sz)
     : name_{n}, kindParameters_{kps}, lenParameters_{lps}, typeParameter_{tp},
       components_{cs}, component_{ca}, typeBoundProcedures_{tbps},
@@ -135,13 +136,13 @@ public:
   }
 
   const char *name() const { return name_; }
-  int kindParameters() const { return kindParameters_; }
-  int lenParameters() const { return lenParameters_; }
+  std::size_t kindParameters() const { return kindParameters_; }
+  std::size_t lenParameters() const { return lenParameters_; }
 
   // KIND type parameters come first.
   const TypeParameter &typeParameter(int n) const { return typeParameter_[n]; }
 
-  int components() const { return components_; }
+  std::size_t components() const { return components_; }
 
   // TBP 0 is the initializer: SUBROUTINE INIT(INSTANCE)
   static constexpr int initializerTBP{0};
@@ -152,7 +153,7 @@ public:
   // TBP 2 is the FINAL subroutine.
   static constexpr int finalTBP{2};
 
-  int typeBoundProcedures() const { return typeBoundProcedures_; }
+  std::size_t typeBoundProcedures() const { return typeBoundProcedures_; }
   const TypeBoundProcedure &typeBoundProcedure(int n) const {
     return typeBoundProcedure_[n];
   }
@@ -184,14 +185,14 @@ private:
   bool IsNontrivialAnalysis() const;
 
   const char *name_{""};  // NUL-terminated constant text
-  int kindParameters_{0};
-  int lenParameters_{0};
+  std::size_t kindParameters_{0};
+  std::size_t lenParameters_{0};
   const TypeParameter *typeParameter_{nullptr};  // array
-  int components_{0};  // *not* including type parameters
+  std::size_t components_{0};  // *not* including type parameters
   const Component *component_{nullptr};  // array
-  int typeBoundProcedures_{0};
+  std::size_t typeBoundProcedures_{0};
   const TypeBoundProcedure *typeBoundProcedure_{nullptr};  // array
-  int definedAssignments_{0};
+  std::size_t definedAssignments_{0};
   const DefinedAssignment *definedAssignment_{nullptr};  // array
   std::uint64_t flags_{0};
   std::size_t bytes_{0};

@@ -31,7 +31,7 @@ bool DerivedType::IsNontrivialAnalysis() const {
       definedAssignments_ > 0) {
     return true;
   }
-  for (int j{0}; j < components_; ++j) {
+  for (std::size_t j{0}; j < components_; ++j) {
     if (component_[j].IsDescriptor()) {
       return true;
     }
