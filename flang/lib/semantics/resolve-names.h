@@ -25,8 +25,10 @@ class CookedSource;
 
 namespace Fortran::semantics {
 
-void ResolveNames(parser::Program &, const parser::CookedSource &,
-    const std::vector<std::string> &);
+class Scope;
+
+void ResolveNames(Scope &rootScope, parser::Program &,
+    const parser::CookedSource &, const std::vector<std::string> &);
 void DumpSymbols(std::ostream &);
 
 }  // namespace Fortran::semantics

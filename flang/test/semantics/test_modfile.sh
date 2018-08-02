@@ -19,47 +19,55 @@ set -e
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
 CMD="${F18:-../../../tools/f18/f18} -fdebug-resolve-names -fparse-only"
-
 if [[ $# != 1 ]]; then
   echo "Usage: $0 <fortran-source>"
   exit 1
 fi
 src=$srcdir/$1
-[[ ! -f $src ]] && echo "File not found: $src" && exit 1
 
 temp=temp-$1
 rm -rf $temp
 mkdir $temp
 [[ $KEEP ]] || trap "rm -rf $temp" EXIT
-
-( cd $temp && $CMD $src )
-
 actual=$temp/actual.mod
 expect=$temp/expect.mod
 actual_files=$temp/actual_files
+prev_files=$temp/prev_files
 diffs=$temp/diffs
 
-( cd $temp && ls -1 *.mod ) > $actual_files
-expected_files=$(sed -n 's/^!Expect: \(.*\)/\1/p' $src)
-extra_files=$(echo "$expected_files" | comm -23 $actual_files -)
-if [[ ! -z "$extra_files" ]]; then
-  echo "Unexpected .mod files produced:" $extra_files
-  echo FAIL
-  exit 1
-fi
-for mod in $expected_files; do
-  if [[ ! -f $temp/$mod ]]; then
-    echo "Compilation did not produce expected mod file: $mod"
+set $src
+
+touch $actual
+for src in "$@"; do
+  [[ ! -f $src ]] && echo "File not found: $src" && exit 1
+  (
+    cd $temp
+    ls -1 *.mod > prev_files
+    $CMD $src
+    ls -1 *.mod | comm -13 prev_files -
+  ) > $actual_files
+  expected_files=$(sed -n 's/^!Expect: \(.*\)/\1/p' $src)
+  extra_files=$(echo "$expected_files" | comm -23 $actual_files -)
+  if [[ ! -z "$extra_files" ]]; then
+    echo "Unexpected .mod files produced:" $extra_files
     echo FAIL
     exit 1
   fi
-  sed '/^!mod\$/d' $temp/$mod > $actual
-  sed '1,/^!Expect: '"$mod"'/d' $src | sed -e '/^$/,$d' -e 's/^! *//' > $expect
-  if ! diff -U999999 $actual $expect > $diffs; then
-    echo "Module file $mod differs from expected:"
-    sed '1,2d' $diffs
-    echo FAIL
-    exit 1
-  fi
+  for mod in $expected_files; do
+    if [[ ! -f $temp/$mod ]]; then
+      echo "Compilation did not produce expected mod file: $mod"
+      echo FAIL
+      exit 1
+    fi
+    sed '/^!mod\$/d' $temp/$mod > $actual
+    sed '1,/^!Expect: '"$mod"'/d' $src | sed -e '/^$/,$d' -e 's/^! *//' > $expect
+    if ! diff -U999999 $actual $expect > $diffs; then
+      echo "Module file $mod differs from expected:"
+      sed '1,2d' $diffs
+      echo FAIL
+      exit 1
+    fi
+  done
+  rm -f $actual $expect
 done
 echo PASS

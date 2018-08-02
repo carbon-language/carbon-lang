@@ -29,15 +29,18 @@ namespace Fortran::semantics {
 class Scope;
 class Symbol;
 
+// A module or submodule.
 class ModuleDetails {
 public:
+  ModuleDetails(bool isSubmodule = false) : isSubmodule_{isSubmodule} {}
+  bool isSubmodule() const { return isSubmodule_; }
   const Scope *scope() const { return scope_; }
-  void set_scope(const Scope *scope) {
-    CHECK(!scope_);
-    scope_ = scope;
-  }
+  const Scope *ancestor() const;  // for submodule; nullptr for module
+  const Scope *parent() const;  // for submodule; nullptr for module
+  void set_scope(const Scope *);
 
 private:
+  bool isSubmodule_;
   const Scope *scope_{nullptr};
 };
 

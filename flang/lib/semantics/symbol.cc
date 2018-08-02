@@ -23,6 +23,28 @@ std::ostream &operator<<(std::ostream &os, const parser::CharBlock &name) {
   return os << name.ToString();
 }
 
+const Scope *ModuleDetails::parent() const {
+  return isSubmodule_ ? &scope_->parent() : nullptr;
+}
+const Scope *ModuleDetails::ancestor() const {
+  if (!isSubmodule_) {
+    return nullptr;
+  }
+  for (auto *scope{scope_};;) {
+    auto *parent{&scope->parent()};
+    if (parent->kind() != Scope::Kind::Module) {
+      return scope;
+    }
+    scope = parent;
+  }
+}
+void ModuleDetails::set_scope(const Scope *scope) {
+  CHECK(!scope_);
+  bool scopeIsSubmodule{scope->parent().kind() == Scope::Kind::Module};
+  CHECK(isSubmodule_ == scopeIsSubmodule);
+  scope_ = scope;
+}
+
 void EntityDetails::set_type(const DeclTypeSpec &type) {
   CHECK(!type_);
   type_ = type;
@@ -261,7 +283,17 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
       common::visitors{
           [&](const UnknownDetails &x) {},
           [&](const MainProgramDetails &x) {},
-          [&](const ModuleDetails &x) {},
+          [&](const ModuleDetails &x) {
+            if (x.isSubmodule()) {
+              auto &ancestor{x.ancestor()->name()};
+              auto &parent{x.parent()->name()};
+              os << " (" << ancestor.ToString();
+              if (parent != ancestor) {
+                os << ':' << parent.ToString();
+              }
+              os << ")";
+            }
+          },
           [&](const SubprogramDetails &x) {
             os << " (";
             int n = 0;

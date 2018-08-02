@@ -91,7 +91,7 @@ public:
   std::pair<iterator, bool> try_emplace(
       const SourceName &name, Attrs attrs, D &&details) {
     Symbol &symbol{MakeSymbol(name, attrs, std::move(details))};
-    return symbols_.insert(std::make_pair(name, &symbol));
+    return symbols_.emplace(name, &symbol);
   }
 
   /// Make a Symbol but don't add it to the scope.
@@ -103,13 +103,16 @@ public:
   std::list<Scope> &children() { return children_; }
   const std::list<Scope> &children() const { return children_; }
 
+  // For Module scope, maintain a mapping of all submodule scopes with this
+  // module as its ancestor module.
+  Scope *FindSubmodule(const SourceName &) const;
+  Scope *AddSubmodule(const SourceName &, Scope *);
+
   DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
 
   // For modules read from module files, this is the stream of characters
   // that are referenced by SourceName objects.
-  void set_chars(std::string &&chars) {
-    chars_ = std::move(chars);
-  }
+  void set_chars(std::string &&chars) { chars_ = std::move(chars); }
 
 private:
   Scope &parent_;
@@ -117,6 +120,7 @@ private:
   Symbol *const symbol_;
   std::list<Scope> children_;
   mapType symbols_;
+  std::map<SourceName, Scope *> submodules_;
   std::list<DerivedTypeSpec> derivedTypeSpecs_;
   std::string chars_;
 

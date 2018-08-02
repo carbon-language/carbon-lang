@@ -49,8 +49,6 @@ public:
 
   // Write out all .mod files; if error return false.
   bool WriteAll();
-  // Write out .mod file for one module; if error return false.
-  bool WriteOne(const Symbol &);
 
 private:
   using symbolSet = std::set<const Symbol *>;
@@ -66,7 +64,9 @@ private:
   // Any errors encountered during writing:
   std::vector<parser::MessageFormattedText> errors_;
 
-  std::string GetAsString(const std::string &);
+  void WriteChildren(const Scope &);
+  void WriteOne(const Scope &);
+  std::string GetAsString(const Symbol &);
   std::string GetHeader(const std::string &);
   void PutSymbols(const Scope &);
   symbolVector SortSymbols(const symbolSet);
@@ -84,18 +84,19 @@ public:
   // directories specifies where to search for module files
   ModFileReader(const std::vector<std::string> &directories)
     : directories_{directories} {}
-
-  // Find and read the module file for modName.
-  // Return true on success; otherwise errors() reports the problems.
-  bool Read(const SourceName &modName);
+  // Find and read the module file for a module or submodule.
+  // If ancestor is specified, look for a submodule of that module.
+  // Return the Scope for that module/submodule or nullptr on error.
+  Scope *Read(const SourceName &, Scope *ancestor = nullptr);
+  // Errors that occurred when Read returns nullptr.
   std::vector<parser::Message> &errors() { return errors_; }
 
 private:
   std::vector<std::string> directories_;
   std::vector<parser::Message> errors_;
 
-  std::optional<std::string> FindModFile(const SourceName &);
-  bool Prescan(const SourceName &, const std::string &);
+  std::optional<std::string> FindModFile(
+      const SourceName &, const std::string &);
 };
 
 }  // namespace Fortran::semantics
