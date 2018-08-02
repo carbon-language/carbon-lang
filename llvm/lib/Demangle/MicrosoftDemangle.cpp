@@ -885,6 +885,7 @@ namespace {
 class Demangler : public NameResolver {
 public:
   Demangler() = default;
+  virtual ~Demangler() = default;
 
   // You are supposed to call parse() first and then check if error is true.  If
   // it is false, call output() to write the formatted name to the given stream.
@@ -2039,7 +2040,7 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
 
 StringView Demangler::resolve(StringView N) {
   assert(N.size() == 1 && isdigit(N[0]));
-  int Digit = N[0] - '0';
+  size_t Digit = N[0] - '0';
   if (Digit >= BackRefCount)
     return N;
   return BackReferences[Digit];
