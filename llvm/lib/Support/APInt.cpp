@@ -2781,7 +2781,7 @@ llvm::APIntOps::SolveQuadraticEquationWrap(APInt A, APInt B, APInt C,
   APInt SqrB = B * B;
   bool PickLow;
 
-  auto RoundUp = [] (const APInt &V, const APInt &A) {
+  auto RoundUp = [] (const APInt &V, const APInt &A) -> APInt {
     assert(A.isStrictlyPositive());
     APInt T = V.abs().urem(A);
     if (T.isNullValue())
