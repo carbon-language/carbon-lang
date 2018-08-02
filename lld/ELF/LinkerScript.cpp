@@ -751,10 +751,6 @@ MemoryRegion *LinkerScript::findMemoryRegion(OutputSection *Sec) {
   return nullptr;
 }
 
-static bool isHeaderSection(OutputSection *Sec) {
-  return Sec == Out::ElfHeader || Sec == Out::ProgramHeaders;
-}
-
 static OutputSection *findFirstSection(PhdrEntry *Load) {
   for (OutputSection *Sec : OutputSections)
     if (Sec->PtLoad == Load)
@@ -790,8 +786,7 @@ void LinkerScript::assignOffsets(OutputSection *Sec) {
   // This, however, should only be done by the first "non-header" section
   // in the segment.
   if (PhdrEntry *L = Ctx->OutSec->PtLoad)
-    if ((Sec == L->FirstSec) ||
-        (isHeaderSection(L->FirstSec) && (Sec == findFirstSection(L))))
+    if (Sec == findFirstSection(L))
       L->LMAOffset = Ctx->LMAOffset;
 
   // We can call this method multiple times during the creation of
