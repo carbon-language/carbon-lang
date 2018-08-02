@@ -2081,7 +2081,7 @@ void Demangler::dumpBackReferences() {
     Type::outputPre(OS, *T, *this);
     Type::outputPost(OS, *T, *this);
 
-    std::printf("  [%d] - %*s\n", (int)I, (int)OS.getCurrentPosition(),
+    std::printf("  [%d] - %.*s\n", (int)I, (int)OS.getCurrentPosition(),
                 OS.getBuffer());
   }
   std::free(OS.getBuffer());
@@ -2090,7 +2090,7 @@ void Demangler::dumpBackReferences() {
     std::printf("\n");
   std::printf("%d name backreferences\n", (int)BackRefCount);
   for (size_t I = 0; I < BackRefCount; ++I) {
-    std::printf("  [%d] - %*s\n", (int)I, (int)BackReferences[I].size(),
+    std::printf("  [%d] - %.*s\n", (int)I, (int)BackReferences[I].size(),
                 BackReferences[I].begin());
   }
   if (BackRefCount > 0)
