@@ -888,13 +888,8 @@ void InputSectionBase::adjustSplitStackFunctionPrologues(uint8_t *Buf,
     if (Rel.Sym->isLocal())
       continue;
 
-    Defined *D = dyn_cast<Defined>(Rel.Sym);
-    // A reference to an undefined symbol was an error, and should not
-    // have gotten to this point.
-    if (!D)
-      continue;
-
     // Ignore calls into the split-stack api.
+    Defined *D = cast<Defined>(Rel.Sym);
     if (D->getName().startswith("__morestack")) {
       if (D->getName().equals("__morestack"))
         MorestackCalls.push_back(&Rel);
