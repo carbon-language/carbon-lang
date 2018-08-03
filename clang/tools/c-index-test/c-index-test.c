@@ -84,6 +84,8 @@ static unsigned getDefaultParsingOptions() {
     options |= CXTranslationUnit_KeepGoing;
   if (getenv("CINDEXTEST_LIMIT_SKIP_FUNCTION_BODIES_TO_PREAMBLE"))
     options |= CXTranslationUnit_LimitSkipFunctionBodiesToPreamble;
+  if (getenv("CINDEXTEST_INCLUDE_ATTRIBUTED_TYPES"))
+    options |= CXTranslationUnit_IncludeAttributedTypes;
 
   return options;
 }
@@ -1496,6 +1498,22 @@ static void PrintTypeTemplateArgs(CXType T, const char *Format) {
   }
 }
 
+static void PrintNullabilityKind(CXType T, const char *Format) {
+  enum CXTypeNullabilityKind N = clang_Type_getNullability(T);
+
+  const char *nullability = 0;
+  switch (N) {
+    case CXTypeNullability_NonNull: nullability = "nonnull"; break;
+    case CXTypeNullability_Nullable: nullability = "nullable"; break;
+    case CXTypeNullability_Unspecified: nullability = "unspecified"; break;
+    case CXTypeNullability_Invalid: break;
+  }
+
+  if (nullability) {
+    printf(Format, nullability);
+  }
+}
+
 static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
                                          CXClientData d) {
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
@@ -1504,6 +1522,7 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
     enum CXRefQualifierKind RQ = clang_Type_getCXXRefQualifier(T);
     PrintCursor(cursor, NULL);
     PrintTypeAndTypeKind(T, " [type=%s] [typekind=%s]");
+    PrintNullabilityKind(T, " [nullability=%s]");
     if (clang_isConstQualifiedType(T))
       printf(" const");
     if (clang_isVolatileQualifiedType(T))
@@ -1524,12 +1543,20 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
         PrintTypeTemplateArgs(CT, " [canonicaltemplateargs/%d=");
       }
     }
+    /* Print the modified type if it exists. */
+    {
+      CXType MT = clang_Type_getModifiedType(T);
+      if (MT.kind != CXType_Invalid) {
+        PrintTypeAndTypeKind(MT, " [modifiedtype=%s] [modifiedtypekind=%s]");
+      }
+    }
     /* Print the return type if it exists. */
     {
       CXType RT = clang_getCursorResultType(cursor);
       if (RT.kind != CXType_Invalid) {
         PrintTypeAndTypeKind(RT, " [resulttype=%s] [resulttypekind=%s]");
       }
+      PrintNullabilityKind(RT, " [resultnullability=%s]");
     }
     /* Print the argument types if they exist. */
     {
@@ -1541,6 +1568,7 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
           CXType T = clang_getCursorType(clang_Cursor_getArgument(cursor, i));
           if (T.kind != CXType_Invalid) {
             PrintTypeAndTypeKind(T, " [%s] [%s]");
+            PrintNullabilityKind(T, " [%s]");
           }
         }
         printf("]");

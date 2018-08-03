@@ -3745,6 +3745,33 @@ CINDEX_LINKAGE CXType clang_Type_getNamedType(CXType T);
  */
 CINDEX_LINKAGE unsigned clang_Type_isTransparentTagTypedef(CXType T);
 
+enum CXTypeNullabilityKind {
+  /**
+   * Values of this type can never be null.
+   */
+  CXTypeNullability_NonNull = 0,
+  /**
+   * Values of this type can be null.
+   */
+  CXTypeNullability_Nullable = 1,
+  /**
+   * Whether values of this type can be null is (explicitly)
+   * unspecified. This captures a (fairly rare) case where we
+   * can't conclude anything about the nullability of the type even
+   * though it has been considered.
+   */
+  CXTypeNullability_Unspecified = 2,
+  /**
+   * Nullability is not applicable to this type.
+   */
+  CXTypeNullability_Invalid = 3
+};
+
+/**
+ * Retrieve the nullability kind of a pointer type.
+ */
+CINDEX_LINKAGE enum CXTypeNullabilityKind clang_Type_getNullability(CXType T);
+
 /**
  * List the possible error codes for \c clang_Type_getSizeOf,
  *   \c clang_Type_getAlignOf, \c clang_Type_getOffsetOf and

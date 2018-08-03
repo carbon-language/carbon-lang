@@ -1240,3 +1240,22 @@ unsigned clang_Type_isTransparentTagTypedef(CXType TT){
   }
   return false;
 }
+
+enum CXTypeNullabilityKind clang_Type_getNullability(CXType CT) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return CXTypeNullability_Invalid;
+
+  ASTContext &Ctx = cxtu::getASTUnit(GetTU(CT))->getASTContext();
+  if (auto nullability = T->getNullability(Ctx)) {
+    switch (*nullability) {
+      case NullabilityKind::NonNull:
+        return CXTypeNullability_NonNull;
+      case NullabilityKind::Nullable:
+        return CXTypeNullability_Nullable;
+      case NullabilityKind::Unspecified:
+        return CXTypeNullability_Unspecified;
+    }
+  }
+  return CXTypeNullability_Invalid;
+}
