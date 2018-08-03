@@ -415,7 +415,7 @@ private:
       const SourceName &useName);
   Symbol &BeginModule(const SourceName &, bool isSubmodule,
       const std::optional<parser::ModuleSubprogramPart> &);
-  Scope *FindModule(const SourceName &, Scope * = nullptr);
+  Scope *FindModule(const SourceName &, Scope *ancestor = nullptr);
 };
 
 class InterfaceVisitor : public virtual ScopeHandler {
@@ -1333,7 +1333,7 @@ bool ModuleVisitor::Pre(const parser::Submodule &x) {
   }
   PushScope(*parentScope);  // submodule is hosted in parent
   auto &symbol{BeginModule(name, true, subpPart)};
-  if (ancestor->AddSubmodule(name, &CurrScope())) {
+  if (!ancestor->AddSubmodule(name, &CurrScope())) {
     Say(name, "Module '%s' already has a submodule named '%s'"_err_en_US,
         ancestorName, name);
   }

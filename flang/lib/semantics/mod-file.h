@@ -66,6 +66,7 @@ private:
 
   void WriteChildren(const Scope &);
   void WriteOne(const Scope &);
+  void Write(const Symbol &);
   std::string GetAsString(const Symbol &);
   std::string GetHeader(const std::string &);
   void PutSymbols(const Scope &);

@@ -56,9 +56,8 @@ Scope *Scope::FindSubmodule(const SourceName &name) const {
     return it->second;
   }
 }
-Scope *Scope::AddSubmodule(const SourceName &name, Scope *submodule) {
-  auto pair{submodules_.emplace(name, submodule)};
-  return !pair.second ? pair.first->second : nullptr;
+bool Scope::AddSubmodule(const SourceName &name, Scope *submodule) {
+  return submodules_.emplace(name, submodule).second;
 }
 DerivedTypeSpec &Scope::MakeDerivedTypeSpec(const SourceName &name) {
   derivedTypeSpecs_.emplace_back(name);

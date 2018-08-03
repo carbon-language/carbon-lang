@@ -71,32 +71,36 @@ void ModFileWriter::WriteChildren(const Scope &scope) {
 }
 
 void ModFileWriter::WriteOne(const Scope &scope) {
-  auto *symbol{scope.symbol()};
-  if (scope.kind() != Scope::Kind::Module) {
+  if (scope.kind() == Scope::Kind::Module) {
+    auto *symbol{scope.symbol()};
+    if (!symbol->test(Symbol::Flag::ModFile)) {
+      Write(*symbol);
+    }
+    WriteChildren(scope);  // write out submodules
+  }
+}
+
+// Write the module file for symbol, which must be a module or submodule.
+void ModFileWriter::Write(const Symbol &symbol) {
+  auto *ancestor{symbol.get<ModuleDetails>().ancestor()};
+  auto ancestorName{ancestor ? ancestor->name().ToString() : ""s};
+  auto path{ModFilePath(dir_, symbol.name(), ancestorName)};
+  unlink(path.data());
+  std::ofstream os{path};
+  PutSymbols(*symbol.scope());
+  std::string all{GetAsString(symbol)};
+  auto header{GetHeader(all)};
+  os << header << all;
+  os.close();
+  if (!os) {
+    errors_.emplace_back(
+        "Error writing %s: %s"_err_en_US, path.c_str(), std::strerror(errno));
     return;
   }
-  if (!symbol->test(Symbol::Flag::ModFile)) {
-    auto *ancestor{symbol->get<ModuleDetails>().ancestor()};
-    auto ancestorName{ancestor ? ancestor->name().ToString() : ""s};
-    auto path{ModFilePath(dir_, symbol->name(), ancestorName)};
-    unlink(path.data());
-    std::ofstream os{path};
-    PutSymbols(scope);
-    std::string all{GetAsString(*symbol)};
-    auto header{GetHeader(all)};
-    os << header << all;
-    os.close();
-    if (!os) {
-      errors_.emplace_back(
-          "Error writing %s: %s"_err_en_US, path.c_str(), std::strerror(errno));
-      return;
-    }
-    if (!MakeReadonly(path)) {
-      errors_.emplace_back("Error changing permissions on %s: %s"_en_US,
-          path.c_str(), std::strerror(errno));
-    }
+  if (!MakeReadonly(path)) {
+    errors_.emplace_back("Error changing permissions on %s: %s"_en_US,
+        path.c_str(), std::strerror(errno));
   }
-  WriteChildren(scope);  // write out submodules
 }
 
 // Return the entire body of the module file
@@ -406,14 +410,13 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
             name.ToString(), *path));
     return nullptr;
   }
-  Scope *parentScope;
+  Scope *parentScope;  // the scope this module/submodule goes into
   if (!ancestor) {
-    // module: goes into global scope
     parentScope = &Scope::globalScope;
+  } else if (auto *parent{GetSubmoduleParent(*parseTree)}) {
+    parentScope = Read(*parent, ancestor);
   } else {
-    // submodule: goes into parent module/submodule
-    auto *parent{GetSubmoduleParent(*parseTree)};
-    parentScope = parent ? Read(*parent, ancestor) : ancestor;
+    parentScope = ancestor;
   }
   ResolveNames(*parentScope, *parseTree, parsing.cooked(), directories_);
   const auto &it{parentScope->find(name)};

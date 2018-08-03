@@ -104,9 +104,9 @@ public:
   const std::list<Scope> &children() const { return children_; }
 
   // For Module scope, maintain a mapping of all submodule scopes with this
-  // module as its ancestor module.
+  // module as its ancestor module. AddSubmodule returns false if already there.
   Scope *FindSubmodule(const SourceName &) const;
-  Scope *AddSubmodule(const SourceName &, Scope *);
+  bool AddSubmodule(const SourceName &, Scope *);
 
   DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
 
