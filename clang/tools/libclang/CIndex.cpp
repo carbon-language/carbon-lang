@@ -5313,6 +5313,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("attribute(objc_runtime_visible)");
   case CXCursor_ObjCBoxable:
     return cxstring::createRef("attribute(objc_boxable)");
+  case CXCursor_FlagEnum:
+    return cxstring::createRef("attribute(flag_enum)");
   case CXCursor_PreprocessingDirective:
     return cxstring::createRef("preprocessing directive");
   case CXCursor_MacroDefinition:

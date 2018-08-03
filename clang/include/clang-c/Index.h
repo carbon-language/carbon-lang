@@ -32,7 +32,7 @@
  * compatible, thus CINDEX_VERSION_MAJOR is expected to remain stable.
  */
 #define CINDEX_VERSION_MAJOR 0
-#define CINDEX_VERSION_MINOR 49
+#define CINDEX_VERSION_MINOR 50
 
 #define CINDEX_VERSION_ENCODE(major, minor) ( \
       ((major) * 10000)                       \
@@ -2585,7 +2585,8 @@ enum CXCursorKind {
   CXCursor_ObjCDesignatedInitializer     = 434,
   CXCursor_ObjCRuntimeVisible            = 435,
   CXCursor_ObjCBoxable                   = 436,
-  CXCursor_LastAttr                      = CXCursor_ObjCBoxable,
+  CXCursor_FlagEnum                      = 437,
+  CXCursor_LastAttr                      = CXCursor_FlagEnum,
 
   /* Preprocessing */
   CXCursor_PreprocessingDirective        = 500,
