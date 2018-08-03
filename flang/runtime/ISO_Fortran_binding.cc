@@ -181,7 +181,7 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
 }
 
 int CFI_is_contiguous(const CFI_cdesc_t *descriptor) {
-  std::size_t bytes{descriptor->elem_len};
+  CFI_index_t bytes = descriptor->elem_len;
   for (int j{0}; j < descriptor->rank; ++j) {
     if (bytes != descriptor->dim[j].sm) {
       return 0;
