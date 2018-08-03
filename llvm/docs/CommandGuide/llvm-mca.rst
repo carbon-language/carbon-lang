@@ -645,32 +645,32 @@ available units from the group; by default, the resource manager uses a
 round-robin selector to guarantee that resource usage is uniformly distributed
 between all units of a group.
 
-:program:`llvm-mca`'s scheduler implements three instruction queues:
+:program:`llvm-mca`'s scheduler internally groups instructions into three sets:
 
-* WaitQueue: a queue of instructions whose operands are not ready.
-* ReadyQueue: a queue of instructions ready to execute.
-* IssuedQueue: a queue of instructions executing.
+* WaitSet: a set of instructions whose operands are not ready.
+* ReadySet: a set of instructions ready to execute.
+* IssuedSet: a set of instructions executing.
 
-Depending on the operand availability, instructions that are dispatched to the
-scheduler are either placed into the WaitQueue or into the ReadyQueue.
+Depending on the operands availability, instructions that are dispatched to the
+scheduler are either placed into the WaitSet or into the ReadySet.
 
-Every cycle, the scheduler checks if instructions can be moved from the
-WaitQueue to the ReadyQueue, and if instructions from the ReadyQueue can be
-issued to the underlying pipelines. The algorithm prioritizes older instructions
-over younger instructions.
+Every cycle, the scheduler checks if instructions can be moved from the WaitSet
+to the ReadySet, and if instructions from the ReadySet can be issued to the
+underlying pipelines. The algorithm prioritizes older instructions over younger
+instructions.
 
 Write-Back and Retire Stage
 """""""""""""""""""""""""""
-Issued instructions are moved from the ReadyQueue to the IssuedQueue.  There,
+Issued instructions are moved from the ReadySet to the IssuedSet.  There,
 instructions wait until they reach the write-back stage.  At that point, they
 get removed from the queue and the retire control unit is notified.
 
-When instructions are executed, the retire control unit flags the
-instruction as "ready to retire."
+When instructions are executed, the retire control unit flags the instruction as
+"ready to retire."
 
-Instructions are retired in program order.  The register file is notified of
-the retirement so that it can free the physical registers that were allocated
-for the instruction during the register renaming stage.
+Instructions are retired in program order.  The register file is notified of the
+retirement so that it can free the physical registers that were allocated for
+the instruction during the register renaming stage.
 
 Load/Store Unit and Memory Consistency Model
 """"""""""""""""""""""""""""""""""""""""""""
