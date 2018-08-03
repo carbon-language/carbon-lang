@@ -117,12 +117,6 @@ struct TypeBoundProcedure {
   ExecutableCode code;
 };
 
-struct DefinedAssignment {
-  int destinationRank, sourceRank;
-  bool isElemental;
-  ExecutableCode code;
-};
-
 // Represents a specialization of a derived type; i.e., any KIND type
 // parameters have values set at compilation time.
 // Extended derived types have the EXTENDS flag set and place their base
@@ -132,12 +126,10 @@ class DerivedType {
 public:
   DerivedType(const char *n, std::size_t kps, std::size_t lps,
       const TypeParameter *tp, std::size_t cs, const Component *ca,
-      std::size_t tbps, const TypeBoundProcedure *tbp, std::size_t das,
-      const DefinedAssignment *da, std::size_t sz)
+      std::size_t tbps, const TypeBoundProcedure *tbp, std::size_t sz)
     : name_{n}, kindParameters_{kps}, lenParameters_{lps}, typeParameter_{tp},
       components_{cs}, component_{ca}, typeBoundProcedures_{tbps},
-      typeBoundProcedure_{tbp}, definedAssignments_{das},
-      definedAssignment_{da}, bytes_{sz} {
+      typeBoundProcedure_{tbp}, bytes_{sz} {
     if (IsNontrivialAnalysis()) {
       flags_ |= NONTRIVIAL;
     }
@@ -197,8 +189,6 @@ private:
   const Component *component_{nullptr};  // array
   std::size_t typeBoundProcedures_{0};
   const TypeBoundProcedure *typeBoundProcedure_{nullptr};  // array
-  std::size_t definedAssignments_{0};
-  const DefinedAssignment *definedAssignment_{nullptr};  // array
   std::uint64_t flags_{0};
   std::size_t bytes_{0};
 };

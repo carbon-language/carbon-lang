@@ -27,8 +27,7 @@ TypeParameterValue TypeParameter::GetValue(const Descriptor &descriptor) const {
 }
 
 bool DerivedType::IsNontrivialAnalysis() const {
-  if (kindParameters_ > 0 || lenParameters_ > 0 || typeBoundProcedures_ > 0 ||
-      definedAssignments_ > 0) {
+  if (kindParameters_ > 0 || lenParameters_ > 0 || typeBoundProcedures_ > 0) {
     return true;
   }
   for (std::size_t j{0}; j < components_; ++j) {
