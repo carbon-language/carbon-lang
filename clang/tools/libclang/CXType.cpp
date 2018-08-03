@@ -98,6 +98,7 @@ static CXTypeKind GetTypeKind(QualType T) {
     TKCASE(Enum);
     TKCASE(Typedef);
     TKCASE(ObjCInterface);
+    TKCASE(ObjCObject);
     TKCASE(ObjCObjectPointer);
     TKCASE(FunctionNoProto);
     TKCASE(FunctionProto);
@@ -575,6 +576,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(Enum);
     TKIND(Typedef);
     TKIND(ObjCInterface);
+    TKIND(ObjCObject);
     TKIND(ObjCObjectPointer);
     TKIND(FunctionNoProto);
     TKIND(FunctionProto);
@@ -1096,6 +1098,74 @@ CXType clang_Type_getTemplateArgumentAsType(CXType CT, unsigned index) {
 
   Optional<QualType> QT = FindTemplateArgumentTypeAt(TA.getValue(), index);
   return MakeCXType(QT.getValueOr(QualType()), GetTU(CT));
+}
+
+CXType clang_Type_getObjCObjectBaseType(CXType CT) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return MakeCXType(QualType(), GetTU(CT));
+
+  const ObjCObjectType *OT = dyn_cast<ObjCObjectType>(T);
+  if (!OT)
+    return MakeCXType(QualType(), GetTU(CT));
+
+  return MakeCXType(OT->getBaseType(), GetTU(CT));
+}
+
+unsigned clang_Type_getNumObjCProtocolRefs(CXType CT) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return 0;
+
+  const ObjCObjectType *OT = dyn_cast<ObjCObjectType>(T);
+  if (!OT)
+    return 0;
+
+  return OT->getNumProtocols();
+}
+
+CXCursor clang_Type_getObjCProtocolDecl(CXType CT, unsigned i) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
+
+  const ObjCObjectType *OT = dyn_cast<ObjCObjectType>(T);
+  if (!OT)
+    return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
+
+  const ObjCProtocolDecl *PD = OT->getProtocol(i);
+  if (!PD)
+    return cxcursor::MakeCXCursorInvalid(CXCursor_NoDeclFound);
+
+  return cxcursor::MakeCXCursor(PD, GetTU(CT));
+}
+
+unsigned clang_Type_getNumObjCTypeArgs(CXType CT) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return 0;
+
+  const ObjCObjectType *OT = dyn_cast<ObjCObjectType>(T);
+  if (!OT)
+    return 0;
+
+  return OT->getTypeArgs().size();
+}
+
+CXType clang_Type_getObjCTypeArg(CXType CT, unsigned i) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return MakeCXType(QualType(), GetTU(CT));
+
+  const ObjCObjectType *OT = dyn_cast<ObjCObjectType>(T);
+  if (!OT)
+    return MakeCXType(QualType(), GetTU(CT));
+
+  const ArrayRef<QualType> TA = OT->getTypeArgs();
+  if ((size_t)i >= TA.size())
+    return MakeCXType(QualType(), GetTU(CT));
+
+  return MakeCXType(TA[i], GetTU(CT));
 }
 
 unsigned clang_Type_visitFields(CXType PT,

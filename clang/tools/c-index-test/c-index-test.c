@@ -1500,6 +1500,7 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
                                          CXClientData d) {
   if (!clang_isInvalid(clang_getCursorKind(cursor))) {
     CXType T = clang_getCursorType(cursor);
+    CXType PT = clang_getPointeeType(T);
     enum CXRefQualifierKind RQ = clang_Type_getCXXRefQualifier(T);
     PrintCursor(cursor, NULL);
     PrintTypeAndTypeKind(T, " [type=%s] [typekind=%s]");
@@ -1545,11 +1546,45 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
         printf("]");
       }
     }
+    /* Print ObjC base types, type arguments, and protocol list if available. */
+    {
+      CXType BT = clang_Type_getObjCObjectBaseType(PT);
+      if (BT.kind != CXType_Invalid) {
+        PrintTypeAndTypeKind(BT, " [basetype=%s] [basekind=%s]");
+      }
+    }
+    {
+      unsigned NumTypeArgs = clang_Type_getNumObjCTypeArgs(PT);
+      if (NumTypeArgs > 0) {
+        unsigned i;
+        printf(" [typeargs=");
+        for (i = 0; i < NumTypeArgs; ++i) {
+          CXType TA = clang_Type_getObjCTypeArg(PT, i);
+          if (TA.kind != CXType_Invalid) {
+            PrintTypeAndTypeKind(TA, " [%s] [%s]");
+          }
+        }
+        printf("]");
+      }
+    }
+    {
+      unsigned NumProtocols = clang_Type_getNumObjCProtocolRefs(PT);
+      if (NumProtocols > 0) {
+        unsigned i;
+        printf(" [protocols=");
+        for (i = 0; i < NumProtocols; ++i) {
+          CXCursor P = clang_Type_getObjCProtocolDecl(PT, i);
+          if (!clang_isInvalid(clang_getCursorKind(P))) {
+            PrintCursor(P, NULL);
+          }
+        }
+        printf("]");
+      }
+    }
     /* Print if this is a non-POD type. */
     printf(" [isPOD=%d]", clang_isPODType(T));
     /* Print the pointee type. */
     {
-      CXType PT = clang_getPointeeType(T);
       if (PT.kind != CXType_Invalid) {
         PrintTypeAndTypeKind(PT, " [pointeetype=%s] [pointeekind=%s]");
       }

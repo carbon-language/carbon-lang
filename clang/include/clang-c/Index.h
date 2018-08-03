@@ -3265,7 +3265,9 @@ enum CXTypeKind {
   CXType_OCLSampler = 157,
   CXType_OCLEvent = 158,
   CXType_OCLQueue = 159,
-  CXType_OCLReserveID = 160
+  CXType_OCLReserveID = 160,
+
+  CXType_ObjCObject = 161
 };
 
 /**
@@ -3625,6 +3627,43 @@ CINDEX_LINKAGE int clang_getNumArgTypes(CXType T);
  * parameters, an invalid type is returned.
  */
 CINDEX_LINKAGE CXType clang_getArgType(CXType T, unsigned i);
+
+/**
+ * Retrieves the base type of the ObjCObjectType.
+ *
+ * If the type is not an ObjC object, an invalid type is returned.
+ */
+CINDEX_LINKAGE CXType clang_Type_getObjCObjectBaseType(CXType T);
+
+/**
+ * Retrieve the number of protocol references associated with an ObjC object/id.
+ *
+ * If the type is not an ObjC object, 0 is returned.
+ */
+CINDEX_LINKAGE unsigned clang_Type_getNumObjCProtocolRefs(CXType T);
+
+/**
+ * Retrieve the decl for a protocol reference for an ObjC object/id.
+ *
+ * If the type is not an ObjC object or there are not enough protocol
+ * references, an invalid cursor is returned.
+ */
+CINDEX_LINKAGE CXCursor clang_Type_getObjCProtocolDecl(CXType T, unsigned i);
+
+/**
+ * Retreive the number of type arguments associated with an ObjC object.
+ *
+ * If the type is not an ObjC object, 0 is returned.
+ */
+CINDEX_LINKAGE unsigned clang_Type_getNumObjCTypeArgs(CXType T);
+
+/**
+ * Retrieve a type argument associated with an ObjC object.
+ *
+ * If the type is not an ObjC or the index is not valid,
+ * an invalid type is returned.
+ */
+CINDEX_LINKAGE CXType clang_Type_getObjCTypeArg(CXType T, unsigned i);
 
 /**
  * Return 1 if the CXType is a variadic function type, and 0 otherwise.
