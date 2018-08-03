@@ -22,6 +22,8 @@
 
 namespace Fortran::semantics {
 
+IntExpr::~IntExpr() {}
+
 std::ostream &operator<<(std::ostream &o, const IntExpr &x) {
   return x.Output(o);
 }

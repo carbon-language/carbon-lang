@@ -64,6 +64,7 @@ public:
     return IntExpr();  // TODO
   }
   IntExpr() {}
+  virtual ~IntExpr();
   virtual std::ostream &Output(std::ostream &o) const { return o << "IntExpr"; }
 };
 
