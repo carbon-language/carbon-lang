@@ -918,8 +918,7 @@ defm : RELEASE_BINOP_MI<"ADD", add>;
 defm : RELEASE_BINOP_MI<"AND", and>;
 defm : RELEASE_BINOP_MI<"OR",  or>;
 defm : RELEASE_BINOP_MI<"XOR", xor>;
-// Note: we don't deal with sub, because substractions of constants are
-//       optimized into additions before this code can run.
+defm : RELEASE_BINOP_MI<"SUB", sub>;
 
 // Same as above, but for floating-point.
 // FIXME: imm version.

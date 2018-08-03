@@ -462,17 +462,14 @@ define void @add_32r_seq_cst(i32* %p, i32 %v) {
 define void @sub_8r(i8* %p, i8 %v) {
 ; X64-LABEL: sub_8r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movb (%rdi), %al
-; X64-NEXT:    subb %sil, %al
-; X64-NEXT:    movb %al, (%rdi)
+; X64-NEXT:    subb %sil, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: sub_8r:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movb (%eax), %cl
-; X32-NEXT:    subb {{[0-9]+}}(%esp), %cl
-; X32-NEXT:    movb %cl, (%eax)
+; X32-NEXT:    movb {{[0-9]+}}(%esp), %al
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    subb %al, (%ecx)
 ; X32-NEXT:    retl
   %1 = load atomic i8, i8* %p seq_cst, align 1
   %2 = sub i8 %1, %v
@@ -485,17 +482,14 @@ define void @sub_16r(i16* %p, i16 %v) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; X64-LABEL: sub_16r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movzwl (%rdi), %eax
-; X64-NEXT:    subw %si, %ax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    subw %si, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: sub_16r:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movzwl (%eax), %ecx
-; X32-NEXT:    subw {{[0-9]+}}(%esp), %cx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    subw %ax, (%ecx)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = sub i16 %1, %v
@@ -506,17 +500,14 @@ define void @sub_16r(i16* %p, i16 %v) {
 define void @sub_32r(i32* %p, i32 %v) {
 ; X64-LABEL: sub_32r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movl (%rdi), %eax
-; X64-NEXT:    subl %esi, %eax
-; X64-NEXT:    movl %eax, (%rdi)
+; X64-NEXT:    subl %esi, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: sub_32r:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movl (%eax), %ecx
-; X32-NEXT:    subl {{[0-9]+}}(%esp), %ecx
-; X32-NEXT:    movl %ecx, (%eax)
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    subl %eax, (%ecx)
 ; X32-NEXT:    retl
   %1 = load atomic i32, i32* %p acquire, align 4
   %2 = sub i32 %1, %v
@@ -575,9 +566,7 @@ define i32 @sub_32r_ret_load(i32* %p, i32 %v) {
 define void @sub_64r(i64* %p, i64 %v) {
 ; X64-LABEL: sub_64r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movq (%rdi), %rax
-; X64-NEXT:    subq %rsi, %rax
-; X64-NEXT:    movq %rax, (%rdi)
+; X64-NEXT:    subq %rsi, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: sub_64r:
