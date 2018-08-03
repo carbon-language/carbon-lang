@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "descriptor.h"
+#include "transformational.h"
 #include "../lib/common/idioms.h"
 #include "../lib/evaluate/integer.h"
 #include <algorithm>
 #include <bitset>
 #include <cinttypes>
-#include <cstdlib>
+#include <memory>
 
 namespace Fortran::runtime {
 
@@ -39,8 +39,8 @@ static inline std::int64_t GetInt64(const char *p, std::size_t bytes) {
 }
 
 // F2018 16.9.163
-Descriptor *RESHAPE(const Descriptor &source, const Descriptor &shape,
-    const Descriptor *pad, const Descriptor *order) {
+std::unique_ptr<Descriptor> RESHAPE(const Descriptor &source,
+    const Descriptor &shape, const Descriptor *pad, const Descriptor *order) {
   // Compute and check the rank of the result.
   CHECK(shape.rank() == 1);
   CHECK(shape.type().IsInteger());
@@ -48,11 +48,13 @@ Descriptor *RESHAPE(const Descriptor &source, const Descriptor &shape,
   CHECK(resultRank >= 0 && resultRank <= static_cast<SubscriptValue>(maxRank));
 
   // Extract and check the shape of the result; compute its element count.
+  SubscriptValue lowerBound[maxRank];  // all 1's
   SubscriptValue resultExtent[maxRank];
   std::size_t shapeElementBytes{shape.ElementBytes()};
   std::size_t resultElements{1};
   SubscriptValue shapeSubscript{shape.GetDimension(0).LowerBound()};
   for (SubscriptValue j{0}; j < resultRank; ++j, ++shapeSubscript) {
+    lowerBound[j] = 1;
     resultExtent[j] =
         GetInt64(shape.Element<char>(&shapeSubscript), shapeElementBytes);
     CHECK(resultExtent[j] >= 0);
@@ -61,11 +63,12 @@ Descriptor *RESHAPE(const Descriptor &source, const Descriptor &shape,
 
   // Check that there are sufficient elements in the SOURCE=, or that
   // the optional PAD= argument is present and nonempty.
+  std::size_t elementBytes{source.ElementBytes()};
   std::size_t sourceElements{source.Elements()};
   std::size_t padElements{pad ? pad->Elements() : 0};
   if (resultElements < sourceElements) {
     CHECK(padElements > 0);
-    CHECK(pad->ElementBytes() == source.ElementBytes());
+    CHECK(pad->ElementBytes() == elementBytes);
   }
 
   // Extract and check the optional ORDER= argument, which must be a
@@ -89,34 +92,33 @@ Descriptor *RESHAPE(const Descriptor &source, const Descriptor &shape,
     }
   }
 
-  // Allocate the result's data storage.
-  std::size_t elementBytes{source.ElementBytes()};
-  std::size_t resultBytes{resultElements * elementBytes};
-  void *data{std::malloc(resultBytes)};
-  CHECK(resultBytes == 0 || data != nullptr);
-
   // Create and populate the result's descriptor.
   const DescriptorAddendum *sourceAddendum{source.Addendum()};
   const DerivedType *sourceDerivedType{
       sourceAddendum ? sourceAddendum->derivedType() : nullptr};
-  Descriptor *result{nullptr};
+  std::unique_ptr<Descriptor> result;
   if (sourceDerivedType != nullptr) {
-    result =
-        Descriptor::Create(*sourceDerivedType, data, resultRank, resultExtent);
+    result = Descriptor::Create(*sourceDerivedType, nullptr, resultRank,
+        resultExtent, CFI_attribute_allocatable);
   } else {
-    result = Descriptor::Create(
-        source.type(), elementBytes, data, resultRank, resultExtent);
+    result = Descriptor::Create(source.type(), elementBytes, nullptr,
+        resultRank, resultExtent,
+        CFI_attribute_allocatable);  // TODO rearrange these arguments
   }
   DescriptorAddendum *resultAddendum{result->Addendum()};
   CHECK(resultAddendum != nullptr);
   resultAddendum->flags() |= DescriptorAddendum::DoNotFinalize;
-  resultAddendum->flags() |= DescriptorAddendum::AllContiguous;
   if (sourceDerivedType != nullptr) {
     std::size_t lenParameters{sourceDerivedType->lenParameters()};
     for (std::size_t j{0}; j < lenParameters; ++j) {
       resultAddendum->SetLenParameterValue(
           j, sourceAddendum->LenParameterValue(j));
     }
+  }
+  // Allocate storage for the result's data.
+  int status{result->Allocate(lowerBound, resultExtent, elementBytes)};
+  if (status != CFI_SUCCESS) {
+    common::die("RESHAPE: Allocate failed (error %d)", status);
   }
 
   // Populate the result's elements.

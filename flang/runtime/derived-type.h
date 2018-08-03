@@ -77,6 +77,14 @@ public:
     return reinterpret_cast<const A *>(dtInstance + offset_);
   }
 
+  Descriptor *GetDescriptor(char *dtInstance) const {
+    if (IsDescriptor()) {
+      return Locate<Descriptor>(dtInstance);
+    } else {
+      return nullptr;
+    }
+  }
+
   const Descriptor *GetDescriptor(const char *dtInstance) const {
     if (staticDescriptor_ != nullptr) {
       return staticDescriptor_;
@@ -144,14 +152,8 @@ public:
 
   std::size_t components() const { return components_; }
 
-  // TBP 0 is the initializer: SUBROUTINE INIT(INSTANCE)
-  static constexpr int initializerTBP{0};
-
-  // TBP 1 is the sourced allocation copier: SUBROUTINE COPYINIT(TO, FROM)
-  static constexpr int copierTBP{1};
-
-  // TBP 2 is the FINAL subroutine.
-  static constexpr int finalTBP{2};
+  // The first few type-bound procedure indices are special.
+  enum SpecialTBP { InitializerTBP, CopierTBP, FinalTBP };
 
   std::size_t typeBoundProcedures() const { return typeBoundProcedures_; }
   const TypeBoundProcedure &typeBoundProcedure(int n) const {
@@ -175,6 +177,9 @@ public:
   bool IsNontrivial() const { return (flags_ & NONTRIVIAL) != 0; }
 
   bool IsSameType(const DerivedType &) const;
+
+  void Initialize(char *instance) const;
+  void Destroy(char *instance, bool finalize = true) const;
 
 private:
   enum Flag { SEQUENCE = 1, BIND_C = 2, NONTRIVIAL = 4 };

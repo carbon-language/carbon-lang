@@ -31,6 +31,8 @@
 #include <cinttypes>
 #include <cstddef>
 #include <cstring>
+#include <memory>
+#include <ostream>
 
 namespace Fortran::runtime {
 
@@ -63,11 +65,8 @@ public:
   enum Flags {
     StaticDescriptor = 0x001,
     ImplicitAllocatable = 0x002,  // compiler-created allocatable
-    Created = 0x004,  // allocated by Descriptor::Create()
-    DoNotFinalize = 0x008,  // compiler temporary
-    Target = 0x010,  // TARGET attribute
-    AllContiguous = 0x020,  // all array elements are contiguous
-    LeadingDimensionContiguous = 0x040,  // only leading dimension contiguous
+    DoNotFinalize = 0x004,  // compiler temporary
+    Target = 0x008,  // TARGET attribute
   };
 
   explicit DescriptorAddendum(
@@ -100,6 +99,8 @@ public:
     len_[which] = x;
   }
 
+  std::ostream &Dump(std::ostream &) const;
+
 private:
   const DerivedType *derivedType_{nullptr};
   std::uint64_t flags_{0};
@@ -116,13 +117,20 @@ public:
   // Be advised: this class type is not suitable for use when allocating
   // a descriptor -- it is a dynamic view of the common descriptor format.
   // If used in a simple declaration of a local variable or dynamic allocation,
-  // the size is going to be wrong, since the true size of a descriptor
-  // depends on the number of its dimensions and the presence of an addendum.
+  // the size is going to be correct only by accident, since the true size of
+  // a descriptor depends on the number of its dimensions and the presence and
+  // size of an addendum, which depends on the type of the data.
   // Use the class template StaticDescriptor (below) to declare a descriptor
   // whose type and rank are fixed and known at compilation time.  Use the
   // Create() static member functions otherwise to dynamically allocate a
   // descriptor.
-  Descriptor() = delete;
+
+  Descriptor() {
+    // Minimal initialization to prevent the destructor from running amuck
+    // later if the descriptor is never established.
+    raw_.base_addr = nullptr;
+    raw_.f18Addendum = false;
+  }
 
   ~Descriptor();
 
@@ -138,20 +146,18 @@ public:
       const SubscriptValue *extent = nullptr,
       ISO::CFI_attribute_t attribute = CFI_attribute_other);
 
-  static Descriptor *Create(TypeCode t, std::size_t elementBytes,
+  static std::unique_ptr<Descriptor> Create(TypeCode t,
+      std::size_t elementBytes, void *p = nullptr, int rank = maxRank,
+      const SubscriptValue *extent = nullptr,
+      ISO::CFI_attribute_t attribute = CFI_attribute_other);
+  static std::unique_ptr<Descriptor> Create(TypeCategory, int kind,
       void *p = nullptr, int rank = maxRank,
       const SubscriptValue *extent = nullptr,
       ISO::CFI_attribute_t attribute = CFI_attribute_other);
-  static Descriptor *Create(TypeCategory, int kind, void *p = nullptr,
-      int rank = maxRank, const SubscriptValue *extent = nullptr,
+  static std::unique_ptr<Descriptor> Create(const DerivedType &dt,
+      void *p = nullptr, int rank = maxRank,
+      const SubscriptValue *extent = nullptr,
       ISO::CFI_attribute_t attribute = CFI_attribute_other);
-  static Descriptor *Create(const DerivedType &dt, void *p = nullptr,
-      int rank = maxRank, const SubscriptValue *extent = nullptr,
-      ISO::CFI_attribute_t attribute = CFI_attribute_other);
-
-  // Descriptor instances allocated via Create() above must be deallocated
-  // by calling Destroy().
-  void Destroy();
 
   ISO::CFI_cdesc_t &raw() { return raw_; }
   const ISO::CFI_cdesc_t &raw() const { return raw_; }
@@ -168,6 +174,7 @@ public:
   bool IsAllocatable() const {
     return raw_.attribute == CFI_attribute_allocatable;
   }
+  bool IsAllocated() const { return raw_.base_addr != nullptr; }
 
   Dimension &GetDimension(int dim) {
     return *reinterpret_cast<Dimension *>(&raw_.dim[dim]);
@@ -247,19 +254,28 @@ public:
 
   std::size_t Elements() const;
 
-  bool IsContiguous() const {
-    if (raw_.attribute == CFI_attribute_allocatable) {
-      return true;
+  int Allocate(const SubscriptValue lb[], const SubscriptValue ub[],
+      std::size_t charLen = 0);  // TODO: SOURCE= and MOLD=
+  int Deallocate(bool finalize = true);
+  void Destroy(char *data, bool finalize = true) const;
+
+  bool IsContiguous(int leadingDimensions = maxRank) const {
+    auto bytes{static_cast<SubscriptValue>(ElementBytes())};
+    for (int j{0}; j < leadingDimensions && j < raw_.rank; ++j) {
+      const Dimension &dim{GetDimension(j)};
+      if (bytes != dim.ByteStride()) {
+        return false;
+      }
+      bytes *= dim.Extent();
     }
-    if (const DescriptorAddendum * addendum{Addendum()}) {
-      return (addendum->flags() & DescriptorAddendum::AllContiguous) != 0;
-    }
-    return false;
+    return true;
   }
 
   void Check() const;
 
   // TODO: creation of array sections
+
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   ISO::CFI_cdesc_t raw_;
@@ -283,6 +299,10 @@ public:
   static constexpr bool hasAddendum{ADDENDUM || MAX_LEN_PARMS > 0};
   static constexpr std::size_t byteSize{
       Descriptor::SizeInBytes(maxRank, hasAddendum, maxLengthTypeParameters)};
+
+  StaticDescriptor() { new (storage_) Descriptor{}; }
+
+  ~StaticDescriptor() { descriptor().~Descriptor(); }
 
   Descriptor &descriptor() { return *reinterpret_cast<Descriptor *>(storage_); }
   const Descriptor &descriptor() const {

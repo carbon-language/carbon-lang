@@ -16,7 +16,6 @@
 // as specified in section 18.5.5 of Fortran 2018.
 
 #include "descriptor.h"
-#include <cstdlib>
 
 namespace Fortran::ISO {
 extern "C" {
@@ -37,12 +36,13 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
   if (descriptor->version != CFI_VERSION) {
     return CFI_INVALID_DESCRIPTOR;
   }
-  if ((descriptor->attribute &
-          ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
+  if (descriptor->attribute != CFI_attribute_allocatable &&
+      descriptor->attribute != CFI_attribute_pointer) {
     // Non-interoperable object
     return CFI_INVALID_DESCRIPTOR;
   }
-  if (descriptor->base_addr != nullptr) {
+  if (descriptor->attribute == CFI_attribute_allocatable &&
+      descriptor->base_addr != nullptr) {
     return CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
   if (descriptor->rank > CFI_MAX_RANK) {
@@ -70,7 +70,7 @@ int CFI_allocate(CFI_cdesc_t *descriptor, const CFI_index_t lower_bounds[],
     dim->sm = byteSize;
     byteSize *= extent;
   }
-  void *p{std::malloc(byteSize)};
+  void *p{new char[byteSize]};
   if (p == nullptr) {
     return CFI_ERROR_MEM_ALLOCATION;
   }
@@ -83,15 +83,15 @@ int CFI_deallocate(CFI_cdesc_t *descriptor) {
   if (descriptor->version != CFI_VERSION) {
     return CFI_INVALID_DESCRIPTOR;
   }
-  if ((descriptor->attribute &
-          ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
+  if (descriptor->attribute != CFI_attribute_allocatable &&
+      descriptor->attribute != CFI_attribute_pointer) {
     // Non-interoperable object
     return CFI_INVALID_DESCRIPTOR;
   }
   if (descriptor->base_addr == nullptr) {
     return CFI_ERROR_BASE_ADDR_NULL;
   }
-  std::free(descriptor->base_addr);
+  delete[] static_cast<char *>(descriptor->base_addr);
   descriptor->base_addr = nullptr;
   return CFI_SUCCESS;
 }
@@ -141,11 +141,15 @@ static constexpr std::size_t MinElemLen(CFI_type_t type) {
 int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
     CFI_attribute_t attribute, CFI_type_t type, std::size_t elem_len,
     CFI_rank_t rank, const CFI_index_t extents[]) {
-  if ((attribute & ~(CFI_attribute_pointer | CFI_attribute_allocatable)) != 0) {
+  if (attribute != CFI_attribute_other && attribute != CFI_attribute_pointer &&
+      attribute != CFI_attribute_allocatable) {
     return CFI_INVALID_ATTRIBUTE;
   }
   if (rank > CFI_MAX_RANK) {
     return CFI_INVALID_RANK;
+  }
+  if (base_addr != nullptr && attribute != CFI_attribute_pointer) {
+    return CFI_ERROR_BASE_ADDR_NOT_NULL;
   }
   if (rank > 0 && base_addr != nullptr && extents == nullptr) {
     return CFI_INVALID_EXTENT;
@@ -177,7 +181,14 @@ int CFI_establish(CFI_cdesc_t *descriptor, void *base_addr,
 }
 
 int CFI_is_contiguous(const CFI_cdesc_t *descriptor) {
-  return 0;  // TODO
+  std::size_t bytes{descriptor->elem_len};
+  for (int j{0}; j < descriptor->rank; ++j) {
+    if (bytes != descriptor->dim[j].sm) {
+      return 0;
+    }
+    bytes *= descriptor->dim[j].extent;
+  }
+  return 1;
 }
 
 int CFI_section(CFI_cdesc_t *result, const CFI_cdesc_t *source,

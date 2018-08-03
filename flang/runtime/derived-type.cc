@@ -47,4 +47,36 @@ bool DerivedType::IsNontrivialAnalysis() const {
   }
   return false;
 }
+
+void DerivedType::Initialize(char *instance) const {
+  if (typeBoundProcedures_ > InitializerTBP) {
+    if (auto f{reinterpret_cast<void (*)(char *)>(
+            typeBoundProcedure_[InitializerTBP].code.host)}) {
+      f(instance);
+    }
+  }
+  for (std::size_t j{0}; j < components_; ++j) {
+    if (const Descriptor * descriptor{component_[j].GetDescriptor(instance)}) {
+      // TODO
+    }
+  }
+}
+
+void DerivedType::Destroy(char *instance, bool finalize) const {
+  if (finalize && typeBoundProcedures_ > FinalTBP) {
+    if (auto f{reinterpret_cast<void (*)(char *)>(
+            typeBoundProcedure_[FinalTBP].code.host)}) {
+      f(instance);
+    }
+  }
+  const char *constInstance{instance};
+  for (std::size_t j{0}; j < components_; ++j) {
+    if (Descriptor * descriptor{component_[j].GetDescriptor(instance)}) {
+      descriptor->Deallocate(finalize);
+    } else if (const Descriptor *
+        descriptor{component_[j].GetDescriptor(constInstance)}) {
+      descriptor->Destroy(component_[j].Locate<char>(instance), finalize);
+    }
+  }
+}
 }  // namespace Fortran::runtime
