@@ -911,34 +911,48 @@ entry:
   ret <8 x half> %sub.i
 }
 
+define dso_local <4 x half> @test_vfma_f16(<4 x half> %a, <4 x half> %b, <4 x half> %c) {
+; CHECK-LABEL: test_vfma_f16:
+; CHECK:         vfma.f16 d0, d1, d2
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = tail call <4 x half> @llvm.fma.v4f16(<4 x half> %b, <4 x half> %c, <4 x half> %a)
+  ret <4 x half> %0
+}
+
+define dso_local <8 x half> @test_vfmaq_f16(<8 x half> %a, <8 x half> %b, <8 x half> %c) {
+; CHECK-LABEL: test_vfmaq_f16:
+; CHECK:         vfma.f16 q0, q1, q2
+; CHECK-NEXT:    bx lr
+entry:
+  %0 = tail call <8 x half> @llvm.fma.v8f16(<8 x half> %b, <8 x half> %c, <8 x half> %a)
+  ret <8 x half> %0
+}
+
+define dso_local <4 x half> @test_vfms_f16(<4 x half> %a, <4 x half> %b, <4 x half> %c) {
+; CHECK-LABEL: test_vfms_f16:
+; CHECK:         vneg.f16 [[D16:d[0-9]+]], d1
+; CHECK-NEXT:    vfma.f16 d0, [[D16]], d2
+; CHECK-NEXT:    bx lr
+entry:
+  %sub.i = fsub <4 x half> <half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000>, %b
+  %0 = tail call <4 x half> @llvm.fma.v4f16(<4 x half> %sub.i, <4 x half> %c, <4 x half> %a)
+  ret <4 x half> %0
+}
+
+define dso_local <8 x half> @test_vfmsq_f16(<8 x half> %a, <8 x half> %b, <8 x half> %c) {
+; CHECK-LABEL: test_vfmsq_f16:
+; CHECK:         vneg.f16 [[Q8:q[0-9]+]], q1
+; CHECK-NEXT:    vfma.f16 q0, [[Q8]], q2
+; CHECK-NEXT:    bx lr
+entry:
+  %sub.i = fsub <8 x half> <half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000>, %b
+  %0 = tail call <8 x half> @llvm.fma.v8f16(<8 x half> %sub.i, <8 x half> %c, <8 x half> %a)
+  ret <8 x half> %0
+}
+
 ; FIXME (PR38404)
 ;
-;define dso_local <4 x half> @test_vfma_f16(<4 x half> %a, <4 x half> %b, <4 x half> %c) {
-;entry:
-;  %0 = tail call <4 x half> @llvm.fma.v4f16(<4 x half> %b, <4 x half> %c, <4 x half> %a)
-;  ret <4 x half> %0
-;}
-
-;define dso_local <8 x half> @test_vfmaq_f16(<8 x half> %a, <8 x half> %b, <8 x half> %c) {
-;entry:
-;  %0 = tail call <8 x half> @llvm.fma.v8f16(<8 x half> %b, <8 x half> %c, <8 x half> %a)
-;  ret <8 x half> %0
-;}
-
-;define dso_local <4 x half> @test_vfms_f16(<4 x half> %a, <4 x half> %b, <4 x half> %c) {
-;entry:
-;  %sub.i = fsub <4 x half> <half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000>, %b
-;  %0 = tail call <4 x half> @llvm.fma.v4f16(<4 x half> %sub.i, <4 x half> %c, <4 x half> %a)
-;  ret <4 x half> %0
-;}
-
-;define dso_local <8 x half> @test_vfmsq_f16(<8 x half> %a, <8 x half> %b, <8 x half> %c) {
-;entry:
-;  %sub.i = fsub <8 x half> <half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000, half 0xH8000>, %b
-;  %0 = tail call <8 x half> @llvm.fma.v8f16(<8 x half> %sub.i, <8 x half> %c, <8 x half> %a)
-;  ret <8 x half> %0
-;}
-
 ;define dso_local <4 x half> @test_vmul_lane_f16(<4 x half> %a, <4 x half> %b) {
 ;entry:
 ;  %shuffle = shufflevector <4 x half> %b, <4 x half> undef, <4 x i32> <i32 3, i32 3, i32 3, i32 3>
