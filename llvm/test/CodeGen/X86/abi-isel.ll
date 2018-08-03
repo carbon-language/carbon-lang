@@ -32,11 +32,6 @@
 @dxdst = global [32 x i32] zeroinitializer, align 32
 
 define void @foo00() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 0), align 4
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 0), align 4
-	ret void
-
 ; LINUX-64-STATIC-LABEL: foo00:
 ; LINUX-64-STATIC: movl	src(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl	[[EAX]], dst
@@ -101,14 +96,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r..]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 0), align 4
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 0), align 4
+	ret void
+
 }
 
 define void @fxo00() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 0), align 4
-	store i32 %0, i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 0), align 4
-	ret void
-
 ; LINUX-64-STATIC-LABEL: fxo00:
 ; LINUX-64-STATIC: movl	xsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl	[[EAX]], xdst
@@ -173,12 +168,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 0), align 4
+	store i32 %0, i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 0), align 4
+	ret void
+
 }
 
 define void @foo01() nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i32 0), i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: foo01:
 ; LINUX-64-STATIC: movq	$dst, ptr
 ; LINUX-64-STATIC: ret
@@ -233,12 +230,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i32 0), i32** @ptr, align 8
+	ret void
 }
 
 define void @fxo01() nounwind {
-entry:
-	store i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i32 0), i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: fxo01:
 ; LINUX-64-STATIC: movq	$xdst, ptr
 ; LINUX-64-STATIC: ret
@@ -293,14 +290,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i32 0), i32** @ptr, align 8
+	ret void
 }
 
 define void @foo02() nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 0), align 4
-	store i32 %1, i32* %0, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: foo02:
 ; LINUX-64-STATIC: movl    src(%rip), %
 ; LINUX-64-STATIC: movq    ptr(%rip), %
@@ -375,13 +370,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 0), align 4
+	store i32 %1, i32* %0, align 4
+	ret void
 }
 
 define void @fxo02() nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 0), align 4
-	store i32 %1, i32* %0, align 4
 ; LINUX-64-STATIC-LABEL: fxo02:
 ; LINUX-64-STATIC: movl    xsrc(%rip), %
 ; LINUX-64-STATIC: movq    ptr(%rip), %
@@ -393,7 +389,6 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], ([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
-	ret void
 
 ; LINUX-32-PIC-LABEL: fxo02:
 ; LINUX-32-PIC: 	movl	xsrc, [[EAX:%e.x]]
@@ -457,13 +452,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 0), align 4
+	store i32 %1, i32* %0, align 4
+	ret void
 }
 
 define void @foo03() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 0), align 32
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 0), align 32
-	ret void
 ; LINUX-64-STATIC-LABEL: foo03:
 ; LINUX-64-STATIC: movl    dsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst
@@ -518,12 +514,13 @@ entry:
 ; DARWIN-64-PIC: 	movl	_dsrc(%rip), [[EAX:%e.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ddst(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 0), align 32
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 0), align 32
+	ret void
 }
 
 define void @foo04() nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i32 0), i32** @dptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: foo04:
 ; LINUX-64-STATIC: movq    $ddst, dptr
 ; LINUX-64-STATIC: ret
@@ -572,14 +569,12 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i32 0), i32** @dptr, align 8
+	ret void
 }
 
 define void @foo05() nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 0), align 32
-	store i32 %1, i32* %0, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: foo05:
 ; LINUX-64-STATIC: movl    dsrc(%rip), %
 ; LINUX-64-STATIC: movq    dptr(%rip), %
@@ -644,13 +639,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 0), align 32
+	store i32 %1, i32* %0, align 4
+	ret void
 }
 
 define void @foo06() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 0), align 4
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 0), align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: foo06:
 ; LINUX-64-STATIC: movl    lsrc(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst(%rip)
@@ -703,12 +699,13 @@ entry:
 ; DARWIN-64-PIC: 	movl	_lsrc(%rip), [[EAX:%e.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ldst(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 0), align 4
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 0), align 4
+	ret void
 }
 
 define void @foo07() nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i32 0), i32** @lptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: foo07:
 ; LINUX-64-STATIC: movq    $ldst, lptr
 ; LINUX-64-STATIC: ret
@@ -756,14 +753,12 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i32 0), i32** @lptr, align 8
+	ret void
 }
 
 define void @foo08() nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 0), align 4
-	store i32 %1, i32* %0, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: foo08:
 ; LINUX-64-STATIC: movl    lsrc(%rip), %
 ; LINUX-64-STATIC: movq    lptr(%rip), %
@@ -826,13 +821,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 0), align 4
+	store i32 %1, i32* %0, align 4
+	ret void
 }
 
 define void @qux00() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 16), align 4
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 16), align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: qux00:
 ; LINUX-64-STATIC: movl    src+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+64(%rip)
@@ -897,13 +893,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 16), align 4
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 16), align 4
+	ret void
 }
 
 define void @qxx00() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 16), align 4
-	store i32 %0, i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 16), align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: qxx00:
 ; LINUX-64-STATIC: movl    xsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], xdst+64(%rip)
@@ -968,12 +964,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 16), align 4
+	store i32 %0, i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 16), align 4
+	ret void
 }
 
 define void @qux01() nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 16), i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: qux01:
 ; LINUX-64-STATIC: movq    $dst+64, ptr
 ; LINUX-64-STATIC: ret
@@ -1034,12 +1031,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 16), i32** @ptr, align 8
+	ret void
 }
 
 define void @qxx01() nounwind {
-entry:
-	store i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 16), i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: qxx01:
 ; LINUX-64-STATIC: movq    $xdst+64, ptr
 ; LINUX-64-STATIC: ret
@@ -1100,14 +1097,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 16), i32** @ptr, align 8
+	ret void
 }
 
 define void @qux02() nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 16), align 4
-	%2 = getelementptr i32, i32* %0, i64 16
-	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qux02:
 ; LINUX-64-STATIC: movl    src+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -1119,7 +1114,6 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
-	ret void
 
 ; LINUX-32-PIC-LABEL: qux02:
 ; LINUX-32-PIC: 	movl	src+64, [[EAX:%e.x]]
@@ -1183,14 +1177,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 16), align 4
+	%2 = getelementptr i32, i32* %0, i64 16
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @qxx02() nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 16), align 4
-	%2 = getelementptr i32, i32* %0, i64 16
-	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qxx02:
 ; LINUX-64-STATIC: movl    xsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -1202,7 +1197,6 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	movl	ptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
-	ret void
 
 ; LINUX-32-PIC-LABEL: qxx02:
 ; LINUX-32-PIC: 	movl	xsrc+64, [[EAX:%e.x]]
@@ -1266,13 +1260,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 16), align 4
+	%2 = getelementptr i32, i32* %0, i64 16
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @qux03() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 16), align 32
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 16), align 32
-	ret void
 ; LINUX-64-STATIC-LABEL: qux03:
 ; LINUX-64-STATIC: movl    dsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+64(%rip)
@@ -1327,12 +1323,13 @@ entry:
 ; DARWIN-64-PIC: 	movl	_dsrc+64(%rip), [[EAX:%e.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ddst+64(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 16), align 32
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 16), align 32
+	ret void
 }
 
 define void @qux04() nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 16), i32** @dptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: qux04:
 ; LINUX-64-STATIC: movq    $ddst+64, dptr(%rip)
 ; LINUX-64-STATIC: ret
@@ -1382,14 +1379,12 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ddst+64(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 16), i32** @dptr, align 8
+	ret void
 }
 
 define void @qux05() nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 16), align 32
-	%2 = getelementptr i32, i32* %0, i64 16
-	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qux05:
 ; LINUX-64-STATIC: movl    dsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
@@ -1401,7 +1396,6 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	movl	dptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
-	ret void
 
 ; LINUX-32-PIC-LABEL: qux05:
 ; LINUX-32-PIC: 	movl	dsrc+64, [[EAX:%e.x]]
@@ -1455,13 +1449,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 16), align 32
+	%2 = getelementptr i32, i32* %0, i64 16
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @qux06() nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 16), align 4
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 16), align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: qux06:
 ; LINUX-64-STATIC: movl    lsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+64
@@ -1514,12 +1510,13 @@ entry:
 ; DARWIN-64-PIC: 	movl	_lsrc+64(%rip), [[EAX:%e.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ldst+64(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 16), align 4
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 16), align 4
+	ret void
 }
 
 define void @qux07() nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 16), i32** @lptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: qux07:
 ; LINUX-64-STATIC: movq    $ldst+64, lptr
 ; LINUX-64-STATIC: ret
@@ -1567,14 +1564,12 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ldst+64(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 16), i32** @lptr, align 8
+	ret void
 }
 
 define void @qux08() nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 16), align 4
-	%2 = getelementptr i32, i32* %0, i64 16
-	store i32 %1, i32* %2, align 4
 ; LINUX-64-STATIC-LABEL: qux08:
 ; LINUX-64-STATIC: movl    lsrc+64(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
@@ -1586,7 +1581,6 @@ entry:
 ; LINUX-32-STATIC-NEXT: 	movl	lptr, [[ECX:%e.x]]
 ; LINUX-32-STATIC-NEXT: 	movl	[[EAX]], 64([[ECX]])
 ; LINUX-32-STATIC-NEXT: 	ret
-	ret void
 
 ; LINUX-32-PIC-LABEL: qux08:
 ; LINUX-32-PIC: 	movl	lsrc+64, [[EAX:%e.x]]
@@ -1638,15 +1632,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 16), align 4
+	%2 = getelementptr i32, i32* %0, i64 16
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @ind00(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %i
-	%1 = load i32, i32* %0, align 4
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %i
-	store i32 %1, i32* %2, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: ind00:
 ; LINUX-64-STATIC: movl    src(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst(,%rdi,4)
@@ -1716,15 +1710,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %i
+	%1 = load i32, i32* %0, align 4
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %i
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @ixd00(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %i
-	%1 = load i32, i32* %0, align 4
-	%2 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %i
-	store i32 %1, i32* %2, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: ixd00:
 ; LINUX-64-STATIC: movl    xsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], xdst(,%rdi,4)
@@ -1794,13 +1788,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %i
+	%1 = load i32, i32* %0, align 4
+	%2 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %i
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @ind01(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %i
-	store i32* %0, i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: ind01:
 ; LINUX-64-STATIC: leaq    dst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
@@ -1870,13 +1866,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %i
+	store i32* %0, i32** @ptr, align 8
+	ret void
 }
 
 define void @ixd01(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %i
-	store i32* %0, i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: ixd01:
 ; LINUX-64-STATIC: leaq    xdst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
@@ -1946,16 +1942,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	%rdi, ([[RAX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %i
+	store i32* %0, i32** @ptr, align 8
+	ret void
 }
 
 define void @ind02(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %i
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr i32, i32* %0, i64 %i
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: ind02:
 ; LINUX-64-STATIC: movl    src(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -2035,16 +2028,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
-}
-
-define void @ixd02(i64 %i) nounwind {
 entry:
 	%0 = load i32*, i32** @ptr, align 8
-	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %i
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %i
 	%2 = load i32, i32* %1, align 4
 	%3 = getelementptr i32, i32* %0, i64 %i
 	store i32 %2, i32* %3, align 4
 	ret void
+}
+
+define void @ixd02(i64 %i) nounwind {
 ; LINUX-64-STATIC-LABEL: ixd02:
 ; LINUX-64-STATIC: movl    xsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -2124,15 +2117,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %i
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr i32, i32* %0, i64 %i
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @ind03(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %i
-	%1 = load i32, i32* %0, align 4
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %i
-	store i32 %1, i32* %2, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: ind03:
 ; LINUX-64-STATIC: movl    dsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst(,%rdi,4)
@@ -2198,13 +2192,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %i
+	%1 = load i32, i32* %0, align 4
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %i
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @ind04(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %i
-	store i32* %0, i32** @dptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: ind04:
 ; LINUX-64-STATIC: leaq    ddst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], dptr
@@ -2267,16 +2263,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %i
+	store i32* %0, i32** @dptr, align 8
+	ret void
 }
 
 define void @ind05(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %i
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr i32, i32* %0, i64 %i
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: ind05:
 ; LINUX-64-STATIC: movl    dsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
@@ -2349,15 +2342,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %i
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr i32, i32* %0, i64 %i
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @ind06(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %i
-	%1 = load i32, i32* %0, align 4
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %i
-	store i32 %1, i32* %2, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: ind06:
 ; LINUX-64-STATIC: movl    lsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst(,%rdi,4)
@@ -2423,13 +2417,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %i
+	%1 = load i32, i32* %0, align 4
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %i
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @ind07(i64 %i) nounwind {
-entry:
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %i
-	store i32* %0, i32** @lptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: ind07:
 ; LINUX-64-STATIC: leaq    ldst(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], lptr
@@ -2491,16 +2487,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %i
+	store i32* %0, i32** @lptr, align 8
+	ret void
 }
 
 define void @ind08(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %i
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr i32, i32* %0, i64 %i
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: ind08:
 ; LINUX-64-STATIC: movl    lsrc(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
@@ -2572,16 +2565,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], ([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %i
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr i32, i32* %0, i64 %i
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @off00(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: off00:
 ; LINUX-64-STATIC: movl    src+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+64(,%rdi,4)
@@ -2651,16 +2644,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @oxf00(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %0
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %0
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: oxf00:
 ; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], xdst+64(,%rdi,4)
@@ -2730,14 +2723,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_xdst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %0
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %0
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @off01(i64 %i) nounwind {
-entry:
-	%.sum = add i64 %i, 16
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %.sum
-	store i32* %0, i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: off01:
 ; LINUX-64-STATIC: leaq    dst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
@@ -2807,14 +2802,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%.sum = add i64 %i, 16
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %.sum
+	store i32* %0, i32** @ptr, align 8
+	ret void
 }
 
 define void @oxf01(i64 %i) nounwind {
-entry:
-	%.sum = add i64 %i, 16
-	%0 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %.sum
-	store i32* %0, i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: oxf01:
 ; LINUX-64-STATIC: leaq    xdst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr
@@ -2884,17 +2879,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%.sum = add i64 %i, 16
+	%0 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %.sum
+	store i32* %0, i32** @ptr, align 8
+	ret void
 }
 
 define void @off02(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = add i64 %i, 16
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %1
-	%3 = load i32, i32* %2, align 4
-	%4 = getelementptr i32, i32* %0, i64 %1
-	store i32 %3, i32* %4, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: off02:
 ; LINUX-64-STATIC: movl    src+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -2974,17 +2966,17 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
-}
-
-define void @oxf02(i64 %i) nounwind {
 entry:
 	%0 = load i32*, i32** @ptr, align 8
 	%1 = add i64 %i, 16
-	%2 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %1
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %1
 	%3 = load i32, i32* %2, align 4
 	%4 = getelementptr i32, i32* %0, i64 %1
 	store i32 %3, i32* %4, align 4
 	ret void
+}
+
+define void @oxf02(i64 %i) nounwind {
 ; LINUX-64-STATIC-LABEL: oxf02:
 ; LINUX-64-STATIC: movl    xsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -3064,16 +3056,17 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = add i64 %i, 16
+	%2 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %1
+	%3 = load i32, i32* %2, align 4
+	%4 = getelementptr i32, i32* %0, i64 %1
+	store i32 %3, i32* %4, align 4
+	ret void
 }
 
 define void @off03(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: off03:
 ; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+64(,%rdi,4)
@@ -3139,14 +3132,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @off04(i64 %i) nounwind {
-entry:
-	%.sum = add i64 %i, 16
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %.sum
-	store i32* %0, i32** @dptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: off04:
 ; LINUX-64-STATIC: leaq    ddst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], dptr
@@ -3209,17 +3204,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%.sum = add i64 %i, 16
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %.sum
+	store i32* %0, i32** @dptr, align 8
+	ret void
 }
 
 define void @off05(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = add i64 %i, 16
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %1
-	%3 = load i32, i32* %2, align 4
-	%4 = getelementptr i32, i32* %0, i64 %1
-	store i32 %3, i32* %4, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: off05:
 ; LINUX-64-STATIC: movl    dsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
@@ -3292,16 +3284,17 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = add i64 %i, 16
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %1
+	%3 = load i32, i32* %2, align 4
+	%4 = getelementptr i32, i32* %0, i64 %1
+	store i32 %3, i32* %4, align 4
+	ret void
 }
 
 define void @off06(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: off06:
 ; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+64(,%rdi,4)
@@ -3367,14 +3360,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @off07(i64 %i) nounwind {
-entry:
-	%.sum = add i64 %i, 16
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %.sum
-	store i32* %0, i32** @lptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: off07:
 ; LINUX-64-STATIC: leaq    ldst+64(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], lptr
@@ -3436,17 +3431,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%.sum = add i64 %i, 16
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %.sum
+	store i32* %0, i32** @lptr, align 8
+	ret void
 }
 
 define void @off08(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = add i64 %i, 16
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %1
-	%3 = load i32, i32* %2, align 4
-	%4 = getelementptr i32, i32* %0, i64 %1
-	store i32 %3, i32* %4, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: off08:
 ; LINUX-64-STATIC: movl    lsrc+64(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
@@ -3518,13 +3510,17 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 64([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = add i64 %i, 16
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %1
+	%3 = load i32, i32* %2, align 4
+	%4 = getelementptr i32, i32* %0, i64 %1
+	store i32 %3, i32* %4, align 4
+	ret void
 }
 
 define void @moo00(i64 %i) nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 65536), align 4
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 65536), align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: moo00:
 ; LINUX-64-STATIC: movl    src+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+262144(%rip)
@@ -3589,12 +3585,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 65536), align 4
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 65536), align 4
+	ret void
 }
 
 define void @moo01(i64 %i) nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 65536), i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: moo01:
 ; LINUX-64-STATIC: movq    $dst+262144, ptr(%rip)
 ; LINUX-64-STATIC: ret
@@ -3655,15 +3652,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 65536), i32** @ptr, align 8
+	ret void
 }
 
 define void @moo02(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 65536), align 4
-	%2 = getelementptr i32, i32* %0, i64 65536
-	store i32 %1, i32* %2, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: moo02:
 ; LINUX-64-STATIC: movl    src+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -3738,13 +3732,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 65536), align 4
+	%2 = getelementptr i32, i32* %0, i64 65536
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @moo03(i64 %i) nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 65536), align 32
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 65536), align 32
-	ret void
 ; LINUX-64-STATIC-LABEL: moo03:
 ; LINUX-64-STATIC: movl    dsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+262144(%rip)
@@ -3799,12 +3795,13 @@ entry:
 ; DARWIN-64-PIC: 	movl	_dsrc+262144(%rip), [[EAX:%e.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ddst+262144(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 65536), align 32
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 65536), align 32
+	ret void
 }
 
 define void @moo04(i64 %i) nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 65536), i32** @dptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: moo04:
 ; LINUX-64-STATIC: movq    $ddst+262144, dptr
 ; LINUX-64-STATIC: ret
@@ -3854,15 +3851,12 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ddst+262144(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 65536), i32** @dptr, align 8
+	ret void
 }
 
 define void @moo05(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 65536), align 32
-	%2 = getelementptr i32, i32* %0, i64 65536
-	store i32 %1, i32* %2, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: moo05:
 ; LINUX-64-STATIC: movl    dsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
@@ -3927,13 +3921,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 65536), align 32
+	%2 = getelementptr i32, i32* %0, i64 65536
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @moo06(i64 %i) nounwind {
-entry:
-	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 65536), align 4
-	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 65536), align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: moo06:
 ; LINUX-64-STATIC: movl    lsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+262144(%rip)
@@ -3986,12 +3982,13 @@ entry:
 ; DARWIN-64-PIC: 	movl	_lsrc+262144(%rip), [[EAX:%e.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], _ldst+262144(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 65536), align 4
+	store i32 %0, i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 65536), align 4
+	ret void
 }
 
 define void @moo07(i64 %i) nounwind {
-entry:
-	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 65536), i32** @lptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: moo07:
 ; LINUX-64-STATIC: movq    $ldst+262144, lptr
 ; LINUX-64-STATIC: ret
@@ -4039,15 +4036,12 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ldst+262144(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	store i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 65536), i32** @lptr, align 8
+	ret void
 }
 
 define void @moo08(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 65536), align 4
-	%2 = getelementptr i32, i32* %0, i64 65536
-	store i32 %1, i32* %2, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: moo08:
 ; LINUX-64-STATIC: movl    lsrc+262144(%rip), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
@@ -4110,16 +4104,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = load i32, i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 65536), align 4
+	%2 = getelementptr i32, i32* %0, i64 65536
+	store i32 %1, i32* %2, align 4
+	ret void
 }
 
 define void @big00(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: big00:
 ; LINUX-64-STATIC: movl    src+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], dst+262144(,%rdi,4)
@@ -4189,14 +4182,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dst@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @big01(i64 %i) nounwind {
-entry:
-	%.sum = add i64 %i, 65536
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %.sum
-	store i32* %0, i32** @ptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: big01:
 ; LINUX-64-STATIC: leaq    dst+262144(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], ptr(%rip)
@@ -4266,17 +4261,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], ([[RCX]])
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%.sum = add i64 %i, 65536
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %.sum
+	store i32* %0, i32** @ptr, align 8
+	ret void
 }
 
 define void @big02(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = add i64 %i, 65536
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %1
-	%3 = load i32, i32* %2, align 4
-	%4 = getelementptr i32, i32* %0, i64 %1
-	store i32 %3, i32* %4, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: big02:
 ; LINUX-64-STATIC: movl    src+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RCX:%r.x]]
@@ -4356,16 +4348,17 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RCX]]), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = add i64 %i, 65536
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %1
+	%3 = load i32, i32* %2, align 4
+	%4 = getelementptr i32, i32* %0, i64 %1
+	store i32 %3, i32* %4, align 4
+	ret void
 }
 
 define void @big03(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: big03:
 ; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ddst+262144(,%rdi,4)
@@ -4431,14 +4424,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	_ddst(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @big04(i64 %i) nounwind {
-entry:
-	%.sum = add i64 %i, 65536
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %.sum
-	store i32* %0, i32** @dptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: big04:
 ; LINUX-64-STATIC: leaq    ddst+262144(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], dptr
@@ -4501,17 +4496,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _dptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%.sum = add i64 %i, 65536
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %.sum
+	store i32* %0, i32** @dptr, align 8
+	ret void
 }
 
 define void @big05(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = add i64 %i, 65536
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %1
-	%3 = load i32, i32* %2, align 4
-	%4 = getelementptr i32, i32* %0, i64 %1
-	store i32 %3, i32* %4, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: big05:
 ; LINUX-64-STATIC: movl    dsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RCX:%r.x]]
@@ -4584,16 +4576,17 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_dptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = add i64 %i, 65536
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %1
+	%3 = load i32, i32* %2, align 4
+	%4 = getelementptr i32, i32* %0, i64 %1
+	store i32 %3, i32* %4, align 4
+	ret void
 }
 
 define void @big06(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
-	%2 = load i32, i32* %1, align 4
-	%3 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
-	store i32 %2, i32* %3, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: big06:
 ; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movl    [[EAX]], ldst+262144(,%rdi,4)
@@ -4659,14 +4652,16 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	_ldst(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
+	%2 = load i32, i32* %1, align 4
+	%3 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
+	store i32 %2, i32* %3, align 4
+	ret void
 }
 
 define void @big07(i64 %i) nounwind {
-entry:
-	%.sum = add i64 %i, 65536
-	%0 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %.sum
-	store i32* %0, i32** @lptr, align 8
-	ret void
 ; LINUX-64-STATIC-LABEL: big07:
 ; LINUX-64-STATIC: leaq    ldst+262144(,%rdi,4), [[RAX:%r.x]]
 ; LINUX-64-STATIC: movq    [[RAX]], lptr
@@ -4728,17 +4723,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	[[RAX]], _lptr(%rip)
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%.sum = add i64 %i, 65536
+	%0 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %.sum
+	store i32* %0, i32** @lptr, align 8
+	ret void
 }
 
 define void @big08(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = add i64 %i, 65536
-	%2 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %1
-	%3 = load i32, i32* %2, align 4
-	%4 = getelementptr i32, i32* %0, i64 %1
-	store i32 %3, i32* %4, align 4
-	ret void
 ; LINUX-64-STATIC-LABEL: big08:
 ; LINUX-64-STATIC: movl    lsrc+262144(,%rdi,4), [[EAX:%e.x]]
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RCX:%r.x]]
@@ -4810,11 +4802,18 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_lptr(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movl	[[EAX]], 262144([[RCX]],%rdi,4)
 ; DARWIN-64-PIC-NEXT: 	ret
+
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = add i64 %i, 65536
+	%2 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %1
+	%3 = load i32, i32* %2, align 4
+	%4 = getelementptr i32, i32* %0, i64 %1
+	store i32 %3, i32* %4, align 4
+	ret void
 }
 
 define i8* @bar00() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @src to i8*)
 ; LINUX-64-STATIC-LABEL: bar00:
 ; LINUX-64-STATIC: movl    $src, %eax
 ; LINUX-64-STATIC: ret
@@ -4857,11 +4856,12 @@ entry:
 ; DARWIN-64-PIC: _bar00:
 ; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+
+entry:
+	ret i8* bitcast ([131072 x i32]* @src to i8*)
 }
 
 define i8* @bxr00() nounwind {
-entry:
-	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
 ; LINUX-64-STATIC-LABEL: bxr00:
 ; LINUX-64-STATIC: movl    $xsrc, %eax
 ; LINUX-64-STATIC: ret
@@ -4904,11 +4904,12 @@ entry:
 ; DARWIN-64-PIC: _bxr00:
 ; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+
+entry:
+	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
 }
 
 define i8* @bar01() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @dst to i8*)
 ; LINUX-64-STATIC-LABEL: bar01:
 ; LINUX-64-STATIC: movl    $dst, %eax
 ; LINUX-64-STATIC: ret
@@ -4951,11 +4952,12 @@ entry:
 ; DARWIN-64-PIC: _bar01:
 ; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+
+entry:
+	ret i8* bitcast ([131072 x i32]* @dst to i8*)
 }
 
 define i8* @bxr01() nounwind {
-entry:
-	ret i8* bitcast ([32 x i32]* @xdst to i8*)
 ; LINUX-64-STATIC-LABEL: bxr01:
 ; LINUX-64-STATIC: movl    $xdst, %eax
 ; LINUX-64-STATIC: ret
@@ -4998,11 +5000,12 @@ entry:
 ; DARWIN-64-PIC: _bxr01:
 ; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+
+entry:
+	ret i8* bitcast ([32 x i32]* @xdst to i8*)
 }
 
 define i8* @bar02() nounwind {
-entry:
-	ret i8* bitcast (i32** @ptr to i8*)
 ; LINUX-64-STATIC-LABEL: bar02:
 ; LINUX-64-STATIC: movl    $ptr, %eax
 ; LINUX-64-STATIC: ret
@@ -5045,11 +5048,11 @@ entry:
 ; DARWIN-64-PIC: _bar02:
 ; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32** @ptr to i8*)
 }
 
 define i8* @bar03() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
 ; LINUX-64-STATIC-LABEL: bar03:
 ; LINUX-64-STATIC: movl    $dsrc, %eax
 ; LINUX-64-STATIC: ret
@@ -5092,11 +5095,11 @@ entry:
 ; DARWIN-64-PIC: _bar03:
 ; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
 }
 
 define i8* @bar04() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
 ; LINUX-64-STATIC-LABEL: bar04:
 ; LINUX-64-STATIC: movl    $ddst, %eax
 ; LINUX-64-STATIC: ret
@@ -5139,11 +5142,11 @@ entry:
 ; DARWIN-64-PIC: _bar04:
 ; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
 }
 
 define i8* @bar05() nounwind {
-entry:
-	ret i8* bitcast (i32** @dptr to i8*)
 ; LINUX-64-STATIC-LABEL: bar05:
 ; LINUX-64-STATIC: movl    $dptr, %eax
 ; LINUX-64-STATIC: ret
@@ -5186,11 +5189,11 @@ entry:
 ; DARWIN-64-PIC: _bar05:
 ; DARWIN-64-PIC: 	leaq	_dptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32** @dptr to i8*)
 }
 
 define i8* @bar06() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
 ; LINUX-64-STATIC-LABEL: bar06:
 ; LINUX-64-STATIC: movl    $lsrc, %eax
 ; LINUX-64-STATIC: ret
@@ -5233,11 +5236,11 @@ entry:
 ; DARWIN-64-PIC: _bar06:
 ; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
 }
 
 define i8* @bar07() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
 ; LINUX-64-STATIC-LABEL: bar07:
 ; LINUX-64-STATIC: movl    $ldst, %eax
 ; LINUX-64-STATIC: ret
@@ -5280,11 +5283,11 @@ entry:
 ; DARWIN-64-PIC: _bar07:
 ; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
 }
 
 define i8* @bar08() nounwind {
-entry:
-	ret i8* bitcast (i32** @lptr to i8*)
 ; LINUX-64-STATIC-LABEL: bar08:
 ; LINUX-64-STATIC: movl    $lptr, %eax
 ; LINUX-64-STATIC: ret
@@ -5327,11 +5330,11 @@ entry:
 ; DARWIN-64-PIC: _bar08:
 ; DARWIN-64-PIC: 	leaq	_lptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32** @lptr to i8*)
 }
 
 define i8* @har00() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @src to i8*)
 ; LINUX-64-STATIC-LABEL: har00:
 ; LINUX-64-STATIC: movl    $src, %eax
 ; LINUX-64-STATIC: ret
@@ -5374,11 +5377,11 @@ entry:
 ; DARWIN-64-PIC: _har00:
 ; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @src to i8*)
 }
 
 define i8* @hxr00() nounwind {
-entry:
-	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
 ; LINUX-64-STATIC-LABEL: hxr00:
 ; LINUX-64-STATIC: movl    $xsrc, %eax
 ; LINUX-64-STATIC: ret
@@ -5421,11 +5424,11 @@ entry:
 ; DARWIN-64-PIC: _hxr00:
 ; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([32 x i32]* @xsrc to i8*)
 }
 
 define i8* @har01() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @dst to i8*)
 ; LINUX-64-STATIC-LABEL: har01:
 ; LINUX-64-STATIC: movl    $dst, %eax
 ; LINUX-64-STATIC: ret
@@ -5468,11 +5471,11 @@ entry:
 ; DARWIN-64-PIC: _har01:
 ; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @dst to i8*)
 }
 
 define i8* @hxr01() nounwind {
-entry:
-	ret i8* bitcast ([32 x i32]* @xdst to i8*)
 ; LINUX-64-STATIC-LABEL: hxr01:
 ; LINUX-64-STATIC: movl    $xdst, %eax
 ; LINUX-64-STATIC: ret
@@ -5515,13 +5518,11 @@ entry:
 ; DARWIN-64-PIC: _hxr01:
 ; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([32 x i32]* @xdst to i8*)
 }
 
 define i8* @har02() nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = bitcast i32* %0 to i8*
-	ret i8* %1
 ; LINUX-64-STATIC-LABEL: har02:
 ; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: ret
@@ -5570,11 +5571,13 @@ entry:
 ; DARWIN-64-PIC: 	movq	_ptr@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = bitcast i32* %0 to i8*
+	ret i8* %1
 }
 
 define i8* @har03() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
 ; LINUX-64-STATIC-LABEL: har03:
 ; LINUX-64-STATIC: movl    $dsrc, %eax
 ; LINUX-64-STATIC: ret
@@ -5617,11 +5620,11 @@ entry:
 ; DARWIN-64-PIC: _har03:
 ; DARWIN-64-PIC: 	leaq	_dsrc(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @dsrc to i8*)
 }
 
 define i8* @har04() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
 ; LINUX-64-STATIC-LABEL: har04:
 ; LINUX-64-STATIC: movl    $ddst, %eax
 ; LINUX-64-STATIC: ret
@@ -5664,13 +5667,11 @@ entry:
 ; DARWIN-64-PIC: _har04:
 ; DARWIN-64-PIC: 	leaq	_ddst(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @ddst to i8*)
 }
 
 define i8* @har05() nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = bitcast i32* %0 to i8*
-	ret i8* %1
 ; LINUX-64-STATIC-LABEL: har05:
 ; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: ret
@@ -5714,11 +5715,13 @@ entry:
 ; DARWIN-64-PIC: _har05:
 ; DARWIN-64-PIC: 	movq	_dptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = bitcast i32* %0 to i8*
+	ret i8* %1
 }
 
 define i8* @har06() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
 ; LINUX-64-STATIC-LABEL: har06:
 ; LINUX-64-STATIC: movl    $lsrc, %eax
 ; LINUX-64-STATIC: ret
@@ -5761,11 +5764,11 @@ entry:
 ; DARWIN-64-PIC: _har06:
 ; DARWIN-64-PIC: 	leaq	_lsrc(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @lsrc to i8*)
 }
 
 define i8* @har07() nounwind {
-entry:
-	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
 ; LINUX-64-STATIC-LABEL: har07:
 ; LINUX-64-STATIC: movl    $ldst, %eax
 ; LINUX-64-STATIC: ret
@@ -5808,13 +5811,11 @@ entry:
 ; DARWIN-64-PIC: _har07:
 ; DARWIN-64-PIC: 	leaq	_ldst(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast ([131072 x i32]* @ldst to i8*)
 }
 
 define i8* @har08() nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = bitcast i32* %0 to i8*
-	ret i8* %1
 ; LINUX-64-STATIC-LABEL: har08:
 ; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: ret
@@ -5857,11 +5858,13 @@ entry:
 ; DARWIN-64-PIC: _har08:
 ; DARWIN-64-PIC: 	movq	_lptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = bitcast i32* %0 to i8*
+	ret i8* %1
 }
 
 define i8* @bat00() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bat00:
 ; LINUX-64-STATIC: movl    $src+64, %eax
 ; LINUX-64-STATIC: ret
@@ -5910,11 +5913,11 @@ entry:
 ; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 16) to i8*)
 }
 
 define i8* @bxt00() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bxt00:
 ; LINUX-64-STATIC: movl    $xsrc+64, %eax
 ; LINUX-64-STATIC: ret
@@ -5963,11 +5966,11 @@ entry:
 ; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([32 x i32], [32 x i32]* @xsrc, i32 0, i64 16) to i8*)
 }
 
 define i8* @bat01() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bat01:
 ; LINUX-64-STATIC: movl    $dst+64, %eax
 ; LINUX-64-STATIC: ret
@@ -6016,11 +6019,11 @@ entry:
 ; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 16) to i8*)
 }
 
 define i8* @bxt01() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bxt01:
 ; LINUX-64-STATIC: movl    $xdst+64, %eax
 ; LINUX-64-STATIC: ret
@@ -6069,14 +6072,11 @@ entry:
 ; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 16) to i8*)
 }
 
 define i8* @bat02() nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = getelementptr i32, i32* %0, i64 16
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: bat02:
 ; LINUX-64-STATIC: movq    ptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
@@ -6135,11 +6135,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = getelementptr i32, i32* %0, i64 16
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @bat03() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bat03:
 ; LINUX-64-STATIC: movl    $dsrc+64, %eax
 ; LINUX-64-STATIC: ret
@@ -6183,11 +6186,11 @@ entry:
 ; DARWIN-64-PIC: _bat03:
 ; DARWIN-64-PIC: 	leaq	_dsrc+64(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 16) to i8*)
 }
 
 define i8* @bat04() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bat04:
 ; LINUX-64-STATIC: movl    $ddst+64, %eax
 ; LINUX-64-STATIC: ret
@@ -6231,14 +6234,11 @@ entry:
 ; DARWIN-64-PIC: _bat04:
 ; DARWIN-64-PIC: 	leaq	_ddst+64(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 16) to i8*)
 }
 
 define i8* @bat05() nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = getelementptr i32, i32* %0, i64 16
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: bat05:
 ; LINUX-64-STATIC: movq    dptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
@@ -6292,11 +6292,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_dptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = getelementptr i32, i32* %0, i64 16
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @bat06() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bat06:
 ; LINUX-64-STATIC: movl    $lsrc+64, %eax
 ; LINUX-64-STATIC: ret
@@ -6339,11 +6342,11 @@ entry:
 ; DARWIN-64-PIC: _bat06:
 ; DARWIN-64-PIC: 	leaq	_lsrc+64(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 16) to i8*)
 }
 
 define i8* @bat07() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 16) to i8*)
 ; LINUX-64-STATIC-LABEL: bat07:
 ; LINUX-64-STATIC: movl    $ldst+64, %eax
 ; LINUX-64-STATIC: ret
@@ -6386,14 +6389,11 @@ entry:
 ; DARWIN-64-PIC: _bat07:
 ; DARWIN-64-PIC: 	leaq	_ldst+64(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 16) to i8*)
 }
 
 define i8* @bat08() nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = getelementptr i32, i32* %0, i64 16
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: bat08:
 ; LINUX-64-STATIC: movq    lptr(%rip), %rax
 ; LINUX-64-STATIC: addq    $64, %rax
@@ -6446,11 +6446,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_lptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	addq	$64, %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = getelementptr i32, i32* %0, i64 16
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @bam00() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC-LABEL: bam00:
 ; LINUX-64-STATIC: movl    $src+262144, %eax
 ; LINUX-64-STATIC: ret
@@ -6499,11 +6502,11 @@ entry:
 ; DARWIN-64-PIC: 	movl	$262144, %eax
 ; DARWIN-64-PIC-NEXT: 	addq	_src@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @src, i32 0, i64 65536) to i8*)
 }
 
 define i8* @bam01() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC-LABEL: bam01:
 ; LINUX-64-STATIC: movl    $dst+262144, %eax
 ; LINUX-64-STATIC: ret
@@ -6552,11 +6555,11 @@ entry:
 ; DARWIN-64-PIC: 	movl	$262144, %eax
 ; DARWIN-64-PIC-NEXT: 	addq	_dst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dst, i32 0, i64 65536) to i8*)
 }
 
 define i8* @bxm01() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC-LABEL: bxm01:
 ; LINUX-64-STATIC: movl    $xdst+262144, %eax
 ; LINUX-64-STATIC: ret
@@ -6605,14 +6608,11 @@ entry:
 ; DARWIN-64-PIC: 	movl	$262144, %eax
 ; DARWIN-64-PIC-NEXT: 	addq	_xdst@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([32 x i32], [32 x i32]* @xdst, i32 0, i64 65536) to i8*)
 }
 
 define i8* @bam02() nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = getelementptr i32, i32* %0, i64 65536
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: bam02:
 ; LINUX-64-STATIC: movl    $262144, %eax
 ; LINUX-64-STATIC: addq    ptr(%rip), %rax
@@ -6671,11 +6671,14 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	_ptr@GOTPCREL(%rip), [[RCX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	addq	([[RCX]]), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = getelementptr i32, i32* %0, i64 65536
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @bam03() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC-LABEL: bam03:
 ; LINUX-64-STATIC: movl    $dsrc+262144, %eax
 ; LINUX-64-STATIC: ret
@@ -6719,11 +6722,11 @@ entry:
 ; DARWIN-64-PIC: _bam03:
 ; DARWIN-64-PIC: 	leaq	_dsrc+262144(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @dsrc, i32 0, i64 65536) to i8*)
 }
 
 define i8* @bam04() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC-LABEL: bam04:
 ; LINUX-64-STATIC: movl    $ddst+262144, %eax
 ; LINUX-64-STATIC: ret
@@ -6767,14 +6770,11 @@ entry:
 ; DARWIN-64-PIC: _bam04:
 ; DARWIN-64-PIC: 	leaq	_ddst+262144(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ddst, i32 0, i64 65536) to i8*)
 }
 
 define i8* @bam05() nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = getelementptr i32, i32* %0, i64 65536
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: bam05:
 ; LINUX-64-STATIC: movl    $262144, %eax
 ; LINUX-64-STATIC: addq    dptr(%rip), %rax
@@ -6828,11 +6828,14 @@ entry:
 ; DARWIN-64-PIC: 	movl	$262144, %eax
 ; DARWIN-64-PIC-NEXT: 	addq	_dptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = getelementptr i32, i32* %0, i64 65536
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @bam06() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC-LABEL: bam06:
 ; LINUX-64-STATIC: movl    $lsrc+262144, %eax
 ; LINUX-64-STATIC: ret
@@ -6875,11 +6878,11 @@ entry:
 ; DARWIN-64-PIC: _bam06:
 ; DARWIN-64-PIC: 	leaq	_lsrc+262144(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @lsrc, i32 0, i64 65536) to i8*)
 }
 
 define i8* @bam07() nounwind {
-entry:
-	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 65536) to i8*)
 ; LINUX-64-STATIC-LABEL: bam07:
 ; LINUX-64-STATIC: movl    $ldst+262144, %eax
 ; LINUX-64-STATIC: ret
@@ -6922,14 +6925,11 @@ entry:
 ; DARWIN-64-PIC: _bam07:
 ; DARWIN-64-PIC: 	leaq	_ldst+262144(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret i8* bitcast (i32* getelementptr ([131072 x i32], [131072 x i32]* @ldst, i32 0, i64 65536) to i8*)
 }
 
 define i8* @bam08() nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = getelementptr i32, i32* %0, i64 65536
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: bam08:
 ; LINUX-64-STATIC: movl    $262144, %eax
 ; LINUX-64-STATIC: addq    lptr(%rip), %rax
@@ -6982,14 +6982,14 @@ entry:
 ; DARWIN-64-PIC: 	movl	$262144, %eax
 ; DARWIN-64-PIC-NEXT: 	addq	_lptr(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = getelementptr i32, i32* %0, i64 65536
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cat00(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cat00:
 ; LINUX-64-STATIC: leaq    src+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7043,14 +7043,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cxt00(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cxt00:
 ; LINUX-64-STATIC: leaq    xsrc+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7104,14 +7104,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cat01(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cat01:
 ; LINUX-64-STATIC: leaq    dst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7165,14 +7165,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cxt01(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cxt01:
 ; LINUX-64-STATIC: leaq    xdst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7226,15 +7226,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cat02(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = add i64 %i, 16
-	%2 = getelementptr i32, i32* %0, i64 %1
-	%3 = bitcast i32* %2 to i8*
-	ret i8* %3
 ; LINUX-64-STATIC-LABEL: cat02:
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
@@ -7298,14 +7297,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = add i64 %i, 16
+	%2 = getelementptr i32, i32* %0, i64 %1
+	%3 = bitcast i32* %2 to i8*
+	ret i8* %3
 }
 
 define i8* @cat03(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cat03:
 ; LINUX-64-STATIC: leaq    dsrc+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7357,14 +7357,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cat04(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cat04:
 ; LINUX-64-STATIC: leaq    ddst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7416,15 +7416,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cat05(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = add i64 %i, 16
-	%2 = getelementptr i32, i32* %0, i64 %1
-	%3 = bitcast i32* %2 to i8*
-	ret i8* %3
 ; LINUX-64-STATIC-LABEL: cat05:
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
@@ -7483,14 +7482,15 @@ entry:
 ; DARWIN-64-PIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = add i64 %i, 16
+	%2 = getelementptr i32, i32* %0, i64 %1
+	%3 = bitcast i32* %2 to i8*
+	ret i8* %3
 }
 
 define i8* @cat06(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cat06:
 ; LINUX-64-STATIC: leaq    lsrc+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7542,14 +7542,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cat07(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 16
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cat07:
 ; LINUX-64-STATIC: leaq    ldst+64(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7601,15 +7601,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 16
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cat08(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = add i64 %i, 16
-	%2 = getelementptr i32, i32* %0, i64 %1
-	%3 = bitcast i32* %2 to i8*
-	ret i8* %3
 ; LINUX-64-STATIC-LABEL: cat08:
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    64([[RAX]],%rdi,4), %rax
@@ -7667,14 +7666,15 @@ entry:
 ; DARWIN-64-PIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	64([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = add i64 %i, 16
+	%2 = getelementptr i32, i32* %0, i64 %1
+	%3 = bitcast i32* %2 to i8*
+	ret i8* %3
 }
 
 define i8* @cam00(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cam00:
 ; LINUX-64-STATIC: leaq    src+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7728,14 +7728,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_src@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @src, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cxm00(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cxm00:
 ; LINUX-64-STATIC: leaq    xsrc+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7789,14 +7789,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_xsrc@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [32 x i32], [32 x i32]* @xsrc, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cam01(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cam01:
 ; LINUX-64-STATIC: leaq    dst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7850,14 +7850,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_dst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @dst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cxm01(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cxm01:
 ; LINUX-64-STATIC: leaq    xdst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -7911,15 +7911,14 @@ entry:
 ; DARWIN-64-PIC: 	movq	_xdst@GOTPCREL(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [32 x i32], [32 x i32]* @xdst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cam02(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @ptr, align 8
-	%1 = add i64 %i, 65536
-	%2 = getelementptr i32, i32* %0, i64 %1
-	%3 = bitcast i32* %2 to i8*
-	ret i8* %3
 ; LINUX-64-STATIC-LABEL: cam02:
 ; LINUX-64-STATIC: movq    ptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
@@ -7983,14 +7982,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	movq	([[RAX]]), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @ptr, align 8
+	%1 = add i64 %i, 65536
+	%2 = getelementptr i32, i32* %0, i64 %1
+	%3 = bitcast i32* %2 to i8*
+	ret i8* %3
 }
 
 define i8* @cam03(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cam03:
 ; LINUX-64-STATIC: leaq    dsrc+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -8042,14 +8042,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_dsrc(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @dsrc, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cam04(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cam04:
 ; LINUX-64-STATIC: leaq    ddst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -8101,15 +8101,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ddst(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @ddst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cam05(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @dptr, align 8
-	%1 = add i64 %i, 65536
-	%2 = getelementptr i32, i32* %0, i64 %1
-	%3 = bitcast i32* %2 to i8*
-	ret i8* %3
 ; LINUX-64-STATIC-LABEL: cam05:
 ; LINUX-64-STATIC: movq    dptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
@@ -8168,14 +8167,15 @@ entry:
 ; DARWIN-64-PIC: 	movq	_dptr(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @dptr, align 8
+	%1 = add i64 %i, 65536
+	%2 = getelementptr i32, i32* %0, i64 %1
+	%3 = bitcast i32* %2 to i8*
+	ret i8* %3
 }
 
 define i8* @cam06(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cam06:
 ; LINUX-64-STATIC: leaq    lsrc+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -8227,14 +8227,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_lsrc(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @lsrc, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cam07(i64 %i) nounwind {
-entry:
-	%0 = add i64 %i, 65536
-	%1 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
-	%2 = bitcast i32* %1 to i8*
-	ret i8* %2
 ; LINUX-64-STATIC-LABEL: cam07:
 ; LINUX-64-STATIC: leaq    ldst+262144(,%rdi,4), %rax
 ; LINUX-64-STATIC: ret
@@ -8286,15 +8286,14 @@ entry:
 ; DARWIN-64-PIC: 	leaq	_ldst(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = add i64 %i, 65536
+	%1 = getelementptr [131072 x i32], [131072 x i32]* @ldst, i64 0, i64 %0
+	%2 = bitcast i32* %1 to i8*
+	ret i8* %2
 }
 
 define i8* @cam08(i64 %i) nounwind {
-entry:
-	%0 = load i32*, i32** @lptr, align 8
-	%1 = add i64 %i, 65536
-	%2 = getelementptr i32, i32* %0, i64 %1
-	%3 = bitcast i32* %2 to i8*
-	ret i8* %3
 ; LINUX-64-STATIC-LABEL: cam08:
 ; LINUX-64-STATIC: movq    lptr(%rip), [[RAX:%r.x]]
 ; LINUX-64-STATIC: leaq    262144([[RAX]],%rdi,4), %rax
@@ -8352,18 +8351,15 @@ entry:
 ; DARWIN-64-PIC: 	movq	_lptr(%rip), [[RAX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	leaq	262144([[RAX]],%rdi,4), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load i32*, i32** @lptr, align 8
+	%1 = add i64 %i, 65536
+	%2 = getelementptr i32, i32* %0, i64 %1
+	%3 = bitcast i32* %2 to i8*
+	ret i8* %3
 }
 
 define void @lcallee() nounwind {
-entry:
-	call void @x() nounwind
-	call void @x() nounwind
-	call void @x() nounwind
-	call void @x() nounwind
-	call void @x() nounwind
-	call void @x() nounwind
-	call void @x() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: lcallee:
 ; LINUX-64-STATIC: callq   x
 ; LINUX-64-STATIC: callq   x
@@ -8482,20 +8478,20 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_x
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	call void @x() nounwind
+	ret void
 }
 
 declare void @x()
 
 define internal void @dcallee() nounwind {
-entry:
-	call void @y() nounwind
-	call void @y() nounwind
-	call void @y() nounwind
-	call void @y() nounwind
-	call void @y() nounwind
-	call void @y() nounwind
-	call void @y() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: dcallee:
 ; LINUX-64-STATIC: callq   y
 ; LINUX-64-STATIC: callq   y
@@ -8614,13 +8610,20 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_y
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	call void @y() nounwind
+	ret void
 }
 
 declare void @y()
 
 define void ()* @address() nounwind {
-entry:
-	ret void ()* @callee
 ; LINUX-64-STATIC-LABEL: address:
 ; LINUX-64-STATIC: movl    $callee, %eax
 ; LINUX-64-STATIC: ret
@@ -8663,13 +8666,13 @@ entry:
 ; DARWIN-64-PIC: _address:
 ; DARWIN-64-PIC: 	movq	_callee@GOTPCREL(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret void ()* @callee
 }
 
 declare void @callee()
 
 define void ()* @laddress() nounwind {
-entry:
-	ret void ()* @lcallee
 ; LINUX-64-STATIC-LABEL: laddress:
 ; LINUX-64-STATIC: movl    $lcallee, %eax
 ; LINUX-64-STATIC: ret
@@ -8712,11 +8715,11 @@ entry:
 ; DARWIN-64-PIC: _laddress:
 ; DARWIN-64-PIC: 	leaq	_lcallee(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret void ()* @lcallee
 }
 
 define void ()* @daddress() nounwind {
-entry:
-	ret void ()* @dcallee
 ; LINUX-64-STATIC-LABEL: daddress:
 ; LINUX-64-STATIC: movl    $dcallee, %eax
 ; LINUX-64-STATIC: ret
@@ -8759,13 +8762,11 @@ entry:
 ; DARWIN-64-PIC: _daddress:
 ; DARWIN-64-PIC: 	leaq	_dcallee(%rip), %rax
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	ret void ()* @dcallee
 }
 
 define void @caller() nounwind {
-entry:
-	call void @callee() nounwind
-	call void @callee() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: caller:
 ; LINUX-64-STATIC: callq   callee
 ; LINUX-64-STATIC: callq   callee
@@ -8834,13 +8835,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_callee
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @callee() nounwind
+	call void @callee() nounwind
+	ret void
 }
 
 define void @dcaller() nounwind {
-entry:
-	call void @dcallee() nounwind
-	call void @dcallee() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: dcaller:
 ; LINUX-64-STATIC: callq   dcallee
 ; LINUX-64-STATIC: callq   dcallee
@@ -8909,13 +8910,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @dcallee() nounwind
+	call void @dcallee() nounwind
+	ret void
 }
 
 define void @lcaller() nounwind {
-entry:
-	call void @lcallee() nounwind
-	call void @lcallee() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: lcaller:
 ; LINUX-64-STATIC: callq   lcallee
 ; LINUX-64-STATIC: callq   lcallee
@@ -8984,12 +8985,13 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @lcallee() nounwind
+	call void @lcallee() nounwind
+	ret void
 }
 
 define void @tailcaller() nounwind {
-entry:
-	call void @callee() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: tailcaller:
 ; LINUX-64-STATIC: callq   callee
 ; LINUX-64-STATIC: ret
@@ -9048,12 +9050,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_callee
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @callee() nounwind
+	ret void
 }
 
 define void @dtailcaller() nounwind {
-entry:
-	call void @dcallee() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: dtailcaller:
 ; LINUX-64-STATIC: callq   dcallee
 ; LINUX-64-STATIC: ret
@@ -9112,12 +9114,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_dcallee
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @dcallee() nounwind
+	ret void
 }
 
 define void @ltailcaller() nounwind {
-entry:
-	call void @lcallee() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: ltailcaller:
 ; LINUX-64-STATIC: callq   lcallee
 ; LINUX-64-STATIC: ret
@@ -9176,15 +9178,12 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	_lcallee
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	call void @lcallee() nounwind
+	ret void
 }
 
 define void @icaller() nounwind {
-entry:
-	%0 = load void ()*, void ()** @ifunc, align 8
-	call void %0() nounwind
-	%1 = load void ()*, void ()** @ifunc, align 8
-	call void %1() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: icaller:
 ; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: callq   *ifunc
@@ -9266,15 +9265,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	*([[RBX]])
 ; DARWIN-64-PIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load void ()*, void ()** @ifunc, align 8
+	call void %0() nounwind
+	%1 = load void ()*, void ()** @ifunc, align 8
+	call void %1() nounwind
+	ret void
 }
 
 define void @dicaller() nounwind {
-entry:
-	%0 = load void ()*, void ()** @difunc, align 8
-	call void %0() nounwind
-	%1 = load void ()*, void ()** @difunc, align 8
-	call void %1() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: dicaller:
 ; LINUX-64-STATIC: callq   *difunc
 ; LINUX-64-STATIC: callq   *difunc
@@ -9349,15 +9348,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	*_difunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load void ()*, void ()** @difunc, align 8
+	call void %0() nounwind
+	%1 = load void ()*, void ()** @difunc, align 8
+	call void %1() nounwind
+	ret void
 }
 
 define void @licaller() nounwind {
-entry:
-	%0 = load void ()*, void ()** @lifunc, align 8
-	call void %0() nounwind
-	%1 = load void ()*, void ()** @lifunc, align 8
-	call void %1() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: licaller:
 ; LINUX-64-STATIC: callq   *lifunc
 ; LINUX-64-STATIC: callq   *lifunc
@@ -9431,15 +9430,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load void ()*, void ()** @lifunc, align 8
+	call void %0() nounwind
+	%1 = load void ()*, void ()** @lifunc, align 8
+	call void %1() nounwind
+	ret void
 }
 
 define void @itailcaller() nounwind {
-entry:
-	%0 = load void ()*, void ()** @ifunc, align 8
-	call void %0() nounwind
-	%1 = load void ()*, void ()** @ifunc, align 8
-	call void %1() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: itailcaller:
 ; LINUX-64-STATIC: callq   *ifunc
 ; LINUX-64-STATIC: callq   *ifunc
@@ -9521,13 +9520,15 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	*([[RBX]])
 ; DARWIN-64-PIC-NEXT: 	popq	[[RBX:%r.x]]
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load void ()*, void ()** @ifunc, align 8
+	call void %0() nounwind
+	%1 = load void ()*, void ()** @ifunc, align 8
+	call void %1() nounwind
+	ret void
 }
 
 define void @ditailcaller() nounwind {
-entry:
-	%0 = load void ()*, void ()** @difunc, align 8
-	call void %0() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: ditailcaller:
 ; LINUX-64-STATIC: callq   *difunc
 ; LINUX-64-STATIC: ret
@@ -9589,13 +9590,13 @@ entry:
 ; DARWIN-64-PIC: 	callq	*_difunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load void ()*, void ()** @difunc, align 8
+	call void %0() nounwind
+	ret void
 }
 
 define void @litailcaller() nounwind {
-entry:
-	%0 = load void ()*, void ()** @lifunc, align 8
-	call void %0() nounwind
-	ret void
 ; LINUX-64-STATIC-LABEL: litailcaller:
 ; LINUX-64-STATIC: callq   *lifunc
 ; LINUX-64-STATIC: ret
@@ -9657,4 +9658,8 @@ entry:
 ; DARWIN-64-PIC-NEXT: 	callq	*_lifunc(%rip)
 ; DARWIN-64-PIC-NEXT: 	popq
 ; DARWIN-64-PIC-NEXT: 	ret
+entry:
+	%0 = load void ()*, void ()** @lifunc, align 8
+	call void %0() nounwind
+	ret void
 }
