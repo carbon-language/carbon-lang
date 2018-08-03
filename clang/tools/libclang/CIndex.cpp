@@ -1802,7 +1802,9 @@ bool CursorVisitor::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
 bool CursorVisitor::VisitAttributes(Decl *D) {
   for (const auto *I : D->attrs())
-    if (!I->isImplicit() && Visit(MakeCXCursor(I, D, TU)))
+    if ((TU->ParsingOptions & CXTranslationUnit_VisitImplicitAttributes ||
+         !I->isImplicit()) &&
+        Visit(MakeCXCursor(I, D, TU)))
         return true;
 
   return false;

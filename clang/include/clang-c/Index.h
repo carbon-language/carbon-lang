@@ -1336,7 +1336,12 @@ enum CXTranslationUnit_Flags {
   /**
    * Used to indicate that attributed types should be included in CXType.
    */
-  CXTranslationUnit_IncludeAttributedTypes = 0x1000
+  CXTranslationUnit_IncludeAttributedTypes = 0x1000,
+
+  /**
+   * Used to indicate that implicit attributes should be visited.
+   */
+  CXTranslationUnit_VisitImplicitAttributes = 0x2000
 };
 
 /**

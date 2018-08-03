@@ -86,6 +86,8 @@ static unsigned getDefaultParsingOptions() {
     options |= CXTranslationUnit_LimitSkipFunctionBodiesToPreamble;
   if (getenv("CINDEXTEST_INCLUDE_ATTRIBUTED_TYPES"))
     options |= CXTranslationUnit_IncludeAttributedTypes;
+  if (getenv("CINDEXTEST_VISIT_IMPLICIT_ATTRIBUTES"))
+    options |= CXTranslationUnit_VisitImplicitAttributes;
 
   return options;
 }
@@ -1780,6 +1782,23 @@ static enum CXChildVisitResult PrintTypeDeclaration(CXCursor cursor, CXCursor p,
   }
 
   return CXChildVisit_Recurse;
+}
+
+/******************************************************************************/
+/* Declaration attributes testing                                             */
+/******************************************************************************/
+
+static enum CXChildVisitResult PrintDeclAttributes(CXCursor cursor, CXCursor p,
+                                                   CXClientData d) {
+  if (clang_isDeclaration(cursor.kind)) {
+    printf("\n");
+    PrintCursor(cursor, NULL);
+    return CXChildVisit_Recurse;
+  } else if (clang_isAttribute(cursor.kind)) {
+    printf(" ");
+    PrintCursor(cursor, NULL);
+  }
+  return CXChildVisit_Continue;
 }
 
 /******************************************************************************/
@@ -4793,6 +4812,9 @@ int cindextest_main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-print-type-declaration") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintTypeDeclaration, 0);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-decl-attributes") == 0)
+    return perform_test_load_source(argc - 2, argv + 2, "all",
+                                    PrintDeclAttributes, 0);
   else if (argc > 2 && strcmp(argv[1], "-test-print-bitwidth") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintBitWidth, 0);
