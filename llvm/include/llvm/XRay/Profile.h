@@ -85,8 +85,8 @@ public:
 
   Profile() = default;
   ~Profile() = default;
-  Profile(Profile &&) noexcept = default;
-  Profile &operator=(Profile &&) noexcept = default;
+  Profile(Profile &&) = default;
+  Profile &operator=(Profile &&) = default;
 
   // Disable copy construction and assignment.
   Profile(const Profile &) = delete;
