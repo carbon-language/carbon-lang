@@ -78,7 +78,9 @@ public:
     return {re_.FlushDenormalToZero(), im_.FlushDenormalToZero()};
   }
 
-  static constexpr Complex NaN() { return {Part::NaN(), Part::NaN()}; }
+  static constexpr Complex NotANumber() {
+    return {Part::NotANumber(), Part::NotANumber()};
+  }
 
   std::string DumpHexadecimal() const;
   // TODO: (C)ABS once Real::HYPOT is done

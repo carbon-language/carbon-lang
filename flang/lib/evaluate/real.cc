@@ -60,7 +60,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Add(
     const Real &y, Rounding rounding) const {
   ValueWithRealFlags<Real> result;
   if (IsNotANumber() || y.IsNotANumber()) {
-    result.value = NaN();  // NaN + x -> NaN
+    result.value = NotANumber();  // NaN + x -> NaN
     if (IsSignalingNaN() || y.IsSignalingNaN()) {
       result.flags.set(RealFlag::InvalidArgument);
     }
@@ -73,7 +73,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Add(
       if (isNegative == yIsNegative) {
         result.value = *this;  // +/-Inf + +/-Inf -> +/-Inf
       } else {
-        result.value = NaN();  // +/-Inf + -/+Inf -> NaN
+        result.value = NotANumber();  // +/-Inf + -/+Inf -> NaN
         result.flags.set(RealFlag::InvalidArgument);
       }
     } else {
@@ -140,7 +140,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Multiply(
     const Real &y, Rounding rounding) const {
   ValueWithRealFlags<Real> result;
   if (IsNotANumber() || y.IsNotANumber()) {
-    result.value = NaN();  // NaN * x -> NaN
+    result.value = NotANumber();  // NaN * x -> NaN
     if (IsSignalingNaN() || y.IsSignalingNaN()) {
       result.flags.set(RealFlag::InvalidArgument);
     }
@@ -148,7 +148,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Multiply(
     bool isNegative{IsNegative() != y.IsNegative()};
     if (IsInfinite() || y.IsInfinite()) {
       if (IsZero() || y.IsZero()) {
-        result.value = NaN();  // 0 * Inf -> NaN
+        result.value = NotANumber();  // 0 * Inf -> NaN
         result.flags.set(RealFlag::InvalidArgument);
       } else {
         result.value = Infinity(isNegative);
@@ -200,7 +200,7 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Divide(
     const Real &y, Rounding rounding) const {
   ValueWithRealFlags<Real> result;
   if (IsNotANumber() || y.IsNotANumber()) {
-    result.value = NaN();  // NaN / x -> NaN, x / NaN -> NaN
+    result.value = NotANumber();  // NaN / x -> NaN, x / NaN -> NaN
     if (IsSignalingNaN() || y.IsSignalingNaN()) {
       result.flags.set(RealFlag::InvalidArgument);
     }
@@ -208,14 +208,14 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Divide(
     bool isNegative{IsNegative() != y.IsNegative()};
     if (IsInfinite()) {
       if (y.IsInfinite()) {
-        result.value = NaN();  // Inf/Inf -> NaN
+        result.value = NotANumber();  // Inf/Inf -> NaN
         result.flags.set(RealFlag::InvalidArgument);
       } else {  // Inf/x -> Inf,  Inf/0 -> Inf
         result.value = Infinity(isNegative);
       }
     } else if (y.IsZero()) {
       if (IsZero()) {  // 0/0 -> NaN
-        result.value = NaN();
+        result.value = NotANumber();
         result.flags.set(RealFlag::InvalidArgument);
       } else {  // x/0 -> Inf, Inf/0 -> Inf
         result.value = Infinity(isNegative);

@@ -28,7 +28,7 @@ ValueWithRealFlags<REAL> IntPower(
   ValueWithRealFlags<REAL> result;
   result.value = one;
   if (base.IsNotANumber()) {
-    result.value = REAL::NaN();
+    result.value = REAL::NotANumber();
     if (base.IsSignalingNaN()) {
       result.flags.set(RealFlag::InvalidArgument);
     }

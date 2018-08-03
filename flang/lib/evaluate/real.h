@@ -124,8 +124,8 @@ public:
     return *this;
   }
 
-  // TODO: Configurable NaN representations
-  static constexpr Real NaN() {
+  // TODO: Configurable NotANumber representations
+  static constexpr Real NotANumber() {
     return {Word{maxExponent}
                 .SHIFTL(significandBits)
                 .IBSET(significandBits - 1)
@@ -310,7 +310,7 @@ private:
   }
 
   // Normalizes and marshals the fields of a floating-point number in place.
-  // The value is not a NaN, and a zero fraction means a zero value (i.e.,
+  // The value is a number, and a zero fraction means a zero value (i.e.,
   // a maximal exponent and zero fraction doesn't signify infinity, although
   // this member function will detect overflow and encode infinities).
   RealFlags Normalize(bool negative, std::uint64_t exponent,
