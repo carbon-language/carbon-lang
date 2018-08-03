@@ -85,8 +85,17 @@ private:
 // on a constant text or a set of characters.
 class MessageExpectedText {
 public:
-  MessageExpectedText(const char *s, std::size_t n)
-    : u_{CharBlock{s, n == std::string::npos ? std::strlen(s) : n}} {}
+  MessageExpectedText(const char *s, std::size_t n) {
+    if (n == std::string::npos) {
+      n = std::strlen(s);
+    }
+    if (n == 1) {
+      // Treat a one-character string as a singleton set for better merging.
+      u_ = SetOfChars{*s};
+    } else {
+      u_ = CharBlock{s, n};
+    }
+  }
   constexpr explicit MessageExpectedText(CharBlock cb) : u_{cb} {}
   constexpr explicit MessageExpectedText(char ch) : u_{SetOfChars{ch}} {}
   constexpr explicit MessageExpectedText(SetOfChars set) : u_{set} {}
@@ -96,7 +105,7 @@ public:
   MessageExpectedText &operator=(MessageExpectedText &&) = default;
 
   std::string ToString() const;
-  void Incorporate(const MessageExpectedText &);
+  bool Merge(const MessageExpectedText &);
 
 private:
   std::variant<CharBlock, SetOfChars> u_;
@@ -153,7 +162,10 @@ public:
   // corresponding ProvenanceRange.
   void ResolveProvenances(const CookedSource &);
 
-  void Incorporate(Message &);
+  bool IsMergeable() const {
+    return std::holds_alternative<MessageExpectedText>(text_);
+  }
+  bool Merge(const Message &);
 
 private:
   bool AtSameLocation(const Message &) const;
@@ -171,16 +183,16 @@ public:
   Messages(Messages &&that) : messages_{std::move(that.messages_)} {
     if (!messages_.empty()) {
       last_ = that.last_;
-      that.last_ = that.messages_.before_begin();
+      that.ResetLastPointer();
     }
   }
   Messages &operator=(Messages &&that) {
     messages_ = std::move(that.messages_);
     if (messages_.empty()) {
-      last_ = messages_.before_begin();
+      ResetLastPointer();
     } else {
       last_ = that.last_;
-      that.last_ = that.messages_.before_begin();
+      that.ResetLastPointer();
     }
     return *this;
   }
@@ -201,7 +213,7 @@ public:
     if (!that.messages_.empty()) {
       messages_.splice_after(last_, that.messages_);
       last_ = that.last_;
-      that.last_ = that.messages_.before_begin();
+      that.ResetLastPointer();
     }
   }
 
@@ -210,7 +222,8 @@ public:
     *this = std::move(that);
   }
 
-  void Incorporate(Messages &);
+  bool Merge(const Message &);
+  void Merge(Messages &&);
   void Copy(const Messages &);
   void ResolveProvenances(const CookedSource &);
   void Emit(std::ostream &, const CookedSource &cooked,
@@ -219,6 +232,8 @@ public:
   bool AnyFatalError() const;
 
 private:
+  void ResetLastPointer() { last_ = messages_.before_begin(); }
+
   std::forward_list<Message> messages_;
   std::forward_list<Message>::iterator last_{messages_.before_begin()};
 };

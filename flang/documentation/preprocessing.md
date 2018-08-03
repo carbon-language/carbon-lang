@@ -33,7 +33,7 @@ Behavior common to (nearly) all compilers:
 * A `#define` directive intermixed with continuation lines can't
   define a macro that's invoked earlier in the same continued statement.
 
-Behavior that is not consistent to all extant compilers but which
+Behavior that is not consistent over all extant compilers but which
 probably should be uncontroversial:
 -----------------------------------
 * Invoked macro names can straddle a Fortran line continuation.

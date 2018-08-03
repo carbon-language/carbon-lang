@@ -47,6 +47,7 @@ public:
     if (std::optional<const char *> at{state.PeekAtNextChar()}) {
       if (set_.Has(**at)) {
         state.UncheckedAdvance();
+        state.set_anyTokenMatched();
         return at;
       }
     }
@@ -160,7 +161,7 @@ public:
         return {};
       }
     }
-    state.TokenMatched();
+    state.set_anyTokenMatched();
     if (IsLegalInIdentifier(p[-1])) {
       return spaceCheck.Parse(state);
     } else {

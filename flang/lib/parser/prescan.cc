@@ -357,6 +357,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
   if (*at_ == '\n') {
     return false;
   }
+  const char *start{at_};
   if (*at_ == '\'' || *at_ == '"') {
     QuotedCharacterLiteral(tokens);
     preventHollerith_ = false;
@@ -375,7 +376,7 @@ bool Prescanner::NextToken(TokenSequence &tokens) {
     } while (IsDecimalDigit(*at_));
     if ((*at_ == 'h' || *at_ == 'H') && n > 0 && n < maxHollerith &&
         !preventHollerith_) {
-      Hollerith(tokens, n);
+      Hollerith(tokens, n, start);
     } else if (*at_ == '.') {
       while (IsDecimalDigit(EmitCharAndAdvance(tokens, *at_))) {
       }
@@ -505,19 +506,18 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence &tokens) {
   inCharLiteral_ = false;
 }
 
-void Prescanner::Hollerith(TokenSequence &tokens, int count) {
+void Prescanner::Hollerith(
+    TokenSequence &tokens, int count, const char *start) {
   inCharLiteral_ = true;
   CHECK(*at_ == 'h' || *at_ == 'H');
   EmitChar(tokens, 'H');
-  const char *start{at_}, *end{at_ + 1};
   while (count-- > 0) {
     if (PadOutCharacterLiteral(tokens)) {
     } else if (*at_ == '\n') {
-      Say("incomplete Hollerith literal"_err_en_US,
-          GetProvenanceRange(start, end));
+      Say("possible truncated Hollerith literal"_en_US,
+          GetProvenanceRange(start, at_));
       break;
     } else {
-      end = at_ + 1;
       NextChar();
       EmitChar(tokens, *at_);
       // Multi-byte character encodings should count as single characters.

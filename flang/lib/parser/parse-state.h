@@ -48,7 +48,7 @@ public:
       anyConformanceViolation_{that.anyConformanceViolation_},
       deferMessages_{that.deferMessages_},
       anyDeferredMessages_{that.anyDeferredMessages_},
-      tokensMatched_{that.tokensMatched_} {}
+      anyTokenMatched_{that.anyTokenMatched_} {}
   ParseState(ParseState &&that)
     : p_{that.p_}, limit_{that.limit_}, messages_{std::move(that.messages_)},
       context_{std::move(that.context_)}, userState_{that.userState_},
@@ -57,7 +57,7 @@ public:
       anyConformanceViolation_{that.anyConformanceViolation_},
       deferMessages_{that.deferMessages_},
       anyDeferredMessages_{that.anyDeferredMessages_},
-      tokensMatched_{that.tokensMatched_} {}
+      anyTokenMatched_{that.anyTokenMatched_} {}
   ParseState &operator=(const ParseState &that) {
     p_ = that.p_, limit_ = that.limit_, context_ = that.context_;
     userState_ = that.userState_, inFixedForm_ = that.inFixedForm_;
@@ -66,7 +66,7 @@ public:
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
     anyDeferredMessages_ = that.anyDeferredMessages_;
-    tokensMatched_ = that.tokensMatched_;
+    anyTokenMatched_ = that.anyTokenMatched_;
     return *this;
   }
   ParseState &operator=(ParseState &&that) {
@@ -78,7 +78,7 @@ public:
     anyConformanceViolation_ = that.anyConformanceViolation_;
     deferMessages_ = that.deferMessages_;
     anyDeferredMessages_ = that.anyDeferredMessages_;
-    tokensMatched_ = that.tokensMatched_;
+    anyTokenMatched_ = that.anyTokenMatched_;
     return *this;
   }
 
@@ -124,13 +124,9 @@ public:
     return *this;
   }
 
-  std::size_t tokensMatched() const { return tokensMatched_; }
-  ParseState &set_tokensMatched(std::size_t n) {
-    tokensMatched_ = n;
-    return *this;
-  }
-  ParseState &TokenMatched() {
-    ++tokensMatched_;
+  bool anyTokenMatched() const { return anyTokenMatched_; }
+  ParseState &set_anyTokenMatched(bool yes = true) {
+    anyTokenMatched_ = yes;
     return *this;
   }
 
@@ -218,20 +214,19 @@ public:
     return remain;
   }
 
-  void CombineFailedParses(ParseState &prev, std::size_t origTokensMatched) {
-    if (prev.tokensMatched_ > origTokensMatched) {
-      if (tokensMatched_ > origTokensMatched) {
-        if (prev.p_ == p_) {
-          prev.messages_.Incorporate(messages_);
-          prev.anyDeferredMessages_ |= anyDeferredMessages_;
-        }
-        if (prev.p_ >= p_) {
-          *this = std::move(prev);
-        }
-      } else {
-        *this = std::move(prev);
+  void CombineFailedParses(ParseState &&prev) {
+    if (prev.anyTokenMatched_) {
+      if (!anyTokenMatched_ || prev.p_ > p_) {
+        anyTokenMatched_ = true;
+        p_ = prev.p_;
+        messages_ = std::move(prev.messages_);
+      } else if (prev.p_ == p_) {
+        messages_.Merge(std::move(prev.messages_));
       }
     }
+    anyDeferredMessages_ |= prev.anyDeferredMessages_;
+    anyConformanceViolation_ |= prev.anyConformanceViolation_;
+    anyErrorRecovery_ |= prev.anyErrorRecovery_;
   }
 
 private:
@@ -250,7 +245,7 @@ private:
   bool anyConformanceViolation_{false};
   bool deferMessages_{false};
   bool anyDeferredMessages_{false};
-  std::size_t tokensMatched_{0};
+  bool anyTokenMatched_{false};
   // NOTE: Any additions or modifications to these data members must also be
   // reflected in the copy and move constructors defined at the top of this
   // class definition!

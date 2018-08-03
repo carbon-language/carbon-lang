@@ -144,7 +144,7 @@ private:
   bool NextToken(TokenSequence &);
   bool ExponentAndKind(TokenSequence &);
   void QuotedCharacterLiteral(TokenSequence &);
-  void Hollerith(TokenSequence &, int);
+  void Hollerith(TokenSequence &, int count, const char *start);
   bool PadOutCharacterLiteral(TokenSequence &);
   bool SkipCommentLine();
   bool IsFixedFormCommentLine(const char *) const;
