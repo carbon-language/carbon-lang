@@ -209,17 +209,13 @@ define void @add_16i(i16* %p) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; X64-LABEL: add_16i:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    addl $2, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    addw $2, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: add_16i:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    addl $2, %ecx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    addw $2, (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = add i16 %1, 2
@@ -232,17 +228,14 @@ define void @add_16r(i16* %p, i16 %v) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; X64-LABEL: add_16r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    addl %esi, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    addw %si, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: add_16r:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    addw {{[0-9]+}}(%esp), %cx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    addw %ax, (%ecx)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = add i16 %1, %v
@@ -506,17 +499,13 @@ define void @and_16i(i16* %p) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; X64-LABEL: and_16i:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    andl $2, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    andw $2, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: and_16i:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    andl $2, %ecx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    andw $2, (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = and i16 %1, 2
@@ -529,17 +518,14 @@ define void @and_16r(i16* %p, i16 %v) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; X64-LABEL: and_16r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    andl %esi, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    andw %si, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: and_16r:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    andw {{[0-9]+}}(%esp), %cx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    andw %ax, (%ecx)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = and i16 %1, %v
@@ -751,17 +737,13 @@ define void @or_8r(i8* %p, i8 %v) {
 define void @or_16i(i16* %p) {
 ; X64-LABEL: or_16i:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    orl $2, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    orw $2, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: or_16i:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    orl $2, %ecx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    orw $2, (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = or i16 %1, 2
@@ -772,17 +754,14 @@ define void @or_16i(i16* %p) {
 define void @or_16r(i16* %p, i16 %v) {
 ; X64-LABEL: or_16r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    orl %esi, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    orw %si, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: or_16r:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    orw {{[0-9]+}}(%esp), %cx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    orw %ax, (%ecx)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = or i16 %1, %v
@@ -994,17 +973,13 @@ define void @xor_8r(i8* %p, i8 %v) {
 define void @xor_16i(i16* %p) {
 ; X64-LABEL: xor_16i:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    xorl $2, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    xorw $2, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: xor_16i:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    xorl $2, %ecx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    xorw $2, (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = xor i16 %1, 2
@@ -1015,17 +990,14 @@ define void @xor_16i(i16* %p) {
 define void @xor_16r(i16* %p, i16 %v) {
 ; X64-LABEL: xor_16r:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    xorl %esi, %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    xorw %si, (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: xor_16r:
 ; X32:       # %bb.0:
-; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    xorw {{[0-9]+}}(%esp), %cx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    xorw %ax, (%ecx)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = xor i16 %1, %v
@@ -1226,24 +1198,18 @@ define void @inc_16(i16* %p) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; FAST_INC-LABEL: inc_16:
 ; FAST_INC:       # %bb.0:
-; FAST_INC-NEXT:    movw (%rdi), %ax
-; FAST_INC-NEXT:    incl %eax
-; FAST_INC-NEXT:    movw %ax, (%rdi)
+; FAST_INC-NEXT:    incw (%rdi)
 ; FAST_INC-NEXT:    retq
 ;
 ; X32-LABEL: inc_16:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    incl %ecx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    incw (%eax)
 ; X32-NEXT:    retl
 ;
 ; SLOW_INC-LABEL: inc_16:
 ; SLOW_INC:       # %bb.0:
-; SLOW_INC-NEXT:    movw (%rdi), %ax
-; SLOW_INC-NEXT:    addl $1, %eax
-; SLOW_INC-NEXT:    movw %ax, (%rdi)
+; SLOW_INC-NEXT:    addw $1, (%rdi)
 ; SLOW_INC-NEXT:    retq
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = add i16 %1, 1
@@ -1379,24 +1345,18 @@ define void @dec_16(i16* %p) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; FAST_INC-LABEL: dec_16:
 ; FAST_INC:       # %bb.0:
-; FAST_INC-NEXT:    movw (%rdi), %ax
-; FAST_INC-NEXT:    decl %eax
-; FAST_INC-NEXT:    movw %ax, (%rdi)
+; FAST_INC-NEXT:    decw (%rdi)
 ; FAST_INC-NEXT:    retq
 ;
 ; X32-LABEL: dec_16:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    decl %ecx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    decw (%eax)
 ; X32-NEXT:    retl
 ;
 ; SLOW_INC-LABEL: dec_16:
 ; SLOW_INC:       # %bb.0:
-; SLOW_INC-NEXT:    movw (%rdi), %ax
-; SLOW_INC-NEXT:    addl $-1, %eax
-; SLOW_INC-NEXT:    movw %ax, (%rdi)
+; SLOW_INC-NEXT:    addw $-1, (%rdi)
 ; SLOW_INC-NEXT:    retq
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = sub i16 %1, 1
@@ -1527,17 +1487,13 @@ define void @not_16(i16* %p) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; X64-LABEL: not_16:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
-; X64-NEXT:    notl %eax
-; X64-NEXT:    movw %ax, (%rdi)
+; X64-NEXT:    notw (%rdi)
 ; X64-NEXT:    retq
 ;
 ; X32-LABEL: not_16:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
-; X32-NEXT:    notl %ecx
-; X32-NEXT:    movw %cx, (%eax)
+; X32-NEXT:    notw (%eax)
 ; X32-NEXT:    retl
   %1 = load atomic i16, i16* %p acquire, align 2
   %2 = xor i16 %1, -1

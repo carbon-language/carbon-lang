@@ -896,8 +896,14 @@ multiclass RELEASE_BINOP_MI<SDNode op> {
         "#BINOP "#NAME#"8mr PSEUDO!",
         [(atomic_store_8 addr:$dst, (op
             (atomic_load_8 addr:$dst), GR8:$src))]>;
-    // NAME#16 is not generated as 16-bit arithmetic instructions are considered
-    // costly and avoided as far as possible by this backend anyway
+    def NAME#16mi : I<0, Pseudo, (outs), (ins i16mem:$dst, i16imm:$src),
+        "#BINOP "#NAME#"16mi PSEUDO!",
+        [(atomic_store_16 addr:$dst, (op
+            (atomic_load_16 addr:$dst), (i16 imm:$src)))]>;
+    def NAME#16mr : I<0, Pseudo, (outs), (ins i16mem:$dst, GR16:$src),
+        "#BINOP "#NAME#"16mr PSEUDO!",
+        [(atomic_store_16 addr:$dst, (op
+            (atomic_load_16 addr:$dst), GR16:$src))]>;
     def NAME#32mi : I<0, Pseudo, (outs), (ins i32mem:$dst, i32imm:$src),
         "#BINOP "#NAME#"32mi PSEUDO!",
         [(atomic_store_32 addr:$dst, (op
