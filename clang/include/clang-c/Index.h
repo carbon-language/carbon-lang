@@ -4449,6 +4449,18 @@ CINDEX_LINKAGE unsigned clang_Cursor_getObjCPropertyAttributes(CXCursor C,
                                                              unsigned reserved);
 
 /**
+ * Given a cursor that represents a property declaration, return the
+ * name of the method that implements the getter.
+ */
+CINDEX_LINKAGE CXString clang_Cursor_getObjCPropertyGetterName(CXCursor C);
+
+/**
+ * Given a cursor that represents a property declaration, return the
+ * name of the method that implements the setter, if any.
+ */
+CINDEX_LINKAGE CXString clang_Cursor_getObjCPropertySetterName(CXCursor C);
+
+/**
  * 'Qualifiers' written next to the return and parameter types in
  * Objective-C method declarations.
  */

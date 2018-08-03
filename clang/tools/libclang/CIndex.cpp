@@ -7913,6 +7913,30 @@ unsigned clang_Cursor_getObjCPropertyAttributes(CXCursor C, unsigned reserved) {
   return Result;
 }
 
+CXString clang_Cursor_getObjCPropertyGetterName(CXCursor C) {
+  if (C.kind != CXCursor_ObjCPropertyDecl)
+    return cxstring::createNull();
+
+  const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(getCursorDecl(C));
+  Selector sel = PD->getGetterName();
+  if (sel.isNull())
+    return cxstring::createNull();
+
+  return cxstring::createDup(sel.getAsString());
+}
+
+CXString clang_Cursor_getObjCPropertySetterName(CXCursor C) {
+  if (C.kind != CXCursor_ObjCPropertyDecl)
+    return cxstring::createNull();
+
+  const ObjCPropertyDecl *PD = dyn_cast<ObjCPropertyDecl>(getCursorDecl(C));
+  Selector sel = PD->getSetterName();
+  if (sel.isNull())
+    return cxstring::createNull();
+
+  return cxstring::createDup(sel.getAsString());
+}
+
 unsigned clang_Cursor_getObjCDeclQualifiers(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return CXObjCDeclQualifier_None;

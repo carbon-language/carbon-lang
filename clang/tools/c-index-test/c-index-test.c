@@ -1103,6 +1103,34 @@ static void PrintCursor(CXCursor Cursor, const char *CommentSchemaFile) {
       }
     }
 
+    if (Cursor.kind == CXCursor_ObjCPropertyDecl) {
+      CXString Name = clang_Cursor_getObjCPropertyGetterName(Cursor);
+      CXString Spelling = clang_getCursorSpelling(Cursor);
+      const char *CName = clang_getCString(Name);
+      const char *CSpelling = clang_getCString(Spelling);
+      if (CName && strcmp(CName, CSpelling)) {
+        printf(" (getter=%s)", CName);
+      }
+      clang_disposeString(Spelling);
+      clang_disposeString(Name);
+    }
+
+    if (Cursor.kind == CXCursor_ObjCPropertyDecl) {
+      CXString Name = clang_Cursor_getObjCPropertySetterName(Cursor);
+      CXString Spelling = clang_getCursorSpelling(Cursor);
+      const char *CName = clang_getCString(Name);
+      const char *CSpelling = clang_getCString(Spelling);
+      char *DefaultSetter = malloc(strlen(CSpelling) + 5);
+      sprintf(DefaultSetter, "set%s:", CSpelling);
+      DefaultSetter[3] &= ~(1 << 5); /* Make uppercase */
+      if (CName && strcmp(CName, DefaultSetter)) {
+        printf(" (setter=%s)", CName);
+      }
+      free(DefaultSetter);
+      clang_disposeString(Spelling);
+      clang_disposeString(Name);
+    }
+
     {
       unsigned QT = clang_Cursor_getObjCDeclQualifiers(Cursor);
       if (QT != CXObjCDeclQualifier_None) {
