@@ -76,6 +76,7 @@ void PLTCall::runOnFunctions(
         BC.MIB->convertCallToIndirectCall(Instr,
                                           CalleeBF->getPLTSymbol(),
                                           BC.Ctx.get());
+        BC.MIB->addAnnotation(Instr, "PLTCall", true);
         ++NumCallsOptimized;
       }
     }

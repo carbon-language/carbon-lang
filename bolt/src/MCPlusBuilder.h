@@ -1298,10 +1298,11 @@ public:
     return false;
   }
 
-  virtual bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int Scale,
-                          const MCPhysReg &IndexReg, int Offset,
-                          const MCExpr *OffsetExpr, const MCPhysReg &DstReg,
-                          int Size) const {
+  virtual bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int64_t Scale,
+                          const MCPhysReg &IndexReg, int64_t Offset,
+                          const MCExpr *OffsetExpr,
+                          const MCPhysReg &AddrSegmentReg,
+                          const MCPhysReg &DstReg, int Size) const {
     llvm_unreachable("not implemented");
     return false;
   }

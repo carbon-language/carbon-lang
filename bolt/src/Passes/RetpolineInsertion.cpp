@@ -95,6 +95,7 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
         Ctx.createTempSymbol(Twine(RetpolineTag + "_BB" + to_string(I)), true);
     NewBlocks[I] = NewRetpoline->createBasicBlock(
         BinaryBasicBlock::INVALID_OFFSET, Symbol);
+    NewBlocks[I].get()->setCFIState(0);
   }
 
   auto &BB0 = *NewBlocks[0].get();
@@ -139,7 +140,8 @@ BinaryFunction *createNewRetpoline(BinaryContext &BC,
       MCInst LoadCalleeAddrs;
       MIB.createLoad(LoadCalleeAddrs, BrInfo.BaseRegNum, BrInfo.ScaleValue,
                      BrInfo.IndexRegNum, BrInfo.DispValue, BrInfo.DispExpr,
-                     MIB.getX86R11(), 8);
+                     BrInfo.SegRegNum, MIB.getX86R11(), 8);
+
       BB2.addInstruction(LoadCalleeAddrs);
 
       MCInst StoreToStack;
@@ -194,11 +196,17 @@ std::string createRetpolineFunctionTag(BinaryContext &BC,
   Tag += BrInfo.BaseRegNum != BC.MIB->getX86NoRegister()
              ? "r" + to_string(BrInfo.BaseRegNum)
              : "";
-  Tag += BrInfo.DispValue ? "+" + to_string(BrInfo.DispValue) : "";
-  Tag += BrInfo.DispExpr ? "+" + DispExprStr : "";
+
+  Tag +=
+      BrInfo.DispExpr ? "+" + DispExprStr : "+" + to_string(BrInfo.DispValue);
+
   Tag += BrInfo.IndexRegNum != BC.MIB->getX86NoRegister()
              ? "+" + to_string(BrInfo.ScaleValue) + "*" +
                    to_string(BrInfo.IndexRegNum)
+             : "";
+
+  Tag += BrInfo.SegRegNum != BC.MIB->getX86NoRegister()
+             ? "_seg_" + to_string(BrInfo.SegRegNum)
              : "";
 
   return Tag;
@@ -227,7 +235,7 @@ void createBranchReplacement(BinaryContext &BC,
     MCInst LoadCalleeAddrs;
     MIB.createLoad(LoadCalleeAddrs, BrInfo.BaseRegNum, BrInfo.ScaleValue,
                    BrInfo.IndexRegNum, BrInfo.DispValue, BrInfo.DispExpr,
-                   MIB.getX86R11(), 8);
+                   BrInfo.SegRegNum, MIB.getX86R11(), 8);
     Replacement.push_back(LoadCalleeAddrs);
   }
 
@@ -250,7 +258,7 @@ IndirectBranchInfo::IndirectBranchInfo(MCInst &Inst, MCPlusBuilder &MIB) {
     if (!MIB.evaluateX86MemoryOperand(Inst, &BaseRegNum, &ScaleValue,
                                       &IndexRegNum, &DispValue, &SegRegNum,
                                       &DispExpr)) {
-      assert(false && "not expected");
+      llvm_unreachable("not expected");
     }
   } else if (MIB.isBranchOnReg(Inst)) {
     assert(MCPlus::getNumPrimeOperands(Inst) == 1 && "expect 1 operand");
@@ -290,7 +298,9 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC,
 
         // Determine if r11 is available before this instruction
         if (BrInfo.isMem()) {
-          if (opts::R11Availability == AvailabilityOptions::ALWAYS)
+          if(MIB.hasAnnotation(Inst, "PLTCall"))
+            R11Available= true;
+          else if (opts::R11Availability == AvailabilityOptions::ALWAYS)
             R11Available = true;
           else if (opts::R11Availability == AvailabilityOptions::ABI)
             R11Available = BrInfo.isCall();
@@ -317,9 +327,9 @@ void RetpolineInsertion::runOnFunctions(BinaryContext &BC,
       }
     }
   }
-  outs() << "The number of created retpoline functions is : "
+  outs() << "BOLT-INFO: The number of created retpoline functions is : "
          << CreatedRetpolines.size()
-         << "\nThe number of retpolined branches is : " << RetpolinedBranches
+         << "\nBOLT-INFO: The number of retpolined branches is : " << RetpolinedBranches
          << "\n";
 }
 

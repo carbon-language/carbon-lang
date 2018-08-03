@@ -358,7 +358,7 @@ BinaryBasicBlock::getMacroOpFusionPair() const {
   if (!Function->getBinaryContext().isX86())
     return end();
 
-  if (succ_size() != 2)
+  if (getNumNonPseudos() < 2 || succ_size() != 2)
     return end();
 
   auto RI = getLastNonPseudo();

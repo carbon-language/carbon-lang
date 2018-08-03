@@ -1040,6 +1040,9 @@ public:
     } else {
       assert(DispExpr && "DispExpr needs to be set");
       *DispExpr = Disp.getExpr();
+      if (DispImm) {
+        *DispImm = 0;
+      }
     }
     *SegmentRegNum = Segment.getReg();
     return true;
@@ -2667,13 +2670,14 @@ public:
                               int Offset, const MCPhysReg &DstReg,
                               int Size) const override {
     return createLoad(Inst, StackReg, /*Scale=*/1, /*IndexReg=*/X86::NoRegister,
-                      Offset, nullptr, DstReg, Size);
+                      Offset, nullptr, /*AddrSegmentReg=*/X86::NoRegister,
+                      DstReg, Size);
   }
 
-  bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int Scale,
-                          const MCPhysReg &IndexReg, int Offset,
-                          const MCExpr *OffsetExpr, const MCPhysReg &DstReg,
-                          int Size) const{
+  bool createLoad(MCInst &Inst, const MCPhysReg &BaseReg, int64_t Scale,
+                  const MCPhysReg &IndexReg, int64_t Offset,
+                  const MCExpr *OffsetExpr, const MCPhysReg &AddrSegmentReg,
+                  const MCPhysReg &DstReg, int Size) const {
     unsigned NewOpcode;
     switch (Size) {
       default:
@@ -2692,7 +2696,7 @@ public:
       Inst.addOperand(MCOperand::createExpr(OffsetExpr)); // Displacement
     else
       Inst.addOperand(MCOperand::createImm(Offset)); // Displacement
-    Inst.addOperand(MCOperand::createReg(X86::NoRegister)); // AddrSegmentReg
+    Inst.addOperand(MCOperand::createReg(AddrSegmentReg)); // AddrSegmentReg
     return true;
   }
 
