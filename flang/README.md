@@ -22,9 +22,9 @@ Read more about f18 in the documentation directory.
 F18 is written in C++17.
 
 The code has been compiled and tested with
-GCC versions 7.2.0, 7.3.0, and 8.1.0.
+GCC versions 7.2.0, 7.3.0, 8.1.0, and 8.2.0.
 The code has been compiled and tested with clang 6.0
-using GCC 7.3.0 or 8.1.0 headers;
+using either GCC 7.3.0 or 8.1.0 headers;
 however, the headers needed small patches.
 
 To build and install f18, there are several options
