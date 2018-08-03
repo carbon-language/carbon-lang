@@ -293,7 +293,7 @@ Expected<Profile> loadProfile(StringRef Filename) {
       return std::move(E);
   }
 
-  return P;
+  return std::move(P);
 }
 
 namespace {
