@@ -541,9 +541,6 @@ void ASTDeclReader::Visit(Decl *D) {
     // if we have a fully initialized TypeDecl, we can safely read its type now.
     ID->TypeForDecl = Reader.GetType(DeferredTypeID).getTypePtrOrNull();
   } else if (auto *FD = dyn_cast<FunctionDecl>(D)) {
-    if (DeferredTypeID)
-      FD->setType(Reader.GetType(DeferredTypeID));
-
     // FunctionDecl's body was written last after all other Stmts/Exprs.
     // We only read it if FD doesn't already have a body (e.g., from another
     // module).
@@ -844,10 +841,11 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     // We'll set up the real type in Visit, once we've finished loading the
     // function.
     FD->setType(FD->getTypeSourceInfo()->getType());
+    Reader.PendingFunctionTypes.push_back({FD, DeferredTypeID});
   } else {
     FD->setType(Reader.GetType(DeferredTypeID));
-    DeferredTypeID = 0;
   }
+  DeferredTypeID = 0;
 
   ReadDeclarationNameLoc(FD->DNLoc, FD->getDeclName());
   FD->IdentifierNamespace = Record.readInt();
@@ -3370,6 +3368,11 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
   }
 }
 
+static bool isUndeducedReturnType(QualType T) {
+  auto *DT = T->getContainedDeducedType();
+  return DT && !DT->isDeduced();
+}
+
 template<>
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
                                            Redeclarable<FunctionDecl> *D,
@@ -3401,17 +3404,26 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
     FD->setImplicitlyInline(true);
   }
 
-  // If we need to propagate an exception specification along the redecl
-  // chain, make a note of that so that we can do so later.
   auto *FPT = FD->getType()->getAs<FunctionProtoType>();
   auto *PrevFPT = PrevFD->getType()->getAs<FunctionProtoType>();
   if (FPT && PrevFPT) {
+    // If we need to propagate an exception specification along the redecl
+    // chain, make a note of that so that we can do so later.
     bool IsUnresolved = isUnresolvedExceptionSpec(FPT->getExceptionSpecType());
     bool WasUnresolved =
         isUnresolvedExceptionSpec(PrevFPT->getExceptionSpecType());
     if (IsUnresolved != WasUnresolved)
       Reader.PendingExceptionSpecUpdates.insert(
-          std::make_pair(Canon, IsUnresolved ? PrevFD : FD));
+          {Canon, IsUnresolved ? PrevFD : FD});
+
+    // If we need to propagate a deduced return type along the redecl chain,
+    // make a note of that so that we can do it later.
+    bool IsUndeduced = isUndeducedReturnType(FPT->getReturnType());
+    bool WasUndeduced = isUndeducedReturnType(PrevFPT->getReturnType());
+    if (IsUndeduced != WasUndeduced)
+      Reader.PendingDeducedTypeUpdates.insert(
+          {cast<FunctionDecl>(Canon),
+           (IsUndeduced ? PrevFPT : FPT)->getReturnType()});
   }
 }
 
@@ -4328,14 +4340,10 @@ void ASTDeclReader::UpdateDecl(Decl *D,
     }
 
     case UPD_CXX_DEDUCED_RETURN_TYPE: {
-      // FIXME: Also do this when merging redecls.
+      auto *FD = cast<FunctionDecl>(D);
       QualType DeducedResultType = Record.readType();
-      for (auto *Redecl : merged_redecls(D)) {
-        // FIXME: If the return type is already deduced, check that it matches.
-        auto *FD = cast<FunctionDecl>(Redecl);
-        Reader.getContext().adjustDeducedFunctionResultType(FD,
-                                                            DeducedResultType);
-      }
+      Reader.PendingDeducedTypeUpdates.insert(
+          {FD->getCanonicalDecl(), DeducedResultType});
       break;
     }
 
