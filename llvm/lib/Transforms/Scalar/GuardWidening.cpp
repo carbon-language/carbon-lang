@@ -66,6 +66,7 @@ STATISTIC(GuardsEliminated, "Number of eliminated guards");
 
 namespace {
 
+// Get the condition of \p GuardInst.
 static Value *getGuardCondition(Instruction *GuardInst) {
   IntrinsicInst *GI = cast<IntrinsicInst>(GuardInst);
   assert(GI->getIntrinsicID() == Intrinsic::experimental_guard &&
