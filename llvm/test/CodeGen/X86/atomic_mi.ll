@@ -1607,7 +1607,7 @@ define void @neg_16(i16* %p) {
 ;   treat 16 bit arithmetic as expensive on X86/X86_64.
 ; X64-LABEL: neg_16:
 ; X64:       # %bb.0:
-; X64-NEXT:    movw (%rdi), %ax
+; X64-NEXT:    movzwl (%rdi), %eax
 ; X64-NEXT:    negl %eax
 ; X64-NEXT:    movw %ax, (%rdi)
 ; X64-NEXT:    retq
@@ -1615,7 +1615,7 @@ define void @neg_16(i16* %p) {
 ; X32-LABEL: neg_16:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-NEXT:    movw (%eax), %cx
+; X32-NEXT:    movzwl (%eax), %ecx
 ; X32-NEXT:    negl %ecx
 ; X32-NEXT:    movw %cx, (%eax)
 ; X32-NEXT:    retl
