@@ -112,6 +112,7 @@ static CXTypeKind GetTypeKind(QualType T) {
     TKCASE(Auto);
     TKCASE(Elaborated);
     TKCASE(Pipe);
+    TKCASE(Attributed);
     default:
       return CXType_Unexposed;
   }
@@ -125,7 +126,9 @@ CXType cxtype::MakeCXType(QualType T, CXTranslationUnit TU) {
   if (TU && !T.isNull()) {
     // Handle attributed types as the original type
     if (auto *ATT = T->getAs<AttributedType>()) {
-      return MakeCXType(ATT->getModifiedType(), TU);
+      if (!(TU->ParsingOptions & CXTranslationUnit_IncludeAttributedTypes)) {
+        return MakeCXType(ATT->getModifiedType(), TU);
+      }
     }
     // Handle paren types as the original type
     if (auto *PTT = T->getAs<ParenType>()) {
@@ -591,6 +594,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(Auto);
     TKIND(Elaborated);
     TKIND(Pipe);
+    TKIND(Attributed);
 #define IMAGE_TYPE(ImgType, Id, SingletonId, Access, Suffix) TKIND(Id);
 #include "clang/Basic/OpenCLImageTypes.def"
 #undef IMAGE_TYPE
@@ -994,6 +998,17 @@ long long clang_Type_getOffsetOf(CXType PT, const char *S) {
     return Ctx.getFieldOffset(IFD);
   // we don't want any other Decl Type.
   return CXTypeLayoutError_InvalidFieldName;
+}
+
+CXType clang_Type_getModifiedType(CXType CT) {
+  QualType T = GetQualType(CT);
+  if (T.isNull())
+    return MakeCXType(QualType(), GetTU(CT));
+
+  if (auto *ATT = T->getAs<AttributedType>())
+    return MakeCXType(ATT->getModifiedType(), GetTU(CT));
+
+  return MakeCXType(QualType(), GetTU(CT));
 }
 
 long long clang_Cursor_getOffsetOfField(CXCursor C) {

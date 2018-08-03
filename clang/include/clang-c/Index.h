@@ -1331,7 +1331,12 @@ enum CXTranslationUnit_Flags {
    *
    * The function bodies of the main file are not skipped.
    */
-  CXTranslationUnit_LimitSkipFunctionBodiesToPreamble = 0x800
+  CXTranslationUnit_LimitSkipFunctionBodiesToPreamble = 0x800,
+
+  /**
+   * Used to indicate that attributed types should be included in CXType.
+   */
+  CXTranslationUnit_IncludeAttributedTypes = 0x1000
 };
 
 /**
@@ -3268,7 +3273,8 @@ enum CXTypeKind {
   CXType_OCLReserveID = 160,
 
   CXType_ObjCObject = 161,
-  CXType_ObjCTypeParam = 162
+  CXType_ObjCTypeParam = 162,
+  CXType_Attributed = 163
 };
 
 /**
@@ -3816,6 +3822,13 @@ CINDEX_LINKAGE long long clang_Type_getSizeOf(CXType T);
  *   CXTypeLayoutError_InvalidFieldName is returned.
  */
 CINDEX_LINKAGE long long clang_Type_getOffsetOf(CXType T, const char *S);
+
+/**
+ * Return the type that was modified by this attributed type.
+ *
+ * If the type is not an attributed type, an invalid type is returned.
+ */
+CINDEX_LINKAGE CXType clang_Type_getModifiedType(CXType T);
 
 /**
  * Return the offset of the field represented by the Cursor.
