@@ -100,6 +100,7 @@ static CXTypeKind GetTypeKind(QualType T) {
     TKCASE(ObjCInterface);
     TKCASE(ObjCObject);
     TKCASE(ObjCObjectPointer);
+    TKCASE(ObjCTypeParam);
     TKCASE(FunctionNoProto);
     TKCASE(FunctionProto);
     TKCASE(ConstantArray);
@@ -578,6 +579,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
     TKIND(ObjCInterface);
     TKIND(ObjCObject);
     TKIND(ObjCObjectPointer);
+    TKIND(ObjCTypeParam);
     TKIND(FunctionNoProto);
     TKIND(FunctionProto);
     TKIND(ConstantArray);
