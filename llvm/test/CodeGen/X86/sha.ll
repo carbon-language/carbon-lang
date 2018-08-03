@@ -184,3 +184,23 @@ entry:
   %1 = tail call <4 x i32> @llvm.x86.sha256msg2(<4 x i32> %a, <4 x i32> %0)
   ret <4 x i32> %1
 }
+
+; Make sure we don't forget that sha instructions have no VEX equivalents and thus don't zero YMM/ZMM.
+define <8 x i32> @test_sha1rnds4_zero_extend(<4 x i32> %a, <4 x i32>* %b) nounwind uwtable {
+; SSE-LABEL: test_sha1rnds4_zero_extend:
+; SSE:       # %bb.0: # %entry
+; SSE-NEXT:    sha1rnds4 $3, (%rdi), %xmm0
+; SSE-NEXT:    xorps %xmm1, %xmm1
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: test_sha1rnds4_zero_extend:
+; AVX:       # %bb.0: # %entry
+; AVX-NEXT:    sha1rnds4 $3, (%rdi), %xmm0
+; AVX-NEXT:    vmovaps %xmm0, %xmm0
+; AVX-NEXT:    retq
+entry:
+  %0 = load <4 x i32>, <4 x i32>* %b
+  %1 = tail call <4 x i32> @llvm.x86.sha1rnds4(<4 x i32> %a, <4 x i32> %0, i8 3)
+  %2 = shufflevector <4 x i32> %1, <4 x i32> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i32> %2
+}
