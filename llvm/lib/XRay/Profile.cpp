@@ -372,7 +372,7 @@ Expected<Profile> profileFromTrace(const Trace &T) {
       return std::move(E);
   }
 
-  return P;
+  return std::move(P);
 }
 
 } // namespace xray
