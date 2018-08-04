@@ -160,7 +160,6 @@ static void CreateAndRunJITFunc(const std::string &IR, CodeGenOpt::Level OLvl) {
   EE->finalizeObject();
   EE->runStaticConstructorsDestructors(false);
 
-  typedef void (*func)(int*, int*, int*, int);
 #if defined(__GNUC__) && !defined(__clang) &&                                  \
     ((__GNUC__ == 4) && (__GNUC_MINOR__ < 9))
 // Silence
@@ -173,7 +172,7 @@ static void CreateAndRunJITFunc(const std::string &IR, CodeGenOpt::Level OLvl) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #endif
-  LLVMFunc f = reinterpret_cast<LLVMFunc>(EE->getPointerToFunction(EntryFunc)); 
+  LLVMFunc f = reinterpret_cast<LLVMFunc>(EE->getPointerToFunction(EntryFunc));
 #if defined(__GNUC__) && !defined(__clang) &&                                  \
     ((__GNUC__ == 4) && (__GNUC_MINOR__ < 9))
 #pragma GCC diagnostic pop
