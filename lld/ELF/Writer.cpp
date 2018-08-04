@@ -2050,7 +2050,7 @@ template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
       continue;
     if ((Sec->Offset > FileSize) || (Sec->Offset + Sec->Size > FileSize))
       error("unable to place section " + Sec->Name + " at file offset " +
-            rangeToString(Sec->Offset, Sec->Offset + Sec->Size) +
+            rangeToString(Sec->Offset, Sec->Size) +
             "; check your linker script for overflows");
   }
 }
