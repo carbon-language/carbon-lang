@@ -89,8 +89,7 @@ uint32_t zlib::crc32(StringRef Buffer) {
 #else
 bool zlib::isAvailable() { return false; }
 Error zlib::compress(StringRef InputBuffer,
-                     SmallVectorImpl<char> &CompressedBuffer,
-                     CompressionLevel Level) {
+                     SmallVectorImpl<char> &CompressedBuffer, int Level) {
   llvm_unreachable("zlib::compress is unavailable");
 }
 Error zlib::uncompress(StringRef InputBuffer, char *UncompressedBuffer,
