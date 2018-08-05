@@ -52,7 +52,7 @@
 ; YAML-HOT-NEXT:   - Callee:          f
 ; YAML-HOT-NEXT:   - String:          ' inlined into '
 ; YAML-HOT-NEXT:   - Caller:          _start
-; YAML-HOT-NEXT:   - String:          ' with'
+; YAML-HOT-NEXT:   - String:          ' with '
 ; YAML-HOT-NEXT:   - String:          '(cost='
 ; YAML-HOT-NEXT:   - Cost:            '0'
 ; YAML-HOT-NEXT:   - String:          ', threshold='
