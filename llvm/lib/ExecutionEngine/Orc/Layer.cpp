@@ -116,8 +116,10 @@ Expected<SymbolFlagsMap> getObjectSymbolFlags(ExecutionSession &ES,
   for (auto &Sym : (*Obj)->symbols()) {
     if (!(Sym.getFlags() & object::BasicSymbolRef::SF_Undefined) &&
         (Sym.getFlags() & object::BasicSymbolRef::SF_Exported)) {
-      auto InternedName =
-          ES.getSymbolStringPool().intern(cantFail(Sym.getName()));
+      auto Name = Sym.getName();
+      if (!Name)
+        return Name.takeError();
+      auto InternedName = ES.getSymbolStringPool().intern(*Name);
       auto SymFlags = JITSymbolFlags::fromObjectSymbol(Sym);
       if (!SymFlags)
         return SymFlags.takeError();
