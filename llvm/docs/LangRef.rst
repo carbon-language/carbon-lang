@@ -2337,15 +2337,7 @@ The default LLVM floating-point environment assumes that floating-point
 instructions do not have side effects. Results assume the round-to-nearest
 rounding mode. No floating-point exception state is maintained in this
 environment. Therefore, there is no attempt to create or preserve invalid
-operation (SNaN) or division-by-zero exceptions in these examples:
-
-.. code-block:: llvm
-
-      %A = fdiv 0x7ff0000000000001, %X  ; 64-bit SNaN hex value 
-      %B = fdiv %X, 0.0
-    Safe:
-      %A = NaN
-      %B = NaN
+operation (SNaN) or division-by-zero exceptions.
 
 The benefit of this exception-free assumption is that floating-point
 operations may be speculated freely without any other fast-math relaxations
