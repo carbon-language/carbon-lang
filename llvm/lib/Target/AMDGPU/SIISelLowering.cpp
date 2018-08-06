@@ -6745,70 +6745,99 @@ SDValue SITargetLowering::performRcpCombine(SDNode *N,
   return AMDGPUTargetLowering::performRcpCombine(N, DCI);
 }
 
-static bool isCanonicalized(SelectionDAG &DAG, SDValue Op,
-                            const GCNSubtarget *ST, unsigned MaxDepth=5) {
+bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
+                                       unsigned MaxDepth) const {
+  unsigned Opcode = Op.getOpcode();
+  if (Opcode == ISD::FCANONICALIZE)
+    return true;
+
+  if (auto *CFP = dyn_cast<ConstantFPSDNode>(Op)) {
+    auto F = CFP->getValueAPF();
+    if (F.isNaN() && F.isSignaling())
+      return false;
+    return !F.isDenormal() || denormalsEnabledForType(Op.getValueType());
+  }
+
   // If source is a result of another standard FP operation it is already in
   // canonical form.
+  if (MaxDepth == 0)
+    return false;
 
-  switch (Op.getOpcode()) {
-  default:
-    break;
-
+  switch (Opcode) {
   // These will flush denorms if required.
   case ISD::FADD:
   case ISD::FSUB:
   case ISD::FMUL:
-  case ISD::FSQRT:
   case ISD::FCEIL:
   case ISD::FFLOOR:
   case ISD::FMA:
   case ISD::FMAD:
-
-  case ISD::FCANONICALIZE:
+  case ISD::FSQRT:
+  case ISD::FDIV:
+  case ISD::FREM:
+  case AMDGPUISD::FMUL_LEGACY:
+  case AMDGPUISD::FMAD_FTZ:
     return true;
-
   case ISD::FP_ROUND:
     return Op.getValueType().getScalarType() != MVT::f16 ||
-           ST->hasFP16Denormals();
+           Subtarget->hasFP16Denormals();
 
   case ISD::FP_EXTEND:
     return Op.getOperand(0).getValueType().getScalarType() != MVT::f16 ||
-           ST->hasFP16Denormals();
+           Subtarget->hasFP16Denormals();
 
   // It can/will be lowered or combined as a bit operation.
   // Need to check their input recursively to handle.
   case ISD::FNEG:
   case ISD::FABS:
-    return (MaxDepth > 0) &&
-           isCanonicalized(DAG, Op.getOperand(0), ST, MaxDepth - 1);
+  case ISD::FCOPYSIGN:
+    return isCanonicalized(DAG, Op.getOperand(0), MaxDepth - 1);
 
   case ISD::FSIN:
   case ISD::FCOS:
   case ISD::FSINCOS:
     return Op.getValueType().getScalarType() != MVT::f16;
 
-  // In pre-GFX9 targets V_MIN_F32 and others do not flush denorms.
-  // For such targets need to check their input recursively.
   case ISD::FMINNUM:
-  case ISD::FMAXNUM:
-  case ISD::FMINNAN:
-  case ISD::FMAXNAN:
+  case ISD::FMAXNUM: {
+    // FIXME: Shouldn't treat the generic operations different based these.
+    bool IsIEEEMode = Subtarget->enableIEEEBit(DAG.getMachineFunction());
+    if (IsIEEEMode) {
+      // snans will be quieted, so we only need to worry about denormals.
+      if (Subtarget->supportsMinMaxDenormModes() ||
+          denormalsEnabledForType(Op.getValueType()))
+        return true;
 
-    if (ST->supportsMinMaxDenormModes() &&
-        DAG.isKnownNeverNaN(Op.getOperand(0)) &&
-        DAG.isKnownNeverNaN(Op.getOperand(1)))
-      return true;
+      // Flushing may be required.
+      // In pre-GFX9 targets V_MIN_F32 and others do not flush denorms. For such
+      // targets need to check their input recursively.
+      return isCanonicalized(DAG, Op.getOperand(0), MaxDepth - 1) &&
+             isCanonicalized(DAG, Op.getOperand(1), MaxDepth - 1);
+    }
 
-    return (MaxDepth > 0) &&
-           isCanonicalized(DAG, Op.getOperand(0), ST, MaxDepth - 1) &&
-           isCanonicalized(DAG, Op.getOperand(1), ST, MaxDepth - 1);
+    if (Subtarget->supportsMinMaxDenormModes() ||
+        denormalsEnabledForType(Op.getValueType())) {
+      // Only quieting may be necessary.
+      return DAG.isKnownNeverSNaN(Op.getOperand(0)) &&
+             DAG.isKnownNeverSNaN(Op.getOperand(1));
+    }
 
-  case ISD::ConstantFP: {
-    auto F = cast<ConstantFPSDNode>(Op)->getValueAPF();
-    return !F.isDenormal() && !(F.isNaN() && F.isSignaling());
+    // Flushing and quieting may be necessary
+    // With ieee_mode off, the nan is returned as-is, so if it is an sNaN it
+    // needs to be quieted.
+    return isCanonicalized(DAG, Op.getOperand(0), MaxDepth - 1) &&
+           isCanonicalized(DAG, Op.getOperand(1), MaxDepth - 1);
   }
+  case ISD::SELECT: {
+    return isCanonicalized(DAG, Op.getOperand(1), MaxDepth - 1) &&
+           isCanonicalized(DAG, Op.getOperand(2), MaxDepth - 1);
   }
-  return false;
+  default:
+    return denormalsEnabledForType(Op.getValueType()) &&
+           DAG.isKnownNeverSNaN(Op);
+  }
+
+  llvm_unreachable("invalid operation");
 }
 
 // Constant fold canonicalize.
@@ -6828,22 +6857,7 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
   ConstantFPSDNode *CFP = isConstOrConstSplatFP(N0);
   if (!CFP) {
     SDValue N0 = N->getOperand(0);
-    EVT VT = N0.getValueType().getScalarType();
-    auto ST = getSubtarget();
-
-    if (((VT == MVT::f32 && ST->hasFP32Denormals()) ||
-         (VT == MVT::f64 && ST->hasFP64Denormals()) ||
-         (VT == MVT::f16 && ST->hasFP16Denormals())) &&
-        DAG.isKnownNeverNaN(N0))
-      return N0;
-
-    bool IsIEEEMode = Subtarget->enableIEEEBit(DAG.getMachineFunction());
-
-    if ((IsIEEEMode || DAG.isKnownNeverSNaN(N0)) &&
-        isCanonicalized(DAG, N0, ST))
-      return N0;
-
-    return SDValue();
+    return isCanonicalized(DAG, N0) ? N0 : SDValue();
   }
 
   const APFloat &C = CFP->getValueAPF();
@@ -8461,4 +8475,17 @@ bool SITargetLowering::isSDNodeSourceOfDivergence(const SDNode * N,
       return true;
   }
   return false;
+}
+
+bool SITargetLowering::denormalsEnabledForType(EVT VT) const {
+  switch (VT.getScalarType().getSimpleVT().SimpleTy) {
+  case MVT::f32:
+    return Subtarget->hasFP32Denormals();
+  case MVT::f64:
+    return Subtarget->hasFP64Denormals();
+  case MVT::f16:
+    return Subtarget->hasFP16Denormals();
+  default:
+    return false;
+  }
 }

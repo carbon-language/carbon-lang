@@ -323,6 +323,10 @@ public:
 
   bool isSDNodeSourceOfDivergence(const SDNode *N,
     FunctionLoweringInfo *FLI, DivergenceAnalysis *DA) const override;
+
+  bool isCanonicalized(SelectionDAG &DAG, SDValue Op,
+                       unsigned MaxDepth = 5) const;
+  bool denormalsEnabledForType(EVT VT) const;
 };
 
 } // End namespace llvm
