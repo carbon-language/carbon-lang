@@ -2697,20 +2697,15 @@ unsigned ObjectFileELF::ApplyRelocations(
         break;
       }
       case R_X86_64_32:
-      case R_X86_64_32S:
-      case R_AARCH64_ABS32: {
+      case R_X86_64_32S: {
         symbol = symtab->FindSymbolByID(reloc_symbol(rel));
         if (symbol) {
           addr_t value = symbol->GetAddressRef().GetFileAddress();
           value += ELFRelocation::RelocAddend32(rel);
-          if (!((IsRelocABS32(rel) && value <= UINT32_MAX) ||
-                (reloc_type(rel) == R_X86_64_32S &&
-                 ((int64_t)value <= INT32_MAX &&
-                  (int64_t)value >= INT32_MIN)))) {
-            Log *log =
-                lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_MODULES);
-            log->Printf("Failed to apply debug info relocations");
-          }
+          assert(
+              (reloc_type(rel) == R_X86_64_32 && (value <= UINT32_MAX)) ||
+              (reloc_type(rel) == R_X86_64_32S &&
+               ((int64_t)value <= INT32_MAX && (int64_t)value >= INT32_MIN)));
           uint32_t truncated_addr = (value & 0xFFFFFFFF);
           DataBufferSP &data_buffer_sp = debug_data.GetSharedDataBuffer();
           uint32_t *dst = reinterpret_cast<uint32_t *>(
