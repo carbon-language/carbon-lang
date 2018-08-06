@@ -290,7 +290,7 @@ bool GuardWideningImpl::run() {
   if (WidenFrequentBranches && BPI) {
     unsigned Threshold = FrequentBranchThreshold;
     assert(Threshold > 0 && "Zero threshold makes no sense!");
-    LikelyTaken = std::move(BranchProbability(Threshold - 1, Threshold));
+    LikelyTaken = BranchProbability(Threshold - 1, Threshold);
   }
 
   for (auto DFI = df_begin(Root), DFE = df_end(Root);
