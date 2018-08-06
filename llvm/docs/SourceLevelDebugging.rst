@@ -1495,7 +1495,7 @@ For example, here is a module before:
 
 .. code-block:: llvm
 
-   define dso_local void @f(i32* %x) {
+   define void @f(i32* %x) {
    entry:
      %x.addr = alloca i32*, align 8
      store i32* %x, i32** %x.addr, align 8
@@ -1508,7 +1508,7 @@ and after running ``opt -debugify``  on it we get:
 
 .. code-block:: llvm
 
-   define dso_local void @f(i32* %x) !dbg !6 {
+   define void @f(i32* %x) !dbg !6 {
    entry:
      %x.addr = alloca i32*, align 8, !dbg !12
      call void @llvm.dbg.value(metadata i32** %x.addr, metadata !9, metadata !DIExpression()), !dbg !12
