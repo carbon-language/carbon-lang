@@ -6779,6 +6779,18 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
   case ISD::FP_EXTEND:
   case AMDGPUISD::FMUL_LEGACY:
   case AMDGPUISD::FMAD_FTZ:
+  case AMDGPUISD::RCP:
+  case AMDGPUISD::RSQ:
+  case AMDGPUISD::RSQ_CLAMP:
+  case AMDGPUISD::RCP_LEGACY:
+  case AMDGPUISD::RSQ_LEGACY:
+  case AMDGPUISD::RCP_IFLAG:
+  case AMDGPUISD::TRIG_PREOP:
+  case AMDGPUISD::DIV_SCALE:
+  case AMDGPUISD::DIV_FMAS:
+  case AMDGPUISD::DIV_FIXUP:
+  case AMDGPUISD::FRACT:
+  case AMDGPUISD::LDEXP:
     return true;
 
   // It can/will be lowered or combined as a bit operation.
@@ -6794,7 +6806,11 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
     return Op.getValueType().getScalarType() != MVT::f16;
 
   case ISD::FMINNUM:
-  case ISD::FMAXNUM: {
+  case ISD::FMAXNUM:
+  case AMDGPUISD::CLAMP:
+  case AMDGPUISD::FMED3:
+  case AMDGPUISD::FMAX3:
+  case AMDGPUISD::FMIN3: {
     // FIXME: Shouldn't treat the generic operations different based these.
     bool IsIEEEMode = Subtarget->enableIEEEBit(DAG.getMachineFunction());
     if (IsIEEEMode) {
