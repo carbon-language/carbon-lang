@@ -31,8 +31,10 @@ void Descriptor::Establish(TypeCode t, std::size_t elementBytes, void *p,
   CHECK(ISO::CFI_establish(&raw_, p, attribute, t.raw(), elementBytes, rank,
             extent) == CFI_SUCCESS);
   raw_.f18Addendum = addendum;
-  if (addendum) {
-    new (Addendum()) DescriptorAddendum{};
+  DescriptorAddendum *a{Addendum()};
+  CHECK(addendum == (a != nullptr));
+  if (a) {
+    new (a) DescriptorAddendum{};
   }
 }
 
@@ -46,8 +48,10 @@ void Descriptor::Establish(TypeCategory c, int kind, void *p, int rank,
   CHECK(ISO::CFI_establish(&raw_, p, attribute, TypeCode(c, kind).raw(),
             elementBytes, rank, extent) == CFI_SUCCESS);
   raw_.f18Addendum = addendum;
-  if (addendum) {
-    new (Addendum()) DescriptorAddendum{};
+  DescriptorAddendum *a{Addendum()};
+  CHECK(addendum == (a != nullptr));
+  if (a) {
+    new (a) DescriptorAddendum{};
   }
 }
 
@@ -56,7 +60,9 @@ void Descriptor::Establish(const DerivedType &dt, void *p, int rank,
   CHECK(ISO::CFI_establish(&raw_, p, attribute, CFI_type_struct,
             dt.SizeInBytes(), rank, extent) == CFI_SUCCESS);
   raw_.f18Addendum = true;
-  new (Addendum()) DescriptorAddendum{&dt};
+  DescriptorAddendum *a{Addendum()};
+  CHECK(a != nullptr);
+  new (a) DescriptorAddendum{&dt};
 }
 
 std::unique_ptr<Descriptor> Descriptor::Create(TypeCode t,
