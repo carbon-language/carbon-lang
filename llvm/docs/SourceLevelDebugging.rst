@@ -1506,7 +1506,7 @@ For example, here is a module before:
 
 and after running ``opt -debugify``  on it we get:
 
-.. code-block:: llvm
+.. code-block:: text
 
    define void @f(i32* %x) !dbg !6 {
    entry:
