@@ -4392,7 +4392,7 @@ DISubrange
 - ``count: !9`` describes the count with a :ref:`DILocalVariable`.
 - ``count: !11`` describes the count with a :ref:`DIGlobalVariable`.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DISubrange(count: 5, lowerBound: 0) ; array counting from 0
     !1 = !DISubrange(count: 5, lowerBound: 1) ; array counting from 1
@@ -4420,7 +4420,7 @@ DIEnumerator
 ``DIEnumerator`` nodes are the elements for ``DW_TAG_enumeration_type``
 variants of :ref:`DICompositeType`.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DIEnumerator(name: "SixKind", value: 7)
     !1 = !DIEnumerator(name: "SevenKind", value: 7)
@@ -4433,7 +4433,7 @@ DITemplateTypeParameter
 language constructs. They are used (optionally) in :ref:`DICompositeType` and
 :ref:`DISubprogram` ``templateParams:`` fields.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DITemplateTypeParameter(name: "Ty", type: !1)
 
@@ -4446,7 +4446,7 @@ but if specified can also be set to ``DW_TAG_GNU_template_template_param`` or
 ``DW_TAG_GNU_template_param_pack``. They are used (optionally) in
 :ref:`DICompositeType` and :ref:`DISubprogram` ``templateParams:`` fields.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DITemplateValueParameter(name: "Ty", type: !1, value: i32 7)
 
@@ -4455,7 +4455,7 @@ DINamespace
 
 ``DINamespace`` nodes represent namespaces in the source language.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DINamespace(name: "myawesomeproject", scope: !1, file: !2, line: 7)
 
@@ -4466,7 +4466,7 @@ DIGlobalVariable
 
 ``DIGlobalVariable`` nodes represent global variables in the source language.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DIGlobalVariable(name: "foo", linkageName: "foo", scope: !1,
                            file: !2, line: 7, type: !3, isLocal: true,
@@ -4537,7 +4537,7 @@ DILexicalBlockFile
 indicate textual inclusion, or the ``discriminator:`` field can be used to
 discriminate between control flow within a single block in the source language.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DILexicalBlock(scope: !3, file: !4, line: 7, column: 35)
     !1 = !DILexicalBlockFile(scope: !0, file: !4, discriminator: 0)
@@ -4552,7 +4552,7 @@ DILocation
 mandatory, and points at an :ref:`DILexicalBlockFile`, an
 :ref:`DILexicalBlock`, or an :ref:`DISubprogram`.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !0 = !DILocation(line: 2900, column: 42, scope: !1, inlinedAt: !2)
 
@@ -4645,7 +4645,7 @@ DIObjCProperty
 
 ``DIObjCProperty`` nodes represent Objective-C property nodes.
 
-.. code-block:: llvm
+.. code-block:: text
 
     !3 = !DIObjCProperty(name: "foo", file: !1, line: 7, setter: "setFoo",
                          getter: "getFoo", attributes: 7, type: !2)
