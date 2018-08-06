@@ -6852,6 +6852,33 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
 }
 
 // Constant fold canonicalize.
+
+SDValue SITargetLowering::getCanonicalConstantFP(
+  SelectionDAG &DAG, const SDLoc &SL, EVT VT, const APFloat &C) const {
+  // Flush denormals to 0 if not enabled.
+  if (C.isDenormal() && !denormalsEnabledForType(VT))
+    return DAG.getConstantFP(0.0, SL, VT);
+
+  if (C.isNaN()) {
+    APFloat CanonicalQNaN = APFloat::getQNaN(C.getSemantics());
+    if (C.isSignaling()) {
+      // Quiet a signaling NaN.
+      // FIXME: Is this supposed to preserve payload bits?
+      return DAG.getConstantFP(CanonicalQNaN, SL, VT);
+    }
+
+    // Make sure it is the canonical NaN bitpattern.
+    //
+    // TODO: Can we use -1 as the canonical NaN value since it's an inline
+    // immediate?
+    if (C.bitcastToAPInt() != CanonicalQNaN.bitcastToAPInt())
+      return DAG.getConstantFP(CanonicalQNaN, SL, VT);
+  }
+
+  // Already canonical.
+  return DAG.getConstantFP(C, SL, VT);
+}
+
 SDValue SITargetLowering::performFCanonicalizeCombine(
   SDNode *N,
   DAGCombinerInfo &DCI) const {
@@ -6865,45 +6892,12 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
     return DAG.getConstantFP(QNaN, SDLoc(N), VT);
   }
 
-  ConstantFPSDNode *CFP = isConstOrConstSplatFP(N0);
-  if (!CFP) {
-    SDValue N0 = N->getOperand(0);
-    return isCanonicalized(DAG, N0) ? N0 : SDValue();
-  }
-
-  const APFloat &C = CFP->getValueAPF();
-
-  // Flush denormals to 0 if not enabled.
-  if (C.isDenormal()) {
+  if (ConstantFPSDNode *CFP = isConstOrConstSplatFP(N0)) {
     EVT VT = N->getValueType(0);
-    EVT SVT = VT.getScalarType();
-    if (SVT == MVT::f32 && !Subtarget->hasFP32Denormals())
-      return DAG.getConstantFP(0.0, SDLoc(N), VT);
-
-    if (SVT == MVT::f64 && !Subtarget->hasFP64Denormals())
-      return DAG.getConstantFP(0.0, SDLoc(N), VT);
-
-    if (SVT == MVT::f16 && !Subtarget->hasFP16Denormals())
-      return DAG.getConstantFP(0.0, SDLoc(N), VT);
+    return getCanonicalConstantFP(DAG, SDLoc(N), VT, CFP->getValueAPF());
   }
 
-  if (C.isNaN()) {
-    EVT VT = N->getValueType(0);
-    APFloat CanonicalQNaN = APFloat::getQNaN(C.getSemantics());
-    if (C.isSignaling()) {
-      // Quiet a signaling NaN.
-      return DAG.getConstantFP(CanonicalQNaN, SDLoc(N), VT);
-    }
-
-    // Make sure it is the canonical NaN bitpattern.
-    //
-    // TODO: Can we use -1 as the canonical NaN value since it's an inline
-    // immediate?
-    if (C.bitcastToAPInt() != CanonicalQNaN.bitcastToAPInt())
-      return DAG.getConstantFP(CanonicalQNaN, SDLoc(N), VT);
-  }
-
-  return N0;
+  return isCanonicalized(DAG, N0) ? N0 : SDValue();
 }
 
 static unsigned minMaxOpcToMin3Max3Opc(unsigned Opc) {

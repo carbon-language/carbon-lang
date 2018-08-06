@@ -130,6 +130,8 @@ private:
   SDValue performXorCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performZeroExtendCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performClassCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue getCanonicalConstantFP(SelectionDAG &DAG, const SDLoc &SL, EVT VT,
+                                 const APFloat &C) const;
   SDValue performFCanonicalizeCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
   SDValue performFPMed3ImmCombine(SelectionDAG &DAG, const SDLoc &SL,
