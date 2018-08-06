@@ -743,6 +743,90 @@ define amdgpu_ps float @test_fold_canonicalize_minnum_value_no_ieee_mode_nnan(fl
   ret float %canonicalized
 }
 
+; GCN-LABEL: {{^}}v_test_canonicalize_build_vector_v2f16:
+; GFX9-DAG: v_add_f16_e32
+; GFX9-DAG: v_mul_f16_e32
+; GFX9-NOT: v_max
+; GFX9-NOT: v_pk_max
+define <2 x half> @v_test_canonicalize_build_vector_v2f16(<2 x half> %vec) {
+  %lo = extractelement <2 x half> %vec, i32 0
+  %hi = extractelement <2 x half> %vec, i32 1
+  %lo.op = fadd half %lo, 1.0
+  %hi.op = fmul half %lo, 4.0
+  %ins0 = insertelement <2 x half> undef, half %lo.op, i32 0
+  %ins1 = insertelement <2 x half> %ins0, half %hi.op, i32 1
+  %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> %ins1)
+  ret <2 x half> %canonicalized
+}
+
+; GCN-LABEL: {{^}}v_test_canonicalize_build_vector_noncanon1_v2f16:
+; GFX9: v_add_f16_e32
+; GFX9: v_pk_max
+define <2 x half> @v_test_canonicalize_build_vector_noncanon1_v2f16(<2 x half> %vec) {
+  %lo = extractelement <2 x half> %vec, i32 0
+  %lo.op = fadd half %lo, 1.0
+  %ins = insertelement <2 x half> %vec, half %lo.op, i32 0
+  %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> %ins)
+  ret <2 x half> %canonicalized
+}
+
+; GCN-LABEL: {{^}}v_test_canonicalize_build_vector_noncanon0_v2f16:
+; GFX9: v_add_f16_sdwa
+; GFX9: v_pk_max
+define <2 x half> @v_test_canonicalize_build_vector_noncanon0_v2f16(<2 x half> %vec) {
+  %hi = extractelement <2 x half> %vec, i32 1
+  %hi.op = fadd half %hi, 1.0
+  %ins = insertelement <2 x half> %vec, half %hi.op, i32 1
+  %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> %ins)
+  ret <2 x half> %canonicalized
+}
+
+; GCN-LABEL: {{^}}v_test_canonicalize_extract_element_v2f16:
+; GFX9: s_waitcnt
+; GFX9-NEXT: v_pk_mul_f16 v0, v0, 4.0 op_sel_hi:[1,0]
+; GFX9-NEXT: s_setpc_b64
+define half @v_test_canonicalize_extract_element_v2f16(<2 x half> %vec) {
+  %vec.op = fmul <2 x half> %vec, <half 4.0, half 4.0>
+  %elt = extractelement <2 x half> %vec.op, i32 0
+  %canonicalized = call half @llvm.canonicalize.f16(half %elt)
+  ret half %canonicalized
+}
+
+; GCN-LABEL: {{^}}v_test_canonicalize_insertelement_v2f16:
+; GFX9: v_pk_mul_f16
+; GFX9: v_mul_f16_e32
+; GFX9-NOT: v_max
+; GFX9-NOT: v_pk_max
+define <2 x half> @v_test_canonicalize_insertelement_v2f16(<2 x half> %vec, half %val, i32 %idx) {
+  %vec.op = fmul <2 x half> %vec, <half 4.0, half 4.0>
+  %ins.op = fmul half %val, 8.0
+  %ins = insertelement <2 x half> %vec.op, half %ins.op, i32 %idx
+  %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> %ins)
+  ret <2 x half> %canonicalized
+}
+
+; GCN-LABEL: {{^}}v_test_canonicalize_insertelement_noncanon_vec_v2f16:
+; GFX9: v_mul_f16
+; GFX9: v_pk_max_f16 v0, v0, v0
+; GFX9-NEXT: s_setpc_b64
+define <2 x half> @v_test_canonicalize_insertelement_noncanon_vec_v2f16(<2 x half> %vec, half %val, i32 %idx) {
+  %ins.op = fmul half %val, 8.0
+  %ins = insertelement <2 x half> %vec, half %ins.op, i32 %idx
+  %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> %ins)
+  ret <2 x half> %canonicalized
+}
+
+; GCN-LABEL: {{^}}v_test_canonicalize_insertelement_noncanon_insval_v2f16:
+; GFX9: v_pk_mul_f16
+; GFX9: v_pk_max_f16 v0, v0, v0
+; GFX9-NEXT: s_setpc_b64
+define <2 x half> @v_test_canonicalize_insertelement_noncanon_insval_v2f16(<2 x half> %vec, half %val, i32 %idx) {
+  %vec.op = fmul <2 x half> %vec, <half 4.0, half 4.0>
+  %ins = insertelement <2 x half> %vec.op, half %val, i32 %idx
+  %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> %ins)
+  ret <2 x half> %canonicalized
+}
+
 ; Avoid failing the test on FreeBSD11.0 which will match the GCN-NOT: 1.0
 ; in the .amd_amdgpu_isa "amdgcn-unknown-freebsd11.0--gfx802" directive
 ; CHECK: .amd_amdgpu_isa

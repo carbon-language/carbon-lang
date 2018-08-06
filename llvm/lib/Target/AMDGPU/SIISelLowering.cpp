@@ -6843,6 +6843,26 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
     return isCanonicalized(DAG, Op.getOperand(1), MaxDepth - 1) &&
            isCanonicalized(DAG, Op.getOperand(2), MaxDepth - 1);
   }
+  case ISD::BUILD_VECTOR: {
+    for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
+      SDValue SrcOp = Op.getOperand(i);
+      if (!isCanonicalized(DAG, SrcOp, MaxDepth - 1))
+        return false;
+    }
+
+    return true;
+  }
+  case ISD::EXTRACT_VECTOR_ELT:
+  case ISD::EXTRACT_SUBVECTOR: {
+    return isCanonicalized(DAG, Op.getOperand(0), MaxDepth - 1);
+  }
+  case ISD::INSERT_VECTOR_ELT: {
+    return isCanonicalized(DAG, Op.getOperand(0), MaxDepth - 1) &&
+           isCanonicalized(DAG, Op.getOperand(1), MaxDepth - 1);
+  }
+  case ISD::UNDEF:
+    // Could be anything.
+    return false;
   default:
     return denormalsEnabledForType(Op.getValueType()) &&
            DAG.isKnownNeverSNaN(Op);
