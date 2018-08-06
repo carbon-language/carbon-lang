@@ -6775,16 +6775,11 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
   case ISD::FSQRT:
   case ISD::FDIV:
   case ISD::FREM:
+  case ISD::FP_ROUND:
+  case ISD::FP_EXTEND:
   case AMDGPUISD::FMUL_LEGACY:
   case AMDGPUISD::FMAD_FTZ:
     return true;
-  case ISD::FP_ROUND:
-    return Op.getValueType().getScalarType() != MVT::f16 ||
-           Subtarget->hasFP16Denormals();
-
-  case ISD::FP_EXTEND:
-    return Op.getOperand(0).getValueType().getScalarType() != MVT::f16 ||
-           Subtarget->hasFP16Denormals();
 
   // It can/will be lowered or combined as a bit operation.
   // Need to check their input recursively to handle.

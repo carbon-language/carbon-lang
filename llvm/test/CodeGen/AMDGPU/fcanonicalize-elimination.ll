@@ -215,6 +215,22 @@ define amdgpu_kernel void @test_fold_canonicalize_fpextend_value_f32_f16(half ad
   ret void
 }
 
+; GCN-LABEL: test_fold_canonicalize_fpextend_value_f32_f16_flushf16:
+; GCN: v_cvt_f32_f16_e32 [[V:v[0-9]+]], v{{[0-9]+}}
+; GCN-NOT: v_mul
+; GCN-NOT: v_max
+; GCN: {{flat|global}}_store_dword v[{{[0-9:]+}}], [[V]]
+define amdgpu_kernel void @test_fold_canonicalize_fpextend_value_f32_f16_flushf16(half addrspace(1)* %arg, float addrspace(1)* %out) #2 {
+  %id = tail call i32 @llvm.amdgcn.workitem.id.x()
+  %gep = getelementptr inbounds half, half addrspace(1)* %arg, i32 %id
+  %load = load half, half addrspace(1)* %gep, align 2
+  %v = fpext half %load to float
+  %canonicalized = tail call float @llvm.canonicalize.f32(float %v)
+  %gep2 = getelementptr inbounds float, float addrspace(1)* %out, i32 %id
+  store float %canonicalized, float addrspace(1)* %gep2, align 4
+  ret void
+}
+
 ; GCN-LABEL: test_fold_canonicalize_fpround_value_f32_f64:
 ; GCN: v_cvt_f32_f64_e32 [[V:v[0-9]+]], v[{{[0-9:]+}}]
 ; GCN-NOT: v_mul
@@ -233,9 +249,26 @@ define amdgpu_kernel void @test_fold_canonicalize_fpround_value_f32_f64(double a
 
 ; GCN-LABEL: test_fold_canonicalize_fpround_value_f16_f32:
 ; GCN: v_cvt_f16_f32_e32 [[V:v[0-9]+]], v{{[0-9]+}}
+; GCN-NOT: v_max
+; GCN-NOT: v_mul
 ; GCN: {{flat|global}}_store_short v[{{[0-9:]+}}], [[V]]
-; GCN-NOT: 1.0
 define amdgpu_kernel void @test_fold_canonicalize_fpround_value_f16_f32(float addrspace(1)* %arg, half addrspace(1)* %out) {
+  %id = tail call i32 @llvm.amdgcn.workitem.id.x()
+  %gep = getelementptr inbounds float, float addrspace(1)* %arg, i32 %id
+  %load = load float, float addrspace(1)* %gep, align 4
+  %v = fptrunc float %load to half
+  %canonicalized = tail call half @llvm.canonicalize.f16(half %v)
+  %gep2 = getelementptr inbounds half, half addrspace(1)* %out, i32 %id
+  store half %canonicalized, half addrspace(1)* %gep2, align 2
+  ret void
+}
+
+; GCN-LABEL: test_fold_canonicalize_fpround_value_f16_f32_flushf16:
+; GCN: v_cvt_f16_f32_e32 [[V:v[0-9]+]], v{{[0-9]+}}
+; GCN-NOT: v_max
+; GCN-NOT: v_mul
+; GCN: {{flat|global}}_store_short v[{{[0-9:]+}}], [[V]]
+define amdgpu_kernel void @test_fold_canonicalize_fpround_value_f16_f32_flushf16(float addrspace(1)* %arg, half addrspace(1)* %out) #2 {
   %id = tail call i32 @llvm.amdgcn.workitem.id.x()
   %gep = getelementptr inbounds float, float addrspace(1)* %arg, i32 %id
   %load = load float, float addrspace(1)* %gep, align 4
@@ -738,3 +771,4 @@ declare double @llvm.maxnum.f64(double, double) #0
 
 attributes #0 = { nounwind readnone }
 attributes #1 = { "no-nans-fp-math"="true" }
+attributes #2 = { "target-features"="-fp64-fp16-denormals" }
