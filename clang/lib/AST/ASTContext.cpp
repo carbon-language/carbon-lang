@@ -885,7 +885,9 @@ void ASTContext::PrintStats() const {
 #define TYPE(Name, Parent)                                              \
   if (counts[Idx])                                                      \
     llvm::errs() << "    " << counts[Idx] << " " << #Name               \
-                 << " types\n";                                         \
+                 << " types, " << sizeof(Name##Type) << " each "        \
+                 << "(" << counts[Idx] * sizeof(Name##Type)             \
+                 << " bytes)\n";                                        \
   TotalBytes += counts[Idx] * sizeof(Name##Type);                       \
   ++Idx;
 #define ABSTRACT_TYPE(Name, Parent)
