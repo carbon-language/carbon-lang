@@ -601,51 +601,6 @@ TEST(FixedPoint, SAccumConversionOverflow) {
                               -549755813888);
 }
 
-void CheckSaturatedConversionToFractMax(FixedPointSemantics Src,
-                                        int64_t OneVal) {
-  CheckSaturatedConversionMax(Src, Saturated(getSFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getLFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getUSFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getUFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getPadULFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getPadUSFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getPadUFractSema()), OneVal);
-  CheckSaturatedConversionMax(Src, Saturated(getPadULFractSema()), OneVal);
-}
-
-void CheckSaturatedConversionToFractMin(FixedPointSemantics Src,
-                                        int64_t MinusOneVal) {
-  CheckSaturatedConversionMin(Src, Saturated(getSFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getLFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getUSFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getUFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getPadULFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getPadUSFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getPadUFractSema()), MinusOneVal);
-  CheckSaturatedConversionMin(Src, Saturated(getPadULFractSema()), MinusOneVal);
-}
-
-TEST(FixedPoint, OverflowConversionsToFract) {
-  CheckSaturatedConversionToFractMax(getSAccumSema(), 128);
-  CheckSaturatedConversionToFractMin(getSAccumSema(), -128);
-  CheckSaturatedConversionToFractMax(getAccumSema(), 32768);
-  CheckSaturatedConversionToFractMin(getAccumSema(), -32768);
-  CheckSaturatedConversionToFractMax(getLAccumSema(), 2147483648);
-  CheckSaturatedConversionToFractMin(getLAccumSema(), -2147483648);
-
-  // Unsigned
-  CheckSaturatedConversionToFractMax(getUSAccumSema(), 256);
-  CheckSaturatedConversionToFractMax(getUAccumSema(), 65536);
-  CheckSaturatedConversionToFractMax(getULAccumSema(), 4294967296);
-
-  // Padded unsigned
-  CheckSaturatedConversionToFractMax(getPadUSAccumSema(), 128);
-  CheckSaturatedConversionToFractMax(getPadUAccumSema(), 32768);
-  CheckSaturatedConversionToFractMax(getPadULAccumSema(), 2147483648);
-}
-
 TEST(FixedPoint, GetValueSignAfterConversion) {
   APFixedPoint Fixed(255 << 7, getSAccumSema());
   ASSERT_TRUE(Fixed.getValue().isSigned());
