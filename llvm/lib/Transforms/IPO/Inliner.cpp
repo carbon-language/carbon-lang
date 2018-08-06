@@ -367,7 +367,6 @@ shouldBeDeferred(Function *Caller, CallSite CS, InlineCost IC,
   return false;
 }
 
-#ifndef NDEBUG
 static std::basic_ostream<char> &operator<<(std::basic_ostream<char> &R,
                                             const ore::NV &Arg) {
   return R << Arg.Val;
@@ -389,6 +388,7 @@ RemarkT &operator<<(RemarkT &&R, const InlineCost &IC) {
   return R;
 }
 
+#ifndef NDEBUG
 static std::string inlineCostStr(const InlineCost &IC) {
   std::stringstream Remark;
   Remark << IC;
