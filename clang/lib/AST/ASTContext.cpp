@@ -48,6 +48,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/CommentOptions.h"
 #include "clang/Basic/ExceptionSpecificationType.h"
+#include "clang/Basic/FixedPoint.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"
@@ -10432,4 +10433,23 @@ unsigned char ASTContext::getFixedPointIBits(QualType Ty) const {
     case BuiltinType::SatULongFract:
       return 0;
   }
+}
+
+FixedPointSemantics ASTContext::getFixedPointSemantics(QualType Ty) const {
+  assert(Ty->isFixedPointType());
+  bool isSigned = Ty->isSignedFixedPointType();
+  return FixedPointSemantics(
+      static_cast<unsigned>(getTypeSize(Ty)), getFixedPointScale(Ty), isSigned,
+      Ty->isSaturatedFixedPointType(),
+      !isSigned && getTargetInfo().doUnsignedFixedPointTypesHavePadding());
+}
+
+APFixedPoint ASTContext::getFixedPointMax(QualType Ty) const {
+  assert(Ty->isFixedPointType());
+  return APFixedPoint::getMax(getFixedPointSemantics(Ty));
+}
+
+APFixedPoint ASTContext::getFixedPointMin(QualType Ty) const {
+  assert(Ty->isFixedPointType());
+  return APFixedPoint::getMin(getFixedPointSemantics(Ty));
 }
