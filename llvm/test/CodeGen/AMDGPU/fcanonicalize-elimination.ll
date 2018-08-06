@@ -827,6 +827,16 @@ define <2 x half> @v_test_canonicalize_insertelement_noncanon_insval_v2f16(<2 x 
   ret <2 x half> %canonicalized
 }
 
+; GCN-LABEL: {{^}}v_test_canonicalize_cvt_pkrtz:
+; GCN: s_waitcnt
+; GCN-NEXT: v_cvt_pkrtz_f16_f32 v0, v0, v1
+; GCN-NEXT: s_setpc_b64
+define <2 x half> @v_test_canonicalize_cvt_pkrtz(float %a, float %b) {
+  %cvt = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float %a, float %b)
+  %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> %cvt)
+  ret <2 x half> %canonicalized
+}
+
 ; Avoid failing the test on FreeBSD11.0 which will match the GCN-NOT: 1.0
 ; in the .amd_amdgpu_isa "amdgcn-unknown-freebsd11.0--gfx802" directive
 ; CHECK: .amd_amdgpu_isa
@@ -852,6 +862,7 @@ declare half @llvm.cos.f16(half) #0
 declare float @llvm.minnum.f32(float, float) #0
 declare float @llvm.maxnum.f32(float, float) #0
 declare double @llvm.maxnum.f64(double, double) #0
+declare <2 x half> @llvm.amdgcn.cvt.pkrtz(float, float) #0
 
 attributes #0 = { nounwind readnone }
 attributes #1 = { "no-nans-fp-math"="true" }

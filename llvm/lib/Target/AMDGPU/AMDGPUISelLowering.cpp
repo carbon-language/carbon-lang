@@ -4336,7 +4336,8 @@ bool AMDGPUTargetLowering::isKnownNeverNaNForTargetNode(SDValue Op,
     // one?
     return false;
   }
-  case AMDGPUISD::FMUL_LEGACY: {
+  case AMDGPUISD::FMUL_LEGACY:
+  case AMDGPUISD::CVT_PKRTZ_F16_F32: {
     if (SNaN)
       return true;
     return DAG.isKnownNeverNaN(Op.getOperand(0), SNaN, Depth + 1) &&

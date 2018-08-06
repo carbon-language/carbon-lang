@@ -6791,6 +6791,7 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
   case AMDGPUISD::DIV_FIXUP:
   case AMDGPUISD::FRACT:
   case AMDGPUISD::LDEXP:
+  case AMDGPUISD::CVT_PKRTZ_F16_F32:
     return true;
 
   // It can/will be lowered or combined as a bit operation.
@@ -6863,6 +6864,18 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
   case ISD::UNDEF:
     // Could be anything.
     return false;
+
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IntrinsicID
+      = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
+    // TODO: Handle more intrinsics
+    switch (IntrinsicID) {
+    case Intrinsic::amdgcn_cvt_pkrtz:
+      return true;
+    default:
+      break;
+    }
+  }
   default:
     return denormalsEnabledForType(Op.getValueType()) &&
            DAG.isKnownNeverSNaN(Op);
