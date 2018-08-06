@@ -30,48 +30,48 @@ using namespace minidump;
 
 #define DEF_X(i)                                                               \
   {                                                                            \
-    "x" #i, nullptr, 8, OFFSET(x[i]), eEncodingUint, eFormatHex,               \
+    "x" #i, nullptr, 8, OFFSET(x) + i * 8, eEncodingUint, eFormatHex,          \
         {INV, arm64_dwarf::x##i, INV, INV, reg_x##i}, nullptr, nullptr,        \
         nullptr, 0                                                             \
   }
 
 #define DEF_W(i)                                                               \
   {                                                                            \
-    "w" #i, nullptr, 4, OFFSET(x[i]), eEncodingUint, eFormatHex,               \
+    "w" #i, nullptr, 4, OFFSET(x) + i * 8, eEncodingUint, eFormatHex,          \
         {INV, INV, INV, INV, reg_w##i}, nullptr, nullptr, nullptr, 0           \
   }
 
 #define DEF_X_ARG(i, n)                                                        \
   {                                                                            \
-    "x" #i, "arg" #n, 8, OFFSET(x[i]), eEncodingUint, eFormatHex,              \
+    "x" #i, "arg" #n, 8, OFFSET(x) + i * 8, eEncodingUint, eFormatHex,         \
         {INV, arm64_dwarf::x##i, LLDB_REGNUM_GENERIC_ARG1 + i, INV, reg_x##i}, \
         nullptr, nullptr, nullptr, 0                                           \
   }
 
 #define DEF_V(i)                                                               \
   {                                                                            \
-    "v" #i, nullptr, 16, OFFSET(v[i * 16]), eEncodingVector,                   \
+    "v" #i, nullptr, 16, OFFSET(v) + i * 16, eEncodingVector,                  \
         eFormatVectorOfUInt8, {INV, arm64_dwarf::v##i, INV, INV, reg_v##i},    \
         nullptr, nullptr, nullptr, 0                                           \
   }
 
 #define DEF_D(i)                                                               \
   {                                                                            \
-    "d" #i, nullptr, 8, OFFSET(v[i * 16]), eEncodingVector,                    \
+    "d" #i, nullptr, 8, OFFSET(v) + i * 16, eEncodingVector,                   \
         eFormatVectorOfUInt8, {INV, INV, INV, INV, reg_d##i}, nullptr,         \
         nullptr, nullptr, 0                                                    \
   }
 
 #define DEF_S(i)                                                               \
   {                                                                            \
-    "s" #i, nullptr, 4, OFFSET(v[i * 16]), eEncodingVector,                    \
+    "s" #i, nullptr, 4, OFFSET(v) + i * 16, eEncodingVector,                   \
         eFormatVectorOfUInt8, {INV, INV, INV, INV, reg_s##i}, nullptr,         \
         nullptr, nullptr, 0                                                    \
   }
 
 #define DEF_H(i)                                                               \
   {                                                                            \
-    "h" #i, nullptr, 2, OFFSET(v[i * 16]), eEncodingVector,                    \
+    "h" #i, nullptr, 2, OFFSET(v) + i * 16, eEncodingVector,                   \
         eFormatVectorOfUInt8, {INV, INV, INV, INV, reg_h##i}, nullptr,         \
         nullptr, nullptr, 0                                                    \
   }
