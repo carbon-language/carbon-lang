@@ -6879,15 +6879,19 @@ SDValue SITargetLowering::getCanonicalConstantFP(
   return DAG.getConstantFP(C, SL, VT);
 }
 
+static bool vectorEltWillFoldAway(SDValue Op) {
+  return Op.isUndef() || isa<ConstantFPSDNode>(Op);
+}
+
 SDValue SITargetLowering::performFCanonicalizeCombine(
   SDNode *N,
   DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
   SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
 
   // fcanonicalize undef -> qnan
   if (N0.isUndef()) {
-    EVT VT = N->getValueType(0);
     APFloat QNaN = APFloat::getQNaN(SelectionDAG::EVTToAPFloatSemantics(VT));
     return DAG.getConstantFP(QNaN, SDLoc(N), VT);
   }
@@ -6895,6 +6899,38 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
   if (ConstantFPSDNode *CFP = isConstOrConstSplatFP(N0)) {
     EVT VT = N->getValueType(0);
     return getCanonicalConstantFP(DAG, SDLoc(N), VT, CFP->getValueAPF());
+  }
+
+  // fcanonicalize (build_vector x, k) -> build_vector (fcanonicalize x),
+  //                                                   (fcanonicalize k)
+  //
+  // fcanonicalize (build_vector x, undef) -> build_vector (fcanonicalize x), 0
+
+  // TODO: This could be better with wider vectors that will be split to v2f16,
+  // and to consider uses since there aren't that many packed operations.
+  if (N0.getOpcode() == ISD::BUILD_VECTOR && VT == MVT::v2f16) {
+    SDLoc SL(N);
+    SDValue NewElts[2];
+    SDValue Lo = N0.getOperand(0);
+    SDValue Hi = N0.getOperand(1);
+    if (vectorEltWillFoldAway(Lo) || vectorEltWillFoldAway(Hi)) {
+      for (unsigned I = 0; I != 2; ++I) {
+        SDValue Op = N0.getOperand(I);
+        EVT EltVT = Op.getValueType();
+        if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op)) {
+          NewElts[I] = getCanonicalConstantFP(DAG, SL, EltVT,
+                                              CFP->getValueAPF());
+        } else if (Op.isUndef()) {
+          // This would ordinarily be folded to a qNaN. Since this may be half
+          // of a packed operation, it may be cheaper to use a 0.
+          NewElts[I] = DAG.getConstantFP(0.0f, SL, EltVT);
+        } else {
+          NewElts[I] = DAG.getNode(ISD::FCANONICALIZE, SL, EltVT, Op);
+        }
+      }
+
+      return DAG.getBuildVector(VT, SL, NewElts);
+    }
   }
 
   return isCanonicalized(DAG, N0) ? N0 : SDValue();
