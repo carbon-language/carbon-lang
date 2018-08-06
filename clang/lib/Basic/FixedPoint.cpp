@@ -59,7 +59,8 @@ int APFixedPoint::compare(const APFixedPoint &Other) const {
   unsigned CommonWidth = std::max(Val.getBitWidth(), OtherWidth);
 
   // Prevent overflow in the event the widths are the same but the scales differ
-  CommonWidth += std::abs(static_cast<int>(getScale() - OtherScale));
+  CommonWidth += getScale() >= OtherScale ? getScale() - OtherScale
+                                          : OtherScale - getScale();
 
   ThisVal = ThisVal.extOrTrunc(CommonWidth);
   OtherVal = OtherVal.extOrTrunc(CommonWidth);
