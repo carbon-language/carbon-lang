@@ -4400,17 +4400,17 @@ DISubrange
 
     ; Scopes used in rest of example
     !6 = !DIFile(filename: "vla.c", directory: "/path/to/file")
-    !7 = distinct !DICompileUnit(language: DW_LANG_C99, ...
-    !8 = distinct !DISubprogram(name: "foo", scope: !7, file: !6, line: 5, ...
+    !7 = distinct !DICompileUnit(language: DW_LANG_C99, file: !6)
+    !8 = distinct !DISubprogram(name: "foo", scope: !7, file: !6, line: 5)
 
     ; Use of local variable as count value
     !9 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
     !10 = !DILocalVariable(name: "count", scope: !8, file: !6, line: 42, type: !9)
-    !11 = !DISubrange(count !10, lowerBound: 0)
+    !11 = !DISubrange(count: !10, lowerBound: 0)
 
     ; Use of global variable as count value
     !12 = !DIGlobalVariable(name: "count", scope: !8, file: !6, line: 22, type: !9)
-    !13 = !DISubrange(count !12, lowerBound: 0)
+    !13 = !DISubrange(count: !12, lowerBound: 0)
 
 .. _DIEnumerator:
 
