@@ -48,7 +48,8 @@ enum class IndirectBranchType : char {
   POSSIBLE_TAIL_CALL,       /// Possibly a tail call.
   POSSIBLE_JUMP_TABLE,      /// Possibly a switch/jump table.
   POSSIBLE_PIC_JUMP_TABLE,  /// Possibly a jump table for PIC.
-  POSSIBLE_GOTO             /// Possibly a gcc's computed goto.
+  POSSIBLE_GOTO,            /// Possibly a gcc's computed goto.
+  POSSIBLE_FIXED_BRANCH,    /// Possibly an indirect branch to a fixed location.
 };
 
 class MCPlusBuilder {

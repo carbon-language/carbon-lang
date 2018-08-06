@@ -322,6 +322,10 @@ private:
   /// Execution halts whenever this function is entered.
   bool TrapsOnEntry{false};
 
+  /// True if the function had an indirect branch with a fixed internal
+  /// destination.
+  bool HasFixedIndirectBranch{false};
+
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
 
@@ -660,7 +664,8 @@ private:
   /// added to Instructions list.
   IndirectBranchType processIndirectBranch(MCInst &Instruction,
                                            unsigned Size,
-                                           uint64_t Offset);
+                                           uint64_t Offset,
+                                           uint64_t &TargetAddress);
 
   DenseMap<const MCInst *, SmallVector<MCInst *, 4>>
   computeLocalUDChain(const MCInst *CurInstr);

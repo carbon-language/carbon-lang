@@ -2443,9 +2443,20 @@ public:
                                   &DispExpr))
       return IndirectBranchType::UNKNOWN;
 
+    BaseRegNumOut = BaseRegNum;
+    IndexRegNumOut = IndexRegNum;
+    DispValueOut = DispValue;
+    DispExprOut = DispExpr;
+
     if ((BaseRegNum != X86::NoRegister && BaseRegNum != RIPRegister) ||
         SegRegNum != X86::NoRegister)
       return IndirectBranchType::UNKNOWN;
+
+    if (MemLocInstr == &Instruction &&
+        (!ScaleValue || IndexRegNum == X86::NoRegister)) {
+      MemLocInstrOut = MemLocInstr;
+      return IndirectBranchType::POSSIBLE_FIXED_BRANCH;
+    }
 
     if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE &&
         (ScaleValue != 1 || BaseRegNum != RIPRegister))
@@ -2456,10 +2467,6 @@ public:
       return IndirectBranchType::UNKNOWN;
 
     MemLocInstrOut = MemLocInstr;
-    BaseRegNumOut = BaseRegNum;
-    IndexRegNumOut = IndexRegNum;
-    DispValueOut = DispValue;
-    DispExprOut = DispExpr;
 
     return Type;
   }

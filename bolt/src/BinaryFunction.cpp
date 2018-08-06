@@ -666,9 +666,11 @@ void BinaryFunction::printRelocations(raw_ostream &OS,
   }
 }
 
-IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
-                                                         unsigned Size,
-                                                         uint64_t Offset) {
+IndirectBranchType
+BinaryFunction::processIndirectBranch(MCInst &Instruction,
+                                      unsigned Size,
+                                      uint64_t Offset,
+                                      uint64_t &TargetAddress) {
   const auto PtrSize = BC.AsmInfo->getCodePointerSize();
 
   // An instruction referencing memory used by jump instruction (directly or
@@ -789,7 +791,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
         DEBUG(dbgs() << "BOLT-DEBUG: adjusting size of jump table at 0x"
                      << Twine::utohexstr(JT->getAddress()) << '\n');
         JT->OffsetEntries.resize(JTOffset / JT->EntrySize);
-    } else {
+    } else if (Type != IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
       // Re-use an existing jump table. Perhaps parts of it.
       if (Type != IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE) {
         assert(JT->Type == JumpTable::JTT_NORMAL &&
@@ -838,6 +840,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     // The contents are filled at runtime.
     return IndirectBranchType::POSSIBLE_TAIL_CALL;
   }
+
   // Extract the value at the start of the array.
   StringRef SectionContents = Section->getContents();
   const auto EntrySize =
@@ -861,6 +864,17 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
     }
     DEBUG(dbgs() << ", which contains value "
                  << Twine::utohexstr(Value) << '\n');
+    if (Type == IndirectBranchType::POSSIBLE_FIXED_BRANCH) {
+      if (Section->isReadOnly()) {
+        outs() << "BOLT-INFO: fixed indirect branch detected in " << *this
+               << " at 0x" << Twine::utohexstr(getAddress() + Offset)
+               << " the destination value is 0x" << Twine::utohexstr(Value)
+               << '\n';
+        TargetAddress = Value;
+        return Type;
+      }
+      return IndirectBranchType::UNKNOWN;
+    }
     if (containsAddress(Value) && Value != getAddress()) {
       // Is it possible to have a jump table with function start as an entry?
       JTOffsetCandidates.push_back(Value - getAddress());
@@ -920,6 +934,7 @@ IndirectBranchType BinaryFunction::processIndirectBranch(MCInst &Instruction,
   }
   assert(!Value || BC.getSectionForAddress(Value));
   BC.InterproceduralReferences.insert(Value);
+
   return IndirectBranchType::POSSIBLE_TAIL_CALL;
 }
 
@@ -1338,7 +1353,9 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         // Could not evaluate branch. Should be an indirect call or an
         // indirect branch. Bail out on the latter case.
         if (MIB->isIndirectBranch(Instruction)) {
-          auto Result = processIndirectBranch(Instruction, Size, Offset);
+          uint64_t IndirectTarget{0};
+          auto Result =
+              processIndirectBranch(Instruction, Size, Offset, IndirectTarget);
           switch (Result) {
           default:
             llvm_unreachable("unexpected result");
@@ -1346,12 +1363,26 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             auto Result = MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
             (void)Result;
             assert(Result);
-          } break;
+            break;
+          }
           case IndirectBranchType::POSSIBLE_JUMP_TABLE:
           case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
             if (opts::JumpTables == JTS_NONE)
               IsSimple = false;
             break;
+          case IndirectBranchType::POSSIBLE_FIXED_BRANCH: {
+            if (containsAddress(IndirectTarget)) {
+              const auto *TargetSymbol = getOrCreateLocalLabel(IndirectTarget);
+              Instruction.clear();
+              MIB->createUncondBranch(Instruction, TargetSymbol, BC.Ctx.get());
+              TakenBranches.emplace_back(Offset, IndirectTarget - getAddress());
+              HasFixedIndirectBranch = true;
+            } else {
+              MIB->convertJmpToTailCall(Instruction, BC.Ctx.get());
+              BC.InterproceduralReferences.insert(IndirectTarget);
+            }
+            break;
+          }
           case IndirectBranchType::UNKNOWN:
             // Keep processing. We'll do more checks and fixes in
             // postProcessIndirectBranches().
@@ -1594,6 +1625,10 @@ bool BinaryFunction::postProcessIndirectBranches() {
       BC.MIB->convertJmpToTailCall(Instr, BC.Ctx.get());
     }
   }
+
+  if (HasFixedIndirectBranch)
+    return false;
+
   return true;
 }
 
