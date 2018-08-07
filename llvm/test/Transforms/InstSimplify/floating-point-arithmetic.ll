@@ -569,6 +569,22 @@ define float @minnum_undef_op0(float %x) {
   ret float %val
 }
 
+define float @minnum_undef_undef(float %x) {
+; CHECK-LABEL: @minnum_undef_undef(
+; CHECK-NEXT:    ret float undef
+;
+  %val = call float @llvm.minnum.f32(float undef, float undef)
+  ret float %val
+}
+
+define float @maxnum_undef_undef(float %x) {
+; CHECK-LABEL: @maxnum_undef_undef(
+; CHECK-NEXT:    ret float undef
+;
+  %val = call float @llvm.maxnum.f32(float undef, float undef)
+  ret float %val
+}
+
 define float @minnum_same_args(float %x) {
 ; CHECK-LABEL: @minnum_same_args(
 ; CHECK-NEXT:    ret float [[X:%.*]]

@@ -147,14 +147,6 @@ define float @minnum_f32_val_nan(float %x) {
   ret float %y
 }
 
-define float @fold_minnum_f32_undef_undef(float %x) {
-; CHECK-LABEL: @fold_minnum_f32_undef_undef(
-; CHECK-NEXT:    ret float undef
-;
-  %val = call float @llvm.minnum.f32(float undef, float undef)
-  ret float %val
-}
-
 define float @minnum_x_minnum_x_y(float %x, float %y) {
 ; CHECK-LABEL: @minnum_x_minnum_x_y(
 ; CHECK-NEXT:    [[A:%.*]] = call float @llvm.minnum.f32(float [[X:%.*]], float [[Y:%.*]])
