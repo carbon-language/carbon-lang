@@ -2279,7 +2279,7 @@ bool llvm::removeUnreachableBlocks(Function &F, LazyValueInfo *LVI,
 }
 
 void llvm::combineMetadata(Instruction *K, const Instruction *J,
-                           ArrayRef<unsigned> KnownIDs) {
+                           ArrayRef<unsigned> KnownIDs, bool DoesKMove) {
   SmallVector<std::pair<unsigned, MDNode *>, 4> Metadata;
   K->dropUnknownNonDebugMetadata(KnownIDs);
   K->getAllMetadataOtherThanDebugLoc(Metadata);
@@ -2315,8 +2315,9 @@ void llvm::combineMetadata(Instruction *K, const Instruction *J,
         K->setMetadata(Kind, JMD);
         break;
       case LLVMContext::MD_nonnull:
-        // Only set the !nonnull if it is present in both instructions.
-        K->setMetadata(Kind, JMD);
+        // If K does move, keep nonull if it is present in both instructions.
+        if (DoesKMove)
+          K->setMetadata(Kind, JMD);
         break;
       case LLVMContext::MD_invariant_group:
         // Preserve !invariant.group in K.
@@ -2381,8 +2382,8 @@ void llvm::patchReplacementInstruction(Instruction *I, Value *Repl) {
       LLVMContext::MD_tbaa,            LLVMContext::MD_alias_scope,
       LLVMContext::MD_noalias,         LLVMContext::MD_range,
       LLVMContext::MD_fpmath,          LLVMContext::MD_invariant_load,
-      LLVMContext::MD_invariant_group};
-  combineMetadata(ReplInst, I, KnownIDs);
+      LLVMContext::MD_invariant_group, LLVMContext::MD_nonnull};
+  combineMetadata(ReplInst, I, KnownIDs, false);
 }
 
 template <typename RootType, typename DominatesFn>
