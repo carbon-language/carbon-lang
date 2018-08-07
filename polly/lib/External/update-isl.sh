@@ -19,7 +19,7 @@ fi
 (cd $GITDIR && ./autogen.sh)
 mkdir -p $BUILDDIR
 (cd $BUILDDIR && $GITDIR/configure --with-int=imath-32 --with-clang=system)
-touch $GITDIR/gitversion.h
+echo "#define GIT_HEAD_ID \"\"" > $GITDIR/gitversion.h
 (cd $BUILDDIR && make -j dist)
 
 for DISTFILE in "$BUILDDIR/isl*.tar.gz"; do break; done
