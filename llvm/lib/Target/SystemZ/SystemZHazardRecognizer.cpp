@@ -149,7 +149,7 @@ void SystemZHazardRecognizer::nextGroup() {
 
   GrpCount += ((unsigned) NumGroups);
 
-  // Decrease counters for execution units by one.
+  // Decrease counters for execution units.
   for (unsigned i = 0; i < SchedModel->getNumProcResourceKinds(); ++i)
     ProcResourceCounters[i] = ((ProcResourceCounters[i] > NumGroups)
                                    ? (ProcResourceCounters[i] - NumGroups)
