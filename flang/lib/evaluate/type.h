@@ -26,6 +26,8 @@
 #include "real.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
+#include <cinttypes>
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -180,6 +182,10 @@ struct GenericScalar {
   template<typename A>
   GenericScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
+
+  std::optional<std::int64_t> ToInt64() const;
+  std::optional<std::string> ToString() const;
+
   std::variant<ScalarConstant<TypeCategory::Integer>,
       ScalarConstant<TypeCategory::Real>, ScalarConstant<TypeCategory::Complex>,
       ScalarConstant<TypeCategory::Character>,

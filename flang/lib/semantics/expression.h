@@ -26,6 +26,8 @@ namespace Fortran::semantics {
 class ExpressionAnalyzer {
 public:
   using KindParam = std::int64_t;
+  using Result = std::optional<evaluate::GenericExpr>;
+
   ExpressionAnalyzer(evaluate::FoldingContext &c, KindParam dIK)
     : context_{c}, defaultIntegerKind_{dIK} {}
 
@@ -34,7 +36,7 @@ public:
 
   // Performs semantic checking on an expression.  If successful,
   // returns its typed expression representation.
-  std::optional<evaluate::GenericExpr> Analyze(const parser::Expr &);
+  Result Analyze(const parser::Expr &);
   KindParam Analyze(const std::optional<parser::KindParam> &,
       KindParam defaultKind, KindParam kanjiKind = -1 /* not allowed here */);
 
