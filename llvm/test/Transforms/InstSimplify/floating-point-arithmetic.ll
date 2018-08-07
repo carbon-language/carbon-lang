@@ -849,9 +849,7 @@ define float @fadd_fsub_common_op_wrong_commute_commute(float %x, float %y) {
 
 define <2 x float> @fsub_fadd_common_op_vec(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @fsub_fadd_common_op_vec(
-; CHECK-NEXT:    [[S:%.*]] = fsub <2 x float> [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fadd reassoc nsz <2 x float> [[Y]], [[S]]
-; CHECK-NEXT:    ret <2 x float> [[R]]
+; CHECK-NEXT:    ret <2 x float> [[X:%.*]]
 ;
   %s = fsub <2 x float> %x, %y
   %r = fadd reassoc nsz <2 x float> %y, %s
@@ -862,9 +860,7 @@ define <2 x float> @fsub_fadd_common_op_vec(<2 x float> %x, <2 x float> %y) {
 
 define float @fsub_fadd_common_op_commute(float %x, float %y) {
 ; CHECK-LABEL: @fsub_fadd_common_op_commute(
-; CHECK-NEXT:    [[S:%.*]] = fsub float [[X:%.*]], [[Y:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fadd reassoc nsz float [[S]], [[Y]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float [[X:%.*]]
 ;
   %s = fsub float %x, %y
   %r = fadd reassoc nsz float %s, %y
