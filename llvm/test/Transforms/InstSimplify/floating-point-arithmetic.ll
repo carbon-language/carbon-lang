@@ -737,9 +737,7 @@ define float @maxnum_x_y_maxnum_z(float %x, float %y, float %z) {
 
 define float @fsub_fsub_common_op(float %x, float %y) {
 ; CHECK-LABEL: @fsub_fsub_common_op(
-; CHECK-NEXT:    [[S:%.*]] = fsub float [[Y:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fsub reassoc nsz float [[Y]], [[S]]
-; CHECK-NEXT:    ret float [[R]]
+; CHECK-NEXT:    ret float [[X:%.*]]
 ;
   %s = fsub float %y, %x
   %r = fsub reassoc nsz float %y, %s
@@ -748,9 +746,7 @@ define float @fsub_fsub_common_op(float %x, float %y) {
 
 define <2 x float> @fsub_fsub_common_op_vec(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @fsub_fsub_common_op_vec(
-; CHECK-NEXT:    [[S:%.*]] = fsub <2 x float> [[Y:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fsub reassoc nsz <2 x float> [[Y]], [[S]]
-; CHECK-NEXT:    ret <2 x float> [[R]]
+; CHECK-NEXT:    ret <2 x float> [[X:%.*]]
 ;
   %s = fsub <2 x float> %y, %x
   %r = fsub reassoc nsz <2 x float> %y, %s
