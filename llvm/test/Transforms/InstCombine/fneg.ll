@@ -76,11 +76,11 @@ define float @fdiv_op1_constant_fneg_extra_use(float %x) {
 
 define <4 x double> @fdiv_op1_constant_fneg_vec(<4 x double> %x) {
 ; CHECK-LABEL: @fdiv_op1_constant_fneg_vec(
-; CHECK-NEXT:    [[D:%.*]] = fdiv <4 x double> [[X:%.*]], <double -4.200000e+01, double 0.000000e+00, double 0xFFF0000000000000, double undef>
+; CHECK-NEXT:    [[D:%.*]] = fdiv <4 x double> [[X:%.*]], <double -4.200000e+01, double 0xFFF800000ABCD000, double 0xFFF0000000000000, double undef>
 ; CHECK-NEXT:    [[R:%.*]] = fsub <4 x double> <double -0.000000e+00, double -0.000000e+00, double -0.000000e+00, double -0.000000e+00>, [[D]]
 ; CHECK-NEXT:    ret <4 x double> [[R]]
 ;
-  %d = fdiv <4 x double> %x, <double -42.0, double 0xFFF800000ABCD0000, double 0xFFF0000000000000, double undef>
+  %d = fdiv <4 x double> %x, <double -42.0, double 0xFFF800000ABCD000, double 0xFFF0000000000000, double undef>
   %r = fsub <4 x double> <double -0.0, double -0.0, double -0.0, double -0.0>, %d
   ret <4 x double> %r
 }
