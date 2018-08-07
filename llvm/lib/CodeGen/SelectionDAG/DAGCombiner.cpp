@@ -3278,8 +3278,6 @@ SDValue DAGCombiner::visitUDIVLike(SDValue N0, SDValue N1, SDNode *N) {
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
 
-  ConstantSDNode *N1C = isConstOrConstSplat(N1);
-
   // fold (udiv x, (1 << c)) -> x >>u c
   if (isConstantOrConstantVector(N1, /*NoOpaques*/ true) &&
       DAG.isKnownToBeAPowerOfTwo(N1)) {
@@ -3311,7 +3309,8 @@ SDValue DAGCombiner::visitUDIVLike(SDValue N0, SDValue N1, SDNode *N) {
 
   // fold (udiv x, c) -> alternate
   AttributeList Attr = DAG.getMachineFunction().getFunction().getAttributes();
-  if (N1C && !TLI.isIntDivCheap(N->getValueType(0), Attr))
+  if (isConstantOrConstantVector(N1, /*NoOpaques*/ true) &&
+      !TLI.isIntDivCheap(N->getValueType(0), Attr))
     if (SDValue Op = BuildUDIV(N))
       return Op;
 
@@ -3467,6 +3466,19 @@ SDValue DAGCombiner::visitMULHU(SDNode *N) {
   // fold (mulhu x, undef) -> 0
   if (N0.isUndef() || N1.isUndef())
     return DAG.getConstant(0, DL, VT);
+
+  // fold (mulhu x, (1 << c)) -> x >> (bitwidth - c)
+  if (isConstantOrConstantVector(N1, /*NoOpaques*/ true) &&
+      DAG.isKnownToBeAPowerOfTwo(N1) && hasOperation(ISD::SRL, VT)) {
+    SDLoc DL(N);
+    unsigned NumEltBits = VT.getScalarSizeInBits();
+    SDValue LogBase2 = BuildLogBase2(N1, DL);
+    SDValue SRLAmt = DAG.getNode(
+        ISD::SUB, DL, VT, DAG.getConstant(NumEltBits, DL, VT), LogBase2);
+    EVT ShiftVT = getShiftAmountTy(N0.getValueType());
+    SDValue Trunc = DAG.getZExtOrTrunc(SRLAmt, DL, ShiftVT);
+    return DAG.getNode(ISD::SRL, DL, VT, N0, Trunc);
+  }
 
   // If the type twice as wide is legal, transform the mulhu to a wider multiply
   // plus a shift.
@@ -18099,21 +18111,14 @@ SDValue DAGCombiner::BuildUDIV(SDNode *N) {
   if (DAG.getMachineFunction().getFunction().optForMinSize())
     return SDValue();
 
-  ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
-  if (!C)
-    return SDValue();
-
-  // Avoid division by zero.
-  if (C->isNullValue())
-    return SDValue();
-
   SmallVector<SDNode *, 8> Built;
-  SDValue S =
-      TLI.BuildUDIV(N, C->getAPIntValue(), DAG, LegalOperations, Built);
+  if (SDValue S = TLI.BuildUDIV(N, DAG, LegalOperations, Built)) {
+    for (SDNode *N : Built)
+      AddToWorklist(N);
+    return S;
+  }
 
-  for (SDNode *N : Built)
-    AddToWorklist(N);
-  return S;
+  return SDValue();
 }
 
 /// Determines the LogBase2 value for a non-null input value using the
