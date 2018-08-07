@@ -483,11 +483,11 @@ SDValue DAGTypeLegalizer::PromoteIntRes_LOAD(LoadSDNode *N) {
 
 SDValue DAGTypeLegalizer::PromoteIntRes_MLOAD(MaskedLoadSDNode *N) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
-  SDValue ExtSrc0 = GetPromotedInteger(N->getSrc0());
+  SDValue ExtPassThru = GetPromotedInteger(N->getPassThru());
 
   SDLoc dl(N);
   SDValue Res = DAG.getMaskedLoad(NVT, dl, N->getChain(), N->getBasePtr(),
-                                  N->getMask(), ExtSrc0, N->getMemoryVT(),
+                                  N->getMask(), ExtPassThru, N->getMemoryVT(),
                                   N->getMemOperand(), ISD::SEXTLOAD);
   // Legalize the chain result - switch anything that used the old chain to
   // use the new one.

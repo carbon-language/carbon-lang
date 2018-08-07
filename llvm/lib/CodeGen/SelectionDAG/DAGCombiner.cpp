@@ -7599,9 +7599,9 @@ SDValue DAGCombiner::visitMLOAD(SDNode *N) {
     SDValue MaskLo, MaskHi, Lo, Hi;
     std::tie(MaskLo, MaskHi) = SplitVSETCC(Mask.getNode(), DAG);
 
-    SDValue Src0 = MLD->getSrc0();
-    SDValue Src0Lo, Src0Hi;
-    std::tie(Src0Lo, Src0Hi) = DAG.SplitVector(Src0, DL);
+    SDValue PassThru = MLD->getPassThru();
+    SDValue PassThruLo, PassThruHi;
+    std::tie(PassThruLo, PassThruHi) = DAG.SplitVector(PassThru, DL);
 
     EVT LoVT, HiVT;
     std::tie(LoVT, HiVT) = DAG.GetSplitDestVTs(MLD->getValueType(0));
@@ -7625,8 +7625,8 @@ SDValue DAGCombiner::visitMLOAD(SDNode *N) {
                          MachineMemOperand::MOLoad,  LoMemVT.getStoreSize(),
                          Alignment, MLD->getAAInfo(), MLD->getRanges());
 
-    Lo = DAG.getMaskedLoad(LoVT, DL, Chain, Ptr, MaskLo, Src0Lo, LoMemVT, MMO,
-                           ISD::NON_EXTLOAD, MLD->isExpandingLoad());
+    Lo = DAG.getMaskedLoad(LoVT, DL, Chain, Ptr, MaskLo, PassThruLo, LoMemVT,
+                           MMO, ISD::NON_EXTLOAD, MLD->isExpandingLoad());
 
     Ptr = TLI.IncrementMemoryAddress(Ptr, MaskLo, DL, LoMemVT, DAG,
                                      MLD->isExpandingLoad());
@@ -7637,8 +7637,8 @@ SDValue DAGCombiner::visitMLOAD(SDNode *N) {
         MachineMemOperand::MOLoad, HiMemVT.getStoreSize(), SecondHalfAlignment,
         MLD->getAAInfo(), MLD->getRanges());
 
-    Hi = DAG.getMaskedLoad(HiVT, DL, Chain, Ptr, MaskHi, Src0Hi, HiMemVT, MMO,
-                           ISD::NON_EXTLOAD, MLD->isExpandingLoad());
+    Hi = DAG.getMaskedLoad(HiVT, DL, Chain, Ptr, MaskHi, PassThruHi, HiMemVT,
+                           MMO, ISD::NON_EXTLOAD, MLD->isExpandingLoad());
 
     AddToWorklist(Lo.getNode());
     AddToWorklist(Hi.getNode());
