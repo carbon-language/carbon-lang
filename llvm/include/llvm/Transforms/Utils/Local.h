@@ -393,6 +393,10 @@ void combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsigned> Kn
 /// Unknown metadata is removed.
 void combineMetadataForCSE(Instruction *K, const Instruction *J);
 
+/// Patch the replacement so that it is not more restrictive than the value
+/// being replaced.
+void patchReplacementInstruction(Instruction *I, Value *Repl);
+
 // Replace each use of 'From' with 'To', if that use does not belong to basic
 // block where 'From' is defined. Returns the number of replacements made.
 unsigned replaceNonLocalUsesWith(Instruction *From, Value *To);
