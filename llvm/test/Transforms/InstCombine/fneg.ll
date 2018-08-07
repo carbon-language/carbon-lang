@@ -16,7 +16,20 @@ define float @fmul_fneg(float %x) {
   ret float %r
 }
 
-; Extra use is ok.
+; Fast math is not required, but it should be propagated.
+
+define float @fmul_fneg_fmf(float %x) {
+; CHECK-LABEL: @fmul_fneg_fmf(
+; CHECK-NEXT:    [[M:%.*]] = fmul float [[X:%.*]], 4.200000e+01
+; CHECK-NEXT:    [[R:%.*]] = fsub reassoc nsz float -0.000000e+00, [[M]]
+; CHECK-NEXT:    ret float [[R]]
+;
+  %m = fmul float %x, 42.0
+  %r = fsub reassoc nsz float -0.0, %m
+  ret float %r
+}
+
+; Extra use prevents the fold. We don't want to replace the fneg with an fmul.
 
 define float @fmul_fneg_extra_use(float %x) {
 ; CHECK-LABEL: @fmul_fneg_extra_use(
@@ -57,7 +70,20 @@ define float @fdiv_op1_constant_fneg(float %x) {
   ret float %r
 }
 
-; Extra use is ok.
+; Fast math is not required, but it should be propagated.
+
+define float @fdiv_op1_constant_fneg_fmf(float %x) {
+; CHECK-LABEL: @fdiv_op1_constant_fneg_fmf(
+; CHECK-NEXT:    [[D:%.*]] = fdiv float [[X:%.*]], -4.200000e+01
+; CHECK-NEXT:    [[R:%.*]] = fsub nnan float -0.000000e+00, [[D]]
+; CHECK-NEXT:    ret float [[R]]
+;
+  %d = fdiv float %x, -42.0
+  %r = fsub nnan float -0.0, %d
+  ret float %r
+}
+
+; Extra use prevents the fold. We don't want to replace the fneg with an fdiv.
 
 define float @fdiv_op1_constant_fneg_extra_use(float %x) {
 ; CHECK-LABEL: @fdiv_op1_constant_fneg_extra_use(
@@ -98,7 +124,20 @@ define float @fdiv_op0_constant_fneg(float %x) {
   ret float %r
 }
 
-; Extra use is ok.
+; Fast math is not required, but it should be propagated.
+
+define float @fdiv_op0_constant_fneg_fmf(float %x) {
+; CHECK-LABEL: @fdiv_op0_constant_fneg_fmf(
+; CHECK-NEXT:    [[D:%.*]] = fdiv float 4.200000e+01, [[X:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = fsub fast float -0.000000e+00, [[D]]
+; CHECK-NEXT:    ret float [[R]]
+;
+  %d = fdiv float 42.0, %x
+  %r = fsub fast float -0.0, %d
+  ret float %r
+}
+
+; Extra use prevents the fold. We don't want to replace the fneg with an fdiv.
 
 define float @fdiv_op0_constant_fneg_extra_use(float %x) {
 ; CHECK-LABEL: @fdiv_op0_constant_fneg_extra_use(
