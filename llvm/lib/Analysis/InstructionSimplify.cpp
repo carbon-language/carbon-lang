@@ -4397,8 +4397,10 @@ static Value *SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
     return Constant::getNullValue(Op0->getType());
 
   // Y - (Y - X) --> X
+  // (X + Y) - Y --> X
   if (FMF.noSignedZeros() && FMF.allowReassoc() &&
-      match(Op1, m_FSub(m_Specific(Op0), m_Value(X))))
+      (match(Op1, m_FSub(m_Specific(Op0), m_Value(X))) ||
+       match(Op0, m_c_FAdd(m_Specific(Op1), m_Value(X)))))
     return X;
 
   return nullptr;
