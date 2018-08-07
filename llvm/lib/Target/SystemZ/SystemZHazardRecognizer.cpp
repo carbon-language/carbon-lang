@@ -151,10 +151,9 @@ void SystemZHazardRecognizer::nextGroup() {
 
   // Decrease counters for execution units by one.
   for (unsigned i = 0; i < SchedModel->getNumProcResourceKinds(); ++i)
-    if (ProcResourceCounters[i] > 0)
-      ProcResourceCounters[i] =
-        ((ProcResourceCounters[i] > NumGroups) ?
-         (ProcResourceCounters[i] - NumGroups) : 0);
+    ProcResourceCounters[i] = ((ProcResourceCounters[i] > NumGroups)
+                                   ? (ProcResourceCounters[i] - NumGroups)
+                                   : 0);
 
   // Clear CriticalResourceIdx if it is now below the threshold.
   if (CriticalResourceIdx != UINT_MAX &&
