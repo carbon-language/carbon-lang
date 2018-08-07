@@ -239,11 +239,6 @@ Error CoverageMapping::loadFunctionRecord(
     }
     Function.pushRegion(Region, *ExecutionCount);
   }
-  if (Function.CountedRegions.size() != Record.MappingRegions.size()) {
-    FuncCounterMismatches.emplace_back(Record.FunctionName,
-                                       Function.CountedRegions.size());
-    return Error::success();
-  }
 
   Functions.push_back(std::move(Function));
   return Error::success();
