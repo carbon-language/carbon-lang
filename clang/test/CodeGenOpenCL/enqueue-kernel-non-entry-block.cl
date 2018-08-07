@@ -29,5 +29,5 @@ kernel void test(int i) {
 
 // CHECK-DEBUG: ![[TESTFILE:[0-9]+]] = !DIFile(filename: "<stdin>"
 // CHECK-DEBUG: ![[TESTSCOPE:[0-9]+]] = distinct !DISubprogram(name: "test", {{.*}} file: ![[TESTFILE]]
-// CHECK-DEBUG: ![[IFSCOPE:[0-9]+]] = distinct !DILexicalBlock(scope: ![[TESTSCOPE]], file: !1, line: 24)
+// CHECK-DEBUG: ![[IFSCOPE:[0-9]+]] = distinct !DILexicalBlock(scope: ![[TESTSCOPE]], file: ![[TESTFILE]], line: 24)
 // CHECK-DEBUG: ![[TEMPLOCATION]] = !DILocation(line: 25, scope: ![[IFSCOPE]])
