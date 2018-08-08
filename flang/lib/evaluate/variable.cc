@@ -168,7 +168,8 @@ std::optional<std::string> Substring::Fold(FoldingContext &context) {
       std::int64_t len = str->size();
       if (ubi > len) {
         context.messages.Say(
-            "upper bound on substring (%jd) is greater than character length (%jd)"_en_US);
+            "upper bound on substring (%jd) is greater than character length (%jd)"_en_US,
+            static_cast<std::intmax_t>(ubi), static_cast<std::intmax_t>(len));
         ubi = len;
         last_ = SubscriptIntegerExpr{ubi};
       }
