@@ -353,7 +353,7 @@ struct BOZLiteral {
       if (!IsHexadecimalDigit(**at)) {
         return std::nullopt;
       }
-      content += **at;
+      content += ToLowerCaseLetter(**at);
     }
 
     if (!base) {
