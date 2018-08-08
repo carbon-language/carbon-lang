@@ -3432,22 +3432,32 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
 
 /// Given an exact SDIV by a constant, create a multiplication
 /// with the multiplicative inverse of the constant.
-static SDValue BuildExactSDIV(const TargetLowering &TLI, SDValue Op1, APInt d,
+static SDValue BuildExactSDIV(const TargetLowering &TLI, SDNode *N,
                               const SDLoc &dl, SelectionDAG &DAG,
                               SmallVectorImpl<SDNode *> &Created) {
+  SDValue Op0 = N->getOperand(0);
+  SDValue Op1 = N->getOperand(1);
+  EVT VT = N->getValueType(0);
+  EVT ShVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
+
+  ConstantSDNode *C = isConstOrConstSplat(Op1);
+  if (!C || C->isNullValue())
+    return SDValue();
+
+  APInt d = C->getAPIntValue();
   assert(d != 0 && "Division by zero!");
+
+  SDValue Res = Op0;
 
   // Shift the value upfront if it is even, so the LSB is one.
   unsigned ShAmt = d.countTrailingZeros();
   if (ShAmt) {
     // TODO: For UDIV use SRL instead of SRA.
-    SDValue Amt =
-        DAG.getConstant(ShAmt, dl, TLI.getShiftAmountTy(Op1.getValueType(),
-                                                        DAG.getDataLayout()));
+    SDValue Amt = DAG.getConstant(ShAmt, dl, ShVT);
     SDNodeFlags Flags;
     Flags.setExact(true);
-    Op1 = DAG.getNode(ISD::SRA, dl, Op1.getValueType(), Op1, Amt, Flags);
-    Created.push_back(Op1.getNode());
+    Res = DAG.getNode(ISD::SRA, dl, VT, Res, Amt, Flags);
+    Created.push_back(Res.getNode());
     d.ashrInPlace(ShAmt);
   }
 
@@ -3456,10 +3466,8 @@ static SDValue BuildExactSDIV(const TargetLowering &TLI, SDValue Op1, APInt d,
   while ((t = d*xn) != 1)
     xn *= APInt(d.getBitWidth(), 2) - t;
 
-  SDValue Op2 = DAG.getConstant(xn, dl, Op1.getValueType());
-  SDValue Mul = DAG.getNode(ISD::MUL, dl, Op1.getValueType(), Op1, Op2);
-  Created.push_back(Mul.getNode());
-  return Mul;
+  SDValue Mul = DAG.getConstant(xn, dl, VT);
+  return DAG.getNode(ISD::MUL, dl, VT, Res, Mul);
 }
 
 SDValue TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
@@ -3487,15 +3495,15 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   if (!isTypeLegal(VT))
     return SDValue();
 
+  // If the sdiv has an 'exact' bit we can use a simpler lowering.
+  if (N->getFlags().hasExact())
+    return BuildExactSDIV(*this, N, dl, DAG, Created);
+
   // TODO: Add non-uniform constant support.
   ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
   if (!C || C->isNullValue())
     return SDValue();
   const APInt &Divisor = C->getAPIntValue();
-
-  // If the sdiv has an 'exact' bit we can use a simpler lowering.
-  if (N->getFlags().hasExact())
-    return BuildExactSDIV(*this, N->getOperand(0), Divisor, dl, DAG, Created);
 
   APInt::ms magics = Divisor.magic();
 
