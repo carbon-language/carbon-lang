@@ -10745,6 +10745,12 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   if (N0CFP && !N1CFP)
     return DAG.getNode(ISD::FADD, DL, VT, N1, N0, Flags);
 
+  // N0 + -0.0 --> N0 (also allowed with +0.0 and fast-math)
+  ConstantFPSDNode *N1C = isConstOrConstSplatFP(N1);
+  if (N1C && N1C->isZero())
+    if (N1C->isNegative() || Options.UnsafeFPMath || Flags.hasNoSignedZeros())
+      return N0;
+
   if (SDValue NewSel = foldBinOpIntoSelect(N))
     return NewSel;
 
@@ -10768,15 +10774,6 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     SDValue AddOp = N1IsFMul ? N1.getOperand(0) : N0.getOperand(0);
     SDValue Add = DAG.getNode(ISD::FADD, DL, VT, AddOp, AddOp, Flags);
     return DAG.getNode(ISD::FSUB, DL, VT, N1IsFMul ? N0 : N1, Add, Flags);
-  }
-
-  ConstantFPSDNode *N1C = isConstOrConstSplatFP(N1);
-  if (N1C && N1C->isZero()) {
-    if (N1C->isNegative() || Options.UnsafeFPMath ||
-        Flags.hasNoSignedZeros()) {
-      // fold (fadd A, 0) -> A
-      return N0;
-    }
   }
 
   // No FP constant should be created after legalization as Instruction
