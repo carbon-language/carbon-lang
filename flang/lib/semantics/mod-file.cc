@@ -19,14 +19,13 @@
 #include "../parser/parsing.h"
 #include <algorithm>
 #include <cerrno>
+#include <cstring>
 #include <fstream>
 #include <functional>
 #include <ostream>
-#include <set>
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <vector>
 
 namespace Fortran::semantics {
@@ -36,7 +35,7 @@ using namespace parser::literals;
 // The extension used for module files.
 static constexpr auto extension{".mod"};
 // The initial characters of a file that identify it as a .mod file.
-static const auto magic{"!mod$ v1 sum:"s};
+static constexpr auto magic{"!mod$ v1 sum:"};
 
 // Helpers for creating error messages.
 static parser::Message Error(
@@ -384,7 +383,7 @@ static bool FileContentsMatch(std::fstream &stream, const std::string &header,
       return false;
     }
   }
-  return true;
+  return !stream.get(c);
 }
 
 // Compute a simple hash of the contents of a module file and
@@ -409,10 +408,11 @@ static bool VerifyHeader(const std::string &path) {
   std::fstream stream{path};
   std::string header;
   std::getline(stream, header);
-  if (header.compare(0, magic.size(), magic) != 0) {
+  auto magicLen{strlen(magic)};
+  if (header.compare(0, magicLen, magic) != 0) {
     return false;
   }
-  std::string expectSum{header.substr(magic.size(), 16)};
+  std::string expectSum{header.substr(magicLen, 16)};
   std::string actualSum{CheckSum(std::istreambuf_iterator<char>(stream),
       std::istreambuf_iterator<char>())};
   return expectSum == actualSum;
@@ -504,7 +504,7 @@ std::optional<std::string> ModFileReader::FindModFile(
     } else {
       std::string line;
       std::getline(ifstream, line);
-      if (line.compare(0, magic.size(), magic) == 0) {
+      if (line.compare(0, strlen(magic), magic) == 0) {
         return path;
       }
       errors.push_back(Error(name, "%s: Not a valid module file"_en_US, path));
