@@ -6336,6 +6336,9 @@ def VDUPLN32q : VDUPLNQ<{?,1,0,0}, "vdup", "32", v4i32, v2i32, VectorIndex32> {
   let Inst{19} = lane{0};
 }
 
+def : Pat<(v4f16 (NEONvduplane (v4f16 DPR:$Vm), imm:$lane)),
+          (VDUPLN32d DPR:$Vm, imm:$lane)>;
+
 def : Pat<(v2f32 (NEONvduplane (v2f32 DPR:$Vm), imm:$lane)),
           (VDUPLN32d DPR:$Vm, imm:$lane)>;
 
@@ -6350,6 +6353,10 @@ def : Pat<(v8i16 (NEONvduplane (v8i16 QPR:$src), imm:$lane)),
           (v8i16 (VDUPLN16q (v4i16 (EXTRACT_SUBREG QPR:$src,
                                     (DSubReg_i16_reg imm:$lane))),
                             (SubReg_i16_lane imm:$lane)))>;
+def : Pat<(v8f16 (NEONvduplane (v8f16 QPR:$src), imm:$lane)),
+          (v8f16 (VDUPLN16q (v4f16 (EXTRACT_SUBREG QPR:$src,
+                                    (DSubReg_i16_reg imm:$lane))),
+                            (SubReg_i16_lane imm:$lane)))>;
 def : Pat<(v4i32 (NEONvduplane (v4i32 QPR:$src), imm:$lane)),
           (v4i32 (VDUPLN32q (v2i32 (EXTRACT_SUBREG QPR:$src,
                                     (DSubReg_i32_reg imm:$lane))),
@@ -6359,12 +6366,18 @@ def : Pat<(v4f32 (NEONvduplane (v4f32 QPR:$src), imm:$lane)),
                                    (DSubReg_i32_reg imm:$lane))),
                            (SubReg_i32_lane imm:$lane)))>;
 
+def : Pat<(v4f16 (NEONvdup HPR:$src)),
+          (v4f16 (VDUPLN16d (INSERT_SUBREG (v4f16 (IMPLICIT_DEF)),
+                             HPR:$src, ssub_0), (i32 0)))>;
 def : Pat<(v2f32 (NEONvdup (f32 SPR:$src))),
           (v2f32 (VDUPLN32d (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
                              SPR:$src, ssub_0), (i32 0)))>;
 def : Pat<(v4f32 (NEONvdup (f32 SPR:$src))),
           (v4f32 (VDUPLN32q (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)),
                              SPR:$src, ssub_0), (i32 0)))>;
+def : Pat<(v8f16 (NEONvdup HPR:$src)),
+          (v8f16 (VDUPLN16q (INSERT_SUBREG (v4f16 (IMPLICIT_DEF)),
+                             HPR:$src, ssub_0), (i32 0)))>;
 
 //   VMOVN    : Vector Narrowing Move
 defm VMOVN    : N2VN_HSD<0b11,0b11,0b10,0b00100,0,0, IIC_VMOVN,
