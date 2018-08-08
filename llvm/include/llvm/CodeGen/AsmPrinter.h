@@ -631,11 +631,6 @@ private:
   /// inline asm.
   void EmitInlineAsm(const MachineInstr *MI) const;
 
-  /// Add inline assembly info to the diagnostics machinery, so we can
-  /// emit file and position info. Returns SrcMgr memory buffer position.
-  unsigned addInlineAsmDiagBuffer(StringRef AsmStr,
-                                  const MDNode *LocMDNode) const;
-
   //===------------------------------------------------------------------===//
   // Internal Implementation Details
   //===------------------------------------------------------------------===//
