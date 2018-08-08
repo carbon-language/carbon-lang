@@ -2376,6 +2376,9 @@ SDValue SITargetLowering::LowerCall(CallLoweringInfo &CLI,
                               "unsupported call to variadic function ");
   }
 
+  if (!CLI.CS.getInstruction())
+    report_fatal_error("unsupported libcall legalization");
+
   if (!CLI.CS.getCalledFunction()) {
     return lowerUnhandledCall(CLI, InVals,
                               "unsupported indirect call to function ");
