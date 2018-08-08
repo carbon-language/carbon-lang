@@ -35,6 +35,9 @@ nop
 # CHECK-INST: addi t6, zero, 0
 # CHECK-ALIAS: mv t6, zero
 mv x31, zero
+# CHECK-INST: addi a2, a3, 0
+# CHECK-ALIAS: mv a2, a3
+move a2,a3
 # CHECK-INST: xori t6, ra, -1
 # CHECK-ALIAS: not t6, ra
 not x31, x1
@@ -193,3 +196,11 @@ slt a2,a3,4
 # CHECK-INST: sltiu a2, a3, 4
 # CHECK-ALIAS: sltiu a2, a3, 4
 sltu a2,a3,4
+
+# CHECK-INST: ebreak
+# CHECK-ALIAS: ebreak
+sbreak
+
+# CHECK-INST: ecall
+# CHECK-ALIAS: ecall
+scall

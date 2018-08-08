@@ -581,6 +581,14 @@ def : InstAlias<"sltu $rd, $rs1, $imm12",
                 (SLTIU  GPR:$rd, GPR:$rs1, simm12:$imm12)>;
 }
 
+def : MnemonicAlias<"move", "mv">;
+
+// The SCALL and SBREAK instructions wererenamed to ECALL and EBREAK in
+// version 2.1 of the user-level ISA. Like the GNU toolchain, we still accept
+// the old name for backwards compatibility.
+def : MnemonicAlias<"scall", "ecall">;
+def : MnemonicAlias<"sbreak", "ebreak">;
+
 //===----------------------------------------------------------------------===//
 // Pseudo-instructions and codegen patterns
 //
