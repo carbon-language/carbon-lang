@@ -37,8 +37,6 @@ class Scope;
 
 class ModFileWriter {
 public:
-  // The .mod file format version number.
-  void set_version(int version) { version_ = version; }
   // The directory to write .mod files in.
   void set_directory(const std::string &dir) { dir_ = dir; }
 
@@ -54,7 +52,6 @@ private:
   using symbolSet = std::set<const Symbol *>;
   using symbolVector = std::vector<const Symbol *>;
 
-  int version_{1};
   std::string dir_{"."};
   // The mod file consists of uses, declarations, and contained subprograms:
   std::stringstream uses_;
@@ -68,7 +65,6 @@ private:
   void WriteOne(const Scope &);
   void Write(const Symbol &);
   std::string GetAsString(const Symbol &);
-  std::string GetHeader(const std::string &);
   void PutSymbols(const Scope &);
   symbolVector SortSymbols(const symbolSet);
   symbolSet CollectSymbols(const Scope &);

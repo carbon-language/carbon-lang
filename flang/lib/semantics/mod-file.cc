@@ -36,7 +36,7 @@ using namespace parser::literals;
 // The extension used for module files.
 static constexpr auto extension{".mod"};
 // The initial characters of a file that identify it as a .mod file.
-static constexpr auto magic{"!mod$"};
+static const auto magic{"!mod$ v1 sum:"s};
 
 // Helpers for creating error messages.
 static parser::Message Error(
@@ -56,8 +56,11 @@ static std::ostream &PutAttrs(
 static std::ostream &PutLower(std::ostream &, const Symbol &);
 static std::ostream &PutLower(std::ostream &, const DeclTypeSpec &);
 static std::ostream &PutLower(std::ostream &, const std::string &);
-static std::string CheckSum(const std::string &);
-static bool MakeReadonly(const std::string &);
+static bool WriteFile(const std::string &, std::string &&);
+static bool FileContentsMatch(
+    std::fstream &, const std::string &, const std::string &);
+static std::string GetHeader(const std::string &);
+static std::size_t GetFileSize(const std::string &);
 
 bool ModFileWriter::WriteAll() {
   WriteChildren(Scope::globalScope);
@@ -85,21 +88,10 @@ void ModFileWriter::Write(const Symbol &symbol) {
   auto *ancestor{symbol.get<ModuleDetails>().ancestor()};
   auto ancestorName{ancestor ? ancestor->name().ToString() : ""s};
   auto path{ModFilePath(dir_, symbol.name(), ancestorName)};
-  unlink(path.data());
-  std::ofstream os{path};
   PutSymbols(*symbol.scope());
-  std::string all{GetAsString(symbol)};
-  auto header{GetHeader(all)};
-  os << header << all;
-  os.close();
-  if (!os) {
+  if (!WriteFile(path, GetAsString(symbol))) {
     errors_.emplace_back(
         "Error writing %s: %s"_err_en_US, path.c_str(), std::strerror(errno));
-    return;
-  }
-  if (!MakeReadonly(path)) {
-    errors_.emplace_back("Error changing permissions on %s: %s"_en_US,
-        path.c_str(), std::strerror(errno));
   }
 }
 
@@ -132,13 +124,6 @@ std::string ModFileWriter::GetAsString(const Symbol &symbol) {
   }
   all << "end\n";
   return all.str();
-}
-
-// Return the header for this mod file.
-std::string ModFileWriter::GetHeader(const std::string &all) {
-  std::stringstream ss;
-  ss << magic << " v" << version_ << " sum:" << CheckSum(all) << '\n';
-  return ss.str();
 }
 
 // Put out the visible symbols from scope.
@@ -362,12 +347,53 @@ std::ostream &PutLower(std::ostream &os, const std::string &str) {
   return os;
 }
 
+// Write the module file at path, prepending header. Return false on error.
+static bool WriteFile(const std::string &path, std::string &&contents) {
+  std::fstream stream;
+  auto header{GetHeader(contents)};
+  auto size{GetFileSize(path)};
+  if (size == header.size() + 1 + contents.size()) {
+    // file exists and has the right size, check the contents
+    stream.open(path, std::ios::in | std::ios::out);
+    if (FileContentsMatch(stream, header, contents)) {
+      return true;
+    }
+    stream.seekp(0);
+  } else {
+    stream.open(path, std::ios::out);
+  }
+  stream << header << '\n' << contents;
+  stream.close();
+  return !stream.fail();
+}
+
+// Return true if the stream matches what we would write for the mod file.
+static bool FileContentsMatch(std::fstream &stream, const std::string &header,
+    const std::string &contents) {
+  char c;
+  for (std::size_t i{0}; i < header.size(); ++i) {
+    if (!stream.get(c) || c != header[i]) {
+      return false;
+    }
+  }
+  if (!stream.get(c) || c != '\n') {
+    return false;
+  }
+  for (std::size_t i{0}; i < contents.size(); ++i) {
+    if (!stream.get(c) || c != contents[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Compute a simple hash of the contents of a module file and
 // return it as a string of hex digits.
 // This uses the Fowler-Noll-Vo hash function.
-std::string CheckSum(const std::string &str) {
+template<typename Iter> static std::string CheckSum(Iter begin, Iter end) {
   std::uint64_t hash{0xcbf29ce484222325ull};
-  for (char c : str) {
+  for (auto it{begin}; it != end; ++it) {
+    char c{*it};
     hash ^= c & 0xff;
     hash *= 0x100000001b3;
   }
@@ -377,6 +403,34 @@ std::string CheckSum(const std::string &str) {
     result[--i] = digits[hash & 0xf];
   }
   return result;
+}
+
+static bool VerifyHeader(const std::string &path) {
+  std::fstream stream{path};
+  std::string header;
+  std::getline(stream, header);
+  if (header.compare(0, magic.size(), magic) != 0) {
+    return false;
+  }
+  std::string expectSum{header.substr(magic.size(), 16)};
+  std::string actualSum{CheckSum(std::istreambuf_iterator<char>(stream),
+      std::istreambuf_iterator<char>())};
+  return expectSum == actualSum;
+}
+
+static std::string GetHeader(const std::string &all) {
+  std::stringstream ss;
+  ss << magic << CheckSum(all.begin(), all.end());
+  return ss.str();
+}
+
+static std::size_t GetFileSize(const std::string &path) {
+  struct stat statbuf;
+  if (stat(path.c_str(), &statbuf) == 0) {
+    return static_cast<std::size_t>(statbuf.st_size);
+  } else {
+    return 0;
+  }
 }
 
 Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
@@ -394,6 +448,14 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   }
   auto path{FindModFile(name, ancestorName)};
   if (!path.has_value()) {
+    return nullptr;
+  }
+  // TODO: We are reading the file once to verify the checksum and then again
+  // to parse. Do it only reading the file once.
+  if (!VerifyHeader(*path)) {
+    errors_.push_back(
+        Error(name, "Module file for '%s' has invalid checksum: %s"_err_en_US,
+            name.ToString(), *path));
     return nullptr;
   }
   // TODO: Construct parsing with an AllSources reference to share provenance
@@ -441,9 +503,8 @@ std::optional<std::string> ModFileReader::FindModFile(
           Error(name, "%s: %s"_en_US, path, std::string{std::strerror(errno)}));
     } else {
       std::string line;
-      ifstream >> line;
-      if (std::equal(line.begin(), line.end(), std::string{magic}.begin())) {
-        // TODO: verify rest of header line: version, checksum, etc.
+      std::getline(ifstream, line);
+      if (line.compare(0, magic.size(), magic) == 0) {
         return path;
       }
       errors.push_back(Error(name, "%s: Not a valid module file"_en_US, path));
@@ -488,16 +549,6 @@ static std::string ModFilePath(const std::string &dir, const SourceName &name,
   }
   PutLower(path, name.ToString()) << extension;
   return path.str();
-}
-
-static bool MakeReadonly(const std::string &path) {
-  struct stat statbuf;
-  if (stat(path.c_str(), &statbuf) != 0) {
-    return false;
-  }
-  auto mode{statbuf.st_mode};
-  mode &= S_IRUSR | S_IRGRP | S_IROTH;
-  return chmod(path.data(), mode) == 0;
 }
 
 static parser::Message Error(const SourceName &location,
