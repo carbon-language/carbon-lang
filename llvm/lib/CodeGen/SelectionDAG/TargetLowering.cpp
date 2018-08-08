@@ -3569,7 +3569,6 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
 
   auto BuildUDIVPattern = [](const APInt &Divisor, unsigned &PreShift,
                              APInt &Magic, unsigned &PostShift) {
-    assert(!Divisor.isOneValue() && "UDIV by one not supported");
     // FIXME: We should use a narrower constant when the upper
     // bits are known to be zero.
     APInt::mu magics = Divisor.magicu();
@@ -3586,7 +3585,7 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
 
     Magic = magics.m;
 
-    if (magics.a == 0) {
+    if (magics.a == 0 || Divisor.isOneValue()) {
       assert(magics.s < Divisor.getBitWidth() &&
              "We shouldn't generate an undefined shift!");
       PostShift = magics.s;
@@ -3614,9 +3613,6 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
     for (unsigned i = 0; i != NumElts; ++i) {
       auto *C = dyn_cast<ConstantSDNode>(N1.getOperand(i));
       if (!C || C->isNullValue() || C->getAPIntValue().getBitWidth() != EltBits)
-        return SDValue();
-      // TODO: Handle udiv by one.
-      if (C->isOne())
         return SDValue();
       APInt MagicVal;
       unsigned PreShiftVal, PostShiftVal;
@@ -3687,10 +3683,15 @@ SDValue TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
     Created.push_back(NPQ.getNode());
 
     Q = DAG.getNode(ISD::ADD, dl, VT, NPQ, Q);
-    Created.push_back(NPQ.getNode());
+    Created.push_back(Q.getNode());
   }
 
-  return DAG.getNode(ISD::SRL, dl, VT, Q, PostShift);
+  Q = DAG.getNode(ISD::SRL, dl, VT, Q, PostShift);
+  Created.push_back(Q.getNode());
+
+  SDValue One = DAG.getConstant(1, dl, VT);
+  SDValue IsOne = DAG.getSetCC(dl, VT, N1, One, ISD::SETEQ);
+  return DAG.getSelect(dl, VT, IsOne, N0, Q);
 }
 
 bool TargetLowering::
