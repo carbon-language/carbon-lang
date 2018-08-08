@@ -18,6 +18,7 @@
 #include "../common/enum-set.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
+#include "../parser/message.h"
 #include <cinttypes>
 
 namespace Fortran::evaluate {
@@ -126,6 +127,15 @@ using HostUnsignedInt =
 
 // Force availability of copy construction and assignment
 template<typename A> using CopyableIndirection = common::Indirection<A, true>;
+
+// Classes that support a Fold(FoldingContext &) member function have the
+// FoldableTrait set.
+CLASS_TRAIT(FoldableTrait);
+struct FoldingContext {
+  parser::ContextualMessages &messages;
+  Rounding rounding{defaultRounding};
+  bool flushDenormalsToZero{false};
+};
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_COMMON_H_

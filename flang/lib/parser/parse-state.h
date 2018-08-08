@@ -143,30 +143,19 @@ public:
     context_ = context_->attachment();
   }
 
-  void Say(const MessageFixedText &t) { Say(p_, t); }
-  void Say(MessageFormattedText &&t) { Say(p_, std::move(t)); }
-  void Say(const MessageExpectedText &t) { Say(p_, t); }
-
-  void Say(CharBlock range, const MessageFixedText &t) {
+  template<typename... A> void Say(CharBlock range, A &&... args) {
     if (deferMessages_) {
       anyDeferredMessages_ = true;
     } else {
-      messages_.Say(range, t).SetContext(context_.get());
+      messages_.Say(range, std::forward<A>(args)...).SetContext(context_.get());
     }
   }
-  void Say(CharBlock range, MessageFormattedText &&t) {
-    if (deferMessages_) {
-      anyDeferredMessages_ = true;
-    } else {
-      messages_.Say(range, std::move(t)).SetContext(context_.get());
-    }
+  template<typename... A> void Say(const MessageFixedText &text, A &&... args) {
+    Say(p_, text, std::forward<A>(args)...);
   }
-  void Say(CharBlock range, const MessageExpectedText &t) {
-    if (deferMessages_) {
-      anyDeferredMessages_ = true;
-    } else {
-      messages_.Say(range, t).SetContext(context_.get());
-    }
+  template<typename... A>
+  void Say(const MessageExpectedText &text, A &&... args) {
+    Say(p_, text, std::forward<A>(args)...);
   }
 
   void Nonstandard(LanguageFeature lf, const MessageFixedText &msg) {

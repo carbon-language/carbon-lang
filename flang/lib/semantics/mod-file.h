@@ -41,9 +41,7 @@ public:
   void set_directory(const std::string &dir) { dir_ = dir; }
 
   // Errors encountered during writing. Non-empty if WriteAll returns false.
-  const std::vector<parser::MessageFormattedText> &errors() const {
-    return errors_;
-  }
+  parser::Messages &errors() { return errors_; }
 
   // Write out all .mod files; if error return false.
   bool WriteAll();
@@ -59,7 +57,7 @@ private:
   std::stringstream decls_;
   std::stringstream contains_;
   // Any errors encountered during writing:
-  std::vector<parser::MessageFormattedText> errors_;
+  parser::Messages errors_;
 
   void WriteChildren(const Scope &);
   void WriteOne(const Scope &);
@@ -86,11 +84,11 @@ public:
   // Return the Scope for that module/submodule or nullptr on error.
   Scope *Read(const SourceName &, Scope *ancestor = nullptr);
   // Errors that occurred when Read returns nullptr.
-  std::vector<parser::Message> &errors() { return errors_; }
+  parser::Messages &errors() { return errors_; }
 
 private:
   std::vector<std::string> directories_;
-  std::vector<parser::Message> errors_;
+  parser::Messages errors_;
 
   std::optional<std::string> FindModFile(
       const SourceName &, const std::string &);

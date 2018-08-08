@@ -174,7 +174,6 @@ class MessageHandler {
 public:
   using Message = parser::Message;
   using MessageFixedText = parser::MessageFixedText;
-  using MessageFormattedText = parser::MessageFormattedText;
 
   const parser::Messages &messages() const { return messages_; }
 
@@ -203,6 +202,7 @@ public:
   // Emit a message and attached message with two names and locations.
   void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
       MessageFixedText &&);
+  void Annex(parser::Messages &&);
 
 private:
   // Where messages are emitted:
@@ -923,7 +923,7 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
 // MessageHandler implementation
 
 MessageHandler::Message &MessageHandler::Say(Message &&msg) {
-  return messages_.Put(std::move(msg));
+  return messages_.Say(std::move(msg));
 }
 MessageHandler::Message &MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
@@ -939,13 +939,12 @@ MessageHandler::Message &MessageHandler::Say(
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const std::string &arg1) {
-  return Say(Message{location, MessageFormattedText{msg, arg1.c_str()}});
+  return Say(Message{location, msg, arg1.c_str()});
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const SourceName &arg1, const SourceName &arg2) {
-  return Say(Message{location,
-      MessageFormattedText{
-          msg, arg1.ToString().c_str(), arg2.ToString().c_str()}});
+  return Say(
+      Message{location, msg, arg1.ToString().c_str(), arg2.ToString().c_str()});
 }
 void MessageHandler::SayAlreadyDeclared(
     const SourceName &name, const Symbol &prev) {
@@ -954,8 +953,10 @@ void MessageHandler::SayAlreadyDeclared(
 }
 void MessageHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
     const SourceName &name2, MessageFixedText &&msg2) {
-  Say(name1, std::move(msg1))
-      .Attach(name2, MessageFormattedText{msg2, name2.ToString().data()});
+  Say(name1, std::move(msg1)).Attach(name2, msg2, name2.ToString().data());
+}
+void MessageHandler::Annex(parser::Messages &&msgs) {
+  messages_.Annex(std::move(msgs));
 }
 
 // ImplicitRulesVisitor implementation
@@ -1383,9 +1384,7 @@ Scope *ModuleVisitor::FindModule(const SourceName &name, Scope *ancestor) {
   ModFileReader reader{searchDirectories_};
   auto *scope{reader.Read(name, ancestor)};
   if (!scope) {
-    for (auto &error : reader.errors()) {
-      Say(std::move(error));
-    }
+    Annex(std::move(reader.errors()));
     return nullptr;
   }
   if (scope->kind() != Scope::Kind::Module) {
@@ -2163,9 +2162,8 @@ bool ResolveNamesVisitor::CheckUseError(
   for (const auto &pair : details->occurrences()) {
     const SourceName &location{*pair.first};
     const SourceName &moduleName{pair.second->name()};
-    msg.Attach(location,
-        MessageFormattedText{"'%s' was use-associated from module '%s'"_en_US,
-            name.ToString().data(), moduleName.ToString().data()});
+    msg.Attach(location, "'%s' was use-associated from module '%s'"_en_US,
+        name.ToString().data(), moduleName.ToString().data());
   }
   return true;
 }
@@ -2244,9 +2242,8 @@ const Symbol *ResolveNamesVisitor::FindComponent(
     auto &typeName{scope->symbol()->name()};
     Say(component, "Component '%s' not found in derived type '%s'"_err_en_US,
         component, typeName)
-        .Attach(typeName,
-            MessageFormattedText{
-                "Declaration of '%s'"_en_US, typeName.ToString().data()});
+        .Attach(
+            typeName, "Declaration of '%s'"_en_US, typeName.ToString().data());
     return nullptr;
   }
   auto *symbol{it->second};

@@ -383,20 +383,16 @@ auto IntegerExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
 static void RealFlagWarnings(
     FoldingContext &context, const RealFlags &flags, const char *operation) {
   if (flags.test(RealFlag::Overflow)) {
-    context.messages.Say(
-        parser::MessageFormattedText("overflow on %s"_en_US, operation));
+    context.messages.Say("overflow on %s"_en_US, operation);
   }
   if (flags.test(RealFlag::DivideByZero)) {
-    context.messages.Say(parser::MessageFormattedText(
-        "division by zero on %s"_en_US, operation));
+    context.messages.Say("division by zero on %s"_en_US, operation);
   }
   if (flags.test(RealFlag::InvalidArgument)) {
-    context.messages.Say(parser::MessageFormattedText(
-        "invalid argument on %s"_en_US, operation));
+    context.messages.Say("invalid argument on %s"_en_US, operation);
   }
   if (flags.test(RealFlag::Underflow)) {
-    context.messages.Say(
-        parser::MessageFormattedText("underflow on %s"_en_US, operation));
+    context.messages.Say("underflow on %s"_en_US, operation);
   }
 }
 

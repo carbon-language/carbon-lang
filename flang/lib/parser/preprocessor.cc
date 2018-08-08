@@ -362,7 +362,7 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     return;
   }
   if (dir.TokenAt(j).ToString() != "#") {
-    prescanner->Say("missing '#'"_err_en_US, dir.GetTokenProvenanceRange(j));
+    prescanner->Say(dir.GetTokenProvenanceRange(j), "missing '#'"_err_en_US);
     return;
   }
   j = dir.SkipBlanks(j + 1);
@@ -383,8 +383,8 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     // #line is ignored
   } else if (dirName == "define") {
     if (nameToken.empty()) {
-      prescanner->Say("#define: missing or invalid name"_err_en_US,
-          dir.GetTokenProvenanceRange(j < tokens ? j : tokens - 1));
+      prescanner->Say(dir.GetTokenProvenanceRange(j < tokens ? j : tokens - 1),
+          "#define: missing or invalid name"_err_en_US);
       return;
     }
     nameToken = SaveTokenAsName(nameToken);
@@ -401,17 +401,16 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
             isVariadic = true;
           } else {
             if (an.empty() || !IsLegalIdentifierStart(an[0])) {
-              prescanner->Say(
-                  "#define: missing or invalid argument name"_err_en_US,
-                  dir.GetTokenProvenanceRange(j));
+              prescanner->Say(dir.GetTokenProvenanceRange(j),
+                  "#define: missing or invalid argument name"_err_en_US);
               return;
             }
             argName.push_back(an);
           }
           j = dir.SkipBlanks(j + 1);
           if (j == tokens) {
-            prescanner->Say("#define: malformed argument list"_err_en_US,
-                dir.GetTokenProvenanceRange(tokens - 1));
+            prescanner->Say(dir.GetTokenProvenanceRange(tokens - 1),
+                "#define: malformed argument list"_err_en_US);
             return;
           }
           std::string punc{dir.TokenAt(j).ToString()};
@@ -419,21 +418,21 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
             break;
           }
           if (isVariadic || punc != ",") {
-            prescanner->Say("#define: malformed argument list"_err_en_US,
-                dir.GetTokenProvenanceRange(j));
+            prescanner->Say(dir.GetTokenProvenanceRange(j),
+                "#define: malformed argument list"_err_en_US);
             return;
           }
           j = dir.SkipBlanks(j + 1);
           if (j == tokens) {
-            prescanner->Say("#define: malformed argument list"_err_en_US,
-                dir.GetTokenProvenanceRange(tokens - 1));
+            prescanner->Say(dir.GetTokenProvenanceRange(tokens - 1),
+                "#define: malformed argument list"_err_en_US);
             return;
           }
         }
         if (std::set<std::string>(argName.begin(), argName.end()).size() !=
             argName.size()) {
-          prescanner->Say("#define: argument names are not distinct"_err_en_US,
-              dir.GetTokenProvenance(dirOffset));
+          prescanner->Say(dir.GetTokenProvenance(dirOffset),
+              "#define: argument names are not distinct"_err_en_US);
           return;
         }
       }
@@ -447,13 +446,14 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     }
   } else if (dirName == "undef") {
     if (nameToken.empty()) {
-      prescanner->Say("# missing or invalid name"_err_en_US,
-          dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset));
+      prescanner->Say(
+          dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
+          "# missing or invalid name"_err_en_US);
     } else {
       j = dir.SkipBlanks(j + 1);
       if (j != tokens) {
-        prescanner->Say("#undef: excess tokens at end of directive"_err_en_US,
-            dir.GetIntervalProvenanceRange(j, tokens - j));
+        prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
+            "#undef: excess tokens at end of directive"_err_en_US);
       } else {
         definitions_.erase(nameToken);
       }
@@ -461,16 +461,14 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
   } else if (dirName == "ifdef" || dirName == "ifndef") {
     if (nameToken.empty()) {
       prescanner->Say(
-          MessageFormattedText("#%s: missing name"_err_en_US, dirName.data()),
-          dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset));
+          dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
+          "#%s: missing name"_err_en_US, dirName.data());
       return;
     }
     j = dir.SkipBlanks(j + 1);
     if (j != tokens) {
-      prescanner->Say(MessageFormattedText(
-                          "#%s: excess tokens at end of directive"_err_en_US,
-                          dirName.data()),
-          dir.GetIntervalProvenanceRange(j, tokens - j));
+      prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
+          "#%s: excess tokens at end of directive"_err_en_US, dirName.data());
     } else if (IsNameDefined(nameToken) == (dirName == "ifdef")) {
       ifStack_.push(CanDeadElseAppear::Yes);
     } else {
@@ -486,16 +484,14 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     }
   } else if (dirName == "else") {
     if (j != tokens) {
-      prescanner->Say("#else: excess tokens at end of directive"_err_en_US,
-          dir.GetIntervalProvenanceRange(j, tokens - j));
+      prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
+          "#else: excess tokens at end of directive"_err_en_US);
     } else if (ifStack_.empty()) {
-      prescanner->Say(
-          "#else: not nested within #if, #ifdef, or #ifndef"_err_en_US,
-          dir.GetTokenProvenanceRange(dirOffset));
+      prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+          "#else: not nested within #if, #ifdef, or #ifndef"_err_en_US);
     } else if (ifStack_.top() != CanDeadElseAppear::Yes) {
-      prescanner->Say(
-          "#else: already appeared within this #if, #ifdef, or #ifndef"_err_en_US,
-          dir.GetTokenProvenanceRange(dirOffset));
+      prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+          "#else: already appeared within this #if, #ifdef, or #ifndef"_err_en_US);
     } else {
       ifStack_.pop();
       SkipDisabledConditionalCode("else", IsElseActive::No, prescanner,
@@ -503,13 +499,11 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     }
   } else if (dirName == "elif") {
     if (ifStack_.empty()) {
-      prescanner->Say(
-          "#elif: not nested within #if, #ifdef, or #ifndef"_err_en_US,
-          dir.GetTokenProvenanceRange(dirOffset));
+      prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+          "#elif: not nested within #if, #ifdef, or #ifndef"_err_en_US);
     } else if (ifStack_.top() != CanDeadElseAppear::Yes) {
-      prescanner->Say("#elif: #else previously appeared within this "
-                      "#if, #ifdef, or #ifndef"_err_en_US,
-          dir.GetTokenProvenanceRange(dirOffset));
+      prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+          "#elif: #else previously appeared within this #if, #ifdef, or #ifndef"_err_en_US);
     } else {
       ifStack_.pop();
       SkipDisabledConditionalCode("elif", IsElseActive::No, prescanner,
@@ -517,33 +511,34 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
     }
   } else if (dirName == "endif") {
     if (j != tokens) {
-      prescanner->Say("#endif: excess tokens at end of directive"_err_en_US,
-          dir.GetIntervalProvenanceRange(j, tokens - j));
+      prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
+          "#endif: excess tokens at end of directive"_err_en_US);
     } else if (ifStack_.empty()) {
-      prescanner->Say("#endif: no #if, #ifdef, or #ifndef"_err_en_US,
-          dir.GetTokenProvenanceRange(dirOffset));
+      prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+          "#endif: no #if, #ifdef, or #ifndef"_err_en_US);
     } else {
       ifStack_.pop();
     }
   } else if (dirName == "error") {
     prescanner->Say(
-        MessageFormattedText("#error: %s"_err_en_US, dir.ToString().data()),
-        dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset));
+        dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
+        "#error: %s"_err_en_US, dir.ToString().data());
   } else if (dirName == "warning") {
     prescanner->Say(
-        MessageFormattedText("#warning: %s"_en_US, dir.ToString().data()),
-        dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset));
+        dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
+        "#warning: %s"_en_US, dir.ToString().data());
   } else if (dirName == "include") {
     if (j == tokens) {
-      prescanner->Say("#include: missing name of file to include"_err_en_US,
-          dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset));
+      prescanner->Say(
+          dir.GetIntervalProvenanceRange(dirOffset, tokens - dirOffset),
+          "#include: missing name of file to include"_err_en_US);
       return;
     }
     std::string include;
     if (dir.TokenAt(j).ToString() == "<") {
       if (dir.TokenAt(tokens - 1).ToString() != ">") {
-        prescanner->Say("#include: expected '>' at end of directive"_err_en_US,
-            dir.GetIntervalProvenanceRange(j, tokens - j));
+        prescanner->Say(dir.GetIntervalProvenanceRange(j, tokens - j),
+            "#include: expected '>' at end of directive"_err_en_US);
         return;
       }
       TokenSequence braced{dir, j + 1, tokens - j - 2};
@@ -553,31 +548,28 @@ void Preprocessor::Directive(const TokenSequence &dir, Prescanner *prescanner) {
         include.substr(include.size() - 1, 1) == "\"") {
       include = include.substr(1, include.size() - 2);
     } else {
-      prescanner->Say("#include: expected name of file to include"_err_en_US,
-          dir.GetTokenProvenanceRange(j < tokens ? j : tokens - 1));
+      prescanner->Say(dir.GetTokenProvenanceRange(j < tokens ? j : tokens - 1),
+          "#include: expected name of file to include"_err_en_US);
       return;
     }
     if (include.empty()) {
-      prescanner->Say("#include: empty include file name"_err_en_US,
-          dir.GetTokenProvenanceRange(dirOffset));
+      prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+          "#include: empty include file name"_err_en_US);
       return;
     }
     std::stringstream error;
     const SourceFile *included{allSources_.Open(include, &error)};
     if (included == nullptr) {
-      prescanner->Say(
-          MessageFormattedText("#include: %s"_err_en_US, error.str().data()),
-          dir.GetTokenProvenanceRange(dirOffset));
+      prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+          "#include: %s"_err_en_US, error.str().data());
     } else if (included->bytes() > 0) {
       ProvenanceRange fileRange{
           allSources_.AddIncludedFile(*included, dir.GetProvenanceRange())};
       Prescanner{*prescanner}.Prescan(fileRange);
     }
   } else {
-    prescanner->Say(MessageFormattedText(
-                        "#%s: unknown or unimplemented directive"_err_en_US,
-                        dirName.data()),
-        dir.GetTokenProvenanceRange(dirOffset));
+    prescanner->Say(dir.GetTokenProvenanceRange(dirOffset),
+        "#%s: unknown or unimplemented directive"_err_en_US, dirName.data());
   }
 }
 
@@ -639,8 +631,7 @@ void Preprocessor::SkipDisabledConditionalCode(const std::string &dirName,
     }
   }
   prescanner->Say(
-      MessageFormattedText("#%s: missing #endif"_err_en_US, dirName.data()),
-      provenanceRange);
+      provenanceRange, "#%s: missing #endif"_err_en_US, dirName.data());
 }
 
 // Precedence level codes used here to accommodate mixed Fortran and C:
@@ -759,8 +750,7 @@ static std::int64_t ExpressionValue(const TokenSequence &token,
     left = std::stoll(t, &consumed, 0 /*base to be detected*/);
     if (consumed < t.size()) {
       *error = Message{token.GetTokenProvenanceRange(opAt),
-          MessageFormattedText(
-              "uninterpretable numeric constant '%s'"_err_en_US, t.data())};
+          "uninterpretable numeric constant '%s'"_err_en_US, t.data()};
       return 0;
     }
   } else if (IsLegalIdentifierStart(t[0])) {
@@ -980,7 +970,7 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
     expr3.RemoveBlanks();
   }
   if (expr3.empty()) {
-    prescanner->Say("empty expression"_err_en_US, expr.GetProvenanceRange());
+    prescanner->Say(expr.GetProvenanceRange(), "empty expression"_err_en_US);
     return false;
   }
   std::size_t atToken{0};
@@ -989,11 +979,10 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
   if (error.has_value()) {
     prescanner->Say(std::move(*error));
   } else if (atToken < expr3.SizeInTokens()) {
-    prescanner->Say(atToken == 0
-            ? "could not parse any expression"_err_en_US
-            : "excess characters after expression"_err_en_US,
-        expr3.GetIntervalProvenanceRange(
-            atToken, expr3.SizeInTokens() - atToken));
+    prescanner->Say(expr3.GetIntervalProvenanceRange(
+                        atToken, expr3.SizeInTokens() - atToken),
+        atToken == 0 ? "could not parse any expression"_err_en_US
+                     : "excess characters after expression"_err_en_US);
   }
   return result;
 }

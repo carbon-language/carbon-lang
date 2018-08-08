@@ -16,8 +16,11 @@
 #include "../common/idioms.h"
 #include "../parser/char-block.h"
 #include "../parser/characters.h"
+#include "../parser/message.h"
 #include "../semantics/symbol.h"
 #include <ostream>
+
+using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
@@ -119,6 +122,62 @@ SubscriptIntegerExpr Substring::last() const {
                        },
           [](const DataRef &x) { return x.LEN(); }},
       u_);
+}
+
+std::optional<std::string> Substring::Fold(FoldingContext &context) {
+  std::optional<SubscriptIntegerExpr::Scalar> lbValue, ubValue;
+  if (first_.has_value()) {
+    lbValue = (*first_)->Fold(context);
+  } else {
+    lbValue = first().Fold(context);
+  }
+  if (lbValue.has_value()) {
+    first_ = IndirectSubscriptIntegerExpr{SubscriptIntegerExpr{*lbValue}};
+  }
+  if (last_.has_value()) {
+    ubValue = (*last_)->Fold(context);
+  } else {
+    ubValue = last().Fold(context);
+  }
+  if (ubValue.has_value()) {
+    last_ = IndirectSubscriptIntegerExpr{SubscriptIntegerExpr{*ubValue}};
+  }
+  if (lbValue.has_value() && ubValue.has_value()) {
+    std::int64_t lbi{lbValue->ToInt64()};
+    std::int64_t ubi{ubValue->ToInt64()};
+    if (ubi < lbi) {
+      // These cases are well defined, and they produce zero-length results.
+      u_ = ""s;
+      first_ = SubscriptIntegerExpr{1};
+      last_ = SubscriptIntegerExpr{0};
+      return {""s};
+    }
+    if (lbi <= 0) {
+      context.messages.Say(
+          "lower bound on substring (%jd) is less than one"_en_US,
+          static_cast<std::intmax_t>(lbi));
+      lbi = 1;
+      first_ = SubscriptIntegerExpr{lbi};
+    }
+    if (ubi <= 0) {
+      u_ = ""s;
+      last_ = SubscriptIntegerExpr{0};
+      return {""s};
+    }
+    if (std::string * str{std::get_if<std::string>(&u_)}) {
+      std::int64_t len = str->size();
+      if (ubi > len) {
+        context.messages.Say(
+            "upper bound on substring (%jd) is greater than character length (%jd)"_en_US);
+        ubi = len;
+        last_ = SubscriptIntegerExpr{ubi};
+      }
+      std::string result{str->substr(lbi - 1, ubi - lbi + 1)};
+      u_ = result;
+      return {result};
+    }
+  }
+  return std::nullopt;
 }
 
 // Variable dumping

@@ -164,6 +164,7 @@ private:
 // variants of sections instead.
 class Substring {
 public:
+  using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Substring)
   Substring(DataRef &&, std::optional<SubscriptIntegerExpr> &&,
       std::optional<SubscriptIntegerExpr> &&);
@@ -173,6 +174,7 @@ public:
   SubscriptIntegerExpr first() const;
   SubscriptIntegerExpr last() const;
   SubscriptIntegerExpr LEN() const;
+  std::optional<std::string> Fold(FoldingContext &);
 
 private:
   std::variant<DataRef, std::string> u_;

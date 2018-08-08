@@ -23,8 +23,8 @@ std::optional<Success> DebugParser::Parse(ParseState &state) const {
   if (auto ustate{state.userState()}) {
     if (auto out{ustate->debugOutput()}) {
       std::string note{str_, length_};
-      Message message{state.GetLocation(),
-          MessageFormattedText{"parser debug: %s"_en_US, note.data()}};
+      Message message{
+          state.GetLocation(), "parser debug: %s"_en_US, note.data()};
       message.SetContext(state.context().get());
       message.Emit(*out, ustate->cooked(), true);
     }

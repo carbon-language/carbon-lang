@@ -201,12 +201,12 @@ public:
     std::optional<resultType> result{parser_.Parse(state)};
     bool emitMessage{false};
     if (result.has_value()) {
-      messages.Annex(state.messages());
+      messages.Annex(std::move(state.messages()));
       if (backtrack.anyTokenMatched()) {
         state.set_anyTokenMatched();
       }
     } else if (state.anyTokenMatched()) {
-      messages.Annex(state.messages());
+      messages.Annex(std::move(state.messages()));
       backtrack.set_anyTokenMatched();
       if (state.anyDeferredMessages()) {
         backtrack.set_anyDeferredMessages(true);
@@ -407,7 +407,7 @@ public:
       state.messages().Restore(std::move(messages));
       return ax;
     }
-    messages.Annex(state.messages());
+    messages.Annex(std::move(state.messages()));
     bool hadDeferredMessages{state.anyDeferredMessages()};
     bool anyTokenMatched{state.anyTokenMatched()};
     state = std::move(backtrack);

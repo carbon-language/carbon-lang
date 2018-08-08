@@ -14,12 +14,13 @@
 
 #include "expression.h"
 #include "../common/idioms.h"
+#include "../evaluate/common.h"
 
 using namespace Fortran::parser::literals;
 
 namespace Fortran::semantics {
 
-using Result = ExpressionAnalyzer::Result;
+using Result = std::optional<evaluate::GenericExpr>;
 
 // AnalyzeHelper is a local template function that keeps the API
 // member function ExpressionAnalyzer::Analyze from having to be a
@@ -86,20 +87,45 @@ template<>
 Result AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstantSubstring &x) {
   const auto &range{std::get<parser::SubstringRange>(x.t)};
-  if (!std::get<0>(range.t).has_value() && !std::get<1>(range.t).has_value()) {
+  const std::optional<parser::ScalarIntExpr> &lbTree{std::get<0>(range.t)};
+  const std::optional<parser::ScalarIntExpr> &ubTree{std::get<1>(range.t)};
+  if (!lbTree.has_value() && !ubTree.has_value()) {
     // "..."(:)
     return AnalyzeHelper(ea, std::get<parser::CharLiteralConstant>(x.t));
   }
-  Result lower{AnalyzeHelper(ea, std::get<0>(range.t))};
-  Result upper{AnalyzeHelper(ea, std::get<1>(range.t))};
-  if (lower.has_value() && upper.has_value()) {
-    if (std::optional<evaluate::GenericScalar> lb{lower->ScalarValue()}) {
-      if (std::optional<evaluate::GenericScalar> ub{upper->ScalarValue()}) {
-        // TODO pmk continue here with ToInt64()
+  // TODO: ensure that any kind parameter is 1
+  std::string str{std::get<parser::CharLiteralConstant>(x.t).GetString()};
+  std::optional<evaluate::SubscriptIntegerExpr> lb, ub;
+  if (lbTree.has_value()) {
+    if (Result lbExpr{AnalyzeHelper(ea, *lbTree)}) {
+      if (auto *ie{std::get_if<evaluate::AnyKindIntegerExpr>(&lbExpr->u)}) {
+        lb = evaluate::SubscriptIntegerExpr{std::move(*ie)};
+      } else {
+        ea.context().messages.Say(
+            "scalar integer expression required for substring lower bound"_err_en_US);
       }
     }
   }
-  return std::nullopt;
+  if (ubTree.has_value()) {
+    if (Result ubExpr{AnalyzeHelper(ea, *ubTree)}) {
+      if (auto *ie{std::get_if<evaluate::AnyKindIntegerExpr>(&ubExpr->u)}) {
+        ub = evaluate::SubscriptIntegerExpr{std::move(*ie)};
+      } else {
+        ea.context().messages.Say(
+            "scalar integer expression required for substring upper bound"_err_en_US);
+      }
+    }
+  }
+  if (!lb.has_value() || !ub.has_value()) {
+    return std::nullopt;
+  }
+  evaluate::Substring substring{std::move(str), std::move(lb), std::move(ub)};
+  evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
+  evaluate::CharacterExpr<1> chExpr{std::move(ind)};
+  chExpr.Fold(ea.context());
+  evaluate::AnyKindCharacterExpr akcExpr{std::move(chExpr)};
+  evaluate::GenericExpr gExpr{std::move(akcExpr)};
+  return {gExpr};
 }
 
 template<>
@@ -116,9 +142,8 @@ Result AnalyzeHelper(
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:
-    ea.context().messages.Say(parser::MessageFormattedText{
-        "unimplemented INTEGER kind (%ju)"_err_en_US,
-        static_cast<std::uintmax_t>(kind)});
+    ea.context().messages.Say("unimplemented INTEGER kind (%ju)"_err_en_US,
+        static_cast<std::uintmax_t>(kind));
     return std::nullopt;
   }
 }

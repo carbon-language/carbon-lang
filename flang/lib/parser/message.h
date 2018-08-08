@@ -123,7 +123,7 @@ public:
   Message(ProvenanceRange pr, const MessageFixedText &t)
     : location_{pr}, text_{t} {}
   Message(ProvenanceRange pr, const MessageFormattedText &s)
-    : location_{pr}, text_{std::move(s)} {}
+    : location_{pr}, text_{s} {}
   Message(ProvenanceRange pr, MessageFormattedText &&s)
     : location_{pr}, text_{std::move(s)} {}
   Message(ProvenanceRange pr, const MessageExpectedText &t)
@@ -132,11 +132,16 @@ public:
   Message(CharBlock csr, const MessageFixedText &t)
     : location_{csr}, text_{t} {}
   Message(CharBlock csr, const MessageFormattedText &s)
-    : location_{csr}, text_{std::move(s)} {}
+    : location_{csr}, text_{s} {}
   Message(CharBlock csr, MessageFormattedText &&s)
     : location_{csr}, text_{std::move(s)} {}
   Message(CharBlock csr, const MessageExpectedText &t)
     : location_{csr}, text_{t} {}
+
+  template<typename RANGE, typename A1, typename... As>
+  Message(RANGE r, const MessageFixedText &t, A1 a1, As... as)
+    : location_{r}, text_{
+                        MessageFormattedText{t, a1, std::forward<As>(as)...}} {}
 
   bool attachmentIsContext() const { return attachmentIsContext_; }
   Reference attachment() const { return attachment_; }
@@ -199,17 +204,12 @@ public:
 
   bool empty() const { return messages_.empty(); }
 
-  Message &Put(Message &&m) {
-    last_ = messages_.emplace_after(last_, std::move(m));
-    return *last_;
-  }
-
-  template<typename... A> Message &Say(A &&... args) {
+  template<typename... A> Message &Say(A... args) {
     last_ = messages_.emplace_after(last_, std::forward<A>(args)...);
     return *last_;
   }
 
-  void Annex(Messages &that) {
+  void Annex(Messages &&that) {
     if (!that.messages_.empty()) {
       messages_.splice_after(last_, that.messages_);
       last_ = that.last_;
@@ -218,7 +218,7 @@ public:
   }
 
   void Restore(Messages &&that) {
-    that.Annex(*this);
+    that.Annex(std::move(*this));
     *this = std::move(that);
   }
 
@@ -228,7 +228,7 @@ public:
   void ResolveProvenances(const CookedSource &);
   void Emit(std::ostream &, const CookedSource &cooked,
       bool echoSourceLines = true) const;
-
+  void AttachTo(Message &);
   bool AnyFatalError() const;
 
 private:

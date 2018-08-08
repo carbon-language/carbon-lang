@@ -43,13 +43,12 @@ void Parsing::Prescan(const std::string &path, Options options) {
   }
   if (sourceFile == nullptr) {
     ProvenanceRange range{allSources.AddCompilerInsertion(path)};
-    MessageFormattedText msg("%s"_err_en_US, fileError.str().data());
-    messages_.Put(Message{range, std::move(msg)});
+    messages_.Say(range, "%s"_err_en_US, fileError.str().data());
     return;
   }
   if (sourceFile->bytes() == 0) {
     ProvenanceRange range{allSources.AddCompilerInsertion(path)};
-    messages_.Put(Message{range, "file is empty"_err_en_US});
+    messages_.Say(range, "file is empty"_err_en_US);
     return;
   }
 
@@ -112,7 +111,7 @@ void Parsing::Parse(std::ostream *out) {
   CHECK(
       !parseState.anyErrorRecovery() || parseState.messages().AnyFatalError());
   consumedWholeFile_ = parseState.IsAtEnd();
-  messages_.Annex(parseState.messages());
+  messages_.Annex(std::move(parseState.messages()));
   finalRestingPlace_ = parseState.GetLocation();
 }
 

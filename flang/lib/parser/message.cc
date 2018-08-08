@@ -253,7 +253,7 @@ void Messages::Merge(Messages &&that) {
 void Messages::Copy(const Messages &that) {
   for (const Message &m : that.messages_) {
     Message copy{m};
-    Put(std::move(copy));
+    Say(std::move(copy));
   }
 }
 
@@ -273,6 +273,12 @@ void Messages::Emit(
       [](const Message *x, const Message *y) { return x->SortBefore(*y); });
   for (const Message *msg : sorted) {
     msg->Emit(o, cooked, echoSourceLines);
+  }
+}
+
+void Messages::AttachTo(Message &msg) {
+  for (const Message &m : messages_) {
+    msg.Attach(m);
   }
 }
 

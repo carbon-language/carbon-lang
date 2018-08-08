@@ -37,12 +37,6 @@ static constexpr auto extension{".mod"};
 // The initial characters of a file that identify it as a .mod file.
 static constexpr auto magic{"!mod$ v1 sum:"};
 
-// Helpers for creating error messages.
-static parser::Message Error(
-    const SourceName &, parser::MessageFixedText, const std::string &);
-static parser::Message Error(const SourceName &, parser::MessageFixedText,
-    const std::string &, const std::string &);
-
 static const SourceName *GetSubmoduleParent(const parser::Program &);
 static std::string ModFilePath(
     const std::string &, const SourceName &, const std::string &);
@@ -89,7 +83,7 @@ void ModFileWriter::Write(const Symbol &symbol) {
   auto path{ModFilePath(dir_, symbol.name(), ancestorName)};
   PutSymbols(*symbol.scope());
   if (!WriteFile(path, GetAsString(symbol))) {
-    errors_.emplace_back(
+    errors_.Say(symbol.name(),
         "Error writing %s: %s"_err_en_US, path.c_str(), std::strerror(errno));
   }
 }
@@ -467,9 +461,8 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   auto &parseTree{parsing.parseTree()};
   if (!parsing.messages().empty() || !parsing.consumedWholeFile() ||
       !parseTree.has_value()) {
-    errors_.push_back(
-        Error(name, "Module file for '%s' is corrupt: %s"_err_en_US,
-            name.ToString(), *path));
+    errors_.Say(name, "Module file for '%s' is corrupt: %s"_err_en_US,
+        name.ToString().data(), path->data());
     return nullptr;
   }
   Scope *parentScope;  // the scope this module/submodule goes into
@@ -494,31 +487,28 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
 
 std::optional<std::string> ModFileReader::FindModFile(
     const SourceName &name, const std::string &ancestor) {
-  std::vector<parser::Message> errors;
+  parser::Messages attachments;
   for (auto &dir : directories_) {
     std::string path{ModFilePath(dir, name, ancestor)};
     std::ifstream ifstream{path};
     if (!ifstream.good()) {
-      errors.push_back(
-          Error(name, "%s: %s"_en_US, path, std::string{std::strerror(errno)}));
+      attachments.Say(name, "%s: %s"_en_US, path.data(), std::strerror(errno));
     } else {
       std::string line;
       std::getline(ifstream, line);
       if (line.compare(0, strlen(magic), magic) == 0) {
         return path;
       }
-      errors.push_back(Error(name, "%s: Not a valid module file"_en_US, path));
+      attachments.Say(name, "%s: Not a valid module file"_en_US, path.data());
     }
   }
-  auto error{Error(name,
+  auto error{parser::Message{name,
       ancestor.empty()
           ? "Cannot find module file for '%s'"_err_en_US
           : "Cannot find module file for submodule '%s' of module '%s'"_err_en_US,
-      name.ToString(), ancestor)};
-  for (auto &e : errors) {
-    error.Attach(e);
-  }
-  errors_.push_back(error);
+      name.ToString().data(), ancestor.data()}};
+  attachments.AttachTo(error);
+  errors_.Say(error);
   return std::nullopt;
 }
 
@@ -549,18 +539,6 @@ static std::string ModFilePath(const std::string &dir, const SourceName &name,
   }
   PutLower(path, name.ToString()) << extension;
   return path.str();
-}
-
-static parser::Message Error(const SourceName &location,
-    parser::MessageFixedText fixedText, const std::string &arg) {
-  return parser::Message{
-      location, parser::MessageFormattedText{fixedText, arg.data()}};
-}
-static parser::Message Error(const SourceName &location,
-    parser::MessageFixedText fixedText, const std::string &arg1,
-    const std::string &arg2) {
-  return parser::Message{location,
-      parser::MessageFormattedText{fixedText, arg1.data(), arg2.data()}};
 }
 
 }  // namespace Fortran::semantics

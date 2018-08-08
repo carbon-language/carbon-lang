@@ -71,8 +71,8 @@ void Prescanner::Prescan(ProvenanceRange range) {
   lineStart_ = start_;
   const bool beganInFixedForm{inFixedForm_};
   if (prescannerNesting_ > maxPrescannerNesting) {
-    Say("too many nested INCLUDE/#include files, possibly circular"_err_en_US,
-        GetProvenance(start_));
+    Say(GetProvenance(start_),
+        "too many nested INCLUDE/#include files, possibly circular"_err_en_US);
     return;
   }
   while (lineStart_ < limit_) {
@@ -168,8 +168,8 @@ void Prescanner::Statement() {
       break;
     case LineClassification::Kind::ConditionalCompilationDirective:
     case LineClassification::Kind::PreprocessorDirective:
-      Say("preprocessed line resembles a preprocessor directive"_en_US,
-          preprocessed->GetProvenanceRange());
+      Say(preprocessed->GetProvenanceRange(),
+          "preprocessed line resembles a preprocessor directive"_en_US);
       preprocessed->ToLowerCase().Emit(cooked_);
       break;
     case LineClassification::Kind::CompilerDirective:
@@ -216,22 +216,6 @@ TokenSequence Prescanner::TokenizePreprocessorDirective() {
   inPreprocessorDirective_ = false;
   at_ = saveAt;
   return tokens;
-}
-
-void Prescanner::Say(Message &&message) {
-  std::optional<ProvenanceRange> range{message.GetProvenanceRange(cooked_)};
-  CHECK(!range.has_value() || cooked_.IsValid(*range));
-  messages_.Put(std::move(message));
-}
-
-void Prescanner::Say(MessageFixedText text, ProvenanceRange r) {
-  CHECK(cooked_.IsValid(r));
-  messages_.Put({r, text});
-}
-
-void Prescanner::Say(MessageFormattedText &&text, ProvenanceRange r) {
-  CHECK(cooked_.IsValid(r));
-  messages_.Put({r, std::move(text)});
 }
 
 void Prescanner::NextLine() {
@@ -480,8 +464,8 @@ void Prescanner::QuotedCharacterLiteral(TokenSequence &tokens) {
     }
     if (*at_ == '\n') {
       if (!inPreprocessorDirective_) {
-        Say("incomplete character literal"_err_en_US,
-            GetProvenanceRange(start, end));
+        Say(GetProvenanceRange(start, end),
+            "incomplete character literal"_err_en_US);
       }
       break;
     }
@@ -514,8 +498,8 @@ void Prescanner::Hollerith(
   while (count-- > 0) {
     if (PadOutCharacterLiteral(tokens)) {
     } else if (*at_ == '\n') {
-      Say("possible truncated Hollerith literal"_en_US,
-          GetProvenanceRange(start, at_));
+      Say(GetProvenanceRange(start, at_),
+          "possible truncated Hollerith literal"_en_US);
       break;
     } else {
       NextChar();
@@ -629,8 +613,8 @@ void Prescanner::FortranInclude(const char *firstQuote) {
     path += *p;
   }
   if (*p != quote) {
-    Say("malformed path name string"_err_en_US,
-        GetProvenanceRange(firstQuote, p));
+    Say(GetProvenanceRange(firstQuote, p),
+        "malformed path name string"_err_en_US);
     return;
   }
   p = SkipWhiteSpace(p + 1);
@@ -638,8 +622,8 @@ void Prescanner::FortranInclude(const char *firstQuote) {
     const char *garbage{p};
     for (; *p != '\n' && *p != '!'; ++p) {
     }
-    Say("excess characters after path name"_en_US,
-        GetProvenanceRange(garbage, p));
+    Say(GetProvenanceRange(garbage, p),
+        "excess characters after path name"_en_US);
   }
   std::stringstream error;
   Provenance provenance{GetProvenance(lineStart_)};
@@ -653,8 +637,7 @@ void Prescanner::FortranInclude(const char *firstQuote) {
     allSources.PopSearchPathDirectory();
   }
   if (included == nullptr) {
-    Say(MessageFormattedText("INCLUDE: %s"_err_en_US, error.str().data()),
-        provenance);
+    Say(provenance, "INCLUDE: %s"_err_en_US, error.str().data());
   } else if (included->bytes() > 0) {
     ProvenanceRange includeLineRange{
         provenance, static_cast<std::size_t>(p - lineStart_)};
@@ -747,7 +730,7 @@ const char *Prescanner::FixedFormContinuationLine(bool mightNeedSpace) {
       // Extension: '&' as continuation marker
       if (features_.ShouldWarn(
               LanguageFeature::FixedFormContinuationWithColumn1Ampersand)) {
-        Say("nonstandard usage"_en_US, GetProvenance(lineStart_));
+        Say(GetProvenance(lineStart_), "nonstandard usage"_en_US);
       }
       return lineStart_ + 1;
     }

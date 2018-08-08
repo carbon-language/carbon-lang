@@ -217,11 +217,8 @@ std::string CompileFortran(
         parseTree, parsing.cooked(), directories);
     Fortran::semantics::ModFileWriter writer;
     writer.set_directory(driver.moduleDirectory);
-    if (!writer.WriteAll()) {
-      for (const auto &message : writer.errors()) {
-        std::cerr << message.string() << '\n';
-      }
-    }
+    writer.WriteAll();
+    writer.errors().Emit(std::cerr, parsing.cooked());
     if (driver.dumpSymbols) {
       Fortran::semantics::DumpSymbols(std::cout);
     }

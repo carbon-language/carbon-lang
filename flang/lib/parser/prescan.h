@@ -70,9 +70,12 @@ public:
   TokenSequence TokenizePreprocessorDirective();
   Provenance GetCurrentProvenance() const { return GetProvenance(at_); }
 
-  void Say(Message &&);
-  void Say(MessageFixedText, ProvenanceRange);
-  void Say(MessageFormattedText &&, ProvenanceRange);
+  template<typename... A> Message &Say(A... a) {
+    Message &m{messages_.Say(std::forward<A>(a)...)};
+    std::optional<ProvenanceRange> range{m.GetProvenanceRange(cooked_)};
+    CHECK(!range.has_value() || cooked_.IsValid(*range));
+    return m;
+  }
 
 private:
   struct LineClassification {
