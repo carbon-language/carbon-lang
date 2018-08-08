@@ -121,55 +121,77 @@ entry:
   ret <8 x i16> %vcltz.i
 }
 
-; FIXME (PR38404)
-;
-;define dso_local <4 x half> @test_vcvt_f16_s16(<4 x i16> %a) {
-;entry:
-;  %vcvt.i = sitofp <4 x i16> %a to <4 x half>
-;  ret <4 x half> %vcvt.i
-;}
-;
-;define dso_local <8 x half> @test_vcvtq_f16_s16(<8 x i16> %a) {
-;entry:
-;  %vcvt.i = sitofp <8 x i16> %a to <8 x half>
-;  ret <8 x half> %vcvt.i
-;}
+define dso_local <4 x half> @test_vcvt_f16_s16(<4 x i16> %a) {
+; CHECK-LABEL: test_vcvt_f16_s16:
+; CHECK:         vcvt.f16.s16 d0, d0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = sitofp <4 x i16> %a to <4 x half>
+  ret <4 x half> %vcvt.i
+}
 
-;define dso_local <4 x half> @test_vcvt_f16_u16(<4 x i16> %a) {
-;entry:
-;  %vcvt.i = uitofp <4 x i16> %a to <4 x half>
-;  ret <4 x half> %vcvt.i
-;}
+define dso_local <8 x half> @test_vcvtq_f16_s16(<8 x i16> %a) {
+; CHECK-LABEL: test_vcvtq_f16_s16:
+; CHECK:         vcvt.f16.s16 q0, q0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = sitofp <8 x i16> %a to <8 x half>
+  ret <8 x half> %vcvt.i
+}
 
-;define dso_local <8 x half> @test_vcvtq_f16_u16(<8 x i16> %a) {
-;entry:
-;  %vcvt.i = uitofp <8 x i16> %a to <8 x half>
-;  ret <8 x half> %vcvt.i
-;}
+define dso_local <4 x half> @test_vcvt_f16_u16(<4 x i16> %a) {
+; CHECK-LABEL: test_vcvt_f16_u16:
+; CHECK:         vcvt.f16.u16 d0, d0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = uitofp <4 x i16> %a to <4 x half>
+  ret <4 x half> %vcvt.i
+}
 
-;define dso_local <4 x i16> @test_vcvt_s16_f16(<4 x half> %a) {
-;entry:
-;  %vcvt.i = fptosi <4 x half> %a to <4 x i16>
-;  ret <4 x i16> %vcvt.i
-;}
+define dso_local <8 x half> @test_vcvtq_f16_u16(<8 x i16> %a) {
+; CHECK-LABEL: test_vcvtq_f16_u16:
+; CHECK:         vcvt.f16.u16 q0, q0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = uitofp <8 x i16> %a to <8 x half>
+  ret <8 x half> %vcvt.i
+}
 
-;define dso_local <8 x i16> @test_vcvtq_s16_f16(<8 x half> %a) {
-;entry:
-;  %vcvt.i = fptosi <8 x half> %a to <8 x i16>
-;  ret <8 x i16> %vcvt.i
-;}
+define dso_local <4 x i16> @test_vcvt_s16_f16(<4 x half> %a) {
+; CHECK-LABEL: test_vcvt_s16_f16:
+; CHECK:         vcvt.s16.f16 d0, d0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = fptosi <4 x half> %a to <4 x i16>
+  ret <4 x i16> %vcvt.i
+}
 
-;define dso_local <4 x i16> @test_vcvt_u16_f16(<4 x half> %a) {
-;entry:
-;  %vcvt.i = fptoui <4 x half> %a to <4 x i16>
-;  ret <4 x i16> %vcvt.i
-;}
+define dso_local <8 x i16> @test_vcvtq_s16_f16(<8 x half> %a) {
+; CHECK-LABEL: test_vcvtq_s16_f16:
+; CHECK:         vcvt.s16.f16 q0, q0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = fptosi <8 x half> %a to <8 x i16>
+  ret <8 x i16> %vcvt.i
+}
 
-;define dso_local <8 x i16> @test_vcvtq_u16_f16(<8 x half> %a) {
-;entry:
-;  %vcvt.i = fptoui <8 x half> %a to <8 x i16>
-;  ret <8 x i16> %vcvt.i
-;}
+define dso_local <4 x i16> @test_vcvt_u16_f16(<4 x half> %a) {
+; CHECK-LABEL: test_vcvt_u16_f16:
+; CHECK:         vcvt.u16.f16 d0, d0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = fptoui <4 x half> %a to <4 x i16>
+  ret <4 x i16> %vcvt.i
+}
+
+define dso_local <8 x i16> @test_vcvtq_u16_f16(<8 x half> %a) {
+; CHECK-LABEL: test_vcvtq_u16_f16:
+; CHECK:         vcvt.u16.f16 q0, q0
+; CHECK-NEXT:    bx lr
+entry:
+  %vcvt.i = fptoui <8 x half> %a to <8 x i16>
+  ret <8 x i16> %vcvt.i
+}
 
 define dso_local <4 x i16> @test_vcvta_s16_f16(<4 x half> %a) {
 ; CHECK-LABEL: test_vcvta_s16_f16:
