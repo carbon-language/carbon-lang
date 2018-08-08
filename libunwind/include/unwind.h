@@ -379,20 +379,11 @@ extern void *__deregister_frame_info_bases(const void *fde)
 
 #if defined(__SEH__) && !defined(__USING_SJLJ_EXCEPTIONS__)
 // This is the common wrapper for GCC-style personality functions with SEH.
-#ifdef __x86_64__
-// The DISPATCHER_CONTEXT struct is only defined on x64.
 extern EXCEPTION_DISPOSITION _GCC_specific_handler(PEXCEPTION_RECORD exc,
                                                    PVOID frame,
                                                    PCONTEXT ctx,
                                                    PDISPATCHER_CONTEXT disp,
                                                    _Unwind_Personality_Fn pers);
-#else
-extern EXCEPTION_DISPOSITION _GCC_specific_handler(PEXCEPTION_RECORD exc,
-                                                   PVOID frame,
-                                                   PCONTEXT ctx,
-                                                   PVOID disp,
-                                                   _Unwind_Personality_Fn pers);
-#endif
 #endif
 
 #ifdef __cplusplus
