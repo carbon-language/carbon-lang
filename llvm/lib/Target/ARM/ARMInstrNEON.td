@@ -4305,17 +4305,29 @@ def : Pat<(v4f32 (fmul (v4f32 QPR:$src1),
                            (v2f32 (EXTRACT_SUBREG QPR:$src2,
                                    (DSubReg_i32_reg imm:$lane))),
                            (SubReg_i32_lane imm:$lane)))>;
-
+def : Pat<(v8f16 (fmul (v8f16 QPR:$src1),
+                       (v8f16 (NEONvduplane (v8f16 QPR:$src2), imm:$lane)))),
+          (v8f16 (VMULslhq(v8f16 QPR:$src1),
+                           (v4f16 (EXTRACT_SUBREG QPR:$src2,
+                                   (DSubReg_i16_reg imm:$lane))),
+                           (SubReg_i16_lane imm:$lane)))>;
 
 def : Pat<(v2f32 (fmul DPR:$Rn, (NEONvdup (f32 SPR:$Rm)))),
           (VMULslfd DPR:$Rn,
             (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$Rm, ssub_0),
             (i32 0))>;
+def : Pat<(v4f16 (fmul DPR:$Rn, (NEONvdup (f16 HPR:$Rm)))),
+          (VMULslhd DPR:$Rn,
+            (INSERT_SUBREG (v4f16 (IMPLICIT_DEF)), HPR:$Rm, ssub_0),
+            (i32 0))>;
 def : Pat<(v4f32 (fmul QPR:$Rn, (NEONvdup (f32 SPR:$Rm)))),
           (VMULslfq QPR:$Rn,
             (INSERT_SUBREG (v2f32 (IMPLICIT_DEF)), SPR:$Rm, ssub_0),
             (i32 0))>;
-
+def : Pat<(v8f16 (fmul QPR:$Rn, (NEONvdup (f16 HPR:$Rm)))),
+          (VMULslhq QPR:$Rn,
+            (INSERT_SUBREG (v4f16 (IMPLICIT_DEF)), HPR:$Rm, ssub_0),
+            (i32 0))>;
 
 //   VQDMULH  : Vector Saturating Doubling Multiply Returning High Half
 defm VQDMULH  : N3VInt_HS<0, 0, 0b1011, 0, N3RegFrm, IIC_VMULi16D, IIC_VMULi32D,
