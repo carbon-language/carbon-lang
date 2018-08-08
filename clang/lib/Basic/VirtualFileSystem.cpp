@@ -990,7 +990,7 @@ public:
 ///   'type': 'file',
 ///   'name': <string>,
 ///   'use-external-name': <boolean> # Optional
-///   'external-contents': <path to external file>)
+///   'external-contents': <path to external file>
 /// }
 /// \endverbatim
 ///
@@ -1021,7 +1021,7 @@ class RedirectingFileSystem : public vfs::FileSystem {
   /// Currently, case-insensitive matching only works correctly with ASCII.
   bool CaseSensitive = true;
 
-  /// IsRelativeOverlay marks whether a IsExternalContentsPrefixDir path must
+  /// IsRelativeOverlay marks whether a ExternalContentsPrefixDir path must
   /// be prefixed in every 'external-contents' when reading from YAML files.
   bool IsRelativeOverlay = false;
 
