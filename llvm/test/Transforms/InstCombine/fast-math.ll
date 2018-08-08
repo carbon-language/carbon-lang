@@ -335,8 +335,8 @@ define <2 x float> @fsub_fadd_common_op_fneg_commute_vec(<2 x float> %x, <2 x fl
 
 define float @fsub_fsub_common_op_fneg(float %x, float %y) {
 ; CHECK-LABEL: @fsub_fsub_common_op_fneg(
-; CHECK-NEXT:    [[TMP1:%.*]] = fsub reassoc nsz float -0.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    ret float [[TMP1]]
+; CHECK-NEXT:    [[R:%.*]] = fsub reassoc nsz float -0.000000e+00, [[X:%.*]]
+; CHECK-NEXT:    ret float [[R]]
 ;
   %s = fsub float %y, %x
   %r = fsub reassoc nsz float %s, %y
@@ -347,8 +347,7 @@ define float @fsub_fsub_common_op_fneg(float %x, float %y) {
 
 define <2 x float> @fsub_fsub_common_op_fneg_vec(<2 x float> %x, <2 x float> %y) {
 ; CHECK-LABEL: @fsub_fsub_common_op_fneg_vec(
-; CHECK-NEXT:    [[S:%.*]] = fsub <2 x float> [[Y:%.*]], [[X:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = fsub reassoc nsz <2 x float> [[S]], [[Y]]
+; CHECK-NEXT:    [[R:%.*]] = fsub reassoc nsz <2 x float> <float -0.000000e+00, float -0.000000e+00>, [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x float> [[R]]
 ;
   %s = fsub <2 x float> %y, %x
