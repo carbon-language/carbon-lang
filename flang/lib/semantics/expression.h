@@ -32,6 +32,8 @@ public:
 
   evaluate::FoldingContext &context() { return context_; }
   KindParam defaultIntegerKind() const { return defaultIntegerKind_; }
+  KindParam defaultRealKind() const { return defaultRealKind_; }
+  KindParam defaultLogicalKind() const { return defaultLogicalKind_; }
 
   // Performs semantic checking on an expression.  If successful,
   // returns its typed expression representation.
@@ -42,6 +44,8 @@ public:
 private:
   evaluate::FoldingContext context_;
   KindParam defaultIntegerKind_{4};
+  KindParam defaultRealKind_{defaultIntegerKind_};
+  KindParam defaultLogicalKind_{defaultIntegerKind_};
 };
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

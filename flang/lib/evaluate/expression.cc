@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "expression.h"
+#include "common.h"
 #include "int-power.h"
 #include "variable.h"
 #include "../common/idioms.h"
@@ -40,7 +41,11 @@ std::ostream &DumpExprWithType(std::ostream &o, const std::variant<A...> &u) {
 
 template<typename... A>
 std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
-  std::visit([&](const auto &x) { x.Dump(o); }, u);
+  std::visit(common::visitors{[&](const BOZLiteralConstant &x) {
+                                o << "Z'" << x.Hexadecimal() << "'";
+                              },
+                 [&](const auto &x) { x.Dump(o); }},
+      u);
   return o;
 }
 
@@ -378,22 +383,6 @@ auto IntegerExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
         return std::nullopt;
       },
       u_);
-}
-
-static void RealFlagWarnings(
-    FoldingContext &context, const RealFlags &flags, const char *operation) {
-  if (flags.test(RealFlag::Overflow)) {
-    context.messages.Say("overflow on %s"_en_US, operation);
-  }
-  if (flags.test(RealFlag::DivideByZero)) {
-    context.messages.Say("division by zero on %s"_en_US, operation);
-  }
-  if (flags.test(RealFlag::InvalidArgument)) {
-    context.messages.Say("invalid argument on %s"_en_US, operation);
-  }
-  if (flags.test(RealFlag::Underflow)) {
-    context.messages.Say("underflow on %s"_en_US, operation);
-  }
 }
 
 template<int KIND>
@@ -768,12 +757,16 @@ auto LogicalExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
 
 std::optional<GenericScalar> GenericExpr::ScalarValue() const {
   return std::visit(
-      [](const auto &x) -> std::optional<GenericScalar> {
-        if (auto c{x.ScalarValue()}) {
-          return {GenericScalar{std::move(*c)}};
-        }
-        return std::nullopt;
-      },
+      common::visitors{
+          [](const BOZLiteralConstant &) -> std::optional<GenericScalar> {
+            return std::nullopt;
+          },
+          [](const auto &x) -> std::optional<GenericScalar> {
+            if (auto c{x.ScalarValue()}) {
+              return {GenericScalar{std::move(*c)}};
+            }
+            return std::nullopt;
+          }},
       u);
 }
 
@@ -804,12 +797,16 @@ auto Expr<AnyKindType<CAT>>::Fold(FoldingContext &context)
 
 std::optional<GenericScalar> GenericExpr::Fold(FoldingContext &context) {
   return std::visit(
-      [&](auto &x) -> std::optional<GenericScalar> {
-        if (auto c{x.Fold(context)}) {
-          return {GenericScalar{std::move(*c)}};
-        }
-        return std::nullopt;
-      },
+      common::visitors{
+          [](BOZLiteralConstant &) -> std::optional<GenericScalar> {
+            return std::nullopt;
+          },
+          [&](auto &x) -> std::optional<GenericScalar> {
+            if (auto c{x.Fold(context)}) {
+              return {GenericScalar{std::move(*c)}};
+            }
+            return std::nullopt;
+          }},
       u);
 }
 

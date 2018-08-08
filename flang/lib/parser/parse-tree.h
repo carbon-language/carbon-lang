@@ -820,7 +820,9 @@ struct LogicalLiteralConstant {
 // R766 octal-constant -> O ' digit [digit]... ' | O " digit [digit]... "
 // R767 hex-constant ->
 //        Z ' hex-digit [hex-digit]... ' | Z " hex-digit [hex-digit]... "
-WRAPPER_CLASS(BOZLiteralConstant, std::uint64_t);
+// The constant must be large enough to hold any real or integer scalar
+// of any supported kind (F'2018 7.7).
+WRAPPER_CLASS(BOZLiteralConstant, std::string);
 
 // R605 literal-constant ->
 //        int-literal-constant | real-literal-constant |

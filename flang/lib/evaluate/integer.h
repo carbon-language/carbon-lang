@@ -205,7 +205,7 @@ public:
     // assumptions, so here you go, future programmer in some postapocalyptic
     // hellscape, and best of luck with the inexorable killer robots.
     for (; std::uint64_t digit = *p; ++p) {
-      if (digit >= '0' && digit < '0' + base) {
+      if (digit >= '0' && digit <= '9' && digit < '0' + base) {
         digit -= '0';
       } else if (base > 10 && digit >= 'A' && digit < 'A' + base - 10) {
         digit -= 'A' - 10;

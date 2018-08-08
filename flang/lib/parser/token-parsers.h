@@ -25,6 +25,7 @@
 #include "provenance.h"
 #include "type-parsers.h"
 #include "../common/idioms.h"
+#include "../evaluate/integer.h"
 #include <cstddef>
 #include <cstring>
 #include <functional>
@@ -301,15 +302,15 @@ template<char quote> struct CharLiteral {
 // As extensions, support X as an alternate hexadecimal marker, and allow
 // BOZX markers to appear as suffixes.
 struct BOZLiteral {
-  using resultType = std::uint64_t;
-  static std::optional<std::uint64_t> Parse(ParseState &state) {
-    std::optional<int> shift;
-    auto baseChar{[&shift](char ch) -> bool {
+  using resultType = std::string;
+  static std::optional<resultType> Parse(ParseState &state) {
+    char base{'\0'};
+    auto baseChar{[&base](char ch) -> bool {
       switch (ch) {
-      case 'b': shift = 1; return true;
-      case 'o': shift = 3; return true;
-      case 'z': shift = 4; return true;
-      case 'x': shift = 4; return true;
+      case 'b':
+      case 'o':
+      case 'z': base = ch; return true;
+      case 'x': base = 'z'; return true;
       default: return false;
       }
     }};
@@ -355,7 +356,7 @@ struct BOZLiteral {
       content += **at;
     }
 
-    if (!shift.has_value()) {
+    if (!base) {
       // extension: base allowed to appear as suffix, too
       if (!(at = nextCh.Parse(state)).has_value() || !baseChar(**at) ||
           !state.IsNonstandardOk(LanguageFeature::BOZExtensions,
@@ -369,23 +370,7 @@ struct BOZLiteral {
       state.Say(start, "no digit in BOZ literal"_err_en_US);
       return std::nullopt;
     }
-
-    std::uint64_t value{0};
-    for (auto digit : content) {
-      digit = HexadecimalDigitValue(digit);
-      if ((digit >> *shift) > 0) {
-        state.Say(start, "bad digit in BOZ literal"_err_en_US);
-        return std::nullopt;
-      }
-      std::uint64_t was{value};
-      value <<= *shift;
-      if ((value >> *shift) != was) {
-        state.Say(start, "excessive digits in BOZ literal"_err_en_US);
-        return std::nullopt;
-      }
-      value |= digit;
-    }
-    return {value};
+    return {std::string{base} + '"' + content + '"'};
   }
 };
 

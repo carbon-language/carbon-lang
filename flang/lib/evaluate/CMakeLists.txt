@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_library(FortranEvaluate
+  common.cc
   complex.cc
   expression.cc
   integer.cc

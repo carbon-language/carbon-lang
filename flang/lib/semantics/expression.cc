@@ -85,6 +85,24 @@ Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
 
 template<>
 Result AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::CharLiteralConstant &x) {
+  auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
+      ExpressionAnalyzer::KindParam{1})};
+  switch (kind) {
+#define CASE(k) \
+  case k: \
+    return {evaluate::GenericExpr{evaluate::AnyKindCharacterExpr{ \
+        evaluate::CharacterExpr<k>{std::get<std::string>(x.t)}}}};
+#undef CASE
+  default:
+    ea.context().messages.Say("unimplemented CHARACTER kind (%ju)"_err_en_US,
+        static_cast<std::uintmax_t>(kind));
+    return std::nullopt;
+  }
+}
+
+template<>
+Result AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstantSubstring &x) {
   const auto &range{std::get<parser::SubstringRange>(x.t)};
   const std::optional<parser::ScalarIntExpr> &lbTree{std::get<0>(range.t)};
@@ -149,16 +167,126 @@ Result AnalyzeHelper(
 }
 
 template<>
+Result AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::BOZLiteralConstant &x) {
+  const char *p{x.v.data()};
+  std::uint64_t base{16};
+  switch (*p++) {
+  case 'b': base = 2; break;
+  case 'o': base = 8; break;
+  case 'z': break;
+  case 'x': break;
+  default: CRASH_NO_CASE;
+  }
+  CHECK(*p == '"');
+  auto value{evaluate::BOZLiteralConstant::ReadUnsigned(++p, base)};
+  if (*p != '"') {
+    ea.context().messages.Say(
+        "invalid digit ('%c') in BOZ literal %s"_err_en_US, *p, x.v.data());
+    return std::nullopt;
+  }
+  if (value.overflow) {
+    ea.context().messages.Say("BOZ literal %s too large"_err_en_US, x.v.data());
+    return std::nullopt;
+  }
+  return {evaluate::GenericExpr{value.value}};
+}
+
+template<int KIND>
+Result ReadRealLiteral(
+    parser::CharBlock source, evaluate::FoldingContext &context) {
+  using valueType = typename evaluate::RealExpr<KIND>::Scalar;
+  const char *p{source.begin()};
+  auto valWithFlags{valueType::Read(p, context.rounding)};
+  CHECK(p == source.end());
+  evaluate::RealFlagWarnings(
+      context, valWithFlags.flags, "conversion of REAL literal");
+  auto value{valWithFlags.value};
+  if (context.flushDenormalsToZero) {
+    value = value.FlushDenormalToZero();
+  }
+  return {evaluate::GenericExpr{
+      evaluate::AnyKindRealExpr{evaluate::RealExpr<KIND>{value}}}};
+}
+
+template<>
+Result AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::RealLiteralConstant &x) {
+  // Use a local message context around the real literal.
+  parser::ContextualMessages ctxMsgs{x.real.source, ea.context().messages};
+  evaluate::FoldingContext foldingContext{ctxMsgs, ea.context()};
+  // If a kind parameter appears, it takes precedence.  In the absence of
+  // an explicit kind parameter, the exponent letter (e.g., 'e'/'d')
+  // determines the kind.
+  typename ExpressionAnalyzer::KindParam defaultKind{ea.defaultRealKind()};
+  const char *end{x.real.source.end()};
+  for (const char *p{x.real.source.begin()}; p < end; ++p) {
+    if (parser::IsLetter(*p)) {
+      switch (*p) {
+      case 'e': defaultKind = 4; break;
+      case 'd': defaultKind = 8; break;
+      case 'q': defaultKind = 16; break;
+      default: ctxMsgs.Say("unknown exponent letter '%c'"_err_en_US, *p);
+      }
+      break;
+    }
+  }
+  auto kind{ea.Analyze(x.kind, defaultKind)};
+  switch (kind) {
+#define CASE(k) \
+  case k: return ReadRealLiteral<k>(x.real.source, foldingContext);
+    FOR_EACH_REAL_KIND(CASE, )
+#undef CASE
+  default:
+    ctxMsgs.Say("unimplemented REAL kind (%ju)"_err_en_US,
+        static_cast<std::uintmax_t>(kind));
+    return std::nullopt;
+  }
+}
+
+// Per F'2018 R718, if both components are INTEGER, they are both converted
+// to default REAL and the result is default COMPLEX.  Otherwise, the
+// kind of the result is the kind of largest REAL component, and the other
+// component is converted if necessary its type.
+template<>
+Result AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::ComplexLiteralConstant &z) {
+#if 0  // TODO pmk next
+  parser::ComplexPart re{std::get<0>(z.t)}, im{std::get<1>(z.t)};
+#endif
+  return std::nullopt;
+}
+
+template<>
+Result AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::HollerithLiteralConstant &x) {
+  evaluate::Expr<evaluate::DefaultCharacter> expr{x.v};
+  return {evaluate::GenericExpr{evaluate::AnyKindCharacterExpr{expr}}};
+}
+
+template<>
+Result AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::LogicalLiteralConstant &x) {
+  auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
+      ea.defaultLogicalKind())};
+  bool value{std::get<bool>(x.t)};
+  switch (kind) {
+#define CASE(k) \
+  case k: \
+    return {evaluate::GenericExpr{ \
+        evaluate::AnyKindLogicalExpr{evaluate::LogicalExpr<k>{value}}}};
+    FOR_EACH_LOGICAL_KIND(CASE, )
+#undef CASE
+  default:
+    ea.context().messages.Say("unimplemented LOGICAL kind (%ju)"_err_en_US,
+        static_cast<std::uintmax_t>(kind));
+    return std::nullopt;
+  }
+}
+
+template<>
 Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::LiteralConstant &x) {
-  return std::visit(
-      common::visitors{[&](const parser::IntLiteralConstant &c) {
-                         return AnalyzeHelper(ea, c);
-                       },
-          // TODO next [&](const parser::RealLiteralConstant &c) { return
-          // AnalyzeHelper(ea, c); },
-          // TODO: remaining cases
-          [&](const auto &) { return Result{}; }},
-      x.u);
+  return std::visit([&](const auto &c) { return AnalyzeHelper(ea, c); }, x.u);
 }
 
 template<> Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Name &n) {

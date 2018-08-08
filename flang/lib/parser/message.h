@@ -241,6 +241,12 @@ private:
 class ContextualMessages {
 public:
   ContextualMessages(CharBlock at, Messages *m) : at_{at}, messages_{m} {}
+  ContextualMessages(CharBlock at, const ContextualMessages &context)
+    : at_{at}, messages_{context.messages_} {}
+
+  CharBlock at() const { return at_; }
+  Messages *messages() const { return messages_; }
+
   template<typename... A> void Say(A &&... args) {
     if (messages_ != nullptr) {
       messages_->Say(at_, std::forward<A>(args)...);

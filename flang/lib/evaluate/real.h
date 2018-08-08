@@ -260,6 +260,8 @@ public:
     return word_.IBITS(significandBits, exponentBits).ToUInt64();
   }
 
+  static ValueWithRealFlags<Real> Read(
+      const char *&, Rounding rounding = defaultRounding);
   std::string DumpHexadecimal() const;
 
 private:

@@ -13,7 +13,10 @@
 // limitations under the License.
 
 #include "real.h"
+#include "int-power.h"
 #include "../common/idioms.h"
+#include "../parser/characters.h"
+#include <limits>
 
 namespace Fortran::evaluate::value {
 
@@ -374,6 +377,53 @@ void Real<W, P, IM>::NormalizeAndRound(ValueWithRealFlags<Real> &result,
   result.flags |= result.value.Normalize(
       isNegative, exponent, fraction, rounding, &roundingBits);
   result.flags |= result.value.Round(rounding, roundingBits, multiply);
+}
+
+template<typename W, int P, bool IM>
+ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Read(
+    const char *&p, Rounding rounding) {
+  ValueWithRealFlags<Real> result;
+  Real ten{FromInteger(Integer<32>{10}).value};
+  for (; parser::IsDecimalDigit(*p); ++p) {
+    result.value =
+        result.value.Multiply(ten, rounding).AccumulateFlags(result.flags);
+    result.value =
+        result.value.Add(FromInteger(Integer<32>{*p - '0'}).value, rounding)
+            .AccumulateFlags(result.flags);
+  }
+  std::int64_t exponent{0};
+  if (*p == '.') {
+    for (++p; parser::IsDecimalDigit(*p); ++p) {
+      --exponent;
+      result.value =
+          result.value.Multiply(ten, rounding).AccumulateFlags(result.flags);
+      result.value =
+          result.value.Add(FromInteger(Integer<32>{*p - '0'}).value, rounding)
+              .AccumulateFlags(result.flags);
+    }
+  }
+  if (parser::IsLetter(*p)) {
+    bool negExpo{false};
+    if (*++p == '-') {
+      negExpo = true;
+      ++p;
+    } else if (*p == '+') {
+      ++p;
+    }
+    auto expo{Integer<32>::ReadUnsigned(p)};
+    std::int64_t expoVal{expo.value.ToInt64()};
+    if (expo.overflow) {
+      expoVal = std::numeric_limits<std::int32_t>::max();
+    } else if (negExpo) {
+      expoVal *= -1;
+    }
+    exponent += expoVal;
+  }
+  Real tenPower{IntPower(ten, Integer<64>{exponent}, rounding)
+                    .AccumulateFlags(result.flags)};
+  result.value =
+      result.value.Multiply(tenPower, rounding).AccumulateFlags(result.flags);
+  return result;
 }
 
 template<typename W, int P, bool IM>

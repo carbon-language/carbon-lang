@@ -596,6 +596,12 @@ extern template class Expr<AnyKindType<TypeCategory::Complex>>;
 extern template class Expr<AnyKindType<TypeCategory::Character>>;
 extern template class Expr<AnyKindType<TypeCategory::Logical>>;
 
+// BOZ literal constants need to be wide enough to hold an integer or real
+// value of any supported kind.  They also need to be distinguishable from
+// other integer constants, since they are permitted to be used in only a
+// few situations.
+using BOZLiteralConstant = value::Integer<128>;
+
 // A completely generic expression, polymorphic across the intrinsic type
 // categories and each of their kinds.
 struct GenericExpr {
@@ -615,7 +621,7 @@ struct GenericExpr {
   std::optional<Scalar> Fold(FoldingContext &);
   int Rank() const { return 1; }  // TODO
   std::variant<AnyKindIntegerExpr, AnyKindRealExpr, AnyKindComplexExpr,
-      AnyKindCharacterExpr, AnyKindLogicalExpr>
+      AnyKindCharacterExpr, AnyKindLogicalExpr, BOZLiteralConstant>
       u;
 };
 

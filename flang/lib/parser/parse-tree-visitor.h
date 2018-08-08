@@ -33,17 +33,20 @@
 
 namespace Fortran::parser {
 
-// Default case for visitation of non-class data members and strings
+// Default case for visitation of non-class data members, strings, and
+// any other non-decomposable values.
 template<typename A, typename V>
-std::enable_if_t<!std::is_class_v<A> || std::is_same_v<std::string, A>> Walk(
-    const A &x, V &visitor) {
+std::enable_if_t<!std::is_class_v<A> || std::is_same_v<std::string, A> ||
+    std::is_same_v<CharBlock, A>>
+Walk(const A &x, V &visitor) {
   if (visitor.Pre(x)) {
     visitor.Post(x);
   }
 }
 template<typename A, typename M>
-std::enable_if_t<!std::is_class_v<A> || std::is_same_v<std::string, A>> Walk(
-    A &x, M &mutator) {
+std::enable_if_t<!std::is_class_v<A> || std::is_same_v<std::string, A> ||
+    std::is_same_v<CharBlock, A>>
+Walk(A &x, M &mutator) {
   if (mutator.Pre(x)) {
     mutator.Post(x);
   }
