@@ -1911,6 +1911,11 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
     if (match(Op0, m_FSub(m_Specific(Op1), m_Value(X))))
       return BinaryOperator::CreateFNegFMF(X, &I);
 
+    // Y - (X + Y) --> -X
+    // Y - (Y + X) --> -X
+    if (match(Op1, m_c_FAdd(m_Specific(Op0), m_Value(X))))
+      return BinaryOperator::CreateFNegFMF(X, &I);
+
     // TODO: This performs reassociative folds for FP ops. Some fraction of the
     // functionality has been subsumed by simple pattern matching here and in
     // InstSimplify. We should let a dedicated reassociation pass handle more
