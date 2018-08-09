@@ -447,9 +447,8 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   // TODO: We are reading the file once to verify the checksum and then again
   // to parse. Do it only reading the file once.
   if (!VerifyHeader(*path)) {
-    errors_.push_back(
-        Error(name, "Module file for '%s' has invalid checksum: %s"_err_en_US,
-            name.ToString(), *path));
+    errors_.Say(name, "Module file for '%s' has invalid checksum: %s"_err_en_US,
+            name.ToString().data(), path->data());
     return nullptr;
   }
   // TODO: Construct parsing with an AllSources reference to share provenance
