@@ -442,8 +442,8 @@ define double @fail2(double %f1, double %f2) {
 
 define float @fsub_op0_fmul_const(float %x) {
 ; CHECK-LABEL: @fsub_op0_fmul_const(
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul reassoc nsz float [[X:%.*]], 6.000000e+00
-; CHECK-NEXT:    ret float [[TMP1]]
+; CHECK-NEXT:    [[SUB:%.*]] = fmul reassoc nsz float [[X:%.*]], 6.000000e+00
+; CHECK-NEXT:    ret float [[SUB]]
 ;
   %mul = fmul float %x, 7.0
   %sub = fsub reassoc nsz float %mul, %x
@@ -454,8 +454,7 @@ define float @fsub_op0_fmul_const(float %x) {
 
 define <2 x float> @fsub_op0_fmul_const_vec(<2 x float> %x) {
 ; CHECK-LABEL: @fsub_op0_fmul_const_vec(
-; CHECK-NEXT:    [[MUL:%.*]] = fmul <2 x float> [[X:%.*]], <float 7.000000e+00, float -4.200000e+01>
-; CHECK-NEXT:    [[SUB:%.*]] = fsub reassoc nsz <2 x float> [[MUL]], [[X]]
+; CHECK-NEXT:    [[SUB:%.*]] = fmul reassoc nsz <2 x float> [[X:%.*]], <float 6.000000e+00, float -4.300000e+01>
 ; CHECK-NEXT:    ret <2 x float> [[SUB]]
 ;
   %mul = fmul <2 x float> %x, <float 7.0, float -42.0>
@@ -467,8 +466,8 @@ define <2 x float> @fsub_op0_fmul_const_vec(<2 x float> %x) {
 
 define float @fsub_op1_fmul_const(float %x) {
 ; CHECK-LABEL: @fsub_op1_fmul_const(
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul reassoc nsz float [[X:%.*]], -6.000000e+00
-; CHECK-NEXT:    ret float [[TMP1]]
+; CHECK-NEXT:    [[SUB:%.*]] = fmul reassoc nsz float [[X:%.*]], -6.000000e+00
+; CHECK-NEXT:    ret float [[SUB]]
 ;
   %mul = fmul float %x, 7.0
   %sub = fsub reassoc nsz float %x, %mul
@@ -479,8 +478,7 @@ define float @fsub_op1_fmul_const(float %x) {
 
 define <2 x float> @fsub_op1_fmul_const_vec(<2 x float> %x) {
 ; CHECK-LABEL: @fsub_op1_fmul_const_vec(
-; CHECK-NEXT:    [[MUL:%.*]] = fmul <2 x float> [[X:%.*]], <float 7.000000e+00, float 0.000000e+00>
-; CHECK-NEXT:    [[SUB:%.*]] = fsub reassoc nsz <2 x float> [[X]], [[MUL]]
+; CHECK-NEXT:    [[SUB:%.*]] = fmul reassoc nsz <2 x float> [[X:%.*]], <float -6.000000e+00, float 1.000000e+00>
 ; CHECK-NEXT:    ret <2 x float> [[SUB]]
 ;
   %mul = fmul <2 x float> %x, <float 7.0, float 0.0>
