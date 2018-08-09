@@ -135,14 +135,14 @@ public:
                  "to true?");
           Pass.TA.insertAfterToken(afterSemi, "\n}");
           Pass.TA.increaseIndentation(
-                                SourceRange(scope.getIndentedRange().getBegin(),
-                                            (*retI)->getLocEnd()),
-                                      scope.CompoundParent->getLocStart());
+              SourceRange(scope.getIndentedRange().getBegin(),
+                          (*retI)->getLocEnd()),
+              scope.CompoundParent->getBeginLoc());
         } else {
           Pass.TA.replaceStmt(*scope.Begin, "@autoreleasepool {");
           Pass.TA.replaceStmt(*scope.End, "}");
           Pass.TA.increaseIndentation(scope.getIndentedRange(),
-                                      scope.CompoundParent->getLocStart());
+                                      scope.CompoundParent->getBeginLoc());
         }
       }
 
@@ -241,7 +241,7 @@ private:
       Stmt::child_iterator rangeE = Begin;
       for (Stmt::child_iterator I = rangeS; I != End; ++I)
         ++rangeE;
-      return SourceRange((*rangeS)->getLocStart(), (*rangeE)->getLocEnd());
+      return SourceRange((*rangeS)->getBeginLoc(), (*rangeE)->getLocEnd());
     }
   };
 
@@ -256,8 +256,8 @@ private:
                          SourceLocation &declarationLoc)
       : Ctx(ctx), referenceLoc(referenceLoc),
         declarationLoc(declarationLoc) {
-      ScopeRange = SourceRange((*scope.Begin)->getLocStart(),
-                               (*scope.End)->getLocStart());
+      ScopeRange = SourceRange((*scope.Begin)->getBeginLoc(),
+                               (*scope.End)->getBeginLoc());
     }
 
     bool VisitDeclRefExpr(DeclRefExpr *E) {
@@ -328,9 +328,9 @@ private:
             "NSAutoreleasePool scope that it was declared in", referenceLoc);
         Pass.TA.reportNote("name declared here", declarationLoc);
         Pass.TA.reportNote("intended @autoreleasepool scope begins here",
-                           (*scope.Begin)->getLocStart());
+                           (*scope.Begin)->getBeginLoc());
         Pass.TA.reportNote("intended @autoreleasepool scope ends here",
-                           (*scope.End)->getLocStart());
+                           (*scope.End)->getBeginLoc());
         return;
       }
     }

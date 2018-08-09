@@ -192,7 +192,7 @@ bool Expr::isKnownToHaveBooleanValue() const {
 // Amusing macro metaprogramming hack: check whether a class provides
 // a more specific implementation of getExprLoc().
 //
-// See also Stmt.cpp:{getLocStart(),getLocEnd()}.
+// See also Stmt.cpp:{getBeginLoc(),getLocEnd()}.
 namespace {
   /// This implementation is used when a class provides a custom
   /// implementation of getExprLoc.
@@ -209,7 +209,7 @@ namespace {
   template <class E>
   SourceLocation getExprLocImpl(const Expr *expr,
                                 SourceLocation (Expr::*v)() const) {
-    return static_cast<const E*>(expr)->getLocStart();
+    return static_cast<const E *>(expr)->getBeginLoc();
   }
 }
 
@@ -450,7 +450,7 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(const ASTContext &Context,
 SourceLocation DeclRefExpr::getBeginLoc() const {
   if (hasQualifier())
     return getQualifierLoc().getBeginLoc();
-  return getNameInfo().getLocStart();
+  return getNameInfo().getBeginLoc();
 }
 SourceLocation DeclRefExpr::getEndLoc() const {
   if (hasExplicitTemplateArgs())
@@ -1360,11 +1360,11 @@ QualType CallExpr::getCallReturnType(const ASTContext &Ctx) const {
 
 SourceLocation CallExpr::getBeginLoc() const {
   if (isa<CXXOperatorCallExpr>(this))
-    return cast<CXXOperatorCallExpr>(this)->getLocStart();
+    return cast<CXXOperatorCallExpr>(this)->getBeginLoc();
 
-  SourceLocation begin = getCallee()->getLocStart();
+  SourceLocation begin = getCallee()->getBeginLoc();
   if (begin.isInvalid() && getNumArgs() > 0 && getArg(0))
-    begin = getArg(0)->getLocStart();
+    begin = getArg(0)->getBeginLoc();
   return begin;
 }
 SourceLocation CallExpr::getEndLoc() const {
@@ -1538,7 +1538,7 @@ SourceLocation MemberExpr::getBeginLoc() const {
 
   // FIXME: We don't want this to happen. Rather, we should be able to
   // detect all kinds of implicit accesses more cleanly.
-  SourceLocation BaseStartLoc = getBase()->getLocStart();
+  SourceLocation BaseStartLoc = getBase()->getBeginLoc();
   if (BaseStartLoc.isValid())
     return BaseStartLoc;
   return MemberLoc;
@@ -2041,7 +2041,7 @@ bool InitListExpr::isIdiomaticZeroInitializer(const LangOptions &LangOpts) const
 
 SourceLocation InitListExpr::getBeginLoc() const {
   if (InitListExpr *SyntacticForm = getSyntacticForm())
-    return SyntacticForm->getLocStart();
+    return SyntacticForm->getBeginLoc();
   SourceLocation Beg = LBraceLoc;
   if (Beg.isInvalid()) {
     // Find the first non-null initializer.
@@ -2049,7 +2049,7 @@ SourceLocation InitListExpr::getBeginLoc() const {
                                      E = InitExprs.end();
       I != E; ++I) {
       if (Stmt *S = *I) {
-        Beg = S->getLocStart();
+        Beg = S->getBeginLoc();
         break;
       }
     }
@@ -2274,12 +2274,12 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
       if (HasWarnUnusedResultAttr ||
           FD->hasAttr<PureAttr>() || FD->hasAttr<ConstAttr>()) {
         WarnE = this;
-        Loc = CE->getCallee()->getLocStart();
+        Loc = CE->getCallee()->getBeginLoc();
         R1 = CE->getCallee()->getSourceRange();
 
         if (unsigned NumArgs = CE->getNumArgs())
-          R2 = SourceRange(CE->getArg(0)->getLocStart(),
-                           CE->getArg(NumArgs-1)->getLocEnd());
+          R2 = SourceRange(CE->getArg(0)->getBeginLoc(),
+                           CE->getArg(NumArgs - 1)->getLocEnd());
         return true;
       }
     }
@@ -2296,7 +2296,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     if (const CXXRecordDecl *Type = getType()->getAsCXXRecordDecl()) {
       if (Type->hasAttr<WarnUnusedAttr>()) {
         WarnE = this;
-        Loc = getLocStart();
+        Loc = getBeginLoc();
         R1 = getSourceRange();
         return true;
       }
@@ -2396,7 +2396,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
     WarnE = this;
     if (const CXXFunctionalCastExpr *CXXCE =
             dyn_cast<CXXFunctionalCastExpr>(this)) {
-      Loc = CXXCE->getLocStart();
+      Loc = CXXCE->getBeginLoc();
       R1 = CXXCE->getSubExpr()->getSourceRange();
     } else {
       const CStyleCastExpr *CStyleCE = cast<CStyleCastExpr>(this);
@@ -3866,8 +3866,8 @@ SourceRange DesignatedInitExpr::getDesignatorsSourceRange() const {
   DesignatedInitExpr *DIE = const_cast<DesignatedInitExpr*>(this);
   if (size() == 1)
     return DIE->getDesignator(0)->getSourceRange();
-  return SourceRange(DIE->getDesignator(0)->getLocStart(),
-                     DIE->getDesignator(size()-1)->getLocEnd());
+  return SourceRange(DIE->getDesignator(0)->getBeginLoc(),
+                     DIE->getDesignator(size() - 1)->getLocEnd());
 }
 
 SourceLocation DesignatedInitExpr::getBeginLoc() const {
@@ -3945,7 +3945,7 @@ DesignatedInitUpdateExpr::DesignatedInitUpdateExpr(const ASTContext &C,
 }
 
 SourceLocation DesignatedInitUpdateExpr::getBeginLoc() const {
-  return getBase()->getLocStart();
+  return getBase()->getBeginLoc();
 }
 
 SourceLocation DesignatedInitUpdateExpr::getEndLoc() const {

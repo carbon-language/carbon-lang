@@ -269,7 +269,7 @@ namespace {
       // rewrite getter method expression into: receiver.property or
       // (receiver).property
       if (NeedsParen) {
-        commit.insertBefore(receiver->getLocStart(), "(");
+        commit.insertBefore(receiver->getBeginLoc(), "(");
         PropertyDotString = ").";
       }
       else
@@ -293,7 +293,7 @@ namespace {
       SourceLocation BegLoc =
         ReceiverIsSuper ? Msg->getSuperLoc() : receiver->getLocEnd();
       BegLoc = PP.getLocForEndOfToken(BegLoc);
-      SourceLocation EndLoc = RHS->getLocStart();
+      SourceLocation EndLoc = RHS->getBeginLoc();
       EndLoc = EndLoc.getLocWithOffset(-1);
       const char *colon = PP.getSourceManager().getCharacterData(EndLoc);
       // Add a space after '=' if there is no space between RHS and '='
@@ -545,14 +545,14 @@ static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
 
   SourceLocation EndGetterSelectorLoc =
     StartGetterSelectorLoc.getLocWithOffset(GetterSelector.getNameForSlot(0).size());
-  commit.replace(CharSourceRange::getCharRange(Getter->getLocStart(),
+  commit.replace(CharSourceRange::getCharRange(Getter->getBeginLoc(),
                                                EndGetterSelectorLoc),
                  PropertyString);
   if (Setter && AvailabilityArgsMatch) {
     SourceLocation EndLoc = Setter->getDeclaratorEndLoc();
     // Get location past ';'
     EndLoc = EndLoc.getLocWithOffset(1);
-    SourceLocation BeginOfSetterDclLoc = Setter->getLocStart();
+    SourceLocation BeginOfSetterDclLoc = Setter->getBeginLoc();
     // FIXME. This assumes that setter decl; is immediately preceded by eoln.
     // It is trying to remove the setter method decl. line entirely.
     BeginOfSetterDclLoc = BeginOfSetterDclLoc.getLocWithOffset(-1);
@@ -720,14 +720,14 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
 
   ClassString += TypedefDcl->getIdentifier()->getName();
   ClassString += ')';
-  SourceRange R(EnumDcl->getLocStart(), EnumDcl->getLocStart());
+  SourceRange R(EnumDcl->getBeginLoc(), EnumDcl->getBeginLoc());
   commit.replace(R, ClassString);
   SourceLocation EndOfEnumDclLoc = EnumDcl->getLocEnd();
   EndOfEnumDclLoc = trans::findSemiAfterLocation(EndOfEnumDclLoc,
                                                  NS.getASTContext(), /*IsDecl*/true);
   if (EndOfEnumDclLoc.isValid()) {
-    SourceRange EnumDclRange(EnumDcl->getLocStart(), EndOfEnumDclLoc);
-    commit.insertFromRange(TypedefDcl->getLocStart(), EnumDclRange);
+    SourceRange EnumDclRange(EnumDcl->getBeginLoc(), EndOfEnumDclLoc);
+    commit.insertFromRange(TypedefDcl->getBeginLoc(), EnumDclRange);
   }
   else
     return false;
@@ -736,7 +736,7 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   EndTypedefDclLoc = trans::findSemiAfterLocation(EndTypedefDclLoc,
                                                  NS.getASTContext(), /*IsDecl*/true);
   if (EndTypedefDclLoc.isValid()) {
-    SourceRange TDRange(TypedefDcl->getLocStart(), EndTypedefDclLoc);
+    SourceRange TDRange(TypedefDcl->getBeginLoc(), EndTypedefDclLoc);
     commit.remove(TDRange);
   }
   else
@@ -745,7 +745,7 @@ static bool rewriteToNSEnumDecl(const EnumDecl *EnumDcl,
   EndOfEnumDclLoc = trans::findLocationAfterSemi(EnumDcl->getLocEnd(), NS.getASTContext(),
                                                  /*IsDecl*/true);
   if (EndOfEnumDclLoc.isValid()) {
-    SourceLocation BeginOfEnumDclLoc = EnumDcl->getLocStart();
+    SourceLocation BeginOfEnumDclLoc = EnumDcl->getBeginLoc();
     // FIXME. This assumes that enum decl; is immediately preceded by eoln.
     // It is trying to remove the enum decl. lines entirely.
     BeginOfEnumDclLoc = BeginOfEnumDclLoc.getLocWithOffset(-1);
@@ -775,7 +775,8 @@ static void rewriteToNSMacroDecl(ASTContext &Ctx,
   SourceLocation EndLoc = EnumDcl->getBraceRange().getBegin();
   if (EndLoc.isInvalid())
     return;
-  CharSourceRange R = CharSourceRange::getCharRange(EnumDcl->getLocStart(), EndLoc);
+  CharSourceRange R =
+      CharSourceRange::getCharRange(EnumDcl->getBeginLoc(), EndLoc);
   commit.replace(R, ClassString);
   // This is to remove spaces between '}' and typedef name.
   SourceLocation StartTypedefLoc = EnumDcl->getLocEnd();
@@ -928,7 +929,7 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
     if (const EnumType *EnumTy = qt->getAs<EnumType>()) {
       if (EnumTy->getDecl() == EnumDcl) {
         bool NSOptions = UseNSOptionsMacro(PP, Ctx, EnumDcl);
-        if (!InsertFoundation(Ctx, TypedefDcl->getLocStart()))
+        if (!InsertFoundation(Ctx, TypedefDcl->getBeginLoc()))
           return false;
         edit::Commit commit(*Editor);
         rewriteToNSMacroDecl(Ctx, EnumDcl, TypedefDcl, *NSAPIObj, commit, !NSOptions);
@@ -941,7 +942,7 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
 
   // We may still use NS_OPTIONS based on what we find in the enumertor list.
   bool NSOptions = UseNSOptionsMacro(PP, Ctx, EnumDcl);
-  if (!InsertFoundation(Ctx, TypedefDcl->getLocStart()))
+  if (!InsertFoundation(Ctx, TypedefDcl->getBeginLoc()))
     return false;
   edit::Commit commit(*Editor);
   bool Res = rewriteToNSEnumDecl(EnumDcl, TypedefDcl, *NSAPIObj,
@@ -964,7 +965,7 @@ static void ReplaceWithInstancetype(ASTContext &Ctx,
     ClassString = "instancetype";
   }
   else {
-    R = SourceRange(OM->getLocStart(), OM->getLocStart());
+    R = SourceRange(OM->getBeginLoc(), OM->getBeginLoc());
     ClassString = OM->isInstanceMethod() ? '-' : '+';
     ClassString += " (instancetype)";
   }
@@ -986,7 +987,7 @@ static void ReplaceWithClasstype(const ObjCMigrateASTConsumer &ASTC,
     }
   }
   else {
-    R = SourceRange(OM->getLocStart(), OM->getLocStart());
+    R = SourceRange(OM->getBeginLoc(), OM->getBeginLoc());
     ClassString = "+ (";
     ClassString += IDecl->getName(); ClassString += "*)";
   }
@@ -1395,7 +1396,7 @@ void ObjCMigrateASTConsumer::AnnotateImplicitBridging(ASTContext &Ctx) {
     CFFunctionIBCandidates[CFFunctionIBCandidates.size()-1];
   const char *PragmaString = "\nCF_IMPLICIT_BRIDGING_ENABLED\n\n";
   edit::Commit commit(*Editor);
-  commit.insertBefore(FirstFD->getLocStart(), PragmaString);
+  commit.insertBefore(FirstFD->getBeginLoc(), PragmaString);
   PragmaString = "\n\nCF_IMPLICIT_BRIDGING_DISABLED\n";
   SourceLocation EndLoc = LastFD->getLocEnd();
   // get location just past end of function location.

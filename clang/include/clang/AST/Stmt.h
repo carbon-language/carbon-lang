@@ -2316,7 +2316,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getCapturedStmt()->getLocStart();
+    return getCapturedStmt()->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }

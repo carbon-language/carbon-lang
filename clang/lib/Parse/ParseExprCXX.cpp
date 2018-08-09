@@ -1674,7 +1674,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
       return Init;
     Expr *InitList = Init.get();
     return Actions.ActOnCXXTypeConstructExpr(
-        TypeRep, InitList->getLocStart(), MultiExprArg(&InitList, 1),
+        TypeRep, InitList->getBeginLoc(), MultiExprArg(&InitList, 1),
         InitList->getLocEnd(), /*ListInitialization=*/true);
   } else {
     BalancedDelimiterTracker T(*this, tok::l_paren);

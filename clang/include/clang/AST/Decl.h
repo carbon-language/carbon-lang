@@ -3117,7 +3117,7 @@ public:
 
   /// Return SourceLocation representing start of source
   /// range ignoring outer template declarations.
-  SourceLocation getInnerLocStart() const { return getLocStart(); }
+  SourceLocation getInnerLocStart() const { return getBeginLoc(); }
 
   /// Return SourceLocation representing start of source
   /// range taking into account any outer template declarations.

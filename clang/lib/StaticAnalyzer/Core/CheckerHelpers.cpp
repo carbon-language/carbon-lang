@@ -21,7 +21,7 @@ namespace ento {
 
 // Recursively find any substatements containing macros
 bool containsMacro(const Stmt *S) {
-  if (S->getLocStart().isMacroID())
+  if (S->getBeginLoc().isMacroID())
     return true;
 
   if (S->getLocEnd().isMacroID())

@@ -906,7 +906,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return SourceExpr ? SourceExpr->getLocStart() : Loc;
+    return SourceExpr ? SourceExpr->getBeginLoc() : Loc;
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -1550,7 +1550,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return Val->getLocStart();
+    return Val->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY { return Val->getLocEnd(); }
@@ -1896,7 +1896,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return isPostfix() ? Val->getLocStart() : Loc;
+    return isPostfix() ? Val->getBeginLoc() : Loc;
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -2282,7 +2282,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getLHS()->getLocStart();
+    return getLHS()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY { return RBracketLoc; }
@@ -2798,7 +2798,7 @@ public:
     if (!Init)
       return SourceLocation();
     if (LParenLoc.isInvalid())
-      return Init->getLocStart();
+      return Init->getBeginLoc();
     return LParenLoc;
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -2998,7 +2998,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getSubExpr()->getLocStart();
+    return getSubExpr()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -3191,7 +3191,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getLHS()->getLocStart();
+    return getLHS()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -3476,7 +3476,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getCond()->getLocStart();
+    return getCond()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -3566,7 +3566,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getCommon()->getLocStart();
+    return getCommon()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -4471,7 +4471,7 @@ public:
       return Kind == FieldDesignator ? getFieldLoc() : getRBracketLoc();
     }
     SourceRange getSourceRange() const LLVM_READONLY {
-      return SourceRange(getLocStart(), getLocEnd());
+      return SourceRange(getBeginLoc(), getLocEnd());
     }
   };
 
@@ -4710,7 +4710,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getCommonExpr()->getLocStart();
+    return getCommonExpr()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -5026,7 +5026,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getBase()->getLocStart();
+    return getBase()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY { return AccessorLoc; }
@@ -5276,7 +5276,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getSyntacticForm()->getLocStart();
+    return getSyntacticForm()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {

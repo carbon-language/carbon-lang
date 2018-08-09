@@ -205,7 +205,7 @@ public:
 
   /// Get the start of \c S ignoring macro arguments and builtin macros.
   SourceLocation getStart(const Stmt *S) {
-    SourceLocation Loc = S->getLocStart();
+    SourceLocation Loc = S->getBeginLoc();
     while (SM.isMacroArgExpansion(Loc) || isInBuiltin(Loc))
       Loc = SM.getImmediateExpansionRange(Loc).getBegin();
     return Loc;
@@ -637,7 +637,7 @@ struct CounterCoverageMappingBuilder
 
     // The statement may be spanned by an expansion. Make sure we handle a file
     // exit out of this expansion before moving to the next statement.
-    if (SM.isBeforeInTranslationUnit(StartLoc, S->getLocStart()))
+    if (SM.isBeforeInTranslationUnit(StartLoc, S->getBeginLoc()))
       MostRecentLocation = EndLoc;
 
     return ExitCount;
@@ -827,7 +827,7 @@ struct CounterCoverageMappingBuilder
   }
 
   void VisitStmt(const Stmt *S) {
-    if (S->getLocStart().isValid())
+    if (S->getBeginLoc().isValid())
       extendRegion(S);
     for (const Stmt *Child : S->children())
       if (Child)

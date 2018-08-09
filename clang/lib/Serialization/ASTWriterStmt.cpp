@@ -1823,7 +1823,7 @@ public:
 void OMPClauseWriter::writeClause(OMPClause *C) {
   Record.push_back(C->getClauseKind());
   Visit(C);
-  Record.AddSourceLocation(C->getLocStart());
+  Record.AddSourceLocation(C->getBeginLoc());
   Record.AddSourceLocation(C->getLocEnd());
 }
 
@@ -2278,7 +2278,7 @@ void OMPClauseWriter::VisitOMPIsDevicePtrClause(OMPIsDevicePtrClause *C) {
 // OpenMP Directives.
 //===----------------------------------------------------------------------===//
 void ASTStmtWriter::VisitOMPExecutableDirective(OMPExecutableDirective *E) {
-  Record.AddSourceLocation(E->getLocStart());
+  Record.AddSourceLocation(E->getBeginLoc());
   Record.AddSourceLocation(E->getLocEnd());
   OMPClauseWriter ClauseWriter(Record);
   for (unsigned i = 0; i < E->getNumClauses(); ++i) {

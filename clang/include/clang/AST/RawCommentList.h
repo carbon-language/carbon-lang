@@ -182,7 +182,7 @@ public:
   explicit BeforeThanCompare(const SourceManager &SM) : SM(SM) { }
 
   bool operator()(const RawComment &LHS, const RawComment &RHS) {
-    return SM.isBeforeInTranslationUnit(LHS.getLocStart(), RHS.getLocStart());
+    return SM.isBeforeInTranslationUnit(LHS.getBeginLoc(), RHS.getBeginLoc());
   }
 
   bool operator()(const RawComment *LHS, const RawComment *RHS) {

@@ -328,7 +328,7 @@ void ASTDeclWriter::VisitPragmaCommentDecl(PragmaCommentDecl *D) {
   StringRef Arg = D->getArg();
   Record.push_back(Arg.size());
   VisitDecl(D);
-  Record.AddSourceLocation(D->getLocStart());
+  Record.AddSourceLocation(D->getBeginLoc());
   Record.push_back(D->getCommentKind());
   Record.AddString(Arg);
   Code = serialization::DECL_PRAGMA_COMMENT;
@@ -340,7 +340,7 @@ void ASTDeclWriter::VisitPragmaDetectMismatchDecl(
   StringRef Value = D->getValue();
   Record.push_back(Name.size() + 1 + Value.size());
   VisitDecl(D);
-  Record.AddSourceLocation(D->getLocStart());
+  Record.AddSourceLocation(D->getBeginLoc());
   Record.AddString(Name);
   Record.AddString(Value);
   Code = serialization::DECL_PRAGMA_DETECT_MISMATCH;
@@ -360,7 +360,7 @@ void ASTDeclWriter::VisitNamedDecl(NamedDecl *D) {
 
 void ASTDeclWriter::VisitTypeDecl(TypeDecl *D) {
   VisitNamedDecl(D);
-  Record.AddSourceLocation(D->getLocStart());
+  Record.AddSourceLocation(D->getBeginLoc());
   Record.AddTypeRef(QualType(D->getTypeForDecl(), 0));
 }
 
@@ -853,7 +853,7 @@ void ASTDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
 
 void ASTDeclWriter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D) {
   VisitDecl(D);
-  Record.AddSourceLocation(D->getLocStart());
+  Record.AddSourceLocation(D->getBeginLoc());
   Record.AddDeclRef(D->getPropertyDecl());
   Record.AddDeclRef(D->getPropertyIvarDecl());
   Record.AddSourceLocation(D->getPropertyIvarDeclLoc());
@@ -1142,7 +1142,7 @@ void ASTDeclWriter::VisitExportDecl(ExportDecl *D) {
 
 void ASTDeclWriter::VisitLabelDecl(LabelDecl *D) {
   VisitNamedDecl(D);
-  Record.AddSourceLocation(D->getLocStart());
+  Record.AddSourceLocation(D->getBeginLoc());
   Code = serialization::DECL_LABEL;
 }
 
@@ -1151,7 +1151,7 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
   VisitRedeclarable(D);
   VisitNamedDecl(D);
   Record.push_back(D->isInline());
-  Record.AddSourceLocation(D->getLocStart());
+  Record.AddSourceLocation(D->getBeginLoc());
   Record.AddSourceLocation(D->getRBraceLoc());
 
   if (D->isOriginalNamespace())
@@ -1733,7 +1733,7 @@ void ASTDeclWriter::VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D) {
 
 void ASTDeclWriter::VisitOMPDeclareReductionDecl(OMPDeclareReductionDecl *D) {
   VisitValueDecl(D);
-  Record.AddSourceLocation(D->getLocStart());
+  Record.AddSourceLocation(D->getBeginLoc());
   Record.AddStmt(D->getCombiner());
   Record.AddStmt(D->getInitializer());
   Record.push_back(D->getInitializerKind());

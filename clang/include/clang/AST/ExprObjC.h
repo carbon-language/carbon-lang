@@ -574,7 +574,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return isFreeIvar() ? Loc : getBase()->getLocStart();
+    return isFreeIvar() ? Loc : getBase()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
@@ -762,7 +762,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return isObjectReceiver() ? getBase()->getLocStart() :getReceiverLocation();
+    return isObjectReceiver() ? getBase()->getBeginLoc()
+                              : getReceiverLocation();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -860,7 +861,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return SubExprs[BASE]->getLocStart();
+    return SubExprs[BASE]->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -1386,7 +1387,7 @@ public:
 
   SourceLocation getSelectorStartLoc() const {
     if (isImplicit())
-      return getLocStart();
+      return getBeginLoc();
     return getSelectorLoc(0);
   }
 
@@ -1498,7 +1499,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getBase()->getLocStart();
+    return getBase()->getBeginLoc();
   }
 
   SourceLocation getBaseLocEnd() const LLVM_READONLY {
@@ -1577,7 +1578,7 @@ public:
   // Source locations are determined by the subexpression.
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return Operand->getLocStart();
+    return Operand->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {

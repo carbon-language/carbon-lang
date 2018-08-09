@@ -128,7 +128,7 @@ public:
   SourceLocation getExprLoc() const LLVM_READONLY {
     return (Operator < OO_Plus || Operator >= OO_Arrow ||
             Operator == OO_PlusPlus || Operator == OO_MinusMinus)
-               ? getLocStart()
+               ? getBeginLoc()
                : getOperatorLoc();
   }
 
@@ -193,7 +193,7 @@ public:
     if (CLoc.isValid())
       return CLoc;
 
-    return getLocStart();
+    return getBeginLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -532,7 +532,7 @@ public:
   SourceLocation getBeginLoc() const {
     if (getLiteralOperatorKind() == LOK_Template)
       return getRParenLoc();
-    return getArg(0)->getLocStart();
+    return getArg(0)->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -643,7 +643,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return SubExpr->getLocStart();
+    return SubExpr->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -785,7 +785,7 @@ public:
   MSPropertyRefExpr(EmptyShell Empty) : Expr(MSPropertyRefExprClass, Empty) {}
 
   SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getLocStart(), getLocEnd());
+    return SourceRange(getBeginLoc(), getLocEnd());
   }
 
   bool isImplicitAccess() const {
@@ -795,7 +795,7 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const {
     if (!isImplicitAccess())
-      return BaseExpr->getLocStart();
+      return BaseExpr->getBeginLoc();
     else if (QualifierLoc)
       return QualifierLoc.getBeginLoc();
     else
@@ -865,7 +865,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getBase()->getLocStart();
+    return getBase()->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -1271,7 +1271,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return SubExpr->getLocStart();
+    return SubExpr->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -2397,7 +2397,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return Base->getLocStart();
+    return Base->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY;
@@ -2908,7 +2908,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     if (NestedNameSpecifierLoc l = getQualifierLoc())
       return l.getBeginLoc();
-    return getNameInfo().getLocStart();
+    return getNameInfo().getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -3056,7 +3056,7 @@ public:
     return {getTemplateArgs(), getNumTemplateArgs()};
   }
 
-  /// Note: getLocStart() is the start of the whole DependentScopeDeclRefExpr,
+  /// Note: getBeginLoc() is the start of the whole DependentScopeDeclRefExpr,
   /// and differs from getLocation().getStart().
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
@@ -3142,7 +3142,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return SubExpr->getLocStart();
+    return SubExpr->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -3496,7 +3496,7 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
     if (!isImplicitAccess())
-      return Base->getLocStart();
+      return Base->getBeginLoc();
     if (getQualifier())
       return getQualifierLoc().getBeginLoc();
     return MemberNameInfo.getBeginLoc();
@@ -3648,10 +3648,10 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
     if (!isImplicitAccess())
-      return Base->getLocStart();
+      return Base->getBeginLoc();
     if (NestedNameSpecifierLoc l = getQualifierLoc())
       return l.getBeginLoc();
-    return getMemberNameInfo().getLocStart();
+    return getMemberNameInfo().getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -3802,7 +3802,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return Pattern->getLocStart();
+    return Pattern->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -4229,7 +4229,7 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getTemporary()->getLocStart();
+    return getTemporary()->getBeginLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }

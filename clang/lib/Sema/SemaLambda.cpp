@@ -479,7 +479,7 @@ void Sema::buildLambdaScope(LambdaScopeInfo *LSI,
 
     if (!LSI->ReturnType->isDependentType() &&
         !LSI->ReturnType->isVoidType()) {
-      if (RequireCompleteType(CallOperator->getLocStart(), LSI->ReturnType,
+      if (RequireCompleteType(CallOperator->getBeginLoc(), LSI->ReturnType,
                               diag::err_lambda_incomplete_result)) {
         // Do nothing.
       }
@@ -720,10 +720,9 @@ void Sema::deduceClosureReturnType(CapturingScopeInfo &CSI) {
 
     // FIXME: This is a poor diagnostic for ReturnStmts without expressions.
     // TODO: It's possible that the *first* return is the divergent one.
-    Diag(RS->getLocStart(),
+    Diag(RS->getBeginLoc(),
          diag::err_typecheck_missing_return_type_incompatible)
-      << ReturnType << CSI.ReturnType
-      << isa<LambdaScopeInfo>(CSI);
+        << ReturnType << CSI.ReturnType << isa<LambdaScopeInfo>(CSI);
     // Continue iterating so that we keep emitting diagnostics.
   }
 }
@@ -762,9 +761,9 @@ QualType Sema::buildLambdaInitCaptureInitialization(SourceLocation Loc,
   InitializationKind Kind =
       IsDirectInit
           ? (CXXDirectInit ? InitializationKind::CreateDirect(
-                                 Loc, Init->getLocStart(), Init->getLocEnd())
+                                 Loc, Init->getBeginLoc(), Init->getLocEnd())
                            : InitializationKind::CreateDirectList(Loc))
-          : InitializationKind::CreateCopy(Loc, Init->getLocStart());
+          : InitializationKind::CreateCopy(Loc, Init->getBeginLoc());
 
   MultiExprArg Args = Init;
   if (CXXDirectInit)
@@ -1286,16 +1285,13 @@ static void addFunctionPointerConversion(Sema &S,
   for (unsigned I = 0, N = CallOperator->getNumParams(); I != N; ++I) {
     ParmVarDecl *From = CallOperator->getParamDecl(I);
 
-    InvokerParams.push_back(ParmVarDecl::Create(S.Context,
-           // Temporarily add to the TU. This is set to the invoker below.
-                                             S.Context.getTranslationUnitDecl(),
-                                             From->getLocStart(),
-                                             From->getLocation(),
-                                             From->getIdentifier(),
-                                             From->getType(),
-                                             From->getTypeSourceInfo(),
-                                             From->getStorageClass(),
-                                             /*DefaultArg=*/nullptr));
+    InvokerParams.push_back(ParmVarDecl::Create(
+        S.Context,
+        // Temporarily add to the TU. This is set to the invoker below.
+        S.Context.getTranslationUnitDecl(), From->getBeginLoc(),
+        From->getLocation(), From->getIdentifier(), From->getType(),
+        From->getTypeSourceInfo(), From->getStorageClass(),
+        /*DefaultArg=*/nullptr));
     CallOpConvTL.setParam(I, From);
     CallOpConvNameTL.setParam(I, From);
   }
@@ -1747,14 +1743,11 @@ ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
   SmallVector<ParmVarDecl *, 4> BlockParams;
   for (unsigned I = 0, N = CallOperator->getNumParams(); I != N; ++I) {
     ParmVarDecl *From = CallOperator->getParamDecl(I);
-    BlockParams.push_back(ParmVarDecl::Create(Context, Block,
-                                              From->getLocStart(),
-                                              From->getLocation(),
-                                              From->getIdentifier(),
-                                              From->getType(),
-                                              From->getTypeSourceInfo(),
-                                              From->getStorageClass(),
-                                              /*DefaultArg=*/nullptr));
+    BlockParams.push_back(ParmVarDecl::Create(
+        Context, Block, From->getBeginLoc(), From->getLocation(),
+        From->getIdentifier(), From->getType(), From->getTypeSourceInfo(),
+        From->getStorageClass(),
+        /*DefaultArg=*/nullptr));
   }
   Block->setParams(BlockParams);
 

@@ -1789,7 +1789,7 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
       ExprResult NewArg = SubstExpr(Arg, TemplateArgs);
       if (NewArg.isUsable()) {
         // It would be nice if we still had this.
-        SourceLocation EqualLoc = NewArg.get()->getLocStart();
+        SourceLocation EqualLoc = NewArg.get()->getBeginLoc();
         SetParamDefaultArgument(NewParm, NewArg.get(), EqualLoc);
       }
     } else {
@@ -2337,7 +2337,7 @@ bool Sema::InstantiateInClassInitializer(
   Expr *Init = NewInit.get();
   assert((!Init || !isa<ParenListExpr>(Init)) && "call-style init in class");
   ActOnFinishCXXInClassMemberInitializer(
-      Instantiation, Init ? Init->getLocStart() : SourceLocation(), Init);
+      Instantiation, Init ? Init->getBeginLoc() : SourceLocation(), Init);
 
   if (auto *L = getASTMutationListener())
     L->DefaultMemberInitializerInstantiated(Instantiation);

@@ -367,10 +367,10 @@ bool Sema::checkStringLiteralArgumentAttr(const ParsedAttr &AL, unsigned ArgNum,
   Expr *ArgExpr = AL.getArgAsExpr(ArgNum);
   const auto *Literal = dyn_cast<StringLiteral>(ArgExpr->IgnoreParenCasts());
   if (ArgLocation)
-    *ArgLocation = ArgExpr->getLocStart();
+    *ArgLocation = ArgExpr->getBeginLoc();
 
   if (!Literal || !Literal->isAscii()) {
-    Diag(ArgExpr->getLocStart(), diag::err_attribute_argument_type)
+    Diag(ArgExpr->getBeginLoc(), diag::err_attribute_argument_type)
         << AL << AANT_ArgumentString;
     return false;
   }
@@ -764,7 +764,7 @@ static bool checkParamIsIntegerType(Sema &S, const FunctionDecl *FD,
 
   const ParmVarDecl *Param = FD->getParamDecl(Idx.getASTIndex());
   if (!Param->getType()->isIntegerType() && !Param->getType()->isCharType()) {
-    SourceLocation SrcLoc = AttrArg->getLocStart();
+    SourceLocation SrcLoc = AttrArg->getBeginLoc();
     S.Diag(SrcLoc, diag::err_attribute_integers_only)
         << AI << Param->getSourceRange();
     return false;
@@ -977,7 +977,7 @@ static void handleDiagnoseIfAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
 
   DiagnoseIfAttr::DiagnosticType DiagType;
   if (!DiagnoseIfAttr::ConvertStrToDiagnosticType(DiagTypeStr, DiagType)) {
-    S.Diag(AL.getArgAsExpr(2)->getLocStart(),
+    S.Diag(AL.getArgAsExpr(2)->getBeginLoc(),
            diag::err_diagnose_if_invalid_diagnostic_type);
     return;
   }
@@ -992,7 +992,7 @@ static void handleDiagnoseIfAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
 
 static void handlePassObjectSizeAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   if (D->hasAttr<PassObjectSizeAttr>()) {
-    S.Diag(D->getLocStart(), diag::err_attribute_only_once_per_parameter) << AL;
+    S.Diag(D->getBeginLoc(), diag::err_attribute_only_once_per_parameter) << AL;
     return;
   }
 
@@ -1005,7 +1005,7 @@ static void handlePassObjectSizeAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   // __builtin_object_size. So, it has the same constraints as that second
   // argument; namely, it must be in the range [0, 3].
   if (Type > 3) {
-    S.Diag(E->getLocStart(), diag::err_attribute_argument_outof_range)
+    S.Diag(E->getBeginLoc(), diag::err_attribute_argument_outof_range)
         << AL << 0 << 3 << E->getSourceRange();
     return;
   }
@@ -1015,7 +1015,7 @@ static void handlePassObjectSizeAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   // At this point, we have no clue if `D` belongs to a function declaration or
   // definition, so we defer the constness check until later.
   if (!cast<ParmVarDecl>(D)->getType()->isPointerType()) {
-    S.Diag(D->getLocStart(), diag::err_attribute_pointers_only) << AL << 1;
+    S.Diag(D->getBeginLoc(), diag::err_attribute_pointers_only) << AL << 1;
     return;
   }
 
@@ -1565,7 +1565,7 @@ void Sema::AddAllocAlignAttr(SourceRange AttrRange, Decl *D, Expr *ParamExpr,
 
   QualType Ty = getFunctionOrMethodParamType(D, Idx.getASTIndex());
   if (!Ty->isDependentType() && !Ty->isIntegralType(Context)) {
-    Diag(ParamExpr->getLocStart(), diag::err_attribute_integers_only)
+    Diag(ParamExpr->getBeginLoc(), diag::err_attribute_integers_only)
         << &TmpAttr
         << FuncDecl->getParamDecl(Idx.getASTIndex())->getSourceRange();
     return;
@@ -4106,15 +4106,15 @@ static void handleGlobalAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   }
   if (const auto *Method = dyn_cast<CXXMethodDecl>(FD)) {
     if (Method->isInstance()) {
-      S.Diag(Method->getLocStart(), diag::err_kern_is_nonstatic_method)
+      S.Diag(Method->getBeginLoc(), diag::err_kern_is_nonstatic_method)
           << Method;
       return;
     }
-    S.Diag(Method->getLocStart(), diag::warn_kern_is_method) << Method;
+    S.Diag(Method->getBeginLoc(), diag::warn_kern_is_method) << Method;
   }
   // Only warn for "inline" when compiling for host, to cut down on noise.
   if (FD->isInlineSpecified() && !S.getLangOpts().CUDAIsDevice)
-    S.Diag(FD->getLocStart(), diag::warn_kern_is_inline) << FD;
+    S.Diag(FD->getBeginLoc(), diag::warn_kern_is_inline) << FD;
 
   D->addAttr(::new (S.Context)
               CUDAGlobalAttr(AL.getRange(), S.Context,
@@ -4665,7 +4665,7 @@ void Sema::AddNSConsumedAttr(SourceRange AttrRange, Decl *D,
     // is significant.  Allow non-dependent code to contain inappropriate
     // attributes even in ARC, but require template instantiations to be
     // set up correctly.
-    Diag(D->getLocStart(), (IsTemplateInstantiation && IsNSConsumed &&
+    Diag(D->getBeginLoc(), (IsTemplateInstantiation && IsNSConsumed &&
                                     getLangOpts().ObjCAutoRefCount
                                 ? diag::err_ns_attribute_wrong_parameter_type
                                 : diag::warn_ns_attribute_wrong_parameter_type))
@@ -4707,7 +4707,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   else if (const auto *Param = dyn_cast<ParmVarDecl>(D)) {
     ReturnType = Param->getType()->getPointeeType();
     if (ReturnType.isNull()) {
-      S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_parameter_type)
+      S.Diag(D->getBeginLoc(), diag::warn_ns_attribute_wrong_parameter_type)
           << AL << /*pointer-to-CF*/ 2 << AL.getRange();
       return;
     }
@@ -4728,7 +4728,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
       ExpectedDeclKind = ExpectedFunctionMethodOrParameter;
       break;
     }
-    S.Diag(D->getLocStart(), diag::warn_attribute_wrong_decl_type)
+    S.Diag(D->getBeginLoc(), diag::warn_attribute_wrong_decl_type)
         << AL.getRange() << AL << ExpectedDeclKind;
     return;
   }
@@ -4760,7 +4760,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
       return;
 
     if (isa<ParmVarDecl>(D)) {
-      S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_parameter_type)
+      S.Diag(D->getBeginLoc(), diag::warn_ns_attribute_wrong_parameter_type)
           << AL << /*pointer-to-CF*/ 2 << AL.getRange();
     } else {
       // Needs to be kept in sync with warn_ns_attribute_wrong_return_type.
@@ -4773,7 +4773,7 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
         SubjectKind = Method;
       else if (isa<ObjCPropertyDecl>(D))
         SubjectKind = Property;
-      S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
+      S.Diag(D->getBeginLoc(), diag::warn_ns_attribute_wrong_return_type)
           << AL << SubjectKind << Cf << AL.getRange();
     }
     return;
@@ -4819,7 +4819,7 @@ static void handleObjCReturnsInnerPointerAttr(Sema &S, Decl *D,
 
   if (!resultType->isReferenceType() &&
       (!resultType->isPointerType() || resultType->isObjCRetainableType())) {
-    S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
+    S.Diag(D->getBeginLoc(), diag::warn_ns_attribute_wrong_return_type)
         << SourceRange(loc) << Attrs
         << (isa<ObjCMethodDecl>(D) ? EP_ObjCMethod : EP_ObjCProperty)
         << /*non-retainable pointer*/ 2;
@@ -4838,13 +4838,13 @@ static void handleObjCRequiresSuperAttr(Sema &S, Decl *D,
 
   const DeclContext *DC = Method->getDeclContext();
   if (const auto *PDecl = dyn_cast_or_null<ObjCProtocolDecl>(DC)) {
-    S.Diag(D->getLocStart(), diag::warn_objc_requires_super_protocol) << Attrs
+    S.Diag(D->getBeginLoc(), diag::warn_objc_requires_super_protocol) << Attrs
                                                                       << 0;
     S.Diag(PDecl->getLocation(), diag::note_protocol_decl);
     return;
   }
   if (Method->getMethodFamily() == OMF_dealloc) {
-    S.Diag(D->getLocStart(), diag::warn_objc_requires_super_protocol) << Attrs
+    S.Diag(D->getBeginLoc(), diag::warn_objc_requires_super_protocol) << Attrs
                                                                       << 1;
     return;
   }
@@ -4857,7 +4857,7 @@ static void handleObjCBridgeAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   IdentifierLoc *Parm = AL.isArgIdent(0) ? AL.getArgAsIdent(0) : nullptr;
 
   if (!Parm) {
-    S.Diag(D->getLocStart(), diag::err_objc_attr_not_id) << AL << 0;
+    S.Diag(D->getBeginLoc(), diag::err_objc_attr_not_id) << AL << 0;
     return;
   }
 
@@ -4886,7 +4886,7 @@ static void handleObjCBridgeMutableAttr(Sema &S, Decl *D,
   IdentifierLoc *Parm = AL.isArgIdent(0) ? AL.getArgAsIdent(0) : nullptr;
 
   if (!Parm) {
-    S.Diag(D->getLocStart(), diag::err_objc_attr_not_id) << AL << 0;
+    S.Diag(D->getBeginLoc(), diag::err_objc_attr_not_id) << AL << 0;
     return;
   }
 
@@ -4900,7 +4900,7 @@ static void handleObjCBridgeRelatedAttr(Sema &S, Decl *D,
   IdentifierInfo *RelatedClass =
       AL.isArgIdent(0) ? AL.getArgAsIdent(0)->Ident : nullptr;
   if (!RelatedClass) {
-    S.Diag(D->getLocStart(), diag::err_objc_attr_not_id) << AL << 0;
+    S.Diag(D->getBeginLoc(), diag::err_objc_attr_not_id) << AL << 0;
     return;
   }
   IdentifierInfo *ClassMethod =
@@ -4970,7 +4970,7 @@ static void handleObjCBoxable(Sema &S, Decl *D, const ParsedAttr &AL) {
 static void handleObjCOwnershipAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   if (hasDeclarator(D)) return;
 
-  S.Diag(D->getLocStart(), diag::err_attribute_wrong_decl_type)
+  S.Diag(D->getBeginLoc(), diag::err_attribute_wrong_decl_type)
       << AL.getRange() << AL << ExpectedVariable;
 }
 
@@ -5293,7 +5293,7 @@ static void handleAnyX86InterruptAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   // Interrupt handler must have 1 or 2 parameters.
   unsigned NumParams = getFunctionOrMethodNumParams(D);
   if (NumParams < 1 || NumParams > 2) {
-    S.Diag(D->getLocStart(), diag::err_anyx86_interrupt_attribute)
+    S.Diag(D->getBeginLoc(), diag::err_anyx86_interrupt_attribute)
         << (S.Context.getTargetInfo().getTriple().getArch() == llvm::Triple::x86
                 ? 0
                 : 1)
@@ -7062,7 +7062,7 @@ struct AttributeInsertion {
     return {" ", Loc, ""};
   }
   static AttributeInsertion createInsertionBefore(const NamedDecl *D) {
-    return {"", D->getLocStart(), "\n"};
+    return {"", D->getBeginLoc(), "\n"};
   }
 };
 
@@ -7592,18 +7592,18 @@ public:
 
   bool VisitDeclRefExpr(DeclRefExpr *DRE) {
     DiagnoseDeclAvailability(DRE->getDecl(),
-                             SourceRange(DRE->getLocStart(), DRE->getLocEnd()));
+                             SourceRange(DRE->getBeginLoc(), DRE->getLocEnd()));
     return true;
   }
 
   bool VisitMemberExpr(MemberExpr *ME) {
     DiagnoseDeclAvailability(ME->getMemberDecl(),
-                             SourceRange(ME->getLocStart(), ME->getLocEnd()));
+                             SourceRange(ME->getBeginLoc(), ME->getLocEnd()));
     return true;
   }
 
   bool VisitObjCAvailabilityCheckExpr(ObjCAvailabilityCheckExpr *E) {
-    SemaRef.Diag(E->getLocStart(), diag::warn_at_available_unchecked_use)
+    SemaRef.Diag(E->getBeginLoc(), diag::warn_at_available_unchecked_use)
         << (!SemaRef.getLangOpts().ObjC1);
     return true;
   }
@@ -7692,7 +7692,7 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
 
     const SourceManager &SM = SemaRef.getSourceManager();
     SourceLocation IfInsertionLoc =
-        SM.getExpansionLoc(StmtOfUse->getLocStart());
+        SM.getExpansionLoc(StmtOfUse->getBeginLoc());
     SourceLocation StmtEndLoc =
         SM.getExpansionRange(
               (LastStmtOfUse ? LastStmtOfUse : StmtOfUse)->getLocEnd())

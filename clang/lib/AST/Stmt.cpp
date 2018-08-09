@@ -185,14 +185,12 @@ namespace {
     return bad();
   }
 
-  typedef SourceLocation getLocStart_t() const;
-  template <class T> good implements_getLocStart(getLocStart_t T::*) {
+  typedef SourceLocation getBeginLoc_t() const;
+  template <class T> good implements_getBeginLoc(getBeginLoc_t T::*) {
     return good();
   }
   LLVM_ATTRIBUTE_UNUSED
-  static bad implements_getLocStart(getLocStart_t Stmt::*) {
-    return bad();
-  }
+  static bad implements_getBeginLoc(getBeginLoc_t Stmt::*) { return bad(); }
 
   typedef SourceLocation getLocEnd_t() const;
   template <class T> good implements_getLocEnd(getLocEnd_t T::*) {
@@ -205,8 +203,8 @@ namespace {
 
 #define ASSERT_IMPLEMENTS_children(type) \
   (void) is_good(implements_children(&type::children))
-#define ASSERT_IMPLEMENTS_getLocStart(type) \
-  (void) is_good(implements_getLocStart(&type::getLocStart))
+#define ASSERT_IMPLEMENTS_getBeginLoc(type)                                    \
+  (void)is_good(implements_getBeginLoc(&type::getBeginLoc))
 #define ASSERT_IMPLEMENTS_getLocEnd(type) \
   (void) is_good(implements_getLocEnd(&type::getLocEnd))
 
@@ -217,9 +215,9 @@ namespace {
 LLVM_ATTRIBUTE_UNUSED
 static inline void check_implementations() {
 #define ABSTRACT_STMT(type)
-#define STMT(type, base) \
-  ASSERT_IMPLEMENTS_children(type); \
-  ASSERT_IMPLEMENTS_getLocStart(type); \
+#define STMT(type, base)                                                       \
+  ASSERT_IMPLEMENTS_children(type);                                            \
+  ASSERT_IMPLEMENTS_getBeginLoc(type);                                         \
   ASSERT_IMPLEMENTS_getLocEnd(type);
 #include "clang/AST/StmtNodes.inc"
 }
@@ -257,8 +255,8 @@ namespace {
   template <class S>
   SourceRange getSourceRangeImpl(const Stmt *stmt,
                                  SourceRange (Stmt::*v)() const) {
-    return SourceRange(static_cast<const S*>(stmt)->getLocStart(),
-                       static_cast<const S*>(stmt)->getLocEnd());
+    return SourceRange(static_cast<const S *>(stmt)->getBeginLoc(),
+                       static_cast<const S *>(stmt)->getLocEnd());
   }
 
 } // namespace
@@ -280,9 +278,9 @@ SourceLocation Stmt::getBeginLoc() const {
   switch (getStmtClass()) {
   case Stmt::NoStmtClass: llvm_unreachable("statement without class");
 #define ABSTRACT_STMT(type)
-#define STMT(type, base) \
-  case Stmt::type##Class: \
-    return static_cast<const type*>(this)->getLocStart();
+#define STMT(type, base)                                                       \
+  case Stmt::type##Class:                                                      \
+    return static_cast<const type *>(this)->getBeginLoc();
 #include "clang/AST/StmtNodes.inc"
   }
   llvm_unreachable("unknown statement kind");

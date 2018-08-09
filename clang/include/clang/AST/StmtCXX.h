@@ -410,8 +410,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY {
-    return getBody() ? getBody()->getLocStart()
-            : getPromiseDecl()->getLocStart();
+    return getBody() ? getBody()->getBeginLoc()
+                     : getPromiseDecl()->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
@@ -479,7 +479,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return CoreturnLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getOperand() ? getOperand()->getLocEnd() : getLocStart();
+    return getOperand() ? getOperand()->getLocEnd() : getBeginLoc();
   }
 
   child_range children() {
