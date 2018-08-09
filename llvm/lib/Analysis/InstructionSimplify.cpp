@@ -4812,7 +4812,7 @@ static Value *simplifyBinaryIntrinsic(Function *F, Value *Op0, Value *Op1,
     }
     break;
   case Intrinsic::maxnum:
-  case Intrinsic::minnum:
+  case Intrinsic::minnum: {
     // If the arguments are the same, this is a no-op.
     if (Op0 == Op1) return Op0;
 
@@ -4831,7 +4831,22 @@ static Value *simplifyBinaryIntrinsic(Function *F, Value *Op0, Value *Op1,
           (M1->getOperand(0) == Op0 || M1->getOperand(1) == Op0))
         return Op1;
 
+    // minnum(X, -Inf) --> -Inf (and commuted variant)
+    // maxnum(X, +Inf) --> +Inf (and commuted variant)
+    bool UseNegInf = IID == Intrinsic::minnum;
+    const APFloat *C;
+    if ((match(Op0, m_APFloat(C)) && C->isInfinity() &&
+         C->isNegative() == UseNegInf) ||
+        (match(Op1, m_APFloat(C)) && C->isInfinity() &&
+         C->isNegative() == UseNegInf))
+      return ConstantFP::getInfinity(ReturnType, UseNegInf);
+
+    // TODO: minnum(nnan x, inf) -> x
+    // TODO: minnum(nnan ninf x, flt_max) -> x
+    // TODO: maxnum(nnan x, -inf) -> x
+    // TODO: maxnum(nnan ninf x, -flt_max) -> x
     break;
+  }
   default:
     break;
   }
