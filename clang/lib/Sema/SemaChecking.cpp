@@ -6121,7 +6121,8 @@ class FormatStringLiteral {
                                     StartToken, StartTokenByteOffset);
   }
 
-  SourceLocation getLocStart() const LLVM_READONLY {
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getBeginLoc() const LLVM_READONLY {
     return FExpr->getLocStart().getLocWithOffset(Offset);
   }
 

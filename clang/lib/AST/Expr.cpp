@@ -447,7 +447,7 @@ DeclRefExpr *DeclRefExpr::CreateEmpty(const ASTContext &Context,
   return new (Mem) DeclRefExpr(EmptyShell());
 }
 
-SourceLocation DeclRefExpr::getLocStart() const {
+SourceLocation DeclRefExpr::getBeginLoc() const {
   if (hasQualifier())
     return getQualifierLoc().getBeginLoc();
   return getNameInfo().getLocStart();
@@ -1358,7 +1358,7 @@ QualType CallExpr::getCallReturnType(const ASTContext &Ctx) const {
   return FnType->getReturnType();
 }
 
-SourceLocation CallExpr::getLocStart() const {
+SourceLocation CallExpr::getBeginLoc() const {
   if (isa<CXXOperatorCallExpr>(this))
     return cast<CXXOperatorCallExpr>(this)->getLocStart();
 
@@ -1529,7 +1529,7 @@ MemberExpr *MemberExpr::Create(
   return E;
 }
 
-SourceLocation MemberExpr::getLocStart() const {
+SourceLocation MemberExpr::getBeginLoc() const {
   if (isImplicitAccess()) {
     if (hasQualifier())
       return getQualifierLoc().getBeginLoc();
@@ -2039,7 +2039,7 @@ bool InitListExpr::isIdiomaticZeroInitializer(const LangOptions &LangOpts) const
   return Lit && Lit->getValue() == 0;
 }
 
-SourceLocation InitListExpr::getLocStart() const {
+SourceLocation InitListExpr::getBeginLoc() const {
   if (InitListExpr *SyntacticForm = getSyntacticForm())
     return SyntacticForm->getLocStart();
   SourceLocation Beg = LBraceLoc;
@@ -3870,7 +3870,7 @@ SourceRange DesignatedInitExpr::getDesignatorsSourceRange() const {
                      DIE->getDesignator(size()-1)->getLocEnd());
 }
 
-SourceLocation DesignatedInitExpr::getLocStart() const {
+SourceLocation DesignatedInitExpr::getBeginLoc() const {
   SourceLocation StartLoc;
   auto *DIE = const_cast<DesignatedInitExpr *>(this);
   Designator &First = *DIE->getDesignator(0);
@@ -3944,7 +3944,7 @@ DesignatedInitUpdateExpr::DesignatedInitUpdateExpr(const ASTContext &C,
   BaseAndUpdaterExprs[1] = ILE;
 }
 
-SourceLocation DesignatedInitUpdateExpr::getLocStart() const {
+SourceLocation DesignatedInitUpdateExpr::getBeginLoc() const {
   return getBase()->getLocStart();
 }
 

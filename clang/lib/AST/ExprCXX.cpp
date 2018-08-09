@@ -89,7 +89,7 @@ QualType CXXUuidofExpr::getTypeOperand(ASTContext &Context) const {
 }
 
 // CXXScalarValueInitExpr
-SourceLocation CXXScalarValueInitExpr::getLocStart() const {
+SourceLocation CXXScalarValueInitExpr::getBeginLoc() const {
   return TypeInfo ? TypeInfo->getTypeLoc().getBeginLoc() : RParenLoc;
 }
 
@@ -450,7 +450,7 @@ DependentScopeDeclRefExpr::CreateEmpty(const ASTContext &C,
   return E;
 }
 
-SourceLocation CXXConstructExpr::getLocStart() const {
+SourceLocation CXXConstructExpr::getBeginLoc() const {
   if (isa<CXXTemporaryObjectExpr>(this))
     return cast<CXXTemporaryObjectExpr>(this)->getLocStart();
   return Loc;
@@ -707,7 +707,7 @@ CXXFunctionalCastExpr::CreateEmpty(const ASTContext &C, unsigned PathSize) {
   return new (Buffer) CXXFunctionalCastExpr(EmptyShell(), PathSize);
 }
 
-SourceLocation CXXFunctionalCastExpr::getLocStart() const {
+SourceLocation CXXFunctionalCastExpr::getBeginLoc() const {
   return getTypeInfoAsWritten()->getTypeLoc().getLocStart();
 }
 
@@ -792,7 +792,7 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(const ASTContext &C,
                        CXXConstructExpr::CK_Complete, ParenOrBraceRange),
       Type(TSI) {}
 
-SourceLocation CXXTemporaryObjectExpr::getLocStart() const {
+SourceLocation CXXTemporaryObjectExpr::getBeginLoc() const {
   return Type->getTypeLoc().getBeginLoc();
 }
 
@@ -1120,7 +1120,7 @@ CXXUnresolvedConstructExpr::CreateEmpty(const ASTContext &C, unsigned NumArgs) {
   return new (Mem) CXXUnresolvedConstructExpr(Empty, NumArgs);
 }
 
-SourceLocation CXXUnresolvedConstructExpr::getLocStart() const {
+SourceLocation CXXUnresolvedConstructExpr::getBeginLoc() const {
   return Type->getTypeLoc().getBeginLoc();
 }
 

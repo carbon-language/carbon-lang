@@ -645,9 +645,7 @@ public:
     return SourceRange(getLocStart(), getLocEnd());
   }
 
-  SourceLocation getLocStart() const LLVM_READONLY {
-    return getBeginLoc();
-  }
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
 
   SourceLocation getLocEnd() const LLVM_READONLY {
     SourceLocation EndLoc = getEndLocPrivate();

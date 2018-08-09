@@ -275,8 +275,8 @@ SourceRange Stmt::getSourceRange() const {
   llvm_unreachable("unknown statement kind!");
 }
 
-SourceLocation Stmt::getLocStart() const {
-//  llvm::errs() << "getLocStart() for " << getStmtClassName() << "\n";
+SourceLocation Stmt::getBeginLoc() const {
+  //  llvm::errs() << "getBeginLoc() for " << getStmtClassName() << "\n";
   switch (getStmtClass()) {
   case Stmt::NoStmtClass: llvm_unreachable("statement without class");
 #define ABSTRACT_STMT(type)

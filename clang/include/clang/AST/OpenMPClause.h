@@ -64,7 +64,8 @@ protected:
 
 public:
   /// Returns the starting location of the clause.
-  SourceLocation getLocStart() const { return StartLoc; }
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getBeginLoc() const { return StartLoc; }
 
   /// Returns the ending location of the clause.
   SourceLocation getLocEnd() const { return EndLoc; }

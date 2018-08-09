@@ -215,9 +215,8 @@ public:
 
   SourceRange getSourceRange() const LLVM_READONLY { return Range; }
 
-  SourceLocation getLocStart() const LLVM_READONLY {
-    return Range.getBegin();
-  }
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getBeginLoc() const LLVM_READONLY { return Range.getBegin(); }
 
   SourceLocation getLocEnd() const LLVM_READONLY {
     return Range.getEnd();

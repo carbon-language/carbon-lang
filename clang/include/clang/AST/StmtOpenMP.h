@@ -165,7 +165,8 @@ public:
   }
 
   /// Returns starting location of directive kind.
-  SourceLocation getLocStart() const { return StartLoc; }
+  SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getBeginLoc() const { return StartLoc; }
   /// Returns ending location of directive.
   SourceLocation getLocEnd() const { return EndLoc; }
 
