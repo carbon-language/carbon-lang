@@ -133,6 +133,7 @@ struct CopyConfig {
 
   StringRef SplitDWO;
   StringRef AddGnuDebugLink;
+  StringRef SymbolsPrefix;
   std::vector<StringRef> ToRemove;
   std::vector<StringRef> Keep;
   std::vector<StringRef> OnlyKeep;
@@ -388,6 +389,9 @@ static void HandleArgs(const CopyConfig &Config, Object &Obj,
       const auto I = Config.SymbolsToRename.find(Sym.Name);
       if (I != Config.SymbolsToRename.end())
         Sym.Name = I->getValue();
+
+      if (!Config.SymbolsPrefix.empty() && Sym.Type != STT_SECTION)
+        Sym.Name = (Config.SymbolsPrefix + Sym.Name).str();
     });
 
     // The purpose of this loop is to mark symbols referenced by sections
@@ -723,6 +727,7 @@ static CopyConfig ParseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
 
   Config.SplitDWO = InputArgs.getLastArgValue(OBJCOPY_split_dwo);
   Config.AddGnuDebugLink = InputArgs.getLastArgValue(OBJCOPY_add_gnu_debuglink);
+  Config.SymbolsPrefix = InputArgs.getLastArgValue(OBJCOPY_prefix_symbols);
 
   for (auto Arg : InputArgs.filtered(OBJCOPY_redefine_symbol)) {
     if (!StringRef(Arg->getValue()).contains('='))

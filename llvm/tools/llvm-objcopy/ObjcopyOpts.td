@@ -105,3 +105,6 @@ def keep_file_symbols : Flag<["-", "--"], "keep-file-symbols">,
 defm dump_section : Eq<"dump-section">,
                    MetaVarName<"section=file">,
                    HelpText<"Dump contents of section named <section> into file <file>">;
+defm prefix_symbols : Eq<"prefix-symbols">,
+                       MetaVarName<"prefix">,
+                       HelpText<"Add <prefix> to the start of every symbol name">;
