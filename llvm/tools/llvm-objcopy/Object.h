@@ -250,6 +250,7 @@ public:
   uint64_t Offset = 0;
   uint64_t Size = 0;
   uint64_t Type = ELF::SHT_NULL;
+  ArrayRef<uint8_t> OriginalData;
 
   virtual ~SectionBase() = default;
 
