@@ -360,7 +360,9 @@ private:
 
 public:
   ParsedAttr(const ParsedAttr &) = delete;
+  ParsedAttr(ParsedAttr &&) = delete;
   ParsedAttr &operator=(const ParsedAttr &) = delete;
+  ParsedAttr &operator=(ParsedAttr &&) = delete;
   ~ParsedAttr() = delete;
 
   void operator delete(void *) = delete;
