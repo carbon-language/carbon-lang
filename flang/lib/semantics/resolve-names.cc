@@ -2393,13 +2393,19 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
 
 bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
   using stmtType = std::optional<parser::Statement<parser::ProgramStmt>>;
-  if (const stmtType &stmt = std::get<stmtType>(x.t)) {
+  if (auto &stmt{std::get<stmtType>(x.t)}) {
     const parser::Name &name{stmt->statement.v};
     Symbol &symbol{MakeSymbol(name, MainProgramDetails{})};
     PushScope(Scope::Kind::MainProgram, &symbol);
     MakeSymbol(name, MainProgramDetails{});
   } else {
     PushScope(Scope::Kind::MainProgram, nullptr);
+  }
+  if (auto &subpPart{
+          std::get<std::optional<parser::InternalSubprogramPart>>(x.t)}) {
+    subpNamesOnly_ = SubprogramKind::Internal;
+    parser::Walk(*subpPart, *static_cast<ResolveNamesVisitor *>(this));
+    subpNamesOnly_ = std::nullopt;
   }
   return true;
 }
