@@ -250,7 +250,7 @@ QualType CXXPseudoDestructorExpr::getDestroyedType() const {
   return QualType();
 }
 
-SourceLocation CXXPseudoDestructorExpr::getLocEnd() const {
+SourceLocation CXXPseudoDestructorExpr::getEndLoc() const {
   SourceLocation End = DestroyedType.getLocation();
   if (TypeSourceInfo *TInfo = DestroyedType.getTypeSourceInfo())
     End = TInfo->getTypeLoc().getLocalSourceRange().getEnd();
@@ -456,7 +456,7 @@ SourceLocation CXXConstructExpr::getBeginLoc() const {
   return Loc;
 }
 
-SourceLocation CXXConstructExpr::getLocEnd() const {
+SourceLocation CXXConstructExpr::getEndLoc() const {
   if (isa<CXXTemporaryObjectExpr>(this))
     return cast<CXXTemporaryObjectExpr>(this)->getLocEnd();
 
@@ -711,7 +711,7 @@ SourceLocation CXXFunctionalCastExpr::getBeginLoc() const {
   return getTypeInfoAsWritten()->getTypeLoc().getLocStart();
 }
 
-SourceLocation CXXFunctionalCastExpr::getLocEnd() const {
+SourceLocation CXXFunctionalCastExpr::getEndLoc() const {
   return RParenLoc.isValid() ? RParenLoc : getSubExpr()->getLocEnd();
 }
 
@@ -796,7 +796,7 @@ SourceLocation CXXTemporaryObjectExpr::getBeginLoc() const {
   return Type->getTypeLoc().getBeginLoc();
 }
 
-SourceLocation CXXTemporaryObjectExpr::getLocEnd() const {
+SourceLocation CXXTemporaryObjectExpr::getEndLoc() const {
   SourceLocation Loc = getParenOrBraceRange().getEnd();
   if (Loc.isInvalid() && getNumArgs())
     Loc = getArg(getNumArgs()-1)->getLocEnd();

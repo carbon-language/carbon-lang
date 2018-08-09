@@ -908,7 +908,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return SourceExpr ? SourceExpr->getLocStart() : Loc;
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return SourceExpr ? SourceExpr->getLocEnd() : Loc;
   }
   SourceLocation getExprLoc() const LLVM_READONLY {
@@ -1067,7 +1068,8 @@ public:
   void setLocation(SourceLocation L) { Loc = L; }
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY;
-  SourceLocation getLocEnd() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY;
 
   /// Determine whether this declaration reference was preceded by a
   /// C++ nested-name-specifier, e.g., \c N::foo.
@@ -1246,7 +1248,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == PredefinedExprClass;
@@ -1336,7 +1339,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
 
   /// Retrieve the location of the literal.
   SourceLocation getLocation() const { return Loc; }
@@ -1376,7 +1380,8 @@ class FixedPointLiteral : public Expr, public APIntStorage {
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
 
   /// \brief Retrieve the location of the literal.
   SourceLocation getLocation() const { return Loc; }
@@ -1431,7 +1436,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
 
   unsigned getValue() const { return Value; }
 
@@ -1505,7 +1511,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return Loc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Loc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == FloatingLiteralClass;
@@ -1545,7 +1552,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return Val->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY { return Val->getLocEnd(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Val->getLocEnd(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImaginaryLiteralClass;
@@ -1720,7 +1728,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return TokLocs[0]; }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return TokLocs[NumConcatenated - 1];
   }
 
@@ -1761,7 +1770,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return L; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return R; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return R; }
 
   /// Get the location of the left parentheses '('.
   SourceLocation getLParen() const { return L; }
@@ -1888,7 +1898,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return isPostfix() ? Val->getLocStart() : Loc;
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return isPostfix() ? Loc : Val->getLocEnd();
   }
   SourceLocation getExprLoc() const LLVM_READONLY { return Loc; }
@@ -1995,7 +2006,8 @@ public:
   SourceRange getSourceRange() const LLVM_READONLY { return Range; }
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return Range.getBegin(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return Range.getEnd(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Range.getEnd(); }
 };
 
 /// OffsetOfExpr - [C99 7.17] - This represents an expression of the form
@@ -2096,7 +2108,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return OperatorLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OffsetOfExprClass;
@@ -2193,7 +2206,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return OpLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == UnaryExprOrTypeTraitExprClass;
@@ -2270,7 +2284,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getLHS()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RBracketLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RBracketLoc; }
 
   SourceLocation getRBracketLoc() const { return RBracketLoc; }
   void setRBracketLoc(SourceLocation L) { RBracketLoc = L; }
@@ -2439,7 +2454,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY;
-  SourceLocation getLocEnd() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY;
 
   /// Return true if this is a call to __assume() or __builtin_assume() with
   /// a non-value-dependent constant parameter evaluating as false.
@@ -2686,7 +2702,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY;
-  SourceLocation getLocEnd() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY;
 
   SourceLocation getExprLoc() const LLVM_READONLY { return MemberLoc; }
 
@@ -2784,7 +2801,8 @@ public:
       return Init->getLocStart();
     return LParenLoc;
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     // FIXME: Init should never be null.
     if (!Init)
       return SourceLocation();
@@ -2982,7 +3000,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getSubExpr()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return getSubExpr()->getLocEnd();
   }
 
@@ -3090,7 +3109,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return LPLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return getSubExpr()->getLocEnd();
   }
 
@@ -3173,7 +3193,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getLHS()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return getRHS()->getLocEnd();
   }
 
@@ -3457,7 +3478,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getCond()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return getRHS()->getLocEnd();
   }
 
@@ -3546,7 +3568,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getCommon()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return getFalseExpr()->getLocEnd();
   }
 
@@ -3603,7 +3626,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return AmpAmpLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return LabelLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return LabelLoc; }
 
   LabelDecl *getLabel() const { return Label; }
   void setLabel(LabelDecl *L) { Label = L; }
@@ -3649,7 +3673,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return LParenLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   SourceLocation getLParenLoc() const { return LParenLoc; }
   void setLParenLoc(SourceLocation L) { LParenLoc = L; }
@@ -3699,7 +3724,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return BuiltinLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ShuffleVectorExprClass;
@@ -3784,7 +3810,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return BuiltinLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ConvertVectorExprClass;
@@ -3866,7 +3893,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return BuiltinLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ChooseExprClass;
@@ -3906,7 +3934,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return TokenLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return TokenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return TokenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == GNUNullExprClass;
@@ -3959,7 +3988,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return BuiltinLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == VAArgExprClass;
@@ -4194,7 +4224,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY;
-  SourceLocation getLocEnd() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == InitListExprClass;
@@ -4435,7 +4466,8 @@ public:
       else
         return getLBracketLoc();
     }
-    SourceLocation getLocEnd() const LLVM_READONLY {
+    SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+    SourceLocation getEndLoc() const LLVM_READONLY {
       return Kind == FieldDesignator ? getFieldLoc() : getRBracketLoc();
     }
     SourceRange getSourceRange() const LLVM_READONLY {
@@ -4520,7 +4552,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY;
-  SourceLocation getLocEnd() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DesignatedInitExprClass;
@@ -4563,7 +4596,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return SourceLocation(); }
 
   // Iterators
   child_range children() {
@@ -4599,7 +4633,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY;
-  SourceLocation getLocEnd() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == DesignatedInitUpdateExprClass;
@@ -4677,7 +4712,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getCommonExpr()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return getCommonExpr()->getLocEnd();
   }
 
@@ -4711,7 +4747,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return SourceLocation(); }
 
   child_range children() {
     return child_range(child_iterator(), child_iterator());
@@ -4748,7 +4785,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return SourceLocation(); }
 
   // Iterators
   child_range children() {
@@ -4794,7 +4832,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return LParenLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ParenListExprClass;
@@ -4919,7 +4958,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return GenericLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == GenericSelectionExprClass;
@@ -4988,7 +5028,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getBase()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY { return AccessorLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return AccessorLoc; }
 
   /// isArrow - Return true if the base expression is a pointer to vector,
   /// return false if the base expression is a vector.
@@ -5034,7 +5075,10 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getCaretLocation();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY { return getBody()->getLocEnd(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
+    return getBody()->getLocEnd();
+  }
 
   /// getFunctionType - Return the underlying function type for this block.
   const FunctionProtoType *getFunctionType() const;
@@ -5088,7 +5132,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return BuiltinLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AsTypeExprClass;
@@ -5233,7 +5278,8 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY {
     return getSyntacticForm()->getLocStart();
   }
-  SourceLocation getLocEnd() const LLVM_READONLY {
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY {
     return getSyntacticForm()->getLocEnd();
   }
 
@@ -5359,7 +5405,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return BuiltinLoc; }
-  SourceLocation getLocEnd() const LLVM_READONLY { return RParenLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return RParenLoc; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == AtomicExprClass;
@@ -5414,7 +5461,8 @@ public:
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return SourceLocation(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == TypoExprClass;

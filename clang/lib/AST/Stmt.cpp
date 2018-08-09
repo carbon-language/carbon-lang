@@ -288,7 +288,7 @@ SourceLocation Stmt::getBeginLoc() const {
   llvm_unreachable("unknown statement kind");
 }
 
-SourceLocation Stmt::getLocEnd() const {
+SourceLocation Stmt::getEndLoc() const {
   switch (getStmtClass()) {
   case Stmt::NoStmtClass: llvm_unreachable("statement without class");
 #define ABSTRACT_STMT(type)

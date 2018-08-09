@@ -452,7 +452,7 @@ SourceLocation DeclRefExpr::getBeginLoc() const {
     return getQualifierLoc().getBeginLoc();
   return getNameInfo().getLocStart();
 }
-SourceLocation DeclRefExpr::getLocEnd() const {
+SourceLocation DeclRefExpr::getEndLoc() const {
   if (hasExplicitTemplateArgs())
     return getRAngleLoc();
   return getNameInfo().getLocEnd();
@@ -1367,7 +1367,7 @@ SourceLocation CallExpr::getBeginLoc() const {
     begin = getArg(0)->getLocStart();
   return begin;
 }
-SourceLocation CallExpr::getLocEnd() const {
+SourceLocation CallExpr::getEndLoc() const {
   if (isa<CXXOperatorCallExpr>(this))
     return cast<CXXOperatorCallExpr>(this)->getLocEnd();
 
@@ -1543,7 +1543,7 @@ SourceLocation MemberExpr::getBeginLoc() const {
     return BaseStartLoc;
   return MemberLoc;
 }
-SourceLocation MemberExpr::getLocEnd() const {
+SourceLocation MemberExpr::getEndLoc() const {
   SourceLocation EndLoc = getMemberNameInfo().getEndLoc();
   if (hasExplicitTemplateArgs())
     EndLoc = getRAngleLoc();
@@ -2057,7 +2057,7 @@ SourceLocation InitListExpr::getBeginLoc() const {
   return Beg;
 }
 
-SourceLocation InitListExpr::getLocEnd() const {
+SourceLocation InitListExpr::getEndLoc() const {
   if (InitListExpr *SyntacticForm = getSyntacticForm())
     return SyntacticForm->getLocEnd();
   SourceLocation End = RBraceLoc;
@@ -3885,7 +3885,7 @@ SourceLocation DesignatedInitExpr::getBeginLoc() const {
   return StartLoc;
 }
 
-SourceLocation DesignatedInitExpr::getLocEnd() const {
+SourceLocation DesignatedInitExpr::getEndLoc() const {
   return getInit()->getLocEnd();
 }
 
@@ -3948,7 +3948,7 @@ SourceLocation DesignatedInitUpdateExpr::getBeginLoc() const {
   return getBase()->getLocStart();
 }
 
-SourceLocation DesignatedInitUpdateExpr::getLocEnd() const {
+SourceLocation DesignatedInitUpdateExpr::getEndLoc() const {
   return getBase()->getLocEnd();
 }
 

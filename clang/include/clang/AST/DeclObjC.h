@@ -282,7 +282,8 @@ public:
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return getLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY;
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY;
   SourceRange getSourceRange() const override LLVM_READONLY {
     return SourceRange(getLocation(), getLocEnd());
   }

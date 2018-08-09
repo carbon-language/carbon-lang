@@ -6126,7 +6126,8 @@ class FormatStringLiteral {
     return FExpr->getLocStart().getLocWithOffset(Offset);
   }
 
-  SourceLocation getLocEnd() const LLVM_READONLY { return FExpr->getLocEnd(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return FExpr->getLocEnd(); }
 };
 
 }  // namespace
