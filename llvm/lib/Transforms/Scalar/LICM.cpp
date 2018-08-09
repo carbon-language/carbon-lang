@@ -697,6 +697,7 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
     if (!UniqueI)
       // other memory op, give up
       return false;
+    (void)FI; //suppress unused variable warning
     assert(UniqueI == FI && "AS must contain FI");
     return true;
   }
