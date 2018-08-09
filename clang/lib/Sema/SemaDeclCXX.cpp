@@ -1108,7 +1108,7 @@ static bool checkTupleLikeDecomposition(Sema &S,
 
   // [dcl.decomp]p3:
   //   The unqualified-id get is looked up in the scope of E by class member
-  //   access lookup
+  //   access lookup ...
   LookupResult MemberGet(S, GetDN, Src->getLocation(), Sema::LookupMemberName);
   bool UseMemberGet = false;
   if (S.isCompleteType(Src->getLocation(), DecompType)) {
@@ -1116,7 +1116,20 @@ static bool checkTupleLikeDecomposition(Sema &S,
       S.LookupQualifiedName(MemberGet, RD);
     if (MemberGet.isAmbiguous())
       return true;
-    UseMemberGet = !MemberGet.empty();
+    //   ... and if that finds at least one declaration that is a function
+    //   template whose first template parameter is a non-type parameter ...
+    for (NamedDecl *D : MemberGet) {
+      if (FunctionTemplateDecl *FTD =
+              dyn_cast<FunctionTemplateDecl>(D->getUnderlyingDecl())) {
+        TemplateParameterList *TPL = FTD->getTemplateParameters();
+        if (TPL->size() != 0 &&
+            isa<NonTypeTemplateParmDecl>(TPL->getParam(0))) {
+          //   ... the initializer is e.get<i>().
+          UseMemberGet = true;
+          break;
+        }
+      }
+    }
     S.FilterAcceptableTemplateNames(MemberGet);
   }
 
