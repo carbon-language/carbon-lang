@@ -326,6 +326,11 @@ private:
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
 
+  /// Update the ELF note section containing the binary build-id to reflect
+  /// a new build-id, so tools can differentiate between the old and the
+  /// rewritten binary.
+  void patchBuildID();
+
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.
   void updateLineTableOffsets();
@@ -502,6 +507,12 @@ private:
   /// .gdb_index section.
   ErrorOr<BinarySection &> GdbIndexSection{std::errc::bad_address};
 
+  /// .note.gnu.build-id section.
+  ErrorOr<BinarySection &> BuildIDSection{std::errc::bad_address};
+
+  /// A reference to the build-id bytes in the original binary
+  StringRef BuildID;
+
   uint64_t NewSymTabOffset{0};
 
   /// Keep track of functions we fail to write in the binary. We need to avoid
@@ -554,9 +565,13 @@ public:
     return NoneType();
   }
 
-  /// Read binary sections and find a gnu note section with the build-id
-  /// of the input file.
-  Optional<std::string> getBuildID() const;
+  /// Set the build-id string if we did not fail to parse the contents of the
+  /// ELF note section containing build-id information.
+  void parseBuildID();
+
+  /// The build-id is typically a stream of 20 bytes. Return these bytes in
+  /// printable hexadecimal form if they are available, or NoneType otherwise.
+  Optional<std::string> getPrintableBuildID() const;
 
   /// Provide an access to the profile data aggregator.
   const DataAggregator &getDataAggregator() const {

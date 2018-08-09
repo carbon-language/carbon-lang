@@ -358,13 +358,6 @@ Verbosity("v",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
-static cl::opt<bool>
-AddBoltInfo("add-bolt-info",
-  cl::desc("add BOLT version and command line argument information to "
-           "processed binaries"),
-  cl::init(true),
-  cl::cat(BoltCategory));
-
 cl::opt<bool>
 AggregateOnly("aggregate-only",
   cl::desc("exit after writing aggregated data file"),
@@ -908,58 +901,77 @@ void RewriteInstance::discoverStorage() {
   BC->LayoutStartAddress = NextAvailableAddress;
 }
 
-Optional<std::string>
-RewriteInstance::getBuildID() const {
-  for (auto &Section : InputFile->sections()) {
-    StringRef SectionName;
-    Section.getName(SectionName);
+void RewriteInstance::parseBuildID() {
+  if (!BuildIDSection)
+    return;
 
-    if (SectionName != ".note.gnu.build-id")
-      continue;
+  StringRef Buf = BuildIDSection->getContents();
 
-    StringRef SectionContents;
-    Section.getContents(SectionContents);
+  // Reading notes section (see Portable Formats Specification, Version 1.1,
+  // pg 2-5, section "Note Section").
+  DataExtractor DE = DataExtractor(Buf, true, 8);
+  uint32_t Offset = 0;
+  if (!DE.isValidOffset(Offset))
+    return;
+  uint32_t NameSz = DE.getU32(&Offset);
+  if (!DE.isValidOffset(Offset))
+    return;
+  uint32_t DescSz = DE.getU32(&Offset);
+  if (!DE.isValidOffset(Offset))
+    return;
+  uint32_t Type = DE.getU32(&Offset);
 
-    // Reading notes section (see Portable Formats Specification, Version 1.1,
-    // pg 2-5, section "Note Section").
-    DataExtractor DE = DataExtractor(SectionContents, true, 8);
-    uint32_t Offset = 0;
-    if (!DE.isValidOffset(Offset))
-      return NoneType();
-    uint32_t NameSz = DE.getU32(&Offset);
-    if (!DE.isValidOffset(Offset))
-      return NoneType();
-    uint32_t DescSz = DE.getU32(&Offset);
-    if (!DE.isValidOffset(Offset))
-      return NoneType();
-    uint32_t Type = DE.getU32(&Offset);
+  DEBUG(dbgs() << "NameSz = " << NameSz << "; DescSz = " << DescSz
+               << "; Type = " << Type << "\n");
 
-    DEBUG(dbgs() << "NameSz = " << NameSz << "; DescSz = " << DescSz
-                 << "; Type = " << Type << "\n");
+  // Type 3 is a GNU build-id note section
+  if (Type != 3)
+    return;
 
-    // Type 3 is a GNU build-id note section
-    if (Type != 3)
-      return NoneType();
+  StringRef Name = Buf.slice(Offset, Offset + NameSz);
+  Offset = alignTo(Offset + NameSz, 4);
+  if (Name.substr(0, 3) != "GNU")
+    return;
 
-    StringRef Name = SectionContents.slice(Offset, Offset + NameSz);
-    Offset = alignTo(Offset + NameSz, 4);
-    StringRef BinaryBuildID = SectionContents.slice(Offset, Offset + DescSz);
-    if (Name.substr(0, 3) != "GNU")
-      return NoneType();
+  BuildID = Buf.slice(Offset, Offset + DescSz);
+}
 
-    std::string Str;
-    raw_string_ostream OS(Str);
-    auto CharIter = BinaryBuildID.bytes_begin();
-    while (CharIter != BinaryBuildID.bytes_end()) {
-      if (*CharIter < 0x10)
-        OS << "0";
-      OS << Twine::utohexstr(*CharIter);
-      ++CharIter;
-    }
-    outs() << "BOLT-INFO: binary build-id is:     " << OS.str() << "\n";
-    return OS.str();
+Optional<std::string> RewriteInstance::getPrintableBuildID() const {
+  if (BuildID.empty())
+    return NoneType();
+
+  std::string Str;
+  raw_string_ostream OS(Str);
+  auto CharIter = BuildID.bytes_begin();
+  while (CharIter != BuildID.bytes_end()) {
+    if (*CharIter < 0x10)
+      OS << "0";
+    OS << Twine::utohexstr(*CharIter);
+    ++CharIter;
   }
-  return NoneType();
+  return OS.str();
+}
+
+void RewriteInstance::patchBuildID() {
+  auto &OS = Out->os();
+
+  if (BuildID.empty())
+    return;
+
+  size_t IDOffset = BuildIDSection->getContents().rfind(BuildID);
+  assert(IDOffset != StringRef::npos && "failed to patch build-id");
+
+  auto FileOffset = getFileOffsetForAddress(BuildIDSection->getAddress());
+  if (!FileOffset) {
+    errs() << "BOLT-WARNING: Non-allocatable build-id will not be updated.\n";
+    return;
+  }
+
+  char LastIDByte = BuildID[BuildID.size() - 1];
+  LastIDByte ^= 1;
+  OS.pwrite(&LastIDByte, 1, FileOffset + IDOffset + BuildID.size() - 1);
+
+  outs() << "BOLT-INFO: patched build-id (flipped last bit)\n";
 }
 
 void RewriteInstance::run() {
@@ -994,15 +1006,6 @@ void RewriteInstance::run() {
          << Triple::getArchTypeName(
                 (llvm::Triple::ArchType)InputFile->getArch())
          << "\n";
-
-  if (DA.started()) {
-    if (auto FileBuildID = getBuildID()) {
-      DA.processFileBuildID(*FileBuildID);
-    } else {
-      errs() << "BOLT-WARNING: build-id will not be checked because we could "
-                "not read one from input binary\n";
-    }
-  }
 
   unsigned PassNumber = 1;
   executeRewritePass({});
@@ -1738,6 +1741,7 @@ void RewriteInstance::readSpecialSections() {
   GOTPLTSection = BC->getUniqueSectionByName(".got.plt");
   PLTGOTSection = BC->getUniqueSectionByName(".plt.got");
   RelaPLTSection = BC->getUniqueSectionByName(".rela.plt");
+  BuildIDSection = BC->getUniqueSectionByName(".note.gnu.build-id");
 
   if (opts::PrintSections) {
     outs() << "BOLT-INFO: Sections from original binary:\n";
@@ -1768,6 +1772,18 @@ void RewriteInstance::readSpecialSections() {
     EHFrame->dump(outs(), &*BC->MRI, NoneType());
   }
   CFIRdWrt.reset(new CFIReaderWriter(*EHFrame));
+
+  // Parse build-id
+  parseBuildID();
+  if (DA.started()) {
+    if (auto FileBuildID = getPrintableBuildID()) {
+      outs() << "BOLT-INFO: binary build-id is:     " << *FileBuildID << "\n";
+      DA.processFileBuildID(*FileBuildID);
+    } else {
+      errs() << "BOLT-WARNING: build-id will not be checked because we could "
+                "not read one from input binary\n";
+    }
+  }
 }
 
 void RewriteInstance::adjustCommandLineOptions() {
@@ -1846,7 +1862,6 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
     return false;
 
   const bool IsAArch64 = BC->isAArch64();
-  const bool IsFromCode = RelocatedSection.isText();
 
   // For value extraction.
   StringRef RelocatedSectionContents;
@@ -3601,45 +3616,46 @@ void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
                                   ELF::SHT_STRTAB);
 }
 
-void RewriteInstance::addBoltInfoSection() {
-  if (opts::AddBoltInfo) {
-    std::string DescStr;
-    raw_string_ostream DescOS(DescStr);
+namespace {
 
-    DescOS << "BOLT revision: " << BoltRevision << ", " << "command line:";
-    for (auto I = 0; I < Argc; ++I) {
-      DescOS << " " << Argv[I];
-    }
-    DescOS.flush();
-
-    std::string Str;
-    raw_string_ostream OS(Str);
-    std::string NameStr = "GNU";
-    const uint32_t NameSz = NameStr.size() + 1;
-    const uint32_t DescSz = DescStr.size();
-    const uint32_t Type = 4; // NT_GNU_GOLD_VERSION (gold version)
-    OS.write(reinterpret_cast<const char*>(&(NameSz)), 4);
-    OS.write(reinterpret_cast<const char*>(&(DescSz)), 4);
-    OS.write(reinterpret_cast<const char*>(&(Type)), 4);
-    OS << NameStr;
-    for (uint64_t I = NameStr.size();
-         I < alignTo(NameStr.size(), 4); ++I) {
-      OS << '\0';
-    }
-    OS << DescStr;
-    for (uint64_t I = DescStr.size();
-         I < alignTo(DescStr.size(), 4); ++I) {
-      OS << '\0';
-    }
-
-    const auto BoltInfo = OS.str();
-    BC->registerOrUpdateNoteSection(".note.bolt_info",
-                                    copyByteArray(BoltInfo),
-                                    BoltInfo.size(),
-                                    /*Alignment=*/1,
-                                    /*IsReadOnly=*/true,
-                                    ELF::SHT_NOTE);
+std::string encodeELFNote(StringRef NameStr, StringRef DescStr, uint32_t Type) {
+  std::string Str;
+  raw_string_ostream OS(Str);
+  const uint32_t NameSz = NameStr.size() + 1;
+  const uint32_t DescSz = DescStr.size();
+  OS.write(reinterpret_cast<const char *>(&(NameSz)), 4);
+  OS.write(reinterpret_cast<const char *>(&(DescSz)), 4);
+  OS.write(reinterpret_cast<const char *>(&(Type)), 4);
+  OS << NameStr;
+  for (uint64_t I = NameStr.size(); I < alignTo(NameStr.size(), 4); ++I) {
+    OS << '\0';
   }
+  OS << DescStr;
+  for (uint64_t I = DescStr.size(); I < alignTo(DescStr.size(), 4); ++I) {
+    OS << '\0';
+  }
+  return OS.str();
+}
+
+}
+
+void RewriteInstance::addBoltInfoSection() {
+  std::string DescStr;
+  raw_string_ostream DescOS(DescStr);
+
+  DescOS << "BOLT revision: " << BoltRevision << ", "
+         << "command line:";
+  for (auto I = 0; I < Argc; ++I) {
+    DescOS << " " << Argv[I];
+  }
+  DescOS.flush();
+
+  const auto BoltInfo =
+      encodeELFNote("GNU", DescStr, 4 /*NT_GNU_GOLD_VERSION*/);
+  BC->registerOrUpdateNoteSection(".note.bolt_info", copyByteArray(BoltInfo),
+                                  BoltInfo.size(),
+                                  /*Alignment=*/1,
+                                  /*IsReadOnly=*/true, ELF::SHT_NOTE);
 }
 
 // Provide a mapping of the existing input binary sections to the output binary
@@ -4542,6 +4558,8 @@ void RewriteInstance::rewriteFile() {
 
   // Update symbol tables.
   patchELFSymTabs();
+
+  patchBuildID();
 
   // Copy non-allocatable sections once allocatable part is finished.
   rewriteNoteSections();

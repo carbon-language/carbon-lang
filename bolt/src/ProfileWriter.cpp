@@ -172,7 +172,7 @@ ProfileWriter::writeProfile(const RewriteInstance &RI) {
   BP.Header.Version = 1;
   auto FileName = RI.getInputFileName();
   BP.Header.FileName = FileName ? *FileName : "<unknown>";
-  auto BuildID = RI.getBuildID();
+  auto BuildID = RI.getPrintableBuildID();
   BP.Header.Id = BuildID ? *BuildID : "<unknown>";
 
   if (RI.getDataAggregator().started()) {
