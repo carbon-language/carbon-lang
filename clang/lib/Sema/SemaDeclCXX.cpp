@@ -15476,9 +15476,10 @@ MSPropertyDecl *Sema::HandleMSProperty(Scope *S, RecordDecl *Record,
     PrevDecl = nullptr;
 
   SourceLocation TSSL = D.getLocStart();
-  const ParsedAttr::PropertyData &Data = MSPropertyAttr.getPropertyData();
-  MSPropertyDecl *NewPD = MSPropertyDecl::Create(
-      Context, Record, Loc, II, T, TInfo, TSSL, Data.GetterId, Data.SetterId);
+  MSPropertyDecl *NewPD =
+      MSPropertyDecl::Create(Context, Record, Loc, II, T, TInfo, TSSL,
+                             MSPropertyAttr.getPropertyDataGetter(),
+                             MSPropertyAttr.getPropertyDataSetter());
   ProcessDeclAttributes(TUScope, NewPD, D);
   NewPD->setAccess(AS);
 
