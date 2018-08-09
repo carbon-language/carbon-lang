@@ -2094,7 +2094,8 @@ public:
     return SubExprs + Array + hasInitializer() + getNumPlacementArgs();
   }
 
-  SourceLocation getStartLoc() const { return Range.getBegin(); }
+  SourceLocation getStartLoc() const LLVM_READONLY { return getBeginLoc(); }
+  SourceLocation getBeginLoc() const { return Range.getBegin(); }
   SourceLocation getEndLoc() const { return Range.getEnd(); }
 
   SourceRange getDirectInitRange() const { return DirectInitRange; }
@@ -2104,7 +2105,6 @@ public:
   }
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
-  SourceLocation getBeginLoc() const LLVM_READONLY { return getStartLoc(); }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
 
   static bool classof(const Stmt *T) {

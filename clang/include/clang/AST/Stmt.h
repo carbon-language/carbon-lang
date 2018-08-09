@@ -523,7 +523,7 @@ public:
   DeclGroupRef getDeclGroup() { return DG; }
   void setDeclGroup(DeclGroupRef DGR) { DG = DGR; }
 
-  SourceLocation getStartLoc() const { return StartLoc; }
+  SourceLocation getStartLoc() const LLVM_READONLY { return getBeginLoc(); }
   void setStartLoc(SourceLocation L) { StartLoc = L; }
   SourceLocation getEndLoc() const { return EndLoc; }
   void setEndLoc(SourceLocation L) { EndLoc = L; }
