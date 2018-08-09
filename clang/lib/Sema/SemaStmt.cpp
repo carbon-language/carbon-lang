@@ -556,7 +556,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, bool IsConstexpr, Stmt *InitStmt,
     CommaVisitor(*this).Visit(CondExpr);
 
   if (!elseStmt)
-    DiagnoseEmptyStmtBody(CondExpr->getLocEnd(), thenStmt,
+    DiagnoseEmptyStmtBody(CondExpr->getEndLoc(), thenStmt,
                           diag::warn_empty_if_body);
 
   return BuildIfStmt(IfLoc, IsConstexpr, InitStmt, Cond, thenStmt, ElseLoc,
@@ -1027,7 +1027,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         // If the low value is bigger than the high value, the case is empty.
         if (LoVal > HiVal) {
           Diag(CR->getLHS()->getBeginLoc(), diag::warn_case_empty_range)
-              << SourceRange(CR->getLHS()->getBeginLoc(), Hi->getLocEnd());
+              << SourceRange(CR->getLHS()->getBeginLoc(), Hi->getEndLoc());
           CaseRanges.erase(CaseRanges.begin()+i);
           --i;
           --e;
@@ -1208,7 +1208,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
   }
 
   if (BodyStmt)
-    DiagnoseEmptyStmtBody(CondExpr->getLocEnd(), BodyStmt,
+    DiagnoseEmptyStmtBody(CondExpr->getEndLoc(), BodyStmt,
                           diag::warn_empty_switch_body);
 
   // FIXME: If the case list was broken is some way, we don't have a good system

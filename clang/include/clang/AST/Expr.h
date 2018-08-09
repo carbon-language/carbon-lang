@@ -910,7 +910,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SourceExpr ? SourceExpr->getLocEnd() : Loc;
+    return SourceExpr ? SourceExpr->getEndLoc() : Loc;
   }
   SourceLocation getExprLoc() const LLVM_READONLY {
     if (SourceExpr) return SourceExpr->getExprLoc();
@@ -1553,7 +1553,7 @@ public:
     return Val->getBeginLoc();
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Val->getLocEnd(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Val->getEndLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ImaginaryLiteralClass;
@@ -1900,7 +1900,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return isPostfix() ? Loc : Val->getLocEnd();
+    return isPostfix() ? Loc : Val->getEndLoc();
   }
   SourceLocation getExprLoc() const LLVM_READONLY { return Loc; }
 
@@ -2806,7 +2806,7 @@ public:
     // FIXME: Init should never be null.
     if (!Init)
       return SourceLocation();
-    return Init->getLocEnd();
+    return Init->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -3002,7 +3002,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getSubExpr()->getLocEnd();
+    return getSubExpr()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -3111,7 +3111,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return LPLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getSubExpr()->getLocEnd();
+    return getSubExpr()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -3195,7 +3195,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getRHS()->getLocEnd();
+    return getRHS()->getEndLoc();
   }
 
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
@@ -3480,7 +3480,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getRHS()->getLocEnd();
+    return getRHS()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -3570,7 +3570,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getFalseExpr()->getLocEnd();
+    return getFalseExpr()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -4471,7 +4471,7 @@ public:
       return Kind == FieldDesignator ? getFieldLoc() : getRBracketLoc();
     }
     SourceRange getSourceRange() const LLVM_READONLY {
-      return SourceRange(getBeginLoc(), getLocEnd());
+      return SourceRange(getBeginLoc(), getEndLoc());
     }
   };
 
@@ -4714,7 +4714,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getCommonExpr()->getLocEnd();
+    return getCommonExpr()->getEndLoc();
   }
 
   child_range children() {
@@ -5077,7 +5077,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getBody()->getLocEnd();
+    return getBody()->getEndLoc();
   }
 
   /// getFunctionType - Return the underlying function type for this block.
@@ -5280,7 +5280,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getSyntacticForm()->getLocEnd();
+    return getSyntacticForm()->getEndLoc();
   }
 
   child_range children() {

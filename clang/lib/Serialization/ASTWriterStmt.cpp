@@ -1824,7 +1824,7 @@ void OMPClauseWriter::writeClause(OMPClause *C) {
   Record.push_back(C->getClauseKind());
   Visit(C);
   Record.AddSourceLocation(C->getBeginLoc());
-  Record.AddSourceLocation(C->getLocEnd());
+  Record.AddSourceLocation(C->getEndLoc());
 }
 
 void OMPClauseWriter::VisitOMPClauseWithPreInit(OMPClauseWithPreInit *C) {
@@ -2279,7 +2279,7 @@ void OMPClauseWriter::VisitOMPIsDevicePtrClause(OMPIsDevicePtrClause *C) {
 //===----------------------------------------------------------------------===//
 void ASTStmtWriter::VisitOMPExecutableDirective(OMPExecutableDirective *E) {
   Record.AddSourceLocation(E->getBeginLoc());
-  Record.AddSourceLocation(E->getLocEnd());
+  Record.AddSourceLocation(E->getEndLoc());
   OMPClauseWriter ClauseWriter(Record);
   for (unsigned i = 0; i < E->getNumClauses(); ++i) {
     ClauseWriter.writeClause(E->getClause(i));

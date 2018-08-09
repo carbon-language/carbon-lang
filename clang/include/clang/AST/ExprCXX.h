@@ -648,7 +648,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExpr->getLocEnd();
+    return SubExpr->getEndLoc();
   }
 
   /// Retrieve the source range of the expression.
@@ -785,7 +785,7 @@ public:
   MSPropertyRefExpr(EmptyShell Empty) : Expr(MSPropertyRefExprClass, Empty) {}
 
   SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getBeginLoc(), getLocEnd());
+    return SourceRange(getBeginLoc(), getEndLoc());
   }
 
   bool isImplicitAccess() const {
@@ -1066,7 +1066,7 @@ public:
   SourceLocation getEndLoc() const LLVM_READONLY {
     if (!getSubExpr())
       return ThrowLoc;
-    return getSubExpr()->getLocEnd();
+    return getSubExpr()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -1276,7 +1276,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExpr->getLocEnd();
+    return SubExpr->getEndLoc();
   }
 
   // Implement isa/cast/dyncast/etc.
@@ -2209,7 +2209,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return Loc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return Argument->getLocEnd();
+    return Argument->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -2915,7 +2915,7 @@ public:
   SourceLocation getEndLoc() const LLVM_READONLY {
     if (hasExplicitTemplateArgs())
       return getRAngleLoc();
-    return getNameInfo().getLocEnd();
+    return getNameInfo().getEndLoc();
   }
 
   child_range children() {
@@ -3147,7 +3147,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExpr->getLocEnd();
+    return SubExpr->getEndLoc();
   }
 
   // Implement isa/cast/dyncast/etc.
@@ -3275,7 +3275,7 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
     if (!RParenLoc.isValid() && NumArgs > 0)
-      return getArg(NumArgs - 1)->getLocEnd();
+      return getArg(NumArgs - 1)->getEndLoc();
     return RParenLoc;
   }
 
@@ -3658,7 +3658,7 @@ public:
   SourceLocation getEndLoc() const LLVM_READONLY {
     if (hasExplicitTemplateArgs())
       return getRAngleLoc();
-    return getMemberNameInfo().getLocEnd();
+    return getMemberNameInfo().getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -4234,7 +4234,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getTemporary()->getLocEnd();
+    return getTemporary()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -4402,7 +4402,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getCommonExpr()->getLocEnd();
+    return getCommonExpr()->getEndLoc();
   }
 
   child_range children() {
@@ -4490,7 +4490,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getOperand()->getLocEnd();
+    return getOperand()->getEndLoc();
   }
 
   child_range children() { return child_range(SubExprs, SubExprs + 2); }

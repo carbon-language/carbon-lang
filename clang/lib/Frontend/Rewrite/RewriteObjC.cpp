@@ -946,7 +946,7 @@ void RewriteObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   if (Method->isImplicit())
     return;
   SourceLocation LocStart = Method->getBeginLoc();
-  SourceLocation LocEnd = Method->getLocEnd();
+  SourceLocation LocEnd = Method->getEndLoc();
 
   if (SM->getExpansionLineNumber(LocEnd) >
       SM->getExpansionLineNumber(LocStart)) {
@@ -1191,7 +1191,7 @@ void RewriteObjC::RewriteImplementationDecl(Decl *OID) {
   for (auto *I : IMD ? IMD->property_impls() : CID->property_impls())
     RewritePropertyImplDecl(I, IMD, CID);
 
-  InsertText(IMD ? IMD->getLocEnd() : CID->getLocEnd(), "// ");
+  InsertText(IMD ? IMD->getEndLoc() : CID->getEndLoc(), "// ");
 }
 
 void RewriteObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
@@ -1651,7 +1651,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   const char *lparenBuf = startBuf;
   while (*lparenBuf != '(') lparenBuf++;
   ReplaceText(startLoc, lparenBuf-startBuf+1, buf);
-  // We can't use S->getSynchExpr()->getLocEnd() to find the end location, since
+  // We can't use S->getSynchExpr()->getEndLoc() to find the end location, since
   // the sync expression is typically a message expression that's already
   // been rewritten! (which implies the SourceLocation's are invalid).
   SourceLocation endLoc = S->getSynchBody()->getBeginLoc();
@@ -1667,7 +1667,7 @@ Stmt *RewriteObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
   buf += "objc_exception_try_enter(&_stack);\n";
   buf += "if (!_setjmp(_stack.buf)) /* @try block continue */\n";
   ReplaceText(rparenLoc, 1, buf);
-  startLoc = S->getSynchBody()->getLocEnd();
+  startLoc = S->getSynchBody()->getEndLoc();
   startBuf = SM->getCharacterData(startLoc);
 
   assert((*startBuf == '}') && "bogus @synchronized block");
@@ -1798,7 +1798,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
 
   ReplaceText(startLoc, 4, buf);
 
-  startLoc = S->getTryBody()->getLocEnd();
+  startLoc = S->getTryBody()->getEndLoc();
   startBuf = SM->getCharacterData(startLoc);
 
   assert((*startBuf == '}') && "bogus @try block");
@@ -1881,7 +1881,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   }
   // Complete the catch list...
   if (lastCatchBody) {
-    SourceLocation bodyLoc = lastCatchBody->getLocEnd();
+    SourceLocation bodyLoc = lastCatchBody->getEndLoc();
     assert(*SM->getCharacterData(bodyLoc) == '}' &&
            "bogus @catch body location");
 
@@ -1897,7 +1897,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     InsertText(bodyLoc, buf);
 
     // Set lastCurlyLoc
-    lastCurlyLoc = lastCatchBody->getLocEnd();
+    lastCurlyLoc = lastCatchBody->getEndLoc();
   }
   if (ObjCAtFinallyStmt *finalStmt = S->getFinallyStmt()) {
     startLoc = finalStmt->getBeginLoc();
@@ -1908,7 +1908,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
 
     Stmt *body = finalStmt->getFinallyBody();
     SourceLocation startLoc = body->getBeginLoc();
-    SourceLocation endLoc = body->getLocEnd();
+    SourceLocation endLoc = body->getEndLoc();
     assert(*SM->getCharacterData(startLoc) == '{' &&
            "bogus @finally body location");
     assert(*SM->getCharacterData(endLoc) == '}' &&
@@ -1920,7 +1920,7 @@ Stmt *RewriteObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     InsertText(endLoc, " if (_rethrow) objc_exception_throw(_rethrow);\n");
 
     // Set lastCurlyLoc
-    lastCurlyLoc = body->getLocEnd();
+    lastCurlyLoc = body->getEndLoc();
 
     // Now check for any return/continue/go statements within the @try.
     WarnAboutReturnGotoStmts(S->getTryBody());
@@ -2083,7 +2083,7 @@ void RewriteObjC::RewriteObjCQualifiedInterfaceTypes(Expr *E) {
       EndLoc = ECE->getRParenLoc();
     } else {
       Loc = E->getBeginLoc();
-      EndLoc = E->getLocEnd();
+      EndLoc = E->getEndLoc();
     }
     // This will defend against trying to rewrite synthesized expressions.
     if (Loc.isInvalid() || EndLoc.isInvalid())
@@ -2210,7 +2210,7 @@ void RewriteObjC::RewriteTypeOfDecl(VarDecl *ND) {
     ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
   }
   else {
-    SourceLocation X = ND->getLocEnd();
+    SourceLocation X = ND->getEndLoc();
     X = SM->getExpansionLoc(X);
     const char *endBuf = SM->getCharacterData(X);
     ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
@@ -3009,7 +3009,7 @@ Stmt *RewriteObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
 
 Stmt *RewriteObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   Stmt *ReplacingStmt =
-      SynthMessageExpr(Exp, Exp->getBeginLoc(), Exp->getLocEnd());
+      SynthMessageExpr(Exp, Exp->getBeginLoc(), Exp->getEndLoc());
 
   // Now do the actual rewrite.
   ReplaceStmt(Exp, ReplacingStmt);
@@ -4179,7 +4179,7 @@ void RewriteObjC::RewriteByRefVar(VarDecl *ND) {
     // Use variable's location which is good for this case.
     DeclLoc = ND->getLocation();
   const char *startBuf = SM->getCharacterData(DeclLoc);
-  SourceLocation X = ND->getLocEnd();
+  SourceLocation X = ND->getEndLoc();
   X = SM->getExpansionLoc(X);
   const char *endBuf = SM->getCharacterData(X);
   std::string Name(ND->getNameAsString());
@@ -4633,7 +4633,7 @@ Stmt *RewriteObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 #if 0
     // Before we rewrite it, put the original message expression in a comment.
     SourceLocation startLoc = MessExpr->getBeginLoc();
-    SourceLocation endLoc = MessExpr->getLocEnd();
+    SourceLocation endLoc = MessExpr->getEndLoc();
 
     const char *startBuf = SM->getCharacterData(startLoc);
     const char *endBuf = SM->getCharacterData(endLoc);
@@ -5874,7 +5874,7 @@ Stmt *RewriteObjCFragileABI::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                                     IV->getBase());
       // Don't forget the parens to enforce the proper binding.
       ParenExpr *PE = new (Context) ParenExpr(
-          IV->getBase()->getBeginLoc(), IV->getBase()->getLocEnd(), castExpr);
+          IV->getBase()->getBeginLoc(), IV->getBase()->getEndLoc(), castExpr);
       // Cannot delete IV->getBase(), since PE points to it.
       // Replace the old base with the cast. This is important when doing
       // embedded rewrites. For example, [newInv->_container addObject:0].

@@ -1943,26 +1943,23 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(),
                                         false, Constructor->isConstexpr());
-    Method->setRangeEnd(Constructor->getLocEnd());
+    Method->setRangeEnd(Constructor->getEndLoc());
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,
                                        Destructor->isInlineSpecified(),
                                        false);
-    Method->setRangeEnd(Destructor->getLocEnd());
+    Method->setRangeEnd(Destructor->getEndLoc());
   } else if (CXXConversionDecl *Conversion = dyn_cast<CXXConversionDecl>(D)) {
-    Method = CXXConversionDecl::Create(SemaRef.Context, Record,
-                                       StartLoc, NameInfo, T, TInfo,
-                                       Conversion->isInlineSpecified(),
-                                       Conversion->isExplicit(),
-                                       Conversion->isConstexpr(),
-                                       Conversion->getLocEnd());
+    Method = CXXConversionDecl::Create(
+        SemaRef.Context, Record, StartLoc, NameInfo, T, TInfo,
+        Conversion->isInlineSpecified(), Conversion->isExplicit(),
+        Conversion->isConstexpr(), Conversion->getEndLoc());
   } else {
     StorageClass SC = D->isStatic() ? SC_Static : SC_None;
-    Method = CXXMethodDecl::Create(SemaRef.Context, Record,
-                                   StartLoc, NameInfo, T, TInfo,
-                                   SC, D->isInlineSpecified(),
-                                   D->isConstexpr(), D->getLocEnd());
+    Method = CXXMethodDecl::Create(SemaRef.Context, Record, StartLoc, NameInfo,
+                                   T, TInfo, SC, D->isInlineSpecified(),
+                                   D->isConstexpr(), D->getEndLoc());
   }
 
   if (D->isInlined())

@@ -2027,7 +2027,7 @@ bool ConditionBRVisitor::patternMatch(const Expr *Ex,
   // Use heuristics to determine if Ex is a macro expending to a literal and
   // if so, use the macro's name.
   SourceLocation LocStart = Ex->getBeginLoc();
-  SourceLocation LocEnd = Ex->getLocEnd();
+  SourceLocation LocEnd = Ex->getEndLoc();
   if (LocStart.isMacroID() && LocEnd.isMacroID() &&
       (isa<GNUNullExpr>(Ex) ||
        isa<ObjCBoolLiteralExpr>(Ex) ||

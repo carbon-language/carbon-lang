@@ -128,15 +128,15 @@ public:
           Pass.TA.removeStmt(*scope.End);
           Stmt::child_iterator retI = scope.End;
           ++retI;
-          SourceLocation afterSemi = findLocationAfterSemi((*retI)->getLocEnd(),
-                                                           Pass.Ctx);
+          SourceLocation afterSemi =
+              findLocationAfterSemi((*retI)->getEndLoc(), Pass.Ctx);
           assert(afterSemi.isValid() &&
                  "Didn't we check before setting IsFollowedBySimpleReturnStmt "
                  "to true?");
           Pass.TA.insertAfterToken(afterSemi, "\n}");
           Pass.TA.increaseIndentation(
               SourceRange(scope.getIndentedRange().getBegin(),
-                          (*retI)->getLocEnd()),
+                          (*retI)->getEndLoc()),
               scope.CompoundParent->getBeginLoc());
         } else {
           Pass.TA.replaceStmt(*scope.Begin, "@autoreleasepool {");
@@ -241,7 +241,7 @@ private:
       Stmt::child_iterator rangeE = Begin;
       for (Stmt::child_iterator I = rangeS; I != End; ++I)
         ++rangeE;
-      return SourceRange((*rangeS)->getBeginLoc(), (*rangeE)->getLocEnd());
+      return SourceRange((*rangeS)->getBeginLoc(), (*rangeE)->getEndLoc());
     }
   };
 
@@ -307,7 +307,7 @@ private:
         if (ReturnStmt *retS = dyn_cast<ReturnStmt>(*SI))
           if ((retS->getRetValue() == nullptr ||
                isa<DeclRefExpr>(retS->getRetValue()->IgnoreParenCasts())) &&
-              findLocationAfterSemi(retS->getLocEnd(), Pass.Ctx).isValid()) {
+              findLocationAfterSemi(retS->getEndLoc(), Pass.Ctx).isValid()) {
             scope.IsFollowedBySimpleReturnStmt = true;
             ++SI; // the return will be included in scope, don't check it.
           }

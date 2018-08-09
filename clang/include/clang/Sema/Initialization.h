@@ -674,8 +674,8 @@ public:
     if (!DirectInit)
       return CreateCopy(Loc, Init->getBeginLoc());
     if (isa<InitListExpr>(Init))
-      return CreateDirectList(Loc, Init->getBeginLoc(), Init->getLocEnd());
-    return CreateDirect(Loc, Init->getBeginLoc(), Init->getLocEnd());
+      return CreateDirectList(Loc, Init->getBeginLoc(), Init->getEndLoc());
+    return CreateDirect(Loc, Init->getBeginLoc(), Init->getEndLoc());
   }
 
   /// Determine the initialization kind.

@@ -971,7 +971,7 @@ ObjCMethodDecl *ObjCMethodDecl::getCanonicalDecl() {
 
 SourceLocation ObjCMethodDecl::getEndLoc() const {
   if (Stmt *Body = getBody())
-    return Body->getLocEnd();
+    return Body->getEndLoc();
   return DeclEndLoc;
 }
 

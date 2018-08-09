@@ -73,7 +73,7 @@ public:
       Curr = Curr->getNextSwitchCase();
     }
 
-    SourceLocation NextLoc = S->getLocEnd();
+    SourceLocation NextLoc = S->getEndLoc();
     Curr = S->getSwitchCaseList();
     // We iterate over case statements in reverse source-order.
     while (Curr) {

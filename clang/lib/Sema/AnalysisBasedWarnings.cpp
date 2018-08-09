@@ -651,7 +651,7 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
   // Short circuit for compilation speed.
   if (CD.checkDiagnostics(Diags, ReturnsVoid, HasNoReturn))
       return;
-  SourceLocation LBrace = Body->getBeginLoc(), RBrace = Body->getLocEnd();
+  SourceLocation LBrace = Body->getBeginLoc(), RBrace = Body->getEndLoc();
   auto EmitDiag = [&](SourceLocation Loc, unsigned DiagID) {
     if (IsCoroutine)
       S.Diag(Loc, DiagID) << FSI->CoroutinePromise->getType();
@@ -748,10 +748,10 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
     return false;
 
   // Don't suggest a fixit inside macros.
-  if (VD->getLocEnd().isMacroID())
+  if (VD->getEndLoc().isMacroID())
     return false;
 
-  SourceLocation Loc = S.getLocForEndOfToken(VD->getLocEnd());
+  SourceLocation Loc = S.getLocForEndOfToken(VD->getEndLoc());
 
   // Suggest possible initialization (if any).
   std::string Init = S.getFixItZeroInitializerForType(VariableTy, Loc);
@@ -773,9 +773,9 @@ static void CreateIfFixit(Sema &S, const Stmt *If, const Stmt *Then,
     Fixit1 = FixItHint::CreateRemoval(
         CharSourceRange::getCharRange(If->getBeginLoc(), Then->getBeginLoc()));
     if (Else) {
-      SourceLocation ElseKwLoc = S.getLocForEndOfToken(Then->getLocEnd());
-      Fixit2 = FixItHint::CreateRemoval(
-          SourceRange(ElseKwLoc, Else->getLocEnd()));
+      SourceLocation ElseKwLoc = S.getLocForEndOfToken(Then->getEndLoc());
+      Fixit2 =
+          FixItHint::CreateRemoval(SourceRange(ElseKwLoc, Else->getEndLoc()));
     }
   } else {
     // If condition is always false, remove all but the 'else'.
@@ -2142,7 +2142,7 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // Check for thread safety violations
   if (P.enableThreadSafetyAnalysis) {
     SourceLocation FL = AC.getDecl()->getLocation();
-    SourceLocation FEL = AC.getDecl()->getLocEnd();
+    SourceLocation FEL = AC.getDecl()->getEndLoc();
     threadSafety::ThreadSafetyReporter Reporter(S, FL, FEL);
     if (!Diags.isIgnored(diag::warn_thread_safety_beta, D->getBeginLoc()))
       Reporter.setIssueBetaWarnings(true);

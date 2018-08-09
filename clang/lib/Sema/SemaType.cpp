@@ -3302,7 +3302,7 @@ static void warnAboutRedundantParens(Sema &S, Declarator &D, QualType T) {
   // valid (when there is no initializer and we're not in a condition).
   S.Diag(D.getBeginLoc(), diag::note_function_style_cast_add_parentheses)
       << FixItHint::CreateInsertion(D.getBeginLoc(), "(")
-      << FixItHint::CreateInsertion(S.getLocForEndOfToken(D.getLocEnd()), ")");
+      << FixItHint::CreateInsertion(S.getLocForEndOfToken(D.getEndLoc()), ")");
   S.Diag(Paren.Loc, diag::note_remove_parens_for_variable_declaration)
       << FixItHint::CreateRemoval(Paren.Loc)
       << FixItHint::CreateRemoval(Paren.EndLoc);
@@ -4182,7 +4182,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
         if (auto *attr = inferPointerNullability(
                 pointerKind, D.getDeclSpec().getTypeSpecTypeLoc(),
-                D.getDeclSpec().getLocEnd(),
+                D.getDeclSpec().getEndLoc(),
                 D.getMutableDeclSpec().getAttributes())) {
           T = Context.getAttributedType(
                 AttributedType::getNullabilityAttrKind(*inferNullability),T,T);
@@ -4473,10 +4473,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         SourceLocation DiagLoc, FixitLoc;
         if (TInfo) {
           DiagLoc = TInfo->getTypeLoc().getBeginLoc();
-          FixitLoc = S.getLocForEndOfToken(TInfo->getTypeLoc().getLocEnd());
+          FixitLoc = S.getLocForEndOfToken(TInfo->getTypeLoc().getEndLoc());
         } else {
           DiagLoc = D.getDeclSpec().getTypeSpecTypeLoc();
-          FixitLoc = S.getLocForEndOfToken(D.getDeclSpec().getLocEnd());
+          FixitLoc = S.getLocForEndOfToken(D.getDeclSpec().getEndLoc());
         }
         S.Diag(DiagLoc, diag::err_object_cannot_be_passed_returned_by_value)
           << 0 << T
@@ -5298,7 +5298,7 @@ namespace {
       // FIXME. We should have DS.getTypeSpecTypeEndLoc(). But, it requires
       // addition field. What we have is good enough for dispay of location
       // of 'fixit' on interface name.
-      TL.setNameEndLoc(DS.getLocEnd());
+      TL.setNameEndLoc(DS.getEndLoc());
     }
     void VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
       TypeSourceInfo *RepTInfo = nullptr;

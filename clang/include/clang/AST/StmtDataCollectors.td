@@ -4,7 +4,7 @@ class Stmt {
     // This ensures that non-macro-generated code isn't identical to
     // macro-generated code.
     addData(data_collection::getMacroStack(S->getBeginLoc(), Context));
-    addData(data_collection::getMacroStack(S->getLocEnd(), Context));
+    addData(data_collection::getMacroStack(S->getEndLoc(), Context));
   }];
 }
 

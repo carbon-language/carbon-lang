@@ -1698,15 +1698,9 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (ParenListExpr *List = dyn_cast_or_null<ParenListExpr>(Initializer))
     DirectInitRange = List->getSourceRange();
 
-  return BuildCXXNew(SourceRange(StartLoc, D.getLocEnd()), UseGlobal,
-                     PlacementLParen,
-                     PlacementArgs,
-                     PlacementRParen,
-                     TypeIdParens,
-                     AllocType,
-                     TInfo,
-                     ArraySize,
-                     DirectInitRange,
+  return BuildCXXNew(SourceRange(StartLoc, D.getEndLoc()), UseGlobal,
+                     PlacementLParen, PlacementArgs, PlacementRParen,
+                     TypeIdParens, AllocType, TInfo, ArraySize, DirectInitRange,
                      Initializer);
 }
 
@@ -1804,7 +1798,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
             : initStyle == CXXNewExpr::ListInit
                   ? InitializationKind::CreateDirectList(
                         TypeRange.getBegin(), Initializer->getBeginLoc(),
-                        Initializer->getLocEnd())
+                        Initializer->getEndLoc())
                   : InitializationKind::CreateDirect(TypeRange.getBegin(),
                                                      DirectInitRange.getBegin(),
                                                      DirectInitRange.getEnd());
@@ -2087,7 +2081,7 @@ Sema::BuildCXXNew(SourceRange Range, bool UseGlobal,
   // dialect distinction.
   if (ArraySize && !isLegalArrayNewInitializer(initStyle, Initializer)) {
     SourceRange InitRange(Inits[0]->getBeginLoc(),
-                          Inits[NumInits - 1]->getLocEnd());
+                          Inits[NumInits - 1]->getEndLoc());
     Diag(StartLoc, diag::err_new_array_init_args) << InitRange;
     return ExprError();
   }
@@ -2594,7 +2588,7 @@ bool Sema::FindAllocationFunctions(SourceLocation StartLoc, SourceRange Range,
         SourceRange R = PlaceArgs.empty()
                             ? SourceRange()
                             : SourceRange(PlaceArgs.front()->getBeginLoc(),
-                                          PlaceArgs.back()->getLocEnd());
+                                          PlaceArgs.back()->getEndLoc());
         Diag(StartLoc, diag::err_placement_new_non_placement_delete) << R;
         if (!OperatorDelete->isImplicit())
           Diag(OperatorDelete->getLocation(), diag::note_previous_decl)
@@ -5421,7 +5415,7 @@ QualType Sema::CheckPointerToMemberOperands(ExprResult &LHS, ExprResult &RHS,
     CXXCastPath BasePath;
     if (CheckDerivedToBaseConversion(
             LHSType, Class, Loc,
-            SourceRange(LHS.get()->getBeginLoc(), RHS.get()->getLocEnd()),
+            SourceRange(LHS.get()->getBeginLoc(), RHS.get()->getEndLoc()),
             &BasePath))
       return QualType();
 
@@ -7159,9 +7153,8 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
   ExprValueKind VK = Expr::getValueKindForType(ResultType);
   ResultType = ResultType.getNonLValueExprType(Context);
 
-  CXXMemberCallExpr *CE =
-    new (Context) CXXMemberCallExpr(Context, ME, None, ResultType, VK,
-                                    Exp.get()->getLocEnd());
+  CXXMemberCallExpr *CE = new (Context) CXXMemberCallExpr(
+      Context, ME, None, ResultType, VK, Exp.get()->getEndLoc());
 
   if (CheckFunctionCall(Method, CE,
                         Method->getType()->castAs<FunctionProtoType>()))

@@ -100,7 +100,7 @@ public:
       for (++I; I != E; ++I) {
         Decl *Sibling = *I;
         if (!SM.isBeforeInTranslationUnit(Sibling->getBeginLoc(),
-                                          Child->getLocEnd()))
+                                          Child->getEndLoc()))
           break;
         if (!BaseType::canIgnoreChildDeclWhileTraversingDeclContext(Sibling))
           LexicallyNestedDeclarations.push_back(Sibling);

@@ -260,7 +260,7 @@ public:
     // restrict the end of location to just before the `<` character.
     SourceLocation EndLoc = Expr->hasExplicitTemplateArgs()
                                 ? Expr->getLAngleLoc().getLocWithOffset(-1)
-                                : Expr->getLocEnd();
+                                : Expr->getEndLoc();
 
     if (const auto *MD = llvm::dyn_cast<CXXMethodDecl>(Decl)) {
       if (isInUSRSet(MD)) {
@@ -576,7 +576,7 @@ createRenameAtomicChanges(llvm::ArrayRef<std::string> USRs,
   // Hanlde using declarations explicitly as "using a::Foo" don't trigger
   // typeLoc for "a::Foo".
   for (const auto *Using : Finder.getUsingDecls())
-    Replace(Using->getBeginLoc(), Using->getLocEnd(), "using " + NewName.str());
+    Replace(Using->getBeginLoc(), Using->getEndLoc(), "using " + NewName.str());
 
   return AtomicChanges;
 }

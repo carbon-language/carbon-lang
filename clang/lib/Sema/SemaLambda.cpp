@@ -761,7 +761,7 @@ QualType Sema::buildLambdaInitCaptureInitialization(SourceLocation Loc,
   InitializationKind Kind =
       IsDirectInit
           ? (CXXDirectInit ? InitializationKind::CreateDirect(
-                                 Loc, Init->getBeginLoc(), Init->getLocEnd())
+                                 Loc, Init->getBeginLoc(), Init->getEndLoc())
                            : InitializationKind::CreateDirectList(Loc))
           : InitializationKind::CreateCopy(Loc, Init->getBeginLoc());
 
@@ -1296,15 +1296,12 @@ static void addFunctionPointerConversion(Sema &S,
     CallOpConvNameTL.setParam(I, From);
   }
 
-  CXXConversionDecl *Conversion
-    = CXXConversionDecl::Create(S.Context, Class, Loc,
-                                DeclarationNameInfo(ConversionName,
-                                  Loc, ConvNameLoc),
-                                ConvTy,
-                                ConvTSI,
-                                /*isInline=*/true, /*isExplicit=*/false,
-                                /*isConstexpr=*/S.getLangOpts().CPlusPlus17,
-                                CallOperator->getBody()->getLocEnd());
+  CXXConversionDecl *Conversion = CXXConversionDecl::Create(
+      S.Context, Class, Loc,
+      DeclarationNameInfo(ConversionName, Loc, ConvNameLoc), ConvTy, ConvTSI,
+      /*isInline=*/true, /*isExplicit=*/false,
+      /*isConstexpr=*/S.getLangOpts().CPlusPlus17,
+      CallOperator->getBody()->getEndLoc());
   Conversion->setAccess(AS_public);
   Conversion->setImplicit(true);
 
@@ -1339,14 +1336,11 @@ static void addFunctionPointerConversion(Sema &S,
   // trailing return type of the invoker would require a visitor to rebuild
   // the trailing return type and adjusting all back DeclRefExpr's to refer
   // to the new static invoker parameters - not the call operator's.
-  CXXMethodDecl *Invoke
-    = CXXMethodDecl::Create(S.Context, Class, Loc,
-                            DeclarationNameInfo(InvokerName, Loc),
-                            InvokerFunctionTy,
-                            CallOperator->getTypeSourceInfo(),
-                            SC_Static, /*IsInline=*/true,
-                            /*IsConstexpr=*/false,
-                            CallOperator->getBody()->getLocEnd());
+  CXXMethodDecl *Invoke = CXXMethodDecl::Create(
+      S.Context, Class, Loc, DeclarationNameInfo(InvokerName, Loc),
+      InvokerFunctionTy, CallOperator->getTypeSourceInfo(), SC_Static,
+      /*IsInline=*/true,
+      /*IsConstexpr=*/false, CallOperator->getBody()->getEndLoc());
   for (unsigned I = 0, N = CallOperator->getNumParams(); I != N; ++I)
     InvokerParams[I]->setOwningFunction(Invoke);
   Invoke->setParams(InvokerParams);
@@ -1388,14 +1382,11 @@ static void addBlockPointerConversion(Sema &S,
         S.Context.getCanonicalType(BlockPtrTy));
   DeclarationNameLoc NameLoc;
   NameLoc.NamedType.TInfo = S.Context.getTrivialTypeSourceInfo(BlockPtrTy, Loc);
-  CXXConversionDecl *Conversion
-    = CXXConversionDecl::Create(S.Context, Class, Loc,
-                                DeclarationNameInfo(Name, Loc, NameLoc),
-                                ConvTy,
-                                S.Context.getTrivialTypeSourceInfo(ConvTy, Loc),
-                                /*isInline=*/true, /*isExplicit=*/false,
-                                /*isConstexpr=*/false,
-                                CallOperator->getBody()->getLocEnd());
+  CXXConversionDecl *Conversion = CXXConversionDecl::Create(
+      S.Context, Class, Loc, DeclarationNameInfo(Name, Loc, NameLoc), ConvTy,
+      S.Context.getTrivialTypeSourceInfo(ConvTy, Loc),
+      /*isInline=*/true, /*isExplicit=*/false,
+      /*isConstexpr=*/false, CallOperator->getBody()->getEndLoc());
   Conversion->setAccess(AS_public);
   Conversion->setImplicit(true);
   Class->addDecl(Conversion);
@@ -1438,7 +1429,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                  Scope *CurScope) {
   LambdaScopeInfo LSI = *cast<LambdaScopeInfo>(FunctionScopes.back());
   ActOnFinishFunctionBody(LSI.CallOperator, Body);
-  return BuildLambdaExpr(StartLoc, Body->getLocEnd(), &LSI);
+  return BuildLambdaExpr(StartLoc, Body->getEndLoc(), &LSI);
 }
 
 static LambdaCaptureDefault

@@ -1034,7 +1034,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
       Diag(Element.EllipsisLoc,
            diag::err_pack_expansion_without_parameter_packs)
           << SourceRange(Element.Key->getBeginLoc(),
-                         Element.Value->getLocEnd());
+                         Element.Value->getEndLoc());
       return ExprError();
     }
 
@@ -1697,7 +1697,7 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
           << 2 /*method*/ << NumNamedArgs << static_cast<unsigned>(Args.size())
           << Method->getSourceRange()
           << SourceRange(Args[NumNamedArgs]->getBeginLoc(),
-                         Args.back()->getLocEnd());
+                         Args.back()->getEndLoc());
     }
   }
 
@@ -4070,7 +4070,8 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
         ExpressionString += RelatedClass->getNameAsString();
         ExpressionString += " ";
         ExpressionString += ClassMethod->getSelector().getAsString();
-        SourceLocation SrcExprEndLoc = getLocForEndOfToken(SrcExpr->getLocEnd());
+        SourceLocation SrcExprEndLoc =
+            getLocForEndOfToken(SrcExpr->getEndLoc());
         // Provide a fixit: [RelatedClass ClassMethod SrcExpr]
         Diag(Loc, diag::err_objc_bridged_related_known_method)
             << SrcType << DestType << ClassMethod->getSelector() << false
@@ -4098,7 +4099,7 @@ Sema::CheckObjCBridgeRelatedConversions(SourceLocation Loc,
       if (Diagnose) {
         std::string ExpressionString;
         SourceLocation SrcExprEndLoc =
-            getLocForEndOfToken(SrcExpr->getLocEnd());
+            getLocForEndOfToken(SrcExpr->getEndLoc());
         if (InstanceMethod->isPropertyAccessor())
           if (const ObjCPropertyDecl *PDecl =
                   InstanceMethod->findPropertyDecl()) {

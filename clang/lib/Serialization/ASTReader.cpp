@@ -9694,7 +9694,7 @@ void ASTReader::diagnoseOdrViolations() {
           if (NumBases == 0) return SourceRange();
           auto bases = DD->bases();
           return SourceRange(bases[0].getBeginLoc(),
-                             bases[NumBases - 1].getLocEnd());
+                             bases[NumBases - 1].getEndLoc());
         };
 
         if (FirstNumBases != SecondNumBases) {

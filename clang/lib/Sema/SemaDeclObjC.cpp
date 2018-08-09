@@ -653,7 +653,7 @@ ActOnSuperClassOfClassInterface(Scope *S,
     }
 
     IDecl->setSuperClass(SuperClassTInfo);
-    IDecl->setEndOfDefinitionLoc(SuperClassTInfo->getTypeLoc().getLocEnd());
+    IDecl->setEndOfDefinitionLoc(SuperClassTInfo->getTypeLoc().getEndLoc());
   }
 }
 
@@ -829,7 +829,7 @@ static bool checkTypeParamListConsistency(Sema &S,
     if (newTypeParams->size() > prevTypeParams->size()) {
       diagLoc = newTypeParams->begin()[prevTypeParams->size()]->getLocation();
     } else {
-      diagLoc = S.getLocForEndOfToken(newTypeParams->back()->getLocEnd());
+      diagLoc = S.getLocForEndOfToken(newTypeParams->back()->getEndLoc());
     }
 
     S.Diag(diagLoc, diag::err_objc_type_param_arity_mismatch)

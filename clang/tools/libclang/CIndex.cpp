@@ -1049,8 +1049,8 @@ bool CursorVisitor::VisitObjCContainerDecl(ObjCContainerDecl *D) {
                SourceLocation L_A = A->getBeginLoc();
                SourceLocation L_B = B->getBeginLoc();
                return L_A != L_B ? SM.isBeforeInTranslationUnit(L_A, L_B)
-                                 : SM.isBeforeInTranslationUnit(A->getLocEnd(),
-                                                                B->getLocEnd());
+                                 : SM.isBeforeInTranslationUnit(A->getEndLoc(),
+                                                                B->getEndLoc());
              });
 
   // Now visit the decls.

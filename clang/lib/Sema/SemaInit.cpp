@@ -518,10 +518,10 @@ void InitListChecker::FillInEmptyInitForBase(
 
   if (!ILE->getInit(Init)) {
     ExprResult BaseInit =
-        FillWithNoInit ? new (SemaRef.Context) NoInitExpr(Base.getType())
-                       : PerformEmptyInit(SemaRef, ILE->getLocEnd(), BaseEntity,
-                                          /*VerifyOnly*/ false,
-                                          TreatUnavailableAsInvalid);
+        FillWithNoInit
+            ? new (SemaRef.Context) NoInitExpr(Base.getType())
+            : PerformEmptyInit(SemaRef, ILE->getEndLoc(), BaseEntity,
+                               /*VerifyOnly*/ false, TreatUnavailableAsInvalid);
     if (BaseInit.isInvalid()) {
       hadError = true;
       return;
@@ -545,7 +545,7 @@ void InitListChecker::FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
                                               InitListExpr *ILE,
                                               bool &RequiresSecondPass,
                                               bool FillWithNoInit) {
-  SourceLocation Loc = ILE->getLocEnd();
+  SourceLocation Loc = ILE->getEndLoc();
   unsigned NumInits = ILE->getNumInits();
   InitializedEntity MemberEntity
     = InitializedEntity::InitializeMember(Field, &ParentEntity);
@@ -765,10 +765,9 @@ InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
       if (FillWithNoInit)
         Filler = new (SemaRef.Context) NoInitExpr(ElementType);
       else {
-        ExprResult ElementInit = PerformEmptyInit(SemaRef, ILE->getLocEnd(),
-                                                  ElementEntity,
-                                                  /*VerifyOnly*/false,
-                                                  TreatUnavailableAsInvalid);
+        ExprResult ElementInit =
+            PerformEmptyInit(SemaRef, ILE->getEndLoc(), ElementEntity,
+                             /*VerifyOnly*/ false, TreatUnavailableAsInvalid);
         if (ElementInit.isInvalid()) {
           hadError = true;
           return;
@@ -962,7 +961,7 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
                  StructuredSubobjectInitList->getBeginLoc(), "{")
           << FixItHint::CreateInsertion(
                  SemaRef.getLocForEndOfToken(
-                     StructuredSubobjectInitList->getLocEnd()),
+                     StructuredSubobjectInitList->getEndLoc()),
                  "}");
     }
   }
@@ -1509,7 +1508,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
     if (VerifyOnly)
       CheckEmptyInitializable(
           InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity),
-          IList->getLocEnd());
+          IList->getEndLoc());
     return;
   }
 
@@ -1556,7 +1555,7 @@ void InitListChecker::CheckVectorType(const InitializedEntity &Entity,
       // Don't attempt to go past the end of the init list
       if (Index >= IList->getNumInits()) {
         if (VerifyOnly)
-          CheckEmptyInitializable(ElementEntity, IList->getLocEnd());
+          CheckEmptyInitializable(ElementEntity, IList->getEndLoc());
         break;
       }
 
@@ -1775,9 +1774,9 @@ void InitListChecker::CheckArrayType(const InitializedEntity &Entity,
     // FIXME: This needs to detect holes left by designated initializers too.
     if ((maxElementsKnown && elementIndex < maxElements) ||
         Entity.isVariableLengthArrayNew())
-      CheckEmptyInitializable(InitializedEntity::InitializeElement(
-                                                  SemaRef.Context, 0, Entity),
-                              IList->getLocEnd());
+      CheckEmptyInitializable(
+          InitializedEntity::InitializeElement(SemaRef.Context, 0, Entity),
+          IList->getEndLoc());
   }
 }
 
@@ -1861,7 +1860,7 @@ void InitListChecker::CheckStructUnionTypes(
         if (VerifyOnly)
           CheckEmptyInitializable(
               InitializedEntity::InitializeMember(*Field, &Entity),
-              IList->getLocEnd());
+              IList->getEndLoc());
         else
           StructuredList->setInitializedFieldInUnion(*Field);
         break;
@@ -1875,7 +1874,7 @@ void InitListChecker::CheckStructUnionTypes(
   // If we have any base classes, they are initialized prior to the fields.
   for (auto &Base : Bases) {
     Expr *Init = Index < IList->getNumInits() ? IList->getInit(Index) : nullptr;
-    SourceLocation InitLoc = Init ? Init->getBeginLoc() : IList->getLocEnd();
+    SourceLocation InitLoc = Init ? Init->getBeginLoc() : IList->getEndLoc();
 
     // Designated inits always initialize fields, so if we see one, all
     // remaining base classes have no explicit initializer.
@@ -1999,7 +1998,7 @@ void InitListChecker::CheckStructUnionTypes(
       if (!Field->isUnnamedBitfield() && !Field->hasInClassInitializer())
         CheckEmptyInitializable(
             InitializedEntity::InitializeMember(*Field, &Entity),
-            IList->getLocEnd());
+            IList->getEndLoc());
     }
   }
 
@@ -2178,7 +2177,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       if (!ExistingInit)
         StructuredList = getStructuredSubobjectInit(
             IList, Index, CurrentObjectType, StructuredList, StructuredIndex,
-            SourceRange(D->getBeginLoc(), DIE->getLocEnd()));
+            SourceRange(D->getBeginLoc(), DIE->getEndLoc()));
       else if (InitListExpr *Result = dyn_cast<InitListExpr>(ExistingInit))
         StructuredList = Result;
       else {
@@ -2188,7 +2187,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         else {
           DesignatedInitUpdateExpr *DIUE = new (SemaRef.Context)
               DesignatedInitUpdateExpr(SemaRef.Context, D->getBeginLoc(),
-                                       ExistingInit, DIE->getLocEnd());
+                                       ExistingInit, DIE->getEndLoc());
           StructuredList->updateInit(SemaRef.Context, StructuredIndex, DIUE);
           StructuredList = DIUE->getUpdater();
         }
@@ -2215,7 +2214,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
           // subobject [0], overwriting previous initializers.
           SemaRef.Diag(D->getBeginLoc(),
                        diag::warn_subobject_initializer_overrides)
-              << SourceRange(D->getBeginLoc(), DIE->getLocEnd());
+              << SourceRange(D->getBeginLoc(), DIE->getEndLoc());
 
           SemaRef.Diag(ExistingInit->getBeginLoc(),
                        diag::note_previous_initializer)
@@ -2387,7 +2386,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
             = DIE->getDesignator(DesigIdx + 1);
           SemaRef.Diag(NextD->getBeginLoc(),
                        diag::err_designator_into_flexible_array_member)
-              << SourceRange(NextD->getBeginLoc(), DIE->getLocEnd());
+              << SourceRange(NextD->getBeginLoc(), DIE->getEndLoc());
           SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
             << *Field;
         }
@@ -3491,11 +3490,11 @@ maybeRecoverWithZeroInitialization(Sema &S, InitializationSequence &Sequence,
     return false;
 
   VarDecl *VD = cast<VarDecl>(Entity.getDecl());
-  if (VD->getInit() || VD->getLocEnd().isMacroID())
+  if (VD->getInit() || VD->getEndLoc().isMacroID())
     return false;
 
   QualType VariableTy = VD->getType().getCanonicalType();
-  SourceLocation Loc = S.getLocForEndOfToken(VD->getLocEnd());
+  SourceLocation Loc = S.getLocForEndOfToken(VD->getEndLoc());
   std::string Init = S.getFixItZeroInitializerForType(VariableTy, Loc);
   if (!Init.empty()) {
     Sequence.AddZeroInitializationStep(Entity.getType());
@@ -3567,7 +3566,7 @@ static bool TryInitializerListConstruction(Sema &S,
   InitializedEntity HiddenArray =
       InitializedEntity::InitializeTemporary(ArrayType);
   InitializationKind Kind = InitializationKind::CreateDirectList(
-      List->getExprLoc(), List->getBeginLoc(), List->getLocEnd());
+      List->getExprLoc(), List->getBeginLoc(), List->getEndLoc());
   TryListInitialization(S, HiddenArray, Kind, List, Sequence,
                         TreatUnavailableAsInvalid);
   if (Sequence)
@@ -7233,7 +7232,7 @@ InitializationSequence::Perform(Sema &S,
       Entity.getKind() == InitializedEntity::EK_Variable && Args.size() > 0) {
     S.Diag(Args[0]->getBeginLoc(), diag::err_opencl_atomic_init)
         << 1
-        << SourceRange(Entity.getDecl()->getBeginLoc(), Args[0]->getLocEnd());
+        << SourceRange(Entity.getDecl()->getBeginLoc(), Args[0]->getEndLoc());
     return ExprError();
   }
 
@@ -8111,7 +8110,7 @@ bool InitializationSequence::Diagnose(Sema &S,
       (void)Diagnosed;
     } else  // FIXME: diagnostic below could be better!
       S.Diag(Kind.getLocation(), diag::err_reference_has_multiple_inits)
-          << SourceRange(Args.front()->getBeginLoc(), Args.back()->getLocEnd());
+          << SourceRange(Args.front()->getBeginLoc(), Args.back()->getEndLoc());
     break;
   case FK_ParenthesizedListInitForReference:
     S.Diag(Kind.getLocation(), diag::err_list_init_in_parens)
@@ -8322,10 +8321,10 @@ bool InitializationSequence::Diagnose(Sema &S,
 
     auto *InitList = dyn_cast<InitListExpr>(Args[0]);
     if (InitList && InitList->getNumInits() >= 1) {
-      R = SourceRange(InitList->getInit(0)->getLocEnd(), InitList->getLocEnd());
+      R = SourceRange(InitList->getInit(0)->getEndLoc(), InitList->getEndLoc());
     } else {
       assert(Args.size() > 1 && "Expected multiple initializers!");
-      R = SourceRange(Args.front()->getLocEnd(), Args.back()->getLocEnd());
+      R = SourceRange(Args.front()->getEndLoc(), Args.back()->getEndLoc());
     }
 
     R.setBegin(S.getLocForEndOfToken(R.getBegin()));
@@ -8358,7 +8357,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     SourceRange ArgsRange;
     if (Args.size())
       ArgsRange =
-          SourceRange(Args.front()->getBeginLoc(), Args.back()->getLocEnd());
+          SourceRange(Args.front()->getBeginLoc(), Args.back()->getEndLoc());
 
     if (Failure == FK_ListConstructorOverloadFailed) {
       assert(Args.size() == 1 &&
@@ -8946,7 +8945,7 @@ static void DiagnoseNarrowingInInitList(Sema &S,
       << PostInit->getSourceRange()
       << FixItHint::CreateInsertion(PostInit->getBeginLoc(), OS.str())
       << FixItHint::CreateInsertion(
-             S.getLocForEndOfToken(PostInit->getLocEnd()), ")");
+             S.getLocForEndOfToken(PostInit->getEndLoc()), ")");
 }
 
 //===----------------------------------------------------------------------===//

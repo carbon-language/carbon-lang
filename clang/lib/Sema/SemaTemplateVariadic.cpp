@@ -1126,7 +1126,7 @@ static void CheckFoldOperand(Sema &S, Expr *E) {
     S.Diag(E->getExprLoc(), diag::err_fold_expression_bad_operand)
         << E->getSourceRange()
         << FixItHint::CreateInsertion(E->getBeginLoc(), "(")
-        << FixItHint::CreateInsertion(E->getLocEnd(), ")");
+        << FixItHint::CreateInsertion(E->getEndLoc(), ")");
   }
 }
 

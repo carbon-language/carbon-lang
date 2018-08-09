@@ -1338,7 +1338,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   CurGD = GD;
 
-  CurEHLocation = blockInfo.getBlockExpr()->getLocEnd();
+  CurEHLocation = blockInfo.getBlockExpr()->getEndLoc();
 
   BlockInfo = &blockInfo;
 

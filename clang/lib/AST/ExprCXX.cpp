@@ -458,7 +458,7 @@ SourceLocation CXXConstructExpr::getBeginLoc() const {
 
 SourceLocation CXXConstructExpr::getEndLoc() const {
   if (isa<CXXTemporaryObjectExpr>(this))
-    return cast<CXXTemporaryObjectExpr>(this)->getLocEnd();
+    return cast<CXXTemporaryObjectExpr>(this)->getEndLoc();
 
   if (ParenOrBraceRange.isValid())
     return ParenOrBraceRange.getEnd();
@@ -467,7 +467,7 @@ SourceLocation CXXConstructExpr::getEndLoc() const {
   for (unsigned I = getNumArgs(); I > 0; --I) {
     const Expr *Arg = getArg(I-1);
     if (!Arg->isDefaultArgument()) {
-      SourceLocation NewEnd = Arg->getLocEnd();
+      SourceLocation NewEnd = Arg->getEndLoc();
       if (NewEnd.isValid()) {
         End = NewEnd;
         break;
@@ -483,7 +483,7 @@ SourceRange CXXOperatorCallExpr::getSourceRangeImpl() const {
   if (Kind == OO_PlusPlus || Kind == OO_MinusMinus) {
     if (getNumArgs() == 1)
       // Prefix operator
-      return SourceRange(getOperatorLoc(), getArg(0)->getLocEnd());
+      return SourceRange(getOperatorLoc(), getArg(0)->getEndLoc());
     else
       // Postfix operator
       return SourceRange(getArg(0)->getBeginLoc(), getOperatorLoc());
@@ -494,9 +494,9 @@ SourceRange CXXOperatorCallExpr::getSourceRangeImpl() const {
   } else if (Kind == OO_Subscript) {
     return SourceRange(getArg(0)->getBeginLoc(), getRParenLoc());
   } else if (getNumArgs() == 1) {
-    return SourceRange(getOperatorLoc(), getArg(0)->getLocEnd());
+    return SourceRange(getOperatorLoc(), getArg(0)->getEndLoc());
   } else if (getNumArgs() == 2) {
-    return SourceRange(getArg(0)->getBeginLoc(), getArg(1)->getLocEnd());
+    return SourceRange(getArg(0)->getBeginLoc(), getArg(1)->getEndLoc());
   } else {
     return getOperatorLoc();
   }
@@ -712,7 +712,7 @@ SourceLocation CXXFunctionalCastExpr::getBeginLoc() const {
 }
 
 SourceLocation CXXFunctionalCastExpr::getEndLoc() const {
-  return RParenLoc.isValid() ? RParenLoc : getSubExpr()->getLocEnd();
+  return RParenLoc.isValid() ? RParenLoc : getSubExpr()->getEndLoc();
 }
 
 UserDefinedLiteral::LiteralOperatorKind
@@ -799,7 +799,7 @@ SourceLocation CXXTemporaryObjectExpr::getBeginLoc() const {
 SourceLocation CXXTemporaryObjectExpr::getEndLoc() const {
   SourceLocation Loc = getParenOrBraceRange().getEnd();
   if (Loc.isInvalid() && getNumArgs())
-    Loc = getArg(getNumArgs()-1)->getLocEnd();
+    Loc = getArg(getNumArgs() - 1)->getEndLoc();
   return Loc;
 }
 

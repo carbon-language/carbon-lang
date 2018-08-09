@@ -192,7 +192,7 @@ bool Expr::isKnownToHaveBooleanValue() const {
 // Amusing macro metaprogramming hack: check whether a class provides
 // a more specific implementation of getExprLoc().
 //
-// See also Stmt.cpp:{getBeginLoc(),getLocEnd()}.
+// See also Stmt.cpp:{getBeginLoc(),getEndLoc()}.
 namespace {
   /// This implementation is used when a class provides a custom
   /// implementation of getExprLoc.
@@ -455,7 +455,7 @@ SourceLocation DeclRefExpr::getBeginLoc() const {
 SourceLocation DeclRefExpr::getEndLoc() const {
   if (hasExplicitTemplateArgs())
     return getRAngleLoc();
-  return getNameInfo().getLocEnd();
+  return getNameInfo().getEndLoc();
 }
 
 PredefinedExpr::PredefinedExpr(SourceLocation L, QualType FNTy, IdentType IT,
@@ -1369,11 +1369,11 @@ SourceLocation CallExpr::getBeginLoc() const {
 }
 SourceLocation CallExpr::getEndLoc() const {
   if (isa<CXXOperatorCallExpr>(this))
-    return cast<CXXOperatorCallExpr>(this)->getLocEnd();
+    return cast<CXXOperatorCallExpr>(this)->getEndLoc();
 
   SourceLocation end = getRParenLoc();
   if (end.isInvalid() && getNumArgs() > 0 && getArg(getNumArgs() - 1))
-    end = getArg(getNumArgs() - 1)->getLocEnd();
+    end = getArg(getNumArgs() - 1)->getEndLoc();
   return end;
 }
 
@@ -1548,7 +1548,7 @@ SourceLocation MemberExpr::getEndLoc() const {
   if (hasExplicitTemplateArgs())
     EndLoc = getRAngleLoc();
   else if (EndLoc.isInvalid())
-    EndLoc = getBase()->getLocEnd();
+    EndLoc = getBase()->getEndLoc();
   return EndLoc;
 }
 
@@ -2059,7 +2059,7 @@ SourceLocation InitListExpr::getBeginLoc() const {
 
 SourceLocation InitListExpr::getEndLoc() const {
   if (InitListExpr *SyntacticForm = getSyntacticForm())
-    return SyntacticForm->getLocEnd();
+    return SyntacticForm->getEndLoc();
   SourceLocation End = RBraceLoc;
   if (End.isInvalid()) {
     // Find the first non-null initializer from the end.
@@ -2067,7 +2067,7 @@ SourceLocation InitListExpr::getEndLoc() const {
          E = InitExprs.rend();
          I != E; ++I) {
       if (Stmt *S = *I) {
-        End = S->getLocEnd();
+        End = S->getEndLoc();
         break;
       }
     }
@@ -2279,7 +2279,7 @@ bool Expr::isUnusedResultAWarning(const Expr *&WarnE, SourceLocation &Loc,
 
         if (unsigned NumArgs = CE->getNumArgs())
           R2 = SourceRange(CE->getArg(0)->getBeginLoc(),
-                           CE->getArg(NumArgs - 1)->getLocEnd());
+                           CE->getArg(NumArgs - 1)->getEndLoc());
         return true;
       }
     }
@@ -3867,7 +3867,7 @@ SourceRange DesignatedInitExpr::getDesignatorsSourceRange() const {
   if (size() == 1)
     return DIE->getDesignator(0)->getSourceRange();
   return SourceRange(DIE->getDesignator(0)->getBeginLoc(),
-                     DIE->getDesignator(size() - 1)->getLocEnd());
+                     DIE->getDesignator(size() - 1)->getEndLoc());
 }
 
 SourceLocation DesignatedInitExpr::getBeginLoc() const {
@@ -3886,7 +3886,7 @@ SourceLocation DesignatedInitExpr::getBeginLoc() const {
 }
 
 SourceLocation DesignatedInitExpr::getEndLoc() const {
-  return getInit()->getLocEnd();
+  return getInit()->getEndLoc();
 }
 
 Expr *DesignatedInitExpr::getArrayIndex(const Designator& D) const {
@@ -3949,7 +3949,7 @@ SourceLocation DesignatedInitUpdateExpr::getBeginLoc() const {
 }
 
 SourceLocation DesignatedInitUpdateExpr::getEndLoc() const {
-  return getBase()->getLocEnd();
+  return getBase()->getEndLoc();
 }
 
 ParenListExpr::ParenListExpr(const ASTContext& C, SourceLocation lparenloc,

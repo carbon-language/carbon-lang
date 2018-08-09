@@ -349,7 +349,7 @@ public:
   }
 
   SourceRange getCommandNameRange() const {
-    return SourceRange(getBeginLoc().getLocWithOffset(-1), getLocEnd());
+    return SourceRange(getBeginLoc().getLocWithOffset(-1), getEndLoc());
   }
 
   RenderKind getRenderKind() const {
@@ -564,7 +564,7 @@ public:
     ParagraphCommentBits.IsWhitespaceValid = false;
 
     setSourceRange(SourceRange(Content.front()->getBeginLoc(),
-                               Content.back()->getLocEnd()));
+                               Content.back()->getEndLoc()));
     setLocation(Content.front()->getBeginLoc());
   }
 
@@ -699,7 +699,7 @@ public:
 
   void setParagraph(ParagraphComment *PC) {
     Paragraph = PC;
-    SourceLocation NewLocEnd = PC->getLocEnd();
+    SourceLocation NewLocEnd = PC->getEndLoc();
     if (NewLocEnd.isValid())
       setSourceRange(SourceRange(getBeginLoc(), NewLocEnd));
   }
@@ -975,7 +975,7 @@ public:
   }
 
   SourceRange getTextRange() const {
-    return SourceRange(TextBegin, getLocEnd());
+    return SourceRange(TextBegin, getEndLoc());
   }
 };
 
@@ -1103,7 +1103,7 @@ public:
       return;
 
     setSourceRange(
-        SourceRange(Blocks.front()->getBeginLoc(), Blocks.back()->getLocEnd()));
+        SourceRange(Blocks.front()->getBeginLoc(), Blocks.back()->getEndLoc()));
     setLocation(Blocks.front()->getBeginLoc());
   }
 

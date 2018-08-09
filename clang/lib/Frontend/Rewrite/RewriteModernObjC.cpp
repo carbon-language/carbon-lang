@@ -932,7 +932,7 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
     assert((*semiBuf == ';') && "@synthesize: can't find ';'");
     startGetterSetterLoc = startLoc.getLocWithOffset(semiBuf-startBuf+1);
   } else
-    startGetterSetterLoc = IMD ? IMD->getLocEnd() : CID->getLocEnd();
+    startGetterSetterLoc = IMD ? IMD->getEndLoc() : CID->getEndLoc();
 
   if (PID->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
     return; // FIXME: is this correct?
@@ -1109,7 +1109,7 @@ void RewriteModernObjC::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   if (Method->isImplicit())
     return;
   SourceLocation LocStart = Method->getBeginLoc();
-  SourceLocation LocEnd = Method->getLocEnd();
+  SourceLocation LocEnd = Method->getEndLoc();
 
   if (SM->getExpansionLineNumber(LocEnd) >
       SM->getExpansionLineNumber(LocStart)) {
@@ -1371,7 +1371,7 @@ void RewriteModernObjC::RewriteImplementationDecl(Decl *OID) {
   for (auto *I : IMD ? IMD->property_impls() : CID->property_impls())
     RewritePropertyImplDecl(I, IMD, CID);
 
-  InsertText(IMD ? IMD->getLocEnd() : CID->getLocEnd(), "// ");
+  InsertText(IMD ? IMD->getEndLoc() : CID->getEndLoc(), "// ");
 }
 
 void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
@@ -1879,7 +1879,7 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   buf += "\n\tid sync_exit;";
   buf += "\n\t} _sync_exit(_sync_obj);\n";
 
-  // We can't use S->getSynchExpr()->getLocEnd() to find the end location, since
+  // We can't use S->getSynchExpr()->getEndLoc() to find the end location, since
   // the sync expression is typically a message expression that's already
   // been rewritten! (which implies the SourceLocation's are invalid).
   SourceLocation RParenExprLoc = S->getSynchBody()->getBeginLoc();
@@ -1892,7 +1892,7 @@ Stmt *RewriteModernObjC::RewriteObjCSynchronizedStmt(ObjCAtSynchronizedStmt *S) 
   assert (*LBraceLocBuf == '{');
   ReplaceText(RParenExprLoc, (LBraceLocBuf - SM->getCharacterData(RParenExprLoc) + 1), buf);
 
-  SourceLocation startRBraceLoc = S->getSynchBody()->getLocEnd();
+  SourceLocation startRBraceLoc = S->getSynchBody()->getEndLoc();
   assert((*SM->getCharacterData(startRBraceLoc) == '}') &&
          "bogus @synchronized block");
 
@@ -2020,7 +2020,7 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     Write_RethrowObject(buf);
     ReplaceText(startFinalBodyLoc, 1, buf);
 
-    SourceLocation endFinalBodyLoc = body->getLocEnd();
+    SourceLocation endFinalBodyLoc = body->getEndLoc();
     ReplaceText(endFinalBodyLoc, 1, "}\n}");
     // Now check for any return/continue/go statements within the @try.
     WarnAboutReturnGotoStmts(S->getTryBody());
@@ -2051,7 +2051,7 @@ Stmt *RewriteModernObjC::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
   assert((*wBuf == 'w') && "@throw: can't find 'w'");
   ReplaceText(startLoc, wBuf-startBuf+1, buf);
 
-  SourceLocation endLoc = S->getLocEnd();
+  SourceLocation endLoc = S->getEndLoc();
   const char *endBuf = SM->getCharacterData(endLoc);
   const char *semiBuf = strchr(endBuf, ';');
   assert((*semiBuf == ';') && "@throw: can't find ';'");
@@ -2170,7 +2170,7 @@ void RewriteModernObjC::RewriteObjCQualifiedInterfaceTypes(Expr *E) {
       EndLoc = ECE->getRParenLoc();
     } else {
       Loc = E->getBeginLoc();
-      EndLoc = E->getLocEnd();
+      EndLoc = E->getEndLoc();
     }
     // This will defend against trying to rewrite synthesized expressions.
     if (Loc.isInvalid() || EndLoc.isInvalid())
@@ -2301,7 +2301,7 @@ void RewriteModernObjC::RewriteTypeOfDecl(VarDecl *ND) {
     ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
   }
   else {
-    SourceLocation X = ND->getLocEnd();
+    SourceLocation X = ND->getEndLoc();
     X = SM->getExpansionLoc(X);
     const char *endBuf = SM->getCharacterData(X);
     ReplaceText(DeclLoc, endBuf-startBuf-1, TypeAsString);
@@ -2625,7 +2625,7 @@ Stmt *RewriteModernObjC::RewriteObjCBoxedExpr(ObjCBoxedExpr *Exp) {
 
   FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
   SourceLocation StartLoc = Exp->getBeginLoc();
-  SourceLocation EndLoc = Exp->getLocEnd();
+  SourceLocation EndLoc = Exp->getEndLoc();
 
   // Synthesize a call to objc_msgSend().
   SmallVector<Expr*, 4> MsgExprs;
@@ -2709,7 +2709,7 @@ Stmt *RewriteModernObjC::RewriteObjCArrayLiteralExpr(ObjCArrayLiteral *Exp) {
 
   FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
   SourceLocation StartLoc = Exp->getBeginLoc();
-  SourceLocation EndLoc = Exp->getLocEnd();
+  SourceLocation EndLoc = Exp->getEndLoc();
 
   // Build the expression: __NSContainer_literal(int, ...).arr
   QualType IntQT = Context->IntTy;
@@ -2832,7 +2832,7 @@ Stmt *RewriteModernObjC::RewriteObjCDictionaryLiteralExpr(ObjCDictionaryLiteral 
 
   FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
   SourceLocation StartLoc = Exp->getBeginLoc();
-  SourceLocation EndLoc = Exp->getLocEnd();
+  SourceLocation EndLoc = Exp->getEndLoc();
 
   // Build the expression: __NSContainer_literal(int, ...).arr
   QualType IntQT = Context->IntTy;
@@ -3563,7 +3563,7 @@ Stmt *RewriteModernObjC::SynthMessageExpr(ObjCMessageExpr *Exp,
 
 Stmt *RewriteModernObjC::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   Stmt *ReplacingStmt =
-      SynthMessageExpr(Exp, Exp->getBeginLoc(), Exp->getLocEnd());
+      SynthMessageExpr(Exp, Exp->getBeginLoc(), Exp->getEndLoc());
 
   // Now do the actual rewrite.
   ReplaceStmt(Exp, ReplacingStmt);
@@ -5035,7 +5035,7 @@ void RewriteModernObjC::RewriteByRefVar(VarDecl *ND, bool firstDecl,
     // Use variable's location which is good for this case.
     DeclLoc = ND->getLocation();
   const char *startBuf = SM->getCharacterData(DeclLoc);
-  SourceLocation X = ND->getLocEnd();
+  SourceLocation X = ND->getEndLoc();
   X = SM->getExpansionLoc(X);
   const char *endBuf = SM->getCharacterData(X);
   std::string Name(ND->getNameAsString());
@@ -5537,7 +5537,7 @@ Stmt *RewriteModernObjC::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 #if 0
     // Before we rewrite it, put the original message expression in a comment.
     SourceLocation startLoc = MessExpr->getBeginLoc();
-    SourceLocation endLoc = MessExpr->getLocEnd();
+    SourceLocation endLoc = MessExpr->getEndLoc();
 
     const char *startBuf = SM->getCharacterData(startLoc);
     const char *endBuf = SM->getCharacterData(endLoc);

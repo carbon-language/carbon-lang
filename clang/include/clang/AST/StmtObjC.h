@@ -59,7 +59,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return ForLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExprs[BODY]->getLocEnd();
+    return SubExprs[BODY]->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -109,7 +109,7 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return AtCatchLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Body->getLocEnd(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Body->getEndLoc(); }
 
   bool hasEllipsis() const { return getCatchParamDecl() == nullptr; }
 
@@ -141,7 +141,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return AtFinallyLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return AtFinallyStmt->getLocEnd();
+    return AtFinallyStmt->getEndLoc();
   }
 
   SourceLocation getAtFinallyLoc() const { return AtFinallyLoc; }
@@ -307,7 +307,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return AtSynchronizedLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getSynchBody()->getLocEnd();
+    return getSynchBody()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -343,7 +343,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return AtThrowLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return Throw ? Throw->getLocEnd() : AtThrowLoc;
+    return Throw ? Throw->getEndLoc() : AtThrowLoc;
   }
 
   static bool classof(const Stmt *T) {
@@ -373,7 +373,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return AtLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubStmt->getLocEnd();
+    return SubStmt->getEndLoc();
   }
 
   SourceLocation getAtLoc() const { return AtLoc; }

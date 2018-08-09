@@ -70,7 +70,7 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return AtLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return String->getLocEnd(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return String->getEndLoc(); }
 
   // Iterators
   child_range children() { return child_range(&String, &String+1); }
@@ -1503,7 +1503,7 @@ public:
   }
 
   SourceLocation getBaseLocEnd() const LLVM_READONLY {
-    return getBase()->getLocEnd();
+    return getBase()->getEndLoc();
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
@@ -1582,7 +1582,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return Operand->getLocEnd();
+    return Operand->getEndLoc();
   }
 
   SourceLocation getExprLoc() const LLVM_READONLY {
@@ -1647,7 +1647,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getSubExpr()->getLocEnd();
+    return getSubExpr()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {

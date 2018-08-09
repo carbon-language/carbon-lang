@@ -4201,11 +4201,11 @@ public:
       return RBraceLoc;
     // No braces: get the end location of the (only) declaration in context
     // (if present).
-    return decls_empty() ? getLocation() : decls_begin()->getLocEnd();
+    return decls_empty() ? getLocation() : decls_begin()->getEndLoc();
   }
 
   SourceRange getSourceRange() const override LLVM_READONLY {
-    return SourceRange(getLocation(), getLocEnd());
+    return SourceRange(getLocation(), getEndLoc());
   }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

@@ -387,8 +387,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   // or 'NULL' if those are actually defined in the context.  Only use
   // 'nil' for ObjC methods, where it's much more likely that the
   // variadic arguments form a list of object pointers.
-  SourceLocation MissingNilLoc
-    = getLocForEndOfToken(sentinelExpr->getLocEnd());
+  SourceLocation MissingNilLoc = getLocForEndOfToken(sentinelExpr->getEndLoc());
   std::string NullValue;
   if (calleeType == CT_Method && PP.isMacroDefined("nil"))
     NullValue = "nil";
@@ -502,7 +501,7 @@ static void DiagnoseDirectIsaAccess(Sema &S, const ObjCIvarRefExpr *OIRE,
                                &S.Context.Idents.get("object_setClass"),
                                SourceLocation(), S.LookupOrdinaryName);
           if (ObjectSetClass) {
-            SourceLocation RHSLocEnd = S.getLocForEndOfToken(RHS->getLocEnd());
+            SourceLocation RHSLocEnd = S.getLocForEndOfToken(RHS->getEndLoc());
             S.Diag(OIRE->getExprLoc(), diag::warn_objc_isa_assign)
                 << FixItHint::CreateInsertion(OIRE->getBeginLoc(),
                                               "object_setClass(")
@@ -522,7 +521,7 @@ static void DiagnoseDirectIsaAccess(Sema &S, const ObjCIvarRefExpr *OIRE,
                 << FixItHint::CreateInsertion(OIRE->getBeginLoc(),
                                               "object_getClass(")
                 << FixItHint::CreateReplacement(
-                       SourceRange(OIRE->getOpLoc(), OIRE->getLocEnd()), ")");
+                       SourceRange(OIRE->getOpLoc(), OIRE->getEndLoc()), ")");
           else
             S.Diag(OIRE->getLocation(), diag::warn_objc_isa_use);
         }
@@ -897,7 +896,7 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
       return ExprError();
 
     ExprResult Call = ActOnCallExpr(TUScope, TrapFn.get(), E->getBeginLoc(),
-                                    None, E->getLocEnd());
+                                    None, E->getEndLoc());
     if (Call.isInvalid())
       return ExprError();
 
@@ -4842,7 +4841,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
             << FnKind << FDecl->getParamDecl(0)
             << static_cast<unsigned>(Args.size()) << Fn->getSourceRange()
             << SourceRange(Args[NumParams]->getBeginLoc(),
-                           Args.back()->getLocEnd());
+                           Args.back()->getEndLoc());
       else
         Diag(Args[NumParams]->getBeginLoc(),
              MinArgs == NumParams
@@ -4851,7 +4850,7 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
             << FnKind << NumParams << static_cast<unsigned>(Args.size())
             << Fn->getSourceRange()
             << SourceRange(Args[NumParams]->getBeginLoc(),
-                           Args.back()->getLocEnd());
+                           Args.back()->getEndLoc());
 
       // Emit the location of the prototype.
       if (!TC && FDecl && !FDecl->getBuiltinID() && !IsExecConfig)
@@ -5317,7 +5316,7 @@ ExprResult Sema::ActOnCallExpr(Scope *Scope, Expr *Fn, SourceLocation LParenLoc,
         Diag(Fn->getBeginLoc(), diag::err_pseudo_dtor_call_with_args)
             << FixItHint::CreateRemoval(
                    SourceRange(ArgExprs.front()->getBeginLoc(),
-                               ArgExprs.back()->getLocEnd()));
+                               ArgExprs.back()->getEndLoc()));
       }
 
       return new (Context)
@@ -7214,11 +7213,11 @@ static void DiagnoseConditionalPrecedence(Sema &Self,
       Self, OpLoc,
       Self.PDiag(diag::note_precedence_silence)
           << BinaryOperator::getOpcodeStr(CondOpcode),
-      SourceRange(Condition->getBeginLoc(), Condition->getLocEnd()));
+      SourceRange(Condition->getBeginLoc(), Condition->getEndLoc()));
 
   SuggestParentheses(Self, OpLoc,
                      Self.PDiag(diag::note_precedence_conditional_first),
-                     SourceRange(CondRHS->getBeginLoc(), RHSExpr->getLocEnd()));
+                     SourceRange(CondRHS->getBeginLoc(), RHSExpr->getEndLoc()));
 }
 
 /// Compute the nullability of a conditional expression.
@@ -8915,13 +8914,13 @@ static void diagnoseStringPlusInt(Sema &Self, SourceLocation OpLoc,
       return;
   }
 
-  SourceRange DiagRange(LHSExpr->getBeginLoc(), RHSExpr->getLocEnd());
+  SourceRange DiagRange(LHSExpr->getBeginLoc(), RHSExpr->getEndLoc());
   Self.Diag(OpLoc, diag::warn_string_plus_int)
       << DiagRange << IndexExpr->IgnoreImpCasts()->getType();
 
   // Only print a fixit for "str" + int, not for int + "str".
   if (IndexExpr == RHSExpr) {
-    SourceLocation EndLoc = Self.getLocForEndOfToken(RHSExpr->getLocEnd());
+    SourceLocation EndLoc = Self.getLocForEndOfToken(RHSExpr->getEndLoc());
     Self.Diag(OpLoc, diag::note_string_plus_scalar_silence)
         << FixItHint::CreateInsertion(LHSExpr->getBeginLoc(), "&")
         << FixItHint::CreateReplacement(SourceRange(OpLoc), "[")
@@ -8956,7 +8955,7 @@ static void diagnoseStringPlusChar(Sema &Self, SourceLocation OpLoc,
     return;
 
   ASTContext &Ctx = Self.getASTContext();
-  SourceRange DiagRange(LHSExpr->getBeginLoc(), RHSExpr->getLocEnd());
+  SourceRange DiagRange(LHSExpr->getBeginLoc(), RHSExpr->getEndLoc());
 
   const QualType CharType = CharExpr->getType();
   if (!CharType->isAnyCharacterType() &&
@@ -8971,7 +8970,7 @@ static void diagnoseStringPlusChar(Sema &Self, SourceLocation OpLoc,
 
   // Only print a fixit for str + char, not for char + str.
   if (isa<CharacterLiteral>(RHSExpr->IgnoreImpCasts())) {
-    SourceLocation EndLoc = Self.getLocForEndOfToken(RHSExpr->getLocEnd());
+    SourceLocation EndLoc = Self.getLocForEndOfToken(RHSExpr->getEndLoc());
     Self.Diag(OpLoc, diag::note_string_plus_scalar_silence)
         << FixItHint::CreateInsertion(LHSExpr->getBeginLoc(), "&")
         << FixItHint::CreateReplacement(SourceRange(OpLoc), "[")
@@ -9646,7 +9645,7 @@ static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
   if (BinaryOperator::isEqualityOp(Opc) &&
       hasIsEqualMethod(S, LHS.get(), RHS.get())) {
     SourceLocation Start = LHS.get()->getBeginLoc();
-    SourceLocation End = S.getLocForEndOfToken(RHS.get()->getLocEnd());
+    SourceLocation End = S.getLocForEndOfToken(RHS.get()->getEndLoc());
     CharSourceRange OpRange =
       CharSourceRange::getCharRange(Loc, S.getLocForEndOfToken(Loc));
 
@@ -9679,7 +9678,7 @@ static void diagnoseLogicalNotOnLHSofCheck(Sema &S, ExprResult &LHS,
 
   // First note suggest !(x < y)
   SourceLocation FirstOpen = SubExpr->getBeginLoc();
-  SourceLocation FirstClose = RHS.get()->getLocEnd();
+  SourceLocation FirstClose = RHS.get()->getEndLoc();
   FirstClose = S.getLocForEndOfToken(FirstClose);
   if (FirstClose.isInvalid())
     FirstOpen = SourceLocation();
@@ -9690,7 +9689,7 @@ static void diagnoseLogicalNotOnLHSofCheck(Sema &S, ExprResult &LHS,
 
   // Second note suggests (!x) < y
   SourceLocation SecondOpen = LHS.get()->getBeginLoc();
-  SourceLocation SecondClose = LHS.get()->getLocEnd();
+  SourceLocation SecondClose = LHS.get()->getEndLoc();
   SecondClose = S.getLocForEndOfToken(SecondClose);
   if (SecondClose.isInvalid())
     SecondOpen = SourceLocation();
@@ -10619,8 +10618,8 @@ inline QualType Sema::CheckLogicalOperands(ExprResult &LHS, ExprResult &RHS,
           // Suggest replacing "Foo() && kNonZero" with "Foo()"
           Diag(Loc, diag::note_logical_instead_of_bitwise_remove_constant)
               << FixItHint::CreateRemoval(
-                  SourceRange(getLocForEndOfToken(LHS.get()->getLocEnd()),
-                              RHS.get()->getLocEnd()));
+                     SourceRange(getLocForEndOfToken(LHS.get()->getEndLoc()),
+                                 RHS.get()->getEndLoc()));
       }
   }
 
@@ -11265,7 +11264,7 @@ void Sema::DiagnoseCommaOperator(const Expr *LHS, SourceLocation Loc) {
       << FixItHint::CreateInsertion(LHS->getBeginLoc(),
                                     LangOpts.CPlusPlus ? "static_cast<void>("
                                                        : "(void)(")
-      << FixItHint::CreateInsertion(PP.getLocForEndOfToken(LHS->getLocEnd()),
+      << FixItHint::CreateInsertion(PP.getLocForEndOfToken(LHS->getEndLoc()),
                                     ")");
 }
 
@@ -11997,7 +11996,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     //   The meaning of x = {v} [...] is that of x = T(v) [...]. The meaning
     //   of x = {} is x = T().
     InitializationKind Kind = InitializationKind::CreateDirectList(
-        RHSExpr->getBeginLoc(), RHSExpr->getBeginLoc(), RHSExpr->getLocEnd());
+        RHSExpr->getBeginLoc(), RHSExpr->getBeginLoc(), RHSExpr->getEndLoc());
     InitializedEntity Entity =
         InitializedEntity::InitializeTemporary(LHSExpr->getType());
     InitializationSequence InitSeq(*this, Entity, Kind, RHSExpr);
@@ -12026,7 +12025,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
     // OpenCLC v2.0 s6.13.11.1 allows atomic variables to be initialized by
     // the ATOMIC_VAR_INIT macro.
     if (LHSTy->isAtomicType() || RHSTy->isAtomicType()) {
-      SourceRange SR(LHSExpr->getBeginLoc(), RHSExpr->getLocEnd());
+      SourceRange SR(LHSExpr->getBeginLoc(), RHSExpr->getEndLoc());
       if (BO_Assign == Opc)
         Diag(OpLoc, diag::err_opencl_atomic_init) << 0 << SR;
       else
@@ -12188,7 +12187,7 @@ ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                                  &Context.Idents.get("object_setClass"),
                                                  SourceLocation(), LookupOrdinaryName);
     if (ObjectSetClass && isa<ObjCIsaExpr>(LHS.get())) {
-      SourceLocation RHSLocEnd = getLocForEndOfToken(RHS.get()->getLocEnd());
+      SourceLocation RHSLocEnd = getLocForEndOfToken(RHS.get()->getEndLoc());
       Diag(LHS.get()->getExprLoc(), diag::warn_objc_isa_assign)
           << FixItHint::CreateInsertion(LHS.get()->getBeginLoc(),
                                         "object_setClass(")
@@ -12253,12 +12252,12 @@ static void DiagnoseBitwisePrecedence(Sema &Self, BinaryOperatorKind Opc,
 
   SourceRange DiagRange = isLeftComp
                               ? SourceRange(LHSExpr->getBeginLoc(), OpLoc)
-                              : SourceRange(OpLoc, RHSExpr->getLocEnd());
+                              : SourceRange(OpLoc, RHSExpr->getEndLoc());
   StringRef OpStr = isLeftComp ? LHSBO->getOpcodeStr() : RHSBO->getOpcodeStr();
   SourceRange ParensRange =
       isLeftComp
-          ? SourceRange(LHSBO->getRHS()->getBeginLoc(), RHSExpr->getLocEnd())
-          : SourceRange(LHSExpr->getBeginLoc(), RHSBO->getLHS()->getLocEnd());
+          ? SourceRange(LHSBO->getRHS()->getBeginLoc(), RHSExpr->getEndLoc())
+          : SourceRange(LHSExpr->getBeginLoc(), RHSBO->getLHS()->getEndLoc());
 
   Self.Diag(OpLoc, diag::warn_precedence_bitwise_rel)
     << DiagRange << BinaryOperator::getOpcodeStr(Opc) << OpStr;
@@ -12394,7 +12393,7 @@ static void DiagnoseShiftCompare(Sema &S, SourceLocation OpLoc,
                      OCE->getSourceRange());
   SuggestParentheses(
       S, OpLoc, S.PDiag(diag::note_evaluate_comparison_first),
-      SourceRange(OCE->getArg(1)->getBeginLoc(), RHSExpr->getLocEnd()));
+      SourceRange(OCE->getArg(1)->getBeginLoc(), RHSExpr->getEndLoc()));
 }
 
 /// DiagnoseBinOpPrecedence - Emit warnings for expressions with tricky

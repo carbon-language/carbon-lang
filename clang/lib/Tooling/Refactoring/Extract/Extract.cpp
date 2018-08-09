@@ -103,7 +103,7 @@ ExtractFunction::createSourceReplacements(RefactoringRuleContext &Context) {
 
   // Compute the source range of the code that should be extracted.
   SourceRange ExtractedRange(Code[0]->getBeginLoc(),
-                             Code[Code.size() - 1]->getLocEnd());
+                             Code[Code.size() - 1]->getEndLoc());
   // FIXME (Alex L): Add code that accounts for macro locations.
 
   ASTContext &AST = Context.getASTContext();

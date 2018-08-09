@@ -549,7 +549,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->isMultiVersion());
   Record.push_back(D->isLateTemplateParsed());
   Record.push_back(D->getLinkageInternal());
-  Record.AddSourceLocation(D->getLocEnd());
+  Record.AddSourceLocation(D->getEndLoc());
 
   Record.push_back(D->getODRHash());
 
@@ -664,7 +664,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.push_back(D->hasRelatedResultType());
   Record.AddTypeRef(D->getReturnType());
   Record.AddTypeSourceInfo(D->getReturnTypeSourceInfo());
-  Record.AddSourceLocation(D->getLocEnd());
+  Record.AddSourceLocation(D->getEndLoc());
   Record.push_back(D->param_size());
   for (const auto *P : D->parameters())
     Record.AddDeclRef(P);
@@ -1343,7 +1343,7 @@ void ASTDeclWriter::VisitImportDecl(ImportDecl *D) {
   ArrayRef<SourceLocation> IdentifierLocs = D->getIdentifierLocs();
   Record.push_back(!IdentifierLocs.empty());
   if (IdentifierLocs.empty()) {
-    Record.AddSourceLocation(D->getLocEnd());
+    Record.AddSourceLocation(D->getEndLoc());
     Record.push_back(1);
   } else {
     for (unsigned I = 0, N = IdentifierLocs.size(); I != N; ++I)

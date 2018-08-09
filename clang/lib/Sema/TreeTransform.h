@@ -3395,7 +3395,7 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
   // If this was list initialization, revert to syntactic list form.
   if (Construct->isListInitialization())
     return getDerived().RebuildInitList(Construct->getBeginLoc(), NewArgs,
-                                        Construct->getLocEnd());
+                                        Construct->getEndLoc());
 
   // Build a ParenListExpr to represent anything else.
   SourceRange Parens = Construct->getParenOrBraceRange();
@@ -7702,7 +7702,7 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
 
   return getDerived().RebuildOMPExecutableDirective(
       D->getDirectiveKind(), DirName, CancelRegion, TClauses,
-      AssociatedStmt.get(), D->getBeginLoc(), D->getLocEnd());
+      AssociatedStmt.get(), D->getBeginLoc(), D->getEndLoc());
 }
 
 template <typename Derived>
@@ -8239,7 +8239,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPIfClause(OMPIfClause *C) {
     return nullptr;
   return getDerived().RebuildOMPIfClause(
       C->getNameModifier(), Cond.get(), C->getBeginLoc(), C->getLParenLoc(),
-      C->getNameModifierLoc(), C->getColonLoc(), C->getLocEnd());
+      C->getNameModifierLoc(), C->getColonLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8248,7 +8248,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPFinalClause(OMPFinalClause *C) {
   if (Cond.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPFinalClause(Cond.get(), C->getBeginLoc(),
-                                            C->getLParenLoc(), C->getLocEnd());
+                                            C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8258,7 +8258,7 @@ TreeTransform<Derived>::TransformOMPNumThreadsClause(OMPNumThreadsClause *C) {
   if (NumThreads.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPNumThreadsClause(
-      NumThreads.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      NumThreads.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8268,7 +8268,7 @@ TreeTransform<Derived>::TransformOMPSafelenClause(OMPSafelenClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPSafelenClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8278,7 +8278,7 @@ TreeTransform<Derived>::TransformOMPSimdlenClause(OMPSimdlenClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPSimdlenClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8288,7 +8288,7 @@ TreeTransform<Derived>::TransformOMPCollapseClause(OMPCollapseClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPCollapseClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8296,7 +8296,7 @@ OMPClause *
 TreeTransform<Derived>::TransformOMPDefaultClause(OMPDefaultClause *C) {
   return getDerived().RebuildOMPDefaultClause(
       C->getDefaultKind(), C->getDefaultKindKwLoc(), C->getBeginLoc(),
-      C->getLParenLoc(), C->getLocEnd());
+      C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8304,7 +8304,7 @@ OMPClause *
 TreeTransform<Derived>::TransformOMPProcBindClause(OMPProcBindClause *C) {
   return getDerived().RebuildOMPProcBindClause(
       C->getProcBindKind(), C->getProcBindKindKwLoc(), C->getBeginLoc(),
-      C->getLParenLoc(), C->getLocEnd());
+      C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8317,7 +8317,7 @@ TreeTransform<Derived>::TransformOMPScheduleClause(OMPScheduleClause *C) {
       C->getFirstScheduleModifier(), C->getSecondScheduleModifier(),
       C->getScheduleKind(), E.get(), C->getBeginLoc(), C->getLParenLoc(),
       C->getFirstScheduleModifierLoc(), C->getSecondScheduleModifierLoc(),
-      C->getScheduleKindLoc(), C->getCommaLoc(), C->getLocEnd());
+      C->getScheduleKindLoc(), C->getCommaLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8329,7 +8329,7 @@ TreeTransform<Derived>::TransformOMPOrderedClause(OMPOrderedClause *C) {
     if (E.isInvalid())
       return nullptr;
   }
-  return getDerived().RebuildOMPOrderedClause(C->getBeginLoc(), C->getLocEnd(),
+  return getDerived().RebuildOMPOrderedClause(C->getBeginLoc(), C->getEndLoc(),
                                               C->getLParenLoc(), E.get());
 }
 
@@ -8419,7 +8419,7 @@ TreeTransform<Derived>::TransformOMPPrivateClause(OMPPrivateClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPPrivateClause(
-      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8434,7 +8434,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPFirstprivateClause(
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPFirstprivateClause(
-      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8449,7 +8449,7 @@ TreeTransform<Derived>::TransformOMPLastprivateClause(OMPLastprivateClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPLastprivateClause(
-      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8464,7 +8464,7 @@ TreeTransform<Derived>::TransformOMPSharedClause(OMPSharedClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPSharedClause(Vars, C->getBeginLoc(),
-                                             C->getLParenLoc(), C->getLocEnd());
+                                             C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8511,7 +8511,7 @@ TreeTransform<Derived>::TransformOMPReductionClause(OMPReductionClause *C) {
   }
   return getDerived().RebuildOMPReductionClause(
       Vars, C->getBeginLoc(), C->getLParenLoc(), C->getColonLoc(),
-      C->getLocEnd(), ReductionIdScopeSpec, NameInfo, UnresolvedReductions);
+      C->getEndLoc(), ReductionIdScopeSpec, NameInfo, UnresolvedReductions);
 }
 
 template <typename Derived>
@@ -8556,7 +8556,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPTaskReductionClause(
   }
   return getDerived().RebuildOMPTaskReductionClause(
       Vars, C->getBeginLoc(), C->getLParenLoc(), C->getColonLoc(),
-      C->getLocEnd(), ReductionIdScopeSpec, NameInfo, UnresolvedReductions);
+      C->getEndLoc(), ReductionIdScopeSpec, NameInfo, UnresolvedReductions);
 }
 
 template <typename Derived>
@@ -8601,7 +8601,7 @@ TreeTransform<Derived>::TransformOMPInReductionClause(OMPInReductionClause *C) {
   }
   return getDerived().RebuildOMPInReductionClause(
       Vars, C->getBeginLoc(), C->getLParenLoc(), C->getColonLoc(),
-      C->getLocEnd(), ReductionIdScopeSpec, NameInfo, UnresolvedReductions);
+      C->getEndLoc(), ReductionIdScopeSpec, NameInfo, UnresolvedReductions);
 }
 
 template <typename Derived>
@@ -8620,7 +8620,7 @@ TreeTransform<Derived>::TransformOMPLinearClause(OMPLinearClause *C) {
     return nullptr;
   return getDerived().RebuildOMPLinearClause(
       Vars, Step.get(), C->getBeginLoc(), C->getLParenLoc(), C->getModifier(),
-      C->getModifierLoc(), C->getColonLoc(), C->getLocEnd());
+      C->getModifierLoc(), C->getColonLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8639,7 +8639,7 @@ TreeTransform<Derived>::TransformOMPAlignedClause(OMPAlignedClause *C) {
     return nullptr;
   return getDerived().RebuildOMPAlignedClause(
       Vars, Alignment.get(), C->getBeginLoc(), C->getLParenLoc(),
-      C->getColonLoc(), C->getLocEnd());
+      C->getColonLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8654,7 +8654,7 @@ TreeTransform<Derived>::TransformOMPCopyinClause(OMPCopyinClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPCopyinClause(Vars, C->getBeginLoc(),
-                                             C->getLParenLoc(), C->getLocEnd());
+                                             C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8669,7 +8669,7 @@ TreeTransform<Derived>::TransformOMPCopyprivateClause(OMPCopyprivateClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPCopyprivateClause(
-      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8683,7 +8683,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPFlushClause(OMPFlushClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPFlushClause(Vars, C->getBeginLoc(),
-                                            C->getLParenLoc(), C->getLocEnd());
+                                            C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8699,7 +8699,7 @@ TreeTransform<Derived>::TransformOMPDependClause(OMPDependClause *C) {
   }
   return getDerived().RebuildOMPDependClause(
       C->getDependencyKind(), C->getDependencyLoc(), C->getColonLoc(), Vars,
-      C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8709,7 +8709,7 @@ TreeTransform<Derived>::TransformOMPDeviceClause(OMPDeviceClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPDeviceClause(E.get(), C->getBeginLoc(),
-                                             C->getLParenLoc(), C->getLocEnd());
+                                             C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8725,7 +8725,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPMapClause(OMPMapClause *C) {
   return getDerived().RebuildOMPMapClause(
       C->getMapTypeModifier(), C->getMapType(), C->isImplicitMapType(),
       C->getMapLoc(), C->getColonLoc(), Vars, C->getBeginLoc(),
-      C->getLParenLoc(), C->getLocEnd());
+      C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8735,7 +8735,7 @@ TreeTransform<Derived>::TransformOMPNumTeamsClause(OMPNumTeamsClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPNumTeamsClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8745,7 +8745,7 @@ TreeTransform<Derived>::TransformOMPThreadLimitClause(OMPThreadLimitClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPThreadLimitClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8755,7 +8755,7 @@ TreeTransform<Derived>::TransformOMPPriorityClause(OMPPriorityClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPPriorityClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8765,7 +8765,7 @@ TreeTransform<Derived>::TransformOMPGrainsizeClause(OMPGrainsizeClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPGrainsizeClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8775,7 +8775,7 @@ TreeTransform<Derived>::TransformOMPNumTasksClause(OMPNumTasksClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPNumTasksClause(
-      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      E.get(), C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8784,7 +8784,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPHintClause(OMPHintClause *C) {
   if (E.isInvalid())
     return nullptr;
   return getDerived().RebuildOMPHintClause(E.get(), C->getBeginLoc(),
-                                           C->getLParenLoc(), C->getLocEnd());
+                                           C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8795,7 +8795,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPDistScheduleClause(
     return nullptr;
   return getDerived().RebuildOMPDistScheduleClause(
       C->getDistScheduleKind(), E.get(), C->getBeginLoc(), C->getLParenLoc(),
-      C->getDistScheduleKindLoc(), C->getCommaLoc(), C->getLocEnd());
+      C->getDistScheduleKindLoc(), C->getCommaLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8815,7 +8815,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPToClause(OMPToClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPToClause(Vars, C->getBeginLoc(),
-                                         C->getLParenLoc(), C->getLocEnd());
+                                         C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8829,7 +8829,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPFromClause(OMPFromClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPFromClause(Vars, C->getBeginLoc(),
-                                           C->getLParenLoc(), C->getLocEnd());
+                                           C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8844,7 +8844,7 @@ OMPClause *TreeTransform<Derived>::TransformOMPUseDevicePtrClause(
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPUseDevicePtrClause(
-      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 template <typename Derived>
@@ -8859,7 +8859,7 @@ TreeTransform<Derived>::TransformOMPIsDevicePtrClause(OMPIsDevicePtrClause *C) {
     Vars.push_back(EVar.get());
   }
   return getDerived().RebuildOMPIsDevicePtrClause(
-      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getLocEnd());
+      Vars, C->getBeginLoc(), C->getLParenLoc(), C->getEndLoc());
 }
 
 //===----------------------------------------------------------------------===//
@@ -9252,7 +9252,7 @@ TreeTransform<Derived>::TransformOMPArraySectionExpr(OMPArraySectionExpr *E) {
     return E;
 
   return getDerived().RebuildOMPArraySectionExpr(
-      Base.get(), E->getBase()->getLocEnd(), LowerBound.get(), E->getColonLoc(),
+      Base.get(), E->getBase()->getEndLoc(), LowerBound.get(), E->getColonLoc(),
       Length.get(), E->getRBracketLoc());
 }
 
@@ -9505,9 +9505,9 @@ TreeTransform<Derived>::TransformCompoundLiteralExpr(CompoundLiteralExpr *E) {
   // type-as-written, but that's okay, because it should always be
   // derivable from the initializer.
 
-  return getDerived().RebuildCompoundLiteralExpr(E->getLParenLoc(), NewT,
-                                   /*FIXME:*/E->getInitializer()->getLocEnd(),
-                                                 Init.get());
+  return getDerived().RebuildCompoundLiteralExpr(
+      E->getLParenLoc(), NewT,
+      /*FIXME:*/ E->getInitializer()->getEndLoc(), Init.get());
 }
 
 template<typename Derived>
@@ -9523,7 +9523,7 @@ TreeTransform<Derived>::TransformExtVectorElementExpr(ExtVectorElementExpr *E) {
 
   // FIXME: Bad source location
   SourceLocation FakeOperatorLoc =
-      SemaRef.getLocForEndOfToken(E->getBase()->getLocEnd());
+      SemaRef.getLocForEndOfToken(E->getBase()->getEndLoc());
   return getDerived().RebuildExtVectorElementExpr(Base.get(), FakeOperatorLoc,
                                                   E->getAccessorLoc(),
                                                   E->getAccessor());
@@ -9811,7 +9811,7 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
 
     // FIXME: Poor location information
     SourceLocation FakeLParenLoc = SemaRef.getLocForEndOfToken(
-        static_cast<Expr *>(Object.get())->getLocEnd());
+        static_cast<Expr *>(Object.get())->getEndLoc());
 
     // Transform the call arguments.
     SmallVector<Expr*, 8> Args;
@@ -9819,9 +9819,8 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
                                     Args))
       return ExprError();
 
-    return getDerived().RebuildCallExpr(Object.get(), FakeLParenLoc,
-                                        Args,
-                                        E->getLocEnd());
+    return getDerived().RebuildCallExpr(Object.get(), FakeLParenLoc, Args,
+                                        E->getEndLoc());
   }
 
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
@@ -10002,7 +10001,7 @@ TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E) {
       return E;
 
     return getDerived().RebuildCXXTypeidExpr(E->getType(), E->getBeginLoc(),
-                                             TInfo, E->getLocEnd());
+                                             TInfo, E->getEndLoc());
   }
 
   // We don't know whether the subexpression is potentially evaluated until
@@ -10022,7 +10021,7 @@ TreeTransform<Derived>::TransformCXXTypeidExpr(CXXTypeidExpr *E) {
     return E;
 
   return getDerived().RebuildCXXTypeidExpr(E->getType(), E->getBeginLoc(),
-                                           SubExpr.get(), E->getLocEnd());
+                                           SubExpr.get(), E->getEndLoc());
 }
 
 template<typename Derived>
@@ -10039,7 +10038,7 @@ TreeTransform<Derived>::TransformCXXUuidofExpr(CXXUuidofExpr *E) {
       return E;
 
     return getDerived().RebuildCXXUuidofExpr(E->getType(), E->getBeginLoc(),
-                                             TInfo, E->getLocEnd());
+                                             TInfo, E->getEndLoc());
   }
 
   EnterExpressionEvaluationContext Unevaluated(
@@ -10054,7 +10053,7 @@ TreeTransform<Derived>::TransformCXXUuidofExpr(CXXUuidofExpr *E) {
     return E;
 
   return getDerived().RebuildCXXUuidofExpr(E->getType(), E->getBeginLoc(),
-                                           SubExpr.get(), E->getLocEnd());
+                                           SubExpr.get(), E->getEndLoc());
 }
 
 template<typename Derived>
@@ -10624,7 +10623,7 @@ TreeTransform<Derived>::TransformTypeTraitExpr(TypeTraitExpr *E) {
     return E;
 
   return getDerived().RebuildTypeTrait(E->getTrait(), E->getBeginLoc(), Args,
-                                       E->getLocEnd());
+                                       E->getEndLoc());
 }
 
 template<typename Derived>
@@ -10651,7 +10650,7 @@ TreeTransform<Derived>::TransformArrayTypeTraitExpr(ArrayTypeTraitExpr *E) {
   }
 
   return getDerived().RebuildArrayTypeTrait(E->getTrait(), E->getBeginLoc(), T,
-                                            SubExpr.get(), E->getLocEnd());
+                                            SubExpr.get(), E->getEndLoc());
 }
 
 template<typename Derived>
@@ -10670,7 +10669,7 @@ TreeTransform<Derived>::TransformExpressionTraitExpr(ExpressionTraitExpr *E) {
   }
 
   return getDerived().RebuildExpressionTrait(E->getTrait(), E->getBeginLoc(),
-                                             SubExpr.get(), E->getLocEnd());
+                                             SubExpr.get(), E->getEndLoc());
 }
 
 template <typename Derived>
@@ -10871,7 +10870,7 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
   // prepared to handle list-initialization without a child InitListExpr.
   SourceLocation LParenLoc = T->getTypeLoc().getEndLoc();
   return getDerived().RebuildCXXTemporaryObjectExpr(
-      T, LParenLoc, Args, E->getLocEnd(),
+      T, LParenLoc, Args, E->getEndLoc(),
       /*ListInitialization=*/LParenLoc.isInvalid());
 }
 
@@ -10955,7 +10954,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   // Build the call operator.
   CXXMethodDecl *NewCallOperator = getSema().startLambdaDefinition(
       Class, E->getIntroducerRange(), NewCallOpTSI,
-      E->getCallOperator()->getLocEnd(),
+      E->getCallOperator()->getEndLoc(),
       NewCallOpTSI->getTypeLoc().castAs<FunctionProtoTypeLoc>().getParams(),
       E->getCallOperator()->isConstexpr());
 
@@ -11132,7 +11131,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
                                     /*IsInstantiation*/ true);
   SavedContext.pop();
 
-  return getSema().BuildLambdaExpr(E->getBeginLoc(), Body.get()->getLocEnd(),
+  return getSema().BuildLambdaExpr(E->getBeginLoc(), Body.get()->getEndLoc(),
                                    &LSICopy);
 }
 
@@ -11580,7 +11579,7 @@ TreeTransform<Derived>::TransformCXXFoldExpr(CXXFoldExpr *E) {
 
     return getDerived().RebuildCXXFoldExpr(
         E->getBeginLoc(), LHS.get(), E->getOperator(), E->getEllipsisLoc(),
-        RHS.get(), E->getLocEnd());
+        RHS.get(), E->getEndLoc());
   }
 
   // The transform has determined that we should perform an elementwise
@@ -11601,7 +11600,7 @@ TreeTransform<Derived>::TransformCXXFoldExpr(CXXFoldExpr *E) {
 
     Result = getDerived().RebuildCXXFoldExpr(
         E->getBeginLoc(), Out.get(), E->getOperator(), E->getEllipsisLoc(),
-        Result.get(), E->getLocEnd());
+        Result.get(), E->getEndLoc());
     if (Result.isInvalid())
       return true;
   }
@@ -11618,7 +11617,7 @@ TreeTransform<Derived>::TransformCXXFoldExpr(CXXFoldExpr *E) {
       Result = getDerived().RebuildCXXFoldExpr(
           E->getBeginLoc(), LeftFold ? Result.get() : Out.get(),
           E->getOperator(), E->getEllipsisLoc(),
-          LeftFold ? Out.get() : Result.get(), E->getLocEnd());
+          LeftFold ? Out.get() : Result.get(), E->getEndLoc());
     } else if (Result.isUsable()) {
       // We've got down to a single element; build a binary operator.
       Result = getDerived().RebuildBinaryOperator(
@@ -11643,7 +11642,7 @@ TreeTransform<Derived>::TransformCXXFoldExpr(CXXFoldExpr *E) {
 
     Result = getDerived().RebuildCXXFoldExpr(
         E->getBeginLoc(), Result.get(), E->getOperator(), E->getEllipsisLoc(),
-        Out.get(), E->getLocEnd());
+        Out.get(), E->getEndLoc());
     if (Result.isInvalid())
       return true;
   }
@@ -11732,7 +11731,7 @@ TreeTransform<Derived>::TransformObjCDictionaryLiteral(
       Optional<unsigned> OrigNumExpansions = OrigElement.NumExpansions;
       Optional<unsigned> NumExpansions = OrigNumExpansions;
       SourceRange PatternRange(OrigElement.Key->getBeginLoc(),
-                               OrigElement.Value->getLocEnd());
+                               OrigElement.Value->getEndLoc());
       if (getDerived().TryExpandParameterPacks(OrigElement.EllipsisLoc,
                                                PatternRange, Unexpanded, Expand,
                                                RetainExpansion, NumExpansions))

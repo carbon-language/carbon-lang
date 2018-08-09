@@ -112,13 +112,13 @@ static bool checkArgCount(Sema &S, CallExpr *call, unsigned desiredArgCount) {
   if (argCount == desiredArgCount) return false;
 
   if (argCount < desiredArgCount)
-    return S.Diag(call->getLocEnd(), diag::err_typecheck_call_too_few_args)
-        << 0 /*function call*/ << desiredArgCount << argCount
-        << call->getSourceRange();
+    return S.Diag(call->getEndLoc(), diag::err_typecheck_call_too_few_args)
+           << 0 /*function call*/ << desiredArgCount << argCount
+           << call->getSourceRange();
 
   // Highlight all the excess arguments.
   SourceRange range(call->getArg(desiredArgCount)->getBeginLoc(),
-                    call->getArg(argCount - 1)->getLocEnd());
+                    call->getArg(argCount - 1)->getEndLoc());
 
   return S.Diag(range.getBegin(), diag::err_typecheck_call_too_many_args)
     << 0 /*function call*/ << desiredArgCount << argCount
@@ -156,7 +156,7 @@ static bool SemaBuiltinAnnotation(Sema &S, CallExpr *TheCall) {
 static bool SemaBuiltinMSVCAnnotation(Sema &S, CallExpr *TheCall) {
   // We need at least one argument.
   if (TheCall->getNumArgs() < 1) {
-    S.Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args_at_least)
+    S.Diag(TheCall->getEndLoc(), diag::err_typecheck_call_too_few_args_at_least)
         << 0 << 1 << TheCall->getNumArgs()
         << TheCall->getCallee()->getSourceRange();
     return true;
@@ -4308,9 +4308,9 @@ ExprResult Sema::SemaAtomicOpsOverloaded(ExprResult TheCallResult,
     ++AdjustedNumArgs;
   // Check we have the right number of arguments.
   if (TheCall->getNumArgs() < AdjustedNumArgs) {
-    Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 << AdjustedNumArgs << TheCall->getNumArgs()
-      << TheCall->getCallee()->getSourceRange();
+    Diag(TheCall->getEndLoc(), diag::err_typecheck_call_too_few_args)
+        << 0 << AdjustedNumArgs << TheCall->getNumArgs()
+        << TheCall->getCallee()->getSourceRange();
     return ExprError();
   } else if (TheCall->getNumArgs() > AdjustedNumArgs) {
     Diag(TheCall->getArg(AdjustedNumArgs)->getBeginLoc(),
@@ -4628,9 +4628,9 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
 
   // Ensure that we have at least one argument to do type inference from.
   if (TheCall->getNumArgs() < 1) {
-    Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args_at_least)
-      << 0 << 1 << TheCall->getNumArgs()
-      << TheCall->getCallee()->getSourceRange();
+    Diag(TheCall->getEndLoc(), diag::err_typecheck_call_too_few_args_at_least)
+        << 0 << 1 << TheCall->getNumArgs()
+        << TheCall->getCallee()->getSourceRange();
     return ExprError();
   }
 
@@ -4905,15 +4905,15 @@ Sema::SemaBuiltinAtomicOverloaded(ExprResult TheCallResult) {
   // Now that we know how many fixed arguments we expect, first check that we
   // have at least that many.
   if (TheCall->getNumArgs() < 1+NumFixed) {
-    Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args_at_least)
-      << 0 << 1+NumFixed << TheCall->getNumArgs()
-      << TheCall->getCallee()->getSourceRange();
+    Diag(TheCall->getEndLoc(), diag::err_typecheck_call_too_few_args_at_least)
+        << 0 << 1 + NumFixed << TheCall->getNumArgs()
+        << TheCall->getCallee()->getSourceRange();
     return ExprError();
   }
 
   if (WarnAboutSemanticsChange) {
-    Diag(TheCall->getLocEnd(), diag::warn_sync_fetch_and_nand_semantics_change)
-      << TheCall->getCallee()->getSourceRange();
+    Diag(TheCall->getEndLoc(), diag::warn_sync_fetch_and_nand_semantics_change)
+        << TheCall->getCallee()->getSourceRange();
   }
 
   // Get the decl for the concrete builtin from this, we can tell what the
@@ -5204,14 +5204,14 @@ bool Sema::SemaBuiltinVAStart(unsigned BuiltinID, CallExpr *TheCall) {
         << 0 /*function call*/ << 2 << TheCall->getNumArgs()
         << Fn->getSourceRange()
         << SourceRange(TheCall->getArg(2)->getBeginLoc(),
-                       (*(TheCall->arg_end() - 1))->getLocEnd());
+                       (*(TheCall->arg_end() - 1))->getEndLoc());
     return true;
   }
 
   if (TheCall->getNumArgs() < 2) {
-    return Diag(TheCall->getLocEnd(),
-      diag::err_typecheck_call_too_few_args_at_least)
-      << 0 /*function call*/ << 2 << TheCall->getNumArgs();
+    return Diag(TheCall->getEndLoc(),
+                diag::err_typecheck_call_too_few_args_at_least)
+           << 0 /*function call*/ << 2 << TheCall->getNumArgs();
   }
 
   // Type-check the first argument normally.
@@ -5278,7 +5278,7 @@ bool Sema::SemaBuiltinVAStartARMMicrosoft(CallExpr *Call) {
   Expr *Func = Call->getCallee();
 
   if (Call->getNumArgs() < 3)
-    return Diag(Call->getLocEnd(),
+    return Diag(Call->getEndLoc(),
                 diag::err_typecheck_call_too_few_args_at_least)
            << 0 /*function call*/ << 3 << Call->getNumArgs();
 
@@ -5323,14 +5323,14 @@ bool Sema::SemaBuiltinVAStartARMMicrosoft(CallExpr *Call) {
 /// friends.  This is declared to take (...), so we have to check everything.
 bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 2)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 << 2 << TheCall->getNumArgs()/*function call*/;
+    return Diag(TheCall->getEndLoc(), diag::err_typecheck_call_too_few_args)
+           << 0 << 2 << TheCall->getNumArgs() /*function call*/;
   if (TheCall->getNumArgs() > 2)
     return Diag(TheCall->getArg(2)->getBeginLoc(),
                 diag::err_typecheck_call_too_many_args)
            << 0 /*function call*/ << 2 << TheCall->getNumArgs()
            << SourceRange(TheCall->getArg(2)->getBeginLoc(),
-                          (*(TheCall->arg_end() - 1))->getLocEnd());
+                          (*(TheCall->arg_end() - 1))->getEndLoc());
 
   ExprResult OrigArg0 = TheCall->getArg(0);
   ExprResult OrigArg1 = TheCall->getArg(1);
@@ -5357,7 +5357,7 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
                 diag::err_typecheck_call_invalid_ordered_compare)
            << OrigArg0.get()->getType() << OrigArg1.get()->getType()
            << SourceRange(OrigArg0.get()->getBeginLoc(),
-                          OrigArg1.get()->getLocEnd());
+                          OrigArg1.get()->getEndLoc());
 
   return false;
 }
@@ -5368,14 +5368,14 @@ bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
 /// value.
 bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
   if (TheCall->getNumArgs() < NumArgs)
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
-      << 0 << NumArgs << TheCall->getNumArgs()/*function call*/;
+    return Diag(TheCall->getEndLoc(), diag::err_typecheck_call_too_few_args)
+           << 0 << NumArgs << TheCall->getNumArgs() /*function call*/;
   if (TheCall->getNumArgs() > NumArgs)
     return Diag(TheCall->getArg(NumArgs)->getBeginLoc(),
                 diag::err_typecheck_call_too_many_args)
            << 0 /*function call*/ << NumArgs << TheCall->getNumArgs()
            << SourceRange(TheCall->getArg(NumArgs)->getBeginLoc(),
-                          (*(TheCall->arg_end() - 1))->getLocEnd());
+                          (*(TheCall->arg_end() - 1))->getEndLoc());
 
   Expr *OrigArg = TheCall->getArg(NumArgs-1);
 
@@ -5420,13 +5420,13 @@ bool Sema::SemaBuiltinFPClassification(CallExpr *TheCall, unsigned NumArgs) {
 bool Sema::SemaBuiltinVSX(CallExpr *TheCall) {
   unsigned ExpectedNumArgs = 3;
   if (TheCall->getNumArgs() < ExpectedNumArgs)
-    return Diag(TheCall->getLocEnd(),
+    return Diag(TheCall->getEndLoc(),
                 diag::err_typecheck_call_too_few_args_at_least)
-           << 0 /*function call*/ <<  ExpectedNumArgs << TheCall->getNumArgs()
+           << 0 /*function call*/ << ExpectedNumArgs << TheCall->getNumArgs()
            << TheCall->getSourceRange();
 
   if (TheCall->getNumArgs() > ExpectedNumArgs)
-    return Diag(TheCall->getLocEnd(),
+    return Diag(TheCall->getEndLoc(),
                 diag::err_typecheck_call_too_many_args_at_most)
            << 0 /*function call*/ << ExpectedNumArgs << TheCall->getNumArgs()
            << TheCall->getSourceRange();
@@ -5438,7 +5438,7 @@ bool Sema::SemaBuiltinVSX(CallExpr *TheCall) {
                 diag::err_vsx_builtin_nonconstant_argument)
            << 3 /* argument index */ << TheCall->getDirectCallee()
            << SourceRange(TheCall->getArg(2)->getBeginLoc(),
-                          TheCall->getArg(2)->getLocEnd());
+                          TheCall->getArg(2)->getEndLoc());
 
   QualType Arg1Ty = TheCall->getArg(0)->getType();
   QualType Arg2Ty = TheCall->getArg(1)->getType();
@@ -5450,7 +5450,7 @@ bool Sema::SemaBuiltinVSX(CallExpr *TheCall) {
     return Diag(BuiltinLoc, diag::err_vec_builtin_non_vector)
            << TheCall->getDirectCallee()
            << SourceRange(TheCall->getArg(0)->getBeginLoc(),
-                          TheCall->getArg(1)->getLocEnd());
+                          TheCall->getArg(1)->getEndLoc());
   }
 
   // Check the first two arguments are the same type.
@@ -5458,7 +5458,7 @@ bool Sema::SemaBuiltinVSX(CallExpr *TheCall) {
     return Diag(BuiltinLoc, diag::err_vec_builtin_incompatible_vector)
            << TheCall->getDirectCallee()
            << SourceRange(TheCall->getArg(0)->getBeginLoc(),
-                          TheCall->getArg(1)->getLocEnd());
+                          TheCall->getArg(1)->getEndLoc());
   }
 
   // When default clang type checking is turned off and the customized type
@@ -5473,7 +5473,7 @@ bool Sema::SemaBuiltinVSX(CallExpr *TheCall) {
 // This is declared to take (...), so we have to check everything.
 ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
   if (TheCall->getNumArgs() < 2)
-    return ExprError(Diag(TheCall->getLocEnd(),
+    return ExprError(Diag(TheCall->getEndLoc(),
                           diag::err_typecheck_call_too_few_args_at_least)
                      << 0 /*function call*/ << 2 << TheCall->getNumArgs()
                      << TheCall->getSourceRange());
@@ -5494,7 +5494,7 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
           Diag(TheCall->getBeginLoc(), diag::err_vec_builtin_non_vector)
           << TheCall->getDirectCallee()
           << SourceRange(TheCall->getArg(0)->getBeginLoc(),
-                         TheCall->getArg(1)->getLocEnd()));
+                         TheCall->getArg(1)->getEndLoc()));
 
     numElements = LHSType->getAs<VectorType>()->getNumElements();
     unsigned numResElements = TheCall->getNumArgs() - 2;
@@ -5509,13 +5509,13 @@ ExprResult Sema::SemaBuiltinShuffleVector(CallExpr *TheCall) {
                               diag::err_vec_builtin_incompatible_vector)
                          << TheCall->getDirectCallee()
                          << SourceRange(TheCall->getArg(1)->getBeginLoc(),
-                                        TheCall->getArg(1)->getLocEnd()));
+                                        TheCall->getArg(1)->getEndLoc()));
     } else if (!Context.hasSameUnqualifiedType(LHSType, RHSType)) {
       return ExprError(Diag(TheCall->getBeginLoc(),
                             diag::err_vec_builtin_incompatible_vector)
                        << TheCall->getDirectCallee()
                        << SourceRange(TheCall->getArg(0)->getBeginLoc(),
-                                      TheCall->getArg(1)->getLocEnd()));
+                                      TheCall->getArg(1)->getEndLoc()));
     } else if (numElements != numResElements) {
       QualType eltType = LHSType->getAs<VectorType>()->getElementType();
       resType = Context.getVectorType(eltType, numResElements,
@@ -5593,10 +5593,9 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
   unsigned NumArgs = TheCall->getNumArgs();
 
   if (NumArgs > 3)
-    return Diag(TheCall->getLocEnd(),
-             diag::err_typecheck_call_too_many_args_at_most)
-             << 0 /*function call*/ << 3 << NumArgs
-             << TheCall->getSourceRange();
+    return Diag(TheCall->getEndLoc(),
+                diag::err_typecheck_call_too_many_args_at_most)
+           << 0 /*function call*/ << 3 << NumArgs << TheCall->getSourceRange();
 
   // Argument 0 is checked for us and the remaining arguments must be
   // constant integers.
@@ -5661,10 +5660,9 @@ bool Sema::SemaBuiltinAssumeAligned(CallExpr *TheCall) {
   unsigned NumArgs = TheCall->getNumArgs();
 
   if (NumArgs > 3)
-    return Diag(TheCall->getLocEnd(),
-             diag::err_typecheck_call_too_many_args_at_most)
-             << 0 /*function call*/ << 3 << NumArgs
-             << TheCall->getSourceRange();
+    return Diag(TheCall->getEndLoc(),
+                diag::err_typecheck_call_too_many_args_at_most)
+           << 0 /*function call*/ << 3 << NumArgs << TheCall->getSourceRange();
 
   // The alignment must be a constant integer.
   Expr *Arg = TheCall->getArg(1);
@@ -5700,12 +5698,12 @@ bool Sema::SemaBuiltinOSLogFormat(CallExpr *TheCall) {
   unsigned NumArgs = TheCall->getNumArgs();
   unsigned NumRequiredArgs = IsSizeCall ? 1 : 2;
   if (NumArgs < NumRequiredArgs) {
-    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args)
+    return Diag(TheCall->getEndLoc(), diag::err_typecheck_call_too_few_args)
            << 0 /* function call */ << NumRequiredArgs << NumArgs
            << TheCall->getSourceRange();
   }
   if (NumArgs >= NumRequiredArgs + 0x100) {
-    return Diag(TheCall->getLocEnd(),
+    return Diag(TheCall->getEndLoc(),
                 diag::err_typecheck_call_too_many_args_at_most)
            << 0 /* function call */ << (NumRequiredArgs + 0xff) << NumArgs
            << TheCall->getSourceRange();
@@ -5743,7 +5741,7 @@ bool Sema::SemaBuiltinOSLogFormat(CallExpr *TheCall) {
       return true;
     CharUnits ArgSize = Context.getTypeSizeInChars(Arg.get()->getType());
     if (ArgSize.getQuantity() >= 0x100) {
-      return Diag(Arg.get()->getLocEnd(), diag::err_os_log_argument_too_big)
+      return Diag(Arg.get()->getEndLoc(), diag::err_os_log_argument_too_big)
              << i << (int)ArgSize.getQuantity() << 0xff
              << TheCall->getSourceRange();
     }
@@ -5948,7 +5946,7 @@ bool Sema::SemaBuiltinARMSpecialReg(unsigned BuiltinID, CallExpr *TheCall,
 bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
   if (!Context.getTargetInfo().hasSjLjLowering())
     return Diag(TheCall->getBeginLoc(), diag::err_builtin_longjmp_unsupported)
-           << SourceRange(TheCall->getBeginLoc(), TheCall->getLocEnd());
+           << SourceRange(TheCall->getBeginLoc(), TheCall->getEndLoc());
 
   Expr *Arg = TheCall->getArg(1);
   llvm::APSInt Result;
@@ -5959,7 +5957,7 @@ bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
 
   if (Result != 1)
     return Diag(TheCall->getBeginLoc(), diag::err_builtin_longjmp_invalid_val)
-           << SourceRange(Arg->getBeginLoc(), Arg->getLocEnd());
+           << SourceRange(Arg->getBeginLoc(), Arg->getEndLoc());
 
   return false;
 }
@@ -5969,7 +5967,7 @@ bool Sema::SemaBuiltinLongjmp(CallExpr *TheCall) {
 bool Sema::SemaBuiltinSetjmp(CallExpr *TheCall) {
   if (!Context.getTargetInfo().hasSjLjLowering())
     return Diag(TheCall->getBeginLoc(), diag::err_builtin_setjmp_unsupported)
-           << SourceRange(TheCall->getBeginLoc(), TheCall->getLocEnd());
+           << SourceRange(TheCall->getBeginLoc(), TheCall->getEndLoc());
   return false;
 }
 
@@ -6119,7 +6117,7 @@ class FormatStringLiteral {
   }
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return FExpr->getLocEnd(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return FExpr->getEndLoc(); }
 };
 
 }  // namespace
@@ -7270,7 +7268,7 @@ bool CheckPrintfHandler::checkForCStrMembers(
     if (Method->getMinRequiredArguments() == 0 &&
         AT.matchesType(S.Context, Method->getReturnType())) {
       // FIXME: Suggest parens if the expression needs them.
-      SourceLocation EndLoc = S.getLocForEndOfToken(E->getLocEnd());
+      SourceLocation EndLoc = S.getLocForEndOfToken(E->getEndLoc());
       S.Diag(E->getBeginLoc(), diag::note_printf_c_str)
           << "c_str()" << FixItHint::CreateInsertion(EndLoc, ".c_str()");
       return true;
@@ -7748,7 +7746,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
         Hints.push_back(
             FixItHint::CreateInsertion(E->getBeginLoc(), CastFix.str()));
 
-        SourceLocation After = S.getLocForEndOfToken(E->getLocEnd());
+        SourceLocation After = S.getLocForEndOfToken(E->getEndLoc());
         Hints.push_back(FixItHint::CreateInsertion(After, ")"));
       }
 
@@ -8572,8 +8570,9 @@ static bool CheckMemorySizeofForComparison(Sema &S, const Expr *E,
   S.Diag(Size->getOperatorLoc(), diag::warn_memsize_comparison)
       << SizeRange << FnName;
   S.Diag(FnLoc, diag::note_memsize_comparison_paren)
-      << FnName << FixItHint::CreateInsertion(
-                       S.getLocForEndOfToken(Size->getLHS()->getLocEnd()), ")")
+      << FnName
+      << FixItHint::CreateInsertion(
+             S.getLocForEndOfToken(Size->getLHS()->getEndLoc()), ")")
       << FixItHint::CreateRemoval(RParenLoc);
   S.Diag(SizeRange.getBegin(), diag::note_memsize_comparison_cast_silence)
       << FixItHint::CreateInsertion(SizeRange.getBegin(), "(size_t)(")
@@ -11294,7 +11293,7 @@ void Sema::DiagnoseAlwaysNonNullPointer(Expr *E,
       return;
   }
   Diag(E->getExprLoc(), diag::note_function_to_function_call)
-      << FixItHint::CreateInsertion(getLocForEndOfToken(E->getLocEnd()), "()");
+      << FixItHint::CreateInsertion(getLocForEndOfToken(E->getEndLoc()), "()");
 }
 
 /// Diagnoses "dangerous" implicit conversions within the given

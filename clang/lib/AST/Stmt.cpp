@@ -193,20 +193,18 @@ namespace {
   static bad implements_getBeginLoc(getBeginLoc_t Stmt::*) { return bad(); }
 
   typedef SourceLocation getLocEnd_t() const;
-  template <class T> good implements_getLocEnd(getLocEnd_t T::*) {
+  template <class T> good implements_getEndLoc(getLocEnd_t T::*) {
     return good();
   }
   LLVM_ATTRIBUTE_UNUSED
-  static bad implements_getLocEnd(getLocEnd_t Stmt::*) {
-    return bad();
-  }
+  static bad implements_getEndLoc(getLocEnd_t Stmt::*) { return bad(); }
 
 #define ASSERT_IMPLEMENTS_children(type) \
   (void) is_good(implements_children(&type::children))
 #define ASSERT_IMPLEMENTS_getBeginLoc(type)                                    \
   (void)is_good(implements_getBeginLoc(&type::getBeginLoc))
-#define ASSERT_IMPLEMENTS_getLocEnd(type) \
-  (void) is_good(implements_getLocEnd(&type::getLocEnd))
+#define ASSERT_IMPLEMENTS_getEndLoc(type)                                      \
+  (void)is_good(implements_getEndLoc(&type::getEndLoc))
 
 } // namespace
 
@@ -218,7 +216,7 @@ static inline void check_implementations() {
 #define STMT(type, base)                                                       \
   ASSERT_IMPLEMENTS_children(type);                                            \
   ASSERT_IMPLEMENTS_getBeginLoc(type);                                         \
-  ASSERT_IMPLEMENTS_getLocEnd(type);
+  ASSERT_IMPLEMENTS_getEndLoc(type);
 #include "clang/AST/StmtNodes.inc"
 }
 
@@ -256,7 +254,7 @@ namespace {
   SourceRange getSourceRangeImpl(const Stmt *stmt,
                                  SourceRange (Stmt::*v)() const) {
     return SourceRange(static_cast<const S *>(stmt)->getBeginLoc(),
-                       static_cast<const S *>(stmt)->getLocEnd());
+                       static_cast<const S *>(stmt)->getEndLoc());
   }
 
 } // namespace
@@ -290,9 +288,9 @@ SourceLocation Stmt::getEndLoc() const {
   switch (getStmtClass()) {
   case Stmt::NoStmtClass: llvm_unreachable("statement without class");
 #define ABSTRACT_STMT(type)
-#define STMT(type, base) \
-  case Stmt::type##Class: \
-    return static_cast<const type*>(this)->getLocEnd();
+#define STMT(type, base)                                                       \
+  case Stmt::type##Class:                                                      \
+    return static_cast<const type *>(this)->getEndLoc();
 #include "clang/AST/StmtNodes.inc"
   }
   llvm_unreachable("unknown statement kind");

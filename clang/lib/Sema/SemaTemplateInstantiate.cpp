@@ -1708,7 +1708,7 @@ void Sema::SubstExceptionSpec(FunctionDecl *New, const FunctionProtoType *Proto,
       Proto->getExtProtoInfo().ExceptionSpec;
 
   SmallVector<QualType, 4> ExceptionStorage;
-  if (SubstExceptionSpec(New->getTypeSourceInfo()->getTypeLoc().getLocEnd(),
+  if (SubstExceptionSpec(New->getTypeSourceInfo()->getTypeLoc().getEndLoc(),
                          ESI, ExceptionStorage, Args))
     // On error, recover by dropping the exception specification.
     ESI.Type = EST_None;
@@ -2303,7 +2303,7 @@ bool Sema::InstantiateInClassInitializer(
     Diag(PointOfInstantiation,
          diag::err_in_class_initializer_not_yet_parsed)
         << OutermostClass << Pattern;
-    Diag(Pattern->getLocEnd(), diag::note_in_class_initializer_not_yet_parsed);
+    Diag(Pattern->getEndLoc(), diag::note_in_class_initializer_not_yet_parsed);
     Instantiation->setInvalidDecl();
     return true;
   }

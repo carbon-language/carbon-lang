@@ -242,7 +242,7 @@ private:
         } else {
           newCast += '(';
           TA.insert(insertLoc, newCast.str());
-          TA.insertAfterToken(E->getLocEnd(), ")");
+          TA.insertAfterToken(E->getEndLoc(), ")");
         }
       }
     } else {
@@ -267,7 +267,7 @@ private:
       } else {
         BridgeCall += '(';
         TA.insert(InsertLoc, BridgeCall);
-        TA.insertAfterToken(WrapE->getLocEnd(), ")");
+        TA.insertAfterToken(WrapE->getEndLoc(), ")");
       }
     }
   }

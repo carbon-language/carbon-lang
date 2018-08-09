@@ -639,7 +639,7 @@ public:
 
   /// getSourceRange - The range of the declaration name.
   SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getBeginLoc(), getLocEnd());
+    return SourceRange(getBeginLoc(), getEndLoc());
   }
 
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }

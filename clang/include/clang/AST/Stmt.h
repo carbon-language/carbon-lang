@@ -816,7 +816,7 @@ public:
     while (const auto *CS2 = dyn_cast<CaseStmt>(CS->getSubStmt()))
       CS = CS2;
 
-    return CS->getSubStmt()->getLocEnd();
+    return CS->getSubStmt()->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -853,7 +853,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return KeywordLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubStmt->getLocEnd();
+    return SubStmt->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -866,8 +866,8 @@ public:
 
 inline SourceLocation SwitchCase::getEndLoc() const {
   if (const auto *CS = dyn_cast<CaseStmt>(this))
-    return CS->getLocEnd();
-  return cast<DefaultStmt>(this)->getLocEnd();
+    return CS->getEndLoc();
+  return cast<DefaultStmt>(this)->getEndLoc();
 }
 
 /// LabelStmt - Represents a label, which has a substatement.  For example:
@@ -901,7 +901,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return IdentLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubStmt->getLocEnd();
+    return SubStmt->getEndLoc();
   }
 
   child_range children() { return child_range(&SubStmt, &SubStmt+1); }
@@ -960,7 +960,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return AttrLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubStmt->getLocEnd();
+    return SubStmt->getEndLoc();
   }
 
   child_range children() { return child_range(&SubStmt, &SubStmt + 1); }
@@ -1034,9 +1034,9 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
     if (SubExprs[ELSE])
-      return SubExprs[ELSE]->getLocEnd();
+      return SubExprs[ELSE]->getEndLoc();
     else
-      return SubExprs[THEN]->getLocEnd();
+      return SubExprs[THEN]->getEndLoc();
   }
 
   // Iterators over subexpressions.  The iterators will include iterating
@@ -1130,7 +1130,8 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExprs[BODY] ? SubExprs[BODY]->getLocEnd() : SubExprs[COND]->getLocEnd();
+    return SubExprs[BODY] ? SubExprs[BODY]->getEndLoc()
+                          : SubExprs[COND]->getEndLoc();
   }
 
   // Iterators
@@ -1188,7 +1189,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExprs[BODY]->getLocEnd();
+    return SubExprs[BODY]->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -1312,7 +1313,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExprs[BODY]->getLocEnd();
+    return SubExprs[BODY]->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -1396,7 +1397,7 @@ public:
   SourceLocation getLocStart() const LLVM_READONLY { return getBeginLoc(); }
   SourceLocation getBeginLoc() const LLVM_READONLY { return GotoLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
-  SourceLocation getEndLoc() const LLVM_READONLY { return Target->getLocEnd(); }
+  SourceLocation getEndLoc() const LLVM_READONLY { return Target->getEndLoc(); }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == IndirectGotoStmtClass;
@@ -1508,7 +1509,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return RetExpr ? RetExpr->getLocEnd() : RetLoc;
+    return RetExpr ? RetExpr->getEndLoc() : RetLoc;
   }
 
   static bool classof(const Stmt *T) {
@@ -1982,7 +1983,7 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
 
   SourceLocation getExceptLoc() const { return Loc; }
-  SourceLocation getEndLoc() const { return getBlock()->getLocEnd(); }
+  SourceLocation getEndLoc() const { return getBlock()->getEndLoc(); }
 
   Expr *getFilterExpr() const {
     return reinterpret_cast<Expr*>(Children[FILTER_EXPR]);
@@ -2021,7 +2022,7 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
 
   SourceLocation getFinallyLoc() const { return Loc; }
-  SourceLocation getEndLoc() const { return Block->getLocEnd(); }
+  SourceLocation getEndLoc() const { return Block->getEndLoc(); }
 
   CompoundStmt *getBlock() const { return cast<CompoundStmt>(Block); }
 
@@ -2061,7 +2062,7 @@ public:
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
 
   SourceLocation getTryLoc() const { return TryLoc; }
-  SourceLocation getEndLoc() const { return Children[HANDLER]->getLocEnd(); }
+  SourceLocation getEndLoc() const { return Children[HANDLER]->getEndLoc(); }
 
   bool getIsCXXTry() const { return IsCXXTry; }
 
@@ -2321,7 +2322,7 @@ public:
 
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getCapturedStmt()->getLocEnd();
+    return getCapturedStmt()->getEndLoc();
   }
 
   SourceRange getSourceRange() const LLVM_READONLY {

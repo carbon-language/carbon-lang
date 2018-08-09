@@ -2755,7 +2755,7 @@ Decl *ASTNodeImporter::VisitFunctionDecl(FunctionDecl *D) {
   ToFunction->setVirtualAsWritten(D->isVirtualAsWritten());
   ToFunction->setTrivial(D->isTrivial());
   ToFunction->setPure(D->isPure());
-  ToFunction->setRangeEnd(Importer.Import(D->getLocEnd()));
+  ToFunction->setRangeEnd(Importer.Import(D->getEndLoc()));
 
   // Set the parameters.
   for (auto *Param : Parameters) {
@@ -3409,7 +3409,7 @@ Decl *ASTNodeImporter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   ObjCMethodDecl *ToMethod;
   if (GetImportedOrCreateDecl(
           ToMethod, D, Importer.getToContext(), Loc,
-          Importer.Import(D->getLocEnd()), Name.getObjCSelector(), ResultTy,
+          Importer.Import(D->getEndLoc()), Name.getObjCSelector(), ResultTy,
           ReturnTInfo, DC, D->isInstanceMethod(), D->isVariadic(),
           D->isPropertyAccessor(), D->isImplicit(), D->isDefined(),
           D->getImplementationControl(), D->hasRelatedResultType()))
@@ -5862,7 +5862,7 @@ Expr *ASTNodeImporter::VisitArrayTypeTraitExpr(ArrayTypeTraitExpr *E) {
 
   return new (Importer.getToContext()) ArrayTypeTraitExpr(
       Importer.Import(E->getBeginLoc()), E->getTrait(), ToQueried,
-      E->getValue(), Dim, Importer.Import(E->getLocEnd()), T);
+      E->getValue(), Dim, Importer.Import(E->getEndLoc()), T);
 }
 
 Expr *ASTNodeImporter::VisitExpressionTraitExpr(ExpressionTraitExpr *E) {
@@ -5876,7 +5876,7 @@ Expr *ASTNodeImporter::VisitExpressionTraitExpr(ExpressionTraitExpr *E) {
 
   return new (Importer.getToContext()) ExpressionTraitExpr(
       Importer.Import(E->getBeginLoc()), E->getTrait(), ToQueried,
-      E->getValue(), Importer.Import(E->getLocEnd()), T);
+      E->getValue(), Importer.Import(E->getEndLoc()), T);
 }
 
 Expr *ASTNodeImporter::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
@@ -6062,7 +6062,7 @@ Expr *ASTNodeImporter::VisitOffsetOfExpr(OffsetOfExpr *OE) {
     case OffsetOfNode::Array:
       Nodes.push_back(OffsetOfNode(Importer.Import(Node.getBeginLoc()),
                                    Node.getArrayExprIndex(),
-                                   Importer.Import(Node.getLocEnd())));
+                                   Importer.Import(Node.getEndLoc())));
       break;
 
     case OffsetOfNode::Base: {
@@ -6077,7 +6077,7 @@ Expr *ASTNodeImporter::VisitOffsetOfExpr(OffsetOfExpr *OE) {
       if (!FD)
         return nullptr;
       Nodes.push_back(OffsetOfNode(Importer.Import(Node.getBeginLoc()), FD,
-                                   Importer.Import(Node.getLocEnd())));
+                                   Importer.Import(Node.getEndLoc())));
       break;
     }
     case OffsetOfNode::Identifier: {
@@ -6085,7 +6085,7 @@ Expr *ASTNodeImporter::VisitOffsetOfExpr(OffsetOfExpr *OE) {
       if (!ToII)
         return nullptr;
       Nodes.push_back(OffsetOfNode(Importer.Import(Node.getBeginLoc()), ToII,
-                                   Importer.Import(Node.getLocEnd())));
+                                   Importer.Import(Node.getEndLoc())));
       break;
     }
     }
@@ -6126,7 +6126,7 @@ Expr *ASTNodeImporter::VisitCXXNoexceptExpr(CXXNoexceptExpr *E) {
 
   return new (Importer.getToContext())
       CXXNoexceptExpr(T, Operand, CanThrow, Importer.Import(E->getBeginLoc()),
-                      Importer.Import(E->getLocEnd()));
+                      Importer.Import(E->getEndLoc()));
 }
 
 Expr *ASTNodeImporter::VisitCXXThrowExpr(CXXThrowExpr *E) {
@@ -6729,16 +6729,12 @@ Expr *ASTNodeImporter::VisitLambdaExpr(LambdaExpr *LE) {
   if (ImportContainerChecked(LE->capture_inits(), InitCaptures))
     return nullptr;
 
-  return LambdaExpr::Create(Importer.getToContext(), ToClass,
-                            Importer.Import(LE->getIntroducerRange()),
-                            LE->getCaptureDefault(),
-                            Importer.Import(LE->getCaptureDefaultLoc()),
-                            Captures,
-                            LE->hasExplicitParameters(),
-                            LE->hasExplicitResultType(),
-                            InitCaptures,
-                            Importer.Import(LE->getLocEnd()),
-                            LE->containsUnexpandedParameterPack());
+  return LambdaExpr::Create(
+      Importer.getToContext(), ToClass,
+      Importer.Import(LE->getIntroducerRange()), LE->getCaptureDefault(),
+      Importer.Import(LE->getCaptureDefaultLoc()), Captures,
+      LE->hasExplicitParameters(), LE->hasExplicitResultType(), InitCaptures,
+      Importer.Import(LE->getEndLoc()), LE->containsUnexpandedParameterPack());
 }
 
 Expr *ASTNodeImporter::VisitInitListExpr(InitListExpr *ILE) {
@@ -6917,7 +6913,7 @@ Expr *ASTNodeImporter::VisitTypeTraitExpr(TypeTraitExpr *E) {
 
   return TypeTraitExpr::Create(
       Importer.getToContext(), ToType, Importer.Import(E->getBeginLoc()),
-      E->getTrait(), ToArgs, Importer.Import(E->getLocEnd()), ToValue);
+      E->getTrait(), ToArgs, Importer.Import(E->getEndLoc()), ToValue);
 }
 
 Expr *ASTNodeImporter::VisitCXXTypeidExpr(CXXTypeidExpr *E) {

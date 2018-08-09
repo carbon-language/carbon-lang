@@ -213,7 +213,7 @@ public:
 
   /// Get the end of \c S ignoring macro arguments and builtin macros.
   SourceLocation getEnd(const Stmt *S) {
-    SourceLocation Loc = S->getLocEnd();
+    SourceLocation Loc = S->getEndLoc();
     while (SM.isMacroArgExpansion(Loc) || isInBuiltin(Loc))
       Loc = SM.getImmediateExpansionRange(Loc).getBegin();
     return getPreciseTokenLocEnd(Loc);

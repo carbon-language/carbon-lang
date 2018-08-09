@@ -316,9 +316,9 @@ void RawCommentList::addComment(const RawComment &RC,
        (C1.isTrailingComment() && !C2.isTrailingComment() &&
         isOrdinaryKind(C2.getKind()) &&
         commentsStartOnSameColumn(SourceMgr, C1, C2))) &&
-      onlyWhitespaceBetween(SourceMgr, C1.getLocEnd(), C2.getBeginLoc(),
+      onlyWhitespaceBetween(SourceMgr, C1.getEndLoc(), C2.getBeginLoc(),
                             /*MaxNewlinesAllowed=*/1)) {
-    SourceRange MergedRange(C1.getBeginLoc(), C2.getLocEnd());
+    SourceRange MergedRange(C1.getBeginLoc(), C2.getEndLoc());
     *Comments.back() = RawComment(SourceMgr, MergedRange, CommentOpts, true);
   } else {
     Comments.push_back(new (Allocator) RawComment(RC));

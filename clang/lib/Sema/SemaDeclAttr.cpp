@@ -7056,7 +7056,7 @@ struct AttributeInsertion {
   StringRef Suffix;
 
   static AttributeInsertion createInsertionAfter(const NamedDecl *D) {
-    return {" ", D->getLocEnd(), ""};
+    return {" ", D->getEndLoc(), ""};
   }
   static AttributeInsertion createInsertionAfter(SourceLocation Loc) {
     return {" ", Loc, ""};
@@ -7586,19 +7586,19 @@ public:
   bool VisitObjCMessageExpr(ObjCMessageExpr *Msg) {
     if (ObjCMethodDecl *D = Msg->getMethodDecl())
       DiagnoseDeclAvailability(
-          D, SourceRange(Msg->getSelectorStartLoc(), Msg->getLocEnd()));
+          D, SourceRange(Msg->getSelectorStartLoc(), Msg->getEndLoc()));
     return true;
   }
 
   bool VisitDeclRefExpr(DeclRefExpr *DRE) {
     DiagnoseDeclAvailability(DRE->getDecl(),
-                             SourceRange(DRE->getBeginLoc(), DRE->getLocEnd()));
+                             SourceRange(DRE->getBeginLoc(), DRE->getEndLoc()));
     return true;
   }
 
   bool VisitMemberExpr(MemberExpr *ME) {
     DiagnoseDeclAvailability(ME->getMemberDecl(),
-                             SourceRange(ME->getBeginLoc(), ME->getLocEnd()));
+                             SourceRange(ME->getBeginLoc(), ME->getEndLoc()));
     return true;
   }
 
@@ -7695,7 +7695,7 @@ void DiagnoseUnguardedAvailability::DiagnoseDeclAvailability(
         SM.getExpansionLoc(StmtOfUse->getBeginLoc());
     SourceLocation StmtEndLoc =
         SM.getExpansionRange(
-              (LastStmtOfUse ? LastStmtOfUse : StmtOfUse)->getLocEnd())
+              (LastStmtOfUse ? LastStmtOfUse : StmtOfUse)->getEndLoc())
             .getEnd();
     if (SM.getFileID(IfInsertionLoc) != SM.getFileID(StmtEndLoc))
       return;

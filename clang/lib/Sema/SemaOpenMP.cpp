@@ -2706,13 +2706,13 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
              ? SC->getFirstScheduleModifierLoc()
              : SC->getSecondScheduleModifierLoc(),
          diag::err_omp_schedule_nonmonotonic_ordered)
-        << SourceRange(OC->getBeginLoc(), OC->getLocEnd());
+        << SourceRange(OC->getBeginLoc(), OC->getEndLoc());
     ErrorFound = true;
   }
   if (!LCs.empty() && OC && OC->getNumForLoops()) {
     for (const OMPLinearClause *C : LCs) {
       Diag(C->getBeginLoc(), diag::err_omp_linear_ordered)
-          << SourceRange(OC->getBeginLoc(), OC->getLocEnd());
+          << SourceRange(OC->getBeginLoc(), OC->getEndLoc());
     }
     ErrorFound = true;
   }
@@ -6135,7 +6135,7 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
         C->getClauseKind() == OMPC_capture) {
       if (AtomicKind != OMPC_unknown) {
         Diag(C->getBeginLoc(), diag::err_omp_atomic_several_clauses)
-            << SourceRange(C->getBeginLoc(), C->getLocEnd());
+            << SourceRange(C->getBeginLoc(), C->getEndLoc());
         Diag(AtomicKindLoc, diag::note_omp_atomic_previous_clause)
             << getOpenMPClauseName(AtomicKind);
       } else {
@@ -6938,7 +6938,7 @@ static bool checkReductionClauseWithNogroup(Sema &S,
   if (ReductionClause && NogroupClause) {
     S.Diag(ReductionClause->getBeginLoc(), diag::err_omp_reduction_with_nogroup)
         << SourceRange(NogroupClause->getBeginLoc(),
-                       NogroupClause->getLocEnd());
+                       NogroupClause->getEndLoc());
     return true;
   }
   return false;

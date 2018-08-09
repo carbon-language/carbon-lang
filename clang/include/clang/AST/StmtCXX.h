@@ -45,7 +45,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return CatchLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return HandlerBlock->getLocEnd();
+    return HandlerBlock->getEndLoc();
   }
 
   SourceLocation getCatchLoc() const { return CatchLoc; }
@@ -94,7 +94,7 @@ public:
 
   SourceLocation getTryLoc() const { return TryLoc; }
   SourceLocation getEndLoc() const {
-    return getStmts()[NumHandlers]->getLocEnd();
+    return getStmts()[NumHandlers]->getEndLoc();
   }
 
   CompoundStmt *getTryBlock() {
@@ -201,7 +201,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return ForLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubExprs[BODY]->getLocEnd();
+    return SubExprs[BODY]->getEndLoc();
   }
 
   static bool classof(const Stmt *T) {
@@ -289,7 +289,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return KeywordLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return SubStmt->getLocEnd();
+    return SubStmt->getEndLoc();
   }
 
   child_range children() {
@@ -415,7 +415,7 @@ public:
   }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getBody() ? getBody()->getLocEnd() : getPromiseDecl()->getLocEnd();
+    return getBody() ? getBody()->getEndLoc() : getPromiseDecl()->getEndLoc();
   }
 
   child_range children() {
@@ -479,7 +479,7 @@ public:
   SourceLocation getBeginLoc() const LLVM_READONLY { return CoreturnLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    return getOperand() ? getOperand()->getLocEnd() : getBeginLoc();
+    return getOperand() ? getOperand()->getEndLoc() : getBeginLoc();
   }
 
   child_range children() {

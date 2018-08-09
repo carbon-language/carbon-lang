@@ -609,7 +609,7 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   }
 
   if (T->isObjCObjectType()) {
-    SourceLocation StarLoc = TInfo->getTypeLoc().getLocEnd();
+    SourceLocation StarLoc = TInfo->getTypeLoc().getEndLoc();
     StarLoc = getLocForEndOfToken(StarLoc);
     Diag(FD.D.getIdentifierLoc(), diag::err_statically_allocated_object)
       << FixItHint::CreateInsertion(StarLoc, "*");
@@ -2235,7 +2235,7 @@ void Sema::DiagnoseOwningPropertyGetterSynthesis(const ObjCImplementationDecl *D
           if (getterRedecl->getDeclContext() != PD->getDeclContext())
             continue;
           noteLoc = getterRedecl->getLocation();
-          fixItLoc = getterRedecl->getLocEnd();
+          fixItLoc = getterRedecl->getEndLoc();
         }
 
         Preprocessor &PP = getPreprocessor();

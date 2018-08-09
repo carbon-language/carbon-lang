@@ -81,7 +81,7 @@ SourceLocation StmtSequence::getBeginLoc() const {
   return front()->getBeginLoc();
 }
 
-SourceLocation StmtSequence::getEndLoc() const { return back()->getLocEnd(); }
+SourceLocation StmtSequence::getEndLoc() const { return back()->getEndLoc(); }
 
 SourceRange StmtSequence::getSourceRange() const {
   return SourceRange(getBeginLoc(), getEndLoc());

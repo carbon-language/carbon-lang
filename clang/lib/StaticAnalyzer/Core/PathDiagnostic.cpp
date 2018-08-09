@@ -536,7 +536,7 @@ PathDiagnosticConsumer::FilesMade::getFiles(const PathDiagnostic &PD) {
 static SourceLocation getValidSourceLocation(const Stmt* S,
                                              LocationOrAnalysisDeclContext LAC,
                                              bool UseEnd = false) {
-  SourceLocation L = UseEnd ? S->getLocEnd() : S->getBeginLoc();
+  SourceLocation L = UseEnd ? S->getEndLoc() : S->getBeginLoc();
   assert(!LAC.isNull() && "A valid LocationContext or AnalysisDeclContext should "
                           "be passed to PathDiagnosticLocation upon creation.");
 
@@ -564,11 +564,11 @@ static SourceLocation getValidSourceLocation(const Stmt* S,
         if (Body)
           L = Body->getBeginLoc();
         else
-          L = ADC->getDecl()->getLocEnd();
+          L = ADC->getDecl()->getEndLoc();
         break;
       }
 
-      L = UseEnd ? Parent->getLocEnd() : Parent->getBeginLoc();
+      L = UseEnd ? Parent->getEndLoc() : Parent->getBeginLoc();
     } while (!L.isValid());
   }
 

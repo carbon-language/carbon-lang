@@ -1762,7 +1762,7 @@ struct ConvertConstructorToDeductionGuideTransform {
 
     return buildDeductionGuide(TemplateParams, CD->isExplicit(), NewTInfo,
                                CD->getBeginLoc(), CD->getLocation(),
-                               CD->getLocEnd());
+                               CD->getEndLoc());
   }
 
   /// Build a deduction guide with the specified parameter types.
@@ -5625,7 +5625,7 @@ isNullPointerValueTemplateArgument(Sema &S, NonTypeTemplateParmDecl *Param,
     std::string Code = "static_cast<" + ParamType.getAsString() + ">(";
     S.Diag(Arg->getExprLoc(), diag::err_template_arg_untyped_null_constant)
         << ParamType << FixItHint::CreateInsertion(Arg->getBeginLoc(), Code)
-        << FixItHint::CreateInsertion(S.getLocForEndOfToken(Arg->getLocEnd()),
+        << FixItHint::CreateInsertion(S.getLocForEndOfToken(Arg->getEndLoc()),
                                       ")");
     S.Diag(Param->getLocation(), diag::note_template_param_here);
     return NPV_NullPointer;
