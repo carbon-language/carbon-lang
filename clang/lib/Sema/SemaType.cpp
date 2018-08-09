@@ -5815,8 +5815,8 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
 
     // Check the attribute arguments.
     if (Attr.getNumArgs() != 1) {
-      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-          << Attr.getName() << 1;
+      S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << Attr
+                                                                        << 1;
       Attr.setInvalid();
       return;
     }
@@ -5951,8 +5951,8 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
         S.getSourceManager().getImmediateExpansionRange(AttrLoc).getBegin();
 
   if (!attr.isArgIdent(0)) {
-    S.Diag(AttrLoc, diag::err_attribute_argument_type)
-      << attr.getName() << AANT_ArgumentString;
+    S.Diag(AttrLoc, diag::err_attribute_argument_type) << attr
+                                                       << AANT_ArgumentString;
     attr.setInvalid();
     return true;
   }
@@ -6122,14 +6122,14 @@ static bool handleObjCGCTypeAttr(TypeProcessingState &state, ParsedAttr &attr,
   // Check the attribute arguments.
   if (!attr.isArgIdent(0)) {
     S.Diag(attr.getLoc(), diag::err_attribute_argument_type)
-      << attr.getName() << AANT_ArgumentString;
+        << attr << AANT_ArgumentString;
     attr.setInvalid();
     return true;
   }
   Qualifiers::GC GCAttr;
   if (attr.getNumArgs() > 1) {
-    S.Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << attr.getName() << 1;
+    S.Diag(attr.getLoc(), diag::err_attribute_wrong_number_arguments) << attr
+                                                                      << 1;
     attr.setInvalid();
     return true;
   }
@@ -6338,11 +6338,9 @@ static bool handleMSPointerTypeQualifierAttr(TypeProcessingState &State,
   // pointer-to-member types.
   if (!isa<PointerType>(Desugared)) {
     if (Type->isMemberPointerType())
-      S.Diag(Attr.getLoc(), diag::err_attribute_no_member_pointers)
-          << Attr.getName();
+      S.Diag(Attr.getLoc(), diag::err_attribute_no_member_pointers) << Attr;
     else
-      S.Diag(Attr.getLoc(), diag::err_attribute_pointers_only)
-          << Attr.getName() << 0;
+      S.Diag(Attr.getLoc(), diag::err_attribute_pointers_only) << Attr << 0;
     return true;
   }
 
@@ -6906,8 +6904,8 @@ static void HandleVectorSizeAttr(QualType &CurType, const ParsedAttr &Attr,
                                  Sema &S) {
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << Attr.getName() << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << Attr
+                                                                      << 1;
     Attr.setInvalid();
     return;
   }
@@ -6943,8 +6941,8 @@ static void HandleExtVectorTypeAttr(QualType &CurType, const ParsedAttr &Attr,
                                     Sema &S) {
   // check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << Attr.getName() << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << Attr
+                                                                      << 1;
     return;
   }
 
@@ -7032,14 +7030,14 @@ static void HandleNeonVectorTypeAttr(QualType &CurType, const ParsedAttr &Attr,
                                      Sema &S, VectorType::VectorKind VecKind) {
   // Target must have NEON
   if (!S.Context.getTargetInfo().hasFeature("neon")) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_unsupported) << Attr.getName();
+    S.Diag(Attr.getLoc(), diag::err_attribute_unsupported) << Attr;
     Attr.setInvalid();
     return;
   }
   // Check the attribute arguments.
   if (Attr.getNumArgs() != 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << Attr.getName() << 1;
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << Attr
+                                                                      << 1;
     Attr.setInvalid();
     return;
   }
@@ -7049,8 +7047,8 @@ static void HandleNeonVectorTypeAttr(QualType &CurType, const ParsedAttr &Attr,
   if (numEltsExpr->isTypeDependent() || numEltsExpr->isValueDependent() ||
       !numEltsExpr->isIntegerConstantExpr(numEltsInt, S.Context)) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_type)
-      << Attr.getName() << AANT_ArgumentIntegerConstant
-      << numEltsExpr->getSourceRange();
+        << Attr << AANT_ArgumentIntegerConstant
+        << numEltsExpr->getSourceRange();
     Attr.setInvalid();
     return;
   }
@@ -7256,7 +7254,7 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       // A C++11 attribute on a declarator chunk must appertain to a type.
       if (attr.isCXX11Attribute() && TAL == TAL_DeclChunk) {
         state.getSema().Diag(attr.getLoc(), diag::err_attribute_not_type_attr)
-          << attr.getName();
+            << attr;
         attr.setUsedAsTypeAttr();
       }
       break;
