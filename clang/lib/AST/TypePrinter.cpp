@@ -1427,22 +1427,6 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
                              ->getExtInfo().getProducesResult())
     return;
 
-  // Print nullability type specifiers that occur after
-  if (T->getAttrKind() == AttributedType::attr_nonnull ||
-      T->getAttrKind() == AttributedType::attr_nullable ||
-      T->getAttrKind() == AttributedType::attr_null_unspecified) {
-    if (T->getAttrKind() == AttributedType::attr_nonnull)
-      OS << " _Nonnull";
-    else if (T->getAttrKind() == AttributedType::attr_nullable)
-      OS << " _Nullable";
-    else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
-      OS << " _Null_unspecified";
-    else
-      llvm_unreachable("unhandled nullability");
-
-    return;
-  }
-
   if (T->getAttrKind() == AttributedType::attr_lifetimebound) {
     OS << " [[clang::lifetimebound]]";
     return;
