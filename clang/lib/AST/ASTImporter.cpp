@@ -5011,7 +5011,7 @@ Stmt *ASTNodeImporter::VisitDeclStmt(DeclStmt *S) {
     if (!ToD)
       return nullptr;
   }
-  SourceLocation ToStartLoc = Importer.Import(S->getStartLoc());
+  SourceLocation ToStartLoc = Importer.Import(S->getBeginLoc());
   SourceLocation ToEndLoc = Importer.Import(S->getEndLoc());
   return new (Importer.getToContext()) DeclStmt(ToDG, ToStartLoc, ToEndLoc);
 }

@@ -81,7 +81,7 @@ class VarTemplateDecl;
 /// A client can read the relevant info using TypeLoc wrappers, e.g:
 /// @code
 /// TypeLoc TL = TypeSourceInfo->getTypeLoc();
-/// TL.getStartLoc().print(OS, SrcMgr);
+/// TL.getBeginLoc().print(OS, SrcMgr);
 /// @endcode
 class alignas(8) TypeSourceInfo {
   // Contains a memory block after the class, used for type source information,
