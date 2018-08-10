@@ -581,7 +581,7 @@ public:
     TypeTagForDatatypeAllocSize =
         ParsedAttr::totalSizeToAlloc<ArgsUnion, detail::AvailabilityData,
                                      detail::TypeTagForDatatypeData, ParsedType,
-                                     detail::PropertyData>(0, 0, 1, 0, 0),
+                                     detail::PropertyData>(1, 0, 1, 0, 0),
     PropertyAllocSize =
         ParsedAttr::totalSizeToAlloc<ArgsUnion, detail::AvailabilityData,
                                      detail::TypeTagForDatatypeData, ParsedType,
