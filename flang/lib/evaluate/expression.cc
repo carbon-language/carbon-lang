@@ -485,14 +485,14 @@ auto RealExpr<KIND>::Min::FoldScalar(FoldingContext &context, const Scalar &a,
 }
 
 template<int KIND>
-auto RealExpr<KIND>::RealPart::FoldScalar(
-    FoldingContext &context, const CplxScalar &z) -> std::optional<Scalar> {
+auto RealExpr<KIND>::RealPart::FoldScalar(FoldingContext &context,
+    const SameKindComplexScalar &z) -> std::optional<Scalar> {
   return {z.REAL()};
 }
 
 template<int KIND>
-auto RealExpr<KIND>::AIMAG::FoldScalar(
-    FoldingContext &context, const CplxScalar &z) -> std::optional<Scalar> {
+auto RealExpr<KIND>::AIMAG::FoldScalar(FoldingContext &context,
+    const SameKindComplexScalar &z) -> std::optional<Scalar> {
   return {z.AIMAG()};
 }
 
@@ -578,7 +578,8 @@ auto ComplexExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto ComplexExpr<KIND>::CMPLX::FoldScalar(FoldingContext &context,
-    const PartScalar &a, const PartScalar &b) -> std::optional<Scalar> {
+    const SameKindRealScalar &a, const SameKindRealScalar &b)
+    -> std::optional<Scalar> {
   return {Scalar{a, b}};
 }
 

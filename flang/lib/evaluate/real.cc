@@ -419,10 +419,18 @@ ValueWithRealFlags<Real<W, P, IM>> Real<W, P, IM>::Read(
     }
     exponent += expoVal;
   }
-  Real tenPower{IntPower(ten, Integer<64>{exponent}, rounding)
+  if (exponent == 0) {
+    return result;
+  }
+  Real tenPower{IntPower(ten, Integer<64>{std::abs(exponent)}, rounding)
                     .AccumulateFlags(result.flags)};
-  result.value =
-      result.value.Multiply(tenPower, rounding).AccumulateFlags(result.flags);
+  if (exponent > 0) {
+    result.value =
+        result.value.Multiply(tenPower, rounding).AccumulateFlags(result.flags);
+  } else {
+    result.value =
+        result.value.Divide(tenPower, rounding).AccumulateFlags(result.flags);
+  }
   return result;
 }
 

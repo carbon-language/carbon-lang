@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include "expression.h"
+#include "symbol.h"
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
+#include "../evaluate/tools.h"
 
 using namespace Fortran::parser::literals;
 
@@ -83,22 +85,31 @@ Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
   return result;
 }
 
-template<>
-Result AnalyzeHelper(
+static std::optional<evaluate::AnyKindCharacterExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ExpressionAnalyzer::KindParam{1})};
   switch (kind) {
 #define CASE(k) \
   case k: \
-    return {evaluate::GenericExpr{evaluate::AnyKindCharacterExpr{ \
-        evaluate::CharacterExpr<k>{std::get<std::string>(x.t)}}}};
+    return {evaluate::AnyKindCharacterExpr{ \
+        evaluate::CharacterExpr<k>{std::get<std::string>(x.t)}}};
+    FOR_EACH_CHARACTER_KIND(CASE, )
 #undef CASE
   default:
     ea.context().messages.Say("unimplemented CHARACTER kind (%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
     return std::nullopt;
   }
+}
+
+// TODO: move this functor to common?  abstract to more of an fmap?
+template<typename A, typename B>
+std::optional<A> WrapOptional(std::optional<B> &&x) {
+  if (x.has_value()) {
+    return {A{std::move(*x)}};
+  }
+  return std::nullopt;
 }
 
 template<>
@@ -109,7 +120,8 @@ Result AnalyzeHelper(
   const std::optional<parser::ScalarIntExpr> &ubTree{std::get<1>(range.t)};
   if (!lbTree.has_value() && !ubTree.has_value()) {
     // "..."(:)
-    return AnalyzeHelper(ea, std::get<parser::CharLiteralConstant>(x.t));
+    return WrapOptional<evaluate::GenericExpr>(
+        AnalyzeLiteral(ea, std::get<parser::CharLiteralConstant>(x.t)));
   }
   // TODO: ensure that any kind parameter is 1
   std::string str{std::get<parser::CharLiteralConstant>(x.t).GetString()};
@@ -141,22 +153,21 @@ Result AnalyzeHelper(
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
   evaluate::CharacterExpr<1> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
-  evaluate::AnyKindCharacterExpr akcExpr{std::move(chExpr)};
-  evaluate::GenericExpr gExpr{std::move(akcExpr)};
-  return {gExpr};
+  return {
+      evaluate::GenericExpr{evaluate::AnyKindCharacterExpr{std::move(chExpr)}}};
 }
 
-template<>
-Result AnalyzeHelper(
-    ExpressionAnalyzer &ea, const parser::IntLiteralConstant &x) {
+// Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
+template<typename PARSED>
+std::optional<evaluate::AnyKindIntegerExpr> IntLiteralConstant(
+    ExpressionAnalyzer &ea, const PARSED &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultIntegerKind())};
-  std::uint64_t value{std::get<std::uint64_t>(x.t)};
+  auto value{std::get<0>(x.t)};  // std::[u]int64_t
   switch (kind) {
 #define CASE(k) \
   case k: \
-    return {evaluate::GenericExpr{ \
-        evaluate::AnyKindIntegerExpr{evaluate::IntegerExpr<k>{value}}}};
+    return {evaluate::AnyKindIntegerExpr{evaluate::IntegerExpr<k>{value}}};
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:
@@ -166,8 +177,17 @@ Result AnalyzeHelper(
   }
 }
 
-template<>
-Result AnalyzeHelper(
+static std::optional<evaluate::AnyKindIntegerExpr> AnalyzeLiteral(
+    ExpressionAnalyzer &ea, const parser::IntLiteralConstant &x) {
+  return IntLiteralConstant(ea, x);
+}
+
+static std::optional<evaluate::AnyKindIntegerExpr> AnalyzeLiteral(
+    ExpressionAnalyzer &ea, const parser::SignedIntLiteralConstant &x) {
+  return IntLiteralConstant(ea, x);
+}
+
+static std::optional<evaluate::BOZLiteralConstant> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::BOZLiteralConstant &x) {
   const char *p{x.v.data()};
   std::uint64_t base{16};
@@ -189,11 +209,11 @@ Result AnalyzeHelper(
     ea.context().messages.Say("BOZ literal %s too large"_err_en_US, x.v.data());
     return std::nullopt;
   }
-  return {evaluate::GenericExpr{value.value}};
+  return {value.value};
 }
 
 template<int KIND>
-Result ReadRealLiteral(
+std::optional<evaluate::AnyKindRealExpr> ReadRealLiteral(
     parser::CharBlock source, evaluate::FoldingContext &context) {
   using valueType = typename evaluate::RealExpr<KIND>::Scalar;
   const char *p{source.begin()};
@@ -205,12 +225,10 @@ Result ReadRealLiteral(
   if (context.flushDenormalsToZero) {
     value = value.FlushDenormalToZero();
   }
-  return {evaluate::GenericExpr{
-      evaluate::AnyKindRealExpr{evaluate::RealExpr<KIND>{value}}}};
+  return {evaluate::AnyKindRealExpr{evaluate::RealExpr<KIND>{value}}};
 }
 
-template<>
-Result AnalyzeHelper(
+static std::optional<evaluate::AnyKindRealExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::RealLiteralConstant &x) {
   // Use a local message context around the real literal.
   parser::ContextualMessages ctxMsgs{x.real.source, ea.context().messages};
@@ -244,28 +262,84 @@ Result AnalyzeHelper(
   }
 }
 
+static std::optional<evaluate::AnyKindRealExpr> AnalyzeLiteral(
+    ExpressionAnalyzer &ea, const parser::SignedRealLiteralConstant &x) {
+  auto result{AnalyzeLiteral(ea, std::get<parser::RealLiteralConstant>(x.t))};
+  if (result.has_value()) {
+    if (auto sign{std::get<std::optional<parser::Sign>>(x.t)}) {
+      if (sign == parser::Sign::Negative) {
+        std::visit(
+            [](auto &rk) {
+              using t = typename std::decay<decltype(rk)>::type;
+              rk = typename t::Negate{rk};
+            },
+            result->u);
+      }
+    }
+  }
+  return result;
+}
+
+template<>
+Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::NamedConstant &n) {
+  CHECK(n.v.symbol != nullptr);
+  auto *details{n.v.symbol->detailsIf<ObjectEntityDetails>()};
+  if (details == nullptr || !n.v.symbol->attrs().test(Attr::PARAMETER)) {
+    ea.context().messages.Say(
+        "name (%s) is not a defined constant"_err_en_US, n.v.ToString().data());
+    return std::nullopt;
+  }
+  return std::nullopt;  // TODO parameters and enumerators
+}
+
+template<>
+Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::ComplexPart &x) {
+  return std::visit(common::visitors{[&](const parser::NamedConstant &n) {
+                                       return AnalyzeHelper(ea, n);
+                                     },
+                        [&](const auto &literal) {
+                          return WrapOptional<evaluate::GenericExpr>(
+                              AnalyzeLiteral(ea, literal));
+                        }},
+      x.u);
+}
+
+static std::optional<evaluate::AnyKindComplexExpr> BuildComplex(
+    ExpressionAnalyzer &ea, Result &&re, Result &&im) {
+  // TODO pmk: what follows should be abstracted, it will appear many more times
+  auto cvtd{evaluate::ConvertRealOperands(
+      ea.context().messages, std::move(re), std::move(im))};
+  if (cvtd.has_value()) {
+    auto cmplx{std::visit(
+        [](auto &&rx, auto &&ix) -> evaluate::AnyKindComplexExpr {
+          using realExpr = typename std::decay<decltype(rx)>::type;
+          using zExpr = evaluate::Expr<typename realExpr::SameKindComplex>;
+          return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
+        },
+        std::move(cvtd->first.u), std::move(cvtd->second.u))};
+    return {cmplx};
+  }
+  return std::nullopt;
+}
+
 // Per F'2018 R718, if both components are INTEGER, they are both converted
 // to default REAL and the result is default COMPLEX.  Otherwise, the
 // kind of the result is the kind of largest REAL component, and the other
 // component is converted if necessary its type.
-template<>
-Result AnalyzeHelper(
+static std::optional<evaluate::AnyKindComplexExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::ComplexLiteralConstant &z) {
-#if 0  // TODO pmk next
-  parser::ComplexPart re{std::get<0>(z.t)}, im{std::get<1>(z.t)};
-#endif
-  return std::nullopt;
+  const parser::ComplexPart &re{std::get<0>(z.t)}, &im{std::get<1>(z.t)};
+  Result reEx{AnalyzeHelper(ea, re)}, imEx{AnalyzeHelper(ea, im)};
+  return BuildComplex(ea, std::move(reEx), std::move(imEx));
 }
 
-template<>
-Result AnalyzeHelper(
+static std::optional<evaluate::AnyKindCharacterExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::HollerithLiteralConstant &x) {
   evaluate::Expr<evaluate::DefaultCharacter> expr{x.v};
-  return {evaluate::GenericExpr{evaluate::AnyKindCharacterExpr{expr}}};
+  return {evaluate::AnyKindCharacterExpr{expr}};
 }
 
-template<>
-Result AnalyzeHelper(
+static std::optional<evaluate::AnyKindLogicalExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::LogicalLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultLogicalKind())};
@@ -273,8 +347,7 @@ Result AnalyzeHelper(
   switch (kind) {
 #define CASE(k) \
   case k: \
-    return {evaluate::GenericExpr{ \
-        evaluate::AnyKindLogicalExpr{evaluate::LogicalExpr<k>{value}}}};
+    return {evaluate::AnyKindLogicalExpr{evaluate::LogicalExpr<k>{value}}};
     FOR_EACH_LOGICAL_KIND(CASE, )
 #undef CASE
   default:
@@ -286,7 +359,11 @@ Result AnalyzeHelper(
 
 template<>
 Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::LiteralConstant &x) {
-  return std::visit([&](const auto &c) { return AnalyzeHelper(ea, c); }, x.u);
+  return std::visit(
+      [&](const auto &c) {
+        return WrapOptional<evaluate::GenericExpr>(AnalyzeLiteral(ea, c));
+      },
+      x.u);
 }
 
 template<> Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Name &n) {
@@ -473,8 +550,10 @@ Result AnalyzeHelper(
 template<>
 Result AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Expr::ComplexConstructor &x) {
-  // TODO
-  return std::nullopt;
+  Result reEx{ea.Analyze(*std::get<0>(x.t))};
+  Result imEx{ea.Analyze(*std::get<1>(x.t))};
+  return WrapOptional<evaluate::GenericExpr>(
+      BuildComplex(ea, std::move(reEx), std::move(imEx)));
 }
 
 Result ExpressionAnalyzer::Analyze(const parser::Expr &x) {

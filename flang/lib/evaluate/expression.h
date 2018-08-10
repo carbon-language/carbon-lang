@@ -277,18 +277,19 @@ public:
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const Scalar &, const Scalar &);
   };
-  using Cplx = Type<TypeCategory::Complex, KIND>;
-  using CplxScalar = typename Cplx::Value;
-  template<typename CRTP> using CplxUn = Unary<CRTP, Result, Cplx>;
-  struct RealPart : public CplxUn<RealPart> {
-    using CplxUn<RealPart>::CplxUn;
+  using SameKindComplex = Type<TypeCategory::Complex, KIND>;
+  using SameKindComplexScalar = typename SameKindComplex::Value;
+  template<typename CRTP>
+  using SameKindComplexUn = Unary<CRTP, Result, SameKindComplex>;
+  struct RealPart : public SameKindComplexUn<RealPart> {
+    using SameKindComplexUn<RealPart>::SameKindComplexUn;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const CplxScalar &);
+        FoldingContext &, const SameKindComplexScalar &);
   };
-  struct AIMAG : public CplxUn<AIMAG> {
-    using CplxUn<AIMAG>::CplxUn;
+  struct AIMAG : public SameKindComplexUn<AIMAG> {
+    using SameKindComplexUn<AIMAG>::SameKindComplexUn;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const CplxScalar &);
+        FoldingContext &, const SameKindComplexScalar &);
   };
 
   CLASS_BOILERPLATE(Expr)
@@ -373,12 +374,12 @@ public:
     static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &,
         const ScalarConstant<TypeCategory::Integer> &);
   };
-  using Part = Type<TypeCategory::Real, KIND>;
-  using PartScalar = typename Part::Value;
-  struct CMPLX : public Binary<CMPLX, Result, Part> {
-    using Binary<CMPLX, Result, Part>::Binary;
-    static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const PartScalar &, const PartScalar &);
+  using SameKindReal = Type<TypeCategory::Real, KIND>;
+  using SameKindRealScalar = typename SameKindReal::Value;
+  struct CMPLX : public Binary<CMPLX, Result, SameKindReal> {
+    using Binary<CMPLX, Result, SameKindReal>::Binary;
+    static std::optional<Scalar> FoldScalar(FoldingContext &,
+        const SameKindRealScalar &, const SameKindRealScalar &);
   };
 
   CLASS_BOILERPLATE(Expr)
@@ -608,15 +609,19 @@ struct GenericExpr {
   using Scalar = GenericScalar;
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(GenericExpr)
-  template<TypeCategory CAT, int KIND>
-  GenericExpr(const Expr<Type<CAT, KIND>> &x) : u{Expr<AnyKindType<CAT>>{x}} {}
-  template<TypeCategory CAT, int KIND>
-  GenericExpr(Expr<Type<CAT, KIND>> &&x)
-    : u{Expr<AnyKindType<CAT>>{std::move(x)}} {}
+
   template<typename A> GenericExpr(const A &x) : u{x} {}
   template<typename A>
   GenericExpr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
+
+  template<TypeCategory CAT, int KIND>
+  GenericExpr(const Expr<Type<CAT, KIND>> &x) : u{Expr<AnyKindType<CAT>>{x}} {}
+
+  template<TypeCategory CAT, int KIND>
+  GenericExpr(Expr<Type<CAT, KIND>> &&x)
+    : u{Expr<AnyKindType<CAT>>{std::move(x)}} {}
+
   std::optional<Scalar> ScalarValue() const;
   std::optional<Scalar> Fold(FoldingContext &);
   int Rank() const { return 1; }  // TODO
