@@ -293,7 +293,7 @@ private:
 class ScopeHandler : public virtual ImplicitRulesVisitor {
 public:
   void set_rootScope(Scope &scope) { PushScope(scope); }
-  Scope &CurrScope() { return *scopes_.top(); }
+  Scope &CurrScope() { return *currScope_; }
   // Return the enclosing scope not corresponding to a derived type:
   Scope &CurrNonTypeScope();
 
@@ -375,8 +375,7 @@ protected:
   std::optional<const DeclTypeSpec> GetImplicitType(Symbol &);
 
 private:
-  // Stack of containing scopes; memory referenced is owned by parent scopes
-  std::stack<Scope *, std::list<Scope *>> scopes_;
+  Scope *currScope_{nullptr};
 };
 
 class ModuleVisitor : public virtual ScopeHandler {
@@ -1154,11 +1153,11 @@ Scope &ScopeHandler::PushScope(Scope::Kind kind, Symbol *symbol) {
   return scope;
 }
 void ScopeHandler::PushScope(Scope &scope) {
-  scopes_.push(&scope);
+  currScope_ = &scope;
   ImplicitRulesVisitor::PushScope();
 }
 void ScopeHandler::PopScope() {
-  scopes_.pop();
+  currScope_ = &currScope_->parent();
   ImplicitRulesVisitor::PopScope();
 }
 
