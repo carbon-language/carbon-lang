@@ -285,12 +285,13 @@ struct Type {
 
 // Represents an identifier which may be a template.
 struct Name {
-  // Name read from an MangledName string.
-  StringView Str;
-
   bool IsTemplateInstantiation = false;
   bool IsOperator = false;
   bool IsBackReference = false;
+  bool IsConversionOperator = false;
+
+  // Name read from an MangledName string.
+  StringView Str;
 
   // Template parameters. Only valid if Flags contains NF_TemplateInstantiation.
   TemplateParams *TParams = nullptr;
@@ -518,7 +519,7 @@ static void outputParameterList(OutputStream &OS, const FunctionParams &Params,
   }
 }
 
-static void outputName(OutputStream &OS, const Name *TheName,
+static void outputName(OutputStream &OS, const Name *TheName, const Type *Ty,
                        NameResolver &Resolver);
 
 static void outputParameterList(OutputStream &OS, const TemplateParams &Params,
@@ -542,7 +543,7 @@ static void outputParameterList(OutputStream &OS, const TemplateParams &Params,
       if (Head->PointerToSymbol)
         OS << "&";
       Type::outputPre(OS, *Head->ParamType, Resolver);
-      outputName(OS, Head->ParamName, Resolver);
+      outputName(OS, Head->ParamName, Head->ParamType, Resolver);
       Type::outputPost(OS, *Head->ParamType, Resolver);
     } else if (Head->ParamType) {
       // simple type.
@@ -550,7 +551,7 @@ static void outputParameterList(OutputStream &OS, const TemplateParams &Params,
       Type::outputPost(OS, *Head->ParamType, Resolver);
     } else {
       // Template alias.
-      outputName(OS, Head->ParamName, Resolver);
+      outputName(OS, Head->ParamName, Head->ParamType, Resolver);
     }
 
     Head = Head->Next;
@@ -563,17 +564,21 @@ static void outputParameterList(OutputStream &OS, const TemplateParams &Params,
 
 static void outputNameComponent(OutputStream &OS, const Name &N,
                                 NameResolver &Resolver) {
-  StringView S = N.Str;
+  if (N.IsConversionOperator) {
+    OS << " conv";
+  } else {
+    StringView S = N.Str;
 
-  if (N.IsBackReference)
-    S = Resolver.resolve(N.Str);
-  OS << S;
+    if (N.IsBackReference)
+      S = Resolver.resolve(N.Str);
+    OS << S;
+  }
 
-  if (N.IsTemplateInstantiation)
+  if (N.IsTemplateInstantiation && N.TParams)
     outputParameterList(OS, *N.TParams, Resolver);
 }
 
-static void outputName(OutputStream &OS, const Name *TheName,
+static void outputName(OutputStream &OS, const Name *TheName, const Type *Ty,
                        NameResolver &Resolver) {
   if (!TheName)
     return;
@@ -603,9 +608,23 @@ static void outputName(OutputStream &OS, const Name *TheName,
     return;
   }
 
-  // Print out an overloaded operator.
-  OS << "operator";
-  outputNameComponent(OS, *TheName, Resolver);
+  if (TheName->IsConversionOperator) {
+    OS << "operator";
+    if (TheName->IsTemplateInstantiation && TheName->TParams)
+      outputParameterList(OS, *TheName->TParams, Resolver);
+    OS << " ";
+    if (Ty) {
+      const FunctionType *FTy = static_cast<const FunctionType *>(Ty);
+      Type::outputPre(OS, *FTy->ReturnType, Resolver);
+      Type::outputPost(OS, *FTy->ReturnType, Resolver);
+    } else {
+      OS << "<conversion>";
+    }
+  } else {
+    // Print out an overloaded operator.
+    OS << "operator";
+    outputNameComponent(OS, *TheName, Resolver);
+  }
 }
 
 namespace {
@@ -745,7 +764,7 @@ static void outputPointerIndicator(OutputStream &OS, PointerAffinity Affinity,
   }
 
   if (MemberName) {
-    outputName(OS, MemberName, Resolver);
+    outputName(OS, MemberName, Pointee, Resolver);
     OS << "::";
   }
 
@@ -872,7 +891,7 @@ void UdtType::outputPre(OutputStream &OS, NameResolver &Resolver) {
     assert(false && "Not a udt type!");
   }
 
-  outputName(OS, UdtName, Resolver);
+  outputName(OS, UdtName, this, Resolver);
 }
 
 Type *ArrayType::clone(ArenaAllocator &Arena) const {
@@ -1181,7 +1200,7 @@ Name *Demangler::demangleTemplateInstantiationName(StringView &MangledName,
     // Render this class template name into a string buffer so that we can
     // memorize it for the purpose of back-referencing.
     OutputStream OS = OutputStream::create(nullptr, nullptr, 1024);
-    outputName(OS, Node, *this);
+    outputName(OS, Node, nullptr, *this);
     OS << '\0';
     char *Name = OS.getBuffer();
 
@@ -1316,7 +1335,12 @@ Name *Demangler::demangleOperatorName(StringView &MangledName) {
   };
 
   Name *Node = Arena.alloc<Name>();
-  Node->Str = NameString();
+  if (MangledName.consumeFront('B')) {
+    // Handle conversion operator specially.
+    Node->IsConversionOperator = true;
+  } else {
+    Node->Str = NameString();
+  }
   Node->IsOperator = true;
   return Node;
 }
@@ -2148,7 +2172,7 @@ void Demangler::output(const Symbol *S, OutputStream &OS) {
   // "second half". For example, outputPre() writes a return type for a
   // function and outputPost() writes an parameter list.
   Type::outputPre(OS, *S->SymbolType, *this);
-  outputName(OS, S->SymbolName, *this);
+  outputName(OS, S->SymbolName, S->SymbolType, *this);
   Type::outputPost(OS, *S->SymbolType, *this);
 }
 
