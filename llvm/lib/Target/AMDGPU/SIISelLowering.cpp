@@ -6429,6 +6429,29 @@ SDValue SITargetLowering::performAndCombine(SDNode *N,
     }
   }
 
+  if (RHS.getOpcode() == ISD::SETCC && LHS.getOpcode() == AMDGPUISD::FP_CLASS)
+    std::swap(LHS, RHS);
+
+  if (LHS.getOpcode() == ISD::SETCC && RHS.getOpcode() == AMDGPUISD::FP_CLASS &&
+      RHS.hasOneUse()) {
+    ISD::CondCode LCC = cast<CondCodeSDNode>(LHS.getOperand(2))->get();
+    // and (fcmp seto), (fp_class x, mask) -> fp_class x, mask & ~(p_nan | n_nan)
+    // and (fcmp setuo), (fp_class x, mask) -> fp_class x, mask & (p_nan | n_nan)
+    const ConstantSDNode *Mask = dyn_cast<ConstantSDNode>(RHS.getOperand(1));
+    if ((LCC == ISD::SETO || LCC == ISD::SETUO) && Mask &&
+        (RHS.getOperand(0) == LHS.getOperand(0) &&
+         LHS.getOperand(0) == LHS.getOperand(1))) {
+      const unsigned OrdMask = SIInstrFlags::S_NAN | SIInstrFlags::Q_NAN;
+      unsigned NewMask = LCC == ISD::SETO ?
+        Mask->getZExtValue() & ~OrdMask :
+        Mask->getZExtValue() & OrdMask;
+
+      SDLoc DL(N);
+      return DAG.getNode(AMDGPUISD::FP_CLASS, DL, MVT::i1, RHS.getOperand(0),
+                         DAG.getConstant(NewMask, DL, MVT::i32));
+    }
+  }
+
   if (VT == MVT::i32 &&
       (RHS.getOpcode() == ISD::SIGN_EXTEND || LHS.getOpcode() == ISD::SIGN_EXTEND)) {
     // and x, (sext cc from i1) => select cc, x, 0
