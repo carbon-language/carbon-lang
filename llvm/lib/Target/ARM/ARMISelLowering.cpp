@@ -13641,7 +13641,7 @@ ARMTargetLowering::targetShrinkDemandedConstant(SDValue Op,
   auto IsLegalMask = [ShrunkMask, ExpandedMask](unsigned Mask) -> bool {
     return (ShrunkMask & Mask) == ShrunkMask && (~ExpandedMask & Mask) == 0;
   };
-  auto UseMask = [this, Mask, Op, VT, &TLO](unsigned NewMask) -> bool {
+  auto UseMask = [Mask, Op, VT, &TLO](unsigned NewMask) -> bool {
     if (NewMask == Mask)
       return true;
     SDLoc DL(Op);
