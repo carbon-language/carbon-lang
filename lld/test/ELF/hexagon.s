@@ -162,9 +162,8 @@ r0.l = #LO(_start)
 
 # R_HEX_8_X has 3 relocation mask variations
 #0xde000000
-# THis causes an assertion in sanitized versions of llvm-mc
-# remove this temporarily, fix issue and add back.
-# r0=sub(##_start, asl(r1, #4))
+r0=sub(##_start, asl(r0, #1))
+# CHECK: de00c106      r0 = sub(##69632,asl(r0,#1)) }
 
 #0x3c000000
 memw(r0+#0) = ##_start
