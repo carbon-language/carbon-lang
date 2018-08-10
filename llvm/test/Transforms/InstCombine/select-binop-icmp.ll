@@ -134,7 +134,7 @@ define i32 @select_xor_inv_icmp2(i32 %x, i32 %y, i32 %z) {
 ; CHECK-NEXT:    ret i32 [[C]]
 ;
   %A = icmp ne i32 %x, 0
-  call void @use2(i1 %A)
+  call void @use2(i1 %A) ; thwart predicate canonicalization
   %B = xor i32 %x, %z
   %C = select i1 %A, i32 %y, i32 %B
   ret i32 %C
@@ -290,14 +290,16 @@ define <2 x i8> @select_sub_icmp_vec(<2 x i8> %x, <2 x i8> %y, <2 x i8> %z) {
 
 define i32 @select_shl_icmp(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @select_shl_icmp(
-; CHECK-NEXT:    [[A:%.*]] = icmp eq i32 [[X:%.*]], 0
+; CHECK-NEXT:    [[A:%.*]] = icmp ne i32 [[X:%.*]], 0
+; CHECK-NEXT:    call void @use2(i1 [[A]])
 ; CHECK-NEXT:    [[B:%.*]] = shl i32 [[Z:%.*]], [[X]]
-; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], i32 [[B]], i32 [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], i32 [[Y:%.*]], i32 [[B]]
 ; CHECK-NEXT:    ret i32 [[C]]
 ;
-  %A = icmp eq i32 %x, 0
+  %A = icmp ne i32 %x, 0
+  call void @use2(i1 %A) ; thwart predicate canonicalization
   %B = shl i32 %z, %x
-  %C = select i1 %A, i32 %B, i32 %y
+  %C = select i1 %A, i32 %y, i32 %B
   ret i32 %C
 }
 
@@ -316,14 +318,16 @@ define i32 @select_lshr_icmp(i32 %x, i32 %y, i32 %z) {
 
 define i32 @select_ashr_icmp(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @select_ashr_icmp(
-; CHECK-NEXT:    [[A:%.*]] = icmp eq i32 [[X:%.*]], 0
+; CHECK-NEXT:    [[A:%.*]] = icmp ne i32 [[X:%.*]], 0
+; CHECK-NEXT:    call void @use2(i1 [[A]])
 ; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[Z:%.*]], [[X]]
-; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], i32 [[B]], i32 [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], i32 [[Y:%.*]], i32 [[B]]
 ; CHECK-NEXT:    ret i32 [[C]]
 ;
-  %A = icmp eq i32 %x, 0
+  %A = icmp ne i32 %x, 0
+  call void @use2(i1 %A) ; thwart predicate canonicalization
   %B = ashr i32 %z, %x
-  %C = select i1 %A, i32 %B, i32 %y
+  %C = select i1 %A, i32 %y, i32 %B
   ret i32 %C
 }
 
@@ -342,14 +346,16 @@ define i32 @select_udiv_icmp(i32 %x, i32 %y, i32 %z) {
 
 define i32 @select_sdiv_icmp(i32 %x, i32 %y, i32 %z) {
 ; CHECK-LABEL: @select_sdiv_icmp(
-; CHECK-NEXT:    [[A:%.*]] = icmp eq i32 [[X:%.*]], 1
+; CHECK-NEXT:    [[A:%.*]] = icmp ne i32 [[X:%.*]], 1
+; CHECK-NEXT:    call void @use2(i1 [[A]])
 ; CHECK-NEXT:    [[B:%.*]] = sdiv i32 [[Z:%.*]], [[X]]
-; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], i32 [[B]], i32 [[Y:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], i32 [[Y:%.*]], i32 [[B]]
 ; CHECK-NEXT:    ret i32 [[C]]
 ;
-  %A = icmp eq i32 %x, 1
+  %A = icmp ne i32 %x, 1
+  call void @use2(i1 %A) ; thwart predicate canonicalization
   %B = sdiv i32 %z, %x
-  %C = select i1 %A, i32 %B, i32 %y
+  %C = select i1 %A, i32 %y, i32 %B
   ret i32 %C
 }
 
@@ -393,14 +399,14 @@ define i32 @select_xor_icmp_bad_3(i32 %x, i32 %y, i32 %z) {
   ret i32 %C
 }
 
-define i32 @select_xor_icmp_bad_4(i32 %x, i32 %y, i32 %z, i32 %k) {
-; CHECK-LABEL: @select_xor_icmp_bad_4(
-; CHECK-NEXT:    [[A:%.*]] = icmp eq i32 [[X:%.*]], [[K:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = xor i32 [[X]], [[Z:%.*]]
+define i32 @select_xor_fcmp_bad_4(i32 %x, i32 %y, i32 %z, float %k) {
+; CHECK-LABEL: @select_xor_fcmp_bad_4(
+; CHECK-NEXT:    [[A:%.*]] = fcmp oeq float [[K:%.*]], 0.000000e+00
+; CHECK-NEXT:    [[B:%.*]] = xor i32 [[X:%.*]], [[Z:%.*]]
 ; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], i32 [[B]], i32 [[Y:%.*]]
 ; CHECK-NEXT:    ret i32 [[C]]
 ;
-  %A = icmp eq i32 %x, %k
+  %A = fcmp oeq float %k, 0.0
   %B = xor i32 %x, %z
   %C = select i1 %A, i32 %B, i32 %y
   ret i32 %C
@@ -573,6 +579,19 @@ define float @select_fmul_fcmp_bad(float %x, float %y, float %z) {
 ; CHECK-NEXT:    ret float [[C]]
 ;
   %A = fcmp oeq float %x, 3.0
+  %B = fmul float %x, %z
+  %C = select i1 %A, float %B, float %y
+  ret float %C
+}
+
+define float @select_fmul_icmp_bad(float %x, float %y, float %z, i32 %k) {
+; CHECK-LABEL: @select_fmul_icmp_bad(
+; CHECK-NEXT:    [[A:%.*]] = icmp eq i32 [[K:%.*]], 0
+; CHECK-NEXT:    [[B:%.*]] = fmul float [[X:%.*]], [[Z:%.*]]
+; CHECK-NEXT:    [[C:%.*]] = select i1 [[A]], float [[B]], float [[Y:%.*]]
+; CHECK-NEXT:    ret float [[C]]
+;
+  %A = icmp eq i32 %k, 0
   %B = fmul float %x, %z
   %C = select i1 %A, float %B, float %y
   ret float %C
