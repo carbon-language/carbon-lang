@@ -2101,6 +2101,10 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
       // Array
       (*Current)->ParamType =
           demangleType(MangledName, QualifierMangleMode::Drop);
+    } else if (MangledName.consumeFront("$$C")) {
+      // Type has qualifiers.
+      (*Current)->ParamType =
+          demangleType(MangledName, QualifierMangleMode::Mangle);
     } else if (MangledName.startsWith("$1?")) {
       MangledName.consumeFront("$1");
       // Pointer to symbol
