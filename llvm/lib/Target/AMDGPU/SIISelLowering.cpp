@@ -7742,16 +7742,26 @@ SDValue SITargetLowering::performSetCCCombine(SDNode *N,
                                            VT != MVT::f16))
     return SDValue();
 
-  // Match isinf pattern
+  // Match isinf/isfinite pattern
   // (fcmp oeq (fabs x), inf) -> (fp_class x, (p_infinity | n_infinity))
-  if (CC == ISD::SETOEQ && LHS.getOpcode() == ISD::FABS) {
+  // (fcmp one (fabs x), inf) -> (fp_class x,
+  // (p_normal | n_normal | p_subnormal | n_subnormal | p_zero | n_zero)
+  if ((CC == ISD::SETOEQ || CC == ISD::SETONE) && LHS.getOpcode() == ISD::FABS) {
     const ConstantFPSDNode *CRHS = dyn_cast<ConstantFPSDNode>(RHS);
     if (!CRHS)
       return SDValue();
 
     const APFloat &APF = CRHS->getValueAPF();
     if (APF.isInfinity() && !APF.isNegative()) {
-      unsigned Mask = SIInstrFlags::P_INFINITY | SIInstrFlags::N_INFINITY;
+      const unsigned IsInfMask = SIInstrFlags::P_INFINITY |
+                                 SIInstrFlags::N_INFINITY;
+      const unsigned IsFiniteMask = SIInstrFlags::N_ZERO |
+                                    SIInstrFlags::P_ZERO |
+                                    SIInstrFlags::N_NORMAL |
+                                    SIInstrFlags::P_NORMAL |
+                                    SIInstrFlags::N_SUBNORMAL |
+                                    SIInstrFlags::P_SUBNORMAL;
+      unsigned Mask = CC == ISD::SETOEQ ? IsInfMask : IsFiniteMask;
       return DAG.getNode(AMDGPUISD::FP_CLASS, SL, MVT::i1, LHS.getOperand(0),
                          DAG.getConstant(Mask, SL, MVT::i32));
     }

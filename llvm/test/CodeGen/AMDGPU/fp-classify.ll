@@ -55,6 +55,20 @@ define amdgpu_kernel void @test_isfinite_pattern_0(i32 addrspace(1)* nocapture %
   ret void
 }
 
+; SI-LABEL: {{^}}test_isfinite_pattern_1:
+; SI-NOT: v_cmp
+; SI: v_mov_b32_e32 [[MASK:v[0-9]+]], 0x1f8{{$}}
+; SI: v_cmp_class_f32_e32 vcc, s{{[0-9]+}}, [[MASK]]
+; SI-NOT: v_cmp
+; SI: s_endpgm
+define amdgpu_kernel void @test_isfinite_pattern_1(i32 addrspace(1)* nocapture %out, float %x) #0 {
+  %x.fabs = tail call float @llvm.fabs.f32(float %x) #3
+  %cmpinf = fcmp one float %x.fabs, 0x7FF0000000000000
+  %ext = zext i1 %cmpinf to i32
+  store i32 %ext, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 ; Use negative infinity
 ; GCN-LABEL: {{^}}test_isfinite_not_pattern_0:
 ; GCN-NOT: v_cmp_class_f32
@@ -111,10 +125,14 @@ define amdgpu_kernel void @test_isfinite_not_pattern_3(i32 addrspace(1)* nocaptu
 }
 
 ; Wrong unordered compare
-; GCN-LABEL: {{^}}test_isfinite_not_pattern_4:
-; GCN-NOT: v_cmp_class_f32
-; GCN: s_endpgm
-define amdgpu_kernel void @test_isfinite_not_pattern_4(i32 addrspace(1)* nocapture %out, float %x) #0 {
+; GCN-LABEL: {{^}}test_isfinite_pattern_4:
+; GCN-DAG: s_load_dword [[X:s[0-9]+]]
+; GCN-DAG: v_mov_b32_e32 [[K:v[0-9]+]], 0x1f8
+; GCN-DAG: v_cmp_o_f32_e64 [[ORD:s\[[0-9]+:[0-9]+\]]], [[X]], [[X]]
+; GCN-DAG: v_cmp_class_f32_e32 vcc, [[X]], [[K]]
+; GCN: s_and_b64 [[AND:s\[[0-9]+:[0-9]+\]]], [[ORD]], vcc
+; GCN: v_cndmask_b32_e64 v{{[0-9]+}}, 0, 1, [[AND]]
+define amdgpu_kernel void @test_isfinite_pattern_4(i32 addrspace(1)* nocapture %out, float %x) #0 {
   %ord = fcmp ord float %x, 0.000000e+00
   %x.fabs = tail call float @llvm.fabs.f32(float %x) #1
   %ninf = fcmp one float %x.fabs, 0x7FF0000000000000
