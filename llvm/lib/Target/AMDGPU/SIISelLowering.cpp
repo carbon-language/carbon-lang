@@ -6882,6 +6882,8 @@ bool SITargetLowering::isCanonicalized(SelectionDAG &DAG, SDValue Op,
     default:
       break;
     }
+
+    LLVM_FALLTHROUGH;
   }
   default:
     return denormalsEnabledForType(Op.getValueType()) &&
