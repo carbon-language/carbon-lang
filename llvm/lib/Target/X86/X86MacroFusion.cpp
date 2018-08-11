@@ -111,20 +111,24 @@ static bool shouldScheduleAdjacent(const TargetInstrInfo &TII,
   case X86::CMP16ri8:
   case X86::CMP16rm:
   case X86::CMP16rr:
+  case X86::CMP16mr:
   case X86::CMP32i32:
   case X86::CMP32ri:
   case X86::CMP32ri8:
   case X86::CMP32rm:
   case X86::CMP32rr:
+  case X86::CMP32mr:
   case X86::CMP64i32:
   case X86::CMP64ri32:
   case X86::CMP64ri8:
   case X86::CMP64rm:
   case X86::CMP64rr:
+  case X86::CMP64mr:
   case X86::CMP8i8:
   case X86::CMP8ri:
   case X86::CMP8rm:
   case X86::CMP8rr:
+  case X86::CMP8mr:
   case X86::ADD16i16:
   case X86::ADD16ri:
   case X86::ADD16ri8:
