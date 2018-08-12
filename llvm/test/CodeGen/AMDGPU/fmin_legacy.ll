@@ -1,8 +1,6 @@
 ; RUN: llc -march=amdgcn -verify-machineinstrs < %s | FileCheck -check-prefix=SI-SAFE -check-prefix=SI -check-prefix=FUNC %s
-; RUN: llc -enable-no-nans-fp-math -enable-unsafe-fp-math  -march=amdgcn -verify-machineinstrs < %s | FileCheck -check-prefix=SI-NONAN -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -enable-no-nans-fp-math -enable-no-signed-zeros-fp-math  -march=amdgcn -verify-machineinstrs < %s | FileCheck -check-prefix=SI-NONAN -check-prefix=SI -check-prefix=FUNC %s
 ; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
-
-; FIXME: Should replace unsafe-fp-math with no signed zeros.
 
 declare i32 @llvm.r600.read.tidig.x() #1
 
