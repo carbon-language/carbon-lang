@@ -1124,18 +1124,17 @@ Value *LibCallSimplifier::optimizeCAbs(CallInst *CI, IRBuilder<> &B) {
 
 Value *LibCallSimplifier::optimizeCos(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
-  Value *Ret = nullptr;
   StringRef Name = Callee->getName();
   if (UnsafeFPShrink && Name == "cos" && hasFloatVersion(Name))
-    Ret = optimizeUnaryDoubleFP(CI, B, true);
+    if (Value *V = optimizeUnaryDoubleFP(CI, B, true))
+      return V;
 
-  // cos(-x) -> cos(x)
-  Value *Op1 = CI->getArgOperand(0);
-  if (BinaryOperator::isFNeg(Op1)) {
-    BinaryOperator *BinExpr = cast<BinaryOperator>(Op1);
-    return B.CreateCall(Callee, BinExpr->getOperand(1), "cos");
-  }
-  return Ret;
+  // cos(-X) -> cos(X)
+  Value *X;
+  if (match(CI->getArgOperand(0), m_FNeg(m_Value(X))))
+    return B.CreateCall(Callee, X, "cos");
+
+  return nullptr;
 }
 
 static Value *getPow(Value *InnerChain[33], unsigned Exp, IRBuilder<> &B) {
