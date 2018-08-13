@@ -16,6 +16,7 @@
 #define FORTRAN_EVALUATE_TOOLS_H_
 
 #include "expression.h"
+#include "../common/idioms.h"
 #include "../parser/message.h"
 #include <optional>
 #include <utility>
@@ -23,19 +24,17 @@
 namespace Fortran::evaluate {
 
 // Convert the second argument to the same type and kind of the first.
-AnyKindRealExpr ConvertToTypeOf(
-    const AnyKindRealExpr &to, const AnyKindIntegerExpr &from);
-AnyKindRealExpr ConvertToTypeOf(
-    const AnyKindRealExpr &to, const AnyKindRealExpr &from);
+SomeKindRealExpr ConvertToTypeOf(
+    const SomeKindRealExpr &to, const SomeKindIntegerExpr &from);
+SomeKindRealExpr ConvertToTypeOf(
+    const SomeKindRealExpr &to, const SomeKindRealExpr &from);
 
 // Ensure that both operands of an intrinsic REAL operation or CMPLX()
 // are INTEGER or REAL, and convert them as necessary to the same REAL type.
-std::optional<std::pair<AnyKindRealExpr, AnyKindRealExpr>> ConvertRealOperands(
+using ConvertRealOperandsResult =
+    std::optional<std::pair<SomeKindRealExpr, SomeKindRealExpr>>;
+ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &, GenericExpr &&, GenericExpr &&);
-
-std::optional<std::pair<AnyKindRealExpr, AnyKindRealExpr>> ConvertRealOperands(
-    parser::ContextualMessages &, std::optional<GenericExpr> &&x,
-    std::optional<GenericExpr> &&y);
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

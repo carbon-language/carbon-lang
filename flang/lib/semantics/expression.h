@@ -23,6 +23,8 @@
 
 namespace Fortran::semantics {
 
+using MaybeExpr = std::optional<evaluate::GenericExpr>;
+
 class ExpressionAnalyzer {
 public:
   using KindParam = std::int64_t;
@@ -37,9 +39,12 @@ public:
 
   // Performs semantic checking on an expression.  If successful,
   // returns its typed expression representation.
-  std::optional<evaluate::GenericExpr> Analyze(const parser::Expr &);
+  MaybeExpr Analyze(const parser::Expr &);
   KindParam Analyze(const std::optional<parser::KindParam> &,
       KindParam defaultKind, KindParam kanjiKind = -1 /* not allowed here */);
+
+  std::optional<evaluate::SomeKindComplexExpr> ConstructComplex(
+      MaybeExpr &&real, MaybeExpr &&imaginary);
 
 private:
   evaluate::FoldingContext context_;

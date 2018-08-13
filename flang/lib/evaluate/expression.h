@@ -100,16 +100,15 @@ public:
   using FoldableTrait = std::true_type;
 
   struct ConvertInteger
-    : public Unary<ConvertInteger, Result, AnyKindType<TypeCategory::Integer>> {
-    using Unary<ConvertInteger, Result,
-        AnyKindType<TypeCategory::Integer>>::Unary;
+    : public Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>> {
+    using Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>>::Unary;
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const ScalarConstant<TypeCategory::Integer> &);
   };
 
   struct ConvertReal
-    : public Unary<ConvertReal, Result, AnyKindType<TypeCategory::Real>> {
-    using Unary<ConvertReal, Result, AnyKindType<TypeCategory::Real>>::Unary;
+    : public Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>> {
+    using Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>>::Unary;
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const ScalarConstant<TypeCategory::Real> &);
   };
@@ -168,19 +167,19 @@ public:
   Expr(std::int64_t n) : u_{Scalar{n}} {}
   Expr(std::uint64_t n) : u_{Scalar{n}} {}
   Expr(int n) : u_{Scalar{n}} {}
-  Expr(const AnyKindIntegerExpr &x) : u_{ConvertInteger{x}} {}
-  Expr(AnyKindIntegerExpr &&x) : u_{ConvertInteger{std::move(x)}} {}
+  Expr(const SomeKindIntegerExpr &x) : u_{ConvertInteger{x}} {}
+  Expr(SomeKindIntegerExpr &&x) : u_{ConvertInteger{std::move(x)}} {}
   template<int K>
-  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{AnyKindIntegerExpr{x}}} {}
+  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{SomeKindIntegerExpr{x}}} {}
   template<int K>
   Expr(IntegerExpr<K> &&x)
-    : u_{ConvertInteger{AnyKindIntegerExpr{std::move(x)}}} {}
-  Expr(const AnyKindRealExpr &x) : u_{ConvertReal{x}} {}
-  Expr(AnyKindRealExpr &&x) : u_{ConvertReal{std::move(x)}} {}
+    : u_{ConvertInteger{SomeKindIntegerExpr{std::move(x)}}} {}
+  Expr(const SomeKindRealExpr &x) : u_{ConvertReal{x}} {}
+  Expr(SomeKindRealExpr &&x) : u_{ConvertReal{std::move(x)}} {}
   template<int K>
-  Expr(const RealExpr<K> &x) : u_{ConvertReal{AnyKindRealExpr{x}}} {}
+  Expr(const RealExpr<K> &x) : u_{ConvertReal{SomeKindRealExpr{x}}} {}
   template<int K>
-  Expr(RealExpr<K> &&x) : u_{ConvertReal{AnyKindRealExpr{std::move(x)}}} {}
+  Expr(RealExpr<K> &&x) : u_{ConvertReal{SomeKindRealExpr{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A> &&
@@ -211,15 +210,14 @@ public:
   // and part access operations (resp.).  Conversions between kinds of
   // Complex are done via decomposition to Real and reconstruction.
   struct ConvertInteger
-    : public Unary<ConvertInteger, Result, AnyKindType<TypeCategory::Integer>> {
-    using Unary<ConvertInteger, Result,
-        AnyKindType<TypeCategory::Integer>>::Unary;
+    : public Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>> {
+    using Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>>::Unary;
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const ScalarConstant<TypeCategory::Integer> &);
   };
   struct ConvertReal
-    : public Unary<ConvertReal, Result, AnyKindType<TypeCategory::Real>> {
-    using Unary<ConvertReal, Result, AnyKindType<TypeCategory::Real>>::Unary;
+    : public Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>> {
+    using Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>>::Unary;
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const ScalarConstant<TypeCategory::Real> &);
   };
@@ -260,10 +258,10 @@ public:
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const Scalar &, const Scalar &);
   };
-  struct IntPower : public Binary<IntPower, Result, Result,
-                        AnyKindType<TypeCategory::Integer>> {
+  struct IntPower
+    : public Binary<IntPower, Result, Result, SomeKind<TypeCategory::Integer>> {
     using Binary<IntPower, Result, Result,
-        AnyKindType<TypeCategory::Integer>>::Binary;
+        SomeKind<TypeCategory::Integer>>::Binary;
     static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &,
         const ScalarConstant<TypeCategory::Integer> &);
   };
@@ -294,19 +292,19 @@ public:
 
   CLASS_BOILERPLATE(Expr)
   Expr(const Scalar &x) : u_{x} {}
-  Expr(const AnyKindIntegerExpr &x) : u_{ConvertInteger{x}} {}
-  Expr(AnyKindIntegerExpr &&x) : u_{ConvertInteger{std::move(x)}} {}
+  Expr(const SomeKindIntegerExpr &x) : u_{ConvertInteger{x}} {}
+  Expr(SomeKindIntegerExpr &&x) : u_{ConvertInteger{std::move(x)}} {}
   template<int K>
-  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{AnyKindIntegerExpr{x}}} {}
+  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{SomeKindIntegerExpr{x}}} {}
   template<int K>
   Expr(IntegerExpr<K> &&x)
-    : u_{ConvertInteger{AnyKindIntegerExpr{std::move(x)}}} {}
-  Expr(const AnyKindRealExpr &x) : u_{ConvertReal{x}} {}
-  Expr(AnyKindRealExpr &&x) : u_{ConvertReal{std::move(x)}} {}
+    : u_{ConvertInteger{SomeKindIntegerExpr{std::move(x)}}} {}
+  Expr(const SomeKindRealExpr &x) : u_{ConvertReal{x}} {}
+  Expr(SomeKindRealExpr &&x) : u_{ConvertReal{std::move(x)}} {}
   template<int K>
-  Expr(const RealExpr<K> &x) : u_{ConvertReal{AnyKindRealExpr{x}}} {}
+  Expr(const RealExpr<K> &x) : u_{ConvertReal{SomeKindRealExpr{x}}} {}
   template<int K>
-  Expr(RealExpr<K> &&x) : u_{ConvertReal{AnyKindRealExpr{std::move(x)}}} {}
+  Expr(RealExpr<K> &&x) : u_{ConvertReal{SomeKindRealExpr{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
@@ -367,10 +365,10 @@ public:
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const Scalar &, const Scalar &);
   };
-  struct IntPower : public Binary<IntPower, Result, Result,
-                        AnyKindType<TypeCategory::Integer>> {
+  struct IntPower
+    : public Binary<IntPower, Result, Result, SomeKind<TypeCategory::Integer>> {
     using Binary<IntPower, Result, Result,
-        AnyKindType<TypeCategory::Integer>>::Binary;
+        SomeKind<TypeCategory::Integer>>::Binary;
     static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &,
         const ScalarConstant<TypeCategory::Integer> &);
   };
@@ -577,9 +575,9 @@ extern template class Expr<Type<TypeCategory::Logical, 8>>;
 
 // Dynamically polymorphic expressions that can hold any supported kind
 // of a specific intrinsic type category.
-template<TypeCategory CAT> class Expr<AnyKindType<CAT>> {
+template<TypeCategory CAT> class Expr<SomeKind<CAT>> {
 public:
-  using Result = AnyKindType<CAT>;
+  using Result = SomeKind<CAT>;
   using Scalar = typename Result::Value;
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
@@ -591,11 +589,11 @@ public:
   typename KindsVariant<CAT, KindExpr>::type u;
 };
 
-extern template class Expr<AnyKindType<TypeCategory::Integer>>;
-extern template class Expr<AnyKindType<TypeCategory::Real>>;
-extern template class Expr<AnyKindType<TypeCategory::Complex>>;
-extern template class Expr<AnyKindType<TypeCategory::Character>>;
-extern template class Expr<AnyKindType<TypeCategory::Logical>>;
+extern template class Expr<SomeKind<TypeCategory::Integer>>;
+extern template class Expr<SomeKind<TypeCategory::Real>>;
+extern template class Expr<SomeKind<TypeCategory::Complex>>;
+extern template class Expr<SomeKind<TypeCategory::Character>>;
+extern template class Expr<SomeKind<TypeCategory::Logical>>;
 
 // BOZ literal constants need to be wide enough to hold an integer or real
 // value of any supported kind.  They also need to be distinguishable from
@@ -616,17 +614,18 @@ struct GenericExpr {
     : u{std::move(x)} {}
 
   template<TypeCategory CAT, int KIND>
-  GenericExpr(const Expr<Type<CAT, KIND>> &x) : u{Expr<AnyKindType<CAT>>{x}} {}
+  GenericExpr(const Expr<Type<CAT, KIND>> &x) : u{Expr<SomeKind<CAT>>{x}} {}
 
   template<TypeCategory CAT, int KIND>
   GenericExpr(Expr<Type<CAT, KIND>> &&x)
-    : u{Expr<AnyKindType<CAT>>{std::move(x)}} {}
+    : u{Expr<SomeKind<CAT>>{std::move(x)}} {}
 
   std::optional<Scalar> ScalarValue() const;
   std::optional<Scalar> Fold(FoldingContext &);
   int Rank() const { return 1; }  // TODO
-  std::variant<AnyKindIntegerExpr, AnyKindRealExpr, AnyKindComplexExpr,
-      AnyKindCharacterExpr, AnyKindLogicalExpr, BOZLiteralConstant>
+
+  std::variant<SomeKindIntegerExpr, SomeKindRealExpr, SomeKindComplexExpr,
+      SomeKindCharacterExpr, SomeKindLogicalExpr, BOZLiteralConstant>
       u;
 };
 

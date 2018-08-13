@@ -50,7 +50,7 @@ std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
 }
 
 template<TypeCategory CAT>
-std::ostream &Expr<AnyKindType<CAT>>::Dump(std::ostream &o) const {
+std::ostream &Expr<SomeKind<CAT>>::Dump(std::ostream &o) const {
   return DumpExpr(o, u);
 }
 
@@ -772,7 +772,7 @@ std::optional<GenericScalar> GenericExpr::ScalarValue() const {
 }
 
 template<TypeCategory CAT>
-auto Expr<AnyKindType<CAT>>::ScalarValue() const -> std::optional<Scalar> {
+auto Expr<SomeKind<CAT>>::ScalarValue() const -> std::optional<Scalar> {
   return std::visit(
       [](const auto &x) -> std::optional<Scalar> {
         if (auto c{x.ScalarValue()}) {
@@ -784,7 +784,7 @@ auto Expr<AnyKindType<CAT>>::ScalarValue() const -> std::optional<Scalar> {
 }
 
 template<TypeCategory CAT>
-auto Expr<AnyKindType<CAT>>::Fold(FoldingContext &context)
+auto Expr<SomeKind<CAT>>::Fold(FoldingContext &context)
     -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
@@ -811,11 +811,11 @@ std::optional<GenericScalar> GenericExpr::Fold(FoldingContext &context) {
       u);
 }
 
-template class Expr<AnyKindType<TypeCategory::Integer>>;
-template class Expr<AnyKindType<TypeCategory::Real>>;
-template class Expr<AnyKindType<TypeCategory::Complex>>;
-template class Expr<AnyKindType<TypeCategory::Character>>;
-template class Expr<AnyKindType<TypeCategory::Logical>>;
+template class Expr<SomeKind<TypeCategory::Integer>>;
+template class Expr<SomeKind<TypeCategory::Real>>;
+template class Expr<SomeKind<TypeCategory::Complex>>;
+template class Expr<SomeKind<TypeCategory::Character>>;
+template class Expr<SomeKind<TypeCategory::Logical>>;
 
 template class Expr<Type<TypeCategory::Integer, 1>>;
 template class Expr<Type<TypeCategory::Integer, 2>>;

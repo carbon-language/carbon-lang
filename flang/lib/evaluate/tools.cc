@@ -20,19 +20,19 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-AnyKindRealExpr ConvertToTypeOf(
-    const AnyKindRealExpr &to, const AnyKindIntegerExpr &from) {
+SomeKindRealExpr ConvertToTypeOf(
+    const SomeKindRealExpr &to, const SomeKindIntegerExpr &from) {
   return std::visit(
-      [&](const auto &rk) { return AnyKindRealExpr{decltype(rk){to}}; }, to.u);
+      [&](const auto &rk) { return SomeKindRealExpr{decltype(rk){to}}; }, to.u);
 }
 
-AnyKindRealExpr ConvertToTypeOf(
-    const AnyKindRealExpr &to, const AnyKindRealExpr &from) {
+SomeKindRealExpr ConvertToTypeOf(
+    const SomeKindRealExpr &to, const SomeKindRealExpr &from) {
   return std::visit(
-      [&](const auto &rk) { return AnyKindRealExpr{decltype(rk){to}}; }, to.u);
+      [&](const auto &rk) { return SomeKindRealExpr{decltype(rk){to}}; }, to.u);
 }
 
-static void ConvertToSameRealKind(AnyKindRealExpr &x, AnyKindRealExpr &y) {
+static void ConvertToSameRealKind(SomeKindRealExpr &x, SomeKindRealExpr &y) {
   std::visit(
       [&](auto &xk, auto &yk) {
         using xt = typename std::decay<decltype(xk)>::type;
@@ -47,40 +47,41 @@ static void ConvertToSameRealKind(AnyKindRealExpr &x, AnyKindRealExpr &y) {
       x.u, y.u);
 }
 
-std::optional<std::pair<AnyKindRealExpr, AnyKindRealExpr>> ConvertRealOperands(
+std::optional<std::pair<SomeKindRealExpr, SomeKindRealExpr>>
+ConvertRealOperands(
     parser::ContextualMessages &messages, GenericExpr &&x, GenericExpr &&y) {
   return std::visit(
       common::visitors{
-          [&](AnyKindIntegerExpr &&ix, AnyKindIntegerExpr &&iy) {
+          [&](SomeKindIntegerExpr &&ix, SomeKindIntegerExpr &&iy) {
             // Can happen in a CMPLX() constructor.  Per F'2018, both integer
             // operands are converted to default REAL.
             return std::optional{std::make_pair(
-                AnyKindRealExpr{Expr<DefaultReal>{std::move(ix)}},
-                AnyKindRealExpr{Expr<DefaultReal>{std::move(iy)}})};
+                SomeKindRealExpr{Expr<DefaultReal>{std::move(ix)}},
+                SomeKindRealExpr{Expr<DefaultReal>{std::move(iy)}})};
           },
-          [&](AnyKindIntegerExpr &&ix, AnyKindRealExpr &&ry) {
+          [&](SomeKindIntegerExpr &&ix, SomeKindRealExpr &&ry) {
             auto rx{ConvertToTypeOf(ry, std::move(ix))};
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
-          [&](AnyKindRealExpr &&rx, AnyKindIntegerExpr &&iy) {
+          [&](SomeKindRealExpr &&rx, SomeKindIntegerExpr &&iy) {
             auto ry{ConvertToTypeOf(rx, std::move(iy))};
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
-          [&](AnyKindRealExpr &&rx, AnyKindRealExpr &&ry) {
+          [&](SomeKindRealExpr &&rx, SomeKindRealExpr &&ry) {
             ConvertToSameRealKind(rx, ry);
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
           [&](const auto &, const auto &)
-              -> std::optional<std::pair<AnyKindRealExpr, AnyKindRealExpr>> {
+              -> std::optional<std::pair<SomeKindRealExpr, SomeKindRealExpr>> {
             messages.Say("operands must be INTEGER or REAL"_err_en_US);
             return std::nullopt;
           }},
       std::move(x.u), std::move(y.u));
 }
 
-std::optional<std::pair<AnyKindRealExpr, AnyKindRealExpr>> ConvertRealOperands(
-    parser::ContextualMessages &messages, std::optional<GenericExpr> &&x,
-    std::optional<GenericExpr> &&y) {
+std::optional<std::pair<SomeKindRealExpr, SomeKindRealExpr>>
+ConvertRealOperands(parser::ContextualMessages &messages,
+    std::optional<GenericExpr> &&x, std::optional<GenericExpr> &&y) {
   if (x.has_value() && y.has_value()) {
     return ConvertRealOperands(messages, std::move(*x), std::move(*y));
   }

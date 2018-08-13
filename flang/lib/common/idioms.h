@@ -29,6 +29,7 @@
 #error g++ >= 7.2 is required
 #endif
 
+#include <functional>
 #include <list>
 #include <optional>
 #include <tuple>
@@ -134,6 +135,36 @@ template<typename A, typename VARIANT>
 std::optional<A> GetIf(const VARIANT &u) {
   if (const A * x{std::get_if<A>(&u)}) {
     return {*x};
+  }
+  return std::nullopt;
+}
+
+// Collapses a nested std::optional<std::optional<A>>
+template<typename A>
+std::optional<A> JoinOptionals(std::optional<std::optional<A>> &&x) {
+  if (x.has_value()) {
+    return std::move(*x);
+  }
+  return std::nullopt;
+}
+
+// Apply a function to optional argument(s), if are all present.
+// N.B. This function uses a "functor" in the C++ sense -- a type with
+// a member function operator() -- to implement a "functor" in the category
+// theoretical sense.
+template<typename A, typename B>
+std::optional<A> MapOptional(std::function<A(B &&)> &f, std::optional<B> &&x) {
+  if (x.has_value()) {
+    return {f(std::move(*x))};
+  }
+  return std::nullopt;
+}
+
+template<typename A, typename B, typename C>
+std::optional<A> MapOptional(std::function<A(B &&, C &&)> &f,
+    std::optional<B> &&x, std::optional<C> &&y) {
+  if (x.has_value() && y.has_value()) {
+    return {f(std::move(*x), std::move(*y))};
   }
   return std::nullopt;
 }

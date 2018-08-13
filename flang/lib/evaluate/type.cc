@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "type.h"
+#include "expression.h"
 #include "../common/idioms.h"
 #include <cinttypes>
 #include <optional>
@@ -36,6 +37,27 @@ std::optional<std::string> GenericScalar::ToString() const {
     }
   }
   return std::nullopt;
+}
+
+// There's some opaque type-fu going on below.  Given a GenericScalar, we
+// figure out its intrinsic type category, and then (for each category),
+// we figure out its kind from the type of the constant.  Then, given
+// the category, kind, and constant, we construct a GenericExpr around
+// the constant.
+GenericExpr GenericScalar::ToGenericExpr() const {
+  return std::visit(
+      [](const auto &c) -> GenericExpr {
+        using cType = typename std::decay<decltype(c)>::type;
+        constexpr TypeCategory cat{cType::category};
+        return {std::visit(
+            [&](const auto &value) -> Expr<SomeKind<cat>> {
+              using valueType = typename std::decay<decltype(value)>::type;
+              using Ty = typename TypeOfScalarValue<valueType>::type;
+              return {Expr<Ty>{value}};
+            },
+            c.u)};
+      },
+      u);
 }
 
 }  // namespace Fortran::evaluate

@@ -17,26 +17,25 @@
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
 #include "../evaluate/tools.h"
+#include <functional>
 
 using namespace Fortran::parser::literals;
 
 namespace Fortran::semantics {
 
-using Result = std::optional<evaluate::GenericExpr>;
-
 // AnalyzeHelper is a local template function that keeps the API
 // member function ExpressionAnalyzer::Analyze from having to be a
 // many-specialized template itself.
-template<typename A> Result AnalyzeHelper(ExpressionAnalyzer &, const A &);
+template<typename A> MaybeExpr AnalyzeHelper(ExpressionAnalyzer &, const A &);
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr &expr) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr &expr) {
   return ea.Analyze(expr);
 }
 
 // Template wrappers are traversed with checking.
 template<typename A>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const std::optional<A> &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const std::optional<A> &x) {
   if (x.has_value()) {
     return AnalyzeHelper(ea, *x);
   } else {
@@ -45,13 +44,14 @@ Result AnalyzeHelper(ExpressionAnalyzer &ea, const std::optional<A> &x) {
 }
 
 template<typename A>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const common::Indirection<A> &p) {
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const common::Indirection<A> &p) {
   return AnalyzeHelper(ea, *p);
 }
 
 template<typename A>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Scalar<A> &tree) {
-  Result result{AnalyzeHelper(ea, tree.thing)};
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Scalar<A> &tree) {
+  MaybeExpr result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
     if (result->Rank() > 1) {
       ea.context().messages.Say("must be scalar"_err_en_US);
@@ -62,8 +62,9 @@ Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Scalar<A> &tree) {
 }
 
 template<typename A>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Constant<A> &tree) {
-  Result result{AnalyzeHelper(ea, tree.thing)};
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Constant<A> &tree) {
+  MaybeExpr result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
     result->Fold(ea.context());
     if (!result->ScalarValue().has_value()) {
@@ -75,24 +76,25 @@ Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Constant<A> &tree) {
 }
 
 template<typename A>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
-  Result result{AnalyzeHelper(ea, tree.thing)};
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
+  MaybeExpr result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value() &&
-      !std::holds_alternative<evaluate::AnyKindIntegerExpr>(result->u)) {
+      !std::holds_alternative<evaluate::SomeKindIntegerExpr>(result->u)) {
     ea.context().messages.Say("must be integer"_err_en_US);
     return std::nullopt;
   }
   return result;
 }
 
-static std::optional<evaluate::AnyKindCharacterExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindCharacterExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ExpressionAnalyzer::KindParam{1})};
   switch (kind) {
 #define CASE(k) \
   case k: \
-    return {evaluate::AnyKindCharacterExpr{ \
+    return {evaluate::SomeKindCharacterExpr{ \
         evaluate::CharacterExpr<k>{std::get<std::string>(x.t)}}};
     FOR_EACH_CHARACTER_KIND(CASE, )
 #undef CASE
@@ -103,32 +105,29 @@ static std::optional<evaluate::AnyKindCharacterExpr> AnalyzeLiteral(
   }
 }
 
-// TODO: move this functor to common?  abstract to more of an fmap?
-template<typename A, typename B>
-std::optional<A> WrapOptional(std::optional<B> &&x) {
-  if (x.has_value()) {
-    return {A{std::move(*x)}};
-  }
-  return std::nullopt;
+template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
+  std::function<evaluate::GenericExpr(A &&)> f{
+      [](A &&y) -> evaluate::GenericExpr { return {std::move(y)}; }};
+  return common::MapOptional(f, std::move(x));
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstantSubstring &x) {
   const auto &range{std::get<parser::SubstringRange>(x.t)};
   const std::optional<parser::ScalarIntExpr> &lbTree{std::get<0>(range.t)};
   const std::optional<parser::ScalarIntExpr> &ubTree{std::get<1>(range.t)};
   if (!lbTree.has_value() && !ubTree.has_value()) {
     // "..."(:)
-    return WrapOptional<evaluate::GenericExpr>(
+    return PackageGeneric(
         AnalyzeLiteral(ea, std::get<parser::CharLiteralConstant>(x.t)));
   }
   // TODO: ensure that any kind parameter is 1
   std::string str{std::get<parser::CharLiteralConstant>(x.t).GetString()};
   std::optional<evaluate::SubscriptIntegerExpr> lb, ub;
   if (lbTree.has_value()) {
-    if (Result lbExpr{AnalyzeHelper(ea, *lbTree)}) {
-      if (auto *ie{std::get_if<evaluate::AnyKindIntegerExpr>(&lbExpr->u)}) {
+    if (MaybeExpr lbExpr{AnalyzeHelper(ea, *lbTree)}) {
+      if (auto *ie{std::get_if<evaluate::SomeKindIntegerExpr>(&lbExpr->u)}) {
         lb = evaluate::SubscriptIntegerExpr{std::move(*ie)};
       } else {
         ea.context().messages.Say(
@@ -137,8 +136,8 @@ Result AnalyzeHelper(
     }
   }
   if (ubTree.has_value()) {
-    if (Result ubExpr{AnalyzeHelper(ea, *ubTree)}) {
-      if (auto *ie{std::get_if<evaluate::AnyKindIntegerExpr>(&ubExpr->u)}) {
+    if (MaybeExpr ubExpr{AnalyzeHelper(ea, *ubTree)}) {
+      if (auto *ie{std::get_if<evaluate::SomeKindIntegerExpr>(&ubExpr->u)}) {
         ub = evaluate::SubscriptIntegerExpr{std::move(*ie)};
       } else {
         ea.context().messages.Say(
@@ -153,13 +152,13 @@ Result AnalyzeHelper(
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
   evaluate::CharacterExpr<1> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
-  return {
-      evaluate::GenericExpr{evaluate::AnyKindCharacterExpr{std::move(chExpr)}}};
+  return {evaluate::GenericExpr{
+      evaluate::SomeKindCharacterExpr{std::move(chExpr)}}};
 }
 
 // Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
 template<typename PARSED>
-std::optional<evaluate::AnyKindIntegerExpr> IntLiteralConstant(
+std::optional<evaluate::SomeKindIntegerExpr> IntLiteralConstant(
     ExpressionAnalyzer &ea, const PARSED &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultIntegerKind())};
@@ -167,7 +166,7 @@ std::optional<evaluate::AnyKindIntegerExpr> IntLiteralConstant(
   switch (kind) {
 #define CASE(k) \
   case k: \
-    return {evaluate::AnyKindIntegerExpr{evaluate::IntegerExpr<k>{value}}};
+    return {evaluate::SomeKindIntegerExpr{evaluate::IntegerExpr<k>{value}}};
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:
@@ -177,12 +176,12 @@ std::optional<evaluate::AnyKindIntegerExpr> IntLiteralConstant(
   }
 }
 
-static std::optional<evaluate::AnyKindIntegerExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindIntegerExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::IntLiteralConstant &x) {
   return IntLiteralConstant(ea, x);
 }
 
-static std::optional<evaluate::AnyKindIntegerExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindIntegerExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::SignedIntLiteralConstant &x) {
   return IntLiteralConstant(ea, x);
 }
@@ -213,7 +212,7 @@ static std::optional<evaluate::BOZLiteralConstant> AnalyzeLiteral(
 }
 
 template<int KIND>
-std::optional<evaluate::AnyKindRealExpr> ReadRealLiteral(
+std::optional<evaluate::SomeKindRealExpr> ReadRealLiteral(
     parser::CharBlock source, evaluate::FoldingContext &context) {
   using valueType = typename evaluate::RealExpr<KIND>::Scalar;
   const char *p{source.begin()};
@@ -225,10 +224,10 @@ std::optional<evaluate::AnyKindRealExpr> ReadRealLiteral(
   if (context.flushDenormalsToZero) {
     value = value.FlushDenormalToZero();
   }
-  return {evaluate::AnyKindRealExpr{evaluate::RealExpr<KIND>{value}}};
+  return {evaluate::SomeKindRealExpr{evaluate::RealExpr<KIND>{value}}};
 }
 
-static std::optional<evaluate::AnyKindRealExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindRealExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::RealLiteralConstant &x) {
   // Use a local message context around the real literal.
   parser::ContextualMessages ctxMsgs{x.real.source, ea.context().messages};
@@ -262,7 +261,7 @@ static std::optional<evaluate::AnyKindRealExpr> AnalyzeLiteral(
   }
 }
 
-static std::optional<evaluate::AnyKindRealExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindRealExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::SignedRealLiteralConstant &x) {
   auto result{AnalyzeLiteral(ea, std::get<parser::RealLiteralConstant>(x.t))};
   if (result.has_value()) {
@@ -281,65 +280,52 @@ static std::optional<evaluate::AnyKindRealExpr> AnalyzeLiteral(
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::NamedConstant &n) {
-  CHECK(n.v.symbol != nullptr);
-  auto *details{n.v.symbol->detailsIf<ObjectEntityDetails>()};
-  if (details == nullptr || !n.v.symbol->attrs().test(Attr::PARAMETER)) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Name &n) {
+  CHECK(n.symbol != nullptr);
+  auto *details{n.symbol->detailsIf<ObjectEntityDetails>()};
+  if (details == nullptr || !n.symbol->attrs().test(Attr::PARAMETER)) {
     ea.context().messages.Say(
-        "name (%s) is not a defined constant"_err_en_US, n.v.ToString().data());
+        "name (%s) is not a defined constant"_err_en_US, n.ToString().data());
     return std::nullopt;
   }
+  // TODO: enumerators, do they have the PARAMETER attribute?
   return std::nullopt;  // TODO parameters and enumerators
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::ComplexPart &x) {
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::NamedConstant &n) {
+  return AnalyzeHelper(ea, n.v);
+}
+
+template<>
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::ComplexPart &x) {
   return std::visit(common::visitors{[&](const parser::NamedConstant &n) {
                                        return AnalyzeHelper(ea, n);
                                      },
                         [&](const auto &literal) {
-                          return WrapOptional<evaluate::GenericExpr>(
-                              AnalyzeLiteral(ea, literal));
+                          return PackageGeneric(AnalyzeLiteral(ea, literal));
                         }},
       x.u);
-}
-
-static std::optional<evaluate::AnyKindComplexExpr> BuildComplex(
-    ExpressionAnalyzer &ea, Result &&re, Result &&im) {
-  // TODO pmk: what follows should be abstracted, it will appear many more times
-  auto cvtd{evaluate::ConvertRealOperands(
-      ea.context().messages, std::move(re), std::move(im))};
-  if (cvtd.has_value()) {
-    auto cmplx{std::visit(
-        [](auto &&rx, auto &&ix) -> evaluate::AnyKindComplexExpr {
-          using realExpr = typename std::decay<decltype(rx)>::type;
-          using zExpr = evaluate::Expr<typename realExpr::SameKindComplex>;
-          return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
-        },
-        std::move(cvtd->first.u), std::move(cvtd->second.u))};
-    return {cmplx};
-  }
-  return std::nullopt;
 }
 
 // Per F'2018 R718, if both components are INTEGER, they are both converted
 // to default REAL and the result is default COMPLEX.  Otherwise, the
 // kind of the result is the kind of largest REAL component, and the other
 // component is converted if necessary its type.
-static std::optional<evaluate::AnyKindComplexExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindComplexExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::ComplexLiteralConstant &z) {
   const parser::ComplexPart &re{std::get<0>(z.t)}, &im{std::get<1>(z.t)};
-  Result reEx{AnalyzeHelper(ea, re)}, imEx{AnalyzeHelper(ea, im)};
-  return BuildComplex(ea, std::move(reEx), std::move(imEx));
+  return ea.ConstructComplex(AnalyzeHelper(ea, re), AnalyzeHelper(ea, im));
 }
 
-static std::optional<evaluate::AnyKindCharacterExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindCharacterExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::HollerithLiteralConstant &x) {
   evaluate::Expr<evaluate::DefaultCharacter> expr{x.v};
-  return {evaluate::AnyKindCharacterExpr{expr}};
+  return {evaluate::SomeKindCharacterExpr{expr}};
 }
 
-static std::optional<evaluate::AnyKindLogicalExpr> AnalyzeLiteral(
+static std::optional<evaluate::SomeKindLogicalExpr> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::LogicalLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultLogicalKind())};
@@ -347,7 +333,7 @@ static std::optional<evaluate::AnyKindLogicalExpr> AnalyzeLiteral(
   switch (kind) {
 #define CASE(k) \
   case k: \
-    return {evaluate::AnyKindLogicalExpr{evaluate::LogicalExpr<k>{value}}};
+    return {evaluate::SomeKindLogicalExpr{evaluate::LogicalExpr<k>{value}}};
     FOR_EACH_LOGICAL_KIND(CASE, )
 #undef CASE
   default:
@@ -358,210 +344,205 @@ static std::optional<evaluate::AnyKindLogicalExpr> AnalyzeLiteral(
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::LiteralConstant &x) {
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::LiteralConstant &x) {
   return std::visit(
-      [&](const auto &c) {
-        return WrapOptional<evaluate::GenericExpr>(AnalyzeLiteral(ea, c));
-      },
+      [&](const auto &c) { return PackageGeneric(AnalyzeLiteral(ea, c)); },
       x.u);
 }
 
-template<> Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Name &n) {
-  // TODO
-  return std::nullopt;
-}
-
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::ArrayConstructor &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::StructureConstructor &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::TypeParamInquiry &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::FunctionReference &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Expr::Parentheses &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::UnaryPlus &x) {
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Expr::UnaryPlus &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Negate &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Negate &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::NOT &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::NOT &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Expr::PercentLoc &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Expr::DefinedUnary &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Power &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Power &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Multiply &x) {
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Expr::Multiply &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Divide &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Divide &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Add &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Add &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Subtract &x) {
+MaybeExpr AnalyzeHelper(
+    ExpressionAnalyzer &ea, const parser::Expr::Subtract &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Concat &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Concat &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::LT &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::LT &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::LE &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::LE &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::EQ &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::EQ &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::NE &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::NE &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::GE &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::GE &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::GT &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::GT &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::AND &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::AND &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::OR &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::OR &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::EQV &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::EQV &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::NEQV &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::NEQV &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::XOR &x) {
+MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::XOR &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Expr::DefinedBinary &x) {
   // TODO
   return std::nullopt;
 }
 
 template<>
-Result AnalyzeHelper(
+MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Expr::ComplexConstructor &x) {
-  Result reEx{ea.Analyze(*std::get<0>(x.t))};
-  Result imEx{ea.Analyze(*std::get<1>(x.t))};
-  return WrapOptional<evaluate::GenericExpr>(
-      BuildComplex(ea, std::move(reEx), std::move(imEx)));
+  return PackageGeneric(ea.ConstructComplex(
+      ea.Analyze(*std::get<0>(x.t)), ea.Analyze(*std::get<1>(x.t))));
 }
 
-Result ExpressionAnalyzer::Analyze(const parser::Expr &x) {
+MaybeExpr ExpressionAnalyzer::Analyze(const parser::Expr &x) {
   return std::visit(common::visitors{[&](const parser::LiteralConstant &c) {
                                        return AnalyzeHelper(*this, c);
                                      },
                         // TODO: remaining cases
-                        [&](const auto &) { return Result{}; }},
+                        [&](const auto &) { return MaybeExpr{}; }},
       x.u);
 }
 
@@ -576,11 +557,22 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
           [](std::uint64_t k) { return static_cast<KindParam>(k); },
           [&](const parser::Scalar<
               parser::Integer<parser::Constant<parser::Name>>> &n) {
-            if (Result oge{AnalyzeHelper(*this, n)}) {
+            if (MaybeExpr oge{AnalyzeHelper(*this, n)}) {
               if (std::optional<evaluate::GenericScalar> ogs{
                       oge->ScalarValue()}) {
-                // TODO pmk more here next
+                if (std::optional<std::int64_t> v{ogs->ToInt64()}) {
+                  return *v;
+                } else {
+                  context_.messages.Say(
+                      "KIND type parameter must be INTEGER"_err_en_US);
+                }
+              } else {
+                context_.messages.Say(
+                    "KIND type parameter must be constant"_err_en_US);
               }
+            } else {
+              context_.messages.Say(
+                  "KIND type parameter must be constant"_err_en_US);
             }
             return defaultKind;
           },
@@ -588,10 +580,33 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
             if (kanjiKind >= 0) {
               return kanjiKind;
             }
-            context().messages.Say("Kanji not allowed here"_err_en_US);
+            context_.messages.Say("Kanji not allowed here"_err_en_US);
             return defaultKind;
           }},
       kindParam->u);
+}
+
+std::optional<evaluate::SomeKindComplexExpr>
+ExpressionAnalyzer::ConstructComplex(MaybeExpr &&real, MaybeExpr &&imaginary) {
+  // TODO: pmk abstract further, this will be a common pattern
+  auto partial{[&](evaluate::GenericExpr &&x, evaluate::GenericExpr &&y) {
+    return evaluate::ConvertRealOperands(
+        context_.messages, std::move(x), std::move(y));
+  }};
+  using fType = evaluate::ConvertRealOperandsResult(
+      evaluate::GenericExpr &&, evaluate::GenericExpr &&);
+  std::function<fType> f{partial};
+  auto converted{common::MapOptional(f, std::move(real), std::move(imaginary))};
+  if (auto joined{common::JoinOptionals(std::move(converted))}) {
+    return {std::visit(
+        [](auto &&rx, auto &&ix) -> evaluate::SomeKindComplexExpr {
+          using realExpr = typename std::decay<decltype(rx)>::type;
+          using zExpr = evaluate::Expr<typename realExpr::SameKindComplex>;
+          return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
+        },
+        std::move(joined->first.u), std::move(joined->second.u))};
+  }
+  return std::nullopt;
 }
 
 }  // namespace Fortran::semantics

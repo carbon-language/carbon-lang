@@ -35,13 +35,13 @@ template<int KIND> using LogicalExpr = Expr<Type<TypeCategory::Logical, KIND>>;
 
 // An expression whose result is within one particular type category and
 // of any supported kind.
-using AnyKindIntegerExpr = Expr<AnyKindType<TypeCategory::Integer>>;
-using AnyKindRealExpr = Expr<AnyKindType<TypeCategory::Real>>;
-using AnyKindComplexExpr = Expr<AnyKindType<TypeCategory::Complex>>;
-using AnyKindCharacterExpr = Expr<AnyKindType<TypeCategory::Character>>;
-using AnyKindLogicalExpr = Expr<AnyKindType<TypeCategory::Logical>>;
+using SomeKindIntegerExpr = Expr<SomeKind<TypeCategory::Integer>>;
+using SomeKindRealExpr = Expr<SomeKind<TypeCategory::Real>>;
+using SomeKindComplexExpr = Expr<SomeKind<TypeCategory::Complex>>;
+using SomeKindCharacterExpr = Expr<SomeKind<TypeCategory::Character>>;
+using SomeKindLogicalExpr = Expr<SomeKind<TypeCategory::Logical>>;
 
-// A completely generic expression.
+// A completely generic expression of any category and kind.
 struct GenericExpr;
 
 }  // namespace Fortran::evaluate

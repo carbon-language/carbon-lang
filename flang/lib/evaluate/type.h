@@ -35,6 +35,8 @@ namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
+struct GenericExpr;
+
 template<TypeCategory C, int KIND> struct TypeBase {
   static constexpr TypeCategory category{C};
   static constexpr int kind{KIND};
@@ -107,12 +109,13 @@ struct Type<TypeCategory::Logical, KIND>
   using Value = value::Logical<8 * KIND>;
 };
 
+// Convenience type aliases:
 // Default REAL just simply has to be IEEE-754 single precision today.
 // It occupies one numeric storage unit by definition.  The default INTEGER
 // and default LOGICAL intrinsic types also have to occupy one numeric
 // storage unit, so their kinds are also forced.  Default COMPLEX occupies
 // two numeric storage units.
-// TODO: Support a compile-time option to default everything to KIND=8
+// TODO: Support compile-time options to default reals, ints, or both to KIND=8
 
 using DefaultReal = Type<TypeCategory::Real, 4>;
 using DefaultDoublePrecision = Type<TypeCategory::Real, 2 * DefaultReal::kind>;
@@ -134,50 +137,76 @@ using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 #define FOR_EACH_CHARACTER_KIND(M, SEP) M(1)
 #define FOR_EACH_LOGICAL_KIND(M, SEP) M(1) SEP M(2) SEP M(4) SEP M(8)
 
-// These templates create instances of std::variant<> that can contain
+#define FOR_EACH_CATEGORY(M) \
+  M(Integer, INTEGER) \
+  M(Real, REAL) M(Complex, COMPLEX) M(Character, CHARACTER) \
+      M(Logical, LOGICAL)
+
+// These macros and template create instances of std::variant<> that can contain
 // applications of some class template to all of the supported kinds of
 // a category of intrinsic type.
-#define TKIND(K) T<K>
 template<TypeCategory CAT, template<int> class T> struct KindsVariant;
-template<template<int> class T> struct KindsVariant<TypeCategory::Integer, T> {
-  using type = std::variant<FOR_EACH_INTEGER_KIND(TKIND, COMMA)>;
-};
-template<template<int> class T> struct KindsVariant<TypeCategory::Real, T> {
-  using type = std::variant<FOR_EACH_REAL_KIND(TKIND, COMMA)>;
-};
-template<template<int> class T> struct KindsVariant<TypeCategory::Complex, T> {
-  using type = std::variant<FOR_EACH_COMPLEX_KIND(TKIND, COMMA)>;
-};
-template<template<int> class T>
-struct KindsVariant<TypeCategory::Character, T> {
-  using type = std::variant<FOR_EACH_CHARACTER_KIND(TKIND, COMMA)>;
-};
-template<template<int> class T> struct KindsVariant<TypeCategory::Logical, T> {
-  using type = std::variant<FOR_EACH_LOGICAL_KIND(TKIND, COMMA)>;
-};
+#define TKIND(K) T<K>
+#define MAKE(Cat, CAT) \
+  template<template<int> class T> struct KindsVariant<TypeCategory::Cat, T> { \
+    using type = std::variant<FOR_EACH_##CAT##_KIND(TKIND, COMMA)>; \
+  };
+FOR_EACH_CATEGORY(MAKE)
+#undef MAKE
 #undef TKIND
+
+// Map scalar constant value types back to their Fortran types.
+// For every type T = Type<CAT, KIND>, TypeOfScalarValue<T::Value>::type == T.
+// E.g., TypeOfScalarValue<Integer<32>> is Type<TypeCategory::Integer, 4>.
+template<typename CONST> struct TypeOfScalarValue;
+#define TOSV(cat, kind) \
+  template<> \
+  struct TypeOfScalarValue<typename Type<TypeCategory::cat, kind>::Value> { \
+    using type = Type<TypeCategory::cat, kind>; \
+  };
+#define M(k) TOSV(Integer, k)
+FOR_EACH_INTEGER_KIND(M, )
+#undef M
+#define M(k) TOSV(Real, k)
+FOR_EACH_REAL_KIND(M, )
+#undef M
+#define M(k) TOSV(Complex, k)
+FOR_EACH_COMPLEX_KIND(M, )
+#undef M
+#define M(k) TOSV(Character, k)
+FOR_EACH_CHARACTER_KIND(M, )
+#undef M
+#define M(k) TOSV(Logical, k)
+FOR_EACH_LOGICAL_KIND(M, )
+#undef M
+#undef TOSV
 
 // Holds a scalar constant of any kind within a particular intrinsic type
 // category.
 template<TypeCategory CAT> struct ScalarConstant {
+  static constexpr TypeCategory category{CAT};
   CLASS_BOILERPLATE(ScalarConstant)
+
   template<int KIND> using KindScalar = typename Type<CAT, KIND>::Value;
   template<typename A> ScalarConstant(const A &x) : u{x} {}
   template<typename A>
   ScalarConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
+
   typename KindsVariant<CAT, KindScalar>::type u;
 };
 
 // Holds a scalar constant of any intrinsic category and size.
 struct GenericScalar {
   CLASS_BOILERPLATE(GenericScalar)
+
   template<TypeCategory CAT, int KIND>
   GenericScalar(const typename Type<CAT, KIND>::Value &x)
     : u{ScalarConstant<CAT>{x}} {}
   template<TypeCategory CAT, int KIND>
   GenericScalar(typename Type<CAT, KIND>::Value &&x)
     : u{ScalarConstant<CAT>{std::move(x)}} {}
+
   template<typename A> GenericScalar(const A &x) : u{x} {}
   template<typename A>
   GenericScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
@@ -185,6 +214,7 @@ struct GenericScalar {
 
   std::optional<std::int64_t> ToInt64() const;
   std::optional<std::string> ToString() const;
+  GenericExpr ToGenericExpr() const;
 
   std::variant<ScalarConstant<TypeCategory::Integer>,
       ScalarConstant<TypeCategory::Real>, ScalarConstant<TypeCategory::Complex>,
@@ -194,7 +224,7 @@ struct GenericScalar {
 };
 
 // Represents a type of any supported kind within a particular category.
-template<TypeCategory CAT> struct AnyKindType {
+template<TypeCategory CAT> struct SomeKind {
   static constexpr TypeCategory category{CAT};
   using Value = ScalarConstant<CAT>;
 };
