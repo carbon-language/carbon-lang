@@ -1124,9 +1124,7 @@ Value *LibCallSimplifier::optimizeCAbs(CallInst *CI, IRBuilder<> &B) {
 
 static Value *optimizeTrigReflections(CallInst *Call, LibFunc Func,
                                       IRBuilder<> &B) {
-  IRBuilder<>::FastMathFlagGuard Guard(B);
-  B.setFastMathFlags(Call->getFastMathFlags());
-  
+  // FIXME: This drops FMF.
   // TODO: Add tan() and other calls.
   // TODO: Can this be shared to also handle LLVM intrinsics?
   Value *X;

@@ -40,7 +40,7 @@ define float @cosf_negated_arg(float %x) {
 
 define float @cosf_negated_arg_FMF(float %x) {
 ; ANY-LABEL: @cosf_negated_arg_FMF(
-; ANY-NEXT:    [[COS:%.*]] = call reassoc nnan float @cosf(float [[X:%.*]])
+; ANY-NEXT:    [[COS:%.*]] = call float @cosf(float [[X:%.*]])
 ; ANY-NEXT:    ret float [[COS]]
 ;
   %neg = fsub float -0.0, %x
@@ -69,17 +69,6 @@ define float @sinf_negated_arg(float %x) {
 ;
   %neg = fsub float -0.0, %x
   %r = call float @sinf(float %neg)
-  ret float %r
-}
-
-define float @sinf_negated_arg_FMF(float %x) {
-; ANY-LABEL: @sinf_negated_arg_FMF(
-; ANY-NEXT:    [[SIN:%.*]] = call nnan afn float @sinf(float [[X:%.*]])
-; ANY-NEXT:    [[TMP1:%.*]] = fsub nnan afn float -0.000000e+00, [[SIN]]
-; ANY-NEXT:    ret float [[TMP1]]
-;
-  %neg = fsub ninf float -0.0, %x
-  %r = call afn nnan float @sinf(float %neg)
   ret float %r
 }
 
