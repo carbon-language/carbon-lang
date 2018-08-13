@@ -1480,30 +1480,54 @@ static void emitPredicateProlog(const RecordKeeper &Records, raw_ostream &OS) {
 }
 
 static void emitPredicates(const CodeGenSchedTransition &T,
-                           const CodeGenSchedClass &SC,
-                           PredicateExpander &PE,
+                           const CodeGenSchedClass &SC, PredicateExpander &PE,
                            raw_ostream &OS) {
   std::string Buffer;
   raw_string_ostream StringStream(Buffer);
   formatted_raw_ostream FOS(StringStream);
 
   FOS.PadToColumn(6);
-  FOS << "if (";
-  for (RecIter RI = T.PredTerm.begin(), RE = T.PredTerm.end(); RI != RE; ++RI) {
-    if (RI != T.PredTerm.begin()) {
-      FOS << "\n";
-      FOS.PadToColumn(8);
-      FOS << "&& ";
+
+  auto IsTruePredicate = [](const Record *Rec) {
+    return Rec->isSubClassOf("MCSchedPredicate") &&
+           Rec->getValueAsDef("Pred")->isSubClassOf("MCTrue");
+  };
+
+  // If not all predicates are MCTrue, then we need an if-stmt.
+  unsigned NumNonTruePreds =
+      T.PredTerm.size() - count_if(T.PredTerm, IsTruePredicate);
+  if (NumNonTruePreds) {
+    bool FirstNonTruePredicate = true;
+    for (const Record *Rec : T.PredTerm) {
+      // Skip predicates that evaluate to "true".
+      if (IsTruePredicate(Rec))
+        continue;
+
+      if (FirstNonTruePredicate) {
+        FOS << "if (";
+        FirstNonTruePredicate = false;
+      } else {
+        FOS << "\n";
+        FOS.PadToColumn(8);
+        FOS << "&& ";
+      }
+
+      if (Rec->isSubClassOf("MCSchedPredicate")) {
+        PE.expandPredicate(FOS, Rec->getValueAsDef("Pred"));
+        continue;
+      }
+
+      // Expand this legacy predicate and wrap it around braces if there is more
+      // than one predicate to expand.
+      FOS << ((NumNonTruePreds > 1) ? "(" : "")
+          << Rec->getValueAsString("Predicate")
+          << ((NumNonTruePreds > 1) ? ")" : "");
     }
-    const Record *Rec = *RI;
-    if (Rec->isSubClassOf("MCSchedPredicate"))
-      PE.expandPredicate(FOS, Rec->getValueAsDef("Pred"));
-    else
-      FOS << "(" << Rec->getValueAsString("Predicate") << ")";
+
+    FOS << ")\n"; // end of if-stmt
+    FOS.PadToColumn(8);
   }
 
-  FOS << ")\n";
-  FOS.PadToColumn(8);
   FOS << "return " << T.ToClassIdx << "; // " << SC.Name << '\n';
   FOS.flush();
   OS << Buffer;
