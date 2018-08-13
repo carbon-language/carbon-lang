@@ -38,8 +38,11 @@
 
 define i1 @positive_with_signbit(i32 %arg) {
 ; CHECK-LABEL: @positive_with_signbit(
-; CHECK-NEXT:    [[T4_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG:%.*]], 128
-; CHECK-NEXT:    ret i1 [[T4_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = icmp sgt i32 [[ARG:%.*]], -1
+; CHECK-NEXT:    [[T2:%.*]] = add i32 [[ARG]], 128
+; CHECK-NEXT:    [[T3:%.*]] = icmp ult i32 [[T2]], 256
+; CHECK-NEXT:    [[T4:%.*]] = and i1 [[T1]], [[T3]]
+; CHECK-NEXT:    ret i1 [[T4]]
 ;
   %t1 = icmp sgt i32 %arg, -1
   %t2 = add i32 %arg, 128
@@ -50,8 +53,12 @@ define i1 @positive_with_signbit(i32 %arg) {
 
 define i1 @positive_with_mask(i32 %arg) {
 ; CHECK-LABEL: @positive_with_mask(
-; CHECK-NEXT:    [[T5_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG:%.*]], 128
-; CHECK-NEXT:    ret i1 [[T5_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = and i32 [[ARG:%.*]], 1107296256
+; CHECK-NEXT:    [[T2:%.*]] = icmp eq i32 [[T1]], 0
+; CHECK-NEXT:    [[T3:%.*]] = add i32 [[ARG]], 128
+; CHECK-NEXT:    [[T4:%.*]] = icmp ult i32 [[T3]], 256
+; CHECK-NEXT:    [[T5:%.*]] = and i1 [[T2]], [[T4]]
+; CHECK-NEXT:    ret i1 [[T5]]
 ;
   %t1 = and i32 %arg, 1107296256
   %t2 = icmp eq i32 %t1, 0
@@ -63,8 +70,11 @@ define i1 @positive_with_mask(i32 %arg) {
 
 define i1 @positive_with_icmp(i32 %arg) {
 ; CHECK-LABEL: @positive_with_icmp(
-; CHECK-NEXT:    [[T4_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG:%.*]], 128
-; CHECK-NEXT:    ret i1 [[T4_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = icmp ult i32 [[ARG:%.*]], 512
+; CHECK-NEXT:    [[T2:%.*]] = add i32 [[ARG]], 128
+; CHECK-NEXT:    [[T3:%.*]] = icmp ult i32 [[T2]], 256
+; CHECK-NEXT:    [[T4:%.*]] = and i1 [[T1]], [[T3]]
+; CHECK-NEXT:    ret i1 [[T4]]
 ;
   %t1 = icmp ult i32 %arg, 512
   %t2 = add i32 %arg, 128
@@ -76,8 +86,11 @@ define i1 @positive_with_icmp(i32 %arg) {
 ; Still the same
 define i1 @positive_with_aggressive_icmp(i32 %arg) {
 ; CHECK-LABEL: @positive_with_aggressive_icmp(
-; CHECK-NEXT:    [[T4_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG:%.*]], 128
-; CHECK-NEXT:    ret i1 [[T4_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = icmp ult i32 [[ARG:%.*]], 128
+; CHECK-NEXT:    [[T2:%.*]] = add i32 [[ARG]], 256
+; CHECK-NEXT:    [[T3:%.*]] = icmp ult i32 [[T2]], 512
+; CHECK-NEXT:    [[T4:%.*]] = and i1 [[T1]], [[T3]]
+; CHECK-NEXT:    ret i1 [[T4]]
 ;
   %t1 = icmp ult i32 %arg, 128
   %t2 = add i32 %arg, 256
@@ -94,8 +107,11 @@ define i1 @positive_with_aggressive_icmp(i32 %arg) {
 
 define <2 x i1> @positive_vec_splat(<2 x i32> %arg) {
 ; CHECK-LABEL: @positive_vec_splat(
-; CHECK-NEXT:    [[T4_SIMPLIFIED:%.*]] = icmp ult <2 x i32> [[ARG:%.*]], <i32 128, i32 128>
-; CHECK-NEXT:    ret <2 x i1> [[T4_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = icmp sgt <2 x i32> [[ARG:%.*]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[T2:%.*]] = add <2 x i32> [[ARG]], <i32 128, i32 128>
+; CHECK-NEXT:    [[T3:%.*]] = icmp ult <2 x i32> [[T2]], <i32 256, i32 256>
+; CHECK-NEXT:    [[T4:%.*]] = and <2 x i1> [[T1]], [[T3]]
+; CHECK-NEXT:    ret <2 x i1> [[T4]]
 ;
   %t1 = icmp sgt <2 x i32> %arg, <i32 -1, i32 -1>
   %t2 = add <2 x i32> %arg, <i32 128, i32 128>
@@ -233,8 +249,11 @@ declare i32 @gen32()
 define i1 @commutative() {
 ; CHECK-LABEL: @commutative(
 ; CHECK-NEXT:    [[ARG:%.*]] = call i32 @gen32()
-; CHECK-NEXT:    [[T4_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG]], 128
-; CHECK-NEXT:    ret i1 [[T4_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = icmp sgt i32 [[ARG]], -1
+; CHECK-NEXT:    [[T2:%.*]] = add i32 [[ARG]], 128
+; CHECK-NEXT:    [[T3:%.*]] = icmp ult i32 [[T2]], 256
+; CHECK-NEXT:    [[T4:%.*]] = and i1 [[T3]], [[T1]]
+; CHECK-NEXT:    ret i1 [[T4]]
 ;
   %arg = call i32 @gen32()
   %t1 = icmp sgt i32 %arg, -1
@@ -247,8 +266,11 @@ define i1 @commutative() {
 define i1 @commutative_with_icmp() {
 ; CHECK-LABEL: @commutative_with_icmp(
 ; CHECK-NEXT:    [[ARG:%.*]] = call i32 @gen32()
-; CHECK-NEXT:    [[T4_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG]], 128
-; CHECK-NEXT:    ret i1 [[T4_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = icmp ult i32 [[ARG]], 512
+; CHECK-NEXT:    [[T2:%.*]] = add i32 [[ARG]], 128
+; CHECK-NEXT:    [[T3:%.*]] = icmp ult i32 [[T2]], 256
+; CHECK-NEXT:    [[T4:%.*]] = and i1 [[T3]], [[T1]]
+; CHECK-NEXT:    ret i1 [[T4]]
 ;
   %arg = call i32 @gen32()
   %t1 = icmp ult i32 %arg, 512
@@ -264,8 +286,12 @@ define i1 @commutative_with_icmp() {
 
 define i1 @positive_trunc_signbit(i32 %arg) {
 ; CHECK-LABEL: @positive_trunc_signbit(
-; CHECK-NEXT:    [[T5_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG:%.*]], 128
-; CHECK-NEXT:    ret i1 [[T5_SIMPLIFIED]]
+; CHECK-NEXT:    [[T1:%.*]] = trunc i32 [[ARG:%.*]] to i8
+; CHECK-NEXT:    [[T2:%.*]] = icmp sgt i8 [[T1]], -1
+; CHECK-NEXT:    [[T3:%.*]] = add i32 [[ARG]], 128
+; CHECK-NEXT:    [[T4:%.*]] = icmp ult i32 [[T3]], 256
+; CHECK-NEXT:    [[T5:%.*]] = and i1 [[T2]], [[T4]]
+; CHECK-NEXT:    ret i1 [[T5]]
 ;
   %t1 = trunc i32 %arg to i8
   %t2 = icmp sgt i8 %t1, -1
@@ -278,8 +304,11 @@ define i1 @positive_trunc_signbit(i32 %arg) {
 define i1 @positive_trunc_base(i32 %arg) {
 ; CHECK-LABEL: @positive_trunc_base(
 ; CHECK-NEXT:    [[T1:%.*]] = trunc i32 [[ARG:%.*]] to i16
-; CHECK-NEXT:    [[T5_SIMPLIFIED:%.*]] = icmp ult i16 [[T1]], 128
-; CHECK-NEXT:    ret i1 [[T5_SIMPLIFIED]]
+; CHECK-NEXT:    [[T2:%.*]] = icmp sgt i16 [[T1]], -1
+; CHECK-NEXT:    [[T3:%.*]] = add i16 [[T1]], 128
+; CHECK-NEXT:    [[T4:%.*]] = icmp ult i16 [[T3]], 256
+; CHECK-NEXT:    [[T5:%.*]] = and i1 [[T2]], [[T4]]
+; CHECK-NEXT:    ret i1 [[T5]]
 ;
   %t1 = trunc i32 %arg to i16
   %t2 = icmp sgt i16 %t1, -1
@@ -328,8 +357,8 @@ define i1 @oneuse_with_signbit(i32 %arg) {
 ; CHECK-NEXT:    call void @use32(i32 [[T2]])
 ; CHECK-NEXT:    [[T3:%.*]] = icmp ult i32 [[T2]], 256
 ; CHECK-NEXT:    call void @use1(i1 [[T3]])
-; CHECK-NEXT:    [[T4_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG]], 128
-; CHECK-NEXT:    ret i1 [[T4_SIMPLIFIED]]
+; CHECK-NEXT:    [[T4:%.*]] = and i1 [[T1]], [[T3]]
+; CHECK-NEXT:    ret i1 [[T4]]
 ;
   %t1 = icmp sgt i32 %arg, -1
   call void @use1(i1 %t1)
@@ -351,8 +380,8 @@ define i1 @oneuse_with_mask(i32 %arg) {
 ; CHECK-NEXT:    call void @use32(i32 [[T3]])
 ; CHECK-NEXT:    [[T4:%.*]] = icmp ult i32 [[T3]], 256
 ; CHECK-NEXT:    call void @use1(i1 [[T4]])
-; CHECK-NEXT:    [[T5_SIMPLIFIED:%.*]] = icmp ult i32 [[ARG]], 128
-; CHECK-NEXT:    ret i1 [[T5_SIMPLIFIED]]
+; CHECK-NEXT:    [[T5:%.*]] = and i1 [[T2]], [[T4]]
+; CHECK-NEXT:    ret i1 [[T5]]
 ;
   %t1 = and i32 %arg, 603979776 ; some bit within the target 4294967168 mask.
   call void @use32(i32 %t1)
