@@ -1122,18 +1122,30 @@ Value *LibCallSimplifier::optimizeCAbs(CallInst *CI, IRBuilder<> &B) {
   return B.CreateCall(FSqrt, B.CreateFAdd(RealReal, ImagImag), "cabs");
 }
 
-Value *LibCallSimplifier::optimizeCos(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  StringRef Name = Callee->getName();
-  if (UnsafeFPShrink && Name == "cos" && hasFloatVersion(Name))
-    if (Value *V = optimizeUnaryDoubleFP(CI, B, true))
-      return V;
-
-  // cos(-X) -> cos(X)
+static Value *optimizeTrigReflections(CallInst *Call, LibFunc Func,
+                                      IRBuilder<> &B) {
+  // FIXME: This drops FMF.
+  // TODO: Add tan() and other calls.
+  // TODO: Can this be shared to also handle LLVM intrinsics?
   Value *X;
-  if (match(CI->getArgOperand(0), m_FNeg(m_Value(X))))
-    return B.CreateCall(Callee, X, "cos");
-
+  switch (Func) {
+  case LibFunc_sin:
+  case LibFunc_sinf:
+  case LibFunc_sinl:
+    // sin(-X) --> -sin(X)
+    if (match(Call->getArgOperand(0), m_OneUse(m_FNeg(m_Value(X)))))
+      return B.CreateFNeg(B.CreateCall(Call->getCalledFunction(), X, "sin"));
+    break;
+  case LibFunc_cos:
+  case LibFunc_cosf:
+  case LibFunc_cosl:
+    // cos(-X) --> cos(X)
+    if (match(Call->getArgOperand(0), m_FNeg(m_Value(X))))
+      return B.CreateCall(Call->getCalledFunction(), X, "cos");
+    break;
+  default:
+    break;
+  }
   return nullptr;
 }
 
@@ -2327,11 +2339,10 @@ Value *LibCallSimplifier::optimizeFloatingPointLibCall(CallInst *CI,
   if (CI->isStrictFP())
     return nullptr;
 
+  if (Value *V = optimizeTrigReflections(CI, Func, Builder))
+    return V;
+
   switch (Func) {
-  case LibFunc_cosf:
-  case LibFunc_cos:
-  case LibFunc_cosl:
-    return optimizeCos(CI, Builder);
   case LibFunc_sinpif:
   case LibFunc_sinpi:
   case LibFunc_cospif:
@@ -2386,6 +2397,7 @@ Value *LibCallSimplifier::optimizeFloatingPointLibCall(CallInst *CI,
   case LibFunc_exp:
   case LibFunc_exp10:
   case LibFunc_expm1:
+  case LibFunc_cos:
   case LibFunc_sin:
   case LibFunc_sinh:
   case LibFunc_tanh:

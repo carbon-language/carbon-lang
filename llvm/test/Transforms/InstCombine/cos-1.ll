@@ -52,9 +52,9 @@ define float @cosf_negated_arg_FMF(float %x) {
 
 define double @sin_negated_arg(double %x) {
 ; ANY-LABEL: @sin_negated_arg(
-; ANY-NEXT:    [[NEG:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
-; ANY-NEXT:    [[R:%.*]] = call double @sin(double [[NEG]])
-; ANY-NEXT:    ret double [[R]]
+; ANY-NEXT:    [[SIN:%.*]] = call double @sin(double [[X:%.*]])
+; ANY-NEXT:    [[TMP1:%.*]] = fsub double -0.000000e+00, [[SIN]]
+; ANY-NEXT:    ret double [[TMP1]]
 ;
   %neg = fsub double -0.0, %x
   %r = call double @sin(double %neg)
@@ -63,9 +63,9 @@ define double @sin_negated_arg(double %x) {
 
 define float @sinf_negated_arg(float %x) {
 ; ANY-LABEL: @sinf_negated_arg(
-; ANY-NEXT:    [[NEG:%.*]] = fsub float -0.000000e+00, [[X:%.*]]
-; ANY-NEXT:    [[R:%.*]] = call float @sinf(float [[NEG]])
-; ANY-NEXT:    ret float [[R]]
+; ANY-NEXT:    [[SIN:%.*]] = call float @sinf(float [[X:%.*]])
+; ANY-NEXT:    [[TMP1:%.*]] = fsub float -0.000000e+00, [[SIN]]
+; ANY-NEXT:    ret float [[TMP1]]
 ;
   %neg = fsub float -0.0, %x
   %r = call float @sinf(float %neg)
@@ -92,10 +92,8 @@ define double @sin_negated_arg_extra_use(double %x) {
 
 define double @neg_sin_negated_arg(double %x) {
 ; ANY-LABEL: @neg_sin_negated_arg(
-; ANY-NEXT:    [[NEG:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
-; ANY-NEXT:    [[R:%.*]] = call double @sin(double [[NEG]])
-; ANY-NEXT:    [[RN:%.*]] = fsub double -0.000000e+00, [[R]]
-; ANY-NEXT:    ret double [[RN]]
+; ANY-NEXT:    [[SIN:%.*]] = call double @sin(double [[X:%.*]])
+; ANY-NEXT:    ret double [[SIN]]
 ;
   %neg = fsub double -0.0, %x
   %r = call double @sin(double %neg)
