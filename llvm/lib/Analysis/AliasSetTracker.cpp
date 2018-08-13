@@ -357,22 +357,19 @@ void AliasSetTracker::add(Value *Ptr, LocationSize Size,
 void AliasSetTracker::add(LoadInst *LI) {
   if (isStrongerThanMonotonic(LI->getOrdering())) return addUnknown(LI);
 
-  auto MemLoc = MemoryLocation::get(LI);
-  AliasSet &AS = addPointer(MemLoc, AliasSet::RefAccess);
+  AliasSet &AS = addPointer(MemoryLocation::get(LI), AliasSet::RefAccess);
   if (LI->isVolatile()) AS.setVolatile();
 }
 
 void AliasSetTracker::add(StoreInst *SI) {
   if (isStrongerThanMonotonic(SI->getOrdering())) return addUnknown(SI);
 
-  auto MemLoc = MemoryLocation::get(SI);
-  AliasSet &AS = addPointer(MemLoc, AliasSet::ModAccess);
+  AliasSet &AS = addPointer(MemoryLocation::get(SI), AliasSet::ModAccess);
   if (SI->isVolatile()) AS.setVolatile();
 }
 
 void AliasSetTracker::add(VAArgInst *VAAI) {
-  addPointer(MemoryLocation::get(VAAI),
-             AliasSet::ModRefAccess);
+  addPointer(MemoryLocation::get(VAAI), AliasSet::ModRefAccess);
 }
 
 void AliasSetTracker::add(AnyMemSetInst *MSI) {
@@ -385,10 +382,9 @@ void AliasSetTracker::add(AnyMemSetInst *MSI) {
 
 void AliasSetTracker::add(AnyMemTransferInst *MTI) {
   auto SrcLoc = MemoryLocation::getForSource(MTI);
-  auto DestLoc = MemoryLocation::getForDest(MTI);
-
   AliasSet &ASSrc = addPointer(SrcLoc, AliasSet::RefAccess);
 
+  auto DestLoc = MemoryLocation::getForDest(MTI);
   AliasSet &ASDst = addPointer(DestLoc, AliasSet::ModAccess);
 
   auto* MT = dyn_cast<MemTransferInst>(MTI);
