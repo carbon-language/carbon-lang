@@ -669,6 +669,7 @@ public:
 
   /// Erase non-pseudo instruction at a given iterator \p II.
   iterator eraseInstruction(iterator II) {
+    adjustNumPseudos(*II, -1);
     return Instructions.erase(II);
   }
 
