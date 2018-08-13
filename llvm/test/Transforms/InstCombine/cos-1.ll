@@ -6,17 +6,101 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 declare double @cos(double)
 declare double @llvm.cos.f64(double)
+declare float @cosf(float)
+declare float @llvm.cos.f32(float)
 
-; Check cos(-x) -> cos(x);
+declare double @sin(double)
+declare double @llvm.sin.f64(double)
+declare float @sinf(float)
+declare float @llvm.sin.f32(float)
 
-define double @negated_arg(double %d) {
-; ANY-LABEL: @negated_arg(
-; ANY-NEXT:    [[COS1:%.*]] = call double @cos(double [[D:%.*]])
-; ANY-NEXT:    ret double [[COS1]]
+; cos(-x) -> cos(x);
+
+define double @cos_negated_arg(double %x) {
+; ANY-LABEL: @cos_negated_arg(
+; ANY-NEXT:    [[COS:%.*]] = call double @cos(double [[X:%.*]])
+; ANY-NEXT:    ret double [[COS]]
 ;
-  %neg = fsub double -0.0, %d
-  %cos = call double @cos(double %neg)
-  ret double %cos
+  %neg = fsub double -0.0, %x
+  %r = call double @cos(double %neg)
+  ret double %r
+}
+
+define float @cosf_negated_arg(float %x) {
+; ANY-LABEL: @cosf_negated_arg(
+; ANY-NEXT:    [[COS:%.*]] = call float @cosf(float [[X:%.*]])
+; ANY-NEXT:    ret float [[COS]]
+;
+  %neg = fsub float -0.0, %x
+  %r = call float @cosf(float %neg)
+  ret float %r
+}
+
+; FIXME: FMF was dropped.
+
+define float @cosf_negated_arg_FMF(float %x) {
+; ANY-LABEL: @cosf_negated_arg_FMF(
+; ANY-NEXT:    [[COS:%.*]] = call float @cosf(float [[X:%.*]])
+; ANY-NEXT:    ret float [[COS]]
+;
+  %neg = fsub float -0.0, %x
+  %r = call nnan reassoc float @cosf(float %neg)
+  ret float %r
+}
+
+; sin(-x) -> -sin(x);
+
+define double @sin_negated_arg(double %x) {
+; ANY-LABEL: @sin_negated_arg(
+; ANY-NEXT:    [[NEG:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
+; ANY-NEXT:    [[R:%.*]] = call double @sin(double [[NEG]])
+; ANY-NEXT:    ret double [[R]]
+;
+  %neg = fsub double -0.0, %x
+  %r = call double @sin(double %neg)
+  ret double %r
+}
+
+define float @sinf_negated_arg(float %x) {
+; ANY-LABEL: @sinf_negated_arg(
+; ANY-NEXT:    [[NEG:%.*]] = fsub float -0.000000e+00, [[X:%.*]]
+; ANY-NEXT:    [[R:%.*]] = call float @sinf(float [[NEG]])
+; ANY-NEXT:    ret float [[R]]
+;
+  %neg = fsub float -0.0, %x
+  %r = call float @sinf(float %neg)
+  ret float %r
+}
+
+declare void @use(double)
+
+define double @sin_negated_arg_extra_use(double %x) {
+; ANY-LABEL: @sin_negated_arg_extra_use(
+; ANY-NEXT:    [[NEG:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
+; ANY-NEXT:    [[R:%.*]] = call double @sin(double [[NEG]])
+; ANY-NEXT:    call void @use(double [[NEG]])
+; ANY-NEXT:    ret double [[R]]
+;
+  %neg = fsub double -0.0, %x
+  %r = call double @sin(double %neg)
+  call void @use(double %neg)
+  ret double %r
+}
+
+; -sin(-x) --> sin(x)
+; PR38458: https://bugs.llvm.org/show_bug.cgi?id=38458
+
+define double @neg_sin_negated_arg(double %x) {
+; ANY-LABEL: @neg_sin_negated_arg(
+; ANY-NEXT:    [[NEG:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
+; ANY-NEXT:    [[R:%.*]] = call double @sin(double [[NEG]])
+; ANY-NEXT:    [[RN:%.*]] = fsub double -0.000000e+00, [[R]]
+; ANY-NEXT:    ret double [[RN]]
+;
+  %neg = fsub double -0.0, %x
+  %r = call double @sin(double %neg)
+  %rn = fsub double -0.0, %r
+  ret double %rn
 }
 
 define float @negated_and_shrinkable_libcall(float %f) {
