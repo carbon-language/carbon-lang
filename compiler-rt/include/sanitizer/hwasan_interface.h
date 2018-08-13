@@ -32,6 +32,21 @@ extern "C" {
   void __hwasan_enable_allocator_tagging(void);
   void __hwasan_disable_allocator_tagging(void);
 
+  int __sanitizer_posix_memalign(void **memptr, size_t alignment, size_t size);
+  void * __sanitizer_memalign(size_t alignment, size_t size);
+  void * __sanitizer_aligned_alloc(size_t alignment, size_t size);
+  void * __sanitizer___libc_memalign(size_t alignment, size_t size);
+  void * __sanitizer_valloc(size_t size);
+  void * __sanitizer_pvalloc(size_t size);
+  void __sanitizer_free(void *ptr);
+  void __sanitizer_cfree(void *ptr);
+  size_t __sanitizer_malloc_usable_size(const void *ptr);
+  struct mallinfo __sanitizer_mallinfo();
+  int __sanitizer_mallopt(int cmd, int value);
+  void __sanitizer_malloc_stats(void);
+  void * __sanitizer_calloc(size_t nmemb, size_t size);
+  void * __sanitizer_realloc(void *ptr, size_t size);
+  void * __sanitizer_malloc(size_t size);
 #ifdef __cplusplus
 }  // extern "C"
 #endif
