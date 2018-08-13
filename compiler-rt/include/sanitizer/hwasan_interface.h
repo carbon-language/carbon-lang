@@ -19,6 +19,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+  // Initialize shadow but not the rest of the runtime.
+  // Does not call libc unless there is an error.
+  // Can be called multiple times, or not at all (in which case shadow will
+  // be initialized in compiler-inserted __hwasan_init() call).
+  void __hwasan_shadow_init(void);
+
   // This function may be optionally provided by user and should return
   // a string containing HWASan runtime options. See asan_flags.h for details.
   const char* __hwasan_default_options(void);
