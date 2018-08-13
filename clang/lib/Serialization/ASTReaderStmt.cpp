@@ -1856,7 +1856,7 @@ OMPClause *OMPClauseReader::readClause() {
     C = new (Context) OMPScheduleClause();
     break;
   case OMPC_ordered:
-    C = OMPOrderedClause::CreateEmpty(Context, Reader->Record.readInt());
+    C = new (Context) OMPOrderedClause();
     break;
   case OMPC_nowait:
     C = new (Context) OMPNowaitClause();
@@ -1928,8 +1928,7 @@ OMPClause *OMPClauseReader::readClause() {
     C = OMPFlushClause::CreateEmpty(Context, Reader->Record.readInt());
     break;
   case OMPC_depend:
-    C = OMPDependClause::CreateEmpty(Context, Reader->Record.readInt(),
-                                     Reader->Record.readInt());
+    C = OMPDependClause::CreateEmpty(Context, Reader->Record.readInt());
     break;
   case OMPC_device:
     C = new (Context) OMPDeviceClause();
@@ -2088,10 +2087,6 @@ void OMPClauseReader::VisitOMPScheduleClause(OMPScheduleClause *C) {
 
 void OMPClauseReader::VisitOMPOrderedClause(OMPOrderedClause *C) {
   C->setNumForLoops(Reader->Record.readSubExpr());
-  for (unsigned I = 0, E = C->NumberOfLoops; I < E; ++I)
-    C->setLoopNumIterations(I, Reader->Record.readSubExpr());
-  for (unsigned I = 0, E = C->NumberOfLoops; I < E; ++I)
-    C->setLoopCounter(I, Reader->Record.readSubExpr());
   C->setLParenLoc(Reader->ReadSourceLocation());
 }
 
@@ -2403,8 +2398,7 @@ void OMPClauseReader::VisitOMPDependClause(OMPDependClause *C) {
   for (unsigned i = 0; i != NumVars; ++i)
     Vars.push_back(Reader->Record.readSubExpr());
   C->setVarRefs(Vars);
-  for (unsigned I = 0, E = C->getNumLoops(); I < E; ++I)
-    C->setLoopData(I, Reader->Record.readSubExpr());
+  C->setCounterValue(Reader->Record.readSubExpr());
 }
 
 void OMPClauseReader::VisitOMPDeviceClause(OMPDeviceClause *C) {
