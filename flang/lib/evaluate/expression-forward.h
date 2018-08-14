@@ -25,8 +25,10 @@ namespace Fortran::evaluate {
 
 // An expression of some specific result type.
 template<typename A> class Expr;
+
+// TODO: pmk: obsolete?
 template<int KIND> using IntegerExpr = Expr<Type<TypeCategory::Integer, KIND>>;
-using DefaultIntegerExpr = IntegerExpr<DefaultInteger::kind>;
+using DefaultIntegerExpr = Expr<DefaultInteger>;
 template<int KIND> using RealExpr = Expr<Type<TypeCategory::Real, KIND>>;
 template<int KIND> using ComplexExpr = Expr<Type<TypeCategory::Complex, KIND>>;
 template<int KIND>
@@ -40,9 +42,6 @@ using SomeKindRealExpr = Expr<SomeKind<TypeCategory::Real>>;
 using SomeKindComplexExpr = Expr<SomeKind<TypeCategory::Complex>>;
 using SomeKindCharacterExpr = Expr<SomeKind<TypeCategory::Character>>;
 using SomeKindLogicalExpr = Expr<SomeKind<TypeCategory::Logical>>;
-
-// A completely generic expression of any category and kind.
-struct GenericExpr;
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_EXPRESSION_FORWARD_H_

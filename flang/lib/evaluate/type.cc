@@ -38,34 +38,4 @@ std::optional<std::string> GenericScalar::ToString() const {
   }
   return std::nullopt;
 }
-
-// TODO pmk: maybe transplant these templates to type.h/expression.h?
-
-// There's some admittedly opaque type-fu going on below.
-// Given a GenericScalar value, we want to be able to (re-)wrap it as
-// a GenericExpr.  So we extract its value, then build up an expression
-// around it.  The subtle magic is in the first template, whose result
-// is a specific expression whose Fortran type category and kind are inferred
-// from the type of the scalar constant.
-template<typename A> Expr<ScalarValueType<A>> ScalarConstantToExpr(const A &x) {
-  return {x};
-}
-
-template<typename A>
-Expr<SomeKind<A::category>> ToSomeKindExpr(const Expr<A> &x) {
-  return {x};
-}
-
-template<TypeCategory CAT>
-Expr<SomeKind<CAT>> SomeKindScalarToExpr(const SomeKindScalar<CAT> &x) {
-  return std::visit(
-      [](const auto &c) { return ToSomeKindExpr(ScalarConstantToExpr(c)); },
-      x.u);
-}
-
-GenericExpr GenericScalar::ToGenericExpr() const {
-  return std::visit(
-      [&](const auto &c) { return GenericExpr{SomeKindScalarToExpr(c)}; }, u);
-}
-
 }  // namespace Fortran::evaluate

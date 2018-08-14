@@ -35,8 +35,6 @@ namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
-struct GenericExpr;
-
 template<TypeCategory C, int KIND> struct TypeBase {
   static constexpr TypeCategory category{C};
   static constexpr TypeCategory GetCategory() { return C; };
@@ -46,8 +44,6 @@ template<TypeCategory C, int KIND> struct TypeBase {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
 };
-
-template<typename T> using Scalar = typename T::Scalar;
 
 template<TypeCategory C, int KIND> struct Type;
 
@@ -59,32 +55,30 @@ struct Type<TypeCategory::Integer, KIND>
 
 template<>
 struct Type<TypeCategory::Real, 2> : public TypeBase<TypeCategory::Real, 2> {
-  using Scalar = value::Real<Scalar<Type<TypeCategory::Integer, 2>>, 11>;
-  using Complex = Type<TypeCategory::Complex, 2>;
+  using Scalar =
+      value::Real<typename Type<TypeCategory::Integer, 2>::Scalar, 11>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 4> : public TypeBase<TypeCategory::Real, 4> {
-  using Scalar = value::Real<Scalar<Type<TypeCategory::Integer, 4>>, 24>;
-  using Complex = Type<TypeCategory::Complex, 4>;
+  using Scalar =
+      value::Real<typename Type<TypeCategory::Integer, 4>::Scalar, 24>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 8> : public TypeBase<TypeCategory::Real, 8> {
-  using Scalar = value::Real<Scalar<Type<TypeCategory::Integer, 8>>, 53>;
-  using Complex = Type<TypeCategory::Complex, 8>;
+  using Scalar =
+      value::Real<typename Type<TypeCategory::Integer, 8>::Scalar, 53>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 10> : public TypeBase<TypeCategory::Real, 10> {
   using Scalar = value::Real<value::Integer<80>, 64, false>;
-  using Complex = Type<TypeCategory::Complex, 10>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 16> : public TypeBase<TypeCategory::Real, 16> {
   using Scalar = value::Real<value::Integer<128>, 112>;
-  using Complex = Type<TypeCategory::Complex, 16>;
 };
 
 // The KIND type parameter on COMPLEX is the kind of each of its components.
@@ -92,7 +86,7 @@ template<int KIND>
 struct Type<TypeCategory::Complex, KIND>
   : public TypeBase<TypeCategory::Complex, KIND> {
   using Part = Type<TypeCategory::Real, KIND>;
-  using Scalar = value::Complex<Scalar<Part>>;
+  using Scalar = value::Complex<typename Part::Scalar>;
 };
 
 template<int KIND> struct Type<TypeCategory::Character, KIND> {
@@ -111,6 +105,11 @@ struct Type<TypeCategory::Logical, KIND>
   using Scalar = value::Logical<8 * KIND>;
 };
 
+// Type functions
+template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
+template<TypeCategory C, typename T>
+using SameKind = Type<C, std::decay_t<T>::kind>;
+
 // Convenience type aliases:
 // Default REAL just simply has to be IEEE-754 single precision today.
 // It occupies one numeric storage unit by definition.  The default INTEGER
@@ -123,11 +122,12 @@ using DefaultReal = Type<TypeCategory::Real, 4>;
 using DefaultDoublePrecision = Type<TypeCategory::Real, 2 * DefaultReal::kind>;
 using DefaultInteger = Type<TypeCategory::Integer, DefaultReal::kind>;
 using IntrinsicTypeParameterType = DefaultInteger;
-using DefaultComplex = typename DefaultReal::Complex;
+using DefaultComplex = SameKind<TypeCategory::Complex, DefaultReal>;
 using DefaultLogical = Type<TypeCategory::Logical, DefaultInteger::kind>;
 using DefaultCharacter = Type<TypeCategory::Character, 1>;
 
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
+using LogicalResult = Type<TypeCategory::Logical, 1>;
 
 // These macros invoke other macros on each of the supported kinds of
 // a given category.
@@ -183,7 +183,8 @@ FOR_EACH_LOGICAL_KIND(M, )
 #undef TOSV
 
 template<typename CONST>
-using ScalarValueType = typename GetTypeOfScalarValue<CONST>::type;
+using ScalarValueType =
+    typename GetTypeOfScalarValue<std::decay_t<CONST>>::type;
 
 // Holds a scalar value of any kind within a particular intrinsic type
 // category.
@@ -198,6 +199,13 @@ template<TypeCategory CAT> struct SomeKindScalar {
     : u{std::move(x)} {}
 
   typename KindsVariant<CAT, KindScalar>::type u;
+};
+
+struct GenericScalar;
+
+// Represents a completely generic type.
+struct SomeType {
+  using Scalar = GenericScalar;
 };
 
 // Holds a scalar constant of any intrinsic category and size.
@@ -217,7 +225,6 @@ struct GenericScalar {
 
   std::optional<std::int64_t> ToInt64() const;
   std::optional<std::string> ToString() const;
-  GenericExpr ToGenericExpr() const;
 
   std::variant<SomeKindScalar<TypeCategory::Integer>,
       SomeKindScalar<TypeCategory::Real>, SomeKindScalar<TypeCategory::Complex>,

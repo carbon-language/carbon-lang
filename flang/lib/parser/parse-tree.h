@@ -62,10 +62,6 @@ namespace Fortran::semantics {
 class Symbol;
 }  // namespace Fortran::semantics
 
-namespace Fortran::evaluate {
-struct GenericExpr;
-}  // namespace Fortran::evaluate
-
 // Most non-template classes in this file use these default definitions
 // for their move constructor and move assignment operator=, and disable
 // their copy constructor and copy assignment operator=.

@@ -32,21 +32,6 @@ SomeKindRealExpr ConvertToTypeOf(
       [&](const auto &rk) { return SomeKindRealExpr{decltype(rk){to}}; }, to.u);
 }
 
-static void ConvertToSameRealKind(SomeKindRealExpr &x, SomeKindRealExpr &y) {
-  std::visit(
-      [&](auto &xk, auto &yk) {
-        using xt = std::decay_t<decltype(xk)>;
-        using yt = std::decay_t<decltype(yk)>;
-        constexpr int kindDiff{xt::Result::kind - yt::Result::kind};
-        if constexpr (kindDiff < 0) {
-          x.u = yt{xk};
-        } else if constexpr (kindDiff > 0) {
-          y.u = xt{yk};
-        }
-      },
-      x.u, y.u);
-}
-
 std::optional<std::pair<SomeKindRealExpr, SomeKindRealExpr>>
 ConvertRealOperands(
     parser::ContextualMessages &messages, GenericExpr &&x, GenericExpr &&y) {
@@ -68,7 +53,7 @@ ConvertRealOperands(
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
           [&](SomeKindRealExpr &&rx, SomeKindRealExpr &&ry) {
-            ConvertToSameRealKind(rx, ry);
+            ConvertToSameKind(rx, ry);
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
           [&](const auto &, const auto &)
@@ -86,5 +71,11 @@ ConvertRealOperands(parser::ContextualMessages &messages,
     return ConvertRealOperands(messages, std::move(*x), std::move(*y));
   }
   return std::nullopt;
+}
+
+Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &x) {
+  return std::visit(
+      [&](const auto &c) { return ToGenericExpr(SomeKindScalarToExpr(c)); },
+      x.u);
 }
 }  // namespace Fortran::evaluate

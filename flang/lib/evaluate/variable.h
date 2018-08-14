@@ -42,8 +42,8 @@ class ActualFunctionArg;
 
 // Subscript and cosubscript expressions are of a kind that matches the
 // address size, at least at the top level.
-using SubscriptIntegerExpr = IntegerExpr<SubscriptInteger::kind>;
-using IndirectSubscriptIntegerExpr = CopyableIndirection<SubscriptIntegerExpr>;
+using IndirectSubscriptIntegerExpr =
+    CopyableIndirection<Expr<SubscriptInteger>>;
 
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
@@ -60,7 +60,7 @@ public:
   const DataRef &base() const { return *base_; }
   DataRef &base() { return *base_; }
   const Symbol &symbol() const { return *symbol_; }
-  SubscriptIntegerExpr LEN() const;
+  Expr<SubscriptInteger> LEN() const;
 
 private:
   CopyableIndirection<DataRef> base_;
@@ -71,12 +71,12 @@ private:
 class Triplet {
 public:
   CLASS_BOILERPLATE(Triplet)
-  Triplet(std::optional<SubscriptIntegerExpr> &&,
-      std::optional<SubscriptIntegerExpr> &&,
-      std::optional<SubscriptIntegerExpr> &&);
-  std::optional<SubscriptIntegerExpr> lower() const;
-  std::optional<SubscriptIntegerExpr> upper() const;
-  std::optional<SubscriptIntegerExpr> stride() const;
+  Triplet(std::optional<Expr<SubscriptInteger>> &&,
+      std::optional<Expr<SubscriptInteger>> &&,
+      std::optional<Expr<SubscriptInteger>> &&);
+  std::optional<Expr<SubscriptInteger>> lower() const;
+  std::optional<Expr<SubscriptInteger>> upper() const;
+  std::optional<Expr<SubscriptInteger>> stride() const;
 
 private:
   std::optional<IndirectSubscriptIntegerExpr> lower_, upper_, stride_;
@@ -86,9 +86,9 @@ private:
 class Subscript {
 public:
   CLASS_BOILERPLATE(Subscript)
-  explicit Subscript(const SubscriptIntegerExpr &s)
+  explicit Subscript(const Expr<SubscriptInteger> &s)
     : u_{IndirectSubscriptIntegerExpr::Make(s)} {}
-  explicit Subscript(SubscriptIntegerExpr &&s)
+  explicit Subscript(Expr<SubscriptInteger> &&s)
     : u_{IndirectSubscriptIntegerExpr::Make(std::move(s))} {}
   explicit Subscript(const Triplet &t) : u_{t} {}
   explicit Subscript(Triplet &&t) : u_{std::move(t)} {}
@@ -109,7 +109,7 @@ public:
     : u_{&n}, subscript_(std::move(ss)) {}
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
     : u_{std::move(c)}, subscript_(std::move(ss)) {}
-  SubscriptIntegerExpr LEN() const;
+  Expr<SubscriptInteger> LEN() const;
 
 private:
   std::variant<const Symbol *, Component> u_;
@@ -127,15 +127,15 @@ class CoarrayRef {
 public:
   CLASS_BOILERPLATE(CoarrayRef)
   CoarrayRef(std::vector<const Symbol *> &&,
-      std::vector<SubscriptIntegerExpr> &&,
-      std::vector<SubscriptIntegerExpr> &&);  // TODO: stat & team?
+      std::vector<Expr<SubscriptInteger>> &&,
+      std::vector<Expr<SubscriptInteger>> &&);  // TODO: stat & team?
   CoarrayRef &setStat(Variable &&);
   CoarrayRef &setTeam(Variable &&, bool isTeamNumber = false);
-  SubscriptIntegerExpr LEN() const;
+  Expr<SubscriptInteger> LEN() const;
 
 private:
   std::vector<const Symbol *> base_;
-  std::vector<SubscriptIntegerExpr> subscript_, cosubscript_;
+  std::vector<Expr<SubscriptInteger>> subscript_, cosubscript_;
   std::optional<CopyableIndirection<Variable>> stat_, team_;
   bool teamIsTeamNumber_{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
@@ -152,7 +152,7 @@ public:
   explicit DataRef(Component &&c) : u_{std::move(c)} {}
   explicit DataRef(ArrayRef &&a) : u_{std::move(a)} {}
   explicit DataRef(CoarrayRef &&a) : u_{std::move(a)} {}
-  SubscriptIntegerExpr LEN() const;
+  Expr<SubscriptInteger> LEN() const;
 
 private:
   std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u_;
@@ -166,14 +166,14 @@ class Substring {
 public:
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Substring)
-  Substring(DataRef &&, std::optional<SubscriptIntegerExpr> &&,
-      std::optional<SubscriptIntegerExpr> &&);
-  Substring(std::string &&, std::optional<SubscriptIntegerExpr> &&,
-      std::optional<SubscriptIntegerExpr> &&);
+  Substring(DataRef &&, std::optional<Expr<SubscriptInteger>> &&,
+      std::optional<Expr<SubscriptInteger>> &&);
+  Substring(std::string &&, std::optional<Expr<SubscriptInteger>> &&,
+      std::optional<Expr<SubscriptInteger>> &&);
 
-  SubscriptIntegerExpr first() const;
-  SubscriptIntegerExpr last() const;
-  SubscriptIntegerExpr LEN() const;
+  Expr<SubscriptInteger> first() const;
+  Expr<SubscriptInteger> last() const;
+  Expr<SubscriptInteger> LEN() const;
   std::optional<std::string> Fold(FoldingContext &);
 
 private:
@@ -217,7 +217,7 @@ public:
   explicit ProcedureDesignator(const Symbol &n) : u_{&n} {}
   explicit ProcedureDesignator(const Component &c) : u_{c} {}
   explicit ProcedureDesignator(Component &&c) : u_{std::move(c)} {}
-  SubscriptIntegerExpr LEN() const;
+  Expr<SubscriptInteger> LEN() const;
 
 private:
   std::variant<IntrinsicProcedure, const Symbol *, Component> u_;
@@ -252,11 +252,11 @@ private:
 class ActualFunctionArg {
 public:
   CLASS_BOILERPLATE(ActualFunctionArg)
-  explicit ActualFunctionArg(GenericExpr &&x) : u_{std::move(x)} {}
+  explicit ActualFunctionArg(Expr<SomeType> &&x) : u_{std::move(x)} {}
   explicit ActualFunctionArg(Variable &&x) : u_{std::move(x)} {}
 
 private:
-  std::variant<CopyableIndirection<GenericExpr>, Variable> u_;
+  std::variant<CopyableIndirection<Expr<SomeType>>, Variable> u_;
 };
 
 struct Label {  // TODO: this is a placeholder
@@ -268,12 +268,12 @@ struct Label {  // TODO: this is a placeholder
 class ActualSubroutineArg {
 public:
   CLASS_BOILERPLATE(ActualSubroutineArg)
-  explicit ActualSubroutineArg(GenericExpr &&x) : u_{std::move(x)} {}
+  explicit ActualSubroutineArg(Expr<SomeType> &&x) : u_{std::move(x)} {}
   explicit ActualSubroutineArg(Variable &&x) : u_{std::move(x)} {}
   explicit ActualSubroutineArg(const Label &l) : u_{&l} {}
 
 private:
-  std::variant<CopyableIndirection<GenericExpr>, Variable, const Label *> u_;
+  std::variant<CopyableIndirection<Expr<SomeType>>, Variable, const Label *> u_;
 };
 
 using SubroutineRef = ProcedureRef<ActualSubroutineArg>;

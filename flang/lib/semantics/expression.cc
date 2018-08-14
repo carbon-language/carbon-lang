@@ -75,6 +75,9 @@ MaybeExpr AnalyzeHelper(
   return result;
 }
 
+// TODO: Return
+// std::optional<evaluate::Expr<evaluate::SomeKind<TypeCategory::Integer>>> here
+// instead
 template<typename A>
 MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
@@ -106,8 +109,8 @@ static std::optional<evaluate::SomeKindCharacterExpr> AnalyzeLiteral(
 }
 
 template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
-  std::function<evaluate::GenericExpr(A &&)> f{
-      [](A &&y) -> evaluate::GenericExpr { return {std::move(y)}; }};
+  std::function<GenericExpr(A &&)> f{
+      [](A &&y) -> GenericExpr { return {std::move(y)}; }};
   return common::MapOptional(f, std::move(x));
 }
 
@@ -124,11 +127,11 @@ MaybeExpr AnalyzeHelper(
   }
   // TODO: ensure that any kind parameter is 1
   std::string str{std::get<parser::CharLiteralConstant>(x.t).GetString()};
-  std::optional<evaluate::SubscriptIntegerExpr> lb, ub;
+  std::optional<evaluate::Expr<evaluate::SubscriptInteger>> lb, ub;
   if (lbTree.has_value()) {
     if (MaybeExpr lbExpr{AnalyzeHelper(ea, *lbTree)}) {
       if (auto *ie{std::get_if<evaluate::SomeKindIntegerExpr>(&lbExpr->u)}) {
-        lb = evaluate::SubscriptIntegerExpr{std::move(*ie)};
+        lb = evaluate::Expr<evaluate::SubscriptInteger>{std::move(*ie)};
       } else {
         ea.context().messages.Say(
             "scalar integer expression required for substring lower bound"_err_en_US);
@@ -138,7 +141,7 @@ MaybeExpr AnalyzeHelper(
   if (ubTree.has_value()) {
     if (MaybeExpr ubExpr{AnalyzeHelper(ea, *ubTree)}) {
       if (auto *ie{std::get_if<evaluate::SomeKindIntegerExpr>(&ubExpr->u)}) {
-        ub = evaluate::SubscriptIntegerExpr{std::move(*ie)};
+        ub = evaluate::Expr<evaluate::SubscriptInteger>{std::move(*ie)};
       } else {
         ea.context().messages.Say(
             "scalar integer expression required for substring upper bound"_err_en_US);
@@ -152,8 +155,7 @@ MaybeExpr AnalyzeHelper(
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
   evaluate::CharacterExpr<1> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
-  return {evaluate::GenericExpr{
-      evaluate::SomeKindCharacterExpr{std::move(chExpr)}}};
+  return {GenericExpr{evaluate::SomeKindCharacterExpr{std::move(chExpr)}}};
 }
 
 // Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
@@ -165,8 +167,7 @@ std::optional<evaluate::SomeKindIntegerExpr> IntLiteralConstant(
   auto value{std::get<0>(x.t)};  // std::[u]int64_t
   switch (kind) {
 #define CASE(k) \
-  case k: \
-    return {evaluate::SomeKindIntegerExpr{evaluate::IntegerExpr<k>{value}}};
+  case k: return {evaluate::ToSomeKindExpr(evaluate::IntegerExpr<k>{value})};
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:
@@ -214,9 +215,9 @@ static std::optional<evaluate::BOZLiteralConstant> AnalyzeLiteral(
 template<int KIND>
 std::optional<evaluate::SomeKindRealExpr> ReadRealLiteral(
     parser::CharBlock source, evaluate::FoldingContext &context) {
-  using valueType = typename evaluate::RealExpr<KIND>::Scalar;
   const char *p{source.begin()};
-  auto valWithFlags{valueType::Read(p, context.rounding)};
+  using RealType = evaluate::Type<evaluate::TypeCategory::Real, KIND>;
+  auto valWithFlags{evaluate::Scalar<RealType>::Read(p, context.rounding)};
   CHECK(p == source.end());
   evaluate::RealFlagWarnings(
       context, valWithFlags.flags, "conversion of REAL literal");
@@ -224,7 +225,7 @@ std::optional<evaluate::SomeKindRealExpr> ReadRealLiteral(
   if (context.flushDenormalsToZero) {
     value = value.FlushDenormalToZero();
   }
-  return {evaluate::SomeKindRealExpr{evaluate::RealExpr<KIND>{value}}};
+  return {evaluate::ToSomeKindExpr(evaluate::Expr<RealType>{value})};
 }
 
 static std::optional<evaluate::SomeKindRealExpr> AnalyzeLiteral(
@@ -589,19 +590,21 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
 std::optional<evaluate::SomeKindComplexExpr>
 ExpressionAnalyzer::ConstructComplex(MaybeExpr &&real, MaybeExpr &&imaginary) {
   // TODO: pmk abstract further, this will be a common pattern
-  auto partial{[&](evaluate::GenericExpr &&x, evaluate::GenericExpr &&y) {
+  auto partial{[&](GenericExpr &&x, GenericExpr &&y) {
     return evaluate::ConvertRealOperands(
         context_.messages, std::move(x), std::move(y));
   }};
-  using fType = evaluate::ConvertRealOperandsResult(
-      evaluate::GenericExpr &&, evaluate::GenericExpr &&);
+  using fType =
+      evaluate::ConvertRealOperandsResult(GenericExpr &&, GenericExpr &&);
   std::function<fType> f{partial};
   auto converted{common::MapOptional(f, std::move(real), std::move(imaginary))};
   if (auto joined{common::JoinOptionals(std::move(converted))}) {
     return {std::visit(
         [](auto &&rx, auto &&ix) -> evaluate::SomeKindComplexExpr {
-          using realExpr = std::decay_t<decltype(rx)>;
-          using zExpr = evaluate::Expr<typename realExpr::Complex>;
+          using realType = evaluate::ResultType<decltype(rx)>;
+          using zType =
+              evaluate::SameKind<evaluate::TypeCategory::Complex, realType>;
+          using zExpr = evaluate::Expr<zType>;
           return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
         },
         std::move(joined->first.u), std::move(joined->second.u))};
