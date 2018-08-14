@@ -8030,10 +8030,8 @@ static void ReplaceCMP_SWAP_64Results(SDNode *N,
       ARM::CMP_SWAP_64, SDLoc(N),
       DAG.getVTList(MVT::Untyped, MVT::i32, MVT::Other), Ops);
 
-  MachineFunction &MF = DAG.getMachineFunction();
-  MachineSDNode::mmo_iterator MemOp = MF.allocateMemRefsArray(1);
-  MemOp[0] = cast<MemSDNode>(N)->getMemOperand();
-  cast<MachineSDNode>(CmpSwap)->setMemRefs(MemOp, MemOp + 1);
+  MachineMemOperand *MemOp = cast<MemSDNode>(N)->getMemOperand();
+  DAG.setNodeMemRefs(cast<MachineSDNode>(CmpSwap), {MemOp});
 
   bool isBigEndian = DAG.getDataLayout().isBigEndian();
 
