@@ -24,15 +24,15 @@
 namespace Fortran::evaluate {
 
 // Convert the second argument to the same type and kind of the first.
-SomeKindRealExpr ConvertToTypeOf(
-    const SomeKindRealExpr &to, const SomeKindIntegerExpr &from);
-SomeKindRealExpr ConvertToTypeOf(
-    const SomeKindRealExpr &to, const SomeKindRealExpr &from);
+Expr<SomeReal> ConvertToTypeOf(
+    const Expr<SomeReal> &to, const Expr<SomeInteger> &from);
+Expr<SomeReal> ConvertToTypeOf(
+    const Expr<SomeReal> &to, const Expr<SomeReal> &from);
 
 // Ensure that both operands of an intrinsic REAL operation or CMPLX()
 // are INTEGER or REAL, and convert them as necessary to the same REAL type.
 using ConvertRealOperandsResult =
-    std::optional<std::pair<SomeKindRealExpr, SomeKindRealExpr>>;
+    std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>>;
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &, GenericExpr &&, GenericExpr &&);
 

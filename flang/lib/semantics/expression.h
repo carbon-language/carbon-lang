@@ -23,8 +23,7 @@
 
 namespace Fortran::semantics {
 
-using evaluate::GenericExpr;
-using MaybeExpr = std::optional<GenericExpr>;
+using MaybeExpr = std::optional<evaluate::GenericExpr>;
 
 class ExpressionAnalyzer {
 public:
@@ -44,7 +43,7 @@ public:
   KindParam Analyze(const std::optional<parser::KindParam> &,
       KindParam defaultKind, KindParam kanjiKind = -1 /* not allowed here */);
 
-  std::optional<evaluate::SomeKindComplexExpr> ConstructComplex(
+  std::optional<evaluate::Expr<evaluate::SomeComplex>> ConstructComplex(
       MaybeExpr &&real, MaybeExpr &&imaginary);
 
 private:

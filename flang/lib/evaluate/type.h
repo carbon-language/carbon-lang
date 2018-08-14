@@ -107,6 +107,7 @@ struct Type<TypeCategory::Logical, KIND>
 
 // Type functions
 template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
+
 template<TypeCategory C, typename T>
 using SameKind = Type<C, std::decay_t<T>::kind>;
 
@@ -201,13 +202,6 @@ template<TypeCategory CAT> struct SomeKindScalar {
   typename KindsVariant<CAT, KindScalar>::type u;
 };
 
-struct GenericScalar;
-
-// Represents a completely generic type.
-struct SomeType {
-  using Scalar = GenericScalar;
-};
-
 // Holds a scalar constant of any intrinsic category and size.
 struct GenericScalar {
   CLASS_BOILERPLATE(GenericScalar)
@@ -237,6 +231,17 @@ struct GenericScalar {
 template<TypeCategory CAT> struct SomeKind {
   static constexpr TypeCategory category{CAT};
   using Scalar = SomeKindScalar<CAT>;
+};
+
+using SomeInteger = SomeKind<TypeCategory::Integer>;
+using SomeReal = SomeKind<TypeCategory::Real>;
+using SomeComplex = SomeKind<TypeCategory::Complex>;
+using SomeCharacter = SomeKind<TypeCategory::Character>;
+using SomeLogical = SomeKind<TypeCategory::Logical>;
+
+// Represents a completely generic type.
+struct SomeType {
+  using Scalar = GenericScalar;
 };
 
 }  // namespace Fortran::evaluate

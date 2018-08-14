@@ -24,6 +24,9 @@ using namespace Fortran::parser::literals;
 namespace Fortran::semantics {
 
 using common::TypeCategory;
+using evaluate::Expr;
+using evaluate::GenericExpr;
+using evaluate::Type;
 
 // AnalyzeHelper is a local template function that keeps the API
 // member function ExpressionAnalyzer::Analyze from having to be a
@@ -77,31 +80,29 @@ MaybeExpr AnalyzeHelper(
   return result;
 }
 
-// TODO: Return
-// std::optional<evaluate::Expr<evaluate::SomeKind<TypeCategory::Integer>>> here
-// instead
+// TODO: Return std::optional<Expr<SomeInteger>> here instead
 template<typename A>
 MaybeExpr AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
   MaybeExpr result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value() &&
-      !std::holds_alternative<evaluate::SomeKindIntegerExpr>(result->u)) {
+      !std::holds_alternative<Expr<evaluate::SomeInteger>>(result->u)) {
     ea.context().messages.Say("must be integer"_err_en_US);
     return std::nullopt;
   }
   return result;
 }
 
-static std::optional<evaluate::SomeKindCharacterExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ExpressionAnalyzer::KindParam{1})};
   switch (kind) {
 #define CASE(k) \
   case k: { \
-    using Ty = evaluate::Type<TypeCategory::Character, k>; \
-    return {evaluate::SomeKindCharacterExpr{ \
-        evaluate::Expr<Ty>{std::get<std::string>(x.t)}}}; \
+    using Ty = Type<TypeCategory::Character, k>; \
+    return { \
+        Expr<evaluate::SomeCharacter>{Expr<Ty>{std::get<std::string>(x.t)}}}; \
   }
     FOR_EACH_CHARACTER_KIND(CASE, )
 #undef CASE
@@ -114,7 +115,7 @@ static std::optional<evaluate::SomeKindCharacterExpr> AnalyzeLiteral(
 
 template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
   std::function<GenericExpr(A &&)> f{
-      [](A &&y) -> GenericExpr { return {std::move(y)}; }};
+      [](A &&y) { return GenericExpr{std::move(y)}; }};
   return common::MapOptional(f, std::move(x));
 }
 
@@ -131,11 +132,11 @@ MaybeExpr AnalyzeHelper(
   }
   // TODO: ensure that any kind parameter is 1
   std::string str{std::get<parser::CharLiteralConstant>(x.t).GetString()};
-  std::optional<evaluate::Expr<evaluate::SubscriptInteger>> lb, ub;
+  std::optional<Expr<evaluate::SubscriptInteger>> lb, ub;
   if (lbTree.has_value()) {
     if (MaybeExpr lbExpr{AnalyzeHelper(ea, *lbTree)}) {
-      if (auto *ie{std::get_if<evaluate::SomeKindIntegerExpr>(&lbExpr->u)}) {
-        lb = evaluate::Expr<evaluate::SubscriptInteger>{std::move(*ie)};
+      if (auto *ie{std::get_if<Expr<evaluate::SomeInteger>>(&lbExpr->u)}) {
+        lb = Expr<evaluate::SubscriptInteger>{std::move(*ie)};
       } else {
         ea.context().messages.Say(
             "scalar integer expression required for substring lower bound"_err_en_US);
@@ -144,8 +145,8 @@ MaybeExpr AnalyzeHelper(
   }
   if (ubTree.has_value()) {
     if (MaybeExpr ubExpr{AnalyzeHelper(ea, *ubTree)}) {
-      if (auto *ie{std::get_if<evaluate::SomeKindIntegerExpr>(&ubExpr->u)}) {
-        ub = evaluate::Expr<evaluate::SubscriptInteger>{std::move(*ie)};
+      if (auto *ie{std::get_if<Expr<evaluate::SomeInteger>>(&ubExpr->u)}) {
+        ub = Expr<evaluate::SubscriptInteger>{std::move(*ie)};
       } else {
         ea.context().messages.Say(
             "scalar integer expression required for substring upper bound"_err_en_US);
@@ -157,14 +158,14 @@ MaybeExpr AnalyzeHelper(
   }
   evaluate::Substring substring{std::move(str), std::move(lb), std::move(ub)};
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
-  evaluate::Expr<evaluate::DefaultCharacter> chExpr{std::move(ind)};
+  Expr<evaluate::DefaultCharacter> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
-  return {GenericExpr{evaluate::SomeKindCharacterExpr{std::move(chExpr)}}};
+  return {GenericExpr{Expr<evaluate::SomeCharacter>{std::move(chExpr)}}};
 }
 
 // Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
 template<typename PARSED>
-std::optional<evaluate::SomeKindIntegerExpr> IntLiteralConstant(
+std::optional<Expr<evaluate::SomeInteger>> IntLiteralConstant(
     ExpressionAnalyzer &ea, const PARSED &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultIntegerKind())};
@@ -172,8 +173,8 @@ std::optional<evaluate::SomeKindIntegerExpr> IntLiteralConstant(
   switch (kind) {
 #define CASE(k) \
   case k: { \
-    using Ty = evaluate::Type<TypeCategory::Integer, k>; \
-    return {evaluate::ToSomeKindExpr(evaluate::Expr<Ty>{value})}; \
+    using Ty = Type<TypeCategory::Integer, k>; \
+    return {evaluate::ToSomeKindExpr(Expr<Ty>{value})}; \
   }
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
@@ -184,12 +185,12 @@ std::optional<evaluate::SomeKindIntegerExpr> IntLiteralConstant(
   }
 }
 
-static std::optional<evaluate::SomeKindIntegerExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeInteger>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::IntLiteralConstant &x) {
   return IntLiteralConstant(ea, x);
 }
 
-static std::optional<evaluate::SomeKindIntegerExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeInteger>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::SignedIntLiteralConstant &x) {
   return IntLiteralConstant(ea, x);
 }
@@ -220,10 +221,10 @@ static std::optional<evaluate::BOZLiteralConstant> AnalyzeLiteral(
 }
 
 template<int KIND>
-std::optional<evaluate::SomeKindRealExpr> ReadRealLiteral(
+std::optional<Expr<evaluate::SomeReal>> ReadRealLiteral(
     parser::CharBlock source, evaluate::FoldingContext &context) {
   const char *p{source.begin()};
-  using RealType = evaluate::Type<TypeCategory::Real, KIND>;
+  using RealType = Type<TypeCategory::Real, KIND>;
   auto valWithFlags{evaluate::Scalar<RealType>::Read(p, context.rounding)};
   CHECK(p == source.end());
   evaluate::RealFlagWarnings(
@@ -232,10 +233,10 @@ std::optional<evaluate::SomeKindRealExpr> ReadRealLiteral(
   if (context.flushDenormalsToZero) {
     value = value.FlushDenormalToZero();
   }
-  return {evaluate::ToSomeKindExpr(evaluate::Expr<RealType>{value})};
+  return {evaluate::ToSomeKindExpr(Expr<RealType>{value})};
 }
 
-static std::optional<evaluate::SomeKindRealExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::RealLiteralConstant &x) {
   // Use a local message context around the real literal.
   parser::ContextualMessages ctxMsgs{x.real.source, ea.context().messages};
@@ -269,7 +270,7 @@ static std::optional<evaluate::SomeKindRealExpr> AnalyzeLiteral(
   }
 }
 
-static std::optional<evaluate::SomeKindRealExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::SignedRealLiteralConstant &x) {
   auto result{AnalyzeLiteral(ea, std::get<parser::RealLiteralConstant>(x.t))};
   if (result.has_value()) {
@@ -321,19 +322,19 @@ MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::ComplexPart &x) {
 // to default REAL and the result is default COMPLEX.  Otherwise, the
 // kind of the result is the kind of largest REAL component, and the other
 // component is converted if necessary its type.
-static std::optional<evaluate::SomeKindComplexExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeComplex>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::ComplexLiteralConstant &z) {
   const parser::ComplexPart &re{std::get<0>(z.t)}, &im{std::get<1>(z.t)};
   return ea.ConstructComplex(AnalyzeHelper(ea, re), AnalyzeHelper(ea, im));
 }
 
-static std::optional<evaluate::SomeKindCharacterExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::HollerithLiteralConstant &x) {
-  evaluate::Expr<evaluate::DefaultCharacter> expr{x.v};
-  return {evaluate::SomeKindCharacterExpr{expr}};
+  Expr<evaluate::DefaultCharacter> expr{x.v};
+  return {Expr<evaluate::SomeCharacter>{expr}};
 }
 
-static std::optional<evaluate::SomeKindLogicalExpr> AnalyzeLiteral(
+static std::optional<Expr<evaluate::SomeLogical>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::LogicalLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultLogicalKind())};
@@ -341,8 +342,8 @@ static std::optional<evaluate::SomeKindLogicalExpr> AnalyzeLiteral(
   switch (kind) {
 #define CASE(k) \
   case k: { \
-    using Ty = evaluate::Type<TypeCategory::Logical, k>; \
-    return {evaluate::SomeKindLogicalExpr{evaluate::Expr<Ty>{value}}}; \
+    using Ty = Type<TypeCategory::Logical, k>; \
+    return {Expr<evaluate::SomeLogical>{Expr<Ty>{value}}}; \
   }
     FOR_EACH_LOGICAL_KIND(CASE, )
 #undef CASE
@@ -596,8 +597,8 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
       kindParam->u);
 }
 
-std::optional<evaluate::SomeKindComplexExpr>
-ExpressionAnalyzer::ConstructComplex(MaybeExpr &&real, MaybeExpr &&imaginary) {
+std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
+    MaybeExpr &&real, MaybeExpr &&imaginary) {
   // TODO: pmk abstract further, this will be a common pattern
   auto partial{[&](GenericExpr &&x, GenericExpr &&y) {
     return evaluate::ConvertRealOperands(
@@ -609,10 +610,10 @@ ExpressionAnalyzer::ConstructComplex(MaybeExpr &&real, MaybeExpr &&imaginary) {
   auto converted{common::MapOptional(f, std::move(real), std::move(imaginary))};
   if (auto joined{common::JoinOptionals(std::move(converted))}) {
     return {std::visit(
-        [](auto &&rx, auto &&ix) -> evaluate::SomeKindComplexExpr {
+        [](auto &&rx, auto &&ix) -> Expr<evaluate::SomeComplex> {
           using realType = evaluate::ResultType<decltype(rx)>;
           using zType = evaluate::SameKind<TypeCategory::Complex, realType>;
-          using zExpr = evaluate::Expr<zType>;
+          using zExpr = Expr<zType>;
           return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
         },
         std::move(joined->first.u), std::move(joined->second.u))};
