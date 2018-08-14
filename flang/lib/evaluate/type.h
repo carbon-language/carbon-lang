@@ -199,6 +199,18 @@ template<TypeCategory CAT> struct SomeKindScalar {
   SomeKindScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
 
+  std::optional<std::int64_t> ToInt64() const {
+    if constexpr (category == TypeCategory::Integer) {
+      return std::visit(
+          [](const auto &x) { return std::make_optional(x.ToInt64()); }, u);
+    }
+    return std::nullopt;
+  }
+
+  std::optional<std::string> ToString() const {
+    return common::GetIf<std::string>(u);
+  }
+
   typename KindsVariant<CAT, KindScalar>::type u;
 };
 
@@ -217,8 +229,20 @@ struct GenericScalar {
   GenericScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
 
-  std::optional<std::int64_t> ToInt64() const;
-  std::optional<std::string> ToString() const;
+  std::optional<std::int64_t> ToInt64() const {
+    if (const auto *j{std::get_if<SomeKindScalar<TypeCategory::Integer>>(&u)}) {
+      return j->ToInt64();
+    }
+    return std::nullopt;
+  }
+
+  std::optional<std::string> ToString() const {
+    if (const auto *c{
+            std::get_if<SomeKindScalar<TypeCategory::Character>>(&u)}) {
+      return c->ToString();
+    }
+    return std::nullopt;
+  }
 
   std::variant<SomeKindScalar<TypeCategory::Integer>,
       SomeKindScalar<TypeCategory::Real>, SomeKindScalar<TypeCategory::Complex>,

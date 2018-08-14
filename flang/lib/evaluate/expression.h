@@ -184,6 +184,7 @@ public:
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
+  int Rank() const { return 1; }  // TODO
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
@@ -305,6 +306,7 @@ public:
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
+  int Rank() const { return 1; }  // TODO
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
@@ -382,6 +384,7 @@ public:
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
+  int Rank() const { return 1; }  // TODO
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
@@ -423,6 +426,7 @@ public:
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
+  int Rank() const { return 1; }  // TODO
   Expr<SubscriptInteger> LEN() const;
 
 private:
@@ -481,6 +485,7 @@ template<TypeCategory CAT> struct CategoryComparison {
   template<int KIND>
   CategoryComparison(KindComparison<KIND> &&x) : u{std::move(x)} {}
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
+  int Rank() const { return 1; }  // TODO
   typename KindsVariant<CAT, KindComparison>::type u;
 };
 
@@ -532,6 +537,7 @@ public:
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
+  int Rank() const { return 1; }  // TODO
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
@@ -576,6 +582,7 @@ public:
   template<int KIND> Expr(KindExpr<KIND> &&x) : u{std::move(x)} {}
   std::optional<Scalar<Result>> ScalarValue() const;
   std::optional<Scalar<Result>> Fold(FoldingContext &);
+  int Rank() const;
   typename KindsVariant<CAT, KindExpr>::type u;
 };
 
@@ -611,7 +618,7 @@ public:
 
   std::optional<Scalar<Result>> ScalarValue() const;
   std::optional<Scalar<Result>> Fold(FoldingContext &);
-  int Rank() const { return 1; }  // TODO
+  int Rank() const;
 
   std::variant<Expr<SomeInteger>, Expr<SomeReal>, Expr<SomeComplex>,
       Expr<SomeCharacter>, Expr<SomeLogical>, BOZLiteralConstant>

@@ -28,6 +28,8 @@ using evaluate::Expr;
 using evaluate::GenericExpr;
 using evaluate::Type;
 
+using MaybeIntExpr = std::optional<Expr<evaluate::SomeInteger>>;
+
 // AnalyzeHelper is a local template function that keeps the API
 // member function ExpressionAnalyzer::Analyze from having to be a
 // many-specialized template itself.
@@ -55,8 +57,9 @@ MaybeExpr AnalyzeHelper(
 }
 
 template<typename A>
-MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Scalar<A> &tree) {
-  MaybeExpr result{AnalyzeHelper(ea, tree.thing)};
+auto AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Scalar<A> &tree)
+    -> decltype(AnalyzeHelper(ea, tree.thing)) {
+  auto result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
     if (result->Rank() > 1) {
       ea.context().messages.Say("must be scalar"_err_en_US);
@@ -80,17 +83,17 @@ MaybeExpr AnalyzeHelper(
   return result;
 }
 
-// TODO: Return std::optional<Expr<SomeInteger>> here instead
 template<typename A>
-MaybeExpr AnalyzeHelper(
+std::optional<Expr<evaluate::SomeInteger>> AnalyzeHelper(
     ExpressionAnalyzer &ea, const parser::Integer<A> &tree) {
   MaybeExpr result{AnalyzeHelper(ea, tree.thing)};
-  if (result.has_value() &&
-      !std::holds_alternative<Expr<evaluate::SomeInteger>>(result->u)) {
-    ea.context().messages.Say("must be integer"_err_en_US);
-    return std::nullopt;
+  if (result.has_value()) {
+    if (auto *intexpr{std::get_if<Expr<evaluate::SomeInteger>>(&result->u)}) {
+      return {std::move(*intexpr)};
+    }
+    ea.context().messages.Say("expression must be integer"_err_en_US);
   }
-  return result;
+  return std::nullopt;
 }
 
 static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
@@ -134,23 +137,13 @@ MaybeExpr AnalyzeHelper(
   std::string str{std::get<parser::CharLiteralConstant>(x.t).GetString()};
   std::optional<Expr<evaluate::SubscriptInteger>> lb, ub;
   if (lbTree.has_value()) {
-    if (MaybeExpr lbExpr{AnalyzeHelper(ea, *lbTree)}) {
-      if (auto *ie{std::get_if<Expr<evaluate::SomeInteger>>(&lbExpr->u)}) {
-        lb = Expr<evaluate::SubscriptInteger>{std::move(*ie)};
-      } else {
-        ea.context().messages.Say(
-            "scalar integer expression required for substring lower bound"_err_en_US);
-      }
+    if (MaybeIntExpr lbExpr{AnalyzeHelper(ea, *lbTree)}) {
+      lb = Expr<evaluate::SubscriptInteger>{std::move(*lbExpr)};
     }
   }
   if (ubTree.has_value()) {
-    if (MaybeExpr ubExpr{AnalyzeHelper(ea, *ubTree)}) {
-      if (auto *ie{std::get_if<Expr<evaluate::SomeInteger>>(&ubExpr->u)}) {
-        ub = Expr<evaluate::SubscriptInteger>{std::move(*ie)};
-      } else {
-        ea.context().messages.Say(
-            "scalar integer expression required for substring upper bound"_err_en_US);
-      }
+    if (MaybeIntExpr ubExpr{AnalyzeHelper(ea, *ubTree)}) {
+      ub = Expr<evaluate::SubscriptInteger>{std::move(*ubExpr)};
     }
   }
   if (!lb.has_value() || !ub.has_value()) {
@@ -568,23 +561,11 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
           [](std::uint64_t k) { return static_cast<KindParam>(k); },
           [&](const parser::Scalar<
               parser::Integer<parser::Constant<parser::Name>>> &n) {
-            if (MaybeExpr oge{AnalyzeHelper(*this, n)}) {
-              if (std::optional<evaluate::GenericScalar> ogs{
-                      oge->ScalarValue()}) {
-                if (std::optional<std::int64_t> v{ogs->ToInt64()}) {
-                  return *v;
-                } else {
-                  context_.messages.Say(
-                      "KIND type parameter must be INTEGER"_err_en_US);
-                }
-              } else {
-                context_.messages.Say(
-                    "KIND type parameter must be constant"_err_en_US);
-              }
-            } else {
-              context_.messages.Say(
-                  "KIND type parameter must be constant"_err_en_US);
+            if (MaybeIntExpr ie{AnalyzeHelper(*this, n)}) {
+              return *ie->ScalarValue()->ToInt64();
             }
+            context_.messages.Say(
+                "KIND type parameter must be a scalar integer constant"_err_en_US);
             return defaultKind;
           },
           [&](parser::KindParam::Kanji) {

@@ -851,6 +851,10 @@ auto Expr<SomeKind<CAT>>::Fold(FoldingContext &context)
       u);
 }
 
+template<TypeCategory CAT> int Expr<SomeKind<CAT>>::Rank() const {
+  return std::visit([](const auto &x) { return x.Rank(); }, u);
+}
+
 auto Expr<SomeType>::Fold(FoldingContext &context)
     -> std::optional<Scalar<Result>> {
   return std::visit(
@@ -864,6 +868,20 @@ auto Expr<SomeType>::Fold(FoldingContext &context)
             }
             return std::nullopt;
           }},
+      u);
+}
+
+int Expr<SomeType>::Rank() const {
+  // Written thus, instead of common::visitors, to dodge a bug in G++ 7.2.
+  return std::visit(
+      [](const auto &x) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
+                          BOZLiteralConstant>) {
+          return 1;
+        } else {
+          return x.Rank();
+        }
+      },
       u);
 }
 
