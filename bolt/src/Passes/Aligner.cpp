@@ -65,7 +65,7 @@ BlockAlignment("block-alignment",
 cl::opt<bool>
 UseCompactAligner("use-compact-aligner",
   cl::desc("Use compact approach for aligning functions"),
-  cl::init(false),
+  cl::init(true),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
