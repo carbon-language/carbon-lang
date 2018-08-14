@@ -805,9 +805,9 @@ void RewriteInstance::discoverStorage() {
   }
   auto Obj = ELF64LEFile->getELFFile();
   if (Obj->getHeader()->e_type != ELF::ET_EXEC) {
-    errs() << "BOLT-ERROR: only non-PIE ELF executables are supported at the "
-              "moment.\n";
-    exit(1);
+    outs() << "BOLT-INFO: shared object or position-independent executable "
+              "detected\n";
+    BC->HasFixedLoadAddress = false;
   }
 
   EntryPoint = Obj->getHeader()->e_entry;

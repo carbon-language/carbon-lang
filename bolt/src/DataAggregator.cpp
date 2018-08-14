@@ -321,7 +321,8 @@ void DataAggregator::processFileBuildID(StringRef FileBuildID) {
     errs() << "PERF2BOLT-ERROR: failed to match build-id from perf output. "
               "This indicates the input binary supplied for data aggregation "
               "is not the same recorded by perf when collecting profiling "
-              "data. Use -ignore-build-id option to override.\n";
+              "data, or there were no samples recorded for the binary. "
+              "Use -ignore-build-id option to override.\n";
     if (!opts::IgnoreBuildID) {
       deleteTempFile(ErrPath.data());
       deleteTempFile(OutputPath.data());
@@ -761,7 +762,8 @@ ErrorOr<PerfBranchSample> DataAggregator::parseBranchSample() {
   auto PIDRes = parseNumberField(FieldSeparator, true);
   if (std::error_code EC = PIDRes.getError())
     return EC;
-  if (!PIDs.count(PIDRes.get())) {
+  auto MMapInfoIter = BinaryMMapInfo.find(*PIDRes);
+  if (MMapInfoIter == BinaryMMapInfo.end()) {
     consumeRestOfLine();
     return Res;
   }
@@ -772,7 +774,10 @@ ErrorOr<PerfBranchSample> DataAggregator::parseBranchSample() {
     auto LBRRes = parseLBREntry();
     if (std::error_code EC = LBRRes.getError())
       return EC;
-    Res.LBR.push_back(LBRRes.get());
+    auto LBR = LBRRes.get();
+    if (!BC->HasFixedLoadAddress)
+      adjustLBR(LBR, MMapInfoIter->second);
+    Res.LBR.push_back(LBR);
   }
 
   return Res;
@@ -784,7 +789,9 @@ ErrorOr<PerfBasicSample> DataAggregator::parseBasicSample() {
   auto PIDRes = parseNumberField(FieldSeparator, true);
   if (std::error_code EC = PIDRes.getError())
     return EC;
-  if (!PIDs.count(PIDRes.get())) {
+
+  auto MMapInfoIter = BinaryMMapInfo.find(*PIDRes);
+  if (MMapInfoIter == BinaryMMapInfo.end()) {
     consumeRestOfLine();
     return PerfBasicSample{StringRef(), 0};
   }
@@ -807,7 +814,11 @@ ErrorOr<PerfBasicSample> DataAggregator::parseBasicSample() {
     return make_error_code(llvm::errc::io_error);
   }
 
-  return PerfBasicSample{Event.get(), AddrRes.get()};
+  auto Address = *AddrRes;
+  if (!BC->HasFixedLoadAddress)
+    adjustAddress(Address, MMapInfoIter->second);
+
+  return PerfBasicSample{Event.get(), Address};
 }
 
 ErrorOr<PerfMemSample> DataAggregator::parseMemSample() {
@@ -818,7 +829,9 @@ ErrorOr<PerfMemSample> DataAggregator::parseMemSample() {
   auto PIDRes = parseNumberField(FieldSeparator, true);
   if (std::error_code EC = PIDRes.getError())
     return EC;
-  if (!PIDs.count(PIDRes.get())) {
+
+  auto MMapInfoIter = BinaryMMapInfo.find(*PIDRes);
+  if (MMapInfoIter == BinaryMMapInfo.end()) {
     consumeRestOfLine();
     return Res;
   }
@@ -853,7 +866,11 @@ ErrorOr<PerfMemSample> DataAggregator::parseMemSample() {
     return make_error_code(llvm::errc::io_error);
   }
 
-  return PerfMemSample{PCRes.get(), AddrRes.get()};
+  auto Address = *AddrRes;
+  if (!BC->HasFixedLoadAddress)
+    adjustAddress(Address, MMapInfoIter->second);
+
+  return PerfMemSample{PCRes.get(), Address};
 }
 
 ErrorOr<Location> DataAggregator::parseLocationOrOffset() {
@@ -1195,8 +1212,11 @@ std::error_code DataAggregator::parseAggregatedLBRSamples() {
   return std::error_code();
 }
 
-ErrorOr<std::pair<StringRef, int64_t>> DataAggregator::parseMMapEvent() {
+ErrorOr<std::pair<StringRef, DataAggregator::MMapInfo>>
+DataAggregator::parseMMapEvent() {
   while (checkAndConsumeFS()) {}
+
+  MMapInfo ParsedInfo;
 
   auto LineEnd = ParsingBuf.find_first_of("\n");
   if (LineEnd == StringRef::npos) {
@@ -1209,28 +1229,41 @@ ErrorOr<std::pair<StringRef, int64_t>> DataAggregator::parseMMapEvent() {
   auto Pos = Line.find("PERF_RECORD_MMAP2");
   if (Pos == StringRef::npos) {
     consumeRestOfLine();
-    return std::make_pair(StringRef(), -1);
+    return std::make_pair(StringRef(), ParsedInfo);
   }
   Line = Line.drop_front(Pos);
 
   auto FileName = Line.rsplit(FieldSeparator).second;
   if (FileName.startswith("//") || FileName.startswith("[")) {
     consumeRestOfLine();
-    return std::make_pair(StringRef(), -1);
+    return std::make_pair(StringRef(), ParsedInfo);
   }
   FileName = sys::path::filename(FileName);
 
-  int64_t PID;
   StringRef PIDStr = Line.split(FieldSeparator).second.split('/').first;
-  if (PIDStr.getAsInteger(10, PID)) {
+  if (PIDStr.getAsInteger(10, ParsedInfo.PID)) {
     reportError("expected PID");
-    Diag << "Found: " << PIDStr << "\n";
+    Diag << "Found: " << PIDStr << "in '" << Line << "'\n";
+    return make_error_code(llvm::errc::io_error);
+  }
+
+  StringRef BaseAddressStr = Line.split('[').second.split('(').first;
+  if (BaseAddressStr.getAsInteger(0, ParsedInfo.BaseAddress)) {
+    reportError("expected base address");
+    Diag << "Found: " << BaseAddressStr << "in '" << Line << "'\n";
+    return make_error_code(llvm::errc::io_error);
+  }
+
+  StringRef SizeStr = Line.split('(').second.split(')').first;
+  if (SizeStr.getAsInteger(0, ParsedInfo.Size)) {
+    reportError("expected mmaped size");
+    Diag << "Found: " << SizeStr << "in '" << Line << "'\n";
     return make_error_code(llvm::errc::io_error);
   }
 
   consumeRestOfLine();
 
-  return std::make_pair(FileName, PID);
+  return std::make_pair(FileName, ParsedInfo);
 }
 
 std::error_code DataAggregator::parseMMapEvents() {
@@ -1238,47 +1271,61 @@ std::error_code DataAggregator::parseMMapEvents() {
   NamedRegionTimer T("parseMMapEvents", "Parsing mmap events", TimerGroupName,
                      TimerGroupDesc, opts::TimeAggregator);
 
-  std::multimap<StringRef, int64_t> BinaryPIDs;
+  std::multimap<StringRef, MMapInfo> GlobalMMapInfo;
   while (hasData()) {
-    auto NamePIDRes = parseMMapEvent();
-    if (std::error_code EC = NamePIDRes.getError())
+    auto FileMMapInfoRes = parseMMapEvent();
+    if (std::error_code EC = FileMMapInfoRes.getError())
       return EC;
 
-    auto NamePIDPair = NamePIDRes.get();
-    if (NamePIDPair.second == -1)
+    auto FileMMapInfo = FileMMapInfoRes.get();
+    if (FileMMapInfo.second.PID == -1)
       continue;
 
-    BinaryPIDs.insert(NamePIDPair);
+    // Consider only the first mapping of the file for any given PID
+    bool PIDExists = false;
+    auto Range = GlobalMMapInfo.equal_range(FileMMapInfo.first);
+    for (auto MI = Range.first; MI != Range.second; ++MI) {
+      if (MI->second.PID == FileMMapInfo.second.PID) {
+        PIDExists = true;
+        break;
+      }
+    }
+    if (PIDExists)
+      continue;
+
+    GlobalMMapInfo.insert(FileMMapInfo);
   }
 
   DEBUG(
-    dbgs() << "FileName -> PID mapping:\n";
-    for (const auto &Pair : BinaryPIDs) {
-      dbgs() << "  " << Pair.first << " : " << Pair.second << '\n';
+    dbgs() << "FileName -> mmap info:\n";
+    for (const auto &Pair : GlobalMMapInfo) {
+      dbgs() << "  " << Pair.first << " : " << Pair.second.PID << " [0x"
+             << Twine::utohexstr(Pair.second.BaseAddress) << ", "
+             << Twine::utohexstr(Pair.second.Size) << "]\n";
     }
   );
 
   auto NameToUse = BinaryName.substr(0, 15);
-  if (BinaryPIDs.count(NameToUse) == 0 && !BuildIDBinaryName.empty()) {
+  if (GlobalMMapInfo.count(NameToUse) == 0 && !BuildIDBinaryName.empty()) {
     errs() << "PERF2BOLT-WARNING: using \"" << BuildIDBinaryName
            << "\" for profile matching\n";
     NameToUse = BuildIDBinaryName.substr(0, 15);
   }
 
-  auto Range = BinaryPIDs.equal_range(NameToUse);
+  auto Range = GlobalMMapInfo.equal_range(NameToUse);
   for (auto I = Range.first; I != Range.second; ++I) {
-    PIDs.insert(I->second);
+    BinaryMMapInfo.insert(std::make_pair(I->second.PID, I->second));
   }
 
-  if (PIDs.empty()) {
+  if (BinaryMMapInfo.empty()) {
     if (errs().has_colors())
       errs().changeColor(raw_ostream::RED);
     errs() << "PERF2BOLT-ERROR: could not find a profile matching binary \""
            << BinaryName << "\".";
-    if (!BinaryPIDs.empty()) {
+    if (!GlobalMMapInfo.empty()) {
       errs() << " Profile for the following binary name(s) is available:\n";
-      for (auto I = BinaryPIDs.begin(), IE = BinaryPIDs.end(); I != IE;
-           I = BinaryPIDs.upper_bound(I->first)) {
+      for (auto I = GlobalMMapInfo.begin(), IE = GlobalMMapInfo.end(); I != IE;
+           I = GlobalMMapInfo.upper_bound(I->first)) {
         errs() << "  " << I->first << '\n';
       }
       errs() << "Please rename the input binary.\n";
@@ -1291,8 +1338,8 @@ std::error_code DataAggregator::parseMMapEvents() {
     exit(1);
   }
 
-  outs() << "PERF2BOLT: Input binary is associated with " << PIDs.size()
-         << " PID(s)\n";
+  outs() << "PERF2BOLT: Input binary is associated with "
+         << BinaryMMapInfo.size() << " PID(s)\n";
 
   return std::error_code();
 }

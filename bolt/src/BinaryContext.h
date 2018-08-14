@@ -256,6 +256,9 @@ public:
   /// Indicates if relocations are available for usage.
   bool HasRelocations{false};
 
+  /// Is the binary always loaded at a fixed address.
+  bool HasFixedLoadAddress{true};
+
   /// Sum of execution count of all functions
   uint64_t SumExecutionCount{0};
 
