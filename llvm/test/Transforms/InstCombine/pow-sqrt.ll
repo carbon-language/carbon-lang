@@ -85,13 +85,13 @@ define <2 x double> @pow_intrinsic_half_ninf(<2 x double> %x) {
 
 define double @pow_libcall_half_nsz(double %x) {
 ; CHECK-LABEL: @pow_libcall_half_nsz(
-; CHECK-NEXT:    [[SQRT:%.*]] = call ninf double @sqrt(double [[X:%.*]])
-; CHECK-NEXT:    [[ABS:%.*]] = call ninf double @llvm.fabs.f64(double [[SQRT]])
-; CHECK-NEXT:    [[ISINF:%.*]] = fcmp ninf oeq double [[X]], 0xFFF0000000000000
+; CHECK-NEXT:    [[SQRT:%.*]] = call nsz double @sqrt(double [[X:%.*]])
+; CHECK-NEXT:    [[ABS:%.*]] = call nsz double @llvm.fabs.f64(double [[SQRT]])
+; CHECK-NEXT:    [[ISINF:%.*]] = fcmp nsz oeq double [[X]], 0xFFF0000000000000
 ; CHECK-NEXT:    [[TMP1:%.*]] = select i1 [[ISINF]], double 0x7FF0000000000000, double [[ABS]]
 ; CHECK-NEXT:    ret double [[TMP1]]
 ;
-  %pow = call ninf double @pow(double %x, double 5.0e-01)
+  %pow = call nsz double @pow(double %x, double 5.0e-01)
   ret double %pow
 }
 
@@ -209,10 +209,10 @@ define <2 x double> @pow_intrinsic_neghalf_ninf(<2 x double> %x) {
 
 define double @pow_libcall_neghalf_nsz(double %x) {
 ; CHECK-LABEL: @pow_libcall_neghalf_nsz(
-; CHECK-NEXT:    [[POW:%.*]] = call ninf double @pow(double [[X:%.*]], double -5.000000e-01)
+; CHECK-NEXT:    [[POW:%.*]] = call nsz double @pow(double [[X:%.*]], double -5.000000e-01)
 ; CHECK-NEXT:    ret double [[POW]]
 ;
-  %pow = call ninf double @pow(double %x, double -5.0e-01)
+  %pow = call nsz double @pow(double %x, double -5.0e-01)
   ret double %pow
 }
 
