@@ -29,6 +29,7 @@ template<typename A> std::string Dump(const A &x) {
 }
 
 int main() {
+  using DefaultIntegerExpr = Expr<DefaultInteger>;
   TEST(DefaultIntegerExpr::Result::Dump() == "Integer(4)");
   MATCH("666", Dump(DefaultIntegerExpr{666}));
   MATCH("(-1)", Dump(-DefaultIntegerExpr{1}));

@@ -238,5 +238,6 @@ template<TypeCategory CAT> struct SomeKind {
   static constexpr TypeCategory category{CAT};
   using Scalar = SomeKindScalar<CAT>;
 };
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

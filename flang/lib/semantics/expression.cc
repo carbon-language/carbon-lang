@@ -23,6 +23,8 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::semantics {
 
+using common::TypeCategory;
+
 // AnalyzeHelper is a local template function that keeps the API
 // member function ExpressionAnalyzer::Analyze from having to be a
 // many-specialized template itself.
@@ -96,9 +98,11 @@ static std::optional<evaluate::SomeKindCharacterExpr> AnalyzeLiteral(
       ExpressionAnalyzer::KindParam{1})};
   switch (kind) {
 #define CASE(k) \
-  case k: \
+  case k: { \
+    using Ty = evaluate::Type<TypeCategory::Character, k>; \
     return {evaluate::SomeKindCharacterExpr{ \
-        evaluate::CharacterExpr<k>{std::get<std::string>(x.t)}}};
+        evaluate::Expr<Ty>{std::get<std::string>(x.t)}}}; \
+  }
     FOR_EACH_CHARACTER_KIND(CASE, )
 #undef CASE
   default:
@@ -153,7 +157,7 @@ MaybeExpr AnalyzeHelper(
   }
   evaluate::Substring substring{std::move(str), std::move(lb), std::move(ub)};
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
-  evaluate::CharacterExpr<1> chExpr{std::move(ind)};
+  evaluate::Expr<evaluate::DefaultCharacter> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
   return {GenericExpr{evaluate::SomeKindCharacterExpr{std::move(chExpr)}}};
 }
@@ -167,7 +171,10 @@ std::optional<evaluate::SomeKindIntegerExpr> IntLiteralConstant(
   auto value{std::get<0>(x.t)};  // std::[u]int64_t
   switch (kind) {
 #define CASE(k) \
-  case k: return {evaluate::ToSomeKindExpr(evaluate::IntegerExpr<k>{value})};
+  case k: { \
+    using Ty = evaluate::Type<TypeCategory::Integer, k>; \
+    return {evaluate::ToSomeKindExpr(evaluate::Expr<Ty>{value})}; \
+  }
     FOR_EACH_INTEGER_KIND(CASE, )
 #undef CASE
   default:
@@ -216,7 +223,7 @@ template<int KIND>
 std::optional<evaluate::SomeKindRealExpr> ReadRealLiteral(
     parser::CharBlock source, evaluate::FoldingContext &context) {
   const char *p{source.begin()};
-  using RealType = evaluate::Type<evaluate::TypeCategory::Real, KIND>;
+  using RealType = evaluate::Type<TypeCategory::Real, KIND>;
   auto valWithFlags{evaluate::Scalar<RealType>::Read(p, context.rounding)};
   CHECK(p == source.end());
   evaluate::RealFlagWarnings(
@@ -333,8 +340,10 @@ static std::optional<evaluate::SomeKindLogicalExpr> AnalyzeLiteral(
   bool value{std::get<bool>(x.t)};
   switch (kind) {
 #define CASE(k) \
-  case k: \
-    return {evaluate::SomeKindLogicalExpr{evaluate::LogicalExpr<k>{value}}};
+  case k: { \
+    using Ty = evaluate::Type<TypeCategory::Logical, k>; \
+    return {evaluate::SomeKindLogicalExpr{evaluate::Expr<Ty>{value}}}; \
+  }
     FOR_EACH_LOGICAL_KIND(CASE, )
 #undef CASE
   default:
@@ -602,8 +611,7 @@ ExpressionAnalyzer::ConstructComplex(MaybeExpr &&real, MaybeExpr &&imaginary) {
     return {std::visit(
         [](auto &&rx, auto &&ix) -> evaluate::SomeKindComplexExpr {
           using realType = evaluate::ResultType<decltype(rx)>;
-          using zType =
-              evaluate::SameKind<evaluate::TypeCategory::Complex, realType>;
+          using zType = evaluate::SameKind<TypeCategory::Complex, realType>;
           using zExpr = evaluate::Expr<zType>;
           return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
         },

@@ -76,7 +76,8 @@ std::ostream &Binary<CRTP, RESULT, A, B>::Dump(
 }
 
 template<int KIND>
-std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &Expr<Type<TypeCategory::Integer, KIND>>::Dump(
+    std::ostream &o) const {
   std::visit(
       common::visitors{[&](const Scalar<Result> &n) { o << n.SignedDecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
@@ -97,7 +98,9 @@ std::ostream &IntegerExpr<KIND>::Dump(std::ostream &o) const {
   return o;
 }
 
-template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
+template<int KIND>
+std::ostream &Expr<Type<TypeCategory::Real, KIND>>::Dump(
+    std::ostream &o) const {
   std::visit(common::visitors{[&](const Scalar<Result> &n) {
                                 o << n.DumpHexadecimal();
                               },
@@ -124,7 +127,8 @@ template<int KIND> std::ostream &RealExpr<KIND>::Dump(std::ostream &o) const {
 }
 
 template<int KIND>
-std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &Expr<Type<TypeCategory::Complex, KIND>>::Dump(
+    std::ostream &o) const {
   std::visit(common::visitors{[&](const Scalar<Result> &n) {
                                 o << n.DumpHexadecimal();
                               },
@@ -144,7 +148,8 @@ std::ostream &ComplexExpr<KIND>::Dump(std::ostream &o) const {
 }
 
 template<int KIND>
-std::ostream &CharacterExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &Expr<Type<TypeCategory::Character, KIND>>::Dump(
+    std::ostream &o) const {
   std::visit(common::visitors{[&](const Scalar<Result> &s) {
                                 o << parser::QuoteCharacterLiteral(s);
                               },
@@ -164,7 +169,8 @@ template<typename A> std::ostream &Comparison<A>::Dump(std::ostream &o) const {
 }
 
 template<int KIND>
-std::ostream &LogicalExpr<KIND>::Dump(std::ostream &o) const {
+std::ostream &Expr<Type<TypeCategory::Logical, KIND>>::Dump(
+    std::ostream &o) const {
   std::visit(common::visitors{[&](const Scalar<Result> &tf) {
                                 o << (tf.IsTrue() ? ".TRUE." : ".FALSE.");
                               },
@@ -181,7 +187,8 @@ std::ostream &LogicalExpr<KIND>::Dump(std::ostream &o) const {
 }
 
 // LEN()
-template<int KIND> Expr<SubscriptInteger> CharacterExpr<KIND>::LEN() const {
+template<int KIND>
+Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
       common::visitors{[](const Scalar<Result> &c) {
                          // std::string::size_type isn't convertible to uint64_t
@@ -238,7 +245,7 @@ auto Binary<CRTP, RESULT, A, B>::Fold(FoldingContext &context)
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::ConvertInteger::FoldScalar(
     FoldingContext &context, const SomeKindScalar<TypeCategory::Integer> &c)
     -> std::optional<Scalar<Result>> {
   return std::visit(
@@ -254,7 +261,7 @@ auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::ConvertReal::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::ConvertReal::FoldScalar(
     FoldingContext &context, const SomeKindScalar<TypeCategory::Real> &c)
     -> std::optional<Scalar<Result>> {
   return std::visit(
@@ -275,8 +282,9 @@ auto IntegerExpr<KIND>::ConvertReal::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Negate::FoldScalar(FoldingContext &context,
-    const Scalar<Result> &c) -> std::optional<Scalar<Result>> {
+auto Expr<Type<TypeCategory::Integer, KIND>>::Negate::FoldScalar(
+    FoldingContext &context, const Scalar<Result> &c)
+    -> std::optional<Scalar<Result>> {
   auto negated{c.Negate()};
   if (negated.overflow) {
     context.messages.Say("integer negation overflowed"_en_US);
@@ -286,7 +294,7 @@ auto IntegerExpr<KIND>::Negate::FoldScalar(FoldingContext &context,
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Add::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::Add::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto sum{a.AddSigned(b)};
@@ -298,7 +306,7 @@ auto IntegerExpr<KIND>::Add::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Subtract::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::Subtract::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto diff{a.SubtractSigned(b)};
@@ -310,7 +318,7 @@ auto IntegerExpr<KIND>::Subtract::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Multiply::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::Multiply::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto product{a.MultiplySigned(b)};
@@ -322,7 +330,7 @@ auto IntegerExpr<KIND>::Multiply::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Divide::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::Divide::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto qr{a.DivideSigned(b)};
@@ -338,7 +346,7 @@ auto IntegerExpr<KIND>::Divide::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Power::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::Power::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   typename Scalar<Result>::PowerWithErrors power{a.Power(b)};
@@ -358,7 +366,7 @@ auto IntegerExpr<KIND>::Power::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Max::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::Max::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   if (a.CompareSigned(b) == Ordering::Greater) {
@@ -368,7 +376,7 @@ auto IntegerExpr<KIND>::Max::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Min::FoldScalar(
+auto Expr<Type<TypeCategory::Integer, KIND>>::Min::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   if (a.CompareSigned(b) == Ordering::Less) {
@@ -378,7 +386,7 @@ auto IntegerExpr<KIND>::Min::FoldScalar(
 }
 
 template<int KIND>
-auto IntegerExpr<KIND>::Fold(FoldingContext &context)
+auto Expr<Type<TypeCategory::Integer, KIND>>::Fold(FoldingContext &context)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar<Result>> {
@@ -399,7 +407,7 @@ auto IntegerExpr<KIND>::Fold(FoldingContext &context)
 }
 
 template<int KIND>
-auto RealExpr<KIND>::ConvertInteger::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::ConvertInteger::FoldScalar(
     FoldingContext &context, const SomeKindScalar<TypeCategory::Integer> &c)
     -> std::optional<Scalar<Result>> {
   return std::visit(
@@ -412,7 +420,7 @@ auto RealExpr<KIND>::ConvertInteger::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::ConvertReal::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::ConvertReal::FoldScalar(
     FoldingContext &context, const SomeKindScalar<TypeCategory::Real> &c)
     -> std::optional<Scalar<Result>> {
   return std::visit(
@@ -425,13 +433,14 @@ auto RealExpr<KIND>::ConvertReal::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Negate::FoldScalar(FoldingContext &context,
-    const Scalar<Result> &c) -> std::optional<Scalar<Result>> {
+auto Expr<Type<TypeCategory::Real, KIND>>::Negate::FoldScalar(
+    FoldingContext &context, const Scalar<Result> &c)
+    -> std::optional<Scalar<Result>> {
   return {c.Negate()};
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Add::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::Add::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto sum{a.Add(b, context.rounding)};
@@ -440,7 +449,7 @@ auto RealExpr<KIND>::Add::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Subtract::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::Subtract::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto difference{a.Subtract(b, context.rounding)};
@@ -449,7 +458,7 @@ auto RealExpr<KIND>::Subtract::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Multiply::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::Multiply::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto product{a.Multiply(b, context.rounding)};
@@ -458,7 +467,7 @@ auto RealExpr<KIND>::Multiply::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Divide::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::Divide::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto quotient{a.Divide(b, context.rounding)};
@@ -467,15 +476,16 @@ auto RealExpr<KIND>::Divide::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Power::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::Power::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   return std::nullopt;  // TODO
 }
 
 template<int KIND>
-auto RealExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
-    const Scalar<Result> &a, const SomeKindScalar<TypeCategory::Integer> &b)
+auto Expr<Type<TypeCategory::Real, KIND>>::IntPower::FoldScalar(
+    FoldingContext &context, const Scalar<Result> &a,
+    const SomeKindScalar<TypeCategory::Integer> &b)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](const auto &pow) -> std::optional<Scalar<Result>> {
@@ -487,7 +497,7 @@ auto RealExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Max::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::Max::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   if (b.IsNotANumber() || a.Compare(b) == Relation::Less) {
@@ -497,7 +507,7 @@ auto RealExpr<KIND>::Max::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Min::FoldScalar(
+auto Expr<Type<TypeCategory::Real, KIND>>::Min::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   if (b.IsNotANumber() || a.Compare(b) == Relation::Greater) {
@@ -507,21 +517,23 @@ auto RealExpr<KIND>::Min::FoldScalar(
 }
 
 template<int KIND>
-auto RealExpr<KIND>::RealPart::FoldScalar(FoldingContext &context,
+auto Expr<Type<TypeCategory::Real, KIND>>::RealPart::FoldScalar(
+    FoldingContext &context,
     const Scalar<SameKind<TypeCategory::Complex, Result>> &z)
     -> std::optional<Scalar<Result>> {
   return {z.REAL()};
 }
 
 template<int KIND>
-auto RealExpr<KIND>::AIMAG::FoldScalar(FoldingContext &context,
+auto Expr<Type<TypeCategory::Real, KIND>>::AIMAG::FoldScalar(
+    FoldingContext &context,
     const Scalar<SameKind<TypeCategory::Complex, Result>> &z)
     -> std::optional<Scalar<Result>> {
   return {z.AIMAG()};
 }
 
 template<int KIND>
-auto RealExpr<KIND>::Fold(FoldingContext &context)
+auto Expr<Type<TypeCategory::Real, KIND>>::Fold(FoldingContext &context)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar<Result>> {
@@ -545,13 +557,14 @@ auto RealExpr<KIND>::Fold(FoldingContext &context)
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::Negate::FoldScalar(FoldingContext &context,
-    const Scalar<Result> &c) -> std::optional<Scalar<Result>> {
+auto Expr<Type<TypeCategory::Complex, KIND>>::Negate::FoldScalar(
+    FoldingContext &context, const Scalar<Result> &c)
+    -> std::optional<Scalar<Result>> {
   return {c.Negate()};
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::Add::FoldScalar(
+auto Expr<Type<TypeCategory::Complex, KIND>>::Add::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto sum{a.Add(b, context.rounding)};
@@ -560,7 +573,7 @@ auto ComplexExpr<KIND>::Add::FoldScalar(
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::Subtract::FoldScalar(
+auto Expr<Type<TypeCategory::Complex, KIND>>::Subtract::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto difference{a.Subtract(b, context.rounding)};
@@ -569,7 +582,7 @@ auto ComplexExpr<KIND>::Subtract::FoldScalar(
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::Multiply::FoldScalar(
+auto Expr<Type<TypeCategory::Complex, KIND>>::Multiply::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto product{a.Multiply(b, context.rounding)};
@@ -578,7 +591,7 @@ auto ComplexExpr<KIND>::Multiply::FoldScalar(
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::Divide::FoldScalar(
+auto Expr<Type<TypeCategory::Complex, KIND>>::Divide::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   auto quotient{a.Divide(b, context.rounding)};
@@ -587,15 +600,16 @@ auto ComplexExpr<KIND>::Divide::FoldScalar(
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::Power::FoldScalar(
+auto Expr<Type<TypeCategory::Complex, KIND>>::Power::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   return std::nullopt;  // TODO
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
-    const Scalar<Result> &a, const SomeKindScalar<TypeCategory::Integer> &b)
+auto Expr<Type<TypeCategory::Complex, KIND>>::IntPower::FoldScalar(
+    FoldingContext &context, const Scalar<Result> &a,
+    const SomeKindScalar<TypeCategory::Integer> &b)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](const auto &pow) -> std::optional<Scalar<Result>> {
@@ -607,7 +621,8 @@ auto ComplexExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::CMPLX::FoldScalar(FoldingContext &context,
+auto Expr<Type<TypeCategory::Complex, KIND>>::CMPLX::FoldScalar(
+    FoldingContext &context,
     const Scalar<SameKind<TypeCategory::Real, Result>> &a,
     const Scalar<SameKind<TypeCategory::Real, Result>> &b)
     -> std::optional<Scalar<Result>> {
@@ -615,7 +630,7 @@ auto ComplexExpr<KIND>::CMPLX::FoldScalar(FoldingContext &context,
 }
 
 template<int KIND>
-auto ComplexExpr<KIND>::Fold(FoldingContext &context)
+auto Expr<Type<TypeCategory::Complex, KIND>>::Fold(FoldingContext &context)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar<Result>> {
@@ -639,7 +654,7 @@ auto ComplexExpr<KIND>::Fold(FoldingContext &context)
 }
 
 template<int KIND>
-auto CharacterExpr<KIND>::Concat::FoldScalar(
+auto Expr<Type<TypeCategory::Character, KIND>>::Concat::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   if constexpr (KIND == 1) {
@@ -649,7 +664,7 @@ auto CharacterExpr<KIND>::Concat::FoldScalar(
 }
 
 template<int KIND>
-auto CharacterExpr<KIND>::Max::FoldScalar(
+auto Expr<Type<TypeCategory::Character, KIND>>::Max::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   if (Compare(a, b) == Ordering::Less) {
@@ -659,7 +674,7 @@ auto CharacterExpr<KIND>::Max::FoldScalar(
 }
 
 template<int KIND>
-auto CharacterExpr<KIND>::Min::FoldScalar(
+auto Expr<Type<TypeCategory::Character, KIND>>::Min::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   if (Compare(a, b) == Ordering::Greater) {
@@ -669,7 +684,7 @@ auto CharacterExpr<KIND>::Min::FoldScalar(
 }
 
 template<int KIND>
-auto CharacterExpr<KIND>::Fold(FoldingContext &context)
+auto Expr<Type<TypeCategory::Character, KIND>>::Fold(FoldingContext &context)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar<Result>> {
@@ -741,41 +756,42 @@ auto Comparison<A>::FoldScalar(FoldingContext &c, const Scalar<Operand> &a,
 }
 
 template<int KIND>
-auto LogicalExpr<KIND>::Not::FoldScalar(FoldingContext &context,
-    const Scalar<Result> &x) -> std::optional<Scalar<Result>> {
+auto Expr<Type<TypeCategory::Logical, KIND>>::Not::FoldScalar(
+    FoldingContext &context, const Scalar<Result> &x)
+    -> std::optional<Scalar<Result>> {
   return {Scalar<Result>{!x.IsTrue()}};
 }
 
 template<int KIND>
-auto LogicalExpr<KIND>::And::FoldScalar(
+auto Expr<Type<TypeCategory::Logical, KIND>>::And::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   return {Scalar<Result>{a.IsTrue() && b.IsTrue()}};
 }
 
 template<int KIND>
-auto LogicalExpr<KIND>::Or::FoldScalar(
+auto Expr<Type<TypeCategory::Logical, KIND>>::Or::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   return {Scalar<Result>{a.IsTrue() || b.IsTrue()}};
 }
 
 template<int KIND>
-auto LogicalExpr<KIND>::Eqv::FoldScalar(
+auto Expr<Type<TypeCategory::Logical, KIND>>::Eqv::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   return {Scalar<Result>{a.IsTrue() == b.IsTrue()}};
 }
 
 template<int KIND>
-auto LogicalExpr<KIND>::Neqv::FoldScalar(
+auto Expr<Type<TypeCategory::Logical, KIND>>::Neqv::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
   return {Scalar<Result>{a.IsTrue() != b.IsTrue()}};
 }
 
 template<int KIND>
-auto LogicalExpr<KIND>::Fold(FoldingContext &context)
+auto Expr<Type<TypeCategory::Logical, KIND>>::Fold(FoldingContext &context)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar<Result>> {

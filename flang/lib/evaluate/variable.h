@@ -22,8 +22,8 @@
 // that only admissable combinations can be constructed.
 
 #include "common.h"
-#include "expression-forward.h"
 #include "intrinsics.h"
+#include "type.h"
 #include "../common/idioms.h"
 #include "../semantics/symbol.h"
 #include <optional>
@@ -36,6 +36,7 @@ namespace Fortran::evaluate {
 using semantics::Symbol;
 
 // Forward declarations
+template<typename A> class Expr;
 class DataRef;
 class Variable;
 class ActualFunctionArg;

@@ -22,7 +22,6 @@
 // and manipulation in place.
 
 #include "common.h"
-#include "expression-forward.h"
 #include "type.h"
 #include "variable.h"
 #include "../lib/common/idioms.h"
@@ -32,6 +31,16 @@
 #include <variant>
 
 namespace Fortran::evaluate {
+
+template<typename A> class Expr;
+
+// An expression whose result is within one particular type category and
+// of any supported kind.
+using SomeKindIntegerExpr = Expr<SomeKind<TypeCategory::Integer>>;
+using SomeKindRealExpr = Expr<SomeKind<TypeCategory::Real>>;
+using SomeKindComplexExpr = Expr<SomeKind<TypeCategory::Complex>>;
+using SomeKindCharacterExpr = Expr<SomeKind<TypeCategory::Character>>;
+using SomeKindLogicalExpr = Expr<SomeKind<TypeCategory::Logical>>;
 
 // Helper base classes for packaging subexpressions.
 template<typename CRTP, typename RESULT, typename A = RESULT> class Unary {
@@ -160,16 +169,19 @@ public:
   Expr(const SomeKindIntegerExpr &x) : u_{ConvertInteger{x}} {}
   Expr(SomeKindIntegerExpr &&x) : u_{ConvertInteger{std::move(x)}} {}
   template<int K>
-  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{SomeKindIntegerExpr{x}}} {}
+  Expr(const Expr<Type<TypeCategory::Integer, K>> &x)
+    : u_{ConvertInteger{SomeKindIntegerExpr{x}}} {}
   template<int K>
-  Expr(IntegerExpr<K> &&x)
+  Expr(Expr<Type<TypeCategory::Integer, K>> &&x)
     : u_{ConvertInteger{SomeKindIntegerExpr{std::move(x)}}} {}
   Expr(const SomeKindRealExpr &x) : u_{ConvertReal{x}} {}
   Expr(SomeKindRealExpr &&x) : u_{ConvertReal{std::move(x)}} {}
   template<int K>
-  Expr(const RealExpr<K> &x) : u_{ConvertReal{SomeKindRealExpr{x}}} {}
+  Expr(const Expr<Type<TypeCategory::Real, K>> &x)
+    : u_{ConvertReal{SomeKindRealExpr{x}}} {}
   template<int K>
-  Expr(RealExpr<K> &&x) : u_{ConvertReal{SomeKindRealExpr{std::move(x)}}} {}
+  Expr(Expr<Type<TypeCategory::Real, K>> &&x)
+    : u_{ConvertReal{SomeKindRealExpr{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A> &&
@@ -285,16 +297,19 @@ public:
   Expr(const SomeKindIntegerExpr &x) : u_{ConvertInteger{x}} {}
   Expr(SomeKindIntegerExpr &&x) : u_{ConvertInteger{std::move(x)}} {}
   template<int K>
-  Expr(const IntegerExpr<K> &x) : u_{ConvertInteger{SomeKindIntegerExpr{x}}} {}
+  Expr(const Expr<Type<TypeCategory::Integer, K>> &x)
+    : u_{ConvertInteger{SomeKindIntegerExpr{x}}} {}
   template<int K>
-  Expr(IntegerExpr<K> &&x)
+  Expr(Expr<Type<TypeCategory::Integer, K>> &&x)
     : u_{ConvertInteger{SomeKindIntegerExpr{std::move(x)}}} {}
   Expr(const SomeKindRealExpr &x) : u_{ConvertReal{x}} {}
   Expr(SomeKindRealExpr &&x) : u_{ConvertReal{std::move(x)}} {}
   template<int K>
-  Expr(const RealExpr<K> &x) : u_{ConvertReal{SomeKindRealExpr{x}}} {}
+  Expr(const Expr<Type<TypeCategory::Real, K>> &x)
+    : u_{ConvertReal{SomeKindRealExpr{x}}} {}
   template<int K>
-  Expr(RealExpr<K> &&x) : u_{ConvertReal{SomeKindRealExpr{std::move(x)}}} {}
+  Expr(Expr<Type<TypeCategory::Real, K>> &&x)
+    : u_{ConvertReal{SomeKindRealExpr{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
@@ -659,21 +674,21 @@ BINARY(Power, Power)
 #undef BINARY
 
 #define BINARY(FUNC, OP) \
-  template<typename A> LogicalExpr<1> FUNC(const A &x, const A &y) { \
+  template<typename A> Expr<LogicalResult> FUNC(const A &x, const A &y) { \
     return {Comparison<ResultType<A>>{OP, x, y}}; \
   } \
   template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, LogicalExpr<1>> FUNC( \
+  std::enable_if_t<!std::is_reference_v<A>, Expr<LogicalResult>> FUNC( \
       const A &x, A &&y) { \
     return {Comparison<ResultType<A>>{OP, x, std::move(y)}}; \
   } \
   template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, LogicalExpr<1>> FUNC( \
+  std::enable_if_t<!std::is_reference_v<A>, Expr<LogicalResult>> FUNC( \
       A &&x, const A &y) { \
     return {Comparison<ResultType<A>>{OP, std::move(x), y}}; \
   } \
   template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, LogicalExpr<1>> FUNC( \
+  std::enable_if_t<!std::is_reference_v<A>, Expr<LogicalResult>> FUNC( \
       A &&x, A &&y) { \
     return {Comparison<ResultType<A>>{OP, std::move(x), std::move(y)}}; \
   }
