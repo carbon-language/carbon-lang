@@ -563,7 +563,8 @@ void LoopVectorizationLegality::addInductionPhi(
   // back into the PHI node may have external users.
   // We can allow those uses, except if the SCEVs we have for them rely
   // on predicates that only hold within the loop, since allowing the exit
-  // currently means re-using this SCEV outside the loop.
+  // currently means re-using this SCEV outside the loop (see PR33706 for more
+  // details).
   if (PSE.getUnionPredicate().isAlwaysTrue()) {
     AllowedExit.insert(Phi);
     AllowedExit.insert(Phi->getIncomingValueForBlock(TheLoop->getLoopLatch()));
