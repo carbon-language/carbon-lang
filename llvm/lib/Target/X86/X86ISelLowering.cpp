@@ -12362,47 +12362,48 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
 /// blend if only one input is used.
 static SDValue lowerVectorShuffleAsBlendOfPSHUFBs(
     const SDLoc &DL, MVT VT, SDValue V1, SDValue V2, ArrayRef<int> Mask,
-    const APInt &Zeroable, SelectionDAG &DAG, bool &V1InUse,
-    bool &V2InUse) {
-  SDValue V1Mask[16];
-  SDValue V2Mask[16];
+    const APInt &Zeroable, SelectionDAG &DAG, bool &V1InUse, bool &V2InUse) {
+  assert(!is128BitLaneCrossingShuffleMask(VT, Mask) &&
+         "Lane crossing shuffle masks not supported");
+
+  int NumBytes = VT.getSizeInBits() / 8;
+  int Size = Mask.size();
+  int Scale = NumBytes / Size;
+
+  SmallVector<SDValue, 64> V1Mask(NumBytes, DAG.getUNDEF(MVT::i8));
+  SmallVector<SDValue, 64> V2Mask(NumBytes, DAG.getUNDEF(MVT::i8));
   V1InUse = false;
   V2InUse = false;
 
-  int Size = Mask.size();
-  int Scale = 16 / Size;
-  for (int i = 0; i < 16; ++i) {
-    if (Mask[i / Scale] < 0) {
-      V1Mask[i] = V2Mask[i] = DAG.getUNDEF(MVT::i8);
-    } else {
-      const int ZeroMask = 0x80;
-      int V1Idx = Mask[i / Scale] < Size ? Mask[i / Scale] * Scale + i % Scale
-                                          : ZeroMask;
-      int V2Idx = Mask[i / Scale] < Size
-                      ? ZeroMask
-                      : (Mask[i / Scale] - Size) * Scale + i % Scale;
-      if (Zeroable[i / Scale])
-        V1Idx = V2Idx = ZeroMask;
-      V1Mask[i] = DAG.getConstant(V1Idx, DL, MVT::i8);
-      V2Mask[i] = DAG.getConstant(V2Idx, DL, MVT::i8);
-      V1InUse |= (ZeroMask != V1Idx);
-      V2InUse |= (ZeroMask != V2Idx);
-    }
+  for (int i = 0; i < NumBytes; ++i) {
+    int M = Mask[i / Scale];
+    if (M < 0)
+      continue;
+
+    const int ZeroMask = 0x80;
+    int V1Idx = M < Size ? M * Scale + i % Scale : ZeroMask;
+    int V2Idx = M < Size ? ZeroMask : (M - Size) * Scale + i % Scale;
+    if (Zeroable[i / Scale])
+      V1Idx = V2Idx = ZeroMask;
+
+    V1Mask[i] = DAG.getConstant(V1Idx, DL, MVT::i8);
+    V2Mask[i] = DAG.getConstant(V2Idx, DL, MVT::i8);
+    V1InUse |= (ZeroMask != V1Idx);
+    V2InUse |= (ZeroMask != V2Idx);
   }
 
+  MVT ShufVT = MVT::getVectorVT(MVT::i8, NumBytes);
   if (V1InUse)
-    V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8,
-                     DAG.getBitcast(MVT::v16i8, V1),
-                     DAG.getBuildVector(MVT::v16i8, DL, V1Mask));
+    V1 = DAG.getNode(X86ISD::PSHUFB, DL, ShufVT, DAG.getBitcast(ShufVT, V1),
+                     DAG.getBuildVector(ShufVT, DL, V1Mask));
   if (V2InUse)
-    V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8,
-                     DAG.getBitcast(MVT::v16i8, V2),
-                     DAG.getBuildVector(MVT::v16i8, DL, V2Mask));
+    V2 = DAG.getNode(X86ISD::PSHUFB, DL, ShufVT, DAG.getBitcast(ShufVT, V2),
+                     DAG.getBuildVector(ShufVT, DL, V2Mask));
 
   // If we need shuffled inputs from both, blend the two.
   SDValue V;
   if (V1InUse && V2InUse)
-    V = DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
+    V = DAG.getNode(ISD::OR, DL, ShufVT, V1, V2);
   else
     V = V1InUse ? V1 : V2;
 
