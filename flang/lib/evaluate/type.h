@@ -39,6 +39,7 @@ struct GenericExpr;
 
 template<TypeCategory C, int KIND> struct TypeBase {
   static constexpr TypeCategory category{C};
+  static constexpr TypeCategory GetCategory() { return C; };
   static constexpr int kind{KIND};
   static constexpr bool hasLen{false};
   static std::string Dump() {
@@ -46,43 +47,44 @@ template<TypeCategory C, int KIND> struct TypeBase {
   }
 };
 
+template<typename T> using Scalar = typename T::Scalar;
+
 template<TypeCategory C, int KIND> struct Type;
 
 template<int KIND>
 struct Type<TypeCategory::Integer, KIND>
   : public TypeBase<TypeCategory::Integer, KIND> {
-  using Value = value::Integer<8 * KIND>;
+  using Scalar = value::Integer<8 * KIND>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 2> : public TypeBase<TypeCategory::Real, 2> {
-  using Value = value::Real<typename Type<TypeCategory::Integer, 2>::Value, 11>;
+  using Scalar = value::Real<Scalar<Type<TypeCategory::Integer, 2>>, 11>;
   using Complex = Type<TypeCategory::Complex, 2>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 4> : public TypeBase<TypeCategory::Real, 4> {
-  using Value = value::Real<typename Type<TypeCategory::Integer, 4>::Value, 24>;
-  using Complex = Type<TypeCategory::Complex, 2>;
+  using Scalar = value::Real<Scalar<Type<TypeCategory::Integer, 4>>, 24>;
+  using Complex = Type<TypeCategory::Complex, 4>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 8> : public TypeBase<TypeCategory::Real, 8> {
-  using Value = value::Real<typename Type<TypeCategory::Integer, 8>::Value, 53>;
-  using Complex = Type<TypeCategory::Complex, 2>;
+  using Scalar = value::Real<Scalar<Type<TypeCategory::Integer, 8>>, 53>;
+  using Complex = Type<TypeCategory::Complex, 8>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 10> : public TypeBase<TypeCategory::Real, 10> {
-  using Value = value::Real<value::Integer<80>, 64, false>;
-  using Complex = Type<TypeCategory::Complex, 2>;
+  using Scalar = value::Real<value::Integer<80>, 64, false>;
+  using Complex = Type<TypeCategory::Complex, 10>;
 };
 
 template<>
 struct Type<TypeCategory::Real, 16> : public TypeBase<TypeCategory::Real, 16> {
-  using Value =
-      value::Real<typename Type<TypeCategory::Integer, 16>::Value, 112>;
-  using Complex = Type<TypeCategory::Complex, 2>;
+  using Scalar = value::Real<value::Integer<128>, 112>;
+  using Complex = Type<TypeCategory::Complex, 16>;
 };
 
 // The KIND type parameter on COMPLEX is the kind of each of its components.
@@ -90,14 +92,14 @@ template<int KIND>
 struct Type<TypeCategory::Complex, KIND>
   : public TypeBase<TypeCategory::Complex, KIND> {
   using Part = Type<TypeCategory::Real, KIND>;
-  using Value = value::Complex<typename Part::Value>;
+  using Scalar = value::Complex<Scalar<Part>>;
 };
 
 template<int KIND> struct Type<TypeCategory::Character, KIND> {
   static constexpr TypeCategory category{TypeCategory::Character};
   static constexpr int kind{KIND};
   static constexpr bool hasLen{true};
-  using Value = std::string;
+  using Scalar = std::string;
   static std::string Dump() {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
@@ -106,7 +108,7 @@ template<int KIND> struct Type<TypeCategory::Character, KIND> {
 template<int KIND>
 struct Type<TypeCategory::Logical, KIND>
   : public TypeBase<TypeCategory::Logical, KIND> {
-  using Value = value::Logical<8 * KIND>;
+  using Scalar = value::Logical<8 * KIND>;
 };
 
 // Convenience type aliases:
@@ -139,8 +141,7 @@ using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 
 #define FOR_EACH_CATEGORY(M) \
   M(Integer, INTEGER) \
-  M(Real, REAL) M(Complex, COMPLEX) M(Character, CHARACTER) \
-      M(Logical, LOGICAL)
+  M(Real, REAL) M(Complex, COMPLEX) M(Character, CHARACTER) M(Logical, LOGICAL)
 
 // These macros and template create instances of std::variant<> that can contain
 // applications of some class template to all of the supported kinds of
@@ -155,13 +156,13 @@ FOR_EACH_CATEGORY(MAKE)
 #undef MAKE
 #undef TKIND
 
-// Map scalar constant value types back to their Fortran types.
-// For every type T = Type<CAT, KIND>, TypeOfScalarValue<T::Value>::type == T.
+// Map scalar value types back to their Fortran types.
+// For every type T = Type<CAT, KIND>, TypeOfScalarValue<T>> == T.
 // E.g., TypeOfScalarValue<Integer<32>> is Type<TypeCategory::Integer, 4>.
-template<typename CONST> struct TypeOfScalarValue;
+template<typename CONST> struct GetTypeOfScalarValue;
 #define TOSV(cat, kind) \
   template<> \
-  struct TypeOfScalarValue<typename Type<TypeCategory::cat, kind>::Value> { \
+  struct GetTypeOfScalarValue<Scalar<Type<TypeCategory::cat, kind>>> { \
     using type = Type<TypeCategory::cat, kind>; \
   };
 #define M(k) TOSV(Integer, k)
@@ -181,16 +182,19 @@ FOR_EACH_LOGICAL_KIND(M, )
 #undef M
 #undef TOSV
 
-// Holds a scalar constant of any kind within a particular intrinsic type
-// category.
-template<TypeCategory CAT> struct ScalarConstant {
-  static constexpr TypeCategory category{CAT};
-  CLASS_BOILERPLATE(ScalarConstant)
+template<typename CONST>
+using ScalarValueType = typename GetTypeOfScalarValue<CONST>::type;
 
-  template<int KIND> using KindScalar = typename Type<CAT, KIND>::Value;
-  template<typename A> ScalarConstant(const A &x) : u{x} {}
+// Holds a scalar value of any kind within a particular intrinsic type
+// category.
+template<TypeCategory CAT> struct SomeKindScalar {
+  static constexpr TypeCategory category{CAT};
+  CLASS_BOILERPLATE(SomeKindScalar)
+
+  template<int KIND> using KindScalar = Scalar<Type<CAT, KIND>>;
+  template<typename A> SomeKindScalar(const A &x) : u{x} {}
   template<typename A>
-  ScalarConstant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+  SomeKindScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
 
   typename KindsVariant<CAT, KindScalar>::type u;
@@ -201,11 +205,10 @@ struct GenericScalar {
   CLASS_BOILERPLATE(GenericScalar)
 
   template<TypeCategory CAT, int KIND>
-  GenericScalar(const typename Type<CAT, KIND>::Value &x)
-    : u{ScalarConstant<CAT>{x}} {}
+  GenericScalar(const Scalar<Type<CAT, KIND>> &x) : u{SomeKindScalar<CAT>{x}} {}
   template<TypeCategory CAT, int KIND>
-  GenericScalar(typename Type<CAT, KIND>::Value &&x)
-    : u{ScalarConstant<CAT>{std::move(x)}} {}
+  GenericScalar(Scalar<Type<CAT, KIND>> &&x)
+    : u{SomeKindScalar<CAT>{std::move(x)}} {}
 
   template<typename A> GenericScalar(const A &x) : u{x} {}
   template<typename A>
@@ -216,17 +219,17 @@ struct GenericScalar {
   std::optional<std::string> ToString() const;
   GenericExpr ToGenericExpr() const;
 
-  std::variant<ScalarConstant<TypeCategory::Integer>,
-      ScalarConstant<TypeCategory::Real>, ScalarConstant<TypeCategory::Complex>,
-      ScalarConstant<TypeCategory::Character>,
-      ScalarConstant<TypeCategory::Logical>>
+  std::variant<SomeKindScalar<TypeCategory::Integer>,
+      SomeKindScalar<TypeCategory::Real>, SomeKindScalar<TypeCategory::Complex>,
+      SomeKindScalar<TypeCategory::Character>,
+      SomeKindScalar<TypeCategory::Logical>>
       u;
 };
 
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CAT> struct SomeKind {
   static constexpr TypeCategory category{CAT};
-  using Value = ScalarConstant<CAT>;
+  using Scalar = SomeKindScalar<CAT>;
 };
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

@@ -269,7 +269,7 @@ static std::optional<evaluate::SomeKindRealExpr> AnalyzeLiteral(
       if (sign == parser::Sign::Negative) {
         std::visit(
             [](auto &rk) {
-              using t = typename std::decay<decltype(rk)>::type;
+              using t = std::decay_t<decltype(rk)>;
               rk = typename t::Negate{rk};
             },
             result->u);
@@ -600,8 +600,8 @@ ExpressionAnalyzer::ConstructComplex(MaybeExpr &&real, MaybeExpr &&imaginary) {
   if (auto joined{common::JoinOptionals(std::move(converted))}) {
     return {std::visit(
         [](auto &&rx, auto &&ix) -> evaluate::SomeKindComplexExpr {
-          using realExpr = typename std::decay<decltype(rx)>::type;
-          using zExpr = evaluate::Expr<typename realExpr::SameKindComplex>;
+          using realExpr = std::decay_t<decltype(rx)>;
+          using zExpr = evaluate::Expr<typename realExpr::Complex>;
           return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
         },
         std::move(joined->first.u), std::move(joined->second.u))};

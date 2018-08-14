@@ -35,8 +35,8 @@ SomeKindRealExpr ConvertToTypeOf(
 static void ConvertToSameRealKind(SomeKindRealExpr &x, SomeKindRealExpr &y) {
   std::visit(
       [&](auto &xk, auto &yk) {
-        using xt = typename std::decay<decltype(xk)>::type;
-        using yt = typename std::decay<decltype(yk)>::type;
+        using xt = std::decay_t<decltype(xk)>;
+        using yt = std::decay_t<decltype(yk)>;
         constexpr int kindDiff{xt::Result::kind - yt::Result::kind};
         if constexpr (kindDiff < 0) {
           x.u = yt{xk};

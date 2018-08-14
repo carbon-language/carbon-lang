@@ -38,11 +38,11 @@ template<typename CRTP, typename RESULT, typename A = RESULT> class Unary {
 protected:
   using OperandType = A;
   using Operand = Expr<OperandType>;
-  using OperandScalarConstant = typename OperandType::Value;
+  using OperandScalarConstant = Scalar<OperandType>;
 
 public:
   using Result = RESULT;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Unary)
   Unary(const Operand &a) : operand_{a} {}
@@ -62,14 +62,14 @@ class Binary {
 protected:
   using LeftType = A;
   using Left = Expr<LeftType>;
-  using LeftScalar = typename LeftType::Value;
+  using LeftScalar = Scalar<LeftType>;
   using RightType = B;
   using Right = Expr<RightType>;
-  using RightScalar = typename RightType::Value;
+  using RightScalar = Scalar<RightType>;
 
 public:
   using Result = RESULT;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Binary)
   Binary(const Left &a, const Right &b) : left_{a}, right_{b} {}
@@ -96,21 +96,21 @@ private:
 template<int KIND> class Expr<Type<TypeCategory::Integer, KIND>> {
 public:
   using Result = Type<TypeCategory::Integer, KIND>;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
   using FoldableTrait = std::true_type;
 
   struct ConvertInteger
     : public Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>> {
     using Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>>::Unary;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const ScalarConstant<TypeCategory::Integer> &);
+        FoldingContext &, const SomeKindScalar<TypeCategory::Integer> &);
   };
 
   struct ConvertReal
     : public Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>> {
     using Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>>::Unary;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const ScalarConstant<TypeCategory::Real> &);
+        FoldingContext &, const SomeKindScalar<TypeCategory::Real> &);
   };
 
   template<typename CRTP> using Un = Unary<CRTP, Result>;
@@ -203,8 +203,9 @@ private:
 template<int KIND> class Expr<Type<TypeCategory::Real, KIND>> {
 public:
   using Result = Type<TypeCategory::Real, KIND>;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
   using FoldableTrait = std::true_type;
+  using Complex = typename Result::Complex;
 
   // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
   // and part access operations (resp.).  Conversions between kinds of
@@ -213,13 +214,13 @@ public:
     : public Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>> {
     using Unary<ConvertInteger, Result, SomeKind<TypeCategory::Integer>>::Unary;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const ScalarConstant<TypeCategory::Integer> &);
+        FoldingContext &, const SomeKindScalar<TypeCategory::Integer> &);
   };
   struct ConvertReal
     : public Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>> {
     using Unary<ConvertReal, Result, SomeKind<TypeCategory::Real>>::Unary;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const ScalarConstant<TypeCategory::Real> &);
+        FoldingContext &, const SomeKindScalar<TypeCategory::Real> &);
   };
   template<typename CRTP> using Un = Unary<CRTP, Result>;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
@@ -263,7 +264,7 @@ public:
     using Binary<IntPower, Result, Result,
         SomeKind<TypeCategory::Integer>>::Binary;
     static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &,
-        const ScalarConstant<TypeCategory::Integer> &);
+        const SomeKindScalar<TypeCategory::Integer> &);
   };
   struct Max : public Bin<Max> {
     using Bin<Max>::Bin;
@@ -275,19 +276,16 @@ public:
     static std::optional<Scalar> FoldScalar(
         FoldingContext &, const Scalar &, const Scalar &);
   };
-  using SameKindComplex = Type<TypeCategory::Complex, KIND>;
-  using SameKindComplexScalar = typename SameKindComplex::Value;
-  template<typename CRTP>
-  using SameKindComplexUn = Unary<CRTP, Result, SameKindComplex>;
-  struct RealPart : public SameKindComplexUn<RealPart> {
-    using SameKindComplexUn<RealPart>::SameKindComplexUn;
+  template<typename CRTP> using ComplexUn = Unary<CRTP, Result, Complex>;
+  struct RealPart : public ComplexUn<RealPart> {
+    using ComplexUn<RealPart>::ComplexUn;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const SameKindComplexScalar &);
+        FoldingContext &, const evaluate::Scalar<Complex> &);
   };
-  struct AIMAG : public SameKindComplexUn<AIMAG> {
-    using SameKindComplexUn<AIMAG>::SameKindComplexUn;
+  struct AIMAG : public ComplexUn<AIMAG> {
+    using ComplexUn<AIMAG>::ComplexUn;
     static std::optional<Scalar> FoldScalar(
-        FoldingContext &, const SameKindComplexScalar &);
+        FoldingContext &, const evaluate::Scalar<Complex> &);
   };
 
   CLASS_BOILERPLATE(Expr)
@@ -326,8 +324,10 @@ private:
 template<int KIND> class Expr<Type<TypeCategory::Complex, KIND>> {
 public:
   using Result = Type<TypeCategory::Complex, KIND>;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
+  using Part = typename Result::Part;
   using FoldableTrait = std::true_type;
+
   template<typename CRTP> using Un = Unary<CRTP, Result>;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
   struct Parentheses : public Un<Parentheses> {
@@ -370,14 +370,12 @@ public:
     using Binary<IntPower, Result, Result,
         SomeKind<TypeCategory::Integer>>::Binary;
     static std::optional<Scalar> FoldScalar(FoldingContext &, const Scalar &,
-        const ScalarConstant<TypeCategory::Integer> &);
+        const SomeKindScalar<TypeCategory::Integer> &);
   };
-  using SameKindReal = Type<TypeCategory::Real, KIND>;
-  using SameKindRealScalar = typename SameKindReal::Value;
-  struct CMPLX : public Binary<CMPLX, Result, SameKindReal> {
-    using Binary<CMPLX, Result, SameKindReal>::Binary;
+  struct CMPLX : public Binary<CMPLX, Result, Part> {
+    using Binary<CMPLX, Result, Part>::Binary;
     static std::optional<Scalar> FoldScalar(FoldingContext &,
-        const SameKindRealScalar &, const SameKindRealScalar &);
+        const evaluate::Scalar<Part> &, const evaluate::Scalar<Part> &);
   };
 
   CLASS_BOILERPLATE(Expr)
@@ -402,7 +400,7 @@ private:
 template<int KIND> class Expr<Type<TypeCategory::Character, KIND>> {
 public:
   using Result = Type<TypeCategory::Character, KIND>;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
   using FoldableTrait = std::true_type;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
   struct Concat : public Bin<Concat> {
@@ -483,7 +481,7 @@ extern template struct Comparison<Type<TypeCategory::Character, 1>>;
 // Dynamically polymorphic comparisons whose operands are expressions of
 // the same supported kind of a particular type category.
 template<TypeCategory CAT> struct CategoryComparison {
-  using Scalar = typename Type<TypeCategory::Logical, 1>::Value;
+  using Scalar = Scalar<Type<TypeCategory::Logical, 1>>;
   CLASS_BOILERPLATE(CategoryComparison)
   template<int KIND> using KindComparison = Comparison<Type<CAT, KIND>>;
   template<int KIND> CategoryComparison(const KindComparison<KIND> &x) : u{x} {}
@@ -496,7 +494,7 @@ template<TypeCategory CAT> struct CategoryComparison {
 template<int KIND> class Expr<Type<TypeCategory::Logical, KIND>> {
 public:
   using Result = Type<TypeCategory::Logical, KIND>;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
   using FoldableTrait = std::true_type;
   struct Not : Unary<Not, Result> {
     using Unary<Not, Result>::Unary;
@@ -578,7 +576,7 @@ extern template class Expr<Type<TypeCategory::Logical, 8>>;
 template<TypeCategory CAT> class Expr<SomeKind<CAT>> {
 public:
   using Result = SomeKind<CAT>;
-  using Scalar = typename Result::Value;
+  using Scalar = Scalar<Result>;
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
   template<int KIND> using KindExpr = Expr<Type<CAT, KIND>>;

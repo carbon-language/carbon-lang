@@ -22,7 +22,7 @@ template<int KIND> void testKind() {
   TEST(Type::category == Fortran::common::TypeCategory::Logical);
   TEST(Type::kind == KIND);
   TEST(!Type::hasLen);
-  using Value = typename Type::Value;
+  using Value = Fortran::evaluate::Scalar<Type>;
   MATCH(8 * KIND, Value::bits);
   TEST(!Value{}.IsTrue());
   TEST(!Value{false}.IsTrue());

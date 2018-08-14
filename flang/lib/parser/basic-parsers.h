@@ -311,7 +311,7 @@ private:
       state = backtrack;
       const auto &parser{std::get<J>(ps_)};
       static_assert(std::is_same_v<resultType,
-          typename std::decay<decltype(parser)>::type::resultType>);
+          typename std::decay_t<decltype(parser)>::resultType>);
       result = parser.Parse(state);
       if (!result.has_value()) {
         state.CombineFailedParses(std::move(prevState));

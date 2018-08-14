@@ -21,13 +21,13 @@
 using namespace Fortran::evaluate;
 using namespace Fortran::common;
 
-using Real2 = typename Type<TypeCategory::Real, 2>::Value;
-using Real4 = typename Type<TypeCategory::Real, 4>::Value;
-using Real8 = typename Type<TypeCategory::Real, 8>::Value;
-using Real10 = typename Type<TypeCategory::Real, 10>::Value;
-using Real16 = typename Type<TypeCategory::Real, 16>::Value;
-using Integer4 = typename Type<TypeCategory::Integer, 4>::Value;
-using Integer8 = typename Type<TypeCategory::Integer, 8>::Value;
+using Real2 = Scalar<Type<TypeCategory::Real, 2>>;
+using Real4 = Scalar<Type<TypeCategory::Real, 4>>;
+using Real8 = Scalar<Type<TypeCategory::Real, 8>>;
+using Real10 = Scalar<Type<TypeCategory::Real, 10>>;
+using Real16 = Scalar<Type<TypeCategory::Real, 16>>;
+using Integer4 = Scalar<Type<TypeCategory::Integer, 4>>;
+using Integer8 = Scalar<Type<TypeCategory::Integer, 8>>;
 
 void dumpTest() {
   struct {

@@ -236,7 +236,7 @@ auto Binary<CRTP, RESULT, A, B>::Fold(FoldingContext &context)
 
 template<int KIND>
 auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
-    const ScalarConstant<TypeCategory::Integer> &c) -> std::optional<Scalar> {
+    const SomeKindScalar<TypeCategory::Integer> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::ConvertSigned(x)};
@@ -251,7 +251,7 @@ auto IntegerExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto IntegerExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
-    const ScalarConstant<TypeCategory::Real> &c) -> std::optional<Scalar> {
+    const SomeKindScalar<TypeCategory::Real> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{x.template ToInteger<Scalar>()};
@@ -369,7 +369,7 @@ template<int KIND>
 auto IntegerExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
-        using Ty = typename std::decay<decltype(x)>::type;
+        using Ty = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<Ty, Scalar>) {
           return {x};
         }
@@ -387,7 +387,7 @@ auto IntegerExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
 
 template<int KIND>
 auto RealExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
-    const ScalarConstant<TypeCategory::Integer> &c) -> std::optional<Scalar> {
+    const SomeKindScalar<TypeCategory::Integer> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::FromInteger(x)};
@@ -399,7 +399,7 @@ auto RealExpr<KIND>::ConvertInteger::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto RealExpr<KIND>::ConvertReal::FoldScalar(FoldingContext &context,
-    const ScalarConstant<TypeCategory::Real> &c) -> std::optional<Scalar> {
+    const SomeKindScalar<TypeCategory::Real> &c) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
         auto converted{Scalar::Convert(x)};
@@ -455,7 +455,7 @@ auto RealExpr<KIND>::Power::FoldScalar(FoldingContext &context, const Scalar &a,
 
 template<int KIND>
 auto RealExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
-    const Scalar &a, const ScalarConstant<TypeCategory::Integer> &b)
+    const Scalar &a, const SomeKindScalar<TypeCategory::Integer> &b)
     -> std::optional<Scalar> {
   return std::visit(
       [&](const auto &pow) -> std::optional<Scalar> {
@@ -486,13 +486,13 @@ auto RealExpr<KIND>::Min::FoldScalar(FoldingContext &context, const Scalar &a,
 
 template<int KIND>
 auto RealExpr<KIND>::RealPart::FoldScalar(FoldingContext &context,
-    const SameKindComplexScalar &z) -> std::optional<Scalar> {
+    const evaluate::Scalar<Complex> &z) -> std::optional<Scalar> {
   return {z.REAL()};
 }
 
 template<int KIND>
 auto RealExpr<KIND>::AIMAG::FoldScalar(FoldingContext &context,
-    const SameKindComplexScalar &z) -> std::optional<Scalar> {
+    const evaluate::Scalar<Complex> &z) -> std::optional<Scalar> {
   return {z.AIMAG()};
 }
 
@@ -500,7 +500,7 @@ template<int KIND>
 auto RealExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
-        using Ty = typename std::decay<decltype(x)>::type;
+        using Ty = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<Ty, Scalar>) {
           return {x};
         }
@@ -565,7 +565,7 @@ auto ComplexExpr<KIND>::Power::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto ComplexExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
-    const Scalar &a, const ScalarConstant<TypeCategory::Integer> &b)
+    const Scalar &a, const SomeKindScalar<TypeCategory::Integer> &b)
     -> std::optional<Scalar> {
   return std::visit(
       [&](const auto &pow) -> std::optional<Scalar> {
@@ -578,7 +578,7 @@ auto ComplexExpr<KIND>::IntPower::FoldScalar(FoldingContext &context,
 
 template<int KIND>
 auto ComplexExpr<KIND>::CMPLX::FoldScalar(FoldingContext &context,
-    const SameKindRealScalar &a, const SameKindRealScalar &b)
+    const evaluate::Scalar<Part> &a, const evaluate::Scalar<Part> &b)
     -> std::optional<Scalar> {
   return {Scalar{a, b}};
 }
@@ -587,7 +587,7 @@ template<int KIND>
 auto ComplexExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
-        using Ty = typename std::decay<decltype(x)>::type;
+        using Ty = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<Ty, Scalar>) {
           return {x};
         }
@@ -638,7 +638,7 @@ auto CharacterExpr<KIND>::Fold(FoldingContext &context)
     -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
-        using Ty = typename std::decay<decltype(x)>::type;
+        using Ty = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<Ty, Scalar>) {
           return {x};
         }
@@ -740,7 +740,7 @@ template<int KIND>
 auto LogicalExpr<KIND>::Fold(FoldingContext &context) -> std::optional<Scalar> {
   return std::visit(
       [&](auto &x) -> std::optional<Scalar> {
-        using Ty = typename std::decay<decltype(x)>::type;
+        using Ty = std::decay_t<decltype(x)>;
         if constexpr (std::is_same_v<Ty, Scalar>) {
           return {x};
         }

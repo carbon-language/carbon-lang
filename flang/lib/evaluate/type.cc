@@ -22,7 +22,7 @@
 namespace Fortran::evaluate {
 
 std::optional<std::int64_t> GenericScalar::ToInt64() const {
-  if (const auto *j{std::get_if<ScalarConstant<TypeCategory::Integer>>(&u)}) {
+  if (const auto *j{std::get_if<SomeKindScalar<TypeCategory::Integer>>(&u)}) {
     return std::visit(
         [](const auto &k) { return std::optional<std::int64_t>{k.ToInt64()}; },
         j->u);
@@ -31,7 +31,7 @@ std::optional<std::int64_t> GenericScalar::ToInt64() const {
 }
 
 std::optional<std::string> GenericScalar::ToString() const {
-  if (const auto *c{std::get_if<ScalarConstant<TypeCategory::Character>>(&u)}) {
+  if (const auto *c{std::get_if<SomeKindScalar<TypeCategory::Character>>(&u)}) {
     if (const std::string * s{std::get_if<std::string>(&c->u)}) {
       return std::optional<std::string>{*s};
     }
@@ -39,25 +39,33 @@ std::optional<std::string> GenericScalar::ToString() const {
   return std::nullopt;
 }
 
-// There's some opaque type-fu going on below.  Given a GenericScalar, we
-// figure out its intrinsic type category, and then (for each category),
-// we figure out its kind from the type of the constant.  Then, given
-// the category, kind, and constant, we construct a GenericExpr around
-// the constant.
+// TODO pmk: maybe transplant these templates to type.h/expression.h?
+
+// There's some admittedly opaque type-fu going on below.
+// Given a GenericScalar value, we want to be able to (re-)wrap it as
+// a GenericExpr.  So we extract its value, then build up an expression
+// around it.  The subtle magic is in the first template, whose result
+// is a specific expression whose Fortran type category and kind are inferred
+// from the type of the scalar constant.
+template<typename A> Expr<ScalarValueType<A>> ScalarConstantToExpr(const A &x) {
+  return {x};
+}
+
+template<typename A>
+Expr<SomeKind<A::category>> ToSomeKindExpr(const Expr<A> &x) {
+  return {x};
+}
+
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> SomeKindScalarToExpr(const SomeKindScalar<CAT> &x) {
+  return std::visit(
+      [](const auto &c) { return ToSomeKindExpr(ScalarConstantToExpr(c)); },
+      x.u);
+}
+
 GenericExpr GenericScalar::ToGenericExpr() const {
   return std::visit(
-      [](const auto &c) -> GenericExpr {
-        using cType = typename std::decay<decltype(c)>::type;
-        constexpr TypeCategory cat{cType::category};
-        return {std::visit(
-            [&](const auto &value) -> Expr<SomeKind<cat>> {
-              using valueType = typename std::decay<decltype(value)>::type;
-              using Ty = typename TypeOfScalarValue<valueType>::type;
-              return {Expr<Ty>{value}};
-            },
-            c.u)};
-      },
-      u);
+      [&](const auto &c) { return GenericExpr{SomeKindScalarToExpr(c)}; }, u);
 }
 
 }  // namespace Fortran::evaluate
