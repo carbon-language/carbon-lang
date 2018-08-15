@@ -7349,18 +7349,24 @@ SDValue SITargetLowering::performExtractVectorEltCombine(
       return SDValue();
       // TODO: Support other binary operations.
     case ISD::FADD:
+    case ISD::FSUB:
+    case ISD::FMUL:
     case ISD::ADD:
     case ISD::UMIN:
     case ISD::UMAX:
     case ISD::SMIN:
     case ISD::SMAX:
     case ISD::FMAXNUM:
-    case ISD::FMINNUM:
-      return DAG.getNode(Opc, SL, EltVT,
-                         DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,
-                                     Vec.getOperand(0), Idx),
-                         DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,
-                                     Vec.getOperand(1), Idx));
+    case ISD::FMINNUM: {
+      SDValue Elt0 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,
+                                 Vec.getOperand(0), Idx);
+      SDValue Elt1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,
+                                 Vec.getOperand(1), Idx);
+
+      DCI.AddToWorklist(Elt0.getNode());
+      DCI.AddToWorklist(Elt1.getNode());
+      return DAG.getNode(Opc, SL, EltVT, Elt0, Elt1, Vec->getFlags());
+    }
     }
   }
 
