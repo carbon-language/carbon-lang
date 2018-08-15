@@ -562,6 +562,7 @@ static bool fnegFoldsIntoOp(unsigned Opc) {
   case AMDGPUISD::FMUL_LEGACY:
   case AMDGPUISD::FMIN_LEGACY:
   case AMDGPUISD::FMAX_LEGACY:
+  case AMDGPUISD::FMED3:
     return true;
   default:
     return false;
@@ -3604,6 +3605,16 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
     unsigned Opposite = inverseMinMax(Opc);
 
     SDValue Res = DAG.getNode(Opposite, SL, VT, NegLHS, NegRHS, N0->getFlags());
+    if (!N0.hasOneUse())
+      DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
+    return Res;
+  }
+  case AMDGPUISD::FMED3: {
+    SDValue Ops[3];
+    for (unsigned I = 0; I < 3; ++I)
+      Ops[I] = DAG.getNode(ISD::FNEG, SL, VT, N0->getOperand(I), N0->getFlags());
+
+    SDValue Res = DAG.getNode(AMDGPUISD::FMED3, SL, VT, Ops, N0->getFlags());
     if (!N0.hasOneUse())
       DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
     return Res;
