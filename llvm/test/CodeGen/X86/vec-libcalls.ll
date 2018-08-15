@@ -21,6 +21,7 @@ declare <3 x double> @llvm.sin.v3f64(<3 x double>)
 ; Some of these have custom lowering, so those cases won't have
 ; libcalls.
 
+declare <2 x float> @llvm.fabs.v2f32(<2 x float>)
 declare <2 x float> @llvm.ceil.v2f32(<2 x float>)
 declare <2 x float> @llvm.cos.v2f32(<2 x float>)
 declare <2 x float> @llvm.exp.v2f32(<2 x float>)
@@ -281,6 +282,15 @@ define <3 x double> @sin_v3f64(<3 x double> %x) nounwind {
 ; CHECK-NEXT:    retq
   %r = call <3 x double> @llvm.sin.v3f64(<3 x double> %x)
   ret <3 x double> %r
+}
+
+define <2 x float> @fabs_v2f32(<2 x float> %x) nounwind {
+; CHECK-LABEL: fabs_v2f32:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    vandps {{.*}}(%rip), %xmm0, %xmm0
+; CHECK-NEXT:    retq
+  %r = call <2 x float> @llvm.fabs.v2f32(<2 x float> %x)
+  ret <2 x float> %r
 }
 
 define <2 x float> @ceil_v2f32(<2 x float> %x) nounwind {
