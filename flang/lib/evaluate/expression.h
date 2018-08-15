@@ -28,11 +28,70 @@
 #include "../lib/parser/char-block.h"
 #include "../lib/parser/message.h"
 #include <ostream>
+#include <tuple>
 #include <variant>
 
 namespace Fortran::evaluate {
 
 template<typename A> class Expr;
+
+template<typename DERIVED, typename RESULT, typename... OPERAND>
+class Operation {
+private:
+  using OperandTypes = std::tuple<OPERAND...>;
+
+public:
+  using Derived = DERIVED;
+  using Result = RESULT;
+  template<int J> using Operand = std::tuple_element_t<J, OperandTypes>;
+  using FoldableTrait = std::true_type;
+
+  CLASS_BOILERPLATE(Operation)
+  Operation(Expr<OPERAND> &&... x) : operand_{std::move(x)...} {}
+  Operation(const Expr<OPERAND> &... x) : operand_{x...} {}
+
+  DERIVED &derived() { return *static_cast<DERIVED *>(this); }
+  const DERIVED &derived() const { return *static_cast<const DERIVED *>(this); }
+
+  static constexpr auto operands() { return sizeof...(OPERAND); }
+  template<int J> Expr<Operand<J>> &operand() { return *std::get<J>(operand_); }
+  template<int J> const Expr<Operand<J>> &operand() const {
+    return *std::get<J>(operand_);
+  }
+
+  std::optional<Scalar<Result>> Fold(FoldingContext &);  // TODO rank > 0
+
+protected:
+  // Overridable strings for Dump()
+  static constexpr const char *prefix_{"("}, *infix_{""}, *postfix_{")"};
+
+private:
+  std::tuple<CopyableIndirection<Expr<OPERAND>>...> operand_;
+};
+
+template<typename A>
+class Parentheses : public Operation<Parentheses<A>, A, A> {
+  using Base = Operation<Parentheses, A, A>;
+  friend Base;
+  using Base::Base;
+  using typename Base::Result;
+  using Operand = typename Base::template Operand<0>;
+  static std::optional<Scalar<Result>> FoldScalar(
+      FoldingContext &, const Scalar<Operand> &x) {
+    return {x};
+  }
+};
+
+template<typename TO, typename FROM>
+class Convert : public Operation<Convert<TO, FROM>, TO, FROM> {
+  using Base = Operation<Convert<TO, FROM>, TO, FROM>;
+  friend Base;
+  using Base::Base;
+  using typename Base::Result;
+  using Operand = typename Base::template Operand<0>;
+  static std::optional<Scalar<Result>> FoldScalar(
+      FoldingContext &, const Scalar<Operand> &);
+};
 
 // Helper base classes for packaging subexpressions.
 template<typename CRTP, typename RESULT, typename A = RESULT> class Unary {
@@ -102,13 +161,6 @@ public:
 
   template<typename CRTP> using Un = Unary<CRTP, Result>;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Parentheses : public Un<Parentheses> {
-    using Un<Parentheses>::Un;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &x) {
-      return {x};
-    }
-  };
   struct Negate : public Un<Negate> {
     using Un<Negate>::Un;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -189,7 +241,8 @@ public:
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<FunctionRef>, ConvertInteger, ConvertReal,
-      Parentheses, Negate, Add, Subtract, Multiply, Divide, Power, Max, Min>
+      Parentheses<Result>, Negate, Add, Subtract, Multiply, Divide, Power, Max,
+      Min>
       u_;
 };
 
@@ -213,13 +266,6 @@ public:
   };
   template<typename CRTP> using Un = Unary<CRTP, Result>;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Parentheses : public Un<Parentheses> {
-    using Un<Parentheses>::Un;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &x) {
-      return {x};
-    }
-  };
   struct Negate : public Un<Negate> {
     using Un<Negate>::Un;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -311,8 +357,8 @@ public:
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<ComplexPart>, CopyableIndirection<FunctionRef>,
-      ConvertInteger, ConvertReal, Parentheses, Negate, Add, Subtract, Multiply,
-      Divide, Power, IntPower, Max, Min, RealPart, AIMAG>
+      ConvertInteger, ConvertReal, Parentheses<Result>, Negate, Add, Subtract,
+      Multiply, Divide, Power, IntPower, Max, Min, RealPart, AIMAG>
       u_;
 };
 
@@ -323,13 +369,6 @@ public:
 
   template<typename CRTP> using Un = Unary<CRTP, Result>;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Parentheses : public Un<Parentheses> {
-    using Un<Parentheses>::Un;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &x) {
-      return {x};
-    }
-  };
   struct Negate : public Un<Negate> {
     using Un<Negate>::Un;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -388,8 +427,8 @@ public:
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
-      CopyableIndirection<FunctionRef>, Parentheses, Negate, Add, Subtract,
-      Multiply, Divide, Power, IntPower, CMPLX>
+      CopyableIndirection<FunctionRef>, Parentheses<Result>, Negate, Add,
+      Subtract, Multiply, Divide, Power, IntPower, CMPLX>
       u_;
 };
 
@@ -431,8 +470,9 @@ public:
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
-      CopyableIndirection<Substring>, CopyableIndirection<FunctionRef>, Concat,
-      Max, Min>
+      CopyableIndirection<Substring>, CopyableIndirection<FunctionRef>,
+      //      Parentheses<Result>,
+      Concat, Max, Min>
       u_;
 };
 
@@ -541,8 +581,9 @@ public:
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
-      CopyableIndirection<FunctionRef>, Not, And, Or, Eqv, Neqv,
-      CategoryComparison<TypeCategory::Integer>,
+      CopyableIndirection<FunctionRef>,
+      //      Parentheses<Result>,
+      Not, And, Or, Eqv, Neqv, CategoryComparison<TypeCategory::Integer>,
       CategoryComparison<TypeCategory::Real>,
       CategoryComparison<TypeCategory::Complex>,
       CategoryComparison<TypeCategory::Character>>
@@ -634,11 +675,7 @@ template<typename A> using ResultType = typename std::decay_t<A>::Result;
 // These definitions are created with temporary helper macros to reduce
 // C++ boilerplate.  All combinations of lvalue and rvalue references are
 // allowed for operands.
-#define UNARY(FUNC, CONSTR) \
-  template<typename A> A FUNC(const A &x) { return {typename A::CONSTR{x}}; }
-UNARY(Parentheses, Parentheses)
-UNARY(operator-, Negate)
-#undef UNARY
+template<typename A> A operator-(const A &x) { return {typename A::Negate{x}}; }
 
 #define BINARY(FUNC, CONSTR) \
   template<typename A> A FUNC(const A &x, const A &y) { \

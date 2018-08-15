@@ -27,6 +27,108 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
+template<typename D, typename R, typename... O>
+std::ostream &Operation<D, R, O...>::Dump(std::ostream &o) const {
+  operand<0>().Dump(o << derived().prefix_);
+  if constexpr (operands() > 1) {
+    operand<1>().Dump(o << infix_);
+  }
+  return o << derived().postfix_;
+}
+
+template<typename D, typename R, typename... O>
+auto Operation<D, R, O...>::Fold(FoldingContext &context)
+    -> std::optional<Scalar<Result>> {
+  auto c0{operand<0>().Fold(context)};
+  if constexpr (operands() == 1) {
+    if (c0.has_value()) {
+      return derived().FoldScalar(context, *c0);
+    }
+  } else {
+    auto c1{operand<1>().Fold(context)};
+    if (c0.has_value() && c1.has_value()) {
+      return derived().FoldScalar(context, *c0, *c1);
+    }
+  }
+  return std::nullopt;
+}
+
+template<typename TO, typename FROM>
+auto Convert<TO, FROM>::FoldScalar(FoldingContext &context,
+    const Scalar<Operand> &c) -> std::optional<Scalar<Result>> {
+  if constexpr (std::is_same_v<Result, Operand>) {
+    return {c};
+  }
+  if constexpr (std::is_same_v<Result, SomeType>) {
+    using Generic = SomeKind<Operand::category>;
+    if constexpr (std::is_same_v<Operand, Generic>) {
+      return {Scalar<Result>{c}};
+    } else {
+      return {Scalar<Result>{Generic{c}}};
+    }
+  }
+  if constexpr (std::is_same_v<Operand, SomeType>) {
+    return std::visit(
+        [&](const auto &x) -> std::optional<Scalar<Result>> {
+          return Convert<Result, std::decay_t<decltype(x)>>::FoldScalar(
+              context, x);
+        },
+        c.u);
+  }
+  // Result and Operand are distinct types with known categories.
+  if constexpr (std::is_same_v<Result, SomeKind<Result::category>>) {
+    if constexpr (Result::category == Operand::category) {
+      return {Scalar<Result>{c}};
+    }
+    return std::nullopt;
+  }
+  // Result is a specific type.
+  if constexpr (std::is_same_v<Operand, SomeKind<Operand::category>>) {
+    return std::visit(
+        [&](const auto &x) -> std::optional<Scalar<Result>> {
+          return Convert<Result,
+              ScalarValueType<std::decay_t<decltype(x)>>>::FoldScalar(context,
+              x);
+        },
+        c.u);
+  }
+  // Result and Operand are distinct specific types.
+  if constexpr (Result::category == TypeCategory::Integer) {
+    if constexpr (Operand::category == TypeCategory::Integer) {
+      auto converted{Scalar<Result>::ConvertSigned(c)};
+      if (converted.overflow) {
+        context.messages.Say("INTEGER to INTEGER conversion overflowed"_en_US);
+      } else {
+        return {std::move(converted.value)};
+      }
+    }
+    if constexpr (Operand::category == TypeCategory::Real) {
+      auto converted{c.template ToInteger<Scalar<Result>>()};
+      if (converted.flags.test(RealFlag::InvalidArgument)) {
+        context.messages.Say(
+            "REAL to INTEGER conversion: invalid argument"_en_US);
+      } else if (converted.flags.test(RealFlag::Overflow)) {
+        context.messages.Say("REAL to INTEGER conversion overflowed"_en_US);
+      } else {
+        return {std::move(converted.value)};
+      }
+    }
+  }
+  if constexpr (Result::category == TypeCategory::Real) {
+    if constexpr (Operand::category == TypeCategory::Integer) {
+      auto converted{Scalar<Result>::FromInteger(c)};
+      RealFlagWarnings(context, converted.flags, "INTEGER to REAL conversion");
+      return {std::move(converted.value)};
+    }
+    if constexpr (Operand::category == TypeCategory::Real) {
+      auto converted{Scalar<Result>::Convert(c)};
+      RealFlagWarnings(context, converted.flags, "REAL to REAL conversion");
+      return {std::move(converted.value)};
+    }
+  }
+  return std::nullopt;
+}
+
 // Dumping
 template<typename... A>
 std::ostream &DumpExprWithType(std::ostream &o, const std::variant<A...> &u) {
@@ -82,7 +184,7 @@ std::ostream &Expr<Type<TypeCategory::Integer, KIND>>::Dump(
       common::visitors{[&](const Scalar<Result> &n) { o << n.SignedDecimal(); },
           [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
           [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-          [&](const Parentheses &p) { p.Dump(o, "("); },
+          [&](const Parentheses<Result> &p) { p.Dump(o); },
           [&](const Negate &n) { n.Dump(o, "(-"); },
           [&](const Add &a) { a.Dump(o, "+"); },
           [&](const Subtract &s) { s.Dump(o, "-"); },
@@ -107,7 +209,7 @@ std::ostream &Expr<Type<TypeCategory::Real, KIND>>::Dump(
                  [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<ComplexPart> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const Parentheses &p) { p.Dump(o, "("); },
+                 [&](const Parentheses<Result> &p) { p.Dump(o); },
                  [&](const Negate &n) { n.Dump(o, "(-"); },
                  [&](const Add &a) { a.Dump(o, "+"); },
                  [&](const Subtract &s) { s.Dump(o, "-"); },
@@ -134,7 +236,7 @@ std::ostream &Expr<Type<TypeCategory::Complex, KIND>>::Dump(
                               },
                  [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const Parentheses &p) { p.Dump(o, "("); },
+                 [&](const Parentheses<Result> &p) { p.Dump(o); },
                  [&](const Negate &n) { n.Dump(o, "(-"); },
                  [&](const Add &a) { a.Dump(o, "+"); },
                  [&](const Subtract &s) { s.Dump(o, "-"); },
@@ -153,6 +255,7 @@ std::ostream &Expr<Type<TypeCategory::Character, KIND>>::Dump(
   std::visit(common::visitors{[&](const Scalar<Result> &s) {
                                 o << parser::QuoteCharacterLiteral(s);
                               },
+                 //          [&](const Parentheses<Result> &p) { p.Dump(o); },
                  [&](const Concat &concat) { concat.Dump(o, "//"); },
                  [&](const Max &m) { m.Dump(o, ",", "MAX("); },
                  [&](const Min &m) { m.Dump(o, ",", "MIN("); },
@@ -176,6 +279,7 @@ std::ostream &Expr<Type<TypeCategory::Logical, KIND>>::Dump(
                               },
                  [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
+                 //          [&](const Parentheses<Result> &p) { p.Dump(o); },
                  [&](const Not &n) { n.Dump(o, "(.NOT."); },
                  [&](const And &a) { a.Dump(o, ".AND."); },
                  [&](const Or &a) { a.Dump(o, ".OR."); },
@@ -395,9 +499,13 @@ auto Expr<Type<TypeCategory::Integer, KIND>>::Fold(FoldingContext &context)
           return {x};
         }
         if constexpr (evaluate::FoldableTrait<Ty>) {
-          auto c{x.Fold(context)};
-          if (c.has_value()) {
-            u_ = *c;
+          if (auto c{x.Fold(context)}) {
+            if constexpr (std::is_same_v<Ty, Parentheses<Result>>) {
+              // Preserve parentheses around constants.
+              u_ = Parentheses<Result>{Expr{*c}};
+            } else {
+              u_ = *c;
+            }
             return c;
           }
         }
@@ -542,8 +650,7 @@ auto Expr<Type<TypeCategory::Real, KIND>>::Fold(FoldingContext &context)
           return {x};
         }
         if constexpr (evaluate::FoldableTrait<Ty>) {
-          auto c{x.Fold(context)};
-          if (c.has_value()) {
+          if (auto c{x.Fold(context)}) {
             if (context.flushDenormalsToZero) {
               *c = c->FlushDenormalToZero();
             }
@@ -639,8 +746,7 @@ auto Expr<Type<TypeCategory::Complex, KIND>>::Fold(FoldingContext &context)
           return {x};
         }
         if constexpr (evaluate::FoldableTrait<Ty>) {
-          auto c{x.Fold(context)};
-          if (c.has_value()) {
+          if (auto c{x.Fold(context)}) {
             if (context.flushDenormalsToZero) {
               *c = c->FlushDenormalToZero();
             }
@@ -693,8 +799,7 @@ auto Expr<Type<TypeCategory::Character, KIND>>::Fold(FoldingContext &context)
           return {x};
         }
         if constexpr (evaluate::FoldableTrait<Ty>) {
-          auto c{x.Fold(context)};
-          if (c.has_value()) {
+          if (auto c{x.Fold(context)}) {
             u_ = *c;
             return c;
           }
@@ -800,8 +905,7 @@ auto Expr<Type<TypeCategory::Logical, KIND>>::Fold(FoldingContext &context)
           return {x};
         }
         if constexpr (evaluate::FoldableTrait<Ty>) {
-          std::optional<Scalar<Result>> c{x.Fold(context)};
-          if (c.has_value()) {
+          if (auto c{x.Fold(context)}) {
             u_ = *c;
             return c;
           }
