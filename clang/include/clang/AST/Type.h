@@ -1624,6 +1624,25 @@ protected:
     unsigned NumArgs;
   };
 
+  class PackExpansionTypeBitfields {
+    friend class PackExpansionType;
+
+    unsigned : NumTypeBits;
+
+    /// The number of expansions that this pack expansion will
+    /// generate when substituted (+1), which is expected to be able to
+    /// hold at least 1024 according to [implimits]. However, as this limit
+    /// is somewhat easy to hit with template metaprogramming we'd prefer to
+    /// keep it as large as possible. At the moment it has been left as a
+    /// non-bitfield since this type safely fits in 64 bits as an unsigned, so
+    /// there is no reason to introduce the performance impact of a bitfield.
+    ///
+    /// This field will only have a non-zero value when some of the parameter
+    /// packs that occur within the pattern have been substituted but others
+    /// have not.
+    unsigned NumExpansions;
+  };
+
   union {
     TypeBitfields TypeBits;
     ArrayTypeBitfields ArrayTypeBits;
@@ -1636,6 +1655,7 @@ protected:
     TypeWithKeywordBitfields TypeWithKeywordBits;
     VectorTypeBitfields VectorTypeBits;
     TemplateSpecializationTypeBitfields TemplateSpecializationTypeBits;
+    PackExpansionTypeBitfields PackExpansionTypeBits;
 
     static_assert(sizeof(TypeBitfields) <= 8,
                   "TypeBitfields is larger than 8 bytes!");
@@ -1660,6 +1680,8 @@ protected:
     static_assert(sizeof(TemplateSpecializationTypeBitfields) <= 8,
                   "TemplateSpecializationTypeBitfields is larger"
                   " than 8 bytes!");
+    static_assert(sizeof(PackExpansionTypeBitfields) <= 8,
+                  "PackExpansionTypeBitfields is larger than 8 bytes");
   };
 
 private:
@@ -5189,22 +5211,16 @@ class PackExpansionType : public Type, public llvm::FoldingSetNode {
   /// The pattern of the pack expansion.
   QualType Pattern;
 
-  /// The number of expansions that this pack expansion will
-  /// generate when substituted (+1), or indicates that
-  ///
-  /// This field will only have a non-zero value when some of the parameter
-  /// packs that occur within the pattern have been substituted but others have
-  /// not.
-  unsigned NumExpansions;
-
   PackExpansionType(QualType Pattern, QualType Canon,
                     Optional<unsigned> NumExpansions)
       : Type(PackExpansion, Canon, /*Dependent=*/Pattern->isDependentType(),
              /*InstantiationDependent=*/true,
              /*VariablyModified=*/Pattern->isVariablyModifiedType(),
              /*ContainsUnexpandedParameterPack=*/false),
-        Pattern(Pattern),
-        NumExpansions(NumExpansions ? *NumExpansions + 1 : 0) {}
+        Pattern(Pattern) {
+    PackExpansionTypeBits.NumExpansions =
+        NumExpansions ? *NumExpansions + 1 : 0;
+  }
 
 public:
   /// Retrieve the pattern of this pack expansion, which is the
@@ -5215,9 +5231,8 @@ public:
   /// Retrieve the number of expansions that this pack expansion will
   /// generate, if known.
   Optional<unsigned> getNumExpansions() const {
-    if (NumExpansions)
-      return NumExpansions - 1;
-
+    if (PackExpansionTypeBits.NumExpansions)
+      return PackExpansionTypeBits.NumExpansions - 1;
     return None;
   }
 
