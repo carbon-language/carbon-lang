@@ -1606,6 +1606,24 @@ protected:
     unsigned Keyword : 2;
   };
 
+  class TemplateSpecializationTypeBitfields {
+    friend class TemplateSpecializationType;
+
+    unsigned : NumTypeBits;
+
+    /// Whether this template specialization type is a substituted type alias.
+    unsigned TypeAlias : 1;
+
+    /// The number of template arguments named in this class template
+    /// specialization, which is expected to be able to hold at least 1024
+    /// according to [implimits]. However, as this limit is somewhat easy to
+    /// hit with template metaprogramming we'd prefer to keep it as large
+    /// as possible. At the moment it has been left as a non-bitfield since
+    /// this type safely fits in 64 bits as an unsigned, so there is no reason
+    /// to introduce the performance impact of a bitfield.
+    unsigned NumArgs;
+  };
+
   union {
     TypeBitfields TypeBits;
     ArrayTypeBitfields ArrayTypeBits;
@@ -1617,6 +1635,7 @@ protected:
     ReferenceTypeBitfields ReferenceTypeBits;
     TypeWithKeywordBitfields TypeWithKeywordBits;
     VectorTypeBitfields VectorTypeBits;
+    TemplateSpecializationTypeBitfields TemplateSpecializationTypeBits;
 
     static_assert(sizeof(TypeBitfields) <= 8,
                   "TypeBitfields is larger than 8 bytes!");
@@ -1638,6 +1657,9 @@ protected:
                   "TypeWithKeywordBitfields is larger than 8 bytes!");
     static_assert(sizeof(VectorTypeBitfields) <= 8,
                   "VectorTypeBitfields is larger than 8 bytes!");
+    static_assert(sizeof(TemplateSpecializationTypeBitfields) <= 8,
+                  "TemplateSpecializationTypeBitfields is larger"
+                  " than 8 bytes!");
   };
 
 private:
@@ -4669,13 +4691,6 @@ class alignas(8) TemplateSpecializationType
   /// replacement must, recursively, be one of these).
   TemplateName Template;
 
-  /// The number of template arguments named in this class template
-  /// specialization.
-  unsigned NumArgs : 31;
-
-  /// Whether this template specialization type is a substituted type alias.
-  unsigned TypeAlias : 1;
-
   TemplateSpecializationType(TemplateName T,
                              ArrayRef<TemplateArgument> Args,
                              QualType Canon,
@@ -4710,7 +4725,7 @@ public:
   ///   typedef A<Ts...> type; // not a type alias
   /// };
   /// \endcode
-  bool isTypeAlias() const { return TypeAlias; }
+  bool isTypeAlias() const { return TemplateSpecializationTypeBits.TypeAlias; }
 
   /// Get the aliased type, if this is a specialization of a type alias
   /// template.
@@ -4733,14 +4748,16 @@ public:
   }
 
   /// Retrieve the number of template arguments.
-  unsigned getNumArgs() const { return NumArgs; }
+  unsigned getNumArgs() const {
+    return TemplateSpecializationTypeBits.NumArgs;
+  }
 
   /// Retrieve a specific template argument as a type.
   /// \pre \c isArgType(Arg)
   const TemplateArgument &getArg(unsigned Idx) const; // in TemplateBase.h
 
   ArrayRef<TemplateArgument> template_arguments() const {
-    return {getArgs(), NumArgs};
+    return {getArgs(), getNumArgs()};
   }
 
   bool isSugared() const {
