@@ -562,7 +562,7 @@ bool ARMCodeGenPrepare::isLegalToPromote(Value *V) {
 bool ARMCodeGenPrepare::TryToPromote(Value *V) {
   OrigTy = V->getType();
   TypeSize = OrigTy->getPrimitiveSizeInBits();
-  if (TypeSize > 16)
+  if (TypeSize > 16 || TypeSize < 8)
     return false;
 
   if (!isSupportedValue(V) || !shouldPromote(V) || !isLegalToPromote(V))
