@@ -274,7 +274,7 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
         return false;
     } else if (auto S = dyn_cast<ELFYAML::Group>(Sec.get())) {
       unsigned SymIdx;
-      if (SymN2I.lookup(S->Info, SymIdx)) {
+      if (SymN2I.lookup(S->Info, SymIdx) && !to_integer(S->Info, SymIdx)) {
         WithColor::error() << "Unknown symbol referenced: '" << S->Info
                            << "' at YAML section '" << S->Name << "'.\n";
         return false;
