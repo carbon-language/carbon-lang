@@ -252,7 +252,9 @@ public:
     return llvm::ExceptionHandling::None;
   }
 
-  virtual StringRef getOSLibraryNameSuffix() const { return ""; }
+  virtual StringRef getOSLibraryNameSuffix(bool IgnoreSim = false) const {
+    return "";
+  }
 
   /// }
 };
@@ -420,7 +422,7 @@ protected:
                              Action::OffloadKind DeviceOffloadKind) const override;
 
   StringRef getPlatformFamily() const;
-  StringRef getOSLibraryNameSuffix() const override;
+  StringRef getOSLibraryNameSuffix(bool IgnoreSim = false) const override;
 
 public:
   static StringRef getSDKName(StringRef isysroot);

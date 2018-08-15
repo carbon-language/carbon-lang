@@ -916,8 +916,10 @@ void MachO::AddLinkRuntimeLib(const ArgList &Args, ArgStringList &CmdArgs,
     DarwinLibName += Component;
     if (!(Opts & RLO_IsEmbedded))
       DarwinLibName += "_";
-  }
-  DarwinLibName += getOSLibraryNameSuffix();
+    DarwinLibName += getOSLibraryNameSuffix();
+  } else
+    DarwinLibName += getOSLibraryNameSuffix(true);
+
   DarwinLibName += IsShared ? "_dynamic.dylib" : ".a";
   SmallString<128> Dir(getDriver().ResourceDir);
   llvm::sys::path::append(
@@ -983,16 +985,19 @@ StringRef Darwin::getSDKName(StringRef isysroot) {
   return "";
 }
 
-StringRef Darwin::getOSLibraryNameSuffix() const {
-  switch(TargetPlatform) {
+StringRef Darwin::getOSLibraryNameSuffix(bool IgnoreSim) const {
+  switch (TargetPlatform) {
   case DarwinPlatformKind::MacOS:
     return "osx";
   case DarwinPlatformKind::IPhoneOS:
-    return TargetEnvironment == NativeEnvironment ? "ios" : "iossim";
+    return TargetEnvironment == NativeEnvironment || IgnoreSim ? "ios"
+                                                               : "iossim";
   case DarwinPlatformKind::TvOS:
-    return TargetEnvironment == NativeEnvironment ? "tvos" : "tvossim";
+    return TargetEnvironment == NativeEnvironment || IgnoreSim ? "tvos"
+                                                               : "tvossim";
   case DarwinPlatformKind::WatchOS:
-    return TargetEnvironment == NativeEnvironment ? "watchos" : "watchossim";
+    return TargetEnvironment == NativeEnvironment || IgnoreSim ? "watchos"
+                                                               : "watchossim";
   }
   llvm_unreachable("Unsupported platform");
 }
