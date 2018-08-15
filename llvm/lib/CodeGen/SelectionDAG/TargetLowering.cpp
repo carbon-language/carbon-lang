@@ -3508,8 +3508,10 @@ SDValue TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
 SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
                                   bool IsAfterLegalization,
                                   SmallVectorImpl<SDNode *> &Created) const {
-  EVT VT = N->getValueType(0);
   SDLoc dl(N);
+  EVT VT = N->getValueType(0);
+  EVT ShVT = getShiftAmountTy(VT, DAG.getDataLayout());
+  unsigned EltBits = VT.getScalarSizeInBits();
 
   // Check to see if we can do this.
   // FIXME: We should be more aggressive here.
@@ -3520,8 +3522,11 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   if (N->getFlags().hasExact())
     return BuildExactSDIV(*this, N, dl, DAG, Created);
 
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
   // TODO: Add non-uniform constant support.
-  ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
+  ConstantSDNode *C = isConstOrConstSplat(N1);
   if (!C || C->isNullValue())
     return SDValue();
   const APInt &Divisor = C->getAPIntValue();
@@ -3531,43 +3536,37 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   // Multiply the numerator (operand 0) by the magic value
   // FIXME: We should support doing a MUL in a wider type
   SDValue Q;
-  if (IsAfterLegalization ? isOperationLegal(ISD::MULHS, VT) :
-                            isOperationLegalOrCustom(ISD::MULHS, VT))
-    Q = DAG.getNode(ISD::MULHS, dl, VT, N->getOperand(0),
-                    DAG.getConstant(magics.m, dl, VT));
-  else if (IsAfterLegalization ? isOperationLegal(ISD::SMUL_LOHI, VT) :
-                                 isOperationLegalOrCustom(ISD::SMUL_LOHI, VT))
-    Q = SDValue(DAG.getNode(ISD::SMUL_LOHI, dl, DAG.getVTList(VT, VT),
-                              N->getOperand(0),
-                              DAG.getConstant(magics.m, dl, VT)).getNode(), 1);
+  if (IsAfterLegalization ? isOperationLegal(ISD::MULHS, VT)
+                          : isOperationLegalOrCustom(ISD::MULHS, VT))
+    Q = DAG.getNode(ISD::MULHS, dl, VT, N0, DAG.getConstant(magics.m, dl, VT));
+  else if (IsAfterLegalization ? isOperationLegal(ISD::SMUL_LOHI, VT)
+                               : isOperationLegalOrCustom(ISD::SMUL_LOHI, VT))
+    Q = SDValue(DAG.getNode(ISD::SMUL_LOHI, dl, DAG.getVTList(VT, VT), N0,
+                            DAG.getConstant(magics.m, dl, VT))
+                    .getNode(), 1);
   else
-    return SDValue();       // No mulhs or equvialent
+    return SDValue(); // No mulhs or equvialent
 
   Created.push_back(Q.getNode());
 
   // If d > 0 and m < 0, add the numerator
   if (Divisor.isStrictlyPositive() && magics.m.isNegative()) {
-    Q = DAG.getNode(ISD::ADD, dl, VT, Q, N->getOperand(0));
+    Q = DAG.getNode(ISD::ADD, dl, VT, Q, N0);
     Created.push_back(Q.getNode());
   }
   // If d < 0 and m > 0, subtract the numerator.
   if (Divisor.isNegative() && magics.m.isStrictlyPositive()) {
-    Q = DAG.getNode(ISD::SUB, dl, VT, Q, N->getOperand(0));
+    Q = DAG.getNode(ISD::SUB, dl, VT, Q, N0);
     Created.push_back(Q.getNode());
   }
-  auto &DL = DAG.getDataLayout();
   // Shift right algebraic if shift value is nonzero
   if (magics.s > 0) {
-    Q = DAG.getNode(
-        ISD::SRA, dl, VT, Q,
-        DAG.getConstant(magics.s, dl, getShiftAmountTy(Q.getValueType(), DL)));
+    Q = DAG.getNode(ISD::SRA, dl, VT, Q, DAG.getConstant(magics.s, dl, ShVT));
     Created.push_back(Q.getNode());
   }
   // Extract the sign bit and add it to the quotient
   SDValue T =
-      DAG.getNode(ISD::SRL, dl, VT, Q,
-                  DAG.getConstant(VT.getScalarSizeInBits() - 1, dl,
-                                  getShiftAmountTy(Q.getValueType(), DL)));
+      DAG.getNode(ISD::SRL, dl, VT, Q, DAG.getConstant(EltBits - 1, dl, ShVT));
   Created.push_back(T.getNode());
   return DAG.getNode(ISD::ADD, dl, VT, Q, T);
 }
