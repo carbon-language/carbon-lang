@@ -537,7 +537,8 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
     unsigned int sectionIndex = 0;
     if (member.sectionNameOrType == "GRP_COMDAT")
       sectionIndex = llvm::ELF::GRP_COMDAT;
-    else if (SN2I.lookup(member.sectionNameOrType, sectionIndex)) {
+    else if (SN2I.lookup(member.sectionNameOrType, sectionIndex) &&
+             !to_integer(member.sectionNameOrType, sectionIndex)) {
       WithColor::error() << "Unknown section referenced: '"
                          << member.sectionNameOrType << "' at YAML section' "
                          << Section.Name << "\n";
