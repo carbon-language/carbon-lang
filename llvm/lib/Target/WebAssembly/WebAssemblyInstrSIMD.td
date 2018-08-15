@@ -12,7 +12,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-// Immediate argument types
+// immediate argument types
 def ImmByte : ImmLeaf<i32, [{ return 0 <= Imm && Imm < 256; }]>;
 foreach SIZE = [2, 4, 8, 16, 32] in
 def LaneIdx#SIZE : ImmLeaf<i32, "return 0 <= Imm && Imm < "#SIZE#";">;
@@ -54,7 +54,6 @@ multiclass ExtractLaneExtended<string sign, bits<32> baseInst> {
                             !add(baseInst, 2),
                             !cast<PatFrag>("extract_i16x8"#sign)>;
 }
-
 let Defs = [ARGUMENTS] in {
 defm EXTRACT_LANE_S : ExtractLaneExtended<"_s", 9>;
 defm EXTRACT_LANE_U : ExtractLaneExtended<"_u", 10>;
