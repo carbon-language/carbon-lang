@@ -74,6 +74,34 @@ def : Pat<(i32 (vector_extract (v16i8 V128:$vec), (i32 LaneIdx16:$idx))),
 def : Pat<(i32 (vector_extract (v8i16 V128:$vec), (i32 LaneIdx8:$idx))),
           (EXTRACT_LANE_U_I16x8 V128:$vec, (i32 LaneIdx8:$idx))>;
 
+
+// splats
+def splat2 : PatFrag<(ops node:$x), (build_vector node:$x, node:$x)>;
+def splat4 : PatFrag<(ops node:$x), (build_vector
+                       node:$x, node:$x, node:$x, node:$x)>;
+def splat8 : PatFrag<(ops node:$x), (build_vector
+                       node:$x, node:$x, node:$x, node:$x,
+                       node:$x, node:$x, node:$x, node:$x)>;
+def splat16 : PatFrag<(ops node:$x), (build_vector
+                        node:$x, node:$x, node:$x, node:$x,
+                        node:$x, node:$x, node:$x, node:$x,
+                        node:$x, node:$x, node:$x, node:$x,
+                        node:$x, node:$x, node:$x, node:$x)>;
+multiclass Splat<ValueType vec_t, string name, WebAssemblyRegClass reg_t,
+                 PatFrag splat_pat, bits<32> simdop> {
+  defm SPLAT_#vec_t : SIMD_I<(outs V128:$dst), (ins reg_t:$x), (outs), (ins),
+                             [(set (vec_t V128:$dst), (splat_pat reg_t:$x))],
+                             name#".splat\t$dst, $x", name#".splat", simdop>;
+}
+let Defs = [ARGUMENTS] in {
+defm "" : Splat<v16i8, "i8x16", I32, splat16, 3>;
+defm "" : Splat<v8i16, "i16x8", I32, splat8, 4>;
+defm "" : Splat<v4i32, "i32x4", I32, splat4, 5>;
+defm "" : Splat<v2i64, "i64x2", I64, splat2, 6>;
+defm "" : Splat<v4f32, "f32x4", F32, splat4, 7>;
+defm "" : Splat<v2f64, "f64x2", F64, splat2, 8>;
+}
+
 // arithmetic
 let Defs = [ARGUMENTS] in {
 let isCommutable = 1 in
