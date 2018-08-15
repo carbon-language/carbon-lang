@@ -961,6 +961,17 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
   // into edges transitioning to the dominance frontier, otherwise we pull these
   // restores to inside the dominated area.
   Frontier = DA.getDominanceFrontierFor(*BestPosSave);
+  DEBUG({
+    dbgs() << "Dumping dominance frontier for ";
+    BC.printInstruction(dbgs(), *BestPosSave);
+    for (auto &PP : Frontier) {
+      if (PP.isInst()) {
+        BC.printInstruction(dbgs(), *PP.getInst());
+      } else {
+        dbgs() << PP.getBB()->getName() << "\n";
+      }
+    }
+  });
   for (auto &PP : Frontier) {
     bool HasCritEdges{false};
     if (PP.isInst() && BC.MIB->isTerminator(*PP.getInst()) &&
@@ -1562,19 +1573,19 @@ void ShrinkWrapping::rebuildCFIForSP() {
         ++InsertionIter;
         Iter = BF.addCFIInstruction(
             BB, InsertionIter,
-            MCCFIInstruction::createDefCfaOffset(nullptr, SPVal));
+            MCCFIInstruction::createDefCfaOffset(nullptr, -CurVal));
         SPVal = CurVal;
       }
     }
     if (BF.isSplit() && PrevBB && BB->isCold() != PrevBB->isCold()) {
       BF.addCFIInstruction(
           BB, BB->begin(),
-          MCCFIInstruction::createDefCfaOffset(nullptr, SPValAtBegin));
+          MCCFIInstruction::createDefCfaOffset(nullptr, -SPValAtBegin));
     } else {
       if (SPValAtBegin != PrevSPVal) {
         BF.addCFIInstruction(
             PrevBB, PrevBB->end(),
-            MCCFIInstruction::createDefCfaOffset(nullptr, SPValAtBegin));
+            MCCFIInstruction::createDefCfaOffset(nullptr, -SPValAtBegin));
       }
     }
     PrevSPVal = SPValAtEnd;
