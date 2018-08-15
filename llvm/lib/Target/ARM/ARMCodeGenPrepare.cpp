@@ -127,7 +127,9 @@ static bool isSigned(Value *V) {
 static bool isSupportedType(Value *V) {
   LLVM_DEBUG(dbgs() << "ARM CGP: isSupportedType: " << *V << "\n");
   Type *Ty = V->getType();
-  if (Ty->isVoidTy())
+
+  // Allow voids and pointers, these won't be promoted.
+  if (Ty->isVoidTy() || Ty->isPointerTy())
     return true;
 
   if (auto *Ld = dyn_cast<LoadInst>(V))
@@ -150,6 +152,8 @@ static bool isSupportedType(Value *V) {
 /// Many arguments will have the zeroext attribute too, so those would be free
 /// too.
 static bool isSource(Value *V) {
+  if (!isa<IntegerType>(V->getType()))
+    return false;
   // TODO Allow truncs and zext to be sources.
   if (isa<Argument>(V))
     return true;
@@ -222,8 +226,10 @@ static bool isSafeOverflow(Instruction *I) {
 }
 
 static bool shouldPromote(Value *V) {
-  if (!isa<IntegerType>(V->getType()) || isSink(V))
+  if (!isa<IntegerType>(V->getType()) || isSink(V)) {
+    LLVM_DEBUG(dbgs() << "ARM CGP: Don't need to promote: " << *V << "\n");
     return false;
+  }
 
   if (isSource(V))
     return true;
@@ -369,21 +375,19 @@ void IRPromoter::Mutate(Type *OrigTy,
     if (Leaves.count(V))
       continue;
 
-    if (!isa<Instruction>(V))
-      continue;
-
     auto *I = cast<Instruction>(V);
     if (Roots.count(I))
       continue;
 
-    for (auto &U : I->operands()) {
-      if ((U->getType() == ExtTy) || !isSupportedType(&*U))
+    for (unsigned i = 0, e = I->getNumOperands(); i < e; ++i) {
+      Value *Op = I->getOperand(i);
+      if ((Op->getType() == ExtTy) || !isa<IntegerType>(Op->getType()))
         continue;
 
-      if (auto *Const = dyn_cast<ConstantInt>(&*U))
+      if (auto *Const = dyn_cast<ConstantInt>(Op))
         FixConst(Const, I);
-      else if (isa<UndefValue>(&*U))
-        U->mutateType(ExtTy);
+      else if (isa<UndefValue>(Op))
+        I->setOperand(i, UndefValue::get(ExtTy));
     }
 
     if (shouldPromote(I)) {
@@ -396,9 +400,6 @@ void IRPromoter::Mutate(Type *OrigTy,
   // as insert any intrinsics.
   for (auto *V : Visited) {
     if (Leaves.count(V))
-      continue;
-
-    if (!isa<Instruction>(V))
       continue;
 
     if (!shouldPromote(V) || isPromotedResultSafe(V))
@@ -424,6 +425,9 @@ void IRPromoter::Mutate(Type *OrigTy,
 
     for (unsigned i = 0; i < I->getNumOperands(); ++i) {
       Value *V = I->getOperand(i);
+      if (!isa<IntegerType>(V->getType()))
+        continue;
+
       if (Promoted.count(V) || NewInsts.count(V)) {
         if (auto *Op = dyn_cast<Instruction>(V)) {
 
@@ -466,7 +470,7 @@ bool ARMCodeGenPrepare::isSupportedValue(Value *V) {
     return true;
 
   // Non-instruction values that we can handle.
-  if (isa<ConstantInt>(V) || isa<Argument>(V))
+  if ((isa<Constant>(V) && !isa<ConstantExpr>(V)) || isa<Argument>(V))
     return isSupportedType(V);
 
   if (isa<PHINode>(V) || isa<SelectInst>(V) || isa<ReturnInst>(V) ||
@@ -558,10 +562,6 @@ bool ARMCodeGenPrepare::TryToPromote(Value *V) {
     if (CurrentVisited.count(V))
       return true;
 
-    // Ignore pointer value that aren't instructions.
-    if (!isa<Instruction>(V) && isa<PointerType>(V->getType()))
-      return true;
-
     if (!isSupportedValue(V) || (shouldPromote(V) && !isLegalToPromote(V))) {
       LLVM_DEBUG(dbgs() << "ARM CGP: Can't handle: " << *V << "\n");
       return false;
@@ -578,6 +578,7 @@ bool ARMCodeGenPrepare::TryToPromote(Value *V) {
     if (CurrentVisited.count(V))
       continue;
 
+    // Ignore non-instructions, other than arguments.
     if (!isa<Instruction>(V) && !isSource(V))
       continue;
 
@@ -620,6 +621,17 @@ bool ARMCodeGenPrepare::TryToPromote(Value *V) {
              for (auto *I : CurrentVisited)
                I->dump();
              );
+  unsigned ToPromote = 0;
+  for (auto *V : CurrentVisited) {
+    if (Leaves.count(V))
+      continue;
+    if (Roots.count(cast<Instruction>(V)))
+      continue;
+    ++ToPromote;
+  }
+
+  if (ToPromote < 2)
+    return false;
 
   Promoter->Mutate(OrigTy, CurrentVisited, Leaves, Roots);
   return true;
