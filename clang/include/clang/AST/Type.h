@@ -1608,6 +1608,21 @@ protected:
     unsigned Keyword : 2;
   };
 
+  class SubstTemplateTypeParmPackTypeBitfields {
+    friend class SubstTemplateTypeParmPackType;
+
+    unsigned : NumTypeBits;
+
+    /// The number of template arguments in \c Arguments, which is
+    /// expected to be able to hold at least 1024 according to [implimits].
+    /// However as this limit is somewhat easy to hit with template
+    /// metaprogramming we'd prefer to keep it as large as possible.
+    /// At the moment it has been left as a non-bitfield since this type
+    /// safely fits in 64 bits as an unsigned, so there is no reason to
+    /// introduce the performance impact of a bitfield.
+    unsigned NumArgs;
+  };
+
   class TemplateSpecializationTypeBitfields {
     friend class TemplateSpecializationType;
 
@@ -1672,6 +1687,7 @@ protected:
     ReferenceTypeBitfields ReferenceTypeBits;
     TypeWithKeywordBitfields TypeWithKeywordBits;
     VectorTypeBitfields VectorTypeBits;
+    SubstTemplateTypeParmPackTypeBitfields SubstTemplateTypeParmPackTypeBits;
     TemplateSpecializationTypeBitfields TemplateSpecializationTypeBits;
     DependentTemplateSpecializationTypeBitfields
       DependentTemplateSpecializationTypeBits;
@@ -1697,6 +1713,9 @@ protected:
                   "TypeWithKeywordBitfields is larger than 8 bytes!");
     static_assert(sizeof(VectorTypeBitfields) <= 8,
                   "VectorTypeBitfields is larger than 8 bytes!");
+    static_assert(sizeof(SubstTemplateTypeParmPackTypeBitfields) <= 8,
+                  "SubstTemplateTypeParmPackTypeBitfields is larger"
+                  " than 8 bytes!");
     static_assert(sizeof(TemplateSpecializationTypeBitfields) <= 8,
                   "TemplateSpecializationTypeBitfields is larger"
                   " than 8 bytes!");
@@ -4551,9 +4570,6 @@ class SubstTemplateTypeParmPackType : public Type, public llvm::FoldingSetNode {
   /// parameter pack is instantiated with.
   const TemplateArgument *Arguments;
 
-  /// The number of template arguments in \c Arguments.
-  unsigned NumArguments;
-
   SubstTemplateTypeParmPackType(const TemplateTypeParmType *Param,
                                 QualType Canon,
                                 const TemplateArgument &ArgPack);
@@ -4564,6 +4580,10 @@ public:
   /// Gets the template parameter that was substituted for.
   const TemplateTypeParmType *getReplacedParameter() const {
     return Replaced;
+  }
+
+  unsigned getNumArgs() const {
+    return SubstTemplateTypeParmPackTypeBits.NumArgs;
   }
 
   bool isSugared() const { return false; }

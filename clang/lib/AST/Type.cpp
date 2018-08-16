@@ -3285,11 +3285,12 @@ SubstTemplateTypeParmPackType(const TemplateTypeParmType *Param,
                               QualType Canon,
                               const TemplateArgument &ArgPack)
     : Type(SubstTemplateTypeParmPack, Canon, true, true, false, true),
-      Replaced(Param),
-      Arguments(ArgPack.pack_begin()), NumArguments(ArgPack.pack_size()) {}
+      Replaced(Param), Arguments(ArgPack.pack_begin()) {
+  SubstTemplateTypeParmPackTypeBits.NumArgs = ArgPack.pack_size();
+}
 
 TemplateArgument SubstTemplateTypeParmPackType::getArgumentPack() const {
-  return TemplateArgument(llvm::makeArrayRef(Arguments, NumArguments));
+  return TemplateArgument(llvm::makeArrayRef(Arguments, getNumArgs()));
 }
 
 void SubstTemplateTypeParmPackType::Profile(llvm::FoldingSetNodeID &ID) {
