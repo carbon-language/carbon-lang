@@ -282,14 +282,8 @@ static bool ShouldUpgradeX86Intrinsic(Function *F, StringRef Name) {
       Name.startswith("avx512.mask.pror.") || // Added in 7.0
       Name.startswith("avx512.mask.prolv.") || // Added in 7.0
       Name.startswith("avx512.mask.prol.") || // Added in 7.0
-      Name == "avx512.mask.padds.b.128" || // Added in 8.0
-      Name == "avx512.mask.padds.b.256" || // Added in 8.0
-      Name == "avx512.mask.padds.w.128" || // Added in 8.0
-      Name == "avx512.mask.padds.w.256" || // Added in 8.0
-      Name == "avx512.mask.psubs.b.128" || // Added in 8.0
-      Name == "avx512.mask.psubs.b.256" || // Added in 8.0
-      Name == "avx512.mask.psubs.w.128" || // Added in 8.0
-      Name == "avx512.mask.psubs.w.256" || // Added in 8.0
+      Name.startswith("avx512.mask.padds.") || // Added in 8.0
+      Name.startswith("avx512.mask.psubs.") || // Added in 8.0
       Name == "sse.cvtsi2ss" || // Added in 7.0
       Name == "sse.cvtsi642ss" || // Added in 7.0
       Name == "sse2.cvtsi2sd" || // Added in 7.0
@@ -1417,10 +1411,14 @@ static bool upgradeAVX512MaskToSelect(StringRef Name, IRBuilder<> &Builder,
       IID = Intrinsic::x86_sse2_padds_b;
     else if (VecWidth == 256 && EltWidth == 8)
       IID = Intrinsic::x86_avx2_padds_b;
+    else if (VecWidth == 512 && EltWidth == 8)
+      IID = Intrinsic::x86_avx512_padds_b_512;
     else if (VecWidth == 128 && EltWidth == 16)
       IID = Intrinsic::x86_sse2_padds_w;
     else if (VecWidth == 256 && EltWidth == 16)
       IID = Intrinsic::x86_avx2_padds_w;
+    else if (VecWidth == 512 && EltWidth == 16)
+      IID = Intrinsic::x86_avx512_padds_w_512;
     else
       llvm_unreachable("Unexpected intrinsic");
   } else if (Name.startswith("psubs.")) {
@@ -1428,10 +1426,14 @@ static bool upgradeAVX512MaskToSelect(StringRef Name, IRBuilder<> &Builder,
       IID = Intrinsic::x86_sse2_psubs_b;
     else if (VecWidth == 256 && EltWidth == 8)
       IID = Intrinsic::x86_avx2_psubs_b;
+    else if (VecWidth == 512 && EltWidth == 8)
+      IID = Intrinsic::x86_avx512_psubs_b_512;
     else if (VecWidth == 128 && EltWidth == 16)
       IID = Intrinsic::x86_sse2_psubs_w;
     else if (VecWidth == 256 && EltWidth == 16)
       IID = Intrinsic::x86_avx2_psubs_w;
+    else if (VecWidth == 512 && EltWidth == 16)
+      IID = Intrinsic::x86_avx512_psubs_w_512;
     else
       llvm_unreachable("Unexpected intrinsic");
   } else
