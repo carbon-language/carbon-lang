@@ -412,6 +412,24 @@ uptr __hwasan_tag_pointer(uptr p, u8 tag) {
   return AddTagToPointer(p, tag);
 }
 
+void __hwasan_handle_longjmp(const void *sp_dst) {
+  uptr dst = (uptr)sp_dst;
+  // HWASan does not support tagged SP.
+  CHECK(GetTagFromPointer(dst) == 0);
+
+  uptr sp = (uptr)__builtin_frame_address(0);
+  static const uptr kMaxExpectedCleanupSize = 64 << 20;  // 64M
+  if (dst < sp || dst - sp > kMaxExpectedCleanupSize) {
+    Report(
+        "WARNING: HWASan is ignoring requested __hwasan_handle_longjmp: "
+        "stack top: %p; target %p; distance: %p (%zd)\n"
+        "False positive error reports may follow\n",
+        (void *)sp, (void *)dst, dst - sp);
+    return;
+  }
+  TagMemory(sp, dst - sp, 0);
+}
+
 static const u8 kFallbackTag = 0xBB;
 
 u8 __hwasan_generate_tag() {
