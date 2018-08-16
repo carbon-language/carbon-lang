@@ -307,8 +307,8 @@ private:
   /// Patch .got
   ELF_FUNCTION(patchELFGOT);
 
-  /// Patch .rela.plt section.
-  ELF_FUNCTION(patchELFRelaPLT);
+  /// Patch allocatable relocation sections.
+  ELF_FUNCTION(patchELFAllocatableRelaSections);
 
   /// Finalize memory image of section header string table.
   ELF_FUNCTION(finalizeSectionStringTable);

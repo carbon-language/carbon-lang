@@ -276,7 +276,7 @@ class DataAggregator : public DataReader {
   /// B 4b196f 4b19e0 2 0
   bool processPreAggregated();
 
-  /// If \p Address falls into to the binary address space based on memory
+  /// If \p Address falls into the binary address space based on memory
   /// mapping info \p MMI, then adjust it for further processing by subtracting
   /// the base load address. External addresses, i.e. addresses that do not
   /// correspond to the binary allocated address space, are adjusted to avoid

@@ -564,6 +564,19 @@ public:
     return const_cast<BinaryContext *>(this)->nonAllocatableSections();
   }
 
+  /// Iterate over all allocatable relocation sections.
+  iterator_range<FilteredSectionIterator> allocatableRelaSections() {
+    auto isAllocatableRela = [](const SectionIterator &Itr) {
+      return *Itr && Itr->isAllocatable() && Itr->isRela();
+    };
+    return make_range(FilteredSectionIterator(isAllocatableRela,
+                                              Sections.begin(),
+                                              Sections.end()),
+                      FilteredSectionIterator(isAllocatableRela,
+                                              Sections.end(),
+                                              Sections.end()));
+  }
+
   /// Return section name containing the given \p Address.
   ErrorOr<StringRef> getSectionNameForAddress(uint64_t Address) const;
 

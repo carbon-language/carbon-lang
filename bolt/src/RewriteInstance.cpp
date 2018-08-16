@@ -4235,27 +4235,29 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 }
 
 template <typename ELFT>
-void RewriteInstance::patchELFRelaPLT(ELFObjectFile<ELFT> *File) {
+void
+RewriteInstance::patchELFAllocatableRelaSections(ELFObjectFile<ELFT> *File) {
   auto &OS = Out->os();
 
-  if (!RelaPLTSection) {
-    errs() << "BOLT-INFO: no .rela.plt section found\n";
-    return;
-  }
-
-  for (const auto &Rel : RelaPLTSection->getSectionRef().relocations()) {
-    if (Rel.getType() == ELF::R_X86_64_IRELATIVE) {
-      DataRefImpl DRI = Rel.getRawDataRefImpl();
-      const auto *RelA = File->getRela(DRI);
-      auto Address = RelA->r_addend;
-      auto NewAddress = getNewFunctionAddress(Address);
-      DEBUG(dbgs() << "BOLT-DEBUG: patching IRELATIVE .rela.plt entry 0x"
-                   << Twine::utohexstr(Address) << " with 0x"
-                   << Twine::utohexstr(NewAddress) << '\n');
-      auto NewRelA = *RelA;
-      NewRelA.r_addend = NewAddress;
-      OS.pwrite(reinterpret_cast<const char *>(&NewRelA), sizeof(NewRelA),
-        reinterpret_cast<const char *>(RelA) - File->getData().data());
+  for (auto &RelaSection : BC->allocatableRelaSections()) {
+    for (const auto &Rel : RelaSection.getSectionRef().relocations()) {
+      if (Rel.getType() == ELF::R_X86_64_IRELATIVE ||
+          Rel.getType() == ELF::R_X86_64_RELATIVE) {
+        DataRefImpl DRI = Rel.getRawDataRefImpl();
+        const auto *RelA = File->getRela(DRI);
+        auto Address = RelA->r_addend;
+        auto NewAddress = getNewFunctionAddress(Address);
+        if (!NewAddress)
+          continue;
+        DEBUG(dbgs() << "BOLT-DEBUG: patching (I)RELATIVE "
+                     << RelaSection.getName() << " entry 0x"
+                     << Twine::utohexstr(Address) << " with 0x"
+                     << Twine::utohexstr(NewAddress) << '\n');
+        auto NewRelA = *RelA;
+        NewRelA.r_addend = NewAddress;
+        OS.pwrite(reinterpret_cast<const char *>(&NewRelA), sizeof(NewRelA),
+          reinterpret_cast<const char *>(RelA) - File->getData().data());
+      }
     }
   }
 }
@@ -4548,7 +4550,7 @@ void RewriteInstance::rewriteFile() {
   patchELFDynamic();
 
   if (BC->HasRelocations) {
-    patchELFRelaPLT();
+    patchELFAllocatableRelaSections();
     patchELFGOT();
   }
 
