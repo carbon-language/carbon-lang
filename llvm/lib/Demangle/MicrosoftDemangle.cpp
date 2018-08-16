@@ -1505,10 +1505,12 @@ CharLiteralError:
 }
 
 wchar_t Demangler::demangleWcharLiteral(StringView &MangledName) {
-  uint8_t C1 = demangleCharLiteral(MangledName);
+  uint8_t C1, C2;
+
+  C1 = demangleCharLiteral(MangledName);
   if (Error)
     goto WCharLiteralError;
-  uint8_t C2 = demangleCharLiteral(MangledName);
+  C2 = demangleCharLiteral(MangledName);
   if (Error)
     goto WCharLiteralError;
 
@@ -1663,8 +1665,15 @@ static unsigned decodeMultiByteChar(const uint8_t *StringBytes,
 }
 
 Name *Demangler::demangleStringLiteral(StringView &MangledName) {
+  // This function uses goto, so declare all variables up front.
   OutputStream OS;
   StringView CRC;
+  uint64_t StringByteSize;
+  bool IsWcharT = false;
+  bool IsNegative = false;
+  size_t CrcEndPos = 0;
+  char *ResultBuffer = nullptr;
+
   Name *Result = Arena.alloc<Name>();
   Result->IsStringLiteral = true;
 
@@ -1673,7 +1682,6 @@ Name *Demangler::demangleStringLiteral(StringView &MangledName) {
     goto StringLiteralError;
 
   // Char Type (regular or wchar_t)
-  bool IsWcharT = false;
   switch (MangledName.popFront()) {
   case '1':
     IsWcharT = true;
@@ -1685,14 +1693,12 @@ Name *Demangler::demangleStringLiteral(StringView &MangledName) {
   }
 
   // Encoded Length
-  uint64_t StringByteSize;
-  bool IsNegative;
   std::tie(StringByteSize, IsNegative) = demangleNumber(MangledName);
   if (Error || IsNegative)
     goto StringLiteralError;
 
   // CRC 32 (always 8 characters plus a terminator)
-  size_t CrcEndPos = MangledName.find('@');
+  CrcEndPos = MangledName.find('@');
   if (CrcEndPos == StringView::npos)
     goto StringLiteralError;
   CRC = MangledName.substr(0, CrcEndPos);
@@ -1754,7 +1760,7 @@ Name *Demangler::demangleStringLiteral(StringView &MangledName) {
   }
 
   OS << '\0';
-  char *ResultBuffer = OS.getBuffer();
+  ResultBuffer = OS.getBuffer();
   Result->Str = copyString(ResultBuffer);
   return Result;
 
