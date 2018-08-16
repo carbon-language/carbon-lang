@@ -245,7 +245,7 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
 
     if (!Sec->Link.empty()) {
       unsigned Index;
-      if (SN2I.lookup(Sec->Link, Index)) {
+      if (SN2I.lookup(Sec->Link, Index) && !to_integer(Sec->Link, Index)) {
         WithColor::error() << "Unknown section referenced: '" << Sec->Link
                            << "' at YAML section '" << Sec->Name << "'.\n";
         return false;
