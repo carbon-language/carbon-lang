@@ -4483,8 +4483,8 @@ void CodeGenDAGPatterns::GenerateVariants() {
       bool AlreadyExists = false;
       for (unsigned p = 0, e = PatternsToMatch.size(); p != e; ++p) {
         // Skip if the top level predicates do not match.
-        if (PatternsToMatch[i].getPredicates() !=
-            PatternsToMatch[p].getPredicates())
+        if ((i != p) && (PatternsToMatch[i].getPredicates() !=
+                         PatternsToMatch[p].getPredicates()))
           continue;
         // Check to see if this variant already exists.
         if (Variant->isIsomorphicTo(PatternsToMatch[p].getSrcPattern(),
