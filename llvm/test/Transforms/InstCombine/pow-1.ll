@@ -293,7 +293,7 @@ define <2 x double> @pow_neg1_double_fastv(<2 x double> %x) {
 declare double @llvm.pow.f64(double %Val, double %Power)
 define double @test_simplify17(double %x) {
 ; ANY-LABEL: @test_simplify17(
-; ANY-NEXT:    [[SQRT:%.*]] = call double @sqrt(double [[X:%.*]]) #2
+; ANY-NEXT:    [[SQRT:%.*]] = call double @llvm.sqrt.f64(double [[X:%.*]])
 ; ANY-NEXT:    [[ABS:%.*]] = call double @llvm.fabs.f64(double [[SQRT]])
 ; ANY-NEXT:    [[ISINF:%.*]] = fcmp oeq double [[X]], 0xFFF0000000000000
 ; ANY-NEXT:    [[TMP1:%.*]] = select i1 [[ISINF]], double 0x7FF0000000000000, double [[ABS]]
