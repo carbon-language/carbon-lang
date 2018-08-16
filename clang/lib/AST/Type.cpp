@@ -2604,7 +2604,8 @@ DependentTemplateSpecializationType::DependentTemplateSpecializationType(
   : TypeWithKeyword(Keyword, DependentTemplateSpecialization, Canon, true, true,
                     /*VariablyModified=*/false,
                     NNS && NNS->containsUnexpandedParameterPack()),
-    NNS(NNS), Name(Name), NumArgs(Args.size()) {
+    NNS(NNS), Name(Name) {
+  DependentTemplateSpecializationTypeBits.NumArgs = Args.size();
   assert((!NNS || NNS->isDependent()) &&
          "DependentTemplateSpecializatonType requires dependent qualifier");
   TemplateArgument *ArgBuffer = getArgBuffer();
