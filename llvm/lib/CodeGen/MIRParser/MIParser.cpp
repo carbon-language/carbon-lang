@@ -797,10 +797,7 @@ bool MIParser::parse(MachineInstr *&MI) {
     return true;
   if (MemOperands.empty())
     return false;
-  MachineInstr::mmo_iterator MemRefs =
-      MF.allocateMemRefsArray(MemOperands.size());
-  std::copy(MemOperands.begin(), MemOperands.end(), MemRefs);
-  MI->setMemRefs(MemRefs, MemRefs + MemOperands.size());
+  MI->setMemRefs(MF, MemOperands);
   return false;
 }
 

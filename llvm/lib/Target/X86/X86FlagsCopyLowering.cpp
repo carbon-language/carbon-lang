@@ -1048,7 +1048,7 @@ void X86FlagsCopyLoweringPass::rewriteSetCC(MachineBasicBlock &TestMBB,
 
   MIB.addReg(CondReg);
 
-  MIB->setMemRefs(SetCCI.memoperands_begin(), SetCCI.memoperands_end());
+  MIB.setMemRefs(SetCCI.memoperands());
 
   SetCCI.eraseFromParent();
   return;
