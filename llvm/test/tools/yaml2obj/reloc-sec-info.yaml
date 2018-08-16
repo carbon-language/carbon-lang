@@ -1,15 +1,15 @@
 # RUN: yaml2obj %s -o %t
 # RUN: llvm-readobj -sections %t | FileCheck %s
 
-# CHECK: Name: .rela.text
-# CHECK: Type: SHT_RELA
-# CHECK: Flags [
-# CHECK: ]
-# CHECK: Address:
-# CHECK: Offset:
-# CHECK: Size:
-# CHECK: Link:
-# CHECK: Info: 12345
+# CHECK:      Name: .rela.text
+# CHECK-NEXT: Type: SHT_RELA
+# CHECK-NEXT: Flags [
+# CHECK-NEXT: ]
+# CHECK-NEXT: Address:
+# CHECK-NEXT: Offset:
+# CHECK-NEXT: Size:
+# CHECK-NEXT: Link:
+# CHECK-NEXT: Info: 12345
 
 --- !ELF
 FileHeader:
