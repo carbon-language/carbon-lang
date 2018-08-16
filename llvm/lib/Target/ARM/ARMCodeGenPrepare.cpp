@@ -181,6 +181,8 @@ static bool isSink(Value *V) {
     return UsesNarrowValue(Return->getReturnValue());
   if (auto *Trunc = dyn_cast<TruncInst>(V))
     return UsesNarrowValue(Trunc->getOperand(0));
+  if (auto *ZExt = dyn_cast<ZExtInst>(V))
+    return UsesNarrowValue(ZExt->getOperand(0));
   if (auto *ICmp = dyn_cast<ICmpInst>(V))
     return ICmp->isSigned();
 
@@ -422,7 +424,8 @@ void IRPromoter::Mutate(Type *OrigTy,
     if (!isa<Instruction>(V) || !isa<IntegerType>(V->getType()))
       return nullptr;
 
-    if ((!Promoted.count(V) && !NewInsts.count(V)) || !TruncTysMap.count(V))
+    if ((!Promoted.count(V) && !NewInsts.count(V)) || !TruncTysMap.count(V) ||
+        Leaves.count(V))
       return nullptr;
 
     Type *TruncTy = TruncTysMap[V];
@@ -463,7 +466,7 @@ void IRPromoter::Mutate(Type *OrigTy,
       }
     }
   }
-  LLVM_DEBUG(dbgs() << "ARM CGP: Mutation complete.\n");
+  LLVM_DEBUG(dbgs() << "ARM CGP: Mutation complete:\n");
 }
 
 /// We accept most instructions, as well as Arguments and ConstantInsts. We
@@ -492,9 +495,11 @@ bool ARMCodeGenPrepare::isSupportedValue(Value *V) {
       isa<LoadInst>(V))
     return isSupportedType(V);
 
-  // Currently, Trunc is the only cast we support.
   if (auto *Trunc = dyn_cast<TruncInst>(V))
     return isSupportedType(Trunc->getOperand(0));
+
+  if (auto *ZExt = dyn_cast<ZExtInst>(V))
+    return isSupportedType(ZExt->getOperand(0));
 
   // Special cases for calls as we need to check for zeroext
   // TODO We should accept calls even if they don't have zeroext, as they can
