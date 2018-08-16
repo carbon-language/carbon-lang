@@ -5844,7 +5844,6 @@ bool parseAssignmentExpression(StringRef Name, bool allow_redef,
 
   // FIXME: Use better location, we should use proper tokens.
   SMLoc EqualLoc = Parser.getTok().getLoc();
-  SMLoc EndLoc;
   if (Parser.parseExpression(Value))
     return Parser.TokError("missing expression");
 
