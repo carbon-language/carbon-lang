@@ -198,6 +198,9 @@ void __hwasan_init() {
   __hwasan_shadow_init();
   MadviseShadow();
 
+  // This may call libc -> needs initialized shadow.
+  AndroidLogInit();
+
   InitializeInterceptors();
   InstallDeadlySignalHandlers(HwasanOnDeadlySignal);
   InstallAtExitHandler(); // Needs __cxa_atexit interceptor.
