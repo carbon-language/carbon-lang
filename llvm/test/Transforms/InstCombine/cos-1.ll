@@ -117,9 +117,9 @@ define double @neg_sin_negated_arg(double %x) {
 
 define double @tan_negated_arg(double %x) {
 ; ANY-LABEL: @tan_negated_arg(
-; ANY-NEXT:    [[NEG:%.*]] = fsub double -0.000000e+00, [[X:%.*]]
-; ANY-NEXT:    [[R:%.*]] = call double @tan(double [[NEG]])
-; ANY-NEXT:    ret double [[R]]
+; ANY-NEXT:    [[TMP1:%.*]] = call double @tan(double [[X:%.*]])
+; ANY-NEXT:    [[TMP2:%.*]] = fsub double -0.000000e+00, [[TMP1]]
+; ANY-NEXT:    ret double [[TMP2]]
 ;
   %neg = fsub double -0.0, %x
   %r = call double @tan(double %neg)
@@ -130,9 +130,9 @@ define double @tan_negated_arg(double %x) {
 
 define fp128 @tanl_negated_arg(fp128 %x) {
 ; ANY-LABEL: @tanl_negated_arg(
-; ANY-NEXT:    [[NEG:%.*]] = fsub fp128 0xL00000000000000008000000000000000, [[X:%.*]]
-; ANY-NEXT:    [[R:%.*]] = call fp128 @tanl(fp128 [[NEG]])
-; ANY-NEXT:    ret fp128 [[R]]
+; ANY-NEXT:    [[TMP1:%.*]] = call fp128 @tanl(fp128 [[X:%.*]])
+; ANY-NEXT:    [[TMP2:%.*]] = fsub fp128 0xL00000000000000008000000000000000, [[TMP1]]
+; ANY-NEXT:    ret fp128 [[TMP2]]
 ;
   %neg = fsub fp128 0xL00000000000000008000000000000000, %x
   %r = call fp128 @tanl(fp128 %neg)
