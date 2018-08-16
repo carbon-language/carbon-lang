@@ -891,8 +891,8 @@ bool DwarfCompileUnit::hasDwarfPubSections() const {
   case DICompileUnit::DebugNameTableKind::GNU:
     return true;
   case DICompileUnit::DebugNameTableKind::Default:
-    return DD->tuneForGDB() && DD->usePubSections() &&
-           !includeMinimalInlineScopes() && !CUNode->isDebugDirectivesOnly();
+    return DD->tuneForGDB() && !includeMinimalInlineScopes() &&
+           !CUNode->isDebugDirectivesOnly();
   }
 }
 

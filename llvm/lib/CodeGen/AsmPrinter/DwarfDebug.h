@@ -266,9 +266,6 @@ class DwarfDebug : public DebugHandlerBase {
   /// Use inlined strings.
   bool UseInlineStrings = false;
 
-  /// Whether to emit DWARF pub sections or not.
-  bool UsePubSections = true;
-
   /// Allow emission of .debug_ranges section.
   bool UseRangesSection = true;
 
@@ -542,9 +539,6 @@ public:
 
   /// Returns whether to use inline strings.
   bool useInlineStrings() const { return UseInlineStrings; }
-
-  /// Returns whether GNU pub sections should be emitted.
-  bool usePubSections() const { return UsePubSections; }
 
   /// Returns whether ranges section should be emitted.
   bool useRangesSection() const { return UseRangesSection; }

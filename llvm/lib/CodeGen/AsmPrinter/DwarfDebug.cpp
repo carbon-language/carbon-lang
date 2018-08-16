@@ -130,11 +130,6 @@ DwarfInlinedStrings("dwarf-inlined-strings", cl::Hidden,
                  cl::init(Default));
 
 static cl::opt<bool>
-    NoDwarfPubSections("no-dwarf-pub-sections", cl::Hidden,
-                       cl::desc("Disable emission of DWARF pub sections."),
-                       cl::init(false));
-
-static cl::opt<bool>
     NoDwarfRangesSection("no-dwarf-ranges-section", cl::Hidden,
                          cl::desc("Disable emission .debug_ranges section."),
                          cl::init(false));
@@ -355,7 +350,6 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   DwarfVersion =
       TT.isNVPTX() ? 2 : (DwarfVersion ? DwarfVersion : dwarf::DWARF_VERSION);
 
-  UsePubSections = !NoDwarfPubSections && !TT.isNVPTX();
   UseRangesSection = !NoDwarfRangesSection && !TT.isNVPTX();
 
   // Use sections as references. Force for NVPTX.
