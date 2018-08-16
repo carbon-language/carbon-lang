@@ -14,7 +14,7 @@ add_llvm_unittest(PluginsTests
 export_executable_symbols(PluginsTests)
 
 set(LLVM_LINK_COMPONENTS)
-add_llvm_loadable_module(TestPlugin
+add_llvm_library(TestPlugin MODULE BUILDTREE_ONLY
   TestPlugin.cpp
   )
 
