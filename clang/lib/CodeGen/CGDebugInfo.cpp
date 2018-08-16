@@ -579,8 +579,11 @@ void CGDebugInfo::CreateCompileUnit() {
       CGOpts.DwarfDebugFlags, RuntimeVers,
       CGOpts.EnableSplitDwarf ? "" : CGOpts.SplitDwarfFile, EmissionKind,
       0 /* DWOid */, CGOpts.SplitDwarfInlining, CGOpts.DebugInfoForProfiling,
-      CGOpts.GnuPubnames ? llvm::DICompileUnit::DebugNameTableKind::GNU
-                         : llvm::DICompileUnit::DebugNameTableKind::Default);
+      CGM.getTarget().getTriple().isNVPTX()
+          ? llvm::DICompileUnit::DebugNameTableKind::None
+          : CGOpts.GnuPubnames
+                ? llvm::DICompileUnit::DebugNameTableKind::GNU
+                : llvm::DICompileUnit::DebugNameTableKind::Default);
 }
 
 llvm::DIType *CGDebugInfo::CreateType(const BuiltinType *BT) {
