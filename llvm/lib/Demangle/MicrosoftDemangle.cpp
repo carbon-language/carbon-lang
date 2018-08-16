@@ -213,7 +213,7 @@ enum NameBackrefBehavior : uint8_t {
   NBB_Simple = 1 << 1,   // save simple names.
 };
 
-enum class SymbolCategory { Function, Variable };
+enum class SymbolCategory { Function, Variable, Unknown };
 
 namespace {
 
@@ -1050,6 +1050,15 @@ StringView Demangler::copyString(StringView Borrowed) {
 // Parser entry point.
 Symbol *Demangler::parse(StringView &MangledName) {
   Symbol *S = Arena.alloc<Symbol>();
+
+  // We can't demangle MD5 names, just output them as-is.
+  if (MangledName.startsWith("??@")) {
+    S->Category = SymbolCategory::Unknown;
+    S->SymbolName = Arena.alloc<Name>();
+    S->SymbolName->Str = MangledName;
+    MangledName = StringView();
+    return S;
+  }
 
   // MSVC-style mangled symbols must start with '?'.
   if (!MangledName.consumeFront("?")) {
@@ -2180,6 +2189,10 @@ StringView Demangler::resolve(StringView N) {
 }
 
 void Demangler::output(const Symbol *S, OutputStream &OS) {
+  if (S->Category == SymbolCategory::Unknown) {
+    outputName(OS, S->SymbolName, S->SymbolType, *this);
+    return;
+  }
   // Converts an AST to a string.
   //
   // Converting an AST representing a C++ type to a string is tricky due
