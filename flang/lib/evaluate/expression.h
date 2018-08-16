@@ -46,7 +46,19 @@ public:
   template<int J> using Operand = std::tuple_element_t<J, OperandTypes>;
   using FoldableTrait = std::true_type;
 
+  static_assert(Result::kind > 0);  // Operations have specific Result types
+
+#if !__clang__
   CLASS_BOILERPLATE(Operation)
+#else  // clang 6.0 erroneously deletes the "=default" copy constructor
+  Operation() = delete;
+  Operation(const Operation &that) : operand_{that.operand_} {}
+  Operation(Operation &&) = default;
+  Operation &operator=(const Operation &) = default;
+  Operation &operator=(Operation &&) = default;
+  std::ostream &Dump(std::ostream &) const;
+#endif
+
   Operation(Expr<OPERAND> &&... x) : operand_{std::move(x)...} {}
   Operation(const Expr<OPERAND> &... x) : operand_{x...} {}
 
@@ -63,16 +75,25 @@ public:
 
 protected:
   // Overridable strings for Dump()
-  static constexpr const char *prefix_{"("}, *infix_{""}, *postfix_{")"};
+  static constexpr const char *prefix_{"("}, *infix_{""}, *suffix_{")"};
 
 private:
   std::tuple<CopyableIndirection<Expr<OPERAND>>...> operand_;
 };
 
+template<typename TO, typename FROM>
+struct Convert : public Operation<Convert<TO, FROM>, TO, FROM> {
+  using Base = Operation<Convert<TO, FROM>, TO, FROM>;
+  using Base::Base;
+  using typename Base::Result;
+  using Operand = typename Base::template Operand<0>;
+  static std::optional<Scalar<Result>> FoldScalar(
+      FoldingContext &, const Scalar<Operand> &);
+};
+
 template<typename A>
-class Parentheses : public Operation<Parentheses<A>, A, A> {
+struct Parentheses : public Operation<Parentheses<A>, A, A> {
   using Base = Operation<Parentheses, A, A>;
-  friend Base;
   using Base::Base;
   using typename Base::Result;
   using Operand = typename Base::template Operand<0>;
@@ -82,34 +103,44 @@ class Parentheses : public Operation<Parentheses<A>, A, A> {
   }
 };
 
-template<typename TO, typename FROM>
-class Convert : public Operation<Convert<TO, FROM>, TO, FROM> {
-  using Base = Operation<Convert<TO, FROM>, TO, FROM>;
-  friend Base;
+template<typename A> struct Negate : public Operation<Negate<A>, A, A> {
+  using Base = Operation<Negate, A, A>;
   using Base::Base;
   using typename Base::Result;
   using Operand = typename Base::template Operand<0>;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &);
+  static constexpr const char *prefix_{"(-"};
 };
 
-// Helper base classes for packaging subexpressions.
-template<typename CRTP, typename RESULT, typename A = RESULT> class Unary {
-public:
-  using Result = RESULT;
-  using Operand = A;
-  using FoldableTrait = std::true_type;
-  CLASS_BOILERPLATE(Unary)
-  Unary(const Expr<Operand> &a) : operand_{a} {}
-  Unary(Expr<Operand> &&a) : operand_{std::move(a)} {}
-  Unary(CopyableIndirection<Expr<Operand>> &&a) : operand_{std::move(a)} {}
-  const Expr<Operand> &operand() const { return *operand_; }
-  Expr<Operand> &operand() { return *operand_; }
-  std::ostream &Dump(std::ostream &, const char *opr) const;
-  int Rank() const { return operand_.Rank(); }
-  std::optional<Scalar<Result>> Fold(FoldingContext &);  // TODO: array result
-private:
-  CopyableIndirection<Expr<Operand>> operand_;
+// TODO: re vs. im can be dynamic
+template<int KIND, bool realPart = true>
+struct ComplexComponent
+  : public Operation<ComplexComponent<KIND, realPart>,
+        Type<TypeCategory::Real, KIND>, Type<TypeCategory::Complex, KIND>> {
+  using Base = Operation<ComplexComponent, Type<TypeCategory::Real, KIND>,
+      Type<TypeCategory::Complex, KIND>>;
+  static constexpr bool isRealPart{realPart};
+  using Base::Base;
+  using typename Base::Result;
+  using Operand = typename Base::template Operand<0>;
+  static std::optional<Scalar<Result>> FoldScalar(
+      FoldingContext &, const Scalar<Operand> &);
+  static constexpr const char *prefix_{"(("};
+  static constexpr const char *suffix_{isRealPart ? ")%RE)" : ")%IM)"};
+};
+
+template<int KIND>
+struct Not : public Operation<Not<KIND>, Type<TypeCategory::Logical, KIND>,
+                 Type<TypeCategory::Logical, KIND>> {
+  using Base = Operation<Not, Type<TypeCategory::Logical, KIND>,
+      Type<TypeCategory::Logical, KIND>>;
+  using Base::Base;
+  using typename Base::Result;
+  using Operand = typename Base::template Operand<0>;
+  static std::optional<Scalar<Result>> FoldScalar(
+      FoldingContext &, const Scalar<Operand> &);
+  static constexpr const char *prefix_{"(.NOT."};
 };
 
 template<typename CRTP, typename RESULT, typename A = RESULT, typename B = A>
@@ -147,25 +178,7 @@ public:
   using Result = Type<TypeCategory::Integer, KIND>;
   using FoldableTrait = std::true_type;
 
-  struct ConvertInteger : public Unary<ConvertInteger, Result, SomeInteger> {
-    using Unary<ConvertInteger, Result, SomeInteger>::Unary;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const SomeKindScalar<TypeCategory::Integer> &);
-  };
-
-  struct ConvertReal : public Unary<ConvertReal, Result, SomeReal> {
-    using Unary<ConvertReal, Result, SomeReal>::Unary;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const SomeKindScalar<TypeCategory::Real> &);
-  };
-
-  template<typename CRTP> using Un = Unary<CRTP, Result>;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Negate : public Un<Negate> {
-    using Un<Negate>::Un;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &);
-  };
   struct Add : public Bin<Add> {
     using Bin<Add>::Bin;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -208,31 +221,30 @@ public:
   Expr(std::int64_t n) : u_{Scalar<Result>{n}} {}
   Expr(std::uint64_t n) : u_{Scalar<Result>{n}} {}
   Expr(int n) : u_{Scalar<Result>{n}} {}
-  Expr(const Expr<SomeInteger> &x) : u_{ConvertInteger{x}} {}
-  Expr(Expr<SomeInteger> &&x) : u_{ConvertInteger{std::move(x)}} {}
+  Expr(const Expr<SomeInteger> &x) : u_{Convert<Result, SomeInteger>{x}} {}
+  Expr(Expr<SomeInteger> &&x)
+    : u_{Convert<Result, SomeInteger>{std::move(x)}} {}
   template<int K>
   Expr(const Expr<Type<TypeCategory::Integer, K>> &x)
-    : u_{ConvertInteger{Expr<SomeInteger>{x}}} {}
+    : u_{Convert<Result, SomeInteger>{Expr<SomeInteger>{x}}} {}
   template<int K>
   Expr(Expr<Type<TypeCategory::Integer, K>> &&x)
-    : u_{ConvertInteger{Expr<SomeInteger>{std::move(x)}}} {}
-  Expr(const Expr<SomeReal> &x) : u_{ConvertReal{x}} {}
-  Expr(Expr<SomeReal> &&x) : u_{ConvertReal{std::move(x)}} {}
+    : u_{Convert<Result, SomeInteger>{Expr<SomeInteger>{std::move(x)}}} {}
+  Expr(const Expr<SomeReal> &x) : u_{Convert<Result, SomeReal>{x}} {}
+  Expr(Expr<SomeReal> &&x) : u_{Convert<Result, SomeReal>{std::move(x)}} {}
   template<int K>
   Expr(const Expr<Type<TypeCategory::Real, K>> &x)
-    : u_{ConvertReal{Expr<SomeReal>{x}}} {}
+    : u_{Convert<Result, SomeReal>{Expr<SomeReal>{x}}} {}
   template<int K>
   Expr(Expr<Type<TypeCategory::Real, K>> &&x)
-    : u_{ConvertReal{Expr<SomeReal>{std::move(x)}}} {}
+    : u_{Convert<Result, SomeReal>{Expr<SomeReal>{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A> &&
-          (std::is_base_of_v<Un, A> || std::is_base_of_v<Bin, A>),
-      A> &&x)
-    : u_(std::move(x)) {}
+  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_(std::move(x)) {}
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
   std::optional<Scalar<Result>> ScalarValue() const {
+    // TODO: Also succeed when parenthesized constant
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
@@ -240,9 +252,9 @@ public:
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
-      CopyableIndirection<FunctionRef>, ConvertInteger, ConvertReal,
-      Parentheses<Result>, Negate, Add, Subtract, Multiply, Divide, Power, Max,
-      Min>
+      CopyableIndirection<FunctionRef>, Convert<Result, SomeInteger>,
+      Convert<Result, SomeReal>, Parentheses<Result>, Negate<Result>, Add,
+      Subtract, Multiply, Divide, Power, Max, Min>
       u_;
 };
 
@@ -254,23 +266,8 @@ public:
   // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
   // and part access operations (resp.).  Conversions between kinds of
   // Complex are done via decomposition to Real and reconstruction.
-  struct ConvertInteger : public Unary<ConvertInteger, Result, SomeInteger> {
-    using Unary<ConvertInteger, Result, SomeInteger>::Unary;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const SomeKindScalar<TypeCategory::Integer> &);
-  };
-  struct ConvertReal : public Unary<ConvertReal, Result, SomeReal> {
-    using Unary<ConvertReal, Result, SomeReal>::Unary;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const SomeKindScalar<TypeCategory::Real> &);
-  };
-  template<typename CRTP> using Un = Unary<CRTP, Result>;
+
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Negate : public Un<Negate> {
-    using Un<Negate>::Un;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &);
-  };
   struct Add : public Bin<Add> {
     using Bin<Add>::Bin;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -311,44 +308,33 @@ public:
     static std::optional<Scalar<Result>> FoldScalar(
         FoldingContext &, const Scalar<Result> &, const Scalar<Result> &);
   };
-  template<typename CRTP>
-  using ComplexUn =
-      Unary<CRTP, Result, SameKind<TypeCategory::Complex, Result>>;
-  struct RealPart : public ComplexUn<RealPart> {
-    using ComplexUn<RealPart>::ComplexUn;
-    static std::optional<Scalar<Result>> FoldScalar(FoldingContext &,
-        const Scalar<SameKind<TypeCategory::Complex, Result>> &);
-  };
-  struct AIMAG : public ComplexUn<AIMAG> {
-    using ComplexUn<AIMAG>::ComplexUn;
-    static std::optional<Scalar<Result>> FoldScalar(FoldingContext &,
-        const Scalar<SameKind<TypeCategory::Complex, Result>> &);
-  };
 
   CLASS_BOILERPLATE(Expr)
   Expr(const Scalar<Result> &x) : u_{x} {}
-  Expr(const Expr<SomeInteger> &x) : u_{ConvertInteger{x}} {}
-  Expr(Expr<SomeInteger> &&x) : u_{ConvertInteger{std::move(x)}} {}
+  Expr(const Expr<SomeInteger> &x) : u_{Convert<Result, SomeInteger>{x}} {}
+  Expr(Expr<SomeInteger> &&x)
+    : u_{Convert<Result, SomeInteger>{std::move(x)}} {}
   template<int K>
   Expr(const Expr<Type<TypeCategory::Integer, K>> &x)
-    : u_{ConvertInteger{Expr<SomeInteger>{x}}} {}
+    : u_{Convert<Result, SomeInteger>{Expr<SomeInteger>{x}}} {}
   template<int K>
   Expr(Expr<Type<TypeCategory::Integer, K>> &&x)
-    : u_{ConvertInteger{Expr<SomeInteger>{std::move(x)}}} {}
-  Expr(const Expr<SomeReal> &x) : u_{ConvertReal{x}} {}
-  Expr(Expr<SomeReal> &&x) : u_{ConvertReal{std::move(x)}} {}
+    : u_{Convert<Result, SomeInteger>{Expr<SomeInteger>{std::move(x)}}} {}
+  Expr(const Expr<SomeReal> &x) : u_{Convert<Result, SomeReal>{x}} {}
+  Expr(Expr<SomeReal> &&x) : u_{Convert<Result, SomeReal>{std::move(x)}} {}
   template<int K>
   Expr(const Expr<Type<TypeCategory::Real, K>> &x)
-    : u_{ConvertReal{Expr<SomeReal>{x}}} {}
+    : u_{Convert<Result, SomeReal>{Expr<SomeReal>{x}}} {}
   template<int K>
   Expr(Expr<Type<TypeCategory::Real, K>> &&x)
-    : u_{ConvertReal{Expr<SomeReal>{std::move(x)}}} {}
+    : u_{Convert<Result, SomeReal>{Expr<SomeReal>{std::move(x)}}} {}
   template<typename A> Expr(const A &x) : u_{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u_{std::move(x)} {}
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
   std::optional<Scalar<Result>> ScalarValue() const {
+    // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
@@ -357,8 +343,10 @@ public:
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<ComplexPart>, CopyableIndirection<FunctionRef>,
-      ConvertInteger, ConvertReal, Parentheses<Result>, Negate, Add, Subtract,
-      Multiply, Divide, Power, IntPower, Max, Min, RealPart, AIMAG>
+      Convert<Result, SomeInteger>, Convert<Result, SomeReal>,
+      ComplexComponent<KIND, true>, ComplexComponent<KIND, false>,
+      Parentheses<Result>, Negate<Result>, Add, Subtract, Multiply, Divide,
+      Power, IntPower, Max, Min>
       u_;
 };
 
@@ -367,13 +355,7 @@ public:
   using Result = Type<TypeCategory::Complex, KIND>;
   using FoldableTrait = std::true_type;
 
-  template<typename CRTP> using Un = Unary<CRTP, Result>;
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Negate : public Un<Negate> {
-    using Un<Negate>::Un;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &);
-  };
   struct Add : public Bin<Add> {
     using Bin<Add>::Bin;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -420,6 +402,7 @@ public:
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
   std::optional<Scalar<Result>> ScalarValue() const {
+    // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
@@ -427,10 +410,26 @@ public:
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
-      CopyableIndirection<FunctionRef>, Parentheses<Result>, Negate, Add,
-      Subtract, Multiply, Divide, Power, IntPower, CMPLX>
+      CopyableIndirection<FunctionRef>, Parentheses<Result>, Negate<Result>,
+      Add, Subtract, Multiply, Divide, Power, IntPower, CMPLX>
       u_;
 };
+
+extern template class Expr<Type<TypeCategory::Integer, 1>>;
+extern template class Expr<Type<TypeCategory::Integer, 2>>;
+extern template class Expr<Type<TypeCategory::Integer, 4>>;
+extern template class Expr<Type<TypeCategory::Integer, 8>>;
+extern template class Expr<Type<TypeCategory::Integer, 16>>;
+extern template class Expr<Type<TypeCategory::Real, 2>>;
+extern template class Expr<Type<TypeCategory::Real, 4>>;
+extern template class Expr<Type<TypeCategory::Real, 8>>;
+extern template class Expr<Type<TypeCategory::Real, 10>>;
+extern template class Expr<Type<TypeCategory::Real, 16>>;
+extern template class Expr<Type<TypeCategory::Complex, 2>>;
+extern template class Expr<Type<TypeCategory::Complex, 4>>;
+extern template class Expr<Type<TypeCategory::Complex, 8>>;
+extern template class Expr<Type<TypeCategory::Complex, 10>>;
+extern template class Expr<Type<TypeCategory::Complex, 16>>;
 
 template<int KIND> class Expr<Type<TypeCategory::Character, KIND>> {
 public:
@@ -462,6 +461,7 @@ public:
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
   std::optional<Scalar<Result>> ScalarValue() const {
+    // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
@@ -482,9 +482,8 @@ private:
 ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
 
 template<typename A>
-struct Comparison
-  : public Binary<Comparison<A>, Type<TypeCategory::Logical, 1>, A> {
-  using Result = Type<TypeCategory::Logical, 1>;
+struct Comparison : public Binary<Comparison<A>, LogicalResult, A> {
+  using Result = LogicalResult;
   using Operand = A;
   using Base = Binary<Comparison, Result, Operand>;
   CLASS_BOILERPLATE(Comparison)
@@ -498,27 +497,10 @@ struct Comparison
   RelationalOperator opr;
 };
 
-extern template struct Comparison<Type<TypeCategory::Integer, 1>>;
-extern template struct Comparison<Type<TypeCategory::Integer, 2>>;
-extern template struct Comparison<Type<TypeCategory::Integer, 4>>;
-extern template struct Comparison<Type<TypeCategory::Integer, 8>>;
-extern template struct Comparison<Type<TypeCategory::Integer, 16>>;
-extern template struct Comparison<Type<TypeCategory::Real, 2>>;
-extern template struct Comparison<Type<TypeCategory::Real, 4>>;
-extern template struct Comparison<Type<TypeCategory::Real, 8>>;
-extern template struct Comparison<Type<TypeCategory::Real, 10>>;
-extern template struct Comparison<Type<TypeCategory::Real, 16>>;
-extern template struct Comparison<Type<TypeCategory::Complex, 2>>;
-extern template struct Comparison<Type<TypeCategory::Complex, 4>>;
-extern template struct Comparison<Type<TypeCategory::Complex, 8>>;
-extern template struct Comparison<Type<TypeCategory::Complex, 10>>;
-extern template struct Comparison<Type<TypeCategory::Complex, 16>>;
-extern template struct Comparison<Type<TypeCategory::Character, 1>>;
-
 // Dynamically polymorphic comparisons whose operands are expressions of
 // the same supported kind of a particular type category.
 template<TypeCategory CAT> struct CategoryComparison {
-  using Result = Type<TypeCategory::Logical, 1>;
+  using Result = LogicalResult;
   CLASS_BOILERPLATE(CategoryComparison)
   template<int KIND> using KindComparison = Comparison<Type<CAT, KIND>>;
   template<int KIND> CategoryComparison(const KindComparison<KIND> &x) : u{x} {}
@@ -526,18 +508,14 @@ template<TypeCategory CAT> struct CategoryComparison {
   CategoryComparison(KindComparison<KIND> &&x) : u{std::move(x)} {}
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
   int Rank() const { return 1; }  // TODO
-  typename KindsVariant<CAT, KindComparison>::type u;
+
+  KindsVariant<CAT, KindComparison> u;
 };
 
 template<int KIND> class Expr<Type<TypeCategory::Logical, KIND>> {
 public:
   using Result = Type<TypeCategory::Logical, KIND>;
   using FoldableTrait = std::true_type;
-  struct Not : Unary<Not, Result> {
-    using Unary<Not, Result>::Unary;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &);
-  };
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
   struct And : public Bin<And> {
     using Bin<And>::Bin;
@@ -574,6 +552,7 @@ public:
   template<typename A> Expr(CopyableIndirection<A> &&x) : u_{std::move(x)} {}
 
   std::optional<Scalar<Result>> ScalarValue() const {
+    // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
@@ -583,33 +562,12 @@ private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<FunctionRef>,
       //      Parentheses<Result>,
-      Not, And, Or, Eqv, Neqv, CategoryComparison<TypeCategory::Integer>,
+      Not<KIND>, And, Or, Eqv, Neqv, CategoryComparison<TypeCategory::Integer>,
       CategoryComparison<TypeCategory::Real>,
       CategoryComparison<TypeCategory::Complex>,
       CategoryComparison<TypeCategory::Character>>
       u_;
 };
-
-extern template class Expr<Type<TypeCategory::Integer, 1>>;
-extern template class Expr<Type<TypeCategory::Integer, 2>>;
-extern template class Expr<Type<TypeCategory::Integer, 4>>;
-extern template class Expr<Type<TypeCategory::Integer, 8>>;
-extern template class Expr<Type<TypeCategory::Integer, 16>>;
-extern template class Expr<Type<TypeCategory::Real, 2>>;
-extern template class Expr<Type<TypeCategory::Real, 4>>;
-extern template class Expr<Type<TypeCategory::Real, 8>>;
-extern template class Expr<Type<TypeCategory::Real, 10>>;
-extern template class Expr<Type<TypeCategory::Real, 16>>;
-extern template class Expr<Type<TypeCategory::Complex, 2>>;
-extern template class Expr<Type<TypeCategory::Complex, 4>>;
-extern template class Expr<Type<TypeCategory::Complex, 8>>;
-extern template class Expr<Type<TypeCategory::Complex, 10>>;
-extern template class Expr<Type<TypeCategory::Complex, 16>>;
-extern template class Expr<Type<TypeCategory::Character, 1>>;
-extern template class Expr<Type<TypeCategory::Logical, 1>>;
-extern template class Expr<Type<TypeCategory::Logical, 2>>;
-extern template class Expr<Type<TypeCategory::Logical, 4>>;
-extern template class Expr<Type<TypeCategory::Logical, 8>>;
 
 // Dynamically polymorphic expressions that can hold any supported kind
 // of a specific intrinsic type category.
@@ -618,20 +576,16 @@ public:
   using Result = SomeKind<CAT>;
   using FoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
+
   template<int KIND> using KindExpr = Expr<Type<CAT, KIND>>;
   template<int KIND> Expr(const KindExpr<KIND> &x) : u{x} {}
   template<int KIND> Expr(KindExpr<KIND> &&x) : u{std::move(x)} {}
   std::optional<Scalar<Result>> ScalarValue() const;
   std::optional<Scalar<Result>> Fold(FoldingContext &);
   int Rank() const;
-  typename KindsVariant<CAT, KindExpr>::type u;
-};
 
-extern template class Expr<SomeInteger>;
-extern template class Expr<SomeReal>;
-extern template class Expr<SomeComplex>;
-extern template class Expr<SomeCharacter>;
-extern template class Expr<SomeLogical>;
+  KindsVariant<CAT, KindExpr> u;
+};
 
 // BOZ literal constants need to be wide enough to hold an integer or real
 // value of any supported kind.  They also need to be distinguishable from
@@ -666,7 +620,6 @@ public:
       u;
 };
 
-extern template class Expr<SomeType>;
 using GenericExpr = Expr<SomeType>;  // TODO: delete name?
 
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
@@ -675,7 +628,15 @@ template<typename A> using ResultType = typename std::decay_t<A>::Result;
 // These definitions are created with temporary helper macros to reduce
 // C++ boilerplate.  All combinations of lvalue and rvalue references are
 // allowed for operands.
-template<typename A> A operator-(const A &x) { return {typename A::Negate{x}}; }
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator-(const Expr<Type<C, K>> &x) {
+  return {Negate<Type<C, K>>{x}};
+}
+template<TypeCategory C>
+Expr<SomeKind<C>> operator-(const Expr<SomeKind<C>> &x) {
+  return std::visit(
+      [](const auto &y) -> Expr<SomeKind<C>> { return {-y}; }, x.u);
+}
 
 #define BINARY(FUNC, CONSTR) \
   template<typename A> A FUNC(const A &x, const A &y) { \
@@ -728,5 +689,35 @@ BINARY(operator!=, RelationalOperator::NE)
 BINARY(operator>=, RelationalOperator::GE)
 BINARY(operator>, RelationalOperator::GT)
 #undef BINARY
+
+extern template class Expr<Type<TypeCategory::Character, 1>>;  // TODO others
+extern template struct Comparison<Type<TypeCategory::Integer, 1>>;
+extern template struct Comparison<Type<TypeCategory::Integer, 2>>;
+extern template struct Comparison<Type<TypeCategory::Integer, 4>>;
+extern template struct Comparison<Type<TypeCategory::Integer, 8>>;
+extern template struct Comparison<Type<TypeCategory::Integer, 16>>;
+extern template struct Comparison<Type<TypeCategory::Real, 2>>;
+extern template struct Comparison<Type<TypeCategory::Real, 4>>;
+extern template struct Comparison<Type<TypeCategory::Real, 8>>;
+extern template struct Comparison<Type<TypeCategory::Real, 10>>;
+extern template struct Comparison<Type<TypeCategory::Real, 16>>;
+extern template struct Comparison<Type<TypeCategory::Complex, 2>>;
+extern template struct Comparison<Type<TypeCategory::Complex, 4>>;
+extern template struct Comparison<Type<TypeCategory::Complex, 8>>;
+extern template struct Comparison<Type<TypeCategory::Complex, 10>>;
+extern template struct Comparison<Type<TypeCategory::Complex, 16>>;
+extern template struct Comparison<Type<TypeCategory::Character, 1>>;  // TODO
+                                                                      // more
+extern template class Expr<Type<TypeCategory::Logical, 1>>;
+extern template class Expr<Type<TypeCategory::Logical, 2>>;
+extern template class Expr<Type<TypeCategory::Logical, 4>>;
+extern template class Expr<Type<TypeCategory::Logical, 8>>;
+extern template class Expr<SomeInteger>;
+extern template class Expr<SomeReal>;
+extern template class Expr<SomeComplex>;
+extern template class Expr<SomeCharacter>;
+extern template class Expr<SomeLogical>;
+extern template class Expr<SomeType>;
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_

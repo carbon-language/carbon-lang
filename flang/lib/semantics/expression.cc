@@ -265,20 +265,16 @@ static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
 
 static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::SignedRealLiteralConstant &x) {
-  auto result{AnalyzeLiteral(ea, std::get<parser::RealLiteralConstant>(x.t))};
-  if (result.has_value()) {
+  if (auto result{
+          AnalyzeLiteral(ea, std::get<parser::RealLiteralConstant>(x.t))}) {
     if (auto sign{std::get<std::optional<parser::Sign>>(x.t)}) {
       if (sign == parser::Sign::Negative) {
-        std::visit(
-            [](auto &rk) {
-              using t = std::decay_t<decltype(rk)>;
-              rk = typename t::Negate{rk};
-            },
-            result->u);
+        return {-*result};
       }
     }
+    return result;
   }
-  return result;
+  return std::nullopt;
 }
 
 template<>

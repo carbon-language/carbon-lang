@@ -149,15 +149,19 @@ using LogicalResult = Type<TypeCategory::Logical, 1>;
 // These macros and template create instances of std::variant<> that can contain
 // applications of some class template to all of the supported kinds of
 // a category of intrinsic type.
-template<TypeCategory CAT, template<int> class T> struct KindsVariant;
+template<TypeCategory CAT, template<int> class T> struct VariantOverKinds;
 #define TKIND(K) T<K>
 #define MAKE(Cat, CAT) \
-  template<template<int> class T> struct KindsVariant<TypeCategory::Cat, T> { \
+  template<template<int> class T> \
+  struct VariantOverKinds<TypeCategory::Cat, T> { \
     using type = std::variant<FOR_EACH_##CAT##_KIND(TKIND, COMMA)>; \
   };
 FOR_EACH_CATEGORY(MAKE)
 #undef MAKE
 #undef TKIND
+
+template<TypeCategory CAT, template<int> class T>
+using KindsVariant = typename VariantOverKinds<CAT, T>::type;
 
 // Map scalar value types back to their Fortran types.
 // For every type T = Type<CAT, KIND>, TypeOfScalarValue<T>> == T.
@@ -195,7 +199,6 @@ template<TypeCategory CAT> struct SomeKindScalar {
   static constexpr TypeCategory category{CAT};
   CLASS_BOILERPLATE(SomeKindScalar)
 
-  template<int KIND> using KindScalar = Scalar<Type<CAT, KIND>>;
   template<typename A> SomeKindScalar(const A &x) : u{x} {}
   template<typename A>
   SomeKindScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
@@ -213,7 +216,8 @@ template<TypeCategory CAT> struct SomeKindScalar {
     return common::GetIf<std::string>(u);
   }
 
-  typename KindsVariant<CAT, KindScalar>::type u;
+  template<int KIND> using KindScalar = Scalar<Type<CAT, KIND>>;
+  KindsVariant<CAT, KindScalar> u;
 };
 
 // Holds a scalar constant of any intrinsic category and size.

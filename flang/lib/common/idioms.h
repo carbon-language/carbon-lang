@@ -54,10 +54,10 @@ namespace Fortran::common {
 // Helper templates for combining a list of lambdas into an anonymous
 // struct for use with std::visit() on a std::variant<> sum type.
 // E.g.: std::visit(visitors{
-//         [&](const UnaryExpr &x) { ... },
-//         [&](const BinaryExpr &x) { ... },
+//         [&](const firstType &x) { ... },
+//         [&](const secondType &x) { ... },
 //         ...
-//       }, structure.unionMember);
+//         [&](const auto &catchAll) { ... }}, variantObject);
 
 template<typename... LAMBDAS> struct visitors : LAMBDAS... {
   using LAMBDAS::operator()...;
