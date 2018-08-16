@@ -45,6 +45,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/type_traits.h"
+#include "llvm/Support/TrailingObjects.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -1573,6 +1574,16 @@ protected:
 
   enum { NumTypeWithKeywordBits = 8 };
 
+  class ElaboratedTypeBitfields {
+    friend class ElaboratedType;
+
+    unsigned : NumTypeBits;
+    unsigned : NumTypeWithKeywordBits;
+
+    /// Whether the ElaboratedType has a trailing OwnedTagDecl.
+    unsigned HasOwnedTagDecl : 1;
+  };
+
   class VectorTypeBitfields {
     friend class VectorType;
     friend class DependentVectorType;
@@ -1686,6 +1697,7 @@ protected:
     ObjCObjectTypeBitfields ObjCObjectTypeBits;
     ReferenceTypeBitfields ReferenceTypeBits;
     TypeWithKeywordBitfields TypeWithKeywordBits;
+    ElaboratedTypeBitfields ElaboratedTypeBits;
     VectorTypeBitfields VectorTypeBits;
     SubstTemplateTypeParmPackTypeBitfields SubstTemplateTypeParmPackTypeBits;
     TemplateSpecializationTypeBitfields TemplateSpecializationTypeBits;
@@ -1711,6 +1723,8 @@ protected:
                   "ReferenceTypeBitfields is larger than 8 bytes!");
     static_assert(sizeof(TypeWithKeywordBitfields) <= 8,
                   "TypeWithKeywordBitfields is larger than 8 bytes!");
+    static_assert(sizeof(ElaboratedTypeBitfields) <= 8,
+                  "ElaboratedTypeBitfields is larger than 8 bytes!");
     static_assert(sizeof(VectorTypeBitfields) <= 8,
                   "VectorTypeBitfields is larger than 8 bytes!");
     static_assert(sizeof(SubstTemplateTypeParmPackTypeBitfields) <= 8,
@@ -5028,8 +5042,12 @@ public:
 /// source code, including tag keywords and any nested-name-specifiers.
 /// The type itself is always "sugar", used to express what was written
 /// in the source code but containing no additional semantic information.
-class ElaboratedType : public TypeWithKeyword, public llvm::FoldingSetNode {
+class ElaboratedType final
+    : public TypeWithKeyword,
+      public llvm::FoldingSetNode,
+      private llvm::TrailingObjects<ElaboratedType, TagDecl *> {
   friend class ASTContext; // ASTContext creates these
+  friend TrailingObjects;
 
   /// The nested name specifier containing the qualifier.
   NestedNameSpecifier *NNS;
@@ -5037,26 +5055,29 @@ class ElaboratedType : public TypeWithKeyword, public llvm::FoldingSetNode {
   /// The type that this qualified name refers to.
   QualType NamedType;
 
-  /// The (re)declaration of this tag type owned by this occurrence, or nullptr
-  /// if none.
-  TagDecl *OwnedTagDecl;
+  /// The (re)declaration of this tag type owned by this occurrence is stored
+  /// as a trailing object if there is one. Use getOwnedTagDecl to obtain
+  /// it, or obtain a null pointer if there is none.
 
   ElaboratedType(ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS,
                  QualType NamedType, QualType CanonType, TagDecl *OwnedTagDecl)
-    : TypeWithKeyword(Keyword, Elaborated, CanonType,
-                      NamedType->isDependentType(),
-                      NamedType->isInstantiationDependentType(),
-                      NamedType->isVariablyModifiedType(),
-                      NamedType->containsUnexpandedParameterPack()),
-      NNS(NNS), NamedType(NamedType), OwnedTagDecl(OwnedTagDecl) {
+      : TypeWithKeyword(Keyword, Elaborated, CanonType,
+                        NamedType->isDependentType(),
+                        NamedType->isInstantiationDependentType(),
+                        NamedType->isVariablyModifiedType(),
+                        NamedType->containsUnexpandedParameterPack()),
+        NNS(NNS), NamedType(NamedType) {
+    ElaboratedTypeBits.HasOwnedTagDecl = false;
+    if (OwnedTagDecl) {
+      ElaboratedTypeBits.HasOwnedTagDecl = true;
+      *getTrailingObjects<TagDecl *>() = OwnedTagDecl;
+    }
     assert(!(Keyword == ETK_None && NNS == nullptr) &&
            "ElaboratedType cannot have elaborated type keyword "
            "and name qualifier both null.");
   }
 
 public:
-  ~ElaboratedType();
-
   /// Retrieve the qualification on this type.
   NestedNameSpecifier *getQualifier() const { return NNS; }
 
@@ -5070,11 +5091,14 @@ public:
   bool isSugared() const { return true; }
 
   /// Return the (re)declaration of this type owned by this occurrence of this
-  /// type, or nullptr if none.
-  TagDecl *getOwnedTagDecl() const { return OwnedTagDecl; }
+  /// type, or nullptr if there is none.
+  TagDecl *getOwnedTagDecl() const {
+    return ElaboratedTypeBits.HasOwnedTagDecl ? *getTrailingObjects<TagDecl *>()
+                                              : nullptr;
+  }
 
   void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, getKeyword(), NNS, NamedType, OwnedTagDecl);
+    Profile(ID, getKeyword(), NNS, NamedType, getOwnedTagDecl());
   }
 
   static void Profile(llvm::FoldingSetNodeID &ID, ElaboratedTypeKeyword Keyword,
@@ -5086,9 +5110,7 @@ public:
     ID.AddPointer(OwnedTagDecl);
   }
 
-  static bool classof(const Type *T) {
-    return T->getTypeClass() == Elaborated;
-  }
+  static bool classof(const Type *T) { return T->getTypeClass() == Elaborated; }
 };
 
 /// Represents a qualified type name for which the type name is
