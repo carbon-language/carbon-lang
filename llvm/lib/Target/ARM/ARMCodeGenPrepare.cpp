@@ -582,6 +582,11 @@ bool ARMCodeGenPrepare::TryToPromote(Value *V) {
     if (CurrentVisited.count(V))
       return true;
 
+    // Ignore GEPs because they don't need promoting and the constant indices
+    // will prevent the transformation.
+    if (isa<GetElementPtrInst>(V))
+      return true;
+
     if (!isSupportedValue(V) || (shouldPromote(V) && !isLegalToPromote(V))) {
       LLVM_DEBUG(dbgs() << "ARM CGP: Can't handle: " << *V << "\n");
       return false;
