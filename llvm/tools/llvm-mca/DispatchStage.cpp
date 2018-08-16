@@ -126,7 +126,7 @@ llvm::Error DispatchStage::dispatch(InstRef IR) {
   // Notify listeners of the "instruction dispatched" event,
   // and move IR to the next stage.
   notifyInstructionDispatched(IR, RegisterFiles);
-  return std::move(moveToTheNextStage(IR));
+  return moveToTheNextStage(IR);
 }
 
 llvm::Error DispatchStage::cycleStart() {
@@ -148,7 +148,7 @@ bool DispatchStage::isAvailable(const InstRef &IR) const {
 
 llvm::Error DispatchStage::execute(InstRef &IR) {
   assert(canDispatch(IR) && "Cannot dispatch another instruction!");
-  return std::move(dispatch(IR));
+  return dispatch(IR);
 }
 
 #ifndef NDEBUG

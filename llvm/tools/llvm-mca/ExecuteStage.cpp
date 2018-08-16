@@ -170,7 +170,7 @@ Error ExecuteStage::execute(InstRef &IR) {
   if (IR.getInstruction()->isExecuted()) {
     notifyInstructionExecuted(IR);
     //FIXME: add a buffer of executed instructions.
-    return std::move(moveToTheNextStage(IR));
+    return moveToTheNextStage(IR);
   }
   return ErrorSuccess();
 }

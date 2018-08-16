@@ -69,7 +69,7 @@ public:
   /// successor stages.
   llvm::Error moveToTheNextStage(InstRef &IR) {
     assert(checkNextStage(IR) && "Next stage is not ready!");
-    return std::move(NextInSequence->execute(IR));
+    return NextInSequence->execute(IR);
   }
 
   /// Add a listener to receive callbacks during the execution of this stage.
