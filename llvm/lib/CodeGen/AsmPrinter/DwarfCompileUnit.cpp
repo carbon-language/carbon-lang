@@ -894,6 +894,7 @@ bool DwarfCompileUnit::hasDwarfPubSections() const {
     return DD->tuneForGDB() && !includeMinimalInlineScopes() &&
            !CUNode->isDebugDirectivesOnly();
   }
+  llvm_unreachable("Unhandled DICompileUnit::DebugNameTableKind enum");
 }
 
 /// addGlobalName - Add a new global name to the compile unit.
