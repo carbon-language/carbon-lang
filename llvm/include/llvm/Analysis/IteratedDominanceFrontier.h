@@ -90,7 +90,7 @@ class IDFCalculator {
 
 private:
  DominatorTreeBase<BasicBlock, IsPostDom> &DT;
- GraphDiff<BasicBlock *, IsPostDom> *GD;
+ const GraphDiff<BasicBlock *, IsPostDom> *GD;
  bool useLiveIn;
  const SmallPtrSetImpl<BasicBlock *> *LiveInBlocks;
  const SmallPtrSetImpl<BasicBlock *> *DefBlocks;
