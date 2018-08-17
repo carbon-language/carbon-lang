@@ -80,8 +80,12 @@ template <typename TagT, typename... MemberTs> class PointerSumType {
   // when we *read* a value, we copy the underlying storage out to avoid relying
   // on one member or the other being active.
   union StorageT {
-    // Ensure we get a null default constructed value.
-    uintptr_t Value = 0;
+    // Ensure we get a null default constructed value. We don't use a member
+    // initializer because some compilers seem to not implement those correctly
+    // for a union.
+    StorageT() : Value(0) {}
+
+    uintptr_t Value;
 
     typename HelperT::template Lookup<HelperT::MinTag>::PointerT MinTagPointer;
   };
