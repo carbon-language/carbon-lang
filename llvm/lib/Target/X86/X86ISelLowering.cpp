@@ -36780,7 +36780,7 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
   };
 
   // Don't combine if the operation has other uses.
-  if (!N->isOnlyUserOf(Src.getNode()))
+  if (!Src.hasOneUse())
     return SDValue();
 
   // Only support vector truncation for now.
