@@ -740,17 +740,12 @@ bool TypeInfer::EnforceSameSize(TypeSetByHwMode &A, TypeSetByHwMode &B) {
 
 void TypeInfer::expandOverloads(TypeSetByHwMode &VTS) {
   ValidateOnExit _1(VTS, *this);
-  TypeSetByHwMode Legal = getLegalTypes();
-  bool HaveLegalDef = Legal.hasDefault();
+  const TypeSetByHwMode &Legal = getLegalTypes();
+  assert(Legal.isDefaultOnly() && "Default-mode only expected");
+  const TypeSetByHwMode::SetType &LegalTypes = Legal.get(DefaultMode);
 
-  for (auto &I : VTS) {
-    unsigned M = I.first;
-    if (!Legal.hasMode(M) && !HaveLegalDef) {
-      TP.error("Invalid mode " + Twine(M));
-      return;
-    }
-    expandOverloads(I.second, Legal.get(M));
-  }
+  for (auto &I : VTS)
+    expandOverloads(I.second, LegalTypes);
 }
 
 void TypeInfer::expandOverloads(TypeSetByHwMode::SetType &Out,
@@ -802,17 +797,17 @@ void TypeInfer::expandOverloads(TypeSetByHwMode::SetType &Out,
   }
 }
 
-TypeSetByHwMode TypeInfer::getLegalTypes() {
+const TypeSetByHwMode &TypeInfer::getLegalTypes() {
   if (!LegalTypesCached) {
+    TypeSetByHwMode::SetType &LegalTypes = LegalCache.getOrCreate(DefaultMode);
     // Stuff all types from all modes into the default mode.
     const TypeSetByHwMode &LTS = TP.getDAGPatterns().getLegalTypes();
     for (const auto &I : LTS)
-      LegalCache.insert(I.second);
+      LegalTypes.insert(I.second);
     LegalTypesCached = true;
   }
-  TypeSetByHwMode VTS;
-  VTS.getOrCreate(DefaultMode) = LegalCache;
-  return VTS;
+  assert(LegalCache.isDefaultOnly() && "Default-mode only expected");
+  return LegalCache;
 }
 
 #ifndef NDEBUG
