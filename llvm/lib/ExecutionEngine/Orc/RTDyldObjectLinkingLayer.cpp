@@ -14,12 +14,12 @@ namespace {
 using namespace llvm;
 using namespace llvm::orc;
 
-class VSOSearchOrderResolver : public JITSymbolResolver {
+class JITDylibSearchOrderResolver : public JITSymbolResolver {
 public:
-  VSOSearchOrderResolver(MaterializationResponsibility &MR) : MR(MR) {}
+  JITDylibSearchOrderResolver(MaterializationResponsibility &MR) : MR(MR) {}
 
   Expected<LookupResult> lookup(const LookupSet &Symbols) {
-    auto &ES = MR.getTargetVSO().getExecutionSession();
+    auto &ES = MR.getTargetJITDylib().getExecutionSession();
     SymbolNameSet InternedSymbols;
 
     for (auto &S : Symbols)
@@ -30,8 +30,8 @@ public:
     };
 
     auto InternedResult =
-        MR.getTargetVSO().withSearchOrderDo([&](const VSOList &VSOs) {
-          return ES.lookup(VSOs, InternedSymbols, RegisterDependencies, false);
+        MR.getTargetJITDylib().withSearchOrderDo([&](const JITDylibList &JDs) {
+          return ES.lookup(JDs, InternedSymbols, RegisterDependencies, false);
         });
 
     if (!InternedResult)
@@ -45,7 +45,7 @@ public:
   }
 
   Expected<LookupFlagsResult> lookupFlags(const LookupSet &Symbols) {
-    auto &ES = MR.getTargetVSO().getExecutionSession();
+    auto &ES = MR.getTargetJITDylib().getExecutionSession();
 
     SymbolNameSet InternedSymbols;
 
@@ -53,13 +53,13 @@ public:
       InternedSymbols.insert(ES.getSymbolStringPool().intern(S));
 
     SymbolFlagsMap InternedResult;
-    MR.getTargetVSO().withSearchOrderDo([&](const VSOList &VSOs) {
+    MR.getTargetJITDylib().withSearchOrderDo([&](const JITDylibList &JDs) {
       // An empty search order is pathalogical, but allowed.
-      if (VSOs.empty())
+      if (JDs.empty())
         return;
 
-      assert(VSOs.front() && "VSOList entry can not be null");
-      InternedResult = VSOs.front()->lookupFlags(InternedSymbols);
+      assert(JDs.front() && "VSOList entry can not be null");
+      InternedResult = JDs.front()->lookupFlags(InternedSymbols);
     });
 
     LookupFlagsResult Result;
@@ -100,7 +100,7 @@ void RTDyldObjectLinkingLayer2::emit(MaterializationResponsibility R,
 
   auto MemoryManager = GetMemoryManager(K);
 
-  VSOSearchOrderResolver Resolver(R);
+  JITDylibSearchOrderResolver Resolver(R);
   auto RTDyld = llvm::make_unique<RuntimeDyld>(*MemoryManager, Resolver);
   RTDyld->setProcessAllSections(ProcessAllSections);
 
