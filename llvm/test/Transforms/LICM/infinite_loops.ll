@@ -2,23 +2,22 @@
 ; RUN: opt -S -basicaa -licm < %s | FileCheck %s
 ; RUN: opt -aa-pipeline=basic-aa -passes='require<opt-remark-emit>,loop(licm)' -S %s | FileCheck %s
 
-; FIXME: This test demonstrates a bug in MustExecute analysis. We hoist sdiv
-;        which can be a division by zero from a block which is never taken.
+; Make sure we don't hoist the unsafe division to some executable block.
 define void @test_impossible_exit_in_untaken_block(i32 %a, i32 %b, i32* %p) {
 ; CHECK-LABEL: @test_impossible_exit_in_untaken_block(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[DIV:%.*]] = sdiv i32 [[A:%.*]], [[B:%.*]]
 ; CHECK-NEXT:    br label [[LOOP:%.*]]
 ; CHECK:       loop:
 ; CHECK-NEXT:    [[IV:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ [[IV_NEXT:%.*]], [[BACKEDGE:%.*]] ]
 ; CHECK-NEXT:    br i1 false, label [[NEVER_TAKEN:%.*]], label [[BACKEDGE]]
 ; CHECK:       never_taken:
+; CHECK-NEXT:    [[DIV:%.*]] = sdiv i32 [[A:%.*]], [[B:%.*]]
+; CHECK-NEXT:    store i32 [[DIV]], i32* [[P:%.*]]
 ; CHECK-NEXT:    br i1 true, label [[BACKEDGE]], label [[EXIT:%.*]]
 ; CHECK:       backedge:
 ; CHECK-NEXT:    [[IV_NEXT]] = add i32 [[IV]], 1
 ; CHECK-NEXT:    br label [[LOOP]]
 ; CHECK:       exit:
-; CHECK-NEXT:    store i32 [[DIV]], i32* [[P:%.*]], align 4
 ; CHECK-NEXT:    ret void
 ;
 entry:
