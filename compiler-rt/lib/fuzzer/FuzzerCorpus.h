@@ -174,7 +174,7 @@ class InputCorpus {
 
   // Returns an index of random unit from the corpus to mutate.
   size_t ChooseUnitIdxToMutate(Random &Rand) {
-    size_t Idx = static_cast<size_t>(CorpusDistribution(Rand));
+    size_t Idx = CorpusDistribution(Rand);
     assert(Idx < Inputs.size());
     return Idx;
   }
@@ -276,9 +276,7 @@ private:
   void UpdateCorpusDistribution() {
     size_t N = Inputs.size();
     assert(N);
-    Intervals.resize(N + 1);
     Weights.resize(N);
-    std::iota(Intervals.begin(), Intervals.end(), 0);
     for (size_t i = 0; i < N; i++)
       Weights[i] = Inputs[i]->NumFeatures
                        ? (i + 1) * (Inputs[i]->HasFocusFunction ? 1000 : 1)
@@ -291,12 +289,11 @@ private:
         Printf("%f ", Weights[i]);
       Printf("Weights\n");
     }
-    CorpusDistribution = std::piecewise_constant_distribution<double>(
-        Intervals.begin(), Intervals.end(), Weights.begin());
+    CorpusDistribution =
+        std::discrete_distribution<size_t>(Weights.begin(), Weights.end());
   }
-  std::piecewise_constant_distribution<double> CorpusDistribution;
+  std::discrete_distribution<size_t> CorpusDistribution;
 
-  Vector<double> Intervals;
   Vector<double> Weights;
 
   std::unordered_set<std::string> Hashes;
