@@ -23670,14 +23670,13 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     if (SDValue Scale = convertShiftLeftToScale(Amt, dl, Subtarget, DAG))
       return DAG.getNode(ISD::MUL, dl, VT, R, Scale);
 
-  // Constant ISD::SRL can be performed efficiently on vXi8/vXi16 vectors as we
+  // Constant ISD::SRL can be performed efficiently on vXi16 vectors as we
   // can replace with ISD::MULHU, creating scale factor from (NumEltBits - Amt).
   // TODO: Improve support for the shift by zero special case.
   if (Opc == ISD::SRL && ConstantAmt &&
       ((Subtarget.hasSSE41() && VT == MVT::v8i16) ||
        DAG.isKnownNeverZero(Amt)) &&
-      (VT == MVT::v16i8 || VT == MVT::v8i16 ||
-       ((VT == MVT::v32i8 || VT == MVT::v16i16) && Subtarget.hasInt256()))) {
+      (VT == MVT::v8i16 || (VT == MVT::v16i16 && Subtarget.hasInt256()))) {
     SDValue EltBits = DAG.getConstant(VT.getScalarSizeInBits(), dl, VT);
     SDValue RAmt = DAG.getNode(ISD::SUB, dl, VT, EltBits, Amt);
     if (SDValue Scale = convertShiftLeftToScale(RAmt, dl, Subtarget, DAG)) {
@@ -23776,6 +23775,56 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     Amt = DAG.getNode(ISD::ZERO_EXTEND, dl, ExtVT, Amt);
     return DAG.getNode(ISD::TRUNCATE, dl, VT,
                        DAG.getNode(Opc, dl, ExtVT, R, Amt));
+  }
+
+  // Constant ISD::SRA/SRL can be performed efficiently on vXi8 vectors as we
+  // extend to vXi16 to perform a MUL scale effectively as a MUL_LOHI.
+  if (ConstantAmt && (Opc == ISD::SRA || Opc == ISD::SRL) &&
+      (VT == MVT::v16i8 || VT == MVT::v64i8 ||
+       (VT == MVT::v32i8 && Subtarget.hasInt256())) &&
+      !Subtarget.hasXOP()) {
+    int NumElts = VT.getVectorNumElements();
+    SDValue Cst8 = DAG.getConstant(8, dl, MVT::i8);
+
+    // Extend constant shift amount to vXi16 (it doesn't matter if the type
+    // isn't legal).
+    MVT ExVT = MVT::getVectorVT(MVT::i16, NumElts);
+    Amt = DAG.getZExtOrTrunc(Amt, dl, ExVT);
+    Amt = DAG.getNode(ISD::SUB, dl, ExVT, DAG.getConstant(8, dl, ExVT), Amt);
+    Amt = DAG.getNode(ISD::SHL, dl, ExVT, DAG.getConstant(1, dl, ExVT), Amt);
+    assert(ISD::isBuildVectorOfConstantSDNodes(Amt.getNode()) &&
+           "Constant build vector expected");
+
+    if (VT == MVT::v16i8 && Subtarget.hasInt256()) {
+      R = Opc == ISD::SRA ? DAG.getSExtOrTrunc(R, dl, ExVT)
+                          : DAG.getZExtOrTrunc(R, dl, ExVT);
+      R = DAG.getNode(ISD::MUL, dl, ExVT, R, Amt);
+      R = DAG.getNode(X86ISD::VSRLI, dl, ExVT, R, Cst8);
+      return DAG.getZExtOrTrunc(R, dl, VT);
+    }
+
+    SmallVector<SDValue, 16> LoAmt, HiAmt;
+    for (int i = 0; i != NumElts; i += 16) {
+      for (int j = 0; j != 8; ++j) {
+        LoAmt.push_back(Amt.getOperand(i + j));
+        HiAmt.push_back(Amt.getOperand(i + j + 8));
+      }
+    }
+
+    MVT VT16 = MVT::getVectorVT(MVT::i16, NumElts / 2);
+    SDValue LoA = DAG.getBuildVector(VT16, dl, LoAmt);
+    SDValue HiA = DAG.getBuildVector(VT16, dl, HiAmt);
+
+    unsigned ShiftOp = Opc == ISD::SRA ? X86ISD::VSRAI : X86ISD::VSRLI;
+    SDValue LoR = DAG.getBitcast(VT16, getUnpackl(DAG, dl, VT, R, R));
+    SDValue HiR = DAG.getBitcast(VT16, getUnpackh(DAG, dl, VT, R, R));
+    LoR = DAG.getNode(ShiftOp, dl, VT16, LoR, Cst8);
+    HiR = DAG.getNode(ShiftOp, dl, VT16, HiR, Cst8);
+    LoR = DAG.getNode(ISD::MUL, dl, VT16, LoR, LoA);
+    HiR = DAG.getNode(ISD::MUL, dl, VT16, HiR, HiA);
+    LoR = DAG.getNode(X86ISD::VSRLI, dl, VT16, LoR, Cst8);
+    HiR = DAG.getNode(X86ISD::VSRLI, dl, VT16, HiR, Cst8);
+    return DAG.getNode(X86ISD::PACKUS, dl, VT, LoR, HiR);
   }
 
   if (VT == MVT::v16i8 ||
