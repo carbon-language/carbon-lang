@@ -99,22 +99,29 @@ bool TypeSetByHwMode::isPossible() const {
 
 bool TypeSetByHwMode::insert(const ValueTypeByHwMode &VVT) {
   bool Changed = false;
+  bool ContainsDefault = false;
+  MVT DT = MVT::Other;
+
   SmallDenseSet<unsigned, 4> Modes;
   for (const auto &P : VVT) {
     unsigned M = P.first;
     Modes.insert(M);
     // Make sure there exists a set for each specific mode from VVT.
     Changed |= getOrCreate(M).insert(P.second).second;
+    // Cache VVT's default mode.
+    if (DefaultMode == M) {
+      ContainsDefault = true;
+      DT = P.second;
+    }
   }
 
   // If VVT has a default mode, add the corresponding type to all
   // modes in "this" that do not exist in VVT.
-  if (Modes.count(DefaultMode)) {
-    MVT DT = VVT.getType(DefaultMode);
+  if (ContainsDefault)
     for (auto &I : *this)
       if (!Modes.count(I.first))
         Changed |= I.second.insert(DT).second;
-  }
+
   return Changed;
 }
 
