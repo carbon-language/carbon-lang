@@ -945,7 +945,6 @@ static void outputSpecialOperator(OutputStream &OS, const Name *OuterName,
     break;
   }
   case OperatorTy::Vcall: {
-    // [thunk]: __cdecl Base::`vcall'{8, {flat}}' }'
     const VirtualMemberPtrThunk &Thunk =
         static_cast<const VirtualMemberPtrThunk &>(Oper);
     OS << "[thunk]: ";
@@ -1194,9 +1193,17 @@ void FunctionType::outputPost(OutputStream &OS, NameResolver &Resolver) {
   if (FunctionClass & NoPrototype)
     return;
 
-  if (FunctionClass & VirtualThisAdjust) {
-    OS << "`vtordisp{" << ThisAdjust->VtordispOffset << ", "
-       << ThisAdjust->StaticOffset << "}'";
+  if (FunctionClass & StaticThisAdjust) {
+    OS << "`adjustor{" << ThisAdjust->StaticOffset << "}'";
+  } else if (FunctionClass & VirtualThisAdjust) {
+    if (FunctionClass & VirtualThisAdjustEx) {
+      OS << "`vtordispex{" << ThisAdjust->VBPtrOffset << ", "
+         << ThisAdjust->VBOffsetOffset << ", " << ThisAdjust->VtordispOffset
+         << ", " << ThisAdjust->StaticOffset << "}'";
+    } else {
+      OS << "`vtordisp{" << ThisAdjust->VtordispOffset << ", "
+         << ThisAdjust->StaticOffset << "}'";
+    }
   }
 
   OS << "(";
