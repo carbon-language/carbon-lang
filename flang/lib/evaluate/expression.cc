@@ -27,16 +27,7 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-template<typename D, typename R, typename... O>
-std::ostream &Operation<D, R, O...>::Dump(std::ostream &o) const {
-  operand<0>().Dump(o << derived().prefix_);
-  if constexpr (operands() > 1) {
-    operand<1>().Dump(o << infix_);
-  }
-  return o << derived().suffix_;
-}
-
-// TODO: dump Convert<Integer,x> as INT(x,KIND=), &c.
+// Folding
 
 template<typename D, typename R, typename... O>
 auto Operation<D, R, O...>::Fold(FoldingContext &context)
@@ -134,9 +125,9 @@ auto Negate<A>::FoldScalar(FoldingContext &context, const Scalar<Operand> &c)
   return std::nullopt;
 }
 
-template<int KIND, bool R>
-auto ComplexComponent<KIND, R>::FoldScalar(FoldingContext &context,
-    const Scalar<Operand> &z) -> std::optional<Scalar<Result>> {
+template<int KIND>
+auto ComplexComponent<KIND>::FoldScalar(FoldingContext &context,
+    const Scalar<Operand> &z) const -> std::optional<Scalar<Result>> {
   return {isRealPart ? z.REAL() : z.AIMAG()};
 }
 
@@ -146,7 +137,39 @@ auto Not<KIND>::FoldScalar(FoldingContext &context, const Scalar<Operand> &x)
   return {Scalar<Result>{!x.IsTrue()}};
 }
 
+template<typename A>
+auto Add<A>::FoldScalar(FoldingContext &context, const Scalar<Operand> &x,
+    const Scalar<Operand> &y) -> std::optional<Scalar<Result>> {
+  if constexpr (Result::category == TypeCategory::Integer) {
+    auto sum{x.AddSigned(y)};
+    if (sum.overflow) {
+      context.messages.Say("INTEGER addition overflowed"_en_US);
+    } else {
+      return {std::move(sum.value)};
+    }
+  } else {
+    auto sum{x.Add(y, context.rounding)};
+    RealFlagWarnings(context, sum.flags, "addition");
+    return {std::move(sum.value)};
+  }
+  return std::nullopt;
+}
+
 // Dumping
+
+template<typename D, typename R, typename... O>
+std::ostream &Operation<D, R, O...>::Dump(std::ostream &o) const {
+  operand<0>().Dump(o << derived().prefix());
+  if constexpr (operands() > 1) {
+    operand<1>().Dump(o << derived().infix());
+  }
+  return o << derived().suffix();
+}
+
+template<typename A> std::string Comparison<A>::infix() const {
+  return "."s + EnumToString(opr) + '.';
+}
+
 template<typename... A>
 std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
   std::visit(common::visitors{[&](const BOZLiteralConstant &x) {
@@ -180,18 +203,18 @@ std::ostream &Binary<CRTP, RESULT, A, B>::Dump(
 template<int KIND>
 std::ostream &Expr<Type<TypeCategory::Integer, KIND>>::Dump(
     std::ostream &o) const {
-  std::visit(
-      common::visitors{[&](const Scalar<Result> &n) { o << n.SignedDecimal(); },
-          [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
-          [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-          [&](const Add &a) { a.Dump(o, "+"); },
-          [&](const Subtract &s) { s.Dump(o, "-"); },
-          [&](const Multiply &m) { m.Dump(o, "*"); },
-          [&](const Divide &d) { d.Dump(o, "/"); },
-          [&](const Power &p) { p.Dump(o, "**"); },
-          [&](const Max &m) { m.Dump(o, ",", "MAX("); },
-          [&](const Min &m) { m.Dump(o, ",", "MIN("); },
-          [&](const auto &x) { x.Dump(o); }},
+  std::visit(common::visitors{[&](const Scalar<Result> &n) {
+                                o << n.SignedDecimal() << '_' << KIND;
+                              },
+                 [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
+                 [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
+                 [&](const Subtract &s) { s.Dump(o, "-"); },
+                 [&](const Multiply &m) { m.Dump(o, "*"); },
+                 [&](const Divide &d) { d.Dump(o, "/"); },
+                 [&](const Power &p) { p.Dump(o, "**"); },
+                 [&](const Max &m) { m.Dump(o, ",", "MAX("); },
+                 [&](const Min &m) { m.Dump(o, ",", "MIN("); },
+                 [&](const auto &x) { x.Dump(o); }},
       u_);
   return o;
 }
@@ -205,20 +228,14 @@ std::ostream &Expr<Type<TypeCategory::Real, KIND>>::Dump(
                  [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<ComplexPart> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const Convert<Result, SomeInteger> &c) { c.Dump(o); },
-                 [&](const Convert<Result, SomeReal> &c) { c.Dump(o); },
-                 [&](const ComplexComponent<KIND, true> &z) { z.Dump(o); },
-                 [&](const ComplexComponent<KIND, false> &z) { z.Dump(o); },
-                 [&](const Parentheses<Result> &p) { p.Dump(o); },
-                 [&](const Negate<Result> &n) { n.Dump(o); },
-                 [&](const Add &a) { a.Dump(o, "+"); },
                  [&](const Subtract &s) { s.Dump(o, "-"); },
                  [&](const Multiply &m) { m.Dump(o, "*"); },
                  [&](const Divide &d) { d.Dump(o, "/"); },
                  [&](const Power &p) { p.Dump(o, "**"); },
                  [&](const IntPower &p) { p.Dump(o, "**"); },
                  [&](const Max &m) { m.Dump(o, ",", "MAX("); },
-                 [&](const Min &m) { m.Dump(o, ",", "MIN("); }},
+                 [&](const Min &m) { m.Dump(o, ",", "MIN("); },
+                 [&](const auto &x) { x.Dump(o); }},
       u_);
   return o;
 }
@@ -231,7 +248,6 @@ std::ostream &Expr<Type<TypeCategory::Complex, KIND>>::Dump(
                               },
                  [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const Add &a) { a.Dump(o, "+"); },
                  [&](const Subtract &s) { s.Dump(o, "-"); },
                  [&](const Multiply &m) { m.Dump(o, "*"); },
                  [&](const Divide &d) { d.Dump(o, "/"); },
@@ -247,7 +263,8 @@ template<int KIND>
 std::ostream &Expr<Type<TypeCategory::Character, KIND>>::Dump(
     std::ostream &o) const {
   std::visit(common::visitors{[&](const Scalar<Result> &s) {
-                                o << parser::QuoteCharacterLiteral(s);
+                                o << KIND << '_'
+                                  << parser::QuoteCharacterLiteral(s);
                               },
                  //          [&](const Parentheses<Result> &p) { p.Dump(o); },
                  [&](const Concat &concat) { concat.Dump(o, "//"); },
@@ -258,18 +275,12 @@ std::ostream &Expr<Type<TypeCategory::Character, KIND>>::Dump(
   return o;
 }
 
-template<typename A> std::ostream &Comparison<A>::Dump(std::ostream &o) const {
-  o << '(' << A::Dump() << "::";
-  this->left().Dump(o);
-  o << '.' << EnumToString(this->opr) << '.';
-  return this->right().Dump(o) << ')';
-}
-
 template<int KIND>
 std::ostream &Expr<Type<TypeCategory::Logical, KIND>>::Dump(
     std::ostream &o) const {
   std::visit(common::visitors{[&](const Scalar<Result> &tf) {
-                                o << (tf.IsTrue() ? ".TRUE." : ".FALSE.");
+                                o << (tf.IsTrue() ? ".TRUE." : ".FALSE.") << '_'
+                                  << KIND;
                               },
                  [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
                  [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
@@ -331,18 +342,6 @@ auto Binary<CRTP, RESULT, A, B>::Fold(FoldingContext &context)
     return static_cast<CRTP *>(this)->FoldScalar(context, *lc, *rc);
   }
   return std::nullopt;
-}
-
-template<int KIND>
-auto Expr<Type<TypeCategory::Integer, KIND>>::Add::FoldScalar(
-    FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
-    -> std::optional<Scalar<Result>> {
-  auto sum{a.AddSigned(b)};
-  if (sum.overflow) {
-    context.messages.Say("integer addition overflowed"_en_US);
-    return std::nullopt;
-  }
-  return {std::move(sum.value)};
 }
 
 template<int KIND>
@@ -451,15 +450,6 @@ auto Expr<Type<TypeCategory::Integer, KIND>>::Fold(FoldingContext &context)
 }
 
 template<int KIND>
-auto Expr<Type<TypeCategory::Real, KIND>>::Add::FoldScalar(
-    FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
-    -> std::optional<Scalar<Result>> {
-  auto sum{a.Add(b, context.rounding)};
-  RealFlagWarnings(context, sum.flags, "real addition");
-  return {std::move(sum.value)};
-}
-
-template<int KIND>
 auto Expr<Type<TypeCategory::Real, KIND>>::Subtract::FoldScalar(
     FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
     -> std::optional<Scalar<Result>> {
@@ -553,15 +543,6 @@ auto Expr<Type<TypeCategory::Real, KIND>>::Fold(FoldingContext &context)
         return std::nullopt;
       },
       u_);
-}
-
-template<int KIND>
-auto Expr<Type<TypeCategory::Complex, KIND>>::Add::FoldScalar(
-    FoldingContext &context, const Scalar<Result> &a, const Scalar<Result> &b)
-    -> std::optional<Scalar<Result>> {
-  auto sum{a.Add(b, context.rounding)};
-  RealFlagWarnings(context, sum.flags, "complex addition");
-  return {std::move(sum.value)};
 }
 
 template<int KIND>

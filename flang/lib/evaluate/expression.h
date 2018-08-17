@@ -24,6 +24,7 @@
 #include "common.h"
 #include "type.h"
 #include "variable.h"
+#include "../lib/common/fortran.h"
 #include "../lib/common/idioms.h"
 #include "../lib/parser/char-block.h"
 #include "../lib/parser/message.h"
@@ -33,53 +34,50 @@
 
 namespace Fortran::evaluate {
 
+using common::RelationalOperator;
+
 template<typename A> class Expr;
 
 template<typename DERIVED, typename RESULT, typename... OPERAND>
 class Operation {
-private:
-  using OperandTypes = std::tuple<OPERAND...>;
-
 public:
   using Derived = DERIVED;
   using Result = RESULT;
+  using OperandTypes = std::tuple<OPERAND...>;
+  using OperandTuple = std::tuple<Expr<OPERAND>...>;
   template<int J> using Operand = std::tuple_element_t<J, OperandTypes>;
   using FoldableTrait = std::true_type;
 
   static_assert(Result::kind > 0);  // Operations have specific Result types
 
-#if !__clang__
   CLASS_BOILERPLATE(Operation)
-#else  // clang 6.0 erroneously deletes the "=default" copy constructor
-  Operation() = delete;
-  Operation(const Operation &that) : operand_{that.operand_} {}
-  Operation(Operation &&) = default;
-  Operation &operator=(const Operation &) = default;
-  Operation &operator=(Operation &&) = default;
-  std::ostream &Dump(std::ostream &) const;
-#endif
-
-  Operation(Expr<OPERAND> &&... x) : operand_{std::move(x)...} {}
-  Operation(const Expr<OPERAND> &... x) : operand_{x...} {}
+  Operation(const Expr<OPERAND> &... x) : operand_{OperandTuple{x...}} {}
+  Operation(Expr<OPERAND> &&... x)
+    : operand_{OperandTuple{std::forward<Expr<OPERAND>>(x)...}} {}
 
   DERIVED &derived() { return *static_cast<DERIVED *>(this); }
   const DERIVED &derived() const { return *static_cast<const DERIVED *>(this); }
 
-  static constexpr auto operands() { return sizeof...(OPERAND); }
-  template<int J> Expr<Operand<J>> &operand() { return *std::get<J>(operand_); }
+  static constexpr auto operands() { return std::tuple_size_v<OperandTypes>; }
+  template<int J> Expr<Operand<J>> &operand() { return std::get<J>(*operand_); }
   template<int J> const Expr<Operand<J>> &operand() const {
-    return *std::get<J>(operand_);
+    return std::get<J>(*operand_);
   }
 
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &);  // TODO rank > 0
 
 protected:
-  // Overridable strings for Dump()
-  static constexpr const char *prefix_{"("}, *infix_{""}, *suffix_{")"};
+  // Overridable string functions for Dump()
+  static const char *prefix() { return "("; }
+  static const char *infix() { return ","; }
+  static const char *suffix() { return ")"; }
 
 private:
-  std::tuple<CopyableIndirection<Expr<OPERAND>>...> operand_;
+  CopyableIndirection<OperandTuple> operand_;
 };
+
+// Unary operations
 
 template<typename TO, typename FROM>
 struct Convert : public Operation<Convert<TO, FROM>, TO, FROM> {
@@ -110,24 +108,29 @@ template<typename A> struct Negate : public Operation<Negate<A>, A, A> {
   using Operand = typename Base::template Operand<0>;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &);
-  static constexpr const char *prefix_{"(-"};
+  static const char *prefix() { return "(-"; }
 };
 
-// TODO: re vs. im can be dynamic
-template<int KIND, bool realPart = true>
+template<int KIND>
 struct ComplexComponent
-  : public Operation<ComplexComponent<KIND, realPart>,
-        Type<TypeCategory::Real, KIND>, Type<TypeCategory::Complex, KIND>> {
+  : public Operation<ComplexComponent<KIND>, Type<TypeCategory::Real, KIND>,
+        Type<TypeCategory::Complex, KIND>> {
   using Base = Operation<ComplexComponent, Type<TypeCategory::Real, KIND>,
       Type<TypeCategory::Complex, KIND>>;
-  static constexpr bool isRealPart{realPart};
-  using Base::Base;
   using typename Base::Result;
   using Operand = typename Base::template Operand<0>;
-  static std::optional<Scalar<Result>> FoldScalar(
-      FoldingContext &, const Scalar<Operand> &);
-  static constexpr const char *prefix_{"(("};
-  static constexpr const char *suffix_{isRealPart ? ")%RE)" : ")%IM)"};
+  CLASS_BOILERPLATE(ComplexComponent)
+  ComplexComponent(bool isReal, const Expr<Operand> &x)
+    : Base{x}, isRealPart{isReal} {}
+  ComplexComponent(bool isReal, Expr<Operand> &&x)
+    : Base{std::move(x)}, isRealPart{isReal} {}
+
+  std::optional<Scalar<Result>> FoldScalar(
+      FoldingContext &, const Scalar<Operand> &) const;
+  static const char *prefix() { return "(("; }
+  const char *suffix() const { return isRealPart ? "%RE)" : "%IM)"; }
+
+  bool isRealPart{true};
 };
 
 template<int KIND>
@@ -140,7 +143,19 @@ struct Not : public Operation<Not<KIND>, Type<TypeCategory::Logical, KIND>,
   using Operand = typename Base::template Operand<0>;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &);
-  static constexpr const char *prefix_{"(.NOT."};
+  static const char *prefix() { return "(.NOT."; }
+};
+
+// Binary operations
+
+template<typename A> struct Add : public Operation<Add<A>, A, A, A> {
+  using Base = Operation<Add, A, A, A>;
+  using Base::Base;
+  using typename Base::Result;
+  using Operand = typename Base::template Operand<0>;
+  static std::optional<Scalar<Result>> FoldScalar(
+      FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &);
+  static const char *infix() { return "+"; }
 };
 
 template<typename CRTP, typename RESULT, typename A = RESULT, typename B = A>
@@ -179,11 +194,6 @@ public:
   using FoldableTrait = std::true_type;
 
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Add : public Bin<Add> {
-    using Bin<Add>::Bin;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &, const Scalar<Result> &);
-  };
   struct Subtract : public Bin<Subtract> {
     using Bin<Subtract>::Bin;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -247,14 +257,15 @@ public:
     // TODO: Also succeed when parenthesized constant
     return common::GetIf<Scalar<Result>>(u_);
   }
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
   int Rank() const { return 1; }  // TODO
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<FunctionRef>, Convert<Result, SomeInteger>,
-      Convert<Result, SomeReal>, Parentheses<Result>, Negate<Result>, Add,
-      Subtract, Multiply, Divide, Power, Max, Min>
+      Convert<Result, SomeReal>, Parentheses<Result>, Negate<Result>,
+      Add<Result>, Subtract, Multiply, Divide, Power, Max, Min>
       u_;
 };
 
@@ -268,11 +279,6 @@ public:
   // Complex are done via decomposition to Real and reconstruction.
 
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Add : public Bin<Add> {
-    using Bin<Add>::Bin;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &, const Scalar<Result> &);
-  };
   struct Subtract : public Bin<Subtract> {
     using Bin<Subtract>::Bin;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -337,6 +343,7 @@ public:
     // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
   int Rank() const { return 1; }  // TODO
 
@@ -344,9 +351,8 @@ private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<ComplexPart>, CopyableIndirection<FunctionRef>,
       Convert<Result, SomeInteger>, Convert<Result, SomeReal>,
-      ComplexComponent<KIND, true>, ComplexComponent<KIND, false>,
-      Parentheses<Result>, Negate<Result>, Add, Subtract, Multiply, Divide,
-      Power, IntPower, Max, Min>
+      ComplexComponent<KIND>, Parentheses<Result>, Negate<Result>, Add<Result>,
+      Subtract, Multiply, Divide, Power, IntPower, Max, Min>
       u_;
 };
 
@@ -356,11 +362,6 @@ public:
   using FoldableTrait = std::true_type;
 
   template<typename CRTP> using Bin = Binary<CRTP, Result>;
-  struct Add : public Bin<Add> {
-    using Bin<Add>::Bin;
-    static std::optional<Scalar<Result>> FoldScalar(
-        FoldingContext &, const Scalar<Result> &, const Scalar<Result> &);
-  };
   struct Subtract : public Bin<Subtract> {
     using Bin<Subtract>::Bin;
     static std::optional<Scalar<Result>> FoldScalar(
@@ -405,13 +406,14 @@ public:
     // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
   int Rank() const { return 1; }  // TODO
 
 private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<FunctionRef>, Parentheses<Result>, Negate<Result>,
-      Add, Subtract, Multiply, Divide, Power, IntPower, CMPLX>
+      Add<Result>, Subtract, Multiply, Divide, Power, IntPower, CMPLX>
       u_;
 };
 
@@ -464,6 +466,7 @@ public:
     // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
   int Rank() const { return 1; }  // TODO
   Expr<SubscriptInteger> LEN() const;
@@ -479,21 +482,23 @@ private:
 // The Comparison class template is a helper for constructing logical
 // expressions with polymorphism over the cross product of the possible
 // categories and kinds of comparable operands.
-ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
 
 template<typename A>
-struct Comparison : public Binary<Comparison<A>, LogicalResult, A> {
-  using Result = LogicalResult;
-  using Operand = A;
-  using Base = Binary<Comparison, Result, Operand>;
+struct Comparison : public Operation<Comparison<A>, LogicalResult, A, A> {
+  using Base = Operation<Comparison, LogicalResult, A, A>;
+  using typename Base::Result;
+  using Operand = typename Base::template Operand<0>;
   CLASS_BOILERPLATE(Comparison)
   Comparison(
       RelationalOperator r, const Expr<Operand> &a, const Expr<Operand> &b)
     : Base{a, b}, opr{r} {}
   Comparison(RelationalOperator r, Expr<Operand> &&a, Expr<Operand> &&b)
     : Base{std::move(a), std::move(b)}, opr{r} {}
+
   std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &c, const Scalar<Operand> &, const Scalar<Operand> &);
+  std::string infix() const;
+
   RelationalOperator opr;
 };
 
@@ -506,6 +511,7 @@ template<TypeCategory CAT> struct CategoryComparison {
   template<int KIND> CategoryComparison(const KindComparison<KIND> &x) : u{x} {}
   template<int KIND>
   CategoryComparison(KindComparison<KIND> &&x) : u{std::move(x)} {}
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
   int Rank() const { return 1; }  // TODO
 
@@ -555,6 +561,7 @@ public:
     // TODO: parenthesized constants too
     return common::GetIf<Scalar<Result>>(u_);
   }
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &c);
   int Rank() const { return 1; }  // TODO
 
@@ -581,6 +588,7 @@ public:
   template<int KIND> Expr(const KindExpr<KIND> &x) : u{x} {}
   template<int KIND> Expr(KindExpr<KIND> &&x) : u{std::move(x)} {}
   std::optional<Scalar<Result>> ScalarValue() const;
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &);
   int Rank() const;
 
@@ -612,6 +620,7 @@ public:
   Expr(Expr<Type<CAT, KIND>> &&x) : u{Expr<SomeKind<CAT>>{std::move(x)}} {}
 
   std::optional<Scalar<Result>> ScalarValue() const;
+  std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &);
   int Rank() const;
 
@@ -625,9 +634,7 @@ using GenericExpr = Expr<SomeType>;  // TODO: delete name?
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
 
 // Convenience functions and operator overloadings for expression construction.
-// These definitions are created with temporary helper macros to reduce
-// C++ boilerplate.  All combinations of lvalue and rvalue references are
-// allowed for operands.
+
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(const Expr<Type<C, K>> &x) {
   return {Negate<Type<C, K>>{x}};
@@ -638,7 +645,26 @@ Expr<SomeKind<C>> operator-(const Expr<SomeKind<C>> &x) {
       [](const auto &y) -> Expr<SomeKind<C>> { return {-y}; }, x.u);
 }
 
-#define BINARY(FUNC, CONSTR) \
+#define BINARY(op, CONSTR) \
+  template<TypeCategory C, int K> \
+  Expr<Type<C, K>> operator op( \
+      const Expr<Type<C, K>> &x, const Expr<Type<C, K>> &y) { \
+    return {CONSTR<Type<C, K>>{x, y}}; \
+  } \
+  template<TypeCategory C> \
+  Expr<SomeKind<C>> operator op( \
+      const Expr<SomeKind<C>> &x, const Expr<SomeKind<C>> &y) { \
+    return std::visit( \
+        [](const auto &xk, const auto &yk) -> Expr<SomeKind<C>> { \
+          return {xk op yk}; \
+        }, \
+        x.u, y.u); \
+  }
+
+BINARY(+, Add)
+#undef BINARY
+
+#define OLDBINARY(FUNC, CONSTR) \
   template<typename A> A FUNC(const A &x, const A &y) { \
     return {typename A::CONSTR{x, y}}; \
   } \
@@ -655,12 +681,11 @@ Expr<SomeKind<C>> operator-(const Expr<SomeKind<C>> &x) {
     return {typename A::CONSTR{std::move(x), std::move(y)}}; \
   }
 
-BINARY(operator+, Add)
-BINARY(operator-, Subtract)
-BINARY(operator*, Multiply)
-BINARY(operator/, Divide)
-BINARY(Power, Power)
-#undef BINARY
+OLDBINARY(operator-, Subtract)
+OLDBINARY(operator*, Multiply)
+OLDBINARY(operator/, Divide)
+OLDBINARY(Power, Power)
+#undef OLDBINARY
 
 #define BINARY(FUNC, OP) \
   template<typename A> Expr<LogicalResult> FUNC(const A &x, const A &y) { \

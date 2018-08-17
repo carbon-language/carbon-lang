@@ -116,14 +116,12 @@ using HostUnsignedInt =
 // - There is no default constructor (Class() {}), usually to prevent the
 //   need for std::monostate as a default constituent in a std::variant<>.
 // - There are full copy and move semantics for construction and assignment.
-// - There's a Dump(std::ostream &) member function.
 #define CLASS_BOILERPLATE(t) \
   t() = delete; \
   t(const t &) = default; \
   t(t &&) = default; \
   t &operator=(const t &) = default; \
-  t &operator=(t &&) = default; \
-  std::ostream &Dump(std::ostream &) const;
+  t &operator=(t &&) = default;
 
 // Force availability of copy construction and assignment
 template<typename A> using CopyableIndirection = common::Indirection<A, true>;

@@ -31,24 +31,24 @@ template<typename A> std::string Dump(const A &x) {
 int main() {
   using DefaultIntegerExpr = Expr<DefaultInteger>;
   TEST(DefaultIntegerExpr::Result::Dump() == "Integer(4)");
-  MATCH("666", Dump(DefaultIntegerExpr{666}));
-  MATCH("(-1)", Dump(-DefaultIntegerExpr{1}));
+  MATCH("666_4", Dump(DefaultIntegerExpr{666}));
+  MATCH("(-1_4)", Dump(-DefaultIntegerExpr{1}));
   auto ex1{
       DefaultIntegerExpr{2} + DefaultIntegerExpr{3} * -DefaultIntegerExpr{4}};
-  MATCH("(2+(3*(-4)))", Dump(ex1));
+  MATCH("(2_4+(3_4*(-4_4)))", Dump(ex1));
   Fortran::parser::CharBlock src;
   Fortran::parser::ContextualMessages messages{src, nullptr};
   FoldingContext context{messages};
   ex1.Fold(context);
-  MATCH("-10", Dump(ex1));
-  MATCH("(Integer(4)::6.LE.7)",
+  MATCH("-10_4", Dump(ex1));
+  MATCH("(6_4.LE.7_4)",
       Dump(DefaultIntegerExpr{6} <= DefaultIntegerExpr{7}));
   DefaultIntegerExpr a{1};
   DefaultIntegerExpr b{2};
-  MATCH("(1/2)", Dump(a / b));
-  MATCH("1", Dump(a));
+  MATCH("(1_4/2_4)", Dump(a / b));
+  MATCH("1_4", Dump(a));
   a = b;
-  MATCH("2", Dump(a));
-  MATCH("2", Dump(b));
+  MATCH("2_4", Dump(a));
+  MATCH("2_4", Dump(b));
   return testing::Complete();
 }

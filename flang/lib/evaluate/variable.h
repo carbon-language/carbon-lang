@@ -62,6 +62,7 @@ public:
   DataRef &base() { return *base_; }
   const Symbol &symbol() const { return *symbol_; }
   Expr<SubscriptInteger> LEN() const;
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   CopyableIndirection<DataRef> base_;
@@ -78,6 +79,7 @@ public:
   std::optional<Expr<SubscriptInteger>> lower() const;
   std::optional<Expr<SubscriptInteger>> upper() const;
   std::optional<Expr<SubscriptInteger>> stride() const;
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::optional<IndirectSubscriptIntegerExpr> lower_, upper_, stride_;
@@ -93,6 +95,7 @@ public:
     : u_{IndirectSubscriptIntegerExpr::Make(std::move(s))} {}
   explicit Subscript(const Triplet &t) : u_{t} {}
   explicit Subscript(Triplet &&t) : u_{std::move(t)} {}
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<IndirectSubscriptIntegerExpr, Triplet> u_;
@@ -111,6 +114,7 @@ public:
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
     : u_{std::move(c)}, subscript_(std::move(ss)) {}
   Expr<SubscriptInteger> LEN() const;
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<const Symbol *, Component> u_;
@@ -133,6 +137,7 @@ public:
   CoarrayRef &setStat(Variable &&);
   CoarrayRef &setTeam(Variable &&, bool isTeamNumber = false);
   Expr<SubscriptInteger> LEN() const;
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::vector<const Symbol *> base_;
@@ -154,6 +159,7 @@ public:
   explicit DataRef(ArrayRef &&a) : u_{std::move(a)} {}
   explicit DataRef(CoarrayRef &&a) : u_{std::move(a)} {}
   Expr<SubscriptInteger> LEN() const;
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<const Symbol *, Component, ArrayRef, CoarrayRef> u_;
@@ -176,6 +182,7 @@ public:
   Expr<SubscriptInteger> last() const;
   Expr<SubscriptInteger> LEN() const;
   std::optional<std::string> Fold(FoldingContext &);
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<DataRef, std::string> u_;
@@ -192,6 +199,7 @@ public:
   ComplexPart(DataRef &&z, Part p) : complex_{std::move(z)}, part_{p} {}
   const DataRef &complex() const { return complex_; }
   Part part() const { return part_; }
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   DataRef complex_;
@@ -206,6 +214,7 @@ public:
   explicit Designator(DataRef &&d) : u_{std::move(d)} {}
   explicit Designator(Substring &&s) : u_{std::move(s)} {}
   explicit Designator(ComplexPart &&c) : u_{std::move(c)} {}
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<DataRef, Substring, ComplexPart> u_;
@@ -219,6 +228,7 @@ public:
   explicit ProcedureDesignator(const Component &c) : u_{c} {}
   explicit ProcedureDesignator(Component &&c) : u_{std::move(c)} {}
   Expr<SubscriptInteger> LEN() const;
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<IntrinsicProcedure, const Symbol *, Component> u_;
@@ -232,6 +242,7 @@ public:
     : proc_{std::move(p)}, argument_(std::move(a)) {}
   const ProcedureDesignator &proc() const { return proc_; }
   const std::vector<ArgumentType> &argument() const { return argument_; }
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   ProcedureDesignator proc_;
@@ -245,6 +256,7 @@ public:
   CLASS_BOILERPLATE(Variable)
   explicit Variable(Designator &&d) : u_{std::move(d)} {}
   explicit Variable(FunctionRef &&p) : u_{std::move(p)} {}
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<Designator, FunctionRef> u_;
@@ -255,6 +267,7 @@ public:
   CLASS_BOILERPLATE(ActualFunctionArg)
   explicit ActualFunctionArg(Expr<SomeType> &&x) : u_{std::move(x)} {}
   explicit ActualFunctionArg(Variable &&x) : u_{std::move(x)} {}
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<CopyableIndirection<Expr<SomeType>>, Variable> u_;
@@ -264,6 +277,7 @@ struct Label {  // TODO: this is a placeholder
   CLASS_BOILERPLATE(Label)
   explicit Label(int lab) : label{lab} {}
   int label;
+  std::ostream &Dump(std::ostream &) const;
 };
 
 class ActualSubroutineArg {
@@ -272,6 +286,7 @@ public:
   explicit ActualSubroutineArg(Expr<SomeType> &&x) : u_{std::move(x)} {}
   explicit ActualSubroutineArg(Variable &&x) : u_{std::move(x)} {}
   explicit ActualSubroutineArg(const Label &l) : u_{&l} {}
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   std::variant<CopyableIndirection<Expr<SomeType>>, Variable, const Label *> u_;
