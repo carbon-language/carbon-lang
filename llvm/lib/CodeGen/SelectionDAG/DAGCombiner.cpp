@@ -5276,9 +5276,9 @@ static SDValue extractShiftForRotate(SelectionDAG &DAG, SDValue OppShift,
 
   // Compute the shift amount we need to extract to complete the rotate.
   const unsigned VTWidth = ShiftedVT.getScalarSizeInBits();
-  APInt NeededShiftAmt = VTWidth - OppShiftCst->getAPIntValue();
-  if (NeededShiftAmt.isNegative())
+  if (OppShiftCst->getAPIntValue().ugt(VTWidth))
     return SDValue();
+  APInt NeededShiftAmt = VTWidth - OppShiftCst->getAPIntValue();
   // Normalize the bitwidth of the two mul/udiv/shift constant operands.
   APInt ExtractFromAmt = ExtractFromCst->getAPIntValue();
   APInt OppLHSAmt = OppLHSCst->getAPIntValue();
