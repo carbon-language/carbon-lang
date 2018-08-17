@@ -2402,6 +2402,28 @@ bool PPCTargetLowering::SelectAddressRegRegOnly(SDValue N, SDValue &Base,
   return true;
 }
 
+/// Returns true if we should use a direct load into vector instruction
+/// (such as lxsd or lfd), instead of a load into gpr + direct move sequence.
+static bool usePartialVectorLoads(SDNode *N) {
+  if (!N->hasOneUse())
+    return false;
+
+  // If there are any other uses other than scalar to vector, then we should
+  // keep it as a scalar load -> direct move pattern to prevent multiple
+  // loads.  Currently, only check for i64 since we have lxsd/lfd to do this
+  // efficiently, but no update equivalent.
+  if (LoadSDNode *LD = dyn_cast<LoadSDNode>(N)) {
+    EVT MemVT = LD->getMemoryVT();
+    if (MemVT.isSimple() && MemVT.getSimpleVT().SimpleTy == MVT::i64) {
+      SDNode *User = *(LD->use_begin());
+      if (User->getOpcode() == ISD::SCALAR_TO_VECTOR)
+        return true;
+    }
+  }
+
+  return false;
+}
+
 /// getPreIndexedAddressParts - returns true by value, base pointer and
 /// offset pointer and addressing mode by reference if the node's address
 /// can be legally represented as pre-indexed load / store address.
@@ -2426,6 +2448,13 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
     isLoad = false;
   } else
     return false;
+
+  // Do not generate pre-inc forms for specific loads that feed scalar_to_vector
+  // instructions because we can fold these into a more efficient instruction
+  // instead, (such as LXSD).
+  if (isLoad && usePartialVectorLoads(N)) {
+    return false;
+  }
 
   // PowerPC doesn't have preinc load/store instructions for vectors (except
   // for QPX, which does have preinc r+r forms).
