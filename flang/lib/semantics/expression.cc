@@ -589,9 +589,10 @@ std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
     return {std::visit(
         [](auto &&rx, auto &&ix) -> Expr<evaluate::SomeComplex> {
           using realType = evaluate::ResultType<decltype(rx)>;
-          using zType = evaluate::SameKind<TypeCategory::Complex, realType>;
-          using zExpr = Expr<zType>;
-          return {zExpr{typename zExpr::CMPLX{std::move(rx), std::move(ix)}}};
+          constexpr int kind{realType::kind};
+          using zType = evaluate::Type<TypeCategory::Complex, kind>;
+          return {Expr<zType>{evaluate::ComplexConstructor<kind>{
+              std::move(rx), std::move(ix)}}};
         },
         std::move(joined->first.u), std::move(joined->second.u))};
   }

@@ -38,7 +38,6 @@ using common::TypeCategory;
 // Specific intrinsic types
 
 template<TypeCategory C, int KIND> struct TypeBase {
-  static constexpr bool knowKind{true};
   static constexpr TypeCategory category{C};
   static constexpr int kind{KIND};
   static constexpr bool hasLen{false};
@@ -259,7 +258,6 @@ struct GenericScalar {
 
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CAT> struct SomeKind {
-  static constexpr bool knowKind{false};
   using Scalar = SomeKindScalar<CAT>;
   static constexpr TypeCategory category{CAT};
 };
@@ -272,7 +270,6 @@ using SomeLogical = SomeKind<TypeCategory::Logical>;
 
 // Represents a completely generic type.
 struct SomeType {
-  static constexpr bool knowKind{false};
   using Scalar = GenericScalar;
 };
 

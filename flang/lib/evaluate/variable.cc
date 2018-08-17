@@ -357,7 +357,7 @@ Expr<SubscriptInteger> DataRef::LEN() const {
       u_);
 }
 Expr<SubscriptInteger> Substring::LEN() const {
-  return Expr<SubscriptInteger>::Max{
+  return Extremum<SubscriptInteger>{
       Expr<SubscriptInteger>{0}, last() - first() + Expr<SubscriptInteger>{1}};
 }
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
