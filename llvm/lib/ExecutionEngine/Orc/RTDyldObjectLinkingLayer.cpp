@@ -80,10 +80,10 @@ namespace orc {
 
 RTDyldObjectLinkingLayer2::RTDyldObjectLinkingLayer2(
     ExecutionSession &ES, GetMemoryManagerFunction GetMemoryManager,
-    NotifyLoadedFunction NotifyLoaded, NotifyFinalizedFunction NotifyFinalized)
+    NotifyLoadedFunction NotifyLoaded, NotifyEmittedFunction NotifyEmitted)
     : ObjectLayer(ES), GetMemoryManager(GetMemoryManager),
       NotifyLoaded(std::move(NotifyLoaded)),
-      NotifyFinalized(std::move(NotifyFinalized)), ProcessAllSections(false) {}
+      NotifyEmitted(std::move(NotifyEmitted)), ProcessAllSections(false) {}
 
 void RTDyldObjectLinkingLayer2::emit(MaterializationResponsibility R,
                                      VModuleKey K,
@@ -157,10 +157,10 @@ void RTDyldObjectLinkingLayer2::emit(MaterializationResponsibility R,
     return;
   }
 
-  R.finalize();
+  R.emit();
 
-  if (NotifyFinalized)
-    NotifyFinalized(K);
+  if (NotifyEmitted)
+    NotifyEmitted(K);
 }
 
 void RTDyldObjectLinkingLayer2::mapSectionAddress(

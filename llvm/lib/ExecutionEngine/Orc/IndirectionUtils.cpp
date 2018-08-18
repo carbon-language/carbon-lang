@@ -36,7 +36,7 @@ private:
     SymbolMap Result;
     Result[Name] = JITEvaluatedSymbol(Compile(), JITSymbolFlags::Exported);
     R.resolve(Result);
-    R.finalize();
+    R.emit();
   }
 
   void discard(const JITDylib &JD, SymbolStringPtr Name) {

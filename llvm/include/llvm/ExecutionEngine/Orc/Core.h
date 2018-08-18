@@ -120,7 +120,7 @@ private:
 ///
 /// An instance of this class is passed to MaterializationUnits when their
 /// materialize method is called. It allows MaterializationUnits to resolve and
-/// finalize symbols, or abandon materialization by notifying any unmaterialized
+/// emit symbols, or abandon materialization by notifying any unmaterialized
 /// symbols of an error.
 class MaterializationResponsibility {
   friend class MaterializationUnit;
@@ -131,7 +131,7 @@ public:
 
   /// Destruct a MaterializationResponsibility instance. In debug mode
   ///        this asserts that all symbols being tracked have been either
-  ///        finalized or notified of an error.
+  ///        emitted or notified of an error.
   ~MaterializationResponsibility();
 
   /// Returns the target JITDylib that these symbols are being materialized
@@ -147,13 +147,18 @@ public:
   /// back to the JITDylib via the delegate method.
   SymbolNameSet getRequestedSymbols();
 
-  /// Resolves the given symbols. Individual calls to this method may
-  ///        resolve a subset of the symbols, but all symbols must have been
-  ///        resolved prior to calling finalize.
+  /// Notifies the target JITDylib that the given symbols have been resolved.
+  /// This will update the given symbols' addresses in the JITDylib, and notify
+  /// any pending queries on the given symbols of their resolution. The given
+  /// symbols must be ones covered by this MaterializationResponsibility
+  /// instance. Individual calls to this method may resolve a subset of the
+  /// symbols, but all symbols must have been resolved prior to calling emit.
   void resolve(const SymbolMap &Symbols);
 
-  /// Finalizes all symbols tracked by this instance.
-  void finalize();
+  /// Notifies the target JITDylib (and any pending queries on that JITDylib)
+  /// that all symbols covered by this MaterializationResponsibility instance
+  /// have been emitted.
+  void emit();
 
   /// Adds new symbols to the JITDylib and this responsibility instance.
   ///        JITDylib entries start out in the materializing state.
@@ -163,9 +168,11 @@ public:
   /// callbacks, metadata).
   Error defineMaterializing(const SymbolFlagsMap &SymbolFlags);
 
-  /// Notify all unfinalized symbols that an error has occurred.
+  /// Notify all not-yet-emitted covered by this MaterializationResponsibility
+  /// instance that an error has occurred.
   /// This will remove all symbols covered by this MaterializationResponsibilty
-  /// from V, and send an error to any queries waiting on these symbols.
+  /// from the target JITDylib, and send an error to any queries waiting on
+  /// these symbols.
   void failMaterialization();
 
   /// Transfers responsibility to the given MaterializationUnit for all
@@ -686,8 +693,8 @@ private:
   struct MaterializingInfo {
     AsynchronousSymbolQueryList PendingQueries;
     SymbolDependenceMap Dependants;
-    SymbolDependenceMap UnfinalizedDependencies;
-    bool IsFinalized = false;
+    SymbolDependenceMap UnemittedDependencies;
+    bool IsEmitted = false;
   };
 
   using MaterializingInfosMap = std::map<SymbolStringPtr, MaterializingInfo>;
@@ -720,9 +727,9 @@ private:
   void detachQueryHelper(AsynchronousSymbolQuery &Q,
                          const SymbolNameSet &QuerySymbols);
 
-  void transferFinalizedNodeDependencies(MaterializingInfo &DependantMI,
-                                         const SymbolStringPtr &DependantName,
-                                         MaterializingInfo &FinalizedMI);
+  void transferEmittedNodeDependencies(MaterializingInfo &DependantMI,
+                                       const SymbolStringPtr &DependantName,
+                                       MaterializingInfo &EmittedMI);
 
   Error defineMaterializing(const SymbolFlagsMap &SymbolFlags);
 
@@ -735,7 +742,7 @@ private:
 
   void resolve(const SymbolMap &Resolved);
 
-  void finalize(const SymbolFlagsMap &Finalized);
+  void emit(const SymbolFlagsMap &Emitted);
 
   void notifyFailed(const SymbolNameSet &FailedSymbols);
 

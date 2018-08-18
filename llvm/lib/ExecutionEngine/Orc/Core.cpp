@@ -527,7 +527,7 @@ void AsynchronousSymbolQuery::handleFullyResolved() {
 }
 
 void AsynchronousSymbolQuery::notifySymbolReady() {
-  assert(NotYetReadyCount != 0 && "All symbols already finalized");
+  assert(NotYetReadyCount != 0 && "All symbols already emitted");
   --NotYetReadyCount;
 }
 
@@ -624,14 +624,14 @@ void MaterializationResponsibility::resolve(const SymbolMap &Symbols) {
   JD.resolve(Symbols);
 }
 
-void MaterializationResponsibility::finalize() {
+void MaterializationResponsibility::emit() {
 #ifndef NDEBUG
   for (auto &KV : SymbolFlags)
     assert(!KV.second.isMaterializing() &&
-           "Failed to resolve symbol before finalization");
+           "Failed to resolve symbol before emission");
 #endif // NDEBUG
 
-  JD.finalize(SymbolFlags);
+  JD.emit(SymbolFlags);
   SymbolFlags.clear();
 }
 
@@ -707,7 +707,7 @@ AbsoluteSymbolsMaterializationUnit::AbsoluteSymbolsMaterializationUnit(
 void AbsoluteSymbolsMaterializationUnit::materialize(
     MaterializationResponsibility R) {
   R.resolve(Symbols);
-  R.finalize();
+  R.emit();
 }
 
 void AbsoluteSymbolsMaterializationUnit::discard(const JITDylib &JD,
@@ -839,7 +839,7 @@ void ReExportsMaterializationUnit::materialize(
               (*Result)[KV.second.Aliasee].getAddress(), KV.second.AliasFlags);
         }
         QueryInfo->R.resolve(ResolutionMap);
-        QueryInfo->R.finalize();
+        QueryInfo->R.emit();
       } else {
         auto &ES = QueryInfo->R.getTargetJITDylib().getExecutionSession();
         ES.reportError(Result.takeError());
@@ -1024,27 +1024,27 @@ void JITDylib::addDependencies(const SymbolStringPtr &Name,
          "Symbol is not lazy or materializing");
 
   auto &MI = MaterializingInfos[Name];
-  assert(!MI.IsFinalized && "Can not add dependencies to finalized symbol");
+  assert(!MI.IsEmitted && "Can not add dependencies to an emitted symbol");
 
   for (auto &KV : Dependencies) {
     assert(KV.first && "Null JITDylib in dependency?");
     auto &OtherJITDylib = *KV.first;
-    auto &DepsOnOtherJITDylib = MI.UnfinalizedDependencies[&OtherJITDylib];
+    auto &DepsOnOtherJITDylib = MI.UnemittedDependencies[&OtherJITDylib];
 
     for (auto &OtherSymbol : KV.second) {
 #ifndef NDEBUG
-      // Assert that this symbol exists and has not been finalized already.
+      // Assert that this symbol exists and has not been emitted already.
       auto SymI = OtherJITDylib.Symbols.find(OtherSymbol);
       assert(SymI != OtherJITDylib.Symbols.end() &&
              (SymI->second.getFlags().isLazy() ||
               SymI->second.getFlags().isMaterializing()) &&
-             "Dependency on finalized symbol");
+             "Dependency on emitted symbol");
 #endif
 
       auto &OtherMI = OtherJITDylib.MaterializingInfos[OtherSymbol];
 
-      if (OtherMI.IsFinalized)
-        transferFinalizedNodeDependencies(MI, Name, OtherMI);
+      if (OtherMI.IsEmitted)
+        transferEmittedNodeDependencies(MI, Name, OtherMI);
       else if (&OtherJITDylib != this || OtherSymbol != Name) {
         OtherMI.Dependants[this].insert(Name);
         DepsOnOtherJITDylib.insert(OtherSymbol);
@@ -1052,7 +1052,7 @@ void JITDylib::addDependencies(const SymbolStringPtr &Name,
     }
 
     if (DepsOnOtherJITDylib.empty())
-      MI.UnfinalizedDependencies.erase(&OtherJITDylib);
+      MI.UnemittedDependencies.erase(&OtherJITDylib);
   }
 }
 
@@ -1102,11 +1102,11 @@ void JITDylib::resolve(const SymbolMap &Resolved) {
   }
 }
 
-void JITDylib::finalize(const SymbolFlagsMap &Finalized) {
+void JITDylib::emit(const SymbolFlagsMap &Emitted) {
   auto FullyReadyQueries = ES.runSessionLocked([&, this]() {
     AsynchronousSymbolQuerySet ReadyQueries;
 
-    for (const auto &KV : Finalized) {
+    for (const auto &KV : Emitted) {
       const auto &Name = KV.first;
 
       auto MII = MaterializingInfos.find(Name);
@@ -1115,9 +1115,9 @@ void JITDylib::finalize(const SymbolFlagsMap &Finalized) {
 
       auto &MI = MII->second;
 
-      // For each dependant, transfer this node's unfinalized dependencies to
-      // it. If the dependant node is fully finalized then notify any pending
-      // queries.
+      // For each dependant, transfer this node's emitted dependencies to
+      // it. If the dependant node is ready (i.e. has no unemitted
+      // dependencies) then notify any pending queries.
       for (auto &KV : MI.Dependants) {
         auto &DependantJD = *KV.first;
         for (auto &DependantName : KV.second) {
@@ -1129,21 +1129,21 @@ void JITDylib::finalize(const SymbolFlagsMap &Finalized) {
           auto &DependantMI = DependantMII->second;
 
           // Remove the dependant's dependency on this node.
-          assert(DependantMI.UnfinalizedDependencies[this].count(Name) &&
+          assert(DependantMI.UnemittedDependencies[this].count(Name) &&
                  "Dependant does not count this symbol as a dependency?");
-          DependantMI.UnfinalizedDependencies[this].erase(Name);
-          if (DependantMI.UnfinalizedDependencies[this].empty())
-            DependantMI.UnfinalizedDependencies.erase(this);
+          DependantMI.UnemittedDependencies[this].erase(Name);
+          if (DependantMI.UnemittedDependencies[this].empty())
+            DependantMI.UnemittedDependencies.erase(this);
 
-          // Transfer unfinalized dependencies from this node to the dependant.
-          DependantJD.transferFinalizedNodeDependencies(DependantMI,
-                                                        DependantName, MI);
+          // Transfer unemitted dependencies from this node to the dependant.
+          DependantJD.transferEmittedNodeDependencies(DependantMI,
+                                                      DependantName, MI);
 
-          // If the dependant is finalized and this node was the last of its
-          // unfinalized dependencies then notify any pending queries on the
-          // dependant node.
-          if (DependantMI.IsFinalized &&
-              DependantMI.UnfinalizedDependencies.empty()) {
+          // If the dependant is emitted and this node was the last of its
+          // unemitted dependencies then the dependant node is now ready, so
+          // notify any pending queries on the dependant node.
+          if (DependantMI.IsEmitted &&
+              DependantMI.UnemittedDependencies.empty()) {
             assert(DependantMI.Dependants.empty() &&
                    "Dependants should be empty by now");
             for (auto &Q : DependantMI.PendingQueries) {
@@ -1153,8 +1153,8 @@ void JITDylib::finalize(const SymbolFlagsMap &Finalized) {
               Q->removeQueryDependence(DependantJD, DependantName);
             }
 
-            // If this dependant node was fully finalized we can erase its
-            // MaterializingInfo and update its materializing state.
+            // Since this dependant is now ready, we erase its MaterializingInfo
+            // and update its materializing state.
             assert(DependantJD.Symbols.count(DependantName) &&
                    "Dependant has no entry in the Symbols table");
             auto &DependantSym = DependantJD.Symbols[DependantName];
@@ -1165,9 +1165,9 @@ void JITDylib::finalize(const SymbolFlagsMap &Finalized) {
         }
       }
       MI.Dependants.clear();
-      MI.IsFinalized = true;
+      MI.IsEmitted = true;
 
-      if (MI.UnfinalizedDependencies.empty()) {
+      if (MI.UnemittedDependencies.empty()) {
         for (auto &Q : MI.PendingQueries) {
           Q->notifySymbolReady();
           if (Q->isFullyReady())
@@ -1363,8 +1363,8 @@ void JITDylib::lodgeQueryImpl(
       // Add MU to the list of MaterializationUnits to be materialized.
       MUs.push_back(std::move(MU));
     } else if (!SymI->second.getFlags().isMaterializing()) {
-      // The symbol is neither lazy nor materializing. Finalize it and
-      // continue.
+      // The symbol is neither lazy nor materializing, so it must be
+      // ready. Notify the query and continue.
       Q->notifySymbolReady();
       continue;
     }
@@ -1482,8 +1482,8 @@ JITDylib::lookupImpl(std::shared_ptr<AsynchronousSymbolQuery> &Q,
       // Add MU to the list of MaterializationUnits to be materialized.
       MUs.push_back(std::move(MU));
     } else if (!SymI->second.getFlags().isMaterializing()) {
-      // The symbol is neither lazy nor materializing. Finalize it and
-      // continue.
+      // The symbol is neither lazy nor materializing, so it must be ready.
+      // Notify the query and continue.
       Q->notifySymbolReady();
       if (Q->isFullyReady())
         ActionFlags |= NotifyFullyReady;
@@ -1531,7 +1531,7 @@ void JITDylib::dump(raw_ostream &OS) {
       OS << "  MaterializingInfos entries:\n";
     for (auto &KV : MaterializingInfos) {
       OS << "    \"" << *KV.first << "\":\n"
-         << "      IsFinalized = " << (KV.second.IsFinalized ? "true" : "false")
+         << "      IsEmitted = " << (KV.second.IsEmitted ? "true" : "false")
          << "\n"
          << "      " << KV.second.PendingQueries.size()
          << " pending queries: { ";
@@ -1540,8 +1540,8 @@ void JITDylib::dump(raw_ostream &OS) {
       OS << "}\n      Dependants:\n";
       for (auto &KV2 : KV.second.Dependants)
         OS << "        " << KV2.first->getName() << ": " << KV2.second << "\n";
-      OS << "      Unfinalized Dependencies:\n";
-      for (auto &KV2 : KV.second.UnfinalizedDependencies)
+      OS << "      Unemitted Dependencies:\n";
+      for (auto &KV2 : KV.second.UnemittedDependencies)
         OS << "        " << KV2.first->getName() << ": " << KV2.second << "\n";
     }
   });
@@ -1649,12 +1649,12 @@ void JITDylib::detachQueryHelper(AsynchronousSymbolQuery &Q,
   }
 }
 
-void JITDylib::transferFinalizedNodeDependencies(
+void JITDylib::transferEmittedNodeDependencies(
     MaterializingInfo &DependantMI, const SymbolStringPtr &DependantName,
-    MaterializingInfo &FinalizedMI) {
-  for (auto &KV : FinalizedMI.UnfinalizedDependencies) {
+    MaterializingInfo &EmittedMI) {
+  for (auto &KV : EmittedMI.UnemittedDependencies) {
     auto &DependencyJD = *KV.first;
-    SymbolNameSet *UnfinalizedDependenciesOnDependencyJD = nullptr;
+    SymbolNameSet *UnemittedDependenciesOnDependencyJD = nullptr;
 
     for (auto &DependencyName : KV.second) {
       auto &DependencyMI = DependencyJD.MaterializingInfos[DependencyName];
@@ -1665,12 +1665,12 @@ void JITDylib::transferFinalizedNodeDependencies(
 
       // If we haven't looked up the dependencies for DependencyJD yet, do it
       // now and cache the result.
-      if (!UnfinalizedDependenciesOnDependencyJD)
-        UnfinalizedDependenciesOnDependencyJD =
-            &DependantMI.UnfinalizedDependencies[&DependencyJD];
+      if (!UnemittedDependenciesOnDependencyJD)
+        UnemittedDependenciesOnDependencyJD =
+            &DependantMI.UnemittedDependencies[&DependencyJD];
 
       DependencyMI.Dependants[this].insert(DependantName);
-      UnfinalizedDependenciesOnDependencyJD->insert(DependencyName);
+      UnemittedDependenciesOnDependencyJD->insert(DependencyName);
     }
   }
 }

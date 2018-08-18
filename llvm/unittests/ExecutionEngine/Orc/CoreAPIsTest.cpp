@@ -96,7 +96,7 @@ TEST_F(CoreAPIsStandardTest, BasicSuccessfulLookup) {
   EXPECT_TRUE(OnResolutionRun) << "Should have been resolved";
   EXPECT_FALSE(OnReadyRun) << "Should not have been marked ready yet";
 
-  FooMR->finalize();
+  FooMR->emit();
 
   EXPECT_TRUE(OnReadyRun) << "Should have been marked ready";
 }
@@ -257,7 +257,7 @@ TEST_F(CoreAPIsStandardTest, TestThatReExportsDontUnnecessarilyMaterialize) {
       [&](MaterializationResponsibility R) {
         BarMaterialized = true;
         R.resolve({{Bar, BarSym}});
-        R.finalize();
+        R.emit();
       });
 
   cantFail(JD.define(BarMU));
@@ -315,7 +315,7 @@ TEST_F(CoreAPIsStandardTest, TestTrivialCircularDependency) {
             NoDependenciesToRegister);
 
   FooR->resolve({{Foo, FooSym}});
-  FooR->finalize();
+  FooR->emit();
 
   EXPECT_TRUE(FooReady)
     << "Self-dependency prevented symbol from being marked ready";
@@ -324,7 +324,7 @@ TEST_F(CoreAPIsStandardTest, TestTrivialCircularDependency) {
 TEST_F(CoreAPIsStandardTest, TestCircularDependenceInOneJITDylib) {
   // Test that a circular symbol dependency between three symbols in a JITDylib
   // does not prevent any symbol from becoming 'ready' once all symbols are
-  // finalized.
+  // emitted.
 
   // Create three MaterializationResponsibility objects: one for each of Foo,
   // Bar and Baz. These are optional because MaterializationResponsibility
@@ -418,7 +418,7 @@ TEST_F(CoreAPIsStandardTest, TestCircularDependenceInOneJITDylib) {
   EXPECT_FALSE(BarResolved) << "\"Bar\" should not be resolved yet";
   EXPECT_FALSE(BazResolved) << "\"Baz\" should not be resolved yet";
 
-  // Resolve the symbols (but do not finalized them).
+  // Resolve the symbols (but do not emit them).
   FooR->resolve({{Foo, FooSym}});
   BarR->resolve({{Bar, BarSym}});
   BazR->resolve({{Baz, BazSym}});
@@ -432,17 +432,17 @@ TEST_F(CoreAPIsStandardTest, TestCircularDependenceInOneJITDylib) {
   EXPECT_FALSE(BarReady) << "\"Bar\" should not be ready yet";
   EXPECT_FALSE(BazReady) << "\"Baz\" should not be ready yet";
 
-  // Finalize two of the symbols.
-  FooR->finalize();
-  BarR->finalize();
+  // Emit two of the symbols.
+  FooR->emit();
+  BarR->emit();
 
   // Verify that nothing is ready until the circular dependence is resolved.
   EXPECT_FALSE(FooReady) << "\"Foo\" still should not be ready";
   EXPECT_FALSE(BarReady) << "\"Bar\" still should not be ready";
   EXPECT_FALSE(BazReady) << "\"Baz\" still should not be ready";
 
-  // Finalize the last symbol.
-  BazR->finalize();
+  // Emit the last symbol.
+  BazR->emit();
 
   // Verify that everything becomes ready once the circular dependence resolved.
   EXPECT_TRUE(FooReady) << "\"Foo\" should be ready now";
@@ -492,7 +492,7 @@ TEST_F(CoreAPIsStandardTest, AddAndMaterializeLazySymbol) {
       [&](MaterializationResponsibility R) {
         assert(BarDiscarded && "Bar should have been discarded by this point");
         R.resolve(SymbolMap({{Foo, FooSym}}));
-        R.finalize();
+        R.emit();
         FooMaterialized = true;
       },
       [&](const JITDylib &JD, SymbolStringPtr Name) {
@@ -546,7 +546,7 @@ TEST_F(CoreAPIsStandardTest, DefineMaterializingSymbol) {
         cantFail(
             R.defineMaterializing(SymbolFlagsMap({{Bar, BarSym.getFlags()}})));
         R.resolve(SymbolMap({{Foo, FooSym}, {Bar, BarSym}}));
-        R.finalize();
+        R.emit();
       });
 
   cantFail(JD.define(MU));
@@ -613,7 +613,7 @@ TEST_F(CoreAPIsStandardTest, TestLookupWithUnthreadedMaterialization) {
       SymbolFlagsMap({{Foo, JITSymbolFlags::Exported}}),
       [&](MaterializationResponsibility R) {
         R.resolve({{Foo, FooSym}});
-        R.finalize();
+        R.emit();
       });
 
   cantFail(JD.define(MU));
@@ -670,14 +670,14 @@ TEST_F(CoreAPIsStandardTest, TestGetRequestedSymbolsAndReplace) {
             SymbolFlagsMap({{Bar, BarSym.getFlags()}}),
             [&](MaterializationResponsibility R2) {
               R2.resolve(SymbolMap({{Bar, BarSym}}));
-              R2.finalize();
+              R2.emit();
               BarMaterialized = true;
             });
 
         R.replace(std::move(NewMU));
 
         R.resolve(SymbolMap({{Foo, FooSym}}));
-        R.finalize();
+        R.emit();
 
         FooMaterialized = true;
       });
@@ -707,9 +707,9 @@ TEST_F(CoreAPIsStandardTest, TestMaterializationResponsibilityDelegation) {
         auto R2 = R.delegate({Bar});
 
         R.resolve({{Foo, FooSym}});
-        R.finalize();
+        R.emit();
         R2.resolve({{Bar, BarSym}});
-        R2.finalize();
+        R2.emit();
       });
 
   cantFail(JD.define(MU));
@@ -762,7 +762,7 @@ TEST_F(CoreAPIsStandardTest, TestMaterializeWeakSymbol) {
   consumeError(std::move(Err));
 
   FooResponsibility->resolve(SymbolMap({{Foo, FooSym}}));
-  FooResponsibility->finalize();
+  FooResponsibility->emit();
 }
 
 } // namespace
