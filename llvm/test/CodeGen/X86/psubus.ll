@@ -1186,8 +1186,7 @@ define <64 x i8> @test17(<64 x i8> %x, i8 zeroext %w) nounwind {
 ; AVX512-LABEL: test17:
 ; AVX512:       # %bb.0: # %vector.ph
 ; AVX512-NEXT:    vpbroadcastb %edi, %zmm1
-; AVX512-NEXT:    vpcmpnltub %zmm1, %zmm0, %k1
-; AVX512-NEXT:    vpsubb %zmm1, %zmm0, %zmm0 {%k1} {z}
+; AVX512-NEXT:    vpsubusb %zmm1, %zmm0, %zmm0
 ; AVX512-NEXT:    retq
 vector.ph:
   %0 = insertelement <64 x i8> undef, i8 %w, i32 0
@@ -1236,8 +1235,7 @@ define <32 x i16> @test18(<32 x i16> %x, i16 zeroext %w) nounwind {
 ; AVX512-LABEL: test18:
 ; AVX512:       # %bb.0: # %vector.ph
 ; AVX512-NEXT:    vpbroadcastw %edi, %zmm1
-; AVX512-NEXT:    vpcmpnltuw %zmm1, %zmm0, %k1
-; AVX512-NEXT:    vpsubw %zmm1, %zmm0, %zmm0 {%k1} {z}
+; AVX512-NEXT:    vpsubusw %zmm1, %zmm0, %zmm0
 ; AVX512-NEXT:    retq
 vector.ph:
   %0 = insertelement <32 x i16> undef, i16 %w, i32 0

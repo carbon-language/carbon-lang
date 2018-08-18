@@ -33029,9 +33029,10 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
 
   // Match VSELECTs into subs with unsigned saturation.
   if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
-      // psubus is available in SSE2 and AVX2 for i8 and i16 vectors.
-      ((Subtarget.hasSSE2() && (VT == MVT::v16i8 || VT == MVT::v8i16)) ||
-       (Subtarget.hasAVX() && (VT == MVT::v32i8 || VT == MVT::v16i16)))) {
+      // psubus is available in SSE2 for i8 and i16 vectors.
+      Subtarget.hasSSE2() &&
+      (VT.getVectorElementType() == MVT::i8 ||
+       VT.getVectorElementType() == MVT::i16)) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     // Check if one of the arms of the VSELECT is a zero vector. If it's on the
@@ -33062,7 +33063,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
         return SplitOpsAndApply(DAG, Subtarget, DL, VT, { OpLHS, OpRHS },
                                 SUBUSBuilder);
 
-      if (auto *OpRHSBV = dyn_cast<BuildVectorSDNode>(OpRHS))
+      if (auto *OpRHSBV = dyn_cast<BuildVectorSDNode>(OpRHS)) {
         if (isa<BuildVectorSDNode>(CondRHS)) {
           // If the RHS is a constant we have to reverse the const
           // canonicalization.
@@ -33083,7 +33084,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
           // FIXME: Would it be better to use computeKnownBits to determine
           //        whether it's safe to decanonicalize the xor?
           // x s< 0 ? x^C : 0 --> subus x, C
-          if (auto *OpRHSConst = OpRHSBV->getConstantSplatNode())
+          if (auto *OpRHSConst = OpRHSBV->getConstantSplatNode()) {
             if (CC == ISD::SETLT && Other.getOpcode() == ISD::XOR &&
                 ISD::isBuildVectorAllZeros(CondRHS.getNode()) &&
                 OpRHSConst->getAPIntValue().isSignMask()) {
@@ -33093,7 +33094,9 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
               return SplitOpsAndApply(DAG, Subtarget, DL, VT, { OpLHS, OpRHS },
                                       SUBUSBuilder);
             }
+          }
         }
+      }
     }
   }
 
