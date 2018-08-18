@@ -33102,9 +33102,10 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
 
   // Match VSELECTs into add with unsigned saturation.
   if (N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
-      ((Subtarget.hasSSE2() && (VT == MVT::v16i8 || VT == MVT::v8i16)) ||
-       (Subtarget.hasAVX() && (VT == MVT::v32i8 || VT == MVT::v16i16)) ||
-       (Subtarget.useBWIRegs() && (VT == MVT::v64i8 || VT == MVT::v32i16)))) {
+      // paddus is available in SSE2 for i8 and i16 vectors.
+      Subtarget.hasSSE2() &&
+      (VT.getVectorElementType() == MVT::i8 ||
+       VT.getVectorElementType() == MVT::i16)) {
     ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
     SDValue CondLHS = Cond->getOperand(0);
@@ -33136,7 +33137,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
                              ArrayRef<SDValue> Ops) {
         return DAG.getNode(X86ISD::ADDUS, DL, Ops[0].getValueType(), Ops);
       };
-      
+
       // x <= x+y ? x+y : ~0 --> addus x, y
       if ((CC == ISD::SETULE) &&
           Other.getOpcode() == ISD::ADD && Other == CondRHS)
