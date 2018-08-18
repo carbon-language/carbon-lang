@@ -32,7 +32,7 @@ public:
 
   /// Adds a MaterializationUnit representing the given IR to the given
   /// JITDylib.
-  virtual Error add(JITDylib &V, VModuleKey K, std::unique_ptr<Module> M);
+  virtual Error add(JITDylib &JD, VModuleKey K, std::unique_ptr<Module> M);
 
   /// Emit should materialize the given IR.
   virtual void emit(MaterializationResponsibility R, VModuleKey K,
@@ -67,7 +67,7 @@ protected:
   SymbolNameToDefinitionMap SymbolToDefinition;
 
 private:
-  void discard(const JITDylib &V, SymbolStringPtr Name) override;
+  void discard(const JITDylib &JD, SymbolStringPtr Name) override;
 };
 
 /// MaterializationUnit that materializes modules by calling the 'emit' method
@@ -95,7 +95,7 @@ public:
 
   /// Adds a MaterializationUnit representing the given IR to the given
   /// JITDylib.
-  virtual Error add(JITDylib &V, VModuleKey K, std::unique_ptr<MemoryBuffer> O);
+  virtual Error add(JITDylib &JD, VModuleKey K, std::unique_ptr<MemoryBuffer> O);
 
   /// Emit should materialize the given IR.
   virtual void emit(MaterializationResponsibility R, VModuleKey K,
@@ -119,7 +119,7 @@ public:
 private:
 
   void materialize(MaterializationResponsibility R) override;
-  void discard(const JITDylib &V, SymbolStringPtr Name) override;
+  void discard(const JITDylib &JD, SymbolStringPtr Name) override;
 
   ObjectLayer &L;
   VModuleKey K;
