@@ -272,3 +272,44 @@ define <4 x i16> @test_x86_sse2_psubus_w_64(<4 x i16> %a0, <4 x i16> %a1) {
   ret <4 x i16> %sub
 }
 
+; This test has a normal add and a saturating add.
+; FIXME: This should be an addw and a addusw, but a bad canonicalization makes this not work.
+define <8 x i16> @add_addusw(<8 x i16> %x, <8 x i16> %y, <8 x i16> %z) {
+; SSE-LABEL: add_addusw:
+; SSE:       ## %bb.0:
+; SSE-NEXT:    paddw %xmm2, %xmm1 ## encoding: [0x66,0x0f,0xfd,0xca]
+; SSE-NEXT:    paddw %xmm1, %xmm0 ## encoding: [0x66,0x0f,0xfd,0xc1]
+; SSE-NEXT:    movdqa {{.*#+}} xmm2 = [32768,32768,32768,32768,32768,32768,32768,32768]
+; SSE-NEXT:    ## encoding: [0x66,0x0f,0x6f,0x15,A,A,A,A]
+; SSE-NEXT:    ## fixup A - offset: 4, value: LCPI8_0, kind: FK_Data_4
+; SSE-NEXT:    pxor %xmm2, %xmm1 ## encoding: [0x66,0x0f,0xef,0xca]
+; SSE-NEXT:    pxor %xmm0, %xmm2 ## encoding: [0x66,0x0f,0xef,0xd0]
+; SSE-NEXT:    pcmpgtw %xmm2, %xmm1 ## encoding: [0x66,0x0f,0x65,0xca]
+; SSE-NEXT:    por %xmm1, %xmm0 ## encoding: [0x66,0x0f,0xeb,0xc1]
+; SSE-NEXT:    retl ## encoding: [0xc3]
+;
+; AVX2-LABEL: add_addusw:
+; AVX2:       ## %bb.0:
+; AVX2-NEXT:    vpaddw %xmm2, %xmm1, %xmm1 ## encoding: [0xc5,0xf1,0xfd,0xca]
+; AVX2-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xfd,0xc1]
+; AVX2-NEXT:    vpminuw %xmm0, %xmm1, %xmm2 ## encoding: [0xc4,0xe2,0x71,0x3a,0xd0]
+; AVX2-NEXT:    vpcmpeqw %xmm2, %xmm1, %xmm1 ## encoding: [0xc5,0xf1,0x75,0xca]
+; AVX2-NEXT:    vpcmpeqd %xmm2, %xmm2, %xmm2 ## encoding: [0xc5,0xe9,0x76,0xd2]
+; AVX2-NEXT:    vpxor %xmm2, %xmm1, %xmm1 ## encoding: [0xc5,0xf1,0xef,0xca]
+; AVX2-NEXT:    vpor %xmm0, %xmm1, %xmm0 ## encoding: [0xc5,0xf1,0xeb,0xc0]
+; AVX2-NEXT:    retl ## encoding: [0xc3]
+;
+; SKX-LABEL: add_addusw:
+; SKX:       ## %bb.0:
+; SKX-NEXT:    vpaddw %xmm2, %xmm1, %xmm1 ## EVEX TO VEX Compression encoding: [0xc5,0xf1,0xfd,0xca]
+; SKX-NEXT:    vpaddw %xmm1, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0xfd,0xc1]
+; SKX-NEXT:    vpcmpnleuw %xmm0, %xmm1, %k1 ## encoding: [0x62,0xf3,0xf5,0x08,0x3e,0xc8,0x06]
+; SKX-NEXT:    vpcmpeqd %xmm1, %xmm1, %xmm1 ## encoding: [0xc5,0xf1,0x76,0xc9]
+; SKX-NEXT:    vmovdqu16 %xmm1, %xmm0 {%k1} ## encoding: [0x62,0xf1,0xff,0x09,0x6f,0xc1]
+; SKX-NEXT:    retl ## encoding: [0xc3]
+  %a = add <8 x i16> %y, %z
+  %b = add <8 x i16> %x, %a
+  %c = icmp ugt <8 x i16> %a, %b
+  %res = select <8 x i1> %c, <8 x i16> <i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1, i16 -1>, <8 x i16> %b
+  ret <8 x i16> %res
+}
