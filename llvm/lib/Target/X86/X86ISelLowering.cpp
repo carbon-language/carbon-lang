@@ -33111,12 +33111,6 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
     SDValue CondLHS = Cond->getOperand(0);
     SDValue CondRHS = Cond->getOperand(1);
 
-    // Canonicalize ADD to CondRHS to simplify the logic below.
-    if (CondLHS.getOpcode() == ISD::ADD) {
-      std::swap(CondLHS, CondRHS);
-      CC = ISD::getSetCCSwappedOperands(CC);
-    }
-
     // Check if one of the arms of the VSELECT is vector with all bits set.
     // If it's on the left side invert the predicate to simplify logic below.
     SDValue Other;
@@ -33127,10 +33121,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
       Other = LHS;
     }
 
-    // We can test against either of the addition operands.
-    if (Other.getNode() && Other.getNumOperands() == 2 &&
-        (Other.getOperand(0) == CondLHS ||
-         Other.getOperand(1) == CondLHS)) {
+    if (Other.getNode() && Other.getOpcode() == ISD::ADD) {
       SDValue OpLHS = Other.getOperand(0), OpRHS = Other.getOperand(1);
 
       auto ADDUSBuilder = [](SelectionDAG &DAG, const SDLoc &DL,
@@ -33138,9 +33129,17 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
         return DAG.getNode(X86ISD::ADDUS, DL, Ops[0].getValueType(), Ops);
       };
 
+      // Canonicalize condition operands.
+      if (CC == ISD::SETUGE) {
+        std::swap(CondLHS, CondRHS);
+        CC = ISD::SETULE;
+      }
+
+      // We can test against either of the addition operands.
       // x <= x+y ? x+y : ~0 --> addus x, y
-      if ((CC == ISD::SETULE) &&
-          Other.getOpcode() == ISD::ADD && Other == CondRHS)
+      // x+y >= x ? x+y : ~0 --> addus x, y
+      if (CC == ISD::SETULE && Other == CondRHS &&
+          (OpLHS == CondLHS || OpRHS == CondLHS))
         return SplitOpsAndApply(DAG, Subtarget, DL, VT, { OpLHS, OpRHS },
                                 ADDUSBuilder);
     }
