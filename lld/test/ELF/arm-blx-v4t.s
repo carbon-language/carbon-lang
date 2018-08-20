@@ -7,7 +7,6 @@
 // features.
 
 // CHECK: warning: lld uses blx instruction, no object with architecture supporting feature detected.
-// CHECK-NEXT: warning: lld may use movt/movw, no object with architecture supporting feature detected.
 
  .text
  .syntax unified
