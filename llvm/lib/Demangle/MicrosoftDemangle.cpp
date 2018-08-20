@@ -2170,6 +2170,8 @@ Name *Demangler::demangleAnonymousNamespaceName(StringView &MangledName) {
     Error = true;
     return nullptr;
   }
+  StringView NamespaceKey = MangledName.substr(0, EndPos);
+  memorizeString(NamespaceKey);
   MangledName = MangledName.substr(EndPos + 1);
   return Node;
 }
