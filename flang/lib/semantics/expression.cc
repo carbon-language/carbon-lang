@@ -25,7 +25,7 @@ namespace Fortran::semantics {
 
 using common::TypeCategory;
 using evaluate::Expr;
-using evaluate::GenericExpr;
+using evaluate::SomeType;
 using evaluate::Type;
 
 using MaybeIntExpr = std::optional<Expr<evaluate::SomeInteger>>;
@@ -117,8 +117,8 @@ static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
 }
 
 template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
-  std::function<GenericExpr(A &&)> f{
-      [](A &&y) { return GenericExpr{std::move(y)}; }};
+  std::function<Expr<SomeType>(A &&)> f{
+      [](A &&y) { return Expr<SomeType>{std::move(y)}; }};
   return common::MapOptional(f, std::move(x));
 }
 
@@ -153,7 +153,7 @@ MaybeExpr AnalyzeHelper(
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
   Expr<evaluate::DefaultCharacter> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
-  return {GenericExpr{Expr<evaluate::SomeCharacter>{std::move(chExpr)}}};
+  return {Expr<SomeType>{Expr<evaluate::SomeCharacter>{std::move(chExpr)}}};
 }
 
 // Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
@@ -269,7 +269,7 @@ static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
           AnalyzeLiteral(ea, std::get<parser::RealLiteralConstant>(x.t))}) {
     if (auto sign{std::get<std::optional<parser::Sign>>(x.t)}) {
       if (sign == parser::Sign::Negative) {
-        return {-*result};
+        return {-std::move(*result)};
       }
     }
     return result;
@@ -577,12 +577,12 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
 std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
     MaybeExpr &&real, MaybeExpr &&imaginary) {
   // TODO: pmk abstract further, this will be a common pattern
-  auto partial{[&](GenericExpr &&x, GenericExpr &&y) {
+  auto partial{[&](Expr<SomeType> &&x, Expr<SomeType> &&y) {
     return evaluate::ConvertRealOperands(
         context_.messages, std::move(x), std::move(y));
   }};
   using fType =
-      evaluate::ConvertRealOperandsResult(GenericExpr &&, GenericExpr &&);
+      evaluate::ConvertRealOperandsResult(Expr<SomeType> &&, Expr<SomeType> &&);
   std::function<fType> f{partial};
   auto converted{common::MapOptional(f, std::move(real), std::move(imaginary))};
   if (auto joined{common::JoinOptionals(std::move(converted))}) {

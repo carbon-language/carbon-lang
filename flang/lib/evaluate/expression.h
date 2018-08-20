@@ -42,6 +42,8 @@ using common::RelationalOperator;
 // wrap discriminated unions.
 template<typename A> class Expr;
 
+template<typename A> using ResultType = typename std::decay_t<A>::Result;
+
 template<typename DERIVED, typename RESULT, typename... OPERAND>
 class Operation {
 public:
@@ -596,92 +598,6 @@ public:
       Expr<SomeCharacter>, Expr<SomeLogical>, BOZLiteralConstant>
       u;
 };
-
-using GenericExpr = Expr<SomeType>;  // TODO: delete name?
-
-template<typename A> using ResultType = typename std::decay_t<A>::Result;
-
-// Convenience functions and operator overloadings for expression construction.
-
-template<TypeCategory C, int K>
-Expr<Type<C, K>> operator-(const Expr<Type<C, K>> &x) {
-  return {Negate<Type<C, K>>{x}};
-}
-template<TypeCategory C>
-Expr<SomeKind<C>> operator-(const Expr<SomeKind<C>> &x) {
-  return std::visit(
-      [](const auto &y) -> Expr<SomeKind<C>> { return {-y}; }, x.u);
-}
-
-#define BINARY(op, CONSTR) \
-  template<TypeCategory C, int K> \
-  Expr<Type<C, K>> operator op( \
-      const Expr<Type<C, K>> &x, const Expr<Type<C, K>> &y) { \
-    return {CONSTR<Type<C, K>>{x, y}}; \
-  } \
-  template<TypeCategory C> \
-  Expr<SomeKind<C>> operator op( \
-      const Expr<SomeKind<C>> &x, const Expr<SomeKind<C>> &y) { \
-    return std::visit( \
-        [](const auto &xk, const auto &yk) -> Expr<SomeKind<C>> { \
-          return {xk op yk}; \
-        }, \
-        x.u, y.u); \
-  }
-
-BINARY(+, Add)
-BINARY(-, Subtract)
-BINARY(*, Multiply)
-BINARY(/, Divide)
-#undef BINARY
-
-#if 0
-#define OLDBINARY(FUNC, CONSTR) \
-  template<typename A> A FUNC(const A &x, const A &y) { \
-    return {CONSTR<typename A::Result>{x, y}}; \
-  } \
-  template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, A> FUNC(const A &x, A &&y) { \
-    return {CONSTR<typename A::Result>{A{x}, std::move(y)}}; \
-  } \
-  template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, A> FUNC(A &&x, const A &y) { \
-    return {CONSTR<typename A::Result>{std::move(x), A{y}}}; \
-  } \
-  template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, A> FUNC(A &&x, A &&y) { \
-    return {CONSTR<typename A::Result>{std::move(x), std::move(y)}}; \
-  }
-#undef OLDBINARY
-#endif
-
-#define BINARY(FUNC, OP) \
-  template<typename A> Expr<LogicalResult> FUNC(const A &x, const A &y) { \
-    return {Relational<ResultType<A>>{OP, x, y}}; \
-  } \
-  template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, Expr<LogicalResult>> FUNC( \
-      const A &x, A &&y) { \
-    return {Relational<ResultType<A>>{OP, x, std::move(y)}}; \
-  } \
-  template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, Expr<LogicalResult>> FUNC( \
-      A &&x, const A &y) { \
-    return {Relational<ResultType<A>>{OP, std::move(x), y}}; \
-  } \
-  template<typename A> \
-  std::enable_if_t<!std::is_reference_v<A>, Expr<LogicalResult>> FUNC( \
-      A &&x, A &&y) { \
-    return {Relational<ResultType<A>>{OP, std::move(x), std::move(y)}}; \
-  }
-
-BINARY(operator<, RelationalOperator::LT)
-BINARY(operator<=, RelationalOperator::LE)
-BINARY(operator==, RelationalOperator::EQ)
-BINARY(operator!=, RelationalOperator::NE)
-BINARY(operator>=, RelationalOperator::GE)
-BINARY(operator>, RelationalOperator::GT)
-#undef BINARY
 
 extern template class Expr<Type<TypeCategory::Character, 1>>;  // TODO others
 extern template struct Relational<Type<TypeCategory::Integer, 1>>;

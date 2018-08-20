@@ -23,7 +23,7 @@
 
 namespace Fortran::semantics {
 
-using MaybeExpr = std::optional<evaluate::GenericExpr>;
+using MaybeExpr = std::optional<evaluate::Expr<evaluate::SomeType>>;
 
 class ExpressionAnalyzer {
 public:

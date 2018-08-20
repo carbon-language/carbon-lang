@@ -15,6 +15,7 @@
 #include "expression.h"
 #include "common.h"
 #include "int-power.h"
+#include "tools.h"
 #include "variable.h"
 #include "../common/idioms.h"
 #include "../parser/characters.h"

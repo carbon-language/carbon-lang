@@ -20,20 +20,9 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-Expr<SomeReal> ConvertToTypeOf(
-    const Expr<SomeReal> &to, const Expr<SomeInteger> &from) {
-  return std::visit(
-      [&](const auto &rk) { return Expr<SomeReal>{decltype(rk){to}}; }, to.u);
-}
-
-Expr<SomeReal> ConvertToTypeOf(
-    const Expr<SomeReal> &to, const Expr<SomeReal> &from) {
-  return std::visit(
-      [&](const auto &rk) { return Expr<SomeReal>{decltype(rk){to}}; }, to.u);
-}
-
 std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> ConvertRealOperands(
-    parser::ContextualMessages &messages, GenericExpr &&x, GenericExpr &&y) {
+    parser::ContextualMessages &messages, Expr<SomeType> &&x,
+    Expr<SomeType> &&y) {
   return std::visit(
       common::visitors{[&](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
                          // Can happen in a CMPLX() constructor.  Per F'2018,
@@ -43,11 +32,11 @@ std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> ConvertRealOperands(
                              Expr<SomeReal>{Expr<DefaultReal>{std::move(iy)}})};
                        },
           [&](Expr<SomeInteger> &&ix, Expr<SomeReal> &&ry) {
-            auto rx{ConvertToTypeOf(ry, std::move(ix))};
+            auto rx{ConvertToTypeAndKindOf(ry, std::move(ix))};
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
           [&](Expr<SomeReal> &&rx, Expr<SomeInteger> &&iy) {
-            auto ry{ConvertToTypeOf(rx, std::move(iy))};
+            auto ry{ConvertToTypeAndKindOf(rx, std::move(iy))};
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
           [&](Expr<SomeReal> &&rx, Expr<SomeReal> &&ry) {
@@ -63,8 +52,8 @@ std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> ConvertRealOperands(
 }
 
 std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> ConvertRealOperands(
-    parser::ContextualMessages &messages, std::optional<GenericExpr> &&x,
-    std::optional<GenericExpr> &&y) {
+    parser::ContextualMessages &messages, std::optional<Expr<SomeType>> &&x,
+    std::optional<Expr<SomeType>> &&y) {
   if (x.has_value() && y.has_value()) {
     return ConvertRealOperands(messages, std::move(*x), std::move(*y));
   }

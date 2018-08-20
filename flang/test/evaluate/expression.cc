@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "../../lib/evaluate/expression.h"
+#include "../../lib/evaluate/tools.h"
 #include "testing.h"
 #include "../../lib/parser/message.h"
 #include <cstdio>
@@ -41,11 +42,9 @@ int main() {
   FoldingContext context{messages};
   ex1.Fold(context);
   MATCH("-10_4", Dump(ex1));
-  MATCH("(6_4.LE.7_4)",
-      Dump(DefaultIntegerExpr{6} <= DefaultIntegerExpr{7}));
+  MATCH("(1_4/2_4)", Dump(DefaultIntegerExpr{1} / DefaultIntegerExpr{2}));
   DefaultIntegerExpr a{1};
   DefaultIntegerExpr b{2};
-  MATCH("(1_4/2_4)", Dump(a / b));
   MATCH("1_4", Dump(a));
   a = b;
   MATCH("2_4", Dump(a));

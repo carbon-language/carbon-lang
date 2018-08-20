@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "variable.h"
+#include "tools.h"
 #include "../common/idioms.h"
 #include "../parser/char-block.h"
 #include "../parser/characters.h"

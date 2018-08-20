@@ -23,18 +23,92 @@
 
 namespace Fortran::evaluate {
 
-// Convert the second argument to the same type and kind of the first.
-Expr<SomeReal> ConvertToTypeOf(
-    const Expr<SomeReal> &to, const Expr<SomeInteger> &from);
-Expr<SomeReal> ConvertToTypeOf(
-    const Expr<SomeReal> &to, const Expr<SomeReal> &from);
+// Convenience functions and operator overloadings for expression construction.
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {
+  return {Negate<Type<C, K>>{std::move(x)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator+(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Add<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Subtract<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator*(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Multiply<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Divide<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {
+  return std::visit(
+      [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u);
+}
+
+template<TypeCategory C>
+Expr<SomeKind<C>> operator+(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
+  return std::visit(
+      [](auto &xk, auto &yk) {
+        return Expr<SomeKind<C>>{std::move(xk) + std::move(yk)};
+      },
+      x.u, y.u);
+}
+
+template<TypeCategory C>
+Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
+  return std::visit(
+      [](auto &xk, auto &yk) {
+        return Expr<SomeKind<C>>{std::move(xk) - std::move(yk)};
+      },
+      x.u, y.u);
+}
+
+template<TypeCategory C>
+Expr<SomeKind<C>> operator*(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
+  return std::visit(
+      [](auto &xk, auto &yk) {
+        return Expr<SomeKind<C>>{std::move(xk) * std::move(yk)};
+      },
+      x.u, y.u);
+}
+
+template<TypeCategory C>
+Expr<SomeKind<C>> operator/(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
+  return std::visit(
+      [](auto &xk, auto &yk) {
+        return Expr<SomeKind<C>>{std::move(xk) / std::move(yk)};
+      },
+      x.u, y.u);
+}
+
+// Convert the second argument expression to an expression of the same type
+// and kind as that of the first.
+template<TypeCategory TC, typename F>
+Expr<SomeKind<TC>> ConvertToTypeAndKindOf(
+    const Expr<SomeKind<TC>> &to, Expr<F> &&from) {
+  return std::visit(
+      [&](const auto &tk) -> Expr<SomeKind<TC>> {
+        using SpecificExpr = std::decay_t<decltype(tk)>;
+        return {SpecificExpr{std::move(from)}};
+      },
+      to.u);
+}
 
 // Ensure that both operands of an intrinsic REAL operation or CMPLX()
 // are INTEGER or REAL, and convert them as necessary to the same REAL type.
 using ConvertRealOperandsResult =
     std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>>;
 ConvertRealOperandsResult ConvertRealOperands(
-    parser::ContextualMessages &, GenericExpr &&, GenericExpr &&);
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 
 template<TypeCategory CAT>
 void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
