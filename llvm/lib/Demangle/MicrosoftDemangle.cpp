@@ -2165,11 +2165,13 @@ Name *Demangler::demangleAnonymousNamespaceName(StringView &MangledName) {
 
   Name *Node = Arena.alloc<Name>();
   Node->Str = "`anonymous namespace'";
-  if (MangledName.consumeFront('@'))
-    return Node;
-
-  Error = true;
-  return nullptr;
+  size_t EndPos = MangledName.find('@');
+  if (EndPos == StringView::npos) {
+    Error = true;
+    return nullptr;
+  }
+  MangledName = MangledName.substr(EndPos + 1);
+  return Node;
 }
 
 Name *Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
