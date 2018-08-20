@@ -42,6 +42,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   std::string Input(reinterpret_cast<const char *>(Data), Size);
   Input.erase(std::remove(Input.begin(), Input.end(), 0), Input.end());
   if (!Input.empty() && llvm::yaml::isNumeric(Input) != isNumericRegex(Input))
-    __builtin_trap();
+    LLVM_BUILTIN_TRAP;
   return 0;
 }
