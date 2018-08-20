@@ -3240,9 +3240,9 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
     if (VTBits == SrcBits)
       return ComputeNumSignBits(N0, DemandedElts, Depth + 1);
 
+    bool IsLE = getDataLayout().isLittleEndian();
+
     // Bitcast 'large element' scalar/vector to 'small element' vector.
-    // TODO: Handle cases other than 'sign splat' when we have a use case.
-    // Requires handling of DemandedElts and Endianness.
     if ((SrcBits % VTBits) == 0) {
       assert(Op.getValueType().isVector() && "Expected bitcast to vector");
 
@@ -3252,9 +3252,23 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
         if (DemandedElts[i])
           SrcDemandedElts.setBit(i / Scale);
 
+      // Fast case - sign splat can be simply split across the small elements.
       Tmp = ComputeNumSignBits(N0, SrcDemandedElts, Depth + 1);
       if (Tmp == SrcBits)
         return VTBits;
+
+      // Slow case - determine how far the sign extends into each sub-element.
+      Tmp2 = VTBits;
+      for (unsigned i = 0; i != NumElts; ++i)
+        if (DemandedElts[i]) {
+          unsigned SubOffset = i % Scale;
+          SubOffset = (IsLE ? ((Scale - 1) - SubOffset) : SubOffset);
+          SubOffset = SubOffset * VTBits;
+          if (Tmp <= SubOffset)
+            return 1;
+          Tmp2 = std::min(Tmp2, Tmp - SubOffset);
+        }
+      return Tmp2;
     }
     break;
   }
