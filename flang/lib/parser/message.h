@@ -68,6 +68,7 @@ constexpr MessageFixedText operator""_err_en_US(
 class MessageFormattedText {
 public:
   MessageFormattedText(MessageFixedText, ...);
+  MessageFormattedText(MessageFixedText, va_list);
   MessageFormattedText(const MessageFormattedText &) = default;
   MessageFormattedText(MessageFormattedText &&) = default;
   MessageFormattedText &operator=(const MessageFormattedText &) = default;
@@ -77,6 +78,7 @@ public:
   std::string MoveString() { return std::move(string_); }
 
 private:
+  void SetMessageFormattedText(MessageFixedText, va_list);
   std::string string_;
   bool isFatal_{false};
 };
