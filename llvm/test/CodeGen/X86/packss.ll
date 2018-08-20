@@ -226,7 +226,7 @@ define <8 x i16> @trunc_ashr_v4i64_demandedelts(<4 x i64> %a0) {
 ; X64-AVX2-NEXT:    vzeroupper
 ; X64-AVX2-NEXT:    retq
   %1 = shl <4 x i64> %a0, <i64 63, i64 0, i64 63, i64 0>
-  %2 = ashr exact <4 x i64> %1, <i64 63, i64 0, i64 63, i64 0>
+  %2 = ashr <4 x i64> %1, <i64 63, i64 0, i64 63, i64 0>
   %3 = bitcast <4 x i64> %2 to <8 x i32>
   %4 = shufflevector <8 x i32> %3, <8 x i32> undef, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 4, i32 4, i32 4, i32 4>
   %5 = trunc <8 x i32> %4 to <8 x i16>
