@@ -1,5 +1,5 @@
 // REQUIRES: arm
-// RUN: llvm-mc -filetype=obj -triple=arm-none-linux-gnueabi %s -o %t
+// RUN: llvm-mc -arm-add-build-attributes -filetype=obj -triple=armv6-none-linux-gnueabi %s -o %t
 // RUN: ld.lld %t -o /dev/null 2>&1 | FileCheck %s
 
 // On Arm v6 the range of a Thumb BL instruction is only 4 megabytes as the
@@ -9,14 +9,12 @@
 // use these instructions either. At present we don't support v6 so we give a
 // warning for unsupported features.
 
-// CHECK: warning: lld uses extended branch encoding, no object with architecture supporting feature detected.
-// CHECK-NEXT: warning: lld may use movt/movw, no object with architecture supporting feature detected.
+// CHECK: warning: lld may use movt/movw, no object with architecture supporting feature detected.
 // ARM v6 supports blx so we shouldn't see the blx not supported warning.
 // CHECK-NOT: warning: lld uses blx instruction, no object with architecture supporting feature detected.
  .text
  .syntax unified
  .cpu    arm1176jzf-s
- .eabi_attribute 6, 6    @ Tag_CPU_arch
  .globl _start
  .type   _start,%function
  .balign 0x1000

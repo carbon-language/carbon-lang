@@ -1504,9 +1504,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
     if (Config->ARMHasBlx == false)
       warn("lld uses blx instruction, no object with architecture supporting "
            "feature detected.");
-    if (Config->ARMJ1J2BranchEncoding == false)
-      warn("lld uses extended branch encoding, no object with architecture "
-           "supporting feature detected.");
     if (Config->ARMHasMovtMovw == false)
       warn("lld may use movt/movw, no object with architecture supporting "
            "feature detected.");

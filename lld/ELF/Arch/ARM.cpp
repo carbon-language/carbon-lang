@@ -342,7 +342,7 @@ bool ARM::inBranchRange(RelType Type, uint64_t Src, uint64_t Dst) const {
     break;
   case R_ARM_THM_JUMP24:
   case R_ARM_THM_CALL:
-    Range = 0x1000000;
+    Range = Config->ARMJ1J2BranchEncoding ? 0x1000000 : 0x400000;
     InstrSize = 2;
     break;
   default:
@@ -447,11 +447,23 @@ void ARM::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
     }
     // Bit 12 is 0 for BLX, 1 for BL
     write16le(Loc + 2, (read16le(Loc + 2) & ~0x1000) | (Val & 1) << 12);
+    if (!Config->ARMJ1J2BranchEncoding) {
+      // Older Arm architectures do not support R_ARM_THM_JUMP24 and have
+      // different encoding rules and range due to J1 and J2 always being 1.
+      checkInt(Loc, Val, 23, Type);
+      write16le(Loc,
+                0xf000 |                     // opcode
+                    ((Val >> 12) & 0x07ff)); // imm11
+      write16le(Loc + 2,
+                (read16le(Loc + 2) & 0xd000) | // opcode
+                    0x2800 |                   // J1 == J2 == 1
+                    ((Val >> 1) & 0x07ff));    // imm11
+      break;
+    }
     // Fall through as rest of encoding is the same as B.W
     LLVM_FALLTHROUGH;
   case R_ARM_THM_JUMP24:
     // Encoding B  T4, BL T1, BLX T2: Val = S:I1:I2:imm10:imm11:0
-    // FIXME: Use of I1 and I2 require v6T2ops
     checkInt(Loc, Val, 25, Type);
     write16le(Loc,
               0xf000 |                     // opcode
@@ -542,10 +554,19 @@ int64_t ARM::getImplicitAddend(const uint8_t *Buf, RelType Type) const {
                             ((Lo & 0x07ff) << 1));  // imm11:0
   }
   case R_ARM_THM_CALL:
+    if (!Config->ARMJ1J2BranchEncoding) {
+      // Older Arm architectures do not support R_ARM_THM_JUMP24 and have
+      // different encoding rules and range due to J1 and J2 always being 1.
+      uint16_t Hi = read16le(Buf);
+      uint16_t Lo = read16le(Buf + 2);
+      return SignExtend64<22>(((Hi & 0x7ff) << 12) | // imm11
+                              ((Lo & 0x7ff) << 1));  // imm11:0
+      break;
+    }
+    LLVM_FALLTHROUGH;
   case R_ARM_THM_JUMP24: {
     // Encoding B T4, BL T1, BLX T2: A = S:I1:I2:imm10:imm11:0
     // I1 = NOT(J1 EOR S), I2 = NOT(J2 EOR S)
-    // FIXME: I1 and I2 require v6T2ops
     uint16_t Hi = read16le(Buf);
     uint16_t Lo = read16le(Buf + 2);
     return SignExtend64<24>(((Hi & 0x0400) << 14) |                    // S
