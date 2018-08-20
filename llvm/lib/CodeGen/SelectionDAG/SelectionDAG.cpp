@@ -3244,7 +3244,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
 
     // Bitcast 'large element' scalar/vector to 'small element' vector.
     if ((SrcBits % VTBits) == 0) {
-      assert(Op.getValueType().isVector() && "Expected bitcast to vector");
+      assert(VT.isVector() && "Expected bitcast to vector");
 
       unsigned Scale = SrcBits / VTBits;
       APInt SrcDemandedElts(NumElts / Scale, 0);
@@ -3382,7 +3382,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
     // If setcc returns 0/-1, all bits are sign bits.
     // We know that we have an integer-based boolean since these operations
     // are only available for integer.
-    if (TLI->getBooleanContents(Op.getValueType().isVector(), false) ==
+    if (TLI->getBooleanContents(VT.isVector(), false) ==
         TargetLowering::ZeroOrNegativeOneBooleanContent)
       return VTBits;
     break;
