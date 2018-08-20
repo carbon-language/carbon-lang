@@ -55,6 +55,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/Option/Arg.h"
@@ -643,7 +644,12 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.SampleProfileFile = Args.getLastArgValue(OPT_fprofile_sample_use_EQ);
   Opts.DebugInfoForProfiling = Args.hasFlag(
       OPT_fdebug_info_for_profiling, OPT_fno_debug_info_for_profiling, false);
-  Opts.GnuPubnames = Args.hasArg(OPT_ggnu_pubnames);
+  Opts.DebugNameTable = static_cast<unsigned>(
+      Args.hasArg(OPT_ggnu_pubnames)
+          ? llvm::DICompileUnit::DebugNameTableKind::GNU
+          : Args.hasArg(OPT_gpubnames)
+                ? llvm::DICompileUnit::DebugNameTableKind::Default
+                : llvm::DICompileUnit::DebugNameTableKind::None);
 
   setPGOInstrumentor(Opts, Args, Diags);
   Opts.InstrProfileOutput =
