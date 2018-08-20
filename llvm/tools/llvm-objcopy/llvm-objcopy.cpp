@@ -930,12 +930,12 @@ static CopyConfig parseStripOptions(ArrayRef<const char *> ArgsArr) {
       T.ParseArgs(ArgsArr, MissingArgumentIndex, MissingArgumentCount);
 
   if (InputArgs.size() == 0) {
-    T.PrintHelp(errs(), "llvm-strip <input> [ <output> ]", "strip tool");
+    T.PrintHelp(errs(), "llvm-strip", "strip tool");
     exit(1);
   }
 
   if (InputArgs.hasArg(STRIP_help)) {
-    T.PrintHelp(outs(), "llvm-strip <input> [ <output> ]", "strip tool");
+    T.PrintHelp(outs(), "llvm-strip", "strip tool");
     exit(0);
   }
 
@@ -948,7 +948,7 @@ static CopyConfig parseStripOptions(ArrayRef<const char *> ArgsArr) {
   if (Positional.empty())
     error("No input file specified");
 
-  if (Positional.size() > 2)
+  if (Positional.size() > 1)
     error("Support for multiple input files is not implemented yet");
 
   CopyConfig Config;
