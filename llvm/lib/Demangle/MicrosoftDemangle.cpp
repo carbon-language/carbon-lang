@@ -16,9 +16,9 @@
 
 #include "llvm/Demangle/Demangle.h"
 
-#include "Compiler.h"
-#include "StringView.h"
-#include "Utility.h"
+#include "llvm/Demangle/Compiler.h"
+#include "llvm/Demangle/StringView.h"
+#include "llvm/Demangle/Utility.h"
 
 #include <array>
 #include <cctype>
