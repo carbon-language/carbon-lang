@@ -271,6 +271,8 @@ enum class OperatorTy : uint8_t {
   LocalVftableCtorClosure,      // ?_T # local vftable constructor closure
   ArrayNew,                     // ?_U operator new[]
   ArrayDelete,                  // ?_V operator delete[]
+  DynamicInitializer,           // ?__E dynamic initializer for `T'
+  DynamicAtexitDestructor,      // ?__F dynamic atexit destructor for `T'
   LiteralOperator,              // ?__K operator ""_name
   CoAwait,                      // ?__L co_await
   Spaceship,                    // operator<=>
@@ -360,6 +362,8 @@ OperatorMapEntry OperatorMap[] = {
     {"_T", "`local vftable ctor closure'", OperatorTy::LocalVftableCtorClosure},
     {"_U", "operator new[]", OperatorTy::ArrayNew},
     {"_V", "operator delete[]", OperatorTy::ArrayDelete},
+    {"__E", "dynamic initializer", OperatorTy::DynamicInitializer},
+    {"__F", "dynamic atexit destructor", OperatorTy::DynamicAtexitDestructor},
     {"__K", "operator \"\"", OperatorTy::LiteralOperator},
     {"__L", "co_await", OperatorTy::CoAwait},
 };
@@ -883,12 +887,20 @@ static void outputName(OutputStream &OS, const Name *TheName, const Type *Ty) {
 
   const OperatorInfo *Operator = lastComponentAsOperator(TheName);
   const VirtualMemberPtrThunk *Thunk = nullptr;
+  bool PrintLastScopeSeparator = true;
   if (Operator) {
     if (Operator->Info->Operator == OperatorTy::Vcall) {
       Thunk = static_cast<const VirtualMemberPtrThunk *>(Operator);
       OS << "[thunk]: ";
       outputCallingConvention(OS, Thunk->CC);
       OS << " ";
+    } else if (Operator->Info->Operator == OperatorTy::DynamicInitializer) {
+      OS << "`dynamic initializer for '";
+      PrintLastScopeSeparator = false;
+    } else if (Operator->Info->Operator ==
+               OperatorTy::DynamicAtexitDestructor) {
+      OS << "`dynamic atexit destructor for '";
+      PrintLastScopeSeparator = false;
     }
   }
 
@@ -897,7 +909,8 @@ static void outputName(OutputStream &OS, const Name *TheName, const Type *Ty) {
   for (; TheName->Next; TheName = TheName->Next) {
     Previous = TheName;
     outputNameComponent(OS, *TheName);
-    OS << "::";
+    if (TheName->Next != Operator || PrintLastScopeSeparator)
+      OS << "::";
   }
 
   // Print out a regular name.
@@ -946,6 +959,10 @@ static void outputName(OutputStream &OS, const Name *TheName, const Type *Ty) {
     OS << Thunk->OffsetInVTable << ", {flat}}";
     break;
   }
+  case OperatorTy::DynamicInitializer:
+  case OperatorTy::DynamicAtexitDestructor:
+    OS << "''";
+    break;
 
   case OperatorTy::LocalStaticGuard: {
     const LocalStaticGuardVariable &LSG =
