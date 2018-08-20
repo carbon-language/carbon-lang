@@ -13470,6 +13470,12 @@ static SDValue lowerVectorShuffleByMerging128BitLanes(
     }
   }
   SDValue NewV1 = DAG.getVectorShuffle(VT, DL, V1, V2, NewMask);
+  // Ensure we didn't get back the shuffle we started with.
+  // FIXME: This is a hack to make up for some splat handling code in
+  // getVectorShuffle.
+  if (isa<ShuffleVectorSDNode>(NewV1) &&
+      cast<ShuffleVectorSDNode>(NewV1)->getMask() == Mask)
+    return SDValue();
 
   for (int Lane = 0; Lane != NumLanes; ++Lane) {
     int Src = LaneSrcs[Lane][1];
@@ -13481,6 +13487,12 @@ static SDValue lowerVectorShuffleByMerging128BitLanes(
     }
   }
   SDValue NewV2 = DAG.getVectorShuffle(VT, DL, V1, V2, NewMask);
+  // Ensure we didn't get back the shuffle we started with.
+  // FIXME: This is a hack to make up for some splat handling code in
+  // getVectorShuffle.
+  if (isa<ShuffleVectorSDNode>(NewV2) &&
+      cast<ShuffleVectorSDNode>(NewV2)->getMask() == Mask)
+    return SDValue();
 
   for (int i = 0; i != Size; ++i) {
     NewMask[i] = RepeatMask[i % LaneSize];
