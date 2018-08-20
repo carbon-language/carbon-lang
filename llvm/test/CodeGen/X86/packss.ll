@@ -45,13 +45,13 @@ define <8 x i16> @trunc_ashr_v4i64_bitcast(<4 x i64> %a0) {
 ; SSE-NEXT:    movdqa %xmm0, %xmm2
 ; SSE-NEXT:    psrad $31, %xmm2
 ; SSE-NEXT:    pshufd {{.*#+}} xmm2 = xmm2[1,3,2,3]
-; SSE-NEXT:    psrad $15, %xmm0
+; SSE-NEXT:    psrad $17, %xmm0
 ; SSE-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,3,2,3]
 ; SSE-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; SSE-NEXT:    movdqa %xmm1, %xmm2
 ; SSE-NEXT:    psrad $31, %xmm2
 ; SSE-NEXT:    pshufd {{.*#+}} xmm2 = xmm2[1,3,2,3]
-; SSE-NEXT:    psrad $15, %xmm1
+; SSE-NEXT:    psrad $17, %xmm1
 ; SSE-NEXT:    pshufd {{.*#+}} xmm1 = xmm1[1,3,2,3]
 ; SSE-NEXT:    punpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; SSE-NEXT:    pslld $16, %xmm1
@@ -64,12 +64,12 @@ define <8 x i16> @trunc_ashr_v4i64_bitcast(<4 x i64> %a0) {
 ; AVX1-LABEL: trunc_ashr_v4i64_bitcast:
 ; AVX1:       # %bb.0:
 ; AVX1-NEXT:    vpsrad $31, %xmm0, %xmm1
-; AVX1-NEXT:    vpsrad $15, %xmm0, %xmm2
+; AVX1-NEXT:    vpsrad $17, %xmm0, %xmm2
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm2 = xmm2[1,1,3,3]
 ; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm2[0,1],xmm1[2,3],xmm2[4,5],xmm1[6,7]
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
 ; AVX1-NEXT:    vpsrad $31, %xmm0, %xmm2
-; AVX1-NEXT:    vpsrad $15, %xmm0, %xmm0
+; AVX1-NEXT:    vpsrad $17, %xmm0, %xmm0
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
 ; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3],xmm0[4,5],xmm2[6,7]
 ; AVX1-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
@@ -82,15 +82,15 @@ define <8 x i16> @trunc_ashr_v4i64_bitcast(<4 x i64> %a0) {
 ; AVX2-LABEL: trunc_ashr_v4i64_bitcast:
 ; AVX2:       # %bb.0:
 ; AVX2-NEXT:    vpsrad $31, %ymm0, %ymm1
-; AVX2-NEXT:    vpsrad $15, %ymm0, %ymm0
+; AVX2-NEXT:    vpsrad $17, %ymm0, %ymm0
 ; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[1,1,3,3,5,5,7,7]
 ; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7]
-; AVX2-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15,16,17,20,21,24,25,28,29,24,25,28,29,28,29,30,31]
+; AVX2-NEXT:    vpackssdw %ymm0, %ymm0, %ymm0
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
 ; AVX2-NEXT:    # kill: def $xmm0 killed $xmm0 killed $ymm0
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    ret{{[l|q]}}
-   %1 = ashr <4 x i64> %a0, <i64 47, i64 47, i64 47, i64 47>
+   %1 = ashr <4 x i64> %a0, <i64 49, i64 49, i64 49, i64 49>
    %2 = bitcast <4 x i64> %1 to <8 x i32>
    %3 = trunc <8 x i32> %2 to <8 x i16>
    ret <8 x i16> %3
