@@ -65,6 +65,15 @@ private:
   SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerINTRINSIC_VOID(SDValue Op, SelectionDAG &DAG) const;
 
+  // The raw.tbuffer and struct.tbuffer intrinsics have two offset args: offset
+  // (the offset that is included in bounds checking and swizzling, to be split
+  // between the instruction's voffset and immoffset fields) and soffset (the
+  // offset that is excluded from bounds checking and swizzling, to go in the
+  // instruction's soffset field).  This function takes the first kind of
+  // offset and figures out how to split it between voffset and immoffset.
+  std::pair<SDValue, SDValue> splitBufferOffsets(SDValue Offset,
+                                                 SelectionDAG &DAG) const;
+
   SDValue widenLoad(LoadSDNode *Ld, DAGCombinerInfo &DCI) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
