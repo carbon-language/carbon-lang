@@ -164,8 +164,7 @@ terminate10:                                      ; preds = %ehcleanup7
 ; CHECK:  try
 ; CHECK:  call      foo@FUNCTION
 ; CHECK:  catch_all
-; TODO This should be removed too in a later patch
-; CHECK-NO T:  get_global  $push{{.+}}=, __stack_pointer@GLOBAL
+; CHECK-NOT:  get_global  $push{{.+}}=, __stack_pointer@GLOBAL
 ; CHECK:  call      __cxa_end_catch@FUNCTION
 ; CHECK-NOT:  set_global  __stack_pointer@GLOBAL, $pop{{.+}}
 ; CHECK:  end_try
