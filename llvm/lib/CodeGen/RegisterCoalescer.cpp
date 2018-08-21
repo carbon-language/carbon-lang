@@ -1436,7 +1436,10 @@ bool RegisterCoalescer::reMaterializeTrivialDef(const CoalescerPair &CP,
     for (MachineOperand &UseMO : MRI->use_operands(SrcReg)) {
       MachineInstr *UseMI = UseMO.getParent();
       if (UseMI->isDebugValue()) {
-        UseMO.setReg(DstReg);
+        if (TargetRegisterInfo::isPhysicalRegister(DstReg))
+          UseMO.substPhysReg(DstReg, *TRI);
+        else
+          UseMO.setReg(DstReg);
         // Move the debug value directly after the def of the rematerialized
         // value in DstReg.
         MBB->splice(std::next(NewMI.getIterator()), UseMI->getParent(), UseMI);
