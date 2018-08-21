@@ -322,7 +322,7 @@ bool LoopInvariantCodeMotion::runOnLoop(
         // alias set, if the pointer is loop invariant, and if we are not
         // eliminating any volatile loads or stores.
         if (AS.isForwardingAliasSet() || !AS.isMod() || !AS.isMustAlias() ||
-            AS.isVolatile() || !L->isLoopInvariant(AS.begin()->getValue()))
+            !L->isLoopInvariant(AS.begin()->getValue()))
           continue;
 
         assert(
@@ -1368,7 +1368,6 @@ bool llvm::promoteLoopAccessesToScalars(
       // If there is an non-load/store instruction in the loop, we can't promote
       // it.
       if (LoadInst *Load = dyn_cast<LoadInst>(UI)) {
-        assert(!Load->isVolatile() && "AST broken");
         if (!Load->isUnordered())
           return false;
 
@@ -1383,7 +1382,6 @@ bool llvm::promoteLoopAccessesToScalars(
         // pointer.
         if (UI->getOperand(1) != ASIV)
           continue;
-        assert(!Store->isVolatile() && "AST broken");
         if (!Store->isUnordered())
           return false;
 
