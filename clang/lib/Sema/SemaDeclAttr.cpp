@@ -5918,17 +5918,16 @@ static void handleOpenCLAccessAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
 }
 
 static void handleDestroyAttr(Sema &S, Decl *D, const ParsedAttr &A) {
-  if (!isa<VarDecl>(D) || !cast<VarDecl>(D)->hasGlobalStorage()) {
+  if (!cast<VarDecl>(D)->hasGlobalStorage()) {
     S.Diag(D->getLocation(), diag::err_destroy_attr_on_non_static_var)
         << (A.getKind() == ParsedAttr::AT_AlwaysDestroy);
     return;
   }
 
-  if (A.getKind() == ParsedAttr::AT_AlwaysDestroy) {
+  if (A.getKind() == ParsedAttr::AT_AlwaysDestroy)
     handleSimpleAttributeWithExclusions<AlwaysDestroyAttr, NoDestroyAttr>(S, D, A);
-  } else {
+  else
     handleSimpleAttributeWithExclusions<NoDestroyAttr, AlwaysDestroyAttr>(S, D, A);
-  }
 }
 
 //===----------------------------------------------------------------------===//
