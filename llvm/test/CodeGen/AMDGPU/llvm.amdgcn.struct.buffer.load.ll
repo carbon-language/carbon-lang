@@ -125,9 +125,31 @@ entry:
   ret float %val
 }
 
+;CHECK-LABEL: {{^}}buffer_load_int:
+;CHECK: buffer_load_dwordx4 v[0:3], {{v[0-9]+}}, s[0:3], 0 idxen
+;CHECK: buffer_load_dwordx2 v[4:5], {{v[0-9]+}}, s[0:3], 0 idxen glc
+;CHECK: buffer_load_dword v6, {{v[0-9]+}}, s[0:3], 0 idxen slc
+;CHECK: s_waitcnt
+define amdgpu_ps {<4 x float>, <2 x float>, float} @buffer_load_int(<4 x i32> inreg) {
+main_body:
+  %data = call <4 x i32> @llvm.amdgcn.struct.buffer.load.v4i32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 0)
+  %data_glc = call <2 x i32> @llvm.amdgcn.struct.buffer.load.v2i32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 1)
+  %data_slc = call i32 @llvm.amdgcn.struct.buffer.load.i32(<4 x i32> %0, i32 0, i32 0, i32 0, i32 2)
+  %fdata = bitcast <4 x i32> %data to <4 x float>
+  %fdata_glc = bitcast <2 x i32> %data_glc to <2 x float>
+  %fdata_slc = bitcast i32 %data_slc to float
+  %r0 = insertvalue {<4 x float>, <2 x float>, float} undef, <4 x float> %fdata, 0
+  %r1 = insertvalue {<4 x float>, <2 x float>, float} %r0, <2 x float> %fdata_glc, 1
+  %r2 = insertvalue {<4 x float>, <2 x float>, float} %r1, float %fdata_slc, 2
+  ret {<4 x float>, <2 x float>, float} %r2
+}
+
 declare float @llvm.amdgcn.struct.buffer.load.f32(<4 x i32>, i32, i32, i32, i32) #0
 declare <2 x float> @llvm.amdgcn.struct.buffer.load.v2f32(<4 x i32>, i32, i32, i32, i32) #0
 declare <4 x float> @llvm.amdgcn.struct.buffer.load.v4f32(<4 x i32>, i32, i32, i32, i32) #0
+declare i32 @llvm.amdgcn.struct.buffer.load.i32(<4 x i32>, i32, i32, i32, i32) #0
+declare <2 x i32> @llvm.amdgcn.struct.buffer.load.v2i32(<4 x i32>, i32, i32, i32, i32) #0
+declare <4 x i32> @llvm.amdgcn.struct.buffer.load.v4i32(<4 x i32>, i32, i32, i32, i32) #0
 declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1) #0
 
 attributes #0 = { nounwind readonly }
