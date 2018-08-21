@@ -23978,7 +23978,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   }
 
   if (VT == MVT::v8i16) {
-    unsigned ShiftOpcode = Opc;
+    unsigned X86Opc = getTargetVShiftUniformOpcode(Opc, false);
 
     // If we have a constant shift amount, the non-SSE41 path is best as
     // avoiding bitcasts make it easier to constant fold and reduce to PBLENDW.
@@ -23999,7 +23999,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
       // set all bits of the lanes to true and VSELECT uses that in
       // its OR(AND(V0,C),AND(V1,~C)) lowering.
       SDValue C =
-          DAG.getNode(ISD::SRA, dl, VT, Sel, DAG.getConstant(15, dl, VT));
+          getTargetVShiftByConstNode(X86ISD::VSRAI, dl, VT, Sel, 15, DAG);
       return DAG.getSelect(dl, VT, C, V0, V1);
     };
 
@@ -24009,35 +24009,35 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
       // bytes for PBLENDVB.
       Amt = DAG.getNode(
           ISD::OR, dl, VT,
-          DAG.getNode(ISD::SHL, dl, VT, Amt, DAG.getConstant(4, dl, VT)),
-          DAG.getNode(ISD::SHL, dl, VT, Amt, DAG.getConstant(12, dl, VT)));
+          getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, Amt, 4, DAG),
+          getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, Amt, 12, DAG));
     } else {
-      Amt = DAG.getNode(ISD::SHL, dl, VT, Amt, DAG.getConstant(12, dl, VT));
+      Amt = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, Amt, 12, DAG);
     }
 
     // r = VSELECT(r, shift(r, 8), a);
-    SDValue M = DAG.getNode(ShiftOpcode, dl, VT, R, DAG.getConstant(8, dl, VT));
+    SDValue M = getTargetVShiftByConstNode(X86Opc, dl, VT, R, 8, DAG);
     R = SignBitSelect(Amt, M, R);
 
     // a += a
     Amt = DAG.getNode(ISD::ADD, dl, VT, Amt, Amt);
 
     // r = VSELECT(r, shift(r, 4), a);
-    M = DAG.getNode(ShiftOpcode, dl, VT, R, DAG.getConstant(4, dl, VT));
+    M = getTargetVShiftByConstNode(X86Opc, dl, VT, R, 4, DAG);
     R = SignBitSelect(Amt, M, R);
 
     // a += a
     Amt = DAG.getNode(ISD::ADD, dl, VT, Amt, Amt);
 
     // r = VSELECT(r, shift(r, 2), a);
-    M = DAG.getNode(ShiftOpcode, dl, VT, R, DAG.getConstant(2, dl, VT));
+    M = getTargetVShiftByConstNode(X86Opc, dl, VT, R, 2, DAG);
     R = SignBitSelect(Amt, M, R);
 
     // a += a
     Amt = DAG.getNode(ISD::ADD, dl, VT, Amt, Amt);
 
     // return VSELECT(r, shift(r, 1), a);
-    M = DAG.getNode(ShiftOpcode, dl, VT, R, DAG.getConstant(1, dl, VT));
+    M = getTargetVShiftByConstNode(X86Opc, dl, VT, R, 1, DAG);
     R = SignBitSelect(Amt, M, R);
     return R;
   }
