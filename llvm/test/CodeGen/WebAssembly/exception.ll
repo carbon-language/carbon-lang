@@ -19,9 +19,11 @@ define void @test_throw() {
 }
 
 ; CHECK-LABEL: test_catch_rethrow:
+; CHECK:   get_global  $push{{.+}}=, __stack_pointer@GLOBAL
 ; CHECK:   try
 ; CHECK:   call      foo@FUNCTION
 ; CHECK:   i32.catch     $push{{.+}}=, 0
+; CHECK:   set_global  __stack_pointer@GLOBAL
 ; CHECK-DAG:   i32.store  __wasm_lpad_context
 ; CHECK-DAG:   i32.store  __wasm_lpad_context+4
 ; CHECK:   i32.call  $push{{.+}}=, _Unwind_CallPersonality@FUNCTION
@@ -63,6 +65,7 @@ try.cont:                                         ; preds = %entry, %catch
 ; CHECK:   try
 ; CHECK:   call      foo@FUNCTION
 ; CHECK:   catch_all
+; CHECK:   set_global  __stack_pointer@GLOBAL
 ; CHECK:   i32.call  $push{{.+}}=, _ZN7CleanupD1Ev@FUNCTION
 ; CHECK:   rethrow
 ; CHECK:   end_try
@@ -161,10 +164,12 @@ terminate10:                                      ; preds = %ehcleanup7
 ; CHECK:  call      foo@FUNCTION
 ; CHECK:  i32.catch
 ; CHECK-NOT:  get_global  $push{{.+}}=, __stack_pointer@GLOBAL
+; CHECK:  set_global  __stack_pointer@GLOBAL
 ; CHECK:  try
 ; CHECK:  call      foo@FUNCTION
 ; CHECK:  catch_all
 ; CHECK-NOT:  get_global  $push{{.+}}=, __stack_pointer@GLOBAL
+; CHECK:  set_global  __stack_pointer@GLOBAL
 ; CHECK:  call      __cxa_end_catch@FUNCTION
 ; CHECK-NOT:  set_global  __stack_pointer@GLOBAL, $pop{{.+}}
 ; CHECK:  end_try
