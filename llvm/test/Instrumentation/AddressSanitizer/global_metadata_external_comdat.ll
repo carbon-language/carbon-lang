@@ -3,7 +3,7 @@
 $my_var = comdat any
 
 @my_var = global i32 42, align 4, comdat
-; CHECK: @my_var = global i32 42, align 4, comdat
+; CHECK: @my_var = global i32 42, comdat, align 4
 
 ; Don't instrument my_var, it is comdat.
-; CHECK-NOT: __asan_register_globals
+; CHECK-NOT: call {{.*}}__asan_register_globals
