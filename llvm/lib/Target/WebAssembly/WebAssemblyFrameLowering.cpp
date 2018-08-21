@@ -97,7 +97,7 @@ bool WebAssemblyFrameLowering::needsSPWriteback(
          MF.getFunction().hasFnAttribute(Attribute::NoRedZone);
 }
 
-static void writeSPToMemory(unsigned SrcReg, MachineFunction &MF,
+static void writeSPToGlobal(unsigned SrcReg, MachineFunction &MF,
                             MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator &InsertStore,
                             const DebugLoc &DL) {
@@ -120,7 +120,7 @@ WebAssemblyFrameLowering::eliminateCallFramePseudoInstr(
   if (I->getOpcode() == TII->getCallFrameDestroyOpcode() &&
       needsSPWriteback(MF, MF.getFrameInfo())) {
     DebugLoc DL = I->getDebugLoc();
-    writeSPToMemory(WebAssembly::SP32, MF, MBB, I, DL);
+    writeSPToGlobal(WebAssembly::SP32, MF, MBB, I, DL);
   }
   return MBB.erase(I);
 }
@@ -193,7 +193,7 @@ void WebAssemblyFrameLowering::emitPrologue(MachineFunction &MF,
         .addReg(WebAssembly::SP32);
   }
   if (StackSize && needsSPWriteback(MF, MFI)) {
-    writeSPToMemory(WebAssembly::SP32, MF, MBB, InsertPt, DL);
+    writeSPToGlobal(WebAssembly::SP32, MF, MBB, InsertPt, DL);
   }
 }
 
@@ -232,5 +232,5 @@ void WebAssemblyFrameLowering::emitEpilogue(MachineFunction &MF,
     SPReg = hasFP(MF) ? WebAssembly::FP32 : WebAssembly::SP32;
   }
 
-  writeSPToMemory(SPReg, MF, MBB, InsertPt, DL);
+  writeSPToGlobal(SPReg, MF, MBB, InsertPt, DL);
 }
