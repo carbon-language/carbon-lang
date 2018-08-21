@@ -1027,7 +1027,7 @@ static constexpr GPUInfo AMDGCNGPUs[32] = {
 
 static const GPUInfo *getArchEntry(AMDGPU::GPUKind AK,
                                    ArrayRef<GPUInfo> Table) {
-  GPUInfo Search = { "", "", AK, AMDGPU::FEATURE_NONE };
+  GPUInfo Search = { {""}, {""}, AK, AMDGPU::FEATURE_NONE };
 
   auto I = std::lower_bound(Table.begin(), Table.end(), Search,
     [](const GPUInfo &A, const GPUInfo &B) {
