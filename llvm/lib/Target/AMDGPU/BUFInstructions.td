@@ -1043,37 +1043,33 @@ def extract_slc : SDNodeXForm<imm, [{
 multiclass MUBUF_LoadIntrinsicPat<SDPatternOperator name, ValueType vt,
                                   string opcode> {
   def : GCNPat<
-    (vt (name v4i32:$rsrc, 0,
-              (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-              imm:$glc, imm:$slc)),
+    (vt (name v4i32:$rsrc, 0, 0, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, 0)),
     (!cast<MUBUF_Pseudo>(opcode # _OFFSET) $rsrc, $soffset, (as_i16imm $offset),
-      (as_i1imm $glc), (as_i1imm $slc), 0)
+      (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
   >;
 
   def : GCNPat<
-    (vt (name v4i32:$rsrc, i32:$vindex,
-              (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-              imm:$glc, imm:$slc)),
-    (!cast<MUBUF_Pseudo>(opcode # _IDXEN) $vindex, $rsrc, $soffset, (as_i16imm $offset),
-      (as_i1imm $glc), (as_i1imm $slc), 0)
-  >;
-
-  def : GCNPat<
-    (vt (name v4i32:$rsrc, 0,
-              (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-              imm:$glc, imm:$slc)),
+    (vt (name v4i32:$rsrc, 0, i32:$voffset, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, 0)),
     (!cast<MUBUF_Pseudo>(opcode # _OFFEN) $voffset, $rsrc, $soffset, (as_i16imm $offset),
-      (as_i1imm $glc), (as_i1imm $slc), 0)
+      (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
   >;
 
   def : GCNPat<
-    (vt (name v4i32:$rsrc, i32:$vindex,
-              (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-              imm:$glc, imm:$slc)),
+    (vt (name v4i32:$rsrc, i32:$vindex, 0, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, imm)),
+    (!cast<MUBUF_Pseudo>(opcode # _IDXEN) $vindex, $rsrc, $soffset, (as_i16imm $offset),
+      (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
+  >;
+
+  def : GCNPat<
+    (vt (name v4i32:$rsrc, i32:$vindex, i32:$voffset, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, imm)),
     (!cast<MUBUF_Pseudo>(opcode # _BOTHEN)
       (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
       $rsrc, $soffset, (as_i16imm $offset),
-      (as_i1imm $glc), (as_i1imm $slc), 0)
+      (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
   >;
 }
 
@@ -1100,40 +1096,34 @@ defm : MUBUF_LoadIntrinsicPat<SIbuffer_load, v4f32, "BUFFER_LOAD_DWORDX4">;
 multiclass MUBUF_StoreIntrinsicPat<SDPatternOperator name, ValueType vt,
                                    string opcode> {
   def : GCNPat<
-    (name vt:$vdata, v4i32:$rsrc, 0,
-          (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-          imm:$glc, imm:$slc),
+    (name vt:$vdata, v4i32:$rsrc, 0, 0, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, 0),
     (!cast<MUBUF_Pseudo>(opcode # _OFFSET_exact) $vdata, $rsrc, $soffset, (as_i16imm $offset),
-                                    (as_i1imm $glc), (as_i1imm $slc), 0)
+      (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
   >;
 
   def : GCNPat<
-    (name vt:$vdata, v4i32:$rsrc, i32:$vindex,
-          (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-          imm:$glc, imm:$slc),
-    (!cast<MUBUF_Pseudo>(opcode # _IDXEN_exact) $vdata, $vindex, $rsrc, $soffset,
-                                   (as_i16imm $offset), (as_i1imm $glc),
-                                   (as_i1imm $slc), 0)
-  >;
-
-  def : GCNPat<
-    (name vt:$vdata, v4i32:$rsrc, 0,
-          (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-          imm:$glc, imm:$slc),
+    (name vt:$vdata, v4i32:$rsrc, 0, i32:$voffset, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, 0),
     (!cast<MUBUF_Pseudo>(opcode # _OFFEN_exact) $vdata, $voffset, $rsrc, $soffset,
-                                   (as_i16imm $offset), (as_i1imm $glc),
-                                   (as_i1imm $slc), 0)
+      (as_i16imm $offset), (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
   >;
 
   def : GCNPat<
-    (name vt:$vdata, v4i32:$rsrc, i32:$vindex,
-          (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-          imm:$glc, imm:$slc),
+    (name vt:$vdata, v4i32:$rsrc, i32:$vindex, 0, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, imm),
+    (!cast<MUBUF_Pseudo>(opcode # _IDXEN_exact) $vdata, $vindex, $rsrc, $soffset,
+      (as_i16imm $offset), (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
+  >;
+
+  def : GCNPat<
+    (name vt:$vdata, v4i32:$rsrc, i32:$vindex, i32:$voffset, i32:$soffset, imm:$offset,
+              imm:$cachepolicy, imm),
     (!cast<MUBUF_Pseudo>(opcode # _BOTHEN_exact)
       $vdata,
       (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
       $rsrc, $soffset, (as_i16imm $offset),
-      (as_i1imm $glc), (as_i1imm $slc), 0)
+      (extract_glc $cachepolicy), (extract_slc $cachepolicy), 0)
   >;
 }
 
@@ -1164,36 +1154,36 @@ defm : MUBUF_StoreIntrinsicPat<SIbuffer_store, v4f32, "BUFFER_STORE_DWORDX4">;
 multiclass BufferAtomicPatterns<SDPatternOperator name, string opcode> {
   def : GCNPat<
     (name i32:$vdata_in, v4i32:$rsrc, 0,
-          (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-          imm:$slc),
+          0, i32:$soffset, imm:$offset,
+          imm:$cachepolicy, 0),
     (!cast<MUBUF_Pseudo>(opcode # _OFFSET_RTN) $vdata_in, $rsrc, $soffset,
-                                        (as_i16imm $offset), (as_i1imm $slc))
+                                        (as_i16imm $offset), (extract_slc $cachepolicy))
   >;
 
   def : GCNPat<
     (name i32:$vdata_in, v4i32:$rsrc, i32:$vindex,
-          (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-          imm:$slc),
+          0, i32:$soffset, imm:$offset,
+          imm:$cachepolicy, imm),
     (!cast<MUBUF_Pseudo>(opcode # _IDXEN_RTN) $vdata_in, $vindex, $rsrc, $soffset,
-                                       (as_i16imm $offset), (as_i1imm $slc))
+                                       (as_i16imm $offset), (extract_slc $cachepolicy))
   >;
 
   def : GCNPat<
     (name i32:$vdata_in, v4i32:$rsrc, 0,
-          (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-          imm:$slc),
+          i32:$voffset, i32:$soffset, imm:$offset,
+          imm:$cachepolicy, 0),
     (!cast<MUBUF_Pseudo>(opcode # _OFFEN_RTN) $vdata_in, $voffset, $rsrc, $soffset,
-                                       (as_i16imm $offset), (as_i1imm $slc))
+                                       (as_i16imm $offset), (extract_slc $cachepolicy))
   >;
 
   def : GCNPat<
     (name i32:$vdata_in, v4i32:$rsrc, i32:$vindex,
-          (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-          imm:$slc),
+          i32:$voffset, i32:$soffset, imm:$offset,
+          imm:$cachepolicy, imm),
     (!cast<MUBUF_Pseudo>(opcode # _BOTHEN_RTN)
       $vdata_in,
       (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
-      $rsrc, $soffset, (as_i16imm $offset), (as_i1imm $slc))
+      $rsrc, $soffset, (as_i16imm $offset), (extract_slc $cachepolicy))
   >;
 }
 
@@ -1211,49 +1201,49 @@ defm : BufferAtomicPatterns<SIbuffer_atomic_xor, "BUFFER_ATOMIC_XOR">;
 def : GCNPat<
   (SIbuffer_atomic_cmpswap
       i32:$data, i32:$cmp, v4i32:$rsrc, 0,
-      (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-      imm:$slc),
+      0, i32:$soffset, imm:$offset,
+      imm:$cachepolicy, 0),
   (EXTRACT_SUBREG
     (BUFFER_ATOMIC_CMPSWAP_OFFSET_RTN
       (REG_SEQUENCE VReg_64, $data, sub0, $cmp, sub1),
-      $rsrc, $soffset, (as_i16imm $offset), (as_i1imm $slc)),
+      $rsrc, $soffset, (as_i16imm $offset), (extract_slc $cachepolicy)),
     sub0)
 >;
 
 def : GCNPat<
   (SIbuffer_atomic_cmpswap
       i32:$data, i32:$cmp, v4i32:$rsrc, i32:$vindex,
-      (MUBUFIntrinsicOffset i32:$soffset, i16:$offset),
-      imm:$slc),
+      0, i32:$soffset, imm:$offset,
+      imm:$cachepolicy, imm),
   (EXTRACT_SUBREG
     (BUFFER_ATOMIC_CMPSWAP_IDXEN_RTN
       (REG_SEQUENCE VReg_64, $data, sub0, $cmp, sub1),
-      $vindex, $rsrc, $soffset, (as_i16imm $offset), (as_i1imm $slc)),
+      $vindex, $rsrc, $soffset, (as_i16imm $offset), (extract_slc $cachepolicy)),
     sub0)
 >;
 
 def : GCNPat<
   (SIbuffer_atomic_cmpswap
       i32:$data, i32:$cmp, v4i32:$rsrc, 0,
-      (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-      imm:$slc),
+      i32:$voffset, i32:$soffset, imm:$offset,
+      imm:$cachepolicy, 0),
   (EXTRACT_SUBREG
     (BUFFER_ATOMIC_CMPSWAP_OFFEN_RTN
       (REG_SEQUENCE VReg_64, $data, sub0, $cmp, sub1),
-      $voffset, $rsrc, $soffset, (as_i16imm $offset), (as_i1imm $slc)),
+      $voffset, $rsrc, $soffset, (as_i16imm $offset), (extract_slc $cachepolicy)),
     sub0)
 >;
 
 def : GCNPat<
   (SIbuffer_atomic_cmpswap
       i32:$data, i32:$cmp, v4i32:$rsrc, i32:$vindex,
-      (MUBUFIntrinsicVOffset i32:$soffset, i16:$offset, i32:$voffset),
-      imm:$slc),
+      i32:$voffset, i32:$soffset, imm:$offset,
+      imm:$cachepolicy, imm),
   (EXTRACT_SUBREG
     (BUFFER_ATOMIC_CMPSWAP_BOTHEN_RTN
       (REG_SEQUENCE VReg_64, $data, sub0, $cmp, sub1),
       (REG_SEQUENCE VReg_64, $vindex, sub0, $voffset, sub1),
-      $rsrc, $soffset, (as_i16imm $offset), (as_i1imm $slc)),
+      $rsrc, $soffset, (as_i16imm $offset), (extract_slc $cachepolicy)),
     sub0)
 >;
 

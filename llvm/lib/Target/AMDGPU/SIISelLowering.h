@@ -186,6 +186,12 @@ private:
   /// global value \p GV, false otherwise.
   bool shouldEmitPCReloc(const GlobalValue *GV) const;
 
+  // Analyze a combined offset from an amdgcn_buffer_ intrinsic and store the
+  // three offsets (voffset, soffset and instoffset) into the SDValue[3] array
+  // pointed to by Offsets.
+  void setBufferOffsets(SDValue CombinedOffset, SelectionDAG &DAG,
+                        SDValue *Offsets) const;
+
 public:
   SITargetLowering(const TargetMachine &tm, const GCNSubtarget &STI);
 
