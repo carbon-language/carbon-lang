@@ -1,13 +1,13 @@
 ; RUN: opt -licm -basicaa < %s -S | FileCheck %s
 ; RUN: opt -aa-pipeline=basic-aa -passes='require<aa>,require<targetir>,require<scalar-evolution>,require<opt-remark-emit>,loop(licm)' < %s -S | FileCheck %s
 
-; TODO: should be able to hoist both guard and load
+; Hoist guard and load.
 define void @test1(i1 %cond, i32* %ptr) {
 ; CHECK-LABEL: @test1(
 ; CHECK-LABEL: entry:
-; CHECK-LABEL: loop:
 ; CHECK: call void (i1, ...) @llvm.experimental.guard(i1 %cond)
 ; CHECK: %val = load i32, i32* %ptr
+; CHECK-LABEL: loop:
 
 entry:
   br label %loop
@@ -62,13 +62,14 @@ loop:
 }
 
 
-; Could hoist, but don't
+; Hoist guard. Cannot hoist load because of aliasing.
 define void @test3(i1 %cond, i32* %ptr) {
 ; CHECK-LABEL: @test3(
 ; CHECK-LABEL: entry:
-; CHECK-LABEL: loop:
 ; CHECK: call void (i1, ...) @llvm.experimental.guard(i1 %cond)
+; CHECK-LABEL: loop:
 ; CHECK: %val = load i32, i32* %ptr
+; CHECK: store i32 0, i32* %ptr
 
 entry:
   br label %loop
@@ -228,16 +229,16 @@ exit:
   ret void
 }
 
-; We can hoist an invariant guard, leave the following variant guard in the loop.
+; Hoist an invariant guard, leave the following variant guard in the loop.
 define void @test5a(i1 %c, i32* %p, i32* %q) {
 
 ; CHECK-LABEL: @test5a(
 ; CHECK-LABEL: entry:
 ; CHECK:         %a = load i32, i32* %p
 ; CHECK:         %invariant_cond = icmp ne i32 %a, 100
+; CHECK:         call void (i1, ...) @llvm.experimental.guard(i1 %invariant_cond)
 ; CHECK-LABEL: loop:
 ; CHECK:         %variant_cond = icmp ne i32 %a, %iv
-; CHECK:         call void (i1, ...) @llvm.experimental.guard(i1 %invariant_cond)
 ; CHECK:         call void (i1, ...) @llvm.experimental.guard(i1 %variant_cond)
 
 entry:
