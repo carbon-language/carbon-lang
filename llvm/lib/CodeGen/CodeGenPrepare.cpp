@@ -5592,6 +5592,10 @@ static Value *getTrueOrFalseValue(
 /// If we have a SelectInst that will likely profit from branch prediction,
 /// turn it into a branch.
 bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
+  // If branch conversion isn't desirable, exit early.
+  if (DisableSelectToBranch || OptSize || !TLI)
+    return false;
+
   // Find all consecutive select instructions that share the same condition.
   SmallVector<SelectInst *, 2> ASI;
   ASI.push_back(SI);
@@ -5613,8 +5617,7 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
   bool VectorCond = !SI->getCondition()->getType()->isIntegerTy(1);
 
   // Can we convert the 'select' to CF ?
-  if (DisableSelectToBranch || OptSize || !TLI || VectorCond ||
-      SI->getMetadata(LLVMContext::MD_unpredictable))
+  if (VectorCond || SI->getMetadata(LLVMContext::MD_unpredictable))
     return false;
 
   TargetLowering::SelectSupportKind SelectKind;
