@@ -23581,6 +23581,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
   SDValue R = Op.getOperand(0);
   SDValue Amt = Op.getOperand(1);
   unsigned Opc = Op.getOpcode();
+  unsigned EltSizeInBits = VT.getScalarSizeInBits();
   bool ConstantAmt = ISD::isBuildVectorOfConstantSDNodes(Amt.getNode());
 
   assert(VT.isVector() && "Custom lowering only for vector shifts!");
@@ -23669,18 +23670,21 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
 
     // Only perform this blend if we can perform it without loading a mask.
     if (ShuffleMask.size() == NumElts && Amt1 && Amt2 &&
-        isa<ConstantSDNode>(Amt1) && isa<ConstantSDNode>(Amt2) &&
         (VT != MVT::v16i16 ||
          is128BitLaneRepeatedShuffleMask(VT, ShuffleMask)) &&
         (VT == MVT::v4i32 || Subtarget.hasSSE41() || Opc != ISD::SHL ||
          canWidenShuffleElements(ShuffleMask))) {
-      SDValue Splat1 =
-          DAG.getConstant(cast<ConstantSDNode>(Amt1)->getAPIntValue(), dl, VT);
-      SDValue Shift1 = DAG.getNode(Op->getOpcode(), dl, VT, R, Splat1);
-      SDValue Splat2 =
-          DAG.getConstant(cast<ConstantSDNode>(Amt2)->getAPIntValue(), dl, VT);
-      SDValue Shift2 = DAG.getNode(Op->getOpcode(), dl, VT, R, Splat2);
-      return DAG.getVectorShuffle(VT, dl, Shift1, Shift2, ShuffleMask);
+      auto *Cst1 = dyn_cast<ConstantSDNode>(Amt1);
+      auto *Cst2 = dyn_cast<ConstantSDNode>(Amt2);
+      if (Cst1 && Cst2 && Cst1->getAPIntValue().ult(EltSizeInBits) &&
+          Cst2->getAPIntValue().ult(EltSizeInBits)) {
+        unsigned X86Opc = getTargetVShiftUniformOpcode(Opc, false);
+        SDValue Shift1 = getTargetVShiftByConstNode(X86Opc, dl, VT, R,
+                                                    Cst1->getZExtValue(), DAG);
+        SDValue Shift2 = getTargetVShiftByConstNode(X86Opc, dl, VT, R,
+                                                    Cst2->getZExtValue(), DAG);
+        return DAG.getVectorShuffle(VT, dl, Shift1, Shift2, ShuffleMask);
+      }
     }
   }
 
@@ -23697,7 +23701,7 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
       ((Subtarget.hasSSE41() && VT == MVT::v8i16) ||
        DAG.isKnownNeverZero(Amt)) &&
       (VT == MVT::v8i16 || (VT == MVT::v16i16 && Subtarget.hasInt256()))) {
-    SDValue EltBits = DAG.getConstant(VT.getScalarSizeInBits(), dl, VT);
+    SDValue EltBits = DAG.getConstant(EltSizeInBits, dl, VT);
     SDValue RAmt = DAG.getNode(ISD::SUB, dl, VT, EltBits, Amt);
     if (SDValue Scale = convertShiftLeftToScale(RAmt, dl, Subtarget, DAG)) {
       SDValue Zero = DAG.getConstant(0, dl, VT);
