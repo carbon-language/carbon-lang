@@ -902,9 +902,11 @@ RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
       IntB.createSubRangeFrom(Allocator, Mask, IntB);
     }
     SlotIndex AIdx = CopyIdx.getRegSlot(true);
+    LaneBitmask MaskA;
     for (LiveInterval::SubRange &SA : IntA.subranges()) {
       VNInfo *ASubValNo = SA.getVNInfoAt(AIdx);
       assert(ASubValNo != nullptr);
+      MaskA |= SA.LaneMask;
 
       IntB.refineSubRanges(Allocator, SA.LaneMask,
           [&Allocator,&SA,CopyIdx,ASubValNo,&ShrinkB]
@@ -918,6 +920,16 @@ RegisterCoalescer::removeCopyByCommutingDef(const CoalescerPair &CP,
         if (P.first)
           BSubValNo->def = ASubValNo->def;
       });
+    }
+    // Go over all subranges of IntB that have not been covered by IntA,
+    // and delete the segments starting at CopyIdx. This can happen if
+    // IntA has undef lanes that are defined in IntB.
+    for (LiveInterval::SubRange &SB : IntB.subranges()) {
+      if ((SB.LaneMask & MaskA).any())
+        continue;
+      if (LiveRange::Segment *S = SB.getSegmentContaining(CopyIdx))
+        if (S->start.getBaseIndex() == CopyIdx.getBaseIndex())
+          SB.removeSegment(*S, true);
     }
   }
 
