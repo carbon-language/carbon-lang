@@ -339,8 +339,9 @@ public:
   int getCyclesLeft() const { return CyclesLeft; }
 
   bool hasDependentUsers() const {
-    return llvm::any_of(
-        Defs, [](const UniqueDef &Def) { return Def->getNumUsers() > 0; });
+    return std::any_of(Defs.begin(), Defs.end(), [](const UniqueDef &Def) {
+      return Def->getNumUsers() > 0;
+    });
   }
 
   bool isDependencyBreaking() const { return IsDepBreaking; }
