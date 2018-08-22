@@ -92,8 +92,8 @@ bool WebAssemblyFrameLowering::needsPrologForEH(
 /// Returns true if this function needs a local user-space stack pointer.
 /// Unlike a machine stack pointer, the wasm user stack pointer is a global
 /// variable, so it is loaded into a register in the prolog.
-bool WebAssemblyFrameLowering::needsSP(const MachineFunction &MF,
-                                       const MachineFrameInfo &MFI) const {
+bool WebAssemblyFrameLowering::needsSP(const MachineFunction &MF) const {
+  auto &MFI = MF.getFrameInfo();
   return MFI.getStackSize() || MFI.adjustsStack() || hasFP(MF) ||
          needsPrologForEH(MF);
 }
@@ -103,8 +103,9 @@ bool WebAssemblyFrameLowering::needsSP(const MachineFunction &MF,
 /// needsSP is false). If false, the stack red zone can be used and only a local
 /// SP is needed.
 bool WebAssemblyFrameLowering::needsSPWriteback(
-    const MachineFunction &MF, const MachineFrameInfo &MFI) const {
-  assert(needsSP(MF, MFI));
+    const MachineFunction &MF) const {
+  auto &MFI = MF.getFrameInfo();
+  assert(needsSP(MF));
   return MFI.getStackSize() > RedZoneSize || MFI.hasCalls() ||
          MF.getFunction().hasFnAttribute(Attribute::NoRedZone);
 }
@@ -129,7 +130,7 @@ WebAssemblyFrameLowering::eliminateCallFramePseudoInstr(
          "Call frame pseudos should only be used for dynamic stack adjustment");
   const auto *TII = MF.getSubtarget<WebAssemblySubtarget>().getInstrInfo();
   if (I->getOpcode() == TII->getCallFrameDestroyOpcode() &&
-      needsSPWriteback(MF, MF.getFrameInfo())) {
+      needsSPWriteback(MF)) {
     DebugLoc DL = I->getDebugLoc();
     writeSPToGlobal(WebAssembly::SP32, MF, MBB, I, DL);
   }
@@ -143,7 +144,7 @@ void WebAssemblyFrameLowering::emitPrologue(MachineFunction &MF,
   assert(MFI.getCalleeSavedInfo().empty() &&
          "WebAssembly should not have callee-saved registers");
 
-  if (!needsSP(MF, MFI)) return;
+  if (!needsSP(MF)) return;
   uint64_t StackSize = MFI.getStackSize();
 
   const auto *TII = MF.getSubtarget<WebAssemblySubtarget>().getInstrInfo();
@@ -203,16 +204,15 @@ void WebAssemblyFrameLowering::emitPrologue(MachineFunction &MF,
             WebAssembly::FP32)
         .addReg(WebAssembly::SP32);
   }
-  if (StackSize && needsSPWriteback(MF, MFI)) {
+  if (StackSize && needsSPWriteback(MF)) {
     writeSPToGlobal(WebAssembly::SP32, MF, MBB, InsertPt, DL);
   }
 }
 
 void WebAssemblyFrameLowering::emitEpilogue(MachineFunction &MF,
                                             MachineBasicBlock &MBB) const {
-  auto &MFI = MF.getFrameInfo();
-  uint64_t StackSize = MFI.getStackSize();
-  if (!needsSP(MF, MFI) || !needsSPWriteback(MF, MFI)) return;
+  uint64_t StackSize = MF.getFrameInfo().getStackSize();
+  if (!needsSP(MF) || !needsSPWriteback(MF)) return;
   const auto *TII = MF.getSubtarget<WebAssemblySubtarget>().getInstrInfo();
   auto &MRI = MF.getRegInfo();
   auto InsertPt = MBB.getFirstTerminator();
