@@ -13647,13 +13647,20 @@ ARMTargetLowering::targetShrinkDemandedConstant(SDValue Op,
 
   unsigned Mask = C->getZExtValue();
 
-  // If mask is zero, nothing to do.
-  if (!Mask)
-    return false;
-
   unsigned Demanded = DemandedAPInt.getZExtValue();
   unsigned ShrunkMask = Mask & Demanded;
   unsigned ExpandedMask = Mask | ~Demanded;
+
+  // If the mask is all zeros, let the target-independent code replace the
+  // result with zero.
+  if (ShrunkMask == 0)
+    return false;
+
+  // If the mask is all ones, erase the AND. (Currently, the target-independent
+  // code won't do this, so we have to do it explicitly to avoid an infinite
+  // loop in obscure cases.)
+  if (ExpandedMask == ~0U)
+    return TLO.CombineTo(Op, Op.getOperand(0));
 
   auto IsLegalMask = [ShrunkMask, ExpandedMask](unsigned Mask) -> bool {
     return (ShrunkMask & Mask) == ShrunkMask && (~ExpandedMask & Mask) == 0;
