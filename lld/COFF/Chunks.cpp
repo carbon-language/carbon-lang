@@ -315,9 +315,6 @@ void SectionChunk::writeTo(uint8_t *Buf) const {
 
     uint8_t *Off = Buf + OutputSectionOff + Rel.VirtualAddress;
 
-    // Get the output section of the symbol for this relocation.  The output
-    // section is needed to compute SECREL and SECTION relocations used in debug
-    // info.
     auto *Sym =
         dyn_cast_or_null<Defined>(File->getSymbol(Rel.SymbolTableIndex));
     if (!Sym) {
@@ -332,6 +329,9 @@ void SectionChunk::writeTo(uint8_t *Buf) const {
       error("relocation against symbol in discarded section: " + Name);
       continue;
     }
+    // Get the output section of the symbol for this relocation.  The output
+    // section is needed to compute SECREL and SECTION relocations used in debug
+    // info.
     Chunk *C = Sym->getChunk();
     OutputSection *OS = C ? C->getOutputSection() : nullptr;
 
