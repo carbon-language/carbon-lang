@@ -100,20 +100,14 @@ static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ExpressionAnalyzer::KindParam{1})};
-  switch (kind) {
-#define CASE(k) \
-  case k: { \
-    using Ty = Type<TypeCategory::Character, k>; \
-    return { \
-        Expr<evaluate::SomeCharacter>{Expr<Ty>{std::get<std::string>(x.t)}}}; \
-  }
-    FOR_EACH_CHARACTER_KIND(CASE, )
-#undef CASE
-  default:
-    ea.context().messages.Say("unimplemented CHARACTER kind (%ju)"_err_en_US,
+  auto value{std::get<std::string>(x.t)};
+  using Ex = Expr<evaluate::SomeCharacter>;
+  std::optional<Ex> result{Ex::template ForceKind(kind, std::move(value))};
+  if (!result.has_value()) {
+    ea.context().messages.Say("unsupported CHARACTER(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
-    return std::nullopt;
   }
+  return result;
 }
 
 template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
@@ -162,20 +156,14 @@ std::optional<Expr<evaluate::SomeInteger>> IntLiteralConstant(
     ExpressionAnalyzer &ea, const PARSED &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultIntegerKind())};
-  auto value{std::get<0>(x.t)};  // std::[u]int64_t
-  switch (kind) {
-#define CASE(k) \
-  case k: { \
-    using Ty = Type<TypeCategory::Integer, k>; \
-    return {evaluate::ToSomeKindExpr(Expr<Ty>{value})}; \
-  }
-    FOR_EACH_INTEGER_KIND(CASE, )
-#undef CASE
-  default:
-    ea.context().messages.Say("unimplemented INTEGER kind (%ju)"_err_en_US,
+  auto value{std::get<0>(x.t)};  // std::(u)int64_t
+  using Ex = Expr<evaluate::SomeInteger>;
+  std::optional<Ex> result{Ex::template ForceKind(kind, std::move(value))};
+  if (!result.has_value()) {
+    ea.context().messages.Say("unsupported INTEGER(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
-    return std::nullopt;
   }
+  return result;
 }
 
 static std::optional<Expr<evaluate::SomeInteger>> AnalyzeLiteral(
@@ -229,11 +217,23 @@ std::optional<Expr<evaluate::SomeReal>> ReadRealLiteral(
   return {evaluate::ToSomeKindExpr(Expr<RealType>{value})};
 }
 
+struct RealHelper {
+  RealHelper(parser::CharBlock lit, evaluate::FoldingContext &ctx)
+    : literal{lit}, context{ctx} {}
+  template<int K> void action() {
+    CHECK(!result.has_value());
+    result = ReadRealLiteral<K>(literal, context);
+  }
+  parser::CharBlock literal;
+  evaluate::FoldingContext &context;
+  std::optional<Expr<evaluate::SomeReal>> result;
+};
+
 static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::RealLiteralConstant &x) {
   // Use a local message context around the real literal.
   parser::ContextualMessages ctxMsgs{x.real.source, ea.context().messages};
-  evaluate::FoldingContext foldingContext{ctxMsgs, ea.context()};
+  evaluate::FoldingContext localFoldingContext{ctxMsgs, ea.context()};
   // If a kind parameter appears, it takes precedence.  In the absence of
   // an explicit kind parameter, the exponent letter (e.g., 'e'/'d')
   // determines the kind.
@@ -251,16 +251,13 @@ static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
     }
   }
   auto kind{ea.Analyze(x.kind, defaultKind)};
-  switch (kind) {
-#define CASE(k) \
-  case k: return ReadRealLiteral<k>(x.real.source, foldingContext);
-    FOR_EACH_REAL_KIND(CASE, )
-#undef CASE
-  default:
-    ctxMsgs.Say("unimplemented REAL kind (%ju)"_err_en_US,
+  RealHelper helper{x.real.source, localFoldingContext};
+  Expr<evaluate::SomeReal>::template AtKind(helper, kind);
+  if (!helper.result.has_value()) {
+    ctxMsgs.Say("unsupported REAL(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
-    return std::nullopt;
   }
+  return helper.result;
 }
 
 static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
@@ -328,19 +325,13 @@ static std::optional<Expr<evaluate::SomeLogical>> AnalyzeLiteral(
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultLogicalKind())};
   bool value{std::get<bool>(x.t)};
-  switch (kind) {
-#define CASE(k) \
-  case k: { \
-    using Ty = Type<TypeCategory::Logical, k>; \
-    return {Expr<evaluate::SomeLogical>{Expr<Ty>{value}}}; \
-  }
-    FOR_EACH_LOGICAL_KIND(CASE, )
-#undef CASE
-  default:
-    ea.context().messages.Say("unimplemented LOGICAL kind (%ju)"_err_en_US,
+  using Ex = Expr<evaluate::SomeLogical>;
+  std::optional<Ex> result{Ex::template ForceKind(kind, std::move(value))};
+  if (!result.has_value()) {
+    ea.context().messages.Say("unsupported LOGICAL(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
-    return std::nullopt;
   }
+  return result;
 }
 
 template<>
@@ -594,7 +585,7 @@ std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
           return {Expr<zType>{evaluate::ComplexConstructor<kind>{
               std::move(rx), std::move(ix)}}};
         },
-        std::move(joined->first.u), std::move(joined->second.u))};
+        std::move(joined->first.u.u), std::move(joined->second.u.u))};
   }
   return std::nullopt;
 }

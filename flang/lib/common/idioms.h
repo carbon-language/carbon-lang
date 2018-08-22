@@ -129,17 +129,21 @@ template<typename A> struct ListItemCount {
         static_cast<int>(e), #__VA_ARGS__); \
   }
 
-// If a variant holds a value of a particular type, return a copy in a
-// std::optional<>.
-template<typename A, typename VARIANT>
-std::optional<A> GetIf(const VARIANT &u) {
-  if (const A * x{std::get_if<A>(&u)}) {
-    return {*x};
+template<typename A> std::optional<A> GetIfNonNull(const A *p) {
+  if (p) {
+    return {*p};
   }
   return std::nullopt;
 }
 
-// Collapses a nested std::optional<std::optional<A>>
+// If a variant holds a value of a particular type, return a copy in a
+// std::optional<>.
+template<typename A, typename VARIANT>
+std::optional<A> GetIf(const VARIANT &u) {
+  return GetIfNonNull(std::get_if<A>(&u));
+}
+
+// Collapses a nested std::optional<std::optional<A>> to std::optional<A>
 template<typename A>
 std::optional<A> JoinOptionals(std::optional<std::optional<A>> &&x) {
   if (x.has_value()) {
@@ -168,5 +172,6 @@ std::optional<A> MapOptional(std::function<A(B &&, C &&)> &f,
   }
   return std::nullopt;
 }
+
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_IDIOMS_H_

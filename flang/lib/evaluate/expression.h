@@ -37,13 +37,16 @@ namespace Fortran::evaluate {
 using common::RelationalOperator;
 
 // Expr<A> represents an expression whose result is the Fortran type A,
-// which can be specific, SomeKind<C> for a type category C, or
+// which can be a specific Type<C,K>, or SomeKind<C> for a type category C, or
 // Expr<SomeType> for a wholly generic expression.  Instances of Expr<>
 // wrap discriminated unions.
 template<typename A> class Expr;
 
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
 
+// Abstract Operation<> base class.  The first type parameter is a "CRTP"
+// reference to the specific operation class; e.g., Add is defined with
+// struct Add : public Operation<Add, ...>.
 template<typename DERIVED, typename RESULT, typename... OPERAND>
 class Operation {
 public:
@@ -495,18 +498,21 @@ struct Relational : public Operation<Relational<A>, LogicalResult, A, A> {
 // A generic relation between two operands of the same kind in some intrinsic
 // type category (except LOGICAL).
 template<TypeCategory CAT> struct Relational<SomeKind<CAT>> {
+  static constexpr TypeCategory category{CAT};
   using Result = LogicalResult;
   using Operand = SomeKind<CAT>;
-  template<int KIND> using KindRelational = Relational<Type<CAT, KIND>>;
+  template<TypeCategory C, int K> using KindRelational = Relational<Type<C, K>>;
 
   CLASS_BOILERPLATE(Relational)
-  template<int KIND> Relational(const KindRelational<KIND> &x) : u{x} {}
-  template<int KIND> Relational(KindRelational<KIND> &&x) : u{std::move(x)} {}
+  template<int KIND>
+  Relational(const KindRelational<category, KIND> &x) : u{x} {}
+  template<int KIND>
+  Relational(KindRelational<category, KIND> &&x) : u{std::move(x)} {}
 
   std::optional<Scalar<Result>> Fold(FoldingContext &);
   std::ostream &Dump(std::ostream &) const;
 
-  KindsVariant<CAT, KindRelational> u;
+  CategoryUnion<CAT, KindRelational> u;
 };
 
 template<int KIND> class Expr<Type<TypeCategory::Logical, KIND>> {
@@ -552,17 +558,31 @@ template<TypeCategory CAT> class Expr<SomeKind<CAT>> {
 public:
   using Result = SomeKind<CAT>;
   using FoldableTrait = std::true_type;
+  static constexpr TypeCategory category{CAT};
   CLASS_BOILERPLATE(Expr)
 
-  template<int KIND> using KindExpr = Expr<Type<CAT, KIND>>;
-  template<int KIND> Expr(const KindExpr<KIND> &x) : u{x} {}
-  template<int KIND> Expr(KindExpr<KIND> &&x) : u{std::move(x)} {}
+  template<TypeCategory C, int K> using KindExpr = Expr<Type<C, K>>;
+  using Variant = CategoryUnion<category, KindExpr>;
+  Expr(Variant &&x) : u{std::move(x)} {}
+  template<int KIND> Expr(const KindExpr<category, KIND> &x) : u{x} {}
+  template<int KIND> Expr(KindExpr<category, KIND> &&x) : u{std::move(x)} {}
   std::optional<Scalar<Result>> ScalarValue() const;
   std::ostream &Dump(std::ostream &) const;
   std::optional<Scalar<Result>> Fold(FoldingContext &);
   int Rank() const;
 
-  KindsVariant<CAT, KindExpr> u;
+  template<typename A> static std::optional<Expr> ForceKind(int kind, A &&x) {
+    if (std::optional<Variant> result{
+            Variant::template ForceKind<A>(kind, std::move(x))}) {
+      return {Expr{std::move(*result)}};
+    }
+    return std::nullopt;
+  }
+  template<typename A> static void AtKind(A &x, int kind) {
+    Variant::template AtKind<A>(x, kind);
+  }
+
+  Variant u;
 };
 
 // BOZ literal constants need to be wide enough to hold an integer or real

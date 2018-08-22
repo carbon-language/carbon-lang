@@ -179,7 +179,7 @@ auto Expr<SomeKind<CAT>>::Fold(FoldingContext &context)
         }
         return std::nullopt;
       },
-      u);
+      u.u);
 }
 
 auto Expr<SomeType>::Fold(FoldingContext &context)
@@ -218,7 +218,7 @@ auto Convert<TO, FROM>::FoldScalar(FoldingContext &context,
           using Ty = std::decay_t<decltype(x)>;
           return Convert<Result, Ty>::FoldScalar(context, x);
         },
-        c.u);
+        c.u.u);
   } else if constexpr (std::is_same_v<Result, SomeKind<Result::category>>) {
     if constexpr (Result::category == Operand::category) {
       return {Scalar<Result>{c}};
@@ -226,10 +226,10 @@ auto Convert<TO, FROM>::FoldScalar(FoldingContext &context,
   } else if constexpr (std::is_same_v<Operand, SomeKind<Operand::category>>) {
     return std::visit(
         [&](const auto &x) -> std::optional<Scalar<Result>> {
-          using Ty = ScalarValueType<std::decay_t<decltype(x)>>;
+          using Ty = TypeOf<std::decay_t<decltype(x)>>;
           return Convert<Result, Ty>::FoldScalar(context, x);
         },
-        c.u);
+        c.u.u);
   } else if constexpr (Result::category == TypeCategory::Integer) {
     if constexpr (Operand::category == TypeCategory::Integer) {
       auto converted{Scalar<Result>::ConvertSigned(c)};
@@ -398,7 +398,7 @@ auto RealToIntPower<A, B>::FoldScalar(FoldingContext &context,
         RealFlagWarnings(context, power.flags, "raising to INTEGER power");
         return {std::move(power.value)};
       },
-      y.u);
+      y.u.u);
 }
 
 template<typename A>
@@ -540,12 +540,12 @@ std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
 
 template<TypeCategory CAT>
 std::ostream &Expr<SomeKind<CAT>>::Dump(std::ostream &o) const {
-  return DumpExpr(o, u);
+  return DumpExpr(o, u.u);
 }
 
 template<TypeCategory CAT>
 std::ostream &Relational<SomeKind<CAT>>::Dump(std::ostream &o) const {
-  return DumpExpr(o, u);
+  return DumpExpr(o, u.u);
 }
 
 std::ostream &Expr<SomeType>::Dump(std::ostream &o) const {
@@ -658,7 +658,7 @@ auto Expr<SomeKind<CAT>>::ScalarValue() const -> std::optional<Scalar<Result>> {
         }
         return std::nullopt;
       },
-      u);
+      u.u);
 }
 
 auto Expr<SomeType>::ScalarValue() const -> std::optional<Scalar<Result>> {
@@ -679,7 +679,7 @@ auto Expr<SomeType>::ScalarValue() const -> std::optional<Scalar<Result>> {
 // Rank
 
 template<TypeCategory CAT> int Expr<SomeKind<CAT>>::Rank() const {
-  return std::visit([](const auto &x) { return x.Rank(); }, u);
+  return std::visit([](const auto &x) { return x.Rank(); }, u.u);
 }
 
 int Expr<SomeType>::Rank() const {

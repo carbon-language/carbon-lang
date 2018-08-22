@@ -26,6 +26,8 @@
 #include "real.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
+#include "../common/kind-variant.h"
+#include "../common/template.h"
 #include <cinttypes>
 #include <optional>
 #include <string>
@@ -37,6 +39,8 @@ using common::TypeCategory;
 
 // Specific intrinsic types
 
+template<TypeCategory C, int KIND> struct Type;
+
 template<TypeCategory C, int KIND> struct TypeBase {
   static constexpr TypeCategory category{C};
   static constexpr int kind{KIND};
@@ -45,8 +49,6 @@ template<TypeCategory C, int KIND> struct TypeBase {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
 };
-
-template<TypeCategory C, int KIND> struct Type;
 
 template<int KIND>
 struct Type<TypeCategory::Integer, KIND>
@@ -107,6 +109,7 @@ struct Type<TypeCategory::Logical, KIND>
 };
 
 // Type functions
+
 template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
 
 template<TypeCategory C, typename T>
@@ -131,66 +134,89 @@ using DefaultCharacter = Type<TypeCategory::Character, 1>;
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 
-// These macros invoke other macros on each of the supported kinds of
-// a given category.
-// TODO larger CHARACTER kinds, incl. Kanji
-#define COMMA ,
-#define FOR_EACH_INTEGER_KIND(M, SEP) M(1) SEP M(2) SEP M(4) SEP M(8) SEP M(16)
-#define FOR_EACH_REAL_KIND(M, SEP) M(2) SEP M(4) SEP M(8) SEP M(10) SEP M(16)
-#define FOR_EACH_COMPLEX_KIND(M, SEP) M(2) SEP M(4) SEP M(8) SEP M(10) SEP M(16)
-#define FOR_EACH_CHARACTER_KIND(M, SEP) M(1)
-#define FOR_EACH_LOGICAL_KIND(M, SEP) M(1) SEP M(2) SEP M(4) SEP M(8)
+template<TypeCategory CAT, template<TypeCategory, int> class TYPE>
+struct CategoryUnionTemplate;
 
-#define FOR_EACH_CATEGORY(M) \
-  M(Integer, INTEGER) \
-  M(Real, REAL) M(Complex, COMPLEX) M(Character, CHARACTER) M(Logical, LOGICAL)
+template<template<TypeCategory, int> class TYPE>
+struct CategoryUnionTemplate<TypeCategory::Integer, TYPE> {
+  static constexpr auto category{TypeCategory::Integer};
+  template<int K> using PerKind = TYPE<category, K>;
+  using type = common::KindVariant<int, PerKind, 1, 2, 4, 8, 16>;
+};
 
-// These macros and template create instances of std::variant<> that can contain
-// applications of some class template to all of the supported kinds of
-// a category of intrinsic type.
-template<TypeCategory CAT, template<int> class T> struct VariantOverKinds;
-#define TKIND(K) T<K>
-#define MAKE(Cat, CAT) \
-  template<template<int> class T> \
-  struct VariantOverKinds<TypeCategory::Cat, T> { \
-    using type = std::variant<FOR_EACH_##CAT##_KIND(TKIND, COMMA)>; \
+template<template<TypeCategory, int> class TYPE>
+struct CategoryUnionTemplate<TypeCategory::Real, TYPE> {
+  static constexpr auto category{TypeCategory::Real};
+  template<int K> using PerKind = TYPE<category, K>;
+  using type = common::KindVariant<int, PerKind, 2, 4, 8, 10, 16>;
+};
+
+template<template<TypeCategory, int> class TYPE>
+struct CategoryUnionTemplate<TypeCategory::Complex, TYPE> {
+  static constexpr auto category{TypeCategory::Complex};
+  template<int K> using PerKind = TYPE<category, K>;
+  using type = common::KindVariant<int, PerKind, 2, 4, 8, 10, 16>;
+};
+
+template<template<TypeCategory, int> class TYPE>
+struct CategoryUnionTemplate<TypeCategory::Character, TYPE> {
+  static constexpr auto category{TypeCategory::Character};
+  template<int K> using PerKind = TYPE<category, K>;
+  using type = common::KindVariant<int, PerKind, 1>;  // TODO: add kinds 2 & 4;
+};
+
+template<template<TypeCategory, int> class TYPE>
+struct CategoryUnionTemplate<TypeCategory::Logical, TYPE> {
+  static constexpr auto category{TypeCategory::Logical};
+  template<int K> using PerKind = TYPE<category, K>;
+  using type = common::KindVariant<int, PerKind, 1, 2, 4, 8>;
+};
+
+template<TypeCategory CAT, template<TypeCategory, int> class TYPE>
+using CategoryUnion = typename CategoryUnionTemplate<CAT, TYPE>::type;
+
+template<template<TypeCategory, int> class A>
+struct IntrinsicTypeUnionTemplate {
+  template<TypeCategory C> using PerCategory = CategoryUnion<C, A>;
+  using type = common::KindVariant<TypeCategory, PerCategory,
+      TypeCategory::Integer, TypeCategory::Real, TypeCategory::Complex,
+      TypeCategory::Character, TypeCategory::Logical>;
+};
+
+template<template<TypeCategory, int> class A>
+using IntrinsicTypeUnion = typename IntrinsicTypeUnionTemplate<A>::type;
+
+// When Scalar<T> is S, then TypeOf<S> is T.
+template<typename CONST> struct TypeOfTemplate {
+  template<typename A>
+  struct InnerPredicate {  // A is a specific Type<CAT,KIND>
+    static constexpr bool value() {
+      return std::is_same_v<std::decay_t<CONST>,
+          std::decay_t<typename A::Scalar>>;
+    }
   };
-FOR_EACH_CATEGORY(MAKE)
-#undef MAKE
-#undef TKIND
-
-template<TypeCategory CAT, template<int> class T>
-using KindsVariant = typename VariantOverKinds<CAT, T>::type;
-
-// Map scalar value types back to their Fortran types.
-// For every type T = Type<CAT, KIND>, TypeOfScalarValue<T>> == T.
-// E.g., TypeOfScalarValue<Integer<32>> is Type<TypeCategory::Integer, 4>.
-template<typename CONST> struct GetTypeOfScalarValue;
-#define TOSV(cat, kind) \
-  template<> \
-  struct GetTypeOfScalarValue<Scalar<Type<TypeCategory::cat, kind>>> { \
-    using type = Type<TypeCategory::cat, kind>; \
+  template<typename A>
+  struct OuterPredicate {  // A is a CategoryUnion<CAT, Type>
+    static constexpr bool value() {
+      return common::SearchVariantType<InnerPredicate, typename A::Variant> >=
+          0;
+    }
   };
-#define M(k) TOSV(Integer, k)
-FOR_EACH_INTEGER_KIND(M, )
-#undef M
-#define M(k) TOSV(Real, k)
-FOR_EACH_REAL_KIND(M, )
-#undef M
-#define M(k) TOSV(Complex, k)
-FOR_EACH_COMPLEX_KIND(M, )
-#undef M
-#define M(k) TOSV(Character, k)
-FOR_EACH_CHARACTER_KIND(M, )
-#undef M
-#define M(k) TOSV(Logical, k)
-FOR_EACH_LOGICAL_KIND(M, )
-#undef M
-#undef TOSV
+  using BareTypes = IntrinsicTypeUnion<Type>;
+  static constexpr int CatIndex{
+      common::SearchVariantType<OuterPredicate, typename BareTypes::Variant>};
+  static_assert(
+      CatIndex >= 0 || !"no category found for type of scalar constant");
+  static constexpr TypeCategory category{BareTypes::IndexToKind(CatIndex)};
+  using CatType = BareTypes::template KindType<category>;
+  static constexpr int KindIndex{
+      common::SearchVariantType<InnerPredicate, typename CatType::Variant>};
+  static_assert(KindIndex >= 0 || !"search over category failed when repeated");
+  static constexpr int kind{CatType::IndexToKind(KindIndex)};
+  using type = Type<category, kind>;
+};
 
-template<typename CONST>
-using ScalarValueType =
-    typename GetTypeOfScalarValue<std::decay_t<CONST>>::type;
+template<typename CONST> using TypeOf = typename TypeOfTemplate<CONST>::type;
 
 // Holds a scalar value of any kind within a particular intrinsic type
 // category.
@@ -206,17 +232,17 @@ template<TypeCategory CAT> struct SomeKindScalar {
   std::optional<std::int64_t> ToInt64() const {
     if constexpr (category == TypeCategory::Integer) {
       return std::visit(
-          [](const auto &x) { return std::make_optional(x.ToInt64()); }, u);
+          [](const auto &x) { return std::make_optional(x.ToInt64()); }, u.u);
     }
     return std::nullopt;
   }
 
   std::optional<std::string> ToString() const {
-    return common::GetIf<std::string>(u);
+    return common::GetIf<std::string>(u.u);
   }
 
-  template<int KIND> using KindScalar = Scalar<Type<CAT, KIND>>;
-  KindsVariant<CAT, KindScalar> u;
+  template<TypeCategory C, int K> using KindScalar = Scalar<Type<C, K>>;
+  CategoryUnion<CAT, KindScalar> u;
 };
 
 // Holds a scalar constant of any intrinsic category and size.

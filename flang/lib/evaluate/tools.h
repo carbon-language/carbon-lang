@@ -51,7 +51,7 @@ Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
 
 template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {
   return std::visit(
-      [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u);
+      [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u.u);
 }
 
 template<TypeCategory C>
@@ -60,7 +60,7 @@ Expr<SomeKind<C>> operator+(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) + std::move(yk)};
       },
-      x.u, y.u);
+      x.u.u, y.u.u);
 }
 
 template<TypeCategory C>
@@ -69,7 +69,7 @@ Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) - std::move(yk)};
       },
-      x.u, y.u);
+      x.u.u, y.u.u);
 }
 
 template<TypeCategory C>
@@ -78,7 +78,7 @@ Expr<SomeKind<C>> operator*(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) * std::move(yk)};
       },
-      x.u, y.u);
+      x.u.u, y.u.u);
 }
 
 template<TypeCategory C>
@@ -87,7 +87,7 @@ Expr<SomeKind<C>> operator/(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) / std::move(yk)};
       },
-      x.u, y.u);
+      x.u.u, y.u.u);
 }
 
 // Convert the second argument expression to an expression of the same type
@@ -100,7 +100,7 @@ Expr<SomeKind<TC>> ConvertToTypeAndKindOf(
         using SpecificExpr = std::decay_t<decltype(tk)>;
         return {SpecificExpr{std::move(from)}};
       },
-      to.u);
+      to.u.u);
 }
 
 // Ensure that both operands of an intrinsic REAL operation or CMPLX()
@@ -122,23 +122,25 @@ void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
           y.u = Expr<xt>{yk};
         }
       },
-      x.u, y.u);
+      x.u.u, y.u.u);
 }
 
-template<typename A> Expr<ScalarValueType<A>> ScalarConstantToExpr(const A &x) {
+template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
+  static_assert(std::is_same_v<Scalar<TypeOf<A>>, std::decay_t<A>> ||
+      !"TypeOf<> is broken");
   return {x};
 }
 
 template<TypeCategory CAT, int KIND>
 Expr<SomeKind<CAT>> ToSomeKindExpr(const Expr<Type<CAT, KIND>> &x) {
-  return Expr<SomeKind<CAT>>{x};
+  return {x};
 }
 
 template<TypeCategory CAT>
 Expr<SomeKind<CAT>> SomeKindScalarToExpr(const SomeKindScalar<CAT> &x) {
   return std::visit(
       [](const auto &c) { return ToSomeKindExpr(ScalarConstantToExpr(c)); },
-      x.u);
+      x.u.u);
 }
 
 Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &);
