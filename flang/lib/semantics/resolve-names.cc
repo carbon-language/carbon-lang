@@ -36,6 +36,7 @@ using namespace parser::literals;
 class MessageHandler;
 
 static GenericSpec MapGenericSpec(const parser::GenericSpec &);
+static Scope::ImportKind MapImportKind(parser::ImportStmt::Kind);
 
 // ImplicitRules maps initial character of identifier to the DeclTypeSpec*
 // representing the implicit type; nullptr if none.
@@ -640,10 +641,12 @@ public:
   void Post(const parser::FunctionReference &);
   bool Pre(const parser::CallStmt &);
   void Post(const parser::CallStmt &);
+  bool Pre(const parser::ImportStmt &);
 
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
   std::optional<Symbol::Flag> expectedProcFlag_;
+  const SourceName *prevImportStmt_{nullptr};
 
   const parser::Name *GetVariableName(const parser::DataRef &);
   const parser::Name *GetVariableName(const parser::Designator &);
@@ -654,6 +657,8 @@ private:
   const Symbol *ResolveStructureComponent(const parser::StructureComponent &x);
   const Symbol *ResolveDataRef(const parser::DataRef &x);
   const Symbol *FindComponent(const Symbol &base, const SourceName &component);
+  void CheckImports();
+  void CheckImport(const SourceName &, const SourceName &);
 };
 
 // ImplicitRules implementation
@@ -1162,13 +1167,7 @@ void ScopeHandler::PopScope() {
 }
 
 Symbol *ScopeHandler::FindSymbol(const SourceName &name) {
-  Scope &scope{CurrNonTypeScope()};
-  const auto &it{scope.find(name)};
-  if (it == scope.end()) {
-    return nullptr;
-  } else {
-    return it->second;
-  }
+  return CurrNonTypeScope().FindSymbol(name);
 }
 void ScopeHandler::EraseSymbol(const SourceName &name) {
   CurrScope().erase(name);
@@ -2151,6 +2150,43 @@ void ResolveNamesVisitor::Post(const parser::CallStmt &) {
   expectedProcFlag_ = std::nullopt;
 }
 
+bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
+  auto kind{MapImportKind(x.kind)};
+  auto &scope{CurrScope()};
+  // Check C896 and C899
+  switch (scope.kind()) {
+  case Scope::Kind::Module:
+    if (!scope.symbol()->get<ModuleDetails>().isSubmodule()) {
+      Say("IMPORT is not allowed in a module scoping unit"_err_en_US);
+      return false;
+    } else if (kind == Scope::ImportKind::None) {
+      Say("IMPORT,NONE is not allowed in a submodule scoping unit"_err_en_US);
+      return false;
+    }
+    break;
+  case Scope::Kind::MainProgram:
+    Say("IMPORT is not allowed in a main program scoping unit"_err_en_US);
+    return false;
+  case Scope::Kind::Subprogram:
+    if (scope.parent().kind() == Scope::Kind::Global) {
+      Say("IMPORT is not allowed in an external subprogram scoping unit"_err_en_US);
+      return false;
+    }
+    break;
+  default:;
+  }
+  if (auto error{scope.set_importKind(kind)}) {
+    Say(std::move(*error));
+  }
+  for (auto &name : x.names) {
+    if (!scope.add_importName(name.source)) {
+      Say(name, "'%s' not found in host scope"_err_en_US);
+    }
+  }
+  prevImportStmt_ = currStmtSource();
+  return false;
+}
+
 bool ResolveNamesVisitor::CheckUseError(
     const SourceName &name, const Symbol &symbol) {
   const auto *details{symbol.detailsIf<UseErrorDetails>()};
@@ -2287,11 +2323,15 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
         Say2(name->source,
             "Cannot call subroutine '%s' like a function"_err_en_US,
             symbol->name(), "Declaration of '%s'"_en_US);
-      } else if (symbol->detailsIf<ProcEntityDetails>()) {
+      } else if (symbol->has<ProcEntityDetails>()) {
         symbol->set(*expectedProcFlag_);  // in case it hasn't been set yet
-      } else if (symbol->detailsIf<GenericDetails>()) {
+      } else if (symbol->has<SubprogramDetails>()) {
         // OK
-      } else if (symbol->detailsIf<DerivedTypeDetails>()) {
+      } else if (symbol->has<SubprogramNameDetails>()) {
+        // OK
+      } else if (symbol->has<GenericDetails>()) {
+        // OK
+      } else if (symbol->has<DerivedTypeDetails>()) {
         // OK: type constructor
       } else {
         Say2(name->source,
@@ -2372,8 +2412,9 @@ static bool NeedsExplicitType(const Symbol &symbol) {
   }
 }
 
-void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
+void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
   badStmtFuncFound_ = false;
+  CheckImports();
   for (auto &pair : CurrScope()) {
     auto &name{pair.first};
     auto &symbol{*pair.second};
@@ -2387,6 +2428,41 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &s) {
     if (symbol.has<GenericDetails>()) {
       CheckGenericProcedures(symbol);
     }
+  }
+}
+
+void ResolveNamesVisitor::CheckImports() {
+  auto &scope{CurrScope()};
+  switch (scope.importKind()) {
+  case Scope::ImportKind::None: break;
+  case Scope::ImportKind::All:
+    // C8102: all entities in host must not be hidden
+    for (const auto &pair : scope.parent()) {
+      auto &name{pair.first};
+      if (name != scope.name()) {
+        CheckImport(*prevImportStmt_, name);
+      }
+    }
+    break;
+  case Scope::ImportKind::Default:
+  case Scope::ImportKind::Only:
+    // C8102: entities named in IMPORT must not be hidden
+    for (auto &name : scope.importNames()) {
+      CheckImport(name, name);
+    }
+    break;
+  }
+}
+
+void ResolveNamesVisitor::CheckImport(
+    const SourceName &location, const SourceName &name) {
+  auto &scope{CurrScope()};
+  auto it{scope.find(name)};
+  if (it != scope.end()) {
+    Say(location, "'%s' from host is not accessible"_err_en_US,
+        name.ToString().c_str())
+        .Attach(it->second->name(), "'%s' is hidden by this entity"_en_US,
+            it->second->name().ToString().c_str());
   }
 }
 
@@ -2575,6 +2651,16 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &genericSpec) {
           },
       },
       genericSpec.u);
+}
+
+static Scope::ImportKind MapImportKind(parser::ImportStmt::Kind kind) {
+  switch (kind) {
+  case parser::ImportStmt::Kind::Default: return Scope::ImportKind::Default;
+  case parser::ImportStmt::Kind::Only: return Scope::ImportKind::Only;
+  case parser::ImportStmt::Kind::None: return Scope::ImportKind::None;
+  case parser::ImportStmt::Kind::All: return Scope::ImportKind::All;
+  default: CRASH_NO_CASE;
+  }
 }
 
 static void PutIndent(std::ostream &os, int indent) {

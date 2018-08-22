@@ -59,6 +59,8 @@ public:
   void Post(const parser::DerivedTypeSpec &) { PostReference(); }
   bool Pre(const parser::UseStmt &) { return PreReference(); }
   void Post(const parser::UseStmt &) { PostReference(); }
+  bool Pre(const parser::ImportStmt &) { return PreReference(); }
+  void Post(const parser::ImportStmt &) { PostReference(); }
 
 private:
   using symbolMap = std::multimap<const char *, const Symbol *>;

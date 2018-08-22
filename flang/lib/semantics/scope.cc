@@ -48,6 +48,16 @@ Scope::size_type Scope::erase(const SourceName &name) {
     return 0;
   }
 }
+Symbol *Scope::FindSymbol(const SourceName &name) {
+  const auto it{find(name)};
+  if (it != end()) {
+    return it->second;
+  } else if (CanImport(name)) {
+    return parent_.FindSymbol(name);
+  } else {
+    return nullptr;
+  }
+}
 Scope *Scope::FindSubmodule(const SourceName &name) const {
   auto it{submodules_.find(name)};
   if (it == submodules_.end()) {
@@ -62,6 +72,63 @@ bool Scope::AddSubmodule(const SourceName &name, Scope *submodule) {
 DerivedTypeSpec &Scope::MakeDerivedTypeSpec(const SourceName &name) {
   derivedTypeSpecs_.emplace_back(name);
   return derivedTypeSpecs_.back();
+}
+
+Scope::ImportKind Scope::importKind() const {
+  if (importKind_) {
+    return *importKind_;
+  }
+  if (symbol_) {
+    if (auto *details{symbol_->detailsIf<SubprogramDetails>()}) {
+      if (details->isInterface()) {
+        return ImportKind::None;  // default for interface body
+      }
+    }
+  }
+  return ImportKind::Default;
+}
+
+std::optional<parser::MessageFixedText> Scope::set_importKind(ImportKind kind) {
+  if (!importKind_.has_value()) {
+    importKind_ = kind;
+    return std::nullopt;
+  }
+  std::optional<parser::MessageFixedText> error;
+  bool hasNone{kind == ImportKind::None || *importKind_ == ImportKind::None};
+  bool hasAll{kind == ImportKind::All || *importKind_ == ImportKind::All};
+  // Check C8100 and C898
+  if (hasNone || hasAll) {
+    return hasNone
+        ? "IMPORT,NONE must be the only IMPORT statement in a scope"_err_en_US
+        : "IMPORT,ALL must be the only IMPORT statement in a scope"_err_en_US;
+  } else if (kind != *importKind_ &&
+      (kind != ImportKind::Only || kind != ImportKind::Only)) {
+    return "Every IMPORT must have ONLY specifier if one of them does"_err_en_US;
+  } else {
+    return std::nullopt;
+  }
+}
+
+bool Scope::add_importName(const SourceName &name) {
+  if (!parent_.FindSymbol(name)) {
+    return false;
+  }
+  importNames_.insert(name);
+  return true;
+}
+
+// true if name can be imported or host-associated from parent scope.
+bool Scope::CanImport(const SourceName &name) const {
+  if (kind_ == Kind::Global) {
+    return false;
+  }
+  switch (importKind()) {
+  case ImportKind::None: return false;
+  case ImportKind::All:
+  case ImportKind::Default: return true;
+  case ImportKind::Only: return importNames_.count(name) > 0;
+  default: CRASH_NO_CASE;
+  }
 }
 
 std::ostream &operator<<(std::ostream &os, const Scope &scope) {

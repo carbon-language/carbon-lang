@@ -372,7 +372,7 @@ std::ostream &operator<<(std::ostream &os, const Symbol &symbol) {
 // Output a unique name for a scope by qualifying it with the names of
 // parent scopes. For scopes without corresponding symbols, use "ANON".
 static void DumpUniqueName(std::ostream &os, const Scope &scope) {
-  if (&scope != &Scope::globalScope) {
+  if (scope.kind() != Scope::Kind::Global) {
     DumpUniqueName(os, scope.parent());
     os << '/';
     if (auto *scopeSymbol{scope.symbol()}) {
