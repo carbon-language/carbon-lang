@@ -79,6 +79,14 @@ bool WebAssemblyFrameLowering::hasReservedCallFrame(
   return !MF.getFrameInfo().hasVarSizedObjects();
 }
 
+// Returns true if this function needs a local user-space stack pointer for its
+// local frame (not for exception handling).
+bool WebAssemblyFrameLowering::needsSPForLocalFrame(
+    const MachineFunction &MF) const {
+  auto &MFI = MF.getFrameInfo();
+  return MFI.getStackSize() || MFI.adjustsStack() || hasFP(MF);
+}
+
 // In function with EH pads, we need to make a copy of the value of
 // __stack_pointer global in SP32 register, in order to use it when restoring
 // __stack_pointer after an exception is caught.
@@ -93,9 +101,7 @@ bool WebAssemblyFrameLowering::needsPrologForEH(
 /// Unlike a machine stack pointer, the wasm user stack pointer is a global
 /// variable, so it is loaded into a register in the prolog.
 bool WebAssemblyFrameLowering::needsSP(const MachineFunction &MF) const {
-  auto &MFI = MF.getFrameInfo();
-  return MFI.getStackSize() || MFI.adjustsStack() || hasFP(MF) ||
-         needsPrologForEH(MF);
+  return needsSPForLocalFrame(MF) || needsPrologForEH(MF);
 }
 
 /// Returns true if the local user-space stack pointer needs to be written back
@@ -106,8 +112,16 @@ bool WebAssemblyFrameLowering::needsSPWriteback(
     const MachineFunction &MF) const {
   auto &MFI = MF.getFrameInfo();
   assert(needsSP(MF));
-  return MFI.getStackSize() > RedZoneSize || MFI.hasCalls() ||
-         MF.getFunction().hasFnAttribute(Attribute::NoRedZone);
+  // When we don't need a local stack pointer for its local frame but only to
+  // support EH, we don't need to write SP back in the epilog, because we don't
+  // bump down the stack pointer in the prolog. We need to write SP back in the
+  // epilog only if
+  // 1. We need SP not only for EH support but also because we actually use
+  // stack or we have a frame address taken.
+  // 2. We cannot use the red zone.
+  bool CanUseRedZone = MFI.getStackSize() <= RedZoneSize && !MFI.hasCalls() &&
+                       !MF.getFunction().hasFnAttribute(Attribute::NoRedZone);
+  return needsSPForLocalFrame(MF) && !CanUseRedZone;
 }
 
 void WebAssemblyFrameLowering::writeSPToGlobal(
