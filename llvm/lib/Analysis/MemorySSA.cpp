@@ -1472,15 +1472,25 @@ void MemorySSA::insertIntoListsBefore(MemoryAccess *What, const BasicBlock *BB,
   BlockNumberingValid.erase(BB);
 }
 
+void MemorySSA::prepareForMoveTo(MemoryAccess *What, BasicBlock *BB) {
+  // Keep it in the lookup tables, remove from the lists
+  removeFromLists(What, false);
+
+  // Note that moving should implicitly invalidate the optimized state of a
+  // MemoryUse (and Phis can't be optimized). However, it doesn't do so for a
+  // MemoryDef.
+  if (auto *MD = dyn_cast<MemoryDef>(What))
+    MD->resetOptimized();
+  What->setBlock(BB);
+}
+
 // Move What before Where in the IR.  The end result is that What will belong to
 // the right lists and have the right Block set, but will not otherwise be
 // correct. It will not have the right defining access, and if it is a def,
 // things below it will not properly be updated.
 void MemorySSA::moveTo(MemoryUseOrDef *What, BasicBlock *BB,
                        AccessList::iterator Where) {
-  // Keep it in the lookup tables, remove from the lists
-  removeFromLists(What, false);
-  What->setBlock(BB);
+  prepareForMoveTo(What, BB);
   insertIntoListsBefore(What, BB, Where);
 }
 
@@ -1496,8 +1506,7 @@ void MemorySSA::moveTo(MemoryAccess *What, BasicBlock *BB,
     assert(Inserted && "Cannot move a Phi to a block that already has one");
   }
 
-  removeFromLists(What, false);
-  What->setBlock(BB);
+  prepareForMoveTo(What, BB);
   insertIntoListsForBlock(What, BB, Point);
 }
 

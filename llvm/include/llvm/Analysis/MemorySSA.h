@@ -811,6 +811,7 @@ private:
   void buildMemorySSA();
   void optimizeUses();
 
+  void prepareForMoveTo(MemoryAccess *, BasicBlock *);
   void verifyUseInDefs(MemoryAccess *, MemoryAccess *) const;
 
   using AccessMap = DenseMap<const BasicBlock *, std::unique_ptr<AccessList>>;
