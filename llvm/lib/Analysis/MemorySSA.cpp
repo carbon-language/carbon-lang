@@ -1824,14 +1824,6 @@ void MemorySSA::verifyDefUses(Function &F) const {
   }
 }
 
-MemoryUseOrDef *MemorySSA::getMemoryAccess(const Instruction *I) const {
-  return cast_or_null<MemoryUseOrDef>(ValueToMemoryAccess.lookup(I));
-}
-
-MemoryPhi *MemorySSA::getMemoryAccess(const BasicBlock *BB) const {
-  return cast_or_null<MemoryPhi>(ValueToMemoryAccess.lookup(cast<Value>(BB)));
-}
-
 /// Perform a local numbering on blocks so that instruction ordering can be
 /// determined in constant time.
 /// TODO: We currently just number in order.  If we numbered by N, we could
