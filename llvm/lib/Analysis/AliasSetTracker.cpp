@@ -259,7 +259,7 @@ Instruction* AliasSet::getUniqueInstruction() {
   if (size() != 0)
     // Can't track source of pointer, might be many instruction
     return nullptr;
- if (1 != UnknownInsts.size())
+  if (1 != UnknownInsts.size())
     return nullptr;
   return cast<Instruction>(UnknownInsts[0]);
 }
