@@ -5680,6 +5680,7 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
         TrueBlock = BasicBlock::Create(SI->getContext(), "select.true.sink",
                                        EndBlock->getParent(), EndBlock);
         TrueBranch = BranchInst::Create(EndBlock, TrueBlock);
+        TrueBranch->setDebugLoc(SI->getDebugLoc());
       }
       auto *TrueInst = cast<Instruction>(SI->getTrueValue());
       TrueInst->moveBefore(TrueBranch);
@@ -5689,6 +5690,7 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
         FalseBlock = BasicBlock::Create(SI->getContext(), "select.false.sink",
                                         EndBlock->getParent(), EndBlock);
         FalseBranch = BranchInst::Create(EndBlock, FalseBlock);
+        FalseBranch->setDebugLoc(SI->getDebugLoc());
       }
       auto *FalseInst = cast<Instruction>(SI->getFalseValue());
       FalseInst->moveBefore(FalseBranch);
@@ -5703,7 +5705,8 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
 
     FalseBlock = BasicBlock::Create(SI->getContext(), "select.false",
                                     EndBlock->getParent(), EndBlock);
-    BranchInst::Create(EndBlock, FalseBlock);
+    auto *FalseBranch = BranchInst::Create(EndBlock, FalseBlock);
+    FalseBranch->setDebugLoc(SI->getDebugLoc());
   }
 
   // Insert the real conditional branch based on the original condition.
@@ -5738,6 +5741,7 @@ bool CodeGenPrepare::optimizeSelectInst(SelectInst *SI) {
     PN->takeName(SI);
     PN->addIncoming(getTrueOrFalseValue(SI, true, INS), TrueBlock);
     PN->addIncoming(getTrueOrFalseValue(SI, false, INS), FalseBlock);
+    PN->setDebugLoc(SI->getDebugLoc());
 
     SI->replaceAllUsesWith(PN);
     SI->eraseFromParent();
