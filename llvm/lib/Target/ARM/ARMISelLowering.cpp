@@ -850,8 +850,10 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   }
   setOperationAction(ISD::CTTZ,  MVT::i32, Custom);
   setOperationAction(ISD::CTPOP, MVT::i32, Expand);
-  if (!Subtarget->hasV5TOps() || Subtarget->isThumb1Only())
+  if (!Subtarget->hasV5TOps() || Subtarget->isThumb1Only()) {
     setOperationAction(ISD::CTLZ, MVT::i32, Expand);
+    setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, LibCall);
+  }
 
   // @llvm.readcyclecounter requires the Performance Monitors extension.
   // Default to the 0 expansion on unsupported platforms.
