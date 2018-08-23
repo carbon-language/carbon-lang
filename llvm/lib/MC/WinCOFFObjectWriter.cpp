@@ -1036,6 +1036,7 @@ uint64_t WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
   // Create the contents of the .llvm_addrsig section.
   if (EmitAddrsigSection) {
     auto Frag = new MCDataFragment(AddrsigSection);
+    Frag->setLayoutOrder(0);
     raw_svector_ostream OS(Frag->getContents());
     for (const MCSymbol *S : AddrsigSyms) {
       if (!S->isTemporary()) {
