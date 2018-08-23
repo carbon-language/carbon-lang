@@ -929,9 +929,9 @@ public:
       CapabilityExpr UnderCp(UnderlyingMutex, false);
 
       // We're relocking the underlying mutexes. Warn on double locking.
-      if (FSet.findLock(FactMan, UnderCp))
+      if (FSet.findLock(FactMan, UnderCp)) {
         Handler.handleDoubleLock(DiagKind, UnderCp.toString(), entry.loc());
-      else {
+      } else {
         FSet.removeLock(FactMan, !UnderCp);
         FSet.addLock(FactMan, llvm::make_unique<LockableFactEntry>(
                                   UnderCp, entry.kind(), entry.loc()));
@@ -1002,11 +1002,11 @@ public:
                   StringRef DiagKind);
 
   template <typename AttrType>
-  void getMutexIDs(CapExprSet &Mtxs, AttrType *Attr, Expr *Exp,
+  void getMutexIDs(CapExprSet &Mtxs, AttrType *Attr, const Expr *Exp,
                    const NamedDecl *D, VarDecl *SelfDecl = nullptr);
 
   template <class AttrType>
-  void getMutexIDs(CapExprSet &Mtxs, AttrType *Attr, Expr *Exp,
+  void getMutexIDs(CapExprSet &Mtxs, AttrType *Attr, const Expr *Exp,
                    const NamedDecl *D,
                    const CFGBlock *PredBlock, const CFGBlock *CurrBlock,
                    Expr *BrE, bool Neg);
@@ -1315,7 +1315,7 @@ void ThreadSafetyAnalyzer::removeLock(FactSet &FSet, const CapabilityExpr &Cp,
 /// and push them onto Mtxs, discarding any duplicates.
 template <typename AttrType>
 void ThreadSafetyAnalyzer::getMutexIDs(CapExprSet &Mtxs, AttrType *Attr,
-                                       Expr *Exp, const NamedDecl *D,
+                                       const Expr *Exp, const NamedDecl *D,
                                        VarDecl *SelfDecl) {
   if (Attr->args_size() == 0) {
     // The mutex held is the "this" object.
@@ -1347,7 +1347,7 @@ void ThreadSafetyAnalyzer::getMutexIDs(CapExprSet &Mtxs, AttrType *Attr,
 /// any duplicates.
 template <class AttrType>
 void ThreadSafetyAnalyzer::getMutexIDs(CapExprSet &Mtxs, AttrType *Attr,
-                                       Expr *Exp, const NamedDecl *D,
+                                       const Expr *Exp, const NamedDecl *D,
                                        const CFGBlock *PredBlock,
                                        const CFGBlock *CurrBlock,
                                        Expr *BrE, bool Neg) {
@@ -1460,7 +1460,7 @@ void ThreadSafetyAnalyzer::getEdgeLockset(FactSet& Result,
   const LocalVarContext &LVarCtx = PredBlockInfo->ExitContext;
   StringRef CapDiagKind = "mutex";
 
-  auto *Exp = const_cast<CallExpr *>(getTrylockCallExpr(Cond, LVarCtx, Negate));
+  const auto *Exp = getTrylockCallExpr(Cond, LVarCtx, Negate);
   if (!Exp)
     return;
 
