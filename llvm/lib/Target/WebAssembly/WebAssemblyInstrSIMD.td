@@ -18,51 +18,6 @@ def ImmI#SIZE : ImmLeaf<i32, "return (Imm & ((1UL << "#SIZE#") - 1)) == Imm;">;
 foreach SIZE = [2, 4, 8, 16, 32] in
 def LaneIdx#SIZE : ImmLeaf<i32, "return 0 <= Imm && Imm < "#SIZE#";">;
 
-
-multiclass SIMDBinaryFP<SDNode node, string name, bits<32> baseInst> {
-  defm _F32x4 : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
-                       (outs), (ins),
-                       [(set (v4f32 V128:$dst), (node V128:$lhs, V128:$rhs))],
-                       !strconcat("f32x4.",
-                         !strconcat(name, "\t$dst, $lhs, $rhs")),
-                       !strconcat("f32x4.", name), baseInst>;
-  defm _F64x2 : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
-                       (outs), (ins),
-                       [(set (v2f64 V128:$dst), (node V128:$lhs, V128:$rhs))],
-                       !strconcat("f64x2.",
-                         !strconcat(name, "\t$dst, $lhs, $rhs")),
-                       !strconcat("f64x2.", name), !add(baseInst, 1)>;
-}
-multiclass SIMDBinaryIntNoI64x2<SDNode node, string name, bits<32> baseInst> {
-  defm _I8x16 : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
-                       (outs), (ins),
-                       [(set (v16i8 V128:$dst), (node V128:$lhs, V128:$rhs))],
-                       !strconcat("i8x16.",
-                         !strconcat(name, "\t$dst, $lhs, $rhs")),
-                       !strconcat("i8x16.", name), baseInst>;
-  defm _I16x8 : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
-                       (outs), (ins),
-                       [(set (v8i16 V128:$dst), (node V128:$lhs, V128:$rhs))],
-                       !strconcat("i16x8.",
-                         !strconcat(name, "\t$dst, $lhs, $rhs")),
-                       !strconcat("i16x8.", name), !add(baseInst, 1)>;
-  defm _I32x4 : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
-                       (outs), (ins),
-                       [(set (v4i32 V128:$dst), (node V128:$lhs, V128:$rhs))],
-                       !strconcat("i32x4.",
-                         !strconcat(name, "\t$dst, $lhs, $rhs")),
-                       !strconcat("i32x4.", name), !add(baseInst, 2)>;
-}
-multiclass SIMDBinaryInt<SDNode node, string name, bits<32> baseInst> {
-  defm "" : SIMDBinaryIntNoI64x2<node, name, baseInst>;
-  defm _I64x2 : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
-                       (outs), (ins),
-                       [(set (v2i64 V128:$dst), (node V128:$lhs, V128:$rhs))],
-                       !strconcat("i64x2.",
-                         !strconcat(name, "\t$dst, $lhs, $rhs")),
-                       !strconcat("i64x2.", name), !add(baseInst, 3)>;
-}
-
 // const vectors
 multiclass ConstVec<ValueType vec_t, dag ops, dag pat, string args> {
   defm CONST_V128_#vec_t : SIMD_I<(outs V128:$dst), ops, (outs), ops,
@@ -70,6 +25,93 @@ multiclass ConstVec<ValueType vec_t, dag ops, dag pat, string args> {
                                   "v128.const\t$dst, "#args,
                                   "v128.const\t"#args, 0>;
 }
+multiclass ExtractLane<ValueType vec_t, string vec, ImmLeaf imm_t,
+                       WebAssemblyRegClass reg_t, bits<32> simdop,
+                       string suffix = "", SDNode extract = vector_extract> {
+  defm EXTRACT_LANE_#vec_t#suffix :
+      SIMD_I<(outs reg_t:$dst), (ins V128:$vec, i32imm_op:$idx),
+             (outs), (ins i32imm_op:$idx),
+             [(set reg_t:$dst, (extract (vec_t V128:$vec), (i32 imm_t:$idx)))],
+             vec#".extract_lane"#suffix#"\t$dst, $vec, $idx",
+             vec#".extract_lane"#suffix#"\t$idx", simdop>;
+}
+multiclass ExtractPat<ValueType lane_t, int mask> {
+  def _s : PatFrag<(ops node:$vec, node:$idx),
+                   (i32 (sext_inreg
+                     (i32 (vector_extract
+                       node:$vec,
+                       node:$idx
+                     )),
+                     lane_t
+                   ))>;
+  def _u : PatFrag<(ops node:$vec, node:$idx),
+                   (i32 (and
+                     (i32 (vector_extract
+                       node:$vec,
+                       node:$idx
+                     )),
+                     (i32 mask)
+                   ))>;
+}
+defm extract_i8x16 : ExtractPat<i8, 0xff>;
+defm extract_i16x8 : ExtractPat<i16, 0xffff>;
+multiclass ExtractLaneExtended<string sign, bits<32> baseInst> {
+  defm "" : ExtractLane<v16i8, "i8x16", LaneIdx16, I32,  baseInst, sign,
+                        !cast<PatFrag>("extract_i8x16"#sign)>;
+  defm "" : ExtractLane<v8i16, "i16x8", LaneIdx8, I32, !add(baseInst, 2), sign,
+                        !cast<PatFrag>("extract_i16x8"#sign)>;
+}
+multiclass ReplaceLane<ValueType vec_t, string vec, ImmLeaf imm_t,
+                       WebAssemblyRegClass reg_t, ValueType lane_t,
+                       bits<32> simdop> {
+  defm REPLACE_LANE_#vec_t :
+      SIMD_I<(outs V128:$dst), (ins V128:$vec, i32imm_op:$idx, reg_t:$x),
+             (outs), (ins i32imm_op:$idx),
+             [(set V128:$dst, (vector_insert
+               (vec_t V128:$vec), (lane_t reg_t:$x), (i32 imm_t:$idx)))],
+             vec#".replace_lane\t$dst, $vec, $idx, $x",
+             vec#".replace_lane\t$idx", simdop>;
+}
+def splat2 : PatFrag<(ops node:$x), (build_vector node:$x, node:$x)>;
+def splat4 : PatFrag<(ops node:$x), (build_vector
+                       node:$x, node:$x, node:$x, node:$x)>;
+def splat8 : PatFrag<(ops node:$x), (build_vector
+                       node:$x, node:$x, node:$x, node:$x,
+                       node:$x, node:$x, node:$x, node:$x)>;
+def splat16 : PatFrag<(ops node:$x), (build_vector
+                        node:$x, node:$x, node:$x, node:$x,
+                        node:$x, node:$x, node:$x, node:$x,
+                        node:$x, node:$x, node:$x, node:$x,
+                        node:$x, node:$x, node:$x, node:$x)>;
+multiclass Splat<ValueType vec_t, string vec, WebAssemblyRegClass reg_t,
+                 PatFrag splat_pat, bits<32> simdop> {
+  defm SPLAT_#vec_t : SIMD_I<(outs V128:$dst), (ins reg_t:$x), (outs), (ins),
+                             [(set (vec_t V128:$dst), (splat_pat reg_t:$x))],
+                             vec#".splat\t$dst, $x", vec#".splat", simdop>;
+}
+multiclass SIMDBinary<ValueType vec_t, string vec, SDNode node, string name,
+                      bits<32> simdop> {
+  defm _#vec_t : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
+                        (outs), (ins),
+                        [(set (vec_t V128:$dst), (node V128:$lhs, V128:$rhs))],
+                        vec#"."#name#"\t$dst, $lhs, $rhs", vec#"."#name,
+                        simdop>;
+}
+multiclass SIMDBinaryIntNoI64x2<SDNode node, string name, bits<32> baseInst> {
+  defm "" : SIMDBinary<v16i8, "i8x16", node, name, baseInst>;
+  defm "" : SIMDBinary<v8i16, "i16x8", node, name, !add(baseInst, 1)>;
+  defm "" : SIMDBinary<v4i32, "i32x4", node, name, !add(baseInst, 2)>;
+}
+multiclass SIMDBinaryInt<SDNode node, string name, bits<32> baseInst> {
+  defm "" : SIMDBinaryIntNoI64x2<node, name, baseInst>;
+  defm "" : SIMDBinary<v2i64, "i64x2", node, name, !add(baseInst, 3)>;
+}
+multiclass SIMDBinaryFP<SDNode node, string name, bits<32> baseInst> {
+  defm "" : SIMDBinary<v4f32, "f32x4", node, name, baseInst>;
+  defm "" : SIMDBinary<v2f64, "f64x2", node, name, !add(baseInst, 1)>;
+}
+
+let Defs = [ARGUMENTS] in {
 defm "" : ConstVec<v16i8,
                    (ins vec_i8imm_op:$i0, vec_i8imm_op:$i1,
                         vec_i8imm_op:$i2, vec_i8imm_op:$i3,
@@ -114,51 +156,33 @@ defm "" : ConstVec<v2f64,
                   (ins f64imm_op:$i0, f64imm_op:$i1),
                   (build_vector (f64 fpimm:$i0), (f64 fpimm:$i1)),
                   "$i0, $i1">;
-
-// lane extraction
-multiclass ExtractLane<ValueType vec_t, string vec, ImmLeaf imm_t,
-                       WebAssemblyRegClass reg_t, bits<32> simdop,
-                       string suffix = "", SDNode extract = vector_extract> {
-  defm EXTRACT_LANE_#vec_t#suffix :
-      SIMD_I<(outs reg_t:$dst), (ins V128:$vec, i32imm_op:$idx),
-             (outs), (ins i32imm_op:$idx),
-             [(set reg_t:$dst, (extract (vec_t V128:$vec), (i32 imm_t:$idx)))],
-             vec#".extract_lane"#suffix#"\t$dst, $vec, $idx",
-             vec#".extract_lane"#suffix#"\t$idx", simdop>;
-}
-multiclass ExtractPat<ValueType lane_t, int mask> {
-  def _s : PatFrag<(ops node:$vec, node:$idx),
-                   (i32 (sext_inreg
-                     (i32 (vector_extract
-                       node:$vec,
-                       node:$idx
-                     )),
-                     lane_t
-                   ))>;
-  def _u : PatFrag<(ops node:$vec, node:$idx),
-                   (i32 (and
-                     (i32 (vector_extract
-                       node:$vec,
-                       node:$idx
-                     )),
-                     (i32 mask)
-                   ))>;
-}
-defm extract_i8x16 : ExtractPat<i8, 0xff>;
-defm extract_i16x8 : ExtractPat<i16, 0xffff>;
-multiclass ExtractLaneExtended<string sign, bits<32> baseInst> {
-  defm "" : ExtractLane<v16i8, "i8x16", LaneIdx16, I32,  baseInst, sign,
-                        !cast<PatFrag>("extract_i8x16"#sign)>;
-  defm "" : ExtractLane<v8i16, "i16x8", LaneIdx8, I32, !add(baseInst, 2), sign,
-                        !cast<PatFrag>("extract_i16x8"#sign)>;
-}
-let Defs = [ARGUMENTS] in {
 defm "" : ExtractLaneExtended<"_s", 9>;
 defm "" : ExtractLaneExtended<"_u", 10>;
 defm "" : ExtractLane<v4i32, "i32x4", LaneIdx4, I32, 13>;
 defm "" : ExtractLane<v2i64, "i64x2", LaneIdx2, I64, 14>;
 defm "" : ExtractLane<v4f32, "f32x4", LaneIdx4, F32, 15>;
 defm "" : ExtractLane<v2f64, "f64x2", LaneIdx2, F64, 16>;
+defm "" : ReplaceLane<v16i8, "i8x16", LaneIdx16, I32, i32, 17>;
+defm "" : ReplaceLane<v8i16, "i16x8", LaneIdx8, I32, i32, 18>;
+defm "" : ReplaceLane<v4i32, "i32x4", LaneIdx4, I32, i32, 19>;
+defm "" : ReplaceLane<v2i64, "i64x2", LaneIdx2, I64, i64, 20>;
+defm "" : ReplaceLane<v4f32, "f32x4", LaneIdx4, F32, f32, 21>;
+defm "" : ReplaceLane<v2f64, "f64x2", LaneIdx2, F64, f64, 22>;
+defm "" : Splat<v16i8, "i8x16", I32, splat16, 3>;
+defm "" : Splat<v8i16, "i16x8", I32, splat8, 4>;
+defm "" : Splat<v4i32, "i32x4", I32, splat4, 5>;
+defm "" : Splat<v2i64, "i64x2", I64, splat2, 6>;
+defm "" : Splat<v4f32, "f32x4", F32, splat4, 7>;
+defm "" : Splat<v2f64, "f64x2", F64, splat2, 8>;
+let isCommutable = 1 in {
+defm ADD : SIMDBinaryInt<add, "add", 24>;
+defm ADD : SIMDBinaryFP<fadd, "add", 122>;
+defm MUL : SIMDBinaryIntNoI64x2<mul, "mul", 32>;
+defm MUL : SIMDBinaryFP<fmul, "mul", 128>;
+} // isCommutable = 1
+defm SUB : SIMDBinaryInt<sub, "sub", 28>;
+defm SUB : SIMDBinaryFP<fsub, "sub", 124>;
+defm DIV : SIMDBinaryFP<fdiv, "div", 126>;
 } // Defs = [ARGUMENTS]
 
 // follow convention of making implicit expansions unsigned
@@ -166,53 +190,6 @@ def : Pat<(i32 (vector_extract (v16i8 V128:$vec), (i32 LaneIdx16:$idx))),
           (EXTRACT_LANE_v16i8_u V128:$vec, (i32 LaneIdx16:$idx))>;
 def : Pat<(i32 (vector_extract (v8i16 V128:$vec), (i32 LaneIdx8:$idx))),
           (EXTRACT_LANE_v8i16_u V128:$vec, (i32 LaneIdx8:$idx))>;
-
-// lane replacement
-multiclass ReplaceLane<ValueType vec_t, string vec, WebAssemblyRegClass reg_t,
-                       ValueType lane_t, ImmLeaf imm_t, bits<32> simdop> {
-  defm REPLACE_LANE_#vec_t :
-      SIMD_I<(outs V128:$dst), (ins V128:$vec, i32imm_op:$idx, reg_t:$x),
-             (outs), (ins i32imm_op:$idx),
-             [(set V128:$dst, (vector_insert
-               (vec_t V128:$vec), (lane_t reg_t:$x), (i32 imm_t:$idx)))],
-             vec#".replace_lane\t$dst, $vec, $idx, $x",
-             vec#".replace_lane\t$idx", simdop>;
-}
-let Defs = [ARGUMENTS] in {
-defm "" : ReplaceLane<v16i8, "i8x16", I32, i32, LaneIdx16, 17>;
-defm "" : ReplaceLane<v8i16, "i16x8", I32, i32, LaneIdx8, 18>;
-defm "" : ReplaceLane<v4i32, "i32x4", I32, i32, LaneIdx4, 19>;
-defm "" : ReplaceLane<v2i64, "i64x2", I64, i64, LaneIdx2, 20>;
-defm "" : ReplaceLane<v4f32, "f32x4", F32, f32, LaneIdx4, 21>;
-defm "" : ReplaceLane<v2f64, "f64x2", F64, f64, LaneIdx2, 22>;
-} // Defs = [ARGUMENTS]
-
-// splats
-def splat2 : PatFrag<(ops node:$x), (build_vector node:$x, node:$x)>;
-def splat4 : PatFrag<(ops node:$x), (build_vector
-                       node:$x, node:$x, node:$x, node:$x)>;
-def splat8 : PatFrag<(ops node:$x), (build_vector
-                       node:$x, node:$x, node:$x, node:$x,
-                       node:$x, node:$x, node:$x, node:$x)>;
-def splat16 : PatFrag<(ops node:$x), (build_vector
-                        node:$x, node:$x, node:$x, node:$x,
-                        node:$x, node:$x, node:$x, node:$x,
-                        node:$x, node:$x, node:$x, node:$x,
-                        node:$x, node:$x, node:$x, node:$x)>;
-multiclass Splat<ValueType vec_t, string vec, WebAssemblyRegClass reg_t,
-                 PatFrag splat_pat, bits<32> simdop> {
-  defm SPLAT_#vec_t : SIMD_I<(outs V128:$dst), (ins reg_t:$x), (outs), (ins),
-                             [(set (vec_t V128:$dst), (splat_pat reg_t:$x))],
-                             vec#".splat\t$dst, $x", vec#".splat", simdop>;
-}
-let Defs = [ARGUMENTS] in {
-defm "" : Splat<v16i8, "i8x16", I32, splat16, 3>;
-defm "" : Splat<v8i16, "i16x8", I32, splat8, 4>;
-defm "" : Splat<v4i32, "i32x4", I32, splat4, 5>;
-defm "" : Splat<v2i64, "i64x2", I64, splat2, 6>;
-defm "" : Splat<v4f32, "f32x4", F32, splat4, 7>;
-defm "" : Splat<v2f64, "f64x2", F64, splat2, 8>;
-} // Defs = [ARGUMENTS]
 
 // arbitrary other BUILD_VECTOR patterns
 def : Pat<(v16i8 (build_vector
@@ -325,19 +302,3 @@ def : Pat<(v4f32 (build_vector
 def : Pat<(v2f64 (build_vector (f64 F64:$x0), (f64 F64:$x1))),
           (v2f64 (REPLACE_LANE_v2f64
             (v2f64 (SPLAT_v2f64 (f64 F64:$x0))), 1, F64:$x1))>;
-
-// arithmetic
-let Defs = [ARGUMENTS] in {
-let isCommutable = 1 in
-defm ADD : SIMDBinaryInt<add, "add ", 24>;
-defm SUB : SIMDBinaryInt<sub, "sub ", 28>;
-let isCommutable = 1 in
-defm MUL : SIMDBinaryIntNoI64x2<mul, "mul ", 32>;
-
-let isCommutable = 1 in
-defm ADD : SIMDBinaryFP<fadd, "add ", 122>;
-defm SUB : SIMDBinaryFP<fsub, "sub ", 124>;
-defm DIV : SIMDBinaryFP<fdiv, "div ", 126>;
-let isCommutable = 1 in
-defm MUL : SIMDBinaryFP<fmul, "mul ", 128>;
-} // Defs = [ARGUMENTS]
