@@ -491,7 +491,7 @@ const char *DICompileUnit::emissionKindString(DebugEmissionKind EK) {
   case NoDebug:        return "NoDebug";
   case FullDebug:      return "FullDebug";
   case LineTablesOnly: return "LineTablesOnly";
-  case DebugDirectivesOnly: return "DebugDirectviesOnly";
+  case DebugDirectivesOnly: return "DebugDirectivesOnly";
   }
   return nullptr;
 }
