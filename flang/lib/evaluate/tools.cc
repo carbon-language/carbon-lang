@@ -67,7 +67,10 @@ ConvertRealOperandsResult ConvertRealOperands(
 
 Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &x) {
   return std::visit(
-      [&](const auto &c) { return ToGenericExpr(SomeKindScalarToExpr(c)); },
+      [](const auto &c) -> Expr<SomeType> {
+        using Ty = TypeOf<decltype(c)>;
+        return {Expr<SomeKind<Ty::category>>{Expr<Ty>{c}}};
+      },
       x.u);
 }
 

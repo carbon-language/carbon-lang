@@ -191,7 +191,7 @@ auto Expr<SomeType>::Fold(FoldingContext &context)
           },
           [&](auto &x) -> std::optional<Scalar<Result>> {
             if (auto c{x.Fold(context)}) {
-              return {Scalar<Result>{std::move(*c)}};
+              return {common::MoveVariant<Scalar<Result>>(std::move(c->u))};
             }
             return std::nullopt;
           }},
@@ -229,7 +229,7 @@ auto Convert<TO, FROM>::FoldScalar(FoldingContext &context,
           using Ty = TypeOf<std::decay_t<decltype(x)>>;
           return Convert<Result, Ty>::FoldScalar(context, x);
         },
-        c.u.u);
+        c.u);
   } else if constexpr (Result::category == TypeCategory::Integer) {
     if constexpr (Operand::category == TypeCategory::Integer) {
       auto converted{Scalar<Result>::ConvertSigned(c)};
@@ -398,7 +398,7 @@ auto RealToIntPower<A, B>::FoldScalar(FoldingContext &context,
         RealFlagWarnings(context, power.flags, "raising to INTEGER power");
         return {std::move(power.value)};
       },
-      y.u.u);
+      y.u);
 }
 
 template<typename A>
@@ -543,9 +543,8 @@ std::ostream &Expr<SomeKind<CAT>>::Dump(std::ostream &o) const {
   return DumpExpr(o, u.u);
 }
 
-template<TypeCategory CAT>
-std::ostream &Relational<SomeKind<CAT>>::Dump(std::ostream &o) const {
-  return DumpExpr(o, u.u);
+std::ostream &AnyRelational::Dump(std::ostream &o) const {
+  return DumpExpr(o, u);
 }
 
 std::ostream &Expr<SomeType>::Dump(std::ostream &o) const {
@@ -669,7 +668,7 @@ auto Expr<SomeType>::ScalarValue() const -> std::optional<Scalar<Result>> {
           },
           [](const auto &x) -> std::optional<Scalar<Result>> {
             if (auto c{x.ScalarValue()}) {
-              return {Scalar<Result>{std::move(*c)}};
+              return {common::MoveVariant<Scalar<Result>>(std::move(c->u))};
             }
             return std::nullopt;
           }},

@@ -112,6 +112,7 @@ struct Type<TypeCategory::Logical, KIND>
 
 template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
 
+// Given a specific type, find the type of the same kind in another category.
 template<TypeCategory C, typename T>
 using SameKind = Type<C, std::decay_t<T>::kind>;
 
@@ -194,103 +195,101 @@ struct IntrinsicTypeUnionTemplate {
 template<template<TypeCategory, int> class A>
 using IntrinsicTypeUnion = typename IntrinsicTypeUnionTemplate<A>::type;
 
+// For an intrinsic type category CAT, CategoryTypes<CAT> is an instantiation
+// of std::tuple<Type<CAT, K>> for every supported kind K in that category.
+template<TypeCategory CAT, int... KINDS>
+using CategoryTypesTuple = std::tuple<Type<CAT, KINDS>...>;
+
+template<TypeCategory CAT> struct CategoryTypesHelper;
+template<> struct CategoryTypesHelper<TypeCategory::Integer> {
+  using type = CategoryTypesTuple<TypeCategory::Integer, 1, 2, 4, 8, 16>;
+};
+template<> struct CategoryTypesHelper<TypeCategory::Real> {
+  using type = CategoryTypesTuple<TypeCategory::Real, 2, 4, 8, 10, 16>;
+};
+template<> struct CategoryTypesHelper<TypeCategory::Complex> {
+  using type = CategoryTypesTuple<TypeCategory::Complex, 2, 4, 8, 10, 16>;
+};
+template<> struct CategoryTypesHelper<TypeCategory::Character> {
+  using type = CategoryTypesTuple<TypeCategory::Character, 1>;  // TODO: 2 & 4
+};
+template<> struct CategoryTypesHelper<TypeCategory::Logical> {
+  using type = CategoryTypesTuple<TypeCategory::Logical, 1, 2, 4, 8>;
+};
+template<TypeCategory CAT>
+using CategoryTypes = typename CategoryTypesHelper<CAT>::type;
+
+using NumericTypes = common::CombineTuples<CategoryTypes<TypeCategory::Integer>,
+    CategoryTypes<TypeCategory::Real>, CategoryTypes<TypeCategory::Complex>>;
+using RelationalTypes =
+    common::CombineTuples<NumericTypes, CategoryTypes<TypeCategory::Character>>;
+using AllIntrinsicTypes = common::CombineTuples<RelationalTypes,
+    CategoryTypes<TypeCategory::Logical>>;
+
 // When Scalar<T> is S, then TypeOf<S> is T.
 // TypeOf is implemented by scanning all supported types for a match
 // with Type<T>::Scalar.
-template<typename CONST> struct TypeOfTemplate {
-  template<typename A>
-  struct InnerPredicate {  // A is a specific Type<CAT,KIND>
+template<typename CONST> struct TypeOfHelper {
+  template<typename T> struct Predicate {
     static constexpr bool value() {
       return std::is_same_v<std::decay_t<CONST>,
-          std::decay_t<typename A::Scalar>>;
+          std::decay_t<typename T::Scalar>>;
     }
   };
-  template<typename A>
-  struct OuterPredicate {  // A is a CategoryUnion<CAT, Type>
-    static constexpr bool value() {
-      return common::SearchVariantType<InnerPredicate, typename A::Variant> >=
-          0;
-    }
-  };
-  using BareTypes = IntrinsicTypeUnion<Type>;
-  static constexpr int CatIndex{
-      common::SearchVariantType<OuterPredicate, typename BareTypes::Variant>};
-  static_assert(
-      CatIndex >= 0 || !"no category found for type of scalar constant");
-  static constexpr TypeCategory category{BareTypes::IndexToKind(CatIndex)};
-  using CatType = BareTypes::template KindType<category>;
-  static constexpr int KindIndex{
-      common::SearchVariantType<InnerPredicate, typename CatType::Variant>};
-  static_assert(KindIndex >= 0 || !"search over category failed when repeated");
-  static constexpr int kind{CatType::IndexToKind(KindIndex)};
-  using type = Type<category, kind>;
+  static constexpr int index{
+      common::SearchMembers<Predicate, AllIntrinsicTypes>};
+  static_assert(index >= 0 || !"No intrinsic type found for constant type");
+  using type = std::tuple_element_t<index, AllIntrinsicTypes>;
 };
 
-template<typename CONST> using TypeOf = typename TypeOfTemplate<CONST>::type;
+template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 
-// Holds a scalar value of any kind within a particular intrinsic type
-// category.
-template<TypeCategory CAT> struct SomeKindScalar {
-  static constexpr TypeCategory category{CAT};
-  CLASS_BOILERPLATE(SomeKindScalar)
+// A variant union that can hold a scalar constant of some type in a set.
+template<typename TYPES> struct SomeScalar {
+  using Types = TYPES;
+  CLASS_BOILERPLATE(SomeScalar)
 
-  template<typename A> SomeKindScalar(const A &x) : u{x} {}
+  template<typename A> SomeScalar(const A &x) : u{x} {}
   template<typename A>
-  SomeKindScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+  SomeScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
 
-  std::optional<std::int64_t> ToInt64() const {
-    if constexpr (category == TypeCategory::Integer) {
-      return std::visit(
-          [](const auto &x) { return std::make_optional(x.ToInt64()); }, u.u);
-    }
-    return std::nullopt;
+  auto ToInt64() const {
+    return std::visit(
+        [](const auto &x) -> std::optional<std::int64_t> {
+          if constexpr (TypeOf<decltype(x)>::category ==
+              TypeCategory::Integer) {
+            return {x.ToInt64()};
+          } else {
+            return std::nullopt;
+          }
+        },
+        u);
   }
 
-  std::optional<std::string> ToString() const {
-    return common::GetIf<std::string>(u.u);
+  auto ToString() const {
+    return std::visit(
+        [](const auto &x) -> std::optional<std::string> {
+          if constexpr (std::is_same_v<std::string,
+                            std::decay_t<decltype(x)>>) {
+            return {x};
+          } else {
+            return std::nullopt;
+          }
+        },
+        u);
   }
 
-  template<TypeCategory C, int K> using KindScalar = Scalar<Type<C, K>>;
-  CategoryUnion<CAT, KindScalar> u;
+  template<typename T> auto GetIf() const {
+    return common::GetIf<Scalar<T>>(u);
+  }
+
+  common::MapTemplate<Scalar, std::variant, Types> u;
 };
 
-// Holds a scalar constant of any intrinsic category and size.
-struct GenericScalar {
-  CLASS_BOILERPLATE(GenericScalar)
-
-  template<TypeCategory CAT, int KIND>
-  GenericScalar(const Scalar<Type<CAT, KIND>> &x) : u{SomeKindScalar<CAT>{x}} {}
-  template<TypeCategory CAT, int KIND>
-  GenericScalar(Scalar<Type<CAT, KIND>> &&x)
-    : u{SomeKindScalar<CAT>{std::move(x)}} {}
-
-  template<typename A> GenericScalar(const A &x) : u{x} {}
-  template<typename A>
-  GenericScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
-
-  std::optional<std::int64_t> ToInt64() const {
-    if (const auto *j{std::get_if<SomeKindScalar<TypeCategory::Integer>>(&u)}) {
-      return j->ToInt64();
-    }
-    return std::nullopt;
-  }
-
-  std::optional<std::string> ToString() const {
-    if (const auto *c{
-            std::get_if<SomeKindScalar<TypeCategory::Character>>(&u)}) {
-      return c->ToString();
-    }
-    return std::nullopt;
-  }
-
-  std::variant<SomeKindScalar<TypeCategory::Integer>,
-      SomeKindScalar<TypeCategory::Real>, SomeKindScalar<TypeCategory::Complex>,
-      SomeKindScalar<TypeCategory::Character>,
-      SomeKindScalar<TypeCategory::Logical>>
-      u;
-};
+template<TypeCategory CAT>
+using SomeKindScalar = SomeScalar<CategoryTypes<CAT>>;
+using GenericScalar = SomeScalar<AllIntrinsicTypes>;
 
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CAT> struct SomeKind {
@@ -304,7 +303,7 @@ using SomeComplex = SomeKind<TypeCategory::Complex>;
 using SomeCharacter = SomeKind<TypeCategory::Character>;
 using SomeLogical = SomeKind<TypeCategory::Logical>;
 
-// Represents a completely generic type.
+// Represents a completely generic intrinsic type.
 struct SomeType {
   using Scalar = GenericScalar;
 };

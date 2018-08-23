@@ -497,22 +497,16 @@ struct Relational : public Operation<Relational<A>, LogicalResult, A, A> {
 
 // A generic relation between two operands of the same kind in some intrinsic
 // type category (except LOGICAL).
-template<TypeCategory CAT> struct Relational<SomeKind<CAT>> {
-  static constexpr TypeCategory category{CAT};
+struct AnyRelational {
   using Result = LogicalResult;
-  using Operand = SomeKind<CAT>;
-  template<TypeCategory C, int K> using KindRelational = Relational<Type<C, K>>;
-
-  CLASS_BOILERPLATE(Relational)
-  template<int KIND>
-  Relational(const KindRelational<category, KIND> &x) : u{x} {}
-  template<int KIND>
-  Relational(KindRelational<category, KIND> &&x) : u{std::move(x)} {}
-
+  template<typename A> AnyRelational(const A &x) : u{x} {}
+  template<typename A>
+  AnyRelational(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
   std::optional<Scalar<Result>> Fold(FoldingContext &);
   std::ostream &Dump(std::ostream &) const;
 
-  CategoryUnion<CAT, KindRelational> u;
+  common::MapTemplate<Relational, std::variant, RelationalTypes> u;
 };
 
 template<int KIND> class Expr<Type<TypeCategory::Logical, KIND>> {
@@ -544,11 +538,7 @@ private:
   std::variant<Scalar<Result>, CopyableIndirection<DataRef>,
       CopyableIndirection<FunctionRef>,
       // TODO Parentheses<Result>,
-      Not<KIND>, LogicalOperation<KIND>,
-      Relational<SomeKind<TypeCategory::Integer>>,
-      Relational<SomeKind<TypeCategory::Real>>,
-      Relational<SomeKind<TypeCategory::Complex>>,
-      Relational<SomeKind<TypeCategory::Character>>>
+      Not<KIND>, LogicalOperation<KIND>, AnyRelational>
       u_;
 };
 

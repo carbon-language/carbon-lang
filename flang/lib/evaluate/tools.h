@@ -141,13 +141,6 @@ Expr<SomeKind<CAT>> ToSomeKindExpr(Expr<Type<CAT, KIND>> &&x) {
   return {std::move(x)};
 }
 
-template<TypeCategory CAT>
-Expr<SomeKind<CAT>> SomeKindScalarToExpr(const SomeKindScalar<CAT> &x) {
-  return std::visit(
-      [](const auto &c) { return ToSomeKindExpr(ScalarConstantToExpr(c)); },
-      x.u.u);
-}
-
 Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &);
 
 template<TypeCategory CAT, int KIND>

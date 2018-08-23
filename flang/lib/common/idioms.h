@@ -173,5 +173,12 @@ std::optional<A> MapOptional(std::function<A(B &&, C &&)> &f,
   return std::nullopt;
 }
 
+// Move a value from one variant type to another.  The types allowed in the
+// source variant must all be allowed in the destination variant type.
+template<typename TOV, typename FROMV> TOV MoveVariant(FROMV &&u) {
+  return std::visit(
+      [](auto &&x) -> TOV { return {std::move(x)}; }, std::move(u));
+}
+
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_IDIOMS_H_

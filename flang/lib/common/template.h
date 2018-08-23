@@ -27,23 +27,22 @@ namespace Fortran::common {
 // SearchTypeList<PREDICATE, TYPES...> scans a list of types.  The zero-based
 // index of the first type T in the list for which PREDICATE<T>::value() is
 // true is returned, or -1 if the predicate is false for every type in the list.
-template<int N, template<typename> class PREDICATE, typename A,
-    typename... REST>
-struct SearchTypeListTemplate {
+template<int N, template<typename> class PREDICATE, typename TUPLE>
+struct SearchTypeListHelper {
   static constexpr int value() {
-    if constexpr (PREDICATE<A>::value()) {
-      return N;
-    } else if constexpr (sizeof...(REST) == 0) {
+    if constexpr (N >= std::tuple_size_v<TUPLE>) {
       return -1;
+    } else if constexpr (PREDICATE<std::tuple_element_t<N, TUPLE>>::value()) {
+      return N;
     } else {
-      return SearchTypeListTemplate<N + 1, PREDICATE, REST...>::value();
+      return SearchTypeListHelper<N + 1, PREDICATE, TUPLE>::value();
     }
   }
 };
 
 template<template<typename> class PREDICATE, typename... TYPES>
 constexpr int SearchTypeList{
-    SearchTypeListTemplate<0, PREDICATE, TYPES...>::value()};
+    SearchTypeListHelper<0, PREDICATE, std::tuple<TYPES...>>::value()};
 
 // TypeIndex<A, TYPES...> scans a list of types for simple type equality.
 // The zero-based index of A in the list is returned, or -1 if A is not present.
@@ -66,17 +65,31 @@ constexpr int TypeIndex{SearchTypeList<MatchType<A>::template Match, TYPES...>};
 // N.B. It *is* possible to extract the types of the alternatives of a
 // std::variant discriminated union instantiation and reuse them as a
 // template parameter pack in another template instantiation.  The trick is
-// to match the std::variant type with a partial specialization.
-template<template<typename> class PREDICATE, typename V>
-struct SearchVariantTypeTemplate;
-template<template<typename> class PREDICATE, typename... Ts>
-struct SearchVariantTypeTemplate<PREDICATE, std::variant<Ts...>> {
-  static constexpr int index{SearchTypeList<PREDICATE, Ts...>};
+// to match the std::variant type with a partial specialization.  And it
+// works with tuples, too, of course.
+template<template<typename...> class, typename> struct OverMembersHelper;
+template<template<typename...> class T, typename... Ts>
+struct OverMembersHelper<T, std::variant<Ts...>> {
+  using type = T<Ts...>;
+};
+template<template<typename...> class T, typename... Ts>
+struct OverMembersHelper<T, std::tuple<Ts...>> {
+  using type = T<Ts...>;
 };
 
-template<template<typename> class PREDICATE, typename VARIANT>
-constexpr int SearchVariantType{
-    SearchVariantTypeTemplate<PREDICATE, VARIANT>::index};
+template<template<typename...> class T, typename TorV>
+using OverMembers = typename OverMembersHelper<T, TorV>::type;
+
+template<template<typename> class PREDICATE> struct SearchMembersHelper {
+  template<typename... Ts> struct Scanner {
+    static constexpr int value() { return SearchTypeList<PREDICATE, Ts...>; }
+  };
+};
+
+template<template<typename> class PREDICATE, typename TorV>
+constexpr int SearchMembers{
+    OverMembers<SearchMembersHelper<PREDICATE>::template Scanner,
+        TorV>::value()};
 
 // CombineTuples takes a list of std::tuple<> template instantiation types
 // and constructs a new std::tuple type that concatenates all of their member
@@ -93,7 +106,8 @@ template<typename... TUPLES>
 using CombineTuples = typename CombineTuplesHelper<TUPLES...>::type;
 
 // CombineVariants takes a list of std::variant<> instantiations and constructs
-// a new instantiation that holds all of their alternatives.
+// a new instantiation that holds all of their alternatives, which probably
+// should be distinct.
 template<typename> struct VariantToTupleHelper;
 template<typename... Ts> struct VariantToTupleHelper<std::variant<Ts...>> {
   using type = std::tuple<Ts...>;
@@ -113,6 +127,24 @@ template<typename... VARIANTS> struct CombineVariantsHelper {
 };
 template<typename... VARIANTS>
 using CombineVariants = typename CombineVariantsHelper<VARIANTS...>::type;
+
+// Given a type function, apply it to each of the types in a tuple or variant,
+// and collect the results in another tuple or variant.
+template<template<typename> class, template<typename...> class, typename...>
+struct MapTemplateHelper;
+template<template<typename> class F, template<typename...> class TorV,
+    typename... Ts>
+struct MapTemplateHelper<F, TorV, std::tuple<Ts...>> {
+  using type = TorV<F<Ts>...>;
+};
+template<template<typename> class F, template<typename...> class TorV,
+    typename... Ts>
+struct MapTemplateHelper<F, TorV, std::variant<Ts...>> {
+  using type = TorV<F<Ts>...>;
+};
+template<template<typename> class F, template<typename...> class TorV,
+    typename TV>
+using MapTemplate = typename MapTemplateHelper<F, TorV, TV>::type;
 
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_TEMPLATE_H_
