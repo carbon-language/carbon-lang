@@ -87,7 +87,7 @@ static const char colorcodes[2][2][8][10] = {
 static bool coreFilesPrevented = false;
 
 bool Process::AreCoreFilesPrevented() {
-  return !LLVM_ENABLE_CRASH_DUMPS;
+  return LLVM_ENABLE_CRASH_DUMPS ? coreFilesPrevented : false;
 }
 
 // Include the platform-specific parts of this class.
