@@ -2056,7 +2056,7 @@ bool llvm::runIPSCCP(
     for (BasicBlock &BB : F) {
       for (BasicBlock::iterator BI = BB.begin(), E = BB.end(); BI != E;) {
         Instruction *Inst = &*BI++;
-        if (const PredicateBase *PI = Solver.getPredicateInfoFor(Inst)) {
+        if (Solver.getPredicateInfoFor(Inst)) {
           if (auto *II = dyn_cast<IntrinsicInst>(Inst)) {
             if (II->getIntrinsicID() == Intrinsic::ssa_copy) {
               Value *Op = II->getOperand(0);
