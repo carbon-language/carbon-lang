@@ -117,8 +117,8 @@ ResourceManager::ResourceManager(const llvm::MCSchedModel &SM)
 }
 
 void ResourceManager::setCustomStrategyImpl(std::unique_ptr<ResourceStrategy> S,
-                                            uint64_t ResourceID) {
-  unsigned Index = getResourceStateIndex(ResourceID);
+                                            uint64_t ResourceMask) {
+  unsigned Index = getResourceStateIndex(ResourceMask);
   assert(Index < Resources.size() && "Invalid processor resource index!");
   assert(S && "Unexpected null strategy in input!");
   Strategies[Index] = std::move(S);
