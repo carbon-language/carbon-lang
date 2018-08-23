@@ -17,6 +17,7 @@
 
 #include "attr.h"
 #include "symbol.h"
+#include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
 #include <list>
@@ -37,7 +38,7 @@ public:
   static Scope globalScope;  // contains program-units
 
   ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram, DerivedType)
-  ENUM_CLASS(ImportKind, Default, Only, None, All);
+  using ImportKind = common::ImportKind;
 
   Scope(Scope &parent, Kind kind, Symbol *symbol)
     : parent_{parent}, kind_{kind}, symbol_{symbol} {
@@ -125,7 +126,7 @@ public:
   // that are referenced by SourceName objects.
   void set_chars(std::string &&chars) { chars_ = std::move(chars); }
 
-  ImportKind importKind() const;
+  ImportKind GetImportKind() const;
   // Names appearing in IMPORT statements in this scope
   std::set<SourceName> importNames() const { return importNames_; }
 

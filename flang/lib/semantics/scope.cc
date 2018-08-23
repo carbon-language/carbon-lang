@@ -74,7 +74,7 @@ DerivedTypeSpec &Scope::MakeDerivedTypeSpec(const SourceName &name) {
   return derivedTypeSpecs_.back();
 }
 
-Scope::ImportKind Scope::importKind() const {
+Scope::ImportKind Scope::GetImportKind() const {
   if (importKind_) {
     return *importKind_;
   }
@@ -122,7 +122,7 @@ bool Scope::CanImport(const SourceName &name) const {
   if (kind_ == Kind::Global) {
     return false;
   }
-  switch (importKind()) {
+  switch (GetImportKind()) {
   case ImportKind::None: return false;
   case ImportKind::All:
   case ImportKind::Default: return true;

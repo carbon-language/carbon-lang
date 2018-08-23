@@ -1293,11 +1293,12 @@ TYPE_PARSER(space >> (construct<LetterSpec>(letter, maybe("-" >> letter)) ||
 //        IMPORT [[::] import-name-list] |
 //        IMPORT , ONLY : import-name-list | IMPORT , NONE | IMPORT , ALL
 TYPE_CONTEXT_PARSER("IMPORT statement"_en_US,
-    construct<ImportStmt>("IMPORT , ONLY :" >> pure(ImportStmt::Kind::Only),
+    construct<ImportStmt>("IMPORT , ONLY :" >> pure(common::ImportKind::Only),
         nonemptyList(name)) ||
         construct<ImportStmt>(
-            "IMPORT , NONE" >> pure(ImportStmt::Kind::None)) ||
-        construct<ImportStmt>("IMPORT , ALL" >> pure(ImportStmt::Kind::All)) ||
+            "IMPORT , NONE" >> pure(common::ImportKind::None)) ||
+        construct<ImportStmt>(
+            "IMPORT , ALL" >> pure(common::ImportKind::All)) ||
         construct<ImportStmt>(
             "IMPORT" >> maybe("::"_tok) >> optionalList(name)))
 

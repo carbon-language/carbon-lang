@@ -25,5 +25,8 @@ namespace Fortran::common {
 // Fortran has five kinds of intrinsic data, and the derived types.
 ENUM_CLASS(TypeCategory, Integer, Real, Complex, Character, Logical, Derived)
 
+// Kinds of IMPORT statements. Default means IMPORT or IMPORT :: names.
+ENUM_CLASS(ImportKind, Default, Only, None, All)
+
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_FORTRAN_H_

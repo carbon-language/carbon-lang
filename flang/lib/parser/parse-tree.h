@@ -28,6 +28,7 @@
 #include "format-specification.h"
 #include "message.h"
 #include "provenance.h"
+#include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include <cinttypes>
@@ -571,11 +572,10 @@ using ObjectName = Name;
 //        IMPORT , ONLY : import-name-list | IMPORT , NONE | IMPORT , ALL
 struct ImportStmt {
   BOILERPLATE(ImportStmt);
-  ENUM_CLASS(Kind, Default, Only, None, All)
-  ImportStmt(Kind &&k) : kind{k} {}
+  ImportStmt(common::ImportKind &&k) : kind{k} {}
   ImportStmt(std::list<Name> &&n) : names(std::move(n)) {}
-  ImportStmt(Kind &&, std::list<Name> &&);
-  Kind kind{Kind::Default};
+  ImportStmt(common::ImportKind &&, std::list<Name> &&);
+  common::ImportKind kind{common::ImportKind::Default};
   std::list<Name> names;
 };
 

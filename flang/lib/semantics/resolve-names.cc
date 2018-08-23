@@ -36,7 +36,6 @@ using namespace parser::literals;
 class MessageHandler;
 
 static GenericSpec MapGenericSpec(const parser::GenericSpec &);
-static Scope::ImportKind MapImportKind(parser::ImportStmt::Kind);
 
 // ImplicitRules maps initial character of identifier to the DeclTypeSpec*
 // representing the implicit type; nullptr if none.
@@ -2149,7 +2148,6 @@ void ResolveNamesVisitor::Post(const parser::CallStmt &) {
 }
 
 bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
-  auto kind{MapImportKind(x.kind)};
   auto &scope{currScope()};
   // Check C896 and C899: where IMPORT statements are allowed
   switch (scope.kind()) {
@@ -2157,7 +2155,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
     if (!scope.symbol()->get<ModuleDetails>().isSubmodule()) {
       Say("IMPORT is not allowed in a module scoping unit"_err_en_US);
       return false;
-    } else if (kind == Scope::ImportKind::None) {
+    } else if (x.kind == common::ImportKind::None) {
       Say("IMPORT,NONE is not allowed in a submodule scoping unit"_err_en_US);
       return false;
     }
@@ -2173,7 +2171,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
     break;
   default:;
   }
-  if (auto error{scope.SetImportKind(kind)}) {
+  if (auto error{scope.SetImportKind(x.kind)}) {
     Say(std::move(*error));
   }
   for (auto &name : x.names) {
@@ -2431,9 +2429,9 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
 
 void ResolveNamesVisitor::CheckImports() {
   auto &scope{currScope()};
-  switch (scope.importKind()) {
-  case Scope::ImportKind::None: break;
-  case Scope::ImportKind::All:
+  switch (scope.GetImportKind()) {
+  case common::ImportKind::None: break;
+  case common::ImportKind::All:
     // C8102: all entities in host must not be hidden
     for (const auto &pair : scope.parent()) {
       auto &name{pair.first};
@@ -2442,8 +2440,8 @@ void ResolveNamesVisitor::CheckImports() {
       }
     }
     break;
-  case Scope::ImportKind::Default:
-  case Scope::ImportKind::Only:
+  case common::ImportKind::Default:
+  case common::ImportKind::Only:
     // C8102: entities named in IMPORT must not be hidden
     for (auto &name : scope.importNames()) {
       CheckImport(name, name);
@@ -2649,16 +2647,6 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &genericSpec) {
           },
       },
       genericSpec.u);
-}
-
-static Scope::ImportKind MapImportKind(parser::ImportStmt::Kind kind) {
-  switch (kind) {
-  case parser::ImportStmt::Kind::Default: return Scope::ImportKind::Default;
-  case parser::ImportStmt::Kind::Only: return Scope::ImportKind::Only;
-  case parser::ImportStmt::Kind::None: return Scope::ImportKind::None;
-  case parser::ImportStmt::Kind::All: return Scope::ImportKind::All;
-  default: CRASH_NO_CASE;
-  }
 }
 
 static void PutIndent(std::ostream &os, int indent) {
