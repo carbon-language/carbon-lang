@@ -103,13 +103,8 @@ Expr<SomeKind<TC>> ConvertToTypeAndKindOf(
       to.u.u);
 }
 
-// Ensure that both operands of an intrinsic REAL operation or CMPLX()
-// are INTEGER or REAL, and convert them as necessary to the same REAL type.
-using ConvertRealOperandsResult =
-    std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>>;
-ConvertRealOperandsResult ConvertRealOperands(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
-
+// Given two expressions of the same type category, convert one to the
+// kind of the other in place if it has a smaller kind.
 template<TypeCategory CAT>
 void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
   std::visit(
@@ -125,6 +120,16 @@ void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
       x.u.u, y.u.u);
 }
 
+// Ensure that both operands of an intrinsic REAL operation (or CMPLX()
+// constructor) are INTEGER or REAL, then convert them as necessary to the
+// same kind of REAL.
+using ConvertRealOperandsResult =
+    std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>>;
+ConvertRealOperandsResult ConvertRealOperands(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+ConvertRealOperandsResult ConvertRealOperands(parser::ContextualMessages &,
+    std::optional<Expr<SomeType>> &&, std::optional<Expr<SomeType>> &&);
+
 template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   static_assert(std::is_same_v<Scalar<TypeOf<A>>, std::decay_t<A>> ||
       !"TypeOf<> is broken");
@@ -132,8 +137,8 @@ template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
 }
 
 template<TypeCategory CAT, int KIND>
-Expr<SomeKind<CAT>> ToSomeKindExpr(const Expr<Type<CAT, KIND>> &x) {
-  return {x};
+Expr<SomeKind<CAT>> ToSomeKindExpr(Expr<Type<CAT, KIND>> &&x) {
+  return {std::move(x)};
 }
 
 template<TypeCategory CAT>
@@ -145,15 +150,49 @@ Expr<SomeKind<CAT>> SomeKindScalarToExpr(const SomeKindScalar<CAT> &x) {
 
 Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &);
 
-template<TypeCategory CAT>
-Expr<SomeType> ToGenericExpr(const Expr<SomeKind<CAT>> &x) {
-  return Expr<SomeType>{x};
+template<TypeCategory CAT, int KIND>
+Expr<SomeType> ToGenericExpr(Expr<Type<CAT, KIND>> &&x) {
+  return Expr<SomeType>{Expr<SomeKind<CAT>>{std::move(x)}};
 }
 
 template<TypeCategory CAT>
 Expr<SomeType> ToGenericExpr(Expr<SomeKind<CAT>> &&x) {
   return Expr<SomeType>{std::move(x)};
 }
+
+// Convert, if necessary, an expression to a specific kind in the same
+// category.
+template<typename TOTYPE>
+Expr<TOTYPE> EnsureKind(Expr<SomeKind<TOTYPE::category>> &&x) {
+  using ToType = TOTYPE;
+  using FromGenericType = SomeKind<ToType::category>;
+  if (auto *p{std::get_if<Expr<ToType>>(&x.u.u)}) {
+    return std::move(*p);
+  }
+  if constexpr (ToType::category == TypeCategory::Complex) {
+    return {std::visit(
+        [](auto &z) -> ComplexConstructor<ToType::kind> {
+          using FromType = ResultType<decltype(z)>;
+          using FromPart = typename FromType::Part;
+          using FromGeneric = SomeKind<TypeCategory::Real>;
+          using ToPart = typename ToType::Part;
+          Convert<ToPart, FromGeneric> re{Expr<FromGeneric>{
+              Expr<FromPart>{ComplexComponent<FromType::kind>{false, z}}}};
+          Convert<ToPart, FromGeneric> im{Expr<FromGeneric>{
+              Expr<FromPart>{ComplexComponent<FromType::kind>{true, z}}}};
+          return {std::move(re), std::move(im)};
+        },
+        x.u.u)};
+  } else {
+    return {Convert<ToType, FromGenericType>{std::move(x)}};
+  }
+}
+
+template<template<typename> class OPR>
+std::optional<Expr<SomeType>> NumericOperation(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+extern template std::optional<Expr<SomeType>> NumericOperation<Add>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

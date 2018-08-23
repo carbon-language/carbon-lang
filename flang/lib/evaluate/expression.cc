@@ -282,7 +282,7 @@ auto Negate<A>::FoldScalar(FoldingContext &context, const Scalar<Operand> &c)
 template<int KIND>
 auto ComplexComponent<KIND>::FoldScalar(FoldingContext &context,
     const Scalar<Operand> &z) const -> std::optional<Scalar<Result>> {
-  return {isRealPart ? z.REAL() : z.AIMAG()};
+  return {isImaginaryPart ? z.AIMAG() : z.REAL()};
 }
 
 template<int KIND>

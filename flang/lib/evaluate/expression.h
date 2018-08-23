@@ -129,16 +129,16 @@ struct ComplexComponent
   using typename Base::Result;
   using Operand = typename Base::template Operand<0>;
   CLASS_BOILERPLATE(ComplexComponent)
-  ComplexComponent(bool isReal, const Expr<Operand> &x)
-    : Base{x}, isRealPart{isReal} {}
-  ComplexComponent(bool isReal, Expr<Operand> &&x)
-    : Base{std::move(x)}, isRealPart{isReal} {}
+  ComplexComponent(bool isImaginary, const Expr<Operand> &x)
+    : Base{x}, isImaginaryPart{isImaginary} {}
+  ComplexComponent(bool isImaginary, Expr<Operand> &&x)
+    : Base{std::move(x)}, isImaginaryPart{isImaginary} {}
 
   std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &) const;
-  const char *suffix() const { return isRealPart ? "%RE)" : "%IM)"; }
+  const char *suffix() const { return isImaginaryPart ? "%IM)" : "%RE)"; }
 
-  bool isRealPart{true};
+  bool isImaginaryPart{true};
 };
 
 template<int KIND>

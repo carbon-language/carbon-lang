@@ -431,7 +431,7 @@ MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Divide &x) {
 
 template<>
 MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Add &x) {
-  // TODO
+  // TODO pmk WIP
   return std::nullopt;
 }
 
@@ -567,16 +567,8 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
 
 std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
     MaybeExpr &&real, MaybeExpr &&imaginary) {
-  // TODO: pmk abstract further, this will be a common pattern
-  auto partial{[&](Expr<SomeType> &&x, Expr<SomeType> &&y) {
-    return evaluate::ConvertRealOperands(
-        context_.messages, std::move(x), std::move(y));
-  }};
-  using fType =
-      evaluate::ConvertRealOperandsResult(Expr<SomeType> &&, Expr<SomeType> &&);
-  std::function<fType> f{partial};
-  auto converted{common::MapOptional(f, std::move(real), std::move(imaginary))};
-  if (auto joined{common::JoinOptionals(std::move(converted))}) {
+  if (auto converted{evaluate::ConvertRealOperands(
+          context_.messages, std::move(real), std::move(imaginary))}) {
     return {std::visit(
         [](auto &&rx, auto &&ix) -> Expr<evaluate::SomeComplex> {
           using realType = evaluate::ResultType<decltype(rx)>;
@@ -585,7 +577,7 @@ std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
           return {Expr<zType>{evaluate::ComplexConstructor<kind>{
               std::move(rx), std::move(ix)}}};
         },
-        std::move(joined->first.u.u), std::move(joined->second.u.u))};
+        std::move(converted->first.u.u), std::move(converted->second.u.u))};
   }
   return std::nullopt;
 }

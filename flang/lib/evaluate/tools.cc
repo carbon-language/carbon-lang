@@ -13,14 +13,16 @@
 // limitations under the License.
 
 #include "tools.h"
+#include "../common/idioms.h"
 #include "../parser/message.h"
+#include <algorithm>
 #include <variant>
 
 using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> ConvertRealOperands(
+ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y) {
   return std::visit(
@@ -51,13 +53,16 @@ std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> ConvertRealOperands(
       std::move(x.u), std::move(y.u));
 }
 
-std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> ConvertRealOperands(
+ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, std::optional<Expr<SomeType>> &&x,
     std::optional<Expr<SomeType>> &&y) {
-  if (x.has_value() && y.has_value()) {
-    return ConvertRealOperands(messages, std::move(*x), std::move(*y));
-  }
-  return std::nullopt;
+  auto partial{[&](Expr<SomeType> &&x, Expr<SomeType> &&y) {
+    return ConvertRealOperands(messages, std::move(x), std::move(y));
+  }};
+  using fType = ConvertRealOperandsResult(Expr<SomeType> &&, Expr<SomeType> &&);
+  std::function<fType> f{partial};
+  return common::JoinOptionals(
+      common::MapOptional(f, std::move(x), std::move(y)));
 }
 
 Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &x) {
@@ -65,4 +70,67 @@ Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &x) {
       [&](const auto &c) { return ToGenericExpr(SomeKindScalarToExpr(c)); },
       x.u);
 }
+
+template<template<typename> class OPR, TypeCategory CAT>
+std::optional<Expr<SomeType>> PromoteAndCombine(
+    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
+  return {Expr<SomeType>{std::visit(
+      [&](auto &&xk, auto &&yk) -> Expr<SomeKind<CAT>> {
+        using xt = ResultType<decltype(xk)>;
+        using yt = ResultType<decltype(yk)>;
+        using ToType = Type<CAT, std::max(xt::kind, yt::kind)>;
+        return {Expr<ToType>{OPR<ToType>{EnsureKind<ToType>(std::move(xk)),
+            EnsureKind<ToType>(std::move(yk))}}};
+      },
+      std::move(x.u.u), std::move(y.u.u))}};
+}
+
+template<template<typename> class OPR>
+std::optional<Expr<SomeType>> NumericOperation(
+    parser::ContextualMessages &messages, Expr<SomeType> &&x,
+    Expr<SomeType> &&y) {
+  return std::visit(
+      common::visitors{[](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
+                         return PromoteAndCombine<OPR, TypeCategory::Integer>(
+                             std::move(ix), std::move(iy));
+                       },
+          [](Expr<SomeReal> &&rx, Expr<SomeReal> &&ry) {
+            return PromoteAndCombine<OPR, TypeCategory::Real>(
+                std::move(rx), std::move(ry));
+          },
+          [](Expr<SomeReal> &&rx, Expr<SomeInteger> &&iy) {
+            return std::optional{Expr<SomeType>{std::visit(
+                [&](auto &&rxk) -> Expr<SomeReal> {
+                  using kindEx = decltype(rxk);
+                  using resultType = ResultType<kindEx>;
+                  return {kindEx{
+                      OPR<resultType>{std::move(rxk), kindEx{std::move(iy)}}}};
+                },
+                std::move(rx.u.u))}};
+          },
+          [](Expr<SomeInteger> &&ix, Expr<SomeReal> &&ry) {
+            return std::optional{Expr<SomeType>{std::visit(
+                [&](auto &&ryk) -> Expr<SomeReal> {
+                  using kindEx = decltype(ryk);
+                  using resultType = ResultType<kindEx>;
+                  return {kindEx{
+                      OPR<resultType>{kindEx{std::move(ix)}, std::move(ryk)}}};
+                },
+                std::move(ry.u.u))}};
+          },
+          [](Expr<SomeComplex> &&zx, Expr<SomeComplex> &&zy) {
+            return PromoteAndCombine<OPR, TypeCategory::Complex>(
+                std::move(zx), std::move(zy));
+          },
+          // TODO pmk complex; Add/Sub different from Mult/Div
+          [&](auto &&, auto &&) {
+            messages.Say("non-numeric operands to numeric operation"_err_en_US);
+            return std::optional<Expr<SomeType>>{std::nullopt};
+          }},
+      std::move(x.u), std::move(y.u));
+}
+
+template std::optional<Expr<SomeType>> NumericOperation<Add>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+
 }  // namespace Fortran::evaluate
