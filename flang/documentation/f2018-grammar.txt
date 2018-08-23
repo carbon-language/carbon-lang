@@ -452,7 +452,7 @@ R1107 block-construct ->
         block-stmt [block-specification-part] block end-block-stmt
 R1108 block-stmt -> [block-construct-name :] BLOCK
 R1109 block-specification-part ->
-        [use-stmt]... [import-stmt]... [implicit-part]
+        [use-stmt]... [import-stmt]...
         [[declaration-construct]... specification-construct]
 R1110 end-block-stmt -> END BLOCK [block-construct-name]
 R1111 change-team-construct -> change-team-stmt block end-change-team-stmt

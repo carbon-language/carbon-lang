@@ -2070,9 +2070,13 @@ WRAPPER_CLASS(BlockStmt, std::optional<Name>);
 WRAPPER_CLASS(EndBlockStmt, std::optional<Name>);
 
 // R1109 block-specification-part ->
-//         [use-stmt]... [import-stmt]... [implicit-part]
+//         [use-stmt]... [import-stmt]...
 //         [[declaration-construct]... specification-construct]
 WRAPPER_CLASS(BlockSpecificationPart, SpecificationPart);
+// TODO: Because BlockSpecificationPart just wraps the more general
+// SpecificationPart, it can misrecognize an ImplicitPart as part of
+// the BlockSpecificationPart during parsing, and we have to detect and
+// flag such usage in semantics.
 // TODO: error if any COMMON, EQUIVALENCE, INTENT, NAMELIST, OPTIONAL,
 // VALUE, ENTRY, SAVE /common/, or statement function definition statement
 // appears in a block-specification part (C1107, C1570).
