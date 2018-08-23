@@ -117,7 +117,7 @@ public:
   // For Module scope, maintain a mapping of all submodule scopes with this
   // module as its ancestor module. AddSubmodule returns false if already there.
   Scope *FindSubmodule(const SourceName &) const;
-  bool AddSubmodule(const SourceName &, Scope *);
+  bool AddSubmodule(const SourceName &, Scope &);
 
   DerivedTypeSpec &MakeDerivedTypeSpec(const SourceName &);
 
@@ -131,7 +131,7 @@ public:
 
   // Set the kind of imports from host into this scope.
   // Return an error message for incompatible kinds.
-  std::optional<parser::MessageFixedText> set_importKind(ImportKind);
+  std::optional<parser::MessageFixedText> SetImportKind(ImportKind);
 
   bool add_importName(const SourceName &);
 

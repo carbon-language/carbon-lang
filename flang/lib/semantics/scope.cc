@@ -66,8 +66,8 @@ Scope *Scope::FindSubmodule(const SourceName &name) const {
     return it->second;
   }
 }
-bool Scope::AddSubmodule(const SourceName &name, Scope *submodule) {
-  return submodules_.emplace(name, submodule).second;
+bool Scope::AddSubmodule(const SourceName &name, Scope &submodule) {
+  return submodules_.emplace(name, &submodule).second;
 }
 DerivedTypeSpec &Scope::MakeDerivedTypeSpec(const SourceName &name) {
   derivedTypeSpecs_.emplace_back(name);
@@ -88,7 +88,7 @@ Scope::ImportKind Scope::importKind() const {
   return ImportKind::Default;
 }
 
-std::optional<parser::MessageFixedText> Scope::set_importKind(ImportKind kind) {
+std::optional<parser::MessageFixedText> Scope::SetImportKind(ImportKind kind) {
   if (!importKind_.has_value()) {
     importKind_ = kind;
     return std::nullopt;
@@ -96,7 +96,7 @@ std::optional<parser::MessageFixedText> Scope::set_importKind(ImportKind kind) {
   std::optional<parser::MessageFixedText> error;
   bool hasNone{kind == ImportKind::None || *importKind_ == ImportKind::None};
   bool hasAll{kind == ImportKind::All || *importKind_ == ImportKind::All};
-  // Check C8100 and C898
+  // Check C8100 and C898: constraints on multiple IMPORT statements
   if (hasNone || hasAll) {
     return hasNone
         ? "IMPORT,NONE must be the only IMPORT statement in a scope"_err_en_US

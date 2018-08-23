@@ -1330,7 +1330,7 @@ bool ModuleVisitor::Pre(const parser::Submodule &x) {
   }
   PushScope(*parentScope);  // submodule is hosted in parent
   auto &symbol{BeginModule(name, true, subpPart)};
-  if (!ancestor->AddSubmodule(name, &currScope())) {
+  if (!ancestor->AddSubmodule(name, currScope())) {
     Say(name, "Module '%s' already has a submodule named '%s'"_err_en_US,
         ancestorName, name);
   }
@@ -2151,7 +2151,7 @@ void ResolveNamesVisitor::Post(const parser::CallStmt &) {
 bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
   auto kind{MapImportKind(x.kind)};
   auto &scope{currScope()};
-  // Check C896 and C899
+  // Check C896 and C899: where IMPORT statements are allowed
   switch (scope.kind()) {
   case Scope::Kind::Module:
     if (!scope.symbol()->get<ModuleDetails>().isSubmodule()) {
@@ -2173,7 +2173,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
     break;
   default:;
   }
-  if (auto error{scope.set_importKind(kind)}) {
+  if (auto error{scope.SetImportKind(kind)}) {
     Say(std::move(*error));
   }
   for (auto &name : x.names) {
