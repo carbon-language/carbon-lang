@@ -15,6 +15,11 @@
 #ifndef FORTRAN_COMMON_TEMPLATE_H_
 #define FORTRAN_COMMON_TEMPLATE_H_
 
+#include <functional>
+#include <tuple>
+#include <type_traits>
+#include <variant>
+
 // Template metaprogramming utilities
 
 namespace Fortran::common {
@@ -72,6 +77,42 @@ struct SearchVariantTypeTemplate<PREDICATE, std::variant<Ts...>> {
 template<template<typename> class PREDICATE, typename VARIANT>
 constexpr int SearchVariantType{
     SearchVariantTypeTemplate<PREDICATE, VARIANT>::index};
+
+// CombineTuples takes a list of std::tuple<> template instantiation types
+// and constructs a new std::tuple type that concatenates all of their member
+// types.  E.g.,
+//   CombineTuples<std::tuple<char, int>, std::tuple<float, double>>
+// is std::tuple<char, int, float, double>.
+template<typename... TUPLES> struct CombineTuplesHelper {
+  static decltype(auto) f(TUPLES *... a) {
+    return std::tuple_cat(std::move(*a)...);
+  }
+  using type = decltype(f(static_cast<TUPLES *>(nullptr)...));
+};
+template<typename... TUPLES>
+using CombineTuples = typename CombineTuplesHelper<TUPLES...>::type;
+
+// CombineVariants takes a list of std::variant<> instantiations and constructs
+// a new instantiation that holds all of their alternatives.
+template<typename> struct VariantToTupleHelper;
+template<typename... Ts> struct VariantToTupleHelper<std::variant<Ts...>> {
+  using type = std::tuple<Ts...>;
+};
+template<typename VARIANT>
+using VariantToTuple = typename VariantToTupleHelper<VARIANT>::type;
+
+template<typename> struct TupleToVariantHelper;
+template<typename... Ts> struct TupleToVariantHelper<std::tuple<Ts...>> {
+  using type = std::variant<Ts...>;
+};
+template<typename TUPLE>
+using TupleToVariant = typename TupleToVariantHelper<TUPLE>::type;
+
+template<typename... VARIANTS> struct CombineVariantsHelper {
+  using type = TupleToVariant<CombineTuples<VariantToTuple<VARIANTS>...>>;
+};
+template<typename... VARIANTS>
+using CombineVariants = typename CombineVariantsHelper<VARIANTS...>::type;
 
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_TEMPLATE_H_

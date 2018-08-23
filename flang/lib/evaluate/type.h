@@ -134,6 +134,11 @@ using DefaultCharacter = Type<TypeCategory::Character, 1>;
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 
+// The CategoryUnion template applies a given template to all of
+// the supported kinds in a given intrinsic type category, and
+// builds a KindVariant<> union over the results.  This allows
+// us to specify the supported kind values in just one place (here)
+// with resorting to macros.
 template<TypeCategory CAT, template<TypeCategory, int> class TYPE>
 struct CategoryUnionTemplate;
 
@@ -175,6 +180,9 @@ struct CategoryUnionTemplate<TypeCategory::Logical, TYPE> {
 template<TypeCategory CAT, template<TypeCategory, int> class TYPE>
 using CategoryUnion = typename CategoryUnionTemplate<CAT, TYPE>::type;
 
+// IntrinsicTypeUnion takes a template and instantiates it over
+// all five of the intrinsic type categories, using them as the
+// alternatives in a KindVariant.
 template<template<TypeCategory, int> class A>
 struct IntrinsicTypeUnionTemplate {
   template<TypeCategory C> using PerCategory = CategoryUnion<C, A>;
@@ -187,6 +195,8 @@ template<template<TypeCategory, int> class A>
 using IntrinsicTypeUnion = typename IntrinsicTypeUnionTemplate<A>::type;
 
 // When Scalar<T> is S, then TypeOf<S> is T.
+// TypeOf is implemented by scanning all supported types for a match
+// with Type<T>::Scalar.
 template<typename CONST> struct TypeOfTemplate {
   template<typename A>
   struct InnerPredicate {  // A is a specific Type<CAT,KIND>
