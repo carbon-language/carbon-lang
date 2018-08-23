@@ -620,13 +620,8 @@ void WinCOFFObjectWriter::writeSection(MCAssembler &Asm,
 
   // Write the section contents.
   if (Sec.Header.PointerToRawData != 0) {
-    assert(W.OS.tell() <= Sec.Header.PointerToRawData &&
+    assert(W.OS.tell() == Sec.Header.PointerToRawData &&
            "Section::PointerToRawData is insane!");
-
-    unsigned PaddingSize = Sec.Header.PointerToRawData - W.OS.tell();
-    assert(PaddingSize < 4 &&
-           "Should only need at most three bytes of padding!");
-    W.OS.write_zeros(PaddingSize);
 
     uint32_t CRC = writeSectionContents(Asm, Layout, MCSec);
 
@@ -912,10 +907,7 @@ void WinCOFFObjectWriter::assignFileOffsets(MCAssembler &Asm,
     Sec->Header.SizeOfRawData = Layout.getSectionAddressSize(&Section);
 
     if (IsPhysicalSection(Sec)) {
-      // Align the section data to a four byte boundary.
-      Offset = alignTo(Offset, 4);
       Sec->Header.PointerToRawData = Offset;
-
       Offset += Sec->Header.SizeOfRawData;
     }
 
