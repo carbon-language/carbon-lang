@@ -110,6 +110,12 @@ multiclass SIMDBinaryFP<SDNode node, string name, bits<32> baseInst> {
   defm "" : SIMDBinary<v4f32, "f32x4", node, name, baseInst>;
   defm "" : SIMDBinary<v2f64, "f64x2", node, name, !add(baseInst, 1)>;
 }
+multiclass SIMDBitwise<SDNode node, string name, bits<32> simdop> {
+  defm "" : SIMDBinary<v16i8, "v128", node, name, simdop>;
+  defm "" : SIMDBinary<v8i16, "v128", node, name, simdop>;
+  defm "" : SIMDBinary<v4i32, "v128", node, name, simdop>;
+  defm "" : SIMDBinary<v2i64, "v128", node, name, simdop>;
+}
 
 let Defs = [ARGUMENTS] in {
 defm "" : ConstVec<v16i8,
@@ -156,33 +162,45 @@ defm "" : ConstVec<v2f64,
                   (ins f64imm_op:$i0, f64imm_op:$i1),
                   (build_vector (f64 fpimm:$i0), (f64 fpimm:$i1)),
                   "$i0, $i1">;
+
 defm "" : ExtractLaneExtended<"_s", 9>;
 defm "" : ExtractLaneExtended<"_u", 10>;
 defm "" : ExtractLane<v4i32, "i32x4", LaneIdx4, I32, 13>;
 defm "" : ExtractLane<v2i64, "i64x2", LaneIdx2, I64, 14>;
 defm "" : ExtractLane<v4f32, "f32x4", LaneIdx4, F32, 15>;
 defm "" : ExtractLane<v2f64, "f64x2", LaneIdx2, F64, 16>;
+
 defm "" : ReplaceLane<v16i8, "i8x16", LaneIdx16, I32, i32, 17>;
 defm "" : ReplaceLane<v8i16, "i16x8", LaneIdx8, I32, i32, 18>;
 defm "" : ReplaceLane<v4i32, "i32x4", LaneIdx4, I32, i32, 19>;
 defm "" : ReplaceLane<v2i64, "i64x2", LaneIdx2, I64, i64, 20>;
 defm "" : ReplaceLane<v4f32, "f32x4", LaneIdx4, F32, f32, 21>;
 defm "" : ReplaceLane<v2f64, "f64x2", LaneIdx2, F64, f64, 22>;
+
 defm "" : Splat<v16i8, "i8x16", I32, splat16, 3>;
 defm "" : Splat<v8i16, "i16x8", I32, splat8, 4>;
 defm "" : Splat<v4i32, "i32x4", I32, splat4, 5>;
 defm "" : Splat<v2i64, "i64x2", I64, splat2, 6>;
 defm "" : Splat<v4f32, "f32x4", F32, splat4, 7>;
 defm "" : Splat<v2f64, "f64x2", F64, splat2, 8>;
+
 let isCommutable = 1 in {
 defm ADD : SIMDBinaryInt<add, "add", 24>;
 defm ADD : SIMDBinaryFP<fadd, "add", 122>;
 defm MUL : SIMDBinaryIntNoI64x2<mul, "mul", 32>;
 defm MUL : SIMDBinaryFP<fmul, "mul", 128>;
 } // isCommutable = 1
+
 defm SUB : SIMDBinaryInt<sub, "sub", 28>;
 defm SUB : SIMDBinaryFP<fsub, "sub", 124>;
 defm DIV : SIMDBinaryFP<fdiv, "div", 126>;
+
+let isCommutable = 1 in {
+defm AND : SIMDBitwise<and, "and", 59>;
+defm OR : SIMDBitwise<or, "or", 60>;
+defm XOR : SIMDBitwise<xor, "xor", 61>;
+} // isCommutable = 1
+
 } // Defs = [ARGUMENTS]
 
 // follow convention of making implicit expansions unsigned
