@@ -628,12 +628,16 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
   std::string ArchName;
   std::string TripleName;
   llvm::Triple::ArchType Arch = (llvm::Triple::ArchType)File->getArch();
+  std::string FeaturesStr;
   if (Arch == llvm::Triple::x86_64) {
     ArchName = "x86-64";
     TripleName = "x86_64-unknown-linux";
+    FeaturesStr = "";
   } else if (Arch == llvm::Triple::aarch64) {
     ArchName = "aarch64";
     TripleName = "aarch64-unknown-linux";
+    FeaturesStr = "+armv8.1a,+armv8.2a,+armv8.3a,+fp-armv8,+neon,+crypto,"
+        "+dotprod,+crc,+lse,+ras,+rdm,+fullfp16,+spe,+fuse-aes,+svr,+rcpc";
   } else {
     errs() << "BOLT-ERROR: Unrecognized machine in ELF file.\n";
     return nullptr;
@@ -665,7 +669,7 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
   }
 
   std::unique_ptr<const MCSubtargetInfo> STI(
-      TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+      TheTarget->createMCSubtargetInfo(TripleName, "", FeaturesStr));
   if (!STI) {
     errs() << "BOLT-ERROR: no subtarget info for target " << TripleName << "\n";
     return nullptr;
