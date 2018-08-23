@@ -83,10 +83,9 @@ class DefaultResourceStrategy final : public ResourceStrategy {
   ///   ResourceB -- 0b010
   ///   ResourceC -- 0b100
   ///
-  /// Field NextInSequenceMask is used by class ResourceManager to select the
-  /// "next available resource" from the set.
-  /// It defaults to the value of field `ResourceUnitMasks`. In this example, it
-  /// defaults to mask '0b111'.
+  /// Field NextInSequenceMask is used to select the next unit from the set of
+  /// resource units. It defaults to the value of field `ResourceUnitMasks` (in
+  /// this example, it defaults to mask '0b111').
   ///
   /// The round-robin selector would firstly select 'ResourceC', then
   /// 'ResourceB', and eventually 'ResourceA'.  When a resource R is used, the
@@ -99,19 +98,19 @@ class DefaultResourceStrategy final : public ResourceStrategy {
   uint64_t NextInSequenceMask;
 
   /// This field is used to track resource units that are used (i.e. selected)
-  /// by other groups other than this one.
+  /// by other groups other than the one associated with this strategy object.
   ///
   /// In LLVM processor resource groups are allowed to partially (or fully)
   /// overlap. That means, a same unit may be visible to multiple groups.
-  /// This field keeps track of uses that have been initiated from outside of
+  /// This field keeps track of uses that have originated from outside of
   /// this group. The idea is to bias the selection strategy, so that resources
   /// that haven't been used by other groups get prioritized.
   ///
   /// The end goal is to (try to) keep the resource distribution as much uniform
   /// as possible. By construction, this mask only tracks one-level of resource
   /// usage. Therefore, this strategy is expected to be less accurate when same
-  /// units are used multiple times from outside of this group during a single
-  /// selection round.
+  /// units are used multiple times by other groups within a single round of
+  /// select.
   ///
   /// Note: an LRU selector would have a better accuracy at the cost of being
   /// slightly more expensive (mostly in terms of runtime cost). Methods
@@ -315,7 +314,7 @@ public:
                          unsigned ResourceID) {
     assert(ResourceID < ProcResID2Mask.size() &&
            "Invalid resource index in input!");
-    return setCustomStrategy(std::move(S), ProcResID2Mask[ResourceID]);
+    return setCustomStrategyImpl(std::move(S), ProcResID2Mask[ResourceID]);
   }
 
   // Returns RS_BUFFER_AVAILABLE if buffered resources are not reserved, and if

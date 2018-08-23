@@ -115,6 +115,7 @@ void ResourceManager::setCustomStrategyImpl(std::unique_ptr<ResourceStrategy> S,
                                             uint64_t ResourceID) {
   unsigned Index = getResourceStateIndex(ResourceID);
   assert(Index < Resources.size() && "Invalid processor resource index!");
+  assert(S && "Unexpected null strategy in input!");
   Strategies[Index].reset(S.get());
 }
 
