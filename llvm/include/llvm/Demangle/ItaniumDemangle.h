@@ -1118,6 +1118,24 @@ public:
   }
 };
 
+/// A forward-reference to a template argument that was not known at the point
+/// where the template parameter name was parsed in a mangling.
+///
+/// This is created when demangling the name of a specialization of a
+/// conversion function template:
+///
+/// \code
+/// struct A {
+///   template<typename T> operator T*();
+/// };
+/// \endcode
+///
+/// When demangling a specialization of the conversion function template, we
+/// encounter the name of the template (including the \c T) before we reach
+/// the template argument list, so we cannot substitute the parameter name
+/// for the corresponding argument while parsing. Instead, we create a
+/// \c ForwardTemplateReference node that is resolved after we parse the
+/// template arguments.
 struct ForwardTemplateReference : Node {
   size_t Index;
   Node *Ref = nullptr;
