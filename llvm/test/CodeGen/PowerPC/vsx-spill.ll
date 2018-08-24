@@ -36,8 +36,8 @@ entry:
 ; CHECK-FISL: blr
 
 ; CHECK-P9-REG: @foo1
-; CHECK-P9-REG: xxlor v2, f1, f1
-; CHECK-P9-REG: xxlor f1, v2, v2
+; CHECK-P9-REG: xscpsgndp v2, f1, f1
+; CHECK-P9-REG: xscpsgndp f1, v2, v2
 ; CHECK-P9-REG: blr
 
 ; CHECK-P9-FISL: @foo1
@@ -66,8 +66,8 @@ entry:
 ; CHECK-FISL: blr
 
 ; CHECK-P9-REG: @foo2
-; CHECK-P9-REG: {{xxlor|xsadddp}} v2, f1, f1
-; CHECK-P9-REG: {{xxlor|xsadddp}} f1, v2, v2
+; CHECK-P9-REG: {{xscpsgndp|xsadddp}} v2, f1, f1
+; CHECK-P9-REG: {{xscpsgndp|xsadddp}} f1, v2, v2
 ; CHECK-P9-REG: blr
 
 ; CHECK-P9-FISL: @foo2
