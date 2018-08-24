@@ -2671,17 +2671,11 @@ define i32 @madd_double_reduction(<8 x i16>* %arg, <8 x i16>* %arg1, <8 x i16>* 
 ; SSE2:       # %bb.0:
 ; SSE2-NEXT:    movdqu (%rdi), %xmm0
 ; SSE2-NEXT:    movdqu (%rsi), %xmm1
-; SSE2-NEXT:    movdqa %xmm0, %xmm2
-; SSE2-NEXT:    pmulhw %xmm1, %xmm2
-; SSE2-NEXT:    pmullw %xmm1, %xmm0
-; SSE2-NEXT:    movdqa %xmm0, %xmm1
-; SSE2-NEXT:    punpckhwd {{.*#+}} xmm1 = xmm1[4],xmm2[4],xmm1[5],xmm2[5],xmm1[6],xmm2[6],xmm1[7],xmm2[7]
-; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1],xmm0[2],xmm2[2],xmm0[3],xmm2[3]
-; SSE2-NEXT:    paddd %xmm1, %xmm0
-; SSE2-NEXT:    movdqu (%rdx), %xmm1
+; SSE2-NEXT:    pmaddwd %xmm0, %xmm1
+; SSE2-NEXT:    movdqu (%rdx), %xmm0
 ; SSE2-NEXT:    movdqu (%rcx), %xmm2
-; SSE2-NEXT:    pmaddwd %xmm1, %xmm2
-; SSE2-NEXT:    paddd %xmm0, %xmm2
+; SSE2-NEXT:    pmaddwd %xmm0, %xmm2
+; SSE2-NEXT:    paddd %xmm1, %xmm2
 ; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm2[2,3,0,1]
 ; SSE2-NEXT:    paddd %xmm2, %xmm0
 ; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
@@ -2691,14 +2685,9 @@ define i32 @madd_double_reduction(<8 x i16>* %arg, <8 x i16>* %arg1, <8 x i16>* 
 ;
 ; AVX1-LABEL: madd_double_reduction:
 ; AVX1:       # %bb.0:
-; AVX1-NEXT:    vpmovsxwd (%rdi), %xmm0
-; AVX1-NEXT:    vpmovsxwd 8(%rdi), %xmm1
-; AVX1-NEXT:    vpmovsxwd (%rsi), %xmm2
-; AVX1-NEXT:    vpmulld %xmm2, %xmm0, %xmm0
-; AVX1-NEXT:    vpmovsxwd 8(%rsi), %xmm2
-; AVX1-NEXT:    vpmulld %xmm2, %xmm1, %xmm1
-; AVX1-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vmovdqu (%rdi), %xmm0
 ; AVX1-NEXT:    vmovdqu (%rdx), %xmm1
+; AVX1-NEXT:    vpmaddwd (%rsi), %xmm0, %xmm0
 ; AVX1-NEXT:    vpmaddwd (%rcx), %xmm1, %xmm1
 ; AVX1-NEXT:    vpaddd %xmm0, %xmm1, %xmm0
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
@@ -2709,10 +2698,9 @@ define i32 @madd_double_reduction(<8 x i16>* %arg, <8 x i16>* %arg1, <8 x i16>* 
 ;
 ; AVX256-LABEL: madd_double_reduction:
 ; AVX256:       # %bb.0:
-; AVX256-NEXT:    vpmovsxwd (%rdi), %ymm0
-; AVX256-NEXT:    vpmovsxwd (%rsi), %ymm1
-; AVX256-NEXT:    vpmulld %ymm1, %ymm0, %ymm0
+; AVX256-NEXT:    vmovdqu (%rdi), %xmm0
 ; AVX256-NEXT:    vmovdqu (%rdx), %xmm1
+; AVX256-NEXT:    vpmaddwd (%rsi), %xmm0, %xmm0
 ; AVX256-NEXT:    vpmaddwd (%rcx), %xmm1, %xmm1
 ; AVX256-NEXT:    vpaddd %ymm0, %ymm1, %ymm0
 ; AVX256-NEXT:    vextracti128 $1, %ymm0, %xmm1
