@@ -2160,7 +2160,7 @@ struct Db {
     ASTAllocator.reset();
   }
 
-  template <class T, class... Args> T *make(Args &&... args) {
+  template <class T, class... Args> Node *make(Args &&... args) {
     return ASTAllocator.template makeNode<T>(std::forward<Args>(args)...);
   }
 
@@ -4948,8 +4948,11 @@ template<typename Alloc> Node *Db<Alloc>::parseTemplateParam() {
   // <template-arg> further ahead in the mangled name (currently just conversion
   // operator types), then we should only look it up in the right context.
   if (PermitForwardTemplateReferences) {
-    ForwardTemplateRefs.push_back(make<ForwardTemplateReference>(Index));
-    return ForwardTemplateRefs.back();
+    Node *ForwardRef = make<ForwardTemplateReference>(Index);
+    assert(ForwardRef->getKind() == Node::KForwardTemplateReference);
+    ForwardTemplateRefs.push_back(
+        static_cast<ForwardTemplateReference *>(ForwardRef));
+    return ForwardRef;
   }
 
   if (Index >= TemplateParams.size())
