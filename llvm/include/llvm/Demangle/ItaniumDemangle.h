@@ -1284,10 +1284,11 @@ public:
   void printLeft(OutputStream &S) const override {
     switch (SSK) {
     case SpecialSubKind::allocator:
-      S += "std::basic_string<char, std::char_traits<char>, "
-           "std::allocator<char> >";
+      S += "std::allocator";
       break;
     case SpecialSubKind::basic_string:
+      S += "std::basic_string";
+      break;
     case SpecialSubKind::string:
       S += "std::basic_string<char, std::char_traits<char>, "
            "std::allocator<char> >";
