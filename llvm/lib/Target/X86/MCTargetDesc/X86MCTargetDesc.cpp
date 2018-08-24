@@ -386,7 +386,8 @@ public:
                             APInt &Mask) const override;
   std::vector<std::pair<uint64_t, uint64_t>>
   findPltEntries(uint64_t PltSectionVA, ArrayRef<uint8_t> PltContents,
-                 uint64_t GotSectionVA, const Triple &TargetTriple) const;
+                 uint64_t GotSectionVA,
+                 const Triple &TargetTriple) const override;
 };
 
 bool X86MCInstrAnalysis::isDependencyBreaking(const MCSubtargetInfo &STI,
