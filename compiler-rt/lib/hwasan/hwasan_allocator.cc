@@ -186,9 +186,10 @@ void HwasanDeallocate(StackTrace *stack, void *user_ptr) {
   CHECK(user_ptr);
   HWASAN_FREE_HOOK(user_ptr);
 
-  void *p = GetAddressFromPointer(user_ptr);
   if (!PointerAndMemoryTagsMatch(user_ptr))
     ReportInvalidFree(stack, reinterpret_cast<uptr>(user_ptr));
+
+  void *p = GetAddressFromPointer(user_ptr);
   Metadata *meta = reinterpret_cast<Metadata *>(allocator.GetMetaData(p));
   uptr size = meta->requested_size;
   meta->state = CHUNK_FREE;
@@ -219,6 +220,9 @@ void *HwasanReallocate(StackTrace *stack, void *user_old_p, uptr new_size,
                      uptr alignment) {
   alignment = Max(alignment, kShadowAlignment);
   new_size = RoundUpTo(new_size, kShadowAlignment);
+
+  if (!PointerAndMemoryTagsMatch(user_old_p))
+    ReportInvalidFree(stack, reinterpret_cast<uptr>(user_old_p));
 
   void *old_p = GetAddressFromPointer(user_old_p);
   Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(old_p));
