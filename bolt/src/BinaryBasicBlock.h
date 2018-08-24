@@ -365,14 +365,24 @@ public:
       return getSuccessor();
   }
 
-  const BinaryBranchInfo &getBranchInfo(bool Condition) const {
+  /// Return branch info corresponding to a taken branch.
+  const BinaryBranchInfo &getTakenBranchInfo() const {
     assert(BranchInfo.size() == 2 &&
            "could only be called for blocks with 2 successors");
-    return BranchInfo[Condition == true ? 0 : 1];
+    return BranchInfo[0];
   };
 
+  /// Return branch info corresponding to a fall-through branch.
+  const BinaryBranchInfo &getFallthroughBranchInfo() const {
+    assert(BranchInfo.size() == 2 &&
+           "could only be called for blocks with 2 successors");
+    return BranchInfo[1];
+  };
+
+  /// Return branch info corresponding to an edge going to \p Succ basic block.
   BinaryBranchInfo &getBranchInfo(const BinaryBasicBlock &Succ);
 
+  /// Set branch information for the outgoing edge to block \p Succ.
   void setSuccessorBranchInfo(const BinaryBasicBlock &Succ,
                               uint64_t Count,
                               uint64_t MispredictedCount) {

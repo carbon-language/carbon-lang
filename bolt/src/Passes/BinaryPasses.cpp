@@ -904,7 +904,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       // Record this block so that we don't try to optimize it twice.
       BeenOptimized.insert(PredBB);
 
-      bool BranchForStats;
+      uint64_t Count = 0;
       if (CondSucc != BB) {
         // Patch the new target address into the conditional branch.
         MIB->reverseBranchCondition(*CondBranch, CalleeSymbol, BC.Ctx.get());
@@ -913,13 +913,12 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         // branch to the old target.  This has to be done manually since
         // fixupBranches is not called after SCTC.
         NeedsUncondBranch.emplace_back(std::make_pair(PredBB, CondSucc));
-        BranchForStats = false;
+        Count = PredBB->getFallthroughBranchInfo().Count;
       } else {
         // Change destination of the conditional branch.
         MIB->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
-        BranchForStats = true;
+        Count = PredBB->getTakenBranchInfo().Count;
       }
-      const auto Count = PredBB->getBranchInfo(BranchForStats).Count;
       const uint64_t CTCTakenFreq =
         Count == BinaryBasicBlock::COUNT_NO_PROFILE ? 0 : Count;
 

@@ -740,91 +740,66 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
 
   // Scale indirect call counts to the execution count of the original
   // basic block containing the indirect call.
+  auto TotalCount = IndCallBlock->getKnownExecutionCount();
   uint64_t TotalIndirectBranches = 0;
-  uint64_t TotalIndirectMispreds = 0;
-  for (const auto &BI : Targets) {
-    TotalIndirectBranches += BI.Branches;
-    TotalIndirectMispreds += BI.Mispreds;
+  for (const auto &Target : Targets) {
+    TotalIndirectBranches += Target.Branches;
   }
-
-  uint64_t TotalCount = 0;
-  uint64_t TotalMispreds = 0;
-
-  if (Function.hasValidProfile()) {
-    TotalCount = IndCallBlock->getExecutionCount();
-    TotalMispreds =
-      TotalCount * ((double)TotalIndirectMispreds / TotalIndirectBranches);
-    assert(TotalCount != BinaryBasicBlock::COUNT_NO_PROFILE);
-  }
-
-  // New BinaryBranchInfo scaled to the execution count of the original BB.
   std::vector<BinaryBranchInfo> BBI;
-  for (auto Itr = Targets.begin(); Itr != Targets.end(); ++Itr) {
-    const auto BranchPct = (double)Itr->Branches / TotalIndirectBranches;
-    const auto MispredPct =
-      (double)Itr->Mispreds / std::max(TotalIndirectMispreds, 1ul);
-    if (Itr->JTIndex.empty()) {
-      BBI.push_back(BinaryBranchInfo{uint64_t(TotalCount * BranchPct),
-                                     uint64_t(TotalMispreds * MispredPct)});
-      continue;
-    }
-    for (size_t I = 0, E = Itr->JTIndex.size(); I != E; ++I) {
-      BBI.push_back(
-          BinaryBranchInfo{uint64_t(TotalCount * (BranchPct / E)),
-                           uint64_t(TotalMispreds * (MispredPct / E))});
+  std::vector<BinaryBranchInfo> ScaledBBI;
+  for (const auto &Target : Targets) {
+    const auto NumEntries = std::max(1UL, Target.JTIndex.size());
+    for (size_t I = 0; I < NumEntries; ++I) {
+      BBI.push_back(BinaryBranchInfo{Target.Branches / NumEntries,
+                                     Target.Mispreds / NumEntries});
+      ScaledBBI.push_back(BinaryBranchInfo{
+          uint64_t(TotalCount * Target.Branches /
+                                      (NumEntries * TotalIndirectBranches)),
+          uint64_t(TotalCount * Target.Mispreds /
+                                      (NumEntries * TotalIndirectBranches))});
     }
   }
-
-  auto BI = BBI.begin();
-  auto updateCurrentBranchInfo = [&]{
-    assert(BI < BBI.end());
-    TotalCount -= BI->Count;
-    TotalMispreds -= BI->MispredictedCount;
-    ++BI;
-  };
 
   if (IsJumpTable) {
-    IndCallBlock->moveAllSuccessorsTo(NewBBs.back().get());
+    auto *NewIndCallBlock = NewBBs.back().get();
+    IndCallBlock->moveAllSuccessorsTo(NewIndCallBlock);
 
     std::vector<MCSymbol*> SymTargets;
-    for (size_t I = 0; I < Targets.size(); ++I) {
-      assert(Targets[I].To.Sym);
-      if (Targets[I].JTIndex.empty())
-        SymTargets.push_back(Targets[I].To.Sym);
-      else {
-        for (size_t Idx = 0, E = Targets[I].JTIndex.size(); Idx != E; ++Idx) {
-          SymTargets.push_back(Targets[I].To.Sym);
-        }
+    for (const auto &Target : Targets) {
+      const auto NumEntries = std::max(1UL, Target.JTIndex.size());
+      for (size_t I = 0; I < NumEntries; ++I) {
+        SymTargets.push_back(Target.To.Sym);
       }
     }
     assert(SymTargets.size() > NewBBs.size() - 1 &&
            "There must be a target symbol associated with each new BB.");
 
-    // Fix up successors and execution counts.
-    updateCurrentBranchInfo();
-    auto *Succ = Function.getBasicBlockForLabel(SymTargets[0]);
-    assert(Succ && "each jump target must be a legal BB label");
-    IndCallBlock->addSuccessor(Succ, BBI[0]);  // cond branch
-    IndCallBlock->addSuccessor(NewBBs[0].get(), TotalCount); // fallthru branch
+    for (uint64_t I = 0; I < NewBBs.size(); ++I) {
+      BinaryBasicBlock *SourceBB = I ? NewBBs[I - 1].get() : IndCallBlock;
+      SourceBB->setExecutionCount(TotalCount);
 
-    for (size_t I = 0; I < NewBBs.size() - 1; ++I) {
-      assert(TotalCount <= IndCallBlock->getExecutionCount() ||
-             TotalCount <= uint64_t(TotalIndirectBranches));
-      uint64_t ExecCount = BBI[I+1].Count;
-      updateCurrentBranchInfo();
-      auto *Succ = Function.getBasicBlockForLabel(SymTargets[I+1]);
-      assert(Succ && "each jump target must be a legal BB label");
-      NewBBs[I]->addSuccessor(Succ, BBI[I+1]);
-      NewBBs[I]->addSuccessor(NewBBs[I+1].get(), TotalCount); // fallthru
-      ExecCount += TotalCount;
-      NewBBs[I]->setCanOutline(IndCallBlock->canOutline());
-      NewBBs[I]->setIsCold(IndCallBlock->isCold());
-      NewBBs[I]->setExecutionCount(ExecCount);
+      auto *TargetBB = Function.getBasicBlockForLabel(SymTargets[I]);
+      SourceBB->addSuccessor(TargetBB, ScaledBBI[I]); // taken
+
+      TotalCount -= ScaledBBI[I].Count;
+      SourceBB->addSuccessor(NewBBs[I].get(), TotalCount); // fall-through
+
+      // Update branch info for the indirect jump.
+      auto &BranchInfo = NewIndCallBlock->getBranchInfo(*TargetBB);
+      BranchInfo.Count -= BBI[I].Count;
+      BranchInfo.MispredictedCount -= BBI[I].MispredictedCount;
     }
   } else {
     assert(NewBBs.size() >= 2);
     assert(NewBBs.size() % 2 == 1 || IndCallBlock->succ_empty());
     assert(NewBBs.size() % 2 == 1 || IsTailCall);
+
+    auto ScaledBI = ScaledBBI.begin();
+    auto updateCurrentBranchInfo = [&]{
+      assert(ScaledBI != ScaledBBI.end());
+      TotalCount -= ScaledBI->Count;
+      ++ScaledBI;
+    };
 
     if (!IsTailCall) {
       MergeBlock = NewBBs.back().get();
@@ -833,25 +808,23 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
 
     // Fix up successors and execution counts.
     updateCurrentBranchInfo();
-    IndCallBlock->addSuccessor(NewBBs[1].get(), TotalCount); // cond branch
-    IndCallBlock->addSuccessor(NewBBs[0].get(), BBI[0]); // uncond branch
+    IndCallBlock->addSuccessor(NewBBs[1].get(), TotalCount);
+    IndCallBlock->addSuccessor(NewBBs[0].get(), ScaledBBI[0]);
 
     const size_t Adj = IsTailCall ? 1 : 2;
     for (size_t I = 0; I < NewBBs.size() - Adj; ++I) {
       assert(TotalCount <= IndCallBlock->getExecutionCount() ||
              TotalCount <= uint64_t(TotalIndirectBranches));
-      uint64_t ExecCount = BBI[(I+1)/2].Count;
-      NewBBs[I]->setCanOutline(IndCallBlock->canOutline());
-      NewBBs[I]->setIsCold(IndCallBlock->isCold());
+      auto ExecCount = ScaledBBI[(I+1)/2].Count;
       if (I % 2 == 0) {
         if (MergeBlock) {
-          NewBBs[I]->addSuccessor(MergeBlock, BBI[(I+1)/2].Count); // uncond
+          NewBBs[I]->addSuccessor(MergeBlock, ScaledBBI[(I+1)/2].Count);
         }
       } else {
         assert(I + 2 < NewBBs.size());
         updateCurrentBranchInfo();
-        NewBBs[I]->addSuccessor(NewBBs[I+2].get(), TotalCount); // uncond branch
-        NewBBs[I]->addSuccessor(NewBBs[I+1].get(), BBI[(I+1)/2]); // cond. branch
+        NewBBs[I]->addSuccessor(NewBBs[I+2].get(), TotalCount);
+        NewBBs[I]->addSuccessor(NewBBs[I+1].get(), ScaledBBI[(I+1)/2]);
         ExecCount += TotalCount;
       }
       NewBBs[I]->setExecutionCount(ExecCount);
@@ -860,8 +833,6 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
     if (MergeBlock) {
       // Arrange for the MergeBlock to be the fallthrough for the first
       // promoted call block.
-      MergeBlock->setCanOutline(IndCallBlock->canOutline());
-      MergeBlock->setIsCold(IndCallBlock->isCold());
       std::unique_ptr<BinaryBasicBlock> MBPtr;
       std::swap(MBPtr, NewBBs.back());
       NewBBs.pop_back();
@@ -871,13 +842,10 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
     }
   }
 
-  // cold call block
-  // TODO: should be able to outline/cold this block.
+  // Update the execution count.
   NewBBs.back()->setExecutionCount(TotalCount);
-  NewBBs.back()->setCanOutline(IndCallBlock->canOutline());
-  NewBBs.back()->setIsCold(IndCallBlock->isCold());
 
-  // update BB and BB layout.
+  // Update BB and BB layout.
   Function.insertBasicBlocks(IndCallBlock, std::move(NewBBs));
   assert(Function.validateCFG());
 

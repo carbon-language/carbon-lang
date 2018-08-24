@@ -3962,11 +3962,11 @@ DynoStats BinaryFunction::getDynoStats() const {
     }
 
     // Conditional branch that could be followed by an unconditional branch.
-    uint64_t TakenCount = BB->getBranchInfo(true).Count;
+    auto TakenCount = BB->getTakenBranchInfo().Count;
     if (TakenCount == COUNT_NO_PROFILE)
       TakenCount = 0;
 
-    uint64_t NonTakenCount = BB->getBranchInfo(false).Count;
+    auto NonTakenCount = BB->getFallthroughBranchInfo().Count;
     if (NonTakenCount == COUNT_NO_PROFILE)
       NonTakenCount = 0;
 
