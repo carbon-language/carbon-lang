@@ -2469,7 +2469,7 @@ static inline int __kmp_execute_tasks_template(
   KMP_DEBUG_ASSERT(__kmp_tasking_mode != tskm_immediate_exec);
   KMP_DEBUG_ASSERT(thread == __kmp_threads[gtid]);
 
-  if (task_team == NULL)
+  if (task_team == NULL || current_task == NULL)
     return FALSE;
 
   KA_TRACE(15, ("__kmp_execute_tasks_template(enter): T#%d final_spin=%d "
