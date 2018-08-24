@@ -636,8 +636,8 @@ createBinaryContext(ELFObjectFileBase *File, DataReader &DR,
   } else if (Arch == llvm::Triple::aarch64) {
     ArchName = "aarch64";
     TripleName = "aarch64-unknown-linux";
-    FeaturesStr = "+armv8.1a,+armv8.2a,+armv8.3a,+fp-armv8,+neon,+crypto,"
-        "+dotprod,+crc,+lse,+ras,+rdm,+fullfp16,+spe,+fuse-aes,+svr,+rcpc";
+    FeaturesStr = "+fp-armv8,+neon,+crypto,+dotprod,+crc,+lse,+ras,+rdm,"
+      "+fullfp16,+spe,+fuse-aes,+rcpc";
   } else {
     errs() << "BOLT-ERROR: Unrecognized machine in ELF file.\n";
     return nullptr;
