@@ -39076,7 +39076,7 @@ static SDValue combineLoopMAddPattern(SDNode *N, SelectionDAG &DAG,
 
   // If the vector size is less than 128, or greater than the supported RegSize,
   // do not use PMADD.
-  if (VT.getVectorNumElements() < 8)
+  if (!VT.isVector() || VT.getVectorNumElements() < 8)
     return SDValue();
 
   if (Op0.getOpcode() != ISD::MUL)
