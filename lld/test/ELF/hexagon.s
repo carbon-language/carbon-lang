@@ -202,3 +202,7 @@ r0 = add(r1, ##_start)
 # R_HEX_B9_PCREL_X:
 {r0=#1 ; jump ##_start}
 # CHECK: jump 0x11000
+
+# R_HEX_B13_PCREL
+if (r0 == #0) jump:t #_start
+# CHECK: if (r0==#0) jump:t 0x11000

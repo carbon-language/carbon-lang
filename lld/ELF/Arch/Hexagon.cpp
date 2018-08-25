@@ -55,6 +55,7 @@ RelExpr Hexagon::getRelExpr(RelType Type, const Symbol &S,
   switch (Type) {
   case R_HEX_B9_PCREL:
   case R_HEX_B9_PCREL_X:
+  case R_HEX_B13_PCREL:
   case R_HEX_B15_PCREL:
   case R_HEX_B15_PCREL_X:
   case R_HEX_B22_PCREL:
@@ -159,6 +160,9 @@ void Hexagon::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
     break;
   case R_HEX_B9_PCREL_X:
     or32le(Loc, applyMask(0x003000fe, Val & 0x3f));
+    break;
+  case R_HEX_B13_PCREL:
+    or32le(Loc, applyMask(0x00202ffe, Val >> 2));
     break;
   case R_HEX_B15_PCREL:
     or32le(Loc, applyMask(0x00df20fe, Val >> 2));
