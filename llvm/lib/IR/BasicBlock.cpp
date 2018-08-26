@@ -384,7 +384,7 @@ bool BasicBlock::isLegalToHoistInto() const {
   assert(Term->getNumSuccessors() > 0);
 
   // Instructions should not be hoisted across exception handling boundaries.
-  return !Term->isExceptional();
+  return !Term->isExceptionalTerminator();
 }
 
 /// This splits a basic block into two at the specified

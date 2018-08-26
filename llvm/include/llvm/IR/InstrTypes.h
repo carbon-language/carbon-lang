@@ -71,20 +71,6 @@ public:
   static bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
   }
-
-  // Returns true if this terminator relates to exception handling.
-  bool isExceptional() const {
-    switch (getOpcode()) {
-    case Instruction::CatchSwitch:
-    case Instruction::CatchRet:
-    case Instruction::CleanupRet:
-    case Instruction::Invoke:
-    case Instruction::Resume:
-      return true;
-    default:
-      return false;
-    }
-  }
 };
 
 //===----------------------------------------------------------------------===//

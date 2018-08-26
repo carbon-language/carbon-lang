@@ -104,7 +104,7 @@ static bool IsAcceptableTarget(Instruction *Inst, BasicBlock *SuccToSinkTo,
 
   // It's never legal to sink an instruction into a block which terminates in an
   // EH-pad.
-  if (SuccToSinkTo->getTerminator()->isExceptional())
+  if (SuccToSinkTo->getTerminator()->isExceptionalTerminator())
     return false;
 
   // If the block has multiple predecessors, this would introduce computation

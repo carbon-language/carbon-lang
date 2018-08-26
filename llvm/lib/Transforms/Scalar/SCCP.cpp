@@ -675,7 +675,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
   }
 
   // Unwinding instructions successors are always executable.
-  if (TI.isExceptional()) {
+  if (TI.isExceptionalTerminator()) {
     Succs.assign(TI.getNumSuccessors(), true);
     return;
   }

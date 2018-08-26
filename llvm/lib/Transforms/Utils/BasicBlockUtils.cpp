@@ -136,7 +136,7 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, DomTreeUpdater *DTU,
   // Don't break self-loops.
   if (PredBB == BB) return false;
   // Don't break unwinding instructions.
-  if (PredBB->getTerminator()->isExceptional())
+  if (PredBB->getTerminator()->isExceptionalTerminator())
     return false;
 
   // Can't merge if there are multiple distinct successors.
