@@ -904,7 +904,7 @@ def : Proc<"k6-2",            [FeatureX87, FeatureSlowUAMem16, Feature3DNow]>;
 def : Proc<"k6-3",            [FeatureX87, FeatureSlowUAMem16, Feature3DNow]>;
 
 foreach P = ["athlon", "athlon-tbird"] in {
-  def : Proc<P, [FeatureX87, FeatureSlowUAMem16, Feature3DNowA,
+  def : Proc<P, [FeatureX87, FeatureSlowUAMem16, FeatureCMOV, Feature3DNowA,
                  FeatureNOPL, FeatureSlowSHLD]>;
 }
 
