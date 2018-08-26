@@ -592,7 +592,7 @@ bool Instruction::mayThrow() const {
 
 bool Instruction::isSafeToRemove() const {
   return (!isa<CallInst>(this) || !this->mayHaveSideEffects()) &&
-         !isa<TerminatorInst>(this);
+         !this->isTerminator();
 }
 
 const Instruction *Instruction::getNextNonDebugInstruction() const {

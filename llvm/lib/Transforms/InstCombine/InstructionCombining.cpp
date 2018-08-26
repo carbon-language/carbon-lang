@@ -2902,7 +2902,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 
   // Cannot move control-flow-involving, volatile loads, vaarg, etc.
   if (isa<PHINode>(I) || I->isEHPad() || I->mayHaveSideEffects() ||
-      isa<TerminatorInst>(I))
+      I->isTerminator())
     return false;
 
   // Do not sink alloca instructions out of the entry block.

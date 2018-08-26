@@ -49,8 +49,13 @@ class PredIterator : public std::iterator<std::forward_iterator_tag,
 
   inline void advancePastNonTerminators() {
     // Loop to ignore non-terminator uses (for example BlockAddresses).
-    while (!It.atEnd() && !isa<TerminatorInst>(*It))
+    while (!It.atEnd()) {
+      if (auto *Inst = dyn_cast<Instruction>(*It))
+        if (Inst->isTerminator())
+          break;
+
       ++It;
+    }
   }
 
 public:

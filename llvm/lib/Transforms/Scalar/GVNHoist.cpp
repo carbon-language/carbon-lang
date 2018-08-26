@@ -1100,7 +1100,7 @@ private:
           break;
 
         // Do not value number terminator instructions.
-        if (isa<TerminatorInst>(&I1))
+        if (I1.isTerminator())
           break;
 
         if (auto *Load = dyn_cast<LoadInst>(&I1))

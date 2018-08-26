@@ -1978,7 +1978,7 @@ bool JumpThreadingPass::ThreadEdge(BasicBlock *BB,
 
   // Clone the non-phi instructions of BB into NewBB, keeping track of the
   // mapping and using it to remap operands in the cloned instructions.
-  for (; !isa<TerminatorInst>(BI); ++BI) {
+  for (; !BI->isTerminator(); ++BI) {
     Instruction *New = BI->clone();
     New->setName(BI->getName());
     NewBB->getInstList().push_back(New);

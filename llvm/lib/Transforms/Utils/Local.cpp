@@ -354,7 +354,7 @@ bool llvm::isInstructionTriviallyDead(Instruction *I,
 
 bool llvm::wouldInstructionBeTriviallyDead(Instruction *I,
                                            const TargetLibraryInfo *TLI) {
-  if (isa<TerminatorInst>(I))
+  if (I->isTerminator())
     return false;
 
   // We don't want the landingpad-like instructions removed by anything this

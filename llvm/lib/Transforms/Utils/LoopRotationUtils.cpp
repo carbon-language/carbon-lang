@@ -326,7 +326,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     // something that might trap, but isn't safe to hoist something that reads
     // memory (without proving that the loop doesn't write).
     if (L->hasLoopInvariantOperands(Inst) && !Inst->mayReadFromMemory() &&
-        !Inst->mayWriteToMemory() && !isa<TerminatorInst>(Inst) &&
+        !Inst->mayWriteToMemory() && !Inst->isTerminator() &&
         !isa<DbgInfoIntrinsic>(Inst) && !isa<AllocaInst>(Inst)) {
       Inst->moveBefore(LoopEntryBranch);
       continue;
