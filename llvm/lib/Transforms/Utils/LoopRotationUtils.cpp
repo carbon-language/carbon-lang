@@ -375,8 +375,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   // Along with all the other instructions, we just cloned OrigHeader's
   // terminator into OrigPreHeader. Fix up the PHI nodes in each of OrigHeader's
   // successors by duplicating their incoming values for OrigHeader.
-  TerminatorInst *TI = OrigHeader->getTerminator();
-  for (BasicBlock *SuccBB : TI->successors())
+  for (BasicBlock *SuccBB : successors(OrigHeader))
     for (BasicBlock::iterator BI = SuccBB->begin();
          PHINode *PN = dyn_cast<PHINode>(BI); ++BI)
       PN->addIncoming(PN->getIncomingValueForBlock(OrigHeader), OrigPreheader);

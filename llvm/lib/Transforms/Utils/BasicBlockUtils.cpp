@@ -59,7 +59,7 @@ void llvm::DeleteDeadBlock(BasicBlock *BB, DomTreeUpdater *DTU) {
   // of their predecessors is going away.
   if (DTU)
     Updates.reserve(BBTerm->getNumSuccessors());
-  for (BasicBlock *Succ : BBTerm->successors()) {
+  for (BasicBlock *Succ : successors(BBTerm)) {
     Succ->removePredecessor(BB);
     if (DTU)
       Updates.push_back({DominatorTree::Delete, BB, Succ});
