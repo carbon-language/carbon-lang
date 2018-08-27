@@ -96,7 +96,6 @@ std::optional<parser::MessageFixedText> Scope::SetImportKind(ImportKind kind) {
     importKind_ = kind;
     return std::nullopt;
   }
-  std::optional<parser::MessageFixedText> error;
   bool hasNone{kind == ImportKind::None || *importKind_ == ImportKind::None};
   bool hasAll{kind == ImportKind::All || *importKind_ == ImportKind::All};
   // Check C8100 and C898: constraints on multiple IMPORT statements
