@@ -33,6 +33,7 @@ typedef unsigned long long __mmask64;
 
 /* Define the default attributes for the functions in this file. */
 #define __DEFAULT_FN_ATTRS512 __attribute__((__always_inline__, __nodebug__, __target__("avx512bw"), __min_vector_width__(512)))
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("avx512bw")))
 
 /* Integer compare */
 
@@ -1792,5 +1793,6 @@ _mm512_sad_epu8 (__m512i __A, __m512i __B)
 }
 
 #undef __DEFAULT_FN_ATTRS512
+#undef __DEFAULT_FN_ATTRS
 
 #endif
