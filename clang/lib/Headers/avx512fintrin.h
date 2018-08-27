@@ -9595,5 +9595,6 @@ _mm512_mask_reduce_min_ps(__mmask16 __M, __m512 __V) {
 
 #undef __DEFAULT_FN_ATTRS512
 #undef __DEFAULT_FN_ATTRS128
+#undef __DEFAULT_FN_ATTRS
 
 #endif /* __AVX512FINTRIN_H */
