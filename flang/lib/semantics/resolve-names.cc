@@ -37,8 +37,10 @@ class MessageHandler;
 
 static GenericSpec MapGenericSpec(const parser::GenericSpec &);
 
-// ImplicitRules maps initial character of identifier to the DeclTypeSpec*
-// representing the implicit type; nullptr if none.
+// ImplicitRules maps initial character of identifier to the DeclTypeSpec
+// representing the implicit type; std::nullopt if none.
+// It also records the presence of IMPLICIT NONE statements.
+// When inheritFromParent is set, defaults come from the parent rules.
 class ImplicitRules {
 public:
   ImplicitRules(MessageHandler &messages)
