@@ -35,6 +35,78 @@ typedef unsigned long long __mmask64;
 #define __DEFAULT_FN_ATTRS512 __attribute__((__always_inline__, __nodebug__, __target__("avx512bw"), __min_vector_width__(512)))
 #define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("avx512bw")))
 
+static __inline __mmask32 __DEFAULT_FN_ATTRS
+_knot_mask32(__mmask32 __M)
+{
+  return __builtin_ia32_knotsi(__M);
+}
+
+static __inline __mmask64 __DEFAULT_FN_ATTRS
+_knot_mask64(__mmask64 __M)
+{
+  return __builtin_ia32_knotdi(__M);
+}
+
+static __inline__ __mmask32 __DEFAULT_FN_ATTRS
+_kand_mask32(__mmask32 __A, __mmask32 __B)
+{
+  return (__mmask32)__builtin_ia32_kandsi((__mmask32)__A, (__mmask32)__B);
+}
+
+static __inline__ __mmask64 __DEFAULT_FN_ATTRS
+_kand_mask64(__mmask64 __A, __mmask64 __B)
+{
+  return (__mmask64)__builtin_ia32_kanddi((__mmask64)__A, (__mmask64)__B);
+}
+
+static __inline__ __mmask32 __DEFAULT_FN_ATTRS
+_kandn_mask32(__mmask32 __A, __mmask32 __B)
+{
+  return (__mmask32)__builtin_ia32_kandnsi((__mmask32)__A, (__mmask32)__B);
+}
+
+static __inline__ __mmask64 __DEFAULT_FN_ATTRS
+_kandn_mask64(__mmask64 __A, __mmask64 __B)
+{
+  return (__mmask64)__builtin_ia32_kandndi((__mmask64)__A, (__mmask64)__B);
+}
+
+static __inline__ __mmask32 __DEFAULT_FN_ATTRS
+_kor_mask32(__mmask32 __A, __mmask32 __B)
+{
+  return (__mmask32)__builtin_ia32_korsi((__mmask32)__A, (__mmask32)__B);
+}
+
+static __inline__ __mmask64 __DEFAULT_FN_ATTRS
+_kor_mask64(__mmask64 __A, __mmask64 __B)
+{
+  return (__mmask64)__builtin_ia32_kordi((__mmask64)__A, (__mmask64)__B);
+}
+
+static __inline__ __mmask32 __DEFAULT_FN_ATTRS
+_kxnor_mask32(__mmask32 __A, __mmask32 __B)
+{
+  return (__mmask32)__builtin_ia32_kxnorsi((__mmask32)__A, (__mmask32)__B);
+}
+
+static __inline__ __mmask64 __DEFAULT_FN_ATTRS
+_kxnor_mask64(__mmask64 __A, __mmask64 __B)
+{
+  return (__mmask64)__builtin_ia32_kxnordi((__mmask64)__A, (__mmask64)__B);
+}
+
+static __inline__ __mmask32 __DEFAULT_FN_ATTRS
+_kxor_mask32(__mmask32 __A, __mmask32 __B)
+{
+  return (__mmask32)__builtin_ia32_kxorsi((__mmask32)__A, (__mmask32)__B);
+}
+
+static __inline__ __mmask64 __DEFAULT_FN_ATTRS
+_kxor_mask64(__mmask64 __A, __mmask64 __B)
+{
+  return (__mmask64)__builtin_ia32_kxordi((__mmask64)__A, (__mmask64)__B);
+}
+
 /* Integer compare */
 
 #define _mm512_cmp_epi8_mask(a, b, p) \

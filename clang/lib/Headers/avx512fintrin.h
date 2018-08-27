@@ -8369,6 +8369,13 @@ _mm512_kxor (__mmask16 __A, __mmask16 __B)
   return (__mmask16) __builtin_ia32_kxorhi ((__mmask16) __A, (__mmask16) __B);
 }
 
+#define _kand_mask16 _mm512_kand
+#define _kandn_mask16 _mm512_kandn
+#define _knot_mask16 _mm512_knot
+#define _kor_mask16 _mm512_kor
+#define _kxnor_mask16 _mm512_kxnor
+#define _kxor_mask16 _mm512_kxor
+
 static __inline__ void __DEFAULT_FN_ATTRS512
 _mm512_stream_si512 (__m512i * __P, __m512i __A)
 {

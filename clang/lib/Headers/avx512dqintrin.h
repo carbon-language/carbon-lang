@@ -30,6 +30,43 @@
 
 /* Define the default attributes for the functions in this file. */
 #define __DEFAULT_FN_ATTRS512 __attribute__((__always_inline__, __nodebug__, __target__("avx512dq"), __min_vector_width__(512)))
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("avx512dq")))
+
+static __inline __mmask8 __DEFAULT_FN_ATTRS
+_knot_mask8(__mmask8 __M)
+{
+  return __builtin_ia32_knotqi(__M);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_kand_mask8(__mmask8 __A, __mmask8 __B)
+{
+  return (__mmask8)__builtin_ia32_kandqi((__mmask8)__A, (__mmask8)__B);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_kandn_mask8(__mmask8 __A, __mmask8 __B)
+{
+  return (__mmask8)__builtin_ia32_kandnqi((__mmask8)__A, (__mmask8)__B);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_kor_mask8(__mmask8 __A, __mmask8 __B)
+{
+  return (__mmask8)__builtin_ia32_korqi((__mmask8)__A, (__mmask8)__B);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_kxnor_mask8(__mmask8 __A, __mmask8 __B)
+{
+  return (__mmask8)__builtin_ia32_kxnorqi((__mmask8)__A, (__mmask8)__B);
+}
+
+static __inline__ __mmask8 __DEFAULT_FN_ATTRS
+_kxor_mask8(__mmask8 __A, __mmask8 __B)
+{
+  return (__mmask8)__builtin_ia32_kxorqi((__mmask8)__A, (__mmask8)__B);
+}
 
 static __inline__ __m512i __DEFAULT_FN_ATTRS512
 _mm512_mullo_epi64 (__m512i __A, __m512i __B) {
@@ -1257,5 +1294,6 @@ _mm512_maskz_broadcast_i64x2(__mmask8 __M, __m128i __A)
                                           (__mmask8)(U))
 
 #undef __DEFAULT_FN_ATTRS512
+#undef __DEFAULT_FN_ATTRS
 
 #endif
