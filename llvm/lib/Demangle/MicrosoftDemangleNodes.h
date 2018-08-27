@@ -324,6 +324,7 @@ enum class NodeKind {
 
 struct Node {
   explicit Node(NodeKind K) : Kind(K) {}
+  virtual ~Node() = default;
 
   NodeKind kind() const { return Kind; }
 
