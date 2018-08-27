@@ -124,16 +124,22 @@ static void applyMOV(uint8_t *Off, uint16_t V) {
   write16le(Off + 2, (read16le(Off + 2) & 0x8f00) | ((V & 0x700) << 4) | (V & 0xff));
 }
 
-static uint16_t readMOV(uint8_t *Off) {
+static uint16_t readMOV(uint8_t *Off, bool MOVT) {
   uint16_t Op1 = read16le(Off);
+  if ((Op1 & 0xfbf0) != (MOVT ? 0xf2c0 : 0xf240))
+    error("unexpected instruction in " + Twine(MOVT ? "MOVT" : "MOVW") +
+          " instruction in MOV32T relocation");
   uint16_t Op2 = read16le(Off + 2);
+  if ((Op2 & 0x8000) != 0)
+    error("unexpected instruction in " + Twine(MOVT ? "MOVT" : "MOVW") +
+          " instruction in MOV32T relocation");
   return (Op2 & 0x00ff) | ((Op2 >> 4) & 0x0700) | ((Op1 << 1) & 0x0800) |
          ((Op1 & 0x000f) << 12);
 }
 
 void applyMOV32T(uint8_t *Off, uint32_t V) {
-  uint16_t ImmW = readMOV(Off);     // read MOVW operand
-  uint16_t ImmT = readMOV(Off + 4); // read MOVT operand
+  uint16_t ImmW = readMOV(Off, false);    // read MOVW operand
+  uint16_t ImmT = readMOV(Off + 4, true); // read MOVT operand
   uint32_t Imm = ImmW | (ImmT << 16);
   V += Imm;                         // add the immediate offset
   applyMOV(Off, V);           // set MOVW operand
