@@ -701,3 +701,32 @@ define fastcc void @t21_non_sret_to_sret(%struct.foo* %agg.result) nounwind  {
 
 declare fastcc void @t21_f_sret(%struct.foo* noalias sret) nounwind
 declare fastcc void @t21_f_non_sret(%struct.foo*) nounwind
+
+define ccc void @t22_non_sret_to_sret(%struct.foo* %agg.result) nounwind  {
+; X86-LABEL: t22_non_sret_to_sret:
+; X86:       # %bb.0:
+; X86-NEXT:    subl $12, %esp
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl %eax, (%esp)
+; X86-NEXT:    calll t22_f_sret
+; X86-NEXT:    addl $8, %esp
+; X86-NEXT:    retl
+;
+; X64-LABEL: t22_non_sret_to_sret:
+; X64:       # %bb.0:
+; X64-NEXT:    pushq %rax
+; X64-NEXT:    callq t22_f_sret
+; X64-NEXT:    popq %rax
+; X64-NEXT:    retq
+;
+; X32-LABEL: t22_non_sret_to_sret:
+; X32:       # %bb.0:
+; X32-NEXT:    pushq %rax
+; X32-NEXT:    callq t22_f_sret
+; X32-NEXT:    popq %rax
+; X32-NEXT:    retq
+  tail call ccc void @t22_f_sret(%struct.foo* noalias sret %agg.result) nounwind
+  ret void
+}
+
+declare ccc void @t22_f_sret(%struct.foo* noalias sret) nounwind
