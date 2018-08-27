@@ -57,7 +57,7 @@ public:
     va_start(ap, Fixed);
     parser::MessageFormattedText Msg{Fixed, ap};
     va_end(ap);
-    return messages.Put({CB, Msg});
+    return messages.Say(parser::Message{CB, Msg});
   }
 
   const parser::CookedSource& cookedSource;
