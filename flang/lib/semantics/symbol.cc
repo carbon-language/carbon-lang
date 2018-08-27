@@ -370,7 +370,8 @@ std::ostream &operator<<(std::ostream &os, const Symbol &symbol) {
 }
 
 // Output a unique name for a scope by qualifying it with the names of
-// parent scopes. For scopes without corresponding symbols, use "ANON".
+// parent scopes. For scopes without corresponding symbols, use the kind
+// with an index (e.g. Block1, Block2, etc.).
 static void DumpUniqueName(std::ostream &os, const Scope &scope) {
   if (scope.kind() != Scope::Kind::Global) {
     DumpUniqueName(os, scope.parent());
@@ -378,7 +379,16 @@ static void DumpUniqueName(std::ostream &os, const Scope &scope) {
     if (auto *scopeSymbol{scope.symbol()}) {
       os << scopeSymbol->name().ToString();
     } else {
-      os << "ANON";
+      int index{1};
+      for (auto &child : scope.parent().children()) {
+        if (child == scope) {
+          break;
+        }
+        if (child.kind() == scope.kind()) {
+          ++index;
+        }
+      }
+      os << Scope::EnumToString(scope.kind()) << index;
     }
   }
 }

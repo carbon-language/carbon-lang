@@ -24,6 +24,7 @@ set(ERROR_TESTS
   implicit05.f90
   implicit06.f90
   implicit07.f90
+  implicit08.f90
   resolve01.f90
   resolve02.f90
   resolve03.f90
@@ -53,6 +54,7 @@ set(ERROR_TESTS
   resolve27.f90
   resolve28.f90
   resolve29.f90
+  resolve30.f90
 )
 
 # These test files have expected symbols in the source
@@ -61,6 +63,7 @@ set(SYMBOL_TESTS
   symbol02.f90
   symbol03.f90
   symbol04.f90
+  symbol05.f90
 )
 
 # These test files have expected .mod file contents in the source

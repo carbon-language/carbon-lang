@@ -12,26 +12,30 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-!ERROR: No explicit type declared for 'f'
-function f()
-  implicit none
-end
-
-!ERROR: No explicit type declared for 'y'
-subroutine s(x, y)
-  implicit none
-  integer :: x
+subroutine s1
+  integer x
+  block
+    import, none
+    !ERROR: 'x' from host scoping unit is not accessible due to IMPORT
+    x = 1
+  end block
 end
 
 subroutine s2
-  implicit none
   block
-    !ERROR: No explicit type declared for 'i'
-    i = 1
+    import, none
+    !ERROR: 'y' from host scoping unit is not accessible due to IMPORT
+    y = 1
   end block
-contains
-  subroutine s3
-    !ERROR: No explicit type declared for 'j'
-    j = 2
-  end subroutine
+end
+
+subroutine s3
+  integer j
+  block
+    import, only: j
+    type t
+      !ERROR: 'i' from host scoping unit is not accessible due to IMPORT
+      real :: x(10) = [(i, i=1,10)]
+    end type
+  end block
 end subroutine

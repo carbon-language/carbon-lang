@@ -41,27 +41,35 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &);
 // representing the implicit type; nullptr if none.
 class ImplicitRules {
 public:
-  ImplicitRules(MessageHandler &messages);
-  bool isImplicitNoneType() const { return isImplicitNoneType_; }
-  bool isImplicitNoneExternal() const { return isImplicitNoneExternal_; }
+  ImplicitRules(MessageHandler &messages)
+    : messages_{messages}, inheritFromParent_{false} {}
+  ImplicitRules(std::unique_ptr<ImplicitRules> &&parent)
+    : messages_{parent->messages_}, inheritFromParent_{true} {
+    parent_.swap(parent);
+  }
+  std::unique_ptr<ImplicitRules> &&parent() { return std::move(parent_); }
+  bool isImplicitNoneType() const;
+  bool isImplicitNoneExternal() const;
   void set_isImplicitNoneType(bool x) { isImplicitNoneType_ = x; }
   void set_isImplicitNoneExternal(bool x) { isImplicitNoneExternal_ = x; }
+  void set_inheritFromParent(bool x) { inheritFromParent_ = x; }
   // Get the implicit type for identifiers starting with ch. May be null.
   std::optional<const DeclTypeSpec> GetType(char ch) const;
   // Record the implicit type for this range of characters.
   void SetType(const DeclTypeSpec &type, parser::Location lo, parser::Location,
       bool isDefault = false);
-  // Apply the default implicit rules (if no IMPLICIT NONE).
-  void AddDefaultRules();
 
 private:
   static char Incr(char ch);
 
+  std::unique_ptr<ImplicitRules> parent_;
   MessageHandler &messages_;
-  bool isImplicitNoneType_{false};
-  bool isImplicitNoneExternal_{false};
+  std::optional<bool> isImplicitNoneType_;
+  std::optional<bool> isImplicitNoneExternal_;
+  bool inheritFromParent_;  // look in parent if not specified here
   // map initial character of identifier to nullptr or its default type
   std::map<char, const DeclTypeSpec> map_;
+
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
   friend void ShowImplicitRule(std::ostream &, const ImplicitRules &, char);
 };
@@ -227,8 +235,8 @@ public:
   bool Pre(const parser::ImplicitSpec &);
   void Post(const parser::ImplicitSpec &);
 
-  ImplicitRules &implicitRules() { return implicitRules_.top(); }
-  const ImplicitRules &implicitRules() const { return implicitRules_.top(); }
+  ImplicitRules &implicitRules() { return *implicitRules_; }
+  const ImplicitRules &implicitRules() const { return *implicitRules_; }
   bool isImplicitNoneType() const {
     return implicitRules().isImplicitNoneType();
   }
@@ -239,12 +247,11 @@ public:
 protected:
   void PushScope();
   void PopScope();
-  void CopyImplicitRules();  // copy from parent into this scope
 
 private:
   // implicit rules in effect for current scope
-  std::stack<ImplicitRules, std::list<ImplicitRules>> implicitRules_;
-  // previous occurrence of these kinds of statements:
+  std::unique_ptr<ImplicitRules> implicitRules_{
+      std::make_unique<ImplicitRules>(*this)};
   const SourceName *prevImplicit_{nullptr};
   const SourceName *prevImplicitNone_{nullptr};
   const SourceName *prevImplicitNoneType_{nullptr};
@@ -294,8 +301,8 @@ class ScopeHandler : public virtual ImplicitRulesVisitor {
 public:
   void set_rootScope(Scope &scope) { PushScope(scope); }
   Scope &currScope() { return *currScope_; }
-  // Return the enclosing scope not corresponding to a derived type:
-  Scope &CurrNonTypeScope();
+  // The enclosing scope, skipping blocks and derived types.
+  Scope &InclusiveScope();
 
   // Create a new scope and push it on the scope stack.
   void PushScope(Scope::Kind kind, Symbol *symbol);
@@ -629,6 +636,9 @@ public:
   bool Pre(const parser::MainProgram &);
   void Post(const parser::EndProgramStmt &);
   void Post(const parser::Program &);
+  bool Pre(const parser::BlockStmt &);
+  bool Pre(const parser::EndBlockStmt &);
+  bool Pre(const parser::ImplicitStmt &);
 
   void Post(const parser::Expr &x) { CheckImplicitSymbol(GetVariableName(x)); }
   void Post(const parser::Variable &x) {
@@ -662,12 +672,32 @@ private:
 
 // ImplicitRules implementation
 
-ImplicitRules::ImplicitRules(MessageHandler &messages) : messages_{messages} {}
+bool ImplicitRules::isImplicitNoneType() const {
+  if (isImplicitNoneType_.has_value()) {
+    return isImplicitNoneType_.value();
+  } else if (inheritFromParent_) {
+    return parent_->isImplicitNoneType();
+  } else {
+    return false;  // default if not specified
+  }
+}
+
+bool ImplicitRules::isImplicitNoneExternal() const {
+  if (isImplicitNoneExternal_.has_value()) {
+    return isImplicitNoneExternal_.value();
+  } else if (inheritFromParent_) {
+    return parent_->isImplicitNoneExternal();
+  } else {
+    return false;  // default if not specified
+  }
+}
 
 std::optional<const DeclTypeSpec> ImplicitRules::GetType(char ch) const {
   auto it{map_.find(ch)};
   if (it != map_.end()) {
     return it->second;
+  } else if (inheritFromParent_) {
+    return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
     return DeclTypeSpec{IntegerTypeSpec::Make()};
   } else if (ch >= 'a' && ch <= 'z') {
@@ -717,11 +747,6 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const SourceName &name) {
     }
   }
   return symbol;
-}
-
-void ImplicitRules::AddDefaultRules() {
-  SetType(DeclTypeSpec{IntegerTypeSpec::Make()}, "i", "n", true);
-  SetType(DeclTypeSpec{RealTypeSpec::Make()}, "a", "z", true);
 }
 
 // Return the next char after ch in a way that works for ASCII or EBCDIC.
@@ -925,12 +950,9 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
 
 // MessageHandler implementation
 
-MessageHandler::Message &MessageHandler::Say(Message &&msg) {
-  return messages_.Say(std::move(msg));
-}
 MessageHandler::Message &MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
-  return Say(Message{*currStmtSource_, std::move(msg)});
+  return messages_.Say(*currStmtSource_, std::move(msg));
 }
 MessageHandler::Message &MessageHandler::Say(
     const SourceName &name, MessageFixedText &&msg) {
@@ -938,16 +960,16 @@ MessageHandler::Message &MessageHandler::Say(
 }
 MessageHandler::Message &MessageHandler::Say(
     const parser::Name &name, MessageFixedText &&msg) {
-  return Say(name.source, std::move(msg), name.ToString());
+  return messages_.Say(name.source, std::move(msg), name.ToString().c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const std::string &arg1) {
-  return Say(Message{location, msg, arg1.c_str()});
+  return messages_.Say(location, std::move(msg), arg1.c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const SourceName &arg1, const SourceName &arg2) {
-  return Say(
-      Message{location, msg, arg1.ToString().c_str(), arg2.ToString().c_str()});
+  return messages_.Say(location, std::move(msg), arg1.ToString().c_str(),
+      arg2.ToString().c_str());
 }
 void MessageHandler::SayAlreadyDeclared(
     const SourceName &name, const Symbol &prev) {
@@ -956,7 +978,7 @@ void MessageHandler::SayAlreadyDeclared(
 }
 void MessageHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
     const SourceName &name2, MessageFixedText &&msg2) {
-  Say(name1, std::move(msg1)).Attach(name2, msg2, name2.ToString().data());
+  Say(name1, std::move(msg1)).Attach(name2, msg2, name2.ToString().c_str());
 }
 void MessageHandler::Annex(parser::Messages &&msgs) {
   messages_.Annex(std::move(msgs));
@@ -1013,19 +1035,16 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
 }
 
 void ImplicitRulesVisitor::PushScope() {
-  implicitRules_.push(ImplicitRules(*this));
+  implicitRules_ = std::make_unique<ImplicitRules>(std::move(implicitRules_));
   prevImplicit_ = nullptr;
   prevImplicitNone_ = nullptr;
   prevImplicitNoneType_ = nullptr;
   prevParameterStmt_ = nullptr;
 }
 
-void ImplicitRulesVisitor::CopyImplicitRules() {
-  implicitRules_.pop();
-  implicitRules_.push(ImplicitRules(implicitRules_.top()));
+void ImplicitRulesVisitor::PopScope() {
+  implicitRules_ = std::move(implicitRules_->parent());
 }
-
-void ImplicitRulesVisitor::PopScope() { implicitRules_.pop(); }
 
 // TODO: for all of these errors, reference previous statement too
 bool ImplicitRulesVisitor::HandleImplicitNone(
@@ -1147,24 +1166,32 @@ Bound ArraySpecVisitor::GetBound(const parser::SpecificationExpr &x) {
 
 // ScopeHandler implementation
 
-Scope &ScopeHandler::CurrNonTypeScope() {
-  auto &scope{currScope()};
-  return scope.kind() == Scope::Kind::DerivedType ? scope.parent() : scope;
+Scope &ScopeHandler::InclusiveScope() {
+  for (auto *scope{&currScope()};; scope = &scope->parent()) {
+    if (scope->kind() != Scope::Kind::Block &&
+        scope->kind() != Scope::Kind::DerivedType) {
+      return *scope;
+    }
+  }
 }
 void ScopeHandler::PushScope(Scope::Kind kind, Symbol *symbol) {
   PushScope(currScope().MakeScope(kind, symbol));
 }
 void ScopeHandler::PushScope(Scope &scope) {
   currScope_ = &scope;
-  ImplicitRulesVisitor::PushScope();
+  if (currScope_->kind() != Scope::Kind::Block) {
+    ImplicitRulesVisitor::PushScope();
+  }
 }
 void ScopeHandler::PopScope() {
+  if (currScope_->kind() != Scope::Kind::Block) {
+    ImplicitRulesVisitor::PopScope();
+  }
   currScope_ = &currScope_->parent();
-  ImplicitRulesVisitor::PopScope();
 }
 
 Symbol *ScopeHandler::FindSymbol(const SourceName &name) {
-  return CurrNonTypeScope().FindSymbol(name);
+  return currScope().FindSymbol(name);
 }
 void ScopeHandler::EraseSymbol(const SourceName &name) {
   currScope().erase(name);
@@ -1631,7 +1658,6 @@ bool SubprogramVisitor::Pre(const parser::StmtFunctionStmt &x) {
     return true;
   }
   auto &symbol{PushSubprogramScope(name, Symbol::Flag::Function)};
-  CopyImplicitRules();
   if (occurrence) {
     symbol.add_occurrence(*occurrence);
   }
@@ -1794,6 +1820,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
     symbol = &MakeSymbol(name, SubprogramDetails{});
     symbol->set(subpFlag);
   }
+  PushScope(Scope::Kind::Subprogram, symbol);
   auto &details{symbol->get<SubprogramDetails>()};
   if (inInterfaceBlock()) {
     details.set_isInterface();
@@ -1803,8 +1830,8 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
     if (isGeneric()) {
       AddToGeneric(*symbol);
     }
+    implicitRules().set_inheritFromParent(false);
   }
-  PushScope(Scope::Kind::Subprogram, symbol);
   // can't reuse this name inside subprogram:
   MakeSymbol(name, details).set(subpFlag);
   return *symbol;
@@ -1918,8 +1945,9 @@ bool DeclarationVisitor::HandleAttributeStmt(
     if (!pair.second) {
       // symbol was already there: set attribute on it
       Symbol &symbol{*pair.first->second};
-      if (attr != Attr::ASYNCHRONOUS && attr != Attr::VOLATILE &&
-          symbol.has<UseDetails>()) {
+      if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
+        // TODO: if in a BLOCK, attribute should only be set while in the block
+      } else if (symbol.has<UseDetails>()) {
         Say(*currStmtSource(),
             "Cannot change %s attribute on use-associated '%s'"_err_en_US,
             EnumToString(attr), name.source);
@@ -2219,7 +2247,9 @@ const Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
               if (isImplicitNoneType()) {
                 Say(y.source, "No explicit type declared for '%s'"_err_en_US);
               } else {
-                symbol = &MakeSymbol(y.source);
+                auto pair{InclusiveScope().try_emplace(y.source)};
+                CHECK(pair.second);
+                symbol = pair.first->second;
                 ApplyImplicitRules(y.source, *symbol);
               }
             }
@@ -2483,6 +2513,22 @@ bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
 
 void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) { PopScope(); }
 
+bool ResolveNamesVisitor::Pre(const parser::BlockStmt &) {
+  PushScope(Scope::Kind::Block, nullptr);
+  return false;
+}
+bool ResolveNamesVisitor::Pre(const parser::EndBlockStmt &) {
+  PopScope();
+  return false;
+}
+bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
+  if (currScope().kind() == Scope::Kind::Block) {
+    Say("IMPLICIT statement is not allowed in BLOCK construct"_err_en_US);
+    return false;
+  }
+  return ImplicitRulesVisitor::Pre(x);
+}
+
 const parser::Name *ResolveNamesVisitor::GetVariableName(
     const parser::DataRef &x) {
   return std::get_if<parser::Name>(&x.u);
@@ -2536,11 +2582,14 @@ const Symbol *ResolveNamesVisitor::CheckImplicitSymbol(
     Say(*name, "No explicit type declared for '%s'"_err_en_US);
     return nullptr;
   }
-  // If we are in a derived type and need to create an implicit symbol
-  // (e.g. an implied-do variable), it belongs in the enclosing scope.
-  auto pair{CurrNonTypeScope().try_emplace(name->source)};
-  CHECK(pair.second);  // name was not found, so must be able to add it
-  auto *symbol{pair.first->second};
+  // Create the symbol then ensure it is accessible
+  InclusiveScope().try_emplace(name->source);
+  auto *symbol{FindSymbol(name->source)};
+  if (!symbol) {
+    Say(name->source,
+        "'%s' from host scoping unit is not accessible due to IMPORT"_err_en_US);
+    return nullptr;
+  }
   ApplyImplicitRules(name->source, *symbol);
   return symbol;
 }

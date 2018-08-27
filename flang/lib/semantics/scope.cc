@@ -49,6 +49,9 @@ Scope::size_type Scope::erase(const SourceName &name) {
   }
 }
 Symbol *Scope::FindSymbol(const SourceName &name) {
+  if (kind() == Kind::DerivedType) {
+    return parent_.FindSymbol(name);
+  }
   const auto it{find(name)};
   if (it != end()) {
     return it->second;

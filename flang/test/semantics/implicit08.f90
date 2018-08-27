@@ -12,26 +12,9 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-!ERROR: No explicit type declared for 'f'
-function f()
-  implicit none
-end
-
-!ERROR: No explicit type declared for 'y'
-subroutine s(x, y)
-  implicit none
-  integer :: x
-end
-
-subroutine s2
-  implicit none
+subroutine s1
   block
-    !ERROR: No explicit type declared for 'i'
-    i = 1
+    !ERROR: IMPLICIT statement is not allowed in BLOCK construct
+    implicit logical(a)
   end block
-contains
-  subroutine s3
-    !ERROR: No explicit type declared for 'j'
-    j = 2
-  end subroutine
 end subroutine

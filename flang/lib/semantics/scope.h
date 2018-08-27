@@ -37,7 +37,8 @@ public:
   static Scope systemScope;
   static Scope globalScope;  // contains program-units
 
-  ENUM_CLASS(Kind, System, Global, Module, MainProgram, Subprogram, DerivedType)
+  ENUM_CLASS(
+      Kind, System, Global, Module, MainProgram, Subprogram, DerivedType, Block)
   using ImportKind = common::ImportKind;
 
   Scope(Scope &parent, Kind kind, Symbol *symbol)
