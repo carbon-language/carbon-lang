@@ -33125,6 +33125,20 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
           (OpLHS == CondLHS || OpRHS == CondLHS))
         return SplitOpsAndApply(DAG, Subtarget, DL, VT, { OpLHS, OpRHS },
                                 ADDUSBuilder);
+
+      if (isa<BuildVectorSDNode>(OpRHS) && isa<BuildVectorSDNode>(CondRHS) &&
+          CondLHS == OpLHS) {
+        // If the RHS is a constant we have to reverse the const
+        // canonicalization.
+        // x > ~C ? x+C : ~0 --> addus x, C
+        auto MatchADDUS = [](ConstantSDNode *Op, ConstantSDNode *Cond) {
+          return Cond->getAPIntValue() == ~Op->getAPIntValue();
+        };
+        if (CC == ISD::SETULE &&
+            ISD::matchBinaryPredicate(OpRHS, CondRHS, MatchADDUS))
+          return SplitOpsAndApply(DAG, Subtarget, DL, VT, { OpLHS, OpRHS },
+                                  ADDUSBuilder);
+      }
     }
   }
 
