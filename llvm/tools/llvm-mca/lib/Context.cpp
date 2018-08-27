@@ -16,13 +16,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "Context.h"
-#include "DispatchStage.h"
-#include "ExecuteStage.h"
-#include "FetchStage.h"
-#include "RegisterFile.h"
-#include "RetireControlUnit.h"
-#include "RetireStage.h"
-#include "Scheduler.h"
+#include "HardwareUnits/RegisterFile.h"
+#include "HardwareUnits/RetireControlUnit.h"
+#include "HardwareUnits/Scheduler.h"
+#include "Stages/DispatchStage.h"
+#include "Stages/ExecuteStage.h"
+#include "Stages/FetchStage.h"
+#include "Stages/RetireStage.h"
 
 namespace mca {
 

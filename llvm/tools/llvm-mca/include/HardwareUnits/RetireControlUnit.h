@@ -15,7 +15,7 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_RETIRE_CONTROL_UNIT_H
 #define LLVM_TOOLS_LLVM_MCA_RETIRE_CONTROL_UNIT_H
 
-#include "HardwareUnit.h"
+#include "HardwareUnits/HardwareUnit.h"
 #include "Instruction.h"
 #include "llvm/MC/MCSchedule.h"
 #include <vector>

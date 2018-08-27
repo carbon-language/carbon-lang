@@ -17,9 +17,9 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_RETIRE_STAGE_H
 #define LLVM_TOOLS_LLVM_MCA_RETIRE_STAGE_H
 
-#include "RegisterFile.h"
-#include "RetireControlUnit.h"
-#include "Stage.h"
+#include "HardwareUnits/RegisterFile.h"
+#include "HardwareUnits/RetireControlUnit.h"
+#include "Stages/Stage.h"
 
 namespace mca {
 

@@ -18,7 +18,7 @@
 
 #include "InstrBuilder.h"
 #include "SourceMgr.h"
-#include "Stage.h"
+#include "Stages/Stage.h"
 #include <map>
 
 namespace mca {

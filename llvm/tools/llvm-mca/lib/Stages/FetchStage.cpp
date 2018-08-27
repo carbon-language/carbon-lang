@@ -13,7 +13,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "FetchStage.h"
+#include "Stages/FetchStage.h"
 
 namespace mca {
 

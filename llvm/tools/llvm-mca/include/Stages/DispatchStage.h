@@ -20,10 +20,10 @@
 #define LLVM_TOOLS_LLVM_MCA_DISPATCH_STAGE_H
 
 #include "HWEventListener.h"
+#include "HardwareUnits/RegisterFile.h"
+#include "HardwareUnits/RetireControlUnit.h"
 #include "Instruction.h"
-#include "RegisterFile.h"
-#include "RetireControlUnit.h"
-#include "Stage.h"
+#include "Stages/Stage.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 

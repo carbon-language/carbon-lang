@@ -18,9 +18,9 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_EXECUTE_STAGE_H
 #define LLVM_TOOLS_LLVM_MCA_EXECUTE_STAGE_H
 
+#include "HardwareUnits/Scheduler.h"
 #include "Instruction.h"
-#include "Scheduler.h"
-#include "Stage.h"
+#include "Stages/Stage.h"
 #include "llvm/ADT/ArrayRef.h"
 
 namespace mca {

@@ -14,7 +14,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "RegisterFile.h"
+#include "HardwareUnits/RegisterFile.h"
 #include "Instruction.h"
 #include "llvm/Support/Debug.h"
 

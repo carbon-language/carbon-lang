@@ -17,7 +17,7 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_REGISTER_FILE_H
 #define LLVM_TOOLS_LLVM_MCA_REGISTER_FILE_H
 
-#include "HardwareUnit.h"
+#include "HardwareUnits/HardwareUnit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSchedule.h"

@@ -14,7 +14,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "RetireStage.h"
+#include "Stages/RetireStage.h"
 #include "HWEventListener.h"
 #include "llvm/Support/Debug.h"
 

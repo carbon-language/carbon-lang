@@ -16,7 +16,7 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_LSUNIT_H
 #define LLVM_TOOLS_LLVM_MCA_LSUNIT_H
 
-#include "HardwareUnit.h"
+#include "HardwareUnits/HardwareUnit.h"
 #include <set>
 
 namespace mca {

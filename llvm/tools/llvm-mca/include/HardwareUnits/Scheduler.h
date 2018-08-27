@@ -15,8 +15,8 @@
 #ifndef LLVM_TOOLS_LLVM_MCA_SCHEDULER_H
 #define LLVM_TOOLS_LLVM_MCA_SCHEDULER_H
 
-#include "HardwareUnit.h"
-#include "LSUnit.h"
+#include "HardwareUnits/HardwareUnit.h"
+#include "HardwareUnits/LSUnit.h"
 #include "ResourceManager.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCSchedule.h"

@@ -16,9 +16,9 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "DispatchStage.h"
+#include "Stages/DispatchStage.h"
 #include "HWEventListener.h"
-#include "Scheduler.h"
+#include "HardwareUnits/Scheduler.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;

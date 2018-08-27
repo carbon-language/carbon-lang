@@ -13,7 +13,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "HardwareUnit.h"
+#include "HardwareUnits/HardwareUnit.h"
 
 namespace mca {
 

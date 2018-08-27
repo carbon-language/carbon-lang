@@ -15,7 +15,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "InstructionTables.h"
+#include "Stages/InstructionTables.h"
 
 namespace mca {
 

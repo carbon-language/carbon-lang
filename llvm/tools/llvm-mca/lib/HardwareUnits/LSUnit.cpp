@@ -12,9 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "LSUnit.h"
+#include "HardwareUnits/LSUnit.h"
 #include "Instruction.h"
-
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 

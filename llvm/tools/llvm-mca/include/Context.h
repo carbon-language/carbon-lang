@@ -17,7 +17,7 @@
 
 #ifndef LLVM_TOOLS_LLVM_MCA_CONTEXT_H
 #define LLVM_TOOLS_LLVM_MCA_CONTEXT_H
-#include "HardwareUnit.h"
+#include "HardwareUnits/HardwareUnit.h"
 #include "InstrBuilder.h"
 #include "Pipeline.h"
 #include "SourceMgr.h"

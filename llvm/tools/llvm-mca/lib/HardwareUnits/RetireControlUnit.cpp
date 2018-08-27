@@ -12,7 +12,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "RetireControlUnit.h"
+#include "HardwareUnits/RetireControlUnit.h"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
