@@ -66,17 +66,11 @@ public:
 
 /// \brief Is this a legal DO terminator?
 /// Pattern match dependent on the standard we're enforcing
+/// F18:R1131 (must be CONTINUE or END DO)
 template<typename A> constexpr bool IsLegalDoTerm(const parser::Statement<A>&) {
-  return false;
-}
-// F18:R1131 (must be CONTINUE or END DO)
-template<> constexpr bool IsLegalDoTerm(const parser::Statement<parser::
-					EndDoStmt>&) {
-  return true;
-}
-template<> constexpr bool IsLegalDoTerm(const parser::Statement<common::
-					Indirection<parser::EndDoStmt>>&) {
-  return true;
+  using EDS = parser::EndDoStmt;
+  return std::disjunction<std::is_same<A,common::Indirection<EDS>>,
+			  std::is_same<A,EDS>>::value;
 }
 template<> constexpr bool IsLegalDoTerm(const parser::Statement<parser::
 					ActionStmt>& A) {
@@ -99,18 +93,38 @@ template<> constexpr bool IsLegalDoTerm(const parser::Statement<parser::
 /// \brief Is this a FORMAT stmt?
 /// Pattern match for FORMAT statement
 template<typename A> constexpr bool IsFormat(const parser::Statement<A>&) {
-  return false;
-}
-template<> constexpr bool IsFormat(const parser::Statement<common::
-				   Indirection<parser::FormatStmt>>&) {
-  return true;
+  return std::is_same<A,common::Indirection<parser::FormatStmt>>::value;
 }
 
 /// \brief Is this a legal branch target?
 /// Pattern match dependent on the standard we're enforcing
 template<typename A> constexpr bool IsLegalBranchTarget(const parser::
 							Statement<A>&) {
-  return false;
+  using LDS = parser::LabelDoStmt;
+  using EDS = parser::EndDoStmt;
+  return std::disjunction<std::is_same<A,parser::AssociateStmt>,
+			  std::is_same<A,parser::EndAssociateStmt>,
+			  std::is_same<A,parser::IfThenStmt>,
+			  std::is_same<A,parser::EndIfStmt>,
+			  std::is_same<A,parser::SelectCaseStmt>,
+			  std::is_same<A,parser::EndSelectStmt>,
+			  std::is_same<A,parser::SelectRankStmt>,
+			  std::is_same<A,parser::SelectTypeStmt>,
+			  std::is_same<A,common::Indirection<LDS>>,
+			  std::is_same<A,parser::NonLabelDoStmt>,
+			  std::is_same<A,parser::EndDoStmt>,
+			  std::is_same<A,common::Indirection<EDS>>,
+			  std::is_same<A,parser::BlockStmt>,
+			  std::is_same<A,parser::EndBlockStmt>,
+			  std::is_same<A,parser::CriticalStmt>,
+			  std::is_same<A,parser::EndCriticalStmt>,
+			  std::is_same<A,parser::ForallConstructStmt>,
+			  std::is_same<A,parser::ForallStmt>,
+			  std::is_same<A,parser::WhereConstructStmt>,
+			  std::is_same<A,parser::EndFunctionStmt>,
+			  std::is_same<A,parser::EndMpSubprogramStmt>,
+			  std::is_same<A,parser::EndProgramStmt>,
+			  std::is_same<A,parser::EndSubroutineStmt>>::value;
 }
 template<> constexpr bool IsLegalBranchTarget(const parser::Statement<parser::
 					      ActionStmt>& A) {
@@ -124,35 +138,7 @@ template<> constexpr bool IsLegalBranchTarget(const parser::Statement<parser::
 	   std::get_if<common::Indirection<parser::AssignedGotoStmt>>(P) ||
 	   std::get_if<common::Indirection<parser::PauseStmt>>(P));
 }
-#define Instantiate(TYPE)						\
-  template<> constexpr bool IsLegalBranchTarget(const parser::		\
-						Statement<TYPE>&) {	\
-    return true;							\
-  }
-Instantiate(parser::AssociateStmt)
-Instantiate(parser::EndAssociateStmt)
-Instantiate(parser::IfThenStmt)
-Instantiate(parser::EndIfStmt)
-Instantiate(parser::SelectCaseStmt)
-Instantiate(parser::EndSelectStmt)
-Instantiate(parser::SelectRankStmt)
-Instantiate(parser::SelectTypeStmt)
-Instantiate(common::Indirection<parser::LabelDoStmt>)
-Instantiate(parser::NonLabelDoStmt)
-Instantiate(parser::EndDoStmt)
-Instantiate(common::Indirection<parser::EndDoStmt>)
-Instantiate(parser::BlockStmt)
-Instantiate(parser::EndBlockStmt)
-Instantiate(parser::CriticalStmt)
-Instantiate(parser::EndCriticalStmt)
-Instantiate(parser::ForallConstructStmt)
-Instantiate(parser::ForallStmt)
-Instantiate(parser::WhereConstructStmt)
-Instantiate(parser::EndFunctionStmt)
-Instantiate(parser::EndMpSubprogramStmt)
-Instantiate(parser::EndProgramStmt)
-Instantiate(parser::EndSubroutineStmt)
-#undef Instantiate
+
 
 template<typename A>
 constexpr unsigned ConsTrgtFlags(const parser::Statement<A>& S) {
@@ -493,11 +479,10 @@ private:
   /// \param Label the name used by the \c CYCLE or \c EXIT
   template<typename A> void CheckLabelContext(const char* const SStr,
 					      const A& Name) {
-    auto E{Names.crend()};
-    for (auto I{Names.crbegin()}; I != E; ++I) {
-      if (*I == Name)
+    const auto E{Names.crend()};
+    const auto I{std::find(Names.crbegin(), E, Name)};
+    if (I != E)
 	return;
-    }
     EH.Report(Index, "%s construct-name '%s' is not in scope"_err_en_US,
 	      SStr, Name.c_str());
     NoErrors = false;
