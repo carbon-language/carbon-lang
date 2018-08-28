@@ -140,7 +140,10 @@ class TimelineView : public View {
     unsigned CyclesSpentAfterWBAndBeforeRetire;
   };
   std::vector<WaitTimeEntry> WaitTime;
-  std::vector<std::pair<unsigned, unsigned>> UsedBuffer;
+
+  // This field is used to map instructions to buffered resources.
+  // Elements of this vector are <resourceID, BufferSizer> pairs.
+  std::vector<std::pair<unsigned, int>> UsedBuffer;
 
   void printTimelineViewEntry(llvm::formatted_raw_ostream &OS,
                               const TimelineViewEntry &E, unsigned Iteration,

@@ -32,6 +32,10 @@ TimelineView::TimelineView(const MCSubtargetInfo &sti, MCInstPrinter &Printer,
 
   WaitTimeEntry NullWTEntry = {0, 0, 0};
   std::fill(WaitTime.begin(), WaitTime.end(), NullWTEntry);
+
+  std::pair<unsigned, int> NullUsedBufferEntry = {/* Invalid resource ID*/ 0,
+                                                  /* unknown buffer size */ -1};
+  std::fill(UsedBuffer.begin(), UsedBuffer.end(), NullUsedBufferEntry);
 }
 
 void TimelineView::onReservedBuffers(const InstRef &IR,
@@ -40,15 +44,12 @@ void TimelineView::onReservedBuffers(const InstRef &IR,
     return;
 
   const MCSchedModel &SM = STI.getSchedModel();
-  std::pair<unsigned, unsigned> BufferInfo = {0, 0};
+  std::pair<unsigned, int> BufferInfo = {0, -1};
   for (const unsigned Buffer : Buffers) {
     const MCProcResourceDesc &MCDesc = *SM.getProcResource(Buffer);
-    if (MCDesc.BufferSize <= 0)
-      continue;
-    unsigned OtherSize = static_cast<unsigned>(MCDesc.BufferSize);
-    if (!BufferInfo.first || BufferInfo.second > OtherSize) {
+    if (!BufferInfo.first || BufferInfo.second > MCDesc.BufferSize) {
       BufferInfo.first = Buffer;
-      BufferInfo.second = OtherSize;
+      BufferInfo.second = MCDesc.BufferSize;
     }
   }
 
@@ -97,19 +98,19 @@ void TimelineView::onEvent(const HWInstructionEvent &Event) {
 }
 
 static raw_ostream::Colors chooseColor(unsigned CumulativeCycles,
-                                       unsigned Executions,
-                                       unsigned BufferSize) {
-  if (CumulativeCycles && BufferSize == 0)
+                                       unsigned Executions, int BufferSize) {
+  if (CumulativeCycles && BufferSize < 0)
     return raw_ostream::MAGENTA;
-  if (CumulativeCycles >= (BufferSize * Executions))
+  unsigned Size = static_cast<unsigned>(BufferSize);
+  if (CumulativeCycles >= Size * Executions)
     return raw_ostream::RED;
-  if ((CumulativeCycles * 2) >= (BufferSize * Executions))
+  if ((CumulativeCycles * 2) >= Size * Executions)
     return raw_ostream::YELLOW;
   return raw_ostream::SAVEDCOLOR;
 }
 
 static void tryChangeColor(raw_ostream &OS, unsigned Cycles,
-                           unsigned Executions, unsigned BufferSize) {
+                           unsigned Executions, int BufferSize) {
   if (!OS.has_colors())
     return;
 
@@ -135,7 +136,7 @@ void TimelineView::printWaitTimeEntry(formatted_raw_ostream &OS,
 
   OS << Executions;
   OS.PadToColumn(13);
-  unsigned BufferSize = UsedBuffer[SourceIndex].second;
+  int BufferSize = UsedBuffer[SourceIndex].second;
   tryChangeColor(OS, Entry.CyclesSpentInSchedulerQueue, Executions, BufferSize);
   OS << format("%.1f", floor((AverageTime1 * 10) + 0.5) / 10);
   OS.PadToColumn(20);
