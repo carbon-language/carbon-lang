@@ -355,8 +355,7 @@ static bool tryAddToFoldList(SmallVectorImpl<FoldCandidate> &FoldList,
             !TII->getRegisterInfo().isVGPR(MRI, OtherOp.getReg()))
           return false;
 
-        const MachineOperand &SDst = MI->getOperand(1);
-        assert(SDst.isDef());
+        assert(MI->getOperand(1).isDef());
 
         int Op32 =  AMDGPU::getVOPe32(Opc);
         FoldList.push_back(FoldCandidate(MI, CommuteOpNo, OpToFold, true,
