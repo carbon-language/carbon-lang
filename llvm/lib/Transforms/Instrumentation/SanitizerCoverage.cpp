@@ -273,15 +273,9 @@ Function *SanitizerCoverageModule::CreateInitCallsForSections(
   auto SecStart = SecStartEnd.first;
   auto SecEnd = SecStartEnd.second;
   Function *CtorFunc;
-  auto SecStartPtr = IRB.CreatePointerCast(SecStart, Ty);
-  // Account for the fact that on windows-msvc __start_* symbols actually
-  // point to a uint64_t before the start of the array.
-  if (TargetTriple.getObjectFormat() == Triple::COFF)
-    SecStartPtr = IRB.CreateAdd(SecStartPtr,
-                                ConstantInt::get(IntptrTy, sizeof(uint64_t)));
   std::tie(CtorFunc, std::ignore) = createSanitizerCtorAndInitFunctions(
       M, SanCovModuleCtorName, InitFunctionName, {Ty, Ty},
-      {SecStartPtr, IRB.CreatePointerCast(SecEnd, Ty)});
+      {IRB.CreatePointerCast(SecStart, Ty), IRB.CreatePointerCast(SecEnd, Ty)});
 
   if (TargetTriple.supportsCOMDAT()) {
     // Use comdat to dedup CtorFunc.
@@ -403,15 +397,9 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
     Function *InitFunction = declareSanitizerInitFunction(
         M, SanCovPCsInitName, {IntptrPtrTy, IntptrPtrTy});
     IRBuilder<> IRBCtor(Ctor->getEntryBlock().getTerminator());
-    auto SecStartPtr = IRB.CreatePointerCast(SecStartEnd.first, IntptrPtrTy);
-    // Account for the fact that on windows-msvc __start_pc_table actually
-    // points to a uint64_t before the start of the PC table.
-    if (TargetTriple.getObjectFormat() == Triple::COFF)
-      SecStartPtr = IRB.CreateAdd(SecStartPtr,
-                                  ConstantInt::get(IntptrTy, sizeof(uint64_t)));
-    IRBCtor.CreateCall(
-        InitFunction,
-        {SecStartPtr, IRB.CreatePointerCast(SecStartEnd.second, IntptrPtrTy)});
+    IRBCtor.CreateCall(InitFunction,
+                       {IRB.CreatePointerCast(SecStartEnd.first, IntptrPtrTy),
+                        IRB.CreatePointerCast(SecStartEnd.second, IntptrPtrTy)});
   }
   // We don't reference these arrays directly in any of our runtime functions,
   // so we need to prevent them from being dead stripped.
@@ -821,13 +809,8 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
 
 std::string
 SanitizerCoverageModule::getSectionName(const std::string &Section) const {
-  if (TargetTriple.getObjectFormat() == Triple::COFF) {
-    if (Section == SanCovCountersSectionName)
-      return ".SCOV$CM";
-    if (Section == SanCovPCsSectionName)
-      return ".SCOVP$M";
-    return ".SCOV$GM"; // For SanCovGuardsSectionName.
-  }
+  if (TargetTriple.getObjectFormat() == Triple::COFF)
+    return ".SCOV$M";
   if (TargetTriple.isOSBinFormatMachO())
     return "__DATA,__" + Section;
   return "__" + Section;
