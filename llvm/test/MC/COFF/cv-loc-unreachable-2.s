@@ -1,18 +1,8 @@
 # RUN: llvm-mc < %s -triple=i686-pc-win32 -filetype=obj | llvm-readobj - -codeview | FileCheck %s
 
-# Original source, slightly modified with an extra .cv_loc directive (at EXTRA
-# below) that was causing assertions:
-#
-# void __declspec(noreturn) __declspec(dllimport) exit(int);
-# int unlikely();
-# static inline void do_exit() {
-#   if (unlikely()) {
-#     exit(32);
-#   }
-# }
-# void callit() {
-#   do_exit();
-# }
+# Based on the other cv-loc-unreachable-2.s, but with other code in the same
+# section afterwards. We had negative label difference assertions when .cv_loc
+# bound tightly to the next instruction.
 
 # CHECK-LABEL: InlineeSourceLine {
 # CHECK:   Inlinee: do_exit (0x1002)
@@ -61,6 +51,10 @@ Ltmp2:
 	.cv_fpo_endproc
 Lfunc_end0:
                                         # -- End function
+
+	.text
+	.align 32
+	retl
 
 	.section	.debug$S,"dr"
 	.p2align	2
