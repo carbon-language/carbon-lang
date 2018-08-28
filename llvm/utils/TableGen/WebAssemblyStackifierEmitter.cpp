@@ -20,9 +20,11 @@ namespace llvm {
 void EmitWebAssemblyStackifier(RecordKeeper &RK, raw_ostream &OS) {
   Record *InstrClass = RK.getClass("WebAssemblyInst");
   for (auto &RecordPair : RK.getDefs()) {
-    if (!RecordPair.second->isSubClassOf(InstrClass)) continue;
+    if (!RecordPair.second->isSubClassOf(InstrClass))
+      continue;
     bool IsStackBased = RecordPair.second->getValueAsBit("StackBased");
-    if (IsStackBased) continue;
+    if (IsStackBased)
+      continue;
     OS << "  case WebAssembly::" << RecordPair.first << ": return "
        << "WebAssembly::" << RecordPair.first << "_S; break;\n";
   }
