@@ -5,9 +5,9 @@
 
 define <2 x i8> @narrow_shuffle_of_select(<2 x i1> %cmp, <4 x i8> %x, <4 x i8> %y) {
 ; CHECK-LABEL: @narrow_shuffle_of_select(
-; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i8> [[X:%.*]], <4 x i8> undef, <2 x i32> <i32 0, i32 1>
-; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <4 x i8> [[Y:%.*]], <4 x i8> undef, <2 x i32> <i32 0, i32 1>
-; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> [[CMP:%.*]], <2 x i8> [[TMP1]], <2 x i8> [[TMP2]]
+; CHECK-NEXT:    [[WIDECMP:%.*]] = shufflevector <2 x i1> [[CMP:%.*]], <2 x i1> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[WIDESEL:%.*]] = select <4 x i1> [[WIDECMP]], <4 x i8> [[X:%.*]], <4 x i8> [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = shufflevector <4 x i8> [[WIDESEL]], <4 x i8> undef, <2 x i32> <i32 0, i32 1>
 ; CHECK-NEXT:    ret <2 x i8> [[R]]
 ;
   %widecmp = shufflevector <2 x i1> %cmp, <2 x i1> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
@@ -20,9 +20,9 @@ define <2 x i8> @narrow_shuffle_of_select(<2 x i1> %cmp, <4 x i8> %x, <4 x i8> %
 
 define <3 x float> @narrow_shuffle_of_select_undefs(<3 x i1> %cmp, <4 x float> %x, <4 x float> %y) {
 ; CHECK-LABEL: @narrow_shuffle_of_select_undefs(
-; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x float> [[X:%.*]], <4 x float> undef, <3 x i32> <i32 0, i32 1, i32 undef>
-; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <4 x float> [[Y:%.*]], <4 x float> undef, <3 x i32> <i32 0, i32 1, i32 undef>
-; CHECK-NEXT:    [[R:%.*]] = select <3 x i1> [[CMP:%.*]], <3 x float> [[TMP1]], <3 x float> [[TMP2]]
+; CHECK-NEXT:    [[WIDECMP:%.*]] = shufflevector <3 x i1> [[CMP:%.*]], <3 x i1> undef, <4 x i32> <i32 undef, i32 1, i32 2, i32 undef>
+; CHECK-NEXT:    [[WIDESEL:%.*]] = select <4 x i1> [[WIDECMP]], <4 x float> [[X:%.*]], <4 x float> [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = shufflevector <4 x float> [[WIDESEL]], <4 x float> undef, <3 x i32> <i32 0, i32 1, i32 undef>
 ; CHECK-NEXT:    ret <3 x float> [[R]]
 ;
   %widecmp = shufflevector <3 x i1> %cmp, <3 x i1> undef, <4 x i32> <i32 undef, i32 1, i32 2, i32 undef>
@@ -94,7 +94,9 @@ define <3 x i8> @narrow_shuffle_of_select_mismatch_types2(<4 x i1> %cmp, <6 x i8
 
 define <2 x i8> @narrow_shuffle_of_select_consts(<2 x i1> %cmp) {
 ; CHECK-LABEL: @narrow_shuffle_of_select_consts(
-; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> [[CMP:%.*]], <2 x i8> <i8 -1, i8 -2>, <2 x i8> <i8 1, i8 2>
+; CHECK-NEXT:    [[WIDECMP:%.*]] = shufflevector <2 x i1> [[CMP:%.*]], <2 x i1> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[WIDESEL:%.*]] = select <4 x i1> [[WIDECMP]], <4 x i8> <i8 -1, i8 -2, i8 undef, i8 undef>, <4 x i8> <i8 1, i8 2, i8 undef, i8 undef>
+; CHECK-NEXT:    [[R:%.*]] = shufflevector <4 x i8> [[WIDESEL]], <4 x i8> undef, <2 x i32> <i32 0, i32 1>
 ; CHECK-NEXT:    ret <2 x i8> [[R]]
 ;
   %widecmp = shufflevector <2 x i1> %cmp, <2 x i1> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
@@ -108,7 +110,11 @@ define <2 x i8> @narrow_shuffle_of_select_consts(<2 x i1> %cmp) {
 
 define <2 x i8> @narrow_shuffle_of_select_with_widened_ops(<2 x i1> %cmp, <2 x i8> %x, <2 x i8> %y) {
 ; CHECK-LABEL: @narrow_shuffle_of_select_with_widened_ops(
-; CHECK-NEXT:    [[R:%.*]] = select <2 x i1> [[CMP:%.*]], <2 x i8> [[X:%.*]], <2 x i8> [[Y:%.*]]
+; CHECK-NEXT:    [[WIDEX:%.*]] = shufflevector <2 x i8> [[X:%.*]], <2 x i8> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[WIDEY:%.*]] = shufflevector <2 x i8> [[Y:%.*]], <2 x i8> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[WIDECMP:%.*]] = shufflevector <2 x i1> [[CMP:%.*]], <2 x i1> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT:    [[WIDESEL:%.*]] = select <4 x i1> [[WIDECMP]], <4 x i8> [[WIDEX]], <4 x i8> [[WIDEY]]
+; CHECK-NEXT:    [[R:%.*]] = shufflevector <4 x i8> [[WIDESEL]], <4 x i8> undef, <2 x i32> <i32 0, i32 1>
 ; CHECK-NEXT:    ret <2 x i8> [[R]]
 ;
   %widex = shufflevector <2 x i8> %x, <2 x i8> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
