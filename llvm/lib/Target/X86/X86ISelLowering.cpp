@@ -18843,10 +18843,10 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget &Subtarget,
   return Result;
 }
 
-// Try to select this as a KTEST+SETCC if possible.
-static SDValue EmitKTEST(SDValue Op0, SDValue Op1, ISD::CondCode CC,
-                         const SDLoc &dl, SelectionDAG &DAG,
-                         const X86Subtarget &Subtarget) {
+// Try to select this as a KORTEST+SETCC if possible.
+static SDValue EmitKORTEST(SDValue Op0, SDValue Op1, ISD::CondCode CC,
+                           const SDLoc &dl, SelectionDAG &DAG,
+                           const X86Subtarget &Subtarget) {
   // Only support equality comparisons.
   if (CC != ISD::SETEQ && CC != ISD::SETNE)
     return SDValue();
@@ -18913,8 +18913,8 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
       return NewSetCC;
   }
 
-  // Try to lower using KTEST.
-  if (SDValue NewSetCC = EmitKTEST(Op0, Op1, CC, dl, DAG, Subtarget))
+  // Try to lower using KORTEST.
+  if (SDValue NewSetCC = EmitKORTEST(Op0, Op1, CC, dl, DAG, Subtarget))
     return NewSetCC;
 
   // Look for X == 0, X == 1, X != 0, or X != 1.  We can simplify some forms of
