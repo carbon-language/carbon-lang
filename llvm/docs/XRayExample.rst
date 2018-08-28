@@ -257,6 +257,21 @@ svg file.
 
 If you open the svg in a browser, mouse events allow exploring the call stacks.
 
+Chrome Trace Viewer Visualization
+---------------------------------
+
+We can also generate a trace which can be loaded by the Chrome Trace Viewer
+from the same generated trace:
+
+::
+
+  $ llvm-xray convert -symbolize -instr_map=./bin/llc \
+    -output_format=trace_event xray-log.llc.5rqxkU \
+      | gzip > llc-trace.txt.gz
+
+From a Chrome browser, navigating to ``chrome:///tracing`` allows us to load
+the ``sample-trace.txt.gz`` file to visualize the execution trace.
+
 Further Exploration
 -------------------
 
@@ -317,6 +332,7 @@ applications:
   $ llvm-xray graph xray-log.sample.* -m sample -color-edges=sum -edge-label=sum \
       | unflatten -f -l10 | dot -Tsvg -o sample.svg
 
+
 Next Steps
 ----------
 
@@ -327,8 +343,6 @@ making things better.
 
   - Implement a query/filtering library that allows for finding patterns in the
     XRay traces.
-  - A conversion from the XRay trace onto something that can be visualised
-    better by other tools (like the Chrome trace viewer for example).
   - Collecting function call stacks and how often they're encountered in the
     XRay trace.
 
