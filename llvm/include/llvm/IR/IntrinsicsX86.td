@@ -2763,6 +2763,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 //===----------------------------------------------------------------------===//
 // AVX512
 
+// Mask ops
+let TargetPrefix = "x86" in {
+  def int_x86_avx512_kadd_b : GCCBuiltin<"__builtin_ia32_kaddqi">,
+        Intrinsic<[llvm_v8i1_ty], [llvm_v8i1_ty, llvm_v8i1_ty], [IntrNoMem]>;
+  def int_x86_avx512_kadd_w : GCCBuiltin<"__builtin_ia32_kaddhi">,
+        Intrinsic<[llvm_v16i1_ty], [llvm_v16i1_ty, llvm_v16i1_ty], [IntrNoMem]>;
+  def int_x86_avx512_kadd_d : GCCBuiltin<"__builtin_ia32_kaddsi">,
+        Intrinsic<[llvm_v32i1_ty], [llvm_v32i1_ty, llvm_v32i1_ty], [IntrNoMem]>;
+  def int_x86_avx512_kadd_q : GCCBuiltin<"__builtin_ia32_kadddi">,
+        Intrinsic<[llvm_v64i1_ty], [llvm_v64i1_ty, llvm_v64i1_ty], [IntrNoMem]>;
+}
+
 // Conversion ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx512_cvttss2si : GCCBuiltin<"__builtin_ia32_vcvttss2si32">,
