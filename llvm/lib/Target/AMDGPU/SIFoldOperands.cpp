@@ -208,18 +208,25 @@ static bool updateOperand(FoldCandidate &Fold,
       if (Liveness != MachineBasicBlock::LQR_Dead)
         return false;
 
+      MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
       int Op32 = Fold.getShrinkOpcode();
       MachineOperand &Dst0 = MI->getOperand(0);
       MachineOperand &Dst1 = MI->getOperand(1);
       assert(Dst0.isDef() && Dst1.isDef());
 
-      MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+      bool HaveNonDbgCarryUse = !MRI.use_nodbg_empty(Dst1.getReg());
+
       const TargetRegisterClass *Dst0RC = MRI.getRegClass(Dst0.getReg());
       unsigned NewReg0 = MRI.createVirtualRegister(Dst0RC);
       const TargetRegisterClass *Dst1RC = MRI.getRegClass(Dst1.getReg());
       unsigned NewReg1 = MRI.createVirtualRegister(Dst1RC);
 
       MachineInstr *Inst32 = TII.buildShrunkInst(*MI, Op32);
+
+      if (HaveNonDbgCarryUse) {
+        BuildMI(*MBB, MI, MI->getDebugLoc(), TII.get(AMDGPU::COPY), Dst1.getReg())
+          .addReg(AMDGPU::VCC, RegState::Kill);
+      }
 
       // Keep the old instruction around to avoid breaking iterators, but
       // replace the outputs with dummy registers.
@@ -350,10 +357,6 @@ static bool tryAddToFoldList(SmallVectorImpl<FoldCandidate> &FoldList,
 
         const MachineOperand &SDst = MI->getOperand(1);
         assert(SDst.isDef());
-
-        // TODO: Handle cases with a used carry.
-        if (!MRI.use_nodbg_empty(SDst.getReg()))
-          return false;
 
         int Op32 =  AMDGPU::getVOPe32(Opc);
         FoldList.push_back(FoldCandidate(MI, CommuteOpNo, OpToFold, true,
