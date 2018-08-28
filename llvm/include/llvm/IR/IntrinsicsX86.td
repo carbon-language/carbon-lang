@@ -2765,13 +2765,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Mask ops
 let TargetPrefix = "x86" in {
-  def int_x86_avx512_kadd_b : GCCBuiltin<"__builtin_ia32_kaddqi">,
+  def int_x86_avx512_kadd_b :
         Intrinsic<[llvm_v8i1_ty], [llvm_v8i1_ty, llvm_v8i1_ty], [IntrNoMem]>;
-  def int_x86_avx512_kadd_w : GCCBuiltin<"__builtin_ia32_kaddhi">,
+  def int_x86_avx512_kadd_w :
         Intrinsic<[llvm_v16i1_ty], [llvm_v16i1_ty, llvm_v16i1_ty], [IntrNoMem]>;
-  def int_x86_avx512_kadd_d : GCCBuiltin<"__builtin_ia32_kaddsi">,
+  def int_x86_avx512_kadd_d :
         Intrinsic<[llvm_v32i1_ty], [llvm_v32i1_ty, llvm_v32i1_ty], [IntrNoMem]>;
-  def int_x86_avx512_kadd_q : GCCBuiltin<"__builtin_ia32_kadddi">,
+  def int_x86_avx512_kadd_q :
         Intrinsic<[llvm_v64i1_ty], [llvm_v64i1_ty, llvm_v64i1_ty], [IntrNoMem]>;
 }
 
