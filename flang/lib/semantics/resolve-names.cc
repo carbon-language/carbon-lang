@@ -328,7 +328,7 @@ public:
     }
     auto &symbol{*it->second};
     symbol.add_occurrence(name);
-    if (std::is_same<DerivedTypeDetails, D>::value) {
+    if constexpr (std::is_same_v<DerivedTypeDetails, D>) {
       if (auto *d{symbol.detailsIf<GenericDetails>()}) {
         // derived type with same name as a generic
         auto *derivedType{d->derivedType()};
@@ -347,7 +347,7 @@ public:
       symbol.attrs() |= attrs;
       symbol.set_details(details);
       return symbol;
-    } else if (std::is_same<UnknownDetails, D>::value) {
+    } else if constexpr (std::is_same_v<UnknownDetails, D>) {
       symbol.attrs() |= attrs;
       return symbol;
     } else {
@@ -573,14 +573,14 @@ private:
     Symbol &symbol{MakeSymbol(name.source, attrs)};
     if (symbol.has<UnknownDetails>()) {
       symbol.set_details(T{});
-    } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-      if (!std::is_same<EntityDetails, T>::value) {
+    } else if constexpr (!std::is_same_v<EntityDetails, T>) {
+      if (auto *details{symbol.detailsIf<EntityDetails>()}) {
         symbol.set_details(T(*details));
       }
     }
-    if (T *details = symbol.detailsIf<T>()) {
+    if (T *details{symbol.detailsIf<T>()}) {
       // OK
-    } else if (std::is_same<EntityDetails, T>::value &&
+    } else if (std::is_same_v<EntityDetails, T> &&
         (symbol.has<ObjectEntityDetails>() ||
             symbol.has<ProcEntityDetails>())) {
       // OK
@@ -665,8 +665,8 @@ private:
   const parser::Name *GetVariableName(const parser::Variable &);
   const Symbol *CheckImplicitSymbol(const parser::Name *);
   bool CheckUseError(const SourceName &, const Symbol &);
-  const Symbol *ResolveStructureComponent(const parser::StructureComponent &x);
-  const Symbol *ResolveDataRef(const parser::DataRef &x);
+  const Symbol *ResolveStructureComponent(const parser::StructureComponent &);
+  const Symbol *ResolveDataRef(const parser::DataRef &);
   const Symbol *FindComponent(const Symbol &base, const SourceName &component);
   void CheckImports();
   void CheckImport(const SourceName &, const SourceName &);
@@ -695,8 +695,7 @@ bool ImplicitRules::isImplicitNoneExternal() const {
 }
 
 std::optional<const DeclTypeSpec> ImplicitRules::GetType(char ch) const {
-  auto it{map_.find(ch)};
-  if (it != map_.end()) {
+  if (auto it{map_.find(ch)}; it != map_.end()) {
     return it->second;
   } else if (inheritFromParent_) {
     return parent_->GetType(ch);
@@ -733,7 +732,7 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const SourceName &name) {
     return nullptr;
   }
   if (auto *details{symbol->detailsIf<UseDetails>()}) {
-    const Symbol &useSymbol = details->symbol();
+    const Symbol &useSymbol{details->symbol()};
     if (const auto *details{useSymbol.detailsIf<GenericDetails>()}) {
       if (details->derivedType()) {
         return details->derivedType();
@@ -1841,7 +1840,7 @@ Symbol &SubprogramVisitor::PushSubprogramScope(
 
 // If name is a generic, return specific subprogram with the same name.
 Symbol *SubprogramVisitor::GetSpecificFromGeneric(const SourceName &name) {
-  if (Symbol *symbol = FindSymbol(name)) {
+  if (auto *symbol{FindSymbol(name)}) {
     if (auto *details{symbol->detailsIf<GenericDetails>()}) {
       // found generic, want subprogram
       auto *specific{details->specific()};
@@ -2295,8 +2294,8 @@ const Symbol *ResolveNamesVisitor::FindComponent(
     }
     return nullptr;
   }
-  const DerivedTypeSpec &derivedTypeSpec = type->derivedTypeSpec();
-  const Scope *scope = derivedTypeSpec.scope();
+  const DerivedTypeSpec &derivedTypeSpec{type->derivedTypeSpec()};
+  const Scope *scope{derivedTypeSpec.scope()};
   if (!scope) {
     return nullptr;  // previously failed to resolve type
   }
@@ -2371,7 +2370,7 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
 }
 
 bool ModuleVisitor::Pre(const parser::AccessStmt &x) {
-  Attr accessAttr = AccessSpecToAttr(std::get<parser::AccessSpec>(x.t));
+  Attr accessAttr{AccessSpecToAttr(std::get<parser::AccessSpec>(x.t))};
   if (currScope().kind() != Scope::Kind::Module) {
     Say(*currStmtSource(),
         "%s statement may only appear in the specification part of a module"_err_en_US,
