@@ -667,6 +667,11 @@ void BinaryContext::preprocessDebugInfo(
     const auto CUID = CU->getOffset();
     auto *LineTable = DwCtx->getLineTableForUnit(CU.get());
     const auto &FileNames = LineTable->Prologue.FileNames;
+    // Make sure empty debug line tables are registered too.
+    if (FileNames.empty()) {
+      cantFail(Ctx->getDwarfFile("", "<unknown>", 0, nullptr, None, CUID));
+      continue;
+    }
     for (size_t I = 0, Size = FileNames.size(); I != Size; ++I) {
       // Dir indexes start at 1, as DWARF file numbers, and a dir index 0
       // means empty dir.
