@@ -47,7 +47,7 @@ define <16 x i8> @mul_v16i8(<16 x i8> %x, <16 x i8> %y) {
 }
 
 ; CHECK-LABEL: and_v16i8
-; NO-SIMD128-NOT: i8x16
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.and $push0=, $0, $1 # encoding: [0xfd,0x3b]{{$}}
@@ -58,7 +58,7 @@ define <16 x i8> @and_v16i8(<16 x i8> %x, <16 x i8> %y) {
 }
 
 ; CHECK-LABEL: or_v16i8
-; NO-SIMD128-NOT: i8x16
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.or $push0=, $0, $1 # encoding: [0xfd,0x3c]{{$}}
@@ -69,7 +69,7 @@ define <16 x i8> @or_v16i8(<16 x i8> %x, <16 x i8> %y) {
 }
 
 ; CHECK-LABEL: xor_v16i8
-; NO-SIMD128-NOT: i8x16
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.xor $push0=, $0, $1 # encoding: [0xfd,0x3d]{{$}}
@@ -130,7 +130,7 @@ define <8 x i16> @mul_v8i16(<8 x i16> %x, <8 x i16> %y) {
 }
 
 ; CHECK-LABEL: and_v8i16
-; NO-SIMD128-NOT: i16x8
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.and $push0=, $0, $1 # encoding: [0xfd,0x3b]{{$}}
@@ -141,7 +141,7 @@ define <8 x i16> @and_v8i16(<8 x i16> %x, <8 x i16> %y) {
 }
 
 ; CHECK-LABEL: or_v8i16
-; NO-SIMD128-NOT: i16x8
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.or $push0=, $0, $1 # encoding: [0xfd,0x3c]{{$}}
@@ -152,7 +152,7 @@ define <8 x i16> @or_v8i16(<8 x i16> %x, <8 x i16> %y) {
 }
 
 ; CHECK-LABEL: xor_v8i16
-; NO-SIMD128-NOT: i16x8
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.xor $push0=, $0, $1 # encoding: [0xfd,0x3d]{{$}}
@@ -211,7 +211,7 @@ define <4 x i32> @mul_v4i32(<4 x i32> %x, <4 x i32> %y) {
 }
 
 ; CHECK-LABEL: and_v4i32
-; NO-SIMD128-NOT: i32x4
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.and $push0=, $0, $1 # encoding: [0xfd,0x3b]{{$}}
@@ -222,7 +222,7 @@ define <4 x i32> @and_v4i32(<4 x i32> %x, <4 x i32> %y) {
 }
 
 ; CHECK-LABEL: or_v4i32
-; NO-SIMD128-NOT: i32x4
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.or $push0=, $0, $1 # encoding: [0xfd,0x3c]{{$}}
@@ -233,7 +233,7 @@ define <4 x i32> @or_v4i32(<4 x i32> %x, <4 x i32> %y) {
 }
 
 ; CHECK-LABEL: xor_v4i32
-; NO-SIMD128-NOT: i32x4
+; NO-SIMD128-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.xor $push0=, $0, $1 # encoding: [0xfd,0x3d]{{$}}
@@ -294,7 +294,8 @@ define <2 x i64> @mul_v2i64(<2 x i64> %x, <2 x i64> %y) {
 }
 
 ; CHECK-LABEL: and_v2i64
-; NO-SIMD128-NOT: i64x2
+; NO-SIMD128-NOT: v128
+; SIMD128-VM-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.and $push0=, $0, $1 # encoding: [0xfd,0x3b]{{$}}
@@ -305,7 +306,8 @@ define <2 x i64> @and_v2i64(<2 x i64> %x, <2 x i64> %y) {
 }
 
 ; CHECK-LABEL: or_v2i64
-; NO-SIMD128-NOT: i64x2
+; NO-SIMD128-NOT: v128
+; SIMD128-VM-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.or $push0=, $0, $1 # encoding: [0xfd,0x3c]{{$}}
@@ -316,7 +318,8 @@ define <2 x i64> @or_v2i64(<2 x i64> %x, <2 x i64> %y) {
 }
 
 ; CHECK-LABEL: xor_v2i64
-; NO-SIMD128-NOT: i64x2
+; NO-SIMD128-NOT: v128
+; SIMD128-VM-NOT: v128
 ; SIMD128: .param v128, v128{{$}}
 ; SIMD128: .result v128{{$}}
 ; SIMD128: v128.xor $push0=, $0, $1 # encoding: [0xfd,0x3d]{{$}}
