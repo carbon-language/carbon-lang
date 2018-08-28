@@ -19,16 +19,15 @@ struct LargeStruct {
   long v;
   long extra[3];
 
-  LargeStruct(long v) : v(v) {}
+  explicit LargeStruct(long v) : v(v) {}
   operator long() { return v; }
 };
 
-struct Struct12Bytes {
-  int t[3];
+struct Struct10Bytes {
+  short t[3];
 };
 
 TEST(RingBuffer, Construct) {
-
   RingBuffer<long> *RBlong = RingBuffer<long>::New(20);
   EXPECT_EQ(RBlong->size(), 20U);
   RBlong->Delete();
@@ -37,7 +36,7 @@ TEST(RingBuffer, Construct) {
 template <class T> void TestRB() {
   RingBuffer<T> *RB;
   const size_t Sizes[] = {1, 2, 3, 5, 8, 16, 20, 40, 10000};
-  for (size_t Size: Sizes) {
+  for (size_t Size : Sizes) {
     RB = RingBuffer<T>::New(Size);
     EXPECT_EQ(RB->size(), Size);
     RB->Delete();
@@ -51,25 +50,27 @@ template <class T> void TestRB() {
   EXPECT_EQ((long)(*RB)[2], (long)a2);                 \
   EXPECT_EQ((long)(*RB)[3], (long)a3);
 
-  RB->push(1); EXPECT_RING_BUFFER(1, 0, 0, 0);
-  RB->push(2); EXPECT_RING_BUFFER(2, 1, 0, 0);
-  RB->push(3); EXPECT_RING_BUFFER(3, 2, 1, 0);
-  RB->push(4); EXPECT_RING_BUFFER(4, 3, 2, 1);
-  RB->push(5); EXPECT_RING_BUFFER(5, 4, 3, 2);
-  RB->push(6); EXPECT_RING_BUFFER(6, 5, 4, 3);
-  RB->push(7); EXPECT_RING_BUFFER(7, 6, 5, 4);
-  RB->push(8); EXPECT_RING_BUFFER(8, 7, 6, 5);
-  RB->push(9); EXPECT_RING_BUFFER(9, 8, 7, 6);
-  RB->push(10); EXPECT_RING_BUFFER(10, 9, 8, 7);
-  RB->push(11); EXPECT_RING_BUFFER(11, 10, 9, 8);
-  RB->push(12); EXPECT_RING_BUFFER(12, 11, 10, 9);
+  RB->push(T(1)); EXPECT_RING_BUFFER(1, 0, 0, 0);
+  RB->push(T(2)); EXPECT_RING_BUFFER(2, 1, 0, 0);
+  RB->push(T(3)); EXPECT_RING_BUFFER(3, 2, 1, 0);
+  RB->push(T(4)); EXPECT_RING_BUFFER(4, 3, 2, 1);
+  RB->push(T(5)); EXPECT_RING_BUFFER(5, 4, 3, 2);
+  RB->push(T(6)); EXPECT_RING_BUFFER(6, 5, 4, 3);
+  RB->push(T(7)); EXPECT_RING_BUFFER(7, 6, 5, 4);
+  RB->push(T(8)); EXPECT_RING_BUFFER(8, 7, 6, 5);
+  RB->push(T(9)); EXPECT_RING_BUFFER(9, 8, 7, 6);
+  RB->push(T(10)); EXPECT_RING_BUFFER(10, 9, 8, 7);
+  RB->push(T(11)); EXPECT_RING_BUFFER(11, 10, 9, 8);
+  RB->push(T(12)); EXPECT_RING_BUFFER(12, 11, 10, 9);
 
 #undef EXPECT_RING_BUFFER
 }
 
 TEST(RingBuffer, Int) {
-  EXPECT_DEATH(RingBuffer<int>::New(10), "");
-  EXPECT_DEATH(RingBuffer<Struct12Bytes>::New(10), "");
+  EXPECT_DEATH(RingBuffer<short>::New(10), "");
+  EXPECT_DEATH(RingBuffer<Struct10Bytes>::New(10), "");
+  if (sizeof(int) < sizeof(void *))
+    EXPECT_DEATH(RingBuffer<int>::New(10), "");
 }
 
 TEST(RingBuffer, Long) {
