@@ -179,8 +179,8 @@ template<typename CONST> struct TypeOfHelper {
 
 template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 
-// A variant union that can hold a scalar constant of some type in a set,
-// which is passed in as a tuple of Type<> specializations.
+// A variant union that can hold a scalar constant of any type chosen from
+// a set of types, which is passed in as a tuple of Type<> specializations.
 template<typename TYPES> struct SomeScalar {
   using Types = TYPES;
   CLASS_BOILERPLATE(SomeScalar)
@@ -196,9 +196,8 @@ template<typename TYPES> struct SomeScalar {
           if constexpr (TypeOf<decltype(x)>::category ==
               TypeCategory::Integer) {
             return {x.ToInt64()};
-          } else {
-            return std::nullopt;
           }
+          return std::nullopt;
         },
         u);
   }
@@ -209,9 +208,8 @@ template<typename TYPES> struct SomeScalar {
           if constexpr (std::is_same_v<std::string,
                             std::decay_t<decltype(x)>>) {
             return {x};
-          } else {
-            return std::nullopt;
           }
+          return std::nullopt;
         },
         u);
   }
@@ -222,9 +220,8 @@ template<typename TYPES> struct SomeScalar {
           if constexpr (TypeOf<decltype(x)>::category ==
               TypeCategory::Logical) {
             return {x.IsTrue()};
-          } else {
-            return std::nullopt;
           }
+          return std::nullopt;
         },
         u);
   }

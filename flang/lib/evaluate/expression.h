@@ -39,7 +39,7 @@ using common::RelationalOperator;
 // Expressions are represented by specializations of Expr.
 // Each of these specializations wraps a single data member "u" that
 // is a std::variant<> discriminated union over the representational
-// types of the constants, variables, operations, and other entities that
+// types for the constants, variables, operations, and other entities that
 // can be valid expressions in that context:
 // - Expr<Type<CATEGORY, KIND>> is an expression whose result is of a
 //   specific intrinsic type category and kind, e.g. Type<TypeCategory::Real, 4>
@@ -502,6 +502,8 @@ public:
       u;
 };
 
+extern template class Expr<Type<TypeCategory::Character, 1>>;  // TODO more
+
 // The Relational class template is a helper for constructing logical
 // expressions with polymorphism over the cross product of the possible
 // categories and kinds of comparable operands.
@@ -540,6 +542,25 @@ template<> struct Relational<SomeType> {
   common::MapTemplate<Relational, std::variant, RelationalTypes> u;
 };
 
+extern template struct Relational<Type<TypeCategory::Integer, 1>>;
+extern template struct Relational<Type<TypeCategory::Integer, 2>>;
+extern template struct Relational<Type<TypeCategory::Integer, 4>>;
+extern template struct Relational<Type<TypeCategory::Integer, 8>>;
+extern template struct Relational<Type<TypeCategory::Integer, 16>>;
+extern template struct Relational<Type<TypeCategory::Real, 2>>;
+extern template struct Relational<Type<TypeCategory::Real, 4>>;
+extern template struct Relational<Type<TypeCategory::Real, 8>>;
+extern template struct Relational<Type<TypeCategory::Real, 10>>;
+extern template struct Relational<Type<TypeCategory::Real, 16>>;
+extern template struct Relational<Type<TypeCategory::Complex, 2>>;
+extern template struct Relational<Type<TypeCategory::Complex, 4>>;
+extern template struct Relational<Type<TypeCategory::Complex, 8>>;
+extern template struct Relational<Type<TypeCategory::Complex, 10>>;
+extern template struct Relational<Type<TypeCategory::Complex, 16>>;
+extern template struct Relational<Type<TypeCategory::Character, 1>>;  // TODO
+                                                                      // more
+extern template struct Relational<SomeType>;
+
 template<int KIND>
 class Expr<Type<TypeCategory::Logical, KIND>>
   : public ExpressionBase<Type<TypeCategory::Logical, KIND>> {
@@ -564,6 +585,11 @@ private:
 public:
   common::CombineVariants<Operations, Others> u;
 };
+
+extern template class Expr<Type<TypeCategory::Logical, 1>>;
+extern template class Expr<Type<TypeCategory::Logical, 2>>;
+extern template class Expr<Type<TypeCategory::Logical, 4>>;
+extern template class Expr<Type<TypeCategory::Logical, 8>>;
 
 // A polymorphic expression of known intrinsic type category, but dynamic
 // kind, represented as a discriminated union over Expr<Type<CAT, K>>
@@ -619,34 +645,10 @@ public:
   }
 
   using Others = std::variant<BOZLiteralConstant>;
-  common::CombineVariants<Others,
-      common::MapTemplate<Expr, std::variant, SomeCategory>>
-      u;
+  using Categories = common::MapTemplate<Expr, std::variant, SomeCategory>;
+  common::CombineVariants<Others, Categories> u;
 };
 
-extern template class Expr<Type<TypeCategory::Character, 1>>;  // TODO more
-extern template struct Relational<Type<TypeCategory::Integer, 1>>;
-extern template struct Relational<Type<TypeCategory::Integer, 2>>;
-extern template struct Relational<Type<TypeCategory::Integer, 4>>;
-extern template struct Relational<Type<TypeCategory::Integer, 8>>;
-extern template struct Relational<Type<TypeCategory::Integer, 16>>;
-extern template struct Relational<Type<TypeCategory::Real, 2>>;
-extern template struct Relational<Type<TypeCategory::Real, 4>>;
-extern template struct Relational<Type<TypeCategory::Real, 8>>;
-extern template struct Relational<Type<TypeCategory::Real, 10>>;
-extern template struct Relational<Type<TypeCategory::Real, 16>>;
-extern template struct Relational<Type<TypeCategory::Complex, 2>>;
-extern template struct Relational<Type<TypeCategory::Complex, 4>>;
-extern template struct Relational<Type<TypeCategory::Complex, 8>>;
-extern template struct Relational<Type<TypeCategory::Complex, 10>>;
-extern template struct Relational<Type<TypeCategory::Complex, 16>>;
-extern template struct Relational<Type<TypeCategory::Character, 1>>;  // TODO
-                                                                      // more
-extern template struct Relational<SomeType>;
-extern template class Expr<Type<TypeCategory::Logical, 1>>;
-extern template class Expr<Type<TypeCategory::Logical, 2>>;
-extern template class Expr<Type<TypeCategory::Logical, 4>>;
-extern template class Expr<Type<TypeCategory::Logical, 8>>;
 extern template class Expr<SomeInteger>;
 extern template class Expr<SomeReal>;
 extern template class Expr<SomeComplex>;
