@@ -51,7 +51,7 @@ Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
 
 template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {
   return std::visit(
-      [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u.u);
+      [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u);
 }
 
 template<TypeCategory C>
@@ -60,7 +60,7 @@ Expr<SomeKind<C>> operator+(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) + std::move(yk)};
       },
-      x.u.u, y.u.u);
+      x.u, y.u);
 }
 
 template<TypeCategory C>
@@ -69,7 +69,7 @@ Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) - std::move(yk)};
       },
-      x.u.u, y.u.u);
+      x.u, y.u);
 }
 
 template<TypeCategory C>
@@ -78,7 +78,7 @@ Expr<SomeKind<C>> operator*(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) * std::move(yk)};
       },
-      x.u.u, y.u.u);
+      x.u, y.u);
 }
 
 template<TypeCategory C>
@@ -87,24 +87,76 @@ Expr<SomeKind<C>> operator/(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       [](auto &xk, auto &yk) {
         return Expr<SomeKind<C>>{std::move(xk) / std::move(yk)};
       },
-      x.u.u, y.u.u);
+      x.u, y.u);
 }
 
-// Convert the second argument expression to an expression of the same type
-// and kind as that of the first.
-template<TypeCategory TC, typename F>
-Expr<SomeKind<TC>> ConvertToTypeAndKindOf(
-    const Expr<SomeKind<TC>> &to, Expr<F> &&from) {
+// Generalizers: these take expressions of more specific types and wrap
+// them in more abstract containers.
+
+template<TypeCategory CAT, int KIND>
+Expr<SomeKind<CAT>> ToCategoryExpr(Expr<Type<CAT, KIND>> &&x) {
+  return {std::move(x)};
+}
+
+template<typename A> Expr<SomeType> ToGenericExpr(A &&x) {
+  return {std::move(x)};
+}
+
+template<TypeCategory CAT, int KIND>
+Expr<SomeType> ToGenericExpr(Expr<Type<CAT, KIND>> &&x) {
+  return {ToCategoryExpr(std::move(x))};
+}
+
+// Creation of conversion expressions can be done to either a known
+// specific intrinsic type with ConvertToType<T>(x) or by converting
+// one arbitrary expression to the type of another with ConvertTo(to, from).
+
+template<typename TO, TypeCategory FC>
+Expr<TO> ConvertToType(Expr<SomeKind<FC>> &&x) {
+  return {Convert<TO, FC>{std::move(x)}};
+}
+
+template<TypeCategory TC, int TK, TypeCategory FC>
+Expr<Type<TC, TK>> ConvertTo(
+    const Expr<Type<TC, TK>> &, Expr<SomeKind<FC>> &&x) {
+  return ConvertToType<Type<TC, TK>>(std::move(x));
+}
+
+template<TypeCategory TC, int TK, TypeCategory FC, int FK>
+Expr<Type<TC, TK>> ConvertTo(
+    const Expr<Type<TC, TK>> &, Expr<Type<FC, FK>> &&x) {
+  return ConvertToType<Type<TC, TK>>(ToCategoryExpr(std::move(x)));
+}
+
+template<TypeCategory TC, TypeCategory FC>
+Expr<SomeKind<TC>> ConvertTo(
+    const Expr<SomeKind<TC>> &to, Expr<SomeKind<FC>> &&from) {
   return std::visit(
-      [&](const auto &tk) -> Expr<SomeKind<TC>> {
-        using SpecificExpr = std::decay_t<decltype(tk)>;
-        return {SpecificExpr{std::move(from)}};
+      [&](const auto &toKindExpr) {
+        using KindExpr = std::decay_t<decltype(toKindExpr)>;
+        return ToCategoryExpr(
+            ConvertToType<ResultType<KindExpr>>(std::move(from)));
       },
-      to.u.u);
+      to.u);
 }
 
-// Given two expressions of the same type category, convert one to the
-// kind of the other in place if it has a smaller kind.
+template<TypeCategory TC, TypeCategory FC, int FK>
+Expr<SomeKind<TC>> ConvertTo(
+    const Expr<SomeKind<TC>> &to, Expr<Type<FC, FK>> &&from) {
+  return ConvertTo(to, ToCategoryExpr(std::move(from)));
+}
+
+template<typename FT>
+Expr<SomeType> ConvertTo(const Expr<SomeType> &to, Expr<FT> &&from) {
+  return std::visit(
+      [&](const auto &toCatExpr) {
+        return ToGenericExpr(ConvertTo(toCatExpr, std::move(from)));
+      },
+      to.u);
+}
+
+// Given references to two expressions of the same type category, convert
+// either to the kind of the other in place if it has a smaller kind.
 template<TypeCategory CAT>
 void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
   std::visit(
@@ -112,17 +164,18 @@ void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
         using xt = ResultType<decltype(xk)>;
         using yt = ResultType<decltype(yk)>;
         if constexpr (xt::kind < yt::kind) {
-          x.u = Expr<yt>{xk};
+          x.u = Expr<yt>{Convert<yt, CAT>{x}};
         } else if constexpr (xt::kind > yt::kind) {
-          y.u = Expr<xt>{yk};
+          y.u = Expr<xt>{Convert<xt, CAT>{y}};
         }
       },
-      x.u.u, y.u.u);
+      x.u, y.u);
 }
 
 // Ensure that both operands of an intrinsic REAL operation (or CMPLX()
 // constructor) are INTEGER or REAL, then convert them as necessary to the
 // same kind of REAL.
+// TODO pmk: need a better type that guarantees that both have same kind
 using ConvertRealOperandsResult =
     std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>>;
 ConvertRealOperandsResult ConvertRealOperands(
@@ -131,26 +184,10 @@ ConvertRealOperandsResult ConvertRealOperands(parser::ContextualMessages &,
     std::optional<Expr<SomeType>> &&, std::optional<Expr<SomeType>> &&);
 
 template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
-  static_assert(std::is_same_v<Scalar<TypeOf<A>>, std::decay_t<A>> ||
-      !"TypeOf<> is broken");
-  return {x};
-}
-
-template<TypeCategory CAT, int KIND>
-Expr<SomeKind<CAT>> ToSomeKindExpr(Expr<Type<CAT, KIND>> &&x) {
-  return {std::move(x)};
-}
-
-Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &);
-
-template<TypeCategory CAT, int KIND>
-Expr<SomeType> ToGenericExpr(Expr<Type<CAT, KIND>> &&x) {
-  return Expr<SomeType>{Expr<SomeKind<CAT>>{std::move(x)}};
-}
-
-template<TypeCategory CAT>
-Expr<SomeType> ToGenericExpr(Expr<SomeKind<CAT>> &&x) {
-  return Expr<SomeType>{std::move(x)};
+  using Ty = TypeOf<A>;
+  static_assert(
+      std::is_same_v<Scalar<Ty>, std::decay_t<A>> || !"TypeOf<> is broken");
+  return {Constant<Ty>{x}};
 }
 
 // Convert, if necessary, an expression to a specific kind in the same
@@ -158,8 +195,7 @@ Expr<SomeType> ToGenericExpr(Expr<SomeKind<CAT>> &&x) {
 template<typename TOTYPE>
 Expr<TOTYPE> EnsureKind(Expr<SomeKind<TOTYPE::category>> &&x) {
   using ToType = TOTYPE;
-  using FromGenericType = SomeKind<ToType::category>;
-  if (auto *p{std::get_if<Expr<ToType>>(&x.u.u)}) {
+  if (auto *p{std::get_if<Expr<ToType>>(&x.u)}) {
     return std::move(*p);
   }
   if constexpr (ToType::category == TypeCategory::Complex) {
@@ -169,15 +205,15 @@ Expr<TOTYPE> EnsureKind(Expr<SomeKind<TOTYPE::category>> &&x) {
           using FromPart = typename FromType::Part;
           using FromGeneric = SomeKind<TypeCategory::Real>;
           using ToPart = typename ToType::Part;
-          Convert<ToPart, FromGeneric> re{Expr<FromGeneric>{
+          Convert<ToPart, TypeCategory::Real> re{Expr<FromGeneric>{
               Expr<FromPart>{ComplexComponent<FromType::kind>{false, z}}}};
-          Convert<ToPart, FromGeneric> im{Expr<FromGeneric>{
+          Convert<ToPart, TypeCategory::Real> im{Expr<FromGeneric>{
               Expr<FromPart>{ComplexComponent<FromType::kind>{true, z}}}};
           return {std::move(re), std::move(im)};
         },
-        x.u.u)};
+        x.u)};
   } else {
-    return {Convert<ToType, FromGenericType>{std::move(x)}};
+    return {Convert<ToType, ToType::category>{std::move(x)}};
   }
 }
 

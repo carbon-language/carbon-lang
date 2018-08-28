@@ -127,8 +127,8 @@ using HostUnsignedInt =
 template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 
 // Classes that support a Fold(FoldingContext &) member function have the
-// FoldableTrait set.
-CLASS_TRAIT(FoldableTrait);
+// IsFoldableTrait.
+CLASS_TRAIT(IsFoldableTrait)
 struct FoldingContext {
   explicit FoldingContext(parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)

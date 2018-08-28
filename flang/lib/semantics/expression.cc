@@ -25,6 +25,7 @@ namespace Fortran::semantics {
 
 using common::TypeCategory;
 using evaluate::Expr;
+using evaluate::SomeKind;
 using evaluate::SomeType;
 using evaluate::Type;
 
@@ -61,7 +62,7 @@ auto AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Scalar<A> &tree)
     -> decltype(AnalyzeHelper(ea, tree.thing)) {
   auto result{AnalyzeHelper(ea, tree.thing)};
   if (result.has_value()) {
-    if (result->Rank() > 1) {
+    if (result->Rank() > 0) {
       ea.context().messages.Say("must be scalar"_err_en_US);
       return std::nullopt;
     }
@@ -91,29 +92,50 @@ std::optional<Expr<evaluate::SomeInteger>> AnalyzeHelper(
     if (auto *intexpr{std::get_if<Expr<evaluate::SomeInteger>>(&result->u)}) {
       return {std::move(*intexpr)};
     }
-    ea.context().messages.Say("expression must be integer"_err_en_US);
+    ea.context().messages.Say("expression must be INTEGER"_err_en_US);
   }
   return std::nullopt;
 }
+
+// pmk: document, maybe put elsewhere
+template<TypeCategory CAT, typename VALUE> struct ConstantHelper {
+  using Types = evaluate::CategoryTypes<CAT>;
+  explicit ConstantHelper(VALUE &&x) : value{std::move(x)} {}
+  template<int J> void SetKindTraverser(int kind) {
+    if constexpr (J < std::tuple_size_v<Types>) {
+      using Ty = std::tuple_element_t<J, Types>;
+      if (kind == Ty::kind) {
+        result = Expr<Ty>{evaluate::Constant<Ty>{std::move(value)}};
+      } else {
+        SetKindTraverser<J+1>(kind);
+      }
+    }
+  }
+  void SetKind(int kind) { SetKindTraverser<0>(kind); }
+  VALUE value;
+  std::optional<Expr<evaluate::SomeKind<CAT>>> result;
+};
 
 static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
     ExpressionAnalyzer &ea, const parser::CharLiteralConstant &x) {
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ExpressionAnalyzer::KindParam{1})};
   auto value{std::get<std::string>(x.t)};
-  using Ex = Expr<evaluate::SomeCharacter>;
-  std::optional<Ex> result{Ex::template ForceKind(kind, std::move(value))};
-  if (!result.has_value()) {
+  ConstantHelper<TypeCategory::Character, std::string> helper{std::move(value)};
+  helper.SetKind(kind);
+  if (!helper.result.has_value()) {
     ea.context().messages.Say("unsupported CHARACTER(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
   }
-  return result;
+  return std::move(helper.result);
 }
 
-template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
-  std::function<Expr<SomeType>(A &&)> f{
-      [](A &&y) { return Expr<SomeType>{std::move(y)}; }};
-  return common::MapOptional(f, std::move(x));
+template<typename A>
+MaybeExpr PackageGeneric(std::optional<A> &&x) {
+  if (x.has_value()) {
+    return {evaluate::ToGenericExpr(std::move(*x))};
+  }
+  return std::nullopt;
 }
 
 template<>
@@ -132,12 +154,12 @@ MaybeExpr AnalyzeHelper(
   std::optional<Expr<evaluate::SubscriptInteger>> lb, ub;
   if (lbTree.has_value()) {
     if (MaybeIntExpr lbExpr{AnalyzeHelper(ea, *lbTree)}) {
-      lb = Expr<evaluate::SubscriptInteger>{std::move(*lbExpr)};
+      lb = evaluate::ConvertToType<evaluate::SubscriptInteger>(std::move(*lbExpr));
     }
   }
   if (ubTree.has_value()) {
     if (MaybeIntExpr ubExpr{AnalyzeHelper(ea, *ubTree)}) {
-      ub = Expr<evaluate::SubscriptInteger>{std::move(*ubExpr)};
+      ub = evaluate::ConvertToType<evaluate::SubscriptInteger>(std::move(*ubExpr));
     }
   }
   if (!lb.has_value() || !ub.has_value()) {
@@ -147,7 +169,7 @@ MaybeExpr AnalyzeHelper(
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
   Expr<evaluate::DefaultCharacter> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
-  return {Expr<SomeType>{Expr<evaluate::SomeCharacter>{std::move(chExpr)}}};
+  return {evaluate::ToGenericExpr(chExpr)};
 }
 
 // Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
@@ -157,13 +179,13 @@ std::optional<Expr<evaluate::SomeInteger>> IntLiteralConstant(
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultIntegerKind())};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
-  using Ex = Expr<evaluate::SomeInteger>;
-  std::optional<Ex> result{Ex::template ForceKind(kind, std::move(value))};
-  if (!result.has_value()) {
+  ConstantHelper<TypeCategory::Integer, decltype(value)> helper{std::move(value)};
+  helper.SetKind(kind);
+  if (!helper.result.has_value()) {
     ea.context().messages.Say("unsupported INTEGER(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
   }
-  return result;
+  return std::move(helper.result);
 }
 
 static std::optional<Expr<evaluate::SomeInteger>> AnalyzeLiteral(
@@ -214,16 +236,26 @@ std::optional<Expr<evaluate::SomeReal>> ReadRealLiteral(
   if (context.flushDenormalsToZero) {
     value = value.FlushDenormalToZero();
   }
-  return {evaluate::ToSomeKindExpr(Expr<RealType>{value})};
+  return {evaluate::ToCategoryExpr(Expr<RealType>{evaluate::Constant<RealType>{value}})};
 }
 
 struct RealHelper {
   RealHelper(parser::CharBlock lit, evaluate::FoldingContext &ctx)
     : literal{lit}, context{ctx} {}
-  template<int K> void action() {
-    CHECK(!result.has_value());
-    result = ReadRealLiteral<K>(literal, context);
+
+  using Types = evaluate::CategoryTypes<TypeCategory::Real>;
+  template<int J> void SetKindTraverser(int kind) {
+    if constexpr (J < std::tuple_size_v<Types>) {
+      using Ty = std::tuple_element_t<J, Types>;
+      if (kind == Ty::kind) {
+        result = ReadRealLiteral<Ty::kind>(literal, context);
+      } else {
+        SetKindTraverser<J+1>(kind);
+      }
+    }
   }
+  void SetKind(int kind) { SetKindTraverser<0>(kind); }
+
   parser::CharBlock literal;
   evaluate::FoldingContext &context;
   std::optional<Expr<evaluate::SomeReal>> result;
@@ -252,7 +284,7 @@ static std::optional<Expr<evaluate::SomeReal>> AnalyzeLiteral(
   }
   auto kind{ea.Analyze(x.kind, defaultKind)};
   RealHelper helper{x.real.source, localFoldingContext};
-  Expr<evaluate::SomeReal>::template AtKind(helper, kind);
+  helper.SetKind(kind);
   if (!helper.result.has_value()) {
     ctxMsgs.Say("unsupported REAL(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
@@ -325,13 +357,13 @@ static std::optional<Expr<evaluate::SomeLogical>> AnalyzeLiteral(
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultLogicalKind())};
   bool value{std::get<bool>(x.t)};
-  using Ex = Expr<evaluate::SomeLogical>;
-  std::optional<Ex> result{Ex::template ForceKind(kind, std::move(value))};
-  if (!result.has_value()) {
+  ConstantHelper<TypeCategory::Logical, bool> helper{std::move(value)};
+  helper.SetKind(kind);
+  if (!helper.result.has_value()) {
     ea.context().messages.Say("unsupported LOGICAL(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
   }
-  return result;
+  return std::move(helper.result);
 }
 
 template<>
@@ -431,7 +463,7 @@ MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Divide &x) {
 
 template<>
 MaybeExpr AnalyzeHelper(ExpressionAnalyzer &ea, const parser::Expr::Add &x) {
-  // TODO pmk WIP
+  // TODO
   return std::nullopt;
 }
 
@@ -565,19 +597,22 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
       kindParam->u);
 }
 
+// TODO pmk: need a way to represent a tuple of same-typed expressions, avoid CHECK here
 std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
     MaybeExpr &&real, MaybeExpr &&imaginary) {
   if (auto converted{evaluate::ConvertRealOperands(
           context_.messages, std::move(real), std::move(imaginary))}) {
     return {std::visit(
-        [](auto &&rx, auto &&ix) -> Expr<evaluate::SomeComplex> {
-          using realType = evaluate::ResultType<decltype(rx)>;
+        [&](auto &&re) -> Expr<evaluate::SomeComplex> {
+          using realType = evaluate::ResultType<decltype(re)>;
+          auto *im{std::get_if<Expr<realType>>(&converted->second.u)};
+          CHECK(im != nullptr);
           constexpr int kind{realType::kind};
           using zType = evaluate::Type<TypeCategory::Complex, kind>;
-          return {Expr<zType>{evaluate::ComplexConstructor<kind>{
-              std::move(rx), std::move(ix)}}};
+          return {Expr<evaluate::SomeComplex>{Expr<zType>{evaluate::ComplexConstructor<kind>{
+              std::move(re), std::move(*im)}}}};
         },
-        std::move(converted->first.u.u), std::move(converted->second.u.u))};
+        std::move(converted->first.u))};
   }
   return std::nullopt;
 }

@@ -106,8 +106,8 @@ template<typename... TUPLES>
 using CombineTuples = typename CombineTuplesHelper<TUPLES...>::type;
 
 // CombineVariants takes a list of std::variant<> instantiations and constructs
-// a new instantiation that holds all of their alternatives, which probably
-// should be distinct.
+// a new instantiation that holds all of their alternatives, which must be
+// pairwise distinct.
 template<typename> struct VariantToTupleHelper;
 template<typename... Ts> struct VariantToTupleHelper<std::variant<Ts...>> {
   using type = std::tuple<Ts...>;
@@ -115,8 +115,22 @@ template<typename... Ts> struct VariantToTupleHelper<std::variant<Ts...>> {
 template<typename VARIANT>
 using VariantToTuple = typename VariantToTupleHelper<VARIANT>::type;
 
+template<typename A, typename B, typename... REST> struct AreTypesDistinctHelper {
+  static constexpr bool value() {
+    if constexpr (std::is_same_v<A, B>) {
+      return false;
+    }
+    if constexpr (sizeof...(REST) > 0) {
+      return AreTypesDistinctHelper<A, REST...>::value() && AreTypesDistinctHelper<B, REST...>::value();
+    }
+    return true;
+  }
+};
+template<typename... Ts> constexpr bool AreTypesDistinct{AreTypesDistinctHelper<Ts...>::value()};
+
 template<typename> struct TupleToVariantHelper;
 template<typename... Ts> struct TupleToVariantHelper<std::tuple<Ts...>> {
+  static_assert(AreTypesDistinct<Ts...> || !"TupleToVariant: types are not pairwise distinct");
   using type = std::variant<Ts...>;
 };
 template<typename TUPLE>
@@ -127,6 +141,9 @@ template<typename... VARIANTS> struct CombineVariantsHelper {
 };
 template<typename... VARIANTS>
 using CombineVariants = typename CombineVariantsHelper<VARIANTS...>::type;
+
+template<typename VARIANT>
+using SquashVariantOfVariants = OverMembers<CombineVariants, VARIANT>;
 
 // Given a type function, apply it to each of the types in a tuple or variant,
 // and collect the results in another tuple or variant.

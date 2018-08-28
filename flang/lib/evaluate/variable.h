@@ -171,7 +171,7 @@ private:
 // variants of sections instead.
 class Substring {
 public:
-  using FoldableTrait = std::true_type;
+  using IsFoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Substring)
   Substring(DataRef &&, std::optional<Expr<SubscriptInteger>> &&,
       std::optional<Expr<SubscriptInteger>> &&);

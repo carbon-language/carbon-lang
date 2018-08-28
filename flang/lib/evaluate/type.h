@@ -26,7 +26,6 @@
 #include "real.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
-#include "../common/kind-variant.h"
 #include "../common/template.h"
 #include <cinttypes>
 #include <optional>
@@ -37,14 +36,14 @@ namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
-// Specific intrinsic types
+// Specific intrinsic types are represented by specializations of
+// the class template Type<CATEGORY, KIND>.
+template<TypeCategory CATEGORY, int KIND> struct Type;
 
-template<TypeCategory C, int KIND> struct Type;
-
-template<TypeCategory C, int KIND> struct TypeBase {
-  static constexpr TypeCategory category{C};
+template<TypeCategory CATEGORY, int KIND> struct TypeBase {
+  static constexpr bool isSpecificType{true};
+  static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};
-  static constexpr bool hasLen{false};
   static std::string Dump() {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
@@ -92,14 +91,10 @@ struct Type<TypeCategory::Complex, KIND>
   using Scalar = value::Complex<typename Part::Scalar>;
 };
 
-template<int KIND> struct Type<TypeCategory::Character, KIND> {
-  static constexpr TypeCategory category{TypeCategory::Character};
-  static constexpr int kind{KIND};
-  static constexpr bool hasLen{true};
+template<int KIND>
+struct Type<TypeCategory::Character, KIND>
+  : public TypeBase<TypeCategory::Character, KIND> {
   using Scalar = std::string;
-  static std::string Dump() {
-    return EnumToString(category) + '(' + std::to_string(kind) + ')';
-  }
 };
 
 template<int KIND>
@@ -113,8 +108,8 @@ struct Type<TypeCategory::Logical, KIND>
 template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
 
 // Given a specific type, find the type of the same kind in another category.
-template<TypeCategory C, typename T>
-using SameKind = Type<C, std::decay_t<T>::kind>;
+template<TypeCategory CATEGORY, typename T>
+using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
 
 // Convenience type aliases:
 // Default REAL just simply has to be IEEE-754 single precision today.
@@ -135,72 +130,12 @@ using DefaultCharacter = Type<TypeCategory::Character, 1>;
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 
-// The CategoryUnion template applies a given template to all of
-// the supported kinds in a given intrinsic type category, and
-// builds a KindVariant<> union over the results.  This allows
-// us to specify the supported kind values in just one place (here)
-// with resorting to macros.
-template<TypeCategory CAT, template<TypeCategory, int> class TYPE>
-struct CategoryUnionTemplate;
-
-template<template<TypeCategory, int> class TYPE>
-struct CategoryUnionTemplate<TypeCategory::Integer, TYPE> {
-  static constexpr auto category{TypeCategory::Integer};
-  template<int K> using PerKind = TYPE<category, K>;
-  using type = common::KindVariant<int, PerKind, 1, 2, 4, 8, 16>;
-};
-
-template<template<TypeCategory, int> class TYPE>
-struct CategoryUnionTemplate<TypeCategory::Real, TYPE> {
-  static constexpr auto category{TypeCategory::Real};
-  template<int K> using PerKind = TYPE<category, K>;
-  using type = common::KindVariant<int, PerKind, 2, 4, 8, 10, 16>;
-};
-
-template<template<TypeCategory, int> class TYPE>
-struct CategoryUnionTemplate<TypeCategory::Complex, TYPE> {
-  static constexpr auto category{TypeCategory::Complex};
-  template<int K> using PerKind = TYPE<category, K>;
-  using type = common::KindVariant<int, PerKind, 2, 4, 8, 10, 16>;
-};
-
-template<template<TypeCategory, int> class TYPE>
-struct CategoryUnionTemplate<TypeCategory::Character, TYPE> {
-  static constexpr auto category{TypeCategory::Character};
-  template<int K> using PerKind = TYPE<category, K>;
-  using type = common::KindVariant<int, PerKind, 1>;  // TODO: add kinds 2 & 4;
-};
-
-template<template<TypeCategory, int> class TYPE>
-struct CategoryUnionTemplate<TypeCategory::Logical, TYPE> {
-  static constexpr auto category{TypeCategory::Logical};
-  template<int K> using PerKind = TYPE<category, K>;
-  using type = common::KindVariant<int, PerKind, 1, 2, 4, 8>;
-};
-
-template<TypeCategory CAT, template<TypeCategory, int> class TYPE>
-using CategoryUnion = typename CategoryUnionTemplate<CAT, TYPE>::type;
-
-// IntrinsicTypeUnion takes a template and instantiates it over
-// all five of the intrinsic type categories, using them as the
-// alternatives in a KindVariant.
-template<template<TypeCategory, int> class A>
-struct IntrinsicTypeUnionTemplate {
-  template<TypeCategory C> using PerCategory = CategoryUnion<C, A>;
-  using type = common::KindVariant<TypeCategory, PerCategory,
-      TypeCategory::Integer, TypeCategory::Real, TypeCategory::Complex,
-      TypeCategory::Character, TypeCategory::Logical>;
-};
-
-template<template<TypeCategory, int> class A>
-using IntrinsicTypeUnion = typename IntrinsicTypeUnionTemplate<A>::type;
-
 // For an intrinsic type category CAT, CategoryTypes<CAT> is an instantiation
-// of std::tuple<Type<CAT, K>> for every supported kind K in that category.
-template<TypeCategory CAT, int... KINDS>
-using CategoryTypesTuple = std::tuple<Type<CAT, KINDS>...>;
+// of std::tuple<Type<CAT, K>> over each supported kind K in that category.
+template<TypeCategory CATEGORY, int... KINDS>
+using CategoryTypesTuple = std::tuple<Type<CATEGORY, KINDS>...>;
 
-template<TypeCategory CAT> struct CategoryTypesHelper;
+template<TypeCategory CATEGORY> struct CategoryTypesHelper;
 template<> struct CategoryTypesHelper<TypeCategory::Integer> {
   using type = CategoryTypesTuple<TypeCategory::Integer, 1, 2, 4, 8, 16>;
 };
@@ -216,8 +151,8 @@ template<> struct CategoryTypesHelper<TypeCategory::Character> {
 template<> struct CategoryTypesHelper<TypeCategory::Logical> {
   using type = CategoryTypesTuple<TypeCategory::Logical, 1, 2, 4, 8>;
 };
-template<TypeCategory CAT>
-using CategoryTypes = typename CategoryTypesHelper<CAT>::type;
+template<TypeCategory CATEGORY>
+using CategoryTypes = typename CategoryTypesHelper<CATEGORY>::type;
 
 using NumericTypes = common::CombineTuples<CategoryTypes<TypeCategory::Integer>,
     CategoryTypes<TypeCategory::Real>, CategoryTypes<TypeCategory::Complex>>;
@@ -238,13 +173,14 @@ template<typename CONST> struct TypeOfHelper {
   };
   static constexpr int index{
       common::SearchMembers<Predicate, AllIntrinsicTypes>};
-  static_assert(index >= 0 || !"No intrinsic type found for constant type");
-  using type = std::tuple_element_t<index, AllIntrinsicTypes>;
+  using type = std::conditional_t<index >= 0,
+      std::tuple_element_t<index, AllIntrinsicTypes>, void>;
 };
 
 template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 
-// A variant union that can hold a scalar constant of some type in a set.
+// A variant union that can hold a scalar constant of some type in a set,
+// which is passed in as a tuple of Type<> specializations.
 template<typename TYPES> struct SomeScalar {
   using Types = TYPES;
   CLASS_BOILERPLATE(SomeScalar)
@@ -280,6 +216,19 @@ template<typename TYPES> struct SomeScalar {
         u);
   }
 
+  auto IsTrue() const {
+    return std::visit(
+        [](const auto &x) -> std::optional<bool> {
+          if constexpr (TypeOf<decltype(x)>::category ==
+              TypeCategory::Logical) {
+            return {x.IsTrue()};
+          } else {
+            return std::nullopt;
+          }
+        },
+        u);
+  }
+
   template<typename T> auto GetIf() const {
     return common::GetIf<Scalar<T>>(u);
   }
@@ -287,14 +236,15 @@ template<typename TYPES> struct SomeScalar {
   common::MapTemplate<Scalar, std::variant, Types> u;
 };
 
-template<TypeCategory CAT>
-using SomeKindScalar = SomeScalar<CategoryTypes<CAT>>;
+template<TypeCategory CATEGORY>
+using SomeKindScalar = SomeScalar<CategoryTypes<CATEGORY>>;
 using GenericScalar = SomeScalar<AllIntrinsicTypes>;
 
 // Represents a type of any supported kind within a particular category.
-template<TypeCategory CAT> struct SomeKind {
-  using Scalar = SomeKindScalar<CAT>;
-  static constexpr TypeCategory category{CAT};
+template<TypeCategory CATEGORY> struct SomeKind {
+  static constexpr bool isSpecificType{false};
+  static constexpr TypeCategory category{CATEGORY};
+  using Scalar = SomeKindScalar<category>;
 };
 
 using SomeInteger = SomeKind<TypeCategory::Integer>;
@@ -304,7 +254,10 @@ using SomeCharacter = SomeKind<TypeCategory::Character>;
 using SomeLogical = SomeKind<TypeCategory::Logical>;
 
 // Represents a completely generic intrinsic type.
+using SomeCategory =
+    std::tuple<SomeInteger, SomeReal, SomeComplex, SomeCharacter, SomeLogical>;
 struct SomeType {
+  static constexpr bool isSpecificType{false};
   using Scalar = GenericScalar;
 };
 

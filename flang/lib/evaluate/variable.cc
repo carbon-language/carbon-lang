@@ -127,18 +127,27 @@ Expr<SubscriptInteger> Substring::last() const {
 
 std::optional<std::string> Substring::Fold(FoldingContext &context) {
   std::optional<Scalar<SubscriptInteger>> lbValue, ubValue;
+  // pmk: streamline
   if (first_.has_value()) {
-    lbValue = (*first_)->Fold(context);
+    if (auto c{(*first_)->Fold(context)}) {
+      lbValue = c->value;
+    }
   } else {
-    lbValue = first().Fold(context);
+    if (auto c{first().Fold(context)}) {
+      lbValue = c->value;
+    }
   }
   if (lbValue.has_value()) {
     first_ = IndirectSubscriptIntegerExpr{Expr<SubscriptInteger>{*lbValue}};
   }
   if (last_.has_value()) {
-    ubValue = (*last_)->Fold(context);
+    if (auto c{(*last_)->Fold(context)}) {
+      ubValue = c->value;
+    }
   } else {
-    ubValue = last().Fold(context);
+    if (auto c{last().Fold(context)}) {
+      ubValue = c->value;
+    }
   }
   if (ubValue.has_value()) {
     last_ = IndirectSubscriptIntegerExpr{Expr<SubscriptInteger>{*ubValue}};

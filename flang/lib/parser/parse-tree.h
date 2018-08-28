@@ -50,10 +50,10 @@
 // although a C++ compiler wouldn't default them anyway due to the presence
 // of explicitly defaulted move constructors and move assignments.
 
-CLASS_TRAIT(EmptyTrait);
-CLASS_TRAIT(WrapperTrait);
-CLASS_TRAIT(UnionTrait);
-CLASS_TRAIT(TupleTrait);
+CLASS_TRAIT(EmptyTrait)
+CLASS_TRAIT(WrapperTrait)
+CLASS_TRAIT(UnionTrait)
+CLASS_TRAIT(TupleTrait)
 
 // Some parse tree nodes have fields in them to cache the results of a
 // successful semantic analysis later.  Their types are forward declared

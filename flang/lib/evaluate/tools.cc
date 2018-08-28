@@ -26,27 +26,32 @@ ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y) {
   return std::visit(
-      common::visitors{[&](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
-                         // Can happen in a CMPLX() constructor.  Per F'2018,
-                         // both integer operands are converted to default REAL.
-                         return std::optional{std::make_pair(
-                             Expr<SomeReal>{Expr<DefaultReal>{std::move(ix)}},
-                             Expr<SomeReal>{Expr<DefaultReal>{std::move(iy)}})};
-                       },
-          [&](Expr<SomeInteger> &&ix, Expr<SomeReal> &&ry) {
-            auto rx{ConvertToTypeAndKindOf(ry, std::move(ix))};
+      common::visitors{
+          [&](Expr<SomeInteger> &&ix,
+              Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
+            // Can happen in a CMPLX() constructor.  Per F'2018,
+            // both integer operands are converted to default REAL.
+            return std::optional{std::make_pair(
+                ToCategoryExpr(ConvertToType<DefaultReal>(std::move(ix))),
+                ToCategoryExpr(ConvertToType<DefaultReal>(std::move(iy))))};
+          },
+          [&](Expr<SomeInteger> &&ix,
+              Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
+            auto rx{ConvertTo(ry, std::move(ix))};
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
-          [&](Expr<SomeReal> &&rx, Expr<SomeInteger> &&iy) {
-            auto ry{ConvertToTypeAndKindOf(rx, std::move(iy))};
+          [&](Expr<SomeReal> &&rx,
+              Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
+            auto ry{ConvertTo(rx, std::move(iy))};
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
-          [&](Expr<SomeReal> &&rx, Expr<SomeReal> &&ry) {
+          [&](Expr<SomeReal> &&rx,
+              Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
             ConvertToSameKind(rx, ry);
             return std::optional{std::make_pair(std::move(rx), std::move(ry))};
           },
-          [&](const auto &, const auto &)
-              -> std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>> {
+          [&](auto &&, auto &&) -> ConvertRealOperandsResult {
+            // TODO: allow BOZ here?
             messages.Say("operands must be INTEGER or REAL"_err_en_US);
             return std::nullopt;
           }},
@@ -65,15 +70,6 @@ ConvertRealOperandsResult ConvertRealOperands(
       common::MapOptional(f, std::move(x), std::move(y)));
 }
 
-Expr<SomeType> GenericScalarToExpr(const Scalar<SomeType> &x) {
-  return std::visit(
-      [](const auto &c) -> Expr<SomeType> {
-        using Ty = TypeOf<decltype(c)>;
-        return {Expr<SomeKind<Ty::category>>{Expr<Ty>{c}}};
-      },
-      x.u);
-}
-
 template<template<typename> class OPR, TypeCategory CAT>
 std::optional<Expr<SomeType>> PromoteAndCombine(
     Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
@@ -85,7 +81,7 @@ std::optional<Expr<SomeType>> PromoteAndCombine(
         return {Expr<ToType>{OPR<ToType>{EnsureKind<ToType>(std::move(xk)),
             EnsureKind<ToType>(std::move(yk))}}};
       },
-      std::move(x.u.u), std::move(y.u.u))}};
+      std::move(x.u), std::move(y.u))}};
 }
 
 template<template<typename> class OPR>
@@ -106,10 +102,10 @@ std::optional<Expr<SomeType>> NumericOperation(
                 [&](auto &&rxk) -> Expr<SomeReal> {
                   using kindEx = decltype(rxk);
                   using resultType = ResultType<kindEx>;
-                  return {kindEx{
-                      OPR<resultType>{std::move(rxk), kindEx{std::move(iy)}}}};
+                  return {kindEx{OPR<resultType>{std::move(rxk),
+                      ConvertToType<resultType>(std::move(iy))}}};
                 },
-                std::move(rx.u.u))}};
+                std::move(rx.u))}};
           },
           [](Expr<SomeInteger> &&ix, Expr<SomeReal> &&ry) {
             return std::optional{Expr<SomeType>{std::visit(
@@ -117,9 +113,10 @@ std::optional<Expr<SomeType>> NumericOperation(
                   using kindEx = decltype(ryk);
                   using resultType = ResultType<kindEx>;
                   return {kindEx{
-                      OPR<resultType>{kindEx{std::move(ix)}, std::move(ryk)}}};
+                      OPR<resultType>{ConvertToType<resultType>(std::move(ix)),
+                          std::move(ryk)}}};
                 },
-                std::move(ry.u.u))}};
+                std::move(ry.u))}};
           },
           [](Expr<SomeComplex> &&zx, Expr<SomeComplex> &&zy) {
             return PromoteAndCombine<OPR, TypeCategory::Complex>(

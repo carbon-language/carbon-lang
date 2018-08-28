@@ -32,235 +32,128 @@ namespace Fortran::evaluate {
 
 template<typename D, typename R, typename... O>
 auto Operation<D, R, O...>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
+    -> std::optional<Constant<Result>> {
   auto c0{operand<0>().Fold(context)};
   if constexpr (operands() == 1) {
     if (c0.has_value()) {
-      return derived().FoldScalar(context, *c0);
+      if (auto scalar{derived().FoldScalar(context, c0->value)}) {
+        return {Constant<Result>{std::move(*scalar)}};
+      }
     }
   } else {
     auto c1{operand<1>().Fold(context)};
     if (c0.has_value() && c1.has_value()) {
-      return derived().FoldScalar(context, *c0, *c1);
+      if (auto scalar{derived().FoldScalar(context, c0->value, c1->value)}) {
+        return {Constant<Result>{std::move(*scalar)}};
+      }
     }
   }
   return std::nullopt;
 }
 
-template<int KIND>
-auto Expr<Type<TypeCategory::Integer, KIND>>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
-  if (auto c{ScalarValue()}) {
-    return c;
-  }
-  return std::visit(
-      [&](auto &x) -> std::optional<Scalar<Result>> {
-        using Ty = std::decay_t<decltype(x)>;
-        if constexpr (evaluate::FoldableTrait<Ty>) {
-          if (auto c{x.Fold(context)}) {
-            if constexpr (std::is_same_v<Ty, Parentheses<Result>>) {
-              // Preserve parentheses around constants.
-              u_ = Parentheses<Result>{Expr{*c}};
-            } else {
-              u_ = *c;
-            }
-            return c;
+template<typename RESULT>
+auto ExpressionBase<RESULT>::Fold(FoldingContext &context)
+    -> std::optional<Constant<Result>> {
+  using Const = Constant<Result>;
+  if constexpr (Result::isSpecificType) {
+    // Folding an expression of known type category and kind.
+    return std::visit(
+        [&](auto &x) -> std::optional<Const> {
+          using Thing = std::decay_t<decltype(x)>;
+          if constexpr (IsConstantTrait<Thing>) {
+            return {x};
           }
-        }
-        return std::nullopt;
-      },
-      u_);
-}
-
-template<int KIND>
-auto Expr<Type<TypeCategory::Real, KIND>>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
-  if (auto c{ScalarValue()}) {
-    return c;
-  }
-  return std::visit(
-      [&](auto &x) -> std::optional<Scalar<Result>> {
-        using Ty = std::decay_t<decltype(x)>;
-        if constexpr (evaluate::FoldableTrait<Ty>) {
-          if (auto c{x.Fold(context)}) {
-            if (context.flushDenormalsToZero) {
-              *c = c->FlushDenormalToZero();
-            }
-            if constexpr (std::is_same_v<Ty, Parentheses<Result>>) {
-              // Preserve parentheses around constants.
-              u_ = Parentheses<Result>{Expr{*c}};
-            } else {
-              u_ = *c;
-            }
-            return c;
-          }
-        }
-        return std::nullopt;
-      },
-      u_);
-}
-
-template<int KIND>
-auto Expr<Type<TypeCategory::Complex, KIND>>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
-  if (auto c{ScalarValue()}) {
-    return c;
-  }
-  return std::visit(
-      [&](auto &x) -> std::optional<Scalar<Result>> {
-        using Ty = std::decay_t<decltype(x)>;
-        if constexpr (evaluate::FoldableTrait<Ty>) {
-          if (auto c{x.Fold(context)}) {
-            if (context.flushDenormalsToZero) {
-              *c = c->FlushDenormalToZero();
-            }
-            if constexpr (std::is_same_v<Ty, Parentheses<Result>>) {
-              // Preserve parentheses around constants.
-              u_ = Parentheses<Result>{Expr{*c}};
-            } else {
-              u_ = *c;
-            }
-            return c;
-          }
-        }
-        return std::nullopt;
-      },
-      u_);
-}
-
-template<int KIND>
-auto Expr<Type<TypeCategory::Character, KIND>>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
-  if (auto c{ScalarValue()}) {
-    return c;
-  }
-  return std::visit(
-      [&](auto &x) -> std::optional<Scalar<Result>> {
-        using Ty = std::decay_t<decltype(x)>;
-        if constexpr (evaluate::FoldableTrait<Ty>) {
-          if (auto c{x.Fold(context)}) {
-            u_ = *c;
-            return c;
-          }
-        }
-        return std::nullopt;
-      },
-      u_);
-}
-
-template<int KIND>
-auto Expr<Type<TypeCategory::Logical, KIND>>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
-  if (auto c{ScalarValue()}) {
-    return c;
-  }
-  return std::visit(
-      [&](auto &x) -> std::optional<Scalar<Result>> {
-        using Ty = std::decay_t<decltype(x)>;
-        if constexpr (evaluate::FoldableTrait<Ty>) {
-          if (auto c{x.Fold(context)}) {
-            Scalar<Result> result{c->IsTrue()};
-            u_ = result;
-            return {result};
-          }
-        }
-        return std::nullopt;
-      },
-      u_);
-}
-
-template<TypeCategory CAT>
-auto Expr<SomeKind<CAT>>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
-  return std::visit(
-      [&](auto &x) -> std::optional<Scalar<Result>> {
-        if (auto c{x.Fold(context)}) {
-          return {Scalar<Result>{std::move(*c)}};
-        }
-        return std::nullopt;
-      },
-      u.u);
-}
-
-auto Expr<SomeType>::Fold(FoldingContext &context)
-    -> std::optional<Scalar<Result>> {
-  return std::visit(
-      common::visitors{
-          [](BOZLiteralConstant &) -> std::optional<Scalar<Result>> {
-            return std::nullopt;
-          },
-          [&](auto &x) -> std::optional<Scalar<Result>> {
+          if constexpr (IsFoldableTrait<Thing>) {
             if (auto c{x.Fold(context)}) {
-              return {common::MoveVariant<Scalar<Result>>(std::move(c->u))};
+              static constexpr TypeCategory category{Result::category};
+              if constexpr (category == TypeCategory::Real ||
+                  category == TypeCategory::Complex) {
+                if (context.flushDenormalsToZero) {
+                  c->value = c->value.FlushDenormalToZero();
+                }
+              } else if constexpr (category == TypeCategory::Logical) {
+                // Folding may have produced a constant of some
+                // dissimilar LOGICAL kind.
+                bool truth{c->value.IsTrue()};
+                derived() = truth;
+                return {Const{truth}};
+              }
+              if constexpr (std::is_same_v<Parentheses<Result>, Thing>) {
+                // Preserve parentheses around constants.
+                derived() = Thing{Derived{*c}};
+              } else {
+                derived() = *c;
+              }
+              return {Const{c->value}};
             }
-            return std::nullopt;
-          }},
-      u);
+          }
+          return std::nullopt;
+        },
+        derived().u);
+  } else {
+    // Folding a generic expression into a generic constant.
+    return std::visit(
+        [&](auto &x) -> std::optional<Const> {
+          if constexpr (IsFoldableTrait<std::decay_t<decltype(x)>>) {
+            if (auto c{x.Fold(context)}) {
+              if constexpr (ResultType<decltype(*c)>::isSpecificType) {
+                return {Const{c->value}};
+              } else {
+                // pmk: this is ugly
+                return {Const{common::MoveVariant<GenericScalar>(c->value.u)}};
+              }
+            }
+          }
+          return std::nullopt;
+        },
+        derived().u);
+  }
 }
 
 // FoldScalar
 
-template<typename TO, typename FROM>
-auto Convert<TO, FROM>::FoldScalar(FoldingContext &context,
-    const Scalar<Operand> &c) -> std::optional<Scalar<Result>> {
-  if constexpr (std::is_same_v<Result, Operand>) {
-    return {c};
-  } else if constexpr (std::is_same_v<Result, SomeType>) {
-    using Generic = SomeKind<Operand::category>;
-    if constexpr (std::is_same_v<Operand, Generic>) {
-      return {Scalar<Result>{c}};
-    } else {
-      return {Scalar<Result>{Generic{c}}};
-    }
-  } else if constexpr (std::is_same_v<Operand, SomeType>) {
-    return std::visit(
-        [&](const auto &x) -> std::optional<Scalar<Result>> {
-          using Ty = std::decay_t<decltype(x)>;
-          return Convert<Result, Ty>::FoldScalar(context, x);
-        },
-        c.u.u);
-  } else if constexpr (std::is_same_v<Result, SomeKind<Result::category>>) {
-    if constexpr (Result::category == Operand::category) {
-      return {Scalar<Result>{c}};
-    }
-  } else if constexpr (std::is_same_v<Operand, SomeKind<Operand::category>>) {
-    return std::visit(
-        [&](const auto &x) -> std::optional<Scalar<Result>> {
-          using Ty = TypeOf<std::decay_t<decltype(x)>>;
-          return Convert<Result, Ty>::FoldScalar(context, x);
-        },
-        c.u);
-  } else if constexpr (Result::category == TypeCategory::Integer) {
-    if constexpr (Operand::category == TypeCategory::Integer) {
-      auto converted{Scalar<Result>::ConvertSigned(c)};
-      if (converted.overflow) {
-        context.messages.Say("INTEGER to INTEGER conversion overflowed"_en_US);
-      } else {
-        return {std::move(converted.value)};
-      }
-    } else if constexpr (Operand::category == TypeCategory::Real) {
-      auto converted{c.template ToInteger<Scalar<Result>>()};
-      if (converted.flags.test(RealFlag::InvalidArgument)) {
-        context.messages.Say(
-            "REAL to INTEGER conversion: invalid argument"_en_US);
-      } else if (converted.flags.test(RealFlag::Overflow)) {
-        context.messages.Say("REAL to INTEGER conversion overflowed"_en_US);
-      } else {
-        return {std::move(converted.value)};
-      }
-    }
-  } else if constexpr (Result::category == TypeCategory::Real) {
-    if constexpr (Operand::category == TypeCategory::Integer) {
-      auto converted{Scalar<Result>::FromInteger(c)};
-      RealFlagWarnings(context, converted.flags, "INTEGER to REAL conversion");
-      return {std::move(converted.value)};
-    } else if constexpr (Operand::category == TypeCategory::Real) {
-      auto converted{Scalar<Result>::Convert(c)};
-      RealFlagWarnings(context, converted.flags, "REAL to REAL conversion");
-      return {std::move(converted.value)};
-    }
-  }
-  return std::nullopt;
+template<typename TO, TypeCategory FROMCAT>
+auto Convert<TO, FROMCAT>::FoldScalar(FoldingContext &context,
+    const Scalar<Operand> &x) -> std::optional<Scalar<Result>> {
+  return std::visit(
+      [&](const auto &c) -> std::optional<Scalar<Result>> {
+        if constexpr (Result::category == TypeCategory::Integer) {
+          if constexpr (Operand::category == TypeCategory::Integer) {
+            auto converted{Scalar<Result>::ConvertSigned(c)};
+            if (converted.overflow) {
+              context.messages.Say(
+                  "INTEGER to INTEGER conversion overflowed"_en_US);
+            } else {
+              return {std::move(converted.value)};
+            }
+          } else if constexpr (Operand::category == TypeCategory::Real) {
+            auto converted{c.template ToInteger<Scalar<Result>>()};
+            if (converted.flags.test(RealFlag::InvalidArgument)) {
+              context.messages.Say(
+                  "REAL to INTEGER conversion: invalid argument"_en_US);
+            } else if (converted.flags.test(RealFlag::Overflow)) {
+              context.messages.Say(
+                  "REAL to INTEGER conversion overflowed"_en_US);
+            } else {
+              return {std::move(converted.value)};
+            }
+          }
+        } else if constexpr (Result::category == TypeCategory::Real) {
+          if constexpr (Operand::category == TypeCategory::Integer) {
+            auto converted{Scalar<Result>::FromInteger(c)};
+            RealFlagWarnings(
+                context, converted.flags, "INTEGER to REAL conversion");
+            return {std::move(converted.value)};
+          } else if constexpr (Operand::category == TypeCategory::Real) {
+            auto converted{Scalar<Result>::Convert(c)};
+            RealFlagWarnings(
+                context, converted.flags, "REAL to REAL conversion");
+            return {std::move(converted.value)};
+          }
+        }
+        return std::nullopt;
+      },
+      x.u);
 }
 
 template<typename A>
@@ -388,9 +281,9 @@ auto Power<A>::FoldScalar(FoldingContext &context, const Scalar<Operand> &x,
   return std::nullopt;
 }
 
-template<typename A, typename B>
-auto RealToIntPower<A, B>::FoldScalar(FoldingContext &context,
-    const Scalar<Operand> &x, const Scalar<ExponentOperand> &y)
+template<typename A>
+auto RealToIntPower<A>::FoldScalar(FoldingContext &context,
+    const Scalar<BaseOperand> &x, const Scalar<ExponentOperand> &y)
     -> std::optional<Scalar<Result>> {
   return std::visit(
       [&](const auto &pow) -> std::optional<Scalar<Result>> {
@@ -517,6 +410,11 @@ template<typename A> std::string Relational<A>::infix() const {
   return "."s + EnumToString(opr) + '.';
 }
 
+std::ostream &Relational<SomeType>::Dump(std::ostream &o) const {
+  std::visit([&](const auto &rel) { rel.Dump(o); }, u);
+  return o;
+}
+
 template<int KIND> const char *LogicalOperation<KIND>::infix() const {
   const char *result{nullptr};
   switch (logicalOperator) {
@@ -528,107 +426,48 @@ template<int KIND> const char *LogicalOperation<KIND>::infix() const {
   return result;
 }
 
-template<typename... A>
-std::ostream &DumpExpr(std::ostream &o, const std::variant<A...> &u) {
-  std::visit(common::visitors{[&](const BOZLiteralConstant &x) {
-                                o << "Z'" << x.Hexadecimal() << "'";
-                              },
-                 [&](const auto &x) { x.Dump(o); }},
-      u);
+template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
+  if constexpr (T::category == TypeCategory::Integer) {
+    return o << value.SignedDecimal() << '_' << Result::kind;
+  } else if constexpr (T::category == TypeCategory::Real ||
+      T::category == TypeCategory::Complex) {
+    return o << value.DumpHexadecimal() << '_' << Result::kind;
+  } else if constexpr (T::category == TypeCategory::Character) {
+    return o << Result::kind << '_' << parser::QuoteCharacterLiteral(value);
+  } else if constexpr (T::category == TypeCategory::Logical) {
+    if (value.IsTrue()) {
+      o << ".TRUE.";
+    } else {
+      o << ".FALSE.";
+    }
+    return o << '_' << Result::kind;
+  } else {
+    return value.u.Dump(o);
+  }
+}
+
+template<typename RESULT>
+std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
+  std::visit(
+      common::visitors{[&](const BOZLiteralConstant &x) {
+                         o << "Z'" << x.Hexadecimal() << "'";
+                       },
+          [&](const DataReference<Result> &dr) { dr.reference->Dump(o); },
+          [&](const FunctionReference<Result> &fr) { fr.reference->Dump(o); },
+          [&](const CopyableIndirection<Substring> &s) { s->Dump(o); },
+          [&](const auto &x) { x.Dump(o); }},
+      derived().u);
   return o;
 }
 
-template<TypeCategory CAT>
-std::ostream &Expr<SomeKind<CAT>>::Dump(std::ostream &o) const {
-  return DumpExpr(o, u.u);
-}
-
-std::ostream &AnyRelational::Dump(std::ostream &o) const {
-  return DumpExpr(o, u);
-}
-
-std::ostream &Expr<SomeType>::Dump(std::ostream &o) const {
-  return DumpExpr(o, u);
-}
-
-template<int KIND>
-std::ostream &Expr<Type<TypeCategory::Integer, KIND>>::Dump(
-    std::ostream &o) const {
-  std::visit(common::visitors{[&](const Scalar<Result> &n) {
-                                o << n.SignedDecimal() << '_' << KIND;
-                              },
-                 [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
-                 [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const auto &x) { x.Dump(o); }},
-      u_);
-  return o;
-}
-
-template<int KIND>
-std::ostream &Expr<Type<TypeCategory::Real, KIND>>::Dump(
-    std::ostream &o) const {
-  std::visit(common::visitors{[&](const Scalar<Result> &n) {
-                                o << n.DumpHexadecimal();
-                              },
-                 [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
-                 [&](const CopyableIndirection<ComplexPart> &d) { d->Dump(o); },
-                 [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const auto &x) { x.Dump(o); }},
-      u_);
-  return o;
-}
-
-template<int KIND>
-std::ostream &Expr<Type<TypeCategory::Complex, KIND>>::Dump(
-    std::ostream &o) const {
-  std::visit(common::visitors{[&](const Scalar<Result> &n) {
-                                o << n.DumpHexadecimal();
-                              },
-                 [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
-                 [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const auto &x) { x.Dump(o); }},
-      u_);
-  return o;
-}
-
-template<int KIND>
-std::ostream &Expr<Type<TypeCategory::Character, KIND>>::Dump(
-    std::ostream &o) const {
-  std::visit(common::visitors{[&](const Scalar<Result> &s) {
-                                o << KIND << '_'
-                                  << parser::QuoteCharacterLiteral(s);
-                              },
-                 //          [&](const Parentheses<Result> &p) { p.Dump(o); },
-                 [&](const Concat<KIND> &c) { c.Dump(o); },
-                 [&](const Extremum<Result> &mm) { mm.Dump(o); },
-                 [&](const auto &ind) { ind->Dump(o); }},
-      u_);
-  return o;
-}
-
-template<int KIND>
-std::ostream &Expr<Type<TypeCategory::Logical, KIND>>::Dump(
-    std::ostream &o) const {
-  std::visit(common::visitors{[&](const Scalar<Result> &tf) {
-                                o << (tf.IsTrue() ? ".TRUE." : ".FALSE.") << '_'
-                                  << KIND;
-                              },
-                 [&](const CopyableIndirection<DataRef> &d) { d->Dump(o); },
-                 [&](const CopyableIndirection<FunctionRef> &d) { d->Dump(o); },
-                 [&](const auto &x) { x.Dump(o); }},
-      u_);
-  return o;
-}
-
-// LEN()
 template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
-      common::visitors{[](const Scalar<Result> &c) {
+      common::visitors{[](const Constant<Result> &c) {
                          // std::string::size_type isn't convertible to uint64_t
                          // on Darwin
                          return Expr<SubscriptInteger>{
-                             static_cast<std::uint64_t>(c.size())};
+                             static_cast<std::uint64_t>(c.value.size())};
                        },
           [](const Concat<KIND> &c) {
             return c.template operand<0>().LEN() +
@@ -638,64 +477,32 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
             return Expr<SubscriptInteger>{Extremum<SubscriptInteger>{
                 c.template operand<0>().LEN(), c.template operand<1>().LEN()}};
           },
-          [](const CopyableIndirection<DataRef> &dr) { return dr->LEN(); },
+          [](const DataReference<Result> &dr) { return dr.reference->LEN(); },
           [](const CopyableIndirection<Substring> &ss) { return ss->LEN(); },
-          [](const CopyableIndirection<FunctionRef> &fr) {
-            return fr->proc().LEN();
+          [](const FunctionReference<Result> &fr) {
+            return fr.reference->proc().LEN();
           }},
-      u_);
+      u);
 }
 
-// ScalarValue
-
-template<TypeCategory CAT>
-auto Expr<SomeKind<CAT>>::ScalarValue() const -> std::optional<Scalar<Result>> {
+template<typename RESULT>
+auto ExpressionBase<RESULT>::ScalarValue() const
+    -> std::optional<Scalar<Result>> {
+  using Const = Scalar<Result>;
   return std::visit(
-      [](const auto &x) -> std::optional<Scalar<Result>> {
-        if (auto c{x.ScalarValue()}) {
-          return {Scalar<Result>{std::move(*c)}};
+      [](const auto &x) -> std::optional<Const> {
+        using Ty = std::decay_t<decltype(x)>;
+        if constexpr (IsConstantTrait<Ty>) {
+          return {Const{x.value}};
         }
+        // TODO: Also succeed for a parenthesized constant
         return std::nullopt;
       },
-      u.u);
+      derived().u);
 }
 
-auto Expr<SomeType>::ScalarValue() const -> std::optional<Scalar<Result>> {
-  return std::visit(
-      common::visitors{
-          [](const BOZLiteralConstant &) -> std::optional<Scalar<Result>> {
-            return std::nullopt;
-          },
-          [](const auto &x) -> std::optional<Scalar<Result>> {
-            if (auto c{x.ScalarValue()}) {
-              return {common::MoveVariant<Scalar<Result>>(std::move(c->u))};
-            }
-            return std::nullopt;
-          }},
-      u);
-}
-
-// Rank
-
-template<TypeCategory CAT> int Expr<SomeKind<CAT>>::Rank() const {
-  return std::visit([](const auto &x) { return x.Rank(); }, u.u);
-}
-
-int Expr<SomeType>::Rank() const {
-  // Written thus, instead of common::visitors, to dodge a bug in G++ 7.2.
-  return std::visit(
-      [](const auto &x) {
-        if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
-                          BOZLiteralConstant>) {
-          return 1;
-        } else {
-          return x.Rank();
-        }
-      },
-      u);
-}
-
-// Template instantiations
+// Template instantiations to resolve the "extern template" declarations
+// in expression.h.
 
 template class Expr<Type<TypeCategory::Integer, 1>>;
 template class Expr<Type<TypeCategory::Integer, 2>>;
@@ -713,6 +520,16 @@ template class Expr<Type<TypeCategory::Complex, 8>>;
 template class Expr<Type<TypeCategory::Complex, 10>>;
 template class Expr<Type<TypeCategory::Complex, 16>>;
 template class Expr<Type<TypeCategory::Character, 1>>;  // TODO others
+template class Expr<Type<TypeCategory::Logical, 1>>;
+template class Expr<Type<TypeCategory::Logical, 2>>;
+template class Expr<Type<TypeCategory::Logical, 4>>;
+template class Expr<Type<TypeCategory::Logical, 8>>;
+template class Expr<SomeInteger>;
+template class Expr<SomeReal>;
+template class Expr<SomeComplex>;
+template class Expr<SomeCharacter>;
+template class Expr<SomeLogical>;
+template class Expr<SomeType>;
 
 template struct Relational<Type<TypeCategory::Integer, 1>>;
 template struct Relational<Type<TypeCategory::Integer, 2>>;
@@ -730,17 +547,33 @@ template struct Relational<Type<TypeCategory::Complex, 8>>;
 template struct Relational<Type<TypeCategory::Complex, 10>>;
 template struct Relational<Type<TypeCategory::Complex, 16>>;
 template struct Relational<Type<TypeCategory::Character, 1>>;  // TODO others
+template struct Relational<SomeType>;
 
-template class Expr<Type<TypeCategory::Logical, 1>>;
-template class Expr<Type<TypeCategory::Logical, 2>>;
-template class Expr<Type<TypeCategory::Logical, 4>>;
-template class Expr<Type<TypeCategory::Logical, 8>>;
+template struct ExpressionBase<Type<TypeCategory::Integer, 1>>;
+template struct ExpressionBase<Type<TypeCategory::Integer, 2>>;
+template struct ExpressionBase<Type<TypeCategory::Integer, 4>>;
+template struct ExpressionBase<Type<TypeCategory::Integer, 8>>;
+template struct ExpressionBase<Type<TypeCategory::Integer, 16>>;
+template struct ExpressionBase<Type<TypeCategory::Real, 2>>;
+template struct ExpressionBase<Type<TypeCategory::Real, 4>>;
+template struct ExpressionBase<Type<TypeCategory::Real, 8>>;
+template struct ExpressionBase<Type<TypeCategory::Real, 10>>;
+template struct ExpressionBase<Type<TypeCategory::Real, 16>>;
+template struct ExpressionBase<Type<TypeCategory::Complex, 2>>;
+template struct ExpressionBase<Type<TypeCategory::Complex, 4>>;
+template struct ExpressionBase<Type<TypeCategory::Complex, 8>>;
+template struct ExpressionBase<Type<TypeCategory::Complex, 10>>;
+template struct ExpressionBase<Type<TypeCategory::Complex, 16>>;
+template struct ExpressionBase<Type<TypeCategory::Character, 1>>;
+template struct ExpressionBase<Type<TypeCategory::Logical, 1>>;
+template struct ExpressionBase<Type<TypeCategory::Logical, 2>>;
+template struct ExpressionBase<Type<TypeCategory::Logical, 4>>;
+template struct ExpressionBase<Type<TypeCategory::Logical, 8>>;
+template struct ExpressionBase<SomeInteger>;
+template struct ExpressionBase<SomeReal>;
+template struct ExpressionBase<SomeComplex>;
+template struct ExpressionBase<SomeCharacter>;
+template struct ExpressionBase<SomeLogical>;
+template struct ExpressionBase<SomeType>;
 
-template class Expr<SomeInteger>;
-template class Expr<SomeReal>;
-template class Expr<SomeComplex>;
-template class Expr<SomeCharacter>;
-template class Expr<SomeLogical>;
-
-template class Expr<SomeType>;
 }  // namespace Fortran::evaluate

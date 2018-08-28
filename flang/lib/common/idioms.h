@@ -104,7 +104,7 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
       return false; \
     } \
   } \
-  template<typename A> constexpr bool T { class_trait_ns_##T::trait_value<A>() }
+  template<typename A> constexpr bool T { class_trait_ns_##T::trait_value<A>() };
 
 // Define enum class NAME with the given enumerators, a static
 // function EnumToString() that maps enumerators to std::string,
