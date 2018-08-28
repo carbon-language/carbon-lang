@@ -7815,7 +7815,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, const SDValue *To) {
       const SDValue &ToOp = To[Use.getResNo()];
       ++UI;
       Use.set(ToOp);
-      if (To->getNode()->isDivergent() != From->isDivergent())
+      if (ToOp->isDivergent() != From->isDivergent())
         updateDivergence(User);
     } while (UI != UE && *UI == User);
     // Now that we have modified User, add it back to the CSE maps.  If it
