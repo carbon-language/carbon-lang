@@ -66,6 +66,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/LoopPassManager.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/GuardUtils.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <algorithm>
@@ -527,7 +528,7 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       using namespace PatternMatch;
       if (((I.use_empty() &&
             match(&I, m_Intrinsic<Intrinsic::invariant_start>())) ||
-           match(&I, m_Intrinsic<Intrinsic::experimental_guard>())) &&
+           isGuard(&I)) &&
           IsMustExecute && IsMemoryNotModified &&
           CurLoop->hasLoopInvariantOperands(&I)) {
         hoist(I, DT, CurLoop, SafetyInfo, ORE);

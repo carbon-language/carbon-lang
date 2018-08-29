@@ -34,6 +34,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/GuardUtils.h"
 #include <cassert>
 #include <cstdint>
 #include <vector>
@@ -172,8 +173,7 @@ void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA) {
   // Guards are marked as modifying memory for control flow modelling purposes,
   // but don't actually modify any specific memory location.
   using namespace PatternMatch;
-  bool MayWriteMemory = I->mayWriteToMemory() &&
-    !match(I, m_Intrinsic<Intrinsic::experimental_guard>()) &&
+  bool MayWriteMemory = I->mayWriteToMemory() && !isGuard(I) &&
     !(I->use_empty() && match(I, m_Intrinsic<Intrinsic::invariant_start>()));
   if (!MayWriteMemory) {
     Alias = SetMayAlias;

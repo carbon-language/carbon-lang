@@ -65,6 +65,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/GuardUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -2607,9 +2608,8 @@ bool JumpThreadingPass::ProcessGuards(BasicBlock *BB) {
 
   if (auto *BI = dyn_cast<BranchInst>(Parent->getTerminator()))
     for (auto &I : *BB)
-      if (match(&I, m_Intrinsic<Intrinsic::experimental_guard>()))
-        if (ThreadGuard(BB, cast<IntrinsicInst>(&I), BI))
-          return true;
+      if (isGuard(&I) && ThreadGuard(BB, cast<IntrinsicInst>(&I), BI))
+        return true;
 
   return false;
 }

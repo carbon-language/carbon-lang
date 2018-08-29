@@ -49,10 +49,8 @@ static bool lowerGuardIntrinsic(Function &F) {
 
   SmallVector<CallInst *, 8> ToLower;
   for (auto &I : instructions(F))
-    if (auto *CI = dyn_cast<CallInst>(&I))
-      if (auto *F = CI->getCalledFunction())
-        if (F->getIntrinsicID() == Intrinsic::experimental_guard)
-          ToLower.push_back(CI);
+    if (isGuard(&I))
+      ToLower.push_back(cast<CallInst>(&I));
 
   if (ToLower.empty())
     return false;
