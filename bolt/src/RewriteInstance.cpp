@@ -2148,7 +2148,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       auto Name = Relocation::isGOT(Rel.getType()) ? "Zero" : SymbolName;
       ReferencedSymbol = BC->registerNameAtAddress(Name, 0, 0, 0);
       SymbolAddress = 0;
-      Addend = Address;
+      if (Relocation::isGOT(Rel.getType()))
+        Addend = Address;
       DEBUG(dbgs() << "BOLT-DEBUG: forcing relocation against symbol "
                    << SymbolName << " with addend " << Addend << '\n');
     } else if (ReferencedBF) {
