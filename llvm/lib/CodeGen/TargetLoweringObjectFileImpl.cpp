@@ -424,6 +424,9 @@ static SectionKind getELFKindForNamedSection(StringRef Name, SectionKind K) {
       Name.startswith(".llvm.linkonce.tb."))
     return SectionKind::getThreadBSS();
 
+  if (Name.startswith(".debug_"))
+    return SectionKind::getMetadata();
+
   return K;
 }
 

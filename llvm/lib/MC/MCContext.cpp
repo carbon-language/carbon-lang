@@ -394,6 +394,15 @@ MCSectionELF *MCContext::getELFSection(const Twine &Section, unsigned Type,
   auto IterBool = ELFUniquingMap.insert(
       std::make_pair(ELFSectionKey{Section.str(), Group, UniqueID}, nullptr));
   auto &Entry = *IterBool.first;
+  MCSectionELF *&Sec = Entry.second;
+  if (!IterBool.second) {
+    // We want to let users add additional flags even for sections with
+    // defaults. For example, .debug_str has "MS" flags by default and user
+    // might want to add "E".
+    Sec->setFlags(Sec->getFlags() | Flags);
+    return Sec;
+  }
+
   if (!IterBool.second)
     return Entry.second;
 
@@ -407,10 +416,9 @@ MCSectionELF *MCContext::getELFSection(const Twine &Section, unsigned Type,
   else
     Kind = SectionKind::getReadOnly();
 
-  MCSectionELF *Result = createELFSectionImpl(
-      CachedName, Type, Flags, Kind, EntrySize, GroupSym, UniqueID, Associated);
-  Entry.second = Result;
-  return Result;
+  Sec = createELFSectionImpl(CachedName, Type, Flags, Kind, EntrySize, GroupSym,
+                             UniqueID, Associated);
+  return Sec;
 }
 
 MCSectionELF *MCContext::createELFGroupSection(const MCSymbolELF *Group) {
