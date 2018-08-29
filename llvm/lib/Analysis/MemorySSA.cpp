@@ -429,15 +429,20 @@ checkClobberSanity(const MemoryAccess *Start, MemoryAccess *ClobberAt,
       // We should never hit liveOnEntry, unless it's the clobber.
       assert(!MSSA.isLiveOnEntryDef(MA) && "Hit liveOnEntry before clobber?");
 
-      // If Start is a Def, skip self.
-      if (MA == Start)
-        continue;
-
       if (const auto *MD = dyn_cast<MemoryDef>(MA)) {
-        (void)MD;
+        // If Start is a Def, skip self.
+        if (MD == Start)
+          continue;
+
         assert(!instructionClobbersQuery(MD, MAP.second, Query.Inst, AA)
                     .IsClobber &&
                "Found clobber before reaching ClobberAt!");
+        continue;
+      }
+
+      if (const auto *MU = dyn_cast<MemoryUse>(MA)) {
+        assert (MU == Start &&
+                "Can only find use in def chain if Start is a use");
         continue;
       }
 
