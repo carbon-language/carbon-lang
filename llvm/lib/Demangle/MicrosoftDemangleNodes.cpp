@@ -565,9 +565,10 @@ void VariableSymbolNode::output(OutputStream &OS, OutputFlags Flags) const {
     Type->outputPost(OS, Flags);
 }
 
-void CustomNode::output(OutputStream &OS, OutputFlags Flags) const {
-  OS << Name;
+void CustomTypeNode::outputPre(OutputStream &OS, OutputFlags Flags) const {
+  Identifier->output(OS, Flags);
 }
+void CustomTypeNode::outputPost(OutputStream &OS, OutputFlags Flags) const {}
 
 void QualifiedNameNode::output(OutputStream &OS, OutputFlags Flags) const {
   Components->output(OS, Flags, "::");

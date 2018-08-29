@@ -148,7 +148,10 @@ enum class CallingConv : uint8_t {
 
 enum class ReferenceKind : uint8_t { None, LValueRef, RValueRef };
 
-enum OutputFlags { OF_Default = 0, OF_NoCallingConvention = 1 };
+enum OutputFlags {
+  OF_Default = 0,
+  OF_NoCallingConvention = 1,
+};
 
 // Types
 enum class PrimitiveKind {
@@ -392,8 +395,8 @@ struct FunctionSignatureNode : public TypeNode {
   explicit FunctionSignatureNode(NodeKind K) : TypeNode(K) {}
   FunctionSignatureNode() : TypeNode(NodeKind::FunctionSignature) {}
 
-  virtual void outputPre(OutputStream &OS, OutputFlags Flags) const;
-  virtual void outputPost(OutputStream &OS, OutputFlags Flags) const;
+  void outputPre(OutputStream &OS, OutputFlags Flags) const override;
+  void outputPost(OutputStream &OS, OutputFlags Flags) const override;
 
   // Valid if this FunctionTypeNode is the Pointee of a PointerType or
   // MemberPointerType.
@@ -566,13 +569,13 @@ struct IntrinsicNode : public TypeNode {
   void output(OutputStream &OS, OutputFlags Flags) const override {}
 };
 
-struct CustomNode : public Node {
-  CustomNode() : Node(NodeKind::Custom) {}
+struct CustomTypeNode : public TypeNode {
+  CustomTypeNode() : TypeNode(NodeKind::Custom) {}
 
-  void output(OutputStream &OS, OutputFlags Flags) const override;
+  void outputPre(OutputStream &OS, OutputFlags Flags) const override;
+  void outputPost(OutputStream &OS, OutputFlags Flags) const override;
 
-  // The string to print.
-  StringView Name;
+  IdentifierNode *Identifier;
 };
 
 struct NodeArrayNode : public Node {
