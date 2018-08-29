@@ -58,8 +58,6 @@ static uptr MapDynamicShadow(uptr shadow_size_bytes) {
 
 }  // namespace __hwasan
 
-#if HWASAN_PREMAP_SHADOW
-
 extern "C" {
 
 INTERFACE_ATTRIBUTE void __hwasan_shadow();
@@ -117,15 +115,11 @@ void __hwasan_shadow();
 
 }  // extern "C"
 
-#endif  // HWASAN_PREMAP_SHADOW
-
 namespace __hwasan {
 
 uptr FindDynamicShadowStart(uptr shadow_size_bytes) {
-#if HWASAN_PREMAP_SHADOW
   if (IsPremapShadowAvailable())
     return FindPremappedShadowStart(shadow_size_bytes);
-#endif
   return MapDynamicShadow(shadow_size_bytes);
 }
 

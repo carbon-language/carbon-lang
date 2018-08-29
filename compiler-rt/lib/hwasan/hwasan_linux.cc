@@ -157,7 +157,7 @@ bool InitShadow() {
   kHighMemEnd = GetHighMemEnd();
 
   // Determine shadow memory base offset.
-  InitializeShadowBaseAddress(MEM_TO_SHADOW_SIZE(kHighMemEnd));
+  InitializeShadowBaseAddress(MemToShadowSize(kHighMemEnd));
 
   // Place the low memory first.
   if (SHADOW_OFFSET) {
@@ -166,20 +166,20 @@ bool InitShadow() {
   } else {
     // LowMem covers as much of the first 4GB as possible.
     kLowMemEnd = (1UL << 32) - 1;
-    kLowMemStart = MEM_TO_SHADOW(kLowMemEnd) + 1;
+    kLowMemStart = MemToShadow(kLowMemEnd) + 1;
   }
 
   // Define the low shadow based on the already placed low memory.
-  kLowShadowEnd = MEM_TO_SHADOW(kLowMemEnd);
-  kLowShadowStart = SHADOW_OFFSET ? SHADOW_OFFSET : MEM_TO_SHADOW(kLowMemStart);
+  kLowShadowEnd = MemToShadow(kLowMemEnd);
+  kLowShadowStart = SHADOW_OFFSET ? SHADOW_OFFSET : MemToShadow(kLowMemStart);
 
   // High shadow takes whatever memory is left up there (making sure it is not
   // interfering with low memory in the fixed case).
-  kHighShadowEnd = MEM_TO_SHADOW(kHighMemEnd);
-  kHighShadowStart = Max(kLowMemEnd, MEM_TO_SHADOW(kHighShadowEnd)) + 1;
+  kHighShadowEnd = MemToShadow(kHighMemEnd);
+  kHighShadowStart = Max(kLowMemEnd, MemToShadow(kHighShadowEnd)) + 1;
 
   // High memory starts where allocated shadow allows.
-  kHighMemStart = SHADOW_TO_MEM(kHighShadowStart);
+  kHighMemStart = ShadowToMem(kHighShadowStart);
 
   // Check the sanity of the defined memory ranges (there might be gaps).
   CHECK_EQ(kHighMemStart % GetMmapGranularity(), 0);

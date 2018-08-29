@@ -151,7 +151,7 @@ void ReportInvalidFree(StackTrace *stack, uptr tagged_addr) {
   ScopedErrorReportLock l;
   uptr untagged_addr = UntagAddr(tagged_addr);
   tag_t ptr_tag = GetTagFromPointer(tagged_addr);
-  tag_t *tag_ptr = reinterpret_cast<tag_t*>(MEM_TO_SHADOW(untagged_addr));
+  tag_t *tag_ptr = reinterpret_cast<tag_t*>(MemToShadow(untagged_addr));
   tag_t mem_tag = *tag_ptr;
   Decorator d;
   Printf("%s", d.Error());
@@ -187,7 +187,7 @@ void ReportTagMismatch(StackTrace *stack, uptr tagged_addr, uptr access_size,
          untagged_addr, pc);
 
   tag_t ptr_tag = GetTagFromPointer(tagged_addr);
-  tag_t *tag_ptr = reinterpret_cast<tag_t*>(MEM_TO_SHADOW(untagged_addr));
+  tag_t *tag_ptr = reinterpret_cast<tag_t*>(MemToShadow(untagged_addr));
   tag_t mem_tag = *tag_ptr;
   Printf("%s", d.Access());
   Printf("%s of size %zu at %p tags: %02x/%02x (ptr/mem)\n",

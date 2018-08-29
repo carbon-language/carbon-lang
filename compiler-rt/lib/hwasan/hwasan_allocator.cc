@@ -178,7 +178,7 @@ static bool PointerAndMemoryTagsMatch(void *tagged_ptr) {
   CHECK(tagged_ptr);
   tag_t ptr_tag = GetTagFromPointer(reinterpret_cast<uptr>(tagged_ptr));
   tag_t mem_tag = *reinterpret_cast<tag_t *>(
-      MEM_TO_SHADOW(UntagPtr(tagged_ptr)));
+      MemToShadow(reinterpret_cast<uptr>(UntagPtr(tagged_ptr))));
   return ptr_tag == mem_tag;
 }
 

@@ -54,15 +54,15 @@ void HwasanThread::SetThreadStackAndTls() {
 
   int local;
   CHECK(AddrIsInStack((uptr)&local));
-  CHECK(MEM_IS_APP(stack_bottom_));
-  CHECK(MEM_IS_APP(stack_top_ - 1));
+  CHECK(MemIsApp(stack_bottom_));
+  CHECK(MemIsApp(stack_top_ - 1));
 }
 
 void HwasanThread::Init() {
   SetThreadStackAndTls();
   if (stack_bottom_) {
-    CHECK(MEM_IS_APP(stack_bottom_));
-    CHECK(MEM_IS_APP(stack_top_ - 1));
+    CHECK(MemIsApp(stack_bottom_));
+    CHECK(MemIsApp(stack_top_ - 1));
   }
 }
 

@@ -16,6 +16,7 @@
 #define HWASAN_MAPPING_H
 
 #include "sanitizer_common/sanitizer_internal_defs.h"
+#include "hwasan_interface_internal.h"
 
 // Typical mapping on Linux/x86_64 with fixed shadow mapping:
 // || [0x080000000000, 0x7fffffffffff] || HighMem    ||
@@ -47,36 +48,27 @@
 // || [0x007477480000, 0x007bbebc7fff] || LowShadow  ||
 // || [0x000000000000, 0x00747747ffff] || LowMem     ||
 
-static constexpr __sanitizer::u64 kDefaultShadowSentinel = ~(__sanitizer::u64)0;
+static constexpr u64 kDefaultShadowSentinel = ~(u64)0;
 
 // Reasonable values are 4 (for 1/16th shadow) and 6 (for 1/64th).
-constexpr __sanitizer::uptr kShadowScale = 4;
-constexpr __sanitizer::uptr kShadowAlignment = 1ULL << kShadowScale;
+constexpr uptr kShadowScale = 4;
+constexpr uptr kShadowAlignment = 1ULL << kShadowScale;
 
-#if SANITIZER_ANDROID
-# define HWASAN_FIXED_MAPPING 0
-#else
-# define HWASAN_FIXED_MAPPING 1
-#endif
-
-#if HWASAN_FIXED_MAPPING
-# define SHADOW_OFFSET (0)
-# define HWASAN_PREMAP_SHADOW 0
-#else
-# define SHADOW_OFFSET (__hwasan_shadow_memory_dynamic_address)
-# define HWASAN_PREMAP_SHADOW 1
-#endif
+#define SHADOW_OFFSET (__hwasan_shadow_memory_dynamic_address)
 
 #define SHADOW_GRANULARITY (1ULL << kShadowScale)
 
-#define MEM_TO_SHADOW(mem) (((uptr)(mem) >> kShadowScale) + SHADOW_OFFSET)
-#define SHADOW_TO_MEM(shadow) (((uptr)(shadow) - SHADOW_OFFSET) << kShadowScale)
-
-#define MEM_TO_SHADOW_SIZE(size) ((uptr)(size) >> kShadowScale)
-
-#define MEM_IS_APP(mem) MemIsApp((uptr)(mem))
-
 namespace __hwasan {
+
+inline uptr MemToShadow(uptr untagged_addr) {
+  return (untagged_addr >> kShadowScale) + SHADOW_OFFSET;
+}
+inline uptr ShadowToMem(uptr shadow_addr) {
+  return (shadow_addr - SHADOW_OFFSET) << kShadowScale;
+}
+inline uptr MemToShadowSize(uptr size) {
+  return size >> kShadowScale;
+}
 
 bool MemIsApp(uptr p);
 
