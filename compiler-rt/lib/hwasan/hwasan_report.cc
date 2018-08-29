@@ -191,7 +191,8 @@ void ReportTagMismatch(StackTrace *stack, uptr tagged_addr, uptr access_size,
   tag_t mem_tag = *tag_ptr;
   Printf("%s", d.Access());
   Printf("%s of size %zu at %p tags: %02x/%02x (ptr/mem)\n",
-         is_store ? "WRITE" : "READ", access_size, untagged_addr, ptr_tag, mem_tag);
+         is_store ? "WRITE" : "READ", access_size, untagged_addr, ptr_tag,
+         mem_tag);
   Printf("%s", d.Default());
 
   stack->Print();

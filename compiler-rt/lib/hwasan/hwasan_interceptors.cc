@@ -1,4 +1,4 @@
-//===-- hwasan_interceptors.cc ----------------------------------------------===//
+//===-- hwasan_interceptors.cc --------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -132,7 +132,8 @@ static void *AllocateFromLocalPool(uptr size_in_bytes) {
   extern "C" SANITIZER_INTERFACE_ATTRIBUTE RET __sanitizer_##FN(ARGS) \
       ALIAS(WRAPPER_NAME(FN));
 
-SANITIZER_ALIAS(int, posix_memalign, void **memptr, SIZE_T alignment, SIZE_T size);
+SANITIZER_ALIAS(int, posix_memalign, void **memptr, SIZE_T alignment,
+                SIZE_T size);
 SANITIZER_ALIAS(void *, memalign, SIZE_T alignment, SIZE_T size);
 SANITIZER_ALIAS(void *, aligned_alloc, SIZE_T alignment, SIZE_T size);
 SANITIZER_ALIAS(void *, __libc_memalign, SIZE_T alignment, SIZE_T size);

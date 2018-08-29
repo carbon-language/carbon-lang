@@ -1,4 +1,4 @@
-//===-- hwasan_poisoning.cc ---------------------------------------*- C++ -*-===//
+//===-- hwasan_poisoning.cc -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

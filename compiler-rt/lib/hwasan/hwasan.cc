@@ -120,7 +120,8 @@ static void InitializeFlags() {
 #if HWASAN_CONTAINS_UBSAN
   ubsan_parser.ParseString(GetEnv("UBSAN_OPTIONS"));
 #endif
-  VPrintf(1, "HWASAN_OPTIONS: %s\n", hwasan_options ? hwasan_options : "<empty>");
+  VPrintf(1, "HWASAN_OPTIONS: %s\n",
+          hwasan_options ? hwasan_options : "<empty>");
 
   InitializeCommonFlags();
 

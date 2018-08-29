@@ -1,4 +1,4 @@
-//===-- hwasan_allocator.h ----------------------------------------*- C++ -*-===//
+//===-- hwasan_allocator.h --------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
