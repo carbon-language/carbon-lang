@@ -737,7 +737,9 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
 
     // We can only hoist a store that we can prove writes a value which is not
     // read or overwritten within the loop.  For those cases, we fallback to
-    // load store promotion instead.
+    // load store promotion instead.  TODO: We can extend this to cases where
+    // there is exactly one write to the location and that write dominates an
+    // arbitrary number of reads in the loop.
     auto &AS = CurAST->getAliasSetFor(MemoryLocation::get(SI));
 
     if (AS.isRef() || !AS.isMustAlias())
