@@ -42,8 +42,8 @@ Context::createDefaultPipeline(const PipelineOptions &Opts, InstrBuilder &IB,
 
   // Create the pipeline stages.
   auto Fetch = llvm::make_unique<FetchStage>(IB, SrcMgr);
-  auto Dispatch = llvm::make_unique<DispatchStage>(
-      STI, MRI, Opts.RegisterFileSize, Opts.DispatchWidth, *RCU, *PRF);
+  auto Dispatch = llvm::make_unique<DispatchStage>(STI, MRI, Opts.DispatchWidth,
+                                                   *RCU, *PRF);
   auto Execute = llvm::make_unique<ExecuteStage>(*HWS);
   auto Retire = llvm::make_unique<RetireStage>(*RCU, *PRF);
 
