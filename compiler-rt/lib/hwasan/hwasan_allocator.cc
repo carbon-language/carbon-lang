@@ -228,35 +228,15 @@ void *HwasanReallocate(StackTrace *stack, void *user_old_p, uptr new_size,
   if (!PointerAndMemoryTagsMatch(user_old_p))
     ReportInvalidFree(stack, reinterpret_cast<uptr>(user_old_p));
 
-  void *old_p = GetAddressFromPointer(user_old_p);
-  Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(old_p));
-  uptr old_size = meta->requested_size;
-  uptr actually_allocated_size = allocator.GetActuallyAllocatedSize(old_p);
-  if (new_size <= actually_allocated_size) {
-    // We are not reallocating here.
-    // FIXME: update stack trace for the allocation?
-    meta->requested_size = new_size;
-    if (!atomic_load_relaxed(&hwasan_allocator_tagging_enabled))
-      return user_old_p;
-    if (flags()->retag_in_realloc) {
-      HwasanThread *t = GetCurrentThread();
-      return (void *)TagMemoryAligned(
-          (uptr)old_p, new_size,
-          t ? t->GenerateRandomTag() : kFallbackAllocTag);
-    }
-    if (new_size > old_size) {
-      tag_t tag = GetTagFromPointer(reinterpret_cast<uptr>(user_old_p));
-      TagMemoryAligned((uptr)old_p + old_size, new_size - old_size, tag);
-    }
-    return user_old_p;
-  }
-  uptr memcpy_size = Min(new_size, old_size);
   void *new_p = HwasanAllocate(stack, new_size, alignment, false /*zeroise*/);
-  if (new_p) {
-    internal_memcpy(new_p, old_p, memcpy_size);
-    HwasanDeallocate(stack, old_p);
+  if (user_old_p && new_p) {
+    void *untagged_ptr_old =  GetAddressFromPointer(user_old_p);
+    Metadata *meta =
+        reinterpret_cast<Metadata *>(allocator.GetMetaData(untagged_ptr_old));
+    internal_memcpy(GetAddressFromPointer(new_p), untagged_ptr_old,
+                    Min(new_size, static_cast<uptr>(meta->requested_size)));
+    HwasanDeallocate(stack, user_old_p);
   }
-  // FIXME: update t->heap_allocations or simplify HwasanReallocate.
   return new_p;
 }
 
