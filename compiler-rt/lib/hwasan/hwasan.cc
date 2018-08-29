@@ -228,7 +228,7 @@ void __hwasan_init() {
 }
 
 void __hwasan_print_shadow(const void *p, uptr sz) {
-  uptr ptr_raw = GetAddressFromPointer((uptr)p);
+  uptr ptr_raw = UntagAddr(reinterpret_cast<uptr>(p));
   uptr shadow_first = MEM_TO_SHADOW(ptr_raw);
   uptr shadow_last = MEM_TO_SHADOW(ptr_raw + sz - 1);
   Printf("HWASan shadow map for %zx .. %zx (pointer tag %x)\n", ptr_raw,
@@ -243,7 +243,7 @@ sptr __hwasan_test_shadow(const void *p, uptr sz) {
   tag_t ptr_tag = GetTagFromPointer((uptr)p);
   if (ptr_tag == 0)
     return -1;
-  uptr ptr_raw = GetAddressFromPointer((uptr)p);
+  uptr ptr_raw = UntagAddr(reinterpret_cast<uptr>(p));
   uptr shadow_first = MEM_TO_SHADOW(ptr_raw);
   uptr shadow_last = MEM_TO_SHADOW(ptr_raw + sz - 1);
   for (uptr s = shadow_first; s <= shadow_last; ++s)

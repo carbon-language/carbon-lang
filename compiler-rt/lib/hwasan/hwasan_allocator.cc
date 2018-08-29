@@ -174,23 +174,24 @@ static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
   return user_ptr;
 }
 
-static bool PointerAndMemoryTagsMatch(void *user_ptr) {
-  CHECK(user_ptr);
-  tag_t ptr_tag = GetTagFromPointer(reinterpret_cast<uptr>(user_ptr));
+static bool PointerAndMemoryTagsMatch(void *tagged_ptr) {
+  CHECK(tagged_ptr);
+  tag_t ptr_tag = GetTagFromPointer(reinterpret_cast<uptr>(tagged_ptr));
   tag_t mem_tag = *reinterpret_cast<tag_t *>(
-      MEM_TO_SHADOW(GetAddressFromPointer(user_ptr)));
+      MEM_TO_SHADOW(UntagPtr(tagged_ptr)));
   return ptr_tag == mem_tag;
 }
 
-void HwasanDeallocate(StackTrace *stack, void *user_ptr) {
-  CHECK(user_ptr);
-  HWASAN_FREE_HOOK(user_ptr);
+void HwasanDeallocate(StackTrace *stack, void *tagged_ptr) {
+  CHECK(tagged_ptr);
+  HWASAN_FREE_HOOK(tagged_ptr);
 
-  if (!PointerAndMemoryTagsMatch(user_ptr))
-    ReportInvalidFree(stack, reinterpret_cast<uptr>(user_ptr));
+  if (!PointerAndMemoryTagsMatch(tagged_ptr))
+    ReportInvalidFree(stack, reinterpret_cast<uptr>(tagged_ptr));
 
-  void *p = GetAddressFromPointer(user_ptr);
-  Metadata *meta = reinterpret_cast<Metadata *>(allocator.GetMetaData(p));
+  void *untagged_ptr = UntagPtr(tagged_ptr);
+  Metadata *meta =
+      reinterpret_cast<Metadata *>(allocator.GetMetaData(untagged_ptr));
   uptr size = meta->requested_size;
   meta->state = CHUNK_FREE;
   meta->requested_size = 0;
@@ -201,43 +202,44 @@ void HwasanDeallocate(StackTrace *stack, void *user_ptr) {
   HwasanThread *t = GetCurrentThread();
   if (flags()->max_free_fill_size > 0) {
     uptr fill_size = Min(size, (uptr)flags()->max_free_fill_size);
-    internal_memset(p, flags()->free_fill_byte, fill_size);
+    internal_memset(untagged_ptr, flags()->free_fill_byte, fill_size);
   }
   if (flags()->tag_in_free &&
       atomic_load_relaxed(&hwasan_allocator_tagging_enabled))
-    TagMemoryAligned((uptr)p, size,
+    TagMemoryAligned((uptr)untagged_ptr, size,
                      t ? t->GenerateRandomTag() : kFallbackFreeTag);
   if (t) {
     AllocatorCache *cache = GetAllocatorCache(&t->malloc_storage());
-    allocator.Deallocate(cache, p);
+    allocator.Deallocate(cache, untagged_ptr);
     if (auto *ha = t->heap_allocations())
-      ha->push({reinterpret_cast<uptr>(user_ptr), free_context_id,
+      ha->push({reinterpret_cast<uptr>(tagged_ptr), free_context_id,
                 static_cast<u32>(size)});
   } else {
     SpinMutexLock l(&fallback_mutex);
     AllocatorCache *cache = &fallback_allocator_cache;
-    allocator.Deallocate(cache, p);
+    allocator.Deallocate(cache, untagged_ptr);
   }
 }
 
-void *HwasanReallocate(StackTrace *stack, void *user_old_p, uptr new_size,
+void *HwasanReallocate(StackTrace *stack, void *tagged_ptr_old, uptr new_size,
                      uptr alignment) {
   alignment = Max(alignment, kShadowAlignment);
   new_size = RoundUpTo(new_size, kShadowAlignment);
 
-  if (!PointerAndMemoryTagsMatch(user_old_p))
-    ReportInvalidFree(stack, reinterpret_cast<uptr>(user_old_p));
+  if (!PointerAndMemoryTagsMatch(tagged_ptr_old))
+    ReportInvalidFree(stack, reinterpret_cast<uptr>(tagged_ptr_old));
 
-  void *new_p = HwasanAllocate(stack, new_size, alignment, false /*zeroise*/);
-  if (user_old_p && new_p) {
-    void *untagged_ptr_old =  GetAddressFromPointer(user_old_p);
+  void *tagged_ptr_new =
+      HwasanAllocate(stack, new_size, alignment, false /*zeroise*/);
+  if (tagged_ptr_old && tagged_ptr_new) {
+    void *untagged_ptr_old =  UntagPtr(tagged_ptr_old);
     Metadata *meta =
         reinterpret_cast<Metadata *>(allocator.GetMetaData(untagged_ptr_old));
-    internal_memcpy(GetAddressFromPointer(new_p), untagged_ptr_old,
+    internal_memcpy(UntagPtr(tagged_ptr_new), untagged_ptr_old,
                     Min(new_size, static_cast<uptr>(meta->requested_size)));
-    HwasanDeallocate(stack, user_old_p);
+    HwasanDeallocate(stack, tagged_ptr_old);
   }
-  return new_p;
+  return tagged_ptr_new;
 }
 
 void *HwasanCalloc(StackTrace *stack, uptr nmemb, uptr size) {
@@ -258,12 +260,12 @@ HwasanChunkView FindHeapChunkByAddress(uptr address) {
   return HwasanChunkView(reinterpret_cast<uptr>(block), metadata);
 }
 
-static uptr AllocationSize(const void *user_ptr) {
-  const void *p = GetAddressFromPointer(user_ptr);
-  if (!p) return 0;
-  const void *beg = allocator.GetBlockBegin(p);
-  if (beg != p) return 0;
-  Metadata *b = (Metadata *)allocator.GetMetaData(p);
+static uptr AllocationSize(const void *tagged_ptr) {
+  const void *untagged_ptr = UntagPtr(tagged_ptr);
+  if (!untagged_ptr) return 0;
+  const void *beg = allocator.GetBlockBegin(untagged_ptr);
+  if (beg != untagged_ptr) return 0;
+  Metadata *b = (Metadata *)allocator.GetMetaData(untagged_ptr);
   return b->requested_size;
 }
 
