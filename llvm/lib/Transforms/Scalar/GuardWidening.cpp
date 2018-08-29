@@ -57,7 +57,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/GuardUtils.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 
 using namespace llvm;
@@ -106,6 +105,12 @@ static void setCondition(Instruction *I, Value *NewCond) {
     return;
   }
   cast<BranchInst>(I)->setCondition(NewCond);
+}
+
+// Whether or not the particular instruction \p I is a guard.
+static bool isGuard(const Instruction *I) {
+  using namespace llvm::PatternMatch;
+  return match(I, m_Intrinsic<Intrinsic::experimental_guard>());
 }
 
 // Eliminates the guard instruction properly.

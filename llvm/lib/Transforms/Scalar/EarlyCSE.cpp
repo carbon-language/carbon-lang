@@ -54,7 +54,6 @@
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/Utils/GuardUtils.h"
 #include <cassert>
 #include <deque>
 #include <memory>
@@ -864,7 +863,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       continue;
     }
 
-    if (isGuard(Inst)) {
+    if (match(Inst, m_Intrinsic<Intrinsic::experimental_guard>())) {
       if (auto *CondI =
               dyn_cast<Instruction>(cast<CallInst>(Inst)->getArgOperand(0))) {
         if (SimpleValue::canHandle(CondI)) {

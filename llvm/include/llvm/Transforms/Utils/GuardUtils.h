@@ -17,10 +17,6 @@ namespace llvm {
 
 class CallInst;
 class Function;
-class User;
-
-/// Returns true iff \p U has semantics of a guard.
-bool isGuard(const User *U);
 
 /// Splits control flow at point of \p Guard, replacing it with explicit branch
 /// by the condition of guard's first argument. The taken branch then goes to

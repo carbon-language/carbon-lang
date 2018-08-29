@@ -66,7 +66,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Transforms/Utils/GuardUtils.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -1903,7 +1902,8 @@ static bool isKnownNonNullFromDominatingCondition(const Value *V,
           BasicBlockEdge Edge(BI->getParent(), NonNullSuccessor);
           if (Edge.isSingleEdge() && DT->dominates(Edge, CtxI->getParent()))
             return true;
-        } else if (Pred == ICmpInst::ICMP_NE && isGuard(Curr) &&
+        } else if (Pred == ICmpInst::ICMP_NE &&
+                   match(Curr, m_Intrinsic<Intrinsic::experimental_guard>()) &&
                    DT->dominates(cast<Instruction>(Curr), CtxI)) {
           return true;
         }
