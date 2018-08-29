@@ -3,8 +3,9 @@
 
 define void @test(i32* %loc) {
 ; CHECK-LABEL: @test
-; CHECK-LABEL: exit:
+; CHECK-LABEL: entry:
 ; CHECK: store i32 0, i32* %loc
+; CHECK-LABEL: loop:
 entry:
   br label %loop
 
@@ -21,10 +22,9 @@ exit:
 
 define void @test_multiexit(i32* %loc, i1 %earlycnd) {
 ; CHECK-LABEL: @test_multiexit
-; CHECK-LABEL: exit1:
+; CHECK-LABEL: entry:
 ; CHECK: store i32 0, i32* %loc
-; CHECK-LABEL: exit2:
-; CHECK: store i32 0, i32* %loc
+; CHECK-LABEL: loop:
 entry:
   br label %loop
 
@@ -42,6 +42,24 @@ exit1:
   ret void
 exit2:
   ret void
+}
+
+define i32* @false_negative_2use(i32* %loc) {
+; CHECK-LABEL: @false_negative_2use
+; CHECK-LABEL: exit:
+; CHECK: store i32 0, i32* %loc
+entry:
+  br label %loop
+
+loop:
+  %iv = phi i32 [0, %entry], [%iv.next, %loop]
+  store i32 0, i32* %loc
+  %iv.next = add i32 %iv, 1
+  %cmp = icmp slt i32 %iv, 200
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  ret i32* %loc
 }
 
 define void @neg_lv_value(i32* %loc) {
@@ -227,4 +245,67 @@ exit:
   ret void
 }
 
+declare void @maythrow() inaccessiblememonly
 
+define void @neg_early_exit(i32* %loc) {
+; CHECK-LABEL: @neg_early_exit
+; CHECK-LABEL: body:
+; CHECK: store i32 0, i32* %loc
+; CHECK-LABEL: exit:
+entry:
+  br label %loop
+
+loop:
+  %iv = phi i32 [0, %entry], [%iv.next, %body]
+  %is_null = icmp eq i32* %loc, null
+  br i1 %is_null, label %exit, label %body
+body:
+  call void @maythrow()
+  store i32 0, i32* %loc
+  %iv.next = add i32 %iv, 1
+  %cmp = icmp slt i32 %iv, 200
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  ret void
+}
+
+define void @neg_early_throw(i32* %loc) {
+; CHECK-LABEL: @neg_early_throw
+; CHECK-LABEL: loop:
+; CHECK: store i32 0, i32* %loc
+; CHECK-LABEL: exit:
+entry:
+  br label %loop
+
+loop:
+  %iv = phi i32 [0, %entry], [%iv.next, %loop]
+  call void @maythrow()
+  store i32 0, i32* %loc
+  %iv.next = add i32 %iv, 1
+  %cmp = icmp slt i32 %iv, 200
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  ret void
+}
+
+define void @test_late_throw(i32* %loc) {
+; CHECK-LABEL: @test_late_throw
+; CHECK-LABEL: entry:
+; CHECK: store i32 0, i32* %loc
+; CHECK-LABEL: loop:
+entry:
+  br label %loop
+
+loop:
+  %iv = phi i32 [0, %entry], [%iv.next, %loop]
+  store i32 0, i32* %loc
+  call void @maythrow()
+  %iv.next = add i32 %iv, 1
+  %cmp = icmp slt i32 %iv, 200
+  br i1 %cmp, label %loop, label %exit
+
+exit:
+  ret void
+}
