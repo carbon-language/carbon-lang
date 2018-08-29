@@ -545,6 +545,7 @@ public:
 protected:
   bool BeginDecl();
   void EndDecl();
+  bool CheckUseError(const SourceName &, const Symbol &);
 
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
@@ -578,7 +579,7 @@ private:
         symbol.set_details(T(*details));
       }
     }
-    if (T *details{symbol.detailsIf<T>()}) {
+    if (T * details{symbol.detailsIf<T>()}) {
       // OK
     } else if (std::is_same_v<EntityDetails, T> &&
         (symbol.has<ObjectEntityDetails>() ||
@@ -646,6 +647,9 @@ public:
   void Post(const parser::Variable &x) {
     CheckImplicitSymbol(GetVariableName(x));
   }
+  template<typename T> void Post(const parser::LoopBounds<T> &x) {
+    CheckImplicitSymbol(&x.name.thing.thing);
+  }
   bool Pre(const parser::StructureComponent &);
   void Post(const parser::ProcedureDesignator &);
   bool Pre(const parser::FunctionReference &);
@@ -664,8 +668,10 @@ private:
   const parser::Name *GetVariableName(const parser::Expr &);
   const parser::Name *GetVariableName(const parser::Variable &);
   const Symbol *CheckImplicitSymbol(const parser::Name *);
-  bool CheckUseError(const SourceName &, const Symbol &);
   const Symbol *ResolveStructureComponent(const parser::StructureComponent &);
+  const Symbol *ResolveArrayElement(const parser::ArrayElement &);
+  const Symbol *ResolveCoindexedNamedObject(
+      const parser::CoindexedNamedObject &);
   const Symbol *ResolveDataRef(const parser::DataRef &);
   const Symbol *FindComponent(const Symbol &base, const SourceName &component);
   void CheckImports();
@@ -723,31 +729,6 @@ void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
       break;
     }
   }
-}
-
-const Symbol *DeclarationVisitor::ResolveDerivedType(const SourceName &name) {
-  auto *symbol{FindSymbol(name)};
-  if (!symbol) {
-    Say(name, "Derived type '%s' not found"_err_en_US);
-    return nullptr;
-  }
-  if (auto *details{symbol->detailsIf<UseDetails>()}) {
-    const Symbol &useSymbol{details->symbol()};
-    if (const auto *details{useSymbol.detailsIf<GenericDetails>()}) {
-      if (details->derivedType()) {
-        return details->derivedType();
-      }
-    }
-    return &useSymbol;
-  }
-  if (auto *details{symbol->detailsIf<GenericDetails>()}) {
-    if (details->derivedType()) {
-      symbol->remove_occurrence(name);
-      symbol = details->derivedType();
-      details->derivedType()->add_occurrence(name);
-    }
-  }
-  return symbol;
 }
 
 // Return the next char after ch in a way that works for ASCII or EBCDIC.
@@ -1324,18 +1305,16 @@ void ModuleVisitor::AddUse(const SourceName &location,
   localSymbol.attrs() &= ~Attrs{Attr::PUBLIC, Attr::PRIVATE};
   localSymbol.flags() |= useSymbol.flags();
   if (auto *details{localSymbol.detailsIf<UseDetails>()}) {
-    // check for importing the same symbol again:
+    // check for use-associating the same symbol again:
     if (localSymbol.GetUltimate() != useSymbol.GetUltimate()) {
       localSymbol.set_details(
-          UseErrorDetails{details->location(), *useModuleScope_});
+          UseErrorDetails{*details}.add_occurrence(location, *useModuleScope_));
     }
   } else if (auto *details{localSymbol.detailsIf<UseErrorDetails>()}) {
     details->add_occurrence(location, *useModuleScope_);
-  } else if (localSymbol.has<UnknownDetails>()) {
-    localSymbol.set_details(UseDetails{location, useSymbol});
   } else {
-    localSymbol.set_details(
-        UseErrorDetails{useSymbol.name(), *useModuleScope_});
+    CHECK(localSymbol.has<UnknownDetails>());
+    localSymbol.set_details(UseDetails{location, useSymbol});
   }
 }
 
@@ -1879,6 +1858,22 @@ void DeclarationVisitor::EndDecl() {
   EndArraySpec();
 }
 
+bool DeclarationVisitor::CheckUseError(
+    const SourceName &name, const Symbol &symbol) {
+  const auto *details{symbol.detailsIf<UseErrorDetails>()};
+  if (!details) {
+    return false;
+  }
+  Message &msg{Say(name, "Reference to '%s' is ambiguous"_err_en_US)};
+  for (const auto &pair : details->occurrences()) {
+    const SourceName &location{*pair.first};
+    const SourceName &moduleName{pair.second->name()};
+    msg.Attach(location, "'%s' was use-associated from module '%s'"_en_US,
+        name.ToString().data(), moduleName.ToString().data());
+  }
+  return true;
+}
+
 void DeclarationVisitor::Post(const parser::DimensionStmt::Declaration &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   DeclareObjectEntity(name, Attrs{});
@@ -2023,10 +2018,6 @@ void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Type &x) {
   SetDerivedDeclTypeSpec(DeclTypeSpec::TypeDerived);
   DerivedTypeSpec &type{GetDeclTypeSpec()->derivedTypeSpec()};
   if (const auto *symbol{ResolveDerivedType(type.name())}) {
-    if (!symbol->has<DerivedTypeDetails>()) {
-      Say(type.name(), "'%s' is not a derived type"_err_en_US);
-      return;
-    }
     type.set_scope(*symbol->scope());
   }
 }
@@ -2059,7 +2050,11 @@ bool DeclarationVisitor::Pre(const parser::EndTypeStmt &) {
   return false;
 }
 bool DeclarationVisitor::Pre(const parser::TypeAttrSpec::Extends &x) {
-  derivedTypeData_->extends = &x.v.source;
+  auto &name{x.v.source};
+  ResolveDerivedType(name);
+  // TODO: use resolved symbol in derived type
+  // const auto *symbol{ResolveDerivedType(name)};
+  derivedTypeData_->extends = &name;
   return false;
 }
 bool DeclarationVisitor::Pre(const parser::PrivateStmt &x) {
@@ -2137,6 +2132,30 @@ void DeclarationVisitor::SetType(
   symbol.SetType(type);
 }
 
+const Symbol *DeclarationVisitor::ResolveDerivedType(const SourceName &name) {
+  const auto *symbol{FindSymbol(name)};
+  if (!symbol) {
+    Say(name, "Derived type '%s' not found"_err_en_US);
+    return nullptr;
+  }
+  if (CheckUseError(name, *symbol)) {
+    return nullptr;
+  }
+  if (auto *details{symbol->detailsIf<UseDetails>()}) {
+    symbol = &details->symbol();
+  }
+  if (auto *details{symbol->detailsIf<GenericDetails>()}) {
+    if (details->derivedType()) {
+      symbol = details->derivedType();
+    }
+  }
+  if (!symbol->has<DerivedTypeDetails>()) {
+    Say(name, "'%s' is not a derived type"_err_en_US);
+    return nullptr;
+  }
+  return symbol;
+}
+
 // ResolveNamesVisitor implementation
 
 bool ResolveNamesVisitor::Pre(const parser::TypeParamDefStmt &x) {
@@ -2212,22 +2231,6 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
   return false;
 }
 
-bool ResolveNamesVisitor::CheckUseError(
-    const SourceName &name, const Symbol &symbol) {
-  const auto *details{symbol.detailsIf<UseErrorDetails>()};
-  if (!details) {
-    return false;
-  }
-  Message &msg{Say(name, "Reference to '%s' is ambiguous"_err_en_US)};
-  for (const auto &pair : details->occurrences()) {
-    const SourceName &location{*pair.first};
-    const SourceName &moduleName{pair.second->name()};
-    msg.Attach(location, "'%s' was use-associated from module '%s'"_en_US,
-        name.ToString().data(), moduleName.ToString().data());
-  }
-  return true;
-}
-
 bool ResolveNamesVisitor::Pre(const parser::StructureComponent &x) {
   ResolveStructureComponent(x);
   return false;
@@ -2237,6 +2240,14 @@ const Symbol *ResolveNamesVisitor::ResolveStructureComponent(
     const parser::StructureComponent &x) {
   const Symbol *dataRef = ResolveDataRef(x.base);
   return dataRef ? FindComponent(*dataRef, x.component.source) : nullptr;
+}
+const Symbol *ResolveNamesVisitor::ResolveArrayElement(
+    const parser::ArrayElement &x) {
+  return ResolveDataRef(x.base);
+}
+const Symbol *ResolveNamesVisitor::ResolveCoindexedNamedObject(
+    const parser::CoindexedNamedObject &x) {
+  return nullptr;  // TODO
 }
 
 const Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
@@ -2259,8 +2270,11 @@ const Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
           [=](const common::Indirection<parser::StructureComponent> &y) {
             return ResolveStructureComponent(*y);
           },
-          [](const auto &) {
-            return static_cast<const Symbol *>(nullptr);  // TODO
+          [=](const common::Indirection<parser::ArrayElement> &y) {
+            return ResolveArrayElement(*y);
+          },
+          [=](const common::Indirection<parser::CoindexedNamedObject> &y) {
+            return ResolveCoindexedNamedObject(*y);
           },
       },
       x.u);
@@ -2532,15 +2546,26 @@ bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {
 
 const parser::Name *ResolveNamesVisitor::GetVariableName(
     const parser::DataRef &x) {
-  return std::get_if<parser::Name>(&x.u);
+  return std::visit(
+      common::visitors{
+          [](const parser::Name &x) { return &x; },
+          [&](const common::Indirection<parser::ArrayElement> &x) {
+            return GetVariableName(x->base);
+          },
+          [](const auto &) {
+            return static_cast<const parser::Name *>(nullptr);
+          },
+      },
+      x.u);
 }
+
 const parser::Name *ResolveNamesVisitor::GetVariableName(
     const parser::Designator &x) {
   return std::visit(
       common::visitors{
-          [&](const parser::ObjectName &x) { return &x; },
+          [](const parser::ObjectName &x) { return &x; },
           [&](const parser::DataRef &x) { return GetVariableName(x); },
-          [&](const auto &) {
+          [](const auto &) {
             return static_cast<const parser::Name *>(nullptr);
           },
       },
@@ -2614,7 +2639,7 @@ void ResolveNames(Scope &rootScope, parser::Program &program,
     visitor.messages().Emit(std::cerr, cookedSource);
     return;
   }
-  RewriteParseTree(program);
+  RewriteParseTree(program, cookedSource);
 }
 
 // Map the enum in the parser to the one in GenericSpec

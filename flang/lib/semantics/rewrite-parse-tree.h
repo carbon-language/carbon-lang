@@ -17,10 +17,11 @@
 
 namespace Fortran::parser {
 struct Program;
+struct CookedSource;
 }  // namespace Fortran::parser
 
 namespace Fortran::semantics {
-void RewriteParseTree(parser::Program &);
+void RewriteParseTree(parser::Program &, const parser::CookedSource &);
 }  // namespace Fortran::semantics
 
 #endif  // FORTRAN_SEMANTICS_REWRITE_PARSE_TREE_H_

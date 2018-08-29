@@ -165,15 +165,8 @@ private:
 // we can report the error if it is used.
 class UseErrorDetails {
 public:
-  UseErrorDetails(const SourceName &location, const Scope &module) {
-    add_occurrence(location, module);
-  }
-
-  UseErrorDetails &add_occurrence(
-      const SourceName &location, const Scope &module) {
-    occurrences_.push_back(std::make_pair(&location, &module));
-    return *this;
-  }
+  UseErrorDetails(const UseDetails &);
+  UseErrorDetails &add_occurrence(const SourceName &, const Scope &);
 
   using listType = std::list<std::pair<const SourceName *, const Scope *>>;
   const listType occurrences() const { return occurrences_; };

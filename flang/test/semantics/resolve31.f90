@@ -13,31 +13,38 @@
 ! limitations under the License.
 
 subroutine s1
-  integer x
-  block
-    import, none
-    !ERROR: 'x' from host scoping unit is not accessible due to IMPORT
-    x = 1
-  end block
-end
+  integer :: t0
+  !ERROR: 't0' is not a derived type
+  type(t0) :: x
+  type :: t1
+  end type
+  type, extends(t1) :: t2
+  end type
+  !ERROR: Derived type 't3' not found
+  type, extends(t3) :: t4
+  end type
+  !ERROR: 't0' is not a derived type
+  type, extends(t0) :: t5
+  end type
+end subroutine
 
+module m1
+  type t0
+  end type
+end
+module m2
+  type t
+  end type
+end
+module m3
+  type t0
+  end type
+end
 subroutine s2
-  block
-    import, none
-    !ERROR: 'y' from host scoping unit is not accessible due to IMPORT
-    y = 1
-  end block
-end
-
-subroutine s3
-  integer j
-  block
-    import, only: j
-    type t
-      !ERROR: 'i' from host scoping unit is not accessible due to IMPORT
-      real :: x(10) = [(i, &
-        !ERROR: 'i' from host scoping unit is not accessible due to IMPORT
-        i=1,10)]
-    end type
-  end block
+  use m1
+  use m2, t0 => t
+  use m3
+  !ERROR: Reference to 't0' is ambiguous
+  type, extends(t0) :: t1
+  end type
 end subroutine

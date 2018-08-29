@@ -73,6 +73,15 @@ const Symbol &UseDetails::module() const {
   return *symbol_->owner().symbol();
 }
 
+UseErrorDetails::UseErrorDetails(const UseDetails &useDetails) {
+  add_occurrence(useDetails.location(), *useDetails.module().scope());
+}
+UseErrorDetails &UseErrorDetails::add_occurrence(
+    const SourceName &location, const Scope &module) {
+  occurrences_.push_back(std::make_pair(&location, &module));
+  return *this;
+}
+
 GenericDetails::GenericDetails(const listType &specificProcs) {
   for (const auto *proc : specificProcs) {
     add_specificProc(proc);
