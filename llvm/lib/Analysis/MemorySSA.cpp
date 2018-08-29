@@ -441,6 +441,7 @@ checkClobberSanity(const MemoryAccess *Start, MemoryAccess *ClobberAt,
       }
 
       if (const auto *MU = dyn_cast<MemoryUse>(MA)) {
+        (void)MU;
         assert (MU == Start &&
                 "Can only find use in def chain if Start is a use");
         continue;
