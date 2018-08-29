@@ -54,17 +54,14 @@ static constexpr u64 kDefaultShadowSentinel = ~(u64)0;
 constexpr uptr kShadowScale = 4;
 constexpr uptr kShadowAlignment = 1ULL << kShadowScale;
 
-#define SHADOW_OFFSET (__hwasan_shadow_memory_dynamic_address)
-
-#define SHADOW_GRANULARITY (1ULL << kShadowScale)
-
 namespace __hwasan {
 
 inline uptr MemToShadow(uptr untagged_addr) {
-  return (untagged_addr >> kShadowScale) + SHADOW_OFFSET;
+  return (untagged_addr >> kShadowScale) +
+         __hwasan_shadow_memory_dynamic_address;
 }
 inline uptr ShadowToMem(uptr shadow_addr) {
-  return (shadow_addr - SHADOW_OFFSET) << kShadowScale;
+  return (shadow_addr - __hwasan_shadow_memory_dynamic_address) << kShadowScale;
 }
 inline uptr MemToShadowSize(uptr size) {
   return size >> kShadowScale;

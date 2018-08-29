@@ -101,51 +101,38 @@ static void PrintAddressSpaceLayout() {
   else
     CHECK_EQ(kHighShadowEnd + 1, kHighMemStart);
   PrintRange(kHighShadowStart, kHighShadowEnd, "HighShadow");
-  if (SHADOW_OFFSET) {
-    if (kLowShadowEnd + 1 < kHighShadowStart)
-      PrintRange(kLowShadowEnd + 1, kHighShadowStart - 1, "ShadowGap");
-    else
-      CHECK_EQ(kLowMemEnd + 1, kHighShadowStart);
-    PrintRange(kLowShadowStart, kLowShadowEnd, "LowShadow");
-    if (kLowMemEnd + 1 < kLowShadowStart)
-      PrintRange(kLowMemEnd + 1, kLowShadowStart - 1, "ShadowGap");
-    else
-      CHECK_EQ(kLowMemEnd + 1, kLowShadowStart);
-    PrintRange(kLowMemStart, kLowMemEnd, "LowMem");
-    CHECK_EQ(0, kLowMemStart);
-  } else {
-    if (kLowMemEnd + 1 < kHighShadowStart)
-      PrintRange(kLowMemEnd + 1, kHighShadowStart - 1, "ShadowGap");
-    else
-      CHECK_EQ(kLowMemEnd + 1, kHighShadowStart);
-    PrintRange(kLowMemStart, kLowMemEnd, "LowMem");
-    CHECK_EQ(kLowShadowEnd + 1, kLowMemStart);
-    PrintRange(kLowShadowStart, kLowShadowEnd, "LowShadow");
-    PrintRange(0, kLowShadowStart - 1, "ShadowGap");
-  }
+  if (kLowShadowEnd + 1 < kHighShadowStart)
+    PrintRange(kLowShadowEnd + 1, kHighShadowStart - 1, "ShadowGap");
+  else
+    CHECK_EQ(kLowMemEnd + 1, kHighShadowStart);
+  PrintRange(kLowShadowStart, kLowShadowEnd, "LowShadow");
+  if (kLowMemEnd + 1 < kLowShadowStart)
+    PrintRange(kLowMemEnd + 1, kLowShadowStart - 1, "ShadowGap");
+  else
+    CHECK_EQ(kLowMemEnd + 1, kLowShadowStart);
+  PrintRange(kLowMemStart, kLowMemEnd, "LowMem");
+  CHECK_EQ(0, kLowMemStart);
 }
 
 static uptr GetHighMemEnd() {
   // HighMem covers the upper part of the address space.
   uptr max_address = GetMaxUserVirtualAddress();
-  if (SHADOW_OFFSET)
-    // Adjust max address to make sure that kHighMemEnd and kHighMemStart are
-    // properly aligned:
-    max_address |= SHADOW_GRANULARITY * GetMmapGranularity() - 1;
+  // Adjust max address to make sure that kHighMemEnd and kHighMemStart are
+  // properly aligned:
+  max_address |= (GetMmapGranularity() << kShadowScale) - 1;
   return max_address;
 }
 
 static void InitializeShadowBaseAddress(uptr shadow_size_bytes) {
   // Set the shadow memory address to uninitialized.
   __hwasan_shadow_memory_dynamic_address = kDefaultShadowSentinel;
-  uptr shadow_start = SHADOW_OFFSET;
+  uptr shadow_start = __hwasan_shadow_memory_dynamic_address;
   // Detect if a dynamic shadow address must be used and find the available
   // location when necessary. When dynamic address is used, the macro
   // kLowShadowBeg expands to __hwasan_shadow_memory_dynamic_address which
   // was just set to kDefaultShadowSentinel.
   if (shadow_start == kDefaultShadowSentinel) {
     __hwasan_shadow_memory_dynamic_address = 0;
-    CHECK_EQ(0, SHADOW_OFFSET);
     shadow_start = FindDynamicShadowStart(shadow_size_bytes);
   }
   // Update the shadow memory address (potentially) used by instrumentation.
@@ -160,18 +147,12 @@ bool InitShadow() {
   InitializeShadowBaseAddress(MemToShadowSize(kHighMemEnd));
 
   // Place the low memory first.
-  if (SHADOW_OFFSET) {
-    kLowMemEnd = SHADOW_OFFSET - 1;
-    kLowMemStart = 0;
-  } else {
-    // LowMem covers as much of the first 4GB as possible.
-    kLowMemEnd = (1UL << 32) - 1;
-    kLowMemStart = MemToShadow(kLowMemEnd) + 1;
-  }
+  kLowMemEnd = __hwasan_shadow_memory_dynamic_address - 1;
+  kLowMemStart = 0;
 
   // Define the low shadow based on the already placed low memory.
   kLowShadowEnd = MemToShadow(kLowMemEnd);
-  kLowShadowStart = SHADOW_OFFSET ? SHADOW_OFFSET : MemToShadow(kLowMemStart);
+  kLowShadowStart = __hwasan_shadow_memory_dynamic_address;
 
   // High shadow takes whatever memory is left up there (making sure it is not
   // interfering with low memory in the fixed case).
@@ -188,10 +169,7 @@ bool InitShadow() {
   CHECK_GT(kHighShadowStart, kLowMemEnd);
   CHECK_GT(kLowMemEnd, kLowMemStart);
   CHECK_GT(kLowShadowEnd, kLowShadowStart);
-  if (SHADOW_OFFSET)
-    CHECK_GT(kLowShadowStart, kLowMemEnd);
-  else
-    CHECK_GT(kLowMemEnd, kLowShadowStart);
+  CHECK_GT(kLowShadowStart, kLowMemEnd);
 
   if (Verbosity())
     PrintAddressSpaceLayout();
@@ -202,15 +180,10 @@ bool InitShadow() {
 
   // Protect all the gaps.
   ProtectGap(0, Min(kLowMemStart, kLowShadowStart));
-  if (SHADOW_OFFSET) {
-    if (kLowMemEnd + 1 < kLowShadowStart)
-      ProtectGap(kLowMemEnd + 1, kLowShadowStart - kLowMemEnd - 1);
-    if (kLowShadowEnd + 1 < kHighShadowStart)
-      ProtectGap(kLowShadowEnd + 1, kHighShadowStart - kLowShadowEnd - 1);
-  } else {
-    if (kLowMemEnd + 1 < kHighShadowStart)
-      ProtectGap(kLowMemEnd + 1, kHighShadowStart - kLowMemEnd - 1);
-  }
+  if (kLowMemEnd + 1 < kLowShadowStart)
+    ProtectGap(kLowMemEnd + 1, kLowShadowStart - kLowMemEnd - 1);
+  if (kLowShadowEnd + 1 < kHighShadowStart)
+    ProtectGap(kLowShadowEnd + 1, kHighShadowStart - kLowShadowEnd - 1);
   if (kHighShadowEnd + 1 < kHighMemStart)
     ProtectGap(kHighShadowEnd + 1, kHighMemStart - kHighShadowEnd - 1);
 
