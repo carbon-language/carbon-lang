@@ -1379,13 +1379,6 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   // Canonicalize shuffle(x    ,x,mask) -> shuffle(x, undef,mask')
   // Canonicalize shuffle(undef,x,mask) -> shuffle(x, undef,mask').
   if (LHS == RHS || isa<UndefValue>(LHS)) {
-    if (isa<UndefValue>(LHS) && LHS == RHS) {
-      // shuffle(undef,undef,mask) -> undef.
-      Value *Result = (VWidth == LHSWidth)
-                      ? LHS : UndefValue::get(SVI.getType());
-      return replaceInstUsesWith(SVI, Result);
-    }
-
     // Remap any references to RHS to use LHS.
     SmallVector<Constant*, 16> Elts;
     for (unsigned i = 0, e = LHSWidth; i != VWidth; ++i) {
