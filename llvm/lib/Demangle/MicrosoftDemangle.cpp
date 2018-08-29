@@ -994,7 +994,7 @@ Demangler::demangleTemplateInstantiationName(StringView &MangledName,
     // Render this class template name into a string buffer so that we can
     // memorize it for the purpose of back-referencing.
     OutputStream OS = OutputStream::create(nullptr, nullptr, 1024);
-    Identifier->output(OS);
+    Identifier->output(OS, OF_Default);
     OS << '\0';
     char *Name = OS.getBuffer();
 
@@ -1422,7 +1422,7 @@ Demangler::demangleLocallyScopedNamePiece(StringView &MangledName) {
   // Render the parent symbol's name into a buffer.
   OutputStream OS = OutputStream::create(nullptr, nullptr, 1024);
   OS << '`';
-  Scope->output(OS);
+  Scope->output(OS, OF_Default);
   OS << '\'';
   OS << "::`" << Number.first << "'";
   OS << '\0';
@@ -2223,7 +2223,7 @@ void Demangler::dumpBackReferences() {
     OS.setCurrentPosition(0);
 
     TypeNode *T = Backrefs.FunctionParams[I];
-    T->output(OS);
+    T->output(OS, OF_Default);
 
     std::printf("  [%d] - %.*s\n", (int)I, (int)OS.getCurrentPosition(),
                 OS.getBuffer());
@@ -2254,7 +2254,7 @@ char *llvm::microsoftDemangle(const char *MangledName, char *Buf, size_t *N,
     OS << MangledName;
     *Status = llvm::demangle_invalid_mangled_name;
   } else {
-    S->output(OS);
+    S->output(OS, OF_Default);
     *Status = llvm::demangle_success;
   }
 
