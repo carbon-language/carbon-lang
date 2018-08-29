@@ -539,7 +539,7 @@ template<> struct Relational<SomeType> {
   Relational(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &o) const;
-  common::MapTemplate<Relational, std::variant, RelationalTypes> u;
+  common::MapTemplate<Relational, RelationalTypes> u;
 };
 
 extern template struct Relational<Type<TypeCategory::Integer, 1>>;
@@ -605,7 +605,7 @@ public:
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
 
-  common::MapTemplate<Expr, std::variant, CategoryTypes<CAT>> u;
+  common::MapTemplate<Expr, CategoryTypes<CAT>> u;
 };
 
 // BOZ literal constants need to be wide enough to hold an integer or real
@@ -645,7 +645,7 @@ public:
   }
 
   using Others = std::variant<BOZLiteralConstant>;
-  using Categories = common::MapTemplate<Expr, std::variant, SomeCategory>;
+  using Categories = common::MapTemplate<Expr, SomeCategory>;
   common::CombineVariants<Others, Categories> u;
 };
 

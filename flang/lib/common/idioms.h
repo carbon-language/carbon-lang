@@ -104,7 +104,7 @@ template<typename... LAMBDAS> visitors(LAMBDAS... x)->visitors<LAMBDAS...>;
       return false; \
     } \
   } \
-  template<typename A> constexpr bool T { class_trait_ns_##T::trait_value<A>() };
+  template<typename A> constexpr bool T{class_trait_ns_##T::trait_value<A>()};
 
 // Define enum class NAME with the given enumerators, a static
 // function EnumToString() that maps enumerators to std::string,
@@ -128,57 +128,6 @@ template<typename A> struct ListItemCount {
     return Fortran::common::EnumIndexToString( \
         static_cast<int>(e), #__VA_ARGS__); \
   }
-
-template<typename A> std::optional<A> GetIfNonNull(const A *p) {
-  if (p) {
-    return {*p};
-  }
-  return std::nullopt;
-}
-
-// If a variant holds a value of a particular type, return a copy in a
-// std::optional<>.
-template<typename A, typename VARIANT>
-std::optional<A> GetIf(const VARIANT &u) {
-  return GetIfNonNull(std::get_if<A>(&u));
-}
-
-// Collapses a nested std::optional<std::optional<A>> to std::optional<A>
-template<typename A>
-std::optional<A> JoinOptionals(std::optional<std::optional<A>> &&x) {
-  if (x.has_value()) {
-    return std::move(*x);
-  }
-  return std::nullopt;
-}
-
-// Apply a function to optional argument(s), if are all present.
-// N.B. This function uses a "functor" in the C++ sense -- a type with
-// a member function operator() -- to implement a "functor" in the category
-// theoretical sense.
-template<typename A, typename B>
-std::optional<A> MapOptional(std::function<A(B &&)> &f, std::optional<B> &&x) {
-  if (x.has_value()) {
-    return {f(std::move(*x))};
-  }
-  return std::nullopt;
-}
-
-template<typename A, typename B, typename C>
-std::optional<A> MapOptional(std::function<A(B &&, C &&)> &f,
-    std::optional<B> &&x, std::optional<C> &&y) {
-  if (x.has_value() && y.has_value()) {
-    return {f(std::move(*x), std::move(*y))};
-  }
-  return std::nullopt;
-}
-
-// Move a value from one variant type to another.  The types allowed in the
-// source variant must all be allowed in the destination variant type.
-template<typename TOV, typename FROMV> TOV MoveVariant(FROMV &&u) {
-  return std::visit(
-      [](auto &&x) -> TOV { return {std::move(x)}; }, std::move(u));
-}
 
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_IDIOMS_H_

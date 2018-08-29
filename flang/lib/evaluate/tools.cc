@@ -22,6 +22,25 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
+using SameRealExprPair = SameKindExprs<TypeCategory::Real>;
+
+static SameRealExprPair ConversionHelper(
+    Expr<SomeReal> &&x, Expr<SomeReal> &&y) {
+  return std::visit(
+      [&](auto &&rx, auto &&ry) -> SameRealExprPair {
+        using XTy = ResultType<decltype(rx)>;
+        using YTy = ResultType<decltype(ry)>;
+        if constexpr (std::is_same_v<XTy, YTy>) {
+          return {SameExprs<XTy>{std::move(rx), std::move(ry)}};
+        } else if constexpr (XTy::kind < YTy::kind) {
+          return {SameExprs<YTy>{ConvertTo(ry, std::move(rx)), std::move(ry)}};
+        } else {
+          return {SameExprs<XTy>{std::move(rx), ConvertTo(rx, std::move(ry))}};
+        }
+      },
+      std::move(x.u), std::move(y.u));
+}
+
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y) {
@@ -31,24 +50,22 @@ ConvertRealOperandsResult ConvertRealOperands(
               Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
             // Can happen in a CMPLX() constructor.  Per F'2018,
             // both integer operands are converted to default REAL.
-            return std::optional{std::make_pair(
-                ToCategoryExpr(ConvertToType<DefaultReal>(std::move(ix))),
-                ToCategoryExpr(ConvertToType<DefaultReal>(std::move(iy))))};
+            return {ConversionHelper(ConvertToType<DefaultReal>(std::move(ix)),
+                ConvertToType<DefaultReal>(std::move(iy)))};
           },
           [&](Expr<SomeInteger> &&ix,
               Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
-            auto rx{ConvertTo(ry, std::move(ix))};
-            return std::optional{std::make_pair(std::move(rx), std::move(ry))};
+            return {
+                ConversionHelper(ConvertTo(ry, std::move(ix)), std::move(ry))};
           },
           [&](Expr<SomeReal> &&rx,
               Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
-            auto ry{ConvertTo(rx, std::move(iy))};
-            return std::optional{std::make_pair(std::move(rx), std::move(ry))};
+            return {
+                ConversionHelper(std::move(rx), ConvertTo(rx, std::move(iy)))};
           },
           [&](Expr<SomeReal> &&rx,
               Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
-            ConvertToSameKind(rx, ry);
-            return std::optional{std::make_pair(std::move(rx), std::move(ry))};
+            return {ConversionHelper(std::move(rx), std::move(ry))};
           },
           [&](auto &&, auto &&) -> ConvertRealOperandsResult {
             // TODO: allow BOZ here?
@@ -66,8 +83,8 @@ ConvertRealOperandsResult ConvertRealOperands(
   }};
   using fType = ConvertRealOperandsResult(Expr<SomeType> &&, Expr<SomeType> &&);
   std::function<fType> f{partial};
-  return common::JoinOptionals(
-      common::MapOptional(f, std::move(x), std::move(y)));
+  return common::JoinOptional(
+      common::MapOptional(std::move(f), std::move(x), std::move(y)));
 }
 
 template<template<typename> class OPR, TypeCategory CAT>

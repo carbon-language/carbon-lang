@@ -230,7 +230,7 @@ template<typename TYPES> struct SomeScalar {
     return common::GetIf<Scalar<T>>(u);
   }
 
-  common::MapTemplate<Scalar, std::variant, Types> u;
+  common::MapTemplate<Scalar, Types> u;
 };
 
 template<TypeCategory CATEGORY>

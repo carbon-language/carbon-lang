@@ -18,6 +18,7 @@
 #include "expression.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
+#include <array>
 #include <optional>
 #include <utility>
 
@@ -93,18 +94,22 @@ Expr<SomeKind<C>> operator/(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
 // Generalizers: these take expressions of more specific types and wrap
 // them in more abstract containers.
 
-template<TypeCategory CAT, int KIND>
-Expr<SomeKind<CAT>> ToCategoryExpr(Expr<Type<CAT, KIND>> &&x) {
-  return {std::move(x)};
-}
-
-template<typename A> Expr<SomeType> ToGenericExpr(A &&x) {
+template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
   return {std::move(x)};
 }
 
 template<TypeCategory CAT, int KIND>
-Expr<SomeType> ToGenericExpr(Expr<Type<CAT, KIND>> &&x) {
-  return {ToCategoryExpr(std::move(x))};
+Expr<SomeKind<CAT>> AsCategoryExpr(Expr<Type<CAT, KIND>> &&x) {
+  return {std::move(x)};
+}
+
+template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
+  return {std::move(x)};
+}
+
+template<TypeCategory CAT, int KIND>
+Expr<SomeType> AsGenericExpr(Expr<Type<CAT, KIND>> &&x) {
+  return {AsCategoryExpr(std::move(x))};
 }
 
 // Creation of conversion expressions can be done to either a known
@@ -125,7 +130,7 @@ Expr<Type<TC, TK>> ConvertTo(
 template<TypeCategory TC, int TK, TypeCategory FC, int FK>
 Expr<Type<TC, TK>> ConvertTo(
     const Expr<Type<TC, TK>> &, Expr<Type<FC, FK>> &&x) {
-  return ConvertToType<Type<TC, TK>>(ToCategoryExpr(std::move(x)));
+  return ConvertToType<Type<TC, TK>>(AsCategoryExpr(std::move(x)));
 }
 
 template<TypeCategory TC, TypeCategory FC>
@@ -134,7 +139,7 @@ Expr<SomeKind<TC>> ConvertTo(
   return std::visit(
       [&](const auto &toKindExpr) {
         using KindExpr = std::decay_t<decltype(toKindExpr)>;
-        return ToCategoryExpr(
+        return AsCategoryExpr(
             ConvertToType<ResultType<KindExpr>>(std::move(from)));
       },
       to.u);
@@ -143,14 +148,14 @@ Expr<SomeKind<TC>> ConvertTo(
 template<TypeCategory TC, TypeCategory FC, int FK>
 Expr<SomeKind<TC>> ConvertTo(
     const Expr<SomeKind<TC>> &to, Expr<Type<FC, FK>> &&from) {
-  return ConvertTo(to, ToCategoryExpr(std::move(from)));
+  return ConvertTo(to, AsCategoryExpr(std::move(from)));
 }
 
 template<typename FT>
 Expr<SomeType> ConvertTo(const Expr<SomeType> &to, Expr<FT> &&from) {
   return std::visit(
       [&](const auto &toCatExpr) {
-        return ToGenericExpr(ConvertTo(toCatExpr, std::move(from)));
+        return AsGenericExpr(ConvertTo(toCatExpr, std::move(from)));
       },
       to.u);
 }
@@ -175,9 +180,16 @@ void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
 // Ensure that both operands of an intrinsic REAL operation (or CMPLX()
 // constructor) are INTEGER or REAL, then convert them as necessary to the
 // same kind of REAL.
-// TODO pmk: need a better type that guarantees that both have same kind
+template<int N = 2> struct SameExprsHelper {
+  template<typename A> using SameExprs = std::array<Expr<A>, N>;
+};
+template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;
+template<TypeCategory CAT, int N = 2>
+using SameKindExprs =
+    common::MapTemplate<SameExprsHelper<N>::template SameExprs,
+        CategoryTypes<CAT>>;
 using ConvertRealOperandsResult =
-    std::optional<std::pair<Expr<SomeReal>, Expr<SomeReal>>>;
+    std::optional<SameKindExprs<TypeCategory::Real, 2>>;
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 ConvertRealOperandsResult ConvertRealOperands(parser::ContextualMessages &,

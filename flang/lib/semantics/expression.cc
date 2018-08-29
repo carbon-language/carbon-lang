@@ -107,7 +107,7 @@ template<TypeCategory CAT, typename VALUE> struct ConstantHelper {
       if (kind == Ty::kind) {
         result = Expr<Ty>{evaluate::Constant<Ty>{std::move(value)}};
       } else {
-        SetKindTraverser<J+1>(kind);
+        SetKindTraverser<J + 1>(kind);
       }
     }
   }
@@ -130,10 +130,9 @@ static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
   return std::move(helper.result);
 }
 
-template<typename A>
-MaybeExpr PackageGeneric(std::optional<A> &&x) {
+template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
   if (x.has_value()) {
-    return {evaluate::ToGenericExpr(std::move(*x))};
+    return {evaluate::AsGenericExpr(std::move(*x))};
   }
   return std::nullopt;
 }
@@ -154,12 +153,14 @@ MaybeExpr AnalyzeHelper(
   std::optional<Expr<evaluate::SubscriptInteger>> lb, ub;
   if (lbTree.has_value()) {
     if (MaybeIntExpr lbExpr{AnalyzeHelper(ea, *lbTree)}) {
-      lb = evaluate::ConvertToType<evaluate::SubscriptInteger>(std::move(*lbExpr));
+      lb = evaluate::ConvertToType<evaluate::SubscriptInteger>(
+          std::move(*lbExpr));
     }
   }
   if (ubTree.has_value()) {
     if (MaybeIntExpr ubExpr{AnalyzeHelper(ea, *ubTree)}) {
-      ub = evaluate::ConvertToType<evaluate::SubscriptInteger>(std::move(*ubExpr));
+      ub = evaluate::ConvertToType<evaluate::SubscriptInteger>(
+          std::move(*ubExpr));
     }
   }
   if (!lb.has_value() || !ub.has_value()) {
@@ -169,7 +170,7 @@ MaybeExpr AnalyzeHelper(
   evaluate::CopyableIndirection<evaluate::Substring> ind{std::move(substring)};
   Expr<evaluate::DefaultCharacter> chExpr{std::move(ind)};
   chExpr.Fold(ea.context());
-  return {evaluate::ToGenericExpr(chExpr)};
+  return {evaluate::AsGenericExpr(chExpr)};
 }
 
 // Common handling of parser::IntLiteralConstant and SignedIntLiteralConstant
@@ -179,7 +180,8 @@ std::optional<Expr<evaluate::SomeInteger>> IntLiteralConstant(
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultIntegerKind())};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
-  ConstantHelper<TypeCategory::Integer, decltype(value)> helper{std::move(value)};
+  ConstantHelper<TypeCategory::Integer, decltype(value)> helper{
+      std::move(value)};
   helper.SetKind(kind);
   if (!helper.result.has_value()) {
     ea.context().messages.Say("unsupported INTEGER(KIND=%ju)"_err_en_US,
@@ -236,7 +238,8 @@ std::optional<Expr<evaluate::SomeReal>> ReadRealLiteral(
   if (context.flushDenormalsToZero) {
     value = value.FlushDenormalToZero();
   }
-  return {evaluate::ToCategoryExpr(Expr<RealType>{evaluate::Constant<RealType>{value}})};
+  return {evaluate::AsCategoryExpr(
+      Expr<RealType>{evaluate::Constant<RealType>{value}})};
 }
 
 struct RealHelper {
@@ -250,7 +253,7 @@ struct RealHelper {
       if (kind == Ty::kind) {
         result = ReadRealLiteral<Ty::kind>(literal, context);
       } else {
-        SetKindTraverser<J+1>(kind);
+        SetKindTraverser<J + 1>(kind);
       }
     }
   }
@@ -597,22 +600,19 @@ ExpressionAnalyzer::KindParam ExpressionAnalyzer::Analyze(
       kindParam->u);
 }
 
-// TODO pmk: need a way to represent a tuple of same-typed expressions, avoid CHECK here
 std::optional<Expr<evaluate::SomeComplex>> ExpressionAnalyzer::ConstructComplex(
     MaybeExpr &&real, MaybeExpr &&imaginary) {
   if (auto converted{evaluate::ConvertRealOperands(
           context_.messages, std::move(real), std::move(imaginary))}) {
     return {std::visit(
-        [&](auto &&re) -> Expr<evaluate::SomeComplex> {
-          using realType = evaluate::ResultType<decltype(re)>;
-          auto *im{std::get_if<Expr<realType>>(&converted->second.u)};
-          CHECK(im != nullptr);
-          constexpr int kind{realType::kind};
-          using zType = evaluate::Type<TypeCategory::Complex, kind>;
-          return {Expr<evaluate::SomeComplex>{Expr<zType>{evaluate::ComplexConstructor<kind>{
-              std::move(re), std::move(*im)}}}};
+        [](auto &&pair) -> std::optional<Expr<evaluate::SomeComplex>> {
+          using realType = evaluate::ResultType<decltype(pair[0])>;
+          using zType = evaluate::SameKind<TypeCategory::Complex, realType>;
+          auto cmplx{evaluate::ComplexConstructor<zType::kind>{
+              std::move(pair[0]), std::move(pair[1])}};
+          return {evaluate::AsCategoryExpr(evaluate::AsExpr(std::move(cmplx)))};
         },
-        std::move(converted->first.u))};
+        *converted)};
   }
   return std::nullopt;
 }
