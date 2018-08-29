@@ -15,6 +15,7 @@
 #include "hwasan.h"
 #include "hwasan_allocator.h"
 #include "hwasan_mapping.h"
+#include "hwasan_thread.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
@@ -60,6 +61,21 @@ struct HeapAddressDescription {
     GetStackTraceFromId(alloc_stack_id).Print();
   }
 };
+
+bool FindHeapAllocation(HeapAllocationsRingBuffer *rb,
+                        uptr tagged_addr,
+                        HeapAllocationRecord *har) {
+  if (!rb) return false;
+  for (uptr i = 0, size = rb->size(); i < size; i++) {
+    auto h = (*rb)[i];
+    if (h.tagged_addr <= tagged_addr &&
+        h.tagged_addr + h.requested_size > tagged_addr) {
+      *har = h;
+      return true;
+    }
+  }
+  return false;
+}
 
 bool GetHeapAddressInformation(uptr addr, uptr access_size,
                                HeapAddressDescription *description) {
@@ -181,6 +197,18 @@ void ReportTagMismatch(StackTrace *stack, uptr addr, uptr access_size,
   stack->Print();
 
   PrintAddressDescription(address, access_size);
+
+  // Temporary functionality; to be folded into PrintAddressDescription.
+  // TODOs:
+  // * implement ThreadRegistry
+  // * check all threads, not just the current one.
+  // * remove reduntant fields from the allocator metadata
+  // * use the allocations found in the ring buffer for the main report.
+  HeapAllocationRecord har;
+  HwasanThread *t = GetCurrentThread();
+  if (t && FindHeapAllocation(t->heap_allocations(), addr, &har))
+    Printf("Address found in the ring buffer: %p %u %u\n", har.tagged_addr,
+           har.free_context_id, har.requested_size);
 
   PrintTagsAroundAddr(tag_ptr);
 

@@ -50,6 +50,9 @@ class HwasanThread {
   void LeaveInterceptorScope() { in_interceptor_scope_--; }
 
   HwasanThreadLocalMallocStorage &malloc_storage() { return malloc_storage_; }
+  HeapAllocationsRingBuffer *heap_allocations() {
+    return heap_allocations_;
+  }
 
   tag_t GenerateRandomTag();
 
@@ -75,6 +78,7 @@ class HwasanThread {
   u32 random_buffer_;
 
   HwasanThreadLocalMallocStorage malloc_storage_;
+  HeapAllocationsRingBuffer *heap_allocations_;
 };
 
 HwasanThread *GetCurrentThread();

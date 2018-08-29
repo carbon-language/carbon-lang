@@ -32,7 +32,8 @@ HwasanThread *HwasanThread::Create(thread_callback_t start_routine,
   thread->arg_ = arg;
   thread->destructor_iterations_ = GetPthreadDestructorIterations();
   thread->random_state_ = flags()->random_tags ? RandomSeed() : 0;
-
+  if (auto sz = flags()->heap_history_size)
+    thread->heap_allocations_ = RingBuffer<HeapAllocationRecord>::New(sz);
   return thread;
 }
 
@@ -76,6 +77,8 @@ void HwasanThread::Destroy() {
   malloc_storage().CommitBack();
   ClearShadowForThreadStackAndTLS();
   uptr size = RoundUpTo(sizeof(HwasanThread), GetPageSizeCached());
+  if (heap_allocations_)
+    heap_allocations_->Delete();
   UnmapOrDie(this, size);
   DTLS_Destroy();
 }

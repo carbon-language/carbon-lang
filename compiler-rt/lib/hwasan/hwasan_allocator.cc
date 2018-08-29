@@ -36,7 +36,7 @@ enum {
 
 struct Metadata {
   u64 state : 2;
-  u64 requested_size : 62;
+  u32 requested_size;  // Current use cases of hwasan do not expect sizes > 4G.
   u32 alloc_context_id;
   u32 free_context_id;
 };
@@ -155,7 +155,7 @@ static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
   Metadata *meta =
       reinterpret_cast<Metadata *>(allocator.GetMetaData(allocated));
   meta->state = CHUNK_ALLOCATED;
-  meta->requested_size = size;
+  meta->requested_size = static_cast<u32>(size);
   meta->alloc_context_id = StackDepotPut(*stack);
   if (zeroise) {
     internal_memset(allocated, 0, size);
@@ -194,7 +194,8 @@ void HwasanDeallocate(StackTrace *stack, void *user_ptr) {
   uptr size = meta->requested_size;
   meta->state = CHUNK_FREE;
   meta->requested_size = 0;
-  meta->free_context_id = StackDepotPut(*stack);
+  u32 free_context_id = StackDepotPut(*stack);
+  meta->free_context_id = free_context_id;
   // This memory will not be reused by anyone else, so we are free to keep it
   // poisoned.
   HwasanThread *t = GetCurrentThread();
@@ -209,6 +210,9 @@ void HwasanDeallocate(StackTrace *stack, void *user_ptr) {
   if (t) {
     AllocatorCache *cache = GetAllocatorCache(&t->malloc_storage());
     allocator.Deallocate(cache, p);
+    if (auto *ha = t->heap_allocations())
+      ha->push({reinterpret_cast<uptr>(user_ptr), free_context_id,
+                static_cast<u32>(size)});
   } else {
     SpinMutexLock l(&fallback_mutex);
     AllocatorCache *cache = &fallback_allocator_cache;
@@ -252,6 +256,7 @@ void *HwasanReallocate(StackTrace *stack, void *user_old_p, uptr new_size,
     internal_memcpy(new_p, old_p, memcpy_size);
     HwasanDeallocate(stack, old_p);
   }
+  // FIXME: update t->heap_allocations or simplify HwasanReallocate.
   return new_p;
 }
 

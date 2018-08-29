@@ -44,3 +44,7 @@ HWASAN_FLAG(int, malloc_fill_byte, 0xbe,
           "Value used to fill the newly allocated memory.")
 HWASAN_FLAG(int, free_fill_byte, 0x55,
           "Value used to fill deallocated memory.")
+HWASAN_FLAG(int, heap_history_size, 1023,
+          "The number of heap (de)allocations remembered per thread. "
+          "Affects the quality of heap-related reports, but not the ability "
+          "to find bugs.")
