@@ -29,7 +29,7 @@ TimelineView::TimelineView(const MCSubtargetInfo &sti, MCInstPrinter &Printer,
     MaxIterations = DEFAULT_ITERATIONS;
   NumInstructions *= std::min(MaxIterations, AsmSequence.getNumIterations());
   Timeline.resize(NumInstructions);
-  TimelineViewEntry InvalidTVEntry = {-1, 0, 0, 0};
+  TimelineViewEntry InvalidTVEntry = {-1, 0, 0, 0, 0};
   std::fill(Timeline.begin(), Timeline.end(), InvalidTVEntry);
 
   WaitTimeEntry NullWTEntry = {0, 0, 0};
