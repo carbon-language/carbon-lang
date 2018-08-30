@@ -65,11 +65,12 @@ template <size_t Index> struct IndexedMemcpy {
 };
 
 template <uint8_t Kind, class... Data>
-Error writeMetadata(raw_ostream &OS, Data... Ds) {
+Error writeMetadata(raw_ostream &OS, Data&&... Ds) {
   MetadataBlob B;
   B.Type = 1;
   B.RecordKind = Kind;
-  IndexedMemcpy<0>::Copy(B.Data, std::make_tuple(Ds...));
+  auto T = std::make_tuple(std::forward<Data>(std::move(Ds))...);
+  IndexedMemcpy<0>::Copy(B.Data, T);
   OS.write(reinterpret_cast<const char *>(&B), sizeof(MetadataBlob));
   return Error::success();
 }
