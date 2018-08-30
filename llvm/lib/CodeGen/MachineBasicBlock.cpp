@@ -1379,7 +1379,12 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
   const_iterator I(Before);
   // If this is the last insn in the block, don't search forwards.
   if (I != end()) {
-    for (++I; I != end() && N > 0; ++I, --N) {
+    for (++I; I != end() && N > 0; ++I) {
+      if (I->isDebugInstr())
+        continue;
+
+      --N;
+
       MachineOperandIteratorBase::PhysRegInfo Info =
           ConstMIOperands(*I).analyzePhysReg(Reg, TRI);
 
@@ -1416,6 +1421,11 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
     do {
       --I;
 
+      if (I->isDebugInstr())
+        continue;
+
+      --N;
+
       MachineOperandIteratorBase::PhysRegInfo Info =
           ConstMIOperands(*I).analyzePhysReg(Reg, TRI);
 
@@ -1440,7 +1450,8 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
       // Register must be live if we read it.
       if (Info.Read)
         return LQR_Live;
-    } while (I != begin() && --N > 0);
+
+    } while (I != begin() && N > 0);
   }
 
   // Did we get to the start of the block?
@@ -1453,7 +1464,6 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
 
     return LQR_Dead;
   }
-
 
   // At this point we have no idea of the liveness of the register.
   return LQR_Unknown;
