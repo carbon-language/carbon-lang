@@ -166,7 +166,8 @@ static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
 
   void *user_ptr = allocated;
   if (flags()->tag_in_malloc &&
-      atomic_load_relaxed(&hwasan_allocator_tagging_enabled))
+      atomic_load_relaxed(&hwasan_allocator_tagging_enabled) &&
+      !t->TaggingIsDisabled())
     user_ptr = (void *)TagMemoryAligned(
         (uptr)user_ptr, size, t ? t->GenerateRandomTag() : kFallbackAllocTag);
 

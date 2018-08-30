@@ -133,7 +133,12 @@ static void InitializeFlags() {
 void GetStackTrace(BufferedStackTrace *stack, uptr max_s, uptr pc, uptr bp,
                    void *context, bool request_fast_unwind) {
   Thread *t = GetCurrentThread();
-  if (!t || !StackTrace::WillUseFastUnwind(request_fast_unwind)) {
+  if (!t) {
+    // the thread is still being created.
+    stack->size = 0;
+    return;
+  }
+  if (!StackTrace::WillUseFastUnwind(request_fast_unwind)) {
     // Block reports from our interceptors during _Unwind_Backtrace.
     SymbolizerScope sym_scope;
     return stack->Unwind(max_s, pc, bp, context, 0, 0, request_fast_unwind);

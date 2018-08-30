@@ -81,6 +81,9 @@ class Thread {
   tag_t GenerateRandomTag();
 
   int destructor_iterations_;
+  void DisableTagging() { tagging_disabled_++; }
+  void EnableTagging() { tagging_disabled_--; }
+  bool TaggingIsDisabled() const { return tagging_disabled_; }
 
  private:
   // NOTE: There is no Thread constructor. It is allocated
@@ -106,6 +109,8 @@ class Thread {
 
   u32 tid_;
   ThreadContext *context_;
+
+  u32 tagging_disabled_;  // if non-zero, malloc uses zero tag in this thread.
 };
 
 Thread *GetCurrentThread();
@@ -113,6 +118,11 @@ void SetCurrentThread(Thread *t);
 
 // Returns the ThreadRegistry singleton.
 ThreadRegistry &GetThreadRegistry();
+
+struct ScopedTaggingDisabler {
+  ScopedTaggingDisabler() { GetCurrentThread()->DisableTagging(); }
+  ~ScopedTaggingDisabler() { GetCurrentThread()->EnableTagging(); }
+};
 
 // Returns the ThreadRegistry singleton.
 

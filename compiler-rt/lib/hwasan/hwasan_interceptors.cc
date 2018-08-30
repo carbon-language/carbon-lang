@@ -301,6 +301,7 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
             void * param) {
   ENSURE_HWASAN_INITED(); // for GetTlsSize()
   __sanitizer_pthread_attr_t myattr;
+  ScopedTaggingDisabler disabler;
   if (!attr) {
     pthread_attr_init(&myattr);
     attr = &myattr;
@@ -309,8 +310,8 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
   AdjustStackSize(attr);
 
   Thread *t = Thread::Create(callback, param);
-
-  int res = REAL(pthread_create)(th, attr, HwasanThreadStartFunc, t);
+  int res = REAL(pthread_create)(UntagPtr(th), UntagPtr(attr),
+                                 HwasanThreadStartFunc, UntagPtr(t));
 
   if (attr == &myattr)
     pthread_attr_destroy(&myattr);
