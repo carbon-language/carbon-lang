@@ -706,7 +706,7 @@ public:
           else
             ToInsert += "(";
         }
-        // If we try to complete a namespace, then we directly can append
+        // If we try to complete a namespace, then we can directly append
         // the '::'.
         if (const NamespaceDecl *N = dyn_cast<NamespaceDecl>(D)) {
           if (!N->isAnonymousNamespace())
@@ -718,7 +718,6 @@ public:
         ToInsert = R.Keyword;
         break;
       case CodeCompletionResult::RK_Macro:
-        // It's not clear if we want to complete any macros in the
         ToInsert = R.Macro->getName().str();
         break;
       case CodeCompletionResult::RK_Pattern:
