@@ -587,6 +587,23 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
     ++BBMergeI;
   }
   assert(BBMergeI == BF.end());
+
+  // Merge jump tables profile info.
+  auto JTMergeI = BF.JumpTables.begin();
+  for (const auto &JTEntry : JumpTables) {
+    if (JTMergeI->second->Counts.empty())
+      JTMergeI->second->Counts.resize(JTEntry.second->Counts.size());
+    auto CountMergeI = JTMergeI->second->Counts.begin();
+    for (const auto &JI : JTEntry.second->Counts) {
+      CountMergeI->Count += JI.Count;
+      CountMergeI->Mispreds += JI.Mispreds;
+      ++CountMergeI;
+    }
+    assert(CountMergeI == JTMergeI->second->Counts.end());
+
+    ++JTMergeI;
+  }
+  assert(JTMergeI == BF.JumpTables.end());
 }
 
 void BinaryFunction::readSampleData() {
