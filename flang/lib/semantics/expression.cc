@@ -97,23 +97,27 @@ std::optional<Expr<evaluate::SomeInteger>> AnalyzeHelper(
   return std::nullopt;
 }
 
-// pmk: document, maybe put elsewhere
+// pmk: restructure by extracting member function, document, maybe put elsewhere
 template<TypeCategory CAT, typename VALUE> struct ConstantHelper {
+  using FuncResult = std::optional<Expr<evaluate::SomeKind<CAT>>>;
   using Types = evaluate::CategoryTypes<CAT>;
-  explicit ConstantHelper(VALUE &&x) : value{std::move(x)} {}
-  template<int J> void SetKindTraverser(int kind) {
+  template<int J> FuncResult SetKindTraverser(int kind, VALUE &&value) {
     if constexpr (J < std::tuple_size_v<Types>) {
       using Ty = std::tuple_element_t<J, Types>;
       if (kind == Ty::kind) {
-        result = Expr<Ty>{evaluate::Constant<Ty>{std::move(value)}};
+        return {
+            AsCategoryExpr(AsExpr(evaluate::Constant<Ty>{std::move(value)}))};
       } else {
-        SetKindTraverser<J + 1>(kind);
+        return SetKindTraverser<J + 1>(kind, std::move(value));
       }
+    } else {
+      return std::nullopt;
     }
   }
-  void SetKind(int kind) { SetKindTraverser<0>(kind); }
-  VALUE value;
-  std::optional<Expr<evaluate::SomeKind<CAT>>> result;
+  std::optional<Expr<evaluate::SomeKind<CAT>>> SetKind(
+      int kind, VALUE &&value) {
+    return SetKindTraverser<0>(kind, std::move(value));
+  }
 };
 
 static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
@@ -121,13 +125,13 @@ static std::optional<Expr<evaluate::SomeCharacter>> AnalyzeLiteral(
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ExpressionAnalyzer::KindParam{1})};
   auto value{std::get<std::string>(x.t)};
-  ConstantHelper<TypeCategory::Character, std::string> helper{std::move(value)};
-  helper.SetKind(kind);
-  if (!helper.result.has_value()) {
+  ConstantHelper<TypeCategory::Character, std::string> helper;
+  auto result{helper.SetKind(kind, std::move(value))};
+  if (!result.has_value()) {
     ea.context().messages.Say("unsupported CHARACTER(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
   }
-  return std::move(helper.result);
+  return result;
 }
 
 template<typename A> MaybeExpr PackageGeneric(std::optional<A> &&x) {
@@ -180,14 +184,13 @@ std::optional<Expr<evaluate::SomeInteger>> IntLiteralConstant(
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultIntegerKind())};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
-  ConstantHelper<TypeCategory::Integer, decltype(value)> helper{
-      std::move(value)};
-  helper.SetKind(kind);
-  if (!helper.result.has_value()) {
+  ConstantHelper<TypeCategory::Integer, decltype(value)> helper;
+  auto result{helper.SetKind(kind, std::move(value))};
+  if (!result.has_value()) {
     ea.context().messages.Say("unsupported INTEGER(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
   }
-  return std::move(helper.result);
+  return result;
 }
 
 static std::optional<Expr<evaluate::SomeInteger>> AnalyzeLiteral(
@@ -242,6 +245,7 @@ std::optional<Expr<evaluate::SomeReal>> ReadRealLiteral(
       Expr<RealType>{evaluate::Constant<RealType>{value}})};
 }
 
+// TODO pmk: make like ConstantHelper above, clean both up
 struct RealHelper {
   RealHelper(parser::CharBlock lit, evaluate::FoldingContext &ctx)
     : literal{lit}, context{ctx} {}
@@ -360,13 +364,13 @@ static std::optional<Expr<evaluate::SomeLogical>> AnalyzeLiteral(
   auto kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
       ea.defaultLogicalKind())};
   bool value{std::get<bool>(x.t)};
-  ConstantHelper<TypeCategory::Logical, bool> helper{std::move(value)};
-  helper.SetKind(kind);
-  if (!helper.result.has_value()) {
+  ConstantHelper<TypeCategory::Logical, bool> helper;
+  auto result{helper.SetKind(kind, std::move(value))};
+  if (!result.has_value()) {
     ea.context().messages.Say("unsupported LOGICAL(KIND=%ju)"_err_en_US,
         static_cast<std::uintmax_t>(kind));
   }
-  return std::move(helper.result);
+  return result;
 }
 
 template<>

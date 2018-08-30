@@ -87,57 +87,49 @@ ConvertRealOperandsResult ConvertRealOperands(
       common::MapOptional(std::move(f), std::move(x), std::move(y)));
 }
 
-template<template<typename> class OPR, TypeCategory CAT>
-std::optional<Expr<SomeType>> PromoteAndCombine(
-    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
-  return {Expr<SomeType>{std::visit(
-      [&](auto &&xk, auto &&yk) -> Expr<SomeKind<CAT>> {
-        using xt = ResultType<decltype(xk)>;
-        using yt = ResultType<decltype(yk)>;
-        using ToType = Type<CAT, std::max(xt::kind, yt::kind)>;
-        return {Expr<ToType>{OPR<ToType>{EnsureKind<ToType>(std::move(xk)),
-            EnsureKind<ToType>(std::move(yk))}}};
-      },
-      std::move(x.u), std::move(y.u))}};
+template<TypeCategory CAT>
+std::optional<Expr<SomeType>> Package(Expr<SomeKind<CAT>> &&catExpr) {
+  return {AsGenericExpr(std::move(catExpr))};
 }
 
+// TODO pmk next: write in terms of ConvertRealOperands?
 template<template<typename> class OPR>
 std::optional<Expr<SomeType>> NumericOperation(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y) {
+
   return std::visit(
       common::visitors{[](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
-                         return PromoteAndCombine<OPR, TypeCategory::Integer>(
-                             std::move(ix), std::move(iy));
+                         return Package(
+                             PromoteAndCombine<OPR, TypeCategory::Integer>(
+                                 std::move(ix), std::move(iy)));
                        },
           [](Expr<SomeReal> &&rx, Expr<SomeReal> &&ry) {
-            return PromoteAndCombine<OPR, TypeCategory::Real>(
-                std::move(rx), std::move(ry));
+            return Package(PromoteAndCombine<OPR, TypeCategory::Real>(
+                std::move(rx), std::move(ry)));
           },
           [](Expr<SomeReal> &&rx, Expr<SomeInteger> &&iy) {
-            return std::optional{Expr<SomeType>{std::visit(
+            return Package(std::visit(
                 [&](auto &&rxk) -> Expr<SomeReal> {
-                  using kindEx = decltype(rxk);
-                  using resultType = ResultType<kindEx>;
-                  return {kindEx{OPR<resultType>{std::move(rxk),
-                      ConvertToType<resultType>(std::move(iy))}}};
+                  using resultType = ResultType<decltype(rxk)>;
+                  return AsCategoryExpr(AsExpr(OPR<resultType>{std::move(rxk),
+                      ConvertToType<resultType>(std::move(iy))}));
                 },
-                std::move(rx.u))}};
+                std::move(rx.u)));
           },
           [](Expr<SomeInteger> &&ix, Expr<SomeReal> &&ry) {
-            return std::optional{Expr<SomeType>{std::visit(
+            return Package(std::visit(
                 [&](auto &&ryk) -> Expr<SomeReal> {
-                  using kindEx = decltype(ryk);
-                  using resultType = ResultType<kindEx>;
-                  return {kindEx{
+                  using resultType = ResultType<decltype(ryk)>;
+                  return AsCategoryExpr(AsExpr(
                       OPR<resultType>{ConvertToType<resultType>(std::move(ix)),
-                          std::move(ryk)}}};
+                          std::move(ryk)}));
                 },
-                std::move(ry.u))}};
+                std::move(ry.u)));
           },
           [](Expr<SomeComplex> &&zx, Expr<SomeComplex> &&zy) {
-            return PromoteAndCombine<OPR, TypeCategory::Complex>(
-                std::move(zx), std::move(zy));
+            return Package(PromoteAndCombine<OPR, TypeCategory::Complex>(
+                std::move(zx), std::move(zy)));
           },
           // TODO pmk complex; Add/Sub different from Mult/Div
           [&](auto &&, auto &&) {

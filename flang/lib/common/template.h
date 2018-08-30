@@ -26,38 +26,6 @@
 
 namespace Fortran::common {
 
-// const A * -> std::optional<A>
-template<typename A> std::optional<A> GetIfNonNull(const A *p) {
-  if (p) {
-    return {*p};
-  }
-  return std::nullopt;
-}
-
-// const std::variant<..., A, ...> -> std::optional<A>
-// i.e., when a variant holds a value of a particular type, return a copy
-// of that value in a std::optional<>.
-template<typename A, typename VARIANT>
-std::optional<A> GetIf(const VARIANT &u) {
-  return GetIfNonNull(std::get_if<A>(&u));
-}
-
-// std::optional<std::optional<A>> -> std::optional<A>
-template<typename A>
-std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
-  if (x.has_value()) {
-    return std::move(*x);
-  }
-  return std::nullopt;
-}
-
-// Move a value from one variant type to another.  The types allowed in the
-// source variant must all be allowed in the destination variant type.
-template<typename TOV, typename FROMV> TOV MoveVariant(FROMV &&u) {
-  return std::visit(
-      [](auto &&x) -> TOV { return {std::move(x)}; }, std::move(u));
-}
-
 // SearchTypeList<PREDICATE, TYPES...> scans a list of types.  The zero-based
 // index of the first type T in the list for which PREDICATE<T>::value() is
 // true is returned, or -1 if the predicate is false for every type in the list.
@@ -91,6 +59,10 @@ template<typename A> struct MatchType {
 template<typename A, typename... TYPES>
 constexpr int TypeIndex{SearchTypeList<MatchType<A>::template Match, TYPES...>};
 
+// IsTypeInList<A, TYPES...> is a simple presence predicate.
+template<typename A, typename... TYPES>
+constexpr bool IsTypeInList{TypeIndex<A, TYPES...> >= 0};
+
 // OverMembers extracts the list of types that constitute the alternatives
 // of a std::variant or elements of a std::tuple and passes that list as
 // parameter types to a given variadic template.
@@ -117,10 +89,48 @@ template<template<typename> class PREDICATE> struct SearchMembersHelper {
     static constexpr int value() { return SearchTypeList<PREDICATE, Ts...>; }
   };
 };
+
 template<template<typename> class PREDICATE, typename TorV>
 constexpr int SearchMembers{
     OverMembers<SearchMembersHelper<PREDICATE>::template Scanner,
         TorV>::value()};
+
+template<typename A, typename TorV>
+constexpr bool HasMember{
+    SearchMembers<MatchType<A>::template Match, TorV> >= 0};
+
+// const A * -> std::optional<A>
+template<typename A> std::optional<A> GetIfNonNull(const A *p) {
+  if (p) {
+    return {*p};
+  }
+  return std::nullopt;
+}
+
+// const std::variant<..., A, ...> -> std::optional<A>
+// i.e., when a variant holds a value of a particular type, return a copy
+// of that value in a std::optional<>.  The type A must be a valid
+// alternative for the variant.
+template<typename A, typename VARIANT>
+std::optional<A> GetIf(const VARIANT &u) {
+  return GetIfNonNull(std::get_if<A>(&u));
+}
+
+// std::optional<std::optional<A>> -> std::optional<A>
+template<typename A>
+std::optional<A> JoinOptional(std::optional<std::optional<A>> &&x) {
+  if (x.has_value()) {
+    return std::move(*x);
+  }
+  return std::nullopt;
+}
+
+// Move a value from one variant type to another.  The types allowed in the
+// source variant must all be allowed in the destination variant type.
+template<typename TOV, typename FROMV> TOV MoveVariant(FROMV &&u) {
+  return std::visit(
+      [](auto &&x) -> TOV { return {std::move(x)}; }, std::move(u));
+}
 
 // CombineTuples takes a list of std::tuple<> template instantiation types
 // and constructs a new std::tuple type that concatenates all of their member

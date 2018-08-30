@@ -94,8 +94,14 @@ Expr<SomeKind<C>> operator/(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
 // Generalizers: these take expressions of more specific types and wrap
 // them in more abstract containers.
 
+template<typename A> Expr<ResultType<A>> AsExpr(const A &x) { return {x}; }
 template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
   return {std::move(x)};
+}
+
+template<TypeCategory CAT, int KIND>
+Expr<SomeKind<CAT>> AsCategoryExpr(const Expr<Type<CAT, KIND>> &x) {
+  return {x};
 }
 
 template<TypeCategory CAT, int KIND>
@@ -103,10 +109,16 @@ Expr<SomeKind<CAT>> AsCategoryExpr(Expr<Type<CAT, KIND>> &&x) {
   return {std::move(x)};
 }
 
+template<typename A> Expr<SomeType> AsGenericExpr(const A &x) { return {x}; }
+
 template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
   return {std::move(x)};
 }
 
+template<TypeCategory CAT, int KIND>
+Expr<SomeType> AsGenericExpr(const Expr<Type<CAT, KIND>> &x) {
+  return {AsCategoryExpr(x)};
+}
 template<TypeCategory CAT, int KIND>
 Expr<SomeType> AsGenericExpr(Expr<Type<CAT, KIND>> &&x) {
   return {AsCategoryExpr(std::move(x))};
@@ -207,8 +219,9 @@ template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
 template<typename TOTYPE>
 Expr<TOTYPE> EnsureKind(Expr<SomeKind<TOTYPE::category>> &&x) {
   using ToType = TOTYPE;
-  if (auto *p{std::get_if<Expr<ToType>>(&x.u)}) {
-    return std::move(*p);
+  static_assert(ToType::isSpecificType);
+  if (auto already{common::GetIf<Expr<ToType>>(x.u)}) {
+    return std::move(*already);
   }
   if constexpr (ToType::category == TypeCategory::Complex) {
     return {std::visit(
@@ -229,9 +242,32 @@ Expr<TOTYPE> EnsureKind(Expr<SomeKind<TOTYPE::category>> &&x) {
   }
 }
 
+// Given two expressions of arbitrary kind in the same intrinsic type
+// category, convert one of them if necessary to the larger kind of the
+// other, then combine them with a operation and return a new expression
+// in the same type category.
+template<template<typename> class OPR, TypeCategory CAT>
+Expr<SomeKind<CAT>> PromoteAndCombine(
+    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
+  return std::visit(
+      [&](auto &&xk, auto &&yk) -> Expr<SomeKind<CAT>> {
+        using xt = ResultType<decltype(xk)>;
+        using yt = ResultType<decltype(yk)>;
+        using ToType = Type<CAT, std::max(xt::kind, yt::kind)>;
+        return AsCategoryExpr(
+            AsExpr(OPR<ToType>{EnsureKind<ToType>(std::move(xk)),
+                EnsureKind<ToType>(std::move(yk))}));
+      },
+      std::move(x.u), std::move(y.u));
+}
+
+// Given two expressions of arbitrary type, try to combine them with a
+// numeric operation (e.g., Add), possibly with data type conversion of
+// one of the operands to the type of the other.
 template<template<typename> class OPR>
 std::optional<Expr<SomeType>> NumericOperation(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+
 extern template std::optional<Expr<SomeType>> NumericOperation<Add>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 

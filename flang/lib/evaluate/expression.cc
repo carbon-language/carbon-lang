@@ -33,6 +33,7 @@ namespace Fortran::evaluate {
 template<typename D, typename R, typename... O>
 auto Operation<D, R, O...>::Fold(FoldingContext &context)
     -> std::optional<Constant<Result>> {
+  // TODO pmk: generalize
   auto c0{operand<0>().Fold(context)};
   if constexpr (operands() == 1) {
     if (c0.has_value()) {
@@ -60,7 +61,7 @@ auto ExpressionBase<RESULT>::Fold(FoldingContext &context)
     return std::visit(
         [&](auto &x) -> std::optional<Const> {
           using Thing = std::decay_t<decltype(x)>;
-          if constexpr (IsConstantTrait<Thing>) {
+          if constexpr (std::is_same_v<Thing, Const>) {
             return {x};
           }
           if constexpr (IsFoldableTrait<Thing>) {
@@ -99,7 +100,6 @@ auto ExpressionBase<RESULT>::Fold(FoldingContext &context)
               if constexpr (ResultType<decltype(*c)>::isSpecificType) {
                 return {Const{c->value}};
               } else {
-                // pmk: this is ugly
                 return {Const{common::MoveVariant<GenericScalar>(c->value.u)}};
               }
             }
@@ -466,8 +466,8 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
       common::visitors{[](const Constant<Result> &c) {
                          // std::string::size_type isn't convertible to uint64_t
                          // on Darwin
-                         return Expr<SubscriptInteger>{
-                             static_cast<std::uint64_t>(c.value.size())};
+                         return AsExpr(Constant<SubscriptInteger>{
+                             static_cast<std::uint64_t>(c.value.size())});
                        },
           [](const Concat<KIND> &c) {
             return c.template operand<0>().LEN() +
@@ -488,17 +488,42 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
 template<typename RESULT>
 auto ExpressionBase<RESULT>::ScalarValue() const
     -> std::optional<Scalar<Result>> {
-  using Const = Scalar<Result>;
-  return std::visit(
-      [](const auto &x) -> std::optional<Const> {
-        using Ty = std::decay_t<decltype(x)>;
-        if constexpr (IsConstantTrait<Ty>) {
-          return {Const{x.value}};
-        }
-        // TODO: Also succeed for a parenthesized constant
-        return std::nullopt;
-      },
-      derived().u);
+  if constexpr (Result::isSpecificType) {
+    if (auto c{common::GetIf<Constant<Result>>(derived().u)}) {
+      return {c->value};
+    }
+    // TODO: every specifically-typed Expr should support Parentheses
+    if constexpr (common::HasMember<Parentheses<Result>,
+                      decltype(derived().u)>) {
+      if (auto p{common::GetIf<Parentheses<Result>>(derived().u)}) {
+        return p->template operand<0>().ScalarValue();
+      }
+    }
+  } else if constexpr (std::is_same_v<Result, SomeType>) {
+    return std::visit(
+        common::visitors{
+            [](const BOZLiteralConstant &) -> std::optional<Scalar<Result>> {
+              return std::nullopt;
+            },
+            [](const auto &catEx) -> std::optional<Scalar<Result>> {
+              if (auto cv{catEx.ScalarValue()}) {
+                // *cv is SomeKindScalar<CAT> for some category; rewrap it.
+                return {common::MoveVariant<GenericScalar>(std::move(cv->u))};
+              }
+              return std::nullopt;
+            }},
+        derived().u);
+  } else {
+    return std::visit(
+        [](const auto &kindEx) -> std::optional<Scalar<Result>> {
+          if (auto sv{kindEx.ScalarValue()}) {
+            return {SomeKindScalar<Result::category>{*sv}};
+          }
+          return std::nullopt;
+        },
+        derived().u);
+  }
+  return std::nullopt;
 }
 
 // Template instantiations to resolve the "extern template" declarations

@@ -118,48 +118,30 @@ Expr<SubscriptInteger> Substring::last() const {
       common::visitors{[](const std::string &s) {
                          // std::string::size_type isn't convertible to uint64_t
                          // on Darwin
-                         return Expr<SubscriptInteger>{
-                             static_cast<std::uint64_t>(s.size())};
+                         return AsExpr(Constant<SubscriptInteger>{
+                             static_cast<std::uint64_t>(s.size())});
                        },
           [](const DataRef &x) { return x.LEN(); }},
       u_);
 }
 
 std::optional<std::string> Substring::Fold(FoldingContext &context) {
-  std::optional<Scalar<SubscriptInteger>> lbValue, ubValue;
-  // pmk: streamline
-  if (first_.has_value()) {
-    if (auto c{(*first_)->Fold(context)}) {
-      lbValue = c->value;
-    }
-  } else {
-    if (auto c{first().Fold(context)}) {
-      lbValue = c->value;
-    }
+  std::optional<Constant<SubscriptInteger>> lbConst{first().Fold(context)};
+  if (lbConst.has_value()) {
+    first_ = AsExpr(*lbConst);
   }
-  if (lbValue.has_value()) {
-    first_ = IndirectSubscriptIntegerExpr{Expr<SubscriptInteger>{*lbValue}};
+  std::optional<Constant<SubscriptInteger>> ubConst{last().Fold(context)};
+  if (ubConst.has_value()) {
+    last_ = AsExpr(*ubConst);
   }
-  if (last_.has_value()) {
-    if (auto c{(*last_)->Fold(context)}) {
-      ubValue = c->value;
-    }
-  } else {
-    if (auto c{last().Fold(context)}) {
-      ubValue = c->value;
-    }
-  }
-  if (ubValue.has_value()) {
-    last_ = IndirectSubscriptIntegerExpr{Expr<SubscriptInteger>{*ubValue}};
-  }
-  if (lbValue.has_value() && ubValue.has_value()) {
-    std::int64_t lbi{lbValue->ToInt64()};
-    std::int64_t ubi{ubValue->ToInt64()};
+  if (auto both{common::AllPresent(std::move(lbConst), std::move(ubConst))}) {
+    std::int64_t lbi{std::get<0>(*both).value.ToInt64()};
+    std::int64_t ubi{std::get<1>(*both).value.ToInt64()};
     if (ubi < lbi) {
       // These cases are well defined, and they produce zero-length results.
       u_ = ""s;
-      first_ = Expr<SubscriptInteger>{1};
-      last_ = Expr<SubscriptInteger>{0};
+      first_ = AsExpr(Constant<SubscriptInteger>{1});
+      last_ = AsExpr(Constant<SubscriptInteger>{0});
       return {""s};
     }
     if (lbi <= 0) {
@@ -167,11 +149,11 @@ std::optional<std::string> Substring::Fold(FoldingContext &context) {
           "lower bound on substring (%jd) is less than one"_en_US,
           static_cast<std::intmax_t>(lbi));
       lbi = 1;
-      first_ = Expr<SubscriptInteger>{lbi};
+      first_ = AsExpr(Constant<SubscriptInteger>{lbi});
     }
     if (ubi <= 0) {
       u_ = ""s;
-      last_ = Expr<SubscriptInteger>{0};
+      last_ = AsExpr(Constant<SubscriptInteger>{0});
       return {""s};
     }
     if (std::string * str{std::get_if<std::string>(&u_)}) {
@@ -181,7 +163,7 @@ std::optional<std::string> Substring::Fold(FoldingContext &context) {
             "upper bound on substring (%jd) is greater than character length (%jd)"_en_US,
             static_cast<std::intmax_t>(ubi), static_cast<std::intmax_t>(len));
         ubi = len;
-        last_ = Expr<SubscriptInteger>{ubi};
+        last_ = AsExpr(Constant<SubscriptInteger>{ubi});
       }
       std::string result{str->substr(lbi - 1, ubi - lbi + 1)};
       u_ = result;
@@ -348,7 +330,7 @@ std::ostream &Label::Dump(std::ostream &o) const {
 
 // LEN()
 static Expr<SubscriptInteger> SymbolLEN(const Symbol &sym) {
-  return Expr<SubscriptInteger>{0};  // TODO
+  return AsExpr(Constant<SubscriptInteger>{0});  // TODO
 }
 Expr<SubscriptInteger> Component::LEN() const { return SymbolLEN(symbol()); }
 Expr<SubscriptInteger> ArrayRef::LEN() const {
@@ -367,8 +349,8 @@ Expr<SubscriptInteger> DataRef::LEN() const {
       u_);
 }
 Expr<SubscriptInteger> Substring::LEN() const {
-  return Extremum<SubscriptInteger>{
-      Expr<SubscriptInteger>{0}, last() - first() + Expr<SubscriptInteger>{1}};
+  return Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
+      last() - first() + AsExpr(Constant<SubscriptInteger>{1})};
 }
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(
@@ -376,7 +358,7 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
           [](const Component &c) { return c.LEN(); },
           [](const auto &) {
             CRASH_NO_CASE;
-            return Expr<SubscriptInteger>{0};
+            return AsExpr(Constant<SubscriptInteger>{0});
           }},
       u_);
 }
