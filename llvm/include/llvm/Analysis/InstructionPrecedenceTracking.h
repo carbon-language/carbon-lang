@@ -37,7 +37,7 @@ class InstructionPrecedenceTracking {
   // Fills information about the given block's special instructions.
   void fill(const BasicBlock *BB);
 
-  #ifndef NDEBUG
+#ifndef NDEBUG
   /// Asserts whether or not the contents of this tracking is up-to-date. It can
   /// be used to detect situations where we failed to invalidate the map
   /// properly. The behavior of request to an invalid tracking is undefined, and
