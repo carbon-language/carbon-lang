@@ -1172,11 +1172,7 @@ Error createStringError(std::error_code EC, char const *Msg);
 class FileError final : public ErrorInfo<FileError> {
 
   template <class Err>
-  friend Error createFileError(
-      std::string, Err,
-      typename std::enable_if<std::is_base_of<Error, Err>::value &&
-                              !std::is_base_of<ErrorSuccess, Err>::value>::type
-          *);
+  friend Error createFileError(std::string, Err);
 
 public:
   void log(raw_ostream &OS) const override {
@@ -1212,11 +1208,7 @@ private:
 /// Concatenate a source file path and/or name with an Error. The resulting
 /// Error is unchecked.
 template <class Err>
-inline Error createFileError(
-    std::string F, Err E,
-    typename std::enable_if<std::is_base_of<Error, Err>::value &&
-                            !std::is_base_of<ErrorSuccess, Err>::value>::type
-        * = nullptr) {
+inline Error createFileError(std::string F, Err E) {
   return FileError::build(F, std::move(E));
 }
 
