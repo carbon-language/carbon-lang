@@ -38,6 +38,7 @@
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/GlobalsModRef.h"
+#include "llvm/Analysis/GuardUtils.h"
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -528,7 +529,7 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       using namespace PatternMatch;
       if (((I.use_empty() &&
             match(&I, m_Intrinsic<Intrinsic::invariant_start>())) ||
-           match(&I, m_Intrinsic<Intrinsic::experimental_guard>())) &&
+           isGuard(&I)) &&
           IsMustExecute && IsMemoryNotModified &&
           CurLoop->hasLoopInvariantOperands(&I)) {
         hoist(I, DT, CurLoop, SafetyInfo, ORE);

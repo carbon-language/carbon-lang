@@ -13,6 +13,7 @@
 
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/GuardUtils.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/IR/CallSite.h"
@@ -172,8 +173,7 @@ void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA) {
   // Guards are marked as modifying memory for control flow modelling purposes,
   // but don't actually modify any specific memory location.
   using namespace PatternMatch;
-  bool MayWriteMemory = I->mayWriteToMemory() &&
-    !match(I, m_Intrinsic<Intrinsic::experimental_guard>()) &&
+  bool MayWriteMemory = I->mayWriteToMemory() && !isGuard(I) &&
     !(I->use_empty() && match(I, m_Intrinsic<Intrinsic::invariant_start>()));
   if (!MayWriteMemory) {
     Alias = SetMayAlias;
