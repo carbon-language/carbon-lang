@@ -140,6 +140,33 @@ static cl::opt<bool> ICPJumpTablesByTarget(
 namespace llvm {
 namespace bolt {
 
+namespace {
+
+bool verifyProfile(std::map<uint64_t, BinaryFunction> &BFs) {
+  bool IsValid = true;
+  for (auto &BFI : BFs) {
+    auto &BF = BFI.second;
+    if (!BF.isSimple()) continue;
+    for (auto BB : BF.layout()) {
+      auto BI = BB->branch_info_begin();
+      for (auto SuccBB : BB->successors()) {
+        if (BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE && BI->Count > 0) {
+          if (BB->getKnownExecutionCount() == 0 ||
+              SuccBB->getKnownExecutionCount() == 0) {
+            errs() << "BOLT-WARNING: profile verification failed after ICP for "
+                      "function " << BF << '\n';
+            IsValid = false;
+          }
+        }
+        ++BI;
+      }
+    }
+  }
+  return IsValid;
+}
+
+}
+
 IndirectCallPromotion::Callsite::Callsite(BinaryFunction &BF,
                                           const IndirectCallProfile &ICP)
   : From(BF.getSymbol()),
@@ -158,9 +185,10 @@ IndirectCallPromotion::Callsite::Callsite(BinaryFunction &BF,
 // called first.
 std::vector<IndirectCallPromotion::Callsite>
 IndirectCallPromotion::getCallTargets(
-  BinaryFunction &BF,
+  BinaryBasicBlock &BB,
   const MCInst &Inst
 ) const {
+  auto &BF = *BB.getFunction();
   auto &BC = BF.getBinaryContext();
   std::vector<Callsite> Targets;
 
@@ -185,8 +213,9 @@ IndirectCallPromotion::getCallTargets(
           Entry == BF.getFunctionColdEndLabel())
         continue;
       const Location To(Entry);
+      const auto &BI = BB.getBranchInfo(Entry);
       Targets.emplace_back(
-          From, To, JI->Mispreds, JI->Count, I - Range.first);
+          From, To, BI.MispredictedCount, BI.Count, I - Range.first);
     }
 
     // Sort by symbol then addr.
@@ -244,10 +273,10 @@ IndirectCallPromotion::getCallTargets(
   }
 
   // Sort by most commonly called targets.
-  std::sort(Targets.begin(), Targets.end(),
-            [](const Callsite &A, const Callsite &B) {
-              return A.Branches > B.Branches;
-            });
+  std::stable_sort(Targets.begin(), Targets.end(),
+                   [](const Callsite &A, const Callsite &B) {
+                     return A.Branches > B.Branches;
+                   });
 
   // Remove non-symbol targets
   auto Last = std::remove_if(Targets.begin(),
@@ -750,8 +779,9 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
   for (const auto &Target : Targets) {
     const auto NumEntries = std::max(1UL, Target.JTIndex.size());
     for (size_t I = 0; I < NumEntries; ++I) {
-      BBI.push_back(BinaryBranchInfo{Target.Branches / NumEntries,
-                                     Target.Mispreds / NumEntries});
+      BBI.push_back(
+          BinaryBranchInfo{(Target.Branches + NumEntries - 1) / NumEntries,
+                           (Target.Mispreds + NumEntries - 1)  / NumEntries});
       ScaledBBI.push_back(BinaryBranchInfo{
           uint64_t(TotalCount * Target.Branches /
                                       (NumEntries * TotalIndirectBranches)),
@@ -786,8 +816,15 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
 
       // Update branch info for the indirect jump.
       auto &BranchInfo = NewIndCallBlock->getBranchInfo(*TargetBB);
-      BranchInfo.Count -= BBI[I].Count;
-      BranchInfo.MispredictedCount -= BBI[I].MispredictedCount;
+      if (BranchInfo.Count > BBI[I].Count)
+        BranchInfo.Count -= BBI[I].Count;
+      else
+        BranchInfo.Count = 0;
+
+      if (BranchInfo.MispredictedCount > BBI[I].MispredictedCount)
+        BranchInfo.MispredictedCount -= BBI[I].MispredictedCount;
+      else
+        BranchInfo.MispredictedCount = 0;
     }
   } else {
     assert(NewBBs.size() >= 2);
@@ -1062,7 +1099,7 @@ void IndirectCallPromotion::runOnFunctions(
 
   std::unique_ptr<RegAnalysis> RA;
   std::unique_ptr<BinaryFunctionCallGraph> CG;
-  if (opts::IndirectCallPromotion >= ICP_JUMP_TABLES) {
+  if (OptimizeJumpTables) {
     CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
     RA.reset(new RegAnalysis(BC, &BFs, &*CG));
   }
@@ -1142,7 +1179,7 @@ void IndirectCallPromotion::runOnFunctions(
               ((HasIndirectCallProfile && !IsJumpTable && OptimizeCalls) ||
                (IsJumpTable && OptimizeJumpTables))) {
             uint64_t NumCalls = 0;
-            for (const auto &BInfo : getCallTargets(Function, Inst)) {
+            for (const auto &BInfo : getCallTargets(BB, Inst)) {
               NumCalls += BInfo.Branches;
             }
 
@@ -1221,8 +1258,10 @@ void IndirectCallPromotion::runOnFunctions(
           TotalCalls += BB->getKnownExecutionCount();
         }
 
-        if (!((HasIndirectCallProfile && !IsJumpTable && OptimizeCalls) ||
-              (IsJumpTable && OptimizeJumpTables)))
+        if (IsJumpTable && !OptimizeJumpTables)
+          continue;
+
+        if (!IsJumpTable && (!HasIndirectCallProfile || !OptimizeCalls))
           continue;
 
         // Ignore direct calls.
@@ -1237,7 +1276,7 @@ void IndirectCallPromotion::runOnFunctions(
         else
           ++TotalIndirectCallsites;
 
-        auto Targets = getCallTargets(Function, Inst);
+        auto Targets = getCallTargets(*BB, Inst);
 
         // Compute the total number of calls from this particular callsite.
         uint64_t NumCalls = 0;
@@ -1440,6 +1479,10 @@ void IndirectCallPromotion::runOnFunctions(
          << format("%.1f", (100.0 * TotalIndexBasedJumps) /
                    std::max(TotalIndexBasedCandidates, 1ul))
          << "%\n";
+
+#ifndef NDEBUG
+  verifyProfile(BFs);
+#endif
 }
 
 } // namespace bolt

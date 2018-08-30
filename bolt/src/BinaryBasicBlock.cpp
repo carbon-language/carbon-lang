@@ -530,5 +530,18 @@ BinaryBasicBlock::getBranchInfo(const BinaryBasicBlock &Succ) {
   return *BI;
 }
 
+BinaryBasicBlock::BinaryBranchInfo &
+BinaryBasicBlock::getBranchInfo(const MCSymbol *Label) {
+  auto BI = branch_info_begin();
+  for (auto BB : successors()) {
+    if (BB->getLabel() == Label)
+      return *BI;
+    ++BI;
+  }
+
+  llvm_unreachable("Invalid successor");
+  return *BI;
+}
+
 } // namespace bolt
 } // namespace llvm

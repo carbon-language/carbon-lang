@@ -178,7 +178,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   // Total number of jump table sites that use hot indices.
   uint64_t TotalIndexBasedJumps{0};
 
-  std::vector<Callsite> getCallTargets(BinaryFunction &BF,
+  std::vector<Callsite> getCallTargets(BinaryBasicBlock &BB,
                                        const MCInst &Inst) const;
 
   size_t canPromoteCallsite(const BinaryBasicBlock *BB,
