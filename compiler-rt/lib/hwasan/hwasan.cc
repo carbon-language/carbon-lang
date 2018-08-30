@@ -36,17 +36,17 @@ using namespace __sanitizer;
 namespace __hwasan {
 
 void EnterSymbolizer() {
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   CHECK(t);
   t->EnterSymbolizer();
 }
 void ExitSymbolizer() {
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   CHECK(t);
   t->LeaveSymbolizer();
 }
 bool IsInSymbolizer() {
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   return t && t->InSymbolizer();
 }
 
@@ -132,7 +132,7 @@ static void InitializeFlags() {
 
 void GetStackTrace(BufferedStackTrace *stack, uptr max_s, uptr pc, uptr bp,
                    void *context, bool request_fast_unwind) {
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   if (!t || !StackTrace::WillUseFastUnwind(request_fast_unwind)) {
     // Block reports from our interceptors during _Unwind_Backtrace.
     SymbolizerScope sym_scope;
@@ -178,6 +178,7 @@ void __hwasan_init() {
   if (hwasan_inited) return;
   hwasan_init_is_running = 1;
   SanitizerToolName = "HWAddressSanitizer";
+  GetThreadRegistry();
 
   InitTlsSize();
 
@@ -208,7 +209,7 @@ void __hwasan_init() {
 
   HwasanAllocatorInit();
 
-  HwasanThread *main_thread = HwasanThread::Create(nullptr, nullptr);
+  Thread *main_thread = Thread::Create(nullptr, nullptr);
   SetCurrentThread(main_thread);
   main_thread->Init();
 
@@ -428,7 +429,7 @@ void __hwasan_handle_longjmp(const void *sp_dst) {
 static const u8 kFallbackTag = 0xBB;
 
 u8 __hwasan_generate_tag() {
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   if (!t) return kFallbackTag;
   return t->GenerateRandomTag();
 }

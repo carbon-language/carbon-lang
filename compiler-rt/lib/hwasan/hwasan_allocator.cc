@@ -136,7 +136,7 @@ static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
     }
     ReportAllocationSizeTooBig(size, kMaxAllowedMallocSize, stack);
   }
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   void *allocated;
   if (t) {
     AllocatorCache *cache = GetAllocatorCache(&t->malloc_storage());
@@ -199,7 +199,7 @@ void HwasanDeallocate(StackTrace *stack, void *tagged_ptr) {
   meta->free_context_id = free_context_id;
   // This memory will not be reused by anyone else, so we are free to keep it
   // poisoned.
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   if (flags()->max_free_fill_size > 0) {
     uptr fill_size = Min(size, (uptr)flags()->max_free_fill_size);
     internal_memset(untagged_ptr, flags()->free_fill_byte, fill_size);

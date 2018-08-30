@@ -214,13 +214,13 @@ void InstallAtExitHandler() {
 // ---------------------- TSD ---------------- {{{1
 
 extern "C" void __hwasan_thread_enter() {
-  HwasanThread *t = HwasanThread::Create(nullptr, nullptr);
+  Thread *t = Thread::Create(nullptr, nullptr);
   SetCurrentThread(t);
   t->Init();
 }
 
 extern "C" void __hwasan_thread_exit() {
-  HwasanThread *t = GetCurrentThread();
+  Thread *t = GetCurrentThread();
   // Make sure that signal handler can not see a stale current thread pointer.
   atomic_signal_fence(memory_order_seq_cst);
   if (t)
@@ -232,7 +232,7 @@ static pthread_key_t tsd_key;
 static bool tsd_key_inited = false;
 
 void HwasanTSDDtor(void *tsd) {
-  HwasanThread *t = (HwasanThread*)tsd;
+  Thread *t = (Thread*)tsd;
   if (t->destructor_iterations_ > 1) {
     t->destructor_iterations_--;
     CHECK_EQ(0, pthread_setspecific(tsd_key, tsd));
@@ -247,24 +247,24 @@ void HwasanTSDInit() {
   CHECK_EQ(0, pthread_key_create(&tsd_key, HwasanTSDDtor));
 }
 
-HwasanThread *GetCurrentThread() {
-  return (HwasanThread *)pthread_getspecific(tsd_key);
+Thread *GetCurrentThread() {
+  return (Thread *)pthread_getspecific(tsd_key);
 }
 
-void SetCurrentThread(HwasanThread *t) {
+void SetCurrentThread(Thread *t) {
   // Make sure that HwasanTSDDtor gets called at the end.
   CHECK(tsd_key_inited);
-  // Make sure we do not reset the current HwasanThread.
+  // Make sure we do not reset the current Thread.
   CHECK_EQ(0, pthread_getspecific(tsd_key));
   pthread_setspecific(tsd_key, (void *)t);
 }
 #elif SANITIZER_ANDROID
 void HwasanTSDInit() {}
-HwasanThread *GetCurrentThread() {
-  return (HwasanThread*)*get_android_tls_ptr();
+Thread *GetCurrentThread() {
+  return (Thread*)*get_android_tls_ptr();
 }
 
-void SetCurrentThread(HwasanThread *t) {
+void SetCurrentThread(Thread *t) {
   *get_android_tls_ptr() = (uptr)t;
 }
 #else

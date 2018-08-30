@@ -16,12 +16,33 @@
 
 #include "hwasan_allocator.h"
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_thread_registry.h"
 
 namespace __hwasan {
 
-class HwasanThread {
+class Thread;
+
+class ThreadContext : public ThreadContextBase {
  public:
-  static HwasanThread *Create(thread_callback_t start_routine, void *arg);
+  explicit ThreadContext(int tid)
+      : ThreadContextBase(tid), thread(nullptr){}
+
+  Thread *thread;
+
+  void OnCreated(void *arg) override;
+  void OnFinished() override;
+
+  struct Args {
+    Thread *thread;
+  };
+};
+
+// We want this to be small.
+COMPILER_CHECK(sizeof(ThreadContext) <= 256);
+
+class Thread {
+ public:
+  static Thread *Create(thread_callback_t start_routine, void *arg);
   void Destroy();
 
   void Init();
@@ -54,12 +75,15 @@ class HwasanThread {
     return heap_allocations_;
   }
 
+  void set_context(ThreadContext *context) { context_ = context; }
+  const ThreadContext *context() const { return context_; }
+
   tag_t GenerateRandomTag();
 
   int destructor_iterations_;
 
  private:
-  // NOTE: There is no HwasanThread constructor. It is allocated
+  // NOTE: There is no Thread constructor. It is allocated
   // via mmap() and *must* be valid in zero-initialized state.
   void SetThreadStackAndTls();
   void ClearShadowForThreadStackAndTLS();
@@ -79,10 +103,18 @@ class HwasanThread {
 
   HwasanThreadLocalMallocStorage malloc_storage_;
   HeapAllocationsRingBuffer *heap_allocations_;
+
+  u32 tid_;
+  ThreadContext *context_;
 };
 
-HwasanThread *GetCurrentThread();
-void SetCurrentThread(HwasanThread *t);
+Thread *GetCurrentThread();
+void SetCurrentThread(Thread *t);
+
+// Returns the ThreadRegistry singleton.
+ThreadRegistry &GetThreadRegistry();
+
+// Returns the ThreadRegistry singleton.
 
 } // namespace __hwasan
 

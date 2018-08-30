@@ -206,10 +206,12 @@ void ReportTagMismatch(StackTrace *stack, uptr tagged_addr, uptr access_size,
   // * remove reduntant fields from the allocator metadata
   // * use the allocations found in the ring buffer for the main report.
   HeapAllocationRecord har;
-  HwasanThread *t = GetCurrentThread();
-  if (t && FindHeapAllocation(t->heap_allocations(), tagged_addr, &har))
+  Thread *t = GetCurrentThread();
+  if (FindHeapAllocation(t->heap_allocations(), tagged_addr, &har))
     Printf("Address found in the ring buffer: %p %u %u\n", har.tagged_addr,
            har.free_context_id, har.requested_size);
+  Printf("Current thread: tid: %d\n", t->context()->tid);
+
 
   PrintTagsAroundAddr(tag_ptr);
 
