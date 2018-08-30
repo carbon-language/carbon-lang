@@ -121,7 +121,7 @@ public:
   ///     True if we added any completion results to the output;
   ///     false otherwise.
   //------------------------------------------------------------------
-  virtual bool Complete(ExecutionContext &exe_ctx, StringList &matches,
+  virtual bool Complete(ExecutionContext &exe_ctx, CompletionRequest &request,
                         unsigned complete_pos) {
     return false;
   }
