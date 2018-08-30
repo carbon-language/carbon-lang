@@ -24,8 +24,8 @@ static u32 RandomSeed() {
   return seed;
 }
 
-static Thread *main_thread;
-static SpinMutex thread_list_mutex;
+Thread *Thread::main_thread;
+SpinMutex Thread::thread_list_mutex;
 
 void Thread::InsertIntoThreadList(Thread *t) {
   CHECK(!t->next_);
