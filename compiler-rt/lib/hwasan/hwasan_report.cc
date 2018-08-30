@@ -210,7 +210,6 @@ void ReportTagMismatch(StackTrace *stack, uptr tagged_addr, uptr access_size,
   if (FindHeapAllocation(t->heap_allocations(), tagged_addr, &har))
     Printf("Address found in the ring buffer: %p %u %u\n", har.tagged_addr,
            har.free_context_id, har.requested_size);
-  Printf("Current thread: tid: %d\n", t->context()->tid);
 
 
   PrintTagsAroundAddr(tag_ptr);

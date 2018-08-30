@@ -16,29 +16,8 @@
 
 #include "hwasan_allocator.h"
 #include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_thread_registry.h"
 
 namespace __hwasan {
-
-class Thread;
-
-class ThreadContext : public ThreadContextBase {
- public:
-  explicit ThreadContext(int tid)
-      : ThreadContextBase(tid), thread(nullptr){}
-
-  Thread *thread;
-
-  void OnCreated(void *arg) override;
-  void OnFinished() override;
-
-  struct Args {
-    Thread *thread;
-  };
-};
-
-// We want this to be small.
-COMPILER_CHECK(sizeof(ThreadContext) <= 256);
 
 class Thread {
  public:
@@ -46,7 +25,6 @@ class Thread {
   void Destroy();
 
   void Init();
-  thread_return_t ThreadStart();
 
   uptr stack_top() { return stack_top_; }
   uptr stack_bottom() { return stack_bottom_; }
@@ -74,9 +52,6 @@ class Thread {
   HeapAllocationsRingBuffer *heap_allocations() {
     return heap_allocations_;
   }
-
-  void set_context(ThreadContext *context) { context_ = context; }
-  const ThreadContext *context() const { return context_; }
 
   tag_t GenerateRandomTag();
 
@@ -107,8 +82,9 @@ class Thread {
   HwasanThreadLocalMallocStorage malloc_storage_;
   HeapAllocationsRingBuffer *heap_allocations_;
 
-  u32 tid_;
-  ThreadContext *context_;
+  static void InsertIntoThreadList(Thread *t);
+  static void RemoveFromThreadList(Thread *t);
+  Thread *next_;  // All live threads form a linked list.
 
   u32 tagging_disabled_;  // if non-zero, malloc uses zero tag in this thread.
 };
@@ -116,15 +92,10 @@ class Thread {
 Thread *GetCurrentThread();
 void SetCurrentThread(Thread *t);
 
-// Returns the ThreadRegistry singleton.
-ThreadRegistry &GetThreadRegistry();
-
 struct ScopedTaggingDisabler {
   ScopedTaggingDisabler() { GetCurrentThread()->DisableTagging(); }
   ~ScopedTaggingDisabler() { GetCurrentThread()->EnableTagging(); }
 };
-
-// Returns the ThreadRegistry singleton.
 
 } // namespace __hwasan
 
