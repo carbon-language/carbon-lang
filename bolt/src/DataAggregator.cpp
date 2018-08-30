@@ -1305,11 +1305,11 @@ std::error_code DataAggregator::parseMMapEvents() {
     }
   );
 
-  auto NameToUse = BinaryName.substr(0, 15);
+  auto NameToUse = BinaryName;
   if (GlobalMMapInfo.count(NameToUse) == 0 && !BuildIDBinaryName.empty()) {
     errs() << "PERF2BOLT-WARNING: using \"" << BuildIDBinaryName
            << "\" for profile matching\n";
-    NameToUse = BuildIDBinaryName.substr(0, 15);
+    NameToUse = BuildIDBinaryName;
   }
 
   auto Range = GlobalMMapInfo.equal_range(NameToUse);
