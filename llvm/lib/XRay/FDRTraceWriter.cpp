@@ -31,14 +31,14 @@ struct MetadataBlob {
   uint8_t Type : 1;
   uint8_t RecordKind : 7;
   char Data[15];
-} __attribute__((packed));
+};
 
 struct FunctionDeltaBlob {
   uint8_t Type : 1;
   uint8_t RecordKind : 3;
   int FuncId : 28;
   uint32_t TSCDelta;
-} __attribute__((packed));
+};
 
 template <size_t Index> struct IndexedMemcpy {
   template <
