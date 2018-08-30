@@ -3878,7 +3878,8 @@ static void WriteDocumentation(RecordKeeper &Records,
   OS << "   \"";
   for (size_t Kind = 0; Kind != NumSpellingKinds; ++Kind) {
     SpellingKind K = (SpellingKind)Kind;
-    // FIXME: Why are Microsoft spellings not listed?
+    // TODO: List Microsoft (IDL-style attribute) spellings once we fully
+    // support them.
     if (K == SpellingKind::Microsoft)
       continue;
 
