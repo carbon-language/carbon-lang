@@ -520,17 +520,6 @@ Demangler::demangleRttiBaseClassDescriptorNode(ArenaAllocator &Arena,
   return VSN;
 }
 
-void dump(Node *N) {
-  OutputStream OS = OutputStream::create(nullptr, nullptr, 1024);
-  N->output(OS, OF_Default);
-  OS << '\0';
-  char *Name = OS.getBuffer();
-
-  printf(Name);
-  printf("\n");
-  std::free(Name);
-}
-
 FunctionSymbolNode *Demangler::demangleInitFiniStub(StringView &MangledName,
                                                     bool IsDestructor) {
   DynamicStructorIdentifierNode *DSIN =
