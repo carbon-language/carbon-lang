@@ -870,7 +870,7 @@ TEST(Error, FileErrorTest) {
     EXPECT_DEATH(
       {
         Error S = Error::success();
-        createFileError("file.bin", std::move(S));
+        consumeError(createFileError("file.bin", std::move(S)));
       },
       "");
 #endif
