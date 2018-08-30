@@ -105,9 +105,6 @@ bleu x18, x19, 32
 # CHECK-S-OBJ-NOALIAS: jal zero, 2044
 # CHECK-S-OBJ: j 2044
 j 2044
-# CHECK-S-NOALIAS: jal zero, foo
-# CHECK-S: jl zero
-j zero
 # CHECK-S-OBJ-NOALIAS: jal ra, 2040
 # CHECK-S-OBJ: jal 2040
 jal 2040
