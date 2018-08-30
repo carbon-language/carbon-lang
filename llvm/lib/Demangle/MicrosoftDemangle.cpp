@@ -520,14 +520,27 @@ Demangler::demangleRttiBaseClassDescriptorNode(ArenaAllocator &Arena,
   return VSN;
 }
 
+void dump(Node *N) {
+  OutputStream OS = OutputStream::create(nullptr, nullptr, 1024);
+  N->output(OS, OF_Default);
+  OS << '\0';
+  char *Name = OS.getBuffer();
+
+  printf(Name);
+  printf("\n");
+  std::free(Name);
+}
+
 FunctionSymbolNode *Demangler::demangleInitFiniStub(StringView &MangledName,
                                                     bool IsDestructor) {
   DynamicStructorIdentifierNode *DSIN =
       Arena.alloc<DynamicStructorIdentifierNode>();
   DSIN->IsDestructor = IsDestructor;
 
-  // What follows is a main symbol name. This may include namespaces or class
-  // back references.
+  bool IsKnownStaticDataMember = false;
+  if (MangledName.consumeFront('?'))
+    IsKnownStaticDataMember = true;
+
   QualifiedNameNode *QN = demangleFullyQualifiedSymbolName(MangledName);
 
   SymbolNode *Symbol = demangleEncodedSymbol(MangledName, QN);
@@ -536,7 +549,15 @@ FunctionSymbolNode *Demangler::demangleInitFiniStub(StringView &MangledName,
 
   if (Symbol->kind() == NodeKind::VariableSymbol) {
     DSIN->Variable = static_cast<VariableSymbolNode *>(Symbol);
-    if (!MangledName.consumeFront('@')) {
+
+    // Older versions of clang mangled this type of symbol incorrectly.  They
+    // would omit the leading ? and they would only emit a single @ at the end.
+    // The correct mangling is a leading ? and 2 trailing @ signs.  Handle
+    // both cases.
+    int AtCount = IsKnownStaticDataMember ? 2 : 1;
+    for (int I = 0; I < AtCount; ++I) {
+      if (MangledName.consumeFront('@'))
+        continue;
       Error = true;
       return nullptr;
     }
@@ -544,6 +565,12 @@ FunctionSymbolNode *Demangler::demangleInitFiniStub(StringView &MangledName,
     FSN = demangleFunctionEncoding(MangledName);
     FSN->Name = synthesizeQualifiedName(Arena, DSIN);
   } else {
+    if (IsKnownStaticDataMember) {
+      // This was supposed to be a static data member, but we got a function.
+      Error = true;
+      return nullptr;
+    }
+
     FSN = static_cast<FunctionSymbolNode *>(Symbol);
     DSIN->Name = Symbol->Name;
     FSN->Name = synthesizeQualifiedName(Arena, DSIN);
@@ -2148,8 +2175,8 @@ Demangler::demangleTemplateParameterList(StringView &MangledName) {
 
   while (!Error && !MangledName.startsWith('@')) {
     if (MangledName.consumeFront("$S") || MangledName.consumeFront("$$V") ||
-        MangledName.consumeFront("$$$V")) {
-      // Empty parameter pack.
+        MangledName.consumeFront("$$$V") || MangledName.consumeFront("$$Z")) {
+      // parameter pack separator
       continue;
     }
 
