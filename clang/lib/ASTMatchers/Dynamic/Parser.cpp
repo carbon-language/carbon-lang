@@ -339,8 +339,27 @@ bool Parser::parseIdentifierPrefixImpl(VariantValue *Value) {
     if (const VariantValue NamedValue =
             NamedValues ? NamedValues->lookup(NameToken.Text)
                         : VariantValue()) {
-      *Value = NamedValue;
-      return true;
+
+      if (Tokenizer->nextTokenKind() != TokenInfo::TK_Period) {
+        *Value = NamedValue;
+        return true;
+      }
+
+      std::string BindID;
+      if (!parseBindID(BindID))
+        return false;
+
+      assert(NamedValue.isMatcher());
+      llvm::Optional<DynTypedMatcher> Result =
+          NamedValue.getMatcher().getSingleMatcher();
+      if (Result.hasValue()) {
+        llvm::Optional<DynTypedMatcher> Bound = Result->tryBind(BindID);
+        if (Bound.hasValue()) {
+          *Value = VariantMatcher::SingleMatcher(*Bound);
+          return true;
+        }
+      }
+      return false;
     }
     // If the syntax is correct and the name is not a matcher either, report
     // unknown named value.
