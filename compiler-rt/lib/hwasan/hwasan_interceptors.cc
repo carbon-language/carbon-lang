@@ -292,14 +292,6 @@ INTERCEPTOR(void *, malloc, SIZE_T size) {
 extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
 
-struct ThreadStartArg {
-  thread_callback_t callback;
-  void *param;
-  // TODO: something crazy is going on with pthread_create overwriting parts
-  // of the stack, hense the padding.
-  char padding[1000];
-};
-
 static void *HwasanThreadStartFunc(void *arg) {
   __hwasan_thread_enter();
   ThreadStartArg *A = reinterpret_cast<ThreadStartArg*>(arg);
@@ -309,11 +301,10 @@ static void *HwasanThreadStartFunc(void *arg) {
 INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
             void * param) {
   ScopedTaggingDisabler disabler;
-  ThreadStartArg A;
-  A.callback = callback;
-  A.param = param;
+  ThreadStartArg *A = GetCurrentThread()->thread_start_arg();
+  *A = {callback, param};
   int res = REAL(pthread_create)(UntagPtr(th), UntagPtr(attr),
-                                 &HwasanThreadStartFunc, &A);
+                                 &HwasanThreadStartFunc, A);
   return res;
 }
 #endif // HWASAN_WITH_INTERCEPTORS

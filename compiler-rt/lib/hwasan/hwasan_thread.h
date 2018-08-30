@@ -19,6 +19,11 @@
 
 namespace __hwasan {
 
+struct ThreadStartArg {
+  thread_callback_t callback;
+  void *param;
+};
+
 class Thread {
  public:
   static Thread *Create(thread_callback_t start_routine, void *arg);
@@ -70,6 +75,10 @@ class Thread {
     }
   }
 
+  // Return a scratch ThreadStartArg object to be used in
+  // pthread_create interceptor.
+  ThreadStartArg *thread_start_arg() { return &thread_start_arg_; }
+
  private:
   // NOTE: There is no Thread constructor. It is allocated
   // via mmap() and *must* be valid in zero-initialized state.
@@ -99,6 +108,8 @@ class Thread {
   static Thread *main_thread;
 
   u32 tagging_disabled_;  // if non-zero, malloc uses zero tag in this thread.
+
+  ThreadStartArg thread_start_arg_;
 };
 
 Thread *GetCurrentThread();
