@@ -359,6 +359,43 @@ bool Parser::parseIdentifierPrefixImpl(VariantValue *Value) {
   return parseMatcherExpressionImpl(NameToken, Value);
 }
 
+bool Parser::parseBindID(std::string &BindID) {
+  // Parse .bind("foo")
+  assert(Tokenizer->peekNextToken().Kind == TokenInfo::TK_Period);
+  Tokenizer->consumeNextToken(); // consume the period.
+  const TokenInfo BindToken = Tokenizer->consumeNextToken();
+  if (BindToken.Kind == TokenInfo::TK_CodeCompletion) {
+    addCompletion(BindToken, MatcherCompletion("bind(\"", "bind", 1));
+    return false;
+  }
+
+  const TokenInfo OpenToken = Tokenizer->consumeNextToken();
+  const TokenInfo IDToken = Tokenizer->consumeNextToken();
+  const TokenInfo CloseToken = Tokenizer->consumeNextToken();
+
+  // TODO: We could use different error codes for each/some to be more
+  //       explicit about the syntax error.
+  if (BindToken.Kind != TokenInfo::TK_Ident ||
+      BindToken.Text != TokenInfo::ID_Bind) {
+    Error->addError(BindToken.Range, Error->ET_ParserMalformedBindExpr);
+    return false;
+  }
+  if (OpenToken.Kind != TokenInfo::TK_OpenParen) {
+    Error->addError(OpenToken.Range, Error->ET_ParserMalformedBindExpr);
+    return false;
+  }
+  if (IDToken.Kind != TokenInfo::TK_Literal || !IDToken.Value.isString()) {
+    Error->addError(IDToken.Range, Error->ET_ParserMalformedBindExpr);
+    return false;
+  }
+  if (CloseToken.Kind != TokenInfo::TK_CloseParen) {
+    Error->addError(CloseToken.Range, Error->ET_ParserMalformedBindExpr);
+    return false;
+  }
+  BindID = IDToken.Value.getString();
+  return true;
+}
+
 /// Parse and validate a matcher expression.
 /// \return \c true on success, in which case \c Value has the matcher parsed.
 ///   If the input is malformed, or some argument has an error, it
@@ -425,38 +462,8 @@ bool Parser::parseMatcherExpressionImpl(const TokenInfo &NameToken,
 
   std::string BindID;
   if (Tokenizer->peekNextToken().Kind == TokenInfo::TK_Period) {
-    // Parse .bind("foo")
-    Tokenizer->consumeNextToken();  // consume the period.
-    const TokenInfo BindToken = Tokenizer->consumeNextToken();
-    if (BindToken.Kind == TokenInfo::TK_CodeCompletion) {
-      addCompletion(BindToken, MatcherCompletion("bind(\"", "bind", 1));
+    if (!parseBindID(BindID))
       return false;
-    }
-
-    const TokenInfo OpenToken = Tokenizer->consumeNextToken();
-    const TokenInfo IDToken = Tokenizer->consumeNextToken();
-    const TokenInfo CloseToken = Tokenizer->consumeNextToken();
-
-    // TODO: We could use different error codes for each/some to be more
-    //       explicit about the syntax error.
-    if (BindToken.Kind != TokenInfo::TK_Ident ||
-        BindToken.Text != TokenInfo::ID_Bind) {
-      Error->addError(BindToken.Range, Error->ET_ParserMalformedBindExpr);
-      return false;
-    }
-    if (OpenToken.Kind != TokenInfo::TK_OpenParen) {
-      Error->addError(OpenToken.Range, Error->ET_ParserMalformedBindExpr);
-      return false;
-    }
-    if (IDToken.Kind != TokenInfo::TK_Literal || !IDToken.Value.isString()) {
-      Error->addError(IDToken.Range, Error->ET_ParserMalformedBindExpr);
-      return false;
-    }
-    if (CloseToken.Kind != TokenInfo::TK_CloseParen) {
-      Error->addError(CloseToken.Range, Error->ET_ParserMalformedBindExpr);
-      return false;
-    }
-    BindID = IDToken.Value.getString();
   }
 
   if (!Ctor)
