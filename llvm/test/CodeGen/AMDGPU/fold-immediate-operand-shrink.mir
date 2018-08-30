@@ -390,9 +390,9 @@ body:             |
   ; GCN:   successors: %bb.1(0x80000000)
   ; GCN:   [[S_MOV_B32_:%[0-9]+]]:sreg_32_xm0 = S_MOV_B32 12345
   ; GCN:   [[DEF:%[0-9]+]]:vgpr_32 = IMPLICIT_DEF
-  ; GCN:   [[V_ADD_I32_e64_:%[0-9]+]]:vgpr_32, [[V_ADD_I32_e64_1:%[0-9]+]]:sreg_64 = V_ADD_I32_e64 [[S_MOV_B32_]], [[DEF]], implicit $exec
+  ; GCN:   [[V_ADD_I32_e32_:%[0-9]+]]:vgpr_32 = V_ADD_I32_e32 [[S_MOV_B32_]], [[DEF]], implicit-def $vcc, implicit $exec
   ; GCN: bb.1:
-  ; GCN:   S_ENDPGM implicit [[V_ADD_I32_e64_]]
+  ; GCN:   S_ENDPGM implicit [[V_ADD_I32_e32_]]
   bb.0:
     successors: %bb.1
 
