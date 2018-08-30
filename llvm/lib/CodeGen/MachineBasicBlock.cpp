@@ -1439,6 +1439,20 @@ MachineBasicBlock::computeRegisterLiveness(const TargetRegisterInfo *TRI,
     }
   }
 
+  // If we reached the end, it is safe to clobber Reg at the end of a block of
+  // no successor has it live in.
+  if (I == end()) {
+    for (MachineBasicBlock *S : successors()) {
+      for (MCSubRegIterator SubReg(Reg, TRI, /*IncludeSelf*/true);
+           SubReg.isValid(); ++SubReg) {
+        if (S->isLiveIn(*SubReg))
+          return LQR_Live;
+      }
+    }
+
+    return LQR_Dead;
+  }
+
   // At this point we have no idea of the liveness of the register.
   return LQR_Unknown;
 }

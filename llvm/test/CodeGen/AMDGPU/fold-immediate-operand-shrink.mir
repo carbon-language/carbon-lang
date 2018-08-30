@@ -318,14 +318,74 @@ body:             |
 
 ---
 
-# We know this is OK because vcc isn't live out of the block, even
-# though it had a defined value
+# We know this is OK because vcc isn't live out of the block.
 
-name: shrink_scalar_imm_vgpr_v_add_i32_e64_known_dead_no_liveout
+name: shrink_scalar_imm_vgpr_v_add_i32_e64_known_no_liveout
 tracksRegLiveness: true
 
 body:             |
-  ; GCN-LABEL: name: shrink_scalar_imm_vgpr_v_add_i32_e64_known_dead_no_liveout
+  ; GCN-LABEL: name: shrink_scalar_imm_vgpr_v_add_i32_e64_known_no_liveout
+  ; GCN: bb.0:
+  ; GCN:   successors: %bb.1(0x80000000)
+  ; GCN:   [[S_MOV_B32_:%[0-9]+]]:sreg_32_xm0 = S_MOV_B32 12345
+  ; GCN:   [[DEF:%[0-9]+]]:vgpr_32 = IMPLICIT_DEF
+  ; GCN:   [[V_ADD_I32_e32_:%[0-9]+]]:vgpr_32 = V_ADD_I32_e32 [[S_MOV_B32_]], [[DEF]], implicit-def $vcc, implicit $exec
+  ; GCN: bb.1:
+  ; GCN:   S_ENDPGM implicit [[V_ADD_I32_e32_]]
+  bb.0:
+    successors: %bb.1
+
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    S_NOP 0
+    %0:sreg_32_xm0 = S_MOV_B32 12345
+    %1:vgpr_32 = IMPLICIT_DEF
+    %2:vgpr_32, %3:sreg_64 = V_ADD_I32_e64 %0, %1, implicit $exec
+    S_NOP 0
+    S_NOP 0
+
+  bb.1:
+    S_ENDPGM implicit %2
+
+...
+
+---
+
+# We know this is OK because vcc isn't live out of the block, even
+# though it had a defined but unused. value
+
+name: shrink_scalar_imm_vgpr_v_add_i32_e64_known_no_liveout_dead_vcc_def
+tracksRegLiveness: true
+
+body:             |
+  ; GCN-LABEL: name: shrink_scalar_imm_vgpr_v_add_i32_e64_known_no_liveout_dead_vcc_def
   ; GCN: bb.0:
   ; GCN:   successors: %bb.1(0x80000000)
   ; GCN:   [[S_MOV_B32_:%[0-9]+]]:sreg_32_xm0 = S_MOV_B32 12345
@@ -336,10 +396,12 @@ body:             |
   bb.0:
     successors: %bb.1
 
-    $vcc = S_MOV_B64 -1
+    S_NOP 0, implicit-def $vcc
     %0:sreg_32_xm0 = S_MOV_B32 12345
     %1:vgpr_32 = IMPLICIT_DEF
     %2:vgpr_32, %3:sreg_64 = V_ADD_I32_e64 %0, %1, implicit $exec
+    S_NOP 0
+    S_NOP 0
 
   bb.1:
     S_ENDPGM implicit %2
