@@ -455,6 +455,10 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
       false; // Debuggers get universal access
   m_compiler->getLangOpts().DollarIdents =
       true; // $ indicates a persistent variable name
+  // We enable all builtin functions beside the builtins from libc/libm (e.g.
+  // 'fopen'). Those libc functions are already correctly handled by LLDB, and
+  // additionally enabling them as expandable builtins is breaking Clang.
+  m_compiler->getLangOpts().NoBuiltin = true;
 
   // Set CodeGen options
   m_compiler->getCodeGenOpts().EmitDeclMetadata = true;
@@ -510,10 +514,6 @@ ClangExpressionParser::ClangExpressionParser(ExecutionContextScope *exe_scope,
 
   // 8. Most of this we get from the CompilerInstance, but we also want to give
   // the context an ExternalASTSource.
-  // We enable all builtin functions beside the builtins from libc/libm (e.g.
-  // 'fopen'). Those libc functions are already correctly handled by LLDB, and
-  // additionally enabling them as expandable builtins is breaking Clang.
-  m_compiler->getLangOpts().NoBuiltin = true;
 
   auto &PP = m_compiler->getPreprocessor();
   auto &builtin_context = PP.getBuiltinInfo();
