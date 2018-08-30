@@ -639,7 +639,7 @@ bool GlobalMerge::doInitialization(Module &M) {
     Type *Ty = GV.getValueType();
     if (DL.getTypeAllocSize(Ty) < MaxOffset) {
       if (TM &&
-          TargetLoweringObjectFile::getKindForGlobal(&GV, *TM).isBSSLocal())
+          TargetLoweringObjectFile::getKindForGlobal(&GV, *TM).isBSS())
         BSSGlobals[{AddressSpace, Section}].push_back(&GV);
       else if (GV.isConstant())
         ConstGlobals[{AddressSpace, Section}].push_back(&GV);
