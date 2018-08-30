@@ -3,14 +3,13 @@
 # RUN: llvm-mc -triple=i686-windows-gnu %s -filetype=obj -o %t.obj
 
 # RUN: lld-link -lldmingw -dll -out:%t.dll -entry:DllMainCRTStartup@12 %t.obj -implib:%t.lib
-# RUN: llvm-readobj -coff-exports %t.dll | FileCheck %s
+# RUN: llvm-readobj -coff-exports %t.dll | grep Name: | FileCheck %s
 # RUN: llvm-readobj %t.lib | FileCheck -check-prefix=IMPLIB %s
 
-# CHECK-NOT: Name: DllMainCRTStartup
-# CHECK-NOT: Name: _imp__unexported
-# CHECK: Name: dataSym
-# CHECK: Name: foobar
-# CHECK-NOT: Name: unexported
+# CHECK: Name:
+# CHECK-NEXT: Name: dataSym
+# CHECK-NEXT: Name: foobar
+# CHECK-EMPTY:
 
 # IMPLIB: Symbol: __imp__dataSym
 # IMPLIB-NOT: Symbol: _dataSym
