@@ -21,6 +21,7 @@
 .global _dataSym
 .global _unexported
 .global __imp__unexported
+.global .refptr._foobar
 .text
 _DllMainCRTStartup@12:
   ret
@@ -33,6 +34,8 @@ _dataSym:
   .int 4
 __imp__unexported:
   .int _unexported
+.refptr._foobar:
+  .int _foobar
 
 # Test specifying -export-all-symbols, on an object file that contains
 # dllexport directive for some of the symbols.
