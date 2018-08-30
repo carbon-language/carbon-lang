@@ -271,6 +271,17 @@ def : Pat<(i32 (vector_extract (v16i8 V128:$vec), (i32 LaneIdx16:$idx))),
 def : Pat<(i32 (vector_extract (v8i16 V128:$vec), (i32 LaneIdx8:$idx))),
           (EXTRACT_LANE_v8i16_u V128:$vec, (i32 LaneIdx8:$idx))>;
 
+// Bitcasts are nops
+// Matching bitcast t1 to t1 causes strange errors, so avoid repeating types
+foreach t1 = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in
+foreach t2 = !foldl(
+  []<ValueType>, [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+  acc, cur, !if(!eq(!cast<string>(t1), !cast<string>(cur)),
+    acc, !listconcat(acc, [cur])
+  )
+) in
+def : Pat<(t1 (bitconvert (t2 V128:$v))), (t1 V128:$v)>;
+
 // arbitrary other BUILD_VECTOR patterns
 def : Pat<(v16i8 (build_vector
             (i32 I32:$x0), (i32 I32:$x1), (i32 I32:$x2), (i32 I32:$x3),
