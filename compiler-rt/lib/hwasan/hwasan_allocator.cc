@@ -12,10 +12,6 @@
 // HWAddressSanitizer allocator.
 //===----------------------------------------------------------------------===//
 
-#include "sanitizer_common/sanitizer_allocator.h"
-#include "sanitizer_common/sanitizer_allocator_checks.h"
-#include "sanitizer_common/sanitizer_allocator_interface.h"
-#include "sanitizer_common/sanitizer_allocator_report.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_errno.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
@@ -23,15 +19,9 @@
 #include "hwasan_allocator.h"
 #include "hwasan_mapping.h"
 #include "hwasan_thread.h"
-#include "hwasan_poisoning.h"
 #include "hwasan_report.h"
 
 namespace __hwasan {
-
-struct Metadata {
-  u32 requested_size;  // sizes are < 4G.
-  u32 alloc_context_id;
-};
 
 bool HwasanChunkView::IsAllocated() const {
   return metadata_ && metadata_->alloc_context_id && metadata_->requested_size;
@@ -50,41 +40,6 @@ u32 HwasanChunkView::GetAllocStackId() const {
   return metadata_->alloc_context_id;
 }
 
-struct HwasanMapUnmapCallback {
-  void OnMap(uptr p, uptr size) const {}
-  void OnUnmap(uptr p, uptr size) const {
-    // We are about to unmap a chunk of user memory.
-    // It can return as user-requested mmap() or another thread stack.
-    // Make it accessible with zero-tagged pointer.
-    TagMemory(p, size, 0);
-  }
-};
-
-#if !defined(__aarch64__) && !defined(__x86_64__)
-#error Unsupported platform
-#endif
-
-static const uptr kMaxAllowedMallocSize = 2UL << 30;  // 2G
-static const uptr kRegionSizeLog = 20;
-static const uptr kNumRegions = SANITIZER_MMAP_RANGE_SIZE >> kRegionSizeLog;
-typedef TwoLevelByteMap<(kNumRegions >> 12), 1 << 12> ByteMap;
-
-struct AP32 {
-  static const uptr kSpaceBeg = 0;
-  static const u64 kSpaceSize = SANITIZER_MMAP_RANGE_SIZE;
-  static const uptr kMetadataSize = sizeof(Metadata);
-  typedef __sanitizer::CompactSizeClassMap SizeClassMap;
-  static const uptr kRegionSizeLog = __hwasan::kRegionSizeLog;
-  typedef __hwasan::ByteMap ByteMap;
-  typedef HwasanMapUnmapCallback MapUnmapCallback;
-  static const uptr kFlags = 0;
-};
-typedef SizeClassAllocator32<AP32> PrimaryAllocator;
-typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
-typedef LargeMmapAllocator<HwasanMapUnmapCallback> SecondaryAllocator;
-typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
-                          SecondaryAllocator> Allocator;
-
 static Allocator allocator;
 static AllocatorCache fallback_allocator_cache;
 static SpinMutex fallback_mutex;
@@ -102,8 +57,7 @@ void HwasanAllocatorInit() {
 
 AllocatorCache *GetAllocatorCache(HwasanThreadLocalMallocStorage *ms) {
   CHECK(ms);
-  CHECK_LE(sizeof(AllocatorCache), sizeof(ms->allocator_cache));
-  return reinterpret_cast<AllocatorCache *>(ms->allocator_cache);
+  return &ms->allocator_cache;
 }
 
 void HwasanThreadLocalMallocStorage::CommitBack() {
