@@ -86,6 +86,42 @@ _kortest_mask8_u8(__mmask8 __A, __mmask8 __B, unsigned char *__C) {
   return (unsigned char)__builtin_ia32_kortestzqi(__A, __B);
 }
 
+static __inline__ unsigned char __DEFAULT_FN_ATTRS
+_ktestc_mask8_u8(__mmask8 __A, __mmask8 __B)
+{
+  return (unsigned char)__builtin_ia32_ktestcqi(__A, __B);
+}
+
+static __inline__ unsigned char __DEFAULT_FN_ATTRS
+_ktestz_mask8_u8(__mmask8 __A, __mmask8 __B)
+{
+  return (unsigned char)__builtin_ia32_ktestzqi(__A, __B);
+}
+
+static __inline__ unsigned char __DEFAULT_FN_ATTRS
+_ktest_mask8_u8(__mmask8 __A, __mmask8 __B, unsigned char *__C) {
+  *__C = (unsigned char)__builtin_ia32_ktestcqi(__A, __B);
+  return (unsigned char)__builtin_ia32_ktestzqi(__A, __B);
+}
+
+static __inline__ unsigned char __DEFAULT_FN_ATTRS
+_ktestc_mask16_u8(__mmask16 __A, __mmask16 __B)
+{
+  return (unsigned char)__builtin_ia32_ktestchi(__A, __B);
+}
+
+static __inline__ unsigned char __DEFAULT_FN_ATTRS
+_ktestz_mask16_u8(__mmask16 __A, __mmask16 __B)
+{
+  return (unsigned char)__builtin_ia32_ktestzhi(__A, __B);
+}
+
+static __inline__ unsigned char __DEFAULT_FN_ATTRS
+_ktest_mask16_u8(__mmask16 __A, __mmask16 __B, unsigned char *__C) {
+  *__C = (unsigned char)__builtin_ia32_ktestchi(__A, __B);
+  return (unsigned char)__builtin_ia32_ktestzhi(__A, __B);
+}
+
 static __inline__ __mmask8 __DEFAULT_FN_ATTRS
 _kadd_mask8(__mmask8 __A, __mmask8 __B)
 {

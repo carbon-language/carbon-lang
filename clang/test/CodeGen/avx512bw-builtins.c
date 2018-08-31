@@ -226,6 +226,74 @@ unsigned char test_kortest_mask64_u8(__m512i __A, __m512i __B, __m512i __C, __m5
                             _mm512_cmpneq_epu8_mask(__C, __D), CF);
 }
 
+unsigned char test_ktestz_mask32_u8(__m512i __A, __m512i __B, __m512i __C, __m512i __D) {
+  // CHECK-LABEL: @test_ktestz_mask32_u8
+  // CHECK: [[LHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestz.d(<32 x i1> [[LHS]], <32 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  return _ktestz_mask32_u8(_mm512_cmpneq_epu16_mask(__A, __B),
+                           _mm512_cmpneq_epu16_mask(__C, __D));
+}
+
+unsigned char test_ktestc_mask32_u8(__m512i __A, __m512i __B, __m512i __C, __m512i __D) {
+  // CHECK-LABEL: @test_ktestc_mask32_u8
+  // CHECK: [[LHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestc.d(<32 x i1> [[LHS]], <32 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  return _ktestc_mask32_u8(_mm512_cmpneq_epu16_mask(__A, __B),
+                           _mm512_cmpneq_epu16_mask(__C, __D));
+}
+
+unsigned char test_ktest_mask32_u8(__m512i __A, __m512i __B, __m512i __C, __m512i __D, unsigned char *CF) {
+  // CHECK-LABEL: @test_ktest_mask32_u8
+  // CHECK: [[LHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestc.d(<32 x i1> [[LHS]], <32 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  // CHECK: [[LHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestz.d(<32 x i1> [[LHS]], <32 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  return _ktest_mask32_u8(_mm512_cmpneq_epu16_mask(__A, __B),
+                          _mm512_cmpneq_epu16_mask(__C, __D), CF);
+}
+
+unsigned char test_ktestz_mask64_u8(__m512i __A, __m512i __B, __m512i __C, __m512i __D) {
+  // CHECK-LABEL: @test_ktestz_mask64_u8
+  // CHECK: [[LHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestz.q(<64 x i1> [[LHS]], <64 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  return _ktestz_mask64_u8(_mm512_cmpneq_epu8_mask(__A, __B),
+                           _mm512_cmpneq_epu8_mask(__C, __D));
+}
+
+unsigned char test_ktestc_mask64_u8(__m512i __A, __m512i __B, __m512i __C, __m512i __D) {
+  // CHECK-LABEL: @test_ktestc_mask64_u8
+  // CHECK: [[LHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestc.q(<64 x i1> [[LHS]], <64 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  return _ktestc_mask64_u8(_mm512_cmpneq_epu8_mask(__A, __B),
+                           _mm512_cmpneq_epu8_mask(__C, __D));
+}
+
+unsigned char test_ktest_mask64_u8(__m512i __A, __m512i __B, __m512i __C, __m512i __D, unsigned char *CF) {
+  // CHECK-LABEL: @test_ktest_mask64_u8
+  // CHECK: [[LHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestc.q(<64 x i1> [[LHS]], <64 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  // CHECK: [[LHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RHS:%.*]] = bitcast i64 %{{.*}} to <64 x i1>
+  // CHECK: [[RES:%.*]] = call i32 @llvm.x86.avx512.ktestz.q(<64 x i1> [[LHS]], <64 x i1> [[RHS]])
+  // CHECK: trunc i32 [[RES]] to i8
+  return _ktest_mask64_u8(_mm512_cmpneq_epu8_mask(__A, __B),
+                          _mm512_cmpneq_epu8_mask(__C, __D), CF);
+}
+
 __mmask32 test_kadd_mask32(__m512i __A, __m512i __B, __m512i __C, __m512i __D, __m512i __E, __m512i __F) {
   // CHECK-LABEL: @test_kadd_mask32
   // CHECK: [[LHS:%.*]] = bitcast i32 %{{.*}} to <32 x i1>

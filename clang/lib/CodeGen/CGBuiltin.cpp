@@ -10075,6 +10075,50 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateZExt(Cmp, ConvertType(E->getType()));
   }
 
+  case X86::BI__builtin_ia32_ktestcqi:
+  case X86::BI__builtin_ia32_ktestzqi:
+  case X86::BI__builtin_ia32_ktestchi:
+  case X86::BI__builtin_ia32_ktestzhi:
+  case X86::BI__builtin_ia32_ktestcsi:
+  case X86::BI__builtin_ia32_ktestzsi:
+  case X86::BI__builtin_ia32_ktestcdi:
+  case X86::BI__builtin_ia32_ktestzdi: {
+    Intrinsic::ID IID;
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unsupported intrinsic!");
+    case X86::BI__builtin_ia32_ktestcqi:
+      IID = Intrinsic::x86_avx512_ktestc_b;
+      break;
+    case X86::BI__builtin_ia32_ktestzqi:
+      IID = Intrinsic::x86_avx512_ktestz_b;
+      break;
+    case X86::BI__builtin_ia32_ktestchi:
+      IID = Intrinsic::x86_avx512_ktestc_w;
+      break;
+    case X86::BI__builtin_ia32_ktestzhi:
+      IID = Intrinsic::x86_avx512_ktestz_w;
+      break;
+    case X86::BI__builtin_ia32_ktestcsi:
+      IID = Intrinsic::x86_avx512_ktestc_d;
+      break;
+    case X86::BI__builtin_ia32_ktestzsi:
+      IID = Intrinsic::x86_avx512_ktestz_d;
+      break;
+    case X86::BI__builtin_ia32_ktestcdi:
+      IID = Intrinsic::x86_avx512_ktestc_q;
+      break;
+    case X86::BI__builtin_ia32_ktestzdi:
+      IID = Intrinsic::x86_avx512_ktestz_q;
+      break;
+    }
+
+    unsigned NumElts = Ops[0]->getType()->getIntegerBitWidth();
+    Value *LHS = getMaskVecValue(*this, Ops[0], NumElts);
+    Value *RHS = getMaskVecValue(*this, Ops[1], NumElts);
+    Function *Intr = CGM.getIntrinsic(IID);
+    return Builder.CreateCall(Intr, {LHS, RHS});
+  }
+
   case X86::BI__builtin_ia32_kaddqi:
   case X86::BI__builtin_ia32_kaddhi:
   case X86::BI__builtin_ia32_kaddsi:
