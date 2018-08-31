@@ -36,7 +36,6 @@ class HwasanChunkView {
   HwasanChunkView() : block_(0), metadata_(nullptr) {}
   HwasanChunkView(uptr block, Metadata *metadata)
       : block_(block), metadata_(metadata) {}
-  bool IsValid() const;        // Checks if it points to a valid allocated chunk
   bool IsAllocated() const;    // Checks if the memory is currently allocated
   uptr Beg() const;            // First byte of user memory
   uptr End() const;            // Last byte of user memory
