@@ -185,16 +185,16 @@ public:
 };
 
 class PIDRecord : public MetadataRecord {
-  uint64_t PID = 0;
+  int32_t PID = 0;
   friend class RecordInitializer;
 
 public:
   PIDRecord() = default;
-  explicit PIDRecord(uint64_t P) : MetadataRecord(), PID(P) {}
+  explicit PIDRecord(int32_t P) : MetadataRecord(), PID(P) {}
 
   MetadataType metadataType() const override { return MetadataType::PIDEntry; }
 
-  uint64_t pid() const { return PID; }
+  int32_t pid() const { return PID; }
 
   Error apply(RecordVisitor &V) override;
 };

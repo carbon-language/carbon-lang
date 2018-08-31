@@ -63,15 +63,15 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion3) {
   auto &Trace = TraceOrErr.get();
 
   ASSERT_THAT(Trace, Not(IsEmpty()));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::FuncId, Eq(1)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::FuncId, Eq(1)),
                                  Field(&XRayRecord::FuncId, Eq(1))));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::TId, Eq(1u)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::TId, Eq(1u)),
                                  Field(&XRayRecord::TId, Eq(1u))));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::PId, Eq(1u)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::PId, Eq(1u)),
                                  Field(&XRayRecord::PId, Eq(1u))));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::CPU, Eq(1u)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::CPU, Eq(1u)),
                                  Field(&XRayRecord::CPU, Eq(1u))));
-  ASSERT_THAT(Trace,
+  EXPECT_THAT(Trace,
               ElementsAre(Field(&XRayRecord::Type, Eq(RecordTypes::ENTER)),
                           Field(&XRayRecord::Type, Eq(RecordTypes::EXIT))));
 }
@@ -108,13 +108,13 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion2) {
   auto &Trace = TraceOrErr.get();
 
   ASSERT_THAT(Trace, Not(IsEmpty()));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::FuncId, Eq(1)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::FuncId, Eq(1)),
                                  Field(&XRayRecord::FuncId, Eq(1))));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::TId, Eq(1u)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::TId, Eq(1u)),
                                  Field(&XRayRecord::TId, Eq(1u))));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::CPU, Eq(1u)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::CPU, Eq(1u)),
                                  Field(&XRayRecord::CPU, Eq(1u))));
-  ASSERT_THAT(Trace,
+  EXPECT_THAT(Trace,
               ElementsAre(Field(&XRayRecord::Type, Eq(RecordTypes::ENTER)),
                           Field(&XRayRecord::Type, Eq(RecordTypes::EXIT))));
 }
@@ -167,14 +167,13 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion1) {
   auto &Trace = TraceOrErr.get();
 
   ASSERT_THAT(Trace, Not(IsEmpty()));
-  ASSERT_THAT(Trace, Not(IsEmpty()));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::FuncId, Eq(1)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::FuncId, Eq(1)),
                                  Field(&XRayRecord::FuncId, Eq(1))));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::TId, Eq(1u)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::TId, Eq(1u)),
                                  Field(&XRayRecord::TId, Eq(1u))));
-  ASSERT_THAT(Trace, ElementsAre(Field(&XRayRecord::CPU, Eq(1u)),
+  EXPECT_THAT(Trace, ElementsAre(Field(&XRayRecord::CPU, Eq(1u)),
                                  Field(&XRayRecord::CPU, Eq(1u))));
-  ASSERT_THAT(Trace,
+  EXPECT_THAT(Trace,
               ElementsAre(Field(&XRayRecord::Type, Eq(RecordTypes::ENTER)),
                           Field(&XRayRecord::Type, Eq(RecordTypes::EXIT))));
 }

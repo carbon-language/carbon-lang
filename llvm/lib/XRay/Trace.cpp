@@ -396,7 +396,7 @@ Error processFDRPidRecord(FDRState &State, DataExtractor &RecordExtractor,
             fdrStateToTwine(State.Expects),
         std::make_error_code(std::errc::executable_format_error));
   auto PreReadOffset = OffsetPtr;
-  State.ProcessId = RecordExtractor.getU32(&OffsetPtr);
+  State.ProcessId = RecordExtractor.getSigned(&OffsetPtr, 4);
   if (OffsetPtr == PreReadOffset)
     return createStringError(
         std::make_error_code(std::errc::executable_format_error),
