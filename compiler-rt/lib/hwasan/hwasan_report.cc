@@ -61,52 +61,52 @@ bool FindHeapAllocation(HeapAllocationsRingBuffer *rb,
 }
 
 void PrintAddressDescription(uptr tagged_addr, uptr access_size) {
+  Decorator d;
   int num_descriptions_printed = 0;
   uptr untagged_addr = UntagAddr(tagged_addr);
-  Thread::VisitAllLiveThreads([&](Thread *t) {
-    Decorator d;
-    // Check if this looks like a heap buffer overflow by scanning
-    // the shadow left and right and looking for the first adjacent
-    // object with a different memory tag. If that tag matches addr_tag,
-    // check the allocator if it has a live chunk there.
-    tag_t addr_tag = GetTagFromPointer(tagged_addr);
-    tag_t *tag_ptr = reinterpret_cast<tag_t*>(MemToShadow(untagged_addr));
-    if (*tag_ptr != addr_tag) { // should be true usually.
-      tag_t *left = tag_ptr, *right = tag_ptr;
-      // scan left.
-      for (int i = 0; i < 1000 && *left == *tag_ptr; i++, left--){}
-      // scan right.
-      for (int i = 0; i < 1000 && *right == *tag_ptr; i++, right++){}
-      // Chose the object that has addr_tag and that is closer to addr.
-      tag_t *candidate = nullptr;
-      if (*right == addr_tag && *left == addr_tag)
-        candidate = right - tag_ptr < tag_ptr - left ? right : left;
-      else if (*right == addr_tag)
-        candidate = right;
-      else if (*left == addr_tag)
-        candidate = left;
+  // Check if this looks like a heap buffer overflow by scanning
+  // the shadow left and right and looking for the first adjacent
+  // object with a different memory tag. If that tag matches addr_tag,
+  // check the allocator if it has a live chunk there.
+  tag_t addr_tag = GetTagFromPointer(tagged_addr);
+  tag_t *tag_ptr = reinterpret_cast<tag_t*>(MemToShadow(untagged_addr));
+  if (*tag_ptr != addr_tag) { // should be true usually.
+    tag_t *left = tag_ptr, *right = tag_ptr;
+    // scan left.
+    for (int i = 0; i < 1000 && *left == *tag_ptr; i++, left--){}
+    // scan right.
+    for (int i = 0; i < 1000 && *right == *tag_ptr; i++, right++){}
+    // Chose the object that has addr_tag and that is closer to addr.
+    tag_t *candidate = nullptr;
+    if (*right == addr_tag && *left == addr_tag)
+      candidate = right - tag_ptr < tag_ptr - left ? right : left;
+    else if (*right == addr_tag)
+      candidate = right;
+    else if (*left == addr_tag)
+      candidate = left;
 
-      if (candidate) {
-        uptr mem = ShadowToMem(reinterpret_cast<uptr>(candidate));
-        HwasanChunkView chunk = FindHeapChunkByAddress(mem);
-        if (chunk.IsAllocated()) {
-          Printf("%s", d.Location());
-          Printf(
-              "%p is located %zd bytes to the %s of %zd-byte region [%p,%p)\n",
-              untagged_addr,
-              candidate == left ? untagged_addr - chunk.End()
-                                : chunk.Beg() - untagged_addr,
-              candidate == right ? "left" : "right", chunk.UsedSize(),
-              chunk.Beg(), chunk.End());
-          Printf("%s", d.Allocation());
-          Printf("allocated here:\n", t);
-          Printf("%s", d.Default());
-          GetStackTraceFromId(chunk.GetAllocStackId()).Print();
-          num_descriptions_printed++;
-        }
+    if (candidate) {
+      uptr mem = ShadowToMem(reinterpret_cast<uptr>(candidate));
+      HwasanChunkView chunk = FindHeapChunkByAddress(mem);
+      if (chunk.IsAllocated()) {
+        Printf("%s", d.Location());
+        Printf(
+            "%p is located %zd bytes to the %s of %zd-byte region [%p,%p)\n",
+            untagged_addr,
+            candidate == left ? untagged_addr - chunk.End()
+            : chunk.Beg() - untagged_addr,
+            candidate == right ? "left" : "right", chunk.UsedSize(),
+            chunk.Beg(), chunk.End());
+        Printf("%s", d.Allocation());
+        Printf("allocated here:\n");
+        Printf("%s", d.Default());
+        GetStackTraceFromId(chunk.GetAllocStackId()).Print();
+        num_descriptions_printed++;
       }
     }
+  }
 
+  Thread::VisitAllLiveThreads([&](Thread *t) {
     // Scan all threads' ring buffers to find if it's a heap-use-after-free.
     HeapAllocationRecord har;
     if (FindHeapAllocation(t->heap_allocations(), tagged_addr, &har)) {
