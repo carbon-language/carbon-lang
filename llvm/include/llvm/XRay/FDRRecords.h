@@ -244,7 +244,7 @@ public:
   // properties.
   RecordTypes recordType() const { return Kind; }
   int32_t functionId() const { return FuncId; }
-  uint64_t delta() const { return Delta; }
+  uint32_t delta() const { return Delta; }
 
   Error apply(RecordVisitor &V) override;
 };
