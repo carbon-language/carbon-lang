@@ -305,6 +305,9 @@ void X86LegalizerInfo::setLegalizerInfoSSE2() {
   setAction({G_FPEXT, s64}, Legal);
   setAction({G_FPEXT, 1, s32}, Legal);
 
+  setAction({G_FPTRUNC, s32}, Legal);
+  setAction({G_FPTRUNC, 1, s64}, Legal);
+
   // Constants
   setAction({TargetOpcode::G_FCONSTANT, s64}, Legal);
 
