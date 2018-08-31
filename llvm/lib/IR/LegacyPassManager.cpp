@@ -144,6 +144,13 @@ unsigned PMDataManager::initSizeRemarkInfo(Module &M) {
 void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
                                                 int64_t Delta,
                                                 unsigned CountBefore) {
+  // If it's a pass manager, don't emit a remark. (This hinges on the assumption
+  // that the only passes that return non-null with getAsPMDataManager are pass
+  // managers.) The reason we have to do this is to avoid emitting remarks for
+  // CGSCC passes.
+  if (P->getAsPMDataManager())
+    return;
+
   // We need a function containing at least one basic block in order to output
   // remarks. Since it's possible that the first function in the module doesn't
   // actually contain a basic block, we have to go and find one that's suitable
@@ -157,13 +164,6 @@ void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
 
   // We found a function containing at least one basic block.
   Function *F = &*It;
-
-  // If it's a pass manager, don't emit a remark. (This hinges on the assumption
-  // that the only passes that return non-null with getAsPMDataManager are pass
-  // managers.) The reason we have to do this is to avoid emitting remarks for
-  // CGSCC passes.
-  if (P->getAsPMDataManager())
-    return;
   int64_t CountAfter = static_cast<int64_t>(CountBefore) + Delta;
   BasicBlock &BB = *F->begin();
   OptimizationRemarkAnalysis R("size-info", "IRSizeChange",
