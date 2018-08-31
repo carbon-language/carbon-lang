@@ -24,76 +24,6 @@
 
 namespace Fortran::evaluate {
 
-// Convenience functions and operator overloadings for expression construction.
-
-template<TypeCategory C, int K>
-Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {
-  return {Negate<Type<C, K>>{std::move(x)}};
-}
-
-template<TypeCategory C, int K>
-Expr<Type<C, K>> operator+(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Add<Type<C, K>>{std::move(x), std::move(y)}};
-}
-
-template<TypeCategory C, int K>
-Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Subtract<Type<C, K>>{std::move(x), std::move(y)}};
-}
-
-template<TypeCategory C, int K>
-Expr<Type<C, K>> operator*(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Multiply<Type<C, K>>{std::move(x), std::move(y)}};
-}
-
-template<TypeCategory C, int K>
-Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Divide<Type<C, K>>{std::move(x), std::move(y)}};
-}
-
-template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {
-  return std::visit(
-      [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u);
-}
-
-// TODO pmk revisit these below for type safety
-
-template<TypeCategory C>
-Expr<SomeKind<C>> operator+(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
-  return std::visit(
-      [](auto &xk, auto &yk) {
-        return Expr<SomeKind<C>>{std::move(xk) + std::move(yk)};
-      },
-      x.u, y.u);
-}
-
-template<TypeCategory C>
-Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
-  return std::visit(
-      [](auto &xk, auto &yk) {
-        return Expr<SomeKind<C>>{std::move(xk) - std::move(yk)};
-      },
-      x.u, y.u);
-}
-
-template<TypeCategory C>
-Expr<SomeKind<C>> operator*(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
-  return std::visit(
-      [](auto &xk, auto &yk) {
-        return Expr<SomeKind<C>>{std::move(xk) * std::move(yk)};
-      },
-      x.u, y.u);
-}
-
-template<TypeCategory C>
-Expr<SomeKind<C>> operator/(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
-  return std::visit(
-      [](auto &xk, auto &yk) {
-        return Expr<SomeKind<C>>{std::move(xk) / std::move(yk)};
-      },
-      x.u, y.u);
-}
-
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
 // TODO: Would these be better as conversion constructors in the classes?
@@ -163,9 +93,34 @@ template<> inline Expr<SomeType> AsGenericExpr(GenericScalar &&x) {
 // specific intrinsic type with ConvertToType<T>(x) or by converting
 // one arbitrary expression to the type of another with ConvertTo(to, from).
 
-template<typename TO, TypeCategory FC>
-Expr<TO> ConvertToType(Expr<SomeKind<FC>> &&x) {
-  return {Convert<TO, FC>{std::move(x)}};
+template<typename TO, TypeCategory FROMCAT>
+Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
+  static_assert(TO::isSpecificType);
+  if constexpr (FROMCAT != TO::category) {
+    return {Convert<TO, FROMCAT>{std::move(x)}};
+  } else {
+    if (auto already{common::GetIf<Expr<TO>>(x.u)}) {
+      return std::move(*already);
+    }
+    if constexpr (TO::category == TypeCategory::Complex) {
+      // Extract, convert, and recombine the components.
+      return {std::visit(
+          [](auto &z) -> ComplexConstructor<TO::kind> {
+            using FromType = ResultType<decltype(z)>;
+            using FromPart = typename FromType::Part;
+            using FromGeneric = SomeKind<TypeCategory::Real>;
+            using ToPart = typename TO::Part;
+            Convert<ToPart, TypeCategory::Real> re{Expr<FromGeneric>{
+                Expr<FromPart>{ComplexComponent<FromType::kind>{false, z}}}};
+            Convert<ToPart, TypeCategory::Real> im{Expr<FromGeneric>{
+                Expr<FromPart>{ComplexComponent<FromType::kind>{true, z}}}};
+            return {std::move(re), std::move(im)};
+          },
+          x.u)};
+    } else {
+      return {Convert<TO, TO::category>{std::move(x)}};
+    }
+  }
 }
 
 template<TypeCategory TC, int TK, TypeCategory FC>
@@ -207,74 +162,59 @@ Expr<SomeType> ConvertTo(const Expr<SomeType> &to, Expr<FT> &&from) {
       to.u);
 }
 
-// Given references to two expressions of the same type category, convert
-// either to the kind of the other in place if it has a smaller kind.
+template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;
+
+// Given a type category CAT, SameKindExprs<CAT, N> is a variant that
+// holds an arrays of expressions of the same supported kind in that
+// category.
+template<int N = 2> struct SameKindExprsHelper {
+  template<typename A> using SameExprs = std::array<Expr<A>, N>;
+};
+template<TypeCategory CAT, int N = 2>
+using SameKindExprs =
+    common::MapTemplate<SameKindExprsHelper<N>::template SameExprs,
+        CategoryTypes<CAT>>;
+
+// Given references to two expressions of arbitrary kind in the same type
+// category, convert one to the kind of the other when it has the smaller kind,
+// then return them in a type-safe package.
 template<TypeCategory CAT>
-void ConvertToSameKind(Expr<SomeKind<CAT>> &x, Expr<SomeKind<CAT>> &y) {
-  std::visit(
-      [&](auto &xk, auto &yk) {
-        using xt = ResultType<decltype(xk)>;
-        using yt = ResultType<decltype(yk)>;
-        if constexpr (xt::kind < yt::kind) {
-          x.u = Expr<yt>{Convert<yt, CAT>{x}};
-        } else if constexpr (xt::kind > yt::kind) {
-          y.u = Expr<xt>{Convert<xt, CAT>{y}};
+SameKindExprs<CAT, 2> AsSameKindExprs(
+    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
+  return std::visit(
+      [&](auto &&kx, auto &&ky) -> SameKindExprs<CAT, 2> {
+        using XTy = ResultType<decltype(kx)>;
+        using YTy = ResultType<decltype(ky)>;
+        if constexpr (std::is_same_v<XTy, YTy>) {
+          return {SameExprs<XTy>{std::move(kx), std::move(ky)}};
+        } else if constexpr (XTy::kind < YTy::kind) {
+          return {SameExprs<YTy>{ConvertTo(ky, std::move(kx)), std::move(ky)}};
+        } else {
+          return {SameExprs<XTy>{std::move(kx), ConvertTo(kx, std::move(ky))}};
         }
+#if !__clang__ && 100 * __GNUC__ + __GNUC_MINOR__ == 801
+        // Silence a bogus warning about a missing return with G++ 8.1.0.
+        // Doesn't execute, but must be correctly typed.
+        CHECK(!"can't happen");
+        return {SameExprs<XTy>{std::move(kx), std::move(kx)}};
+#endif
       },
-      x.u, y.u);
+      std::move(x.u), std::move(y.u));
 }
 
 // Ensure that both operands of an intrinsic REAL operation (or CMPLX()
 // constructor) are INTEGER or REAL, then convert them as necessary to the
 // same kind of REAL.
-template<int N = 2> struct SameExprsHelper {
-  template<typename A> using SameExprs = std::array<Expr<A>, N>;
-};
-template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;
-template<TypeCategory CAT, int N = 2>
-using SameKindExprs =
-    common::MapTemplate<SameExprsHelper<N>::template SameExprs,
-        CategoryTypes<CAT>>;
 using ConvertRealOperandsResult =
     std::optional<SameKindExprs<TypeCategory::Real, 2>>;
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
-ConvertRealOperandsResult ConvertRealOperands(parser::ContextualMessages &,
-    std::optional<Expr<SomeType>> &&, std::optional<Expr<SomeType>> &&);
 
 template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   using Ty = TypeOf<A>;
   static_assert(
       std::is_same_v<Scalar<Ty>, std::decay_t<A>> || !"TypeOf<> is broken");
   return {Constant<Ty>{x}};
-}
-
-// Convert, if necessary, an expression to a specific kind in the same
-// category.
-template<typename TOTYPE>
-Expr<TOTYPE> EnsureKind(Expr<SomeKind<TOTYPE::category>> &&x) {
-  using ToType = TOTYPE;
-  static_assert(ToType::isSpecificType);
-  if (auto already{common::GetIf<Expr<ToType>>(x.u)}) {
-    return std::move(*already);
-  }
-  if constexpr (ToType::category == TypeCategory::Complex) {
-    return {std::visit(
-        [](auto &z) -> ComplexConstructor<ToType::kind> {
-          using FromType = ResultType<decltype(z)>;
-          using FromPart = typename FromType::Part;
-          using FromGeneric = SomeKind<TypeCategory::Real>;
-          using ToPart = typename ToType::Part;
-          Convert<ToPart, TypeCategory::Real> re{Expr<FromGeneric>{
-              Expr<FromPart>{ComplexComponent<FromType::kind>{false, z}}}};
-          Convert<ToPart, TypeCategory::Real> im{Expr<FromGeneric>{
-              Expr<FromPart>{ComplexComponent<FromType::kind>{true, z}}}};
-          return {std::move(re), std::move(im)};
-        },
-        x.u)};
-  } else {
-    return {Convert<ToType, ToType::category>{std::move(x)}};
-  }
 }
 
 // Given two expressions of arbitrary kind in the same intrinsic type
@@ -285,15 +225,12 @@ template<template<typename> class OPR, TypeCategory CAT>
 Expr<SomeKind<CAT>> PromoteAndCombine(
     Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
   return std::visit(
-      [&](auto &&xk, auto &&yk) -> Expr<SomeKind<CAT>> {
-        using xt = ResultType<decltype(xk)>;
-        using yt = ResultType<decltype(yk)>;
-        using ToType = Type<CAT, std::max(xt::kind, yt::kind)>;
+      [](auto &&xy) {
+        using Ty = ResultType<decltype(xy[0])>;
         return AsCategoryExpr(
-            AsExpr(OPR<ToType>{EnsureKind<ToType>(std::move(xk)),
-                EnsureKind<ToType>(std::move(yk))}));
+            AsExpr(OPR<Ty>{std::move(xy[0]), std::move(xy[1])}));
       },
-      std::move(x.u), std::move(y.u));
+      AsSameKindExprs(std::move(x), std::move(y)));
 }
 
 // Given two expressions of arbitrary type, try to combine them with a
@@ -305,7 +242,68 @@ std::optional<Expr<SomeType>> NumericOperation(
 
 extern template std::optional<Expr<SomeType>> NumericOperation<Add>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
-// TODO pmk more
+extern template std::optional<Expr<SomeType>> NumericOperation<Subtract>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+extern template std::optional<Expr<SomeType>> NumericOperation<Multiply>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+extern template std::optional<Expr<SomeType>> NumericOperation<Divide>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+
+// Convenience functions and operator overloadings for expression construction.
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {
+  return {Negate<Type<C, K>>{std::move(x)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator+(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Add<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Subtract<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator*(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Multiply<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C, int K>
+Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
+  return {Divide<Type<C, K>>{std::move(x), std::move(y)}};
+}
+
+template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {
+  return std::visit(
+      [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u);
+}
+
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> operator+(
+    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
+  return PromoteAndCombine<Add, CAT>(std::move(x), std::move(y));
+}
+
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> operator-(
+    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
+  return PromoteAndCombine<Subtract, CAT>(std::move(x), std::move(y));
+}
+
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> operator*(
+    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
+  return PromoteAndCombine<Multiply, CAT>(std::move(x), std::move(y));
+}
+
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> operator/(
+    Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
+  return PromoteAndCombine<Divide, CAT>(std::move(x), std::move(y));
+}
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

@@ -51,7 +51,9 @@ MaybeExpr AsMaybeExpr(std::optional<Expr<SomeKind<CAT>>> &&x) {
   return std::nullopt;
 }
 
-// This local class wraps some state and a highly overloaded member function.
+// This local class wraps some state and a highly overloaded
+// Analyze() member function that converts parse trees into generic
+// expressions.
 struct ExprAnalyzer {
   using MaybeIntExpr = std::optional<Expr<SomeInteger>>;
 
@@ -77,7 +79,30 @@ struct ExprAnalyzer {
   MaybeExpr Analyze(const parser::ComplexPart &);
 
   MaybeExpr Analyze(const parser::Expr::Parentheses &);
+  MaybeExpr Analyze(const parser::Expr::UnaryPlus &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::Negate &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::NOT &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::DefinedUnary &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::Power &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::Multiply &);
+  MaybeExpr Analyze(const parser::Expr::Divide &);
+  MaybeExpr Analyze(const parser::Expr::Add &);
+  MaybeExpr Analyze(const parser::Expr::Subtract &);
+  MaybeExpr Analyze(const parser::Expr::Concat &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::LT &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::LE &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::EQ &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::NE &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::GE &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::GT &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::AND &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::OR &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::EQV &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::NEQV &);  // TODO
+  MaybeExpr Analyze(const parser::Expr::XOR &);  // TODO
   MaybeExpr Analyze(const parser::Expr::ComplexConstructor &);
+  MaybeExpr Analyze(const parser::Expr::DefinedBinary &);  // TODO
+  // TODO more remain
 
   std::optional<Expr<SomeComplex>> ConstructComplex(MaybeExpr &&, MaybeExpr &&);
 
@@ -318,17 +343,19 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexPart &x) {
 // component is converted if necessary to its type.
 std::optional<Expr<SomeComplex>> ExprAnalyzer::ConstructComplex(
     MaybeExpr &&real, MaybeExpr &&imaginary) {
-  if (auto converted{ConvertRealOperands(
-          context.messages, std::move(real), std::move(imaginary))}) {
-    return {std::visit(
-        [](auto &&pair) -> std::optional<Expr<SomeComplex>> {
-          using realType = ResultType<decltype(pair[0])>;
-          using zType = SameKind<TypeCategory::Complex, realType>;
-          auto cmplx{ComplexConstructor<zType::kind>{
-              std::move(pair[0]), std::move(pair[1])}};
-          return {AsCategoryExpr(AsExpr(std::move(cmplx)))};
-        },
-        std::move(*converted))};
+  if (auto parts{common::AllPresent(std::move(real), std::move(imaginary))}) {
+    if (auto converted{ConvertRealOperands(context.messages,
+            std::move(std::get<0>(*parts)), std::move(std::get<1>(*parts)))}) {
+      return {std::visit(
+          [](auto &&pair) -> std::optional<Expr<SomeComplex>> {
+            using realType = ResultType<decltype(pair[0])>;
+            using zType = SameKind<TypeCategory::Complex, realType>;
+            auto cmplx{ComplexConstructor<zType::kind>{
+                std::move(pair[0]), std::move(pair[1])}};
+            return {AsCategoryExpr(AsExpr(std::move(cmplx)))};
+          },
+          std::move(*converted))};
+    }
   }
   return std::nullopt;
 }
@@ -336,11 +363,6 @@ std::optional<Expr<SomeComplex>> ExprAnalyzer::ConstructComplex(
 MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexLiteralConstant &z) {
   return AsMaybeExpr(
       ConstructComplex(Analyze(std::get<0>(z.t)), Analyze(std::get<1>(z.t))));
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
-  return AsMaybeExpr(
-      ConstructComplex(Analyze(*std::get<0>(x.t)), Analyze(*std::get<1>(x.t))));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
@@ -436,7 +458,37 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
   return std::nullopt;
 }
 
-// TODO: continue here with other parse tree node types
+// TODO: defined operators for illegal intrinsic operator cases
+template<template<typename> class OPR, typename PARSED>
+MaybeExpr BinaryOperationHelper(ExprAnalyzer &ea, const PARSED &x) {
+  if (auto both{common::AllPresent(AnalyzeHelper(ea, *std::get<0>(x.t)),
+          AnalyzeHelper(ea, *std::get<1>(x.t)))}) {
+    return NumericOperation<OPR>(ea.context.messages,
+        std::move(std::get<0>(*both)), std::move(std::get<1>(*both)));
+  }
+  return std::nullopt;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Add &x) {
+  return BinaryOperationHelper<Add>(*this, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Subtract &x) {
+  return BinaryOperationHelper<Subtract>(*this, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Multiply &x) {
+  return BinaryOperationHelper<Multiply>(*this, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Divide &x) {
+  return BinaryOperationHelper<Divide>(*this, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
+  return AsMaybeExpr(ConstructComplex(AnalyzeHelper(*this, *std::get<0>(x.t)),
+      AnalyzeHelper(*this, *std::get<1>(x.t))));
+}
 
 }  // namespace Fortran::evaluate
 

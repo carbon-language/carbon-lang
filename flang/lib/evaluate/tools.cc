@@ -22,50 +22,32 @@ using namespace Fortran::parser::literals;
 
 namespace Fortran::evaluate {
 
-using SameRealExprPair = SameKindExprs<TypeCategory::Real>;
-
-static SameRealExprPair ConversionHelper(
-    Expr<SomeReal> &&x, Expr<SomeReal> &&y) {
-  return std::visit(
-      [&](auto &&rx, auto &&ry) -> SameRealExprPair {
-        using XTy = ResultType<decltype(rx)>;
-        using YTy = ResultType<decltype(ry)>;
-        if constexpr (std::is_same_v<XTy, YTy>) {
-          return {SameExprs<XTy>{std::move(rx), std::move(ry)}};
-        } else if constexpr (XTy::kind < YTy::kind) {
-          return {SameExprs<YTy>{ConvertTo(ry, std::move(rx)), std::move(ry)}};
-        } else {
-          return {SameExprs<XTy>{std::move(rx), ConvertTo(rx, std::move(ry))}};
-        }
-      },
-      std::move(x.u), std::move(y.u));
-}
-
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y) {
   return std::visit(
-      common::visitors{
-          [&](Expr<SomeInteger> &&ix,
-              Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
-            // Can happen in a CMPLX() constructor.  Per F'2018,
-            // both integer operands are converted to default REAL.
-            return {ConversionHelper(ConvertToType<DefaultReal>(std::move(ix)),
-                ConvertToType<DefaultReal>(std::move(iy)))};
-          },
+      common::visitors{[&](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy)
+                           -> ConvertRealOperandsResult {
+                         // Can happen in a CMPLX() constructor.  Per F'2018,
+                         // both integer operands are converted to default REAL.
+                         return {AsSameKindExprs<TypeCategory::Real>(
+                             ConvertToType<DefaultReal>(std::move(ix)),
+                             ConvertToType<DefaultReal>(std::move(iy)))};
+                       },
           [&](Expr<SomeInteger> &&ix,
               Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
-            return {
-                ConversionHelper(ConvertTo(ry, std::move(ix)), std::move(ry))};
+            return {AsSameKindExprs<TypeCategory::Real>(
+                ConvertTo(ry, std::move(ix)), std::move(ry))};
           },
           [&](Expr<SomeReal> &&rx,
               Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
-            return {
-                ConversionHelper(std::move(rx), ConvertTo(rx, std::move(iy)))};
+            return {AsSameKindExprs<TypeCategory::Real>(
+                std::move(rx), ConvertTo(rx, std::move(iy)))};
           },
           [&](Expr<SomeReal> &&rx,
               Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
-            return {ConversionHelper(std::move(rx), std::move(ry))};
+            return {AsSameKindExprs<TypeCategory::Real>(
+                std::move(rx), std::move(ry))};
           },
           [&](auto &&, auto &&) -> ConvertRealOperandsResult {
             // TODO: allow BOZ here?
@@ -73,18 +55,6 @@ ConvertRealOperandsResult ConvertRealOperands(
             return std::nullopt;
           }},
       std::move(x.u), std::move(y.u));
-}
-
-ConvertRealOperandsResult ConvertRealOperands(
-    parser::ContextualMessages &messages, std::optional<Expr<SomeType>> &&x,
-    std::optional<Expr<SomeType>> &&y) {
-  auto partial{[&](Expr<SomeType> &&x, Expr<SomeType> &&y) {
-    return ConvertRealOperands(messages, std::move(x), std::move(y));
-  }};
-  using fType = ConvertRealOperandsResult(Expr<SomeType> &&, Expr<SomeType> &&);
-  std::function<fType> f{partial};
-  return common::JoinOptional(
-      common::MapOptional(std::move(f), std::move(x), std::move(y)));
 }
 
 template<TypeCategory CAT>
@@ -130,7 +100,27 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(PromoteAndCombine<OPR, TypeCategory::Complex>(
                 std::move(zx), std::move(zy)));
           },
-          // TODO pmk complex; Add/Sub different from Mult/Div
+          // TODO pmk mixed complex; Add/Sub different from Mult/Div
+          [](BOZLiteralConstant &&bx, Expr<SomeInteger> &&iy) {
+            return Package(std::visit(
+                [&](auto &&iyk) -> Expr<SomeInteger> {
+                  using resultType = ResultType<decltype(iyk)>;
+                  return AsCategoryExpr(AsExpr(OPR<resultType>{
+                      AsExpr(BOZConstant<resultType>{std::move(bx)}),
+                      std::move(iyk)}));
+                },
+                iy.u));
+          },
+          [](BOZLiteralConstant &&bx, Expr<SomeReal> &&ry) {
+            return Package(std::visit(
+                [&](auto &&ryk) -> Expr<SomeReal> {
+                  using resultType = ResultType<decltype(ryk)>;
+                  return AsCategoryExpr(AsExpr(OPR<resultType>{
+                      AsExpr(BOZConstant<resultType>{std::move(bx)}),
+                      std::move(ryk)}));
+                },
+                ry.u));
+          },
           [&](auto &&, auto &&) {
             messages.Say("non-numeric operands to numeric operation"_err_en_US);
             return std::optional<Expr<SomeType>>{std::nullopt};
@@ -139,6 +129,12 @@ std::optional<Expr<SomeType>> NumericOperation(
 }
 
 template std::optional<Expr<SomeType>> NumericOperation<Add>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+template std::optional<Expr<SomeType>> NumericOperation<Subtract>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+template std::optional<Expr<SomeType>> NumericOperation<Multiply>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+template std::optional<Expr<SomeType>> NumericOperation<Divide>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 
 }  // namespace Fortran::evaluate

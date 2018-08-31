@@ -446,6 +446,10 @@ template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
   }
 }
 
+template<typename T> std::ostream &BOZConstant<T>::Dump(std::ostream &o) const {
+  return o << "Z'" << value.Hexadecimal() << "'";
+}
+
 template<typename RESULT>
 std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
   std::visit(

@@ -56,11 +56,9 @@ template<typename A> class Expr;
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
 
 // Wraps a constant value in a class to make its type clear.
-CLASS_TRAIT(IsConstantTrait)
 template<typename T> struct Constant {
   using Result = T;
   using Value = Scalar<Result>;  // TODO rank > 0
-  using IsConstantTrait = std::true_type;
   CLASS_BOILERPLATE(Constant)
   template<typename A> Constant(const A &x) : value{x} {}
   template<typename A>
@@ -70,8 +68,25 @@ template<typename T> struct Constant {
   Value value;
 };
 
-// Wrappers around data and function references so that their resolved
-// types are clear.
+// BOZ literal constants need to be wide enough to hold an integer or real
+// value of any supported kind.  They also need to be distinguishable from
+// other integer constants, since they are permitted to be used in only a
+// few situations.
+using BOZLiteralConstant = value::Integer<128>;
+
+// "Typeless" operands to INTEGER and REAL operations.
+template<typename T> struct BOZConstant {
+  using Result = T;
+  using Value = BOZLiteralConstant;
+  CLASS_BOILERPLATE(BOZConstant)
+  BOZConstant(const BOZLiteralConstant &x) : value{x} {}
+  BOZConstant(BOZLiteralConstant &&x) : value{std::move(x)} {}
+  std::ostream &Dump(std::ostream &) const;
+  Value value;
+};
+
+// These wrappers around data and function references expose their resolved
+// types.
 template<typename T> struct DataReference {
   using Result = T;
   CopyableIndirection<DataRef> reference;
@@ -399,8 +414,8 @@ private:
   using Operations = std::variant<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, DataReference<Result>,
-      FunctionReference<Result>>;
+  using Others = std::variant<Constant<Result>, BOZConstant<Result>,
+      DataReference<Result>, FunctionReference<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -430,8 +445,8 @@ private:
   using Operations = std::variant<ComplexComponent<KIND>, Parentheses<Result>,
       Negate<Result>, Add<Result>, Subtract<Result>, Multiply<Result>,
       Divide<Result>, Power<Result>, RealToIntPower<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, DataReference<Result>,
-      FunctionReference<Result>>;
+  using Others = std::variant<Constant<Result>, BOZConstant<Result>,
+      DataReference<Result>, FunctionReference<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -607,12 +622,6 @@ public:
 
   common::MapTemplate<Expr, CategoryTypes<CAT>> u;
 };
-
-// BOZ literal constants need to be wide enough to hold an integer or real
-// value of any supported kind.  They also need to be distinguishable from
-// other integer constants, since they are permitted to be used in only a
-// few situations.
-using BOZLiteralConstant = value::Integer<128>;
 
 // A completely generic expression, polymorphic across all of the intrinsic type
 // categories and each of their kinds.
