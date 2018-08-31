@@ -198,15 +198,19 @@ X86RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // Instruction having only floating-point operands (all scalars in VECRReg)
     getInstrPartialMappingIdxs(MI, MRI, /* isFP */ true, OpRegBankIdx);
     break;
-  case TargetOpcode::G_SITOFP: {
+  case TargetOpcode::G_SITOFP:
+  case TargetOpcode::G_FPTOSI: {
     // Some of the floating-point instructions have mixed GPR and FP operands:
     // fine-tune the computed mapping.
     auto &Op0 = MI.getOperand(0);
     auto &Op1 = MI.getOperand(1);
     const LLT Ty0 = MRI.getType(Op0.getReg());
     const LLT Ty1 = MRI.getType(Op1.getReg());
-    OpRegBankIdx[0] = getPartialMappingIdx(Ty0, /* isFP */ true);
-    OpRegBankIdx[1] = getPartialMappingIdx(Ty1, /* isFP */ false);
+
+    bool FirstArgIsFP = Opc == TargetOpcode::G_SITOFP;
+    bool SecondArgIsFP = Opc == TargetOpcode::G_FPTOSI;
+    OpRegBankIdx[0] = getPartialMappingIdx(Ty0, /* isFP */ FirstArgIsFP);
+    OpRegBankIdx[1] = getPartialMappingIdx(Ty1, /* isFP */ SecondArgIsFP);
     break;
   }
   case TargetOpcode::G_FCMP: {

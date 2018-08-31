@@ -219,6 +219,13 @@ void X86LegalizerInfo::setLegalizerInfo64bit() {
       .clampScalar(0, s32, s64)
       .widenScalarToNextPow2(0);
 
+  getActionDefinitionsBuilder(G_FPTOSI)
+      .legalForCartesianProduct({s32, s64})
+      .clampScalar(1, s32, s64)
+      .widenScalarToNextPow2(0)
+      .clampScalar(0, s32, s64)
+      .widenScalarToNextPow2(1);
+
   // Comparison
   setAction({G_ICMP, 1, s64}, Legal);
 
