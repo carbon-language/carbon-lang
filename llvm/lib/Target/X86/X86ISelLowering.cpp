@@ -25790,14 +25790,14 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
         Results.push_back(Res);
         return;
       }
-      if (SrcVT == MVT::v2f32) {
+      if (SrcVT == MVT::v2f32 &&
+          getTypeAction(*DAG.getContext(), MVT::v2i32) != TypeWidenVector) {
         SDValue Idx = DAG.getIntPtrConstant(0, dl);
         SDValue Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32, Src,
                                   DAG.getUNDEF(MVT::v2f32));
         Res = DAG.getNode(IsSigned ? ISD::FP_TO_SINT
                                    : ISD::FP_TO_UINT, dl, MVT::v4i32, Res);
-        if (getTypeAction(*DAG.getContext(), MVT::v2i32) != TypeWidenVector)
-          Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i32, Res, Idx);
+        Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i32, Res, Idx);
         Results.push_back(Res);
         return;
       }
