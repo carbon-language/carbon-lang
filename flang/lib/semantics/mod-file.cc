@@ -83,8 +83,8 @@ void ModFileWriter::Write(const Symbol &symbol) {
   auto path{ModFilePath(dir_, symbol.name(), ancestorName)};
   PutSymbols(*symbol.scope());
   if (!WriteFile(path, GetAsString(symbol))) {
-    errors_.Say(symbol.name(),
-        "Error writing %s: %s"_err_en_US, path.c_str(), std::strerror(errno));
+    errors_.Say(symbol.name(), "Error writing %s: %s"_err_en_US, path.c_str(),
+        std::strerror(errno));
   }
 }
 
@@ -121,8 +121,9 @@ std::string ModFileWriter::GetAsString(const Symbol &symbol) {
 
 // Put out the visible symbols from scope.
 void ModFileWriter::PutSymbols(const Scope &scope) {
+  bool didContains{false};
   for (const auto *symbol : SortSymbols(CollectSymbols(scope))) {
-    PutSymbol(*symbol);
+    PutSymbol(*symbol, didContains);
   }
 }
 
@@ -165,7 +166,7 @@ ModFileWriter::symbolSet ModFileWriter::CollectSymbols(const Scope &scope) {
   return symbols;
 }
 
-void ModFileWriter::PutSymbol(const Symbol &symbol) {
+void ModFileWriter::PutSymbol(const Symbol &symbol, bool &didContains) {
   std::visit(
       common::visitors{
           [&](const ModuleDetails &) { /* should be current module */ },
@@ -173,7 +174,32 @@ void ModFileWriter::PutSymbol(const Symbol &symbol) {
           [&](const SubprogramDetails &) { PutSubprogram(symbol); },
           [&](const GenericDetails &) { PutGeneric(symbol); },
           [&](const UseDetails &) { PutUse(symbol); },
-          [&](const UseErrorDetails &) {},
+          [](const UseErrorDetails &) {},
+          [&](const ProcBindingDetails &x) {
+            bool deferred{symbol.attrs().test(Attr::DEFERRED)};
+            if (!didContains) {
+              didContains = true;
+              decls_ << "contains\n";
+            }
+            decls_ << "procedure";
+            if (deferred) {
+              PutLower(decls_ << '(', x.symbol()) << ')';
+            }
+            PutAttrs(decls_, symbol.attrs(), ","s, ""s);
+            PutLower(decls_ << "::", symbol);
+            if (!deferred && x.symbol().name() != symbol.name()) {
+              PutLower(decls_ << "=>", x.symbol());
+            }
+            decls_ << '\n';
+          },
+          [](const GenericBindingDetails &) { /*TODO*/ },
+          [&](const FinalProcDetails &) {
+            if (!didContains) {
+              didContains = true;
+              decls_ << "contains\n";
+            }
+            PutLower(decls_ << "final::", symbol) << '\n';
+          },
           [&](const auto &) { PutEntity(decls_, symbol); }},
       symbol.details());
 }
@@ -448,7 +474,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   // to parse. Do it only reading the file once.
   if (!VerifyHeader(*path)) {
     errors_.Say(name, "Module file for '%s' has invalid checksum: %s"_err_en_US,
-            name.ToString().data(), path->data());
+        name.ToString().data(), path->data());
     return nullptr;
   }
   // TODO: Construct parsing with an AllSources reference to share provenance

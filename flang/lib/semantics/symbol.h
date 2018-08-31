@@ -146,6 +146,19 @@ private:
 // A derived type
 class DerivedTypeDetails {};
 
+class ProcBindingDetails {
+public:
+  ProcBindingDetails(const Symbol &symbol) : symbol_{&symbol} {}
+  const Symbol &symbol() const { return *symbol_; }
+
+private:
+  const Symbol *symbol_;  // procedure bound to
+};
+
+class GenericBindingDetails {};
+
+class FinalProcDetails {};
+
 // Record the USE of a symbol: location is where (USE statement or renaming);
 // symbol is the USEd module.
 class UseDetails {
@@ -221,7 +234,8 @@ class UnknownDetails {};
 using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     SubprogramDetails, SubprogramNameDetails, EntityDetails,
     ObjectEntityDetails, ProcEntityDetails, DerivedTypeDetails, UseDetails,
-    UseErrorDetails, GenericDetails>;
+    UseErrorDetails, GenericDetails, ProcBindingDetails, GenericBindingDetails,
+    FinalProcDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 std::string DetailsToString(const Details &);
 

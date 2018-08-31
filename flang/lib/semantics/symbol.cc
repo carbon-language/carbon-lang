@@ -127,6 +127,9 @@ std::string DetailsToString(const Details &details) {
           [](const UseDetails &) { return "Use"; },
           [](const UseErrorDetails &) { return "UseError"; },
           [](const GenericDetails &) { return "Generic"; },
+          [](const ProcBindingDetails &) { return "ProcBinding"; },
+          [](const GenericBindingDetails &) { return "GenericBinding"; },
+          [](const FinalProcDetails &) { return "FinalProc"; },
           [](const auto &) { return "unknown"; },
       },
       details);
@@ -342,6 +345,11 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << ' ' << proc->name();
             }
           },
+          [&](const ProcBindingDetails &x) {
+            os << " => " << x.symbol().name();
+          },
+          [&](const GenericBindingDetails &) { /* TODO */ },
+          [&](const FinalProcDetails &) {},
       },
       details);
   return os;

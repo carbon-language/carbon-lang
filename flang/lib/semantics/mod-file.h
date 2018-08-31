@@ -66,7 +66,7 @@ private:
   void PutSymbols(const Scope &);
   symbolVector SortSymbols(const symbolSet);
   symbolSet CollectSymbols(const Scope &);
-  void PutSymbol(const Symbol &);
+  void PutSymbol(const Symbol &, bool &);
   void PutDerivedType(const Symbol &);
   void PutSubprogram(const Symbol &);
   void PutGeneric(const Symbol &);

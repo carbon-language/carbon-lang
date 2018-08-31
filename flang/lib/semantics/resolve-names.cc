@@ -99,6 +99,8 @@ public:
   HANDLE_ATTR_CLASS(PrefixSpec::Pure, PURE)
   HANDLE_ATTR_CLASS(PrefixSpec::Recursive, RECURSIVE)
   HANDLE_ATTR_CLASS(TypeAttrSpec::BindC, BIND_C)
+  HANDLE_ATTR_CLASS(BindAttr::Deferred, DEFERRED)
+  HANDLE_ATTR_CLASS(BindAttr::Non_Overridable, NON_OVERRIDABLE)
   HANDLE_ATTR_CLASS(Abstract, ABSTRACT)
   HANDLE_ATTR_CLASS(Allocatable, ALLOCATABLE)
   HANDLE_ATTR_CLASS(Asynchronous, ASYNCHRONOUS)
@@ -150,7 +152,6 @@ public:
   bool Pre(const parser::IntrinsicTypeSpec::DoublePrecision &);
   bool Pre(const parser::DeclarationTypeSpec::ClassStar &);
   bool Pre(const parser::DeclarationTypeSpec::TypeStar &);
-  void Post(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
   void Post(const parser::TypeParamSpec &);
   bool Pre(const parser::TypeParamValue &);
@@ -522,6 +523,7 @@ public:
   bool Pre(const parser::TypeDeclarationStmt &) { return BeginDecl(); }
   void Post(const parser::TypeDeclarationStmt &) { EndDecl(); }
   void Post(const parser::DeclarationTypeSpec::Type &);
+  void Post(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DerivedTypeSpec &);
   bool Pre(const parser::DerivedTypeDef &x);
   void Post(const parser::DerivedTypeDef &x);
@@ -540,7 +542,11 @@ public:
   void Post(const parser::ProcComponentDefStmt &);
   void Post(const parser::ProcInterface &x);
   void Post(const parser::ProcDecl &x);
-  bool Pre(const parser::FinalProcedureStmt &x);
+  bool Pre(const parser::TypeBoundProcBinding &) { return BeginAttrs(); }
+  void Post(const parser::TypeBoundProcBinding &) { EndAttrs(); }
+  void Post(const parser::TypeBoundProcedureStmt::WithoutInterface &);
+  void Post(const parser::TypeBoundProcedureStmt::WithInterface &);
+  void Post(const parser::FinalProcedureStmt &);
 
 protected:
   bool BeginDecl();
@@ -565,27 +571,27 @@ private:
   // Set the type of an entity or report an error.
   void SetType(
       const SourceName &name, Symbol &symbol, const DeclTypeSpec &type);
-  // Find the Symbol for this derived type.
   const Symbol *ResolveDerivedType(const SourceName &);
+  bool CanBeTypeBoundProc(const Symbol &);
+  Symbol *FindExplicitInterface(const SourceName &);
+  void MakeTypeSymbol(const SourceName &, const Details &);
 
   // Declare an object or procedure entity.
+  // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
   template<typename T>
   Symbol &DeclareEntity(const parser::Name &name, Attrs attrs) {
     Symbol &symbol{MakeSymbol(name.source, attrs)};
-    if (symbol.has<UnknownDetails>()) {
-      symbol.set_details(T{});
-    } else if constexpr (!std::is_same_v<EntityDetails, T>) {
-      if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-        symbol.set_details(T(*details));
-      }
-    }
-    if (T * details{symbol.detailsIf<T>()}) {
+    if (symbol.has<T>()) {
       // OK
+    } else if (symbol.has<UnknownDetails>()) {
+      symbol.set_details(T{});
+    } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
+      symbol.set_details(T{details});
     } else if (std::is_same_v<EntityDetails, T> &&
         (symbol.has<ObjectEntityDetails>() ||
             symbol.has<ProcEntityDetails>())) {
       // OK
-    } else if (UseDetails *details = symbol.detailsIf<UseDetails>()) {
+    } else if (auto *details{symbol.detailsIf<UseDetails>()}) {
       Say(name.source,
           "'%s' is use-associated from module '%s' and cannot be re-declared"_err_en_US,
           name.source, details->module().name());
@@ -836,9 +842,6 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
   return false;
 }
 
-void DeclTypeSpecVisitor::Post(const parser::DeclarationTypeSpec::Class &) {
-  SetDerivedDeclTypeSpec(DeclTypeSpec::ClassDerived);
-}
 bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
   // TODO
   return true;
@@ -2019,6 +2022,14 @@ void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Type &x) {
     type.set_scope(*symbol->scope());
   }
 }
+void DeclarationVisitor::Post(const parser::DeclarationTypeSpec::Class &) {
+  SetDerivedDeclTypeSpec(DeclTypeSpec::ClassDerived);
+  DerivedTypeSpec &type{GetDeclTypeSpec()->derivedTypeSpec()};
+  if (const auto *symbol{ResolveDerivedType(type.name())}) {
+    type.set_scope(*symbol->scope());
+  }
+}
+
 bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
   auto &name{std::get<parser::Name>(x.t).source};
   auto &derivedTypeSpec{currScope().MakeDerivedTypeSpec(name)};
@@ -2092,14 +2103,7 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
   const auto &name{std::get<parser::Name>(x.t)};
   ProcInterface interface;
   if (interfaceName_) {
-    auto *symbol{FindSymbol(*interfaceName_)};
-    if (!symbol) {
-      Say(*interfaceName_, "Explicit interface '%s' not found"_err_en_US);
-    } else if (!symbol->HasExplicitInterface()) {
-      Say2(*interfaceName_,
-          "'%s' is not an abstract interface or a procedure with an explicit interface"_err_en_US,
-          symbol->name(), "Declaration of '%s'"_en_US);
-    } else {
+    if (auto *symbol{FindExplicitInterface(*interfaceName_)}) {
       interface.set_symbol(*symbol);
     }
   } else if (auto &type{GetDeclTypeSpec()}) {
@@ -2113,11 +2117,50 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
   }
 }
 
-bool DeclarationVisitor::Pre(const parser::FinalProcedureStmt &x) {
-  for (const parser::Name &name : x.v) {
-    derivedTypeData_->finalProcs.push_back(name.source);
+void DeclarationVisitor::Post(
+    const parser::TypeBoundProcedureStmt::WithoutInterface &x) {
+  if (GetAttrs().test(Attr::DEFERRED)) {  // C783
+    Say("DEFERRED is only allowed when an interface-name is provided"_err_en_US);
   }
-  return false;
+  for (auto &declaration : x.declarations) {
+    auto &bindingName{std::get<parser::Name>(declaration.t).source};
+    auto &optName{std::get<std::optional<parser::Name>>(declaration.t)};
+    auto &procedureName{optName ? optName->source : bindingName};
+    auto *procedure{FindSymbol(procedureName)};
+    if (!procedure) {
+      Say(procedureName, "Procedure '%s' not found"_err_en_US);
+      continue;
+    }
+    procedure = &procedure->GetUltimate();  // may come from USE
+    if (!CanBeTypeBoundProc(*procedure)) {
+      Say2(procedureName,
+          "'%s' is not a module procedure or external procedure"
+          " with explicit interface"_err_en_US,
+          procedure->name(), "Declaration of '%s'"_en_US);
+      continue;
+    }
+    MakeTypeSymbol(bindingName, ProcBindingDetails{*procedure});
+  }
+}
+
+void DeclarationVisitor::Post(
+    const parser::TypeBoundProcedureStmt::WithInterface &x) {
+  if (!GetAttrs().test(Attr::DEFERRED)) {  // C783
+    Say("DEFERRED is required when an interface-name is provided"_err_en_US);
+  }
+  Symbol *interface{FindExplicitInterface(x.interfaceName.source)};
+  if (!interface) {
+    return;
+  }
+  for (auto &bindingName : x.bindingNames) {
+    MakeTypeSymbol(bindingName.source, ProcBindingDetails{*interface});
+  }
+}
+
+void DeclarationVisitor::Post(const parser::FinalProcedureStmt &x) {
+  for (auto &name : x.v) {
+    MakeTypeSymbol(name.source, FinalProcDetails{});
+  }
 }
 
 void DeclarationVisitor::SetType(
@@ -2129,6 +2172,7 @@ void DeclarationVisitor::SetType(
   symbol.SetType(type);
 }
 
+// Find the Symbol for this derived type.
 const Symbol *DeclarationVisitor::ResolveDerivedType(const SourceName &name) {
   const auto *symbol{FindSymbol(name)};
   if (!symbol) {
@@ -2151,6 +2195,48 @@ const Symbol *DeclarationVisitor::ResolveDerivedType(const SourceName &name) {
     return nullptr;
   }
   return symbol;
+}
+
+// Check this symbol suitable as a type-bound procedure - C769
+bool DeclarationVisitor::CanBeTypeBoundProc(const Symbol &symbol) {
+  if (symbol.has<SubprogramNameDetails>()) {
+    return symbol.owner().kind() == Scope::Kind::Module;
+  } else if (auto *details{symbol.detailsIf<SubprogramDetails>()}) {
+    return symbol.owner().kind() == Scope::Kind::Module ||
+        details->isInterface();
+  } else {
+    return false;
+  }
+}
+
+Symbol *DeclarationVisitor::FindExplicitInterface(const SourceName &name) {
+  auto *symbol{FindSymbol(name)};
+  if (!symbol) {
+    Say(name, "Explicit interface '%s' not found"_err_en_US);
+  } else if (!symbol->HasExplicitInterface()) {
+    Say2(name,
+        "'%s' is not an abstract interface or a procedure with an"
+        " explicit interface"_err_en_US,
+        symbol->name(), "Declaration of '%s'"_en_US);
+    symbol = nullptr;
+  }
+  return symbol;
+}
+
+// Create a symbol for a type parameter, component, or procedure binding in
+// the current derived type scope.
+void DeclarationVisitor::MakeTypeSymbol(
+    const SourceName &name, const Details &details) {
+  Scope &derivedType{currScope()};
+  CHECK(derivedType.kind() == Scope::Kind::DerivedType);
+  if (auto it{derivedType.find(name)}; it != derivedType.end()) {
+    Say2(name,
+        "Type parameter, component, or procedure binding '%s'"
+        " already defined in this type"_err_en_US,
+        it->second->name(), "Previous definition of '%s'"_en_US);
+  } else {
+    MakeSymbol(name, GetAttrs(), details);
+  }
 }
 
 // ResolveNamesVisitor implementation
