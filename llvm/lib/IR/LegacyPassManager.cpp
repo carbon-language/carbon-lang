@@ -1287,9 +1287,15 @@ bool BBPassManager::runOnFunction(Function &F) {
   bool Changed = doInitialization(F);
   Module &M = *F.getParent();
 
-  unsigned InstrCount = 0;
+  unsigned InstrCount, BBSize = 0;
   bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
-  for (BasicBlock &BB : F)
+  if (EmitICRemark)
+    InstrCount = initSizeRemarkInfo(M);
+
+  for (BasicBlock &BB : F) {
+    // Collect the initial size of the basic block.
+    if (EmitICRemark)
+      BBSize = BB.size();
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
       bool LocalChanged = false;
@@ -1303,11 +1309,19 @@ bool BBPassManager::runOnFunction(Function &F) {
         // If the pass crashes, remember this.
         PassManagerPrettyStackEntry X(BP, BB);
         TimeRegion PassTimer(getPassTimer(BP));
-        if (EmitICRemark)
-          InstrCount = initSizeRemarkInfo(M);
         LocalChanged |= BP->runOnBasicBlock(BB);
-        if (EmitICRemark)
-          emitInstrCountChangedRemark(BP, M, InstrCount);
+        if (EmitICRemark) {
+          unsigned NewSize = BB.size();
+          // Update the size of the basic block, emit a remark, and update the
+          // size of the module.
+          if (NewSize != BBSize) {
+            emitInstrCountChangedRemark(BP, M, InstrCount);
+            int64_t Delta =
+                static_cast<int64_t>(NewSize) - static_cast<int64_t>(BBSize);
+            InstrCount = static_cast<int64_t>(InstrCount) + Delta;
+            BBSize = NewSize;
+          }
+        }
       }
 
       Changed |= LocalChanged;
@@ -1322,6 +1336,7 @@ bool BBPassManager::runOnFunction(Function &F) {
       recordAvailableAnalysis(BP);
       removeDeadPasses(BP, BB.getName(), ON_BASICBLOCK_MSG);
     }
+  }
 
   return doFinalization(F) || Changed;
 }
