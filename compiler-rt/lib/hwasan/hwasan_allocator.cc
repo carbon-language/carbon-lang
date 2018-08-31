@@ -119,11 +119,11 @@ void HwasanThreadLocalMallocStorage::CommitBack() {
   allocator.SwallowCache(GetAllocatorCache(this));
 }
 
-static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
-                          bool zeroise) {
-  if (!size) return nullptr;
+static void *HwasanAllocate(StackTrace *stack, uptr orig_size, uptr alignment,
+                            bool zeroise) {
+  if (!orig_size) return nullptr;
   alignment = Max(alignment, kShadowAlignment);
-  size = RoundUpTo(size, kShadowAlignment);
+  uptr size = RoundUpTo(orig_size, kShadowAlignment);
 
   if (size > kMaxAllowedMallocSize) {
     if (AllocatorMayReturnNull()) {
@@ -152,7 +152,7 @@ static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
   Metadata *meta =
       reinterpret_cast<Metadata *>(allocator.GetMetaData(allocated));
   meta->state = CHUNK_ALLOCATED;
-  meta->requested_size = static_cast<u32>(size);
+  meta->requested_size = static_cast<u32>(orig_size);
   meta->alloc_context_id = StackDepotPut(*stack);
   if (zeroise) {
     internal_memset(allocated, 0, size);
@@ -204,7 +204,7 @@ void HwasanDeallocate(StackTrace *stack, void *tagged_ptr) {
   }
   if (flags()->tag_in_free &&
       atomic_load_relaxed(&hwasan_allocator_tagging_enabled))
-    TagMemoryAligned((uptr)untagged_ptr, size,
+    TagMemoryAligned((uptr)untagged_ptr, RoundUpTo(size, kShadowAlignment),
                      t ? t->GenerateRandomTag() : kFallbackFreeTag);
   if (t) {
     AllocatorCache *cache = GetAllocatorCache(&t->malloc_storage());
