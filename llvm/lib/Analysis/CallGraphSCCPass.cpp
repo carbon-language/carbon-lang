@@ -131,17 +131,25 @@ bool CGPassManager::RunPassOnSCC(Pass *P, CallGraphSCC &CurSCC,
     }
 
     {
-      unsigned InstrCount = 0;
+      unsigned InstrCount, SCCCount = 0;
       bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
       TimeRegion PassTimer(getPassTimer(CGSP));
       if (EmitICRemark)
         InstrCount = initSizeRemarkInfo(M);
       Changed = CGSP->runOnSCC(CurSCC);
 
-      // If the pass modified the module, it may have modified the instruction
-      // count of the module. Try emitting a remark.
-      if (EmitICRemark)
-        emitInstrCountChangedRemark(P, M, InstrCount);
+      if (EmitICRemark) {
+        // FIXME: Add getInstructionCount to CallGraphSCC.
+        // TODO: emitInstrCountChangedRemark should take in the delta between
+        // SCCount and InstrCount.
+        SCCCount = M.getInstructionCount();
+        // Is there a difference in the number of instructions in the module?
+        if (SCCCount != InstrCount) {
+          // Yep. Emit a remark and update InstrCount.
+          emitInstrCountChangedRemark(P, M, InstrCount);
+          InstrCount = SCCCount;
+        }
+      }
     }
 
     // After the CGSCCPass is done, when assertions are enabled, use
