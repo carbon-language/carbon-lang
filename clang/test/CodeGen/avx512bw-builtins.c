@@ -280,6 +280,60 @@ __mmask64 test_kshiftri_mask64(__m512i A, __m512i B, __m512i C, __m512i D) {
   return _mm512_mask_cmpneq_epu8_mask(_kshiftri_mask64(_mm512_cmpneq_epu8_mask(A, B), 32), C, D);
 }
 
+unsigned int test_cvtmask32_u32(__m512i A, __m512i B) {
+  // CHECK-LABEL: @test_cvtmask32_u32
+  // CHECK: bitcast <32 x i1> %{{.*}} to i32
+  // CHECK: bitcast i32 %{{.*}} to <32 x i1>
+  return _cvtmask32_u32(_mm512_cmpneq_epu16_mask(A, B));
+}
+
+unsigned long long test_cvtmask64_u64(__m512i A, __m512i B) {
+  // CHECK-LABEL: @test_cvtmask64_u64
+  // CHECK: bitcast <64 x i1> %{{.*}} to i64
+  // CHECK: bitcast i64 %{{.*}} to <64 x i1>
+  return _cvtmask64_u64(_mm512_cmpneq_epu8_mask(A, B));
+}
+
+__mmask32 test_cvtu32_mask32(__m512i A, __m512i B, unsigned int C) {
+  // CHECK-LABEL: @test_cvtu32_mask32
+  // CHECK: bitcast i32 %{{.*}} to <32 x i1>
+  return _mm512_mask_cmpneq_epu16_mask(_cvtu32_mask32(C), A, B);
+}
+
+__mmask64 test_cvtu64_mask64(__m512i A, __m512i B, unsigned long long C) {
+  // CHECK-LABEL: @test_cvtu64_mask64
+  // CHECK: bitcast i64 %{{.*}} to <64 x i1>
+  return _mm512_mask_cmpneq_epu8_mask(_cvtu64_mask64(C), A, B);
+}
+
+__mmask32 test_load_mask32(__mmask32 *A, __m512i B, __m512i C) {
+  // CHECK-LABEL: @test_load_mask32
+  // CHECK: [[LOAD:%.*]] = load i32, i32* %{{.*}}
+  // CHECK: bitcast i32 [[LOAD]] to <32 x i1>
+  return _mm512_mask_cmpneq_epu16_mask(_load_mask32(A), B, C);
+}
+
+__mmask64 test_load_mask64(__mmask64 *A, __m512i B, __m512i C) {
+  // CHECK-LABEL: @test_load_mask64
+  // CHECK: [[LOAD:%.*]] = load i64, i64* %{{.*}}
+  // CHECK: bitcast i64 [[LOAD]] to <64 x i1>
+  return _mm512_mask_cmpneq_epu8_mask(_load_mask64(A), B, C);
+}
+
+void test_store_mask32(__mmask32 *A, __m512i B, __m512i C) {
+  // CHECK-LABEL: @test_store_mask32
+  // CHECK: bitcast <32 x i1> %{{.*}} to i32
+  // CHECK: store i32 %{{.*}}, i32* %{{.*}}
+  _store_mask32(A, _mm512_cmpneq_epu16_mask(B, C));
+}
+
+void test_store_mask64(__mmask64 *A, __m512i B, __m512i C) {
+  // CHECK-LABEL: @test_store_mask64
+  // CHECK: bitcast <64 x i1> %{{.*}} to i64
+  // CHECK: store i64 %{{.*}}, i64* %{{.*}}
+  _store_mask64(A, _mm512_cmpneq_epu8_mask(B, C));
+}
+
 __mmask64 test_mm512_cmpeq_epi8_mask(__m512i __a, __m512i __b) {
   // CHECK-LABEL: @test_mm512_cmpeq_epi8_mask
   // CHECK: icmp eq <64 x i8> %{{.*}}, %{{.*}}

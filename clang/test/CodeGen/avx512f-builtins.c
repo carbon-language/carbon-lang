@@ -8312,6 +8312,35 @@ __mmask16 test_kshiftri_mask16(__m512i A, __m512i B, __m512i C, __m512i D) {
   return _mm512_mask_cmpneq_epu32_mask(_kshiftri_mask16(_mm512_cmpneq_epu32_mask(A, B), 1), C, D);
 }
 
+unsigned int test_cvtmask16_u32(__m512i A, __m512i B) {
+  // CHECK-LABEL: @test_cvtmask16_u32
+  // CHECK: bitcast <16 x i1> %{{.*}} to i16
+  // CHECK: bitcast i16 %{{.*}} to <16 x i1>
+  // CHECK: zext i16 %{{.*}} to i32
+  return _cvtmask16_u32(_mm512_cmpneq_epu32_mask(A, B));
+}
+
+__mmask16 test_cvtu32_mask16(__m512i A, __m512i B, unsigned int C) {
+  // CHECK-LABEL: @test_cvtu32_mask16
+  // CHECK: trunc i32 %{{.*}} to i16
+  // CHECK: bitcast i16 %{{.*}} to <16 x i1>
+  return _mm512_mask_cmpneq_epu32_mask(_cvtu32_mask16(C), A, B);
+}
+
+__mmask16 test_load_mask16(__mmask16 *A, __m512i B, __m512i C) {
+  // CHECK-LABEL: @test_load_mask16
+  // CHECK: [[LOAD:%.*]] = load i16, i16* %{{.*}}
+  // CHECK: bitcast i16 [[LOAD]] to <16 x i1>
+  return _mm512_mask_cmpneq_epu32_mask(_load_mask16(A), B, C);
+}
+
+void test_store_mask16(__mmask16 *A, __m512i B, __m512i C) {
+  // CHECK-LABEL: @test_store_mask16
+  // CHECK: bitcast <16 x i1> %{{.*}} to i16
+  // CHECK: store i16 %{{.*}}, i16* %{{.*}}
+  _store_mask16(A, _mm512_cmpneq_epu32_mask(B, C));
+}
+
 void test_mm512_stream_si512(__m512i * __P, __m512i __A) {
   // CHECK-LABEL: @test_mm512_stream_si512
   // CHECK: store <8 x i64> %{{.*}}, <8 x i64>* %{{.*}}, align 64, !nontemporal
