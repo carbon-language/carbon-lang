@@ -78,6 +78,7 @@ metadataRecordType(const XRayFileHeader &Header, uint8_t T) {
   case MetadataRecordKinds::EnumEndMarker:
     llvm_unreachable("Invalid MetadataRecordKind");
   }
+  llvm_unreachable("Unhandled MetadataRecordKinds enum value");
 }
 
 } // namespace
