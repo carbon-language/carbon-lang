@@ -1622,8 +1622,14 @@ MPPassManager::runOnModule(Module &M) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
     Changed |= getContainedPass(Index)->doInitialization(M);
 
-  unsigned InstrCount = 0;
+  unsigned InstrCount, ModuleCount = 0;
   bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
+  // Collect the initial size of the module.
+  if (EmitICRemark) {
+    InstrCount = initSizeRemarkInfo(M);
+    ModuleCount = InstrCount;
+  }
+
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     ModulePass *MP = getContainedPass(Index);
     bool LocalChanged = false;
@@ -1637,11 +1643,18 @@ MPPassManager::runOnModule(Module &M) {
       PassManagerPrettyStackEntry X(MP, M);
       TimeRegion PassTimer(getPassTimer(MP));
 
-      if (EmitICRemark)
-        InstrCount = initSizeRemarkInfo(M);
       LocalChanged |= MP->runOnModule(M);
-      if (EmitICRemark)
-        emitInstrCountChangedRemark(MP, M, InstrCount);
+      if (EmitICRemark) {
+        // Update the size of the module.
+        // TODO: emitInstrCountChangedRemark should take in a delta between
+        // the old count and new count. Right now, we're calculating this
+        // twice.
+        ModuleCount = M.getInstructionCount();
+        if (ModuleCount != InstrCount) {
+          emitInstrCountChangedRemark(MP, M, InstrCount);
+          ModuleCount = InstrCount;
+        }
+      }
     }
 
     Changed |= LocalChanged;
