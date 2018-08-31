@@ -208,7 +208,7 @@ Error loadNaiveFormatLog(StringRef Data, bool IsLittleEndian,
 /// encoded TSC values into absolute encodings on each record.
 struct FDRState {
   uint16_t CPUId;
-  uint16_t ThreadId;
+  int32_t ThreadId;
   int32_t ProcessId;
   uint64_t BaseTSC;
 
@@ -268,7 +268,7 @@ Error processFDRNewBufferRecord(FDRState &State, DataExtractor &RecordExtractor,
         fdrStateToTwine(State.Expects), OffsetPtr);
 
   auto PreReadOffset = OffsetPtr;
-  State.ThreadId = RecordExtractor.getU16(&OffsetPtr);
+  State.ThreadId = RecordExtractor.getSigned(&OffsetPtr, 4);
   if (OffsetPtr == PreReadOffset)
     return createStringError(
         std::make_error_code(std::errc::executable_format_error),
@@ -277,7 +277,7 @@ Error processFDRNewBufferRecord(FDRState &State, DataExtractor &RecordExtractor,
 
   // Advance the offset pointer by enough bytes representing the remaining
   // padding in a metadata record.
-  OffsetPtr += kFDRMetadataBodySize - 2;
+  OffsetPtr += kFDRMetadataBodySize - 4;
   assert(OffsetPtr - PreReadOffset == kFDRMetadataBodySize);
   return Error::success();
 }
