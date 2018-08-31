@@ -7941,7 +7941,8 @@ SDValue SITargetLowering::performExtractVectorEltCombine(
   // elements. This exposes more load reduction opportunities by replacing
   // multiple small extract_vector_elements with a single 32-bit extract.
   auto *Idx = dyn_cast<ConstantSDNode>(N->getOperand(1));
-  if (EltSize <= 16 &&
+  if (isa<MemSDNode>(Vec) &&
+      EltSize <= 16 &&
       EltVT.isByteSized() &&
       VecSize > 32 &&
       VecSize % 32 == 0 &&
