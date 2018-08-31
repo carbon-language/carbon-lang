@@ -121,6 +121,7 @@ void HwasanThreadLocalMallocStorage::CommitBack() {
 
 static void *HwasanAllocate(StackTrace *stack, uptr size, uptr alignment,
                           bool zeroise) {
+  if (!size) return nullptr;
   alignment = Max(alignment, kShadowAlignment);
   size = RoundUpTo(size, kShadowAlignment);
 

@@ -84,6 +84,12 @@ void PrintAddressDescription(uptr tagged_addr, uptr access_size) {
 
       num_descriptions_printed++;
     }
+    if (t->AddrIsInStack(untagged_addr)) {
+      Printf("%s", d.Location());
+      Printf("Address %p is located in stack of thread %p\n", untagged_addr, t);
+      Printf("%s", d.Default());
+      num_descriptions_printed++;
+    }
   });
 
   if (!num_descriptions_printed)
