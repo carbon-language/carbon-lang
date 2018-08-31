@@ -25719,7 +25719,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     // setCC result type is v2i1 because type legalzation will end up with
     // a v4i1 setcc plus an extend.
     assert(N->getValueType(0) == MVT::v2i32 && "Unexpected type");
-    if (N->getOperand(0).getValueType() != MVT::v2f32)
+    if (N->getOperand(0).getValueType() != MVT::v2f32 ||
+        getTypeAction(*DAG.getContext(), MVT::v2i32) == TypeWidenVector)
       return;
     SDValue UNDEF = DAG.getUNDEF(MVT::v2f32);
     SDValue LHS = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32,
@@ -25728,9 +25729,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                               N->getOperand(1), UNDEF);
     SDValue Res = DAG.getNode(ISD::SETCC, dl, MVT::v4i32, LHS, RHS,
                               N->getOperand(2));
-    if (getTypeAction(*DAG.getContext(), MVT::v2i32) != TypeWidenVector)
-      Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i32, Res,
-                        DAG.getIntPtrConstant(0, dl));
+    Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i32, Res,
+                      DAG.getIntPtrConstant(0, dl));
     Results.push_back(Res);
     return;
   }
