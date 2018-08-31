@@ -1510,8 +1510,14 @@ bool FPPassManager::runOnFunction(Function &F) {
   // Collect inherited analysis from Module level pass manager.
   populateInheritedAnalysis(TPM->activeStack);
 
-  unsigned InstrCount = 0;
+  unsigned InstrCount, FunctionSize = 0;
   bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
+  // Collect the initial size of the module.
+  if (EmitICRemark) {
+    InstrCount = initSizeRemarkInfo(M);
+    FunctionSize = F.getInstructionCount();
+  }
+
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
     bool LocalChanged = false;
@@ -1524,11 +1530,20 @@ bool FPPassManager::runOnFunction(Function &F) {
     {
       PassManagerPrettyStackEntry X(FP, F);
       TimeRegion PassTimer(getPassTimer(FP));
-      if (EmitICRemark)
-        InstrCount = initSizeRemarkInfo(M);
       LocalChanged |= FP->runOnFunction(F);
-      if (EmitICRemark)
-        emitInstrCountChangedRemark(FP, M, InstrCount);
+      if (EmitICRemark) {
+        unsigned NewSize = F.getInstructionCount();
+
+        // Update the size of the function, emit a remark, and update the size
+        // of the module.
+        if (NewSize != FunctionSize) {
+          emitInstrCountChangedRemark(FP, M, InstrCount);
+          int64_t Delta = static_cast<int64_t>(NewSize) -
+                          static_cast<int64_t>(FunctionSize);
+          InstrCount = static_cast<int64_t>(InstrCount) + Delta;
+          FunctionSize = NewSize;
+        }
+      }
     }
 
     Changed |= LocalChanged;
