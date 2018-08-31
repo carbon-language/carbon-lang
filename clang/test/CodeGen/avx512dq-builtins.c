@@ -136,6 +136,22 @@ __mmask16 test_kadd_mask16(__m512i __A, __m512i __B, __m512i __C, __m512i __D, _
                                                     __E, __F);
 }
 
+__mmask8 test_kshiftli_mask8(__m512i A, __m512i B, __m512i C, __m512i D) {
+  // CHECK-LABEL: @test_kshiftli_mask8
+  // CHECK: [[VAL:%.*]] = bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK: [[RES:%.*]] = shufflevector <8 x i1> zeroinitializer, <8 x i1> [[VAL]], <8 x i32> <i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13>
+  // CHECK: bitcast <8 x i1> [[RES]] to i8
+  return _mm512_mask_cmpneq_epu64_mask(_kshiftli_mask8(_mm512_cmpneq_epu64_mask(A, B), 2), C, D);
+}
+
+__mmask8 test_kshiftri_mask8(__m512i A, __m512i B, __m512i C, __m512i D) {
+  // CHECK-LABEL: @test_kshiftri_mask8
+  // CHECK: [[VAL:%.*]] = bitcast i8 %{{.*}} to <8 x i1>
+  // CHECK: [[RES:%.*]] = shufflevector <8 x i1> [[VAL]], <8 x i1> zeroinitializer, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
+  // CHECK: bitcast <8 x i1> [[RES]] to i8
+  return _mm512_mask_cmpneq_epu64_mask(_kshiftri_mask8(_mm512_cmpneq_epu64_mask(A, B), 2), C, D);
+}
+
 __m512i test_mm512_mullo_epi64 (__m512i __A, __m512i __B) {
   // CHECK-LABEL: @test_mm512_mullo_epi64
   // CHECK: mul <8 x i64>

@@ -98,6 +98,12 @@ _kadd_mask16(__mmask16 __A, __mmask16 __B)
   return (__mmask16)__builtin_ia32_kaddhi((__mmask16)__A, (__mmask16)__B);
 }
 
+#define _kshiftli_mask8(A, I) \
+  (__mmask8)__builtin_ia32_kshiftliqi((__mmask8)(A), (unsigned int)(I))
+
+#define _kshiftri_mask8(A, I) \
+  (__mmask8)__builtin_ia32_kshiftriqi((__mmask8)(A), (unsigned int)(I))
+
 static __inline__ __m512i __DEFAULT_FN_ATTRS512
 _mm512_mullo_epi64 (__m512i __A, __m512i __B) {
   return (__m512i) ((__v8du) __A * (__v8du) __B);

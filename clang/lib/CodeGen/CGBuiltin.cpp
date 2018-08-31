@@ -9929,6 +9929,50 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                             "psrldq");
     return Builder.CreateBitCast(SV, ResultType, "cast");
   }
+  case X86::BI__builtin_ia32_kshiftliqi:
+  case X86::BI__builtin_ia32_kshiftlihi:
+  case X86::BI__builtin_ia32_kshiftlisi:
+  case X86::BI__builtin_ia32_kshiftlidi: {
+    unsigned ShiftVal = cast<llvm::ConstantInt>(Ops[1])->getZExtValue() & 0xff;
+    unsigned NumElts = Ops[0]->getType()->getIntegerBitWidth();
+
+    if (ShiftVal >= NumElts)
+      return llvm::Constant::getNullValue(Ops[0]->getType());
+
+    Value *In = getMaskVecValue(*this, Ops[0], NumElts);
+
+    uint32_t Indices[64];
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = NumElts + i - ShiftVal;
+
+    Value *Zero = llvm::Constant::getNullValue(In->getType());
+    Value *SV = Builder.CreateShuffleVector(Zero, In,
+                                            makeArrayRef(Indices, NumElts),
+                                            "kshiftl");
+    return Builder.CreateBitCast(SV, Ops[0]->getType());
+  }
+  case X86::BI__builtin_ia32_kshiftriqi:
+  case X86::BI__builtin_ia32_kshiftrihi:
+  case X86::BI__builtin_ia32_kshiftrisi:
+  case X86::BI__builtin_ia32_kshiftridi: {
+    unsigned ShiftVal = cast<llvm::ConstantInt>(Ops[1])->getZExtValue() & 0xff;
+    unsigned NumElts = Ops[0]->getType()->getIntegerBitWidth();
+
+    if (ShiftVal >= NumElts)
+      return llvm::Constant::getNullValue(Ops[0]->getType());
+
+    Value *In = getMaskVecValue(*this, Ops[0], NumElts);
+
+    uint32_t Indices[64];
+    for (unsigned i = 0; i != NumElts; ++i)
+      Indices[i] = i + ShiftVal;
+
+    Value *Zero = llvm::Constant::getNullValue(In->getType());
+    Value *SV = Builder.CreateShuffleVector(In, Zero,
+                                            makeArrayRef(Indices, NumElts),
+                                            "kshiftr");
+    return Builder.CreateBitCast(SV, Ops[0]->getType());
+  }
   case X86::BI__builtin_ia32_movnti:
   case X86::BI__builtin_ia32_movnti64:
   case X86::BI__builtin_ia32_movntsd:

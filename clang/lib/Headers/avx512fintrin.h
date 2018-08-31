@@ -8394,6 +8394,12 @@ _mm512_kxor (__mmask16 __A, __mmask16 __B)
 #define _kxnor_mask16 _mm512_kxnor
 #define _kxor_mask16 _mm512_kxor
 
+#define _kshiftli_mask16(A, I) \
+  (__mmask16)__builtin_ia32_kshiftlihi((__mmask16)(A), (unsigned int)(I))
+
+#define _kshiftri_mask16(A, I) \
+  (__mmask16)__builtin_ia32_kshiftrihi((__mmask16)(A), (unsigned int)(I))
+
 static __inline__ void __DEFAULT_FN_ATTRS512
 _mm512_stream_si512 (__m512i * __P, __m512i __A)
 {

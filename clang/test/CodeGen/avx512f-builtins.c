@@ -8296,6 +8296,22 @@ __mmask16 test_kxor_mask16(__m512i __A, __m512i __B, __m512i __C, __m512i __D, _
                                                     __E, __F);
 }
 
+__mmask16 test_kshiftli_mask16(__m512i A, __m512i B, __m512i C, __m512i D) {
+  // CHECK-LABEL: @test_kshiftli_mask16
+  // CHECK: [[VAL:%.*]] = bitcast i16 %{{.*}} to <16 x i1>
+  // CHECK: [[RES:%.*]] = shufflevector <16 x i1> zeroinitializer, <16 x i1> [[VAL]], <16 x i32> <i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30>
+  // CHECK: bitcast <16 x i1> [[RES]] to i16
+  return _mm512_mask_cmpneq_epu32_mask(_kshiftli_mask16(_mm512_cmpneq_epu32_mask(A, B), 1), C, D);
+}
+
+__mmask16 test_kshiftri_mask16(__m512i A, __m512i B, __m512i C, __m512i D) {
+  // CHECK-LABEL: @test_kshiftri_mask16
+  // CHECK: [[VAL:%.*]] = bitcast i16 %{{.*}} to <16 x i1>
+  // CHECK: [[RES:%.*]] = shufflevector <16 x i1> [[VAL]], <16 x i1> zeroinitializer, <16 x i32> <i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16>
+  // CHECK: bitcast <16 x i1> [[RES]] to i16
+  return _mm512_mask_cmpneq_epu32_mask(_kshiftri_mask16(_mm512_cmpneq_epu32_mask(A, B), 1), C, D);
+}
+
 void test_mm512_stream_si512(__m512i * __P, __m512i __A) {
   // CHECK-LABEL: @test_mm512_stream_si512
   // CHECK: store <8 x i64> %{{.*}}, <8 x i64>* %{{.*}}, align 64, !nontemporal

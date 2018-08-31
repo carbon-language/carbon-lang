@@ -155,6 +155,18 @@ _kadd_mask64(__mmask64 __A, __mmask64 __B)
   return (__mmask64)__builtin_ia32_kadddi((__mmask64)__A, (__mmask64)__B);
 }
 
+#define _kshiftli_mask32(A, I) \
+  (__mmask32)__builtin_ia32_kshiftlisi((__mmask32)(A), (unsigned int)(I))
+
+#define _kshiftri_mask32(A, I) \
+  (__mmask32)__builtin_ia32_kshiftrisi((__mmask32)(A), (unsigned int)(I))
+
+#define _kshiftli_mask64(A, I) \
+  (__mmask64)__builtin_ia32_kshiftlidi((__mmask64)(A), (unsigned int)(I))
+
+#define _kshiftri_mask64(A, I) \
+  (__mmask64)__builtin_ia32_kshiftridi((__mmask64)(A), (unsigned int)(I))
+
 /* Integer compare */
 
 #define _mm512_cmp_epi8_mask(a, b, p) \
