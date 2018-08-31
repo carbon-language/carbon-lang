@@ -79,7 +79,7 @@ public:
     H.CycleFrequency = 3e9;
 
     Writer = make_unique<FDRTraceWriter>(OS, H);
-    Record = MakeRecord<T>();
+    Rec = MakeRecord<T>();
   }
 
 protected:
@@ -87,7 +87,7 @@ protected:
   raw_string_ostream OS;
   XRayFileHeader H;
   std::unique_ptr<FDRTraceWriter> Writer;
-  std::unique_ptr<Record> Record;
+  std::unique_ptr<Record> Rec;
 };
 
 TYPED_TEST_CASE_P(RoundTripTest);
@@ -95,7 +95,7 @@ TYPED_TEST_CASE_P(RoundTripTest);
 // This test ensures that the writing and reading implementations are in sync --
 // that given write(read(write(R))) == R.
 TYPED_TEST_P(RoundTripTest, RoundTripsSingleValue) {
-  auto &R = this->Record;
+  auto &R = this->Rec;
   ASSERT_FALSE(errorToBool(R->apply(*this->Writer)));
   this->OS.flush();
 
