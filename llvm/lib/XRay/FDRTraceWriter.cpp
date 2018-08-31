@@ -21,9 +21,8 @@ namespace {
 struct alignas(32) FileHeader {
   uint16_t Version;
   uint16_t Type;
-  bool ConstantTSC : 1;
-  bool NonstopTSC : 1;
-  alignas(8) uint64_t CycleFrequency;
+  uint32_t BitField;
+  uint64_t CycleFrequency;
   char FreeForm[16];
 };
 
@@ -65,7 +64,7 @@ template <size_t Index> struct IndexedMemcpy {
 };
 
 template <uint8_t Kind, class... Values>
-Error writeMetadata(raw_ostream &OS, Values&&... Ds) {
+Error writeMetadata(raw_ostream &OS, Values &&... Ds) {
   MetadataBlob B;
   B.Type = 1;
   B.RecordKind = Kind;
@@ -85,8 +84,7 @@ FDRTraceWriter::FDRTraceWriter(raw_ostream &O, const XRayFileHeader &H)
   FileHeader Raw;
   Raw.Version = H.Version;
   Raw.Type = H.Type;
-  Raw.ConstantTSC = H.ConstantTSC;
-  Raw.NonstopTSC = H.NonstopTSC;
+  Raw.BitField = (H.ConstantTSC ? 0x01 : 0x0) | (H.NonstopTSC ? 0x02 : 0x0);
   Raw.CycleFrequency = H.CycleFrequency;
   memcpy(&Raw.FreeForm, H.FreeFormData, 16);
   OS.write(reinterpret_cast<const char *>(&Raw), sizeof(XRayFileHeader));

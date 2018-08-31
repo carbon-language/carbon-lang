@@ -135,6 +135,11 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion1) {
   std::memcpy(H.FreeFormData, reinterpret_cast<const char *>(&BufferSize),
               sizeof(BufferSize));
   FDRTraceWriter Writer(OS, H);
+  OS.flush();
+
+  // Ensure that at this point the Data buffer has the file header serialized
+  // size.
+  ASSERT_THAT(Data.size(), Eq(32u));
   auto L = LogBuilder()
                .add<NewBufferRecord>(1)
                .add<WallclockRecord>(1, 1)
@@ -149,6 +154,10 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion1) {
   // We need to pad the buffer with 4016 (4096 - 80) bytes of zeros.
   OS.write_zeros(4016);
   OS.flush();
+
+  // For version 1 of the log, we need the whole buffer to be the size of the
+  // file header plus 32.
+  ASSERT_THAT(Data.size(), Eq(BufferSize + 32));
 
   // Then from here we load the Trace file.
   DataExtractor DE(Data, true, 8);
