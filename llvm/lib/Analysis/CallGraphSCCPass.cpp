@@ -124,7 +124,7 @@ bool CGPassManager::RunPassOnSCC(Pass *P, CallGraphSCC &CurSCC,
   Module &M = CG.getModule();
 
   if (!PM) {
-    CallGraphSCCPass *CGSP = (CallGraphSCCPass*)P;
+    CallGraphSCCPass *CGSP = (CallGraphSCCPass *)P;
     if (!CallGraphUpToDate) {
       DevirtualizedCall |= RefreshCallGraph(CurSCC, CG, false);
       CallGraphUpToDate = true;
@@ -140,13 +140,13 @@ bool CGPassManager::RunPassOnSCC(Pass *P, CallGraphSCC &CurSCC,
 
       if (EmitICRemark) {
         // FIXME: Add getInstructionCount to CallGraphSCC.
-        // TODO: emitInstrCountChangedRemark should take in the delta between
-        // SCCount and InstrCount.
         SCCCount = M.getInstructionCount();
         // Is there a difference in the number of instructions in the module?
         if (SCCCount != InstrCount) {
           // Yep. Emit a remark and update InstrCount.
-          emitInstrCountChangedRemark(P, M, InstrCount);
+          int64_t Delta =
+              static_cast<int64_t>(SCCCount) - static_cast<int64_t>(InstrCount);
+          emitInstrCountChangedRemark(P, M, Delta, InstrCount);
           InstrCount = SCCCount;
         }
       }

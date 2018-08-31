@@ -410,7 +410,8 @@ public:
 
   /// Emit a remark signifying that the number of IR instructions in the module
   /// changed.
-  void emitInstrCountChangedRemark(Pass *P, Module &M, unsigned CountBefore);
+  void emitInstrCountChangedRemark(Pass *P, Module &M, int64_t Delta,
+                                   unsigned CountBefore);
 
 protected:
   // Top level manager.

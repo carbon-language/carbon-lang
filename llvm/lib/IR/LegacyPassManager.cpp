@@ -142,6 +142,7 @@ unsigned PMDataManager::initSizeRemarkInfo(Module &M) {
 }
 
 void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
+                                                int64_t Delta,
                                                 unsigned CountBefore) {
   // We need a function containing at least one basic block in order to output
   // remarks. Since it's possible that the first function in the module doesn't
@@ -157,25 +158,13 @@ void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
   // We found a function containing at least one basic block.
   Function *F = &*It;
 
-  // How many instructions are in the module now?
-  unsigned CountAfter = M.getInstructionCount();
-
-  // If there was no change, don't emit a remark.
-  if (CountBefore == CountAfter)
-    return;
-
   // If it's a pass manager, don't emit a remark. (This hinges on the assumption
   // that the only passes that return non-null with getAsPMDataManager are pass
   // managers.) The reason we have to do this is to avoid emitting remarks for
   // CGSCC passes.
   if (P->getAsPMDataManager())
     return;
-
-  // Compute a possibly negative delta between the instruction count before
-  // running P, and after running P.
-  int64_t Delta =
-      static_cast<int64_t>(CountAfter) - static_cast<int64_t>(CountBefore);
-
+  int64_t CountAfter = static_cast<int64_t>(CountBefore) + Delta;
   BasicBlock &BB = *F->begin();
   OptimizationRemarkAnalysis R("size-info", "IRSizeChange",
                                DiagnosticLocation(), &BB);
@@ -1315,9 +1304,9 @@ bool BBPassManager::runOnFunction(Function &F) {
           // Update the size of the basic block, emit a remark, and update the
           // size of the module.
           if (NewSize != BBSize) {
-            emitInstrCountChangedRemark(BP, M, InstrCount);
             int64_t Delta =
                 static_cast<int64_t>(NewSize) - static_cast<int64_t>(BBSize);
+            emitInstrCountChangedRemark(BP, M, Delta, InstrCount);
             InstrCount = static_cast<int64_t>(InstrCount) + Delta;
             BBSize = NewSize;
           }
@@ -1552,9 +1541,9 @@ bool FPPassManager::runOnFunction(Function &F) {
         // Update the size of the function, emit a remark, and update the size
         // of the module.
         if (NewSize != FunctionSize) {
-          emitInstrCountChangedRemark(FP, M, InstrCount);
           int64_t Delta = static_cast<int64_t>(NewSize) -
                           static_cast<int64_t>(FunctionSize);
+          emitInstrCountChangedRemark(FP, M, Delta, InstrCount);
           InstrCount = static_cast<int64_t>(InstrCount) + Delta;
           FunctionSize = NewSize;
         }
@@ -1646,12 +1635,11 @@ MPPassManager::runOnModule(Module &M) {
       LocalChanged |= MP->runOnModule(M);
       if (EmitICRemark) {
         // Update the size of the module.
-        // TODO: emitInstrCountChangedRemark should take in a delta between
-        // the old count and new count. Right now, we're calculating this
-        // twice.
         ModuleCount = M.getInstructionCount();
         if (ModuleCount != InstrCount) {
-          emitInstrCountChangedRemark(MP, M, InstrCount);
+          int64_t Delta = static_cast<int64_t>(ModuleCount) -
+                          static_cast<int64_t>(InstrCount);
+          emitInstrCountChangedRemark(MP, M, Delta, InstrCount);
           ModuleCount = InstrCount;
         }
       }

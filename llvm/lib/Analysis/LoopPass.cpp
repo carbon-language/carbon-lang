@@ -224,9 +224,9 @@ bool LPPassManager::runOnFunction(Function &F) {
           // Update the size of the function, emit a remark, and update the
           // size of the module.
           if (NewSize != FunctionSize) {
-            emitInstrCountChangedRemark(P, M, InstrCount);
             int64_t Delta = static_cast<int64_t>(NewSize) -
                             static_cast<int64_t>(FunctionSize);
+            emitInstrCountChangedRemark(P, M, Delta, InstrCount);
             InstrCount = static_cast<int64_t>(InstrCount) + Delta;
             FunctionSize = NewSize;
           }
