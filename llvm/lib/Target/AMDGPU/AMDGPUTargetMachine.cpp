@@ -308,7 +308,6 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
                         FS, Options, getEffectiveRelocModel(RM),
                         getEffectiveCodeModel(CM), OptLevel),
       TLOF(createTLOF(getTargetTriple())) {
-  AS = AMDGPU::getAMDGPUAS(TT);
   initAsmInfo();
 }
 
