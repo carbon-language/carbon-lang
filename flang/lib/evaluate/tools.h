@@ -25,6 +25,7 @@
 namespace Fortran::evaluate {
 
 // Convenience functions and operator overloadings for expression construction.
+
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {
   return {Negate<Type<C, K>>{std::move(x)}};
@@ -54,6 +55,8 @@ template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {
   return std::visit(
       [](auto &xk) { return Expr<SomeKind<C>>{-std::move(xk)}; }, x.u);
 }
+
+// TODO pmk revisit these below for type safety
 
 template<TypeCategory C>
 Expr<SomeKind<C>> operator+(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
@@ -91,8 +94,10 @@ Expr<SomeKind<C>> operator/(Expr<SomeKind<C>> &&x, Expr<SomeKind<C>> &&y) {
       x.u, y.u);
 }
 
-// Generalizers: these take expressions of more specific types and wrap
-// them in more abstract containers.
+// Generalizing packagers: these take operations and expressions of more
+// specific types and wrap them in Expr<> containers of more abstract types.
+// TODO: Would these be better as conversion constructors in the classes?
+// TODO: Are the lvalue argument versions still needed?
 
 template<typename A> Expr<ResultType<A>> AsExpr(const A &x) { return {x}; }
 template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
@@ -109,6 +114,16 @@ Expr<SomeKind<CAT>> AsCategoryExpr(Expr<Type<CAT, KIND>> &&x) {
   return {std::move(x)};
 }
 
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> AsCategoryExpr(SomeKindScalar<CAT> &&x) {
+  return std::visit(
+      [](auto &&scalar) {
+        using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
+        return Expr<SomeKind<CAT>>{Expr<Ty>{Constant<Ty>{std::move(scalar)}}};
+      },
+      x.u);
+}
+
 template<typename A> Expr<SomeType> AsGenericExpr(const A &x) { return {x}; }
 
 template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
@@ -122,6 +137,26 @@ Expr<SomeType> AsGenericExpr(const Expr<Type<CAT, KIND>> &x) {
 template<TypeCategory CAT, int KIND>
 Expr<SomeType> AsGenericExpr(Expr<Type<CAT, KIND>> &&x) {
   return {AsCategoryExpr(std::move(x))};
+}
+
+template<> inline Expr<SomeType> AsGenericExpr(Constant<SomeType> &&x) {
+  return std::visit(
+      [](auto &&scalar) {
+        using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
+        return Expr<SomeType>{Expr<SomeKind<Ty::category>>{
+            Expr<Ty>{Constant<Ty>{std::move(scalar)}}}};
+      },
+      x.value.u);
+}
+
+template<> inline Expr<SomeType> AsGenericExpr(GenericScalar &&x) {
+  return std::visit(
+      [](auto &&scalar) {
+        using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
+        return Expr<SomeType>{Expr<SomeKind<Ty::category>>{
+            Expr<Ty>{Constant<Ty>{std::move(scalar)}}}};
+      },
+      x.u);
 }
 
 // Creation of conversion expressions can be done to either a known
@@ -262,7 +297,7 @@ Expr<SomeKind<CAT>> PromoteAndCombine(
 }
 
 // Given two expressions of arbitrary type, try to combine them with a
-// numeric operation (e.g., Add), possibly with data type conversion of
+// binary numeric operation (e.g., Add), possibly with data type conversion of
 // one of the operands to the type of the other.
 template<template<typename> class OPR>
 std::optional<Expr<SomeType>> NumericOperation(
@@ -270,6 +305,7 @@ std::optional<Expr<SomeType>> NumericOperation(
 
 extern template std::optional<Expr<SomeType>> NumericOperation<Add>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+// TODO pmk more
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

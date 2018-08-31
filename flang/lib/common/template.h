@@ -29,6 +29,8 @@ namespace Fortran::common {
 // SearchTypeList<PREDICATE, TYPES...> scans a list of types.  The zero-based
 // index of the first type T in the list for which PREDICATE<T>::value() is
 // true is returned, or -1 if the predicate is false for every type in the list.
+// This is a compile-time operation; see SearchDynamicTypes below for a
+// run-time form.
 template<int N, template<typename> class PREDICATE, typename TUPLE>
 struct SearchTypeListHelper {
   static constexpr int value() {
@@ -77,7 +79,7 @@ struct OverMembersHelper<T, std::tuple<Ts...>> {
 };
 
 template<template<typename...> class T, typename TorV>
-using OverMembers = typename OverMembersHelper<T, TorV>::type;
+using OverMembers = typename OverMembersHelper<T, std::decay_t<TorV>>::type;
 
 // SearchMembers<PREDICATE> scans the types that constitute the alternatives
 // of a std::variant instantiation or elements of a std::tuple.
@@ -243,8 +245,9 @@ std::optional<std::tuple<A...>> AllPresent(std::optional<A> &&... x) {
 
 // (f(A...) -> R) -> std::optional<A>... -> std::optional<R>
 // Apply a function to optional arguments if all are present.
-// If the function returns std::optional, you will probably want to
-// pass it through JoinOptional to "squash" it.
+// N.B. If the function returns std::optional, MapOptional will return
+// std::optional<std::optional<...>> and you will probably want to
+// run it through JoinOptional to "squash" it.
 template<typename R, typename... A>
 std::optional<R> MapOptional(
     std::function<R(A &&...)> &&f, std::optional<A> &&... x) {
@@ -252,6 +255,33 @@ std::optional<R> MapOptional(
     return std::make_optional(std::apply(std::move(f), std::move(*args)));
   }
   return std::nullopt;
+}
+
+// Given a VISITOR class of the general form
+//   struct VISITOR {
+//     using Result = ...;
+//     static constexpr std::size_t Types{...};
+//     template<std::size_t J> static Result Test();
+//   };
+// SearchDynamicTypes will traverse the indices 0 .. (Types-1) and
+// invoke VISITOR::Test<J>() until it returns a value that casts
+// to a true Boolean.  If no invocation of Test succeeds, it returns a
+// default-constructed Result.
+template<std::size_t J, typename VISITOR>
+typename VISITOR::Result SearchDynamicTypesHelper(VISITOR &&visitor) {
+  if constexpr (J < VISITOR::Types) {
+    if (auto result{visitor.template Test<J>()}) {
+      return result;
+    }
+    return SearchDynamicTypesHelper<J + 1, VISITOR>(std::move(visitor));
+  } else {
+    return typename VISITOR::Result{};
+  }
+}
+
+template<typename VISITOR>
+typename VISITOR::Result SearchDynamicTypes(VISITOR &&visitor) {
+  return SearchDynamicTypesHelper<0, VISITOR>(std::move(visitor));
 }
 
 }  // namespace Fortran::common

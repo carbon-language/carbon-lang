@@ -154,12 +154,16 @@ template<> struct CategoryTypesHelper<TypeCategory::Logical> {
 template<TypeCategory CATEGORY>
 using CategoryTypes = typename CategoryTypesHelper<CATEGORY>::type;
 
-using NumericTypes = common::CombineTuples<CategoryTypes<TypeCategory::Integer>,
-    CategoryTypes<TypeCategory::Real>, CategoryTypes<TypeCategory::Complex>>;
-using RelationalTypes =
-    common::CombineTuples<NumericTypes, CategoryTypes<TypeCategory::Character>>;
-using AllIntrinsicTypes = common::CombineTuples<RelationalTypes,
-    CategoryTypes<TypeCategory::Logical>>;
+using IntegerTypes = CategoryTypes<TypeCategory::Integer>;
+using RealTypes = CategoryTypes<TypeCategory::Real>;
+using ComplexTypes = CategoryTypes<TypeCategory::Complex>;
+using CharacterTypes = CategoryTypes<TypeCategory::Character>;
+using LogicalTypes = CategoryTypes<TypeCategory::Logical>;
+
+using FloatingTypes = common::CombineTuples<RealTypes, ComplexTypes>;
+using NumericTypes = common::CombineTuples<IntegerTypes, FloatingTypes>;
+using RelationalTypes = common::CombineTuples<NumericTypes, CharacterTypes>;
+using AllIntrinsicTypes = common::CombineTuples<RelationalTypes, LogicalTypes>;
 
 // When Scalar<T> is S, then TypeOf<S> is T.
 // TypeOf is implemented by scanning all supported types for a match

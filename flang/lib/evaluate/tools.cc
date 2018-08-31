@@ -97,7 +97,6 @@ template<template<typename> class OPR>
 std::optional<Expr<SomeType>> NumericOperation(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y) {
-
   return std::visit(
       common::visitors{[](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy) {
                          return Package(
