@@ -15053,6 +15053,39 @@ static SDValue lower512BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   }
 }
 
+// Determine if this shuffle can be implemented with a KSHIFT instruction.
+// Returns the shift amount if possible or -1 if not. This is a simplified
+// version of matchVectorShuffleAsShift.
+static int match1BitShuffleAsKSHIFT(unsigned &Opcode, ArrayRef<int> Mask,
+                                    int MaskOffset, const APInt &Zeroable) {
+  int Size = Mask.size();
+
+  auto CheckZeros = [&](int Shift, bool Left) {
+    for (int j = 0; j < Shift; ++j)
+      if (!Zeroable[j + (Left ? 0 : (Size - Shift))])
+        return false;
+
+    return true;
+  };
+
+  auto MatchShift = [&](int Shift, bool Left) {
+    unsigned Pos = Left ? Shift : 0;
+    unsigned Low = Left ? 0 : Shift;
+    unsigned Len = Size - Shift;
+    return isSequentialOrUndefInRange(Mask, Pos, Len, Low + MaskOffset);
+  };
+
+  for (int Shift = 1; Shift != Size; ++Shift)
+    for (bool Left : {true, false})
+      if (CheckZeros(Shift, Left) && MatchShift(Shift, Left)) {
+        Opcode = Left ? X86ISD::KSHIFTL : X86ISD::KSHIFTR;
+        return Shift;
+      }
+
+  return -1;
+}
+
+
 // Lower vXi1 vector shuffles.
 // There is no a dedicated instruction on AVX-512 that shuffles the masks.
 // The only way to shuffle bits is to sign-extend the mask vector to SIMD
@@ -15062,6 +15095,9 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                       const APInt &Zeroable,
                                       const X86Subtarget &Subtarget,
                                       SelectionDAG &DAG) {
+  assert(Subtarget.hasAVX512() &&
+         "Cannot lower 512-bit vectors w/o basic ISA!");
+
   unsigned NumElts = Mask.size();
 
   // Try to recognize shuffles that are just padding a subvector with zeros.
@@ -15088,9 +15124,21 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                        Extract, DAG.getIntPtrConstant(0, DL));
   }
 
+  // Try to match KSHIFTs.
+  // TODO: Support narrower than legal shifts by widening and extracting.
+  if (NumElts >= 16 || (Subtarget.hasDQI() && NumElts == 8)) {
+    unsigned Offset = 0;
+    for (SDValue V : { V1, V2 }) {
+      unsigned Opcode;
+      int ShiftAmt = match1BitShuffleAsKSHIFT(Opcode, Mask, Offset, Zeroable);
+      if (ShiftAmt >= 0)
+        return DAG.getNode(Opcode, DL, VT, V,
+                           DAG.getConstant(ShiftAmt, DL, MVT::i8));
+      Offset += NumElts; // Increment for next iteration.
+    }
+  }
 
-  assert(Subtarget.hasAVX512() &&
-         "Cannot lower 512-bit vectors w/o basic ISA!");
+
   MVT ExtVT;
   switch (VT.SimpleTy) {
   default:
