@@ -410,8 +410,10 @@ public:
 
   /// Emit a remark signifying that the number of IR instructions in the module
   /// changed.
+  /// \p F is optionally passed by passes which run on Functions, and thus
+  /// always know whether or not a non-empty function is available.
   void emitInstrCountChangedRemark(Pass *P, Module &M, int64_t Delta,
-                                   unsigned CountBefore);
+                                   unsigned CountBefore, Function *F = nullptr);
 
 protected:
   // Top level manager.

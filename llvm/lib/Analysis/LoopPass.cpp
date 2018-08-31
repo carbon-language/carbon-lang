@@ -226,7 +226,7 @@ bool LPPassManager::runOnFunction(Function &F) {
           if (NewSize != FunctionSize) {
             int64_t Delta = static_cast<int64_t>(NewSize) -
                             static_cast<int64_t>(FunctionSize);
-            emitInstrCountChangedRemark(P, M, Delta, InstrCount);
+            emitInstrCountChangedRemark(P, M, Delta, InstrCount, &F);
             InstrCount = static_cast<int64_t>(InstrCount) + Delta;
             FunctionSize = NewSize;
           }

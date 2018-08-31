@@ -143,7 +143,8 @@ unsigned PMDataManager::initSizeRemarkInfo(Module &M) {
 
 void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
                                                 int64_t Delta,
-                                                unsigned CountBefore) {
+                                                unsigned CountBefore,
+                                                Function *F) {
   // If it's a pass manager, don't emit a remark. (This hinges on the assumption
   // that the only passes that return non-null with getAsPMDataManager are pass
   // managers.) The reason we have to do this is to avoid emitting remarks for
@@ -151,19 +152,22 @@ void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
   if (P->getAsPMDataManager())
     return;
 
-  // We need a function containing at least one basic block in order to output
-  // remarks. Since it's possible that the first function in the module doesn't
-  // actually contain a basic block, we have to go and find one that's suitable
-  // for emitting remarks.
-  auto It = std::find_if(M.begin(), M.end(),
-                         [](const Function &Fn) { return !Fn.empty(); });
+  // Do we have a function we can use to emit a remark?
+  if (F == nullptr) {
+    // We need a function containing at least one basic block in order to output
+    // remarks. Since it's possible that the first function in the module
+    // doesn't actually contain a basic block, we have to go and find one that's
+    // suitable for emitting remarks.
+    auto It = std::find_if(M.begin(), M.end(),
+                          [](const Function &Fn) { return !Fn.empty(); });
 
-  // Didn't find a function. Quit.
-  if (It == M.end())
-    return;
+    // Didn't find a function. Quit.
+    if (It == M.end())
+      return;
 
-  // We found a function containing at least one basic block.
-  Function *F = &*It;
+    // We found a function containing at least one basic block.
+    F = &*It;
+  }
   int64_t CountAfter = static_cast<int64_t>(CountBefore) + Delta;
   BasicBlock &BB = *F->begin();
   OptimizationRemarkAnalysis R("size-info", "IRSizeChange",
@@ -1306,7 +1310,7 @@ bool BBPassManager::runOnFunction(Function &F) {
           if (NewSize != BBSize) {
             int64_t Delta =
                 static_cast<int64_t>(NewSize) - static_cast<int64_t>(BBSize);
-            emitInstrCountChangedRemark(BP, M, Delta, InstrCount);
+            emitInstrCountChangedRemark(BP, M, Delta, InstrCount, &F);
             InstrCount = static_cast<int64_t>(InstrCount) + Delta;
             BBSize = NewSize;
           }
@@ -1543,7 +1547,7 @@ bool FPPassManager::runOnFunction(Function &F) {
         if (NewSize != FunctionSize) {
           int64_t Delta = static_cast<int64_t>(NewSize) -
                           static_cast<int64_t>(FunctionSize);
-          emitInstrCountChangedRemark(FP, M, Delta, InstrCount);
+          emitInstrCountChangedRemark(FP, M, Delta, InstrCount, &F);
           InstrCount = static_cast<int64_t>(InstrCount) + Delta;
           FunctionSize = NewSize;
         }
