@@ -6,7 +6,7 @@ vbroadcastss (%rax), %ymm0
 
 # CHECK:      Iterations:        100
 # CHECK-NEXT: Instructions:      200
-# CHECK-NEXT: Total Cycles:      208
+# CHECK-NEXT: Total Cycles:      209
 # CHECK-NEXT: Total uOps:        300
 
 # CHECK:      Dispatch Width:    2
@@ -52,15 +52,15 @@ vbroadcastss (%rax), %ymm0
 # CHECK-NEXT:  -      -      -     2.00   2.00   1.00   1.00   1.00    -      -      -      -      -      -     vbroadcastss	(%rax), %ymm0
 
 # CHECK:      Timeline view:
-# CHECK-NEXT:                     0123
+# CHECK-NEXT:                     01234
 # CHECK-NEXT: Index     0123456789
 
-# CHECK:      [0,0]     DeeER.    .  .   leaq	8(%rsp,%rdi,2), %rax
-# CHECK-NEXT: [0,1]     .DeeeeeeER.  .   vbroadcastss	(%rax), %ymm0
-# CHECK-NEXT: [1,0]     . DeeE---R.  .   leaq	8(%rsp,%rdi,2), %rax
-# CHECK-NEXT: [1,1]     .  DeeeeeeER .   vbroadcastss	(%rax), %ymm0
-# CHECK-NEXT: [2,0]     .   DeeE---R .   leaq	8(%rsp,%rdi,2), %rax
-# CHECK-NEXT: [2,1]     .    DeeeeeeER   vbroadcastss	(%rax), %ymm0
+# CHECK:      [0,0]     DeeER.    .   .   leaq	8(%rsp,%rdi,2), %rax
+# CHECK-NEXT: [0,1]     .D=eeeeeeER   .   vbroadcastss	(%rax), %ymm0
+# CHECK-NEXT: [1,0]     . DeeE----R   .   leaq	8(%rsp,%rdi,2), %rax
+# CHECK-NEXT: [1,1]     .  D=eeeeeeER .   vbroadcastss	(%rax), %ymm0
+# CHECK-NEXT: [2,0]     .   DeeE----R .   leaq	8(%rsp,%rdi,2), %rax
+# CHECK-NEXT: [2,1]     .    D=eeeeeeER   vbroadcastss	(%rax), %ymm0
 
 # CHECK:      Average Wait times (based on the timeline view):
 # CHECK-NEXT: [0]: Executions
@@ -69,5 +69,5 @@ vbroadcastss (%rax), %ymm0
 # CHECK-NEXT: [3]: Average time elapsed from WB until retire stage
 
 # CHECK:            [0]    [1]    [2]    [3]
-# CHECK-NEXT: 0.     3     1.0    1.0    2.0       leaq	8(%rsp,%rdi,2), %rax
-# CHECK-NEXT: 1.     3     1.0    1.0    0.0       vbroadcastss	(%rax), %ymm0
+# CHECK-NEXT: 0.     3     1.0    1.0    2.7       leaq	8(%rsp,%rdi,2), %rax
+# CHECK-NEXT: 1.     3     2.0    0.0    0.0       vbroadcastss	(%rax), %ymm0
