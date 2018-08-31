@@ -35,19 +35,6 @@ std::ostream &operator<<(std::ostream &o, const MessageFixedText &t) {
 
 MessageFormattedText::MessageFormattedText(MessageFixedText text, ...)
   : isFatal_{text.isFatal()} {
-  va_list ap;
-  va_start(ap, text);
-  SetMessageFormattedText(text, ap);
-  va_end(ap);
-}
-
-MessageFormattedText::MessageFormattedText(MessageFixedText text, va_list ap)
-  : isFatal_{text.isFatal()} {
-  SetMessageFormattedText(text, ap);
-}
-
-void MessageFormattedText::SetMessageFormattedText(MessageFixedText text,
-						   va_list ap) {
   const char *p{text.text().begin()};
   std::string asString;
   if (*text.text().end() != '\0') {
@@ -56,7 +43,10 @@ void MessageFormattedText::SetMessageFormattedText(MessageFixedText text,
     p = asString.data();
   }
   char buffer[256];
+  va_list ap;
+  va_start(ap, text);
   vsnprintf(buffer, sizeof buffer, p, ap);
+  va_end(ap);
   string_ = buffer;
 }
 

@@ -14,7 +14,7 @@
 
 ! negative test -- invalid labels, out of range
 
-! RUN: f18 < %s | FileCheck %s
+! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: label '0' is out of range
 ! CHECK: label '100000' is out of range
 ! CHECK: label '123456' is out of range

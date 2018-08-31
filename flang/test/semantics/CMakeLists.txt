@@ -84,6 +84,10 @@ set(MODFILE_TESTS
   modfile11.f90
 )
 
+set(LABEL_TESTS
+  label*.[Ff]90
+)
+
 foreach(test ${ERROR_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.sh ${test})
 endforeach()
@@ -94,4 +98,8 @@ endforeach()
 
 foreach(test ${MODFILE_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_modfile.sh ${test})
+endforeach()
+
+foreach(test ${LABEL_TESTS})
+  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
 endforeach()

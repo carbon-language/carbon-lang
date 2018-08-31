@@ -14,7 +14,7 @@
 
 ! negative test -- invalid labels, out of range
 
-! RUN: f18 < %s | FileCheck %s
+! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: 'do 10 i = 1, m' doesn't properly nest
 ! CHECK: label '30' cannot be found
 ! CHECK: label '40' cannot be found

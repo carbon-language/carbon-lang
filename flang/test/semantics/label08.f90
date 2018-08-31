@@ -14,10 +14,10 @@
 
 ! negative test -- invalid labels, out of range
 
-! RUN: f18 < %s | FileCheck %s
+! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: IF construct name mismatch
 ! CHECK: DO construct name mismatch
-! CHECK: CYCLE construct name mismatch
+! CHECK: CYCLE construct-name 'label3' is not in scope
 
 subroutine sub00(a,b,n,m)
   real a(n,m)

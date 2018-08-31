@@ -12,8 +12,8 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-! RUN: f18 < %s | FileCheck %s
-! CHECK: 
+! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
+! CHECK: '60' not a FORMAT
 
 subroutine s(a)
   real a(10)

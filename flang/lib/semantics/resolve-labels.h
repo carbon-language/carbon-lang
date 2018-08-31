@@ -1,3 +1,4 @@
+/* -*- mode: c++; c-basic-offset: 2 -*- */
 // Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,26 +16,19 @@
 #ifndef FORTRAN_SEMANTICS_RESOLVE_LABELS_H_
 #define FORTRAN_SEMANTICS_RESOLVE_LABELS_H_
 
-namespace Fortran {
-namespace parser {
+namespace Fortran::parser {
 struct Program;
 class CookedSource;
-} // parser
+}  // namespace Fortran::parser
 
-namespace semantics {
+namespace Fortran::semantics {
 
 /// \brief Validate the labels in the program
 /// \param ParseTree  the parse tree
 /// \param Source     the cooked source
 /// \return true, iff the program's labels pass semantics checks
-bool ValidateLabels(const parser::Program &ParseTree,
-		    const parser::CookedSource &Source);
-} // semantics
-} // Fortran
+bool ValidateLabels(
+    const parser::Program &ParseTree, const parser::CookedSource &Source);
+}  // namespace Fortran::semantics
 
-#endif // FORTRAN_SEMANTICS_RESOLVE_LABELS_H_
-
-// Local Variables:
-// mode: C++
-// c-basic-offset: 2
-// End:
+#endif  // FORTRAN_SEMANTICS_RESOLVE_LABELS_H_

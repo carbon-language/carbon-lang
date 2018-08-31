@@ -14,11 +14,11 @@
 
 ! negative test -- invalid labels, out of range
 
-! RUN: f18 < %s | FileCheck %s
+! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: label '10' is not in scope
 ! CHECK: label '20' was not found
 ! CHECK: label '40' is not in scope
-! CHECK: label '50' is not in scope (FIXME is that correct?)
+! CHECK: label '50' is not in scope
 
 subroutine sub00(n)
   GOTO (10,20,30) n
