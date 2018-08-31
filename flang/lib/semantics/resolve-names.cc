@@ -79,7 +79,7 @@ private:
 // Provide Post methods to collect attributes into a member variable.
 class AttrsVisitor {
 public:
-  void BeginAttrs();
+  bool BeginAttrs();
   Attrs GetAttrs();
   Attrs EndAttrs();
   void Post(const parser::LanguageBindingSpec &);
@@ -762,9 +762,10 @@ void ShowImplicitRule(
 
 // AttrsVisitor implementation
 
-void AttrsVisitor::BeginAttrs() {
+bool AttrsVisitor::BeginAttrs() {
   CHECK(!attrs_);
   attrs_ = std::make_optional<Attrs>();
+  return true;
 }
 Attrs AttrsVisitor::GetAttrs() {
   CHECK(attrs_);
@@ -1717,16 +1718,14 @@ void SubprogramVisitor::Post(const parser::InterfaceBody::Function &) {
 }
 
 bool SubprogramVisitor::Pre(const parser::SubroutineStmt &stmt) {
-  BeginAttrs();
-  return true;
+  return BeginAttrs();
 }
 bool SubprogramVisitor::Pre(const parser::FunctionStmt &stmt) {
   if (!subpNamesOnly_) {
     BeginDeclTypeSpec();
     CHECK(!funcResultName_);
   }
-  BeginAttrs();
-  return true;
+  return BeginAttrs();
 }
 
 void SubprogramVisitor::Post(const parser::SubroutineStmt &stmt) {
@@ -1848,14 +1847,13 @@ Symbol *SubprogramVisitor::GetSpecificFromGeneric(const SourceName &name) {
 
 bool DeclarationVisitor::BeginDecl() {
   BeginDeclTypeSpec();
-  BeginAttrs();
   BeginArraySpec();
-  return true;
+  return BeginAttrs();
 }
 void DeclarationVisitor::EndDecl() {
   EndDeclTypeSpec();
-  EndAttrs();
   EndArraySpec();
+  EndAttrs();
 }
 
 bool DeclarationVisitor::CheckUseError(
@@ -2036,8 +2034,7 @@ void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
   derivedTypeData_.reset();
 }
 bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {
-  BeginAttrs();
-  return true;
+  return BeginAttrs();
 }
 void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   auto &name{std::get<parser::Name>(x.t).source};
