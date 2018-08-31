@@ -56,7 +56,7 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion3) {
   OS.flush();
 
   // Then from here we load the Trace file.
-  DataExtractor DE(Data, true, 8);
+  DataExtractor DE(Data, sys::IsLittleEndianHost, 8);
   auto TraceOrErr = loadTrace(DE, true);
   if (!TraceOrErr)
     FAIL() << TraceOrErr.takeError();
@@ -100,7 +100,7 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion2) {
   OS.flush();
 
   // Then from here we load the Trace file.
-  DataExtractor DE(Data, true, 8);
+  DataExtractor DE(Data, sys::IsLittleEndianHost, 8);
   auto TraceOrErr = loadTrace(DE, true);
   if (!TraceOrErr)
     FAIL() << TraceOrErr.takeError();
@@ -160,7 +160,7 @@ TEST(FDRTraceWriterTest, WriteToStringBufferVersion1) {
   ASSERT_THAT(Data.size(), Eq(BufferSize + 32));
 
   // Then from here we load the Trace file.
-  DataExtractor DE(Data, true, 8);
+  DataExtractor DE(Data, sys::IsLittleEndianHost, 8);
   auto TraceOrErr = loadTrace(DE, true);
   if (!TraceOrErr)
     FAIL() << TraceOrErr.takeError();
