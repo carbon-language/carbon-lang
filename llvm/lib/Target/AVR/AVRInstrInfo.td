@@ -732,6 +732,14 @@ Defs = [SREG] in
 // This operation is identical to a `Rd AND Rd`.
 def : InstAlias<"tst\t$rd", (ANDRdRr GPR8:$rd, GPR8:$rd)>;
 
+// SBR Rd, K
+//
+// Mnemonic alias to 'ORI Rd, K'. Same bit pattern, same operands,
+// same everything.
+def : InstAlias<"sbr\t$rd, $k",
+                (ORIRdK LD8:$rd, imm_ldi8:$k),
+                /* Disable display, so we don't override ORI */ 0>;
+
 //===----------------------------------------------------------------------===//
 // Jump instructions
 //===----------------------------------------------------------------------===//
@@ -1730,15 +1738,6 @@ def BLD : FRdB<0b00,
 let Constraints = "$src = $rd",
 Defs = [SREG] in
 {
-  // SBR Rd, K
-  // Alias for ORI Rd, K
-  def SBRRdK : FRdK<0b0110,
-                    (outs LD8:$rd),
-                    (ins LD8:$src, imm_ldi8:$k),
-                    "sbr\t$rd, $k",
-                    [(set i8:$rd, (or i8:$src, imm:$k)),
-                     (implicit SREG)]>;
-
   // CBR Rd, K
   // Alias for `ANDI Rd, COM(K)` where COM(K) is the complement of K.
   // FIXME: This uses the 'complement' encoder. We need it to also use the
