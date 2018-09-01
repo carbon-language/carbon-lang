@@ -730,15 +730,7 @@ Defs = [SREG] in
 // TST Rd
 // Test for zero of minus.
 // This operation is identical to a `Rd AND Rd`.
-//def : InstAlias<"tst\t$rd", (ANDRdRr GPR8:$rd, GPR8:$rd), 1>;
-
-let Defs = [SREG] in
-def TSTRd : FTST<0b0010,
-                  0b00,
-                  (outs),
-                  (ins GPR8:$rd),
-                  "tst\t$rd",
-                  [(AVRtst i8:$rd)]>;
+def : InstAlias<"tst\t$rd", (ANDRdRr GPR8:$rd, GPR8:$rd)>;
 
 //===----------------------------------------------------------------------===//
 // Jump instructions
@@ -2103,4 +2095,9 @@ def : Pat<(i8 (trunc (AVRlsr (AVRlsr (AVRlsr (AVRlsr (AVRlsr (AVRlsr (AVRlsr
 // BR_JT -> (mul x, 2) -> (shl x, 1)
 def : Pat<(shl i16:$src1, (i8 1)),
           (LSLWRd i16:$src1)>;
+
+// Lowering of 'tst' node to 'TST' instruction.
+// TST is an alias of AND Rd, Rd.
+def : Pat<(AVRtst i8:$rd),
+          (ANDRdRr $rd, $rd)>;
 
