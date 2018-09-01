@@ -1632,12 +1632,7 @@ def LATZRd : FZRd<0b111,
 let Constraints = "$src = $rd",
 Defs = [SREG] in
 {
-  def LSLRd : FRdRr<0b0000,
-                    0b11,
-                    (outs GPR8:$rd),
-                    (ins GPR8:$src),
-                    "lsl\t$rd",
-                    [(set i8:$rd, (AVRlsl i8:$src)), (implicit SREG)]>;
+  // 8-bit LSL is an alias of ADD Rd, Rd
 
   def LSLWRd : Pseudo<(outs DREGS:$rd),
                       (ins DREGS:$src),
@@ -1754,6 +1749,12 @@ Defs = [SREG] in
 // -------------
 // Clears all bits in a register.
 def CLR : InstAlias<"clr\t$rd", (EORRdRr GPR8:$rd, GPR8:$rd)>;
+
+// LSL Rd
+// Alias for ADD Rd, Rd
+// --------------
+// Logical shift left one bit.
+def LSL : InstAlias<"lsl\t$rd", (ADDRdRr GPR8:$rd, GPR8:$rd)>;
 
 def ROL : InstAlias<"rol\t$rd", (ADCRdRr GPR8:$rd, GPR8:$rd)>;
 
@@ -2098,5 +2099,10 @@ def : Pat<(shl i16:$src1, (i8 1)),
 // Lowering of 'tst' node to 'TST' instruction.
 // TST is an alias of AND Rd, Rd.
 def : Pat<(AVRtst i8:$rd),
-          (ANDRdRr $rd, $rd)>;
+          (ANDRdRr GPR8:$rd, GPR8:$rd)>;
+
+// Lowering of 'lsl' node to 'LSL' instruction.
+// LSL is an alias of 'ADD Rd, Rd'
+def : Pat<(AVRlsl i8:$rd),
+          (ADDRdRr GPR8:$rd, GPR8:$rd)>;
 

@@ -1441,8 +1441,9 @@ MachineBasicBlock *AVRTargetLowering::insertShift(MachineInstr &MI,
   default:
     llvm_unreachable("Invalid shift opcode!");
   case AVR::Lsl8:
-    Opc = AVR::LSLRd;
+    Opc = AVR::ADDRdRr; // LSL is an alias of ADD Rd, Rd
     RC = &AVR::GPR8RegClass;
+    HasRepeatedOperand = true;
     break;
   case AVR::Lsl16:
     Opc = AVR::LSLWRd;
