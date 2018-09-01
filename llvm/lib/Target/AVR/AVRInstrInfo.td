@@ -1671,12 +1671,7 @@ Defs = [SREG] in
   // Bit rotate operations.
   let Uses = [SREG] in
   {
-    def ROLRd : FRdRr<0b0001,
-                      0b11,
-                      (outs GPR8:$rd),
-                      (ins GPR8:$src),
-                      "rol\t$rd",
-                      [(set i8:$rd, (AVRrol i8:$src)), (implicit SREG)]>;
+    // 8-bit ROL is an alias of ADC Rd, Rd
 
     def ROLWRd : Pseudo<(outs DREGS:$rd),
                         (ins DREGS:$src),
@@ -1768,6 +1763,8 @@ Defs = [SREG] in
 // -------------
 // Clears all bits in a register.
 def CLR : InstAlias<"clr\t$rd", (EORRdRr GPR8:$rd, GPR8:$rd)>;
+
+def ROL : InstAlias<"rol\t$rd", (ADCRdRr GPR8:$rd, GPR8:$rd)>;
 
 // SER Rd
 // Alias for LDI Rd, 0xff

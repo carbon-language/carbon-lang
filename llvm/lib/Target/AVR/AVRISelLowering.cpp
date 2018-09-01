@@ -1430,6 +1430,7 @@ MachineBasicBlock *AVRTargetLowering::insertShift(MachineInstr &MI,
                                                   MachineBasicBlock *BB) const {
   unsigned Opc;
   const TargetRegisterClass *RC;
+  bool HasRepeatedOperand = false;
   MachineFunction *F = BB->getParent();
   MachineRegisterInfo &RI = F->getRegInfo();
   const AVRTargetMachine &TM = (const AVRTargetMachine &)getTargetMachine();
@@ -1464,8 +1465,9 @@ MachineBasicBlock *AVRTargetLowering::insertShift(MachineInstr &MI,
     RC = &AVR::DREGSRegClass;
     break;
   case AVR::Rol8:
-    Opc = AVR::ROLRd;
+    Opc = AVR::ADCRdRr; // ROL is an alias of ADC Rd, Rd
     RC = &AVR::GPR8RegClass;
+    HasRepeatedOperand = true;
     break;
   case AVR::Rol16:
     Opc = AVR::ROLWRd;
@@ -1535,7 +1537,11 @@ MachineBasicBlock *AVRTargetLowering::insertShift(MachineInstr &MI,
       .addMBB(BB)
       .addReg(ShiftAmtReg2)
       .addMBB(LoopBB);
-  BuildMI(LoopBB, dl, TII.get(Opc), ShiftReg2).addReg(ShiftReg);
+
+  auto ShiftMI = BuildMI(LoopBB, dl, TII.get(Opc), ShiftReg2).addReg(ShiftReg);
+  if (HasRepeatedOperand)
+    ShiftMI.addReg(ShiftReg);
+
   BuildMI(LoopBB, dl, TII.get(AVR::SUBIRdK), ShiftAmtReg2)
       .addReg(ShiftAmtReg)
       .addImm(1);
