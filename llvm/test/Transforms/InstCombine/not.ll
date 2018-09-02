@@ -210,7 +210,7 @@ define <2 x i32> @not_sub_extra_use_vec(<2 x i32> %y, <2 x i32>* %p) {
 ; CHECK-LABEL: @not_sub_extra_use_vec(
 ; CHECK-NEXT:    [[S:%.*]] = sub <2 x i32> <i32 123, i32 42>, [[Y:%.*]]
 ; CHECK-NEXT:    store <2 x i32> [[S]], <2 x i32>* [[P:%.*]], align 8
-; CHECK-NEXT:    [[R:%.*]] = xor <2 x i32> [[S]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[Y]], <i32 -124, i32 -43>
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %s = sub <2 x i32> <i32 123, i32 42>, %y
