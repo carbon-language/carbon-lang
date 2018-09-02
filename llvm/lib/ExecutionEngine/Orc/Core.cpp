@@ -1158,7 +1158,8 @@ void JITDylib::emit(const SymbolFlagsMap &Emitted) {
             assert(DependantJD.Symbols.count(DependantName) &&
                    "Dependant has no entry in the Symbols table");
             auto &DependantSym = DependantJD.Symbols[DependantName];
-            DependantSym.setFlags(DependantSym.getFlags() & ~JITSymbolFlags::Materializing);
+            DependantSym.setFlags(DependantSym.getFlags() &
+                                  ~JITSymbolFlags::Materializing);
             DependantJD.MaterializingInfos.erase(DependantMII);
           }
         }

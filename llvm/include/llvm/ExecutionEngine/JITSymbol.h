@@ -83,13 +83,13 @@ public:
   }
 
   /// Bitwise AND-assignment for FlagNames.
-  JITSymbolFlags& operator&=(const FlagNames &RHS) {
+  JITSymbolFlags &operator&=(const FlagNames &RHS) {
     Flags &= RHS;
     return *this;
   }
 
   /// Bitwise OR-assignment for FlagNames.
-  JITSymbolFlags& operator|=(const FlagNames &RHS) {
+  JITSymbolFlags &operator|=(const FlagNames &RHS) {
     Flags |= RHS;
     return *this;
   }
@@ -136,7 +136,9 @@ public:
   bool isCallable() const { return (Flags & Callable) == Callable; }
 
   /// Get the underlying flags value as an integer.
-  UnderlyingType getRawFlagsValue() const { return static_cast<UnderlyingType>(Flags); }
+  UnderlyingType getRawFlagsValue() const {
+    return static_cast<UnderlyingType>(Flags);
+  }
 
   /// Return a reference to the target-specific flags.
   TargetFlagsType& getTargetFlags() { return TargetFlags; }
