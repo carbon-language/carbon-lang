@@ -2699,6 +2699,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       Constant *NotC = ConstantExpr::getNot(C);
       return BinaryOperator::CreateAShr(NotC, Y);
     }
+
+    // ~(X + C) --> -(C + 1) - X
+    if (match(Op0, m_Add(m_Value(X), m_Constant(C))))
+      return BinaryOperator::CreateSub(ConstantExpr::getNeg(AddOne(C)), X);
   }
 
   // not (cmp A, B) = !cmp A, B
@@ -2720,11 +2724,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           return BinaryOperator::CreateSub(NewC, X);
         }
       } else if (match(Op0, m_Add(m_Value(X), m_APInt(C)))) {
-        // ~(X + C) --> (-C - 1) - X
-        if (RHSC->isAllOnesValue()) {
-          Constant *NewC = ConstantInt::get(I.getType(), -(*C) - 1);
-          return BinaryOperator::CreateSub(NewC, X);
-        }
         if (RHSC->isSignMask()) {
           // (X + C) ^ signmask -> (X + C + signmask)
           Constant *NewC = ConstantInt::get(I.getType(), *C + *RHSC);

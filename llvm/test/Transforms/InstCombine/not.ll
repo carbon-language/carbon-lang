@@ -243,8 +243,7 @@ define <2 x i32> @not_add_splat(<2 x i32> %x) {
 
 define <2 x i32> @not_add_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @not_add_vec(
-; CHECK-NEXT:    [[A:%.*]] = add <2 x i32> [[X:%.*]], <i32 42, i32 123>
-; CHECK-NEXT:    [[R:%.*]] = xor <2 x i32> [[A]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[R:%.*]] = sub <2 x i32> <i32 -43, i32 -124>, [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %a = add <2 x i32> %x, <i32 42, i32 123>
