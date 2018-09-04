@@ -214,7 +214,7 @@ void InstallAtExitHandler() {
 // ---------------------- TSD ---------------- {{{1
 
 extern "C" void __hwasan_thread_enter() {
-  Thread *t = Thread::Create(nullptr, nullptr);
+  Thread *t = Thread::Create();
   SetCurrentThread(t);
   t->Init();
 }

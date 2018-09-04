@@ -213,7 +213,7 @@ void __hwasan_init() {
 
   HwasanAllocatorInit();
 
-  Thread *main_thread = Thread::Create(nullptr, nullptr);
+  Thread *main_thread = Thread::Create();
   SetCurrentThread(main_thread);
   main_thread->Init();
 

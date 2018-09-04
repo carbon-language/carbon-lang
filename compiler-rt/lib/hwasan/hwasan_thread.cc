@@ -57,14 +57,11 @@ void Thread::RemoveFromThreadList(Thread *t) {
   CHECK(0 && "RemoveFromThreadList: thread not found");
 }
 
-Thread *Thread::Create(thread_callback_t start_routine,
-                               void *arg) {
+Thread *Thread::Create() {
   static u64 unique_id;
   uptr PageSize = GetPageSizeCached();
   uptr size = RoundUpTo(sizeof(Thread), PageSize);
   Thread *thread = (Thread*)MmapOrDie(size, __func__);
-  thread->start_routine_ = start_routine;
-  thread->arg_ = arg;
   thread->destructor_iterations_ = GetPthreadDestructorIterations();
   thread->random_state_ = flags()->random_tags ? RandomSeed() : 0;
   if (auto sz = flags()->heap_history_size)
@@ -75,6 +72,9 @@ Thread *Thread::Create(thread_callback_t start_routine,
 }
 
 void Thread::SetThreadStackAndTls() {
+  // GetPthreadDestructorIterations may call malloc, so disable the tagging.
+  ScopedTaggingDisabler disabler;
+
   // If this process is "init" (pid 1), /proc may not be mounted yet.
   if (IsMainThread() && !FileExists("/proc/self/maps")) {
     stack_top_ = stack_bottom_ = 0;
@@ -126,8 +126,10 @@ void Thread::Destroy() {
 }
 
 void Thread::Print(const char *Prefix) {
-  Printf("%s: thread %p id: %zd stack: [%p,%p) tls: [%p,%p)\n", Prefix, this,
-         unique_id_, stack_bottom(), stack_top(), tls_begin(), tls_end());
+  Printf("%s: thread %p id: %zd stack: [%p,%p) sz: %zd tls: [%p,%p)\n", Prefix,
+         this, unique_id_, stack_bottom(), stack_top(),
+         stack_top() - stack_bottom(),
+         tls_begin(), tls_end());
 }
 
 static u32 xorshift(u32 state) {
@@ -139,6 +141,7 @@ static u32 xorshift(u32 state) {
 
 // Generate a (pseudo-)random non-zero tag.
 tag_t Thread::GenerateRandomTag() {
+  if (tagging_disabled_) return 0;
   tag_t tag;
   do {
     if (flags()->random_tags) {

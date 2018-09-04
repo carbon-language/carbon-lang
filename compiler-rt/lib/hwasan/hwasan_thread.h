@@ -26,7 +26,7 @@ struct ThreadStartArg {
 
 class Thread {
  public:
-  static Thread *Create(thread_callback_t start_routine, void *arg);
+  static Thread *Create();
   void Destroy();
 
   void Init();
@@ -35,7 +35,7 @@ class Thread {
   uptr stack_bottom() { return stack_bottom_; }
   uptr tls_begin() { return tls_begin_; }
   uptr tls_end() { return tls_end_; }
-  bool IsMainThread() { return start_routine_ == nullptr; }
+  bool IsMainThread() { return unique_id_ == 0; }
 
   bool AddrIsInStack(uptr addr) {
     return addr >= stack_bottom_ && addr < stack_top_;
@@ -85,8 +85,6 @@ class Thread {
   void SetThreadStackAndTls();
   void ClearShadowForThreadStackAndTLS();
   void Print(const char *prefix);
-  thread_callback_t start_routine_;
-  void *arg_;
   uptr stack_top_;
   uptr stack_bottom_;
   uptr tls_begin_;
