@@ -49,12 +49,28 @@ namespace Fortran::parser {
 // R507 declaration-construct ->
 //        specification-construct | data-stmt | format-stmt |
 //        entry-stmt | stmt-function-stmt
+// N.B. These parsers incorporate recognition of some other statements that
+// may have been misplaced in the sequence of statements that are acceptable
+// as a specification part in order to improve error recovery.
+// Also note that many instances of specification-part in the standard grammar
+// are in contexts that impose constraints on the kinds of statements that
+// are allowed, and so we have a variant production for declaration-construct
+// that implements those constraints.
 constexpr auto execPartLookAhead{
     first(actionStmt >> ok, openmpEndLoopDirective >> ok, openmpConstruct >> ok,
         "ASSOCIATE ("_tok, "BLOCK"_tok, "SELECT"_tok, "CHANGE TEAM"_sptok,
         "CRITICAL"_tok, "DO"_tok, "IF ("_tok, "WHERE ("_tok, "FORALL ("_tok)};
 constexpr auto declErrorRecovery{
     stmtErrorRecoveryStart >> !execPartLookAhead >> stmtErrorRecovery};
+constexpr auto misplacedSpecificationStmt{Parser<UseStmt>{} >>
+        fail<DeclarationConstruct>("misplaced USE statement"_err_en_US) ||
+    Parser<ImportStmt>{} >>
+        fail<DeclarationConstruct>(
+            "IMPORT statements must follow any USE statements and precede all other declarations"_err_en_US) ||
+    Parser<ImplicitStmt>{} >>
+        fail<DeclarationConstruct>(
+            "IMPLICIT statements must follow USE and IMPORT and precede all other declarations"_err_en_US)};
+
 TYPE_PARSER(recovery(
     withMessage("expected declaration construct"_err_en_US,
         CONTEXT_PARSER("declaration construct"_en_US,
@@ -64,16 +80,24 @@ TYPE_PARSER(recovery(
                     statement(indirect(formatStmt))),
                 construct<DeclarationConstruct>(statement(indirect(entryStmt))),
                 construct<DeclarationConstruct>(
-                    statement(indirect(Parser<StmtFunctionStmt>{})))))),
+                    statement(indirect(Parser<StmtFunctionStmt>{}))),
+                misplacedSpecificationStmt))),
     construct<DeclarationConstruct>(declErrorRecovery)))
 
 // R507 variant of declaration-construct for use in limitedSpecificationPart.
+constexpr auto invalidDeclarationStmt{formatStmt >>
+        fail<DeclarationConstruct>(
+            "FORMAT statements are not permitted in this specification part"_err_en_US) ||
+    entryStmt >>
+        fail<DeclarationConstruct>(
+            "ENTRY statements are not permitted in this specification part"_err_en_US)};
+
 constexpr auto limitedDeclarationConstruct{recovery(
     withMessage("expected declaration construct"_err_en_US,
         inContext("declaration construct"_en_US,
             first(construct<DeclarationConstruct>(specificationConstruct),
-                construct<DeclarationConstruct>(
-                    statement(indirect(dataStmt)))))),
+                construct<DeclarationConstruct>(statement(indirect(dataStmt))),
+                misplacedSpecificationStmt, invalidDeclarationStmt))),
     construct<DeclarationConstruct>(
         stmtErrorRecoveryStart >> stmtErrorRecovery))};
 
