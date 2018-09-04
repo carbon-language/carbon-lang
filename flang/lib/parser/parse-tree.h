@@ -889,9 +889,10 @@ struct TypeParamDecl {
 //        integer-type-spec , type-param-attr-spec :: type-param-decl-list
 // R734 type-param-attr-spec -> KIND | LEN
 struct TypeParamDefStmt {
-  ENUM_CLASS(KindOrLen, Kind, Len)  // R734
   TUPLE_CLASS_BOILERPLATE(TypeParamDefStmt);
-  std::tuple<IntegerTypeSpec, KindOrLen, std::list<TypeParamDecl>> t;
+  std::tuple<IntegerTypeSpec, common::TypeParamKindOrLen,
+      std::list<TypeParamDecl>>
+      t;
 };
 
 // R1028 specification-expr -> scalar-int-expr

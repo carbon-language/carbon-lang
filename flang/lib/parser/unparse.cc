@@ -222,7 +222,7 @@ public:
   }
   void Unparse(const TypeParamDefStmt &x) {  // R732
     Walk(std::get<IntegerTypeSpec>(x.t));
-    Put(", "), Walk(std::get<TypeParamDefStmt::KindOrLen>(x.t));
+    Put(", "), Walk(std::get<common::TypeParamKindOrLen>(x.t));
     Put(" :: "), Walk(std::get<std::list<TypeParamDecl>>(x.t), ", ");
   }
   void Unparse(const TypeParamDecl &x) {  // R733
@@ -2333,7 +2333,7 @@ public:
 #define WALK_NESTED_ENUM(CLASS, ENUM) \
   void Unparse(const CLASS::ENUM &x) { Word(CLASS::EnumToString(x)); }
   WALK_NESTED_ENUM(AccessSpec, Kind)  // R807
-  WALK_NESTED_ENUM(TypeParamDefStmt, KindOrLen)  // R734
+  WALK_NESTED_ENUM(common, TypeParamKindOrLen)  // R734
   WALK_NESTED_ENUM(IntentSpec, Intent)  // R826
   WALK_NESTED_ENUM(ImplicitStmt, ImplicitNoneNameSpec)  // R866
   WALK_NESTED_ENUM(ConnectSpec::CharExpr, Kind)  // R1205
