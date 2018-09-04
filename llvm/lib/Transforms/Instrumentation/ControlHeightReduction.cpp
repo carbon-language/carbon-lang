@@ -447,8 +447,8 @@ static bool shouldApply(Function &F, ProfileSummaryInfo& PSI) {
     if (CHRFunctions.count(Name))
       return true;
     const char* DemangledName = nullptr;
-    int Status = -1;
 #if !defined(_MSC_VER)
+    int Status = -1;
     DemangledName = abi::__cxa_demangle(Name.str().c_str(),
                                         nullptr, nullptr, &Status);
 #endif
@@ -462,8 +462,8 @@ static bool shouldApply(Function &F, ProfileSummaryInfo& PSI) {
 static void dumpIR(Function &F, const char *Label, CHRStats *Stats) {
   std::string Name = F.getName().str();
   const char *DemangledName = nullptr;
-  int Status = -1;
 #if !defined(_MSC_VER)
+  int Status = -1;
   DemangledName = abi::__cxa_demangle(Name.c_str(),
                                       nullptr, nullptr, &Status);
 #endif
