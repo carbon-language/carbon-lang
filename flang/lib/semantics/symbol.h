@@ -17,6 +17,7 @@
 
 #include "type.h"
 #include "../common/enum-set.h"
+#include "../common/fortran.h"
 #include <functional>
 #include <memory>
 
@@ -143,8 +144,14 @@ private:
   friend std::ostream &operator<<(std::ostream &, const ProcEntityDetails &);
 };
 
-// A derived type
-class DerivedTypeDetails {};
+class DerivedTypeDetails {
+public:
+  bool hasTypeParams() const { return hasTypeParams_; }
+  void set_hasTypeParams(bool x = true) { hasTypeParams_ = x; }
+
+private:
+  bool hasTypeParams_{false};
+};
 
 class ProcBindingDetails {
 public:
@@ -158,6 +165,22 @@ private:
 class GenericBindingDetails {};
 
 class FinalProcDetails {};
+
+class TypeParamDetails {
+public:
+  TypeParamDetails(common::TypeParamKindOrLen kindOrLen)
+    : kindOrLen_{kindOrLen} {}
+  common::TypeParamKindOrLen kindOrLen() const { return kindOrLen_; }
+  const std::optional<DeclTypeSpec> &type() const { return type_; }
+  void set_type(const DeclTypeSpec &type) {
+    CHECK(!type_);
+    type_ = type;
+  }
+
+private:
+  common::TypeParamKindOrLen kindOrLen_;
+  std::optional<DeclTypeSpec> type_;
+};
 
 // Record the USE of a symbol: location is where (USE statement or renaming);
 // symbol is the USEd module.
@@ -235,7 +258,7 @@ using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     SubprogramDetails, SubprogramNameDetails, EntityDetails,
     ObjectEntityDetails, ProcEntityDetails, DerivedTypeDetails, UseDetails,
     UseErrorDetails, GenericDetails, ProcBindingDetails, GenericBindingDetails,
-    FinalProcDetails>;
+    FinalProcDetails, TypeParamDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 std::string DetailsToString(const Details &);
 

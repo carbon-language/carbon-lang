@@ -529,7 +529,8 @@ public:
   void Post(const parser::DerivedTypeDef &x);
   bool Pre(const parser::DerivedTypeStmt &x);
   void Post(const parser::DerivedTypeStmt &x);
-  bool Pre(const parser::EndTypeStmt &);
+  bool Pre(const parser::TypeParamDefStmt &x) { return BeginDecl(); }
+  void Post(const parser::TypeParamDefStmt &);
   bool Pre(const parser::TypeAttrSpec::Extends &x);
   bool Pre(const parser::PrivateStmt &x);
   bool Pre(const parser::SequenceStmt &x);
@@ -574,7 +575,7 @@ private:
   const Symbol *ResolveDerivedType(const SourceName &);
   bool CanBeTypeBoundProc(const Symbol &);
   Symbol *FindExplicitInterface(const SourceName &);
-  void MakeTypeSymbol(const SourceName &, const Details &);
+  Symbol &MakeTypeSymbol(const SourceName &, const Details &);
 
   // Declare an object or procedure entity.
   // T is one of: EntityDetails, ObjectEntityDetails, ProcEntityDetails
@@ -638,8 +639,6 @@ public:
 
   bool Pre(const parser::CommonBlockObject &);
   void Post(const parser::CommonBlockObject &);
-  bool Pre(const parser::TypeParamDefStmt &);
-  void Post(const parser::TypeParamDefStmt &);
   bool Pre(const parser::PrefixSpec &);
   void Post(const parser::SpecificationPart &);
   bool Pre(const parser::MainProgram &);
@@ -2043,6 +2042,40 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeDef &x) {
 }
 void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
   derivedTypeData_.reset();
+  std::set<SourceName> paramNames;
+  auto &scope{currScope()};
+  auto &stmt{std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t)};
+  for (auto &name : std::get<std::list<parser::Name>>(stmt.statement.t)) {
+    auto &paramName{name.source};
+    if (auto it{scope.find(paramName)}; it == scope.end()) {
+      Say(paramName,
+          "No definition found for type parameter '%s'"_err_en_US);  // C742
+    } else {
+      auto *symbol{it->second};
+      if (!symbol->has<TypeParamDetails>()) {
+        Say2(paramName, "'%s' is not defined as a type parameter"_err_en_US,
+            symbol->name(),
+            "Definition of '%s'"_en_US);  // C741
+      } else {
+        symbol->add_occurrence(paramName);
+      }
+    }
+    if (!paramNames.insert(paramName).second) {
+      Say(paramName,
+          "Duplicate type parameter name: '%s'"_err_en_US);  // C731
+    }
+  }
+  scope.symbol()->get<DerivedTypeDetails>().set_hasTypeParams(
+      !paramNames.empty());
+  for (const auto &pair : currScope()) {
+    const auto *symbol{pair.second};
+    if (symbol->has<TypeParamDetails>() && !paramNames.count(symbol->name())) {
+      Say2(symbol->name(),
+          "'%s' is not a type parameter of this derived type"_err_en_US,
+          stmt.source, "Derived type statement"_en_US);  // C742
+    }
+  }
+  PopScope();
 }
 bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {
   return BeginAttrs();
@@ -2053,9 +2086,18 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   PushScope(Scope::Kind::DerivedType, &symbol);
   EndAttrs();
 }
-bool DeclarationVisitor::Pre(const parser::EndTypeStmt &) {
-  PopScope();
-  return false;
+void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
+  auto &type{GetDeclTypeSpec()};
+  auto kindOrLen{std::get<common::TypeParamKindOrLen>(x.t)};
+  for (auto &decl : std::get<std::list<parser::TypeParamDecl>>(x.t)) {
+    auto &name{std::get<parser::Name>(decl.t).source};
+    // TODO: initialization
+    // auto &init{
+    //    std::get<std::optional<parser::ScalarIntConstantExpr>>(decl.t)};
+    auto &symbol{MakeTypeSymbol(name, TypeParamDetails{kindOrLen})};
+    SetType(name, symbol, *type);
+  }
+  EndDecl();
 }
 bool DeclarationVisitor::Pre(const parser::TypeAttrSpec::Extends &x) {
   auto &name{x.v.source};
@@ -2225,7 +2267,7 @@ Symbol *DeclarationVisitor::FindExplicitInterface(const SourceName &name) {
 
 // Create a symbol for a type parameter, component, or procedure binding in
 // the current derived type scope.
-void DeclarationVisitor::MakeTypeSymbol(
+Symbol &DeclarationVisitor::MakeTypeSymbol(
     const SourceName &name, const Details &details) {
   Scope &derivedType{currScope()};
   CHECK(derivedType.kind() == Scope::Kind::DerivedType);
@@ -2234,21 +2276,13 @@ void DeclarationVisitor::MakeTypeSymbol(
         "Type parameter, component, or procedure binding '%s'"
         " already defined in this type"_err_en_US,
         it->second->name(), "Previous definition of '%s'"_en_US);
+    return *it->second;
   } else {
-    MakeSymbol(name, GetAttrs(), details);
+    return MakeSymbol(name, GetAttrs(), details);
   }
 }
 
 // ResolveNamesVisitor implementation
-
-bool ResolveNamesVisitor::Pre(const parser::TypeParamDefStmt &x) {
-  BeginDeclTypeSpec();
-  return true;
-}
-void ResolveNamesVisitor::Post(const parser::TypeParamDefStmt &x) {
-  EndDeclTypeSpec();
-  // TODO: TypeParamDefStmt
-}
 
 bool ResolveNamesVisitor::Pre(const parser::CommonBlockObject &x) {
   BeginArraySpec();

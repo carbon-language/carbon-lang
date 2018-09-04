@@ -130,6 +130,7 @@ std::string DetailsToString(const Details &details) {
           [](const ProcBindingDetails &) { return "ProcBinding"; },
           [](const GenericBindingDetails &) { return "GenericBinding"; },
           [](const FinalProcDetails &) { return "FinalProc"; },
+          [](const TypeParamDetails &) { return "TypeParam"; },
           [](const auto &) { return "unknown"; },
       },
       details);
@@ -197,6 +198,9 @@ const DeclTypeSpec *Symbol::GetType() const {
             return x.type().has_value() ? &x.type().value() : nullptr;
           },
           [](const ProcEntityDetails &x) { return x.interface().type(); },
+          [](const TypeParamDetails &x) {
+            return x.type().has_value() ? &x.type().value() : nullptr;
+          },
           [](const auto &) {
             return static_cast<const DeclTypeSpec *>(nullptr);
           },
@@ -210,6 +214,7 @@ void Symbol::SetType(const DeclTypeSpec &type) {
           [&](EntityDetails &x) { x.set_type(type); },
           [&](ObjectEntityDetails &x) { x.set_type(type); },
           [&](ProcEntityDetails &x) { x.interface().set_type(type); },
+          [&](TypeParamDetails &x) { x.set_type(type); },
           [](auto &) {},
       },
       details_);
@@ -350,6 +355,12 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
           },
           [&](const GenericBindingDetails &) { /* TODO */ },
           [&](const FinalProcDetails &) {},
+          [&](const TypeParamDetails &x) {
+            if (x.type()) {
+              os << ' ' << *x.type();
+            }
+            os << ' ' << common::EnumToString(x.kindOrLen());
+          },
       },
       details);
   return os;

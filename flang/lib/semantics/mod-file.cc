@@ -43,6 +43,7 @@ static std::string ModFilePath(
 static void PutEntity(std::ostream &, const Symbol &);
 static void PutObjectEntity(std::ostream &, const Symbol &);
 static void PutProcEntity(std::ostream &, const Symbol &);
+static void PutTypeParam(std::ostream &, const Symbol &);
 static void PutEntity(std::ostream &, const Symbol &, std::function<void()>);
 static std::ostream &PutAttrs(
     std::ostream &, Attrs, std::string before = ","s, std::string after = ""s);
@@ -206,8 +207,21 @@ void ModFileWriter::PutSymbol(const Symbol &symbol, bool &didContains) {
 
 void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
   PutAttrs(decls_ << "type", typeSymbol.attrs(), ","s, ""s);
-  PutLower(decls_ << "::", typeSymbol) << '\n';
-  PutSymbols(*typeSymbol.scope());
+  PutLower(decls_ << "::", typeSymbol);
+  auto &typeScope{*typeSymbol.scope()};
+  if (typeSymbol.get<DerivedTypeDetails>().hasTypeParams()) {
+    bool first{true};
+    decls_ << '(';
+    for (const auto *symbol : SortSymbols(CollectSymbols(typeScope))) {
+      if (symbol->has<TypeParamDetails>()) {
+        PutLower(first ? decls_ : decls_ << ',', *symbol);
+        first = false;
+      }
+    }
+    decls_ << ')';
+  }
+  decls_ << '\n';
+  PutSymbols(typeScope);
   decls_ << "end type\n";
 }
 
@@ -296,6 +310,7 @@ void PutEntity(std::ostream &os, const Symbol &symbol) {
           [&](const EntityDetails &) { PutObjectEntity(os, symbol); },
           [&](const ObjectEntityDetails &) { PutObjectEntity(os, symbol); },
           [&](const ProcEntityDetails &) { PutProcEntity(os, symbol); },
+          [&](const TypeParamDetails &) { PutTypeParam(os, symbol); },
           [&](const auto &) {
             common::die("PutEntity: unexpected details: %s",
                 DetailsToString(symbol.details()).c_str());
@@ -322,6 +337,16 @@ void PutProcEntity(std::ostream &os, const Symbol &symbol) {
       PutLower(os, *interface.type());
     }
     os << ')';
+  });
+}
+
+void PutTypeParam(std::ostream &os, const Symbol &symbol) {
+  PutEntity(os, symbol, [&]() {
+    auto *type{symbol.GetType()};
+    CHECK(type);
+    PutLower(os, *type);
+    PutLower(os << ',',
+        common::EnumToString(symbol.get<TypeParamDetails>().kindOrLen()));
   });
 }
 
