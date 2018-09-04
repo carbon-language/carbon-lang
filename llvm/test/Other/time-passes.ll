@@ -4,9 +4,9 @@
 ; TIME: Pass execution timing report
 ; TIME: Total Execution Time:
 ; TIME: Name
-; TIME-LEGACY-DAG:   Combine redundant instructions
+; TIME-LEGACY-DAG:   Combine redundant instructions{{$}}
 ; TIME-LEGACY-DAG:   Combine redundant instructions #2
-; TIME-LEGACY-DAG:   Loop Invariant Code Motion
+; TIME-LEGACY-DAG:   Loop Invariant Code Motion{{$}}
 ; TIME-DOUBLE-LICM-DAG:  Loop Invariant Code Motion #2
 ; TIME-LEGACY-DAG:   Scalar Evolution Analysis
 ; TIME-LEGACY-DAG:   Loop-Closed SSA Form Pass
