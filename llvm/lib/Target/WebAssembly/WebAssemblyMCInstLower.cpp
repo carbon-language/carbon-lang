@@ -295,7 +295,7 @@ static unsigned regInstructionToStackInstruction(unsigned OpCode) {
   switch (OpCode) {
   default:
     llvm_unreachable(
-          "unknown WebAssembly instruction in Explicit Locals pass");
+          "unknown WebAssembly instruction in WebAssemblyMCInstLower pass");
 #include "WebAssemblyGenStackifier.inc"
   }
 }
