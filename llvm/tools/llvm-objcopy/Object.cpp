@@ -171,8 +171,7 @@ void ELFSectionWriter<ELFT>::visit(const CompressedSection &Sec) {
 CompressedSection::CompressedSection(const SectionBase &Sec,
                                      DebugCompressionType CompressionType)
     : SectionBase(Sec), CompressionType(CompressionType),
-      DecompressedSize(Sec.OriginalData.size()),
-      DecompressedAlign(Sec.Align) {
+      DecompressedSize(Sec.OriginalData.size()), DecompressedAlign(Sec.Align) {
 
   if (Error E = zlib::compress(
           StringRef(reinterpret_cast<const char *>(OriginalData.data()),
