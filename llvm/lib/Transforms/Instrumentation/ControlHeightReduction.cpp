@@ -1753,8 +1753,8 @@ BranchInst *CHR::createMergedBranch(BasicBlock *PreEntryBlock,
          "NewEntryBlock's only pred must be EntryBlock");
   assert(VMap.find(NewEntryBlock) != VMap.end() &&
          "NewEntryBlock must have been copied");
-  OldBR->removeFromParent();
   OldBR->dropAllReferences();
+  OldBR->eraseFromParent();
   // The true predicate is a placeholder. It will be replaced later in
   // fixupBranchesAndSelects().
   BranchInst *NewBR = BranchInst::Create(NewEntryBlock,
