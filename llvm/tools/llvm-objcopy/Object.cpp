@@ -153,9 +153,10 @@ void ELFSectionWriter<ELFT>::visit(const CompressedSection &Sec) {
     ArrayRef<uint8_t> Magic = {'Z', 'L', 'I', 'B'};
     std::copy(Magic.begin(), Magic.end(), Buf);
     Buf += Magic.size();
-    uint64_t *DecompressedSizePtr = reinterpret_cast<uint64_t *>(Buf);
-    *DecompressedSizePtr = support::endian::read64be(&Sec.DecompressedSize);
-    Buf += sizeof(Sec.DecompressedSize);
+    const uint64_t DecompressedSize =
+        support::endian::read64be(&Sec.DecompressedSize);
+    memcpy(Buf, &DecompressedSize, sizeof(DecompressedSize));
+    Buf += sizeof(DecompressedSize);
   } else {
     auto Chdr = reinterpret_cast<Elf_Chdr_Impl<ELFT> *>(Buf);
     Chdr->ch_type = ELF::ELFCOMPRESS_ZLIB;
