@@ -162,7 +162,7 @@ define <8 x i16> @splat_v8i16(i16 %x) {
   ret <8 x i16> %res
 }
 
-; CHECK-LABEL: const_splat_v8i16
+; CHECK-LABEL: const_splat_v8i16:
 ; SIMD128; i16x8.splat
 define <8 x i16> @const_splat_v8i16() {
   ret <8 x i16> <i16 42, i16 42, i16 42, i16 42, i16 42, i16 42, i16 42, i16 42>
