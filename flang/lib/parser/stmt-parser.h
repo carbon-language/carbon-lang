@@ -83,7 +83,8 @@ constexpr auto atEndOfStmt{space >>
 constexpr auto bareEnd{noNameEnd / recovery(atEndOfStmt, SkipTo<'\n'>{})};
 
 constexpr auto endStmtErrorRecovery{
-    ("END"_tok >> SkipPast<'\n'>{} || consumedAllInput) >> missingOptionalName};
+    ("END"_tok >> SkipTo<'\n'>{} || ok) >> missingOptionalName};
+
 constexpr auto progUnitEndStmtErrorRecovery{
     (many(!"END"_tok >> SkipPast<'\n'>{}) >>
         ("END"_tok >> SkipTo<'\n'>{} || consumedAllInput)) >>
