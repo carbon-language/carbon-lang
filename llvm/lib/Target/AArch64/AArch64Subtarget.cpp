@@ -196,8 +196,13 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
   if (TM.getCodeModel() == CodeModel::Large && isTargetMachO())
     return AArch64II::MO_GOT;
 
-  unsigned Flags = GV->hasDLLImportStorageClass() ? AArch64II::MO_DLLIMPORT
-                                                  : AArch64II::MO_NO_FLAG;
+  unsigned Flags = AArch64II::MO_NO_FLAG;
+  if (GV->hasDLLImportStorageClass())
+    Flags = AArch64II::MO_DLLIMPORT;
+  else if (getTargetTriple().isWindowsGNUEnvironment() &&
+           !GV->isDSOLocal() && GV->isDeclarationForLinker() &&
+           isa<GlobalVariable>(GV))
+    Flags = AArch64II::MO_COFFSTUB | AArch64II::MO_GOT;
 
   if (!TM.shouldAssumeDSOLocal(*GV->getParent(), GV))
     return AArch64II::MO_GOT | Flags;
