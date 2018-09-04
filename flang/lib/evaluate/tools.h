@@ -123,6 +123,13 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
   }
 }
 
+template<typename TO>
+Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
+  // TODO: check rank == 0
+  static_assert(TO::isSpecificType);
+  return Expr<TO>{BOZConstant<TO>{std::move(x)}};
+}
+
 template<TypeCategory TC, int TK, TypeCategory FC>
 Expr<Type<TC, TK>> ConvertTo(
     const Expr<Type<TC, TK>> &, Expr<SomeKind<FC>> &&x) {
@@ -160,6 +167,14 @@ Expr<SomeType> ConvertTo(const Expr<SomeType> &to, Expr<FT> &&from) {
         return AsGenericExpr(ConvertTo(toCatExpr, std::move(from)));
       },
       to.u);
+}
+
+template<TypeCategory CAT>
+Expr<SomeType> ConvertTo(const Expr<SomeKind<CAT>> &to, BOZLiteralConstant &&from) {
+  return AsGenericExpr(std::visit([&](const auto &tok) {
+    using Ty = ResultType<decltype(tok)>;
+    return AsCategoryExpr(ConvertToType<Ty>(std::move(from)));
+  }, to.u));
 }
 
 template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;

@@ -57,12 +57,15 @@ ConvertRealOperandsResult ConvertRealOperands(
       std::move(x.u), std::move(y.u));
 }
 
+// A helper template for NumericOperation below.
 template<TypeCategory CAT>
 std::optional<Expr<SomeType>> Package(Expr<SomeKind<CAT>> &&catExpr) {
   return {AsGenericExpr(std::move(catExpr))};
 }
 
-// TODO pmk next: write in terms of ConvertRealOperands?
+// N.B. When a "typeless" BOZ literal constant appears as one (not both!) of
+// the operands to a dyadic INTEGER or REAL operation, it assumes the type
+// and kind of the other operand.
 template<template<typename> class OPR>
 std::optional<Expr<SomeType>> NumericOperation(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
@@ -90,9 +93,8 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(std::visit(
                 [&](auto &&ryk) -> Expr<SomeReal> {
                   using resultType = ResultType<decltype(ryk)>;
-                  return AsCategoryExpr(AsExpr(
-                      OPR<resultType>{ConvertToType<resultType>(std::move(ix)),
-                          std::move(ryk)}));
+                  return AsCategoryExpr(AsExpr(OPR<resultType>{
+                      ConvertToType<resultType>(std::move(ix)), std::move(ryk)}));
                 },
                 std::move(ry.u)));
           },
@@ -100,27 +102,19 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(PromoteAndCombine<OPR, TypeCategory::Complex>(
                 std::move(zx), std::move(zy)));
           },
+          [&](BOZLiteralConstant &&bx, Expr<SomeInteger> &&iy) {
+            return NumericOperation<OPR>(messages, ConvertTo(iy, std::move(bx)), std::move(y));
+          },
+          [&](BOZLiteralConstant &&bx, Expr<SomeReal> &&ry) {
+            return NumericOperation<OPR>(messages, ConvertTo(ry, std::move(bx)), std::move(y));
+          },
+          [&](Expr<SomeInteger> &&ix, BOZLiteralConstant &&by) {
+            return NumericOperation<OPR>(messages, std::move(x), ConvertTo(ix, std::move(by)));
+          },
+          [&](Expr<SomeReal> &&rx, BOZLiteralConstant &&by) {
+            return NumericOperation<OPR>(messages, std::move(x), ConvertTo(rx, std::move(by)));
+          },
           // TODO pmk mixed complex; Add/Sub different from Mult/Div
-          [](BOZLiteralConstant &&bx, Expr<SomeInteger> &&iy) {
-            return Package(std::visit(
-                [&](auto &&iyk) -> Expr<SomeInteger> {
-                  using resultType = ResultType<decltype(iyk)>;
-                  return AsCategoryExpr(AsExpr(OPR<resultType>{
-                      AsExpr(BOZConstant<resultType>{std::move(bx)}),
-                      std::move(iyk)}));
-                },
-                iy.u));
-          },
-          [](BOZLiteralConstant &&bx, Expr<SomeReal> &&ry) {
-            return Package(std::visit(
-                [&](auto &&ryk) -> Expr<SomeReal> {
-                  using resultType = ResultType<decltype(ryk)>;
-                  return AsCategoryExpr(AsExpr(OPR<resultType>{
-                      AsExpr(BOZConstant<resultType>{std::move(bx)}),
-                      std::move(ryk)}));
-                },
-                ry.u));
-          },
           [&](auto &&, auto &&) {
             messages.Say("non-numeric operands to numeric operation"_err_en_US);
             return std::optional<Expr<SomeType>>{std::nullopt};
