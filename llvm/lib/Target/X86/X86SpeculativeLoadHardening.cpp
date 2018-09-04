@@ -75,6 +75,11 @@ STATISTIC(NumCallsOrJumpsHardened,
 STATISTIC(NumInstsInserted, "Number of instructions inserted");
 STATISTIC(NumLFENCEsInserted, "Number of lfence instructions inserted");
 
+static cl::opt<bool> EnableSpeculativeLoadHardening(
+    "x86-speculative-load-hardening",
+    cl::desc("Force enable speculative load hardening"), cl::init(false),
+    cl::Hidden);
+
 static cl::opt<bool> HardenEdgesWithLFENCE(
     PASS_KEY "-lfence",
     cl::desc(
@@ -403,6 +408,12 @@ bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
     MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "********** " << getPassName() << " : " << MF.getName()
                     << " **********\n");
+
+  // Only run if this pass is forced enabled or we detect the relevant function
+  // attribute requesting SLH.
+  if (!EnableSpeculativeLoadHardening &&
+      !MF.getFunction().hasFnAttribute(Attribute::SpeculativeLoadHardening))
+    return false;
 
   Subtarget = &MF.getSubtarget<X86Subtarget>();
   MRI = &MF.getRegInfo();
