@@ -179,6 +179,9 @@ private:
 
   void unfoldCallAndJumpLoads(MachineFunction &MF);
 
+  SmallVector<MachineInstr *, 16>
+  tracePredStateThroughIndirectBranches(MachineFunction &MF);
+
   void tracePredStateThroughBlocksAndHarden(MachineFunction &MF);
 
   unsigned saveEFLAGS(MachineBasicBlock &MBB,
@@ -522,10 +525,15 @@ bool X86SpeculativeLoadHardeningPass::runOnMachineFunction(
     }
   }
 
-  // If we are going to harden calls and jumps we need to unfold their memory
-  // operands.
-  if (HardenIndirectCallsAndJumps)
+  if (HardenIndirectCallsAndJumps) {
+    // If we are going to harden calls and jumps we need to unfold their memory
+    // operands.
     unfoldCallAndJumpLoads(MF);
+
+    // Then we trace predicate state through the indirect branches.
+    auto IndirectBrCMovs = tracePredStateThroughIndirectBranches(MF);
+    CMovs.append(IndirectBrCMovs.begin(), IndirectBrCMovs.end());
+  }
 
   // Now that we have the predicate state available at the start of each block
   // in the CFG, trace it through each block, hardening vulnerable instructions
@@ -923,6 +931,263 @@ void X86SpeculativeLoadHardeningPass::unfoldCallAndJumpLoads(
       }
       llvm_unreachable("Escaped switch with default!");
     }
+}
+
+/// Trace the predicate state through indirect branches, instrumenting them to
+/// poison the state if a target is reached that does not match the expected
+/// target.
+///
+/// This is designed to mitigate Spectre variant 1 attacks where an indirect
+/// branch is trained to predict a particular target and then mispredicts that
+/// target in a way that can leak data. Despite using an indirect branch, this
+/// is really a variant 1 style attack: it does not steer execution to an
+/// arbitrary or attacker controlled address, and it does not require any
+/// special code executing next to the victim. This attack can also be mitigated
+/// through retpolines, but those require either replacing indirect branches
+/// with conditional direct branches or lowering them through a device that
+/// blocks speculation. This mitigation can replace these retpoline-style
+/// mitigations for jump tables and other indirect branches within a function
+/// when variant 2 isn't a risk while allowing limited speculation. Indirect
+/// calls, however, cannot be mitigated through this technique without changing
+/// the ABI in a fundamental way.
+SmallVector<MachineInstr *, 16>
+X86SpeculativeLoadHardeningPass::tracePredStateThroughIndirectBranches(
+    MachineFunction &MF) {
+  // We use the SSAUpdater to insert PHI nodes for the target addresses of
+  // indirect branches. We don't actually need the full power of the SSA updater
+  // in this particular case as we always have immediately available values, but
+  // this avoids us having to re-implement the PHI construction logic.
+  MachineSSAUpdater TargetAddrSSA(MF);
+  TargetAddrSSA.Initialize(MRI->createVirtualRegister(&X86::GR64RegClass));
+
+  // Track which blocks were terminated with an indirect branch.
+  SmallPtrSet<MachineBasicBlock *, 4> IndirectTerminatedMBBs;
+
+  // We need to know what blocks end up reached via indirect branches. We
+  // expect this to be a subset of those whose address is taken and so track it
+  // directly via the CFG.
+  SmallPtrSet<MachineBasicBlock *, 4> IndirectTargetMBBs;
+
+  // Walk all the blocks which end in an indirect branch and make the
+  // target address available.
+  for (MachineBasicBlock &MBB : MF) {
+    // Find the last terminator.
+    auto MII = MBB.instr_rbegin();
+    while (MII != MBB.instr_rend() && MII->isDebugInstr())
+      ++MII;
+    if (MII == MBB.instr_rend())
+      continue;
+    MachineInstr &TI = *MII;
+    if (!TI.isTerminator() || !TI.isBranch())
+      // No terminator or non-branch terminator.
+      continue;
+
+    unsigned TargetReg;
+
+    switch (TI.getOpcode()) {
+    default:
+      // Direct branch or conditional branch (leading to fallthrough).
+      continue;
+
+    case X86::FARJMP16m:
+    case X86::FARJMP32m:
+    case X86::FARJMP64:
+      // We cannot mitigate far jumps or calls, but we also don't expect them
+      // to be vulnerable to Spectre v1.2 or v2 (self trained) style attacks.
+      continue;
+
+    case X86::JMP16m:
+    case X86::JMP16m_NT:
+    case X86::JMP32m:
+    case X86::JMP32m_NT:
+    case X86::JMP64m:
+    case X86::JMP64m_NT:
+      // Mostly as documentation.
+      report_fatal_error("Memory operand jumps should have been unfolded!");
+
+    case X86::JMP16r:
+      report_fatal_error(
+          "Support for 16-bit indirect branches is not implemented.");
+    case X86::JMP32r:
+      report_fatal_error(
+          "Support for 32-bit indirect branches is not implemented.");
+
+    case X86::JMP64r:
+      TargetReg = TI.getOperand(0).getReg();
+    }
+
+    // We have definitely found an indirect  branch. Verify that there are no
+    // preceding conditional branches as we don't yet support that.
+    if (llvm::any_of(MBB.terminators(), [&](MachineInstr &OtherTI) {
+          return !OtherTI.isDebugInstr() && &OtherTI != &TI;
+        })) {
+      LLVM_DEBUG({
+        dbgs() << "ERROR: Found other terminators in a block with an indirect "
+                  "branch! This is not yet supported! Terminator sequence:\n";
+        for (MachineInstr &MI : MBB.terminators()) {
+          MI.dump();
+          dbgs() << '\n';
+        }
+      });
+      report_fatal_error("Unimplemented terminator sequence!");
+    }
+
+    // Make the target register an available value for this block.
+    TargetAddrSSA.AddAvailableValue(&MBB, TargetReg);
+    IndirectTerminatedMBBs.insert(&MBB);
+
+    // Add all the successors to our target candidates.
+    for (MachineBasicBlock *Succ : MBB.successors())
+      IndirectTargetMBBs.insert(Succ);
+  }
+
+  // Keep track of the cmov instructions we insert so we can return them.
+  SmallVector<MachineInstr *, 16> CMovs;
+
+  // If we didn't find any indirect branches with targets, nothing to do here.
+  if (IndirectTargetMBBs.empty())
+    return CMovs;
+
+  // We found indirect branches and targets that need to be instrumented to
+  // harden loads within them. Walk the blocks of the function (to get a stable
+  // ordering) and instrument each target of an indirect branch.
+  for (MachineBasicBlock &MBB : MF) {
+    // Skip the blocks that aren't candidate targets.
+    if (!IndirectTargetMBBs.count(&MBB))
+      continue;
+
+    // We don't expect EH pads to ever be reached via an indirect branch. If
+    // this is desired for some reason, we could simply skip them here rather
+    // than asserting.
+    assert(!MBB.isEHPad() &&
+           "Unexpected EH pad as target of an indirect branch!");
+
+    // We should never end up threading EFLAGS into a block to harden
+    // conditional jumps as there would be an additional successor via the
+    // indirect branch. As a consequence, all such edges would be split before
+    // reaching here, and the inserted block will handle the EFLAGS-based
+    // hardening.
+    assert(!MBB.isLiveIn(X86::EFLAGS) &&
+           "Cannot check within a block that already has live-in EFLAGS!");
+
+    // We can't handle having non-indirect edges into this block unless this is
+    // the only successor and we can synthesize the necessary target address.
+    for (MachineBasicBlock *Pred : MBB.predecessors()) {
+      // If we've already handled this by extracting the target directly,
+      // nothing to do.
+      if (IndirectTerminatedMBBs.count(Pred))
+        continue;
+
+      // Otherwise, we have to be the only successor. We generally expect this
+      // to be true as conditional branches should have had a critical edge
+      // split already. We don't however need to worry about EH pad successors
+      // as they'll happily ignore the target and their hardening strategy is
+      // resilient to all ways in which they could be reached speculatively.
+      if (!llvm::all_of(Pred->successors(), [&](MachineBasicBlock *Succ) {
+            return Succ->isEHPad() || Succ == &MBB;
+          })) {
+        LLVM_DEBUG({
+          dbgs() << "ERROR: Found conditional entry to target of indirect "
+                    "branch!\n";
+          Pred->dump();
+          MBB.dump();
+        });
+        report_fatal_error("Cannot harden a conditional entry to a target of "
+                           "an indirect branch!");
+      }
+
+      // Now we need to compute the address of this block and install it as a
+      // synthetic target in the predecessor. We do this at the bottom of the
+      // predecessor.
+      auto InsertPt = Pred->getFirstTerminator();
+      unsigned TargetReg = MRI->createVirtualRegister(&X86::GR64RegClass);
+      if (MF.getTarget().getCodeModel() == CodeModel::Small &&
+          !Subtarget->isPositionIndependent()) {
+        // Directly materialize it into an immediate.
+        auto AddrI = BuildMI(*Pred, InsertPt, DebugLoc(),
+                             TII->get(X86::MOV64ri32), TargetReg)
+                         .addMBB(&MBB);
+        ++NumInstsInserted;
+        (void)AddrI;
+        LLVM_DEBUG(dbgs() << "  Inserting mov: "; AddrI->dump();
+                   dbgs() << "\n");
+      } else {
+        auto AddrI = BuildMI(*Pred, InsertPt, DebugLoc(), TII->get(X86::LEA64r),
+                             TargetReg)
+                         .addReg(/*Base*/ X86::RIP)
+                         .addImm(/*Scale*/ 1)
+                         .addReg(/*Index*/ 0)
+                         .addMBB(&MBB)
+                         .addReg(/*Segment*/ 0);
+        ++NumInstsInserted;
+        (void)AddrI;
+        LLVM_DEBUG(dbgs() << "  Inserting lea: "; AddrI->dump();
+                   dbgs() << "\n");
+      }
+      // And make this available.
+      TargetAddrSSA.AddAvailableValue(Pred, TargetReg);
+    }
+
+    // Materialize the needed SSA value of the target. Note that we need the
+    // middle of the block as this block might at the bottom have an indirect
+    // branch back to itself. We can do this here because at this point, every
+    // predecessor of this block has an available value. This is basically just
+    // automating the construction of a PHI node for this target.
+    unsigned TargetReg = TargetAddrSSA.GetValueInMiddleOfBlock(&MBB);
+
+    // Insert a comparison of the incoming target register with this block's
+    // address.
+    auto InsertPt = MBB.SkipPHIsLabelsAndDebug(MBB.begin());
+    if (MF.getTarget().getCodeModel() == CodeModel::Small &&
+        !Subtarget->isPositionIndependent()) {
+      // Check directly against a relocated immediate when we can.
+      auto CheckI = BuildMI(MBB, InsertPt, DebugLoc(), TII->get(X86::CMP64ri32))
+                        .addReg(TargetReg, RegState::Kill)
+                        .addMBB(&MBB);
+      ++NumInstsInserted;
+      (void)CheckI;
+      LLVM_DEBUG(dbgs() << "  Inserting cmp: "; CheckI->dump(); dbgs() << "\n");
+    } else {
+      // Otherwise compute the address into a register first.
+      unsigned AddrReg = MRI->createVirtualRegister(&X86::GR64RegClass);
+      auto AddrI =
+          BuildMI(MBB, InsertPt, DebugLoc(), TII->get(X86::LEA64r), AddrReg)
+              .addReg(/*Base*/ X86::RIP)
+              .addImm(/*Scale*/ 1)
+              .addReg(/*Index*/ 0)
+              .addMBB(&MBB)
+              .addReg(/*Segment*/ 0);
+      ++NumInstsInserted;
+      (void)AddrI;
+      LLVM_DEBUG(dbgs() << "  Inserting lea: "; AddrI->dump(); dbgs() << "\n");
+      auto CheckI = BuildMI(MBB, InsertPt, DebugLoc(), TII->get(X86::CMP64rr))
+                        .addReg(TargetReg, RegState::Kill)
+                        .addReg(AddrReg, RegState::Kill);
+      ++NumInstsInserted;
+      (void)CheckI;
+      LLVM_DEBUG(dbgs() << "  Inserting cmp: "; CheckI->dump(); dbgs() << "\n");
+    }
+
+    // Now cmov over the predicate if the comparison wasn't equal.
+    int PredStateSizeInBytes = TRI->getRegSizeInBits(*PS->RC) / 8;
+    auto CMovOp = X86::getCMovFromCond(X86::COND_NE, PredStateSizeInBytes);
+    unsigned UpdatedStateReg = MRI->createVirtualRegister(PS->RC);
+    auto CMovI =
+        BuildMI(MBB, InsertPt, DebugLoc(), TII->get(CMovOp), UpdatedStateReg)
+            .addReg(PS->InitialReg)
+            .addReg(PS->PoisonReg);
+    CMovI->findRegisterUseOperand(X86::EFLAGS)->setIsKill(true);
+    ++NumInstsInserted;
+    LLVM_DEBUG(dbgs() << "  Inserting cmov: "; CMovI->dump(); dbgs() << "\n");
+    CMovs.push_back(&*CMovI);
+
+    // And put the new value into the available values for SSA form of our
+    // predicate state.
+    PS->SSA.AddAvailableValue(&MBB, UpdatedStateReg);
+  }
+
+  // Return all the newly inserted cmov instructions of the predicate state.
+  return CMovs;
 }
 
 /// Returns true if the instruction has no behavior (specified or otherwise)
