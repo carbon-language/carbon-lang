@@ -59,6 +59,7 @@ void Thread::RemoveFromThreadList(Thread *t) {
 
 Thread *Thread::Create(thread_callback_t start_routine,
                                void *arg) {
+  static u64 unique_id;
   uptr PageSize = GetPageSizeCached();
   uptr size = RoundUpTo(sizeof(Thread), PageSize);
   Thread *thread = (Thread*)MmapOrDie(size, __func__);
@@ -68,6 +69,7 @@ Thread *Thread::Create(thread_callback_t start_routine,
   thread->random_state_ = flags()->random_tags ? RandomSeed() : 0;
   if (auto sz = flags()->heap_history_size)
     thread->heap_allocations_ = RingBuffer<HeapAllocationRecord>::New(sz);
+  thread->unique_id_ = unique_id++;
   InsertIntoThreadList(thread);
   return thread;
 }
@@ -99,6 +101,8 @@ void Thread::Init() {
     CHECK(MemIsApp(stack_bottom_));
     CHECK(MemIsApp(stack_top_ - 1));
   }
+  if (flags()->verbose_threads)
+    Print("Creating  ");
 }
 
 void Thread::ClearShadowForThreadStackAndTLS() {
@@ -109,6 +113,8 @@ void Thread::ClearShadowForThreadStackAndTLS() {
 }
 
 void Thread::Destroy() {
+  if (flags()->verbose_threads)
+    Print("Destroying");
   malloc_storage().CommitBack();
   ClearShadowForThreadStackAndTLS();
   RemoveFromThreadList(this);
@@ -117,6 +123,11 @@ void Thread::Destroy() {
     heap_allocations_->Delete();
   UnmapOrDie(this, size);
   DTLS_Destroy();
+}
+
+void Thread::Print(const char *Prefix) {
+  Printf("%s: thread %p id: %zd stack: [%p,%p) tls: [%p,%p)\n", Prefix, this,
+         unique_id_, stack_bottom(), stack_top(), tls_begin(), tls_end());
 }
 
 static u32 xorshift(u32 state) {

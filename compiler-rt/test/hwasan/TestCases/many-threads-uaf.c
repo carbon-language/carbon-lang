@@ -1,4 +1,4 @@
-// RUN: %clang_hwasan %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clang_hwasan %s -o %t && not %env_hwasan_opts=verbose_threads=1 %run %t 2>&1 | FileCheck %s
 // REQUIRES: stable-runtime
 
 #include <pthread.h>
@@ -13,6 +13,13 @@ void *BoringThread(void *arg) {
   free(x);
   return NULL;
 }
+
+// CHECK: Creating  : thread {{.*}} id: 0
+// CHECK: Creating  : thread {{.*}} id: 1
+// CHECK: Destroying: thread {{.*}} id: 1
+// CHECK: Creating  : thread {{.*}} id: 1100
+// CHECK: Destroying: thread {{.*}} id: 1100
+// CHECK: Creating  : thread {{.*}} id: 1101
 
 void *UAFThread(void *arg) {
   char * volatile x = (char*)malloc(10);

@@ -84,6 +84,7 @@ class Thread {
   // via mmap() and *must* be valid in zero-initialized state.
   void SetThreadStackAndTls();
   void ClearShadowForThreadStackAndTLS();
+  void Print(const char *prefix);
   thread_callback_t start_routine_;
   void *arg_;
   uptr stack_top_;
@@ -106,6 +107,8 @@ class Thread {
   Thread *next_;  // All live threads form a linked list.
   static SpinMutex thread_list_mutex;
   static Thread *main_thread;
+
+  u64 unique_id_;  // counting from zero.
 
   u32 tagging_disabled_;  // if non-zero, malloc uses zero tag in this thread.
 
