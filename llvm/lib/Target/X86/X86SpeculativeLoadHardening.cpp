@@ -1763,13 +1763,6 @@ void X86SpeculativeLoadHardeningPass::tracePredStateThroughBlocksAndHarden(
     // pass specifically so that we have the complete set of instructions for
     // which we will do post-load hardening and can defer it in certain
     // circumstances.
-    //
-    // FIXME: This could probably be made even more effective by doing it
-    // across the entire function. Rather than just walking the flat list
-    // backwards here, we could walk the function in PO and each block bottom
-    // up, allowing us to in some cases sink hardening across block blocks. As
-    // long as the in-block predicate state is used at the eventual hardening
-    // site, this remains safe.
     for (MachineInstr &MI : MBB) {
       if (HardenLoads) {
         // We cannot both require hardening the def of a load and its address.
@@ -1851,8 +1844,8 @@ void X86SpeculativeLoadHardeningPass::tracePredStateThroughBlocksAndHarden(
       }
 
       // Otherwise we have a call. We need to handle transferring the predicate
-      // state into a call and recovering it after the call returns unless this
-      // is a tail call.
+      // state into a call and recovering it after the call returns (unless this
+      // is a tail call).
       assert(MI.isCall() && "Should only reach here for calls!");
       tracePredStateThroughCall(MI);
     }
@@ -2374,21 +2367,10 @@ void X86SpeculativeLoadHardeningPass::hardenReturnInstr(MachineInstr &MI) {
   DebugLoc Loc = MI.getDebugLoc();
   auto InsertPt = MI.getIterator();
 
-  if (FenceCallAndRet) {
-    // Simply forcibly block speculation of loads out of the function by using
-    // an LFENCE. This is potentially a heavy-weight mitigation strategy, but
-    // should be secure, is simple from an ABI perspective, and the cost can be
-    // minimized through inlining.
-    //
-    // FIXME: We should investigate ways to establish a strong data-dependency
-    // on the return. However, poisoning the stack pointer is unlikely to work
-    // because the return is *predicted* rather than relying on the load of the
-    // return address to actually resolve.
-    BuildMI(MBB, InsertPt, Loc, TII->get(X86::LFENCE));
-    ++NumInstsInserted;
-    ++NumLFENCEsInserted;
+  if (FenceCallAndRet)
+    // No need to fence here as we'll fence at the return site itself. That
+    // handles more cases than we can handle here.
     return;
-  }
 
   // Take our predicate state, shift it to the high 17 bits (so that we keep
   // pointers canonical) and merge it into RSP. This will allow the caller to
@@ -2406,14 +2388,48 @@ void X86SpeculativeLoadHardeningPass::hardenReturnInstr(MachineInstr &MI) {
 ///
 /// For tail calls, this is all we need to do.
 ///
-/// For calls where we might return to control flow, we further need to extract
-/// the predicate state built up within that function from the high bits of the
-/// stack pointer, and make that the newly available predicate state.
+/// For calls where we might return and resume the control flow, we need to
+/// extract the predicate state from the high bits of the stack pointer after
+/// control returns from the called function.
+///
+/// We also need to verify that we intended to return to this location in the
+/// code. An attacker might arrange for the processor to mispredict the return
+/// to this valid but incorrect return address in the program rather than the
+/// correct one. See the paper on this attack, called "ret2spec" by the
+/// researchers, here:
+/// https://christian-rossow.de/publications/ret2spec-ccs2018.pdf
+///
+/// The way we verify that we returned to the correct location is by preserving
+/// the expected return address across the call. One technique involves taking
+/// advantage of the red-zone to load the return address from `8(%rsp)` where it
+/// was left by the RET instruction when it popped `%rsp`. Alternatively, we can
+/// directly save the address into a register that will be preserved across the
+/// call. We compare this intended return address against the address
+/// immediately following the call (the observed return address). If these
+/// mismatch, we have detected misspeculation and can poison our predicate
+/// state.
 void X86SpeculativeLoadHardeningPass::tracePredStateThroughCall(
     MachineInstr &MI) {
   MachineBasicBlock &MBB = *MI.getParent();
+  MachineFunction &MF = *MBB.getParent();
   auto InsertPt = MI.getIterator();
   DebugLoc Loc = MI.getDebugLoc();
+
+  if (FenceCallAndRet) {
+    if (MI.isReturn())
+      // Tail call, we don't return to this function.
+      // FIXME: We should also handle noreturn calls.
+      return;
+
+    // We don't need to fence before the call because the function should fence
+    // in its entry. However, we do need to fence after the call returns.
+    // Fencing before the return doesn't correctly handle cases where the return
+    // itself is mispredicted.
+    BuildMI(MBB, std::next(InsertPt), Loc, TII->get(X86::LFENCE));
+    ++NumInstsInserted;
+    ++NumLFENCEsInserted;
+    return;
+  }
 
   // First, we transfer the predicate state into the called function by merging
   // it into the stack pointer. This will kill the current def of the state.
@@ -2421,16 +2437,119 @@ void X86SpeculativeLoadHardeningPass::tracePredStateThroughCall(
   mergePredStateIntoSP(MBB, InsertPt, Loc, StateReg);
 
   // If this call is also a return, it is a tail call and we don't need anything
-  // else to handle it so just continue.
-  // FIXME: We should also handle noreturn calls.
-  if (MI.isReturn())
+  // else to handle it so just return. Also, if there are no further
+  // instructions and no successors, this call does not return so we can also
+  // bail.
+  if (MI.isReturn() || (std::next(InsertPt) == MBB.end() && MBB.succ_empty()))
     return;
 
-  // We need to step past the call and recover the predicate state from SP after
-  // the return, and make this new state available.
+  // Create a symbol to track the return address and attach it to the call
+  // machine instruction. We will lower extra symbols attached to call
+  // instructions as label immediately following the call.
+  MCSymbol *RetSymbol =
+      MF.getContext().createTempSymbol("slh_ret_addr",
+                                       /*AlwaysAddSuffix*/ true);
+  MI.setPostInstrSymbol(MF, RetSymbol);
+
+  const TargetRegisterClass *AddrRC = &X86::GR64RegClass;
+  unsigned ExpectedRetAddrReg = 0;
+
+  // If we have no red zones or if the function returns twice (possibly without
+  // using the `ret` instruction) like setjmp, we need to save the expected
+  // return address prior to the call.
+  if (MF.getFunction().hasFnAttribute(Attribute::NoRedZone) ||
+      MF.exposesReturnsTwice()) {
+    // If we don't have red zones, we need to compute the expected return
+    // address prior to the call and store it in a register that lives across
+    // the call.
+    //
+    // In some ways, this is doubly satisfying as a mitigation because it will
+    // also successfully detect stack smashing bugs in some cases (typically,
+    // when a callee-saved register is used and the callee doesn't push it onto
+    // the stack). But that isn't our primary goal, so we only use it as
+    // a fallback.
+    //
+    // FIXME: It isn't clear that this is reliable in the face of
+    // rematerialization in the register allocator. We somehow need to force
+    // that to not occur for this particular instruction, and instead to spill
+    // or otherwise preserve the value computed *prior* to the call.
+    //
+    // FIXME: It is even less clear why MachineCSE can't just fold this when we
+    // end up having to use identical instructions both before and after the
+    // call to feed the comparison.
+    ExpectedRetAddrReg = MRI->createVirtualRegister(AddrRC);
+    if (MF.getTarget().getCodeModel() == CodeModel::Small &&
+        !Subtarget->isPositionIndependent()) {
+      BuildMI(MBB, InsertPt, Loc, TII->get(X86::MOV64ri32), ExpectedRetAddrReg)
+          .addSym(RetSymbol);
+    } else {
+      BuildMI(MBB, InsertPt, Loc, TII->get(X86::LEA64r), ExpectedRetAddrReg)
+          .addReg(/*Base*/ X86::RIP)
+          .addImm(/*Scale*/ 1)
+          .addReg(/*Index*/ 0)
+          .addSym(RetSymbol)
+          .addReg(/*Segment*/ 0);
+    }
+  }
+
+  // Step past the call to handle when it returns.
   ++InsertPt;
+
+  // If we didn't pre-compute the expected return address into a register, then
+  // red zones are enabled and the return address is still available on the
+  // stack immediately after the call. As the very first instruction, we load it
+  // into a register.
+  if (!ExpectedRetAddrReg) {
+    ExpectedRetAddrReg = MRI->createVirtualRegister(AddrRC);
+    BuildMI(MBB, InsertPt, Loc, TII->get(X86::MOV64rm), ExpectedRetAddrReg)
+        .addReg(/*Base*/ X86::RSP)
+        .addImm(/*Scale*/ 1)
+        .addReg(/*Index*/ 0)
+        .addImm(/*Displacement*/ -8) // The stack pointer has been popped, so
+                                     // the return address is 8-bytes past it.
+        .addReg(/*Segment*/ 0);
+  }
+
+  // Now we extract the callee's predicate state from the stack pointer.
   unsigned NewStateReg = extractPredStateFromSP(MBB, InsertPt, Loc);
-  PS->SSA.AddAvailableValue(&MBB, NewStateReg);
+
+  // Test the expected return address against our actual address. If we can
+  // form this basic block's address as an immediate, this is easy. Otherwise
+  // we compute it.
+  if (MF.getTarget().getCodeModel() == CodeModel::Small &&
+      !Subtarget->isPositionIndependent()) {
+    // FIXME: Could we fold this with the load? It would require careful EFLAGS
+    // management.
+    BuildMI(MBB, InsertPt, Loc, TII->get(X86::CMP64ri32))
+        .addReg(ExpectedRetAddrReg, RegState::Kill)
+        .addSym(RetSymbol);
+  } else {
+    unsigned ActualRetAddrReg = MRI->createVirtualRegister(AddrRC);
+    BuildMI(MBB, InsertPt, Loc, TII->get(X86::LEA64r), ActualRetAddrReg)
+        .addReg(/*Base*/ X86::RIP)
+        .addImm(/*Scale*/ 1)
+        .addReg(/*Index*/ 0)
+        .addSym(RetSymbol)
+        .addReg(/*Segment*/ 0);
+    BuildMI(MBB, InsertPt, Loc, TII->get(X86::CMP64rr))
+        .addReg(ExpectedRetAddrReg, RegState::Kill)
+        .addReg(ActualRetAddrReg, RegState::Kill);
+  }
+
+  // Now conditionally update the predicate state we just extracted if we ended
+  // up at a different return address than expected.
+  int PredStateSizeInBytes = TRI->getRegSizeInBits(*PS->RC) / 8;
+  auto CMovOp = X86::getCMovFromCond(X86::COND_NE, PredStateSizeInBytes);
+
+  unsigned UpdatedStateReg = MRI->createVirtualRegister(PS->RC);
+  auto CMovI = BuildMI(MBB, InsertPt, Loc, TII->get(CMovOp), UpdatedStateReg)
+                   .addReg(NewStateReg, RegState::Kill)
+                   .addReg(PS->PoisonReg);
+  CMovI->findRegisterUseOperand(X86::EFLAGS)->setIsKill(true);
+  ++NumInstsInserted;
+  LLVM_DEBUG(dbgs() << "  Inserting cmov: "; CMovI->dump(); dbgs() << "\n");
+
+  PS->SSA.AddAvailableValue(&MBB, UpdatedStateReg);
 }
 
 /// An attacker may speculatively store over a value that is then speculatively

@@ -17,56 +17,69 @@
 define i32 @test_indirect_call(i32 ()** %ptr) nounwind {
 ; X64-LABEL: test_indirect_call:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    pushq %rax
+; X64-NEXT:    pushq %rbx
 ; X64-NEXT:    movq %rsp, %rax
-; X64-NEXT:    movq $-1, %rcx
+; X64-NEXT:    movq $-1, %rbx
 ; X64-NEXT:    sarq $63, %rax
 ; X64-NEXT:    movq (%rdi), %rcx
 ; X64-NEXT:    orq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rax
 ; X64-NEXT:    orq %rax, %rsp
 ; X64-NEXT:    callq *%rcx
+; X64-NEXT:  .Lslh_ret_addr0:
 ; X64-NEXT:    movq %rsp, %rcx
+; X64-NEXT:    movq -{{[0-9]+}}(%rsp), %rdx
 ; X64-NEXT:    sarq $63, %rcx
+; X64-NEXT:    cmpq $.Lslh_ret_addr0, %rdx
+; X64-NEXT:    cmovneq %rbx, %rcx
 ; X64-NEXT:    shlq $47, %rcx
 ; X64-NEXT:    orq %rcx, %rsp
-; X64-NEXT:    popq %rcx
+; X64-NEXT:    popq %rbx
 ; X64-NEXT:    retq
 ;
 ; X64-PIC-LABEL: test_indirect_call:
 ; X64-PIC:       # %bb.0: # %entry
-; X64-PIC-NEXT:    pushq %rax
+; X64-PIC-NEXT:    pushq %rbx
 ; X64-PIC-NEXT:    movq %rsp, %rax
-; X64-PIC-NEXT:    movq $-1, %rcx
+; X64-PIC-NEXT:    movq $-1, %rbx
 ; X64-PIC-NEXT:    sarq $63, %rax
 ; X64-PIC-NEXT:    movq (%rdi), %rcx
 ; X64-PIC-NEXT:    orq %rax, %rcx
 ; X64-PIC-NEXT:    shlq $47, %rax
 ; X64-PIC-NEXT:    orq %rax, %rsp
 ; X64-PIC-NEXT:    callq *%rcx
+; X64-PIC-NEXT:  .Lslh_ret_addr0:
 ; X64-PIC-NEXT:    movq %rsp, %rcx
+; X64-PIC-NEXT:    movq -{{[0-9]+}}(%rsp), %rdx
 ; X64-PIC-NEXT:    sarq $63, %rcx
+; X64-PIC-NEXT:    leaq .Lslh_ret_addr0(%rip), %rsi
+; X64-PIC-NEXT:    cmpq %rsi, %rdx
+; X64-PIC-NEXT:    cmovneq %rbx, %rcx
 ; X64-PIC-NEXT:    shlq $47, %rcx
 ; X64-PIC-NEXT:    orq %rcx, %rsp
-; X64-PIC-NEXT:    popq %rcx
+; X64-PIC-NEXT:    popq %rbx
 ; X64-PIC-NEXT:    retq
 ;
 ; X64-RETPOLINE-LABEL: test_indirect_call:
 ; X64-RETPOLINE:       # %bb.0: # %entry
-; X64-RETPOLINE-NEXT:    pushq %rax
+; X64-RETPOLINE-NEXT:    pushq %rbx
 ; X64-RETPOLINE-NEXT:    movq %rsp, %rax
-; X64-RETPOLINE-NEXT:    movq $-1, %rcx
+; X64-RETPOLINE-NEXT:    movq $-1, %rbx
 ; X64-RETPOLINE-NEXT:    sarq $63, %rax
 ; X64-RETPOLINE-NEXT:    movq (%rdi), %r11
 ; X64-RETPOLINE-NEXT:    orq %rax, %r11
 ; X64-RETPOLINE-NEXT:    shlq $47, %rax
 ; X64-RETPOLINE-NEXT:    orq %rax, %rsp
 ; X64-RETPOLINE-NEXT:    callq __llvm_retpoline_r11
+; X64-RETPOLINE-NEXT:  .Lslh_ret_addr0:
 ; X64-RETPOLINE-NEXT:    movq %rsp, %rcx
+; X64-RETPOLINE-NEXT:    movq -{{[0-9]+}}(%rsp), %rdx
 ; X64-RETPOLINE-NEXT:    sarq $63, %rcx
+; X64-RETPOLINE-NEXT:    cmpq $.Lslh_ret_addr0, %rdx
+; X64-RETPOLINE-NEXT:    cmovneq %rbx, %rcx
 ; X64-RETPOLINE-NEXT:    shlq $47, %rcx
 ; X64-RETPOLINE-NEXT:    orq %rcx, %rsp
-; X64-RETPOLINE-NEXT:    popq %rcx
+; X64-RETPOLINE-NEXT:    popq %rbx
 ; X64-RETPOLINE-NEXT:    retq
 entry:
   %fp = load i32 ()*, i32 ()** %ptr
@@ -116,27 +129,31 @@ entry:
 define i32 @test_indirect_call_global() nounwind {
 ; X64-LABEL: test_indirect_call_global:
 ; X64:       # %bb.0: # %entry
-; X64-NEXT:    pushq %rax
+; X64-NEXT:    pushq %rbx
 ; X64-NEXT:    movq %rsp, %rax
-; X64-NEXT:    movq $-1, %rcx
+; X64-NEXT:    movq $-1, %rbx
 ; X64-NEXT:    sarq $63, %rax
 ; X64-NEXT:    movq global_fnptr(%rip), %rcx
 ; X64-NEXT:    orq %rax, %rcx
 ; X64-NEXT:    shlq $47, %rax
 ; X64-NEXT:    orq %rax, %rsp
 ; X64-NEXT:    callq *%rcx
+; X64-NEXT:  .Lslh_ret_addr1:
 ; X64-NEXT:    movq %rsp, %rcx
+; X64-NEXT:    movq -{{[0-9]+}}(%rsp), %rdx
 ; X64-NEXT:    sarq $63, %rcx
+; X64-NEXT:    cmpq $.Lslh_ret_addr1, %rdx
+; X64-NEXT:    cmovneq %rbx, %rcx
 ; X64-NEXT:    shlq $47, %rcx
 ; X64-NEXT:    orq %rcx, %rsp
-; X64-NEXT:    popq %rcx
+; X64-NEXT:    popq %rbx
 ; X64-NEXT:    retq
 ;
 ; X64-PIC-LABEL: test_indirect_call_global:
 ; X64-PIC:       # %bb.0: # %entry
-; X64-PIC-NEXT:    pushq %rax
+; X64-PIC-NEXT:    pushq %rbx
 ; X64-PIC-NEXT:    movq %rsp, %rax
-; X64-PIC-NEXT:    movq $-1, %rcx
+; X64-PIC-NEXT:    movq $-1, %rbx
 ; X64-PIC-NEXT:    sarq $63, %rax
 ; X64-PIC-NEXT:    movq global_fnptr@GOTPCREL(%rip), %rcx
 ; X64-PIC-NEXT:    movq (%rcx), %rcx
@@ -144,28 +161,37 @@ define i32 @test_indirect_call_global() nounwind {
 ; X64-PIC-NEXT:    shlq $47, %rax
 ; X64-PIC-NEXT:    orq %rax, %rsp
 ; X64-PIC-NEXT:    callq *%rcx
+; X64-PIC-NEXT:  .Lslh_ret_addr1:
 ; X64-PIC-NEXT:    movq %rsp, %rcx
+; X64-PIC-NEXT:    movq -{{[0-9]+}}(%rsp), %rdx
 ; X64-PIC-NEXT:    sarq $63, %rcx
+; X64-PIC-NEXT:    leaq .Lslh_ret_addr1(%rip), %rsi
+; X64-PIC-NEXT:    cmpq %rsi, %rdx
+; X64-PIC-NEXT:    cmovneq %rbx, %rcx
 ; X64-PIC-NEXT:    shlq $47, %rcx
 ; X64-PIC-NEXT:    orq %rcx, %rsp
-; X64-PIC-NEXT:    popq %rcx
+; X64-PIC-NEXT:    popq %rbx
 ; X64-PIC-NEXT:    retq
 ;
 ; X64-RETPOLINE-LABEL: test_indirect_call_global:
 ; X64-RETPOLINE:       # %bb.0: # %entry
-; X64-RETPOLINE-NEXT:    pushq %rax
+; X64-RETPOLINE-NEXT:    pushq %rbx
 ; X64-RETPOLINE-NEXT:    movq %rsp, %rax
-; X64-RETPOLINE-NEXT:    movq $-1, %rcx
+; X64-RETPOLINE-NEXT:    movq $-1, %rbx
 ; X64-RETPOLINE-NEXT:    sarq $63, %rax
 ; X64-RETPOLINE-NEXT:    movq global_fnptr(%rip), %r11
 ; X64-RETPOLINE-NEXT:    shlq $47, %rax
 ; X64-RETPOLINE-NEXT:    orq %rax, %rsp
 ; X64-RETPOLINE-NEXT:    callq __llvm_retpoline_r11
+; X64-RETPOLINE-NEXT:  .Lslh_ret_addr1:
 ; X64-RETPOLINE-NEXT:    movq %rsp, %rcx
+; X64-RETPOLINE-NEXT:    movq -{{[0-9]+}}(%rsp), %rdx
 ; X64-RETPOLINE-NEXT:    sarq $63, %rcx
+; X64-RETPOLINE-NEXT:    cmpq $.Lslh_ret_addr1, %rdx
+; X64-RETPOLINE-NEXT:    cmovneq %rbx, %rcx
 ; X64-RETPOLINE-NEXT:    shlq $47, %rcx
 ; X64-RETPOLINE-NEXT:    orq %rcx, %rsp
-; X64-RETPOLINE-NEXT:    popq %rcx
+; X64-RETPOLINE-NEXT:    popq %rbx
 ; X64-RETPOLINE-NEXT:    retq
 entry:
   %fp = load i32 ()*, i32 ()** @global_fnptr
