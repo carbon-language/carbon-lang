@@ -34,7 +34,9 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Transforms/Scalar.h"
 
+#if !defined(_MSC_VER)
 #include <cxxabi.h>
+#endif
 #include <set>
 #include <sstream>
 
@@ -446,8 +448,10 @@ static bool shouldApply(Function &F, ProfileSummaryInfo& PSI) {
       return true;
     const char* DemangledName = nullptr;
     int Status = -1;
+#if !defined(_MSC_VER)
     DemangledName = abi::__cxa_demangle(Name.str().c_str(),
                                         nullptr, nullptr, &Status);
+#endif
     return DemangledName && CHRFunctions.count(DemangledName);
   }
 
@@ -459,8 +463,10 @@ static void dumpIR(Function &F, const char *Label, CHRStats *Stats) {
   std::string Name = F.getName().str();
   const char *DemangledName = nullptr;
   int Status = -1;
+#if !defined(_MSC_VER)
   DemangledName = abi::__cxa_demangle(Name.c_str(),
                                       nullptr, nullptr, &Status);
+#endif
   if (DemangledName == nullptr) {
     DemangledName = "<NOT-MANGLED>";
   }
@@ -1593,6 +1599,7 @@ static void assertBranchOrSelectConditionHoisted(CHRScope *Scope,
       Value *V = BI->getCondition();
       CHR_DEBUG(dbgs() << *V << "\n");
       if (auto *I = dyn_cast<Instruction>(V)) {
+        (void)(I); // Unused in release build.
         assert((I->getParent() == PreEntryBlock ||
                 !Scope->contains(I)) &&
                "Must have been hoisted to PreEntryBlock or outside the scope");
@@ -1606,6 +1613,7 @@ static void assertBranchOrSelectConditionHoisted(CHRScope *Scope,
       Value *V = SI->getCondition();
       CHR_DEBUG(dbgs() << *V << "\n");
       if (auto *I = dyn_cast<Instruction>(V)) {
+        (void)(I); // Unused in release build.
         assert((I->getParent() == PreEntryBlock ||
                 !Scope->contains(I)) &&
                "Must have been hoisted to PreEntryBlock or outside the scope");
