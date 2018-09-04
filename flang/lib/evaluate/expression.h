@@ -68,13 +68,13 @@ template<typename T> struct Constant {
   Value value;
 };
 
-// BOZ literal constants need to be wide enough to hold an integer or real
-// value of any supported kind.  They also need to be distinguishable from
+// BOZ literal "typeless" constants must be wide enough to hold a numeric
+// value of any supported kind.  They must also be distinguishable from
 // other integer constants, since they are permitted to be used in only a
 // few situations.
-using BOZLiteralConstant = value::Integer<128>;
+using BOZLiteralConstant = value::Integer<8 * 2 * DefaultComplex::kind>;
 
-// "Typeless" operands to INTEGER and REAL operations.
+// "Typeless" operands to INTEGER, REAL, and COMPLEX operations.
 template<typename T> struct BOZConstant {
   using Result = T;
   using Value = BOZLiteralConstant;
@@ -469,8 +469,8 @@ public:
   using Operations = std::variant<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, RealToIntPower<Result>, ComplexConstructor<KIND>>;
-  using Others = std::variant<Constant<Result>, DataReference<Result>,
-      FunctionReference<Result>>;
+  using Others = std::variant<Constant<Result>, BOZConstant<Result>,
+      DataReference<Result>, FunctionReference<Result>>;
 
 public:
   common::CombineVariants<Operations, Others> u;

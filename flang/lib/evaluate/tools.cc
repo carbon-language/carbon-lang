@@ -57,10 +57,84 @@ ConvertRealOperandsResult ConvertRealOperands(
       std::move(x.u), std::move(y.u));
 }
 
-// A helper template for NumericOperation below.
+// A helper template for NumericOperation and its subroutines.
 template<TypeCategory CAT>
 std::optional<Expr<SomeType>> Package(Expr<SomeKind<CAT>> &&catExpr) {
   return {AsGenericExpr(std::move(catExpr))};
+}
+template<TypeCategory CAT>
+std::optional<Expr<SomeType>> Package(
+    std::optional<Expr<SomeKind<CAT>>> &&catExpr) {
+  if (catExpr.has_value()) {
+    return {AsGenericExpr(std::move(*catExpr))};
+  }
+  return std::nullopt;
+}
+
+std::optional<Expr<SomeComplex>> ConstructComplex(
+    parser::ContextualMessages &messages, Expr<SomeType> &&real,
+    Expr<SomeType> &&imaginary) {
+  if (auto converted{ConvertRealOperands(
+          messages, std::move(real), std::move(imaginary))}) {
+    return {std::visit(
+        [](auto &&pair) {
+          return MakeComplex(std::move(pair[0]), std::move(pair[1]));
+        },
+        std::move(*converted))};
+  }
+  return std::nullopt;
+}
+
+std::optional<Expr<SomeComplex>> ConstructComplex(
+    parser::ContextualMessages &messages, std::optional<Expr<SomeType>> &&real,
+    std::optional<Expr<SomeType>> &&imaginary) {
+  if (auto parts{common::AllPresent(std::move(real), std::move(imaginary))}) {
+    return ConstructComplex(messages, std::move(std::get<0>(*parts)),
+        std::move(std::get<1>(*parts)));
+  }
+  return std::nullopt;
+}
+
+Expr<SomeReal> GetComplexPart(const Expr<SomeComplex> &z, bool isImaginary) {
+  return std::visit(
+      [&](const auto &zk) {
+        static constexpr int kind{ResultType<decltype(zk)>::kind};
+        return AsCategoryExpr(AsExpr(ComplexComponent<kind>{isImaginary, zk}));
+      },
+      z.u);
+}
+
+template<template<typename> class OPR>
+std::optional<Expr<SomeType>> MixedComplex(parser::ContextualMessages &messages,
+    Expr<SomeComplex> &&zx, Expr<SomeType> &&iry) {
+  Expr<SomeReal> zr{GetComplexPart(zx, false)};
+  Expr<SomeReal> zi{GetComplexPart(zx, true)};
+  if constexpr (std::is_same_v<OPR<DefaultReal>, Add<DefaultReal>> ||
+      std::is_same_v<OPR<DefaultReal>, Subtract<DefaultReal>>) {
+    // Addition and subtraction: apply the operation to the real part of the
+    // complex operand, and a transfer/convert its imaginary part.
+    // i.e., (a,b) + c = (a+c, b)
+    if (std::optional<Expr<SomeType>> rr{
+            NumericOperation<OPR>(messages, std::move(zr), std::move(iry))}) {
+      return Package(ConstructComplex(messages, AsGenericExpr(std::move(*rr)),
+          AsGenericExpr(std::move(zi))));
+    }
+  } else if constexpr (std::is_same_v<OPR<DefaultReal>,
+                           Multiply<DefaultReal>> ||
+      std::is_same_v<OPR<DefaultReal>, Divide<DefaultReal>>) {
+    // Multiplication and division of a COMPLEX value by an INTEGER or REAL
+    // operand: apply the operation to both components of the COMPLEX value,
+    // then convert and recombine them.
+    // i.e., (a,b) * c = (a*c, b*c)
+    auto copy{iry};
+    auto rr{NumericOperation<OPR>(messages, std::move(zr), std::move(iry))};
+    auto ri{NumericOperation<OPR>(messages, std::move(zi), std::move(copy))};
+    if (auto parts{common::AllPresent(std::move(rr), std::move(ri))}) {
+      return Package(ConstructComplex(messages, std::move(std::get<0>(*parts)),
+          std::move(std::get<1>(*parts))));
+    }
+  }
+  return std::nullopt;
 }
 
 // N.B. When a "typeless" BOZ literal constant appears as one (not both!) of
@@ -93,8 +167,9 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(std::visit(
                 [&](auto &&ryk) -> Expr<SomeReal> {
                   using resultType = ResultType<decltype(ryk)>;
-                  return AsCategoryExpr(AsExpr(OPR<resultType>{
-                      ConvertToType<resultType>(std::move(ix)), std::move(ryk)}));
+                  return AsCategoryExpr(AsExpr(
+                      OPR<resultType>{ConvertToType<resultType>(std::move(ix)),
+                          std::move(ryk)}));
                 },
                 std::move(ry.u)));
           },
@@ -102,19 +177,30 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(PromoteAndCombine<OPR, TypeCategory::Complex>(
                 std::move(zx), std::move(zy)));
           },
+          [&](Expr<SomeComplex> &&zx, Expr<SomeInteger> &&zy) {
+            return MixedComplex<OPR>(messages, std::move(zx), std::move(zy));
+          },
+          [&](Expr<SomeComplex> &&zx, Expr<SomeReal> &&zy) {
+            return MixedComplex<OPR>(messages, std::move(zx), std::move(zy));
+          },
+          // TODO pmk: mixed r+complex, &c.; r/z is tricky
+          // TODO pmk: mixed complex + boz?  yes but what about COMPLEX*16?
           [&](BOZLiteralConstant &&bx, Expr<SomeInteger> &&iy) {
-            return NumericOperation<OPR>(messages, ConvertTo(iy, std::move(bx)), std::move(y));
+            return NumericOperation<OPR>(
+                messages, ConvertTo(iy, std::move(bx)), std::move(y));
           },
           [&](BOZLiteralConstant &&bx, Expr<SomeReal> &&ry) {
-            return NumericOperation<OPR>(messages, ConvertTo(ry, std::move(bx)), std::move(y));
+            return NumericOperation<OPR>(
+                messages, ConvertTo(ry, std::move(bx)), std::move(y));
           },
           [&](Expr<SomeInteger> &&ix, BOZLiteralConstant &&by) {
-            return NumericOperation<OPR>(messages, std::move(x), ConvertTo(ix, std::move(by)));
+            return NumericOperation<OPR>(
+                messages, std::move(x), ConvertTo(ix, std::move(by)));
           },
           [&](Expr<SomeReal> &&rx, BOZLiteralConstant &&by) {
-            return NumericOperation<OPR>(messages, std::move(x), ConvertTo(rx, std::move(by)));
+            return NumericOperation<OPR>(
+                messages, std::move(x), ConvertTo(rx, std::move(by)));
           },
-          // TODO pmk mixed complex; Add/Sub different from Mult/Div
           [&](auto &&, auto &&) {
             messages.Say("non-numeric operands to numeric operation"_err_en_US);
             return std::optional<Expr<SomeType>>{std::nullopt};

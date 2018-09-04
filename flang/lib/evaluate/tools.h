@@ -89,6 +89,16 @@ template<> inline Expr<SomeType> AsGenericExpr(GenericScalar &&x) {
       x.u);
 }
 
+Expr<SomeReal> GetComplexPart(
+    const Expr<SomeComplex> &, bool isImaginary = false);
+
+template<int KIND>
+Expr<SomeComplex> MakeComplex(Expr<Type<TypeCategory::Real, KIND>> &&re,
+    Expr<Type<TypeCategory::Real, KIND>> &&im) {
+  return AsCategoryExpr(
+      AsExpr(ComplexConstructor<KIND>{std::move(re), std::move(im)}));
+}
+
 // Creation of conversion expressions can be done to either a known
 // specific intrinsic type with ConvertToType<T>(x) or by converting
 // one arbitrary expression to the type of another with ConvertTo(to, from).
@@ -123,9 +133,9 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
   }
 }
 
-template<typename TO>
-Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
+template<typename TO> Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
   // TODO: check rank == 0
+  // TODO: pmk: truncation warnings
   static_assert(TO::isSpecificType);
   return Expr<TO>{BOZConstant<TO>{std::move(x)}};
 }
@@ -170,11 +180,14 @@ Expr<SomeType> ConvertTo(const Expr<SomeType> &to, Expr<FT> &&from) {
 }
 
 template<TypeCategory CAT>
-Expr<SomeType> ConvertTo(const Expr<SomeKind<CAT>> &to, BOZLiteralConstant &&from) {
-  return AsGenericExpr(std::visit([&](const auto &tok) {
-    using Ty = ResultType<decltype(tok)>;
-    return AsCategoryExpr(ConvertToType<Ty>(std::move(from)));
-  }, to.u));
+Expr<SomeType> ConvertTo(
+    const Expr<SomeKind<CAT>> &to, BOZLiteralConstant &&from) {
+  return AsGenericExpr(std::visit(
+      [&](const auto &tok) {
+        using Ty = ResultType<decltype(tok)>;
+        return AsCategoryExpr(ConvertToType<Ty>(std::move(from)));
+      },
+      to.u));
 }
 
 template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;
@@ -224,6 +237,15 @@ using ConvertRealOperandsResult =
     std::optional<SameKindExprs<TypeCategory::Real, 2>>;
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+
+// Per F'2018 R718, if both components are INTEGER, they are both converted
+// to default REAL and the result is default COMPLEX.  Otherwise, the
+// kind of the result is the kind of most precise REAL component, and the other
+// component is converted if necessary to its type.
+std::optional<Expr<SomeComplex>> ConstructComplex(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+std::optional<Expr<SomeComplex>> ConstructComplex(parser::ContextualMessages &,
+    std::optional<Expr<SomeType>> &&, std::optional<Expr<SomeType>> &&);
 
 template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   using Ty = TypeOf<A>;

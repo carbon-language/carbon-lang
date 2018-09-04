@@ -104,8 +104,6 @@ struct ExprAnalyzer {
   MaybeExpr Analyze(const parser::Expr::DefinedBinary &);  // TODO
   // TODO more remain
 
-  std::optional<Expr<SomeComplex>> ConstructComplex(MaybeExpr &&, MaybeExpr &&);
-
   FoldingContext &context;
   const semantics::IntrinsicTypeDefaultKinds &defaults;
 };
@@ -337,32 +335,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexPart &x) {
   return AnalyzeHelper(*this, x.u);
 }
 
-// Per F'2018 R718, if both components are INTEGER, they are both converted
-// to default REAL and the result is default COMPLEX.  Otherwise, the
-// kind of the result is the kind of most precise REAL component, and the other
-// component is converted if necessary to its type.
-std::optional<Expr<SomeComplex>> ExprAnalyzer::ConstructComplex(
-    MaybeExpr &&real, MaybeExpr &&imaginary) {
-  if (auto parts{common::AllPresent(std::move(real), std::move(imaginary))}) {
-    if (auto converted{ConvertRealOperands(context.messages,
-            std::move(std::get<0>(*parts)), std::move(std::get<1>(*parts)))}) {
-      return {std::visit(
-          [](auto &&pair) -> std::optional<Expr<SomeComplex>> {
-            using realType = ResultType<decltype(pair[0])>;
-            using zType = SameKind<TypeCategory::Complex, realType>;
-            auto cmplx{ComplexConstructor<zType::kind>{
-                std::move(pair[0]), std::move(pair[1])}};
-            return {AsCategoryExpr(AsExpr(std::move(cmplx)))};
-          },
-          std::move(*converted))};
-    }
-  }
-  return std::nullopt;
-}
-
 MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexLiteralConstant &z) {
-  return AsMaybeExpr(
-      ConstructComplex(Analyze(std::get<0>(z.t)), Analyze(std::get<1>(z.t))));
+  return AsMaybeExpr(ConstructComplex(
+      context.messages, Analyze(std::get<0>(z.t)), Analyze(std::get<1>(z.t))));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
@@ -486,7 +461,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Divide &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
-  return AsMaybeExpr(ConstructComplex(AnalyzeHelper(*this, *std::get<0>(x.t)),
+  return AsMaybeExpr(ConstructComplex(context.messages,
+      AnalyzeHelper(*this, *std::get<0>(x.t)),
       AnalyzeHelper(*this, *std::get<1>(x.t))));
 }
 
