@@ -2784,12 +2784,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     return BinaryOperator::CreateAnd(Op0, Builder.CreateNot(X));
   // (X & Y) ^ Y --> ~X & Y
   // (Y & X) ^ Y --> ~X & Y
-  // Canonical form with a non-splat constant is (X & C) ^ C; don't touch that.
-  // TODO: Why do we treat arbitrary vector constants differently?
+  // Canonical form is (X & C) ^ C; don't touch that.
   // TODO: A 'not' op is better for analysis and codegen, but demanded bits must
   //       be fixed to prefer that (otherwise we get infinite looping).
-  const APInt *Unused;
-  if (!match(Op1, m_APInt(Unused)) &&
+  if (!match(Op1, m_Constant()) &&
       match(Op0, m_OneUse(m_c_And(m_Value(X), m_Specific(Op1)))))
     return BinaryOperator::CreateAnd(Op1, Builder.CreateNot(X));
 
