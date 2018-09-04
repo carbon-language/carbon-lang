@@ -42,8 +42,8 @@ done
 
 for f in read1 read2 read4 read8; do
   check $f rsp 1
-  check $f push 3
-  check $f pop 18
+  check $f push 2
+  check $f pop 12
 done
 
 for f in func_entry func_exit; do
