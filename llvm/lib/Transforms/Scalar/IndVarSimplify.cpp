@@ -645,6 +645,16 @@ void IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
           continue;
         }
 
+#ifndef NDEBUG
+        // If we reuse an instruction from a loop which is neither L nor one of
+        // its containing loops, we end up breaking LCSSA form for this loop by
+        // creating a new use of its instruction.
+        if (auto *ExitInsn = dyn_cast<Instruction>(ExitVal))
+          if (auto *EVL = LI->getLoopFor(ExitInsn->getParent()))
+            if (EVL != L)
+              assert(EVL->contains(L) && "LCSSA breach detected!");
+#endif
+
         // Collect all the candidate PHINodes to be rewritten.
         RewritePhiSet.emplace_back(PN, i, ExitVal, HighCost);
       }
