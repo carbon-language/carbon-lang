@@ -20,7 +20,7 @@ SmallString<128> llvm::unittest::getInputFileDirectory() {
   llvm::sys::fs::make_absolute(Result);
   llvm::sys::path::append(Result, "llvm.srcdir.txt");
 
-  EXPECT_TRUE(llvm::sys::fs::is_directory(Result))
+  EXPECT_TRUE(llvm::sys::fs::is_regular_file(Result))
       << "Unit test source directory file does not exist.";
 
   auto File = MemoryBuffer::getFile(Result);
