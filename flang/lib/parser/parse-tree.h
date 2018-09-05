@@ -890,8 +890,7 @@ struct TypeParamDecl {
 // R734 type-param-attr-spec -> KIND | LEN
 struct TypeParamDefStmt {
   TUPLE_CLASS_BOILERPLATE(TypeParamDefStmt);
-  std::tuple<IntegerTypeSpec, common::TypeParamKindOrLen,
-      std::list<TypeParamDecl>>
+  std::tuple<IntegerTypeSpec, common::TypeParamAttr, std::list<TypeParamDecl>>
       t;
 };
 

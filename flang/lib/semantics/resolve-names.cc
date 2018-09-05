@@ -79,7 +79,7 @@ private:
 // Provide Post methods to collect attributes into a member variable.
 class AttrsVisitor {
 public:
-  bool BeginAttrs();
+  bool BeginAttrs();  // always returns true
   Attrs GetAttrs();
   Attrs EndAttrs();
   void Post(const parser::LanguageBindingSpec &);
@@ -2088,13 +2088,13 @@ void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
 }
 void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
   auto &type{GetDeclTypeSpec()};
-  auto kindOrLen{std::get<common::TypeParamKindOrLen>(x.t)};
+  auto attr{std::get<common::TypeParamAttr>(x.t)};
   for (auto &decl : std::get<std::list<parser::TypeParamDecl>>(x.t)) {
     auto &name{std::get<parser::Name>(decl.t).source};
     // TODO: initialization
     // auto &init{
     //    std::get<std::optional<parser::ScalarIntConstantExpr>>(decl.t)};
-    auto &symbol{MakeTypeSymbol(name, TypeParamDetails{kindOrLen})};
+    auto &symbol{MakeTypeSymbol(name, TypeParamDetails{attr})};
     SetType(name, symbol, *type);
   }
   EndDecl();

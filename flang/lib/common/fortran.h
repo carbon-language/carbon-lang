@@ -28,8 +28,8 @@ ENUM_CLASS(TypeCategory, Integer, Real, Complex, Character, Logical, Derived)
 // Kinds of IMPORT statements. Default means IMPORT or IMPORT :: names.
 ENUM_CLASS(ImportKind, Default, Only, None, All)
 
-// Type parameters can be kind or len.
-ENUM_CLASS(TypeParamKindOrLen, Kind, Len)
+// The attribute on a type parameter can be KIND or LEN.
+ENUM_CLASS(TypeParamAttr, Kind, Len)
 
 }  // namespace Fortran::common
 #endif  // FORTRAN_COMMON_FORTRAN_H_

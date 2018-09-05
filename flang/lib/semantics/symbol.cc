@@ -359,7 +359,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
             if (x.type()) {
               os << ' ' << *x.type();
             }
-            os << ' ' << common::EnumToString(x.kindOrLen());
+            os << ' ' << common::EnumToString(x.attr());
           },
       },
       details);

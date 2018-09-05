@@ -168,9 +168,8 @@ class FinalProcDetails {};
 
 class TypeParamDetails {
 public:
-  TypeParamDetails(common::TypeParamKindOrLen kindOrLen)
-    : kindOrLen_{kindOrLen} {}
-  common::TypeParamKindOrLen kindOrLen() const { return kindOrLen_; }
+  TypeParamDetails(common::TypeParamAttr attr) : attr_{attr} {}
+  common::TypeParamAttr attr() const { return attr_; }
   const std::optional<DeclTypeSpec> &type() const { return type_; }
   void set_type(const DeclTypeSpec &type) {
     CHECK(!type_);
@@ -178,7 +177,7 @@ public:
   }
 
 private:
-  common::TypeParamKindOrLen kindOrLen_;
+  common::TypeParamAttr attr_;
   std::optional<DeclTypeSpec> type_;
 };
 

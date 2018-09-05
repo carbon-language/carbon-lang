@@ -740,8 +740,8 @@ TYPE_PARSER(construct<SequenceStmt>("SEQUENCE"_tok))
 //        integer-type-spec , type-param-attr-spec :: type-param-decl-list
 // R734 type-param-attr-spec -> KIND | LEN
 TYPE_PARSER(construct<TypeParamDefStmt>(integerTypeSpec / ",",
-    "KIND" >> pure(common::TypeParamKindOrLen::Kind) ||
-        "LEN" >> pure(common::TypeParamKindOrLen::Len),
+    "KIND" >> pure(common::TypeParamAttr::Kind) ||
+        "LEN" >> pure(common::TypeParamAttr::Len),
     "::" >> nonemptyList(Parser<TypeParamDecl>{})))
 
 // R733 type-param-decl -> type-param-name [= scalar-int-constant-expr]

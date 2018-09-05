@@ -680,7 +680,7 @@ public:
   NODE(parser::TypeGuardStmt, Guard)
   NODE(parser, TypeParamDecl)
   NODE(parser, TypeParamDefStmt)
-  NODE(common, TypeParamKindOrLen)
+  NODE(common, TypeParamAttr)
   NODE(parser, TypeParamInquiry)
   NODE(parser, TypeParamSpec)
   NODE(parser, TypeParamValue)

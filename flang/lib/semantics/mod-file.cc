@@ -345,8 +345,8 @@ void PutTypeParam(std::ostream &os, const Symbol &symbol) {
     auto *type{symbol.GetType()};
     CHECK(type);
     PutLower(os, *type);
-    PutLower(os << ',',
-        common::EnumToString(symbol.get<TypeParamDetails>().kindOrLen()));
+    PutLower(
+        os << ',', common::EnumToString(symbol.get<TypeParamDetails>().attr()));
   });
 }
 
