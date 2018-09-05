@@ -26,10 +26,8 @@ struct ThreadStartArg {
 
 class Thread {
  public:
-  static Thread *Create();
+  static void Create();  // Must be called from the thread itself.
   void Destroy();
-
-  void Init();
 
   uptr stack_top() { return stack_top_; }
   uptr stack_bottom() { return stack_bottom_; }
@@ -82,7 +80,7 @@ class Thread {
  private:
   // NOTE: There is no Thread constructor. It is allocated
   // via mmap() and *must* be valid in zero-initialized state.
-  void SetThreadStackAndTls();
+  void Init();
   void ClearShadowForThreadStackAndTLS();
   void Print(const char *prefix);
   uptr stack_top_;

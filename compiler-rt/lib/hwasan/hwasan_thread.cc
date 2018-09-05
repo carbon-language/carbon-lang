@@ -57,7 +57,7 @@ void Thread::RemoveFromThreadList(Thread *t) {
   CHECK(0 && "RemoveFromThreadList: thread not found");
 }
 
-Thread *Thread::Create() {
+void Thread::Create() {
   static u64 unique_id;
   uptr PageSize = GetPageSizeCached();
   uptr size = RoundUpTo(sizeof(Thread), PageSize);
@@ -68,10 +68,11 @@ Thread *Thread::Create() {
     thread->heap_allocations_ = RingBuffer<HeapAllocationRecord>::New(sz);
   thread->unique_id_ = unique_id++;
   InsertIntoThreadList(thread);
-  return thread;
+  SetCurrentThread(thread);
+  thread->Init();
 }
 
-void Thread::SetThreadStackAndTls() {
+void Thread::Init() {
   // GetPthreadDestructorIterations may call malloc, so disable the tagging.
   ScopedTaggingDisabler disabler;
 
@@ -93,10 +94,7 @@ void Thread::SetThreadStackAndTls() {
   CHECK(AddrIsInStack((uptr)&local));
   CHECK(MemIsApp(stack_bottom_));
   CHECK(MemIsApp(stack_top_ - 1));
-}
 
-void Thread::Init() {
-  SetThreadStackAndTls();
   if (stack_bottom_) {
     CHECK(MemIsApp(stack_bottom_));
     CHECK(MemIsApp(stack_top_ - 1));
