@@ -29,22 +29,32 @@ using LabeledStmtClassificationSet =
     common::EnumSet<TargetStatementEnum, TargetStatementEnum_enumSize>;
 
 using IndexList = std::vector<std::pair<parser::CharBlock, parser::CharBlock>>;
-using ScopeProxy = unsigned;
+using ProxyForScope = unsigned;
 using LabelStmtInfo =
-    std::tuple<ScopeProxy, parser::CharBlock, LabeledStmtClassificationSet>;
+    std::tuple<ProxyForScope, parser::CharBlock, LabeledStmtClassificationSet>;
 using TargetStmtMap = std::map<parser::Label, LabelStmtInfo>;
 using SourceStmtList =
-    std::vector<std::tuple<parser::Label, ScopeProxy, parser::CharBlock>>;
+    std::vector<std::tuple<parser::Label, ProxyForScope, parser::CharBlock>>;
 
 const bool isStrictF18{false};  // FIXME - make a command-line option
 
-bool HasScope(ScopeProxy scope) { return scope != ScopeProxy{0u}; }
+bool HasScope(ProxyForScope scope) {
+  if (scope != ProxyForScope{0u}) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 // F18:R1131
 template<typename A>
 constexpr bool IsLegalDoTerm(const parser::Statement<A> &) {
-  return std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
-      std::is_same_v<A, parser::EndDoStmt>;
+  if (std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
+      std::is_same_v<A, parser::EndDoStmt>) {
+    return true;
+  } else {
+    return false;
+  }
 }
 template<>
 constexpr bool IsLegalDoTerm(
@@ -54,20 +64,23 @@ constexpr bool IsLegalDoTerm(
     return true;
   } else if (isStrictF18) {
     return false;
+  } else if (!(std::holds_alternative<
+                   common::Indirection<parser::ArithmeticIfStmt>>(
+                   actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::CycleStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::ExitStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::StopStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::GotoStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<
+                     common::Indirection<parser::ReturnStmt>>(
+                     actionStmt.statement.u))) {
+    return true;
   } else {
-    return !(
-        std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::CycleStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::ExitStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::StopStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::GotoStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::ReturnStmt>>(
-            actionStmt.statement.u));
+    return false;
   }
 }
 
@@ -104,7 +117,9 @@ constexpr bool IsLegalBranchTarget(const parser::Statement<A> &) {
 template<>
 constexpr bool IsLegalBranchTarget(
     const parser::Statement<parser::ActionStmt> &actionStmt) {
-  return !isStrictF18 ||
+  if (!isStrictF18) {
+    return true;
+  } else if (
       !(std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
             actionStmt.statement.u) ||
           std::holds_alternative<common::Indirection<parser::AssignStmt>>(
@@ -112,7 +127,11 @@ constexpr bool IsLegalBranchTarget(
           std::holds_alternative<common::Indirection<parser::AssignedGotoStmt>>(
               actionStmt.statement.u) ||
           std::holds_alternative<common::Indirection<parser::PauseStmt>>(
-              actionStmt.statement.u));
+              actionStmt.statement.u))) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 template<typename A>
@@ -180,7 +199,7 @@ struct UnitAnalysis {
   SourceStmtList formatStmtSources;
   SourceStmtList otherStmtSources;
   TargetStmtMap targetStmts;
-  std::vector<ScopeProxy> scopeModel;
+  std::vector<ProxyForScope> scopeModel;
 };
 
 class ParseTreeAnalyzer {
@@ -388,17 +407,17 @@ private:
 
   template<typename A> void popConstructNameWithoutBlock(const A &a) {
     CheckName(a);
-    SelectivePopBack(a);
+    popConstructNameIfPresent(a);
   }
 
-  template<typename A> void SelectivePopBack(const A &a) {
+  template<typename A> void popConstructNameIfPresent(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
     if (optionalName.has_value()) {
       constructNames_.pop_back();
     }
   }
 
-  void SelectivePopBack(const parser::BlockConstruct &blockConstruct) {
+  void popConstructNameIfPresent(const parser::BlockConstruct &blockConstruct) {
     const auto &optionalName{
         std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
             .statement.v};
@@ -410,14 +429,14 @@ private:
   template<typename A> void popConstructName(const A &a) {
     CheckName(a);
     PopScope();
-    SelectivePopBack(a);
+    popConstructNameIfPresent(a);
   }
 
   // C1144
   void popConstructName(const parser::CaseConstruct &caseConstruct) {
     CheckName(caseConstruct, "CASE");
     PopScope();
-    SelectivePopBack(caseConstruct);
+    popConstructNameIfPresent(caseConstruct);
   }
 
   // C1154, C1156
@@ -425,7 +444,7 @@ private:
       const parser::SelectRankConstruct &selectRankConstruct) {
     CheckName(selectRankConstruct, "RANK", "RANK ");
     PopScope();
-    SelectivePopBack(selectRankConstruct);
+    popConstructNameIfPresent(selectRankConstruct);
   }
 
   // C1165
@@ -433,7 +452,7 @@ private:
       const parser::SelectTypeConstruct &selectTypeConstruct) {
     CheckName(selectTypeConstruct, "TYPE", "TYPE ");
     PopScope();
-    SelectivePopBack(selectTypeConstruct);
+    popConstructNameIfPresent(selectTypeConstruct);
   }
 
   // C1106
@@ -637,21 +656,21 @@ private:
   void addLabelReferenceFromDoStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().doStmtSources.emplace_back(
-        std::tuple<parser::Label, ScopeProxy, parser::CharBlock>{
+        std::tuple<parser::Label, ProxyForScope, parser::CharBlock>{
             label, currentScope_, currentPosition_});
   }
 
   void addLabelReferenceFromFormatStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().formatStmtSources.emplace_back(
-        std::tuple<parser::Label, ScopeProxy, parser::CharBlock>{
+        std::tuple<parser::Label, ProxyForScope, parser::CharBlock>{
             label, currentScope_, currentPosition_});
   }
 
   void addLabelReference(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().otherStmtSources.emplace_back(
-        std::tuple<parser::Label, ScopeProxy, parser::CharBlock>{
+        std::tuple<parser::Label, ProxyForScope, parser::CharBlock>{
             label, currentScope_, currentPosition_});
   }
 
@@ -664,12 +683,12 @@ private:
   std::vector<UnitAnalysis> programUnits_;
   parser::Messages errorHandler_;
   parser::CharBlock currentPosition_{nullptr};
-  ScopeProxy currentScope_{0};
+  ProxyForScope currentScope_{0};
   std::vector<std::string> constructNames_;
 };
 
-bool InInclusiveScope(
-    const std::vector<ScopeProxy> &scopes, ScopeProxy tail, ScopeProxy head) {
+bool InInclusiveScope(const std::vector<ProxyForScope> &scopes,
+    ProxyForScope tail, ProxyForScope head) {
   for (; tail != head; tail = scopes[tail]) {
     if (!HasScope(tail)) {
       return false;
@@ -686,8 +705,12 @@ ParseTreeAnalyzer LabelAnalysis(const parser::Program &program) {
 
 bool InBody(const parser::CharBlock &position,
     const std::pair<parser::CharBlock, parser::CharBlock> &pair) {
-  return (position.begin() >= pair.first.begin()) &&
-      (position.begin() < pair.second.end());
+  if (position.begin() >= pair.first.begin()) {
+    if (position.begin() < pair.second.end()) {
+      return true;
+    }
+  }
+  return false;
 }
 
 LabelStmtInfo GetLabel(
@@ -702,12 +725,12 @@ LabelStmtInfo GetLabel(
 
 // 11.1.7.3
 void CheckBranchesIntoDoBody(const SourceStmtList &branches,
-    const TargetStmtMap &labels, const std::vector<ScopeProxy> &scopes,
+    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
     const IndexList &loopBodies, parser::Messages &errorHandler) {
   for (const auto branch : branches) {
     const auto &label{std::get<parser::Label>(branch)};
     auto branchTarget{GetLabel(labels, label)};
-    if (HasScope(std::get<ScopeProxy>(branchTarget))) {
+    if (HasScope(std::get<ProxyForScope>(branchTarget))) {
       const auto &fromPosition{std::get<parser::CharBlock>(branch)};
       const auto &toPosition{std::get<parser::CharBlock>(branchTarget)};
       for (const auto body : loopBodies) {
@@ -760,14 +783,14 @@ parser::CharBlock SkipLabel(const parser::CharBlock &position) {
 
 void CheckLabelDoConstraints(const SourceStmtList &dos,
     const SourceStmtList &branches, const TargetStmtMap &labels,
-    const std::vector<ScopeProxy> &scopes, parser::Messages &errorHandler) {
+    const std::vector<ProxyForScope> &scopes, parser::Messages &errorHandler) {
   IndexList loopBodies;
   for (const auto stmt : dos) {
     const auto &label{std::get<parser::Label>(stmt)};
-    const auto &scope{std::get<ScopeProxy>(stmt)};
+    const auto &scope{std::get<ProxyForScope>(stmt)};
     const auto &position{std::get<parser::CharBlock>(stmt)};
     auto doTarget{GetLabel(labels, label)};
-    if (!HasScope(std::get<ScopeProxy>(doTarget))) {
+    if (!HasScope(std::get<ProxyForScope>(doTarget))) {
       // C1133
       errorHandler.Say(position,
           parser::MessageFormattedText{
@@ -780,7 +803,7 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
               "label '%" PRIu64 "' doesn't lexically follow DO stmt"_err_en_US,
               label});
     } else if (!InInclusiveScope(
-                   scopes, scope, std::get<ScopeProxy>(doTarget))) {
+                   scopes, scope, std::get<ProxyForScope>(doTarget))) {
       // C1133
       if (isStrictF18) {
         errorHandler.Say(position,
@@ -808,18 +831,19 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
 
 // 6.2.5
 void CheckScopeConstraints(const SourceStmtList &stmts,
-    const TargetStmtMap &labels, const std::vector<ScopeProxy> &scopes,
+    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
     parser::Messages &errorHandler) {
   for (const auto stmt : stmts) {
     const auto &label{std::get<parser::Label>(stmt)};
-    const auto &scope{std::get<ScopeProxy>(stmt)};
+    const auto &scope{std::get<ProxyForScope>(stmt)};
     const auto &position{std::get<parser::CharBlock>(stmt)};
     auto target{GetLabel(labels, label)};
-    if (!HasScope(std::get<ScopeProxy>(target))) {
+    if (!HasScope(std::get<ProxyForScope>(target))) {
       errorHandler.Say(position,
           parser::MessageFormattedText{
               "label '%" PRIu64 "' was not found"_err_en_US, label});
-    } else if (!InInclusiveScope(scopes, scope, std::get<ScopeProxy>(target))) {
+    } else if (!InInclusiveScope(
+                   scopes, scope, std::get<ProxyForScope>(target))) {
       if (isStrictF18) {
         errorHandler.Say(position,
             parser::MessageFormattedText{
@@ -838,7 +862,7 @@ void CheckBranchTargetConstraints(const SourceStmtList &stmts,
   for (const auto stmt : stmts) {
     const auto &label{std::get<parser::Label>(stmt)};
     auto branchTarget{GetLabel(labels, label)};
-    if (HasScope(std::get<ScopeProxy>(branchTarget))) {
+    if (HasScope(std::get<ProxyForScope>(branchTarget))) {
       if (!std::get<LabeledStmtClassificationSet>(branchTarget)
                .test(TargetStatementEnum::Branch)) {
         errorHandler.Say(std::get<parser::CharBlock>(branchTarget),
@@ -850,7 +874,7 @@ void CheckBranchTargetConstraints(const SourceStmtList &stmts,
 }
 
 void CheckBranchConstraints(const SourceStmtList &branches,
-    const TargetStmtMap &labels, const std::vector<ScopeProxy> &scopes,
+    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
     parser::Messages &errorHandler) {
   CheckScopeConstraints(branches, labels, scopes, errorHandler);
   CheckBranchTargetConstraints(branches, labels, errorHandler);
@@ -861,7 +885,7 @@ void CheckDataXferTargetConstraints(const SourceStmtList &stmts,
   for (const auto stmt : stmts) {
     const auto &label{std::get<parser::Label>(stmt)};
     auto ioTarget{GetLabel(labels, label)};
-    if (HasScope(std::get<ScopeProxy>(ioTarget))) {
+    if (HasScope(std::get<ProxyForScope>(ioTarget))) {
       if (!std::get<LabeledStmtClassificationSet>(ioTarget).test(
               TargetStatementEnum::Format)) {
         errorHandler.Say(std::get<parser::CharBlock>(ioTarget),
@@ -873,7 +897,7 @@ void CheckDataXferTargetConstraints(const SourceStmtList &stmts,
 }
 
 void CheckDataTransferConstraints(const SourceStmtList &dataTransfers,
-    const TargetStmtMap &labels, const std::vector<ScopeProxy> &scopes,
+    const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
     parser::Messages &errorHandler) {
   CheckScopeConstraints(dataTransfers, labels, scopes, errorHandler);
   CheckDataXferTargetConstraints(dataTransfers, labels, errorHandler);
