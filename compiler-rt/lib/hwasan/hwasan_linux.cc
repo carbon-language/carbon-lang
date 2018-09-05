@@ -221,23 +221,25 @@ extern "C" void __hwasan_thread_exit() {
   Thread *t = GetCurrentThread();
   // Make sure that signal handler can not see a stale current thread pointer.
   atomic_signal_fence(memory_order_seq_cst);
-  if (t)
-    t->Destroy();
+  CHECK(t);
+  t->Destroy();
 }
 
 #if HWASAN_WITH_INTERCEPTORS
 static pthread_key_t tsd_key;
 static bool tsd_key_inited = false;
 
+static THREADLOCAL Thread *current_thread;
+
 void HwasanTSDDtor(void *tsd) {
-  Thread *t = (Thread*)tsd;
+  Thread *t = current_thread;
   if (t->destructor_iterations_ > 1) {
     t->destructor_iterations_--;
-    CHECK_EQ(0, pthread_setspecific(tsd_key, tsd));
+    CHECK_EQ(0, pthread_setspecific(tsd_key, (void*)1));
     return;
   }
-  t->Destroy();
   __hwasan_thread_exit();
+  current_thread = nullptr;
 }
 
 void HwasanTSDInit() {
@@ -247,15 +249,17 @@ void HwasanTSDInit() {
 }
 
 Thread *GetCurrentThread() {
-  return (Thread *)pthread_getspecific(tsd_key);
+  return current_thread;
 }
 
 void SetCurrentThread(Thread *t) {
   // Make sure that HwasanTSDDtor gets called at the end.
   CHECK(tsd_key_inited);
   // Make sure we do not reset the current Thread.
+  CHECK_EQ(current_thread, nullptr);
+  current_thread = t;
   CHECK_EQ(0, pthread_getspecific(tsd_key));
-  pthread_setspecific(tsd_key, (void *)t);
+  CHECK_EQ(0, pthread_setspecific(tsd_key, (void *)1));
 }
 #elif SANITIZER_ANDROID
 void HwasanTSDInit() {}
