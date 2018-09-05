@@ -160,7 +160,8 @@ struct CHRStats {
                                      // count at the scope entry.
 };
 
-inline raw_ostream &operator<<(raw_ostream &OS, const CHRStats &Stats) {
+inline raw_ostream LLVM_ATTRIBUTE_UNUSED &operator<<(raw_ostream &OS,
+                                                     const CHRStats &Stats) {
   Stats.print(OS);
   return OS;
 }
@@ -459,7 +460,8 @@ static bool shouldApply(Function &F, ProfileSummaryInfo& PSI) {
   return PSI.isFunctionEntryHot(&F);
 }
 
-static void dumpIR(Function &F, const char *Label, CHRStats *Stats) {
+static void LLVM_ATTRIBUTE_UNUSED dumpIR(Function &F, const char *Label,
+                                         CHRStats *Stats) {
   std::string Name = F.getName().str();
   const char *DemangledName = nullptr;
 #if !defined(_MSC_VER)
@@ -478,7 +480,6 @@ static void dumpIR(Function &F, const char *Label, CHRStats *Stats) {
   CHR_DEBUG(dbgs() << "\n");
   CHR_DEBUG(F.dump());
 }
-
 
 void CHRScope::print(raw_ostream &OS) const {
   assert(RegInfos.size() > 0 && "Empty CHRScope");
@@ -1566,7 +1567,8 @@ static void insertTrivialPHIs(CHRScope *Scope,
 }
 
 // Assert that all the CHR regions of the scope have a biased branch or select.
-static void assertCHRRegionsHaveBiasedBranchOrSelect(CHRScope *Scope) {
+static void LLVM_ATTRIBUTE_UNUSED
+assertCHRRegionsHaveBiasedBranchOrSelect(CHRScope *Scope) {
 #ifndef NDEBUG
   auto HasBiasedBranchOrSelect = [](RegInfo &RI, CHRScope *Scope) {
     if (Scope->TrueBiasedRegions.count(RI.R) ||
@@ -1587,8 +1589,8 @@ static void assertCHRRegionsHaveBiasedBranchOrSelect(CHRScope *Scope) {
 
 // Assert that all the condition values of the biased branches and selects have
 // been hoisted to the pre-entry block or outside of the scope.
-static void assertBranchOrSelectConditionHoisted(CHRScope *Scope,
-                                                 BasicBlock *PreEntryBlock) {
+static void LLVM_ATTRIBUTE_UNUSED assertBranchOrSelectConditionHoisted(
+    CHRScope *Scope, BasicBlock *PreEntryBlock) {
   CHR_DEBUG(dbgs() << "Biased regions condition values \n");
   for (RegInfo &RI : Scope->CHRRegions) {
     Region *R = RI.R;
@@ -1908,7 +1910,8 @@ void CHR::transformScopes(SmallVectorImpl<CHRScope *> &CHRScopes) {
   }
 }
 
-static void dumpScopes(SmallVectorImpl<CHRScope *> &Scopes, const char * Label) {
+static void LLVM_ATTRIBUTE_UNUSED
+dumpScopes(SmallVectorImpl<CHRScope *> &Scopes, const char *Label) {
   dbgs() << Label << " " << Scopes.size() << "\n";
   for (CHRScope *Scope : Scopes) {
     dbgs() << *Scope << "\n";
