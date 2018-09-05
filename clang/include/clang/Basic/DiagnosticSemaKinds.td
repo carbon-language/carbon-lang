@@ -1467,6 +1467,10 @@ def err_noexcept_needs_constant_expression : Error<
   "argument to noexcept specifier must be a constant expression">;
 def err_exception_spec_not_parsed : Error<
   "exception specification is not available until end of class definition">;
+def err_exception_spec_cycle : Error<
+  "exception specification of %0 uses itself">;
+def err_exception_spec_incomplete_type : Error<
+  "exception specification needed for member of incomplete class %0">;
 
 // C++ access checking
 def err_class_redeclared_with_different_access : Error<
@@ -4270,6 +4274,8 @@ def note_forward_template_decl : Note<
 def note_inst_declaration_hint : Note<"add an explicit instantiation "
   "declaration to suppress this warning if %q0 is explicitly instantiated in "
   "another translation unit">;
+def note_evaluating_exception_spec_here : Note<
+  "in evaluation of exception specification for %q0 needed here">;
 
 def note_default_arg_instantiation_here : Note<
   "in instantiation of default argument for '%0' required here">;
@@ -7471,8 +7477,6 @@ def note_in_class_initializer_not_yet_parsed : Note<
   "default member initializer declared here">;
 def err_in_class_initializer_cycle
     : Error<"default member initializer for %0 uses itself">;
-def err_exception_spec_cycle
-    : Error<"exception specification of %0 uses itself">;
 
 def ext_in_class_initializer_non_constant : Extension<
   "in-class initializer for static data member is not a constant expression; "
