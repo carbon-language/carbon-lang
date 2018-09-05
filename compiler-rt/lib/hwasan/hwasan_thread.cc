@@ -114,7 +114,7 @@ void Thread::ClearShadowForThreadStackAndTLS() {
 void Thread::Destroy() {
   if (flags()->verbose_threads)
     Print("Destroying: ");
-  malloc_storage().CommitBack();
+  AllocatorSwallowThreadLocalCache(allocator_cache());
   ClearShadowForThreadStackAndTLS();
   RemoveFromThreadList(this);
   uptr size = RoundUpTo(sizeof(Thread), GetPageSizeCached());

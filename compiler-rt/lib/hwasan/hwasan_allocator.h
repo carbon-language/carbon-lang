@@ -64,14 +64,8 @@ typedef LargeMmapAllocator<HwasanMapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
                           SecondaryAllocator> Allocator;
 
-struct HwasanThreadLocalMallocStorage {
-  AllocatorCache allocator_cache;
-  void CommitBack();
 
- private:
-  // These objects are allocated via mmap() and are zero-initialized.
-  HwasanThreadLocalMallocStorage() {}
-};
+void AllocatorSwallowThreadLocalCache(AllocatorCache *cache);
 
 class HwasanChunkView {
  public:
