@@ -86,6 +86,8 @@ HwasanChunkView FindHeapChunkByAddress(uptr address);
 
 // Information about one (de)allocation that happened in the past.
 // These are recorded in a thread-local ring buffer.
+// TODO: this is currently 24 bytes (20 bytes + alignment).
+// Compress it to 16 bytes or extend it to be more useful.
 struct HeapAllocationRecord {
   uptr tagged_addr;
   u32  alloc_context_id;
