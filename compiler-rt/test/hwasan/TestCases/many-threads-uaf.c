@@ -14,12 +14,12 @@ void *BoringThread(void *arg) {
   return NULL;
 }
 
-// CHECK: Creating  : thread {{.*}} id: 0
-// CHECK: Creating  : thread {{.*}} id: 1
-// CHECK: Destroying: thread {{.*}} id: 1
-// CHECK: Creating  : thread {{.*}} id: 1100
-// CHECK: Destroying: thread {{.*}} id: 1100
-// CHECK: Creating  : thread {{.*}} id: 1101
+// CHECK: Creating  : T0
+// CHECK: Creating  : T1
+// CHECK: Destroying: T1
+// CHECK: Creating  : T1100
+// CHECK: Destroying: T1100
+// CHECK: Creating  : T1101
 
 void *UAFThread(void *arg) {
   char * volatile x = (char*)malloc(10);
@@ -29,6 +29,7 @@ void *UAFThread(void *arg) {
   // CHECK: ERROR: HWAddressSanitizer: tag-mismatch on address
   // CHECK: WRITE of size 1
   // CHECK: many-threads-uaf.c:[[@LINE-3]]
+  // CHECK: Thread: T1101
   return NULL;
 }
 
