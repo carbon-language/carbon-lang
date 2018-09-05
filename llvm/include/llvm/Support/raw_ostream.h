@@ -369,9 +369,11 @@ class raw_fd_ostream : public raw_pwrite_stream {
 
   bool SupportsSeeking;
 
+#ifdef _WIN32
   /// True if this fd refers to a Windows console device. Mintty and other
   /// terminal emulators are TTYs, but they are not consoles.
   bool IsWindowsConsole = false;
+#endif
 
   std::error_code EC;
 
