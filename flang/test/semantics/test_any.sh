@@ -51,8 +51,9 @@ function internal_check() {
 
 r=0
 for input in $*; do
-  CMD=$(cat ${input} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
-  CMD=$(echo ${CMD} | sed -e "s:%s:${input}:g")
-  eval "( ${CMD} )" || (echo "test ${input} failed"; r=1)
+  finput="${srcdir}/${input}"
+  CMD=$(cat ${finput} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
+  CMD=$(echo ${CMD} | sed -e "s:%s:${finput}:g")
+  eval "( ${CMD} )" || (echo "test ${finput} failed"; r=1)
 done
 exit $r
