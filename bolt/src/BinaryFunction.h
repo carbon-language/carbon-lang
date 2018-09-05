@@ -496,6 +496,11 @@ private:
   /// in a different order.
   CFIInstrMapType FrameInstructions;
 
+  /// A map of restore state CFI instructions to their equivalent CFI
+  /// instructions that produce the same state, in order to eliminate
+  /// remember-restore CFI instructions when rewriting CFI.
+  DenseMap<int32_t , SmallVector<int32_t, 4>> FrameRestoreEquivalents;
+
   /// Exception handling ranges.
   struct CallSite {
     const MCSymbol *Start;
@@ -802,10 +807,8 @@ public:
   }
 
   /// Update layout of basic blocks used for output.
-  void updateBasicBlockLayout(BasicBlockOrderType &NewLayout,
-                              bool SavePrevLayout) {
-    if (SavePrevLayout)
-      BasicBlocksPreviousLayout = BasicBlocksLayout;
+  void updateBasicBlockLayout(BasicBlockOrderType &NewLayout) {
+    BasicBlocksPreviousLayout = BasicBlocksLayout;
 
     if (NewLayout != BasicBlocksLayout) {
       ModifiedLayout = true;
@@ -2012,6 +2015,20 @@ public:
   const CFIInstrMapType &getFDEProgram() const {
     return FrameInstructions;
   }
+
+  void moveRememberRestorePair(BinaryBasicBlock *BB);
+
+  bool replayCFIInstrs(int32_t FromState, int32_t ToState,
+                       BinaryBasicBlock *InBB,
+                       BinaryBasicBlock::iterator InsertIt);
+
+  /// unwindCFIState is used to unwind from a higher to a lower state number
+  /// without using remember-restore instructions. We do that by keeping track
+  /// of what values have been changed from state A to B and emitting
+  /// instructions that undo this change.
+  SmallVector<int32_t, 4> unwindCFIState(int32_t FromState, int32_t ToState,
+                                         BinaryBasicBlock *InBB,
+                                         BinaryBasicBlock::iterator &InsertIt);
 
   /// After reordering, this function checks the state of CFI and fixes it if it
   /// is corrupted. If it is unable to fix it, it returns false.

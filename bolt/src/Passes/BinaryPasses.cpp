@@ -489,7 +489,7 @@ void ReorderBasicBlocks::modifyFunctionLayout(BinaryFunction &BF,
 
   Algo->reorderBasicBlocks(BF, NewLayout);
 
-  BF.updateBasicBlockLayout(NewLayout, /*SavePrevLayout=*/opts::PrintFuncStat);
+  BF.updateBasicBlockLayout(NewLayout);
 
   if (Split)
     splitFunction(BF);

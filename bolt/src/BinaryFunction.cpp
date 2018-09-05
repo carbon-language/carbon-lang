@@ -1132,7 +1132,11 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       // Functions with "soft" boundaries, e.g. coming from assembly source,
       // can have 0-byte padding at the end.
       bool IsZeroPadding = true;
-      for (auto I = Offset; I < getSize(); ++I) {
+      uint64_t EndOfCode = getSize();
+      auto Iter = DataOffsets.upper_bound(Offset);
+      if (Iter != DataOffsets.end())
+        EndOfCode = *Iter;
+      for (auto I = Offset; I < EndOfCode; ++I) {
         if (FunctionData[I] != 0) {
           IsZeroPadding = false;
           break;
@@ -2184,56 +2188,397 @@ void BinaryFunction::annotateCFIState() {
   assert(StateStack.empty() && "corrupt CFI stack");
 }
 
+namespace {
+
+/// Our full interpretation of a DWARF CFI machine state at a given point
+struct CFISnapshot {
+  /// CFA register number and offset defining the canonical frame at this
+  /// point, or the number of a rule (CFI state) that computes it with a
+  /// DWARF expression. This number will be negative if it refers to a CFI
+  /// located in the CIE instead of the FDE.
+  uint32_t CFAReg;
+  int32_t CFAOffset;
+  int32_t CFARule;
+  /// Mapping of rules (CFI states) that define the location of each
+  /// register. If absent, no rule defining the location of such register
+  /// was ever read. This number will be negative if it refers to a CFI
+  /// located in the CIE instead of the FDE.
+  DenseMap<int32_t, int32_t> RegRule;
+
+  /// References to CIE, FDE and expanded instructions after a restore state
+  const std::vector<MCCFIInstruction> &CIE;
+  const std::vector<MCCFIInstruction> &FDE;
+  const DenseMap<int32_t, SmallVector<int32_t, 4>> &FrameRestoreEquivalents;
+
+  /// Current FDE CFI number representing the state where the snapshot is at
+  int32_t CurState;
+
+  /// Used when we don't have information about which state/rule to apply
+  /// to recover the location of either the CFA or a specific register
+  constexpr static int32_t UNKNOWN = std::numeric_limits<int32_t>::min();
+
+private:
+  /// Update our snapshot by executing a single CFI
+  void update(const MCCFIInstruction &Instr, int32_t RuleNumber) {
+    switch (Instr.getOperation()) {
+    case MCCFIInstruction::OpSameValue:
+    case MCCFIInstruction::OpRelOffset:
+    case MCCFIInstruction::OpOffset:
+    case MCCFIInstruction::OpRestore:
+    case MCCFIInstruction::OpUndefined:
+    case MCCFIInstruction::OpRegister:
+    case MCCFIInstruction::OpExpression:
+    case MCCFIInstruction::OpValExpression:
+      RegRule[Instr.getRegister()] = RuleNumber;
+      break;
+    case MCCFIInstruction::OpDefCfaRegister:
+      CFAReg = Instr.getRegister();
+      CFARule = UNKNOWN;
+      break;
+    case MCCFIInstruction::OpDefCfaOffset:
+      CFAOffset = Instr.getOffset();
+      CFARule = UNKNOWN;
+      break;
+    case MCCFIInstruction::OpDefCfa:
+      CFAReg = Instr.getRegister();
+      CFAOffset = Instr.getOffset();
+      CFARule = UNKNOWN;
+      break;
+    case MCCFIInstruction::OpDefCfaExpression:
+      CFARule = RuleNumber;
+      break;
+    case MCCFIInstruction::OpAdjustCfaOffset:
+    case MCCFIInstruction::OpWindowSave:
+    case MCCFIInstruction::OpEscape:
+      llvm_unreachable("unsupported CFI opcode");
+      break;
+    case MCCFIInstruction::OpRememberState:
+    case MCCFIInstruction::OpRestoreState:
+    case MCCFIInstruction::OpGnuArgsSize:
+      // do not affect CFI state
+      break;
+    }
+  }
+
+public:
+  /// Advance state reading FDE CFI instructions up to State number
+  void advanceTo(int32_t State) {
+    for (int32_t I = CurState, E = State; I != E; ++I) {
+      const auto &Instr = FDE[I];
+      if (Instr.getOperation() != MCCFIInstruction::OpRestoreState) {
+        update(Instr, I);
+        continue;
+      }
+      // If restore state instruction, fetch the equivalent CFIs that have
+      // the same effect of this restore. This is used to ensure remember-
+      // restore pairs are completely removed.
+      auto Iter = FrameRestoreEquivalents.find(I);
+      if (Iter == FrameRestoreEquivalents.end())
+        continue;
+      for (int32_t RuleNumber : Iter->second) {
+        update(FDE[RuleNumber], RuleNumber);
+      }
+    }
+
+    assert(((CFAReg != (uint32_t)UNKNOWN && CFAOffset != UNKNOWN) ||
+            CFARule != UNKNOWN) &&
+           "CIE did not define default CFA?");
+
+    CurState = State;
+  }
+
+  /// Interpret all CIE and FDE instructions up until CFI State number and
+  /// populate this snapshot
+  CFISnapshot(
+      const std::vector<MCCFIInstruction> &CIE,
+      const std::vector<MCCFIInstruction> &FDE,
+      const DenseMap<int32_t, SmallVector<int32_t, 4>> &FrameRestoreEquivalents,
+      int32_t State)
+      : CIE(CIE), FDE(FDE), FrameRestoreEquivalents(FrameRestoreEquivalents) {
+    CFAReg = UNKNOWN;
+    CFAOffset = UNKNOWN;
+    CFARule = UNKNOWN;
+    CurState = 0;
+
+    for (int32_t I = 0, E = CIE.size(); I != E; ++I) {
+      const auto &Instr = CIE[I];
+      update(Instr, -I);
+    }
+
+    advanceTo(State);
+  }
+
+};
+
+/// A CFI snapshot with the capability of checking if incremental additions to
+/// it are redundant. This is used to ensure we do not emit two CFI instructions
+/// back-to-back that are doing the same state change, or to avoid emitting a
+/// CFI at all when the state at that point would not be modified after that CFI
+struct CFISnapshotDiff : public CFISnapshot {
+  bool RestoredCFAReg{false};
+  bool RestoredCFAOffset{false};
+  DenseMap<int32_t, bool> RestoredRegs;
+
+  CFISnapshotDiff(const CFISnapshot &S) : CFISnapshot(S) {}
+
+  CFISnapshotDiff(
+      const std::vector<MCCFIInstruction> &CIE,
+      const std::vector<MCCFIInstruction> &FDE,
+      const DenseMap<int32_t, SmallVector<int32_t, 4>> &FrameRestoreEquivalents,
+      int32_t State)
+      : CFISnapshot(CIE, FDE, FrameRestoreEquivalents, State) {}
+
+  /// Return true if applying Instr to this state is redundant and can be
+  /// dismissed.
+  bool isRedundant(const MCCFIInstruction &Instr) {
+    switch (Instr.getOperation()) {
+    case MCCFIInstruction::OpSameValue:
+    case MCCFIInstruction::OpRelOffset:
+    case MCCFIInstruction::OpOffset:
+    case MCCFIInstruction::OpRestore:
+    case MCCFIInstruction::OpUndefined:
+    case MCCFIInstruction::OpRegister:
+    case MCCFIInstruction::OpExpression:
+    case MCCFIInstruction::OpValExpression: {
+      if (RestoredRegs[Instr.getRegister()])
+        return true;
+      RestoredRegs[Instr.getRegister()] = true;
+      const int32_t CurRegRule =
+          RegRule.find(Instr.getRegister()) != RegRule.end()
+              ? RegRule[Instr.getRegister()]
+              : UNKNOWN;
+      if (CurRegRule == UNKNOWN) {
+        if (Instr.getOperation() == MCCFIInstruction::OpRestore ||
+            Instr.getOperation() == MCCFIInstruction::OpSameValue)
+          return true;
+        return false;
+      }
+      const MCCFIInstruction &LastDef =
+          CurRegRule < 0 ? CIE[-CurRegRule] : FDE[CurRegRule];
+      return LastDef == Instr;
+    }
+    case MCCFIInstruction::OpDefCfaRegister:
+      if (RestoredCFAReg)
+        return true;
+      RestoredCFAReg = true;
+      return CFAReg == Instr.getRegister();
+    case MCCFIInstruction::OpDefCfaOffset:
+      if (RestoredCFAOffset)
+        return true;
+      RestoredCFAOffset = true;
+      return CFAOffset == Instr.getOffset();
+    case MCCFIInstruction::OpDefCfa:
+      if (RestoredCFAReg && RestoredCFAOffset)
+        return true;
+      RestoredCFAReg = true;
+      RestoredCFAOffset = true;
+      return CFAReg == Instr.getRegister() && CFAOffset == Instr.getOffset();
+    case MCCFIInstruction::OpDefCfaExpression:
+      if (RestoredCFAReg && RestoredCFAOffset)
+        return true;
+      RestoredCFAReg = true;
+      RestoredCFAOffset = true;
+      return false;
+    case MCCFIInstruction::OpAdjustCfaOffset:
+    case MCCFIInstruction::OpWindowSave:
+    case MCCFIInstruction::OpEscape:
+      llvm_unreachable("unsupported CFI opcode");
+      return false;
+    case MCCFIInstruction::OpRememberState:
+    case MCCFIInstruction::OpRestoreState:
+    case MCCFIInstruction::OpGnuArgsSize:
+      // do not affect CFI state
+      return true;
+    }
+    return false;
+  }
+};
+
+} // end anonymous namespace
+
+bool BinaryFunction::replayCFIInstrs(int32_t FromState, int32_t ToState,
+                                     BinaryBasicBlock *InBB,
+                                     BinaryBasicBlock::iterator InsertIt) {
+  if (FromState == ToState)
+    return true;
+  assert(FromState < ToState && "can only replay CFIs forward");
+
+  CFISnapshotDiff CFIDiff(CIEFrameInstructions, FrameInstructions,
+                          FrameRestoreEquivalents, FromState);
+
+  std::vector<uint32_t> NewCFIs;
+  for (auto CurState = FromState; CurState < ToState; ++CurState) {
+    MCCFIInstruction *Instr = &FrameInstructions[CurState];
+    if (Instr->getOperation() == MCCFIInstruction::OpRestoreState) {
+      auto Iter = FrameRestoreEquivalents.find(CurState);
+      assert(Iter != FrameRestoreEquivalents.end());
+      NewCFIs.insert(NewCFIs.end(), Iter->second.begin(),
+                     Iter->second.end());
+      // RestoreState / Remember will be filtered out later by CFISnapshotDiff,
+      // so we might as well fall-through here.
+    }
+    NewCFIs.push_back(CurState);
+    continue;
+  }
+
+  // Replay instructions while avoiding duplicates
+  for (auto I = NewCFIs.rbegin(), E = NewCFIs.rend(); I != E; ++I) {
+    if (CFIDiff.isRedundant(FrameInstructions[*I]))
+      continue;
+    InsertIt = addCFIPseudo(InBB, InsertIt, *I);
+  }
+
+  return true;
+}
+
+SmallVector<int32_t, 4>
+BinaryFunction::unwindCFIState(int32_t FromState, int32_t ToState,
+                               BinaryBasicBlock *InBB,
+                               BinaryBasicBlock::iterator &InsertIt) {
+  SmallVector<int32_t, 4> NewStates;
+
+  CFISnapshot ToCFITable(CIEFrameInstructions, FrameInstructions,
+                                FrameRestoreEquivalents, ToState);
+  CFISnapshotDiff FromCFITable(ToCFITable);
+  FromCFITable.advanceTo(FromState);
+
+  auto undoState = [&](const MCCFIInstruction &Instr) {
+    switch (Instr.getOperation()) {
+    case MCCFIInstruction::OpRememberState:
+    case MCCFIInstruction::OpRestoreState:
+      break;
+    case MCCFIInstruction::OpSameValue:
+    case MCCFIInstruction::OpRelOffset:
+    case MCCFIInstruction::OpOffset:
+    case MCCFIInstruction::OpRestore:
+    case MCCFIInstruction::OpUndefined:
+    case MCCFIInstruction::OpRegister:
+    case MCCFIInstruction::OpExpression:
+    case MCCFIInstruction::OpValExpression: {
+      if (ToCFITable.RegRule.find(Instr.getRegister()) ==
+          ToCFITable.RegRule.end()) {
+        FrameInstructions.emplace_back(
+            MCCFIInstruction::createRestore(nullptr, Instr.getRegister()));
+        if (FromCFITable.isRedundant(FrameInstructions.back())) {
+          FrameInstructions.pop_back();
+          break;
+        }
+        NewStates.push_back(FrameInstructions.size() - 1);
+        InsertIt = addCFIPseudo(InBB, InsertIt, FrameInstructions.size() - 1);
+        ++InsertIt;
+        break;
+      }
+      const int32_t Rule = ToCFITable.RegRule[Instr.getRegister()];
+      if (Rule < 0) {
+        if (FromCFITable.isRedundant(CIEFrameInstructions[-Rule]))
+          break;
+        NewStates.push_back(FrameInstructions.size());
+        InsertIt = addCFIPseudo(InBB, InsertIt, FrameInstructions.size());
+        ++InsertIt;
+        FrameInstructions.emplace_back(CIEFrameInstructions[-Rule]);
+        break;
+      }
+      if (FromCFITable.isRedundant(FrameInstructions[Rule]))
+        break;
+      NewStates.push_back(Rule);
+      InsertIt = addCFIPseudo(InBB, InsertIt, Rule);
+      ++InsertIt;
+      break;
+    }
+    case MCCFIInstruction::OpDefCfaRegister:
+    case MCCFIInstruction::OpDefCfaOffset:
+    case MCCFIInstruction::OpDefCfa:
+    case MCCFIInstruction::OpDefCfaExpression:
+      if (ToCFITable.CFARule == CFISnapshot::UNKNOWN) {
+        FrameInstructions.emplace_back(MCCFIInstruction::createDefCfa(
+            nullptr, ToCFITable.CFAReg, -ToCFITable.CFAOffset));
+        if (FromCFITable.isRedundant(FrameInstructions.back())) {
+          FrameInstructions.pop_back();
+          break;
+        }
+        NewStates.push_back(FrameInstructions.size() - 1);
+        InsertIt = addCFIPseudo(InBB, InsertIt, FrameInstructions.size() - 1);
+        ++InsertIt;
+      } else if (ToCFITable.CFARule < 0) {
+        if (FromCFITable.isRedundant(CIEFrameInstructions[-ToCFITable.CFARule]))
+          break;
+        NewStates.push_back(FrameInstructions.size());
+        InsertIt = addCFIPseudo(InBB, InsertIt, FrameInstructions.size());
+        ++InsertIt;
+        FrameInstructions.emplace_back(
+            CIEFrameInstructions[-ToCFITable.CFARule]);
+      } else if (!FromCFITable.isRedundant(
+                     FrameInstructions[ToCFITable.CFARule])) {
+        NewStates.push_back(ToCFITable.CFARule);
+        InsertIt = addCFIPseudo(InBB, InsertIt, ToCFITable.CFARule);
+        ++InsertIt;
+      }
+      break;
+    case MCCFIInstruction::OpAdjustCfaOffset:
+    case MCCFIInstruction::OpWindowSave:
+    case MCCFIInstruction::OpEscape:
+      llvm_unreachable("unsupported CFI opcode");
+      break;
+    case MCCFIInstruction::OpGnuArgsSize:
+      // do not affect CFI state
+      break;
+    }
+  };
+
+
+  // Undo all modifications from ToState to FromState
+  for (int32_t I = ToState, E = FromState; I != E; ++I) {
+    const auto &Instr = FrameInstructions[I];
+    if (Instr.getOperation() != MCCFIInstruction::OpRestoreState) {
+      undoState(Instr);
+      continue;
+    }
+    auto Iter = FrameRestoreEquivalents.find(I);
+    if (Iter == FrameRestoreEquivalents.end())
+      continue;
+    for (int32_t State : Iter->second)
+      undoState(FrameInstructions[State]);
+  }
+
+  return NewStates;
+}
+
 bool BinaryFunction::fixCFIState() {
   DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
   DEBUG(dbgs() << "This is the list of CFI states for each BB of " << *this
                << ": ");
 
-  auto replayCFIInstrs =
-      [this](int32_t FromState, int32_t ToState, BinaryBasicBlock *InBB,
-         BinaryBasicBlock::iterator InsertIt) -> bool {
-    if (FromState == ToState)
-      return true;
-    assert(FromState < ToState && "can only replay CFIs forward");
+  std::stack<int32_t> Stack;
+  auto &OriginalBBOrder = BasicBlocksPreviousLayout.empty()
+                              ? BasicBlocksLayout
+                              : BasicBlocksPreviousLayout;
 
-    std::vector<uint32_t> NewCFIs;
-    uint32_t NestedLevel = 0;
-    for (auto CurState = FromState; CurState < ToState; ++CurState) {
-      MCCFIInstruction *Instr = &FrameInstructions[CurState];
-      if (Instr->getOperation() == MCCFIInstruction::OpRememberState)
-        ++NestedLevel;
-      if (!NestedLevel)
-        NewCFIs.push_back(CurState);
-      if (Instr->getOperation() == MCCFIInstruction::OpRestoreState)
-        --NestedLevel;
-    }
-
-    // TODO: If in replaying the CFI instructions to reach this state we
-    // have state stack instructions, we could still work out the logic
-    // to extract only the necessary instructions to reach this state
-    // without using the state stack. Not sure if it is worth the effort
-    // because this happens rarely.
-    if (NestedLevel != 0) {
-      errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state"
-             << " while replaying CFI instructions for BB "
-             << InBB->getName() << " in function " << *this << '\n';
-      return false;
-    }
-
-    for (auto CFI : NewCFIs) {
-      // Ignore GNU_args_size instructions.
-      if (FrameInstructions[CFI].getOperation() !=
-          MCCFIInstruction::OpGnuArgsSize) {
-        InsertIt = addCFIPseudo(InBB, InsertIt, CFI);
-        ++InsertIt;
+  // Reordering blocks with remember-restore state instructions can be specially
+  // tricky. When rewriting the CFI, we omit remember-restore state instructions
+  // entirely. For restore state, we build a map expanding each restore to the
+  // equivalent unwindCFIState sequence required at that point to achieve the
+  // same effect of the restore. All remember state are then just ignored.
+  for (BinaryBasicBlock *CurBB : OriginalBBOrder) {
+    for (auto II = CurBB->begin(); II != CurBB->end(); ++II) {
+      if (auto *CFI = getCFIFor(*II)) {
+        if (CFI->getOperation() == MCCFIInstruction::OpRememberState) {
+          Stack.push(II->getOperand(0).getImm());
+          BC.MIB->addAnnotation(*II, "DeleteMe", 0U);
+          continue;
+        }
+        if (CFI->getOperation() == MCCFIInstruction::OpRestoreState) {
+          const int32_t RememberState = Stack.top();
+          const int32_t CurState = II->getOperand(0).getImm();
+          BC.MIB->addAnnotation(*II, "DeleteMe", 0U);
+          FrameRestoreEquivalents[CurState] =
+              unwindCFIState(CurState, RememberState, CurBB, II);
+          Stack.pop();
+        }
       }
     }
-
-    return true;
-  };
+  }
 
   int32_t State = 0;
-  auto *FDEStartBB = BasicBlocksLayout[0];
   bool SeenCold = false;
   auto Sep = "";
   (void)Sep;
@@ -2241,11 +2586,9 @@ bool BinaryFunction::fixCFIState() {
     const auto CFIStateAtExit = BB->getCFIStateAtExit();
 
     // Hot-cold border: check if this is the first BB to be allocated in a cold
-    // region (with a different FDE). If yes, we need to reset the CFI state and
-    // the FDEStartBB that is used to insert remember_state CFIs.
+    // region (with a different FDE). If yes, we need to reset the CFI state.
     if (!SeenCold && BB->isCold()) {
       State = 0;
-      FDEStartBB = BB;
       SeenCold = true;
     }
 
@@ -2253,55 +2596,10 @@ bool BinaryFunction::fixCFIState() {
     // state at BB entry point.
     if (BB->getCFIState() < State) {
       // In this case, State is currently higher than what this BB expect it
-      // to be. To solve this, we need to insert a CFI instruction to remember
-      // the old state at function entry, then another CFI instruction to
-      // restore it at the entry of this BB and replay CFI instructions to
-      // reach the desired state.
-      int32_t OldState = BB->getCFIState();
-      // Remember state at function entry point (our reference state).
-      auto InsertIt = FDEStartBB->begin();
-      while (InsertIt != FDEStartBB->end() && BC.MIB->isCFI(*InsertIt))
-        ++InsertIt;
-      addCFIPseudo(FDEStartBB, InsertIt, FrameInstructions.size());
-      FrameInstructions.emplace_back(
-          MCCFIInstruction::createRememberState(nullptr));
-      // Restore state
-      InsertIt = addCFIPseudo(BB, BB->begin(), FrameInstructions.size());
-      ++InsertIt;
-      FrameInstructions.emplace_back(
-          MCCFIInstruction::createRestoreState(nullptr));
-      if (!replayCFIInstrs(0, OldState, BB, InsertIt))
-        return false;
-      // Check if we messed up the stack in this process
-      int StackOffset = 0;
-      for (BinaryBasicBlock *CurBB : BasicBlocksLayout) {
-        if (CurBB == BB)
-          break;
-        for (auto &Instr : *CurBB) {
-          if (auto *CFI = getCFIFor(Instr)) {
-            if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
-              ++StackOffset;
-            if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
-              --StackOffset;
-          }
-        }
-      }
-      auto Pos = BB->begin();
-      while (Pos != BB->end() && BC.MIB->isCFI(*Pos)) {
-        auto CFI = getCFIFor(*Pos);
-        if (CFI->getOperation() == MCCFIInstruction::OpRememberState)
-          ++StackOffset;
-        if (CFI->getOperation() == MCCFIInstruction::OpRestoreState)
-          --StackOffset;
-        ++Pos;
-      }
-
-      if (StackOffset != 0) {
-        errs() << "BOLT-WARNING: not possible to remember/recover state"
-               << " without corrupting CFI state stack in function "
-               << *this << " @ " << BB->getName() << "\n";
-        return false;
-      }
+      // to be. To solve this, we need to insert CFI instructions to undo
+      // the effect of all CFI from BB's state to current State.
+      auto InsertIt = BB->begin();
+      unwindCFIState(State, BB->getCFIState(), BB, InsertIt);
     } else if (BB->getCFIState() > State) {
       // If BB's CFI state is greater than State, it means we are behind in the
       // state. Just emit all instructions to reach this state at the
@@ -2315,6 +2613,12 @@ bool BinaryFunction::fixCFIState() {
     DEBUG(dbgs() << Sep << State; Sep = ", ");
   }
   DEBUG(dbgs() << "\n");
+
+  for (auto BB : BasicBlocksLayout)
+    for (auto I = BB->rbegin(), E = BB->rend(); I != E; ++I)
+      if (BC.MIB->hasAnnotation(*I, "DeleteMe"))
+        BB->eraseInstruction(&*I);
+
   return true;
 }
 

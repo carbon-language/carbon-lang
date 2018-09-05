@@ -756,22 +756,23 @@ void BinaryContext::printCFI(raw_ostream &OS, const MCCFIInstruction &Inst) {
     OS << "OpDefCfa Reg" << Inst.getRegister() << " " << Inst.getOffset();
     break;
   case MCCFIInstruction::OpRelOffset:
-    OS << "OpRelOffset";
+    OS << "OpRelOffset Reg" << Inst.getRegister() << " " << Inst.getOffset();
     break;
   case MCCFIInstruction::OpAdjustCfaOffset:
-    OS << "OfAdjustCfaOffset";
+    OS << "OfAdjustCfaOffset " << Inst.getOffset();
     break;
   case MCCFIInstruction::OpEscape:
     OS << "OpEscape";
     break;
   case MCCFIInstruction::OpRestore:
-    OS << "OpRestore";
+    OS << "OpRestore Reg" << Inst.getRegister();
     break;
   case MCCFIInstruction::OpUndefined:
-    OS << "OpUndefined";
+    OS << "OpUndefined Reg" << Inst.getRegister();
     break;
   case MCCFIInstruction::OpRegister:
-    OS << "OpRegister";
+    OS << "OpRegister Reg" << Inst.getRegister() << " Reg"
+       << Inst.getRegister2();
     break;
   case MCCFIInstruction::OpWindowSave:
     OS << "OpWindowSave";

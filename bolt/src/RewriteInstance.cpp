@@ -1105,9 +1105,23 @@ void RewriteInstance::discoverFileObjects() {
     }
   }
 
-  // Sort symbols in the file by value.
-  std::vector<SymbolRef> SortedFileSymbols(InputFile->symbol_begin(),
-                                           InputFile->symbol_end());
+  // Sort symbols in the file by value. Ignore symbols from non-allocatable
+  // sections.
+  auto isSymbolInMemory = [this](const SymbolRef &Sym) {
+    if (cantFail(Sym.getType()) == SymbolRef::ST_File)
+      return false;
+    if (Sym.getFlags() & SymbolRef::SF_Absolute)
+      return true;
+    if (Sym.getFlags() & SymbolRef::SF_Undefined)
+      return false;
+    BinarySection Section(*BC, *cantFail(Sym.getSection()));
+    return Section.isAllocatable();
+  };
+  std::vector<SymbolRef> SortedFileSymbols;
+  std::copy_if(InputFile->symbol_begin(), InputFile->symbol_end(),
+               std::back_inserter(SortedFileSymbols),
+               isSymbolInMemory);
+
   std::stable_sort(SortedFileSymbols.begin(), SortedFileSymbols.end(),
                    [](const SymbolRef &A, const SymbolRef &B) {
                      // FUNC symbols have higher precedence.
