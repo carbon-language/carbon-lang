@@ -1046,6 +1046,9 @@ def err_objc_property_attr_mutually_exclusive : Error<
   "property attributes '%0' and '%1' are mutually exclusive">;
 def err_objc_property_requires_object : Error<
   "property with '%0' attribute must be of object type">;
+def warn_objc_property_assign_on_object : Warning<
+  "'assign' property of object type may become a dangling reference; consider using 'unsafe_unretained'">,
+  InGroup<ObjCPropertyAssignOnObjectType>, DefaultIgnore;
 def warn_objc_property_no_assignment_attribute : Warning<
   "no 'assign', 'retain', or 'copy' attribute is specified - "
   "'assign' is assumed">,
