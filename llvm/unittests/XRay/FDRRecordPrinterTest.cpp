@@ -28,7 +28,7 @@ template <> struct Helper<BufferExtents> {
 
   static constexpr char Expected[] = "<Buffer: size = 1 bytes>";
 };
-constexpr char Helper<BufferExtents>::Expected[];
+const char Helper<BufferExtents>::Expected[];
 
 template <> struct Helper<WallclockRecord> {
   static std::unique_ptr<Record> construct() {
@@ -37,7 +37,7 @@ template <> struct Helper<WallclockRecord> {
 
   static constexpr char Expected[] = "<Wall Time: seconds = 1.000002>";
 };
-constexpr char Helper<WallclockRecord>::Expected[];
+const char Helper<WallclockRecord>::Expected[];
 
 template <> struct Helper<NewCPUIDRecord> {
   static std::unique_ptr<Record> construct() {
@@ -46,7 +46,7 @@ template <> struct Helper<NewCPUIDRecord> {
 
   static constexpr char Expected[] = "<CPU ID: 1>";
 };
-constexpr char Helper<NewCPUIDRecord>::Expected[];
+const char Helper<NewCPUIDRecord>::Expected[];
 
 template <> struct Helper<TSCWrapRecord> {
   static std::unique_ptr<Record> construct() {
@@ -55,7 +55,7 @@ template <> struct Helper<TSCWrapRecord> {
 
   static constexpr char Expected[] = "<TSC Wrap: base = 1>";
 };
-constexpr char Helper<TSCWrapRecord>::Expected[];
+const char Helper<TSCWrapRecord>::Expected[];
 
 template <> struct Helper<CustomEventRecord> {
   static std::unique_ptr<Record> construct() {
@@ -65,7 +65,7 @@ template <> struct Helper<CustomEventRecord> {
   static constexpr char Expected[] =
       "<Custom Event: tsc = 1, size = 4, data = 'data'>";
 };
-constexpr char Helper<CustomEventRecord>::Expected[];
+const char Helper<CustomEventRecord>::Expected[];
 
 template <> struct Helper<CallArgRecord> {
   static std::unique_ptr<Record> construct() {
@@ -74,7 +74,7 @@ template <> struct Helper<CallArgRecord> {
 
   static constexpr char Expected[] = "<Call Argument: data = 1 (hex = 0x1)>";
 };
-constexpr char Helper<CallArgRecord>::Expected[];
+const char Helper<CallArgRecord>::Expected[];
 
 template <> struct Helper<PIDRecord> {
   static std::unique_ptr<Record> construct() {
@@ -83,7 +83,7 @@ template <> struct Helper<PIDRecord> {
 
   static constexpr char Expected[] = "<PID: 1>";
 };
-constexpr char Helper<PIDRecord>::Expected[];
+const char Helper<PIDRecord>::Expected[];
 
 template <> struct Helper<NewBufferRecord> {
   static std::unique_ptr<Record> construct() {
@@ -92,7 +92,7 @@ template <> struct Helper<NewBufferRecord> {
 
   static constexpr char Expected[] = "<Thread ID: 1>";
 };
-constexpr char Helper<NewBufferRecord>::Expected[];
+const char Helper<NewBufferRecord>::Expected[];
 
 template <> struct Helper<EndBufferRecord> {
   static std::unique_ptr<Record> construct() {
@@ -101,7 +101,7 @@ template <> struct Helper<EndBufferRecord> {
 
   static constexpr char Expected[] = "<End of Buffer>";
 };
-constexpr char Helper<EndBufferRecord>::Expected[];
+const char Helper<EndBufferRecord>::Expected[];
 
 template <class T> class PrinterTest : public ::testing::Test {
 protected:
