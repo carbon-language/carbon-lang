@@ -135,6 +135,7 @@ void PrintAddressDescription(uptr tagged_addr, uptr access_size) {
       Printf("%s", d.Location());
       Printf("Address %p is located in stack of thread T%zd\n", untagged_addr,
              t->unique_id());
+      Printf("%s", d.Default());
       t->Announce();
 
       num_descriptions_printed++;
