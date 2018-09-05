@@ -614,13 +614,15 @@ static bool CheckMDProf(MDNode *MD, BranchProbability &TrueProb,
   ConstantInt *FalseWeight = mdconst::extract<ConstantInt>(MD->getOperand(2));
   if (!TrueWeight || !FalseWeight)
     return false;
-  APInt TrueWt = TrueWeight->getValue();
-  APInt FalseWt = FalseWeight->getValue();
-  APInt SumWt = TrueWt + FalseWt;
-  TrueProb = BranchProbability::getBranchProbability(TrueWt.getZExtValue(),
-                                                     SumWt.getZExtValue());
-  FalseProb = BranchProbability::getBranchProbability(FalseWt.getZExtValue(),
-                                                      SumWt.getZExtValue());
+  uint64_t TrueWt = TrueWeight->getValue().getZExtValue();
+  uint64_t FalseWt = FalseWeight->getValue().getZExtValue();
+  uint64_t SumWt = TrueWt + FalseWt;
+
+  assert(SumWt >= TrueWt && SumWt >= FalseWt &&
+         "Overflow calculating branch probabilities.");
+
+  TrueProb = BranchProbability::getBranchProbability(TrueWt, SumWt);
+  FalseProb = BranchProbability::getBranchProbability(FalseWt, SumWt);
   return true;
 }
 
