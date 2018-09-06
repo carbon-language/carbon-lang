@@ -27,12 +27,12 @@
 namespace llvm {
 
 class InstructionPrecedenceTracking {
-  // Maps a block to the topmost special instruction in it.
+  // Maps a block to the topmost special instruction in it. If the value is
+  // nullptr, it means that it is known that this block does not contain any
+  // special instructions.
   DenseMap<const BasicBlock *, const Instruction *> FirstSpecialInsts;
   // Allows to answer queries about precedence of instructions within one block.
   OrderedInstructions OI;
-  // Blocks for which we have the up-to-date cached information.
-  SmallPtrSet<const BasicBlock *, 8> KnownBlocks;
 
   // Fills information about the given block's special instructions.
   void fill(const BasicBlock *BB);

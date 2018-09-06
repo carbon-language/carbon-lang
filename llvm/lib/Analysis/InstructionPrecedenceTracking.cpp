@@ -42,11 +42,11 @@ const Instruction *InstructionPrecedenceTracking::getFirstSpecialInstruction(
     validate(BB);
 #endif
 
-  if (!KnownBlocks.count(BB))
+  if (FirstSpecialInsts.find(BB) == FirstSpecialInsts.end()) {
     fill(BB);
-  auto *FirstICF = FirstSpecialInsts.lookup(BB);
-  assert((!FirstICF || FirstICF->getParent() == BB) && "Inconsistent cache!");
-  return FirstICF;
+    assert(FirstSpecialInsts.find(BB) != FirstSpecialInsts.end() && "Must be!");
+  }
+  return FirstSpecialInsts[BB];
 }
 
 bool InstructionPrecedenceTracking::hasSpecialInstructions(
@@ -66,63 +66,48 @@ void InstructionPrecedenceTracking::fill(const BasicBlock *BB) {
   for (auto &I : *BB)
     if (isSpecialInstruction(&I)) {
       FirstSpecialInsts[BB] = &I;
-      break;
+      return;
     }
 
-  // Mark this block as having a known result.
-  KnownBlocks.insert(BB);
+  // Mark this block as having no special instructions.
+  FirstSpecialInsts[BB] = nullptr;
 }
 
 #ifndef NDEBUG
 void InstructionPrecedenceTracking::validate(const BasicBlock *BB) const {
-  // If we don't know anything about this block, make sure we don't store
-  // a bucket for it in FirstSpecialInsts map.
-  if (!KnownBlocks.count(BB)) {
-    assert(FirstSpecialInsts.find(BB) == FirstSpecialInsts.end() && "Must be!");
-    return;
-  }
-
   auto It = FirstSpecialInsts.find(BB);
-  bool BlockHasSpecialInsns = false;
-  for (const Instruction &Insn : *BB) {
+  // Bail if we don't have anything cached for this block.
+  if (It == FirstSpecialInsts.end())
+    return;
+
+  for (const Instruction &Insn : *BB)
     if (isSpecialInstruction(&Insn)) {
-      assert(It != FirstSpecialInsts.end() &&
-             "Blocked marked as known but we have no cached value for it!");
       assert(It->second == &Insn &&
              "Cached first special instruction is wrong!");
-      BlockHasSpecialInsns = true;
-      break;
+      return;
     }
-  }
-  if (!BlockHasSpecialInsns)
-    assert(It == FirstSpecialInsts.end() &&
-           "Block is marked as having special instructions but in fact it "
-           "has none!");
+
+  assert(It->second == nullptr &&
+         "Block is marked as having special instructions but in fact it  has "
+         "none!");
 }
 
 void InstructionPrecedenceTracking::validateAll() const {
   // Check that for every known block the cached value is correct.
-  for (auto *BB : KnownBlocks)
-    validate(BB);
-
-  // Check that all blocks with cached values are marked as known.
   for (auto &It : FirstSpecialInsts)
-    assert(KnownBlocks.count(It.first) &&
-           "We have a cached value but the block is not marked as known?");
+    validate(It.first);
 }
 #endif
 
 void InstructionPrecedenceTracking::invalidateBlock(const BasicBlock *BB) {
   OI.invalidateBlock(BB);
   FirstSpecialInsts.erase(BB);
-  KnownBlocks.erase(BB);
 }
 
 void InstructionPrecedenceTracking::clear() {
   for (auto It : FirstSpecialInsts)
     OI.invalidateBlock(It.first);
   FirstSpecialInsts.clear();
-  KnownBlocks.clear();
 #ifndef NDEBUG
   // The map should be valid after clearing (at least empty).
   validateAll();
