@@ -607,9 +607,9 @@ private:
   // C1134, C1166
   template<typename A>
   void CheckLabelContext(const char *const stmtString, const A &constructName) {
-    const auto I{std::find(
+    const auto iter{std::find(
         constructNames_.crbegin(), constructNames_.crend(), constructName)};
-    if (I == constructNames_.crend()) {
+    if (iter == constructNames_.crend()) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
               "%s construct-name '%s' is not in scope"_err_en_US, stmtString,
