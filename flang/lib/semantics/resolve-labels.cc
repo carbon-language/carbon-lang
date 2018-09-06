@@ -634,10 +634,9 @@ private:
   void addTargetLabelDefinition(parser::Label label,
       LabeledStmtClassificationSet labeledStmtClassificationSet) {
     CheckLabelInRange(label);
-    const auto pair{
-        programUnits_.back().targetStmts.emplace(std::make_pair(label,
-            LabeledStatementInfoTuplePOD{currentScope_, currentPosition_,
-                labeledStmtClassificationSet}))};
+    const auto pair{programUnits_.back().targetStmts.emplace(label,
+        LabeledStatementInfoTuplePOD{
+            currentScope_, currentPosition_, labeledStmtClassificationSet})};
     if (!pair.second) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
@@ -648,21 +647,18 @@ private:
   void addLabelReferenceFromDoStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().doStmtSources.emplace_back(
-
         label, currentScope_, currentPosition_);
   }
 
   void addLabelReferenceFromFormatStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().formatStmtSources.emplace_back(
-
         label, currentScope_, currentPosition_);
   }
 
   void addLabelReference(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().otherStmtSources.emplace_back(
-
         label, currentScope_, currentPosition_);
   }
 
