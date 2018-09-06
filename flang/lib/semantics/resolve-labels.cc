@@ -29,12 +29,31 @@ using LabeledStmtClassificationSet =
     common::EnumSet<TargetStatementEnum, TargetStatementEnum_enumSize>;
 
 using IndexList = std::vector<std::pair<parser::CharBlock, parser::CharBlock>>;
+// A ProxyForScope is an integral proxy for a Fortran scope. This is required
+// because the parse tree does not actually have the scopes required.
 using ProxyForScope = unsigned;
-using LabelStmtInfo =
-    std::tuple<ProxyForScope, parser::CharBlock, LabeledStmtClassificationSet>;
-using TargetStmtMap = std::map<parser::Label, LabelStmtInfo>;
-using SourceStmtList =
-    std::vector<std::tuple<parser::Label, ProxyForScope, parser::CharBlock>>;
+struct LabeledStatementInfoTuplePOD {
+  LabeledStatementInfoTuplePOD(const ProxyForScope &_proxyForScope,
+      const parser::CharBlock &_parserCharBlock,
+      const LabeledStmtClassificationSet &_labeledStmtClassificationSet)
+    : proxyForScope{_proxyForScope}, parserCharBlock{_parserCharBlock},
+      labeledStmtClassificationSet{_labeledStmtClassificationSet} {}
+  ProxyForScope proxyForScope;
+  parser::CharBlock parserCharBlock;
+  LabeledStmtClassificationSet labeledStmtClassificationSet;
+};
+using TargetStmtMap = std::map<parser::Label, LabeledStatementInfoTuplePOD>;
+struct SourceStatementInfoTuplePOD {
+  SourceStatementInfoTuplePOD(const parser::Label &_parserLabel,
+      const ProxyForScope &_proxyForScope,
+      const parser::CharBlock &_parserCharBlock)
+    : parserLabel{_parserLabel}, proxyForScope{_proxyForScope},
+      parserCharBlock{_parserCharBlock} {}
+  parser::Label parserLabel;
+  ProxyForScope proxyForScope;
+  parser::CharBlock parserCharBlock;
+};
+using SourceStmtList = std::vector<SourceStatementInfoTuplePOD>;
 
 const bool isStrictF18{false};  // FIXME - make a command-line option
 
@@ -189,11 +208,11 @@ bool PresentAndEq(const std::optional<parser::Name> &name_a,
 struct UnitAnalysis {
   UnitAnalysis() { scopeModel.push_back(0); }
   UnitAnalysis(UnitAnalysis &&that)
-    : doStmtSources(std::move(that.doStmtSources)),
-      formatStmtSources(std::move(that.formatStmtSources)),
-      otherStmtSources(std::move(that.otherStmtSources)),
-      targetStmts(std::move(that.targetStmts)),
-      scopeModel(std::move(that.scopeModel)) {}
+    : doStmtSources{std::move(that.doStmtSources)},
+      formatStmtSources{std::move(that.formatStmtSources)},
+      otherStmtSources{std::move(that.otherStmtSources)},
+      targetStmts{std::move(that.targetStmts)}, scopeModel{std::move(
+                                                    that.scopeModel)} {}
 
   SourceStmtList doStmtSources;
   SourceStmtList formatStmtSources;
@@ -206,10 +225,10 @@ class ParseTreeAnalyzer {
 public:
   ParseTreeAnalyzer() {}
   ParseTreeAnalyzer(ParseTreeAnalyzer &&that)
-    : programUnits_(std::move(that.programUnits_)),
-      errorHandler_(std::move(that.errorHandler_)),
-      currentPosition_(std::move(that.currentPosition_)),
-      constructNames_(std::move(that.constructNames_)) {}
+    : programUnits_{std::move(that.programUnits_)},
+      errorHandler_{std::move(that.errorHandler_)}, currentPosition_{std::move(
+                                                        that.currentPosition_)},
+      constructNames_{std::move(that.constructNames_)} {}
 
   template<typename A> constexpr bool Pre(const A &) { return true; }
   template<typename A> constexpr void Post(const A &) {}
@@ -644,7 +663,7 @@ private:
     CheckLabelInRange(label);
     const auto pair{
         programUnits_.back().targetStmts.emplace(std::make_pair(label,
-            LabelStmtInfo{currentScope_, currentPosition_,
+            LabeledStatementInfoTuplePOD{currentScope_, currentPosition_,
                 labeledStmtClassificationSet}))};
     if (!pair.second) {
       errorHandler_.Say(currentPosition_,
@@ -656,22 +675,22 @@ private:
   void addLabelReferenceFromDoStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().doStmtSources.emplace_back(
-        std::tuple<parser::Label, ProxyForScope, parser::CharBlock>{
-            label, currentScope_, currentPosition_});
+
+        label, currentScope_, currentPosition_);
   }
 
   void addLabelReferenceFromFormatStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().formatStmtSources.emplace_back(
-        std::tuple<parser::Label, ProxyForScope, parser::CharBlock>{
-            label, currentScope_, currentPosition_});
+
+        label, currentScope_, currentPosition_);
   }
 
   void addLabelReference(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().otherStmtSources.emplace_back(
-        std::tuple<parser::Label, ProxyForScope, parser::CharBlock>{
-            label, currentScope_, currentPosition_});
+
+        label, currentScope_, currentPosition_);
   }
 
   void addLabelReference(const std::list<parser::Label> &labels) {
@@ -713,7 +732,7 @@ bool InBody(const parser::CharBlock &position,
   return false;
 }
 
-LabelStmtInfo GetLabel(
+LabeledStatementInfoTuplePOD GetLabel(
     const TargetStmtMap &labels, const parser::Label &label) {
   const auto iter{labels.find(label)};
   if (iter == labels.cend()) {
@@ -728,11 +747,11 @@ void CheckBranchesIntoDoBody(const SourceStmtList &branches,
     const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
     const IndexList &loopBodies, parser::Messages &errorHandler) {
   for (const auto branch : branches) {
-    const auto &label{std::get<parser::Label>(branch)};
+    const auto &label{branch.parserLabel};
     auto branchTarget{GetLabel(labels, label)};
-    if (HasScope(std::get<ProxyForScope>(branchTarget))) {
-      const auto &fromPosition{std::get<parser::CharBlock>(branch)};
-      const auto &toPosition{std::get<parser::CharBlock>(branchTarget)};
+    if (HasScope(branchTarget.proxyForScope)) {
+      const auto &fromPosition{branch.parserCharBlock};
+      const auto &toPosition{branchTarget.parserCharBlock};
       for (const auto body : loopBodies) {
         if (!InBody(fromPosition, body) && InBody(toPosition, body)) {
           if (isStrictF18) {
@@ -786,24 +805,22 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
     const std::vector<ProxyForScope> &scopes, parser::Messages &errorHandler) {
   IndexList loopBodies;
   for (const auto stmt : dos) {
-    const auto &label{std::get<parser::Label>(stmt)};
-    const auto &scope{std::get<ProxyForScope>(stmt)};
-    const auto &position{std::get<parser::CharBlock>(stmt)};
+    const auto &label{stmt.parserLabel};
+    const auto &scope{stmt.proxyForScope};
+    const auto &position{stmt.parserCharBlock};
     auto doTarget{GetLabel(labels, label)};
-    if (!HasScope(std::get<ProxyForScope>(doTarget))) {
+    if (!HasScope(doTarget.proxyForScope)) {
       // C1133
       errorHandler.Say(position,
           parser::MessageFormattedText{
               "label '%" PRIu64 "' cannot be found"_err_en_US, label});
-    } else if (std::get<parser::CharBlock>(doTarget).begin() <
-        position.begin()) {
+    } else if (doTarget.parserCharBlock.begin() < position.begin()) {
       // R1119
       errorHandler.Say(position,
           parser::MessageFormattedText{
               "label '%" PRIu64 "' doesn't lexically follow DO stmt"_err_en_US,
               label});
-    } else if (!InInclusiveScope(
-                   scopes, scope, std::get<ProxyForScope>(doTarget))) {
+    } else if (!InInclusiveScope(scopes, scope, doTarget.proxyForScope)) {
       // C1133
       if (isStrictF18) {
         errorHandler.Say(position,
@@ -814,14 +831,13 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
             parser::MessageFormattedText{
                 "label '%" PRIu64 "' is not in scope"_en_US, label});
       }
-    } else if (!std::get<LabeledStmtClassificationSet>(doTarget).test(
+    } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do)) {
-      errorHandler.Say(std::get<parser::CharBlock>(doTarget),
+      errorHandler.Say(doTarget.parserCharBlock,
           parser::MessageFormattedText{
               "'%" PRIu64 "' invalid DO terminal statement"_err_en_US, label});
     } else {
-      loopBodies.emplace_back(std::pair<parser::CharBlock, parser::CharBlock>{
-          SkipLabel(position), std::get<parser::CharBlock>(doTarget)});
+      loopBodies.emplace_back(SkipLabel(position), doTarget.parserCharBlock);
     }
   }
 
@@ -834,16 +850,15 @@ void CheckScopeConstraints(const SourceStmtList &stmts,
     const TargetStmtMap &labels, const std::vector<ProxyForScope> &scopes,
     parser::Messages &errorHandler) {
   for (const auto stmt : stmts) {
-    const auto &label{std::get<parser::Label>(stmt)};
-    const auto &scope{std::get<ProxyForScope>(stmt)};
-    const auto &position{std::get<parser::CharBlock>(stmt)};
+    const auto &label{stmt.parserLabel};
+    const auto &scope{stmt.proxyForScope};
+    const auto &position{stmt.parserCharBlock};
     auto target{GetLabel(labels, label)};
-    if (!HasScope(std::get<ProxyForScope>(target))) {
+    if (!HasScope(target.proxyForScope)) {
       errorHandler.Say(position,
           parser::MessageFormattedText{
               "label '%" PRIu64 "' was not found"_err_en_US, label});
-    } else if (!InInclusiveScope(
-                   scopes, scope, std::get<ProxyForScope>(target))) {
+    } else if (!InInclusiveScope(scopes, scope, target.proxyForScope)) {
       if (isStrictF18) {
         errorHandler.Say(position,
             parser::MessageFormattedText{
@@ -860,12 +875,12 @@ void CheckScopeConstraints(const SourceStmtList &stmts,
 void CheckBranchTargetConstraints(const SourceStmtList &stmts,
     const TargetStmtMap &labels, parser::Messages &errorHandler) {
   for (const auto stmt : stmts) {
-    const auto &label{std::get<parser::Label>(stmt)};
+    const auto &label{stmt.parserLabel};
     auto branchTarget{GetLabel(labels, label)};
-    if (HasScope(std::get<ProxyForScope>(branchTarget))) {
-      if (!std::get<LabeledStmtClassificationSet>(branchTarget)
-               .test(TargetStatementEnum::Branch)) {
-        errorHandler.Say(std::get<parser::CharBlock>(branchTarget),
+    if (HasScope(branchTarget.proxyForScope)) {
+      if (!branchTarget.labeledStmtClassificationSet.test(
+              TargetStatementEnum::Branch)) {
+        errorHandler.Say(branchTarget.parserCharBlock,
             parser::MessageFormattedText{
                 "'%" PRIu64 "' not a branch target"_err_en_US, label});
       }
@@ -883,12 +898,12 @@ void CheckBranchConstraints(const SourceStmtList &branches,
 void CheckDataXferTargetConstraints(const SourceStmtList &stmts,
     const TargetStmtMap &labels, parser::Messages &errorHandler) {
   for (const auto stmt : stmts) {
-    const auto &label{std::get<parser::Label>(stmt)};
+    const auto &label{stmt.parserLabel};
     auto ioTarget{GetLabel(labels, label)};
-    if (HasScope(std::get<ProxyForScope>(ioTarget))) {
-      if (!std::get<LabeledStmtClassificationSet>(ioTarget).test(
+    if (HasScope(ioTarget.proxyForScope)) {
+      if (!ioTarget.labeledStmtClassificationSet.test(
               TargetStatementEnum::Format)) {
-        errorHandler.Say(std::get<parser::CharBlock>(ioTarget),
+        errorHandler.Say(ioTarget.parserCharBlock,
             parser::MessageFormattedText{
                 "'%" PRIu64 "' not a FORMAT"_err_en_US, label});
       }
