@@ -143,6 +143,9 @@ void __hwasan_thread_enter();
 SANITIZER_INTERFACE_ATTRIBUTE
 void __hwasan_thread_exit();
 
+SANITIZER_INTERFACE_ATTRIBUTE
+void __hwasan_print_memory_usage();
+
 }  // extern "C"
 
 #endif  // HWASAN_INTERFACE_INTERNAL_H

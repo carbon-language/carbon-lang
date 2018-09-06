@@ -26,6 +26,7 @@ class Thread {
 
   uptr stack_top() { return stack_top_; }
   uptr stack_bottom() { return stack_bottom_; }
+  uptr stack_size() { return stack_top() - stack_bottom(); }
   uptr tls_begin() { return tls_begin_; }
   uptr tls_end() { return tls_end_; }
   bool IsMainThread() { return unique_id_ == 0; }
@@ -75,6 +76,18 @@ class Thread {
     Print("Thread: ");
   }
 
+  struct ThreadStats {
+    uptr n_live_threads;
+    uptr total_stack_size;
+  };
+
+  static ThreadStats GetThreadStats() {
+    SpinMutexLock l(&thread_list_mutex);
+    return thread_stats;
+  }
+
+  static uptr MemoryUsedPerThread();
+
  private:
   // NOTE: There is no Thread constructor. It is allocated
   // via mmap() and *must* be valid in zero-initialized state.
@@ -101,6 +114,7 @@ class Thread {
   Thread *next_;  // All live threads form a linked list.
   static SpinMutex thread_list_mutex;
   static Thread *main_thread;
+  static ThreadStats thread_stats;
 
   u64 unique_id_;  // counting from zero.
 

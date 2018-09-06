@@ -48,6 +48,10 @@ static atomic_uint8_t hwasan_allocator_tagging_enabled;
 static const tag_t kFallbackAllocTag = 0xBB;
 static const tag_t kFallbackFreeTag = 0xBC;
 
+void GetAllocatorStats(AllocatorStatCounters s) {
+  allocator.GetStats(s);
+}
+
 void HwasanAllocatorInit() {
   atomic_store_relaxed(&hwasan_allocator_tagging_enabled,
                        !flags()->disable_allocator_tagging);
