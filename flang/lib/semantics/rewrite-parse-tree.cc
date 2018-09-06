@@ -59,7 +59,7 @@ public:
     for (auto it{list.begin()}; it != list.end();) {
       if (auto stmt{std::get_if<stmtFuncType>(&it->u)}) {
         Symbol *symbol{std::get<parser::Name>(stmt->statement->t).symbol};
-        if (symbol && symbol->has<EntityDetails>()) {
+        if (symbol && symbol->has<ObjectEntityDetails>()) {
           // not a stmt func: remove it here and add to ones to convert
           stmtFuncsToConvert.push_back(std::move(*stmt));
           it = list.erase(it);
@@ -122,7 +122,7 @@ private:
     }
     parser::Name *name = std::get_if<parser::Name>(
         &std::get<parser::ProcedureDesignator>((*funcRef)->v.t).u);
-    if (!name || !name->symbol || !name->symbol->has<EntityDetails>()) {
+    if (!name || !name->symbol || !name->symbol->has<ObjectEntityDetails>()) {
       return;
     }
     x.u = common::Indirection{(*funcRef)->ConvertToArrayElementRef()};
