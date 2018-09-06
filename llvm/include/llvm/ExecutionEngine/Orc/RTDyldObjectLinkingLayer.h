@@ -60,11 +60,6 @@ public:
   void emit(MaterializationResponsibility R, VModuleKey K,
             std::unique_ptr<MemoryBuffer> O) override;
 
-  /// Map section addresses for the object associated with the
-  ///        VModuleKey K.
-  void mapSectionAddress(VModuleKey K, const void *LocalAddress,
-                         JITTargetAddress TargetAddr) const;
-
   /// Set the 'ProcessAllSections' flag.
   ///
   /// If set to true, all sections in each object file will be allocated using
@@ -115,7 +110,6 @@ private:
   bool ProcessAllSections = false;
   bool OverrideObjectFlags = false;
   bool AutoClaimObjectSymbols = false;
-  std::map<VModuleKey, RuntimeDyld *> ActiveRTDylds;
   std::map<VModuleKey, std::shared_ptr<RuntimeDyld::MemoryManager>> MemMgrs;
 };
 
