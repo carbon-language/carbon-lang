@@ -31,9 +31,8 @@ define void @add128_rmw2(i128 %a, i128* %b) nounwind {
 ; CHECK-LABEL: add128_rmw2:
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    addq (%rdx), %rdi
-; CHECK-NEXT:    adcq 8(%rdx), %rsi
+; CHECK-NEXT:    adcq %rsi, 8(%rdx)
 ; CHECK-NEXT:    movq %rdi, (%rdx)
-; CHECK-NEXT:    movq %rsi, 8(%rdx)
 ; CHECK-NEXT:    retq
 entry:
   %0 = load i128, i128* %b
