@@ -789,9 +789,14 @@ static void runMRIScript() {
   std::vector<std::unique_ptr<MemoryBuffer>> ArchiveBuffers;
   std::vector<std::unique_ptr<object::Archive>> Archives;
 
-  for (line_iterator I(Ref, /*SkipBlanks*/ true, ';'), E; I != E; ++I) {
+  for (line_iterator I(Ref, /*SkipBlanks*/ false), E; I != E; ++I) {
     StringRef Line = *I;
     StringRef CommandStr, Rest;
+    Line = Line.split(';').first;
+    Line = Line.split('*').first;
+    Line = Line.trim();
+    if (Line.empty())
+      continue;
     std::tie(CommandStr, Rest) = Line.split(' ');
     Rest = Rest.trim();
     if (!Rest.empty() && Rest.front() == '"' && Rest.back() == '"')
