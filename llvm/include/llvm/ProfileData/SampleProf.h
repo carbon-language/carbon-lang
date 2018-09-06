@@ -403,7 +403,7 @@ public:
   void setName(StringRef FunctionName) { Name = FunctionName; }
 
   /// Return the function name.
-  const StringRef &getName() const { return Name; }
+  StringRef getName() const { return Name; }
 
   /// Return the original function name if it exists in Module \p M.
   StringRef getFuncNameInModule(const Module *M) const {
@@ -422,7 +422,7 @@ public:
     // Expect CurrentModule to be initialized by GUIDToFuncNameMapper.
     if (M != CurrentModule)
       llvm_unreachable("Input Module should be the same as CurrentModule");
-    auto iter = GUIDToFuncNameMap.find(std::stoul(Name.data()));
+    auto iter = GUIDToFuncNameMap.find(std::stoull(Name.data()));
     if (iter == GUIDToFuncNameMap.end())
       return StringRef();
     return iter->second;
@@ -486,8 +486,10 @@ public:
   // Assume the input \p Name is a name coming from FunctionSamples itself.
   // If the format is SPF_Compact_Binary, the name is already a GUID and we
   // don't want to return the GUID of GUID.
-  static uint64_t getGUID(const StringRef &Name) {
-    return (Format == SPF_Compact_Binary) ? std::stoul(Name.data())
+  static uint64_t getGUID(StringRef Name) {
+    if (Format == SPF_Compact_Binary)
+      errs() << Name << '\n';
+    return (Format == SPF_Compact_Binary) ? std::stoull(Name.data())
                                           : Function::getGUID(Name);
   }
 
