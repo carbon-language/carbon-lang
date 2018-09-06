@@ -30,10 +30,8 @@ static std::pair<bool, SmallString<128>> findSrcDirMap(StringRef Argv0) {
   if (llvm::sys::fs::is_regular_file(PathInParentDir))
     return std::make_pair(true, std::move(PathInParentDir));
 
-  return std::pair<bool, SmallString<128>>(false, "");
+  return std::pair<bool, SmallString<128>>(false, {});
 }
-
-static bool isInParentDir(StringRef Argv0) {}
 
 SmallString<128> llvm::unittest::getInputFileDirectory(const char *Argv0) {
   bool Found = false;
