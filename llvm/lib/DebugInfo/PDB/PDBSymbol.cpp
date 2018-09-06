@@ -105,14 +105,14 @@ PDBSymbol::create(const IPDBSession &PDBSession,
   auto SymbolPtr = createSymbol(PDBSession, RawSymbol->getSymTag());
   SymbolPtr->RawSymbol = RawSymbol.get();
   SymbolPtr->OwnedRawSymbol = std::move(RawSymbol);
-  return std::move(SymbolPtr);
+  return SymbolPtr;
 }
 
 std::unique_ptr<PDBSymbol> PDBSymbol::create(const IPDBSession &PDBSession,
                                              IPDBRawSymbol &RawSymbol) {
   auto SymbolPtr = createSymbol(PDBSession, RawSymbol.getSymTag());
   SymbolPtr->RawSymbol = &RawSymbol;
-  return std::move(SymbolPtr);
+  return SymbolPtr;
 }
 
 void PDBSymbol::defaultDump(raw_ostream &OS, int Indent) const {

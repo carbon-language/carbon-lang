@@ -32,5 +32,5 @@ SmallString<128> llvm::unittest::getInputFileDirectory() {
   Result.append((*File)->getBuffer().trim());
   llvm::sys::path::append(Result, "Inputs");
   llvm::sys::path::native(Result);
-  return std::move(Result);
+  return Result;
 }
