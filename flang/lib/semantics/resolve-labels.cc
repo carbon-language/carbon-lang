@@ -24,7 +24,8 @@ namespace Fortran::semantics {
 
 using namespace parser::literals;
 
-ENUM_CLASS(TargetStatementEnum, Do, Branch, Format)
+ENUM_CLASS(
+    TargetStatementEnum, Do, Branch, Format, CompatibleDo, CompatibleBranch)
 using LabeledStmtClassificationSet =
     common::EnumSet<TargetStatementEnum, TargetStatementEnum_enumSize>;
 
@@ -54,39 +55,43 @@ struct SourceStatementInfoTuplePOD {
   parser::CharBlock parserCharBlock;
 };
 using SourceStmtList = std::vector<SourceStatementInfoTuplePOD>;
-
-const bool isStrictF18{false};  // FIXME - make a command-line option
+enum Legality { neverLegal, alwaysLegal, backwardsCompatible };
 
 bool HasScope(ProxyForScope scope) { return scope != ProxyForScope{0u}; }
 
 // F18:R1131
 template<typename A>
-constexpr bool IsLegalDoTerm(const parser::Statement<A> &) {
-  return std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
-      std::is_same_v<A, parser::EndDoStmt>;
+constexpr Legality IsLegalDoTerm(const parser::Statement<A> &) {
+  if (std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
+      std::is_same_v<A, parser::EndDoStmt>) {
+    return alwaysLegal;
+  } else {
+    return neverLegal;
+  }
 }
 template<>
-constexpr bool IsLegalDoTerm(
+constexpr Legality IsLegalDoTerm(
     const parser::Statement<parser::ActionStmt> &actionStmt) {
   if (std::holds_alternative<parser::ContinueStmt>(actionStmt.statement.u)) {
     // See F08:C816
-    return true;
-  } else if (isStrictF18) {
-    return false;
+    return alwaysLegal;
+  } else if (!(std::holds_alternative<
+                   common::Indirection<parser::ArithmeticIfStmt>>(
+                   actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::CycleStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::ExitStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::StopStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<common::Indirection<parser::GotoStmt>>(
+                     actionStmt.statement.u) ||
+                 std::holds_alternative<
+                     common::Indirection<parser::ReturnStmt>>(
+                     actionStmt.statement.u))) {
+    return backwardsCompatible;
   } else {
-    return !(
-        std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::CycleStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::ExitStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::StopStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::GotoStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::ReturnStmt>>(
-            actionStmt.statement.u));
+    return neverLegal;
   }
 }
 
@@ -95,8 +100,8 @@ template<typename A> constexpr bool IsFormat(const parser::Statement<A> &) {
 }
 
 template<typename A>
-constexpr bool IsLegalBranchTarget(const parser::Statement<A> &) {
-  return std::is_same_v<A, parser::AssociateStmt> ||
+constexpr Legality IsLegalBranchTarget(const parser::Statement<A> &) {
+  if (std::is_same_v<A, parser::AssociateStmt> ||
       std::is_same_v<A, parser::EndAssociateStmt> ||
       std::is_same_v<A, parser::IfThenStmt> ||
       std::is_same_v<A, parser::EndIfStmt> ||
@@ -118,23 +123,26 @@ constexpr bool IsLegalBranchTarget(const parser::Statement<A> &) {
       std::is_same_v<A, parser::EndFunctionStmt> ||
       std::is_same_v<A, parser::EndMpSubprogramStmt> ||
       std::is_same_v<A, parser::EndProgramStmt> ||
-      std::is_same_v<A, parser::EndSubroutineStmt>;
+      std::is_same_v<A, parser::EndSubroutineStmt>) {
+    return alwaysLegal;
+  } else {
+    return neverLegal;
+  }
 }
 template<>
-constexpr bool IsLegalBranchTarget(
+constexpr Legality IsLegalBranchTarget(
     const parser::Statement<parser::ActionStmt> &actionStmt) {
-  if (!isStrictF18) {
-    return true;
+  if (!(std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
+            actionStmt.statement.u) ||
+          std::holds_alternative<common::Indirection<parser::AssignStmt>>(
+              actionStmt.statement.u) ||
+          std::holds_alternative<common::Indirection<parser::AssignedGotoStmt>>(
+              actionStmt.statement.u) ||
+          std::holds_alternative<common::Indirection<parser::PauseStmt>>(
+              actionStmt.statement.u))) {
+    return alwaysLegal;
   } else {
-    return !(
-        std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::AssignStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::AssignedGotoStmt>>(
-            actionStmt.statement.u) ||
-        std::holds_alternative<common::Indirection<parser::PauseStmt>>(
-            actionStmt.statement.u));
+    return backwardsCompatible;
   }
 }
 
@@ -142,11 +150,15 @@ template<typename A>
 constexpr LabeledStmtClassificationSet constructBranchTargetFlags(
     const parser::Statement<A> &statement) {
   LabeledStmtClassificationSet labeledStmtClassificationSet{};
-  if (IsLegalDoTerm(statement)) {
+  if (IsLegalDoTerm(statement) == alwaysLegal) {
     labeledStmtClassificationSet.set(TargetStatementEnum::Do);
+  } else if (IsLegalDoTerm(statement) == backwardsCompatible) {
+    labeledStmtClassificationSet.set(TargetStatementEnum::CompatibleDo);
   }
-  if (IsLegalBranchTarget(statement)) {
+  if (IsLegalBranchTarget(statement) == alwaysLegal) {
     labeledStmtClassificationSet.set(TargetStatementEnum::Branch);
+  } else if (IsLegalBranchTarget(statement) == backwardsCompatible) {
+    labeledStmtClassificationSet.set(TargetStatementEnum::CompatibleBranch);
   }
   if (IsFormat(statement)) {
     labeledStmtClassificationSet.set(TargetStatementEnum::Format);
@@ -719,17 +731,10 @@ void CheckBranchesIntoDoBody(const SourceStmtList &branches,
       const auto &toPosition{branchTarget.parserCharBlock};
       for (const auto body : loopBodies) {
         if (!InBody(fromPosition, body) && InBody(toPosition, body)) {
-          if (isStrictF18) {
-            errorHandler.Say(fromPosition,
-                parser::MessageFormattedText{
-                    "branch into '%s' from another scope"_err_en_US,
-                    body.first.ToString().c_str()});
-          } else {
             errorHandler.Say(fromPosition,
                 parser::MessageFormattedText{
                     "branch into '%s' from another scope"_en_US,
                     body.first.ToString().c_str()});
-          }
         }
       }
     }
@@ -787,20 +792,21 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
               label});
     } else if (!InInclusiveScope(scopes, scope, doTarget.proxyForScope)) {
       // C1133
-      if (isStrictF18) {
-        errorHandler.Say(position,
-            parser::MessageFormattedText{
-                "label '%" PRIu64 "' is not in scope"_err_en_US, label});
-      } else {
         errorHandler.Say(position,
             parser::MessageFormattedText{
                 "label '%" PRIu64 "' is not in scope"_en_US, label});
-      }
+    } else if (!doTarget.labeledStmtClassificationSet.test(
+                   TargetStatementEnum::Do) &&
+        !doTarget.labeledStmtClassificationSet.test(
+            TargetStatementEnum::CompatibleDo)) {
+      errorHandler.Say(doTarget.parserCharBlock,
+          parser::MessageFormattedText{
+              "'%" PRIu64 "' invalid DO terminal statement"_err_en_US, label});
     } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do)) {
       errorHandler.Say(doTarget.parserCharBlock,
           parser::MessageFormattedText{
-              "'%" PRIu64 "' invalid DO terminal statement"_err_en_US, label});
+              "'%" PRIu64 "' invalid DO terminal statement"_en_US, label});
     } else {
       loopBodies.emplace_back(SkipLabel(position), doTarget.parserCharBlock);
     }
@@ -824,15 +830,9 @@ void CheckScopeConstraints(const SourceStmtList &stmts,
           parser::MessageFormattedText{
               "label '%" PRIu64 "' was not found"_err_en_US, label});
     } else if (!InInclusiveScope(scopes, scope, target.proxyForScope)) {
-      if (isStrictF18) {
-        errorHandler.Say(position,
-            parser::MessageFormattedText{
-                "label '%" PRIu64 "' is not in scope"_err_en_US, label});
-      } else {
         errorHandler.Say(position,
             parser::MessageFormattedText{
                 "label '%" PRIu64 "' is not in scope"_en_US, label});
-      }
     }
   }
 }
@@ -844,10 +844,17 @@ void CheckBranchTargetConstraints(const SourceStmtList &stmts,
     auto branchTarget{GetLabel(labels, label)};
     if (HasScope(branchTarget.proxyForScope)) {
       if (!branchTarget.labeledStmtClassificationSet.test(
-              TargetStatementEnum::Branch)) {
+              TargetStatementEnum::Branch) &&
+          !branchTarget.labeledStmtClassificationSet.test(
+              TargetStatementEnum::CompatibleBranch)) {
         errorHandler.Say(branchTarget.parserCharBlock,
             parser::MessageFormattedText{
                 "'%" PRIu64 "' not a branch target"_err_en_US, label});
+      } else if (!branchTarget.labeledStmtClassificationSet.test(
+                     TargetStatementEnum::Branch)) {
+        errorHandler.Say(branchTarget.parserCharBlock,
+            parser::MessageFormattedText{
+                "'%" PRIu64 "' not a branch target"_en_US, label});
       }
     }
   }
