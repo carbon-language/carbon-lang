@@ -17,7 +17,6 @@
 # we get the right symbols in the output, i.e. the output should be
 # the same as the input, except for the copyright comment.
 # Change the compiler by setting the F18 environment variable.
-
 PATH=/usr/bin:/bin
 srcdir=$(dirname $0)
 F18=${F18:=../../tools/f18/f18}
@@ -49,11 +48,17 @@ function internal_check() {
   ${r}
 }
 
-r=0
-for input in $*; do
-  finput="${srcdir}/${input}"
-  CMD=$(cat ${finput} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
-  CMD=$(echo ${CMD} | sed -e "s:%s:${finput}:g")
-  eval "( ${CMD} )" || (echo "test ${finput} failed"; r=1)
+gr=0
+for input in ${srcdir}/$*; do
+  lr=true
+  CMD=$(cat ${input} | egrep '^[[:space:]]*![[:space:]]*RUN:[[:space:]]*' | sed -e 's/^[[:space:]]*![[:space:]]*RUN:[[:space:]]*//')
+  CMD=$(echo ${CMD} | sed -e "s:%s:${input}:g")
+  $(eval $CMD) || lr=false
+  if $lr; then
+    echo "PASS  ${input}"
+  else
+    echo "FAIL  ${input}"
+    gr=1
+  fi
 done
-exit $r
+exit $gr
