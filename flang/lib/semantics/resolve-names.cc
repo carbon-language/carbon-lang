@@ -526,7 +526,6 @@ public:
   void Post(const parser::DeclarationTypeSpec::Type &);
   void Post(const parser::DeclarationTypeSpec::Class &);
   bool Pre(const parser::DerivedTypeSpec &);
-  bool Pre(const parser::DerivedTypeDef &x);
   void Post(const parser::DerivedTypeDef &x);
   bool Pre(const parser::DerivedTypeStmt &x);
   void Post(const parser::DerivedTypeStmt &x);
@@ -567,8 +566,6 @@ private:
     bool sawContains{false};  // currently processing bindings
     bool sequence{false};  // is a sequence type
   } derivedTypeInfo_;
-  // In a DerivedTypeDef, this is data collected for it
-  std::unique_ptr<DerivedTypeDef::Data> derivedTypeData_;
   // In a ProcedureDeclarationStmt or ProcComponentDefStmt, this is
   // the interface name, if any.
   const SourceName *interfaceName_{nullptr};
@@ -1997,7 +1994,6 @@ void DeclarationVisitor::DeclareProcEntity(
               : Symbol::Flag::Subroutine);
     }
     details->set_interface(interface);
-    symbol.attrs().set(Attr::EXTERNAL);
   }
 }
 
@@ -2045,13 +2041,7 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeSpec &x) {
   BeginDerivedTypeSpec(derivedTypeSpec);
   return true;
 }
-bool DeclarationVisitor::Pre(const parser::DerivedTypeDef &x) {
-  CHECK(!derivedTypeData_);
-  derivedTypeData_ = std::make_unique<DerivedTypeDef::Data>();
-  return true;
-}
 void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
-  derivedTypeData_.reset();
   std::set<SourceName> paramNames;
   auto &scope{currScope()};
   auto &stmt{std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t)};
@@ -2133,7 +2123,6 @@ void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
 }
 bool DeclarationVisitor::Pre(const parser::TypeAttrSpec::Extends &x) {
   derivedTypeInfo_.extends = &x.v.source;
-  derivedTypeData_->extends = &x.v.source;
   return false;
 }
 
@@ -2153,7 +2142,6 @@ bool DeclarationVisitor::Pre(const parser::PrivateStmt &x) {
 }
 bool DeclarationVisitor::Pre(const parser::SequenceStmt &x) {
   derivedTypeInfo_.sequence = true;
-  derivedTypeData_->sequence = true;
   return false;
 }
 void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
@@ -2197,12 +2185,11 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
   } else if (auto &type{GetDeclTypeSpec()}) {
     interface.set_type(*type);
   }
-  if (derivedTypeData_) {
-    derivedTypeData_->procComps.emplace_back(
-        ProcDecl{name.source}, GetAttrs(), interface);
-  } else {
-    DeclareProcEntity(name, GetAttrs(), interface);
+  auto attrs{GetAttrs()};
+  if (currScope().kind() != Scope::Kind::DerivedType) {
+    attrs.set(Attr::EXTERNAL);
   }
+  DeclareProcEntity(name, attrs, interface);
 }
 
 bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &x) {

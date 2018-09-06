@@ -21,14 +21,34 @@ module m
   external b, d
   procedure() :: e
   procedure(real) :: f
+  procedure(s) :: g
+  type t
+    procedure(), pointer, nopass :: e
+    procedure(real), nopass, pointer :: f
+    procedure(s), private, pointer :: g
+  end type
+contains
+  subroutine s(x)
+    class(t) :: x
+  end
 end
 
 !Expect: m.mod
 !module m
-! procedure(real)::a
-! procedure(logical)::b
-! procedure(complex)::c
-! procedure()::d
-! procedure()::e
-! procedure(real)::f
+!  procedure(real)::a
+!  procedure(logical)::b
+!  procedure(complex)::c
+!  procedure()::d
+!  procedure()::e
+!  procedure(real)::f
+!  procedure(s)::g
+!  type::t
+!    procedure(),nopass,pointer::e
+!    procedure(real),nopass,pointer::f
+!    procedure(s),pointer,private::g
+!  end type
+!contains
+!  subroutine s(x)
+!    class(t)::x
+!  end
 !end
