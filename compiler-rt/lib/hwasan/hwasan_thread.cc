@@ -44,7 +44,7 @@ void Thread::InsertIntoThreadList(Thread *t) {
 }
 
 void Thread::RemoveFromThreadList(Thread *t) {
-  CHECK_NE(t, main_thread);
+  if (t == main_thread) return;  // Do nothing (happens due to pthread_exit).
   SpinMutexLock l(&thread_list_mutex);
   thread_stats.n_live_threads--;
   thread_stats.total_stack_size -= t->stack_size();
