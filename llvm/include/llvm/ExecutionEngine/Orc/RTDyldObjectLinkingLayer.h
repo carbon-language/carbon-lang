@@ -47,7 +47,7 @@ public:
   using NotifyEmittedFunction = std::function<void(VModuleKey)>;
 
   using GetMemoryManagerFunction =
-      std::function<std::shared_ptr<RuntimeDyld::MemoryManager>(VModuleKey)>;
+      std::function<std::unique_ptr<RuntimeDyld::MemoryManager>(VModuleKey)>;
 
   /// Construct an ObjectLinkingLayer with the given NotifyLoaded,
   ///        and NotifyEmitted functors.
