@@ -791,12 +791,12 @@ static void runMRIScript() {
 
   for (line_iterator I(Ref, /*SkipBlanks*/ false), E; I != E; ++I) {
     StringRef Line = *I;
-    StringRef CommandStr, Rest;
     Line = Line.split(';').first;
     Line = Line.split('*').first;
     Line = Line.trim();
     if (Line.empty())
       continue;
+    StringRef CommandStr, Rest;
     std::tie(CommandStr, Rest) = Line.split(' ');
     Rest = Rest.trim();
     if (!Rest.empty() && Rest.front() == '"' && Rest.back() == '"')
