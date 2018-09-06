@@ -401,14 +401,12 @@ private:
     CheckName(a);
     popConstructNameIfPresent(a);
   }
-
   template<typename A> void popConstructNameIfPresent(const A &a) {
     const auto &optionalName{std::get<0>(std::get<0>(a.t).statement.t)};
     if (optionalName.has_value()) {
       constructNames_.pop_back();
     }
   }
-
   void popConstructNameIfPresent(const parser::BlockConstruct &blockConstruct) {
     const auto &optionalName{
         std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
@@ -532,9 +530,7 @@ private:
               std::get<parser::Statement<parser::ElseStmt>>(
                   std::get<std::optional<parser::IfConstruct::ElseBlock>>(
                       ifConstruct.t)
-                      ->t
-
-                  )
+                      ->t)
                   .statement.v,
               constructName)) {
         errorHandler_.Say(currentPosition_,
