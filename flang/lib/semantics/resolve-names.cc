@@ -36,6 +36,7 @@ using namespace parser::literals;
 class MessageHandler;
 
 static GenericSpec MapGenericSpec(const parser::GenericSpec &);
+static bool IsModule(const Scope &);
 
 // ImplicitRules maps initial character of identifier to the DeclTypeSpec
 // representing the implicit type; std::nullopt if none.
@@ -543,6 +544,7 @@ public:
   void Post(const parser::ProcComponentDefStmt &);
   void Post(const parser::ProcInterface &x);
   void Post(const parser::ProcDecl &x);
+  bool Pre(const parser::TypeBoundProcedurePart &);
   bool Pre(const parser::TypeBoundProcBinding &) { return BeginAttrs(); }
   void Post(const parser::TypeBoundProcBinding &) { EndAttrs(); }
   void Post(const parser::TypeBoundProcedureStmt::WithoutInterface &);
@@ -557,6 +559,14 @@ protected:
 private:
   // The attribute corresponding to the statement containing an ObjectDecl
   std::optional<Attr> objectDeclAttr_;
+  // Info about current derived type while walking DerivedTypeStmt
+  struct {
+    const SourceName *extends{nullptr};  // EXTENDS(name)
+    bool privateComps{false};  // components are private by default
+    bool privateBindings{false};  // bindings are private by default
+    bool sawContains{false};  // currently processing bindings
+    bool sequence{false};  // is a sequence type
+  } derivedTypeInfo_;
   // In a DerivedTypeDef, this is data collected for it
   std::unique_ptr<DerivedTypeDef::Data> derivedTypeData_;
   // In a ProcedureDeclarationStmt or ProcComponentDefStmt, this is
@@ -2065,8 +2075,8 @@ void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
           "Duplicate type parameter name: '%s'"_err_en_US);  // C731
     }
   }
-  scope.symbol()->get<DerivedTypeDetails>().set_hasTypeParams(
-      !paramNames.empty());
+  auto &details{scope.symbol()->get<DerivedTypeDetails>()};
+  details.set_hasTypeParams(!paramNames.empty());
   for (const auto &pair : currScope()) {
     const auto *symbol{pair.second};
     if (symbol->has<TypeParamDetails>() && !paramNames.count(symbol->name())) {
@@ -2075,6 +2085,22 @@ void DeclarationVisitor::Post(const parser::DerivedTypeDef &x) {
           stmt.source, "Derived type statement"_en_US);  // C742
     }
   }
+  if (derivedTypeInfo_.sequence) {
+    details.set_sequence(true);
+    if (derivedTypeInfo_.extends) {
+      Say(stmt.source,
+          "A sequence type may not have the EXTENDS attribute"_err_en_US);  // C735
+    }
+    if (details.hasTypeParams()) {
+      Say(stmt.source,
+          "A sequence type may not have type parameters"_err_en_US);  // C740
+    }
+    if (derivedTypeInfo_.sawContains) {
+      Say(stmt.source,
+          "A sequence type may not have a CONTAINS statement"_err_en_US);  // C740
+    }
+  }
+  derivedTypeInfo_ = {};
   PopScope();
 }
 bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {
@@ -2083,7 +2109,13 @@ bool DeclarationVisitor::Pre(const parser::DerivedTypeStmt &x) {
 void DeclarationVisitor::Post(const parser::DerivedTypeStmt &x) {
   auto &name{std::get<parser::Name>(x.t).source};
   auto &symbol{MakeSymbol(name, GetAttrs(), DerivedTypeDetails{})};
+  auto &details{symbol.get<DerivedTypeDetails>()};
   PushScope(Scope::Kind::DerivedType, &symbol);
+  if (derivedTypeInfo_.extends) {
+    if (auto *extends{ResolveDerivedType(*derivedTypeInfo_.extends)}) {
+      details.set_extends(extends);
+    }
+  }
   EndAttrs();
 }
 void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
@@ -2100,24 +2132,38 @@ void DeclarationVisitor::Post(const parser::TypeParamDefStmt &x) {
   EndDecl();
 }
 bool DeclarationVisitor::Pre(const parser::TypeAttrSpec::Extends &x) {
-  auto &name{x.v.source};
-  ResolveDerivedType(name);
-  // TODO: use resolved symbol in derived type
-  // const auto *symbol{ResolveDerivedType(name)};
-  derivedTypeData_->extends = &name;
+  derivedTypeInfo_.extends = &x.v.source;
+  derivedTypeData_->extends = &x.v.source;
   return false;
 }
+
 bool DeclarationVisitor::Pre(const parser::PrivateStmt &x) {
-  derivedTypeData_->Private = true;
+  if (!IsModule(currScope().parent())) {
+    Say("PRIVATE is only allowed in a derived type that is"
+        " in a module"_err_en_US);  // C766
+  } else if (derivedTypeInfo_.sawContains) {
+    derivedTypeInfo_.privateBindings = true;
+  } else if (!derivedTypeInfo_.privateComps) {
+    derivedTypeInfo_.privateComps = true;
+  } else {
+    Say("PRIVATE may not appear more than once in"
+      " derived type components"_err_en_US);  // C738
+  }
   return false;
 }
 bool DeclarationVisitor::Pre(const parser::SequenceStmt &x) {
+  derivedTypeInfo_.sequence = true;
   derivedTypeData_->sequence = true;
   return false;
 }
 void DeclarationVisitor::Post(const parser::ComponentDecl &x) {
   const auto &name{std::get<parser::Name>(x.t)};
-  DeclareObjectEntity(name, GetAttrs());
+  auto attrs{GetAttrs()};
+  if (derivedTypeInfo_.privateComps &&
+      !attrs.HasAny({Attr::PUBLIC, Attr::PRIVATE})) {
+    attrs.set(Attr::PRIVATE);
+  }
+  DeclareObjectEntity(name, attrs);
   ClearArraySpec();
 }
 bool DeclarationVisitor::Pre(const parser::ProcedureDeclarationStmt &) {
@@ -2157,6 +2203,11 @@ void DeclarationVisitor::Post(const parser::ProcDecl &x) {
   } else {
     DeclareProcEntity(name, GetAttrs(), interface);
   }
+}
+
+bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &x) {
+  derivedTypeInfo_.sawContains = true;
+  return true;
 }
 
 void DeclarationVisitor::Post(
@@ -2278,7 +2329,14 @@ Symbol &DeclarationVisitor::MakeTypeSymbol(
         it->second->name(), "Previous definition of '%s'"_en_US);
     return *it->second;
   } else {
-    return MakeSymbol(name, GetAttrs(), details);
+    auto attrs{GetAttrs()};
+    // Apply binding-private-stmt if present and this is a procedure binding
+    if (derivedTypeInfo_.privateBindings &&
+        !attrs.HasAny({Attr::PUBLIC, Attr::PRIVATE}) &&
+        std::holds_alternative<ProcBindingDetails>(details)) {
+      attrs.set(Attr::PRIVATE);
+    }
+    return MakeSymbol(name, attrs, details);
   }
 }
 
@@ -2317,7 +2375,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
   // Check C896 and C899: where IMPORT statements are allowed
   switch (scope.kind()) {
   case Scope::Kind::Module:
-    if (!scope.symbol()->get<ModuleDetails>().isSubmodule()) {
+    if (IsModule(scope)) {
       Say("IMPORT is not allowed in a module scoping unit"_err_en_US);
       return false;
     } else if (x.kind == common::ImportKind::None) {
@@ -2839,6 +2897,12 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &genericSpec) {
           },
       },
       genericSpec.u);
+}
+
+// Is this a scope for a module (and not a submodule)?
+static bool IsModule(const Scope &scope) {
+  return scope.kind() == Scope::Kind::Module &&
+      !scope.symbol()->get<ModuleDetails>().isSubmodule();
 }
 
 static void PutIndent(std::ostream &os, int indent) {

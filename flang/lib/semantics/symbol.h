@@ -147,10 +147,16 @@ private:
 class DerivedTypeDetails {
 public:
   bool hasTypeParams() const { return hasTypeParams_; }
+  const Symbol *extends() const { return extends_; }
+  bool sequence() const { return sequence_; }
   void set_hasTypeParams(bool x = true) { hasTypeParams_ = x; }
+  void set_extends(const Symbol *extends) { extends_ = extends; }
+  void set_sequence(bool x = true) { sequence_ = x; }
 
 private:
   bool hasTypeParams_{false};
+  const Symbol *extends_{nullptr};
+  bool sequence_{false};
 };
 
 class ProcBindingDetails {

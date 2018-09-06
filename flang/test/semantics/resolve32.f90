@@ -68,6 +68,12 @@ module m
     !ERROR: Type parameter, component, or procedure binding 'i' already defined in this type
     final :: i
   end type
+  type t3
+  contains
+    private
+    procedure, nopass :: b => s
+    procedure, nopass, public :: f
+  end type
 contains
   subroutine s
   end

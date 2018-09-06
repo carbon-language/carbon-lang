@@ -206,10 +206,14 @@ void ModFileWriter::PutSymbol(const Symbol &symbol, bool &didContains) {
 }
 
 void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
+  auto &details{typeSymbol.get<DerivedTypeDetails>()};
   PutAttrs(decls_ << "type", typeSymbol.attrs(), ","s, ""s);
+  if (details.extends()) {
+    PutLower(decls_ << ",extends(", *details.extends()) << ')';
+  }
   PutLower(decls_ << "::", typeSymbol);
   auto &typeScope{*typeSymbol.scope()};
-  if (typeSymbol.get<DerivedTypeDetails>().hasTypeParams()) {
+  if (details.hasTypeParams()) {
     bool first{true};
     decls_ << '(';
     for (const auto *symbol : SortSymbols(CollectSymbols(typeScope))) {
@@ -221,6 +225,9 @@ void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
     decls_ << ')';
   }
   decls_ << '\n';
+  if (details.sequence()) {
+    decls_ << "sequence\n";
+  }
   PutSymbols(typeScope);
   decls_ << "end type\n";
 }
