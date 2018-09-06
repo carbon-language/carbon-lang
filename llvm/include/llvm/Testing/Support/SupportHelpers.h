@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/raw_os_ostream.h"
 #include "gtest/gtest-printers.h"
 
 #include <string>
