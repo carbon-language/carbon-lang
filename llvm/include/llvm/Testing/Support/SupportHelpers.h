@@ -56,7 +56,7 @@ void PrintTo(const ExpectedHolder<T> &Item, std::ostream *Out) {
 } // namespace detail
 
 namespace unittest {
-SmallString<128> getInputFileDirectory();
+SmallString<128> getInputFileDirectory(const char *Argv0);
 }
 } // namespace llvm
 

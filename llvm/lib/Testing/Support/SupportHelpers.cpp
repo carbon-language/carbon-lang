@@ -13,10 +13,8 @@
 using namespace llvm;
 using namespace llvm::unittest;
 
-extern const char *TestMainArgv0;
-
-SmallString<128> llvm::unittest::getInputFileDirectory() {
-  llvm::SmallString<128> Result = llvm::sys::path::parent_path(TestMainArgv0);
+SmallString<128> llvm::unittest::getInputFileDirectory(const char *Argv0) {
+  llvm::SmallString<128> Result = llvm::sys::path::parent_path(Argv0);
   llvm::sys::fs::make_absolute(Result);
   llvm::sys::path::append(Result, "llvm.srcdir.txt");
 
