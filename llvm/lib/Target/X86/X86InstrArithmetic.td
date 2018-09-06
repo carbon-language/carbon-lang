@@ -1176,6 +1176,16 @@ let isCompare = 1 in {
 defm CMP : ArithBinOp_F<0x38, 0x3A, 0x3C, "cmp", MRM7r, MRM7m, X86cmp, 0, 0>;
 }
 
+// Patterns to recognize loads on the LHS of an ADC. We can't make X86adc_flag
+// commutable since it has EFLAGs as an input.
+def : Pat<(X86adc_flag (loadi8 addr:$src1), GR8:$src2, EFLAGS),
+          (ADC8rm GR8:$src2, addr:$src1)>;
+def : Pat<(X86adc_flag (loadi16 addr:$src1), GR16:$src2, EFLAGS),
+          (ADC16rm GR16:$src2, addr:$src1)>;
+def : Pat<(X86adc_flag (loadi32 addr:$src1), GR32:$src2, EFLAGS),
+          (ADC32rm GR32:$src2, addr:$src1)>;
+def : Pat<(X86adc_flag (loadi64 addr:$src1), GR64:$src2, EFLAGS),
+          (ADC64rm GR64:$src2, addr:$src1)>;
 
 //===----------------------------------------------------------------------===//
 // Semantically, test instructions are similar like AND, except they don't
