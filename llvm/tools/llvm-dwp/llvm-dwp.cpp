@@ -697,21 +697,13 @@ int main(int argc, char **argv) {
   // Create the output file.
   std::error_code EC;
   raw_fd_ostream OutFile(OutputFilename, EC, sys::fs::F_None);
-  Optional<buffer_ostream> BOS;
-  raw_pwrite_stream *OS;
   if (EC)
     return error(Twine(OutputFilename) + ": " + EC.message(), Context);
-  if (OutFile.supportsSeeking()) {
-    OS = &OutFile;
-  } else {
-    BOS.emplace(OutFile);
-    OS = BOS.getPointer();
-  }
 
   MCTargetOptions MCOptions = InitMCTargetOptionsFromFlags();
   std::unique_ptr<MCStreamer> MS(TheTarget->createMCObjectStreamer(
       TheTriple, MC, std::unique_ptr<MCAsmBackend>(MAB),
-      MAB->createObjectWriter(*OS), std::unique_ptr<MCCodeEmitter>(MCE),
+      MAB->createObjectWriter(OutFile), std::unique_ptr<MCCodeEmitter>(MCE),
       *MSTI, MCOptions.MCRelaxAll, MCOptions.MCIncrementalLinkerCompatible,
       /*DWARFMustBeAtTheEnd*/ false));
   if (!MS)
