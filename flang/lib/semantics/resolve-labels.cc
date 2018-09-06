@@ -731,10 +731,10 @@ void CheckBranchesIntoDoBody(const SourceStmtList &branches,
       const auto &toPosition{branchTarget.parserCharBlock};
       for (const auto body : loopBodies) {
         if (!InBody(fromPosition, body) && InBody(toPosition, body)) {
-            errorHandler.Say(fromPosition,
-                parser::MessageFormattedText{
-                    "branch into '%s' from another scope"_en_US,
-                    body.first.ToString().c_str()});
+          errorHandler.Say(fromPosition,
+              parser::MessageFormattedText{
+                  "branch into '%s' from another scope"_en_US,
+                  body.first.ToString().c_str()});
         }
       }
     }
@@ -792,9 +792,9 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
               label});
     } else if (!InInclusiveScope(scopes, scope, doTarget.proxyForScope)) {
       // C1133
-        errorHandler.Say(position,
-            parser::MessageFormattedText{
-                "label '%" PRIu64 "' is not in scope"_en_US, label});
+      errorHandler.Say(position,
+          parser::MessageFormattedText{
+              "label '%" PRIu64 "' is not in scope"_en_US, label});
     } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do) &&
         !doTarget.labeledStmtClassificationSet.test(
@@ -830,9 +830,9 @@ void CheckScopeConstraints(const SourceStmtList &stmts,
           parser::MessageFormattedText{
               "label '%" PRIu64 "' was not found"_err_en_US, label});
     } else if (!InInclusiveScope(scopes, scope, target.proxyForScope)) {
-        errorHandler.Say(position,
-            parser::MessageFormattedText{
-                "label '%" PRIu64 "' is not in scope"_en_US, label});
+      errorHandler.Say(position,
+          parser::MessageFormattedText{
+              "label '%" PRIu64 "' is not in scope"_en_US, label});
     }
   }
 }
