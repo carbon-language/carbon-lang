@@ -57,23 +57,13 @@ using SourceStmtList = std::vector<SourceStatementInfoTuplePOD>;
 
 const bool isStrictF18{false};  // FIXME - make a command-line option
 
-bool HasScope(ProxyForScope scope) {
-  if (scope != ProxyForScope{0u}) {
-    return true;
-  } else {
-    return false;
-  }
-}
+bool HasScope(ProxyForScope scope) { return scope != ProxyForScope{0u}; }
 
 // F18:R1131
 template<typename A>
 constexpr bool IsLegalDoTerm(const parser::Statement<A> &) {
-  if (std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
-      std::is_same_v<A, parser::EndDoStmt>) {
-    return true;
-  } else {
-    return false;
-  }
+  return std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
+      std::is_same_v<A, parser::EndDoStmt>;
 }
 template<>
 constexpr bool IsLegalDoTerm(
@@ -83,23 +73,20 @@ constexpr bool IsLegalDoTerm(
     return true;
   } else if (isStrictF18) {
     return false;
-  } else if (!(std::holds_alternative<
-                   common::Indirection<parser::ArithmeticIfStmt>>(
-                   actionStmt.statement.u) ||
-                 std::holds_alternative<common::Indirection<parser::CycleStmt>>(
-                     actionStmt.statement.u) ||
-                 std::holds_alternative<common::Indirection<parser::ExitStmt>>(
-                     actionStmt.statement.u) ||
-                 std::holds_alternative<common::Indirection<parser::StopStmt>>(
-                     actionStmt.statement.u) ||
-                 std::holds_alternative<common::Indirection<parser::GotoStmt>>(
-                     actionStmt.statement.u) ||
-                 std::holds_alternative<
-                     common::Indirection<parser::ReturnStmt>>(
-                     actionStmt.statement.u))) {
-    return true;
   } else {
-    return false;
+    return !(
+        std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::CycleStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::ExitStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::StopStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::GotoStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::ReturnStmt>>(
+            actionStmt.statement.u));
   }
 }
 
@@ -138,18 +125,16 @@ constexpr bool IsLegalBranchTarget(
     const parser::Statement<parser::ActionStmt> &actionStmt) {
   if (!isStrictF18) {
     return true;
-  } else if (
-      !(std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
-            actionStmt.statement.u) ||
-          std::holds_alternative<common::Indirection<parser::AssignStmt>>(
-              actionStmt.statement.u) ||
-          std::holds_alternative<common::Indirection<parser::AssignedGotoStmt>>(
-              actionStmt.statement.u) ||
-          std::holds_alternative<common::Indirection<parser::PauseStmt>>(
-              actionStmt.statement.u))) {
-    return true;
   } else {
-    return false;
+    return !(
+        std::holds_alternative<common::Indirection<parser::ArithmeticIfStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::AssignStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::AssignedGotoStmt>>(
+            actionStmt.statement.u) ||
+        std::holds_alternative<common::Indirection<parser::PauseStmt>>(
+            actionStmt.statement.u));
   }
 }
 
@@ -173,20 +158,12 @@ bool BothEqOrNone(const std::optional<parser::Name> &name_a,
     const std::optional<parser::Name> &name_b) {
   if (name_a.has_value()) {
     if (name_b.has_value()) {
-      if (name_a->ToString() == name_b->ToString()) {
-        return true;
-      } else {
-        return false;
-      }
+      return name_a->ToString() == name_b->ToString();
     } else {
       return false;
     }
   } else {
-    if (!name_b.has_value()) {
-      return true;
-    } else {
-      return false;
-    }
+    return !name_b.has_value();
   }
 }
 
@@ -195,11 +172,7 @@ bool PresentAndEq(const std::optional<parser::Name> &name_a,
   if (!name_a.has_value()) {
     return true;
   } else if (name_b.has_value()) {
-    if (name_a->ToString() == name_b->ToString()) {
-      return true;
-    } else {
-      return false;
-    }
+    return name_a->ToString() == name_b->ToString();
   } else {
     return false;
   }
