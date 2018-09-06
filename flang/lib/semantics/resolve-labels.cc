@@ -33,22 +33,22 @@ using IndexList = std::vector<std::pair<parser::CharBlock, parser::CharBlock>>;
 // because the parse tree does not actually have the scopes required.
 using ProxyForScope = unsigned;
 struct LabeledStatementInfoTuplePOD {
-  LabeledStatementInfoTuplePOD(const ProxyForScope &_proxyForScope,
-      const parser::CharBlock &_parserCharBlock,
-      const LabeledStmtClassificationSet &_labeledStmtClassificationSet)
-    : proxyForScope{_proxyForScope}, parserCharBlock{_parserCharBlock},
-      labeledStmtClassificationSet{_labeledStmtClassificationSet} {}
+  LabeledStatementInfoTuplePOD(const ProxyForScope &proxyForScope,
+      const parser::CharBlock &parserCharBlock,
+      const LabeledStmtClassificationSet &labeledStmtClassificationSet)
+    : proxyForScope{proxyForScope}, parserCharBlock{parserCharBlock},
+      labeledStmtClassificationSet{labeledStmtClassificationSet} {}
   ProxyForScope proxyForScope;
   parser::CharBlock parserCharBlock;
   LabeledStmtClassificationSet labeledStmtClassificationSet;
 };
 using TargetStmtMap = std::map<parser::Label, LabeledStatementInfoTuplePOD>;
 struct SourceStatementInfoTuplePOD {
-  SourceStatementInfoTuplePOD(const parser::Label &_parserLabel,
-      const ProxyForScope &_proxyForScope,
-      const parser::CharBlock &_parserCharBlock)
-    : parserLabel{_parserLabel}, proxyForScope{_proxyForScope},
-      parserCharBlock{_parserCharBlock} {}
+  SourceStatementInfoTuplePOD(const parser::Label &parserLabel,
+      const ProxyForScope &proxyForScope,
+      const parser::CharBlock &parserCharBlock)
+    : parserLabel{parserLabel}, proxyForScope{proxyForScope},
+      parserCharBlock{parserCharBlock} {}
   parser::Label parserLabel;
   ProxyForScope proxyForScope;
   parser::CharBlock parserCharBlock;
