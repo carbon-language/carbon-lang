@@ -448,6 +448,10 @@ private:
   /// parameters (x86_64-specific).
   GlobalVariable *VAArgTLS;
 
+  /// Thread-local shadow storage for in-register va_arg function
+  /// parameters (x86_64-specific).
+  GlobalVariable *VAArgOriginTLS;
+
   /// Thread-local shadow storage for va_arg overflow area
   /// (x86_64-specific).
   GlobalVariable *VAArgOverflowSizeTLS;
@@ -560,6 +564,12 @@ void MemorySanitizer::createUserspaceApi(Module &M) {
       M, ArrayType::get(IRB.getInt64Ty(), kParamTLSSize / 8), false,
       GlobalVariable::ExternalLinkage, nullptr, "__msan_va_arg_tls", nullptr,
       GlobalVariable::InitialExecTLSModel);
+
+  VAArgOriginTLS = new GlobalVariable(
+      M, ArrayType::get(OriginTy, kParamTLSSize / 4), false,
+      GlobalVariable::ExternalLinkage, nullptr, "__msan_va_arg_origin_tls",
+      nullptr, GlobalVariable::InitialExecTLSModel);
+
   VAArgOverflowSizeTLS = new GlobalVariable(
       M, IRB.getInt64Ty(), false, GlobalVariable::ExternalLinkage, nullptr,
       "__msan_va_arg_overflow_size_tls", nullptr,
@@ -3258,6 +3268,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
   MemorySanitizer &MS;
   MemorySanitizerVisitor &MSV;
   Value *VAArgTLSCopy = nullptr;
+  Value *VAArgTLSOriginCopy = nullptr;
   Value *VAArgOverflowSize = nullptr;
 
   SmallVector<CallInst*, 16> VAStartInstrumentationList;
@@ -3320,6 +3331,9 @@ struct VarArgAMD64Helper : public VarArgHelper {
         uint64_t ArgSize = DL.getTypeAllocSize(RealTy);
         Value *ShadowBase = getShadowPtrForVAArgument(
             RealTy, IRB, OverflowOffset, alignTo(ArgSize, 8));
+        Value *OriginBase = nullptr;
+        if (MS.TrackOrigins)
+          OriginBase = getOriginPtrForVAArgument(RealTy, IRB, OverflowOffset);
         OverflowOffset += alignTo(ArgSize, 8);
         if (!ShadowBase)
           continue;
@@ -3330,22 +3344,31 @@ struct VarArgAMD64Helper : public VarArgHelper {
 
         IRB.CreateMemCpy(ShadowBase, kShadowTLSAlignment, ShadowPtr,
                          kShadowTLSAlignment, ArgSize);
+        if (MS.TrackOrigins)
+          IRB.CreateMemCpy(OriginBase, kShadowTLSAlignment, OriginPtr,
+                           kShadowTLSAlignment, ArgSize);
       } else {
         ArgKind AK = classifyArgument(A);
         if (AK == AK_GeneralPurpose && GpOffset >= AMD64GpEndOffset)
           AK = AK_Memory;
         if (AK == AK_FloatingPoint && FpOffset >= AMD64FpEndOffset)
           AK = AK_Memory;
-        Value *ShadowBase;
+        Value *ShadowBase, *OriginBase = nullptr;
         switch (AK) {
           case AK_GeneralPurpose:
             ShadowBase =
                 getShadowPtrForVAArgument(A->getType(), IRB, GpOffset, 8);
+            if (MS.TrackOrigins)
+              OriginBase =
+                  getOriginPtrForVAArgument(A->getType(), IRB, GpOffset);
             GpOffset += 8;
             break;
           case AK_FloatingPoint:
             ShadowBase =
                 getShadowPtrForVAArgument(A->getType(), IRB, FpOffset, 16);
+            if (MS.TrackOrigins)
+              OriginBase =
+                  getOriginPtrForVAArgument(A->getType(), IRB, FpOffset);
             FpOffset += 16;
             break;
           case AK_Memory:
@@ -3354,16 +3377,26 @@ struct VarArgAMD64Helper : public VarArgHelper {
             uint64_t ArgSize = DL.getTypeAllocSize(A->getType());
             ShadowBase =
                 getShadowPtrForVAArgument(A->getType(), IRB, OverflowOffset, 8);
+            if (MS.TrackOrigins)
+              OriginBase =
+                  getOriginPtrForVAArgument(A->getType(), IRB, OverflowOffset);
             OverflowOffset += alignTo(ArgSize, 8);
         }
         // Take fixed arguments into account for GpOffset and FpOffset,
         // but don't actually store shadows for them.
+        // TODO(glider): don't call get*PtrForVAArgument() for them.
         if (IsFixed)
           continue;
         if (!ShadowBase)
           continue;
-        IRB.CreateAlignedStore(MSV.getShadow(A), ShadowBase,
-                               kShadowTLSAlignment);
+        Value *Shadow = MSV.getShadow(A);
+        IRB.CreateAlignedStore(Shadow, ShadowBase, kShadowTLSAlignment);
+        if (MS.TrackOrigins) {
+          Value *Origin = MSV.getOrigin(A);
+          unsigned StoreSize = DL.getTypeStoreSize(Shadow->getType());
+          MSV.paintOrigin(IRB, Origin, OriginBase, StoreSize,
+                          std::max(kShadowTLSAlignment, kMinOriginAlignment));
+        }
       }
     }
     Constant *OverflowSize =
@@ -3380,7 +3413,18 @@ struct VarArgAMD64Helper : public VarArgHelper {
     Value *Base = IRB.CreatePointerCast(MS.VAArgTLS, MS.IntptrTy);
     Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
     return IRB.CreateIntToPtr(Base, PointerType::get(MSV.getShadowTy(Ty), 0),
-                              "_msarg");
+                              "_msarg_va_s");
+  }
+
+  /// Compute the origin address for a given va_arg.
+  Value *getOriginPtrForVAArgument(Type *Ty, IRBuilder<> &IRB, int ArgOffset) {
+    Value *Base = IRB.CreatePointerCast(MS.VAArgOriginTLS, MS.IntptrTy);
+    // getOriginPtrForVAArgument() is always called after
+    // getShadowPtrForVAArgument(), so __msan_va_arg_origin_tls can never
+    // overflow.
+    Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
+    return IRB.CreateIntToPtr(Base, PointerType::get(MS.OriginTy, 0),
+                              "_msarg_va_o");
   }
 
   void unpoisonVAListTagForInst(IntrinsicInst &I) {
@@ -3425,6 +3469,10 @@ struct VarArgAMD64Helper : public VarArgHelper {
                       VAArgOverflowSize);
       VAArgTLSCopy = IRB.CreateAlloca(Type::getInt8Ty(*MS.C), CopySize);
       IRB.CreateMemCpy(VAArgTLSCopy, 8, MS.VAArgTLS, 8, CopySize);
+      if (MS.TrackOrigins) {
+        VAArgTLSOriginCopy = IRB.CreateAlloca(Type::getInt8Ty(*MS.C), CopySize);
+        IRB.CreateMemCpy(VAArgTLSOriginCopy, 8, MS.VAArgOriginTLS, 8, CopySize);
+      }
     }
 
     // Instrument va_start.
@@ -3446,6 +3494,9 @@ struct VarArgAMD64Helper : public VarArgHelper {
                                  Alignment, /*isStore*/ true);
       IRB.CreateMemCpy(RegSaveAreaShadowPtr, Alignment, VAArgTLSCopy, Alignment,
                        AMD64FpEndOffset);
+      if (MS.TrackOrigins)
+        IRB.CreateMemCpy(RegSaveAreaOriginPtr, Alignment, VAArgTLSOriginCopy,
+                         Alignment, AMD64FpEndOffset);
       Value *OverflowArgAreaPtrPtr = IRB.CreateIntToPtr(
           IRB.CreateAdd(IRB.CreatePtrToInt(VAListTag, MS.IntptrTy),
                         ConstantInt::get(MS.IntptrTy, 8)),
@@ -3459,6 +3510,12 @@ struct VarArgAMD64Helper : public VarArgHelper {
                                              AMD64FpEndOffset);
       IRB.CreateMemCpy(OverflowArgAreaShadowPtr, Alignment, SrcPtr, Alignment,
                        VAArgOverflowSize);
+      if (MS.TrackOrigins) {
+        SrcPtr = IRB.CreateConstGEP1_32(IRB.getInt8Ty(), VAArgTLSOriginCopy,
+                                        AMD64FpEndOffset);
+        IRB.CreateMemCpy(OverflowArgAreaOriginPtr, Alignment, SrcPtr, Alignment,
+                         VAArgOverflowSize);
+      }
     }
   }
 };
