@@ -53,6 +53,9 @@ public:
   constexpr bool Contains(const Interval &that) const {
     return Contains(that.start_) && Contains(that.start_ + (that.size_ - 1));
   }
+  constexpr bool IsDisjointWith(const Interval &that) const {
+    return that.NextAfter() <= start_ || NextAfter() <= that.start_;
+  }
   constexpr bool ImmediatelyPrecedes(const Interval &that) const {
     return NextAfter() == that.start_;
   }
@@ -84,6 +87,20 @@ public:
   Interval Suffix(std::size_t n) const {
     CHECK(n <= size_);
     return {start_ + n, size_ - n};
+  }
+
+  constexpr Interval Intersection(const Interval &that) const {
+    if (start_ >= that.NextAfter()) {
+      return {};
+    } else if (start_ >= that.start_) {
+      auto skip{start_ - that.start_};
+      return {start_, std::min(size_, that.size_ - skip)};
+    } else if (NextAfter() <= that.start_) {
+      return {};
+    } else {
+      auto skip{that.start_ - start_};
+      return {that.start_, std::min(that.size_ - size_ - skip)};
+    }
   }
 
 private:

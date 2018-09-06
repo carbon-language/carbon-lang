@@ -69,21 +69,10 @@ template<typename T> struct Constant {
 };
 
 // BOZ literal "typeless" constants must be wide enough to hold a numeric
-// value of any supported kind.  They must also be distinguishable from
-// other integer constants, since they are permitted to be used in only a
-// few situations.
-using BOZLiteralConstant = value::Integer<8 * 2 * DefaultComplex::kind>;
-
-// "Typeless" operands to INTEGER, REAL, and COMPLEX operations.
-template<typename T> struct BOZConstant {
-  using Result = T;
-  using Value = BOZLiteralConstant;
-  CLASS_BOILERPLATE(BOZConstant)
-  BOZConstant(const BOZLiteralConstant &x) : value{x} {}
-  BOZConstant(BOZLiteralConstant &&x) : value{std::move(x)} {}
-  std::ostream &Dump(std::ostream &) const;
-  Value value;
-};
+// value of any supported kind of INTEGER or REAL.  They must also be
+// distinguishable from other integer constants, since they are permitted
+// to be used in only a few situations.
+using BOZLiteralConstant = typename LargestReal::Scalar::Word;
 
 // These wrappers around data and function references expose their resolved
 // types.
@@ -414,8 +403,8 @@ private:
   using Operations = std::variant<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, BOZConstant<Result>,
-      DataReference<Result>, FunctionReference<Result>>;
+  using Others = std::variant<Constant<Result>, DataReference<Result>,
+      FunctionReference<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -445,8 +434,8 @@ private:
   using Operations = std::variant<ComplexComponent<KIND>, Parentheses<Result>,
       Negate<Result>, Add<Result>, Subtract<Result>, Multiply<Result>,
       Divide<Result>, Power<Result>, RealToIntPower<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, BOZConstant<Result>,
-      DataReference<Result>, FunctionReference<Result>>;
+  using Others = std::variant<Constant<Result>, DataReference<Result>,
+      FunctionReference<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -466,11 +455,13 @@ public:
   Expr(const DataRef &x) : u{DataReference<Result>{x}} {}
   Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
 
+  // TODO pmk: Remove Negate, Add, Subtract in favor of component-wise
+  // operations.
   using Operations = std::variant<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, RealToIntPower<Result>, ComplexConstructor<KIND>>;
-  using Others = std::variant<Constant<Result>, BOZConstant<Result>,
-      DataReference<Result>, FunctionReference<Result>>;
+  using Others = std::variant<Constant<Result>, DataReference<Result>,
+      FunctionReference<Result>>;
 
 public:
   common::CombineVariants<Operations, Others> u;

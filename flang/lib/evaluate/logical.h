@@ -57,6 +57,5 @@ extern template class Logical<8>;
 extern template class Logical<16>;
 extern template class Logical<32>;
 extern template class Logical<64>;
-extern template class Logical<128>;
 }  // namespace Fortran::evaluate::value
 #endif  // FORTRAN_EVALUATE_LOGICAL_H_

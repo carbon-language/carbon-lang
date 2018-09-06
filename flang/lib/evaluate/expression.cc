@@ -33,7 +33,6 @@ namespace Fortran::evaluate {
 template<typename D, typename R, typename... O>
 auto Operation<D, R, O...>::Fold(FoldingContext &context)
     -> std::optional<Constant<Result>> {
-  // TODO pmk: generalize
   auto c0{operand<0>().Fold(context)};
   if constexpr (operands() == 1) {
     if (c0.has_value()) {
@@ -42,6 +41,7 @@ auto Operation<D, R, O...>::Fold(FoldingContext &context)
       }
     }
   } else {
+    static_assert(operands() == 2);  // TODO: generalize to N operands?
     auto c1{operand<1>().Fold(context)};
     if (c0.has_value() && c1.has_value()) {
       if (auto scalar{derived().FoldScalar(context, c0->value, c1->value)}) {
@@ -444,10 +444,6 @@ template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
   } else {
     return value.u.Dump(o);
   }
-}
-
-template<typename T> std::ostream &BOZConstant<T>::Dump(std::ostream &o) const {
-  return o << "Z'" << value.Hexadecimal() << "'";
 }
 
 template<typename RESULT>

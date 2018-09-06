@@ -104,42 +104,82 @@ Expr<SomeReal> GetComplexPart(const Expr<SomeComplex> &z, bool isImaginary) {
       z.u);
 }
 
-template<template<typename> class OPR>
-std::optional<Expr<SomeType>> MixedComplex(parser::ContextualMessages &messages,
-    Expr<SomeComplex> &&zx, Expr<SomeType> &&iry) {
+// Handle mixed COMPLEX+REAL (or INTEGER) operations in a smarter way
+// than just converting the second operand to COMPLEX and performing the
+// corresponding COMPLEX+COMPLEX operation.
+template<template<typename> class OPR, TypeCategory RCAT>
+std::optional<Expr<SomeType>> MixedComplexLeft(
+    parser::ContextualMessages &messages, Expr<SomeComplex> &&zx,
+    Expr<SomeKind<RCAT>> &&iry) {
   Expr<SomeReal> zr{GetComplexPart(zx, false)};
   Expr<SomeReal> zi{GetComplexPart(zx, true)};
   if constexpr (std::is_same_v<OPR<DefaultReal>, Add<DefaultReal>> ||
       std::is_same_v<OPR<DefaultReal>, Subtract<DefaultReal>>) {
-    // Addition and subtraction: apply the operation to the real part of the
-    // complex operand, and a transfer/convert its imaginary part.
-    // i.e., (a,b) + c = (a+c, b)
-    if (std::optional<Expr<SomeType>> rr{
-            NumericOperation<OPR>(messages, std::move(zr), std::move(iry))}) {
-      return Package(ConstructComplex(messages, AsGenericExpr(std::move(*rr)),
-          AsGenericExpr(std::move(zi))));
+    // (a,b) + x -> (a+x, b)
+    // (a,b) - x -> (a-x, b)
+    if (std::optional<Expr<SomeType>> rr{NumericOperation<OPR>(messages,
+            AsGenericExpr(std::move(zr)), AsGenericExpr(std::move(iry)))}) {
+      return Package(ConstructComplex(
+          messages, std::move(*rr), AsGenericExpr(std::move(zi))));
     }
   } else if constexpr (std::is_same_v<OPR<DefaultReal>,
                            Multiply<DefaultReal>> ||
       std::is_same_v<OPR<DefaultReal>, Divide<DefaultReal>>) {
-    // Multiplication and division of a COMPLEX value by an INTEGER or REAL
-    // operand: apply the operation to both components of the COMPLEX value,
-    // then convert and recombine them.
-    // i.e., (a,b) * c = (a*c, b*c)
+    // (a,b) * x -> (a*x, b*x)
+    // (a,b) / x -> (a/x, b/x)
     auto copy{iry};
-    auto rr{NumericOperation<OPR>(messages, std::move(zr), std::move(iry))};
-    auto ri{NumericOperation<OPR>(messages, std::move(zi), std::move(copy))};
+    auto rr{NumericOperation<Multiply>(
+        messages, AsGenericExpr(std::move(zr)), AsGenericExpr(std::move(iry)))};
+    auto ri{NumericOperation<Multiply>(messages, AsGenericExpr(std::move(zi)),
+        AsGenericExpr(std::move(copy)))};
     if (auto parts{common::AllPresent(std::move(rr), std::move(ri))}) {
       return Package(ConstructComplex(messages, std::move(std::get<0>(*parts)),
           std::move(std::get<1>(*parts))));
     }
+  } else {
+    // (a,b) ? x -> (a,b) ? (x,0)
+    Expr<SomeComplex> zy{ConvertTo(zx, std::move(iry))};
+    return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
+  }
+  return std::nullopt;
+}
+
+// Mixed COMPLEX operations with the COMPLEX operand on the right.
+//  x + (a,b) -> (x+a, b)
+//  x - (a,b) -> (x-a, -b)
+//  x * (a,b) -> (x*a, x*b)
+//  x / (a,b) -> (x,0) / (a,b)
+template<template<typename> class OPR, TypeCategory LCAT>
+std::optional<Expr<SomeType>> MixedComplexRight(
+    parser::ContextualMessages &messages, Expr<SomeKind<LCAT>> &&irx,
+    Expr<SomeComplex> &&zy) {
+  if constexpr (std::is_same_v<OPR<DefaultReal>, Add<DefaultReal>> ||
+      std::is_same_v<OPR<DefaultReal>, Multiply<DefaultReal>>) {
+    // x + (a,b) -> (a,b) + x -> (a+x, b)
+    // x * (a,b) -> (a,b) * x -> (a*x, b*x)
+    return MixedComplexLeft<Add, LCAT>(messages, std::move(zy), std::move(irx));
+  } else if constexpr (std::is_same_v<OPR<DefaultReal>,
+                           Subtract<DefaultReal>>) {
+    // x - (a,b) -> (x-a, -b)
+    Expr<SomeReal> zr{GetComplexPart(zy, false)};
+    Expr<SomeReal> zi{GetComplexPart(zy, true)};
+    if (std::optional<Expr<SomeType>> rr{NumericOperation<Subtract>(messages,
+            AsGenericExpr(std::move(irx)), AsGenericExpr(std::move(zr)))}) {
+      return Package(ConstructComplex(
+          messages, std::move(*rr), AsGenericExpr(-std::move(zi))));
+    }
+  } else {
+    // x / (a,b) -> (x,0) / (a,b)    and any other operators that make it here
+    Expr<SomeComplex> zx{ConvertTo(zy, std::move(irx))};
+    return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
   }
   return std::nullopt;
 }
 
 // N.B. When a "typeless" BOZ literal constant appears as one (not both!) of
-// the operands to a dyadic INTEGER or REAL operation, it assumes the type
-// and kind of the other operand.
+// the operands to a dyadic operation, it assumes the type and kind of the
+// other operand.
+// TODO pmk: add Power, RealToIntPower, &c.
 template<template<typename> class OPR>
 std::optional<Expr<SomeType>> NumericOperation(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
@@ -154,6 +194,7 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(PromoteAndCombine<OPR, TypeCategory::Real>(
                 std::move(rx), std::move(ry)));
           },
+          // Mixed INTEGER/REAL operations
           [](Expr<SomeReal> &&rx, Expr<SomeInteger> &&iy) {
             return Package(std::visit(
                 [&](auto &&rxk) -> Expr<SomeReal> {
@@ -173,18 +214,28 @@ std::optional<Expr<SomeType>> NumericOperation(
                 },
                 std::move(ry.u)));
           },
+          // Homogenous and mixed COMPLEX operations
           [](Expr<SomeComplex> &&zx, Expr<SomeComplex> &&zy) {
             return Package(PromoteAndCombine<OPR, TypeCategory::Complex>(
                 std::move(zx), std::move(zy)));
           },
           [&](Expr<SomeComplex> &&zx, Expr<SomeInteger> &&zy) {
-            return MixedComplex<OPR>(messages, std::move(zx), std::move(zy));
+            return MixedComplexLeft<OPR>(
+                messages, std::move(zx), std::move(zy));
           },
           [&](Expr<SomeComplex> &&zx, Expr<SomeReal> &&zy) {
-            return MixedComplex<OPR>(messages, std::move(zx), std::move(zy));
+            return MixedComplexLeft<OPR>(
+                messages, std::move(zx), std::move(zy));
           },
-          // TODO pmk: mixed r+complex, &c.; r/z is tricky
-          // TODO pmk: mixed complex + boz?  yes but what about COMPLEX*16?
+          [&](Expr<SomeInteger> &&zx, Expr<SomeComplex> &&zy) {
+            return MixedComplexRight<OPR>(
+                messages, std::move(zx), std::move(zy));
+          },
+          [&](Expr<SomeReal> &&zx, Expr<SomeComplex> &&zy) {
+            return MixedComplexRight<OPR>(
+                messages, std::move(zx), std::move(zy));
+          },
+          // Operations with one typeless operand
           [&](BOZLiteralConstant &&bx, Expr<SomeInteger> &&iy) {
             return NumericOperation<OPR>(
                 messages, ConvertTo(iy, std::move(bx)), std::move(y));
@@ -201,6 +252,7 @@ std::optional<Expr<SomeType>> NumericOperation(
             return NumericOperation<OPR>(
                 messages, std::move(x), ConvertTo(rx, std::move(by)));
           },
+          // Default case
           [&](auto &&, auto &&) {
             messages.Say("non-numeric operands to numeric operation"_err_en_US);
             return std::optional<Expr<SomeType>>{std::nullopt};

@@ -70,7 +70,7 @@ static constexpr Relation Reverse(Relation relation) {
 ENUM_CLASS(
     RealFlag, Overflow, DivideByZero, InvalidArgument, Underflow, Inexact)
 
-using RealFlags = common::EnumSet<RealFlag, 5>;
+using RealFlags = common::EnumSet<RealFlag, RealFlag_enumSize>;
 
 template<typename A> struct ValueWithRealFlags {
   A AccumulateFlags(RealFlags &f) {

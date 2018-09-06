@@ -31,7 +31,8 @@ ENUM_CLASS(LanguageFeature, BackslashEscapes, OldDebugLines,
     ProgramParentheses, PercentRefAndVal, OmitFunctionDummies, CrayPointer,
     Hollerith, ArithmeticIF, Assign, AssignedGOTO, Pause, OpenMP)
 
-using LanguageFeatures = common::EnumSet<LanguageFeature, 64>;
+using LanguageFeatures =
+    common::EnumSet<LanguageFeature, LanguageFeature_enumSize>;
 
 class LanguageFeatureControl {
 public:

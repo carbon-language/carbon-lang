@@ -107,8 +107,16 @@ template<typename TO, TypeCategory FROMCAT>
 Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
   static_assert(TO::isSpecificType);
   if constexpr (FROMCAT != TO::category) {
-    return {Convert<TO, FROMCAT>{std::move(x)}};
+    if constexpr (TO::category == TypeCategory::Complex) {
+      using Part = typename TO::Part;
+      Scalar<Part> zero;
+      return {ComplexConstructor<TO::kind>{
+          ConvertToType<Part>(std::move(x)), Expr<Part>{Constant<Part>{zero}}}};
+    } else {
+      return {Convert<TO, FROMCAT>{std::move(x)}};
+    }
   } else {
+    // Same type category
     if (auto already{common::GetIf<Expr<TO>>(x.u)}) {
       return std::move(*already);
     }
@@ -134,10 +142,15 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
 }
 
 template<typename TO> Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
-  // TODO: check rank == 0
-  // TODO: pmk: truncation warnings
   static_assert(TO::isSpecificType);
-  return Expr<TO>{BOZConstant<TO>{std::move(x)}};
+  using Value = typename Constant<TO>::Value;
+  if constexpr (TO::category == TypeCategory::Integer) {
+    return Expr<TO>{Constant<TO>{Value::ConvertUnsigned(std::move(x)).value}};
+  } else {
+    static_assert(TO::category == TypeCategory::Real);
+    using Word = typename Value::Word;
+    return Expr<TO>{Constant<TO>{Word::ConvertUnsigned(std::move(x)).value}};
+  }
 }
 
 template<TypeCategory TC, int TK, TypeCategory FC>
@@ -256,8 +269,8 @@ template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
 
 // Given two expressions of arbitrary kind in the same intrinsic type
 // category, convert one of them if necessary to the larger kind of the
-// other, then combine them with a operation and return a new expression
-// in the same type category.
+// other, then combine the resulting homogenized operands with a given
+// operation, returning a new expression in the same type category.
 template<template<typename> class OPR, TypeCategory CAT>
 Expr<SomeKind<CAT>> PromoteAndCombine(
     Expr<SomeKind<CAT>> &&x, Expr<SomeKind<CAT>> &&y) {
@@ -287,6 +300,9 @@ extern template std::optional<Expr<SomeType>> NumericOperation<Divide>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 
 // Convenience functions and operator overloadings for expression construction.
+// These interfaces are defined only for those situations that cannot possibly
+// need to emit any messages.  Use the more general NumericOperation<>
+// template (above) in other situations.
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {

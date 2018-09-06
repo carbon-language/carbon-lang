@@ -129,6 +129,7 @@ using DefaultCharacter = Type<TypeCategory::Character, 1>;
 
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
+using LargestReal = Type<TypeCategory::Real, 16>;
 
 // For an intrinsic type category CAT, CategoryTypes<CAT> is an instantiation
 // of std::tuple<Type<CAT, K>> over each supported kind K in that category.
