@@ -55,7 +55,7 @@ struct SourceStatementInfoTuplePOD {
   parser::CharBlock parserCharBlock;
 };
 using SourceStmtList = std::vector<SourceStatementInfoTuplePOD>;
-enum Legality { neverLegal, alwaysLegal, backwardsCompatible };
+enum class Legality { never, always, formerly };
 
 bool HasScope(ProxyForScope scope) { return scope != ProxyForScope{0u}; }
 
@@ -64,9 +64,9 @@ template<typename A>
 constexpr Legality IsLegalDoTerm(const parser::Statement<A> &) {
   if (std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
       std::is_same_v<A, parser::EndDoStmt>) {
-    return alwaysLegal;
+      return Legality::always;
   } else {
-    return neverLegal;
+    return Legality::never;
   }
 }
 template<>
@@ -74,7 +74,7 @@ constexpr Legality IsLegalDoTerm(
     const parser::Statement<parser::ActionStmt> &actionStmt) {
   if (std::holds_alternative<parser::ContinueStmt>(actionStmt.statement.u)) {
     // See F08:C816
-    return alwaysLegal;
+    return Legality::always;
   } else if (!(std::holds_alternative<
                    common::Indirection<parser::ArithmeticIfStmt>>(
                    actionStmt.statement.u) ||
@@ -89,9 +89,9 @@ constexpr Legality IsLegalDoTerm(
                  std::holds_alternative<
                      common::Indirection<parser::ReturnStmt>>(
                      actionStmt.statement.u))) {
-    return backwardsCompatible;
+    return Legality::formerly;
   } else {
-    return neverLegal;
+    return Legality::never;
   }
 }
 
@@ -124,9 +124,9 @@ constexpr Legality IsLegalBranchTarget(const parser::Statement<A> &) {
       std::is_same_v<A, parser::EndMpSubprogramStmt> ||
       std::is_same_v<A, parser::EndProgramStmt> ||
       std::is_same_v<A, parser::EndSubroutineStmt>) {
-    return alwaysLegal;
+    return Legality::always;
   } else {
-    return neverLegal;
+    return Legality::never;
   }
 }
 template<>
@@ -140,9 +140,9 @@ constexpr Legality IsLegalBranchTarget(
               actionStmt.statement.u) ||
           std::holds_alternative<common::Indirection<parser::PauseStmt>>(
               actionStmt.statement.u))) {
-    return alwaysLegal;
+    return Legality::always;
   } else {
-    return backwardsCompatible;
+    return Legality::formerly;
   }
 }
 
@@ -150,14 +150,14 @@ template<typename A>
 constexpr LabeledStmtClassificationSet constructBranchTargetFlags(
     const parser::Statement<A> &statement) {
   LabeledStmtClassificationSet labeledStmtClassificationSet{};
-  if (IsLegalDoTerm(statement) == alwaysLegal) {
+  if (IsLegalDoTerm(statement) == Legality::always) {
     labeledStmtClassificationSet.set(TargetStatementEnum::Do);
-  } else if (IsLegalDoTerm(statement) == backwardsCompatible) {
+  } else if (IsLegalDoTerm(statement) == Legality::formerly) {
     labeledStmtClassificationSet.set(TargetStatementEnum::CompatibleDo);
   }
-  if (IsLegalBranchTarget(statement) == alwaysLegal) {
+  if (IsLegalBranchTarget(statement) == Legality::always) {
     labeledStmtClassificationSet.set(TargetStatementEnum::Branch);
-  } else if (IsLegalBranchTarget(statement) == backwardsCompatible) {
+  } else if (IsLegalBranchTarget(statement) == Legality::formerly) {
     labeledStmtClassificationSet.set(TargetStatementEnum::CompatibleBranch);
   }
   if (IsFormat(statement)) {
