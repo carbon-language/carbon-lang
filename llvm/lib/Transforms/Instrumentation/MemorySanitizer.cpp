@@ -4342,7 +4342,7 @@ static VarArgHelper *CreateVarArgHelper(Function &Func, MemorySanitizer &Msan,
 }
 
 bool MemorySanitizer::runOnFunction(Function &F) {
-  if (&F == MsanCtorFunction)
+  if (!CompileKernel && (&F == MsanCtorFunction))
     return false;
   MemorySanitizerVisitor Visitor(F, *this);
 
