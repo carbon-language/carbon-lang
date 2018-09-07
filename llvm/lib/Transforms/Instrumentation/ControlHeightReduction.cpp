@@ -34,9 +34,6 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
-#if !defined(_MSC_VER)
-#include <cxxabi.h>
-#endif
 #include <set>
 #include <sstream>
 
@@ -159,12 +156,6 @@ struct CHRStats {
   uint64_t WeightedNumBranchesDelta; // NumBranchesDelta weighted by the profile
                                      // count at the scope entry.
 };
-
-inline raw_ostream LLVM_ATTRIBUTE_UNUSED &operator<<(raw_ostream &OS,
-                                                     const CHRStats &Stats) {
-  Stats.print(OS);
-  return OS;
-}
 
 // RegInfo - some properties of a Region.
 struct RegInfo {
@@ -326,11 +317,6 @@ class CHRScope {
     : RegInfos(RegInfosIn), Subs(SubsIn), BranchInsertPoint(nullptr) {}
 };
 
-inline raw_ostream &operator<<(raw_ostream &OS, const CHRScope &Scope) {
-  Scope.print(OS);
-  return OS;
-}
-
 class CHR {
  public:
   CHR(Function &Fin, BlockFrequencyInfo &BFIin, DominatorTree &DTin,
@@ -437,6 +423,19 @@ class CHR {
 
 } // end anonymous namespace
 
+static inline
+raw_ostream LLVM_ATTRIBUTE_UNUSED &operator<<(raw_ostream &OS,
+                                              const CHRStats &Stats) {
+  Stats.print(OS);
+  return OS;
+}
+
+static inline
+raw_ostream &operator<<(raw_ostream &OS, const CHRScope &Scope) {
+  Scope.print(OS);
+  return OS;
+}
+
 static bool shouldApply(Function &F, ProfileSummaryInfo& PSI) {
   if (ForceCHR)
     return true;
@@ -444,16 +443,7 @@ static bool shouldApply(Function &F, ProfileSummaryInfo& PSI) {
   if (!CHRModuleList.empty() || !CHRFunctionList.empty()) {
     if (CHRModules.count(F.getParent()->getName()))
       return true;
-    StringRef Name = F.getName();
-    if (CHRFunctions.count(Name))
-      return true;
-    const char* DemangledName = nullptr;
-#if !defined(_MSC_VER)
-    int Status = -1;
-    DemangledName = abi::__cxa_demangle(Name.str().c_str(),
-                                        nullptr, nullptr, &Status);
-#endif
-    return DemangledName && CHRFunctions.count(DemangledName);
+    return CHRFunctions.count(F.getName());
   }
 
   assert(PSI.hasProfileSummary() && "Empty PSI?");
@@ -462,19 +452,10 @@ static bool shouldApply(Function &F, ProfileSummaryInfo& PSI) {
 
 static void LLVM_ATTRIBUTE_UNUSED dumpIR(Function &F, const char *Label,
                                          CHRStats *Stats) {
-  std::string Name = F.getName().str();
-  const char *DemangledName = nullptr;
-#if !defined(_MSC_VER)
-  int Status = -1;
-  DemangledName = abi::__cxa_demangle(Name.c_str(),
-                                      nullptr, nullptr, &Status);
-#endif
-  if (DemangledName == nullptr) {
-    DemangledName = "<NOT-MANGLED>";
-  }
-  std::string ModuleName = F.getParent()->getName().str();
+  StringRef FuncName = F.getName();
+  StringRef ModuleName = F.getParent()->getName();
   CHR_DEBUG(dbgs() << "CHR IR dump " << Label << " " << ModuleName << " "
-            << Name);
+            << FuncName);
   if (Stats)
     CHR_DEBUG(dbgs() << " " << *Stats);
   CHR_DEBUG(dbgs() << "\n");
