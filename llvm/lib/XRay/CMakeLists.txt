@@ -1,6 +1,5 @@
 add_llvm_library(LLVMXRay
   BlockIndexer.cpp
-  BlockVerifier.cpp
   FDRRecordProducer.cpp
   FDRRecords.cpp
   FDRTraceWriter.cpp
