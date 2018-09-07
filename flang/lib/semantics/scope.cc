@@ -23,6 +23,10 @@ Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global, nullptr};
 
 Symbols<1024> Scope::allSymbols;
 
+bool Scope::IsModule() const {
+  return kind_ == Kind::Module && !symbol_->get<ModuleDetails>().isSubmodule();
+}
+
 Scope &Scope::MakeScope(Kind kind, Symbol *symbol) {
   children_.emplace_back(*this, kind, symbol);
   return children_.back();

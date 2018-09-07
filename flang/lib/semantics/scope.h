@@ -60,6 +60,7 @@ public:
     return parent_;
   }
   Kind kind() const { return kind_; }
+  bool IsModule() const;  // only module, not submodule
   Symbol *symbol() { return symbol_; }
   const Symbol *symbol() const { return symbol_; }
 

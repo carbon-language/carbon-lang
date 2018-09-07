@@ -36,7 +36,6 @@ using namespace parser::literals;
 class MessageHandler;
 
 static GenericSpec MapGenericSpec(const parser::GenericSpec &);
-static bool IsModule(const Scope &);
 
 // ImplicitRules maps initial character of identifier to the DeclTypeSpec
 // representing the implicit type; std::nullopt if none.
@@ -2127,7 +2126,7 @@ bool DeclarationVisitor::Pre(const parser::TypeAttrSpec::Extends &x) {
 }
 
 bool DeclarationVisitor::Pre(const parser::PrivateStmt &x) {
-  if (!IsModule(currScope().parent())) {
+  if (!currScope().parent().IsModule()) {
     Say("PRIVATE is only allowed in a derived type that is"
         " in a module"_err_en_US);  // C766
   } else if (derivedTypeInfo_.sawContains) {
@@ -2136,7 +2135,7 @@ bool DeclarationVisitor::Pre(const parser::PrivateStmt &x) {
     derivedTypeInfo_.privateComps = true;
   } else {
     Say("PRIVATE may not appear more than once in"
-      " derived type components"_err_en_US);  // C738
+        " derived type components"_en_US);  // C738
   }
   return false;
 }
@@ -2362,7 +2361,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
   // Check C896 and C899: where IMPORT statements are allowed
   switch (scope.kind()) {
   case Scope::Kind::Module:
-    if (IsModule(scope)) {
+    if (scope.IsModule()) {
       Say("IMPORT is not allowed in a module scoping unit"_err_en_US);
       return false;
     } else if (x.kind == common::ImportKind::None) {
@@ -2884,12 +2883,6 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &genericSpec) {
           },
       },
       genericSpec.u);
-}
-
-// Is this a scope for a module (and not a submodule)?
-static bool IsModule(const Scope &scope) {
-  return scope.kind() == Scope::Kind::Module &&
-      !scope.symbol()->get<ModuleDetails>().isSubmodule();
 }
 
 static void PutIndent(std::ostream &os, int indent) {

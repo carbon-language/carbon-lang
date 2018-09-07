@@ -53,8 +53,7 @@ module m4
   type :: t1
     private
     sequence
-    !ERROR: PRIVATE may not appear more than once in derived type components
-    private
+    private  ! not a fatal error
   end type
   !ERROR: A sequence type may not have the EXTENDS attribute
   type, extends(t1) :: t2
