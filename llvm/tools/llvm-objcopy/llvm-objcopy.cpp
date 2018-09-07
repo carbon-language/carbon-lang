@@ -17,7 +17,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/BinaryFormat/ELF.h"
-#include "llvm/MC/MCTargetOptions.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ArchiveWriter.h"
 #include "llvm/Object/Binary.h"
@@ -30,7 +29,6 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/Compression.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
@@ -178,7 +176,6 @@ struct CopyConfig {
   bool StripSections = false;
   bool StripUnneeded = false;
   bool Weaken = false;
-  DebugCompressionType CompressionType = DebugCompressionType::None;
 };
 
 // Configuration for the overall invocation of this tool. When invoked as
@@ -301,12 +298,12 @@ static SectionRename parseRenameSectionValue(StringRef FlagValue) {
 }
 
 static bool isDebugSection(const SectionBase &Sec) {
-  return StringRef(Sec.Name).startswith(".debug") ||
-         StringRef(Sec.Name).startswith(".zdebug") || Sec.Name == ".gdb_index";
+  return Sec.Name.startswith(".debug") || Sec.Name.startswith(".zdebug") ||
+         Sec.Name == ".gdb_index";
 }
 
 static bool isDWOSection(const SectionBase &Sec) {
-  return StringRef(Sec.Name).endswith(".dwo");
+  return Sec.Name.endswith(".dwo");
 }
 
 static bool onlyKeepDWOPred(const Object &Obj, const SectionBase &Sec) {
@@ -416,49 +413,6 @@ static Error dumpSectionToFile(StringRef SecName, StringRef Filename,
                                  object_error::parse_failed);
 }
 
-static bool isCompressed(const SectionBase &Section) {
-  ArrayRef<uint8_t> GnuPrefix = {'Z', 'L', 'I', 'B'};
-  return StringRef(Section.Name).startswith(".zdebug") ||
-         (Section.OriginalData.size() > strlen("ZLIB") &&
-          std::equal(GnuPrefix.begin(), GnuPrefix.end(),
-                     Section.OriginalData.data())) ||
-         (Section.Flags & ELF::SHF_COMPRESSED);
-}
-
-static bool isCompressable(const SectionBase &Section) {
-  return !isCompressed(Section) && isDebugSection(Section) &&
-         Section.Name != ".gdb_index";
-}
-
-static void compressSections(const CopyConfig &Config, Object &Obj,
-                             SectionPred &RemovePred) {
-  SmallVector<SectionBase *, 13> ToCompress;
-  SmallVector<RelocationSection *, 13> RelocationSections;
-  for (auto &Sec : Obj.sections()) {
-    if (RelocationSection *R = dyn_cast<RelocationSection>(&Sec)) {
-      if (isCompressable(*R->getSection()))
-        RelocationSections.push_back(R);
-      continue;
-    }
-
-    if (isCompressable(Sec))
-      ToCompress.push_back(&Sec);
-  }
-
-  for (SectionBase *S : ToCompress) {
-    CompressedSection &CS =
-        Obj.addSection<CompressedSection>(*S, Config.CompressionType);
-
-    for (RelocationSection *RS : RelocationSections) {
-      if (RS->getSection() == S)
-        RS->setSection(&CS);
-    }
-  }
-
-  RemovePred = [RemovePred](const SectionBase &Sec) {
-    return isCompressable(Sec) || RemovePred(Sec);
-  };
-}
 // This function handles the high level operations of GNU objcopy including
 // handling command line options. It's important to outline certain properties
 // we expect to hold of the command line operations. Any operation that "keeps"
@@ -618,7 +572,7 @@ static void handleArgs(const CopyConfig &Config, Object &Obj,
         return true;
       if (&Sec == Obj.SectionNames)
         return false;
-      if (StringRef(Sec.Name).startswith(".gnu.warning"))
+      if (Sec.Name.startswith(".gnu.warning"))
         return false;
       return (Sec.Flags & SHF_ALLOC) == 0;
     };
@@ -669,9 +623,6 @@ static void handleArgs(const CopyConfig &Config, Object &Obj,
       return RemovePred(Sec);
     };
   }
-
-  if (Config.CompressionType != DebugCompressionType::None)
-    compressSections(Config, Obj, RemovePred);
 
   Obj.removeSections(RemovePred);
 
@@ -915,25 +866,6 @@ static DriverConfig parseObjcopyOptions(ArrayRef<const char *> ArgsArr) {
     if (BinaryArch.empty())
       error("Specified binary input without specifiying an architecture");
     Config.BinaryArch = getMachineInfo(BinaryArch);
-  }
-
-  if (auto Arg = InputArgs.getLastArg(OBJCOPY_compress_debug_sections,
-                                      OBJCOPY_compress_debug_sections_eq)) {
-    Config.CompressionType = DebugCompressionType::Z;
-
-    if (Arg->getOption().getID() == OBJCOPY_compress_debug_sections_eq) {
-      Config.CompressionType =
-          StringSwitch<DebugCompressionType>(
-              InputArgs.getLastArgValue(OBJCOPY_compress_debug_sections_eq))
-              .Case("zlib-gnu", DebugCompressionType::GNU)
-              .Case("zlib", DebugCompressionType::Z)
-              .Default(DebugCompressionType::None);
-      if (Config.CompressionType == DebugCompressionType::None)
-        error("Invalid or unsupported --compress-debug-sections format: " +
-              InputArgs.getLastArgValue(OBJCOPY_compress_debug_sections_eq));
-      if (!zlib::isAvailable())
-        error("LLVM was not compiled with LLVM_ENABLE_ZLIB: can not compress.");
-    }
   }
 
   Config.SplitDWO = InputArgs.getLastArgValue(OBJCOPY_split_dwo);
