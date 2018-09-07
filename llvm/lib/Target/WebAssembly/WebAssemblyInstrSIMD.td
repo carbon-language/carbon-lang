@@ -44,8 +44,8 @@ multiclass ExtractLane<ValueType vec_t, string vec, ImmLeaf imm_t,
                        WebAssemblyRegClass reg_t, bits<32> simdop,
                        string suffix = "", SDNode extract = vector_extract> {
   defm EXTRACT_LANE_#vec_t#suffix :
-      SIMD_I<(outs reg_t:$dst), (ins V128:$vec, i32imm_op:$idx),
-             (outs), (ins i32imm_op:$idx),
+      SIMD_I<(outs reg_t:$dst), (ins V128:$vec, vec_i8imm_op:$idx),
+             (outs), (ins vec_i8imm_op:$idx),
              [(set reg_t:$dst, (extract (vec_t V128:$vec), (i32 imm_t:$idx)))],
              vec#".extract_lane"#suffix#"\t$dst, $vec, $idx",
              vec#".extract_lane"#suffix#"\t$idx", simdop>;
@@ -80,8 +80,8 @@ multiclass ReplaceLane<ValueType vec_t, string vec, ImmLeaf imm_t,
                        WebAssemblyRegClass reg_t, ValueType lane_t,
                        bits<32> simdop> {
   defm REPLACE_LANE_#vec_t :
-      SIMD_I<(outs V128:$dst), (ins V128:$vec, i32imm_op:$idx, reg_t:$x),
-             (outs), (ins i32imm_op:$idx),
+      SIMD_I<(outs V128:$dst), (ins V128:$vec, vec_i8imm_op:$idx, reg_t:$x),
+             (outs), (ins vec_i8imm_op:$idx),
              [(set V128:$dst, (vector_insert
                (vec_t V128:$vec), (lane_t reg_t:$x), (i32 imm_t:$idx)))],
              vec#".replace_lane\t$dst, $vec, $idx, $x",
