@@ -2896,3 +2896,43 @@ define void @not_avg_v16i8_wide_constants(<16 x i8>* %a, <16 x i8>* %b) nounwind
   store <16 x i8> %8, <16 x i8>* undef, align 4
   ret void
 }
+
+; Make sure we don't fail on single element vectors.
+define <1 x i8> @avg_v1i8(<1 x i8> %x, <1 x i8> %y) {
+; SSE2-LABEL: avg_v1i8:
+; SSE2:       # %bb.0:
+; SSE2-NEXT:    movd %edi, %xmm0
+; SSE2-NEXT:    pxor %xmm1, %xmm1
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; SSE2-NEXT:    movd %xmm0, %eax
+; SSE2-NEXT:    movd %esi, %xmm0
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; SSE2-NEXT:    movd %xmm0, %ecx
+; SSE2-NEXT:    leal 1(%rax,%rcx), %eax
+; SSE2-NEXT:    shrl %eax
+; SSE2-NEXT:    # kill: def $al killed $al killed $eax
+; SSE2-NEXT:    retq
+;
+; AVX-LABEL: avg_v1i8:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vmovd %edi, %xmm0
+; AVX-NEXT:    vpmovzxbw {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; AVX-NEXT:    vmovd %xmm0, %eax
+; AVX-NEXT:    vmovd %esi, %xmm0
+; AVX-NEXT:    vpmovzxbw {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; AVX-NEXT:    vmovd %xmm0, %ecx
+; AVX-NEXT:    leal 1(%rax,%rcx), %eax
+; AVX-NEXT:    shrl %eax
+; AVX-NEXT:    # kill: def $al killed $al killed $eax
+; AVX-NEXT:    retq
+  %a = zext <1 x i8> %x to <1 x i16>
+  %b = zext <1 x i8> %y to <1 x i16>
+  %c = add <1 x i16> %a, %b
+  %d = add <1 x i16> %c, <i16 1>
+  %e = lshr <1 x i16> %d, <i16 1>
+  %f = trunc <1 x i16> %e to <1 x i8>
+  ret <1 x i8> %f
+}
+

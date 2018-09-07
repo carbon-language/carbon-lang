@@ -35956,7 +35956,7 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
 
   EVT ScalarVT = VT.getVectorElementType();
   if (!((ScalarVT == MVT::i8 || ScalarVT == MVT::i16) &&
-        isPowerOf2_32(NumElems)))
+        NumElems >= 2 && isPowerOf2_32(NumElems)))
     return SDValue();
 
   // InScalarVT is the intermediate type in AVG pattern and it should be greater
