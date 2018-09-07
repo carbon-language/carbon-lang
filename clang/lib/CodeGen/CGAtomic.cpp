@@ -765,11 +765,15 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E) {
   std::tie(sizeChars, alignChars) = getContext().getTypeInfoInChars(AtomicTy);
   uint64_t Size = sizeChars.getQuantity();
   unsigned MaxInlineWidthInBits = getTarget().getMaxAtomicInlineWidth();
-  bool UseLibcall = ((Ptr.getAlignment() % sizeChars) != 0 ||
-                     getContext().toBits(sizeChars) > MaxInlineWidthInBits);
 
-  if (UseLibcall)
-    CGM.getDiags().Report(E->getBeginLoc(), diag::warn_atomic_op_misaligned);
+  bool Oversized = getContext().toBits(sizeChars) > MaxInlineWidthInBits;
+  bool Misaligned = (Ptr.getAlignment() % sizeChars) != 0;
+  bool UseLibcall = Misaligned | Oversized;
+
+  if (UseLibcall) {
+    CGM.getDiags().Report(E->getBeginLoc(), diag::warn_atomic_op_misaligned)
+        << !Oversized;
+  }
 
   llvm::Value *Order = EmitScalarExpr(E->getOrder());
   llvm::Value *Scope =
