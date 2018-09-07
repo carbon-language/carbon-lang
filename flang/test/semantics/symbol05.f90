@@ -16,10 +16,10 @@
 
 !DEF: /s1 Subprogram
 subroutine s1
- !DEF: /s1/x Entity INTEGER
+ !DEF: /s1/x ObjectEntity INTEGER
  integer x
  block
-  !DEF: /s1/Block1/y Entity INTEGER
+  !DEF: /s1/Block1/y ObjectEntity INTEGER
   integer y
   !REF: /s1/x
   x = 1
@@ -27,7 +27,7 @@ subroutine s1
   y = 2.0
  end block
  block
-  !DEF: /s1/Block2/y Entity REAL
+  !DEF: /s1/Block2/y ObjectEntity REAL
   real y
   !REF: /s1/Block2/y
   y = 3.0

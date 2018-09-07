@@ -31,7 +31,7 @@ contains
   end subroutine
  end subroutine
  !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram
- !DEF: /m/f/x ALLOCATABLE Entity REAL
+ !DEF: /m/f/x ALLOCATABLE ObjectEntity REAL
  recursive pure function f() result(x)
   real, allocatable :: x
   !REF: /m/f/x

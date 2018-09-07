@@ -20,7 +20,7 @@ call a  ! OK - can be function or subroutine
 c = a()
 !ERROR: Cannot call function 'b' like a subroutine
 call b
-!ERROR: Cannot call function 'y' like a subroutine
+!ERROR: Use of 'y' as a procedure conflicts with its declaration
 call y
 call x
 !ERROR: Cannot call subroutine 'x' like a function

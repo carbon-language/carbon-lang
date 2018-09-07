@@ -1107,7 +1107,7 @@ bool ArraySpecVisitor::Pre(const parser::AssumedShapeSpec &x) {
   const auto &lb{x.v};
   arraySpec_.push_back(
       lb ? ShapeSpec::MakeAssumed(GetBound(*lb)) : ShapeSpec::MakeAssumed());
-  return false;
+  return true;
 }
 
 bool ArraySpecVisitor::Pre(const parser::ExplicitShapeSpec &x) {
@@ -1115,7 +1115,7 @@ bool ArraySpecVisitor::Pre(const parser::ExplicitShapeSpec &x) {
   const auto &ub{GetBound(std::get<parser::SpecificationExpr>(x.t))};
   arraySpec_.push_back(lb ? ShapeSpec::MakeExplicit(GetBound(*lb), ub)
                           : ShapeSpec::MakeExplicit(ub));
-  return false;
+  return true;
 }
 
 bool ArraySpecVisitor::Pre(const parser::AssumedImpliedSpec &x) {
@@ -1191,8 +1191,6 @@ void ScopeHandler::EraseSymbol(const SourceName &name) {
 void ScopeHandler::ApplyImplicitRules(const SourceName &name, Symbol &symbol) {
   if (symbol.has<UnknownDetails>()) {
     symbol.set_details(ObjectEntityDetails{});
-  } else if (symbol.has<EntityDetails>()) {
-    symbol.set_details(ObjectEntityDetails{symbol.get<EntityDetails>()});
   }
   if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
     if (!details->type()) {
@@ -2535,6 +2533,12 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
         // OK
       } else if (symbol->has<DerivedTypeDetails>()) {
         // OK: type constructor
+      } else if (auto *details{symbol->detailsIf<ObjectEntityDetails>()};
+                 details && details->isArray()) {
+        // OK: array mis-parsed as a call
+      } else if (symbol->test(Symbol::Flag::Implicit)) {
+        Say(name->source,
+            "Use of '%s' as a procedure conflicts with its implicit definition"_err_en_US);
       } else {
         Say2(name->source,
             "Use of '%s' as a procedure conflicts with its declaration"_err_en_US,
@@ -2620,6 +2624,9 @@ void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
   for (auto &pair : currScope()) {
     auto &name{pair.first};
     auto &symbol{*pair.second};
+    if (auto *details{symbol.detailsIf<EntityDetails>()}) {
+      symbol.set_details(ObjectEntityDetails{*details});
+    }
     if (NeedsExplicitType(symbol)) {
       if (isImplicitNoneType()) {
         Say(name, "No explicit type declared for '%s'"_err_en_US);

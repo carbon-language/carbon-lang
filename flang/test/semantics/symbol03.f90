@@ -16,7 +16,7 @@
 
 !DEF: /main MainProgram
 program main
- !DEF: /main/x Entity INTEGER
+ !DEF: /main/x ObjectEntity INTEGER
  integer x
  !REF: /main/s
  call s
