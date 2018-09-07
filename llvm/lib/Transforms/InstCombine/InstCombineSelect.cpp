@@ -362,6 +362,14 @@ Instruction *InstCombiner::foldSelectOpOp(SelectInst &SI, Instruction *TI,
     return nullptr;
   }
 
+  // If the select condition is a vector, the operands of the original select's
+  // operands also must be vectors. This may not be the case for getelementptr
+  // for example.
+  if (SI.getCondition()->getType()->isVectorTy() &&
+      (!OtherOpT->getType()->isVectorTy() ||
+       !OtherOpF->getType()->isVectorTy()))
+    return nullptr;
+
   // If we reach here, they do have operations in common.
   Value *NewSI = Builder.CreateSelect(SI.getCondition(), OtherOpT, OtherOpF,
                                       SI.getName() + ".v", &SI);
