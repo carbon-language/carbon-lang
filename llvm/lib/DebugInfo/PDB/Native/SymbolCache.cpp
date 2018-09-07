@@ -2,10 +2,11 @@
 
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/NativeCompilandSymbol.h"
-#include "llvm/DebugInfo/PDB/Native/NativeEnumSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeEnumTypes.h"
 #include "llvm/DebugInfo/PDB/Native/NativeRawSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeSession.h"
+#include "llvm/DebugInfo/PDB/Native/NativeTypeBuiltin.h"
+#include "llvm/DebugInfo/PDB/Native/NativeTypeEnum.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
@@ -83,8 +84,8 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
     if (It == std::end(BuiltinTypes))
       return 0;
     SymIndexId Id = Cache.size();
-    Cache.emplace_back(llvm::make_unique<NativeBuiltinSymbol>(
-        Session, Id, It->Type, It->Size));
+    Cache.emplace_back(
+        llvm::make_unique<NativeTypeBuiltin>(Session, Id, It->Type, It->Size));
     TypeIndexToSymbolId[Index] = Id;
     return Id;
   }
@@ -101,7 +102,7 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
   SymIndexId Id = 0;
   switch (CVT.kind()) {
   case codeview::LF_ENUM:
-    Id = createSymbol<NativeEnumSymbol>(CVT);
+    Id = createSymbol<NativeTypeEnum>(CVT);
     break;
   default:
     assert(false && "Unsupported native symbol type!");

@@ -15,7 +15,6 @@
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
-#include "llvm/DebugInfo/PDB/Native/NativeBuiltinSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeRawSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/SymbolCache.h"
 #include "llvm/Support/Allocator.h"
