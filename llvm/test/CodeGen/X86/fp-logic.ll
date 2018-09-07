@@ -331,3 +331,29 @@ define <4 x float> @fsub_bitcast_fneg_vec(<4 x float> %x, <4 x float> %y) {
   %fsub = fsub <4 x float> %x, %bc2
   ret <4 x float> %fsub
 }
+
+define <4 x float> @fadd_bitcast_fneg_vec_width(<4 x float> %x, <4 x float> %y) {
+; CHECK-LABEL: fadd_bitcast_fneg_vec_width:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    xorps {{.*}}(%rip), %xmm1
+; CHECK-NEXT:    addps %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %bc1 = bitcast <4 x float> %y to <2 x i64>
+  %xor = xor <2 x i64> %bc1, <i64 -9223372034707292160, i64 -9223372034707292160>
+  %bc2 = bitcast <2 x i64> %xor to <4 x float>
+  %fadd = fadd <4 x float> %x, %bc2
+  ret <4 x float> %fadd
+}
+
+define <4 x float> @fsub_bitcast_fneg_vec_width(<4 x float> %x, <4 x float> %y) {
+; CHECK-LABEL: fsub_bitcast_fneg_vec_width:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    xorps {{.*}}(%rip), %xmm1
+; CHECK-NEXT:    subps %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %bc1 = bitcast <4 x float> %y to <2 x i64>
+  %xor = xor <2 x i64> %bc1, <i64 -9223372034707292160, i64 -9223372034707292160>
+  %bc2 = bitcast <2 x i64> %xor to <4 x float>
+  %fsub = fsub <4 x float> %x, %bc2
+  ret <4 x float> %fsub
+}
