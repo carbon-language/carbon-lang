@@ -830,6 +830,31 @@ extern int __kmp_hws_abs_flag; // absolute or per-item number requested
 #define KMP_GTID_UNKNOWN (-5) /* Is not known */
 #define KMP_GTID_MIN (-6) /* Minimal gtid for low bound check in DEBUG */
 
+#if OMP_50_ENABLED
+/* OpenMP 5.0 Memory Management support */
+extern int __kmp_memkind_available;
+extern int __kmp_hbw_mem_available;
+typedef void *omp_allocator_t;
+extern const omp_allocator_t *OMP_NULL_ALLOCATOR;
+extern const omp_allocator_t *omp_default_mem_alloc;
+extern const omp_allocator_t *omp_large_cap_mem_alloc;
+extern const omp_allocator_t *omp_const_mem_alloc;
+extern const omp_allocator_t *omp_high_bw_mem_alloc;
+extern const omp_allocator_t *omp_low_lat_mem_alloc;
+extern const omp_allocator_t *omp_cgroup_mem_alloc;
+extern const omp_allocator_t *omp_pteam_mem_alloc;
+extern const omp_allocator_t *omp_thread_mem_alloc;
+extern const omp_allocator_t *__kmp_def_allocator;
+
+extern void __kmpc_set_default_allocator(int gtid, const omp_allocator_t *al);
+extern const omp_allocator_t *__kmpc_get_default_allocator(int gtid);
+extern void *__kmpc_alloc(int gtid, size_t sz, const omp_allocator_t *al);
+extern void __kmpc_free(int gtid, void *ptr, const omp_allocator_t *al);
+
+extern void __kmp_init_memkind();
+extern void __kmp_fini_memkind();
+#endif // OMP_50_ENABLED
+
 /* ------------------------------------------------------------------------ */
 
 #define KMP_UINT64_MAX                                                         \
@@ -2414,7 +2439,9 @@ typedef struct KMP_ALIGN_CACHE kmp_base_info {
 #if KMP_AFFINITY_SUPPORTED
   kmp_affin_mask_t *th_affin_mask; /* thread's current affinity mask */
 #endif
-
+#if OMP_50_ENABLED
+  void *const *th_def_allocator; /* per implicit task default allocator */
+#endif
   /* The data set by the master at reinit, then R/W by the worker */
   KMP_ALIGN_CACHE int
       th_set_nproc; /* if > 0, then only use this request for the next fork */
@@ -2628,6 +2655,9 @@ typedef struct KMP_ALIGN_CACHE kmp_base_team {
 #endif // OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
   int t_size_changed; // team size was changed?: 0: no, 1: yes, -1: changed via
 // omp_set_num_threads() call
+#if OMP_50_ENABLED
+  void *const *t_def_allocator; /* per implicit task default allocator */
+#endif
 
 // Read/write by workers as well
 #if (KMP_ARCH_X86 || KMP_ARCH_X86_64)

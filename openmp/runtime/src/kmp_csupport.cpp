@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define __KMP_IMP
 #include "omp.h" /* extern "C" declarations of user-visible routines */
 #include "kmp.h"
 #include "kmp_error.h"
@@ -540,6 +541,9 @@ void __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid) {
         serial_team->t.t_dispatch->th_disp_buffer->next;
     __kmp_free(disp_buffer);
   }
+#if OMP_50_ENABLED
+  this_thr->th.th_def_allocator = serial_team->t.t_def_allocator; // restore
+#endif
 
   --serial_team->t.t_serialized;
   if (serial_team->t.t_serialized == 0) {
