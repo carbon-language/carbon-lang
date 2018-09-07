@@ -20,4 +20,5 @@ add_executable(f18
 target_link_libraries(f18
   FortranParser
   FortranSemantics
+  FortranEvaluate
 )

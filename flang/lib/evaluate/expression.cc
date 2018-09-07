@@ -33,16 +33,16 @@ namespace Fortran::evaluate {
 template<typename D, typename R, typename... O>
 auto Operation<D, R, O...>::Fold(FoldingContext &context)
     -> std::optional<Constant<Result>> {
-  auto c0{operand<0>().Fold(context)};
-  if constexpr (operands() == 1) {
+  auto c0{left().Fold(context)};
+  if constexpr (operands == 1) {
     if (c0.has_value()) {
       if (auto scalar{derived().FoldScalar(context, c0->value)}) {
         return {Constant<Result>{std::move(*scalar)}};
       }
     }
   } else {
-    static_assert(operands() == 2);  // TODO: generalize to N operands?
-    auto c1{operand<1>().Fold(context)};
+    static_assert(operands == 2);  // TODO: generalize to N operands?
+    auto c1{right().Fold(context)};
     if (c0.has_value() && c1.has_value()) {
       if (auto scalar{derived().FoldScalar(context, c0->value, c1->value)}) {
         return {Constant<Result>{std::move(*scalar)}};
@@ -399,15 +399,30 @@ auto LogicalOperation<KIND>::FoldScalar(FoldingContext &context,
 
 template<typename D, typename R, typename... O>
 std::ostream &Operation<D, R, O...>::Dump(std::ostream &o) const {
-  operand<0>().Dump(o << derived().prefix());
-  if constexpr (operands() > 1) {
-    operand<1>().Dump(o << derived().infix());
+  left().Dump(derived().Prefix(o));
+  if constexpr (operands > 1) {
+    right().Dump(derived().Infix(o));
   }
-  return o << derived().suffix();
+  return derived().Suffix(o);
 }
 
-template<typename A> std::string Relational<A>::infix() const {
-  return "."s + EnumToString(opr) + '.';
+template<typename TO, TypeCategory FROMCAT>
+std::ostream &Convert<TO, FROMCAT>::Dump(std::ostream &o) const {
+  static_assert(TO::category == TypeCategory::Integer ||
+      TO::category == TypeCategory::Real ||
+      TO::category == TypeCategory::Logical || !"Convert<> to bad category!");
+  if constexpr (TO::category == TypeCategory::Integer) {
+    o << "INT";
+  } else if constexpr (TO::category == TypeCategory::Real) {
+    o << "REAL";
+  } else if constexpr (TO::category == TypeCategory::Logical) {
+    o << "LOGICAL";
+  }
+  return this->left().Dump(o << '(') << ",KIND=" << TO::kind << ')';
+}
+
+template<typename A> std::ostream &Relational<A>::Infix(std::ostream &o) const {
+  return o << '.' << EnumToString(opr) << '.';
 }
 
 std::ostream &Relational<SomeType>::Dump(std::ostream &o) const {
@@ -415,15 +430,15 @@ std::ostream &Relational<SomeType>::Dump(std::ostream &o) const {
   return o;
 }
 
-template<int KIND> const char *LogicalOperation<KIND>::infix() const {
-  const char *result{nullptr};
+template<int KIND>
+std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
   switch (logicalOperator) {
-  case LogicalOperator::And: result = ".AND."; break;
-  case LogicalOperator::Or: result = ".OR."; break;
-  case LogicalOperator::Eqv: result = ".EQV."; break;
-  case LogicalOperator::Neqv: result = ".NEQV."; break;
+  case LogicalOperator::And: o << ".AND."; break;
+  case LogicalOperator::Or: o << ".OR."; break;
+  case LogicalOperator::Eqv: o << ".EQV."; break;
+  case LogicalOperator::Neqv: o << ".NEQV."; break;
   }
-  return result;
+  return o;
 }
 
 template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
@@ -470,12 +485,11 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
                              static_cast<std::uint64_t>(c.value.size())});
                        },
           [](const Concat<KIND> &c) {
-            return c.template operand<0>().LEN() +
-                c.template operand<1>().LEN();
+            return c.left().LEN() + c.template right().LEN();
           },
           [](const Extremum<Result> &c) {
-            return Expr<SubscriptInteger>{Extremum<SubscriptInteger>{
-                c.template operand<0>().LEN(), c.template operand<1>().LEN()}};
+            return Expr<SubscriptInteger>{
+                Extremum<SubscriptInteger>{c.left().LEN(), c.right().LEN()}};
           },
           [](const DataReference<Result> &dr) { return dr.reference->LEN(); },
           [](const CopyableIndirection<Substring> &ss) { return ss->LEN(); },
@@ -496,7 +510,7 @@ auto ExpressionBase<RESULT>::ScalarValue() const
     if constexpr (common::HasMember<Parentheses<Result>,
                       decltype(derived().u)>) {
       if (auto p{common::GetIf<Parentheses<Result>>(derived().u)}) {
-        return p->template operand<0>().ScalarValue();
+        return p->left().ScalarValue();
       }
     }
   } else if constexpr (std::is_same_v<Result, SomeType>) {
@@ -525,6 +539,8 @@ auto ExpressionBase<RESULT>::ScalarValue() const
   }
   return std::nullopt;
 }
+
+Expr<SomeType>::~Expr() {}
 
 // Template instantiations to resolve the "extern template" declarations
 // in expression.h.
@@ -602,3 +618,15 @@ template struct ExpressionBase<SomeLogical>;
 template struct ExpressionBase<SomeType>;
 
 }  // namespace Fortran::evaluate
+
+// For reclamation of analyzed expressions to which owning pointers have
+// been embedded in the parse tree.  This destructor appears here, where
+// definitions for all the necessary types are available, to obviate a
+// need to include lib/evaluate/*.h headers in the parser proper.
+namespace Fortran::common {
+template<> OwningPointer<evaluate::GenericExprWrapper>::~OwningPointer() {
+  delete p_;
+  p_ = nullptr;
+}
+template class OwningPointer<evaluate::GenericExprWrapper>;
+}  // namespace Fortran::common

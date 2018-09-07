@@ -57,7 +57,9 @@ ConvertRealOperandsResult ConvertRealOperands(
       std::move(x.u), std::move(y.u));
 }
 
-// A helper template for NumericOperation and its subroutines.
+// Helpers for NumericOperation and its subroutines below.
+static std::optional<Expr<SomeType>> NoExpr() { return std::nullopt; }
+
 template<TypeCategory CAT>
 std::optional<Expr<SomeType>> Package(Expr<SomeKind<CAT>> &&catExpr) {
   return {AsGenericExpr(std::move(catExpr))};
@@ -68,7 +70,7 @@ std::optional<Expr<SomeType>> Package(
   if (catExpr.has_value()) {
     return {AsGenericExpr(std::move(*catExpr))};
   }
-  return std::nullopt;
+  return NoExpr();
 }
 
 std::optional<Expr<SomeComplex>> ConstructComplex(
@@ -141,7 +143,7 @@ std::optional<Expr<SomeType>> MixedComplexLeft(
     Expr<SomeComplex> zy{ConvertTo(zx, std::move(iry))};
     return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
   }
-  return std::nullopt;
+  return NoExpr();
 }
 
 // Mixed COMPLEX operations with the COMPLEX operand on the right.
@@ -173,7 +175,7 @@ std::optional<Expr<SomeType>> MixedComplexRight(
     Expr<SomeComplex> zx{ConvertTo(zy, std::move(irx))};
     return Package(PromoteAndCombine<OPR>(std::move(zx), std::move(zy)));
   }
-  return std::nullopt;
+  return NoExpr();
 }
 
 // N.B. When a "typeless" BOZ literal constant appears as one (not both!) of
@@ -254,8 +256,9 @@ std::optional<Expr<SomeType>> NumericOperation(
           },
           // Default case
           [&](auto &&, auto &&) {
+            // TODO: defined operator
             messages.Say("non-numeric operands to numeric operation"_err_en_US);
-            return std::optional<Expr<SomeType>>{std::nullopt};
+            return NoExpr();
           }},
       std::move(x.u), std::move(y.u));
 }
@@ -268,5 +271,29 @@ template std::optional<Expr<SomeType>> NumericOperation<Multiply>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 template std::optional<Expr<SomeType>> NumericOperation<Divide>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+
+std::optional<Expr<SomeType>> Negation(
+    parser::ContextualMessages &messages, Expr<SomeType> &&x) {
+  return std::visit(
+      common::visitors{[&](BOZLiteralConstant &&) {
+                         messages.Say(
+                             "BOZ literal cannot be negated"_err_en_US);
+                         return NoExpr();
+                       },
+          [&](Expr<SomeInteger> &&x) { return Package(std::move(x)); },
+          [&](Expr<SomeReal> &&x) { return Package(-std::move(x)); },
+          [&](Expr<SomeComplex> &&x) { return Package(-std::move(x)); },
+          [&](Expr<SomeCharacter> &&x) {
+            // TODO: defined operator
+            messages.Say("CHARACTER cannot be negated"_err_en_US);
+            return NoExpr();
+          },
+          [&](Expr<SomeLogical> &&x) {
+            // TODO: defined operator
+            messages.Say("LOGICAL cannot be negated"_err_en_US);
+            return NoExpr();
+          }},
+      std::move(x.u));
+}
 
 }  // namespace Fortran::evaluate

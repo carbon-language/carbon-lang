@@ -21,6 +21,7 @@
 #include "../parser/parse-tree.h"
 #include <cinttypes>
 #include <optional>
+#include <ostream>  // TODO pmk
 
 namespace Fortran::semantics {
 
@@ -29,12 +30,17 @@ using MaybeExpr = std::optional<evaluate::Expr<evaluate::SomeType>>;
 struct IntrinsicTypeDefaultKinds {
   int defaultIntegerKind{evaluate::DefaultInteger::kind};
   int defaultRealKind{evaluate::DefaultReal::kind};
+  int defaultDoublePrecisionKind{evaluate::DefaultDoublePrecision::kind};
+  int defaultQuadPrecisionKind{evaluate::DefaultDoublePrecision::kind};
   int defaultCharacterKind{evaluate::DefaultCharacter::kind};
   int defaultLogicalKind{evaluate::DefaultLogical::kind};
 };
 
 MaybeExpr AnalyzeExpr(evaluate::FoldingContext &,
     const IntrinsicTypeDefaultKinds &, const parser::Expr &);
+
+void AnalyzeExpressions(parser::Program &, evaluate::FoldingContext &,
+    const IntrinsicTypeDefaultKinds &, std::ostream &);
 
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

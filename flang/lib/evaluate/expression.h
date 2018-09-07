@@ -86,18 +86,27 @@ template<typename T> struct FunctionReference {
   CopyableIndirection<FunctionRef> reference;
 };
 
-// Abstract Operation<> base class. The first type parameter is a "CRTP"
-// reference to the specific operation class; e.g., Add is defined with
-// struct Add : public Operation<Add, ...>.
+// Operations always have specific Fortran result types (i.e., with known
+// intrinsic type category and kind parameter value).  The classes that
+// represent the operations all inherit from this Operation<> base class
+// template.  Note that Operation has as its first type parameter (DERIVED) a
+// "curiously reoccurring template pattern (CRTP)" reference to the specific
+// operation class being derived from Operation; e.g., Add is defined with
+// struct Add : public Operation<Add, ...>.  Uses of instances of Operation<>,
+// including its own member functions, can access each specific class derived
+// from it via its derived() member function with compile-time type safety.
 template<typename DERIVED, typename RESULT, typename... OPERANDS>
 class Operation {
-  using OperandTypes = std::tuple<OPERANDS...>;
-  static_assert(RESULT::kind > 0 || !"bad result Type");
+  static_assert(RESULT::isSpecificType || !"bad result Type");
+  // The extra "int" member is a dummy that allows a safe unused reference
+  // to element 1 to arise indirectly in the definition of "right()" below
+  // when the operation has but a single operand.
+  using OperandTypes = std::tuple<OPERANDS..., int>;
 
 public:
   using Derived = DERIVED;
   using Result = RESULT;
-  static constexpr auto operands() { return std::tuple_size_v<OperandTypes>; }
+  static constexpr std::size_t operands{sizeof...(OPERANDS)};
   template<int J> using Operand = std::tuple_element_t<J, OperandTypes>;
   using IsFoldableTrait = std::true_type;
 
@@ -105,7 +114,7 @@ public:
   // Binary operations wrap a tuple of CopyableIndirections to Exprs.
 private:
   using Container =
-      std::conditional_t<operands() == 1, CopyableIndirection<Expr<Operand<0>>>,
+      std::conditional_t<operands == 1, CopyableIndirection<Expr<Operand<0>>>,
           std::tuple<CopyableIndirection<Expr<OPERANDS>>...>>;
 
 public:
@@ -117,8 +126,13 @@ public:
   Derived &derived() { return *static_cast<Derived *>(this); }
   const Derived &derived() const { return *static_cast<const Derived *>(this); }
 
+  // References to operand expressions from member functions of derived
+  // classes for specific operators can be made by index, e.g. operand<0>(),
+  // which must be spelled like "this->template operand<0>()" when
+  // inherited in a derived class template.  There are convenience aliases
+  // left() and right() that are not templates.
   template<int J> Expr<Operand<J>> &operand() {
-    if constexpr (operands() == 1) {
+    if constexpr (operands == 1) {
       static_assert(J == 0);
       return *operand_;
     } else {
@@ -126,7 +140,7 @@ public:
     }
   }
   template<int J> const Expr<Operand<J>> &operand() const {
-    if constexpr (operands() == 1) {
+    if constexpr (operands == 1) {
       static_assert(J == 0);
       return *operand_;
     } else {
@@ -134,14 +148,29 @@ public:
     }
   }
 
+  Expr<Operand<0>> &left() { return operand<0>(); }
+  const Expr<Operand<0>> &left() const { return operand<0>(); }
+
+  std::conditional_t<(operands > 1), Expr<Operand<1>> &, void> right() {
+    if constexpr (operands > 1) {
+      return operand<1>();
+    }
+  }
+  std::conditional_t<(operands > 1), const Expr<Operand<1>> &, void>
+  right() const {
+    if constexpr (operands > 1) {
+      return operand<1>();
+    }
+  }
+
   std::ostream &Dump(std::ostream &) const;
   std::optional<Constant<Result>> Fold(FoldingContext &);
 
 protected:
-  // Overridable string functions for Dump()
-  static const char *prefix() { return "("; }
-  static const char *infix() { return ","; }
-  static const char *suffix() { return ")"; }
+  // Overridable functions for Dump()
+  static std::ostream &Prefix(std::ostream &o) { return o << '('; }
+  static std::ostream &Infix(std::ostream &o) { return o << ','; }
+  static std::ostream &Suffix(std::ostream &o) { return o << ')'; }
 
 private:
   Container operand_;
@@ -149,14 +178,25 @@ private:
 
 // Unary operations
 
+// Conversions to specific types from expressions of known category and
+// dynamic kind.
 template<typename TO, TypeCategory FROMCAT>
 struct Convert : public Operation<Convert<TO, FROMCAT>, TO, SomeKind<FROMCAT>> {
+  // Fortran doesn't have conversions between kinds of CHARACTER.
+  // Conversions between kinds of COMPLEX are represented piecewise.
+  static_assert(((TO::category == TypeCategory::Integer ||
+                     TO::category == TypeCategory::Real) &&
+                    (FROMCAT == TypeCategory::Integer ||
+                        FROMCAT == TypeCategory::Real)) ||
+      (TO::category == TypeCategory::Logical &&
+          FROMCAT == TypeCategory::Logical));
   using Result = TO;
   using Operand = SomeKind<FROMCAT>;
   using Base = Operation<Convert, Result, Operand>;
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &);
+  std::ostream &Dump(std::ostream &) const;
 };
 
 template<typename A>
@@ -178,7 +218,7 @@ template<typename A> struct Negate : public Operation<Negate<A>, A, A> {
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &);
-  static const char *prefix() { return "(-"; }
+  static std::ostream &Prefix(std::ostream &o) { return o << "(-"; }
 };
 
 template<int KIND>
@@ -196,7 +236,9 @@ struct ComplexComponent
 
   std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &) const;
-  const char *suffix() const { return isImaginaryPart ? "%IM)" : "%RE)"; }
+  std::ostream &Suffix(std::ostream &o) const {
+    return o << (isImaginaryPart ? "%IM)" : "%RE)");
+  }
 
   bool isImaginaryPart{true};
 };
@@ -210,7 +252,7 @@ struct Not : public Operation<Not<KIND>, Type<TypeCategory::Logical, KIND>,
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &);
-  static const char *prefix() { return "(.NOT."; }
+  static std::ostream &Prefix(std::ostream &o) { return o << "(.NOT."; }
 };
 
 // Binary operations
@@ -222,7 +264,7 @@ template<typename A> struct Add : public Operation<Add<A>, A, A, A> {
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &);
-  static constexpr const char *infix() { return "+"; }
+  static std::ostream &Infix(std::ostream &o) { return o << '+'; }
 };
 
 template<typename A> struct Subtract : public Operation<Subtract<A>, A, A, A> {
@@ -232,7 +274,7 @@ template<typename A> struct Subtract : public Operation<Subtract<A>, A, A, A> {
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &);
-  static constexpr const char *infix() { return "-"; }
+  static std::ostream &Infix(std::ostream &o) { return o << '-'; }
 };
 
 template<typename A> struct Multiply : public Operation<Multiply<A>, A, A, A> {
@@ -242,7 +284,7 @@ template<typename A> struct Multiply : public Operation<Multiply<A>, A, A, A> {
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &);
-  static constexpr const char *infix() { return "*"; }
+  static std::ostream &Infix(std::ostream &o) { return o << '*'; }
 };
 
 template<typename A> struct Divide : public Operation<Divide<A>, A, A, A> {
@@ -252,7 +294,7 @@ template<typename A> struct Divide : public Operation<Divide<A>, A, A, A> {
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &);
-  static constexpr const char *infix() { return "/"; }
+  static std::ostream &Infix(std::ostream &o) { return o << '/'; }
 };
 
 template<typename A> struct Power : public Operation<Power<A>, A, A, A> {
@@ -262,7 +304,7 @@ template<typename A> struct Power : public Operation<Power<A>, A, A, A> {
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &);
-  static constexpr const char *infix() { return "**"; }
+  static std::ostream &Infix(std::ostream &o) { return o << "**"; }
 };
 
 template<typename A>
@@ -274,7 +316,7 @@ struct RealToIntPower : public Operation<RealToIntPower<A>, A, A, SomeInteger> {
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(FoldingContext &,
       const Scalar<BaseOperand> &, const Scalar<ExponentOperand> &);
-  static constexpr const char *infix() { return "**"; }
+  static std::ostream &Infix(std::ostream &o) { return o << "**"; }
 };
 
 template<typename A> struct Extremum : public Operation<Extremum<A>, A, A, A> {
@@ -291,8 +333,8 @@ template<typename A> struct Extremum : public Operation<Extremum<A>, A, A, A> {
 
   std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &) const;
-  const char *prefix() const {
-    return ordering == Ordering::Less ? "MIN(" : "MAX(";
+  std::ostream &Prefix(std::ostream &o) const {
+    return o << (ordering == Ordering::Less ? "MIN(" : "MAX(");
   }
 
   Ordering ordering{Ordering::Greater};
@@ -322,7 +364,7 @@ struct Concat
   using Base::Base;
   static std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &);
-  static constexpr const char *infix() { return "//"; }
+  static std::ostream &Infix(std::ostream &o) { return o << "//"; }
 };
 
 ENUM_CLASS(LogicalOperator, And, Or, Eqv, Neqv)
@@ -343,7 +385,7 @@ struct LogicalOperation
 
   std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &, const Scalar<Operand> &, const Scalar<Operand> &) const;
-  const char *infix() const;
+  std::ostream &Infix(std::ostream &) const;
 
   LogicalOperator logicalOperator;
 };
@@ -532,7 +574,7 @@ struct Relational : public Operation<Relational<A>, LogicalResult, A, A> {
 
   std::optional<Scalar<Result>> FoldScalar(
       FoldingContext &c, const Scalar<Operand> &, const Scalar<Operand> &);
-  std::string infix() const;
+  std::ostream &Infix(std::ostream &) const;
 
   RelationalOperator opr;
 };
@@ -622,6 +664,11 @@ public:
   using IsFoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
 
+  // Owning references to these generic expressions can appear in other
+  // compiler data structures (viz., the parse tree and symbol table), so
+  // its destructor is externalized to reduce redundant default instances.
+  ~Expr();
+
   template<typename A> Expr(const A &x) : u{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
@@ -647,6 +694,14 @@ public:
   using Others = std::variant<BOZLiteralConstant>;
   using Categories = common::MapTemplate<Expr, SomeCategory>;
   common::CombineVariants<Others, Categories> u;
+};
+
+// This wrapper class is used, by means of a forward reference with
+// OwningPointer, to implement owning pointers to analyzed expressions
+// from parse tree nodes.
+struct GenericExprWrapper {
+  GenericExprWrapper(Expr<SomeType> &&x) : v{std::move(x)} {}
+  Expr<SomeType> v;
 };
 
 extern template class Expr<SomeInteger>;

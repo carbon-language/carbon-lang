@@ -22,6 +22,7 @@
 // Intended to be as invisible as a reference, wherever possible.
 
 #include "../common/idioms.h"
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -107,6 +108,45 @@ public:
 
   template<typename... ARGS> static Indirection Make(ARGS &&... args) {
     return {new A(std::forward<ARGS>(args)...)};
+  }
+
+private:
+  A *p_{nullptr};
+};
+
+// A variant of Indirection suitable for use with forward-referenced types.
+// These are nullable pointers, not references.  Allocation is not available,
+// and a single externalized destructor must be defined.
+template<typename A> class OwningPointer {
+public:
+  using element_type = A;
+
+  OwningPointer() {}
+  OwningPointer(OwningPointer &&that) : p_{that.release()} {}
+  explicit OwningPointer(std::unique_ptr<A> &&that) : p_{that.release()} {}
+  explicit OwningPointer(A *&&p) : p_{p} { p = nullptr; }
+  ~OwningPointer();
+  OwningPointer &operator=(OwningPointer &&that) {
+    reset(that.release());
+    return *this;
+  }
+
+  A &operator*() { return *p_; }
+  const A &operator*() const { return *p_; }
+  A *operator->() { return p_; }
+  const A *operator->() const { return p_; }
+
+  A *get() const { return p_; }
+
+  A *release() {
+    A *result{p_};
+    p_ = nullptr;
+    return result;
+  }
+
+  void reset(A *p) {
+    this->~OwningPointer();
+    p_ = p;
   }
 
 private:

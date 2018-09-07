@@ -62,6 +62,17 @@ namespace Fortran::semantics {
 class Symbol;
 }  // namespace Fortran::semantics
 
+// Expressions in the parse tree have owning pointers that can be set to
+// type-checked generic expression representations by semantic analysis.
+// OwningPointer<> is used for leak safety without having to include
+// the bulk of lib/evaluate/*.h headers into the parser proper.
+namespace Fortran::evaluate {
+struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
+}  // namespace Fortran::evaluate
+namespace Fortran::common {
+extern template class OwningPointer<evaluate::GenericExprWrapper>;
+}  // namespace Fortran::common
+
 // Most non-template classes in this file use these default definitions
 // for their move constructor and move assignment operator=, and disable
 // their copy constructor and copy assignment operator=.
@@ -1683,6 +1694,9 @@ struct Expr {
 
   explicit Expr(Designator &&);
   explicit Expr(FunctionReference &&);
+
+  // Filled in later during semantic analysis of the expression.
+  common::OwningPointer<evaluate::GenericExprWrapper> typedExpr;
 
   std::variant<common::Indirection<CharLiteralConstantSubstring>,
       LiteralConstant, common::Indirection<Designator>, ArrayConstructor,

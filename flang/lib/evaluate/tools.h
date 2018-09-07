@@ -299,6 +299,9 @@ extern template std::optional<Expr<SomeType>> NumericOperation<Multiply>(
 extern template std::optional<Expr<SomeType>> NumericOperation<Divide>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 
+std::optional<Expr<SomeType>> Negation(
+    parser::ContextualMessages &, Expr<SomeType> &&);
+
 // Convenience functions and operator overloadings for expression construction.
 // These interfaces are defined only for those situations that cannot possibly
 // need to emit any messages.  Use the more general NumericOperation<>
@@ -307,6 +310,14 @@ extern template std::optional<Expr<SomeType>> NumericOperation<Divide>(
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {
   return {Negate<Type<C, K>>{std::move(x)}};
+}
+
+template<int K>
+Expr<Type<TypeCategory::Complex, K>> operator-(
+    Expr<Type<TypeCategory::Complex, K>> &&x) {
+  using Part = Type<TypeCategory::Real, K>;
+  return {ComplexConstructor<K>{Negate<Part>{ComplexComponent<K>{false, x}},
+      Negate<Part>{ComplexComponent<K>{true, x}}}};
 }
 
 template<TypeCategory C, int K>
