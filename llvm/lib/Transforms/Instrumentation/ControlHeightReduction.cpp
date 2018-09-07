@@ -65,7 +65,7 @@ static cl::opt<std::string> CHRFunctionList(
 static StringSet<> CHRModules;
 static StringSet<> CHRFunctions;
 
-static void ParseCHRFilterFiles() {
+static void parseCHRFilterFiles() {
   if (!CHRModuleList.empty()) {
     auto FileOrErr = MemoryBuffer::getFile(CHRModuleList);
     if (!FileOrErr) {
@@ -106,7 +106,7 @@ public:
   ControlHeightReductionLegacyPass() : FunctionPass(ID) {
     initializeControlHeightReductionLegacyPassPass(
         *PassRegistry::getPassRegistry());
-    ParseCHRFilterFiles();
+    parseCHRFilterFiles();
   }
 
   bool runOnFunction(Function &F) override;
@@ -227,13 +227,13 @@ class CHRScope {
 
   void addSub(CHRScope *SubIn) {
 #ifndef NDEBUG
-    bool is_child = false;
+    bool IsChild = false;
     for (RegInfo &RI : RegInfos)
       if (RI.R == SubIn->getParentRegion()) {
-        is_child = true;
+        IsChild = true;
         break;
       }
-    assert(is_child && "Must be a child");
+    assert(IsChild && "Must be a child");
 #endif
     Subs.push_back(SubIn);
   }
@@ -586,7 +586,7 @@ checkHoistValue(Value *V, Instruction *InsertPoint, DominatorTree &DT,
 
 // Returns true and sets the true probability and false probability of an
 // MD_prof metadata if it's well-formed.
-static bool CheckMDProf(MDNode *MD, BranchProbability &TrueProb,
+static bool checkMDProf(MDNode *MD, BranchProbability &TrueProb,
                         BranchProbability &FalseProb) {
   if (!MD) return false;
   MDString *MDName = cast<MDString>(MD->getOperand(0));
@@ -619,7 +619,7 @@ static BranchProbability getCHRBiasThreshold() {
 // CHRBiasThreshold, put Key into FalseSet and return true. Otherwise, return
 // false.
 template<typename K, typename S, typename M>
-bool CheckBias(K *Key, BranchProbability TrueProb, BranchProbability FalseProb,
+bool checkBias(K *Key, BranchProbability TrueProb, BranchProbability FalseProb,
                S &TrueSet, S &FalseSet, M &BiasMap) {
   BranchProbability Threshold = getCHRBiasThreshold();
   if (TrueProb >= Threshold) {
@@ -636,14 +636,14 @@ bool CheckBias(K *Key, BranchProbability TrueProb, BranchProbability FalseProb,
 
 // Returns true and insert a region into the right biased set and the map if the
 // branch of the region is biased.
-static bool CheckBiasedBranch(BranchInst *BI, Region *R,
+static bool checkBiasedBranch(BranchInst *BI, Region *R,
                               DenseSet<Region *> &TrueBiasedRegionsGlobal,
                               DenseSet<Region *> &FalseBiasedRegionsGlobal,
                               DenseMap<Region *, BranchProbability> &BranchBiasMap) {
   if (!BI->isConditional())
     return false;
   BranchProbability ThenProb, ElseProb;
-  if (!CheckMDProf(BI->getMetadata(LLVMContext::MD_prof),
+  if (!checkMDProf(BI->getMetadata(LLVMContext::MD_prof),
                    ThenProb, ElseProb))
     return false;
   BasicBlock *IfThen = BI->getSuccessor(0);
@@ -660,26 +660,26 @@ static bool CheckBiasedBranch(BranchInst *BI, Region *R,
   CHR_DEBUG(dbgs() << "BI " << *BI << " ");
   CHR_DEBUG(dbgs() << "ThenProb " << ThenProb << " ");
   CHR_DEBUG(dbgs() << "ElseProb " << ElseProb << "\n");
-  return CheckBias(R, ThenProb, ElseProb,
+  return checkBias(R, ThenProb, ElseProb,
                    TrueBiasedRegionsGlobal, FalseBiasedRegionsGlobal,
                    BranchBiasMap);
 }
 
 // Returns true and insert a select into the right biased set and the map if the
 // select is biased.
-static bool CheckBiasedSelect(
+static bool checkBiasedSelect(
     SelectInst *SI, Region *R,
     DenseSet<SelectInst *> &TrueBiasedSelectsGlobal,
     DenseSet<SelectInst *> &FalseBiasedSelectsGlobal,
     DenseMap<SelectInst *, BranchProbability> &SelectBiasMap) {
   BranchProbability TrueProb, FalseProb;
-  if (!CheckMDProf(SI->getMetadata(LLVMContext::MD_prof),
+  if (!checkMDProf(SI->getMetadata(LLVMContext::MD_prof),
                    TrueProb, FalseProb))
     return false;
   CHR_DEBUG(dbgs() << "SI " << *SI << " ");
   CHR_DEBUG(dbgs() << "TrueProb " << TrueProb << " ");
   CHR_DEBUG(dbgs() << "FalseProb " << FalseProb << "\n");
-  return CheckBias(SI, TrueProb, FalseProb,
+  return checkBias(SI, TrueProb, FalseProb,
                    TrueBiasedSelectsGlobal, FalseBiasedSelectsGlobal,
                    SelectBiasMap);
 }
@@ -764,7 +764,7 @@ CHRScope * CHR::findScope(Region *R) {
       CHR_DEBUG(dbgs() << "S1 " << S1->getName() << "\n");
       if (S0 != S1 && (S0 == Exit || S1 == Exit)) {
         RegInfo RI(R);
-        RI.HasBranch = CheckBiasedBranch(
+        RI.HasBranch = checkBiasedBranch(
             BI, R, TrueBiasedRegionsGlobal, FalseBiasedRegionsGlobal,
             BranchBiasMap);
         Result = new CHRScope(RI);
@@ -806,7 +806,7 @@ CHRScope * CHR::findScope(Region *R) {
     if (Selects.size() > 0) {
       auto AddSelects = [&](RegInfo &RI) {
         for (auto *SI : Selects)
-          if (CheckBiasedSelect(SI, RI.R,
+          if (checkBiasedSelect(SI, RI.R,
                                 TrueBiasedSelectsGlobal,
                                 FalseBiasedSelectsGlobal,
                                 SelectBiasMap))
@@ -950,8 +950,8 @@ CHRScope * CHR::findScopes(Region *R, Region *NextRegion, Region *ParentRegion,
   SmallVector<CHRScope *, 8> Subscopes;
   for (auto It = R->begin(); It != R->end(); ++It) {
     const std::unique_ptr<Region> &SubR = *It;
-    auto Next_It = std::next(It);
-    Region *NextSubR = Next_It != R->end() ? Next_It->get() : nullptr;
+    auto NextIt = std::next(It);
+    Region *NextSubR = NextIt != R->end() ? NextIt->get() : nullptr;
     CHR_DEBUG(dbgs() << "Looking at subregion " << SubR.get()->getNameStr()
               << "\n");
     CHRScope *SubCHRScope = findScopes(SubR.get(), NextSubR, R, Scopes);
@@ -1070,16 +1070,13 @@ static bool shouldSplit(Instruction *InsertPoint,
   return false;  // Don't split.
 }
 
-static void GetSelectsInScope(CHRScope *Scope,
+static void getSelectsInScope(CHRScope *Scope,
                               DenseSet<Instruction *> &Output) {
-  for (RegInfo &RI : Scope->RegInfos) {
-    for (SelectInst *SI : RI.Selects) {
+  for (RegInfo &RI : Scope->RegInfos)
+    for (SelectInst *SI : RI.Selects)
       Output.insert(SI);
-    }
-  }
-  for (CHRScope *Sub : Scope->Subs) {
-    GetSelectsInScope(Sub, Output);
-  }
+  for (CHRScope *Sub : Scope->Subs)
+    getSelectsInScope(Sub, Output);
 }
 
 void CHR::splitScopes(SmallVectorImpl<CHRScope *> &Input,
@@ -1088,7 +1085,7 @@ void CHR::splitScopes(SmallVectorImpl<CHRScope *> &Input,
     assert(!Scope->BranchInsertPoint &&
            "BranchInsertPoint must not be set");
     DenseSet<Instruction *> Unhoistables;
-    GetSelectsInScope(Scope, Unhoistables);
+    getSelectsInScope(Scope, Unhoistables);
     splitScope(Scope, nullptr, nullptr, nullptr, Output, Unhoistables);
   }
 #ifndef NDEBUG
@@ -1185,7 +1182,7 @@ SmallVector<CHRScope *, 8> CHR::splitScope(
     Instruction *SplitInsertPoint = SplitsInsertPoints[I];
     SmallVector<CHRScope *, 8> NewSubs;
     DenseSet<Instruction *> SplitUnhoistables;
-    GetSelectsInScope(Split, SplitUnhoistables);
+    getSelectsInScope(Split, SplitUnhoistables);
     for (CHRScope *Sub : Split->Subs) {
       SmallVector<CHRScope *, 8> SubSplits = splitScope(
           Sub, Split, &SplitConditionValues, SplitInsertPoint, Output,
@@ -1434,7 +1431,7 @@ static void hoistScopeConditions(CHRScope *Scope, Instruction *HoistPoint,
 
 // Negate the predicate if an ICmp if it's used only by branches or selects by
 // swapping the operands of the branches or the selects. Returns true if success.
-static bool NegateICmpIfUsedByBranchOrSelectOnly(ICmpInst *ICmp,
+static bool negateICmpIfUsedByBranchOrSelectOnly(ICmpInst *ICmp,
                                                  Instruction *ExcludedUser,
                                                  CHRScope *Scope) {
   for (User *U : ICmp->users()) {
@@ -1870,7 +1867,7 @@ void CHR::addToMergedCondition(bool IsTrueBiased, Value *Cond,
     // inserting an Xor to negate Cond.
     bool Done = false;
     if (auto *ICmp = dyn_cast<ICmpInst>(Cond))
-      if (NegateICmpIfUsedByBranchOrSelectOnly(ICmp, BranchOrSelect, Scope)) {
+      if (negateICmpIfUsedByBranchOrSelectOnly(ICmp, BranchOrSelect, Scope)) {
         MergedCondition = IRB.CreateAnd(MergedCondition, Cond);
         Done = true;
       }
@@ -1883,15 +1880,15 @@ void CHR::addToMergedCondition(bool IsTrueBiased, Value *Cond,
 }
 
 void CHR::transformScopes(SmallVectorImpl<CHRScope *> &CHRScopes) {
-  unsigned i = 0;
-  (void)(i); // Unused in release build.
+  unsigned I = 0;
   DenseSet<PHINode *> TrivialPHIs;
   for (CHRScope *Scope : CHRScopes) {
     transformScopes(Scope, TrivialPHIs);
     CHR_DEBUG(
         std::ostringstream oss;
-        oss << " after transformScopes " << i++;
+        oss << " after transformScopes " << I++;
         dumpIR(F, oss.str().c_str(), nullptr));
+    (void)I;
   }
 }
 
@@ -1983,7 +1980,7 @@ bool ControlHeightReductionLegacyPass::runOnFunction(Function &F) {
 namespace llvm {
 
 ControlHeightReductionPass::ControlHeightReductionPass() {
-  ParseCHRFilterFiles();
+  parseCHRFilterFiles();
 }
 
 PreservedAnalyses ControlHeightReductionPass::run(
