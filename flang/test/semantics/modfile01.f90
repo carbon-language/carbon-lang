@@ -28,9 +28,12 @@ end
 !Expect: m.mod
 !module m
 !integer::i
+!integer,private::j
 !type::t
 !integer::i
 !integer,private::j
+!end type
+!type,private::u
 !end type
 !type(t)::x
 !end

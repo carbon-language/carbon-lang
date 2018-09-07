@@ -86,6 +86,7 @@ public:
   iterator find(const SourceName &name);
   const_iterator find(const SourceName &name) const;
   size_type erase(const SourceName &);
+  size_type size() const { return symbols_.size(); }
 
   // Look for symbol by name in this scope and host (depending on imports).
   Symbol *FindSymbol(const SourceName &);
