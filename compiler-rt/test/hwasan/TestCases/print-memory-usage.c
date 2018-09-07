@@ -36,19 +36,20 @@ void *T4(void *arg) { return NULL; }
 
 int main() {
   __hwasan_enable_allocator_tagging();
+  sink = malloc_and_use(10);
 
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID:[0-9]*]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: 0 uniq_stacks: 0 heap: 0
+  // CHECK: HWASAN pid: [[PID:[0-9]*]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{.*}} uniq_stacks: [[UNIQ_STACKS:[0-9]*]] heap: [[HEAP:[0-9]*]]
 
   void *one_meg = malloc_and_use(1 << 20);
 
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{[1-9][0-9]*}} uniq_stacks: 1 heap: 1052672
+  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{.*}}
 
   free(one_meg);
 
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{[1-9][0-9]*}} uniq_stacks: 2 heap: 0
+  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{.*}} uniq_stacks: {{.*}} heap: [[HEAP]]
 
   pthread_t t1, t2, t3, t4;
 
