@@ -257,11 +257,19 @@ DecodeStatus RISCVDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
   // It's a 32 bit instruction if bit 0 and 1 are 1.
   if ((Bytes[0] & 0x3) == 0x3) {
+    if (Bytes.size() < 4) {
+      Size = 0;
+      return MCDisassembler::Fail;
+    }
     Insn = support::endian::read32le(Bytes.data());
     LLVM_DEBUG(dbgs() << "Trying RISCV32 table :\n");
     Result = decodeInstruction(DecoderTable32, MI, Insn, Address, this, STI);
     Size = 4;
   } else {
+    if (Bytes.size() < 2) {
+      Size = 0;
+      return MCDisassembler::Fail;
+    }
     Insn = support::endian::read16le(Bytes.data());
 
     if (!STI.getFeatureBits()[RISCV::Feature64Bit]) {
