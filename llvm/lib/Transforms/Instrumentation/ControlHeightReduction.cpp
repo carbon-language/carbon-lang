@@ -454,6 +454,8 @@ static void LLVM_ATTRIBUTE_UNUSED dumpIR(Function &F, const char *Label,
                                          CHRStats *Stats) {
   StringRef FuncName = F.getName();
   StringRef ModuleName = F.getParent()->getName();
+  (void)(FuncName); // Unused in release build.
+  (void)(ModuleName); // Unused in release build.
   CHR_DEBUG(dbgs() << "CHR IR dump " << Label << " " << ModuleName << " "
             << FuncName);
   if (Stats)
