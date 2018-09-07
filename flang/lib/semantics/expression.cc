@@ -31,17 +31,10 @@ using common::TypeCategory;
 
 using MaybeExpr = std::optional<Expr<SomeType>>;
 
+// Utility subroutines for repackaging optional values.
 template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
   if (x.has_value()) {
     return {AsGenericExpr(AsCategoryExpr(AsExpr(std::move(*x))))};
-  }
-  return std::nullopt;
-}
-
-template<TypeCategory CAT, int KIND>
-MaybeExpr PackageGeneric(std::optional<Expr<Type<CAT, KIND>>> &&x) {
-  if (x.has_value()) {
-    return {AsGenericExpr(AsCategoryExpr(std::move(*x)))};
   }
   return std::nullopt;
 }
@@ -50,6 +43,14 @@ template<TypeCategory CAT>
 MaybeExpr AsMaybeExpr(std::optional<Expr<SomeKind<CAT>>> &&x) {
   if (x.has_value()) {
     return {AsGenericExpr(std::move(*x))};
+  }
+  return std::nullopt;
+}
+
+template<TypeCategory CAT, int KIND>
+MaybeExpr AsMaybeExpr(std::optional<Expr<Type<CAT, KIND>>> &&x) {
+  if (x.has_value()) {
+    return {AsGenericExpr(AsCategoryExpr(std::move(*x)))};
   }
   return std::nullopt;
 }
@@ -511,12 +512,8 @@ MaybeExpr BinaryOperationHelper(ExprAnalyzer &ea, const PARSED &x) {
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Add &x) {
-  return BinaryOperationHelper<Add>(*this, x);
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Subtract &x) {
-  return BinaryOperationHelper<Subtract>(*this, x);
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Power &x) {
+  return BinaryOperationHelper<Power>(*this, x);
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Multiply &x) {
@@ -527,15 +524,18 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Divide &x) {
   return BinaryOperationHelper<Divide>(*this, x);
 }
 
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Add &x) {
+  return BinaryOperationHelper<Add>(*this, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Subtract &x) {
+  return BinaryOperationHelper<Subtract>(*this, x);
+}
+
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
   return AsMaybeExpr(ConstructComplex(context.messages,
       AnalyzeHelper(*this, *std::get<0>(x.t)),
       AnalyzeHelper(*this, *std::get<1>(x.t))));
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Power &) {
-  context.messages.Say("pmk: Power unimplemented\n"_err_en_US);
-  return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &) {
@@ -543,59 +543,83 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &) {
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::LT &) {
-  context.messages.Say("pmk: .LT. unimplemented\n"_err_en_US);
+// TODO: check defined operators for illegal intrinsic operator cases
+template<typename PARSED>
+MaybeExpr RelationHelper(
+    ExprAnalyzer &ea, RelationalOperator opr, const PARSED &x) {
+  if (auto both{common::AllPresent(AnalyzeHelper(ea, *std::get<0>(x.t)),
+          AnalyzeHelper(ea, *std::get<1>(x.t)))}) {
+    return AsMaybeExpr(Relate(ea.context.messages, opr,
+        std::move(std::get<0>(*both)), std::move(std::get<1>(*both))));
+  }
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::LE &) {
-  context.messages.Say("pmk: .LE. unimplemented\n"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::LT &x) {
+  return RelationHelper(*this, RelationalOperator::LT, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::LE &x) {
+  return RelationHelper(*this, RelationalOperator::LE, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::EQ &x) {
+  return RelationHelper(*this, RelationalOperator::EQ, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NE &x) {
+  return RelationHelper(*this, RelationalOperator::NE, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::GE &x) {
+  return RelationHelper(*this, RelationalOperator::GE, x);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::GT &x) {
+  return RelationHelper(*this, RelationalOperator::GT, x);
+}
+
+// TODO: check defined operators for illegal intrinsic operator cases
+template<typename PARSED>
+MaybeExpr LogicalHelper(
+    ExprAnalyzer &ea, LogicalOperator opr, const PARSED &x) {
+  if (auto both{common::AllPresent(AnalyzeHelper(ea, *std::get<0>(x.t)),
+          AnalyzeHelper(ea, *std::get<1>(x.t)))}) {
+    return std::visit(
+        common::visitors{
+            [=](Expr<SomeLogical> &&lx, Expr<SomeLogical> &&ly) -> MaybeExpr {
+              return {AsGenericExpr(
+                  BinaryLogicalOperation(opr, std::move(lx), std::move(ly)))};
+            },
+            [&](auto &&, auto &&) -> MaybeExpr {
+              // TODO pmk: extensions: INTEGER and typeless operands
+              ea.context.messages.Say(
+                  "operands to LOGICAL operation must be LOGICAL"_err_en_US);
+              return {};
+            }},
+        std::move(std::get<0>(*both).u), std::move(std::get<1>(*both).u));
+  }
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::EQ &) {
-  context.messages.Say("pmk: .EQ. unimplemented\n"_err_en_US);
-  return std::nullopt;
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::AND &x) {
+  return LogicalHelper(*this, LogicalOperator::And, x);
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NE &) {
-  context.messages.Say("pmk: .NE. unimplemented\n"_err_en_US);
-  return std::nullopt;
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::OR &x) {
+  return LogicalHelper(*this, LogicalOperator::Or, x);
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::GT &) {
-  context.messages.Say("pmk: .GT. unimplemented\n"_err_en_US);
-  return std::nullopt;
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::EQV &x) {
+  return LogicalHelper(*this, LogicalOperator::Eqv, x);
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::GE &) {
-  context.messages.Say("pmk: .GE. unimplemented\n"_err_en_US);
-  return std::nullopt;
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NEQV &x) {
+  return LogicalHelper(*this, LogicalOperator::Neqv, x);
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::AND &) {
-  context.messages.Say("pmk: .AND. unimplemented\n"_err_en_US);
-  return std::nullopt;
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::OR &) {
-  context.messages.Say("pmk: .OR. unimplemented\n"_err_en_US);
-  return std::nullopt;
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::EQV &) {
-  context.messages.Say("pmk: .EQV. unimplemented\n"_err_en_US);
-  return std::nullopt;
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NEQV &) {
-  context.messages.Say("pmk: .NEQV. unimplemented\n"_err_en_US);
-  return std::nullopt;
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::XOR &) {
-  context.messages.Say("pmk: .XOR. unimplemented\n"_err_en_US);
-  return std::nullopt;
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::XOR &x) {
+  return LogicalHelper(*this, LogicalOperator::Neqv, x);
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {

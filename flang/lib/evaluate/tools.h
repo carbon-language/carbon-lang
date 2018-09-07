@@ -193,14 +193,14 @@ Expr<SomeType> ConvertTo(const Expr<SomeType> &to, Expr<FT> &&from) {
 }
 
 template<TypeCategory CAT>
-Expr<SomeType> ConvertTo(
+Expr<SomeKind<CAT>> ConvertTo(
     const Expr<SomeKind<CAT>> &to, BOZLiteralConstant &&from) {
-  return AsGenericExpr(std::visit(
+  return std::visit(
       [&](const auto &tok) {
         using Ty = ResultType<decltype(tok)>;
         return AsCategoryExpr(ConvertToType<Ty>(std::move(from)));
       },
-      to.u));
+      to.u);
 }
 
 template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;
@@ -267,6 +267,27 @@ template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   return {Constant<Ty>{x}};
 }
 
+// Combine two expressions of the same specific numeric type with an operation
+// to produce a new expression.  Implements piecewise addition and subtraction
+// for COMPLEX.
+template<template<typename> class OPR, typename SPECIFIC>
+Expr<SPECIFIC> Combine(Expr<SPECIFIC> &&x, Expr<SPECIFIC> &&y) {
+  static_assert(SPECIFIC::isSpecificType);
+  if constexpr (SPECIFIC::category == TypeCategory::Complex &&
+      (std::is_same_v<OPR<DefaultReal>, Add<DefaultReal>> ||
+          std::is_same_v<OPR<DefaultReal>, Subtract<DefaultReal>>)) {
+    static constexpr int kind{SPECIFIC::kind};
+    using Part = Type<TypeCategory::Real, kind>;
+    return AsExpr(
+        ComplexConstructor<kind>{OPR<Part>{ComplexComponent<kind>{false, x},
+                                     ComplexComponent<kind>{false, y}},
+            OPR<Part>{ComplexComponent<kind>{true, x},
+                ComplexComponent<kind>{true, y}}});
+  } else {
+    return AsExpr(OPR<SPECIFIC>{std::move(x), std::move(y)});
+  }
+}
+
 // Given two expressions of arbitrary kind in the same intrinsic type
 // category, convert one of them if necessary to the larger kind of the
 // other, then combine the resulting homogenized operands with a given
@@ -278,34 +299,46 @@ Expr<SomeKind<CAT>> PromoteAndCombine(
       [](auto &&xy) {
         using Ty = ResultType<decltype(xy[0])>;
         return AsCategoryExpr(
-            AsExpr(OPR<Ty>{std::move(xy[0]), std::move(xy[1])}));
+            Combine<OPR, Ty>(std::move(xy[0]), std::move(xy[1])));
       },
       AsSameKindExprs(std::move(x), std::move(y)));
 }
 
 // Given two expressions of arbitrary type, try to combine them with a
 // binary numeric operation (e.g., Add), possibly with data type conversion of
-// one of the operands to the type of the other.
+// one of the operands to the type of the other.  Handles special cases with
+// typeless literal operands and with REAL/COMPLEX exponentiation to INTEGER
+// powers.
 template<template<typename> class OPR>
 std::optional<Expr<SomeType>> NumericOperation(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 
-extern template std::optional<Expr<SomeType>> NumericOperation<Add>(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
-extern template std::optional<Expr<SomeType>> NumericOperation<Subtract>(
+extern template std::optional<Expr<SomeType>> NumericOperation<Power>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 extern template std::optional<Expr<SomeType>> NumericOperation<Multiply>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 extern template std::optional<Expr<SomeType>> NumericOperation<Divide>(
     parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+extern template std::optional<Expr<SomeType>> NumericOperation<Add>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+extern template std::optional<Expr<SomeType>> NumericOperation<Subtract>(
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 
 std::optional<Expr<SomeType>> Negation(
     parser::ContextualMessages &, Expr<SomeType> &&);
 
+// Given two expressions of arbitrary type, try to combine them with a
+// relational operator (e.g., .LT.), possibly with data type conversion.
+std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &,
+    RelationalOperator, Expr<SomeType> &&, Expr<SomeType> &&);
+
+Expr<SomeLogical> BinaryLogicalOperation(
+    LogicalOperator, Expr<SomeLogical> &&, Expr<SomeLogical> &&);
+
 // Convenience functions and operator overloadings for expression construction.
-// These interfaces are defined only for those situations that cannot possibly
-// need to emit any messages.  Use the more general NumericOperation<>
-// template (above) in other situations.
+// These interfaces are defined only for those situations that can never
+// emit any message.  Use the more general templates (above) in other
+// situations.
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {
@@ -322,22 +355,22 @@ Expr<Type<TypeCategory::Complex, K>> operator-(
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator+(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Add<Type<C, K>>{std::move(x), std::move(y)}};
+  return {Combine<Add, Type<C, K>>(std::move(x), std::move(y))};
 }
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Subtract<Type<C, K>>{std::move(x), std::move(y)}};
+  return {Combine<Subtract, Type<C, K>>(std::move(x), std::move(y))};
 }
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator*(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Multiply<Type<C, K>>{std::move(x), std::move(y)}};
+  return {Combine<Multiply, Type<C, K>>(std::move(x), std::move(y))};
 }
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Divide<Type<C, K>>{std::move(x), std::move(y)}};
+  return {Combine<Divide, Type<C, K>>(std::move(x), std::move(y))};
 }
 
 template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {

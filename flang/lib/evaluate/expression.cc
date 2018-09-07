@@ -360,11 +360,6 @@ auto Relational<A>::FoldScalar(FoldingContext &c, const Scalar<Operand> &a,
     case Relation::Unordered: return std::nullopt;
     }
   }
-  if constexpr (A::category == TypeCategory::Complex) {
-    bool eqOk{opr == RelationalOperator::LE || opr == RelationalOperator::EQ ||
-        opr == RelationalOperator::GE};
-    return {eqOk == a.Equals(b)};
-  }
   if constexpr (A::category == TypeCategory::Character) {
     switch (Compare(a, b)) {
     case Ordering::Less:
@@ -582,11 +577,6 @@ template struct Relational<Type<TypeCategory::Real, 4>>;
 template struct Relational<Type<TypeCategory::Real, 8>>;
 template struct Relational<Type<TypeCategory::Real, 10>>;
 template struct Relational<Type<TypeCategory::Real, 16>>;
-template struct Relational<Type<TypeCategory::Complex, 2>>;
-template struct Relational<Type<TypeCategory::Complex, 4>>;
-template struct Relational<Type<TypeCategory::Complex, 8>>;
-template struct Relational<Type<TypeCategory::Complex, 10>>;
-template struct Relational<Type<TypeCategory::Complex, 16>>;
 template struct Relational<Type<TypeCategory::Character, 1>>;  // TODO others
 template struct Relational<SomeType>;
 

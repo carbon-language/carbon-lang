@@ -36,17 +36,18 @@ namespace Fortran::evaluate {
 
 using common::RelationalOperator;
 
-// Expressions are represented by specializations of Expr.
+// Expressions are represented by specializations of the class template Expr.
 // Each of these specializations wraps a single data member "u" that
-// is a std::variant<> discriminated union over the representational
+// is a std::variant<> discriminated union over all of the representational
 // types for the constants, variables, operations, and other entities that
 // can be valid expressions in that context:
-// - Expr<Type<CATEGORY, KIND>> is an expression whose result is of a
+// - Expr<Type<CATEGORY, KIND>> represents an expression whose result is of a
 //   specific intrinsic type category and kind, e.g. Type<TypeCategory::Real, 4>
 // - Expr<SomeKind<CATEGORY>> is a union of Expr<Type<CATEGORY, K>> for each
-//   kind type parameter value K in that intrinsic type category
+//   kind type parameter value K in that intrinsic type category.  It represents
+//   an expression with known category and any kind.
 // - Expr<SomeType> is a union of Expr<SomeKind<CATEGORY>> over the five
-//   intrinsic type categories of Fortran.
+//   intrinsic type categories of Fortran.  It represents any valid expression.
 template<typename A> class Expr;
 
 // Everything that can appear in, or as, a valid Fortran expression must be
@@ -55,7 +56,7 @@ template<typename A> class Expr;
 // or SomeType.
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
 
-// Wraps a constant value in a class to make its type clear.
+// Wraps a constant value in a class with its resolved type.
 template<typename T> struct Constant {
   using Result = T;
   using Value = Scalar<Result>;  // TODO rank > 0
@@ -378,9 +379,9 @@ struct LogicalOperation
   using Base = Operation<LogicalOperation, Result, Operand, Operand>;
   CLASS_BOILERPLATE(LogicalOperation)
   LogicalOperation(
-      const Expr<Operand> &x, const Expr<Operand> &y, LogicalOperator opr)
+      LogicalOperator opr, const Expr<Operand> &x, const Expr<Operand> &y)
     : Base{x, y}, logicalOperator{opr} {}
-  LogicalOperation(Expr<Operand> &&x, Expr<Operand> &&y, LogicalOperator opr)
+  LogicalOperation(LogicalOperator opr, Expr<Operand> &&x, Expr<Operand> &&y)
     : Base{std::move(x), std::move(y)}, logicalOperator{opr} {}
 
   std::optional<Scalar<Result>> FoldScalar(
@@ -390,7 +391,7 @@ struct LogicalOperation
   LogicalOperator logicalOperator;
 };
 
-// Per-category expressions
+// Per-category expression representations
 
 // Common Expr<> behaviors
 template<typename RESULT> struct ExpressionBase {
@@ -497,11 +498,11 @@ public:
   Expr(const DataRef &x) : u{DataReference<Result>{x}} {}
   Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
 
-  // TODO pmk: Remove Negate, Add, Subtract in favor of component-wise
-  // operations.
-  using Operations = std::variant<Parentheses<Result>, Negate<Result>,
-      Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
-      Power<Result>, RealToIntPower<Result>, ComplexConstructor<KIND>>;
+  // Note that many COMPLEX operations are represented as REAL operations
+  // over their components (viz., conversions, negation, add, and subtract).
+  using Operations =
+      std::variant<Parentheses<Result>, Multiply<Result>, Divide<Result>,
+          Power<Result>, RealToIntPower<Result>, ComplexConstructor<KIND>>;
   using Others = std::variant<Constant<Result>, DataReference<Result>,
       FunctionReference<Result>>;
 
@@ -556,8 +557,8 @@ extern template class Expr<Type<TypeCategory::Character, 1>>;  // TODO more
 // expressions with polymorphism over the cross product of the possible
 // categories and kinds of comparable operands.
 // Fortran defines a numeric relation with distinct types or kinds as
-// undergoing the same operand conversions that occur with the addition
-// intrinsic operator first.  Character relations must have the same kind.
+// first undergoing the same operand conversions that occur with the intrinsic
+// addition operator.  Character relations must have the same kind.
 // There are no relations between LOGICAL values.
 
 template<typename A>
@@ -579,7 +580,12 @@ struct Relational : public Operation<Relational<A>, LogicalResult, A, A> {
   RelationalOperator opr;
 };
 
-template<> struct Relational<SomeType> {
+template<> class Relational<SomeType> {
+  // COMPLEX data is compared piecewise.
+  using DirectlyComparableTypes =
+      common::CombineTuples<IntegerTypes, RealTypes, CharacterTypes>;
+
+public:
   using Result = LogicalResult;
   CLASS_BOILERPLATE(Relational)
   template<typename A> Relational(const A &x) : u(x) {}
@@ -587,7 +593,7 @@ template<> struct Relational<SomeType> {
   Relational(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &o) const;
-  common::MapTemplate<Relational, RelationalTypes> u;
+  common::MapTemplate<Relational, DirectlyComparableTypes> u;
 };
 
 extern template struct Relational<Type<TypeCategory::Integer, 1>>;
@@ -600,11 +606,6 @@ extern template struct Relational<Type<TypeCategory::Real, 4>>;
 extern template struct Relational<Type<TypeCategory::Real, 8>>;
 extern template struct Relational<Type<TypeCategory::Real, 10>>;
 extern template struct Relational<Type<TypeCategory::Real, 16>>;
-extern template struct Relational<Type<TypeCategory::Complex, 2>>;
-extern template struct Relational<Type<TypeCategory::Complex, 4>>;
-extern template struct Relational<Type<TypeCategory::Complex, 8>>;
-extern template struct Relational<Type<TypeCategory::Complex, 10>>;
-extern template struct Relational<Type<TypeCategory::Complex, 16>>;
 extern template struct Relational<Type<TypeCategory::Character, 1>>;  // TODO
                                                                       // more
 extern template struct Relational<SomeType>;
@@ -625,8 +626,8 @@ public:
   Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
 
 private:
-  using Operations =
-      std::variant<Not<KIND>, LogicalOperation<KIND>, Relational<SomeType>>;
+  using Operations = std::variant<Convert<Result, TypeCategory::Logical>,
+      Not<KIND>, LogicalOperation<KIND>, Relational<SomeType>>;
   using Others = std::variant<Constant<Result>, DataReference<Result>,
       FunctionReference<Result>>;
 

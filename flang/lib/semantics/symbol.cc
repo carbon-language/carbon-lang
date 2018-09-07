@@ -284,7 +284,7 @@ std::ostream &operator<<(std::ostream &os, const ProcEntityDetails &x) {
 }
 
 std::ostream &operator<<(std::ostream &os, const DerivedTypeDetails &x) {
-  if (const Symbol *extends{x.extends()}) {
+  if (const Symbol * extends{x.extends()}) {
     os << " extends:" << extends->name();
   }
   if (x.sequence()) {
