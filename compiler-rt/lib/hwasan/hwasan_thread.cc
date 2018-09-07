@@ -24,7 +24,7 @@ static u32 RandomSeed() {
   return seed;
 }
 
-Thread *Thread::main_thread;
+Thread *Thread::thread_list_head;
 SpinMutex Thread::thread_list_mutex;
 Thread::ThreadStats Thread::thread_stats;
 
@@ -33,22 +33,26 @@ void Thread::InsertIntoThreadList(Thread *t) {
   SpinMutexLock l(&thread_list_mutex);
   thread_stats.n_live_threads++;
   thread_stats.total_stack_size += t->stack_size();
-  if (!main_thread) {
-    main_thread = t;
+  if (!thread_list_head) {
+    thread_list_head = t;
     return;
   }
-  Thread *last = main_thread;
+  Thread *last = thread_list_head;
   while (last->next_)
     last = last->next_;
   last->next_ = t;
 }
 
 void Thread::RemoveFromThreadList(Thread *t) {
-  if (t == main_thread) return;  // Do nothing (happens due to pthread_exit).
   SpinMutexLock l(&thread_list_mutex);
   thread_stats.n_live_threads--;
   thread_stats.total_stack_size -= t->stack_size();
-  Thread *prev = main_thread;
+  if (t == thread_list_head) {
+    thread_list_head = t->next_;
+    t->next_ = nullptr;
+    return;
+  }
+  Thread *prev = thread_list_head;
   Thread *cur = prev->next_;
   CHECK(cur);
   while (cur) {

@@ -62,7 +62,7 @@ class Thread {
   template <class CB>
   static void VisitAllLiveThreads(CB cb) {
     SpinMutexLock l(&thread_list_mutex);
-    Thread *t = main_thread;
+    Thread *t = thread_list_head;
     while (t) {
       cb(t);
       t = t->next_;
@@ -113,7 +113,7 @@ class Thread {
   static void RemoveFromThreadList(Thread *t);
   Thread *next_;  // All live threads form a linked list.
   static SpinMutex thread_list_mutex;
-  static Thread *main_thread;
+  static Thread *thread_list_head;
   static ThreadStats thread_stats;
 
   u64 unique_id_;  // counting from zero.
