@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MCTargetDesc/RISCVBaseInfo.h"
 #include "MCTargetDesc/RISCVMCTargetDesc.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
@@ -239,6 +240,17 @@ static DecodeStatus decodeCLUIImmOperand(MCInst &Inst, uint64_t Imm,
   if (Imm > 31) {
     Imm = (SignExtend64<6>(Imm) & 0xfffff);
   }
+  Inst.addOperand(MCOperand::createImm(Imm));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus decodeFRMArg(MCInst &Inst, uint64_t Imm,
+                                 int64_t Address,
+                                 const void *Decoder) {
+  assert(isUInt<3>(Imm) && "Invalid immediate");
+  if (!llvm::RISCVFPRndMode::isValidRoundingMode(Imm))
+    return MCDisassembler::Fail;
+
   Inst.addOperand(MCOperand::createImm(Imm));
   return MCDisassembler::Success;
 }
