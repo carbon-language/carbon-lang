@@ -12,6 +12,7 @@
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/PDB/Native/NativeEnumTypes.h"
+#include "llvm/DebugInfo/PDB/Native/SymbolCache.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"
 
 #include <cassert>
@@ -78,7 +79,8 @@ bool NativeEnumSymbol::hasCastOperator() const {
 }
 
 uint64_t NativeEnumSymbol::getLength() const {
-  const auto Id = Session.findSymbolByTypeIndex(Record.getUnderlyingType());
+  const auto Id = Session.getSymbolCache().findSymbolByTypeIndex(
+      Record.getUnderlyingType());
   const auto UnderlyingType =
       Session.getConcreteSymbolById<PDBSymbolTypeBuiltin>(Id);
   return UnderlyingType ? UnderlyingType->getLength() : 0;
@@ -104,5 +106,6 @@ bool NativeEnumSymbol::isScoped() const {
 }
 
 uint32_t NativeEnumSymbol::getTypeId() const {
-  return Session.findSymbolByTypeIndex(Record.getUnderlyingType());
+  return Session.getSymbolCache().findSymbolByTypeIndex(
+      Record.getUnderlyingType());
 }

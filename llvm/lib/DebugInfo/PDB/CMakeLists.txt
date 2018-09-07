@@ -62,6 +62,7 @@ add_pdb_impl_folder(Native
   Native/PublicsStream.cpp
   Native/GSIStreamBuilder.cpp
   Native/RawError.cpp
+  Native/SymbolCache.cpp
   Native/SymbolStream.cpp
   Native/TpiHashing.cpp
   Native/TpiStream.cpp

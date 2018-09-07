@@ -41,7 +41,7 @@ uint32_t NativeEnumTypes::getChildCount() const {
 std::unique_ptr<PDBSymbol>
 NativeEnumTypes::getChildAtIndex(uint32_t Index) const {
   if (Index < Matches.size())
-    return Session.createEnumSymbol(Matches[Index]);
+    return Session.getSymbolCache().createEnumSymbol(Matches[Index]);
   return nullptr;
 }
 
