@@ -39,17 +39,17 @@ int main() {
   sink = malloc_and_use(10);
 
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID:[0-9]*]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{.*}} uniq_stacks: [[UNIQ_STACKS:[0-9]*]] heap: [[HEAP:[0-9]*]]
+  // CHECK: HWASAN pid: [[PID:[0-9]*]] rss: {{.*}} threads: 1 stacks: [[STACKS:[0-9]*]] thr_aux: {{.*}} stack_depot: {{.*}} uniq_stacks: [[UNIQ_STACKS:[0-9]*]] heap: [[HEAP:[0-9]*]]
 
   void *one_meg = malloc_and_use(1 << 20);
 
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{.*}}
+  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: [[STACKS]] thr_aux: {{.*}} stack_depot: {{.*}}
 
   free(one_meg);
 
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: 1024000 thr_aux: {{.*}} stack_depot: {{.*}} uniq_stacks: {{.*}} heap: [[HEAP]]
+  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: [[STACKS]] thr_aux: {{.*}} stack_depot: {{.*}} uniq_stacks: {{.*}} heap: [[HEAP]]
 
   pthread_t t1, t2, t3, t4;
 
@@ -61,12 +61,12 @@ int main() {
   pthread_join(t4, NULL);
 
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 4 stacks: 4083520
+  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 4 stacks:
 
   __sync_fetch_and_add(&state, 1);
   pthread_join(t1, NULL);
   pthread_join(t2, NULL);
   pthread_join(t3, NULL);
   __hwasan_print_memory_usage();
-  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: 1024000
+  // CHECK: HWASAN pid: [[PID]] rss: {{.*}} threads: 1 stacks: [[STACKS]]
 }
