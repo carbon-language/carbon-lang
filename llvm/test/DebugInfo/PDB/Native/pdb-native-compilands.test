@@ -3,7 +3,7 @@
 ; RUN:   | FileCheck -check-prefix=EMPTY %s
 ; RUN: llvm-pdbutil pretty -native -compilands %p/../Inputs/big-read.pdb \
 ; RUN:   | FileCheck -check-prefix=BIGREAD %s
-; RUN: llvm-pdbutil diadump -compilands %p/../Inputs/empty.pdb \
+; RUN: llvm-pdbutil diadump -native -compilands %p/../Inputs/empty.pdb \
 ; RUN:   | FileCheck -check-prefix=DUMP %s
 
 ; Reference output was generated with the DIA reader to ensure that the
@@ -67,9 +67,9 @@ BIGREAD:  api-ms-win-crt-heap-l1-1-0.dll
 BIGREAD:  * Linker *
 
 DUMP:      {
-DUMP-NEXT:   symIndexId: 1
+DUMP-NEXT:   symIndexId: 2
 DUMP-NEXT:   symTag: 2
-DUMP-NEXT:   lexicalParentId: 2
+DUMP-NEXT:   lexicalParentId: 0
 DUMP-NEXT:   libraryName: d:\src\llvm\test\DebugInfo\PDB\Inputs\empty.obj
 DUMP-NEXT:   name: d:\src\llvm\test\DebugInfo\PDB\Inputs\empty.obj
 DUMP-NEXT:   editAndContinueEnabled: 0
@@ -77,7 +77,7 @@ DUMP-NEXT: }
 DUMP-NEXT: {
 DUMP-NEXT:   symIndexId: 3
 DUMP-NEXT:   symTag: 2
-DUMP-NEXT:   lexicalParentId: 2
+DUMP-NEXT:   lexicalParentId: 0
 DUMP-NEXT:   libraryName:
 DUMP-NEXT:   name: * Linker *
 DUMP-NEXT:   editAndContinueEnabled: 0

@@ -26,8 +26,6 @@ PDB_SymType NativeCompilandSymbol::getSymTag() const {
 void NativeCompilandSymbol::dump(raw_ostream &OS, int Indent) const {
   NativeRawSymbol::dump(OS, Indent);
 
-  dumpSymbolField(OS, "baseType", static_cast<uint32_t>(getBuiltinType()),
-                  Indent);
   dumpSymbolField(OS, "lexicalParentId", 0, Indent);
   dumpSymbolField(OS, "libraryName", getLibraryName(), Indent);
   dumpSymbolField(OS, "name", getName(), Indent);
