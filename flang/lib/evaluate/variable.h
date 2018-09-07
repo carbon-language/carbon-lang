@@ -185,6 +185,7 @@ public:
   std::ostream &Dump(std::ostream &) const;
 
 private:
+  // TODO: character kinds > 1
   std::variant<DataRef, std::string> u_;
   std::optional<IndirectSubscriptIntegerExpr> first_, last_;
 };
@@ -295,9 +296,5 @@ private:
 using SubroutineRef = ProcedureRef<ActualSubroutineArg>;
 
 }  // namespace Fortran::evaluate
-
-// This inclusion must follow the definitions in this header due to
-// mutual references.
-#include "expression.h"
 
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_

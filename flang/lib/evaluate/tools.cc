@@ -344,6 +344,15 @@ std::optional<Expr<SomeType>> Negation(
       std::move(x.u));
 }
 
+Expr<SomeLogical> LogicalNegation(Expr<SomeLogical> &&x) {
+  return std::visit(
+      [](auto &&xk) {
+        return AsCategoryExpr(
+            AsExpr(Not<ResultType<decltype(xk)>::kind>{std::move(xk)}));
+      },
+      std::move(x.u));
+}
+
 template<typename T>
 Expr<LogicalResult> PackageRelation(
     RelationalOperator opr, Expr<T> &&x, Expr<T> &&y) {

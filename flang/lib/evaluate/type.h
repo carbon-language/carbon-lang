@@ -91,10 +91,22 @@ struct Type<TypeCategory::Complex, KIND>
   using Scalar = value::Complex<typename Part::Scalar>;
 };
 
-template<int KIND>
-struct Type<TypeCategory::Character, KIND>
-  : public TypeBase<TypeCategory::Character, KIND> {
+template<>
+struct Type<TypeCategory::Character, 1>
+  : public TypeBase<TypeCategory::Character, 1> {
   using Scalar = std::string;
+};
+
+template<>
+struct Type<TypeCategory::Character, 2>
+  : public TypeBase<TypeCategory::Character, 2> {
+  using Scalar = std::u16string;
+};
+
+template<>
+struct Type<TypeCategory::Character, 4>
+  : public TypeBase<TypeCategory::Character, 4> {
+  using Scalar = std::u32string;
 };
 
 template<int KIND>

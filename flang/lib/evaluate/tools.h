@@ -26,17 +26,9 @@ namespace Fortran::evaluate {
 
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
-// TODO: Would these be better as conversion constructors in the classes?
-// TODO: Are the lvalue argument versions still needed?
 
-template<typename A> Expr<ResultType<A>> AsExpr(const A &x) { return {x}; }
 template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
   return {std::move(x)};
-}
-
-template<TypeCategory CAT, int KIND>
-Expr<SomeKind<CAT>> AsCategoryExpr(const Expr<Type<CAT, KIND>> &x) {
-  return {x};
 }
 
 template<TypeCategory CAT, int KIND>
@@ -54,16 +46,10 @@ Expr<SomeKind<CAT>> AsCategoryExpr(SomeKindScalar<CAT> &&x) {
       x.u);
 }
 
-template<typename A> Expr<SomeType> AsGenericExpr(const A &x) { return {x}; }
-
 template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
   return {std::move(x)};
 }
 
-template<TypeCategory CAT, int KIND>
-Expr<SomeType> AsGenericExpr(const Expr<Type<CAT, KIND>> &x) {
-  return {AsCategoryExpr(x)};
-}
 template<TypeCategory CAT, int KIND>
 Expr<SomeType> AsGenericExpr(Expr<Type<CAT, KIND>> &&x) {
   return {AsCategoryExpr(std::move(x))};
@@ -332,6 +318,7 @@ std::optional<Expr<SomeType>> Negation(
 std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &,
     RelationalOperator, Expr<SomeType> &&, Expr<SomeType> &&);
 
+Expr<SomeLogical> LogicalNegation(Expr<SomeLogical> &&);
 Expr<SomeLogical> BinaryLogicalOperation(
     LogicalOperator, Expr<SomeLogical> &&, Expr<SomeLogical> &&);
 

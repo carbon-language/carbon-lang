@@ -438,12 +438,17 @@ std::ostream &LogicalOperation<KIND>::Infix(std::ostream &o) const {
 
 template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
   if constexpr (T::category == TypeCategory::Integer) {
-    return o << value.SignedDecimal() << '_' << Result::kind;
+    return o << value.SignedDecimal() << '_' << T::kind;
   } else if constexpr (T::category == TypeCategory::Real ||
       T::category == TypeCategory::Complex) {
-    return o << value.DumpHexadecimal() << '_' << Result::kind;
+    return o << value.DumpHexadecimal() << '_' << T::kind;
   } else if constexpr (T::category == TypeCategory::Character) {
-    return o << Result::kind << '_' << parser::QuoteCharacterLiteral(value);
+    if constexpr (T::kind == 1) {
+      return o << T::kind << '_' << parser::QuoteCharacterLiteral(value);
+    } else {
+      return o << T::kind
+               << "_'(wide character dumping unimplemented)'";  // TODO
+    }
   } else if constexpr (T::category == TypeCategory::Logical) {
     if (value.IsTrue()) {
       o << ".TRUE.";
@@ -555,7 +560,9 @@ template class Expr<Type<TypeCategory::Complex, 4>>;
 template class Expr<Type<TypeCategory::Complex, 8>>;
 template class Expr<Type<TypeCategory::Complex, 10>>;
 template class Expr<Type<TypeCategory::Complex, 16>>;
-template class Expr<Type<TypeCategory::Character, 1>>;  // TODO others
+template class Expr<Type<TypeCategory::Character, 1>>;
+template class Expr<Type<TypeCategory::Character, 2>>;
+template class Expr<Type<TypeCategory::Character, 4>>;
 template class Expr<Type<TypeCategory::Logical, 1>>;
 template class Expr<Type<TypeCategory::Logical, 2>>;
 template class Expr<Type<TypeCategory::Logical, 4>>;
@@ -577,7 +584,9 @@ template struct Relational<Type<TypeCategory::Real, 4>>;
 template struct Relational<Type<TypeCategory::Real, 8>>;
 template struct Relational<Type<TypeCategory::Real, 10>>;
 template struct Relational<Type<TypeCategory::Real, 16>>;
-template struct Relational<Type<TypeCategory::Character, 1>>;  // TODO others
+template struct Relational<Type<TypeCategory::Character, 1>>;
+template struct Relational<Type<TypeCategory::Character, 2>>;
+template struct Relational<Type<TypeCategory::Character, 4>>;
 template struct Relational<SomeType>;
 
 template struct ExpressionBase<Type<TypeCategory::Integer, 1>>;

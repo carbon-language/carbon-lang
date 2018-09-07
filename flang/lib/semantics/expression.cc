@@ -486,8 +486,20 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Negate &x) {
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NOT &) {
-  context.messages.Say("pmk: NOT unimplemented\n"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NOT &x) {
+  if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
+    return std::visit(common::visitors{[](Expr<SomeLogical> &&lx) -> MaybeExpr {
+                                         return {AsGenericExpr(
+                                             LogicalNegation(std::move(lx)))};
+                                       },
+                          [=](auto &&) -> MaybeExpr {
+                            // TODO pmk: INTEGER operand for bitwise extension?
+                            context.messages.Say(
+                                "Operand of .NOT. must be LOGICAL"_err_en_US);
+                            return std::nullopt;
+                          }},
+        std::move(operand->u));
+  }
   return std::nullopt;
 }
 
@@ -538,8 +550,35 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
       AnalyzeHelper(*this, *std::get<1>(x.t))));
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &) {
-  context.messages.Say("pmk: Concat unimplemented\n"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &x) {
+  if (auto both{common::AllPresent(AnalyzeHelper(*this, *std::get<0>(x.t)),
+          AnalyzeHelper(*this, *std::get<1>(x.t)))}) {
+    return std::visit(
+        common::visitors{
+            [&](Expr<SomeCharacter> &&cx, Expr<SomeCharacter> &&cy) {
+              return std::visit(
+                  [&](auto &&cxk, auto &&cyk) -> MaybeExpr {
+                    using Ty = ResultType<decltype(cxk)>;
+                    if constexpr (std::is_same_v<Ty,
+                                      ResultType<decltype(cyk)>>) {
+                      return {AsGenericExpr(AsCategoryExpr(AsExpr(
+                          Concat<Ty::kind>{std::move(cxk), std::move(cyk)})))};
+                    } else {
+                      context.messages.Say(
+                          "Operands of // must be the same kind of CHARACTER"_err_en_US);
+                      return std::nullopt;
+                    }
+                  },
+                  std::move(cx.u), std::move(cy.u));
+            },
+            [&](auto &&, auto &&) -> MaybeExpr {
+              context.messages.Say(
+                  "Operands of // must be CHARACTER"_err_en_US);
+              return std::nullopt;
+            },
+        },
+        std::move(std::get<0>(*both).u), std::move(std::get<1>(*both).u));
+  }
   return std::nullopt;
 }
 

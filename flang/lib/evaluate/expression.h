@@ -551,7 +551,9 @@ public:
       u;
 };
 
-extern template class Expr<Type<TypeCategory::Character, 1>>;  // TODO more
+extern template class Expr<Type<TypeCategory::Character, 1>>;
+extern template class Expr<Type<TypeCategory::Character, 2>>;
+extern template class Expr<Type<TypeCategory::Character, 4>>;
 
 // The Relational class template is a helper for constructing logical
 // expressions with polymorphism over the cross product of the possible
@@ -581,7 +583,7 @@ struct Relational : public Operation<Relational<A>, LogicalResult, A, A> {
 };
 
 template<> class Relational<SomeType> {
-  // COMPLEX data is compared piecewise.
+  // COMPLEX data are compared piecewise.
   using DirectlyComparableTypes =
       common::CombineTuples<IntegerTypes, RealTypes, CharacterTypes>;
 
@@ -606,8 +608,9 @@ extern template struct Relational<Type<TypeCategory::Real, 4>>;
 extern template struct Relational<Type<TypeCategory::Real, 8>>;
 extern template struct Relational<Type<TypeCategory::Real, 10>>;
 extern template struct Relational<Type<TypeCategory::Real, 16>>;
-extern template struct Relational<Type<TypeCategory::Character, 1>>;  // TODO
-                                                                      // more
+extern template struct Relational<Type<TypeCategory::Character, 1>>;
+extern template struct Relational<Type<TypeCategory::Character, 2>>;
+extern template struct Relational<Type<TypeCategory::Character, 4>>;
 extern template struct Relational<SomeType>;
 
 template<int KIND>
