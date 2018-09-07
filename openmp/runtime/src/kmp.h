@@ -207,6 +207,10 @@ enum {
       an invalid combination of hints to mean that another, larger field
       should be used in a different flag. */
   KMP_IDENT_ATOMIC_HINT_MASK = 0xFF0000,
+  KMP_IDENT_ATOMIC_HINT_UNCONTENDED = 0x010000,
+  KMP_IDENT_ATOMIC_HINT_CONTENDED = 0x020000,
+  KMP_IDENT_ATOMIC_HINT_NONSPECULATIVE = 0x040000,
+  KMP_IDENT_ATOMIC_HINT_SPECULATIVE = 0x080000,
 };
 
 /*!
@@ -3656,7 +3660,7 @@ KMP_EXPORT void __kmpc_end_critical(ident_t *, kmp_int32 global_tid,
 
 #if OMP_45_ENABLED
 KMP_EXPORT void __kmpc_critical_with_hint(ident_t *, kmp_int32 global_tid,
-                                          kmp_critical_name *, uintptr_t hint);
+                                          kmp_critical_name *, uint32_t hint);
 #endif
 
 KMP_EXPORT kmp_int32 __kmpc_barrier_master(ident_t *, kmp_int32 global_tid);

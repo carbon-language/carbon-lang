@@ -1351,7 +1351,7 @@ thread can enter the critical section unless the hint suggests use of
 speculative execution and the hardware supports it.
 */
 void __kmpc_critical_with_hint(ident_t *loc, kmp_int32 global_tid,
-                               kmp_critical_name *crit, uintptr_t hint) {
+                               kmp_critical_name *crit, uint32_t hint) {
   KMP_COUNT_BLOCK(OMP_CRITICAL);
   kmp_user_lock_p lck;
 #if OMPT_SUPPORT && OMPT_OPTIONAL
