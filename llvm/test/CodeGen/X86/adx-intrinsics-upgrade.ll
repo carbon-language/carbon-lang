@@ -2,7 +2,7 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 --show-mc-encoding | FileCheck %s --check-prefix=CHECK --check-prefix=NOADX
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=broadwell --show-mc-encoding | FileCheck %s --check-prefix=CHECK --check-prefix=ADX
 
-declare { i8, i32 } @llvm.x86.addcarryx.u32(i8, i32, i32)
+declare i8 @llvm.x86.addcarryx.u32(i8, i32, i32, i8*)
 
 define i8 @test_addcarryx_u32(i8 %c, i32 %a, i32 %b, i8* %ptr) {
 ; NOADX-LABEL: test_addcarryx_u32:
@@ -20,15 +20,11 @@ define i8 @test_addcarryx_u32(i8 %c, i32 %a, i32 %b, i8* %ptr) {
 ; ADX-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
 ; ADX-NEXT:    movl %esi, (%rcx) ## encoding: [0x89,0x31]
 ; ADX-NEXT:    retq ## encoding: [0xc3]
-  %ret = call { i8, i32 } @llvm.x86.addcarryx.u32(i8 %c, i32 %a, i32 %b)
-  %1 = extractvalue { i8, i32 } %ret, 1
-  %2 = bitcast i8* %ptr to i32*
-  store i32 %1, i32* %2, align 1
-  %3 = extractvalue { i8, i32 } %ret, 0
-  ret i8 %3
+  %ret = tail call i8 @llvm.x86.addcarryx.u32(i8 %c, i32 %a, i32 %b, i8* %ptr)
+  ret i8 %ret;
 }
 
-declare { i8, i64 } @llvm.x86.addcarryx.u64(i8, i64, i64)
+declare i8 @llvm.x86.addcarryx.u64(i8, i64, i64, i8*)
 
 define i8 @test_addcarryx_u64(i8 %c, i64 %a, i64 %b, i8* %ptr) {
 ; NOADX-LABEL: test_addcarryx_u64:
@@ -46,15 +42,11 @@ define i8 @test_addcarryx_u64(i8 %c, i64 %a, i64 %b, i8* %ptr) {
 ; ADX-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
 ; ADX-NEXT:    movq %rsi, (%rcx) ## encoding: [0x48,0x89,0x31]
 ; ADX-NEXT:    retq ## encoding: [0xc3]
-  %ret = call { i8, i64 } @llvm.x86.addcarryx.u64(i8 %c, i64 %a, i64 %b)
-  %1 = extractvalue { i8, i64 } %ret, 1
-  %2 = bitcast i8* %ptr to i64*
-  store i64 %1, i64* %2, align 1
-  %3 = extractvalue { i8, i64 } %ret, 0
-  ret i8 %3
+  %ret = tail call i8 @llvm.x86.addcarryx.u64(i8 %c, i64 %a, i64 %b, i8* %ptr)
+  ret i8 %ret;
 }
 
-declare { i8, i32 } @llvm.x86.addcarry.u32(i8, i32, i32)
+declare i8 @llvm.x86.addcarry.u32(i8, i32, i32, i8*)
 
 define i8 @test_addcarry_u32(i8 %c, i32 %a, i32 %b, i8* %ptr) {
 ; NOADX-LABEL: test_addcarry_u32:
@@ -72,15 +64,11 @@ define i8 @test_addcarry_u32(i8 %c, i32 %a, i32 %b, i8* %ptr) {
 ; ADX-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
 ; ADX-NEXT:    movl %esi, (%rcx) ## encoding: [0x89,0x31]
 ; ADX-NEXT:    retq ## encoding: [0xc3]
-  %ret = call { i8, i32 } @llvm.x86.addcarry.u32(i8 %c, i32 %a, i32 %b)
-  %1 = extractvalue { i8, i32 } %ret, 1
-  %2 = bitcast i8* %ptr to i32*
-  store i32 %1, i32* %2, align 1
-  %3 = extractvalue { i8, i32 } %ret, 0
-  ret i8 %3
+  %ret = tail call i8 @llvm.x86.addcarry.u32(i8 %c, i32 %a, i32 %b, i8* %ptr)
+  ret i8 %ret;
 }
 
-declare { i8, i64 } @llvm.x86.addcarry.u64(i8, i64, i64)
+declare i8 @llvm.x86.addcarry.u64(i8, i64, i64, i8*)
 
 define i8 @test_addcarry_u64(i8 %c, i64 %a, i64 %b, i8* %ptr) {
 ; NOADX-LABEL: test_addcarry_u64:
@@ -98,15 +86,11 @@ define i8 @test_addcarry_u64(i8 %c, i64 %a, i64 %b, i8* %ptr) {
 ; ADX-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
 ; ADX-NEXT:    movq %rsi, (%rcx) ## encoding: [0x48,0x89,0x31]
 ; ADX-NEXT:    retq ## encoding: [0xc3]
-  %ret = call { i8, i64 } @llvm.x86.addcarry.u64(i8 %c, i64 %a, i64 %b)
-  %1 = extractvalue { i8, i64 } %ret, 1
-  %2 = bitcast i8* %ptr to i64*
-  store i64 %1, i64* %2, align 1
-  %3 = extractvalue { i8, i64 } %ret, 0
-  ret i8 %3
+  %ret = tail call i8 @llvm.x86.addcarry.u64(i8 %c, i64 %a, i64 %b, i8* %ptr)
+  ret i8 %ret;
 }
 
-declare { i8, i32 } @llvm.x86.subborrow.u32(i8, i32, i32)
+declare i8 @llvm.x86.subborrow.u32(i8, i32, i32, i8*)
 
 define i8 @test_subborrow_u32(i8 %c, i32 %a, i32 %b, i8* %ptr) {
 ; CHECK-LABEL: test_subborrow_u32:
@@ -116,15 +100,11 @@ define i8 @test_subborrow_u32(i8 %c, i32 %a, i32 %b, i8* %ptr) {
 ; CHECK-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
 ; CHECK-NEXT:    movl %esi, (%rcx) ## encoding: [0x89,0x31]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
-  %ret = call { i8, i32 } @llvm.x86.subborrow.u32(i8 %c, i32 %a, i32 %b)
-  %1 = extractvalue { i8, i32 } %ret, 1
-  %2 = bitcast i8* %ptr to i32*
-  store i32 %1, i32* %2, align 1
-  %3 = extractvalue { i8, i32 } %ret, 0
-  ret i8 %3
+  %ret = tail call i8 @llvm.x86.subborrow.u32(i8 %c, i32 %a, i32 %b, i8* %ptr)
+  ret i8 %ret;
 }
 
-declare { i8, i64 } @llvm.x86.subborrow.u64(i8, i64, i64)
+declare i8 @llvm.x86.subborrow.u64(i8, i64, i64, i8*)
 
 define i8 @test_subborrow_u64(i8 %c, i64 %a, i64 %b, i8* %ptr) {
 ; CHECK-LABEL: test_subborrow_u64:
@@ -134,12 +114,8 @@ define i8 @test_subborrow_u64(i8 %c, i64 %a, i64 %b, i8* %ptr) {
 ; CHECK-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
 ; CHECK-NEXT:    movq %rsi, (%rcx) ## encoding: [0x48,0x89,0x31]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
-  %ret = call { i8, i64 } @llvm.x86.subborrow.u64(i8 %c, i64 %a, i64 %b)
-  %1 = extractvalue { i8, i64 } %ret, 1
-  %2 = bitcast i8* %ptr to i64*
-  store i64 %1, i64* %2, align 1
-  %3 = extractvalue { i8, i64 } %ret, 0
-  ret i8 %3
+  %ret = tail call i8 @llvm.x86.subborrow.u64(i8 %c, i64 %a, i64 %b, i8* %ptr)
+  ret i8 %ret;
 }
 
 ; Try a version with loads. Previously we crashed on this.
@@ -168,12 +144,8 @@ define i32 @load_crash(i64* nocapture readonly %a, i64* nocapture readonly %b, i
   %1 = load i64, i64* %a, align 8
   %2 = load i64, i64* %b, align 8
   %3 = bitcast i64* %res to i8*
-  %4 = call { i8, i64 } @llvm.x86.addcarryx.u64(i8 0, i64 %1, i64 %2)
-  %5 = extractvalue { i8, i64 } %4, 1
-  %6 = bitcast i8* %3 to i64*
-  store i64 %5, i64* %6, align 1
-  %7 = extractvalue { i8, i64 } %4, 0
-  %conv = zext i8 %7 to i32
+  %4 = tail call i8 @llvm.x86.addcarryx.u64(i8 0, i64 %1, i64 %2, i8* %3)
+  %conv = zext i8 %4 to i32
   ret i32 %conv
 }
 
@@ -188,9 +160,6 @@ define void @allzeros() {
 ; CHECK-NEXT:    movq %rax, 0 ## encoding: [0x48,0x89,0x04,0x25,0x00,0x00,0x00,0x00]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
 entry:
-  %0 = call { i8, i64 } @llvm.x86.addcarryx.u64(i8 0, i64 0, i64 0)
-  %1 = extractvalue { i8, i64 } %0, 1
-  store i64 %1, i64* null, align 1
-  %2 = extractvalue { i8, i64 } %0, 0
+  %0 = tail call i8 @llvm.x86.addcarryx.u64(i8 0, i64 0, i64 0, i8* null)
   ret void
 }
