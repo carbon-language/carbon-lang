@@ -27,7 +27,8 @@
         integer, parameter :: kmp_size_t_kind        = c_size_t
         integer, parameter :: kmp_affinity_mask_kind = c_intptr_t
         integer, parameter :: kmp_cancel_kind        = omp_integer_kind
-        integer, parameter :: omp_lock_hint_kind     = omp_integer_kind
+        integer, parameter :: omp_sync_hint_kind     = omp_integer_kind
+        integer, parameter :: omp_lock_hint_kind     = omp_sync_hint_kind
         integer, parameter :: omp_control_tool_kind  = omp_integer_kind
         integer, parameter :: omp_control_tool_result_kind = omp_integer_kind
         integer, parameter :: omp_allocator_kind = c_intptr_t
@@ -62,14 +63,19 @@
         integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_sections = 3
         integer (kind=kmp_cancel_kind), parameter :: kmp_cancel_taskgroup = 4
 
-        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_none           = 0
-        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_uncontended    = 1
-        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_contended      = 2
-        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_nonspeculative = 4
-        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_speculative    = 8
-        integer (kind=omp_lock_hint_kind), parameter :: kmp_lock_hint_hle            = 65536
-        integer (kind=omp_lock_hint_kind), parameter :: kmp_lock_hint_rtm            = 131072
-        integer (kind=omp_lock_hint_kind), parameter :: kmp_lock_hint_adaptive       = 262144
+        integer (kind=omp_sync_hint_kind), parameter :: omp_sync_hint_none           = 0
+        integer (kind=omp_sync_hint_kind), parameter :: omp_sync_hint_uncontended    = 1
+        integer (kind=omp_sync_hint_kind), parameter :: omp_sync_hint_contended      = 2
+        integer (kind=omp_sync_hint_kind), parameter :: omp_sync_hint_nonspeculative = 4
+        integer (kind=omp_sync_hint_kind), parameter :: omp_sync_hint_speculative    = 8
+        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_none = omp_sync_hint_none
+        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_uncontended = omp_sync_hint_uncontended
+        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_contended = omp_sync_hint_contended
+        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_nonspeculative = omp_sync_hint_nonspeculative
+        integer (kind=omp_lock_hint_kind), parameter :: omp_lock_hint_speculative = omp_sync_hint_speculative
+        integer (kind=omp_lock_hint_kind), parameter :: kmp_lock_hint_hle         = 65536
+        integer (kind=omp_lock_hint_kind), parameter :: kmp_lock_hint_rtm         = 131072
+        integer (kind=omp_lock_hint_kind), parameter :: kmp_lock_hint_adaptive    = 262144
 
         integer (kind=omp_control_tool_kind), parameter :: omp_control_tool_start = 1
         integer (kind=omp_control_tool_kind), parameter :: omp_control_tool_pause = 2
