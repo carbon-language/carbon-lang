@@ -29,13 +29,21 @@ define i8 @test_addcarryx_u32(i8 %c, i32 %a, i32 %b, i8* %ptr) {
 }
 
 define i8 @test_addcarryx_u32_load(i8 %c, i32* %aptr, i32 %b, i8* %ptr) {
-; CHECK-LABEL: test_addcarryx_u32_load:
-; CHECK:       ## %bb.0:
-; CHECK-NEXT:    addb $-1, %dil ## encoding: [0x40,0x80,0xc7,0xff]
-; CHECK-NEXT:    adcl (%rsi), %edx ## encoding: [0x13,0x16]
-; CHECK-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
-; CHECK-NEXT:    movl %edx, (%rcx) ## encoding: [0x89,0x11]
-; CHECK-NEXT:    retq ## encoding: [0xc3]
+; NOADX-LABEL: test_addcarryx_u32_load:
+; NOADX:       ## %bb.0:
+; NOADX-NEXT:    addb $-1, %dil ## encoding: [0x40,0x80,0xc7,0xff]
+; NOADX-NEXT:    adcl (%rsi), %edx ## encoding: [0x13,0x16]
+; NOADX-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
+; NOADX-NEXT:    movl %edx, (%rcx) ## encoding: [0x89,0x11]
+; NOADX-NEXT:    retq ## encoding: [0xc3]
+;
+; ADX-LABEL: test_addcarryx_u32_load:
+; ADX:       ## %bb.0:
+; ADX-NEXT:    addb $-1, %dil ## encoding: [0x40,0x80,0xc7,0xff]
+; ADX-NEXT:    adcxl (%rsi), %edx ## encoding: [0x66,0x0f,0x38,0xf6,0x16]
+; ADX-NEXT:    setb %al ## encoding: [0x0f,0x92,0xc0]
+; ADX-NEXT:    movl %edx, (%rcx) ## encoding: [0x89,0x11]
+; ADX-NEXT:    retq ## encoding: [0xc3]
   %a = load i32, i32* %aptr
   %ret = call { i8, i32 } @llvm.x86.addcarryx.u32(i8 %c, i32 %a, i32 %b)
   %1 = extractvalue { i8, i32 } %ret, 1
