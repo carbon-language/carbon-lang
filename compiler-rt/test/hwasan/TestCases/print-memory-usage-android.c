@@ -2,6 +2,11 @@
 // RUN: %clang_hwasan %s -o %t && %env_hwasan_opts=export_memory_stats=1 %run %t 2>&1 | FileCheck %s
 // REQUIRES: android
 
+// This test requires a rooted device.
+// UNSUPPORTED: android
+
+#include <sys/types.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 
