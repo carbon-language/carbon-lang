@@ -81,8 +81,7 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:gr32 = COPY $esi
     ; CHECK: [[COPY3:%[0-9]+]]:gr32 = COPY $edi
     ; CHECK: dead [[COPY3]].sub_8bit:gr32 = ADD8ri [[COPY3]].sub_8bit, -1, implicit-def $eflags
-    ; CHECK: [[COPY4:%[0-9]+]]:gr32 = COPY [[COPY2]]
-    ; CHECK: [[ADCX32rr:%[0-9]+]]:gr32 = ADCX32rr [[ADCX32rr]], [[COPY1]], implicit-def dead $eflags, implicit killed $eflags
+    ; CHECK: [[ADCX32rr:%[0-9]+]]:gr32 = ADCX32rr [[ADCX32rr]], [[COPY2]], implicit-def dead $eflags, implicit killed $eflags
     ; CHECK: [[IMUL32rr:%[0-9]+]]:gr32 = IMUL32rr [[IMUL32rr]], [[COPY2]], implicit-def dead $eflags
     ; CHECK: MOV32mr [[COPY]], 1, $noreg, 0, $noreg, [[IMUL32rr]] :: (store 4 into %ir.res)
     ; CHECK: RET 0
@@ -127,8 +126,7 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:gr64 = COPY $rsi
     ; CHECK: [[COPY3:%[0-9]+]]:gr32 = COPY $edi
     ; CHECK: dead [[COPY3]].sub_8bit:gr32 = ADD8ri [[COPY3]].sub_8bit, -1, implicit-def $eflags
-    ; CHECK: [[COPY4:%[0-9]+]]:gr64 = COPY [[COPY2]]
-    ; CHECK: [[ADCX64rr:%[0-9]+]]:gr64 = ADCX64rr [[ADCX64rr]], [[COPY1]], implicit-def dead $eflags, implicit killed $eflags
+    ; CHECK: [[ADCX64rr:%[0-9]+]]:gr64 = ADCX64rr [[ADCX64rr]], [[COPY2]], implicit-def dead $eflags, implicit killed $eflags
     ; CHECK: [[IMUL64rr:%[0-9]+]]:gr64 = IMUL64rr [[IMUL64rr]], [[COPY2]], implicit-def dead $eflags
     ; CHECK: MOV64mr [[COPY]], 1, $noreg, 0, $noreg, [[IMUL64rr]] :: (store 8 into %ir.res)
     ; CHECK: RET 0
@@ -173,8 +171,7 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:gr32 = COPY $esi
     ; CHECK: [[COPY3:%[0-9]+]]:gr32 = COPY $edi
     ; CHECK: dead [[COPY3]].sub_8bit:gr32 = ADD8ri [[COPY3]].sub_8bit, 127, implicit-def $eflags
-    ; CHECK: [[COPY4:%[0-9]+]]:gr32 = COPY [[COPY2]]
-    ; CHECK: [[ADOX32rr:%[0-9]+]]:gr32 = ADOX32rr [[ADOX32rr]], [[COPY1]], implicit-def dead $eflags, implicit killed $eflags
+    ; CHECK: [[ADOX32rr:%[0-9]+]]:gr32 = ADOX32rr [[ADOX32rr]], [[COPY2]], implicit-def dead $eflags, implicit killed $eflags
     ; CHECK: [[IMUL32rr:%[0-9]+]]:gr32 = IMUL32rr [[IMUL32rr]], [[COPY2]], implicit-def dead $eflags
     ; CHECK: MOV32mr [[COPY]], 1, $noreg, 0, $noreg, [[IMUL32rr]] :: (store 4 into %ir.res)
     ; CHECK: RET 0
@@ -219,8 +216,7 @@ body:             |
     ; CHECK: [[COPY2:%[0-9]+]]:gr64 = COPY $rsi
     ; CHECK: [[COPY3:%[0-9]+]]:gr32 = COPY $edi
     ; CHECK: dead [[COPY3]].sub_8bit:gr32 = ADD8ri [[COPY3]].sub_8bit, 127, implicit-def $eflags
-    ; CHECK: [[COPY4:%[0-9]+]]:gr64 = COPY [[COPY2]]
-    ; CHECK: [[ADOX64rr:%[0-9]+]]:gr64 = ADOX64rr [[ADOX64rr]], [[COPY1]], implicit-def dead $eflags, implicit killed $eflags
+    ; CHECK: [[ADOX64rr:%[0-9]+]]:gr64 = ADOX64rr [[ADOX64rr]], [[COPY2]], implicit-def dead $eflags, implicit killed $eflags
     ; CHECK: [[IMUL64rr:%[0-9]+]]:gr64 = IMUL64rr [[IMUL64rr]], [[COPY2]], implicit-def dead $eflags
     ; CHECK: MOV64mr [[COPY]], 1, $noreg, 0, $noreg, [[IMUL64rr]] :: (store 8 into %ir.res)
     ; CHECK: RET 0
