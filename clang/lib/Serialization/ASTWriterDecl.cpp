@@ -936,6 +936,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       Record.push_back(static_cast<unsigned>(IPD->getParameterKind()));
     else
       Record.push_back(0);
+    Record.push_back(D->isEscapingByref());
   }
   Record.push_back(D->getLinkageInternal());
 
@@ -1006,6 +1007,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       !D->isInitCapture() &&
       !D->isPreviousDeclInSameBlockScope() &&
       !(D->hasAttr<BlocksAttr>() && D->getType()->getAsCXXRecordDecl()) &&
+      !D->isEscapingByref() &&
       D->getStorageDuration() != SD_Static &&
       !D->getMemberSpecializationInfo())
     AbbrevToUse = Writer.getDeclVarAbbrev();
@@ -2057,6 +2059,7 @@ void ASTWriter::WriteDeclAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(0));                         // isInitCapture
   Abv->Add(BitCodeAbbrevOp(0));                         // isPrevDeclInSameScope
   Abv->Add(BitCodeAbbrevOp(0));                         // ImplicitParamKind
+  Abv->Add(BitCodeAbbrevOp(0));                         // EscapingByref
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3)); // Linkage
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // IsInitICE (local)
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // VarKind (local enum)
