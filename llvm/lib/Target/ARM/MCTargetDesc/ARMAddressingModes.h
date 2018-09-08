@@ -643,7 +643,7 @@ namespace ARM_AM {
     I |= ((Exp & 0x4) != 0 ? 0x1f : 0) << 25;
     I |= (Exp & 0x3) << 23;
     I |= Mantissa << 19;
-    return bit_cast<float>(F);
+    return bit_cast<float>(I);
   }
 
   /// getFP16Imm - Return an 8-bit floating-point version of the 16-bit
