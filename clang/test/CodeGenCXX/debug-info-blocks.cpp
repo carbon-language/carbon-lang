@@ -9,7 +9,6 @@ struct A {
 
 void test() {
   __block A a;
-  ^{ (void)a; };
 }
 
 // CHECK: !DISubprogram(name: "__Block_byref_object_copy_",
