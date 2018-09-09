@@ -188,7 +188,7 @@ struct TransferableCommand {
       }
 
       Cmd.CommandLine.insert(Cmd.CommandLine.end(),
-                             &OldArgs[OldPos], &OldArgs[Pos]);
+                             OldArgs.data() + OldPos, OldArgs.data() + Pos);
     }
 
     if (Std != LangStandard::lang_unspecified) // -std take precedence over -x
