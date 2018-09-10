@@ -105,6 +105,10 @@ static cl::opt<uint32_t>
 MaxRecurseDepth("gvn-max-recurse-depth", cl::Hidden, cl::init(1000), cl::ZeroOrMore,
                 cl::desc("Max recurse depth in GVN (default = 1000)"));
 
+static cl::opt<uint32_t> MaxNumDeps(
+    "gvn-max-num-deps", cl::Hidden, cl::init(100), cl::ZeroOrMore,
+    cl::desc("Max number of dependences to attempt Load PRE (default = 100)"));
+
 struct llvm::GVN::Expression {
   uint32_t opcode;
   Type *type;
@@ -1311,7 +1315,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   // dependencies, this load isn't worth worrying about.  Optimizing
   // it will be too expensive.
   unsigned NumDeps = Deps.size();
-  if (NumDeps > 100)
+  if (NumDeps > MaxNumDeps)
     return false;
 
   // If we had a phi translation failure, we'll have a single entry which is a
