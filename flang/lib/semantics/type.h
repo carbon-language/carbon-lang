@@ -140,6 +140,19 @@ public:
   DeclTypeSpec(Category);
   DeclTypeSpec() = delete;
 
+  bool operator==(const DeclTypeSpec &that) const {
+    if (category_ != that.category_) {
+      return false;
+    }
+    switch (category_) {
+    case Intrinsic: return typeSpec_.intrinsic == that.typeSpec_.intrinsic;
+    case TypeDerived:
+    case ClassDerived: return typeSpec_.derived == that.typeSpec_.derived;
+    default: return true;
+    }
+  }
+  bool operator!=(const DeclTypeSpec &that) const { return !operator==(that); }
+
   Category category() const { return category_; }
   const IntrinsicTypeSpec &intrinsicTypeSpec() const;
   DerivedTypeSpec &derivedTypeSpec();

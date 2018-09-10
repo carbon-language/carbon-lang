@@ -150,11 +150,13 @@ public:
   bool Pre(const parser::IntrinsicTypeSpec::Real &);
   bool Pre(const parser::IntrinsicTypeSpec::Complex &);
   bool Pre(const parser::IntrinsicTypeSpec::DoublePrecision &);
+  bool Pre(const parser::IntrinsicTypeSpec::DoubleComplex &);
+  void Post(const parser::IntrinsicTypeSpec::Character &);
   bool Pre(const parser::DeclarationTypeSpec::ClassStar &);
   bool Pre(const parser::DeclarationTypeSpec::TypeStar &);
   bool Pre(const parser::DeclarationTypeSpec::Record &);
   void Post(const parser::TypeParamSpec &);
-  bool Pre(const parser::TypeParamValue &);
+  void Post(const parser::TypeParamValue &);
   void Post(const parser::StructureConstructor &);
   bool Pre(const parser::AllocateStmt &);
   void Post(const parser::AllocateStmt &);
@@ -500,6 +502,11 @@ public:
 
   void Post(const parser::EntityDecl &);
   void Post(const parser::ObjectDecl &);
+
+  bool Pre(const parser::BindStmt &) { return BeginAttrs(); }
+  void Post(const parser::BindStmt &) { EndAttrs(); }
+  bool Pre(const parser::BindEntity &);
+  bool Pre(const parser::NamedConstantDef &);
   bool Pre(const parser::AsynchronousStmt &);
   bool Pre(const parser::ContiguousStmt &);
   bool Pre(const parser::ExternalStmt &);
@@ -571,6 +578,7 @@ private:
 
   // Handle a statement that sets an attribute on a list of names.
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
+  Symbol &HandleAttributeStmt(Attr, const SourceName &);
   void DeclareObjectEntity(const parser::Name &, Attrs);
   void DeclareProcEntity(const parser::Name &, Attrs, const ProcInterface &);
   bool ConvertToProcEntity(Symbol &);
@@ -654,6 +662,12 @@ public:
   bool Pre(const parser::EndBlockStmt &);
   bool Pre(const parser::ImplicitStmt &);
 
+  void Post(const parser::AllocateObject &x) {
+    CheckImplicitSymbol(std::get_if<parser::Name>(&x.u));
+  }
+  void Post(const parser::PointerAssignmentStmt &x) {
+    ResolveDataRef(std::get<parser::DataRef>(x.t));
+  }
   void Post(const parser::Expr &x) { CheckImplicitSymbol(GetVariableName(x)); }
   void Post(const parser::Variable &x) {
     CheckImplicitSymbol(GetVariableName(x));
@@ -833,7 +847,7 @@ bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::TypeStar &x) {
 void DeclTypeSpecVisitor::Post(const parser::TypeParamSpec &x) {
   typeParamValue_.reset();
 }
-bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
+void DeclTypeSpecVisitor::Post(const parser::TypeParamValue &x) {
   typeParamValue_ = std::make_unique<ParamValue>(std::visit(
       common::visitors{
           // TODO: create IntExpr from ScalarIntExpr
@@ -844,7 +858,6 @@ bool DeclTypeSpecVisitor::Pre(const parser::TypeParamValue &x) {
           },
       },
       x.u));
-  return false;
 }
 
 bool DeclTypeSpecVisitor::Pre(const parser::DeclarationTypeSpec::Record &x) {
@@ -879,6 +892,9 @@ bool DeclTypeSpecVisitor::Pre(const parser::IntegerTypeSpec &x) {
   MakeIntrinsic(IntegerTypeSpec::Make(GetKindParamValue(x.v)));
   return false;
 }
+void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
+  CHECK(!"TODO: character");
+}
 bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Logical &x) {
   MakeIntrinsic(LogicalTypeSpec::Make(GetKindParamValue(x.kind)));
   return false;
@@ -894,6 +910,11 @@ bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Complex &x) {
 bool DeclTypeSpecVisitor::Pre(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
   CHECK(!"TODO: double precision");
+  return false;
+}
+bool DeclTypeSpecVisitor::Pre(
+    const parser::IntrinsicTypeSpec::DoubleComplex &) {
+  CHECK(!"TODO: double complex");
   return false;
 }
 void DeclTypeSpecVisitor::MakeIntrinsic(
@@ -1901,6 +1922,24 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
   }
 }
 
+bool DeclarationVisitor::Pre(const parser::BindEntity &x) {
+  auto &name{std::get<parser::Name>(x.t)};
+  if (std::get<parser::BindEntity::Kind>(x.t) ==
+      parser::BindEntity::Kind::Object) {
+    HandleAttributeStmt(Attr::BIND_C, name.source);
+  } else {
+    // TODO: name is common block
+  }
+  return false;
+}
+bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
+  auto &name{std::get<parser::NamedConstant>(x.t).v.source};
+  // TODO: auto &expr{std::get<parser::ConstantExpr>(x.t)};
+  // TODO: old-style parameters: type based on expr
+  auto &symbol{HandleAttributeStmt(Attr::PARAMETER, name)};
+  ApplyImplicitRules(name, symbol);
+  return false;
+}
 bool DeclarationVisitor::Pre(const parser::AsynchronousStmt &x) {
   return HandleAttributeStmt(Attr::ASYNCHRONOUS, x.v);
 }
@@ -1941,23 +1980,29 @@ bool DeclarationVisitor::Pre(const parser::VolatileStmt &x) {
 bool DeclarationVisitor::HandleAttributeStmt(
     Attr attr, const std::list<parser::Name> &names) {
   for (const auto &name : names) {
-    const auto pair{currScope().try_emplace(name.source, Attrs{attr})};
-    if (!pair.second) {
-      // symbol was already there: set attribute on it
-      Symbol &symbol{*pair.first->second};
-      if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
-        // TODO: if in a BLOCK, attribute should only be set while in the block
-      } else if (symbol.has<UseDetails>()) {
-        Say(*currStmtSource(),
-            "Cannot change %s attribute on use-associated '%s'"_err_en_US,
-            EnumToString(attr), name.source);
-      }
-      symbol.attrs().set(attr);
-      symbol.add_occurrence(name.source);
-    }
+    HandleAttributeStmt(attr, name.source);
   }
   return false;
 }
+Symbol &DeclarationVisitor::HandleAttributeStmt(
+    Attr attr, const SourceName &name) {
+  const auto pair{currScope().try_emplace(name, Attrs{attr})};
+  Symbol &symbol{*pair.first->second};
+  if (!pair.second) {
+    // symbol was already there: set attribute on it
+    if (attr == Attr::ASYNCHRONOUS || attr == Attr::VOLATILE) {
+      // TODO: if in a BLOCK, attribute should only be set while in the block
+    } else if (symbol.has<UseDetails>()) {
+      Say(*currStmtSource(),
+          "Cannot change %s attribute on use-associated '%s'"_err_en_US,
+          EnumToString(attr), name);
+    }
+    symbol.attrs().set(attr);
+    symbol.add_occurrence(name);
+  }
+  return symbol;
+}
+
 // Convert symbol to be a ProcEntity or return false if it can't be.
 bool DeclarationVisitor::ConvertToProcEntity(Symbol &symbol) {
   if (symbol.has<ProcEntityDetails>()) {
@@ -1999,11 +2044,7 @@ void DeclarationVisitor::DeclareObjectEntity(
   Symbol &symbol{DeclareEntity<ObjectEntityDetails>(name, attrs)};
   if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
     if (auto &type{GetDeclTypeSpec()}) {
-      if (details->type()) {
-        Say(name, "The type of '%s' has already been declared"_err_en_US);
-      } else {
-        details->set_type(*type);
-      }
+      SetType(name.source, symbol, *type);
     }
     if (!arraySpec().empty()) {
       if (!details->shape().empty()) {
@@ -2242,11 +2283,17 @@ void DeclarationVisitor::Post(const parser::FinalProcedureStmt &x) {
 
 void DeclarationVisitor::SetType(
     const SourceName &name, Symbol &symbol, const DeclTypeSpec &type) {
-  if (symbol.GetType()) {
+  auto *prevType{symbol.GetType()};
+  if (!prevType) {
+    symbol.SetType(type);
+  } else if (!symbol.test(Symbol::Flag::Implicit)) {
     Say(name, "The type of '%s' has already been declared"_err_en_US);
-    return;
+  } else if (type != *prevType) {
+    Say(name,
+        "The type of '%s' has already been implicitly declared"_err_en_US);
+  } else {
+    symbol.set(Symbol::Flag::Implicit, false);
   }
-  symbol.SetType(type);
 }
 
 // Find the Symbol for this derived type.
@@ -2392,7 +2439,7 @@ bool ResolveNamesVisitor::Pre(const parser::ImportStmt &x) {
 
 bool ResolveNamesVisitor::Pre(const parser::StructureComponent &x) {
   ResolveStructureComponent(x);
-  return false;
+  return true;
 }
 
 const Symbol *ResolveNamesVisitor::ResolveStructureComponent(
@@ -2733,8 +2780,8 @@ const parser::Name *ResolveNamesVisitor::GetVariableName(
       common::visitors{
           [](const parser::ObjectName &x) { return &x; },
           [&](const parser::DataRef &x) { return GetVariableName(x); },
-          [](const auto &) {
-            return static_cast<const parser::Name *>(nullptr);
+          [&](const parser::Substring &x) {
+            return GetVariableName(std::get<parser::DataRef>(x.t));
           },
       },
       x.u);
