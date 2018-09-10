@@ -267,18 +267,10 @@ public:
   ///  -1 - consecutive and decreasing.
   int getConsecutiveDirection() const;
 
-  /// Compute the transformed value of Index at offset StartValue using step
-  /// StepValue.
-  /// For integer induction, returns StartValue + Index * StepValue.
-  /// For pointer induction, returns StartValue[Index * StepValue].
-  /// FIXME: The newly created binary instructions should contain nsw/nuw
-  /// flags, which can be found from the original scalar operations.
-  Value *transform(IRBuilder<> &B, Value *Index, ScalarEvolution *SE,
-                   const DataLayout& DL) const;
-
   Value *getStartValue() const { return StartValue; }
   InductionKind getKind() const { return IK; }
   const SCEV *getStep() const { return Step; }
+  BinaryOperator *getInductionBinOp() const { return InductionBinOp; }
   ConstantInt *getConstIntStepValue() const;
 
   /// Returns true if \p Phi is an induction in the loop \p L. If \p Phi is an
