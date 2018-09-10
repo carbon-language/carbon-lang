@@ -507,7 +507,7 @@ uint32_t DIARawSymbol::getAge() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_age);
 }
 
-uint32_t DIARawSymbol::getArrayIndexTypeId() const {
+SymIndexId DIARawSymbol::getArrayIndexTypeId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_arrayIndexTypeId);
 }
 
@@ -526,7 +526,7 @@ uint32_t DIARawSymbol::getBaseDataSlot() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_baseDataSlot);
 }
 
-uint32_t DIARawSymbol::getBaseSymbolId() const {
+SymIndexId DIARawSymbol::getBaseSymbolId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_baseSymbolId);
 }
 
@@ -544,7 +544,7 @@ PDB_CallingConv DIARawSymbol::getCallingConvention() const {
       Symbol, &IDiaSymbol::get_callingConvention);
 }
 
-uint32_t DIARawSymbol::getClassParentId() const {
+SymIndexId DIARawSymbol::getClassParentId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_classParentId);
 }
 
@@ -571,7 +571,7 @@ PDB_Lang DIARawSymbol::getLanguage() const {
   return PrivateGetDIAValue<DWORD, PDB_Lang>(Symbol, &IDiaSymbol::get_language);
 }
 
-uint32_t DIARawSymbol::getLexicalParentId() const {
+SymIndexId DIARawSymbol::getLexicalParentId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_lexicalParentId);
 }
 
@@ -599,7 +599,7 @@ codeview::RegisterId DIARawSymbol::getLocalBasePointerRegisterId() const {
       Symbol, &IDiaSymbol::get_localBasePointerRegisterId);
 }
 
-uint32_t DIARawSymbol::getLowerBoundId() const {
+SymIndexId DIARawSymbol::getLowerBoundId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_lowerBoundId);
 }
 
@@ -640,7 +640,7 @@ uint32_t DIARawSymbol::getOemId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_oemId);
 }
 
-uint32_t DIARawSymbol::getOemSymbolId() const {
+SymIndexId DIARawSymbol::getOemSymbolId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_oemSymbolId);
 }
 
@@ -702,7 +702,7 @@ uint32_t DIARawSymbol::getStride() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_stride);
 }
 
-uint32_t DIARawSymbol::getSubTypeId() const {
+SymIndexId DIARawSymbol::getSubTypeId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_subTypeId);
 }
 
@@ -710,7 +710,7 @@ std::string DIARawSymbol::getSymbolsFileName() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_symbolsFileName);
 }
 
-uint32_t DIARawSymbol::getSymIndexId() const {
+SymIndexId DIARawSymbol::getSymIndexId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_symIndexId);
 }
 
@@ -743,7 +743,7 @@ uint32_t DIARawSymbol::getToken() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_token);
 }
 
-uint32_t DIARawSymbol::getTypeId() const {
+SymIndexId DIARawSymbol::getTypeId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_typeId);
 }
 
@@ -755,11 +755,11 @@ std::string DIARawSymbol::getUndecoratedName() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_undecoratedName);
 }
 
-uint32_t DIARawSymbol::getUnmodifiedTypeId() const {
+SymIndexId DIARawSymbol::getUnmodifiedTypeId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_unmodifiedTypeId);
 }
 
-uint32_t DIARawSymbol::getUpperBoundId() const {
+SymIndexId DIARawSymbol::getUpperBoundId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_upperBoundId);
 }
 
@@ -780,7 +780,7 @@ uint32_t DIARawSymbol::getVirtualBaseOffset() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_virtualBaseOffset);
 }
 
-uint32_t DIARawSymbol::getVirtualTableShapeId() const {
+SymIndexId DIARawSymbol::getVirtualTableShapeId() const {
   return PrivateGetDIAValue(Symbol, &IDiaSymbol::get_virtualTableShapeId);
 }
 
