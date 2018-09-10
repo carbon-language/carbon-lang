@@ -102,8 +102,8 @@ static cl::opt<bool> EnableMemDep("enable-gvn-memdep", cl::init(true));
 
 // Maximum allowed recursion depth.
 static cl::opt<uint32_t>
-MaxRecurseDepth("max-recurse-depth", cl::Hidden, cl::init(1000), cl::ZeroOrMore,
-                cl::desc("Max recurse depth (default = 1000)"));
+MaxRecurseDepth("gvn-max-recurse-depth", cl::Hidden, cl::init(1000), cl::ZeroOrMore,
+                cl::desc("Max recurse depth in GVN (default = 1000)"));
 
 struct llvm::GVN::Expression {
   uint32_t opcode;
