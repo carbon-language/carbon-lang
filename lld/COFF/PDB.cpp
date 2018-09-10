@@ -340,8 +340,8 @@ Expected<const CVIndexMap&> PDBLinker::maybeMergeTypeServerPDB(ObjFile *File,
   auto PrevErr = MissingTypeServerPDBs.find(TSId);
   if (PrevErr != MissingTypeServerPDBs.end())
     return createFileError(
-        TSPath, std::move(make_error<StringError>(PrevErr->second,
-                                                  inconvertibleErrorCode())));
+        TSPath,
+        make_error<StringError>(PrevErr->second, inconvertibleErrorCode()));
 
   // Second, check if we already loaded a PDB with this GUID. Return the type
   // index mapping if we have it.
@@ -384,7 +384,7 @@ Expected<const CVIndexMap&> PDBLinker::maybeMergeTypeServerPDB(ObjFile *File,
     std::string ErrMsg;
     raw_string_ostream S(ErrMsg);
     S << E;
-    auto It = MissingTypeServerPDBs.emplace(TSId, S.str());
+    MissingTypeServerPDBs.emplace(TSId, S.str());
 
     return createFileError(TSPath, std::move(E));
   }
