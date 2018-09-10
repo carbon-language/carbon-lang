@@ -158,10 +158,6 @@ public:
   /// RecurrenceKind.
   static unsigned getRecurrenceBinOp(RecurrenceKind Kind);
 
-  /// Returns a Min/Max operation corresponding to MinMaxRecurrenceKind.
-  static Value *createMinMaxOp(IRBuilder<> &Builder, MinMaxRecurrenceKind RK,
-                               Value *Left, Value *Right);
-
   /// Returns true if Phi is a reduction of type Kind and adds it to the
   /// RecurrenceDescriptor. If either \p DB is non-null or \p AC and \p DT are
   /// non-null, the minimal bit width needed to compute the reduction will be
@@ -514,6 +510,11 @@ bool canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
                         Loop *CurLoop, AliasSetTracker *CurAST,
                         bool TargetExecutesOncePerLoop,
                         OptimizationRemarkEmitter *ORE = nullptr);
+
+/// Returns a Min/Max operation corresponding to MinMaxRecurrenceKind.
+Value *createMinMaxOp(IRBuilder<> &Builder,
+                      RecurrenceDescriptor::MinMaxRecurrenceKind RK,
+                      Value *Left, Value *Right);
 
 /// Generates an ordered vector reduction using extracts to reduce the value.
 Value *

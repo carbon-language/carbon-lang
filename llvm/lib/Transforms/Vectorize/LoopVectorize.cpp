@@ -3688,8 +3688,8 @@ void InnerLoopVectorizer::fixReduction(PHINode *Phi) {
           Builder.CreateBinOp((Instruction::BinaryOps)Op, RdxPart,
                               ReducedPartRdx, "bin.rdx"));
     else
-      ReducedPartRdx = RecurrenceDescriptor::createMinMaxOp(
-          Builder, MinMaxKind, ReducedPartRdx, RdxPart);
+      ReducedPartRdx = createMinMaxOp(Builder, MinMaxKind, ReducedPartRdx,
+                                      RdxPart);
   }
 
   if (VF > 1) {

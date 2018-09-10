@@ -709,50 +709,6 @@ unsigned RecurrenceDescriptor::getRecurrenceBinOp(RecurrenceKind Kind) {
   }
 }
 
-Value *RecurrenceDescriptor::createMinMaxOp(IRBuilder<> &Builder,
-                                            MinMaxRecurrenceKind RK,
-                                            Value *Left, Value *Right) {
-  CmpInst::Predicate P = CmpInst::ICMP_NE;
-  switch (RK) {
-  default:
-    llvm_unreachable("Unknown min/max recurrence kind");
-  case MRK_UIntMin:
-    P = CmpInst::ICMP_ULT;
-    break;
-  case MRK_UIntMax:
-    P = CmpInst::ICMP_UGT;
-    break;
-  case MRK_SIntMin:
-    P = CmpInst::ICMP_SLT;
-    break;
-  case MRK_SIntMax:
-    P = CmpInst::ICMP_SGT;
-    break;
-  case MRK_FloatMin:
-    P = CmpInst::FCMP_OLT;
-    break;
-  case MRK_FloatMax:
-    P = CmpInst::FCMP_OGT;
-    break;
-  }
-
-  // We only match FP sequences that are 'fast', so we can unconditionally
-  // set it on any generated instructions.
-  IRBuilder<>::FastMathFlagGuard FMFG(Builder);
-  FastMathFlags FMF;
-  FMF.setFast();
-  Builder.setFastMathFlags(FMF);
-
-  Value *Cmp;
-  if (RK == MRK_FloatMin || RK == MRK_FloatMax)
-    Cmp = Builder.CreateFCmp(P, Left, Right, "rdx.minmax.cmp");
-  else
-    Cmp = Builder.CreateICmp(P, Left, Right, "rdx.minmax.cmp");
-
-  Value *Select = Builder.CreateSelect(Cmp, Left, Right, "rdx.minmax.select");
-  return Select;
-}
-
 InductionDescriptor::InductionDescriptor(Value *Start, InductionKind K,
                                          const SCEV *Step, BinaryOperator *BOp,
                                          SmallVectorImpl<Instruction *> *Casts)
@@ -1553,6 +1509,51 @@ static Value *addFastMathFlag(Value *V) {
   return V;
 }
 
+Value *llvm::createMinMaxOp(IRBuilder<> &Builder,
+                            RecurrenceDescriptor::MinMaxRecurrenceKind RK,
+                            Value *Left, Value *Right) {
+  CmpInst::Predicate P = CmpInst::ICMP_NE;
+  switch (RK) {
+  default:
+    llvm_unreachable("Unknown min/max recurrence kind");
+  case RecurrenceDescriptor::MRK_UIntMin:
+    P = CmpInst::ICMP_ULT;
+    break;
+  case RecurrenceDescriptor::MRK_UIntMax:
+    P = CmpInst::ICMP_UGT;
+    break;
+  case RecurrenceDescriptor::MRK_SIntMin:
+    P = CmpInst::ICMP_SLT;
+    break;
+  case RecurrenceDescriptor::MRK_SIntMax:
+    P = CmpInst::ICMP_SGT;
+    break;
+  case RecurrenceDescriptor::MRK_FloatMin:
+    P = CmpInst::FCMP_OLT;
+    break;
+  case RecurrenceDescriptor::MRK_FloatMax:
+    P = CmpInst::FCMP_OGT;
+    break;
+  }
+
+  // We only match FP sequences that are 'fast', so we can unconditionally
+  // set it on any generated instructions.
+  IRBuilder<>::FastMathFlagGuard FMFG(Builder);
+  FastMathFlags FMF;
+  FMF.setFast();
+  Builder.setFastMathFlags(FMF);
+
+  Value *Cmp;
+  if (RK == RecurrenceDescriptor::MRK_FloatMin ||
+      RK == RecurrenceDescriptor::MRK_FloatMax)
+    Cmp = Builder.CreateFCmp(P, Left, Right, "rdx.minmax.cmp");
+  else
+    Cmp = Builder.CreateICmp(P, Left, Right, "rdx.minmax.cmp");
+
+  Value *Select = Builder.CreateSelect(Cmp, Left, Right, "rdx.minmax.select");
+  return Select;
+}
+
 // Helper to generate an ordered reduction.
 Value *
 llvm::getOrderedReduction(IRBuilder<> &Builder, Value *Acc, Value *Src,
@@ -1574,8 +1575,7 @@ llvm::getOrderedReduction(IRBuilder<> &Builder, Value *Acc, Value *Src,
     } else {
       assert(MinMaxKind != RecurrenceDescriptor::MRK_Invalid &&
              "Invalid min/max");
-      Result = RecurrenceDescriptor::createMinMaxOp(Builder, MinMaxKind, Result,
-                                                    Ext);
+      Result = createMinMaxOp(Builder, MinMaxKind, Result, Ext);
     }
 
     if (!RedOps.empty())
@@ -1618,8 +1618,7 @@ llvm::getShuffleReduction(IRBuilder<> &Builder, Value *Src, unsigned Op,
     } else {
       assert(MinMaxKind != RecurrenceDescriptor::MRK_Invalid &&
              "Invalid min/max");
-      TmpVec = RecurrenceDescriptor::createMinMaxOp(Builder, MinMaxKind, TmpVec,
-                                                    Shuf);
+      TmpVec = createMinMaxOp(Builder, MinMaxKind, TmpVec, Shuf);
     }
     if (!RedOps.empty())
       propagateIRFlags(TmpVec, RedOps);
