@@ -4418,18 +4418,15 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
                                              SelectionDAG &DAG) const {
   GlobalAddressSDNode *GSD = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *GV = GSD->getGlobal();
-
-  if (GSD->getAddressSpace() != AMDGPUAS::CONSTANT_ADDRESS &&
-      GSD->getAddressSpace() != AMDGPUAS::CONSTANT_ADDRESS_32BIT &&
-      GSD->getAddressSpace() != AMDGPUAS::GLOBAL_ADDRESS &&
-      // FIXME: It isn't correct to rely on the type of the pointer. This should
-      // be removed when address space 0 is 64-bit.
-      !GV->getType()->getElementType()->isFunctionTy())
+  if (GSD->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
+      GSD->getAddressSpace() == AMDGPUAS::REGION_ADDRESS ||
+      GSD->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS)
     return AMDGPUTargetLowering::LowerGlobalAddress(MFI, Op, DAG);
 
   SDLoc DL(GSD);
   EVT PtrVT = Op.getValueType();
 
+  // FIXME: Should not make address space based decisions here.
   if (shouldEmitFixup(GV))
     return buildPCRelGlobalAddress(DAG, GV, DL, GSD->getOffset(), PtrVT);
   else if (shouldEmitPCReloc(GV))
