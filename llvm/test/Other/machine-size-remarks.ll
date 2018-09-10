@@ -1,4 +1,4 @@
-; RUN: llc -mtriple x86_64---- %s -pass-remarks-analysis='size-info'\
+; RUN: llc -mtriple x86_64-apple-darwin %s -pass-remarks-analysis='size-info'\
 ; RUN: -pass-remarks-output=%t.yaml -o /dev/null < %s 2> %t; \
 ; RUN: cat %t %t.yaml | FileCheck %s
 
