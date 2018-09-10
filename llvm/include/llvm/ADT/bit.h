@@ -27,8 +27,8 @@ template <typename To, typename From
           , typename = typename std::enable_if<std::is_trivially_copyable<To>::value>::type
           , typename = typename std::enable_if<std::is_trivially_copyable<From>::value>::type
 #elif __has_feature(is_trivially_copyable)
-          , typename = typename std::enable_if<__is_trivially_copyable<To>::value>::type
-          , typename = typename std::enable_if<__is_trivially_copyable<From>::value>::type
+          , typename = typename std::enable_if<__is_trivially_copyable(To>>::type
+          , typename = typename std::enable_if<__is_trivially_copyable(From)>::type
 #else
   // This case is GCC 4.x. clang with libc++ or libstdc++ never get here. Unlike
   // llvm/Support/type_traits.h's isPodLike we don't want to provide a
