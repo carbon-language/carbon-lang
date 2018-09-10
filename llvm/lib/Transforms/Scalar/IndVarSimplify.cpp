@@ -145,7 +145,7 @@ class IndVarSimplify {
 
   bool canLoopBeDeleted(Loop *L, SmallVector<RewritePhi, 8> &RewritePhiSet);
   void rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter);
-  void rewriteFirstIterationLoopExitValues(Loop *L);
+  bool rewriteFirstIterationLoopExitValues(Loop *L);
 
   Value *linearFunctionTestReplace(Loop *L, const SCEV *BackedgeTakenCount,
                                    PHINode *IndVar, SCEVExpander &Rewriter);
@@ -707,7 +707,7 @@ void IndVarSimplify::rewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
 /// exits. If so, we know that if the exit path is taken, it is at the first
 /// loop iteration. This lets us predict exit values of PHI nodes that live in
 /// loop header.
-void IndVarSimplify::rewriteFirstIterationLoopExitValues(Loop *L) {
+bool IndVarSimplify::rewriteFirstIterationLoopExitValues(Loop *L) {
   // Verify the input to the pass is already in LCSSA form.
   assert(L->isLCSSAForm(*DT));
 
@@ -716,6 +716,7 @@ void IndVarSimplify::rewriteFirstIterationLoopExitValues(Loop *L) {
   auto *LoopHeader = L->getHeader();
   assert(LoopHeader && "Invalid loop");
 
+  bool MadeAnyChanges = false;
   for (auto *ExitBB : ExitBlocks) {
     // If there are no more PHI nodes in this exit block, then no more
     // values defined inside the loop are used on this path.
@@ -762,12 +763,14 @@ void IndVarSimplify::rewriteFirstIterationLoopExitValues(Loop *L) {
         if (PreheaderIdx != -1) {
           assert(ExitVal->getParent() == LoopHeader &&
                  "ExitVal must be in loop header");
+          MadeAnyChanges = true;
           PN.setIncomingValue(IncomingValIdx,
                               ExitVal->getIncomingValue(PreheaderIdx));
         }
       }
     }
   }
+  return MadeAnyChanges;
 }
 
 /// Check whether it is possible to delete the loop after rewriting exit
@@ -2658,7 +2661,7 @@ bool IndVarSimplify::run(Loop *L) {
   // rewriteFirstIterationLoopExitValues does not rely on the computation of
   // trip count and therefore can further simplify exit values in addition to
   // rewriteLoopExitValues.
-  rewriteFirstIterationLoopExitValues(L);
+  Changed |= rewriteFirstIterationLoopExitValues(L);
 
   // Clean up dead instructions.
   Changed |= DeleteDeadPHIs(L->getHeader(), TLI);
