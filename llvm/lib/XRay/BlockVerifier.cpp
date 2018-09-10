@@ -112,9 +112,9 @@ Error BlockVerifier::transition(State To) {
     return Error::success();
 
   auto &Mapping = TransitionTable[number(CurrentRecord)];
-  auto &From = Mapping.From;
   auto &Destinations = Mapping.ToStates;
-  assert(From == CurrentRecord && "BUG: Wrong index for record mapping.");
+  assert(Mapping.From == CurrentRecord &&
+         "BUG: Wrong index for record mapping.");
   if ((Destinations & ToSet(mask(To))) == 0)
     return createStringError(
         std::make_error_code(std::errc::executable_format_error),
