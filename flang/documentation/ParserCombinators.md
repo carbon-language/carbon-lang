@@ -96,6 +96,8 @@ They are `constexpr`, so they should be viewed as type-safe macros.
 * `recovery(p, q)` is equivalent to `p || q`, except that error messages
   generated from the first parser are retained, and a flag is set in
   the ParseState to remember that error recovery was necessary.
+* `localRecovery(msg, p, q)` is equivalent to `recovery(withMessage(msg, p), defaulted(cut >> p) >> q)`.  It is useful for targeted error recovery situations
+  within statements.
 
 Note that
 ```
@@ -143,9 +145,12 @@ is built.  All of the following parsers consume characters acquired from
    free form source.
 * `parenthesized(p)` is shorthand for `"(" >> p / ")"`.
 * `bracketed(p)` is shorthand for `"[" >> p / "]"`.
-* `nonEmptyListOf(p)` matches a comma-separated list of one or more
+* `nonEmptyList(p)` matches a comma-separated list of one or more
   instances of p.
-* `optionalListOf(p)` is the same thing, but can be empty, and always succeeds.
+* `nonEmptyList(errorMessage, p)` is equivalent to
+  `withMessage(errorMessage, nonemptyList(p))`, which allows one to supply
+  a meaningful error message in the event of an empty list.
+* `optionalList(p)` is the same thing, but can be empty, and always succeeds.
 
 ### Debugging Parser
 Last, a string literal `"..."_debug` denotes a parser that emits the string to

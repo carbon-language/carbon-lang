@@ -379,6 +379,7 @@ inline constexpr auto operator||(const PA &pa, const PB &pb) {
 // If a and b are parsers, then recovery(a,b) returns a parser that succeeds if
 // a does so, or if a fails and b succeeds.  If a succeeds, b is not attempted.
 // All messages from the first parse are retained.
+// The two parsers must return values of the same type.
 template<typename PA, typename PB> class RecoveryParser {
 public:
   using resultType = typename PA::resultType;
@@ -1244,6 +1245,13 @@ template<bool pass> struct FixedParser {
 
 constexpr FixedParser<true> ok;
 constexpr FixedParser<false> cut;
+
+// A variant of recovery() above for convenience.
+template<typename PA, typename PB>
+inline constexpr auto localRecovery(
+    MessageFixedText msg, const PA &pa, const PB &pb) {
+  return recovery(withMessage(msg, pa), pb >> defaulted(cut >> pa));
+}
 
 // nextCh is a parser that succeeds if the parsing state is not
 // at the end of its input, returning the next character location and

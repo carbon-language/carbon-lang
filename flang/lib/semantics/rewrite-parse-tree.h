@@ -17,7 +17,7 @@
 
 namespace Fortran::parser {
 struct Program;
-struct CookedSource;
+class CookedSource;
 }  // namespace Fortran::parser
 
 namespace Fortran::semantics {

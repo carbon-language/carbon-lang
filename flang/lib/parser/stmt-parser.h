@@ -61,9 +61,14 @@ template<typename PA> inline constexpr auto unambiguousStatement(const PA &p) {
 constexpr auto ignoredStatementPrefix{
     skipStuffBeforeStatement >> maybe(label) >> maybe(name / ":") >> space};
 
-// Error recovery within statements: skip to the end of the line,
+// Error recovery within a statement() call: skip *to* the end of the line,
+// unless at an END or CONTAINS statement.
+constexpr auto inStmtErrorRecovery{!"END"_tok >> !"CONTAINS"_tok >>
+    SkipTo<'\n'>{} >> construct<ErrorRecovery>()};
+
+// Error recovery within statement sequences: skip *past* the end of the line,
 // but not over an END or CONTAINS statement.
-constexpr auto stmtErrorRecovery{!"END"_tok >> !"CONTAINS"_tok >>
+constexpr auto skipStmtErrorRecovery{!"END"_tok >> !"CONTAINS"_tok >>
     SkipPast<'\n'>{} >> construct<ErrorRecovery>()};
 
 // Error recovery across statements: skip the line, unless it looks
