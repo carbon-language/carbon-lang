@@ -445,7 +445,7 @@ constexpr auto obsoleteExecutionPartConstruct{recovery(ignoredStatementPrefix >>
             "obsolete legacy extension is not supported"_err_en_US),
     construct<ExecutionPartConstruct>(
         statement("REDIMENSION" >> name >>
-            parenthesized(Parser<AllocateShapeSpec>{}) >> ok) >>
+            parenthesized(nonemptyList(Parser<AllocateShapeSpec>{})) >> ok) >>
         construct<ErrorRecovery>()))};
 
 TYPE_PARSER(recovery(
