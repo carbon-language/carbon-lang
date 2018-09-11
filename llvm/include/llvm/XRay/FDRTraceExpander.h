@@ -27,7 +27,7 @@ class TraceExpander : public RecordVisitor {
   int32_t PID = 0;
   int32_t TID = 0;
   uint64_t BaseTSC = 0;
-  XRayRecord CurrentRecord{};
+  XRayRecord CurrentRecord{0, 0, RecordTypes::ENTER, 0, 0, 0, 0, {}};
   uint16_t CPUId = 0;
   uint16_t LogVersion = 0;
   bool BuildingFunction = false;

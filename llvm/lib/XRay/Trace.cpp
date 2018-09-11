@@ -317,8 +317,8 @@ Error loadFDRLog(StringRef Data, bool IsLittleEndian,
             return (L.WallclockTime->seconds() < R.WallclockTime->seconds() &&
                     L.WallclockTime->nanos() < R.WallclockTime->nanos());
           });
-      TraceExpander Expander([&](const XRayRecord &R) { Records.push_back(R); },
-                             FileHeader.Version);
+      auto Adder = [&](const XRayRecord &R) { Records.push_back(R); };
+      TraceExpander Expander(Adder, FileHeader.Version);
       for (auto &B : Blocks) {
         for (auto *R : B.Records)
           if (auto E = R->apply(Expander))
