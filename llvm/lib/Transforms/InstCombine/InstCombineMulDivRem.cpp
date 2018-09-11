@@ -327,7 +327,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // integer mul followed by a sext.
   if (SExtInst *Op0Conv = dyn_cast<SExtInst>(Op0)) {
     // (mul (sext x), cst) --> (sext (mul x, cst'))
-    if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+    if (auto *Op1C = dyn_cast<Constant>(Op1)) {
       if (Op0Conv->hasOneUse()) {
         Constant *CI =
             ConstantExpr::getTrunc(Op1C, Op0Conv->getOperand(0)->getType());
@@ -363,7 +363,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
   // integer mul followed by a zext.
   if (auto *Op0Conv = dyn_cast<ZExtInst>(Op0)) {
     // (mul (zext x), cst) --> (zext (mul x, cst'))
-    if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+    if (auto *Op1C = dyn_cast<Constant>(Op1)) {
       if (Op0Conv->hasOneUse()) {
         Constant *CI =
             ConstantExpr::getTrunc(Op1C, Op0Conv->getOperand(0)->getType());
