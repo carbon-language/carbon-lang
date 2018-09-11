@@ -34,6 +34,7 @@ add_clang_library(clangAnalysis
 
   LINK_LIBS
   clangAST
+  clangASTMatchers
   clangBasic
   clangLex
   )
