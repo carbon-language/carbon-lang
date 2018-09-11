@@ -632,8 +632,8 @@ Error MinimalSymbolDumper::visitKnownRecord(CVSymbol &CVR, FrameProcSym &FP) {
                formatSegmentOffset(FP.SectionIdOfExceptionHandler,
                                    FP.OffsetOfExceptionHandler));
   P.formatLine("local fp reg = {0}, param fp reg = {1}",
-               formatRegisterId(FP.getLocalFPReg(CompilationCPU)),
-               formatRegisterId(FP.getParamFPReg(CompilationCPU)));
+               formatRegisterId(FP.getLocalFramePtrReg(CompilationCPU)),
+               formatRegisterId(FP.getParamFramePtrReg(CompilationCPU)));
   P.formatLine("flags = {0}",
                formatFrameProcedureOptions(P.getIndentLevel() + 9, FP.Flags));
   return Error::success();
