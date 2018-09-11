@@ -653,16 +653,8 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
     if (isLoadInvariantInLoop(LI, DT, CurLoop))
       return true;
 
-    // Don't hoist loads which have may-aliased stores in loop.
-    uint64_t Size = 0;
-    if (LI->getType()->isSized())
-      Size = I.getModule()->getDataLayout().getTypeStoreSize(LI->getType());
-
-    AAMDNodes AAInfo;
-    LI->getAAMetadata(AAInfo);
-
-    bool Invalidated = pointerInvalidatedByLoop(
-        MemoryLocation(LI->getOperand(0), Size, AAInfo), CurAST, CurLoop, AA);
+    bool Invalidated = pointerInvalidatedByLoop(MemoryLocation::get(LI),
+                                                CurAST, CurLoop, AA);
     // Check loop-invariant address because this may also be a sinkable load
     // whose address is not necessarily loop-invariant.
     if (ORE && Invalidated && CurLoop->isLoopInvariant(LI->getPointerOperand()))
