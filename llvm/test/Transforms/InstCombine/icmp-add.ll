@@ -377,8 +377,8 @@ define i1 @op_ugt_sum_commute1(i8 %p1, i8 %p2) {
 ; CHECK-LABEL: @op_ugt_sum_commute1(
 ; CHECK-NEXT:    [[X:%.*]] = sdiv i8 42, [[P1:%.*]]
 ; CHECK-NEXT:    [[Y:%.*]] = sdiv i8 42, [[P2:%.*]]
-; CHECK-NEXT:    [[A:%.*]] = add i8 [[X]], [[Y]]
-; CHECK-NEXT:    [[C:%.*]] = icmp ugt i8 [[X]], [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[X]], -1
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt i8 [[Y]], [[TMP1]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %x = sdiv i8 42, %p1
@@ -392,8 +392,8 @@ define <2 x i1> @op_ugt_sum_vec_commute2(<2 x i8> %p1, <2 x i8> %p2) {
 ; CHECK-LABEL: @op_ugt_sum_vec_commute2(
 ; CHECK-NEXT:    [[X:%.*]] = sdiv <2 x i8> <i8 42, i8 -42>, [[P1:%.*]]
 ; CHECK-NEXT:    [[Y:%.*]] = sdiv <2 x i8> <i8 42, i8 -42>, [[P2:%.*]]
-; CHECK-NEXT:    [[A:%.*]] = add <2 x i8> [[Y]], [[X]]
-; CHECK-NEXT:    [[C:%.*]] = icmp ugt <2 x i8> [[X]], [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor <2 x i8> [[X]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt <2 x i8> [[Y]], [[TMP1]]
 ; CHECK-NEXT:    ret <2 x i1> [[C]]
 ;
   %x = sdiv <2 x i8> <i8 42, i8 -42>, %p1
@@ -424,8 +424,8 @@ define <2 x i1> @sum_ult_op_vec_commute1(<2 x i8> %p1, <2 x i8> %p2) {
 ; CHECK-LABEL: @sum_ult_op_vec_commute1(
 ; CHECK-NEXT:    [[X:%.*]] = sdiv <2 x i8> <i8 42, i8 -42>, [[P1:%.*]]
 ; CHECK-NEXT:    [[Y:%.*]] = sdiv <2 x i8> <i8 -42, i8 42>, [[P2:%.*]]
-; CHECK-NEXT:    [[A:%.*]] = add <2 x i8> [[X]], [[Y]]
-; CHECK-NEXT:    [[C:%.*]] = icmp ult <2 x i8> [[A]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor <2 x i8> [[X]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt <2 x i8> [[Y]], [[TMP1]]
 ; CHECK-NEXT:    ret <2 x i1> [[C]]
 ;
   %x = sdiv <2 x i8> <i8 42, i8 -42>, %p1
@@ -439,8 +439,8 @@ define i1 @sum_ult_op_commute2(i8 %p1, i8 %p2) {
 ; CHECK-LABEL: @sum_ult_op_commute2(
 ; CHECK-NEXT:    [[X:%.*]] = sdiv i8 42, [[P1:%.*]]
 ; CHECK-NEXT:    [[Y:%.*]] = sdiv i8 42, [[P2:%.*]]
-; CHECK-NEXT:    [[A:%.*]] = add i8 [[Y]], [[X]]
-; CHECK-NEXT:    [[C:%.*]] = icmp ult i8 [[A]], [[X]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor i8 [[X]], -1
+; CHECK-NEXT:    [[C:%.*]] = icmp ugt i8 [[Y]], [[TMP1]]
 ; CHECK-NEXT:    ret i1 [[C]]
 ;
   %x = sdiv i8 42, %p1
