@@ -337,19 +337,9 @@ public:
   void Post(const parser::EndLabel &endLabel) { addLabelReference(endLabel.v); }
   void Post(const parser::EorLabel &eorLabel) { addLabelReference(eorLabel.v); }
   void Post(const parser::Format &format) {
-    // BUG: the label is saved as an IntLiteralConstant rather than a Label
-#if 0
     if (const auto *P{std::get_if<parser::Label>(&format.u)}) {
       addLabelReferenceFromFormatStmt(*P);
     }
-#else
-    if (const auto *P{std::get_if<0>(&format.u)}) {
-      addLabelReferenceFromFormatStmt(
-          parser::Label{std::get<0>(std::get<parser::IntLiteralConstant>(
-              std::get<parser::LiteralConstant>((*P->thing).u).u)
-                                        .t)});
-    }
-#endif
   }
   void Post(const parser::CycleStmt &cycleStmt) {
     if (cycleStmt.v.has_value()) {
