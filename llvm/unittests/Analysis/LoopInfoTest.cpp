@@ -110,7 +110,6 @@ TEST(LoopInfoTest, LoopWithMultipleLatches) {
 
   runWithLoopInfo(*M, "foo", [&](Function &F, LoopInfo &LI) {
     Function::iterator FI = F.begin();
-    F.dump();
     // First basic block is entry - skip it.
     BasicBlock *Header = &*(++FI);
     assert(Header->getName() == "for.cond");
