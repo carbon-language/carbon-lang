@@ -2229,8 +2229,7 @@ define <2 x i1> @icmp_xor_neg4_X_uge_4_vec(<2 x i32> %X) {
 
 define <2 x i1> @xor_ult(<2 x i8> %x) {
 ; CHECK-LABEL: @xor_ult(
-; CHECK-NEXT:    [[XOR:%.*]] = xor <2 x i8> [[X:%.*]], <i8 -4, i8 -4>
-; CHECK-NEXT:    [[R:%.*]] = icmp ult <2 x i8> [[XOR]], <i8 -4, i8 -4>
+; CHECK-NEXT:    [[R:%.*]] = icmp ugt <2 x i8> [[X:%.*]], <i8 3, i8 3>
 ; CHECK-NEXT:    ret <2 x i1> [[R]]
 ;
   %xor = xor <2 x i8> %x, <i8 -4, i8 -4>
@@ -2242,7 +2241,7 @@ define i1 @xor_ult_extra_use(i8 %x, i8* %p) {
 ; CHECK-LABEL: @xor_ult_extra_use(
 ; CHECK-NEXT:    [[XOR:%.*]] = xor i8 [[X:%.*]], -32
 ; CHECK-NEXT:    store i8 [[XOR]], i8* [[P:%.*]], align 1
-; CHECK-NEXT:    [[R:%.*]] = icmp ult i8 [[XOR]], -32
+; CHECK-NEXT:    [[R:%.*]] = icmp ugt i8 [[X]], 31
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %xor = xor i8 %x, -32
@@ -2265,7 +2264,7 @@ define i1 @xor_ugt_extra_use(i8 %x, i8* %p) {
 ; CHECK-LABEL: @xor_ugt_extra_use(
 ; CHECK-NEXT:    [[XOR:%.*]] = xor i8 [[X:%.*]], 63
 ; CHECK-NEXT:    store i8 [[XOR]], i8* [[P:%.*]], align 1
-; CHECK-NEXT:    [[R:%.*]] = icmp ugt i8 [[XOR]], 63
+; CHECK-NEXT:    [[R:%.*]] = icmp ugt i8 [[X]], 63
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %xor = xor i8 %x, 63
