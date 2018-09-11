@@ -2286,10 +2286,12 @@ void DeclarationVisitor::SetType(
   if (!prevType) {
     symbol.SetType(type);
   } else if (!symbol.test(Symbol::Flag::Implicit)) {
-    Say(name, "The type of '%s' has already been declared"_err_en_US);
+    Say2(name, "The type of '%s' has already been declared"_err_en_US,
+        symbol.name(), "Declaration of '%s'"_en_US);
   } else if (type != *prevType) {
-    Say(name,
-        "The type of '%s' has already been implicitly declared"_err_en_US);
+    Say2(name,
+        "The type of '%s' has already been implicitly declared"_err_en_US,
+        symbol.name(), "Declaration of '%s'"_en_US);
   } else {
     symbol.set(Symbol::Flag::Implicit, false);
   }
