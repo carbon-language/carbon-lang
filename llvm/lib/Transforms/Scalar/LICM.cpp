@@ -1535,11 +1535,6 @@ LoopInvariantCodeMotion::collectAliasInfoForLoop(Loop *L, LoopInfo *LI,
                                                  AliasAnalysis *AA) {
   std::unique_ptr<AliasSetTracker> CurAST;
   SmallVector<Loop *, 4> RecomputeLoops;
-  auto mergeLoop = [&CurAST](Loop *L) {
-    // Loop over the body of this loop, looking for calls, invokes, and stores.
-    for (BasicBlock *BB : L->blocks())
-      CurAST->add(*BB); // Incorporate the specified basic block
-  };
   for (Loop *InnerL : L->getSubLoops()) {
     auto MapI = LoopToAliasSetMap.find(InnerL);
     // If the AST for this inner loop is missing it may have been merged into
@@ -1566,10 +1561,13 @@ LoopInvariantCodeMotion::collectAliasInfoForLoop(Loop *L, LoopInfo *LI,
 
   // Add everything from the sub loops that are no longer directly available.
   for (Loop *InnerL : RecomputeLoops)
-    mergeLoop(InnerL);
+    for (BasicBlock *BB : InnerL->blocks())
+      CurAST->add(*BB);
 
-  // And merge in this loop.
-  mergeLoop(L);
+  // And merge in this loop (without anything from inner loops).
+  for (BasicBlock *BB : L->blocks())
+    if (LI->getLoopFor(BB) == L)
+      CurAST->add(*BB);
 
   return CurAST;
 }
