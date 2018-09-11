@@ -16,3 +16,4 @@ add_llvm_unittest(XRayTests
   )
 
 add_dependencies(XRayTests intrinsics_gen)
+target_link_libraries(XRayTests PRIVATE LLVMTestingSupport)
