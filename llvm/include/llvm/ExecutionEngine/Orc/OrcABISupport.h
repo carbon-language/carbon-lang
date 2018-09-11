@@ -247,7 +247,7 @@ public:
   static const unsigned TrampolineSize = 20;
   static const unsigned ResolverCodeSize = 0xfc;
   using IndirectStubsInfo = GenericIndirectStubsInfo<16>;
-  
+
   using JITReentryFn = JITTargetAddress (*)(void *CallbackMgr,
                                             void *TrampolineId);
   /// @brief Write the requsted number of trampolines into the given memory,
