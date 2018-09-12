@@ -28,10 +28,10 @@ end
 !Expect: m.mod
 !module m
 !type,private::t1
-!integer::i
+!integer(4)::i
 !end type
 !type,private::t2
-!integer::i
+!integer(4)::i
 !end type
 !type(t1)::x1
 !type(t2),private::x2

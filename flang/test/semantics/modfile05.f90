@@ -29,9 +29,9 @@ end
 
 !Expect: m1.mod
 !module m1
-!real::x
-!integer::y
-!real,volatile::z
+!real(4)::x
+!integer(4)::y
+!real(4),volatile::z
 !end
 
 !Expect: m2.mod

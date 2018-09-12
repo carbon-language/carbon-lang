@@ -40,7 +40,8 @@ DEFINE_DUMP(parser, Name)
 DEFINE_DUMP(parser, CharBlock)
 DEFINE_DUMP(semantics, Symbol)
 DEFINE_DUMP(semantics, Scope)
-DEFINE_DUMP(semantics, TypeSpec)
+DEFINE_DUMP(semantics, IntrinsicTypeSpec)
+DEFINE_DUMP(semantics, DerivedTypeSpec)
 DEFINE_DUMP(semantics, DeclTypeSpec)
 }  // namespace Fortran
 

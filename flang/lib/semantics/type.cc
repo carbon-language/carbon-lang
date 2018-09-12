@@ -13,12 +13,10 @@
 // limitations under the License.
 
 #include "type.h"
-#include "attr.h"
 #include "scope.h"
 #include "symbol.h"
-#include "../common/idioms.h"
-#include <iostream>
-#include <set>
+#include "../evaluate/type.h"
+#include "../parser/characters.h"
 
 namespace Fortran::semantics {
 
@@ -33,10 +31,6 @@ std::ostream &operator<<(std::ostream &o, const IntConst &x) {
 
 std::unordered_map<std::uint64_t, IntConst> IntConst::cache;
 
-std::ostream &operator<<(std::ostream &o, const KindParamValue &x) {
-  return o << x.value_;
-}
-
 const IntConst &IntConst::Make(std::uint64_t value) {
   auto it{cache.find(value)};
   if (it == cache.end()) {
@@ -44,118 +38,6 @@ const IntConst &IntConst::Make(std::uint64_t value) {
   }
   return it->second;
 }
-
-std::ostream &operator<<(std::ostream &o, const TypeSpec &x) {
-  return x.Output(o);
-}
-
-const LogicalTypeSpec &LogicalTypeSpec::Make() { return helper.Make(); }
-const LogicalTypeSpec &LogicalTypeSpec::Make(KindParamValue kind) {
-  return helper.Make(kind);
-}
-KindedTypeHelper<LogicalTypeSpec> LogicalTypeSpec::helper{"LOGICAL", 0};
-std::ostream &operator<<(std::ostream &o, const LogicalTypeSpec &x) {
-  return LogicalTypeSpec::helper.Output(o, x);
-}
-
-const IntegerTypeSpec &IntegerTypeSpec::Make() { return helper.Make(); }
-const IntegerTypeSpec &IntegerTypeSpec::Make(KindParamValue kind) {
-  return helper.Make(kind);
-}
-KindedTypeHelper<IntegerTypeSpec> IntegerTypeSpec::helper{"INTEGER", 0};
-std::ostream &operator<<(std::ostream &o, const IntegerTypeSpec &x) {
-  return IntegerTypeSpec::helper.Output(o, x);
-}
-
-const RealTypeSpec &RealTypeSpec::Make() { return helper.Make(); }
-const RealTypeSpec &RealTypeSpec::Make(KindParamValue kind) {
-  return helper.Make(kind);
-}
-KindedTypeHelper<RealTypeSpec> RealTypeSpec::helper{"REAL", 0};
-std::ostream &operator<<(std::ostream &o, const RealTypeSpec &x) {
-  return RealTypeSpec::helper.Output(o, x);
-}
-
-const ComplexTypeSpec &ComplexTypeSpec::Make() { return helper.Make(); }
-const ComplexTypeSpec &ComplexTypeSpec::Make(KindParamValue kind) {
-  return helper.Make(kind);
-}
-KindedTypeHelper<ComplexTypeSpec> ComplexTypeSpec::helper{"COMPLEX", 0};
-std::ostream &operator<<(std::ostream &o, const ComplexTypeSpec &x) {
-  return ComplexTypeSpec::helper.Output(o, x);
-}
-
-std::ostream &operator<<(std::ostream &o, const CharacterTypeSpec &x) {
-  o << "CHARACTER(" << x.len_;
-  if (x.kind_ != CharacterTypeSpec::DefaultKind) {
-    o << ", " << x.kind_;
-  }
-  return o << ')';
-}
-
-std::ostream &operator<<(std::ostream &o, const DerivedTypeDef &x) {
-  o << "TYPE";
-  if (!x.data_.attrs.empty()) {
-    o << ", " << x.data_.attrs;
-  }
-  o << " :: " << x.data_.name->ToString();
-  if (x.data_.lenParams.size() > 0 || x.data_.kindParams.size() > 0) {
-    o << '(';
-    int n = 0;
-    for (const auto &param : x.data_.lenParams) {
-      if (n++) {
-        o << ", ";
-      }
-      o << param.name();
-    }
-    for (auto param : x.data_.kindParams) {
-      if (n++) {
-        o << ", ";
-      }
-      o << param.name();
-    }
-    o << ')';
-  }
-  o << '\n';
-  for (const auto &param : x.data_.lenParams) {
-    o << "  " << param.type() << ", LEN :: " << param.name() << "\n";
-  }
-  for (const auto &param : x.data_.kindParams) {
-    o << "  " << param.type() << ", KIND :: " << param.name() << "\n";
-  }
-  if (x.data_.Private) {
-    o << "  PRIVATE\n";
-  }
-  if (x.data_.sequence) {
-    o << "  SEQUENCE\n";
-  }
-  for (const auto &comp : x.data_.dataComps) {
-    o << "  " << comp << "\n";
-  }
-  for (const auto &comp : x.data_.procComps) {
-    o << "  " << comp << "\n";
-  }
-  if (x.data_.hasTbpPart()) {
-    o << "CONTAINS\n";
-    if (x.data_.bindingPrivate) {
-      o << "  PRIVATE\n";
-    }
-    for (const auto &tbp : x.data_.typeBoundProcs) {
-      o << "  " << tbp << "\n";
-    }
-    for (const auto &tbg : x.data_.typeBoundGenerics) {
-      o << "  " << tbg << "\n";
-    }
-    for (const auto &name : x.data_.finalProcs) {
-      o << "  FINAL :: " << name.ToString() << '\n';
-    }
-  }
-  return o << "END TYPE";
-}
-
-// DerivedTypeSpec is a base class for classes with virtual functions,
-// so clang wants it to have a virtual destructor.
-DerivedTypeSpec::~DerivedTypeSpec() {}
 
 void DerivedTypeSpec::set_scope(const Scope &scope) {
   CHECK(!scope_);
@@ -197,57 +79,43 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
   return o;
 }
 
-std::ostream &operator<<(std::ostream &o, const DataComponentDef &x) {
-  o << x.type_;
-  if (!x.attrs_.empty()) {
-    o << ", " << x.attrs_;
-  }
-  o << " :: " << x.name_.ToString();
-  if (!x.arraySpec_.empty()) {
-    o << '(';
-    int n = 0;
-    for (ShapeSpec shape : x.arraySpec_) {
-      if (n++) {
-        o << ", ";
-      }
-      o << shape;
-    }
-    o << ')';
-  }
-  return o;
+IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, int kind)
+  : category_{category}, kind_{kind ? kind : GetDefaultKind(category)} {
+  CHECK(category != TypeCategory::Derived);
 }
 
-DataComponentDef::DataComponentDef(const DeclTypeSpec &type,
-    const SourceName &name, const Attrs &attrs, const ArraySpec &arraySpec)
-  : type_{type}, name_{name}, attrs_{attrs}, arraySpec_{arraySpec} {
-  attrs.CheckValid({Attr::PUBLIC, Attr::PRIVATE, Attr::ALLOCATABLE,
-      Attr::POINTER, Attr::CONTIGUOUS});
-  if (attrs.HasAny({Attr::ALLOCATABLE, Attr::POINTER})) {
-    for (const auto &shapeSpec : arraySpec) {
-      CHECK(shapeSpec.isDeferred());
-    }
-  } else {
-    for (const auto &shapeSpec : arraySpec) {
-      CHECK(shapeSpec.isExplicit());
-    }
+int IntrinsicTypeSpec::GetDefaultKind(TypeCategory category) {
+  switch (category) {
+  case TypeCategory::Character: return evaluate::DefaultCharacter::kind;
+  //case TypeCategory::Complex: return evaluate::DefaultComplex::kind;
+  case TypeCategory::Complex: return 4;  // TEMP to work around bug
+  case TypeCategory::Integer: return evaluate::DefaultInteger::kind;
+  case TypeCategory::Logical: return evaluate::DefaultLogical::kind;
+  case TypeCategory::Real: return evaluate::DefaultReal::kind;
+  default: CRASH_NO_CASE;
   }
+}
+
+std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {
+  os << parser::ToUpperCaseLetters(common::EnumToString(x.category()));
+  if (x.kind() != 0) {
+    os << '(' << x.kind() << ')';
+  }
+  return os;
 }
 
 DeclTypeSpec::DeclTypeSpec(const IntrinsicTypeSpec &intrinsic)
-  : category_{Intrinsic} {
-  typeSpec_.intrinsic = &intrinsic;
-}
+  : category_{Intrinsic}, typeSpec_{intrinsic} {}
 DeclTypeSpec::DeclTypeSpec(Category category, DerivedTypeSpec &derived)
-  : category_{category} {
+  : category_{category}, typeSpec_{&derived} {
   CHECK(category == TypeDerived || category == ClassDerived);
-  typeSpec_.derived = &derived;
 }
 DeclTypeSpec::DeclTypeSpec(Category category) : category_{category} {
   CHECK(category == TypeStar || category == ClassStar);
 }
 const IntrinsicTypeSpec &DeclTypeSpec::intrinsicTypeSpec() const {
   CHECK(category_ == Intrinsic);
-  return *typeSpec_.intrinsic;
+  return typeSpec_.intrinsic;
 }
 DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() {
   CHECK(category_ == TypeDerived || category_ == ClassDerived);
@@ -257,10 +125,21 @@ const DerivedTypeSpec &DeclTypeSpec::derivedTypeSpec() const {
   CHECK(category_ == TypeDerived || category_ == ClassDerived);
   return *typeSpec_.derived;
 }
+bool DeclTypeSpec::operator==(const DeclTypeSpec &that) const {
+  if (category_ != that.category_) {
+    return false;
+  }
+  switch (category_) {
+  case Intrinsic: return typeSpec_.intrinsic == that.typeSpec_.intrinsic;
+  case TypeDerived:
+  case ClassDerived: return typeSpec_.derived == that.typeSpec_.derived;
+  default: return true;
+  }
+}
 
 std::ostream &operator<<(std::ostream &o, const DeclTypeSpec &x) {
   switch (x.category()) {
-  case DeclTypeSpec::Intrinsic: return x.intrinsicTypeSpec().Output(o);
+  case DeclTypeSpec::Intrinsic: return o << x.intrinsicTypeSpec();
   case DeclTypeSpec::TypeDerived:
     return o << "TYPE(" << x.derivedTypeSpec().name().ToString() << ')';
   case DeclTypeSpec::ClassDerived:
@@ -278,28 +157,6 @@ void ProcInterface::set_symbol(const Symbol &symbol) {
 void ProcInterface::set_type(const DeclTypeSpec &type) {
   CHECK(!symbol_);
   type_ = type;
-}
-
-std::ostream &operator<<(std::ostream &o, const ProcDecl &x) {
-  return o << x.name_.ToString();
-}
-
-ProcComponentDef::ProcComponentDef(
-    const ProcDecl &decl, Attrs attrs, const ProcInterface &interface)
-  : decl_{decl}, attrs_{attrs}, interface_{interface} {
-  CHECK(attrs_.test(Attr::POINTER));
-  attrs_.CheckValid(
-      {Attr::PUBLIC, Attr::PRIVATE, Attr::NOPASS, Attr::POINTER, Attr::PASS});
-}
-std::ostream &operator<<(std::ostream &o, const ProcComponentDef &x) {
-  o << "PROCEDURE(";
-  if (auto *symbol{x.interface_.symbol()}) {
-    o << symbol->name().ToString();
-  } else if (auto *type{x.interface_.type()}) {
-    o << *type;
-  }
-  o << "), " << x.attrs_ << " :: " << x.decl_;
-  return o;
 }
 
 std::ostream &operator<<(std::ostream &o, const GenericSpec &x) {
@@ -332,30 +189,6 @@ std::ostream &operator<<(std::ostream &o, const GenericSpec &x) {
   case GenericSpec::OP_XOR: return o << "OPERATOR(.XOR.)";
   default: CRASH_NO_CASE;
   }
-}
-
-std::ostream &operator<<(std::ostream &o, const TypeBoundProc &x) {
-  o << "PROCEDURE(";
-  if (x.interface_) {
-    o << x.interface_->ToString();
-  }
-  o << ")";
-  if (!x.attrs_.empty()) {
-    o << ", " << x.attrs_;
-  }
-  o << " :: " << x.binding_.ToString();
-  if (x.procedure_ != x.binding_) {
-    o << " => " << x.procedure_.ToString();
-  }
-  return o;
-}
-std::ostream &operator<<(std::ostream &o, const TypeBoundGeneric &x) {
-  o << "GENERIC ";
-  if (!x.attrs_.empty()) {
-    o << ", " << x.attrs_;
-  }
-  o << " :: " << x.genericSpec_ << " => " << x.name_.ToString();
-  return o;
 }
 
 }  // namespace Fortran::semantics

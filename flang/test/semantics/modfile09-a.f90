@@ -8,7 +8,7 @@ end
 
 !Expect: m.mod
 !module m
-!integer::m1_x
+!integer(4)::m1_x
 !interface
 !module subroutine s()
 !end

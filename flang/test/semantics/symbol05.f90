@@ -16,10 +16,10 @@
 
 !DEF: /s1 Subprogram
 subroutine s1
- !DEF: /s1/x ObjectEntity INTEGER
+ !DEF: /s1/x ObjectEntity INTEGER(4)
  integer x
  block
-  !DEF: /s1/Block1/y ObjectEntity INTEGER
+  !DEF: /s1/Block1/y ObjectEntity INTEGER(4)
   integer y
   !REF: /s1/x
   x = 1
@@ -27,7 +27,7 @@ subroutine s1
   y = 2.0
  end block
  block
-  !DEF: /s1/Block2/y ObjectEntity REAL
+  !DEF: /s1/Block2/y ObjectEntity REAL(4)
   real y
   !REF: /s1/Block2/y
   y = 3.0
@@ -38,9 +38,9 @@ end subroutine
 subroutine s2
  implicit integer(w-x)
  block
-  !DEF: /s2/x (implicit) ObjectEntity INTEGER
+  !DEF: /s2/x (implicit) ObjectEntity INTEGER(4)
   x = 1
-  !DEF: /s2/y (implicit) ObjectEntity REAL
+  !DEF: /s2/y (implicit) ObjectEntity REAL(4)
   y = 2
  end block
 contains
@@ -48,7 +48,7 @@ contains
  subroutine s
   !REF: /s2/x
   x = 1
-  !DEF: /s2/s/w (implicit) ObjectEntity INTEGER
+  !DEF: /s2/s/w (implicit) ObjectEntity INTEGER(4)
   w = 1
  end subroutine
 end subroutine
@@ -58,8 +58,8 @@ subroutine s3
  block
   !DEF: /s3/Block1/t DerivedType
   type :: t
-   !DEF: /s3/i (implicit) ObjectEntity INTEGER
-   !DEF: /s3/Block1/t/x ObjectEntity REAL
+   !DEF: /s3/i (implicit) ObjectEntity INTEGER(4)
+   !DEF: /s3/Block1/t/x ObjectEntity REAL(4)
    real :: x(10) = [(i, i=1,10)]
   end type
  end block
@@ -70,8 +70,8 @@ subroutine s4
  implicit integer(x)
  interface
   !DEF: /s4/s EXTERNAL Subprogram
-  !DEF: /s4/s/x (implicit) ObjectEntity REAL
-  !DEF: /s4/s/y (implicit) ObjectEntity INTEGER
+  !DEF: /s4/s/x (implicit) ObjectEntity REAL(4)
+  !DEF: /s4/s/y (implicit) ObjectEntity INTEGER(4)
   subroutine s (x, y)
    implicit integer(y)
   end subroutine
@@ -81,13 +81,13 @@ end subroutine
 !DEF: /s5 Subprogram
 subroutine s5
  block
-  !DEF: /s5/Block1/x (implicit) ObjectEntity REAL
+  !DEF: /s5/Block1/x (implicit) ObjectEntity REAL(4)
   dimension :: x(2)
   block
-   !DEF: /s5/Block1/Block1/x (implicit) ObjectEntity REAL
+   !DEF: /s5/Block1/Block1/x (implicit) ObjectEntity REAL(4)
    dimension :: x(3)
   end block
  end block
- !DEF: /s5/x (implicit) ObjectEntity REAL
+ !DEF: /s5/x (implicit) ObjectEntity REAL(4)
  x = 1.0
 end subroutine

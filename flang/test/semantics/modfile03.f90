@@ -35,14 +35,14 @@ end
 
 !Expect: m1.mod
 !module m1
-!integer::x1
-!integer,private::x2
+!integer(4)::x1
+!integer(4),private::x2
 !end
 
 !Expect: m2.mod
 !module m2
 !use m1,only:x1
-!integer::y1
+!integer(4)::y1
 !end
 
 !Expect: m3.mod

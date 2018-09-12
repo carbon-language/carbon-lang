@@ -16,46 +16,26 @@
 #define FORTRAN_SEMANTICS_TYPE_H_
 
 #include "attr.h"
+#include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../parser/char-block.h"
 #include <list>
-#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 
-/*
-
-Type specs are represented by a class hierarchy rooted at TypeSpec. Only the
-leaves are concrete types:
-  TypeSpec
-    IntrinsicTypeSpec
-      CharacterTypeSpec
-      LogicalTypeSpec
-      NumericTypeSpec
-        IntegerTypeSpec
-        RealTypeSpec
-        ComplexTypeSpec
-    DerivedTypeSpec
-
-TypeSpec classes are immutable. For intrinsic types (except character) there
-is a limited number of instances -- one for each kind.
-
-A DerivedTypeSpec is based on a DerivedTypeDef (from a derived type statement)
-with kind and len parameter values provided.
-
-*/
-
 namespace Fortran::semantics {
 
-using Name = std::string;
+class Scope;
+class Symbol;
 
 /// A SourceName is a name in the cooked character stream,
 /// i.e. a range of lower-case characters with provenance.
 using SourceName = parser::CharBlock;
+
+using TypeCategory = common::TypeCategory;
 
 // TODO
 class IntExpr {
@@ -85,21 +65,6 @@ private:
   friend std::ostream &operator<<(std::ostream &, const IntConst &);
 };
 
-// The value of a kind type parameter
-class KindParamValue {
-public:
-  KindParamValue(int value = 0) : KindParamValue(IntConst::Make(value)) {}
-  KindParamValue(const IntConst &value) : value_{value} {}
-  bool operator==(const KindParamValue &x) const { return value_ == x.value_; }
-  bool operator!=(const KindParamValue &x) const { return !operator==(x); }
-  bool operator<(const KindParamValue &x) const { return value_ < x.value_; }
-  const IntConst &value() const { return value_; }
-
-private:
-  const IntConst &value_;
-  friend std::ostream &operator<<(std::ostream &, const KindParamValue &);
-};
-
 // An array spec bound: an explicit integer expression or ASSUMED or DEFERRED
 class Bound {
 public:
@@ -122,186 +87,24 @@ private:
   friend std::ostream &operator<<(std::ostream &, const Bound &);
 };
 
-// The value of a len type parameter
-using LenParamValue = Bound;
-
-class IntrinsicTypeSpec;
-class DerivedTypeSpec;
-
-class DeclTypeSpec {
+class IntrinsicTypeSpec {
 public:
-  enum Category { Intrinsic, TypeDerived, ClassDerived, TypeStar, ClassStar };
-
-  // intrinsic-type-spec or TYPE(intrinsic-type-spec)
-  DeclTypeSpec(const IntrinsicTypeSpec &);
-  // TYPE(derived-type-spec) or CLASS(derived-type-spec)
-  DeclTypeSpec(Category, DerivedTypeSpec &);
-  // TYPE(*) or CLASS(*)
-  DeclTypeSpec(Category);
-  DeclTypeSpec() = delete;
-
-  bool operator==(const DeclTypeSpec &that) const {
-    if (category_ != that.category_) {
-      return false;
-    }
-    switch (category_) {
-    case Intrinsic: return typeSpec_.intrinsic == that.typeSpec_.intrinsic;
-    case TypeDerived:
-    case ClassDerived: return typeSpec_.derived == that.typeSpec_.derived;
-    default: return true;
-    }
+  IntrinsicTypeSpec(TypeCategory, int kind = 0);
+  const TypeCategory category() const { return category_; }
+  const int kind() const { return kind_; }
+  bool operator==(const IntrinsicTypeSpec &x) const {
+    return category_ == x.category_ && kind_ == x.kind_;
   }
-  bool operator!=(const DeclTypeSpec &that) const { return !operator==(that); }
+  bool operator!=(const IntrinsicTypeSpec &x) const { return !operator==(x); }
 
-  Category category() const { return category_; }
-  const IntrinsicTypeSpec &intrinsicTypeSpec() const;
-  DerivedTypeSpec &derivedTypeSpec();
-  const DerivedTypeSpec &derivedTypeSpec() const;
+  static int GetDefaultKind(TypeCategory category);
 
 private:
-  Category category_;
-  union {
-    const IntrinsicTypeSpec *intrinsic;
-    DerivedTypeSpec *derived;
-  } typeSpec_;
+  TypeCategory category_;
+  int kind_;
+  friend std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x);
+  // TODO: Character and len
 };
-std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
-
-// Root of the *TypeSpec hierarchy
-class TypeSpec {
-public:
-  virtual std::ostream &Output(std::ostream &o) const = 0;
-};
-
-class IntrinsicTypeSpec : public TypeSpec {
-public:
-  const KindParamValue &kind() const { return kind_; }
-
-protected:
-  IntrinsicTypeSpec(KindParamValue kind) : kind_{kind} {}
-  const KindParamValue kind_;
-};
-
-class NumericTypeSpec : public IntrinsicTypeSpec {
-protected:
-  NumericTypeSpec(KindParamValue kind) : IntrinsicTypeSpec(kind) {}
-};
-
-namespace {
-
-// Helper to cache mapping of kind to TypeSpec
-template<typename T> class KindedTypeHelper {
-public:
-  std::map<KindParamValue, T> cache;
-  KindedTypeHelper(Name name, KindParamValue defaultValue)
-    : name_{name}, defaultValue_{defaultValue} {}
-  const T &Make() { return Make(defaultValue_); }
-  const T &Make(KindParamValue kind) {
-    auto it{cache.find(kind)};
-    if (it == cache.end()) {
-      it = cache.insert(std::make_pair(kind, T{kind})).first;
-    }
-    return it->second;
-  }
-  std::ostream &Output(std::ostream &o, const T &x) {
-    o << name_;
-    if (x.kind_ != defaultValue_) o << '(' << x.kind_ << ')';
-    return o;
-  }
-
-private:
-  const Name name_;
-  const KindParamValue defaultValue_;
-};
-
-}  // namespace
-
-// One unique instance of LogicalTypeSpec for each kind.
-class LogicalTypeSpec : public IntrinsicTypeSpec {
-public:
-  static const LogicalTypeSpec &Make();
-  static const LogicalTypeSpec &Make(KindParamValue kind);
-  std::ostream &Output(std::ostream &o) const override { return o << *this; }
-
-private:
-  friend class KindedTypeHelper<LogicalTypeSpec>;
-  static KindedTypeHelper<LogicalTypeSpec> helper;
-  LogicalTypeSpec(KindParamValue kind) : IntrinsicTypeSpec(kind) {}
-  friend std::ostream &operator<<(std::ostream &o, const LogicalTypeSpec &x);
-};
-
-// One unique instance of IntegerTypeSpec for each kind.
-class IntegerTypeSpec : public NumericTypeSpec {
-public:
-  static const IntegerTypeSpec &Make();
-  static const IntegerTypeSpec &Make(KindParamValue kind);
-  std::ostream &Output(std::ostream &o) const override { return o << *this; }
-
-private:
-  friend class KindedTypeHelper<IntegerTypeSpec>;
-  static KindedTypeHelper<IntegerTypeSpec> helper;
-  IntegerTypeSpec(KindParamValue kind) : NumericTypeSpec(kind) {}
-  friend std::ostream &operator<<(std::ostream &o, const IntegerTypeSpec &x);
-};
-
-// One unique instance of RealTypeSpec for each kind.
-class RealTypeSpec : public NumericTypeSpec {
-public:
-  static const RealTypeSpec &Make();
-  static const RealTypeSpec &Make(KindParamValue kind);
-  std::ostream &Output(std::ostream &o) const override { return o << *this; }
-
-private:
-  friend class KindedTypeHelper<RealTypeSpec>;
-  static KindedTypeHelper<RealTypeSpec> helper;
-  RealTypeSpec(KindParamValue kind) : NumericTypeSpec(kind) {}
-  friend std::ostream &operator<<(std::ostream &o, const RealTypeSpec &x);
-};
-
-// One unique instance of ComplexTypeSpec for each kind.
-class ComplexTypeSpec : public NumericTypeSpec {
-public:
-  static const ComplexTypeSpec &Make();
-  static const ComplexTypeSpec &Make(KindParamValue kind);
-  std::ostream &Output(std::ostream &o) const override { return o << *this; }
-
-private:
-  friend class KindedTypeHelper<ComplexTypeSpec>;
-  static KindedTypeHelper<ComplexTypeSpec> helper;
-  ComplexTypeSpec(KindParamValue kind) : NumericTypeSpec(kind) {}
-  friend std::ostream &operator<<(std::ostream &o, const ComplexTypeSpec &x);
-};
-
-class CharacterTypeSpec : public IntrinsicTypeSpec {
-public:
-  static const int DefaultKind = 0;
-  CharacterTypeSpec(LenParamValue len, KindParamValue kind = DefaultKind)
-    : IntrinsicTypeSpec{kind}, len_{len} {}
-  const LenParamValue &len() const { return len_; }
-  std::ostream &Output(std::ostream &o) const override { return o << *this; }
-
-private:
-  const LenParamValue len_;
-  friend std::ostream &operator<<(std::ostream &, const CharacterTypeSpec &);
-};
-
-// Definition of a type parameter
-class TypeParamDef {
-public:
-  TypeParamDef(const Name &name, const IntegerTypeSpec &type,
-      const std::optional<IntConst> &defaultValue = {})
-    : name_{name}, type_{type}, defaultValue_{defaultValue} {};
-  const Name &name() const { return name_; }
-  const IntegerTypeSpec &type() const { return type_; }
-  const std::optional<IntConst> &defaultValue() const { return defaultValue_; }
-
-private:
-  const Name name_;
-  const IntegerTypeSpec type_;
-  const std::optional<IntConst> defaultValue_;
-};
-
-using TypeParamDefs = std::list<TypeParamDef>;
 
 class ShapeSpec {
 public:
@@ -344,78 +147,6 @@ private:
 };
 
 using ArraySpec = std::list<ShapeSpec>;
-
-class DataComponentDef {
-public:
-  // TODO: character-length - should be in DeclTypeSpec (overrides what is
-  // there)
-  // TODO: coarray-spec
-  // TODO: component-initialization
-  DataComponentDef(
-      const DeclTypeSpec &type, const SourceName &name, const Attrs &attrs)
-    : DataComponentDef(type, name, attrs, ArraySpec{}) {}
-  DataComponentDef(const DeclTypeSpec &type, const SourceName &name,
-      const Attrs &attrs, const ArraySpec &arraySpec);
-
-  const DeclTypeSpec &type() const { return type_; }
-  const SourceName &name() const { return name_; }
-  const Attrs &attrs() const { return attrs_; }
-  const ArraySpec &shape() const { return arraySpec_; }
-
-private:
-  const DeclTypeSpec type_;
-  const SourceName name_;
-  const Attrs attrs_;
-  const ArraySpec arraySpec_;
-  friend std::ostream &operator<<(std::ostream &, const DataComponentDef &);
-};
-
-class Scope;
-class Symbol;
-
-// This represents a proc-interface in the declaration of a procedure or
-// procedure component. It comprises a symbol (representing the specific
-// interface), a decl-type-spec (representing the function return type),
-// or neither.
-class ProcInterface {
-public:
-  const Symbol *symbol() const { return symbol_; }
-  const DeclTypeSpec *type() const { return type_ ? &*type_ : nullptr; }
-  void set_symbol(const Symbol &symbol);
-  void set_type(const DeclTypeSpec &type);
-
-private:
-  const Symbol *symbol_{nullptr};
-  std::optional<DeclTypeSpec> type_;
-};
-
-class ProcDecl {
-public:
-  ProcDecl(const ProcDecl &decl) = default;
-  ProcDecl(const SourceName &name) : name_{name} {}
-  // TODO: proc-pointer-init
-  const SourceName &name() const { return name_; }
-
-private:
-  const SourceName name_;
-  friend std::ostream &operator<<(std::ostream &, const ProcDecl &);
-};
-
-class ProcComponentDef {
-public:
-  ProcComponentDef(
-      const ProcDecl &decl, Attrs attrs, const ProcInterface &interface);
-
-  const ProcDecl &decl() const { return decl_; }
-  const Attrs &attrs() const { return attrs_; }
-  const ProcInterface &interface() const { return interface_; }
-
-private:
-  const ProcDecl decl_;
-  const Attrs attrs_;
-  const ProcInterface interface_;
-  friend std::ostream &operator<<(std::ostream &, const ProcComponentDef &);
-};
 
 class GenericSpec {
 public:
@@ -473,111 +204,15 @@ private:
   friend std::ostream &operator<<(std::ostream &, const GenericSpec &);
 };
 
-class TypeBoundGeneric {
-public:
-  TypeBoundGeneric(const SourceName &name, const Attrs &attrs,
-      const GenericSpec &genericSpec)
-    : name_{name}, attrs_{attrs}, genericSpec_{genericSpec} {
-    attrs_.CheckValid({Attr::PUBLIC, Attr::PRIVATE});
-  }
-
-private:
-  const SourceName name_;
-  const Attrs attrs_;
-  const GenericSpec genericSpec_;
-  friend std::ostream &operator<<(std::ostream &, const TypeBoundGeneric &);
-};
-
-class TypeBoundProc {
-public:
-  TypeBoundProc(const SourceName &interface, const Attrs &attrs,
-      const SourceName &binding)
-    : TypeBoundProc(interface, attrs, binding, binding) {
-    if (!attrs_.test(Attr::DEFERRED)) {
-      common::die(
-          "DEFERRED attribute is required if interface name is specified");
-    }
-  }
-  TypeBoundProc(const Attrs &attrs, const SourceName &binding,
-      const std::optional<SourceName> &procedure)
-    : TypeBoundProc({}, attrs, binding, procedure ? *procedure : binding) {
-    if (attrs_.test(Attr::DEFERRED)) {
-      common::die("DEFERRED attribute is only allowed with interface name");
-    }
-  }
-
-private:
-  TypeBoundProc(const std::optional<SourceName> &interface, const Attrs &attrs,
-      const SourceName &binding, const SourceName &procedure)
-    : interface_{interface}, attrs_{attrs}, binding_{binding}, procedure_{
-                                                                   procedure} {
-    attrs_.CheckValid({Attr::PUBLIC, Attr::PRIVATE, Attr::NOPASS, Attr::PASS,
-        Attr::DEFERRED, Attr::NON_OVERRIDABLE});
-  }
-  const std::optional<SourceName> interface_;
-  const Attrs attrs_;
-  const SourceName binding_;
-  const SourceName procedure_;
-  friend std::ostream &operator<<(std::ostream &, const TypeBoundProc &);
-};
-
-// Definition of a derived type
-class DerivedTypeDef {
-public:
-  const SourceName &name() const { return *data_.name; }
-  const SourceName *extends() const { return data_.extends; }
-  const Attrs &attrs() const { return data_.attrs; }
-  const TypeParamDefs &lenParams() const { return data_.lenParams; }
-  const TypeParamDefs &kindParams() const { return data_.kindParams; }
-  const std::list<DataComponentDef> &dataComponents() const {
-    return data_.dataComps;
-  }
-  const std::list<ProcComponentDef> &procComponents() const {
-    return data_.procComps;
-  }
-  const std::list<TypeBoundProc> &typeBoundProcs() const {
-    return data_.typeBoundProcs;
-  }
-  const std::list<TypeBoundGeneric> &typeBoundGenerics() const {
-    return data_.typeBoundGenerics;
-  }
-  const std::list<SourceName> finalProcs() const { return data_.finalProcs; }
-
-  struct Data {
-    const SourceName *name{nullptr};
-    const SourceName *extends{nullptr};
-    Attrs attrs;
-    bool Private{false};
-    bool sequence{false};
-    TypeParamDefs lenParams;
-    TypeParamDefs kindParams;
-    std::list<DataComponentDef> dataComps;
-    std::list<ProcComponentDef> procComps;
-    bool bindingPrivate{false};
-    std::list<TypeBoundProc> typeBoundProcs;
-    std::list<TypeBoundGeneric> typeBoundGenerics;
-    std::list<SourceName> finalProcs;
-    bool hasTbpPart() const {
-      return !finalProcs.empty() || !typeBoundProcs.empty() ||
-          !typeBoundGenerics.empty();
-    }
-  };
-  explicit DerivedTypeDef(const Data &x);
-
-private:
-  const Data data_;
-  // TODO: type-bound procedures
-  friend std::ostream &operator<<(std::ostream &, const DerivedTypeDef &);
-};
+// The value of a len type parameter
+using LenParamValue = Bound;
 
 using ParamValue = LenParamValue;
 
-class DerivedTypeSpec : public TypeSpec {
+class DerivedTypeSpec {
 public:
-  std::ostream &Output(std::ostream &o) const override { return o << *this; }
   explicit DerivedTypeSpec(const SourceName &name) : name_{&name} {}
   DerivedTypeSpec() = delete;
-  virtual ~DerivedTypeSpec();
   const SourceName &name() const { return *name_; }
   const Scope *scope() const { return scope_; }
   void set_scope(const Scope &);
@@ -587,6 +222,54 @@ private:
   const Scope *scope_{nullptr};
   std::list<std::pair<std::optional<SourceName>, ParamValue>> paramValues_;
   friend std::ostream &operator<<(std::ostream &, const DerivedTypeSpec &);
+};
+
+class DeclTypeSpec {
+public:
+  enum Category { Intrinsic, TypeDerived, ClassDerived, TypeStar, ClassStar };
+
+  // intrinsic-type-spec or TYPE(intrinsic-type-spec)
+  DeclTypeSpec(const IntrinsicTypeSpec &);
+  // TYPE(derived-type-spec) or CLASS(derived-type-spec)
+  DeclTypeSpec(Category, DerivedTypeSpec &);
+  // TYPE(*) or CLASS(*)
+  DeclTypeSpec(Category);
+  DeclTypeSpec() = delete;
+
+  bool operator==(const DeclTypeSpec &) const;
+  bool operator!=(const DeclTypeSpec &that) const { return !operator==(that); }
+
+  Category category() const { return category_; }
+  const IntrinsicTypeSpec &intrinsicTypeSpec() const;
+  DerivedTypeSpec &derivedTypeSpec();
+  const DerivedTypeSpec &derivedTypeSpec() const;
+
+private:
+  Category category_;
+  union TypeSpec {
+    TypeSpec() : derived{nullptr} {}
+    TypeSpec(IntrinsicTypeSpec intrinsic) : intrinsic{intrinsic} {}
+    TypeSpec(DerivedTypeSpec *derived) : derived{derived} {}
+    IntrinsicTypeSpec intrinsic;
+    DerivedTypeSpec *derived;
+  } typeSpec_;
+};
+std::ostream &operator<<(std::ostream &, const DeclTypeSpec &);
+
+// This represents a proc-interface in the declaration of a procedure or
+// procedure component. It comprises a symbol (representing the specific
+// interface), a decl-type-spec (representing the function return type),
+// or neither.
+class ProcInterface {
+public:
+  const Symbol *symbol() const { return symbol_; }
+  const DeclTypeSpec *type() const { return type_ ? &*type_ : nullptr; }
+  void set_symbol(const Symbol &symbol);
+  void set_type(const DeclTypeSpec &type);
+
+private:
+  const Symbol *symbol_{nullptr};
+  std::optional<DeclTypeSpec> type_;
 };
 
 }  // namespace Fortran::semantics

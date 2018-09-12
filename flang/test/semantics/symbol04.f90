@@ -21,7 +21,7 @@ module m
  end type
  !DEF: /m/t2 PUBLIC DerivedType
  type :: t2
-  !DEF: /m/t2/t1 ObjectEntity INTEGER
+  !DEF: /m/t2/t1 ObjectEntity INTEGER(4)
   integer :: t1
   !DEF: /m/t2/x ObjectEntity TYPE(t1)
   !REF: /m/t1

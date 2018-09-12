@@ -38,14 +38,14 @@ end
 !module m
 !contains
 !pure subroutine s(x,y) bind(c)
-!logical,intent(in)::x
-!real,intent(inout)::y
+!logical(4),intent(in)::x
+!real(4),intent(inout)::y
 !end
 !function f1() result(x)
-!real::x
+!real(4)::x
 !end
 !function f2(y)
-!real::f2
-!complex::y
+!real(4)::f2
+!complex(4)::y
 !end
 !end

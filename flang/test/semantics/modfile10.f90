@@ -38,6 +38,8 @@ module m
     sequence
     integer i
     real x
+    double precision y
+    double complex z
   end type
 contains
   subroutine b()
@@ -58,19 +60,19 @@ end module
 !module m
 !  interface
 !    subroutine a(i,j)
-!      integer::i
-!      integer::j
+!      integer(4)::i
+!      integer(4)::j
 !    end
 !  end interface
 !  type,abstract::t
-!    integer::i
+!    integer(4)::i
 !  contains
 !    procedure(a),deferred,nopass::q
 !    procedure(b),deferred,nopass::p
 !    procedure(b),deferred,nopass::r
 !  end type
 !  type::t2
-!    integer::x
+!    integer(4)::x
 !  contains
 !    final::c
 !    procedure,non_overridable,private::d
@@ -78,8 +80,10 @@ end module
 !  end type
 !  type::t3
 !    sequence
-!    integer::i
-!    real::x
+!    integer(4)::i
+!    real(4)::x
+!    real(8)::y
+!    complex(8)::z
 !  end type
 !contains
 !  subroutine b()

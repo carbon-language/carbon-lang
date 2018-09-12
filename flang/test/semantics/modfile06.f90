@@ -28,14 +28,14 @@ end
 !module m
 ! interface
 !  function f(x)
-!   integer::f
-!   real::x
+!   integer(4)::f
+!   real(4)::x
 !  end
 ! end interface
 ! interface
 !  subroutine s(y,z)
-!   logical::y
-!   complex::z
+!   logical(4)::y
+!   complex(4)::z
 !  end
 ! end interface
 !end

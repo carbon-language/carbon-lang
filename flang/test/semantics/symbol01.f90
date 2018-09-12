@@ -20,8 +20,8 @@ module m
  private :: f
 contains
  !DEF: /m/s BIND(C), PUBLIC, PURE Subprogram
- !DEF: /m/s/x INTENT(IN) (implicit) ObjectEntity REAL
- !DEF: /m/s/y INTENT(INOUT) (implicit) ObjectEntity REAL
+ !DEF: /m/s/x INTENT(IN) (implicit) ObjectEntity REAL(4)
+ !DEF: /m/s/y INTENT(INOUT) (implicit) ObjectEntity REAL(4)
  pure subroutine s (x, y) bind(c)
   intent(in) :: x
   intent(inout) :: y
@@ -31,7 +31,7 @@ contains
   end subroutine
  end subroutine
  !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram
- !DEF: /m/f/x ALLOCATABLE ObjectEntity REAL
+ !DEF: /m/f/x ALLOCATABLE ObjectEntity REAL(4)
  recursive pure function f() result(x)
   real, allocatable :: x
   !REF: /m/f/x

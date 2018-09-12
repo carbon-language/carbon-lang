@@ -176,10 +176,9 @@ private:
   DerivedTypeSpec *derivedTypeSpec_{nullptr};
   std::unique_ptr<ParamValue> typeParamValue_;
 
-  void MakeIntrinsic(const IntrinsicTypeSpec &intrinsicTypeSpec);
+  void MakeIntrinsic(TypeCategory, int);
   void SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec);
-  static KindParamValue GetKindParamValue(
-      const std::optional<parser::KindSelector> &kind);
+  static int GetKindParamValue(const std::optional<parser::KindSelector> &kind);
 };
 
 // Track statement source locations and save messages.
@@ -731,9 +730,9 @@ std::optional<const DeclTypeSpec> ImplicitRules::GetType(char ch) const {
   } else if (inheritFromParent_) {
     return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
-    return DeclTypeSpec{IntegerTypeSpec::Make()};
+    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Integer}};
   } else if (ch >= 'a' && ch <= 'z') {
-    return DeclTypeSpec{RealTypeSpec::Make()};
+    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Real}};
   } else {
     return std::nullopt;
   }
@@ -889,37 +888,38 @@ void DeclTypeSpecVisitor::Post(const parser::TypeGuardStmt &) {
 }
 
 bool DeclTypeSpecVisitor::Pre(const parser::IntegerTypeSpec &x) {
-  MakeIntrinsic(IntegerTypeSpec::Make(GetKindParamValue(x.v)));
+  MakeIntrinsic(TypeCategory::Integer, GetKindParamValue(x.v));
   return false;
 }
 void DeclTypeSpecVisitor::Post(const parser::IntrinsicTypeSpec::Character &x) {
   CHECK(!"TODO: character");
 }
 bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Logical &x) {
-  MakeIntrinsic(LogicalTypeSpec::Make(GetKindParamValue(x.kind)));
+  MakeIntrinsic(TypeCategory::Logical, GetKindParamValue(x.kind));
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Real &x) {
-  MakeIntrinsic(RealTypeSpec::Make(GetKindParamValue(x.kind)));
+  MakeIntrinsic(TypeCategory::Real, GetKindParamValue(x.kind));
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Complex &x) {
-  MakeIntrinsic(ComplexTypeSpec::Make(GetKindParamValue(x.kind)));
+  MakeIntrinsic(TypeCategory::Complex, GetKindParamValue(x.kind));
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
-  CHECK(!"TODO: double precision");
+  MakeIntrinsic(TypeCategory::Real,
+      2 * IntrinsicTypeSpec::GetDefaultKind(TypeCategory::Real));
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(
     const parser::IntrinsicTypeSpec::DoubleComplex &) {
-  CHECK(!"TODO: double complex");
+  MakeIntrinsic(TypeCategory::Complex,
+      2 * IntrinsicTypeSpec::GetDefaultKind(TypeCategory::Complex));
   return false;
 }
-void DeclTypeSpecVisitor::MakeIntrinsic(
-    const IntrinsicTypeSpec &intrinsicTypeSpec) {
-  SetDeclTypeSpec(DeclTypeSpec{intrinsicTypeSpec});
+void DeclTypeSpecVisitor::MakeIntrinsic(TypeCategory category, int kind) {
+  SetDeclTypeSpec(DeclTypeSpec{IntrinsicTypeSpec{category, kind}});
 }
 
 // Set declTypeSpec_ based on derivedTypeSpec_
@@ -941,15 +941,14 @@ void DeclTypeSpecVisitor::SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec) {
   declTypeSpec_ = std::make_unique<DeclTypeSpec>(declTypeSpec);
 }
 
-KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
+int DeclTypeSpecVisitor::GetKindParamValue(
     const std::optional<parser::KindSelector> &kind) {
   if (kind) {
     if (auto *intExpr{std::get_if<parser::ScalarIntConstantExpr>(&kind->u)}) {
       const parser::Expr &expr{*intExpr->thing.thing.thing};
       if (auto *lit{std::get_if<parser::LiteralConstant>(&expr.u)}) {
         if (auto *intLit{std::get_if<parser::IntLiteralConstant>(&lit->u)}) {
-          return KindParamValue{
-              IntConst::Make(std::get<std::uint64_t>(intLit->t))};
+          return std::get<std::uint64_t>(intLit->t);
         }
       }
       CHECK(!"TODO: constant evaluation");
@@ -957,7 +956,7 @@ KindParamValue DeclTypeSpecVisitor::GetKindParamValue(
       CHECK(!"TODO: translate star-size to kind");
     }
   }
-  return KindParamValue{};
+  return 0;
 }
 
 // MessageHandler implementation

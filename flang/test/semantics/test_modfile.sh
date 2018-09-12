@@ -61,7 +61,7 @@ for src in "$@"; do
     fi
     sed '/^!mod\$/d' $temp/$mod > $actual
     sed '1,/^!Expect: '"$mod"'/d' $src | sed -e '/^$/,$d' -e 's/^! *//' > $expect
-    if ! diff -U999999 $actual $expect > $diffs; then
+    if ! diff -U999999 $expect $actual > $diffs; then
       echo "Module file $mod differs from expected:"
       sed '1,2d' $diffs
       echo FAIL

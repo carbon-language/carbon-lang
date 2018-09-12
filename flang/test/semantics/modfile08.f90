@@ -35,16 +35,16 @@ end
 
 !Expect: m.mod
 !module m
-!  procedure(real)::a
-!  procedure(logical)::b
-!  procedure(complex)::c
+!  procedure(real(4))::a
+!  procedure(logical(4))::b
+!  procedure(complex(4))::c
 !  procedure()::d
 !  procedure()::e
-!  procedure(real)::f
+!  procedure(real(4))::f
 !  procedure(s)::g
 !  type::t
 !    procedure(),nopass,pointer::e
-!    procedure(real),nopass,pointer::f
+!    procedure(real(4)),nopass,pointer::f
 !    procedure(s),pointer,private::g
 !  end type
 !contains

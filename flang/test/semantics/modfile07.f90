@@ -42,20 +42,20 @@ end
 ! generic::foo=>s1,s2
 ! interface
 !  subroutine s1(x)
-!   real::x
+!   real(4)::x
 !  end
 ! end interface
 ! interface
 !  subroutine s2(x)
-!   complex::x
+!   complex(4)::x
 !  end
 ! end interface
 ! generic::bar=>s1,s2,s3,s4
 !contains
 ! subroutine s3(x)
-!  logical::x
+!  logical(4)::x
 ! end
 ! subroutine s4(x)
-!  integer::x
+!  integer(4)::x
 ! end
 !end
