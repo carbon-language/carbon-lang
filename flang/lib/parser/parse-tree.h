@@ -1823,13 +1823,6 @@ struct ArrayElement {
   std::list<SectionSubscript> subscripts;
 };
 
-// R918 array-section ->
-//        data-ref [( substring-range )] | complex-part-designator
-struct ArraySection {
-  WRAPPER_CLASS_BOILERPLATE(ArraySection, Designator);
-  // at least one vector-valued or triplet subscript
-};
-
 // R933 allocate-object -> variable-name | structure-component
 struct AllocateObject {
   UNION_CLASS_BOILERPLATE(AllocateObject);

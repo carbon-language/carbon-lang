@@ -18,7 +18,9 @@
 // These definitions map Fortran's intrinsic types, characterized by byte
 // sizes encoded in KIND type parameter values, to their value representation
 // types in the evaluation library, which are parameterized in terms of
-// total bit width and real precision.
+// total bit width and real precision.  Instances of these class templates
+// are suitable for use as template parameters to instantiate other class
+// templates, like expressions, over the supported types and kinds.
 
 #include "complex.h"
 #include "integer.h"
@@ -37,7 +39,7 @@ namespace Fortran::evaluate {
 using common::TypeCategory;
 
 // Specific intrinsic types are represented by specializations of
-// the class template Type<CATEGORY, KIND>.
+// this class template Type<CATEGORY, KIND>.
 template<TypeCategory CATEGORY, int KIND> struct Type;
 
 template<TypeCategory CATEGORY, int KIND> struct TypeBase {
@@ -127,8 +129,8 @@ using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
 // Default REAL just simply has to be IEEE-754 single precision today.
 // It occupies one numeric storage unit by definition.  The default INTEGER
 // and default LOGICAL intrinsic types also have to occupy one numeric
-// storage unit, so their kinds are also forced.  Default COMPLEX occupies
-// two numeric storage units.
+// storage unit, so their kinds are also forced.  Default COMPLEX must always
+// comprise two default REAL components.
 // TODO: Support compile-time options to default reals, ints, or both to KIND=8
 
 using DefaultReal = Type<TypeCategory::Real, 4>;
@@ -143,8 +145,9 @@ using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
 
-// For an intrinsic type category CAT, CategoryTypes<CAT> is an instantiation
-// of std::tuple<Type<CAT, K>> over each supported kind K in that category.
+// For each intrinsic type category CAT, CategoryTypes<CAT> is an instantiation
+// of std::tuple<Type<CAT, K>> that comprises every kind value K in that
+// category that could possibly be supported on any target.
 template<TypeCategory CATEGORY, int... KINDS>
 using CategoryTypesTuple = std::tuple<Type<CATEGORY, KINDS>...>;
 

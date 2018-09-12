@@ -543,7 +543,7 @@ auto ExpressionBase<RESULT>::ScalarValue() const
 Expr<SomeType>::~Expr() {}
 
 // Template instantiations to resolve the "extern template" declarations
-// in expression.h.
+// that appear in expression.h.
 
 template class Expr<Type<TypeCategory::Integer, 1>>;
 template class Expr<Type<TypeCategory::Integer, 2>>;
@@ -605,6 +605,8 @@ template struct ExpressionBase<Type<TypeCategory::Complex, 8>>;
 template struct ExpressionBase<Type<TypeCategory::Complex, 10>>;
 template struct ExpressionBase<Type<TypeCategory::Complex, 16>>;
 template struct ExpressionBase<Type<TypeCategory::Character, 1>>;
+template struct ExpressionBase<Type<TypeCategory::Character, 2>>;
+template struct ExpressionBase<Type<TypeCategory::Character, 4>>;
 template struct ExpressionBase<Type<TypeCategory::Logical, 1>>;
 template struct ExpressionBase<Type<TypeCategory::Logical, 2>>;
 template struct ExpressionBase<Type<TypeCategory::Logical, 4>>;

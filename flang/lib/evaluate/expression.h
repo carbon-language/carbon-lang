@@ -17,8 +17,9 @@
 
 // Represent Fortran expressions in a type-safe manner.
 // Expressions are the sole owners of their constituents; i.e., there is no
-// context-independent hash table or sharing of common subexpressions.
-// Both deep copy and move semantics are supported for expression construction.
+// context-independent hash table or sharing of common subexpressions, and
+// thus these are trees, not DAGs.  Both deep copy and move semantics are
+// supported for expression construction.
 
 #include "common.h"
 #include "type.h"
@@ -721,6 +722,8 @@ extern template struct ExpressionBase<Type<TypeCategory::Complex, 8>>;
 extern template struct ExpressionBase<Type<TypeCategory::Complex, 10>>;
 extern template struct ExpressionBase<Type<TypeCategory::Complex, 16>>;
 extern template struct ExpressionBase<Type<TypeCategory::Character, 1>>;
+extern template struct ExpressionBase<Type<TypeCategory::Character, 2>>;
+extern template struct ExpressionBase<Type<TypeCategory::Character, 4>>;
 extern template struct ExpressionBase<Type<TypeCategory::Logical, 1>>;
 extern template struct ExpressionBase<Type<TypeCategory::Logical, 2>>;
 extern template struct ExpressionBase<Type<TypeCategory::Logical, 4>>;

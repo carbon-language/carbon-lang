@@ -218,7 +218,7 @@ std::string CompileFortran(
     }
     Fortran::semantics::ResolveNames(Fortran::semantics::Scope::globalScope,
         parseTree, parsing.cooked(), directories);
-    const auto& Cook = parsing.cooked();
+    const auto &Cook = parsing.cooked();
     bool Pass = Fortran::semantics::ValidateLabels(parseTree, Cook);
     if (!Pass) {
       std::cerr << "Semantic error(s), aborting\n";
@@ -244,8 +244,7 @@ std::string CompileFortran(
     Fortran::parser::ContextualMessages contextualMessages{whole, &messages};
     Fortran::evaluate::FoldingContext context{contextualMessages};
     Fortran::semantics::IntrinsicTypeDefaultKinds defaults;
-    Fortran::semantics::AnalyzeExpressions(
-        parseTree, context, defaults, std::cout);
+    Fortran::semantics::AnalyzeExpressions(parseTree, context, defaults);
     messages.Emit(std::cerr, parsing.cooked());
     if (!messages.empty() &&
         (driver.warningsAreErrors || messages.AnyFatalError())) {

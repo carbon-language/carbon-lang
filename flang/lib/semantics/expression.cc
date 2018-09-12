@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "expression.h"
-#include "dump-parse-tree.h"  // TODO pmk temporary
+#include "dump-parse-tree.h"  // TODO temporary
 #include "symbol.h"
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
@@ -21,17 +21,22 @@
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <functional>
+#include <iostream>  // TODO remove soon
 #include <optional>
 
 using namespace Fortran::parser::literals;
 
+// Much of the code that implements semantic analysis of expressions is
+// tightly coupled with their typed representations in lib/evaluate,
+// and appears here in namespace Fortran::evaluate for convenience.
 namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
 using MaybeExpr = std::optional<Expr<SomeType>>;
 
-// A utility subroutine to repackage optional values as MaybeExpr values.
+// A utility subroutine to repackage optional expressions of various levels
+// of type specificity as fully general MaybeExpr values.
 template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
   if (x.has_value()) {
     return {AsGenericExpr(AsCategoryExpr(AsExpr(std::move(*x))))};
@@ -55,18 +60,13 @@ MaybeExpr AsMaybeExpr(std::optional<Expr<Type<CAT, KIND>>> &&x) {
   return std::nullopt;
 }
 
-// This local class wraps some state and a highly overloaded
-// Analyze() member function that converts parse trees into generic
+// This local class wraps some state and a highly overloaded Analyze()
+// member function that converts parse trees into (usually) generic
 // expressions.
 struct ExprAnalyzer {
-  using MaybeIntExpr = std::optional<Expr<SomeInteger>>;
-
   ExprAnalyzer(
       FoldingContext &ctx, const semantics::IntrinsicTypeDefaultKinds &dfts)
     : context{ctx}, defaults{dfts} {}
-
-  int Analyze(
-      const std::optional<parser::KindParam> &, int defaultKind, int kanjiKind);
 
   MaybeExpr Analyze(const parser::Expr &);
   MaybeExpr Analyze(const parser::CharLiteralConstantSubstring &);
@@ -78,14 +78,23 @@ struct ExprAnalyzer {
   MaybeExpr Analyze(const parser::ComplexLiteralConstant &);
   MaybeExpr Analyze(const parser::CharLiteralConstant &);
   MaybeExpr Analyze(const parser::LogicalLiteralConstant &);
+  MaybeExpr Analyze(const parser::HollerithLiteralConstant &);
+  MaybeExpr Analyze(const parser::BOZLiteralConstant &);
   MaybeExpr Analyze(const parser::Name &);
+  MaybeExpr Analyze(const parser::NamedConstant &);
   MaybeExpr Analyze(const parser::Substring &);
   MaybeExpr Analyze(const parser::ArrayElement &);
   MaybeExpr Analyze(const parser::StructureComponent &);
+  MaybeExpr Analyze(const parser::TypeParamInquiry &);
   MaybeExpr Analyze(const parser::CoindexedNamedObject &);
   MaybeExpr Analyze(const parser::ComplexPart &);
-  MaybeExpr Analyze(const parser::AcSpec &);
+  MaybeExpr Analyze(const parser::ArrayConstructor &);
   MaybeExpr Analyze(const parser::StructureConstructor &);
+  MaybeExpr Analyze(const parser::Expr::Parentheses &);
+  MaybeExpr Analyze(const parser::Expr::UnaryPlus &);
+  MaybeExpr Analyze(const parser::Expr::Negate &);
+  MaybeExpr Analyze(const parser::Expr::NOT &);
+  MaybeExpr Analyze(const parser::Expr::PercentLoc &);
   MaybeExpr Analyze(const parser::Expr::DefinedUnary &);
   MaybeExpr Analyze(const parser::Expr::Power &);
   MaybeExpr Analyze(const parser::Expr::Multiply &);
@@ -106,13 +115,18 @@ struct ExprAnalyzer {
   MaybeExpr Analyze(const parser::Expr::XOR &);
   MaybeExpr Analyze(const parser::Expr::ComplexConstructor &);
   MaybeExpr Analyze(const parser::Expr::DefinedBinary &);
-  MaybeExpr Analyze(const parser::Call &);
+  MaybeExpr Analyze(const parser::FunctionReference &);
+
+  // Kind parameter analysis always returns a valid kind value.
+  int Analyze(
+      const std::optional<parser::KindParam> &, int defaultKind, int kanjiKind);
+
+  std::optional<Subscript> Analyze(const parser::SectionSubscript &);
+  std::vector<Subscript> Analyze(const std::list<parser::SectionSubscript> &);
 
   std::optional<Expr<SubscriptInteger>> AsSubscript(MaybeExpr &&);
   std::optional<Expr<SubscriptInteger>> TripletPart(
       const std::optional<parser::Subscript> &);
-  std::optional<Subscript> Analyze(const parser::SectionSubscript &);
-  std::vector<Subscript> Analyze(const std::list<parser::SectionSubscript> &);
 
   FoldingContext &context;
   const semantics::IntrinsicTypeDefaultKinds &defaults;
@@ -120,13 +134,11 @@ struct ExprAnalyzer {
 
 // This helper template function handles the Scalar<>, Integer<>, and
 // Constant<> wrappers in the parse tree, as well as default behavior
-// for wrappers and unions.
-// (C++ doesn't allow template specialization in a class, so this helper
-// template function must be outside ExprAnalyzer and reflect back into it.)
+// for unions.  (C++ doesn't allow template specialization in
+// a class, so this helper template function must be outside ExprAnalyzer
+// and reflect back into it.)
 template<typename A> MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const A &x) {
-  if constexpr (WrapperTrait<A>) {
-    return AnalyzeHelper(ea, x.v);
-  } else if constexpr (UnionTrait<A>) {
+  if constexpr (UnionTrait<A>) {
     return AnalyzeHelper(ea, x.u);
   } else {
     return ea.Analyze(x);
@@ -171,97 +183,8 @@ MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const common::Indirection<A> &x) {
   return AnalyzeHelper(ea, *x);
 }
 
-template<>
-MaybeExpr AnalyzeHelper(
-    ExprAnalyzer &ea, const parser::HollerithLiteralConstant &x) {
-  return common::SearchDynamicTypes(
-      TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
-          ea.defaults.defaultCharacterKind, x.v});
-}
-
-template<>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::BOZLiteralConstant &x) {
-  const char *p{x.v.data()};
-  std::uint64_t base{16};
-  switch (*p++) {
-  case 'b': base = 2; break;
-  case 'o': base = 8; break;
-  case 'z': break;
-  case 'x': break;
-  default: CRASH_NO_CASE;
-  }
-  CHECK(*p == '"');
-  auto value{BOZLiteralConstant::ReadUnsigned(++p, base)};
-  if (*p != '"') {
-    ea.context.messages.Say(
-        "invalid digit ('%c') in BOZ literal %s"_err_en_US, *p, x.v.data());
-    return std::nullopt;
-  }
-  if (value.overflow) {
-    ea.context.messages.Say("BOZ literal %s too large"_err_en_US, x.v.data());
-    return std::nullopt;
-  }
-  return {AsGenericExpr(value.value)};
-}
-
-template<>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Expr::Parentheses &x) {
-  if (MaybeExpr operand{AnalyzeHelper(ea, *x.v)}) {
-    return std::visit(
-        common::visitors{
-            [&](BOZLiteralConstant &&boz) {
-              return operand;  // ignore parentheses around typeless
-            },
-            [](auto &&catExpr) {
-              return std::visit(
-                  [](auto &&expr) -> MaybeExpr {
-                    using Ty = ResultType<decltype(expr)>;
-                    if constexpr (common::HasMember<Parentheses<Ty>,
-                                      decltype(expr.u)>) {
-                      return {AsGenericExpr(
-                          AsExpr(Parentheses<Ty>{std::move(expr)}))};
-                    }
-                    // TODO: support Parentheses in all Expr specializations
-                    return std::nullopt;
-                  },
-                  std::move(catExpr.u));
-            }},
-        std::move(operand->u));
-  }
-  return std::nullopt;
-}
-
-template<>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Expr::Negate &x) {
-  if (MaybeExpr operand{AnalyzeHelper(ea, *x.v)}) {
-    return Negation(ea.context.messages, std::move(operand->u));
-  }
-  return std::nullopt;
-}
-
-template<>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Expr::NOT &x) {
-  if (MaybeExpr operand{AnalyzeHelper(ea, *x.v)}) {
-    return std::visit(common::visitors{[](Expr<SomeLogical> &&lx) -> MaybeExpr {
-                                         return {AsGenericExpr(
-                                             LogicalNegation(std::move(lx)))};
-                                       },
-                          [=](auto &&) -> MaybeExpr {
-                            // TODO pmk: INTEGER operand for bitwise extension?
-                            ea.context.messages.Say(
-                                "Operand of .NOT. must be LOGICAL"_err_en_US);
-                            return std::nullopt;
-                          }},
-        std::move(operand->u));
-  }
-  return std::nullopt;
-}
-
-template<>
-MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Expr::PercentLoc &) {
-  ea.context.messages.Say("TODO: %LOC unimplemented\n"_err_en_US);
-  return std::nullopt;
-}
+// Implementations of ExprAnalyzer::Analyze follow for various parse tree
+// node types.
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr &x) {
   return AnalyzeHelper(*this, x);
@@ -311,7 +234,7 @@ MaybeExpr IntLiteralConstant(ExprAnalyzer &ea, const PARSED &x) {
       TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
           kind, static_cast<std::int64_t>(value)})};
   if (!result.has_value()) {
-    ea.context.messages.Say("unsupported INTEGER(KIND=%u)"_err_en_US, kind);
+    ea.context.messages.Say("unsupported INTEGER(KIND=%d)"_err_en_US, kind);
   }
   return result;
 }
@@ -393,7 +316,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   auto result{common::SearchDynamicTypes(
       RealTypeVisitor{kind, x.real.source, context})};
   if (!result.has_value()) {
-    ctxMsgs.Say("unsupported REAL(KIND=%u)"_err_en_US, kind);
+    ctxMsgs.Say("unsupported REAL(KIND=%d)"_err_en_US, kind);
   }
   return AsMaybeExpr(std::move(result));
 }
@@ -426,7 +349,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstant &x) {
       TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
           kind, std::move(value)})};
   if (!result.has_value()) {
-    context.messages.Say("unsupported CHARACTER(KIND=%u)"_err_en_US, kind);
+    context.messages.Say("unsupported CHARACTER(KIND=%d)"_err_en_US, kind);
   }
   return result;
 }
@@ -439,9 +362,39 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
       TypeKindVisitor<TypeCategory::Logical, Constant, bool>{
           kind, std::move(value)})};
   if (!result.has_value()) {
-    context.messages.Say("unsupported LOGICAL(KIND=%u)"_err_en_US, kind);
+    context.messages.Say("unsupported LOGICAL(KIND=%d)"_err_en_US, kind);
   }
   return result;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::HollerithLiteralConstant &x) {
+  return common::SearchDynamicTypes(
+      TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
+          defaults.defaultCharacterKind, x.v});
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
+  const char *p{x.v.data()};
+  std::uint64_t base{16};
+  switch (*p++) {
+  case 'b': base = 2; break;
+  case 'o': base = 8; break;
+  case 'z': break;
+  case 'x': break;
+  default: CRASH_NO_CASE;
+  }
+  CHECK(*p == '"');
+  auto value{BOZLiteralConstant::ReadUnsigned(++p, base)};
+  if (*p != '"') {
+    context.messages.Say(
+        "invalid digit ('%c') in BOZ literal %s"_err_en_US, *p, x.v.data());
+    return std::nullopt;
+  }
+  if (value.overflow) {
+    context.messages.Say("BOZ literal %s too large"_err_en_US, x.v.data());
+    return std::nullopt;
+  }
+  return {AsGenericExpr(value.value)};
 }
 
 template<typename TYPE, TypeCategory CATEGORY>
@@ -511,7 +464,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
   if (n.symbol == nullptr) {
     // TODO: convert this to a CHECK later
     context.messages.Say(
-        "TODO: name (%s) is not resolved to an object"_err_en_US,
+        "TODO: name '%s' is not resolved to an object"_err_en_US,
         n.ToString().data());
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
     context.messages.Say(
@@ -522,8 +475,19 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
             TypedDataRef(*n.symbol, defaults, DataRef{*n.symbol})}) {
       return result;
     }
-    context.messages.Say("%s is not of a supported type and kind"_err_en_US,
+    context.messages.Say("'%s' is not of a supported type and kind"_err_en_US,
         n.ToString().data());
+  }
+  return std::nullopt;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::NamedConstant &n) {
+  if (MaybeExpr value{Analyze(n.v)}) {
+    if (std::optional<Constant<SomeType>> folded{value->Fold(context)}) {
+      return {AsGenericExpr(std::move(*folded))};
+    }
+    context.messages.Say(
+        "'%s' must be a constant"_err_en_US, n.v.ToString().data());
   }
   return std::nullopt;
 }
@@ -604,7 +568,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
   } else if (const auto *component{
                  std::get_if<common::Indirection<parser::StructureComponent>>(
                      &ae.base.u)}) {
-    // pmk continue
+    // pmk continue development here
   } else {
     CHECK(!"parser::ArrayRef base DataRef is neither Name nor "
            "StructureComponent");
@@ -613,38 +577,117 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
-  context.messages.Say("pmk: StructureComponent unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: StructureComponent unimplemented\n"_err_en_US);
+  return std::nullopt;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::TypeParamInquiry &tpi) {
+  context.messages.Say("TODO: TypeParamInquiry unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::CoindexedNamedObject &co) {
-  context.messages.Say("pmk: CoindexedNamedObject unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: CoindexedNamedObject unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstantSubstring &) {
   context.messages.Say(
-      "pmk: CharLiteralConstantSubstring unimplemented\n"_err_en_US);
+      "TODO: CharLiteralConstantSubstring unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::AcSpec &) {
-  context.messages.Say("pmk: AcSpec unimplemented\n"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayConstructor &) {
+  context.messages.Say("TODO: ArrayConstructor unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::StructureConstructor &) {
-  context.messages.Say("pmk: StructureConstructor unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: StructureConstructor unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::Call &) {
-  context.messages.Say("pmk: Call unimplemented\n"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &) {
+  context.messages.Say("TODO: FunctionReference unimplemented\n"_err_en_US);
+  return std::nullopt;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
+  if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
+    return std::visit(
+        common::visitors{
+            [&](BOZLiteralConstant &&boz) {
+              return operand;  // ignore parentheses around typeless
+            },
+            [](auto &&catExpr) {
+              return std::visit(
+                  [](auto &&expr) -> MaybeExpr {
+                    using Ty = ResultType<decltype(expr)>;
+                    if constexpr (common::HasMember<Parentheses<Ty>,
+                                      decltype(expr.u)>) {
+                      return {AsGenericExpr(
+                          AsExpr(Parentheses<Ty>{std::move(expr)}))};
+                    }
+                    // TODO: support Parentheses in all Expr specializations
+                    return std::nullopt;
+                  },
+                  std::move(catExpr.u));
+            }},
+        std::move(operand->u));
+  }
+  return std::nullopt;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::UnaryPlus &x) {
+  MaybeExpr value{AnalyzeHelper(*this, *x.v)};
+  if (value.has_value()) {
+    std::visit(
+        common::visitors{
+            [](const BOZLiteralConstant &) {},  // allow +Z'1', it's harmless
+            [&](const auto &catExpr) {
+              TypeCategory cat{ResultType<decltype(catExpr)>::category};
+              if (cat != TypeCategory::Integer && cat != TypeCategory::Real &&
+                  cat != TypeCategory::Complex) {
+                context.messages.Say(
+                    "operand of unary + must be of a numeric type"_err_en_US);
+              }
+            }},
+        value->u);
+  }
+  return value;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Negate &x) {
+  if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
+    return Negation(context.messages, std::move(operand->u));
+  }
+  return std::nullopt;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NOT &x) {
+  if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
+    return std::visit(common::visitors{[](Expr<SomeLogical> &&lx) -> MaybeExpr {
+                                         return {AsGenericExpr(
+                                             LogicalNegation(std::move(lx)))};
+                                       },
+                          [=](auto &&) -> MaybeExpr {
+                            // TODO: accept INTEGER operand if not overridden
+                            context.messages.Say(
+                                "Operand of .NOT. must be LOGICAL"_err_en_US);
+                            return std::nullopt;
+                          }},
+        std::move(operand->u));
+  }
+  return std::nullopt;
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::PercentLoc &) {
+  context.messages.Say("TODO: %LOC unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedUnary &) {
-  context.messages.Say("pmk: DefinedUnary unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: DefinedUnary unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
@@ -766,7 +809,8 @@ MaybeExpr LogicalHelper(
                   BinaryLogicalOperation(opr, std::move(lx), std::move(ly)))};
             },
             [&](auto &&, auto &&) -> MaybeExpr {
-              // TODO pmk: extensions: INTEGER and typeless operands
+              // TODO: extension: INTEGER and typeless operands
+              // ifort and PGI accept them if not overridden
               ea.context.messages.Say(
                   "operands to LOGICAL operation must be LOGICAL"_err_en_US);
               return {};
@@ -797,7 +841,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::XOR &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
-  context.messages.Say("pmk: DefinedBinary unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: DefinedBinary unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
@@ -805,7 +849,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
 
 namespace Fortran::semantics {
 
-MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
+evaluate::MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
     const IntrinsicTypeDefaultKinds &defaults, const parser::Expr &expr) {
   return evaluate::ExprAnalyzer{context, defaults}.Analyze(expr);
 }
@@ -813,8 +857,8 @@ MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
 class Mutator {
 public:
   Mutator(evaluate::FoldingContext &context,
-      const IntrinsicTypeDefaultKinds &defaults, std::ostream &o)
-    : context_{context}, defaults_{defaults}, out_{o} {}
+      const IntrinsicTypeDefaultKinds &defaults)
+    : context_{context}, defaults_{defaults} {}
 
   template<typename A> bool Pre(A &) { return true /* visit children */; }
   template<typename A> void Post(A &) {}
@@ -822,12 +866,12 @@ public:
   bool Pre(parser::Expr &expr) {
     if (expr.typedExpr.get() == nullptr) {
       if (MaybeExpr checked{AnalyzeExpr(context_, defaults_, expr)}) {
-        checked->Dump(out_ << "pmk checked: ") << '\n';
+        checked->Dump(std::cout << "checked expression: ") << '\n';
         expr.typedExpr.reset(
             new evaluate::GenericExprWrapper{std::move(*checked)});
       } else {
-        out_ << "pmk: expression analysis failed for an expression: ";
-        DumpTree(out_, expr);
+        std::cout << "expression analysis failed for this expression: ";
+        DumpTree(std::cout, expr);
       }
     }
     return false;
@@ -836,13 +880,12 @@ public:
 private:
   evaluate::FoldingContext &context_;
   const IntrinsicTypeDefaultKinds &defaults_;
-  std::ostream &out_;
 };
 
 void AnalyzeExpressions(parser::Program &program,
     evaluate::FoldingContext &context,
-    const IntrinsicTypeDefaultKinds &defaults, std::ostream &o) {
-  Mutator mutator{context, defaults, o};
+    const IntrinsicTypeDefaultKinds &defaults) {
+  Mutator mutator{context, defaults};
   parser::Walk(program, mutator);
 }
 

@@ -17,11 +17,8 @@
 
 #include "../evaluate/expression.h"
 #include "../evaluate/type.h"
-#include "../parser/message.h"
 #include "../parser/parse-tree.h"
-#include <cinttypes>
 #include <optional>
-#include <ostream>  // TODO pmk
 
 namespace Fortran::semantics {
 
@@ -36,11 +33,15 @@ struct IntrinsicTypeDefaultKinds {
   int defaultLogicalKind{evaluate::DefaultLogical::kind};
 };
 
-MaybeExpr AnalyzeExpr(evaluate::FoldingContext &,
-    const IntrinsicTypeDefaultKinds &, const parser::Expr &);
+// Semantic analysis of one expression.
+std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
+    evaluate::FoldingContext &, const IntrinsicTypeDefaultKinds &,
+    const parser::Expr &);
 
+// Semantic analysis of all expressions in a parse tree, which is
+// decorated with typed representations for top-level expressions.
 void AnalyzeExpressions(parser::Program &, evaluate::FoldingContext &,
-    const IntrinsicTypeDefaultKinds &, std::ostream &);
+    const IntrinsicTypeDefaultKinds &);
 
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

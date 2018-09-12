@@ -64,7 +64,7 @@ template<typename A>
 constexpr Legality IsLegalDoTerm(const parser::Statement<A> &) {
   if (std::is_same_v<A, common::Indirection<parser::EndDoStmt>> ||
       std::is_same_v<A, parser::EndDoStmt>) {
-      return Legality::always;
+    return Legality::always;
   } else {
     return Legality::never;
   }
