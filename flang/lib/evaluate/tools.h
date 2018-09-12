@@ -103,7 +103,7 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
     }
   } else {
     // Same type category
-    if (auto already{common::GetIf<Expr<TO>>(x.u)}) {
+    if (auto *already{std::get_if<Expr<TO>>(&x.u)}) {
       return std::move(*already);
     }
     if constexpr (TO::category == TypeCategory::Complex) {

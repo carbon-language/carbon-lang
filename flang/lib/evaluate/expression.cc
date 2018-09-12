@@ -503,13 +503,13 @@ template<typename RESULT>
 auto ExpressionBase<RESULT>::ScalarValue() const
     -> std::optional<Scalar<Result>> {
   if constexpr (Result::isSpecificType) {
-    if (auto c{common::GetIf<Constant<Result>>(derived().u)}) {
+    if (auto *c{std::get_if<Constant<Result>>(&derived().u)}) {
       return {c->value};
     }
     // TODO: every specifically-typed Expr should support Parentheses
     if constexpr (common::HasMember<Parentheses<Result>,
                       decltype(derived().u)>) {
-      if (auto p{common::GetIf<Parentheses<Result>>(derived().u)}) {
+      if (auto *p{std::get_if<Parentheses<Result>>(&derived().u)}) {
         return p->left().ScalarValue();
       }
     }

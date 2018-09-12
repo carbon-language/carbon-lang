@@ -210,7 +210,7 @@ template<typename TYPES> struct SomeScalar {
   SomeScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
 
-  auto ToInt64() const {
+  std::optional<std::int64_t> ToInt64() const {
     return std::visit(
         [](const auto &x) -> std::optional<std::int64_t> {
           if constexpr (TypeOf<decltype(x)>::category ==
@@ -222,7 +222,7 @@ template<typename TYPES> struct SomeScalar {
         u);
   }
 
-  auto ToString() const {
+  std::optional<std::string> ToString() const {
     return std::visit(
         [](const auto &x) -> std::optional<std::string> {
           if constexpr (std::is_same_v<std::string,
@@ -234,7 +234,7 @@ template<typename TYPES> struct SomeScalar {
         u);
   }
 
-  auto IsTrue() const {
+  std::optional<bool> IsTrue() const {
     return std::visit(
         [](const auto &x) -> std::optional<bool> {
           if constexpr (TypeOf<decltype(x)>::category ==
@@ -244,10 +244,6 @@ template<typename TYPES> struct SomeScalar {
           return std::nullopt;
         },
         u);
-  }
-
-  template<typename T> auto GetIf() const {
-    return common::GetIf<Scalar<T>>(u);
   }
 
   common::MapTemplate<Scalar, Types> u;

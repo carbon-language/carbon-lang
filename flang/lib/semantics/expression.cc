@@ -323,9 +323,11 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::SignedRealLiteralConstant &x) {
   if (MaybeExpr result{Analyze(std::get<parser::RealLiteralConstant>(x.t))}) {
+    auto *realExpr{std::get_if<Expr<SomeReal>>(&result->u)};
+    CHECK(realExpr != nullptr);
     if (auto sign{std::get<std::optional<parser::Sign>>(x.t)}) {
       if (sign == parser::Sign::Negative) {
-        return {AsGenericExpr(-*common::GetIf<Expr<SomeReal>>(result->u))};
+        return {AsGenericExpr(-std::move(*realExpr))};
       }
     }
     return result;
@@ -397,65 +399,41 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
   return {AsGenericExpr(value.value)};
 }
 
-template<typename TYPE, TypeCategory CATEGORY>
-MaybeExpr DataRefIfType(
-    const semantics::Symbol &symbol, int defaultKind, DataRef &&dataRef) {
+template<TypeCategory CATEGORY>
+MaybeExpr TypedDataRefHelper(int kind, DataRef &&dataRef) {
+  return common::SearchDynamicTypes(
+      TypeKindVisitor<CATEGORY, DataReference, DataRef>{
+          kind, std::move(dataRef)});
+}
+
+static MaybeExpr TypedDataRef(
+    const semantics::Symbol &symbol, DataRef &&dataRef) {
   if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (details->type().has_value()) {
       if (details->type()->category() ==
           semantics::DeclTypeSpec::Category::Intrinsic) {
-        std::uint64_t kindParam{
-            details->type()->intrinsicTypeSpec().kind().value().value()};
-        int kind = static_cast<int>(kindParam);
-        if (static_cast<std::uint64_t>(kind) == kindParam) {
-          // TODO: Inspection of semantics::IntrinsicTypeSpec requires the use
-          // of forbidden RTTI via dynamic_cast<>.  See whether
-          // semantics::IntrinsicTypeSpec can be augmented with query
-          // interfaces instead.
-          if (dynamic_cast<const TYPE *>(
-                  &details->type()->intrinsicTypeSpec()) != nullptr) {
-            if (kind == 0) {  // TODO: resolve default kinds in semantics
-              kind = defaultKind;
-            }
-            if (MaybeExpr result{common::SearchDynamicTypes(
-                    TypeKindVisitor<CATEGORY, DataReference, DataRef>{
-                        kind, std::move(dataRef)})}) {
-              return result;
-            }
-          }
+        TypeCategory category{details->type()->intrinsicTypeSpec().category()};
+        int kind{details->type()->intrinsicTypeSpec().kind()};
+        switch (category) {
+        case TypeCategory::Integer:
+          return TypedDataRefHelper<TypeCategory::Integer>(
+              kind, std::move(dataRef));
+        case TypeCategory::Real:
+          return TypedDataRefHelper<TypeCategory::Real>(
+              kind, std::move(dataRef));
+        case TypeCategory::Complex:
+          return TypedDataRefHelper<TypeCategory::Complex>(
+              kind, std::move(dataRef));
+        case TypeCategory::Character:
+          return TypedDataRefHelper<TypeCategory::Character>(
+              kind, std::move(dataRef));
+        case TypeCategory::Logical:
+          return TypedDataRefHelper<TypeCategory::Logical>(
+              kind, std::move(dataRef));
+        default: CRASH_NO_CASE;
         }
       }
     }
-  }
-  return std::nullopt;
-}
-
-static MaybeExpr TypedDataRef(const semantics::Symbol &symbol,
-    const semantics::IntrinsicTypeDefaultKinds &defaults, DataRef &&dataRef) {
-  if (MaybeExpr result{
-          DataRefIfType<semantics::IntegerTypeSpec, TypeCategory::Integer>(
-              symbol, defaults.defaultIntegerKind, std::move(dataRef))}) {
-    return result;
-  }
-  if (MaybeExpr result{
-          DataRefIfType<semantics::RealTypeSpec, TypeCategory::Real>(
-              symbol, defaults.defaultRealKind, std::move(dataRef))}) {
-    return result;
-  }
-  if (MaybeExpr result{
-          DataRefIfType<semantics::ComplexTypeSpec, TypeCategory::Complex>(
-              symbol, defaults.defaultRealKind, std::move(dataRef))}) {
-    return result;
-  }
-  if (MaybeExpr result{
-          DataRefIfType<semantics::CharacterTypeSpec, TypeCategory::Character>(
-              symbol, defaults.defaultCharacterKind, std::move(dataRef))}) {
-    return result;
-  }
-  if (MaybeExpr result{
-          DataRefIfType<semantics::LogicalTypeSpec, TypeCategory::Logical>(
-              symbol, defaults.defaultLogicalKind, std::move(dataRef))}) {
-    return result;
   }
   return std::nullopt;
 }
@@ -471,8 +449,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
         "TODO: PARAMETER references not yet implemented"_err_en_US);
     // TODO: enumerators, do they have the PARAMETER attribute?
   } else {
-    if (MaybeExpr result{
-            TypedDataRef(*n.symbol, defaults, DataRef{*n.symbol})}) {
+    if (MaybeExpr result{TypedDataRef(*n.symbol, DataRef{*n.symbol})}) {
       return result;
     }
     context.messages.Say("'%s' is not of a supported type and kind"_err_en_US,
@@ -562,8 +539,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
           name->ToString().data());
     } else {
       ArrayRef arrayRef{*name->symbol, std::move(subscripts)};
-      return TypedDataRef(
-          *name->symbol, defaults, DataRef{std::move(arrayRef)});
+      return TypedDataRef(*name->symbol, DataRef{std::move(arrayRef)});
     }
   } else if (const auto *component{
                  std::get_if<common::Indirection<parser::StructureComponent>>(

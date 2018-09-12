@@ -78,8 +78,9 @@ struct OverMembersHelper<T, std::tuple<Ts...>> {
   using type = T<Ts...>;
 };
 
-template<template<typename...> class T, typename TorV>
-using OverMembers = typename OverMembersHelper<T, std::decay_t<TorV>>::type;
+template<template<typename...> class T, typename TUPLEorVARIANT>
+using OverMembers =
+    typename OverMembersHelper<T, std::decay_t<TUPLEorVARIANT>>::type;
 
 // SearchMembers<PREDICATE> scans the types that constitute the alternatives
 // of a std::variant instantiation or elements of a std::tuple.
@@ -92,31 +93,14 @@ template<template<typename> class PREDICATE> struct SearchMembersHelper {
   };
 };
 
-template<template<typename> class PREDICATE, typename TorV>
+template<template<typename> class PREDICATE, typename TUPLEorVARIANT>
 constexpr int SearchMembers{
     OverMembers<SearchMembersHelper<PREDICATE>::template Scanner,
-        TorV>::value()};
+        TUPLEorVARIANT>::value()};
 
-template<typename A, typename TorV>
+template<typename A, typename TUPLEorVARIANT>
 constexpr bool HasMember{
-    SearchMembers<MatchType<A>::template Match, TorV> >= 0};
-
-// const A * -> std::optional<A>
-template<typename A> std::optional<A> GetIfNonNull(const A *p) {
-  if (p) {
-    return {*p};
-  }
-  return std::nullopt;
-}
-
-// const std::variant<..., A, ...> -> std::optional<A>
-// i.e., when a variant holds a value of a particular type, return a copy
-// of that value in a std::optional<>.  The type A must be a valid
-// alternative for the variant.
-template<typename A, typename VARIANT>
-std::optional<A> GetIf(const VARIANT &u) {
-  return GetIfNonNull(std::get_if<A>(&u));
-}
+    SearchMembers<MatchType<A>::template Match, TUPLEorVARIANT> >= 0};
 
 // std::optional<std::optional<A>> -> std::optional<A>
 template<typename A>
@@ -209,9 +193,10 @@ template<template<typename> class F, template<typename...> class PACKAGE,
 struct MapTemplateHelper<F, PACKAGE, std::variant<Ts...>> {
   using type = PACKAGE<F<Ts>...>;
 };
-template<template<typename> class F, typename TorV,
+template<template<typename> class F, typename TUPLEorVARIANT,
     template<typename...> class PACKAGE = std::variant>
-using MapTemplate = typename MapTemplateHelper<F, PACKAGE, TorV>::type;
+using MapTemplate =
+    typename MapTemplateHelper<F, PACKAGE, TUPLEorVARIANT>::type;
 
 // std::tuple<std::optional<>...> -> std::optional<std::tuple<...>>
 // i.e., inverts a tuple of optional values into an optional tuple that has
