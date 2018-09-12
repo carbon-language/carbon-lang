@@ -761,14 +761,31 @@ private:
 /// An ExecutionSession represents a running JIT program.
 class ExecutionSession : public ExecutionSessionBase {
 public:
+  using ExecutionSessionBase::lookup;
+
   /// Construct an ExecutionEngine.
   ///
   /// SymbolStringPools may be shared between ExecutionSessions.
-  ExecutionSession(std::shared_ptr<SymbolStringPool> SSP = nullptr)
-      : ExecutionSessionBase(std::move(SSP)) {}
+  ExecutionSession(std::shared_ptr<SymbolStringPool> SSP = nullptr);
+
+  /// Get the "main" JITDylib, which is created automatically on construction of
+  /// the ExecutionSession.
+  JITDylib &getMainJITDylib();
 
   /// Add a new JITDylib to this ExecutionSession.
-  JITDylib &createJITDylib(std::string Name);
+  JITDylib &createJITDylib(std::string Name,
+                           bool AddToMainDylibSearchOrder = true);
+
+  /// Convenience version of the blocking version of lookup in
+  /// ExecutionSessionBase. Uses the main JITDylib's search order as the lookup
+  /// order, and registers no dependencies.
+  Expected<SymbolMap> lookup(const SymbolNameSet &Symbols) {
+    return getMainJITDylib().withSearchOrderDo(
+        [&](const JITDylibList &SearchOrder) {
+          return ExecutionSessionBase::lookup(SearchOrder, Symbols,
+                                              NoDependenciesToRegister, true);
+        });
+  }
 
 private:
   std::vector<std::unique_ptr<JITDylib>> JDs;
