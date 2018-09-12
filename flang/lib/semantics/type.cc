@@ -87,10 +87,9 @@ IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, int kind)
 int IntrinsicTypeSpec::GetDefaultKind(TypeCategory category) {
   switch (category) {
   case TypeCategory::Character: return evaluate::DefaultCharacter::kind;
-  //case TypeCategory::Complex: return evaluate::DefaultComplex::kind;
-  case TypeCategory::Complex: return 4;  // TEMP to work around bug
   case TypeCategory::Integer: return evaluate::DefaultInteger::kind;
   case TypeCategory::Logical: return evaluate::DefaultLogical::kind;
+  case TypeCategory::Complex:
   case TypeCategory::Real: return evaluate::DefaultReal::kind;
   default: CRASH_NO_CASE;
   }
