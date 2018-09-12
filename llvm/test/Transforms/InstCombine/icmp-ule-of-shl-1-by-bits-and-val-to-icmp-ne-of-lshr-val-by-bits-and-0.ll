@@ -14,8 +14,8 @@
 
 define i1 @p0(i8 %val, i8 %bits) {
 ; CHECK-LABEL: @p0(
-; CHECK-NEXT:    [[T0:%.*]] = shl i8 1, [[BITS:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp ule i8 [[T0]], [[VAL:%.*]]
+; CHECK-NEXT:    [[VAL_HIGHBITS:%.*]] = lshr i8 [[VAL:%.*]], [[BITS:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ne i8 [[VAL_HIGHBITS]], 0
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %t0 = shl i8 1, %bits
@@ -29,8 +29,8 @@ define i1 @p0(i8 %val, i8 %bits) {
 
 define <2 x i1> @p1_vec(<2 x i8> %val, <2 x i8> %bits) {
 ; CHECK-LABEL: @p1_vec(
-; CHECK-NEXT:    [[T0:%.*]] = shl <2 x i8> <i8 1, i8 1>, [[BITS:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp ule <2 x i8> [[T0]], [[VAL:%.*]]
+; CHECK-NEXT:    [[VAL_HIGHBITS:%.*]] = lshr <2 x i8> [[VAL:%.*]], [[BITS:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ne <2 x i8> [[VAL_HIGHBITS]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[R]]
 ;
   %t0 = shl <2 x i8> <i8 1, i8 1>, %bits
@@ -40,8 +40,8 @@ define <2 x i1> @p1_vec(<2 x i8> %val, <2 x i8> %bits) {
 
 define <3 x i1> @p2_vec_undef(<3 x i8> %val, <3 x i8> %bits) {
 ; CHECK-LABEL: @p2_vec_undef(
-; CHECK-NEXT:    [[T0:%.*]] = shl <3 x i8> <i8 1, i8 undef, i8 1>, [[BITS:%.*]]
-; CHECK-NEXT:    [[R:%.*]] = icmp ule <3 x i8> [[T0]], [[VAL:%.*]]
+; CHECK-NEXT:    [[VAL_HIGHBITS:%.*]] = lshr <3 x i8> [[VAL:%.*]], [[BITS:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ne <3 x i8> [[VAL_HIGHBITS]], zeroinitializer
 ; CHECK-NEXT:    ret <3 x i1> [[R]]
 ;
   %t0 = shl <3 x i8> <i8 1, i8 undef, i8 1>, %bits
@@ -57,9 +57,9 @@ declare i8 @gen8()
 
 define i1 @c0(i8 %bits) {
 ; CHECK-LABEL: @c0(
-; CHECK-NEXT:    [[T0:%.*]] = shl i8 1, [[BITS:%.*]]
 ; CHECK-NEXT:    [[VAL:%.*]] = call i8 @gen8()
-; CHECK-NEXT:    [[R:%.*]] = icmp uge i8 [[VAL]], [[T0]]
+; CHECK-NEXT:    [[VAL_HIGHBITS:%.*]] = lshr i8 [[VAL]], [[BITS:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ne i8 [[VAL_HIGHBITS]], 0
 ; CHECK-NEXT:    ret i1 [[R]]
 ;
   %t0 = shl i8 1, %bits
