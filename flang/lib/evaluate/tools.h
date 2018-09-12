@@ -389,5 +389,29 @@ Expr<SomeKind<CAT>> operator/(
   return PromoteAndCombine<Divide, CAT>(std::move(x), std::move(y));
 }
 
+// A utility for use with common::SearchDynamicTypes to create generic
+// expressions when an intrinsic type category for (say) a variable is known
+// but the kind parameter value is not.
+template<TypeCategory CAT, template<typename> class TEMPLATE, typename VALUE>
+struct TypeKindVisitor {
+  using Result = std::optional<Expr<SomeType>>;
+  static constexpr std::size_t Types{std::tuple_size_v<CategoryTypes<CAT>>};
+
+  TypeKindVisitor(int k, VALUE &&x) : kind{k}, value{std::move(x)} {}
+  TypeKindVisitor(int k, const VALUE &x) : kind{k}, value{x} {}
+
+  template<std::size_t J> Result Test() {
+    using Ty = std::tuple_element_t<J, CategoryTypes<CAT>>;
+    if (kind == Ty::kind) {
+      return AsGenericExpr(
+          AsCategoryExpr(AsExpr(TEMPLATE<Ty>{std::move(value)})));
+    }
+    return std::nullopt;
+  }
+
+  int kind;
+  VALUE value;
+};
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

@@ -108,6 +108,12 @@ struct ExprAnalyzer {
   MaybeExpr Analyze(const parser::Expr::DefinedBinary &);
   MaybeExpr Analyze(const parser::Call &);
 
+  std::optional<Expr<SubscriptInteger>> AsSubscript(MaybeExpr &&);
+  std::optional<Expr<SubscriptInteger>> TripletPart(
+      const std::optional<parser::Subscript> &);
+  std::optional<Subscript> Analyze(const parser::SectionSubscript &);
+  std::vector<Subscript> Analyze(const std::list<parser::SectionSubscript> &);
+
   FoldingContext &context;
   const semantics::IntrinsicTypeDefaultKinds &defaults;
 };
@@ -165,32 +171,12 @@ MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const common::Indirection<A> &x) {
   return AnalyzeHelper(ea, *x);
 }
 
-// A helper class used with common::SearchDynamicTypes when constructing
-// a literal constant with a dynamic kind in some type category.
-template<TypeCategory CAT, typename VALUE> struct ConstantTypeVisitor {
-  using Result = std::optional<Expr<SomeKind<CAT>>>;
-  static constexpr std::size_t Types{std::tuple_size_v<CategoryTypes<CAT>>};
-
-  ConstantTypeVisitor(int k, const VALUE &x) : kind{k}, value{x} {}
-
-  template<std::size_t J> Result Test() {
-    using Ty = std::tuple_element_t<J, CategoryTypes<CAT>>;
-    if (kind == Ty::kind) {
-      return {AsCategoryExpr(AsExpr(Constant<Ty>{std::move(value)}))};
-    }
-    return std::nullopt;
-  }
-
-  int kind;
-  VALUE value;
-};
-
 template<>
 MaybeExpr AnalyzeHelper(
     ExprAnalyzer &ea, const parser::HollerithLiteralConstant &x) {
-  return AsMaybeExpr(common::SearchDynamicTypes(
-      ConstantTypeVisitor<TypeCategory::Character, std::string>{
-          ea.defaults.defaultCharacterKind, x.v}));
+  return common::SearchDynamicTypes(
+      TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
+          ea.defaults.defaultCharacterKind, x.v});
 }
 
 template<>
@@ -322,12 +308,12 @@ MaybeExpr IntLiteralConstant(ExprAnalyzer &ea, const PARSED &x) {
       ea.defaults.defaultIntegerKind)};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
   auto result{common::SearchDynamicTypes(
-      ConstantTypeVisitor<TypeCategory::Integer, std::int64_t>{
+      TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
           kind, static_cast<std::int64_t>(value)})};
   if (!result.has_value()) {
     ea.context.messages.Say("unsupported INTEGER(KIND=%u)"_err_en_US, kind);
   }
-  return AsMaybeExpr(std::move(result));
+  return result;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::IntLiteralConstant &x) {
@@ -437,12 +423,12 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstant &x) {
   int kind{Analyze(std::get<std::optional<parser::KindParam>>(x.t), 1)};
   auto value{std::get<std::string>(x.t)};
   auto result{common::SearchDynamicTypes(
-      ConstantTypeVisitor<TypeCategory::Character, std::string>{
+      TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
           kind, std::move(value)})};
   if (!result.has_value()) {
     context.messages.Say("unsupported CHARACTER(KIND=%u)"_err_en_US, kind);
   }
-  return AsMaybeExpr(std::move(result));
+  return result;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
@@ -450,47 +436,179 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
       defaults.defaultLogicalKind)};
   bool value{std::get<bool>(x.t)};
   auto result{common::SearchDynamicTypes(
-      ConstantTypeVisitor<TypeCategory::Logical, bool>{
+      TypeKindVisitor<TypeCategory::Logical, Constant, bool>{
           kind, std::move(value)})};
   if (!result.has_value()) {
     context.messages.Say("unsupported LOGICAL(KIND=%u)"_err_en_US, kind);
   }
-  return AsMaybeExpr(std::move(result));
+  return result;
+}
+
+template<typename TYPE, TypeCategory CATEGORY>
+MaybeExpr DataRefIfType(
+    const semantics::Symbol &symbol, int defaultKind, DataRef &&dataRef) {
+  if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    if (details->type().has_value()) {
+      if (details->type()->category() ==
+          semantics::DeclTypeSpec::Category::Intrinsic) {
+        std::uint64_t kindParam{
+            details->type()->intrinsicTypeSpec().kind().value().value()};
+        int kind = static_cast<int>(kindParam);
+        if (static_cast<std::uint64_t>(kind) == kindParam) {
+          // TODO: Inspection of semantics::IntrinsicTypeSpec requires the use
+          // of forbidden RTTI via dynamic_cast<>.  See whether
+          // semantics::IntrinsicTypeSpec can be augmented with query
+          // interfaces instead.
+          if (dynamic_cast<const TYPE *>(
+                  &details->type()->intrinsicTypeSpec()) != nullptr) {
+            if (kind == 0) {  // TODO: resolve default kinds in semantics
+              kind = defaultKind;
+            }
+            if (MaybeExpr result{common::SearchDynamicTypes(
+                    TypeKindVisitor<CATEGORY, DataReference, DataRef>{
+                        kind, std::move(dataRef)})}) {
+              return result;
+            }
+          }
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
+
+static MaybeExpr TypedDataRef(const semantics::Symbol &symbol,
+    const semantics::IntrinsicTypeDefaultKinds &defaults, DataRef &&dataRef) {
+  if (MaybeExpr result{
+          DataRefIfType<semantics::IntegerTypeSpec, TypeCategory::Integer>(
+              symbol, defaults.defaultIntegerKind, std::move(dataRef))}) {
+    return result;
+  }
+  if (MaybeExpr result{
+          DataRefIfType<semantics::RealTypeSpec, TypeCategory::Real>(
+              symbol, defaults.defaultRealKind, std::move(dataRef))}) {
+    return result;
+  }
+  if (MaybeExpr result{
+          DataRefIfType<semantics::ComplexTypeSpec, TypeCategory::Complex>(
+              symbol, defaults.defaultRealKind, std::move(dataRef))}) {
+    return result;
+  }
+  if (MaybeExpr result{
+          DataRefIfType<semantics::CharacterTypeSpec, TypeCategory::Character>(
+              symbol, defaults.defaultCharacterKind, std::move(dataRef))}) {
+    return result;
+  }
+  if (MaybeExpr result{
+          DataRefIfType<semantics::LogicalTypeSpec, TypeCategory::Logical>(
+              symbol, defaults.defaultLogicalKind, std::move(dataRef))}) {
+    return result;
+  }
+  return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
   if (n.symbol == nullptr) {
-    // TODO: convert to CHECK later
-    context.messages.Say("name (%s) is not resolved to an object"_err_en_US,
+    // TODO: convert this to a CHECK later
+    context.messages.Say(
+        "TODO: name (%s) is not resolved to an object"_err_en_US,
         n.ToString().data());
-  } else if (auto *details{
-                 n.symbol->detailsIf<semantics::ObjectEntityDetails>()}) {
-    if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
-      // TODO pmk get type and value
-      context.messages.Say(
-          "pmk: PARAMETER references not yet implemented"_err_en_US);
-    } else {
-      // TODO pmk variables
-      context.messages.Say(
-          "name (%s) is not a defined constant"_err_en_US, n.ToString().data());
-    }
+  } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
+    context.messages.Say(
+        "TODO: PARAMETER references not yet implemented"_err_en_US);
     // TODO: enumerators, do they have the PARAMETER attribute?
   } else {
-    // TODO: convert to CHECK later
-    context.messages.Say(
-        "name (%s) lacks details in the symbol table"_err_en_US,
+    if (MaybeExpr result{
+            TypedDataRef(*n.symbol, defaults, DataRef{*n.symbol})}) {
+      return result;
+    }
+    context.messages.Say("%s is not of a supported type and kind"_err_en_US,
         n.ToString().data());
   }
-  return std::nullopt;  // TODO parameters and enumerators
-}
-
-MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
-  context.messages.Say("pmk: Substring unimplemented\n"_err_en_US);
   return std::nullopt;
 }
 
+MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
+  context.messages.Say("TODO: Substring unimplemented\n"_err_en_US);
+  return std::nullopt;
+}
+
+std::optional<Expr<SubscriptInteger>> ExprAnalyzer::AsSubscript(
+    MaybeExpr &&expr) {
+  if (expr.has_value()) {
+    if (auto *intExpr{std::get_if<Expr<SomeInteger>>(&expr->u)}) {
+      if (auto *ssIntExpr{std::get_if<Expr<SubscriptInteger>>(&intExpr->u)}) {
+        return {std::move(*ssIntExpr)};
+      }
+      return {Expr<SubscriptInteger>{
+          Convert<SubscriptInteger, TypeCategory::Integer>{
+              std::move(*intExpr)}}};
+    } else {
+      context.messages.Say("subscript expression is not INTEGER"_err_en_US);
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<Expr<SubscriptInteger>> ExprAnalyzer::TripletPart(
+    const std::optional<parser::Subscript> &s) {
+  if (s.has_value()) {
+    return AsSubscript(AnalyzeHelper(*this, *s));
+  }
+  return std::nullopt;
+}
+
+std::optional<Subscript> ExprAnalyzer::Analyze(
+    const parser::SectionSubscript &ss) {
+  return std::visit(
+      common::visitors{[&](const parser::SubscriptTriplet &t) {
+                         return std::make_optional(
+                             Subscript{Triplet{TripletPart(std::get<0>(t.t)),
+                                 TripletPart(std::get<1>(t.t)),
+                                 TripletPart(std::get<2>(t.t))}});
+                       },
+          [&](const auto &s) -> std::optional<Subscript> {
+            if (auto subscriptExpr{AsSubscript(AnalyzeHelper(*this, s))}) {
+              return {Subscript{std::move(*subscriptExpr)}};
+            } else {
+              return std::nullopt;
+            }
+          }},
+      ss.u);
+}
+
+std::vector<Subscript> ExprAnalyzer::Analyze(
+    const std::list<parser::SectionSubscript> &sss) {
+  std::vector<Subscript> subscripts;
+  for (const auto &s : sss) {
+    if (auto subscript{Analyze(s)}) {
+      subscripts.emplace_back(std::move(*subscript));
+    }
+  }
+  return subscripts;
+}
+
 MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
-  context.messages.Say("pmk: ArrayElement unimplemented\n"_err_en_US);
+  std::vector<Subscript> subscripts{Analyze(ae.subscripts)};
+  if (const parser::Name * name{std::get_if<parser::Name>(&ae.base.u)}) {
+    if (name->symbol == nullptr) {
+      // TODO: convert this to a CHECK later
+      context.messages.Say(
+          "TODO: name (%s) is not resolved to an object"_err_en_US,
+          name->ToString().data());
+    } else {
+      ArrayRef arrayRef{*name->symbol, std::move(subscripts)};
+      return TypedDataRef(
+          *name->symbol, defaults, DataRef{std::move(arrayRef)});
+    }
+  } else if (const auto *component{
+                 std::get_if<common::Indirection<parser::StructureComponent>>(
+                     &ae.base.u)}) {
+    // pmk continue
+  } else {
+    CHECK(!"parser::ArrayRef base DataRef is neither Name nor "
+           "StructureComponent");
+  }
   return std::nullopt;
 }
 

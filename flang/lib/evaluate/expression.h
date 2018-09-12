@@ -437,8 +437,6 @@ public:
   template<typename A> Expr(const A &x) : u{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u(std::move(x)) {}
-  Expr(const DataRef &x) : u{DataReference<Result>{x}} {}
-  Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
 
 private:
   using Conversions = std::variant<Convert<Result, TypeCategory::Integer>,
@@ -465,8 +463,6 @@ public:
   template<typename A> Expr(const A &x) : u{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
-  Expr(const DataRef &x) : u{DataReference<Result>{x}} {}
-  Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
 
 private:
   // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
@@ -495,8 +491,6 @@ public:
   template<typename A> Expr(const A &x) : u{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
-  Expr(const DataRef &x) : u{DataReference<Result>{x}} {}
-  Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
 
   // Note that many COMPLEX operations are represented as REAL operations
   // over their components (viz., conversions, negation, add, and subtract).
@@ -538,8 +532,6 @@ public:
   template<typename A> Expr(const A &x) : u{x} {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
-  Expr(const DataRef &x) : u{DataReference<Result>{x}} {}
-  Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
   template<typename A> Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
   Expr<SubscriptInteger> LEN() const;
@@ -625,8 +617,6 @@ public:
   template<typename A> Expr(const A &x) : u(x) {}
   template<typename A>
   Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
-  Expr(const DataRef &x) : u{DataReference<Result>{x}} {}
-  Expr(const FunctionRef &x) : u{FunctionReference<Result>{x}} {}
 
 private:
   using Operations = std::variant<Convert<Result, TypeCategory::Logical>,
