@@ -28,12 +28,12 @@ namespace Fortran::evaluate {
 // specific types and wrap them in Expr<> containers of more abstract types.
 
 template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
-  return {std::move(x)};
+  return Expr<ResultType<A>>{std::move(x)};
 }
 
 template<TypeCategory CAT, int KIND>
 Expr<SomeKind<CAT>> AsCategoryExpr(Expr<Type<CAT, KIND>> &&x) {
-  return {std::move(x)};
+  return Expr<SomeKind<CAT>>{std::move(x)};
 }
 
 template<TypeCategory CAT>
@@ -47,12 +47,12 @@ Expr<SomeKind<CAT>> AsCategoryExpr(SomeKindScalar<CAT> &&x) {
 }
 
 template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
-  return {std::move(x)};
+  return Expr<SomeType>{std::move(x)};
 }
 
 template<TypeCategory CAT, int KIND>
 Expr<SomeType> AsGenericExpr(Expr<Type<CAT, KIND>> &&x) {
-  return {AsCategoryExpr(std::move(x))};
+  return Expr<SomeType>{AsCategoryExpr(std::move(x))};
 }
 
 template<> inline Expr<SomeType> AsGenericExpr(Constant<SomeType> &&x) {
@@ -96,10 +96,10 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
     if constexpr (TO::category == TypeCategory::Complex) {
       using Part = typename TO::Part;
       Scalar<Part> zero;
-      return {ComplexConstructor<TO::kind>{
+      return Expr<TO>{ComplexConstructor<TO::kind>{
           ConvertToType<Part>(std::move(x)), Expr<Part>{Constant<Part>{zero}}}};
     } else {
-      return {Convert<TO, FROMCAT>{std::move(x)}};
+      return Expr<TO>{Convert<TO, FROMCAT>{std::move(x)}};
     }
   } else {
     // Same type category
@@ -108,8 +108,8 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
     }
     if constexpr (TO::category == TypeCategory::Complex) {
       // Extract, convert, and recombine the components.
-      return {std::visit(
-          [](auto &z) -> ComplexConstructor<TO::kind> {
+      return Expr<TO>{std::visit(
+          [](auto &z) {
             using FromType = ResultType<decltype(z)>;
             using FromPart = typename FromType::Part;
             using FromGeneric = SomeKind<TypeCategory::Real>;
@@ -118,11 +118,12 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
                 Expr<FromPart>{ComplexComponent<FromType::kind>{false, z}}}};
             Convert<ToPart, TypeCategory::Real> im{Expr<FromGeneric>{
                 Expr<FromPart>{ComplexComponent<FromType::kind>{true, z}}}};
-            return {std::move(re), std::move(im)};
+            return ComplexConstructor<TO::kind>{
+                AsExpr(std::move(re)), AsExpr(std::move(im))};
           },
           x.u)};
     } else {
-      return {Convert<TO, TO::category>{std::move(x)}};
+      return Expr<TO>{Convert<TO, TO::category>{std::move(x)}};
     }
   }
 }
@@ -148,7 +149,7 @@ Expr<Type<TC, TK>> ConvertTo(
 template<TypeCategory TC, int TK, TypeCategory FC, int FK>
 Expr<Type<TC, TK>> ConvertTo(
     const Expr<Type<TC, TK>> &, Expr<Type<FC, FK>> &&x) {
-  return ConvertToType<Type<TC, TK>>(AsCategoryExpr(std::move(x)));
+  return AsExpr(ConvertToType<Type<TC, TK>>(AsCategoryExpr(std::move(x))));
 }
 
 template<TypeCategory TC, TypeCategory FC>
@@ -264,11 +265,11 @@ Expr<SPECIFIC> Combine(Expr<SPECIFIC> &&x, Expr<SPECIFIC> &&y) {
           std::is_same_v<OPR<DefaultReal>, Subtract<DefaultReal>>)) {
     static constexpr int kind{SPECIFIC::kind};
     using Part = Type<TypeCategory::Real, kind>;
-    return AsExpr(
-        ComplexConstructor<kind>{OPR<Part>{ComplexComponent<kind>{false, x},
-                                     ComplexComponent<kind>{false, y}},
-            OPR<Part>{ComplexComponent<kind>{true, x},
-                ComplexComponent<kind>{true, y}}});
+    return AsExpr(ComplexConstructor<kind>{
+        AsExpr(OPR<Part>{AsExpr(ComplexComponent<kind>{false, x}),
+            AsExpr(ComplexComponent<kind>{false, y})}),
+        AsExpr(OPR<Part>{AsExpr(ComplexComponent<kind>{true, x}),
+            AsExpr(ComplexComponent<kind>{true, y})})});
   } else {
     return AsExpr(OPR<SPECIFIC>{std::move(x), std::move(y)});
   }
@@ -329,35 +330,36 @@ Expr<SomeLogical> BinaryLogicalOperation(
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x) {
-  return {Negate<Type<C, K>>{std::move(x)}};
+  return AsExpr(Negate<Type<C, K>>{std::move(x)});
 }
 
 template<int K>
 Expr<Type<TypeCategory::Complex, K>> operator-(
     Expr<Type<TypeCategory::Complex, K>> &&x) {
   using Part = Type<TypeCategory::Real, K>;
-  return {ComplexConstructor<K>{Negate<Part>{ComplexComponent<K>{false, x}},
-      Negate<Part>{ComplexComponent<K>{true, x}}}};
+  return AsExpr(ComplexConstructor<K>{
+      AsExpr(Negate<Part>{AsExpr(ComplexComponent<K>{false, x})}),
+      AsExpr(Negate<Part>{AsExpr(ComplexComponent<K>{true, x})})});
 }
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator+(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Combine<Add, Type<C, K>>(std::move(x), std::move(y))};
+  return AsExpr(Combine<Add, Type<C, K>>(std::move(x), std::move(y)));
 }
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator-(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Combine<Subtract, Type<C, K>>(std::move(x), std::move(y))};
+  return AsExpr(Combine<Subtract, Type<C, K>>(std::move(x), std::move(y)));
 }
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator*(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Combine<Multiply, Type<C, K>>(std::move(x), std::move(y))};
+  return AsExpr(Combine<Multiply, Type<C, K>>(std::move(x), std::move(y)));
 }
 
 template<TypeCategory C, int K>
 Expr<Type<C, K>> operator/(Expr<Type<C, K>> &&x, Expr<Type<C, K>> &&y) {
-  return {Combine<Divide, Type<C, K>>(std::move(x), std::move(y))};
+  return AsExpr(Combine<Divide, Type<C, K>>(std::move(x), std::move(y)));
 }
 
 template<TypeCategory C> Expr<SomeKind<C>> operator-(Expr<SomeKind<C>> &&x) {

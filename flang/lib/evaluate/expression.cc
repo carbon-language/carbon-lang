@@ -76,14 +76,14 @@ auto ExpressionBase<RESULT>::Fold(FoldingContext &context)
                 // Folding may have produced a constant of some
                 // dissimilar LOGICAL kind.
                 bool truth{c->value.IsTrue()};
-                derived() = truth;
+                derived() = Derived{truth};
                 return {Const{truth}};
               }
               if constexpr (std::is_same_v<Parentheses<Result>, Thing>) {
                 // Preserve parentheses around constants.
-                derived() = Thing{Derived{*c}};
+                derived() = Derived{Thing{Derived{*c}}};
               } else {
-                derived() = *c;
+                derived() = Derived{*c};
               }
               return {Const{c->value}};
             }
@@ -519,6 +519,8 @@ auto ExpressionBase<RESULT>::ScalarValue() const
             [](const BOZLiteralConstant &) -> std::optional<Scalar<Result>> {
               return std::nullopt;
             },
+            [](const Expr<Type<TypeCategory::Derived>> &)
+                -> std::optional<Scalar<Result>> { return std::nullopt; },
             [](const auto &catEx) -> std::optional<Scalar<Result>> {
               if (auto cv{catEx.ScalarValue()}) {
                 // *cv is SomeKindScalar<CAT> for some category; rewrap it.

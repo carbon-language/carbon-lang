@@ -27,14 +27,15 @@ ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
     Expr<SomeType> &&y) {
   return std::visit(
-      common::visitors{[&](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy)
-                           -> ConvertRealOperandsResult {
-                         // Can happen in a CMPLX() constructor.  Per F'2018,
-                         // both integer operands are converted to default REAL.
-                         return {AsSameKindExprs<TypeCategory::Real>(
-                             ConvertToType<DefaultReal>(std::move(ix)),
-                             ConvertToType<DefaultReal>(std::move(iy)))};
-                       },
+      common::visitors{
+          [&](Expr<SomeInteger> &&ix,
+              Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
+            // Can happen in a CMPLX() constructor.  Per F'2018,
+            // both integer operands are converted to default REAL.
+            return {AsSameKindExprs<TypeCategory::Real>(
+                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(ix))),
+                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(iy))))};
+          },
           [&](Expr<SomeInteger> &&ix,
               Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
             return {AsSameKindExprs<TypeCategory::Real>(
@@ -53,14 +54,14 @@ ConvertRealOperandsResult ConvertRealOperands(
           [&](Expr<SomeInteger> &&ix,
               BOZLiteralConstant &&by) -> ConvertRealOperandsResult {
             return {AsSameKindExprs<TypeCategory::Real>(
-                ConvertToType<DefaultReal>(std::move(ix)),
-                ConvertToType<DefaultReal>(std::move(by)))};
+                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(ix))),
+                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(by))))};
           },
           [&](BOZLiteralConstant &&bx,
               Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
             return {AsSameKindExprs<TypeCategory::Real>(
-                ConvertToType<DefaultReal>(std::move(bx)),
-                ConvertToType<DefaultReal>(std::move(iy)))};
+                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(bx))),
+                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(iy))))};
           },
           [&](Expr<SomeReal> &&rx,
               BOZLiteralConstant &&by) -> ConvertRealOperandsResult {
@@ -285,20 +286,20 @@ std::optional<Expr<SomeType>> NumericOperation(
           },
           // Operations with one typeless operand
           [&](BOZLiteralConstant &&bx, Expr<SomeInteger> &&iy) {
-            return NumericOperation<OPR>(
-                messages, ConvertTo(iy, std::move(bx)), std::move(y));
+            return NumericOperation<OPR>(messages,
+                AsGenericExpr(ConvertTo(iy, std::move(bx))), std::move(y));
           },
           [&](BOZLiteralConstant &&bx, Expr<SomeReal> &&ry) {
-            return NumericOperation<OPR>(
-                messages, ConvertTo(ry, std::move(bx)), std::move(y));
+            return NumericOperation<OPR>(messages,
+                AsGenericExpr(ConvertTo(ry, std::move(bx))), std::move(y));
           },
           [&](Expr<SomeInteger> &&ix, BOZLiteralConstant &&by) {
-            return NumericOperation<OPR>(
-                messages, std::move(x), ConvertTo(ix, std::move(by)));
+            return NumericOperation<OPR>(messages, std::move(x),
+                AsGenericExpr(ConvertTo(ix, std::move(by))));
           },
           [&](Expr<SomeReal> &&rx, BOZLiteralConstant &&by) {
-            return NumericOperation<OPR>(
-                messages, std::move(x), ConvertTo(rx, std::move(by)));
+            return NumericOperation<OPR>(messages, std::move(x),
+                AsGenericExpr(ConvertTo(rx, std::move(by))));
           },
           // Default case
           [&](auto &&, auto &&) {
@@ -323,11 +324,11 @@ template std::optional<Expr<SomeType>> NumericOperation<Subtract>(
 std::optional<Expr<SomeType>> Negation(
     parser::ContextualMessages &messages, Expr<SomeType> &&x) {
   return std::visit(
-      common::visitors{[&](BOZLiteralConstant &&) {
-                         messages.Say(
-                             "BOZ literal cannot be negated"_err_en_US);
-                         return NoExpr();
-                       },
+      common::visitors{
+          [&](BOZLiteralConstant &&) {
+            messages.Say("BOZ literal cannot be negated"_err_en_US);
+            return NoExpr();
+          },
           [&](Expr<SomeInteger> &&x) { return Package(std::move(x)); },
           [&](Expr<SomeReal> &&x) { return Package(-std::move(x)); },
           [&](Expr<SomeComplex> &&x) { return Package(-std::move(x)); },
@@ -340,7 +341,13 @@ std::optional<Expr<SomeType>> Negation(
             // TODO: defined operator
             messages.Say("LOGICAL cannot be negated"_err_en_US);
             return NoExpr();
-          }},
+          },
+          [&](Expr<Type<TypeCategory::Derived>> &&x) {
+            // TODO: defined operator
+            messages.Say("derived type cannot be negated"_err_en_US);
+            return NoExpr();
+          },
+      },
       std::move(x.u));
 }
 
@@ -383,12 +390,12 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
                 PromoteAndRelate(opr, std::move(rx), std::move(ry)));
           },
           [&](Expr<SomeReal> &&rx, Expr<SomeInteger> &&iy) {
-            return Relate(
-                messages, opr, std::move(x), ConvertTo(rx, std::move(iy)));
+            return Relate(messages, opr, std::move(x),
+                AsGenericExpr(ConvertTo(rx, std::move(iy))));
           },
           [&](Expr<SomeInteger> &&ix, Expr<SomeReal> &&ry) {
-            return Relate(
-                messages, opr, ConvertTo(ry, std::move(ix)), std::move(y));
+            return Relate(messages, opr,
+                AsGenericExpr(ConvertTo(ry, std::move(ix))), std::move(y));
           },
           [&](Expr<SomeComplex> &&zx, Expr<SomeComplex> &&zy) {
             if (opr != RelationalOperator::EQ &&
@@ -397,10 +404,12 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
                   "COMPLEX data may be compared only for equality"_err_en_US);
               return std::optional<Expr<LogicalResult>>{};
             } else {
-              auto rr{Relate(messages, opr, GetComplexPart(zx, false),
-                  GetComplexPart(zy, false))};
-              auto ri{Relate(messages, opr, GetComplexPart(zx, true),
-                  GetComplexPart(zy, true))};
+              auto rr{Relate(messages, opr,
+                  AsGenericExpr(GetComplexPart(zx, false)),
+                  AsGenericExpr(GetComplexPart(zy, false)))};
+              auto ri{
+                  Relate(messages, opr, AsGenericExpr(GetComplexPart(zx, true)),
+                      AsGenericExpr(GetComplexPart(zy, true)))};
               if (auto parts{
                       common::AllPresent(std::move(rr), std::move(ri))}) {
                 // (a,b)==(c,d) -> (a==c) .AND. (b==d)
@@ -418,20 +427,20 @@ std::optional<Expr<LogicalResult>> Relate(parser::ContextualMessages &messages,
             }
           },
           [&](Expr<SomeComplex> &&zx, Expr<SomeInteger> &&iy) {
-            return Relate(
-                messages, opr, std::move(x), ConvertTo(zx, std::move(iy)));
+            return Relate(messages, opr, std::move(x),
+                AsGenericExpr(ConvertTo(zx, std::move(iy))));
           },
           [&](Expr<SomeComplex> &&zx, Expr<SomeReal> &&ry) {
-            return Relate(
-                messages, opr, std::move(x), ConvertTo(zx, std::move(ry)));
+            return Relate(messages, opr, std::move(x),
+                AsGenericExpr(ConvertTo(zx, std::move(ry))));
           },
           [&](Expr<SomeInteger> &&ix, Expr<SomeComplex> &&zy) {
-            return Relate(
-                messages, opr, ConvertTo(zy, std::move(ix)), std::move(y));
+            return Relate(messages, opr,
+                AsGenericExpr(ConvertTo(zy, std::move(ix))), std::move(y));
           },
           [&](Expr<SomeReal> &&rx, Expr<SomeComplex> &&zy) {
-            return Relate(
-                messages, opr, ConvertTo(zy, std::move(rx)), std::move(y));
+            return Relate(messages, opr,
+                AsGenericExpr(ConvertTo(zy, std::move(rx))), std::move(y));
           },
           [&](Expr<SomeCharacter> &&cx, Expr<SomeCharacter> &&cy) {
             return std::visit(

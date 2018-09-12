@@ -595,6 +595,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
             [&](BOZLiteralConstant &&boz) {
               return operand;  // ignore parentheses around typeless
             },
+            [&](Expr<Type<TypeCategory::Derived>> &&dte) { return operand; },
             [](auto &&catExpr) {
               return std::visit(
                   [](auto &&expr) -> MaybeExpr {
@@ -635,7 +636,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::UnaryPlus &x) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Negate &x) {
   if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
-    return Negation(context.messages, std::move(operand->u));
+    return Negation(context.messages, std::move(*operand));
   }
   return std::nullopt;
 }

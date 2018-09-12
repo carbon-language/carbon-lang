@@ -107,7 +107,7 @@ Expr<SubscriptInteger> Substring::first() const {
   if (first_.has_value()) {
     return **first_;
   }
-  return {1};
+  return AsExpr(Constant<SubscriptInteger>{1});
 }
 
 Expr<SubscriptInteger> Substring::last() const {
@@ -349,8 +349,9 @@ Expr<SubscriptInteger> DataRef::LEN() const {
       u_);
 }
 Expr<SubscriptInteger> Substring::LEN() const {
-  return Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
-      last() - first() + AsExpr(Constant<SubscriptInteger>{1})};
+  return AsExpr(
+      Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
+          last() - first() + AsExpr(Constant<SubscriptInteger>{1})});
 }
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(

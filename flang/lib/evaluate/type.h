@@ -22,6 +22,7 @@
 // are suitable for use as template parameters to instantiate other class
 // templates, like expressions, over the supported types and kinds.
 
+#include "common.h"
 #include "complex.h"
 #include "integer.h"
 #include "logical.h"
@@ -34,13 +35,17 @@
 #include <string>
 #include <variant>
 
+namespace Fortran::semantics {
+class DerivedTypeSpec;
+}  // namespace Fortran::semantics
+
 namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
 // Specific intrinsic types are represented by specializations of
 // this class template Type<CATEGORY, KIND>.
-template<TypeCategory CATEGORY, int KIND> struct Type;
+template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
 template<TypeCategory CATEGORY, int KIND> struct TypeBase {
   static constexpr bool isSpecificType{true};
@@ -52,69 +57,98 @@ template<TypeCategory CATEGORY, int KIND> struct TypeBase {
 };
 
 template<int KIND>
-struct Type<TypeCategory::Integer, KIND>
+class Type<TypeCategory::Integer, KIND>
   : public TypeBase<TypeCategory::Integer, KIND> {
+public:
   using Scalar = value::Integer<8 * KIND>;
 };
 
 template<>
-struct Type<TypeCategory::Real, 2> : public TypeBase<TypeCategory::Real, 2> {
+class Type<TypeCategory::Real, 2> : public TypeBase<TypeCategory::Real, 2> {
+public:
   using Scalar =
       value::Real<typename Type<TypeCategory::Integer, 2>::Scalar, 11>;
 };
 
 template<>
-struct Type<TypeCategory::Real, 4> : public TypeBase<TypeCategory::Real, 4> {
+class Type<TypeCategory::Real, 4> : public TypeBase<TypeCategory::Real, 4> {
+public:
   using Scalar =
       value::Real<typename Type<TypeCategory::Integer, 4>::Scalar, 24>;
 };
 
 template<>
-struct Type<TypeCategory::Real, 8> : public TypeBase<TypeCategory::Real, 8> {
+class Type<TypeCategory::Real, 8> : public TypeBase<TypeCategory::Real, 8> {
+public:
   using Scalar =
       value::Real<typename Type<TypeCategory::Integer, 8>::Scalar, 53>;
 };
 
 template<>
-struct Type<TypeCategory::Real, 10> : public TypeBase<TypeCategory::Real, 10> {
+class Type<TypeCategory::Real, 10> : public TypeBase<TypeCategory::Real, 10> {
+public:
   using Scalar = value::Real<value::Integer<80>, 64, false>;
 };
 
 template<>
-struct Type<TypeCategory::Real, 16> : public TypeBase<TypeCategory::Real, 16> {
+class Type<TypeCategory::Real, 16> : public TypeBase<TypeCategory::Real, 16> {
+public:
   using Scalar = value::Real<value::Integer<128>, 112>;
 };
 
 // The KIND type parameter on COMPLEX is the kind of each of its components.
 template<int KIND>
-struct Type<TypeCategory::Complex, KIND>
+class Type<TypeCategory::Complex, KIND>
   : public TypeBase<TypeCategory::Complex, KIND> {
+public:
   using Part = Type<TypeCategory::Real, KIND>;
   using Scalar = value::Complex<typename Part::Scalar>;
 };
 
 template<>
-struct Type<TypeCategory::Character, 1>
+class Type<TypeCategory::Character, 1>
   : public TypeBase<TypeCategory::Character, 1> {
+public:
   using Scalar = std::string;
 };
 
 template<>
-struct Type<TypeCategory::Character, 2>
+class Type<TypeCategory::Character, 2>
   : public TypeBase<TypeCategory::Character, 2> {
+public:
   using Scalar = std::u16string;
 };
 
 template<>
-struct Type<TypeCategory::Character, 4>
+class Type<TypeCategory::Character, 4>
   : public TypeBase<TypeCategory::Character, 4> {
+public:
   using Scalar = std::u32string;
 };
 
 template<int KIND>
-struct Type<TypeCategory::Logical, KIND>
+class Type<TypeCategory::Logical, KIND>
   : public TypeBase<TypeCategory::Logical, KIND> {
+public:
   using Scalar = value::Logical<8 * KIND>;
+};
+
+template<> class Type<TypeCategory::Derived> {
+public:
+  static constexpr bool isSpecificType{true};
+  static constexpr TypeCategory category{TypeCategory::Derived};
+  using Scalar = void;
+
+  CLASS_BOILERPLATE(Type)
+  explicit Type(const semantics::DerivedTypeSpec &s) : spec_{&s} {}
+
+  const semantics::DerivedTypeSpec &spec() const { return *spec_; }
+  std::string Dump() const;
+
+private:
+  // This member should be a reference, except that copy construction
+  // and assignment would not be possible.
+  const semantics::DerivedTypeSpec *spec_;
 };
 
 // Type functions

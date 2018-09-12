@@ -121,8 +121,8 @@ private:
 
 public:
   CLASS_BOILERPLATE(Operation)
-  Operation(const Expr<OPERANDS> &... x) : operand_{x...} {}
-  Operation(Expr<OPERANDS> &&... x)
+  explicit Operation(const Expr<OPERANDS> &... x) : operand_{x...} {}
+  explicit Operation(Expr<OPERANDS> &&... x)
     : operand_{std::forward<Expr<OPERANDS>>(x)...} {}
 
   Derived &derived() { return *static_cast<Derived *>(this); }
@@ -431,13 +431,14 @@ public:
   // TODO: R916 type-param-inquiry
 
   CLASS_BOILERPLATE(Expr)
-  Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  Expr(std::int64_t n) : u{Constant<Result>{n}} {}
-  Expr(std::uint64_t n) : u{Constant<Result>{n}} {}
-  Expr(int n) : u{Constant<Result>{n}} {}
-  template<typename A> Expr(const A &x) : u{x} {}
+  explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
+  explicit Expr(std::int64_t n) : u{Constant<Result>{n}} {}
+  explicit Expr(std::uint64_t n) : u{Constant<Result>{n}} {}
+  explicit Expr(int n) : u{Constant<Result>{n}} {}
+  template<typename A> explicit Expr(const A &x) : u{x} {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u(std::move(x)) {}
+  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u(std::move(x)) {}
 
 private:
   using Conversions = std::variant<Convert<Result, TypeCategory::Integer>,
@@ -460,10 +461,11 @@ public:
   using IsFoldableTrait = std::true_type;
 
   CLASS_BOILERPLATE(Expr)
-  Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  template<typename A> Expr(const A &x) : u{x} {}
+  explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
+  template<typename A> explicit Expr(const A &x) : u{x} {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
 
 private:
   // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
@@ -488,10 +490,11 @@ public:
   using Result = Type<TypeCategory::Complex, KIND>;
   using IsFoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
-  Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  template<typename A> Expr(const A &x) : u{x} {}
+  explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
+  template<typename A> explicit Expr(const A &x) : u{x} {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
 
   // Note that many COMPLEX operations are represented as REAL operations
   // over their components (viz., conversions, negation, add, and subtract).
@@ -528,12 +531,14 @@ public:
   using Result = Type<TypeCategory::Character, KIND>;
   using IsFoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
-  Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  Expr(Scalar<Result> &&x) : u{Constant<Result>{std::move(x)}} {}
-  template<typename A> Expr(const A &x) : u{x} {}
+  explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
+  explicit Expr(Scalar<Result> &&x) : u{Constant<Result>{std::move(x)}} {}
+  template<typename A> explicit Expr(const A &x) : u{x} {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
-  template<typename A> Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
+  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
+  template<typename A>
+  explicit Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
   Expr<SubscriptInteger> LEN() const;
 
@@ -583,9 +588,9 @@ template<> class Relational<SomeType> {
 public:
   using Result = LogicalResult;
   CLASS_BOILERPLATE(Relational)
-  template<typename A> Relational(const A &x) : u(x) {}
+  template<typename A> explicit Relational(const A &x) : u(x) {}
   template<typename A>
-  Relational(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+  explicit Relational(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &o) const;
   common::MapTemplate<Relational, DirectlyComparableTypes> u;
@@ -613,11 +618,12 @@ public:
   using Result = Type<TypeCategory::Logical, KIND>;
   using IsFoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
-  Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  Expr(bool x) : u{Constant<Result>{x}} {}
-  template<typename A> Expr(const A &x) : u(x) {}
+  explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
+  explicit Expr(bool x) : u{Constant<Result>{x}} {}
+  template<typename A> explicit Expr(const A &x) : u(x) {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
 
 private:
   using Operations = std::variant<Convert<Result, TypeCategory::Logical>,
@@ -634,6 +640,22 @@ extern template class Expr<Type<TypeCategory::Logical, 2>>;
 extern template class Expr<Type<TypeCategory::Logical, 4>>;
 extern template class Expr<Type<TypeCategory::Logical, 8>>;
 
+template<>
+class Expr<Type<TypeCategory::Derived>>
+  : public ExpressionBase<Type<TypeCategory::Derived>> {
+public:
+  using Result = Type<TypeCategory::Derived>;
+  using IsFoldableTrait = std::false_type;
+  CLASS_BOILERPLATE(Expr)
+  template<typename A>
+  explicit Expr(const Result &r, const A &x) : result{r}, u{x} {}
+  template<typename A>
+  explicit Expr(Result &&r, std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : result{std::move(r)}, u{std::move(x)} {}
+  Result result;
+  std::variant<DataReference<Result>, FunctionReference<Result>> u;
+};
+
 // A polymorphic expression of known intrinsic type category, but dynamic
 // kind, represented as a discriminated union over Expr<Type<CAT, K>>
 // for each supported kind K in the category.
@@ -644,9 +666,10 @@ public:
   using IsFoldableTrait = std::true_type;
   CLASS_BOILERPLATE(Expr)
 
-  template<typename A> Expr(const A &x) : u{x} {}
+  template<typename A> explicit Expr(const A &x) : u{x} {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
 
   common::MapTemplate<Expr, CategoryTypes<CAT>> u;
 };
@@ -664,15 +687,17 @@ public:
   // its destructor is externalized to reduce redundant default instances.
   ~Expr();
 
-  template<typename A> Expr(const A &x) : u{x} {}
+  template<typename A> explicit Expr(const A &x) : u{x} {}
   template<typename A>
-  Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x) : u{std::move(x)} {}
+  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : u{std::move(x)} {}
 
   template<TypeCategory CAT, int KIND>
-  Expr(const Expr<Type<CAT, KIND>> &x) : u{Expr<SomeKind<CAT>>{x}} {}
+  explicit Expr(const Expr<Type<CAT, KIND>> &x) : u{Expr<SomeKind<CAT>>{x}} {}
 
   template<TypeCategory CAT, int KIND>
-  Expr(Expr<Type<CAT, KIND>> &&x) : u{Expr<SomeKind<CAT>>{std::move(x)}} {}
+  explicit Expr(Expr<Type<CAT, KIND>> &&x)
+    : u{Expr<SomeKind<CAT>>{std::move(x)}} {}
 
   template<TypeCategory CAT, int KIND>
   Expr &operator=(const Expr<Type<CAT, KIND>> &x) {
@@ -686,7 +711,8 @@ public:
     return *this;
   }
 
-  using Others = std::variant<BOZLiteralConstant>;
+  using Others =
+      std::variant<BOZLiteralConstant, Expr<Type<TypeCategory::Derived>>>;
   using Categories = common::MapTemplate<Expr, SomeCategory>;
   common::CombineVariants<Others, Categories> u;
 };
