@@ -14,7 +14,6 @@
 
 #include "llvm/ADT/StringRef.h"
 
-#include "lldb/API/SBValue.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/VariableList.h"
 
