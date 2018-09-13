@@ -121,8 +121,7 @@ getBenchmarkResultContext(const LLVMState &State) {
 
 // Generates code snippets for opcode `Opcode`.
 llvm::Expected<std::vector<BenchmarkCode>>
-generateSnippets(const LLVMState &State, unsigned Opcode,
-                 unsigned NumRepetitions) {
+generateSnippets(const LLVMState &State, unsigned Opcode) {
   const std::unique_ptr<SnippetGenerator> Generator =
       State.getExegesisTarget().createSnippetGenerator(BenchmarkMode, State);
   if (!Generator) {
@@ -166,7 +165,7 @@ void benchmarkMain() {
 
   // FIXME: Allow arbitrary code.
   const std::vector<BenchmarkCode> Configurations =
-      ExitOnErr(generateSnippets(State, Opcode, NumRepetitions));
+      ExitOnErr(generateSnippets(State, Opcode));
 
   const std::unique_ptr<BenchmarkRunner> Runner =
       State.getExegesisTarget().createBenchmarkRunner(BenchmarkMode, State);
