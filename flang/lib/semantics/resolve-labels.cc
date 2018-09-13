@@ -166,7 +166,7 @@ constexpr LabeledStmtClassificationSet constructBranchTargetFlags(
   return labeledStmtClassificationSet;
 }
 
-bool BothEqOrNone(const std::optional<parser::Name> &name_a,
+bool namesBothEqualOrBothNone(const std::optional<parser::Name> &name_a,
     const std::optional<parser::Name> &name_b) {
   if (name_a.has_value()) {
     if (name_b.has_value()) {
@@ -179,7 +179,7 @@ bool BothEqOrNone(const std::optional<parser::Name> &name_a,
   }
 }
 
-bool PresentAndEq(const std::optional<parser::Name> &name_a,
+bool firstNameNoneOrBothEqual(const std::optional<parser::Name> &name_a,
     const std::optional<parser::Name> &name_b) {
   if (!name_a.has_value()) {
     return true;
@@ -190,7 +190,7 @@ bool PresentAndEq(const std::optional<parser::Name> &name_a,
   }
 }
 
-bool PresentAndEq(
+bool firstNameNoneOrBothEqual(
     const std::optional<parser::Name> &name_a, const parser::Name &name_b) {
   if (!name_a.has_value()) {
     return true;
@@ -322,7 +322,7 @@ public:
 
   // C1414
   void Post(const parser::BlockData &blockData) {
-    if (!BothEqOrNone(
+    if (!namesBothEqualOrBothNone(
             std::get<parser::Statement<parser::BlockDataStmt>>(blockData.t)
                 .statement.v,
             std::get<parser::Statement<parser::EndBlockDataStmt>>(blockData.t)
@@ -333,9 +333,10 @@ public:
   }
   // C1564
   void Post(const parser::FunctionSubprogram &functionSubprogram) {
-    if (!PresentAndEq(std::get<parser::Statement<parser::EndFunctionStmt>>(
-                          functionSubprogram.t)
-                          .statement.v,
+    if (!firstNameNoneOrBothEqual(
+            std::get<parser::Statement<parser::EndFunctionStmt>>(
+                functionSubprogram.t)
+                .statement.v,
             std::get<parser::Name>(
                 std::get<parser::Statement<parser::FunctionStmt>>(
                     functionSubprogram.t)
@@ -375,7 +376,7 @@ public:
   }
   // C1402
   void Post(const parser::Module &module) {
-    if (!PresentAndEq(
+    if (!firstNameNoneOrBothEqual(
             std::get<parser::Statement<parser::EndModuleStmt>>(module.t)
                 .statement.v,
             std::get<parser::Statement<parser::ModuleStmt>>(module.t)
@@ -386,9 +387,10 @@ public:
   }
   // C1569
   void Post(const parser::SeparateModuleSubprogram &separateModuleSubprogram) {
-    if (!PresentAndEq(std::get<parser::Statement<parser::EndMpSubprogramStmt>>(
-                          separateModuleSubprogram.t)
-                          .statement.v,
+    if (!firstNameNoneOrBothEqual(
+            std::get<parser::Statement<parser::EndMpSubprogramStmt>>(
+                separateModuleSubprogram.t)
+                .statement.v,
             std::get<parser::Statement<parser::MpSubprogramStmt>>(
                 separateModuleSubprogram.t)
                 .statement.v)) {
@@ -427,7 +429,7 @@ public:
   }
   // C1413
   void Post(const parser::Submodule &submodule) {
-    if (!PresentAndEq(
+    if (!firstNameNoneOrBothEqual(
             std::get<parser::Statement<parser::EndSubmoduleStmt>>(submodule.t)
                 .statement.v,
             std::get<parser::Name>(
@@ -440,9 +442,10 @@ public:
   }
   // C1567
   void Post(const parser::SubroutineSubprogram &subroutineSubprogram) {
-    if (!PresentAndEq(std::get<parser::Statement<parser::EndSubroutineStmt>>(
-                          subroutineSubprogram.t)
-                          .statement.v,
+    if (!firstNameNoneOrBothEqual(
+            std::get<parser::Statement<parser::EndSubroutineStmt>>(
+                subroutineSubprogram.t)
+                .statement.v,
             std::get<parser::Name>(
                 std::get<parser::Statement<parser::SubroutineStmt>>(
                     subroutineSubprogram.t)
@@ -454,7 +457,7 @@ public:
   }
   // C739
   void Post(const parser::DerivedTypeDef &derivedTypeDef) {
-    if (!PresentAndEq(
+    if (!firstNameNoneOrBothEqual(
             std::get<parser::Statement<parser::EndTypeStmt>>(derivedTypeDef.t)
                 .statement.v,
             std::get<parser::Name>(
@@ -621,7 +624,7 @@ private:
 
   template<typename A>
   void CheckName(const char *const constructTag, const A &a) {
-    if (!BothEqOrNone(
+    if (!namesBothEqualOrBothNone(
             std::get<std::optional<parser::Name>>(std::get<0>(a.t).statement.t),
             std::get<2>(a.t).statement.v)) {
       errorHandler_.Say(currentPosition_,
@@ -632,7 +635,7 @@ private:
 
   // C1109
   void CheckName(const parser::BlockConstruct &blockConstruct) {
-    if (!BothEqOrNone(
+    if (!namesBothEqualOrBothNone(
             std::get<parser::Statement<parser::BlockStmt>>(blockConstruct.t)
                 .statement.v,
             std::get<parser::Statement<parser::EndBlockStmt>>(blockConstruct.t)
@@ -644,10 +647,11 @@ private:
   }
   // C1112
   void CheckName(const parser::ChangeTeamConstruct &changeTeamConstruct) {
-    if (!BothEqOrNone(std::get<std::optional<parser::Name>>(
-                          std::get<parser::Statement<parser::ChangeTeamStmt>>(
-                              changeTeamConstruct.t)
-                              .statement.t),
+    if (!namesBothEqualOrBothNone(
+            std::get<std::optional<parser::Name>>(
+                std::get<parser::Statement<parser::ChangeTeamStmt>>(
+                    changeTeamConstruct.t)
+                    .statement.t),
             std::get<std::optional<parser::Name>>(
                 std::get<parser::Statement<parser::EndChangeTeamStmt>>(
                     changeTeamConstruct.t)
@@ -663,7 +667,7 @@ private:
     const auto &constructName{std::get<std::optional<parser::Name>>(
         std::get<parser::Statement<parser::IfThenStmt>>(ifConstruct.t)
             .statement.t)};
-    if (!BothEqOrNone(constructName,
+    if (!namesBothEqualOrBothNone(constructName,
             std::get<parser::Statement<parser::EndIfStmt>>(ifConstruct.t)
                 .statement.v)) {
       errorHandler_.Say(currentPosition_,
@@ -671,7 +675,7 @@ private:
     }
     for (const auto &elseIfBlock :
         std::get<std::list<parser::IfConstruct::ElseIfBlock>>(ifConstruct.t)) {
-      if (!PresentAndEq(
+      if (!firstNameNoneOrBothEqual(
               std::get<std::optional<parser::Name>>(
                   std::get<parser::Statement<parser::ElseIfStmt>>(elseIfBlock.t)
                       .statement.t),
@@ -683,7 +687,7 @@ private:
     }
     if (std::get<std::optional<parser::IfConstruct::ElseBlock>>(ifConstruct.t)
             .has_value()) {
-      if (!PresentAndEq(
+      if (!firstNameNoneOrBothEqual(
               std::get<parser::Statement<parser::ElseStmt>>(
                   std::get<std::optional<parser::IfConstruct::ElseBlock>>(
                       ifConstruct.t)
@@ -701,14 +705,15 @@ private:
   void CheckName(const A &a, const char *const selectTag,
       const char *const selectSubTag = "") {
     const auto &constructName{std::get<0>(std::get<0>(a.t).statement.t)};
-    if (!BothEqOrNone(constructName, std::get<2>(a.t).statement.v)) {
+    if (!namesBothEqualOrBothNone(
+            constructName, std::get<2>(a.t).statement.v)) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
               "SELECT %s construct name mismatch"_err_en_US, selectTag});
     }
     for (const auto &subpart : std::get<1>(a.t)) {
-      if (!PresentAndEq(std::get<std::optional<parser::Name>>(
-                            std::get<0>(subpart.t).statement.t),
+      if (!firstNameNoneOrBothEqual(std::get<std::optional<parser::Name>>(
+                                        std::get<0>(subpart.t).statement.t),
               constructName)) {
         errorHandler_.Say(currentPosition_,
             parser::MessageFormattedText{
@@ -723,7 +728,7 @@ private:
         std::get<parser::Statement<parser::WhereConstructStmt>>(
             whereConstruct.t)
             .statement.t)};
-    if (!BothEqOrNone(constructName,
+    if (!namesBothEqualOrBothNone(constructName,
             std::get<parser::Statement<parser::EndWhereStmt>>(whereConstruct.t)
                 .statement.v)) {
       errorHandler_.Say(currentPosition_,
@@ -733,7 +738,7 @@ private:
     for (const auto &maskedElsewhere :
         std::get<std::list<parser::WhereConstruct::MaskedElsewhere>>(
             whereConstruct.t)) {
-      if (!PresentAndEq(
+      if (!firstNameNoneOrBothEqual(
               std::get<std::optional<parser::Name>>(
                   std::get<parser::Statement<parser::MaskedElsewhereStmt>>(
                       maskedElsewhere.t)
@@ -747,7 +752,7 @@ private:
     if (std::get<std::optional<parser::WhereConstruct::Elsewhere>>(
             whereConstruct.t)
             .has_value()) {
-      if (!PresentAndEq(
+      if (!firstNameNoneOrBothEqual(
               std::get<parser::Statement<parser::ElsewhereStmt>>(
                   std::get<std::optional<parser::WhereConstruct::Elsewhere>>(
                       whereConstruct.t)
