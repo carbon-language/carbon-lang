@@ -805,10 +805,9 @@ define i32 @test47(i32 %x, i32 %y, i32 %z) {
 
 define i32 @test48(i32 %x) {
 ; CHECK-LABEL: @test48(
-; CHECK-NEXT:    [[A:%.*]] = sub i32 -2, [[X:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = icmp sgt i32 [[A]], 0
-; CHECK-NEXT:    [[C:%.*]] = select i1 [[B]], i32 [[A]], i32 0
-; CHECK-NEXT:    [[D:%.*]] = xor i32 [[C]], -1
+; CHECK-NEXT:    [[TMP1:%.*]] = add i32 [[X:%.*]], 1
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp slt i32 [[TMP1]], -1
+; CHECK-NEXT:    [[D:%.*]] = select i1 [[TMP2]], i32 [[TMP1]], i32 -1
 ; CHECK-NEXT:    ret i32 [[D]]
 ;
   %a = sub i32 -2, %x
@@ -820,10 +819,9 @@ define i32 @test48(i32 %x) {
 
 define <2 x i32> @test48vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test48vec(
-; CHECK-NEXT:    [[A:%.*]] = sub <2 x i32> <i32 -2, i32 -2>, [[X:%.*]]
-; CHECK-NEXT:    [[B:%.*]] = icmp sgt <2 x i32> [[A]], zeroinitializer
-; CHECK-NEXT:    [[C:%.*]] = select <2 x i1> [[B]], <2 x i32> [[A]], <2 x i32> zeroinitializer
-; CHECK-NEXT:    [[D:%.*]] = xor <2 x i32> [[C]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[TMP1:%.*]] = add <2 x i32> [[X:%.*]], <i32 1, i32 1>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp slt <2 x i32> [[TMP1]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[D:%.*]] = select <2 x i1> [[TMP2]], <2 x i32> [[TMP1]], <2 x i32> <i32 -1, i32 -1>
 ; CHECK-NEXT:    ret <2 x i32> [[D]]
 ;
   %a = sub <2 x i32> <i32 -2, i32 -2>, %x
@@ -835,10 +833,9 @@ define <2 x i32> @test48vec(<2 x i32> %x) {
 
 define i32 @test49(i32 %x) {
 ; CHECK-LABEL: @test49(
-; CHECK-NEXT:    [[A:%.*]] = add i32 [[X:%.*]], -2
-; CHECK-NEXT:    [[B:%.*]] = icmp slt i32 [[A]], -1
-; CHECK-NEXT:    [[C:%.*]] = select i1 [[B]], i32 [[A]], i32 -1
-; CHECK-NEXT:    [[D:%.*]] = xor i32 [[C]], -1
+; CHECK-NEXT:    [[TMP1:%.*]] = sub i32 1, [[X:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt i32 [[TMP1]], 0
+; CHECK-NEXT:    [[D:%.*]] = select i1 [[TMP2]], i32 [[TMP1]], i32 0
 ; CHECK-NEXT:    ret i32 [[D]]
 ;
   %a = add i32 %x, -2
@@ -850,10 +847,9 @@ define i32 @test49(i32 %x) {
 
 define <2 x i32> @test49vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test49vec(
-; CHECK-NEXT:    [[A:%.*]] = add <2 x i32> [[X:%.*]], <i32 -2, i32 -2>
-; CHECK-NEXT:    [[B:%.*]] = icmp slt <2 x i32> [[A]], <i32 -1, i32 -1>
-; CHECK-NEXT:    [[C:%.*]] = select <2 x i1> [[B]], <2 x i32> [[A]], <2 x i32> <i32 -1, i32 -1>
-; CHECK-NEXT:    [[D:%.*]] = xor <2 x i32> [[C]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[TMP1:%.*]] = sub <2 x i32> <i32 1, i32 1>, [[X:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp sgt <2 x i32> [[TMP1]], zeroinitializer
+; CHECK-NEXT:    [[D:%.*]] = select <2 x i1> [[TMP2]], <2 x i32> [[TMP1]], <2 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <2 x i32> [[D]]
 ;
   %a = add <2 x i32> %x, <i32 -2, i32 -2>
@@ -865,11 +861,10 @@ define <2 x i32> @test49vec(<2 x i32> %x) {
 
 define i32 @test50(i32 %x, i32 %y) {
 ; CHECK-LABEL: @test50(
-; CHECK-NEXT:    [[A:%.*]] = add i32 [[X:%.*]], -2
-; CHECK-NEXT:    [[B:%.*]] = sub i32 -2, [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = icmp slt i32 [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select i1 [[C]], i32 [[A]], i32 [[B]]
-; CHECK-NEXT:    [[E:%.*]] = xor i32 [[D]], -1
+; CHECK-NEXT:    [[TMP1:%.*]] = sub i32 1, [[X:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = add i32 [[Y:%.*]], 1
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp slt i32 [[TMP2]], [[TMP1]]
+; CHECK-NEXT:    [[E:%.*]] = select i1 [[TMP3]], i32 [[TMP1]], i32 [[TMP2]]
 ; CHECK-NEXT:    ret i32 [[E]]
 ;
   %a = add i32 %x, -2
@@ -882,11 +877,10 @@ define i32 @test50(i32 %x, i32 %y) {
 
 define <2 x i32> @test50vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @test50vec(
-; CHECK-NEXT:    [[A:%.*]] = add <2 x i32> [[X:%.*]], <i32 -2, i32 -2>
-; CHECK-NEXT:    [[B:%.*]] = sub <2 x i32> <i32 -2, i32 -2>, [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = icmp slt <2 x i32> [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select <2 x i1> [[C]], <2 x i32> [[A]], <2 x i32> [[B]]
-; CHECK-NEXT:    [[E:%.*]] = xor <2 x i32> [[D]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[TMP1:%.*]] = sub <2 x i32> <i32 1, i32 1>, [[X:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = add <2 x i32> [[Y:%.*]], <i32 1, i32 1>
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp slt <2 x i32> [[TMP2]], [[TMP1]]
+; CHECK-NEXT:    [[E:%.*]] = select <2 x i1> [[TMP3]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]]
 ; CHECK-NEXT:    ret <2 x i32> [[E]]
 ;
   %a = add <2 x i32> %x, <i32 -2, i32 -2>
@@ -899,11 +893,10 @@ define <2 x i32> @test50vec(<2 x i32> %x, <2 x i32> %y) {
 
 define i32 @test51(i32 %x, i32 %y) {
 ; CHECK-LABEL: @test51(
-; CHECK-NEXT:    [[A:%.*]] = add i32 [[X:%.*]], 2
-; CHECK-NEXT:    [[B:%.*]] = sub i32 2, [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt i32 [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select i1 [[C]], i32 [[A]], i32 [[B]]
-; CHECK-NEXT:    [[E:%.*]] = xor i32 [[D]], -1
+; CHECK-NEXT:    [[TMP1:%.*]] = sub i32 -3, [[X:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = add i32 [[Y:%.*]], -3
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp sgt i32 [[TMP2]], [[TMP1]]
+; CHECK-NEXT:    [[E:%.*]] = select i1 [[TMP3]], i32 [[TMP1]], i32 [[TMP2]]
 ; CHECK-NEXT:    ret i32 [[E]]
 ;
   %a = add i32 %x, 2
@@ -916,11 +909,10 @@ define i32 @test51(i32 %x, i32 %y) {
 
 define <2 x i32> @test51vec(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @test51vec(
-; CHECK-NEXT:    [[A:%.*]] = add <2 x i32> [[X:%.*]], <i32 2, i32 2>
-; CHECK-NEXT:    [[B:%.*]] = sub <2 x i32> <i32 2, i32 2>, [[Y:%.*]]
-; CHECK-NEXT:    [[C:%.*]] = icmp sgt <2 x i32> [[A]], [[B]]
-; CHECK-NEXT:    [[D:%.*]] = select <2 x i1> [[C]], <2 x i32> [[A]], <2 x i32> [[B]]
-; CHECK-NEXT:    [[E:%.*]] = xor <2 x i32> [[D]], <i32 -1, i32 -1>
+; CHECK-NEXT:    [[TMP1:%.*]] = sub <2 x i32> <i32 -3, i32 -3>, [[X:%.*]]
+; CHECK-NEXT:    [[TMP2:%.*]] = add <2 x i32> [[Y:%.*]], <i32 -3, i32 -3>
+; CHECK-NEXT:    [[TMP3:%.*]] = icmp sgt <2 x i32> [[TMP2]], [[TMP1]]
+; CHECK-NEXT:    [[E:%.*]] = select <2 x i1> [[TMP3]], <2 x i32> [[TMP1]], <2 x i32> [[TMP2]]
 ; CHECK-NEXT:    ret <2 x i32> [[E]]
 ;
   %a = add <2 x i32> %x, <i32 2, i32 2>
