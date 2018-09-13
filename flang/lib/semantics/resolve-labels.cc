@@ -190,6 +190,15 @@ bool PresentAndEq(const std::optional<parser::Name> &name_a,
   }
 }
 
+bool PresentAndEq(
+    const std::optional<parser::Name> &name_a, const parser::Name &name_b) {
+  if (!name_a.has_value()) {
+    return true;
+  } else {
+    return name_a->ToString() == name_b.ToString();
+  }
+}
+
 struct UnitAnalysis {
   UnitAnalysis() { scopeModel.push_back(0); }
   UnitAnalysis(UnitAnalysis &&that)
@@ -311,6 +320,156 @@ public:
     popConstructNameWithoutBlock(forallConstruct);
   }
 
+  // C1414
+  void Post(const parser::BlockData &blockData) {
+    if (!BothEqOrNone(
+            std::get<parser::Statement<parser::BlockDataStmt>>(blockData.t)
+                .statement.v,
+            std::get<parser::Statement<parser::EndBlockDataStmt>>(blockData.t)
+                .statement.v)) {
+      errorHandler_.Say(currentPosition_,
+          parser::MessageFormattedText{"BLOCK DATA name mismatch"_err_en_US});
+    }
+  }
+  // C1564
+  void Post(const parser::FunctionSubprogram &functionSubprogram) {
+    if (!PresentAndEq(std::get<parser::Statement<parser::EndFunctionStmt>>(
+                          functionSubprogram.t)
+                          .statement.v,
+            std::get<parser::Name>(
+                std::get<parser::Statement<parser::FunctionStmt>>(
+                    functionSubprogram.t)
+                    .statement.t))) {
+      errorHandler_.Say(currentPosition_,
+          parser::MessageFormattedText{"END FUNCTION name mismatch"_err_en_US});
+    }
+  }
+  void Post(const parser::InterfaceBlock &interfaceBlock) {
+    auto &interfaceStmt{
+        std::get<parser::Statement<parser::InterfaceStmt>>(interfaceBlock.t)
+            .statement};
+    if (const auto *optionalGenericSpecPointer{
+            std::get_if<std::optional<parser::GenericSpec>>(
+                &interfaceStmt.u)}) {
+      if (optionalGenericSpecPointer->has_value()) {
+        if (const auto *namePointer{
+                std::get_if<parser::Name>(&(*optionalGenericSpecPointer)->u)}) {
+          auto &optionalGenericSpec{
+              std::get<parser::Statement<parser::EndInterfaceStmt>>(
+                  interfaceBlock.t)
+                  .statement.v};
+          if (optionalGenericSpec.has_value()) {
+            if (const auto *otherPointer{
+                    std::get_if<parser::Name>(&optionalGenericSpec->u)}) {
+              if (namePointer->ToString() != otherPointer->ToString()) {
+                errorHandler_.Say(currentPosition_,
+                    parser::MessageFormattedText{
+                        "INTERFACE generic-name (%s) mismatch"_en_US,
+                        namePointer->ToString().c_str()});
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // C1402
+  void Post(const parser::Module &module) {
+    if (!PresentAndEq(
+            std::get<parser::Statement<parser::EndModuleStmt>>(module.t)
+                .statement.v,
+            std::get<parser::Statement<parser::ModuleStmt>>(module.t)
+                .statement.v)) {
+      errorHandler_.Say(currentPosition_,
+          parser::MessageFormattedText{"END MODULE name mismatch"_err_en_US});
+    }
+  }
+  // C1569
+  void Post(const parser::SeparateModuleSubprogram &separateModuleSubprogram) {
+    if (!PresentAndEq(std::get<parser::Statement<parser::EndMpSubprogramStmt>>(
+                          separateModuleSubprogram.t)
+                          .statement.v,
+            std::get<parser::Statement<parser::MpSubprogramStmt>>(
+                separateModuleSubprogram.t)
+                .statement.v)) {
+      errorHandler_.Say(currentPosition_,
+          parser::MessageFormattedText{
+              "END MODULE PROCEDURE name mismatch"_err_en_US});
+    }
+  }
+  // C1401
+  void Post(const parser::MainProgram &mainProgram) {
+    if (std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(
+            mainProgram.t)
+            .has_value()) {
+      auto &programStmt{
+          std::get<std::optional<parser::Statement<parser::ProgramStmt>>>(
+              mainProgram.t)
+              ->statement};
+      auto &endProgramStmt{
+          std::get<parser::Statement<parser::EndProgramStmt>>(mainProgram.t)
+              .statement};
+      if (endProgramStmt.v.has_value()) {
+        if (programStmt.v.ToString() != endProgramStmt.v->ToString()) {
+          errorHandler_.Say(currentPosition_,
+              parser::MessageFormattedText{
+                  "END PROGRAM name mismatch"_err_en_US});
+        }
+      } else {
+        errorHandler_.Say(currentPosition_,
+            parser::MessageFormattedText{
+                "END PROGRAM must have a program-name"_err_en_US});
+      }
+    } else {
+      if (std::get<parser::Statement<parser::EndProgramStmt>>(mainProgram.t)
+              .statement.v.has_value()) {
+        errorHandler_.Say(currentPosition_,
+            parser::MessageFormattedText{
+                "END PROGRAM cannot have a program-name"_err_en_US});
+      }
+    }
+  }
+  // C1413
+  void Post(const parser::Submodule &submodule) {
+    if (!PresentAndEq(
+            std::get<parser::Statement<parser::EndSubmoduleStmt>>(submodule.t)
+                .statement.v,
+            std::get<parser::Name>(
+                std::get<parser::Statement<parser::SubmoduleStmt>>(submodule.t)
+                    .statement.t))) {
+      errorHandler_.Say(currentPosition_,
+          parser::MessageFormattedText{
+              "END SUBMODULE name mismatch"_err_en_US});
+    }
+  }
+  // C1567
+  void Post(const parser::SubroutineSubprogram &subroutineSubprogram) {
+    if (!PresentAndEq(std::get<parser::Statement<parser::EndSubroutineStmt>>(
+                          subroutineSubprogram.t)
+                          .statement.v,
+            std::get<parser::Name>(
+                std::get<parser::Statement<parser::SubroutineStmt>>(
+                    subroutineSubprogram.t)
+                    .statement.t))) {
+      errorHandler_.Say(currentPosition_,
+          parser::MessageFormattedText{
+              "END SUBROUTINE name mismatch"_err_en_US});
+    }
+  }
+  // C739
+  void Post(const parser::DerivedTypeDef &derivedTypeDef) {
+    if (!PresentAndEq(
+            std::get<parser::Statement<parser::EndTypeStmt>>(derivedTypeDef.t)
+                .statement.v,
+            std::get<parser::Name>(
+                std::get<parser::Statement<parser::DerivedTypeStmt>>(
+                    derivedTypeDef.t)
+                    .statement.t))) {
+      errorHandler_.Say(currentPosition_,
+          parser::MessageFormattedText{"END TYPE name mismatch"_err_en_US});
+    }
+  }
+
   void Post(const parser::LabelDoStmt &labelDoStmt) {
     addLabelReferenceFromDoStmt(std::get<parser::Label>(labelDoStmt.t));
   }
@@ -337,8 +496,8 @@ public:
   void Post(const parser::EndLabel &endLabel) { addLabelReference(endLabel.v); }
   void Post(const parser::EorLabel &eorLabel) { addLabelReference(eorLabel.v); }
   void Post(const parser::Format &format) {
-    if (const auto *P{std::get_if<parser::Label>(&format.u)}) {
-      addLabelReferenceFromFormatStmt(*P);
+    if (const auto *labelPointer{std::get_if<parser::Label>(&format.u)}) {
+      addLabelReferenceFromFormatStmt(*labelPointer);
     }
   }
   void Post(const parser::CycleStmt &cycleStmt) {

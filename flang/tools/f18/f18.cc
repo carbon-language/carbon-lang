@@ -216,15 +216,11 @@ std::string CompileFortran(
     if (driver.moduleDirectory != "."s) {
       directories.insert(directories.begin(), driver.moduleDirectory);
     }
-    Fortran::semantics::ResolveNames(Fortran::semantics::Scope::globalScope,
-        parseTree, parsing.cooked(), directories);
-    const auto &Cook = parsing.cooked();
-    bool Pass = Fortran::semantics::ValidateLabels(parseTree, Cook);
-    if (!Pass) {
-      std::cerr << "Semantic error(s), aborting\n";
-      exitStatus = EXIT_FAILURE;
+    if (!Fortran::semantics::ValidateLabels(parseTree, parsing.cooked())) {
       return {};
     }
+    Fortran::semantics::ResolveNames(Fortran::semantics::Scope::globalScope,
+        parseTree, parsing.cooked(), directories);
     Fortran::semantics::ModFileWriter writer;
     writer.set_directory(driver.moduleDirectory);
     writer.WriteAll();
