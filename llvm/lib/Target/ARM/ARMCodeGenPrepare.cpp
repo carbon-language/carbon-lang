@@ -271,13 +271,6 @@ static bool isSafeOverflow(Instruction *I) {
     return true;
   }
 
-  // Otherwise, if an instruction is using a negative immediate we will need
-  // to fix it up during the promotion.
-  for (auto &Op : I->operands()) {
-    if (auto *Const = dyn_cast<ConstantInt>(Op))
-      if (Const->isNegative())
-        return false;
-  }
   return false;
 }
 
@@ -370,19 +363,9 @@ void IRPromoter::Mutate(Type *OrigTy,
   };
 
   auto FixConst = [&](ConstantInt *Const, Instruction *I) {
-    Constant *NewConst = nullptr;
-    if (isSafeOverflow(I)) {
-      NewConst = (Const->isNegative()) ?
-        ConstantExpr::getSExt(Const, ExtTy) :
-        ConstantExpr::getZExt(Const, ExtTy);
-    } else {
-      uint64_t NewVal = *Const->getValue().getRawData();
-      if (Const->getType() == Type::getInt16Ty(Ctx))
-        NewVal &= 0xFFFF;
-      else
-        NewVal &= 0xFF;
-      NewConst = ConstantInt::get(ExtTy, NewVal);
-    }
+    Constant *NewConst = isSafeOverflow(I) && Const->isNegative() ?
+      ConstantExpr::getSExt(Const, ExtTy) :
+      ConstantExpr::getZExt(Const, ExtTy);
     I->replaceUsesOfWith(Const, NewConst);
   };
 
