@@ -454,7 +454,7 @@ TYPE_PARSER(construct<OpenMPDeclareSimdConstruct>(
     maybe(parenthesized(name)), Parser<OmpClauseList>{}))
 
 // Declarative construct & Threadprivate directive
-TYPE_PARSER(lookAhead(!"!$OMP END"_tok) >> "!$OMP "_tok >>
+TYPE_PARSER(!"!$OMP END"_tok >> "!$OMP "_tok >>
     ("DECLARE REDUCTION" >>
             construct<OpenMPDeclarativeConstruct>(
                 construct<OpenMPDeclarativeConstruct>(
@@ -536,7 +536,7 @@ TYPE_PARSER("PARALLEL SECTIONS" >> construct<OpenMPParallelSectionsConstruct>(
                                        block, Parser<OmpEndParallelSections>{}))
 
 TYPE_CONTEXT_PARSER("OpenMP construct"_en_US,
-    skipStuffBeforeStatement >> "!$OMP "_sptok >> lookAhead(!"END"_tok) >>
+    skipStuffBeforeStatement >> "!$OMP "_sptok >> !"END"_tok >>
         (construct<OpenMPConstruct>(
              indirect(Parser<OpenMPStandaloneConstruct>{})) ||
             construct<OpenMPConstruct>(

@@ -2625,7 +2625,7 @@ TYPE_CONTEXT_PARSER("PRINT statement"_en_US,
         "PRINT" >> format, defaulted("," >> nonemptyList(outputItem))))
 
 // R1215 format -> default-char-expr | label | *
-TYPE_PARSER(construct<Format>(label) ||
+TYPE_PARSER(construct<Format>(label / !"_."_ch) ||
     construct<Format>(defaultCharExpr / !"="_tok) || construct<Format>(star))
 
 // R1216 input-item -> variable | io-implied-do
