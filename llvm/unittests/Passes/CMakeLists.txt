@@ -10,17 +10,12 @@ endif()
 set(LLVM_LINK_COMPONENTS Support Passes Core)
 add_llvm_unittest(PluginsTests
   PluginsTest.cpp
-
-  DEPENDS
-  TestPlugin
   )
 export_executable_symbols(PluginsTests)
 
+set(LLVM_LINK_COMPONENTS)
 add_llvm_loadable_module(TestPlugin
   TestPlugin.cpp
-
-  DEPENDS
-  intrinsics_gen
   )
 
 # Put plugin next to the unit test executable.
@@ -29,3 +24,6 @@ set_output_directory(TestPlugin
   LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}
   )
 set_target_properties(TestPlugin PROPERTIES FOLDER "Tests")
+
+add_dependencies(TestPlugin intrinsics_gen)
+add_dependencies(PluginsTests TestPlugin)
