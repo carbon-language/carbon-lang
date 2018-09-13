@@ -1847,9 +1847,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       // MIN(~a, ~b) -> ~MAX(a, b)
       Value *A, *B;
       if (match(LHS, m_Not(m_Value(A))) && match(RHS, m_Not(m_Value(B))) &&
-          !IsFreeToInvert(A, A->hasOneUse()) &&
-          !IsFreeToInvert(B, B->hasOneUse()) &&
-         (!LHS->hasNUsesOrMore(3) || !RHS->hasNUsesOrMore(3))) {
+          (!LHS->hasNUsesOrMore(3) || !RHS->hasNUsesOrMore(3))) {
         CmpInst::Predicate InvertedPred = getInverseMinMaxPred(SPF);
         Value *InvertedCmp = Builder.CreateICmp(InvertedPred, A, B);
         Value *NewSel = Builder.CreateSelect(InvertedCmp, A, B);
