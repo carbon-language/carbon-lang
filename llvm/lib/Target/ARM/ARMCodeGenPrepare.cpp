@@ -175,7 +175,6 @@ static bool generateSignBits(Value *V) {
 /// dealing with icmps but allow any other integer that is <= 16 bits. Void
 /// types are accepted so we can handle switches.
 static bool isSupportedType(Value *V) {
-  LLVM_DEBUG(dbgs() << "ARM CGP: isSupportedType: " << *V << "\n");
   Type *Ty = V->getType();
 
   // Allow voids and pointers, these won't be promoted.
@@ -186,10 +185,8 @@ static bool isSupportedType(Value *V) {
     Ty = cast<PointerType>(Ld->getPointerOperandType())->getElementType();
 
   const IntegerType *IntTy = dyn_cast<IntegerType>(Ty);
-  if (!IntTy) {
-    LLVM_DEBUG(dbgs() << "ARM CGP: No, not an integer.\n");
+  if (!IntTy)
     return false;
-  }
 
   return IntTy->getBitWidth() == ARMCodeGenPrepare::TypeSize;
 }
@@ -204,7 +201,7 @@ static bool isSupportedType(Value *V) {
 static bool isSource(Value *V) {
   if (!isa<IntegerType>(V->getType()))
     return false;
-  // TODO Allow truncs and zext to be sources.
+  // TODO Allow zext to be sources.
   if (isa<Argument>(V))
     return true;
   else if (isa<LoadInst>(V))
@@ -213,6 +210,8 @@ static bool isSource(Value *V) {
     return true;
   else if (auto *Call = dyn_cast<CallInst>(V))
     return Call->hasRetAttr(Attribute::AttrKind::ZExt);
+  else if (auto *Trunc = dyn_cast<TruncInst>(V))
+    return isSupportedType(Trunc);
   return false;
 }
 
@@ -275,10 +274,8 @@ static bool isSafeOverflow(Instruction *I) {
 }
 
 static bool shouldPromote(Value *V) {
-  if (!isa<IntegerType>(V->getType()) || isSink(V)) {
-    LLVM_DEBUG(dbgs() << "ARM CGP: Don't need to promote: " << *V << "\n");
+  if (!isa<IntegerType>(V->getType()) || isSink(V))
     return false;
-  }
 
   if (isSource(V))
     return true;
@@ -358,7 +355,7 @@ void IRPromoter::Mutate(Type *OrigTy,
       Users.push_back(User);
     }
 
-    for (auto &U : Users)
+    for (auto *U : Users)
       U->replaceUsesOfWith(From, To);
   };
 
@@ -502,6 +499,15 @@ void IRPromoter::Mutate(Type *OrigTy,
     }
   }
   LLVM_DEBUG(dbgs() << "ARM CGP: Mutation complete:\n");
+  LLVM_DEBUG(dbgs();
+             for (auto *V : Sources)
+               V->dump();
+             for (auto *I : NewInsts)
+               I->dump();
+             for (auto *V : Visited) {
+               if (!Sources.count(V))
+                 V->dump();
+              });
 }
 
 /// We accept most instructions, as well as Arguments and ConstantInsts. We
@@ -509,8 +515,6 @@ void IRPromoter::Mutate(Type *OrigTy,
 /// return value is zeroext. We don't allow opcodes that can introduce sign
 /// bits.
 bool ARMCodeGenPrepare::isSupportedValue(Value *V) {
-  LLVM_DEBUG(dbgs() << "ARM CGP: Is " << *V << " supported?\n");
-
   if (isa<ICmpInst>(V))
     return true;
 
@@ -530,7 +534,11 @@ bool ARMCodeGenPrepare::isSupportedValue(Value *V) {
       isa<LoadInst>(V))
     return isSupportedType(V);
 
-  if (isa<CastInst>(V) && !isa<SExtInst>(V)) 
+  // Truncs can be either sources or sinks.
+  if (auto *Trunc = dyn_cast<TruncInst>(V))
+    return isSupportedType(Trunc) || isSupportedType(Trunc->getOperand(0));
+
+  if (isa<CastInst>(V) && !isa<SExtInst>(V))
     return isSupportedType(cast<CastInst>(V)->getOperand(0));
 
   // Special cases for calls as we need to check for zeroext
@@ -540,10 +548,9 @@ bool ARMCodeGenPrepare::isSupportedValue(Value *V) {
     return isSupportedType(Call) &&
            Call->hasRetAttr(Attribute::AttrKind::ZExt);
 
-  if (!isa<BinaryOperator>(V)) {
-    LLVM_DEBUG(dbgs() << "ARM CGP: No, not a binary operator.\n");
+  if (!isa<BinaryOperator>(V))
     return false;
-  }
+
   if (!isSupportedType(V))
     return false;
 
@@ -645,10 +652,8 @@ bool ARMCodeGenPrepare::TryToPromote(Value *V) {
     // the tree has already been explored.
     // TODO: This could limit the transform, ie if we try to promote something
     // from an i8 and fail first, before trying an i16.
-    if (AllVisited.count(V)) {
-      LLVM_DEBUG(dbgs() << "ARM CGP: Already visited this: " << *V << "\n");
+    if (AllVisited.count(V))
       return false;
-    }
 
     CurrentVisited.insert(V);
     AllVisited.insert(V);
@@ -728,7 +733,6 @@ bool ARMCodeGenPrepare::runOnFunction(Function &F) {
         if (CI.isSigned() || !isa<IntegerType>(CI.getOperand(0)->getType()))
           continue;
 
-        LLVM_DEBUG(dbgs() << "ARM CGP: Searching from: " << CI << "\n");
         for (auto &Op : CI.operands()) {
           if (auto *I = dyn_cast<Instruction>(Op))
             MadeChange |= TryToPromote(I);
