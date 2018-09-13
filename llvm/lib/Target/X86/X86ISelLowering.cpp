@@ -41219,14 +41219,36 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
           Size == 8 ? (is64Bit ? &X86::GR8RegClass : &X86::GR8_NOREXRegClass)
         : Size == 16 ? (is64Bit ? &X86::GR16RegClass : &X86::GR16_NOREXRegClass)
         : Size == 32 ? (is64Bit ? &X86::GR32RegClass : &X86::GR32_NOREXRegClass)
-        : &X86::GR64RegClass;
-      if (RC->contains(DestReg))
-        Res = std::make_pair(DestReg, RC);
-    } else {
-      // No register found/type mismatch.
-      Res.first = 0;
-      Res.second = nullptr;
+        : Size == 64 ? (is64Bit ? &X86::GR64RegClass : nullptr)
+        : nullptr;
+      if (Size == 64 && !is64Bit) {
+        // Model GCC's behavior here and select a fixed pair of 32-bit
+        // registers.
+        switch (Res.first) {
+        case X86::EAX:
+          return std::make_pair(X86::EAX, &X86::GR32_ADRegClass);
+        case X86::EDX:
+          return std::make_pair(X86::EDX, &X86::GR32_DCRegClass);
+        case X86::ECX:
+          return std::make_pair(X86::ECX, &X86::GR32_CBRegClass);
+        case X86::EBX:
+          return std::make_pair(X86::EBX, &X86::GR32_BSIRegClass);
+        case X86::ESI:
+          return std::make_pair(X86::ESI, &X86::GR32_SIDIRegClass);
+        case X86::EDI:
+          return std::make_pair(X86::EDI, &X86::GR32_DIBPRegClass);
+        case X86::EBP:
+          return std::make_pair(X86::EBP, &X86::GR32_BPSPRegClass);
+        default:
+          return std::make_pair(0, nullptr);
+        }
+      }
+      if (RC && RC->contains(DestReg))
+        return std::make_pair(DestReg, RC);
+      return Res;
     }
+    // No register found/type mismatch.
+    return std::make_pair(0, nullptr);
   } else if (isFRClass(*Class)) {
     // Handle references to XMM physical registers that got mapped into the
     // wrong class.  This can happen with constraints like {xmm0} where the
