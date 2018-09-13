@@ -102,6 +102,22 @@ define i1 @c0(i8 %bits) {
   ret i1 %r
 }
 
+; What if we have the same pattern on both sides?
+define i1 @both(i8 %bits0, i8 %bits1) {
+; CHECK-LABEL: @both(
+; CHECK-NEXT:    [[T0:%.*]] = shl i8 -1, [[BITS0:%.*]]
+; CHECK-NEXT:    [[T2:%.*]] = shl i8 -1, [[BITS1:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = icmp ult i8 [[T2]], [[T0]]
+; CHECK-NEXT:    ret i1 [[R]]
+;
+  %t0 = shl i8 -1, %bits0
+  %t1 = xor i8 %t0, -1
+  %t2 = shl i8 -1, %bits1
+  %t3 = xor i8 %t2, -1
+  %r = icmp ult i8 %t1, %t3
+  ret i1 %r
+}
+
 ; ============================================================================ ;
 ; One-use tests.
 ; ============================================================================ ;
