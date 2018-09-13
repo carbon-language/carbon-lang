@@ -41156,39 +41156,25 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         Constraint[3] == '(' &&
         (Constraint[4] >= '0' && Constraint[4] <= '7') &&
         Constraint[5] == ')' &&
-        Constraint[6] == '}') {
-
-      Res.first = X86::FP0+Constraint[4]-'0';
-      Res.second = &X86::RFP80RegClass;
-      return Res;
-    }
+        Constraint[6] == '}')
+      return std::make_pair(X86::FP0 + Constraint[4] - '0',
+                            &X86::RFP80RegClass);
 
     // GCC allows "st(0)" to be called just plain "st".
-    if (StringRef("{st}").equals_lower(Constraint)) {
-      Res.first = X86::FP0;
-      Res.second = &X86::RFP80RegClass;
-      return Res;
-    }
+    if (StringRef("{st}").equals_lower(Constraint))
+      return std::make_pair(X86::FP0, &X86::RFP80RegClass);
 
     // flags -> EFLAGS
-    if (StringRef("{flags}").equals_lower(Constraint)) {
-      Res.first = X86::EFLAGS;
-      Res.second = &X86::CCRRegClass;
-      return Res;
-    }
+    if (StringRef("{flags}").equals_lower(Constraint))
+      return std::make_pair(X86::EFLAGS, &X86::CCRRegClass);
 
     // 'A' means [ER]AX + [ER]DX.
     if (Constraint == "A") {
-      if (Subtarget.is64Bit()) {
-        Res.first = X86::RAX;
-        Res.second = &X86::GR64_ADRegClass;
-      } else {
-        assert((Subtarget.is32Bit() || Subtarget.is16Bit()) &&
-               "Expecting 64, 32 or 16 bit subtarget");
-        Res.first = X86::EAX;
-        Res.second = &X86::GR32_ADRegClass;
-      }
-      return Res;
+      if (Subtarget.is64Bit())
+        return std::make_pair(X86::RAX, &X86::GR64_ADRegClass);
+      assert((Subtarget.is32Bit() || Subtarget.is16Bit()) &&
+             "Expecting 64, 32 or 16 bit subtarget");
+      return std::make_pair(X86::EAX, &X86::GR32_ADRegClass);
     }
     return Res;
   }
@@ -41198,18 +41184,14 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       (isFRClass(*Res.second) || isGRClass(*Res.second)) &&
       TRI->getEncodingValue(Res.first) >= 8) {
     // Register requires REX prefix, but we're in 32-bit mode.
-    Res.first = 0;
-    Res.second = nullptr;
-    return Res;
+    return std::make_pair(0, nullptr);
   }
 
   // Make sure it isn't a register that requires AVX512.
   if (!Subtarget.hasAVX512() && isFRClass(*Res.second) &&
       TRI->getEncodingValue(Res.first) & 0x10) {
     // Register requires EVEX prefix.
-    Res.first = 0;
-    Res.second = nullptr;
-    return Res;
+    return std::make_pair(0, nullptr);
   }
 
   // Otherwise, check to see if this is a register class of the wrong value
