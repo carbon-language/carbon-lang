@@ -8,6 +8,9 @@ add_llvm_library(LLVMExegesisX86
 
   STATIC
 
+  DEPENDS
+  intrinsics_gen
+
   LINK_COMPONENTS
   X86
   Exegesis

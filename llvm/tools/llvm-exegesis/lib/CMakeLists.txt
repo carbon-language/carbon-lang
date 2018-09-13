@@ -29,6 +29,9 @@ add_llvm_library(LLVMExegesis
 
   STATIC
 
+  DEPENDS
+  intrinsics_gen
+
   LINK_COMPONENTS
   Analysis
   CodeGen

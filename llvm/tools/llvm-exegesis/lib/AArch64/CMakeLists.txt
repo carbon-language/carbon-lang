@@ -8,6 +8,9 @@ add_llvm_library(LLVMExegesisAArch64
 
   STATIC
 
+  DEPENDS
+  intrinsics_gen
+
   LINK_COMPONENTS
   AArch64
   Exegesis
