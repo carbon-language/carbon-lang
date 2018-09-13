@@ -27,7 +27,7 @@ namespace Fortran::parser {
 // end-of-statement markers.
 
 // R611 label -> digit [digit]...
-constexpr auto label{space >> digitString / spaceCheck};
+constexpr auto label{space >> digitString / !"_.edq"_ch};
 
 template<typename PA> inline constexpr auto unterminatedStatement(const PA &p) {
   return skipStuffBeforeStatement >>
