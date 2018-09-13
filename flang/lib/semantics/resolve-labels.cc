@@ -415,10 +415,6 @@ public:
               parser::MessageFormattedText{
                   "END PROGRAM name mismatch"_err_en_US});
         }
-      } else {
-        errorHandler_.Say(currentPosition_,
-            parser::MessageFormattedText{
-                "END PROGRAM must have a program-name"_err_en_US});
       }
     } else {
       if (std::get<parser::Statement<parser::EndProgramStmt>>(mainProgram.t)
