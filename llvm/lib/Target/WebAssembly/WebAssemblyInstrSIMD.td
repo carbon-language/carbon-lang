@@ -26,7 +26,7 @@ multiclass ConstVec<ValueType vec_t, dag ops, dag pat, string args> {
                                   "v128.const\t"#args, 0>;
 }
 multiclass SIMDLoad<ValueType vec_t> {
-  let mayLoad = 1, isAsCheapAsAMove = 1 in
+  let mayLoad = 1 in
   defm LOAD_#vec_t :
     SIMD_I<(outs V128:$dst), (ins P2Align:$align, offset32_op:$off, I32:$addr),
            (outs), (ins P2Align:$align, offset32_op:$off), [],
@@ -34,7 +34,7 @@ multiclass SIMDLoad<ValueType vec_t> {
            "v128.load\t$off$align", 1>;
 }
 multiclass SIMDStore<ValueType vec_t> {
-  let mayStore = 1, isAsCheapAsAMove = 1 in
+  let mayStore = 1 in
   defm STORE_#vec_t :
     SIMD_I<(outs), (ins P2Align:$align, offset32_op:$off, I32:$addr, V128:$vec),
            (outs), (ins P2Align:$align, offset32_op:$off), [],
