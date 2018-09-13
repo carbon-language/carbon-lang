@@ -150,9 +150,9 @@ public:
     attachment_ = c;
     attachmentIsContext_ = true;
   }
-  void Attach(Message *);
-  template<typename... A> void Attach(A &&... args) {
-    Attach(new Message{std::forward<A>(args)...});  // reference-counted
+  Message &Attach(Message *);
+  template<typename... A> Message &Attach(A &&... args) {
+    return Attach(new Message{std::forward<A>(args)...});  // reference-counted
   }
 
   bool SortBefore(const Message &that) const;

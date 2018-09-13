@@ -18,6 +18,8 @@
 ! CHECK: label '50' was not found
 ! CHECK: label '55' is not in scope
 ! CHECK: '70' not a branch target
+! CHECK: referenced from here
+! CHECK: references here
 
 subroutine sub00(a,b,n,m)
   real a(n,m)

@@ -14,6 +14,7 @@
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: '60' not a FORMAT
+! CHECK: referenced from here
 
 subroutine s(a)
   real a(10)

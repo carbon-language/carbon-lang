@@ -15,8 +15,11 @@
 ! negative test -- invalid labels, out of range
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: branch into 'do 10 i = 1, m' from another scope
-! CHECK: branch into 'do 20 j = 1, n' from another scope
+! CHECK: branch into loop body from outside
+! CHECK: do 10 i = 1, m
+! CHECK: do 20 j = 1, n
+! CHECK: to here
+! CHECK: from here
 
 subroutine sub00(a,b,n,m)
   real a(n,m)

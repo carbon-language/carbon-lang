@@ -19,6 +19,8 @@
 ! CHECK: label '20' was not found
 ! CHECK: label '40' is not in scope
 ! CHECK: label '50' is not in scope
+! CHECK: referenced from here
+! CHECK: references here
 
 subroutine sub00(n)
   GOTO (10,20,30) n

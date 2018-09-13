@@ -200,12 +200,13 @@ bool Message::Merge(const Message &that) {
           text_, that.text_);
 }
 
-void Message::Attach(Message *m) {
+Message &Message::Attach(Message *m) {
   if (!attachment_) {
     attachment_ = m;
   } else {
     attachment_->Attach(m);
   }
+  return *this;
 }
 
 bool Message::AtSameLocation(const Message &that) const {

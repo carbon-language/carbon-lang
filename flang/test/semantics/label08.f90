@@ -16,6 +16,7 @@
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: IF construct name mismatch
+! CHECK: mismatched from here
 ! CHECK: DO construct name mismatch
 ! CHECK: CYCLE construct-name 'label3' is not in scope
 

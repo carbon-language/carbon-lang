@@ -19,6 +19,8 @@
 ! CHECK: label '20' was not found
 ! CHECK: '30' not a branch target
 ! CHECK: label '60' was not found
+! CHECK: referenced from here
+! CHECK: references here
 
 subroutine sub00(n,m)
 30 format (i6,f6.2)

@@ -13,7 +13,8 @@
 ! limitations under the License.
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: BLOCK DATA name mismatch
+! CHECK: END BLOCK DATA name mismatch
+! CHECK: mismatched from here
 ! CHECK: END FUNCTION name mismatch
 ! CHECK: END SUBROUTINE name mismatch
 ! CHECK: END PROGRAM name mismatch
