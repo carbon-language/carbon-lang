@@ -205,6 +205,7 @@ public:
     return llvm::makeArrayRef<T>((const T *)Data.data(), S / sizeof(T));
   }
 
+private:
   // A pointer that owns decompressed data if a section is compressed by zlib.
   // Since the feature is not used often, this is usually a nullptr.
   std::unique_ptr<char[]> DecompressBuf;
