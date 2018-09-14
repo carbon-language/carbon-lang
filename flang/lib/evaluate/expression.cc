@@ -467,10 +467,19 @@ std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
       common::visitors{[&](const BOZLiteralConstant &x) {
                          o << "Z'" << x.Hexadecimal() << "'";
                        },
-          [&](const DataReference<Result> &dr) { dr.reference->Dump(o); },
-          [&](const FunctionReference<Result> &fr) { fr.reference->Dump(o); },
           [&](const CopyableIndirection<Substring> &s) { s->Dump(o); },
-          [&](const auto &x) { x.Dump(o); }},
+          [&](const auto &x) {
+            if constexpr (Result::isSpecificType) {
+              using Ty = std::decay_t<decltype(x)>;
+              if constexpr (std::is_same_v<Ty, FunctionReference<Result>>) {
+                x.reference->Dump(o);
+              } else {
+                x.Dump(o);
+              }
+            } else {
+              x.Dump(o);
+            }
+          }},
       derived().u);
   return o;
 }
@@ -491,8 +500,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
             return Expr<SubscriptInteger>{
                 Extremum<SubscriptInteger>{c.left().LEN(), c.right().LEN()}};
           },
-          [](const DataReference<Result> &dr) { return dr.reference->LEN(); },
-          [](const CopyableIndirection<Substring> &ss) { return ss->LEN(); },
+          [](const Designator<Result> &dr) { return dr.LEN(); },
           [](const FunctionReference<Result> &fr) {
             return fr.reference->proc().LEN();
           }},
@@ -519,8 +527,9 @@ auto ExpressionBase<RESULT>::ScalarValue() const
             [](const BOZLiteralConstant &) -> std::optional<Scalar<Result>> {
               return std::nullopt;
             },
-            [](const Expr<Type<TypeCategory::Derived>> &)
-                -> std::optional<Scalar<Result>> { return std::nullopt; },
+            [](const Expr<SomeDerived> &) -> std::optional<Scalar<Result>> {
+              return std::nullopt;
+            },
             [](const auto &catEx) -> std::optional<Scalar<Result>> {
               if (auto cv{catEx.ScalarValue()}) {
                 // *cv is SomeKindScalar<CAT> for some category; rewrap it.

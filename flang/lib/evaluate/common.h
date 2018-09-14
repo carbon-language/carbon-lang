@@ -116,12 +116,21 @@ using HostUnsignedInt =
 // - There is no default constructor (Class() {}), usually to prevent the
 //   need for std::monostate as a default constituent in a std::variant<>.
 // - There are full copy and move semantics for construction and assignment.
+// - Discriminated unions have a std::variant<> member "u" and support
+//   explicit copy and move constructors.
 #define CLASS_BOILERPLATE(t) \
   t() = delete; \
   t(const t &) = default; \
   t(t &&) = default; \
   t &operator=(const t &) = default; \
   t &operator=(t &&) = default;
+
+#define EVALUATE_UNION_CLASS_BOILERPLATE(t) \
+  CLASS_BOILERPLATE(t) \
+  template<typename _A> explicit t(const _A &x) : u{x} {} \
+  template<typename _A> \
+  explicit t(std::enable_if_t<!std::is_reference_v<_A>, _A> &&x) \
+    : u(std::move(x)) {}
 
 // Force availability of copy construction and assignment
 template<typename A> using CopyableIndirection = common::Indirection<A, true>;

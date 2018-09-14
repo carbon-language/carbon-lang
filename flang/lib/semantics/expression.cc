@@ -37,25 +37,12 @@ using MaybeExpr = std::optional<Expr<SomeType>>;
 
 // A utility subroutine to repackage optional expressions of various levels
 // of type specificity as fully general MaybeExpr values.
+template<typename A> MaybeExpr AsMaybeExpr(A &&x) {
+  return std::make_optional(AsGenericExpr(std::move(x)));
+}
 template<typename A> MaybeExpr AsMaybeExpr(std::optional<A> &&x) {
   if (x.has_value()) {
-    return {AsGenericExpr(AsCategoryExpr(AsExpr(std::move(*x))))};
-  }
-  return std::nullopt;
-}
-
-template<TypeCategory CAT>
-MaybeExpr AsMaybeExpr(std::optional<Expr<SomeKind<CAT>>> &&x) {
-  if (x.has_value()) {
-    return {AsGenericExpr(std::move(*x))};
-  }
-  return std::nullopt;
-}
-
-template<TypeCategory CAT, int KIND>
-MaybeExpr AsMaybeExpr(std::optional<Expr<Type<CAT, KIND>>> &&x) {
-  if (x.has_value()) {
-    return {AsGenericExpr(AsCategoryExpr(std::move(*x)))};
+    return AsMaybeExpr(std::move(*x));
   }
   return std::nullopt;
 }
@@ -75,6 +62,7 @@ struct ExprAnalyzer {
   MaybeExpr Analyze(const parser::SignedIntLiteralConstant &);
   MaybeExpr Analyze(const parser::RealLiteralConstant &);
   MaybeExpr Analyze(const parser::SignedRealLiteralConstant &);
+  MaybeExpr Analyze(const parser::ComplexPart &);
   MaybeExpr Analyze(const parser::ComplexLiteralConstant &);
   MaybeExpr Analyze(const parser::CharLiteralConstant &);
   MaybeExpr Analyze(const parser::LogicalLiteralConstant &);
@@ -85,9 +73,7 @@ struct ExprAnalyzer {
   MaybeExpr Analyze(const parser::Substring &);
   MaybeExpr Analyze(const parser::ArrayElement &);
   MaybeExpr Analyze(const parser::StructureComponent &);
-  MaybeExpr Analyze(const parser::TypeParamInquiry &);
   MaybeExpr Analyze(const parser::CoindexedNamedObject &);
-  MaybeExpr Analyze(const parser::ComplexPart &);
   MaybeExpr Analyze(const parser::ArrayConstructor &);
   MaybeExpr Analyze(const parser::StructureConstructor &);
   MaybeExpr Analyze(const parser::Expr::Parentheses &);
@@ -396,22 +382,21 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
     context.messages.Say("BOZ literal %s too large"_err_en_US, x.v.data());
     return std::nullopt;
   }
-  return {AsGenericExpr(value.value)};
+  return {AsGenericExpr(std::move(value.value))};
 }
 
 template<TypeCategory CATEGORY>
 MaybeExpr TypedDataRefHelper(int kind, DataRef &&dataRef) {
   return common::SearchDynamicTypes(
-      TypeKindVisitor<CATEGORY, DataReference, DataRef>{
-          kind, std::move(dataRef)});
+      TypeKindVisitor<CATEGORY, Designator, DataRef>{kind, std::move(dataRef)});
 }
 
 static MaybeExpr TypedDataRef(
     const semantics::Symbol &symbol, DataRef &&dataRef) {
   if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (details->type().has_value()) {
-      if (details->type()->category() ==
-          semantics::DeclTypeSpec::Category::Intrinsic) {
+      switch (details->type()->category()) {
+      case semantics::DeclTypeSpec::Category::Intrinsic: {
         TypeCategory category{details->type()->intrinsicTypeSpec().category()};
         int kind{details->type()->intrinsicTypeSpec().kind()};
         switch (category) {
@@ -432,6 +417,16 @@ static MaybeExpr TypedDataRef(
               kind, std::move(dataRef));
         default: CRASH_NO_CASE;
         }
+      } break;
+      case semantics::DeclTypeSpec::Category::TypeDerived:
+      case semantics::DeclTypeSpec::Category::ClassDerived:
+        return AsGenericExpr(
+            Expr<SomeDerived>{SomeDerived{details->type()->derivedTypeSpec()},
+                Designator<SomeDerived>{std::move(dataRef)}});
+        break;
+      default:
+        // TODO: graceful errors on CLASS(*) and TYPE(*) misusage
+        break;
       }
     }
   }
@@ -442,8 +437,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
   if (n.symbol == nullptr) {
     // TODO: convert this to a CHECK later
     context.messages.Say(
-        "TODO: name '%s' is not resolved to an object"_err_en_US,
-        n.ToString().data());
+        n.source, "name was not resolved to a symbol"_err_en_US);
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
     context.messages.Say(
         "TODO: PARAMETER references not yet implemented"_err_en_US);
@@ -452,8 +446,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
     if (MaybeExpr result{TypedDataRef(*n.symbol, DataRef{*n.symbol})}) {
       return result;
     }
-    context.messages.Say("'%s' is not of a supported type and kind"_err_en_US,
-        n.ToString().data());
+    context.messages.Say(
+        n.source, "not of a supported type and kind"_err_en_US);
   }
   return std::nullopt;
 }
@@ -463,14 +457,13 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::NamedConstant &n) {
     if (std::optional<Constant<SomeType>> folded{value->Fold(context)}) {
       return {AsGenericExpr(std::move(*folded))};
     }
-    context.messages.Say(
-        "'%s' must be a constant"_err_en_US, n.v.ToString().data());
+    context.messages.Say(n.v.source, "must be a constant"_err_en_US);
   }
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
-  context.messages.Say("TODO: Substring unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: Substring unimplemented"_err_en_US);
   return std::nullopt;
 }
 
@@ -529,62 +522,147 @@ std::vector<Subscript> ExprAnalyzer::Analyze(
   return subscripts;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
-  std::vector<Subscript> subscripts{Analyze(ae.subscripts)};
-  if (const parser::Name * name{std::get_if<parser::Name>(&ae.base.u)}) {
-    if (name->symbol == nullptr) {
-      // TODO: convert this to a CHECK later
-      context.messages.Say(
-          "TODO: name (%s) is not resolved to an object"_err_en_US,
-          name->ToString().data());
-    } else {
-      ArrayRef arrayRef{*name->symbol, std::move(subscripts)};
-      return TypedDataRef(*name->symbol, DataRef{std::move(arrayRef)});
-    }
-  } else if (const auto *component{
-                 std::get_if<common::Indirection<parser::StructureComponent>>(
-                     &ae.base.u)}) {
-    // pmk continue development here
+// If a generic expression represents a DataRef, convert it to one.
+// TODO: put in tools.h?
+template<typename A> std::optional<DataRef> AsDataRef(A &&) {
+  return std::nullopt;
+}
+
+template<TypeCategory CAT, int KIND>
+std::optional<DataRef> AsDataRef(Expr<Type<CAT, KIND>> &&expr) {
+  using Ty = ResultType<decltype(expr)>;
+  if (auto *designator{std::get_if<Designator<Ty>>(&expr.u)}) {
+    return std::visit(
+        [](auto &&x) -> std::optional<DataRef> {
+          using Ty = std::decay_t<decltype(x)>;
+          if constexpr (common::HasMember<Ty, decltype(DataRef::u)>) {
+            return {DataRef{std::move(x)}};
+          } else {
+            return std::nullopt;
+          }
+        },
+        std::move(designator->u));
   } else {
-    CHECK(!"parser::ArrayRef base DataRef is neither Name nor "
-           "StructureComponent");
+    return std::nullopt;
+  }
+}
+
+template<TypeCategory CAT>
+std::optional<DataRef> AsDataRef(Expr<SomeKind<CAT>> &&expr) {
+  return std::visit(
+      [](auto &&specificExpr) { return AsDataRef(std::move(specificExpr)); },
+      std::move(expr.u));
+}
+
+template<> std::optional<DataRef> AsDataRef(Expr<SomeType> &&expr) {
+  return std::visit(
+      common::visitors{[](BOZLiteralConstant &&) -> std::optional<DataRef> {
+                         return std::nullopt;
+                       },
+          [](auto &&catExpr) { return AsDataRef(std::move(catExpr)); }},
+      std::move(expr.u));
+}
+
+template<typename A> std::optional<DataRef> AsDataRef(std::optional<A> &&x) {
+  if (x.has_value()) {
+    return AsDataRef(std::move(*x));
   }
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
-  context.messages.Say("TODO: StructureComponent unimplemented\n"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
+  std::vector<Subscript> subscripts{Analyze(ae.subscripts)};
+  if (MaybeExpr baseExpr{AnalyzeHelper(*this, ae.base)}) {
+    // TODO: check rank and subscript count
+    if (std::optional<DataRef> dataRef{AsDataRef(std::move(*baseExpr))}) {
+      if (const Symbol **symbol{std::get_if<const Symbol *>(&dataRef->u)}) {
+        ArrayRef arrayRef{**symbol, std::move(subscripts)};
+        return TypedDataRef(**symbol, DataRef{std::move(arrayRef)});
+      } else if (Component * component{std::get_if<Component>(&dataRef->u)}) {
+        ArrayRef arrayRef{std::move(*component), std::move(subscripts)};
+        return TypedDataRef(component->symbol(), DataRef{std::move(arrayRef)});
+      }
+    }
+  }
+  context.messages.Say(
+      "subscripts must be applied to an object or component"_err_en_US);
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::TypeParamInquiry &tpi) {
-  context.messages.Say("TODO: TypeParamInquiry unimplemented\n"_err_en_US);
+MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
+  if (MaybeExpr base{AnalyzeHelper(*this, sc.base)}) {
+    if (auto *dtExpr{std::get_if<Expr<SomeDerived>>(&base->u)}) {
+      Symbol *sym{sc.component.symbol};
+      if (sym == nullptr) {
+        context.messages.Say(sc.component.source,
+            "component name was not resolved to a symbol"_err_en_US);
+      } else if (const auto *tpDetails{
+                     sym->detailsIf<semantics::TypeParamDetails>()}) {
+        context.messages.Say(sc.component.source,
+            "TODO: type parameter inquiry unimplemented"_err_en_US);
+      } else if (&sym->owner() != dtExpr->result.spec().scope()) {
+        // TODO: extended derived types - insert explicit reference to base?
+        context.messages.Say(sc.component.source,
+            "component is not in scope of derived TYPE(%s)"_err_en_US,
+            dtExpr->result.spec().name().ToString().data());
+      } else if (std::optional<DataRef> dataRef{
+                     AsDataRef(std::move(*dtExpr))}) {
+        Component component{std::move(*dataRef), *sym};
+        return TypedDataRef(*sym, DataRef{std::move(component)});
+      } else {
+        context.messages.Say(sc.component.source,
+            "base of component reference must be a data reference"_err_en_US);
+      }
+    } else if (auto *zExpr{std::get_if<Expr<SomeComplex>>(&base->u)}) {
+      ComplexPart::Part part{ComplexPart::Part::RE};
+      if (sc.component.source == parser::CharBlock{"im", 2}) {
+        part = ComplexPart::Part::IM;
+      } else if (sc.component.source != parser::CharBlock{"re", 2}) {
+        context.messages.Say(sc.component.source,
+            "component of complex value must be %%RE or %%IM"_err_en_US);
+        return std::nullopt;
+      }
+      if (std::optional<DataRef> dataRef{AsDataRef(std::move(*zExpr))}) {
+        Expr<SomeReal> realExpr{std::visit(
+            [&](const auto &z) {
+              using PartType = typename ResultType<decltype(z)>::Part;
+              return AsCategoryExpr(AsExpr(Designator<PartType>{
+                  ComplexPart{std::move(*dataRef), part}}));
+            },
+            zExpr->u)};
+        return {AsGenericExpr(std::move(realExpr))};
+      }
+    } else {
+      context.messages.Say("derived type required before '%%%s'"_err_en_US,
+          sc.component.ToString().data());
+    }
+  }
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::CoindexedNamedObject &co) {
-  context.messages.Say("TODO: CoindexedNamedObject unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: CoindexedNamedObject unimplemented"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstantSubstring &) {
   context.messages.Say(
-      "TODO: CharLiteralConstantSubstring unimplemented\n"_err_en_US);
+      "TODO: CharLiteralConstantSubstring unimplemented"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayConstructor &) {
-  context.messages.Say("TODO: ArrayConstructor unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: ArrayConstructor unimplemented"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::StructureConstructor &) {
-  context.messages.Say("TODO: StructureConstructor unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: StructureConstructor unimplemented"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &) {
-  context.messages.Say("TODO: FunctionReference unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: FunctionReference unimplemented"_err_en_US);
   return std::nullopt;
 }
 
@@ -595,7 +673,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
             [&](BOZLiteralConstant &&boz) {
               return operand;  // ignore parentheses around typeless
             },
-            [&](Expr<Type<TypeCategory::Derived>> &&dte) { return operand; },
+            [&](Expr<SomeDerived> &&dte) { return operand; },
             [](auto &&catExpr) {
               return std::visit(
                   [](auto &&expr) -> MaybeExpr {
@@ -659,12 +737,12 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NOT &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::PercentLoc &) {
-  context.messages.Say("TODO: %LOC unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: %LOC unimplemented"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedUnary &) {
-  context.messages.Say("TODO: DefinedUnary unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: DefinedUnary unimplemented"_err_en_US);
   return std::nullopt;
 }
 
@@ -818,7 +896,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::XOR &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
-  context.messages.Say("TODO: DefinedBinary unimplemented\n"_err_en_US);
+  context.messages.Say("TODO: DefinedBinary unimplemented"_err_en_US);
   return std::nullopt;
 }
 

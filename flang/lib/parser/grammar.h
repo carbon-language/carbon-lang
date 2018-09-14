@@ -1488,14 +1488,6 @@ TYPE_PARSER(construct<PartRef>(name,
 TYPE_PARSER(construct<StructureComponent>(
     construct<DataRef>(some(Parser<PartRef>{} / percentOrDot)), name))
 
-// R915 complex-part-designator -> designator % RE | designator % IM
-// %RE and %IM are initially recognized as structure components.
-constexpr auto complexPartDesignator{construct<ComplexPartDesignator>(dataRef)};
-
-// R916 type-param-inquiry -> designator % type-param-name
-// Type parameter inquiries are initially recognized as structure components.
-TYPE_PARSER(construct<TypeParamInquiry>(structureComponent))
-
 // R919 subscript -> scalar-int-expr
 constexpr auto subscript{scalarIntExpr};
 
@@ -1612,6 +1604,7 @@ TYPE_PARSER(construct<StatOrErrmsg>("STAT =" >> statVariable) ||
 //         literal-constant | designator | array-constructor |
 //         structure-constructor | function-reference | type-param-inquiry |
 //         type-param-name | ( expr )
+// N.B. type-param-inquiry is parsed as a structure component
 constexpr auto primary{instrumented("primary"_en_US,
     first(construct<Expr>(indirect(Parser<CharLiteralConstantSubstring>{})),
         construct<Expr>(literalConstant),
@@ -1620,7 +1613,6 @@ constexpr auto primary{instrumented("primary"_en_US,
         construct<Expr>(designator / !"("_tok),
         construct<Expr>(Parser<StructureConstructor>{}),
         construct<Expr>(Parser<ArrayConstructor>{}),
-        construct<Expr>(indirect(Parser<TypeParamInquiry>{})),  // occulted
         // PGI/XLF extension: COMPLEX constructor (x,y)
         extension<LanguageFeature::ComplexConstructor>(
             construct<Expr>(parenthesized(
@@ -3476,6 +3468,10 @@ TYPE_CONTEXT_PARSER("PAUSE statement"_en_US,
 //     is used only via scalar-default-char-variable
 //   R907 int-variable -> variable
 //     is used only via scalar-int-variable
+//   R915 complex-part-designator -> designator % RE | designator % IM
+//     %RE and %IM are initially recognized as structure components
+//   R916 type-param-inquiry -> designator % type-param-name
+//     is occulted by structure component designators
 //   R918 array-section ->
 //        data-ref [( substring-range )] | complex-part-designator
 //     is not used because parsing is not sensitive to rank

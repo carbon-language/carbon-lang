@@ -26,6 +26,7 @@
 #include "variable.h"
 #include "../lib/common/fortran.h"
 #include "../lib/common/idioms.h"
+#include "../lib/common/template.h"
 #include "../lib/parser/char-block.h"
 #include "../lib/parser/message.h"
 #include <ostream>
@@ -76,15 +77,9 @@ template<typename T> struct Constant {
 // to be used in only a few situations.
 using BOZLiteralConstant = typename LargestReal::Scalar::Word;
 
-// These wrappers around data and function references expose their resolved
-// types.
-template<typename T> struct DataReference {
-  using Result = T;
-  CopyableIndirection<DataRef> reference;
-};
-
 template<typename T> struct FunctionReference {
   using Result = T;
+  static_assert(Result::isSpecificType);
   CopyableIndirection<FunctionRef> reference;
 };
 
@@ -99,7 +94,7 @@ template<typename T> struct FunctionReference {
 // from it via its derived() member function with compile-time type safety.
 template<typename DERIVED, typename RESULT, typename... OPERANDS>
 class Operation {
-  static_assert(RESULT::isSpecificType || !"bad result Type");
+  static_assert(RESULT::isSpecificType);
   // The extra "int" member is a dummy that allows a safe unused reference
   // to element 1 to arise indirectly in the definition of "right()" below
   // when the operation has but a single operand.
@@ -430,15 +425,11 @@ public:
   using IsFoldableTrait = std::true_type;
   // TODO: R916 type-param-inquiry
 
-  CLASS_BOILERPLATE(Expr)
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
   explicit Expr(std::int64_t n) : u{Constant<Result>{n}} {}
   explicit Expr(std::uint64_t n) : u{Constant<Result>{n}} {}
   explicit Expr(int n) : u{Constant<Result>{n}} {}
-  template<typename A> explicit Expr(const A &x) : u{x} {}
-  template<typename A>
-  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u(std::move(x)) {}
 
 private:
   using Conversions = std::variant<Convert<Result, TypeCategory::Integer>,
@@ -446,7 +437,7 @@ private:
   using Operations = std::variant<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, DataReference<Result>,
+  using Others = std::variant<Constant<Result>, Designator<Result>,
       FunctionReference<Result>>;
 
 public:
@@ -460,12 +451,8 @@ public:
   using Result = Type<TypeCategory::Real, KIND>;
   using IsFoldableTrait = std::true_type;
 
-  CLASS_BOILERPLATE(Expr)
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  template<typename A> explicit Expr(const A &x) : u{x} {}
-  template<typename A>
-  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
 
 private:
   // N.B. Real->Complex and Complex->Real conversions are done with CMPLX
@@ -476,7 +463,7 @@ private:
   using Operations = std::variant<ComplexComponent<KIND>, Parentheses<Result>,
       Negate<Result>, Add<Result>, Subtract<Result>, Multiply<Result>,
       Divide<Result>, Power<Result>, RealToIntPower<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, DataReference<Result>,
+  using Others = std::variant<Constant<Result>, Designator<Result>,
       FunctionReference<Result>>;
 
 public:
@@ -489,19 +476,15 @@ class Expr<Type<TypeCategory::Complex, KIND>>
 public:
   using Result = Type<TypeCategory::Complex, KIND>;
   using IsFoldableTrait = std::true_type;
-  CLASS_BOILERPLATE(Expr)
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  template<typename A> explicit Expr(const A &x) : u{x} {}
-  template<typename A>
-  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
 
   // Note that many COMPLEX operations are represented as REAL operations
   // over their components (viz., conversions, negation, add, and subtract).
   using Operations =
       std::variant<Parentheses<Result>, Multiply<Result>, Divide<Result>,
           Power<Result>, RealToIntPower<Result>, ComplexConstructor<KIND>>;
-  using Others = std::variant<Constant<Result>, DataReference<Result>,
+  using Others = std::variant<Constant<Result>, Designator<Result>,
       FunctionReference<Result>>;
 
 public:
@@ -530,20 +513,13 @@ class Expr<Type<TypeCategory::Character, KIND>>
 public:
   using Result = Type<TypeCategory::Character, KIND>;
   using IsFoldableTrait = std::true_type;
-  CLASS_BOILERPLATE(Expr)
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
   explicit Expr(Scalar<Result> &&x) : u{Constant<Result>{std::move(x)}} {}
-  template<typename A> explicit Expr(const A &x) : u{x} {}
-  template<typename A>
-  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
-  template<typename A>
-  explicit Expr(CopyableIndirection<A> &&x) : u{std::move(x)} {}
 
   Expr<SubscriptInteger> LEN() const;
 
-  std::variant<Constant<Result>, DataReference<Result>,
-      CopyableIndirection<Substring>, FunctionReference<Result>,
+  std::variant<Constant<Result>, Designator<Result>, FunctionReference<Result>,
       // TODO Parentheses<Result>,
       Concat<KIND>, Extremum<Result>>
       u;
@@ -587,11 +563,7 @@ template<> class Relational<SomeType> {
 
 public:
   using Result = LogicalResult;
-  CLASS_BOILERPLATE(Relational)
-  template<typename A> explicit Relational(const A &x) : u(x) {}
-  template<typename A>
-  explicit Relational(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
+  EVALUATE_UNION_CLASS_BOILERPLATE(Relational)
   std::ostream &Dump(std::ostream &o) const;
   common::MapTemplate<Relational, DirectlyComparableTypes> u;
 };
@@ -617,18 +589,14 @@ class Expr<Type<TypeCategory::Logical, KIND>>
 public:
   using Result = Type<TypeCategory::Logical, KIND>;
   using IsFoldableTrait = std::true_type;
-  CLASS_BOILERPLATE(Expr)
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
   explicit Expr(bool x) : u{Constant<Result>{x}} {}
-  template<typename A> explicit Expr(const A &x) : u(x) {}
-  template<typename A>
-  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
 
 private:
   using Operations = std::variant<Convert<Result, TypeCategory::Logical>,
       Not<KIND>, LogicalOperation<KIND>, Relational<SomeType>>;
-  using Others = std::variant<Constant<Result>, DataReference<Result>,
+  using Others = std::variant<Constant<Result>, Designator<Result>,
       FunctionReference<Result>>;
 
 public:
@@ -640,22 +608,6 @@ extern template class Expr<Type<TypeCategory::Logical, 2>>;
 extern template class Expr<Type<TypeCategory::Logical, 4>>;
 extern template class Expr<Type<TypeCategory::Logical, 8>>;
 
-template<>
-class Expr<Type<TypeCategory::Derived>>
-  : public ExpressionBase<Type<TypeCategory::Derived>> {
-public:
-  using Result = Type<TypeCategory::Derived>;
-  using IsFoldableTrait = std::false_type;
-  CLASS_BOILERPLATE(Expr)
-  template<typename A>
-  explicit Expr(const Result &r, const A &x) : result{r}, u{x} {}
-  template<typename A>
-  explicit Expr(Result &&r, std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : result{std::move(r)}, u{std::move(x)} {}
-  Result result;
-  std::variant<DataReference<Result>, FunctionReference<Result>> u;
-};
-
 // A polymorphic expression of known intrinsic type category, but dynamic
 // kind, represented as a discriminated union over Expr<Type<CAT, K>>
 // for each supported kind K in the category.
@@ -664,14 +616,24 @@ class Expr<SomeKind<CAT>> : public ExpressionBase<SomeKind<CAT>> {
 public:
   using Result = SomeKind<CAT>;
   using IsFoldableTrait = std::true_type;
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
+  common::MapTemplate<Expr, CategoryTypes<CAT>> u;
+};
+
+template<> class Expr<SomeDerived> : public ExpressionBase<SomeDerived> {
+public:
+  using Result = SomeDerived;
+  using IsFoldableTrait = std::false_type;
   CLASS_BOILERPLATE(Expr)
 
-  template<typename A> explicit Expr(const A &x) : u{x} {}
   template<typename A>
-  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
+  explicit Expr(const Result &r, const A &x) : result{r}, u{x} {}
+  template<typename A>
+  explicit Expr(Result &&r, std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : result{std::move(r)}, u{std::move(x)} {}
 
-  common::MapTemplate<Expr, CategoryTypes<CAT>> u;
+  Result result;
+  std::variant<Designator<Result>, FunctionReference<Result>> u;
 };
 
 // A completely generic expression, polymorphic across all of the intrinsic type
@@ -680,17 +642,12 @@ template<> class Expr<SomeType> : public ExpressionBase<SomeType> {
 public:
   using Result = SomeType;
   using IsFoldableTrait = std::true_type;
-  CLASS_BOILERPLATE(Expr)
+  EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
 
   // Owning references to these generic expressions can appear in other
   // compiler data structures (viz., the parse tree and symbol table), so
   // its destructor is externalized to reduce redundant default instances.
   ~Expr();
-
-  template<typename A> explicit Expr(const A &x) : u{x} {}
-  template<typename A>
-  explicit Expr(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
 
   template<TypeCategory CAT, int KIND>
   explicit Expr(const Expr<Type<CAT, KIND>> &x) : u{Expr<SomeKind<CAT>>{x}} {}
@@ -711,9 +668,11 @@ public:
     return *this;
   }
 
-  using Others =
-      std::variant<BOZLiteralConstant, Expr<Type<TypeCategory::Derived>>>;
+private:
+  using Others = std::variant<BOZLiteralConstant>;
   using Categories = common::MapTemplate<Expr, SomeCategory>;
+
+public:
   common::CombineVariants<Others, Categories> u;
 };
 

@@ -184,7 +184,6 @@ struct CharLiteralConstantSubstring;
 struct DataRef;  // R911
 struct StructureComponent;  // R913
 struct CoindexedNamedObject;  // R914
-struct TypeParamInquiry;  // R916
 struct ArrayElement;  // R917
 struct AllocateStmt;  // R927
 struct NullifyStmt;  // R939
@@ -1700,11 +1699,10 @@ struct Expr {
 
   std::variant<common::Indirection<CharLiteralConstantSubstring>,
       LiteralConstant, common::Indirection<Designator>, ArrayConstructor,
-      StructureConstructor, common::Indirection<TypeParamInquiry>,
-      common::Indirection<FunctionReference>, Parentheses, UnaryPlus, Negate,
-      NOT, PercentLoc, DefinedUnary, Power, Multiply, Divide, Add, Subtract,
-      Concat, LT, LE, EQ, NE, GE, GT, AND, OR, EQV, NEQV, XOR, DefinedBinary,
-      ComplexConstructor>
+      StructureConstructor, common::Indirection<FunctionReference>, Parentheses,
+      UnaryPlus, Negate, NOT, PercentLoc, DefinedUnary, Power, Multiply, Divide,
+      Add, Subtract, Concat, LT, LE, EQ, NE, GE, GT, AND, OR, EQV, NEQV, XOR,
+      DefinedBinary, ComplexConstructor>
       u;
 };
 
@@ -1802,16 +1800,6 @@ struct CoindexedNamedObject {
     : base{std::move(dr)}, imageSelector{std::move(is)} {}
   DataRef base;
   ImageSelector imageSelector;
-};
-
-// R915 complex-part-designator -> designator % RE | designator % IM
-struct ComplexPartDesignator {
-  WRAPPER_CLASS_BOILERPLATE(ComplexPartDesignator, StructureComponent);
-};
-
-// R916 type-param-inquiry -> designator % type-param-name
-struct TypeParamInquiry {
-  WRAPPER_CLASS_BOILERPLATE(TypeParamInquiry, StructureComponent);
 };
 
 // R917 array-element -> data-ref

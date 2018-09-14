@@ -211,6 +211,22 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     semantics.Perform(parseTree);
     auto &messages{semantics.messages()};
     messages.Emit(std::cerr, parsing.cooked());
+    if (driver.debugExpressions) {
+      // TODO: Move into semantics.Perform()
+      Fortran::parser::CharBlock whole{parsing.cooked().data()};
+      Fortran::parser::Messages messages;
+      Fortran::parser::ContextualMessages contextualMessages{whole, &messages};
+      Fortran::evaluate::FoldingContext context{contextualMessages};
+      Fortran::semantics::IntrinsicTypeDefaultKinds defaults;
+      Fortran::semantics::AnalyzeExpressions(parseTree, context, defaults);
+      messages.Emit(std::cerr, parsing.cooked());
+      if (!messages.empty() &&
+          (driver.warningsAreErrors || messages.AnyFatalError())) {
+        std::cerr << driver.prefix << "semantic errors in " << path << '\n';
+        exitStatus = EXIT_FAILURE;
+        return {};
+      }
+    }
     if (driver.dumpSymbols) {
       semantics.DumpSymbols(std::cout);
     }
@@ -223,21 +239,6 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
     if (driver.dumpUnparseWithSymbols) {
       Fortran::semantics::UnparseWithSymbols(
           std::cout, parseTree, driver.encoding);
-      return {};
-    }
-  }
-  if (driver.debugExpressions) {
-    Fortran::parser::CharBlock whole{parsing.cooked().data()};
-    Fortran::parser::Messages messages;
-    Fortran::parser::ContextualMessages contextualMessages{whole, &messages};
-    Fortran::evaluate::FoldingContext context{contextualMessages};
-    Fortran::semantics::IntrinsicTypeDefaultKinds defaults;
-    Fortran::semantics::AnalyzeExpressions(parseTree, context, defaults);
-    messages.Emit(std::cerr, parsing.cooked());
-    if (!messages.empty() &&
-        (driver.warningsAreErrors || messages.AnyFatalError())) {
-      std::cerr << driver.prefix << "semantic errors in " << path << '\n';
-      exitStatus = EXIT_FAILURE;
       return {};
     }
   }

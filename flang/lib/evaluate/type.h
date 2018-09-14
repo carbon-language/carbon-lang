@@ -133,24 +133,6 @@ public:
   using Scalar = value::Logical<8 * KIND>;
 };
 
-template<> class Type<TypeCategory::Derived> {
-public:
-  static constexpr bool isSpecificType{true};
-  static constexpr TypeCategory category{TypeCategory::Derived};
-  using Scalar = void;
-
-  CLASS_BOILERPLATE(Type)
-  explicit Type(const semantics::DerivedTypeSpec &s) : spec_{&s} {}
-
-  const semantics::DerivedTypeSpec &spec() const { return *spec_; }
-  std::string Dump() const;
-
-private:
-  // This member should be a reference, except that copy construction
-  // and assignment would not be possible.
-  const semantics::DerivedTypeSpec *spec_;
-};
-
 // Type functions
 
 template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
@@ -200,6 +182,9 @@ template<> struct CategoryTypesHelper<TypeCategory::Character> {
 };
 template<> struct CategoryTypesHelper<TypeCategory::Logical> {
   using type = CategoryTypesTuple<TypeCategory::Logical, 1, 2, 4, 8>;
+};
+template<> struct CategoryTypesHelper<TypeCategory::Derived> {
+  using type = std::tuple<>;
 };
 template<TypeCategory CATEGORY>
 using CategoryTypes = typename CategoryTypesHelper<CATEGORY>::type;
@@ -294,15 +279,32 @@ template<TypeCategory CATEGORY> struct SomeKind {
   using Scalar = SomeKindScalar<category>;
 };
 
+template<> class SomeKind<TypeCategory::Derived> {
+public:
+  static constexpr bool isSpecificType{true};
+  static constexpr TypeCategory category{TypeCategory::Derived};
+  using Scalar = void;
+
+  CLASS_BOILERPLATE(SomeKind)
+  explicit SomeKind(const semantics::DerivedTypeSpec &s) : spec_{&s} {}
+
+  const semantics::DerivedTypeSpec &spec() const { return *spec_; }
+  std::string Dump() const;
+
+private:
+  const semantics::DerivedTypeSpec *spec_;
+};
+
 using SomeInteger = SomeKind<TypeCategory::Integer>;
 using SomeReal = SomeKind<TypeCategory::Real>;
 using SomeComplex = SomeKind<TypeCategory::Complex>;
 using SomeCharacter = SomeKind<TypeCategory::Character>;
 using SomeLogical = SomeKind<TypeCategory::Logical>;
+using SomeDerived = SomeKind<TypeCategory::Derived>;
 
 // Represents a completely generic intrinsic type.
-using SomeCategory =
-    std::tuple<SomeInteger, SomeReal, SomeComplex, SomeCharacter, SomeLogical>;
+using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
+    SomeCharacter, SomeLogical, SomeDerived>;
 struct SomeType {
   static constexpr bool isSpecificType{false};
   using Scalar = GenericScalar;

@@ -19,7 +19,7 @@
 using namespace std::literals::string_literals;
 
 namespace Fortran::evaluate {
-std::string Type<TypeCategory::Derived>::Dump() const {
+std::string SomeDerived::Dump() const {
   return "TYPE("s + spec().name().ToString() + ')';
 }
 }  // namespace Fortran::evaluate

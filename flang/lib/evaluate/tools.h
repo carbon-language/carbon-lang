@@ -31,9 +31,14 @@ template<typename A> Expr<ResultType<A>> AsExpr(A &&x) {
   return Expr<ResultType<A>>{std::move(x)};
 }
 
-template<TypeCategory CAT, int KIND>
-Expr<SomeKind<CAT>> AsCategoryExpr(Expr<Type<CAT, KIND>> &&x) {
-  return Expr<SomeKind<CAT>>{std::move(x)};
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> AsCategoryExpr(Expr<SomeKind<CAT>> &&x) {
+  return std::move(x);
+}
+
+template<typename A>
+Expr<SomeKind<ResultType<A>::category>> AsCategoryExpr(A &&x) {
+  return Expr<SomeKind<ResultType<A>::category>>{AsExpr(std::move(x))};
 }
 
 template<TypeCategory CAT>
@@ -41,26 +46,28 @@ Expr<SomeKind<CAT>> AsCategoryExpr(SomeKindScalar<CAT> &&x) {
   return std::visit(
       [](auto &&scalar) {
         using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
-        return Expr<SomeKind<CAT>>{Expr<Ty>{Constant<Ty>{std::move(scalar)}}};
+        return AsCategoryExpr(Constant<Ty>{std::move(scalar)});
       },
       x.u);
 }
 
 template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
-  return Expr<SomeType>{std::move(x)};
+  return Expr<SomeType>{AsCategoryExpr(std::move(x))};
 }
 
-template<TypeCategory CAT, int KIND>
-Expr<SomeType> AsGenericExpr(Expr<Type<CAT, KIND>> &&x) {
-  return Expr<SomeType>{AsCategoryExpr(std::move(x))};
+template<> inline Expr<SomeType> AsGenericExpr(Expr<SomeType> &&x) {
+  return std::move(x);
+}
+
+template<> inline Expr<SomeType> AsGenericExpr(BOZLiteralConstant &&x) {
+  return Expr<SomeType>{std::move(x)};
 }
 
 template<> inline Expr<SomeType> AsGenericExpr(Constant<SomeType> &&x) {
   return std::visit(
       [](auto &&scalar) {
         using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
-        return Expr<SomeType>{Expr<SomeKind<Ty::category>>{
-            Expr<Ty>{Constant<Ty>{std::move(scalar)}}}};
+        return AsGenericExpr(Constant<Ty>{std::move(scalar)});
       },
       x.value.u);
 }
@@ -69,8 +76,7 @@ template<> inline Expr<SomeType> AsGenericExpr(GenericScalar &&x) {
   return std::visit(
       [](auto &&scalar) {
         using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
-        return Expr<SomeType>{Expr<SomeKind<Ty::category>>{
-            Expr<Ty>{Constant<Ty>{std::move(scalar)}}}};
+        return AsGenericExpr(Constant<Ty>{std::move(scalar)});
       },
       x.u);
 }
@@ -81,8 +87,7 @@ Expr<SomeReal> GetComplexPart(
 template<int KIND>
 Expr<SomeComplex> MakeComplex(Expr<Type<TypeCategory::Real, KIND>> &&re,
     Expr<Type<TypeCategory::Real, KIND>> &&im) {
-  return AsCategoryExpr(
-      AsExpr(ComplexConstructor<KIND>{std::move(re), std::move(im)}));
+  return AsCategoryExpr(ComplexConstructor<KIND>{std::move(re), std::move(im)});
 }
 
 // Creation of conversion expressions can be done to either a known
@@ -405,8 +410,7 @@ struct TypeKindVisitor {
   template<std::size_t J> Result Test() {
     using Ty = std::tuple_element_t<J, CategoryTypes<CAT>>;
     if (kind == Ty::kind) {
-      return AsGenericExpr(
-          AsCategoryExpr(AsExpr(TEMPLATE<Ty>{std::move(value)})));
+      return AsGenericExpr(TEMPLATE<Ty>{std::move(value)});
     }
     return std::nullopt;
   }

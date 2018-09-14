@@ -253,6 +253,12 @@ public:
     }
   }
 
+  template<typename... A> void Say(const CharBlock &at, A &&... args) {
+    if (messages_ != nullptr) {
+      messages_->Say(at, std::forward<A>(args)...);
+    }
+  }
+
 private:
   CharBlock at_;
   Messages *messages_{nullptr};

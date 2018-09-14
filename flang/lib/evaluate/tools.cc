@@ -342,7 +342,7 @@ std::optional<Expr<SomeType>> Negation(
             messages.Say("LOGICAL cannot be negated"_err_en_US);
             return NoExpr();
           },
-          [&](Expr<Type<TypeCategory::Derived>> &&x) {
+          [&](Expr<SomeDerived> &&x) {
             // TODO: defined operator
             messages.Say("derived type cannot be negated"_err_en_US);
             return NoExpr();

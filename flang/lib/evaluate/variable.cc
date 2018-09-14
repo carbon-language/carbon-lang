@@ -244,12 +244,12 @@ std::ostream &Triplet::Dump(std::ostream &o) const {
   return o;
 }
 
-std::ostream &Subscript::Dump(std::ostream &o) const { return Emit(o, u_); }
+std::ostream &Subscript::Dump(std::ostream &o) const { return Emit(o, u); }
 
 std::ostream &ArrayRef::Dump(std::ostream &o) const {
-  Emit(o, u_);
+  Emit(o, u);
   char separator{'('};
-  for (const Subscript &ss : subscript_) {
+  for (const Subscript &ss : subscript) {
     ss.Dump(o << separator);
     separator = ',';
   }
@@ -283,7 +283,7 @@ std::ostream &CoarrayRef::Dump(std::ostream &o) const {
   return o << ']';
 }
 
-std::ostream &DataRef::Dump(std::ostream &o) const { return Emit(o, u_); }
+std::ostream &DataRef::Dump(std::ostream &o) const { return Emit(o, u); }
 
 std::ostream &Substring::Dump(std::ostream &o) const {
   Emit(o, u_) << '(';
@@ -295,10 +295,8 @@ std::ostream &ComplexPart::Dump(std::ostream &o) const {
   return complex_.Dump(o) << '%' << EnumToString(part_);
 }
 
-std::ostream &Designator::Dump(std::ostream &o) const { return Emit(o, u_); }
-
 std::ostream &ProcedureDesignator::Dump(std::ostream &o) const {
-  return Emit(o, u_);
+  return Emit(o, u);
 }
 
 template<typename ARG>
@@ -315,13 +313,13 @@ std::ostream &ProcedureRef<ARG>::Dump(std::ostream &o) const {
   return o << ')';
 }
 
-std::ostream &Variable::Dump(std::ostream &o) const { return Emit(o, u_); }
+std::ostream &Variable::Dump(std::ostream &o) const { return Emit(o, u); }
 
 std::ostream &ActualFunctionArg::Dump(std::ostream &o) const {
-  return Emit(o, u_);
+  return Emit(o, u);
 }
 std::ostream &ActualSubroutineArg::Dump(std::ostream &o) const {
-  return Emit(o, u_);
+  return Emit(o, u);
 }
 
 std::ostream &Label::Dump(std::ostream &o) const {
@@ -337,7 +335,7 @@ Expr<SubscriptInteger> ArrayRef::LEN() const {
   return std::visit(
       common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
           [](const Component &x) { return x.LEN(); }},
-      u_);
+      u);
 }
 Expr<SubscriptInteger> CoarrayRef::LEN() const {
   return SymbolLEN(*base_.back());
@@ -346,12 +344,19 @@ Expr<SubscriptInteger> DataRef::LEN() const {
   return std::visit(
       common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
           [](const auto &x) { return x.LEN(); }},
-      u_);
+      u);
 }
 Expr<SubscriptInteger> Substring::LEN() const {
   return AsExpr(
       Extremum<SubscriptInteger>{AsExpr(Constant<SubscriptInteger>{0}),
           last() - first() + AsExpr(Constant<SubscriptInteger>{1})});
+}
+template<typename A> Expr<SubscriptInteger> Designator<A>::LEN() const {
+  return std::visit(
+      common::visitors{[](const Symbol *s) { return SymbolLEN(*s); },
+          [](const Component &c) { return c.LEN(); },
+          [](const auto &x) { return x.LEN(); }},
+      u);
 }
 Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
   return std::visit(
@@ -361,7 +366,10 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
             CRASH_NO_CASE;
             return AsExpr(Constant<SubscriptInteger>{0});
           }},
-      u_);
+      u);
 }
 
+template class Designator<Type<TypeCategory::Character, 1>>;
+template class Designator<Type<TypeCategory::Character, 2>>;
+template class Designator<Type<TypeCategory::Character, 4>>;
 }  // namespace Fortran::evaluate
