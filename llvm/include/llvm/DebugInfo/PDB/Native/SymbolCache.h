@@ -43,7 +43,8 @@ class SymbolCache {
   SymIndexId createSymbolForType(codeview::TypeIndex TI, codeview::CVType CVT,
                                  Args &&... ConstructorArgs) {
     CVRecordT Record;
-    if (auto EC = TypeDeserializer::deserializeAs<CVRecordT>(CVT, Record)) {
+    if (auto EC =
+            codeview::TypeDeserializer::deserializeAs<CVRecordT>(CVT, Record)) {
       consumeError(std::move(EC));
       return 0;
     }
