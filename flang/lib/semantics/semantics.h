@@ -19,6 +19,7 @@
 #include "../parser/message.h"
 #include <string>
 #include <vector>
+#include <iostream>
 
 namespace Fortran::parser {
   struct Program;
@@ -28,7 +29,6 @@ namespace Fortran::semantics {
 
 class Semantics {
 public:
-  Semantics() { directories_.push_back("."s); }
   const parser::Messages &messages() const { return messages_; }
   Semantics &set_searchDirectories(const std::vector<std::string> &);
   Semantics &set_moduleDirectory(const std::string &);
@@ -38,10 +38,11 @@ public:
 
 private:
   Scope globalScope_;
-  std::vector<std::string> directories_;
+  std::vector<std::string> directories_{"."s};
   std::string moduleDirectory_{"."s};
   parser::Messages messages_;
 };
+
 }  // namespace Fortran::semantics
 
 #endif
