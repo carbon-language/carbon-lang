@@ -2495,13 +2495,6 @@ createSymbols(ArrayRef<std::vector<GdbIndexSection::NameTypeEntry>> NameTypes) {
 template <class ELFT> GdbIndexSection *GdbIndexSection::create() {
   std::vector<InputSection *> Sections = getDebugInfoSections();
 
-  // .debug_gnu_pub{names,types} are useless in executables.
-  // They are present in input object files solely for creating
-  // a .gdb_index. So we can remove them from the output.
-  for (InputSectionBase *S : InputSections)
-    if (S->Name == ".debug_gnu_pubnames" || S->Name == ".debug_gnu_pubtypes")
-      S->Live = false;
-
   std::vector<GdbChunk> Chunks(Sections.size());
   std::vector<std::vector<NameTypeEntry>> NameTypes(Sections.size());
 
@@ -2514,6 +2507,16 @@ template <class ELFT> GdbIndexSection *GdbIndexSection::create() {
     Chunks[I].AddressAreas = readAddressAreas(Dwarf, Sections[I]);
     NameTypes[I] = readPubNamesAndTypes(Dwarf, I);
   });
+
+  // .debug_gnu_pub{names,types} are useless in executables.
+  // They are present in input object files solely for creating
+  // a .gdb_index. So we can remove them from the output.
+  for (InputSectionBase *S : InputSections) {
+    if (S->Name != ".debug_gnu_pubnames" && S->Name != ".debug_gnu_pubtypes")
+      continue;
+    S->Live = false;
+    S->DecompressBuf.reset();
+  }
 
   auto *Ret = make<GdbIndexSection>();
   Ret->Chunks = std::move(Chunks);
