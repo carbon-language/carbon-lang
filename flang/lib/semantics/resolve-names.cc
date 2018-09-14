@@ -187,7 +187,7 @@ public:
   using Message = parser::Message;
   using MessageFixedText = parser::MessageFixedText;
 
-  const parser::Messages &messages() const { return messages_; }
+  void set_messages(parser::Messages &messages) { messages_ = &messages; }
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
     currStmtSource_ = &x.source;
@@ -218,14 +218,13 @@ public:
 
 private:
   // Where messages are emitted:
-  parser::Messages messages_;
+  parser::Messages *messages_;
   // Source location of current statement; null if not in a statement
   const SourceName *currStmtSource_{nullptr};
 };
 
 // Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
-class ImplicitRulesVisitor : public DeclTypeSpecVisitor,
-                             public virtual MessageHandler {
+class ImplicitRulesVisitor : public DeclTypeSpecVisitor, public MessageHandler {
 public:
   using DeclTypeSpecVisitor::Post;
   using DeclTypeSpecVisitor::Pre;
@@ -301,12 +300,13 @@ private:
 };
 
 // Manage a stack of Scopes
-class ScopeHandler : public virtual ImplicitRulesVisitor {
+class ScopeHandler : public ImplicitRulesVisitor {
 public:
-  void set_rootScope(Scope &scope) { PushScope(scope); }
   Scope &currScope() { return *currScope_; }
   // The enclosing scope, skipping blocks and derived types.
   Scope &InclusiveScope();
+  // The global scope, containing program units.
+  Scope &GlobalScope();
 
   // Create a new scope and push it on the scope stack.
   void PushScope(Scope::Kind kind, Symbol *symbol);
@@ -646,6 +646,11 @@ public:
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
 
+  ResolveNamesVisitor(parser::Messages &messages, Scope &rootScope) {
+    set_messages(messages);
+    PushScope(rootScope);
+  }
+
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
@@ -963,7 +968,7 @@ int DeclTypeSpecVisitor::GetKindParamValue(
 
 MessageHandler::Message &MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
-  return messages_.Say(*currStmtSource_, std::move(msg));
+  return messages_->Say(*currStmtSource_, std::move(msg));
 }
 MessageHandler::Message &MessageHandler::Say(
     const SourceName &name, MessageFixedText &&msg) {
@@ -971,15 +976,15 @@ MessageHandler::Message &MessageHandler::Say(
 }
 MessageHandler::Message &MessageHandler::Say(
     const parser::Name &name, MessageFixedText &&msg) {
-  return messages_.Say(name.source, std::move(msg), name.ToString().c_str());
+  return messages_->Say(name.source, std::move(msg), name.ToString().c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const std::string &arg1) {
-  return messages_.Say(location, std::move(msg), arg1.c_str());
+  return messages_->Say(location, std::move(msg), arg1.c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const SourceName &arg1, const SourceName &arg2) {
-  return messages_.Say(location, std::move(msg), arg1.ToString().c_str(),
+  return messages_->Say(location, std::move(msg), arg1.ToString().c_str(),
       arg2.ToString().c_str());
 }
 void MessageHandler::SayAlreadyDeclared(
@@ -992,7 +997,7 @@ void MessageHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
   Say(name1, std::move(msg1)).Attach(name2, msg2, name2.ToString().c_str());
 }
 void MessageHandler::Annex(parser::Messages &&msgs) {
-  messages_.Annex(std::move(msgs));
+  messages_->Annex(std::move(msgs));
 }
 
 // ImplicitRulesVisitor implementation
@@ -1184,6 +1189,15 @@ Scope &ScopeHandler::InclusiveScope() {
       return *scope;
     }
   }
+  common::die("inclusive scope not found");
+}
+Scope &ScopeHandler::GlobalScope() {
+  for (auto *scope = currScope_; scope; scope = &scope->parent()) {
+    if (scope->kind() == Scope::Kind::Global) {
+      return *scope;
+    }
+  }
+  common::die("global scope not found");
 }
 void ScopeHandler::PushScope(Scope::Kind kind, Symbol *symbol) {
   PushScope(currScope().MakeScope(kind, symbol));
@@ -1411,7 +1425,7 @@ Symbol &ModuleVisitor::BeginModule(const SourceName &name, bool isSubmodule,
 // If an error occurs, report it and return nullptr.
 Scope *ModuleVisitor::FindModule(const SourceName &name, Scope *ancestor) {
   ModFileReader reader{searchDirectories_};
-  auto *scope{reader.Read(name, ancestor)};
+  auto *scope{reader.Read(GlobalScope(), name, ancestor)};
   if (!scope) {
     Annex(std::move(reader.errors()));
     return nullptr;
@@ -2842,20 +2856,14 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
   CHECK(!GetDeclTypeSpec());
 }
 
-void ResolveNames(Scope &rootScope, parser::Program &program,
-    const parser::CookedSource &cookedSource,
+void ResolveNames(parser::Messages &messages, Scope &rootScope,
+    const parser::Program &program,
     const std::vector<std::string> &searchDirectories) {
-  ResolveNamesVisitor visitor;
-  visitor.set_rootScope(rootScope);
+  ResolveNamesVisitor visitor{messages, rootScope};
   for (auto &dir : searchDirectories) {
     visitor.add_searchDirectory(dir);
   }
-  parser::Walk(const_cast<const parser::Program &>(program), visitor);
-  if (!visitor.messages().empty()) {
-    visitor.messages().Emit(std::cerr, cookedSource);
-    return;
-  }
-  RewriteParseTree(program, cookedSource);
+  parser::Walk(program, visitor);
 }
 
 // Map the enum in the parser to the one in GenericSpec
@@ -2939,38 +2947,5 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &genericSpec) {
       },
       genericSpec.u);
 }
-
-static void PutIndent(std::ostream &os, int indent) {
-  for (int i = 0; i < indent; ++i) {
-    os << "  ";
-  }
-}
-
-static void DumpSymbols(std::ostream &os, const Scope &scope, int indent = 0) {
-  PutIndent(os, indent);
-  os << Scope::EnumToString(scope.kind()) << " scope:";
-  if (const auto *symbol{scope.symbol()}) {
-    os << ' ' << symbol->name().ToString();
-  }
-  os << '\n';
-  ++indent;
-  for (const auto &pair : scope) {
-    const auto &symbol{*pair.second};
-    PutIndent(os, indent);
-    os << symbol << '\n';
-    if (const auto *details{symbol.detailsIf<GenericDetails>()}) {
-      if (const auto &type{details->derivedType()}) {
-        PutIndent(os, indent);
-        os << *type << '\n';
-      }
-    }
-  }
-  for (const auto &child : scope.children()) {
-    DumpSymbols(os, child, indent);
-  }
-  --indent;
-}
-
-void DumpSymbols(std::ostream &os) { DumpSymbols(os, Scope::globalScope); }
 
 }  // namespace Fortran::semantics

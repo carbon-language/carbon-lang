@@ -16,12 +16,15 @@
 #define FORTRAN_SEMANTICS_REWRITE_PARSE_TREE_H_
 
 namespace Fortran::parser {
+class Messages;
 struct Program;
-class CookedSource;
 }  // namespace Fortran::parser
+namespace Fortran::semantics {
+class Scope;
+}  // namespace Fortran::semantics
 
 namespace Fortran::semantics {
-void RewriteParseTree(parser::Program &, const parser::CookedSource &);
+void RewriteParseTree(parser::Messages &, const Scope &, parser::Program &);
 }  // namespace Fortran::semantics
 
 #endif  // FORTRAN_SEMANTICS_REWRITE_PARSE_TREE_H_

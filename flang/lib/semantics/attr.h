@@ -18,7 +18,6 @@
 #include "../common/enum-set.h"
 #include "../common/idioms.h"
 #include <cinttypes>
-#include <iostream>
 #include <string>
 
 namespace Fortran::semantics {

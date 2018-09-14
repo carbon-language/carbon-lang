@@ -18,9 +18,6 @@
 
 namespace Fortran::semantics {
 
-Scope Scope::systemScope{Scope::systemScope, Scope::Kind::System, nullptr};
-Scope Scope::globalScope{Scope::systemScope, Scope::Kind::Global, nullptr};
-
 Symbols<1024> Scope::allSymbols;
 
 bool Scope::IsModule() const {

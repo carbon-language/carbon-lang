@@ -12,26 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_SEMANTICS_RESOLVE_NAMES_H_
-#define FORTRAN_SEMANTICS_RESOLVE_NAMES_H_
+#ifndef FORTRAN_SEMANTICS_SEMANTICS_H_
+#define FORTRAN_SEMANTICS_SEMANTICS_H_
 
-#include <iosfwd>
+#include "scope.h"
+#include "../parser/message.h"
 #include <string>
 #include <vector>
 
 namespace Fortran::parser {
-class Messages;
-struct Program;
-}  // namespace Fortran::parser
+  struct Program;
+}
 
 namespace Fortran::semantics {
 
-class Scope;
+class Semantics {
+public:
+  Semantics() { directories_.push_back("."s); }
+  const parser::Messages &messages() const { return messages_; }
+  Semantics &set_searchDirectories(const std::vector<std::string> &);
+  Semantics &set_moduleDirectory(const std::string &);
+  bool AnyFatalError() const { return messages_.AnyFatalError(); }
+  bool Perform(parser::Program &);
+  void DumpSymbols(std::ostream &);
 
-void ResolveNames(parser::Messages &, Scope &, const parser::Program &,
-    const std::vector<std::string> &);
-void DumpSymbols(std::ostream &);
-
+private:
+  Scope globalScope_;
+  std::vector<std::string> directories_;
+  std::string moduleDirectory_{"."s};
+  parser::Messages messages_;
+};
 }  // namespace Fortran::semantics
 
-#endif  // FORTRAN_SEMANTICS_RESOLVE_NAMES_H_
+#endif

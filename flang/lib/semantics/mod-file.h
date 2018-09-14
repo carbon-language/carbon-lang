@@ -18,8 +18,6 @@
 #include "attr.h"
 #include "resolve-names.h"
 #include "../parser/message.h"
-#include "../parser/provenance.h"
-#include <iosfwd>
 #include <set>
 #include <sstream>
 #include <string>
@@ -41,10 +39,10 @@ public:
   void set_directory(const std::string &dir) { dir_ = dir; }
 
   // Errors encountered during writing. Non-empty if WriteAll returns false.
-  parser::Messages &errors() { return errors_; }
+  parser::Messages &&errors() { return std::move(errors_); }
 
   // Write out all .mod files; if error return false.
-  bool WriteAll();
+  bool WriteAll(const Scope &);
 
 private:
   std::string dir_{"."};
@@ -56,7 +54,6 @@ private:
   // Any errors encountered during writing:
   parser::Messages errors_;
 
-  void WriteChildren(const Scope &);
   void WriteOne(const Scope &);
   void Write(const Symbol &);
   std::string GetAsString(const Symbol &);
@@ -77,7 +74,7 @@ public:
   // Find and read the module file for a module or submodule.
   // If ancestor is specified, look for a submodule of that module.
   // Return the Scope for that module/submodule or nullptr on error.
-  Scope *Read(const SourceName &, Scope *ancestor = nullptr);
+  Scope *Read(Scope &, const SourceName &, Scope *ancestor = nullptr);
   // Errors that occurred when Read returns nullptr.
   parser::Messages &errors() { return errors_; }
 

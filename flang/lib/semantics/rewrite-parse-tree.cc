@@ -31,9 +31,8 @@ using symbolMap = std::map<const char *, Symbol *>;
 /// Convert mis-identified statement functions to array element assignments.
 class RewriteMutator {
 public:
-  RewriteMutator(const symbolMap &symbols) : symbols_{symbols} {}
-
-  const parser::Messages &messages() const { return messages_; }
+  RewriteMutator(parser::Messages &messages, const symbolMap &symbols)
+    : messages_{messages}, symbols_{symbols} {}
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(T &) { return true; }
@@ -67,9 +66,9 @@ private:
   using stmtFuncType =
       parser::Statement<common::Indirection<parser::StmtFunctionStmt>>;
   bool errorOnUnresolvedName_{true};
+  parser::Messages &messages_;
   const symbolMap &symbols_;
   std::list<stmtFuncType> stmtFuncsToConvert_;
-  parser::Messages messages_;
 
   // For T = Variable or Expr, if x has a function reference that really
   // should be an array element reference (i.e. the name occurs in an
@@ -95,7 +94,7 @@ void RewriteMutator::Post(parser::Name &name) {
   if (it != symbols_.end()) {
     name.symbol = it->second;
   } else if (errorOnUnresolvedName_) {
-    messages_.Say(name.source, "Internal: no symbol found for '%s'"_err_en_US,
+    messages_.Say(name.source, "Internal: no symbol found for '%s'"_en_US,
         name.ToString().c_str());
   }
 }
@@ -136,7 +135,7 @@ static void CollectSymbol(Symbol &symbol, symbolMap &symbols) {
   }
 }
 
-static void CollectSymbols(Scope &scope, symbolMap &symbols) {
+static void CollectSymbols(const Scope &scope, symbolMap &symbols) {
   for (auto &pair : scope) {
     Symbol *symbol{pair.second};
     CollectSymbol(*symbol, symbols);
@@ -152,12 +151,11 @@ static void CollectSymbols(Scope &scope, symbolMap &symbols) {
 }
 
 void RewriteParseTree(
-    parser::Program &program, const parser::CookedSource &cookedSource) {
+    parser::Messages &messages, const Scope &scope, parser::Program &program) {
   symbolMap symbols;
-  CollectSymbols(Scope::globalScope, symbols);
-  RewriteMutator mutator{symbols};
+  CollectSymbols(scope, symbols);
+  RewriteMutator mutator{messages, symbols};
   parser::Walk(program, mutator);
-  mutator.messages().Emit(std::cerr, cookedSource);
 }
 
 }  // namespace Fortran::semantics

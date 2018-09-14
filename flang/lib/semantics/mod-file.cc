@@ -15,15 +15,11 @@
 #include "mod-file.h"
 #include "scope.h"
 #include "symbol.h"
-#include "../parser/message.h"
 #include "../parser/parsing.h"
 #include <algorithm>
 #include <cerrno>
-#include <cstring>
 #include <fstream>
-#include <functional>
 #include <ostream>
-#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <vector>
@@ -57,15 +53,11 @@ static bool FileContentsMatch(
 static std::string GetHeader(const std::string &);
 static std::size_t GetFileSize(const std::string &);
 
-bool ModFileWriter::WriteAll() {
-  WriteChildren(Scope::globalScope);
-  return errors_.empty();
-}
-
-void ModFileWriter::WriteChildren(const Scope &scope) {
+bool ModFileWriter::WriteAll(const Scope &scope) {
   for (const auto &child : scope.children()) {
     WriteOne(child);
   }
+  return errors_.empty();
 }
 
 void ModFileWriter::WriteOne(const Scope &scope) {
@@ -74,7 +66,7 @@ void ModFileWriter::WriteOne(const Scope &scope) {
     if (!symbol->test(Symbol::Flag::ModFile)) {
       Write(*symbol);
     }
-    WriteChildren(scope);  // write out submodules
+    WriteAll(scope);  // write out submodules
   }
 }
 
@@ -463,7 +455,8 @@ static std::size_t GetFileSize(const std::string &path) {
   }
 }
 
-Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
+Scope *ModFileReader::Read(
+    Scope &globalScope, const SourceName &name, Scope *ancestor) {
   std::string ancestorName;  // empty for module
   if (ancestor) {
     if (auto *scope{ancestor->FindSubmodule(name)}) {
@@ -471,8 +464,8 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
     }
     ancestorName = ancestor->name().ToString();
   } else {
-    auto it{Scope::globalScope.find(name)};
-    if (it != Scope::globalScope.end()) {
+    auto it{globalScope.find(name)};
+    if (it != globalScope.end()) {
       return it->second->scope();
     }
   }
@@ -492,7 +485,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   parser::Options options;
   options.isModuleFile = true;
   parsing.Prescan(*path, options);
-  parsing.Parse(&std::cout);
+  parsing.Parse(nullptr);
   auto &parseTree{parsing.parseTree()};
   if (!parsing.messages().empty() || !parsing.consumedWholeFile() ||
       !parseTree.has_value()) {
@@ -502,13 +495,13 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   }
   Scope *parentScope;  // the scope this module/submodule goes into
   if (!ancestor) {
-    parentScope = &Scope::globalScope;
+    parentScope = &globalScope;
   } else if (auto *parent{GetSubmoduleParent(*parseTree)}) {
-    parentScope = Read(*parent, ancestor);
+    parentScope = Read(globalScope, *parent, ancestor);
   } else {
     parentScope = ancestor;
   }
-  ResolveNames(*parentScope, *parseTree, parsing.cooked(), directories_);
+  ResolveNames(errors_, *parentScope, *parseTree, directories_);
   const auto &it{parentScope->find(name)};
   if (it == parentScope->end()) {
     return nullptr;

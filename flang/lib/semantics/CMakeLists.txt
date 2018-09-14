@@ -17,10 +17,11 @@ add_library(FortranSemantics
   attr.cc
   expression.cc
   mod-file.cc
-  resolve-names.cc
   resolve-labels.cc
+  resolve-names.cc
   rewrite-parse-tree.cc
   scope.cc
+  semantics.cc
   symbol.cc
   type.cc
   unparse-with-symbols.cc

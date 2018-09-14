@@ -16,18 +16,17 @@
 #define FORTRAN_SEMANTICS_RESOLVE_LABELS_H_
 
 namespace Fortran::parser {
+class Messages;
 struct Program;
-class CookedSource;
 }  // namespace Fortran::parser
 
 namespace Fortran::semantics {
 
 /// \brief Validate the labels in the program
-/// \param ParseTree  the parse tree
-/// \param Source     the cooked source
+/// \param messages   where to emit messages
+/// \param program    the parse tree of the program
 /// \return true, iff the program's labels pass semantics checks
-bool ValidateLabels(
-    const parser::Program &ParseTree, const parser::CookedSource &Source);
-}  // namespace Fortran::semantics
+bool ValidateLabels(parser::Messages &messages, const parser::Program &program);
 
+}  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_RESOLVE_LABELS_H_

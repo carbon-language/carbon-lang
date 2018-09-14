@@ -14,6 +14,7 @@
 
 #include "attr.h"
 #include "../common/idioms.h"
+#include <ostream>
 #include <stddef.h>
 
 namespace Fortran::semantics {

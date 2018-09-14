@@ -33,14 +33,12 @@ class Scope {
   using mapType = std::map<SourceName, Symbol *>;
 
 public:
-  // root of the scope tree; contains intrinsics:
-  static Scope systemScope;
-  static Scope globalScope;  // contains program-units
-
   ENUM_CLASS(
       Kind, System, Global, Module, MainProgram, Subprogram, DerivedType, Block)
   using ImportKind = common::ImportKind;
 
+  // Create the Global scope -- the root of the scope tree
+  Scope() : Scope{*this, Kind::Global, nullptr} {}
   Scope(Scope &parent, Kind kind, Symbol *symbol)
     : parent_{parent}, kind_{kind}, symbol_{symbol} {
     if (symbol) {
