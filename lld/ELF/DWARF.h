@@ -1,4 +1,4 @@
-//===- GdbIndex.h --------------------------------------------*- C++ -*-===//
+//===- DWARF.h -----------------------------------------------*- C++ -*-===//
 //
 //                             The LLVM Linker
 //
@@ -7,8 +7,8 @@
 //
 //===-------------------------------------------------------------------===//
 
-#ifndef LLD_ELF_GDB_INDEX_H
-#define LLD_ELF_GDB_INDEX_H
+#ifndef LLD_ELF_DWARF_H
+#define LLD_ELF_DWARF_H
 
 #include "InputFiles.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
