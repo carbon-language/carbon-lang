@@ -1113,11 +1113,6 @@ function(add_unittest test_suite test_name)
   # API for all shared libaries loaded by this executable.
   target_link_libraries(${test_name} PRIVATE gtest_main gtest ${LLVM_PTHREAD_LIB})
   
-  set(LLVM_UNITTEST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-  configure_file(
-    ${LLVM_MAIN_SRC_DIR}/unittests/unittest.cfg.in
-    ${CMAKE_CURRENT_BINARY_DIR}/llvm.srcdir.txt)
-
   add_dependencies(${test_suite} ${test_name})
   get_target_property(test_suite_folder ${test_suite} FOLDER)
   if (NOT ${test_suite_folder} STREQUAL "NOTFOUND")
@@ -1125,6 +1120,16 @@ function(add_unittest test_suite test_name)
   endif ()
 endfunction()
 
+# Use for test binaries that call llvm::getInputFileDirectory(). Use of this
+# is discouraged.
+function(add_unittest_with_input_files test_suite test_name)
+  set(LLVM_UNITTEST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+  configure_file(
+    ${LLVM_MAIN_SRC_DIR}/unittests/unittest.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/llvm.srcdir.txt)
+
+  add_unittest(${test_suite} ${test_name} ${ARGN})
+endfunction()
 
 # Generic support for adding a benchmark.
 function(add_benchmark benchmark_name)
