@@ -293,6 +293,10 @@ struct VPTransformState {
     /// of replication, maps the BasicBlock of the last replica created.
     SmallDenseMap<VPBasicBlock *, BasicBlock *> VPBB2IRBB;
 
+    /// Vector of VPBasicBlocks whose terminator instruction needs to be fixed
+    /// up at the end of vector code generation.
+    SmallVector<VPBasicBlock *, 8> VPBBsToFix;
+
     CFGState() = default;
   } CFG;
 
