@@ -538,13 +538,24 @@ private:
                     : willNotOverflowUnsignedMul(LHS, RHS, CxtI);
   }
 
+  bool willNotOverflow(BinaryOperator::BinaryOps Opcode, const Value *LHS,
+                       const Value *RHS, const Instruction &CxtI,
+                       bool IsSigned) const {
+    switch (Opcode) {
+    case Instruction::Add: return willNotOverflowAdd(LHS, RHS, CxtI, IsSigned);
+    case Instruction::Sub: return willNotOverflowSub(LHS, RHS, CxtI, IsSigned);
+    case Instruction::Mul: return willNotOverflowMul(LHS, RHS, CxtI, IsSigned);
+    default: llvm_unreachable("Unexpected opcode for overflow query");
+    }
+  }
+
   Value *EmitGEPOffset(User *GEP);
   Instruction *scalarizePHI(ExtractElementInst &EI, PHINode *PN);
   Value *EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask);
   Instruction *foldCastedBitwiseLogic(BinaryOperator &I);
   Instruction *narrowBinOp(TruncInst &Trunc);
   Instruction *narrowMaskedBinOp(BinaryOperator &And);
-  Instruction *narrowAddIfNoOverflow(BinaryOperator &I);
+  Instruction *narrowMathIfNoOverflow(BinaryOperator &I);
   Instruction *narrowRotate(TruncInst &Trunc);
   Instruction *optimizeBitCastFromPhi(CastInst &CI, PHINode *PN);
 

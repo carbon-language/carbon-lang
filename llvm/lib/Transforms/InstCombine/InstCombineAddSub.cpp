@@ -1032,45 +1032,6 @@ static Instruction *canonicalizeLowbitMask(BinaryOperator &I,
   return BinaryOperator::CreateNot(NotMask, I.getName());
 }
 
-/// Try to narrow the width of an 'add' if at least 1 operand is an extend of
-/// of a value. This requires a potentially expensive known bits check to make
-/// sure the narrow op does not overflow.
-Instruction *InstCombiner::narrowAddIfNoOverflow(BinaryOperator &I) {
-  // We need at least one extended operand.
-  Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
-  Value *X;
-  bool IsSext = match(LHS, m_SExt(m_Value(X)));
-  if (!IsSext && !match(LHS, m_ZExt(m_Value(X))))
-    return nullptr;
-
-  // If both operands are the same extension from the same source type and we
-  // can eliminate at least one (hasOneUse), this might work.
-  CastInst::CastOps CastOpc = IsSext ? Instruction::SExt : Instruction::ZExt;
-  Value *Y;
-  if (!(match(RHS, m_ZExtOrSExt(m_Value(Y))) && X->getType() == Y->getType() &&
-        cast<Operator>(RHS)->getOpcode() == CastOpc &&
-        (LHS->hasOneUse() || RHS->hasOneUse()))) {
-    // If that did not match, see if the RHS is a constant. Truncating and
-    // extending must produce the same constant.
-    Constant *WideC;
-    if (!LHS->hasOneUse() || !match(RHS, m_Constant(WideC)))
-      return nullptr;
-    Constant *NarrowC = ConstantExpr::getTrunc(WideC, X->getType());
-    if (ConstantExpr::getCast(CastOpc, NarrowC, I.getType()) != WideC)
-      return nullptr;
-    Y = NarrowC;
-  }
-  // Both operands have narrow versions. Last step: the math must not overflow
-  // in the narrow width.
-  if (!willNotOverflowAdd(X, Y, I, IsSext))
-    return nullptr;
-
-  // add (ext X), (ext Y) --> ext (add X, Y)
-  // add (ext X), C --> ext (add X, C')
-  Value *NarrowAdd = Builder.CreateAdd(X, Y, "narrow", !IsSext, IsSext);
-  return CastInst::Create(CastOpc, NarrowAdd, I.getType());
-}
-
 Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (Value *V = SimplifyAddInst(I.getOperand(0), I.getOperand(1),
                                  I.hasNoSignedWrap(), I.hasNoUnsignedWrap(),
@@ -1230,7 +1191,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  if (Instruction *Ext = narrowAddIfNoOverflow(I))
+  if (Instruction *Ext = narrowMathIfNoOverflow(I))
     return Ext;
 
   // (add (xor A, B) (and A, B)) --> (or A, B)
