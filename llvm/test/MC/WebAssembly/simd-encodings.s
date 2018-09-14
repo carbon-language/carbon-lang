@@ -133,6 +133,18 @@
     # CHECK: i32x4.mul # encoding: [0xfd,0x22]
     i32x4.mul
 
+    # CHECK: i8x16.neg # encoding: [0xfd,0x23]
+    i8x16.neg
+
+    # CHECK: i16x8.neg # encoding: [0xfd,0x24]
+    i16x8.neg
+
+    # CHECK: i32x4.neg # encoding: [0xfd,0x25]
+    i32x4.neg
+
+    # CHECK: i64x2.neg # encoding: [0xfd,0x26]
+    i64x2.neg
+
     # CHECK: v128.and # encoding: [0xfd,0x3b]
     v128.and
 
@@ -270,6 +282,12 @@
 
     # CHECK: f64x2.ge # encoding: [0xfd,0x71]
     f64x2.ge
+
+    # CHECK: f32x4.neg # encoding: [0xfd,0x72]
+    f32x4.neg
+
+    # CHECK: f64x2.neg # encoding: [0xfd,0x73]
+    f64x2.neg
 
     # CHECK: f32x4.add # encoding: [0xfd,0x7a]
     f32x4.add

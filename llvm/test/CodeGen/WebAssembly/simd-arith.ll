@@ -46,6 +46,19 @@ define <16 x i8> @mul_v16i8(<16 x i8> %x, <16 x i8> %y) {
   ret <16 x i8> %a
 }
 
+; CHECK-LABEL: neg_v16i8:
+; NO-SIMD128-NOT: i8x16
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: i8x16.neg $push0=, $0{{$}}
+; SIMD128-NEXT: return $pop0{{$}}
+define <16 x i8> @neg_v16i8(<16 x i8> %x) {
+  %a = sub <16 x i8> <i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0,
+                      i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0>,
+                     %x
+  ret <16 x i8> %a
+}
+
 ; CHECK-LABEL: and_v16i8:
 ; NO-SIMD128-NOT: v128
 ; SIMD128-NEXT: .param v128, v128{{$}}
@@ -129,6 +142,18 @@ define <8 x i16> @mul_v8i16(<8 x i16> %x, <8 x i16> %y) {
   ret <8 x i16> %a
 }
 
+; CHECK-LABEL: neg_v8i16:
+; NO-SIMD128-NOT: i16x8
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: i16x8.neg $push0=, $0{{$}}
+; SIMD128-NEXT: return $pop0{{$}}
+define <8 x i16> @neg_v8i16(<8 x i16> %x) {
+  %a = sub <8 x i16> <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>,
+                     %x
+  ret <8 x i16> %a
+}
+
 ; CHECK-LABEL: and_v8i16:
 ; NO-SIMD128-NOT: v128
 ; SIMD128-NEXT: .param v128, v128{{$}}
@@ -207,6 +232,17 @@ define <4 x i32> @sub_v4i32(<4 x i32> %x, <4 x i32> %y) {
 ; SIMD128-NEXT: return $pop0{{$}}
 define <4 x i32> @mul_v4i32(<4 x i32> %x, <4 x i32> %y) {
   %a = mul <4 x i32> %x, %y
+  ret <4 x i32> %a
+}
+
+; CHECK-LABEL: neg_v4i32:
+; NO-SIMD128-NOT: i32x4
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: i32x4.neg $push0=, $0{{$}}
+; SIMD128-NEXT: return $pop0{{$}}
+define <4 x i32> @neg_v4i32(<4 x i32> %x) {
+  %a = sub <4 x i32> <i32 0, i32 0, i32 0, i32 0>, %x
   ret <4 x i32> %a
 }
 
@@ -293,6 +329,17 @@ define <2 x i64> @mul_v2i64(<2 x i64> %x, <2 x i64> %y) {
   ret <2 x i64> %a
 }
 
+; CHECK-LABEL: neg_v2i64:
+; NO-SIMD128-NOT: i64x2
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: i64x2.neg $push0=, $0{{$}}
+; SIMD128-NEXT: return $pop0{{$}}
+define <2 x i64> @neg_v2i64(<2 x i64> %x) {
+  %a = sub <2 x i64> <i64 0, i64 0>, %x
+  ret <2 x i64> %a
+}
+
 ; CHECK-LABEL: and_v2i64:
 ; NO-SIMD128-NOT: v128
 ; SIMD128-VM-NOT: v128
@@ -344,6 +391,17 @@ define <2 x i64> @not_v2i64(<2 x i64> %x) {
 ; ==============================================================================
 ; 4 x float
 ; ==============================================================================
+; CHECK-LABEL: neg_v4f32:
+; NO-SIMD128-NOT: f32x4
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: f32x4.neg $push0=, $0{{$}}
+; SIMD128-NEXT: return $pop0{{$}}
+define <4 x float> @neg_v4f32(<4 x float> %x) {
+  %a = fsub <4 x float> <float 0., float 0., float 0., float 0.>, %x
+  ret <4 x float> %a
+}
+
 ; CHECK-LABEL: add_v4f32:
 ; NO-SIMD128-NOT: f32x4
 ; SIMD128-NEXT: .param v128, v128{{$}}
@@ -391,6 +449,17 @@ define <4 x float> @mul_v4f32(<4 x float> %x, <4 x float> %y) {
 ; ==============================================================================
 ; 2 x double
 ; ==============================================================================
+; CHECK-LABEL: neg_v2f64:
+; NO-SIMD128-NOT: f64x2
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: f64x2.neg $push0=, $0{{$}}
+; SIMD128-NEXT: return $pop0{{$}}
+define <2 x double> @neg_v2f64(<2 x double> %x) {
+  %a = fsub <2 x double> <double 0., double 0.>, %x
+  ret <2 x double> %a
+}
+
 ; CHECK-LABEL: add_v2f64:
 ; NO-SIMD128-NOT: f64x2
 ; SIMD128-VM-NOT: f62x2

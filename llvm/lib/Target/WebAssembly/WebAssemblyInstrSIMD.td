@@ -134,6 +134,29 @@ multiclass SIMDBitwise<SDNode node, string name, bits<32> simdop> {
   defm "" : SIMDBinary<v4i32, "v128", node, name, simdop>;
   defm "" : SIMDBinary<v2i64, "v128", node, name, simdop>;
 }
+multiclass SIMDNeg<ValueType vec_t, string vec, PatFrag splat_pat,
+                   ValueType lane_t, SDNode node, dag lane, bits<32> simdop> {
+  defm NEG_#vec_t : SIMD_I<(outs V128:$dst), (ins V128:$vec),
+                           (outs), (ins),
+                           [(set
+                             (vec_t V128:$dst),
+                             (vec_t (node
+                               (vec_t (splat_pat lane)),
+                               (vec_t V128:$vec)
+                             ))
+                           )],
+                           vec#".neg\t$dst, $vec", vec#".neg", simdop>;
+}
+multiclass SIMDNegInt<ValueType vec_t, string vec, PatFrag splat_pat,
+                      ValueType lane_t, bits<32> simdop> {
+  defm "" : SIMDNeg<vec_t, vec, splat_pat, lane_t, sub, (lane_t 0), simdop>;
+}
+def fpimm0 : FPImmLeaf<fAny, [{ return Imm.isExactlyValue(+0.0); }]>;
+multiclass SIMDNegFP<ValueType vec_t, string vec, PatFrag splat_pat,
+                     ValueType lane_t, bits<32> simdop> {
+  defm "" : SIMDNeg<vec_t, vec, splat_pat, lane_t, fsub, (lane_t fpimm0),
+                    simdop>;
+}
 multiclass SIMDNot<ValueType vec_t, PatFrag splat_pat, ValueType lane_t> {
   defm NOT_#vec_t : SIMD_I<(outs V128:$dst), (ins V128:$vec),
                            (outs), (ins),
@@ -280,6 +303,13 @@ defm MUL : SIMDBinaryFP<fmul, "mul", 128>;
 defm SUB : SIMDBinaryInt<sub, "sub", 28>;
 defm SUB : SIMDBinaryFP<fsub, "sub", 124>;
 defm DIV : SIMDBinaryFP<fdiv, "div", 126>;
+
+defm "" : SIMDNegInt<v16i8, "i8x16", splat16, i32, 35>;
+defm "" : SIMDNegInt<v8i16, "i16x8", splat8, i32, 36>;
+defm "" : SIMDNegInt<v4i32, "i32x4", splat4, i32, 37>;
+defm "" : SIMDNegInt<v2i64, "i64x2", splat2, i64, 38>;
+defm "" : SIMDNegFP<v4f32, "f32x4", splat4, f32, 114>;
+defm "" : SIMDNegFP<v2f64, "f64x2", splat2, f64, 115>;
 
 let isCommutable = 1 in {
 defm AND : SIMDBitwise<and, "and", 59>;
