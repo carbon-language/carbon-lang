@@ -1967,9 +1967,6 @@ bool CodeGenModule::isInSanitizerBlacklist(llvm::GlobalVariable *GV,
 
 bool CodeGenModule::imbueXRayAttrs(llvm::Function *Fn, SourceLocation Loc,
                                    StringRef Category) const {
-  if (!LangOpts.XRayInstrument)
-    return false;
-
   const auto &XRayFilter = getContext().getXRayFilter();
   using ImbueAttr = XRayFunctionFilter::ImbueAttribute;
   auto Attr = ImbueAttr::NONE;

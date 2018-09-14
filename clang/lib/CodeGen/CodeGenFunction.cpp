@@ -901,21 +901,21 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   }
 
   // Apply xray attributes to the function (as a string, for now)
-  bool InstrumentXray = ShouldXRayInstrumentFunction() &&
-                        CGM.getCodeGenOpts().XRayInstrumentationBundle.has(
-                            XRayInstrKind::Function);
-  if (D && InstrumentXray) {
+  if (D) {
     if (const auto *XRayAttr = D->getAttr<XRayInstrumentAttr>()) {
-      if (XRayAttr->alwaysXRayInstrument())
-        Fn->addFnAttr("function-instrument", "xray-always");
-      if (XRayAttr->neverXRayInstrument())
-        Fn->addFnAttr("function-instrument", "xray-never");
-      if (const auto *LogArgs = D->getAttr<XRayLogArgsAttr>()) {
-        Fn->addFnAttr("xray-log-args",
-                      llvm::utostr(LogArgs->getArgumentCount()));
+      if (CGM.getCodeGenOpts().XRayInstrumentationBundle.has(
+              XRayInstrKind::Function)) {
+        if (XRayAttr->alwaysXRayInstrument() && ShouldXRayInstrumentFunction())
+          Fn->addFnAttr("function-instrument", "xray-always");
+        if (XRayAttr->neverXRayInstrument())
+          Fn->addFnAttr("function-instrument", "xray-never");
+        if (const auto *LogArgs = D->getAttr<XRayLogArgsAttr>())
+          if (ShouldXRayInstrumentFunction())
+            Fn->addFnAttr("xray-log-args",
+                          llvm::utostr(LogArgs->getArgumentCount()));
       }
     } else {
-      if (!CGM.imbueXRayAttrs(Fn, Loc))
+      if (ShouldXRayInstrumentFunction() && !CGM.imbueXRayAttrs(Fn, Loc))
         Fn->addFnAttr(
             "xray-instruction-threshold",
             llvm::itostr(CGM.getCodeGenOpts().XRayInstructionThreshold));
