@@ -1062,9 +1062,7 @@ Instruction *InstCombiner::narrowAddIfNoOverflow(BinaryOperator &I) {
   }
   // Both operands have narrow versions. Last step: the math must not overflow
   // in the narrow width.
-  bool WillNotOverflow = IsSext ? willNotOverflowSignedAdd(X, Y, I)
-                                : willNotOverflowUnsignedAdd(X, Y, I);
-  if (!WillNotOverflow)
+  if (!willNotOverflowAdd(X, Y, I, IsSext))
     return nullptr;
 
   // add (ext X), (ext Y) --> ext (add X, Y)

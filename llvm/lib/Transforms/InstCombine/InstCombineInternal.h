@@ -496,6 +496,12 @@ private:
            OverflowResult::NeverOverflows;
   }
 
+  bool willNotOverflowAdd(const Value *LHS, const Value *RHS,
+                          const Instruction &CxtI, bool IsSigned) const {
+    return IsSigned ? willNotOverflowSignedAdd(LHS, RHS, CxtI)
+                    : willNotOverflowUnsignedAdd(LHS, RHS, CxtI);
+  }
+
   bool willNotOverflowSignedSub(const Value *LHS, const Value *RHS,
                                 const Instruction &CxtI) const {
     return computeOverflowForSignedSub(LHS, RHS, &CxtI) ==
@@ -508,6 +514,12 @@ private:
            OverflowResult::NeverOverflows;
   }
 
+  bool willNotOverflowSub(const Value *LHS, const Value *RHS,
+                          const Instruction &CxtI, bool IsSigned) const {
+    return IsSigned ? willNotOverflowSignedSub(LHS, RHS, CxtI)
+                    : willNotOverflowUnsignedSub(LHS, RHS, CxtI);
+  }
+
   bool willNotOverflowSignedMul(const Value *LHS, const Value *RHS,
                                 const Instruction &CxtI) const {
     return computeOverflowForSignedMul(LHS, RHS, &CxtI) ==
@@ -518,6 +530,12 @@ private:
                                   const Instruction &CxtI) const {
     return computeOverflowForUnsignedMul(LHS, RHS, &CxtI) ==
            OverflowResult::NeverOverflows;
+  }
+
+  bool willNotOverflowMul(const Value *LHS, const Value *RHS,
+                          const Instruction &CxtI, bool IsSigned) const {
+    return IsSigned ? willNotOverflowSignedMul(LHS, RHS, CxtI)
+                    : willNotOverflowUnsignedMul(LHS, RHS, CxtI);
   }
 
   Value *EmitGEPOffset(User *GEP);
