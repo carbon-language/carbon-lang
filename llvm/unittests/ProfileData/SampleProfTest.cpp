@@ -36,14 +36,17 @@ static ::testing::AssertionResult NoError(std::error_code EC) {
 namespace {
 
 struct SampleProfTest : ::testing::Test {
-  std::string Data;
   LLVMContext Context;
+  std::string Profile;
   std::unique_ptr<raw_ostream> OS;
   std::unique_ptr<SampleProfileWriter> Writer;
   std::unique_ptr<SampleProfileReader> Reader;
+  std::error_code EC;
 
   SampleProfTest()
-      : Data(), OS(new raw_string_ostream(Data)), Writer(), Reader() {}
+      : Profile("profile"),
+        OS(new raw_fd_ostream(Profile, EC, sys::fs::F_None)), Writer(),
+        Reader() {}
 
   void createWriter(SampleProfileFormat Format) {
     auto WriterOrErr = SampleProfileWriter::create(OS, Format);
@@ -51,10 +54,11 @@ struct SampleProfTest : ::testing::Test {
     Writer = std::move(WriterOrErr.get());
   }
 
-  void readProfile(std::unique_ptr<MemoryBuffer> &Profile) {
+  void readProfile(const Module &M) {
     auto ReaderOrErr = SampleProfileReader::create(Profile, Context);
     ASSERT_TRUE(NoError(ReaderOrErr.getError()));
     Reader = std::move(ReaderOrErr.get());
+    Reader->collectFuncsToUse(M);
   }
 
   void testRoundTrip(SampleProfileFormat Format) {
@@ -83,6 +87,12 @@ struct SampleProfTest : ::testing::Test {
     BarSamples.addCalledTargetSamples(1, 0, MconstructName, 1000);
     BarSamples.addCalledTargetSamples(1, 0, StringviewName, 437);
 
+    Module M("my_module", Context);
+    FunctionType *fn_type =
+        FunctionType::get(Type::getVoidTy(Context), {}, false);
+    M.getOrInsertFunction(FooName, fn_type);
+    M.getOrInsertFunction(BarName, fn_type);
+
     StringMap<FunctionSamples> Profiles;
     Profiles[FooName] = std::move(FooSamples);
     Profiles[BarName] = std::move(BarSamples);
@@ -93,8 +103,7 @@ struct SampleProfTest : ::testing::Test {
 
     Writer->getOutputStream().flush();
 
-    auto Profile = MemoryBuffer::getMemBufferCopy(Data);
-    readProfile(Profile);
+    readProfile(M);
 
     EC = Reader->read();
     ASSERT_TRUE(NoError(EC));
@@ -164,7 +173,6 @@ struct SampleProfTest : ::testing::Test {
     delete PS;
 
     // Test that summary can be attached to and read back from module.
-    Module M("my_module", Context);
     M.setProfileSummary(MD);
     MD = M.getProfileSummary();
     ASSERT_TRUE(MD);
