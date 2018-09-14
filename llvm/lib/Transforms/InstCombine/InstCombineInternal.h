@@ -526,6 +526,7 @@ private:
   Instruction *foldCastedBitwiseLogic(BinaryOperator &I);
   Instruction *narrowBinOp(TruncInst &Trunc);
   Instruction *narrowMaskedBinOp(BinaryOperator &And);
+  Instruction *narrowAddIfNoOverflow(BinaryOperator &I);
   Instruction *narrowRotate(TruncInst &Trunc);
   Instruction *optimizeBitCastFromPhi(CastInst &CI, PHINode *PN);
 
