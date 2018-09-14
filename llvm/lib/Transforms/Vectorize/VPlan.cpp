@@ -205,10 +205,6 @@ void VPBasicBlock::execute(VPTransformState *State) {
     Value *IRCBV = CBV->getUnderlyingValue();
     assert(IRCBV && "Unexpected null underlying value for condition bit");
 
-    // Delete the condition bit at this point - it should be no longer needed.
-    delete CBV;
-    setCondBit(nullptr);
-
     // Condition bit value in a VPBasicBlock is used as the branch selector. In
     // the VPlan-native path case, since all branches are uniform we generate a
     // branch instruction using the condition value from vector lane 0 and dummy

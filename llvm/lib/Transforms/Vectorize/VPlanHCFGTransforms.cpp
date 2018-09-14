@@ -33,6 +33,7 @@ void VPlanHCFGTransforms::VPInstructionsToVPRecipes(
     if (auto *CondBit = VPBB->getCondBit()) {
       auto *NCondBit = new VPValue(CondBit->getUnderlyingValue());
       VPBB->setCondBit(NCondBit);
+      Plan->addCBV(NCondBit);
     }
   }
   for (VPBlockBase *Base : RPOT) {
