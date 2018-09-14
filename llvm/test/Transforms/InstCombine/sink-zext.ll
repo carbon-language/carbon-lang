@@ -6,6 +6,22 @@ target triple = "x86_64-unknown-linux-gnu"
 
 declare i32 @callee()
 
+define i64 @sext_sext_add(i32 %A) {
+; CHECK-LABEL: @sext_sext_add(
+; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[A:%.*]], 7
+; CHECK-NEXT:    [[C:%.*]] = ashr i32 [[A]], 9
+; CHECK-NEXT:    [[ADDCONV:%.*]] = add nsw i32 [[B]], [[C]]
+; CHECK-NEXT:    [[F:%.*]] = sext i32 [[ADDCONV]] to i64
+; CHECK-NEXT:    ret i64 [[F]]
+;
+  %B = ashr i32 %A, 7
+  %C = ashr i32 %A, 9
+  %D = sext i32 %B to i64
+  %E = sext i32 %C to i64
+  %F = add i64 %D, %E
+  ret i64 %F
+}
+
 define i64 @test1(i32 %V) {
 ; CHECK-LABEL: @test1(
 ; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range !0
