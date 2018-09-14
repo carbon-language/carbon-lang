@@ -38,22 +38,31 @@ class SymbolCache {
     return Id;
   }
 
+  template <typename ConcreteSymbolT, typename CVRecordT, typename... Args>
+  SymIndexId createSymbolForType(codeview::TypeIndex TI, codeview::CVType CVT,
+                                 Args &&... ConstructorArgs) {
+    CVRecordT Record;
+    if (auto EC = TypeDeserializer::deserializeAs<CVRecordT>(CVT, Record)) {
+      consumeError(std::move(EC));
+      return 0;
+    }
+
+    return createSymbol<ConcreteSymbolT>(
+        TI, std::move(Record), std::forward<Args>(ConstructorArgs)...);
+  }
+
 public:
   SymbolCache(NativeSession &Session, DbiStream *Dbi);
 
   template <typename ConcreteSymbolT, typename... Args>
   SymIndexId createSymbol(Args &&... ConstructorArgs) {
     SymIndexId Id = Cache.size();
-    std::unique_ptr<ConcreteSymbolT> Symbol =
-        llvm::make_unique<ConcreteSymbolT>(
-            Session, Id, std::forward<Args>(ConstructorArgs)...);
-    std::unique_ptr<NativeRawSymbol> NRS = std::move(Symbol);
-    Cache.push_back(std::move(NRS));
+
+    auto Result = llvm::make_unique<ConcreteSymbolT>(
+        Session, Id, std::forward<Args>(ConstructorArgs)...);
+    Cache.push_back(std::move(Result));
     return Id;
   }
-
-  std::unique_ptr<PDBSymbolTypeEnum>
-  createEnumSymbol(codeview::TypeIndex Index);
 
   std::unique_ptr<IPDBEnumSymbols>
   createTypeEnumerator(codeview::TypeLeafKind Kind);
