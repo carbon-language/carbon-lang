@@ -3,6 +3,8 @@
 
 declare i32 @callee()
 
+declare void @use(i64)
+
 define i64 @sext_sext_add(i32 %A) {
 ; CHECK-LABEL: @sext_sext_add(
 ; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[A:%.*]], 7
@@ -15,6 +17,105 @@ define i64 @sext_sext_add(i32 %A) {
   %C = ashr i32 %A, 9
   %D = sext i32 %B to i64
   %E = sext i32 %C to i64
+  %F = add i64 %D, %E
+  ret i64 %F
+}
+
+; Negative test
+
+define i64 @sext_zext_add_mismatched_exts(i32 %A) {
+; CHECK-LABEL: @sext_zext_add_mismatched_exts(
+; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[A:%.*]], 7
+; CHECK-NEXT:    [[C:%.*]] = lshr i32 [[A]], 9
+; CHECK-NEXT:    [[D:%.*]] = sext i32 [[B]] to i64
+; CHECK-NEXT:    [[E:%.*]] = zext i32 [[C]] to i64
+; CHECK-NEXT:    [[F:%.*]] = add nsw i64 [[D]], [[E]]
+; CHECK-NEXT:    ret i64 [[F]]
+;
+  %B = ashr i32 %A, 7
+  %C = lshr i32 %A, 9
+  %D = sext i32 %B to i64
+  %E = zext i32 %C to i64
+  %F = add i64 %D, %E
+  ret i64 %F
+}
+
+; Negative test
+
+define i64 @sext_sext_add_mismatched_types(i16 %A, i32 %x) {
+; CHECK-LABEL: @sext_sext_add_mismatched_types(
+; CHECK-NEXT:    [[B:%.*]] = ashr i16 [[A:%.*]], 7
+; CHECK-NEXT:    [[C:%.*]] = ashr i32 [[X:%.*]], 9
+; CHECK-NEXT:    [[D:%.*]] = sext i16 [[B]] to i64
+; CHECK-NEXT:    [[E:%.*]] = sext i32 [[C]] to i64
+; CHECK-NEXT:    [[F:%.*]] = add nsw i64 [[D]], [[E]]
+; CHECK-NEXT:    ret i64 [[F]]
+;
+  %B = ashr i16 %A, 7
+  %C = ashr i32 %x, 9
+  %D = sext i16 %B to i64
+  %E = sext i32 %C to i64
+  %F = add i64 %D, %E
+  ret i64 %F
+}
+
+define i64 @sext_sext_add_extra_use1(i32 %A) {
+; CHECK-LABEL: @sext_sext_add_extra_use1(
+; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[A:%.*]], 7
+; CHECK-NEXT:    [[C:%.*]] = ashr i32 [[A]], 9
+; CHECK-NEXT:    [[D:%.*]] = sext i32 [[B]] to i64
+; CHECK-NEXT:    call void @use(i64 [[D]])
+; CHECK-NEXT:    [[ADDCONV:%.*]] = add nsw i32 [[B]], [[C]]
+; CHECK-NEXT:    [[F:%.*]] = sext i32 [[ADDCONV]] to i64
+; CHECK-NEXT:    ret i64 [[F]]
+;
+  %B = ashr i32 %A, 7
+  %C = ashr i32 %A, 9
+  %D = sext i32 %B to i64
+  call void @use(i64 %D)
+  %E = sext i32 %C to i64
+  %F = add i64 %D, %E
+  ret i64 %F
+}
+
+define i64 @sext_sext_add_extra_use2(i32 %A) {
+; CHECK-LABEL: @sext_sext_add_extra_use2(
+; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[A:%.*]], 7
+; CHECK-NEXT:    [[C:%.*]] = ashr i32 [[A]], 9
+; CHECK-NEXT:    [[E:%.*]] = sext i32 [[C]] to i64
+; CHECK-NEXT:    call void @use(i64 [[E]])
+; CHECK-NEXT:    [[ADDCONV:%.*]] = add nsw i32 [[B]], [[C]]
+; CHECK-NEXT:    [[F:%.*]] = sext i32 [[ADDCONV]] to i64
+; CHECK-NEXT:    ret i64 [[F]]
+;
+  %B = ashr i32 %A, 7
+  %C = ashr i32 %A, 9
+  %D = sext i32 %B to i64
+  %E = sext i32 %C to i64
+  call void @use(i64 %E)
+  %F = add i64 %D, %E
+  ret i64 %F
+}
+
+; Negative test - if both extends have extra uses, we need an extra instruction.
+
+define i64 @sext_sext_add_extra_use3(i32 %A) {
+; CHECK-LABEL: @sext_sext_add_extra_use3(
+; CHECK-NEXT:    [[B:%.*]] = ashr i32 [[A:%.*]], 7
+; CHECK-NEXT:    [[C:%.*]] = ashr i32 [[A]], 9
+; CHECK-NEXT:    [[D:%.*]] = sext i32 [[B]] to i64
+; CHECK-NEXT:    call void @use(i64 [[D]])
+; CHECK-NEXT:    [[E:%.*]] = sext i32 [[C]] to i64
+; CHECK-NEXT:    call void @use(i64 [[E]])
+; CHECK-NEXT:    [[F:%.*]] = add nsw i64 [[D]], [[E]]
+; CHECK-NEXT:    ret i64 [[F]]
+;
+  %B = ashr i32 %A, 7
+  %C = ashr i32 %A, 9
+  %D = sext i32 %B to i64
+  call void @use(i64 %D)
+  %E = sext i32 %C to i64
+  call void @use(i64 %E)
   %F = add i64 %D, %E
   ret i64 %F
 }
@@ -90,6 +191,23 @@ define i64 @test5(i32 %V) {
 ;
   %ashr = ashr i32 %V, 1
   %sext = sext i32 %ashr to i64
+  %add = add i64 %sext, 1073741823
+  ret i64 %add
+}
+
+; Negative test - extra use means we'd have more instructions than we started with.
+
+define i64 @sext_add_constant_extra_use(i32 %V) {
+; CHECK-LABEL: @sext_add_constant_extra_use(
+; CHECK-NEXT:    [[ASHR:%.*]] = ashr i32 [[V:%.*]], 1
+; CHECK-NEXT:    [[SEXT:%.*]] = sext i32 [[ASHR]] to i64
+; CHECK-NEXT:    call void @use(i64 [[SEXT]])
+; CHECK-NEXT:    [[ADD:%.*]] = add nsw i64 [[SEXT]], 1073741823
+; CHECK-NEXT:    ret i64 [[ADD]]
+;
+  %ashr = ashr i32 %V, 1
+  %sext = sext i32 %ashr to i64
+  call void @use(i64 %sext)
   %add = add i64 %sext, 1073741823
   ret i64 %add
 }
