@@ -145,6 +145,42 @@
     # CHECK: i64x2.neg # encoding: [0xfd,0x26]
     i64x2.neg
 
+    # CHECK: i8x16.shl # encoding: [0xfd,0x2f]
+    i8x16.shl
+
+    # CHECK: i16x8.shl # encoding: [0xfd,0x30]
+    i16x8.shl
+
+    # CHECK: i32x4.shl # encoding: [0xfd,0x31]
+    i32x4.shl
+
+    # CHECK: i64x2.shl # encoding: [0xfd,0x32]
+    i64x2.shl
+
+    # CHECK: i8x16.shr_s # encoding: [0xfd,0x33]
+    i8x16.shr_s
+
+    # CHECK: i8x16.shr_u # encoding: [0xfd,0x34]
+    i8x16.shr_u
+
+    # CHECK: i16x8.shr_s # encoding: [0xfd,0x35]
+    i16x8.shr_s
+
+    # CHECK: i16x8.shr_u # encoding: [0xfd,0x36]
+    i16x8.shr_u
+
+    # CHECK: i32x4.shr_s # encoding: [0xfd,0x37]
+    i32x4.shr_s
+
+    # CHECK: i32x4.shr_u # encoding: [0xfd,0x38]
+    i32x4.shr_u
+
+    # CHECK: i64x2.shr_s # encoding: [0xfd,0x39]
+    i64x2.shr_s
+
+    # CHECK: i64x2.shr_u # encoding: [0xfd,0x3a]
+    i64x2.shr_u
+
     # CHECK: v128.and # encoding: [0xfd,0x3b]
     v128.and
 
