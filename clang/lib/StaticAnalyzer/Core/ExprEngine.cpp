@@ -2974,7 +2974,7 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
   }
 
   static void dumpProgramPoint(ProgramPoint Loc,
-                               const PrintingPolicy &PP,
+                               const ASTContext &Context,
                                llvm::raw_string_ostream &Out) {
     switch (Loc.getKind()) {
     case ProgramPoint::BlockEntranceKind:
@@ -3019,9 +3019,7 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
     case ProgramPoint::PreImplicitCallKind: {
       ImplicitCallPoint PC = Loc.castAs<ImplicitCallPoint>();
       Out << "PreCall: ";
-
-      // FIXME: Get proper printing options.
-      PC.getDecl()->print(Out, LangOptions());
+      PC.getDecl()->print(Out, Context.getLangOpts());
       printLocation(Out, PC.getLocation());
       break;
     }
@@ -3029,9 +3027,7 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
     case ProgramPoint::PostImplicitCallKind: {
       ImplicitCallPoint PC = Loc.castAs<ImplicitCallPoint>();
       Out << "PostCall: ";
-
-      // FIXME: Get proper printing options.
-      PC.getDecl()->print(Out, LangOptions());
+      PC.getDecl()->print(Out, Context.getLangOpts());
       printLocation(Out, PC.getLocation());
       break;
     }
@@ -3045,8 +3041,7 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
       else {
         QualType Ty = Init->getTypeSourceInfo()->getType();
         Ty = Ty.getLocalUnqualifiedType();
-        LangOptions LO; // FIXME.
-        Ty.print(Out, LO);
+        Ty.print(Out, Context.getLangOpts());
       }
       break;
     }
@@ -3060,8 +3055,7 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
         SourceLocation SLoc = T->getBeginLoc();
 
         Out << "\\|Terminator: ";
-        LangOptions LO; // FIXME.
-        E.getSrc()->printTerminator(Out, LO);
+        E.getSrc()->printTerminator(Out, Context.getLangOpts());
 
         if (SLoc.isFileID()) {
           Out << "\\lline="
@@ -3076,13 +3070,13 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
           if (Label) {
             if (const auto *C = dyn_cast<CaseStmt>(Label)) {
               Out << "\\lcase ";
-              LangOptions LO; // FIXME.
               if (C->getLHS())
-                C->getLHS()->printPretty(Out, nullptr, PrintingPolicy(LO));
+                C->getLHS()->printPretty(Out, nullptr,
+                                         Context.getPrintingPolicy());
 
               if (const Stmt *RHS = C->getRHS()) {
                 Out << " .. ";
-                RHS->printPretty(Out, nullptr, PrintingPolicy(LO));
+                RHS->printPretty(Out, nullptr, Context.getPrintingPolicy());
               }
 
               Out << ":";
@@ -3112,8 +3106,9 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
       const Stmt *S = Loc.castAs<StmtPoint>().getStmt();
       assert(S != nullptr && "Expecting non-null Stmt");
 
-      Out << S->getStmtClassName() << ' ' << (const void *)S << ' ';
-      S->printPretty(Out, nullptr, PP);
+      Out << S->getStmtClassName() << ' '
+          << S->getID(Context) << " (" << (const void *)S << ") ";
+      S->printPretty(Out, nullptr, Context.getPrintingPolicy());
       printLocation(Out, S->getBeginLoc());
 
       if (Loc.getAs<PreStmt>())
@@ -3149,12 +3144,12 @@ struct DOTGraphTraits<ExplodedNode*> : public DefaultDOTGraphTraits {
     }
 
     ProgramStateRef State = N->getState();
-    const auto &PP = State->getStateManager().getContext().getPrintingPolicy();
+    const ASTContext &Context = State->getStateManager().getContext();
 
     // Dump program point for all the previously skipped nodes.
     const ExplodedNode *OtherNode = FirstHiddenNode;
     while (true) {
-      dumpProgramPoint(OtherNode->getLocation(), PP, Out);
+      dumpProgramPoint(OtherNode->getLocation(), Context, Out);
 
       if (const ProgramPointTag *Tag = OtherNode->getLocation().getTag())
         Out << "\\lTag:" << Tag->getTagDescription();
