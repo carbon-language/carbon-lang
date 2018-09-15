@@ -825,7 +825,7 @@ void PrintPreprocessedAction::ExecuteAction() {
   }
 
   std::unique_ptr<raw_ostream> OS =
-      CI.createDefaultOutputFile(BinaryMode, getCurrentFile());
+      CI.createDefaultOutputFile(BinaryMode, getCurrentFileOrBufferName());
   if (!OS) return;
 
   // If we're preprocessing a module map, start by dumping the contents of the
@@ -837,8 +837,6 @@ void PrintPreprocessedAction::ExecuteAction() {
       OS->write_escaped(Input.getFile());
       (*OS) << "\"\n";
     }
-    // FIXME: Include additional information here so that we don't need the
-    // original source files to exist on disk.
     getCurrentModule()->print(*OS);
     (*OS) << "#pragma clang module contents\n";
   }

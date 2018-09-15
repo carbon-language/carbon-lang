@@ -587,12 +587,12 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       assert(ASTModule && "module file does not define its own module");
       Input = FrontendInputFile(ASTModule->PresumedModuleMapFile, Kind);
     } else {
-      auto &SM = CI.getSourceManager();
-      FileID ID = SM.getMainFileID();
-      if (auto *File = SM.getFileEntryForID(ID))
+      auto &OldSM = AST->getSourceManager();
+      FileID ID = OldSM.getMainFileID();
+      if (auto *File = OldSM.getFileEntryForID(ID))
         Input = FrontendInputFile(File->getName(), Kind);
       else
-        Input = FrontendInputFile(SM.getBuffer(ID), Kind);
+        Input = FrontendInputFile(OldSM.getBuffer(ID), Kind);
     }
     setCurrentInput(Input, std::move(AST));
   }

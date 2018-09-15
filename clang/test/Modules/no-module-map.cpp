@@ -4,6 +4,11 @@
 // RUN: %clang_cc1 -fmodules-ts -fmodule-file=%t.pcm %s -I%S/Inputs/no-module-map -verify -DB
 // RUN: %clang_cc1 -fmodules-ts -fmodule-file=%t.pcm %s -I%S/Inputs/no-module-map -verify -DA -DB
 
+// RUN: %clang_cc1 -E %t.pcm -o - | FileCheck %s
+// RUN: %clang_cc1 -frewrite-imports -E %t.pcm -o - | FileCheck %s
+// CHECK: # {{.*}}a.h
+// CHECK: # {{.*}}b.h
+
 #ifdef B
 // expected-no-diagnostics
 #endif
