@@ -16,8 +16,6 @@
 [[clang::xray_always_instrument]] void __attribute__((noinline)) fn() { }
 
 int main(int argc, char *argv[]) {
-  FDRLoggingOptions Opts;
-
   auto status = __xray_log_init_mode("xray-fdr", "");
   assert(status == XRayLogInitStatus::XRAY_LOG_INITIALIZED);
 
