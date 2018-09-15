@@ -16737,13 +16737,11 @@ static SDValue LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG,
   SDValue Result;
 
   if (Subtarget.hasSSE3()) {
-    // FIXME: The 'haddpd' instruction may be slower than 'movhlps + addsd'.
+    // FIXME: The 'haddpd' instruction may be slower than 'shuffle + addsd'.
     Result = DAG.getNode(X86ISD::FHADD, dl, MVT::v2f64, Sub, Sub);
   } else {
-    SDValue S2F = DAG.getBitcast(MVT::v4i32, Sub);
-    SDValue Shuffle = DAG.getVectorShuffle(MVT::v4i32, dl, S2F, S2F, {2,3,0,1});
-    Result = DAG.getNode(ISD::FADD, dl, MVT::v2f64,
-                         DAG.getBitcast(MVT::v2f64, Shuffle), Sub);
+    SDValue Shuffle = DAG.getVectorShuffle(MVT::v2f64, dl, Sub, Sub, {1,-1});
+    Result = DAG.getNode(ISD::FADD, dl, MVT::v2f64, Shuffle, Sub);
   }
 
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, Result,
