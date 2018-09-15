@@ -307,7 +307,6 @@ int64_t Stmt::getID(const ASTContext &Context) const {
   assert(Out && "Wrong allocator used");
   assert(*Out % alignof(Stmt) == 0 && "Wrong alignment information");
   return *Out / alignof(Stmt);
-
 }
 
 CompoundStmt::CompoundStmt(ArrayRef<Stmt *> Stmts, SourceLocation LB,
