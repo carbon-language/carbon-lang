@@ -216,6 +216,7 @@ struct UnitAnalysis {
 
 class ParseTreeAnalyzer {
 public:
+  ParseTreeAnalyzer(ParseTreeAnalyzer &&that) = default;
   ParseTreeAnalyzer(parser::Messages &errorHandler)
     : errorHandler_{errorHandler} {}
 
