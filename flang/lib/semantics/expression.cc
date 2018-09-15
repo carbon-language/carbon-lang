@@ -113,6 +113,7 @@ struct ExprAnalyzer {
   std::optional<Expr<SubscriptInteger>> AsSubscript(MaybeExpr &&);
   std::optional<Expr<SubscriptInteger>> TripletPart(
       const std::optional<parser::Subscript> &);
+  MaybeExpr Subscripts(const Symbol &, ArrayRef &&);
 
   FoldingContext &context;
   const semantics::IntrinsicTypeDefaultKinds &defaults;
@@ -247,7 +248,6 @@ Constant<TYPE> ReadRealLiteral(
   return {value};
 }
 
-// TODO: can this definition appear in the function belowe?
 struct RealTypeVisitor {
   using Result = std::optional<Expr<SomeReal>>;
   static constexpr std::size_t Types{std::tuple_size_v<RealTypes>};
@@ -386,13 +386,12 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
 }
 
 template<TypeCategory CATEGORY>
-MaybeExpr TypedDataRefHelper(int kind, DataRef &&dataRef) {
+MaybeExpr DesignateHelper(int kind, DataRef &&dataRef) {
   return common::SearchDynamicTypes(
       TypeKindVisitor<CATEGORY, Designator, DataRef>{kind, std::move(dataRef)});
 }
 
-static MaybeExpr TypedDataRef(
-    const semantics::Symbol &symbol, DataRef &&dataRef) {
+static MaybeExpr Designate(const semantics::Symbol &symbol, DataRef &&dataRef) {
   if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (details->type().has_value()) {
       switch (details->type()->category()) {
@@ -401,23 +400,23 @@ static MaybeExpr TypedDataRef(
         int kind{details->type()->intrinsicTypeSpec().kind()};
         switch (category) {
         case TypeCategory::Integer:
-          return TypedDataRefHelper<TypeCategory::Integer>(
+          return DesignateHelper<TypeCategory::Integer>(
               kind, std::move(dataRef));
         case TypeCategory::Real:
-          return TypedDataRefHelper<TypeCategory::Real>(
-              kind, std::move(dataRef));
+          return DesignateHelper<TypeCategory::Real>(kind, std::move(dataRef));
         case TypeCategory::Complex:
-          return TypedDataRefHelper<TypeCategory::Complex>(
+          return DesignateHelper<TypeCategory::Complex>(
               kind, std::move(dataRef));
         case TypeCategory::Character:
-          return TypedDataRefHelper<TypeCategory::Character>(
+          return DesignateHelper<TypeCategory::Character>(
               kind, std::move(dataRef));
         case TypeCategory::Logical:
-          return TypedDataRefHelper<TypeCategory::Logical>(
+          return DesignateHelper<TypeCategory::Logical>(
               kind, std::move(dataRef));
         default: CRASH_NO_CASE;
         }
-      } break;
+        break;
+      }
       case semantics::DeclTypeSpec::Category::TypeDerived:
       case semantics::DeclTypeSpec::Category::ClassDerived:
         return AsGenericExpr(
@@ -443,7 +442,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
         "TODO: PARAMETER references not yet implemented"_err_en_US);
     // TODO: enumerators, do they have the PARAMETER attribute?
   } else {
-    if (MaybeExpr result{TypedDataRef(*n.symbol, DataRef{*n.symbol})}) {
+    if (MaybeExpr result{Designate(*n.symbol, DataRef{*n.symbol})}) {
       return result;
     }
     context.messages.Say(
@@ -570,22 +569,42 @@ template<typename A> std::optional<DataRef> AsDataRef(std::optional<A> &&x) {
   return std::nullopt;
 }
 
+MaybeExpr ExprAnalyzer::Subscripts(const Symbol &symbol, ArrayRef &&ref) {
+  if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    int symbolRank = details->shape().size();
+    if (ref.subscript.empty()) {
+      // A -> A(:,:)
+      for (int j{0}; j < symbolRank; ++j) {
+        ref.subscript.emplace_back(Subscript{Triplet{}});
+      }
+    }
+    int subscripts = ref.subscript.size();
+    if (subscripts != symbolRank) {
+      context.messages.Say(
+          "reference to rank-%d object '%s' has %d subscripts"_err_en_US,
+          symbolRank, symbol.name().ToString().data(), subscripts);
+    }
+    // TODO: rank analysis, enforce vector-valued subscript constraints
+    // fill in bounds of triplets?
+    // subtract lowers bounds?
+  }
+  return Designate(symbol, DataRef{std::move(ref)});
+}
+
 MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
   std::vector<Subscript> subscripts{Analyze(ae.subscripts)};
   if (MaybeExpr baseExpr{AnalyzeHelper(*this, ae.base)}) {
-    // TODO: check rank and subscript count
     if (std::optional<DataRef> dataRef{AsDataRef(std::move(*baseExpr))}) {
       if (const Symbol **symbol{std::get_if<const Symbol *>(&dataRef->u)}) {
-        ArrayRef arrayRef{**symbol, std::move(subscripts)};
-        return TypedDataRef(**symbol, DataRef{std::move(arrayRef)});
+        return Subscripts(**symbol, ArrayRef{**symbol, std::move(subscripts)});
       } else if (Component * component{std::get_if<Component>(&dataRef->u)}) {
-        ArrayRef arrayRef{std::move(*component), std::move(subscripts)};
-        return TypedDataRef(component->symbol(), DataRef{std::move(arrayRef)});
+        return Subscripts(component->symbol(),
+            ArrayRef{std::move(*component), std::move(subscripts)});
       }
     }
   }
   context.messages.Say(
-      "subscripts must be applied to an object or component"_err_en_US);
+      "subscripts may be applied only to an object or component"_err_en_US);
   return std::nullopt;
 }
 
@@ -608,7 +627,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
       } else if (std::optional<DataRef> dataRef{
                      AsDataRef(std::move(*dtExpr))}) {
         Component component{std::move(*dataRef), *sym};
-        return TypedDataRef(*sym, DataRef{std::move(component)});
+        return Designate(*sym, DataRef{std::move(component)});
       } else {
         context.messages.Say(sc.component.source,
             "base of component reference must be a data reference"_err_en_US);

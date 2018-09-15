@@ -74,7 +74,8 @@ private:
 // R921 subscript-triplet
 class Triplet {
 public:
-  CLASS_BOILERPLATE(Triplet)
+  Triplet() {}
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(Triplet)
   Triplet(std::optional<Expr<SubscriptInteger>> &&,
       std::optional<Expr<SubscriptInteger>> &&,
       std::optional<Expr<SubscriptInteger>> &&);

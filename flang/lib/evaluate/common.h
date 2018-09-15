@@ -118,12 +118,15 @@ using HostUnsignedInt =
 // - There are full copy and move semantics for construction and assignment.
 // - Discriminated unions have a std::variant<> member "u" and support
 //   explicit copy and move constructors.
-#define CLASS_BOILERPLATE(t) \
-  t() = delete; \
+#define DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(t) \
   t(const t &) = default; \
   t(t &&) = default; \
   t &operator=(const t &) = default; \
   t &operator=(t &&) = default;
+
+#define CLASS_BOILERPLATE(t) \
+  t() = delete; \
+  DEFAULT_CONSTRUCTORS_AND_ASSIGNMENTS(t)
 
 #define EVALUATE_UNION_CLASS_BOILERPLATE(t) \
   CLASS_BOILERPLATE(t) \
