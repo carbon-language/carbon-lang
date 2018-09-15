@@ -37,24 +37,21 @@ namespace {
 
 struct SampleProfTest : ::testing::Test {
   LLVMContext Context;
-  std::string Profile;
-  std::unique_ptr<raw_ostream> OS;
   std::unique_ptr<SampleProfileWriter> Writer;
   std::unique_ptr<SampleProfileReader> Reader;
-  std::error_code EC;
 
-  SampleProfTest()
-      : Profile("profile"),
-        OS(new raw_fd_ostream(Profile, EC, sys::fs::F_None)), Writer(),
-        Reader() {}
+  SampleProfTest() : Writer(), Reader() {}
 
-  void createWriter(SampleProfileFormat Format) {
+  void createWriter(SampleProfileFormat Format, const std::string &Profile) {
+    std::error_code EC;
+    std::unique_ptr<raw_ostream> OS(
+        new raw_fd_ostream(Profile, EC, sys::fs::F_None));
     auto WriterOrErr = SampleProfileWriter::create(OS, Format);
     ASSERT_TRUE(NoError(WriterOrErr.getError()));
     Writer = std::move(WriterOrErr.get());
   }
 
-  void readProfile(const Module &M) {
+  void readProfile(const Module &M, const std::string &Profile) {
     auto ReaderOrErr = SampleProfileReader::create(Profile, Context);
     ASSERT_TRUE(NoError(ReaderOrErr.getError()));
     Reader = std::move(ReaderOrErr.get());
@@ -62,7 +59,8 @@ struct SampleProfTest : ::testing::Test {
   }
 
   void testRoundTrip(SampleProfileFormat Format) {
-    createWriter(Format);
+    std::string Profile = std::string("profile.") + std::to_string(Format);
+    createWriter(Format, Profile);
 
     StringRef FooName("_Z3fooi");
     FunctionSamples FooSamples;
@@ -103,7 +101,7 @@ struct SampleProfTest : ::testing::Test {
 
     Writer->getOutputStream().flush();
 
-    readProfile(M);
+    readProfile(M, Profile);
 
     EC = Reader->read();
     ASSERT_TRUE(NoError(EC));
