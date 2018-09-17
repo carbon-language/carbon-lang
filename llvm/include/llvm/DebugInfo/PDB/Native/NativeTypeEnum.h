@@ -18,6 +18,8 @@
 namespace llvm {
 namespace pdb {
 
+class NativeTypeBuiltin;
+
 class NativeTypeEnum : public NativeRawSymbol {
 public:
   NativeTypeEnum(NativeSession &Session, SymIndexId Id, codeview::TypeIndex TI,
@@ -55,6 +57,8 @@ public:
   bool isRefUdt() const override;
   bool isValueUdt() const override;
   bool isInterfaceUdt() const override;
+
+  const NativeTypeBuiltin &getUnderlyingBuiltinType() const;
 
 protected:
   codeview::TypeIndex Index;

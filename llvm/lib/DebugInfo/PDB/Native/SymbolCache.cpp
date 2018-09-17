@@ -26,14 +26,17 @@ static const struct BuiltinTypeEntry {
   PDB_BuiltinType Type;
   uint32_t Size;
 } BuiltinTypes[] = {
+    {codeview::SimpleTypeKind::Int16Short, PDB_BuiltinType::Int, 2},
+    {codeview::SimpleTypeKind::UInt16Short, PDB_BuiltinType::UInt, 2},
     {codeview::SimpleTypeKind::Int32, PDB_BuiltinType::Int, 4},
     {codeview::SimpleTypeKind::UInt32, PDB_BuiltinType::UInt, 4},
+    {codeview::SimpleTypeKind::Int32Long, PDB_BuiltinType::Int, 4},
     {codeview::SimpleTypeKind::UInt32Long, PDB_BuiltinType::UInt, 4},
+    {codeview::SimpleTypeKind::Int64Quad, PDB_BuiltinType::Int, 8},
     {codeview::SimpleTypeKind::UInt64Quad, PDB_BuiltinType::UInt, 8},
     {codeview::SimpleTypeKind::NarrowCharacter, PDB_BuiltinType::Char, 1},
     {codeview::SimpleTypeKind::SignedCharacter, PDB_BuiltinType::Char, 1},
     {codeview::SimpleTypeKind::UnsignedCharacter, PDB_BuiltinType::UInt, 1},
-    {codeview::SimpleTypeKind::UInt16Short, PDB_BuiltinType::UInt, 2},
     {codeview::SimpleTypeKind::Boolean8, PDB_BuiltinType::Bool, 1}
     // This table can be grown as necessary, but these are the only types we've
     // needed so far.
@@ -169,6 +172,8 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
 
 std::unique_ptr<PDBSymbol>
 SymbolCache::getSymbolById(SymIndexId SymbolId) const {
+  assert(SymbolId < Cache.size());
+
   // Id 0 is reserved.
   if (SymbolId == 0)
     return nullptr;
