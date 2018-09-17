@@ -903,7 +903,7 @@ ErrorOr<AggregatedLBREntry> DataAggregator::parseAggregatedLBREntry() {
   auto TypeOrErr = parseString(FieldSeparator);
   if (std::error_code EC = TypeOrErr.getError())
     return EC;
-  auto Type{AggregatedLBREntry::BRANCH};
+  auto Type = AggregatedLBREntry::BRANCH;
   if (TypeOrErr.get() == "B") {
     Type = AggregatedLBREntry::BRANCH;
   } else if (TypeOrErr.get() == "F") {
