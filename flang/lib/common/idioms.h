@@ -32,6 +32,7 @@
 #include <functional>
 #include <list>
 #include <optional>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <variant>

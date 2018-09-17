@@ -536,9 +536,8 @@ std::optional<DataRef> AsDataRef(Expr<Type<CAT, KIND>> &&expr) {
           using Ty = std::decay_t<decltype(x)>;
           if constexpr (common::HasMember<Ty, decltype(DataRef::u)>) {
             return {DataRef{std::move(x)}};
-          } else {
-            return std::nullopt;
           }
+          return std::nullopt;
         },
         std::move(designator->u));
   } else {
@@ -615,8 +614,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
       if (sym == nullptr) {
         context.messages.Say(sc.component.source,
             "component name was not resolved to a symbol"_err_en_US);
-      } else if (const auto *tpDetails{
-                     sym->detailsIf<semantics::TypeParamDetails>()}) {
+      } else if (sym->detailsIf<semantics::TypeParamDetails>()) {
         context.messages.Say(sc.component.source,
             "TODO: type parameter inquiry unimplemented"_err_en_US);
       } else if (&sym->owner() != dtExpr->result.spec().scope()) {
