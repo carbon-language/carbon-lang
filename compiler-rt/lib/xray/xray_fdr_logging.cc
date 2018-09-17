@@ -1203,11 +1203,22 @@ bool fdrLogDynamicInitializer() XRAY_NEVER_INSTRUMENT {
   };
   auto RegistrationResult = __xray_log_register_mode("xray-fdr", Impl);
   if (RegistrationResult != XRayLogRegisterStatus::XRAY_REGISTRATION_OK &&
-      Verbosity())
+      Verbosity()) {
     Report("Cannot register XRay FDR mode to 'xray-fdr'; error = %d\n",
            RegistrationResult);
-  if (flags()->xray_fdr_log || !internal_strcmp(flags()->xray_mode, "xray-fdr"))
-    __xray_set_log_impl(Impl);
+    return false;
+  }
+
+  if (flags()->xray_fdr_log ||
+      !internal_strcmp(flags()->xray_mode, "xray-fdr")) {
+    auto SelectResult = __xray_log_select_mode("xray-fdr");
+    if (SelectResult != XRayLogRegisterStatus::XRAY_REGISTRATION_OK &&
+        Verbosity()) {
+      Report("Cannot select XRay FDR mode as 'xray-fdr'; error = %d\n",
+             SelectResult);
+      return false;
+    }
+  }
   return true;
 }
 
