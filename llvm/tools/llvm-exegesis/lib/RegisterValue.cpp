@@ -38,6 +38,7 @@ static llvm::APFloat getFloatValue(const llvm::fltSemantics &FltSemantics,
     Output.next(false);
     return Output;
   }
+  llvm_unreachable("Unhandled exegesis::PredefinedValues");
 }
 
 llvm::APInt bitcastFloatValue(const llvm::fltSemantics &FltSemantics,
