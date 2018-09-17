@@ -84,6 +84,7 @@ extern cl::OptionCategory AggregatorCategory;
 extern cl::opt<MacroFusionType> AlignMacroOpFusion;
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::list<std::string> ReorderData;
+extern cl::opt<bool> HotFunctionsAtEnd;
 
 static cl::opt<bool>
 ForceToDataRelocations("force-data-relocations",
@@ -2793,7 +2794,7 @@ void RewriteInstance::emitFunctions() {
   Streamer->InitSections(false);
 
   // Mark beginning of "hot text".
-  if (BC->HasRelocations && opts::HotText)
+  if (BC->HasRelocations && opts::HotText && !opts::HotFunctionsAtEnd)
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_start"));
 
   // Sort functions for the output.
@@ -2811,13 +2812,23 @@ void RewriteInstance::emitFunctions() {
 
   uint32_t LastHotIndex = -1u;
   uint32_t CurrentIndex = 0;
-  for (auto *BF : SortedFunctions) {
-    if (!BF->hasValidIndex() && LastHotIndex == -1u) {
-      LastHotIndex = CurrentIndex;
+  if (opts::HotFunctionsAtEnd) {
+    for (auto *BF : SortedFunctions) {
+      if (BF->hasValidIndex() && LastHotIndex == -1u) {
+        LastHotIndex = CurrentIndex;
+      }
+      assert(LastHotIndex == -1u || BF->hasValidIndex());
+      ++CurrentIndex;
     }
-    assert(LastHotIndex == -1u || !BF->hasValidIndex());
-    assert(!BF->hasValidIndex() || CurrentIndex == BF->getIndex());
-    ++CurrentIndex;
+  } else {
+    for (auto *BF : SortedFunctions) {
+      if (!BF->hasValidIndex() && LastHotIndex == -1u) {
+        LastHotIndex = CurrentIndex;
+      }
+      assert(LastHotIndex == -1u || !BF->hasValidIndex());
+      assert(!BF->hasValidIndex() || CurrentIndex == BF->getIndex());
+      ++CurrentIndex;
+    }
   }
   CurrentIndex = 0;
   DEBUG(dbgs() << "BOLT-DEBUG: LastHotIndex = " << LastHotIndex << "\n");
@@ -2833,11 +2844,10 @@ void RewriteInstance::emitFunctions() {
     if (BC->HasRelocations && !ColdFunctionSeen &&
         CurrentIndex >= LastHotIndex) {
       // Mark the end of "hot" stuff.
-      if (opts::HotText) {
+      if (opts::HotText && !opts::HotFunctionsAtEnd) {
         Streamer->SwitchSection(BC->MOFI->getTextSection());
         Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_end"));
       }
-
       ColdFunctionSeen = true;
 
       // Emit injected functions hot part
@@ -2858,6 +2868,12 @@ void RewriteInstance::emitFunctions() {
         }
       }
       DEBUG(dbgs() << "BOLT-DEBUG: first cold function: " << Function << '\n');
+
+      if (opts::HotText && opts::HotFunctionsAtEnd) {
+        Streamer->SwitchSection(BC->MOFI->getTextSection());
+        Streamer->EmitCodeAlignment(BC->PageAlign);
+        Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_start"));
+      }
     }
 
     if (!BC->HasRelocations &&
@@ -2886,7 +2902,7 @@ void RewriteInstance::emitFunctions() {
     }
   }
 
-  if (!ColdFunctionSeen && opts::HotText) {
+  if ((!ColdFunctionSeen || opts::HotFunctionsAtEnd) && opts::HotText) {
     Streamer->SwitchSection(BC->MOFI->getTextSection());
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_end"));
   }

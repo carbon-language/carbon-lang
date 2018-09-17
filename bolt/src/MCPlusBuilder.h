@@ -1102,7 +1102,7 @@ public:
 
   /// Returns how many bits we have in this instruction to encode a PC-rel
   /// imm.
-  virtual int getPCRelEncodingSize(MCInst &Inst) const {
+  virtual int getPCRelEncodingSize(const MCInst &Inst) const {
     llvm_unreachable("not implemented");
     return 0;
   }

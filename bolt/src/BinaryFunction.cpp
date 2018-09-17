@@ -3241,8 +3241,7 @@ void BinaryFunction::fixBranches() {
       assert(CondBranch && "conditional branch expected");
       const auto *TSuccessor = BB->getConditionalSuccessor(true);
       const auto *FSuccessor = BB->getConditionalSuccessor(false);
-      if (NextBB && NextBB == TSuccessor &&
-          !BC.MIB->hasAnnotation(*CondBranch, "DoNotChangeTarget")) {
+      if (NextBB && NextBB == TSuccessor) {
         std::swap(TSuccessor, FSuccessor);
         MIB->reverseBranchCondition(*CondBranch, TSuccessor->getLabel(), Ctx);
         BB->swapConditionalSuccessors();
@@ -3252,10 +3251,7 @@ void BinaryFunction::fixBranches() {
       if (TSuccessor == FSuccessor) {
         BB->removeDuplicateConditionalSuccessor(CondBranch);
       }
-      if (!NextBB ||
-          ((NextBB != TSuccessor ||
-            BC.MIB->hasAnnotation(*CondBranch, "DoNotChangeTarget")) &&
-           NextBB != FSuccessor)) {
+      if (!NextBB || (NextBB != TSuccessor && NextBB != FSuccessor)) {
         BB->addBranchInstruction(FSuccessor);
       }
     }

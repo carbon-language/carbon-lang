@@ -697,7 +697,7 @@ public:
     return replaceBranchTarget(Inst, TBB, Ctx);
   }
 
-  int getPCRelEncodingSize(MCInst &Inst) const override {
+  int getPCRelEncodingSize(const MCInst &Inst) const override {
     switch (Inst.getOpcode()) {
     default:
       llvm_unreachable("Failed to get pcrel encoding size");

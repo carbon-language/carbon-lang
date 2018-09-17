@@ -23,7 +23,7 @@ extern cl::OptionCategory BoltOptCategory;
 static llvm::cl::opt<bool>
 EliminateVeneers("elim-link-veneers",
   cl::desc("run veneer elimination pass"),
-  cl::init(false),
+  cl::init(true),
   cl::ZeroOrMore,
   cl::Hidden,
   cl::cat(BoltOptCategory));
