@@ -105,13 +105,13 @@ std::optional<Expr<SomeType>> MixedRealLeft(
       [&](auto &&rxk) -> Expr<SomeReal> {
         using resultType = ResultType<decltype(rxk)>;
         if constexpr (std::is_same_v<OPR<resultType>, Power<resultType>>) {
-          return AsCategoryExpr(AsExpr(
-              RealToIntPower<resultType>{std::move(rxk), std::move(iy)}));
+          return AsCategoryExpr(
+              RealToIntPower<resultType>{std::move(rxk), std::move(iy)});
         }
         // G++ 8.1.0 emits bogus warnings about missing return statements if
         // this statement is wrapped in an "else", as it should be.
-        return AsCategoryExpr(AsExpr(OPR<resultType>{
-            std::move(rxk), ConvertToType<resultType>(std::move(iy))}));
+        return AsCategoryExpr(OPR<resultType>{
+            std::move(rxk), ConvertToType<resultType>(std::move(iy))});
       },
       std::move(rx.u)));
 }
@@ -144,7 +144,7 @@ Expr<SomeReal> GetComplexPart(const Expr<SomeComplex> &z, bool isImaginary) {
   return std::visit(
       [&](const auto &zk) {
         static constexpr int kind{ResultType<decltype(zk)>::kind};
-        return AsCategoryExpr(AsExpr(ComplexComponent<kind>{isImaginary, zk}));
+        return AsCategoryExpr(ComplexComponent<kind>{isImaginary, zk});
       },
       z.u);
 }
@@ -257,9 +257,9 @@ std::optional<Expr<SomeType>> NumericOperation(
             return Package(std::visit(
                 [&](auto &&ryk) -> Expr<SomeReal> {
                   using resultType = ResultType<decltype(ryk)>;
-                  return AsCategoryExpr(AsExpr(
+                  return AsCategoryExpr(
                       OPR<resultType>{ConvertToType<resultType>(std::move(ix)),
-                          std::move(ryk)}));
+                          std::move(ryk)});
                 },
                 std::move(ry.u)));
           },

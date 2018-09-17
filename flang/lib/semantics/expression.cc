@@ -258,7 +258,7 @@ struct RealTypeVisitor {
   template<std::size_t J> Result Test() {
     using Ty = std::tuple_element_t<J, RealTypes>;
     if (kind == Ty::kind) {
-      return {AsCategoryExpr(AsExpr(ReadRealLiteral<Ty>(literal, context)))};
+      return {AsCategoryExpr(ReadRealLiteral<Ty>(literal, context))};
     }
     return std::nullopt;
   }
@@ -643,8 +643,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
         Expr<SomeReal> realExpr{std::visit(
             [&](const auto &z) {
               using PartType = typename ResultType<decltype(z)>::Part;
-              return AsCategoryExpr(AsExpr(Designator<PartType>{
-                  ComplexPart{std::move(*dataRef), part}}));
+              return AsCategoryExpr(
+                  Designator<PartType>{ComplexPart{std::move(*dataRef), part}});
             },
             zExpr->u)};
         return {AsGenericExpr(std::move(realExpr))};
@@ -679,6 +679,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureConstructor &) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &) {
+  // TODO: C1003: A parenthesized function reference may not return a
+  // procedure pointer.
   context.messages.Say("TODO: FunctionReference unimplemented"_err_en_US);
   return std::nullopt;
 }
@@ -688,20 +690,17 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
     return std::visit(
         common::visitors{
             [&](BOZLiteralConstant &&boz) {
-              return operand;  // ignore parentheses around typeless
+              return operand;  // ignore parentheses around typeless constants
             },
-            [&](Expr<SomeDerived> &&dte) { return operand; },
+            [&](Expr<SomeDerived> &&) {
+              // TODO: parenthesized derived type variable
+              return operand;
+            },
             [](auto &&catExpr) {
               return std::visit(
                   [](auto &&expr) -> MaybeExpr {
                     using Ty = ResultType<decltype(expr)>;
-                    if constexpr (common::HasMember<Parentheses<Ty>,
-                                      decltype(expr.u)>) {
-                      return {AsGenericExpr(
-                          AsExpr(Parentheses<Ty>{std::move(expr)}))};
-                    }
-                    // TODO: support Parentheses in all Expr specializations
-                    return std::nullopt;
+                    return {AsGenericExpr(Parentheses<Ty>{std::move(expr)})};
                   },
                   std::move(catExpr.u));
             }},
@@ -811,8 +810,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &x) {
                     using Ty = ResultType<decltype(cxk)>;
                     if constexpr (std::is_same_v<Ty,
                                       ResultType<decltype(cyk)>>) {
-                      return {AsGenericExpr(AsCategoryExpr(AsExpr(
-                          Concat<Ty::kind>{std::move(cxk), std::move(cyk)})))};
+                      return {AsGenericExpr(
+                          Concat<Ty::kind>{std::move(cxk), std::move(cyk)})};
                     } else {
                       context.messages.Say(
                           "Operands of // must be the same kind of CHARACTER"_err_en_US);

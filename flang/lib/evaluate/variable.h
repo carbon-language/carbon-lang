@@ -276,6 +276,8 @@ struct ActualFunctionArg {
   explicit ActualFunctionArg(Expr<SomeType> &&x) : u{std::move(x)} {}
   std::ostream &Dump(std::ostream &) const;
 
+  // Subtlety: There is a distinction to be respected here between a variable
+  // and an expression that is a variable, e.g. X vs. (X).
   std::variant<CopyableIndirection<Expr<SomeType>>, Variable> u;
 };
 
@@ -293,13 +295,8 @@ public:
   explicit ActualSubroutineArg(const Label &l) : u{&l} {}
   std::ostream &Dump(std::ostream &) const;
 
-private:
-  using Variables = decltype(Variable::u);
-  using Others =
-      std::variant<CopyableIndirection<Expr<SomeType>>, const Label *>;
-
 public:
-  common::CombineVariants<Variables, Others> u;
+  std::variant<CopyableIndirection<Expr<SomeType>>, Variable, const Label *> u;
 };
 
 using SubroutineRef = ProcedureRef<ActualSubroutineArg>;

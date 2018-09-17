@@ -520,8 +520,7 @@ public:
   Expr<SubscriptInteger> LEN() const;
 
   std::variant<Constant<Result>, Designator<Result>, FunctionReference<Result>,
-      // TODO Parentheses<Result>,
-      Concat<KIND>, Extremum<Result>>
+      Parentheses<Result>, Concat<KIND>, Extremum<Result>>
       u;
 };
 
@@ -594,8 +593,9 @@ public:
   explicit Expr(bool x) : u{Constant<Result>{x}} {}
 
 private:
-  using Operations = std::variant<Convert<Result, TypeCategory::Logical>,
-      Not<KIND>, LogicalOperation<KIND>, Relational<SomeType>>;
+  using Operations =
+      std::variant<Convert<Result, TypeCategory::Logical>, Parentheses<Result>,
+          Not<KIND>, LogicalOperation<KIND>, Relational<SomeType>>;
   using Others = std::variant<Constant<Result>, Designator<Result>,
       FunctionReference<Result>>;
 

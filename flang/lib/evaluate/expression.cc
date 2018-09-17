@@ -493,8 +493,9 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
                          return AsExpr(Constant<SubscriptInteger>{
                              static_cast<std::uint64_t>(c.value.size())});
                        },
+          [](const Parentheses<Result> &x) { return x.left().LEN(); },
           [](const Concat<KIND> &c) {
-            return c.left().LEN() + c.template right().LEN();
+            return c.left().LEN() + c.right().LEN();
           },
           [](const Extremum<Result> &c) {
             return Expr<SubscriptInteger>{
@@ -514,12 +515,8 @@ auto ExpressionBase<RESULT>::ScalarValue() const
     if (auto *c{std::get_if<Constant<Result>>(&derived().u)}) {
       return {c->value};
     }
-    // TODO: every specifically-typed Expr should support Parentheses
-    if constexpr (common::HasMember<Parentheses<Result>,
-                      decltype(derived().u)>) {
-      if (auto *p{std::get_if<Parentheses<Result>>(&derived().u)}) {
-        return p->left().ScalarValue();
-      }
+    if (auto *p{std::get_if<Parentheses<Result>>(&derived().u)}) {
+      return p->left().ScalarValue();
     }
   } else if constexpr (std::is_same_v<Result, SomeType>) {
     return std::visit(
