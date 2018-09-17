@@ -28,6 +28,13 @@ NativeTypeEnum::NativeTypeEnum(NativeSession &Session, SymIndexId Id,
     : NativeRawSymbol(Session, PDB_SymType::Enum, Id), Index(Index),
       Record(std::move(Record)) {}
 
+NativeTypeEnum::NativeTypeEnum(NativeSession &Session, SymIndexId Id,
+                               codeview::TypeIndex ModifierTI,
+                               codeview::ModifierRecord Modifier,
+                               codeview::EnumRecord EnumRecord)
+    : NativeRawSymbol(Session, PDB_SymType::Enum, Id), Index(ModifierTI),
+      Record(std::move(EnumRecord)), Modifiers(std::move(Modifier)) {}
+
 NativeTypeEnum::~NativeTypeEnum() {}
 
 void NativeTypeEnum::dump(raw_ostream &OS, int Indent) const {
@@ -38,6 +45,8 @@ void NativeTypeEnum::dump(raw_ostream &OS, int Indent) const {
   dumpSymbolField(OS, "lexicalParentId", 0, Indent);
   dumpSymbolField(OS, "name", getName(), Indent);
   dumpSymbolField(OS, "typeId", getTypeId(), Indent);
+  if (Modifiers.hasValue())
+    dumpSymbolField(OS, "unmodifiedTypeId", getUnmodifiedTypeId(), Indent);
   dumpSymbolField(OS, "length", getLength(), Indent);
   dumpSymbolField(OS, "constructor", hasConstructor(), Indent);
   dumpSymbolField(OS, "constType", isConstType(), Indent);
@@ -66,17 +75,6 @@ NativeTypeEnum::findChildren(PDB_SymType Type) const {
   default:
     return nullptr;
   }
-}
-
-Error NativeTypeEnum::visitKnownRecord(codeview::CVType &CVR,
-                                       codeview::EnumRecord &ER) {
-  Record = ER;
-  return Error::success();
-}
-
-Error NativeTypeEnum::visitKnownMember(codeview::CVMemberRecord &CVM,
-                                       codeview::EnumeratorRecord &R) {
-  return Error::success();
 }
 
 PDB_SymType NativeTypeEnum::getSymTag() const { return PDB_SymType::Enum; }
@@ -149,9 +147,10 @@ PDB_BuiltinType NativeTypeEnum::getBuiltinType() const {
 }
 
 SymIndexId NativeTypeEnum::getUnmodifiedTypeId() const {
-  // FIXME: If this is const, volatile, or unaligned, we should return the
-  // SymIndexId of the unmodified type here.
-  return 0;
+  if (!Modifiers)
+    return 0;
+  return Session.getSymbolCache().findSymbolByTypeIndex(
+      Modifiers->ModifiedType);
 }
 
 bool NativeTypeEnum::hasConstructor() const {
@@ -215,3 +214,24 @@ bool NativeTypeEnum::isRefUdt() const { return false; }
 bool NativeTypeEnum::isValueUdt() const { return false; }
 
 bool NativeTypeEnum::isInterfaceUdt() const { return false; }
+
+bool NativeTypeEnum::isConstType() const {
+  if (!Modifiers)
+    return false;
+  return ((Modifiers->getModifiers() & ModifierOptions::Const) !=
+          ModifierOptions::None);
+}
+
+bool NativeTypeEnum::isVolatileType() const {
+  if (!Modifiers)
+    return false;
+  return ((Modifiers->getModifiers() & ModifierOptions::Volatile) !=
+          ModifierOptions::None);
+}
+
+bool NativeTypeEnum::isUnalignedType() const {
+  if (!Modifiers)
+    return false;
+  return ((Modifiers->getModifiers() & ModifierOptions::Unaligned) !=
+          ModifierOptions::None);
+}

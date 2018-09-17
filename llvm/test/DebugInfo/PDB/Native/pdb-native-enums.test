@@ -6,6 +6,7 @@
 
 ENUMS:  enum FooClass::NestedEnum {
 ENUMS-NEXT:  }
+ENUMS:  const volatile enum FooClass::NestedEnum
 
 DUMP:      {
 DUMP-NEXT:   symIndexId: 2
@@ -222,4 +223,28 @@ DUMP-NEXT:   scoped: 0
 DUMP-NEXT:   unalignedType: 0
 DUMP-NEXT:   isValueUdt: 0
 DUMP-NEXT:   volatileType: 0
+DUMP-NEXT: }
+DUMP-NEXT: {
+DUMP-NEXT:   symIndexId: 12
+DUMP-NEXT:   symTag: 12
+DUMP-NEXT:   baseType: 6
+DUMP-NEXT:   lexicalParentId: 0
+DUMP-NEXT:   name: FooClass::NestedEnum
+DUMP-NEXT:   typeId: 3
+DUMP-NEXT:   length: 4
+DUMP-NEXT:   constructor: 0
+DUMP-NEXT:   constType: 1
+DUMP-NEXT:   hasAssignmentOperator: 0
+DUMP-NEXT:   hasCastOperator: 0
+DUMP-NEXT:   hasNestedTypes: 0
+DUMP-NEXT:   overloadedOperator: 0
+DUMP-NEXT:   isInterfaceUdt: 0
+DUMP-NEXT:   intrinsic: 0
+DUMP-NEXT:   nested: 1
+DUMP-NEXT:   packed: 0
+DUMP-NEXT:   isRefUdt: 0
+DUMP-NEXT:   scoped: 0
+DUMP-NEXT:   unalignedType: 0
+DUMP-NEXT:   isValueUdt: 0
+DUMP-NEXT:   volatileType: 1
 DUMP-NEXT: }

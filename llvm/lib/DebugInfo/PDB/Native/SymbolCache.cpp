@@ -60,6 +60,72 @@ SymbolCache::createTypeEnumerator(codeview::TypeLeafKind Kind) {
       new NativeEnumTypes(Session, Types, Kind));
 }
 
+SymIndexId SymbolCache::createSimpleType(TypeIndex Index,
+                                         ModifierOptions Mods) {
+  // FIXME:  We will eventually need to handle pointers to other simple types,
+  // which are still simple types in the world of CodeView TypeIndexes.
+  if (Index.getSimpleMode() != codeview::SimpleTypeMode::Direct)
+    return 0;
+
+  const auto Kind = Index.getSimpleKind();
+  const auto It = std::find_if(
+      std::begin(BuiltinTypes), std::end(BuiltinTypes),
+      [Kind](const BuiltinTypeEntry &Builtin) { return Builtin.Kind == Kind; });
+  if (It == std::end(BuiltinTypes))
+    return 0;
+  SymIndexId Id = Cache.size();
+  Cache.emplace_back(llvm::make_unique<NativeTypeBuiltin>(Session, Id, Mods,
+                                                          It->Type, It->Size));
+  TypeIndexToSymbolId[Index] = Id;
+  return Id;
+}
+
+SymIndexId
+SymbolCache::createSymbolForModifiedType(codeview::TypeIndex ModifierTI,
+                                         codeview::CVType CVT) {
+  ModifierRecord Record;
+  if (auto EC = TypeDeserializer::deserializeAs<ModifierRecord>(CVT, Record)) {
+    consumeError(std::move(EC));
+    return 0;
+  }
+
+  if (Record.ModifiedType.isSimple())
+    return createSimpleType(Record.ModifiedType, Record.Modifiers);
+
+  auto Tpi = Session.getPDBFile().getPDBTpiStream();
+  if (!Tpi) {
+    consumeError(Tpi.takeError());
+    return 0;
+  }
+  codeview::LazyRandomTypeCollection &Types = Tpi->typeCollection();
+
+  codeview::CVType UnmodifiedType = Types.getType(Record.ModifiedType);
+
+  switch (UnmodifiedType.kind()) {
+  case LF_ENUM: {
+    EnumRecord ER;
+    if (auto EC =
+            TypeDeserializer::deserializeAs<EnumRecord>(UnmodifiedType, ER)) {
+      consumeError(std::move(EC));
+      return 0;
+    }
+    return createSymbol<NativeTypeEnum>(Record.ModifiedType, std::move(Record),
+                                        std::move(ER));
+  }
+  case LF_STRUCTURE:
+  case LF_UNION:
+  case LF_CLASS:
+    // FIXME: Handle these
+    break;
+  default:
+    // No other types can be modified.  (LF_POINTER, for example, records
+    // its modifiers a different way.
+    assert(false && "Invalid LF_MODIFIER record");
+    break;
+  }
+  return createSymbolPlaceholder();
+}
+
 SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
   // First see if it's already in our cache.
   const auto Entry = TypeIndexToSymbolId.find(Index);
@@ -67,25 +133,8 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
     return Entry->second;
 
   // Symbols for built-in types are created on the fly.
-  if (Index.isSimple()) {
-    // FIXME:  We will eventually need to handle pointers to other simple types,
-    // which are still simple types in the world of CodeView TypeIndexes.
-    if (Index.getSimpleMode() != codeview::SimpleTypeMode::Direct)
-      return 0;
-    const auto Kind = Index.getSimpleKind();
-    const auto It =
-        std::find_if(std::begin(BuiltinTypes), std::end(BuiltinTypes),
-                     [Kind](const BuiltinTypeEntry &Builtin) {
-                       return Builtin.Kind == Kind;
-                     });
-    if (It == std::end(BuiltinTypes))
-      return 0;
-    SymIndexId Id = Cache.size();
-    Cache.emplace_back(
-        llvm::make_unique<NativeTypeBuiltin>(Session, Id, It->Type, It->Size));
-    TypeIndexToSymbolId[Index] = Id;
-    return Id;
-  }
+  if (Index.isSimple())
+    return createSimpleType(Index, ModifierOptions::None);
 
   // We need to instantiate and cache the desired type symbol.
   auto Tpi = Session.getPDBFile().getPDBTpiStream();
@@ -97,6 +146,7 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
   codeview::CVType CVT = Types.getType(Index);
   // TODO(amccarth):  Make this handle all types.
   SymIndexId Id = 0;
+
   switch (CVT.kind()) {
   case codeview::LF_ENUM:
     Id = createSymbolForType<NativeTypeEnum, EnumRecord>(Index, std::move(CVT));
@@ -104,6 +154,9 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
   case codeview::LF_POINTER:
     Id = createSymbolForType<NativeTypePointer, PointerRecord>(Index,
                                                                std::move(CVT));
+    break;
+  case codeview::LF_MODIFIER:
+    Id = createSymbolForModifiedType(Index, std::move(CVT));
     break;
   default:
     Id = createSymbolPlaceholder();

@@ -53,6 +53,12 @@ class SymbolCache {
         TI, std::move(Record), std::forward<Args>(ConstructorArgs)...);
   }
 
+  SymIndexId createSymbolForModifiedType(codeview::TypeIndex ModifierTI,
+                                         codeview::CVType CVT);
+
+  SymIndexId createSimpleType(codeview::TypeIndex TI,
+                              codeview::ModifierOptions Mods);
+
 public:
   SymbolCache(NativeSession &Session, DbiStream *Dbi);
 
