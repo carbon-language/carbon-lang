@@ -187,7 +187,7 @@ public:
   using Message = parser::Message;
   using MessageFixedText = parser::MessageFixedText;
 
-  void set_messages(parser::Messages &messages) { messages_ = &messages; }
+  parser::Messages &&messages() { return std::move(messages_); }
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
     currStmtSource_ = &x.source;
@@ -218,7 +218,7 @@ public:
 
 private:
   // Where messages are emitted:
-  parser::Messages *messages_;
+  parser::Messages messages_;
   // Source location of current statement; null if not in a statement
   const SourceName *currStmtSource_{nullptr};
 };
@@ -646,8 +646,7 @@ public:
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
 
-  ResolveNamesVisitor(parser::Messages &messages, Scope &rootScope) {
-    set_messages(messages);
+  ResolveNamesVisitor(Scope &rootScope) {
     PushScope(rootScope);
   }
 
@@ -968,7 +967,7 @@ int DeclTypeSpecVisitor::GetKindParamValue(
 
 MessageHandler::Message &MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
-  return messages_->Say(*currStmtSource_, std::move(msg));
+  return messages_.Say(*currStmtSource_, std::move(msg));
 }
 MessageHandler::Message &MessageHandler::Say(
     const SourceName &name, MessageFixedText &&msg) {
@@ -976,15 +975,15 @@ MessageHandler::Message &MessageHandler::Say(
 }
 MessageHandler::Message &MessageHandler::Say(
     const parser::Name &name, MessageFixedText &&msg) {
-  return messages_->Say(name.source, std::move(msg), name.ToString().c_str());
+  return messages_.Say(name.source, std::move(msg), name.ToString().c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const std::string &arg1) {
-  return messages_->Say(location, std::move(msg), arg1.c_str());
+  return messages_.Say(location, std::move(msg), arg1.c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const SourceName &arg1, const SourceName &arg2) {
-  return messages_->Say(location, std::move(msg), arg1.ToString().c_str(),
+  return messages_.Say(location, std::move(msg), arg1.ToString().c_str(),
       arg2.ToString().c_str());
 }
 void MessageHandler::SayAlreadyDeclared(
@@ -997,7 +996,7 @@ void MessageHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
   Say(name1, std::move(msg1)).Attach(name2, msg2, name2.ToString().c_str());
 }
 void MessageHandler::Annex(parser::Messages &&msgs) {
-  messages_->Annex(std::move(msgs));
+  messages_.Annex(std::move(msgs));
 }
 
 // ImplicitRulesVisitor implementation
@@ -2859,11 +2858,12 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
 void ResolveNames(parser::Messages &messages, Scope &rootScope,
     const parser::Program &program,
     const std::vector<std::string> &searchDirectories) {
-  ResolveNamesVisitor visitor{messages, rootScope};
+  ResolveNamesVisitor visitor{rootScope};
   for (auto &dir : searchDirectories) {
     visitor.add_searchDirectory(dir);
   }
   parser::Walk(program, visitor);
+  messages.Annex(visitor.messages());
 }
 
 // Map the enum in the parser to the one in GenericSpec
