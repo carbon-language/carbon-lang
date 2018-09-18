@@ -120,6 +120,10 @@ public:
   void set_shape(const ArraySpec &shape);
   bool isDummy() const { return isDummy_; }
   bool isArray() const { return !shape_.empty(); }
+  bool isAssumedSize() const {
+    return isDummy() && isArray() && shape_.back().ubound().isAssumed() &&
+        !shape_.back().lbound().isAssumed();
+  }
 
 private:
   bool isDummy_;

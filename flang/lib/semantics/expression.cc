@@ -245,10 +245,23 @@ MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Designator &d) {
     if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(result))}) {
       if (Component * component{std::get_if<Component>(&dataRef->u)}) {
         ea.ComponentRankCheck(*component);
-      } else if (const Symbol **symbol{
+      } else if (const Symbol **symbolPointer{
                      std::get_if<const Symbol *>(&dataRef->u)}) {
-        // TODO: Whole array reference: append : subscripts, enforce C1002
-        // Possibly use EA::Subscripts() below.
+        const Symbol &symbol{**symbolPointer};
+        if (const auto *details{
+                symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+          if (details->isArray()) {
+            if (details->isAssumedSize()) {  // C1002
+              // TODO: it's okay to forward an assumed-size array as an argument
+              // to many functions and all subroutines, though
+              ea.context.messages.Say(
+                  "assumed-size array '%s' must have subscripts in expression"_err_en_US,
+                  symbol.name().ToString().data());
+            }
+            // TODO: Whole array reference: append : subscripts, enforce C1002
+            // Possibly use EA::Subscripts() below.
+          }
+        }
       }
     }
     return result;
@@ -642,7 +655,6 @@ MaybeExpr ExprAnalyzer::Subscripts(const Symbol &symbol, ArrayRef &&ref) {
         symbolRank, symbol.name().ToString().data(), subscripts);
   }
   // TODO: fill in bounds of triplets?
-  // TODO: subtract lowers bounds?
   // TODO: enforce constraints, like lack of uppermost bound on assumed-size
   if (Component * component{std::get_if<Component>(&ref.u)}) {
     int baseRank{component->Rank()};
