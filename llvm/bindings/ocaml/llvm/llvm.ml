@@ -469,6 +469,7 @@ external struct_element_types : lltype -> lltype array
                               = "llvm_struct_element_types"
 external is_packed : lltype -> bool = "llvm_is_packed"
 external is_opaque : lltype -> bool = "llvm_is_opaque"
+external is_literal : lltype -> bool = "llvm_is_literal"
 
 (*--... Operations on pointer, vector, and array types .....................--*)
 

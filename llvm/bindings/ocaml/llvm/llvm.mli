@@ -665,6 +665,10 @@ val is_packed : lltype -> bool
     [false] otherwise. See the method [llvm::StructType::isOpaque]. *)
 val is_opaque : lltype -> bool
 
+(** [is_literal sty] returns [true] if the structure type [sty] is literal.
+    [false] otherwise. See the method [llvm::StructType::isLiteral]. *)
+val is_literal : lltype -> bool
+
 
 (** {7 Operations on pointer, vector, and array types} *)
 

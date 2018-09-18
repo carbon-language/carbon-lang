@@ -510,6 +510,11 @@ CAMLprim value llvm_is_opaque(LLVMTypeRef StructTy) {
   return Val_bool(LLVMIsOpaqueStruct(StructTy));
 }
 
+/* lltype -> bool */
+CAMLprim value llvm_is_literal(LLVMTypeRef StructTy) {
+  return Val_bool(LLVMIsLiteralStruct(StructTy));
+}
+
 /*--... Operations on array, pointer, and vector types .....................--*/
 
 /* lltype -> lltype array */

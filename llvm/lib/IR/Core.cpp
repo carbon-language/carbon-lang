@@ -706,6 +706,10 @@ LLVMBool LLVMIsOpaqueStruct(LLVMTypeRef StructTy) {
   return unwrap<StructType>(StructTy)->isOpaque();
 }
 
+LLVMBool LLVMIsLiteralStruct(LLVMTypeRef StructTy) {
+  return unwrap<StructType>(StructTy)->isLiteral();
+}
+
 LLVMTypeRef LLVMGetTypeByName(LLVMModuleRef M, const char *Name) {
   return wrap(unwrap(M)->getTypeByName(Name));
 }
