@@ -91,8 +91,9 @@ class RISCVAsmParser : public MCTargetAsmParser {
                                      bool AllowParens = false);
   OperandMatchResultTy parseMemOpBaseReg(OperandVector &Operands);
   OperandMatchResultTy parseOperandWithModifier(OperandVector &Operands);
+  OperandMatchResultTy parseBareSymbol(OperandVector &Operands);
 
-  bool parseOperand(OperandVector &Operands, bool ForceImmediate);
+  bool parseOperand(OperandVector &Operands, StringRef Mnemonic);
 
   bool parseDirectiveOption();
 
@@ -966,6 +967,24 @@ RISCVAsmParser::parseOperandWithModifier(OperandVector &Operands) {
   return MatchOperand_Success;
 }
 
+OperandMatchResultTy RISCVAsmParser::parseBareSymbol(OperandVector &Operands) {
+  SMLoc S = getLoc();
+  SMLoc E = SMLoc::getFromPointer(S.getPointer() - 1);
+  const MCExpr *Res;
+
+  if (getLexer().getKind() != AsmToken::Identifier)
+    return MatchOperand_NoMatch;
+
+  StringRef Identifier;
+  if (getParser().parseIdentifier(Identifier))
+    return MatchOperand_ParseFail;
+
+  MCSymbol *Sym = getContext().getOrCreateSymbol(Identifier);
+  Res = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, getContext());
+  Operands.push_back(RISCVOperand::createImm(Res, S, E, isRV64()));
+  return MatchOperand_Success;
+}
+
 OperandMatchResultTy
 RISCVAsmParser::parseMemOpBaseReg(OperandVector &Operands) {
   if (getLexer().isNot(AsmToken::LParen)) {
@@ -994,13 +1013,19 @@ RISCVAsmParser::parseMemOpBaseReg(OperandVector &Operands) {
 
 /// Looks at a token type and creates the relevant operand from this
 /// information, adding to Operands. If operand was parsed, returns false, else
-/// true. If ForceImmediate is true, no attempt will be made to parse the
-/// operand as a register, which is needed for pseudoinstructions such as
-/// call.
-bool RISCVAsmParser::parseOperand(OperandVector &Operands,
-                                  bool ForceImmediate) {
-  // Attempt to parse token as register, unless ForceImmediate.
-  if (!ForceImmediate && parseRegister(Operands, true) == MatchOperand_Success)
+/// true.
+bool RISCVAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
+  // Check if the current operand has a custom associated parser, if so, try to
+  // custom parse the operand, or fallback to the general approach.
+  OperandMatchResultTy Result =
+      MatchOperandParserImpl(Operands, Mnemonic, /*ParseForAllFeatures=*/true);
+  if (Result == MatchOperand_Success)
+    return false;
+  if (Result == MatchOperand_ParseFail)
+    return true;
+
+  // Attempt to parse token as a register.
+  if (parseRegister(Operands, true) == MatchOperand_Success)
     return false;
 
   // Attempt to parse token as an immediate
@@ -1016,26 +1041,6 @@ bool RISCVAsmParser::parseOperand(OperandVector &Operands,
   return true;
 }
 
-/// Return true if the operand at the OperandIdx for opcode Name should be
-/// 'forced' to be parsed as an immediate. This is required for
-/// pseudoinstructions such as tail or call, which allow bare symbols to be used
-/// that could clash with register names.
-static bool shouldForceImediateOperand(StringRef Name, unsigned OperandIdx) {
-  // FIXME: This may not scale so perhaps we want to use a data-driven approach
-  // instead.
-  switch (OperandIdx) {
-  case 0:
-    // call imm
-    // tail imm
-    return Name == "tail" || Name == "call";
-  case 1:
-    // lla rdest, imm
-    return Name == "lla";
-  default:
-    return false;
-  }
-}
-
 bool RISCVAsmParser::ParseInstruction(ParseInstructionInfo &Info,
                                       StringRef Name, SMLoc NameLoc,
                                       OperandVector &Operands) {
@@ -1047,7 +1052,7 @@ bool RISCVAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     return false;
 
   // Parse first operand
-  if (parseOperand(Operands, shouldForceImediateOperand(Name, 0)))
+  if (parseOperand(Operands, Name))
     return true;
 
   // Parse until end of statement, consuming commas between operands
@@ -1057,7 +1062,7 @@ bool RISCVAsmParser::ParseInstruction(ParseInstructionInfo &Info,
     getLexer().Lex();
 
     // Parse next operand
-    if (parseOperand(Operands, shouldForceImediateOperand(Name, OperandIdx)))
+    if (parseOperand(Operands, Name))
       return true;
 
     ++OperandIdx;

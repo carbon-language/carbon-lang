@@ -178,14 +178,12 @@ def BareSymbol : AsmOperandClass {
   let Name = "BareSymbol";
   let RenderMethod = "addImmOperands";
   let DiagnosticType = "InvalidBareSymbol";
+  let ParserMethod = "parseBareSymbol";
 }
 
 // A bare symbol.
 def bare_symbol : Operand<XLenVT> {
   let ParserMatchClass = BareSymbol;
-  let MCOperandPredicate = [{
-     return MCOp.isBareSymbolRef();
-  }];
 }
 
 // A parameterized register class alternative to i32imm/i64imm from Target.td.
