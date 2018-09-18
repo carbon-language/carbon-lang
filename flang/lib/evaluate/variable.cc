@@ -369,6 +369,72 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
       u);
 }
 
+// Rank()
+int Component::Rank() const { return symbol_->Rank(); }
+int Subscript::Rank() const {
+  return std::visit(common::visitors{[](const IndirectSubscriptIntegerExpr &x) {
+                                       int rank{x->Rank()};
+                                       CHECK(rank <= 1);
+                                       return rank;
+                                     },
+                        [](const Triplet &) { return 1; }},
+      u);
+}
+int ArrayRef::Rank() const {
+  int rank{0};
+  for (std::size_t j{0}; j < subscript.size(); ++j) {
+    rank += subscript[j].Rank();
+  }
+  return rank;
+}
+int CoarrayRef::Rank() const {
+  int rank{0};
+  for (std::size_t j{0}; j < subscript_.size(); ++j) {
+    rank += subscript_[j].Rank();
+  }
+  return rank;
+}
+int DataRef::Rank() const {
+  return std::visit(
+      common::visitors{[](const Symbol *sym) { return sym->Rank(); },
+          [](const auto &x) { return x.Rank(); }},
+      u);
+}
+int Substring::Rank() const {
+  return std::visit(common::visitors{[](const std::string &) { return 0; },
+                        [](const auto &x) { return x.Rank(); }},
+      u_);
+}
+int ComplexPart::Rank() const { return complex_.Rank(); }
+template<> int FunctionRef::Rank() const {
+  // TODO: Rank of elemental function reference depends on actual arguments
+  return std::visit(
+      common::visitors{[](IntrinsicProcedure) { return 0 /*TODO!!*/; },
+          [](const Symbol *sym) { return sym->Rank(); },
+          [](const Component &c) { return c.symbol().Rank(); }},
+      proc().u);
+}
+int Variable::Rank() const {
+  return std::visit([](const auto &x) { return x.Rank(); }, u);
+}
+int ActualFunctionArg::Rank() const {
+  return std::visit(
+      common::visitors{[](const CopyableIndirection<Expr<SomeType>> &x) {
+                         return x->Rank();
+                       },
+          [](const auto &x) { return x.Rank(); }},
+      u);
+}
+int ActualSubroutineArg::Rank() const {
+  return std::visit(
+      common::visitors{[](const CopyableIndirection<Expr<SomeType>> &x) {
+                         return x->Rank();
+                       },
+          [](const Label *) { return 0; },
+          [](const auto &x) { return x.Rank(); }},
+      u);
+}
+
 template class Designator<Type<TypeCategory::Character, 1>>;
 template class Designator<Type<TypeCategory::Character, 2>>;
 template class Designator<Type<TypeCategory::Character, 4>>;

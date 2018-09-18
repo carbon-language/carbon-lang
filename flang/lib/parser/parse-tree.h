@@ -1695,7 +1695,9 @@ struct Expr {
   explicit Expr(FunctionReference &&);
 
   // Filled in later during semantic analysis of the expression.
+  // TODO: May be temporary; remove if caching no longer required.
   common::OwningPointer<evaluate::GenericExprWrapper> typedExpr;
+  CharBlock source;
 
   std::variant<common::Indirection<CharLiteralConstantSubstring>,
       LiteralConstant, common::Indirection<Designator>, ArrayConstructor,

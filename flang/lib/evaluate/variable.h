@@ -50,7 +50,7 @@ using IndirectSubscriptIntegerExpr =
 // R913 structure-component & C920: Defined to be a multi-part
 // data-ref whose last part has no subscripts (or image-selector, although
 // that isn't explicit in the document).  Pointer and allocatable components
-// are not explicitly indirected in this representation.
+// are not explicitly indirected in this representation (TODO: yet?)
 // Complex components (%RE, %IM) are isolated below in ComplexPart.
 class Component {
 public:
@@ -63,6 +63,7 @@ public:
   const DataRef &base() const { return *base_; }
   DataRef &base() { return *base_; }
   const Symbol &symbol() const { return *symbol_; }
+  int Rank() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -93,6 +94,7 @@ struct Subscript {
   EVALUATE_UNION_CLASS_BOILERPLATE(Subscript)
   explicit Subscript(Expr<SubscriptInteger> &&s)
     : u{IndirectSubscriptIntegerExpr::Make(std::move(s))} {}
+  int Rank() const;
   std::ostream &Dump(std::ostream &) const;
   std::variant<IndirectSubscriptIntegerExpr, Triplet> u;
 };
@@ -108,6 +110,8 @@ struct ArrayRef {
     : u{&n}, subscript(std::move(ss)) {}
   ArrayRef(Component &&c, std::vector<Subscript> &&ss)
     : u{std::move(c)}, subscript(std::move(ss)) {}
+
+  int Rank() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -130,6 +134,7 @@ public:
       std::vector<Expr<SubscriptInteger>> &&);  // TODO: stat & team?
   CoarrayRef &setStat(Variable &&);
   CoarrayRef &setTeam(Variable &&, bool isTeamNumber = false);
+  int Rank() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -148,6 +153,8 @@ private:
 struct DataRef {
   EVALUATE_UNION_CLASS_BOILERPLATE(DataRef)
   explicit DataRef(const Symbol &n) : u{&n} {}
+
+  int Rank() const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -169,6 +176,7 @@ public:
 
   Expr<SubscriptInteger> first() const;
   Expr<SubscriptInteger> last() const;
+  int Rank() const;
   Expr<SubscriptInteger> LEN() const;
   std::optional<std::string> Fold(FoldingContext &);
   std::ostream &Dump(std::ostream &) const;
@@ -189,6 +197,7 @@ public:
   ComplexPart(DataRef &&z, Part p) : complex_{std::move(z)}, part_{p} {}
   const DataRef &complex() const { return complex_; }
   Part part() const { return part_; }
+  int Rank() const;
   std::ostream &Dump(std::ostream &) const;
 
 private:
@@ -220,7 +229,15 @@ public:
     return *this;
   }
 
+  int Rank() const {
+    return std::visit(
+        common::visitors{[](const Symbol *sym) { return sym->Rank(); },
+            [](const auto &x) { return x.Rank(); }},
+        u);
+  }
+
   Expr<SubscriptInteger> LEN() const;
+
   std::ostream &Dump(std::ostream &o) const {
     std::visit(common::visitors{[&](const Symbol *sym) {
                                   o << sym->name().ToString();
@@ -244,7 +261,6 @@ struct ProcedureDesignator {
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
-private:
   std::variant<IntrinsicProcedure, const Symbol *, Component> u;
 };
 
@@ -256,6 +272,7 @@ public:
     : proc_{std::move(p)}, argument_(std::move(a)) {}
   const ProcedureDesignator &proc() const { return proc_; }
   const std::vector<ArgumentType> &argument() const { return argument_; }
+  int Rank() const;
   std::ostream &Dump(std::ostream &) const;
 
 private:
@@ -267,6 +284,7 @@ using FunctionRef = ProcedureRef<ActualFunctionArg>;
 
 struct Variable {
   EVALUATE_UNION_CLASS_BOILERPLATE(Variable)
+  int Rank() const;
   std::ostream &Dump(std::ostream &) const;
   std::variant<DataRef, Substring, ComplexPart, FunctionRef> u;
 };
@@ -274,6 +292,7 @@ struct Variable {
 struct ActualFunctionArg {
   EVALUATE_UNION_CLASS_BOILERPLATE(ActualFunctionArg)
   explicit ActualFunctionArg(Expr<SomeType> &&x) : u{std::move(x)} {}
+  int Rank() const;
   std::ostream &Dump(std::ostream &) const;
 
   // Subtlety: There is a distinction to be respected here between a variable
@@ -293,6 +312,7 @@ public:
   EVALUATE_UNION_CLASS_BOILERPLATE(ActualSubroutineArg)
   explicit ActualSubroutineArg(Expr<SomeType> &&x) : u{std::move(x)} {}
   explicit ActualSubroutineArg(const Label &l) : u{&l} {}
+  int Rank() const;
   std::ostream &Dump(std::ostream &) const;
 
 public:

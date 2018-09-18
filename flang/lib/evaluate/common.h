@@ -142,14 +142,19 @@ template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 // IsFoldableTrait.
 CLASS_TRAIT(IsFoldableTrait)
 struct FoldingContext {
-  explicit FoldingContext(parser::ContextualMessages &m,
+  explicit FoldingContext(const parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)
     : messages{m}, rounding{round}, flushDenormalsToZero{flush} {}
-  FoldingContext(parser::ContextualMessages &m, const FoldingContext &c)
+  FoldingContext(const parser::ContextualMessages &m, const FoldingContext &c)
     : messages{m}, rounding{c.rounding}, flushDenormalsToZero{
                                              c.flushDenormalsToZero} {}
 
-  parser::ContextualMessages &messages;
+  // For narrowed contexts
+  FoldingContext(const FoldingContext &c, const parser::ContextualMessages &m)
+    : messages{m}, rounding{c.rounding}, flushDenormalsToZero{
+                                             c.flushDenormalsToZero} {}
+
+  parser::ContextualMessages messages;
   Rounding rounding{defaultRounding};
   bool flushDenormalsToZero{false};
 };

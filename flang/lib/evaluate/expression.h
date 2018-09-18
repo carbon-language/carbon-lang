@@ -61,12 +61,13 @@ template<typename A> using ResultType = typename std::decay_t<A>::Result;
 // Wraps a constant value in a class with its resolved type.
 template<typename T> struct Constant {
   using Result = T;
-  using Value = Scalar<Result>;  // TODO rank > 0
+  using Value = Scalar<Result>;
   CLASS_BOILERPLATE(Constant)
   template<typename A> Constant(const A &x) : value{x} {}
   template<typename A>
   Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : value(std::move(x)) {}
+  int Rank() const { return 0; }
   std::ostream &Dump(std::ostream &) const;
   Value value;
 };
@@ -80,6 +81,7 @@ using BOZLiteralConstant = typename LargestReal::Scalar::Word;
 template<typename T> struct FunctionReference {
   using Result = T;
   static_assert(Result::isSpecificType);
+  int Rank() const { return reference->Rank(); }
   CopyableIndirection<FunctionRef> reference;
 };
 
@@ -158,6 +160,17 @@ public:
     if constexpr (operands > 1) {
       return operand<1>();
     }
+  }
+
+  int Rank() const {
+    int rank{left().Rank()};
+    if constexpr (operands > 1) {
+      int rightRank{right().Rank()};
+      if (rightRank > rank) {
+        rank = rightRank;
+      }
+    }
+    return rank;
   }
 
   std::ostream &Dump(std::ostream &) const;
@@ -397,8 +410,6 @@ template<typename RESULT> struct ExpressionBase {
   Derived &derived() { return *static_cast<Derived *>(this); }
   const Derived &derived() const { return *static_cast<const Derived *>(this); }
 
-  int Rank() const { return 0; }  // TODO
-
   template<typename A> Derived &operator=(const A &x) {
     Derived &d{derived()};
     d.u = x;
@@ -412,6 +423,7 @@ template<typename RESULT> struct ExpressionBase {
     return d;
   }
 
+  int Rank() const;
   std::ostream &Dump(std::ostream &) const;
   std::optional<Constant<Result>> Fold(FoldingContext &c);
   std::optional<Scalar<Result>> ScalarValue() const;
@@ -563,6 +575,9 @@ template<> class Relational<SomeType> {
 public:
   using Result = LogicalResult;
   EVALUATE_UNION_CLASS_BOILERPLATE(Relational)
+  int Rank() const {
+    return std::visit([](const auto &x) { return x.Rank(); }, u);
+  }
   std::ostream &Dump(std::ostream &o) const;
   common::MapTemplate<Relational, DirectlyComparableTypes> u;
 };

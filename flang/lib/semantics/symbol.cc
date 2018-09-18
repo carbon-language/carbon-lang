@@ -244,6 +244,28 @@ bool Symbol::HasExplicitInterface() const {
       details_);
 }
 
+int Symbol::Rank() const {
+  return std::visit(
+      common::visitors{
+          [](const SubprogramDetails &sd) {
+            if (sd.isFunction()) {
+              return sd.result().Rank();
+            } else {
+              return 0;
+            }
+          },
+          [](const GenericDetails &) {
+            return 0; /*TODO*/
+          },
+          [](const UseDetails &x) { return x.symbol().Rank(); },
+          [](const ObjectEntityDetails &oed) {
+            return static_cast<int>(oed.shape().size());
+          },
+          [](const auto &) { return 0; },
+      },
+      details_);
+}
+
 ObjectEntityDetails::ObjectEntityDetails(const EntityDetails &d)
   : isDummy_{d.isDummy()}, type_{d.type()} {}
 

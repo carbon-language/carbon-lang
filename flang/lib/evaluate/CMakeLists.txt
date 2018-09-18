@@ -26,4 +26,5 @@ add_library(FortranEvaluate
 
 target_link_libraries(FortranEvaluate
   FortranCommon
+  FortranSemantics
 )

@@ -550,6 +550,14 @@ auto ExpressionBase<RESULT>::ScalarValue() const
 
 Expr<SomeType>::~Expr() {}
 
+// Rank()
+template<typename A> int ExpressionBase<A>::Rank() const {
+  return std::visit(
+      common::visitors{[](const BOZLiteralConstant &) { return 0; },
+          [](const auto &x) { return x.Rank(); }},
+      derived().u);
+}
+
 // Template instantiations to resolve the "extern template" declarations
 // that appear in expression.h.
 

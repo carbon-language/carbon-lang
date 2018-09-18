@@ -341,6 +341,8 @@ public:
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }
 
+  int Rank() const;
+
 private:
   const Scope *owner_;
   std::list<SourceName> occurrences_;
