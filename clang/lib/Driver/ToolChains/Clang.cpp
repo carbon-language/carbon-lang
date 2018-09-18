@@ -2085,6 +2085,11 @@ static void RenderFloatingPointOptions(const ToolChain &TC, const Driver &D,
   StringRef DenormalFPMath = "";
   StringRef FPContract = "";
 
+  if (const Arg *A = Args.getLastArg(options::OPT_flimited_precision_EQ)) {
+    CmdArgs.push_back("-mlimit-float-precision");
+    CmdArgs.push_back(A->getValue());
+  }
+
   for (const Arg *A : Args) {
     switch (A->getOption().getID()) {
     // If this isn't an FP option skip the claim below
@@ -3661,11 +3666,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   getToolChain().addClangTargetOptions(Args, CmdArgs,
                                        JA.getOffloadingDeviceKind());
-
-  if (Arg *A = Args.getLastArg(options::OPT_flimited_precision_EQ)) {
-    CmdArgs.push_back("-mlimit-float-precision");
-    CmdArgs.push_back(A->getValue());
-  }
 
   // FIXME: Handle -mtune=.
   (void)Args.hasArg(options::OPT_mtune_EQ);
