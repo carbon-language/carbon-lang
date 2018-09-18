@@ -1187,6 +1187,7 @@ external build_invoke : llvalue -> llvalue array -> llbasicblock ->
                       = "llvm_build_invoke_bc" "llvm_build_invoke_nat"
 external build_landingpad : lltype -> llvalue -> int -> string -> llbuilder ->
                             llvalue = "llvm_build_landingpad"
+external is_cleanup : llvalue -> bool = "llvm_is_cleanup"
 external set_cleanup : llvalue -> bool -> unit = "llvm_set_cleanup"
 external add_clause : llvalue -> llvalue -> unit = "llvm_add_clause"
 external build_resume : llvalue -> llbuilder -> llvalue = "llvm_build_resume"

@@ -1914,6 +1914,11 @@ CAMLprim value llvm_add_clause(LLVMValueRef LandingPadInst, LLVMValueRef ClauseV
     return Val_unit;
 }
 
+/* llvalue -> bool */
+CAMLprim value llvm_is_cleanup(LLVMValueRef LandingPadInst)
+{
+    return Val_bool(LLVMIsCleanup(LandingPadInst));
+}
 
 /* llvalue -> bool -> unit */
 CAMLprim value llvm_set_cleanup(LLVMValueRef LandingPadInst, value flag)

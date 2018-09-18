@@ -2093,6 +2093,10 @@ val build_invoke : llvalue -> llvalue array -> llbasicblock ->
 val build_landingpad : lltype -> llvalue -> int -> string -> llbuilder ->
                          llvalue
 
+(** [is_cleanup lp] returns [true] if [landingpad] instruction lp is a cleanup.
+    See the method [llvm::LandingPadInst::isCleanup]. *)
+val is_cleanup : llvalue -> bool
+
 (** [set_cleanup lp] sets the cleanup flag in the [landingpad]instruction.
     See the method [llvm::LandingPadInst::setCleanup]. *)
 val set_cleanup : llvalue -> bool -> unit
