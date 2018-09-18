@@ -4508,7 +4508,7 @@ void CodeGenDAGPatterns::GenerateVariants() {
 
     // Copy this to all the matching patterns.
     for (int p = Matches.find_first(); p != -1; p = Matches.find_next(p))
-      if (p != i) {
+      if (p != (int)i) {
         MatchedPatterns[p] = true;
         MatchedPredicates[p] = Matches;
       }
