@@ -16,8 +16,8 @@ csrrsi t1, 999, 32 # CHECK: :[[@LINE]]:17: error: immediate must be an integer i
 csrrci x0, 43, -90 # CHECK: :[[@LINE]]:16: error: immediate must be an integer in the range [0, 31]
 
 ## simm12
-ori a0, a1, -2049 # CHECK: :[[@LINE]]:13: error: immediate must be an integer in the range [-2048, 2047]
-andi ra, sp, 2048 # CHECK: :[[@LINE]]:14: error: immediate must be an integer in the range [-2048, 2047]
+ori a0, a1, -2049 # CHECK: :[[@LINE]]:13: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
+andi ra, sp, 2048 # CHECK: :[[@LINE]]:14: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
 
 ## uimm12
 csrrw a0, -1, a0 # CHECK: :[[@LINE]]:11: error: immediate must be an integer in the range [0, 4095]
@@ -66,10 +66,11 @@ csrrsi t1, 999, %pcrel_lo(4) # CHECK: :[[@LINE]]:17: error: immediate must be an
 csrrci x0, 43, %pcrel_lo(d) # CHECK: :[[@LINE]]:16: error: immediate must be an integer in the range [0, 31]
 
 ## simm12
-ori a0, a1, %hi(foo) # CHECK: :[[@LINE]]:13: error: immediate must be an integer in the range [-2048, 2047]
-andi ra, sp, %pcrel_hi(123) # CHECK: :[[@LINE]]:14: error: immediate must be an integer in the range [-2048, 2047]
-xori a2, a3, %hi(345) # CHECK: :[[@LINE]]:14: error: immediate must be an integer in the range [-2048, 2047]
-add a1, a2, (a3) # CHECK: :[[@LINE]]:13: error: immediate must be an integer in the range [-2048, 2047]
+ori a0, a1, %hi(foo) # CHECK: :[[@LINE]]:13: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
+andi ra, sp, %pcrel_hi(123) # CHECK: :[[@LINE]]:14: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
+xori a2, a3, %hi(345) # CHECK: :[[@LINE]]:14: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
+add a1, a2, (a3) # CHECK: :[[@LINE]]:13: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
+add a1, a2, foo # CHECK: :[[@LINE]]:13: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
 
 ## uimm12
 csrrw a0, %lo(1), a0 # CHECK: :[[@LINE]]:11: error: immediate must be an integer in the range [0, 4095]
@@ -146,7 +147,7 @@ add ra, zero, zero, zero # CHECK: :[[@LINE]]:21: error: invalid operand for inst
 sltiu s2, s3, 0x50, 0x60 # CHECK: :[[@LINE]]:21: error: invalid operand for instruction
 
 # Memory operand not formatted correctly
-lw a4, a5, 111 # CHECK: :[[@LINE]]:8: error: immediate must be an integer in the range [-2048, 2047]
+lw a4, a5, 111 # CHECK: :[[@LINE]]:8: error: operand must be a symbol with %lo/%pcrel_lo modifier or an integer in the range [-2048, 2047]
 
 # Too few operands
 ori a0, a1 # CHECK: :[[@LINE]]:1: error: too few operands for instruction

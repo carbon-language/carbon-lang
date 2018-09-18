@@ -415,7 +415,7 @@ public:
       IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm);
     else
       IsValid = isInt<12>(Imm);
-    return IsValid && (VK == RISCVMCExpr::VK_RISCV_None ||
+    return IsValid && ((IsConstantImm && VK == RISCVMCExpr::VK_RISCV_None) ||
                        VK == RISCVMCExpr::VK_RISCV_LO ||
                        VK == RISCVMCExpr::VK_RISCV_PCREL_LO);
   }
@@ -785,8 +785,10 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         Operands, ErrorInfo, -(1 << 9), (1 << 9) - 16,
         "immediate must be a multiple of 16 bytes and non-zero in the range");
   case Match_InvalidSImm12:
-    return generateImmOutOfRangeError(Operands, ErrorInfo, -(1 << 11),
-                                      (1 << 11) - 1);
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, -(1 << 11), (1 << 11) - 1,
+        "operand must be a symbol with %lo/%pcrel_lo modifier or an integer in "
+        "the range");
   case Match_InvalidSImm12Lsb0:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 11), (1 << 11) - 2,
