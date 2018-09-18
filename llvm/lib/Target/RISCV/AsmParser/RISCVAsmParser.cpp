@@ -443,20 +443,36 @@ public:
            VK == RISCVMCExpr::VK_RISCV_None;
   }
 
-  bool isUImm20() const {
+  bool isUImm20LUI() const {
     RISCVMCExpr::VariantKind VK;
     int64_t Imm;
     bool IsValid;
     if (!isImm())
       return false;
     bool IsConstantImm = evaluateConstantImm(Imm, VK);
-    if (!IsConstantImm)
+    if (!IsConstantImm) {
       IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm);
-    else
-      IsValid = isUInt<20>(Imm);
-    return IsValid && (VK == RISCVMCExpr::VK_RISCV_None ||
-                       VK == RISCVMCExpr::VK_RISCV_HI ||
-                       VK == RISCVMCExpr::VK_RISCV_PCREL_HI);
+      return IsValid && VK == RISCVMCExpr::VK_RISCV_HI;
+    } else {
+      return isUInt<20>(Imm) && (VK == RISCVMCExpr::VK_RISCV_None ||
+                                 VK == RISCVMCExpr::VK_RISCV_HI);
+    }
+  }
+
+  bool isUImm20AUIPC() const {
+    RISCVMCExpr::VariantKind VK;
+    int64_t Imm;
+    bool IsValid;
+    if (!isImm())
+      return false;
+    bool IsConstantImm = evaluateConstantImm(Imm, VK);
+    if (!IsConstantImm) {
+      IsValid = RISCVAsmParser::classifySymbolRef(getImm(), VK, Imm);
+      return IsValid && VK == RISCVMCExpr::VK_RISCV_PCREL_HI;
+    } else {
+      return isUInt<20>(Imm) && (VK == RISCVMCExpr::VK_RISCV_None ||
+                                 VK == RISCVMCExpr::VK_RISCV_PCREL_HI);
+    }
   }
 
   bool isSImm21Lsb0() const { return isBareSimmNLsb0<21>(); }
@@ -781,8 +797,15 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 12), (1 << 12) - 2,
         "immediate must be a multiple of 2 bytes in the range");
-  case Match_InvalidUImm20:
-    return generateImmOutOfRangeError(Operands, ErrorInfo, 0, (1 << 20) - 1);
+  case Match_InvalidUImm20LUI:
+    return generateImmOutOfRangeError(Operands, ErrorInfo, 0, (1 << 20) - 1,
+                                      "operand must be a symbol with %hi() "
+                                      "modifier or an integer in the range");
+  case Match_InvalidUImm20AUIPC:
+    return generateImmOutOfRangeError(
+        Operands, ErrorInfo, 0, (1 << 20) - 1,
+        "operand must be a symbol with %pcrel_hi() modifier or an integer in "
+        "the range");
   case Match_InvalidSImm21Lsb0:
     return generateImmOutOfRangeError(
         Operands, ErrorInfo, -(1 << 20), (1 << 20) - 2,

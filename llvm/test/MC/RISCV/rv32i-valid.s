@@ -30,6 +30,11 @@ lui t0, 1048575
 # CHECK-ASM-AND-OBJ: lui gp, 0
 # CHECK-ASM: encoding: [0xb7,0x01,0x00,0x00]
 lui gp, 0
+# CHECK-ASM: lui a0, %hi(foo)
+# CHECK-ASM: encoding: [0x37,0bAAAA0101,A,A]
+# CHECK-OBJ: lui a0, 0
+# CHECK-OBJ: R_RISCV_HI20 foo
+lui a0, %hi(foo)
 
 # CHECK-ASM-AND-OBJ: auipc a0, 2
 # CHECK-ASM: encoding: [0x17,0x25,0x00,0x00]
@@ -43,6 +48,11 @@ auipc t0, 1048575
 # CHECK-ASM-AND-OBJ: auipc gp, 0
 # CHECK-ASM: encoding: [0x97,0x01,0x00,0x00]
 auipc gp, 0
+# CHECK-ASM: auipc a0, %pcrel_hi(foo)
+# CHECK-ASM: encoding: [0x17,0bAAAA0101,A,A]
+# CHECK-OBJ: auipc a0, 0
+# CHECK-OBJ: R_RISCV_PCREL_HI20 foo
+auipc a0, %pcrel_hi(foo)
 
 # CHECK-ASM-AND-OBJ: jal a2, 1048574
 # CHECK-ASM: encoding: [0x6f,0xf6,0xff,0x7f]
