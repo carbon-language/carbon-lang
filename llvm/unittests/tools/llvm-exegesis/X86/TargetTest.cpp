@@ -125,7 +125,7 @@ protected:
   }
 
   std::vector<MCInst> setRegTo(unsigned Reg, const APInt &Value) {
-    return ExegesisTarget_->setRegTo(*STI_, Reg, Value);
+    return ExegesisTarget_->setRegTo(*STI_, Value, Reg);
   }
 
   const llvm::Target *Target_;
@@ -136,16 +136,6 @@ protected:
 using Core2TargetTest = X86TargetTest<kCpuCore2, kFeaturesEmpty>;
 using Core2AvxTargetTest = X86TargetTest<kCpuCore2, kFeaturesAvx>;
 using Core2Avx512TargetTest = X86TargetTest<kCpuCore2, kFeaturesAvx512VL>;
-
-TEST_F(Core2TargetTest, SetFlags) {
-  const unsigned Reg = llvm::X86::EFLAGS;
-  EXPECT_THAT(
-      setRegTo(Reg, APInt(64, 0x1111222233334444ULL)),
-      ElementsAre(IsStackAllocate(8),
-                  IsMovValueToStack(llvm::X86::MOV32mi, 0x33334444UL, 0),
-                  IsMovValueToStack(llvm::X86::MOV32mi, 0x11112222UL, 4),
-                  OpcodeIs(llvm::X86::POPF64)));
-}
 
 TEST_F(Core2TargetTest, SetRegToGR8Value) {
   const uint8_t Value = 0xFFU;
@@ -295,7 +285,7 @@ TEST_F(Core2TargetTest, SetRegToST0_32Bits) {
       setRegTo(llvm::X86::ST0, APInt(32, 0x11112222ULL)),
       ElementsAre(IsStackAllocate(4),
                   IsMovValueToStack(llvm::X86::MOV32mi, 0x11112222UL, 0),
-                  OpcodeIs(llvm::X86::LD_F32m), IsStackDeallocate(4)));
+                  testing::A<MCInst>(), IsStackDeallocate(4)));
 }
 
 TEST_F(Core2TargetTest, SetRegToST1_32Bits) {
@@ -305,8 +295,7 @@ TEST_F(Core2TargetTest, SetRegToST1_32Bits) {
       setRegTo(llvm::X86::ST1, APInt(32, 0x11112222ULL)),
       ElementsAre(IsStackAllocate(4),
                   IsMovValueToStack(llvm::X86::MOV32mi, 0x11112222UL, 0),
-                  OpcodeIs(llvm::X86::LD_F32m), CopySt0ToSt1,
-                  IsStackDeallocate(4)));
+                  testing::A<MCInst>(), CopySt0ToSt1, IsStackDeallocate(4)));
 }
 
 TEST_F(Core2TargetTest, SetRegToST0_64Bits) {
@@ -315,7 +304,7 @@ TEST_F(Core2TargetTest, SetRegToST0_64Bits) {
       ElementsAre(IsStackAllocate(8),
                   IsMovValueToStack(llvm::X86::MOV32mi, 0x33334444UL, 0),
                   IsMovValueToStack(llvm::X86::MOV32mi, 0x11112222UL, 4),
-                  OpcodeIs(llvm::X86::LD_F64m), IsStackDeallocate(8)));
+                  testing::A<MCInst>(), IsStackDeallocate(8)));
 }
 
 TEST_F(Core2TargetTest, SetRegToST0_80Bits) {
@@ -325,7 +314,7 @@ TEST_F(Core2TargetTest, SetRegToST0_80Bits) {
                   IsMovValueToStack(llvm::X86::MOV32mi, 0x44445555UL, 0),
                   IsMovValueToStack(llvm::X86::MOV32mi, 0x22223333UL, 4),
                   IsMovValueToStack(llvm::X86::MOV16mi, 0x1111UL, 8),
-                  OpcodeIs(llvm::X86::LD_F80m), IsStackDeallocate(10)));
+                  testing::A<MCInst>(), IsStackDeallocate(10)));
 }
 
 } // namespace

@@ -29,18 +29,18 @@ static constexpr const char ModuleID[] = "ExegesisInfoTest";
 static constexpr const char FunctionID[] = "foo";
 
 static std::vector<llvm::MCInst>
-generateSnippetSetupCode(const ExegesisTarget &ET,
-                         const llvm::MCSubtargetInfo *const MSI,
-                         llvm::ArrayRef<RegisterValue> RegisterInitialValues,
-                         bool &IsSnippetSetupComplete) {
+generateSnippetSetupCode(const llvm::ArrayRef<unsigned> RegsToDef,
+                         const ExegesisTarget &ET,
+                         const llvm::LLVMTargetMachine &TM, bool &IsComplete) {
+  IsComplete = true;
   std::vector<llvm::MCInst> Result;
-  for (const RegisterValue &RV : RegisterInitialValues) {
-    // Load a constant in the register.
-    const auto SetRegisterCode = ET.setRegTo(*MSI, RV.Register, RV.Value);
-    if (SetRegisterCode.empty())
-      IsSnippetSetupComplete = false;
-    Result.insert(Result.end(), SetRegisterCode.begin(), SetRegisterCode.end());
-  }
+  // for (const unsigned Reg : RegsToDef) {
+  //   // Load a constant in the register.
+  //   const auto Code = ET.setRegToConstant(*TM.getMCSubtargetInfo(), Reg);
+  //   if (Code.empty())
+  //     IsComplete = false;
+  //   Result.insert(Result.end(), Code.begin(), Code.end());
+  // }
   return Result;
 }
 
@@ -149,7 +149,7 @@ llvm::BitVector getFunctionReservedRegs(const llvm::TargetMachine &TM) {
 void assembleToStream(const ExegesisTarget &ET,
                       std::unique_ptr<llvm::LLVMTargetMachine> TM,
                       llvm::ArrayRef<unsigned> LiveIns,
-                      llvm::ArrayRef<RegisterValue> RegisterInitialValues,
+                      llvm::ArrayRef<unsigned> RegsToDef,
                       llvm::ArrayRef<llvm::MCInst> Instructions,
                       llvm::raw_pwrite_stream &AsmStream) {
   std::unique_ptr<llvm::LLVMContext> Context =
@@ -171,12 +171,13 @@ void assembleToStream(const ExegesisTarget &ET,
     MF.getRegInfo().addLiveIn(Reg);
 
   bool IsSnippetSetupComplete = false;
-  std::vector<llvm::MCInst> Code =
-      generateSnippetSetupCode(ET, TM->getMCSubtargetInfo(),
-                               RegisterInitialValues, IsSnippetSetupComplete);
-
-  Code.insert(Code.end(), Instructions.begin(), Instructions.end());
-
+  std::vector<llvm::MCInst> SnippetWithSetup =
+      generateSnippetSetupCode(RegsToDef, ET, *TM, IsSnippetSetupComplete);
+  if (!SnippetWithSetup.empty()) {
+    SnippetWithSetup.insert(SnippetWithSetup.end(), Instructions.begin(),
+                            Instructions.end());
+    Instructions = SnippetWithSetup;
+  }
   // If the snippet setup is not complete, we disable liveliness tracking. This
   // means that we won't know what values are in the registers.
   if (!IsSnippetSetupComplete)
@@ -187,7 +188,7 @@ void assembleToStream(const ExegesisTarget &ET,
   MF.getRegInfo().freezeReservedRegs(MF);
 
   // Fill the MachineFunction from the instructions.
-  fillMachineFunction(MF, LiveIns, Code);
+  fillMachineFunction(MF, LiveIns, Instructions);
 
   // We create the pass manager, run the passes to populate AsmBuffer.
   llvm::MCContext &MCContext = MMI->getContext();

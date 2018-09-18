@@ -101,8 +101,8 @@ protected:
   }
 };
 
-static unsigned GetLoadImmediateOpcode(unsigned RegBitWidth) {
-  switch (RegBitWidth) {
+static unsigned GetLoadImmediateOpcode(const llvm::APInt &Value) {
+  switch (Value.getBitWidth()) {
   case 8:
     return llvm::X86::MOV8ri;
   case 16:
@@ -115,12 +115,10 @@ static unsigned GetLoadImmediateOpcode(unsigned RegBitWidth) {
   llvm_unreachable("Invalid Value Width");
 }
 
-// Generates instruction to load an immediate value into a register.
-static llvm::MCInst loadImmediate(unsigned Reg, unsigned RegBitWidth,
-                                  const llvm::APInt &Value) {
-  if (Value.getBitWidth() > RegBitWidth)
-    llvm_unreachable("Value must fit in the Register");
-  return llvm::MCInstBuilder(GetLoadImmediateOpcode(RegBitWidth))
+static llvm::MCInst loadImmediate(unsigned Reg, const llvm::APInt &Value,
+                                  unsigned MaxBitWidth) {
+  assert(Value.getBitWidth() <= MaxBitWidth && "Value too big to fit register");
+  return llvm::MCInstBuilder(GetLoadImmediateOpcode(Value))
       .addReg(Reg)
       .addImm(Value.getZExtValue());
 }
@@ -167,8 +165,6 @@ static llvm::MCInst releaseStackSpace(unsigned Bytes) {
       .addImm(Bytes);
 }
 
-// Reserves some space on the stack, fills it with the content of the provided
-// constant and provide methods to load the stack value into a register.
 struct ConstantInliner {
   explicit ConstantInliner(const llvm::APInt &Constant)
       : StackSize(Constant.getBitWidth() / 8) {
@@ -191,19 +187,17 @@ struct ConstantInliner {
           Constant.extractBits(8, ByteOffset * 8).getZExtValue()));
   }
 
-  std::vector<llvm::MCInst> loadAndFinalize(unsigned Reg, unsigned RegBitWidth,
-                                            unsigned Opcode) {
-    assert(StackSize * 8 == RegBitWidth &&
-           "Value does not have the correct size");
+  std::vector<llvm::MCInst> loadAndFinalize(unsigned Reg, unsigned Opcode,
+                                            unsigned BitWidth) {
+    assert(StackSize * 8 == BitWidth && "Value does not have the correct size");
     add(loadToReg(Reg, Opcode));
     add(releaseStackSpace(StackSize));
     return std::move(Instructions);
   }
 
-  std::vector<llvm::MCInst>
-  loadX87AndFinalize(unsigned Reg, unsigned RegBitWidth, unsigned Opcode) {
-    assert(StackSize * 8 == RegBitWidth &&
-           "Value does not have the correct size");
+  std::vector<llvm::MCInst> loadX87AndFinalize(unsigned Reg, unsigned Opcode,
+                                               unsigned BitWidth) {
+    assert(StackSize * 8 == BitWidth && "Value does not have the correct size");
     add(llvm::MCInstBuilder(Opcode)
             .addReg(llvm::X86::RSP) // BaseReg
             .addImm(1)              // ScaleAmt
@@ -217,7 +211,7 @@ struct ConstantInliner {
   }
 
   std::vector<llvm::MCInst> popFlagAndFinalize() {
-    assert(StackSize * 8 == 64 && "Value does not have the correct size");
+    assert(StackSize * 8 == 32 && "Value does not have the correct size");
     add(llvm::MCInstBuilder(llvm::X86::POPF64));
     return std::move(Instructions);
   }
@@ -281,46 +275,46 @@ class ExegesisX86Target : public ExegesisTarget {
   }
 
   std::vector<llvm::MCInst> setRegTo(const llvm::MCSubtargetInfo &STI,
-                                     unsigned Reg,
-                                     const llvm::APInt &Value) const override {
+                                     const llvm::APInt &Value,
+                                     unsigned Reg) const override {
     if (llvm::X86::GR8RegClass.contains(Reg))
-      return {loadImmediate(Reg, 8, Value)};
+      return {loadImmediate(Reg, Value, 8)};
     if (llvm::X86::GR16RegClass.contains(Reg))
-      return {loadImmediate(Reg, 16, Value)};
+      return {loadImmediate(Reg, Value, 16)};
     if (llvm::X86::GR32RegClass.contains(Reg))
-      return {loadImmediate(Reg, 32, Value)};
+      return {loadImmediate(Reg, Value, 32)};
     if (llvm::X86::GR64RegClass.contains(Reg))
-      return {loadImmediate(Reg, 64, Value)};
+      return {loadImmediate(Reg, Value, 64)};
     ConstantInliner CI(Value);
     if (llvm::X86::VR64RegClass.contains(Reg))
-      return CI.loadAndFinalize(Reg, 64, llvm::X86::MMX_MOVQ64rm);
+      return CI.loadAndFinalize(Reg, llvm::X86::MMX_MOVQ64rm, 64);
     if (llvm::X86::VR128XRegClass.contains(Reg)) {
       if (STI.getFeatureBits()[llvm::X86::FeatureAVX512])
-        return CI.loadAndFinalize(Reg, 128, llvm::X86::VMOVDQU32Z128rm);
+        return CI.loadAndFinalize(Reg, llvm::X86::VMOVDQU32Z128rm, 128);
       if (STI.getFeatureBits()[llvm::X86::FeatureAVX])
-        return CI.loadAndFinalize(Reg, 128, llvm::X86::VMOVDQUrm);
-      return CI.loadAndFinalize(Reg, 128, llvm::X86::MOVDQUrm);
+        return CI.loadAndFinalize(Reg, llvm::X86::VMOVDQUrm, 128);
+      return CI.loadAndFinalize(Reg, llvm::X86::MOVDQUrm, 128);
     }
     if (llvm::X86::VR256XRegClass.contains(Reg)) {
       if (STI.getFeatureBits()[llvm::X86::FeatureAVX512])
-        return CI.loadAndFinalize(Reg, 256, llvm::X86::VMOVDQU32Z256rm);
+        return CI.loadAndFinalize(Reg, llvm::X86::VMOVDQU32Z256rm, 256);
       if (STI.getFeatureBits()[llvm::X86::FeatureAVX])
-        return CI.loadAndFinalize(Reg, 256, llvm::X86::VMOVDQUYrm);
+        return CI.loadAndFinalize(Reg, llvm::X86::VMOVDQUYrm, 256);
     }
     if (llvm::X86::VR512RegClass.contains(Reg))
       if (STI.getFeatureBits()[llvm::X86::FeatureAVX512])
-        return CI.loadAndFinalize(Reg, 512, llvm::X86::VMOVDQU32Zrm);
+        return CI.loadAndFinalize(Reg, llvm::X86::VMOVDQU32Zrm, 512);
     if (llvm::X86::RSTRegClass.contains(Reg)) {
       if (Value.getBitWidth() == 32)
-        return CI.loadX87AndFinalize(Reg, 32, llvm::X86::LD_F32m);
+        return CI.loadX87AndFinalize(Reg, llvm::X86::LD_F32m, 32);
       if (Value.getBitWidth() == 64)
-        return CI.loadX87AndFinalize(Reg, 64, llvm::X86::LD_F64m);
+        return CI.loadX87AndFinalize(Reg, llvm::X86::LD_F64m, 64);
       if (Value.getBitWidth() == 80)
-        return CI.loadX87AndFinalize(Reg, 80, llvm::X86::LD_F80m);
+        return CI.loadX87AndFinalize(Reg, llvm::X86::LD_F80m, 80);
     }
     if (Reg == llvm::X86::EFLAGS)
       return CI.popFlagAndFinalize();
-    return {}; // Not yet implemented.
+    llvm_unreachable("Not yet implemented");
   }
 
   std::unique_ptr<SnippetGenerator>

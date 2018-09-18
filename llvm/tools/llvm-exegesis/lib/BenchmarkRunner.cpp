@@ -104,7 +104,7 @@ BenchmarkRunner::writeObjectFile(const BenchmarkCode &BC,
     return std::move(E);
   llvm::raw_fd_ostream OFS(ResultFD, true /*ShouldClose*/);
   assembleToStream(State.getExegesisTarget(), State.createTargetMachine(),
-                   BC.LiveIns, BC.RegisterInitialValues, Code, OFS);
+                   BC.LiveIns, BC.RegsToDef, Code, OFS);
   return ResultPath.str();
 }
 
