@@ -619,6 +619,7 @@ enum ValueKind {
   ConstantVector,
   Function,
   GlobalAlias,
+  GlobalIFunc,
   GlobalVariable,
   UndefValue,
   Instruction
@@ -654,6 +655,7 @@ CAMLprim value llvm_classify_value(LLVMValueRef Val) {
   if (LLVMIsAGlobalValue(Val)) {
     DEFINE_CASE(Val, Function);
     DEFINE_CASE(Val, GlobalAlias);
+    DEFINE_CASE(Val, GlobalIFunc);
     DEFINE_CASE(Val, GlobalVariable);
   }
   DEFINE_CASE(Val, Argument);
