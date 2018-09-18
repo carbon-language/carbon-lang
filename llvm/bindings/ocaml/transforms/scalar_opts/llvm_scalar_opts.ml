@@ -121,3 +121,6 @@ external add_scoped_no_alias_alias_analysis
 external add_basic_alias_analysis
   : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit
   = "llvm_add_basic_alias_analysis"
+external add_unify_function_exit_nodes
+  : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit
+  = "llvm_add_unify_function_exit_nodes"

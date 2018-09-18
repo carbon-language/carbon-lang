@@ -248,3 +248,9 @@ CAMLprim value llvm_add_basic_alias_analysis(LLVMPassManagerRef PM) {
   LLVMAddBasicAliasAnalysisPass(PM);
   return Val_unit;
 }
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_unify_function_exit_nodes(LLVMPassManagerRef PM) {
+  LLVMAddUnifyFunctionExitNodesPass(PM);
+  return Val_unit;
+}
