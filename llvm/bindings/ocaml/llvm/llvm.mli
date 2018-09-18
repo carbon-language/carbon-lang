@@ -77,6 +77,7 @@ module TypeKind : sig
   | Vector
   | Metadata
   | X86_mmx
+  | Token
 end
 
 (** The linkage of a global value, accessed with {!linkage} and

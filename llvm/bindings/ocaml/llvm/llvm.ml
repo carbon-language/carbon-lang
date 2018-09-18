@@ -42,6 +42,7 @@ module TypeKind = struct
   | Vector
   | Metadata
   | X86_mmx
+  | Token
 end
 
 module Linkage = struct
