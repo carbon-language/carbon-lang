@@ -1052,9 +1052,12 @@ let remove_enum_call_site_attr f k i =
 let remove_string_call_site_attr f k i =
   llvm_remove_string_call_site_attr f k (AttrIndex.to_int i)
 
-(*--... Operations on call instructions (only) .............................--*)
+(*--... Operations on call and invoke instructions (only) ..................--*)
+external num_arg_operands : llvalue -> int = "llvm_num_arg_operands"
 external is_tail_call : llvalue -> bool = "llvm_is_tail_call"
 external set_tail_call : bool -> llvalue -> unit = "llvm_set_tail_call"
+external get_normal_dest : llvalue -> llbasicblock = "LLVMGetNormalDest"
+external get_unwind_dest : llvalue -> llbasicblock = "LLVMGetUnwindDest"
 
 (*--... Operations on load/store instructions (only) .......................--*)
 external is_volatile : llvalue -> bool = "llvm_is_volatile"

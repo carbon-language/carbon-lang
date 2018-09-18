@@ -1599,6 +1599,11 @@ CAMLprim value llvm_remove_string_call_site_attr(LLVMValueRef F, value Kind,
 
 /*--... Operations on call instructions (only) .............................--*/
 
+/* llvalue -> int */
+CAMLprim value llvm_num_arg_operands(LLVMValueRef V) {
+  return Val_int(LLVMGetNumArgOperands(V));
+}
+
 /* llvalue -> bool */
 CAMLprim value llvm_is_tail_call(LLVMValueRef CallInst) {
   return Val_bool(LLVMIsTailCall(CallInst));

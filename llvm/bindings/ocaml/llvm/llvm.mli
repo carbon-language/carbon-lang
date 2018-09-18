@@ -1832,7 +1832,12 @@ val remove_enum_call_site_attr : llvalue -> llattrkind -> AttrIndex.t -> unit
 val remove_string_call_site_attr : llvalue -> string -> AttrIndex.t -> unit
 
 
-(** {7 Operations on call instructions (only)} *)
+(** {7 Operations on call and invoke instructions (only)} *)
+
+(** [num_arg_operands ci] returns the number of arguments for the call or
+    invoke instruction [ci].  See the method
+    [llvm::CallInst::getNumArgOperands]. *)
+val num_arg_operands : llvalue -> int
 
 (** [is_tail_call ci] is [true] if the call instruction [ci] is flagged as
     eligible for tail call optimization, [false] otherwise.
@@ -1843,6 +1848,14 @@ val is_tail_call : llvalue -> bool
     call optimization if [tc] is [true], clears otherwise.
     See the method [llvm::CallInst::setTailCall]. *)
 val set_tail_call : bool -> llvalue -> unit
+
+(** [get_normal_dest ii] is the normal destination basic block of an invoke
+    instruction. See the method [llvm::InvokeInst::getNormalDest()]. *)
+val get_normal_dest : llvalue -> llbasicblock
+
+(** [get_unwind_dest ii] is the unwind destination basic block of an invoke
+    instruction. See the method [llvm::InvokeInst::getUnwindDest()]. *)
+val get_unwind_dest : llvalue -> llbasicblock
 
 
 (** {7 Operations on load/store instructions (only)} *)
