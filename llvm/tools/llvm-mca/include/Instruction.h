@@ -389,21 +389,24 @@ public:
 /// An InstRef contains both a SourceMgr index and Instruction pair.  The index
 /// is used as a unique identifier for the instruction.  MCA will make use of
 /// this index as a key throughout MCA.
-class InstRef : public std::pair<unsigned, Instruction *> {
-public:
-  InstRef() : std::pair<unsigned, Instruction *>(0, nullptr) {}
-  InstRef(unsigned Index, Instruction *I)
-      : std::pair<unsigned, Instruction *>(Index, I) {}
+class InstRef {
+  std::pair<unsigned, Instruction *> Data;
 
-  unsigned getSourceIndex() const { return first; }
-  Instruction *getInstruction() { return second; }
-  const Instruction *getInstruction() const { return second; }
+public:
+  InstRef() : Data(std::make_pair(0, nullptr)) {}
+  InstRef(unsigned Index, Instruction *I) : Data(std::make_pair(Index, I)) {}
+
+  bool operator==(const InstRef &Other) const { return Data == Other.Data; }
+
+  unsigned getSourceIndex() const { return Data.first; }
+  Instruction *getInstruction() { return Data.second; }
+  const Instruction *getInstruction() const { return Data.second; }
 
   /// Returns true if this references a valid instruction.
-  bool isValid() const { return second != nullptr; }
+  bool isValid() const { return Data.second; }
 
   /// Invalidate this reference.
-  void invalidate() { second = nullptr; }
+  void invalidate() { Data.second = nullptr; }
 
 #ifndef NDEBUG
   void print(llvm::raw_ostream &OS) const { OS << getSourceIndex(); }

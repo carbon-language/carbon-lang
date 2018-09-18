@@ -118,7 +118,7 @@ llvm::Error DispatchStage::dispatch(InstRef IR) {
       !(Desc.isZeroLatency() && IsDependencyBreaking);
   SmallVector<unsigned, 4> RegisterFiles(PRF.getNumRegisterFiles());
   for (std::unique_ptr<WriteState> &WS : IS.getDefs()) {
-    PRF.addRegisterWrite(WriteRef(IR.first, WS.get()), RegisterFiles,
+    PRF.addRegisterWrite(WriteRef(IR.getSourceIndex(), WS.get()), RegisterFiles,
                          ShouldAllocateRegisters);
   }
 
