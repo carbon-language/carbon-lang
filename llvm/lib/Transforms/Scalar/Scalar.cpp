@@ -194,6 +194,10 @@ void LLVMAddLoopUnswitchPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createLoopUnswitchPass());
 }
 
+void LLVMAddLowerAtomicPass(LLVMPassManagerRef PM) {
+  unwrap(PM)->add(createLowerAtomicPass());
+}
+
 void LLVMAddMemCpyOptPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createMemCpyOptPass());
 }

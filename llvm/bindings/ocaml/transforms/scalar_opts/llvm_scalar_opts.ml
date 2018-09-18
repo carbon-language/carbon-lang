@@ -64,6 +64,9 @@ external add_memcpy_opt
 external add_partially_inline_lib_calls
   : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit
   = "llvm_add_partially_inline_lib_calls"
+external add_lower_atomic
+  : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit
+  = "llvm_add_lower_atomic"
 external add_lower_switch
   : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit
   = "llvm_add_lower_switch"

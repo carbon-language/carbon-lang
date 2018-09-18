@@ -135,6 +135,12 @@ CAMLprim value llvm_add_partially_inline_lib_calls(LLVMPassManagerRef PM) {
 }
 
 /* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_lower_atomic(LLVMPassManagerRef PM) {
+  LLVMAddLowerAtomicPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
 CAMLprim value llvm_add_lower_switch(LLVMPassManagerRef PM) {
   LLVMAddLowerSwitchPass(PM);
   return Val_unit;

@@ -107,6 +107,11 @@ external add_partially_inline_lib_calls
   : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit
   = "llvm_add_partially_inline_lib_calls"
 
+(** See the [llvm::createLowerAtomicPass] function. *)
+external add_lower_atomic
+  : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit
+  = "llvm_add_lower_atomic"
+
 (** See the [llvm::createLowerSwitchPass] function. *)
 external add_lower_switch
   : [< Llvm.PassManager.any ] Llvm.PassManager.t -> unit

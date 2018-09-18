@@ -92,6 +92,9 @@ void LLVMAddLoopUnrollAndJamPass(LLVMPassManagerRef PM);
 /** See llvm::createLoopUnswitchPass function. */
 void LLVMAddLoopUnswitchPass(LLVMPassManagerRef PM);
 
+/** See llvm::createLowerAtomicPass function. */
+void LLVMAddLowerAtomicPass(LLVMPassManagerRef PM);
+
 /** See llvm::createMemCpyOptPass function. */
 void LLVMAddMemCpyOptPass(LLVMPassManagerRef PM);
 
