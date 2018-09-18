@@ -14,6 +14,7 @@
 
 #include "semantics.h"
 #include "canonicalize-do.h"
+#include "check-do-concurrent.h"
 #include "default-kinds.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
@@ -51,6 +52,10 @@ bool Semantics::Perform() {
     return false;
   }
   RewriteParseTree(context_, program_);
+  if (AnyFatalError()) {
+    return false;
+  }
+  CheckDoConcurrentConstraints(messages_, program);
   if (AnyFatalError()) {
     return false;
   }
