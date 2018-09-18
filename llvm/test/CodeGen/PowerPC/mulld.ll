@@ -18,10 +18,10 @@ define void @bn_mul_comba8(i64* nocapture %r, i64* nocapture readonly %a, i64* n
 
 ; CHECK-ITIN-LABEL: bn_mul_comba8:
 ; CHECK-ITIN:    mulhdu
-; CHECK-ITIN-NEXT:    mulhdu
 ; CHECK-ITIN-NEXT:    mulld
 ; CHECK-ITIN-NEXT:    mulhdu
 ; CHECK-ITIN-NEXT:    mulld
+; CHECK-ITIN-NEXT:    mulhdu
 
   %1 = load i64, i64* %a, align 8
   %conv = zext i64 %1 to i128
