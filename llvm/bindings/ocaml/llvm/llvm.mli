@@ -260,6 +260,12 @@ module Opcode : sig
   | AtomicRMW
   | Resume
   | LandingPad
+  | AddrSpaceCast
+  | CleanupRet
+  | CatchRet
+  | CatchPad
+  | CleanupPad
+  | CatchSwitch
 end
 
 (** The type of a clause of a [landingpad] instruction.

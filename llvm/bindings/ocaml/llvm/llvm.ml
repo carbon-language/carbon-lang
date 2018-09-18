@@ -238,6 +238,12 @@ module Opcode  = struct
   | AtomicRMW
   | Resume
   | LandingPad
+  | AddrSpaceCast
+  | CleanupRet
+  | CatchRet
+  | CatchPad
+  | CleanupPad
+  | CatchSwitch
 end
 
 module LandingPadClauseTy = struct
