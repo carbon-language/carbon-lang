@@ -25,17 +25,18 @@ namespace Fortran::evaluate {
 // Conversions of complex component expressions to REAL.
 ConvertRealOperandsResult ConvertRealOperands(
     parser::ContextualMessages &messages, Expr<SomeType> &&x,
-    Expr<SomeType> &&y) {
+    Expr<SomeType> &&y, int defaultRealKind) {
   return std::visit(
-      common::visitors{
-          [&](Expr<SomeInteger> &&ix,
-              Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
-            // Can happen in a CMPLX() constructor.  Per F'2018,
-            // both integer operands are converted to default REAL.
-            return {AsSameKindExprs<TypeCategory::Real>(
-                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(ix))),
-                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(iy))))};
-          },
+      common::visitors{[&](Expr<SomeInteger> &&ix, Expr<SomeInteger> &&iy)
+                           -> ConvertRealOperandsResult {
+                         // Can happen in a CMPLX() constructor.  Per F'2018,
+                         // both integer operands are converted to default REAL.
+                         return {AsSameKindExprs<TypeCategory::Real>(
+                             ConvertToKind<TypeCategory::Real>(
+                                 defaultRealKind, std::move(ix)),
+                             ConvertToKind<TypeCategory::Real>(
+                                 defaultRealKind, std::move(iy)))};
+                       },
           [&](Expr<SomeInteger> &&ix,
               Expr<SomeReal> &&ry) -> ConvertRealOperandsResult {
             return {AsSameKindExprs<TypeCategory::Real>(
@@ -54,14 +55,18 @@ ConvertRealOperandsResult ConvertRealOperands(
           [&](Expr<SomeInteger> &&ix,
               BOZLiteralConstant &&by) -> ConvertRealOperandsResult {
             return {AsSameKindExprs<TypeCategory::Real>(
-                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(ix))),
-                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(by))))};
+                ConvertToKind<TypeCategory::Real>(
+                    defaultRealKind, std::move(ix)),
+                ConvertToKind<TypeCategory::Real>(
+                    defaultRealKind, std::move(by)))};
           },
           [&](BOZLiteralConstant &&bx,
               Expr<SomeInteger> &&iy) -> ConvertRealOperandsResult {
             return {AsSameKindExprs<TypeCategory::Real>(
-                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(bx))),
-                AsCategoryExpr(ConvertToType<DefaultReal>(std::move(iy))))};
+                ConvertToKind<TypeCategory::Real>(
+                    defaultRealKind, std::move(bx)),
+                ConvertToKind<TypeCategory::Real>(
+                    defaultRealKind, std::move(iy)))};
           },
           [&](Expr<SomeReal> &&rx,
               BOZLiteralConstant &&by) -> ConvertRealOperandsResult {
@@ -118,9 +123,9 @@ std::optional<Expr<SomeType>> MixedRealLeft(
 
 std::optional<Expr<SomeComplex>> ConstructComplex(
     parser::ContextualMessages &messages, Expr<SomeType> &&real,
-    Expr<SomeType> &&imaginary) {
+    Expr<SomeType> &&imaginary, int defaultRealKind) {
   if (auto converted{ConvertRealOperands(
-          messages, std::move(real), std::move(imaginary))}) {
+          messages, std::move(real), std::move(imaginary), defaultRealKind)}) {
     return {std::visit(
         [](auto &&pair) {
           return MakeComplex(std::move(pair[0]), std::move(pair[1]));
@@ -132,10 +137,10 @@ std::optional<Expr<SomeComplex>> ConstructComplex(
 
 std::optional<Expr<SomeComplex>> ConstructComplex(
     parser::ContextualMessages &messages, std::optional<Expr<SomeType>> &&real,
-    std::optional<Expr<SomeType>> &&imaginary) {
+    std::optional<Expr<SomeType>> &&imaginary, int defaultRealKind) {
   if (auto parts{common::AllPresent(std::move(real), std::move(imaginary))}) {
     return ConstructComplex(messages, std::move(std::get<0>(*parts)),
-        std::move(std::get<1>(*parts)));
+        std::move(std::get<1>(*parts)), defaultRealKind);
   }
   return std::nullopt;
 }

@@ -195,11 +195,34 @@ Expr<SomeKind<CAT>> ConvertTo(
       to.u);
 }
 
-template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;
+// Convert an expression of some known category to a dynamically chosen
+// kind of some category (usually but not necessarily distinct).
+template<TypeCategory TOCAT, typename VALUE> struct ConvertToKindHelper {
+  using Result = std::optional<Expr<SomeKind<TOCAT>>>;
+  static constexpr std::size_t Types{std::tuple_size_v<CategoryTypes<TOCAT>>};
+  ConvertToKindHelper(int k, VALUE &&x) : kind{k}, value{std::move(x)} {}
+  template<std::size_t J> Result Test() {
+    using Ty = std::tuple_element_t<J, CategoryTypes<TOCAT>>;
+    if (kind == Ty::kind) {
+      return std::make_optional(
+          AsCategoryExpr(ConvertToType<Ty>(std::move(value))));
+    }
+    return std::nullopt;
+  }
+  int kind;
+  VALUE value;
+};
+
+template<TypeCategory TOCAT, typename VALUE>
+Expr<SomeKind<TOCAT>> ConvertToKind(int kind, VALUE &&x) {
+  return *common::SearchDynamicTypes(
+      ConvertToKindHelper<TOCAT, VALUE>{kind, std::move(x)});
+}
 
 // Given a type category CAT, SameKindExprs<CAT, N> is a variant that
 // holds an arrays of expressions of the same supported kind in that
 // category.
+template<typename A, int N = 2> using SameExprs = std::array<Expr<A>, N>;
 template<int N = 2> struct SameKindExprsHelper {
   template<typename A> using SameExprs = std::array<Expr<A>, N>;
 };
@@ -240,17 +263,20 @@ SameKindExprs<CAT, 2> AsSameKindExprs(
 // same kind of REAL.
 using ConvertRealOperandsResult =
     std::optional<SameKindExprs<TypeCategory::Real, 2>>;
-ConvertRealOperandsResult ConvertRealOperands(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+ConvertRealOperandsResult ConvertRealOperands(parser::ContextualMessages &,
+    Expr<SomeType> &&, Expr<SomeType> &&,
+    int defaultRealKind = DefaultReal::kind);
 
 // Per F'2018 R718, if both components are INTEGER, they are both converted
 // to default REAL and the result is default COMPLEX.  Otherwise, the
 // kind of the result is the kind of most precise REAL component, and the other
 // component is converted if necessary to its type.
-std::optional<Expr<SomeComplex>> ConstructComplex(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
 std::optional<Expr<SomeComplex>> ConstructComplex(parser::ContextualMessages &,
-    std::optional<Expr<SomeType>> &&, std::optional<Expr<SomeType>> &&);
+    Expr<SomeType> &&, Expr<SomeType> &&,
+    int defaultRealKind = DefaultReal::kind);
+std::optional<Expr<SomeComplex>> ConstructComplex(parser::ContextualMessages &,
+    std::optional<Expr<SomeType>> &&, std::optional<Expr<SomeType>> &&,
+    int defaultRealKind = DefaultReal::kind);
 
 template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   using Ty = TypeOf<A>;

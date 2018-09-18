@@ -422,8 +422,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexPart &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexLiteralConstant &z) {
-  return AsMaybeExpr(ConstructComplex(
-      context.messages, Analyze(std::get<0>(z.t)), Analyze(std::get<1>(z.t))));
+  return AsMaybeExpr(
+      ConstructComplex(context.messages, Analyze(std::get<0>(z.t)),
+          Analyze(std::get<1>(z.t)), defaults.defaultRealKind));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstant &x) {
@@ -871,7 +872,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Subtract &x) {
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
   return AsMaybeExpr(ConstructComplex(context.messages,
       AnalyzeHelper(*this, *std::get<0>(x.t)),
-      AnalyzeHelper(*this, *std::get<1>(x.t))));
+      AnalyzeHelper(*this, *std::get<1>(x.t)), defaults.defaultRealKind));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &x) {
