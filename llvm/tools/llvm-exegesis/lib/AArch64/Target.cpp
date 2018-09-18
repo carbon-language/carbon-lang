@@ -27,11 +27,6 @@ private:
 };
 
 class ExegesisAArch64Target : public ExegesisTarget {
-  std::vector<llvm::MCInst> setRegToConstant(const llvm::MCSubtargetInfo &STI,
-                                             unsigned Reg) const override {
-    llvm_unreachable("Not yet implemented");
-  }
-
   std::vector<llvm::MCInst> setRegTo(const llvm::MCSubtargetInfo &STI,
                                      const llvm::APInt &Value,
                                      unsigned Reg) const override {

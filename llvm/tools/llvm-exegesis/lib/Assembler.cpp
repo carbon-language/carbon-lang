@@ -34,13 +34,13 @@ generateSnippetSetupCode(const llvm::ArrayRef<unsigned> RegsToDef,
                          const llvm::LLVMTargetMachine &TM, bool &IsComplete) {
   IsComplete = true;
   std::vector<llvm::MCInst> Result;
-  for (const unsigned Reg : RegsToDef) {
-    // Load a constant in the register.
-    const auto Code = ET.setRegToConstant(*TM.getMCSubtargetInfo(), Reg);
-    if (Code.empty())
-      IsComplete = false;
-    Result.insert(Result.end(), Code.begin(), Code.end());
-  }
+  // for (const unsigned Reg : RegsToDef) {
+  //   // Load a constant in the register.
+  //   const auto Code = ET.setRegToConstant(*TM.getMCSubtargetInfo(), Reg);
+  //   if (Code.empty())
+  //     IsComplete = false;
+  //   Result.insert(Result.end(), Code.begin(), Code.end());
+  // }
   return Result;
 }
 
