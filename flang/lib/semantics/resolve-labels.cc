@@ -318,10 +318,10 @@ public:
 
   // C1414
   void Post(const parser::BlockData &blockData) {
-    if (!namesBothEqualOrBothNone(
-            std::get<parser::Statement<parser::BlockDataStmt>>(blockData.t)
-                .statement.v,
+    if (!firstNameNoneOrBothEqual(
             std::get<parser::Statement<parser::EndBlockDataStmt>>(blockData.t)
+                .statement.v,
+            std::get<parser::Statement<parser::BlockDataStmt>>(blockData.t)
                 .statement.v)) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{"BLOCK DATA name mismatch"_err_en_US});
