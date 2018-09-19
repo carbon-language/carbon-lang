@@ -22832,7 +22832,7 @@ static SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
 
 /// Break a 256-bit integer operation into two new 128-bit ones and then
 /// concatenate the result back.
-static SDValue Lower256IntArith(SDValue Op, SelectionDAG &DAG) {
+static SDValue split256IntArith(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
 
   assert(VT.is256BitVector() && VT.isInteger() &&
@@ -22861,7 +22861,7 @@ static SDValue Lower256IntArith(SDValue Op, SelectionDAG &DAG) {
 
 /// Break a 512-bit integer operation into two new 256-bit ones and then
 /// concatenate the result back.
-static SDValue Lower512IntArith(SDValue Op, SelectionDAG &DAG) {
+static SDValue split512IntArith(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
 
   assert(VT.is512BitVector() && VT.isInteger() &&
@@ -22896,7 +22896,7 @@ static SDValue LowerADD_SUB(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getSimpleValueType().is256BitVector() &&
          Op.getSimpleValueType().isInteger() &&
          "Only handle AVX 256-bit vector integer operation");
-  return Lower256IntArith(Op, DAG);
+  return split256IntArith(Op, DAG);
 }
 
 static SDValue LowerABS(SDValue Op, SelectionDAG &DAG) {
@@ -22924,7 +22924,7 @@ static SDValue LowerMINMAX(SDValue Op, SelectionDAG &DAG) {
 
   // For AVX1 cases, split to use legal ops (everything but v4i64).
   if (VT.getScalarType() != MVT::i64 && VT.is256BitVector())
-    return Lower256IntArith(Op, DAG);
+    return split256IntArith(Op, DAG);
 
   SDLoc DL(Op);
   unsigned Opcode = Op.getOpcode();
@@ -22966,9 +22966,9 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
   if (VT.getScalarType() == MVT::i1)
     return DAG.getNode(ISD::AND, dl, VT, Op.getOperand(0), Op.getOperand(1));
 
-  // Decompose 256-bit ops into smaller 128-bit ops.
+  // Decompose 256-bit ops into 128-bit ops.
   if (VT.is256BitVector() && !Subtarget.hasInt256())
-    return Lower256IntArith(Op, DAG);
+    return split256IntArith(Op, DAG);
 
   SDValue A = Op.getOperand(0);
   SDValue B = Op.getOperand(1);
@@ -22980,13 +22980,13 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
       // For 512-bit vectors, split into 256-bit vectors to allow the
       // sign-extension to occur.
       if (VT == MVT::v64i8)
-        return Lower512IntArith(Op, DAG);
+        return split512IntArith(Op, DAG);
 
       // For 256-bit vectors, split into 128-bit vectors to allow the
       // sign-extension to occur. We don't need this on AVX512BW as we can
       // safely sign-extend to v32i16.
       if (VT == MVT::v32i8 && !Subtarget.hasBWI())
-        return Lower256IntArith(Op, DAG);
+        return split256IntArith(Op, DAG);
 
       MVT ExVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements());
       return DAG.getNode(
@@ -23117,9 +23117,9 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
   SDValue A = Op.getOperand(0);
   SDValue B = Op.getOperand(1);
 
-  // Decompose 256-bit ops into smaller 128-bit ops.
+  // Decompose 256-bit ops into 128-bit ops.
   if (VT.is256BitVector() && !Subtarget.hasInt256())
-    return Lower256IntArith(Op, DAG);
+    return split256IntArith(Op, DAG);
 
   if (VT == MVT::v4i32 || VT == MVT::v8i32 || VT == MVT::v16i32) {
     assert((VT == MVT::v4i32 && Subtarget.hasSSE2()) ||
@@ -23202,7 +23202,7 @@ static SDValue LowerMULH(SDValue Op, const X86Subtarget &Subtarget,
   // For 512-bit vectors, split into 256-bit vectors to allow the
   // sign-extension to occur.
   if (VT == MVT::v64i8)
-    return Lower512IntArith(Op, DAG);
+    return split512IntArith(Op, DAG);
 
   // AVX2 implementations - extend xmm subvectors to ymm.
   if (Subtarget.hasInt256()) {
@@ -24257,9 +24257,9 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     return R;
   }
 
-  // Decompose 256-bit shifts into smaller 128-bit shifts.
+  // Decompose 256-bit shifts into 128-bit shifts.
   if (VT.is256BitVector())
-    return Lower256IntArith(Op, DAG);
+    return split256IntArith(Op, DAG);
 
   return SDValue();
 }
@@ -24299,9 +24299,8 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
   // XOP has 128-bit vector variable + immediate rotates.
   // +ve/-ve Amt = rotate left/right - just need to handle ISD::ROTL.
   if (Subtarget.hasXOP()) {
-    // Split 256-bit integers.
     if (VT.is256BitVector())
-      return Lower256IntArith(Op, DAG);
+      return split256IntArith(Op, DAG);
     assert(VT.is128BitVector() && "Only rotate 128-bit vectors!");
 
     // Attempt to rotate by immediate.
@@ -24320,7 +24319,7 @@ static SDValue LowerRotate(SDValue Op, const X86Subtarget &Subtarget,
 
   // Split 256-bit integers on pre-AVX2 targets.
   if (VT.is256BitVector() && !Subtarget.hasAVX2())
-    return Lower256IntArith(Op, DAG);
+    return split256IntArith(Op, DAG);
 
   assert((VT == MVT::v4i32 || VT == MVT::v8i16 || VT == MVT::v16i8 ||
           ((VT == MVT::v8i32 || VT == MVT::v16i16 || VT == MVT::v32i8) &&
