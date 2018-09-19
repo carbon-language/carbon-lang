@@ -401,7 +401,7 @@ void bug7377_bad_length_mod_usage() {
 void pr7981(wint_t c, wchar_t c2) {
   printf("%lc", c); // no-warning
   printf("%lc", 1.0); // expected-warning{{the argument has type 'double'}}
-#if __WINT_TYPE__ == int
+#if __WINT_WIDTH__ == 32
   printf("%lc", (char) 1); // no-warning
 #else
   printf("%lc", (char) 1); // expected-warning{{the argument has type 'char'}}
