@@ -3877,6 +3877,9 @@ void IndexBitcodeWriter::writeCombinedGlobalValueSummary() {
     Stream.EmitRecord(bitc::FS_COMBINED_ALIAS, NameVals, FSAliasAbbrev);
     NameVals.clear();
     MaybeEmitOriginalName(*AS);
+
+    if (auto *FS = dyn_cast<FunctionSummary>(&AS->getAliasee()))
+      getReferencedTypeIds(FS, ReferencedTypeIds);
   }
 
   if (!Index.cfiFunctionDefs().empty()) {
