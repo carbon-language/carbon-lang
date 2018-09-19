@@ -170,11 +170,15 @@ struct ExprAnalyzer {
   std::vector<Subscript> Analyze(const std::list<parser::SectionSubscript> &);
 
   std::optional<Expr<SubscriptInteger>> AsSubscript(MaybeExpr &&);
+  std::optional<Expr<SubscriptInteger>> GetSubstringBound(
+      const std::optional<parser::ScalarIntExpr> &);
   std::optional<Expr<SubscriptInteger>> TripletPart(
       const std::optional<parser::Subscript> &);
-  MaybeExpr Subscripts(const Symbol &, ArrayRef &&);
+  MaybeExpr ApplySubscripts(DataRef &&, std::vector<Subscript> &&);
+  MaybeExpr CompleteSubscripts(ArrayRef &&);
 
-  void ComponentRankCheck(const Component &);
+  MaybeExpr TopLevelChecks(DataRef &&);
+  void CheckUnsubscriptedComponent(const Component &);
 
   FoldingContext context;
   const semantics::IntrinsicTypeDefaultKinds &defaults;
@@ -239,30 +243,11 @@ MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const common::Indirection<A> &x) {
 
 template<>
 MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Designator &d) {
-  // These check have to be deferred to these "top level" data-refs where
-  // we can be sure that there are no following subscripts.
+  // These checks have to be deferred to these "top level" data-refs where
+  // we can be sure that there are no following subscripts (yet).
   if (MaybeExpr result{AnalyzeHelper(ea, d.u)}) {
     if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(result))}) {
-      if (Component * component{std::get_if<Component>(&dataRef->u)}) {
-        ea.ComponentRankCheck(*component);
-      } else if (const Symbol **symbolPointer{
-                     std::get_if<const Symbol *>(&dataRef->u)}) {
-        const Symbol &symbol{**symbolPointer};
-        if (const auto *details{
-                symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
-          if (details->isArray()) {
-            if (details->isAssumedSize()) {  // C1002
-              // TODO: it's okay to forward an assumed-size array as an argument
-              // to many functions and all subroutines, though
-              ea.context.messages.Say(
-                  "assumed-size array '%s' must have subscripts in expression"_err_en_US,
-                  symbol.name().ToString().data());
-            }
-            // TODO: Whole array reference: append : subscripts, enforce C1002
-            // Possibly use EA::Subscripts() below.
-          }
-        }
-      }
+      return ea.TopLevelChecks(std::move(*dataRef));
     }
     return result;
   }
@@ -495,48 +480,55 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
   return {AsGenericExpr(std::move(value.value))};
 }
 
-template<TypeCategory CATEGORY>
-MaybeExpr DesignateHelper(int kind, DataRef &&dataRef) {
+template<TypeCategory CATEGORY, typename DATAREF = DataRef>
+MaybeExpr DesignateHelper(int kind, DATAREF &&dataRef) {
   return common::SearchDynamicTypes(
-      TypeKindVisitor<CATEGORY, Designator, DataRef>{kind, std::move(dataRef)});
+      TypeKindVisitor<CATEGORY, Designator, DATAREF>{kind, std::move(dataRef)});
 }
 
-static MaybeExpr Designate(const semantics::Symbol &symbol, DataRef &&dataRef) {
+static std::optional<DynamicType> CategorizeSymbolType(const Symbol &symbol) {
   if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (details->type().has_value()) {
       switch (details->type()->category()) {
-      case semantics::DeclTypeSpec::Category::Intrinsic: {
-        TypeCategory category{details->type()->intrinsicTypeSpec().category()};
-        int kind{details->type()->intrinsicTypeSpec().kind()};
-        switch (category) {
-        case TypeCategory::Integer:
-          return DesignateHelper<TypeCategory::Integer>(
-              kind, std::move(dataRef));
-        case TypeCategory::Real:
-          return DesignateHelper<TypeCategory::Real>(kind, std::move(dataRef));
-        case TypeCategory::Complex:
-          return DesignateHelper<TypeCategory::Complex>(
-              kind, std::move(dataRef));
-        case TypeCategory::Character:
-          return DesignateHelper<TypeCategory::Character>(
-              kind, std::move(dataRef));
-        case TypeCategory::Logical:
-          return DesignateHelper<TypeCategory::Logical>(
-              kind, std::move(dataRef));
-        default: CRASH_NO_CASE;
-        }
-        break;
-      }
+      case semantics::DeclTypeSpec::Category::Intrinsic:
+        return std::make_optional(
+            DynamicType{details->type()->intrinsicTypeSpec().category(),
+                details->type()->intrinsicTypeSpec().kind()});
       case semantics::DeclTypeSpec::Category::TypeDerived:
       case semantics::DeclTypeSpec::Category::ClassDerived:
-        return AsGenericExpr(
-            Expr<SomeDerived>{SomeDerived{details->type()->derivedTypeSpec()},
-                Designator<SomeDerived>{std::move(dataRef)}});
-        break;
-      default:
-        // TODO: graceful errors on CLASS(*) and TYPE(*) misusage
-        break;
+        return std::make_optional(DynamicType{TypeCategory::Derived});
+      default:;
       }
+    }
+  }
+  return std::nullopt;
+}
+
+// Wraps a data reference in a typed Designator<>.
+static MaybeExpr Designate(DataRef &&dataRef) {
+  const Symbol &symbol{*dataRef.GetSymbol(false)};
+  if (std::optional<DynamicType> dynamicType{CategorizeSymbolType(symbol)}) {
+    switch (dynamicType->category) {
+    case TypeCategory::Integer:
+      return DesignateHelper<TypeCategory::Integer>(
+          dynamicType->kind, std::move(dataRef));
+    case TypeCategory::Real:
+      return DesignateHelper<TypeCategory::Real>(
+          dynamicType->kind, std::move(dataRef));
+    case TypeCategory::Complex:
+      return DesignateHelper<TypeCategory::Complex>(
+          dynamicType->kind, std::move(dataRef));
+    case TypeCategory::Character:
+      return DesignateHelper<TypeCategory::Character>(
+          dynamicType->kind, std::move(dataRef));
+    case TypeCategory::Logical:
+      return DesignateHelper<TypeCategory::Logical>(
+          dynamicType->kind, std::move(dataRef));
+    case TypeCategory::Derived:
+      return AsGenericExpr(Expr<SomeDerived>{
+          *dynamicType->derived, Designator<SomeDerived>{std::move(dataRef)}});
+    // TODO: graceful errors on CLASS(*) and TYPE(*) misusage
+    default: CRASH_NO_CASE;
     }
   }
   return std::nullopt;
@@ -544,15 +536,14 @@ static MaybeExpr Designate(const semantics::Symbol &symbol, DataRef &&dataRef) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
   if (n.symbol == nullptr) {
-    // TODO: convert this to a CHECK later
     context.messages.Say(
-        n.source, "name was not resolved to a symbol"_err_en_US);
+        n.source, "TODO INTERNAL: name was not resolved to a symbol"_err_en_US);
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
     context.messages.Say(
         "TODO: PARAMETER references not yet implemented"_err_en_US);
     // TODO: enumerators, do they have the PARAMETER attribute?
   } else {
-    if (MaybeExpr result{Designate(*n.symbol, DataRef{*n.symbol})}) {
+    if (MaybeExpr result{Designate(DataRef{*n.symbol})}) {
       return result;
     }
     context.messages.Say(
@@ -572,23 +563,46 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::NamedConstant &n) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
-  context.messages.Say("TODO: Substring unimplemented"_err_en_US);
-  // TODO: be sure to run ComponentRankCheck() here on base of substring if
-  // it's a Component.
+  if (MaybeExpr baseExpr{
+          AnalyzeHelper(*this, std::get<parser::DataRef>(ss.t))}) {
+    if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(*baseExpr))}) {
+      if (MaybeExpr newBaseExpr{TopLevelChecks(std::move(*dataRef))}) {
+        if (std::optional<DataRef> checked{
+                ExtractDataRef(std::move(*newBaseExpr))}) {
+          const parser::SubstringRange &range{
+              std::get<parser::SubstringRange>(ss.t)};
+          std::optional<Expr<SubscriptInteger>> first{
+              GetSubstringBound(std::get<0>(range.t))};
+          std::optional<Expr<SubscriptInteger>> last{
+              GetSubstringBound(std::get<1>(range.t))};
+          const Symbol &symbol{*checked->GetSymbol(false)};
+          if (std::optional<DynamicType> dynamicType{
+                  CategorizeSymbolType(symbol)}) {
+            if (dynamicType->category == TypeCategory::Character) {
+              return DesignateHelper<TypeCategory::Character, Substring>(
+                  dynamicType->kind,
+                  Substring{
+                      std::move(*checked), std::move(first), std::move(last)});
+            }
+          }
+          context.messages.Say(
+              "substring may apply only to CHARACTER"_err_en_US);
+        }
+      }
+    }
+  }
   return std::nullopt;
 }
 
 std::optional<Expr<SubscriptInteger>> ExprAnalyzer::AsSubscript(
     MaybeExpr &&expr) {
   if (expr.has_value()) {
+    if (expr->Rank() > 1) {
+      context.messages.Say(
+          "subscript expression has rank %d"_err_en_US, expr->Rank());
+    }
     if (auto *intExpr{std::get_if<Expr<SomeInteger>>(&expr->u)}) {
       if (auto *ssIntExpr{std::get_if<Expr<SubscriptInteger>>(&intExpr->u)}) {
-        int rank{ssIntExpr->Rank()};
-        if (rank > 1) {
-          context.messages.Say(
-              "subscript expression has rank %d"_err_en_US, rank);
-          return std::nullopt;
-        }
         return {std::move(*ssIntExpr)};
       }
       return {Expr<SubscriptInteger>{
@@ -596,6 +610,30 @@ std::optional<Expr<SubscriptInteger>> ExprAnalyzer::AsSubscript(
               std::move(*intExpr)}}};
     } else {
       context.messages.Say("subscript expression is not INTEGER"_err_en_US);
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<Expr<SubscriptInteger>> ExprAnalyzer::GetSubstringBound(
+    const std::optional<parser::ScalarIntExpr> &bound) {
+  if (bound.has_value()) {
+    if (MaybeExpr expr{AnalyzeHelper(*this, *bound)}) {
+      if (expr->Rank() > 1) {
+        context.messages.Say(
+            "substring bound expression has rank %d"_err_en_US, expr->Rank());
+      }
+      if (auto *intExpr{std::get_if<Expr<SomeInteger>>(&expr->u)}) {
+        if (auto *ssIntExpr{std::get_if<Expr<SubscriptInteger>>(&intExpr->u)}) {
+          return {std::move(*ssIntExpr)};
+        }
+        return {Expr<SubscriptInteger>{
+            Convert<SubscriptInteger, TypeCategory::Integer>{
+                std::move(*intExpr)}}};
+      } else {
+        context.messages.Say(
+            "substring bound expression is not INTEGER"_err_en_US);
+      }
     }
   }
   return std::nullopt;
@@ -630,7 +668,6 @@ std::optional<Subscript> ExprAnalyzer::Analyze(
 
 std::vector<Subscript> ExprAnalyzer::Analyze(
     const std::list<parser::SectionSubscript> &sss) {
-  // TODO: enforce restrictions on vector-valued subscripts
   std::vector<Subscript> subscripts;
   for (const auto &s : sss) {
     if (auto subscript{Analyze(s)}) {
@@ -640,7 +677,26 @@ std::vector<Subscript> ExprAnalyzer::Analyze(
   return subscripts;
 }
 
-MaybeExpr ExprAnalyzer::Subscripts(const Symbol &symbol, ArrayRef &&ref) {
+MaybeExpr ExprAnalyzer::ApplySubscripts(
+    DataRef &&dataRef, std::vector<Subscript> &&subscripts) {
+  return std::visit(
+      common::visitors{
+          [&](const Symbol *symbol) {
+            return CompleteSubscripts(ArrayRef{*symbol, std::move(subscripts)});
+          },
+          [&](auto &&base) -> MaybeExpr {
+            using Ty = std::decay_t<decltype(base)>;
+            if constexpr (common::HasMember<Ty, decltype(ArrayRef::u)>) {
+              return CompleteSubscripts(
+                  ArrayRef{std::move(base), std::move(subscripts)});
+            }
+            return std::nullopt;
+          }},
+      std::move(dataRef.u));
+}
+
+MaybeExpr ExprAnalyzer::CompleteSubscripts(ArrayRef &&ref) {
+  const Symbol &symbol{*ref.GetSymbol(false)};
   int symbolRank{symbol.Rank()};
   if (ref.subscript.empty()) {
     // A -> A(:,:)
@@ -653,10 +709,7 @@ MaybeExpr ExprAnalyzer::Subscripts(const Symbol &symbol, ArrayRef &&ref) {
     context.messages.Say(
         "reference to rank-%d object '%s' has %d subscripts"_err_en_US,
         symbolRank, symbol.name().ToString().data(), subscripts);
-  }
-  // TODO: fill in bounds of triplets?
-  // TODO: enforce constraints, like lack of uppermost bound on assumed-size
-  if (Component * component{std::get_if<Component>(&ref.u)}) {
+  } else if (Component * component{std::get_if<Component>(&ref.u)}) {
     int baseRank{component->Rank()};
     if (baseRank > 0) {
       int rank{ref.Rank()};
@@ -666,19 +719,27 @@ MaybeExpr ExprAnalyzer::Subscripts(const Symbol &symbol, ArrayRef &&ref) {
             baseRank, rank);
       }
     }
+  } else if (const auto *details{
+                 symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
+    // C928 & C1002
+    if (Triplet * last{std::get_if<Triplet>(&ref.subscript.back().u)}) {
+      if (!last->upper().has_value() && details->isAssumedSize()) {
+        context.messages.Say(
+            "assumed-size array '%s' must have explicit final subscript upper bound value"_err_en_US,
+            symbol.name().ToString().data());
+      }
+    }
   }
-  return Designate(symbol, DataRef{std::move(ref)});
+  return Designate(DataRef{std::move(ref)});
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ArrayElement &ae) {
   std::vector<Subscript> subscripts{Analyze(ae.subscripts)};
   if (MaybeExpr baseExpr{AnalyzeHelper(*this, ae.base)}) {
     if (std::optional<DataRef> dataRef{ExtractDataRef(std::move(*baseExpr))}) {
-      if (const Symbol **symbol{std::get_if<const Symbol *>(&dataRef->u)}) {
-        return Subscripts(**symbol, ArrayRef{**symbol, std::move(subscripts)});
-      } else if (Component * component{std::get_if<Component>(&dataRef->u)}) {
-        return Subscripts(component->symbol(),
-            ArrayRef{std::move(*component), std::move(subscripts)});
+      if (MaybeExpr result{
+              ApplySubscripts(std::move(*dataRef), std::move(subscripts))}) {
+        return result;
       }
     }
   }
@@ -705,7 +766,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
       } else if (std::optional<DataRef> dataRef{
                      ExtractDataRef(std::move(*dtExpr))}) {
         Component component{std::move(*dataRef), *sym};
-        return Designate(*sym, DataRef{std::move(component)});
+        return Designate(DataRef{std::move(component)});
       } else {
         context.messages.Say(sc.component.source,
             "base of component reference must be a data reference"_err_en_US);
@@ -738,7 +799,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::CoindexedNamedObject &co) {
-  // TODO: ComponentRankCheck or its equivalent
+  // TODO: CheckUnsubscriptedComponent or its equivalent
   context.messages.Say("TODO: CoindexedNamedObject unimplemented"_err_en_US);
   return std::nullopt;
 }
@@ -760,13 +821,16 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureConstructor &) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &) {
-  // TODO: C1003: A parenthesized function reference may not return a
-  // procedure pointer.
+  // TODO: C1002: Allow a whole assumed-size array to appear if the dummy
+  // argument would accept it.  Handle by special-casing the context
+  // ActualArg -> Variable -> Designator.
   context.messages.Say("TODO: FunctionReference unimplemented"_err_en_US);
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Parentheses &x) {
+  // TODO: C1003: A parenthesized function reference may not return a
+  // procedure pointer.
   if (MaybeExpr operand{AnalyzeHelper(*this, *x.v)}) {
     return std::visit(
         common::visitors{
@@ -823,7 +887,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::NOT &x) {
                                              LogicalNegation(std::move(lx)))};
                                        },
                           [=](auto &&) -> MaybeExpr {
-                            // TODO: accept INTEGER operand if not overridden
+                            // TODO: accept INTEGER operand and maybe typeless
+                            // if not overridden
                             context.messages.Say(
                                 "Operand of .NOT. must be LOGICAL"_err_en_US);
                             return std::nullopt;
@@ -970,6 +1035,7 @@ MaybeExpr LogicalHelper(
             [&](auto &&, auto &&) -> MaybeExpr {
               // TODO: extension: INTEGER and typeless operands
               // ifort and PGI accept them if not overridden
+              // need to define IAND, IOR, IEOR intrinsic representation
               ea.context.messages.Say(
                   "operands to LOGICAL operation must be LOGICAL"_err_en_US);
               return {};
@@ -1004,13 +1070,28 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::DefinedBinary &) {
   return std::nullopt;
 }
 
-void ExprAnalyzer::ComponentRankCheck(const Component &component) {
+MaybeExpr ExprAnalyzer::TopLevelChecks(DataRef &&dataRef) {
+  if (Component * component{std::get_if<Component>(&dataRef.u)}) {
+    CheckUnsubscriptedComponent(*component);
+  }
+  if (dataRef.Rank() > 0) {
+    if (MaybeExpr subscripted{
+            ApplySubscripts(std::move(dataRef), std::vector<Subscript>{})}) {
+      return subscripted;
+    }
+  }
+  return Designate(std::move(dataRef));
+}
+
+void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
   int baseRank{component.base().Rank()};
-  int componentRank{component.symbol().Rank()};
-  if (baseRank > 0 && componentRank > 0) {
-    context.messages.Say(
-        "reference to rank-%d component '%%%s' of rank-%d array of derived type is not allowed"_err_en_US,
-        componentRank, component.symbol().name().ToString().data(), baseRank);
+  if (baseRank > 0) {
+    int componentRank{component.symbol().Rank()};
+    if (componentRank > 0) {
+      context.messages.Say(
+          "reference to whole rank-%d component '%%%s' of rank-%d array of derived type is not allowed"_err_en_US,
+          componentRank, component.symbol().name().ToString().data(), baseRank);
+    }
   }
 }
 

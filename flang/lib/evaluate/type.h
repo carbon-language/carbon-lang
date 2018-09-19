@@ -43,12 +43,19 @@ namespace Fortran::evaluate {
 
 using common::TypeCategory;
 
+struct DynamicType {
+  TypeCategory category;
+  int kind{0};
+  const semantics::DerivedTypeSpec *derived{nullptr};
+};
+
 // Specific intrinsic types are represented by specializations of
 // this class template Type<CATEGORY, KIND>.
 template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
 template<TypeCategory CATEGORY, int KIND> struct TypeBase {
   static constexpr bool isSpecificType{true};
+  static constexpr DynamicType dynamicType{CATEGORY, KIND};
   static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};
   static std::string Dump() {

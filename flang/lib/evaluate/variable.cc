@@ -315,9 +315,6 @@ std::ostream &ProcedureRef<ARG>::Dump(std::ostream &o) const {
 
 std::ostream &Variable::Dump(std::ostream &o) const { return Emit(o, u); }
 
-std::ostream &ActualFunctionArg::Dump(std::ostream &o) const {
-  return Emit(o, u);
-}
 std::ostream &ActualSubroutineArg::Dump(std::ostream &o) const {
   return Emit(o, u);
 }
@@ -370,7 +367,24 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
 }
 
 // Rank()
-int Component::Rank() const { return symbol_->Rank(); }
+int Component::Rank() const {
+  int baseRank{base_->Rank()};
+  int symbolRank{symbol_->Rank()};
+  CHECK(baseRank == 0 || symbolRank == 0);
+  return baseRank + symbolRank;
+}
+template<typename A> int ProcedureRef<A>::Rank() const {
+  if constexpr (std::is_same_v<A, ActualFunctionArg>) {  // FunctionRef
+    // TODO: Rank of elemental function reference depends on actual arguments
+    return std::visit(
+        common::visitors{[](IntrinsicProcedure) { return 0 /*TODO!!*/; },
+            [](const Symbol *sym) { return sym->Rank(); },
+            [](const Component &c) { return c.symbol().Rank(); }},
+        proc().u);
+  } else {
+    return 0;
+  }
+}
 int Subscript::Rank() const {
   return std::visit(common::visitors{[](const IndirectSubscriptIntegerExpr &x) {
                                        int rank{x->Rank()};
@@ -385,7 +399,12 @@ int ArrayRef::Rank() const {
   for (std::size_t j{0}; j < subscript.size(); ++j) {
     rank += subscript[j].Rank();
   }
-  return rank;
+  int baseRank{std::visit(
+      common::visitors{[](const Symbol *symbol) { return symbol->Rank(); },
+          [](const auto &x) { return x.Rank(); }},
+      u)};
+  CHECK(rank == 0 || baseRank == 0);
+  return baseRank + rank;
 }
 int CoarrayRef::Rank() const {
   int rank{0};
@@ -406,24 +425,8 @@ int Substring::Rank() const {
       u_);
 }
 int ComplexPart::Rank() const { return complex_.Rank(); }
-template<> int FunctionRef::Rank() const {
-  // TODO: Rank of elemental function reference depends on actual arguments
-  return std::visit(
-      common::visitors{[](IntrinsicProcedure) { return 0 /*TODO!!*/; },
-          [](const Symbol *sym) { return sym->Rank(); },
-          [](const Component &c) { return c.symbol().Rank(); }},
-      proc().u);
-}
 int Variable::Rank() const {
   return std::visit([](const auto &x) { return x.Rank(); }, u);
-}
-int ActualFunctionArg::Rank() const {
-  return std::visit(
-      common::visitors{[](const CopyableIndirection<Expr<SomeType>> &x) {
-                         return x->Rank();
-                       },
-          [](const auto &x) { return x.Rank(); }},
-      u);
 }
 int ActualSubroutineArg::Rank() const {
   return std::visit(
@@ -435,7 +438,33 @@ int ActualSubroutineArg::Rank() const {
       u);
 }
 
+// GetSymbol
+const Symbol *Component::GetSymbol(bool first) const {
+  return base_->GetSymbol(first);
+}
+const Symbol *ArrayRef::GetSymbol(bool first) const {
+  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                        [=](const Component &component) {
+                          return component.GetSymbol(first);
+                        }},
+      u);
+}
+const Symbol *DataRef::GetSymbol(bool first) const {
+  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                        [=](const auto &x) { return x.GetSymbol(first); }},
+      u);
+}
+const Symbol *Substring::GetSymbol(bool first) const {
+  if (const DataRef * dataRef{std::get_if<DataRef>(&u_)}) {
+    return dataRef->GetSymbol(first);
+  } else {
+    return nullptr;  // substring of character literal
+  }
+}
+
 template class Designator<Type<TypeCategory::Character, 1>>;
 template class Designator<Type<TypeCategory::Character, 2>>;
 template class Designator<Type<TypeCategory::Character, 4>>;
+template class ProcedureRef<ActualFunctionArg>;  // FunctionRef
+template class ProcedureRef<ActualSubroutineArg>;
 }  // namespace Fortran::evaluate

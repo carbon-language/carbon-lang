@@ -642,7 +642,8 @@ public:
   CLASS_BOILERPLATE(Expr)
 
   template<typename A>
-  explicit Expr(const Result &r, const A &x) : result{r}, u{x} {}
+  explicit Expr(const semantics::DerivedTypeSpec &dts, const A &x)
+    : result{dts}, u{x} {}
   template<typename A>
   explicit Expr(Result &&r, std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : result{std::move(r)}, u{std::move(x)} {}

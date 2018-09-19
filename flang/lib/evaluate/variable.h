@@ -40,7 +40,6 @@ using semantics::Symbol;
 template<typename A> class Expr;
 struct DataRef;
 struct Variable;
-struct ActualFunctionArg;
 
 // Subscript and cosubscript expressions are of a kind that matches the
 // address size, at least at the top level.
@@ -64,6 +63,7 @@ public:
   DataRef &base() { return *base_; }
   const Symbol &symbol() const { return *symbol_; }
   int Rank() const;
+  const Symbol *GetSymbol(bool first) const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -112,6 +112,7 @@ struct ArrayRef {
     : u{std::move(c)}, subscript(std::move(ss)) {}
 
   int Rank() const;
+  const Symbol *GetSymbol(bool first) const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -134,7 +135,15 @@ public:
       std::vector<Expr<SubscriptInteger>> &&);  // TODO: stat & team?
   CoarrayRef &setStat(Variable &&);
   CoarrayRef &setTeam(Variable &&, bool isTeamNumber = false);
+
   int Rank() const;
+  const Symbol *GetSymbol(bool first) const {
+    if (first) {
+      return base_.front();
+    } else {
+      return base_.back();
+    }
+  }
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -155,6 +164,7 @@ struct DataRef {
   explicit DataRef(const Symbol &n) : u{&n} {}
 
   int Rank() const;
+  const Symbol *GetSymbol(bool first) const;
   Expr<SubscriptInteger> LEN() const;
   std::ostream &Dump(std::ostream &) const;
 
@@ -177,6 +187,7 @@ public:
   Expr<SubscriptInteger> first() const;
   Expr<SubscriptInteger> last() const;
   int Rank() const;
+  const Symbol *GetSymbol(bool first) const;
   Expr<SubscriptInteger> LEN() const;
   std::optional<std::string> Fold(FoldingContext &);
   std::ostream &Dump(std::ostream &) const;
@@ -198,6 +209,9 @@ public:
   const DataRef &complex() const { return complex_; }
   Part part() const { return part_; }
   int Rank() const;
+  const Symbol *GetSymbol(bool first) const {
+    return complex_.GetSymbol(first);
+  }
   std::ostream &Dump(std::ostream &) const;
 
 private:
@@ -236,6 +250,12 @@ public:
         u);
   }
 
+  const Symbol *GetSymbol(bool first) const {
+    return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                          [=](const auto &x) { return x.GetSymbol(first); }},
+        u);
+  }
+
   Expr<SubscriptInteger> LEN() const;
 
   std::ostream &Dump(std::ostream &o) const {
@@ -249,10 +269,6 @@ public:
 
   Variant u;
 };
-
-extern template class Designator<Type<TypeCategory::Character, 1>>;
-extern template class Designator<Type<TypeCategory::Character, 2>>;
-extern template class Designator<Type<TypeCategory::Character, 4>>;
 
 struct ProcedureDesignator {
   EVALUATE_UNION_CLASS_BOILERPLATE(ProcedureDesignator)
@@ -280,6 +296,10 @@ private:
   std::vector<ArgumentType> argument_;
 };
 
+// Subtlety: There is a distinction that must be maintained here between an
+// actual argument expression that *is* a variable and one that is not,
+// e.g. between X and (X).
+using ActualFunctionArg = CopyableIndirection<Expr<SomeType>>;
 using FunctionRef = ProcedureRef<ActualFunctionArg>;
 
 struct Variable {
@@ -287,17 +307,6 @@ struct Variable {
   int Rank() const;
   std::ostream &Dump(std::ostream &) const;
   std::variant<DataRef, Substring, ComplexPart, FunctionRef> u;
-};
-
-struct ActualFunctionArg {
-  EVALUATE_UNION_CLASS_BOILERPLATE(ActualFunctionArg)
-  explicit ActualFunctionArg(Expr<SomeType> &&x) : u{std::move(x)} {}
-  int Rank() const;
-  std::ostream &Dump(std::ostream &) const;
-
-  // Subtlety: There is a distinction to be respected here between a variable
-  // and an expression that is a variable, e.g. X vs. (X).
-  std::variant<CopyableIndirection<Expr<SomeType>>, Variable> u;
 };
 
 struct Label {  // TODO: this is a placeholder
@@ -320,6 +329,12 @@ public:
 };
 
 using SubroutineRef = ProcedureRef<ActualSubroutineArg>;
+
+extern template class Designator<Type<TypeCategory::Character, 1>>;
+extern template class Designator<Type<TypeCategory::Character, 2>>;
+extern template class Designator<Type<TypeCategory::Character, 4>>;
+extern template class ProcedureRef<ActualFunctionArg>;  // FunctionRef
+extern template class ProcedureRef<ActualSubroutineArg>;
 
 }  // namespace Fortran::evaluate
 

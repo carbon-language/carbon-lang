@@ -19,7 +19,7 @@
 
 namespace Fortran::evaluate {
 
-ENUM_CLASS(IntrinsicProcedure, LEN, MAX, MIN)
+ENUM_CLASS(IntrinsicProcedure, IAND, IEOR, IOR, LEN, MAX, MIN)
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_INTRINSICS_H_
