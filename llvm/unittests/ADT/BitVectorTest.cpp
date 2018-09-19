@@ -840,23 +840,23 @@ TYPED_TEST(BitVectorTest, Iterators) {
 TYPED_TEST(BitVectorTest, PushBack) {
   TypeParam Vec(10, false);
   EXPECT_EQ(-1, Vec.find_first());
-  EXPECT_EQ(10, Vec.size());
-  EXPECT_EQ(0, Vec.count());
+  EXPECT_EQ(10U, Vec.size());
+  EXPECT_EQ(0U, Vec.count());
 
   Vec.push_back(true);
   EXPECT_EQ(10, Vec.find_first());
-  EXPECT_EQ(11, Vec.size());
-  EXPECT_EQ(1, Vec.count());
+  EXPECT_EQ(11U, Vec.size());
+  EXPECT_EQ(1U, Vec.count());
 
   Vec.push_back(false);
   EXPECT_EQ(10, Vec.find_first());
-  EXPECT_EQ(12, Vec.size());
-  EXPECT_EQ(1, Vec.count());
+  EXPECT_EQ(12U, Vec.size());
+  EXPECT_EQ(1U, Vec.count());
 
   Vec.push_back(true);
   EXPECT_EQ(10, Vec.find_first());
-  EXPECT_EQ(13, Vec.size());
-  EXPECT_EQ(2, Vec.count());
+  EXPECT_EQ(13U, Vec.size());
+  EXPECT_EQ(2U, Vec.count());
 
   // Add a lot of values to cause reallocation.
   for (int i = 0; i != 100; ++i) {
@@ -864,8 +864,8 @@ TYPED_TEST(BitVectorTest, PushBack) {
     Vec.push_back(false);
   }
   EXPECT_EQ(10, Vec.find_first());
-  EXPECT_EQ(213, Vec.size());
-  EXPECT_EQ(102, Vec.count());
+  EXPECT_EQ(213U, Vec.size());
+  EXPECT_EQ(102U, Vec.count());
 }
 }
 #endif
