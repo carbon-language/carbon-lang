@@ -91,6 +91,10 @@ set(LABEL_TESTS
   label*.[Ff]90
 )
 
+set(CANONDO_TESTS
+  canondo*.[Ff]90
+)
+
 foreach(test ${ERROR_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_errors.sh ${test})
 endforeach()
@@ -104,5 +108,9 @@ foreach(test ${MODFILE_TESTS})
 endforeach()
 
 foreach(test ${LABEL_TESTS})
+  add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
+endforeach()
+
+foreach(test ${CANONDO_TESTS})
   add_test(NAME ${test} COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/test_any.sh ${test})
 endforeach()

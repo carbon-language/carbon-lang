@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "semantics.h"
+#include "canonicalize-do.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
 #include "resolve-names.h"
@@ -52,6 +53,7 @@ bool Semantics::Perform(parser::Program &program) {
   if (AnyFatalError()) {
     return false;
   }
+  CanonicalizeDo(program);
   ModFileWriter writer;
   writer.set_directory(moduleDirectory_);
   if (!writer.WriteAll(globalScope_)) {

@@ -15,6 +15,7 @@
 
 add_library(FortranSemantics
   attr.cc
+  canonicalize-do.cc
   expression.cc
   mod-file.cc
   resolve-labels.cc
