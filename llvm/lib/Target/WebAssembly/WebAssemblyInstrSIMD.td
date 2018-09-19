@@ -189,7 +189,7 @@ multiclass SIMDNot<ValueType vec_t, PatFrag splat_pat, ValueType lane_t> {
 multiclass SIMDCondition<ValueType vec_t, ValueType out_t, string vec,
                              string name, CondCode cond, bits<32> simdop> {
   defm _#vec_t :
-    SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128: $rhs), (outs), (ins),
+    SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs), (outs), (ins),
            [(set (out_t V128:$dst),
              (setcc (vec_t V128:$lhs), (vec_t V128:$rhs), cond))],
            vec#"."#name#"\t$dst, $lhs, $rhs", vec#"."#name, simdop>;
