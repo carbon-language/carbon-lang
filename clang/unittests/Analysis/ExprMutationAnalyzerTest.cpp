@@ -215,6 +215,12 @@ TEST(ExprMutationAnalyzerTest, ByValueArgument) {
                          "void f() { A x, y; y = x; }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
+
+  AST = buildASTFromCode(
+      "template <int> struct A { A(); A(const A&); static void mf(A) {} };"
+      "void f() { A<0> x; A<0>::mf(x); }");
+  Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
+  EXPECT_FALSE(isMutated(Results, AST.get()));
 }
 
 TEST(ExprMutationAnalyzerTest, ByConstValueArgument) {
@@ -239,6 +245,12 @@ TEST(ExprMutationAnalyzerTest, ByConstValueArgument) {
 
   AST = buildASTFromCode(
       "void f() { struct A { A(const int); }; int x; A y(x); }");
+  Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
+  EXPECT_FALSE(isMutated(Results, AST.get()));
+
+  AST = buildASTFromCode("template <int> struct A { A(); A(const A&);"
+                         "static void mf(const A&) {} };"
+                         "void f() { A<0> x; A<0>::mf(x); }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
 }
@@ -288,6 +300,12 @@ TEST(ExprMutationAnalyzerTest, ByNonConstRefArgument) {
   AST = buildASTFromCode("void f() { struct A { A(); A(A&); }; A x; A y(x); }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_THAT(mutatedBy(Results, AST.get()), ElementsAre("x"));
+
+  AST = buildASTFromCode(
+      "template <int> struct A { A(); A(const A&); static void mf(A&) {} };"
+      "void f() { A<0> x; A<0>::mf(x); }");
+  Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
+  EXPECT_THAT(mutatedBy(Results, AST.get()), ElementsAre("A<0>::mf(x)"));
 }
 
 TEST(ExprMutationAnalyzerTest, ByConstRefArgument) {
@@ -686,6 +704,12 @@ TEST(ExprMutationAnalyzerTest, FollowFuncArgModified) {
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_THAT(mutatedBy(Results, AST.get()), ElementsAre("x"));
 
+  AST = buildASTFromCode("template <class U> struct S {"
+                         "template <class T> S(T&& t) : m(++t) { } U m; };"
+                         "void f() { int x; S<int> s(x); }");
+  Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
+  EXPECT_THAT(mutatedBy(Results, AST.get()), ElementsAre("x"));
+
   AST = buildASTFromCode(StdRemoveReference + StdForward +
                          "template <class... Args> void u(Args&...);"
                          "template <class... Args> void h(Args&&... args)"
@@ -734,6 +758,12 @@ TEST(ExprMutationAnalyzerTest, FollowFuncArgNotModified) {
   AST = buildASTFromCode(
       "struct S { template <class T> S(T&& t) : m(t) { } int m; };"
       "void f() { int x; S s(x); }");
+  Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
+  EXPECT_FALSE(isMutated(Results, AST.get()));
+
+  AST = buildASTFromCode("template <class U> struct S {"
+                         "template <class T> S(T&& t) : m(t) { } U m; };"
+                         "void f() { int x; S<int> s(x); }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
