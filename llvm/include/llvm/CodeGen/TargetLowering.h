@@ -1721,6 +1721,15 @@ public:
     return false;
   }
 
+  /// Return true if it is profitable to transform an integer
+  /// multiplication-by-constant into simpler operations like shifts and adds.
+  /// This may be true if the target does not directly support the
+  /// multiplication operation for the specified type or the sequence of simpler
+  /// ops is faster than the multiply.
+  virtual bool decomposeMulByConstant(EVT VT, SDValue C) const {
+    return false;
+  }
+
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
   // the derived class constructor to configure this object for the target.
