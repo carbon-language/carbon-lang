@@ -203,7 +203,7 @@ TEST(ExprMutationAnalyzerTest, ByValueArgument) {
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
   AST = buildASTFromCode(
-      "struct A {}; A operator+(A, int) {} void f() { A x; x + 1; }");
+      "struct A {}; A operator+(A, int); void f() { A x; x + 1; }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
@@ -239,7 +239,7 @@ TEST(ExprMutationAnalyzerTest, ByConstValueArgument) {
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
   AST = buildASTFromCode(
-      "struct A {}; A operator+(const A, int) {} void f() { A x; x + 1; }");
+      "struct A {}; A operator+(const A, int); void f() { A x; x + 1; }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
@@ -289,7 +289,7 @@ TEST(ExprMutationAnalyzerTest, ByNonConstRefArgument) {
   EXPECT_THAT(mutatedBy(Results, AST.get()), ElementsAre("g(x)"));
 
   AST = buildASTFromCode(
-      "struct A {}; A operator+(A&, int) {} void f() { A x; x + 1; }");
+      "struct A {}; A operator+(A&, int); void f() { A x; x + 1; }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_THAT(mutatedBy(Results, AST.get()), ElementsAre("x + 1"));
 
@@ -333,7 +333,7 @@ TEST(ExprMutationAnalyzerTest, ByConstRefArgument) {
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
   AST = buildASTFromCode(
-      "struct A {}; A operator+(const A&, int) {} void f() { A x; x + 1; }");
+      "struct A {}; A operator+(const A&, int); void f() { A x; x + 1; }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
@@ -356,7 +356,7 @@ TEST(ExprMutationAnalyzerTest, ByNonConstRRefArgument) {
   EXPECT_THAT(mutatedBy(Results, AST.get()),
               ElementsAre("g(static_cast<int &&>(x))"));
 
-  AST = buildASTFromCode("struct A {}; A operator+(A&&, int) {}"
+  AST = buildASTFromCode("struct A {}; A operator+(A&&, int);"
                          "void f() { A x; static_cast<A &&>(x) + 1; }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_THAT(mutatedBy(Results, AST.get()),
@@ -382,7 +382,7 @@ TEST(ExprMutationAnalyzerTest, ByConstRRefArgument) {
       match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
 
-  AST = buildASTFromCode("struct A {}; A operator+(const A&&, int) {}"
+  AST = buildASTFromCode("struct A {}; A operator+(const A&&, int);"
                          "void f() { A x; static_cast<A&&>(x) + 1; }");
   Results = match(withEnclosingCompound(declRefTo("x")), AST->getASTContext());
   EXPECT_FALSE(isMutated(Results, AST.get()));
