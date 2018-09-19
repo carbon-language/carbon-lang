@@ -4498,8 +4498,8 @@ void CodeGenDAGPatterns::GenerateVariants() {
         PatternsToMatch[i].getPredicates();
 
     BitVector &Matches = MatchedPredicates[i];
-    MatchedPatterns[i] = true;
-    Matches[i] = true;
+    MatchedPatterns.set(i);
+    Matches.set(i);
 
     // Don't test patterns that have already been cached - it won't match.
     for (unsigned p = 0; p != NumOriginalPatterns; ++p)
@@ -4509,7 +4509,7 @@ void CodeGenDAGPatterns::GenerateVariants() {
     // Copy this to all the matching patterns.
     for (int p = Matches.find_first(); p != -1; p = Matches.find_next(p))
       if (p != (int)i) {
-        MatchedPatterns[p] = true;
+        MatchedPatterns.set(p);
         MatchedPredicates[p] = Matches;
       }
   }
