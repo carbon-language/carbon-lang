@@ -1574,6 +1574,15 @@ public:
     llvm_unreachable("Masked atomicrmw expansion unimplemented on this target");
   }
 
+  /// Perform a masked cmpxchg using a target-specific intrinsic. This
+  /// represents the core LL/SC loop which will be lowered at a late stage by
+  /// the backend.
+  virtual Value *emitMaskedAtomicCmpXchgIntrinsic(
+      IRBuilder<> &Builder, AtomicCmpXchgInst *CI, Value *AlignedAddr,
+      Value *CmpVal, Value *NewVal, Value *Mask, AtomicOrdering Ord) const {
+    llvm_unreachable("Masked cmpxchg expansion unimplemented on this target");
+  }
+
   /// Inserts in the IR a target-specific intrinsic specifying a fence.
   /// It is called by AtomicExpandPass before expanding an
   ///   AtomicRMW/AtomicCmpXchg/AtomicStore/AtomicLoad
@@ -1650,11 +1659,11 @@ public:
     return AtomicExpansionKind::None;
   }
 
-  /// Returns true if the given atomic cmpxchg should be expanded by the
-  /// IR-level AtomicExpand pass into a load-linked/store-conditional sequence
-  /// (through emitLoadLinked() and emitStoreConditional()).
-  virtual bool shouldExpandAtomicCmpXchgInIR(AtomicCmpXchgInst *AI) const {
-    return false;
+  /// Returns how the given atomic cmpxchg should be expanded by the IR-level
+  /// AtomicExpand pass.
+  virtual AtomicExpansionKind
+  shouldExpandAtomicCmpXchgInIR(AtomicCmpXchgInst *AI) const {
+    return AtomicExpansionKind::None;
   }
 
   /// Returns how the IR-level AtomicExpand pass should expand the given

@@ -98,6 +98,7 @@ namespace {
         AtomicOrdering MemOpOrder,
         function_ref<Value *(IRBuilder<> &, Value *)> PerformOp,
         CreateCmpXchgInstFun CreateCmpXchg);
+    bool tryExpandAtomicCmpXchg(AtomicCmpXchgInst *CI);
 
     bool expandAtomicCmpXchg(AtomicCmpXchgInst *CI);
     bool isIdempotentRMW(AtomicRMWInst *RMWI);
@@ -260,7 +261,9 @@ bool AtomicExpand::runOnFunction(Function &F) {
                           isAcquireOrStronger(RMWI->getOrdering()))) {
         FenceOrdering = RMWI->getOrdering();
         RMWI->setOrdering(AtomicOrdering::Monotonic);
-      } else if (CASI && !TLI->shouldExpandAtomicCmpXchgInIR(CASI) &&
+      } else if (CASI &&
+                 TLI->shouldExpandAtomicCmpXchgInIR(CASI) ==
+                     TargetLoweringBase::AtomicExpansionKind::None &&
                  (isReleaseOrStronger(CASI->getSuccessOrdering()) ||
                   isAcquireOrStronger(CASI->getSuccessOrdering()))) {
         // If a compare and swap is lowered to LL/SC, we can do smarter fence
@@ -334,16 +337,7 @@ bool AtomicExpand::runOnFunction(Function &F) {
         MadeChange = true;
       }
 
-      unsigned MinCASSize = TLI->getMinCmpXchgSizeInBits() / 8;
-      unsigned ValueSize = getAtomicOpSize(CASI);
-      if (ValueSize < MinCASSize) {
-        assert(!TLI->shouldExpandAtomicCmpXchgInIR(CASI) &&
-               "MinCmpXchgSizeInBits not yet supported for LL/SC expansions.");
-        expandPartwordCmpXchg(CASI);
-      } else {
-        if (TLI->shouldExpandAtomicCmpXchgInIR(CASI))
-          MadeChange |= expandAtomicCmpXchg(CASI);
-      }
+      MadeChange |= tryExpandAtomicCmpXchg(CASI);
     }
   }
   return MadeChange;
@@ -1353,6 +1347,28 @@ Value *AtomicExpand::insertRMWCmpXchgLoop(
 
   Builder.SetInsertPoint(ExitBB, ExitBB->begin());
   return NewLoaded;
+}
+
+bool AtomicExpand::tryExpandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
+  unsigned MinCASSize = TLI->getMinCmpXchgSizeInBits() / 8;
+  unsigned ValueSize = getAtomicOpSize(CI);
+
+  switch (TLI->shouldExpandAtomicCmpXchgInIR(CI)) {
+  default:
+    llvm_unreachable("Unhandled case in tryExpandAtomicCmpXchg");
+  case TargetLoweringBase::AtomicExpansionKind::None:
+    if (ValueSize < MinCASSize)
+      expandPartwordCmpXchg(CI);
+    return false;
+  case TargetLoweringBase::AtomicExpansionKind::LLSC: {
+    assert(ValueSize >= MinCASSize &&
+           "MinCmpXchgSizeInBits not yet supported for LL/SC expansions.");
+    return expandAtomicCmpXchg(CI);
+  }
+  case TargetLoweringBase::AtomicExpansionKind::MaskedIntrinsic:
+    llvm_unreachable(
+        "MaskedIntrinsic expansion of cmpxhg not yet implemented");
+  }
 }
 
 // Note: This function is exposed externally by AtomicExpandUtils.h
