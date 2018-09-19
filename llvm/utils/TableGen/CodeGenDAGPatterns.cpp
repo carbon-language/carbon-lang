@@ -4552,9 +4552,8 @@ void CodeGenDAGPatterns::GenerateVariants() {
       MatchedPredicates.push_back(Matches);
 
       // Add a new match the same as this pattern.
-      unsigned NumPatterns = PatternsToMatch.size();
       for (auto &P : MatchedPredicates)
-        P.resize(NumPatterns, P[i]);
+        P.push_back(P[i]);
     }
 
     LLVM_DEBUG(errs() << "\n");
