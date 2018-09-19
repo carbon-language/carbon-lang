@@ -430,17 +430,15 @@ define <4 x i32> @inc_not_vec(<4 x i32> %a) nounwind {
 ;
 ; X64-LINUX-LABEL: inc_not_vec:
 ; X64-LINUX:       # %bb.0:
-; X64-LINUX-NEXT:    pcmpeqd %xmm1, %xmm1
-; X64-LINUX-NEXT:    pxor %xmm1, %xmm0
-; X64-LINUX-NEXT:    psubd %xmm1, %xmm0
+; X64-LINUX-NEXT:    pxor %xmm1, %xmm1
+; X64-LINUX-NEXT:    psubd %xmm0, %xmm1
+; X64-LINUX-NEXT:    movdqa %xmm1, %xmm0
 ; X64-LINUX-NEXT:    retq
 ;
 ; X64-WIN32-LABEL: inc_not_vec:
 ; X64-WIN32:       # %bb.0:
-; X64-WIN32-NEXT:    pcmpeqd %xmm1, %xmm1
-; X64-WIN32-NEXT:    movdqa (%rcx), %xmm0
-; X64-WIN32-NEXT:    pxor %xmm1, %xmm0
-; X64-WIN32-NEXT:    psubd %xmm1, %xmm0
+; X64-WIN32-NEXT:    pxor %xmm0, %xmm0
+; X64-WIN32-NEXT:    psubd (%rcx), %xmm0
 ; X64-WIN32-NEXT:    retq
   %nota = xor <4 x i32> %a, <i32 -1, i32 -1, i32 -1, i32 -1>
   %r = add <4 x i32> %nota, <i32 1, i32 1, i32 1, i32 1>
