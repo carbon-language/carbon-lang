@@ -406,6 +406,47 @@ define i32 @inc_not(i32 %a) {
   ret i32 %r
 }
 
+define <4 x i32> @inc_not_vec(<4 x i32> %a) nounwind {
+; X32-LABEL: inc_not_vec:
+; X32:       # %bb.0:
+; X32-NEXT:    pushl %edi
+; X32-NEXT:    pushl %esi
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    xorl %ecx, %ecx
+; X32-NEXT:    xorl %edx, %edx
+; X32-NEXT:    subl {{[0-9]+}}(%esp), %edx
+; X32-NEXT:    xorl %esi, %esi
+; X32-NEXT:    subl {{[0-9]+}}(%esp), %esi
+; X32-NEXT:    xorl %edi, %edi
+; X32-NEXT:    subl {{[0-9]+}}(%esp), %edi
+; X32-NEXT:    subl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    movl %ecx, 12(%eax)
+; X32-NEXT:    movl %edi, 8(%eax)
+; X32-NEXT:    movl %esi, 4(%eax)
+; X32-NEXT:    movl %edx, (%eax)
+; X32-NEXT:    popl %esi
+; X32-NEXT:    popl %edi
+; X32-NEXT:    retl $4
+;
+; X64-LINUX-LABEL: inc_not_vec:
+; X64-LINUX:       # %bb.0:
+; X64-LINUX-NEXT:    pcmpeqd %xmm1, %xmm1
+; X64-LINUX-NEXT:    pxor %xmm1, %xmm0
+; X64-LINUX-NEXT:    psubd %xmm1, %xmm0
+; X64-LINUX-NEXT:    retq
+;
+; X64-WIN32-LABEL: inc_not_vec:
+; X64-WIN32:       # %bb.0:
+; X64-WIN32-NEXT:    pcmpeqd %xmm1, %xmm1
+; X64-WIN32-NEXT:    movdqa (%rcx), %xmm0
+; X64-WIN32-NEXT:    pxor %xmm1, %xmm0
+; X64-WIN32-NEXT:    psubd %xmm1, %xmm0
+; X64-WIN32-NEXT:    retq
+  %nota = xor <4 x i32> %a, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %r = add <4 x i32> %nota, <i32 1, i32 1, i32 1, i32 1>
+  ret <4 x i32> %r
+}
+
 define void @uaddo1_not(i32 %a, i32* %p0, i1* %p1) {
 ; X32-LABEL: uaddo1_not:
 ; X32:       # %bb.0:
