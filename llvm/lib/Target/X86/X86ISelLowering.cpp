@@ -31765,9 +31765,102 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
             {Op}, 0, Op, {0}, {}, /*Depth*/ 1,
             /*HasVarMask*/ false, /*AllowVarMask*/ true, DAG, Subtarget))
       return Res;
+
+    // Simplify source operands based on shuffle mask.
+    // TODO - merge this into combineX86ShufflesRecursively.
+    APInt KnownUndef, KnownZero;
+    APInt DemandedElts = APInt::getAllOnesValue(VT.getVectorNumElements());
+    if (TLI.SimplifyDemandedVectorElts(Op, DemandedElts, KnownUndef, KnownZero, DCI))
+      return SDValue(N, 0);
   }
 
   return SDValue();
+}
+
+bool X86TargetLowering::SimplifyDemandedVectorEltsForTargetNode(
+    SDValue Op, const APInt &DemandedElts, APInt &KnownUndef, APInt &KnownZero,
+    TargetLoweringOpt &TLO, unsigned Depth) const {
+  int NumElts = DemandedElts.getBitWidth();
+  unsigned Opc = Op.getOpcode();
+  EVT VT = Op.getValueType();
+
+  // Handle special case opcodes.
+  switch (Opc) {
+  case X86ISD::VBROADCAST: {
+    SDValue Src = Op.getOperand(0);
+    MVT SrcVT = Src.getSimpleValueType();
+    if (!SrcVT.isVector())
+      return false;
+    APInt SrcUndef, SrcZero;
+    APInt SrcElts = APInt::getOneBitSet(SrcVT.getVectorNumElements(), 0);
+    if (SimplifyDemandedVectorElts(Src, SrcElts, SrcUndef, SrcZero, TLO,
+                                   Depth + 1))
+      return true;
+    break;
+  }
+  }
+
+  // Simplify target shuffles.
+  if (!isTargetShuffle(Opc))
+    return false;
+
+  // Get target shuffle mask.
+  SmallVector<int, 64> OpMask;
+  SmallVector<SDValue, 2> OpInputs;
+  if (!resolveTargetShuffleInputs(Op, OpInputs, OpMask, TLO.DAG))
+    return false;
+
+  // Shuffle inputs must be the same type as the result.
+  if (llvm::any_of(OpInputs,
+                   [VT](SDValue V) { return VT != V.getValueType(); }))
+    return false;
+
+  // Attempt to simplify inputs.
+  int NumSrcs = OpInputs.size();
+  for (int Src = 0; Src != NumSrcs; ++Src) {
+    int Lo = Src * NumElts;
+    APInt SrcElts = APInt::getNullValue(NumElts);
+    for (int i = 0; i != NumElts; ++i)
+      if (DemandedElts[i]) {
+        int M = OpMask[i] - Lo;
+        if (0 <= M && M < NumElts)
+          SrcElts.setBit(M);
+      }
+
+    APInt SrcUndef, SrcZero;
+    if (SimplifyDemandedVectorElts(OpInputs[Src], SrcElts, SrcUndef, SrcZero,
+                                   TLO, Depth + 1))
+      return true;
+  }
+
+  // Check if shuffle mask can be simplified to undef/zero/identity.
+  for (int i = 0; i != NumElts; ++i)
+    if (!DemandedElts[i])
+      OpMask[i] = SM_SentinelUndef;
+
+  if (isUndefInRange(OpMask, 0, NumElts)) {
+    KnownUndef.setAllBits();
+    return TLO.CombineTo(Op, TLO.DAG.getUNDEF(VT));
+  }
+  if (isUndefOrZeroInRange(OpMask, 0, NumElts)) {
+    KnownZero.setAllBits();
+    return TLO.CombineTo(
+        Op, getZeroVector(VT.getSimpleVT(), Subtarget, TLO.DAG, SDLoc(Op)));
+  }
+  for (int Src = 0; Src != NumSrcs; ++Src)
+    if (isSequentialOrUndefInRange(OpMask, 0, NumElts, Src * NumElts))
+      return TLO.CombineTo(Op, OpInputs[Src]);
+
+  // Extract known zero/undef elements.
+  // TODO - Propagate input undef/zero elts.
+  for (int i = 0; i != NumElts; ++i) {
+    if (OpMask[i] == SM_SentinelUndef)
+      KnownUndef.setBit(i);
+    if (OpMask[i] == SM_SentinelZero)
+      KnownZero.setBit(i);
+  }
+
+  return false;
 }
 
 /// Check if a vector extract from a target-specific shuffle of a load can be
