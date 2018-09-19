@@ -29,8 +29,8 @@ define <4 x i32> @combine_vec_sdiv_by_one(<4 x i32> %x) {
 define i32 @combine_sdiv_by_negone(i32 %x) {
 ; CHECK-LABEL: combine_sdiv_by_negone:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    negl %edi
 ; CHECK-NEXT:    movl %edi, %eax
+; CHECK-NEXT:    negl %eax
 ; CHECK-NEXT:    retq
   %1 = sdiv i32 %x, -1
   ret i32 %1
