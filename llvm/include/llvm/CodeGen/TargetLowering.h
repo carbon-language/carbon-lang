@@ -163,6 +163,7 @@ public:
     LLOnly,  // Expand the (load) instruction into just a load-linked, which has
              // greater atomic guarantees than a normal load.
     CmpXChg, // Expand the instruction into cmpxchg; used by at least X86.
+    MaskedIntrinsic, // Use a target-specific intrinsic for the LL/SC loop.
   };
 
   /// Enum that specifies when a multiplication should be expanded.
@@ -1560,6 +1561,17 @@ public:
   virtual Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
                                       Value *Addr, AtomicOrdering Ord) const {
     llvm_unreachable("Store conditional unimplemented on this target");
+  }
+
+  /// Perform a masked atomicrmw using a target-specific intrinsic. This
+  /// represents the core LL/SC loop which will be lowered at a late stage by
+  /// the backend.
+  virtual Value *emitMaskedAtomicRMWIntrinsic(IRBuilder<> &Builder,
+                                              AtomicRMWInst *AI,
+                                              Value *AlignedAddr, Value *Incr,
+                                              Value *Mask, Value *ShiftAmt,
+                                              AtomicOrdering Ord) const {
+    llvm_unreachable("Masked atomicrmw expansion unimplemented on this target");
   }
 
   /// Inserts in the IR a target-specific intrinsic specifying a fence.
