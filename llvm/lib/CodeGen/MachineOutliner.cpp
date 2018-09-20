@@ -1386,7 +1386,11 @@ void MachineOutliner::populateMapper(InstructionMapper &Mapper, Module &M,
     for (MachineBasicBlock &MBB : *MF) {
       // If there isn't anything in MBB, then there's no point in outlining from
       // it.
-      if (MBB.empty())
+      // If there are fewer than 2 instructions in the MBB, then it can't ever
+      // contain something worth outlining.
+      // FIXME: This should be based off of the maximum size in B of an outlined
+      // call versus the size in B of the MBB.
+      if (MBB.empty() || MBB.size() < 2)
         continue;
 
       // Check if MBB could be the target of an indirect branch. If it is, then
