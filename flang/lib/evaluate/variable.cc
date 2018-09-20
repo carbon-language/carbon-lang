@@ -70,13 +70,14 @@ CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
   CHECK(!base_.empty());
 }
 
-CoarrayRef &CoarrayRef::setStat(Variable &&v) {
-  stat_ = CopyableIndirection<Variable>::Make(std::move(v));
+CoarrayRef &CoarrayRef::set_stat(Variable<DefaultInteger> &&v) {
+  stat_ = CopyableIndirection<Variable<DefaultInteger>>::Make(std::move(v));
   return *this;
 }
 
-CoarrayRef &CoarrayRef::setTeam(Variable &&v, bool isTeamNumber) {
-  team_ = CopyableIndirection<Variable>::Make(std::move(v));
+CoarrayRef &CoarrayRef::set_team(
+    Variable<DefaultInteger> &&v, bool isTeamNumber) {
+  team_ = CopyableIndirection<Variable<DefaultInteger>>::Make(std::move(v));
   teamIsTeamNumber_ = isTeamNumber;
   return *this;
 }
@@ -299,11 +300,10 @@ std::ostream &ProcedureDesignator::Dump(std::ostream &o) const {
   return Emit(o, u);
 }
 
-template<typename ARG>
-std::ostream &ProcedureRef<ARG>::Dump(std::ostream &o) const {
+std::ostream &UntypedFunctionRef::Dump(std::ostream &o) const {
   Emit(o, proc_);
   char separator{'('};
-  for (const auto &arg : argument_) {
+  for (const auto &arg : arguments_) {
     Emit(o << separator, arg);
     separator = ',';
   }
@@ -313,7 +313,18 @@ std::ostream &ProcedureRef<ARG>::Dump(std::ostream &o) const {
   return o << ')';
 }
 
-std::ostream &Variable::Dump(std::ostream &o) const { return Emit(o, u); }
+std::ostream &SubroutineCall::Dump(std::ostream &o) const {
+  Emit(o, proc_);
+  char separator{'('};
+  for (const auto &arg : arguments_) {
+    Emit(o << separator, arg);
+    separator = ',';
+  }
+  if (separator == '(') {
+    o << '(';
+  }
+  return o << ')';
+}
 
 std::ostream &ActualSubroutineArg::Dump(std::ostream &o) const {
   return Emit(o, u);
@@ -365,6 +376,11 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
           }},
       u);
 }
+Expr<SubscriptInteger> UntypedFunctionRef::LEN() const {
+  // TODO: the results of the intrinsic functions REPEAT and TRIM have
+  // unpredictable lengths; maybe the concept of LEN() has to become dynamic
+  return proc_.LEN();
+}
 
 // Rank()
 int Component::Rank() const {
@@ -372,18 +388,6 @@ int Component::Rank() const {
   int symbolRank{symbol_->Rank()};
   CHECK(baseRank == 0 || symbolRank == 0);
   return baseRank + symbolRank;
-}
-template<typename A> int ProcedureRef<A>::Rank() const {
-  if constexpr (std::is_same_v<A, ActualFunctionArg>) {  // FunctionRef
-    // TODO: Rank of elemental function reference depends on actual arguments
-    return std::visit(
-        common::visitors{[](IntrinsicProcedure) { return 0 /*TODO!!*/; },
-            [](const Symbol *sym) { return sym->Rank(); },
-            [](const Component &c) { return c.symbol().Rank(); }},
-        proc().u);
-  } else {
-    return 0;
-  }
 }
 int Subscript::Rank() const {
   return std::visit(common::visitors{[](const IndirectSubscriptIntegerExpr &x) {
@@ -399,12 +403,13 @@ int ArrayRef::Rank() const {
   for (std::size_t j{0}; j < subscript.size(); ++j) {
     rank += subscript[j].Rank();
   }
-  int baseRank{std::visit(
-      common::visitors{[](const Symbol *symbol) { return symbol->Rank(); },
-          [](const auto &x) { return x.Rank(); }},
-      u)};
-  CHECK(rank == 0 || baseRank == 0);
-  return baseRank + rank;
+  if (std::holds_alternative<const Symbol *>(u)) {
+    return rank;
+  } else {
+    int baseRank{std::get_if<Component>(&u)->Rank()};
+    CHECK(rank == 0 || baseRank == 0);
+    return baseRank + rank;
+  }
 }
 int CoarrayRef::Rank() const {
   int rank{0};
@@ -425,16 +430,22 @@ int Substring::Rank() const {
       u_);
 }
 int ComplexPart::Rank() const { return complex_.Rank(); }
-int Variable::Rank() const {
-  return std::visit([](const auto &x) { return x.Rank(); }, u);
+int ProcedureDesignator::Rank() const {
+  return std::visit(
+      common::visitors{[](IntrinsicProcedure) { return 0 /*TODO!!*/; },
+          [](const Symbol *sym) { return sym->Rank(); },
+          [](const Component &c) { return c.symbol().Rank(); }},
+      u);
 }
 int ActualSubroutineArg::Rank() const {
-  return std::visit(
-      common::visitors{[](const CopyableIndirection<Expr<SomeType>> &x) {
-                         return x->Rank();
-                       },
-          [](const Label *) { return 0; },
-          [](const auto &x) { return x.Rank(); }},
+  return std::visit(common::visitors{[](const ActualFunctionArg &a) {
+                                       if (a.has_value()) {
+                                         return (*a)->Rank();
+                                       } else {
+                                         return 0;
+                                       }
+                                     },
+                        [](const Label *) { return 0; }},
       u);
 }
 
@@ -461,10 +472,14 @@ const Symbol *Substring::GetSymbol(bool first) const {
     return nullptr;  // substring of character literal
   }
 }
+const Symbol *ProcedureDesignator::GetSymbol() const {
+  return std::visit(common::visitors{[](const Symbol *sym) { return sym; },
+                        [](const Component &c) { return c.GetSymbol(false); },
+                        [](const auto &) -> const Symbol * { return nullptr; }},
+      u);
+}
 
-template class Designator<Type<TypeCategory::Character, 1>>;
-template class Designator<Type<TypeCategory::Character, 2>>;
-template class Designator<Type<TypeCategory::Character, 4>>;
-template class ProcedureRef<ActualFunctionArg>;  // FunctionRef
-template class ProcedureRef<ActualSubroutineArg>;
+FOR_EACH_CHARACTER_KIND(template class Designator)
+FOR_EACH_SPECIFIC_TYPE(template class FunctionRef)
+
 }  // namespace Fortran::evaluate

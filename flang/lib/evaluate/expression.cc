@@ -463,23 +463,11 @@ template<typename T> std::ostream &Constant<T>::Dump(std::ostream &o) const {
 
 template<typename RESULT>
 std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
-  std::visit(
-      common::visitors{[&](const BOZLiteralConstant &x) {
-                         o << "Z'" << x.Hexadecimal() << "'";
-                       },
-          [&](const CopyableIndirection<Substring> &s) { s->Dump(o); },
-          [&](const auto &x) {
-            if constexpr (Result::isSpecificType) {
-              using Ty = std::decay_t<decltype(x)>;
-              if constexpr (std::is_same_v<Ty, FunctionReference<Result>>) {
-                x.reference->Dump(o);
-              } else {
-                x.Dump(o);
-              }
-            } else {
-              x.Dump(o);
-            }
-          }},
+  std::visit(common::visitors{[&](const BOZLiteralConstant &x) {
+                                o << "Z'" << x.Hexadecimal() << "'";
+                              },
+                 [&](const CopyableIndirection<Substring> &s) { s->Dump(o); },
+                 [&](const auto &x) { x.Dump(o); }},
       derived().u);
   return o;
 }
@@ -502,9 +490,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
                 Extremum<SubscriptInteger>{c.left().LEN(), c.right().LEN()}};
           },
           [](const Designator<Result> &dr) { return dr.LEN(); },
-          [](const FunctionReference<Result> &fr) {
-            return fr.reference->proc().LEN();
-          }},
+          [](const FunctionRef<Result> &fr) { return fr.LEN(); }},
       u);
 }
 
@@ -561,78 +547,13 @@ template<typename A> int ExpressionBase<A>::Rank() const {
 // Template instantiations to resolve the "extern template" declarations
 // that appear in expression.h.
 
-template class Expr<Type<TypeCategory::Integer, 1>>;
-template class Expr<Type<TypeCategory::Integer, 2>>;
-template class Expr<Type<TypeCategory::Integer, 4>>;
-template class Expr<Type<TypeCategory::Integer, 8>>;
-template class Expr<Type<TypeCategory::Integer, 16>>;
-template class Expr<Type<TypeCategory::Real, 2>>;
-template class Expr<Type<TypeCategory::Real, 4>>;
-template class Expr<Type<TypeCategory::Real, 8>>;
-template class Expr<Type<TypeCategory::Real, 10>>;
-template class Expr<Type<TypeCategory::Real, 16>>;
-template class Expr<Type<TypeCategory::Complex, 2>>;
-template class Expr<Type<TypeCategory::Complex, 4>>;
-template class Expr<Type<TypeCategory::Complex, 8>>;
-template class Expr<Type<TypeCategory::Complex, 10>>;
-template class Expr<Type<TypeCategory::Complex, 16>>;
-template class Expr<Type<TypeCategory::Character, 1>>;
-template class Expr<Type<TypeCategory::Character, 2>>;
-template class Expr<Type<TypeCategory::Character, 4>>;
-template class Expr<Type<TypeCategory::Logical, 1>>;
-template class Expr<Type<TypeCategory::Logical, 2>>;
-template class Expr<Type<TypeCategory::Logical, 4>>;
-template class Expr<Type<TypeCategory::Logical, 8>>;
-template class Expr<SomeInteger>;
-template class Expr<SomeReal>;
-template class Expr<SomeComplex>;
-template class Expr<SomeCharacter>;
-template class Expr<SomeLogical>;
-template class Expr<SomeType>;
-
-template struct Relational<Type<TypeCategory::Integer, 1>>;
-template struct Relational<Type<TypeCategory::Integer, 2>>;
-template struct Relational<Type<TypeCategory::Integer, 4>>;
-template struct Relational<Type<TypeCategory::Integer, 8>>;
-template struct Relational<Type<TypeCategory::Integer, 16>>;
-template struct Relational<Type<TypeCategory::Real, 2>>;
-template struct Relational<Type<TypeCategory::Real, 4>>;
-template struct Relational<Type<TypeCategory::Real, 8>>;
-template struct Relational<Type<TypeCategory::Real, 10>>;
-template struct Relational<Type<TypeCategory::Real, 16>>;
-template struct Relational<Type<TypeCategory::Character, 1>>;
-template struct Relational<Type<TypeCategory::Character, 2>>;
-template struct Relational<Type<TypeCategory::Character, 4>>;
+FOR_EACH_TYPE_AND_KIND(template class Expr)
+FOR_EACH_INTEGER_KIND(template struct Relational)
+FOR_EACH_REAL_KIND(template struct Relational)
+FOR_EACH_CHARACTER_KIND(template struct Relational)
 template struct Relational<SomeType>;
-
-template struct ExpressionBase<Type<TypeCategory::Integer, 1>>;
-template struct ExpressionBase<Type<TypeCategory::Integer, 2>>;
-template struct ExpressionBase<Type<TypeCategory::Integer, 4>>;
-template struct ExpressionBase<Type<TypeCategory::Integer, 8>>;
-template struct ExpressionBase<Type<TypeCategory::Integer, 16>>;
-template struct ExpressionBase<Type<TypeCategory::Real, 2>>;
-template struct ExpressionBase<Type<TypeCategory::Real, 4>>;
-template struct ExpressionBase<Type<TypeCategory::Real, 8>>;
-template struct ExpressionBase<Type<TypeCategory::Real, 10>>;
-template struct ExpressionBase<Type<TypeCategory::Real, 16>>;
-template struct ExpressionBase<Type<TypeCategory::Complex, 2>>;
-template struct ExpressionBase<Type<TypeCategory::Complex, 4>>;
-template struct ExpressionBase<Type<TypeCategory::Complex, 8>>;
-template struct ExpressionBase<Type<TypeCategory::Complex, 10>>;
-template struct ExpressionBase<Type<TypeCategory::Complex, 16>>;
-template struct ExpressionBase<Type<TypeCategory::Character, 1>>;
-template struct ExpressionBase<Type<TypeCategory::Character, 2>>;
-template struct ExpressionBase<Type<TypeCategory::Character, 4>>;
-template struct ExpressionBase<Type<TypeCategory::Logical, 1>>;
-template struct ExpressionBase<Type<TypeCategory::Logical, 2>>;
-template struct ExpressionBase<Type<TypeCategory::Logical, 4>>;
-template struct ExpressionBase<Type<TypeCategory::Logical, 8>>;
-template struct ExpressionBase<SomeInteger>;
-template struct ExpressionBase<SomeReal>;
-template struct ExpressionBase<SomeComplex>;
-template struct ExpressionBase<SomeCharacter>;
-template struct ExpressionBase<SomeLogical>;
-template struct ExpressionBase<SomeType>;
+FOR_EACH_INTRINSIC_KIND(template struct ExpressionBase)
+FOR_EACH_CATEGORY_TYPE(template struct ExpressionBase)
 
 }  // namespace Fortran::evaluate
 

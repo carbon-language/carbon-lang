@@ -39,7 +39,7 @@ using semantics::Symbol;
 // Forward declarations
 template<typename A> class Expr;
 struct DataRef;
-struct Variable;
+template<typename A> struct Variable;
 
 // Subscript and cosubscript expressions are of a kind that matches the
 // address size, at least at the top level.
@@ -133,8 +133,8 @@ public:
   CoarrayRef(std::vector<const Symbol *> &&,
       std::vector<Expr<SubscriptInteger>> &&,
       std::vector<Expr<SubscriptInteger>> &&);  // TODO: stat & team?
-  CoarrayRef &setStat(Variable &&);
-  CoarrayRef &setTeam(Variable &&, bool isTeamNumber = false);
+  CoarrayRef &set_stat(Variable<DefaultInteger> &&);
+  CoarrayRef &set_team(Variable<DefaultInteger> &&, bool isTeamNumber = false);
 
   int Rank() const;
   const Symbol *GetSymbol(bool first) const {
@@ -150,7 +150,7 @@ public:
 private:
   std::vector<const Symbol *> base_;
   std::vector<Expr<SubscriptInteger>> subscript_, cosubscript_;
-  std::optional<CopyableIndirection<Variable>> stat_, team_;
+  std::optional<CopyableIndirection<Variable<DefaultInteger>>> stat_, team_;
   bool teamIsTeamNumber_{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
 
@@ -221,7 +221,8 @@ private:
 
 // R901 designator is the most general data reference object, apart from
 // calls to pointer-valued functions.  Its variant holds everything that
-// a DataRef can, and (when appropriate) a substring or complex part.
+// a DataRef can, and, when appropriate for the result type, a substring
+// reference or complex part (%RE/%IM).
 template<typename A> class Designator {
   using DataRefs = decltype(DataRef::u);
   using MaybeSubstring =
@@ -275,38 +276,67 @@ struct ProcedureDesignator {
   explicit ProcedureDesignator(IntrinsicProcedure p) : u{p} {}
   explicit ProcedureDesignator(const Symbol &n) : u{&n} {}
   Expr<SubscriptInteger> LEN() const;
+  int Rank() const;
+  const Symbol *GetSymbol() const;
   std::ostream &Dump(std::ostream &) const;
 
   std::variant<IntrinsicProcedure, const Symbol *, Component> u;
 };
 
-template<typename ARG> class ProcedureRef {
+using ActualFunctionArg = std::optional<CopyableIndirection<Expr<SomeType>>>;
+
+class UntypedFunctionRef {
 public:
-  using ArgumentType = CopyableIndirection<ARG>;
-  CLASS_BOILERPLATE(ProcedureRef)
-  ProcedureRef(ProcedureDesignator &&p, std::vector<ArgumentType> &&a)
-    : proc_{std::move(p)}, argument_(std::move(a)) {}
+  using Argument = ActualFunctionArg;
+  using Arguments = std::vector<Argument>;
+  CLASS_BOILERPLATE(UntypedFunctionRef)
+  UntypedFunctionRef(ProcedureDesignator &&p, Arguments &&a, int r)
+    : proc_{std::move(p)}, arguments_(std::move(a)), rank_{r} {}
+  UntypedFunctionRef(ProcedureDesignator &&p, Arguments &&a)
+    : proc_{std::move(p)}, arguments_(std::move(a)) {}
+
   const ProcedureDesignator &proc() const { return proc_; }
-  const std::vector<ArgumentType> &argument() const { return argument_; }
-  int Rank() const;
+  const Arguments &arguments() const { return arguments_; }
+
+  Expr<SubscriptInteger> LEN() const;
+  int Rank() const { return rank_; }
   std::ostream &Dump(std::ostream &) const;
 
-private:
+protected:
   ProcedureDesignator proc_;
-  std::vector<ArgumentType> argument_;
+  Arguments arguments_;
+  int rank_{proc_.Rank()};
 };
 
-// Subtlety: There is a distinction that must be maintained here between an
-// actual argument expression that *is* a variable and one that is not,
-// e.g. between X and (X).
-using ActualFunctionArg = CopyableIndirection<Expr<SomeType>>;
-using FunctionRef = ProcedureRef<ActualFunctionArg>;
+template<typename A> struct FunctionRef : public UntypedFunctionRef {
+  using Result = A;
+  static_assert(Result::isSpecificType);
+  // Subtlety: There is a distinction that must be maintained here between an
+  // actual argument expression that *is* a variable and one that is not,
+  // e.g. between X and (X).  The parser attempts to parse each argument
+  // first as a variable, then as an expression, and the distinction appears
+  // in the parse tree.
+  using Argument = ActualFunctionArg;
+  using Arguments = std::vector<Argument>;
+  CLASS_BOILERPLATE(FunctionRef)
+  explicit FunctionRef(UntypedFunctionRef &&ufr)
+    : UntypedFunctionRef{std::move(ufr)} {}
+  FunctionRef(ProcedureDesignator &&p, Arguments &&a, int r = 0)
+    : UntypedFunctionRef{std::move(p), std::move(a), r} {}
+};
 
-struct Variable {
+template<typename A> struct Variable {
+  using Result = A;
+  static_assert(Result::isSpecificType);
   EVALUATE_UNION_CLASS_BOILERPLATE(Variable)
-  int Rank() const;
-  std::ostream &Dump(std::ostream &) const;
-  std::variant<DataRef, Substring, ComplexPart, FunctionRef> u;
+  int Rank() const {
+    return std::visit([](const auto &x) { return x.Rank(); }, u);
+  }
+  std::ostream &Dump(std::ostream &o) const {
+    std::visit([&](const auto &x) { x.Dump(o); }, u);
+    return o;
+  }
+  std::variant<Designator<Result>, FunctionRef<Result>> u;
 };
 
 struct Label {  // TODO: this is a placeholder
@@ -319,22 +349,33 @@ struct Label {  // TODO: this is a placeholder
 class ActualSubroutineArg {
 public:
   EVALUATE_UNION_CLASS_BOILERPLATE(ActualSubroutineArg)
-  explicit ActualSubroutineArg(Expr<SomeType> &&x) : u{std::move(x)} {}
+  explicit ActualSubroutineArg(ActualFunctionArg &&x) : u{std::move(x)} {}
   explicit ActualSubroutineArg(const Label &l) : u{&l} {}
   int Rank() const;
   std::ostream &Dump(std::ostream &) const;
 
 public:
-  std::variant<CopyableIndirection<Expr<SomeType>>, Variable, const Label *> u;
+  std::variant<ActualFunctionArg, const Label *> u;
 };
 
-using SubroutineRef = ProcedureRef<ActualSubroutineArg>;
+class SubroutineCall {
+public:
+  using Argument = ActualSubroutineArg;
+  using Arguments = std::vector<Argument>;
+  CLASS_BOILERPLATE(SubroutineCall)
+  SubroutineCall(ProcedureDesignator &&p, Arguments &&a)
+    : proc_{std::move(p)}, arguments_(std::move(a)) {}
+  const ProcedureDesignator &proc() const { return proc_; }
+  const Arguments &arguments() const { return arguments_; }
+  int Rank() const { return 0; }  // TODO: elemental subroutine representation
+  std::ostream &Dump(std::ostream &) const;
 
-extern template class Designator<Type<TypeCategory::Character, 1>>;
-extern template class Designator<Type<TypeCategory::Character, 2>>;
-extern template class Designator<Type<TypeCategory::Character, 4>>;
-extern template class ProcedureRef<ActualFunctionArg>;  // FunctionRef
-extern template class ProcedureRef<ActualSubroutineArg>;
+private:
+  ProcedureDesignator proc_;
+  Arguments arguments_;
+};
+
+FOR_EACH_CHARACTER_KIND(extern template class Designator)
 
 }  // namespace Fortran::evaluate
 

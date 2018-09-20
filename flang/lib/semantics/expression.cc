@@ -180,6 +180,9 @@ struct ExprAnalyzer {
   MaybeExpr TopLevelChecks(DataRef &&);
   void CheckUnsubscriptedComponent(const Component &);
 
+  std::optional<ProcedureDesignator> Procedure(
+      const parser::ProcedureDesignator &);
+
   FoldingContext context;
   const semantics::IntrinsicTypeDefaultKinds &defaults;
 };
@@ -480,12 +483,6 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
   return {AsGenericExpr(std::move(value.value))};
 }
 
-template<TypeCategory CATEGORY, typename DATAREF = DataRef>
-MaybeExpr DesignateHelper(int kind, DATAREF &&dataRef) {
-  return common::SearchDynamicTypes(
-      TypeKindVisitor<CATEGORY, Designator, DATAREF>{kind, std::move(dataRef)});
-}
-
 static std::optional<DynamicType> CategorizeSymbolType(const Symbol &symbol) {
   if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
     if (details->type().has_value()) {
@@ -504,40 +501,57 @@ static std::optional<DynamicType> CategorizeSymbolType(const Symbol &symbol) {
   return std::nullopt;
 }
 
+// Wraps a object in an explicitly typed representation (e.g., Designator<>
+// or FunctionRef<>) as instantiated on a dynamic type.
+// TODO: move to tools.h?
+template<TypeCategory CATEGORY, template<typename> typename WRAPPER,
+    typename WRAPPED>
+MaybeExpr WrapperHelper(int kind, WRAPPED &&x) {
+  return common::SearchDynamicTypes(
+      TypeKindVisitor<CATEGORY, WRAPPER, WRAPPED>{kind, std::move(x)});
+}
+
+template<template<typename> typename WRAPPER, typename WRAPPED>
+MaybeExpr TypedWrapper(DynamicType &&dyType, WRAPPED &&x) {
+  switch (dyType.category) {
+  case TypeCategory::Integer:
+    return WrapperHelper<TypeCategory::Integer, WRAPPER, WRAPPED>(
+        dyType.kind, std::move(x));
+  case TypeCategory::Real:
+    return WrapperHelper<TypeCategory::Real, WRAPPER, WRAPPED>(
+        dyType.kind, std::move(x));
+  case TypeCategory::Complex:
+    return WrapperHelper<TypeCategory::Complex, WRAPPER, WRAPPED>(
+        dyType.kind, std::move(x));
+  case TypeCategory::Character:
+    return WrapperHelper<TypeCategory::Character, WRAPPER, WRAPPED>(
+        dyType.kind, std::move(x));
+  case TypeCategory::Logical:
+    return WrapperHelper<TypeCategory::Logical, WRAPPER, WRAPPED>(
+        dyType.kind, std::move(x));
+  case TypeCategory::Derived:
+    return AsGenericExpr(
+        Expr<SomeDerived>{*dyType.derived, WRAPPER<SomeDerived>{std::move(x)}});
+  default: CRASH_NO_CASE;
+  }
+}
+
 // Wraps a data reference in a typed Designator<>.
 static MaybeExpr Designate(DataRef &&dataRef) {
   const Symbol &symbol{*dataRef.GetSymbol(false)};
-  if (std::optional<DynamicType> dynamicType{CategorizeSymbolType(symbol)}) {
-    switch (dynamicType->category) {
-    case TypeCategory::Integer:
-      return DesignateHelper<TypeCategory::Integer>(
-          dynamicType->kind, std::move(dataRef));
-    case TypeCategory::Real:
-      return DesignateHelper<TypeCategory::Real>(
-          dynamicType->kind, std::move(dataRef));
-    case TypeCategory::Complex:
-      return DesignateHelper<TypeCategory::Complex>(
-          dynamicType->kind, std::move(dataRef));
-    case TypeCategory::Character:
-      return DesignateHelper<TypeCategory::Character>(
-          dynamicType->kind, std::move(dataRef));
-    case TypeCategory::Logical:
-      return DesignateHelper<TypeCategory::Logical>(
-          dynamicType->kind, std::move(dataRef));
-    case TypeCategory::Derived:
-      return AsGenericExpr(Expr<SomeDerived>{
-          *dynamicType->derived, Designator<SomeDerived>{std::move(dataRef)}});
-    // TODO: graceful errors on CLASS(*) and TYPE(*) misusage
-    default: CRASH_NO_CASE;
-    }
+  if (std::optional<DynamicType> dyType{CategorizeSymbolType(symbol)}) {
+    return TypedWrapper<Designator, DataRef>(
+        std::move(*dyType), std::move(dataRef));
   }
+  // TODO: graceful errors on CLASS(*) and TYPE(*) misusage
   return std::nullopt;
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
   if (n.symbol == nullptr) {
-    context.messages.Say(
-        n.source, "TODO INTERNAL: name was not resolved to a symbol"_err_en_US);
+    context.messages.Say(n.source,
+        "TODO INTERNAL: name '%s' was not resolved to a symbol"_err_en_US,
+        n.ToString().data());
   } else if (n.symbol->attrs().test(semantics::Attr::PARAMETER)) {
     context.messages.Say(
         "TODO: PARAMETER references not yet implemented"_err_en_US);
@@ -579,8 +593,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
           if (std::optional<DynamicType> dynamicType{
                   CategorizeSymbolType(symbol)}) {
             if (dynamicType->category == TypeCategory::Character) {
-              return DesignateHelper<TypeCategory::Character, Substring>(
-                  dynamicType->kind,
+              return WrapperHelper<TypeCategory::Character, Designator,
+                  Substring>(dynamicType->kind,
                   Substring{
                       std::move(*checked), std::move(first), std::move(last)});
             }
@@ -820,11 +834,113 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureConstructor &) {
   return std::nullopt;
 }
 
-MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &) {
+std::optional<ProcedureDesignator> ExprAnalyzer::Procedure(
+    const parser::ProcedureDesignator &pd) {
+  return std::visit(
+      common::visitors{
+          [&](const parser::Name &n) -> std::optional<ProcedureDesignator> {
+            if (n.symbol == nullptr) {
+              context.messages.Say(
+                  "TODO INTERNAL no symbol for procedure designator name '%s'"_err_en_US,
+                  n.ToString().data());
+              return std::nullopt;
+            }
+            return std::visit(
+                common::visitors{[&](const semantics::ProcEntityDetails &p)
+                                     -> std::optional<ProcedureDesignator> {
+                                   // TODO: capture &/or check interface vs.
+                                   // actual arguments
+                                   return {ProcedureDesignator{*n.symbol}};
+                                 },
+                    [&](const auto &) -> std::optional<ProcedureDesignator> {
+                      context.messages.Say(
+                          "TODO: unimplemented/invalid kind of symbol as procedure designator '%s'"_err_en_US,
+                          n.ToString().data());
+                      return std::nullopt;
+                    }},
+                n.symbol->details());
+          },
+          [&](const parser::ProcComponentRef &pcr)
+              -> std::optional<ProcedureDesignator> {
+            if (MaybeExpr component{AnalyzeHelper(*this, pcr.v)}) {
+              // TODO distinguish PCR from TBP
+              // TODO optional PASS argument for TBP
+              context.messages.Say("TODO: proc component ref"_err_en_US);
+              return std::nullopt;
+            } else {
+              return std::nullopt;
+            }
+          },
+      },
+      pd.u);
+}
+
+MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
   // TODO: C1002: Allow a whole assumed-size array to appear if the dummy
   // argument would accept it.  Handle by special-casing the context
   // ActualArg -> Variable -> Designator.
-  context.messages.Say("TODO: FunctionReference unimplemented"_err_en_US);
+
+  std::optional<ProcedureDesignator> proc{
+      Procedure(std::get<parser::ProcedureDesignator>(funcRef.v.t))};
+
+  typename UntypedFunctionRef::Arguments arguments;
+  for (const auto &arg :
+      std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t)) {
+    std::optional<parser::CharBlock> keyword;
+    if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
+      keyword = argKW->v.source;
+    }
+    // TODO: look up dummy argument info by number/keyword
+    MaybeExpr actualArgExpr;
+    std::visit(
+        common::visitors{[&](const common::Indirection<parser::Variable> &v) {
+                           actualArgExpr = AnalyzeHelper(*this, v);
+                         },
+            [&](const common::Indirection<parser::Expr> &x) {
+              actualArgExpr = Analyze(*x);
+            },
+            [&](const parser::Name &n) {
+              context.messages.Say("TODO: procedure name actual arg"_err_en_US);
+            },
+            [&](const parser::ProcComponentRef &) {
+              context.messages.Say(
+                  "TODO: proc component ref actual arg"_err_en_US);
+            },
+            [&](const parser::AltReturnSpec &) {
+              context.messages.Say(
+                  "alternate return specification cannot appear on function reference"_err_en_US);
+            },
+            [&](const parser::ActualArg::PercentRef &) {
+              context.messages.Say("TODO: %REF() argument"_err_en_US);
+            },
+            [&](const parser::ActualArg::PercentVal &) {
+              context.messages.Say("TODO: %VAL() argument"_err_en_US);
+            }},
+        std::get<parser::ActualArg>(arg.t).u);
+    if (actualArgExpr.has_value()) {
+      CopyableIndirection<Expr<SomeType>> indExpr{std::move(*actualArgExpr)};
+      arguments.emplace_back(std::move(indExpr));
+    } else {
+      arguments.emplace_back();
+    }
+  }
+  // TODO: validate arguments against interface
+  // TODO: distinguish applications of elemental functions
+  // TODO: map generic to specific procedure
+
+  if (proc.has_value()) {
+    std::optional<DynamicType> dyType;
+    if (const Symbol * symbol{proc->GetSymbol()}) {
+      dyType = CategorizeSymbolType(*symbol);
+    } else {
+      // TODO: intrinsic function result type - this is a placeholder
+      dyType = DynamicType{TypeCategory::Real, 4};
+    }
+    if (dyType.has_value()) {
+      return TypedWrapper<FunctionRef, UntypedFunctionRef>(std::move(*dyType),
+          UntypedFunctionRef{std::move(*proc), std::move(arguments)});
+    }
+  }
   return std::nullopt;
 }
 
@@ -1120,7 +1236,7 @@ public:
         expr.typedExpr.reset(
             new evaluate::GenericExprWrapper{std::move(*checked)});
       } else {
-        std::cout << "expression analysis failed for this expression: ";
+        std::cout << "TODO: expression analysis failed for this expression: ";
         DumpTree(std::cout, expr);
       }
     }

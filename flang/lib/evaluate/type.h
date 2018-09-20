@@ -317,5 +317,53 @@ struct SomeType {
   using Scalar = GenericScalar;
 };
 
+// For "[extern] template class", &c. boilerplate
+#define FOR_EACH_INTEGER_KIND(PREFIX) \
+  PREFIX<Type<TypeCategory::Integer, 1>>; \
+  PREFIX<Type<TypeCategory::Integer, 2>>; \
+  PREFIX<Type<TypeCategory::Integer, 4>>; \
+  PREFIX<Type<TypeCategory::Integer, 8>>; \
+  PREFIX<Type<TypeCategory::Integer, 16>>;
+#define FOR_EACH_REAL_KIND(PREFIX) \
+  PREFIX<Type<TypeCategory::Real, 2>>; \
+  PREFIX<Type<TypeCategory::Real, 4>>; \
+  PREFIX<Type<TypeCategory::Real, 8>>; \
+  PREFIX<Type<TypeCategory::Real, 10>>; \
+  PREFIX<Type<TypeCategory::Real, 16>>;
+#define FOR_EACH_COMPLEX_KIND(PREFIX) \
+  PREFIX<Type<TypeCategory::Complex, 2>>; \
+  PREFIX<Type<TypeCategory::Complex, 4>>; \
+  PREFIX<Type<TypeCategory::Complex, 8>>; \
+  PREFIX<Type<TypeCategory::Complex, 10>>; \
+  PREFIX<Type<TypeCategory::Complex, 16>>;
+#define FOR_EACH_CHARACTER_KIND(PREFIX) \
+  PREFIX<Type<TypeCategory::Character, 1>>; \
+  PREFIX<Type<TypeCategory::Character, 2>>; \
+  PREFIX<Type<TypeCategory::Character, 4>>;
+#define FOR_EACH_LOGICAL_KIND(PREFIX) \
+  PREFIX<Type<TypeCategory::Logical, 1>>; \
+  PREFIX<Type<TypeCategory::Logical, 2>>; \
+  PREFIX<Type<TypeCategory::Logical, 4>>; \
+  PREFIX<Type<TypeCategory::Logical, 8>>;
+#define FOR_EACH_INTRINSIC_KIND(PREFIX) \
+  FOR_EACH_INTEGER_KIND(PREFIX) \
+  FOR_EACH_REAL_KIND(PREFIX) \
+  FOR_EACH_COMPLEX_KIND(PREFIX) \
+  FOR_EACH_CHARACTER_KIND(PREFIX) \
+  FOR_EACH_LOGICAL_KIND(PREFIX)
+#define FOR_EACH_SPECIFIC_TYPE(PREFIX) \
+  FOR_EACH_INTRINSIC_KIND(PREFIX) \
+  PREFIX<SomeDerived>;
+#define FOR_EACH_CATEGORY_TYPE(PREFIX) \
+  PREFIX<SomeInteger>; \
+  PREFIX<SomeReal>; \
+  PREFIX<SomeComplex>; \
+  PREFIX<SomeCharacter>; \
+  PREFIX<SomeLogical>; \
+  PREFIX<SomeType>;
+#define FOR_EACH_TYPE_AND_KIND(PREFIX) \
+  FOR_EACH_SPECIFIC_TYPE(PREFIX) \
+  FOR_EACH_CATEGORY_TYPE(PREFIX)
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

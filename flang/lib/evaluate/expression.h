@@ -78,13 +78,6 @@ template<typename T> struct Constant {
 // to be used in only a few situations.
 using BOZLiteralConstant = typename LargestReal::Scalar::Word;
 
-template<typename T> struct FunctionReference {
-  using Result = T;
-  static_assert(Result::isSpecificType);
-  int Rank() const { return reference->Rank(); }
-  CopyableIndirection<FunctionRef> reference;
-};
-
 // Operations always have specific Fortran result types (i.e., with known
 // intrinsic type category and kind parameter value).  The classes that
 // represent the operations all inherit from this Operation<> base class
@@ -449,8 +442,8 @@ private:
   using Operations = std::variant<Parentheses<Result>, Negate<Result>,
       Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
       Power<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, Designator<Result>,
-      FunctionReference<Result>>;
+  using Others =
+      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -475,8 +468,8 @@ private:
   using Operations = std::variant<ComplexComponent<KIND>, Parentheses<Result>,
       Negate<Result>, Add<Result>, Subtract<Result>, Multiply<Result>,
       Divide<Result>, Power<Result>, RealToIntPower<Result>, Extremum<Result>>;
-  using Others = std::variant<Constant<Result>, Designator<Result>,
-      FunctionReference<Result>>;
+  using Others =
+      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Conversions, Others> u;
@@ -496,28 +489,16 @@ public:
   using Operations =
       std::variant<Parentheses<Result>, Multiply<Result>, Divide<Result>,
           Power<Result>, RealToIntPower<Result>, ComplexConstructor<KIND>>;
-  using Others = std::variant<Constant<Result>, Designator<Result>,
-      FunctionReference<Result>>;
+  using Others =
+      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Others> u;
 };
 
-extern template class Expr<Type<TypeCategory::Integer, 1>>;
-extern template class Expr<Type<TypeCategory::Integer, 2>>;
-extern template class Expr<Type<TypeCategory::Integer, 4>>;
-extern template class Expr<Type<TypeCategory::Integer, 8>>;
-extern template class Expr<Type<TypeCategory::Integer, 16>>;
-extern template class Expr<Type<TypeCategory::Real, 2>>;
-extern template class Expr<Type<TypeCategory::Real, 4>>;
-extern template class Expr<Type<TypeCategory::Real, 8>>;
-extern template class Expr<Type<TypeCategory::Real, 10>>;
-extern template class Expr<Type<TypeCategory::Real, 16>>;
-extern template class Expr<Type<TypeCategory::Complex, 2>>;
-extern template class Expr<Type<TypeCategory::Complex, 4>>;
-extern template class Expr<Type<TypeCategory::Complex, 8>>;
-extern template class Expr<Type<TypeCategory::Complex, 10>>;
-extern template class Expr<Type<TypeCategory::Complex, 16>>;
+FOR_EACH_INTEGER_KIND(extern template class Expr)
+FOR_EACH_REAL_KIND(extern template class Expr)
+FOR_EACH_COMPLEX_KIND(extern template class Expr)
 
 template<int KIND>
 class Expr<Type<TypeCategory::Character, KIND>>
@@ -531,14 +512,12 @@ public:
 
   Expr<SubscriptInteger> LEN() const;
 
-  std::variant<Constant<Result>, Designator<Result>, FunctionReference<Result>,
+  std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>,
       Parentheses<Result>, Concat<KIND>, Extremum<Result>>
       u;
 };
 
-extern template class Expr<Type<TypeCategory::Character, 1>>;
-extern template class Expr<Type<TypeCategory::Character, 2>>;
-extern template class Expr<Type<TypeCategory::Character, 4>>;
+FOR_EACH_CHARACTER_KIND(extern template class Expr)
 
 // The Relational class template is a helper for constructing logical
 // expressions with polymorphism over the cross product of the possible
@@ -582,19 +561,9 @@ public:
   common::MapTemplate<Relational, DirectlyComparableTypes> u;
 };
 
-extern template struct Relational<Type<TypeCategory::Integer, 1>>;
-extern template struct Relational<Type<TypeCategory::Integer, 2>>;
-extern template struct Relational<Type<TypeCategory::Integer, 4>>;
-extern template struct Relational<Type<TypeCategory::Integer, 8>>;
-extern template struct Relational<Type<TypeCategory::Integer, 16>>;
-extern template struct Relational<Type<TypeCategory::Real, 2>>;
-extern template struct Relational<Type<TypeCategory::Real, 4>>;
-extern template struct Relational<Type<TypeCategory::Real, 8>>;
-extern template struct Relational<Type<TypeCategory::Real, 10>>;
-extern template struct Relational<Type<TypeCategory::Real, 16>>;
-extern template struct Relational<Type<TypeCategory::Character, 1>>;
-extern template struct Relational<Type<TypeCategory::Character, 2>>;
-extern template struct Relational<Type<TypeCategory::Character, 4>>;
+FOR_EACH_INTEGER_KIND(extern template struct Relational)
+FOR_EACH_REAL_KIND(extern template struct Relational)
+FOR_EACH_CHARACTER_KIND(extern template struct Relational)
 extern template struct Relational<SomeType>;
 
 template<int KIND>
@@ -611,17 +580,14 @@ private:
   using Operations =
       std::variant<Convert<Result, TypeCategory::Logical>, Parentheses<Result>,
           Not<KIND>, LogicalOperation<KIND>, Relational<SomeType>>;
-  using Others = std::variant<Constant<Result>, Designator<Result>,
-      FunctionReference<Result>>;
+  using Others =
+      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
 
 public:
   common::CombineVariants<Operations, Others> u;
 };
 
-extern template class Expr<Type<TypeCategory::Logical, 1>>;
-extern template class Expr<Type<TypeCategory::Logical, 2>>;
-extern template class Expr<Type<TypeCategory::Logical, 4>>;
-extern template class Expr<Type<TypeCategory::Logical, 8>>;
+FOR_EACH_LOGICAL_KIND(extern template class Expr)
 
 // A polymorphic expression of known intrinsic type category, but dynamic
 // kind, represented as a discriminated union over Expr<Type<CAT, K>>
@@ -649,7 +615,7 @@ public:
     : result{std::move(r)}, u{std::move(x)} {}
 
   Result result;
-  std::variant<Designator<Result>, FunctionReference<Result>> u;
+  std::variant<Designator<Result>, FunctionRef<Result>> u;
 };
 
 // A completely generic expression, polymorphic across all of the intrinsic type
@@ -700,41 +666,9 @@ struct GenericExprWrapper {
   Expr<SomeType> v;
 };
 
-extern template class Expr<SomeInteger>;
-extern template class Expr<SomeReal>;
-extern template class Expr<SomeComplex>;
-extern template class Expr<SomeCharacter>;
-extern template class Expr<SomeLogical>;
-extern template class Expr<SomeType>;
-
-extern template struct ExpressionBase<Type<TypeCategory::Integer, 1>>;
-extern template struct ExpressionBase<Type<TypeCategory::Integer, 2>>;
-extern template struct ExpressionBase<Type<TypeCategory::Integer, 4>>;
-extern template struct ExpressionBase<Type<TypeCategory::Integer, 8>>;
-extern template struct ExpressionBase<Type<TypeCategory::Integer, 16>>;
-extern template struct ExpressionBase<Type<TypeCategory::Real, 2>>;
-extern template struct ExpressionBase<Type<TypeCategory::Real, 4>>;
-extern template struct ExpressionBase<Type<TypeCategory::Real, 8>>;
-extern template struct ExpressionBase<Type<TypeCategory::Real, 10>>;
-extern template struct ExpressionBase<Type<TypeCategory::Real, 16>>;
-extern template struct ExpressionBase<Type<TypeCategory::Complex, 2>>;
-extern template struct ExpressionBase<Type<TypeCategory::Complex, 4>>;
-extern template struct ExpressionBase<Type<TypeCategory::Complex, 8>>;
-extern template struct ExpressionBase<Type<TypeCategory::Complex, 10>>;
-extern template struct ExpressionBase<Type<TypeCategory::Complex, 16>>;
-extern template struct ExpressionBase<Type<TypeCategory::Character, 1>>;
-extern template struct ExpressionBase<Type<TypeCategory::Character, 2>>;
-extern template struct ExpressionBase<Type<TypeCategory::Character, 4>>;
-extern template struct ExpressionBase<Type<TypeCategory::Logical, 1>>;
-extern template struct ExpressionBase<Type<TypeCategory::Logical, 2>>;
-extern template struct ExpressionBase<Type<TypeCategory::Logical, 4>>;
-extern template struct ExpressionBase<Type<TypeCategory::Logical, 8>>;
-extern template struct ExpressionBase<SomeInteger>;
-extern template struct ExpressionBase<SomeReal>;
-extern template struct ExpressionBase<SomeComplex>;
-extern template struct ExpressionBase<SomeCharacter>;
-extern template struct ExpressionBase<SomeLogical>;
-extern template struct ExpressionBase<SomeType>;
+FOR_EACH_CATEGORY_TYPE(extern template class Expr)
+FOR_EACH_INTRINSIC_KIND(extern template struct ExpressionBase)
+FOR_EACH_CATEGORY_TYPE(extern template struct ExpressionBase)
 
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_
