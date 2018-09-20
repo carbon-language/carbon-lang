@@ -342,7 +342,7 @@ static bool getZFlag(opt::InputArgList &Args, StringRef K1, StringRef K2,
   return Default;
 }
 
-static bool isKnown(StringRef S) {
+static bool isKnownZFlag(StringRef S) {
   return S == "combreloc" || S == "copyreloc" || S == "defs" ||
          S == "execstack" || S == "global" || S == "hazardplt" ||
          S == "initfirst" || S == "interpose" ||
@@ -358,7 +358,7 @@ static bool isKnown(StringRef S) {
 // Report an error for an unknown -z option.
 static void checkZOptions(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_z))
-    if (!isKnown(Arg->getValue()))
+    if (!isKnownZFlag(Arg->getValue()))
       error("unknown -z value: " + StringRef(Arg->getValue()));
 }
 
