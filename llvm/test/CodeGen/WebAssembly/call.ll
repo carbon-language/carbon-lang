@@ -1,5 +1,5 @@
-; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -wasm-keep-registers -wasm-temporary-workarounds=false | FileCheck %s
-; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -wasm-keep-registers -fast-isel -fast-isel-abort=1 -wasm-temporary-workarounds=false | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -wasm-keep-registers -wasm-temporary-workarounds=false -mattr=+sign-ext,+simd128 | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -disable-wasm-fallthrough-return-opt -wasm-keep-registers -fast-isel -fast-isel-abort=1 -wasm-temporary-workarounds=false -mattr=+sign-ext,+simd128 | FileCheck %s
 
 ; Test that basic call operations assemble as expected.
 
@@ -12,6 +12,7 @@ declare i32 @i32_binary(i32, i32)
 declare i64 @i64_nullary()
 declare float @float_nullary()
 declare double @double_nullary()
+declare <16 x i8> @v128_nullary()
 declare void @void_nullary()
 
 ; CHECK-LABEL: call_i32_nullary:
@@ -48,6 +49,15 @@ define float @call_float_nullary() {
 define double @call_double_nullary() {
   %r = call double @double_nullary()
   ret double %r
+}
+
+; CHECK-LABEL: call_v128_nullary:
+; CHECK-NEXT: .result v128{{$}}
+; CHECK-NEXT: {{^}} v128.call $push[[NUM:[0-9]+]]=, v128_nullary@FUNCTION{{$}}
+; CHECK-NEXT: return $pop[[NUM]]{{$}}
+define <16 x i8> @call_v128_nullary() {
+  %r = call <16 x i8> @v128_nullary()
+  ret <16 x i8> %r
 }
 
 ; CHECK-LABEL: call_void_nullary:
@@ -100,6 +110,17 @@ define void @call_indirect_void(void ()* %callee) {
 define i32 @call_indirect_i32(i32 ()* %callee) {
   %t = call i32 %callee()
   ret i32 %t
+}
+
+; CHECK-LABEL: call_indirect_v128:
+; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .result v128{{$}}
+; CHECK-NEXT: get_local $push[[L0:[0-9]+]]=, 0{{$}}
+; CHECK-NEXT: {{^}} v128.call_indirect $push[[NUM:[0-9]+]]=, $pop[[L0]]{{$}}
+; CHECK-NEXT: return $pop[[NUM]]{{$}}
+define <16 x i8> @call_indirect_v128(<16 x i8> ()* %callee) {
+  %t = call <16 x i8> %callee()
+  ret <16 x i8> %t
 }
 
 ; CHECK-LABEL: call_indirect_arg:
