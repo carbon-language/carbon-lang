@@ -31021,74 +31021,6 @@ combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
   return V;
 }
 
-/// Search for a combinable shuffle across a chain ending in pshuflw or
-/// pshufhw.
-///
-/// We walk up the chain, skipping shuffles of the other half and looking
-/// through shuffles which switch halves trying to find a shuffle of the same
-/// pair of dwords.
-static bool combineRedundantHalfShuffle(SDValue N, MutableArrayRef<int> Mask,
-                                        SelectionDAG &DAG,
-                                        TargetLowering::DAGCombinerInfo &DCI) {
-  assert(
-      (N.getOpcode() == X86ISD::PSHUFLW || N.getOpcode() == X86ISD::PSHUFHW) &&
-      "Called with something other than an x86 128-bit half shuffle!");
-  SDLoc DL(N);
-  unsigned CombineOpcode = N.getOpcode();
-
-  // Walk up a single-use chain looking for a combinable shuffle.
-  SDValue V = N.getOperand(0);
-  for (; V.hasOneUse(); V = V.getOperand(0)) {
-    switch (V.getOpcode()) {
-    default:
-      return false; // Nothing combined!
-
-    case ISD::BITCAST:
-      // Skip bitcasts as we always know the type for the target specific
-      // instructions.
-      continue;
-
-    case X86ISD::PSHUFLW:
-    case X86ISD::PSHUFHW:
-      if (V.getOpcode() == CombineOpcode)
-        break;
-
-      // Other-half shuffles are no-ops.
-      continue;
-    }
-    // Break out of the loop if we break out of the switch.
-    break;
-  }
-
-  if (!V.hasOneUse())
-    // We fell out of the loop without finding a viable combining instruction.
-    return false;
-
-  // Combine away the bottom node as its shuffle will be accumulated into
-  // a preceding shuffle.
-  DCI.CombineTo(N.getNode(), N.getOperand(0), /*AddTo*/ true);
-
-  // Record the old value.
-  SDValue Old = V;
-
-  // Merge this node's mask and our incoming mask (adjusted to account for all
-  // the pshufd instructions encountered).
-  SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
-  for (int &M : Mask)
-    M = VMask[M];
-  V = DAG.getNode(V.getOpcode(), DL, MVT::v8i16, V.getOperand(0),
-                  getV4X86ShuffleImm8ForMask(Mask, DL, DAG));
-
-  // Check that the shuffles didn't cancel each other out. If not, we need to
-  // combine to the new one.
-  if (Old != V)
-    // Replace the combinable shuffle with the combined one, updating all users
-    // so that we re-evaluate the chain here.
-    DCI.CombineTo(Old.getNode(), V, /*AddTo*/ true);
-
-  return true;
-}
-
 /// Try to combine x86 target specific shuffles.
 static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
                                     TargetLowering::DAGCombinerInfo &DCI,
@@ -31319,9 +31251,6 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
   case X86ISD::PSHUFLW:
   case X86ISD::PSHUFHW:
     assert(VT.getVectorElementType() == MVT::i16 && "Bad word shuffle type!");
-
-    if (combineRedundantHalfShuffle(N, Mask, DAG, DCI))
-      return SDValue(); // We combined away this shuffle, so we're done.
 
     // See if this reduces to a PSHUFD which is no more expensive and can
     // combine with more operations. Note that it has to at least flip the
