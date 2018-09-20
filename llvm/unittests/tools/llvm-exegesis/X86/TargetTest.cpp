@@ -99,22 +99,17 @@ Matcher<MCInst> IsStackDeallocate(unsigned Size) {
       ElementsAre(IsReg(llvm::X86::RSP), IsReg(llvm::X86::RSP), IsImm(Size)));
 }
 
-static const char kTriple[] = "x86_64-unknown-linux";
-static const char kFeaturesEmpty[] = "";
-static const char kFeaturesAvx[] = "+avx";
-static const char kFeaturesAvx512VL[] = "+avx512vl";
-static const char kCpuCore2[] = "core2";
+constexpr const char kTriple[] = "x86_64-unknown-linux";
 
-template <const char *CPU, const char *Features>
 class X86TargetTest : public ::testing::Test {
 protected:
-  X86TargetTest()
+  X86TargetTest(const char *Features)
       : ExegesisTarget_(ExegesisTarget::lookup(llvm::Triple(kTriple))) {
     EXPECT_THAT(ExegesisTarget_, NotNull());
     std::string error;
     Target_ = llvm::TargetRegistry::lookupTarget(kTriple, error);
     EXPECT_THAT(Target_, NotNull());
-    STI_.reset(Target_->createMCSubtargetInfo(kTriple, kCpuCore2, Features));
+    STI_.reset(Target_->createMCSubtargetInfo(kTriple, "core2", Features));
   }
 
   static void SetUpTestCase() {
@@ -133,9 +128,20 @@ protected:
   std::unique_ptr<llvm::MCSubtargetInfo> STI_;
 };
 
-using Core2TargetTest = X86TargetTest<kCpuCore2, kFeaturesEmpty>;
-using Core2AvxTargetTest = X86TargetTest<kCpuCore2, kFeaturesAvx>;
-using Core2Avx512TargetTest = X86TargetTest<kCpuCore2, kFeaturesAvx512VL>;
+class Core2TargetTest : public X86TargetTest {
+public:
+  Core2TargetTest() : X86TargetTest("") {}
+};
+
+class Core2AvxTargetTest : public X86TargetTest {
+public:
+  Core2AvxTargetTest() : X86TargetTest("+avx") {}
+};
+
+class Core2Avx512TargetTest : public X86TargetTest {
+public:
+  Core2Avx512TargetTest() : X86TargetTest("+avx512vl") {}
+};
 
 TEST_F(Core2TargetTest, SetFlags) {
   const unsigned Reg = llvm::X86::EFLAGS;

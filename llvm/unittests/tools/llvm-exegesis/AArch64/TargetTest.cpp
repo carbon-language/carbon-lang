@@ -22,9 +22,7 @@ using testing::IsEmpty;
 using testing::Not;
 using testing::NotNull;
 
-static const char kTriple[] = "aarch64-unknown-linux";
-static const char kGenericCpu[] = "generic";
-static const char kNoFeatures[] = "";
+constexpr const char kTriple[] = "aarch64-unknown-linux";
 
 class AArch64TargetTest : public ::testing::Test {
 protected:
@@ -35,7 +33,7 @@ protected:
     Target_ = llvm::TargetRegistry::lookupTarget(kTriple, error);
     EXPECT_THAT(Target_, NotNull());
     STI_.reset(
-        Target_->createMCSubtargetInfo(kTriple, kGenericCpu, kNoFeatures));
+        Target_->createMCSubtargetInfo(kTriple, "generic", /*no features*/ ""));
   }
 
   static void SetUpTestCase() {
