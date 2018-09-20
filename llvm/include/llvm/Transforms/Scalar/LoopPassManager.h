@@ -276,15 +276,7 @@ public:
     // pass pipeline to put loops into their canonical form. Note that we can
     // directly build up function analyses after this as the function pass
     // manager handles all the invalidation at that layer.
-    PassInstrumentation PI = AM.getResult<PassInstrumentationAnalysis>(F);
-
-    PreservedAnalyses PA = PreservedAnalyses::all();
-    // Check the PassInstrumentation's BeforePass callbacks before running the
-    // canonicalization pipeline.
-    if (PI.runBeforePass<Function>(LoopCanonicalizationFPM, F)) {
-      PA = LoopCanonicalizationFPM.run(F, AM);
-      PI.runAfterPass<Function>(LoopCanonicalizationFPM, F);
-    }
+    PreservedAnalyses PA = LoopCanonicalizationFPM.run(F, AM);
 
     // Get the loop structure for this function
     LoopInfo &LI = AM.getResult<LoopAnalysis>(F);
@@ -345,15 +337,8 @@ public:
       assert(L->isRecursivelyLCSSAForm(LAR.DT, LI) &&
              "Loops must remain in LCSSA form!");
 #endif
-      // Check the PassInstrumentation's BeforePass callbacks before running the
-      // pass, skip its execution completely if asked to (callback returns
-      // false).
-      if (!PI.runBeforePass<Loop>(Pass, *L))
-        continue;
+
       PreservedAnalyses PassPA = Pass.run(*L, LAM, LAR, Updater);
-
-      PI.runAfterPass<Loop>(Pass, *L);
-
       // FIXME: We should verify the set of analyses relevant to Loop passes
       // are preserved.
 

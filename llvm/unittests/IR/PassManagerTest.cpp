@@ -406,9 +406,6 @@ TEST_F(PassManagerTest, Basic) {
   MAM.registerPass([&] { return FunctionAnalysisManagerModuleProxy(FAM); });
   FAM.registerPass([&] { return ModuleAnalysisManagerFunctionProxy(MAM); });
 
-  MAM.registerPass([&] { return PassInstrumentationAnalysis(); });
-  FAM.registerPass([&] { return PassInstrumentationAnalysis(); });
-
   ModulePassManager MPM;
 
   // Count the runs over a Function.
@@ -559,8 +556,6 @@ struct CustomizedPass : PassInfoMixin<CustomizedPass> {
 TEST_F(PassManagerTest, CustomizedPassManagerArgs) {
   CustomizedAnalysisManager AM;
   AM.registerPass([&] { return CustomizedAnalysis(); });
-  PassInstrumentationCallbacks PIC;
-  AM.registerPass([&] { return PassInstrumentationAnalysis(&PIC); });
 
   CustomizedPassManager PM;
 
@@ -692,10 +687,6 @@ TEST_F(PassManagerTest, IndirectAnalysisInvalidation) {
   MAM.registerPass([&] { return TestModuleAnalysis(ModuleAnalysisRuns); });
   MAM.registerPass([&] { return FunctionAnalysisManagerModuleProxy(FAM); });
   FAM.registerPass([&] { return ModuleAnalysisManagerFunctionProxy(MAM); });
-
-  PassInstrumentationCallbacks PIC;
-  MAM.registerPass([&] { return PassInstrumentationAnalysis(&PIC); });
-  FAM.registerPass([&] { return PassInstrumentationAnalysis(&PIC); });
 
   int InstrCount = 0, FunctionCount = 0;
   ModulePassManager MPM(/*DebugLogging*/ true);
