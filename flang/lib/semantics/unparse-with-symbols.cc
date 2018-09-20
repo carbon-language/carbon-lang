@@ -40,7 +40,7 @@ public:
   template<typename T> void Post(const parser::Statement<T> &) {
     currStmt_ = nullptr;
   }
-  void Post(const parser::Name &);
+  void Post(const parser::Name &name) { ProcessName(name, isRef()); }
   void Post(const parser::EndFunctionStmt &) { EndScope(); }
   void Post(const parser::EndModuleStmt &) { EndScope(); }
   void Post(const parser::EndMpSubprogramStmt &) { EndScope(); }
@@ -57,8 +57,10 @@ public:
   void Post(const parser::ProcedureDesignator &) { PostReference(); }
   bool Pre(const parser::DerivedTypeSpec &) { return PreReference(); }
   void Post(const parser::DerivedTypeSpec &) { PostReference(); }
-  bool Pre(const parser::UseStmt &) { return PreReference(); }
-  void Post(const parser::UseStmt &) { PostReference(); }
+  bool Pre(const parser::Rename::Names &);
+  bool Pre(const parser::UseStmt &);
+  bool Pre(const parser::DerivedTypeStmt &);
+
   bool Pre(const parser::ImportStmt &) { return PreReference(); }
   void Post(const parser::ImportStmt &) { PostReference(); }
 
@@ -71,6 +73,7 @@ private:
   symbolMap refs_;  // statement location to symbol referenced there
   std::map<const Symbol *, const char *> symbolToStmt_;  // symbol to def
 
+  void ProcessName(const parser::Name &, bool isRef);
   void EndScope();
   bool PreReference();
   void PostReference();
@@ -94,7 +97,7 @@ void SymbolDumpVisitor::PrintSymbols(const parser::CharBlock &location,
     if (done.insert(symbol).second) {
       Indent(out, indent);
       out << '!' << (isDef ? "DEF"s : "REF"s) << ": ";
-      DumpForUnparse(out, symbol->GetUltimate(), isDef);
+      DumpForUnparse(out, *symbol, isDef);
       out << '\n';
     }
   }
@@ -105,14 +108,35 @@ void SymbolDumpVisitor::Indent(std::ostream &out, int indent) const {
   }
 }
 
-void SymbolDumpVisitor::Post(const parser::Name &name) {
+// Special handling for some nodes that both define and reference names.
+bool SymbolDumpVisitor::Pre(const parser::Rename::Names &x) {
+  ProcessName(std::get<0>(x.t), /*isRef*/ false);
+  ProcessName(std::get<1>(x.t), /*isRef*/ true);
+  return false;
+}
+bool SymbolDumpVisitor::Pre(const parser::UseStmt &x) {
+  ProcessName(x.moduleName, /*isRef*/ true);
+  parser::Walk(x.u, *this);
+  return false;
+}
+bool SymbolDumpVisitor::Pre(const parser::DerivedTypeStmt &x) {
+  PreReference();
+  parser::Walk(std::get<0>(x.t), *this);
+  ProcessName(std::get<1>(x.t), /*isRef*/ false);
+  parser::Walk(std::get<2>(x.t), *this);
+  PostReference();
+  return false;
+}
+
+// If there is a symbol set in this name, add it to refs_ or symbolToStmt_.
+void SymbolDumpVisitor::ProcessName(const parser::Name &name, bool isRef) {
   if (const auto *symbol{name.symbol}) {
     CHECK(currStmt_);
     // If this is the first reference to an implicitly defined symbol,
     // record it as a def.
     bool isImplicit{symbol->test(Symbol::Flag::Implicit) &&
         symbolToStmt_.find(symbol) == symbolToStmt_.end()};
-    if (isRef() && !isImplicit) {
+    if (isRef && !isImplicit) {
       refs_.emplace(currStmt_->begin(), symbol);
     } else {
       symbolToStmt_.emplace(symbol, currStmt_->begin());

@@ -272,8 +272,10 @@ std::vector<const Symbol *> CollectSymbols(const Scope &scope) {
   sorted.reserve(scope.size());
   for (const auto &pair : scope) {
     auto *symbol{pair.second};
-    if (symbols.insert(symbol).second) {
-      sorted.push_back(symbol);
+    if (!symbol->test(Symbol::Flag::ParentComp)) {
+      if (symbols.insert(symbol).second) {
+        sorted.push_back(symbol);
+      }
     }
   }
   std::sort(sorted.begin(), sorted.end(), [](const Symbol *x, const Symbol *y) {
