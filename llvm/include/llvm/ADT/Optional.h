@@ -22,6 +22,7 @@
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <new>
 #include <utility>
 
@@ -115,9 +116,11 @@ template <typename T> struct OptionalStorage<T, true> {
 
   OptionalStorage() = default;
 
-  OptionalStorage(const T &y) : hasVal(true) { new (storage.buffer) T(y); }
+  OptionalStorage(const T &y) : hasVal(true) {
+    std::memmove(storage.buffer, &y, sizeof(y));
+  }
   OptionalStorage &operator=(const T &y) {
-    *reinterpret_cast<T *>(storage.buffer) = y;
+    std::memmove(storage.buffer, &y, sizeof(y));
     hasVal = true;
     return *this;
   }
