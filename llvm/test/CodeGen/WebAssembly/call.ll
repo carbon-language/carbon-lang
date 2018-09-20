@@ -112,6 +112,39 @@ define i32 @call_indirect_i32(i32 ()* %callee) {
   ret i32 %t
 }
 
+; CHECK-LABEL: call_indirect_i64:
+; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .result i64{{$}}
+; CHECK-NEXT: get_local $push[[L0:[0-9]+]]=, 0{{$}}
+; CHECK-NEXT: {{^}} i64.call_indirect $push[[NUM:[0-9]+]]=, $pop[[L0]]{{$}}
+; CHECK-NEXT: return $pop[[NUM]]{{$}}
+define i64 @call_indirect_i64(i64 ()* %callee) {
+  %t = call i64 %callee()
+  ret i64 %t
+}
+
+; CHECK-LABEL: call_indirect_float:
+; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .result f32{{$}}
+; CHECK-NEXT: get_local $push[[L0:[0-9]+]]=, 0{{$}}
+; CHECK-NEXT: {{^}} f32.call_indirect $push[[NUM:[0-9]+]]=, $pop[[L0]]{{$}}
+; CHECK-NEXT: return $pop[[NUM]]{{$}}
+define float @call_indirect_float(float ()* %callee) {
+  %t = call float %callee()
+  ret float %t
+}
+
+; CHECK-LABEL: call_indirect_double:
+; CHECK-NEXT: .param i32{{$}}
+; CHECK-NEXT: .result f64{{$}}
+; CHECK-NEXT: get_local $push[[L0:[0-9]+]]=, 0{{$}}
+; CHECK-NEXT: {{^}} f64.call_indirect $push[[NUM:[0-9]+]]=, $pop[[L0]]{{$}}
+; CHECK-NEXT: return $pop[[NUM]]{{$}}
+define double @call_indirect_double(double ()* %callee) {
+  %t = call double %callee()
+  ret double %t
+}
+
 ; CHECK-LABEL: call_indirect_v128:
 ; CHECK-NEXT: .param i32{{$}}
 ; CHECK-NEXT: .result v128{{$}}
