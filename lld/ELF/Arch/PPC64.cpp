@@ -74,6 +74,32 @@ uint64_t elf::getPPC64TocBase() {
   return TocVA + PPC64TocOffset;
 }
 
+
+unsigned elf::getPPC64GlobalEntryToLocalEntryOffset(uint8_t StOther) {
+  // The offset is encoded into the 3 most significant bits of the st_other
+  // field, with some special values described in section 3.4.1 of the ABI:
+  // 0   --> Zero offset between the GEP and LEP, and the function does NOT use
+  //         the TOC pointer (r2). r2 will hold the same value on returning from
+  //         the function as it did on entering the function.
+  // 1   --> Zero offset between the GEP and LEP, and r2 should be treated as a
+  //         caller-saved register for all callers.
+  // 2-6 --> The  binary logarithm of the offset eg:
+  //         2 --> 2^2 = 4 bytes -->  1 instruction.
+  //         6 --> 2^6 = 64 bytes --> 16 instructions.
+  // 7   --> Reserved.
+  uint8_t GepToLep = (StOther >> 5) & 7;
+  if (GepToLep < 2)
+    return 0;
+
+  // The value encoded in the st_other bits is the
+  // log-base-2(offset).
+  if (GepToLep < 7)
+    return 1 << GepToLep;
+
+  error("reserved value of 7 in the 3 most-significant-bits of st_other");
+  return 0;
+}
+
 namespace {
 class PPC64 final : public TargetInfo {
 public:
