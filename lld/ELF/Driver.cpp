@@ -973,10 +973,6 @@ static void setConfigs(opt::InputArgList &Args) {
   Config->Pic = Config->Pie || Config->Shared;
   Config->Wordsize = Config->Is64 ? 8 : 4;
 
-  // There is an ILP32 ABI for x86-64, although it's not very popular.
-  // It is called the x32 ABI.
-  bool IsX32 = (Kind == ELF32LEKind && Machine == EM_X86_64);
-
   // ELF defines two different ways to store relocation addends as shown below:
   //
   //  Rel:  Addends are stored to the location where relocations are applied.
@@ -990,9 +986,9 @@ static void setConfigs(opt::InputArgList &Args) {
   // You cannot choose which one, Rel or Rela, you want to use. Instead each
   // ABI defines which one you need to use. The following expression expresses
   // that.
-  Config->IsRela =
-      (Config->Is64 || IsX32 || Machine == EM_PPC || Machine == EM_RISCV) &&
-      Machine != EM_MIPS;
+  Config->IsRela = Machine == EM_AARCH64 || Machine == EM_AMDGPU ||
+                   Machine == EM_PPC || Machine == EM_PPC64 ||
+                   Machine == EM_RISCV || Machine == EM_X86_64;
 
   // If the output uses REL relocations we must store the dynamic relocation
   // addends to the output sections. We also store addends for RELA relocations
