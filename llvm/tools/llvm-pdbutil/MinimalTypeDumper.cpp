@@ -41,7 +41,7 @@ static std::string formatClassOptions(uint32_t IndentLevel,
         Stream->findFullDeclForForwardRef(CurrentTypeIndex);
     if (!ETI) {
       consumeError(ETI.takeError());
-      PUSH_FLAG(ClassOptions, ForwardReference, Options, "forward ref (???)");
+      PUSH_FLAG(ClassOptions, ForwardReference, Options, "forward ref (??\?)");
     } else {
       const char *Direction = (*ETI == CurrentTypeIndex)
                                   ? "="
