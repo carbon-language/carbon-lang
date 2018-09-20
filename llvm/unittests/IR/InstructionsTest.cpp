@@ -848,6 +848,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_TRUE(Id1->isIdentity());
   EXPECT_FALSE(Id1->isIdentityWithPadding());
   EXPECT_FALSE(Id1->isIdentityWithExtract());
+  EXPECT_FALSE(Id1->isConcat());
   delete Id1;
 
   // Result has less elements than operands.
@@ -856,6 +857,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id2->isIdentity());
   EXPECT_FALSE(Id2->isIdentityWithPadding());
   EXPECT_TRUE(Id2->isIdentityWithExtract());
+  EXPECT_FALSE(Id2->isConcat());
   delete Id2;
 
   // Result has less elements than operands; choose from Op1.
@@ -864,6 +866,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id3->isIdentity());
   EXPECT_FALSE(Id3->isIdentityWithPadding());
   EXPECT_TRUE(Id3->isIdentityWithExtract());
+  EXPECT_FALSE(Id3->isConcat());
   delete Id3;
 
   // Result has less elements than operands; choose from Op0 and Op1 is not identity.
@@ -872,6 +875,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id4->isIdentity());
   EXPECT_FALSE(Id4->isIdentityWithPadding());
   EXPECT_FALSE(Id4->isIdentityWithExtract());
+  EXPECT_FALSE(Id4->isConcat());
   delete Id4;
 
   // Result has more elements than operands, and extra elements are undef.
@@ -880,6 +884,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id5->isIdentity());
   EXPECT_TRUE(Id5->isIdentityWithPadding());
   EXPECT_FALSE(Id5->isIdentityWithExtract());
+  EXPECT_FALSE(Id5->isConcat());
   delete Id5;
 
   // Result has more elements than operands, and extra elements are undef; choose from Op1.
@@ -888,6 +893,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id6->isIdentity());
   EXPECT_TRUE(Id6->isIdentityWithPadding());
   EXPECT_FALSE(Id6->isIdentityWithExtract());
+  EXPECT_FALSE(Id6->isConcat());
   delete Id6;
   
   // Result has more elements than operands, but extra elements are not undef.
@@ -896,6 +902,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id7->isIdentity());
   EXPECT_FALSE(Id7->isIdentityWithPadding());
   EXPECT_FALSE(Id7->isIdentityWithExtract());
+  EXPECT_FALSE(Id7->isConcat());
   delete Id7;
   
   // Result has more elements than operands; choose from Op0 and Op1 is not identity.
@@ -904,7 +911,45 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_FALSE(Id8->isIdentity());
   EXPECT_FALSE(Id8->isIdentityWithPadding());
   EXPECT_FALSE(Id8->isIdentityWithExtract());
+  EXPECT_FALSE(Id8->isConcat());
   delete Id8;
+
+  // Result has twice as many elements as operands; choose consecutively from Op0 and Op1 is concat.
+  ShuffleVectorInst *Id9 = new ShuffleVectorInst(V0, V1,
+                                                 ConstantVector::get({C0, CU, C2, C3, CU, CU, C6, C7}));
+  EXPECT_FALSE(Id9->isIdentity());
+  EXPECT_FALSE(Id9->isIdentityWithPadding());
+  EXPECT_FALSE(Id9->isIdentityWithExtract());
+  EXPECT_TRUE(Id9->isConcat());
+  delete Id9;
+
+  // Result has less than twice as many elements as operands, so not a concat.
+  ShuffleVectorInst *Id10 = new ShuffleVectorInst(V0, V1,
+                                                  ConstantVector::get({C0, CU, C2, C3, CU, CU, C6}));
+  EXPECT_FALSE(Id10->isIdentity());
+  EXPECT_FALSE(Id10->isIdentityWithPadding());
+  EXPECT_FALSE(Id10->isIdentityWithExtract());
+  EXPECT_FALSE(Id10->isConcat());
+  delete Id10;
+
+  // Result has more than twice as many elements as operands, so not a concat.
+  ShuffleVectorInst *Id11 = new ShuffleVectorInst(V0, V1,
+                                                  ConstantVector::get({C0, CU, C2, C3, CU, CU, C6, C7, CU}));
+  EXPECT_FALSE(Id11->isIdentity());
+  EXPECT_FALSE(Id11->isIdentityWithPadding());
+  EXPECT_FALSE(Id11->isIdentityWithExtract());
+  EXPECT_FALSE(Id11->isConcat());
+  delete Id11;
+
+  // If an input is undef, it's not a concat.
+  // TODO: IdentityWithPadding should be true here even though the high mask values are not undef.
+  ShuffleVectorInst *Id12 = new ShuffleVectorInst(V0, ConstantVector::get({CU, CU, CU, CU}),
+                                                  ConstantVector::get({C0, CU, C2, C3, CU, CU, C6, C7}));
+  EXPECT_FALSE(Id12->isIdentity());
+  EXPECT_FALSE(Id12->isIdentityWithPadding());
+  EXPECT_FALSE(Id12->isIdentityWithExtract());
+  EXPECT_FALSE(Id12->isConcat());
+  delete Id12;
 }
 
 TEST(InstructionsTest, SkipDebug) {
