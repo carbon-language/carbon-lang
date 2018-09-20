@@ -838,9 +838,12 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   EXPECT_TRUE(ShuffleVectorInst::isTransposeMask(ConstantVector::get({C1, C5, C3, C7})));
   EXPECT_TRUE(ShuffleVectorInst::isTransposeMask(ConstantVector::get({C1, C3})));
 
+  // Nothing special about the values here - just re-using inputs to reduce code. 
+  Constant *V0 = ConstantVector::get({C0, C1, C2, C3});
+  Constant *V1 = ConstantVector::get({C3, C2, C1, C0});
+
   // Identity with undef elts.
-  ShuffleVectorInst *Id1 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C3, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id1 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({C0, C1, CU, CU}));
   EXPECT_TRUE(Id1->isIdentity());
   EXPECT_FALSE(Id1->isIdentityWithPadding());
@@ -848,8 +851,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   delete Id1;
 
   // Result has less elements than operands.
-  ShuffleVectorInst *Id2 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C2, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id2 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({C0, C1, C2}));
   EXPECT_FALSE(Id2->isIdentity());
   EXPECT_FALSE(Id2->isIdentityWithPadding());
@@ -857,8 +859,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   delete Id2;
 
   // Result has less elements than operands; choose from Op1.
-  ShuffleVectorInst *Id3 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C2, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id3 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({C4, CU, C6}));
   EXPECT_FALSE(Id3->isIdentity());
   EXPECT_FALSE(Id3->isIdentityWithPadding());
@@ -866,8 +867,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   delete Id3;
 
   // Result has less elements than operands; choose from Op0 and Op1 is not identity.
-  ShuffleVectorInst *Id4 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C2, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id4 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({C4, C1, C6}));
   EXPECT_FALSE(Id4->isIdentity());
   EXPECT_FALSE(Id4->isIdentityWithPadding());
@@ -875,8 +875,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   delete Id4;
 
   // Result has more elements than operands, and extra elements are undef.
-  ShuffleVectorInst *Id5 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C2, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id5 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({CU, C1, C2, C3, CU, CU}));
   EXPECT_FALSE(Id5->isIdentity());
   EXPECT_TRUE(Id5->isIdentityWithPadding());
@@ -884,8 +883,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   delete Id5;
 
   // Result has more elements than operands, and extra elements are undef; choose from Op1.
-  ShuffleVectorInst *Id6 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C2, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id6 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({C4, C5, C6, CU, CU, CU}));
   EXPECT_FALSE(Id6->isIdentity());
   EXPECT_TRUE(Id6->isIdentityWithPadding());
@@ -893,8 +891,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   delete Id6;
   
   // Result has more elements than operands, but extra elements are not undef.
-  ShuffleVectorInst *Id7 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C2, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id7 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({C0, C1, C2, C3, CU, C1}));
   EXPECT_FALSE(Id7->isIdentity());
   EXPECT_FALSE(Id7->isIdentityWithPadding());
@@ -902,8 +899,7 @@ TEST(InstructionsTest, ShuffleMaskQueries) {
   delete Id7;
   
   // Result has more elements than operands; choose from Op0 and Op1 is not identity.
-  ShuffleVectorInst *Id8 = new ShuffleVectorInst(ConstantVector::get({C0, C1, C2, C3}),
-                                                 ConstantVector::get({C0, C1, C2, C3}),
+  ShuffleVectorInst *Id8 = new ShuffleVectorInst(V0, V1,
                                                  ConstantVector::get({C4, CU, C2, C3, CU, CU}));
   EXPECT_FALSE(Id8->isIdentity());
   EXPECT_FALSE(Id8->isIdentityWithPadding());
