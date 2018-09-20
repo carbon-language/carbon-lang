@@ -24,17 +24,6 @@
 
 using namespace llvm;
 
-namespace llvm {
-/// Provide an ostream operator for StringRef.
-///
-/// For convenience we provide a custom matcher below for IRUnit's and analysis
-/// result's getName functions, which most of the time returns a StringRef. The
-/// matcher makes use of this operator.
-static std::ostream &operator<<(std::ostream &O, StringRef S) {
-  return O << S.str();
-}
-}
-
 namespace {
 using testing::AnyNumber;
 using testing::AtLeast;
