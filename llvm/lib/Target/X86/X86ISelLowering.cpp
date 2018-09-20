@@ -5513,19 +5513,6 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, int Idx,
   return DAG.getVectorShuffle(VT, SDLoc(V2), V1, V2, MaskVec);
 }
 
-static SDValue peekThroughBitcasts(SDValue V) {
-  while (V.getNode() && V.getOpcode() == ISD::BITCAST)
-    V = V.getOperand(0);
-  return V;
-}
-
-static SDValue peekThroughOneUseBitcasts(SDValue V) {
-  while (V.getNode() && V.getOpcode() == ISD::BITCAST &&
-         V.getOperand(0).hasOneUse())
-    V = V.getOperand(0);
-  return V;
-}
-
 // Peek through EXTRACT_SUBVECTORs - typically used for AVX1 256-bit intops.
 static SDValue peekThroughEXTRACT_SUBVECTORs(SDValue V) {
   while (V.getOpcode() == ISD::EXTRACT_SUBVECTOR)
