@@ -21,19 +21,19 @@ Expected<uint32_t> hashTypeRecord(const llvm::codeview::CVType &Type);
 struct TagRecordHash {
   explicit TagRecordHash(codeview::ClassRecord CR, uint32_t Full,
                          uint32_t Forward)
-      : Class(std::move(CR)), FullRecordHash(Full), ForwardDeclHash(Forward) {
+      : FullRecordHash(Full), ForwardDeclHash(Forward), Class(std::move(CR)) {
     State = 0;
   }
 
   explicit TagRecordHash(codeview::EnumRecord ER, uint32_t Full,
                          uint32_t Forward)
-      : Enum(std::move(ER)), FullRecordHash(Full), ForwardDeclHash(Forward) {
+      : FullRecordHash(Full), ForwardDeclHash(Forward), Enum(std::move(ER)) {
     State = 1;
   }
 
   explicit TagRecordHash(codeview::UnionRecord UR, uint32_t Full,
                          uint32_t Forward)
-      : Union(std::move(UR)), FullRecordHash(Full), ForwardDeclHash(Forward) {
+      : FullRecordHash(Full), ForwardDeclHash(Forward), Union(std::move(UR)) {
     State = 2;
   }
 

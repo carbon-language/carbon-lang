@@ -200,7 +200,6 @@ TpiStream::findFullDeclForForwardRef(TypeIndex ForwardRefTI) const {
   if (!ForwardTRH)
     return ForwardTRH.takeError();
 
-  TagRecordHash Copy = std::move(*ForwardTRH);
   uint32_t BucketIdx = ForwardTRH->FullRecordHash % Header->NumHashBuckets;
 
   for (TypeIndex TI : HashMap[BucketIdx]) {
