@@ -272,7 +272,7 @@ public:
   ENUM_CLASS(Flag,
       Function,  // symbol is a function
       Subroutine,  // symbol is a subroutine
-      Implicit,  // symbol is implicity typed
+      Implicit,  // symbol is implicitly typed
       ModFile,  // symbol came from .mod file
       ParentComp  // symbol is the "parent component" of an extended type
   );
