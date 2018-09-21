@@ -35,6 +35,12 @@ public:
     if (!labels_.empty() && statement.label.has_value() &&
         labels_.back() == *statement.label) {
       auto currentLabel{labels_.back()};
+      if constexpr (std::is_same_v<T, common::Indirection<parser::EndDoStmt>>) {
+        std::get<parser::ExecutableConstruct>(currentIter_->u).u =
+            parser::Statement<parser::ActionStmt>{
+                std::optional<parser::Label>{currentLabel},
+                parser::ContinueStmt{}};
+      }
       do {
         currentIter_ = MakeCanonicalForm(labelDoIters_.back(), currentIter_);
         labelDoIters_.pop_back();
