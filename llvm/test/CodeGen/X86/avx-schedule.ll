@@ -5424,6 +5424,90 @@ define void @test_zeroupper() {
   call void @llvm.x86.avx.vzeroupper()
   ret void
 }
+
+define void @test_avx256_zero_idioms() {
+; GENERIC-LABEL: test_avx256_zero_idioms:
+; GENERIC:       # %bb.0:
+; GENERIC-NEXT:    #APP
+; GENERIC-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:1.00]
+; GENERIC-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:1.00]
+; GENERIC-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:1.00]
+; GENERIC-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:1.00]
+; GENERIC-NEXT:    #NO_APP
+; GENERIC-NEXT:    retq # sched: [1:1.00]
+;
+; SANDY-LABEL: test_avx256_zero_idioms:
+; SANDY:       # %bb.0:
+; SANDY-NEXT:    #APP
+; SANDY-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:1.00]
+; SANDY-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:1.00]
+; SANDY-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:1.00]
+; SANDY-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:1.00]
+; SANDY-NEXT:    #NO_APP
+; SANDY-NEXT:    retq # sched: [1:1.00]
+;
+; HASWELL-LABEL: test_avx256_zero_idioms:
+; HASWELL:       # %bb.0:
+; HASWELL-NEXT:    #APP
+; HASWELL-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:1.00]
+; HASWELL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:1.00]
+; HASWELL-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:1.00]
+; HASWELL-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:1.00]
+; HASWELL-NEXT:    #NO_APP
+; HASWELL-NEXT:    retq # sched: [7:1.00]
+;
+; BROADWELL-LABEL: test_avx256_zero_idioms:
+; BROADWELL:       # %bb.0:
+; BROADWELL-NEXT:    #APP
+; BROADWELL-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:1.00]
+; BROADWELL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:1.00]
+; BROADWELL-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:1.00]
+; BROADWELL-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:1.00]
+; BROADWELL-NEXT:    #NO_APP
+; BROADWELL-NEXT:    retq # sched: [7:1.00]
+;
+; SKYLAKE-LABEL: test_avx256_zero_idioms:
+; SKYLAKE:       # %bb.0:
+; SKYLAKE-NEXT:    #APP
+; SKYLAKE-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:0.33]
+; SKYLAKE-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:0.33]
+; SKYLAKE-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:0.33]
+; SKYLAKE-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:0.33]
+; SKYLAKE-NEXT:    #NO_APP
+; SKYLAKE-NEXT:    retq # sched: [7:1.00]
+;
+; SKX-LABEL: test_avx256_zero_idioms:
+; SKX:       # %bb.0:
+; SKX-NEXT:    #APP
+; SKX-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:0.33]
+; SKX-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:0.33]
+; SKX-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:0.33]
+; SKX-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:0.33]
+; SKX-NEXT:    #NO_APP
+; SKX-NEXT:    retq # sched: [7:1.00]
+;
+; BTVER2-LABEL: test_avx256_zero_idioms:
+; BTVER2:       # %bb.0:
+; BTVER2-NEXT:    #APP
+; BTVER2-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:1.00]
+; BTVER2-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:1.00]
+; BTVER2-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:1.00]
+; BTVER2-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:1.00]
+; BTVER2-NEXT:    #NO_APP
+; BTVER2-NEXT:    retq # sched: [4:1.00]
+;
+; ZNVER1-LABEL: test_avx256_zero_idioms:
+; ZNVER1:       # %bb.0:
+; ZNVER1-NEXT:    #APP
+; ZNVER1-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:0.25]
+; ZNVER1-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:0.25]
+; ZNVER1-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:0.25]
+; ZNVER1-NEXT:    #NO_APP
+; ZNVER1-NEXT:    retq # sched: [1:0.50]
+  call void asm sideeffect "vxorps %ymm0, %ymm0, %ymm0\0Avxorpd %ymm1, %ymm1, %ymm1\0Avandnps %ymm2, %ymm2, %ymm2\0Avandnpd %ymm3, %ymm3, %ymm3", ""()
+  ret void
+}
 declare void @llvm.x86.avx.vzeroupper() nounwind
 
 !0 = !{i32 1}
