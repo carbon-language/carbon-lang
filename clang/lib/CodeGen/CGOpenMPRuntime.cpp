@@ -7607,8 +7607,15 @@ public:
                   SI->getAssociatedDeclaration())
                 break;
             }
-            assert(CI != CE && SI != SE &&
-                   "Unexpected end of the map components.");
+
+            // Lists contain the same elements.
+            if (CI == CE && SI == SE)
+              return false;
+
+            // List with less elements is less than list with more elements.
+            if (CI == CE || SI == SE)
+              return CI == CE;
+
             const auto *FD1 = cast<FieldDecl>(CI->getAssociatedDeclaration());
             const auto *FD2 = cast<FieldDecl>(SI->getAssociatedDeclaration());
             if (FD1->getParent() == FD2->getParent())
