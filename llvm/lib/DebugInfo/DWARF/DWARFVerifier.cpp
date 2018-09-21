@@ -175,11 +175,24 @@ unsigned DWARFVerifier::verifyUnitContents(DWARFUnit &Unit) {
   unsigned NumDies = Unit.getNumDIEs();
   for (unsigned I = 0; I < NumDies; ++I) {
     auto Die = Unit.getDIEAtIndex(I);
+
     if (Die.getTag() == DW_TAG_null)
       continue;
+
+    bool HasTypeAttr = false;
     for (auto AttrValue : Die.attributes()) {
       NumUnitErrors += verifyDebugInfoAttribute(Die, AttrValue);
       NumUnitErrors += verifyDebugInfoForm(Die, AttrValue);
+      HasTypeAttr |= (AttrValue.Attr == DW_AT_type);
+    }
+
+    if (!HasTypeAttr && (Die.getTag() == DW_TAG_formal_parameter ||
+                         Die.getTag() == DW_TAG_variable ||
+                         Die.getTag() == DW_TAG_array_type)) {
+      error() << "DIE with tag " << TagString(Die.getTag())
+              << " is missing type attribute:\n";
+      dump(Die) << '\n';
+      NumUnitErrors++;
     }
   }
 
@@ -461,6 +474,14 @@ unsigned DWARFVerifier::verifyDebugInfoAttribute(const DWARFDie &Die,
                   " that points to DIE with "
                   "incompatible tag " +
                   TagString(RefTag));
+    }
+  }
+  case DW_AT_type: {
+    DWARFDie TypeDie = Die.getAttributeValueAsReferencedDie(DW_AT_type);
+    if (TypeDie && !isType(TypeDie.getTag())) {
+      ReportError("DIE has " + AttributeString(Attr) +
+                  " with incompatible tag " + TagString(TypeDie.getTag()));
+      break;
     }
   }
   default:
