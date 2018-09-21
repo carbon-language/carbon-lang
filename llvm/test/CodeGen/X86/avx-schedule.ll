@@ -4637,7 +4637,7 @@ define <8 x float> @test_subps(<8 x float> %a0, <8 x float> %a1, <8 x float> *%a
 define i32 @test_testpd(<2 x double> %a0, <2 x double> %a1, <2 x double> *%a2) {
 ; GENERIC-LABEL: test_testpd:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; GENERIC-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; GENERIC-NEXT:    vtestpd %xmm1, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    setb %al # sched: [1:0.50]
 ; GENERIC-NEXT:    vtestpd (%rdi), %xmm0 # sched: [7:1.00]
@@ -4646,7 +4646,7 @@ define i32 @test_testpd(<2 x double> %a0, <2 x double> %a1, <2 x double> *%a2) {
 ;
 ; SANDY-LABEL: test_testpd:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; SANDY-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; SANDY-NEXT:    vtestpd %xmm1, %xmm0 # sched: [1:1.00]
 ; SANDY-NEXT:    setb %al # sched: [1:0.50]
 ; SANDY-NEXT:    vtestpd (%rdi), %xmm0 # sched: [7:1.00]
@@ -4717,7 +4717,7 @@ declare i32 @llvm.x86.avx.vtestc.pd(<2 x double>, <2 x double>) nounwind readnon
 define i32 @test_testpd_ymm(<4 x double> %a0, <4 x double> %a1, <4 x double> *%a2) {
 ; GENERIC-LABEL: test_testpd_ymm:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; GENERIC-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; GENERIC-NEXT:    vtestpd %ymm1, %ymm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    setb %al # sched: [1:0.50]
 ; GENERIC-NEXT:    vtestpd (%rdi), %ymm0 # sched: [8:1.00]
@@ -4727,7 +4727,7 @@ define i32 @test_testpd_ymm(<4 x double> %a0, <4 x double> %a1, <4 x double> *%a
 ;
 ; SANDY-LABEL: test_testpd_ymm:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; SANDY-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; SANDY-NEXT:    vtestpd %ymm1, %ymm0 # sched: [1:1.00]
 ; SANDY-NEXT:    setb %al # sched: [1:0.50]
 ; SANDY-NEXT:    vtestpd (%rdi), %ymm0 # sched: [8:1.00]
@@ -4804,7 +4804,7 @@ declare i32 @llvm.x86.avx.vtestc.pd.256(<4 x double>, <4 x double>) nounwind rea
 define i32 @test_testps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a2) {
 ; GENERIC-LABEL: test_testps:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; GENERIC-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; GENERIC-NEXT:    vtestps %xmm1, %xmm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    setb %al # sched: [1:0.50]
 ; GENERIC-NEXT:    vtestps (%rdi), %xmm0 # sched: [7:1.00]
@@ -4813,7 +4813,7 @@ define i32 @test_testps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a2) {
 ;
 ; SANDY-LABEL: test_testps:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; SANDY-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; SANDY-NEXT:    vtestps %xmm1, %xmm0 # sched: [1:1.00]
 ; SANDY-NEXT:    setb %al # sched: [1:0.50]
 ; SANDY-NEXT:    vtestps (%rdi), %xmm0 # sched: [7:1.00]
@@ -4884,7 +4884,7 @@ declare i32 @llvm.x86.avx.vtestc.ps(<4 x float>, <4 x float>) nounwind readnone
 define i32 @test_testps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x float> *%a2) {
 ; GENERIC-LABEL: test_testps_ymm:
 ; GENERIC:       # %bb.0:
-; GENERIC-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; GENERIC-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; GENERIC-NEXT:    vtestps %ymm1, %ymm0 # sched: [1:1.00]
 ; GENERIC-NEXT:    setb %al # sched: [1:0.50]
 ; GENERIC-NEXT:    vtestps (%rdi), %ymm0 # sched: [8:1.00]
@@ -4894,7 +4894,7 @@ define i32 @test_testps_ymm(<8 x float> %a0, <8 x float> %a1, <8 x float> *%a2) 
 ;
 ; SANDY-LABEL: test_testps_ymm:
 ; SANDY:       # %bb.0:
-; SANDY-NEXT:    xorl %eax, %eax # sched: [1:0.33]
+; SANDY-NEXT:    xorl %eax, %eax # sched: [0:0.25]
 ; SANDY-NEXT:    vtestps %ymm1, %ymm0 # sched: [1:1.00]
 ; SANDY-NEXT:    setb %al # sched: [1:0.50]
 ; SANDY-NEXT:    vtestps (%rdi), %ymm0 # sched: [8:1.00]
