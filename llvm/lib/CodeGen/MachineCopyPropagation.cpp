@@ -78,54 +78,54 @@ using RegList = SmallVector<unsigned, 4>;
 using SourceMap = DenseMap<unsigned, RegList>;
 using Reg2MIMap = DenseMap<unsigned, MachineInstr *>;
 
-  class MachineCopyPropagation : public MachineFunctionPass {
-    const TargetRegisterInfo *TRI;
-    const TargetInstrInfo *TII;
-    const MachineRegisterInfo *MRI;
+class MachineCopyPropagation : public MachineFunctionPass {
+  const TargetRegisterInfo *TRI;
+  const TargetInstrInfo *TII;
+  const MachineRegisterInfo *MRI;
 
-  public:
-    static char ID; // Pass identification, replacement for typeid
+public:
+  static char ID; // Pass identification, replacement for typeid
 
-    MachineCopyPropagation() : MachineFunctionPass(ID) {
-      initializeMachineCopyPropagationPass(*PassRegistry::getPassRegistry());
-    }
+  MachineCopyPropagation() : MachineFunctionPass(ID) {
+    initializeMachineCopyPropagationPass(*PassRegistry::getPassRegistry());
+  }
 
-    void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.setPreservesCFG();
-      MachineFunctionPass::getAnalysisUsage(AU);
-    }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesCFG();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
 
-    bool runOnMachineFunction(MachineFunction &MF) override;
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-    MachineFunctionProperties getRequiredProperties() const override {
-      return MachineFunctionProperties().set(
-          MachineFunctionProperties::Property::NoVRegs);
-    }
+  MachineFunctionProperties getRequiredProperties() const override {
+    return MachineFunctionProperties().set(
+        MachineFunctionProperties::Property::NoVRegs);
+  }
 
-  private:
-    void ClobberRegister(unsigned Reg);
-    void ReadRegister(unsigned Reg);
-    void CopyPropagateBlock(MachineBasicBlock &MBB);
-    bool eraseIfRedundant(MachineInstr &Copy, unsigned Src, unsigned Def);
-    void forwardUses(MachineInstr &MI);
-    bool isForwardableRegClassCopy(const MachineInstr &Copy,
-                                   const MachineInstr &UseI, unsigned UseIdx);
-    bool hasImplicitOverlap(const MachineInstr &MI, const MachineOperand &Use);
+private:
+  void ClobberRegister(unsigned Reg);
+  void ReadRegister(unsigned Reg);
+  void CopyPropagateBlock(MachineBasicBlock &MBB);
+  bool eraseIfRedundant(MachineInstr &Copy, unsigned Src, unsigned Def);
+  void forwardUses(MachineInstr &MI);
+  bool isForwardableRegClassCopy(const MachineInstr &Copy,
+                                 const MachineInstr &UseI, unsigned UseIdx);
+  bool hasImplicitOverlap(const MachineInstr &MI, const MachineOperand &Use);
 
-    /// Candidates for deletion.
-    SmallSetVector<MachineInstr*, 8> MaybeDeadCopies;
+  /// Candidates for deletion.
+  SmallSetVector<MachineInstr *, 8> MaybeDeadCopies;
 
-    /// Def -> available copies map.
-    Reg2MIMap AvailCopyMap;
+  /// Def -> available copies map.
+  Reg2MIMap AvailCopyMap;
 
-    /// Def -> copies map.
-    Reg2MIMap CopyMap;
+  /// Def -> copies map.
+  Reg2MIMap CopyMap;
 
-    /// Src -> Def map
-    SourceMap SrcMap;
+  /// Src -> Def map
+  SourceMap SrcMap;
 
-    bool Changed;
-  };
+  bool Changed;
+};
 
 } // end anonymous namespace
 
