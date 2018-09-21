@@ -637,9 +637,9 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer, bool EmitColdPart) {
       if (TypeAddress) {
         const auto *TypeSymbol =
           BC.getOrCreateGlobalSymbol(TypeAddress,
+                                     "TI",
                                      TTypeEncodingSize,
-                                     TTypeAlignment,
-                                     "TI");
+                                     TTypeAlignment);
         auto *DotSymbol = BC.Ctx->createTempSymbol();
         Streamer->EmitLabel(DotSymbol);
         const auto *SubDotExpr = MCBinaryExpr::createSub(

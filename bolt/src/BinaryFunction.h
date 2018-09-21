@@ -1608,7 +1608,7 @@ public:
 
   BinaryFunction &setPersonalityFunction(uint64_t Addr) {
     assert(!PersonalityFunction && "can't set personality function twice");
-    PersonalityFunction = BC.getOrCreateGlobalSymbol(Addr, 0, 0, "FUNCat");
+    PersonalityFunction = BC.getOrCreateGlobalSymbol(Addr, "FUNCat");
     return *this;
   }
 
@@ -1762,7 +1762,7 @@ public:
       return nullptr;
 
     // Register our island at global namespace
-    Symbol = BC.getOrCreateGlobalSymbol(Address, 0, 0, "ISLANDat");
+    Symbol = BC.getOrCreateGlobalSymbol(Address, "ISLANDat");
     // Internal bookkeeping
     const auto Offset = Address - getAddress();
     assert((!IslandOffsets.count(Offset) || IslandOffsets[Offset] == Symbol) &&

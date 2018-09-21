@@ -1046,7 +1046,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     }
     // TODO: use DWARF info to get size/alignment here?
     auto *TargetSymbol =
-        BC.getOrCreateGlobalSymbol(TargetAddress, 0, 0, "DATAat");
+        BC.getOrCreateGlobalSymbol(TargetAddress, "DATAat");
     DEBUG(if (opts::Verbosity >= 2) {
       auto SectionName = BD ? BD->getSectionName() : "<unknown>";
       dbgs() << "Created DATAat sym: " << TargetSymbol->getName()
@@ -1301,7 +1301,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             }
 
             TargetSymbol =
-                BC.getOrCreateGlobalSymbol(TargetAddress, 0, 0, "FUNCat");
+                BC.getOrCreateGlobalSymbol(TargetAddress, "FUNCat");
             if (TargetAddress == 0) {
               // We actually see calls to address 0 in presence of weak
               // symbols originating from libraries. This code is never meant

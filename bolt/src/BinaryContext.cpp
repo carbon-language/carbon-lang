@@ -228,9 +228,9 @@ BinaryContext::getSubBinaryData(BinaryData *BD) {
 }
 
 MCSymbol *BinaryContext::getOrCreateGlobalSymbol(uint64_t Address,
+                                                 Twine Prefix,
                                                  uint64_t Size,
                                                  uint16_t Alignment,
-                                                 Twine Prefix,
                                                  unsigned Flags) {
   auto Itr = BinaryDataMap.find(Address);
   if (Itr != BinaryDataMap.end()) {
@@ -536,7 +536,7 @@ void BinaryContext::fixBinaryDataHoles() {
         if (BD->getSection() == Section)
           setBinaryDataSize(Hole.first, Hole.second);
       } else {
-        getOrCreateGlobalSymbol(Hole.first, Hole.second, 1, "HOLEat");
+        getOrCreateGlobalSymbol(Hole.first, "HOLEat", Hole.second, 1);
       }
     }
   }

@@ -386,9 +386,9 @@ public:
   /// If there are multiple symbols registered at the \p Address, then
   /// return the first one.
   MCSymbol *getOrCreateGlobalSymbol(uint64_t Address,
-                                    uint64_t Size,
-                                    uint16_t Alignment,
                                     Twine Prefix,
+                                    uint64_t Size = 0,
+                                    uint16_t Alignment = 0,
                                     unsigned Flags = 0);
 
   /// Register a symbol with \p Name at a given \p Address and \p Size.

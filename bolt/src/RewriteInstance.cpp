@@ -1695,7 +1695,7 @@ void RewriteInstance::relocateEHFrameSection() {
     if (!Symbol) {
       DEBUG(dbgs() << "BOLT-DEBUG: creating symbol for DWARF reference at 0x"
                    << Twine::utohexstr(Value) << '\n');
-      Symbol = BC->getOrCreateGlobalSymbol(Value, 0, 0, "FUNCat");
+      Symbol = BC->getOrCreateGlobalSymbol(Value, "FUNCat");
     }
 
     DEBUG(dbgs() << "BOLT-DEBUG: adding DWARF reference against symbol "
@@ -1806,8 +1806,7 @@ void RewriteInstance::readSpecialSections() {
 }
 
 void RewriteInstance::adjustCommandLineOptions() {
-  if (BC->isAArch64() && opts::RelocationMode != cl::BOU_TRUE &&
-      !opts::AggregateOnly) {
+  if (BC->isAArch64() && !BC->HasRelocations) {
     errs() << "BOLT-WARNING: non-relocation mode for AArch64 is not fully "
               "supported\n";
   }
@@ -1874,6 +1873,7 @@ int64_t getRelocationAddend(const ELFObjectFileBase *Obj,
 bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
                                         SectionRef RelocatedSection,
                                         std::string &SymbolName,
+                                        bool &IsSectionRelocation,
                                         uint64_t &SymbolAddress,
                                         int64_t &Addend,
                                         uint64_t &ExtractedValue) const {
@@ -1882,45 +1882,68 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
 
   const bool IsAArch64 = BC->isAArch64();
 
-  // For value extraction.
+  // Extract the value.
   StringRef RelocatedSectionContents;
   RelocatedSection.getContents(RelocatedSectionContents);
   DataExtractor DE(RelocatedSectionContents,
                    BC->AsmInfo->isLittleEndian(),
                    BC->AsmInfo->getCodePointerSize());
-
-  const bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
-  auto SymbolIter = Rel.getSymbol();
-  assert(SymbolIter != InputFile->symbol_end() &&
-         "relocation symbol must exist");
-  const auto &Symbol = *SymbolIter;
-  SymbolName = cantFail(Symbol.getName());
-  SymbolAddress = cantFail(Symbol.getAddress());
-  Addend = getRelocationAddend(InputFile, Rel);
-
-  uint32_t RelocationOffset =
-    Rel.getOffset() - RelocatedSection.getAddress();
+  uint32_t RelocationOffset = Rel.getOffset() - RelocatedSection.getAddress();
   const auto RelSize = Relocation::getSizeForType(Rel.getType());
-  ExtractedValue =
-    static_cast<uint64_t>(DE.getSigned(&RelocationOffset, RelSize));
-
+  ExtractedValue = static_cast<uint64_t>(DE.getSigned(&RelocationOffset,
+                                                      RelSize));
   if (IsAArch64) {
     ExtractedValue = Relocation::extractValue(Rel.getType(),
                                               ExtractedValue,
                                               Rel.getOffset());
   }
 
-  // Section symbols are marked as ST_Debug.
-  const bool SymbolIsSection =
-      (cantFail(Symbol.getType()) == SymbolRef::ST_Debug);
+  Addend = getRelocationAddend(InputFile, Rel);
+
+  const bool IsPCRelative = Relocation::isPCRelative(Rel.getType());
   const auto PCRelOffset = IsPCRelative && !IsAArch64 ? Rel.getOffset() : 0;
+  bool SkipVerification = false;
+  auto SymbolIter = Rel.getSymbol();
+  if (SymbolIter == InputFile->symbol_end()) {
+    SymbolAddress = ExtractedValue - Addend;
+    if (IsPCRelative)
+      SymbolAddress += PCRelOffset;
+    auto *RelSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress, "RELSYMat");
+    SymbolName = RelSymbol->getName();
+    IsSectionRelocation = false;
+  } else {
+    const auto &Symbol = *SymbolIter;
+    SymbolName = cantFail(Symbol.getName());
+    SymbolAddress = cantFail(Symbol.getAddress());
+    SkipVerification = (cantFail(Symbol.getType()) == SymbolRef::ST_Other);
+    // Section symbols are marked as ST_Debug.
+    IsSectionRelocation = (cantFail(Symbol.getType()) == SymbolRef::ST_Debug);
+    if (IsSectionRelocation) {
+      auto Section = Symbol.getSection();
+      if (Section && *Section != InputFile->section_end()) {
+        SymbolName = "section " + std::string(getSectionName(**Section));
+        if (!IsAArch64) {
+          assert(SymbolAddress == (*Section)->getAddress() &&
+                 "section symbol address must be the same as section address");
+          // Convert section symbol relocations to regular relocations inside
+          // non-section symbols.
+          if (IsPCRelative) {
+            Addend = ExtractedValue - (SymbolAddress - PCRelOffset);
+          } else {
+            SymbolAddress = ExtractedValue;
+            Addend = 0;
+          }
+        }
+      }
+    }
+  }
 
   // If no symbol has been found or if it is a relocation requiring the
   // creation of a GOT entry, do not link against the symbol but against
   // whatever address was extracted from the instruction itself. We are
   // not creating a GOT entry as this was already processed by the linker.
   if (!SymbolAddress || Relocation::isGOT(Rel.getType())) {
-    assert(!SymbolIsSection);
+    assert(!IsSectionRelocation);
     if (ExtractedValue) {
       SymbolAddress = ExtractedValue - Addend + PCRelOffset;
     } else {
@@ -1935,26 +1958,12 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
       SymbolAddress += PCRelOffset;
       return true;
     }
-  } else if (SymbolIsSection) {
-    auto Section = Symbol.getSection();
-    if (Section && *Section != InputFile->section_end()) {
-      SymbolName = "section " + std::string(getSectionName(**Section));
-      if (!IsAArch64) {
-        assert(SymbolAddress == (*Section)->getAddress() &&
-               "section symbol address must be the same as section address");
-        // Convert section symbol relocations to regular relocations inside
-        // non-section symbols.
-        if (IsPCRelative) {
-          Addend = ExtractedValue - (SymbolAddress - PCRelOffset);
-        } else {
-          SymbolAddress = ExtractedValue;
-          Addend = 0;
-        }
-      }
-    }
   }
 
   auto verifyExtractedValue = [&]() {
+    if (SkipVerification)
+      return true;
+
     if (IsAArch64)
       return true;
 
@@ -1962,9 +1971,6 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
       return true;
 
     if (Relocation::isTLS(Rel.getType()))
-      return true;
-
-    if (cantFail(Symbol.getType()) == SymbolRef::ST_Other)
       return true;
 
     return truncateToSize(ExtractedValue, RelSize) ==
@@ -1981,7 +1987,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
   Section.getName(SectionName);
   DEBUG(dbgs() << "BOLT-DEBUG: relocations for section "
                << SectionName << ":\n");
-  if (ELFSectionRef(Section).getFlags() & ELF::SHF_ALLOC) {
+  if (BinarySection(*BC, Section).isAllocatable()) {
     DEBUG(dbgs() << "BOLT-DEBUG: ignoring runtime relocations\n");
     return;
   }
@@ -1994,7 +2000,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
   DEBUG(dbgs() << "BOLT-DEBUG: relocated section is "
                << RelocatedSectionName << '\n');
 
-  if (!(ELFSectionRef(RelocatedSection).getFlags() & ELF::SHF_ALLOC)) {
+  if (!BinarySection(*BC, RelocatedSection).isAllocatable()) {
     DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocations against "
                  << "non-allocatable section\n");
     return;
@@ -2046,17 +2052,18 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     uint64_t SymbolAddress;
     int64_t Addend;
     uint64_t ExtractedValue;
-
+    bool IsSectionRelocation;
     if (!analyzeRelocation(Rel,
                            RelocatedSection,
                            SymbolName,
+                           IsSectionRelocation,
                            SymbolAddress,
                            Addend,
                            ExtractedValue)) {
       DEBUG(dbgs() << "BOLT-DEBUG: skipping relocation @ offset = 0x"
-                 << Twine::utohexstr(Rel.getOffset())
-                 << "; type name = " << TypeName
-                 << '\n');
+                   << Twine::utohexstr(Rel.getOffset())
+                   << "; type name = " << TypeName
+                   << '\n');
       continue;
     }
 
@@ -2117,7 +2124,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     if (BC->isAArch64() && Rel.getType() == ELF::R_AARCH64_ADR_GOT_PAGE)
       ForceRelocation = true;
 
-    // TODO: RefSection should be the same as **Rel.getSymbol().getSection()
     auto RefSection = BC->getSectionForAddress(SymbolAddress);
     if (!RefSection && !ForceRelocation) {
       DEBUG(dbgs() << "BOLT-DEBUG: cannot determine referenced section.\n");
@@ -2125,8 +2131,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     }
 
     const bool IsToCode = RefSection && RefSection->isText();
-    const bool IsSectionRelocation =
-      (cantFail(Rel.getSymbol()->getType()) == SymbolRef::ST_Debug);
 
     // Occasionally we may see a reference past the last byte of the function
     // typically as a result of __builtin_unreachable(). Check it here.
@@ -2298,7 +2302,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         SymbolAddress = BD->getAddress();
         assert(Address == SymbolAddress + Addend);
       } else {
-        auto Symbol = *Rel.getSymbol();
         // These are mostly local data symbols but undefined symbols
         // in relocation sections can get through here too, from .plt.
         assert((IsAArch64 ||
@@ -2306,14 +2309,18 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                 BC->getSectionNameForAddress(SymbolAddress)->startswith(".plt"))
                && "known symbols should not resolve to anonymous locals");
 
-        const uint64_t SymbolSize =
-            IsAArch64 ? 0 : ELFSymbolRef(Symbol).getSize();
-        const uint64_t SymbolAlignment = IsAArch64 ? 1 : Symbol.getAlignment();
-        const unsigned SymbolFlags = Symbol.getFlags();
-
-        if (!IsSectionRelocation) {
+        if (IsSectionRelocation) {
+          ReferencedSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress,
+                                                         "SYMBOLat");
+        } else {
+          auto Symbol = *Rel.getSymbol();
+          const uint64_t SymbolSize =
+              IsAArch64 ? 0 : ELFSymbolRef(Symbol).getSize();
+          const uint64_t SymbolAlignment =
+              IsAArch64 ? 1 : Symbol.getAlignment();
+          const auto SymbolFlags = Symbol.getFlags();
           std::string Name;
-          if (Symbol.getFlags() & SymbolRef::SF_Global) {
+          if (SymbolFlags & SymbolRef::SF_Global) {
             Name = SymbolName;
           } else {
             Name = uniquifyName(*BC, StringRef(SymbolName).startswith(
@@ -2326,12 +2333,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                                                        SymbolSize,
                                                        SymbolAlignment,
                                                        SymbolFlags);
-        } else {
-          ReferencedSymbol = BC->getOrCreateGlobalSymbol(SymbolAddress,
-                                                         SymbolSize,
-                                                         SymbolAlignment,
-                                                         "SYMBOLat",
-                                                         SymbolFlags);
         }
 
         if (!opts::AllowSectionRelocations && IsSectionRelocation) {

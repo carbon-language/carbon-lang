@@ -264,6 +264,7 @@ private:
   bool analyzeRelocation(const RelocationRef &Rel,
                          SectionRef RelocatedSection,
                          std::string &SymbolName,
+                         bool &IsSectionRelocation,
                          uint64_t &SymbolAddress,
                          int64_t &Addend,
                          uint64_t &ExtractedValue) const;
