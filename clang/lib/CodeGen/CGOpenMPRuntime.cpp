@@ -7571,7 +7571,6 @@ public:
           const MapData &BaseData = CI == CE ? L : L1;
           OMPClauseMappableExprCommon::MappableExprComponentListRef SubData =
               SI == SE ? Components : Components1;
-          auto It = CI == CE ? SI : CI;
           auto &OverlappedElements = OverlappedData.FindAndConstruct(&BaseData);
           OverlappedElements.getSecond().push_back(SubData);
         }
