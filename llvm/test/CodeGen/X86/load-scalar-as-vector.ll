@@ -24,6 +24,26 @@ define <4 x i32> @add_op1_constant(i32* %p) nounwind {
   ret <4 x i32> %r
 }
 
+define <4 x i32> @add_op1_constant_optsize(i32* %p) nounwind optsize {
+; SSE-LABEL: add_op1_constant_optsize:
+; SSE:       # %bb.0:
+; SSE-NEXT:    movl (%rdi), %eax
+; SSE-NEXT:    addl $42, %eax
+; SSE-NEXT:    movd %eax, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: add_op1_constant_optsize:
+; AVX:       # %bb.0:
+; AVX-NEXT:    movl (%rdi), %eax
+; AVX-NEXT:    addl $42, %eax
+; AVX-NEXT:    vmovd %eax, %xmm0
+; AVX-NEXT:    retq
+  %x = load i32, i32* %p
+  %b = add i32 %x, 42
+  %r = insertelement <4 x i32> undef, i32 %b, i32 0
+  ret <4 x i32> %r
+}
+
 define <8 x i16> @add_op0_constant(i16* %p) nounwind {
 ; SSE-LABEL: add_op0_constant:
 ; SSE:       # %bb.0:
