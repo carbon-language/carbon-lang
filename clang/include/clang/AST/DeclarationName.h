@@ -277,9 +277,9 @@ private:
   /// Construct a declaration name from a CXXSpecialNameExtra.
   DeclarationName(detail::CXXSpecialNameExtra *Name,
                   StoredNameKind StoredKind) {
-    assert(StoredKind == StoredCXXConstructorName ||
+    assert((StoredKind == StoredCXXConstructorName ||
            StoredKind == StoredCXXDestructorName ||
-           StoredKind == StoredCXXConversionFunctionName &&
+           StoredKind == StoredCXXConversionFunctionName) &&
                "Invalid StoredNameKind when constructing a DeclarationName"
                " from a CXXSpecialNameExtra!");
     setPtrAndKind(Name, StoredKind);
@@ -308,9 +308,9 @@ private:
   /// Assert that the stored pointer points to a CXXSpecialNameExtra
   /// and return it.
   detail::CXXSpecialNameExtra *castAsCXXSpecialNameExtra() const {
-    assert(getStoredNameKind() == StoredCXXConstructorName ||
+    assert((getStoredNameKind() == StoredCXXConstructorName ||
            getStoredNameKind() == StoredCXXDestructorName ||
-           getStoredNameKind() == StoredCXXConversionFunctionName &&
+           getStoredNameKind() == StoredCXXConversionFunctionName) &&
                "DeclarationName does not store a CXXSpecialNameExtra!");
     return static_cast<detail::CXXSpecialNameExtra *>(getPtr());
   }
@@ -318,7 +318,7 @@ private:
   /// Assert that the stored pointer points to a CXXOperatorIdName
   /// and return it.
   detail::CXXOperatorIdName *castAsCXXOperatorIdName() const {
-    assert(getStoredNameKind() == StoredCXXOperatorName &&
+    assert((getStoredNameKind() == StoredCXXOperatorName) &&
            "DeclarationName does not store a CXXOperatorIdName!");
     return static_cast<detail::CXXOperatorIdName *>(getPtr());
   }
