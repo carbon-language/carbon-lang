@@ -53,7 +53,7 @@ bool Semantics::Perform(parser::Program &program) {
   if (AnyFatalError()) {
     return false;
   }
-  CanonicalizeDo(program);
+  parser::CanonicalizeDo(program);
   ModFileWriter writer;
   writer.set_directory(moduleDirectory_);
   if (!writer.WriteAll(globalScope_)) {

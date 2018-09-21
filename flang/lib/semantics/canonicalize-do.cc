@@ -15,7 +15,7 @@
 #include "canonicalize-do.h"
 #include "../parser/parse-tree-visitor.h"
 
-namespace Fortran::semantics {
+namespace Fortran::parser {
 
 class CanonicalizationOfDoLoops {
 public:
@@ -23,7 +23,7 @@ public:
 
   template<typename T> bool Pre(T &) { return true; }
   template<typename T> void Post(T &) {}
-  bool Pre(parser::ExecutionPart &executionPart) {
+  bool Pre(ExecutionPart &executionPart) {
     const auto &endIter{executionPart.v.end()};
     currentList_ = &executionPart.v;
     for (auto iter{executionPart.v.begin()}; iter != endIter; ++iter) {
@@ -31,15 +31,14 @@ public:
     }
     return false;
   }
-  template<typename T> bool Pre(parser::Statement<T> &statement) {
+  template<typename T> bool Pre(Statement<T> &statement) {
     if (!labels_.empty() && statement.label.has_value() &&
         labels_.back() == *statement.label) {
       auto currentLabel{labels_.back()};
-      if constexpr (std::is_same_v<T, common::Indirection<parser::EndDoStmt>>) {
-        std::get<parser::ExecutableConstruct>(currentIter_->u).u =
-            parser::Statement<parser::ActionStmt>{
-                std::optional<parser::Label>{currentLabel},
-                parser::ContinueStmt{}};
+      if constexpr (std::is_same_v<T, common::Indirection<EndDoStmt>>) {
+        std::get<ExecutableConstruct>(currentIter_->u).u =
+            Statement<ActionStmt>{
+                std::optional<Label>{currentLabel}, ContinueStmt{}};
       }
       do {
         currentIter_ = MakeCanonicalForm(labelDoIters_.back(), currentIter_);
@@ -51,69 +50,63 @@ public:
   }
 
 private:
-  parser::Block ExtractBlock(
-      parser::Block::iterator beginLoop, parser::Block::iterator endLoop) {
-    parser::Block block;
+  Block ExtractBlock(Block::iterator beginLoop, Block::iterator endLoop) {
+    Block block;
     block.splice(block.begin(), *currentList_, ++beginLoop, ++endLoop);
     return block;
   }
-  std::optional<parser::LoopControl> CreateLoopControl(
-      std::optional<parser::LoopControl> &loopControlOpt) {
+  std::optional<LoopControl> CreateLoopControl(
+      std::optional<LoopControl> &loopControlOpt) {
     if (loopControlOpt.has_value()) {
-      return std::optional<parser::LoopControl>(
-          parser::LoopControl{loopControlOpt->u});
+      return std::optional<LoopControl>(LoopControl{loopControlOpt->u});
     }
-    return std::optional<parser::LoopControl>{};
+    return std::optional<LoopControl>{};
   }
-  std::optional<parser::LoopControl> ExtractLoopControl(
-      const parser::Block::iterator &startLoop) {
-    return CreateLoopControl(std::get<std::optional<parser::LoopControl>>(
-        std::get<parser::Statement<common::Indirection<parser::LabelDoStmt>>>(
-            std::get<parser::ExecutableConstruct>(startLoop->u).u)
+  std::optional<LoopControl> ExtractLoopControl(
+      const Block::iterator &startLoop) {
+    return CreateLoopControl(std::get<std::optional<LoopControl>>(
+        std::get<Statement<common::Indirection<LabelDoStmt>>>(
+            std::get<ExecutableConstruct>(startLoop->u).u)
             .statement->t));
   }
-  parser::Block::iterator MakeCanonicalForm(
-      const parser::Block::iterator &startLoop,
-      const parser::Block::iterator &endLoop) {
-    std::get<parser::ExecutableConstruct>(startLoop->u).u =
-        common::Indirection<parser::DoConstruct>{std::make_tuple(
-            parser::Statement<parser::NonLabelDoStmt>{
-                std::optional<parser::Label>{},
-                parser::NonLabelDoStmt{
-                    std::make_tuple(std::optional<parser::Name>{},
-                        ExtractLoopControl(startLoop))}},
+  Block::iterator MakeCanonicalForm(
+      const Block::iterator &startLoop, const Block::iterator &endLoop) {
+    std::get<ExecutableConstruct>(startLoop->u).u =
+        common::Indirection<DoConstruct>{std::make_tuple(
+            Statement<NonLabelDoStmt>{std::optional<Label>{},
+                NonLabelDoStmt{std::make_tuple(
+                    std::optional<Name>{}, ExtractLoopControl(startLoop))}},
             ExtractBlock(startLoop, endLoop),
-            parser::Statement<parser::EndDoStmt>{std::optional<parser::Label>{},
-                parser::EndDoStmt{std::optional<parser::Name>{}}})};
+            Statement<EndDoStmt>{
+                std::optional<Label>{}, EndDoStmt{std::optional<Name>{}}})};
     return startLoop;
   }
-  parser::Block::iterator ConvertLabelDoToStructuredDo(
-      const parser::Block::iterator &iter) {
+  Block::iterator ConvertLabelDoToStructuredDo(const Block::iterator &iter) {
     currentIter_ = iter;
-    parser::ExecutionPartConstruct &executionPartConstruct{*iter};
-    if (auto *executableConstruct = std::get_if<parser::ExecutableConstruct>(
-            &executionPartConstruct.u)) {
-      if (auto *labelDoLoop = std::get_if<
-              parser::Statement<common::Indirection<parser::LabelDoStmt>>>(
-              &executableConstruct->u)) {
+    ExecutionPartConstruct &executionPartConstruct{*iter};
+    if (auto *executableConstruct =
+            std::get_if<ExecutableConstruct>(&executionPartConstruct.u)) {
+      if (auto *labelDoLoop =
+              std::get_if<Statement<common::Indirection<LabelDoStmt>>>(
+                  &executableConstruct->u)) {
         labelDoIters_.push_back(iter);
-        labels_.push_back(std::get<parser::Label>(labelDoLoop->statement->t));
+        labels_.push_back(std::get<Label>(labelDoLoop->statement->t));
       } else if (!labels_.empty()) {
-        parser::Walk(executableConstruct->u, *this);
+        Walk(executableConstruct->u, *this);
       }
     }
     return currentIter_;
   }
 
-  std::vector<parser::Block::iterator> labelDoIters_;
-  std::vector<parser::Label> labels_;
-  parser::Block::iterator currentIter_;
-  parser::Block *currentList_;
+  std::vector<Block::iterator> labelDoIters_;
+  std::vector<Label> labels_;
+  Block::iterator currentIter_;
+  Block *currentList_;
 };
 
-void CanonicalizeDo(parser::Program &program) {
+void CanonicalizeDo(Program &program) {
   CanonicalizationOfDoLoops canonicalizationOfDoLoops;
-  parser::Walk(program, canonicalizationOfDoLoops);
+  Walk(program, canonicalizationOfDoLoops);
 }
 
-}  // namespace Fortran::semantics
+}  // namespace Fortran::parser

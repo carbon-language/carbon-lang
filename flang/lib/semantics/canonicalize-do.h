@@ -15,11 +15,11 @@
 #ifndef FORTRAN_SEMANTICS_CANONICALIZE_DO_H_
 #define FORTRAN_SEMANTICS_CANONICALIZE_DO_H_
 
+// Converts a LabelDo followed by a sequence of ExecutableConstructs (perhaps
+// logically nested) into the more structured DoConstruct (explicitly nested)
 namespace Fortran::parser {
 struct Program;
+void CanonicalizeDo(Program &program);
 }  // namespace Fortran::parser
 
-namespace Fortran::semantics {
-void CanonicalizeDo(parser::Program &program);
-}  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_CANONICALIZE_DO_H_
