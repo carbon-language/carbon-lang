@@ -64,13 +64,6 @@ using namespace threadSafety;
 // Key method definition
 ThreadSafetyHandler::~ThreadSafetyHandler() = default;
 
-namespace {
-
-class TILPrinter :
-    public til::PrettyPrinter<TILPrinter, llvm::raw_ostream> {};
-
-} // namespace
-
 /// Issue a warning about an invalid lock expression
 static void warnInvalidLock(ThreadSafetyHandler &Handler,
                             const Expr *MutexExp, const NamedDecl *D,
