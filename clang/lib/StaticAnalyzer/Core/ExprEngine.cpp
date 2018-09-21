@@ -2957,6 +2957,8 @@ struct DOTGraphTraits<ExplodedGraph*> : public DefaultDOTGraphTraits {
   // work.
   static std::string getNodeAttributes(const ExplodedNode *N,
                                        ExplodedGraph *G) {
+    if (N->isSink())
+      return "color=red";
     return {};
   }
 
