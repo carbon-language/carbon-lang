@@ -5489,10 +5489,10 @@ define void @test_avx256_zero_idioms() {
 ; BTVER2-LABEL: test_avx256_zero_idioms:
 ; BTVER2:       # %bb.0:
 ; BTVER2-NEXT:    #APP
-; BTVER2-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:1.00]
-; BTVER2-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:1.00]
-; BTVER2-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:1.00]
-; BTVER2-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:1.00]
+; BTVER2-NEXT:    vxorps %ymm0, %ymm0, %ymm0 # sched: [1:0.50]
+; BTVER2-NEXT:    vxorpd %ymm1, %ymm1, %ymm1 # sched: [1:0.50]
+; BTVER2-NEXT:    vandnps %ymm2, %ymm2, %ymm2 # sched: [1:0.50]
+; BTVER2-NEXT:    vandnpd %ymm3, %ymm3, %ymm3 # sched: [1:0.50]
 ; BTVER2-NEXT:    #NO_APP
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
