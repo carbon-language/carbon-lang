@@ -1479,8 +1479,6 @@ void AsmMatcherInfo::buildInfo() {
   bool ReportMultipleNearMisses =
       AsmParser->getValueAsBit("ReportMultipleNearMisses");
 
-  bool IsWebAssemblyTarget = Target.getName() == "WebAssembly";
-
   // Parse the instructions; we need to do this first so that we can gather the
   // singleton register classes.
   SmallPtrSet<Record*, 16> SingletonRegisters;
@@ -1515,14 +1513,6 @@ void AsmMatcherInfo::buildInfo() {
       StringRef V = CGI->TheDef->getValueAsString("AsmVariantName");
       if (!V.empty() && V != Variant.Name)
         continue;
-
-      // [WebAssembly] Ignore non-stack instructions.
-      if (IsWebAssemblyTarget) {
-        auto Bit = CGI->TheDef->getValue("StackBased")->getValue()->
-                     getCastTo(BitRecTy::get());
-        if (!Bit || !reinterpret_cast<const BitInit *>(Bit)->getValue())
-          continue;
-      }
 
       auto II = llvm::make_unique<MatchableInfo>(*CGI);
 
