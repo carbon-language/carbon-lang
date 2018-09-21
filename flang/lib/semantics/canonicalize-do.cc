@@ -27,7 +27,7 @@ public:
     const auto &endIter{executionPart.v.end()};
     currentList_ = &executionPart.v;
     for (auto iter{executionPart.v.begin()}; iter != endIter; ++iter) {
-      iter = CheckStatement(iter);
+      iter = ConvertLabelDoToStructuredDo(iter);
     }
     return false;
   }
@@ -51,7 +51,7 @@ public:
   }
 
 private:
-  parser::Block SpliceBlock(
+  parser::Block ExtractBlock(
       parser::Block::iterator beginLoop, parser::Block::iterator endLoop) {
     parser::Block block;
     block.splice(block.begin(), *currentList_, ++beginLoop, ++endLoop);
@@ -82,12 +82,13 @@ private:
                 parser::NonLabelDoStmt{
                     std::make_tuple(std::optional<parser::Name>{},
                         ExtractLoopControl(startLoop))}},
-            SpliceBlock(startLoop, endLoop),
+            ExtractBlock(startLoop, endLoop),
             parser::Statement<parser::EndDoStmt>{std::optional<parser::Label>{},
                 parser::EndDoStmt{std::optional<parser::Name>{}}})};
     return startLoop;
   }
-  parser::Block::iterator CheckStatement(const parser::Block::iterator &iter) {
+  parser::Block::iterator ConvertLabelDoToStructuredDo(
+      const parser::Block::iterator &iter) {
     currentIter_ = iter;
     parser::ExecutionPartConstruct &executionPartConstruct{*iter};
     if (auto *executableConstruct = std::get_if<parser::ExecutableConstruct>(
