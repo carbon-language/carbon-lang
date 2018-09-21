@@ -49,6 +49,10 @@ NativeExeSymbol::findChildren(PDB_SymType Type) const {
     return Session.getSymbolCache().createTypeEnumerator(
         {codeview::LF_STRUCTURE, codeview::LF_CLASS, codeview::LF_UNION,
          codeview::LF_INTERFACE});
+  case PDB_SymType::FunctionSig:
+    return Session.getSymbolCache().createTypeEnumerator(
+        {codeview::LF_PROCEDURE, codeview::LF_MFUNCTION});
+
   default:
     break;
   }

@@ -28,6 +28,9 @@ public:
                   codeview::LazyRandomTypeCollection &TypeCollection,
                   std::vector<codeview::TypeLeafKind> Kinds);
 
+  NativeEnumTypes(NativeSession &Session,
+                  std::vector<codeview::TypeIndex> Indices);
+
   uint32_t getChildCount() const override;
   std::unique_ptr<PDBSymbol> getChildAtIndex(uint32_t Index) const override;
   std::unique_ptr<PDBSymbol> getNext() override;

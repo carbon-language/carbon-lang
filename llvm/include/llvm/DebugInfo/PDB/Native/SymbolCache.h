@@ -68,9 +68,18 @@ public:
   SymIndexId createSymbol(Args &&... ConstructorArgs) {
     SymIndexId Id = Cache.size();
 
+    // Initial construction must not access the cache, since it must be done
+    // atomically.
     auto Result = llvm::make_unique<ConcreteSymbolT>(
         Session, Id, std::forward<Args>(ConstructorArgs)...);
+    Result->SymbolId = Id;
+
+    NativeRawSymbol *NRS = static_cast<NativeRawSymbol *>(Result.get());
     Cache.push_back(std::move(Result));
+
+    // After the item is in the cache, we can do further initialization which
+    // is then allowed to access the cache.
+    NRS->initialize();
     return Id;
   }
 
@@ -89,13 +98,11 @@ public:
     SymIndexId SymId = Cache.size();
     std::pair<codeview::TypeIndex, uint32_t> Key{FieldListTI, Index};
     auto Result = FieldListMembersToSymbolId.try_emplace(Key, SymId);
-    if (Result.second) {
-      auto NewSymbol = llvm::make_unique<ConcreteSymbolT>(
-          Session, SymId, std::forward<Args>(ConstructorArgs)...);
-      Cache.push_back(std::move(NewSymbol));
-    } else {
+    if (Result.second)
+      SymId =
+          createSymbol<ConcreteSymbolT>(std::forward<Args>(ConstructorArgs)...);
+    else
       SymId = Result.first->second;
-    }
     return SymId;
   }
 

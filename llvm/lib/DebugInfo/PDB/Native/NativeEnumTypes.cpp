@@ -48,15 +48,17 @@ NativeEnumTypes::NativeEnumTypes(NativeSession &PDBSession,
   }
 }
 
+NativeEnumTypes::NativeEnumTypes(NativeSession &PDBSession,
+                                 std::vector<codeview::TypeIndex> Indices)
+    : Matches(std::move(Indices)), Index(0), Session(PDBSession) {}
+
 uint32_t NativeEnumTypes::getChildCount() const {
   return static_cast<uint32_t>(Matches.size());
 }
 
-std::unique_ptr<PDBSymbol>
-NativeEnumTypes::getChildAtIndex(uint32_t Index) const {
-  if (Index < Matches.size()) {
-    SymIndexId Id =
-        Session.getSymbolCache().findSymbolByTypeIndex(Matches[Index]);
+std::unique_ptr<PDBSymbol> NativeEnumTypes::getChildAtIndex(uint32_t N) const {
+  if (N < Matches.size()) {
+    SymIndexId Id = Session.getSymbolCache().findSymbolByTypeIndex(Matches[N]);
     return Session.getSymbolCache().getSymbolById(Id);
   }
   return nullptr;

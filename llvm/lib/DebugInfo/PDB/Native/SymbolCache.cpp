@@ -9,6 +9,7 @@
 #include "llvm/DebugInfo/PDB/Native/NativeSession.h"
 #include "llvm/DebugInfo/PDB/Native/NativeTypeBuiltin.h"
 #include "llvm/DebugInfo/PDB/Native/NativeTypeEnum.h"
+#include "llvm/DebugInfo/PDB/Native/NativeTypeFunctionSig.h"
 #include "llvm/DebugInfo/PDB/Native/NativeTypePointer.h"
 #include "llvm/DebugInfo/PDB/Native/NativeTypeUDT.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
@@ -29,6 +30,7 @@ static const struct BuiltinTypeEntry {
   uint32_t Size;
 } BuiltinTypes[] = {
     {codeview::SimpleTypeKind::None, PDB_BuiltinType::None, 0},
+    {codeview::SimpleTypeKind::Void, PDB_BuiltinType::Void, 0},
     {codeview::SimpleTypeKind::Int16Short, PDB_BuiltinType::Int, 2},
     {codeview::SimpleTypeKind::UInt16Short, PDB_BuiltinType::UInt, 2},
     {codeview::SimpleTypeKind::Int32, PDB_BuiltinType::Int, 4},
@@ -76,24 +78,16 @@ SymbolCache::createTypeEnumerator(std::vector<TypeLeafKind> Kinds) {
 
 SymIndexId SymbolCache::createSimpleType(TypeIndex Index,
                                          ModifierOptions Mods) {
-  if (Index.getSimpleMode() != codeview::SimpleTypeMode::Direct) {
-    SymIndexId Id = Cache.size();
-    Cache.emplace_back(
-        llvm::make_unique<NativeTypePointer>(Session, Id, Index));
-    return Id;
-  }
+  if (Index.getSimpleMode() != codeview::SimpleTypeMode::Direct)
+    return createSymbol<NativeTypePointer>(Index);
 
-  SymIndexId Id = Cache.size();
   const auto Kind = Index.getSimpleKind();
   const auto It = std::find_if(
       std::begin(BuiltinTypes), std::end(BuiltinTypes),
       [Kind](const BuiltinTypeEntry &Builtin) { return Builtin.Kind == Kind; });
   if (It == std::end(BuiltinTypes))
     return 0;
-  Cache.emplace_back(llvm::make_unique<NativeTypeBuiltin>(Session, Id, Mods,
-                                                          It->Type, It->Size));
-  TypeIndexToSymbolId[Index] = Id;
-  return Id;
+  return createSymbol<NativeTypeBuiltin>(Mods, It->Type, It->Size);
 }
 
 SymIndexId
@@ -135,8 +129,12 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
     return Entry->second;
 
   // Symbols for built-in types are created on the fly.
-  if (Index.isSimple())
-    return createSimpleType(Index, ModifierOptions::None);
+  if (Index.isSimple()) {
+    SymIndexId Result = createSimpleType(Index, ModifierOptions::None);
+    assert(TypeIndexToSymbolId.count(Index) == 0);
+    TypeIndexToSymbolId[Index] = Result;
+    return Result;
+  }
 
   // We need to instantiate and cache the desired type symbol.
   auto Tpi = Session.getPDBFile().getPDBTpiStream();
@@ -157,6 +155,7 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
       SymIndexId Result = findSymbolByTypeIndex(*EFD);
       // Record a mapping from ForwardRef -> SymIndex of complete type so that
       // we'll take the fast path next time.
+      assert(TypeIndexToSymbolId.count(Index) == 0);
       TypeIndexToSymbolId[Index] = Result;
       return Result;
     }
@@ -184,12 +183,22 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
   case codeview::LF_MODIFIER:
     Id = createSymbolForModifiedType(Index, std::move(CVT));
     break;
+  case codeview::LF_PROCEDURE:
+    Id = createSymbolForType<NativeTypeFunctionSig, ProcedureRecord>(
+        Index, std::move(CVT));
+    break;
+  case codeview::LF_MFUNCTION:
+    Id = createSymbolForType<NativeTypeFunctionSig, MemberFunctionRecord>(
+        Index, std::move(CVT));
+    break;
   default:
     Id = createSymbolPlaceholder();
     break;
   }
-  if (Id != 0)
+  if (Id != 0) {
+    assert(TypeIndexToSymbolId.count(Index) == 0);
     TypeIndexToSymbolId[Index] = Id;
+  }
   return Id;
 }
 
