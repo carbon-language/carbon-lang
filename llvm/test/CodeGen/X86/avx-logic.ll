@@ -364,6 +364,28 @@ define <8 x i32> @andn_disguised_i8_elts(<8 x i32> %x, <8 x i32> %y, <8 x i32> %
   ret <8 x i32> %add1
 }
 
+define <8 x i32> @andn_variable_mask_operand(<8 x i32> %x, <8 x i32> %y, <8 x i32> %z) {
+; AVX1-LABEL: andn_variable_mask_operand:
+; AVX1:       # %bb.0:
+; AVX1-NEXT:    vandnps %ymm2, %ymm0, %ymm0
+; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm2
+; AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm3
+; AVX1-NEXT:    vpaddd %xmm3, %xmm2, %xmm2
+; AVX1-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm2, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; INT256-LABEL: andn_variable_mask_operand:
+; INT256:       # %bb.0:
+; INT256-NEXT:    vpandn %ymm2, %ymm0, %ymm0
+; INT256-NEXT:    vpaddd %ymm1, %ymm0, %ymm0
+; INT256-NEXT:    retq
+  %and = and <8 x i32> %x, %z
+  %xor = xor <8 x i32> %and, %z ; demanded bits will make this a 'not'
+  %add = add <8 x i32> %xor, %y
+  ret <8 x i32> %add
+}
+
 define <8 x i32> @or_disguised_i8_elts(<8 x i32> %x, <8 x i32> %y, <8 x i32> %z) {
 ; AVX1-LABEL: or_disguised_i8_elts:
 ; AVX1:       # %bb.0:
