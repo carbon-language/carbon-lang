@@ -77,6 +77,9 @@ public:
   std::unique_ptr<IPDBEnumSymbols>
   createTypeEnumerator(codeview::TypeLeafKind Kind);
 
+  std::unique_ptr<IPDBEnumSymbols>
+  createTypeEnumerator(std::vector<codeview::TypeLeafKind> Kinds);
+
   SymIndexId findSymbolByTypeIndex(codeview::TypeIndex TI);
 
   template <typename ConcreteSymbolT, typename... Args>

@@ -1,6 +1,7 @@
 #include "llvm/DebugInfo/PDB/Native/SymbolCache.h"
 
 #include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
+#include "llvm/DebugInfo/CodeView/TypeRecordHelpers.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/NativeCompilandSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeEnumTypes.h"
@@ -9,6 +10,7 @@
 #include "llvm/DebugInfo/PDB/Native/NativeTypeBuiltin.h"
 #include "llvm/DebugInfo/PDB/Native/NativeTypeEnum.h"
 #include "llvm/DebugInfo/PDB/Native/NativeTypePointer.h"
+#include "llvm/DebugInfo/PDB/Native/NativeTypeUDT.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/DebugInfo/PDB/PDBSymbol.h"
@@ -50,10 +52,18 @@ SymbolCache::SymbolCache(NativeSession &Session, DbiStream *Dbi)
 
   if (Dbi)
     Compilands.resize(Dbi->modules().getModuleCount());
+
+  auto &Tpi = cantFail(Session.getPDBFile().getPDBTpiStream());
+  Tpi.buildHashMap();
 }
 
 std::unique_ptr<IPDBEnumSymbols>
-SymbolCache::createTypeEnumerator(codeview::TypeLeafKind Kind) {
+SymbolCache::createTypeEnumerator(TypeLeafKind Kind) {
+  return createTypeEnumerator(std::vector<TypeLeafKind>{Kind});
+}
+
+std::unique_ptr<IPDBEnumSymbols>
+SymbolCache::createTypeEnumerator(std::vector<TypeLeafKind> Kinds) {
   auto Tpi = Session.getPDBFile().getPDBTpiStream();
   if (!Tpi) {
     consumeError(Tpi.takeError());
@@ -61,7 +71,7 @@ SymbolCache::createTypeEnumerator(codeview::TypeLeafKind Kind) {
   }
   auto &Types = Tpi->typeCollection();
   return std::unique_ptr<IPDBEnumSymbols>(
-      new NativeEnumTypes(Session, Types, Kind));
+      new NativeEnumTypes(Session, Types, std::move(Kinds)));
 }
 
 SymIndexId SymbolCache::createSimpleType(TypeIndex Index,
@@ -98,38 +108,24 @@ SymbolCache::createSymbolForModifiedType(codeview::TypeIndex ModifierTI,
   if (Record.ModifiedType.isSimple())
     return createSimpleType(Record.ModifiedType, Record.Modifiers);
 
-  auto Tpi = Session.getPDBFile().getPDBTpiStream();
-  if (!Tpi) {
-    consumeError(Tpi.takeError());
-    return 0;
-  }
-  codeview::LazyRandomTypeCollection &Types = Tpi->typeCollection();
+  // Make sure we create and cache a record for the unmodified type.
+  SymIndexId UnmodifiedId = findSymbolByTypeIndex(Record.ModifiedType);
+  NativeRawSymbol &UnmodifiedNRS = *Cache[UnmodifiedId];
 
-  codeview::CVType UnmodifiedType = Types.getType(Record.ModifiedType);
-
-  switch (UnmodifiedType.kind()) {
-  case LF_ENUM: {
-    EnumRecord ER;
-    if (auto EC =
-            TypeDeserializer::deserializeAs<EnumRecord>(UnmodifiedType, ER)) {
-      consumeError(std::move(EC));
-      return 0;
-    }
-    return createSymbol<NativeTypeEnum>(Record.ModifiedType, std::move(Record),
-                                        std::move(ER));
-  }
-  case LF_STRUCTURE:
-  case LF_UNION:
-  case LF_CLASS:
-    // FIXME: Handle these
-    break;
+  switch (UnmodifiedNRS.getSymTag()) {
+  case PDB_SymType::Enum:
+    return createSymbol<NativeTypeEnum>(
+        static_cast<NativeTypeEnum &>(UnmodifiedNRS), std::move(Record));
+  case PDB_SymType::UDT:
+    return createSymbol<NativeTypeUDT>(
+        static_cast<NativeTypeUDT &>(UnmodifiedNRS), std::move(Record));
   default:
     // No other types can be modified.  (LF_POINTER, for example, records
     // its modifiers a different way.
     assert(false && "Invalid LF_MODIFIER record");
     break;
   }
-  return createSymbolPlaceholder();
+  return 0;
 }
 
 SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
@@ -150,12 +146,36 @@ SymIndexId SymbolCache::findSymbolByTypeIndex(codeview::TypeIndex Index) {
   }
   codeview::LazyRandomTypeCollection &Types = Tpi->typeCollection();
   codeview::CVType CVT = Types.getType(Index);
-  // TODO(amccarth):  Make this handle all types.
-  SymIndexId Id = 0;
 
+  if (isUdtForwardRef(CVT)) {
+    Expected<TypeIndex> EFD = Tpi->findFullDeclForForwardRef(Index);
+
+    if (!EFD)
+      consumeError(EFD.takeError());
+    else if (*EFD != Index) {
+      assert(!isUdtForwardRef(Types.getType(*EFD)));
+      SymIndexId Result = findSymbolByTypeIndex(*EFD);
+      // Record a mapping from ForwardRef -> SymIndex of complete type so that
+      // we'll take the fast path next time.
+      TypeIndexToSymbolId[Index] = Result;
+      return Result;
+    }
+  }
+
+  // At this point if we still have a forward ref udt it means the full decl was
+  // not in the PDB.  We just have to deal with it and use the forward ref.
+  SymIndexId Id = 0;
   switch (CVT.kind()) {
   case codeview::LF_ENUM:
     Id = createSymbolForType<NativeTypeEnum, EnumRecord>(Index, std::move(CVT));
+    break;
+  case codeview::LF_CLASS:
+  case codeview::LF_STRUCTURE:
+  case codeview::LF_INTERFACE:
+    Id = createSymbolForType<NativeTypeUDT, ClassRecord>(Index, std::move(CVT));
+    break;
+  case codeview::LF_UNION:
+    Id = createSymbolForType<NativeTypeUDT, UnionRecord>(Index, std::move(CVT));
     break;
   case codeview::LF_POINTER:
     Id = createSymbolForType<NativeTypePointer, PointerRecord>(Index,

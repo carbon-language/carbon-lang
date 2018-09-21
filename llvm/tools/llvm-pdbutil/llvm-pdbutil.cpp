@@ -986,6 +986,8 @@ static void dumpDia(StringRef Path) {
     SymTypes.push_back(PDB_SymType::Enum);
   if (opts::diadump::Pointers)
     SymTypes.push_back(PDB_SymType::PointerType);
+  if (opts::diadump::UDTs)
+    SymTypes.push_back(PDB_SymType::UDT);
 
   PdbSymbolIdField Ids = opts::diadump::NoSymIndexIds ? PdbSymbolIdField::None
                                                       : PdbSymbolIdField::All;
@@ -1011,6 +1013,8 @@ static void dumpDia(StringRef Path) {
       outs() << "\n}\n";
     }
   }
+  auto Child = Session->getSymbolById(3);
+  Child->defaultDump(outs(), 2, PdbSymbolIdField::All, PdbSymbolIdField::None);
 }
 
 static void dumpPretty(StringRef Path) {
