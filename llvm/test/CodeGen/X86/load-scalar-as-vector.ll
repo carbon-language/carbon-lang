@@ -3,6 +3,7 @@
 ; RUN: llc < %s -mtriple=x86_64-- -mattr=+sse4.2     | FileCheck %s --check-prefixes=SSE,SSE4
 ; RUN: llc < %s -mtriple=x86_64-- -mattr=+avx        | FileCheck %s --check-prefixes=AVX,AVX1
 ; RUN: llc < %s -mtriple=x86_64-- -mattr=+avx2       | FileCheck %s --check-prefixes=AVX,AVX2
+; RUN: llc < %s -mtriple=x86_64-- -mattr=+avx512dq,+avx512bw | FileCheck %s --check-prefixes=AVX,AVX512
 
 define <4 x i32> @add_op1_constant(i32* %p) nounwind {
 ; SSE-LABEL: add_op1_constant:
