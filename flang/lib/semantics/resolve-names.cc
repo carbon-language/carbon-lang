@@ -387,8 +387,10 @@ protected:
   std::optional<SubprogramKind> subpNamesOnly_;
 
   // Apply the implicit type rules to this symbol.
-  void ApplyImplicitRules(const SourceName &, Symbol &);
+  void ApplyImplicitRules(Symbol &);
   std::optional<const DeclTypeSpec> GetImplicitType(Symbol &);
+  bool ConvertToObjectEntity(Symbol &);
+  bool ConvertToProcEntity(Symbol &);
 
 private:
   Scope *currScope_{nullptr};
@@ -583,8 +585,7 @@ private:
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   Symbol &HandleAttributeStmt(Attr, const SourceName &);
   void DeclareObjectEntity(const SourceName &, Attrs);
-  void DeclareProcEntity(const SourceName &, Attrs, const ProcInterface &);
-  bool ConvertToProcEntity(Symbol &);
+  Symbol &DeclareProcEntity(const SourceName &, Attrs, const ProcInterface &);
   void SetType(const SourceName &, Symbol &, const DeclTypeSpec &);
   const Symbol *ResolveDerivedType(const SourceName &);
   bool CanBeTypeBoundProc(const Symbol &);
@@ -696,12 +697,11 @@ private:
   const parser::Name *GetVariableName(const parser::Expr &);
   const parser::Name *GetVariableName(const parser::Variable &);
   const Symbol *CheckImplicitSymbol(const parser::Name *);
-  const Symbol *ResolveStructureComponent(const parser::StructureComponent &);
-  const Symbol *ResolveArrayElement(const parser::ArrayElement &);
-  const Symbol *ResolveCoindexedNamedObject(
-      const parser::CoindexedNamedObject &);
-  const Symbol *ResolveDataRef(const parser::DataRef &);
-  const Symbol *FindComponent(const Symbol &, const SourceName &);
+  Symbol *ResolveStructureComponent(const parser::StructureComponent &);
+  Symbol *ResolveArrayElement(const parser::ArrayElement &);
+  Symbol *ResolveCoindexedNamedObject(const parser::CoindexedNamedObject &);
+  Symbol *ResolveDataRef(const parser::DataRef &);
+  Symbol *FindComponent(Symbol &, const SourceName &);
   Symbol *FindComponent(const Scope &, const SourceName &);
   bool CheckAccessibleComponent(const Symbol &);
   void CheckImports();
@@ -1215,6 +1215,10 @@ void ScopeHandler::PushScope(Scope &scope) {
   }
 }
 void ScopeHandler::PopScope() {
+  for (auto &pair : currScope()) {
+    auto &symbol{*pair.second};
+    ConvertToObjectEntity(symbol);  // if not a proc by now, it is an object
+  }
   if (currScope_->kind() != Scope::Kind::Block) {
     ImplicitRulesVisitor::PopScope();
   }
@@ -1228,16 +1232,15 @@ void ScopeHandler::EraseSymbol(const SourceName &name) {
   currScope().erase(name);
 }
 
-void ScopeHandler::ApplyImplicitRules(const SourceName &name, Symbol &symbol) {
-  if (symbol.has<UnknownDetails>()) {
-    symbol.set_details(ObjectEntityDetails{});
-  }
-  if (auto *details{symbol.detailsIf<ObjectEntityDetails>()}) {
-    if (!details->type()) {
-      if (const auto type{GetImplicitType(symbol)}) {
-        details->set_type(*type);
-      }
-    }
+void ScopeHandler::ApplyImplicitRules(Symbol &symbol) {
+  ConvertToObjectEntity(symbol);
+  if (symbol.GetType()) {
+    // already has a type
+  } else if (symbol.has<ProcEntityDetails>() &&
+      !symbol.test(Symbol::Flag::Function)) {
+    // a procedure that is not known to be a function
+  } else if (const auto type{GetImplicitType(symbol)}) {
+    symbol.SetType(*type);
   }
 }
 std::optional<const DeclTypeSpec> ScopeHandler::GetImplicitType(
@@ -1250,6 +1253,36 @@ std::optional<const DeclTypeSpec> ScopeHandler::GetImplicitType(
     Say(name, "No explicit type declared for '%s'"_err_en_US);
   }
   return type;
+}
+
+// Convert symbol to be a ObjectEntity or return false if it can't be.
+bool ScopeHandler::ConvertToObjectEntity(Symbol &symbol) {
+  if (symbol.has<ObjectEntityDetails>()) {
+    // nothing to do
+  } else if (symbol.has<UnknownDetails>()) {
+    symbol.set_details(ObjectEntityDetails{});
+  } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
+    symbol.set_details(ObjectEntityDetails{*details});
+  } else {
+    return false;
+  }
+  return true;
+}
+// Convert symbol to be a ProcEntity or return false if it can't be.
+bool ScopeHandler::ConvertToProcEntity(Symbol &symbol) {
+  if (symbol.has<ProcEntityDetails>()) {
+    // nothing to do
+  } else if (symbol.has<UnknownDetails>()) {
+    symbol.set_details(ProcEntityDetails{});
+  } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
+    symbol.set_details(ProcEntityDetails{*details});
+  } else {
+    return false;
+  }
+  if (symbol.GetType()) {
+    symbol.set(Symbol::Flag::Function);
+  }
+  return true;
 }
 
 // ModuleVisitor implementation
@@ -1936,7 +1969,7 @@ void DeclarationVisitor::Post(const parser::EntityDecl &x) {
     if (auto &type{GetDeclTypeSpec()}) {
       SetType(name, symbol, *type);
     }
-    if (attrs.test(Attr::EXTERNAL)) {
+    if (symbol.attrs().test(Attr::EXTERNAL)) {
       ConvertToProcEntity(symbol);
     }
   }
@@ -1957,7 +1990,7 @@ bool DeclarationVisitor::Pre(const parser::NamedConstantDef &x) {
   // TODO: auto &expr{std::get<parser::ConstantExpr>(x.t)};
   // TODO: old-style parameters: type based on expr
   auto &symbol{HandleAttributeStmt(Attr::PARAMETER, name)};
-  ApplyImplicitRules(name, symbol);
+  ApplyImplicitRules(symbol);
   return false;
 }
 bool DeclarationVisitor::Pre(const parser::AsynchronousStmt &x) {
@@ -2024,28 +2057,13 @@ Symbol &DeclarationVisitor::HandleAttributeStmt(
   return symbol;
 }
 
-// Convert symbol to be a ProcEntity or return false if it can't be.
-bool DeclarationVisitor::ConvertToProcEntity(Symbol &symbol) {
-  if (symbol.has<ProcEntityDetails>()) {
-    // nothing to do
-  } else if (symbol.has<UnknownDetails>()) {
-    symbol.set_details(ProcEntityDetails{});
-  } else if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-    symbol.set_details(ProcEntityDetails(*details));
-    symbol.set(Symbol::Flag::Function);
-  } else {
-    return false;
-  }
-  return true;
-}
-
 void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
   CHECK(objectDeclAttr_.has_value());
   const auto &name{std::get<parser::ObjectName>(x.t)};
   DeclareObjectEntity(name.source, Attrs{*objectDeclAttr_});
 }
 
-void DeclarationVisitor::DeclareProcEntity(
+Symbol &DeclarationVisitor::DeclareProcEntity(
     const SourceName &name, Attrs attrs, const ProcInterface &interface) {
   Symbol &symbol{DeclareEntity<ProcEntityDetails>(name, attrs)};
   if (auto *details{symbol.detailsIf<ProcEntityDetails>()}) {
@@ -2058,6 +2076,7 @@ void DeclarationVisitor::DeclareProcEntity(
     }
     details->set_interface(interface);
   }
+  return symbol;
 }
 
 void DeclarationVisitor::DeclareObjectEntity(
@@ -2245,20 +2264,27 @@ void DeclarationVisitor::Post(const parser::ProcInterface &x) {
 }
 
 void DeclarationVisitor::Post(const parser::ProcDecl &x) {
-  const auto &name{std::get<parser::Name>(x.t).source};
+  bool isFunction{false};
+  bool isSubroutine{false};
   ProcInterface interface;
   if (interfaceName_) {
     if (auto *symbol{FindExplicitInterface(*interfaceName_)}) {
       interface.set_symbol(*symbol);
+      isFunction = symbol->test(Symbol::Flag::Function);
+      isSubroutine = symbol->test(Symbol::Flag::Subroutine);
     }
   } else if (auto &type{GetDeclTypeSpec()}) {
     interface.set_type(*type);
+    isFunction = true;
   }
   auto attrs{GetAttrs()};
   if (currScope().kind() != Scope::Kind::DerivedType) {
     attrs.set(Attr::EXTERNAL);
   }
-  DeclareProcEntity(name, attrs, interface);
+  const auto &name{std::get<parser::Name>(x.t).source};
+  auto &symbol{DeclareProcEntity(name, attrs, interface)};
+  symbol.set(Symbol::Flag::Function, isFunction);
+  symbol.set(Symbol::Flag::Subroutine, isSubroutine);
 }
 
 bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &x) {
@@ -2512,21 +2538,21 @@ bool ResolveNamesVisitor::Pre(const parser::StructureComponent &x) {
   return false;
 }
 
-const Symbol *ResolveNamesVisitor::ResolveStructureComponent(
+Symbol *ResolveNamesVisitor::ResolveStructureComponent(
     const parser::StructureComponent &x) {
-  const Symbol *dataRef = ResolveDataRef(x.base);
+  Symbol *dataRef{ResolveDataRef(x.base)};
   return dataRef ? FindComponent(*dataRef, x.component.source) : nullptr;
 }
-const Symbol *ResolveNamesVisitor::ResolveArrayElement(
+Symbol *ResolveNamesVisitor::ResolveArrayElement(
     const parser::ArrayElement &x) {
   return ResolveDataRef(x.base);
 }
-const Symbol *ResolveNamesVisitor::ResolveCoindexedNamedObject(
+Symbol *ResolveNamesVisitor::ResolveCoindexedNamedObject(
     const parser::CoindexedNamedObject &x) {
   return nullptr;  // TODO
 }
 
-const Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
+Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
   return std::visit(
       common::visitors{
           [=](const parser::Name &y) {
@@ -2538,10 +2564,10 @@ const Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
                 auto pair{InclusiveScope().try_emplace(y.source)};
                 CHECK(pair.second);
                 symbol = pair.first->second;
-                ApplyImplicitRules(y.source, *symbol);
+                ApplyImplicitRules(*symbol);
               }
             }
-            return const_cast<const Symbol *>(symbol);
+            return symbol;
           },
           [=](const common::Indirection<parser::StructureComponent> &y) {
             return ResolveStructureComponent(*y);
@@ -2557,17 +2583,15 @@ const Symbol *ResolveNamesVisitor::ResolveDataRef(const parser::DataRef &x) {
 }
 
 // base is a part-ref of a derived type; find the named component in its type.
-const Symbol *ResolveNamesVisitor::FindComponent(
-    const Symbol &base, const SourceName &component) {
-  std::optional<DeclTypeSpec> type;
-  if (auto *details{base.detailsIf<ObjectEntityDetails>()}) {
-    type = details->type();
-  } else {
+Symbol *ResolveNamesVisitor::FindComponent(
+    Symbol &base, const SourceName &component) {
+  if (!ConvertToObjectEntity(base)) {
     Say2(base.lastOccurrence(),
-        "'%s' is not an object of derived type"_err_en_US, base.name(),
-        "Declaration of '%s'"_en_US);
+        "'%s' is an invalid base for a component reference"_err_en_US,
+        base.name(), "Declaration of '%s'"_en_US);
     return nullptr;
   }
+  auto *type{base.GetType()};
   if (!type) {
     return nullptr;  // should have already reported error
   }
@@ -2582,8 +2606,7 @@ const Symbol *ResolveNamesVisitor::FindComponent(
     }
     return nullptr;
   }
-  const DerivedTypeSpec &derivedTypeSpec{type->derivedTypeSpec()};
-  const Scope *scope{derivedTypeSpec.scope()};
+  const Scope *scope{type->derivedTypeSpec().scope()};
   if (!scope) {
     return nullptr;  // previously failed to resolve type
   } else if (auto *result{FindComponent(*scope, component)}) {
@@ -2657,10 +2680,7 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
       // error was reported
     } else {
       symbol = &symbol->GetUltimate();
-      if (auto *details{symbol->detailsIf<EntityDetails>()}) {
-        symbol->set_details(ProcEntityDetails(*details));
-        symbol->set(Symbol::Flag::Function);
-      }
+      ConvertToProcEntity(*symbol);
       if (symbol->test(Symbol::Flag::Function) &&
           expectedProcFlag_ == Symbol::Flag::Subroutine) {
         Say2(name->source,
@@ -2673,6 +2693,9 @@ void ResolveNamesVisitor::Post(const parser::ProcedureDesignator &x) {
             symbol->name(), "Declaration of '%s'"_en_US);
       } else if (symbol->has<ProcEntityDetails>()) {
         symbol->set(*expectedProcFlag_);  // in case it hasn't been set yet
+        if (expectedProcFlag_ == Symbol::Flag::Function) {
+          ApplyImplicitRules(*symbol);
+        }
       } else if (symbol->has<SubprogramDetails>()) {
         // OK
       } else if (symbol->has<SubprogramNameDetails>()) {
@@ -2769,21 +2792,24 @@ static bool NeedsExplicitType(const Symbol &symbol) {
 void ResolveNamesVisitor::Post(const parser::SpecificationPart &) {
   badStmtFuncFound_ = false;
   CheckImports();
+  bool inModule{currScope().kind() == Scope::Kind::Module};
   for (auto &pair : currScope()) {
     auto &name{pair.first};
     auto &symbol{*pair.second};
-    if (auto *details{symbol.detailsIf<EntityDetails>()}) {
-      symbol.set_details(ObjectEntityDetails{*details});
-    }
     if (NeedsExplicitType(symbol)) {
       if (isImplicitNoneType()) {
         Say(name, "No explicit type declared for '%s'"_err_en_US);
       } else {
-        ApplyImplicitRules(name, symbol);
+        ApplyImplicitRules(symbol);
       }
     }
     if (symbol.has<GenericDetails>()) {
       CheckGenericProcedures(symbol);
+    }
+    if (inModule && symbol.attrs().test(Attr::EXTERNAL) &&
+        !symbol.test(Symbol::Flag::Function)) {
+      // in a module, external proc without return type is subroutine
+      symbol.set(Symbol::Flag::Subroutine);
     }
   }
 }
@@ -2932,7 +2958,7 @@ const Symbol *ResolveNamesVisitor::CheckImplicitSymbol(
         "'%s' from host scoping unit is not accessible due to IMPORT"_err_en_US);
     return nullptr;
   }
-  ApplyImplicitRules(name->source, *symbol);
+  ApplyImplicitRules(*symbol);
   return symbol;
 }
 

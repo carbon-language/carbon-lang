@@ -20,7 +20,7 @@ call a  ! OK - can be function or subroutine
 c = a()
 !ERROR: Cannot call function 'b' like a subroutine
 call b
-!ERROR: Use of 'y' as a procedure conflicts with its declaration
+!ERROR: Cannot call function 'y' like a subroutine
 call y
 call x
 !ERROR: Cannot call subroutine 'x' like a function
@@ -34,5 +34,45 @@ subroutine s
   i = s()
 contains
   function f()
+  end
+end
+
+subroutine s2
+  ! subroutine vs. function is determined by use
+  external :: a, b
+  call a()
+  !ERROR: Cannot call subroutine 'a' like a function
+  x = a()
+  x = b()
+  !ERROR: Cannot call function 'b' like a subroutine
+  call b()
+end
+
+subroutine s3
+  ! subroutine vs. function is determined by use, even in internal subprograms
+  external :: a
+  procedure() :: b
+contains
+  subroutine s3a()
+    x = a()
+    call b()
+  end
+  subroutine s3b()
+    !ERROR: Cannot call function 'a' like a subroutine
+    call a()
+    !ERROR: Cannot call subroutine 'b' like a function
+    x = b()
+  end
+end
+
+module m
+  ! subroutine vs. function is determined at end of specification part
+  external :: a
+  procedure() :: b
+contains
+  subroutine s()
+    call a()
+    !ERROR: Cannot call subroutine 'b' like a function
+    x = b()
   end
 end
