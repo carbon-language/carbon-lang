@@ -150,7 +150,7 @@ defm : SKLWriteResPair<WritePOPCNT,         [SKLPort1], 3>;
 
 // Integer shifts and rotates.
 defm : SKLWriteResPair<WriteShift,  [SKLPort06],  1>;
-defm : SKLWriteResPair<WriteRotate, [SKLPort06],  1>;
+defm : SKLWriteResPair<WriteRotate, [SKLPort06],  2, [2], 2>;
 
 // SHLD/SHRD.
 defm : X86WriteRes<WriteSHDrri, [SKLPort1], 3, [1], 1>;
@@ -669,9 +669,7 @@ def SKLWriteResGroup15 : SchedWriteRes<[SKLPort06]> {
   let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
-def: InstRW<[SKLWriteResGroup15], (instregex "ROL(8|16|32|64)r(1|i)",
-                                             "ROR(8|16|32|64)r(1|i)",
-                                             "SET(A|BE)r")>;
+def: InstRW<[SKLWriteResGroup15], (instregex "SET(A|BE)r")>;
 
 def SKLWriteResGroup17 : SchedWriteRes<[SKLPort0156]> {
   let Latency = 2;
