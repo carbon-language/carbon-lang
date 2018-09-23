@@ -2924,28 +2924,35 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
   }
 
   // Try to transform multiply-by-(power-of-2 +/- 1) into shift and add/sub.
+  // mul x, (2^N + 1) --> add (shl x, N), x
+  // mul x, (2^N - 1) --> sub (shl x, N), x
   // Examples: x * 33 --> (x << 5) + x
   //           x * 15 --> (x << 4) - x
+  //           x * -33 --> -((x << 5) + x)
+  //           x * -15 --> -((x << 4) - x) ; this reduces --> x - (x << 4)
   if (N1IsConst && TLI.decomposeMulByConstant(VT, N1)) {
-    // TODO: Negative constants can be handled by negating the result.
     // TODO: We could handle more general decomposition of any constant by
     //       having the target set a limit on number of ops and making a
     //       callback to determine that sequence (similar to sqrt expansion).
     unsigned MathOp = ISD::DELETED_NODE;
-    if ((ConstValue1 - 1).isPowerOf2())
+    APInt MulC = ConstValue1.abs();
+    if ((MulC - 1).isPowerOf2())
       MathOp = ISD::ADD;
-    else if ((ConstValue1 + 1).isPowerOf2())
+    else if ((MulC + 1).isPowerOf2())
       MathOp = ISD::SUB;
 
     if (MathOp != ISD::DELETED_NODE) {
-      unsigned ShAmt = MathOp == ISD::ADD ? (ConstValue1 - 1).logBase2()
-                                          : (ConstValue1 + 1).logBase2();
+      unsigned ShAmt = MathOp == ISD::ADD ? (MulC - 1).logBase2()
+                                          : (MulC + 1).logBase2();
       assert(ShAmt > 0 && ShAmt < VT.getScalarSizeInBits() &&
              "Not expecting multiply-by-constant that could have simplified");
       SDLoc DL(N);
       SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, N0,
                                 DAG.getConstant(ShAmt, DL, VT));
-      return DAG.getNode(MathOp, DL, VT, Shl, N0);
+      SDValue R = DAG.getNode(MathOp, DL, VT, Shl, N0);
+      if (ConstValue1.isNegative())
+        R = DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), R);
+      return R;
     }
   }
 
