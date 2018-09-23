@@ -136,7 +136,7 @@ defm : X86WriteRes<WriteSHDmri, [SBPort4,SBPort23,SBPort05,SBPort015], 8, [1, 2,
 defm : X86WriteRes<WriteSHDmrcl,[SBPort4,SBPort23,SBPort05,SBPort015], 10, [1, 2, 3, 1], 7>;
 
 defm : SBWriteResPair<WriteShift,  [SBPort05],  1>;
-defm : SBWriteResPair<WriteRotate, [SBPort05],  1>;
+defm : SBWriteResPair<WriteRotate, [SBPort05],  2, [2], 2>;
 
 defm : SBWriteResPair<WriteJump,  [SBPort5],   1>;
 defm : SBWriteResPair<WriteCRC32, [SBPort1],   3, [1], 1, 5>;
@@ -597,9 +597,7 @@ def SBWriteResGroup9 : SchedWriteRes<[SBPort05]> {
   let NumMicroOps = 2;
   let ResourceCycles = [2];
 }
-def: InstRW<[SBWriteResGroup9], (instregex "ROL(8|16|32|64)r(1|i)",
-                                           "ROR(8|16|32|64)r(1|i)",
-                                           "SET(A|BE)r")>;
+def: InstRW<[SBWriteResGroup9], (instregex "SET(A|BE)r")>;
 
 def SBWriteResGroup11 : SchedWriteRes<[SBPort015]> {
   let Latency = 2;
