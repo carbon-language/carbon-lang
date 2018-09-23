@@ -133,8 +133,10 @@ defm : X86WriteRes<WriteXCHG, [HWPort0156], 2, [3], 3>;
 def  : WriteRes<WriteIMulH, []> { let Latency = 3; }
 
 // Integer shifts and rotates.
-defm : HWWriteResPair<WriteShift,  [HWPort06],  1>;
-defm : HWWriteResPair<WriteRotate, [HWPort06],  2, [2], 2>;
+defm : HWWriteResPair<WriteShift,    [HWPort06],  1>;
+defm : HWWriteResPair<WriteShiftCL,  [HWPort06, HWPort0156],  3, [2,1], 3>;
+defm : HWWriteResPair<WriteRotate,   [HWPort06],  2, [2], 2>;
+defm : HWWriteResPair<WriteRotateCL, [HWPort06, HWPort0156],  3, [2,1], 3>;
 
 // SHLD/SHRD.
 defm : X86WriteRes<WriteSHDrri, [HWPort1], 3, [1], 1>;
@@ -1285,17 +1287,6 @@ def HWWriteResGroup59 : SchedWriteRes<[HWPort06,HWPort0156]> {
 }
 def: InstRW<[HWWriteResGroup59], (instregex "RCL(8|16|32|64)r(1|i)",
                                             "RCR(8|16|32|64)r(1|i)")>;
-
-def HWWriteResGroup60 : SchedWriteRes<[HWPort06,HWPort0156]> {
-  let Latency = 3;
-  let NumMicroOps = 3;
-  let ResourceCycles = [2,1];
-}
-def: InstRW<[HWWriteResGroup60], (instregex "ROL(8|16|32|64)rCL",
-                                            "ROR(8|16|32|64)rCL",
-                                            "SAR(8|16|32|64)rCL",
-                                            "SHL(8|16|32|64)rCL",
-                                            "SHR(8|16|32|64)rCL")>;
 
 def HWWriteResGroup61 : SchedWriteRes<[HWPort0,HWPort4,HWPort237]> {
   let Latency = 4;
