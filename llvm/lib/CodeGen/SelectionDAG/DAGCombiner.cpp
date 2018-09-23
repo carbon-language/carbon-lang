@@ -9843,8 +9843,10 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
     return DAG.getUNDEF(VT);
 
   // If the input is a BUILD_VECTOR with all constant elements, fold this now.
-  // Only do this before legalize, since afterward the target may be depending
-  // on the bitconvert.
+  // Only do this before legalize types, since we might create an illegal
+  // scalar type. Even if we knew we wouldn't create an illegal scalar type
+  // we can only do this before legalize ops, since the target maybe
+  // depending on the bitcast.
   // First check to see if this is all constant.
   if (!LegalTypes &&
       N0.getOpcode() == ISD::BUILD_VECTOR && N0.getNode()->hasOneUse() &&
