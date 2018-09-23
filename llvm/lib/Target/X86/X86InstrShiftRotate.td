@@ -822,16 +822,18 @@ def ROT64L2R_imm8  : SDNodeXForm<imm, [{
   return getI8Imm(64 - N->getZExtValue(), SDLoc(N));
 }]>;
 
+// NOTE: We use WriteShift for these rotates as they avoid the stalls
+// of many of the older x86 rotate instructions.
 multiclass bmi_rotate<string asm, RegisterClass RC, X86MemOperand x86memop> {
 let hasSideEffects = 0 in {
   def ri : Ii8<0xF0, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, u8imm:$src2),
                !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-               []>, TAXD, VEX, Sched<[WriteRotate]>;
+               []>, TAXD, VEX, Sched<[WriteShift]>;
   let mayLoad = 1 in
   def mi : Ii8<0xF0, MRMSrcMem, (outs RC:$dst),
                (ins x86memop:$src1, u8imm:$src2),
                !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-               []>, TAXD, VEX, Sched<[WriteRotateLd]>;
+               []>, TAXD, VEX, Sched<[WriteShiftLd]>;
 }
 }
 
