@@ -139,10 +139,11 @@ def  : WriteRes<WriteSETCCStore, [SKXPort06,SKXPort4,SKXPort237]> {
   let NumMicroOps = 3;
 }
 def  : WriteRes<WriteLAHFSAHF, [SKXPort06]>;
-def  : WriteRes<WriteBitTest,[SKXPort06]>; //
+def  : WriteRes<WriteBitTest,  [SKXPort06]>; //
 
 // Integer shifts and rotates.
-defm : SKXWriteResPair<WriteShift, [SKXPort06],  1>;
+defm : SKXWriteResPair<WriteShift,  [SKXPort06],  1>;
+defm : SKXWriteResPair<WriteRotate, [SKXPort06],  1>;
 
 // SHLD/SHRD.
 defm : X86WriteRes<WriteSHDrri, [SKXPort1], 3, [1], 1>;

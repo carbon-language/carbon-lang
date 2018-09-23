@@ -150,7 +150,8 @@ defm : BWWriteResPair<WriteTZCNT,          [BWPort1], 3>;
 defm : BWWriteResPair<WritePOPCNT,         [BWPort1], 3>;
 
 // Integer shifts and rotates.
-defm : BWWriteResPair<WriteShift, [BWPort06],  1>;
+defm : BWWriteResPair<WriteShift,  [BWPort06],  1>;
+defm : BWWriteResPair<WriteRotate, [BWPort06],  1>;
 
 // SHLD/SHRD.
 defm : X86WriteRes<WriteSHDrri, [BWPort1], 3, [1], 1>;

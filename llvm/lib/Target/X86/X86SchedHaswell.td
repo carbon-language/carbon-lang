@@ -134,6 +134,7 @@ def  : WriteRes<WriteIMulH, []> { let Latency = 3; }
 
 // Integer shifts and rotates.
 defm : HWWriteResPair<WriteShift,  [HWPort06],  1>;
+defm : HWWriteResPair<WriteRotate, [HWPort06],  1>;
 
 // SHLD/SHRD.
 defm : X86WriteRes<WriteSHDrri, [HWPort1], 3, [1], 1>;

@@ -149,7 +149,8 @@ defm : SKLWriteResPair<WriteTZCNT,          [SKLPort1], 3>;
 defm : SKLWriteResPair<WritePOPCNT,         [SKLPort1], 3>;
 
 // Integer shifts and rotates.
-defm : SKLWriteResPair<WriteShift, [SKLPort06],  1>;
+defm : SKLWriteResPair<WriteShift,  [SKLPort06],  1>;
+defm : SKLWriteResPair<WriteRotate, [SKLPort06],  1>;
 
 // SHLD/SHRD.
 defm : X86WriteRes<WriteSHDrri, [SKLPort1], 3, [1], 1>;
