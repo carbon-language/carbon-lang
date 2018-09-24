@@ -3,22 +3,26 @@
 
 %"struct.std::pair" = type { i32, i32, i32, i32 }
 
-; Before patch D51550
-define zeroext i1 @opeq1(
 ; X86-LABEL: @opeq1(
 ; X86-NEXT:  entry:
 ; X86-NEXT:    [[PTR:%.*]] = alloca i32
-; X86-NEXT:    [[FIRST_I:%.*]] = getelementptr inbounds %"struct.std::pair", %"struct.std::pair"* [[A:%.*]], i64 0, i32 0
-; X86-NEXT:    [[TMP0:%.*]] = load i32, i32* [[FIRST_I]], align 4
-; X86-NEXT:    [[FIRST1_I:%.*]] = getelementptr inbounds %"struct.std::pair", %"struct.std::pair"* [[B:%.*]], i64 0, i32 0
-; X86-NEXT:    [[TMP1:%.*]] = load i32, i32* [[FIRST1_I]], align 4
 ; X86-NEXT:    store i32 42, i32* [[PTR]]
-; X86-NEXT:    [[CMP_I:%.*]] = icmp eq i32 [[TMP0]], [[TMP1]]
-; X86-NEXT:    br i1 [[CMP_I]], label [[LAND_RHS_I:%.*]], label [[OPEQ1_EXIT:%.*]]
+; X86-NEXT:    [[FIRST_I:%.*]] = getelementptr inbounds %"struct.std::pair", %"struct.std::pair"* [[A:%.*]], i64 0, i32 0
+; X86-NEXT:    [[FIRST1_I:%.*]] = getelementptr inbounds %"struct.std::pair", %"struct.std::pair"* [[B:%.*]], i64 0, i32 0
+; X86-NEXT:    [[CSTR:%.*]] = bitcast i32* [[FIRST_I]] to i8*
+; X86-NEXT:    [[CSTR1:%.*]] = bitcast i32* [[FIRST1_I]] to i8*
+; X86-NEXT:    [[MEMCMP:%.*]] = call i32 @memcmp(i8* [[CSTR]], i8* [[CSTR1]], i64 16)
+; X86-NEXT:    [[TMP0:%.*]] = icmp eq i32 [[MEMCMP]], 0
+; X86-NEXT:    br label [[OPEQ1_EXIT:%.*]]
+; X86:       opeq1.exit:
+; X86-NEXT:    [[TMP1:%.*]] = phi i1 [ [[TMP0]], [[ENTRY:%.*]] ]
+; X86-NEXT:    ret i1 [[TMP1]]
 
+define zeroext i1 @opeq1(
 
   %"struct.std::pair"* nocapture readonly dereferenceable(16) %a,
   %"struct.std::pair"* nocapture readonly dereferenceable(16) %b) local_unnamed_addr #0 {
+
 entry:
   %ptr = alloca i32
   %first.i = getelementptr inbounds %"struct.std::pair", %"struct.std::pair"* %a, i64 0, i32 0
