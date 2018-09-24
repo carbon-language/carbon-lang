@@ -585,7 +585,7 @@ private:
   bool HandleAttributeStmt(Attr, const std::list<parser::Name> &);
   Symbol &HandleAttributeStmt(Attr, const SourceName &);
   void DeclareObjectEntity(const SourceName &, Attrs);
-  Symbol &DeclareProcEntity(const SourceName &, Attrs, const ProcInterface &);
+  void DeclareProcEntity(const SourceName &, Attrs, const ProcInterface &);
   void SetType(const SourceName &, Symbol &, const DeclTypeSpec &);
   const Symbol *ResolveDerivedType(const SourceName &);
   bool CanBeTypeBoundProc(const Symbol &);
@@ -2063,7 +2063,7 @@ void DeclarationVisitor::Post(const parser::ObjectDecl &x) {
   DeclareObjectEntity(name.source, Attrs{*objectDeclAttr_});
 }
 
-Symbol &DeclarationVisitor::DeclareProcEntity(
+void DeclarationVisitor::DeclareProcEntity(
     const SourceName &name, Attrs attrs, const ProcInterface &interface) {
   Symbol &symbol{DeclareEntity<ProcEntityDetails>(name, attrs)};
   if (auto *details{symbol.detailsIf<ProcEntityDetails>()}) {
@@ -2076,7 +2076,6 @@ Symbol &DeclarationVisitor::DeclareProcEntity(
     }
     details->set_interface(interface);
   }
-  return symbol;
 }
 
 void DeclarationVisitor::DeclareObjectEntity(
@@ -2264,27 +2263,20 @@ void DeclarationVisitor::Post(const parser::ProcInterface &x) {
 }
 
 void DeclarationVisitor::Post(const parser::ProcDecl &x) {
-  bool isFunction{false};
-  bool isSubroutine{false};
   ProcInterface interface;
   if (interfaceName_) {
     if (auto *symbol{FindExplicitInterface(*interfaceName_)}) {
       interface.set_symbol(*symbol);
-      isFunction = symbol->test(Symbol::Flag::Function);
-      isSubroutine = symbol->test(Symbol::Flag::Subroutine);
     }
   } else if (auto &type{GetDeclTypeSpec()}) {
     interface.set_type(*type);
-    isFunction = true;
   }
   auto attrs{GetAttrs()};
   if (currScope().kind() != Scope::Kind::DerivedType) {
     attrs.set(Attr::EXTERNAL);
   }
   const auto &name{std::get<parser::Name>(x.t).source};
-  auto &symbol{DeclareProcEntity(name, attrs, interface)};
-  symbol.set(Symbol::Flag::Function, isFunction);
-  symbol.set(Symbol::Flag::Subroutine, isSubroutine);
+  DeclareProcEntity(name, attrs, interface);
 }
 
 bool DeclarationVisitor::Pre(const parser::TypeBoundProcedurePart &x) {
