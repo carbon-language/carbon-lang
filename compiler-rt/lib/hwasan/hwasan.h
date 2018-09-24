@@ -41,10 +41,6 @@ typedef u8 tag_t;
 const unsigned kAddressTagShift = 56;
 const uptr kAddressTagMask = 0xFFUL << kAddressTagShift;
 
-// Minimal alignment of the shadow base address. Determines the space available
-// for threads and stack histories. This is an ABI constant.
-const unsigned kShadowBaseAlignment = 32;
-
 static inline tag_t GetTagFromPointer(uptr p) {
   return p >> kAddressTagShift;
 }
@@ -70,7 +66,6 @@ extern int hwasan_report_count;
 
 bool ProtectRange(uptr beg, uptr end);
 bool InitShadow();
-void InitThreads();
 void MadviseShadow();
 char *GetProcSelfMaps();
 void InitializeInterceptors();
@@ -147,7 +142,6 @@ class ScopedThreadLocalStateBackup {
 };
 
 void HwasanTSDInit();
-void HwasanTSDThreadInit();
 
 void HwasanOnDeadlySignal(int signo, void *info, void *context);
 

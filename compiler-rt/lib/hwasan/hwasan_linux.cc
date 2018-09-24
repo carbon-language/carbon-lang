@@ -22,7 +22,6 @@
 #include "hwasan_mapping.h"
 #include "hwasan_report.h"
 #include "hwasan_thread.h"
-#include "hwasan_thread_list.h"
 
 #include <elf.h>
 #include <link.h>
@@ -37,10 +36,6 @@
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
-
-#if HWASAN_WITH_INTERCEPTORS && !SANITIZER_ANDROID
-THREADLOCAL uptr __hwasan_tls;
-#endif
 
 namespace __hwasan {
 
@@ -184,20 +179,6 @@ bool InitShadow() {
   return true;
 }
 
-void InitThreads() {
-  CHECK(__hwasan_shadow_memory_dynamic_address);
-  uptr guard_page_size = GetMmapGranularity();
-  uptr thread_space_start =
-      __hwasan_shadow_memory_dynamic_address - (1ULL << kShadowBaseAlignment);
-  uptr thread_space_end =
-      __hwasan_shadow_memory_dynamic_address - guard_page_size;
-  ReserveShadowMemoryRange(thread_space_start, thread_space_end - 1,
-                           "hwasan threads");
-  ProtectGap(thread_space_end,
-             __hwasan_shadow_memory_dynamic_address - thread_space_end);
-  InitThreadList(thread_space_start, thread_space_end - thread_space_start);
-}
-
 static void MadviseShadowRegion(uptr beg, uptr end) {
   uptr size = end - beg + 1;
   if (common_flags()->no_huge_pages_for_shadow)
@@ -233,7 +214,7 @@ void InstallAtExitHandler() {
 // ---------------------- TSD ---------------- {{{1
 
 extern "C" void __hwasan_thread_enter() {
-  hwasanThreadList().CreateCurrentThread();
+  Thread::Create();
 }
 
 extern "C" void __hwasan_thread_exit() {
@@ -241,25 +222,21 @@ extern "C" void __hwasan_thread_exit() {
   // Make sure that signal handler can not see a stale current thread pointer.
   atomic_signal_fence(memory_order_seq_cst);
   if (t)
-    hwasanThreadList().ReleaseThread(t);
+    t->Destroy();
 }
 
 #if HWASAN_WITH_INTERCEPTORS
 static pthread_key_t tsd_key;
 static bool tsd_key_inited = false;
 
-void HwasanTSDThreadInit() {
-  if (tsd_key_inited)
-    CHECK_EQ(0, pthread_setspecific(tsd_key,
-                                    (void *)GetPthreadDestructorIterations()));
-}
-
 void HwasanTSDDtor(void *tsd) {
-  uptr iterations = (uptr)tsd;
-  if (iterations > 1) {
-    CHECK_EQ(0, pthread_setspecific(tsd_key, (void *)(iterations - 1)));
+  Thread *t = (Thread*)tsd;
+  if (t->destructor_iterations_ > 1) {
+    t->destructor_iterations_--;
+    CHECK_EQ(0, pthread_setspecific(tsd_key, tsd));
     return;
   }
+  t->Destroy();
   __hwasan_thread_exit();
 }
 
@@ -268,25 +245,30 @@ void HwasanTSDInit() {
   tsd_key_inited = true;
   CHECK_EQ(0, pthread_key_create(&tsd_key, HwasanTSDDtor));
 }
-#else
-void HwasanTSDInit() {}
-void HwasanTSDThreadInit() {}
-#endif
-
-#if SANITIZER_ANDROID
-uptr *GetCurrentThreadLongPtr() {
-  return (uptr *)get_android_tls_ptr();
-}
-#else
-uptr *GetCurrentThreadLongPtr() {
-  return &__hwasan_tls;
-}
-#endif
 
 Thread *GetCurrentThread() {
-  auto *R = (StackAllocationsRingBuffer*)GetCurrentThreadLongPtr();
-  return hwasanThreadList().GetThreadByBufferAddress((uptr)(R->Next()));
+  return (Thread *)pthread_getspecific(tsd_key);
 }
+
+void SetCurrentThread(Thread *t) {
+  // Make sure that HwasanTSDDtor gets called at the end.
+  CHECK(tsd_key_inited);
+  // Make sure we do not reset the current Thread.
+  CHECK_EQ(0, pthread_getspecific(tsd_key));
+  pthread_setspecific(tsd_key, (void *)t);
+}
+#elif SANITIZER_ANDROID
+void HwasanTSDInit() {}
+Thread *GetCurrentThread() {
+  return (Thread*)*get_android_tls_ptr();
+}
+
+void SetCurrentThread(Thread *t) {
+  *get_android_tls_ptr() = (uptr)t;
+}
+#else
+#error unsupported configuration !HWASAN_WITH_INTERCEPTORS && !SANITIZER_ANDROID
+#endif
 
 struct AccessInfo {
   uptr addr;
