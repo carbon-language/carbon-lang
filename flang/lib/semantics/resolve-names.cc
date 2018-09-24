@@ -2595,6 +2595,13 @@ Symbol *ResolveNamesVisitor::FindComponent(
   if (!type) {
     return nullptr;  // should have already reported error
   }
+  if (type->category() == DeclTypeSpec::Intrinsic &&
+      type->intrinsicTypeSpec().category() == TypeCategory::Complex) {
+    auto name{component.ToString()};
+    if (name == "re" || name == "im") {
+      return nullptr;  // complex-part-designator, not structure-component
+    }
+  }
   if (type->category() != DeclTypeSpec::TypeDerived) {
     if (base.test(Symbol::Flag::Implicit)) {
       Say(base.lastOccurrence(),
