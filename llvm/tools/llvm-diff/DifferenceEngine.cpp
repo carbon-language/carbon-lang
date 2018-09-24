@@ -720,10 +720,10 @@ void DifferenceEngine::diff(Module *L, Module *R) {
 
   if (LeftAnonCount != 0 || RightAnonCount != 0) {
     SmallString<32> Tmp;
-    Twine Message = "not comparing " + Twine(LeftAnonCount) +
-      " anonymous functions in the left module and " + Twine(RightAnonCount) +
-      " in the right module";
-    logf(Message.toStringRef(Tmp));
+    logf(("not comparing " + Twine(LeftAnonCount) +
+          " anonymous functions in the left module and " +
+          Twine(RightAnonCount) + " in the right module")
+             .toStringRef(Tmp));
   }
 
   for (SmallVectorImpl<std::pair<Function*,Function*> >::iterator
