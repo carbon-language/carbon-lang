@@ -35,6 +35,8 @@ BenchmarkRunner::~BenchmarkRunner() = default;
 // code.
 static std::vector<llvm::MCInst>
 GenerateInstructions(const BenchmarkCode &BC, const size_t MinInstructions) {
+  if (BC.Instructions.empty())
+    return {};
   std::vector<llvm::MCInst> Code = BC.Instructions;
   for (int I = 0; Code.size() < MinInstructions; ++I)
     Code.push_back(BC.Instructions[I % BC.Instructions.size()]);
@@ -53,10 +55,6 @@ BenchmarkRunner::runConfiguration(const BenchmarkCode &BC,
   InstrBenchmark.Info = BC.Info;
 
   const std::vector<llvm::MCInst> &Instructions = BC.Instructions;
-  if (Instructions.empty()) {
-    InstrBenchmark.Error = "Empty snippet";
-    return InstrBenchmark;
-  }
 
   InstrBenchmark.Key.Instructions = Instructions;
 
