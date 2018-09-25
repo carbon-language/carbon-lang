@@ -127,7 +127,8 @@ SIGN(REAL(k) A, REAL(k) B) -> REAL(k)
 SQRT(REAL(k) X) -> REAL(k) = X ** 0.5
 ```
 
-These variants, however *cannot* be used as specific names.
+These variants, however *cannot* be used as specific names without recourse to an alias
+from the following section:
 ```
 ABS(INTEGER(k) A) -> INTEGER(k) = SIGN(A, 0)
 ABS(COMPLEX(k) A) -> REAL(k) = HYPOT(A%RE, A%IM)
@@ -215,7 +216,7 @@ ERFC(REAL(k) X) -> REAL(k)
 ERFC_SCALED(REAL(k) X) -> REAL(k)
 FRACTION(REAL(k) X) -> REAL(k)
 GAMMA(REAL(k) X) -> REAL(k)
-HYPOT(REAL(k) X, REAL(k) Y) -> REAL(k)
+HYPOT(REAL(k) X, REAL(k) Y) -> REAL(k) = SQRT(X*X+Y*Y) without spurious overflow
 IMAGE_STATUS(IMAGE [, scalar TEAM_TYPE TEAM ]) -> default INTEGER
 IS_IOSTAT_END(INTEGER(any) I) -> default LOGICAL
 IS_IOSTAT_EOR(INTEGER(any) I) -> default LOGICAL
@@ -357,6 +358,8 @@ NORM2(REAL(k) X(..) [, DIM ]) -> REAL(k)
 PRODUCT(numeric ARRAY(..) [, DIM, MASK ]) -> numeric
 SUM(numeric ARRAY(..) [, DIM, MASK ]) -> numeric
 ```
+
+`NORM2` generalizes `HYPOT` by computing `SQRT(SUM(X*X))` while avoiding spurious overflows.
 
 ## Extrema reduction transformational intrinsic functions
 ```
@@ -550,6 +553,9 @@ The arguments to `EXTENDS_TYPE_OF` must be of extensible derived types or be unl
 An assumed-rank array may be used with `IS_CONTIGUOUS` and `RANK`.
 
 # Intrinsic subroutines
+
+(*TODO*: complete these descriptions)
+
 ## One elemental intrinsic subroutine
 ```
 INTERFACE
