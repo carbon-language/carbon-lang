@@ -180,6 +180,9 @@ private:
   /// Did we already inform the user about inconsistent MD5 usage?
   bool ReportedInconsistentMD5 = false;
 
+  // Is alt macro mode enabled.
+  bool AltMacroMode = false;
+
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI, unsigned CB);
@@ -2443,14 +2446,13 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
             // Here, we identify the integer token which is the result of the
             // absolute expression evaluation and replace it with its string
             // representation.
-            if (Lexer.IsaAltMacroMode() && Token.getString().front() == '%' &&
+            if (AltMacroMode && Token.getString().front() == '%' &&
                 Token.is(AsmToken::Integer))
               // Emit an integer value to the buffer.
               OS << Token.getIntVal();
             // Only Token that was validated as a string and begins with '<'
             // is considered altMacroString!!!
-            else if (Lexer.IsaAltMacroMode() &&
-                     Token.getString().front() == '<' &&
+            else if (AltMacroMode && Token.getString().front() == '<' &&
                      Token.is(AsmToken::String)) {
               OS << altMacroString(Token.getStringContents());
             }
@@ -2634,7 +2636,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
 
     SMLoc StrLoc = Lexer.getLoc();
     SMLoc EndLoc;
-    if (Lexer.IsaAltMacroMode() && Lexer.is(AsmToken::Percent)) {
+    if (AltMacroMode && Lexer.is(AsmToken::Percent)) {
       const MCExpr *AbsoluteExp;
       int64_t Value;
       /// Eat '%'
@@ -2649,7 +2651,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
       AsmToken newToken(AsmToken::Integer,
                         StringRef(StrChar, EndChar - StrChar), Value);
       FA.Value.push_back(newToken);
-    } else if (Lexer.IsaAltMacroMode() && Lexer.is(AsmToken::Less) &&
+    } else if (AltMacroMode && Lexer.is(AsmToken::Less) &&
                isAltmacroString(StrLoc, EndLoc)) {
       const char *StrChar = StrLoc.getPointer();
       const char *EndChar = EndLoc.getPointer();
@@ -4186,10 +4188,7 @@ bool AsmParser::parseDirectiveCFIUndefined(SMLoc DirectiveLoc) {
 bool AsmParser::parseDirectiveAltmacro(StringRef Directive) {
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '" + Directive + "' directive");
-  if (Directive == ".altmacro")
-    getLexer().SetAltMacroMode(true);
-  else
-    getLexer().SetAltMacroMode(false);
+  AltMacroMode = (Directive == ".altmacro");
   return false;
 }
 
