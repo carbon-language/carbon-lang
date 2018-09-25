@@ -631,13 +631,67 @@ private:
   }
 };
 
+// Check that construct names don't conflict with other names.
+class ConstructNamesVisitor : public virtual ScopeHandler {
+public:
+  // Definitions of construct names
+  bool Pre(const parser::WhereConstructStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::ForallConstructStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::AssociateStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::BlockStmt &x) { return CheckDef(x.v); }
+  bool Pre(const parser::ChangeTeamStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::CriticalStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::LabelDoStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::NonLabelDoStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::IfThenStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::SelectCaseStmt &x) { return CheckDef(x.t); }
+  bool Pre(const parser::SelectRankStmt &x) {
+    return CheckDef(std::get<0>(x.t));
+  }
+  bool Pre(const parser::SelectTypeStmt &x) {
+    return CheckDef(std::get<0>(x.t));
+  }
+  // References to construct names
+  void Post(const parser::MaskedElsewhereStmt &x) { CheckRef(x.t); }
+  void Post(const parser::ElsewhereStmt &x) { CheckRef(x.v); }
+  void Post(const parser::EndWhereStmt &x) { CheckRef(x.v); }
+  void Post(const parser::EndForallStmt &x) { CheckRef(x.v); }
+  void Post(const parser::EndAssociateStmt &x) { CheckRef(x.v); }
+  void Post(const parser::EndBlockStmt &x) { CheckRef(x.v); }
+  void Post(const parser::EndChangeTeamStmt &x) { CheckRef(x.t); }
+  void Post(const parser::EndCriticalStmt &x) { CheckRef(x.v); }
+  void Post(const parser::EndDoStmt &x) { CheckRef(x.v); }
+  void Post(const parser::ElseIfStmt &x) { CheckRef(x.t); }
+  void Post(const parser::ElseStmt &x) { CheckRef(x.v); }
+  void Post(const parser::EndIfStmt &x) { CheckRef(x.v); }
+  void Post(const parser::CaseStmt &x) { CheckRef(x.t); }
+  void Post(const parser::EndSelectStmt &x) { CheckRef(x.v); }
+  void Post(const parser::SelectRankCaseStmt &x) { CheckRef(x.t); }
+  void Post(const parser::TypeGuardStmt &x) { CheckRef(x.t); }
+  void Post(const parser::CycleStmt &x) { CheckRef(x.v); }
+  void Post(const parser::ExitStmt &x) { CheckRef(x.v); }
+
+private:
+  template<typename T> bool CheckDef(const T &t) {
+    return CheckDef(std::get<std::optional<parser::Name>>(t));
+  }
+  template<typename T> void CheckRef(const T &t) {
+    CheckRef(std::get<std::optional<parser::Name>>(t));
+  }
+  bool CheckDef(const std::optional<parser::Name> &);
+  void CheckRef(const std::optional<parser::Name> &);
+};
+
 // Walk the parse tree and resolve names to symbols.
 class ResolveNamesVisitor : public ModuleVisitor,
                             public SubprogramVisitor,
-                            public DeclarationVisitor {
+                            public DeclarationVisitor,
+                            public ConstructNamesVisitor {
 public:
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
+  using ConstructNamesVisitor::Post;
+  using ConstructNamesVisitor::Pre;
   using DeclarationVisitor::Post;
   using DeclarationVisitor::Pre;
   using ImplicitRulesVisitor::Post;
@@ -686,6 +740,10 @@ public:
   bool Pre(const parser::CallStmt &);
   void Post(const parser::CallStmt &);
   bool Pre(const parser::ImportStmt &);
+  void Post(const parser::TypeGuardStmt &x) {
+    DeclTypeSpecVisitor::Post(x);
+    ConstructNamesVisitor::Post(x);
+  }
 
 private:
   // Kind of procedure we are expecting to see in a ProcedureDesignator
@@ -2459,6 +2517,22 @@ bool DeclarationVisitor::OkToAddComponent(
   }
 }
 
+// ConstructNamesVisitor implementation
+
+bool ConstructNamesVisitor::CheckDef(const std::optional<parser::Name> &x) {
+  if (x) {
+    MakeSymbol(*x, MiscDetails{MiscDetails::Kind::ConstructName});
+  }
+  return true;
+}
+
+void ConstructNamesVisitor::CheckRef(const std::optional<parser::Name> &x) {
+  if (x) {
+    // Just add an occurrence of this name; checking is done in ValidateLabels
+    FindSymbol(x->source);
+  }
+}
+
 // ResolveNamesVisitor implementation
 
 bool ResolveNamesVisitor::Pre(const parser::CommonBlockObject &x) {
@@ -2869,12 +2943,14 @@ bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
 
 void ResolveNamesVisitor::Post(const parser::EndProgramStmt &) { PopScope(); }
 
-bool ResolveNamesVisitor::Pre(const parser::BlockStmt &) {
+bool ResolveNamesVisitor::Pre(const parser::BlockStmt &x) {
+  ConstructNamesVisitor::Pre(x);
   PushScope(Scope::Kind::Block, nullptr);
   return false;
 }
-bool ResolveNamesVisitor::Pre(const parser::EndBlockStmt &) {
+bool ResolveNamesVisitor::Pre(const parser::EndBlockStmt &x) {
   PopScope();
+  ConstructNamesVisitor::Post(x);
   return false;
 }
 bool ResolveNamesVisitor::Pre(const parser::ImplicitStmt &x) {

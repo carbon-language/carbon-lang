@@ -45,22 +45,14 @@ public:
   void Post(parser::Expr &x) { ConvertFunctionRef(x); }
 
   // Don't bother resolving names in end statements.
-  bool Pre(parser::EndAssociateStmt &) { return false; }
   bool Pre(parser::EndBlockDataStmt &) { return false; }
-  bool Pre(parser::EndBlockStmt &) { return false; }
-  bool Pre(parser::EndCriticalStmt &) { return false; }
-  bool Pre(parser::EndDoStmt &) { return false; }
-  bool Pre(parser::EndForallStmt &) { return false; }
   bool Pre(parser::EndFunctionStmt &) { return false; }
-  bool Pre(parser::EndIfStmt &) { return false; }
   bool Pre(parser::EndModuleStmt &) { return false; }
   bool Pre(parser::EndMpSubprogramStmt &) { return false; }
   bool Pre(parser::EndProgramStmt &) { return false; }
-  bool Pre(parser::EndSelectStmt &) { return false; }
   bool Pre(parser::EndSubmoduleStmt &) { return false; }
   bool Pre(parser::EndSubroutineStmt &) { return false; }
   bool Pre(parser::EndTypeStmt &) { return false; }
-  bool Pre(parser::EndWhereStmt &) { return false; }
 
 private:
   using stmtFuncType =

@@ -176,6 +176,16 @@ class GenericBindingDetails {};
 
 class FinalProcDetails {};
 
+class MiscDetails {
+public:
+  ENUM_CLASS(Kind, ConstructName);
+  MiscDetails(Kind kind) : kind_{kind} {}
+  Kind kind() const { return kind_; }
+
+private:
+  Kind kind_;
+};
+
 class TypeParamDetails {
 public:
   TypeParamDetails(common::TypeParamAttr attr) : attr_{attr} {}
@@ -267,7 +277,7 @@ using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     SubprogramDetails, SubprogramNameDetails, EntityDetails,
     ObjectEntityDetails, ProcEntityDetails, DerivedTypeDetails, UseDetails,
     UseErrorDetails, GenericDetails, ProcBindingDetails, GenericBindingDetails,
-    FinalProcDetails, TypeParamDetails>;
+    FinalProcDetails, TypeParamDetails, MiscDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 std::string DetailsToString(const Details &);
 

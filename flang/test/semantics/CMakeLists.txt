@@ -59,6 +59,7 @@ set(ERROR_TESTS
   resolve32.f90
   resolve33.f90
   resolve34.f90
+  resolve35.f90
 )
 
 # These test files have expected symbols in the source

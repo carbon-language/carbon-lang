@@ -131,6 +131,7 @@ std::string DetailsToString(const Details &details) {
           [](const GenericBindingDetails &) { return "GenericBinding"; },
           [](const FinalProcDetails &) { return "FinalProc"; },
           [](const TypeParamDetails &) { return "TypeParam"; },
+          [](const MiscDetails &) { return "Misc"; },
           [](const auto &) { return "unknown"; },
       },
       details);
@@ -388,6 +389,9 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << ' ' << *x.type();
             }
             os << ' ' << common::EnumToString(x.attr());
+          },
+          [&](const MiscDetails &x) {
+            os << ' ' << MiscDetails::EnumToString(x.kind());
           },
       },
       details);
