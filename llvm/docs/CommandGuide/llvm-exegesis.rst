@@ -93,14 +93,15 @@ Real-life code snippets typically depend on registers or memory.
 :program:`llvm-exegesis` checks the liveliness of registers (i.e. any register
 use has a corresponding def or is a "live in"). If your code depends on the
 value of some registers, you have two options:
-  - Mark the register as requiring a definition. :program:`llvm-exegesis` will
-    automatically assign a value to the register. This can be done using the
-    directive `LLVM-EXEGESIS-DEFREG <reg name> <hex_value>`, where `<hex_value>`
-    is a bit pattern used to fill `<reg_name>`. If `<hex_value>` is smaller than
-    the register width, it will be sign-extended.
-  - Mark the register as a "live in". :program:`llvm-exegesis` will benchmark
-    using whatever value was in this registers on entry. This can be done using
-    the directive `LLVM-EXEGESIS-LIVEIN <reg name>`.
+
+- Mark the register as requiring a definition. :program:`llvm-exegesis` will
+  automatically assign a value to the register. This can be done using the
+  directive `LLVM-EXEGESIS-DEFREG <reg name> <hex_value>`, where `<hex_value>`
+  is a bit pattern used to fill `<reg_name>`. If `<hex_value>` is smaller than
+  the register width, it will be sign-extended.
+- Mark the register as a "live in". :program:`llvm-exegesis` will benchmark
+  using whatever value was in this registers on entry. This can be done using
+  the directive `LLVM-EXEGESIS-LIVEIN <reg name>`.
 
 For example, the following code snippet depends on the values of XMM1 (which
 will be set by the tool) and the memory buffer passed in RDI (live in).
