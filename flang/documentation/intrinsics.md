@@ -48,15 +48,14 @@ the result is also an array.
 Scalar arguments are expanded when the arguments are not all scalars.
 
 ## Elemental intrinsic functions that may have unrestricted specific procedures
+
 When an elemental intrinsic function is documented here as having an
 _unrestricted specific name_, that name may be passed as an actual
 argument, used as the target of a procedure pointer, appear in
 a generic interface, and be otherwise used as if it were an external
 procedure.
-
 An `INTRINSIC` statement or attribute may have to be applied to an
-unrestricted specific name to enable such usage, if the name is not
-otherwise known to be an intrinsic function because it has been called.
+unrestricted specific name to enable such usage.
 
 In such usage, the instance of the function that accepts and returns
 values of the default kinds of the intrinsic types is used.
@@ -114,7 +113,7 @@ AIMAG(COMPLEX(k) Z) -> REAL(k) = Z%IM
 AINT(REAL(k) A [, KIND=k ]) -> REAL(KIND)
 ANINT(REAL(k) A [, KIND=k ] -> REAL(KIND)
 CONJG(COMPLEX(k) Z) -> COMPLEX(k) = CMPLX(Z%RE, -Z%IM)
-DIM(REAL(k) X, REAL(k) Y) -> REAL(k) = MAX(X-Y, REAL(0.0, KIND=k))
+DIM(REAL(k) X, REAL(k) Y) -> REAL(k) = X-MIN(X,Y)
 DPROD(default REAL X, default REAL Y) -> DOUBLE PRECISION = DBLE(X)*DBLE(Y)
 EXP(REAL(k) X) -> REAL(k)
 INDEX(CHARACTER(k) STRING, CHARACTER(k) SUBSTRING [, LOGICAL(any) BACK, KIND=KIND(0) ]) -> INTEGER(KIND)
@@ -132,11 +131,12 @@ from the following section:
 ```
 ABS(INTEGER(k) A) -> INTEGER(k) = SIGN(A, 0)
 ABS(COMPLEX(k) A) -> REAL(k) = HYPOT(A%RE, A%IM)
-DIM(INTEGER(k) X, INTEGER(k) Y) -> INTEGER(k) = MAX(X-Y, INT(0,KIND=k))
+DIM(INTEGER(k) X, INTEGER(k) Y) -> INTEGER(k) = X-MIN(X,Y)
 EXP(COMPLEX(k) X) -> COMPLEX(k)
 LOG(COMPLEX(k) X) -> COMPLEX(k)
 MOD(REAL(k) A, REAL(k) P) -> REAL(k) = A-P*INT(A/P)
 SIGN(INTEGER(k) A, INTEGER(k) B) -> INTEGER(k)
+SQRT(COMPLEX(k) X) -> COMPLEX(k)
 ```
 
 ### Unrestricted specific aliases for some elemental intrinsic functions with distinct names
@@ -159,7 +159,7 @@ DATAN(DOUBLE PRECISION X) = ATAN(X)
 DATAN2(DOUBLE PRECISION Y, DOUBLE PRECISION X) = ATAN2(Y, X)
 DCOS(DOUBLE PRECISION X) = COS(X)
 DCOSH(DOUBLE PRECISION X) = COSH(X)
-DDIM(DOUBLE PRECISION, DOUBLE PRECISION) -> DOUBLE PRECISION = MAX(X-Y, 0.0D0)
+DDIM(DOUBLE PRECISION X, DOUBLE PRECISION Y) -> DOUBLE PRECISION = X-MIN(X,Y)
 DEXP(DOUBLE PRECISION) -> DOUBLE PRECISION = EXP(A)
 DINT(DOUBLE PRECISION A) -> DOUBLE PRECISION = AINT(A)
 DLOG(DOUBLE PRECISION X) -> DOUBLE PRECISION = LOG(X)
@@ -173,7 +173,7 @@ DSQRT(DOUBLE PRECISION X) -> DOUBLE PRECISION = SQRT(X)
 DTAN(DOUBLE PRECISION X) = TAN(X)
 DTANH(DOUBLE PRECISION X) = TANH(X)
 IABS(INTEGER A) = ABS(A)
-IDIM(INTEGER, INTEGER) -> INTEGER = MAX(X-Y, 0)
+IDIM(INTEGER X, INTEGER Y) -> INTEGER = X-MIN(X,Y)
 IDNINT(DOUBLE PRECISION A) = NINT(A)
 ISIGN(INTEGER A, INTEGER B) -> INTEGER = SIGN(A, B)
 ```
@@ -617,4 +617,42 @@ CALL CO_MAX
 CALL CO_MIN
 CALL CO_REDUCE
 CALL CO_SUM
+```
+
+# Non-standard intrinsics
+## PGI
+```
+AND, OR, XOR
+LSHIFT, RSHIFT, SHIFT
+ZEXT, IZEXT
+COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D
+COMPL
+DCMPLX
+EQV, NEQV
+INT8
+JINT, JNINT, KNINT
+LOC
+```
+
+## Intel
+```
+DCMPLX(X,Y), QCMPLX(X,Y)
+DREAL(DOUBLE COMPLEX A) -> DOUBLE PRECISION
+DFLOAT, DREAL
+QEXT, QFLOAT, QREAL
+DNUM, INUM, JNUM, KNUM, QNUM, RNUM - scan value from string
+ZEXT
+RAN, RANF
+ILEN(I) = BIT_SIZE(I)
+SIZEOF
+MCLOCK, SECNDS
+COTAN(X) = 1.0/TAN(X)
+COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COTAND - degrees
+AND, OR, XOR
+LSHIFT, RSHIFT
+IBCHNG, ISHA, ISHC, ISHL, IXOR
+IARG, IARGC, NARGS, NUMARG
+BADDRESS, IADDR
+CACHESIZE, EOF, FP_CLASS, INT_PTR_KIND, ISNAN, LOC
+MALLOC
 ```
