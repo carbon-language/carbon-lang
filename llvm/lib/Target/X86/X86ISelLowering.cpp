@@ -39073,7 +39073,8 @@ static SDValue combineSIntToFP(SDNode *N, SelectionDAG &DAG,
 
   // Transform (SINT_TO_FP (i64 ...)) into an x87 operation if we have
   // a 32-bit target where SSE doesn't support i64->FP operations.
-  if (!Subtarget.useSoftFloat() && Op0.getOpcode() == ISD::LOAD) {
+  if (!Subtarget.useSoftFloat() && Subtarget.hasX87() &&
+      Op0.getOpcode() == ISD::LOAD) {
     LoadSDNode *Ld = cast<LoadSDNode>(Op0.getNode());
     EVT LdVT = Ld->getValueType(0);
 
