@@ -404,9 +404,6 @@ private:
 
   static const char TimerGroupDesc[];
 
-  /// Huge page size used for alignment.
-  static constexpr unsigned PageAlign = 0x200000;
-
   /// Alignment value used for .eh_frame_hdr.
   static constexpr uint64_t EHFrameHdrAlign = 4;
 

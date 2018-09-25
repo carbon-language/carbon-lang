@@ -211,6 +211,12 @@ public:
   }
 
 public:
+  /// Regular page size.
+  static constexpr unsigned RegularPageSize = 0x1000;
+
+  /// Huge page size to use.
+  static constexpr unsigned HugePageSize = 0x200000;
+
   /// Map address to a constant island owner (constant data in code section)
   std::map<uint64_t, BinaryFunction *> AddressToConstantIslandMap;
 
@@ -282,6 +288,9 @@ public:
   uint64_t OldTextSectionOffset{0};
   uint64_t OldTextSectionSize{0};
 
+  /// Page alignment used for code layout.
+  uint64_t PageAlign{HugePageSize};
+
   /// True if the binary requires immediate relocation processing.
   bool RequiresZNow{false};
 
@@ -303,25 +312,7 @@ public:
                 std::unique_ptr<MCPlusBuilder> MIB,
                 std::unique_ptr<const MCRegisterInfo> MRI,
                 std::unique_ptr<MCDisassembler> DisAsm,
-                DataReader &DR) :
-      Ctx(std::move(Ctx)),
-      DwCtx(std::move(DwCtx)),
-      TheTriple(std::move(TheTriple)),
-      TheTarget(TheTarget),
-      TripleName(TripleName),
-      MCE(std::move(MCE)),
-      MOFI(std::move(MOFI)),
-      AsmInfo(std::move(AsmInfo)),
-      MII(std::move(MII)),
-      STI(std::move(STI)),
-      InstPrinter(std::move(InstPrinter)),
-      MIA(std::move(MIA)),
-      MIB(std::move(MIB)),
-      MRI(std::move(MRI)),
-      DisAsm(std::move(DisAsm)),
-      DR(DR) {
-    Relocation::Arch = this->TheTriple->getArch();
-  }
+                DataReader &DR);
 
   ~BinaryContext();
 

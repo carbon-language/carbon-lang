@@ -26,7 +26,6 @@ namespace bolt {
 
 namespace {
 constexpr unsigned ColdFragAlign = 16;
-constexpr unsigned PageAlign = 0x200000;
 
 std::pair<std::unique_ptr<BinaryBasicBlock>, MCSymbol *>
 createNewStub(const BinaryContext &BC, BinaryFunction &Func,
@@ -298,12 +297,12 @@ void LongJmpPass::tentativeLayout(
   // Initial padding
   if (opts::UseOldText && EstimatedTextSize <= BC.OldTextSectionSize) {
     DotAddress = BC.OldTextSectionAddress;
-    auto Pad = OffsetToAlignment(DotAddress, PageAlign);
+    auto Pad = OffsetToAlignment(DotAddress, BC.PageAlign);
     if (Pad + EstimatedTextSize <= BC.OldTextSectionSize) {
       DotAddress += Pad;
     }
   } else {
-    DotAddress = alignTo(BC.LayoutStartAddress, PageAlign);
+    DotAddress = alignTo(BC.LayoutStartAddress, BC.PageAlign);
   }
 
   tentativeLayoutRelocMode(BC, SortedFunctions, DotAddress);

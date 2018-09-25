@@ -859,8 +859,8 @@ void RewriteInstance::discoverStorage() {
 
   FirstNonAllocatableOffset = NextAvailableOffset;
 
-  NextAvailableAddress = alignTo(NextAvailableAddress, PageAlign);
-  NextAvailableOffset = alignTo(NextAvailableOffset, PageAlign);
+  NextAvailableAddress = alignTo(NextAvailableAddress, BC->PageAlign);
+  NextAvailableOffset = alignTo(NextAvailableOffset, BC->PageAlign);
 
   if (!opts::UseGnuStack) {
     // This is where the black magic happens. Creating PHDR table in a segment
@@ -2993,25 +2993,25 @@ void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
     assert(TextSection && ".text not found in output");
 
     uint64_t NewTextSectionOffset = 0;
+    auto Padding = OffsetToAlignment(BC->OldTextSectionAddress, BC->PageAlign);
     if (opts::UseOldText &&
-        TextSection->getOutputSize() <= BC->OldTextSectionSize) {
-      outs() << "BOLT-INFO: using original .text for new code\n";
+        Padding + TextSection->getOutputSize() <= BC->OldTextSectionSize) {
       // Utilize the original .text for storage.
-      NewTextSectionStartAddress = BC->OldTextSectionAddress;
-      NewTextSectionOffset = BC->OldTextSectionOffset;
-      auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);
-      if (Padding + TextSection->getOutputSize() <= BC->OldTextSectionSize) {
-        outs() << "BOLT-INFO: using 0x200000 alignment\n";
-        NewTextSectionStartAddress += Padding;
-        NewTextSectionOffset += Padding;
-      }
+      outs() << "BOLT-INFO: using original .text for new code with 0x"
+             << Twine::utohexstr(BC->PageAlign) << " alignment\n";
+      NewTextSectionStartAddress = BC->OldTextSectionAddress + Padding;
+      NewTextSectionOffset = BC->OldTextSectionOffset + Padding;
     } else {
       if (opts::UseOldText) {
-        errs() << "BOLT-ERROR: original .text too small to fit the new code. "
-               << TextSection->getOutputSize() << " bytes needed, have "
-               << BC->OldTextSectionSize << " bytes available.\n";
+        errs() << "BOLT-WARNING: original .text too small to fit the new code"
+               << " using 0x" << Twine::utohexstr(BC->PageAlign)
+               << " aligment. " << Padding + TextSection->getOutputSize()
+               << " bytes needed, have " << BC->OldTextSectionSize
+               << " bytes available.\n";
+        opts::UseOldText = false;
       }
-      auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);
+      auto Padding = OffsetToAlignment(NewTextSectionStartAddress,
+                                       BC->PageAlign);
       NextAvailableAddress += Padding;
       NewTextSectionStartAddress = NextAvailableAddress;
       NewTextSectionOffset = getFileOffsetForAddress(NextAvailableAddress);
@@ -3033,7 +3033,8 @@ void RewriteInstance::mapTextSections(orc::VModuleKey Key) {
     assert(TextSection && ".text not found in output");
     if (TextSection->hasValidSectionID()) {
       uint64_t NewTextSectionOffset = 0;
-      auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);
+      auto Padding = OffsetToAlignment(NewTextSectionStartAddress,
+                                       BC->PageAlign);
       NextAvailableAddress += Padding;
       NewTextSectionStartAddress = NextAvailableAddress;
       NewTextSectionOffset = getFileOffsetForAddress(NextAvailableAddress);
@@ -3437,7 +3438,7 @@ void RewriteInstance::patchELFPHDRTable() {
       NewPhdr.p_filesz = NewTextSegmentSize;
       NewPhdr.p_memsz = NewTextSegmentSize;
       NewPhdr.p_flags = ELF::PF_X | ELF::PF_R;
-      NewPhdr.p_align = PageAlign;
+      NewPhdr.p_align = BC->PageAlign;
       ModdedGnuStack = true;
     } else if (!opts::UseGnuStack && Phdr.p_type == ELF::PT_DYNAMIC) {
       // Insert new pheader
@@ -3449,7 +3450,7 @@ void RewriteInstance::patchELFPHDRTable() {
       NewTextPhdr.p_filesz = NewTextSegmentSize;
       NewTextPhdr.p_memsz = NewTextSegmentSize;
       NewTextPhdr.p_flags = ELF::PF_X | ELF::PF_R;
-      NewTextPhdr.p_align = PageAlign;
+      NewTextPhdr.p_align = BC->PageAlign;
       OS.write(reinterpret_cast<const char *>(&NewTextPhdr),
                sizeof(NewTextPhdr));
       AddedSegment = true;
@@ -4707,6 +4708,10 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
     if (SectionName == OverwriteName)
       return true;
   }
+
+  // Special handling for .text
+  if (SectionName == ".text" && opts::UseOldText)
+    return false;
 
   auto Section = BC->getUniqueSectionByName(SectionName);
   return Section && Section->isAllocatable() && Section->isFinalized();

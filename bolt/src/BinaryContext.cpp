@@ -34,6 +34,13 @@ extern cl::OptionCategory BoltCategory;
 
 extern cl::opt<unsigned> Verbosity;
 
+cl::opt<bool>
+NoHugePages("no-huge-pages",
+  cl::desc("use regular size pages for code alignment"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
 static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
   cl::desc("print debug info when printing functions"),
@@ -56,6 +63,42 @@ PrintMemData("print-mem-data",
   cl::cat(BoltCategory));
 
 } // namespace opts
+
+BinaryContext::BinaryContext(std::unique_ptr<MCContext> Ctx,
+                             std::unique_ptr<DWARFContext> DwCtx,
+                             std::unique_ptr<Triple> TheTriple,
+                             const Target *TheTarget,
+                             std::string TripleName,
+                             std::unique_ptr<MCCodeEmitter> MCE,
+                             std::unique_ptr<MCObjectFileInfo> MOFI,
+                             std::unique_ptr<const MCAsmInfo> AsmInfo,
+                             std::unique_ptr<const MCInstrInfo> MII,
+                             std::unique_ptr<const MCSubtargetInfo> STI,
+                             std::unique_ptr<MCInstPrinter> InstPrinter,
+                             std::unique_ptr<const MCInstrAnalysis> MIA,
+                             std::unique_ptr<MCPlusBuilder> MIB,
+                             std::unique_ptr<const MCRegisterInfo> MRI,
+                             std::unique_ptr<MCDisassembler> DisAsm,
+                             DataReader &DR)
+    : Ctx(std::move(Ctx)),
+      DwCtx(std::move(DwCtx)),
+      TheTriple(std::move(TheTriple)),
+      TheTarget(TheTarget),
+      TripleName(TripleName),
+      MCE(std::move(MCE)),
+      MOFI(std::move(MOFI)),
+      AsmInfo(std::move(AsmInfo)),
+      MII(std::move(MII)),
+      STI(std::move(STI)),
+      InstPrinter(std::move(InstPrinter)),
+      MIA(std::move(MIA)),
+      MIB(std::move(MIB)),
+      MRI(std::move(MRI)),
+      DisAsm(std::move(DisAsm)),
+      DR(DR) {
+  Relocation::Arch = this->TheTriple->getArch();
+  PageAlign = opts::NoHugePages ? RegularPageSize : HugePageSize;
+}
 
 BinaryContext::~BinaryContext() {
   for (auto *Section : Sections) {
