@@ -22,7 +22,6 @@
 #include "llvm/Support/Error.h"
 
 namespace llvm {
-namespace orc {
 
 // A default-constructible llvm::Error that is suitable for use with MSVC's
 // std::future implementation which requires default constructible types.
@@ -80,7 +79,6 @@ public:
       : Expected<T>(std::move(Other)) {}
 };
 
-} // end namespace orc
 } // end namespace llvm
 
 #endif // LLVM_SUPPORT_MSVCERRORWORKAROUNDS_H

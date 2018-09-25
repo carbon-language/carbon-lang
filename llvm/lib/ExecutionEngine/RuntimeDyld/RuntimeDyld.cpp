@@ -1087,7 +1087,7 @@ Error RuntimeDyldImpl::resolveExternalSymbols() {
 
 #ifdef _MSC_VER
       using ExpectedLookupResult =
-          MSVCPExpected<JITSymbolResolver::LooupResult>;
+          MSVCPExpected<JITSymbolResolver::LookupResult>;
 #else
       using ExpectedLookupResult = Expected<JITSymbolResolver::LookupResult>;
 #endif

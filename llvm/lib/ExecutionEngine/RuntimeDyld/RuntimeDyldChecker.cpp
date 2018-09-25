@@ -735,7 +735,7 @@ Expected<JITSymbolResolver::LookupResult> RuntimeDyldCheckerImpl::lookup(
     const JITSymbolResolver::LookupSet &Symbols) const {
 
 #ifdef _MSC_VER
-  using ExpectedLookupResult = MSVCPExpected<JITSymbolResolver::LooupResult>;
+  using ExpectedLookupResult = MSVCPExpected<JITSymbolResolver::LookupResult>;
 #else
   using ExpectedLookupResult = Expected<JITSymbolResolver::LookupResult>;
 #endif
