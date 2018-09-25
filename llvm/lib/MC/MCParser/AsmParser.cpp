@@ -1327,7 +1327,7 @@ AsmParser::applyModifierToExpr(const MCExpr *E,
 /// GCC does not fully support this feature and so we will not support it.
 /// TODO: Adding single quote as a string.
 bool AsmParser::isAltmacroString(SMLoc &StrLoc, SMLoc &EndLoc) {
-  assert((StrLoc.getPointer() != NULL) &&
+  assert((StrLoc.getPointer() != nullptr) &&
          "Argument to the function cannot be a NULL value");
   const char *CharPtr = StrLoc.getPointer();
   while ((*CharPtr != '>') && (*CharPtr != '\n') && (*CharPtr != '\r') &&
