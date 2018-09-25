@@ -2,19 +2,30 @@
 Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 -->
 
-# Notes on standard (2018) and extended Fortran intrinsic procedures
+# A categorization of standard (2018) and extended Fortran intrinsic procedures
+
+This note attempts to group the intrinsic procedures of Fortran into categories
+of functions or subroutines with similar interfaces as an aid to
+comprehension beyond that which might be gained from the standard's
+alphabetical list.
+
+Few procedures are actually described here apart from their interfaces; see the
+Fortran 2018 standard (section 16) for the complete story.
+
+Intrinsic modules are not covered here.
 
 ## General rules
 
-1. The value of any function's `KIND` actual argument, if present, must be a
-   scalar constant integer expression, of any kind, whose value
+1. The value of any intrinsic function's `KIND` actual argument, if present,
+   must be a scalar constant integer expression, of any kind, whose value
    resolves to some supported kind of the function's result type.
    If optional and absent, the kind of the function's result is
    either the default kind of that category or to the kind of an argument
    (e.g., as in `AINT`).
 1. Procedures are summarized with a non-Fortran syntax for brevity.
    Wherever a function has a short definition, it appears after an
-   equal sign as if it were a statement function.
+   equal sign as if it were a statement function.  Any functions referenced
+   in these short summaries are intrinsic.
 1. Unless stated otherwise, an actual argument may have any supported kind
    of a particular intrinsic type.  Sometimes a pattern variable
    can appear in a description (e.g., `REAL(k)`) when the kind of an
@@ -23,25 +34,35 @@ Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 1. When an intrinsic type name appears without a kind (e.g., `REAL`),
    it refers to the default kind of that type.  Sometimes the word
    `default` will appear for clarity.
-1. The names of the dummy arguments can be used as keywords.
-1. All standard intrinsic functions are `PURE`, even if not `ELEMENTAL`.
+1. The names of the dummy arguments actually matter because they can
+   be used as keywords for actual arguments.
+1. All standard intrinsic functions are pure, even when not elemental.
 1. Assumed-rank arguments may not appear as actual arguments unless
    expressly permitted.
 
 # Elemental intrinsic functions
 
-Elemental semantics apply to these functions, to wit: when one or more of
+Pure elemental semantics apply to these functions, to wit: when one or more of
 the actual arguments are arrays, the arguments must be conformable, and
 the result is also an array.
 Scalar arguments are expanded when the arguments are not all scalars.
 
 ## Elemental intrinsic functions that may have unrestricted specific procedures
-When an elemental intrinsic function is documented as having an
+When an elemental intrinsic function is documented here as having an
 _unrestricted specific name_, that name may be passed as an actual
-argument, used as the target of a procedure pointer, and appear in
-a generic interface.
+argument, used as the target of a procedure pointer, appear in
+a generic interface, and be otherwise used as if it were an external
+procedure.
+
+An `INTRINSIC` statement or attribute may have to be applied to an
+unrestricted specific name to enable such usage, if the name is not
+otherwise known to be an intrinsic function because it has been called.
+
 In such usage, the instance of the function that accepts and returns
 values of the default kinds of the intrinsic types is used.
+A Fortran `INTERFACE` could be written to define each of
+these unrestricted specific intrinsic function names.
+
 Calls to dummy arguments and procedure pointers that correspond to these
 specific names must pass only scalar actual argument values.
 
@@ -86,13 +107,13 @@ TANH(COMPLEX(k) X) -> COMPLEX(k)
 ```
 
 ### Non-trigonometric elemental intrinsic functions, generic and specific
-These functions can be used as unrestricted specific names.
+These functions *can* be used as unrestricted specific names.
 ```
-ABS(REAL(k) A) -> REAL(k)
-AIMAG(COMPLEX(k) Z) -> REAL(k)
+ABS(REAL(k) A) -> REAL(k) = SIGN(A, 0.0)
+AIMAG(COMPLEX(k) Z) -> REAL(k) = Z%IM
 AINT(REAL(k) A [, KIND=k ]) -> REAL(KIND)
 ANINT(REAL(k) A [, KIND=k ] -> REAL(KIND)
-CONJG(COMPLEX(k) Z) -> COMPLEX(k)
+CONJG(COMPLEX(k) Z) -> COMPLEX(k) = CMPLX(Z%RE, -Z%IM)
 DIM(REAL(k) X, REAL(k) Y) -> REAL(k) = MAX(X-Y, REAL(0.0, KIND=k))
 DPROD(default REAL X, default REAL Y) -> DOUBLE PRECISION = DBLE(X)*DBLE(Y)
 EXP(REAL(k) X) -> REAL(k)
@@ -103,17 +124,17 @@ LOG10(REAL(k) X) -> REAL(k)
 MOD(INTEGER(k) A, INTEGER(k) P) -> INTEGER(k) = A-P*INT(A/P)
 NINT(REAL(k) A [, KIND=KIND(0) ]) -> INTEGER(KIND)
 SIGN(REAL(k) A, REAL(k) B) -> REAL(k)
-SQRT(REAL(k) X) -> REAL(k)
+SQRT(REAL(k) X) -> REAL(k) = X ** 0.5
 ```
 
-These variants cannot be used as specific names.
+These variants, however *cannot* be used as specific names.
 ```
-ABS(INTEGER(k) A) -> INTEGER(k)
-ABS(COMPLEX(k) A) -> REAL(k)
+ABS(INTEGER(k) A) -> INTEGER(k) = SIGN(A, 0)
+ABS(COMPLEX(k) A) -> REAL(k) = HYPOT(A%RE, A%IM)
 DIM(INTEGER(k) X, INTEGER(k) Y) -> INTEGER(k) = MAX(X-Y, INT(0,KIND=k))
 EXP(COMPLEX(k) X) -> COMPLEX(k)
 LOG(COMPLEX(k) X) -> COMPLEX(k)
-MOD(REAL(k) A, REAL(k) P) -> REAL(k)
+MOD(REAL(k) A, REAL(k) P) -> REAL(k) = A-P*INT(A/P)
 SIGN(INTEGER(k) A, INTEGER(k) B) -> INTEGER(k)
 ```
 
@@ -238,7 +259,10 @@ SNGL(DOUBLE PRECISION A) = REAL(A)
 
 ### Generic elemental bit manipulation intrinsic functions
 ```
-BGE, BGT, BLE, BLT(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
+BGE(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
+BGT(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
+BLE(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
+BLT(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
 BTEST(INTEGER(n1) I, INTEGER(n2) POS) -> default LOGICAL
 DSHIFTL(INTEGER(k), INTEGER(k) or BOZ J, INTEGER(any) SHIFT) -> INTEGER(k)
 DSHIFTL(BOZ I, INTEGER(k), INTEGER(any) SHIFT) -> INTEGER(k)
@@ -262,7 +286,7 @@ MERGE_BITS(INTEGER(k) I, INTEGER(k) or BOZ J, INTEGER(k) or BOZ MASK) = IOR(IAND
 MERGE_BITS(BOZ I, INTEGER(k) J, INTEGER(k) or BOZ MASK) = IOR(IAND(I,MASK),IAND(J,NOT(MASK)))
 NOT(INTEGER(k) I) -> INTEGER(k)
 POPCNT(INTEGER(any) I) -> default INTEGER
-POPPAR(INTEGER(any) I) -> default INTEGER = IAND(POPCNT(I), z'1')
+POPPAR(INTEGER(any) I) -> default INTEGER = IAND(POPCNT(I), Z'1')
 SHIFTA(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
 SHIFTL(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
 SHIFTR(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
@@ -293,11 +317,12 @@ that is present in `SET`, or zero if none is.
 `VERIFY` is the opposite, and returns the index of the first (or last) character
 in `STRING` that is *not* present in `SET`, or zero if all are.
 
-## Transformational intrinsic functions
+# Transformational intrinsic functions
 
 This category comprises a large collection of intrinsic functions that
 are collected together because they somehow transform their arguments
 in a way that prevents them from being elemental.
+All of them are pure, however.
 
 Some general rules apply to the transformational intrinsic functions:
 
@@ -315,7 +340,7 @@ Some general rules apply to the transformational intrinsic functions:
 1. The type `any` here denotes any intrinsic or derived type.
 1. The notation `(..)` denotes an array of any rank (but not an assumed-rank array).
 
-### Logical reduction transformational intrinsic functions
+## Logical reduction transformational intrinsic functions
 ```
 ALL(LOGICAL(k) MASK(..) [, DIM ]) -> LOGICAL(k)
 ANY(LOGICAL(k) MASK(..) [, DIM ]) -> LOGICAL(k)
@@ -323,7 +348,7 @@ COUNT(LOGICAL(any) MASK(..) [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
 PARITY(LOGICAL(k) MASK(..) [, DIM ]) -> LOGICAL(k)
 ```
 
-### Numeric reduction transformational intrinsic functions
+## Numeric reduction transformational intrinsic functions
 ```
 IALL(INTEGER(k) ARRAY(..) [, DIM, MASK ]) -> INTEGER(k)
 IANY(INTEGER(k) ARRAY(..) [, DIM, MASK ]) -> INTEGER(k)
@@ -333,7 +358,7 @@ PRODUCT(numeric ARRAY(..) [, DIM, MASK ]) -> numeric
 SUM(numeric ARRAY(..) [, DIM, MASK ]) -> numeric
 ```
 
-### Extrema reduction transformational intrinsic functions
+## Extrema reduction transformational intrinsic functions
 ```
 MAXVAL(relational(k) ARRAY(..) [, DIM, MASK ]) -> relational(k)
 MINVAL(relational(k) ARRAY(..) [, DIM, MASK ]) -> relational(k)
@@ -360,7 +385,7 @@ MAXLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), BACK ])
 MINLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), BACK ])
 ```
 
-### Data rearrangement transformational intrinsic functions
+## Data rearrangement transformational intrinsic functions
 The optional `DIM` argument to these functions must be a scalar integer of
 any kind, and it takes a default value of 1 when absent.
 
@@ -416,7 +441,7 @@ UNPACK(any VECTOR(n), LOGICAL(any) MASK(..), FIELD) -> type and kind of VECTOR, 
 ```
 `FIELD` has same type and kind as `VECTOR` and is conformable with `MASK`.
 
-### Other transformational intrinsic functions
+## Other transformational intrinsic functions
 ```
 BESSEL_JN(INTEGER(n1) N1, INTEGER(n2) N2, REAL(k) X) -> REAL(k) vector (MAX(N2-N1+1,0))
 BESSEL_YN(INTEGER(n1) N1, INTEGER(n2) N2, REAL(k) X) -> REAL(k) vector (MAX(N2-N1+1,0))
@@ -458,7 +483,7 @@ At least one argument must be present in a call to `SELECTED_REAL_KIND`.
 An assumed-rank array may be passed to `SHAPE`, and if it is associated with an assumed-size array,
 the last element of the result will be -1.
 
-### Coarray transformational intrinsic functions
+## Coarray transformational intrinsic functions
 ```
 FAILED_IMAGES([scalar TEAM_TYPE TEAM, KIND=KIND(0)]) -> INTEGER(KIND) vector
 GET_TEAM([scalar INTEGER(?) LEVEL]) -> scalar TEAM_TYPE
@@ -473,8 +498,10 @@ THIS_IMAGE([COARRAY, DIM, scalar TEAM_TYPE TEAM]) -> default INTEGER
 The result of `THIS_IMAGE` is a scalar if `DIM` is present or if `COARRAY` is absent,
 and a vector whose length is the corank of `COARRAY` otherwise.
 
-## Inquiry intrinsic functions
-### Type inquiry intrinsic functions
+# Inquiry intrinsic functions
+These are neither elemental nor transformational; all are pure.
+
+## Type inquiry intrinsic functions
 The value of the argument is not used, and may be undefined.
 ```
 BIT_SIZE(INTEGER(k) I(..)) -> INTEGER(k)
@@ -492,7 +519,7 @@ RANGE(INTEGER(k) or REAL(k) or COMPLEX(k) X) -> scalar default INTEGER
 TINY(REAL(k) X(..)) -> scalar REAL(k)
 ```
 
-### Bound and size inquiry intrinsic functions
+## Bound and size inquiry intrinsic functions
 The results are scalar when `DIM` is present, and a vector of length=(co)rank(`(CO)ARRAY`)
 when `DIM` is absent.
 ```
@@ -505,7 +532,7 @@ UCOBOUND(any COARRAY [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
 
 Assumed-rank arrays may be used with `LBOUND`, `SIZE`, and `UBOUND`.
 
-### Object characteristic inquiry intrinsic functions
+## Object characteristic inquiry intrinsic functions
 ```
 ALLOCATED(any type ALLOCATABLE ARRAY) -> scalar default LOGICAL
 ALLOCATED(any type ALLOCATABLE SCALAR) -> scalar default LOGICAL
@@ -522,8 +549,8 @@ The arguments to `EXTENDS_TYPE_OF` must be of extensible derived types or be unl
 
 An assumed-rank array may be used with `IS_CONTIGUOUS` and `RANK`.
 
-## Intrinsic subroutines
-### One elemental intrinsic subroutine
+# Intrinsic subroutines
+## One elemental intrinsic subroutine
 ```
 INTERFACE
   SUBROUTINE MVBITS(FROM, FROMPOS, LEN, TO, TOPOS)
@@ -537,7 +564,7 @@ INTERFACE
 END INTERFACE
 ```
 
-### Non-elemental intrinsic subroutines
+## Non-elemental intrinsic subroutines
 ```
 CALL CPU_TIME(REAL INTENT(OUT) TIME)
 ```
@@ -562,7 +589,7 @@ CALL RANDOM_SEED([SIZE, PUT, GET])
 CALL SYSTEM_CLOCK([COUNT, COUNT_RATE, COUNT_MAX])
 ```
 
-### Atomic intrinsic subroutines
+## Atomic intrinsic subroutines
 ```
 CALL ATOMIC_ADD(ATOM, VALUE [, STAT=])
 CALL ATOMIC_AND(ATOM, VALUE [, STAT=])
@@ -577,7 +604,7 @@ CALL ATOMIC_REF(VALUE, ATOM [, STAT=])
 CALL ATOMIC_XOR(ATOM, VALUE [, STAT=])
 ```
 
-### Collective intrinsic subroutines
+## Collective intrinsic subroutines
 ```
 CALL CO_BROADCAST
 CALL CO_MAX
