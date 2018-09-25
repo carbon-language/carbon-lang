@@ -260,8 +260,6 @@ public:
   /// }
 
 private:
-  bool isAltmacroString(SMLoc &StrLoc, SMLoc &EndLoc);
-  void altMacroString(StringRef AltMacroStr, std::string &Res);
   bool parseStatement(ParseStatementInfo &Info,
                       MCAsmParserSemaCallback *SI);
   bool parseCurlyBlockScope(SmallVectorImpl<AsmRewrite>& AsmStrRewrites);
@@ -1327,7 +1325,7 @@ AsmParser::applyModifierToExpr(const MCExpr *E,
 /// implementation. GCC does not fully support this feature and so we will not
 /// support it.
 /// TODO: Adding single quote as a string.
-bool AsmParser::isAltmacroString(SMLoc &StrLoc, SMLoc &EndLoc) {
+static bool isAltmacroString(SMLoc &StrLoc, SMLoc &EndLoc) {
   assert((StrLoc.getPointer() != nullptr) &&
          "Argument to the function cannot be a NULL value");
   const char *CharPtr = StrLoc.getPointer();
@@ -1345,12 +1343,14 @@ bool AsmParser::isAltmacroString(SMLoc &StrLoc, SMLoc &EndLoc) {
 }
 
 /// creating a string without the escape characters '!'.
-void AsmParser::altMacroString(StringRef AltMacroStr,std::string &Res) {
+static std::string altMacroString(StringRef AltMacroStr) {
+  std::string Res;
   for (size_t Pos = 0; Pos < AltMacroStr.size(); Pos++) {
     if (AltMacroStr[Pos] == '!')
       Pos++;
     Res += AltMacroStr[Pos];
   }
+  return Res;
 }
 
 /// Parse an expression and return it.
@@ -2452,9 +2452,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
             else if (Lexer.IsaAltMacroMode() &&
                      Token.getString().front() == '<' &&
                      Token.is(AsmToken::String)) {
-              std::string Res;
-              altMacroString(Token.getStringContents(), Res);
-              OS << Res;
+              OS << altMacroString(Token.getStringContents());
             }
             // We expect no quotes around the string's contents when
             // parsing for varargs.
