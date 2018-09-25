@@ -547,7 +547,8 @@ template<typename A> int ExpressionBase<A>::Rank() const {
 // Template instantiations to resolve the "extern template" declarations
 // that appear in expression.h.
 
-FOR_EACH_TYPE_AND_KIND(template class Expr)
+FOR_EACH_INTRINSIC_KIND(template class Expr)
+FOR_EACH_CATEGORY_TYPE(template class Expr)
 FOR_EACH_INTEGER_KIND(template struct Relational)
 FOR_EACH_REAL_KIND(template struct Relational)
 FOR_EACH_CHARACTER_KIND(template struct Relational)

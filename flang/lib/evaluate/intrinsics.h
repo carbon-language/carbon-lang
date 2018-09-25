@@ -19,6 +19,7 @@
 
 namespace Fortran::evaluate {
 
+// Placeholder
 ENUM_CLASS(IntrinsicProcedure, IAND, IEOR, IOR, LEN, MAX, MIN)
 
 }  // namespace Fortran::evaluate

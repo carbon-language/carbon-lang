@@ -1,0 +1,508 @@
+<!--
+Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
+-->
+
+# Notes on standard (2018) and extended Fortran intrinsic procedures
+
+## General rules
+
+1. The value of any function's `KIND` actual argument, if present, must be a
+   scalar constant integer expression, of any kind, whose value
+   resolves to some supported kind of the function's result type.
+   If optional and absent, the kind of the function's result is
+   either the default kind of that category or to the kind of an argument
+   (e.g., as in `AINT`).
+1. Procedures are summarized with a non-Fortran syntax for brevity.
+   Wherever a function has a short definition, it appears after an
+   equal sign as if it were a statement function.
+1. Unless stated otherwise, an actual argument may have any supported kind
+   of a particular intrinsic type.  Sometimes a pattern variable
+   can appear in a description (e.g., `REAL(k)`) when the kind of an
+   actual argument's type must match the kind of another argument, or
+   determines the kind type parameter of the function result.
+1. When an intrinsic type name appears without a kind (e.g., `REAL`),
+   it refers to the default kind of that type.  Sometimes the word
+   `default` will appear for clarity.
+1. The names of the dummy arguments can be used as keywords.
+1. All standard intrinsic functions are `PURE`, even if not `ELEMENTAL`.
+
+# Elemental intrinsic functions
+
+Elemental semantics apply to these functions, to wit: when one or more of
+the actual arguments are arrays, the arguments must be conformable, and
+the result is also an array.
+Scalar arguments are expanded when the arguments are not all scalars.
+
+## Elemental intrinsic functions with unrestricted specific procedures
+When a function is marked with an asterisk (`*`) below, its name can be used
+as an `unrestricted specific name`: viz., it may be passed as an actual
+argument, used as the target of a procedure pointer, and appear in
+a generic interface.
+In such a case, the instance of the function that accepts and returns
+values of the default kinds of the intrinsic types is used.
+Calls to dummy arguments and procedure pointers that correspond to these
+specific names must pass only scalar actual argument values.
+
+No other intrinsic function name can be passed as an actual argument,
+used pointer target, or appear in a generic interface.
+
+### Unrestricted specific aliases for some elemental intrinsic functions with distinct names
+
+```
+  * ALOG(REAL X) -> REAL = LOG(X)
+  * ALOG10(REAL X) -> REAL = LOG10(X)
+  * AMOD(REAL A, REAL P) -> REAL = MOD(A, P)
+  * CABS(COMPLEX A) = ABS(A)
+  * CCOS(COMPLEX X) = COS(X)
+  * CEXP(COMPLEX A) -> COMPLEX = EXP(A)
+  * CLOG(COMPLEX X) -> COMPLEX = LOG(X)
+  * CSIN(COMPLEX X) = SIN(X)
+  * CSQRT(COMPLEX X) -> COMPLEX = SQRT(X)
+  * CTAN(COMPLEX X) = TAN(X)
+  * DABS(DOUBLE PRECISION A) = ABS(A)
+  * DACOS(DOUBLE PRECISION X) = ACOS(X)
+  * DASIN(DOUBLE PRECISION X) = ASIN(X)
+  * DATAN(DOUBLE PRECISION X) = ATAN(X)
+  * DATAN2(DOUBLE PRECISION Y, DOUBLE PRECISION X) = ATAN2(Y, X)
+  * DCOS(DOUBLE PRECISION X) = COS(X)
+  * DCOSH(DOUBLE PRECISION X) = COSH(X)
+  * DDIM(DOUBLE PRECISION, DOUBLE PRECISION) -> DOUBLE PRECISION = MAX(X-Y, 0.0D0)
+  * DEXP(DOUBLE PRECISION) -> DOUBLE PRECISION = EXP(A)
+  * DINT(DOUBLE PRECISION A) -> DOUBLE PRECISION = AINT(A)
+  * DLOG(DOUBLE PRECISION X) -> DOUBLE PRECISION = LOG(X)
+  * DLOG10(DOUBLE PRECISION X) -> DOUBLE PRECISION = LOG10(X)
+  * DMOD(DOUBLE PRECISION A, DOUBLE PRECISION P) -> DOUBLE PRECISION = MOD(A, P)
+  * DNINT(DOUBLE PRECISION A) = ANINT(A)
+  * DSIGN(DOUBLE PRECISION A, DOUBLE PRECISION B) -> DOUBLE PRECISION = SIGN(A, B)
+  * DSIN(DOUBLE PRECISION X) = SIN(X)
+  * DSINH(DOUBLE PRECISION X) = SINH(X)
+  * DSQRT(DOUBLE PRECISION X) -> DOUBLE PRECISION = SQRT(X)
+  * DTAN(DOUBLE PRECISION X) = TAN(X)
+  * DTANH(DOUBLE PRECISION X) = TANH(X)
+  * IABS(INTEGER A) = ABS(A)
+  * IDIM(INTEGER, INTEGER) -> INTEGER = MAX(X-Y, 0)
+  * IDNINT(DOUBLE PRECISION A) = NINT(A)
+  * ISIGN(INTEGER A, INTEGER B) -> INTEGER = SIGN(A, B)
+```
+
+### Trigonometric elemental intrinsic functions, generic and (mostly) specific
+All of these can be used as unrestricted specific names, except
+for the inverse hyperbolic functions (`ACOSH, ASINH, ATANH`).
+
+```
+  * ACOS(REAL(k) X) -> REAL(k)
+  ACOS(COMPLEX(k) X) -> COMPLEX(k)
+  * ASIN(REAL(k) X) -> REAL(k)
+  ASIN(COMPLEX(k) X) -> COMPLEX(k)
+  * ATAN(REAL(k) X) -> REAL(k)
+  ATAN(COMPLEX(k) X) -> COMPLEX(k)
+  ACOSH(REAL(k) X) -> REAL(k)
+  ACOSH(COMPLEX(k) X) -> COMPLEX(k)
+  ASINH(REAL(k) X) -> REAL(k)
+  ASINH(COMPLEX(k) X) -> COMPLEX(k)
+  ATANH(REAL(k) X) -> REAL(k)
+  ATANH(COMPLEX(k) X) -> COMPLEX(k)
+  * ATAN(REAL(k) Y, REAL(k) X) -> REAL(k) = ATAN2(Y, X)
+  * ATAN2(REAL(k) Y, REAL(k) X) -> REAL(k)
+  * COS(REAL(k) X) -> REAL(k)
+  COS(COMPLEX(k) X) -> COMPLEX(k)
+  * COSH(REAL(k) X) -> REAL(k)
+  COSH(COMPLEX(k) X) -> COMPLEX(k)
+  * SIN(REAL(k) X) -> REAL(k)
+  SIN(COMPLEX(k) X) -> COMPLEX(k)
+  * SINH(REAL(k) X) -> REAL(k)
+  SINH(COMPLEX(k) X) -> COMPLEX(k)
+  * TAN(REAL(k) X) -> REAL(k)
+  TAN(COMPLEX(k) X) -> COMPLEX(k)
+  * TANH(REAL(k) X) -> REAL(k)
+  TANH(COMPLEX(k) X) -> COMPLEX(k)
+```
+
+### Other elemental intrinsic functions whose names can be used as unrestricted specific procedures for some argument types
+
+```
+  * ABS(REAL(k) A) -> REAL(k)
+  ABS(INTEGER(k) A) -> INTEGER(k)
+  ABS(COMPLEX(k) A) -> REAL(k)
+  * AIMAG(COMPLEX(k) Z) -> REAL(k)
+  * AINT(REAL(k) A [, KIND=k ]) -> REAL(KIND)
+  * ANINT(REAL(k) A [, KIND=k ] -> REAL(KIND)
+  * CONJG(COMPLEX(k) Z) -> COMPLEX(k)
+  * DIM(REAL(k) X, REAL(k) Y) -> REAL(k) = MAX(X-Y, REAL(0.0, KIND=k))
+  DIM(INTEGER(k) X, INTEGER(k) Y) -> INTEGER(k) = MAX(X-Y, INT(0,KIND=k))
+  * DPROD(default REAL X, default REAL Y) -> DOUBLE PRECISION = DBLE(X)*DBLE(Y)
+  * EXP(REAL(k) X) -> REAL(k)
+  EXP(COMPLEX(k) X) -> COMPLEX(k)
+  * INDEX(CHARACTER(k) STRING, CHARACTER(k) SUBSTRING [, LOGICAL(any) BACK, KIND=KIND(0) ]) -> INTEGER(KIND)
+  * LEN(CHARACTER(k,n) STRING [, KIND=KIND(0) ]) -> INTEGER(KIND) = n
+  * LOG(REAL(k) X) -> REAL(k)
+  LOG(COMPLEX(k) X) -> COMPLEX(k)
+  * LOG10(REAL(k) X) -> REAL(k)
+  * MOD(INTEGER(k) A, INTEGER(k) P) -> INTEGER(k) = A-P*INT(A/P)
+  MOD(REAL(k) A, REAL(k) P) -> REAL(k)
+  * NINT(REAL(k) A [, KIND=KIND(0) ]) -> INTEGER(KIND)
+  * SIGN(REAL(k) A, REAL(k) B) -> REAL(k)
+  SIGN(INTEGER(k) A, INTEGER(k) B) -> INTEGER(k)
+  * SQRT(REAL(k) X) -> REAL(k)
+```
+
+## Generic elemental intrinsic functions without specific names
+
+### Elemental conversions
+
+```
+  ACHAR(INTEGER(k) I [, KIND=KIND('')]) -> CHARACTER(KIND,LEN=1)
+  CEILING(REAL() A [, KIND=KIND(0)]) -> INTEGER(KIND)
+  CHAR(INTEGER(any) I [, KIND=KIND('')]) -> CHARACTER(KIND,LEN=1)
+  CMPLX(COMPLEX(k) X [, KIND=KIND(0.0D0)]) -> COMPLEX(KIND)
+  CMPLX(INTEGER or REAL or BOZ X [, INTEGER or REAL or BOZ Y, KIND=KIND((0,0)) ]) -> COMPLEX(KIND)
+  EXPONENT(REAL(any) X) -> default INTEGER
+  FLOOR(REAL(any) A [, KIND=KIND(0)]) -> INTEGER(KIND)
+  IACHAR(CHARACTER(KIND=k,LEN=1) C [, KIND=KIND(0)]) -> INTEGER(KIND)
+  ICHAR(CHARACTER(KIND=k,LEN=1) C [, KIND=KIND(0)]) -> INTEGER(KIND)
+  INT(INTEGER or REAL or COMPLEX or BOZ A [, KIND=KIND(0) ]) -> INTEGER(KIND)
+  LOGICAL(LOGICAL(any) L [, KIND=KIND(.TRUE.) ]) -> LOGICAL(KIND)
+  REAL(INTEGER or REAL or COMPLEX or BOZ A [, KIND=KIND(0.0) ]) -> REAL(KIND)
+```
+
+### Other generic elemental intrinsic functions without specific names
+N.B. `BESSEL_JN(N1, N2, X)` and `BESSEL_YN(N1, N2, X)` are categorized
+below with the transformational intrinsic functions.
+
+```
+  BESSEL_J0(REAL(k) X) -> REAL(k)
+  BESSEL_J1(REAL(k) X) -> REAL(k)
+  BESSEL_JN(INTEGER(n) N, REAL(k) X) -> REAL(k)
+  BESSEL_Y0(REAL(k) X) -> REAL(k)
+  BESSEL_Y1(REAL(k) X) -> REAL(k)
+  BESSEL_YN(INTEGER(n) N, REAL(k) X) -> REAL(k)
+  ERF(REAL(k) X) -> REAL(k)
+  ERFC(REAL(k) X) -> REAL(k)
+  ERFC_SCALED(REAL(k) X) -> REAL(k)
+  FRACTION(REAL(k) X) -> REAL(k)
+  GAMMA(REAL(k) X) -> REAL(k)
+  HYPOT(REAL(k) X, REAL(k) Y) -> REAL(k)
+  IMAGE_STATUS(IMAGE [, scalar TEAM_TYPE TEAM ]) -> default INTEGER
+  IS_IOSTAT_END(INTEGER(any) I) -> default LOGICAL
+  IS_IOSTAT_EOR(INTEGER(any) I) -> default LOGICAL
+  LOG_GAMMA(REAL(k) X) -> REAL(k)
+  MAX(INTEGER(k) ...) -> INTEGER(k)
+  MAX(REAL(k) ...) -> REAL(k)
+  MAX(CHARACTER(KIND=k) ...) -> CHARACTER(KIND=k,LEN=MAX(LEN(...)))
+  MERGE(any type TSOURCE, same type FSOURCE, LOGICAL(any) MASK) -> type of FSOURCE
+  MIN(INTEGER(k) ...) -> INTEGER(k)
+  MIN(REAL(k) ...) -> REAL(k)
+  MIN(CHARACTER(KIND=k) ...) -> CHARACTER(KIND=k,LEN=MAX(LEN(...)))
+  MODULO(INTEGER(k) A, INTEGER(k) P) -> INTEGER(k); P*result >= 0
+  MODULO(REAL(k) A, REAL(k) P) -> REAL(k) = A - P*FLOOR(A/P)
+  NEAREST(REAL(k) X, REAL(any) S) -> REAL(k)
+  OUT_OF_RANGE(INTEGER or REAL(any) X, scalar INTEGER or REAL(k) MOLD [, scalar LOGICAL(any) ROUND ]) -> default LOGICAL
+  RRSPACING(REAL(k) X) -> REAL(k)
+  SCALE(REAL(k) X, INTEGER(any) I) -> REAL(k)
+  SET_EXPONENT(REAL(k) X, INTEGER(any) I) -> REAL(k)
+  SPACING(REAL(k) X) -> REAL(k)
+
+```
+
+### Restricted aliases for elemental conversions &/or extrema with default intrinsic types
+
+```
+  AMAX0(default INTEGER...) = REAL(MAX(...))
+  AMAX1(default REAL ...) = MAX(...)
+  AMIN0(default INTEGER...) = REAL(MIN(...))
+  AMIN1(default REAL ...) = MIN(...)
+  DBLE(default REAL A) = REAL(A, KIND=KIND(0.0D0))
+  DMAX1(DOUBLE PRECISION ...) = MAX(...)
+  DMIN1(DOUBLE PRECISION ...) = MIN(...)
+  FLOAT(default INTEGER I) = REAL(I)
+  IDINT(DOUBLE PRECISION A) = INT(A)
+  IFIX(default REAL A) = INT(A)
+  MAX0(default INTEGER...) = MAX(...)
+  MAX1(default REAL...) = INT(MAX(...))
+  MIN0(default INTEGER...) = MIN(...)
+  MIN1(default REAL...) = INT(MIN(...))
+  SNGL(DOUBLE PRECISION A) = REAL(A)
+```
+
+### Generic elemental bit manipulation intrinsic functions
+```
+  BGE, BGT, BLE, BLT(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
+  BTEST(INTEGER(n1) I, INTEGER(n2) POS) -> default LOGICAL
+  DSHIFTL(INTEGER(k), INTEGER(k) or BOZ J, INTEGER(any) SHIFT) -> INTEGER(k)
+  DSHIFTL(BOZ I, INTEGER(k), INTEGER(any) SHIFT) -> INTEGER(k)
+  DSHIFTR(INTEGER(k), INTEGER(k) or BOZ J, INTEGER(any) SHIFT) -> INTEGER(k)
+  DSHIFTR(BOZ I, INTEGER(k), INTEGER(any) SHIFT) -> INTEGER(k)
+  IAND(INTEGER(k) I, INTEGER(k) or BOZ J) -> INTEGER(k)
+  IAND(BOZ I, INTEGER(k) J) -> INTEGER(k)
+  IBCLR(INTEGER(k) I, INTEGER(any) POS) -> INTEGER(k)
+  IBSET(INTEGER(k) I, INTEGER(any) POS) -> INTEGER(k)
+  IBITS(INTEGER(k) I, INTEGER(n1) POS, INTEGER(n2) LEN) -> INTEGER(k)
+  IEOR(INTEGER(k) I, INTEGER(k) or BOZ J) -> INTEGER(k)
+  IEOR(BOZ I, INTEGER(k) J) -> INTEGER(k)
+  IOR(INTEGER(k) I, INTEGER(k) or BOZ J) -> INTEGER(k)
+  IOR(BOZ I, INTEGER(k) J) -> INTEGER(k)
+  ISHFT(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
+  ISHFTC(INTEGER(k) I, INTEGER(n1) SHIFT [, INTEGER(n2) SIZE = BIT_SIZE(I) ]) -> INTEGER(k)
+  LEADZ(INTEGER(any) I) -> default INTEGER
+  MASKL(INTEGER(any) I [, KIND=KIND(0) ]) -> INTEGER(KIND)
+  MASKR(INTEGER(any) I [, KIND=KIND(0) ]) -> INTEGER(KIND)
+  MERGE_BITS(INTEGER(k) I, INTEGER(k) or BOZ J, INTEGER(k) or BOZ MASK) = IOR(IAND(I,MASK),IAND(J,NOT(MASK)))
+  MERGE_BITS(BOZ I, INTEGER(k) J, INTEGER(k) or BOZ MASK) = IOR(IAND(I,MASK),IAND(J,NOT(MASK)))
+    - any BOZ argument is converted to INTEGER(k)
+  NOT(INTEGER(k) I) -> INTEGER(k)
+  POPCNT(INTEGER(any) I) -> default INTEGER
+  POPPAR(INTEGER(any) I) -> default INTEGER = IAND(POPCNT(I), z'1')
+  SHIFTA(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
+  SHIFTL(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
+  SHIFTR(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
+  TRAILZ(INTEGER(any) I) -> default INTEGER
+```
+
+### Character elemental intrinsic functions
+See also `INDEX` and `LEN` above among the elemental intrinsic functions with
+unrestricted specific names.
+
+```
+  ADJUSTL(CHARACTER(k,LEN=n) STRING) -> CHARACTER(k,LEN=n)
+  ADJUSTR(CHARACTER(k,LEN=n) STRING) -> CHARACTER(k,LEN=n)
+  LEN_TRIM(CHARACTER(k,n) STRING [, KIND=KIND(0) ]) -> INTEGER(KIND) = n
+  LGE/LGT/LLE/LLT(CHARACTER(k,n1) STRING_A, CHARACTER(k,n2) STRING_B) -> default LOGICAL
+  SCAN(CHARACTER(k,n) STRING, CHARACTER(k,m) SET [, LOGICAL(any) BACK, KIND ]) -> INTEGER(KIND)
+  VERIFY(CHARACTER(k,n) STRING, CHARACTER(k,m) SET [, LOGICAL(any) BACK, KIND ]) -> INTEGER(KIND)
+```
+
+## Transformational intrinsic functions
+
+1. `DIM` arguments are optional; if present, the actual argument must be
+   a scalar integer of any kind.
+1. When an optional `DIM` argument is absent, or an `ARRAY` or `MASK`
+   argument is a vector, the result of the function is scalar; otherwise,
+   the result is an array of the same shape as the `ARRAY` or `MASK`
+   argument with the dimension `DIM` removed from the shape.
+1. When a function takes an optional `MASK` argument, it must be conformable
+  with its `ARRAY` argument if it is present, and the mask can be any kind
+  of `LOGICAL`.  It can be scalar.
+1. The type `numeric` here can be any kind of `INTEGER`, `REAL`, or `COMPLEX`.
+1. The type `relational` here can be any kind of `INTEGER`, `REAL`, or `CHARACTER`.
+1. The type `any` here denotes any intrinsic or derived type.
+1. The notation `(..)` denotes an array of any rank (but not assumed-rank).
+
+### Logical reduction transformational intrinsic functions
+```
+  ALL(LOGICAL(k) MASK(..) [, DIM ]) -> LOGICAL(k)
+  ANY(LOGICAL(k) MASK(..) [, DIM ]) -> LOGICAL(k)
+  COUNT(LOGICAL(any) MASK(..) [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
+  PARITY(LOGICAL(k) MASK(..) [, DIM ]) -> LOGICAL(k)
+```
+
+### Numeric reduction transformational intrinsic functions
+```
+  IALL(INTEGER(k) ARRAY(..) [, DIM, MASK ]) -> INTEGER(k)
+  IANY(INTEGER(k) ARRAY(..) [, DIM, MASK ]) -> INTEGER(k)
+  IPARITY(INTEGER(k) ARRAY(..) [, DIM, MASK ]) -> INTEGER(k)
+  NORM2(REAL(k) X(..) [, DIM ]) -> REAL(k)
+  PRODUCT(numeric ARRAY(..) [, DIM, MASK ]) -> numeric
+  SUM(numeric ARRAY(..) [, DIM, MASK ]) -> numeric
+```
+
+### Extrema reduction transformational intrinsic functions
+```
+  MAXVAL(relational(k) ARRAY(..) [, DIM, MASK ]) -> relational(k)
+  MINVAL(relational(k) ARRAY(..) [, DIM, MASK ]) -> relational(k)
+```
+
+### Locational transformational intrinsic functions
+When the optional `DIM` argument is absent, the result is an `INTEGER(KIND)`
+vector whose length is the rank of `ARRAY`.
+When the optional `DIM` argument is present, the result is an `INTEGER(KIND)`
+array of rank `RANK(ARRAY)-1` and shape equal to that of `ARRAY` with
+the dimension `DIM` removed.
+
+For `FINDLOC`, `ARRAY` may have any of the five intrinsic types, and `VALUE`
+must a scalar value of a type for which `ARRAY==VALUE` or `ARRAY .EQV. VALUE`
+is an acceptable expression.
+
+```
+  FINDLOC(intrinsic ARRAY(..), scalar VALUE [, DIM, MASK, KIND=KIND(0), scalar LOGICAL(any) BACK=.FALSE. ])
+  MAXLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), scalar LOGICAL(any) BACK=.FALSE. ])
+  MINLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), scalar LOGICAL(any) BACK=.FALSE. ])
+```
+
+### Data rearrangement transformational intrinsic functions
+The optional `DIM` argument to these functions must be a scalar integer of
+any kind, and it takes a default value of 1 when absent.
+
+```
+  CSHIFT(any ARRAY(..), INTEGER(any) SHIFT(..) [, DIM ]) -> same type/kind/shape as ARRAY
+```
+`SHIFT` is scalar or `RANK(SHIFT) == RANK(ARRAY) - 1` and `SHAPE(SHIFT)` is that of `SHAPE(ARRAY)` with element `DIM` removed.
+
+```
+  EOSHIFT(any ARRAY(..), INTEGER(any) SHIFT(..) [, BOUNDARY, DIM ]) -> same type/kind/shape as ARRAY
+```
+* `SHIFT` is scalar or `RANK(SHIFT) == RANK(ARRAY) - 1` and `SHAPE(SHIFT)` is that of `SHAPE(ARRAY)` with element `DIM` removed.
+* If `BOUNDARY` is present, it must have the same type and parameters as `ARRAY`.
+* If `BOUNDARY` is absent, `ARRAY` must be of an intrinsic type, and the default `BOUNDARY` is the obvious `0`, `' '`, or `.FALSE.` value of `KIND(ARRAY)`.
+* If `BOUNDARY` is present, either it is scalar, or `RANK(BOUNDARY) == RANK(ARRAY) - 1` and `SHAPE(BOUNDARY)` is that of `SHAPE(ARRAY)` with element `DIM`
+  removed.
+
+```
+  PACK(any ARRAY(..), LOGICAL(any) MASK(..)) -> vector of same type and kind as ARRAY
+```
+* `MASK` is conformable with `ARRAY` and may be scalar.
+* The length of the result vector is `COUNT(MASK)` if `MASK` is an array, else `SIZE(ARRAY)` if `MASK` is `.TRUE.`, else zero.
+
+```
+  PACK(any ARRAY(..), LOGICAL(any) MASK(..), any VECTOR(n)) -> vector of same type, kind, and size as VECTOR
+```
+* `MASK` is conformable with `ARRAY` and may be scalar.
+* `VECTOR` has the same type and kind as `ARRAY`.
+* `VECTOR` must not be smaller than result of `PACK` with no `VECTOR` argument.
+* The leading elements of `VECTOR` are replaced with elements from `ARRAY` as
+  if `PACK` had been invoked without `VECTOR`.
+
+```
+  RESHAPE(any SOURCE(..), INTEGER(k) SHAPE(n) [, PAD(..), INTEGER(k2) ORDER(n) ]) -> SOURCE array with shape SHAPE
+```
+* If `ORDER` is present, it is a vector of the same size as `SHAPE`, and
+  contains a permutation.
+* The element(s) of `PAD` are used to fill out the result once `SOURCE`
+  has been consumed.
+
+```
+  SPREAD(any SOURCE, DIM, scalar INTEGER(any) NCOPIES) -> same type as SOURCE, rank=RANK(SOURCE)+1
+  TRANSFORM(any SOURCE, any MOLD) -> scalar if MOLD is scalar, else vector; same type and kind as MOLD
+  TRANSFORM(any SOURCE, any MOLD, scalar INTEGER(any) SIZE) -> vector(SIZE) of type and kind of MOLD
+  TRANSPOSE(any MATRIX(n,m)) -> matrix(m,n) of same type and kind as MATRIX
+```
+
+```
+  UNPACK(any VECTOR(n), LOGICAL(any) MASK(..), FIELD) -> type and kind of VECTOR, shape of MASK
+```
+`FIELD` has same type and kind as `VECTOR` and is conformable with `MASK`.
+
+### Other transformational intrinsic functions
+  OTHER TRANSFORMATIONAL INTRINSIC FUNCTIONS
+    BESSEL_JN(INTEGER(n1) N1, INTEGER(n2) N2, REAL(k) X) -> REAL(k) vector (MAX(N2-N1+1,0))
+      - arguments are scalar
+    BESSEL_YN(INTEGER(n1) N1, INTEGER(n2) N2, REAL(k) X) -> REAL(k) vector (MAX(N2-N1+1,0))
+      - arguments are scalar
+    COMMAND_ARGUMENT_COUNT() -> default INTEGER scalar
+    DOT_PRODUCT(LOGICAL(k) VECTOR_A(n), LOGICAL(k) VECTOR_B(n)) -> LOGICAL(k) = ANY(VECTOR_A .AND. VECTOR_B)
+    DOT_PRODUCT(COMPLEX(any) VECTOR_A(n), numeric VECTOR_B(n)) = SUM(CONJG(VECTOR_A) * VECTOR_B)
+    DOT_PRODUCT(INTEGER(any) or REAL(any) VECTOR_A(n), numeric VECTOR_B(n)) = SUM(VECTOR_A * VECTOR_B)
+    MATMUL(numeric ARRAY_A(j), numeric ARRAY_B(j,k)) -> numeric (k)
+    MATMUL(numeric ARRAY_A(j,k), numeric ARRAY_B(k)) -> numeric (j)
+    MATMUL(numeric ARRAY_A(j,k), numeric ARRAY_B(k,m)) -> numeric (j,m)
+    MATMUL(LOGICAL(n1) ARRAY_A(j), LOGICAL(n2) ARRAY_B(j,k)) -> default LOGICAL (k)
+    MATMUL(LOGICAL(n1) ARRAY_A(j,k), LOGICAL(n2) ARRAY_B(k)) -> default LOGICAL (j)
+    MATMUL(LOGICAL(n1) ARRAY_A(j,k), LOGICAL(n2) ARRAY_B(k,m)) -> default LOGICAL (j,m)
+    NULL([POINTER/ALLOCATABLE MOLD]) -> POINTER
+      - MOLD can be absent only when NULL() appears in a context where type can be known
+    REDUCE(any type ARRAY(..), function OPERATION [, DIM, LOGICAL(any) MASK(..), IDENTITY, LOGICAL ORDERED)
+    REPEAT(CHARACTER(k,n) STRING, INTEGER(any) NCOPIES) -> CHARACTER(k,n*NCOPIES)
+    SELECTED_CHAR_KIND('DEFAULT' or 'ASCII' or 'ISO_10646' or ...) -> scalar default INTEGER
+    SELECTED_INT_KIND(scalar INTEGER(any) R) -> scalar default INTEGER
+    SELECTED_REAL_KIND([scalar INTEGER(any) P, scalar INTEGER(any) R, scalar INTEGER(any) RADIX])
+      - at least one argument shall be present
+    SHAPE(SOURCE [, KIND=KIND(0) ]) -> INTEGER(KIND)(RANK(SOURCE))
+    TRIM(CHARACTER(k,n) STRING) -> CHARACTER(k)
+
+  COARRAY TRANSFORMATIONAL INTRINSIC FUNCTIONS
+    FAILED_IMAGES([scalar TEAM_TYPE TEAM, KIND=KIND(0)]) -> INTEGER(KIND) vector
+    GET_TEAM([scalar INTEGER(?) LEVEL]) -> scalar TEAM_TYPE
+    IMAGE_INDEX(COARRAY, SUB)
+    IMAGE_INDEX(COARRAY, SUB, TEAM)
+    IMAGE_INDEX(COARRAY, SUB, TEAM_NUMBER)
+    NUM_IMAGES(), NUM_IMAGES(TEAM), NUM_IMAGES(TEAM_NUMBER) -> scalar default INTEGER
+    STOPPED_IMAGES([scalar TEAM_TYPE TEAM, KIND=KIND(0)]) -> INTEGER(KIND) vector
+    TEAM_NUMBER([scalar TEAM_TYPE TEAM]) -> scalar default INTEGER
+    THIS_IMAGE([COARRAY, DIM, scalar TEAM_TYPE TEAM]) -> default INTEGER, scalar if DIM or no COARRAY, else vector(corank(COARRAY))
+
+INQUIRY INTRINSIC FUNCTIONS
+  TYPE INQUIRY INTRINSIC FUNCTIONS - the value of the argument is not used
+    BIT_SIZE(INTEGER(k) I(..)) -> INTEGER(k)
+    DIGITS(INTEGER or REAL X(..)) -> scalar default INTEGER
+    EPSILON(REAL(k) X(..)) -> scalar REAL(k)
+    HUGE(INTEGER(k) X(..)) -> scalar INTEGER(k)
+    HUGE(REAL(k) X(..)) -> scalar of REAL(k)
+    KIND(intrinsic X(..)) -> scalar default INTEGER
+    MAXEXPONENT(REAL(k) X(..)) -> scalar default INTEGER
+    MINEXPONENT(REAL(k) X(..)) -> scalar default INTEGER
+    NEW_LINE(CHARACTER(k,n) A(..)) -> scalar CHARACTER(k,1) = CHAR(10)
+    PRECISION(REAL(k) or COMPLEX(k) X) -> scalar default INTEGER
+    RADIX(INTEGER(k) or REAL(k) X) -> scalar default INTEGER, always 2
+    RANGE(INTEGER(k) or REAL(k) or COMPLEX(k) X) -> scalar default INTEGER
+    TINY(REAL(k) X(..)) -> scalar REAL(k)
+
+  BOUND AND SIZE INQUIRY INTRINSIC FUNCTIONS
+    - The results are scalar when DIM is present, else a vector of length=(co)rank((CO)ARRAY)
+    LBOUND(any ARRAY(..) [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
+    LCOBOUND(any COARRAY [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
+    SIZE(any ARRAY(..) [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
+    UBOUND(any ARRAY(..) [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
+    UCOBOUND(any COARRAY [, DIM, KIND=KIND(0) ]) -> INTEGER(KIND)
+
+  OBJECT CHARACTERISTIC INQUIRY INTRINSIC FUNCTIONS
+    ALLOCATED(any type ALLOCATABLE ARRAY) -> scalar default LOGICAL
+    ALLOCATED(any type ALLOCATABLE SCALAR) -> scalar default LOGICAL
+    ASSOCIATED(any type POINTER POINTER [, same type TARGET]) -> scalar default LOGICAL
+    COSHAPE(COARRAY [, KIND=KIND(0) ]) -> INTEGER(KIND) vector of length corank(COARRAY)
+    EXTENDS_TYPE_OF(A, MOLD) -> default LOGICAL
+     - A and MOLD have extensible derived type or are unlimited polymorphic
+    IS_CONTIGUOUS(ARRAY(..)) -> scalar default LOGICAL
+    PRESENT(OPTIONAL A) -> scalar default LOGICAL
+    RANK(any data A) -> scalar default INTEGER = 0 if A is scalar, SIZE(SHAPE(A)) if A is an array, rank if assumed-rank
+    SAME_TYPE_AS(A, B) -> scalar default LOGICAL
+    STORAGE_SIZE(any data A [, KIND=KIND(0) ]) -> INTEGER(KIND)
+
+ELEMENTAL SUBROUTINE
+CALL MVBITS(FROM, FROMPOS, LEN, TO, TOPOS)
+  INTEGER(k1) :: FROM, TO
+  INTENT(IN) :: FROM
+  INTENT(INOUT) :: TO
+  INTEGER(k2), INTENT(IN) :: FROMPOS
+  INTEGER(k3), INTENT(IN) :: LEN
+  INTEGER(k4), INTENT(IN) :: TOPOS
+
+NON-ELEMENTAL SUBROUTINES
+
+CALL CPU_TIME(REAL INTENT(OUT) TIME) - kind is not specified in standard
+CALL DATA_AND_TIME([DATE, TIME, ZONE, VALUES])
+  - All arguments are OPTIONAL and INTENT(OUT).
+  - DATE, TIME, and ZONE are scalar default CHARACTER.
+  - VALUES is a vector of at least 8 elements of some KIND >= 2.
+CALL EVENT_QUERY(EVENT, COUNT [, STAT])
+CALL EXECUTE_COMMAND_LINE(COMMAND [, WAIT, EXITSTAT, CMDSTAT, CMDMSG ])
+CALL GET_COMMAND([COMMAND, LENGTH, STATUS, ERRMSG ])
+CALL GET_COMMAND_ARGUMENT(NUMBER [, VALUE, LENGTH, STATUS, ERRMSG ])
+CALL GET_ENVIRONMENT_VARIABLE(NAME [, VALUE, LENGTH, STATUS, TRIM_NAME, ERRMSG ])
+CALL MOVE_ALLOC(ALLOCATABLE INTENT(INOUT) FROM, ALLOCATABLE INTENT(OUT) TO [, STAT, ERRMSG ])
+CALL RANDOM_INIT(LOGICAL(k1) INTENT(IN) REPEATABLE, LOGICAL(k2) INTENT(IN) IMAGE_DISTINCT)
+CALL RANDOM_NUMBER(REAL(k) INTENT(OUT) HARVEST(..))
+CALL RANDOM_SEED([SIZE, PUT, GET])
+CALL SYSTEM_CLOCK([COUNT, COUNT_RATE, COUNT_MAX])
+
+
+ATOMIC SUBROUTINES
+
+CALL ATOMIC_ADD(ATOM, VALUE [, STAT=])
+CALL ATOMIC_AND(ATOM, VALUE [, STAT=])
+CALL ATOMIC_CAS(ATOM, OLD, COMPARE, NEW [, STAT=])
+CALL ATOMIC_DEFINE(ATOM, VALUE [, STAT=])
+CALL ATOMIC_FETCH_ADD(ATOM, VALUE, OLD [, STAT=])
+CALL ATOMIC_FETCH_AND(ATOM, VALUE, OLD [, STAT=])
+CALL ATOMIC_FETCH_OR(ATOM, VALUE, OLD [, STAT=])
+CALL ATOMIC_FETCH_XOR(ATOM, VALUE, OLD [, STAT=])
+CALL ATOMIC_OR(ATOM, VALUE [, STAT=])
+CALL ATOMIC_REF(VALUE, ATOM [, STAT=])
+CALL ATOMIC_XOR(ATOM, VALUE [, STAT=])
+
+
+COLLECTIVE SUBROUTINES
+
+CALL CO_BROADCAST
+CALL CO_MAX
+CALL CO_MIN
+CALL CO_REDUCE
+CALL CO_SUM

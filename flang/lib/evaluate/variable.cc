@@ -480,6 +480,6 @@ const Symbol *ProcedureDesignator::GetSymbol() const {
 }
 
 FOR_EACH_CHARACTER_KIND(template class Designator)
-FOR_EACH_SPECIFIC_TYPE(template class FunctionRef)
+FOR_EACH_SPECIFIC_TYPE(template struct FunctionRef)
 
 }  // namespace Fortran::evaluate
