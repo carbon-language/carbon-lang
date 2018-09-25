@@ -14,6 +14,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/Support/MSVCErrorWorkarounds.h"
 #include "llvm/Support/Path.h"
 #include <cctype>
 #include <future>
@@ -732,8 +733,14 @@ bool RuntimeDyldCheckerImpl::checkAllRulesInBuffer(StringRef RulePrefix,
 
 Expected<JITSymbolResolver::LookupResult> RuntimeDyldCheckerImpl::lookup(
     const JITSymbolResolver::LookupSet &Symbols) const {
-  auto ResultP = std::make_shared<
-      std::promise<Expected<JITSymbolResolver::LookupResult>>>();
+
+#ifdef _MSC_VER
+  using ExpectedLookupResult = MSVCPExpected<JITSymbolResolver::LooupResult>;
+#else
+  using ExpectedLookupResult = Expected<JITSymbolResolver::LookupResult>;
+#endif
+
+  auto ResultP = std::make_shared<std::promise<ExpectedLookupResult>>();
   auto ResultF = ResultP->get_future();
 
   getRTDyld().Resolver.lookup(

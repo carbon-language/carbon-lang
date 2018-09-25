@@ -25,6 +25,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ExecutionEngine/Orc/OrcError.h"
 #include "llvm/ExecutionEngine/Orc/RPCSerialization.h"
+#include "llvm/Support/MSVCErrorWorkarounds.h"
 
 #include <future>
 
