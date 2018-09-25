@@ -269,7 +269,9 @@ void InstructionBenchmark::writeYamlTo(const LLVMState &State,
                                        llvm::raw_ostream &OS) {
   llvm::yaml::Output Yout(OS);
   YamlContext Context(State);
+  Yout.beginDocuments();
   llvm::yaml::yamlize(Yout, *this, /*unused*/ true, Context);
+  Yout.endDocuments();
 }
 
 void InstructionBenchmark::readYamlFrom(const LLVMState &State,
