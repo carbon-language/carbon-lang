@@ -723,6 +723,18 @@ define <4 x float> @mul_v4f32(<4 x float> %x, <4 x float> %y) {
   ret <4 x float> %a
 }
 
+; CHECK-LABEL: sqrt_v4f32:
+; NO-SIMD128-NOT: f32x4
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: f32x4.sqrt $push[[R:[0-9]+]]=, $0{{$}}
+; SIMD128-NEXT: return $pop[[R]]{{$}}
+declare <4 x float> @llvm.sqrt.v4f32(<4 x float> %x)
+define <4 x float> @sqrt_v4f32(<4 x float> %x) {
+  %a = call <4 x float> @llvm.sqrt.v4f32(<4 x float> %x)
+  ret <4 x float> %a
+}
+
 ; ==============================================================================
 ; 2 x double
 ; ==============================================================================
@@ -795,5 +807,17 @@ define <2 x double> @div_v2f64(<2 x double> %x, <2 x double> %y) {
 ; SIMD128-NEXT: return $pop[[R]]{{$}}
 define <2 x double> @mul_v2f64(<2 x double> %x, <2 x double> %y) {
   %a = fmul <2 x double> %x, %y
+  ret <2 x double> %a
+}
+
+; CHECK-LABEL: sqrt_v2f64:
+; NO-SIMD128-NOT: f64x2
+; SIMD128-NEXT: .param v128{{$}}
+; SIMD128-NEXT: .result v128{{$}}
+; SIMD128-NEXT: f64x2.sqrt $push[[R:[0-9]+]]=, $0{{$}}
+; SIMD128-NEXT: return $pop[[R]]{{$}}
+declare <2 x double> @llvm.sqrt.v2f64(<2 x double> %x)
+define <2 x double> @sqrt_v2f64(<2 x double> %x) {
+  %a = call <2 x double> @llvm.sqrt.v2f64(<2 x double> %x)
   ret <2 x double> %a
 }
