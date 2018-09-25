@@ -17,17 +17,17 @@
 #if SANITIZER_WINDOWS
 
 #ifndef WINAPI
-#ifdef _M_IX86
+#if defined(_M_IX86) || defined(__i386__)
 #define WINAPI __stdcall
 #else
 #define WINAPI
 #endif
 #endif
 
-#if defined(_WIN64)
-#define WIN_SYM_PREFIX
-#else
+#if defined(_M_IX86) || defined(__i386__)
 #define WIN_SYM_PREFIX "_"
+#else
+#define WIN_SYM_PREFIX
 #endif
 
 // Intermediate macro to ensure the parameter is expanded before stringified.
