@@ -3791,23 +3791,11 @@ define i1 @allzeros_v8i64_and4(<8 x i64> %arg) {
 define i32 @movmskpd(<2 x double> %x) {
 ; SSE2-LABEL: movmskpd:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    movdqa {{.*#+}} xmm1 = [2147483648,0,2147483648,0]
-; SSE2-NEXT:    pxor %xmm1, %xmm0
-; SSE2-NEXT:    movdqa %xmm1, %xmm2
-; SSE2-NEXT:    pcmpgtd %xmm0, %xmm2
-; SSE2-NEXT:    pshufd {{.*#+}} xmm3 = xmm2[0,0,2,2]
-; SSE2-NEXT:    pcmpeqd %xmm1, %xmm0
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; SSE2-NEXT:    pand %xmm3, %xmm0
-; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm2[1,1,3,3]
-; SSE2-NEXT:    por %xmm0, %xmm1
-; SSE2-NEXT:    movmskpd %xmm1, %eax
+; SSE2-NEXT:    movmskpd %xmm0, %eax
 ; SSE2-NEXT:    retq
 ;
 ; AVX-LABEL: movmskpd:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX-NEXT:    vpcmpgtq %xmm0, %xmm1, %xmm0
 ; AVX-NEXT:    vmovmskpd %xmm0, %eax
 ; AVX-NEXT:    retq
 ;
@@ -3827,15 +3815,11 @@ define i32 @movmskpd(<2 x double> %x) {
 define i32 @movmskps(<4 x float> %x) {
 ; SSE2-LABEL: movmskps:
 ; SSE2:       # %bb.0:
-; SSE2-NEXT:    pxor %xmm1, %xmm1
-; SSE2-NEXT:    pcmpgtd %xmm0, %xmm1
-; SSE2-NEXT:    movmskps %xmm1, %eax
+; SSE2-NEXT:    movmskps %xmm0, %eax
 ; SSE2-NEXT:    retq
 ;
 ; AVX-LABEL: movmskps:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX-NEXT:    vpcmpgtd %xmm0, %xmm1, %xmm0
 ; AVX-NEXT:    vmovmskps %xmm0, %eax
 ; AVX-NEXT:    retq
 ;
@@ -3878,24 +3862,11 @@ define i32 @movmskpd256(<4 x double> %x) {
 ; SSE2-NEXT:    movmskps %xmm1, %eax
 ; SSE2-NEXT:    retq
 ;
-; AVX1-LABEL: movmskpd256:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; AVX1-NEXT:    vpcmpgtq %xmm1, %xmm2, %xmm1
-; AVX1-NEXT:    vpcmpgtq %xmm0, %xmm2, %xmm0
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; AVX1-NEXT:    vmovmskpd %ymm0, %eax
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: movmskpd256:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX2-NEXT:    vpcmpgtq %ymm0, %ymm1, %ymm0
-; AVX2-NEXT:    vmovmskpd %ymm0, %eax
-; AVX2-NEXT:    vzeroupper
-; AVX2-NEXT:    retq
+; AVX-LABEL: movmskpd256:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vmovmskpd %ymm0, %eax
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
 ;
 ; SKX-LABEL: movmskpd256:
 ; SKX:       # %bb.0:
@@ -3924,24 +3895,11 @@ define i32 @movmskps256(<8 x float> %x) {
 ; SSE2-NEXT:    movzbl %al, %eax
 ; SSE2-NEXT:    retq
 ;
-; AVX1-LABEL: movmskps256:
-; AVX1:       # %bb.0:
-; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; AVX1-NEXT:    vpcmpgtd %xmm1, %xmm2, %xmm1
-; AVX1-NEXT:    vpcmpgtd %xmm0, %xmm2, %xmm0
-; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
-; AVX1-NEXT:    vmovmskps %ymm0, %eax
-; AVX1-NEXT:    vzeroupper
-; AVX1-NEXT:    retq
-;
-; AVX2-LABEL: movmskps256:
-; AVX2:       # %bb.0:
-; AVX2-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; AVX2-NEXT:    vpcmpgtd %ymm0, %ymm1, %ymm0
-; AVX2-NEXT:    vmovmskps %ymm0, %eax
-; AVX2-NEXT:    vzeroupper
-; AVX2-NEXT:    retq
+; AVX-LABEL: movmskps256:
+; AVX:       # %bb.0:
+; AVX-NEXT:    vmovmskps %ymm0, %eax
+; AVX-NEXT:    vzeroupper
+; AVX-NEXT:    retq
 ;
 ; SKX-LABEL: movmskps256:
 ; SKX:       # %bb.0:
