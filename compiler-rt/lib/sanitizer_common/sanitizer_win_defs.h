@@ -72,7 +72,7 @@
   __pragma(comment(linker, "/include:" WIN_SYM_PREFIX STRINGIFY(Name)))
 
 #define WIN_EXPORT(ExportedName, Name)                                         \
-  __pragma(comment(linker, "/export:" WIN_EXPORT_PREFIX STRINGIFY(ExportedName)   \
+  __pragma(comment(linker, "/export:" WIN_EXPORT_PREFIX STRINGIFY(ExportedName)\
                                   "=" WIN_EXPORT_PREFIX STRINGIFY(Name)))
 
 // We cannot define weak functions on Windows, but we can use WIN_WEAK_ALIAS()
