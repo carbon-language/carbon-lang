@@ -333,7 +333,6 @@ class JITSymbolResolver {
 public:
   using LookupSet = std::set<StringRef>;
   using LookupResult = std::map<StringRef, JITEvaluatedSymbol>;
-  using OnResolvedFunction = std::function<void(Expected<LookupResult>)>;
 
   virtual ~JITSymbolResolver() = default;
 
@@ -342,8 +341,7 @@ public:
   ///
   /// This method will return an error if any of the given symbols can not be
   /// resolved, or if the resolution process itself triggers an error.
-  virtual void lookup(const LookupSet &Symbols,
-                      OnResolvedFunction OnResolved) = 0;
+  virtual Expected<LookupResult> lookup(const LookupSet &Symbols) = 0;
 
   /// Returns the subset of the given symbols that should be materialized by
   /// the caller. Only weak/common symbols should be looked up, as strong
@@ -361,7 +359,7 @@ public:
   /// Performs lookup by, for each symbol, first calling
   ///        findSymbolInLogicalDylib and if that fails calling
   ///        findSymbol.
-  void lookup(const LookupSet &Symbols, OnResolvedFunction OnResolved) final;
+  Expected<LookupResult> lookup(const LookupSet &Symbols) final;
 
   /// Performs flags lookup by calling findSymbolInLogicalDylib and
   ///        returning the flags value for that symbol.

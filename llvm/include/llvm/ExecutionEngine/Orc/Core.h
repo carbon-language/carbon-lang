@@ -376,7 +376,6 @@ private:
 class AsynchronousSymbolQuery {
   friend class ExecutionSession;
   friend class JITDylib;
-  friend class JITSymbolResolverAdapter;
 
 public:
 

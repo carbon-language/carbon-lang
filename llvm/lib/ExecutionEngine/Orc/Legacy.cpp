@@ -18,34 +18,34 @@ JITSymbolResolverAdapter::JITSymbolResolverAdapter(
     ExecutionSession &ES, SymbolResolver &R, MaterializationResponsibility *MR)
     : ES(ES), R(R), MR(MR) {}
 
-void JITSymbolResolverAdapter::lookup(const LookupSet &Symbols,
-                                      OnResolvedFunction OnResolved) {
+Expected<JITSymbolResolverAdapter::LookupResult>
+JITSymbolResolverAdapter::lookup(const LookupSet &Symbols) {
   SymbolNameSet InternedSymbols;
   for (auto &S : Symbols)
     InternedSymbols.insert(ES.getSymbolStringPool().intern(S));
 
-  auto OnResolvedWithUnwrap = [OnResolved](Expected<SymbolMap> InternedResult) {
-    if (!InternedResult) {
-      OnResolved(InternedResult.takeError());
-      return;
-    }
-
-    LookupResult Result;
-    for (auto &KV : *InternedResult)
-      Result[*KV.first] = std::move(KV.second);
-    OnResolved(Result);
+  auto LookupFn = [&, this](std::shared_ptr<AsynchronousSymbolQuery> Q,
+                            SymbolNameSet Unresolved) {
+    return R.lookup(std::move(Q), std::move(Unresolved));
   };
 
-  auto Q = std::make_shared<AsynchronousSymbolQuery>(
-      InternedSymbols, OnResolvedWithUnwrap,
-      [this](Error Err) { ES.reportError(std::move(Err)); });
-
-  auto Unresolved = R.lookup(Q, InternedSymbols);
-  if (Unresolved.empty()) {
+  auto RegisterDependencies = [&](const SymbolDependenceMap &Deps) {
     if (MR)
-      MR->addDependenciesForAll(Q->QueryRegistrations);
-  } else
-    ES.legacyFailQuery(*Q, make_error<SymbolsNotFound>(std::move(Unresolved)));
+      MR->addDependenciesForAll(Deps);
+  };
+
+  auto InternedResult =
+      ES.legacyLookup(std::move(LookupFn), std::move(InternedSymbols),
+                      false, RegisterDependencies);
+
+  if (!InternedResult)
+    return InternedResult.takeError();
+
+  JITSymbolResolver::LookupResult Result;
+  for (auto &KV : *InternedResult)
+    Result[*KV.first] = KV.second;
+
+  return Result;
 }
 
 Expected<JITSymbolResolverAdapter::LookupSet>
