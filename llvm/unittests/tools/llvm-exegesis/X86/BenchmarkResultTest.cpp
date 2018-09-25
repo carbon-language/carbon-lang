@@ -56,7 +56,7 @@ TEST(BenchmarkResultTest, WriteToAndReadFromDisk) {
   LLVMInitializeX86TargetMC();
 
   // Read benchmarks.
-  const LLVMState State;
+  const LLVMState State("x86_64-unknown-linux", "haswell");
 
   llvm::ExitOnError ExitOnErr;
 
