@@ -17887,11 +17887,35 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
     // Check that the select condition doesn't reach either load.  If so,
     // folding this will induce a cycle into the DAG.  If not, this is safe to
     // xform, so create a select of the addresses.
+
+    SmallPtrSet<const SDNode *, 32> Visited;
+    SmallVector<const SDNode *, 16> Worklist;
+
+    // Always fail if LLD and RLD are not independent. TheSelect is a
+    // predecessor to all Nodes in question so we need not search past it.
+
+    Visited.insert(TheSelect);
+    Worklist.push_back(LLD);
+    Worklist.push_back(RLD);
+
+    if (SDNode::hasPredecessorHelper(LLD, Visited, Worklist) ||
+        SDNode::hasPredecessorHelper(RLD, Visited, Worklist))
+      return false;
+
     SDValue Addr;
     if (TheSelect->getOpcode() == ISD::SELECT) {
+      // We cannot do this optimization if any pair of {RLD, LLD} is a
+      // predecessor to {RLD, LLD, CondNode}. As we've already compared the
+      // Loads, we only need to check if CondNode is a successor to one of the
+      // loads. We can further avoid this if there's no use of their chain
+      // value.
       SDNode *CondNode = TheSelect->getOperand(0).getNode();
-      if ((LLD->hasAnyUseOfValue(1) && LLD->isPredecessorOf(CondNode)) ||
-          (RLD->hasAnyUseOfValue(1) && RLD->isPredecessorOf(CondNode)))
+      Worklist.push_back(CondNode);
+
+      if ((LLD->hasAnyUseOfValue(1) &&
+           SDNode::hasPredecessorHelper(LLD, Visited, Worklist)) ||
+          (RLD->hasAnyUseOfValue(1) &&
+           SDNode::hasPredecessorHelper(RLD, Visited, Worklist)))
         return false;
 
       Addr = DAG.getSelect(SDLoc(TheSelect),
@@ -17899,13 +17923,21 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
                            TheSelect->getOperand(0), LLD->getBasePtr(),
                            RLD->getBasePtr());
     } else {  // Otherwise SELECT_CC
+      // We cannot do this optimization if any pair of {RLD, LLD} is a
+      // predecessor to {RLD, LLD, CondLHS, CondRHS}. As we've already compared
+      // the Loads, we only need to check if CondLHS/CondRHS is a successor to
+      // one of the loads. We can further avoid this if there's no use of their
+      // chain value.
+
       SDNode *CondLHS = TheSelect->getOperand(0).getNode();
       SDNode *CondRHS = TheSelect->getOperand(1).getNode();
+      Worklist.push_back(CondLHS);
+      Worklist.push_back(CondRHS);
 
       if ((LLD->hasAnyUseOfValue(1) &&
-           (LLD->isPredecessorOf(CondLHS) || LLD->isPredecessorOf(CondRHS))) ||
+           SDNode::hasPredecessorHelper(LLD, Visited, Worklist)) ||
           (RLD->hasAnyUseOfValue(1) &&
-           (RLD->isPredecessorOf(CondLHS) || RLD->isPredecessorOf(CondRHS))))
+           SDNode::hasPredecessorHelper(RLD, Visited, Worklist)))
         return false;
 
       Addr = DAG.getNode(ISD::SELECT_CC, SDLoc(TheSelect),
