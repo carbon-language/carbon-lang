@@ -16678,7 +16678,7 @@ SDValue X86TargetLowering::BuildFILD(SDValue Op, EVT SrcVT, SDValue Chain,
     Chain = Result.getValue(1);
     SDValue InFlag = Result.getValue(2);
 
-    // FIXME: Currently the FST is flagged to the FILD_FLAG. This
+    // FIXME: Currently the FST is glued to the FILD_FLAG. This
     // shouldn't be necessary except that RFP cannot be live across
     // multiple blocks. When stackifier is fixed, they can be uncoupled.
     MachineFunction &MF = DAG.getMachineFunction();
