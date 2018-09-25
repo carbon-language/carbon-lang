@@ -12701,8 +12701,15 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
       if (TryNext)
         continue;
 
-      // Check for #2
-      if (!Op->isPredecessorOf(N) && !N->isPredecessorOf(Op)) {
+      // Check for #2.
+      SmallPtrSet<const SDNode *, 32> Visited;
+      SmallVector<const SDNode *, 8> Worklist;
+      // Ptr is predecessor to both N and Op.
+      Visited.insert(Ptr.getNode());
+      Worklist.push_back(N);
+      Worklist.push_back(Op);
+      if (!SDNode::hasPredecessorHelper(N, Visited, Worklist) &&
+          !SDNode::hasPredecessorHelper(Op, Visited, Worklist)) {
         SDValue Result = isLoad
           ? DAG.getIndexedLoad(SDValue(N,0), SDLoc(N),
                                BasePtr, Offset, AM)
