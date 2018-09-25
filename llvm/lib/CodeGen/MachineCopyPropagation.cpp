@@ -99,33 +99,6 @@ public:
     }
   }
 
-  /// Remove any entry in the tracker's copy maps that is marked clobbered in \p
-  /// RegMask. The map will typically have a lot fewer entries than the regmask
-  /// clobbers, so this is more efficient than iterating the clobbered registers
-  /// and calling ClobberRegister() on them.
-  void removeClobberedRegs(const MachineOperand &RegMask,
-                           const TargetRegisterInfo &TRI) {
-    auto RemoveFromMap = [&RegMask](Reg2MIMap &Map) {
-      for (Reg2MIMap::iterator I = Map.begin(), E = Map.end(), Next; I != E;
-           I = Next) {
-        Next = std::next(I);
-        if (RegMask.clobbersPhysReg(I->first))
-          Map.erase(I);
-      }
-    };
-    RemoveFromMap(AvailCopyMap);
-    RemoveFromMap(CopyMap);
-
-    for (SourceMap::iterator I = SrcMap.begin(), E = SrcMap.end(), Next; I != E;
-         I = Next) {
-      Next = std::next(I);
-      if (RegMask.clobbersPhysReg(I->first)) {
-        markRegsUnavailable(I->second, TRI);
-        SrcMap.erase(I);
-      }
-    }
-  }
-
   /// Clobber a single register, removing it from the tracker's copy maps.
   void clobberRegister(unsigned Reg, const TargetRegisterInfo &TRI) {
     for (MCRegAliasIterator AI(Reg, &TRI, true); AI.isValid(); ++AI) {
@@ -163,11 +136,24 @@ public:
 
   bool hasAvailableCopies() { return !AvailCopyMap.empty(); }
 
-  MachineInstr *findAvailCopy(unsigned Reg) {
+  MachineInstr *findAvailCopy(MachineInstr &DestCopy, unsigned Reg) {
     auto CI = AvailCopyMap.find(Reg);
-    if (CI != AvailCopyMap.end())
-      return CI->second;
-    return nullptr;
+    if (CI == AvailCopyMap.end())
+      return nullptr;
+    MachineInstr &AvailCopy = *CI->second;
+
+    // Check that the available copy isn't clobbered by any regmasks between
+    // itself and the destination.
+    unsigned AvailSrc = AvailCopy.getOperand(1).getReg();
+    unsigned AvailDef = AvailCopy.getOperand(0).getReg();
+    for (const MachineInstr &MI :
+         make_range(AvailCopy.getIterator(), DestCopy.getIterator()))
+      for (const MachineOperand &MO : MI.operands())
+        if (MO.isRegMask())
+          if (MO.clobbersPhysReg(AvailSrc) || MO.clobbersPhysReg(AvailDef))
+            return nullptr;
+
+    return &AvailCopy;
   }
 
   MachineInstr *findCopy(unsigned Reg) {
@@ -277,7 +263,7 @@ bool MachineCopyPropagation::eraseIfRedundant(MachineInstr &Copy, unsigned Src,
     return false;
 
   // Search for an existing copy.
-  MachineInstr *PrevCopy = Tracker.findAvailCopy(Def);
+  MachineInstr *PrevCopy = Tracker.findAvailCopy(Copy, Def);
   if (!PrevCopy)
     return false;
 
@@ -398,7 +384,7 @@ void MachineCopyPropagation::forwardUses(MachineInstr &MI) {
     if (!MOUse.isRenamable())
       continue;
 
-    MachineInstr *Copy = Tracker.findAvailCopy(MOUse.getReg());
+    MachineInstr *Copy = Tracker.findAvailCopy(MI, MOUse.getReg());
     if (!Copy)
       continue;
 
@@ -586,6 +572,10 @@ void MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
         LLVM_DEBUG(dbgs() << "MCP: Removing copy due to regmask clobbering: ";
                    MaybeDead->dump());
 
+        // Make sure we invalidate any entries in the copy maps before erasing
+        // the instruction.
+        Tracker.clobberRegister(Reg, *TRI);
+
         // erase() will return the next valid iterator pointing to the next
         // element after the erased one.
         DI = MaybeDeadCopies.erase(DI);
@@ -593,8 +583,6 @@ void MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
         Changed = true;
         ++NumDeletes;
       }
-
-      Tracker.removeClobberedRegs(*RegMask, *TRI);
     }
 
     // Any previous copy definition or reading the Defs is no longer available.
