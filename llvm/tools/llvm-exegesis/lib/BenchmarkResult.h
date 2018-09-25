@@ -16,6 +16,7 @@
 #ifndef LLVM_TOOLS_LLVM_EXEGESIS_BENCHMARKRESULT_H
 #define LLVM_TOOLS_LLVM_EXEGESIS_BENCHMARKRESULT_H
 
+#include "BenchmarkCode.h"
 #include "LlvmState.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -32,6 +33,8 @@ namespace exegesis {
 struct InstructionBenchmarkKey {
   // The LLVM opcode name.
   std::vector<llvm::MCInst> Instructions;
+  // The initial values of the registers.
+  std::vector<RegisterValue> RegisterInitialValues;
   // An opaque configuration, that can be used to separate several benchmarks of
   // the same instruction under different configurations.
   std::string Config;

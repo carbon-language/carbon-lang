@@ -54,6 +54,24 @@ struct YamlContext {
 
   std::string &getLastError() { return ErrorStream.str(); }
 
+  llvm::raw_string_ostream &getErrorStream() { return ErrorStream; }
+
+  llvm::StringRef getRegName(unsigned RegNo) {
+    const llvm::StringRef RegName = State->getRegInfo().getName(RegNo);
+    if (RegName.empty())
+      ErrorStream << "No register with enum value" << RegNo;
+    return RegName;
+  }
+
+  unsigned getRegNo(llvm::StringRef RegName) {
+    const llvm::MCRegisterInfo &RegInfo = State->getRegInfo();
+    for (unsigned E = RegInfo.getNumRegs(), I = 0; I < E; ++I)
+      if (RegInfo.getName(I) == RegName)
+        return I;
+    ErrorStream << "No register with name " << RegName;
+    return 0;
+  }
+
 private:
   void serializeMCOperand(const llvm::MCOperand &MCOperand,
                           llvm::raw_ostream &OS) {
@@ -83,27 +101,11 @@ private:
     return {};
   }
 
-  llvm::StringRef getRegName(unsigned RegNo) {
-    const llvm::StringRef RegName = State->getRegInfo().getName(RegNo);
-    if (RegName.empty())
-      ErrorStream << "No register with enum value" << RegNo;
-    return RegName;
-  }
-
   llvm::StringRef getInstrName(unsigned InstrNo) {
     const llvm::StringRef InstrName = State->getInstrInfo().getName(InstrNo);
     if (InstrName.empty())
       ErrorStream << "No opcode with enum value" << InstrNo;
     return InstrName;
-  }
-
-  unsigned getRegNo(llvm::StringRef RegName) {
-    const llvm::MCRegisterInfo &RegInfo = State->getRegInfo();
-    for (unsigned E = RegInfo.getNumRegs(), I = 0; I < E; ++I)
-      if (RegInfo.getName(I) == RegName)
-        return I;
-    ErrorStream << "No register with name " << RegName;
-    return 0;
   }
 
   unsigned getInstrOpcode(llvm::StringRef InstrName) {
@@ -124,6 +126,10 @@ private:
 namespace llvm {
 namespace yaml {
 
+static YamlContext &getTypedContext(void *Ctx) {
+  return *reinterpret_cast<YamlContext *>(Ctx);
+}
+
 // std::vector<llvm::MCInst> will be rendered as a list.
 template <> struct SequenceElementTraits<llvm::MCInst> {
   static const bool flow = false;
@@ -133,15 +139,17 @@ template <> struct ScalarTraits<llvm::MCInst> {
 
   static void output(const llvm::MCInst &Value, void *Ctx,
                      llvm::raw_ostream &Out) {
-    reinterpret_cast<YamlContext *>(Ctx)->serializeMCInst(Value, Out);
+    getTypedContext(Ctx).serializeMCInst(Value, Out);
   }
 
   static StringRef input(StringRef Scalar, void *Ctx, llvm::MCInst &Value) {
-    YamlContext &Context = *reinterpret_cast<YamlContext *>(Ctx);
+    YamlContext &Context = getTypedContext(Ctx);
     Context.deserializeMCInst(Scalar, Value);
     return Context.getLastError();
   }
 
+  // By default strings are quoted only when necessary.
+  // We force the use of single quotes for uniformity.
   static QuotingType mustQuote(StringRef) { return QuotingType::Single; }
 
   static const bool flow = true;
@@ -173,6 +181,44 @@ struct ScalarEnumerationTraits<exegesis::InstructionBenchmark::ModeE> {
   }
 };
 
+// std::vector<exegesis::RegisterValue> will be rendered as a list.
+template <> struct SequenceElementTraits<exegesis::RegisterValue> {
+  static const bool flow = false;
+};
+
+template <> struct ScalarTraits<exegesis::RegisterValue> {
+  static constexpr const unsigned kRadix = 16;
+  static constexpr const bool kSigned = false;
+
+  static void output(const exegesis::RegisterValue &RV, void *Ctx,
+                     llvm::raw_ostream &Out) {
+    YamlContext &Context = getTypedContext(Ctx);
+    Out << Context.getRegName(RV.Register) << "=0x"
+        << RV.Value.toString(kRadix, kSigned);
+  }
+
+  static StringRef input(StringRef String, void *Ctx,
+                         exegesis::RegisterValue &RV) {
+    llvm::SmallVector<llvm::StringRef, 2> Pieces;
+    String.split(Pieces, "=0x", /* MaxSplit */ -1,
+                 /* KeepEmpty */ false);
+    YamlContext &Context = getTypedContext(Ctx);
+    if (Pieces.size() == 2) {
+      RV.Register = Context.getRegNo(Pieces[0]);
+      const unsigned BitsNeeded = llvm::APInt::getBitsNeeded(Pieces[1], kRadix);
+      RV.Value = llvm::APInt(BitsNeeded, Pieces[1], kRadix);
+    } else {
+      Context.getErrorStream()
+          << "Unknown initial register value: '" << String << "'";
+    }
+    return Context.getLastError();
+  }
+
+  static QuotingType mustQuote(StringRef) { return QuotingType::Single; }
+
+  static const bool flow = true;
+};
+
 template <>
 struct MappingContextTraits<exegesis::InstructionBenchmarkKey, YamlContext> {
   static void mapping(IO &Io, exegesis::InstructionBenchmarkKey &Obj,
@@ -180,13 +226,13 @@ struct MappingContextTraits<exegesis::InstructionBenchmarkKey, YamlContext> {
     Io.setContext(&Context);
     Io.mapRequired("instructions", Obj.Instructions);
     Io.mapOptional("config", Obj.Config);
+    Io.mapRequired("register_initial_values", Obj.RegisterInitialValues);
   }
 };
 
 template <>
 struct MappingContextTraits<exegesis::InstructionBenchmark, YamlContext> {
-  class NormalizedBinary {
-  public:
+  struct NormalizedBinary {
     NormalizedBinary(IO &io) {}
     NormalizedBinary(IO &, std::vector<uint8_t> &Data) : Binary(Data) {}
     std::vector<uint8_t> denormalize(IO &) {

@@ -68,6 +68,9 @@ TEST(BenchmarkResultTest, WriteToAndReadFromDisk) {
                                         .addImm(123)
                                         .addFPImm(0.5));
   ToDisk.Key.Config = "config";
+  ToDisk.Key.RegisterInitialValues = {
+      RegisterValue{llvm::X86::AL, llvm::APInt(8, "-1", 10)},
+      RegisterValue{llvm::X86::AH, llvm::APInt(8, "123", 10)}};
   ToDisk.Mode = InstructionBenchmark::Latency;
   ToDisk.CpuName = "cpu_name";
   ToDisk.LLVMTriple = "llvm_triple";

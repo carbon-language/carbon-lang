@@ -57,6 +57,7 @@ BenchmarkRunner::runConfiguration(const BenchmarkCode &BC,
   const std::vector<llvm::MCInst> &Instructions = BC.Instructions;
 
   InstrBenchmark.Key.Instructions = Instructions;
+  InstrBenchmark.Key.RegisterInitialValues = BC.RegisterInitialValues;
 
   // Assemble at least kMinInstructionsForSnippet instructions by repeating the
   // snippet for debug/analysis. This is so that the user clearly understands
