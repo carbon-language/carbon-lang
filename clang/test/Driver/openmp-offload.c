@@ -574,7 +574,6 @@
 // CHK-UBJOBS2: ld{{(\.exe)?}}" {{.*}}"-o" "
 // CHK-UBJOBS2-SAME: [[HOSTBIN:[^\\/]+\.out]]" {{.*}}"{{.*}}[[HOSTOBJ]]" {{.*}}"-T" "
 // CHK-UBJOBS2-SAME: [[LKS:[^\\/]+\.lk]]"
-// CHK-UBJOBS2-ST-NOT: clang-offload-bundler{{.*}}in.so
 // CHK-UBJOBS2-ST: clang-offload-bundler{{.*}}" "-type=o" "-targets=host-powerpc64le-unknown-linux,openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu" "-inputs=
 // CHK-UBJOBS2-ST-SAME: [[INPUT:[^\\/]+\.o]]" "-outputs=
 // CHK-UBJOBS2-ST-SAME: [[HOSTOBJ:[^\\/,]+\.o]],
