@@ -21,6 +21,7 @@
 #include "llvm/ExecutionEngine/Orc/IRTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/ObjectTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
+#include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -43,11 +44,11 @@ public:
   Error defineAbsolute(StringRef Name, JITEvaluatedSymbol Address);
 
   /// Adds an IR module to the given JITDylib.
-  Error addIRModule(JITDylib &JD, std::unique_ptr<Module> M);
+  Error addIRModule(JITDylib &JD, ThreadSafeModule TSM);
 
   /// Adds an IR module to the Main JITDylib.
-  Error addIRModule(std::unique_ptr<Module> M) {
-    return addIRModule(Main, std::move(M));
+  Error addIRModule(ThreadSafeModule TSM) {
+    return addIRModule(Main, std::move(TSM));
   }
 
   /// Adds an object file to the given JITDylib.
@@ -119,7 +120,7 @@ class LLLazyJIT : public LLJIT {
 public:
   /// Create an LLLazyJIT instance.
   static Expected<std::unique_ptr<LLLazyJIT>>
-  Create(std::unique_ptr<TargetMachine> TM, DataLayout DL, LLVMContext &Ctx);
+  Create(std::unique_ptr<TargetMachine> TM, DataLayout DL);
 
   /// Set an IR transform (e.g. pass manager pipeline) to run on each function
   /// when it is compiled.
@@ -128,16 +129,16 @@ public:
   }
 
   /// Add a module to be lazily compiled to JITDylib JD.
-  Error addLazyIRModule(JITDylib &JD, std::unique_ptr<Module> M);
+  Error addLazyIRModule(JITDylib &JD, ThreadSafeModule M);
 
   /// Add a module to be lazily compiled to the main JITDylib.
-  Error addLazyIRModule(std::unique_ptr<Module> M) {
+  Error addLazyIRModule(ThreadSafeModule M) {
     return addLazyIRModule(Main, std::move(M));
   }
 
 private:
   LLLazyJIT(std::unique_ptr<ExecutionSession> ES,
-            std::unique_ptr<TargetMachine> TM, DataLayout DL, LLVMContext &Ctx,
+            std::unique_ptr<TargetMachine> TM, DataLayout DL,
             std::unique_ptr<JITCompileCallbackManager> CCMgr,
             std::function<std::unique_ptr<IndirectStubsManager>()> ISMBuilder);
 

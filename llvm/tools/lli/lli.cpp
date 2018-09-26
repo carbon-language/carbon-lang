@@ -678,13 +678,13 @@ int main(int argc, char **argv, char * const *envp) {
 static orc::IRTransformLayer2::TransformFunction createDebugDumper() {
   switch (OrcDumpKind) {
   case DumpKind::NoDump:
-    return [](std::unique_ptr<Module> M) { return M; };
+    return [](orc::ThreadSafeModule TSM) { return TSM; };
 
   case DumpKind::DumpFuncsToStdOut:
-    return [](std::unique_ptr<Module> M) {
+    return [](orc::ThreadSafeModule TSM) {
       printf("[ ");
 
-      for (const auto &F : *M) {
+      for (const auto &F : *TSM.getModule()) {
         if (F.isDeclaration())
           continue;
 
@@ -696,28 +696,29 @@ static orc::IRTransformLayer2::TransformFunction createDebugDumper() {
       }
 
       printf("]\n");
-      return M;
+      return TSM;
     };
 
   case DumpKind::DumpModsToStdOut:
-    return [](std::unique_ptr<Module> M) {
+    return [](orc::ThreadSafeModule TSM) {
       outs() << "----- Module Start -----\n"
-             << *M << "----- Module End -----\n";
+             << *TSM.getModule() << "----- Module End -----\n";
 
-      return M;
+      return TSM;
     };
 
   case DumpKind::DumpModsToDisk:
-    return [](std::unique_ptr<Module> M) {
+    return [](orc::ThreadSafeModule TSM) {
       std::error_code EC;
-      raw_fd_ostream Out(M->getModuleIdentifier() + ".ll", EC, sys::fs::F_Text);
+      raw_fd_ostream Out(TSM.getModule()->getModuleIdentifier() + ".ll", EC,
+                         sys::fs::F_Text);
       if (EC) {
-        errs() << "Couldn't open " << M->getModuleIdentifier()
+        errs() << "Couldn't open " << TSM.getModule()->getModuleIdentifier()
                << " for dumping.\nError:" << EC.message() << "\n";
         exit(1);
       }
-      Out << *M;
-      return M;
+      Out << *TSM.getModule();
+      return TSM;
     };
   }
   llvm_unreachable("Unknown DumpKind");
@@ -736,13 +737,14 @@ int runOrcLazyJIT(const char *ProgName) {
   }
 
   // Parse the main module.
-  LLVMContext Ctx;
+  orc::ThreadSafeContext TSCtx(llvm::make_unique<LLVMContext>());
   SMDiagnostic Err;
-  auto MainModule = parseIRFile(InputFile, Err, Ctx);
+  auto MainModule = orc::ThreadSafeModule(
+      parseIRFile(InputFile, Err, *TSCtx.getContext()), TSCtx);
   if (!MainModule)
     reportError(Err, ProgName);
 
-  const auto &TT = MainModule->getTargetTriple();
+  const auto &TT = MainModule.getModule()->getTargetTriple();
   orc::JITTargetMachineBuilder TMD =
       TT.empty() ? ExitOnErr(orc::JITTargetMachineBuilder::detectHost())
                  : orc::JITTargetMachineBuilder(Triple(TT));
@@ -758,18 +760,17 @@ int runOrcLazyJIT(const char *ProgName) {
                         : None);
   auto TM = ExitOnErr(TMD.createTargetMachine());
   auto DL = TM->createDataLayout();
-  auto J = ExitOnErr(orc::LLLazyJIT::Create(std::move(TM), DL, Ctx));
+  auto J = ExitOnErr(orc::LLLazyJIT::Create(std::move(TM), DL));
 
   auto Dump = createDebugDumper();
 
-  J->setLazyCompileTransform(
-    [&](std::unique_ptr<Module> M) {
-      if (verifyModule(*M, &dbgs())) {
-        dbgs() << "Bad module: " << *M << "\n";
-        exit(1);
-      }
-      return Dump(std::move(M));
-    });
+  J->setLazyCompileTransform([&](orc::ThreadSafeModule TSM) {
+    if (verifyModule(*TSM.getModule(), &dbgs())) {
+      dbgs() << "Bad module: " << *TSM.getModule() << "\n";
+      exit(1);
+    }
+    return Dump(std::move(TSM));
+  });
   J->getMainJITDylib().setFallbackDefinitionGenerator(
       orc::DynamicLibraryFallbackGenerator(
           std::move(LibLLI), DL, [](orc::SymbolStringPtr) { return true; }));
@@ -783,12 +784,12 @@ int runOrcLazyJIT(const char *ProgName) {
 
   // Add any extra modules.
   for (auto &ModulePath : ExtraModules) {
-    auto M = parseIRFile(ModulePath, Err, Ctx);
+    auto M = parseIRFile(ModulePath, Err, *TSCtx.getContext());
     if (!M)
       reportError(Err, ProgName);
 
     orc::makeAllSymbolsExternallyAccessible(*M);
-    ExitOnErr(J->addLazyIRModule(std::move(M)));
+    ExitOnErr(J->addLazyIRModule(orc::ThreadSafeModule(std::move(M), TSCtx)));
   }
 
   // Add the objects.

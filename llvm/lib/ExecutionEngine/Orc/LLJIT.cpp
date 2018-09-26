@@ -27,14 +27,14 @@ Error LLJIT::defineAbsolute(StringRef Name, JITEvaluatedSymbol Sym) {
   return Main.define(absoluteSymbols(std::move(Symbols)));
 }
 
-Error LLJIT::addIRModule(JITDylib &JD, std::unique_ptr<Module> M) {
-  assert(M && "Can not add null module");
+Error LLJIT::addIRModule(JITDylib &JD, ThreadSafeModule TSM) {
+  assert(TSM && "Can not add null module");
 
-  if (auto Err = applyDataLayout(*M))
+  if (auto Err = applyDataLayout(*TSM.getModule()))
     return Err;
 
   auto K = ES->allocateVModule();
-  return CompileLayer.add(JD, K, std::move(M));
+  return CompileLayer.add(JD, K, std::move(TSM));
 }
 
 Error LLJIT::addObjectFile(JITDylib &JD, std::unique_ptr<MemoryBuffer> Obj) {
@@ -90,8 +90,7 @@ void LLJIT::recordCtorDtors(Module &M) {
 }
 
 Expected<std::unique_ptr<LLLazyJIT>>
-LLLazyJIT::Create(std::unique_ptr<TargetMachine> TM, DataLayout DL,
-                  LLVMContext &Ctx) {
+LLLazyJIT::Create(std::unique_ptr<TargetMachine> TM, DataLayout DL) {
   auto ES = llvm::make_unique<ExecutionSession>();
 
   const Triple &TT = TM->getTargetTriple();
@@ -109,33 +108,32 @@ LLLazyJIT::Create(std::unique_ptr<TargetMachine> TM, DataLayout DL,
         inconvertibleErrorCode());
 
   return std::unique_ptr<LLLazyJIT>(
-      new LLLazyJIT(std::move(ES), std::move(TM), std::move(DL), Ctx,
+      new LLLazyJIT(std::move(ES), std::move(TM), std::move(DL),
                     std::move(CCMgr), std::move(ISMBuilder)));
 }
 
-Error LLLazyJIT::addLazyIRModule(JITDylib &JD, std::unique_ptr<Module> M) {
-  assert(M && "Can not add null module");
+Error LLLazyJIT::addLazyIRModule(JITDylib &JD, ThreadSafeModule TSM) {
+  assert(TSM && "Can not add null module");
 
-  if (auto Err = applyDataLayout(*M))
+  if (auto Err = applyDataLayout(*TSM.getModule()))
     return Err;
 
-  makeAllSymbolsExternallyAccessible(*M);
+  makeAllSymbolsExternallyAccessible(*TSM.getModule());
 
-  recordCtorDtors(*M);
+  recordCtorDtors(*TSM.getModule());
 
   auto K = ES->allocateVModule();
-  return CODLayer.add(JD, K, std::move(M));
+  return CODLayer.add(JD, K, std::move(TSM));
 }
 
 LLLazyJIT::LLLazyJIT(
     std::unique_ptr<ExecutionSession> ES, std::unique_ptr<TargetMachine> TM,
-    DataLayout DL, LLVMContext &Ctx,
-    std::unique_ptr<JITCompileCallbackManager> CCMgr,
+    DataLayout DL, std::unique_ptr<JITCompileCallbackManager> CCMgr,
     std::function<std::unique_ptr<IndirectStubsManager>()> ISMBuilder)
     : LLJIT(std::move(ES), std::move(TM), std::move(DL)),
       CCMgr(std::move(CCMgr)), TransformLayer(*this->ES, CompileLayer),
-      CODLayer(*this->ES, TransformLayer, *this->CCMgr, std::move(ISMBuilder),
-               [&]() -> LLVMContext & { return Ctx; }) {}
+      CODLayer(*this->ES, TransformLayer, *this->CCMgr, std::move(ISMBuilder)) {
+}
 
 } // End namespace orc.
 } // End namespace llvm.
