@@ -17,6 +17,8 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 
+#include <functional>
+#include <memory>
 #include <mutex>
 
 namespace llvm {
