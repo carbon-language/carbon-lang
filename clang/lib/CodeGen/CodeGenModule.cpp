@@ -4879,6 +4879,10 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::OMPDeclareReduction:
     EmitOMPDeclareReduction(cast<OMPDeclareReductionDecl>(D));
     break;
+ 
+  case Decl::OMPRequires:
+    EmitOMPRequiresDecl(cast<OMPRequiresDecl>(D));
+    break;
 
   default:
     // Make sure we handled everything we should, every other kind is a
