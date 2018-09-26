@@ -1,385 +1,645 @@
-	.file	"matmul.polly.interchanged+tiled+vector.ll"
+	.text
+	.file	"matmul.c"
 	.section	.rodata.cst8,"aM",@progbits,8
-	.align	8
+	.p2align	3               # -- Begin function init_array
 .LCPI0_0:
 	.quad	4602678819172646912     # double 0.5
 	.text
 	.globl	init_array
-	.align	16, 0x90
+	.p2align	4, 0x90
 	.type	init_array,@function
 init_array:                             # @init_array
 	.cfi_startproc
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	pushq	%rbp
-.Ltmp2:
 	.cfi_def_cfa_offset 16
-.Ltmp3:
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
-.Ltmp4:
 	.cfi_def_cfa_register %rbp
+	leaq	B(%rip), %rax
+	leaq	A(%rip), %rcx
 	xorl	%r8d, %r8d
-	vmovsd	.LCPI0_0(%rip), %xmm0
-	.align	16, 0x90
-.LBB0_1:                                # %polly.loop_preheader3
+	movsd	.LCPI0_0(%rip), %xmm0   # xmm0 = mem[0],zero
+	xorl	%r9d, %r9d
+	.p2align	4, 0x90
+.LBB0_1:                                # %polly.loop_header
                                         # =>This Loop Header: Depth=1
                                         #     Child Loop BB0_2 Depth 2
-	xorl	%ecx, %ecx
-	.align	16, 0x90
-.LBB0_2:                                # %polly.loop_header2
+	movl	$1, %edi
+	xorl	%edx, %edx
+	.p2align	4, 0x90
+.LBB0_2:                                # %polly.loop_header1
                                         #   Parent Loop BB0_1 Depth=1
                                         # =>  This Inner Loop Header: Depth=2
-	movl	%ecx, %edx
-	imull	%r8d, %edx
 	movl	%edx, %esi
-	sarl	$31, %esi
-	shrl	$22, %esi
-	addl	%edx, %esi
-	andl	$-1024, %esi            # imm = 0xFFFFFFFFFFFFFC00
-	negl	%esi
-	movq	%r8, %rax
-	shlq	$11, %rax
-	leal	1(%rdx,%rsi), %edi
-	leaq	(%rax,%rax,2), %rsi
-	leaq	1(%rcx), %rdx
-	cmpq	$1536, %rdx             # imm = 0x600
-	vcvtsi2sdl	%edi, %xmm0, %xmm1
-	vmulsd	%xmm0, %xmm1, %xmm1
-	vcvtsd2ss	%xmm1, %xmm1, %xmm1
-	vmovss	%xmm1, A(%rsi,%rcx,4)
-	vmovss	%xmm1, B(%rsi,%rcx,4)
-	movq	%rdx, %rcx
+	andl	$1022, %esi             # imm = 0x3FE
+	orl	$1, %esi
+	xorps	%xmm1, %xmm1
+	cvtsi2sdl	%esi, %xmm1
+	mulsd	%xmm0, %xmm1
+	cvtsd2ss	%xmm1, %xmm1
+	movss	%xmm1, -4(%rcx,%rdi,4)
+	movss	%xmm1, -4(%rax,%rdi,4)
+	leal	(%r9,%rdx), %esi
+	andl	$1023, %esi             # imm = 0x3FF
+	addl	$1, %esi
+	xorps	%xmm1, %xmm1
+	cvtsi2sdl	%esi, %xmm1
+	mulsd	%xmm0, %xmm1
+	cvtsd2ss	%xmm1, %xmm1
+	movss	%xmm1, (%rcx,%rdi,4)
+	movss	%xmm1, (%rax,%rdi,4)
+	addq	$2, %rdi
+	addl	%r8d, %edx
+	cmpq	$1537, %rdi             # imm = 0x601
 	jne	.LBB0_2
-# BB#3:                                 # %polly.loop_exit4
+# %bb.3:                                # %polly.loop_exit3
                                         #   in Loop: Header=BB0_1 Depth=1
-	incq	%r8
-	cmpq	$1536, %r8              # imm = 0x600
+	addq	$1, %r9
+	addq	$6144, %rax             # imm = 0x1800
+	addq	$6144, %rcx             # imm = 0x1800
+	addl	$2, %r8d
+	cmpq	$1536, %r9              # imm = 0x600
 	jne	.LBB0_1
-# BB#4:                                 # %polly.loop_exit
+# %bb.4:                                # %polly.exiting
 	popq	%rbp
-	ret
-.Ltmp5:
-	.size	init_array, .Ltmp5-init_array
+	.cfi_def_cfa %rsp, 8
+	retq
+.Lfunc_end0:
+	.size	init_array, .Lfunc_end0-init_array
 	.cfi_endproc
-
-	.globl	print_array
-	.align	16, 0x90
+                                        # -- End function
+	.globl	print_array             # -- Begin function print_array
+	.p2align	4, 0x90
 	.type	print_array,@function
 print_array:                            # @print_array
 	.cfi_startproc
-# BB#0:                                 # %entry
+# %bb.0:                                # %entry
 	pushq	%rbp
-.Ltmp9:
 	.cfi_def_cfa_offset 16
-.Ltmp10:
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
-.Ltmp11:
-	.cfi_def_cfa_register %rbp
-	pushq	%r15
-	pushq	%r14
-	pushq	%r12
-	pushq	%rbx
-.Ltmp12:
-	.cfi_offset %rbx, -48
-.Ltmp13:
-	.cfi_offset %r12, -40
-.Ltmp14:
-	.cfi_offset %r14, -32
-.Ltmp15:
-	.cfi_offset %r15, -24
-	xorl	%r14d, %r14d
-	movl	$C, %r15d
-	.align	16, 0x90
-.LBB1_1:                                # %for.cond1.preheader
-                                        # =>This Loop Header: Depth=1
-                                        #     Child Loop BB1_2 Depth 2
-	movq	stdout(%rip), %rax
-	movq	%r15, %r12
-	xorl	%ebx, %ebx
-	.align	16, 0x90
-.LBB1_2:                                # %for.body3
-                                        #   Parent Loop BB1_1 Depth=1
-                                        # =>  This Inner Loop Header: Depth=2
-	vmovss	(%r12), %xmm0
-	vcvtss2sd	%xmm0, %xmm0, %xmm0
-	movq	%rax, %rdi
-	movl	$.L.str, %esi
-	movb	$1, %al
-	callq	fprintf
-	movslq	%ebx, %rax
-	imulq	$1717986919, %rax, %rcx # imm = 0x66666667
-	movq	%rcx, %rdx
-	shrq	$63, %rdx
-	sarq	$37, %rcx
-	addl	%edx, %ecx
-	imull	$80, %ecx, %ecx
-	subl	%ecx, %eax
-	cmpl	$79, %eax
-	jne	.LBB1_4
-# BB#3:                                 # %if.then
-                                        #   in Loop: Header=BB1_2 Depth=2
-	movq	stdout(%rip), %rsi
-	movl	$10, %edi
-	callq	fputc
-.LBB1_4:                                # %for.inc
-                                        #   in Loop: Header=BB1_2 Depth=2
-	addq	$4, %r12
-	incq	%rbx
-	movq	stdout(%rip), %rax
-	cmpq	$1536, %rbx             # imm = 0x600
-	jne	.LBB1_2
-# BB#5:                                 # %for.end
-                                        #   in Loop: Header=BB1_1 Depth=1
-	movl	$10, %edi
-	movq	%rax, %rsi
-	callq	fputc
-	addq	$6144, %r15             # imm = 0x1800
-	incq	%r14
-	cmpq	$1536, %r14             # imm = 0x600
-	jne	.LBB1_1
-# BB#6:                                 # %for.end12
-	popq	%rbx
-	popq	%r12
-	popq	%r14
-	popq	%r15
-	popq	%rbp
-	ret
-.Ltmp16:
-	.size	print_array, .Ltmp16-print_array
-	.cfi_endproc
-
-	.section	.rodata.cst8,"aM",@progbits,8
-	.align	8
-.LCPI2_0:
-	.quad	4602678819172646912     # double 0.5
-	.text
-	.globl	main
-	.align	16, 0x90
-	.type	main,@function
-main:                                   # @main
-	.cfi_startproc
-# BB#0:                                 # %entry
-	pushq	%rbp
-.Ltmp20:
-	.cfi_def_cfa_offset 16
-.Ltmp21:
-	.cfi_offset %rbp, -16
-	movq	%rsp, %rbp
-.Ltmp22:
 	.cfi_def_cfa_register %rbp
 	pushq	%r15
 	pushq	%r14
 	pushq	%r13
 	pushq	%r12
 	pushq	%rbx
-	subq	$56, %rsp
-.Ltmp23:
+	pushq	%rax
 	.cfi_offset %rbx, -56
-.Ltmp24:
 	.cfi_offset %r12, -48
-.Ltmp25:
 	.cfi_offset %r13, -40
-.Ltmp26:
 	.cfi_offset %r14, -32
-.Ltmp27:
 	.cfi_offset %r15, -24
-	xorl	%ebx, %ebx
-	vmovsd	.LCPI2_0(%rip), %xmm0
-	.align	16, 0x90
-.LBB2_1:                                # %polly.loop_preheader3.i
-                                        # =>This Loop Header: Depth=1
-                                        #     Child Loop BB2_2 Depth 2
-	xorl	%ecx, %ecx
-	.align	16, 0x90
-.LBB2_2:                                # %polly.loop_header2.i
-                                        #   Parent Loop BB2_1 Depth=1
-                                        # =>  This Inner Loop Header: Depth=2
-	movl	%ecx, %edx
-	imull	%ebx, %edx
-	movl	%edx, %esi
-	sarl	$31, %esi
-	shrl	$22, %esi
-	addl	%edx, %esi
-	andl	$-1024, %esi            # imm = 0xFFFFFFFFFFFFFC00
-	negl	%esi
-	movq	%rbx, %rax
-	shlq	$11, %rax
-	leal	1(%rdx,%rsi), %edi
-	leaq	(%rax,%rax,2), %rsi
-	leaq	1(%rcx), %rdx
-	cmpq	$1536, %rdx             # imm = 0x600
-	vcvtsi2sdl	%edi, %xmm0, %xmm1
-	vmulsd	%xmm0, %xmm1, %xmm1
-	vcvtsd2ss	%xmm1, %xmm1, %xmm1
-	vmovss	%xmm1, A(%rsi,%rcx,4)
-	vmovss	%xmm1, B(%rsi,%rcx,4)
-	movq	%rdx, %rcx
-	jne	.LBB2_2
-# BB#3:                                 # %polly.loop_exit4.i
-                                        #   in Loop: Header=BB2_1 Depth=1
-	incq	%rbx
-	cmpq	$1536, %rbx             # imm = 0x600
-	jne	.LBB2_1
-# BB#4:                                 # %polly.loop_preheader3.preheader
-	movl	$C, %edi
-	xorl	%esi, %esi
-	movl	$9437184, %edx          # imm = 0x900000
-	callq	memset
-	xorl	%esi, %esi
-	movl	$C+16, %eax
-	movq	%rax, -88(%rbp)         # 8-byte Spill
-	.align	16, 0x90
-.LBB2_5:                                # %polly.loop_preheader17
-                                        # =>This Loop Header: Depth=1
-                                        #     Child Loop BB2_15 Depth 2
-                                        #       Child Loop BB2_8 Depth 3
-                                        #         Child Loop BB2_11 Depth 4
-                                        #           Child Loop BB2_17 Depth 5
-                                        #             Child Loop BB2_18 Depth 6
-	movq	%rsi, -56(%rbp)         # 8-byte Spill
-	movq	%rsi, %rax
-	orq	$63, %rax
-	movq	%rax, -72(%rbp)         # 8-byte Spill
-	leaq	-1(%rax), %rax
-	movq	%rax, -48(%rbp)         # 8-byte Spill
-	xorl	%edx, %edx
-	.align	16, 0x90
-.LBB2_15:                               # %polly.loop_preheader24
-                                        #   Parent Loop BB2_5 Depth=1
-                                        # =>  This Loop Header: Depth=2
-                                        #       Child Loop BB2_8 Depth 3
-                                        #         Child Loop BB2_11 Depth 4
-                                        #           Child Loop BB2_17 Depth 5
-                                        #             Child Loop BB2_18 Depth 6
-	movq	%rdx, -80(%rbp)         # 8-byte Spill
-	leaq	-4(%rdx), %rcx
-	movq	%rdx, %rax
-	decq	%rax
-	cmovsq	%rcx, %rax
-	movq	%rax, %r15
-	sarq	$63, %r15
-	shrq	$62, %r15
-	addq	%rax, %r15
-	andq	$-4, %r15
-	movq	%rdx, %r13
-	orq	$63, %r13
-	leaq	-4(%r13), %rdx
-	xorl	%r10d, %r10d
-	movq	-88(%rbp), %rax         # 8-byte Reload
-	leaq	(%rax,%r15,4), %rax
-	movq	%rax, -64(%rbp)         # 8-byte Spill
-	leaq	B+16(,%r15,4), %rbx
-	leaq	4(%r15), %r12
-	.align	16, 0x90
-.LBB2_8:                                # %polly.loop_header23
-                                        #   Parent Loop BB2_5 Depth=1
-                                        #     Parent Loop BB2_15 Depth=2
-                                        # =>    This Loop Header: Depth=3
-                                        #         Child Loop BB2_11 Depth 4
-                                        #           Child Loop BB2_17 Depth 5
-                                        #             Child Loop BB2_18 Depth 6
-	cmpq	-72(%rbp), %rsi         # 8-byte Folded Reload
-	jg	.LBB2_13
-# BB#9:                                 # %polly.loop_header30.preheader
-                                        #   in Loop: Header=BB2_8 Depth=3
-	movq	%r10, %rax
-	orq	$63, %rax
-	cmpq	%rax, %r10
-	jg	.LBB2_13
-# BB#10:                                #   in Loop: Header=BB2_8 Depth=3
-	decq	%rax
-	movq	-64(%rbp), %r14         # 8-byte Reload
-	movq	-56(%rbp), %r11         # 8-byte Reload
-	.align	16, 0x90
-.LBB2_11:                               # %polly.loop_header37.preheader
-                                        #   Parent Loop BB2_5 Depth=1
-                                        #     Parent Loop BB2_15 Depth=2
-                                        #       Parent Loop BB2_8 Depth=3
-                                        # =>      This Loop Header: Depth=4
-                                        #           Child Loop BB2_17 Depth 5
-                                        #             Child Loop BB2_18 Depth 6
-	cmpq	%r13, %r12
-	movq	%rbx, %r8
-	movq	%r10, %rsi
-	jg	.LBB2_12
-	.align	16, 0x90
-.LBB2_17:                               # %polly.loop_header46.preheader
-                                        #   Parent Loop BB2_5 Depth=1
-                                        #     Parent Loop BB2_15 Depth=2
-                                        #       Parent Loop BB2_8 Depth=3
-                                        #         Parent Loop BB2_11 Depth=4
-                                        # =>        This Loop Header: Depth=5
-                                        #             Child Loop BB2_18 Depth 6
-	leaq	(%r11,%r11,2), %rcx
-	shlq	$11, %rcx
-	vbroadcastss	A(%rcx,%rsi,4), %xmm0
-	movq	%r14, %rdi
-	movq	%r8, %r9
-	movq	%r15, %rcx
-.LBB2_18:                               # %polly.loop_header46
-                                        #   Parent Loop BB2_5 Depth=1
-                                        #     Parent Loop BB2_15 Depth=2
-                                        #       Parent Loop BB2_8 Depth=3
-                                        #         Parent Loop BB2_11 Depth=4
-                                        #           Parent Loop BB2_17 Depth=5
-                                        # =>          This Inner Loop Header: Depth=6
-	vmulps	(%r9), %xmm0, %xmm1
-	vaddps	(%rdi), %xmm1, %xmm1
-	vmovaps	%xmm1, (%rdi)
-	addq	$16, %rdi
-	addq	$16, %r9
-	addq	$4, %rcx
-	cmpq	%rdx, %rcx
-	jle	.LBB2_18
-# BB#16:                                # %polly.loop_exit48
-                                        #   in Loop: Header=BB2_17 Depth=5
-	addq	$6144, %r8              # imm = 0x1800
-	cmpq	%rax, %rsi
-	leaq	1(%rsi), %rsi
-	jle	.LBB2_17
-	.align	16, 0x90
-.LBB2_12:                               # %polly.loop_exit39
-                                        #   in Loop: Header=BB2_11 Depth=4
-	addq	$6144, %r14             # imm = 0x1800
-	cmpq	-48(%rbp), %r11         # 8-byte Folded Reload
-	leaq	1(%r11), %r11
-	jle	.LBB2_11
-	.align	16, 0x90
-.LBB2_13:                               # %polly.loop_exit32
-                                        #   in Loop: Header=BB2_8 Depth=3
-	addq	$393216, %rbx           # imm = 0x60000
-	cmpq	$1472, %r10             # imm = 0x5C0
-	leaq	64(%r10), %r10
-	movq	-56(%rbp), %rsi         # 8-byte Reload
-	jl	.LBB2_8
-# BB#14:                                # %polly.loop_exit25
-                                        #   in Loop: Header=BB2_15 Depth=2
-	movq	-80(%rbp), %rdx         # 8-byte Reload
-	cmpq	$1472, %rdx             # imm = 0x5C0
-	leaq	64(%rdx), %rdx
-	jl	.LBB2_15
-# BB#6:                                 # %polly.loop_exit18
-                                        #   in Loop: Header=BB2_5 Depth=1
-	addq	$393216, -88(%rbp)      # 8-byte Folded Spill
-                                        # imm = 0x60000
-	cmpq	$1472, %rsi             # imm = 0x5C0
-	leaq	64(%rsi), %rsi
-	jl	.LBB2_5
-# BB#7:                                 # %polly.loop_exit11
+	leaq	C(%rip), %r13
 	xorl	%eax, %eax
-	addq	$56, %rsp
+	movl	$3435973837, %r12d      # imm = 0xCCCCCCCD
+	leaq	.L.str(%rip), %r14
+	.p2align	4, 0x90
+.LBB1_1:                                # %for.cond1.preheader
+                                        # =>This Loop Header: Depth=1
+                                        #     Child Loop BB1_2 Depth 2
+	movq	%rax, -48(%rbp)         # 8-byte Spill
+	movq	stdout(%rip), %rsi
+	xorl	%ebx, %ebx
+	.p2align	4, 0x90
+.LBB1_2:                                # %for.body3
+                                        #   Parent Loop BB1_1 Depth=1
+                                        # =>  This Inner Loop Header: Depth=2
+	movl	%ebx, %eax
+	imulq	%r12, %rax
+	shrq	$38, %rax
+	leal	(%rax,%rax,4), %r15d
+	shll	$4, %r15d
+	addl	$79, %r15d
+	movss	(%r13,%rbx,4), %xmm0    # xmm0 = mem[0],zero,zero,zero
+	cvtss2sd	%xmm0, %xmm0
+	movb	$1, %al
+	movq	%rsi, %rdi
+	movq	%r14, %rsi
+	callq	fprintf
+	cmpl	%ebx, %r15d
+	jne	.LBB1_4
+# %bb.3:                                # %if.then
+                                        #   in Loop: Header=BB1_2 Depth=2
+	movq	stdout(%rip), %rsi
+	movl	$10, %edi
+	callq	fputc@PLT
+.LBB1_4:                                # %for.inc
+                                        #   in Loop: Header=BB1_2 Depth=2
+	addq	$1, %rbx
+	movq	stdout(%rip), %rsi
+	cmpq	$1536, %rbx             # imm = 0x600
+	jne	.LBB1_2
+# %bb.5:                                # %for.end
+                                        #   in Loop: Header=BB1_1 Depth=1
+	movl	$10, %edi
+	callq	fputc@PLT
+	movq	-48(%rbp), %rax         # 8-byte Reload
+	addq	$1, %rax
+	addq	$6144, %r13             # imm = 0x1800
+	cmpq	$1536, %rax             # imm = 0x600
+	jne	.LBB1_1
+# %bb.6:                                # %for.end12
+	addq	$8, %rsp
 	popq	%rbx
 	popq	%r12
 	popq	%r13
 	popq	%r14
 	popq	%r15
 	popq	%rbp
-	ret
-.Ltmp28:
-	.size	main, .Ltmp28-main
+	.cfi_def_cfa %rsp, 8
+	retq
+.Lfunc_end1:
+	.size	print_array, .Lfunc_end1-print_array
 	.cfi_endproc
-
+                                        # -- End function
+	.globl	main                    # -- Begin function main
+	.p2align	4, 0x90
+	.type	main,@function
+main:                                   # @main
+	.cfi_startproc
+# %bb.0:                                # %entry
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%r15
+	pushq	%r14
+	pushq	%r13
+	pushq	%r12
+	pushq	%rbx
+	subq	$264, %rsp              # imm = 0x108
+	.cfi_offset %rbx, -56
+	.cfi_offset %r12, -48
+	.cfi_offset %r13, -40
+	.cfi_offset %r14, -32
+	.cfi_offset %r15, -24
+	callq	init_array
+	leaq	C(%rip), %rdi
+	xorl	%eax, %eax
+	movq	%rax, -48(%rbp)         # 8-byte Spill
+	xorl	%esi, %esi
+	movl	$9437184, %edx          # imm = 0x900000
+	callq	memset@PLT
+	movl	$64, %eax
+	movq	%rax, -80(%rbp)         # 8-byte Spill
+	leaq	A(%rip), %rax
+	movq	%rax, -72(%rbp)         # 8-byte Spill
+	.p2align	4, 0x90
+.LBB2_1:                                # %polly.loop_header8
+                                        # =>This Loop Header: Depth=1
+                                        #     Child Loop BB2_2 Depth 2
+                                        #       Child Loop BB2_3 Depth 3
+                                        #         Child Loop BB2_4 Depth 4
+                                        #           Child Loop BB2_5 Depth 5
+	leaq	B+192(%rip), %r9
+	xorl	%edi, %edi
+	xorl	%eax, %eax
+	.p2align	4, 0x90
+.LBB2_2:                                # %polly.loop_header14
+                                        #   Parent Loop BB2_1 Depth=1
+                                        # =>  This Loop Header: Depth=2
+                                        #       Child Loop BB2_3 Depth 3
+                                        #         Child Loop BB2_4 Depth 4
+                                        #           Child Loop BB2_5 Depth 5
+	movq	%rax, -168(%rbp)        # 8-byte Spill
+	movq	%rdi, -176(%rbp)        # 8-byte Spill
+	shlq	$6, %rdi
+	leaq	16(%rdi), %rdx
+	leaq	32(%rdi), %rsi
+	leaq	48(%rdi), %rcx
+	movq	-72(%rbp), %r12         # 8-byte Reload
+	movq	%r9, -184(%rbp)         # 8-byte Spill
+	xorl	%eax, %eax
+	.p2align	4, 0x90
+.LBB2_3:                                # %polly.loop_header20
+                                        #   Parent Loop BB2_1 Depth=1
+                                        #     Parent Loop BB2_2 Depth=2
+                                        # =>    This Loop Header: Depth=3
+                                        #         Child Loop BB2_4 Depth 4
+                                        #           Child Loop BB2_5 Depth 5
+	movq	%rax, -192(%rbp)        # 8-byte Spill
+	movq	%r12, -200(%rbp)        # 8-byte Spill
+	movq	-48(%rbp), %r14         # 8-byte Reload
+	.p2align	4, 0x90
+.LBB2_4:                                # %polly.loop_header26
+                                        #   Parent Loop BB2_1 Depth=1
+                                        #     Parent Loop BB2_2 Depth=2
+                                        #       Parent Loop BB2_3 Depth=3
+                                        # =>      This Loop Header: Depth=4
+                                        #           Child Loop BB2_5 Depth 5
+	leaq	(%r14,%r14,2), %rbx
+	shlq	$11, %rbx
+	leaq	C(%rip), %rax
+	addq	%rax, %rbx
+	leaq	(%rbx,%rdi,4), %r8
+	leaq	(%rbx,%rdx,4), %r15
+	leaq	(%rbx,%rsi,4), %r10
+	leaq	(%rbx,%rcx,4), %r11
+	movups	(%rbx,%rdi,4), %xmm8
+	movups	16(%rbx,%rdi,4), %xmm0
+	movaps	%xmm0, -144(%rbp)       # 16-byte Spill
+	movups	32(%rbx,%rdi,4), %xmm6
+	movups	48(%rbx,%rdi,4), %xmm1
+	movups	(%rbx,%rdx,4), %xmm15
+	movups	16(%rbx,%rdx,4), %xmm0
+	movaps	%xmm0, -64(%rbp)        # 16-byte Spill
+	movups	32(%rbx,%rdx,4), %xmm0
+	movaps	%xmm0, -96(%rbp)        # 16-byte Spill
+	movups	48(%rbx,%rdx,4), %xmm0
+	movaps	%xmm0, -112(%rbp)       # 16-byte Spill
+	movups	(%rbx,%rsi,4), %xmm11
+	movups	16(%rbx,%rsi,4), %xmm0
+	movaps	%xmm0, -160(%rbp)       # 16-byte Spill
+	movups	32(%rbx,%rsi,4), %xmm12
+	movups	48(%rbx,%rsi,4), %xmm0
+	movaps	%xmm0, -128(%rbp)       # 16-byte Spill
+	movups	(%rbx,%rcx,4), %xmm9
+	movups	16(%rbx,%rcx,4), %xmm13
+	movups	32(%rbx,%rcx,4), %xmm2
+	movups	48(%rbx,%rcx,4), %xmm3
+	movq	%r9, %rbx
+	movl	$0, %r13d
+	.p2align	4, 0x90
+.LBB2_5:                                # %vector.ph
+                                        #   Parent Loop BB2_1 Depth=1
+                                        #     Parent Loop BB2_2 Depth=2
+                                        #       Parent Loop BB2_3 Depth=3
+                                        #         Parent Loop BB2_4 Depth=4
+                                        # =>        This Inner Loop Header: Depth=5
+	movaps	%xmm12, -240(%rbp)      # 16-byte Spill
+	movaps	%xmm2, -256(%rbp)       # 16-byte Spill
+	movaps	%xmm3, -272(%rbp)       # 16-byte Spill
+	movaps	%xmm8, %xmm10
+	movaps	-144(%rbp), %xmm7       # 16-byte Reload
+	unpcklps	%xmm7, %xmm10   # xmm10 = xmm10[0],xmm7[0],xmm10[1],xmm7[1]
+	movaps	%xmm1, %xmm4
+	shufps	$0, %xmm6, %xmm4        # xmm4 = xmm4[0,0],xmm6[0,0]
+	shufps	$36, %xmm4, %xmm10      # xmm10 = xmm10[0,1],xmm4[2,0]
+	movaps	%xmm7, %xmm5
+	shufps	$17, %xmm8, %xmm5       # xmm5 = xmm5[1,0],xmm8[1,0]
+	movaps	%xmm6, %xmm4
+	unpcklps	%xmm1, %xmm4    # xmm4 = xmm4[0],xmm1[0],xmm4[1],xmm1[1]
+	shufps	$226, %xmm4, %xmm5      # xmm5 = xmm5[2,0],xmm4[2,3]
+	movaps	%xmm8, %xmm12
+	unpckhps	%xmm7, %xmm12   # xmm12 = xmm12[2],xmm7[2],xmm12[3],xmm7[3]
+	movaps	%xmm1, %xmm4
+	shufps	$34, %xmm6, %xmm4       # xmm4 = xmm4[2,0],xmm6[2,0]
+	shufps	$36, %xmm4, %xmm12      # xmm12 = xmm12[0,1],xmm4[2,0]
+	shufps	$51, %xmm8, %xmm7       # xmm7 = xmm7[3,0],xmm8[3,0]
+	unpckhps	%xmm1, %xmm6    # xmm6 = xmm6[2],xmm1[2],xmm6[3],xmm1[3]
+	shufps	$226, %xmm6, %xmm7      # xmm7 = xmm7[2,0],xmm6[2,3]
+	movaps	-160(%rbx), %xmm0
+	movaps	-144(%rbx), %xmm1
+	movaps	%xmm1, %xmm6
+	shufps	$0, %xmm0, %xmm6        # xmm6 = xmm6[0,0],xmm0[0,0]
+	movaps	-192(%rbx), %xmm3
+	movaps	-176(%rbx), %xmm4
+	movaps	%xmm3, %xmm8
+	unpcklps	%xmm4, %xmm8    # xmm8 = xmm8[0],xmm4[0],xmm8[1],xmm4[1]
+	shufps	$36, %xmm6, %xmm8       # xmm8 = xmm8[0,1],xmm6[2,0]
+	movaps	%xmm0, %xmm2
+	unpcklps	%xmm1, %xmm2    # xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1]
+	movaps	%xmm4, %xmm6
+	shufps	$17, %xmm3, %xmm6       # xmm6 = xmm6[1,0],xmm3[1,0]
+	shufps	$226, %xmm2, %xmm6      # xmm6 = xmm6[2,0],xmm2[2,3]
+	movaps	%xmm1, %xmm2
+	shufps	$34, %xmm0, %xmm2       # xmm2 = xmm2[2,0],xmm0[2,0]
+	movaps	%xmm3, %xmm14
+	unpckhps	%xmm4, %xmm14   # xmm14 = xmm14[2],xmm4[2],xmm14[3],xmm4[3]
+	shufps	$36, %xmm2, %xmm14      # xmm14 = xmm14[0,1],xmm2[2,0]
+	unpckhps	%xmm1, %xmm0    # xmm0 = xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+	shufps	$51, %xmm3, %xmm4       # xmm4 = xmm4[3,0],xmm3[3,0]
+	shufps	$226, %xmm0, %xmm4      # xmm4 = xmm4[2,0],xmm0[2,3]
+	movss	(%r12,%r13,4), %xmm0    # xmm0 = mem[0],zero,zero,zero
+	shufps	$0, %xmm0, %xmm0        # xmm0 = xmm0[0,0,0,0]
+	mulps	%xmm0, %xmm8
+	addps	%xmm10, %xmm8
+	mulps	%xmm0, %xmm6
+	addps	%xmm5, %xmm6
+	mulps	%xmm0, %xmm14
+	addps	%xmm12, %xmm14
+	mulps	%xmm0, %xmm4
+	movaps	%xmm0, %xmm5
+	addps	%xmm7, %xmm4
+	movaps	%xmm14, %xmm0
+	unpckhps	%xmm4, %xmm0    # xmm0 = xmm0[2],xmm4[2],xmm0[3],xmm4[3]
+	movaps	%xmm6, %xmm1
+	shufps	$51, %xmm8, %xmm1       # xmm1 = xmm1[3,0],xmm8[3,0]
+	shufps	$226, %xmm0, %xmm1      # xmm1 = xmm1[2,0],xmm0[2,3]
+	movaps	%xmm1, -304(%rbp)       # 16-byte Spill
+	movaps	%xmm4, %xmm0
+	shufps	$34, %xmm14, %xmm0      # xmm0 = xmm0[2,0],xmm14[2,0]
+	movaps	%xmm8, %xmm1
+	unpckhps	%xmm6, %xmm1    # xmm1 = xmm1[2],xmm6[2],xmm1[3],xmm6[3]
+	shufps	$36, %xmm0, %xmm1       # xmm1 = xmm1[0,1],xmm0[2,0]
+	movaps	%xmm1, -288(%rbp)       # 16-byte Spill
+	movaps	%xmm14, %xmm0
+	unpcklps	%xmm4, %xmm0    # xmm0 = xmm0[0],xmm4[0],xmm0[1],xmm4[1]
+	movaps	%xmm6, %xmm1
+	shufps	$17, %xmm8, %xmm1       # xmm1 = xmm1[1,0],xmm8[1,0]
+	shufps	$226, %xmm0, %xmm1      # xmm1 = xmm1[2,0],xmm0[2,3]
+	movaps	%xmm1, -144(%rbp)       # 16-byte Spill
+	shufps	$0, %xmm14, %xmm4       # xmm4 = xmm4[0,0],xmm14[0,0]
+	unpcklps	%xmm6, %xmm8    # xmm8 = xmm8[0],xmm6[0],xmm8[1],xmm6[1]
+	shufps	$36, %xmm4, %xmm8       # xmm8 = xmm8[0,1],xmm4[2,0]
+	movaps	%xmm15, %xmm14
+	movaps	-64(%rbp), %xmm4        # 16-byte Reload
+	unpcklps	%xmm4, %xmm14   # xmm14 = xmm14[0],xmm4[0],xmm14[1],xmm4[1]
+	movaps	-112(%rbp), %xmm1       # 16-byte Reload
+	movaps	%xmm1, %xmm0
+	movaps	-96(%rbp), %xmm3        # 16-byte Reload
+	shufps	$0, %xmm3, %xmm0        # xmm0 = xmm0[0,0],xmm3[0,0]
+	shufps	$36, %xmm0, %xmm14      # xmm14 = xmm14[0,1],xmm0[2,0]
+	movaps	%xmm4, %xmm12
+	shufps	$17, %xmm15, %xmm12     # xmm12 = xmm12[1,0],xmm15[1,0]
+	movaps	%xmm3, %xmm2
+	unpcklps	%xmm1, %xmm2    # xmm2 = xmm2[0],xmm1[0],xmm2[1],xmm1[1]
+	shufps	$226, %xmm2, %xmm12     # xmm12 = xmm12[2,0],xmm2[2,3]
+	movaps	%xmm15, %xmm7
+	unpckhps	%xmm4, %xmm7    # xmm7 = xmm7[2],xmm4[2],xmm7[3],xmm4[3]
+	movaps	%xmm1, %xmm2
+	shufps	$34, %xmm3, %xmm2       # xmm2 = xmm2[2,0],xmm3[2,0]
+	shufps	$36, %xmm2, %xmm7       # xmm7 = xmm7[0,1],xmm2[2,0]
+	shufps	$51, %xmm15, %xmm4      # xmm4 = xmm4[3,0],xmm15[3,0]
+	unpckhps	%xmm1, %xmm3    # xmm3 = xmm3[2],xmm1[2],xmm3[3],xmm1[3]
+	shufps	$226, %xmm3, %xmm4      # xmm4 = xmm4[2,0],xmm3[2,3]
+	movaps	%xmm4, -64(%rbp)        # 16-byte Spill
+	movaps	-96(%rbx), %xmm2
+	movaps	-80(%rbx), %xmm1
+	movaps	%xmm1, %xmm4
+	shufps	$0, %xmm2, %xmm4        # xmm4 = xmm4[0,0],xmm2[0,0]
+	movaps	-112(%rbx), %xmm10
+	movaps	-128(%rbx), %xmm0
+	movaps	%xmm0, %xmm15
+	unpcklps	%xmm10, %xmm15  # xmm15 = xmm15[0],xmm10[0],xmm15[1],xmm10[1]
+	shufps	$36, %xmm4, %xmm15      # xmm15 = xmm15[0,1],xmm4[2,0]
+	movaps	%xmm2, %xmm4
+	unpcklps	%xmm1, %xmm4    # xmm4 = xmm4[0],xmm1[0],xmm4[1],xmm1[1]
+	movaps	%xmm10, %xmm6
+	shufps	$17, %xmm0, %xmm6       # xmm6 = xmm6[1,0],xmm0[1,0]
+	shufps	$226, %xmm4, %xmm6      # xmm6 = xmm6[2,0],xmm4[2,3]
+	movaps	%xmm1, %xmm3
+	shufps	$34, %xmm2, %xmm3       # xmm3 = xmm3[2,0],xmm2[2,0]
+	movaps	%xmm0, %xmm4
+	unpckhps	%xmm10, %xmm4   # xmm4 = xmm4[2],xmm10[2],xmm4[3],xmm10[3]
+	shufps	$36, %xmm3, %xmm4       # xmm4 = xmm4[0,1],xmm3[2,0]
+	unpckhps	%xmm1, %xmm2    # xmm2 = xmm2[2],xmm1[2],xmm2[3],xmm1[3]
+	shufps	$51, %xmm0, %xmm10      # xmm10 = xmm10[3,0],xmm0[3,0]
+	shufps	$226, %xmm2, %xmm10     # xmm10 = xmm10[2,0],xmm2[2,3]
+	movaps	%xmm5, -224(%rbp)       # 16-byte Spill
+	mulps	%xmm5, %xmm15
+	addps	%xmm14, %xmm15
+	mulps	%xmm5, %xmm6
+	addps	%xmm12, %xmm6
+	mulps	%xmm5, %xmm4
+	addps	%xmm7, %xmm4
+	mulps	%xmm5, %xmm10
+	addps	-64(%rbp), %xmm10       # 16-byte Folded Reload
+	movaps	%xmm4, %xmm0
+	unpckhps	%xmm10, %xmm0   # xmm0 = xmm0[2],xmm10[2],xmm0[3],xmm10[3]
+	movaps	%xmm6, %xmm1
+	shufps	$51, %xmm15, %xmm1      # xmm1 = xmm1[3,0],xmm15[3,0]
+	shufps	$226, %xmm0, %xmm1      # xmm1 = xmm1[2,0],xmm0[2,3]
+	movaps	%xmm1, -112(%rbp)       # 16-byte Spill
+	movaps	%xmm10, %xmm0
+	shufps	$34, %xmm4, %xmm0       # xmm0 = xmm0[2,0],xmm4[2,0]
+	movaps	%xmm15, %xmm1
+	unpckhps	%xmm6, %xmm1    # xmm1 = xmm1[2],xmm6[2],xmm1[3],xmm6[3]
+	shufps	$36, %xmm0, %xmm1       # xmm1 = xmm1[0,1],xmm0[2,0]
+	movaps	%xmm1, -96(%rbp)        # 16-byte Spill
+	movaps	%xmm4, %xmm0
+	unpcklps	%xmm10, %xmm0   # xmm0 = xmm0[0],xmm10[0],xmm0[1],xmm10[1]
+	movaps	%xmm6, %xmm1
+	shufps	$17, %xmm15, %xmm1      # xmm1 = xmm1[1,0],xmm15[1,0]
+	shufps	$226, %xmm0, %xmm1      # xmm1 = xmm1[2,0],xmm0[2,3]
+	movaps	%xmm1, -64(%rbp)        # 16-byte Spill
+	shufps	$0, %xmm4, %xmm10       # xmm10 = xmm10[0,0],xmm4[0,0]
+	unpcklps	%xmm6, %xmm15   # xmm15 = xmm15[0],xmm6[0],xmm15[1],xmm6[1]
+	shufps	$36, %xmm10, %xmm15     # xmm15 = xmm15[0,1],xmm10[2,0]
+	movaps	%xmm11, %xmm10
+	movaps	-160(%rbp), %xmm14      # 16-byte Reload
+	unpcklps	%xmm14, %xmm10  # xmm10 = xmm10[0],xmm14[0],xmm10[1],xmm14[1]
+	movaps	-128(%rbp), %xmm2       # 16-byte Reload
+	movaps	%xmm2, %xmm0
+	movaps	-240(%rbp), %xmm3       # 16-byte Reload
+	shufps	$0, %xmm3, %xmm0        # xmm0 = xmm0[0,0],xmm3[0,0]
+	shufps	$36, %xmm0, %xmm10      # xmm10 = xmm10[0,1],xmm0[2,0]
+	movaps	%xmm14, %xmm12
+	shufps	$17, %xmm11, %xmm12     # xmm12 = xmm12[1,0],xmm11[1,0]
+	movaps	%xmm3, %xmm0
+	unpcklps	%xmm2, %xmm0    # xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
+	shufps	$226, %xmm0, %xmm12     # xmm12 = xmm12[2,0],xmm0[2,3]
+	movaps	%xmm11, %xmm0
+	unpckhps	%xmm14, %xmm0   # xmm0 = xmm0[2],xmm14[2],xmm0[3],xmm14[3]
+	movaps	%xmm2, %xmm1
+	shufps	$34, %xmm3, %xmm1       # xmm1 = xmm1[2,0],xmm3[2,0]
+	shufps	$36, %xmm1, %xmm0       # xmm0 = xmm0[0,1],xmm1[2,0]
+	shufps	$51, %xmm11, %xmm14     # xmm14 = xmm14[3,0],xmm11[3,0]
+	unpckhps	%xmm2, %xmm3    # xmm3 = xmm3[2],xmm2[2],xmm3[3],xmm2[3]
+	shufps	$226, %xmm3, %xmm14     # xmm14 = xmm14[2,0],xmm3[2,3]
+	movaps	-32(%rbx), %xmm1
+	movaps	-16(%rbx), %xmm2
+	movaps	%xmm2, %xmm3
+	shufps	$0, %xmm1, %xmm3        # xmm3 = xmm3[0,0],xmm1[0,0]
+	movaps	-48(%rbx), %xmm4
+	movaps	-64(%rbx), %xmm5
+	movaps	%xmm5, %xmm11
+	unpcklps	%xmm4, %xmm11   # xmm11 = xmm11[0],xmm4[0],xmm11[1],xmm4[1]
+	shufps	$36, %xmm3, %xmm11      # xmm11 = xmm11[0,1],xmm3[2,0]
+	movaps	%xmm1, %xmm3
+	unpcklps	%xmm2, %xmm3    # xmm3 = xmm3[0],xmm2[0],xmm3[1],xmm2[1]
+	movaps	%xmm4, %xmm7
+	shufps	$17, %xmm5, %xmm7       # xmm7 = xmm7[1,0],xmm5[1,0]
+	shufps	$226, %xmm3, %xmm7      # xmm7 = xmm7[2,0],xmm3[2,3]
+	movaps	%xmm2, %xmm3
+	shufps	$34, %xmm1, %xmm3       # xmm3 = xmm3[2,0],xmm1[2,0]
+	movaps	%xmm5, %xmm6
+	unpckhps	%xmm4, %xmm6    # xmm6 = xmm6[2],xmm4[2],xmm6[3],xmm4[3]
+	shufps	$36, %xmm3, %xmm6       # xmm6 = xmm6[0,1],xmm3[2,0]
+	unpckhps	%xmm2, %xmm1    # xmm1 = xmm1[2],xmm2[2],xmm1[3],xmm2[3]
+	shufps	$51, %xmm5, %xmm4       # xmm4 = xmm4[3,0],xmm5[3,0]
+	shufps	$226, %xmm1, %xmm4      # xmm4 = xmm4[2,0],xmm1[2,3]
+	movaps	-224(%rbp), %xmm1       # 16-byte Reload
+	mulps	%xmm1, %xmm11
+	addps	%xmm10, %xmm11
+	mulps	%xmm1, %xmm7
+	addps	%xmm12, %xmm7
+	mulps	%xmm1, %xmm6
+	addps	%xmm0, %xmm6
+	mulps	%xmm1, %xmm4
+	addps	%xmm14, %xmm4
+	movaps	%xmm6, %xmm0
+	unpckhps	%xmm4, %xmm0    # xmm0 = xmm0[2],xmm4[2],xmm0[3],xmm4[3]
+	movaps	%xmm7, %xmm1
+	shufps	$51, %xmm11, %xmm1      # xmm1 = xmm1[3,0],xmm11[3,0]
+	shufps	$226, %xmm0, %xmm1      # xmm1 = xmm1[2,0],xmm0[2,3]
+	movaps	%xmm1, -128(%rbp)       # 16-byte Spill
+	movaps	%xmm4, %xmm0
+	shufps	$34, %xmm6, %xmm0       # xmm0 = xmm0[2,0],xmm6[2,0]
+	movaps	%xmm11, %xmm12
+	unpckhps	%xmm7, %xmm12   # xmm12 = xmm12[2],xmm7[2],xmm12[3],xmm7[3]
+	shufps	$36, %xmm0, %xmm12      # xmm12 = xmm12[0,1],xmm0[2,0]
+	movaps	%xmm6, %xmm0
+	unpcklps	%xmm4, %xmm0    # xmm0 = xmm0[0],xmm4[0],xmm0[1],xmm4[1]
+	movaps	%xmm7, %xmm1
+	shufps	$17, %xmm11, %xmm1      # xmm1 = xmm1[1,0],xmm11[1,0]
+	shufps	$226, %xmm0, %xmm1      # xmm1 = xmm1[2,0],xmm0[2,3]
+	movaps	%xmm1, -160(%rbp)       # 16-byte Spill
+	shufps	$0, %xmm6, %xmm4        # xmm4 = xmm4[0,0],xmm6[0,0]
+	unpcklps	%xmm7, %xmm11   # xmm11 = xmm11[0],xmm7[0],xmm11[1],xmm7[1]
+	shufps	$36, %xmm4, %xmm11      # xmm11 = xmm11[0,1],xmm4[2,0]
+	movaps	%xmm9, %xmm10
+	unpcklps	%xmm13, %xmm10  # xmm10 = xmm10[0],xmm13[0],xmm10[1],xmm13[1]
+	movaps	-272(%rbp), %xmm2       # 16-byte Reload
+	movaps	%xmm2, %xmm0
+	movaps	-256(%rbp), %xmm3       # 16-byte Reload
+	shufps	$0, %xmm3, %xmm0        # xmm0 = xmm0[0,0],xmm3[0,0]
+	shufps	$36, %xmm0, %xmm10      # xmm10 = xmm10[0,1],xmm0[2,0]
+	movaps	%xmm13, %xmm14
+	shufps	$17, %xmm9, %xmm14      # xmm14 = xmm14[1,0],xmm9[1,0]
+	movaps	%xmm3, %xmm0
+	unpcklps	%xmm2, %xmm0    # xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
+	shufps	$226, %xmm0, %xmm14     # xmm14 = xmm14[2,0],xmm0[2,3]
+	movaps	%xmm9, %xmm0
+	unpckhps	%xmm13, %xmm0   # xmm0 = xmm0[2],xmm13[2],xmm0[3],xmm13[3]
+	movaps	%xmm2, %xmm1
+	shufps	$34, %xmm3, %xmm1       # xmm1 = xmm1[2,0],xmm3[2,0]
+	shufps	$36, %xmm1, %xmm0       # xmm0 = xmm0[0,1],xmm1[2,0]
+	shufps	$51, %xmm9, %xmm13      # xmm13 = xmm13[3,0],xmm9[3,0]
+	unpckhps	%xmm2, %xmm3    # xmm3 = xmm3[2],xmm2[2],xmm3[3],xmm2[3]
+	shufps	$226, %xmm3, %xmm13     # xmm13 = xmm13[2,0],xmm3[2,3]
+	movaps	32(%rbx), %xmm1
+	movaps	48(%rbx), %xmm2
+	movaps	%xmm2, %xmm3
+	shufps	$0, %xmm1, %xmm3        # xmm3 = xmm3[0,0],xmm1[0,0]
+	movaps	16(%rbx), %xmm4
+	movaps	(%rbx), %xmm5
+	movaps	%xmm5, %xmm9
+	unpcklps	%xmm4, %xmm9    # xmm9 = xmm9[0],xmm4[0],xmm9[1],xmm4[1]
+	shufps	$36, %xmm3, %xmm9       # xmm9 = xmm9[0,1],xmm3[2,0]
+	movaps	%xmm1, %xmm3
+	unpcklps	%xmm2, %xmm3    # xmm3 = xmm3[0],xmm2[0],xmm3[1],xmm2[1]
+	movaps	%xmm4, %xmm7
+	shufps	$17, %xmm5, %xmm7       # xmm7 = xmm7[1,0],xmm5[1,0]
+	shufps	$226, %xmm3, %xmm7      # xmm7 = xmm7[2,0],xmm3[2,3]
+	movaps	%xmm2, %xmm3
+	shufps	$34, %xmm1, %xmm3       # xmm3 = xmm3[2,0],xmm1[2,0]
+	movaps	%xmm5, %xmm6
+	unpckhps	%xmm4, %xmm6    # xmm6 = xmm6[2],xmm4[2],xmm6[3],xmm4[3]
+	shufps	$36, %xmm3, %xmm6       # xmm6 = xmm6[0,1],xmm3[2,0]
+	unpckhps	%xmm2, %xmm1    # xmm1 = xmm1[2],xmm2[2],xmm1[3],xmm2[3]
+	shufps	$51, %xmm5, %xmm4       # xmm4 = xmm4[3,0],xmm5[3,0]
+	shufps	$226, %xmm1, %xmm4      # xmm4 = xmm4[2,0],xmm1[2,3]
+	movaps	-224(%rbp), %xmm1       # 16-byte Reload
+	mulps	%xmm1, %xmm9
+	addps	%xmm10, %xmm9
+	mulps	%xmm1, %xmm7
+	addps	%xmm14, %xmm7
+	mulps	%xmm1, %xmm6
+	addps	%xmm0, %xmm6
+	mulps	%xmm1, %xmm4
+	addps	%xmm13, %xmm4
+	movaps	%xmm6, %xmm0
+	unpckhps	%xmm4, %xmm0    # xmm0 = xmm0[2],xmm4[2],xmm0[3],xmm4[3]
+	movaps	%xmm7, %xmm3
+	shufps	$51, %xmm9, %xmm3       # xmm3 = xmm3[3,0],xmm9[3,0]
+	shufps	$226, %xmm0, %xmm3      # xmm3 = xmm3[2,0],xmm0[2,3]
+	movaps	%xmm4, %xmm0
+	shufps	$34, %xmm6, %xmm0       # xmm0 = xmm0[2,0],xmm6[2,0]
+	movaps	%xmm9, %xmm2
+	unpckhps	%xmm7, %xmm2    # xmm2 = xmm2[2],xmm7[2],xmm2[3],xmm7[3]
+	shufps	$36, %xmm0, %xmm2       # xmm2 = xmm2[0,1],xmm0[2,0]
+	movaps	%xmm6, %xmm0
+	unpcklps	%xmm4, %xmm0    # xmm0 = xmm0[0],xmm4[0],xmm0[1],xmm4[1]
+	movaps	%xmm7, %xmm13
+	shufps	$17, %xmm9, %xmm13      # xmm13 = xmm13[1,0],xmm9[1,0]
+	shufps	$226, %xmm0, %xmm13     # xmm13 = xmm13[2,0],xmm0[2,3]
+	shufps	$0, %xmm6, %xmm4        # xmm4 = xmm4[0,0],xmm6[0,0]
+	movaps	-288(%rbp), %xmm6       # 16-byte Reload
+	movaps	-304(%rbp), %xmm1       # 16-byte Reload
+	unpcklps	%xmm7, %xmm9    # xmm9 = xmm9[0],xmm7[0],xmm9[1],xmm7[1]
+	shufps	$36, %xmm4, %xmm9       # xmm9 = xmm9[0,1],xmm4[2,0]
+	addq	$1, %r13
+	addq	$6144, %rbx             # imm = 0x1800
+	cmpq	$64, %r13
+	jne	.LBB2_5
+# %bb.6:                                # %polly.loop_exit34
+                                        #   in Loop: Header=BB2_4 Depth=4
+	movups	%xmm8, (%r8)
+	movaps	-144(%rbp), %xmm0       # 16-byte Reload
+	movups	%xmm0, 16(%r8)
+	movups	%xmm6, 32(%r8)
+	movups	%xmm1, 48(%r8)
+	movaps	-112(%rbp), %xmm0       # 16-byte Reload
+	movups	%xmm0, 48(%r15)
+	movaps	-96(%rbp), %xmm0        # 16-byte Reload
+	movups	%xmm0, 32(%r15)
+	movaps	-64(%rbp), %xmm0        # 16-byte Reload
+	movups	%xmm0, 16(%r15)
+	movups	%xmm15, (%r15)
+	movaps	-128(%rbp), %xmm0       # 16-byte Reload
+	movups	%xmm0, 48(%r10)
+	movaps	-160(%rbp), %xmm0       # 16-byte Reload
+	movups	%xmm0, 16(%r10)
+	movups	%xmm11, (%r10)
+	movups	%xmm12, 32(%r10)
+	movups	%xmm3, 48(%r11)
+	movups	%xmm13, 16(%r11)
+	movups	%xmm9, (%r11)
+	movups	%xmm2, 32(%r11)
+	addq	$1, %r14
+	addq	$6144, %r12             # imm = 0x1800
+	cmpq	-80(%rbp), %r14         # 8-byte Folded Reload
+	jne	.LBB2_4
+# %bb.7:                                # %polly.loop_exit28
+                                        #   in Loop: Header=BB2_3 Depth=3
+	movq	-192(%rbp), %rax        # 8-byte Reload
+	addq	$64, %rax
+	addq	$393216, %r9            # imm = 0x60000
+	movq	-200(%rbp), %r12        # 8-byte Reload
+	addq	$256, %r12              # imm = 0x100
+	cmpq	$1536, %rax             # imm = 0x600
+	jb	.LBB2_3
+# %bb.8:                                # %polly.loop_exit22
+                                        #   in Loop: Header=BB2_2 Depth=2
+	movq	-168(%rbp), %rax        # 8-byte Reload
+	addq	$64, %rax
+	movq	-176(%rbp), %rdi        # 8-byte Reload
+	addq	$1, %rdi
+	movq	-184(%rbp), %r9         # 8-byte Reload
+	addq	$256, %r9               # imm = 0x100
+	cmpq	$1536, %rax             # imm = 0x600
+	jb	.LBB2_2
+# %bb.9:                                # %polly.loop_exit16
+                                        #   in Loop: Header=BB2_1 Depth=1
+	movq	-48(%rbp), %rax         # 8-byte Reload
+	movq	%rax, %rcx
+	addq	$64, %rcx
+	addq	$64, -80(%rbp)          # 8-byte Folded Spill
+	addq	$393216, -72(%rbp)      # 8-byte Folded Spill
+                                        # imm = 0x60000
+	movq	%rcx, %rax
+	movq	%rcx, -48(%rbp)         # 8-byte Spill
+	cmpq	$1536, %rcx             # imm = 0x600
+	jb	.LBB2_1
+# %bb.10:                               # %polly.exiting
+	xorl	%eax, %eax
+	addq	$264, %rsp              # imm = 0x108
+	popq	%rbx
+	popq	%r12
+	popq	%r13
+	popq	%r14
+	popq	%r15
+	popq	%rbp
+	.cfi_def_cfa %rsp, 8
+	retq
+.Lfunc_end2:
+	.size	main, .Lfunc_end2-main
+	.cfi_endproc
+                                        # -- End function
 	.type	A,@object               # @A
 	.comm	A,9437184,16
 	.type	B,@object               # @B
@@ -387,10 +647,11 @@ main:                                   # @main
 	.type	.L.str,@object          # @.str
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str:
-	.asciz	 "%lf "
+	.asciz	"%lf "
 	.size	.L.str, 5
 
 	.type	C,@object               # @C
 	.comm	C,9437184,16
 
+	.ident	"clang version 8.0.0 (trunk 342834) (llvm/trunk 342856)"
 	.section	".note.GNU-stack","",@progbits
