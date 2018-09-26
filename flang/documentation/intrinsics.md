@@ -64,8 +64,10 @@ procedure.
 An `INTRINSIC` statement or attribute may have to be applied to an
 unrestricted specific name to enable such usage.
 
-In such usage, the instance of the function that accepts and returns
-values of the default kinds of the intrinsic types is used.
+When a name is being used as a specific procedure for any purpose other
+than that of a called function, the specific instance of the function
+that accepts and returns values of the default kinds of the intrinsic
+types is used.
 A Fortran `INTERFACE` could be written to define each of
 these unrestricted specific intrinsic function names.
 
@@ -73,7 +75,14 @@ Calls to dummy arguments and procedure pointers that correspond to these
 specific names must pass only scalar actual argument values.
 
 No other intrinsic function name can be passed as an actual argument,
-used as a pointer target, or appear in a generic interface.
+used as a pointer target, appear in a generic interface, or be otherwise
+used except as the name of a called function.
+Some of these _restricted specific intrinsic functions_, e.g. `FLOAT`,
+provide a means for invoking a corresponding generic (`REAL` in the case of `FLOAT`)
+with forced argument and result kinds.
+Others, viz. `CHAR`, `ICHAR`, `INT`, `REAL`, and the lexical comparisons like `LGE`,
+have the same name as their generic functions, and it is not clear what purpose
+is accomplished by the standard by defining them as specific functions.
 
 ### Trigonometric elemental intrinsic functions, generic and (mostly) specific
 All of these functions can be used as unrestricted specific names.
