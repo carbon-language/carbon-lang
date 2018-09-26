@@ -2148,8 +2148,7 @@ typedef struct kmp_taskgroup {
   std::atomic<kmp_int32>
       cancel_request; // request for cancellation of this taskgroup
   struct kmp_taskgroup *parent; // parent taskgroup
-// TODO: change to OMP_50_ENABLED, need to change build tools for this to work
-#if OMP_45_ENABLED
+#if OMP_50_ENABLED
   // Block of data to perform task reduction
   void *reduce_data; // reduction related info
   kmp_int32 reduce_num_data; // number of data items to reduce
@@ -3769,8 +3768,7 @@ KMP_EXPORT void __kmpc_taskloop(ident_t *loc, kmp_int32 gtid, kmp_task_t *task,
                                 kmp_int32 sched, kmp_uint64 grainsize,
                                 void *task_dup);
 #endif
-// TODO: change to OMP_50_ENABLED, need to change build tools for this to work
-#if OMP_45_ENABLED
+#if OMP_50_ENABLED
 KMP_EXPORT void *__kmpc_task_reduction_init(int gtid, int num_data, void *data);
 KMP_EXPORT void *__kmpc_task_reduction_get_th_data(int gtid, void *tg, void *d);
 #endif

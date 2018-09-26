@@ -1855,8 +1855,7 @@ kmp_int32 __kmpc_omp_taskyield(ident_t *loc_ref, kmp_int32 gtid, int end_part) {
   return TASK_CURRENT_NOT_QUEUED;
 }
 
-// TODO: change to OMP_50_ENABLED, need to change build tools for this to work
-#if OMP_45_ENABLED
+#if OMP_50_ENABLED
 // Task Reduction implementation
 
 typedef struct kmp_task_red_flags {
@@ -2059,8 +2058,7 @@ void __kmpc_taskgroup(ident_t *loc, int gtid) {
   KMP_ATOMIC_ST_RLX(&tg_new->count, 0);
   KMP_ATOMIC_ST_RLX(&tg_new->cancel_request, cancel_noreq);
   tg_new->parent = taskdata->td_taskgroup;
-// TODO: change to OMP_50_ENABLED, need to change build tools for this to work
-#if OMP_45_ENABLED
+#if OMP_50_ENABLED
   tg_new->reduce_data = NULL;
   tg_new->reduce_num_data = 0;
 #endif
@@ -2165,8 +2163,7 @@ void __kmpc_end_taskgroup(ident_t *loc, int gtid) {
   }
   KMP_DEBUG_ASSERT(taskgroup->count == 0);
 
-// TODO: change to OMP_50_ENABLED, need to change build tools for this to work
-#if OMP_45_ENABLED
+#if OMP_50_ENABLED
   if (taskgroup->reduce_data != NULL) // need to reduce?
     __kmp_task_reduction_fini(thread, taskgroup);
 #endif
