@@ -153,9 +153,7 @@ Expected<std::unique_ptr<LLLazyJIT>>
 
   auto CCMgr = createLocalCompileCallbackManager(TT, *ES, 0);
   if (!CCMgr)
-    return make_error<StringError>(
-        std::string("No callback manager available for ") + TT.str(),
-        inconvertibleErrorCode());
+    return CCMgr.takeError();
 
   auto ISMBuilder = createLocalIndirectStubsManagerBuilder(TT);
   if (!ISMBuilder)
@@ -168,13 +166,13 @@ Expected<std::unique_ptr<LLLazyJIT>>
     if (!TM)
       return TM.takeError();
     return std::unique_ptr<LLLazyJIT>(
-      new LLLazyJIT(std::move(ES), std::move(*TM), std::move(DL),
-                    std::move(CCMgr), std::move(ISMBuilder)));
+        new LLLazyJIT(std::move(ES), std::move(*TM), std::move(DL),
+                      std::move(*CCMgr), std::move(ISMBuilder)));
   }
 
-  return std::unique_ptr<LLLazyJIT>(
-      new LLLazyJIT(std::move(ES), std::move(JTMB), std::move(DL),
-                    NumCompileThreads, std::move(CCMgr), std::move(ISMBuilder)));
+  return std::unique_ptr<LLLazyJIT>(new LLLazyJIT(
+      std::move(ES), std::move(JTMB), std::move(DL), NumCompileThreads,
+      std::move(*CCMgr), std::move(ISMBuilder)));
 }
 
 Error LLLazyJIT::addLazyIRModule(JITDylib &JD, ThreadSafeModule TSM) {
