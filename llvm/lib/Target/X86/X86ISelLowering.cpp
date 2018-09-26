@@ -23931,6 +23931,30 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     }
   }
 
+  // Constant ISD::SRA can be performed efficiently on vXi16 vectors as we
+  // can replace with ISD::MULHS, creating scale factor from (NumEltBits - Amt).
+  // TODO: Special case handling for shift by 0/1, really we can afford either
+  // of these cases in pre-SSE41/XOP/AVX512 but not both.
+  if (Opc == ISD::SRA && ConstantAmt &&
+      (VT == MVT::v8i16 || (VT == MVT::v16i16 && Subtarget.hasInt256())) &&
+      ((Subtarget.hasSSE41() && !Subtarget.hasXOP() &&
+        !Subtarget.hasAVX512()) ||
+       DAG.isKnownNeverZero(Amt))) {
+    SDValue EltBits = DAG.getConstant(EltSizeInBits, dl, VT);
+    SDValue RAmt = DAG.getNode(ISD::SUB, dl, VT, EltBits, Amt);
+    if (SDValue Scale = convertShiftLeftToScale(RAmt, dl, Subtarget, DAG)) {
+      SDValue Amt0 =
+          DAG.getSetCC(dl, VT, Amt, DAG.getConstant(0, dl, VT), ISD::SETEQ);
+      SDValue Amt1 =
+          DAG.getSetCC(dl, VT, Amt, DAG.getConstant(1, dl, VT), ISD::SETEQ);
+      SDValue Sra1 =
+          getTargetVShiftByConstNode(X86ISD::VSRAI, dl, VT, R, 1, DAG);
+      SDValue Res = DAG.getNode(ISD::MULHS, dl, VT, R, Scale);
+      Res = DAG.getSelect(dl, VT, Amt0, R, Res);
+      return DAG.getSelect(dl, VT, Amt1, Sra1, Res);
+    }
+  }
+
   // v4i32 Non Uniform Shifts.
   // If the shift amount is constant we can shift each lane using the SSE2
   // immediate shifts, else we need to zero-extend each lane to the lower i64
