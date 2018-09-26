@@ -4401,7 +4401,7 @@ multiclass FPConversion<string asm> {
 //---
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
-class BaseSingleOperandFPData<bits<4> opcode, RegisterClass regtype,
+class BaseSingleOperandFPData<bits<6> opcode, RegisterClass regtype,
                               ValueType vt, string asm, SDPatternOperator node>
     : I<(outs regtype:$Rd), (ins regtype:$Rn), asm, "\t$Rd, $Rn", "",
          [(set (vt regtype:$Rd), (node (vt regtype:$Rn)))]>,
@@ -4409,8 +4409,8 @@ class BaseSingleOperandFPData<bits<4> opcode, RegisterClass regtype,
   bits<5> Rd;
   bits<5> Rn;
   let Inst{31-24} = 0b00011110;
-  let Inst{21-19} = 0b100;
-  let Inst{18-15} = opcode;
+  let Inst{21}    = 0b1;
+  let Inst{20-15} = opcode;
   let Inst{14-10} = 0b10000;
   let Inst{9-5}   = Rn;
   let Inst{4-0}   = Rd;
@@ -4418,16 +4418,17 @@ class BaseSingleOperandFPData<bits<4> opcode, RegisterClass regtype,
 
 multiclass SingleOperandFPData<bits<4> opcode, string asm,
                                SDPatternOperator node = null_frag> {
-  def Hr : BaseSingleOperandFPData<opcode, FPR16, f16, asm, node> {
+
+  def Hr : BaseSingleOperandFPData<{0b00,opcode}, FPR16, f16, asm, node> {
     let Inst{23-22} = 0b11; // 16-bit size flag
     let Predicates = [HasFullFP16];
   }
 
-  def Sr : BaseSingleOperandFPData<opcode, FPR32, f32, asm, node> {
+  def Sr : BaseSingleOperandFPData<{0b00,opcode}, FPR32, f32, asm, node> {
     let Inst{23-22} = 0b00; // 32-bit size flag
   }
 
-  def Dr : BaseSingleOperandFPData<opcode, FPR64, f64, asm, node> {
+  def Dr : BaseSingleOperandFPData<{0b00,opcode}, FPR64, f64, asm, node> {
     let Inst{23-22} = 0b01; // 64-bit size flag
   }
 }
