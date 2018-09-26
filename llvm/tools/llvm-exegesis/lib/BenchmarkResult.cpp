@@ -164,9 +164,10 @@ template <> struct SequenceElementTraits<exegesis::BenchmarkMeasure> {
 // e.g. { "key": "the key", "value": 0123 }
 template <> struct MappingTraits<exegesis::BenchmarkMeasure> {
   static void mapping(IO &Io, exegesis::BenchmarkMeasure &Obj) {
-    Io.mapRequired("key", Obj.Key);
-    Io.mapRequired("value", Obj.Value);
     Io.mapOptional("debug_string", Obj.DebugString);
+    Io.mapRequired("value", Obj.PerInstructionValue);
+    Io.mapOptional("per_snippet_value", Obj.PerSnippetValue);
+    Io.mapRequired("key", Obj.Key);
   }
   static const bool flow = true;
 };
@@ -345,14 +346,14 @@ llvm::Error InstructionBenchmark::writeYaml(const LLVMState &State,
   return llvm::Error::success();
 }
 
-void BenchmarkMeasureStats::push(const BenchmarkMeasure &BM) {
+void PerInstructionStats::push(const BenchmarkMeasure &BM) {
   if (Key.empty())
     Key = BM.Key;
   assert(Key == BM.Key);
   ++NumValues;
-  SumValues += BM.Value;
-  MaxValue = std::max(MaxValue, BM.Value);
-  MinValue = std::min(MinValue, BM.Value);
+  SumValues += BM.PerInstructionValue;
+  MaxValue = std::max(MaxValue, BM.PerInstructionValue);
+  MinValue = std::min(MinValue, BM.PerInstructionValue);
 }
 
 } // namespace exegesis

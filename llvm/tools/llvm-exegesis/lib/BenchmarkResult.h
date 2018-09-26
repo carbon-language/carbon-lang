@@ -42,7 +42,12 @@ struct InstructionBenchmarkKey {
 
 struct BenchmarkMeasure {
   std::string Key;
-  double Value;
+  // This is the per-instruction value, i.e. measured quantity scaled per
+  // instruction.
+  double PerInstructionValue;
+  // This is the per-snippet value, i.e. measured quantity for one repetition of
+  // the whole snippet.
+  double PerSnippetValue;
   std::string DebugString;
 };
 
@@ -81,7 +86,7 @@ struct InstructionBenchmark {
 // Utilities to work with Benchmark measures.
 
 // A class that measures stats over benchmark measures.
-class BenchmarkMeasureStats {
+class PerInstructionStats {
 public:
   void push(const BenchmarkMeasure &BM);
 
