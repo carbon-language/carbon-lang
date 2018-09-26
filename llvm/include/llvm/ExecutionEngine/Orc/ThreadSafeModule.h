@@ -16,7 +16,6 @@
 
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Compiler.h"
 
 #include <functional>
 #include <memory>
@@ -41,7 +40,7 @@ private:
 public:
 
   // RAII based lock for ThreadSafeContext.
-  class LLVM_NODISCARD Lock {
+  class Lock {
   private:
     using UnderlyingLock = std::lock_guard<std::recursive_mutex>;
   public:
@@ -89,11 +88,13 @@ public:
   /// Construct a ThreadSafeModule from a unique_ptr<Module> and a
   /// unique_ptr<LLVMContext>. This creates a new ThreadSafeContext from the
   /// given context.
-  ThreadSafeModule(std::unique_ptr<Module> M, std::unique_ptr<LLVMContext> Ctx)
-      : TSCtx(std::move(Ctx)), M(std::move(M)) {}
+  ThreadSafeModule(std::unique_ptr<Module> M,
+                   std::unique_ptr<LLVMContext> Ctx)
+    : M(std::move(M)), TSCtx(std::move(Ctx)) {}
 
-  ThreadSafeModule(std::unique_ptr<Module> M, ThreadSafeContext TSCtx)
-      : TSCtx(std::move(TSCtx)), M(std::move(M)) {}
+  ThreadSafeModule(std::unique_ptr<Module> M,
+                   ThreadSafeContext TSCtx)
+    : M(std::move(M)), TSCtx(std::move(TSCtx)) {}
 
   Module* getModule() { return M.get(); }
 
@@ -108,8 +109,8 @@ public:
   }
 
 private:
-  ThreadSafeContext TSCtx;
   std::unique_ptr<Module> M;
+  ThreadSafeContext TSCtx;
 };
 
 using GVPredicate = std::function<bool(const GlobalValue&)>;
