@@ -248,10 +248,7 @@ void Analysis::printSchedClassClustersHtml(
   for (const auto &Measurement :
        Points[Clusters[0].getPointIds()[0]].Measurements) {
     OS << "<th>";
-    if (Measurement.DebugString.empty())
-      writeEscaped<kEscapeHtml>(OS, Measurement.Key);
-    else
-      writeEscaped<kEscapeHtml>(OS, Measurement.DebugString);
+    writeEscaped<kEscapeHtml>(OS, Measurement.Key);
     OS << "</th>";
   }
   OS << "</tr>";
