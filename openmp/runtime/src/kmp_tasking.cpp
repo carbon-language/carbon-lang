@@ -16,6 +16,7 @@
 #include "kmp_itt.h"
 #include "kmp_stats.h"
 #include "kmp_wait_release.h"
+#include "kmp_taskdeps.h"
 
 #if OMPT_SUPPORT
 #include "ompt-specific.h"
@@ -764,15 +765,14 @@ static void __kmp_task_finish(kmp_int32 gtid, kmp_task_t *task,
 #if OMP_40_ENABLED
     if (taskdata->td_taskgroup)
       KMP_ATOMIC_DEC(&taskdata->td_taskgroup->count);
-#if OMP_45_ENABLED
-  }
-  // if we found proxy tasks there could exist a dependency chain
-  // with the proxy task as origin
-  if (!(taskdata->td_flags.team_serial || taskdata->td_flags.tasking_ser) ||
-      (task_team && task_team->tt.tt_found_proxy_tasks)) {
-#endif
     __kmp_release_deps(gtid, taskdata);
-#endif
+#if OMP_45_ENABLED
+  } else if (task_team && task_team->tt.tt_found_proxy_tasks) {
+    // if we found proxy tasks there could exist a dependency chain
+    // with the proxy task as origin
+    __kmp_release_deps(gtid, taskdata);
+#endif // OMP_45_ENABLED
+#endif // OMP_40_ENABLED
   }
 
   // td_flags.executing must be marked as 0 after __kmp_release_deps has been

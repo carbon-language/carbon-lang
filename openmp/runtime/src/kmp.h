@@ -3748,9 +3748,6 @@ KMP_EXPORT void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid,
                                      kmp_depend_info_t *dep_list,
                                      kmp_int32 ndeps_noalias,
                                      kmp_depend_info_t *noalias_dep_list);
-extern void __kmp_release_deps(kmp_int32 gtid, kmp_taskdata_t *task);
-extern void __kmp_dephash_free_entries(kmp_info_t *thread, kmp_dephash_t *h);
-extern void __kmp_dephash_free(kmp_info_t *thread, kmp_dephash_t *h);
 
 extern kmp_int32 __kmp_omp_task(kmp_int32 gtid, kmp_task_t *new_task,
                                 bool serialize_immediate);
