@@ -1173,16 +1173,23 @@ def pstatefield4_op : Operand<i32> {
   let PrintMethod = "printSystemPStateField";
 }
 
+// Instructions to modify PSTATE, no input reg
 let Defs = [NZCV] in
+class PstateWriteSimple<dag iops, string asm, string operands>
+  : SimpleSystemI<0, iops, asm, operands> {
+
+  let Inst{20-19} = 0b00;
+  let Inst{15-12} = 0b0100;
+}
+
 class MSRpstateImm0_15
-  : SimpleSystemI<0, (ins pstatefield4_op:$pstatefield, imm0_15:$imm),
-                  "msr", "\t$pstatefield, $imm">,
+  : PstateWriteSimple<(ins pstatefield4_op:$pstatefield, imm0_15:$imm), "msr",
+                  "\t$pstatefield, $imm">,
     Sched<[WriteSys]> {
+
   bits<6> pstatefield;
   bits<4> imm;
-  let Inst{20-19} = 0b00;
   let Inst{18-16} = pstatefield{5-3};
-  let Inst{15-12} = 0b0100;
   let Inst{11-8} = imm;
   let Inst{7-5} = pstatefield{2-0};
 
@@ -1201,16 +1208,15 @@ def pstatefield1_op : Operand<i32> {
   let PrintMethod = "printSystemPStateField";
 }
 
-let Defs = [NZCV] in
 class MSRpstateImm0_1
-  : SimpleSystemI<0, (ins pstatefield1_op:$pstatefield, imm0_1:$imm),
-                  "msr", "\t$pstatefield, $imm">,
+  : PstateWriteSimple<(ins pstatefield1_op:$pstatefield, imm0_1:$imm), "msr",
+                 "\t$pstatefield, $imm">,
     Sched<[WriteSys]> {
+
   bits<6> pstatefield;
   bit imm;
-  let Inst{20-19} = 0b00;
   let Inst{18-16} = pstatefield{5-3};
-  let Inst{15-9} = 0b0100000;
+  let Inst{11-9} = 0b000;
   let Inst{8} = imm;
   let Inst{7-5} = pstatefield{2-0};
 
