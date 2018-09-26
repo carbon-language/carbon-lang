@@ -130,8 +130,7 @@ LatencyBenchmarkRunner::runMeasurements(const ExecutableFunction &Function,
     if (Value < MinLatency)
       MinLatency = Value;
   }
-  return {{"latency", static_cast<double>(MinLatency),
-           static_cast<double>(MinLatency), ""}};
+  return {BenchmarkMeasure::Create("latency", MinLatency)};
 }
 
 } // namespace exegesis
