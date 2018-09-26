@@ -711,7 +711,7 @@ private:
   LookupResultKind ResultKind = NotFound;
   // ill-defined unless ambiguous. Still need to be initialized it will be
   // copied/moved.
-  AmbiguityKind Ambiguity = {}; 
+  AmbiguityKind Ambiguity = {};
   UnresolvedSet<8> Decls;
   CXXBasePaths *Paths = nullptr;
   CXXRecordDecl *NamingClass = nullptr;
