@@ -39,6 +39,13 @@ Intrinsic modules are not covered here.
 1. All standard intrinsic functions are pure, even when not elemental.
 1. Assumed-rank arguments may not appear as actual arguments unless
    expressly permitted.
+1. When an argument is described with a default value, e.g. `KIND=KIND(0)`,
+   it is an optional argument.  Optional arguments without defaults,
+   e.g. `DIM` on many transformationals, are wrapped in `[]` brackets
+   as in the Fortran standard.  When an intrinsic has optional arguments
+   with and without default values, the arguments with default values
+   may appear within the brackets to preserve the order of arguments
+   (e.g., `COUNT`).
 
 # Elemental intrinsic functions
 
@@ -110,18 +117,18 @@ These functions *can* be used as unrestricted specific names.
 ```
 ABS(REAL(k) A) -> REAL(k) = SIGN(A, 0.0)
 AIMAG(COMPLEX(k) Z) -> REAL(k) = Z%IM
-AINT(REAL(k) A [, KIND=k ]) -> REAL(KIND)
-ANINT(REAL(k) A [, KIND=k ] -> REAL(KIND)
+AINT(REAL(k) A, KIND=k) -> REAL(KIND)
+ANINT(REAL(k) A, KIND=k) -> REAL(KIND)
 CONJG(COMPLEX(k) Z) -> COMPLEX(k) = CMPLX(Z%RE, -Z%IM)
 DIM(REAL(k) X, REAL(k) Y) -> REAL(k) = X-MIN(X,Y)
 DPROD(default REAL X, default REAL Y) -> DOUBLE PRECISION = DBLE(X)*DBLE(Y)
 EXP(REAL(k) X) -> REAL(k)
-INDEX(CHARACTER(k) STRING, CHARACTER(k) SUBSTRING [, LOGICAL(any) BACK, KIND=KIND(0) ]) -> INTEGER(KIND)
-LEN(CHARACTER(k,n) STRING [, KIND=KIND(0) ]) -> INTEGER(KIND) = n
+INDEX(CHARACTER(k) STRING, CHARACTER(k) SUBSTRING, LOGICAL(any) BACK=.FALSE., KIND=KIND(0)) -> INTEGER(KIND)
+LEN(CHARACTER(k,n) STRING, KIND=KIND(0)) -> INTEGER(KIND) = n
 LOG(REAL(k) X) -> REAL(k)
 LOG10(REAL(k) X) -> REAL(k)
 MOD(INTEGER(k) A, INTEGER(k) P) -> INTEGER(k) = A-P*INT(A/P)
-NINT(REAL(k) A [, KIND=KIND(0) ]) -> INTEGER(KIND)
+NINT(REAL(k) A, KIND=KIND(0)) -> INTEGER(KIND)
 SIGN(REAL(k) A, REAL(k) B) -> REAL(k)
 SQRT(REAL(k) X) -> REAL(k) = X ** 0.5
 ```
@@ -186,18 +193,18 @@ pointer targets, or appear as specific procedures in generic interfaces.)
 ### Elemental conversions
 
 ```
-ACHAR(INTEGER(k) I [, KIND=KIND('')]) -> CHARACTER(KIND,LEN=1)
-CEILING(REAL() A [, KIND=KIND(0)]) -> INTEGER(KIND)
-CHAR(INTEGER(any) I [, KIND=KIND('')]) -> CHARACTER(KIND,LEN=1)
-CMPLX(COMPLEX(k) X [, KIND=KIND(0.0D0)]) -> COMPLEX(KIND)
-CMPLX(INTEGER or REAL or BOZ X [, INTEGER or REAL or BOZ Y, KIND=KIND((0,0)) ]) -> COMPLEX(KIND)
+ACHAR(INTEGER(k) I, KIND=KIND('')) -> CHARACTER(KIND,LEN=1)
+CEILING(REAL() A, KIND=KIND(0)) -> INTEGER(KIND)
+CHAR(INTEGER(any) I, KIND=KIND('')) -> CHARACTER(KIND,LEN=1)
+CMPLX(COMPLEX(k) X, KIND=KIND(0.0D0)) -> COMPLEX(KIND)
+CMPLX(INTEGER or REAL or BOZ X, INTEGER or REAL or BOZ Y=0, KIND=KIND((0,0))) -> COMPLEX(KIND)
 EXPONENT(REAL(any) X) -> default INTEGER
-FLOOR(REAL(any) A [, KIND=KIND(0)]) -> INTEGER(KIND)
-IACHAR(CHARACTER(KIND=k,LEN=1) C [, KIND=KIND(0)]) -> INTEGER(KIND)
-ICHAR(CHARACTER(KIND=k,LEN=1) C [, KIND=KIND(0)]) -> INTEGER(KIND)
-INT(INTEGER or REAL or COMPLEX or BOZ A [, KIND=KIND(0) ]) -> INTEGER(KIND)
-LOGICAL(LOGICAL(any) L [, KIND=KIND(.TRUE.) ]) -> LOGICAL(KIND)
-REAL(INTEGER or REAL or COMPLEX or BOZ A [, KIND=KIND(0.0) ]) -> REAL(KIND)
+FLOOR(REAL(any) A, KIND=KIND(0)) -> INTEGER(KIND)
+IACHAR(CHARACTER(KIND=k,LEN=1) C, KIND=KIND(0)) -> INTEGER(KIND)
+ICHAR(CHARACTER(KIND=k,LEN=1) C, KIND=KIND(0)) -> INTEGER(KIND)
+INT(INTEGER or REAL or COMPLEX or BOZ A, KIND=KIND(0)) -> INTEGER(KIND)
+LOGICAL(LOGICAL(any) L, KIND=KIND(.TRUE.)) -> LOGICAL(KIND)
+REAL(INTEGER or REAL or COMPLEX or BOZ A, KIND=KIND(0.0)) -> REAL(KIND)
 ```
 
 ### Other generic elemental intrinsic functions without specific names
@@ -231,7 +238,9 @@ MIN(CHARACTER(KIND=k) ...) -> CHARACTER(KIND=k,LEN=MAX(LEN(...)))
 MODULO(INTEGER(k) A, INTEGER(k) P) -> INTEGER(k); P*result >= 0
 MODULO(REAL(k) A, REAL(k) P) -> REAL(k) = A - P*FLOOR(A/P)
 NEAREST(REAL(k) X, REAL(any) S) -> REAL(k)
-OUT_OF_RANGE(INTEGER or REAL(any) X, scalar INTEGER or REAL(k) MOLD [, scalar LOGICAL(any) ROUND ]) -> default LOGICAL
+OUT_OF_RANGE(INTEGER(any) X, scalar INTEGER or REAL(k) MOLD) -> default LOGICAL
+OUT_OF_RANGE(REAL(any) X, scalar REAL(k) MOLD) -> default LOGICAL
+OUT_OF_RANGE(REAL(any) X, scalar INTEGER(any) MOLD, scalar LOGICAL(any) ROUND=.FALSE.) -> default LOGICAL
 RRSPACING(REAL(k) X) -> REAL(k)
 SCALE(REAL(k) X, INTEGER(any) I) -> REAL(k)
 SET_EXPONENT(REAL(k) X, INTEGER(any) I) -> REAL(k)
@@ -259,6 +268,16 @@ SNGL(DOUBLE PRECISION A) = REAL(A)
 ```
 
 ### Generic elemental bit manipulation intrinsic functions
+Many of these accept a typeless "BOZ" literal as an actual argument.
+It is interpreted as having the kind of intrinsic `INTEGER` type
+as another argument, as if the typeless were implicitly wrapped
+in a call to `INT()`.
+When multiple arguments can be either `INTEGER` values or typeless
+constants, it is forbidden for *all* of them to be typeless
+constants if the result of the function is `INTEGER`
+(i.e., only `BGE`, `BGT`, `BLE`, and `BLT` can have multiple
+typeless arguments).
+
 ```
 BGE(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
 BGT(INTEGER(n1) or BOZ I, INTEGER(n2) or BOZ J) -> default LOGICAL
@@ -279,10 +298,10 @@ IEOR(BOZ I, INTEGER(k) J) -> INTEGER(k)
 IOR(INTEGER(k) I, INTEGER(k) or BOZ J) -> INTEGER(k)
 IOR(BOZ I, INTEGER(k) J) -> INTEGER(k)
 ISHFT(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
-ISHFTC(INTEGER(k) I, INTEGER(n1) SHIFT [, INTEGER(n2) SIZE = BIT_SIZE(I) ]) -> INTEGER(k)
+ISHFTC(INTEGER(k) I, INTEGER(n1) SHIFT, INTEGER(n2) SIZE=BIT_SIZE(I)) -> INTEGER(k)
 LEADZ(INTEGER(any) I) -> default INTEGER
-MASKL(INTEGER(any) I [, KIND=KIND(0) ]) -> INTEGER(KIND)
-MASKR(INTEGER(any) I [, KIND=KIND(0) ]) -> INTEGER(KIND)
+MASKL(INTEGER(any) I, KIND=KIND(0)) -> INTEGER(KIND)
+MASKR(INTEGER(any) I, KIND=KIND(0)) -> INTEGER(KIND)
 MERGE_BITS(INTEGER(k) I, INTEGER(k) or BOZ J, INTEGER(k) or BOZ MASK) = IOR(IAND(I,MASK),IAND(J,NOT(MASK)))
 MERGE_BITS(BOZ I, INTEGER(k) J, INTEGER(k) or BOZ MASK) = IOR(IAND(I,MASK),IAND(J,NOT(MASK)))
 NOT(INTEGER(k) I) -> INTEGER(k)
@@ -294,28 +313,25 @@ SHIFTR(INTEGER(k) I, INTEGER(any) SHIFT) -> INTEGER(k)
 TRAILZ(INTEGER(any) I) -> default INTEGER
 ```
 
-Any typeless "BOZ" argument to `MERGE_BITS` is converted to `INTEGER(k)`.  Note that at most one
-of its first two arguments can be a typeless "BOZ" literal.
-
 ### Character elemental intrinsic functions
 See also `INDEX` and `LEN` above among the elemental intrinsic functions with
 unrestricted specific names.
 ```
 ADJUSTL(CHARACTER(k,LEN=n) STRING) -> CHARACTER(k,LEN=n)
 ADJUSTR(CHARACTER(k,LEN=n) STRING) -> CHARACTER(k,LEN=n)
-LEN_TRIM(CHARACTER(k,n) STRING [, KIND=KIND(0) ]) -> INTEGER(KIND) = n
+LEN_TRIM(CHARACTER(k,n) STRING, KIND=KIND(0)) -> INTEGER(KIND) = n
 LGE(CHARACTER(k,n1) STRING_A, CHARACTER(k,n2) STRING_B) -> default LOGICAL
 LGT(CHARACTER(k,n1) STRING_A, CHARACTER(k,n2) STRING_B) -> default LOGICAL
 LLE(CHARACTER(k,n1) STRING_A, CHARACTER(k,n2) STRING_B) -> default LOGICAL
 LLT(CHARACTER(k,n1) STRING_A, CHARACTER(k,n2) STRING_B) -> default LOGICAL
-SCAN(CHARACTER(k,n) STRING, CHARACTER(k,m) SET [, LOGICAL(any) BACK, KIND ]) -> INTEGER(KIND)
-VERIFY(CHARACTER(k,n) STRING, CHARACTER(k,m) SET [, LOGICAL(any) BACK, KIND ]) -> INTEGER(KIND)
+SCAN(CHARACTER(k,n) STRING, CHARACTER(k,m) SET, LOGICAL(any) BACK=.FALSE., KIND=KIND(0)) -> INTEGER(KIND)
+VERIFY(CHARACTER(k,n) STRING, CHARACTER(k,m) SET, LOGICAL(any) BACK=.FALSE., KIND=KIND(0)) -> INTEGER(KIND)
 ```
 
 `SCAN` returns the index of the first (or last, if `BACK=.TRUE.`) character in `STRING`
 that is present in `SET`, or zero if none is.
 
-`VERIFY` is the opposite, and returns the index of the first (or last) character
+`VERIFY` is essentially the opposite: it returns the index of the first (or last) character
 in `STRING` that is *not* present in `SET`, or zero if all are.
 
 # Transformational intrinsic functions
@@ -383,9 +399,9 @@ must a scalar value of a type for which `ARRAY==VALUE` or `ARRAY .EQV. VALUE`
 is an acceptable expression.
 
 ```
-FINDLOC(intrinsic ARRAY(..), scalar VALUE [, DIM, MASK, KIND=KIND(0), BACK ])
-MAXLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), BACK ])
-MINLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), BACK ])
+FINDLOC(intrinsic ARRAY(..), scalar VALUE [, DIM, MASK, KIND=KIND(0), BACK=.FALSE. ])
+MAXLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), BACK=.FALSE. ])
+MINLOC(relational ARRAY(..) [, DIM, MASK, KIND=KIND(0), BACK=.FALSE. ])
 ```
 
 ## Data rearrangement transformational intrinsic functions
@@ -431,8 +447,8 @@ RESHAPE(any SOURCE(..), INTEGER(k) SHAPE(n) [, PAD(..), INTEGER(k2) ORDER(n) ]) 
 
 ```
 SPREAD(any SOURCE, DIM, scalar INTEGER(any) NCOPIES) -> same type as SOURCE, rank=RANK(SOURCE)+1
-TRANSFORM(any SOURCE, any MOLD) -> scalar if MOLD is scalar, else vector; same type and kind as MOLD
-TRANSFORM(any SOURCE, any MOLD, scalar INTEGER(any) SIZE) -> vector(SIZE) of type and kind of MOLD
+TRANSFER(any SOURCE, any MOLD) -> scalar if MOLD is scalar, else vector; same type and kind as MOLD
+TRANSFER(any SOURCE, any MOLD, scalar INTEGER(any) SIZE) -> vector(SIZE) of type and kind of MOLD
 TRANSPOSE(any MATRIX(n,m)) -> matrix(m,n) of same type and kind as MATRIX
 ```
 
@@ -459,12 +475,12 @@ MATMUL(LOGICAL(n1) ARRAY_A(j), LOGICAL(n2) ARRAY_B(j,k)) -> LOGICAL vector(k)
 MATMUL(LOGICAL(n1) ARRAY_A(j,k), LOGICAL(n2) ARRAY_B(k)) -> LOGICAL vector(j)
 MATMUL(LOGICAL(n1) ARRAY_A(j,k), LOGICAL(n2) ARRAY_B(k,m)) -> LOGICAL matrix(j,m)
 NULL([POINTER/ALLOCATABLE MOLD]) -> POINTER
-REDUCE(any ARRAY(..), function OPERATION [, DIM, LOGICAL(any) MASK(..), IDENTITY, LOGICAL ORDERED ])
+REDUCE(any ARRAY(..), function OPERATION [, DIM, LOGICAL(any) MASK(..), IDENTITY, LOGICAL ORDERED=.FALSE. ])
 REPEAT(CHARACTER(k,n) STRING, INTEGER(any) NCOPIES) -> CHARACTER(k,n*NCOPIES)
 SELECTED_CHAR_KIND('DEFAULT' or 'ASCII' or 'ISO_10646' or ...) -> scalar default INTEGER
 SELECTED_INT_KIND(scalar INTEGER(any) R) -> scalar default INTEGER
 SELECTED_REAL_KIND([scalar INTEGER(any) P, scalar INTEGER(any) R, scalar INTEGER(any) RADIX]) -> scalar default INTEGER
-SHAPE(SOURCE [, KIND=KIND(0) ]) -> INTEGER(KIND)(RANK(SOURCE))
+SHAPE(SOURCE, KIND=KIND(0)) -> INTEGER(KIND)(RANK(SOURCE))
 TRIM(CHARACTER(k,n) STRING) -> CHARACTER(k)
 ```
 
@@ -540,13 +556,13 @@ Assumed-rank arrays may be used with `LBOUND`, `SIZE`, and `UBOUND`.
 ALLOCATED(any type ALLOCATABLE ARRAY) -> scalar default LOGICAL
 ALLOCATED(any type ALLOCATABLE SCALAR) -> scalar default LOGICAL
 ASSOCIATED(any type POINTER POINTER [, same type TARGET]) -> scalar default LOGICAL
-COSHAPE(COARRAY [, KIND=KIND(0) ]) -> INTEGER(KIND) vector of length corank(COARRAY)
+COSHAPE(COARRAY, KIND=KIND(0)) -> INTEGER(KIND) vector of length corank(COARRAY)
 EXTENDS_TYPE_OF(A, MOLD) -> default LOGICAL
 IS_CONTIGUOUS(any data ARRAY(..)) -> scalar default LOGICAL
 PRESENT(OPTIONAL A) -> scalar default LOGICAL
 RANK(any data A) -> scalar default INTEGER = 0 if A is scalar, SIZE(SHAPE(A)) if A is an array, rank if assumed-rank
 SAME_TYPE_AS(A, B) -> scalar default LOGICAL
-STORAGE_SIZE(any data A [, KIND=KIND(0) ]) -> INTEGER(KIND)
+STORAGE_SIZE(any data A, KIND=KIND(0)) -> INTEGER(KIND)
 ```
 The arguments to `EXTENDS_TYPE_OF` must be of extensible derived types or be unlimited polymorphic.
 
