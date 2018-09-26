@@ -33967,25 +33967,9 @@ static bool canReduceVMulWidth(SDNode *N, SelectionDAG &DAG, ShrinkMode &Mode) {
       else
         return false;
       IsPositive[i] = true;
-    } else if (Opd.getOpcode() == ISD::BUILD_VECTOR) {
-      // All the operands of BUILD_VECTOR need to be int constant.
-      // Find the smallest value range which all the operands belong to.
-      SignBits[i] = 32;
-      IsPositive[i] = true;
-      for (const SDValue &SubOp : Opd.getNode()->op_values()) {
-        if (SubOp.isUndef())
-          continue;
-        auto *CN = dyn_cast<ConstantSDNode>(SubOp);
-        if (!CN)
-          return false;
-        APInt IntVal = CN->getAPIntValue();
-        if (IntVal.isNegative())
-          IsPositive[i] = false;
-        SignBits[i] = std::min(SignBits[i], IntVal.getNumSignBits());
-      }
     } else {
       SignBits[i] = DAG.ComputeNumSignBits(Opd);
-      if (Opd.getOpcode() == ISD::ZERO_EXTEND)
+      if (DAG.SignBitIsZero(Opd))
         IsPositive[i] = true;
     }
   }
