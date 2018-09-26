@@ -97,6 +97,17 @@ namespace {
                                            "orc-lazy",
                                            "Orc-based lazy JIT.")));
 
+  cl::opt<unsigned>
+  LazyJITCompileThreads("compile-threads",
+                        cl::desc("Choose the number of compile threads "
+                                 "(jit-kind=orc-lazy only)"),
+                        cl::init(0));
+
+  cl::list<std::string>
+  ThreadEntryPoints("thread-entry",
+                    cl::desc("calls the given entry-point on a new thread "
+                             "(jit-kind=orc-lazy only)"));
+
   // The MCJIT supports building for a target address space separate from
   // the JIT compilation process. Use a forked process and a copying
   // memory manager with IPC to execute using this functionality.
@@ -363,6 +374,19 @@ int main(int argc, char **argv, char * const *envp) {
 
   if (UseJITKind == JITKind::OrcLazy)
     return runOrcLazyJIT(argv[0]);
+  else {
+    // Make sure nobody used an orc-lazy specific option accidentally.
+
+    if (LazyJITCompileThreads != 0) {
+      errs() << "-compile-threads requires -jit-kind=orc-lazy\n";
+      exit(1);
+    }
+
+    if (!ThreadEntryPoints.empty()) {
+      errs() << "-thread-entry requires -jit-kind=orc-lazy\n";
+      exit(1);
+    }
+  }
 
   LLVMContext Context;
 
@@ -745,11 +769,11 @@ int runOrcLazyJIT(const char *ProgName) {
     reportError(Err, ProgName);
 
   const auto &TT = MainModule.getModule()->getTargetTriple();
-  orc::JITTargetMachineBuilder TMD =
+  orc::JITTargetMachineBuilder JTMB =
       TT.empty() ? ExitOnErr(orc::JITTargetMachineBuilder::detectHost())
                  : orc::JITTargetMachineBuilder(Triple(TT));
 
-  TMD.setArch(MArch)
+  JTMB.setArch(MArch)
       .setCPU(getCPUStr())
       .addFeatures(getFeatureList())
       .setRelocationModel(RelocModel.getNumOccurrences()
@@ -758,9 +782,13 @@ int runOrcLazyJIT(const char *ProgName) {
       .setCodeModel(CMModel.getNumOccurrences()
                         ? Optional<CodeModel::Model>(CMModel)
                         : None);
-  auto TM = ExitOnErr(TMD.createTargetMachine());
-  auto DL = TM->createDataLayout();
-  auto J = ExitOnErr(orc::LLLazyJIT::Create(std::move(TM), DL));
+  DataLayout DL("");
+  {
+    // Create a throwaway TargetMachine to get the data layout.
+    auto TM = ExitOnErr(JTMB.createTargetMachine());
+    DL = TM->createDataLayout();
+  }
+  auto J = ExitOnErr(orc::LLLazyJIT::Create(std::move(JTMB), DL, LazyJITCompileThreads));
 
   auto Dump = createDebugDumper();
 
@@ -807,6 +835,16 @@ int runOrcLazyJIT(const char *ProgName) {
   // Run any static constructors.
   ExitOnErr(J->runConstructors());
 
+  // Run any -thread-entry points.
+  std::vector<std::thread> AltEntryThreads;
+  for (auto &ThreadEntryPoint : ThreadEntryPoints) {
+    auto EntryPointSym = ExitOnErr(J->lookup(ThreadEntryPoint));
+    typedef void (*EntryPointPtr)();
+    auto EntryPoint =
+      reinterpret_cast<EntryPointPtr>(static_cast<uintptr_t>(EntryPointSym.getAddress()));
+    AltEntryThreads.push_back(std::thread([EntryPoint]() { EntryPoint(); }));
+  }
+
   // Run main.
   auto MainSym = ExitOnErr(J->lookup("main"));
   typedef int (*MainFnPtr)(int, const char *[]);
@@ -817,8 +855,12 @@ int runOrcLazyJIT(const char *ProgName) {
       reinterpret_cast<MainFnPtr>(static_cast<uintptr_t>(MainSym.getAddress()));
   auto Result = Main(ArgV.size(), (const char **)ArgV.data());
 
-  ExitOnErr(J->runDestructors());
+  // Wait for -entry-point threads.
+  for (auto &AltEntryThread : AltEntryThreads)
+    AltEntryThread.join();
 
+  // Run destructors.
+  ExitOnErr(J->runDestructors());
   CXXRuntimeOverrides.runDestructors();
 
   return Result;
