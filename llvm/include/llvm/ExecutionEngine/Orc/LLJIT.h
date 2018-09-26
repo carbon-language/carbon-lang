@@ -22,7 +22,7 @@
 #include "llvm/ExecutionEngine/Orc/ObjectTransformLayer.h"
 #include "llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
-#include "llvm/Support/ThreadPool.h"
+#include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 namespace orc {
@@ -30,19 +30,11 @@ namespace orc {
 /// A pre-fabricated ORC JIT stack that can serve as an alternative to MCJIT.
 class LLJIT {
 public:
-
-  /// Destruct this instance. If a multi-threaded instance, waits for all
-  /// compile threads to complete.
-  ~LLJIT();
-
   /// Create an LLJIT instance.
-  /// If NumCompileThreads is not equal to zero, creates a multi-threaded
-  /// LLJIT with the given number of compile threads.
   static Expected<std::unique_ptr<LLJIT>>
-  Create(JITTargetMachineBuilder JTMB, DataLayout DL,
-         unsigned NumCompileThreads = 0);
+  Create(std::unique_ptr<TargetMachine> TM, DataLayout DL);
 
-  /// Returns the ExecutionSession for this instance.
+  /// Returns a reference to the ExecutionSession for this JIT instance.
   ExecutionSession &getExecutionSession() { return *ES; }
 
   /// Returns a reference to the JITDylib representing the JIT'd main program.
@@ -99,14 +91,8 @@ public:
   RTDyldObjectLinkingLayer2 &getObjLinkingLayer() { return ObjLinkingLayer; }
 
 protected:
-
-  /// Create an LLJIT instance with a single compile thread.
   LLJIT(std::unique_ptr<ExecutionSession> ES, std::unique_ptr<TargetMachine> TM,
         DataLayout DL);
-
-  /// Create an LLJIT instance with multiple compile threads.
-  LLJIT(std::unique_ptr<ExecutionSession> ES, JITTargetMachineBuilder JTMB,
-        DataLayout DL, unsigned NumCompileThreads);
 
   std::unique_ptr<RuntimeDyld::MemoryManager> getMemoryManager(VModuleKey K);
 
@@ -119,8 +105,8 @@ protected:
   std::unique_ptr<ExecutionSession> ES;
   JITDylib &Main;
 
+  std::unique_ptr<TargetMachine> TM;
   DataLayout DL;
-  std::unique_ptr<ThreadPool> CompileThreads;
 
   RTDyldObjectLinkingLayer2 ObjLinkingLayer;
   IRCompileLayer2 CompileLayer;
@@ -132,13 +118,9 @@ protected:
 /// compilation of LLVM IR.
 class LLLazyJIT : public LLJIT {
 public:
-
   /// Create an LLLazyJIT instance.
-  /// If NumCompileThreads is not equal to zero, creates a multi-threaded
-  /// LLLazyJIT with the given number of compile threads.
   static Expected<std::unique_ptr<LLLazyJIT>>
-  Create(JITTargetMachineBuilder JTMB, DataLayout DL,
-         unsigned NumCompileThreads = 0);
+  Create(std::unique_ptr<TargetMachine> TM, DataLayout DL);
 
   /// Set an IR transform (e.g. pass manager pipeline) to run on each function
   /// when it is compiled.
@@ -155,16 +137,8 @@ public:
   }
 
 private:
-
-  // Create a single-threaded LLLazyJIT instance.
   LLLazyJIT(std::unique_ptr<ExecutionSession> ES,
             std::unique_ptr<TargetMachine> TM, DataLayout DL,
-            std::unique_ptr<LazyCallThroughManager> LCTMgr,
-            std::function<std::unique_ptr<IndirectStubsManager>()> ISMBuilder);
-
-  // Create a multi-threaded LLLazyJIT instance.
-  LLLazyJIT(std::unique_ptr<ExecutionSession> ES, JITTargetMachineBuilder JTMB,
-            DataLayout DL, unsigned NumCompileThreads,
             std::unique_ptr<LazyCallThroughManager> LCTMgr,
             std::function<std::unique_ptr<IndirectStubsManager>()> ISMBuilder);
 
