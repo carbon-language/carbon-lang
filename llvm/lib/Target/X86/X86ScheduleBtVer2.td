@@ -200,7 +200,9 @@ defm : X86WriteRes<WriteFCMOV, [JFPU0, JFPA], 3, [1,1], 1>; // x87 conditional m
 def  : WriteRes<WriteSETCC, [JALU01]>; // Setcc.
 def  : WriteRes<WriteSETCCStore, [JALU01,JSAGU]>;
 def  : WriteRes<WriteLAHFSAHF, [JALU01]>;
-def  : WriteRes<WriteBitTest,[JALU01]>;
+
+defm : X86WriteRes<WriteBitTest,    [JALU01], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestSet, [JALU01], 1, [1], 1>;
 
 // This is for simple LEAs with one or two input operands.
 def : WriteRes<WriteLEA, [JALU01]>;
