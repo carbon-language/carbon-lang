@@ -1337,6 +1337,35 @@ define void @widen_masked_store(<3 x i32> %v, <3 x i32>* %p, <3 x i1> %mask) {
 }
 declare void @llvm.masked.store.v3i32(<3 x i32>, <3 x i32>*, i32, <3 x i1>)
 
+define i32 @pr38986(i1 %c, i32* %p) {
+; AVX-LABEL: pr38986:
+; AVX:       ## %bb.0:
+; AVX-NEXT:    testb $1, %dil
+; AVX-NEXT:    ## implicit-def: $eax
+; AVX-NEXT:    je LBB43_2
+; AVX-NEXT:  ## %bb.1: ## %cond.load
+; AVX-NEXT:    movl (%rsi), %eax
+; AVX-NEXT:  LBB43_2: ## %else
+; AVX-NEXT:    retq
+;
+; AVX512-LABEL: pr38986:
+; AVX512:       ## %bb.0:
+; AVX512-NEXT:    testb $1, %dil
+; AVX512-NEXT:    ## implicit-def: $eax
+; AVX512-NEXT:    je LBB43_2
+; AVX512-NEXT:  ## %bb.1: ## %cond.load
+; AVX512-NEXT:    movl (%rsi), %eax
+; AVX512-NEXT:  LBB43_2: ## %else
+; AVX512-NEXT:    retq
+ %vc = insertelement <1 x i1> undef, i1 %c, i32 0
+ %vp = bitcast i32* %p to <1 x i32>*
+ %L = call <1 x i32> @llvm.masked.load.v1i32.p0v1i32 (<1 x i32>* %vp, i32 4, <1 x i1> %vc, <1 x i32> undef)
+ %ret = bitcast <1 x i32> %L to i32
+ ret i32 %ret
+}
+declare <1 x i32>  @llvm.masked.load.v1i32.p0v1i32 (<1 x i32>*, i32, <1 x i1>, <1 x i32>)
+
+
 declare <4 x i32> @llvm.masked.load.v4i32.p0v4i32(<4 x i32>*, i32, <4 x i1>, <4 x i32>)
 declare <2 x i32> @llvm.masked.load.v2i32.p0v2i32(<2 x i32>*, i32, <2 x i1>, <2 x i32>)
 declare <4 x i64> @llvm.masked.load.v4i64.p0v4i64(<4 x i64>*, i32, <4 x i1>, <4 x i64>)
