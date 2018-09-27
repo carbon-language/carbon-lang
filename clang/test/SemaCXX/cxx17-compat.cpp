@@ -27,3 +27,18 @@ struct B {
     // expected-warning@-4 {{default member initializer for bit-field is incompatible with C++ standards before C++2a}}
 #endif
 };
+
+auto Lambda = []{};
+decltype(Lambda) AnotherLambda;
+#if __cplusplus <= 201703L
+    // expected-error@-2 {{no matching constructor}} expected-note@-3 2{{candidate}}
+#else
+    // expected-warning@-4 {{default construction of lambda is incompatible with C++ standards before C++2a}}
+#endif
+
+void copy_lambda() { Lambda = Lambda; }
+#if __cplusplus <= 201703L
+    // expected-error@-2 {{deleted}} expected-note@-10 {{lambda}}
+#else
+    // expected-warning@-4 {{assignment of lambda is incompatible with C++ standards before C++2a}}
+#endif
