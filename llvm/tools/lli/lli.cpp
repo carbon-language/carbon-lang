@@ -851,9 +851,12 @@ int runOrcLazyJIT(const char *ProgName) {
   std::vector<const char *> ArgV;
   for (auto &Arg : Args)
     ArgV.push_back(Arg.c_str());
+  ArgV.push_back(nullptr);
+
+  int ArgC = ArgV.size() - 1;
   auto Main =
       reinterpret_cast<MainFnPtr>(static_cast<uintptr_t>(MainSym.getAddress()));
-  auto Result = Main(ArgV.size(), (const char **)ArgV.data());
+  auto Result = Main(ArgC, (const char **)ArgV.data());
 
   // Wait for -entry-point threads.
   for (auto &AltEntryThread : AltEntryThreads)
