@@ -116,10 +116,9 @@ static void scalarizeMaskedLoad(CallInst *CI) {
   Value *Src0 = CI->getArgOperand(3);
 
   unsigned AlignVal = cast<ConstantInt>(Alignment)->getZExtValue();
-  VectorType *VecType = dyn_cast<VectorType>(CI->getType());
-  assert(VecType && "Unexpected return type of masked load intrinsic");
+  VectorType *VecType = cast<VectorType>(CI->getType());
 
-  Type *EltTy = CI->getType()->getVectorElementType();
+  Type *EltTy = VecType->getElementType();
 
   IRBuilder<> Builder(CI->getContext());
   Instruction *InsertPt = CI;
@@ -139,7 +138,7 @@ static void scalarizeMaskedLoad(CallInst *CI) {
   }
 
   // Adjust alignment for the scalar instruction.
-  AlignVal = std::min(AlignVal, VecType->getScalarSizeInBits() / 8);
+  AlignVal = std::min(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
   // Bitcast %addr fron i8* to EltTy*
   Type *NewPtrType =
       EltTy->getPointerTo(cast<PointerType>(Ptr->getType())->getAddressSpace());
@@ -244,8 +243,7 @@ static void scalarizeMaskedStore(CallInst *CI) {
   Value *Mask = CI->getArgOperand(3);
 
   unsigned AlignVal = cast<ConstantInt>(Alignment)->getZExtValue();
-  VectorType *VecType = dyn_cast<VectorType>(Src->getType());
-  assert(VecType && "Unexpected data type in masked store intrinsic");
+  VectorType *VecType = cast<VectorType>(Src->getType());
 
   Type *EltTy = VecType->getElementType();
 
@@ -263,7 +261,7 @@ static void scalarizeMaskedStore(CallInst *CI) {
   }
 
   // Adjust alignment for the scalar instruction.
-  AlignVal = std::max(AlignVal, VecType->getScalarSizeInBits() / 8);
+  AlignVal = std::max(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
   // Bitcast %addr fron i8* to EltTy*
   Type *NewPtrType =
       EltTy->getPointerTo(cast<PointerType>(Ptr->getType())->getAddressSpace());
@@ -354,9 +352,7 @@ static void scalarizeMaskedGather(CallInst *CI) {
   Value *Mask = CI->getArgOperand(2);
   Value *Src0 = CI->getArgOperand(3);
 
-  VectorType *VecType = dyn_cast<VectorType>(CI->getType());
-
-  assert(VecType && "Unexpected return type of masked load intrinsic");
+  VectorType *VecType = cast<VectorType>(CI->getType());
 
   IRBuilder<> Builder(CI->getContext());
   Instruction *InsertPt = CI;
