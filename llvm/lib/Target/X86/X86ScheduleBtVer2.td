@@ -202,7 +202,7 @@ def  : WriteRes<WriteSETCCStore, [JALU01,JSAGU]>;
 def  : WriteRes<WriteLAHFSAHF, [JALU01]>;
 
 defm : X86WriteRes<WriteBitTest,    [JALU01], 1, [1], 1>;
-defm : X86WriteRes<WriteBitTestSet, [JALU01], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestSet, [JALU01], 1, [1], 2>;
 
 // This is for simple LEAs with one or two input operands.
 def : WriteRes<WriteLEA, [JALU01]>;
