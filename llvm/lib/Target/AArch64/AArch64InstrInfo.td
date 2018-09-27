@@ -66,6 +66,8 @@ def HasAltNZCV       : Predicate<"Subtarget->hasAlternativeNZCV()">,
                        AssemblerPredicate<"FeatureAltFPCmp", "altnzcv">;
 def HasFRInt3264     : Predicate<"Subtarget->hasFRInt3264()">,
                        AssemblerPredicate<"FeatureFRInt3264", "frint3264">;
+def HasSpecCtrl      : Predicate<"Subtarget->hasSpecCtrl()">,
+                       AssemblerPredicate<"FeatureSpecCtrl", "specctrl">;
 def IsLE             : Predicate<"Subtarget->isLittleEndian()">;
 def IsBE             : Predicate<"!Subtarget->isLittleEndian()">;
 def UseAlternateSExtLoadCVTF32
@@ -627,8 +629,16 @@ def AXFLAG : PstateWriteSimple<(ins), "axflag", "">, Sched<[WriteSys]> {
   let Unpredictable{11-8} = 0b1111;
   let Inst{7-5} = 0b010;
 }
-
 } // HasAltNZCV
+
+
+// Armv8.5-A speculation barrier
+def SB : SimpleSystemI<0, (ins), "sb", "">, Sched<[]> {
+  let Inst{20-5} = 0b0001100110000111;
+  let Unpredictable{11-8} = 0b1111;
+  let Predicates = [HasSpecCtrl];
+  let hasSideEffects = 1;
+}
 
 def : InstAlias<"clrex", (CLREX 0xf)>;
 def : InstAlias<"isb", (ISB 0xf)>;

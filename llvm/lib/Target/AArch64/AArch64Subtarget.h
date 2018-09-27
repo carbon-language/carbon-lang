@@ -97,6 +97,7 @@ protected:
   // Armv8.5-A Extensions
   bool HasAlternativeNZCV = false;
   bool HasFRInt3264 = false;
+  bool HasSpecCtrl = false;
 
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
   bool HasZeroCycleRegMove = false;
@@ -312,6 +313,7 @@ public:
   bool hasAggressiveFMA() const { return HasAggressiveFMA; }
   bool hasAlternativeNZCV() const { return HasAlternativeNZCV; }
   bool hasFRInt3264() const { return HasFRInt3264; }
+  bool hasSpecCtrl() { return HasSpecCtrl; }
 
   bool isLittleEndian() const { return IsLittle; }
 
