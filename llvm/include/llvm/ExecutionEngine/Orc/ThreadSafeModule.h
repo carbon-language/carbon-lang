@@ -102,15 +102,29 @@ public:
   /// unique_ptr<LLVMContext>. This creates a new ThreadSafeContext from the
   /// given context.
   ThreadSafeModule(std::unique_ptr<Module> M, std::unique_ptr<LLVMContext> Ctx)
-      : TSCtx(std::move(Ctx)), M(std::move(M)) {}
+      : M(std::move(M)), TSCtx(std::move(Ctx)) {}
 
+  /// Construct a ThreadSafeModule from a unique_ptr<Module> and an
+  /// existing ThreadSafeContext.
   ThreadSafeModule(std::unique_ptr<Module> M, ThreadSafeContext TSCtx)
-      : TSCtx(std::move(TSCtx)), M(std::move(M)) {}
+      : M(std::move(M)), TSCtx(std::move(TSCtx)) {}
 
+  ~ThreadSafeModule() {
+    // We need to lock the context while we destruct the module.
+    if (M) {
+      auto L = getContextLock();
+      M = nullptr;
+    }
+  }
+
+  /// Get the module wrapped by this ThreadSafeModule.
   Module* getModule() { return M.get(); }
 
+  /// Take out a lock on the ThreadSafeContext for this module.
   ThreadSafeContext::Lock getContextLock() { return TSCtx.getLock(); }
 
+  /// Boolean conversion: This ThreadSafeModule will evaluate to true if it
+  /// wraps a non-null module.
   explicit operator bool() {
     if (M) {
       assert(TSCtx.getContext() && "Non-null module must have non-null context");
@@ -120,8 +134,8 @@ public:
   }
 
 private:
-  ThreadSafeContext TSCtx;
   std::unique_ptr<Module> M;
+  ThreadSafeContext TSCtx;
 };
 
 using GVPredicate = std::function<bool(const GlobalValue&)>;
