@@ -77,6 +77,21 @@ FunctionPass *llvm::createScalarizeMaskedMemIntrinPass() {
   return new ScalarizeMaskedMemIntrin();
 }
 
+static bool isConstantIntVector(Value *Mask) {
+  Constant *C = dyn_cast<Constant>(Mask);
+  if (!C)
+    return false;
+
+  unsigned NumElts = Mask->getType()->getVectorNumElements();
+  for (unsigned i = 0; i != NumElts; ++i) {
+    Constant *CElt = C->getAggregateElement(i);
+    if (!CElt || !isa<ConstantInt>(CElt))
+      return false;
+  }
+
+  return true;
+}
+
 // Translate a masked load intrinsic like
 // <16 x i32 > @llvm.masked.load( <16 x i32>* %addr, i32 align,
 //                               <16 x i1> %mask, <16 x i32> %passthru)
@@ -148,7 +163,7 @@ static void scalarizeMaskedLoad(CallInst *CI) {
   // The result vector
   Value *VResult = Src0;
 
-  if (isa<Constant>(Mask)) {
+  if (isConstantIntVector(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
       if (cast<Constant>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
@@ -268,7 +283,7 @@ static void scalarizeMaskedStore(CallInst *CI) {
   Value *FirstEltPtr = Builder.CreateBitCast(Ptr, NewPtrType);
   unsigned VectorWidth = VecType->getNumElements();
 
-  if (isa<Constant>(Mask)) {
+  if (isConstantIntVector(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
       if (cast<Constant>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
@@ -369,7 +384,7 @@ static void scalarizeMaskedGather(CallInst *CI) {
   unsigned VectorWidth = VecType->getNumElements();
 
   // Shorten the way if the mask is a vector of constants.
-  if (isa<Constant>(Mask)) {
+  if (isConstantIntVector(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
       if (cast<Constant>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
@@ -479,7 +494,7 @@ static void scalarizeMaskedScatter(CallInst *CI) {
   unsigned VectorWidth = Src->getType()->getVectorNumElements();
 
   // Shorten the way if the mask is a vector of constants.
-  if (isa<Constant>(Mask)) {
+  if (isConstantIntVector(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
       if (cast<ConstantVector>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
