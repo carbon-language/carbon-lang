@@ -97,6 +97,7 @@ protected:
   // Armv8.5-A Extensions
   bool HasAlternativeNZCV = false;
   bool HasFRInt3264 = false;
+  bool HasSpecRestrict = false;
   bool HasSpecCtrl = false;
   bool HasPredCtrl = false;
   bool HasCCDP = false;
@@ -316,6 +317,7 @@ public:
   bool hasAggressiveFMA() const { return HasAggressiveFMA; }
   bool hasAlternativeNZCV() const { return HasAlternativeNZCV; }
   bool hasFRInt3264() const { return HasFRInt3264; }
+  bool hasSpecRestrict() { return HasSpecRestrict; }
   bool hasSpecCtrl() { return HasSpecCtrl; }
   bool hasPredCtrl() { return HasPredCtrl; }
   bool hasCCDP() { return HasCCDP; }
