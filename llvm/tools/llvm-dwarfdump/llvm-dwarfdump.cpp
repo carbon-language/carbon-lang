@@ -393,7 +393,7 @@ bool collectStatsForObjectFile(ObjectFile &Obj, DWARFContext &DICtx,
 
 static bool dumpObjectFile(ObjectFile &Obj, DWARFContext &DICtx, Twine Filename,
                            raw_ostream &OS) {
-  logAllUnhandledErrors(DICtx.loadRegisterInfo(Obj), errs(),
+  logAllUnhandledErrors(DICtx.loadArchitectureInfo(Obj), errs(),
                         Filename.str() + ": ");
   // The UUID dump already contains all the same information.
   if (!(DumpType & DIDT_UUID) || DumpType == DIDT_All)
