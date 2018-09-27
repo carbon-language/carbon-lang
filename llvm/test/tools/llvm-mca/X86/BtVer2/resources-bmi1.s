@@ -66,10 +66,10 @@ tzcnt       (%rax), %rcx
 # CHECK-NEXT:  1      5     1.00    *                   blsrl	(%rax), %ecx
 # CHECK-NEXT:  1      2     1.00                        blsrq	%rax, %rcx
 # CHECK-NEXT:  1      5     1.00    *                   blsrq	(%rax), %rcx
-# CHECK-NEXT:  1      2     1.00                        tzcntl	%eax, %ecx
-# CHECK-NEXT:  1      5     1.00    *                   tzcntl	(%rax), %ecx
-# CHECK-NEXT:  1      2     1.00                        tzcntq	%rax, %rcx
-# CHECK-NEXT:  1      5     1.00    *                   tzcntq	(%rax), %rcx
+# CHECK-NEXT:  2      2     1.00                        tzcntl	%eax, %ecx
+# CHECK-NEXT:  2      5     1.00    *                   tzcntl	(%rax), %ecx
+# CHECK-NEXT:  2      2     1.00                        tzcntq	%rax, %rcx
+# CHECK-NEXT:  2      5     1.00    *                   tzcntq	(%rax), %rcx
 
 # CHECK:      Resources:
 # CHECK-NEXT: [0]   - JALU0

@@ -210,7 +210,7 @@ defm : JWriteResIntPair<WriteBSF, [JALU01], 5, [4], 8>;
 defm : JWriteResIntPair<WriteBSR, [JALU01], 5, [4], 8>;
 defm : JWriteResIntPair<WritePOPCNT,         [JALU01], 1>;
 defm : JWriteResIntPair<WriteLZCNT,          [JALU01], 1>;
-defm : JWriteResIntPair<WriteTZCNT,          [JALU01], 2, [2]>;
+defm : JWriteResIntPair<WriteTZCNT,          [JALU01], 2, [2], 2>;
 
 // BMI1 BEXTR/BLS, BMI2 BZHI
 defm : JWriteResIntPair<WriteBEXTR, [JALU01], 1>;
