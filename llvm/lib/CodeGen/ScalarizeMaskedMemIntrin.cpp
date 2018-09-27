@@ -151,9 +151,9 @@ static void scalarizeMaskedLoad(CallInst *CI) {
   // The result vector
   Value *VResult = UndefVal;
 
-  if (isa<ConstantVector>(Mask)) {
+  if (isa<Constant>(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
-      if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
+      if (cast<Constant>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
       Value *Gep =
           Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
@@ -280,9 +280,9 @@ static void scalarizeMaskedStore(CallInst *CI) {
   Value *FirstEltPtr = Builder.CreateBitCast(Ptr, NewPtrType);
   unsigned VectorWidth = VecType->getNumElements();
 
-  if (isa<ConstantVector>(Mask)) {
+  if (isa<Constant>(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
-      if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
+      if (cast<Constant>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
       Value *OneElt = Builder.CreateExtractElement(Src, Builder.getInt32(Idx));
       Value *Gep =
@@ -385,9 +385,9 @@ static void scalarizeMaskedGather(CallInst *CI) {
   unsigned VectorWidth = VecType->getNumElements();
 
   // Shorten the way if the mask is a vector of constants.
-  if (isa<ConstantVector>(Mask)) {
+  if (isa<Constant>(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
-      if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
+      if (cast<Constant>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
       Value *Ptr = Builder.CreateExtractElement(Ptrs, Builder.getInt32(Idx),
                                                 "Ptr" + Twine(Idx));
@@ -504,9 +504,9 @@ static void scalarizeMaskedScatter(CallInst *CI) {
   unsigned VectorWidth = Src->getType()->getVectorNumElements();
 
   // Shorten the way if the mask is a vector of constants.
-  if (isa<ConstantVector>(Mask)) {
+  if (isa<Constant>(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
-      if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
+      if (cast<ConstantVector>(Mask)->getAggregateElement(Idx)->isNullValue())
         continue;
       Value *OneElt = Builder.CreateExtractElement(Src, Builder.getInt32(Idx),
                                                    "Elt" + Twine(Idx));

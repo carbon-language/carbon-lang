@@ -41,24 +41,8 @@ define <2 x i64> @scalarize_v2i64_ones_mask(<2 x i64>* %p, <2 x i64> %passthru) 
 define <2 x i64> @scalarize_v2i64_zero_mask(<2 x i64>* %p, <2 x i64> %passthru) {
 ; CHECK-LABEL: @scalarize_v2i64_zero_mask(
 ; CHECK-NEXT:    [[TMP1:%.*]] = bitcast <2 x i64>* [[P:%.*]] to i64*
-; CHECK-NEXT:    br i1 false, label [[COND_LOAD:%.*]], label [[ELSE:%.*]]
-; CHECK:       cond.load:
-; CHECK-NEXT:    [[TMP2:%.*]] = getelementptr inbounds i64, i64* [[TMP1]], i32 0
-; CHECK-NEXT:    [[TMP3:%.*]] = load i64, i64* [[TMP2]], align 8
-; CHECK-NEXT:    [[TMP4:%.*]] = insertelement <2 x i64> undef, i64 [[TMP3]], i32 0
-; CHECK-NEXT:    br label [[ELSE]]
-; CHECK:       else:
-; CHECK-NEXT:    [[RES_PHI_ELSE:%.*]] = phi <2 x i64> [ [[TMP4]], [[COND_LOAD]] ], [ undef, [[TMP0:%.*]] ]
-; CHECK-NEXT:    br i1 false, label [[COND_LOAD1:%.*]], label [[ELSE2:%.*]]
-; CHECK:       cond.load1:
-; CHECK-NEXT:    [[TMP5:%.*]] = getelementptr inbounds i64, i64* [[TMP1]], i32 1
-; CHECK-NEXT:    [[TMP6:%.*]] = load i64, i64* [[TMP5]], align 8
-; CHECK-NEXT:    [[TMP7:%.*]] = insertelement <2 x i64> [[RES_PHI_ELSE]], i64 [[TMP6]], i32 1
-; CHECK-NEXT:    br label [[ELSE2]]
-; CHECK:       else2:
-; CHECK-NEXT:    [[RES_PHI_SELECT:%.*]] = phi <2 x i64> [ [[TMP7]], [[COND_LOAD1]] ], [ [[RES_PHI_ELSE]], [[ELSE]] ]
-; CHECK-NEXT:    [[TMP8:%.*]] = select <2 x i1> zeroinitializer, <2 x i64> [[RES_PHI_SELECT]], <2 x i64> [[PASSTHRU:%.*]]
-; CHECK-NEXT:    ret <2 x i64> [[TMP8]]
+; CHECK-NEXT:    [[TMP2:%.*]] = select <2 x i1> zeroinitializer, <2 x i64> undef, <2 x i64> [[PASSTHRU:%.*]]
+; CHECK-NEXT:    ret <2 x i64> [[TMP2]]
 ;
   %ret = call <2 x i64> @llvm.masked.load.v2i64.p0v2i64(<2 x i64>* %p, i32 8, <2 x i1> <i1 false, i1 false>, <2 x i64> %passthru)
   ret <2 x i64> %ret
