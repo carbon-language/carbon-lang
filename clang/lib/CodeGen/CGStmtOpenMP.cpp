@@ -2310,6 +2310,10 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(
                                        S.getIterationVariable()->getType(),
                                        S.getBeginLoc());
         }
+      } else {
+        // Default behaviour for schedule clause.
+        CGM.getOpenMPRuntime().getDefaultScheduleAndChunk(
+            *this, S, ScheduleKind.Schedule, Chunk);
       }
       const unsigned IVSize = getContext().getTypeSize(IVExpr->getType());
       const bool IVSigned = IVExpr->getType()->hasSignedIntegerRepresentation();

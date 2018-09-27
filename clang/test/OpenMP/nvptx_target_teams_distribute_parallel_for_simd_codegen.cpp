@@ -89,7 +89,7 @@ int bar(int n){
 // CHECK: ret void
 
 // CHECK: define internal void [[OUTL2]](
-// CHECK: call void @__kmpc_for_static_init_4({{.+}}, {{.+}}, {{.+}} 34,
+// CHECK: call void @__kmpc_for_static_init_4({{.+}}, {{.+}}, {{.+}} 33,
 // CHECK: call void @__kmpc_for_static_fini(
 // CHECK: ret void
 
@@ -103,7 +103,7 @@ int bar(int n){
 // CHECK: ret void
 
 // CHECK: define internal void [[OUTL3]](
-// CHECK: call void @__kmpc_for_static_init_4({{.+}}, {{.+}}, {{.+}} 34,
+// CHECK: call void @__kmpc_for_static_init_4({{.+}}, {{.+}}, {{.+}} 33,
 // CHECK: call void @__kmpc_for_static_fini(
 // CHECK: ret void
 
@@ -119,7 +119,7 @@ int bar(int n){
 // CHECK: ret void
 
 // CHECK: define internal void [[OUTL4]](
-// CHECK: call void @__kmpc_for_static_init_4({{.+}}, {{.+}}, {{.+}} 34,
+// CHECK: call void @__kmpc_for_static_init_4({{.+}}, {{.+}}, {{.+}} 33,
 // CHECK: call void @__kmpc_for_static_fini(
 // CHECK: ret void
 
