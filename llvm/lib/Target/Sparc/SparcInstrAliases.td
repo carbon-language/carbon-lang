@@ -476,6 +476,9 @@ def : InstAlias<"pwr $simm13, %psr", (PWRPSRri G0, i32imm:$simm13), 0>;
 // flush -> flush %g0
 def : InstAlias<"flush", (FLUSH), 0>;
 
+// unimp -> unimp 0
+def : InstAlias<"unimp", (UNIMP 0), 0>;
+
 def : MnemonicAlias<"iflush", "flush">;
 
 def : MnemonicAlias<"stub", "stb">;
