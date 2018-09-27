@@ -181,7 +181,7 @@ Error LLLazyJIT::addLazyIRModule(JITDylib &JD, ThreadSafeModule TSM) {
   if (auto Err = applyDataLayout(*TSM.getModule()))
     return Err;
 
-  makeAllSymbolsExternallyAccessible(*TSM.getModule());
+  PromoteSymbols(*TSM.getModule());
 
   recordCtorDtors(*TSM.getModule());
 

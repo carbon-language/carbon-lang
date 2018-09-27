@@ -816,7 +816,6 @@ int runOrcLazyJIT(const char *ProgName) {
     if (!M)
       reportError(Err, ProgName);
 
-    orc::makeAllSymbolsExternallyAccessible(*M);
     ExitOnErr(J->addLazyIRModule(orc::ThreadSafeModule(std::move(M), TSCtx)));
   }
 
