@@ -116,24 +116,46 @@ class getVOP2Pat64 <SDPatternOperator node, VOPProfile P> : LetDummies {
     [(set P.DstVT:$vdst, (node P.Src0VT:$src0, P.Src1VT:$src1))]);
 }
 
-multiclass VOP2Inst <string opName,
-                     VOPProfile P,
-                     SDPatternOperator node = null_frag,
-                     string revOp = opName,
-                     bit GFX9Renamed = 0> {
-
+multiclass VOP2Inst_e32<string opName,
+                        VOPProfile P,
+                        SDPatternOperator node = null_frag,
+                        string revOp = opName,
+                        bit GFX9Renamed = 0> {
   let renamedInGFX9 = GFX9Renamed in {
-
     def _e32 : VOP2_Pseudo <opName, P, VOPPatOrNull<node,P>.ret>,
                Commutable_REV<revOp#"_e32", !eq(revOp, opName)>;
+  } // End renamedInGFX9 = GFX9Renamed
+}
 
+multiclass VOP2Inst_e64<string opName,
+                        VOPProfile P,
+                        SDPatternOperator node = null_frag,
+                        string revOp = opName,
+                        bit GFX9Renamed = 0> {
+  let renamedInGFX9 = GFX9Renamed in {
     def _e64 : VOP3_Pseudo <opName, P, getVOP2Pat64<node, P>.ret>,
                Commutable_REV<revOp#"_e64", !eq(revOp, opName)>;
-
-    def _sdwa  : VOP2_SDWA_Pseudo <opName, P>;
-
-  }
+  } // End renamedInGFX9 = GFX9Renamed
 }
+
+multiclass VOP2Inst_sdwa<string opName,
+                         VOPProfile P,
+                         SDPatternOperator node = null_frag,
+                         string revOp = opName,
+                         bit GFX9Renamed = 0> {
+  let renamedInGFX9 = GFX9Renamed in {
+    def _sdwa : VOP2_SDWA_Pseudo <opName, P>;
+  } // End renamedInGFX9 = GFX9Renamed
+}
+
+multiclass VOP2Inst<string opName,
+                    VOPProfile P,
+                    SDPatternOperator node = null_frag,
+                    string revOp = opName,
+                    bit GFX9Renamed = 0> :
+    VOP2Inst_e32<opName, P, node, revOp, GFX9Renamed>,
+    VOP2Inst_e64<opName, P, node, revOp, GFX9Renamed>,
+    VOP2Inst_sdwa<opName, P, node, revOp, GFX9Renamed>;
 
 multiclass VOP2bInst <string opName,
                       VOPProfile P,
