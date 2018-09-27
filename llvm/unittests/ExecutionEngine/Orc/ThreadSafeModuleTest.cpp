@@ -23,8 +23,8 @@ TEST(ThreadSafeModuleTest, ContextWhollyOwnedByOneModule) {
   // Test that ownership of a context can be transferred to a single
   // ThreadSafeModule.
   ThreadSafeContext TSCtx(llvm::make_unique<LLVMContext>());
-  ThreadSafeModule TSM(llvm::make_unique<Module>("M", *TSCtx.getContext()),
-                       std::move(TSCtx));
+  auto M = llvm::make_unique<Module>("M", *TSCtx.getContext());
+  ThreadSafeModule TSM(std::move(M), std::move(TSCtx));
 }
 
 TEST(ThreadSafeModuleTest, ContextOwnershipSharedByTwoModules) {
@@ -32,10 +32,11 @@ TEST(ThreadSafeModuleTest, ContextOwnershipSharedByTwoModules) {
   // ThreadSafeModule.
   ThreadSafeContext TSCtx(llvm::make_unique<LLVMContext>());
 
-  ThreadSafeModule TSM1(llvm::make_unique<Module>("M1", *TSCtx.getContext()),
-                        TSCtx);
-  ThreadSafeModule TSM2(llvm::make_unique<Module>("M2", *TSCtx.getContext()),
-                        std::move(TSCtx));
+  auto M1 =llvm::make_unique<Module>("M1", *TSCtx.getContext());
+  ThreadSafeModule TSM1(std::move(M1), TSCtx);
+
+  auto M2 =llvm::make_unique<Module>("M2", *TSCtx.getContext());
+  ThreadSafeModule TSM2(std::move(M2), std::move(TSCtx));
 }
 
 TEST(ThreadSafeModuleTest, ContextOwnershipSharedWithClient) {
@@ -45,13 +46,13 @@ TEST(ThreadSafeModuleTest, ContextOwnershipSharedWithClient) {
 
   {
     // Create and destroy a module.
-    ThreadSafeModule TSM1(llvm::make_unique<Module>("M1", *TSCtx.getContext()),
-                          TSCtx);
+    auto M1 = llvm::make_unique<Module>("M1", *TSCtx.getContext());
+    ThreadSafeModule TSM1(std::move(M1), TSCtx);
   }
 
   // Verify that the context is still available for re-use.
-  ThreadSafeModule TSM2(llvm::make_unique<Module>("M2", *TSCtx.getContext()),
-                        std::move(TSCtx));
+  auto M2 = llvm::make_unique<Module>("M2", *TSCtx.getContext());
+  ThreadSafeModule TSM2(std::move(M2), std::move(TSCtx));
 }
 
 TEST(ThreadSafeModuleTest, ThreadSafeModuleMoveAssignment) {
@@ -59,16 +60,16 @@ TEST(ThreadSafeModuleTest, ThreadSafeModuleMoveAssignment) {
   // to the field order) to ensure that overwriting with an empty
   // ThreadSafeModule does not destroy the context early.
   ThreadSafeContext TSCtx(llvm::make_unique<LLVMContext>());
-  ThreadSafeModule TSM(llvm::make_unique<Module>("M", *TSCtx.getContext()),
-                       std::move(TSCtx));
+  auto M = llvm::make_unique<Module>("M", *TSCtx.getContext());
+  ThreadSafeModule TSM(std::move(M), std::move(TSCtx));
   TSM = ThreadSafeModule();
 }
 
 TEST(ThreadSafeModuleTest, BasicContextLockAPI) {
   // Test that basic lock API calls work.
   ThreadSafeContext TSCtx(llvm::make_unique<LLVMContext>());
-  ThreadSafeModule TSM(llvm::make_unique<Module>("M", *TSCtx.getContext()),
-                       TSCtx);
+  auto M =llvm::make_unique<Module>("M", *TSCtx.getContext());
+  ThreadSafeModule TSM(std::move(M), TSCtx);
 
   { auto L = TSCtx.getLock(); }
 
