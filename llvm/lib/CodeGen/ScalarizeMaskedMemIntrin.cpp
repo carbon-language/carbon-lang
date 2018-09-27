@@ -90,7 +90,7 @@ FunctionPass *llvm::createScalarizeMaskedMemIntrinPass() {
 // cond.load:                                        ; preds = %0
 //  %3 = getelementptr i32* %1, i32 0
 //  %4 = load i32* %3
-//  %5 = insertelement <16 x i32> undef, i32 %4, i32 0
+//  %5 = insertelement <16 x i32> %passthru, i32 %4, i32 0
 //  br label %else
 //
 // else:                                             ; preds = %0, %cond.load
@@ -146,10 +146,8 @@ static void scalarizeMaskedLoad(CallInst *CI) {
   Value *FirstEltPtr = Builder.CreateBitCast(Ptr, NewPtrType);
   unsigned VectorWidth = VecType->getNumElements();
 
-  Value *UndefVal = UndefValue::get(VecType);
-
   // The result vector
-  Value *VResult = UndefVal;
+  Value *VResult = Src0;
 
   if (isa<Constant>(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
@@ -161,14 +159,10 @@ static void scalarizeMaskedLoad(CallInst *CI) {
       VResult =
           Builder.CreateInsertElement(VResult, Load, Builder.getInt32(Idx));
     }
-    Value *NewI = Builder.CreateSelect(Mask, VResult, Src0);
-    CI->replaceAllUsesWith(NewI);
+    CI->replaceAllUsesWith(VResult);
     CI->eraseFromParent();
     return;
   }
-
-  PHINode *Phi = nullptr;
-  Value *PrevPhi = UndefVal;
 
   for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
     // Fill the "else" block, created in the previous iteration
@@ -177,13 +171,6 @@ static void scalarizeMaskedLoad(CallInst *CI) {
     //  %mask_1 = extractelement <16 x i1> %mask, i32 Idx
     //  br i1 %mask_1, label %cond.load, label %else
     //
-    if (Idx > 0) {
-      Phi = Builder.CreatePHI(VecType, 2, "res.phi.else");
-      Phi->addIncoming(VResult, CondBlock);
-      Phi->addIncoming(PrevPhi, PrevIfBlock);
-      PrevPhi = Phi;
-      VResult = Phi;
-    }
 
     Value *Predicate =
         Builder.CreateExtractElement(Mask, Builder.getInt32(Idx));
@@ -200,7 +187,8 @@ static void scalarizeMaskedLoad(CallInst *CI) {
     Value *Gep =
         Builder.CreateInBoundsGEP(EltTy, FirstEltPtr, Builder.getInt32(Idx));
     LoadInst *Load = Builder.CreateAlignedLoad(Gep, AlignVal);
-    VResult = Builder.CreateInsertElement(VResult, Load, Builder.getInt32(Idx));
+    Value *NewVResult = Builder.CreateInsertElement(VResult, Load,
+                                                    Builder.getInt32(Idx));
 
     // Create "else" block, fill it in the next iteration
     BasicBlock *NewIfBlock =
@@ -211,13 +199,15 @@ static void scalarizeMaskedLoad(CallInst *CI) {
     OldBr->eraseFromParent();
     PrevIfBlock = IfBlock;
     IfBlock = NewIfBlock;
+
+    // Create the phi to join the new and previous value.
+    PHINode *Phi = Builder.CreatePHI(VecType, 2, "res.phi.else");
+    Phi->addIncoming(NewVResult, CondBlock);
+    Phi->addIncoming(VResult, PrevIfBlock);
+    VResult = Phi;
   }
 
-  Phi = Builder.CreatePHI(VecType, 2, "res.phi.select");
-  Phi->addIncoming(VResult, CondBlock);
-  Phi->addIncoming(PrevPhi, PrevIfBlock);
-  Value *NewI = Builder.CreateSelect(Mask, Phi, Src0);
-  CI->replaceAllUsesWith(NewI);
+  CI->replaceAllUsesWith(VResult);
   CI->eraseFromParent();
 }
 

@@ -12,50 +12,20 @@ define <1 x double> @loadv1(<1 x i64> %trigger, <1 x double>* %addr, <1 x double
 ; AVX-LABEL: loadv1:
 ; AVX:       ## %bb.0:
 ; AVX-NEXT:    testq %rdi, %rdi
-; AVX-NEXT:    ## implicit-def: $xmm1
-; AVX-NEXT:    je LBB0_1
-; AVX-NEXT:  ## %bb.2: ## %else
-; AVX-NEXT:    testq %rdi, %rdi
-; AVX-NEXT:    jne LBB0_3
-; AVX-NEXT:  LBB0_4: ## %else
-; AVX-NEXT:    vmovaps %xmm1, %xmm0
-; AVX-NEXT:    retq
-; AVX-NEXT:  LBB0_1: ## %cond.load
-; AVX-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX-NEXT:    testq %rdi, %rdi
-; AVX-NEXT:    je LBB0_4
-; AVX-NEXT:  LBB0_3: ## %else
-; AVX-NEXT:    vmovaps %xmm0, %xmm1
-; AVX-NEXT:    vmovaps %xmm1, %xmm0
+; AVX-NEXT:    jne LBB0_2
+; AVX-NEXT:  ## %bb.1: ## %cond.load
+; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:  LBB0_2: ## %else
 ; AVX-NEXT:    retq
 ;
-; AVX512F-LABEL: loadv1:
-; AVX512F:       ## %bb.0:
-; AVX512F-NEXT:    testq %rdi, %rdi
-; AVX512F-NEXT:    ## implicit-def: $xmm1
-; AVX512F-NEXT:    jne LBB0_2
-; AVX512F-NEXT:  ## %bb.1: ## %cond.load
-; AVX512F-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; AVX512F-NEXT:  LBB0_2: ## %else
-; AVX512F-NEXT:    testq %rdi, %rdi
-; AVX512F-NEXT:    sete %al
-; AVX512F-NEXT:    kmovw %eax, %k1
-; AVX512F-NEXT:    vmovsd %xmm1, %xmm0, %xmm0 {%k1}
-; AVX512F-NEXT:    retq
-;
-; SKX-LABEL: loadv1:
-; SKX:       ## %bb.0:
-; SKX-NEXT:    testq %rdi, %rdi
-; SKX-NEXT:    ## implicit-def: $xmm1
-; SKX-NEXT:    jne LBB0_2
-; SKX-NEXT:  ## %bb.1: ## %cond.load
-; SKX-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; SKX-NEXT:  LBB0_2: ## %else
-; SKX-NEXT:    testq %rdi, %rdi
-; SKX-NEXT:    sete %al
-; SKX-NEXT:    kmovd %eax, %k1
-; SKX-NEXT:    vmovsd %xmm1, %xmm0, %xmm0 {%k1}
-; SKX-NEXT:    retq
+; AVX512-LABEL: loadv1:
+; AVX512:       ## %bb.0:
+; AVX512-NEXT:    testq %rdi, %rdi
+; AVX512-NEXT:    jne LBB0_2
+; AVX512-NEXT:  ## %bb.1: ## %cond.load
+; AVX512-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; AVX512-NEXT:  LBB0_2: ## %else
+; AVX512-NEXT:    retq
   %mask = icmp eq <1 x i64> %trigger, zeroinitializer
   %res = call <1 x double> @llvm.masked.load.v1f64.p0v1f64(<1 x double>* %addr, i32 4, <1 x i1>%mask, <1 x double>%dst)
   ret <1 x double> %res
