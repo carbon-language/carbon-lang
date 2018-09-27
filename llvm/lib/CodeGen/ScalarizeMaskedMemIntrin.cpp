@@ -85,32 +85,29 @@ FunctionPass *llvm::createScalarizeMaskedMemIntrinPass() {
 //
 //  %1 = bitcast i8* %addr to i32*
 //  %2 = extractelement <16 x i1> %mask, i32 0
-//  %3 = icmp eq i1 %2, true
-//  br i1 %3, label %cond.load, label %else
+//  br i1 %2, label %cond.load, label %else
 //
 // cond.load:                                        ; preds = %0
-//  %4 = getelementptr i32* %1, i32 0
-//  %5 = load i32* %4
-//  %6 = insertelement <16 x i32> undef, i32 %5, i32 0
+//  %3 = getelementptr i32* %1, i32 0
+//  %4 = load i32* %3
+//  %5 = insertelement <16 x i32> undef, i32 %4, i32 0
 //  br label %else
 //
 // else:                                             ; preds = %0, %cond.load
-//  %res.phi.else = phi <16 x i32> [ %6, %cond.load ], [ undef, %0 ]
-//  %7 = extractelement <16 x i1> %mask, i32 1
-//  %8 = icmp eq i1 %7, true
-//  br i1 %8, label %cond.load1, label %else2
+//  %res.phi.else = phi <16 x i32> [ %5, %cond.load ], [ undef, %0 ]
+//  %6 = extractelement <16 x i1> %mask, i32 1
+//  br i1 %6, label %cond.load1, label %else2
 //
 // cond.load1:                                       ; preds = %else
-//  %9 = getelementptr i32* %1, i32 1
-//  %10 = load i32* %9
-//  %11 = insertelement <16 x i32> %res.phi.else, i32 %10, i32 1
+//  %7 = getelementptr i32* %1, i32 1
+//  %8 = load i32* %7
+//  %9 = insertelement <16 x i32> %res.phi.else, i32 %8, i32 1
 //  br label %else2
 //
 // else2:                                          ; preds = %else, %cond.load1
-//  %res.phi.else3 = phi <16 x i32> [ %11, %cond.load1 ], [ %res.phi.else, %else ]
-//  %12 = extractelement <16 x i1> %mask, i32 2
-//  %13 = icmp eq i1 %12, true
-//  br i1 %13, label %cond.load4, label %else5
+//  %res.phi.else3 = phi <16 x i32> [ %9, %cond.load1 ], [ %res.phi.else, %else ]
+//  %10 = extractelement <16 x i1> %mask, i32 2
+//  br i1 %10, label %cond.load4, label %else5
 //
 static void scalarizeMaskedLoad(CallInst *CI) {
   Value *Ptr = CI->getArgOperand(0);
@@ -235,24 +232,22 @@ static void scalarizeMaskedLoad(CallInst *CI) {
 //
 //   %1 = bitcast i8* %addr to i32*
 //   %2 = extractelement <16 x i1> %mask, i32 0
-//   %3 = icmp eq i1 %2, true
-//   br i1 %3, label %cond.store, label %else
+//   br i1 %2, label %cond.store, label %else
 //
 // cond.store:                                       ; preds = %0
-//   %4 = extractelement <16 x i32> %val, i32 0
-//   %5 = getelementptr i32* %1, i32 0
-//   store i32 %4, i32* %5
+//   %3 = extractelement <16 x i32> %val, i32 0
+//   %4 = getelementptr i32* %1, i32 0
+//   store i32 %3, i32* %4
 //   br label %else
 //
 // else:                                             ; preds = %0, %cond.store
-//   %6 = extractelement <16 x i1> %mask, i32 1
-//   %7 = icmp eq i1 %6, true
-//   br i1 %7, label %cond.store1, label %else2
+//   %5 = extractelement <16 x i1> %mask, i32 1
+//   br i1 %5, label %cond.store1, label %else2
 //
 // cond.store1:                                      ; preds = %else
-//   %8 = extractelement <16 x i32> %val, i32 1
-//   %9 = getelementptr i32* %1, i32 1
-//   store i32 %8, i32* %9
+//   %6 = extractelement <16 x i32> %val, i32 1
+//   %7 = getelementptr i32* %1, i32 1
+//   store i32 %6, i32* %7
 //   br label %else2
 //   . . .
 static void scalarizeMaskedStore(CallInst *CI) {
@@ -346,30 +341,28 @@ static void scalarizeMaskedStore(CallInst *CI) {
 // to a chain of basic blocks, with loading element one-by-one if
 // the appropriate mask bit is set
 //
-// % Ptrs = getelementptr i32, i32* %base, <16 x i64> %ind
-// % Mask0 = extractelement <16 x i1> %Mask, i32 0
-// % ToLoad0 = icmp eq i1 % Mask0, true
-// br i1 % ToLoad0, label %cond.load, label %else
+// %Ptrs = getelementptr i32, i32* %base, <16 x i64> %ind
+// %Mask0 = extractelement <16 x i1> %Mask, i32 0
+// br i1 %Mask0, label %cond.load, label %else
 //
 // cond.load:
-// % Ptr0 = extractelement <16 x i32*> %Ptrs, i32 0
-// % Load0 = load i32, i32* % Ptr0, align 4
-// % Res0 = insertelement <16 x i32> undef, i32 % Load0, i32 0
+// %Ptr0 = extractelement <16 x i32*> %Ptrs, i32 0
+// %Load0 = load i32, i32* %Ptr0, align 4
+// %Res0 = insertelement <16 x i32> undef, i32 %Load0, i32 0
 // br label %else
 //
 // else:
-// %res.phi.else = phi <16 x i32>[% Res0, %cond.load], [undef, % 0]
-// % Mask1 = extractelement <16 x i1> %Mask, i32 1
-// % ToLoad1 = icmp eq i1 % Mask1, true
-// br i1 % ToLoad1, label %cond.load1, label %else2
+// %res.phi.else = phi <16 x i32>[%Res0, %cond.load], [undef, %0]
+// %Mask1 = extractelement <16 x i1> %Mask, i32 1
+// br i1 %Mask1, label %cond.load1, label %else2
 //
 // cond.load1:
-// % Ptr1 = extractelement <16 x i32*> %Ptrs, i32 1
-// % Load1 = load i32, i32* % Ptr1, align 4
-// % Res1 = insertelement <16 x i32> %res.phi.else, i32 % Load1, i32 1
+// %Ptr1 = extractelement <16 x i32*> %Ptrs, i32 1
+// %Load1 = load i32, i32* %Ptr1, align 4
+// %Res1 = insertelement <16 x i32> %res.phi.else, i32 %Load1, i32 1
 // br label %else2
 // . . .
-// % Result = select <16 x i1> %Mask, <16 x i32> %res.phi.select, <16 x i32> %Src
+// %Result = select <16 x i1> %Mask, <16 x i32> %res.phi.select, <16 x i32> %Src
 // ret <16 x i32> %Result
 static void scalarizeMaskedGather(CallInst *CI) {
   Value *Ptrs = CI->getArgOperand(0);
@@ -477,26 +470,24 @@ static void scalarizeMaskedGather(CallInst *CI) {
 // to a chain of basic blocks, that stores element one-by-one if
 // the appropriate mask bit is set.
 //
-// % Ptrs = getelementptr i32, i32* %ptr, <16 x i64> %ind
-// % Mask0 = extractelement <16 x i1> % Mask, i32 0
-// % ToStore0 = icmp eq i1 % Mask0, true
-// br i1 %ToStore0, label %cond.store, label %else
+// %Ptrs = getelementptr i32, i32* %ptr, <16 x i64> %ind
+// %Mask0 = extractelement <16 x i1> %Mask, i32 0
+// br i1 %Mask0, label %cond.store, label %else
 //
 // cond.store:
-// % Elt0 = extractelement <16 x i32> %Src, i32 0
-// % Ptr0 = extractelement <16 x i32*> %Ptrs, i32 0
-// store i32 %Elt0, i32* % Ptr0, align 4
+// %Elt0 = extractelement <16 x i32> %Src, i32 0
+// %Ptr0 = extractelement <16 x i32*> %Ptrs, i32 0
+// store i32 %Elt0, i32* %Ptr0, align 4
 // br label %else
 //
 // else:
-// % Mask1 = extractelement <16 x i1> % Mask, i32 1
-// % ToStore1 = icmp eq i1 % Mask1, true
-// br i1 % ToStore1, label %cond.store1, label %else2
+// %Mask1 = extractelement <16 x i1> %Mask, i32 1
+// br i1 %Mask1, label %cond.store1, label %else2
 //
 // cond.store1:
-// % Elt1 = extractelement <16 x i32> %Src, i32 1
-// % Ptr1 = extractelement <16 x i32*> %Ptrs, i32 1
-// store i32 % Elt1, i32* % Ptr1, align 4
+// %Elt1 = extractelement <16 x i32> %Src, i32 1
+// %Ptr1 = extractelement <16 x i32*> %Ptrs, i32 1
+// store i32 %Elt1, i32* %Ptr1, align 4
 // br label %else2
 //   . . .
 static void scalarizeMaskedScatter(CallInst *CI) {
@@ -547,9 +538,9 @@ static void scalarizeMaskedScatter(CallInst *CI) {
 
     // Create "cond" block
     //
-    //  % Elt1 = extractelement <16 x i32> %Src, i32 1
-    //  % Ptr1 = extractelement <16 x i32*> %Ptrs, i32 1
-    //  %store i32 % Elt1, i32* % Ptr1
+    //  %Elt1 = extractelement <16 x i32> %Src, i32 1
+    //  %Ptr1 = extractelement <16 x i32*> %Ptrs, i32 1
+    //  %store i32 %Elt1, i32* %Ptr1
     //
     BasicBlock *CondBlock = IfBlock->splitBasicBlock(InsertPt, "cond.store");
     Builder.SetInsertPoint(InsertPt);
