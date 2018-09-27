@@ -1446,20 +1446,20 @@ void Target::SetExecutableModule(ModuleSP &executable_sp,
 
     FileSpecList dependent_files;
     ObjectFile *executable_objfile = executable_sp->GetObjectFile();
-    bool load_dependens;
+    bool load_dependents = true;
     switch (load_dependent_files) {
     case eLoadDependentsDefault:
-      load_dependens = executable_sp->IsExecutable();
+      load_dependents = executable_sp->IsExecutable();
       break;
     case eLoadDependentsYes:
-      load_dependens = true;
+      load_dependents = true;
       break;
     case eLoadDependentsNo:
-      load_dependens = false;
+      load_dependents = false;
       break;
     }
 
-    if (executable_objfile && load_dependens) {
+    if (executable_objfile && load_dependents) {
       executable_objfile->GetDependentModules(dependent_files);
       for (uint32_t i = 0; i < dependent_files.GetSize(); i++) {
         FileSpec dependent_file_spec(
