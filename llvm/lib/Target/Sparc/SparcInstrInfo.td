@@ -56,6 +56,11 @@ def HasHardQuad : Predicate<"Subtarget->hasHardQuad()">;
 // instruction
 def HasLeonCASA : Predicate<"Subtarget->hasLeonCasa()">;
 
+// HasPWRPSR - This is true when the target processor supports partial
+// writes to the PSR register that only affects the ET field.
+def HasPWRPSR : Predicate<"Subtarget->hasPWRPSR()">,
+                AssemblerPredicate<"FeaturePWRPSR">;
+
 // HasUMAC_SMAC - This is true when the target processor supports the
 // UMAC and SMAC instructions
 def HasUMAC_SMAC : Predicate<"Subtarget->hasUmacSmac()">;
@@ -1585,6 +1590,17 @@ let Predicates = [HasUMAC_SMAC], Defs = [Y, ASR18], Uses = [Y, ASR18] in {
                   (outs IntRegs:$rd), (ins IntRegs:$rs1, simm13Op:$simm13, ASRRegs:$asr18),
                    "umac $rs1, $simm13, $rd",
                    [], IIC_smac_umac>;
+}
+
+// The partial write WRPSR instruction has a non-zero destination
+// register value to separate it from the standard instruction.
+let Predicates = [HasPWRPSR], Defs = [PSR], rd=1 in {
+  def PWRPSRrr : F3_1<2, 0b110001,
+     (outs), (ins IntRegs:$rs1, IntRegs:$rs2),
+     "pwr $rs1, $rs2, %psr", []>;
+  def PWRPSRri : F3_2<2, 0b110001,
+     (outs), (ins IntRegs:$rs1, simm13Op:$simm13),
+     "pwr $rs1, $simm13, %psr", []>;
 }
 
 let Defs = [ICC] in {
