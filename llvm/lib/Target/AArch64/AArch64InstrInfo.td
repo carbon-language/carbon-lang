@@ -72,6 +72,8 @@ def HasPredCtrl      : Predicate<"Subtarget->hasPredCtrl()">,
                        AssemblerPredicate<"FeaturePredCtrl", "predctrl">;
 def HasCCDP          : Predicate<"Subtarget->hasCCDP()">,
                        AssemblerPredicate<"FeatureCacheDeepPersist", "ccdp">;
+def HasBTI           : Predicate<"Subtarget->hasBTI()">,
+                       AssemblerPredicate<"FeatureBranchTargetId", "bti">;
 def IsLE             : Predicate<"Subtarget->isLittleEndian()">;
 def IsBE             : Predicate<"!Subtarget->isLittleEndian()">;
 def UseAlternateSExtLoadCVTF32
@@ -454,6 +456,8 @@ def : InstAlias<"sev",  (HINT 0b100)>;
 def : InstAlias<"sevl", (HINT 0b101)>;
 def : InstAlias<"esb",  (HINT 0b10000)>, Requires<[HasRAS]>;
 def : InstAlias<"csdb", (HINT 20)>;
+def : InstAlias<"bti",  (HINT 32)>, Requires<[HasBTI]>;
+def : InstAlias<"bti $op", (HINT btihint_op:$op)>, Requires<[HasBTI]>;
 
 // v8.2a Statistical Profiling extension
 def : InstAlias<"psb $op",  (HINT psbhint_op:$op)>, Requires<[HasSPE]>;

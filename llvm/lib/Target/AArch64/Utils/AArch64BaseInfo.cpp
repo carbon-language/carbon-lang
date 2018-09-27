@@ -111,6 +111,13 @@ namespace llvm {
 }
 
 namespace llvm {
+  namespace AArch64BTIHint {
+#define GET_BTI_IMPL
+#include "AArch64GenSystemOperands.inc"
+  }
+}
+
+namespace llvm {
   namespace AArch64SysReg {
 #define GET_SYSREG_IMPL
 #include "AArch64GenSystemOperands.inc"

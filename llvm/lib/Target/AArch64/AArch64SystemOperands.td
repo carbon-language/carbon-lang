@@ -321,6 +321,23 @@ class PSB<string name, bits<5> encoding> : SearchableTable {
 def : PSB<"csync", 0x11>;
 
 //===----------------------------------------------------------------------===//
+// BTI instruction options.
+//===----------------------------------------------------------------------===//
+
+class BTI<string name, bits<2> encoding> : SearchableTable {
+  let SearchableFields = ["Name", "Encoding"];
+  let EnumValueField = "Encoding";
+
+  string Name = name;
+  bits<2> Encoding;
+  let Encoding = encoding;
+}
+
+def : BTI<"c",  0b01>;
+def : BTI<"j",  0b10>;
+def : BTI<"jc", 0b11>;
+
+//===----------------------------------------------------------------------===//
 // TLBI (translation lookaside buffer invalidate) instruction options.
 //===----------------------------------------------------------------------===//
 

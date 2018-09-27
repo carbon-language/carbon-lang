@@ -223,6 +223,9 @@ def FeaturePredCtrl : SubtargetFeature<"predctrl", "HasPredCtrl", "true",
 def FeatureCacheDeepPersist : SubtargetFeature<"ccdp", "HasCCDP",
     "true", "Enable Cache Clean to Point of Deep Persistence" >;
 
+def FeatureBranchTargetId : SubtargetFeature<"bti", "HasBTI",
+    "true", "Enable Branch Target Identification" >;
+
 def FeatureRandGen : SubtargetFeature<"rand", "HasRandGen",
     "true", "Enable Random Number generation instructions" >;
 
@@ -245,7 +248,8 @@ def HasV8_4aOps : SubtargetFeature<"v8.4a", "HasV8_4aOps", "true",
 def HasV8_5aOps : SubtargetFeature<
   "v8.5a", "HasV8_5aOps", "true", "Support ARM v8.5a instructions",
   [HasV8_4aOps, FeatureAltFPCmp, FeatureFRInt3264, FeatureSpecRestrict,
-   FeatureSpecCtrl, FeaturePredCtrl, FeatureCacheDeepPersist]
+   FeatureSpecCtrl, FeaturePredCtrl, FeatureCacheDeepPersist,
+   FeatureBranchTargetId]
 >;
 
 //===----------------------------------------------------------------------===//

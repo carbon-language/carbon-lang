@@ -1149,6 +1149,21 @@ def psbhint_op : Operand<i32> {
   }];
 }
 
+def BTIHintOperand : AsmOperandClass {
+  let Name = "BTIHint";
+  let ParserMethod = "tryParseBTIHint";
+}
+def btihint_op : Operand<i32> {
+  let ParserMatchClass = BTIHintOperand;
+  let PrintMethod = "printBTIHintOp";
+  let MCOperandPredicate = [{
+    // "bti" is an alias to "hint" only for certain values of CRm:Op2 fields.
+    if (!MCOp.isImm())
+      return false;
+    return AArch64BTIHint::lookupBTIByEncoding((MCOp.getImm() ^ 32) >> 1) != nullptr;
+  }];
+}
+
 class MRSI : RtSystemI<1, (outs GPR64:$Rt), (ins mrs_sysreg_op:$systemreg),
                        "mrs", "\t$Rt, $systemreg"> {
   bits<16> systemreg;

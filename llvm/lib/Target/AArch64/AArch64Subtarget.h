@@ -101,6 +101,7 @@ protected:
   bool HasSpecCtrl = false;
   bool HasPredCtrl = false;
   bool HasCCDP = false;
+  bool HasBTI = false;
   bool HasRandGen = false;
 
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
@@ -321,6 +322,7 @@ public:
   bool hasSpecCtrl() { return HasSpecCtrl; }
   bool hasPredCtrl() { return HasPredCtrl; }
   bool hasCCDP() { return HasCCDP; }
+  bool hasBTI() { return HasBTI; }
   bool hasRandGen() { return HasRandGen; }
 
   bool isLittleEndian() const { return IsLittle; }

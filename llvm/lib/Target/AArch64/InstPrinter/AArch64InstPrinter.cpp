@@ -1122,6 +1122,17 @@ void AArch64InstPrinter::printPSBHintOp(const MCInst *MI, unsigned OpNum,
     O << '#' << formatImm(psbhintop);
 }
 
+void AArch64InstPrinter::printBTIHintOp(const MCInst *MI, unsigned OpNum,
+                                        const MCSubtargetInfo &STI,
+                                        raw_ostream &O) {
+  unsigned btihintop = (MI->getOperand(OpNum).getImm() ^ 32) >> 1;
+  auto BTI = AArch64BTIHint::lookupBTIByEncoding(btihintop);
+  if (BTI)
+    O << BTI->Name;
+  else
+    O << '#' << formatImm(btihintop);
+}
+
 void AArch64InstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,
                                            const MCSubtargetInfo &STI,
                                            raw_ostream &O) {

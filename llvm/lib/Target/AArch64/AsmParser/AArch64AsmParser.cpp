@@ -202,6 +202,7 @@ private:
   template <bool IsSVEPrefetch = false>
   OperandMatchResultTy tryParsePrefetch(OperandVector &Operands);
   OperandMatchResultTy tryParsePSBHint(OperandVector &Operands);
+  OperandMatchResultTy tryParseBTIHint(OperandVector &Operands);
   OperandMatchResultTy tryParseAdrpLabel(OperandVector &Operands);
   OperandMatchResultTy tryParseAdrLabel(OperandVector &Operands);
   template<bool AddFPZeroAsLiteral>
@@ -284,6 +285,7 @@ private:
     k_FPImm,
     k_Barrier,
     k_PSBHint,
+    k_BTIHint,
   } Kind;
 
   SMLoc StartLoc, EndLoc;
@@ -387,6 +389,12 @@ private:
     unsigned Val;
   };
 
+  struct BTIHintOp {
+    const char *Data;
+    unsigned Length;
+    unsigned Val;
+  };
+
   struct ExtendOp {
     unsigned Val;
   };
@@ -405,6 +413,7 @@ private:
     struct SysCRImmOp SysCRImm;
     struct PrefetchOp Prefetch;
     struct PSBHintOp PSBHint;
+    struct BTIHintOp BTIHint;
     struct ShiftExtendOp ShiftExtend;
   };
 
@@ -458,6 +467,9 @@ public:
       break;
     case k_PSBHint:
       PSBHint = o.PSBHint;
+      break;
+    case k_BTIHint:
+      BTIHint = o.BTIHint;
       break;
     case k_ShiftExtend:
       ShiftExtend = o.ShiftExtend;
@@ -568,6 +580,16 @@ public:
   StringRef getPSBHintName() const {
     assert(Kind == k_PSBHint && "Invalid access!");
     return StringRef(PSBHint.Data, PSBHint.Length);
+  }
+
+  unsigned getBTIHint() const {
+    assert(Kind == k_BTIHint && "Invalid access!");
+    return BTIHint.Val;
+  }
+
+  StringRef getBTIHintName() const {
+    assert(Kind == k_BTIHint && "Invalid access!");
+    return StringRef(BTIHint.Data, BTIHint.Length);
   }
 
   StringRef getPrefetchName() const {
@@ -1188,6 +1210,7 @@ public:
   bool isSysCR() const { return Kind == k_SysCR; }
   bool isPrefetch() const { return Kind == k_Prefetch; }
   bool isPSBHint() const { return Kind == k_PSBHint; }
+  bool isBTIHint() const { return Kind == k_BTIHint; }
   bool isShiftExtend() const { return Kind == k_ShiftExtend; }
   bool isShifter() const {
     if (!isShiftExtend())
@@ -1705,6 +1728,11 @@ public:
     Inst.addOperand(MCOperand::createImm(getPSBHint()));
   }
 
+  void addBTIHintOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::createImm(getBTIHint()));
+  }
+
   void addShifterOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     unsigned Imm =
@@ -1953,6 +1981,19 @@ public:
     return Op;
   }
 
+  static std::unique_ptr<AArch64Operand> CreateBTIHint(unsigned Val,
+                                                       StringRef Str,
+                                                       SMLoc S,
+                                                       MCContext &Ctx) {
+    auto Op = make_unique<AArch64Operand>(k_BTIHint, Ctx);
+    Op->BTIHint.Val = Val << 1 | 32;
+    Op->BTIHint.Data = Str.data();
+    Op->BTIHint.Length = Str.size();
+    Op->StartLoc = S;
+    Op->EndLoc = S;
+    return Op;
+  }
+
   static std::unique_ptr<AArch64Operand>
   CreateShiftExtend(AArch64_AM::ShiftExtendType ShOp, unsigned Val,
                     bool HasExplicitAmount, SMLoc S, SMLoc E, MCContext &Ctx) {
@@ -2033,6 +2074,9 @@ void AArch64Operand::print(raw_ostream &OS) const {
     if (!getShiftExtendAmount() && !hasShiftExtendAmount())
       break;
     LLVM_FALLTHROUGH;
+  case k_BTIHint:
+    OS << getBTIHintName();
+    break;
   case k_ShiftExtend:
     OS << "<" << AArch64_AM::getShiftExtendName(getShiftExtendType()) << " #"
        << getShiftExtendAmount();
@@ -2395,6 +2439,29 @@ AArch64AsmParser::tryParsePSBHint(OperandVector &Operands) {
   Parser.Lex(); // Eat identifier token.
   Operands.push_back(AArch64Operand::CreatePSBHint(
       PSB->Encoding, Tok.getString(), S, getContext()));
+  return MatchOperand_Success;
+}
+
+/// tryParseBTIHint - Try to parse a BTI operand, mapped to Hint command
+OperandMatchResultTy
+AArch64AsmParser::tryParseBTIHint(OperandVector &Operands) {
+  MCAsmParser &Parser = getParser();
+  SMLoc S = getLoc();
+  const AsmToken &Tok = Parser.getTok();
+  if (Tok.isNot(AsmToken::Identifier)) {
+    TokError("invalid operand for instruction");
+    return MatchOperand_ParseFail;
+  }
+
+  auto BTI = AArch64BTIHint::lookupBTIByName(Tok.getString());
+  if (!BTI) {
+    TokError("invalid operand for instruction");
+    return MatchOperand_ParseFail;
+  }
+
+  Parser.Lex(); // Eat identifier token.
+  Operands.push_back(AArch64Operand::CreateBTIHint(
+      BTI->Encoding, Tok.getString(), S, getContext()));
   return MatchOperand_Success;
 }
 
