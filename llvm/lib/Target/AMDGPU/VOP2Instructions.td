@@ -234,17 +234,8 @@ class VOP_MAC <ValueType vt> : VOPProfile <[vt, vt, vt, vt]> {
   let HasSDWA9 = 0;
 }
 
-def VOP_MAC_F16 : VOP_MAC <f16> {
-  // FIXME: Move 'Asm64' definition to VOP_MAC, and use 'vt'. Currently it gives
-  // 'not a string initializer' error.
-  let Asm64 = getAsm64<1, 2, 0, HasModifiers, HasOMod, f16>.ret;
-}
-
-def VOP_MAC_F32 : VOP_MAC <f32> {
-  // FIXME: Move 'Asm64' definition to VOP_MAC, and use 'vt'. Currently it gives
-  // 'not a string initializer' error.
-  let Asm64 = getAsm64<1, 2, 0, HasModifiers, HasOMod, f32>.ret;
-}
+def VOP_MAC_F16 : VOP_MAC <f16>;
+def VOP_MAC_F32 : VOP_MAC <f32>;
 
 // Write out to vcc or arbitrary SGPR.
 def VOP2b_I32_I1_I32_I32 : VOPProfile<[i32, i32, i32, untyped]> {
