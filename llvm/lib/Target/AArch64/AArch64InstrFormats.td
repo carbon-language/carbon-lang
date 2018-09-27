@@ -1998,23 +1998,29 @@ multiclass InsertImmediate<bits<2> opc, string asm> {
 //---
 
 class BaseAddSubImm<bit isSub, bit setFlags, RegisterClass dstRegtype,
-                    RegisterClass srcRegtype, addsub_shifted_imm immtype,
-                    string asm, SDPatternOperator OpNode>
-    : I<(outs dstRegtype:$Rd), (ins srcRegtype:$Rn, immtype:$imm),
-        asm, "\t$Rd, $Rn, $imm", "",
-        [(set dstRegtype:$Rd, (OpNode srcRegtype:$Rn, immtype:$imm))]>,
-      Sched<[WriteI, ReadI]>  {
+                    string asm_inst, string asm_ops,
+                    dag inputs, dag pattern>
+    : I<(outs dstRegtype:$Rd), inputs, asm_inst, asm_ops, "", [pattern]>,
+      Sched<[WriteI, ReadI]> {
   bits<5>  Rd;
   bits<5>  Rn;
-  bits<14> imm;
   let Inst{30}    = isSub;
   let Inst{29}    = setFlags;
   let Inst{28-24} = 0b10001;
-  let Inst{23-22} = imm{13-12}; // '00' => lsl #0, '01' => lsl #12
-  let Inst{21-10} = imm{11-0};
   let Inst{9-5}   = Rn;
   let Inst{4-0}   = Rd;
   let DecoderMethod = "DecodeBaseAddSubImm";
+}
+
+class AddSubImmShift<bit isSub, bit setFlags, RegisterClass dstRegtype,
+                     RegisterClass srcRegtype, addsub_shifted_imm immtype,
+                     string asm_inst, SDPatternOperator OpNode>
+    : BaseAddSubImm<isSub, setFlags, dstRegtype, asm_inst, "\t$Rd, $Rn, $imm",
+                    (ins srcRegtype:$Rn, immtype:$imm),
+                    (set dstRegtype:$Rd, (OpNode srcRegtype:$Rn, immtype:$imm))> {
+  bits<14> imm;
+  let Inst{23-22} = imm{13-12}; // '00' => lsl #0, '01' => lsl #12
+  let Inst{21-10} = imm{11-0};
 }
 
 class BaseAddSubRegPseudo<RegisterClass regtype,
@@ -2118,12 +2124,12 @@ multiclass AddSub<bit isSub, string mnemonic, string alias,
   // We used to match the register variant before the immediate when the
   // register argument could be implicitly zero-extended.
   let AddedComplexity = 6 in
-  def Wri  : BaseAddSubImm<isSub, 0, GPR32sp, GPR32sp, addsub_shifted_imm32,
+  def Wri  : AddSubImmShift<isSub, 0, GPR32sp, GPR32sp, addsub_shifted_imm32,
                            mnemonic, OpNode> {
     let Inst{31} = 0;
   }
   let AddedComplexity = 6 in
-  def Xri  : BaseAddSubImm<isSub, 0, GPR64sp, GPR64sp, addsub_shifted_imm64,
+  def Xri  : AddSubImmShift<isSub, 0, GPR64sp, GPR64sp, addsub_shifted_imm64,
                            mnemonic, OpNode> {
     let Inst{31} = 1;
   }
@@ -2194,11 +2200,11 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp,
                    string alias, string cmpAlias> {
   let isCompare = 1, Defs = [NZCV] in {
   // Add/Subtract immediate
-  def Wri  : BaseAddSubImm<isSub, 1, GPR32, GPR32sp, addsub_shifted_imm32,
+  def Wri  : AddSubImmShift<isSub, 1, GPR32, GPR32sp, addsub_shifted_imm32,
                            mnemonic, OpNode> {
     let Inst{31} = 0;
   }
-  def Xri  : BaseAddSubImm<isSub, 1, GPR64, GPR64sp, addsub_shifted_imm64,
+  def Xri  : AddSubImmShift<isSub, 1, GPR64, GPR64sp, addsub_shifted_imm64,
                            mnemonic, OpNode> {
     let Inst{31} = 1;
   }
