@@ -380,8 +380,7 @@ define i1 @test19_undef_ordered() {
 ; Can fold 1.0 / X < 0.0 --> X < 0 with ninf
 define i1 @test20_recipX_olt_0(float %X) {
 ; CHECK-LABEL: @test20_recipX_olt_0(
-; CHECK-NEXT:    [[DIV:%.*]] = fdiv ninf float 1.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf olt float [[DIV]], 0.000000e+00
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf olt float [[X:%.*]], 0.000000e+00
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %div = fdiv ninf float 1.0, %X
@@ -392,8 +391,7 @@ define i1 @test20_recipX_olt_0(float %X) {
 ; Can fold -2.0 / X <= 0.0 --> X >= 0 with ninf
 define i1 @test21_recipX_ole_0(float %X) {
 ; CHECK-LABEL: @test21_recipX_ole_0(
-; CHECK-NEXT:    [[DIV:%.*]] = fdiv ninf float -2.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ole float [[DIV]], 0.000000e+00
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf oge float [[X:%.*]], 0.000000e+00
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %div = fdiv ninf float -2.0, %X
@@ -404,8 +402,7 @@ define i1 @test21_recipX_ole_0(float %X) {
 ; Can fold 2.0 / X > 0.0 --> X > 0 with ninf
 define i1 @test22_recipX_ogt_0(float %X) {
 ; CHECK-LABEL: @test22_recipX_ogt_0(
-; CHECK-NEXT:    [[DIV:%.*]] = fdiv ninf float 2.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ogt float [[DIV]], 0.000000e+00
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ogt float [[X:%.*]], 0.000000e+00
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %div = fdiv ninf float 2.0, %X
@@ -416,8 +413,7 @@ define i1 @test22_recipX_ogt_0(float %X) {
 ; Can fold -1.0 / X >= 0.0 --> X <= 0 with ninf
 define i1 @test23_recipX_oge_0(float %X) {
 ; CHECK-LABEL: @test23_recipX_oge_0(
-; CHECK-NEXT:    [[DIV:%.*]] = fdiv ninf float -1.000000e+00, [[X:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf oge float [[DIV]], 0.000000e+00
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ole float [[X:%.*]], 0.000000e+00
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %div = fdiv ninf float -1.0, %X
@@ -464,8 +460,7 @@ define i1 @test26_recipX_unorderd(float %X) {
 ; Fold <-1.0, -1.0> / X > <-0.0, -0.0>
 define <2 x i1> @test27_recipX_gt_vecsplat(<2 x float> %X) {
 ; CHECK-LABEL: @test27_recipX_gt_vecsplat(
-; CHECK-NEXT:    [[DIV:%.*]] = fdiv ninf <2 x float> <float -1.000000e+00, float -1.000000e+00>, [[X:%.*]]
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf ogt <2 x float> [[DIV]], <float -0.000000e+00, float -0.000000e+00>
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ninf olt <2 x float> [[X:%.*]], <float -0.000000e+00, float -0.000000e+00>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %div = fdiv ninf <2 x float> <float -1.0, float -1.0>, %X
