@@ -368,10 +368,8 @@ static void scalarizeMaskedGather(CallInst *CI) {
 
   Builder.SetCurrentDebugLocation(CI->getDebugLoc());
 
-  Value *UndefVal = UndefValue::get(VecType);
-
   // The result vector
-  Value *VResult = UndefVal;
+  Value *VResult = Src0;
   unsigned VectorWidth = VecType->getNumElements();
 
   // Shorten the way if the mask is a vector of constants.
@@ -386,14 +384,10 @@ static void scalarizeMaskedGather(CallInst *CI) {
       VResult = Builder.CreateInsertElement(
           VResult, Load, Builder.getInt32(Idx), "Res" + Twine(Idx));
     }
-    Value *NewI = Builder.CreateSelect(Mask, VResult, Src0);
-    CI->replaceAllUsesWith(NewI);
+    CI->replaceAllUsesWith(VResult);
     CI->eraseFromParent();
     return;
   }
-
-  PHINode *Phi = nullptr;
-  Value *PrevPhi = UndefVal;
 
   for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
     // Fill the "else" block, created in the previous iteration
@@ -401,13 +395,6 @@ static void scalarizeMaskedGather(CallInst *CI) {
     //  %Mask1 = extractelement <16 x i1> %Mask, i32 1
     //  br i1 %Mask1, label %cond.load, label %else
     //
-    if (Idx > 0) {
-      Phi = Builder.CreatePHI(VecType, 2, "res.phi.else");
-      Phi->addIncoming(VResult, CondBlock);
-      Phi->addIncoming(PrevPhi, PrevIfBlock);
-      PrevPhi = Phi;
-      VResult = Phi;
-    }
 
     Value *Predicate = Builder.CreateExtractElement(Mask, Builder.getInt32(Idx),
                                                     "Mask" + Twine(Idx));
@@ -425,8 +412,9 @@ static void scalarizeMaskedGather(CallInst *CI) {
                                               "Ptr" + Twine(Idx));
     LoadInst *Load =
         Builder.CreateAlignedLoad(Ptr, AlignVal, "Load" + Twine(Idx));
-    VResult = Builder.CreateInsertElement(VResult, Load, Builder.getInt32(Idx),
-                                          "Res" + Twine(Idx));
+    Value *NewVResult = Builder.CreateInsertElement(VResult, Load,
+                                                    Builder.getInt32(Idx),
+                                                    "Res" + Twine(Idx));
 
     // Create "else" block, fill it in the next iteration
     BasicBlock *NewIfBlock = CondBlock->splitBasicBlock(InsertPt, "else");
@@ -436,13 +424,14 @@ static void scalarizeMaskedGather(CallInst *CI) {
     OldBr->eraseFromParent();
     PrevIfBlock = IfBlock;
     IfBlock = NewIfBlock;
+
+    PHINode *Phi = Builder.CreatePHI(VecType, 2, "res.phi.else");
+    Phi->addIncoming(NewVResult, CondBlock);
+    Phi->addIncoming(VResult, PrevIfBlock);
+    VResult = Phi;
   }
 
-  Phi = Builder.CreatePHI(VecType, 2, "res.phi.select");
-  Phi->addIncoming(VResult, CondBlock);
-  Phi->addIncoming(PrevPhi, PrevIfBlock);
-  Value *NewI = Builder.CreateSelect(Mask, Phi, Src0);
-  CI->replaceAllUsesWith(NewI);
+  CI->replaceAllUsesWith(VResult);
   CI->eraseFromParent();
 }
 
