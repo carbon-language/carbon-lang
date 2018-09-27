@@ -252,8 +252,11 @@ class VOP_MAC <ValueType vt> : VOPProfile <[vt, vt, vt, vt]> {
   let AsmSDWA9 = getAsmSDWA9<1, 1, 2, vt>.ret;
   let HasSrc2 = 0;
   let HasSrc2Mods = 0;
+
   let HasExt = 1;
-  let HasSDWA9 = 0;
+  let HasExtDPP = 1;
+  let HasExtSDWA = 1;
+  let HasExtSDWA9 = 0;
 }
 
 def VOP_MAC_F16 : VOP_MAC <f16>;
@@ -303,7 +306,9 @@ def VOP2b_I32_I1_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1]> {
                     dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                     bank_mask:$bank_mask, bound_ctrl:$bound_ctrl);
   let HasExt = 1;
-  let HasSDWA9 = 1;
+  let HasExtDPP = 1;
+  let HasExtSDWA = 1;
+  let HasExtSDWA9 = 1;
 }
 
 // Read in from vcc or arbitrary SGPR
@@ -334,7 +339,9 @@ def VOP2e_I32_I32_I32_I1 : VOPProfile<[i32, i32, i32, i1]> {
                     dpp_ctrl:$dpp_ctrl, row_mask:$row_mask,
                     bank_mask:$bank_mask, bound_ctrl:$bound_ctrl);
   let HasExt = 1;
-  let HasSDWA9 = 1;
+  let HasExtDPP = 1;
+  let HasExtSDWA = 1;
+  let HasExtSDWA9 = 1;
 }
 
 def VOP_READLANE : VOPProfile<[i32, i32, i32]> {
@@ -344,8 +351,11 @@ def VOP_READLANE : VOPProfile<[i32, i32, i32]> {
   let Ins64 = Ins32;
   let Asm32 = " $vdst, $src0, $src1";
   let Asm64 = Asm32;
+
   let HasExt = 0;
-  let HasSDWA9 = 0;
+  let HasExtDPP = 0;
+  let HasExtSDWA = 0;
+  let HasExtSDWA9 = 0;
 }
 
 def VOP_WRITELANE : VOPProfile<[i32, i32, i32, i32]> {
@@ -355,10 +365,13 @@ def VOP_WRITELANE : VOPProfile<[i32, i32, i32, i32]> {
   let Ins64 = Ins32;
   let Asm32 = " $vdst, $src0, $src1";
   let Asm64 = Asm32;
-  let HasExt = 0;
-  let HasSDWA9 = 0;
   let HasSrc2 = 0;
   let HasSrc2Mods = 0;
+
+  let HasExt = 0;
+  let HasExtDPP = 0;
+  let HasExtSDWA = 0;
+  let HasExtSDWA9 = 0;
 }
 
 //===----------------------------------------------------------------------===//
