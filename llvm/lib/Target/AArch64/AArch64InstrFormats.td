@@ -4433,6 +4433,22 @@ multiclass SingleOperandFPData<bits<4> opcode, string asm,
   }
 }
 
+multiclass SingleOperandFPNo16<bits<6> opcode, string asm,
+                  SDPatternOperator node = null_frag>{
+
+  def Sr : BaseSingleOperandFPData<opcode, FPR32, f32, asm, node> {
+    let Inst{23-22} = 0b00; // 32-bit registers
+  }
+
+  def Dr : BaseSingleOperandFPData<opcode, FPR64, f64, asm, node> {
+    let Inst{23-22} = 0b01; // 64-bit registers
+  }
+}
+
+// FRInt[32|64][Z|N] instructions
+multiclass FRIntNNT<bits<2> opcode, string asm, SDPatternOperator node = null_frag> :
+      SingleOperandFPNo16<{0b0100,opcode}, asm, node>;
+
 //---
 // Two operand floating point data processing
 //---
@@ -5308,7 +5324,7 @@ multiclass SIMDTwoVectorBH<bit U, bits<5> opc, string asm,
                     [(set (v8i16 V128:$Rd), (OpNode V128:$Rn))]>;
 }
 
-// Supports only S and D element sizes, uses high bit of the size field
+// Supports H, S and D element sizes, uses high bit of the size field
 // as an extra opcode bit.
 multiclass SIMDTwoVectorFP<bit U, bit S, bits<5> opc, string asm,
                            SDPatternOperator OpNode> {
@@ -5330,6 +5346,25 @@ multiclass SIMDTwoVectorFP<bit U, bit S, bits<5> opc, string asm,
                                 asm, ".2d", ".2d",
                           [(set (v2f64 V128:$Rd), (OpNode (v2f64 V128:$Rn)))]>;
 }
+
+// Supports only S and D element sizes
+multiclass SIMDTwoVectorSD<bit U, bits<5> opc, string asm,
+                           SDPatternOperator OpNode = null_frag> {
+
+  def v2f32 : BaseSIMDTwoSameVector<0, U, 00, opc, 0b00, V64,
+                                asm, ".2s", ".2s",
+                          [(set (v2f32 V64:$Rd), (OpNode (v2f32 V64:$Rn)))]>;
+  def v4f32 : BaseSIMDTwoSameVector<1, U, 00, opc, 0b00, V128,
+                                asm, ".4s", ".4s",
+                          [(set (v4f32 V128:$Rd), (OpNode (v4f32 V128:$Rn)))]>;
+  def v2f64 : BaseSIMDTwoSameVector<1, U, 01, opc, 0b00, V128,
+                                asm, ".2d", ".2d",
+                          [(set (v2f64 V128:$Rd), (OpNode (v2f64 V128:$Rn)))]>;
+}
+
+multiclass FRIntNNTVector<bit U, bit op, string asm,
+                          SDPatternOperator OpNode = null_frag> :
+           SIMDTwoVectorSD<U, {0b1111,op}, asm, OpNode>;
 
 // Supports only S element size.
 multiclass SIMDTwoVectorS<bit U, bit S, bits<5> opc, string asm,
