@@ -340,6 +340,11 @@ public:
   ///
   void functionFinished(CodeGenFunction &CGF) override;
 
+  /// Choose a default value for the schedule clause.
+  void getDefaultDistScheduleAndChunk(CodeGenFunction &CGF,
+      const OMPLoopDirective &S, OpenMPDistScheduleClauseKind &ScheduleKind,
+      llvm::Value *&Chunk) const override;
+
 private:
   /// Track the execution mode when codegening directives within a target
   /// region. The appropriate mode (SPMD/NON-SPMD) is set on entry to the

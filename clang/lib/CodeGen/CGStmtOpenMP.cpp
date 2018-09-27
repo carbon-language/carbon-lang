@@ -3325,6 +3325,10 @@ void CodeGenFunction::EmitOMPDistributeLoop(const OMPLoopDirective &S,
                                        S.getIterationVariable()->getType(),
                                        S.getBeginLoc());
         }
+      } else {
+        // Default behaviour for dist_schedule clause.
+        CGM.getOpenMPRuntime().getDefaultDistScheduleAndChunk(
+            *this, S, ScheduleKind, Chunk);
       }
       const unsigned IVSize = getContext().getTypeSize(IVExpr->getType());
       const bool IVSigned = IVExpr->getType()->hasSignedIntegerRepresentation();
