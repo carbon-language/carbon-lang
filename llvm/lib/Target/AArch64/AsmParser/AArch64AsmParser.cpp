@@ -2757,6 +2757,7 @@ static const struct Extension {
   { "ras", {AArch64::FeatureRAS} },
   { "lse", {AArch64::FeatureLSE} },
   { "predctrl", {AArch64::FeaturePredCtrl} },
+  { "ccdp", {AArch64::FeatureCacheDeepPersist} },
 
   // FIXME: Unsupported extensions
   { "pan", {} },

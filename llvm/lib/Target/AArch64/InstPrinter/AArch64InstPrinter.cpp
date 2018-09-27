@@ -812,7 +812,7 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
     }
     break;
     // DC aliases
-    case 4: case 6: case 10: case 11: case 12: case 14:
+    case 4: case 6: case 10: case 11: case 12: case 13: case 14:
     {
       const AArch64DC::DC *DC = AArch64DC::lookupDCByEncoding(Encoding);
       if (!DC || !DC->haveFeatures(STI.getFeatureBits()))

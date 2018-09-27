@@ -217,6 +217,9 @@ def FeatureSpecCtrl : SubtargetFeature<"specctrl", "HasSpecCtrl", "true",
 def FeaturePredCtrl : SubtargetFeature<"predctrl", "HasPredCtrl", "true",
   "Enable execution and data prediction invalidation instructions" >;
 
+def FeatureCacheDeepPersist : SubtargetFeature<"ccdp", "HasCCDP",
+    "true", "Enable Cache Clean to Point of Deep Persistence" >;
+
 //===----------------------------------------------------------------------===//
 // Architectures.
 //
@@ -236,7 +239,7 @@ def HasV8_4aOps : SubtargetFeature<"v8.4a", "HasV8_4aOps", "true",
 def HasV8_5aOps : SubtargetFeature<
   "v8.5a", "HasV8_5aOps", "true", "Support ARM v8.5a instructions",
   [HasV8_4aOps, FeatureAltFPCmp, FeatureFRInt3264, FeatureSpecCtrl,
-   FeaturePredCtrl]
+   FeaturePredCtrl, FeatureCacheDeepPersist]
 >;
 
 //===----------------------------------------------------------------------===//

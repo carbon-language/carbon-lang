@@ -105,6 +105,9 @@ def : DC<"CISW",  0b000, 0b0111, 0b1110, 0b010>;
 let Requires = [{ {AArch64::HasV8_2aOps} }] in
 def : DC<"CVAP",  0b011, 0b0111, 0b1100, 0b001>;
 
+let Requires = [{ {AArch64::FeatureCacheDeepPersist} }] in
+def : DC<"CVADP",  0b011, 0b0111, 0b1101, 0b001>;
+
 //===----------------------------------------------------------------------===//
 // IC (instruction cache maintenance) instruction options.
 //===----------------------------------------------------------------------===//
