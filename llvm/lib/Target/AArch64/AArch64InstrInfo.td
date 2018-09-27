@@ -650,6 +650,8 @@ def SB : SimpleSystemI<0, (ins), "sb", "">, Sched<[]> {
 
 def : InstAlias<"clrex", (CLREX 0xf)>;
 def : InstAlias<"isb", (ISB 0xf)>;
+def : InstAlias<"ssbb", (DSB 0)>;
+def : InstAlias<"pssbb", (DSB 4)>;
 
 def MRS    : MRSI;
 def MSR    : MSRI;
