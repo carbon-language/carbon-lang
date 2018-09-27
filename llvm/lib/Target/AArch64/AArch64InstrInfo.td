@@ -68,6 +68,8 @@ def HasFRInt3264     : Predicate<"Subtarget->hasFRInt3264()">,
                        AssemblerPredicate<"FeatureFRInt3264", "frint3264">;
 def HasSpecCtrl      : Predicate<"Subtarget->hasSpecCtrl()">,
                        AssemblerPredicate<"FeatureSpecCtrl", "specctrl">;
+def HasPredCtrl      : Predicate<"Subtarget->hasPredCtrl()">,
+                       AssemblerPredicate<"FeaturePredCtrl", "predctrl">;
 def IsLE             : Predicate<"Subtarget->isLittleEndian()">;
 def IsBE             : Predicate<"!Subtarget->isLittleEndian()">;
 def UseAlternateSExtLoadCVTF32

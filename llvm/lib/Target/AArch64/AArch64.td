@@ -214,6 +214,9 @@ def FeatureFRInt3264 : SubtargetFeature<"fptoint", "HasFRInt3264", "true",
 def FeatureSpecCtrl : SubtargetFeature<"specctrl", "HasSpecCtrl", "true",
   "Enable speculation control barrier" >;
 
+def FeaturePredCtrl : SubtargetFeature<"predctrl", "HasPredCtrl", "true",
+  "Enable execution and data prediction invalidation instructions" >;
+
 //===----------------------------------------------------------------------===//
 // Architectures.
 //
@@ -232,7 +235,8 @@ def HasV8_4aOps : SubtargetFeature<"v8.4a", "HasV8_4aOps", "true",
 
 def HasV8_5aOps : SubtargetFeature<
   "v8.5a", "HasV8_5aOps", "true", "Support ARM v8.5a instructions",
-  [HasV8_4aOps, FeatureAltFPCmp, FeatureFRInt3264, FeatureSpecCtrl]
+  [HasV8_4aOps, FeatureAltFPCmp, FeatureFRInt3264, FeatureSpecCtrl,
+   FeaturePredCtrl]
 >;
 
 //===----------------------------------------------------------------------===//

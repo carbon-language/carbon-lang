@@ -420,6 +420,23 @@ def : TLBI<"RVAE3OS",      0b110, 0b1000, 0b0101, 0b001>;
 def : TLBI<"RVALE3OS",     0b110, 0b1000, 0b0101, 0b101>;
 }
 
+// Armv8.5-A Prediction Restriction by Context instruction options:
+class PRCTX<string name, bits<4> crm> : SearchableTable {
+  let SearchableFields = ["Name", "Encoding"];
+  let EnumValueField = "Encoding";
+
+  string Name = name;
+  bits<11> Encoding;
+  let Encoding{10-4} = 0b0110111;
+  let Encoding{3-0} = crm;
+  bit NeedsReg = 1;
+  code Requires = [{ {} }];
+}
+
+let Requires = [{ {AArch64::FeaturePredCtrl} }] in {
+def : PRCTX<"RCTX", 0b0011>;
+}
+
 //===----------------------------------------------------------------------===//
 // MRS/MSR (system register read/write) instruction options.
 //===----------------------------------------------------------------------===//

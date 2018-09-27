@@ -775,8 +775,33 @@ bool AArch64InstPrinter::printSysAlias(const MCInst *MI,
   if (CnVal == 7) {
     switch (CmVal) {
     default: return false;
+    // Maybe IC, maybe Prediction Restriction
+    case 1:
+      switch (Op1Val) {
+      default: return false;
+      case 0: goto Search_IC;
+      case 3: goto Search_PRCTX;
+      }
+    // Prediction Restriction aliases
+    case 3: {
+      Search_PRCTX:
+      const AArch64PRCTX::PRCTX *PRCTX = AArch64PRCTX::lookupPRCTXByEncoding(Encoding >> 3);
+      if (!PRCTX || !PRCTX->haveFeatures(STI.getFeatureBits()))
+        return false;
+
+      NeedsReg = PRCTX->NeedsReg;
+      switch (Op2Val) {
+      default: return false;
+      case 4: Ins = "cfp\t"; break;
+      case 5: Ins = "dvp\t"; break;
+      case 7: Ins = "cpp\t"; break;
+      }
+      Name = std::string(PRCTX->Name);
+    }
+    break;
     // IC aliases
-    case 1: case 5: {
+    case 5: {
+      Search_IC:
       const AArch64IC::IC *IC = AArch64IC::lookupICByEncoding(Encoding);
       if (!IC || !IC->haveFeatures(STI.getFeatureBits()))
         return false;

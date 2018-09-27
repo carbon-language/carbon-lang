@@ -98,6 +98,7 @@ protected:
   bool HasAlternativeNZCV = false;
   bool HasFRInt3264 = false;
   bool HasSpecCtrl = false;
+  bool HasPredCtrl = false;
 
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
   bool HasZeroCycleRegMove = false;
@@ -314,6 +315,7 @@ public:
   bool hasAlternativeNZCV() const { return HasAlternativeNZCV; }
   bool hasFRInt3264() const { return HasFRInt3264; }
   bool hasSpecCtrl() { return HasSpecCtrl; }
+  bool hasPredCtrl() { return HasPredCtrl; }
 
   bool isLittleEndian() const { return IsLittle; }
 

@@ -62,6 +62,13 @@ namespace llvm {
 }
 
 namespace llvm {
+  namespace AArch64PRCTX {
+#define GET_PRCTX_IMPL
+#include "AArch64GenSystemOperands.inc"
+  }
+}
+
+namespace llvm {
   namespace AArch64PRFM {
 #define GET_PRFM_IMPL
 #include "AArch64GenSystemOperands.inc"

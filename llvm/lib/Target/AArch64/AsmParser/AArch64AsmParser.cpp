@@ -2756,6 +2756,7 @@ static const struct Extension {
   { "simd", {AArch64::FeatureNEON} },
   { "ras", {AArch64::FeatureRAS} },
   { "lse", {AArch64::FeatureLSE} },
+  { "predctrl", {AArch64::FeaturePredCtrl} },
 
   // FIXME: Unsupported extensions
   { "pan", {} },
@@ -2864,6 +2865,23 @@ bool AArch64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
       return TokError(Str.c_str());
     }
     createSysAlias(TLBI->Encoding, Operands, S);
+  } else if (Mnemonic == "cfp" || Mnemonic == "dvp" || Mnemonic == "cpp") {
+    const AArch64PRCTX::PRCTX *PRCTX = AArch64PRCTX::lookupPRCTXByName(Op);
+    if (!PRCTX)
+      return TokError("invalid operand for prediction restriction instruction");
+    else if (!PRCTX->haveFeatures(getSTI().getFeatureBits())) {
+      std::string Str(
+          Mnemonic.upper() + std::string(PRCTX->Name) + " requires ");
+      setRequiredFeatureString(PRCTX->getRequiredFeatures(), Str);
+      return TokError(Str.c_str());
+    }
+    uint16_t PRCTX_Op2 =
+      Mnemonic == "cfp" ? 4 :
+      Mnemonic == "dvp" ? 5 :
+      Mnemonic == "cpp" ? 7 :
+      0;
+    assert(PRCTX_Op2 && "Invalid mnemonic for prediction restriction instruction");
+    createSysAlias(PRCTX->Encoding << 3 | PRCTX_Op2 , Operands, S);
   }
 
   Parser.Lex(); // Eat operand.
@@ -3682,8 +3700,10 @@ bool AArch64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
   size_t Start = 0, Next = Name.find('.');
   StringRef Head = Name.slice(Start, Next);
 
-  // IC, DC, AT, and TLBI instructions are aliases for the SYS instruction.
-  if (Head == "ic" || Head == "dc" || Head == "at" || Head == "tlbi")
+  // IC, DC, AT, TLBI and Prediction invalidation instructions are aliases for
+  // the SYS instruction.
+  if (Head == "ic" || Head == "dc" || Head == "at" || Head == "tlbi" ||
+      Head == "cfp" || Head == "dvp" || Head == "cpp")
     return parseSysAlias(Head, NameLoc, Operands);
 
   Operands.push_back(
