@@ -614,6 +614,13 @@ def : ROSysReg<"ERRIDR_EL1", 0b11, 0b000, 0b0101, 0b0011, 0b000>;
 def : ROSysReg<"ERXFR_EL1",  0b11, 0b000, 0b0101, 0b0100, 0b000>;
 }
 
+// v8.5a "random number" registers
+//                       Op0   Op1    CRn     CRm     Op2
+let Requires = [{ {AArch64::FeatureRandGen} }] in {
+def : ROSysReg<"RNDR",   0b11, 0b011, 0b0010, 0b0100, 0b000>;
+def : ROSysReg<"RNDRRS", 0b11, 0b011, 0b0010, 0b0100, 0b001>;
+}
+
 //===----------------------
 // Write-only regs
 //===----------------------

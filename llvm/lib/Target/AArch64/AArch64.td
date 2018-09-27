@@ -220,6 +220,9 @@ def FeaturePredCtrl : SubtargetFeature<"predctrl", "HasPredCtrl", "true",
 def FeatureCacheDeepPersist : SubtargetFeature<"ccdp", "HasCCDP",
     "true", "Enable Cache Clean to Point of Deep Persistence" >;
 
+def FeatureRandGen : SubtargetFeature<"rand", "HasRandGen",
+    "true", "Enable Random Number generation instructions" >;
+
 //===----------------------------------------------------------------------===//
 // Architectures.
 //
