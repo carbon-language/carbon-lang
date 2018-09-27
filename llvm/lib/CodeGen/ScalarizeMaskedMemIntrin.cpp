@@ -131,10 +131,7 @@ static void scalarizeMaskedLoad(CallInst *CI) {
   Builder.SetCurrentDebugLocation(CI->getDebugLoc());
 
   // Short-cut if the mask is all-true.
-  bool IsAllOnesMask =
-      isa<Constant>(Mask) && cast<Constant>(Mask)->isAllOnesValue();
-
-  if (IsAllOnesMask) {
+  if (isa<Constant>(Mask) && cast<Constant>(Mask)->isAllOnesValue()) {
     Value *NewI = Builder.CreateAlignedLoad(Ptr, AlignVal);
     CI->replaceAllUsesWith(NewI);
     CI->eraseFromParent();
@@ -269,10 +266,7 @@ static void scalarizeMaskedStore(CallInst *CI) {
   Builder.SetCurrentDebugLocation(CI->getDebugLoc());
 
   // Short-cut if the mask is all-true.
-  bool IsAllOnesMask =
-      isa<Constant>(Mask) && cast<Constant>(Mask)->isAllOnesValue();
-
-  if (IsAllOnesMask) {
+  if (isa<Constant>(Mask) && cast<Constant>(Mask)->isAllOnesValue()) {
     Builder.CreateAlignedStore(Src, Ptr, AlignVal);
     CI->eraseFromParent();
     return;
@@ -391,9 +385,7 @@ static void scalarizeMaskedGather(CallInst *CI) {
   unsigned VectorWidth = VecType->getNumElements();
 
   // Shorten the way if the mask is a vector of constants.
-  bool IsConstMask = isa<ConstantVector>(Mask);
-
-  if (IsConstMask) {
+  if (isa<ConstantVector>(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
       if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
         continue;
@@ -512,9 +504,7 @@ static void scalarizeMaskedScatter(CallInst *CI) {
   unsigned VectorWidth = Src->getType()->getVectorNumElements();
 
   // Shorten the way if the mask is a vector of constants.
-  bool IsConstMask = isa<ConstantVector>(Mask);
-
-  if (IsConstMask) {
+  if (isa<ConstantVector>(Mask)) {
     for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
       if (cast<ConstantVector>(Mask)->getOperand(Idx)->isNullValue())
         continue;
@@ -527,6 +517,7 @@ static void scalarizeMaskedScatter(CallInst *CI) {
     CI->eraseFromParent();
     return;
   }
+
   for (unsigned Idx = 0; Idx < VectorWidth; ++Idx) {
     // Fill the "else" block, created in the previous iteration
     //
