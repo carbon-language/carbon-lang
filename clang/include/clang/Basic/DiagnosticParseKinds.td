@@ -540,6 +540,12 @@ def ext_init_statement : ExtWarn<
 def warn_cxx14_compat_init_statement : Warning<
   "%select{if|switch}0 initialization statements are incompatible with "
   "C++ standards before C++17">, DefaultIgnore, InGroup<CXXPre17Compat>;
+def ext_for_range_init_stmt : ExtWarn<
+  "range-based for loop initialization statements are a C++2a extension">,
+  InGroup<CXX2a>;
+def warn_cxx17_compat_for_range_init_stmt : Warning<
+  "range-based for loop initialization statements are incompatible with "
+  "C++ standards before C++2a">, DefaultIgnore, InGroup<CXXPre2aCompat>;
 
 // C++ derived classes
 def err_dup_virtual : Error<"duplicate 'virtual' in base specifier">;
