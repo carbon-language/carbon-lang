@@ -276,7 +276,7 @@ static void scalarizeMaskedStore(CallInst *CI) {
   }
 
   // Adjust alignment for the scalar instruction.
-  AlignVal = std::max(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
+  AlignVal = std::min(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
   // Bitcast %addr fron i8* to EltTy*
   Type *NewPtrType =
       EltTy->getPointerTo(cast<PointerType>(Ptr->getType())->getAddressSpace());

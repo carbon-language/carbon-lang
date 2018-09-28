@@ -9,7 +9,7 @@ define void @scalarize_v2i64(<2 x i64>* %p, <2 x i1> %mask, <2 x i64> %data) {
 ; CHECK:       cond.store:
 ; CHECK-NEXT:    [[TMP3:%.*]] = extractelement <2 x i64> [[DATA:%.*]], i32 0
 ; CHECK-NEXT:    [[TMP4:%.*]] = getelementptr inbounds i64, i64* [[TMP1]], i32 0
-; CHECK-NEXT:    store i64 [[TMP3]], i64* [[TMP4]], align 128
+; CHECK-NEXT:    store i64 [[TMP3]], i64* [[TMP4]], align 8
 ; CHECK-NEXT:    br label [[ELSE]]
 ; CHECK:       else:
 ; CHECK-NEXT:    [[TMP5:%.*]] = extractelement <2 x i1> [[MASK]], i32 1
@@ -17,7 +17,7 @@ define void @scalarize_v2i64(<2 x i64>* %p, <2 x i1> %mask, <2 x i64> %data) {
 ; CHECK:       cond.store1:
 ; CHECK-NEXT:    [[TMP6:%.*]] = extractelement <2 x i64> [[DATA]], i32 1
 ; CHECK-NEXT:    [[TMP7:%.*]] = getelementptr inbounds i64, i64* [[TMP1]], i32 1
-; CHECK-NEXT:    store i64 [[TMP6]], i64* [[TMP7]], align 128
+; CHECK-NEXT:    store i64 [[TMP6]], i64* [[TMP7]], align 8
 ; CHECK-NEXT:    br label [[ELSE2]]
 ; CHECK:       else2:
 ; CHECK-NEXT:    ret void
