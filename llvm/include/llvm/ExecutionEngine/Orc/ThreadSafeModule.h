@@ -126,6 +126,9 @@ public:
   /// Get the module wrapped by this ThreadSafeModule.
   Module* getModule() { return M.get(); }
 
+  /// Get the module wrapped by this ThreadSafeModule.
+  const Module* getModule() const { return M.get(); }
+
   /// Take out a lock on the ThreadSafeContext for this module.
   ThreadSafeContext::Lock getContextLock() { return TSCtx.getLock(); }
 
