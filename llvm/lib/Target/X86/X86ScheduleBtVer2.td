@@ -392,11 +392,11 @@ defm : X86WriteResPairUnsupported<WriteFVarShuffle256>;
 // Conversions.
 ////////////////////////////////////////////////////////////////////////////////
 
-defm : JWriteResFpuPair<WriteCvtSS2I,      [JFPU1, JSTC, JFPA, JALU0], 7, [1,1,1,1], 2>;
+defm : JWriteResFpuPair<WriteCvtSS2I,      [JFPU1, JSTC, JFPU0, JFPA, JALU0], 7, [1,1,1,1,1], 2>;
 defm : JWriteResFpuPair<WriteCvtPS2I,      [JFPU1, JSTC], 3, [1,1], 1>;
 defm : JWriteResYMMPair<WriteCvtPS2IY,     [JFPU1, JSTC], 3, [2,2], 2>;
 defm : X86WriteResPairUnsupported<WriteCvtPS2IZ>;
-defm : JWriteResFpuPair<WriteCvtSD2I,      [JFPU1, JSTC, JFPA, JALU0], 7, [1,1,1,1], 2>;
+defm : JWriteResFpuPair<WriteCvtSD2I,      [JFPU1, JSTC, JFPU0, JFPA, JALU0], 7, [1,1,1,1,1], 2>;
 defm : JWriteResFpuPair<WriteCvtPD2I,      [JFPU1, JSTC], 3, [1,1], 1>;
 defm : JWriteResYMMPair<WriteCvtPD2IY,     [JFPU1, JSTC, JFPX], 6, [2,2,4], 3>;
 defm : X86WriteResPairUnsupported<WriteCvtPD2IZ>;
