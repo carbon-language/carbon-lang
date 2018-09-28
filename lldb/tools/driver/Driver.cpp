@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <bitset>
 #include <csignal>
 #include <fcntl.h>
 #include <limits.h>
