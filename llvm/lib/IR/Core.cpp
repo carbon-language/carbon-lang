@@ -872,6 +872,30 @@ void LLVMSetMetadata(LLVMValueRef Inst, unsigned KindID, LLVMValueRef Val) {
   unwrap<Instruction>(Inst)->setMetadata(KindID, N);
 }
 
+struct LLVMOpaqueValueMetadataEntry {
+  unsigned Kind;
+  LLVMMetadataRef Metadata;
+};
+
+using MetadataEntries = SmallVectorImpl<std::pair<unsigned, MDNode *>>;
+static LLVMValueMetadataEntry *
+llvm_getMetadata(size_t *NumEntries,
+                 llvm::function_ref<void(MetadataEntries &)> AccessMD) {
+  SmallVector<std::pair<unsigned, MDNode *>, 8> MVEs;
+  AccessMD(MVEs);
+
+  LLVMOpaqueValueMetadataEntry *Result =
+  static_cast<LLVMOpaqueValueMetadataEntry *>(
+                                              safe_malloc(MVEs.size() * sizeof(LLVMOpaqueValueMetadataEntry)));
+  for (unsigned i = 0; i < MVEs.size(); ++i) {
+    const auto &ModuleFlag = MVEs[i];
+    Result[i].Kind = ModuleFlag.first;
+    Result[i].Metadata = wrap(ModuleFlag.second);
+  }
+  *NumEntries = MVEs.size();
+  return Result;
+}
+
 LLVMValueMetadataEntry *
 LLVMInstructionGetAllMetadataOtherThanDebugLoc(LLVMValueRef Value,
                                                size_t *NumEntries) {
@@ -1884,30 +1908,6 @@ void LLVMSetAlignment(LLVMValueRef V, unsigned Bytes) {
         "only GlobalValue, AllocaInst, LoadInst and StoreInst have alignment");
 }
 
-struct LLVMOpaqueValueMetadataEntry {
-  unsigned Kind;
-  LLVMMetadataRef Metadata;
-};
-
-using MetadataEntries = SmallVectorImpl<std::pair<unsigned, MDNode *>>;
-static LLVMValueMetadataEntry *
-llvm_getMetadata(size_t *NumEntries,
-                 llvm::function_ref<void(MetadataEntries &)> AccessMD) {
-  SmallVector<std::pair<unsigned, MDNode *>, 8> MVEs;
-  AccessMD(MVEs);
-
-  LLVMOpaqueValueMetadataEntry *Result =
-      static_cast<LLVMOpaqueValueMetadataEntry *>(
-        safe_malloc(MVEs.size() * sizeof(LLVMOpaqueValueMetadataEntry)));
-  for (unsigned i = 0; i < MVEs.size(); ++i) {
-    const auto &ModuleFlag = MVEs[i];
-    Result[i].Kind = ModuleFlag.first;
-    Result[i].Metadata = wrap(ModuleFlag.second);
-  }
-  *NumEntries = MVEs.size();
-  return Result;
-}
-
 LLVMValueMetadataEntry *LLVMGlobalCopyAllMetadata(LLVMValueRef Value,
                                                   size_t *NumEntries) {
   return llvm_getMetadata(NumEntries, [&Value](MetadataEntries &Entries) {
@@ -1940,7 +1940,7 @@ void LLVMDisposeValueMetadataEntries(LLVMValueMetadataEntry *Entries) {
 
 void LLVMGlobalSetMetadata(LLVMValueRef Global, unsigned Kind,
                            LLVMMetadataRef MD) {
-  unwrap<GlobalObject>(Global)->setMetadata(Kind, unwrapDI<MDNode>(MD));
+  unwrap<GlobalObject>(Global)->setMetadata(Kind, unwrap<MDNode>(MD));
 }
 
 void LLVMGlobalEraseMetadata(LLVMValueRef Global, unsigned Kind) {
