@@ -184,14 +184,15 @@ define <2 x i8> @test13a(i8 %x1, i8 %x2) {
   ret <2 x i8> %D
 }
 
-; TODO: Increasing length of vector ops is not a good canonicalization.
- 
+; Increasing length of vector ops is not a good canonicalization.
+
 define <3 x i32> @add_wider(i32 %y, i32 %z) {
-; CHECK-LABEL: @add(
-; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <3 x i32> undef, i32 [[Y:%.*]], i32 0
-; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <3 x i32> [[TMP1]], i32 [[Z:%.*]], i32 1
-; CHECK-NEXT:    [[TMP3:%.*]] = add <3 x i32> [[TMP2]], <i32 255, i32 255, i32 undef>
-; CHECK-NEXT:    ret <3 x i32> [[TMP3]]
+; CHECK-LABEL: @add_wider(
+; CHECK-NEXT:    [[I0:%.*]] = insertelement <2 x i32> undef, i32 [[Y:%.*]], i32 0
+; CHECK-NEXT:    [[I1:%.*]] = insertelement <2 x i32> [[I0]], i32 [[Z:%.*]], i32 1
+; CHECK-NEXT:    [[A:%.*]] = add <2 x i32> [[I1]], <i32 255, i32 255>
+; CHECK-NEXT:    [[EXT:%.*]] = shufflevector <2 x i32> [[A]], <2 x i32> undef, <3 x i32> <i32 0, i32 1, i32 undef>
+; CHECK-NEXT:    ret <3 x i32> [[EXT]]
 ;
   %i0 = insertelement <2 x i32> undef, i32 %y, i32 0
   %i1 = insertelement <2 x i32> %i0, i32 %z, i32 1
@@ -200,11 +201,15 @@ define <3 x i32> @add_wider(i32 %y, i32 %z) {
   ret <3 x i32> %ext
 }
 
-; FIXME: Increasing length of vector ops must be safe from illegal undef propagation.
+; Increasing length of vector ops must be safe from illegal undef propagation.
 
 define <3 x i32> @div_wider(i32 %y, i32 %z) {
-; CHECK-LABEL: @div(
-; CHECK-NEXT:    ret <3 x i32> undef
+; CHECK-LABEL: @div_wider(
+; CHECK-NEXT:    [[I0:%.*]] = insertelement <2 x i32> undef, i32 [[Y:%.*]], i32 0
+; CHECK-NEXT:    [[I1:%.*]] = insertelement <2 x i32> [[I0]], i32 [[Z:%.*]], i32 1
+; CHECK-NEXT:    [[A:%.*]] = sdiv <2 x i32> [[I1]], <i32 255, i32 255>
+; CHECK-NEXT:    [[EXT:%.*]] = shufflevector <2 x i32> [[A]], <2 x i32> undef, <3 x i32> <i32 0, i32 1, i32 undef>
+; CHECK-NEXT:    ret <3 x i32> [[EXT]]
 ;
   %i0 = insertelement <2 x i32> undef, i32 %y, i32 0
   %i1 = insertelement <2 x i32> %i0, i32 %z, i32 1
