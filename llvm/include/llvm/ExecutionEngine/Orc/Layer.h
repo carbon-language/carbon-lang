@@ -86,6 +86,9 @@ public:
   IRMaterializationUnit(ThreadSafeModule TSM, SymbolFlagsMap SymbolFlags,
                         SymbolNameToDefinitionMap SymbolToDefinition);
 
+  /// Return the ModuleIdentifier as the name for this MaterializationUnit.
+  StringRef getName() const override;
+
 protected:
   ThreadSafeModule TSM;
   SymbolNameToDefinitionMap SymbolToDefinition;
@@ -146,6 +149,9 @@ public:
   BasicObjectLayerMaterializationUnit(ObjectLayer &L, VModuleKey K,
                                       std::unique_ptr<MemoryBuffer> O,
                                       SymbolFlagsMap SymbolFlags);
+
+  /// Return the buffer's identifier as the name for this MaterializationUnit.
+  StringRef getName() const override;
 
 private:
 
