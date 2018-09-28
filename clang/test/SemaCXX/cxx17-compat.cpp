@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++17 -pedantic -verify %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++2a -Wc++17-compat-pedantic -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++2a -Wc++17-compat-pedantic -verify %s -Wno-defaulted-function-deleted
 
 struct A {};
 int (A::*pa)() const&;
@@ -42,3 +42,15 @@ void copy_lambda() { Lambda = Lambda; }
 #else
     // expected-warning@-4 {{assignment of lambda is incompatible with C++ standards before C++2a}}
 #endif
+
+struct DefaultDeleteWrongTypeBase {
+  DefaultDeleteWrongTypeBase(DefaultDeleteWrongTypeBase&);
+};
+struct DefaultDeleteWrongType : DefaultDeleteWrongTypeBase {
+  DefaultDeleteWrongType(const DefaultDeleteWrongType&) = default;
+#if __cplusplus <= 201703L
+    // expected-error@-2 {{a member or base requires it to be non-const}}
+#else
+    // expected-warning@-4 {{explicitly defaulting this copy constructor with a type different from the implicit type is incompatible with C++ standards before C++2a}}
+#endif
+};
