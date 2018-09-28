@@ -3,7 +3,7 @@
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=btver2 -all-views -resource-pressure       < %s | FileCheck %s -check-prefix=ALL -check-prefix=FULLREPORT
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=btver2 -resource-pressure -all-views       < %s | FileCheck %s -check-prefix=ALL -check-prefix=FULLREPORT
 # RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=btver2 -resource-pressure=false -all-views < %s | FileCheck %s -check-prefix=ALL -check-prefix=FULLREPORT
-# RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=btver2 -all-views -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL -check-prefix=NORPV
+# RUN: llvm-mca -mtriple=x86_64-unknown-unknown -mcpu=btver2 -all-views -resource-pressure=false < %s | FileCheck %s -check-prefix=ALL
 
 add %eax, %eax
 
