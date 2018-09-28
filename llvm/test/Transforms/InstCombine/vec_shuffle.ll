@@ -184,6 +184,35 @@ define <2 x i8> @test13a(i8 %x1, i8 %x2) {
   ret <2 x i8> %D
 }
 
+; TODO: Increasing length of vector ops is not a good canonicalization.
+ 
+define <3 x i32> @add_wider(i32 %y, i32 %z) {
+; CHECK-LABEL: @add(
+; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <3 x i32> undef, i32 [[Y:%.*]], i32 0
+; CHECK-NEXT:    [[TMP2:%.*]] = insertelement <3 x i32> [[TMP1]], i32 [[Z:%.*]], i32 1
+; CHECK-NEXT:    [[TMP3:%.*]] = add <3 x i32> [[TMP2]], <i32 255, i32 255, i32 undef>
+; CHECK-NEXT:    ret <3 x i32> [[TMP3]]
+;
+  %i0 = insertelement <2 x i32> undef, i32 %y, i32 0
+  %i1 = insertelement <2 x i32> %i0, i32 %z, i32 1
+  %a = add <2 x i32> %i1, <i32 255, i32 255>
+  %ext = shufflevector <2 x i32> %a, <2 x i32> undef, <3 x i32> <i32 0, i32 1, i32 undef>
+  ret <3 x i32> %ext
+}
+
+; FIXME: Increasing length of vector ops must be safe from illegal undef propagation.
+
+define <3 x i32> @div_wider(i32 %y, i32 %z) {
+; CHECK-LABEL: @div(
+; CHECK-NEXT:    ret <3 x i32> undef
+;
+  %i0 = insertelement <2 x i32> undef, i32 %y, i32 0
+  %i1 = insertelement <2 x i32> %i0, i32 %z, i32 1
+  %a = sdiv <2 x i32> %i1, <i32 255, i32 255>
+  %ext = shufflevector <2 x i32> %a, <2 x i32> undef, <3 x i32> <i32 0, i32 1, i32 undef>
+  ret <3 x i32> %ext
+}
+
 define <2 x i8> @test13b(i8 %x) {
 ; CHECK-LABEL: @test13b(
 ; CHECK-NEXT:    [[TMP1:%.*]] = insertelement <2 x i8> undef, i8 [[X:%.*]], i32 1
