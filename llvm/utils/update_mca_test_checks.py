@@ -80,7 +80,7 @@ def _parse_args():
   if not args.llvm_mca_binary:
     raise Error('--llvm-mca-binary value cannot be empty string')
 
-  if os.path.basename(args.llvm_mca_binary) != 'llvm-mca':
+  if 'llvm-mca' not in os.path.basename(args.llvm_mca_binary):
     _warn('unexpected binary name: {}'.format(args.llvm_mca_binary))
 
   return args
@@ -116,7 +116,7 @@ def _get_run_infos(run_lines, args):
       _warn('could not split tool and filecheck commands: {}'.format(run_line))
       continue
 
-    tool_basename = os.path.basename(args.llvm_mca_binary)
+    tool_basename = os.path.splitext(os.path.basename(args.llvm_mca_binary))[0]
 
     if not tool_cmd.startswith(tool_basename + ' '):
       _warn('skipping non-{} RUN line: {}'.format(tool_basename, run_line))
