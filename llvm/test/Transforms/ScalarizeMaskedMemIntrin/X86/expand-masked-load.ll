@@ -24,7 +24,7 @@ define <2 x i64> @scalarize_v2i64(<2 x i64>* %p, <2 x i1> %mask, <2 x i64> %pass
 ; CHECK-NEXT:    [[RES_PHI_ELSE3:%.*]] = phi <2 x i64> [ [[TMP9]], [[COND_LOAD1]] ], [ [[RES_PHI_ELSE]], [[ELSE]] ]
 ; CHECK-NEXT:    ret <2 x i64> [[RES_PHI_ELSE3]]
 ;
-  %ret = call <2 x i64> @llvm.masked.load.v2i64.p0v2i64(<2 x i64>* %p, i32 8, <2 x i1> %mask, <2 x i64> %passthru)
+  %ret = call <2 x i64> @llvm.masked.load.v2i64.p0v2i64(<2 x i64>* %p, i32 128, <2 x i1> %mask, <2 x i64> %passthru)
   ret <2 x i64> %ret
 }
 
