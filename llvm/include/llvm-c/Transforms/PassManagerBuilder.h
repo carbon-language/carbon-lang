@@ -79,9 +79,6 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
                                                   LLVMBool Internalize,
                                                   LLVMBool RunInliner);
 
-/** See llvm::addCoroutinePassesToExtensionPoints. */
-void LLVMPassManagerBuilderAddCoroutinePassesToExtensionPoints(LLVMPassManagerBuilderRef PMB);
-
 /**
  * @}
  */
