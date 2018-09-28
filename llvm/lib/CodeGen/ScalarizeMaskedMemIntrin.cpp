@@ -153,7 +153,7 @@ static void scalarizeMaskedLoad(CallInst *CI) {
   }
 
   // Adjust alignment for the scalar instruction.
-  AlignVal = std::min(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
+  AlignVal = MinAlign(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
   // Bitcast %addr fron i8* to EltTy*
   Type *NewPtrType =
       EltTy->getPointerTo(cast<PointerType>(Ptr->getType())->getAddressSpace());
@@ -276,7 +276,7 @@ static void scalarizeMaskedStore(CallInst *CI) {
   }
 
   // Adjust alignment for the scalar instruction.
-  AlignVal = std::min(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
+  AlignVal = MinAlign(AlignVal, EltTy->getPrimitiveSizeInBits() / 8);
   // Bitcast %addr fron i8* to EltTy*
   Type *NewPtrType =
       EltTy->getPointerTo(cast<PointerType>(Ptr->getType())->getAddressSpace());
