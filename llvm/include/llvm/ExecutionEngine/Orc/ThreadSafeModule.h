@@ -93,6 +93,12 @@ public:
     // reverse order (i.e. module first) to ensure the dependencies are
     // protected: The old module that is being overwritten must be destroyed
     // *before* the context that it depends on.
+    // We also need to lock the context to make sure the module tear-down
+    // does not overlap any other work on the context.
+    if (M) {
+      auto L = getContextLock();
+      M = nullptr;
+    }
     M = std::move(Other.M);
     TSCtx = std::move(Other.TSCtx);
     return *this;
