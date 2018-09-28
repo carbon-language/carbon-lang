@@ -3148,7 +3148,7 @@ static SDValue promoteToConstantPool(const GlobalValue *GV, SelectionDAG &DAG,
   // that are strings for simplicity.
   auto *CDAInit = dyn_cast<ConstantDataArray>(Init);
   unsigned Size = DAG.getDataLayout().getTypeAllocSize(Init->getType());
-  unsigned Align = GVar->getAlignment();
+  unsigned Align = DAG.getDataLayout().getPreferredAlignment(GVar);
   unsigned RequiredPadding = 4 - (Size % 4);
   bool PaddingPossible =
     RequiredPadding == 4 || (CDAInit && CDAInit->isString());

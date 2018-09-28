@@ -22,6 +22,7 @@
 @.ptr = private unnamed_addr constant [2 x i16*] [i16* getelementptr inbounds ([2 x i16], [2 x i16]* @.arr2, i32 0, i32 0), i16* null], align 2
 @.arr4 = private unnamed_addr constant [2 x i16] [i16 3, i16 4], align 16
 @.zerosize = private unnamed_addr constant [0 x i16] zeroinitializer, align 4
+@implicit_alignment_vector = private unnamed_addr constant <4 x i32> <i32 1, i32 2, i32 3, i32 4>
 
 ; CHECK-LABEL: @test1
 ; CHECK: adr r0, [[x:.*]]
@@ -178,9 +179,19 @@ define void @test11(i16* %a) local_unnamed_addr #0 {
   ret void
 }
 
+; Promotion only works with globals with alignment 4 or less; a vector has
+; implicit alignment 16.
+; CHECK-LABEL: @test12
+; CHECK-NOT: adr
+define void @test12() local_unnamed_addr #0 {
+  call void @d(<4 x i32>* @implicit_alignment_vector)
+  ret void
+}
+
 
 declare void @b(i8*) #1
 declare void @c(i16*) #1
+declare void @d(<4 x i32>*) #1
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture writeonly, i8* nocapture readonly, i32, i1)
 declare void @llvm.memmove.p0i8.p0i8.i32(i8*, i8*, i32, i1) local_unnamed_addr
 declare void @llvm.memmove.p0i16.p0i16.i32(i16*, i16*, i32, i1) local_unnamed_addr
