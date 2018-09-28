@@ -222,6 +222,64 @@ def _get_useful_prefix_info(run_infos):
   return common_to_all, longest_prefix_len
 
 
+def _align_matching_blocks(all_blocks, farthest_indexes):
+  """ Some sub-sequences of blocks may be common to multiple lists of blocks,
+      but at different indexes in each one.
+
+      For example, in the following case, A,B,E,F, and H are common to both
+      sets, but only A and B would be identified as such due to the indexes
+      matching:
+
+      index | 0 1 2 3 4 5 6
+      ------+--------------
+      setA  | A B C D E F H
+      setB  | A B E F G H
+
+      This function attempts to align the indexes of matching blocks by
+      inserting empty blocks into the block list. With this approach, A, B, E,
+      F, and H would now be able to be identified as matching blocks:
+
+      index | 0 1 2 3 4 5 6 7
+      ------+----------------
+      setA  | A B C D E F   H
+      setB  | A B     E F G H
+  """
+
+  # "Farthest block analysis": essentially, iterate over all blocks and find
+  # the highest index into a block list for the first instance of each block.
+  # This is relatively expensive, but we're dealing with small numbers of
+  # blocks so it doesn't make a perceivable difference to user time.
+  for blocks in all_blocks.values():
+    for block in blocks:
+      if not block:
+        continue
+
+      index = blocks.index(block)
+
+      if index > farthest_indexes[block]:
+        farthest_indexes[block] = index
+
+  # Use the results of the above analysis to identify any blocks that can be
+  # shunted along to match the farthest index value.
+  for blocks in all_blocks.values():
+    for index, block in enumerate(blocks):
+      if not block:
+        continue
+
+      changed = False
+      while(index < farthest_indexes[block]):
+        blocks.insert(index, '')
+        index += 1
+        changed = True
+
+      if changed:
+        # Bail out.  We'll need to re-do the farthest block analysis now that
+        # we've inserted some blocks.
+        return True
+
+  return False
+
+
 def _get_block_infos(run_infos, test_path, args, common_prefix):  # noqa
   """ For each run line, run the tool with the specified args and collect the
       output. We use the concept of 'blocks' for uniquing, where a block is
@@ -253,6 +311,10 @@ def _get_block_infos(run_infos, test_path, args, common_prefix):  # noqa
   all_blocks = {}
   max_block_len = 0
 
+  # A cache of the furthest-back position in any block list of the first
+  # instance of each block, indexed by the block itself.
+  farthest_indexes = defaultdict(int)
+
   # Run the tool for each run line to generate all of the blocks.
   for prefixes, tool_args in run_infos:
     key = _block_key(tool_args, prefixes)
@@ -269,6 +331,11 @@ def _get_block_infos(run_infos, test_path, args, common_prefix):  # noqa
     all_blocks[key] = [b.lstrip('\n').rstrip()
                        for b in raw_tool_output.split('\n\n')]
     max_block_len = max(max_block_len, len(all_blocks[key]))
+
+    # Attempt to align matching blocks until no more changes can be made.
+    made_changes = True
+    while made_changes:
+      made_changes = _align_matching_blocks(all_blocks, farthest_indexes)
 
   # If necessary, pad the lists of blocks with empty blocks so that they are
   # all the same length.
