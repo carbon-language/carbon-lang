@@ -208,8 +208,8 @@ defm : X86WriteRes<WriteBitTestSet, [JALU01], 1, [1], 2>;
 def : WriteRes<WriteLEA, [JALU01]>;
 
 // Bit counts.
-defm : JWriteResIntPair<WriteBSF, [JALU01], 5, [4], 8>;
-defm : JWriteResIntPair<WriteBSR, [JALU01], 5, [4], 8>;
+defm : JWriteResIntPair<WriteBSF, [JALU01], 4, [8], 7>;
+defm : JWriteResIntPair<WriteBSR, [JALU01], 5, [8], 8>;
 defm : JWriteResIntPair<WritePOPCNT,         [JALU01], 1>;
 defm : JWriteResIntPair<WriteLZCNT,          [JALU01], 1>;
 defm : JWriteResIntPair<WriteTZCNT,          [JALU01], 2, [2], 2>;
