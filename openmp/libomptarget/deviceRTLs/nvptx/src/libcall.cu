@@ -61,8 +61,8 @@ EXTERN int omp_get_max_threads(void) {
   omptarget_nvptx_TaskDescr *currTaskDescr = getMyTopTaskDescriptor();
   int rc = 1; // default is 1 thread avail
   if (!currTaskDescr->InParallelRegion()) {
-    // not currently in a parallel region... all are available
-    rc = GetNumberOfProcsInTeam();
+    // Not currently in a parallel region, return what was set.
+    rc = currTaskDescr->NThreads();
     ASSERT0(LT_FUSSY, rc >= 0, "bad number of threads");
   }
   PRINT(LD_IO, "call omp_get_max_threads() return %d\n", rc);
