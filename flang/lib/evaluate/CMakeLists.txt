@@ -17,6 +17,7 @@ add_library(FortranEvaluate
   complex.cc
   expression.cc
   integer.cc
+  intrinsics.cc
   logical.cc
   real.cc
   tools.cc

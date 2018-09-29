@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../lib/evaluate/bit-population-count.h"
+#include "../../lib/common/bit-population-count.h"
 #include "testing.h"
 
-using Fortran::evaluate::BitPopulationCount;
-using Fortran::evaluate::Parity;
+using Fortran::common::BitPopulationCount;
+using Fortran::common::Parity;
 
 int main() {
   MATCH(0, BitPopulationCount(std::uint64_t{0}));

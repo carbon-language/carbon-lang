@@ -23,9 +23,9 @@
 // (*"Signed" here means two's-complement, just to be clear.  Ones'-complement
 // and signed-magnitude encodings appear to be extinct in 2018.)
 
-#include "bit-population-count.h"
 #include "common.h"
 #include "leading-zero-bit-count.h"
+#include "../common/bit-population-count.h"
 #include <cinttypes>
 #include <climits>
 #include <cstddef>
@@ -395,7 +395,7 @@ public:
   constexpr int POPCNT() const {
     int count{0};
     for (int j{0}; j < parts; ++j) {
-      count += BitPopulationCount(part_[j]);
+      count += common::BitPopulationCount(part_[j]);
     }
     return count;
   }

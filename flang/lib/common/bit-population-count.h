@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FORTRAN_EVALUATE_BIT_POPULATION_COUNT_H_
-#define FORTRAN_EVALUATE_BIT_POPULATION_COUNT_H_
+#ifndef FORTRAN_COMMON_BIT_POPULATION_COUNT_H_
+#define FORTRAN_COMMON_BIT_POPULATION_COUNT_H_
 
 // Fast and portable functions that implement Fortran's POPCNT and POPPAR
 // intrinsic functions.  POPCNT returns the number of bits that are set (1)
@@ -22,7 +22,7 @@
 
 #include <cinttypes>
 
-namespace Fortran::evaluate {
+namespace Fortran::common {
 
 inline constexpr int BitPopulationCount(std::uint64_t x) {
   // In each of the 32 2-bit fields, count the bits that were present.
@@ -81,6 +81,5 @@ template<typename UINT> inline constexpr bool Parity(UINT x) {
 }
 
 // "Parity is for farmers." -- Seymour R. Cray
-
-}  // namespace Fortran::evaluate
-#endif  // FORTRAN_EVALUATE_BIT_POPULATION_COUNT_H_
+}
+#endif  // FORTRAN_COMMON_BIT_POPULATION_COUNT_H_

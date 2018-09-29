@@ -20,8 +20,11 @@
 // This class template facilitates the use of the more type-safe C++ "enum
 // class" feature without loss of convenience.
 
+#include "constexpr-bitset.h"
 #include <bitset>
 #include <cstddef>
+#include <initializer_list>
+#include <type_traits>
 
 namespace Fortran::common {
 
@@ -29,7 +32,10 @@ template<typename ENUM, std::size_t BITS> class EnumSet {
   static_assert(BITS > 0);
 
 public:
-  using bitsetType = std::bitset<BITS>;
+  // When the bitset fits in a word, use a custom local bitset class that is
+  // more amenable to constexpr evaluation than the current std::bitset<>.
+  using bitsetType =
+      std::conditional_t<(BITS <= 64), common::BitSet<BITS>, std::bitset<BITS>>;
   using enumerationType = ENUM;
 
   constexpr EnumSet() {}

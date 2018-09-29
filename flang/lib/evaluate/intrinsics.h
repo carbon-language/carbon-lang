@@ -15,12 +15,52 @@
 #ifndef FORTRAN_EVALUATE_INTRINSICS_H_
 #define FORTRAN_EVALUATE_INTRINSICS_H_
 
+#include "type.h"
 #include "../common/idioms.h"
+#include "../parser/char-block.h"
+#include <memory>
+#include <vector>
+
+namespace Fortran::semantics {
+struct IntrinsicTypeDefaultKinds;
+}
 
 namespace Fortran::evaluate {
 
 // Placeholder
 ENUM_CLASS(IntrinsicProcedure, IAND, IEOR, IOR, LEN, MAX, MIN)
 
+// Characterize actual arguments
+struct ActualArgumentCharacteristics {
+  parser::CharBlock keyword;
+  DynamicType type;
+  int rank;
+};
+
+struct CallCharacteristics {
+  bool isSubroutineCall{false};
+  parser::CharBlock name;
+  std::vector<ActualArgumentCharacteristics> argument;
+};
+
+struct SpecificIntrinsic {
+  const char *name;
+  bool isElemental;
+  DynamicType type;
+  int rank;
+};
+
+class IntrinsicTable {
+private:
+  struct Implementation;
+
+public:
+  ~IntrinsicTable();
+  static IntrinsicTable Configure(const semantics::IntrinsicTypeDefaultKinds &);
+  const SpecificIntrinsic *Probe(const CallCharacteristics &);
+
+private:
+  Implementation *impl_{nullptr};
+};
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_INTRINSICS_H_
