@@ -5745,6 +5745,10 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   // Extract constant bits from a subvector's source.
   if (Op.getOpcode() == ISD::EXTRACT_SUBVECTOR &&
       isa<ConstantSDNode>(Op.getOperand(1))) {
+    // TODO - support extract_subvector through bitcasts.
+    if (EltSizeInBits != VT.getScalarSizeInBits())
+      return false;
+
     if (getTargetConstantBitsFromNode(Op.getOperand(0), EltSizeInBits,
                                       UndefElts, EltBits, AllowWholeUndefs,
                                       AllowPartialUndefs)) {
@@ -5759,6 +5763,49 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
         EltBits.erase(EltBits.begin(), EltBits.begin() + BaseIdx);
       return true;
     }
+  }
+
+  // Extract constant bits from shuffle node sources.
+  if (auto *SVN = dyn_cast<ShuffleVectorSDNode>(Op)) {
+    // TODO - support shuffle through bitcasts.
+    if (EltSizeInBits != VT.getScalarSizeInBits())
+      return false;
+
+    ArrayRef<int> Mask = SVN->getMask();
+    if ((!AllowWholeUndefs || !AllowPartialUndefs) &&
+        llvm::any_of(Mask, [](int M) { return M < 0; }))
+      return false;
+
+    APInt UndefElts0, UndefElts1;
+    SmallVector<APInt, 32> EltBits0, EltBits1;
+    if (isAnyInRange(Mask, 0, NumElts) &&
+        !getTargetConstantBitsFromNode(Op.getOperand(0), EltSizeInBits,
+                                       UndefElts0, EltBits0, AllowWholeUndefs,
+                                       AllowPartialUndefs))
+      return false;
+    if (isAnyInRange(Mask, NumElts, 2 * NumElts) &&
+        !getTargetConstantBitsFromNode(Op.getOperand(1), EltSizeInBits,
+                                       UndefElts1, EltBits1, AllowWholeUndefs,
+                                       AllowPartialUndefs))
+      return false;
+
+    UndefElts = APInt::getNullValue(NumElts);
+    for (int i = 0; i != NumElts; ++i) {
+      int M = Mask[i];
+      if (M < 0) {
+        UndefElts.setBit(i);
+        EltBits.push_back(APInt::getNullValue(EltSizeInBits));
+      } else if (M < (int)NumElts) {
+        if (UndefElts0[M])
+          UndefElts.setBit(i);
+        EltBits.push_back(EltBits0[M]);
+      } else {
+        if (UndefElts1[M - NumElts])
+          UndefElts.setBit(i);
+        EltBits.push_back(EltBits1[M - NumElts]);
+      }
+    }
+    return true;
   }
 
   return false;
