@@ -5748,11 +5748,15 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     if (getTargetConstantBitsFromNode(Op.getOperand(0), EltSizeInBits,
                                       UndefElts, EltBits, AllowWholeUndefs,
                                       AllowPartialUndefs)) {
+      EVT SrcVT = Op.getOperand(0).getValueType();
+      unsigned NumSrcElts = SrcVT.getVectorNumElements();
       unsigned NumSubElts = VT.getVectorNumElements();
       unsigned BaseIdx = Op.getConstantOperandVal(1);
       UndefElts = UndefElts.extractBits(NumSubElts, BaseIdx);
-      EltBits.erase(EltBits.begin() + BaseIdx + NumSubElts, EltBits.end());
-      EltBits.erase(EltBits.begin(), EltBits.begin() + BaseIdx);
+      if ((BaseIdx + NumSubElts) != NumSrcElts)
+        EltBits.erase(EltBits.begin() + BaseIdx + NumSubElts, EltBits.end());
+      if (BaseIdx != 0)
+        EltBits.erase(EltBits.begin(), EltBits.begin() + BaseIdx);
       return true;
     }
   }
