@@ -5790,7 +5790,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
       return false;
 
     UndefElts = APInt::getNullValue(NumElts);
-    for (int i = 0; i != NumElts; ++i) {
+    for (int i = 0; i != (int)NumElts; ++i) {
       int M = Mask[i];
       if (M < 0) {
         UndefElts.setBit(i);
