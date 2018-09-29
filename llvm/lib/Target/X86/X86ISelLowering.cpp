@@ -5742,6 +5742,21 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     return CastBitData(UndefSrcElts, SrcEltBits);
   }
 
+  // Extract constant bits from a subvector's source.
+  if (Op.getOpcode() == ISD::EXTRACT_SUBVECTOR &&
+      isa<ConstantSDNode>(Op.getOperand(1))) {
+    if (getTargetConstantBitsFromNode(Op.getOperand(0), EltSizeInBits,
+                                      UndefElts, EltBits, AllowWholeUndefs,
+                                      AllowPartialUndefs)) {
+      unsigned NumSubElts = VT.getVectorNumElements();
+      unsigned BaseIdx = Op.getConstantOperandVal(1);
+      UndefElts = UndefElts.extractBits(NumSubElts, BaseIdx);
+      EltBits.erase(EltBits.begin() + BaseIdx + NumSubElts, EltBits.end());
+      EltBits.erase(EltBits.begin(), EltBits.begin() + BaseIdx);
+      return true;
+    }
+  }
+
   return false;
 }
 
