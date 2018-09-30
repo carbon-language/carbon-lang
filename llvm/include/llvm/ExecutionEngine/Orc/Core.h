@@ -661,8 +661,11 @@ public:
   /// SymbolStringPools may be shared between ExecutionSessions.
   ExecutionSession(std::shared_ptr<SymbolStringPool> SSP = nullptr);
 
-  /// Returns the SymbolStringPool for this ExecutionSession.
-  SymbolStringPool &getSymbolStringPool() const { return *SSP; }
+  /// Add a symbol name to the SymbolStringPool and return a pointer to it.
+  SymbolStringPtr intern(StringRef SymName) { return SSP->intern(SymName); }
+
+  /// Returns a shared_ptr to the SymbolStringPool for this ExecutionSession.
+  std::shared_ptr<SymbolStringPool> getSymbolStringPool() const { return SSP; }
 
   /// Run the given lambda with the session mutex locked.
   template <typename Func> auto runSessionLocked(Func &&F) -> decltype(F()) {

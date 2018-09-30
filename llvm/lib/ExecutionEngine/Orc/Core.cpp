@@ -1873,7 +1873,7 @@ SymbolStringPtr MangleAndInterner::operator()(StringRef Name) {
     raw_string_ostream MangledNameStream(MangledName);
     Mangler::getNameWithPrefix(MangledNameStream, Name, DL);
   }
-  return ES.getSymbolStringPool().intern(MangledName);
+  return ES.intern(MangledName);
 }
 
 } // End namespace orc.
