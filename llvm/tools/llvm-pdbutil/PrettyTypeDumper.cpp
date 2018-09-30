@@ -292,7 +292,7 @@ void TypeDumper::dump(const PDBSymbolTypeFunctionSig &Symbol) {
 void TypeDumper::dump(const PDBSymbolTypePointer &Symbol) {
   std::unique_ptr<PDBSymbol> P = Symbol.getPointeeType();
 
-  if (auto *FS = dyn_cast<PDBSymbolTypeFunctionSig>(P.get())) {
+  if (auto *FS = dyn_cast_or_null<PDBSymbolTypeFunctionSig>(P.get())) {
     FunctionDumper Dumper(Printer);
     FunctionDumper::PointerType PT =
         Symbol.isReference() ? FunctionDumper::PointerType::Reference
@@ -301,9 +301,9 @@ void TypeDumper::dump(const PDBSymbolTypePointer &Symbol) {
     return;
   }
 
-  if (auto *UDT = dyn_cast<PDBSymbolTypeUDT>(P.get())) {
+  if (auto *UDT = dyn_cast_or_null<PDBSymbolTypeUDT>(P.get())) {
     printClassDecl(Printer, *UDT);
-  } else {
+  } else if (P) {
     P->dump(*this);
   }
 
