@@ -197,12 +197,11 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
 /// EliminatePHINodes - Eliminate phi nodes by inserting copy instructions in
 /// predecessor basic blocks.
 bool PHIElimination::EliminatePHINodes(MachineFunction &MF,
-                                             MachineBasicBlock &MBB) {
+                                       MachineBasicBlock &MBB) {
   if (MBB.empty() || !MBB.front().isPHI())
     return false;   // Quick exit for basic blocks without PHIs.
 
-  // Get an iterator to the first instruction after the last PHI node (this may
-  // also be the end of the basic block).
+  // Get an iterator to the last PHI node.
   MachineBasicBlock::iterator LastPHIIt =
     std::prev(MBB.SkipPHIsAndLabels(MBB.begin()));
 
