@@ -188,10 +188,6 @@ struct FormatToken {
   bool ClosesTemplateDeclaration = false;
 
   /// Number of parameters, if this is "(", "[" or "<".
-  ///
-  /// This is initialized to 1 as we don't need to distinguish functions with
-  /// 0 parameters from functions with 1 parameter. Thus, we can simply count
-  /// the number of commas.
   unsigned ParameterCount = 0;
 
   /// Number of parameters that are nested blocks,
