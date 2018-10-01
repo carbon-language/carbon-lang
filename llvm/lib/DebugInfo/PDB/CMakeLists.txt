@@ -58,6 +58,7 @@ add_pdb_impl_folder(Native
   Native/NativeTypeFunctionSig.cpp
   Native/NativeTypePointer.cpp
   Native/NativeTypeUDT.cpp
+  Native/NativeTypeVTShape.cpp
   Native/NamedStreamMap.cpp
   Native/NativeSession.cpp
   Native/PDBFile.cpp
