@@ -2001,7 +2001,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
            I = SinkCandidateUseCounts.begin(),
            E = SinkCandidateUseCounts.end();
        I != E; ++I)
-    if (I->first->getNumUses() == I->second) {
+    if (I->first->hasNUses(I->second)) {
       ++SpeculationCost;
       if (SpeculationCost > 1)
         return false;
