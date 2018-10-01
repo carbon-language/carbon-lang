@@ -978,13 +978,6 @@ def BWWriteResGroup62 : SchedWriteRes<[BWPort6,BWPort23]> {
 def: InstRW<[BWWriteResGroup62], (instrs FARJMP64)>;
 def: InstRW<[BWWriteResGroup62], (instregex "JMP(16|32|64)m")>;
 
-def BWWriteResGroup63 : SchedWriteRes<[BWPort23,BWPort06]> {
-  let Latency = 6;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[BWWriteResGroup63], (instregex "BT(16|32|64)mi8")>;
-
 def BWWriteResGroup64 : SchedWriteRes<[BWPort23,BWPort15]> {
   let Latency = 6;
   let NumMicroOps = 2;

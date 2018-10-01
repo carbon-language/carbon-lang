@@ -1018,13 +1018,6 @@ def SKLWriteResGroup72 : SchedWriteRes<[SKLPort6,SKLPort23]> {
 def: InstRW<[SKLWriteResGroup72], (instrs FARJMP64)>;
 def: InstRW<[SKLWriteResGroup72], (instregex "JMP(16|32|64)m")>;
 
-def SKLWriteResGroup74 : SchedWriteRes<[SKLPort23,SKLPort06]> {
-  let Latency = 6;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[SKLWriteResGroup74], (instregex "BT(16|32|64)mi8")>;
-
 def SKLWriteResGroup75 : SchedWriteRes<[SKLPort23,SKLPort15]> {
   let Latency = 6;
   let NumMicroOps = 2;

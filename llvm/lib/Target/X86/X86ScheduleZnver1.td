@@ -714,10 +714,6 @@ def ZnWriteALULat2Ld : SchedWriteRes<[ZnAGU, ZnALU]> {
   let Latency = 6;
 }
 
-// BT.
-// m,i.
-def : InstRW<[WriteShiftLd], (instregex "BT(16|32|64)mi8")>;
-
 // BTR BTS BTC.
 // m,r,i.
 def ZnWriteBTRSCm : SchedWriteRes<[ZnAGU, ZnALU]> {

@@ -1177,13 +1177,6 @@ def SKXWriteResGroup76 : SchedWriteRes<[SKXPort6,SKXPort23]> {
 def: InstRW<[SKXWriteResGroup76], (instrs FARJMP64)>;
 def: InstRW<[SKXWriteResGroup76], (instregex "JMP(16|32|64)m")>;
 
-def SKXWriteResGroup78 : SchedWriteRes<[SKXPort23,SKXPort06]> {
-  let Latency = 6;
-  let NumMicroOps = 2;
-  let ResourceCycles = [1,1];
-}
-def: InstRW<[SKXWriteResGroup78], (instregex "BT(16|32|64)mi8")>;
-
 def SKXWriteResGroup79 : SchedWriteRes<[SKXPort23,SKXPort15]> {
   let Latency = 6;
   let NumMicroOps = 2;
