@@ -736,9 +736,9 @@ public:
     adjustNumPseudos(*II, -1);
     adjustNumPseudos(Begin, End, 1);
 
-    auto i = II - Instructions.begin();
+    auto I = II - Instructions.begin();
     Instructions.insert(Instructions.erase(II), Begin, End);
-    return i + Instructions.begin();
+    return I + Instructions.begin();
   }
 
   iterator replaceInstruction(iterator II,
