@@ -268,7 +268,7 @@ struct FormatToken {
   /// \c true if this token ends a binary expression.
   bool EndsBinaryExpression = false;
 
-  /// Is this is an operator (or "."/"->") in a sequence of operators
+  /// If this is an operator (or "."/"->") in a sequence of operators
   /// with the same precedence, contains the 0-based operator index.
   unsigned OperatorIndex = 0;
 
