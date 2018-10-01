@@ -781,10 +781,8 @@ static bool supportsSPMDExecutionMode(ASTContext &Ctx,
   case OMPD_target_parallel:
   case OMPD_target_parallel_for:
   case OMPD_target_parallel_for_simd:
-    return !hasParallelIfNumThreadsClause(Ctx, D);
   case OMPD_target_teams_distribute_parallel_for:
   case OMPD_target_teams_distribute_parallel_for_simd:
-    // Distribute with lastprivates requires non-SPMD execution mode.
     return !hasParallelIfNumThreadsClause(Ctx, D);
   case OMPD_target_simd:
   case OMPD_target_teams_distribute:
