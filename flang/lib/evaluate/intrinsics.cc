@@ -36,6 +36,7 @@ static constexpr CategorySet Int{TypeCategory::Integer},
     AnyType{IntrinsicType | CategorySet{TypeCategory::Derived}};
 
 enum class KindCode {
+  none,
   defaultIntegerKind,
   defaultRealKind,
   doublePrecision,
@@ -56,7 +57,7 @@ enum class KindCode {
 
 struct TypePattern {
   CategorySet categorySet;
-  KindCode kindCode;
+  KindCode kindCode{KindCode::none};
 };
 
 // Abbreviations for arguments and results in the prototype specifications
@@ -108,10 +109,10 @@ enum SpecialNote {
 };
 
 struct IntrinsicDummyArgument {
-  const char *keyword;
+  const char *keyword{nullptr};
   TypePattern typePattern;
   RankPattern rank{elemental};
-  enum SpecialNote note;  // default value when greater than zero
+  enum SpecialNote note { none };
 };
 
 static constexpr IntrinsicDummyArgument DefaultingKind{
@@ -120,14 +121,14 @@ static constexpr IntrinsicDummyArgument DefaultingKind{
 
 struct IntrinsicInterface {
   static constexpr int maxArguments{7};
-  const char *name;
+  const char *name{nullptr};
   IntrinsicDummyArgument dummy[maxArguments];
   TypePattern result;
   RankPattern rank{elemental};
 };
 
 // This table's entries must be ordered alphabetically.
-static constexpr IntrinsicInterface genericIntrinsicFunction[]{
+static const IntrinsicInterface genericIntrinsicFunction[]{
     {"abs", {{"a", IntOrRealA}}, IntOrRealA},
     {"abs", {{"a", ZA}}, RA},
     {"achar", {{"i", IA}, DefaultingKind}, ChK},
@@ -355,7 +356,7 @@ struct SpecificIntrinsicInterface : public IntrinsicInterface {
   const char *generic{nullptr};
 };
 
-static constexpr SpecificIntrinsicInterface specificIntrinsicFunction[]{
+static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"abs", {{"a", Rd}}, Rd}},
     {{"acos", {{"x", Rd}}, Rd}},
     {{"aimag", {{"z", Zd}}, Rd}},
