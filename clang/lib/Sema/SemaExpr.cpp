@@ -13530,9 +13530,6 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     }
   }
 
-  if (getCurFunction())
-    getCurFunction()->addBlock(BSI->TheDecl);
-
   return Result;
 }
 
