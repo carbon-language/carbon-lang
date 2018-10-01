@@ -17,12 +17,12 @@
 
 #include "scope.h"
 #include "../parser/message.h"
+#include <iostream>
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace Fortran::parser {
-  struct Program;
+struct Program;
 }
 
 namespace Fortran::semantics {

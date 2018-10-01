@@ -420,13 +420,28 @@ int CoarrayRef::Rank() const {
 }
 int DataRef::Rank() const {
   return std::visit(
-      common::visitors{[](const Symbol *sym) { return sym->Rank(); },
-          [](const auto &x) { return x.Rank(); }},
+      // g++ 7.2 emits bogus warnings here and below when common::visitors{}
+      // is used with a "const auto &" catch-all member, so a constexpr type
+      // test has to be used instead.
+      [](const auto &x) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
+                          const Symbol *>) {
+          return x->Rank();
+        } else {
+          return x.Rank();
+        }
+      },
       u);
 }
 int Substring::Rank() const {
-  return std::visit(common::visitors{[](const std::string &) { return 0; },
-                        [](const auto &x) { return x.Rank(); }},
+  return std::visit(
+      [](const auto &x) {
+        if constexpr (std::is_same_v<std::decay_t<decltype(x)>, std::string>) {
+          return 0;
+        } else {
+          return x.Rank();
+        }
+      },
       u_);
 }
 int ComplexPart::Rank() const { return complex_.Rank(); }
