@@ -688,6 +688,12 @@ def : InstRW<[JWriteVZeroIdiomALUX], (instrs PSUBBrr, VPSUBBrr,
                                              PCMPGTQrr, VPCMPGTQrr,
                                              PCMPGTWrr, VPCMPGTWrr)>;
 
+def JWriteVPERM2F128 : SchedWriteVariant<[
+  SchedVar<MCSchedPredicate<ZeroIdiomVPERMPredicate>, [JWriteZeroIdiomYmm]>,
+  SchedVar<NoSchedPred,                               [WriteFShuffle256]>
+]>;
+def : InstRW<[JWriteVPERM2F128], (instrs VPERM2F128rr)>;
+
 // This write is used for slow LEA instructions.
 def JWrite3OpsLEA : SchedWriteRes<[JALU1, JSAGU]> {
   let Latency = 2;
@@ -762,7 +768,9 @@ def : IsZeroIdiomFunction<[
 
     // ymm variants.
     VXORPSYrr, VXORPDYrr, VANDNPSYrr, VANDNPDYrr
-  ], ZeroIdiomPredicate>
+  ], ZeroIdiomPredicate>,
+
+  DepBreakingClass<[ VPERM2F128rr ], ZeroIdiomVPERMPredicate>
 ]>;
 
 def : IsDepBreakingFunction<[
