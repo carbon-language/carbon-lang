@@ -159,11 +159,13 @@ def  : WriteRes<WriteSETCCStore, [SKXPort06,SKXPort4,SKXPort237]> {
   let Latency = 2;
   let NumMicroOps = 3;
 }
-defm : X86WriteRes<WriteLAHFSAHF,     [SKXPort06], 1, [1], 1>;
-defm : X86WriteRes<WriteBitTest,      [SKXPort06], 1, [1], 1>;
-defm : X86WriteRes<WriteBitTestImmLd, [SKXPort06,SKXPort23], 6, [1,1], 2>;
-defm : X86WriteRes<WriteBitTestRegLd, [SKXPort0156,SKXPort23], 6, [1,1], 2>;
-defm : X86WriteRes<WriteBitTestSet,   [SKXPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteLAHFSAHF,        [SKXPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTest,         [SKXPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestImmLd,    [SKXPort06,SKXPort23], 6, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestRegLd,    [SKXPort0156,SKXPort23], 6, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestSet,      [SKXPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestSetImmLd, [SKXPort06,SKXPort23], 6, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestSetRegLd, [SKXPort0156,SKXPort23], 5, [1,1], 2>;
 
 // Integer shifts and rotates.
 defm : SKXWriteResPair<WriteShift,    [SKXPort06],  1>;

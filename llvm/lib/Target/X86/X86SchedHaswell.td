@@ -166,11 +166,13 @@ def  : WriteRes<WriteSETCCStore, [HWPort06,HWPort4,HWPort237]> {
   let NumMicroOps = 3;
 }
 
-defm : X86WriteRes<WriteLAHFSAHF,     [HWPort06], 1, [1], 1>;
-defm : X86WriteRes<WriteBitTest,      [HWPort06], 1, [1], 1>;
-defm : X86WriteRes<WriteBitTestImmLd, [HWPort06,HWPort23], 6, [1,1], 2>;
-defm : X86WriteRes<WriteBitTestRegLd, [], 1, [], 10>;
-defm : X86WriteRes<WriteBitTestSet,   [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteLAHFSAHF,        [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTest,         [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestImmLd,    [HWPort06,HWPort23], 6, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestRegLd,    [], 1, [], 10>;
+defm : X86WriteRes<WriteBitTestSet,      [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestSetImmLd, [HWPort06,HWPort23], 6, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestSetRegLd, [], 1, [], 11>;
 
 // This is for simple LEAs with one or two input operands.
 // The complex ones can only execute on port 1, and they require two cycles on
