@@ -4,7 +4,7 @@
 ; This turns into a&1 != 0
 define <2 x i1> @test1(<2 x i64> %a) {
 ; CHECK-LABEL: @test1(
-; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i64> %a, <i64 1, i64 1>
+; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i64> [[A:%.*]], <i64 1, i64 1>
 ; CHECK-NEXT:    [[T:%.*]] = icmp ne <2 x i64> [[TMP1]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[T]]
 ;
@@ -26,7 +26,7 @@ define <2 x i64> @test2(<2 x i64> %a) {
 
 define <2 x i64> @test3(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: @test3(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord <4 x float> %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp ord <4 x float> [[A:%.*]], [[B:%.*]]
 ; CHECK-NEXT:    [[AND:%.*]] = sext <4 x i1> [[TMP1]] to <4 x i32>
 ; CHECK-NEXT:    [[CONV:%.*]] = bitcast <4 x i32> [[AND]] to <2 x i64>
 ; CHECK-NEXT:    ret <2 x i64> [[CONV]]
@@ -42,7 +42,7 @@ define <2 x i64> @test3(<4 x float> %a, <4 x float> %b) {
 
 define <2 x i64> @test4(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: @test4(
-; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uno <4 x float> %a, %b
+; CHECK-NEXT:    [[TMP1:%.*]] = fcmp uno <4 x float> [[A:%.*]], [[B:%.*]]
 ; CHECK-NEXT:    [[OR:%.*]] = sext <4 x i1> [[TMP1]] to <4 x i32>
 ; CHECK-NEXT:    [[CONV:%.*]] = bitcast <4 x i32> [[OR]] to <2 x i64>
 ; CHECK-NEXT:    ret <2 x i64> [[CONV]]
@@ -59,10 +59,10 @@ define <2 x i64> @test4(<4 x float> %a, <4 x float> %b) {
 ; rdar://7434900
 define <2 x i64> @test5(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: @test5(
-; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult <4 x float> %a, zeroinitializer
-; CHECK-NEXT:    [[CMP4:%.*]] = fcmp ult <4 x float> %b, zeroinitializer
-; CHECK-NEXT:    [[NARROW:%.*]] = and <4 x i1> [[CMP]], [[CMP4]]
-; CHECK-NEXT:    [[AND:%.*]] = sext <4 x i1> [[NARROW]] to <4 x i32>
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult <4 x float> [[A:%.*]], zeroinitializer
+; CHECK-NEXT:    [[CMP4:%.*]] = fcmp ult <4 x float> [[B:%.*]], zeroinitializer
+; CHECK-NEXT:    [[AND1:%.*]] = and <4 x i1> [[CMP]], [[CMP4]]
+; CHECK-NEXT:    [[AND:%.*]] = sext <4 x i1> [[AND1]] to <4 x i32>
 ; CHECK-NEXT:    [[CONV:%.*]] = bitcast <4 x i32> [[AND]] to <2 x i64>
 ; CHECK-NEXT:    ret <2 x i64> [[CONV]]
 ;
@@ -79,8 +79,8 @@ define <2 x i64> @test6(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: @test6(
 ; CHECK-NEXT:    [[CMP:%.*]] = fcmp ult <4 x float> [[A:%.*]], zeroinitializer
 ; CHECK-NEXT:    [[CMP4:%.*]] = fcmp ult <4 x float> [[B:%.*]], zeroinitializer
-; CHECK-NEXT:    [[NARROW:%.*]] = or <4 x i1> [[CMP]], [[CMP4]]
-; CHECK-NEXT:    [[AND:%.*]] = sext <4 x i1> [[NARROW]] to <4 x i32>
+; CHECK-NEXT:    [[AND1:%.*]] = or <4 x i1> [[CMP]], [[CMP4]]
+; CHECK-NEXT:    [[AND:%.*]] = sext <4 x i1> [[AND1]] to <4 x i32>
 ; CHECK-NEXT:    [[CONV:%.*]] = bitcast <4 x i32> [[AND]] to <2 x i64>
 ; CHECK-NEXT:    ret <2 x i64> [[CONV]]
 ;
@@ -113,9 +113,9 @@ define <2 x i64> @test7(<4 x float> %a, <4 x float> %b) {
 
 define void @convert(<2 x i32>* %dst.addr, <2 x i64> %src) {
 ; CHECK-LABEL: @convert(
-; CHECK-NEXT:    [[VAL:%.*]] = trunc <2 x i64> %src to <2 x i32>
+; CHECK-NEXT:    [[VAL:%.*]] = trunc <2 x i64> [[SRC:%.*]] to <2 x i32>
 ; CHECK-NEXT:    [[ADD:%.*]] = add <2 x i32> [[VAL]], <i32 1, i32 1>
-; CHECK-NEXT:    store <2 x i32> [[ADD]], <2 x i32>* %dst.addr, align 8
+; CHECK-NEXT:    store <2 x i32> [[ADD]], <2 x i32>* [[DST_ADDR:%.*]], align 8
 ; CHECK-NEXT:    ret void
 ;
   %val = trunc <2 x i64> %src to <2 x i32>
@@ -126,7 +126,7 @@ define void @convert(<2 x i32>* %dst.addr, <2 x i64> %src) {
 
 define <2 x i65> @foo(<2 x i64> %t) {
 ; CHECK-LABEL: @foo(
-; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i64> %t, <i64 4294967295, i64 4294967295>
+; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i64> [[T:%.*]], <i64 4294967295, i64 4294967295>
 ; CHECK-NEXT:    [[B:%.*]] = zext <2 x i64> [[TMP1]] to <2 x i65>
 ; CHECK-NEXT:    ret <2 x i65> [[B]]
 ;
@@ -137,7 +137,7 @@ define <2 x i65> @foo(<2 x i64> %t) {
 
 define <2 x i64> @bar(<2 x i65> %t) {
 ; CHECK-LABEL: @bar(
-; CHECK-NEXT:    [[A:%.*]] = trunc <2 x i65> %t to <2 x i64>
+; CHECK-NEXT:    [[A:%.*]] = trunc <2 x i65> [[T:%.*]] to <2 x i64>
 ; CHECK-NEXT:    [[B:%.*]] = and <2 x i64> [[A]], <i64 4294967295, i64 4294967295>
 ; CHECK-NEXT:    ret <2 x i64> [[B]]
 ;
@@ -148,7 +148,7 @@ define <2 x i64> @bar(<2 x i65> %t) {
 
 define <2 x i64> @bars(<2 x i65> %t) {
 ; CHECK-LABEL: @bars(
-; CHECK-NEXT:    [[A:%.*]] = trunc <2 x i65> %t to <2 x i64>
+; CHECK-NEXT:    [[A:%.*]] = trunc <2 x i65> [[T:%.*]] to <2 x i64>
 ; CHECK-NEXT:    [[SEXT:%.*]] = shl <2 x i64> [[A]], <i64 32, i64 32>
 ; CHECK-NEXT:    [[B:%.*]] = ashr exact <2 x i64> [[SEXT]], <i64 32, i64 32>
 ; CHECK-NEXT:    ret <2 x i64> [[B]]
@@ -160,7 +160,7 @@ define <2 x i64> @bars(<2 x i65> %t) {
 
 define <2 x i64> @quxs(<2 x i64> %t) {
 ; CHECK-LABEL: @quxs(
-; CHECK-NEXT:    [[SEXT:%.*]] = shl <2 x i64> %t, <i64 32, i64 32>
+; CHECK-NEXT:    [[SEXT:%.*]] = shl <2 x i64> [[T:%.*]], <i64 32, i64 32>
 ; CHECK-NEXT:    [[B:%.*]] = ashr exact <2 x i64> [[SEXT]], <i64 32, i64 32>
 ; CHECK-NEXT:    ret <2 x i64> [[B]]
 ;
@@ -171,7 +171,7 @@ define <2 x i64> @quxs(<2 x i64> %t) {
 
 define <2 x i64> @quxt(<2 x i64> %t) {
 ; CHECK-LABEL: @quxt(
-; CHECK-NEXT:    [[A:%.*]] = shl <2 x i64> %t, <i64 32, i64 32>
+; CHECK-NEXT:    [[A:%.*]] = shl <2 x i64> [[T:%.*]], <i64 32, i64 32>
 ; CHECK-NEXT:    [[B:%.*]] = ashr exact <2 x i64> [[A]], <i64 32, i64 32>
 ; CHECK-NEXT:    ret <2 x i64> [[B]]
 ;
@@ -182,7 +182,7 @@ define <2 x i64> @quxt(<2 x i64> %t) {
 
 define <2 x double> @fa(<2 x double> %t) {
 ; CHECK-LABEL: @fa(
-; CHECK-NEXT:    [[A:%.*]] = fptrunc <2 x double> %t to <2 x float>
+; CHECK-NEXT:    [[A:%.*]] = fptrunc <2 x double> [[T:%.*]] to <2 x float>
 ; CHECK-NEXT:    [[B:%.*]] = fpext <2 x float> [[A]] to <2 x double>
 ; CHECK-NEXT:    ret <2 x double> [[B]]
 ;
@@ -193,7 +193,7 @@ define <2 x double> @fa(<2 x double> %t) {
 
 define <2 x double> @fb(<2 x double> %t) {
 ; CHECK-LABEL: @fb(
-; CHECK-NEXT:    [[A:%.*]] = fptoui <2 x double> %t to <2 x i64>
+; CHECK-NEXT:    [[A:%.*]] = fptoui <2 x double> [[T:%.*]] to <2 x i64>
 ; CHECK-NEXT:    [[B:%.*]] = uitofp <2 x i64> [[A]] to <2 x double>
 ; CHECK-NEXT:    ret <2 x double> [[B]]
 ;
@@ -204,7 +204,7 @@ define <2 x double> @fb(<2 x double> %t) {
 
 define <2 x double> @fc(<2 x double> %t) {
 ; CHECK-LABEL: @fc(
-; CHECK-NEXT:    [[A:%.*]] = fptosi <2 x double> %t to <2 x i64>
+; CHECK-NEXT:    [[A:%.*]] = fptosi <2 x double> [[T:%.*]] to <2 x i64>
 ; CHECK-NEXT:    [[B:%.*]] = sitofp <2 x i64> [[A]] to <2 x double>
 ; CHECK-NEXT:    ret <2 x double> [[B]]
 ;
@@ -257,7 +257,7 @@ define <8 x i32> @pr24458(<8 x float> %n) {
 
 define <3 x i16> @trunc_inselt_undef(i32 %x) {
 ; CHECK-LABEL: @trunc_inselt_undef(
-; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 %x to i16
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i32 [[X:%.*]] to i16
 ; CHECK-NEXT:    [[TRUNC:%.*]] = insertelement <3 x i16> undef, i16 [[TMP1]], i32 1
 ; CHECK-NEXT:    ret <3 x i16> [[TRUNC]]
 ;
@@ -271,8 +271,8 @@ define <3 x i16> @trunc_inselt_undef(i32 %x) {
 
 define <2 x float> @fptrunc_inselt_undef(double %x, i32 %index) {
 ; CHECK-LABEL: @fptrunc_inselt_undef(
-; CHECK-NEXT:    [[TMP1:%.*]] = fptrunc double %x to float
-; CHECK-NEXT:    [[TRUNC:%.*]] = insertelement <2 x float> undef, float [[TMP1]], i32 %index
+; CHECK-NEXT:    [[TMP1:%.*]] = fptrunc double [[X:%.*]] to float
+; CHECK-NEXT:    [[TRUNC:%.*]] = insertelement <2 x float> undef, float [[TMP1]], i32 [[INDEX:%.*]]
 ; CHECK-NEXT:    ret <2 x float> [[TRUNC]]
 ;
   %vec = insertelement <2 x double> <double undef, double undef>, double %x, i32 %index
@@ -286,7 +286,7 @@ define <2 x float> @fptrunc_inselt_undef(double %x, i32 %index) {
 
 define <3 x i16> @trunc_inselt1(i32 %x) {
 ; CHECK-LABEL: @trunc_inselt1(
-; CHECK-NEXT:    [[VEC:%.*]] = insertelement <3 x i32> <i32 3, i32 undef, i32 65536>, i32 %x, i32 1
+; CHECK-NEXT:    [[VEC:%.*]] = insertelement <3 x i32> <i32 3, i32 undef, i32 65536>, i32 [[X:%.*]], i32 1
 ; CHECK-NEXT:    [[TRUNC:%.*]] = trunc <3 x i32> [[VEC]] to <3 x i16>
 ; CHECK-NEXT:    ret <3 x i16> [[TRUNC]]
 ;
@@ -301,7 +301,7 @@ define <3 x i16> @trunc_inselt1(i32 %x) {
 
 define <2 x float> @fptrunc_inselt1(double %x, i32 %index) {
 ; CHECK-LABEL: @fptrunc_inselt1(
-; CHECK-NEXT:    [[VEC:%.*]] = insertelement <2 x double> <double undef, double 3.000000e+00>, double %x, i32 %index
+; CHECK-NEXT:    [[VEC:%.*]] = insertelement <2 x double> <double undef, double 3.000000e+00>, double [[X:%.*]], i32 [[INDEX:%.*]]
 ; CHECK-NEXT:    [[TRUNC:%.*]] = fptrunc <2 x double> [[VEC]] to <2 x float>
 ; CHECK-NEXT:    ret <2 x float> [[TRUNC]]
 ;
@@ -316,7 +316,7 @@ define <2 x float> @fptrunc_inselt1(double %x, i32 %index) {
 
 define <8 x i16> @trunc_inselt2(<8 x i32> %x, i32 %index) {
 ; CHECK-LABEL: @trunc_inselt2(
-; CHECK-NEXT:    [[VEC:%.*]] = insertelement <8 x i32> %x, i32 1048576, i32 %index
+; CHECK-NEXT:    [[VEC:%.*]] = insertelement <8 x i32> [[X:%.*]], i32 1048576, i32 [[INDEX:%.*]]
 ; CHECK-NEXT:    [[TRUNC:%.*]] = trunc <8 x i32> [[VEC]] to <8 x i16>
 ; CHECK-NEXT:    ret <8 x i16> [[TRUNC]]
 ;
@@ -331,7 +331,7 @@ define <8 x i16> @trunc_inselt2(<8 x i32> %x, i32 %index) {
 
 define <3 x float> @fptrunc_inselt2(<3 x double> %x) {
 ; CHECK-LABEL: @fptrunc_inselt2(
-; CHECK-NEXT:    [[VEC:%.*]] = insertelement <3 x double> %x, double 4.000000e+00, i32 2
+; CHECK-NEXT:    [[VEC:%.*]] = insertelement <3 x double> [[X:%.*]], double 4.000000e+00, i32 2
 ; CHECK-NEXT:    [[TRUNC:%.*]] = fptrunc <3 x double> [[VEC]] to <3 x float>
 ; CHECK-NEXT:    ret <3 x float> [[TRUNC]]
 ;
