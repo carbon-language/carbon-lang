@@ -786,12 +786,7 @@ int runOrcLazyJIT(const char *ProgName) {
                         ? Optional<CodeModel::Model>(CMModel)
                         : None);
 
-  DataLayout DL("");
-  {
-    // Create a throwaway TargetMachine to get the data layout.
-    auto TM = ExitOnErr(JTMB.createTargetMachine());
-    DL = TM->createDataLayout();
-  }
+  DataLayout DL = ExitOnErr(JTMB.getDefaultDataLayoutForTarget());
   auto J = ExitOnErr(orc::LLLazyJIT::Create(std::move(JTMB), DL, LazyJITCompileThreads));
 
   if (PerModuleLazy)
