@@ -3412,7 +3412,7 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
 
       MVT VT;
       int SubRegOp;
-      unsigned Op;
+      unsigned ROpc, MOpc;
 
       // For each of these checks we need to be careful if the sign flag is
       // being used. It is only safe to use the sign flag in two conditions,
@@ -3425,7 +3425,8 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
         // For example, convert "testl %eax, $8" to "testb %al, $8"
         VT = MVT::i8;
         SubRegOp = X86::sub_8bit;
-        Op = X86::TEST8ri;
+        ROpc = X86::TEST8ri;
+        MOpc = X86::TEST8mi;
       } else if (OptForMinSize && isUInt<16>(Mask) &&
                  (!(Mask & 0x8000) || CmpVT == MVT::i16 ||
                   hasNoSignedComparisonUses(Node))) {
@@ -3435,7 +3436,8 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
         // changing prefix penalty in the decoders.
         VT = MVT::i16;
         SubRegOp = X86::sub_16bit;
-        Op = X86::TEST16ri;
+        ROpc = X86::TEST16ri;
+        MOpc = X86::TEST16mi;
       } else if (isUInt<32>(Mask) && N0.getValueType() != MVT::i16 &&
                  ((!(Mask & 0x80000000) &&
                    // Without minsize 16-bit Cmps can get here so we need to
@@ -3449,7 +3451,8 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
         // they had a good reason not to and do not promote here.
         VT = MVT::i32;
         SubRegOp = X86::sub_32bit;
-        Op = X86::TEST32ri;
+        ROpc = X86::TEST32ri;
+        MOpc = X86::TEST32mi;
       } else {
         // No eligible transformation was found.
         break;
@@ -3460,12 +3463,25 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
       SDValue Imm = CurDAG->getTargetConstant(Mask, dl, VT);
       SDValue Reg = N0.getOperand(0);
 
-      // Extract the subregister if necessary.
-      if (N0.getValueType() != VT)
-        Reg = CurDAG->getTargetExtractSubreg(SubRegOp, dl, VT, Reg);
-
       // Emit a testl or testw.
-      SDNode *NewNode = CurDAG->getMachineNode(Op, dl, MVT::i32, Reg, Imm);
+      MachineSDNode *NewNode;
+      SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
+      if (tryFoldLoad(Node, N0.getNode(), Reg, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4)) {
+        SDValue Ops[] = { Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Imm,
+                          Reg.getOperand(0) };
+        NewNode = CurDAG->getMachineNode(MOpc, dl, MVT::i32, MVT::Other, Ops);
+        // Update the chain.
+        ReplaceUses(Reg.getValue(1), SDValue(NewNode, 1));
+        // Record the mem-refs
+        CurDAG->setNodeMemRefs(NewNode,
+                               {cast<LoadSDNode>(Reg)->getMemOperand()});
+      } else {
+        // Extract the subregister if necessary.
+        if (N0.getValueType() != VT)
+          Reg = CurDAG->getTargetExtractSubreg(SubRegOp, dl, VT, Reg);
+
+        NewNode = CurDAG->getMachineNode(ROpc, dl, MVT::i32, Reg, Imm);
+      }
       // Replace CMP with TEST.
       ReplaceNode(Node, NewNode);
       return;

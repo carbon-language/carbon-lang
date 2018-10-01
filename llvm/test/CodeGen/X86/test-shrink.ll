@@ -645,8 +645,7 @@ define void @and32_trunc_8_sign(i32 %x) nounwind {
 ;
 ; CHECK-X86-LABEL: and32_trunc_8_sign:
 ; CHECK-X86:       # %bb.0:
-; CHECK-X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-X86-NEXT:    testb $-128, %al
+; CHECK-X86-NEXT:    testb $-128, {{[0-9]+}}(%esp)
 ; CHECK-X86-NEXT:    jg .LBB14_2
 ; CHECK-X86-NEXT:  # %bb.1: # %yes
 ; CHECK-X86-NEXT:    calll bar
@@ -689,8 +688,7 @@ define void @and64_trunc_8_sign(i64 %x) nounwind {
 ;
 ; CHECK-X86-LABEL: and64_trunc_8_sign:
 ; CHECK-X86:       # %bb.0:
-; CHECK-X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-X86-NEXT:    testb $-128, %al
+; CHECK-X86-NEXT:    testb $-128, {{[0-9]+}}(%esp)
 ; CHECK-X86-NEXT:    jg .LBB15_2
 ; CHECK-X86-NEXT:  # %bb.1: # %yes
 ; CHECK-X86-NEXT:    calll bar
@@ -780,8 +778,7 @@ define void @and32_trunc_16_sign_minsize(i32 %x) minsize nounwind {
 ;
 ; CHECK-X86-LABEL: and32_trunc_16_sign_minsize:
 ; CHECK-X86:       # %bb.0:
-; CHECK-X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-X86-NEXT:    testw $-32768, %ax # imm = 0x8000
+; CHECK-X86-NEXT:    testw $-32768, {{[0-9]+}}(%esp) # imm = 0x8000
 ; CHECK-X86-NEXT:    jg .LBB17_2
 ; CHECK-X86-NEXT:  # %bb.1: # %yes
 ; CHECK-X86-NEXT:    calll bar
@@ -871,8 +868,7 @@ define void @and64_trunc_16_sign_minsize(i64 %x) minsize nounwind {
 ;
 ; CHECK-X86-LABEL: and64_trunc_16_sign_minsize:
 ; CHECK-X86:       # %bb.0:
-; CHECK-X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; CHECK-X86-NEXT:    testw $-32768, %ax # imm = 0x8000
+; CHECK-X86-NEXT:    testw $-32768, {{[0-9]+}}(%esp) # imm = 0x8000
 ; CHECK-X86-NEXT:    jg .LBB19_2
 ; CHECK-X86-NEXT:  # %bb.1: # %yes
 ; CHECK-X86-NEXT:    calll bar
