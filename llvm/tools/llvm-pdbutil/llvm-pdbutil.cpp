@@ -197,6 +197,8 @@ static cl::opt<bool> Arrays("arrays", cl::desc("Dump array types"),
                             cl::sub(DiaDumpSubcommand));
 static cl::opt<bool> VTShapes("vtshapes", cl::desc("Dump virtual table shapes"),
                               cl::sub(DiaDumpSubcommand));
+static cl::opt<bool> Typedefs("typedefs", cl::desc("Dump typedefs"),
+                              cl::sub(DiaDumpSubcommand));
 } // namespace diadump
 
 namespace pretty {
@@ -1027,6 +1029,8 @@ static void dumpDia(StringRef Path) {
     SymTypes.push_back(PDB_SymType::ArrayType);
   if (opts::diadump::VTShapes)
     SymTypes.push_back(PDB_SymType::VTableShape);
+  if (opts::diadump::Typedefs)
+    SymTypes.push_back(PDB_SymType::Typedef);
   PdbSymbolIdField Ids = opts::diadump::NoSymIndexIds ? PdbSymbolIdField::None
                                                       : PdbSymbolIdField::All;
 

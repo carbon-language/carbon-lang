@@ -56,6 +56,8 @@ NativeExeSymbol::findChildren(PDB_SymType Type) const {
   case PDB_SymType::FunctionSig:
     return Session.getSymbolCache().createTypeEnumerator(
         {codeview::LF_PROCEDURE, codeview::LF_MFUNCTION});
+  case PDB_SymType::Typedef:
+    return Session.getSymbolCache().createGlobalsEnumerator(codeview::S_UDT);
 
   default:
     break;
