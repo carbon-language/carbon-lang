@@ -2137,12 +2137,12 @@ TYPE_PARSER(construct<ConcurrentControl>(name / "=", scalarIntExpr / ":",
     scalarIntExpr, maybe(":" >> scalarIntExpr)))
 
 // R1130 locality-spec ->
-//         LOCAL ( variable-name-list ) | LOCAL INIT ( variable-name-list ) |
+//         LOCAL ( variable-name-list ) | LOCAL_INIT ( variable-name-list ) |
 //         SHARED ( variable-name-list ) | DEFAULT ( NONE )
 TYPE_PARSER(construct<LocalitySpec>(construct<LocalitySpec::Local>(
                 "LOCAL" >> parenthesized(listOfNames))) ||
     construct<LocalitySpec>(construct<LocalitySpec::LocalInit>(
-        "LOCAL INIT"_sptok >> parenthesized(listOfNames))) ||
+        "LOCAL_INIT"_sptok >> parenthesized(listOfNames))) ||
     construct<LocalitySpec>(construct<LocalitySpec::Shared>(
         "SHARED" >> parenthesized(listOfNames))) ||
     construct<LocalitySpec>(

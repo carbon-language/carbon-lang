@@ -2153,7 +2153,7 @@ struct ConcurrentHeader {
 };
 
 // R1130 locality-spec ->
-//         LOCAL ( variable-name-list ) | LOCAL INIT ( variable-name-list ) |
+//         LOCAL ( variable-name-list ) | LOCAL_INIT ( variable-name-list ) |
 //         SHARED ( variable-name-list ) | DEFAULT ( NONE )
 struct LocalitySpec {
   UNION_CLASS_BOILERPLATE(LocalitySpec);

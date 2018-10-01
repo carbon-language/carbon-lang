@@ -485,7 +485,7 @@ R1127 concurrent-limit -> scalar-int-expr
 R1128 concurrent-step -> scalar-int-expr
 R1129 concurrent-locality -> [locality-spec]...
 R1130 locality-spec ->
-        LOCAL ( variable-name-list ) | LOCAL INIT ( variable-name-list ) |
+        LOCAL ( variable-name-list ) | LOCAL_INIT ( variable-name-list ) |
         SHARED ( variable-name-list ) | DEFAULT ( NONE )
 R1131 end-do -> end-do-stmt | continue-stmt
 R1132 end-do-stmt -> END DO [do-construct-name]

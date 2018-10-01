@@ -936,7 +936,7 @@ public:
     Word("LOCAL("), Walk(x.v, ", "), Put(')');
   }
   void Unparse(const LocalitySpec::LocalInit &x) {
-    Word("LOCAL INIT("), Walk(x.v, ", "), Put(')');
+    Word("LOCAL_INIT("), Walk(x.v, ", "), Put(')');
   }
   void Unparse(const LocalitySpec::Shared &x) {
     Word("SHARED("), Walk(x.v, ", "), Put(')');
