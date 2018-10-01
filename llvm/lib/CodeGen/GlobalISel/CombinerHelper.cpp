@@ -132,13 +132,12 @@ bool CombinerHelper::tryCombineExtendingLoads(MachineInstr &MI) {
   // and emit a variant of (extend (trunc X)) for the others according to the
   // relative type sizes. At the same time, pick an extend to use based on the
   // extend involved in the chosen type.
-  PreferredTuple Preferred = {LLT(),
-                              MI.getOpcode() == TargetOpcode::G_LOAD
-                                  ? TargetOpcode::G_ANYEXT
-                                  : MI.getOpcode() == TargetOpcode::G_SEXTLOAD
-                                        ? TargetOpcode::G_SEXT
-                                        : TargetOpcode::G_ZEXT,
-                              nullptr};
+  unsigned PreferredOpcode = MI.getOpcode() == TargetOpcode::G_LOAD
+                                 ? TargetOpcode::G_ANYEXT
+                                 : MI.getOpcode() == TargetOpcode::G_SEXTLOAD
+                                       ? TargetOpcode::G_SEXT
+                                       : TargetOpcode::G_ZEXT;
+  PreferredTuple Preferred = {LLT(), PreferredOpcode, nullptr};
   for (auto &UseMI : MRI.use_instructions(LoadValue.getReg())) {
     if (UseMI.getOpcode() == TargetOpcode::G_SEXT ||
         UseMI.getOpcode() == TargetOpcode::G_ZEXT || !Preferred.Ty.isValid())
