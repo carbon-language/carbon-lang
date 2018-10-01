@@ -1207,6 +1207,10 @@ void CGOpenMPRuntimeNVPTX::emitSPMDKernel(const OMPExecutableDirective &D,
                                    IsOffloadEntry, CodeGen);
 }
 
+static void
+getDistributeLastprivateVars(const OMPExecutableDirective &D,
+                             llvm::SmallVectorImpl<const ValueDecl *> &Vars);
+
 void CGOpenMPRuntimeNVPTX::emitSPMDEntryHeader(
     CodeGenFunction &CGF, EntryFunctionState &EST,
     const OMPExecutableDirective &D) {
@@ -1219,11 +1223,33 @@ void CGOpenMPRuntimeNVPTX::emitSPMDEntryHeader(
   // Initialize the OMP state in the runtime; called by all active threads.
   bool RequiresFullRuntime = CGM.getLangOpts().OpenMPCUDAForceFullRuntime ||
                              !supportsLightweightRuntime(CGF.getContext(), D);
+  // Check if we have inner distribute + lastprivate|reduction clauses.
+  bool RequiresDatasharing = RequiresFullRuntime;
+  if (!RequiresDatasharing) {
+    const OMPExecutableDirective *TD = &D;
+    if (!isOpenMPTeamsDirective(TD->getDirectiveKind()) &&
+        !isOpenMPParallelDirective(TD->getDirectiveKind())) {
+      const Stmt *S = getSingleCompoundChild(
+          TD->getInnermostCapturedStmt()->getCapturedStmt()->IgnoreContainers(
+              /*IgnoreCaptured=*/true));
+      TD = cast<OMPExecutableDirective>(S);
+    }
+    if (!isOpenMPDistributeDirective(TD->getDirectiveKind()) &&
+        !isOpenMPParallelDirective(TD->getDirectiveKind())) {
+      const Stmt *S = getSingleCompoundChild(
+          TD->getInnermostCapturedStmt()->getCapturedStmt()->IgnoreContainers(
+              /*IgnoreCaptured=*/true));
+      TD = cast<OMPExecutableDirective>(S);
+    }
+    if (isOpenMPDistributeDirective(TD->getDirectiveKind()))
+      RequiresDatasharing = TD->hasClausesOfKind<OMPLastprivateClause>() ||
+                            TD->hasClausesOfKind<OMPReductionClause>();
+  }
   llvm::Value *Args[] = {
       getThreadLimit(CGF, /*IsInSPMDExecutionMode=*/true),
       /*RequiresOMPRuntime=*/
       Bld.getInt16(RequiresFullRuntime ? 1 : 0),
-      /*RequiresDataSharing=*/Bld.getInt16(RequiresFullRuntime ? 1 : 0)};
+      /*RequiresDataSharing=*/Bld.getInt16(RequiresDatasharing ? 1 : 0)};
   CGF.EmitRuntimeCall(
       createNVPTXRuntimeFunction(OMPRTL_NVPTX__kmpc_spmd_kernel_init), Args);
 
