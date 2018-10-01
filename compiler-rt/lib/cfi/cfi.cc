@@ -26,6 +26,7 @@
 #if SANITIZER_LINUX
 typedef ElfW(Phdr) Elf_Phdr;
 typedef ElfW(Ehdr) Elf_Ehdr;
+typedef ElfW(Addr) Elf_Addr;
 typedef ElfW(Sym) Elf_Sym;
 typedef ElfW(Dyn) Elf_Dyn;
 #elif SANITIZER_FREEBSD
