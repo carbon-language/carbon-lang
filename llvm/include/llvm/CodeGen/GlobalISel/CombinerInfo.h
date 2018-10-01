@@ -17,12 +17,10 @@
 #include <cassert>
 namespace llvm {
 
-class CombinerChangeObserver;
 class LegalizerInfo;
 class MachineInstr;
 class MachineIRBuilder;
 class MachineRegisterInfo;
-
 // Contains information relevant to enabling/disabling various combines for a
 // pass.
 class CombinerInfo {
@@ -43,8 +41,7 @@ public:
   /// illegal ops that are created.
   bool LegalizeIllegalOps; // TODO: Make use of this.
   const LegalizerInfo *LInfo;
-  virtual bool combine(CombinerChangeObserver &Observer, MachineInstr &MI,
-                       MachineIRBuilder &B) const = 0;
+  virtual bool combine(MachineInstr &MI, MachineIRBuilder &B) const = 0;
 };
 } // namespace llvm
 

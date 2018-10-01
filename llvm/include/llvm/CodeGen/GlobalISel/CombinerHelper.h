@@ -20,7 +20,6 @@
 
 namespace llvm {
 
-class CombinerChangeObserver;
 class MachineIRBuilder;
 class MachineRegisterInfo;
 class MachineInstr;
@@ -28,21 +27,13 @@ class MachineInstr;
 class CombinerHelper {
   MachineIRBuilder &Builder;
   MachineRegisterInfo &MRI;
-  CombinerChangeObserver &Observer;
-
-  void eraseInstr(MachineInstr &MI);
-  void scheduleForVisit(MachineInstr &MI);
 
 public:
-  CombinerHelper(CombinerChangeObserver &Observer, MachineIRBuilder &B);
+  CombinerHelper(MachineIRBuilder &B);
 
   /// If \p MI is COPY, try to combine it.
   /// Returns true if MI changed.
   bool tryCombineCopy(MachineInstr &MI);
-
-  /// If \p MI is extend that consumes the result of a load, try to combine it.
-  /// Returns true if MI changed.
-  bool tryCombineExtendingLoads(MachineInstr &MI);
 
   /// Try to transform \p MI by using all of the above
   /// combine functions. Returns true if changed.
