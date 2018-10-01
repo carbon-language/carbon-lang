@@ -158,9 +158,12 @@ def  : WriteRes<WriteSETCCStore, [SKLPort06,SKLPort4,SKLPort237]> {
   let Latency = 2;
   let NumMicroOps = 3;
 }
-def  : WriteRes<WriteLAHFSAHF,   [SKLPort06]>;
-def  : WriteRes<WriteBitTest,    [SKLPort06]>;
-def  : WriteRes<WriteBitTestSet, [SKLPort06]>;
+
+defm : X86WriteRes<WriteLAHFSAHF,     [SKLPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTest,      [SKLPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestImmLd, [SKLPort06,SKLPort23], 6, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestRegLd, [SKLPort0156,SKLPort23], 6, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestSet,   [SKLPort06], 1, [1], 1>;
 
 // Bit counts.
 defm : SKLWriteResPair<WriteBSF, [SKLPort1], 3>;

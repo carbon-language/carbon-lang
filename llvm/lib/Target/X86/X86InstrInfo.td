@@ -1771,7 +1771,7 @@ def BT64rr : RI<0xA3, MRMDestReg, (outs), (ins GR64:$src1, GR64:$src2),
 // only for now. These instructions are also slow on modern CPUs so that's
 // another reason to avoid generating them.
 
-let mayLoad = 1, hasSideEffects = 0, SchedRW = [WriteALULd] in {
+let mayLoad = 1, hasSideEffects = 0, SchedRW = [WriteBitTestRegLd] in {
   def BT16mr : I<0xA3, MRMDestMem, (outs), (ins i16mem:$src1, GR16:$src2),
                  "bt{w}\t{$src2, $src1|$src1, $src2}",
                  []>, OpSize16, TB, NotMemoryFoldable;
@@ -1799,7 +1799,7 @@ def BT64ri8 : RIi8<0xBA, MRM4r, (outs), (ins GR64:$src1, i64i8imm:$src2),
 
 // Note that these instructions aren't slow because that only applies when the
 // other operand is in a register. When it's an immediate, bt is still fast.
-let SchedRW = [WriteALULd] in {
+let SchedRW = [WriteBitTestImmLd] in {
 def BT16mi8 : Ii8<0xBA, MRM4m, (outs), (ins i16mem:$src1, i16i8imm:$src2),
                   "bt{w}\t{$src2, $src1|$src1, $src2}",
                   [(set EFLAGS, (X86bt (loadi16 addr:$src1),

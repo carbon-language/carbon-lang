@@ -214,8 +214,10 @@ def  : WriteRes<WriteSETCC,  [ZnALU]>;
 def  : WriteRes<WriteSETCCStore,  [ZnALU, ZnAGU]>;
 defm : X86WriteRes<WriteLAHFSAHF, [ZnALU], 2, [1], 2>;
 
-defm : X86WriteRes<WriteBitTest,    [ZnALU], 1, [1], 1>;
-defm : X86WriteRes<WriteBitTestSet, [ZnALU], 2, [1], 2>;
+defm : X86WriteRes<WriteBitTest,      [ZnALU], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestImmLd, [ZnALU,ZnAGU], 5, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestRegLd, [ZnALU,ZnAGU], 5, [1,1], 2>;
+defm : X86WriteRes<WriteBitTestSet,   [ZnALU], 2, [1], 2>;
 
 // Bit counts.
 defm : ZnWriteResPair<WriteBSF, [ZnALU], 3>;

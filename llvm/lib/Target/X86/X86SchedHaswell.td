@@ -165,9 +165,12 @@ def  : WriteRes<WriteSETCCStore, [HWPort06,HWPort4,HWPort237]> {
   let Latency = 2;
   let NumMicroOps = 3;
 }
-def  : WriteRes<WriteLAHFSAHF,   [HWPort06]>;
-def  : WriteRes<WriteBitTest,    [HWPort06]>;
-def  : WriteRes<WriteBitTestSet, [HWPort06]>;
+
+defm : X86WriteRes<WriteLAHFSAHF,     [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTest,      [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestImmLd, [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestRegLd, [HWPort06], 1, [1], 1>;
+defm : X86WriteRes<WriteBitTestSet,   [HWPort06], 1, [1], 1>;
 
 // This is for simple LEAs with one or two input operands.
 // The complex ones can only execute on port 1, and they require two cycles on
