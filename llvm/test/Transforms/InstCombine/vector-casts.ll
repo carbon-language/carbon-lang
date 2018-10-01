@@ -2,14 +2,26 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
 ; This turns into a&1 != 0
-define <2 x i1> @test1(<2 x i64> %a) {
-; CHECK-LABEL: @test1(
+
+define <2 x i1> @trunc(<2 x i64> %a) {
+; CHECK-LABEL: @trunc(
 ; CHECK-NEXT:    [[TMP1:%.*]] = and <2 x i64> [[A:%.*]], <i64 1, i64 1>
 ; CHECK-NEXT:    [[T:%.*]] = icmp ne <2 x i64> [[TMP1]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[T]]
 ;
   %t = trunc <2 x i64> %a to <2 x i1>
   ret <2 x i1> %t
+}
+
+define <2 x i1> @and_cmp_is_trunc(<2 x i64> %a) {
+; CHECK-LABEL: @and_cmp_is_trunc(
+; CHECK-NEXT:    [[T:%.*]] = and <2 x i64> [[A:%.*]], <i64 1, i64 1>
+; CHECK-NEXT:    [[R:%.*]] = icmp ne <2 x i64> [[T]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[R]]
+;
+  %t = and <2 x i64> %a, <i64 1, i64 1>
+  %r = icmp ne <2 x i64> %t, zeroinitializer
+  ret <2 x i1> %r
 }
 
 ; The ashr turns into an lshr.
