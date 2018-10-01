@@ -35,16 +35,17 @@ llvm::Expected<std::vector<BenchmarkCode>>
 SnippetGenerator::generateConfigurations(unsigned Opcode) const {
   if (auto E = generateCodeTemplate(Opcode)) {
     CodeTemplate &CT = E.get();
+    const llvm::BitVector &ForbiddenRegs =
+        CT.ScratchSpacePointerInReg
+            ? RATC.getRegister(CT.ScratchSpacePointerInReg).aliasedBits()
+            : RATC.emptyRegisters();
     std::vector<BenchmarkCode> Output;
     // TODO: Generate as many BenchmarkCode as needed.
     {
       BenchmarkCode BC;
       BC.Info = CT.Info;
       for (InstructionTemplate &IT : CT.Instructions) {
-        IT.randomizeUnsetVariables(
-            CT.ScratchSpacePointerInReg
-                ? RATC.getRegister(CT.ScratchSpacePointerInReg).aliasedBits()
-                : RATC.emptyRegisters());
+        randomizeUnsetVariables(ForbiddenRegs, IT);
         BC.Instructions.push_back(IT.build());
       }
       if (CT.ScratchSpacePointerInReg)

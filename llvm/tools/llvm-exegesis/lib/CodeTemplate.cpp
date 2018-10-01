@@ -67,15 +67,6 @@ bool InstructionTemplate::hasImmediateVariables() const {
   });
 }
 
-void InstructionTemplate::randomizeUnsetVariables(
-    const llvm::BitVector &ForbiddenRegs) {
-  for (const Variable &Var : Instr.Variables) {
-    llvm::MCOperand &AssignedValue = getValueFor(Var);
-    if (!AssignedValue.isValid())
-      randomize(Instr, Var, AssignedValue, ForbiddenRegs);
-  }
-}
-
 llvm::MCInst InstructionTemplate::build() const {
   llvm::MCInst Result;
   Result.setOpcode(Instr.Description->Opcode);
@@ -159,6 +150,15 @@ void setRandomAliasing(const AliasingConfigurations &AliasingConfigurations,
   const auto &RandomConf = randomElement(AliasingConfigurations.Configurations);
   setRegisterOperandValue(randomElement(RandomConf.Defs), DefIB);
   setRegisterOperandValue(randomElement(RandomConf.Uses), UseIB);
+}
+
+void randomizeUnsetVariables(const llvm::BitVector &ForbiddenRegs,
+                             InstructionTemplate &IT) {
+  for (const Variable &Var : IT.Instr.Variables) {
+    llvm::MCOperand &AssignedValue = IT.getValueFor(Var);
+    if (!AssignedValue.isValid())
+      randomize(IT.Instr, Var, AssignedValue, ForbiddenRegs);
+  }
 }
 
 } // namespace exegesis

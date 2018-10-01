@@ -36,10 +36,6 @@ struct InstructionTemplate {
   const llvm::MCOperand &getValueFor(const Operand &Op) const;
   bool hasImmediateVariables() const;
 
-  // Assigns a Random Value to all Variables that are still Invalid.
-  // Do not use any of the registers in `ForbiddenRegs`.
-  void randomizeUnsetVariables(const llvm::BitVector &ForbiddenRegs);
-
   // Builds an llvm::MCInst from this InstructionTemplate setting its operands
   // to the corresponding variable values. Precondition: All VariableValues must
   // be set.
@@ -83,6 +79,11 @@ size_t randomBit(const llvm::BitVector &Vector);
 // it and finally set the selected values in the provided InstructionInstances.
 void setRandomAliasing(const AliasingConfigurations &AliasingConfigurations,
                        InstructionTemplate &DefIB, InstructionTemplate &UseIB);
+
+// Assigns a Random Value to all Variables in IT that are still Invalid.
+// Do not use any of the registers in `ForbiddenRegs`.
+void randomizeUnsetVariables(const llvm::BitVector &ForbiddenRegs,
+                             InstructionTemplate &IT);
 
 } // namespace exegesis
 
