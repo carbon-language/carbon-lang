@@ -740,7 +740,7 @@ public:
   /// dependenant symbols for this query (e.g. it is being made by a top level
   /// client to get an address to call) then the value NoDependenciesToRegister
   /// can be used.
-  void lookup(const JITDylibList &JDs, const SymbolNameSet &Symbols,
+  void lookup(const JITDylibList &JDs, SymbolNameSet Symbols,
               SymbolsResolvedCallback OnResolve, SymbolsReadyCallback OnReady,
               RegisterDependenciesFunction RegisterDependencies);
 
