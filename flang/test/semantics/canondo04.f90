@@ -15,12 +15,22 @@
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: end do
 
-SUBROUTINE sub00(a,b,n,m)
-  INTEGER n,m
-  REAL a(n,m), b(n,m)
-
-  i = n-1
-  DO 10 j = 1,m
-     g = a(i,j) - b(i,j)
-10   PRINT *, g
-END SUBROUTINE sub00
+program main
+  do 1 j1=1,2
+    do 1 j2=1,2
+      if (j1 == j2) then
+        do 2 j3=1,2
+          print *, j1, j2, j3
+          do 2 j4=1,2
+            print *, j3, j4
+2         continue
+      else
+        do 3 j3=3,4
+          print *, j1, j2, j3
+          do 3 j4=3,4
+            print *, j3, j4
+3         continue
+      end if
+    print *, j1, j2
+1   continue
+end

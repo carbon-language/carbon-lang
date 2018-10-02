@@ -12,8 +12,6 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-! negative test -- invalid labels, out of range
-
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: 10 continue
 ! CHECK: end do
