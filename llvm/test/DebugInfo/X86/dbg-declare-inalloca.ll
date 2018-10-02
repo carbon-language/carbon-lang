@@ -67,7 +67,7 @@
 ; OBJ: }
 ; OBJ: LocalSym {
 ; OBJ:   Kind: S_LOCAL (0x113E)
-; OBJ:   Type: NonTrivial (0x1008)
+; OBJ:   Type: NonTrivial (0x{{.*}})
 ; OBJ:   Flags [ (0x1)
 ; OBJ:     IsParameter (0x1)
 ; OBJ:   ]
