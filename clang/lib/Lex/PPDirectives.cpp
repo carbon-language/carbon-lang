@@ -1898,21 +1898,25 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
           }
           return Filename;
         };
-        Filename = CorrectTypoFilename(Filename);
+        StringRef TypoCorrectionName = CorrectTypoFilename(Filename);
         File = LookupFile(
             FilenameLoc,
-            LangOpts.MSVCCompat ? NormalizedPath.c_str() : Filename, isAngled,
-            LookupFrom, LookupFromFile, CurDir,
+            LangOpts.MSVCCompat ? NormalizedPath.c_str() : TypoCorrectionName,
+            isAngled, LookupFrom, LookupFromFile, CurDir,
             Callbacks ? &SearchPath : nullptr,
             Callbacks ? &RelativePath : nullptr, &SuggestedModule, &IsMapped);
         if (File) {
           SourceRange Range(FilenameTok.getLocation(), CharEnd);
-          auto Hint = isAngled ? FixItHint::CreateReplacement(
-                                     Range, "<" + Filename.str() + ">")
-                               : FixItHint::CreateReplacement(
-                                     Range, "\"" + Filename.str() + "\"");
+          auto Hint = isAngled
+                          ? FixItHint::CreateReplacement(
+                                Range, "<" + TypoCorrectionName.str() + ">")
+                          : FixItHint::CreateReplacement(
+                                Range, "\"" + TypoCorrectionName.str() + "\"");
           Diag(FilenameTok, diag::err_pp_file_not_found_typo_not_fatal)
-              << OriginalFilename << Filename << Hint;
+              << OriginalFilename << TypoCorrectionName << Hint;
+          // We found the file, so set the Filename to the name after typo
+          // correction.
+          Filename = TypoCorrectionName;
         }
       }
 
