@@ -325,6 +325,9 @@ def : PState<"DIT",     0b11010>;
 // v8.5a Spectre Mitigation
 let Requires = [{ {AArch64::FeatureSpecRestrict} }] in
 def : PState<"SSBS",    0b11001>;
+// v8.5a Memory Tagging Extension
+let Requires = [{ {AArch64::FeatureMTE} }] in
+def : PState<"TCO",     0b11100>;
 
 //===----------------------------------------------------------------------===//
 // PSB instruction options.
@@ -1410,6 +1413,19 @@ def : RWSysReg<"ZCR_EL12",         0b11, 0b101, 0b0001, 0b0010, 0b000>;
 //                     Op0   Op1    CRn     CRm     Op2
 let Requires = [{ {AArch64::FeatureSpecRestrict} }] in
 def : RWSysReg<"SSBS", 0b11, 0b011, 0b0100, 0b0010, 0b110>;
+
+// v8.5a Memory Tagging Extension
+//                                 Op0   Op1    CRn     CRm     Op2
+let Requires = [{ {AArch64::FeatureMTE} }] in {
+def : RWSysReg<"TCO",              0b11, 0b011, 0b0100, 0b0010, 0b111>;
+def : RWSysReg<"GCR_EL1",          0b11, 0b000, 0b0001, 0b0000, 0b110>;
+def : RWSysReg<"RGSR_EL1",         0b11, 0b000, 0b0001, 0b0000, 0b101>;
+def : RWSysReg<"TFSR_EL1",         0b11, 0b000, 0b0110, 0b0101, 0b000>;
+def : RWSysReg<"TFSR_EL2",         0b11, 0b100, 0b0110, 0b0101, 0b000>;
+def : RWSysReg<"TFSR_EL3",         0b11, 0b110, 0b0110, 0b0110, 0b000>;
+def : RWSysReg<"TFSR_EL12",        0b11, 0b101, 0b0110, 0b0110, 0b000>;
+def : RWSysReg<"TFSRE0_EL1",       0b11, 0b000, 0b0110, 0b0110, 0b001>;
+} // HasMTE
 
 // Cyclone specific system registers
 //                                 Op0    Op1     CRn     CRm    Op2
