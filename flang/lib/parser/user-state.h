@@ -28,7 +28,7 @@
 #include <optional>
 #include <ostream>
 #include <set>
-#include <unordered_set>
+#include <unordered_map>
 
 namespace Fortran::parser {
 
@@ -72,12 +72,13 @@ public:
 
   using Label = std::uint64_t;
   bool IsDoLabel(Label label) const {
-    return doLabels_.find(label) != doLabels_.end();
+    auto iter{doLabels_.find(label)};
+    return iter != doLabels_.end() &&
+        iter->second >= nonlabelDoConstructNestingDepth_;
   }
-  bool InNonlabelDoConstruct() const {
-    return nonlabelDoConstructNestingDepth_ > 0;
+  void NewDoLabel(Label label) {
+    doLabels_[label] = nonlabelDoConstructNestingDepth_;
   }
-  void NewDoLabel(Label label) { doLabels_.insert(label); }
 
   void EnterNonlabelDoConstruct() { ++nonlabelDoConstructNestingDepth_; }
   void LeaveDoConstruct() {
@@ -101,7 +102,7 @@ private:
   ParsingLog *log_{nullptr};
   bool instrumentedParse_{false};
 
-  std::unordered_set<Label> doLabels_;
+  std::unordered_map<Label, int> doLabels_;
   int nonlabelDoConstructNestingDepth_{0};
 
   std::set<CharBlock> oldStructureComponents_;

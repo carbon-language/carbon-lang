@@ -49,8 +49,7 @@ EndDoStmtForCapturedLabelDoStmt::Parse(ParseState &state) {
   if (auto enddo{parser.Parse(state)}) {
     if (enddo->label.has_value()) {
       if (const auto *ustate{state.userState()}) {
-        if (!ustate->InNonlabelDoConstruct() &&
-            ustate->IsDoLabel(enddo->label.value())) {
+        if (ustate->IsDoLabel(enddo->label.value())) {
           return enddo;
         }
       }

@@ -39,7 +39,7 @@ function internal_check() {
   done < ${lcheck}
   egrep '^[[:space:]]*![[:space:]]*CHECK-NOT:[[:space:]]*' ${linput} | sed -e 's/^[[:space:]]*![[:space:]]*CHECK-NOT:[[:space:]]*//' > ${lcheck} 2>/dev/null
   while read p; do
-    if egrep ${p} ${lstdin} >/dev/null 2>&1; then
+    if egrep "${p}" ${lstdin} >/dev/null 2>&1; then
       echo "Found: ${p}" >&2
       r=false
     fi

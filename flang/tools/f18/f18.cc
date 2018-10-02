@@ -92,6 +92,7 @@ struct DriverOptions {
   bool dumpSymbols{false};
   bool debugExpressions{false};
   bool debugResolveNames{false};
+  bool debugSemantics{false};
   bool measureTree{false};
   std::vector<std::string> pgf90Args;
   const char *prefix{nullptr};
@@ -206,7 +207,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (driver.measureTree) {
     MeasureParseTree(parseTree);
   }
-  if (driver.debugResolveNames || driver.dumpSymbols ||
+  if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols || driver.debugExpressions) {
     semantics.Perform(parseTree);
     auto &messages{semantics.messages()};
@@ -408,6 +409,8 @@ int main(int argc, char *const argv[]) {
       driver.measureTree = true;
     } else if (arg == "-fdebug-instrumented-parse") {
       options.instrumentedParse = true;
+    } else if (arg == "-fdebug-semantics") {
+      driver.debugSemantics = true;
     } else if (arg == "-funparse") {
       driver.dumpUnparse = true;
     } else if (arg == "-funparse-with-symbols") {
@@ -452,6 +455,7 @@ int main(int argc, char *const argv[]) {
           << "  -fdebug-dump-symbols\n"
           << "  -fdebug-resolve-names\n"
           << "  -fdebug-instrumented-parse\n"
+          << "  -fdebug-semantics    perform semantic checks\n"
           << "  -v -c -o -I -D -U    have their usual meanings\n"
           << "  -help                print this again\n"
           << "Other options are passed through to the compiler.\n";
