@@ -1888,7 +1888,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       // Check for likely typos due to leading or trailing non-isAlphanumeric
       // characters
       StringRef OriginalFilename = Filename;
-      if (!File) {
+      if (LangOpts.SpellChecking && !File) {
         // A heuristic to correct a typo file name by removing leading and
         // trailing non-isAlphanumeric characters.
         auto CorrectTypoFilename = [](llvm::StringRef Filename) {
