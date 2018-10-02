@@ -23,14 +23,18 @@ program main
           print *, j1, j2, j3
           do 2 j4=1,2
             print *, j3, j4
-2         continue
+2         end do
       else
         do 3 j3=3,4
           print *, j1, j2, j3
           do 3 j4=3,4
             print *, j3, j4
-3         continue
+3         end do
       end if
     print *, j1, j2
 1   continue
+  do 4 j1=3,4 ! adjacent non-block DO loops
+4   print *, j1
+  do 5 j1=5,6 ! non-block DO loop at end of execution part
+5   print *, j1
 end

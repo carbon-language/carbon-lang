@@ -85,6 +85,23 @@ template<typename T, typename M> void Walk(std::list<T> &x, M &mutator) {
     Walk(elem, mutator);
   }
 }
+// When a list constitutes a Block, invoke the visitor or mutator.
+template<typename V> void Walk(const Block &x, V &visitor) {
+  if (visitor.Pre(x)) {
+    for (const auto &elem : x) {
+      Walk(elem, visitor);
+    }
+    visitor.Post(x);
+  }
+}
+template<typename M> void Walk(Block &x, M &mutator) {
+  if (mutator.Pre(x)) {
+    for (auto &elem : x) {
+      Walk(elem, mutator);
+    }
+  }
+  mutator.Post(x);
+}
 template<std::size_t I = 0, typename Func, typename T>
 void ForEachInTuple(const T &tuple, Func func) {
   if constexpr (I < std::tuple_size_v<T>) {

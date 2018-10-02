@@ -14,6 +14,8 @@
 
 #include "canonicalize-do.h"
 #include "../parser/parse-tree-visitor.h"
+#include <variant>
+#include <vector>
 
 namespace Fortran::parser {
 
@@ -116,5 +118,4 @@ void CanonicalizeDo(Program &program) {
   CanonicalizationOfDoLoops canonicalizationOfDoLoops{labelInfos};
   Walk(program, canonicalizationOfDoLoops);
 }
-
 }  // namespace Fortran::parser
