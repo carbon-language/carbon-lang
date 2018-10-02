@@ -84,11 +84,11 @@ private:
   Block::iterator ConvertLabelDoToStructuredDo(const Block::iterator &iter) {
     currentIter_ = iter;
     ExecutionPartConstruct &executionPartConstruct{*iter};
-    if (auto *executableConstruct =
-            std::get_if<ExecutableConstruct>(&executionPartConstruct.u)) {
-      if (auto *labelDoLoop =
+    if (auto *executableConstruct{
+            std::get_if<ExecutableConstruct>(&executionPartConstruct.u)}) {
+      if (auto *labelDoLoop{
               std::get_if<Statement<common::Indirection<LabelDoStmt>>>(
-                  &executableConstruct->u)) {
+                  &executableConstruct->u)}) {
         labelDoIters_.push_back(iter);
         labels_.push_back(std::get<Label>(labelDoLoop->statement->t));
       } else if (!labels_.empty()) {
@@ -100,8 +100,8 @@ private:
 
   std::vector<Block::iterator> labelDoIters_;
   std::vector<Label> labels_;
-  Block::iterator currentIter_;
-  Block *currentList_;
+  Block::iterator currentIter_;  ///< cursor for current ExecutionPartConstruct
+  Block *currentList_;  ///< current ExectionPartConstruct list being traversed
 };
 
 void CanonicalizeDo(Program &program) {
