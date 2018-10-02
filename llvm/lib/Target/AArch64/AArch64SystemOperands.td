@@ -108,6 +108,27 @@ def : DC<"CVAP",  0b011, 0b0111, 0b1100, 0b001>;
 let Requires = [{ {AArch64::FeatureCacheDeepPersist} }] in
 def : DC<"CVADP",  0b011, 0b0111, 0b1101, 0b001>;
 
+let Requires = [{ {AArch64::FeatureMTE} }] in {
+def : DC<"IGVAC",   0b000, 0b0111, 0b0110, 0b011>;
+def : DC<"IGSW",    0b000, 0b0111, 0b0110, 0b100>;
+def : DC<"CGSW",    0b000, 0b0111, 0b1010, 0b100>;
+def : DC<"CIGSW",   0b000, 0b0111, 0b1110, 0b100>;
+def : DC<"CGVAC",   0b011, 0b0111, 0b1010, 0b011>;
+def : DC<"CGVAP",   0b011, 0b0111, 0b1100, 0b011>;
+def : DC<"CGVADP",  0b011, 0b0111, 0b1101, 0b011>;
+def : DC<"CIGVAC",  0b011, 0b0111, 0b1110, 0b011>;
+def : DC<"GVA",     0b011, 0b0111, 0b0100, 0b011>;
+def : DC<"IGDVAC",  0b000, 0b0111, 0b0110, 0b101>;
+def : DC<"IGDSW",   0b000, 0b0111, 0b0110, 0b110>;
+def : DC<"CGDSW",   0b000, 0b0111, 0b1010, 0b110>;
+def : DC<"CIGDSW",  0b000, 0b0111, 0b1110, 0b110>;
+def : DC<"CGDVAC",  0b011, 0b0111, 0b1010, 0b101>;
+def : DC<"CGDVAP",  0b011, 0b0111, 0b1100, 0b101>;
+def : DC<"CGDVADP", 0b011, 0b0111, 0b1101, 0b101>;
+def : DC<"CIGDVAC", 0b011, 0b0111, 0b1110, 0b101>;
+def : DC<"GZVA",    0b011, 0b0111, 0b0100, 0b100>;
+}
+
 //===----------------------------------------------------------------------===//
 // IC (instruction cache maintenance) instruction options.
 //===----------------------------------------------------------------------===//
