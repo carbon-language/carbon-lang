@@ -296,6 +296,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasSize);
   REGISTER_MATCHER(hasSizeExpr);
   REGISTER_MATCHER(hasSourceExpression);
+  REGISTER_MATCHER(hasSpecializedTemplate);
   REGISTER_MATCHER(hasStaticStorageDuration);
   REGISTER_MATCHER(hasSyntacticForm);
   REGISTER_MATCHER(hasTargetDecl);
@@ -308,6 +309,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(hasUnaryOperand);
   REGISTER_MATCHER(hasUnarySelector);
   REGISTER_MATCHER(hasUnderlyingDecl);
+  REGISTER_MATCHER(hasUnderlyingType);
   REGISTER_MATCHER(hasUnqualifiedDesugaredType);
   REGISTER_MATCHER(hasValueType);
   REGISTER_MATCHER(ifStmt);
@@ -342,6 +344,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isDefaulted);
   REGISTER_MATCHER(isDefinition);
   REGISTER_MATCHER(isDeleted);
+  REGISTER_MATCHER(isDelegatingConstructor);
   REGISTER_MATCHER(isExceptionVariable);
   REGISTER_MATCHER(isExpansionInFileMatching);
   REGISTER_MATCHER(isExpansionInMainFile);
@@ -380,6 +383,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(isTypeDependent);
   REGISTER_MATCHER(isUnion);
   REGISTER_MATCHER(isUnsignedInteger);
+  REGISTER_MATCHER(isUserProvided);
   REGISTER_MATCHER(isValueDependent);
   REGISTER_MATCHER(isVariadic);
   REGISTER_MATCHER(isVirtual);
@@ -403,6 +407,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(namesType);
   REGISTER_MATCHER(nestedNameSpecifier);
   REGISTER_MATCHER(nestedNameSpecifierLoc);
+  REGISTER_MATCHER(nonTypeTemplateParmDecl);
   REGISTER_MATCHER(nullPointerConstant);
   REGISTER_MATCHER(nullStmt);
   REGISTER_MATCHER(numSelectorArgs);
@@ -441,6 +446,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(refersToDeclaration);
   REGISTER_MATCHER(refersToIntegralType);
   REGISTER_MATCHER(refersToType);
+  REGISTER_MATCHER(refersToTemplate);
   REGISTER_MATCHER(requiresZeroInitialization);
   REGISTER_MATCHER(returns);
   REGISTER_MATCHER(returnStmt);
@@ -458,6 +464,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(substTemplateTypeParmType);
   REGISTER_MATCHER(switchCase);
   REGISTER_MATCHER(switchStmt);
+  REGISTER_MATCHER(tagType);
   REGISTER_MATCHER(templateArgument);
   REGISTER_MATCHER(templateArgumentCountIs);
   REGISTER_MATCHER(templateName);
