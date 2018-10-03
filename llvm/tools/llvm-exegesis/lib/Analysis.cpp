@@ -404,7 +404,7 @@ getNonRedundantWriteProcRes(const llvm::MCSchedClassDesc &SCDesc,
 Analysis::ResolvedSchedClass::ResolvedSchedClass(
     const llvm::MCSubtargetInfo &STI, unsigned ResolvedSchedClassId,
     bool WasVariant)
-    : SCDesc(STI.getSchedModel().getSchedClassDesc(ResolvedSchedClassId)),
+    : SchedClassId(ResolvedSchedClassId), SCDesc(STI.getSchedModel().getSchedClassDesc(ResolvedSchedClassId)),
       WasVariant(WasVariant),
       NonRedundantWriteProcRes(getNonRedundantWriteProcRes(*SCDesc, STI)),
       IdealizedProcResPressure(computeIdealizedProcResPressure(
@@ -669,7 +669,7 @@ llvm::Error Analysis::run<Analysis::PrintSchedClassInconsistencies>(
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
     writeEscaped<kEscapeHtml>(OS, RSCAndPoints.RSC.SCDesc->Name);
 #else
-    OS << SchedClassId;
+    OS << RSCAndPoints.RSC.SchedClassId;
 #endif
     OS << "</span> contains instructions whose performance characteristics do"
           " not match that of LLVM:</p>";
