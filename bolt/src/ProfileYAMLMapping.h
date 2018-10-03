@@ -37,8 +37,26 @@ struct CallSiteInfo {
            DestId == Other.DestId &&
            EntryDiscriminator == Other.EntryDiscriminator;
   }
+
   bool operator!=(const CallSiteInfo &Other) const {
     return !(*this == Other);
+  }
+
+  bool operator<(const CallSiteInfo &Other) const {
+    if (Offset < Other.Offset)
+      return true;
+    if (Offset > Other.Offset)
+      return false;
+
+    if (DestId < Other.DestId)
+      return true;
+    if (DestId > Other.DestId)
+      return false;
+
+    if (EntryDiscriminator < Other.EntryDiscriminator)
+      return true;
+
+    return false;
   }
 };
 } // end namespace bolt

@@ -278,6 +278,9 @@ public:
   uint64_t MissedMacroFusionPairs{0};
   uint64_t MissedMacroFusionExecCount{0};
 
+  // Address of the first allocated segment.
+  uint64_t FirstAllocAddress{std::numeric_limits<uint64_t>::max()};
+
   /// Track next available address for new allocatable sections. RewriteInstance
   /// sets this prior to running BOLT passes, so layout passes are aware of the
   /// final addresses functions will have.
@@ -566,6 +569,11 @@ public:
                       FilteredSectionIterator(isAllocatableRela,
                                               Sections.end(),
                                               Sections.end()));
+  }
+
+  /// Check if the address belongs to this binary's static allocation space.
+  bool containsAddress(uint64_t Address) const {
+    return Address >= FirstAllocAddress && Address < LayoutStartAddress;
   }
 
   /// Return section name containing the given \p Address.

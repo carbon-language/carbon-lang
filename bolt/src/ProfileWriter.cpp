@@ -124,6 +124,8 @@ convert(const BinaryFunction &BF, yaml::bolt::BinaryFunctionProfile &YamlBF) {
       }
     }
 
+    std::sort(YamlBB.CallSites.begin(), YamlBB.CallSites.end());
+
     // Skip printing if there's no profile data for non-entry basic block.
     // Include landing pads with non-zero execution count.
     if (YamlBB.CallSites.empty() &&

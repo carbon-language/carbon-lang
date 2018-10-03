@@ -24,6 +24,7 @@
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Timer.h"
 #include <map>
+#include <unordered_map>
 
 #include <unistd.h>
 
@@ -550,6 +551,9 @@ bool DataAggregator::aggregate(BinaryContext &BC,
 
 BinaryFunction *
 DataAggregator::getBinaryFunctionContainingAddress(uint64_t Address) {
+  if (!BC->containsAddress(Address))
+    return nullptr;
+
   auto FI = BFs->upper_bound(Address);
   if (FI == BFs->begin())
     return nullptr;
@@ -964,6 +968,37 @@ std::error_code DataAggregator::parseBranchEvents() {
   uint64_t NumEntries{0};
   uint64_t NumSamples{0};
   uint64_t NumTraces{0};
+
+  struct Location {
+    uint64_t From;
+    uint64_t To;
+    Location(uint64_t From, uint64_t To)
+      : From(From), To(To) {}
+    bool operator==(const Location &Other) const {
+      return From == Other.From && To == Other.To;
+    }
+  };
+
+  struct LocationHash {
+    size_t operator()(const Location &L) const {
+      return std::hash<uint64_t>()(L.From << 32 | L.To);
+    }
+  };
+
+  struct TraceInfo {
+    uint64_t InternCount{0};
+    uint64_t ExternCount{0};
+  };
+
+  struct BranchInfo {
+    uint64_t TakenCount{0};
+    uint64_t MispredCount{0};
+  };
+
+  /// Map location to counters.
+  std::unordered_map<Location, BranchInfo, LocationHash> BranchLBRs;
+  std::unordered_map<Location, TraceInfo, LocationHash> FallthroughLBRs;
+
   while (hasData()) {
     auto SampleRes = parseBranchSample();
     if (std::error_code EC = SampleRes.getError())
@@ -981,13 +1016,62 @@ std::error_code DataAggregator::parseBranchEvents() {
     const LBREntry *NextLBR{nullptr};
     for (const auto &LBR : Sample.LBR) {
       if (NextLBR) {
-        doTrace(LBR, *NextLBR);
+        // Record fall-through trace.
+        const auto TraceFrom = LBR.To;
+        const auto TraceTo = NextLBR->From;
+        const auto *TraceBF = getBinaryFunctionContainingAddress(TraceFrom);
+        if (TraceBF && TraceBF->containsAddress(TraceTo)) {
+            auto &Info = FallthroughLBRs[Location(TraceFrom, TraceTo)];
+            if (TraceBF->containsAddress(LBR.From)) {
+              ++Info.InternCount;
+            } else {
+              ++Info.ExternCount;
+            }
+        } else {
+          if (TraceBF && getBinaryFunctionContainingAddress(TraceTo)) {
+            ++NumInvalidTraces;
+          } else {
+            ++NumLongRangeTraces;
+          }
+        }
         ++NumTraces;
       }
-      doBranch(LBR.From, LBR.To, 1, LBR.Mispred);
       NextLBR = &LBR;
+
+      auto From = LBR.From;
+      if (!getBinaryFunctionContainingAddress(From))
+        From = 0;
+      auto To = LBR.To;
+      if (!getBinaryFunctionContainingAddress(To))
+        To = 0;
+      if (!From && !To)
+        continue;
+      auto &Info = BranchLBRs[Location(From, To)];
+      ++Info.TakenCount;
+      Info.MispredCount += LBR.Mispred;
     }
   }
+
+  for (const auto &AggrLBR : FallthroughLBRs) {
+    auto &Loc = AggrLBR.first;
+    auto &Info = AggrLBR.second;
+    LBREntry First{Loc.From, Loc.From, false};
+    LBREntry Second{Loc.To, Loc.To, false};
+    if (Info.InternCount) {
+      doTrace(First, Second, Info.InternCount);
+    }
+    if (Info.ExternCount) {
+      First.From = 0;
+      doTrace(First, Second, Info.ExternCount);
+    }
+  }
+
+  for (const auto &AggrLBR : BranchLBRs) {
+    auto &Loc = AggrLBR.first;
+    auto &Info = AggrLBR.second;
+    doBranch(Loc.From, Loc.To, Info.TakenCount, Info.MispredCount);
+  }
+
   outs() << "PERF2BOLT: Read " << NumSamples << " samples and "
          << NumEntries << " LBR entries\n";
   outs() << "PERF2BOLT: Traces mismatching disassembled function contents: "

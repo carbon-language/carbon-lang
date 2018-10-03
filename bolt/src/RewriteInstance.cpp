@@ -810,16 +810,13 @@ void RewriteInstance::discoverStorage() {
 
   EntryPoint = Obj->getHeader()->e_entry;
 
-  // This is where the first segment and ELF header were allocated.
-  uint64_t FirstAllocAddress = std::numeric_limits<uint64_t>::max();
-
   NextAvailableAddress = 0;
   uint64_t NextAvailableOffset = 0;
   auto PHs = cantFail(Obj->program_headers(), "program_headers() failed");
   for (const auto &Phdr : PHs) {
     if (Phdr.p_type == ELF::PT_LOAD) {
-      FirstAllocAddress = std::min(FirstAllocAddress,
-                                   static_cast<uint64_t>(Phdr.p_vaddr));
+      BC->FirstAllocAddress = std::min(BC->FirstAllocAddress,
+                                       static_cast<uint64_t>(Phdr.p_vaddr));
       NextAvailableAddress = std::max(NextAvailableAddress,
                                       Phdr.p_vaddr + Phdr.p_memsz);
       NextAvailableOffset = std::max(NextAvailableOffset,
@@ -856,7 +853,7 @@ void RewriteInstance::discoverStorage() {
          "no PT_LOAD pheader seen");
 
   outs() << "BOLT-INFO: first alloc address is 0x"
-         << Twine::utohexstr(FirstAllocAddress) << '\n';
+         << Twine::utohexstr(BC->FirstAllocAddress) << '\n';
 
   FirstNonAllocatableOffset = NextAvailableOffset;
 
@@ -874,13 +871,13 @@ void RewriteInstance::discoverStorage() {
     //
     // NB: bfd's strip command cannot do the above and will corrupt the
     //     binary during the process of stripping non-allocatable sections.
-    if (NextAvailableOffset <= NextAvailableAddress - FirstAllocAddress) {
-      NextAvailableOffset = NextAvailableAddress - FirstAllocAddress;
+    if (NextAvailableOffset <= NextAvailableAddress - BC->FirstAllocAddress) {
+      NextAvailableOffset = NextAvailableAddress - BC->FirstAllocAddress;
     } else {
-      NextAvailableAddress = NextAvailableOffset + FirstAllocAddress;
+      NextAvailableAddress = NextAvailableOffset + BC->FirstAllocAddress;
     }
-    assert(NextAvailableOffset == NextAvailableAddress - FirstAllocAddress &&
-           "PHDR table address calculation error");
+    assert(NextAvailableOffset == NextAvailableAddress - BC->FirstAllocAddress
+           && "PHDR table address calculation error");
 
     outs() << "BOLT-INFO: creating new program header table at address 0x"
            << Twine::utohexstr(NextAvailableAddress) << ", offset 0x"
