@@ -625,7 +625,8 @@ def IsOrAdd: PatFrag<(ops node:$A, node:$B), (or node:$A, node:$B), [{
 
 def : Pat<(simm12:$imm), (ADDI X0, simm12:$imm)>;
 def : Pat<(simm32hi20:$imm), (LUI (HI20 imm:$imm))>;
-def : Pat<(simm32:$imm), (ADDI (LUI (HI20 imm:$imm)), (LO12Sext imm:$imm))>;
+def : Pat<(simm32:$imm), (ADDI (LUI (HI20 imm:$imm)), (LO12Sext imm:$imm))>,
+      Requires<[IsRV32]>;
 
 /// Simple arithmetic operations
 
@@ -808,7 +809,7 @@ multiclass StPat<PatFrag StoreOp, RVInst Inst, RegisterClass StTy> {
 
 defm : StPat<truncstorei8, SB, GPR>;
 defm : StPat<truncstorei16, SH, GPR>;
-defm : StPat<store, SW, GPR>;
+defm : StPat<store, SW, GPR>, Requires<[IsRV32]>;
 
 /// Fences
 
