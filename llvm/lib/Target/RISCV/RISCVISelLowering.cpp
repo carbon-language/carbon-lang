@@ -494,6 +494,24 @@ SDValue RISCVTargetLowering::LowerRETURNADDR(SDValue Op,
   return DAG.getCopyFromReg(DAG.getEntryNode(), DL, Reg, XLenVT);
 }
 
+SDValue RISCVTargetLowering::PerformDAGCombine(SDNode *N,
+                                               DAGCombinerInfo &DCI) const {
+  switch (N->getOpcode()) {
+  default:
+    break;
+  case RISCVISD::SplitF64: {
+    // If the input to SplitF64 is just BuildPairF64 then the operation is
+    // redundant. Instead, use BuildPairF64's operands directly.
+    SDValue Op0 = N->getOperand(0);
+    if (Op0->getOpcode() != RISCVISD::BuildPairF64)
+      break;
+    return DCI.CombineTo(N, Op0.getOperand(0), Op0.getOperand(1));
+  }
+  }
+
+  return SDValue();
+}
+
 static MachineBasicBlock *emitSplitF64Pseudo(MachineInstr &MI,
                                              MachineBasicBlock *BB) {
   assert(MI.getOpcode() == RISCV::SplitF64Pseudo && "Unexpected instruction");
