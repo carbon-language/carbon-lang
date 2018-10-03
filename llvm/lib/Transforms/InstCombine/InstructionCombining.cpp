@@ -1351,7 +1351,7 @@ Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
   } while (true);
 }
 
-Instruction *InstCombiner::foldShuffledBinop(BinaryOperator &Inst) {
+Instruction *InstCombiner::foldVectorBinop(BinaryOperator &Inst) {
   if (!Inst.getType()->isVectorTy()) return nullptr;
 
   unsigned VWidth = cast<VectorType>(Inst.getType())->getNumElements();
