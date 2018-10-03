@@ -142,7 +142,7 @@ void Analysis::printInstructionRowCsv(const size_t PointId,
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   const llvm::MCSchedClassDesc *const SCDesc =
-      SchedModel.getSchedClassDesc(SchedClassId);
+      SubtargetInfo_->getSchedModel().getSchedClassDesc(SchedClassId);
   writeEscaped<kEscapeCsv>(OS, SCDesc->Name);
 #else
   OS << SchedClassId;
