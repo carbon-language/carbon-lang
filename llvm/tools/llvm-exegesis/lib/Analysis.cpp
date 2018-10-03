@@ -136,7 +136,6 @@ void Analysis::printInstructionRowCsv(const size_t PointId,
   writeEscaped<kEscapeCsv>(OS, Point.Key.Config);
   OS << kCsvSep;
   assert(!Point.Key.Instructions.empty());
-  const auto &SchedModel = SubtargetInfo_->getSchedModel();
   const llvm::MCInst &MCI = Point.Key.Instructions[0];
   const unsigned SchedClassId = resolveSchedClassId(
       *SubtargetInfo_, InstrInfo_->get(MCI.getOpcode()).getSchedClass(), MCI);
