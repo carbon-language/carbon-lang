@@ -75,6 +75,9 @@ template<typename T, typename M> void Walk(std::optional<T> &x, M &mutator) {
     Walk(*x, mutator);
   }
 }
+// For most lists, just traverse the elements; but when a list constitutes
+// a Block (i.e., std::list<ExecutionPartConstruct>), also invoke the
+// visitor/mutator on the list itself.
 template<typename T, typename V> void Walk(const std::list<T> &x, V &visitor) {
   for (const auto &elem : x) {
     Walk(elem, visitor);
@@ -85,7 +88,6 @@ template<typename T, typename M> void Walk(std::list<T> &x, M &mutator) {
     Walk(elem, mutator);
   }
 }
-// When a list constitutes a Block, invoke the visitor or mutator.
 template<typename V> void Walk(const Block &x, V &visitor) {
   if (visitor.Pre(x)) {
     for (const auto &elem : x) {

@@ -207,6 +207,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   if (driver.measureTree) {
     MeasureParseTree(parseTree);
   }
+  // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols || driver.debugExpressions) {
     semantics.Perform(parseTree);
@@ -410,6 +411,7 @@ int main(int argc, char *const argv[]) {
     } else if (arg == "-fdebug-instrumented-parse") {
       options.instrumentedParse = true;
     } else if (arg == "-fdebug-semantics") {
+      // TODO: Enable by default once basic tests pass
       driver.debugSemantics = true;
     } else if (arg == "-funparse") {
       driver.dumpUnparse = true;
