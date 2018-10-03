@@ -619,7 +619,7 @@ let isCodeGenOnly = 1, Defs = [EFLAGS] in
 def OR32mrLocked  : I<0x09, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$zero),
                       "or{l}\t{$zero, $dst|$dst, $zero}", []>,
                       Requires<[Not64BitMode]>, OpSize32, LOCK,
-                      Sched<[WriteALULd, WriteRMW]>;
+                      Sched<[WriteALURMW]>;
 
 let hasSideEffects = 1 in
 def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
@@ -633,7 +633,7 @@ def Int_MemBarrier : I<0, Pseudo, (outs), (ins),
 multiclass LOCK_ArithBinOp<bits<8> RegOpc, bits<8> ImmOpc, bits<8> ImmOpc8,
                            Format ImmMod, SDNode Op, string mnemonic> {
 let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
-    SchedRW = [WriteALULd, WriteRMW] in {
+    SchedRW = [WriteALURMW] in {
 
 def NAME#8mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                   RegOpc{3}, RegOpc{2}, RegOpc{1}, 0 },
@@ -732,7 +732,7 @@ defm LOCK_XOR : LOCK_ArithBinOp<0x30, 0x80, 0x83, MRM6m, X86lock_xor, "xor">;
 multiclass LOCK_ArithUnOp<bits<8> Opc8, bits<8> Opc, Format Form,
                           string frag, string mnemonic> {
 let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1,
-    SchedRW = [WriteALULd, WriteRMW] in {
+    SchedRW = [WriteALURMW] in {
 def NAME#8m  : I<Opc8, Form, (outs), (ins i8mem :$dst),
                  !strconcat(mnemonic, "{b}\t$dst"),
                  [(set EFLAGS, (!cast<PatFrag>(frag # "_8") addr:$dst))]>,
@@ -870,7 +870,7 @@ defm LCMPXCHG : LCMPXCHG_BinOp<0xB0, 0xB1, MRMDestMem, "cmpxchg", X86cas>;
 multiclass ATOMIC_LOAD_BINOP<bits<8> opc8, bits<8> opc, string mnemonic,
                              string frag> {
   let Constraints = "$val = $dst", Defs = [EFLAGS], isCodeGenOnly = 1,
-      SchedRW = [WriteALULd, WriteRMW] in {
+      SchedRW = [WriteALURMW] in {
     def NAME#8  : I<opc8, MRMSrcMem, (outs GR8:$dst),
                     (ins GR8:$val, i8mem:$ptr),
                     !strconcat(mnemonic, "{b}\t{$val, $ptr|$ptr, $val}"),
