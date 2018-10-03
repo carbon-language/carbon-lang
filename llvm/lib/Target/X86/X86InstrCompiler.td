@@ -590,21 +590,29 @@ let usesCustomInserter = 1, hasNoSchedulingInfo = 1, Uses = [EFLAGS] in {
 
   defm _FR32   : CMOVrr_PSEUDO<FR32, f32>;
   defm _FR64   : CMOVrr_PSEUDO<FR64, f64>;
-  defm _F128   : CMOVrr_PSEUDO<VR128, f128>;
-  defm _V4F32  : CMOVrr_PSEUDO<VR128, v4f32>;
-  defm _V2F64  : CMOVrr_PSEUDO<VR128, v2f64>;
-  defm _V2I64  : CMOVrr_PSEUDO<VR128, v2i64>;
-  defm _V8F32  : CMOVrr_PSEUDO<VR256, v8f32>;
-  defm _V4F64  : CMOVrr_PSEUDO<VR256, v4f64>;
-  defm _V4I64  : CMOVrr_PSEUDO<VR256, v4i64>;
-  defm _V8I64  : CMOVrr_PSEUDO<VR512, v8i64>;
-  defm _V8F64  : CMOVrr_PSEUDO<VR512, v8f64>;
-  defm _V16F32 : CMOVrr_PSEUDO<VR512, v16f32>;
-  defm _V8I1   : CMOVrr_PSEUDO<VK8,  v8i1>;
-  defm _V16I1  : CMOVrr_PSEUDO<VK16, v16i1>;
-  defm _V32I1  : CMOVrr_PSEUDO<VK32, v32i1>;
-  defm _V64I1  : CMOVrr_PSEUDO<VK64, v64i1>;
+  defm _VR128  : CMOVrr_PSEUDO<VR128, v2i64>;
+  defm _VR256  : CMOVrr_PSEUDO<VR256, v4i64>;
+  defm _VR512  : CMOVrr_PSEUDO<VR512, v8i64>;
+  defm _VK8    : CMOVrr_PSEUDO<VK8,  v8i1>;
+  defm _VK16   : CMOVrr_PSEUDO<VK16, v16i1>;
+  defm _VK32   : CMOVrr_PSEUDO<VK32, v32i1>;
+  defm _VK64   : CMOVrr_PSEUDO<VK64, v64i1>;
 } // usesCustomInserter = 1, hasNoSchedulingInfo = 1, Uses = [EFLAGS]
+
+def : Pat<(f128 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
+          (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
+def : Pat<(v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
+          (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
+def : Pat<(v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
+          (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
+def : Pat<(v8f32 (X86cmov VR256:$t, VR256:$f, imm:$cond, EFLAGS)),
+          (CMOV_VR256 VR256:$t, VR256:$f, imm:$cond)>;
+def : Pat<(v4f64 (X86cmov VR256:$t, VR256:$f, imm:$cond, EFLAGS)),
+          (CMOV_VR256 VR256:$t, VR256:$f, imm:$cond)>;
+def : Pat<(v16f32 (X86cmov VR512:$t, VR512:$f, imm:$cond, EFLAGS)),
+          (CMOV_VR512 VR512:$t, VR512:$f, imm:$cond)>;
+def : Pat<(v8f64 (X86cmov VR512:$t, VR512:$f, imm:$cond, EFLAGS)),
+          (CMOV_VR512 VR512:$t, VR512:$f, imm:$cond)>;
 
 //===----------------------------------------------------------------------===//
 // Normal-Instructions-With-Lock-Prefix Pseudo Instructions
