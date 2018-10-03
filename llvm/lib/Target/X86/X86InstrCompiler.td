@@ -599,6 +599,8 @@ let usesCustomInserter = 1, hasNoSchedulingInfo = 1, Uses = [EFLAGS] in {
     defm _VR256X : CMOVrr_PSEUDO<VR256X, v4i64>;
   }
   defm _VR512  : CMOVrr_PSEUDO<VR512, v8i64>;
+  defm _VK2    : CMOVrr_PSEUDO<VK2,  v2i1>;
+  defm _VK4    : CMOVrr_PSEUDO<VK4,  v4i1>;
   defm _VK8    : CMOVrr_PSEUDO<VK8,  v8i1>;
   defm _VK16   : CMOVrr_PSEUDO<VK16, v16i1>;
   defm _VK32   : CMOVrr_PSEUDO<VK32, v32i1>;
