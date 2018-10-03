@@ -590,8 +590,14 @@ let usesCustomInserter = 1, hasNoSchedulingInfo = 1, Uses = [EFLAGS] in {
 
   defm _FR32   : CMOVrr_PSEUDO<FR32, f32>;
   defm _FR64   : CMOVrr_PSEUDO<FR64, f64>;
-  defm _VR128  : CMOVrr_PSEUDO<VR128, v2i64>;
-  defm _VR256  : CMOVrr_PSEUDO<VR256, v4i64>;
+  let Predicates = [NoVLX] in {
+    defm _VR128  : CMOVrr_PSEUDO<VR128, v2i64>;
+    defm _VR256  : CMOVrr_PSEUDO<VR256, v4i64>;
+  }
+  let Predicates = [HasVLX] in {
+    defm _VR128X : CMOVrr_PSEUDO<VR128X, v2i64>;
+    defm _VR256X : CMOVrr_PSEUDO<VR256X, v4i64>;
+  }
   defm _VR512  : CMOVrr_PSEUDO<VR512, v8i64>;
   defm _VK8    : CMOVrr_PSEUDO<VK8,  v8i1>;
   defm _VK16   : CMOVrr_PSEUDO<VK16, v16i1>;
@@ -601,14 +607,28 @@ let usesCustomInserter = 1, hasNoSchedulingInfo = 1, Uses = [EFLAGS] in {
 
 def : Pat<(f128 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
           (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
-def : Pat<(v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
-          (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
-def : Pat<(v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
-          (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
-def : Pat<(v8f32 (X86cmov VR256:$t, VR256:$f, imm:$cond, EFLAGS)),
-          (CMOV_VR256 VR256:$t, VR256:$f, imm:$cond)>;
-def : Pat<(v4f64 (X86cmov VR256:$t, VR256:$f, imm:$cond, EFLAGS)),
-          (CMOV_VR256 VR256:$t, VR256:$f, imm:$cond)>;
+
+let Predicates = [NoVLX] in {
+  def : Pat<(v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
+  def : Pat<(v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR128 VR128:$t, VR128:$f, imm:$cond)>;
+  def : Pat<(v8f32 (X86cmov VR256:$t, VR256:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR256 VR256:$t, VR256:$f, imm:$cond)>;
+  def : Pat<(v4f64 (X86cmov VR256:$t, VR256:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR256 VR256:$t, VR256:$f, imm:$cond)>;
+}
+let Predicates = [HasVLX] in {
+  def : Pat<(v4f32 (X86cmov VR128X:$t, VR128X:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR128X VR128X:$t, VR128X:$f, imm:$cond)>;
+  def : Pat<(v2f64 (X86cmov VR128X:$t, VR128X:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR128X VR128X:$t, VR128X:$f, imm:$cond)>;
+  def : Pat<(v8f32 (X86cmov VR256X:$t, VR256X:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR256X VR256X:$t, VR256X:$f, imm:$cond)>;
+  def : Pat<(v4f64 (X86cmov VR256X:$t, VR256X:$f, imm:$cond, EFLAGS)),
+            (CMOV_VR256X VR256X:$t, VR256X:$f, imm:$cond)>;
+}
+
 def : Pat<(v16f32 (X86cmov VR512:$t, VR512:$f, imm:$cond, EFLAGS)),
           (CMOV_VR512 VR512:$t, VR512:$f, imm:$cond)>;
 def : Pat<(v8f64 (X86cmov VR512:$t, VR512:$f, imm:$cond, EFLAGS)),

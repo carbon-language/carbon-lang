@@ -27464,7 +27464,9 @@ static bool isCMOVPseudo(MachineInstr &MI) {
   case X86::CMOV_RFP64:
   case X86::CMOV_RFP80:
   case X86::CMOV_VR128:
+  case X86::CMOV_VR128X:
   case X86::CMOV_VR256:
+  case X86::CMOV_VR256X:
   case X86::CMOV_VR512:
   case X86::CMOV_VK8:
   case X86::CMOV_VK16:
@@ -29060,7 +29062,9 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case X86::CMOV_RFP64:
   case X86::CMOV_RFP80:
   case X86::CMOV_VR128:
+  case X86::CMOV_VR128X:
   case X86::CMOV_VR256:
+  case X86::CMOV_VR256X:
   case X86::CMOV_VR512:
   case X86::CMOV_VK8:
   case X86::CMOV_VK16:
