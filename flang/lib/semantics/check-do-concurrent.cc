@@ -20,7 +20,7 @@ namespace Fortran::semantics {
 
 using namespace parser::literals;
 
-// 11.1.7.5
+// 11.1.7.5 - enforce semantics constraints on a DO CONCURRENT loop body
 class DoConcurrentEnforcement {
 public:
   DoConcurrentEnforcement(parser::Messages &messages) : messages_{messages} {}
@@ -85,8 +85,11 @@ public:
   }
   // C1141
   void Post(const parser::ProcedureDesignator &procedureDesignator) {
-    if (auto *name = std::get_if<parser::Name>(&procedureDesignator.u)) {
+#if 0
+    if (auto *name{std::get_if<parser::Name>(&procedureDesignator.u)}) {
       auto upperName{parser::ToUpperCaseLetters(name->ToString())};
+      // FIXME: These names need to resolve to symbols imported from the
+      // intrinsic module IEEE_EXCEPTIONS. Do some symbol lookup here?
       if (upperName == "IEEE_GET_FLAG"s) {
         messages_.Say(charBlock_,
             parser::MessageFormattedText{
@@ -101,14 +104,15 @@ public:
                                          " in DO CONCURRENT"_err_en_US});
       }
     }
+#endif
   }
 
   // C1138: extended ranges in DOs should be errors, not warnings
 
   // 11.1.7.5
   void Post(const parser::IoControlSpec &ioControlSpec) {
-    if (auto *charExpr =
-            std::get_if<parser::IoControlSpec::CharExpr>(&ioControlSpec.u)) {
+    if (auto *charExpr{
+            std::get_if<parser::IoControlSpec::CharExpr>(&ioControlSpec.u)}) {
       if (std::get<parser::IoControlSpec::CharExpr::Kind>(charExpr->t) ==
           parser::IoControlSpec::CharExpr::Kind::Advance) {
         messages_.Say(charBlock_,
@@ -119,87 +123,49 @@ public:
   }
 
 private:
-  bool ObjectIsCoarray() { return false; } // placeholder
-  bool EndTDeallocatesCoarray() { return false; } // placeholder
+  bool ObjectIsCoarray() { return false; }  // placeholder
+  bool EndTDeallocatesCoarray() { return false; }  // placeholder
 
   parser::CharBlock charBlock_;
   parser::Messages &messages_;
 };
 
-class DoConcurrentCollection {
+// Find a canonical DO CONCURRENT and enforce semantics checks on its body
+class FindDoConcurrentLoops {
 public:
-  DoConcurrentCollection(parser::Messages &messages) : messages_{messages} {}
+  FindDoConcurrentLoops(parser::Messages &messages) : messages_{messages} {}
   template<typename T> constexpr bool Pre(const T &) { return true; }
   template<typename T> constexpr void Post(const T &) {}
-  bool Pre(const parser::ExecutionPart &executionPart) {
-    const auto &cend{executionPart.v.cend()};
-    for (auto iter{executionPart.v.cbegin()}; iter != cend; ++iter) {
-      CheckDoConcurrent(iter);
-      currentIter_ = iter;
+  template<typename T> constexpr bool Pre(const parser::Statement<T> &) {
+    return false;
+  }
+  bool Pre(const parser::DoConstruct &doConstruct) {
+    if (std::get<std::optional<parser::LoopControl>>(
+            std::get<parser::Statement<parser::NonLabelDoStmt>>(doConstruct.t)
+                .statement.t)
+            .has_value() &&
+        std::holds_alternative<parser::LoopControl::Concurrent>(
+            std::get<std::optional<parser::LoopControl>>(
+                std::get<parser::Statement<parser::NonLabelDoStmt>>(
+                    doConstruct.t)
+                    .statement.t)
+                ->u)) {
+      DoConcurrentEnforcement doConcurrentEnforcement{messages_};
+      parser::Walk(
+          std::get<parser::Block>(doConstruct.t), doConcurrentEnforcement);
     }
     return true;
   }
-  template<typename T> void Post(const parser::Statement<T> &statement) {
-    if (!labels_.empty() && statement.label.has_value() &&
-        labels_.back() == *statement.label) {
-      CheckConstraints(++labelDoIters_.back(), currentIter_);
-      labels_.pop_back();
-      labelDoIters_.pop_back();
-    }
-  }
 
 private:
-  void CheckConstraints(const parser::Block::const_iterator &begin,
-      const parser::Block::const_iterator &end) {
-    DoConcurrentEnforcement doConcurrentEnforcement{messages_};
-    for (auto iter = begin; iter != end; ++iter) {
-      Walk(*iter, doConcurrentEnforcement);
-    }
-  }
-  void CheckDoConcurrent(
-      const std::list<parser::ExecutionPartConstruct>::const_iterator &iter) {
-    const parser::ExecutionPartConstruct &executionPartConstruct{*iter};
-    if (auto *executableConstruct = std::get_if<parser::ExecutableConstruct>(
-            &executionPartConstruct.u)) {
-      if (auto *doConstruct =
-              std::get_if<common::Indirection<parser::DoConstruct>>(
-                  &executableConstruct->u)) {
-        if (std::get<std::optional<parser::LoopControl>>(
-                std::get<parser::Statement<parser::NonLabelDoStmt>>(
-                    (*doConstruct)->t)
-                    .statement.t)
-                .has_value()) {
-          CheckConstraints(std::get<parser::Block>((*doConstruct)->t).cbegin(),
-              std::get<parser::Block>((*doConstruct)->t).cend());
-        }
-      } else if (auto *labelDoLoop = std::get_if<parser::Statement<
-                     common::Indirection<parser::LabelDoStmt>>>(
-                     &executableConstruct->u)) {
-        if (std::get<std::optional<parser::LoopControl>>(
-                labelDoLoop->statement->t)
-                .has_value() &&
-            std::holds_alternative<parser::LoopControl::Concurrent>(
-                std::get<std::optional<parser::LoopControl>>(
-                    labelDoLoop->statement->t)
-                    ->u)) {
-          labelDoIters_.push_back(iter);
-          labels_.push_back(std::get<parser::Label>(labelDoLoop->statement->t));
-        }
-      }
-    }
-  }
-
   parser::Messages &messages_;
-  std::vector<std::list<parser::ExecutionPartConstruct>::const_iterator>
-      labelDoIters_;
-  std::list<parser::ExecutionPartConstruct>::const_iterator currentIter_;
-  std::vector<parser::Label> labels_;
 };
 
+// DO loops must be canonicalized prior to calling
 void CheckDoConcurrentConstraints(
     parser::Messages &messages, const parser::Program &program) {
-  DoConcurrentCollection doConcurrentCollection{messages};
-  Walk(program, doConcurrentCollection);
+  FindDoConcurrentLoops findDoConcurrentLoops{messages};
+  Walk(program, findDoConcurrentLoops);
 }
 
 }  // namespace Fortran::semantics

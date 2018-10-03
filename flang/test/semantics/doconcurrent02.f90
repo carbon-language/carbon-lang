@@ -12,18 +12,21 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
+! negative tests: we don't want DO CONCURRENT semantics constraints checked
+! when the loops are not DO CONCURRENT
+
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
-! CHECK: image control statement not allowed in DO CONCURRENT
-! CHECK: RETURN not allowed in DO CONCURRENT
-! XXXCHECK: IEEE_GET_FLAG not allowed in DO CONCURRENT
-! CHECK: ADVANCE specifier not allowed in DO CONCURRENT
-! CHECK: SYNC ALL
-! CHECK: SYNC IMAGES
+! CHECK-NOT: image control statement not allowed in DO CONCURRENT
+! CHECK-NOT: RETURN not allowed in DO CONCURRENT
+! XXXCHECK-NOT: IEEE_GET_FLAG not allowed in DO CONCURRENT
+! CHECK-NOT: ADVANCE specifier not allowed in DO CONCURRENT
+! CHECK-NOT: SYNC ALL
+! CHECK-NOT: SYNC IMAGES
 
 subroutine do_concurrent_test1(i,n)
   implicit none
   integer :: i, n
-  do 10 concurrent (i = 1:n)
+  do 10 i = 1,n
      SYNC ALL
      SYNC IMAGES (*)
      return
@@ -34,7 +37,7 @@ subroutine do_concurrent_test2(i,j,n,flag)
   !use ieee_exceptions
   implicit none
   integer :: i, j, n, flag, flag2
-  do concurrent (i = 1:n)
+  do i = 1,n
     change team (j)
       call ieee_get_flag(flag, flag2)
     end team
