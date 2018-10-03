@@ -686,7 +686,7 @@ def Select_GPR_Using_CC_GPR : SelectCC_rrirr<GPR, GPR>;
 // Match `(brcond (CondOp ..), ..)` and lower to the appropriate RISC-V branch
 // instruction.
 class BccPat<PatFrag CondOp, RVInstB Inst>
-    : Pat<(brcond (i32 (CondOp GPR:$rs1, GPR:$rs2)), bb:$imm12),
+    : Pat<(brcond (XLenVT (CondOp GPR:$rs1, GPR:$rs2)), bb:$imm12),
           (Inst GPR:$rs1, GPR:$rs2, simm13_lsb0:$imm12)>;
 
 def : BccPat<seteq, BEQ>;
@@ -697,7 +697,7 @@ def : BccPat<setult, BLTU>;
 def : BccPat<setuge, BGEU>;
 
 class BccSwapPat<PatFrag CondOp, RVInst InstBcc>
-    : Pat<(brcond (i32 (CondOp GPR:$rs1, GPR:$rs2)), bb:$imm12),
+    : Pat<(brcond (XLenVT (CondOp GPR:$rs1, GPR:$rs2)), bb:$imm12),
           (InstBcc GPR:$rs2, GPR:$rs1, bb:$imm12)>;
 
 // Condition codes that don't have matching RISC-V branch instructions, but
@@ -817,13 +817,13 @@ defm : StPat<store, SW, GPR>, Requires<[IsRV32]>;
 // Manual: Volume I.
 
 // fence acquire -> fence r, rw
-def : Pat<(atomic_fence (i32 4), (imm)), (FENCE 0b10, 0b11)>;
+def : Pat<(atomic_fence (XLenVT 4), (imm)), (FENCE 0b10, 0b11)>;
 // fence release -> fence rw, w
-def : Pat<(atomic_fence (i32 5), (imm)), (FENCE 0b11, 0b1)>;
+def : Pat<(atomic_fence (XLenVT 5), (imm)), (FENCE 0b11, 0b1)>;
 // fence acq_rel -> fence.tso
-def : Pat<(atomic_fence (i32 6), (imm)), (FENCE_TSO)>;
+def : Pat<(atomic_fence (XLenVT 6), (imm)), (FENCE_TSO)>;
 // fence seq_cst -> fence rw, rw
-def : Pat<(atomic_fence (i32 7), (imm)), (FENCE 0b11, 0b11)>;
+def : Pat<(atomic_fence (XLenVT 7), (imm)), (FENCE 0b11, 0b11)>;
 
 // Lowering for atomic load and store is defined in RISCVInstrInfoA.td.
 // Although these are lowered to fence+load/store instructions defined in the
