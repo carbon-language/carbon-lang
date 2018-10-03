@@ -929,7 +929,7 @@ AST_MATCHER_P(TemplateArgument, refersToType,
 /// Given
 /// \code
 ///   template<template <typename> class S> class X {};
-///   template<typename T> class Y {};"
+///   template<typename T> class Y {};
 ///   X<Y> xi;
 /// \endcode
 /// classTemplateSpecializationDecl(hasAnyTemplateArgument(
