@@ -42,6 +42,7 @@
 ; RUN:   | FileCheck %s --check-prefix DISABLED
 
 ; ENABLED:       IRTranslator
+; VERIFY-NEXT:   Verify generated machine code
 ; ENABLED-NEXT:  PreLegalizerCombiner
 ; VERIFY-NEXT:   Verify generated machine code
 ; ENABLED-NEXT:  Legalizer
