@@ -60,12 +60,8 @@ PreferredTuple ChoosePreferredUse(PreferredTuple &CurrentUse,
                                   unsigned OpcodeForCandidate,
                                   MachineInstr *MIForCandidate) {
   if (!CurrentUse.Ty.isValid()) {
-    if (CurrentUse.ExtendOpcode == OpcodeForCandidate)
-      return {TyForCandidate, OpcodeForCandidate, MIForCandidate};
-    if (CurrentUse.ExtendOpcode == TargetOpcode::G_ANYEXT &&
-        (OpcodeForCandidate == TargetOpcode::G_SEXT ||
-         OpcodeForCandidate == TargetOpcode::G_ZEXT ||
-         OpcodeForCandidate == TargetOpcode::G_ANYEXT))
+    if (CurrentUse.ExtendOpcode == OpcodeForCandidate ||
+        CurrentUse.ExtendOpcode == TargetOpcode::G_ANYEXT)
       return {TyForCandidate, OpcodeForCandidate, MIForCandidate};
     return CurrentUse;
   }
@@ -171,10 +167,12 @@ bool CombinerHelper::tryCombineExtendingLoads(MachineInstr &MI) {
   PreferredTuple Preferred = {LLT(), PreferredOpcode, nullptr};
   for (auto &UseMI : MRI.use_instructions(LoadValue.getReg())) {
     if (UseMI.getOpcode() == TargetOpcode::G_SEXT ||
-        UseMI.getOpcode() == TargetOpcode::G_ZEXT || !Preferred.Ty.isValid())
+        UseMI.getOpcode() == TargetOpcode::G_ZEXT ||
+        UseMI.getOpcode() == TargetOpcode::G_ANYEXT) {
       Preferred = ChoosePreferredUse(Preferred,
                                      MRI.getType(UseMI.getOperand(0).getReg()),
                                      UseMI.getOpcode(), &UseMI);
+    }
   }
 
   // There were no extends

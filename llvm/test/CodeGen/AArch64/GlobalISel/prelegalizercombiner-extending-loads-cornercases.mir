@@ -35,6 +35,16 @@
     ret void
   }
 
+  define void @use_doesnt_def_anything(i8* %addr) {
+  entry:
+    ret void
+  }
+
+  define void @op0_isnt_a_reg(i8* %addr) {
+  entry:
+    ret void
+  }
+
 ...
 
 ---
@@ -126,9 +136,6 @@ body: |
 ---
 name:            sink_to_phi_nondominating
 # CHECK-LABEL: name: sink_to_phi_nondominating
-# This test currently tests that we don't sink if we would sink to a phi. This
-# is needed to avoid inserting into the middle of the leading G_PHI instructions
-# of a BB
 tracksRegLiveness: true
 body: |
   bb.0.entry:
@@ -171,4 +178,37 @@ body: |
     $w1 = COPY %9
 ...
 
+---
+name:            use_doesnt_def_anything
+# CHECK-LABEL: name: use_doesnt_def_anything
+# Check that we don't crash when inspecting a use that doesn't define anything.
+# The real issue which was that the combine rule was looking through
+# non-truncates as if they were truncates and attempting to obtain the result
+# register. It would usually go on to make the right overall decision anyway but
+# would sometimes crash on things like (SOME_INTRINSIC imm). This test covers
+# the case that it would recover from.
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    liveins: $x0, $w1
+    %0:_(p0) = COPY $x0
+    %1:_(s8) = G_LOAD %0 :: (load 1 from %ir.addr)
+    ; CHECK: %1:_(s8) = G_LOAD %0(p0) :: (load 1 from %ir.addr)
+    G_STORE %1(s8), %0(p0) :: (store 1 into %ir.addr)
+    ; CHECK: G_STORE %1(s8), %0(p0) :: (store 1 into %ir.addr)
+...
 
+---
+name:            op0_isnt_a_reg
+# CHECK-LABEL: name: op0_isnt_a_reg
+# This test covers the variant of use_doesnt_def_anything that would crash.
+tracksRegLiveness: true
+body: |
+  bb.0.entry:
+    liveins: $x0, $w1
+    %0:_(p0) = COPY $x0
+    %1:_(s8) = G_LOAD %0 :: (load 1 from %ir.addr)
+    ; CHECK: %1:_(s8) = G_LOAD %0(p0) :: (load 1 from %ir.addr)
+    G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.hint), %1(s8)
+    ; CHECK: G_INTRINSIC_W_SIDE_EFFECTS intrinsic(@llvm.aarch64.hint), %1(s8)
+...
