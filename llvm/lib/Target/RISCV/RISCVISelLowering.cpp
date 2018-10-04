@@ -312,9 +312,9 @@ SDValue RISCVTargetLowering::LowerOperation(SDValue Op,
   case ISD::VASTART:
     return lowerVASTART(Op, DAG);
   case ISD::FRAMEADDR:
-    return LowerFRAMEADDR(Op, DAG);
+    return lowerFRAMEADDR(Op, DAG);
   case ISD::RETURNADDR:
-    return LowerRETURNADDR(Op, DAG);
+    return lowerRETURNADDR(Op, DAG);
   }
 }
 
@@ -441,7 +441,7 @@ SDValue RISCVTargetLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
                       MachinePointerInfo(SV));
 }
 
-SDValue RISCVTargetLowering::LowerFRAMEADDR(SDValue Op,
+SDValue RISCVTargetLowering::lowerFRAMEADDR(SDValue Op,
                                             SelectionDAG &DAG) const {
   const RISCVRegisterInfo &RI = *Subtarget.getRegisterInfo();
   MachineFunction &MF = DAG.getMachineFunction();
@@ -464,7 +464,7 @@ SDValue RISCVTargetLowering::LowerFRAMEADDR(SDValue Op,
   return FrameAddr;
 }
 
-SDValue RISCVTargetLowering::LowerRETURNADDR(SDValue Op,
+SDValue RISCVTargetLowering::lowerRETURNADDR(SDValue Op,
                                              SelectionDAG &DAG) const {
   const RISCVRegisterInfo &RI = *Subtarget.getRegisterInfo();
   MachineFunction &MF = DAG.getMachineFunction();
@@ -481,7 +481,7 @@ SDValue RISCVTargetLowering::LowerRETURNADDR(SDValue Op,
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   if (Depth) {
     int Off = -XLenInBytes;
-    SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
+    SDValue FrameAddr = lowerFRAMEADDR(Op, DAG);
     SDValue Offset = DAG.getConstant(Off, DL, VT);
     return DAG.getLoad(VT, DL, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, DL, VT, FrameAddr, Offset),
