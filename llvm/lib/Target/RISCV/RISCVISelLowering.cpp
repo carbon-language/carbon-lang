@@ -834,10 +834,14 @@ static bool CC_RISCV(const DataLayout &DL, unsigned ValNo, MVT ValVT, MVT LocVT,
 
   if (Reg) {
     State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
-  } else {
-    State.addLoc(
-        CCValAssign::getMem(ValNo, ValVT, StackOffset, LocVT, LocInfo));
+    return false;
   }
+
+  if (ValVT == MVT::f32) {
+    LocVT = MVT::f32;
+    LocInfo = CCValAssign::Full;
+  }
+  State.addLoc(CCValAssign::getMem(ValNo, ValVT, StackOffset, LocVT, LocInfo));
   return false;
 }
 
@@ -1046,7 +1050,6 @@ SDValue RISCVTargetLowering::LowerFormalArguments(
 
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    assert(VA.getLocVT() == XLenVT && "Unhandled argument type");
     SDValue ArgValue;
     // Passing f64 on RV32D with a soft float ABI must be handled as a special
     // case.
