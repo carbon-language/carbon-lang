@@ -872,11 +872,11 @@ void BinaryContext::printInstruction(raw_ostream &OS,
       OS << " # TAILCALL ";
     if (MIB->isInvoke(Instruction)) {
       if (const auto EHInfo = MIB->getEHInfo(Instruction)) {
-      OS << " # handler: ";
+        OS << " # handler: ";
         if (EHInfo->first)
           OS << *EHInfo->first;
-      else
-        OS << '0';
+        else
+          OS << '0';
         OS << "; action: " << EHInfo->second;
       }
       auto GnuArgsSize = MIB->getGnuArgsSize(Instruction);

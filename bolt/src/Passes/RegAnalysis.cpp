@@ -105,6 +105,7 @@ void RegAnalysis::beConservative(BitVector &Result) const {
     BC.MIB->getCalleeSavedRegs(BV);
     BV.flip();
     Result |= BV;
+    break;
   }
   case ConservativeStrategy::CLOBBERS_NONE:
     Result.reset();
