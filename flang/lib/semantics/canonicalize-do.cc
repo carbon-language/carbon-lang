@@ -74,13 +74,13 @@ private:
       iter = currentPosition_.iter;
     }
   }
-  Block ExtractBlock(
+  static Block ExtractBlock(
       Block &currentBlock, Block::iterator beginLoop, Block::iterator endLoop) {
     Block block;
     block.splice(block.begin(), currentBlock, ++beginLoop, ++endLoop);
     return block;
   }
-  std::optional<LoopControl> ExtractLoopControl(
+  static std::optional<LoopControl> ExtractLoopControl(
       const Block::iterator &startLoop) {
     return [](std::optional<LoopControl> &loopControlOpt) {
       return loopControlOpt.has_value()
@@ -91,7 +91,7 @@ private:
                    std::get<ExecutableConstruct>(startLoop->u).u)
                    .statement->t));
   }
-  Block::iterator MakeCanonicalForm(Block &currentBlock,
+  static Block::iterator MakeCanonicalForm(Block &currentBlock,
       const Block::iterator &startLoop, const Block::iterator &endLoop) {
     std::get<ExecutableConstruct>(startLoop->u).u =
         common::Indirection<DoConstruct>{std::make_tuple(
