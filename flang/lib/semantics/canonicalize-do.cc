@@ -17,95 +17,103 @@
 
 namespace Fortran::parser {
 
+struct LabelInfo {
+  Block::iterator iter;
+  Label label;
+};
+
 class CanonicalizationOfDoLoops {
 public:
-  CanonicalizationOfDoLoops() = default;
-
+  CanonicalizationOfDoLoops(std::vector<LabelInfo> &labelInfos)
+    : labelInfos_{labelInfos} {}
   template<typename T> bool Pre(T &) { return true; }
   template<typename T> void Post(T &) {}
-  bool Pre(ExecutionPart &executionPart) {
-    const auto &endIter{executionPart.v.end()};
-    currentList_ = &executionPart.v;
-    for (auto iter{executionPart.v.begin()}; iter != endIter; ++iter) {
-      iter = ConvertLabelDoToStructuredDo(iter);
-    }
-    return false;
-  }
+  bool Pre(ExecutionPart &executionPart) { return VisitBlock(executionPart.v); }
+  bool Pre(Block &block) { return VisitBlock(block); }
   template<typename T> bool Pre(Statement<T> &statement) {
-    if (!labels_.empty() && statement.label.has_value() &&
-        labels_.back() == *statement.label) {
-      auto currentLabel{labels_.back()};
+    if (!labelInfos_.empty() && statement.label.has_value() &&
+        labelInfos_.back().label == *statement.label) {
+      auto currentLabel{labelInfos_.back().label};
       if constexpr (std::is_same_v<T, common::Indirection<EndDoStmt>>) {
-        std::get<ExecutableConstruct>(currentIter_->u).u =
+        std::get<ExecutableConstruct>(currentPosition_.iter->u).u =
             Statement<ActionStmt>{
                 std::optional<Label>{currentLabel}, ContinueStmt{}};
       }
       do {
-        currentIter_ = MakeCanonicalForm(labelDoIters_.back(), currentIter_);
-        labelDoIters_.pop_back();
-        labels_.pop_back();
-      } while (!labels_.empty() && labels_.back() == currentLabel);
+        currentPosition_.iter = MakeCanonicalForm(*currentPosition_.block,
+            labelInfos_.back().iter, currentPosition_.iter);
+        labelInfos_.pop_back();
+      } while (
+          !labelInfos_.empty() && labelInfos_.back().label == currentLabel);
     }
     return false;
   }
 
 private:
-  Block ExtractBlock(Block::iterator beginLoop, Block::iterator endLoop) {
-    Block block;
-    block.splice(block.begin(), *currentList_, ++beginLoop, ++endLoop);
-    return block;
+  bool VisitBlock(Block &block) {
+    CanonicalizationOfDoLoops canonicalizationOfDoLoops{labelInfos_};
+    canonicalizationOfDoLoops.TraverseBlock(block);
+    return false;
   }
-  std::optional<LoopControl> CreateLoopControl(
-      std::optional<LoopControl> &loopControlOpt) {
-    if (loopControlOpt.has_value()) {
-      return std::optional<LoopControl>(LoopControl{loopControlOpt->u});
+  void TraverseBlock(Block &block) {
+    const auto &endIter{block.end()};
+    currentPosition_.block = &block;
+    for (auto iter{block.begin()}; iter != endIter; ++iter) {
+      ExecutionPartConstruct &executionPartConstruct{*iter};
+      currentPosition_.iter = iter;
+      if (auto *executableConstruct{
+              std::get_if<ExecutableConstruct>(&executionPartConstruct.u)}) {
+        if (auto *labelDoLoop{
+                std::get_if<Statement<common::Indirection<LabelDoStmt>>>(
+                    &executableConstruct->u)}) {
+          labelInfos_.push_back(
+              LabelInfo{iter, std::get<Label>(labelDoLoop->statement->t)});
+        }
+      }
+      Walk(executionPartConstruct.u, *this);  // may update currentPosition_
+      iter = currentPosition_.iter;
     }
-    return std::optional<LoopControl>{};
+  }
+  Block ExtractBlock(
+      Block &currentBlock, Block::iterator beginLoop, Block::iterator endLoop) {
+    Block block;
+    block.splice(block.begin(), currentBlock, ++beginLoop, ++endLoop);
+    return block;
   }
   std::optional<LoopControl> ExtractLoopControl(
       const Block::iterator &startLoop) {
-    return CreateLoopControl(std::get<std::optional<LoopControl>>(
-        std::get<Statement<common::Indirection<LabelDoStmt>>>(
-            std::get<ExecutableConstruct>(startLoop->u).u)
-            .statement->t));
+    return [](std::optional<LoopControl> &loopControlOpt) {
+      return loopControlOpt.has_value()
+          ? std::optional<LoopControl>{LoopControl{loopControlOpt->u}}
+          : std::optional<LoopControl>{};
+    }(std::get<std::optional<LoopControl>>(
+               std::get<Statement<common::Indirection<LabelDoStmt>>>(
+                   std::get<ExecutableConstruct>(startLoop->u).u)
+                   .statement->t));
   }
-  Block::iterator MakeCanonicalForm(
+  Block::iterator MakeCanonicalForm(Block &currentBlock,
       const Block::iterator &startLoop, const Block::iterator &endLoop) {
     std::get<ExecutableConstruct>(startLoop->u).u =
         common::Indirection<DoConstruct>{std::make_tuple(
             Statement<NonLabelDoStmt>{std::optional<Label>{},
                 NonLabelDoStmt{std::make_tuple(
                     std::optional<Name>{}, ExtractLoopControl(startLoop))}},
-            ExtractBlock(startLoop, endLoop),
+            ExtractBlock(currentBlock, startLoop, endLoop),
             Statement<EndDoStmt>{
                 std::optional<Label>{}, EndDoStmt{std::optional<Name>{}}})};
     return startLoop;
   }
-  Block::iterator ConvertLabelDoToStructuredDo(const Block::iterator &iter) {
-    currentIter_ = iter;
-    ExecutionPartConstruct &executionPartConstruct{*iter};
-    if (auto *executableConstruct{
-            std::get_if<ExecutableConstruct>(&executionPartConstruct.u)}) {
-      if (auto *labelDoLoop{
-              std::get_if<Statement<common::Indirection<LabelDoStmt>>>(
-                  &executableConstruct->u)}) {
-        labelDoIters_.push_back(iter);
-        labels_.push_back(std::get<Label>(labelDoLoop->statement->t));
-      } else if (!labels_.empty()) {
-        Walk(executableConstruct->u, *this);
-      }
-    }
-    return currentIter_;
-  }
 
-  std::vector<Block::iterator> labelDoIters_;
-  std::vector<Label> labels_;
-  Block::iterator currentIter_;  ///< cursor for current ExecutionPartConstruct
-  Block *currentList_;  ///< current ExectionPartConstruct list being traversed
+  std::vector<LabelInfo> &labelInfos_;
+  struct TraversalInfo {
+    Block::iterator iter;
+    Block *block;
+  } currentPosition_;
 };
 
 void CanonicalizeDo(Program &program) {
-  CanonicalizationOfDoLoops canonicalizationOfDoLoops;
+  std::vector<LabelInfo> labelInfos;
+  CanonicalizationOfDoLoops canonicalizationOfDoLoops{labelInfos};
   Walk(program, canonicalizationOfDoLoops);
 }
 
