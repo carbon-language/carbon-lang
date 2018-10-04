@@ -1,4 +1,4 @@
-;===- ./lib/Target/RISCV/AsmParser/LLVMBuild.txt ---------------*- Conf -*--===;
+;===- ./lib/Target/RISCV/Utils/LLVMBuild.txt ----------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,7 +17,8 @@
 
 [component_0]
 type = Library
-name = RISCVAsmParser
+name = RISCVUtils
 parent = RISCV
-required_libraries = MC MCParser RISCVDesc RISCVInfo RISCVUtils Support
+required_libraries = Support
 add_to_library_groups = RISCV
+
