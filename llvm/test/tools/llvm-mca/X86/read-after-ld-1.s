@@ -30,35 +30,35 @@ vaddps  (%rax), %xmm1, %xmm1
 # ZNVER1-NEXT:  Total Cycles:      24
 # ZNVER1-NEXT:  Total uOps:        2
 
+# BDWELL:       Dispatch Width:    4
+# BDWELL-NEXT:  uOps Per Cycle:    0.18
+# BDWELL-NEXT:  IPC:               0.12
+# BDWELL-NEXT:  Block RThroughput: 5.0
+
 # BTVER2:       Dispatch Width:    2
 # BTVER2-NEXT:  uOps Per Cycle:    0.07
 # BTVER2-NEXT:  IPC:               0.07
 # BTVER2-NEXT:  Block RThroughput: 19.0
-
-# ZNVER1:       Dispatch Width:    4
-# ZNVER1-NEXT:  uOps Per Cycle:    0.08
-# ZNVER1-NEXT:  IPC:               0.08
-# ZNVER1-NEXT:  Block RThroughput: 1.0
-
-# SANDY:        Dispatch Width:    4
-# SANDY-NEXT:   uOps Per Cycle:    0.14
-# SANDY-NEXT:   IPC:               0.10
-# SANDY-NEXT:   Block RThroughput: 14.0
 
 # HASWELL:      Dispatch Width:    4
 # HASWELL-NEXT: uOps Per Cycle:    0.15
 # HASWELL-NEXT: IPC:               0.10
 # HASWELL-NEXT: Block RThroughput: 7.0
 
-# BDWELL:       Dispatch Width:    4
-# BDWELL-NEXT:  uOps Per Cycle:    0.18
-# BDWELL-NEXT:  IPC:               0.12
-# BDWELL-NEXT:  Block RThroughput: 5.0
+# SANDY:        Dispatch Width:    4
+# SANDY-NEXT:   uOps Per Cycle:    0.14
+# SANDY-NEXT:   IPC:               0.10
+# SANDY-NEXT:   Block RThroughput: 14.0
 
 # SKYLAKE:      Dispatch Width:    6
 # SKYLAKE-NEXT: uOps Per Cycle:    0.16
 # SKYLAKE-NEXT: IPC:               0.11
 # SKYLAKE-NEXT: Block RThroughput: 3.0
+
+# ZNVER1:       Dispatch Width:    4
+# ZNVER1-NEXT:  uOps Per Cycle:    0.08
+# ZNVER1-NEXT:  IPC:               0.08
+# ZNVER1-NEXT:  Block RThroughput: 1.0
 
 # ALL:          Timeline view:
 
@@ -80,11 +80,11 @@ vaddps  (%rax), %xmm1, %xmm1
 # ZNVER1-NEXT:                      0123456789
 # ZNVER1-NEXT:  Index     0123456789          0123
 
-# SKYLAKE:      [0,0]     DeeeeeeeeeeeER .  .   vdivps	%xmm0, %xmm1, %xmm1
-# SKYLAKE-NEXT: [0,1]     D======eeeeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
-
 # BDWELL:       [0,0]     DeeeeeeeeeeeER ..   vdivps	%xmm0, %xmm1, %xmm1
 # BDWELL-NEXT:  [0,1]     D======eeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
+
+# BTVER2:       [0,0]     DeeeeeeeeeeeeeeeeeeeER   ..   vdivps	%xmm0, %xmm1, %xmm1
+# BTVER2-NEXT:  [0,1]     D================eeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
 
 # HASWELL:      [0,0]     DeeeeeeeeeeeeeER   .   vdivps	%xmm0, %xmm1, %xmm1
 # HASWELL-NEXT: [0,1]     D========eeeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
@@ -92,11 +92,11 @@ vaddps  (%rax), %xmm1, %xmm1
 # SANDY:        [0,0]     DeeeeeeeeeeeeeeER   .   vdivps	%xmm0, %xmm1, %xmm1
 # SANDY-NEXT:   [0,1]     D=========eeeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
 
+# SKYLAKE:      [0,0]     DeeeeeeeeeeeER .  .   vdivps	%xmm0, %xmm1, %xmm1
+# SKYLAKE-NEXT: [0,1]     D======eeeeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
+
 # ZNVER1:       [0,0]     DeeeeeeeeeeeeeeeER  .  .   vdivps	%xmm0, %xmm1, %xmm1
 # ZNVER1-NEXT:  [0,1]     D===========eeeeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
-
-# BTVER2:       [0,0]     DeeeeeeeeeeeeeeeeeeeER   ..   vdivps	%xmm0, %xmm1, %xmm1
-# BTVER2-NEXT:  [0,1]     D================eeeeeeeeER   vaddps	(%rax), %xmm1, %xmm1
 
 # ALL:          Average Wait times (based on the timeline view):
 # ALL-NEXT:     [0]: Executions

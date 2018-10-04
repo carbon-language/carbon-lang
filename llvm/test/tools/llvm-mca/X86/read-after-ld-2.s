@@ -29,25 +29,25 @@ cmp     %edi, %edx
 # ZNVER1-NEXT:  Total Cycles:      407
 # ZNVER1-NEXT:  Total uOps:        400
 
-# ZNVER1:       Dispatch Width:    4
-# ZNVER1-NEXT:  uOps Per Cycle:    0.98
-# ZNVER1-NEXT:  IPC:               0.98
-# ZNVER1-NEXT:  Block RThroughput: 1.0
+# BDWELL:       Dispatch Width:    4
+# BDWELL-NEXT:  uOps Per Cycle:    2.40
+# BDWELL-NEXT:  IPC:               1.92
+# BDWELL-NEXT:  Block RThroughput: 1.3
 
 # HASWELL:      Dispatch Width:    4
 # HASWELL-NEXT: uOps Per Cycle:    1.62
 # HASWELL-NEXT: IPC:               1.30
 # HASWELL-NEXT: Block RThroughput: 1.3
 
-# BDWELL:       Dispatch Width:    4
-# BDWELL-NEXT:  uOps Per Cycle:    2.40
-# BDWELL-NEXT:  IPC:               1.92
-# BDWELL-NEXT:  Block RThroughput: 1.3
-
 # SKYLAKE:      Dispatch Width:    6
 # SKYLAKE-NEXT: uOps Per Cycle:    0.62
 # SKYLAKE-NEXT: IPC:               0.50
 # SKYLAKE-NEXT: Block RThroughput: 0.8
+
+# ZNVER1:       Dispatch Width:    4
+# ZNVER1-NEXT:  uOps Per Cycle:    0.98
+# ZNVER1-NEXT:  IPC:               0.98
+# ZNVER1-NEXT:  Block RThroughput: 1.0
 
 # ALL:          Timeline view:
 
@@ -62,6 +62,88 @@ cmp     %edi, %edx
 
 # ZNVER1-NEXT:                      0123456789          0123456789
 # ZNVER1-NEXT:  Index     0123456789          0123456789          0123456
+
+# BDWELL:       [0,0]     DeER .    .    .    .    . .   addl	$1, %edx
+# BDWELL-NEXT:  [0,1]     DeeeeeeeER.    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [0,2]     DeE------R.    .    .    . .   addq	$32, %r8
+# BDWELL-NEXT:  [0,3]     .DeE-----R.    .    .    . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [1,0]     .DeE-----R.    .    .    . .   addl	$1, %edx
+# BDWELL-NEXT:  [1,1]     .D=eeeeeeeER   .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [1,2]     . DeE------R   .    .    . .   addq	$32, %r8
+# BDWELL-NEXT:  [1,3]     . DeE------R   .    .    . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [2,0]     . DeE------R   .    .    . .   addl	$1, %edx
+# BDWELL-NEXT:  [2,1]     .  D=eeeeeeeER .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [2,2]     .  DeE-------R .    .    . .   addq	$32, %r8
+# BDWELL-NEXT:  [2,3]     .  DeE-------R .    .    . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [3,0]     .   DeE------R .    .    . .   addl	$1, %edx
+# BDWELL-NEXT:  [3,1]     .   D==eeeeeeeER    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [3,2]     .   DeE--------R    .    . .   addq	$32, %r8
+# BDWELL-NEXT:  [3,3]     .    DeE-------R    .    . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [4,0]     .    DeE-------R    .    . .   addl	$1, %edx
+# BDWELL-NEXT:  [4,1]     .    D===eeeeeeeER  .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [4,2]     .    .DeE--------R  .    . .   addq	$32, %r8
+# BDWELL-NEXT:  [4,3]     .    .DeE--------R  .    . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [5,0]     .    .DeE--------R  .    . .   addl	$1, %edx
+# BDWELL-NEXT:  [5,1]     .    . D===eeeeeeeER.    . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [5,2]     .    . DeE---------R.    . .   addq	$32, %r8
+# BDWELL-NEXT:  [5,3]     .    . DeE---------R.    . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [6,0]     .    .  DeE--------R.    . .   addl	$1, %edx
+# BDWELL-NEXT:  [6,1]     .    .  D====eeeeeeeER   . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [6,2]     .    .  DeE----------R   . .   addq	$32, %r8
+# BDWELL-NEXT:  [6,3]     .    .   DeE---------R   . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [7,0]     .    .   DeE---------R   . .   addl	$1, %edx
+# BDWELL-NEXT:  [7,1]     .    .   D=====eeeeeeeER . .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [7,2]     .    .    DeE----------R . .   addq	$32, %r8
+# BDWELL-NEXT:  [7,3]     .    .    DeE----------R . .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [8,0]     .    .    DeE----------R . .   addl	$1, %edx
+# BDWELL-NEXT:  [8,1]     .    .    .D=====eeeeeeeER .   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [8,2]     .    .    .DeE-----------R .   addq	$32, %r8
+# BDWELL-NEXT:  [8,3]     .    .    .DeE-----------R .   cmpl	%edi, %edx
+# BDWELL-NEXT:  [9,0]     .    .    . DeE----------R .   addl	$1, %edx
+# BDWELL-NEXT:  [9,1]     .    .    . D======eeeeeeeER   vpaddd	(%r8), %ymm0, %ymm0
+# BDWELL-NEXT:  [9,2]     .    .    . DeE------------R   addq	$32, %r8
+# BDWELL-NEXT:  [9,3]     .    .    .  DeE-----------R   cmpl	%edi, %edx
+
+# HASWELL:      [0,0]     DeER .    .    .    .    .    .    . .   addl	$1, %edx
+# HASWELL-NEXT: [0,1]     DeeeeeeeeER    .    .    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [0,2]     DeE-------R    .    .    .    .    . .   addq	$32, %r8
+# HASWELL-NEXT: [0,3]     .DeE------R    .    .    .    .    . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [1,0]     .DeE------R    .    .    .    .    . .   addl	$1, %edx
+# HASWELL-NEXT: [1,1]     .D==eeeeeeeeER .    .    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [1,2]     . DeE--------R .    .    .    .    . .   addq	$32, %r8
+# HASWELL-NEXT: [1,3]     . DeE--------R .    .    .    .    . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [2,0]     . DeE--------R .    .    .    .    . .   addl	$1, %edx
+# HASWELL-NEXT: [2,1]     .  D===eeeeeeeeER   .    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [2,2]     .  DeE----------R   .    .    .    . .   addq	$32, %r8
+# HASWELL-NEXT: [2,3]     .  DeE----------R   .    .    .    . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [3,0]     .   DeE---------R   .    .    .    . .   addl	$1, %edx
+# HASWELL-NEXT: [3,1]     .   D=====eeeeeeeeER.    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [3,2]     .   DeE------------R.    .    .    . .   addq	$32, %r8
+# HASWELL-NEXT: [3,3]     .    DeE-----------R.    .    .    . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [4,0]     .    DeE-----------R.    .    .    . .   addl	$1, %edx
+# HASWELL-NEXT: [4,1]     .    D=======eeeeeeeeER  .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [4,2]     .    .DeE-------------R  .    .    . .   addq	$32, %r8
+# HASWELL-NEXT: [4,3]     .    .DeE-------------R  .    .    . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [5,0]     .    .DeE-------------R  .    .    . .   addl	$1, %edx
+# HASWELL-NEXT: [5,1]     .    . D========eeeeeeeeER    .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [5,2]     .    . DeE---------------R    .    . .   addq	$32, %r8
+# HASWELL-NEXT: [5,3]     .    . DeE---------------R    .    . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [6,0]     .    .  DeE--------------R    .    . .   addl	$1, %edx
+# HASWELL-NEXT: [6,1]     .    .  D==========eeeeeeeeER .    . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [6,2]     .    .  DeE-----------------R .    . .   addq	$32, %r8
+# HASWELL-NEXT: [6,3]     .    .   DeE----------------R .    . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [7,0]     .    .   DeE----------------R .    . .   addl	$1, %edx
+# HASWELL-NEXT: [7,1]     .    .   D============eeeeeeeeER   . .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [7,2]     .    .    DeE------------------R   . .   addq	$32, %r8
+# HASWELL-NEXT: [7,3]     .    .    DeE------------------R   . .   cmpl	%edi, %edx
+# HASWELL-NEXT: [8,0]     .    .    DeE------------------R   . .   addl	$1, %edx
+# HASWELL-NEXT: [8,1]     .    .    .D=============eeeeeeeeER. .   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [8,2]     .    .    .DeE--------------------R. .   addq	$32, %r8
+# HASWELL-NEXT: [8,3]     .    .    .DeE--------------------R. .   cmpl	%edi, %edx
+# HASWELL-NEXT: [9,0]     .    .    . DeE-------------------R. .   addl	$1, %edx
+# HASWELL-NEXT: [9,1]     .    .    . D===============eeeeeeeeER   vpaddd	(%r8), %ymm0, %ymm0
+# HASWELL-NEXT: [9,2]     .    .    . DeE----------------------R   addq	$32, %r8
+# HASWELL-NEXT: [9,3]     .    .    .  DeE---------------------R   cmpl	%edi, %edx
 
 # SKYLAKE:      [0,0]     DeER .    .    .    .    .    .    .    .    .    .    .    .    .    .   .   addl	$1, %edx
 # SKYLAKE-NEXT: [0,1]     DeeeeeeeeER    .    .    .    .    .    .    .    .    .    .    .    .   .   vpaddd	(%r8), %ymm0, %ymm0
@@ -141,88 +223,6 @@ cmp     %edi, %edx
 # ZNVER1-NEXT:  [9,1]     .    .   D===========================eeeeeeeeER   vpaddd	(%r8), %ymm0, %ymm0
 # ZNVER1-NEXT:  [9,2]     .    .   DeE----------------------------------R   addq	$32, %r8
 # ZNVER1-NEXT:  [9,3]     .    .   D=eE---------------------------------R   cmpl	%edi, %edx
-
-# HASWELL:      [0,0]     DeER .    .    .    .    .    .    . .   addl	$1, %edx
-# HASWELL-NEXT: [0,1]     DeeeeeeeeER    .    .    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [0,2]     DeE-------R    .    .    .    .    . .   addq	$32, %r8
-# HASWELL-NEXT: [0,3]     .DeE------R    .    .    .    .    . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [1,0]     .DeE------R    .    .    .    .    . .   addl	$1, %edx
-# HASWELL-NEXT: [1,1]     .D==eeeeeeeeER .    .    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [1,2]     . DeE--------R .    .    .    .    . .   addq	$32, %r8
-# HASWELL-NEXT: [1,3]     . DeE--------R .    .    .    .    . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [2,0]     . DeE--------R .    .    .    .    . .   addl	$1, %edx
-# HASWELL-NEXT: [2,1]     .  D===eeeeeeeeER   .    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [2,2]     .  DeE----------R   .    .    .    . .   addq	$32, %r8
-# HASWELL-NEXT: [2,3]     .  DeE----------R   .    .    .    . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [3,0]     .   DeE---------R   .    .    .    . .   addl	$1, %edx
-# HASWELL-NEXT: [3,1]     .   D=====eeeeeeeeER.    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [3,2]     .   DeE------------R.    .    .    . .   addq	$32, %r8
-# HASWELL-NEXT: [3,3]     .    DeE-----------R.    .    .    . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [4,0]     .    DeE-----------R.    .    .    . .   addl	$1, %edx
-# HASWELL-NEXT: [4,1]     .    D=======eeeeeeeeER  .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [4,2]     .    .DeE-------------R  .    .    . .   addq	$32, %r8
-# HASWELL-NEXT: [4,3]     .    .DeE-------------R  .    .    . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [5,0]     .    .DeE-------------R  .    .    . .   addl	$1, %edx
-# HASWELL-NEXT: [5,1]     .    . D========eeeeeeeeER    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [5,2]     .    . DeE---------------R    .    . .   addq	$32, %r8
-# HASWELL-NEXT: [5,3]     .    . DeE---------------R    .    . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [6,0]     .    .  DeE--------------R    .    . .   addl	$1, %edx
-# HASWELL-NEXT: [6,1]     .    .  D==========eeeeeeeeER .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [6,2]     .    .  DeE-----------------R .    . .   addq	$32, %r8
-# HASWELL-NEXT: [6,3]     .    .   DeE----------------R .    . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [7,0]     .    .   DeE----------------R .    . .   addl	$1, %edx
-# HASWELL-NEXT: [7,1]     .    .   D============eeeeeeeeER   . .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [7,2]     .    .    DeE------------------R   . .   addq	$32, %r8
-# HASWELL-NEXT: [7,3]     .    .    DeE------------------R   . .   cmpl	%edi, %edx
-# HASWELL-NEXT: [8,0]     .    .    DeE------------------R   . .   addl	$1, %edx
-# HASWELL-NEXT: [8,1]     .    .    .D=============eeeeeeeeER. .   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [8,2]     .    .    .DeE--------------------R. .   addq	$32, %r8
-# HASWELL-NEXT: [8,3]     .    .    .DeE--------------------R. .   cmpl	%edi, %edx
-# HASWELL-NEXT: [9,0]     .    .    . DeE-------------------R. .   addl	$1, %edx
-# HASWELL-NEXT: [9,1]     .    .    . D===============eeeeeeeeER   vpaddd	(%r8), %ymm0, %ymm0
-# HASWELL-NEXT: [9,2]     .    .    . DeE----------------------R   addq	$32, %r8
-# HASWELL-NEXT: [9,3]     .    .    .  DeE---------------------R   cmpl	%edi, %edx
-
-# BDWELL:       [0,0]     DeER .    .    .    .    . .   addl	$1, %edx
-# BDWELL-NEXT:  [0,1]     DeeeeeeeER.    .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [0,2]     DeE------R.    .    .    . .   addq	$32, %r8
-# BDWELL-NEXT:  [0,3]     .DeE-----R.    .    .    . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [1,0]     .DeE-----R.    .    .    . .   addl	$1, %edx
-# BDWELL-NEXT:  [1,1]     .D=eeeeeeeER   .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [1,2]     . DeE------R   .    .    . .   addq	$32, %r8
-# BDWELL-NEXT:  [1,3]     . DeE------R   .    .    . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [2,0]     . DeE------R   .    .    . .   addl	$1, %edx
-# BDWELL-NEXT:  [2,1]     .  D=eeeeeeeER .    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [2,2]     .  DeE-------R .    .    . .   addq	$32, %r8
-# BDWELL-NEXT:  [2,3]     .  DeE-------R .    .    . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [3,0]     .   DeE------R .    .    . .   addl	$1, %edx
-# BDWELL-NEXT:  [3,1]     .   D==eeeeeeeER    .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [3,2]     .   DeE--------R    .    . .   addq	$32, %r8
-# BDWELL-NEXT:  [3,3]     .    DeE-------R    .    . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [4,0]     .    DeE-------R    .    . .   addl	$1, %edx
-# BDWELL-NEXT:  [4,1]     .    D===eeeeeeeER  .    . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [4,2]     .    .DeE--------R  .    . .   addq	$32, %r8
-# BDWELL-NEXT:  [4,3]     .    .DeE--------R  .    . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [5,0]     .    .DeE--------R  .    . .   addl	$1, %edx
-# BDWELL-NEXT:  [5,1]     .    . D===eeeeeeeER.    . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [5,2]     .    . DeE---------R.    . .   addq	$32, %r8
-# BDWELL-NEXT:  [5,3]     .    . DeE---------R.    . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [6,0]     .    .  DeE--------R.    . .   addl	$1, %edx
-# BDWELL-NEXT:  [6,1]     .    .  D====eeeeeeeER   . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [6,2]     .    .  DeE----------R   . .   addq	$32, %r8
-# BDWELL-NEXT:  [6,3]     .    .   DeE---------R   . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [7,0]     .    .   DeE---------R   . .   addl	$1, %edx
-# BDWELL-NEXT:  [7,1]     .    .   D=====eeeeeeeER . .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [7,2]     .    .    DeE----------R . .   addq	$32, %r8
-# BDWELL-NEXT:  [7,3]     .    .    DeE----------R . .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [8,0]     .    .    DeE----------R . .   addl	$1, %edx
-# BDWELL-NEXT:  [8,1]     .    .    .D=====eeeeeeeER .   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [8,2]     .    .    .DeE-----------R .   addq	$32, %r8
-# BDWELL-NEXT:  [8,3]     .    .    .DeE-----------R .   cmpl	%edi, %edx
-# BDWELL-NEXT:  [9,0]     .    .    . DeE----------R .   addl	$1, %edx
-# BDWELL-NEXT:  [9,1]     .    .    . D======eeeeeeeER   vpaddd	(%r8), %ymm0, %ymm0
-# BDWELL-NEXT:  [9,2]     .    .    . DeE------------R   addq	$32, %r8
-# BDWELL-NEXT:  [9,3]     .    .    .  DeE-----------R   cmpl	%edi, %edx
 
 # ALL:          Average Wait times (based on the timeline view):
 # ALL-NEXT:     [0]: Executions

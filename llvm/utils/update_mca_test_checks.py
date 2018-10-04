@@ -502,17 +502,28 @@ def _write_output(test_path, input_lines, prefix_list, block_infos,  # noqa
     else:
       # _break_down_block() was unable to do do anything so output the block
       # as-is.
+
+      # Rather than writing out each block as soon we encounter it, save it
+      # indexed by prefix so that we can write all of the blocks out sorted by
+      # prefix at the end.
+      output_blocks = defaultdict(list)
+
       for block_text in sorted(block_infos[block_num]):
+
         if not block_text:
           continue
 
         lines = block_text.split('\n')
         for prefix in block_infos[block_num][block_text]:
-          used_prefixes |= _write_block(output_check_lines,
+          assert prefix not in output_blocks
+          used_prefixes |= _write_block(output_blocks[prefix],
                                         [(prefix, line) for line in lines],
                                         not_prefix_set,
                                         common_prefix,
                                         prefix_pad)
+
+      for prefix in sorted(output_blocks):
+        output_check_lines.extend(output_blocks[prefix])
 
   unused_prefixes = (prefix_set - not_prefix_set) - used_prefixes
   if unused_prefixes:
