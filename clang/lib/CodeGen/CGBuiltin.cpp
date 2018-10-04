@@ -6576,6 +6576,23 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F, {StoreVal, StoreAddr}, "stxr");
   }
 
+  if (BuiltinID == AArch64::BI__getReg) {
+    APSInt Value;
+    if (!E->getArg(0)->EvaluateAsInt(Value, CGM.getContext()))
+      llvm_unreachable("Sema will ensure that the parameter is constant");
+
+    LLVMContext &Context = CGM.getLLVMContext();
+    std::string Reg = Value == 31 ? "sp" : "x" + Value.toString(10);
+
+    llvm::Metadata *Ops[] = {llvm::MDString::get(Context, Reg)};
+    llvm::MDNode *RegName = llvm::MDNode::get(Context, Ops);
+    llvm::Value *Metadata = llvm::MetadataAsValue::get(Context, RegName);
+
+    llvm::Value *F =
+        CGM.getIntrinsic(llvm::Intrinsic::read_register, {Int64Ty});
+    return Builder.CreateCall(F, Metadata);
+  }
+
   if (BuiltinID == AArch64::BI__builtin_arm_clrex) {
     Function *F = CGM.getIntrinsic(Intrinsic::aarch64_clrex);
     return Builder.CreateCall(F);
