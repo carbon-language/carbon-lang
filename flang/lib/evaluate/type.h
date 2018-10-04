@@ -44,6 +44,14 @@ namespace Fortran::evaluate {
 using common::TypeCategory;
 
 struct DynamicType {
+  bool operator==(const DynamicType &that) const {
+    return category == that.category && kind == that.kind &&
+        derived == that.derived;
+  }
+  std::string Dump() const {
+    return EnumToString(category) + '(' + std::to_string(kind) + ')';
+  }
+
   TypeCategory category;
   int kind{0};
   const semantics::DerivedTypeSpec *derived{nullptr};
@@ -58,9 +66,7 @@ template<TypeCategory CATEGORY, int KIND> struct TypeBase {
   static constexpr DynamicType dynamicType{CATEGORY, KIND};
   static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};
-  static std::string Dump() {
-    return EnumToString(category) + '(' + std::to_string(kind) + ')';
-  }
+  static std::string Dump() { return dynamicType.Dump(); }
 };
 
 template<int KIND>

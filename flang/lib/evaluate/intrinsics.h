@@ -19,6 +19,7 @@
 #include "../common/idioms.h"
 #include "../parser/char-block.h"
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace Fortran::semantics {
@@ -30,11 +31,15 @@ namespace Fortran::evaluate {
 // Placeholder
 ENUM_CLASS(IntrinsicProcedure, IAND, IEOR, IOR, LEN, MAX, MIN)
 
-// Characterize actual arguments
+// Characterize an actual argument to an intrinsic procedure reference
 struct ActualArgumentCharacteristics {
-  parser::CharBlock keyword;
+  std::optional<parser::CharBlock> keyword;
+  bool isBOZ{false};
+  bool isAssumedRank{false};
   DynamicType type;
   int rank;
+  std::optional<int> vectorSize;
+  std::optional<int> intValue;
 };
 
 struct CallCharacteristics {
@@ -44,10 +49,13 @@ struct CallCharacteristics {
 };
 
 struct SpecificIntrinsic {
-  const char *name;
-  bool isElemental;
+  explicit SpecificIntrinsic(const char *n) : name{n} {}
+  SpecificIntrinsic(const char *n, bool isElem, DynamicType dt, int r)
+    : name{n}, isElemental{isElem}, type{dt}, rank{r} {}
+  const char *name;  // not owned
+  bool isElemental{false};
   DynamicType type;
-  int rank;
+  int rank{0};
 };
 
 class IntrinsicTable {
@@ -57,7 +65,7 @@ private:
 public:
   ~IntrinsicTable();
   static IntrinsicTable Configure(const semantics::IntrinsicTypeDefaultKinds &);
-  const SpecificIntrinsic *Probe(const CallCharacteristics &);
+  std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &);
 
 private:
   Implementation *impl_{nullptr};

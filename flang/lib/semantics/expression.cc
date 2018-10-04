@@ -1215,6 +1215,17 @@ void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
 
 namespace Fortran::semantics {
 
+int IntrinsicTypeDefaultKinds::DefaultKind(TypeCategory category) const {
+  switch (category) {
+  case TypeCategory::Integer: return defaultIntegerKind;
+  case TypeCategory::Real:
+  case TypeCategory::Complex: return defaultRealKind;
+  case TypeCategory::Character: return defaultCharacterKind;
+  case TypeCategory::Logical: return defaultLogicalKind;
+  default: CRASH_NO_CASE; return 0;
+  }
+}
+
 evaluate::MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
     const IntrinsicTypeDefaultKinds &defaults, const parser::Expr &expr) {
   return evaluate::ExprAnalyzer{context, defaults}.Analyze(expr);

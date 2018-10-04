@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <optional>
 #include <type_traits>
 
 namespace Fortran::common {
@@ -86,18 +87,14 @@ public:
   }
   constexpr BitSet operator|(BitSet &&that) const { return bits_ | that.bits_; }
 
-  constexpr BitSet operator==(const BitSet &that) const {
+  constexpr bool operator==(const BitSet &that) const {
     return bits_ == that.bits_;
   }
-  constexpr BitSet operator==(BitSet &&that) const {
+  constexpr bool operator==(BitSet &&that) const { return bits_ == that.bits_; }
+  constexpr bool operator!=(const BitSet &that) const {
     return bits_ == that.bits_;
   }
-  constexpr BitSet operator!=(const BitSet &that) const {
-    return bits_ == that.bits_;
-  }
-  constexpr BitSet operator!=(BitSet &&that) const {
-    return bits_ == that.bits_;
-  }
+  constexpr bool operator!=(BitSet &&that) const { return bits_ == that.bits_; }
 
   static constexpr std::size_t size() { return BITS; }
   constexpr bool test(std::size_t x) const {
@@ -137,6 +134,14 @@ public:
   constexpr BitSet &flip(std::size_t x) {
     bits_ ^= static_cast<Word>(1) << x;
     return *this;
+  }
+
+  constexpr std::optional<std::size_t> LeastElement() const {
+    if (bits_ == 0) {
+      return std::nullopt;
+    } else {
+      return {TrailingZeroCount(bits_)};
+    }
   }
 
 private:

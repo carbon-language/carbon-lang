@@ -21,9 +21,11 @@
 // class" feature without loss of convenience.
 
 #include "constexpr-bitset.h"
+#include "idioms.h"
 #include <bitset>
 #include <cstddef>
 #include <initializer_list>
+#include <optional>
 #include <type_traits>
 
 namespace Fortran::common {
@@ -113,16 +115,16 @@ public:
     return result;
   }
 
-  constexpr EnumSet operator==(const EnumSet &that) const {
+  constexpr bool operator==(const EnumSet &that) const {
     return bitset_ == that.bitset_;
   }
-  constexpr EnumSet operator==(EnumSet &&that) const {
+  constexpr bool operator==(EnumSet &&that) const {
     return bitset_ == that.bitset_;
   }
-  constexpr EnumSet operator!=(const EnumSet &that) const {
+  constexpr bool operator!=(const EnumSet &that) const {
     return bitset_ != that.bitset_;
   }
-  constexpr EnumSet operator!=(EnumSet &&that) const {
+  constexpr bool operator!=(EnumSet &&that) const {
     return bitset_ != that.bitset_;
   }
 
@@ -175,6 +177,23 @@ public:
   void emplace(enumerationType &&x) { set(x); }
   void erase(enumerationType x) { reset(x); }
   void erase(enumerationType &&x) { reset(x); }
+
+  constexpr std::optional<enumerationType> LeastElement() const {
+    if (empty()) {
+      return std::nullopt;
+    } else if constexpr (std::is_same_v<bitsetType, common::BitSet<BITS>>) {
+      return {static_cast<enumerationType>(*bitset_.LeastElement())};
+    } else {
+      // std::bitset: just iterate
+      for (std::size_t j{0}; j < BITS; ++j) {
+        auto enumerator{static_cast<enumerationType>(j)};
+        if (bitset_.test(enumerator)) {
+          return {enumerator};
+        }
+      }
+      die("EnumSet::LeastElement(): no bit found in non-empty std::bitset");
+    }
+  }
 
 private:
   bitsetType bitset_;

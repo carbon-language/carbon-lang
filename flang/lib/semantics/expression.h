@@ -31,6 +31,7 @@ struct IntrinsicTypeDefaultKinds {
   int defaultQuadPrecisionKind{evaluate::DefaultDoublePrecision::kind};
   int defaultCharacterKind{evaluate::DefaultCharacter::kind};
   int defaultLogicalKind{evaluate::DefaultLogical::kind};
+  int DefaultKind(TypeCategory) const;
 };
 
 // Semantic analysis of one expression.
