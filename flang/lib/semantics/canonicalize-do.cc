@@ -28,7 +28,6 @@ public:
     : labelInfos_{labelInfos} {}
   template<typename T> bool Pre(T &) { return true; }
   template<typename T> void Post(T &) {}
-  bool Pre(ExecutionPart &executionPart) { return VisitBlock(executionPart.v); }
   bool Pre(Block &block) { return VisitBlock(block); }
   template<typename T> bool Pre(Statement<T> &statement) {
     if (!labelInfos_.empty() && statement.label.has_value() &&
@@ -80,24 +79,16 @@ private:
     block.splice(block.begin(), currentBlock, ++beginLoop, ++endLoop);
     return block;
   }
-  static std::optional<LoopControl> ExtractLoopControl(
-      const Block::iterator &startLoop) {
-    return [](std::optional<LoopControl> &loopControlOpt) {
-      return loopControlOpt.has_value()
-          ? std::optional<LoopControl>{LoopControl{loopControlOpt->u}}
-          : std::optional<LoopControl>{};
-    }(std::get<std::optional<LoopControl>>(
-               std::get<Statement<common::Indirection<LabelDoStmt>>>(
-                   std::get<ExecutableConstruct>(startLoop->u).u)
-                   .statement->t));
-  }
   static Block::iterator MakeCanonicalForm(Block &currentBlock,
       const Block::iterator &startLoop, const Block::iterator &endLoop) {
     std::get<ExecutableConstruct>(startLoop->u).u =
         common::Indirection<DoConstruct>{std::make_tuple(
             Statement<NonLabelDoStmt>{std::optional<Label>{},
-                NonLabelDoStmt{std::make_tuple(
-                    std::optional<Name>{}, ExtractLoopControl(startLoop))}},
+                NonLabelDoStmt{std::make_tuple(std::optional<Name>{},
+                    std::move(std::get<std::optional<LoopControl>>(
+                        std::get<Statement<common::Indirection<LabelDoStmt>>>(
+                            std::get<ExecutableConstruct>(startLoop->u).u)
+                            .statement->t)))}},
             ExtractBlock(currentBlock, startLoop, endLoop),
             Statement<EndDoStmt>{
                 std::optional<Label>{}, EndDoStmt{std::optional<Name>{}}})};
