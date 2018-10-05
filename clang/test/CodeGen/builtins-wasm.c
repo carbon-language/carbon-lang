@@ -276,3 +276,27 @@ int f40(i64x2 x) {
   // WEBASSEMBLY: call i32 @llvm.wasm.alltrue.v2i64(<2 x i64> %x)
   // WEBASSEMBLY: ret
 }
+
+f32x4 f41(f32x4 x) {
+  return __builtin_wasm_abs_f32x4(x);
+  // WEBASSEMBLY: call <4 x float> @llvm.fabs.v4f32(<4 x float> %x)
+  // WEBASSEMBLY: ret
+}
+
+f64x2 f42(f64x2 x) {
+  return __builtin_wasm_abs_f64x2(x);
+  // WEBASSEMBLY: call <2 x double> @llvm.fabs.v2f64(<2 x double> %x)
+  // WEBASSEMBLY: ret
+}
+
+f32x4 f43(f32x4 x) {
+  return __builtin_wasm_sqrt_f32x4(x);
+  // WEBASSEMBLY: call <4 x float> @llvm.sqrt.v4f32(<4 x float> %x)
+  // WEBASSEMBLY: ret
+}
+
+f64x2 f44(f64x2 x) {
+  return __builtin_wasm_sqrt_f64x2(x);
+  // WEBASSEMBLY: call <2 x double> @llvm.sqrt.v2f64(<2 x double> %x)
+  // WEBASSEMBLY: ret
+}

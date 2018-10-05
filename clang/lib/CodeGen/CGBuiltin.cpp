@@ -12565,6 +12565,18 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
     Value *Callee = CGM.getIntrinsic(IntNo, Vec->getType());
     return Builder.CreateCall(Callee, {Vec});
   }
+  case WebAssembly::BI__builtin_wasm_abs_f32x4:
+  case WebAssembly::BI__builtin_wasm_abs_f64x2: {
+    Value *Vec = EmitScalarExpr(E->getArg(0));
+    Value *Callee = CGM.getIntrinsic(Intrinsic::fabs, Vec->getType());
+    return Builder.CreateCall(Callee, {Vec});
+  }
+  case WebAssembly::BI__builtin_wasm_sqrt_f32x4:
+  case WebAssembly::BI__builtin_wasm_sqrt_f64x2: {
+    Value *Vec = EmitScalarExpr(E->getArg(0));
+    Value *Callee = CGM.getIntrinsic(Intrinsic::sqrt, Vec->getType());
+    return Builder.CreateCall(Callee, {Vec});
+  }
 
   default:
     return nullptr;

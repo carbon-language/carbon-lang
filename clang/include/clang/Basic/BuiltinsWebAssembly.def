@@ -75,4 +75,10 @@ BUILTIN(__builtin_wasm_all_true_i16x8, "iV8s", "nc")
 BUILTIN(__builtin_wasm_all_true_i32x4, "iV4i", "nc")
 BUILTIN(__builtin_wasm_all_true_i64x2, "iV2LLi", "nc")
 
+BUILTIN(__builtin_wasm_abs_f32x4, "V4fV4f", "nc")
+BUILTIN(__builtin_wasm_abs_f64x2, "V2dV2d", "nc")
+
+BUILTIN(__builtin_wasm_sqrt_f32x4, "V4fV4f", "nc")
+BUILTIN(__builtin_wasm_sqrt_f64x2, "V2dV2d", "nc")
+
 #undef BUILTIN
