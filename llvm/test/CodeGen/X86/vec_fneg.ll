@@ -102,16 +102,12 @@ define <2 x float> @fneg_bitcast(i64 %i) nounwind {
 define <4 x float> @fneg_undef_elts_v4f32(<4 x float> %x) {
 ; X32-SSE-LABEL: fneg_undef_elts_v4f32:
 ; X32-SSE:       # %bb.0:
-; X32-SSE-NEXT:    movaps {{.*#+}} xmm1 = <-0,u,u,-0>
-; X32-SSE-NEXT:    subps %xmm0, %xmm1
-; X32-SSE-NEXT:    movaps %xmm1, %xmm0
+; X32-SSE-NEXT:    xorps {{\.LCPI.*}}, %xmm0
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: fneg_undef_elts_v4f32:
 ; X64-SSE:       # %bb.0:
-; X64-SSE-NEXT:    movaps {{.*#+}} xmm1 = <-0,u,u,-0>
-; X64-SSE-NEXT:    subps %xmm0, %xmm1
-; X64-SSE-NEXT:    movaps %xmm1, %xmm0
+; X64-SSE-NEXT:    xorps {{.*}}(%rip), %xmm0
 ; X64-SSE-NEXT:    retq
   %r = fsub <4 x float> <float -0.0, float undef, float undef, float -0.0>, %x
   ret <4 x float> %r
@@ -120,25 +116,13 @@ define <4 x float> @fneg_undef_elts_v4f32(<4 x float> %x) {
 ; This isn't fneg, but similarly check that (X - 0.0) is simplified.
 
 define <4 x float> @fsub0_undef_elts_v4f32(<4 x float> %x) {
-; X32-SSE1-LABEL: fsub0_undef_elts_v4f32:
-; X32-SSE1:       # %bb.0:
-; X32-SSE1-NEXT:    retl
+; X32-SSE-LABEL: fsub0_undef_elts_v4f32:
+; X32-SSE:       # %bb.0:
+; X32-SSE-NEXT:    retl
 ;
-; X32-SSE2-LABEL: fsub0_undef_elts_v4f32:
-; X32-SSE2:       # %bb.0:
-; X32-SSE2-NEXT:    xorps %xmm1, %xmm1
-; X32-SSE2-NEXT:    subps %xmm1, %xmm0
-; X32-SSE2-NEXT:    retl
-;
-; X64-SSE1-LABEL: fsub0_undef_elts_v4f32:
-; X64-SSE1:       # %bb.0:
-; X64-SSE1-NEXT:    retq
-;
-; X64-SSE2-LABEL: fsub0_undef_elts_v4f32:
-; X64-SSE2:       # %bb.0:
-; X64-SSE2-NEXT:    xorps %xmm1, %xmm1
-; X64-SSE2-NEXT:    subps %xmm1, %xmm0
-; X64-SSE2-NEXT:    retq
+; X64-SSE-LABEL: fsub0_undef_elts_v4f32:
+; X64-SSE:       # %bb.0:
+; X64-SSE-NEXT:    retq
   %r = fsub <4 x float> %x, <float 0.0, float undef, float 0.0, float undef>
   ret <4 x float> %r
 }
