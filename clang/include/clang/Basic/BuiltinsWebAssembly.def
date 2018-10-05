@@ -66,4 +66,13 @@ BUILTIN(__builtin_wasm_sub_saturate_u_i8x16, "V16cV16cV16c", "nc")
 BUILTIN(__builtin_wasm_sub_saturate_s_i16x8, "V8sV8sV8s", "nc")
 BUILTIN(__builtin_wasm_sub_saturate_u_i16x8, "V8sV8sV8s", "nc")
 
+BUILTIN(__builtin_wasm_any_true_i8x16, "iV16c", "nc")
+BUILTIN(__builtin_wasm_any_true_i16x8, "iV8s", "nc")
+BUILTIN(__builtin_wasm_any_true_i32x4, "iV4i", "nc")
+BUILTIN(__builtin_wasm_any_true_i64x2, "iV2LLi", "nc")
+BUILTIN(__builtin_wasm_all_true_i8x16, "iV16c", "nc")
+BUILTIN(__builtin_wasm_all_true_i16x8, "iV8s", "nc")
+BUILTIN(__builtin_wasm_all_true_i32x4, "iV4i", "nc")
+BUILTIN(__builtin_wasm_all_true_i64x2, "iV2LLi", "nc")
+
 #undef BUILTIN

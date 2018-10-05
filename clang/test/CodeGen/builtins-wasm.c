@@ -228,3 +228,51 @@ i16x8 f32(i16x8 x, i16x8 y) {
   // WEBASSEMBLY-SAME: <8 x i16> %x, <8 x i16> %y)
   // WEBASSEMBLY-NEXT: ret
 }
+
+int f33(i8x16 x) {
+  return __builtin_wasm_any_true_i8x16(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.anytrue.v16i8(<16 x i8> %x)
+  // WEBASSEMBLY: ret
+}
+
+int f34(i16x8 x) {
+  return __builtin_wasm_any_true_i16x8(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.anytrue.v8i16(<8 x i16> %x)
+  // WEBASSEMBLY: ret
+}
+
+int f35(i32x4 x) {
+  return __builtin_wasm_any_true_i32x4(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.anytrue.v4i32(<4 x i32> %x)
+  // WEBASSEMBLY: ret
+}
+
+int f36(i64x2 x) {
+  return __builtin_wasm_any_true_i64x2(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.anytrue.v2i64(<2 x i64> %x)
+  // WEBASSEMBLY: ret
+}
+
+int f37(i8x16 x) {
+  return __builtin_wasm_all_true_i8x16(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.alltrue.v16i8(<16 x i8> %x)
+  // WEBASSEMBLY: ret
+}
+
+int f38(i16x8 x) {
+  return __builtin_wasm_all_true_i16x8(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.alltrue.v8i16(<8 x i16> %x)
+  // WEBASSEMBLY: ret
+}
+
+int f39(i32x4 x) {
+  return __builtin_wasm_all_true_i32x4(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.alltrue.v4i32(<4 x i32> %x)
+  // WEBASSEMBLY: ret
+}
+
+int f40(i64x2 x) {
+  return __builtin_wasm_all_true_i64x2(x);
+  // WEBASSEMBLY: call i32 @llvm.wasm.alltrue.v2i64(<2 x i64> %x)
+  // WEBASSEMBLY: ret
+}

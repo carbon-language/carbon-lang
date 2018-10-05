@@ -12536,6 +12536,35 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
     Value *Callee = CGM.getIntrinsic(IntNo, ConvertType(E->getType()));
     return Builder.CreateCall(Callee, {LHS, RHS});
   }
+  case WebAssembly::BI__builtin_wasm_any_true_i8x16:
+  case WebAssembly::BI__builtin_wasm_any_true_i16x8:
+  case WebAssembly::BI__builtin_wasm_any_true_i32x4:
+  case WebAssembly::BI__builtin_wasm_any_true_i64x2:
+  case WebAssembly::BI__builtin_wasm_all_true_i8x16:
+  case WebAssembly::BI__builtin_wasm_all_true_i16x8:
+  case WebAssembly::BI__builtin_wasm_all_true_i32x4:
+  case WebAssembly::BI__builtin_wasm_all_true_i64x2: {
+    unsigned IntNo;
+    switch (BuiltinID) {
+    case WebAssembly::BI__builtin_wasm_any_true_i8x16:
+    case WebAssembly::BI__builtin_wasm_any_true_i16x8:
+    case WebAssembly::BI__builtin_wasm_any_true_i32x4:
+    case WebAssembly::BI__builtin_wasm_any_true_i64x2:
+      IntNo = Intrinsic::wasm_anytrue;
+      break;
+    case WebAssembly::BI__builtin_wasm_all_true_i8x16:
+    case WebAssembly::BI__builtin_wasm_all_true_i16x8:
+    case WebAssembly::BI__builtin_wasm_all_true_i32x4:
+    case WebAssembly::BI__builtin_wasm_all_true_i64x2:
+      IntNo = Intrinsic::wasm_alltrue;
+      break;
+    default:
+      llvm_unreachable("unexpected builtin ID");
+    }
+    Value *Vec = EmitScalarExpr(E->getArg(0));
+    Value *Callee = CGM.getIntrinsic(IntNo, Vec->getType());
+    return Builder.CreateCall(Callee, {Vec});
+  }
 
   default:
     return nullptr;
