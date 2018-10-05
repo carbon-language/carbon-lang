@@ -32,6 +32,8 @@ struct GlobalStats {
   /// Total number of PC range bytes in each variable's enclosing scope,
   /// starting from the first definition of the variable.
   unsigned ScopeBytesFromFirstDefinition = 0;
+  /// Total number of call site entries (DW_TAG_call_site).
+  unsigned CallSiteEntries = 0;
 };
 
 /// Extract the low pc from a Die.
@@ -56,6 +58,11 @@ static void collectStatsForDie(DWARFDie Die, std::string FnPrefix,
   bool HasLoc = false;
   uint64_t BytesCovered = 0;
   uint64_t OffsetToFirstDefinition = 0;
+
+  if (Die.getTag() == dwarf::DW_TAG_call_site) {
+    GlobalStats.CallSiteEntries++;
+    return;
+  }
 
   if (Die.getTag() != dwarf::DW_TAG_formal_parameter &&
       Die.getTag() != dwarf::DW_TAG_variable &&
@@ -260,6 +267,7 @@ bool collectStatsForObjectFile(ObjectFile &Obj, DWARFContext &DICtx,
   printDatum(OS, "unique source variables", VarUnique);
   printDatum(OS, "source variables", VarTotal);
   printDatum(OS, "variables with location", VarWithLoc);
+  printDatum(OS, "call site entries", GlobalStats.CallSiteEntries);
   printDatum(OS, "scope bytes total",
              GlobalStats.ScopeBytesFromFirstDefinition);
   printDatum(OS, "scope bytes covered", GlobalStats.ScopeBytesCovered);
