@@ -43,7 +43,7 @@ if.end:                                           ; preds = %if.then, %entry
 ; CHECK:      .loc 1 7 7 prologue_end
 ; CHECK-NOT:  .loc
 ; CHECK:      # %bb.1
-; CHECK-NEXT: .file 2 "/tests/include.h"
+; CHECK-NEXT: .file 2 "/tests{{[/\]+}}include.h"
 ; CHECK-NEXT: .loc 2 20 5
 ; CHECK-NOT:  .loc
 ; CHECK:      .LBB0_2:
