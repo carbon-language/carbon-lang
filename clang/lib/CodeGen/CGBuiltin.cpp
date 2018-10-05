@@ -12444,6 +12444,36 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
     Value *Callee = CGM.getIntrinsic(Intrinsic::wasm_atomic_notify);
     return Builder.CreateCall(Callee, {Addr, Count});
   }
+  case WebAssembly::BI__builtin_wasm_extract_lane_s_i8x16:
+  case WebAssembly::BI__builtin_wasm_extract_lane_u_i8x16:
+  case WebAssembly::BI__builtin_wasm_extract_lane_s_i16x8:
+  case WebAssembly::BI__builtin_wasm_extract_lane_u_i16x8:
+  case WebAssembly::BI__builtin_wasm_extract_lane_i32x4:
+  case WebAssembly::BI__builtin_wasm_extract_lane_i64x2:
+  case WebAssembly::BI__builtin_wasm_extract_lane_f32x4:
+  case WebAssembly::BI__builtin_wasm_extract_lane_f64x2: {
+    llvm::APSInt LaneConst;
+    if (!E->getArg(1)->isIntegerConstantExpr(LaneConst, getContext()))
+      llvm_unreachable("Constant arg isn't actually constant?");
+    Value *Vec = EmitScalarExpr(E->getArg(0));
+    Value *Lane = llvm::ConstantInt::get(getLLVMContext(), LaneConst);
+    Value *Extract = Builder.CreateExtractElement(Vec, Lane);
+    switch (BuiltinID) {
+    case WebAssembly::BI__builtin_wasm_extract_lane_s_i8x16:
+    case WebAssembly::BI__builtin_wasm_extract_lane_s_i16x8:
+      return Builder.CreateSExt(Extract, ConvertType(E->getType()));
+    case WebAssembly::BI__builtin_wasm_extract_lane_u_i8x16:
+    case WebAssembly::BI__builtin_wasm_extract_lane_u_i16x8:
+      return Builder.CreateZExt(Extract, ConvertType(E->getType()));
+    case WebAssembly::BI__builtin_wasm_extract_lane_i32x4:
+    case WebAssembly::BI__builtin_wasm_extract_lane_i64x2:
+    case WebAssembly::BI__builtin_wasm_extract_lane_f32x4:
+    case WebAssembly::BI__builtin_wasm_extract_lane_f64x2:
+      return Extract;
+    default:
+      llvm_unreachable("unexpected builtin ID");
+    }
+  }
 
   default:
     return nullptr;

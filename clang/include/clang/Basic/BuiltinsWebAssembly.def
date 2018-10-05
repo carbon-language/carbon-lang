@@ -39,4 +39,14 @@ BUILTIN(__builtin_wasm_atomic_wait_i32, "ii*iLLi", "n")
 BUILTIN(__builtin_wasm_atomic_wait_i64, "iLLi*LLiLLi", "n")
 BUILTIN(__builtin_wasm_atomic_notify, "Uii*i", "n")
 
+// SIMD builtins
+BUILTIN(__builtin_wasm_extract_lane_s_i8x16, "iV16cIi", "nc")
+BUILTIN(__builtin_wasm_extract_lane_u_i8x16, "iV16cIi", "nc")
+BUILTIN(__builtin_wasm_extract_lane_s_i16x8, "iV8sIi", "nc")
+BUILTIN(__builtin_wasm_extract_lane_u_i16x8, "iV8sIi", "nc")
+BUILTIN(__builtin_wasm_extract_lane_i32x4, "iV4iIi", "nc")
+BUILTIN(__builtin_wasm_extract_lane_i64x2, "LLiV2LLiIi", "nc")
+BUILTIN(__builtin_wasm_extract_lane_f32x4, "fV4fIi", "nc")
+BUILTIN(__builtin_wasm_extract_lane_f64x2, "dV2dIi", "nc")
+
 #undef BUILTIN
