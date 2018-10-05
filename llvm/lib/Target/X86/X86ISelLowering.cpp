@@ -6414,7 +6414,8 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
         Mask[i + InsertIdx] = (NumElts * (1 + InputIdx)) + ExtractIdx + M;
       }
     }
-    return true;
+    // TODO - Add support for more than 1 subinput.
+    return Ops.size() <= 2;
   }
   case ISD::SCALAR_TO_VECTOR: {
     // Match against a scalar_to_vector of an extract from a vector,
