@@ -18,6 +18,7 @@
 #include "type.h"
 #include "../common/idioms.h"
 #include "../parser/char-block.h"
+#include "../parser/message.h"
 #include <memory>
 #include <optional>
 #include <vector>
@@ -66,7 +67,8 @@ private:
 public:
   ~IntrinsicTable();
   static IntrinsicTable Configure(const semantics::IntrinsicTypeDefaultKinds &);
-  std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &) const;
+  std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &,
+      parser::ContextualMessages *messages = nullptr) const;
 
 private:
   Implementation *impl_{nullptr};  // owning pointer

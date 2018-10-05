@@ -924,9 +924,11 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
       arguments.emplace_back();
     }
   }
-  // TODO: validate arguments against interface
+
+  // TODO: Look up user function, try to map generic to specific procedure
+  // TODO: validate arguments against interface, discarding messages if
+  // an intrinsic function is a better match
   // TODO: distinguish applications of elemental functions
-  // TODO: map generic to specific procedure
 
   if (proc.has_value()) {
     std::optional<DynamicType> dyType;
