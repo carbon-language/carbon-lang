@@ -172,3 +172,59 @@ f64x2 f24(f64x2 v, double x) {
   // WEBASSEMBLY: insertelement <2 x double> %v, double %x, i32 1
   // WEBASSEMBLY-NEXT: ret
 }
+
+i8x16 f25(i8x16 x, i8x16 y) {
+  return __builtin_wasm_add_saturate_s_i8x16(x, y);
+  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.add.saturate.signed.v16i8(
+  // WEBASSEMBLY-SAME: <16 x i8> %x, <16 x i8> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i8x16 f26(i8x16 x, i8x16 y) {
+  return __builtin_wasm_add_saturate_u_i8x16(x, y);
+  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.add.saturate.unsigned.v16i8(
+  // WEBASSEMBLY-SAME: <16 x i8> %x, <16 x i8> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i16x8 f27(i16x8 x, i16x8 y) {
+  return __builtin_wasm_add_saturate_s_i16x8(x, y);
+  // WEBASSEMBLY: call <8 x i16> @llvm.wasm.add.saturate.signed.v8i16(
+  // WEBASSEMBLY-SAME: <8 x i16> %x, <8 x i16> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i16x8 f28(i16x8 x, i16x8 y) {
+  return __builtin_wasm_add_saturate_u_i16x8(x, y);
+  // WEBASSEMBLY: call <8 x i16> @llvm.wasm.add.saturate.unsigned.v8i16(
+  // WEBASSEMBLY-SAME: <8 x i16> %x, <8 x i16> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i8x16 f29(i8x16 x, i8x16 y) {
+  return __builtin_wasm_sub_saturate_s_i8x16(x, y);
+  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.sub.saturate.signed.v16i8(
+  // WEBASSEMBLY-SAME: <16 x i8> %x, <16 x i8> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i8x16 f30(i8x16 x, i8x16 y) {
+  return __builtin_wasm_sub_saturate_u_i8x16(x, y);
+  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.sub.saturate.unsigned.v16i8(
+  // WEBASSEMBLY-SAME: <16 x i8> %x, <16 x i8> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i16x8 f31(i16x8 x, i16x8 y) {
+  return __builtin_wasm_sub_saturate_s_i16x8(x, y);
+  // WEBASSEMBLY: call <8 x i16> @llvm.wasm.sub.saturate.signed.v8i16(
+  // WEBASSEMBLY-SAME: <8 x i16> %x, <8 x i16> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i16x8 f32(i16x8 x, i16x8 y) {
+  return __builtin_wasm_sub_saturate_u_i16x8(x, y);
+  // WEBASSEMBLY: call <8 x i16> @llvm.wasm.sub.saturate.unsigned.v8i16(
+  // WEBASSEMBLY-SAME: <8 x i16> %x, <8 x i16> %y)
+  // WEBASSEMBLY-NEXT: ret
+}

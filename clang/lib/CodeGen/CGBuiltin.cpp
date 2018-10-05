@@ -12502,6 +12502,40 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
       llvm_unreachable("unexpected builtin ID");
     }
   }
+  case WebAssembly::BI__builtin_wasm_add_saturate_s_i8x16:
+  case WebAssembly::BI__builtin_wasm_add_saturate_u_i8x16:
+  case WebAssembly::BI__builtin_wasm_add_saturate_s_i16x8:
+  case WebAssembly::BI__builtin_wasm_add_saturate_u_i16x8:
+  case WebAssembly::BI__builtin_wasm_sub_saturate_s_i8x16:
+  case WebAssembly::BI__builtin_wasm_sub_saturate_u_i8x16:
+  case WebAssembly::BI__builtin_wasm_sub_saturate_s_i16x8:
+  case WebAssembly::BI__builtin_wasm_sub_saturate_u_i16x8: {
+    unsigned IntNo;
+    switch (BuiltinID) {
+    case WebAssembly::BI__builtin_wasm_add_saturate_s_i8x16:
+    case WebAssembly::BI__builtin_wasm_add_saturate_s_i16x8:
+      IntNo = Intrinsic::wasm_add_saturate_signed;
+      break;
+    case WebAssembly::BI__builtin_wasm_add_saturate_u_i8x16:
+    case WebAssembly::BI__builtin_wasm_add_saturate_u_i16x8:
+      IntNo = Intrinsic::wasm_add_saturate_unsigned;
+      break;
+    case WebAssembly::BI__builtin_wasm_sub_saturate_s_i8x16:
+    case WebAssembly::BI__builtin_wasm_sub_saturate_s_i16x8:
+      IntNo = Intrinsic::wasm_sub_saturate_signed;
+      break;
+    case WebAssembly::BI__builtin_wasm_sub_saturate_u_i8x16:
+    case WebAssembly::BI__builtin_wasm_sub_saturate_u_i16x8:
+      IntNo = Intrinsic::wasm_sub_saturate_unsigned;
+      break;
+    default:
+      llvm_unreachable("unexpected builtin ID");
+    }
+    Value *LHS = EmitScalarExpr(E->getArg(0));
+    Value *RHS = EmitScalarExpr(E->getArg(1));
+    Value *Callee = CGM.getIntrinsic(IntNo, ConvertType(E->getType()));
+    return Builder.CreateCall(Callee, {LHS, RHS});
+  }
 
   default:
     return nullptr;

@@ -56,4 +56,14 @@ BUILTIN(__builtin_wasm_replace_lane_i64x2, "V2LLiV2LLiIiLLi", "nc")
 BUILTIN(__builtin_wasm_replace_lane_f32x4, "V4fV4fIif", "nc")
 BUILTIN(__builtin_wasm_replace_lane_f64x2, "V2dV2dIid", "nc")
 
+BUILTIN(__builtin_wasm_add_saturate_s_i8x16, "V16cV16cV16c", "nc")
+BUILTIN(__builtin_wasm_add_saturate_u_i8x16, "V16cV16cV16c", "nc")
+BUILTIN(__builtin_wasm_add_saturate_s_i16x8, "V8sV8sV8s", "nc")
+BUILTIN(__builtin_wasm_add_saturate_u_i16x8, "V8sV8sV8s", "nc")
+
+BUILTIN(__builtin_wasm_sub_saturate_s_i8x16, "V16cV16cV16c", "nc")
+BUILTIN(__builtin_wasm_sub_saturate_u_i8x16, "V16cV16cV16c", "nc")
+BUILTIN(__builtin_wasm_sub_saturate_s_i16x8, "V8sV8sV8s", "nc")
+BUILTIN(__builtin_wasm_sub_saturate_u_i16x8, "V8sV8sV8s", "nc")
+
 #undef BUILTIN
