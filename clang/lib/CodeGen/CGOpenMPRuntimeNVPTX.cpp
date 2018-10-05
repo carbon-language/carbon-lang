@@ -1197,8 +1197,11 @@ void CGOpenMPRuntimeNVPTX::emitSPMDKernel(const OMPExecutableDirective &D,
         : RT(RT), EST(EST), D(D) {}
     void Enter(CodeGenFunction &CGF) override {
       RT.emitSPMDEntryHeader(CGF, EST, D);
+      // Skip target region initialization.
+      RT.setLocThreadIdInsertPt(CGF, /*AtCurrentPoint=*/true);
     }
     void Exit(CodeGenFunction &CGF) override {
+      RT.clearLocThreadIdInsertPt(CGF);
       RT.emitSPMDEntryFooter(CGF, EST);
     }
   } Action(*this, EST, D);
