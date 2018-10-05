@@ -250,7 +250,7 @@ bool collectStatsForObjectFile(ObjectFile &Obj, DWARFContext &DICtx,
 
   // Print summary.
   OS.SetBufferSize(1024);
-  OS << "{\"version\":\"" << Version << '"';
+  OS << "{\"version\":" << Version;
   LLVM_DEBUG(llvm::dbgs() << "Variable location quality metrics\n";
              llvm::dbgs() << "---------------------------------\n");
   printDatum(OS, "file", Filename.str());
