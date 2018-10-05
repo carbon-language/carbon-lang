@@ -134,3 +134,41 @@ double f18(f64x2 v) {
   // WEBASSEMBLY: extractelement <2 x double> %v, i32 1
   // WEBASSEMBLY-NEXT: ret
 }
+
+i8x16 f19(i8x16 v, int x) {
+  return __builtin_wasm_replace_lane_i8x16(v, 13, x);
+  // WEBASSEMBLY: trunc i32 %x to i8
+  // WEBASSEMBLY-NEXT: insertelement <16 x i8> %v, i8 %{{.*}}, i32 13
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i16x8 f20(i16x8 v, int x) {
+  return __builtin_wasm_replace_lane_i16x8(v, 7, x);
+  // WEBASSEMBLY: trunc i32 %x to i16
+  // WEBASSEMBLY-NEXT: insertelement <8 x i16> %v, i16 %{{.*}}, i32 7
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i32x4 f21(i32x4 v, int x) {
+  return __builtin_wasm_replace_lane_i32x4(v, 3, x);
+  // WEBASSEMBLY: insertelement <4 x i32> %v, i32 %x, i32 3
+  // WEBASSEMBLY-NEXT: ret
+}
+
+i64x2 f22(i64x2 v, long long x) {
+  return __builtin_wasm_replace_lane_i64x2(v, 1, x);
+  // WEBASSEMBLY: insertelement <2 x i64> %v, i64 %x, i32 1
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f32x4 f23(f32x4 v, float x) {
+  return __builtin_wasm_replace_lane_f32x4(v, 3, x);
+  // WEBASSEMBLY: insertelement <4 x float> %v, float %x, i32 3
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f64x2 f24(f64x2 v, double x) {
+  return __builtin_wasm_replace_lane_f64x2(v, 1, x);
+  // WEBASSEMBLY: insertelement <2 x double> %v, double %x, i32 1
+  // WEBASSEMBLY-NEXT: ret
+}

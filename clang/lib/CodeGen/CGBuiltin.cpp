@@ -12474,6 +12474,34 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
       llvm_unreachable("unexpected builtin ID");
     }
   }
+  case WebAssembly::BI__builtin_wasm_replace_lane_i8x16:
+  case WebAssembly::BI__builtin_wasm_replace_lane_i16x8:
+  case WebAssembly::BI__builtin_wasm_replace_lane_i32x4:
+  case WebAssembly::BI__builtin_wasm_replace_lane_i64x2:
+  case WebAssembly::BI__builtin_wasm_replace_lane_f32x4:
+  case WebAssembly::BI__builtin_wasm_replace_lane_f64x2: {
+    llvm::APSInt LaneConst;
+    if (!E->getArg(1)->isIntegerConstantExpr(LaneConst, getContext()))
+      llvm_unreachable("Constant arg isn't actually constant?");
+    Value *Vec = EmitScalarExpr(E->getArg(0));
+    Value *Lane = llvm::ConstantInt::get(getLLVMContext(), LaneConst);
+    Value *Val = EmitScalarExpr(E->getArg(2));
+    switch (BuiltinID) {
+    case WebAssembly::BI__builtin_wasm_replace_lane_i8x16:
+    case WebAssembly::BI__builtin_wasm_replace_lane_i16x8: {
+      llvm::Type *ElemType = ConvertType(E->getType())->getVectorElementType();
+      Value *Trunc = Builder.CreateTrunc(Val, ElemType);
+      return Builder.CreateInsertElement(Vec, Trunc, Lane);
+    }
+    case WebAssembly::BI__builtin_wasm_replace_lane_i32x4:
+    case WebAssembly::BI__builtin_wasm_replace_lane_i64x2:
+    case WebAssembly::BI__builtin_wasm_replace_lane_f32x4:
+    case WebAssembly::BI__builtin_wasm_replace_lane_f64x2:
+      return Builder.CreateInsertElement(Vec, Val, Lane);
+    default:
+      llvm_unreachable("unexpected builtin ID");
+    }
+  }
 
   default:
     return nullptr;
