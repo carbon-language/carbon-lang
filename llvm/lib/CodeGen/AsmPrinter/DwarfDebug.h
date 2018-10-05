@@ -719,6 +719,9 @@ public:
   bool tuneForLLDB() const { return DebuggerTuning == DebuggerKind::LLDB; }
   bool tuneForSCE() const { return DebuggerTuning == DebuggerKind::SCE; }
   /// @}
+
+private:
+  void emitDebugLoc(const DebugLoc &DL);
 };
 
 } // end namespace llvm
