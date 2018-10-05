@@ -807,10 +807,35 @@ struct IntrinsicTable::Implementation {
     }
   }
 
+  std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &) const;
+
   semantics::IntrinsicTypeDefaultKinds defaults;
   std::multimap<std::string, const IntrinsicInterface *> genericFuncs;
   std::multimap<std::string, const SpecificIntrinsicInterface *> specificFuncs;
 };
+
+std::optional<SpecificIntrinsic> IntrinsicTable::Implementation::Probe(
+    const CallCharacteristics &call) const {
+  if (call.isSubroutineCall) {
+    return std::nullopt;  // TODO
+  }
+  // Probe the specific intrinsic functions first.
+  std::string name{call.name.ToString()};
+  auto specificRange{specificFuncs.equal_range(name)};
+  for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
+    if (auto specific{iter->second->Match(call, defaults)}) {
+      specific->name = iter->second->generic;
+      return specific;
+    }
+  }
+  auto genericRange{specificFuncs.equal_range(name)};
+  for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
+    if (auto specific{iter->second->Match(call, defaults)}) {
+      return specific;
+    }
+  }
+  return std::nullopt;
+}
 
 IntrinsicTable::~IntrinsicTable() {
   delete impl_;
@@ -825,10 +850,8 @@ IntrinsicTable IntrinsicTable::Configure(
 }
 
 std::optional<SpecificIntrinsic> IntrinsicTable::Probe(
-    const CallCharacteristics &call) {
+    const CallCharacteristics &call) const {
   CHECK(impl_ != nullptr || !"IntrinsicTable: not configured");
-  if (call.isSubroutineCall) {
-    return std::nullopt;  // TODO
-  }
+  return impl_->Probe(call);
 }
 }  // namespace Fortran::evaluate

@@ -49,6 +49,7 @@ struct CallCharacteristics {
 };
 
 struct SpecificIntrinsic {
+  //  SpecificIntrinsic(SpecificIntrinsic &&) = default;
   explicit SpecificIntrinsic(const char *n) : name{n} {}
   SpecificIntrinsic(const char *n, bool isElem, DynamicType dt, int r)
     : name{n}, isElemental{isElem}, type{dt}, rank{r} {}
@@ -65,10 +66,10 @@ private:
 public:
   ~IntrinsicTable();
   static IntrinsicTable Configure(const semantics::IntrinsicTypeDefaultKinds &);
-  std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &);
+  std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &) const;
 
 private:
-  Implementation *impl_{nullptr};
+  Implementation *impl_{nullptr};  // owning pointer
 };
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_INTRINSICS_H_
