@@ -40317,10 +40317,14 @@ static SDValue combinePMULDQ(SDNode *N, SelectionDAG &DAG,
   APInt DemandedMask(APInt::getLowBitsSet(64, 32));
 
   // PMULQDQ/PMULUDQ only uses lower 32 bits from each vector element.
-  if (TLI.SimplifyDemandedBits(LHS, DemandedMask, DCI))
+  if (TLI.SimplifyDemandedBits(LHS, DemandedMask, DCI)) {
+    DCI.AddToWorklist(N);
     return SDValue(N, 0);
-  if (TLI.SimplifyDemandedBits(RHS, DemandedMask, DCI))
+  }
+  if (TLI.SimplifyDemandedBits(RHS, DemandedMask, DCI)) {
+    DCI.AddToWorklist(N);
     return SDValue(N, 0);
+  }
 
   return SDValue();
 }
