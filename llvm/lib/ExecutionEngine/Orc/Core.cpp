@@ -489,7 +489,7 @@ void AbsoluteSymbolsMaterializationUnit::materialize(
 }
 
 void AbsoluteSymbolsMaterializationUnit::discard(const JITDylib &JD,
-                                                 SymbolStringPtr Name) {
+                                                 const SymbolStringPtr &Name) {
   assert(Symbols.count(Name) && "Symbol is not part of this MU");
   Symbols.erase(Name);
 }
@@ -637,7 +637,7 @@ void ReExportsMaterializationUnit::materialize(
 }
 
 void ReExportsMaterializationUnit::discard(const JITDylib &JD,
-                                           SymbolStringPtr Name) {
+                                           const SymbolStringPtr &Name) {
   assert(Aliases.count(Name) &&
          "Symbol not covered by this MaterializationUnit");
   Aliases.erase(Name);

@@ -255,7 +255,7 @@ public:
 
   /// Called by JITDylibs to notify MaterializationUnits that the given symbol
   /// has been overridden.
-  void doDiscard(const JITDylib &JD, SymbolStringPtr Name) {
+  void doDiscard(const JITDylib &JD, const SymbolStringPtr &Name) {
     SymbolFlags.erase(Name);
     discard(JD, std::move(Name));
   }
@@ -275,7 +275,7 @@ private:
   ///        from the source (e.g. if the source is an LLVM IR Module and the
   ///        symbol is a function, delete the function body or mark it available
   ///        externally).
-  virtual void discard(const JITDylib &JD, SymbolStringPtr Name) = 0;
+  virtual void discard(const JITDylib &JD, const SymbolStringPtr &Name) = 0;
 };
 
 using MaterializationUnitList =
@@ -293,7 +293,7 @@ public:
 
 private:
   void materialize(MaterializationResponsibility R) override;
-  void discard(const JITDylib &JD, SymbolStringPtr Name) override;
+  void discard(const JITDylib &JD, const SymbolStringPtr &Name) override;
   static SymbolFlagsMap extractFlags(const SymbolMap &Symbols);
 
   SymbolMap Symbols;
@@ -344,7 +344,7 @@ public:
 
 private:
   void materialize(MaterializationResponsibility R) override;
-  void discard(const JITDylib &JD, SymbolStringPtr Name) override;
+  void discard(const JITDylib &JD, const SymbolStringPtr &Name) override;
   static SymbolFlagsMap extractFlags(const SymbolAliasMap &Aliases);
 
   JITDylib *SourceJD = nullptr;
