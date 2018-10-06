@@ -6393,7 +6393,8 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
       return false;
     SmallVector<int, 64> SubMask;
     SmallVector<SDValue, 2> SubInputs;
-    if (!resolveTargetShuffleInputs(Sub, SubInputs, SubMask, DAG))
+    if (!resolveTargetShuffleInputs(Sub, SubInputs, SubMask, DAG) ||
+        SubMask.size() != NumSubElts)
       return false;
     Ops.push_back(Src);
     for (SDValue &SubInput : SubInputs) {
