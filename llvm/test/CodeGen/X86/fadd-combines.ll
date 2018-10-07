@@ -20,8 +20,6 @@ define <4 x float> @fadd_zero_4f32(<4 x float> %x) #0 {
 define <4 x float> @fadd_zero_4f32_undef(<4 x float> %x) {
 ; CHECK-LABEL: fadd_zero_4f32_undef:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorps %xmm1, %xmm1
-; CHECK-NEXT:    addps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %y = fadd nsz <4 x float> %x, <float 0.0, float undef, float 0.0, float undef>
   ret <4 x float> %y

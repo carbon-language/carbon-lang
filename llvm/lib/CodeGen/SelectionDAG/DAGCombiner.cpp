@@ -10865,7 +10865,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     return DAG.getNode(ISD::FADD, DL, VT, N1, N0, Flags);
 
   // N0 + -0.0 --> N0 (also allowed with +0.0 and fast-math)
-  ConstantFPSDNode *N1C = isConstOrConstSplatFP(N1);
+  ConstantFPSDNode *N1C = isConstOrConstSplatFP(N1, true);
   if (N1C && N1C->isZero())
     if (N1C->isNegative() || Options.UnsafeFPMath || Flags.hasNoSignedZeros())
       return N0;
