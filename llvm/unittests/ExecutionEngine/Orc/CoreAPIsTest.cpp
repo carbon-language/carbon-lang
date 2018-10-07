@@ -167,6 +167,7 @@ TEST_F(CoreAPIsStandardTest, RemoveSymbolsTest) {
     EXPECT_TRUE(!!Err) << "Expected failure";
     EXPECT_TRUE(Err.isA<SymbolsNotFound>())
         << "Expected a SymbolsNotFound error";
+    consumeError(std::move(Err));
   }
 
   {
@@ -175,6 +176,7 @@ TEST_F(CoreAPIsStandardTest, RemoveSymbolsTest) {
     EXPECT_TRUE(!!Err) << "Expected failure";
     EXPECT_TRUE(Err.isA<SymbolsCouldNotBeRemoved>())
         << "Expected a SymbolsNotFound error";
+    consumeError(std::move(Err));
   }
 
   BazR->resolve({{Baz, BazSym}});
