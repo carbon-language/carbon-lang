@@ -323,8 +323,7 @@ define <4 x float> @fadd_bitcast_fneg_vec(<4 x float> %x, <4 x float> %y) {
 define <4 x float> @fadd_bitcast_fneg_vec_undef_elts(<4 x float> %x, <4 x float> %y) {
 ; CHECK-LABEL: fadd_bitcast_fneg_vec_undef_elts:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorps {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    addps %xmm1, %xmm0
+; CHECK-NEXT:    subps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %bc1 = bitcast <4 x float> %y to <4 x i32>
   %xor = xor <4 x i32> %bc1, <i32 2147483648, i32 2147483648, i32 undef, i32 2147483648>
@@ -345,11 +344,10 @@ define <4 x float> @fsub_bitcast_fneg_vec(<4 x float> %x, <4 x float> %y) {
   ret <4 x float> %fsub
 }
 
-define <4 x float> @fsub_bitcast_fneg_vec_elts(<4 x float> %x, <4 x float> %y) {
-; CHECK-LABEL: fsub_bitcast_fneg_vec_elts:
+define <4 x float> @fsub_bitcast_fneg_vec_undef_elts(<4 x float> %x, <4 x float> %y) {
+; CHECK-LABEL: fsub_bitcast_fneg_vec_undef_elts:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorps {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    subps %xmm1, %xmm0
+; CHECK-NEXT:    addps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %bc1 = bitcast <4 x float> %y to <4 x i32>
   %xor = xor <4 x i32> %bc1, <i32 undef, i32 2147483648, i32 undef, i32 2147483648>
