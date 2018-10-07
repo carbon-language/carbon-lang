@@ -23,8 +23,7 @@ define <4 x float> @fmul_zero_nsz_nnan(<4 x float> %x) nounwind {
 define <4 x float> @fmul_zero_nsz_nnan_undef(<4 x float> %x) nounwind {
 ; CHECK-LABEL: fmul_zero_nsz_nnan_undef:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorps %xmm1, %xmm1
-; CHECK-NEXT:    mulps %xmm1, %xmm0
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %r = fmul nsz nnan <4 x float> %x, <float 0.0, float 0.0, float 0.0, float undef>
   ret <4 x float> %r
@@ -53,7 +52,7 @@ define <4 x float> @fmul2_v4f32(<4 x float> %x) {
 define <4 x float> @fmul2_v4f32_undef(<4 x float> %x) {
 ; CHECK-LABEL: fmul2_v4f32_undef:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    mulps {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    addps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %y = fmul <4 x float> %x, <float undef, float 2.0, float 2.0, float 2.0>
   ret <4 x float> %y
@@ -89,8 +88,7 @@ define <4 x float> @fmul0_v4f32(<4 x float> %x) #0 {
 define <4 x float> @fmul0_v4f32_undef(<4 x float> %x) #0 {
 ; CHECK-LABEL: fmul0_v4f32_undef:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    xorps %xmm1, %xmm1
-; CHECK-NEXT:    mulps %xmm1, %xmm0
+; CHECK-NEXT:    xorps %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %y = fmul <4 x float> %x, <float undef, float 0.0, float undef, float 0.0>
   ret <4 x float> %y
