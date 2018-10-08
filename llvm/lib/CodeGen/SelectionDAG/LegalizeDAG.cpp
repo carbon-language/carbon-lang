@@ -222,10 +222,12 @@ public:
     ReplacedNode(Old.getNode());
   }
 
-  void ReplaceNode(SDNode *Old, const SDValue *New) {
+  void ReplaceNode(SDNode *Old, ArrayRef<SDValue> New) {
+    assert(Old->getNumValues() == New.size() &&
+           "Replacing with a different number of values!");
     LLVM_DEBUG(dbgs() << " ... replacing: "; Old->dump(&DAG));
 
-    DAG.ReplaceAllUsesWith(Old, New);
+    DAG.ReplaceAllUsesWith(Old, New.data());
     for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i) {
       LLVM_DEBUG(dbgs() << (i == 0 ? "     with:      " : "      and:      ");
                  New[i]->dump(&DAG));
@@ -1204,7 +1206,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
         for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
           ResultVals.push_back(Res.getValue(i));
         LLVM_DEBUG(dbgs() << "Successfully custom legalized node\n");
-        ReplaceNode(Node, ResultVals.data());
+        ReplaceNode(Node, ResultVals);
         return;
       }
       LLVM_DEBUG(dbgs() << "Could not custom legalize node\n");
@@ -3959,7 +3961,7 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   }
 
   LLVM_DEBUG(dbgs() << "Successfully expanded node\n");
-  ReplaceNode(Node, Results.data());
+  ReplaceNode(Node, Results);
   return true;
 }
 
@@ -4286,7 +4288,7 @@ void SelectionDAGLegalize::ConvertNodeToLibcall(SDNode *Node) {
   // Replace the original node with the legalized result.
   if (!Results.empty()) {
     LLVM_DEBUG(dbgs() << "Successfully converted node to libcall\n");
-    ReplaceNode(Node, Results.data());
+    ReplaceNode(Node, Results);
   } else
     LLVM_DEBUG(dbgs() << "Could not convert node to libcall\n");
 }
@@ -4741,7 +4743,7 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
   // Replace the original node with the legalized result.
   if (!Results.empty()) {
     LLVM_DEBUG(dbgs() << "Successfully promoted node\n");
-    ReplaceNode(Node, Results.data());
+    ReplaceNode(Node, Results);
   } else
     LLVM_DEBUG(dbgs() << "Could not promote node\n");
 }
