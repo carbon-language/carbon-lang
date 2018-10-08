@@ -2,7 +2,6 @@
 ; RUN:    -global-name="operator delete" \
 ; RUN:    -global-name=main \
 ; RUN:    -global-name=abcdefg \
-; RUN:    -global-name="Base2::`vbase destructor'" \
 ; RUN:    %p/Inputs/every-function.pdb | FileCheck %s
 
 CHECK:                        Global Symbols
@@ -17,6 +16,3 @@ CHECK-NEXT:       2016 | S_PROCREF [size = 20] `main`
 CHECK-NEXT:              module = 1, sum name = 0, offset = 1952
 CHECK-NEXT:     Global Name `abcdefg`
 CHECK-NEXT:       (no matching records found)
-CHECK-NEXT:     Global Name `Base2::`vbase destructor'`
-CHECK-NEXT:       2288 | S_PROCREF [size = 40] `Base2::`vbase destructor'`
-CHECK-NEXT:              module = 1, sum name = 0, offset = 2852
