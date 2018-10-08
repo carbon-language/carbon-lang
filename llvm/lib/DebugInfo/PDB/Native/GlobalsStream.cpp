@@ -65,7 +65,6 @@ GlobalsStream::findRecordsByName(StringRef Name,
   ChainStartOffset /= 12;
   NextChainOffset /= 12;
 
-  auto &Back = GlobalsTable.HashRecords.back();
   while (ChainStartOffset < NextChainOffset) {
     PSHashRecord PSH = GlobalsTable.HashRecords[ChainStartOffset];
     uint32_t Off = PSH.Off - 1;
