@@ -36927,10 +36927,12 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
 /// In short, LHS and RHS are inspected to see if LHS op RHS is of the form
 /// A horizontal-op B, for some already available A and B, and if so then LHS is
 /// set to A, RHS to B, and the routine returns 'true'.
-/// Note that the binary operation should have the property that if one of the
-/// operands is UNDEF then the result is UNDEF.
 static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
-  // Look for the following pattern: if
+  // If either operand is undef, bail out. The binop should be simplified.
+  if (LHS.isUndef() || RHS.isUndef())
+    return false;
+
+  // Look for the following pattern:
   //   A = < float a0, float a1, float a2, float a3 >
   //   B = < float b0, float b1, float b2, float b3 >
   // and
@@ -36945,25 +36947,15 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
     return false;
 
   MVT VT = LHS.getSimpleValueType();
-
   assert((VT.is128BitVector() || VT.is256BitVector()) &&
          "Unsupported vector type for horizontal add/sub");
 
-  // Handle 128 and 256-bit vector lengths. AVX defines horizontal add/sub to
-  // operate independently on 128-bit lanes.
-  unsigned NumElts = VT.getVectorNumElements();
-  unsigned NumLanes = VT.getSizeInBits()/128;
-  unsigned NumLaneElts = NumElts / NumLanes;
-  assert((NumLaneElts % 2 == 0) &&
-         "Vector type should have an even number of elements in each lane");
-  unsigned HalfLaneElts = NumLaneElts/2;
-
   // View LHS in the form
   //   LHS = VECTOR_SHUFFLE A, B, LMask
-  // If LHS is not a shuffle then pretend it is the shuffle
+  // If LHS is not a shuffle, then pretend it is the identity shuffle:
   //   LHS = VECTOR_SHUFFLE LHS, undef, <0, 1, ..., N-1>
-  // NOTE: in what follows a default initialized SDValue represents an UNDEF of
-  // type VT.
+  // NOTE: A default initialized SDValue represents an UNDEF of type VT.
+  unsigned NumElts = VT.getVectorNumElements();
   SDValue A, B;
   SmallVector<int, 16> LMask(NumElts);
   if (LHS.getOpcode() == ISD::VECTOR_SHUFFLE) {
@@ -36974,8 +36966,7 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
     ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(LHS.getNode())->getMask();
     std::copy(Mask.begin(), Mask.end(), LMask.begin());
   } else {
-    if (!LHS.isUndef())
-      A = LHS;
+    A = LHS;
     for (unsigned i = 0; i != NumElts; ++i)
       LMask[i] = i;
   }
@@ -36992,43 +36983,48 @@ static bool isHorizontalBinOp(SDValue &LHS, SDValue &RHS, bool IsCommutative) {
     ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(RHS.getNode())->getMask();
     std::copy(Mask.begin(), Mask.end(), RMask.begin());
   } else {
-    if (!RHS.isUndef())
-      C = RHS;
+    C = RHS;
     for (unsigned i = 0; i != NumElts; ++i)
       RMask[i] = i;
   }
 
-  // Check that the shuffles are both shuffling the same vectors.
-  if (!(A == C && B == D) && !(A == D && B == C))
-    return false;
-
-  // If everything is UNDEF then bail out: it would be better to fold to UNDEF.
-  if (!A.getNode() && !B.getNode())
-    return false;
-
-  // If A and B occur in reverse order in RHS, then "swap" them (which means
-  // rewriting the mask).
-  if (A != C)
+  // If A and B occur in reverse order in RHS, then canonicalize by commuting
+  // RHS operands and shuffle mask.
+  if (A != C) {
+    std::swap(C, D);
     ShuffleVectorSDNode::commuteMask(RMask);
+  }
+  // Check that the shuffles are both shuffling the same vectors.
+  if (!(A == C && B == D))
+    return false;
 
-  // At this point LHS and RHS are equivalent to
-  //   LHS = VECTOR_SHUFFLE A, B, LMask
-  //   RHS = VECTOR_SHUFFLE A, B, RMask
+  // LHS and RHS are now:
+  //   LHS = shuffle A, B, LMask
+  //   RHS = shuffle A, B, RMask
   // Check that the masks correspond to performing a horizontal operation.
-  for (unsigned l = 0; l != NumElts; l += NumLaneElts) {
-    for (unsigned i = 0; i != NumLaneElts; ++i) {
-      int LIdx = LMask[i+l], RIdx = RMask[i+l];
-
-      // Ignore any UNDEF components.
+  // AVX defines horizontal add/sub to operate independently on 128-bit lanes,
+  // so we just repeat the inner loop if this is a 256-bit op.
+  unsigned Num128BitChunks = VT.getSizeInBits() / 128;
+  unsigned NumEltsPer128BitChunk = NumElts / Num128BitChunks;
+  assert((NumEltsPer128BitChunk % 2 == 0) &&
+         "Vector type should have an even number of elements in each lane");
+  for (unsigned j = 0; j != NumElts; j += NumEltsPer128BitChunk) {
+    for (unsigned i = 0; i != NumEltsPer128BitChunk; ++i) {
+      // Ignore undefined components.
+      int LIdx = LMask[i + j], RIdx = RMask[i + j];
       if (LIdx < 0 || RIdx < 0 ||
           (!A.getNode() && (LIdx < (int)NumElts || RIdx < (int)NumElts)) ||
           (!B.getNode() && (LIdx >= (int)NumElts || RIdx >= (int)NumElts)))
         continue;
 
-      // Check that successive elements are being operated on.  If not, this is
+      // The  low half of the 128-bit result must choose from A.
+      // The high half of the 128-bit result must choose from B.
+      unsigned NumEltsPer64BitChunk = NumEltsPer128BitChunk / 2;
+      unsigned Src = i >= NumEltsPer64BitChunk;
+
+      // Check that successive elements are being operated on. If not, this is
       // not a horizontal operation.
-      unsigned Src = (i/HalfLaneElts); // each lane is split between srcs
-      int Index = 2*(i%HalfLaneElts) + NumElts*Src + l;
+      int Index = 2 * (i % NumEltsPer64BitChunk) + NumElts * Src + j;
       if (!(LIdx == Index && RIdx == Index + 1) &&
           !(IsCommutative && LIdx == Index + 1 && RIdx == Index))
         return false;
