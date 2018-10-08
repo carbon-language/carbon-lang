@@ -52,7 +52,7 @@ GlobalsStream::findRecordsByName(StringRef Name,
 
   // Hash the name to figure out which bucket this goes into.
   size_t ExpandedBucketIndex = hashStringV1(Name) % IPHR_HASH;
-  uint32_t CompressedBucketIndex = GlobalsTable.BucketMap[ExpandedBucketIndex];
+  int32_t CompressedBucketIndex = GlobalsTable.BucketMap[ExpandedBucketIndex];
   if (CompressedBucketIndex == -1)
     return Result;
 
