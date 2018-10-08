@@ -58,7 +58,7 @@ GlobalsStream::findRecordsByName(StringRef Name,
 
   uint32_t ChainStartOffset = GlobalsTable.HashBuckets[CompressedBucketIndex];
   uint32_t NextChainStart = GlobalsTable.HashBuckets.size();
-  if (CompressedBucketIndex + 1 < GlobalsTable.HashBuckets.size())
+  if (static_cast<uint32_t>(CompressedBucketIndex + 1) < NextChainStart)
     NextChainStart = GlobalsTable.HashBuckets[CompressedBucketIndex + 1];
   ChainStartOffset /= 12;
   NextChainStart /= 12;
