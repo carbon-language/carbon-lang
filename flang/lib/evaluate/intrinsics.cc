@@ -13,11 +13,11 @@
 // limitations under the License.
 
 #include "intrinsics.h"
+#include "expression.h"
 #include "type.h"
 #include "../common/enum-set.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
-#include "../semantics/expression.h"
 #include <map>
 #include <string>
 #include <utility>
@@ -186,7 +186,7 @@ struct IntrinsicInterface {
   TypePattern result;
   Rank rank{Rank::elemental};
   std::optional<SpecificIntrinsic> Match(const CallCharacteristics &,
-      const semantics::IntrinsicTypeDefaultKinds &,
+      const IntrinsicTypeDefaultKinds &,
       parser::ContextualMessages &messages) const;
 };
 
@@ -528,19 +528,24 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
 // Intrinsic interface matching against the arguments of a particular
 // procedure reference.
 std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
-    const CallCharacteristics &call,
-    const semantics::IntrinsicTypeDefaultKinds &defaults,
+    const CallCharacteristics &call, const IntrinsicTypeDefaultKinds &defaults,
     parser::ContextualMessages &messages) const {
   // Attempt to construct a 1-1 correspondence between the dummy arguments in
   // a particular intrinsic procedure's generic interface and the actual
   // arguments in a procedure reference.
-  const ActualArgumentCharacteristics *actualForDummy[maxArguments];
+  const ActualArgument *actualForDummy[maxArguments];
   int dummies{0};
   for (; dummies < maxArguments && dummy[dummies].keyword != nullptr;
        ++dummies) {
     actualForDummy[dummies] = nullptr;
   }
-  for (const ActualArgumentCharacteristics &arg : call.argument) {
+  for (const ActualArgument &arg : call.argument) {
+    if (arg.isAlternateReturn) {
+      messages.Say(
+          "alternate return specifier not acceptable on call to intrinsic '%s'"_err_en_US,
+          call.name.ToString().data());
+      return std::nullopt;
+    }
     bool found{false};
     for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
       if (actualForDummy[dummyArgIndex] == nullptr) {
@@ -567,9 +572,9 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   // Check types and kinds of the actual arguments against the intrinsic's
   // interface.  Ensure that two or more arguments that have to have the same
   // type and kind do so.  Check for missing non-optional arguments now, too.
-  const ActualArgumentCharacteristics *sameArg{nullptr};
+  const ActualArgument *sameArg{nullptr};
   const IntrinsicDummyArgument *kindDummyArg{nullptr};
-  const ActualArgumentCharacteristics *kindArg{nullptr};
+  const ActualArgument *kindArg{nullptr};
   bool hasDimArg{false};
   for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
     const IntrinsicDummyArgument &d{dummy[dummyArgIndex]};
@@ -577,7 +582,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       CHECK(kindDummyArg == nullptr);
       kindDummyArg = &d;
     }
-    const ActualArgumentCharacteristics *arg{actualForDummy[dummyArgIndex]};
+    const ActualArgument *arg{actualForDummy[dummyArgIndex]};
     if (!arg) {
       if (d.optionality == Optionality::required) {
         messages.Say("missing '%s' argument"_err_en_US, d.keyword);
@@ -586,17 +591,18 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
         continue;
       }
     }
-    if (arg->isBOZ) {
-      CHECK(arg->rank == 0);
+    std::optional<DynamicType> type{arg->GetType()};
+    if (!type.has_value()) {
+      CHECK(arg->Rank() == 0);
       if (d.typePattern.kindCode == KindCode::typeless ||
           d.rank == Rank::elementalOrBOZ) {
         continue;
       }
       messages.Say("typeless (BOZ) not allowed for '%s'"_err_en_US, d.keyword);
       return std::nullopt;
-    } else if (!d.typePattern.categorySet.test(arg->type.category)) {
+    } else if (!d.typePattern.categorySet.test(type->category)) {
       messages.Say("actual argument for '%s' has bad type '%s'"_err_en_US,
-          d.keyword, arg->type.Dump().data());
+          d.keyword, type->Dump().data());
       return std::nullopt;  // argument has invalid type category
     }
     bool argOk{false};
@@ -607,19 +613,19 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       argOk = false;
       break;
     case KindCode::defaultIntegerKind:
-      argOk = arg->type.kind == defaults.defaultIntegerKind;
+      argOk = type->kind == defaults.defaultIntegerKind;
       break;
     case KindCode::defaultRealKind:
-      argOk = arg->type.kind == defaults.defaultRealKind;
+      argOk = type->kind == defaults.defaultRealKind;
       break;
     case KindCode::doublePrecision:
-      argOk = arg->type.kind == defaults.defaultDoublePrecisionKind;
+      argOk = type->kind == defaults.defaultDoublePrecisionKind;
       break;
     case KindCode::defaultCharKind:
-      argOk = arg->type.kind == defaults.defaultCharacterKind;
+      argOk = type->kind == defaults.defaultCharacterKind;
       break;
     case KindCode::defaultLogicalKind:
-      argOk = arg->type.kind == defaults.defaultLogicalKind;
+      argOk = type->kind == defaults.defaultLogicalKind;
       break;
     case KindCode::any: argOk = true; break;
     case KindCode::kindArg:
@@ -635,7 +641,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       if (sameArg == nullptr) {
         sameArg = arg;
       }
-      argOk = arg->type == sameArg->type;
+      argOk = *type == sameArg->GetType();
       break;
     case KindCode::effectiveKind:
       common::die("INTERNAL: KindCode::effectiveKind appears on argument '%s' "
@@ -647,49 +653,49 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     if (!argOk) {
       messages.Say(
           "actual argument for '%s' has bad type or kind '%s'"_err_en_US,
-          d.keyword, arg->type.Dump().data());
+          d.keyword, type->Dump().data());
       return std::nullopt;
     }
   }
 
   // Check the ranks of the arguments against the intrinsic's interface.
-  const ActualArgumentCharacteristics *arrayArg{nullptr};
-  const ActualArgumentCharacteristics *knownArg{nullptr};
-  const ActualArgumentCharacteristics *shapeArg{nullptr};
+  const ActualArgument *arrayArg{nullptr};
+  const ActualArgument *knownArg{nullptr};
+  const ActualArgument *shapeArg{nullptr};
   int elementalRank{0};
   for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
     const IntrinsicDummyArgument &d{dummy[dummyArgIndex]};
-    if (const ActualArgumentCharacteristics *
-        arg{actualForDummy[dummyArgIndex]}) {
+    if (const ActualArgument * arg{actualForDummy[dummyArgIndex]}) {
       if (arg->isAssumedRank && d.rank != Rank::anyOrAssumedRank) {
         messages.Say(
             "assumed-rank array cannot be used for '%s' argument"_err_en_US,
             d.keyword);
         return std::nullopt;
       }
+      int rank{arg->Rank()};
       bool argOk{false};
       switch (d.rank) {
       case Rank::elemental:
       case Rank::elementalOrBOZ:
         if (elementalRank == 0) {
-          elementalRank = arg->rank;
+          elementalRank = rank;
         }
-        argOk = arg->rank == 0 || arg->rank == elementalRank;
+        argOk = rank == 0 || rank == elementalRank;
         break;
-      case Rank::scalar: argOk = arg->rank == 0; break;
-      case Rank::vector: argOk = arg->rank == 1; break;
+      case Rank::scalar: argOk = rank == 0; break;
+      case Rank::vector: argOk = rank == 1; break;
       case Rank::shape:
         CHECK(shapeArg == nullptr);
         shapeArg = arg;
-        argOk = arg->rank == 1 && arg->vectorSize.has_value();
+        argOk = rank == 1 && arg->vectorSize.has_value();
         break;
-      case Rank::matrix: argOk = arg->rank == 2; break;
+      case Rank::matrix: argOk = rank == 2; break;
       case Rank::array:
-        argOk = arg->rank > 0;
+        argOk = rank > 0;
         if (!arrayArg) {
           arrayArg = arg;
         } else {
-          argOk &= arg->rank == arrayArg->rank;
+          argOk &= rank == arrayArg->Rank();
         }
         break;
       case Rank::known:
@@ -700,14 +706,14 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       case Rank::anyOrAssumedRank: argOk = true; break;
       case Rank::conformable:
         CHECK(arrayArg != nullptr);
-        argOk = arg->rank == 0 || arg->rank == arrayArg->rank;
+        argOk = rank == 0 || rank == arrayArg->Rank();
         break;
       case Rank::dimRemoved:
         CHECK(arrayArg != nullptr);
         if (hasDimArg) {
-          argOk = arg->rank + 1 == arrayArg->rank;
+          argOk = rank + 1 == arrayArg->Rank();
         } else {
-          argOk = arg->rank == 0;
+          argOk = rank == 0;
         }
         break;
       case Rank::dimReduced:
@@ -720,7 +726,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       }
       if (!argOk) {
         messages.Say("'%s' argument has unacceptable rank %d"_err_en_US,
-            d.keyword, arg->rank);
+            d.keyword, rank);
         return std::nullopt;
       }
     }
@@ -762,8 +768,8 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     break;
   case KindCode::same:
     CHECK(sameArg != nullptr);
-    CHECK(result.categorySet.test(sameArg->type.category));
-    resultType = sameArg->type;
+    resultType = *sameArg->GetType();
+    CHECK(result.categorySet.test(resultType.category));
     break;
   case KindCode::effectiveKind:
     CHECK(kindDummyArg != nullptr);
@@ -771,10 +777,10 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     if (kindArg != nullptr) {
       CHECK(kindArg->intValue.has_value());
       resultType.kind = *kindArg->intValue;
-      // TODO pmk: validate the kind!!
+      // TODO pmk: validate this kind!!
     } else if (kindDummyArg->optionality == Optionality::defaultsToSameKind) {
       CHECK(sameArg != nullptr);
-      resultType = sameArg->type;
+      resultType = *sameArg->GetType();
     } else {
       CHECK(
           kindDummyArg->optionality == Optionality::defaultsToDefaultForResult);
@@ -801,11 +807,11 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   case Rank::matrix: resultRank = 2; break;
   case Rank::dimReduced:
     CHECK(arrayArg != nullptr);
-    resultRank = hasDimArg ? arrayArg->rank - 1 : 0;
+    resultRank = hasDimArg ? arrayArg->Rank() - 1 : 0;
     break;
   case Rank::rankPlus1:
     CHECK(knownArg != nullptr);
-    resultRank = knownArg->rank + 1;
+    resultRank = knownArg->Rank() + 1;
     break;
   case Rank::shaped:
     CHECK(shapeArg != nullptr);
@@ -829,8 +835,8 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       name, elementalRank > 0, resultType, resultRank);
 }
 
-struct IntrinsicTable::Implementation {
-  explicit Implementation(const semantics::IntrinsicTypeDefaultKinds &dfts)
+struct IntrinsicProcTable::Implementation {
+  explicit Implementation(const IntrinsicTypeDefaultKinds &dfts)
     : defaults{dfts} {
     for (const IntrinsicInterface &f : genericIntrinsicFunction) {
       genericFuncs.insert(std::make_pair(std::string{f.name}, &f));
@@ -843,14 +849,14 @@ struct IntrinsicTable::Implementation {
   std::optional<SpecificIntrinsic> Probe(
       const CallCharacteristics &, parser::ContextualMessages *) const;
 
-  semantics::IntrinsicTypeDefaultKinds defaults;
+  IntrinsicTypeDefaultKinds defaults;
   std::multimap<std::string, const IntrinsicInterface *> genericFuncs;
   std::multimap<std::string, const SpecificIntrinsicInterface *> specificFuncs;
 };
 
 // Probe the configured intrinsic procedure pattern tables in search of a
 // match for a given procedure reference.
-std::optional<SpecificIntrinsic> IntrinsicTable::Implementation::Probe(
+std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
     const CallCharacteristics &call,
     parser::ContextualMessages *messages) const {
   if (call.isSubroutineCall) {
@@ -885,23 +891,23 @@ std::optional<SpecificIntrinsic> IntrinsicTable::Implementation::Probe(
   return std::nullopt;
 }
 
-IntrinsicTable::~IntrinsicTable() {
+IntrinsicProcTable::~IntrinsicProcTable() {
   // Discard the configured tables.
   delete impl_;
   impl_ = nullptr;
 }
 
-IntrinsicTable IntrinsicTable::Configure(
-    const semantics::IntrinsicTypeDefaultKinds &defaults) {
-  IntrinsicTable result;
-  result.impl_ = new IntrinsicTable::Implementation(defaults);
+IntrinsicProcTable IntrinsicProcTable::Configure(
+    const IntrinsicTypeDefaultKinds &defaults) {
+  IntrinsicProcTable result;
+  result.impl_ = new IntrinsicProcTable::Implementation(defaults);
   return result;
 }
 
-std::optional<SpecificIntrinsic> IntrinsicTable::Probe(
+std::optional<SpecificIntrinsic> IntrinsicProcTable::Probe(
     const CallCharacteristics &call,
     parser::ContextualMessages *messages) const {
-  CHECK(impl_ != nullptr || !"IntrinsicTable: not configured");
+  CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
   return impl_->Probe(call, messages);
 }
 }  // namespace Fortran::evaluate

@@ -219,8 +219,11 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       Fortran::parser::Messages messages;
       Fortran::parser::ContextualMessages contextualMessages{whole, &messages};
       Fortran::evaluate::FoldingContext context{contextualMessages};
-      Fortran::semantics::IntrinsicTypeDefaultKinds defaults;
-      Fortran::semantics::AnalyzeExpressions(parseTree, context, defaults);
+      Fortran::evaluate::IntrinsicTypeDefaultKinds defaults;
+      auto intrinsics{
+          Fortran::evaluate::IntrinsicProcTable::Configure(defaults)};
+      Fortran::semantics::AnalyzeExpressions(
+          parseTree, context, defaults, intrinsics);
       messages.Emit(std::cerr, parsing.cooked());
       if (!messages.empty() &&
           (driver.warningsAreErrors || messages.AnyFatalError())) {

@@ -138,6 +138,10 @@ using HostUnsignedInt =
 // Force availability of copy construction and assignment
 template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 
+// Forward definition of Expr<> so that it can be indirectly used in its own
+// definition
+template<typename A> class Expr;
+
 // Classes that support a Fold(FoldingContext &) member function have the
 // IsFoldableTrait.
 CLASS_TRAIT(IsFoldableTrait)

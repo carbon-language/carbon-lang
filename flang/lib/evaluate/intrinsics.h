@@ -15,6 +15,7 @@
 #ifndef FORTRAN_EVALUATE_INTRINSICS_H_
 #define FORTRAN_EVALUATE_INTRINSICS_H_
 
+#include "call.h"
 #include "type.h"
 #include "../common/idioms.h"
 #include "../parser/char-block.h"
@@ -23,50 +24,34 @@
 #include <optional>
 #include <vector>
 
-namespace Fortran::semantics {
-struct IntrinsicTypeDefaultKinds;
-}
-
 namespace Fortran::evaluate {
 
 // Placeholder
 ENUM_CLASS(IntrinsicProcedure, IAND, IEOR, IOR, LEN, MAX, MIN)
 
-// Characterize an actual argument to an intrinsic procedure reference
-struct ActualArgumentCharacteristics {
-  std::optional<parser::CharBlock> keyword;
-  bool isBOZ{false};
-  bool isAssumedRank{false};
-  DynamicType type;
-  int rank;
-  std::optional<int> vectorSize;
-  std::optional<int> intValue;
-};
-
 struct CallCharacteristics {
-  bool isSubroutineCall{false};
   parser::CharBlock name;
-  std::vector<ActualArgumentCharacteristics> argument;
+  const std::vector<ActualArgument> &argument;
+  bool isSubroutineCall{false};
 };
 
 struct SpecificIntrinsic {
-  //  SpecificIntrinsic(SpecificIntrinsic &&) = default;
   explicit SpecificIntrinsic(const char *n) : name{n} {}
   SpecificIntrinsic(const char *n, bool isElem, DynamicType dt, int r)
     : name{n}, isElemental{isElem}, type{dt}, rank{r} {}
-  const char *name;  // not owned
+  const char *name;  // not owner
   bool isElemental{false};
   DynamicType type;
   int rank{0};
 };
 
-class IntrinsicTable {
+class IntrinsicProcTable {
 private:
   struct Implementation;
 
 public:
-  ~IntrinsicTable();
-  static IntrinsicTable Configure(const semantics::IntrinsicTypeDefaultKinds &);
+  ~IntrinsicProcTable();
+  static IntrinsicProcTable Configure(const IntrinsicTypeDefaultKinds &);
   std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &,
       parser::ContextualMessages *messages = nullptr) const;
 

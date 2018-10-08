@@ -21,7 +21,7 @@
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
 #include <functional>
-#include <iostream>  // TODO remove soon
+#include <iostream>  // TODO pmk remove soon
 #include <optional>
 
 using namespace Fortran::parser::literals;
@@ -105,14 +105,14 @@ std::optional<DataRef> ExtractDataRef(std::optional<A> &&x) {
 // member function that converts parse trees into (usually) generic
 // expressions.
 struct ExprAnalyzer {
-  ExprAnalyzer(
-      FoldingContext &ctx, const semantics::IntrinsicTypeDefaultKinds &dfts)
-    : context{ctx}, defaults{dfts} {}
+  ExprAnalyzer(FoldingContext &ctx, const IntrinsicTypeDefaultKinds &dfts,
+      const IntrinsicProcTable &procs)
+    : context{ctx}, defaults{dfts}, intrinsics{procs} {}
 
   ExprAnalyzer(const ExprAnalyzer &that, const parser::CharBlock &source)
     : context{that.context,
           parser::ContextualMessages{source, that.context.messages}},
-      defaults{that.defaults} {}
+      defaults{that.defaults}, intrinsics{that.intrinsics} {}
 
   MaybeExpr Analyze(const parser::Expr &);
   MaybeExpr Analyze(const parser::CharLiteralConstantSubstring &);
@@ -181,10 +181,11 @@ struct ExprAnalyzer {
   void CheckUnsubscriptedComponent(const Component &);
 
   std::optional<ProcedureDesignator> Procedure(
-      const parser::ProcedureDesignator &);
+      const parser::ProcedureDesignator &, const std::vector<ActualArgument> &);
 
   FoldingContext context;
-  const semantics::IntrinsicTypeDefaultKinds &defaults;
+  const IntrinsicTypeDefaultKinds &defaults;
+  const IntrinsicProcTable &intrinsics;
 };
 
 // This helper template function handles the Scalar<>, Integer<>, and
@@ -483,24 +484,6 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
   return {AsGenericExpr(std::move(value.value))};
 }
 
-static std::optional<DynamicType> CategorizeSymbolType(const Symbol &symbol) {
-  if (auto *details{symbol.detailsIf<semantics::ObjectEntityDetails>()}) {
-    if (details->type().has_value()) {
-      switch (details->type()->category()) {
-      case semantics::DeclTypeSpec::Category::Intrinsic:
-        return std::make_optional(
-            DynamicType{details->type()->intrinsicTypeSpec().category(),
-                details->type()->intrinsicTypeSpec().kind()});
-      case semantics::DeclTypeSpec::Category::TypeDerived:
-      case semantics::DeclTypeSpec::Category::ClassDerived:
-        return std::make_optional(DynamicType{TypeCategory::Derived});
-      default:;
-      }
-    }
-  }
-  return std::nullopt;
-}
-
 // Wraps a object in an explicitly typed representation (e.g., Designator<>
 // or FunctionRef<>) as instantiated on a dynamic type.
 // TODO: move to tools.h?
@@ -530,8 +513,7 @@ MaybeExpr TypedWrapper(DynamicType &&dyType, WRAPPED &&x) {
     return WrapperHelper<TypeCategory::Logical, WRAPPER, WRAPPED>(
         dyType.kind, std::move(x));
   case TypeCategory::Derived:
-    return AsGenericExpr(
-        Expr<SomeDerived>{*dyType.derived, WRAPPER<SomeDerived>{std::move(x)}});
+    return AsGenericExpr(Expr<SomeDerived>{WRAPPER<SomeDerived>{std::move(x)}});
   default: CRASH_NO_CASE;
   }
 }
@@ -539,7 +521,7 @@ MaybeExpr TypedWrapper(DynamicType &&dyType, WRAPPED &&x) {
 // Wraps a data reference in a typed Designator<>.
 static MaybeExpr Designate(DataRef &&dataRef) {
   const Symbol &symbol{*dataRef.GetSymbol(false)};
-  if (std::optional<DynamicType> dyType{CategorizeSymbolType(symbol)}) {
+  if (std::optional<DynamicType> dyType{GetSymbolType(symbol)}) {
     return TypedWrapper<Designator, DataRef>(
         std::move(*dyType), std::move(dataRef));
   }
@@ -590,8 +572,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Substring &ss) {
           std::optional<Expr<SubscriptInteger>> last{
               GetSubstringBound(std::get<1>(range.t))};
           const Symbol &symbol{*checked->GetSymbol(false)};
-          if (std::optional<DynamicType> dynamicType{
-                  CategorizeSymbolType(symbol)}) {
+          if (std::optional<DynamicType> dynamicType{GetSymbolType(symbol)}) {
             if (dynamicType->category == TypeCategory::Character) {
               return WrapperHelper<TypeCategory::Character, Designator,
                   Substring>(dynamicType->kind,
@@ -766,17 +747,24 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureComponent &sc) {
   if (MaybeExpr base{AnalyzeHelper(*this, sc.base)}) {
     if (auto *dtExpr{std::get_if<Expr<SomeDerived>>(&base->u)}) {
       Symbol *sym{sc.component.symbol};
+      const semantics::DerivedTypeSpec *dtSpec{nullptr};
+      if (std::optional<DynamicType> dtDyTy{dtExpr->GetType()}) {
+        dtSpec = dtDyTy->derived;
+      }
       if (sym == nullptr) {
         context.messages.Say(sc.component.source,
             "component name was not resolved to a symbol"_err_en_US);
       } else if (sym->detailsIf<semantics::TypeParamDetails>()) {
         context.messages.Say(sc.component.source,
             "TODO: type parameter inquiry unimplemented"_err_en_US);
-      } else if (&sym->owner() != dtExpr->result.spec().scope()) {
+      } else if (dtSpec == nullptr) {
+        context.messages.Say(sc.component.source,
+            "TODO: base of component reference lacks a derived type"_err_en_US);
+      } else if (&sym->owner() != dtSpec->scope()) {
         // TODO: extended derived types - insert explicit reference to base?
         context.messages.Say(sc.component.source,
             "component is not in scope of derived TYPE(%s)"_err_en_US,
-            dtExpr->result.spec().name().ToString().data());
+            dtSpec->name().ToString().data());
       } else if (std::optional<DataRef> dataRef{
                      ExtractDataRef(std::move(*dtExpr))}) {
         Component component{std::move(*dataRef), *sym};
@@ -835,7 +823,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::StructureConstructor &) {
 }
 
 std::optional<ProcedureDesignator> ExprAnalyzer::Procedure(
-    const parser::ProcedureDesignator &pd) {
+    const parser::ProcedureDesignator &pd,
+    const std::vector<ActualArgument> &arg) {
   return std::visit(
       common::visitors{
           [&](const parser::Name &n) -> std::optional<ProcedureDesignator> {
@@ -846,12 +835,30 @@ std::optional<ProcedureDesignator> ExprAnalyzer::Procedure(
               return std::nullopt;
             }
             return std::visit(
-                common::visitors{[&](const semantics::ProcEntityDetails &p)
-                                     -> std::optional<ProcedureDesignator> {
-                                   // TODO: capture &/or check interface vs.
-                                   // actual arguments
-                                   return {ProcedureDesignator{*n.symbol}};
-                                 },
+                common::visitors{
+                    [&](const semantics::ProcEntityDetails &p)
+                        -> std::optional<ProcedureDesignator> {
+                      if (!p.HasExplicitInterface()) {
+                        std::cerr
+                            << "pmk: arg[0] cat "
+                            << static_cast<int>(arg[0].GetType()->category)
+                            << '\n';
+                        CallCharacteristics cc{n.source, arg};
+                        std::optional<SpecificIntrinsic> si{
+                            intrinsics.Probe(cc, &context.messages)};
+                        if (si) {
+                          context.messages.Say(n.source,
+                              "pmk debug: Probe succeeds: %s %s %d"_en_US,
+                              si->name, si->type.Dump().data(), si->rank);
+                        } else {
+                          context.messages.Say(
+                              n.source, "pmk debug: Probe failed"_en_US);
+                        }
+                      }
+                      // TODO: capture &/or check interface vs.
+                      // actual arguments
+                      return {ProcedureDesignator{*n.symbol}};
+                    },
                     [&](const auto &) -> std::optional<ProcedureDesignator> {
                       context.messages.Say(
                           "TODO: unimplemented/invalid kind of symbol as procedure designator '%s'"_err_en_US,
@@ -879,18 +886,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
   // TODO: C1002: Allow a whole assumed-size array to appear if the dummy
   // argument would accept it.  Handle by special-casing the context
   // ActualArg -> Variable -> Designator.
-
-  std::optional<ProcedureDesignator> proc{
-      Procedure(std::get<parser::ProcedureDesignator>(funcRef.v.t))};
-
-  typename UntypedFunctionRef::Arguments arguments;
+  Arguments arguments;
   for (const auto &arg :
       std::get<std::list<parser::ActualArgSpec>>(funcRef.v.t)) {
-    std::optional<parser::CharBlock> keyword;
-    if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
-      keyword = argKW->v.source;
-    }
-    // TODO: look up dummy argument info by number/keyword
     MaybeExpr actualArgExpr;
     std::visit(
         common::visitors{[&](const common::Indirection<parser::Variable> &v) {
@@ -920,20 +918,25 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
     if (actualArgExpr.has_value()) {
       CopyableIndirection<Expr<SomeType>> indExpr{std::move(*actualArgExpr)};
       arguments.emplace_back(std::move(indExpr));
+      if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
+        arguments.back().keyword = argKW->v.source;
+      }
     } else {
-      arguments.emplace_back();
+      return std::nullopt;
     }
   }
 
-  // TODO: Look up user function, try to map generic to specific procedure
-  // TODO: validate arguments against interface, discarding messages if
-  // an intrinsic function is a better match
+  // TODO: map generic to specific procedure
+  // TODO: validate arguments against interface
   // TODO: distinguish applications of elemental functions
-
+  std::cerr << "pmk: arguments size " << arguments.size() << ", arg[0] cat "
+            << static_cast<int>(arguments[0].GetType()->category) << '\n';
+  std::optional<ProcedureDesignator> proc{
+      Procedure(std::get<parser::ProcedureDesignator>(funcRef.v.t), arguments)};
   if (proc.has_value()) {
     std::optional<DynamicType> dyType;
     if (const Symbol * symbol{proc->GetSymbol()}) {
-      dyType = CategorizeSymbolType(*symbol);
+      dyType = GetSymbolType(*symbol);
     } else {
       // TODO: intrinsic function result type - this is a placeholder
       dyType = DynamicType{TypeCategory::Real, 4};
@@ -1217,34 +1220,26 @@ void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
 
 namespace Fortran::semantics {
 
-int IntrinsicTypeDefaultKinds::DefaultKind(TypeCategory category) const {
-  switch (category) {
-  case TypeCategory::Integer: return defaultIntegerKind;
-  case TypeCategory::Real:
-  case TypeCategory::Complex: return defaultRealKind;
-  case TypeCategory::Character: return defaultCharacterKind;
-  case TypeCategory::Logical: return defaultLogicalKind;
-  default: CRASH_NO_CASE; return 0;
-  }
-}
-
 evaluate::MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
-    const IntrinsicTypeDefaultKinds &defaults, const parser::Expr &expr) {
-  return evaluate::ExprAnalyzer{context, defaults}.Analyze(expr);
+    const evaluate::IntrinsicTypeDefaultKinds &defaults,
+    const evaluate::IntrinsicProcTable &intrinsics, const parser::Expr &expr) {
+  return evaluate::ExprAnalyzer{context, defaults, intrinsics}.Analyze(expr);
 }
 
 class Mutator {
 public:
   Mutator(evaluate::FoldingContext &context,
-      const IntrinsicTypeDefaultKinds &defaults)
-    : context_{context}, defaults_{defaults} {}
+      const evaluate::IntrinsicTypeDefaultKinds &defaults,
+      const evaluate::IntrinsicProcTable &intrinsics)
+    : context_{context}, defaults_{defaults}, intrinsics_{intrinsics} {}
 
   template<typename A> bool Pre(A &) { return true /* visit children */; }
   template<typename A> void Post(A &) {}
 
   bool Pre(parser::Expr &expr) {
     if (expr.typedExpr.get() == nullptr) {
-      if (MaybeExpr checked{AnalyzeExpr(context_, defaults_, expr)}) {
+      if (MaybeExpr checked{
+              AnalyzeExpr(context_, defaults_, intrinsics_, expr)}) {
         checked->Dump(std::cout << "checked expression: ") << '\n';
         expr.typedExpr.reset(
             new evaluate::GenericExprWrapper{std::move(*checked)});
@@ -1258,14 +1253,15 @@ public:
 
 private:
   evaluate::FoldingContext &context_;
-  const IntrinsicTypeDefaultKinds &defaults_;
+  const evaluate::IntrinsicTypeDefaultKinds &defaults_;
+  const evaluate::IntrinsicProcTable &intrinsics_;
 };
 
 void AnalyzeExpressions(parser::Program &program,
     evaluate::FoldingContext &context,
-    const IntrinsicTypeDefaultKinds &defaults) {
-  Mutator mutator{context, defaults};
+    const evaluate::IntrinsicTypeDefaultKinds &defaults,
+    const evaluate::IntrinsicProcTable &intrinsics) {
+  Mutator mutator{context, defaults, intrinsics};
   parser::Walk(program, mutator);
 }
-
 }  // namespace Fortran::semantics

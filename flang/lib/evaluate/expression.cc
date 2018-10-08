@@ -472,6 +472,11 @@ std::ostream &ExpressionBase<RESULT>::Dump(std::ostream &o) const {
   return o;
 }
 
+std::ostream &Expr<SomeDerived>::Dump(std::ostream &o) const {
+  std::visit([&](const auto &x) { x.Dump(o); }, u);
+  return o;
+}
+
 template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
@@ -534,7 +539,32 @@ auto ExpressionBase<RESULT>::ScalarValue() const
 
 Expr<SomeType>::~Expr() {}
 
-// Rank()
+template<typename A>
+std::optional<DynamicType> ExpressionBase<A>::GetType() const {
+  if constexpr (Result::isSpecificType) {
+    if constexpr (Result::category == TypeCategory::Derived) {
+      return std::visit([](const auto &x) { return x.GetType(); }, derived().u);
+    } else {
+      return Result::GetType();
+    }
+  } else {
+    return std::visit(
+        [](const auto &x) -> std::optional<DynamicType> {
+          if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
+                            BOZLiteralConstant>) {
+            return std::nullopt;  // typeless -> no type
+          } else {
+            return x.GetType();
+          }
+        },
+        derived().u);
+  }
+}
+
+std::optional<DynamicType> Expr<SomeDerived>::GetType() const {
+  return std::visit([](const auto &x) { return x.GetType(); }, u);
+}
+
 template<typename A> int ExpressionBase<A>::Rank() const {
   return std::visit(
       [](const auto &x) {
@@ -546,6 +576,10 @@ template<typename A> int ExpressionBase<A>::Rank() const {
         }
       },
       derived().u);
+}
+
+int Expr<SomeDerived>::Rank() const {
+  return std::visit([](const auto &x) { return x.Rank(); }, u);
 }
 
 // Template instantiations to resolve the "extern template" declarations

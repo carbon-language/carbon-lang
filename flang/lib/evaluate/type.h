@@ -37,6 +37,7 @@
 
 namespace Fortran::semantics {
 class DerivedTypeSpec;
+class Symbol;
 }  // namespace Fortran::semantics
 
 namespace Fortran::evaluate {
@@ -57,6 +58,8 @@ struct DynamicType {
   const semantics::DerivedTypeSpec *derived{nullptr};
 };
 
+std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);
+
 // Specific intrinsic types are represented by specializations of
 // this class template Type<CATEGORY, KIND>.
 template<TypeCategory CATEGORY, int KIND = 0> class Type;
@@ -64,6 +67,9 @@ template<TypeCategory CATEGORY, int KIND = 0> class Type;
 template<TypeCategory CATEGORY, int KIND> struct TypeBase {
   static constexpr bool isSpecificType{true};
   static constexpr DynamicType dynamicType{CATEGORY, KIND};
+  static constexpr std::optional<DynamicType> GetType() {
+    return {dynamicType};
+  }
   static constexpr TypeCategory category{CATEGORY};
   static constexpr int kind{KIND};
   static std::string Dump() { return dynamicType.Dump(); }
@@ -169,6 +175,16 @@ using IntrinsicTypeParameterType = DefaultInteger;
 using DefaultComplex = SameKind<TypeCategory::Complex, DefaultReal>;
 using DefaultLogical = Type<TypeCategory::Logical, DefaultInteger::kind>;
 using DefaultCharacter = Type<TypeCategory::Character, 1>;
+
+struct IntrinsicTypeDefaultKinds {
+  int defaultIntegerKind{evaluate::DefaultInteger::kind};
+  int defaultRealKind{evaluate::DefaultReal::kind};
+  int defaultDoublePrecisionKind{evaluate::DefaultDoublePrecision::kind};
+  int defaultQuadPrecisionKind{evaluate::DefaultDoublePrecision::kind};
+  int defaultCharacterKind{evaluate::DefaultCharacter::kind};
+  int defaultLogicalKind{evaluate::DefaultLogical::kind};
+  int DefaultKind(TypeCategory) const;
+};
 
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
@@ -278,6 +294,15 @@ template<typename TYPES> struct SomeScalar {
         u);
   }
 
+  std::optional<DynamicType> GetType() const {
+    return std::visit(
+        [](const auto &x) {
+          using Ty = std::decay_t<decltype(x)>;
+          return TypeOf<Ty>::GetType();
+        },
+        u);
+  }
+
   common::MapTemplate<Scalar, Types> u;
 };
 
@@ -301,6 +326,9 @@ public:
   CLASS_BOILERPLATE(SomeKind)
   explicit SomeKind(const semantics::DerivedTypeSpec &s) : spec_{&s} {}
 
+  std::optional<DynamicType> GetType() const {
+    return {DynamicType{category, 0, spec_}};
+  }
   const semantics::DerivedTypeSpec &spec() const { return *spec_; }
   std::string Dump() const;
 

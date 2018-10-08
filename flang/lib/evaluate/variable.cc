@@ -323,10 +323,6 @@ std::ostream &SubroutineCall::Dump(std::ostream &o) const {
   return o << ')';
 }
 
-std::ostream &ActualSubroutineArg::Dump(std::ostream &o) const {
-  return Emit(o, u);
-}
-
 std::ostream &Label::Dump(std::ostream &o) const {
   return o << '*' << std::dec << label;
 }
@@ -447,17 +443,6 @@ int ProcedureDesignator::Rank() const {
       common::visitors{[](IntrinsicProcedure) { return 0 /*TODO!!*/; },
           [](const Symbol *sym) { return sym->Rank(); },
           [](const Component &c) { return c.symbol().Rank(); }},
-      u);
-}
-int ActualSubroutineArg::Rank() const {
-  return std::visit(common::visitors{[](const ActualFunctionArg &a) {
-                                       if (a.has_value()) {
-                                         return (*a)->Rank();
-                                       } else {
-                                         return 0;
-                                       }
-                                     },
-                        [](const Label *) { return 0; }},
       u);
 }
 

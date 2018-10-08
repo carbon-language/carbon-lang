@@ -37,7 +37,6 @@ namespace Fortran::evaluate {
 using semantics::Symbol;
 
 // Forward declarations
-template<typename A> class Expr;
 struct DataRef;
 template<typename A> struct Variable;
 
@@ -221,8 +220,8 @@ private:
 
 // R901 designator is the most general data reference object, apart from
 // calls to pointer-valued functions.  Its variant holds everything that
-// a DataRef can, and, when appropriate for the result type, a substring
-// reference or complex part (%RE/%IM).
+// a DataRef can, and possibly either a substring reference or a complex
+// part (%RE/%IM) reference.
 template<typename A> class Designator {
   using DataRefs = decltype(DataRef::u);
   using MaybeSubstring =
@@ -237,11 +236,20 @@ public:
   using Result = A;
   static_assert(Result::isSpecificType);
   EVALUATE_UNION_CLASS_BOILERPLATE(Designator)
-  explicit Designator(DataRef &&that)
+  Designator(const DataRef &that) : u{common::MoveVariant<Variant>(that.u)} {}
+  Designator(DataRef &&that)
     : u{common::MoveVariant<Variant>(std::move(that.u))} {}
-  Designator &operator=(DataRef &&that) {
-    *this = Designator{std::move(that)};
-    return *this;
+
+  std::optional<DynamicType> GetType() const {
+    if constexpr (std::is_same_v<Result, SomeDerived>) {
+      if (const Symbol * sym{GetSymbol(false)}) {
+        return GetSymbolType(*sym);
+      } else {
+        return std::nullopt;
+      }
+    } else {
+      return Result::GetType();
+    }
   }
 
   int Rank() const {
@@ -271,6 +279,7 @@ public:
   Variant u;
 };
 
+// TODO pmk: move more of these into call.h/cc...
 struct ProcedureDesignator {
   EVALUATE_UNION_CLASS_BOILERPLATE(ProcedureDesignator)
   explicit ProcedureDesignator(IntrinsicProcedure p) : u{p} {}
@@ -283,12 +292,8 @@ struct ProcedureDesignator {
   std::variant<IntrinsicProcedure, const Symbol *, Component> u;
 };
 
-using ActualFunctionArg = std::optional<CopyableIndirection<Expr<SomeType>>>;
-
 class UntypedFunctionRef {
 public:
-  using Argument = ActualFunctionArg;
-  using Arguments = std::vector<Argument>;
   CLASS_BOILERPLATE(UntypedFunctionRef)
   UntypedFunctionRef(ProcedureDesignator &&p, Arguments &&a, int r)
     : proc_{std::move(p)}, arguments_(std::move(a)), rank_{r} {}
@@ -316,19 +321,29 @@ template<typename A> struct FunctionRef : public UntypedFunctionRef {
   // e.g. between X and (X).  The parser attempts to parse each argument
   // first as a variable, then as an expression, and the distinction appears
   // in the parse tree.
-  using Argument = ActualFunctionArg;
-  using Arguments = std::vector<Argument>;
   CLASS_BOILERPLATE(FunctionRef)
-  explicit FunctionRef(UntypedFunctionRef &&ufr)
-    : UntypedFunctionRef{std::move(ufr)} {}
-  FunctionRef(ProcedureDesignator &&p, Arguments &&a, int r = 0)
-    : UntypedFunctionRef{std::move(p), std::move(a), r} {}
+  FunctionRef(UntypedFunctionRef &&ufr) : UntypedFunctionRef{std::move(ufr)} {}
+  FunctionRef(ProcedureDesignator &&p, Arguments &&a, int rank = 0)
+    : UntypedFunctionRef{std::move(p), std::move(a), rank} {}
+  std::optional<DynamicType> GetType() const {
+    if constexpr (std::is_same_v<Result, SomeDerived>) {
+      if (const Symbol * symbol{proc_.GetSymbol()}) {
+        return GetSymbolType(*symbol);
+      }
+    } else {
+      return Result::GetType();
+    }
+    return std::nullopt;
+  }
 };
 
 template<typename A> struct Variable {
   using Result = A;
   static_assert(Result::isSpecificType);
   EVALUATE_UNION_CLASS_BOILERPLATE(Variable)
+  std::optional<DynamicType> GetType() const {
+    return std::visit([](const auto &x) { return x.GetType(); }, u);
+  }
   int Rank() const {
     return std::visit([](const auto &x) { return x.Rank(); }, u);
   }
@@ -346,22 +361,8 @@ struct Label {  // TODO: this is a placeholder
   std::ostream &Dump(std::ostream &) const;
 };
 
-class ActualSubroutineArg {
-public:
-  EVALUATE_UNION_CLASS_BOILERPLATE(ActualSubroutineArg)
-  explicit ActualSubroutineArg(ActualFunctionArg &&x) : u{std::move(x)} {}
-  explicit ActualSubroutineArg(const Label &l) : u{&l} {}
-  int Rank() const;
-  std::ostream &Dump(std::ostream &) const;
-
-public:
-  std::variant<ActualFunctionArg, const Label *> u;
-};
-
 class SubroutineCall {
 public:
-  using Argument = ActualSubroutineArg;
-  using Arguments = std::vector<Argument>;
   CLASS_BOILERPLATE(SubroutineCall)
   SubroutineCall(ProcedureDesignator &&p, Arguments &&a)
     : proc_{std::move(p)}, arguments_(std::move(a)) {}
