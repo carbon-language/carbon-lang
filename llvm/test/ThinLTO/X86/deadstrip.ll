@@ -35,6 +35,8 @@
 ; COMBINED-DAG: <COMBINED {{.*}} op2=119
 ; Live, dso_local, Internal
 ; COMBINED-DAG: <COMBINED {{.*}} op2=103
+; Live, Local, WeakODR
+; COMBINED-DAG: <COMBINED {{.*}} op2=101
 ; Live, Local, LinkOnceODR
 ; COMBINED-DAG: <COMBINED {{.*}} op2=99
 ; Live, Local, AvailableExternally
@@ -43,8 +45,6 @@
 ; COMBINED-DAG: <COMBINED {{.*}} op2=96
 ; COMBINED-DAG: <COMBINED {{.*}} op2=96
 ; COMBINED-DAG: <COMBINED {{.*}} op2=96
-; Live, Local, WeakODR
-; COMBINED-DAG: <COMBINED {{.*}} op2=69
 ; Local, (Dead)
 ; COMBINED-DAG: <COMBINED {{.*}} op2=64
 ; COMBINED-DAG: <COMBINED {{.*}} op2=64
