@@ -404,12 +404,6 @@ def FeatureFastBEXTR : SubtargetFeature<"fast-bextr", "HasFastBEXTR", "true",
           "Indicates that the BEXTR instruction is implemented as a single uop "
           "with good throughput.">;
 
-// Merge branches using three-way conditional code.
-def FeatureMergeToThreeWayBranch : SubtargetFeature<"merge-to-threeway-branch",
-                                        "ThreewayBranchProfitable", "true",
-                                        "Merge branches to a three-way "
-                                        "conditional branch">;
-
 //===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//
@@ -738,7 +732,6 @@ def SNBFeatures : ProcessorFeatures<[], [
   FeatureFastScalarFSQRT,
   FeatureFastSHLDRotate,
   FeatureSlowIncDec,
-  FeatureMergeToThreeWayBranch,
   FeatureMacroFusion
 ]>;
 
