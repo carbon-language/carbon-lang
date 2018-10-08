@@ -1125,9 +1125,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     }
 
     if (HasInt256) {
-      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v4i64,  Custom);
-      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v8i32,  Custom);
-      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, MVT::v16i16, Custom);
+      for (auto VT : { MVT::v16i16, MVT::v8i32, MVT::v4i64 }) {
+        setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG, VT, Custom);
+        setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG, VT, Custom);
+      }
 
       // The custom lowering for UINT_TO_FP for v8i32 becomes interesting
       // when we have a 256bit-wide blend with immediate.
@@ -19727,10 +19728,7 @@ static SDValue LowerEXTEND_VECTOR_INREG(SDValue Op,
     In = extractSubVector(In, 0, DAG, dl, std::max(InSize, 128));
   }
 
-  assert((Op.getOpcode() != ISD::ZERO_EXTEND_VECTOR_INREG ||
-          InVT == MVT::v64i8) && "Zero extend only for v64i8 input!");
-
-  // SSE41 targets can use the pmovsx* instructions directly for 128-bit results,
+  // SSE41 targets can use the pmov[sz]x* instructions directly for 128-bit results,
   // so are legal and shouldn't occur here. AVX2/AVX512 pmovsx* instructions still
   // need to be handled here for 256/512-bit results.
   if (Subtarget.hasInt256()) {
