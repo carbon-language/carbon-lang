@@ -119,7 +119,7 @@ struct Instruction {
   bool hasAliasingRegisters() const;
 
   // Convenient function to help with debugging.
-  void Dump(const llvm::MCRegisterInfo &RegInfo,
+  void dump(const llvm::MCRegisterInfo &RegInfo,
             llvm::raw_ostream &Stream) const;
 
   const llvm::MCInstrDesc *Description; // Never nullptr.

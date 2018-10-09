@@ -184,7 +184,7 @@ bool Instruction::hasAliasingRegisters() const {
   return AllDefRegs.anyCommon(AllUseRegs);
 }
 
-void Instruction::Dump(const llvm::MCRegisterInfo &RegInfo,
+void Instruction::dump(const llvm::MCRegisterInfo &RegInfo,
                        llvm::raw_ostream &Stream) const {
   for (const auto &Op : Operands) {
     Stream << "- Op" << Op.getIndex();
