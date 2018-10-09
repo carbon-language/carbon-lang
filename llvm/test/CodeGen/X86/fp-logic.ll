@@ -311,8 +311,7 @@ define float @fsub_bitcast_fneg(float %x, float %y) {
 define float @nabsf(float %a) {
 ; CHECK-LABEL: nabsf:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; CHECK-NEXT:    orps %xmm1, %xmm0
+; CHECK-NEXT:    orps {{.*}}(%rip), %xmm0
 ; CHECK-NEXT:    retq
   %conv = bitcast float %a to i32
   %and = or i32 %conv, -2147483648
@@ -323,8 +322,7 @@ define float @nabsf(float %a) {
 define double @nabsd(double %a) {
 ; CHECK-LABEL: nabsd:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    movsd {{.*#+}} xmm1 = mem[0],zero
-; CHECK-NEXT:    orps %xmm1, %xmm0
+; CHECK-NEXT:    orps {{.*}}(%rip), %xmm0
 ; CHECK-NEXT:    retq
   %conv = bitcast double %a to i64
   %and = or i64 %conv, -9223372036854775808

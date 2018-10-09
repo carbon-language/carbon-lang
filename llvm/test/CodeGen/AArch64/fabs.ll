@@ -37,9 +37,8 @@ define float @still_not_fabs(float %x) #0 {
 define float @nabsf(float %a) {
 ; CHECK-LABEL: nabsf:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    fmov w8, s0
-; CHECK-NEXT:    orr w8, w8, #0x80000000
-; CHECK-NEXT:    fmov s0, w8
+; CHECK-NEXT:    fabs s0, s0
+; CHECK-NEXT:    fneg s0, s0
 ; CHECK-NEXT:    ret
   %conv = bitcast float %a to i32
   %and = or i32 %conv, -2147483648
@@ -50,9 +49,8 @@ define float @nabsf(float %a) {
 define double @nabsd(double %a) {
 ; CHECK-LABEL: nabsd:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    fmov x8, d0
-; CHECK-NEXT:    orr x8, x8, #0x8000000000000000
-; CHECK-NEXT:    fmov d0, x8
+; CHECK-NEXT:    fabs d0, d0
+; CHECK-NEXT:    fneg d0, d0
 ; CHECK-NEXT:    ret
   %conv = bitcast double %a to i64
   %and = or i64 %conv, -9223372036854775808
