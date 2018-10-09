@@ -18,9 +18,10 @@
 namespace exegesis {
 
 unsigned Variable::getIndex() const {
-  assert(Index >= 0);
+  assert(Index >= 0 && "Index must be set");
   return Index;
 }
+
 unsigned Variable::getPrimaryOperandIndex() const {
   assert(!TiedOperands.empty());
   return TiedOperands[0];

@@ -47,7 +47,7 @@ struct Variable {
   llvm::MCOperand AssignedValue;
   // The index of this Variable in Instruction.Variables and its associated
   // Value in InstructionBuilder.VariableValues.
-  unsigned Index = -1;
+  int Index = -1;
 };
 
 // MCOperandInfo can only represents Explicit operands. This object gives a
