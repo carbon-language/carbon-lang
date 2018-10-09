@@ -354,8 +354,8 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
       Earlier.Size == MemoryLocation::UnknownSize)
     return OW_Unknown;
 
-  const uint64_t LaterSize = Later.Size;
-  const uint64_t EarlierSize = Earlier.Size;
+  const uint64_t LaterSize = Later.Size.getValue();
+  const uint64_t EarlierSize = Earlier.Size.getValue();
 
   const Value *P1 = Earlier.Ptr->stripPointerCasts();
   const Value *P2 = Later.Ptr->stripPointerCasts();
@@ -1004,11 +1004,10 @@ static bool removePartiallyOverlappedStores(AliasAnalysis *AA,
     Instruction *EarlierWrite = OI.first;
     MemoryLocation Loc = getLocForWrite(EarlierWrite);
     assert(isRemovable(EarlierWrite) && "Expect only removable instruction");
-    assert(Loc.Size != MemoryLocation::UnknownSize && "Unexpected mem loc");
 
     const Value *Ptr = Loc.Ptr->stripPointerCasts();
     int64_t EarlierStart = 0;
-    int64_t EarlierSize = int64_t(Loc.Size);
+    int64_t EarlierSize = int64_t(Loc.Size.getValue());
     GetPointerBaseWithConstantOffset(Ptr, EarlierStart, DL);
     OverlapIntervalsTy &IntervalMap = OI.second;
     Changed |=
@@ -1205,8 +1204,9 @@ static bool eliminateDeadStores(BasicBlock &BB, AliasAnalysis *AA,
           assert(!EnablePartialOverwriteTracking && "Do not expect to perform "
                                                     "when partial-overwrite "
                                                     "tracking is enabled");
-          int64_t EarlierSize = DepLoc.Size;
-          int64_t LaterSize = Loc.Size;
+          // The overwrite result is known, so these must be known, too.
+          int64_t EarlierSize = DepLoc.Size.getValue();
+          int64_t LaterSize = Loc.Size.getValue();
           bool IsOverwriteEnd = (OR == OW_End);
           MadeChange |= tryToShorten(DepWrite, DepWriteOffset, EarlierSize,
                                     InstWriteOffset, LaterSize, IsOverwriteEnd);

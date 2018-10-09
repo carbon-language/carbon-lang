@@ -561,8 +561,8 @@ bool CFLAndersAAResult::FunctionInfo::mayAlias(
           MaybeRHSSize == MemoryLocation::UnknownSize)
         return true;
 
-      const uint64_t LHSSize = MaybeLHSSize;
-      const uint64_t RHSSize = MaybeRHSSize;
+      const uint64_t LHSSize = MaybeLHSSize.getValue();
+      const uint64_t RHSSize = MaybeRHSSize.getValue();
 
       for (const auto &OVal : make_range(RangePair)) {
         // Be conservative about UnknownOffset
