@@ -121,7 +121,8 @@ static Error readGSIHashRecords(FixedStreamArray<PSHashRecord> &HashRecords,
 
 static Error
 readGSIHashBuckets(FixedStreamArray<support::ulittle32_t> &HashBuckets,
-                   ArrayRef<uint32_t> &HashBitmap, const GSIHashHeader *HashHdr,
+                   FixedStreamArray<support::ulittle32_t> &HashBitmap,
+                   const GSIHashHeader *HashHdr,
                    MutableArrayRef<int32_t> BucketMap,
                    BinaryStreamReader &Reader) {
   if (auto EC = checkHashHdrVersion(HashHdr))
