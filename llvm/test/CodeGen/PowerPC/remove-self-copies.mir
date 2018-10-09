@@ -1,4 +1,4 @@
-# RUN: llc -start-before ppc-pre-emit-peephole \
+# RUN: llc -mtriple=powerpc64le-unknown-unknown -start-before ppc-pre-emit-peephole \
 # RUN:   -verify-machineinstrs -ppc-asm-full-reg-names %s -o - | FileCheck %s
 --- |
   ; ModuleID = 't.ll'
