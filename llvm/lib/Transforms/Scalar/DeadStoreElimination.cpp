@@ -354,6 +354,9 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
       Earlier.Size == MemoryLocation::UnknownSize)
     return OW_Unknown;
 
+  const uint64_t LaterSize = Later.Size;
+  const uint64_t EarlierSize = Earlier.Size;
+
   const Value *P1 = Earlier.Ptr->stripPointerCasts();
   const Value *P2 = Later.Ptr->stripPointerCasts();
 
@@ -361,7 +364,7 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   // the later store was larger than the earlier store.
   if (P1 == P2 || AA.isMustAlias(P1, P2)) {
     // Make sure that the Later size is >= the Earlier size.
-    if (Later.Size >= Earlier.Size)
+    if (LaterSize >= EarlierSize)
       return OW_Complete;
   }
 
@@ -379,7 +382,7 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   // If the "Later" store is to a recognizable object, get its size.
   uint64_t ObjectSize = getPointerSize(UO2, DL, TLI, F);
   if (ObjectSize != MemoryLocation::UnknownSize)
-    if (ObjectSize == Later.Size && ObjectSize >= Earlier.Size)
+    if (ObjectSize == LaterSize && ObjectSize >= EarlierSize)
       return OW_Complete;
 
   // Okay, we have stores to two completely different pointers.  Try to
@@ -410,8 +413,8 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   //
   // We have to be careful here as *Off is signed while *.Size is unsigned.
   if (EarlierOff >= LaterOff &&
-      Later.Size >= Earlier.Size &&
-      uint64_t(EarlierOff - LaterOff) + Earlier.Size <= Later.Size)
+      LaterSize >= EarlierSize &&
+      uint64_t(EarlierOff - LaterOff) + EarlierSize <= LaterSize)
     return OW_Complete;
 
   // We may now overlap, although the overlap is not complete. There might also
@@ -420,21 +423,21 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   // Note: The correctness of this logic depends on the fact that this function
   // is not even called providing DepWrite when there are any intervening reads.
   if (EnablePartialOverwriteTracking &&
-      LaterOff < int64_t(EarlierOff + Earlier.Size) &&
-      int64_t(LaterOff + Later.Size) >= EarlierOff) {
+      LaterOff < int64_t(EarlierOff + EarlierSize) &&
+      int64_t(LaterOff + LaterSize) >= EarlierOff) {
 
     // Insert our part of the overlap into the map.
     auto &IM = IOL[DepWrite];
     LLVM_DEBUG(dbgs() << "DSE: Partial overwrite: Earlier [" << EarlierOff
-                      << ", " << int64_t(EarlierOff + Earlier.Size)
+                      << ", " << int64_t(EarlierOff + EarlierSize)
                       << ") Later [" << LaterOff << ", "
-                      << int64_t(LaterOff + Later.Size) << ")\n");
+                      << int64_t(LaterOff + LaterSize) << ")\n");
 
     // Make sure that we only insert non-overlapping intervals and combine
     // adjacent intervals. The intervals are stored in the map with the ending
     // offset as the key (in the half-open sense) and the starting offset as
     // the value.
-    int64_t LaterIntStart = LaterOff, LaterIntEnd = LaterOff + Later.Size;
+    int64_t LaterIntStart = LaterOff, LaterIntEnd = LaterOff + LaterSize;
 
     // Find any intervals ending at, or after, LaterIntStart which start
     // before LaterIntEnd.
@@ -464,10 +467,10 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
 
     ILI = IM.begin();
     if (ILI->second <= EarlierOff &&
-        ILI->first >= int64_t(EarlierOff + Earlier.Size)) {
+        ILI->first >= int64_t(EarlierOff + EarlierSize)) {
       LLVM_DEBUG(dbgs() << "DSE: Full overwrite from partials: Earlier ["
                         << EarlierOff << ", "
-                        << int64_t(EarlierOff + Earlier.Size)
+                        << int64_t(EarlierOff + EarlierSize)
                         << ") Composite Later [" << ILI->second << ", "
                         << ILI->first << ")\n");
       ++NumCompletePartials;
@@ -478,13 +481,13 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   // Check for an earlier store which writes to all the memory locations that
   // the later store writes to.
   if (EnablePartialStoreMerging && LaterOff >= EarlierOff &&
-      int64_t(EarlierOff + Earlier.Size) > LaterOff &&
-      uint64_t(LaterOff - EarlierOff) + Later.Size <= Earlier.Size) {
+      int64_t(EarlierOff + EarlierSize) > LaterOff &&
+      uint64_t(LaterOff - EarlierOff) + LaterSize <= EarlierSize) {
     LLVM_DEBUG(dbgs() << "DSE: Partial overwrite an earlier load ["
                       << EarlierOff << ", "
-                      << int64_t(EarlierOff + Earlier.Size)
+                      << int64_t(EarlierOff + EarlierSize)
                       << ") by a later store [" << LaterOff << ", "
-                      << int64_t(LaterOff + Later.Size) << ")\n");
+                      << int64_t(LaterOff + LaterSize) << ")\n");
     // TODO: Maybe come up with a better name?
     return OW_PartialEarlierWithFullLater;
   }
@@ -498,8 +501,8 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   // In this case we may want to trim the size of earlier to avoid generating
   // writes to addresses which will definitely be overwritten later
   if (!EnablePartialOverwriteTracking &&
-      (LaterOff > EarlierOff && LaterOff < int64_t(EarlierOff + Earlier.Size) &&
-       int64_t(LaterOff + Later.Size) >= int64_t(EarlierOff + Earlier.Size)))
+      (LaterOff > EarlierOff && LaterOff < int64_t(EarlierOff + EarlierSize) &&
+       int64_t(LaterOff + LaterSize) >= int64_t(EarlierOff + EarlierSize)))
     return OW_End;
 
   // Finally, we also need to check if the later store overwrites the beginning
@@ -512,9 +515,8 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   // of earlier to avoid generating writes to addresses which will definitely
   // be overwritten later.
   if (!EnablePartialOverwriteTracking &&
-      (LaterOff <= EarlierOff && int64_t(LaterOff + Later.Size) > EarlierOff)) {
-    assert(int64_t(LaterOff + Later.Size) <
-               int64_t(EarlierOff + Earlier.Size) &&
+      (LaterOff <= EarlierOff && int64_t(LaterOff + LaterSize) > EarlierOff)) {
+    assert(int64_t(LaterOff + LaterSize) < int64_t(EarlierOff + EarlierSize) &&
            "Expect to be handled as OW_Complete");
     return OW_Begin;
   }
