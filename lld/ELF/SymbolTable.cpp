@@ -234,11 +234,10 @@ std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name, uint8_t Type,
   if (!File || File->kind() == InputFile::ObjKind)
     S->IsUsedInRegularObj = true;
 
-  if (!WasInserted && S->Type != Symbol::UnknownType &&
-      ((Type == STT_TLS) != S->isTls())) {
+  bool HasTlsAttr = !WasInserted && (!S->isLazy() || S->isTls());
+  if (HasTlsAttr && (Type == STT_TLS) != S->isTls())
     error("TLS attribute mismatch: " + toString(*S) + "\n>>> defined in " +
           toString(S->File) + "\n>>> defined in " + toString(File));
-  }
 
   return {S, WasInserted};
 }
@@ -566,7 +565,7 @@ void SymbolTable::addLazyArchive(StringRef Name, ArchiveFile &File,
   bool WasInserted;
   std::tie(S, WasInserted) = Symtab->insert(Name);
   if (WasInserted) {
-    replaceSymbol<LazyArchive>(S, File, Symbol::UnknownType, Sym);
+    replaceSymbol<LazyArchive>(S, File, STT_NOTYPE, Sym);
     return;
   }
   if (!S->isUndefined())
@@ -590,7 +589,7 @@ void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &File) {
   bool WasInserted;
   std::tie(S, WasInserted) = Symtab->insert(Name);
   if (WasInserted) {
-    replaceSymbol<LazyObject>(S, File, Symbol::UnknownType, Name);
+    replaceSymbol<LazyObject>(S, File, STT_NOTYPE, Name);
     return;
   }
   if (!S->isUndefined())
