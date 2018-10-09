@@ -31,7 +31,7 @@ public:
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
   template<typename T> bool Pre(const parser::Statement<T> &statement) {
-    charBlock_ = statement.source;
+    currentStatementSourcePosition_ = statement.source;
     if (statement.label.has_value()) {
       labels_.insert(*statement.label);
     }
@@ -39,11 +39,12 @@ public:
   }
   // C1136
   void Post(const parser::ReturnStmt &) {
-    messages_.Say(charBlock_, "RETURN not allowed in DO CONCURRENT"_err_en_US);
+    messages_.Say(currentStatementSourcePosition_,
+        "RETURN not allowed in DO CONCURRENT"_err_en_US);
   }
   // C1137
   void NoImageControl() {
-    messages_.Say(charBlock_,
+    messages_.Say(currentStatementSourcePosition_,
         "image control statement not allowed in DO CONCURRENT"_err_en_US);
   }
   void Post(const parser::SyncAllStmt &) { NoImageControl(); }
@@ -62,25 +63,25 @@ public:
 
   void Post(const parser::AllocateStmt &) {
     if (anyObjectIsCoarray()) {
-      messages_.Say(charBlock_,
+      messages_.Say(currentStatementSourcePosition_,
           "ALLOCATE coarray not allowed in DO CONCURRENT"_err_en_US);
     }
   }
   void Post(const parser::DeallocateStmt &) {
     if (anyObjectIsCoarray()) {
-      messages_.Say(charBlock_,
+      messages_.Say(currentStatementSourcePosition_,
           "DEALLOCATE coarray not allowed in DO CONCURRENT"_err_en_US);
     }
     // C1140: deallocation of polymorphic objects
     if (anyObjectIsPolymorphic()) {
-      messages_.Say(charBlock_,
+      messages_.Say(currentStatementSourcePosition_,
           "DEALLOCATE polymorphic object(s) not allowed"
           " in DO CONCURRENT"_err_en_US);
     }
   }
   template<typename T> void Post(const parser::Statement<T> &) {
     if (EndTDeallocatesCoarray()) {
-      messages_.Say(charBlock_,
+      messages_.Say(currentStatementSourcePosition_,
           "implicit deallocation of coarray not allowed"
           " in DO CONCURRENT"_err_en_US);
     }
@@ -91,25 +92,25 @@ public:
       // C1137: call move_alloc with coarray arguments
       if (name->ToString() == "move_alloc"s) {
         if (anyObjectIsCoarray()) {
-          messages_.Say(charBlock_,
+          messages_.Say(currentStatementSourcePosition_,
               "call to MOVE_ALLOC intrinsic in DO CONCURRENT with coarray"
               " argument(s) not allowed"_err_en_US);
         }
       }
       // C1139: call to impure procedure
       if (name->symbol && !isPure(name->symbol->attrs())) {
-        messages_.Say(charBlock_,
+        messages_.Say(currentStatementSourcePosition_,
             "call to impure subroutine in DO CONCURRENT not allowed"_err_en_US);
       }
       if (name->symbol && fromScope(*name->symbol, "ieee_exceptions"s)) {
         if (name->ToString() == "ieee_get_flag"s) {
-          messages_.Say(charBlock_,
+          messages_.Say(currentStatementSourcePosition_,
               "IEEE_GET_FLAG not allowed in DO CONCURRENT"_err_en_US);
         } else if (name->ToString() == "ieee_set_halting_mode"s) {
-          messages_.Say(charBlock_,
+          messages_.Say(currentStatementSourcePosition_,
               "IEEE_SET_HALTING_MODE not allowed in DO CONCURRENT"_err_en_US);
         } else if (name->ToString() == "ieee_get_halting_mode"s) {
-          messages_.Say(charBlock_,
+          messages_.Say(currentStatementSourcePosition_,
               "IEEE_GET_HALTING_MODE not allowed in DO CONCURRENT"_err_en_US);
         }
       }
@@ -118,7 +119,7 @@ public:
       auto &component{std::get<parser::ProcComponentRef>(procedureDesignator.u)
                           .v.thing.component};
       if (component.symbol && !isPure(component.symbol->attrs())) {
-        messages_.Say(charBlock_,
+        messages_.Say(currentStatementSourcePosition_,
             "call to impure subroutine in DO CONCURRENT not allowed"_err_en_US);
       }
     }
@@ -130,16 +131,16 @@ public:
             std::get_if<parser::IoControlSpec::CharExpr>(&ioControlSpec.u)}) {
       if (std::get<parser::IoControlSpec::CharExpr::Kind>(charExpr->t) ==
           parser::IoControlSpec::CharExpr::Kind::Advance) {
-        messages_.Say(charBlock_,
+        messages_.Say(currentStatementSourcePosition_,
             "ADVANCE specifier not allowed in DO CONCURRENT"_err_en_US);
       }
     }
   }
 
 private:
-  bool anyObjectIsCoarray() { return false; }  // placeholder
-  bool anyObjectIsPolymorphic() { return false; }  // placeholder
-  bool EndTDeallocatesCoarray() { return false; }  // placeholder
+  bool anyObjectIsCoarray() { return false; }  // FIXME placeholder
+  bool anyObjectIsPolymorphic() { return false; }  // FIXME placeholder
+  bool EndTDeallocatesCoarray() { return false; }  // FIXME placeholder
   bool isPure(Attrs &attrs) {
     return attrs.test(Attr::PURE) ||
         (attrs.test(Attr::ELEMENTAL) && !attrs.test(Attr::IMPURE));
@@ -154,7 +155,7 @@ private:
   }
 
   std::set<parser::Label> labels_;
-  parser::CharBlock charBlock_;
+  parser::CharBlock currentStatementSourcePosition_;
   parser::Messages &messages_;
 };
 
@@ -165,7 +166,7 @@ public:
     : messages_{messages}, labels_{labels} {}
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> bool Pre(const parser::Statement<T> &statement) {
-    charBlock_ = statement.source;
+    currentStatementSourcePosition_ = statement.source;
     return true;
   }
   template<typename T> void Post(const T &) {}
@@ -198,15 +199,15 @@ public:
   void Post(const parser::EorLabel &eorLabel) { checkLabelUse(eorLabel.v); }
   void checkLabelUse(const parser::Label &labelUsed) {
     if (labels_.find(labelUsed) == labels_.end()) {
-      messages_.Say(
-          charBlock_, "control flow escapes from DO CONCURRENT"_err_en_US);
+      messages_.Say(currentStatementSourcePosition_,
+          "control flow escapes from DO CONCURRENT"_err_en_US);
     }
   }
 
 private:
   parser::Messages &messages_;
   std::set<parser::Label> labels_;
-  parser::CharBlock charBlock_{nullptr};
+  parser::CharBlock currentStatementSourcePosition_{nullptr};
 };
 
 // Find a canonical DO CONCURRENT and enforce semantics checks on its body
