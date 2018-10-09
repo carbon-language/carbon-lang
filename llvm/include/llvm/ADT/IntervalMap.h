@@ -964,7 +964,7 @@ public:
 
 private:
   // The root data is either a RootLeaf or a RootBranchData instance.
-  AlignedCharArrayUnion<RootLeaf, RootBranchData> data;
+  LLVM_ALIGNAS(RootLeaf) AlignedCharArrayUnion<RootLeaf, RootBranchData> data;
 
   // Tree height.
   // 0: Leaves in root.
