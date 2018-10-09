@@ -154,9 +154,9 @@ void SymbolTable::trace(StringRef Name) {
 
 void SymbolTable::wrap(Symbol *Sym, Symbol *Real, Symbol *Wrap) {
   // Swap symbols as instructed by -wrap.
-  int &Idx1 = Symtab->SymMap[CachedHashStringRef(Sym->getName())];
-  int &Idx2 = Symtab->SymMap[CachedHashStringRef(Real->getName())];
-  int &Idx3 = Symtab->SymMap[CachedHashStringRef(Wrap->getName())];
+  int &Idx1 = SymMap[CachedHashStringRef(Sym->getName())];
+  int &Idx2 = SymMap[CachedHashStringRef(Real->getName())];
+  int &Idx3 = SymMap[CachedHashStringRef(Wrap->getName())];
 
   Idx2 = Idx1;
   Idx1 = Idx3;
@@ -563,7 +563,7 @@ void SymbolTable::addLazyArchive(StringRef Name, ArchiveFile &File,
                                  const object::Archive::Symbol Sym) {
   Symbol *S;
   bool WasInserted;
-  std::tie(S, WasInserted) = Symtab->insert(Name);
+  std::tie(S, WasInserted) = insert(Name);
   if (WasInserted) {
     replaceSymbol<LazyArchive>(S, File, STT_NOTYPE, Sym);
     return;
@@ -580,14 +580,14 @@ void SymbolTable::addLazyArchive(StringRef Name, ArchiveFile &File,
   }
 
   if (InputFile *F = File.fetch(Sym))
-    Symtab->addFile<ELFT>(F);
+    addFile<ELFT>(F);
 }
 
 template <class ELFT>
 void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &File) {
   Symbol *S;
   bool WasInserted;
-  std::tie(S, WasInserted) = Symtab->insert(Name);
+  std::tie(S, WasInserted) = insert(Name);
   if (WasInserted) {
     replaceSymbol<LazyObject>(S, File, STT_NOTYPE, Name);
     return;
@@ -604,7 +604,7 @@ void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &File) {
   }
 
   if (InputFile *F = File.fetch())
-    Symtab->addFile<ELFT>(F);
+    addFile<ELFT>(F);
 }
 
 template <class ELFT> void SymbolTable::fetchLazy(Symbol *Sym) {
