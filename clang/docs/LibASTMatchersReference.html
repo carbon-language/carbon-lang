@@ -144,6 +144,23 @@ Example matches Z
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('classTemplatePartialSpecializationDecl0')"><a name="classTemplatePartialSpecializationDecl0Anchor">classTemplatePartialSpecializationDecl</a></td><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1ClassTemplatePartialSpecializationDecl.html">ClassTemplatePartialSpecializationDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="classTemplatePartialSpecializationDecl0"><pre>Matches C++ class template partial specializations.
+
+Given
+  template&lt;class T1, class T2, int I&gt;
+  class A {};
+
+  template&lt;class T, int I&gt;
+  class A&lt;T, T*, I&gt; {};
+
+  template&lt;&gt;
+  class A&lt;int, int, 1&gt; {};
+classTemplatePartialSpecializationDecl()
+  matches the specialization A&lt;T,T*,I&gt; but not A&lt;int,int,1&gt;
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('classTemplateSpecializationDecl0')"><a name="classTemplateSpecializationDecl0Anchor">classTemplateSpecializationDecl</a></td><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1ClassTemplateSpecializationDecl.html">ClassTemplateSpecializationDecl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="classTemplateSpecializationDecl0"><pre>Matches C++ class template specializations.
 
@@ -1165,6 +1182,12 @@ Example matches 'if (x) {}'
 </pre></td></tr>
 
 
+<tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('imaginaryLiteral0')"><a name="imaginaryLiteral0Anchor">imaginaryLiteral</a></td><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1ImaginaryLiteral.html">ImaginaryLiteral</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="imaginaryLiteral0"><pre>Matches imaginary literals, which are based on integer and floating
+point literals e.g.: 1i, 1.0i
+</pre></td></tr>
+
+
 <tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('implicitCastExpr0')"><a name="implicitCastExpr0Anchor">implicitCastExpr</a></td><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1ImplicitCastExpr.html">ImplicitCastExpr</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="implicitCastExpr0"><pre>Matches the implicit cast nodes of Clang's AST.
 
@@ -1287,7 +1310,6 @@ Example: matches "a" in "init" method:
 }
 - (void) init {
   a = @"hello";
-}
 }
 </pre></td></tr>
 
@@ -5152,11 +5174,11 @@ functionDecl(hasAnyTemplateArgument(refersToType(asString("int"))))
 <tr><td colspan="4" class="doc" id="hasSpecializedTemplate0"><pre>Matches the specialized template of a specialization declaration.
 
 Given
-  tempalate&lt;typename T&gt; class A {};
-  typedef A&lt;int&gt; B;
+  template&lt;typename T&gt; class A {}; #1
+  template&lt;&gt; class A&lt;int&gt; {}; #2
 classTemplateSpecializationDecl(hasSpecializedTemplate(classTemplateDecl()))
-  matches 'B' with classTemplateDecl() matching the class template
-  declaration of 'A'.
+  matches '#2' with classTemplateDecl() matching the class template
+  declaration of 'A' at #1.
 </pre></td></tr>
 
 
@@ -5353,7 +5375,7 @@ Given
   decltype(1) a = 1;
   decltype(2.0) b = 2.0;
 decltypeType(hasUnderlyingType(isInteger()))
-  matches "auto a"
+  matches the type of "a"
 
 Usable as: Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1DecltypeType.html">DecltypeType</a>&gt;
 </pre></td></tr>
@@ -6580,7 +6602,7 @@ classTemplateSpecializationDecl(
 
 Given
   template&lt;template &lt;typename&gt; class S&gt; class X {};
-  template&lt;typename T&gt; class Y {};"
+  template&lt;typename T&gt; class Y {};
   X&lt;Y&gt; xi;
 classTemplateSpecializationDecl(hasAnyTemplateArgument(
     refersToTemplate(templateName())))
