@@ -424,8 +424,9 @@ bool X86CondBrFolding::optimize() {
   }
   NumFixedCondBrs += RemoveList.size();
   for (auto MBBI : RemoveList) {
-    for (auto *Succ : MBBI->successors())
-      MBBI->removeSuccessor(Succ);
+    while (!MBBI->succ_empty())
+      MBBI->removeSuccessor(MBBI->succ_end() - 1);
+
     MBBI->eraseFromParent();
   }
 
