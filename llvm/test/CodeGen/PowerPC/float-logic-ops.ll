@@ -124,3 +124,67 @@ entry:
   %conv1 = bitcast <2 x i64> %and to <2 x double>
   ret <2 x double> %conv1
 }
+define float @nabsf(float %a) {
+; CHECK-LABEL: nabsf:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    xscvdpspn vs0, f1
+; CHECK-NEXT:    xxsldwi vs0, vs0, vs0, 3
+; CHECK-NEXT:    mfvsrwz r3, f0
+; CHECK-NEXT:    oris r3, r3, 32768
+; CHECK-NEXT:    mtvsrd f0, r3
+; CHECK-NEXT:    xxsldwi vs0, vs0, vs0, 1
+; CHECK-NEXT:    xscvspdpn f1, vs0
+; CHECK-NEXT:    blr
+entry:
+  %conv = bitcast float %a to i32
+  %and = or i32 %conv, -2147483648
+  %conv1 = bitcast i32 %and to float
+  ret float %conv1
+}
+
+define double @nabsd(double %a) {
+; CHECK-LABEL: nabsd:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    li r3, 1
+; CHECK-NEXT:    mffprd r4, f1
+; CHECK-NEXT:    sldi r3, r3, 63
+; CHECK-NEXT:    or r3, r4, r3
+; CHECK-NEXT:    mtvsrd f1, r3
+; CHECK-NEXT:    blr
+entry:
+  %conv = bitcast double %a to i64
+  %and = or i64 %conv, -9223372036854775808
+  %conv1 = bitcast i64 %and to double
+  ret double %conv1
+}
+
+define <4 x float> @nabsv4f32(<4 x float> %a) {
+; CHECK-LABEL: nabsv4f32:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    vspltisb v3, -1
+; CHECK-NEXT:    vslw v3, v3, v3
+; CHECK-NEXT:    xxlor vs34, vs34, vs35
+; CHECK-NEXT:    blr
+entry:
+  %conv = bitcast <4 x float> %a to <4 x i32>
+  %and = or <4 x i32> %conv, <i32 -2147483648, i32 -2147483648, i32 -2147483648, i32 -2147483648>
+  %conv1 = bitcast <4 x i32> %and to <4 x float>
+  ret <4 x float> %conv1
+}
+
+define <2 x double> @nabsv2d64(<2 x double> %a) {
+; CHECK-LABEL: nabsv2d64:
+; CHECK:       # %bb.0: # %entry
+; CHECK-NEXT:    addis r3, r2, .LCPI13_0@toc@ha
+; CHECK-NEXT:    addi r3, r3, .LCPI13_0@toc@l
+; CHECK-NEXT:    lxvd2x vs0, 0, r3
+; CHECK-NEXT:    xxswapd vs35, vs0
+; CHECK-NEXT:    xxlor vs34, vs34, vs35
+; CHECK-NEXT:    blr
+entry:
+  %conv = bitcast <2 x double> %a to <2 x i64>
+  %and = or <2 x i64> %conv, <i64 -9223372036854775808, i64 -9223372036854775808>
+  %conv1 = bitcast <2 x i64> %and to <2 x double>
+  ret <2 x double> %conv1
+}
+
