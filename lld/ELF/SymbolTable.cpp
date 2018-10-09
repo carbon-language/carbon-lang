@@ -559,18 +559,14 @@ Symbol *SymbolTable::find(StringRef Name) {
   return SymVector[It->second];
 }
 
-// This is used to handle lazy symbols. May replace existent
-// symbol with lazy version or request to Fetch it.
-template <class ELFT, typename LazyT, typename... ArgT>
-static void replaceOrFetchLazy(StringRef Name, InputFile &File,
-                               llvm::function_ref<InputFile *()> Fetch,
-                               ArgT &&... Arg) {
+template <class ELFT>
+void SymbolTable::addLazyArchive(StringRef Name, ArchiveFile &File,
+                                 const object::Archive::Symbol Sym) {
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) = Symtab->insert(Name);
   if (WasInserted) {
-    replaceSymbol<LazyT>(S, File, Symbol::UnknownType,
-                         std::forward<ArgT>(Arg)...);
+    replaceSymbol<LazyArchive>(S, File, Symbol::UnknownType, Sym);
     return;
   }
   if (!S->isUndefined())
@@ -579,26 +575,37 @@ static void replaceOrFetchLazy(StringRef Name, InputFile &File,
   // An undefined weak will not fetch archive members. See comment on Lazy in
   // Symbols.h for the details.
   if (S->isWeak()) {
-    replaceSymbol<LazyT>(S, File, S->Type, std::forward<ArgT>(Arg)...);
+    replaceSymbol<LazyArchive>(S, File, S->Type, Sym);
     S->Binding = STB_WEAK;
     return;
   }
 
-  if (InputFile *F = Fetch())
+  if (InputFile *F = File.fetch(Sym))
     Symtab->addFile<ELFT>(F);
 }
 
 template <class ELFT>
-void SymbolTable::addLazyArchive(StringRef Name, ArchiveFile &F,
-                                 const object::Archive::Symbol Sym) {
-  replaceOrFetchLazy<ELFT, LazyArchive>(Name, F, [&]() { return F.fetch(Sym); },
-                                        Sym);
-}
+void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &File) {
+  Symbol *S;
+  bool WasInserted;
+  std::tie(S, WasInserted) = Symtab->insert(Name);
+  if (WasInserted) {
+    replaceSymbol<LazyObject>(S, File, Symbol::UnknownType, Name);
+    return;
+  }
+  if (!S->isUndefined())
+    return;
 
-template <class ELFT>
-void SymbolTable::addLazyObject(StringRef Name, LazyObjFile &Obj) {
-  replaceOrFetchLazy<ELFT, LazyObject>(Name, Obj, [&]() { return Obj.fetch(); },
-                                       Name);
+  // An undefined weak will not fetch archive members. See comment on Lazy in
+  // Symbols.h for the details.
+  if (S->isWeak()) {
+    replaceSymbol<LazyObject>(S, File, S->Type, Name);
+    S->Binding = STB_WEAK;
+    return;
+  }
+
+  if (InputFile *F = File.fetch())
+    Symtab->addFile<ELFT>(F);
 }
 
 template <class ELFT> void SymbolTable::fetchLazy(Symbol *Sym) {
