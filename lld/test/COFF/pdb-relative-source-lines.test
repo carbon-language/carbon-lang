@@ -32,7 +32,7 @@ RUN: cd %t
 
 RUN: yaml2obj %S/Inputs/pdb_lines_1_relative.yaml -o %t/pdb_lines_1_relative.obj
 RUN: yaml2obj %S/Inputs/pdb_lines_2_relative.yaml -o %t/pdb_lines_2_relative.obj
-RUN: ./lld-link -debug -pdbsourcepath:c:\\src -entry:main -nodefaultlib -out:out.exe -pdb:out.pdb pdb_lines_1_relative.obj pdb_lines_2_relative.obj
+RUN: ./lld-link -debug "-pdbsourcepath:c:\src" -entry:main -nodefaultlib -out:out.exe -pdb:out.pdb pdb_lines_1_relative.obj pdb_lines_2_relative.obj
 RUN: llvm-pdbutil pdb2yaml -modules -module-files -module-syms -subsections=lines,fc %t/out.pdb | FileCheck %s
 
 CHECK-LABEL:  - Module:          'c:\src\pdb_lines_1_relative.obj'
