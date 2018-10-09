@@ -171,7 +171,7 @@ bool Instruction::hasAliasingImplicitRegisters() const {
 
 bool Instruction::hasTiedRegisters() const {
   return llvm::any_of(
-      Variables, [this](const Variable &Var) { return Var.hasTiedOperands(); });
+      Variables, [](const Variable &Var) { return Var.hasTiedOperands(); });
 }
 
 bool Instruction::hasAliasingRegisters() const {
