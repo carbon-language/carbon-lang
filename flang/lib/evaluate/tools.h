@@ -96,7 +96,7 @@ Expr<SomeComplex> MakeComplex(Expr<Type<TypeCategory::Real, KIND>> &&re,
 
 template<typename TO, TypeCategory FROMCAT>
 Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
-  static_assert(TO::isSpecificType);
+  static_assert(TO::isSpecificIntrinsicType);
   if constexpr (FROMCAT != TO::category) {
     if constexpr (TO::category == TypeCategory::Complex) {
       using Part = typename TO::Part;
@@ -134,7 +134,7 @@ Expr<TO> ConvertToType(Expr<SomeKind<FROMCAT>> &&x) {
 }
 
 template<typename TO> Expr<TO> ConvertToType(BOZLiteralConstant &&x) {
-  static_assert(TO::isSpecificType);
+  static_assert(TO::isSpecificIntrinsicType);
   using Value = typename Constant<TO>::Value;
   if constexpr (TO::category == TypeCategory::Integer) {
     return Expr<TO>{Constant<TO>{Value::ConvertUnsigned(std::move(x)).value}};
@@ -290,7 +290,7 @@ template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
 // for COMPLEX.
 template<template<typename> class OPR, typename SPECIFIC>
 Expr<SPECIFIC> Combine(Expr<SPECIFIC> &&x, Expr<SPECIFIC> &&y) {
-  static_assert(SPECIFIC::isSpecificType);
+  static_assert(SPECIFIC::isSpecificIntrinsicType);
   if constexpr (SPECIFIC::category == TypeCategory::Complex &&
       (std::is_same_v<OPR<DefaultReal>, Add<DefaultReal>> ||
           std::is_same_v<OPR<DefaultReal>, Subtract<DefaultReal>>)) {

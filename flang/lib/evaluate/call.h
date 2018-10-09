@@ -35,8 +35,7 @@ struct ActualArgument {
   std::optional<parser::CharBlock> keyword;
   bool isAssumedRank{false};
   bool isAlternateReturn{false};
-  std::optional<int> vectorSize;  // TODO: pmk replace with function on value
-  std::optional<int> intValue;  // TODO: pmk replace with function on value
+  std::optional<int> vectorSize;  // TODO
   CopyableIndirection<Expr<SomeType>> value;
 };
 

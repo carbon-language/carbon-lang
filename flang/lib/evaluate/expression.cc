@@ -56,7 +56,7 @@ template<typename RESULT>
 auto ExpressionBase<RESULT>::Fold(FoldingContext &context)
     -> std::optional<Constant<Result>> {
   using Const = Constant<Result>;
-  if constexpr (Result::isSpecificType) {
+  if constexpr (Result::isSpecificIntrinsicType) {
     // Folding an expression of known type category and kind.
     return std::visit(
         [&](auto &x) -> std::optional<Const> {
@@ -97,7 +97,7 @@ auto ExpressionBase<RESULT>::Fold(FoldingContext &context)
         [&](auto &x) -> std::optional<Const> {
           if constexpr (IsFoldableTrait<std::decay_t<decltype(x)>>) {
             if (auto c{x.Fold(context)}) {
-              if constexpr (ResultType<decltype(*c)>::isSpecificType) {
+              if constexpr (ResultType<decltype(*c)>::isSpecificIntrinsicType) {
                 return {Const{c->value}};
               } else {
                 return {Const{common::MoveVariant<GenericScalar>(c->value.u)}};
@@ -500,7 +500,7 @@ Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
 template<typename RESULT>
 auto ExpressionBase<RESULT>::ScalarValue() const
     -> std::optional<Scalar<Result>> {
-  if constexpr (Result::isSpecificType) {
+  if constexpr (Result::isSpecificIntrinsicType) {
     if (auto *c{std::get_if<Constant<Result>>(&derived().u)}) {
       return {c->value};
     }
@@ -541,12 +541,8 @@ Expr<SomeType>::~Expr() {}
 
 template<typename A>
 std::optional<DynamicType> ExpressionBase<A>::GetType() const {
-  if constexpr (Result::isSpecificType) {
-    if constexpr (Result::category == TypeCategory::Derived) {
-      return std::visit([](const auto &x) { return x.GetType(); }, derived().u);
-    } else {
-      return Result::GetType();
-    }
+  if constexpr (Result::isSpecificIntrinsicType) {
+    return Result::GetType();
   } else {
     return std::visit(
         [](const auto &x) -> std::optional<DynamicType> {

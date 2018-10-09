@@ -368,7 +368,7 @@ Expr<SomeLogical> LogicalNegation(Expr<SomeLogical> &&x) {
 template<typename T>
 Expr<LogicalResult> PackageRelation(
     RelationalOperator opr, Expr<T> &&x, Expr<T> &&y) {
-  static_assert(T::isSpecificType);
+  static_assert(T::isSpecificIntrinsicType);
   return Expr<LogicalResult>{
       Relational<SomeType>{Relational<T>{opr, std::move(x), std::move(y)}}};
 }

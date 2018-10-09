@@ -53,6 +53,8 @@ struct DynamicType {
     return EnumToString(category) + '(' + std::to_string(kind) + ')';
   }
 
+  DynamicType ResultTypeForMultiply(const DynamicType &) const;
+
   TypeCategory category;
   int kind{0};
   const semantics::DerivedTypeSpec *derived{nullptr};
@@ -65,7 +67,9 @@ std::optional<DynamicType> GetSymbolType(const semantics::Symbol &);
 template<TypeCategory CATEGORY, int KIND = 0> class Type;
 
 template<TypeCategory CATEGORY, int KIND> struct TypeBase {
-  static constexpr bool isSpecificType{true};
+  // Only types that represent a known kind of one of the five intrinsic
+  // data types will have set this flag to true.
+  static constexpr bool isSpecificIntrinsicType{true};
   static constexpr DynamicType dynamicType{CATEGORY, KIND};
   static constexpr std::optional<DynamicType> GetType() {
     return {dynamicType};
@@ -190,33 +194,39 @@ using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
 
+// A predicate that is true when a kind value is a kind that could possibly
+// be supported for an intrinsic type category on some target instruction
+// set architecture.
+static constexpr bool IsValidKindOfIntrinsicType(
+    TypeCategory category, std::int64_t kind) {
+  switch (category) {
+  case TypeCategory::Integer:
+    return kind == 1 || kind == 2 || kind == 4 || kind == 8 || kind == 16;
+  case TypeCategory::Real:
+  case TypeCategory::Complex:
+    return kind == 2 || kind == 4 || kind == 8 || kind == 10 || kind == 16;
+  case TypeCategory::Character:
+    return kind == 1;  // TODO: || kind == 2 || kind == 4;
+  case TypeCategory::Logical:
+    return kind == 1 || kind == 2 || kind == 4 || kind == 8;
+  default: return false;
+  }
+}
+
 // For each intrinsic type category CAT, CategoryTypes<CAT> is an instantiation
 // of std::tuple<Type<CAT, K>> that comprises every kind value K in that
 // category that could possibly be supported on any target.
-template<TypeCategory CATEGORY, int... KINDS>
-using CategoryTypesTuple = std::tuple<Type<CATEGORY, KINDS>...>;
+template<TypeCategory CATEGORY, int KIND>
+using CategoryKindTuple =
+    std::conditional_t<IsValidKindOfIntrinsicType(CATEGORY, KIND),
+        std::tuple<Type<CATEGORY, KIND>>, std::tuple<>>;
 
-template<TypeCategory CATEGORY> struct CategoryTypesHelper;
-template<> struct CategoryTypesHelper<TypeCategory::Integer> {
-  using type = CategoryTypesTuple<TypeCategory::Integer, 1, 2, 4, 8, 16>;
-};
-template<> struct CategoryTypesHelper<TypeCategory::Real> {
-  using type = CategoryTypesTuple<TypeCategory::Real, 2, 4, 8, 10, 16>;
-};
-template<> struct CategoryTypesHelper<TypeCategory::Complex> {
-  using type = CategoryTypesTuple<TypeCategory::Complex, 2, 4, 8, 10, 16>;
-};
-template<> struct CategoryTypesHelper<TypeCategory::Character> {
-  using type = CategoryTypesTuple<TypeCategory::Character, 1>;  // TODO: 2 & 4
-};
-template<> struct CategoryTypesHelper<TypeCategory::Logical> {
-  using type = CategoryTypesTuple<TypeCategory::Logical, 1, 2, 4, 8>;
-};
-template<> struct CategoryTypesHelper<TypeCategory::Derived> {
-  using type = std::tuple<>;
-};
+template<TypeCategory CATEGORY, int... KINDS>
+using CategoryTypesHelper =
+    common::CombineTuples<CategoryKindTuple<CATEGORY, KINDS>...>;
+
 template<TypeCategory CATEGORY>
-using CategoryTypes = typename CategoryTypesHelper<CATEGORY>::type;
+using CategoryTypes = CategoryTypesHelper<CATEGORY, 1, 2, 4, 8, 10, 16, 32>;
 
 using IntegerTypes = CategoryTypes<TypeCategory::Integer>;
 using RealTypes = CategoryTypes<TypeCategory::Real>;
@@ -312,14 +322,14 @@ using GenericScalar = SomeScalar<AllIntrinsicTypes>;
 
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CATEGORY> struct SomeKind {
-  static constexpr bool isSpecificType{false};
+  static constexpr bool isSpecificIntrinsicType{false};
   static constexpr TypeCategory category{CATEGORY};
   using Scalar = SomeKindScalar<category>;
 };
 
 template<> class SomeKind<TypeCategory::Derived> {
 public:
-  static constexpr bool isSpecificType{true};
+  static constexpr bool isSpecificIntrinsicType{true};
   static constexpr TypeCategory category{TypeCategory::Derived};
   using Scalar = void;
 
@@ -347,7 +357,7 @@ using SomeDerived = SomeKind<TypeCategory::Derived>;
 using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
     SomeCharacter, SomeLogical, SomeDerived>;
 struct SomeType {
-  static constexpr bool isSpecificType{false};
+  static constexpr bool isSpecificIntrinsicType{false};
   using Scalar = GenericScalar;
 };
 

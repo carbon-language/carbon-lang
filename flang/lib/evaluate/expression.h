@@ -79,7 +79,7 @@ template<typename T> struct Constant {
   Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
     : value(std::move(x)) {}
   constexpr std::optional<DynamicType> GetType() const {
-    if constexpr (Result::isSpecificType) {
+    if constexpr (Result::isSpecificIntrinsicType) {
       return Result::GetType();
     } else {
       return value.GetType();
@@ -115,8 +115,7 @@ class Operation {
 public:
   using Derived = DERIVED;
   using Result = RESULT;
-  static_assert(Result::isSpecificType);
-  static_assert(Result::category != TypeCategory::Derived);
+  static_assert(Result::isSpecificIntrinsicType);
   static constexpr std::size_t operands{sizeof...(OPERANDS)};
   template<int J> using Operand = std::tuple_element_t<J, OperandTypes>;
   using IsFoldableTrait = std::true_type;

@@ -76,6 +76,7 @@ enum class KindCode {
   effectiveKind,  // for function results: same "kindArg", possibly defaulted
   dimArg,  // this argument is DIM=
   same,  // match any kind; all "same" kinds must be equal
+  likeMultiply,  // for DOT_PRODUCT and MATMUL
 };
 
 struct TypePattern {
@@ -104,6 +105,7 @@ static constexpr TypePattern AnyNumeric{Numeric, KindCode::any};
 static constexpr TypePattern AnyChar{Char, KindCode::any};
 static constexpr TypePattern AnyLogical{Logical, KindCode::any};
 static constexpr TypePattern AnyRelatable{Relatable, KindCode::any};
+static constexpr TypePattern Anything{AnyType, KindCode::any};
 
 // Match some kind of some intrinsic type(s); all "Same" values must match,
 // even when not in the same category (e.g., SameComplex and SameReal).
@@ -122,6 +124,10 @@ static constexpr TypePattern SameIntrinsic{IntrinsicType, KindCode::same};
 static constexpr TypePattern SameDerivedType{
     CategorySet{TypeCategory::Derived}, KindCode::same};
 static constexpr TypePattern SameType{AnyType, KindCode::same};
+
+// For DOT_PRODUCT and MATMUL, the result type depends on the arguments
+static constexpr TypePattern ResultLogical{Logical, KindCode::likeMultiply};
+static constexpr TypePattern ResultNumeric{Numeric, KindCode::likeMultiply};
 
 // Result types with known category and KIND=
 static constexpr TypePattern KINDInt{Int, KindCode::effectiveKind};
@@ -214,9 +220,17 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"bessel_j0", {{"x", SameReal}}, SameReal},
     {"bessel_j1", {{"x", SameReal}}, SameReal},
     {"bessel_jn", {{"n", AnyInt}, {"x", SameReal}}, SameReal},
+    {"bessel_jn",
+        {{"n1", AnyInt, Rank::scalar}, {"n2", AnyInt, Rank::scalar},
+            {"x", SameReal, Rank::scalar}},
+        SameReal, Rank::vector},
     {"bessel_y0", {{"x", SameReal}}, SameReal},
     {"bessel_y1", {{"x", SameReal}}, SameReal},
     {"bessel_yn", {{"n", AnyInt}, {"x", SameReal}}, SameReal},
+    {"bessel_yn",
+        {{"n1", AnyInt, Rank::scalar}, {"n2", AnyInt, Rank::scalar},
+            {"x", SameReal, Rank::scalar}},
+        SameReal, Rank::vector},
     {"bge",
         {{"i", AnyInt, Rank::elementalOrBOZ},
             {"j", AnyInt, Rank::elementalOrBOZ}},
@@ -241,6 +255,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"x", SameIntOrReal, Rank::elementalOrBOZ},
             {"y", SameIntOrReal, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDComplex},
+    {"command_argument_count", {}, DftInt, Rank::scalar},
     {"conjg", {{"z", SameComplex}}, SameComplex},
     {"cos", {{"x", SameFloating}}, SameFloating},
     {"cosh", {{"x", SameFloating}}, SameFloating},
@@ -251,6 +266,18 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             OptionalDIM},
         SameType, Rank::array},
     {"dim", {{"x", SameIntOrReal}, {"y", SameIntOrReal}}, SameIntOrReal},
+    {"dot_product",
+        {{"vector_a", AnyLogical, Rank::vector},
+            {"vector_b", AnyLogical, Rank::vector}},
+        ResultLogical, Rank::scalar},
+    {"dot_product",
+        {{"vector_a", AnyComplex, Rank::vector},
+            {"vector_b", AnyNumeric, Rank::vector}},
+        ResultNumeric, Rank::scalar},  // conjugates vector_a
+    {"dot_product",
+        {{"vector_a", AnyIntOrReal, Rank::vector},
+            {"vector_b", AnyNumeric, Rank::vector}},
+        ResultNumeric, Rank::scalar},
     {"dprod", {{"x", DftReal}, {"y", DftReal}}, DoublePrecision},
     {"dshiftl",
         {{"i", SameInt}, {"j", SameInt, Rank::elementalOrBOZ},
@@ -334,6 +361,12 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         SameInt},
     {"is_iostat_end", {{"i", AnyInt}}, DftLogical},
     {"is_iostat_eor", {{"i", AnyInt}}, DftLogical},
+    {"lbound", {{"array", Anything, Rank::anyOrAssumedRank}, DefaultingKIND},
+        KINDInt, Rank::vector},
+    {"lbound",
+        {{"array", Anything, Rank::anyOrAssumedRank},
+            {"dim", {Int, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
+        KINDInt, Rank::scalar},
     {"leadz", {{"i", AnyInt}}, DftInt},
     {"len", {{"string", AnyChar}, DefaultingKIND}, KINDInt},
     {"len_trim", {{"string", AnyChar}, DefaultingKIND}, KINDInt},
@@ -345,6 +378,30 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"log10", {{"x", SameReal}}, SameReal},
     {"logical", {{"l", AnyLogical}, DefaultingKIND}, KINDLogical},
     {"log_gamma", {{"x", SameReal}}, SameReal},
+    {"matmul",
+        {{"array_a", AnyLogical, Rank::vector},
+            {"array_b", AnyLogical, Rank::matrix}},
+        ResultLogical, Rank::vector},
+    {"matmul",
+        {{"array_a", AnyLogical, Rank::matrix},
+            {"array_b", AnyLogical, Rank::vector}},
+        ResultLogical, Rank::vector},
+    {"matmul",
+        {{"array_a", AnyLogical, Rank::matrix},
+            {"array_b", AnyLogical, Rank::matrix}},
+        ResultLogical, Rank::matrix},
+    {"matmul",
+        {{"array_a", AnyNumeric, Rank::vector},
+            {"array_b", AnyNumeric, Rank::matrix}},
+        ResultNumeric, Rank::vector},
+    {"matmul",
+        {{"array_a", AnyNumeric, Rank::matrix},
+            {"array_b", AnyNumeric, Rank::vector}},
+        ResultNumeric, Rank::vector},
+    {"matmul",
+        {{"array_a", AnyNumeric, Rank::matrix},
+            {"array_b", AnyNumeric, Rank::matrix}},
+        ResultNumeric, Rank::matrix},
     {"maskl", {{"i", AnyInt}, DefaultingKIND}, KINDInt},
     {"maskr", {{"i", AnyInt}, DefaultingKIND}, KINDInt},
     {"maxloc",
@@ -377,6 +434,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"norm2", {{"x", SameReal, Rank::array}, OptionalDIM}, SameReal,
         Rank::dimReduced},
     {"not", {{"i", SameInt}}, SameInt},
+    // pmk WIP continue here in transformationals with NULL
     {"out_of_range",
         {{"x", SameIntOrReal}, {"mold", AnyIntOrReal, Rank::scalar}},
         DftLogical},
@@ -418,6 +476,12 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"sign", {{"a", SameIntOrReal}, {"b", SameIntOrReal}}, SameIntOrReal},
     {"sin", {{"x", SameFloating}}, SameFloating},
     {"sinh", {{"x", SameFloating}}, SameFloating},
+    {"size", {{"array", Anything, Rank::anyOrAssumedRank}, DefaultingKIND},
+        KINDInt, Rank::vector},
+    {"size",
+        {{"array", Anything, Rank::anyOrAssumedRank},
+            {"dim", {Int, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
+        KINDInt, Rank::scalar},
     {"spacing", {{"x", SameReal}}, SameReal},
     {"spread",
         {{"source", SameType, Rank::known},
@@ -430,7 +494,28 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"tan", {{"x", SameFloating}}, SameFloating},
     {"tanh", {{"x", SameFloating}}, SameFloating},
     {"trailz", {{"i", AnyInt}}, DftInt},
-    // TODO: pmk: continue here with TRANSFER
+    {"transfer",
+        {{"source", Anything, Rank::known}, {"mold", SameType, Rank::scalar}},
+        SameType, Rank::scalar},
+    {"transfer",
+        {{"source", Anything, Rank::known}, {"mold", SameType, Rank::array}},
+        SameType, Rank::vector},
+    {"transfer",
+        {{"source", Anything, Rank::known}, {"mold", SameType, Rank::known},
+            {"size", AnyInt, Rank::scalar}},
+        SameType, Rank::vector},
+    {"transpose", {{"matrix", SameType, Rank::matrix}}, SameType, Rank::matrix},
+    {"trim", {{"string", AnyChar, Rank::scalar}}, SameChar, Rank::scalar},
+    {"ubound", {{"array", Anything, Rank::anyOrAssumedRank}, DefaultingKIND},
+        KINDInt, Rank::vector},
+    {"ubound",
+        {{"array", Anything, Rank::anyOrAssumedRank},
+            {"dim", {Int, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
+        KINDInt, Rank::scalar},
+    {"unpack",
+        {{"vector", SameType, Rank::vector}, {"mask", AnyLogical, Rank::array},
+            {"field", SameType, Rank::conformable}},
+        SameType, Rank::conformable},
     {"verify",
         {{"string", SameChar}, {"set", SameChar},
             {"back", AnyLogical, Rank::elemental, Optionality::optional},
@@ -629,11 +714,13 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       break;
     case KindCode::any: argOk = true; break;
     case KindCode::kindArg:
+      CHECK(type->category == TypeCategory::Integer);
       CHECK(kindArg == nullptr);
       kindArg = arg;
-      argOk = arg->intValue.has_value();
+      argOk = true;
       break;
     case KindCode::dimArg:
+      CHECK(type->category == TypeCategory::Integer);
       hasDimArg = true;
       argOk = true;
       break;
@@ -732,7 +819,6 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     }
   }
 
-  // At this point, the call is acceptable.
   // Calculate the characteristics of the function result, if any
   if (result.categorySet.empty()) {
     CHECK(result.kindCode == KindCode::none);
@@ -775,9 +861,21 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     CHECK(kindDummyArg != nullptr);
     CHECK(result.categorySet == CategorySet{resultType.category});
     if (kindArg != nullptr) {
-      CHECK(kindArg->intValue.has_value());
-      resultType.kind = *kindArg->intValue;
-      // TODO pmk: validate this kind!!
+      if (auto *jExpr{std::get_if<Expr<SomeInteger>>(&kindArg->value->u)}) {
+        CHECK(jExpr->Rank() == 0);
+        if (auto value{jExpr->ScalarValue()}) {
+          if (auto code{value->ToInt64()}) {
+            if (IsValidKindOfIntrinsicType(resultType.category, *code)) {
+              resultType.kind = *code;
+              break;
+            }
+          }
+        }
+      }
+      messages.Say("'kind' argument must be a constant scalar integer "
+                   "whose value is a supported kind for the "
+                   "intrinsic result type"_err_en_US);
+      return std::nullopt;
     } else if (kindDummyArg->optionality == Optionality::defaultsToSameKind) {
       CHECK(sameArg != nullptr);
       resultType = *sameArg->GetType();
@@ -786,6 +884,13 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
           kindDummyArg->optionality == Optionality::defaultsToDefaultForResult);
       resultType.kind = defaults.DefaultKind(resultType.category);
     }
+    break;
+  case KindCode::likeMultiply:
+    CHECK(dummies >= 2);
+    CHECK(actualForDummy[0] != nullptr);
+    CHECK(actualForDummy[1] != nullptr);
+    resultType = actualForDummy[0]->GetType()->ResultTypeForMultiply(
+        *actualForDummy[1]->GetType());
     break;
   case KindCode::typeless:
   case KindCode::teamType:
@@ -798,6 +903,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   default: CRASH_NO_CASE;
   }
 
+  // At this point, the call is acceptable.
   // Determine the rank of the function result.
   int resultRank{0};
   switch (rank) {
@@ -805,6 +911,10 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   case Rank::scalar: resultRank = 0; break;
   case Rank::vector: resultRank = 1; break;
   case Rank::matrix: resultRank = 2; break;
+  case Rank::conformable:
+    CHECK(arrayArg != nullptr);
+    resultRank = arrayArg->Rank();
+    break;
   case Rank::dimReduced:
     CHECK(arrayArg != nullptr);
     resultRank = hasDimArg ? arrayArg->Rank() - 1 : 0;
@@ -823,7 +933,6 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   case Rank::array:
   case Rank::known:
   case Rank::anyOrAssumedRank:
-  case Rank::conformable:
   case Rank::dimRemoved:
     common::die("INTERNAL: bad Rank code on intrinsic '%s' result", name);
     break;

@@ -234,7 +234,8 @@ template<typename A> class Designator {
 
 public:
   using Result = A;
-  static_assert(Result::isSpecificType);
+  static_assert(Result::isSpecificIntrinsicType ||
+      std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Designator)
   Designator(const DataRef &that) : u{common::MoveVariant<Variant>(that.u)} {}
   Designator(DataRef &&that)
@@ -315,7 +316,8 @@ protected:
 
 template<typename A> struct FunctionRef : public UntypedFunctionRef {
   using Result = A;
-  static_assert(Result::isSpecificType);
+  static_assert(Result::isSpecificIntrinsicType ||
+      std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   // Subtlety: There is a distinction that must be maintained here between an
   // actual argument expression that *is* a variable and one that is not,
   // e.g. between X and (X).  The parser attempts to parse each argument
@@ -339,7 +341,8 @@ template<typename A> struct FunctionRef : public UntypedFunctionRef {
 
 template<typename A> struct Variable {
   using Result = A;
-  static_assert(Result::isSpecificType);
+  static_assert(Result::isSpecificIntrinsicType ||
+      std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   EVALUATE_UNION_CLASS_BOILERPLATE(Variable)
   std::optional<DynamicType> GetType() const {
     return std::visit([](const auto &x) { return x.GetType(); }, u);
