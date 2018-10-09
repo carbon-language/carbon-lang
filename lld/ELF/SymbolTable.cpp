@@ -196,23 +196,22 @@ std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name) {
 
   if (SymIndex == -1) {
     SymIndex = SymVector.size();
-    IsNew = Traced = true;
+    IsNew = true;
+    Traced = true;
   }
 
-  Symbol *Sym;
-  if (IsNew) {
-    Sym = reinterpret_cast<Symbol *>(make<SymbolUnion>());
-    Sym->Visibility = STV_DEFAULT;
-    Sym->IsUsedInRegularObj = false;
-    Sym->ExportDynamic = false;
-    Sym->CanInline = true;
-    Sym->Traced = Traced;
-    Sym->VersionId = Config->DefaultSymbolVersion;
-    SymVector.push_back(Sym);
-  } else {
-    Sym = SymVector[SymIndex];
-  }
-  return {Sym, IsNew};
+  if (!IsNew)
+    return {SymVector[SymIndex], false};
+
+  auto *Sym = reinterpret_cast<Symbol *>(make<SymbolUnion>());
+  Sym->Visibility = STV_DEFAULT;
+  Sym->IsUsedInRegularObj = false;
+  Sym->ExportDynamic = false;
+  Sym->CanInline = true;
+  Sym->Traced = Traced;
+  Sym->VersionId = Config->DefaultSymbolVersion;
+  SymVector.push_back(Sym);
+  return {Sym, true};
 }
 
 // Find an existing symbol or create and insert a new one, then apply the given
