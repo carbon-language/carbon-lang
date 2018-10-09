@@ -146,10 +146,9 @@ private:
         (attrs.test(Attr::ELEMENTAL) && !attrs.test(Attr::IMPURE));
   }
   bool fromScope(const Symbol &symbol, const std::string &moduleName) {
-    if (symbol.scope() && symbol.scope()->IsModule()) {
-      if (symbol.scope()->symbol()->name().ToString() == moduleName) {
-        return true;
-      }
+    if (symbol.GetUltimate().owner().IsModule() &&
+        symbol.GetUltimate().owner().name().ToString() == moduleName) {
+      return true;
     }
     return false;
   }
