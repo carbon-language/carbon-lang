@@ -33,11 +33,6 @@ using IndexList = std::vector<std::pair<parser::CharBlock, parser::CharBlock>>;
 // because the parse tree does not actually have the scopes required.
 using ProxyForScope = unsigned;
 struct LabeledStatementInfoTuplePOD {
-  LabeledStatementInfoTuplePOD(const ProxyForScope &proxyForScope,
-      const parser::CharBlock &parserCharBlock,
-      const LabeledStmtClassificationSet &labeledStmtClassificationSet)
-    : proxyForScope{proxyForScope}, parserCharBlock{parserCharBlock},
-      labeledStmtClassificationSet{labeledStmtClassificationSet} {}
   ProxyForScope proxyForScope;
   parser::CharBlock parserCharBlock;
   LabeledStmtClassificationSet labeledStmtClassificationSet;
@@ -229,9 +224,10 @@ public:
 
   template<typename A> bool Pre(const parser::Statement<A> &statement) {
     currentPosition_ = statement.source;
-    if (statement.label.has_value())
+    if (statement.label.has_value()) {
       addTargetLabelDefinition(
           statement.label.value(), constructBranchTargetFlags(statement));
+    }
     return true;
   }
 
@@ -524,7 +520,7 @@ public:
   void Post(const parser::EorLabel &eorLabel) { addLabelReference(eorLabel.v); }
   void Post(const parser::Format &format) {
     if (const auto *labelPointer{std::get_if<parser::Label>(&format.u)}) {
-      addLabelReferenceFromFormatStmt(*labelPointer);
+      addLabelReferenceToFormatStmt(*labelPointer);
     }
   }
   void Post(const parser::CycleStmt &cycleStmt) {
@@ -871,7 +867,7 @@ private:
         label, currentScope_, currentPosition_);
   }
 
-  void addLabelReferenceFromFormatStmt(parser::Label label) {
+  void addLabelReferenceToFormatStmt(parser::Label label) {
     CheckLabelInRange(label);
     programUnits_.back().formatStmtSources.emplace_back(
         label, currentScope_, currentPosition_);

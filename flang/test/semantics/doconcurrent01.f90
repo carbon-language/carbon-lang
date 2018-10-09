@@ -15,10 +15,19 @@
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: image control statement not allowed in DO CONCURRENT
 ! CHECK: RETURN not allowed in DO CONCURRENT
+! CHECK: call to impure subroutine in DO CONCURRENT not allowed
 ! XXXCHECK: IEEE_GET_FLAG not allowed in DO CONCURRENT
 ! CHECK: ADVANCE specifier not allowed in DO CONCURRENT
 ! CHECK: SYNC ALL
 ! CHECK: SYNC IMAGES
+
+module ieee_exceptions
+  interface
+     subroutine ieee_get_flag(i, j)
+       integer :: i, j
+     end subroutine ieee_get_flag
+  end interface
+end module ieee_exceptions
 
 subroutine do_concurrent_test1(i,n)
   implicit none
@@ -31,7 +40,7 @@ subroutine do_concurrent_test1(i,n)
 end subroutine do_concurrent_test1
 
 subroutine do_concurrent_test2(i,j,n,flag)
-  !use ieee_exceptions
+  use ieee_exceptions
   implicit none
   integer :: i, j, n, flag, flag2
   do concurrent (i = 1:n)
