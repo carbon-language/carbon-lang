@@ -432,23 +432,22 @@ public:
 
   EVALUATE_UNION_CLASS_BOILERPLATE(Expr)
   explicit Expr(const Scalar<Result> &x) : u{Constant<Result>{x}} {}
-  template<typename INT> explicit Expr(std::enable_if_t<std::is_integral_v<INT>, INT> n) : u(Constant<Result>{
-    n}
-} {
-}
+  template<typename INT>
+  explicit Expr(std::enable_if_t<std::is_integral_v<INT>, INT> n)
+    : u{Constant<Result>{n}} {}
 
 private:
-using Conversions = std::variant<Convert<Result, TypeCategory::Integer>,
-    Convert<Result, TypeCategory::Real>>;
-using Operations = std::variant<Parentheses<Result>, Negate<Result>,
-    Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
-    Power<Result>, Extremum<Result>>;
-using Others =
-    std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
+  using Conversions = std::variant<Convert<Result, TypeCategory::Integer>,
+      Convert<Result, TypeCategory::Real>>;
+  using Operations = std::variant<Parentheses<Result>, Negate<Result>,
+      Add<Result>, Subtract<Result>, Multiply<Result>, Divide<Result>,
+      Power<Result>, Extremum<Result>>;
+  using Others =
+      std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
 
 public:
-common::CombineVariants<Operations, Conversions, Others> u;
-};  // namespace Fortran::evaluate
+  common::CombineVariants<Operations, Conversions, Others> u;
+};
 
 template<int KIND>
 class Expr<Type<TypeCategory::Real, KIND>>

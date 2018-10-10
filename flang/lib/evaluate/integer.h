@@ -120,8 +120,8 @@ public:
 
   // C++'s integral types can all be converted to Integer
   // with silent truncation.
-  template<typename INT>
-  constexpr Integer(std::enable_if<std::is_integral_v<INT>, INT> n) {
+  template<typename INT> constexpr Integer(INT n) {
+    static_assert(std::is_integral_v<INT>);
     constexpr int nBits = CHAR_BIT * sizeof n;
     if constexpr (nBits < partBits) {
       if constexpr (std::is_unsigned_v<INT>) {
