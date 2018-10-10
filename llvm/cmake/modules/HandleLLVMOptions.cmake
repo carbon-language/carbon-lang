@@ -23,7 +23,7 @@ string(TOUPPER "${LLVM_ENABLE_LTO}" uppercase_LLVM_ENABLE_LTO)
 # Ninja Job Pool support
 # The following only works with the Ninja generator in CMake >= 3.0.
 set(LLVM_PARALLEL_COMPILE_JOBS "" CACHE STRING
-  "Define the maximum number of concurrent compilation jobs.")
+  "Define the maximum number of concurrent compilation jobs (Ninja only).")
 if(LLVM_PARALLEL_COMPILE_JOBS)
   if(NOT CMAKE_MAKE_PROGRAM MATCHES "ninja")
     message(WARNING "Job pooling is only available with Ninja generators.")
@@ -34,7 +34,7 @@ if(LLVM_PARALLEL_COMPILE_JOBS)
 endif()
 
 set(LLVM_PARALLEL_LINK_JOBS "" CACHE STRING
-  "Define the maximum number of concurrent link jobs.")
+  "Define the maximum number of concurrent link jobs (Ninja only).")
 if(CMAKE_MAKE_PROGRAM MATCHES "ninja")
   if(NOT LLVM_PARALLEL_LINK_JOBS AND uppercase_LLVM_ENABLE_LTO STREQUAL "THIN")
     message(STATUS "ThinLTO provides its own parallel linking - limiting parallel link jobs to 2.")
