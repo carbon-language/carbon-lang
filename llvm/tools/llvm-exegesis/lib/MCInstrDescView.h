@@ -130,6 +130,7 @@ struct Instruction {
             llvm::raw_ostream &Stream) const;
 
   const llvm::MCInstrDesc *Description; // Never nullptr.
+  llvm::StringRef Name;                 // The name of this instruction.
   llvm::SmallVector<Operand, 8> Operands;
   llvm::SmallVector<Variable, 4> Variables;
   llvm::BitVector ImplDefRegs; // The set of aliased implicit def registers.

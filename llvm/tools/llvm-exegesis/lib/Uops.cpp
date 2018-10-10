@@ -125,13 +125,11 @@ void UopsSnippetGenerator::instantiateMemoryOperands(
 }
 
 llvm::Expected<CodeTemplate>
-UopsSnippetGenerator::generateCodeTemplate(unsigned Opcode) const {
-  const auto &ET = State.getExegesisTarget();
+UopsSnippetGenerator::generateCodeTemplate(const Instruction &Instr) const {
   CodeTemplate CT;
-
   const llvm::BitVector *ScratchSpaceAliasedRegs = nullptr;
-  const Instruction Instr(State, Opcode);
   if (Instr.hasMemoryOperands()) {
+    const auto &ET = State.getExegesisTarget();
     CT.ScratchSpacePointerInReg =
         ET.getScratchMemoryRegister(State.getTargetMachine().getTargetTriple());
     if (CT.ScratchSpacePointerInReg == 0)

@@ -57,8 +57,7 @@ LatencySnippetGenerator::generateTwoInstructionPrototype(
 }
 
 llvm::Expected<CodeTemplate>
-LatencySnippetGenerator::generateCodeTemplate(unsigned Opcode) const {
-  const Instruction Instr(State, Opcode);
+LatencySnippetGenerator::generateCodeTemplate(const Instruction &Instr) const {
   if (Instr.hasMemoryOperands())
     return llvm::make_error<BenchmarkFailure>(
         "Infeasible : has memory operands");

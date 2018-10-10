@@ -59,7 +59,8 @@ protected:
 
   CodeTemplate checkAndGetCodeTemplate(unsigned Opcode) {
     randomGenerator().seed(0); // Initialize seed.
-    auto CodeTemplateOrError = Generator.generateCodeTemplate(Opcode);
+    const Instruction Instr(State, Opcode);
+    auto CodeTemplateOrError = Generator.generateCodeTemplate(Instr);
     EXPECT_FALSE(CodeTemplateOrError.takeError()); // Valid configuration.
     return std::move(CodeTemplateOrError.get());
   }
@@ -238,7 +239,8 @@ TEST_F(UopsSnippetGeneratorTest, MemoryUse) {
 TEST_F(UopsSnippetGeneratorTest, MemoryUse_Movsb) {
   // MOVSB writes to scratch memory register.
   const unsigned Opcode = llvm::X86::MOVSB;
-  auto Error = Generator.generateCodeTemplate(Opcode).takeError();
+  const Instruction Instr(State, Opcode);
+  auto Error = Generator.generateCodeTemplate(Instr).takeError();
   EXPECT_TRUE((bool)Error);
   llvm::consumeError(std::move(Error));
 }
@@ -253,7 +255,7 @@ public:
 
 private:
   llvm::Expected<CodeTemplate>
-  generateCodeTemplate(unsigned Opcode) const override {
+  generateCodeTemplate(const Instruction &Instr) const override {
     return llvm::make_error<llvm::StringError>("not implemented",
                                                llvm::inconvertibleErrorCode());
   }

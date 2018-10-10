@@ -30,8 +30,8 @@ SnippetGenerator::SnippetGenerator(const LLVMState &State) : State(State) {}
 SnippetGenerator::~SnippetGenerator() = default;
 
 llvm::Expected<std::vector<BenchmarkCode>>
-SnippetGenerator::generateConfigurations(unsigned Opcode) const {
-  if (auto E = generateCodeTemplate(Opcode)) {
+SnippetGenerator::generateConfigurations(const Instruction &Instr) const {
+  if (auto E = generateCodeTemplate(Instr)) {
     CodeTemplate &CT = E.get();
     const auto &RATC = State.getRATC();
     const llvm::BitVector &ForbiddenRegs =

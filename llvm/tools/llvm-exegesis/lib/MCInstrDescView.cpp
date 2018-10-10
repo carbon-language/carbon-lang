@@ -88,7 +88,8 @@ const llvm::MCOperandInfo &Operand::getExplicitOperandInfo() const {
 }
 
 Instruction::Instruction(const LLVMState &State, unsigned Opcode)
-    : Description(&State.getInstrInfo().get(Opcode)) {
+    : Description(&State.getInstrInfo().get(Opcode)),
+      Name(State.getInstrInfo().getName(Opcode)) {
   const auto &RATC = State.getRATC();
   unsigned OpIndex = 0;
   for (; OpIndex < Description->getNumOperands(); ++OpIndex) {
@@ -198,6 +199,7 @@ bool Instruction::hasAliasingRegisters() const {
 
 void Instruction::dump(const llvm::MCRegisterInfo &RegInfo,
                        llvm::raw_ostream &Stream) const {
+  Stream << "- " << Name << "\n";
   for (const auto &Op : Operands) {
     Stream << "- Op" << Op.getIndex();
     if (Op.isExplicit())
@@ -227,10 +229,15 @@ void Instruction::dump(const llvm::MCRegisterInfo &RegInfo,
   }
   for (const auto &Var : Variables) {
     Stream << "- Var" << Var.getIndex();
-    Stream << " (";
-    for (auto OperandIndex : Var.TiedOperands)
+    Stream << " [";
+    bool IsFirst = true;
+    for (auto OperandIndex : Var.TiedOperands) {
+      if (!IsFirst)
+        Stream << ",";
       Stream << "Op" << OperandIndex;
-    Stream << ")";
+      IsFirst = false;
+    }
+    Stream << "]";
     Stream << "\n";
   }
   if (hasMemoryOperands())
