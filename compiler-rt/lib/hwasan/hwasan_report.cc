@@ -237,12 +237,12 @@ static void PrintTagsAroundAddr(tag_t *tag_ptr) {
       "bytes):\n", kShadowAlignment);
 
   const uptr row_len = 16;  // better be power of two.
-  const uptr num_rows = 11;
+  const uptr num_rows = 17;
   tag_t *center_row_beg = reinterpret_cast<tag_t *>(
       RoundDownTo(reinterpret_cast<uptr>(tag_ptr), row_len));
   tag_t *beg_row = center_row_beg - row_len * (num_rows / 2);
   tag_t *end_row = center_row_beg + row_len * (num_rows / 2);
-  InternalScopedString s(GetPageSizeCached());
+  InternalScopedString s(GetPageSizeCached() * 8);
   for (tag_t *row = beg_row; row < end_row; row += row_len) {
     s.append("%s", row == center_row_beg ? "=>" : "  ");
     for (uptr i = 0; i < row_len; i++) {
@@ -251,9 +251,8 @@ static void PrintTagsAroundAddr(tag_t *tag_ptr) {
       s.append("%s", row + i == tag_ptr ? "]" : " ");
     }
     s.append("%s\n", row == center_row_beg ? "<=" : "  ");
-    Printf("%s", s.data());
-    s.clear();
   }
+  Printf("%s", s.data());
 }
 
 void ReportInvalidFree(StackTrace *stack, uptr tagged_addr) {
