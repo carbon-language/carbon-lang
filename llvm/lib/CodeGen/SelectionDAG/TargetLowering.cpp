@@ -586,13 +586,15 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       Known.Zero &= Known2.Zero;
     }
     break;
-  case ISD::AND:
+  case ISD::AND: {
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+
     // If the RHS is a constant, check to see if the LHS would be zero without
     // using the bits from the RHS.  Below, we use knowledge about the RHS to
     // simplify the LHS, here we're using information from the LHS to simplify
     // the RHS.
-    if (ConstantSDNode *RHSC = isConstOrConstSplat(Op.getOperand(1))) {
-      SDValue Op0 = Op.getOperand(0);
+    if (ConstantSDNode *RHSC = isConstOrConstSplat(Op1)) {
       KnownBits LHSKnown;
       // Do not increment Depth here; that can cause an infinite loop.
       TLO.DAG.computeKnownBits(Op0, LHSKnown, Depth);
@@ -612,26 +614,25 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       // and (xor (srl X, 31), -1), 1 --> xor (srl X, 31), 1
       if (isBitwiseNot(Op0) && Op0.hasOneUse() &&
           LHSKnown.One == ~RHSC->getAPIntValue()) {
-        SDValue Xor = TLO.DAG.getNode(ISD::XOR, dl, VT, Op0.getOperand(0),
-                                      Op.getOperand(1));
+        SDValue Xor = TLO.DAG.getNode(ISD::XOR, dl, VT, Op0.getOperand(0), Op1);
         return TLO.CombineTo(Op, Xor);
       }
     }
 
-    if (SimplifyDemandedBits(Op.getOperand(1), NewMask, Known, TLO, Depth+1))
+    if (SimplifyDemandedBits(Op1, NewMask, Known, TLO, Depth + 1))
       return true;
     assert(!Known.hasConflict() && "Bits known to be one AND zero?");
-    if (SimplifyDemandedBits(Op.getOperand(0), ~Known.Zero & NewMask,
-                             Known2, TLO, Depth+1))
+    if (SimplifyDemandedBits(Op0, ~Known.Zero & NewMask, Known2, TLO,
+                             Depth + 1))
       return true;
     assert(!Known2.hasConflict() && "Bits known to be one AND zero?");
 
     // If all of the demanded bits are known one on one side, return the other.
     // These bits cannot contribute to the result of the 'and'.
     if (NewMask.isSubsetOf(Known2.Zero | Known.One))
-      return TLO.CombineTo(Op, Op.getOperand(0));
+      return TLO.CombineTo(Op, Op0);
     if (NewMask.isSubsetOf(Known.Zero | Known2.One))
-      return TLO.CombineTo(Op, Op.getOperand(1));
+      return TLO.CombineTo(Op, Op1);
     // If all of the demanded bits in the inputs are known zeros, return zero.
     if (NewMask.isSubsetOf(Known.Zero | Known2.Zero))
       return TLO.CombineTo(Op, TLO.DAG.getConstant(0, dl, VT));
@@ -647,21 +648,24 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // Output known-0 are known to be clear if zero in either the LHS | RHS.
     Known.Zero |= Known2.Zero;
     break;
-  case ISD::OR:
-    if (SimplifyDemandedBits(Op.getOperand(1), NewMask, Known, TLO, Depth+1))
+  }
+  case ISD::OR: {
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+
+    if (SimplifyDemandedBits(Op1, NewMask, Known, TLO, Depth + 1))
       return true;
     assert(!Known.hasConflict() && "Bits known to be one AND zero?");
-    if (SimplifyDemandedBits(Op.getOperand(0), ~Known.One & NewMask,
-                             Known2, TLO, Depth+1))
+    if (SimplifyDemandedBits(Op0, ~Known.One & NewMask, Known2, TLO, Depth + 1))
       return true;
     assert(!Known2.hasConflict() && "Bits known to be one AND zero?");
 
     // If all of the demanded bits are known zero on one side, return the other.
     // These bits cannot contribute to the result of the 'or'.
     if (NewMask.isSubsetOf(Known2.One | Known.Zero))
-      return TLO.CombineTo(Op, Op.getOperand(0));
+      return TLO.CombineTo(Op, Op0);
     if (NewMask.isSubsetOf(Known.One | Known2.Zero))
-      return TLO.CombineTo(Op, Op.getOperand(1));
+      return TLO.CombineTo(Op, Op1);
     // If the RHS is a constant, see if we can simplify it.
     if (ShrinkDemandedConstant(Op, NewMask, TLO))
       return true;
@@ -674,20 +678,24 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // Output known-1 are known to be set if set in either the LHS | RHS.
     Known.One |= Known2.One;
     break;
+  }
   case ISD::XOR: {
-    if (SimplifyDemandedBits(Op.getOperand(1), NewMask, Known, TLO, Depth+1))
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+
+    if (SimplifyDemandedBits(Op1, NewMask, Known, TLO, Depth + 1))
       return true;
     assert(!Known.hasConflict() && "Bits known to be one AND zero?");
-    if (SimplifyDemandedBits(Op.getOperand(0), NewMask, Known2, TLO, Depth+1))
+    if (SimplifyDemandedBits(Op0, NewMask, Known2, TLO, Depth + 1))
       return true;
     assert(!Known2.hasConflict() && "Bits known to be one AND zero?");
 
     // If all of the demanded bits are known zero on one side, return the other.
     // These bits cannot contribute to the result of the 'xor'.
     if (NewMask.isSubsetOf(Known.Zero))
-      return TLO.CombineTo(Op, Op.getOperand(0));
+      return TLO.CombineTo(Op, Op0);
     if (NewMask.isSubsetOf(Known2.Zero))
-      return TLO.CombineTo(Op, Op.getOperand(1));
+      return TLO.CombineTo(Op, Op1);
     // If the operation can be done in a smaller type, do so.
     if (ShrinkDemandedOp(Op, BitWidth, NewMask, TLO))
       return true;
@@ -695,27 +703,24 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // If all of the unknown bits are known to be zero on one side or the other
     // (but not both) turn this into an *inclusive* or.
     //    e.g. (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-    if (NewMask.isSubsetOf(Known.Zero|Known2.Zero))
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::OR, dl, VT,
-                                               Op.getOperand(0),
-                                               Op.getOperand(1)));
+    if (NewMask.isSubsetOf(Known.Zero | Known2.Zero))
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::OR, dl, VT, Op0, Op1));
 
     // Output known-0 bits are known if clear or set in both the LHS & RHS.
     KnownOut.Zero = (Known.Zero & Known2.Zero) | (Known.One & Known2.One);
     // Output known-1 are known to be set if set in only one of the LHS, RHS.
     KnownOut.One = (Known.Zero & Known2.One) | (Known.One & Known2.Zero);
 
-    if (ConstantSDNode *C = isConstOrConstSplat(Op.getOperand(1))) {
+    if (ConstantSDNode *C = isConstOrConstSplat(Op1)) {
       // If one side is a constant, and all of the known set bits on the other
       // side are also set in the constant, turn this into an AND, as we know
       // the bits will be cleared.
       //    e.g. (X | C1) ^ C2 --> (X | C1) & ~C2 iff (C1&C2) == C2
       // NB: it is okay if more bits are known than are requested
       if (C->getAPIntValue() == Known2.One) {
-        SDValue ANDC = TLO.DAG.getConstant(~C->getAPIntValue() & NewMask,
-                                           dl, VT);
-        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::AND, dl, VT,
-                                                 Op.getOperand(0), ANDC));
+        SDValue ANDC =
+            TLO.DAG.getConstant(~C->getAPIntValue() & NewMask, dl, VT);
+        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::AND, dl, VT, Op0, ANDC));
       }
 
       // If the RHS is a constant, see if we can change it. Don't alter a -1
@@ -724,7 +729,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       if (!C->isAllOnesValue()) {
         if (NewMask.isSubsetOf(C->getAPIntValue())) {
           // We're flipping all demanded bits. Flip the undemanded bits too.
-          SDValue New = TLO.DAG.getNOT(dl, Op.getOperand(0), VT);
+          SDValue New = TLO.DAG.getNOT(dl, Op0, VT);
           return TLO.CombineTo(Op, New);
         }
         // If we can't turn this into a 'not', try to shrink the constant.
@@ -795,10 +800,11 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       Known.Zero.setBitsFrom(1);
     break;
   }
-  case ISD::SHL:
-    if (ConstantSDNode *SA = isConstOrConstSplat(Op.getOperand(1))) {
-      SDValue InOp = Op.getOperand(0);
+  case ISD::SHL: {
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
 
+    if (ConstantSDNode *SA = isConstOrConstSplat(Op1)) {
       // If the shift count is an invalid immediate, don't do anything.
       if (SA->getAPIntValue().uge(BitWidth))
         break;
@@ -808,35 +814,33 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       // If this is ((X >>u C1) << ShAmt), see if we can simplify this into a
       // single shift.  We can do this if the bottom bits (which are shifted
       // out) are never demanded.
-      if (InOp.getOpcode() == ISD::SRL) {
-        if (ConstantSDNode *SA2 = isConstOrConstSplat(InOp.getOperand(1))) {
+      if (Op0.getOpcode() == ISD::SRL) {
+        if (ConstantSDNode *SA2 = isConstOrConstSplat(Op0.getOperand(1))) {
           if (ShAmt && (NewMask & APInt::getLowBitsSet(BitWidth, ShAmt)) == 0) {
             if (SA2->getAPIntValue().ult(BitWidth)) {
               unsigned C1 = SA2->getZExtValue();
               unsigned Opc = ISD::SHL;
-              int Diff = ShAmt-C1;
+              int Diff = ShAmt - C1;
               if (Diff < 0) {
                 Diff = -Diff;
                 Opc = ISD::SRL;
               }
 
-              SDValue NewSA =
-                TLO.DAG.getConstant(Diff, dl, Op.getOperand(1).getValueType());
-              return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT,
-                                                       InOp.getOperand(0),
-                                                       NewSA));
+              SDValue NewSA = TLO.DAG.getConstant(Diff, dl, Op1.getValueType());
+              return TLO.CombineTo(
+                  Op, TLO.DAG.getNode(Opc, dl, VT, Op0.getOperand(0), NewSA));
             }
           }
         }
       }
 
-      if (SimplifyDemandedBits(InOp, NewMask.lshr(ShAmt), Known, TLO, Depth+1))
+      if (SimplifyDemandedBits(Op0, NewMask.lshr(ShAmt), Known, TLO, Depth + 1))
         return true;
 
       // Convert (shl (anyext x, c)) to (anyext (shl x, c)) if the high bits
       // are not demanded. This will likely allow the anyext to be folded away.
-      if (InOp.getNode()->getOpcode() == ISD::ANY_EXTEND) {
-        SDValue InnerOp = InOp.getOperand(0);
+      if (Op0.getOpcode() == ISD::ANY_EXTEND) {
+        SDValue InnerOp = Op0.getOperand(0);
         EVT InnerVT = InnerOp.getValueType();
         unsigned InnerBits = InnerVT.getScalarSizeInBits();
         if (ShAmt < InnerBits && NewMask.getActiveBits() <= InnerBits &&
@@ -845,47 +849,47 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
           if (!APInt(BitWidth, ShAmt).isIntN(ShTy.getSizeInBits()))
             ShTy = InnerVT;
           SDValue NarrowShl =
-            TLO.DAG.getNode(ISD::SHL, dl, InnerVT, InnerOp,
-                            TLO.DAG.getConstant(ShAmt, dl, ShTy));
-          return
-            TLO.CombineTo(Op,
-                          TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT, NarrowShl));
+              TLO.DAG.getNode(ISD::SHL, dl, InnerVT, InnerOp,
+                              TLO.DAG.getConstant(ShAmt, dl, ShTy));
+          return TLO.CombineTo(
+              Op, TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT, NarrowShl));
         }
         // Repeat the SHL optimization above in cases where an extension
         // intervenes: (shl (anyext (shr x, c1)), c2) to
         // (shl (anyext x), c2-c1).  This requires that the bottom c1 bits
         // aren't demanded (as above) and that the shifted upper c1 bits of
         // x aren't demanded.
-        if (InOp.hasOneUse() && InnerOp.getOpcode() == ISD::SRL &&
+        if (Op0.hasOneUse() && InnerOp.getOpcode() == ISD::SRL &&
             InnerOp.hasOneUse()) {
-          if (ConstantSDNode *SA2 = isConstOrConstSplat(InnerOp.getOperand(1))) {
+          if (ConstantSDNode *SA2 =
+                  isConstOrConstSplat(InnerOp.getOperand(1))) {
             unsigned InnerShAmt = SA2->getLimitedValue(InnerBits);
-            if (InnerShAmt < ShAmt &&
-                InnerShAmt < InnerBits &&
+            if (InnerShAmt < ShAmt && InnerShAmt < InnerBits &&
                 NewMask.getActiveBits() <= (InnerBits - InnerShAmt + ShAmt) &&
                 NewMask.countTrailingZeros() >= ShAmt) {
-              SDValue NewSA =
-                TLO.DAG.getConstant(ShAmt - InnerShAmt, dl,
-                                    Op.getOperand(1).getValueType());
+              SDValue NewSA = TLO.DAG.getConstant(ShAmt - InnerShAmt, dl,
+                                                  Op1.getValueType());
               SDValue NewExt = TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT,
                                                InnerOp.getOperand(0));
-              return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl, VT,
-                                                       NewExt, NewSA));
+              return TLO.CombineTo(
+                  Op, TLO.DAG.getNode(ISD::SHL, dl, VT, NewExt, NewSA));
             }
           }
         }
       }
 
       Known.Zero <<= ShAmt;
-      Known.One  <<= ShAmt;
+      Known.One <<= ShAmt;
       // low bits known zero.
       Known.Zero.setLowBits(ShAmt);
     }
     break;
-  case ISD::SRL:
-    if (ConstantSDNode *SA = isConstOrConstSplat(Op.getOperand(1))) {
-      SDValue InOp = Op.getOperand(0);
+  }
+  case ISD::SRL: {
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
 
+    if (ConstantSDNode *SA = isConstOrConstSplat(Op1)) {
       // If the shift count is an invalid immediate, don't do anything.
       if (SA->getAPIntValue().uge(BitWidth))
         break;
@@ -901,50 +905,50 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       // If this is ((X << C1) >>u ShAmt), see if we can simplify this into a
       // single shift.  We can do this if the top bits (which are shifted out)
       // are never demanded.
-      if (InOp.getOpcode() == ISD::SHL) {
-        if (ConstantSDNode *SA2 = isConstOrConstSplat(InOp.getOperand(1))) {
+      if (Op0.getOpcode() == ISD::SHL) {
+        if (ConstantSDNode *SA2 = isConstOrConstSplat(Op0.getOperand(1))) {
           if (ShAmt &&
               (NewMask & APInt::getHighBitsSet(BitWidth, ShAmt)) == 0) {
             if (SA2->getAPIntValue().ult(BitWidth)) {
               unsigned C1 = SA2->getZExtValue();
               unsigned Opc = ISD::SRL;
-              int Diff = ShAmt-C1;
+              int Diff = ShAmt - C1;
               if (Diff < 0) {
                 Diff = -Diff;
                 Opc = ISD::SHL;
               }
 
-              SDValue NewSA =
-                TLO.DAG.getConstant(Diff, dl, Op.getOperand(1).getValueType());
-              return TLO.CombineTo(Op, TLO.DAG.getNode(Opc, dl, VT,
-                                                       InOp.getOperand(0),
-                                                       NewSA));
+              SDValue NewSA = TLO.DAG.getConstant(Diff, dl, Op1.getValueType());
+              return TLO.CombineTo(
+                  Op, TLO.DAG.getNode(Opc, dl, VT, Op0.getOperand(0), NewSA));
             }
           }
         }
       }
 
       // Compute the new bits that are at the top now.
-      if (SimplifyDemandedBits(InOp, InDemandedMask, Known, TLO, Depth+1))
+      if (SimplifyDemandedBits(Op0, InDemandedMask, Known, TLO, Depth + 1))
         return true;
       assert(!Known.hasConflict() && "Bits known to be one AND zero?");
       Known.Zero.lshrInPlace(ShAmt);
       Known.One.lshrInPlace(ShAmt);
 
-      Known.Zero.setHighBits(ShAmt);  // High bits known zero.
+      Known.Zero.setHighBits(ShAmt); // High bits known zero.
     }
     break;
-  case ISD::SRA:
+  }
+  case ISD::SRA: {
+    SDValue Op0 = Op.getOperand(0);
+    SDValue Op1 = Op.getOperand(1);
+
     // If this is an arithmetic shift right and only the low-bit is set, we can
     // always convert this into a logical shr, even if the shift amount is
     // variable.  The low bit of the shift cannot be an input sign bit unless
     // the shift amount is >= the size of the datatype, which is undefined.
     if (NewMask.isOneValue())
-      return TLO.CombineTo(Op,
-                           TLO.DAG.getNode(ISD::SRL, dl, VT, Op.getOperand(0),
-                                           Op.getOperand(1)));
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, VT, Op0, Op1));
 
-    if (ConstantSDNode *SA = isConstOrConstSplat(Op.getOperand(1))) {
+    if (ConstantSDNode *SA = isConstOrConstSplat(Op1)) {
       // If the shift count is an invalid immediate, don't do anything.
       if (SA->getAPIntValue().uge(BitWidth))
         break;
@@ -962,8 +966,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       if (NewMask.countLeadingZeros() < ShAmt)
         InDemandedMask.setSignBit();
 
-      if (SimplifyDemandedBits(Op.getOperand(0), InDemandedMask, Known, TLO,
-                               Depth+1))
+      if (SimplifyDemandedBits(Op0, InDemandedMask, Known, TLO, Depth + 1))
         return true;
       assert(!Known.hasConflict() && "Bits known to be one AND zero?");
       Known.Zero.lshrInPlace(ShAmt);
@@ -975,19 +978,16 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
           NewMask.countLeadingZeros() >= ShAmt) {
         SDNodeFlags Flags;
         Flags.setExact(Op->getFlags().hasExact());
-        return TLO.CombineTo(Op,
-                             TLO.DAG.getNode(ISD::SRL, dl, VT, Op.getOperand(0),
-                                             Op.getOperand(1), Flags));
+        return TLO.CombineTo(
+            Op, TLO.DAG.getNode(ISD::SRL, dl, VT, Op0, Op1, Flags));
       }
 
       int Log2 = NewMask.exactLogBase2();
       if (Log2 >= 0) {
         // The bit must come from the sign.
         SDValue NewSA =
-          TLO.DAG.getConstant(BitWidth - 1 - Log2, dl,
-                              Op.getOperand(1).getValueType());
-        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, VT,
-                                                 Op.getOperand(0), NewSA));
+            TLO.DAG.getConstant(BitWidth - 1 - Log2, dl, Op1.getValueType());
+        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, VT, Op0, NewSA));
       }
 
       if (Known.One[BitWidth - ShAmt - 1])
@@ -995,15 +995,16 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         Known.One.setHighBits(ShAmt);
     }
     break;
+  }
   case ISD::SIGN_EXTEND_INREG: {
+    SDValue Op0 = Op.getOperand(0);
     EVT ExVT = cast<VTSDNode>(Op.getOperand(1))->getVT();
     unsigned ExVTBits = ExVT.getScalarSizeInBits();
 
     // If we only care about the highest bit, don't bother shifting right.
     if (NewMask.isSignMask()) {
-      SDValue InOp = Op.getOperand(0);
       bool AlreadySignExtended =
-        TLO.DAG.ComputeNumSignBits(InOp) >= BitWidth-ExVTBits+1;
+          TLO.DAG.ComputeNumSignBits(Op0) >= BitWidth - ExVTBits + 1;
       // However if the input is already sign extended we expect the sign
       // extension to be dropped altogether later and do not simplify.
       if (!AlreadySignExtended) {
@@ -1013,16 +1014,16 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         if (TLO.LegalTypes() && !ShiftAmtTy.isVector())
           ShiftAmtTy = getShiftAmountTy(ShiftAmtTy, DL);
 
-        SDValue ShiftAmt = TLO.DAG.getConstant(BitWidth - ExVTBits, dl,
-                                               ShiftAmtTy);
-        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl, VT, InOp,
-                                                 ShiftAmt));
+        SDValue ShiftAmt =
+            TLO.DAG.getConstant(BitWidth - ExVTBits, dl, ShiftAmtTy);
+        return TLO.CombineTo(Op,
+                             TLO.DAG.getNode(ISD::SHL, dl, VT, Op0, ShiftAmt));
       }
     }
 
     // If none of the extended bits are demanded, eliminate the sextinreg.
     if (NewMask.getActiveBits() <= ExVTBits)
-      return TLO.CombineTo(Op, Op.getOperand(0));
+      return TLO.CombineTo(Op, Op0);
 
     APInt InputDemandedBits = NewMask.getLoBits(ExVTBits);
 
@@ -1030,8 +1031,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // bit is demanded.
     InputDemandedBits.setBit(ExVTBits - 1);
 
-    if (SimplifyDemandedBits(Op.getOperand(0), InputDemandedBits,
-                             Known, TLO, Depth+1))
+    if (SimplifyDemandedBits(Op0, InputDemandedBits, Known, TLO, Depth + 1))
       return true;
     assert(!Known.hasConflict() && "Bits known to be one AND zero?");
 
@@ -1040,14 +1040,14 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
     // If the input sign bit is known zero, convert this into a zero extension.
     if (Known.Zero[ExVTBits - 1])
-      return TLO.CombineTo(Op, TLO.DAG.getZeroExtendInReg(
-                                   Op.getOperand(0), dl, ExVT.getScalarType()));
+      return TLO.CombineTo(
+          Op, TLO.DAG.getZeroExtendInReg(Op0, dl, ExVT.getScalarType()));
 
     APInt Mask = APInt::getLowBitsSet(BitWidth, ExVTBits);
-    if (Known.One[ExVTBits - 1]) {    // Input sign bit known set
+    if (Known.One[ExVTBits - 1]) { // Input sign bit known set
       Known.One.setBitsFrom(ExVTBits);
       Known.Zero &= Mask;
-    } else {                       // Input sign bit unknown
+    } else { // Input sign bit unknown
       Known.Zero &= Mask;
       Known.One &= Mask;
     }
@@ -1092,20 +1092,19 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     break;
   }
   case ISD::SIGN_EXTEND: {
-    unsigned InBits = Op.getOperand(0).getValueType().getScalarSizeInBits();
+    SDValue Src = Op.getOperand(0);
+    unsigned InBits = Src.getScalarValueSizeInBits();
 
     // If none of the top bits are demanded, convert this into an any_extend.
     if (NewMask.getActiveBits() <= InBits)
-      return TLO.CombineTo(Op,TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT,
-                                              Op.getOperand(0)));
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ANY_EXTEND, dl, VT, Src));
 
     // Since some of the sign extended bits are demanded, we know that the sign
     // bit is demanded.
     APInt InDemandedBits = NewMask.trunc(InBits);
     InDemandedBits.setBit(InBits - 1);
 
-    if (SimplifyDemandedBits(Op.getOperand(0), InDemandedBits, Known, TLO,
-                             Depth+1))
+    if (SimplifyDemandedBits(Src, InDemandedBits, Known, TLO, Depth + 1))
       return true;
     assert(!Known.hasConflict() && "Bits known to be one AND zero?");
     // If the sign bit is known one, the top bits match.
@@ -1113,14 +1112,13 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
     // If the sign bit is known zero, convert this to a zero extend.
     if (Known.isNonNegative())
-      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ZERO_EXTEND, dl, VT,
-                                               Op.getOperand(0)));
+      return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Src));
     break;
   }
   case ISD::SIGN_EXTEND_VECTOR_INREG: {
     // TODO - merge this with SIGN_EXTEND above?
     SDValue Src = Op.getOperand(0);
-    unsigned InBits = Src.getValueType().getScalarSizeInBits();
+    unsigned InBits = Src.getScalarValueSizeInBits();
 
     APInt InDemandedBits = NewMask.trunc(InBits);
 
@@ -1146,20 +1144,22 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     break;
   }
   case ISD::TRUNCATE: {
+    SDValue Src = Op.getOperand(0);
+
     // Simplify the input, using demanded bit information, and compute the known
     // zero/one bits live out.
-    unsigned OperandBitWidth = Op.getOperand(0).getScalarValueSizeInBits();
+    unsigned OperandBitWidth = Src.getScalarValueSizeInBits();
     APInt TruncMask = NewMask.zext(OperandBitWidth);
-    if (SimplifyDemandedBits(Op.getOperand(0), TruncMask, Known, TLO, Depth+1))
+    if (SimplifyDemandedBits(Src, TruncMask, Known, TLO, Depth + 1))
       return true;
     Known = Known.trunc(BitWidth);
 
     // If the input is only used by this truncate, see if we can shrink it based
     // on the known demanded bits.
-    if (Op.getOperand(0).getNode()->hasOneUse()) {
-      SDValue In = Op.getOperand(0);
-      switch (In.getOpcode()) {
-      default: break;
+    if (Src.getNode()->hasOneUse()) {
+      switch (Src.getOpcode()) {
+      default:
+        break;
       case ISD::SRL:
         // Shrink SRL by a constant if none of the high bits shifted in are
         // demanded.
@@ -1167,10 +1167,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
           // Do not turn (vt1 truncate (vt2 srl)) into (vt1 srl) if vt1 is
           // undesirable.
           break;
-        ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(In.getOperand(1));
+        ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Src.getOperand(1));
         if (!ShAmt)
           break;
-        SDValue Shift = In.getOperand(1);
+        SDValue Shift = Src.getOperand(1);
         if (TLO.LegalTypes()) {
           uint64_t ShVal = ShAmt->getZExtValue();
           Shift = TLO.DAG.getConstant(ShVal, dl, getShiftAmountTy(VT, DL));
@@ -1185,10 +1185,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
           if (!(HighBits & NewMask)) {
             // None of the shifted in bits are needed.  Add a truncate of the
             // shift input, then shift it.
-            SDValue NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, dl, VT,
-                                               In.getOperand(0));
-            return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, VT, NewTrunc,
-                                                     Shift));
+            SDValue NewTrunc =
+                TLO.DAG.getNode(ISD::TRUNCATE, dl, VT, Src.getOperand(0));
+            return TLO.CombineTo(
+                Op, TLO.DAG.getNode(ISD::SRL, dl, VT, NewTrunc, Shift));
           }
         }
         break;
