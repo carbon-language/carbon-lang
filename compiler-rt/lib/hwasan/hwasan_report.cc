@@ -95,6 +95,21 @@ void PrintAddressDescription(
   Decorator d;
   int num_descriptions_printed = 0;
   uptr untagged_addr = UntagAddr(tagged_addr);
+
+  // Print some very basic information about the address, if it's a heap.
+  HwasanChunkView chunk = FindHeapChunkByAddress(untagged_addr);
+  if (uptr beg = chunk.Beg()) {
+    uptr size = chunk.ActualSize();
+    Printf("%s[%p,%p) is a %s %s heap chunk; "
+           "size: %zd offset: %zd\n%s",
+           d.Location(),
+           beg, beg + size,
+           chunk.FromSmallHeap() ? "small" : "large",
+           chunk.IsAllocated() ? "allocated" : "unallocated",
+           size, untagged_addr - beg,
+           d.Default());
+  }
+
   // Check if this looks like a heap buffer overflow by scanning
   // the shadow left and right and looking for the first adjacent
   // object with a different memory tag. If that tag matches addr_tag,
