@@ -5880,3 +5880,332 @@ define i64 @c4_i64_bad(i64 %arg) {
   %tmp1 = and i64 %tmp0, 16382
   ret i64 %tmp1
 }
+
+; ---------------------------------------------------------------------------- ;
+; Constant, storing the result afterwards.
+; ---------------------------------------------------------------------------- ;
+
+; i32
+
+; The most canonical variant
+define void @c5_i32(i32 %arg, i32* %ptr) {
+; X86-NOBMI-LABEL: c5_i32:
+; X86-NOBMI:       # %bb.0:
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOBMI-NEXT:    shrl $19, %ecx
+; X86-NOBMI-NEXT:    andl $1023, %ecx # imm = 0x3FF
+; X86-NOBMI-NEXT:    movl %ecx, (%eax)
+; X86-NOBMI-NEXT:    retl
+;
+; X86-BMI1NOTBM-LABEL: c5_i32:
+; X86-BMI1NOTBM:       # %bb.0:
+; X86-BMI1NOTBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBM-NEXT:    movl $2579, %ecx # imm = 0xA13
+; X86-BMI1NOTBM-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBM-NEXT:    retl
+;
+; X86-BMI1TBM-LABEL: c5_i32:
+; X86-BMI1TBM:       # %bb.0:
+; X86-BMI1TBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1TBM-NEXT:    bextrl $2579, {{[0-9]+}}(%esp), %ecx # imm = 0xA13
+; X86-BMI1TBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1TBM-NEXT:    retl
+;
+; X86-BMI1NOTBMBMI2-LABEL: c5_i32:
+; X86-BMI1NOTBMBMI2:       # %bb.0:
+; X86-BMI1NOTBMBMI2-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBMBMI2-NEXT:    movl $2579, %ecx # imm = 0xA13
+; X86-BMI1NOTBMBMI2-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBMBMI2-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBMBMI2-NEXT:    retl
+;
+; X64-NOBMI-LABEL: c5_i32:
+; X64-NOBMI:       # %bb.0:
+; X64-NOBMI-NEXT:    shrl $19, %edi
+; X64-NOBMI-NEXT:    andl $1023, %edi # imm = 0x3FF
+; X64-NOBMI-NEXT:    movl %edi, (%rsi)
+; X64-NOBMI-NEXT:    retq
+;
+; X64-BMI1NOTBM-LABEL: c5_i32:
+; X64-BMI1NOTBM:       # %bb.0:
+; X64-BMI1NOTBM-NEXT:    movl $2579, %eax # imm = 0xA13
+; X64-BMI1NOTBM-NEXT:    bextrl %eax, %edi, %eax
+; X64-BMI1NOTBM-NEXT:    movl %eax, (%rsi)
+; X64-BMI1NOTBM-NEXT:    retq
+;
+; X64-BMI1TBM-LABEL: c5_i32:
+; X64-BMI1TBM:       # %bb.0:
+; X64-BMI1TBM-NEXT:    bextrl $2579, %edi, %eax # imm = 0xA13
+; X64-BMI1TBM-NEXT:    movl %eax, (%rsi)
+; X64-BMI1TBM-NEXT:    retq
+;
+; X64-BMI1NOTBMBMI2-LABEL: c5_i32:
+; X64-BMI1NOTBMBMI2:       # %bb.0:
+; X64-BMI1NOTBMBMI2-NEXT:    movl $2579, %eax # imm = 0xA13
+; X64-BMI1NOTBMBMI2-NEXT:    bextrl %eax, %edi, %eax
+; X64-BMI1NOTBMBMI2-NEXT:    movl %eax, (%rsi)
+; X64-BMI1NOTBMBMI2-NEXT:    retq
+  %tmp0 = lshr i32 %arg, 19
+  %tmp1 = and i32 %tmp0, 1023
+  store i32 %tmp1, i32* %ptr
+  ret void
+}
+
+; Should be still fine, but the mask is shifted
+define void @c6_i32(i32 %arg, i32* %ptr) {
+; X86-NOBMI-LABEL: c6_i32:
+; X86-NOBMI:       # %bb.0:
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOBMI-NEXT:    shrl $19, %ecx
+; X86-NOBMI-NEXT:    andl $4095, %ecx # imm = 0xFFF
+; X86-NOBMI-NEXT:    movl %ecx, (%eax)
+; X86-NOBMI-NEXT:    retl
+;
+; X86-BMI1NOTBM-LABEL: c6_i32:
+; X86-BMI1NOTBM:       # %bb.0:
+; X86-BMI1NOTBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBM-NEXT:    movl $3091, %ecx # imm = 0xC13
+; X86-BMI1NOTBM-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBM-NEXT:    retl
+;
+; X86-BMI1TBM-LABEL: c6_i32:
+; X86-BMI1TBM:       # %bb.0:
+; X86-BMI1TBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1TBM-NEXT:    bextrl $3091, {{[0-9]+}}(%esp), %ecx # imm = 0xC13
+; X86-BMI1TBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1TBM-NEXT:    retl
+;
+; X86-BMI1NOTBMBMI2-LABEL: c6_i32:
+; X86-BMI1NOTBMBMI2:       # %bb.0:
+; X86-BMI1NOTBMBMI2-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBMBMI2-NEXT:    movl $3091, %ecx # imm = 0xC13
+; X86-BMI1NOTBMBMI2-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBMBMI2-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBMBMI2-NEXT:    retl
+;
+; X64-NOBMI-LABEL: c6_i32:
+; X64-NOBMI:       # %bb.0:
+; X64-NOBMI-NEXT:    shrl $19, %edi
+; X64-NOBMI-NEXT:    andl $4095, %edi # imm = 0xFFF
+; X64-NOBMI-NEXT:    movl %edi, (%rsi)
+; X64-NOBMI-NEXT:    retq
+;
+; X64-BMI1NOTBM-LABEL: c6_i32:
+; X64-BMI1NOTBM:       # %bb.0:
+; X64-BMI1NOTBM-NEXT:    movl $3091, %eax # imm = 0xC13
+; X64-BMI1NOTBM-NEXT:    bextrl %eax, %edi, %eax
+; X64-BMI1NOTBM-NEXT:    movl %eax, (%rsi)
+; X64-BMI1NOTBM-NEXT:    retq
+;
+; X64-BMI1TBM-LABEL: c6_i32:
+; X64-BMI1TBM:       # %bb.0:
+; X64-BMI1TBM-NEXT:    bextrl $3091, %edi, %eax # imm = 0xC13
+; X64-BMI1TBM-NEXT:    movl %eax, (%rsi)
+; X64-BMI1TBM-NEXT:    retq
+;
+; X64-BMI1NOTBMBMI2-LABEL: c6_i32:
+; X64-BMI1NOTBMBMI2:       # %bb.0:
+; X64-BMI1NOTBMBMI2-NEXT:    movl $3091, %eax # imm = 0xC13
+; X64-BMI1NOTBMBMI2-NEXT:    bextrl %eax, %edi, %eax
+; X64-BMI1NOTBMBMI2-NEXT:    movl %eax, (%rsi)
+; X64-BMI1NOTBMBMI2-NEXT:    retq
+  %tmp0 = lshr i32 %arg, 19
+  %tmp1 = and i32 %tmp0, 4095
+  store i32 %tmp1, i32* %ptr
+  ret void
+}
+
+; Should be still fine, but the result is shifted left afterwards
+define void @c7_i32(i32 %arg, i32* %ptr) {
+; X86-LABEL: c7_i32:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NEXT:    shrl $17, %ecx
+; X86-NEXT:    andl $4092, %ecx # imm = 0xFFC
+; X86-NEXT:    movl %ecx, (%eax)
+; X86-NEXT:    retl
+;
+; X64-LABEL: c7_i32:
+; X64:       # %bb.0:
+; X64-NEXT:    shrl $17, %edi
+; X64-NEXT:    andl $4092, %edi # imm = 0xFFC
+; X64-NEXT:    movl %edi, (%rsi)
+; X64-NEXT:    retq
+  %tmp0 = lshr i32 %arg, 19
+  %tmp1 = and i32 %tmp0, 1023
+  %tmp2 = shl i32 %tmp1, 2
+  store i32 %tmp2, i32* %ptr
+  ret void
+}
+
+; i64
+
+; The most canonical variant
+define void @c5_i64(i64 %arg, i64* %ptr) {
+; X86-NOBMI-LABEL: c5_i64:
+; X86-NOBMI:       # %bb.0:
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOBMI-NEXT:    shrl $19, %ecx
+; X86-NOBMI-NEXT:    andl $1023, %ecx # imm = 0x3FF
+; X86-NOBMI-NEXT:    movl %ecx, (%eax)
+; X86-NOBMI-NEXT:    movl $0, 4(%eax)
+; X86-NOBMI-NEXT:    retl
+;
+; X86-BMI1NOTBM-LABEL: c5_i64:
+; X86-BMI1NOTBM:       # %bb.0:
+; X86-BMI1NOTBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBM-NEXT:    movl $2579, %ecx # imm = 0xA13
+; X86-BMI1NOTBM-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBM-NEXT:    movl $0, 4(%eax)
+; X86-BMI1NOTBM-NEXT:    retl
+;
+; X86-BMI1TBM-LABEL: c5_i64:
+; X86-BMI1TBM:       # %bb.0:
+; X86-BMI1TBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1TBM-NEXT:    bextrl $2579, {{[0-9]+}}(%esp), %ecx # imm = 0xA13
+; X86-BMI1TBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1TBM-NEXT:    movl $0, 4(%eax)
+; X86-BMI1TBM-NEXT:    retl
+;
+; X86-BMI1NOTBMBMI2-LABEL: c5_i64:
+; X86-BMI1NOTBMBMI2:       # %bb.0:
+; X86-BMI1NOTBMBMI2-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBMBMI2-NEXT:    movl $2579, %ecx # imm = 0xA13
+; X86-BMI1NOTBMBMI2-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBMBMI2-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBMBMI2-NEXT:    movl $0, 4(%eax)
+; X86-BMI1NOTBMBMI2-NEXT:    retl
+;
+; X64-NOBMI-LABEL: c5_i64:
+; X64-NOBMI:       # %bb.0:
+; X64-NOBMI-NEXT:    shrq $51, %rdi
+; X64-NOBMI-NEXT:    andl $1023, %edi # imm = 0x3FF
+; X64-NOBMI-NEXT:    movq %rdi, (%rsi)
+; X64-NOBMI-NEXT:    retq
+;
+; X64-BMI1NOTBM-LABEL: c5_i64:
+; X64-BMI1NOTBM:       # %bb.0:
+; X64-BMI1NOTBM-NEXT:    movl $2611, %eax # imm = 0xA33
+; X64-BMI1NOTBM-NEXT:    bextrq %rax, %rdi, %rax
+; X64-BMI1NOTBM-NEXT:    movq %rax, (%rsi)
+; X64-BMI1NOTBM-NEXT:    retq
+;
+; X64-BMI1TBM-LABEL: c5_i64:
+; X64-BMI1TBM:       # %bb.0:
+; X64-BMI1TBM-NEXT:    bextrq $2611, %rdi, %rax # imm = 0xA33
+; X64-BMI1TBM-NEXT:    movq %rax, (%rsi)
+; X64-BMI1TBM-NEXT:    retq
+;
+; X64-BMI1NOTBMBMI2-LABEL: c5_i64:
+; X64-BMI1NOTBMBMI2:       # %bb.0:
+; X64-BMI1NOTBMBMI2-NEXT:    movl $2611, %eax # imm = 0xA33
+; X64-BMI1NOTBMBMI2-NEXT:    bextrq %rax, %rdi, %rax
+; X64-BMI1NOTBMBMI2-NEXT:    movq %rax, (%rsi)
+; X64-BMI1NOTBMBMI2-NEXT:    retq
+  %tmp0 = lshr i64 %arg, 51
+  %tmp1 = and i64 %tmp0, 1023
+  store i64 %tmp1, i64* %ptr
+  ret void
+}
+
+; Should be still fine, but the mask is shifted
+define void @c6_i64(i64 %arg, i64* %ptr) {
+; X86-NOBMI-LABEL: c6_i64:
+; X86-NOBMI:       # %bb.0:
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NOBMI-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NOBMI-NEXT:    shrl $19, %ecx
+; X86-NOBMI-NEXT:    andl $4095, %ecx # imm = 0xFFF
+; X86-NOBMI-NEXT:    movl %ecx, (%eax)
+; X86-NOBMI-NEXT:    movl $0, 4(%eax)
+; X86-NOBMI-NEXT:    retl
+;
+; X86-BMI1NOTBM-LABEL: c6_i64:
+; X86-BMI1NOTBM:       # %bb.0:
+; X86-BMI1NOTBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBM-NEXT:    movl $3091, %ecx # imm = 0xC13
+; X86-BMI1NOTBM-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBM-NEXT:    movl $0, 4(%eax)
+; X86-BMI1NOTBM-NEXT:    retl
+;
+; X86-BMI1TBM-LABEL: c6_i64:
+; X86-BMI1TBM:       # %bb.0:
+; X86-BMI1TBM-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1TBM-NEXT:    bextrl $3091, {{[0-9]+}}(%esp), %ecx # imm = 0xC13
+; X86-BMI1TBM-NEXT:    movl %ecx, (%eax)
+; X86-BMI1TBM-NEXT:    movl $0, 4(%eax)
+; X86-BMI1TBM-NEXT:    retl
+;
+; X86-BMI1NOTBMBMI2-LABEL: c6_i64:
+; X86-BMI1NOTBMBMI2:       # %bb.0:
+; X86-BMI1NOTBMBMI2-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-BMI1NOTBMBMI2-NEXT:    movl $3091, %ecx # imm = 0xC13
+; X86-BMI1NOTBMBMI2-NEXT:    bextrl %ecx, {{[0-9]+}}(%esp), %ecx
+; X86-BMI1NOTBMBMI2-NEXT:    movl %ecx, (%eax)
+; X86-BMI1NOTBMBMI2-NEXT:    movl $0, 4(%eax)
+; X86-BMI1NOTBMBMI2-NEXT:    retl
+;
+; X64-NOBMI-LABEL: c6_i64:
+; X64-NOBMI:       # %bb.0:
+; X64-NOBMI-NEXT:    shrq $51, %rdi
+; X64-NOBMI-NEXT:    andl $4095, %edi # imm = 0xFFF
+; X64-NOBMI-NEXT:    movq %rdi, (%rsi)
+; X64-NOBMI-NEXT:    retq
+;
+; X64-BMI1NOTBM-LABEL: c6_i64:
+; X64-BMI1NOTBM:       # %bb.0:
+; X64-BMI1NOTBM-NEXT:    movl $3123, %eax # imm = 0xC33
+; X64-BMI1NOTBM-NEXT:    bextrq %rax, %rdi, %rax
+; X64-BMI1NOTBM-NEXT:    movq %rax, (%rsi)
+; X64-BMI1NOTBM-NEXT:    retq
+;
+; X64-BMI1TBM-LABEL: c6_i64:
+; X64-BMI1TBM:       # %bb.0:
+; X64-BMI1TBM-NEXT:    bextrq $3123, %rdi, %rax # imm = 0xC33
+; X64-BMI1TBM-NEXT:    movq %rax, (%rsi)
+; X64-BMI1TBM-NEXT:    retq
+;
+; X64-BMI1NOTBMBMI2-LABEL: c6_i64:
+; X64-BMI1NOTBMBMI2:       # %bb.0:
+; X64-BMI1NOTBMBMI2-NEXT:    movl $3123, %eax # imm = 0xC33
+; X64-BMI1NOTBMBMI2-NEXT:    bextrq %rax, %rdi, %rax
+; X64-BMI1NOTBMBMI2-NEXT:    movq %rax, (%rsi)
+; X64-BMI1NOTBMBMI2-NEXT:    retq
+  %tmp0 = lshr i64 %arg, 51
+  %tmp1 = and i64 %tmp0, 4095
+  store i64 %tmp1, i64* %ptr
+  ret void
+}
+
+; Should be still fine, but the result is shifted left afterwards
+define void @c7_i64(i64 %arg, i64* %ptr) {
+; X86-LABEL: c7_i64:
+; X86:       # %bb.0:
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X86-NEXT:    shrl $17, %ecx
+; X86-NEXT:    andl $4092, %ecx # imm = 0xFFC
+; X86-NEXT:    movl %ecx, (%eax)
+; X86-NEXT:    movl $0, 4(%eax)
+; X86-NEXT:    retl
+;
+; X64-LABEL: c7_i64:
+; X64:       # %bb.0:
+; X64-NEXT:    shrq $49, %rdi
+; X64-NEXT:    andl $4092, %edi # imm = 0xFFC
+; X64-NEXT:    movq %rdi, (%rsi)
+; X64-NEXT:    retq
+  %tmp0 = lshr i64 %arg, 51
+  %tmp1 = and i64 %tmp0, 1023
+  %tmp2 = shl i64 %tmp1, 2
+  store i64 %tmp2, i64* %ptr
+  ret void
+}
