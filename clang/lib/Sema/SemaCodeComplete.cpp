@@ -1881,7 +1881,8 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
     }
 
     // Switch-specific statements.
-    if (!SemaRef.getCurFunction()->SwitchStack.empty()) {
+    if (SemaRef.getCurFunction() &&
+        !SemaRef.getCurFunction()->SwitchStack.empty()) {
       // case expression:
       Builder.AddTypedTextChunk("case");
       Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
