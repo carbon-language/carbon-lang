@@ -62,8 +62,11 @@ public:
   // Emit simple types as-is.
   void Unparse(const std::string &x) { Put(x); }
   void Unparse(int x) { Put(std::to_string(x)); }
-  void Unparse(std::uint64_t x) { Put(std::to_string(x)); }
-  void Unparse(std::int64_t x) { Put(std::to_string(x)); }
+  void Unparse(unsigned int x) { Put(std::to_string(x)); }
+  void Unparse(long x) { Put(std::to_string(x)); }
+  void Unparse(unsigned long x) { Put(std::to_string(x)); }
+  void Unparse(long long x) { Put(std::to_string(x)); }
+  void Unparse(unsigned long long x) { Put(std::to_string(x)); }
   void Unparse(char x) { Put(x); }
 
   // Statement labels and ends of lines
