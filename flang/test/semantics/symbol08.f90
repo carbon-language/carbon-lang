@@ -12,34 +12,15 @@
 ! See the License for the specific language governing permissions and
 ! limitations under the License.
 
-module m1
-  implicit none
-contains
-  subroutine foo(x)
-    real :: x
-  end subroutine
-end module
-
-!Note: PGI, Intel, GNU, and NAG allow this; Sun does not
-module m2
-  use m1
-  implicit none
-  !ERROR: 'foo' is already declared in this scoping unit
-  interface foo
-    module procedure s
-  end interface
-contains
-  subroutine s(i)
-    integer :: i
-  end subroutine
-end module
-
-subroutine foo
-  !ERROR: Cannot use-associate 'foo'; it is already declared in this scope
-  use m1
-end
-
-subroutine bar
-  !ERROR: Cannot use-associate 'bar'; it is already declared in this scope
-  use m1, bar => foo
-end
+!DEF: /main MainProgram
+program main
+ !DEF: /main/x POINTER ObjectEntity REAL(4)
+ pointer :: x
+ real x
+ !DEF: /main/y EXTERNAL, POINTER ProcEntity REAL(4)
+ pointer :: y
+ procedure (real) :: y
+ !DEF: /main/z (implicit) ObjectEntity REAL(4)
+ !REF: /main/y
+ z = y()
+end program
