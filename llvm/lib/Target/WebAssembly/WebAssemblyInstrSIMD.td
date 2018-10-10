@@ -794,13 +794,13 @@ multiclass SIMDConvert<ValueType vec_t, ValueType arg_t, SDNode op,
            name#"\t$dst, $vec", name, simdop>;
 }
 
-// Integer to floating point
+// Integer to floating point: convert_s / convert_u
 defm "" : SIMDConvert<v4f32, v4i32, sint_to_fp, "f32x4.convert_s/i32x4", 143>;
 defm "" : SIMDConvert<v4f32, v4i32, uint_to_fp, "f32x4.convert_u/i32x4", 144>;
 defm "" : SIMDConvert<v2f64, v2i64, sint_to_fp, "f64x2.convert_s/i64x2", 145>;
 defm "" : SIMDConvert<v2f64, v2i64, uint_to_fp, "f64x2.convert_u/i64x2", 146>;
 
-// Floating point to integer with saturation
+// Floating point to integer with saturation: trunc_sat_s / trunc_sat_u
 defm "" : SIMDConvert<v4i32, v4f32, fp_to_sint, "i32x4.trunc_sat_s/f32x4", 147>;
 defm "" : SIMDConvert<v4i32, v4f32, fp_to_uint, "i32x4.trunc_sat_u/f32x4", 148>;
 defm "" : SIMDConvert<v2i64, v2f64, fp_to_sint, "i64x2.trunc_sat_s/f64x2", 149>;
