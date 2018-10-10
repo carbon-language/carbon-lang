@@ -434,7 +434,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"norm2", {{"x", SameReal, Rank::array}, OptionalDIM}, SameReal,
         Rank::dimReduced},
     {"not", {{"i", SameInt}}, SameInt},
-    // pmk WIP continue here in transformationals with NULL
+    // NULL() is a special case handled in Probe() below
     {"out_of_range",
         {{"x", SameIntOrReal}, {"mold", AnyIntOrReal, Rank::scalar}},
         DftLogical},
@@ -457,6 +457,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         SameNumeric, Rank::dimReduced},
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
+    // pmk WIP continue here with REDUCE
+    // TODO: repeat
     {"reshape",
         {{"source", SameType, Rank::array}, {"shape", AnyInt, Rank::shape},
             {"pad", SameType, Rank::array, Optionality::optional},
@@ -469,7 +471,9 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"back", AnyLogical, Rank::elemental, Optionality::optional},
             DefaultingKIND},
         KINDInt},
+    // TODO: selected_char/int/real_kind
     {"set_exponent", {{"x", SameReal}, {"i", AnyInt}}, SameReal},
+    // TODO: shape
     {"shifta", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
     {"shiftl", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
     {"shiftr", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
@@ -523,6 +527,9 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         KINDInt},
 };
 
+// TODO: Coarray intrinsic functions
+// TODO: Inquiry intrinsic functions
+// TODO: Object characteristic inquiry functions
 // Not covered by the table above:
 // MAX, MIN, MERGE
 
@@ -993,6 +1000,25 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
       return specific;
     }
   }
+  // Special case intrinsic functions
+  if (call.name.ToString() == "null") {
+    if (call.argument.size() == 0) {
+      // TODO: NULL() result type is determined by context
+      // Can pass that context in, or return a token distinguishing
+      // NULL, or represent NULL as a new kind of top-level expression
+    } else if (call.argument.size() > 1) {
+      errors.Say("too many arguments to NULL()"_err_en_US);
+    } else if (call.argument[0].keyword.has_value() &&
+        call.argument[0].keyword->ToString() != "mold") {
+      errors.Say("unknown argument '%s' to NULL()"_err_en_US,
+          call.argument[0].keyword->ToString().data());
+    } else {
+      // TODO: Argument must be pointer, procedure pointer, or allocatable.
+      // Characteristics, including dynamic length type parameter values,
+      // must be taken from the MOLD argument.
+    }
+  }
+  // No match
   CHECK(!buffer.empty());
   if (messages != nullptr && messages->messages() != nullptr) {
     messages->messages()->Annex(std::move(buffer));

@@ -18,7 +18,6 @@
 #include "call.h"
 #include "type.h"
 #include "../common/idioms.h"
-#include "../parser/char-block.h"
 #include "../parser/message.h"
 #include <memory>
 #include <optional>
@@ -26,12 +25,14 @@
 
 namespace Fortran::evaluate {
 
+class Argument;
+
 // Placeholder
 ENUM_CLASS(IntrinsicProcedure, IAND, IEOR, IOR, LEN, MAX, MIN)
 
 struct CallCharacteristics {
   parser::CharBlock name;
-  const std::vector<ActualArgument> &argument;
+  const Arguments &argument;
   bool isSubroutineCall{false};
 };
 
@@ -41,6 +42,7 @@ struct SpecificIntrinsic {
     : name{n}, isElemental{isElem}, type{dt}, rank{r} {}
   const char *name;  // not owner
   bool isElemental{false};
+  bool isPointer{false};  // NULL()
   DynamicType type;
   int rank{0};
 };

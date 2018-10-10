@@ -21,6 +21,7 @@
 // Fortran 2018 language standard (q.v.) and uses strong typing to ensure
 // that only admissable combinations can be constructed.
 
+#include "call.h"
 #include "common.h"
 #include "intrinsics.h"
 #include "type.h"
@@ -280,7 +281,8 @@ public:
   Variant u;
 };
 
-// TODO pmk: move more of these into call.h/cc...
+FOR_EACH_CHARACTER_KIND(extern template class Designator)
+
 struct ProcedureDesignator {
   EVALUATE_UNION_CLASS_BOILERPLATE(ProcedureDesignator)
   explicit ProcedureDesignator(IntrinsicProcedure p) : u{p} {}
@@ -319,7 +321,7 @@ template<typename A> struct FunctionRef : public UntypedFunctionRef {
   static_assert(Result::isSpecificIntrinsicType ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   // Subtlety: There is a distinction that must be maintained here between an
-  // actual argument expression that *is* a variable and one that is not,
+  // actual argument expression that is a variable and one that is not,
   // e.g. between X and (X).  The parser attempts to parse each argument
   // first as a variable, then as an expression, and the distinction appears
   // in the parse tree.
@@ -338,6 +340,8 @@ template<typename A> struct FunctionRef : public UntypedFunctionRef {
     return std::nullopt;
   }
 };
+
+FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef)
 
 template<typename A> struct Variable {
   using Result = A;
@@ -379,8 +383,5 @@ private:
   Arguments arguments_;
 };
 
-FOR_EACH_CHARACTER_KIND(extern template class Designator)
-
 }  // namespace Fortran::evaluate
-
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_

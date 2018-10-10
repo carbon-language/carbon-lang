@@ -32,4 +32,7 @@ std::ostream &ActualArgument::Dump(std::ostream &o) const {
   }
   return value->Dump(o);
 }
+
+FOR_EACH_SPECIFIC_TYPE(template struct FunctionRef)
+
 }  // namespace Fortran::evaluate
