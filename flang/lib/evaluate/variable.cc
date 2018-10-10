@@ -117,10 +117,7 @@ Expr<SubscriptInteger> Substring::last() const {
   }
   return std::visit(
       common::visitors{[](const std::string &s) {
-                         // std::string::size_type isn't convertible to uint64_t
-                         // on Darwin
-                         return AsExpr(Constant<SubscriptInteger>{
-                             static_cast<std::uint64_t>(s.size())});
+                         return AsExpr(Constant<SubscriptInteger>{s.size()});
                        },
           [](const DataRef &x) { return x.LEN(); }},
       u_);

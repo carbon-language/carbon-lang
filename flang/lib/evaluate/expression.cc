@@ -476,10 +476,8 @@ template<int KIND>
 Expr<SubscriptInteger> Expr<Type<TypeCategory::Character, KIND>>::LEN() const {
   return std::visit(
       common::visitors{[](const Constant<Result> &c) {
-                         // std::string::size_type isn't convertible to uint64_t
-                         // on Darwin
-                         return AsExpr(Constant<SubscriptInteger>{
-                             static_cast<std::uint64_t>(c.value.size())});
+                         return AsExpr(
+                             Constant<SubscriptInteger>{c.value.size()});
                        },
           [](const Parentheses<Result> &x) { return x.left().LEN(); },
           [](const Concat<KIND> &c) {
