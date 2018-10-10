@@ -37,9 +37,9 @@ template <typename Impl> class X86SnippetGenerator : public Impl {
     }
 
     // Handle X87.
-    const auto &InstrDesc = InstrInfo.get(Opcode);
-    const unsigned FPInstClass = InstrDesc.TSFlags & llvm::X86II::FPTypeMask;
-    const Instruction Instr(InstrDesc, this->RATC);
+    const unsigned FPInstClass =
+        InstrInfo.get(Opcode).TSFlags & llvm::X86II::FPTypeMask;
+    const Instruction Instr(this->State, Opcode);
     switch (FPInstClass) {
     case llvm::X86II::NotFP:
       break;

@@ -248,7 +248,7 @@ public:
   FakeSnippetGenerator(const LLVMState &State) : SnippetGenerator(State) {}
 
   Instruction createInstruction(unsigned Opcode) {
-    return Instruction(State.getInstrInfo().get(Opcode), RATC);
+    return Instruction(State, Opcode);
   }
 
 private:

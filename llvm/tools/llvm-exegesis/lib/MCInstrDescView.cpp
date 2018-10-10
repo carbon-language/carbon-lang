@@ -87,24 +87,24 @@ const llvm::MCOperandInfo &Operand::getExplicitOperandInfo() const {
   return *Info;
 }
 
-Instruction::Instruction(const llvm::MCInstrDesc &MCInstrDesc,
-                         const RegisterAliasingTrackerCache &RATC)
-    : Description(&MCInstrDesc) {
+Instruction::Instruction(const LLVMState &State, unsigned Opcode)
+    : Description(&State.getInstrInfo().get(Opcode)) {
+  const auto &RATC = State.getRATC();
   unsigned OpIndex = 0;
-  for (; OpIndex < MCInstrDesc.getNumOperands(); ++OpIndex) {
-    const auto &OpInfo = MCInstrDesc.opInfo_begin()[OpIndex];
+  for (; OpIndex < Description->getNumOperands(); ++OpIndex) {
+    const auto &OpInfo = Description->opInfo_begin()[OpIndex];
     Operand Operand;
     Operand.Index = OpIndex;
-    Operand.IsDef = (OpIndex < MCInstrDesc.getNumDefs());
+    Operand.IsDef = (OpIndex < Description->getNumDefs());
     // TODO(gchatelet): Handle isLookupPtrRegClass.
     if (OpInfo.RegClass >= 0)
       Operand.Tracker = &RATC.getRegisterClass(OpInfo.RegClass);
     Operand.TiedToIndex =
-        MCInstrDesc.getOperandConstraint(OpIndex, llvm::MCOI::TIED_TO);
+        Description->getOperandConstraint(OpIndex, llvm::MCOI::TIED_TO);
     Operand.Info = &OpInfo;
     Operands.push_back(Operand);
   }
-  for (const llvm::MCPhysReg *MCPhysReg = MCInstrDesc.getImplicitDefs();
+  for (const llvm::MCPhysReg *MCPhysReg = Description->getImplicitDefs();
        MCPhysReg && *MCPhysReg; ++MCPhysReg, ++OpIndex) {
     Operand Operand;
     Operand.Index = OpIndex;
@@ -113,7 +113,7 @@ Instruction::Instruction(const llvm::MCInstrDesc &MCInstrDesc,
     Operand.ImplicitReg = MCPhysReg;
     Operands.push_back(Operand);
   }
-  for (const llvm::MCPhysReg *MCPhysReg = MCInstrDesc.getImplicitUses();
+  for (const llvm::MCPhysReg *MCPhysReg = Description->getImplicitUses();
        MCPhysReg && *MCPhysReg; ++MCPhysReg, ++OpIndex) {
     Operand Operand;
     Operand.Index = OpIndex;

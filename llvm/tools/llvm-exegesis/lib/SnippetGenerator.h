@@ -54,7 +54,6 @@ public:
 
 protected:
   const LLVMState &State;
-  const RegisterAliasingTrackerCache RATC;
 
   // Generates a single code template that has a self-dependency.
   llvm::Expected<CodeTemplate>
