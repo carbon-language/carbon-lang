@@ -508,23 +508,16 @@ defm XOR : SIMDBitwise<xor, "xor", 62>;
 } // isCommutable = 1
 
 // Bitwise logic: v128.not
-multiclass SIMDNot<ValueType vec_t, PatFrag splat_pat, ValueType lane_t> {
-  defm NOT_#vec_t : SIMD_I<(outs V128:$dst), (ins V128:$vec),
-                           (outs), (ins),
-                           [(set
-                             (vec_t V128:$dst),
-                             (vec_t (xor
-                               (vec_t V128:$vec),
-                               (vec_t (splat_pat (lane_t -1)))
-                             ))
-                           )],
+multiclass SIMDNot<ValueType vec_t> {
+  defm NOT_#vec_t : SIMD_I<(outs V128:$dst), (ins V128:$vec), (outs), (ins),
+                           [(set (vec_t V128:$dst), (vec_t (vnot V128:$vec)))],
                            "v128.not\t$dst, $vec", "v128.not", 63>;
 }
 
-defm "" : SIMDNot<v16i8, splat16, i32>;
-defm "" : SIMDNot<v8i16, splat8, i32>;
-defm "" : SIMDNot<v4i32, splat4, i32>;
-defm "" : SIMDNot<v2i64, splat2, i64>;
+defm "" : SIMDNot<v16i8>;
+defm "" : SIMDNot<v8i16>;
+defm "" : SIMDNot<v4i32>;
+defm "" : SIMDNot<v2i64>;
 
 // Bitwise select: v128.bitselect
 def wasm_bitselect_t : SDTypeProfile<1, 3,
