@@ -155,13 +155,13 @@ void PrintAddressDescription(
       Printf("previously allocated here:\n", t);
       Printf("%s", d.Default());
       GetStackTraceFromId(har.alloc_context_id).Print();
-      t->Announce();
 
       // Print a developer note: the index of this heap object
       // in the thread's deallocation ring buffer.
       Printf("hwasan_dev_note_heap_rb_distance: %zd %zd\n", D,
              flags()->heap_history_size);
 
+      t->Announce();
       num_descriptions_printed++;
     }
 
@@ -195,6 +195,9 @@ void PrintAddressDescription(
       num_descriptions_printed++;
     }
   });
+
+  // Print the remaining threads, as an extra information, 1 line per thread.
+  hwasanThreadList().VisitAllLiveThreads([&](Thread *t) { t->Announce(); });
 
   if (!num_descriptions_printed)
     // We exhausted our possibilities. Bail out.
