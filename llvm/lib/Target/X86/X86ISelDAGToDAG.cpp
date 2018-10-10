@@ -239,12 +239,6 @@ namespace {
       return tryFoldLoad(P, P, N, Base, Scale, Index, Disp, Segment);
     }
 
-    // Try to fold a vector load. This makes sure the load isn't non-temporal.
-    bool tryFoldVecLoad(SDNode *Root, SDNode *P, SDValue N,
-                        SDValue &Base, SDValue &Scale,
-                        SDValue &Index, SDValue &Disp,
-                        SDValue &Segment);
-
     /// Implement addressing mode selection for inline asm expressions.
     bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                       unsigned ConstraintID,
@@ -515,6 +509,10 @@ X86DAGToDAGISel::IsProfitableToFold(SDValue N, SDNode *U, SDNode *Root) const {
 
   if (N.getOpcode() != ISD::LOAD)
     return true;
+
+  // Don't fold non-temporal loads if we have an instruction for them.
+  if (useNonTemporalLoad(cast<LoadSDNode>(N)))
+    return false;
 
   // If N is a load, do additional profitability checks.
   if (U == Root) {
@@ -2053,20 +2051,6 @@ bool X86DAGToDAGISel::tryFoldLoad(SDNode *Root, SDNode *P, SDValue N,
                     N.getOperand(1), Base, Scale, Index, Disp, Segment);
 }
 
-bool X86DAGToDAGISel::tryFoldVecLoad(SDNode *Root, SDNode *P, SDValue N,
-                                     SDValue &Base, SDValue &Scale,
-                                     SDValue &Index, SDValue &Disp,
-                                     SDValue &Segment) {
-  if (!ISD::isNON_EXTLoad(N.getNode()) ||
-      useNonTemporalLoad(cast<LoadSDNode>(N)) ||
-      !IsProfitableToFold(N, P, Root) ||
-      !IsLegalToFold(N, P, Root, OptLevel))
-    return false;
-
-  return selectAddr(N.getNode(),
-                    N.getOperand(1), Base, Scale, Index, Disp, Segment);
-}
-
 /// Return an SDNode that returns the value of the global base register.
 /// Output instructions required to initialize the global base register,
 /// if necessary.
@@ -2595,8 +2579,8 @@ MachineSDNode *X86DAGToDAGISel::emitPCMPISTR(unsigned ROpc, unsigned MOpc,
   // alignment on this load.
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
   if (MayFoldLoad && N1->getOpcode() == ISD::BITCAST && N1->hasOneUse() &&
-      tryFoldVecLoad(Node, N1.getNode(), N1.getOperand(0), Tmp0, Tmp1, Tmp2,
-                     Tmp3, Tmp4)) {
+      tryFoldLoad(Node, N1.getNode(), N1.getOperand(0), Tmp0, Tmp1, Tmp2,
+                  Tmp3, Tmp4)) {
     SDValue Load = N1.getOperand(0);
     SDValue Ops[] = { N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Imm,
                       Load.getOperand(0) };
@@ -2632,8 +2616,8 @@ MachineSDNode *X86DAGToDAGISel::emitPCMPESTR(unsigned ROpc, unsigned MOpc,
   // alignment on this load.
   SDValue Tmp0, Tmp1, Tmp2, Tmp3, Tmp4;
   if (MayFoldLoad && N2->getOpcode() == ISD::BITCAST && N2->hasOneUse() &&
-      tryFoldVecLoad(Node, N2.getNode(), N2.getOperand(0), Tmp0, Tmp1, Tmp2,
-                     Tmp3, Tmp4)) {
+      tryFoldLoad(Node, N2.getNode(), N2.getOperand(0), Tmp0, Tmp1, Tmp2,
+                  Tmp3, Tmp4)) {
     SDValue Load = N2.getOperand(0);
     SDValue Ops[] = { N0, Tmp0, Tmp1, Tmp2, Tmp3, Tmp4, Imm,
                       Load.getOperand(0), InFlag };
