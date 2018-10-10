@@ -81,7 +81,7 @@ struct Operand {
   const llvm::MCOperandInfo &getExplicitOperandInfo() const;
 
   // Please use the accessors above and not the following fields.
-  unsigned Index = 0;
+  int Index = -1;
   bool IsDef = false;
   const RegisterAliasingTracker *Tracker = nullptr; // Set for Register Op.
   const llvm::MCOperandInfo *Info = nullptr;        // Set for Explicit Op.
