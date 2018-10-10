@@ -62,18 +62,23 @@ private:
       do {
         Block block;
         auto doLoop{stack.back().iter};
+        auto originalSource{
+            std::get<Statement<common::Indirection<LabelDoStmt>>>(
+                std::get<ExecutableConstruct>(doLoop->u).u)
+                .source};
         block.splice(block.begin(), originalBlock, ++stack.back().iter, next);
-        std::get<ExecutableConstruct>(doLoop->u)
-            .u = common::Indirection<DoConstruct>{std::make_tuple(
-            Statement<NonLabelDoStmt>{std::optional<Label>{},
-                NonLabelDoStmt{std::make_tuple(std::optional<Name>{},
-                    std::move(std::get<std::optional<LoopControl>>(
-                        std::get<Statement<common::Indirection<LabelDoStmt>>>(
-                            std::get<ExecutableConstruct>(doLoop->u).u)
-                            .statement->t)))}},
-            std::move(block),
-            Statement<EndDoStmt>{
-                std::optional<Label>{}, EndDoStmt{std::optional<Name>{}}})};
+        Statement<NonLabelDoStmt> nonLabelDoStmt{std::optional<Label>{},
+            NonLabelDoStmt{std::make_tuple(std::optional<Name>{},
+                std::move(std::get<std::optional<LoopControl>>(
+                    std::get<Statement<common::Indirection<LabelDoStmt>>>(
+                        std::get<ExecutableConstruct>(doLoop->u).u)
+                        .statement->t)))}};
+        nonLabelDoStmt.source = originalSource;
+        std::get<ExecutableConstruct>(doLoop->u).u =
+            common::Indirection<DoConstruct>{
+                std::make_tuple(std::move(nonLabelDoStmt), std::move(block),
+                    Statement<EndDoStmt>{std::optional<Label>{},
+                        EndDoStmt{std::optional<Name>{}}})};
         stack.pop_back();
       } while (!stack.empty() && stack.back().label == currentLabel);
       i = --next;
