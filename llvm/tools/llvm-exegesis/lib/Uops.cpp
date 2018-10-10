@@ -126,14 +126,11 @@ void UopsSnippetGenerator::instantiateMemoryOperands(
 
 llvm::Expected<CodeTemplate>
 UopsSnippetGenerator::generateCodeTemplate(unsigned Opcode) const {
-  const Instruction Instr(State.getInstrInfo().get(Opcode), RATC);
-  if (Instr.hasMemoryOperands())
-    return llvm::make_error<BenchmarkFailure>(
-        "Infeasible : has unknown operands");
   const auto &ET = State.getExegesisTarget();
   CodeTemplate CT;
 
   const llvm::BitVector *ScratchSpaceAliasedRegs = nullptr;
+  const Instruction Instr(State.getInstrInfo().get(Opcode), RATC);
   if (Instr.hasMemoryOperands()) {
     CT.ScratchSpacePointerInReg =
         ET.getScratchMemoryRegister(State.getTargetMachine().getTargetTriple());
