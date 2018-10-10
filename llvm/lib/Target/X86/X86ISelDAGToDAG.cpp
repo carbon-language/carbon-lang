@@ -457,7 +457,6 @@ namespace {
     }
 
     bool foldLoadStoreIntoMemOperand(SDNode *Node);
-    bool matchBEXTRFromAnd(SDNode *Node);
     bool shrinkAndImmediate(SDNode *N);
     bool isMaskZeroExtended(SDNode *N) const;
     bool tryShiftAmountMod(SDNode *N);
@@ -2582,69 +2581,6 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
   return true;
 }
 
-// See if this is an (X >> C1) & C2 that we can match to BEXTR/BEXTRI.
-bool X86DAGToDAGISel::matchBEXTRFromAnd(SDNode *Node) {
-  MVT NVT = Node->getSimpleValueType(0);
-  SDLoc dl(Node);
-
-  SDValue N0 = Node->getOperand(0);
-  SDValue N1 = Node->getOperand(1);
-
-  // If we have TBM we can use an immediate for the control. If we have BMI
-  // we should only do this if the BEXTR instruction is implemented well.
-  // Otherwise moving the control into a register makes this more costly.
-  // TODO: Maybe load folding, greater than 32-bit masks, or a guarantee of LICM
-  // hoisting the move immediate would make it worthwhile with a less optimal
-  // BEXTR?
-  if (!Subtarget->hasTBM() &&
-      !(Subtarget->hasBMI() && Subtarget->hasFastBEXTR()))
-    return false;
-
-  // Must have a shift right.
-  if (N0->getOpcode() != ISD::SRL && N0->getOpcode() != ISD::SRA)
-    return false;
-
-  // Shift can't have additional users.
-  if (!N0->hasOneUse())
-    return false;
-
-  // Only supported for 32 and 64 bits.
-  if (NVT != MVT::i32 && NVT != MVT::i64)
-    return false;
-
-  // Shift amount and RHS of and must be constant.
-  ConstantSDNode *MaskCst = dyn_cast<ConstantSDNode>(N1);
-  ConstantSDNode *ShiftCst = dyn_cast<ConstantSDNode>(N0->getOperand(1));
-  if (!MaskCst || !ShiftCst)
-    return false;
-
-  // And RHS must be a mask.
-  uint64_t Mask = MaskCst->getZExtValue();
-  if (!isMask_64(Mask))
-    return false;
-
-  uint64_t Shift = ShiftCst->getZExtValue();
-  uint64_t MaskSize = countPopulation(Mask);
-
-  // Don't interfere with something that can be handled by extracting AH.
-  // TODO: If we are able to fold a load, BEXTR might still be better than AH.
-  if (Shift == 8 && MaskSize == 8)
-    return false;
-
-  // Make sure we are only using bits that were in the original value, not
-  // shifted in.
-  if (Shift + MaskSize > NVT.getSizeInBits())
-    return false;
-
-  // Create a BEXTR node and run it through selection.
-  SDValue C = CurDAG->getConstant(Shift | (MaskSize << 8), dl, NVT);
-  SDValue New = CurDAG->getNode(X86ISD::BEXTR, dl, NVT,
-                                N0->getOperand(0), C);
-  ReplaceNode(Node, New.getNode());
-  SelectCode(New.getNode());
-  return true;
-}
-
 // Emit a PCMISTR(I/M) instruction.
 MachineSDNode *X86DAGToDAGISel::emitPCMPISTR(unsigned ROpc, unsigned MOpc,
                                              bool MayFoldLoad, const SDLoc &dl,
@@ -2952,8 +2888,6 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     break;
 
   case ISD::AND:
-    if (matchBEXTRFromAnd(Node))
-      return;
     if (AndImmShrink && shrinkAndImmediate(Node))
       return;
 
