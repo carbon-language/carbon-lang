@@ -120,8 +120,8 @@ public:
 
   // C++'s integral types can all be converted to Integer
   // with silent truncation.
-  template<typename INT> constexpr Integer(INT n) {
-    static_assert(std::is_integral_v<INT>);
+  template<typename INT>
+  constexpr Integer(std::enable_if<std::is_integral_v<INT>, INT> n) {
     constexpr int nBits = CHAR_BIT * sizeof n;
     if constexpr (nBits < partBits) {
       if constexpr (std::is_unsigned_v<INT>) {
@@ -333,7 +333,7 @@ public:
     return result;
   }
 
-  static constexpr Integer BIT_SIZE() { return {std::uint64_t{bits}}; }
+  static constexpr Integer BIT_SIZE() { return {bits}; }
   static constexpr Integer HUGE() { return MASKR(bits - 1); }
 
   // Returns the number of full decimal digits that can be represented.
@@ -341,7 +341,7 @@ public:
     if (bits < 4) {
       return 0;
     }
-    Integer x{HUGE()}, ten{std::uint64_t{10}};
+    Integer x{HUGE()}, ten{10};
     int digits{0};
     while (x.CompareUnsigned(ten) != Ordering::Less) {
       ++digits;
@@ -817,7 +817,7 @@ public:
     if (isNegative != yIsNegative) {
       product.lower = product.lower.NOT();
       product.upper = product.upper.NOT();
-      Integer one{std::uint64_t{1}};
+      Integer one{1};
       auto incremented{product.lower.AddUnsigned(one)};
       product.lower = incremented.value;
       if (incremented.carry) {
@@ -881,8 +881,7 @@ public:
         // Dividend was (and remains) the most negative number.
         // See whether the original divisor was -1 (if so, it's 1 now).
         if (divisorOrdering == Ordering::Less &&
-            divisor.CompareUnsigned(Integer{std::uint64_t{1}}) ==
-                Ordering::Equal) {
+            divisor.CompareUnsigned(Integer{1}) == Ordering::Equal) {
           // most negative number / -1 is the sole overflow case
           return {*this, Integer{}, false, true};
         }
