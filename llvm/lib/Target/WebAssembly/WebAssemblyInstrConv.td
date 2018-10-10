@@ -13,8 +13,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-let Defs = [ARGUMENTS] in {
-
 defm I32_WRAP_I64 : I<(outs I32:$dst), (ins I64:$src), (outs), (ins),
                       [(set I32:$dst, (trunc I64:$src))],
                       "i32.wrap/i64\t$dst, $src", "i32.wrap/i64", 0xa7>;
@@ -51,14 +49,10 @@ defm I64_EXTEND32_S_I64 : I<(outs I64:$dst), (ins I64:$src), (outs), (ins),
                             0xc4>;
 } // Predicates = [HasSignExt]
 
-} // defs = [ARGUMENTS]
-
 // Expand a "don't care" extend into zero-extend (chosen over sign-extend
 // somewhat arbitrarily, although it favors popular hardware architectures
 // and is conceptually a simpler operation).
 def : Pat<(i64 (anyext I32:$src)), (I64_EXTEND_U_I32 I32:$src)>;
-
-let Defs = [ARGUMENTS] in {
 
 // Conversion from floating point to integer instructions which don't trap on
 // overflow or invalid.
@@ -218,5 +212,3 @@ defm F64_REINTERPRET_I64 : I<(outs F64:$dst), (ins I64:$src), (outs), (ins),
                              [(set F64:$dst, (bitconvert I64:$src))],
                              "f64.reinterpret/i64\t$dst, $src",
                              "f64.reinterpret/i64", 0xbf>;
-
-} // Defs = [ARGUMENTS]

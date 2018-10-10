@@ -55,7 +55,6 @@ multiclass ConstVec<ValueType vec_t, dag ops, dag pat, string args> {
                                   "v128.const\t"#args, 0>;
 }
 
-let Defs = [ARGUMENTS] in {
 defm "" : ConstVec<v16i8,
                    (ins vec_i8imm_op:$i0, vec_i8imm_op:$i1,
                         vec_i8imm_op:$i2, vec_i8imm_op:$i3,
@@ -100,7 +99,6 @@ defm "" : ConstVec<v2f64,
                   (ins f64imm_op:$i0, f64imm_op:$i1),
                   (build_vector (f64 fpimm:$i0), (f64 fpimm:$i1)),
                   "$i0, $i1">;
-} // Defs = [ARGUMENTS]
 
 // Create vector with identical lanes: splat
 def splat2 : PatFrag<(ops node:$x), (build_vector node:$x, node:$x)>;
