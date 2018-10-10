@@ -490,8 +490,10 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op, const APInt &DemandedMask,
   KnownBits Known;
 
   bool Simplified = SimplifyDemandedBits(Op, DemandedMask, Known, TLO);
-  if (Simplified)
+  if (Simplified) {
+    DCI.AddToWorklist(Op.getNode());
     DCI.CommitTargetLoweringOpt(TLO);
+  }
   return Simplified;
 }
 
@@ -1359,8 +1361,10 @@ bool TargetLowering::SimplifyDemandedVectorElts(SDValue Op,
 
   bool Simplified =
       SimplifyDemandedVectorElts(Op, DemandedElts, KnownUndef, KnownZero, TLO);
-  if (Simplified)
+  if (Simplified) {
+    DCI.AddToWorklist(Op.getNode());
     DCI.CommitTargetLoweringOpt(TLO);
+  }
   return Simplified;
 }
 

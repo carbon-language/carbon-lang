@@ -36534,16 +36534,10 @@ static SDValue combineMaskedStore(SDNode *N, SelectionDAG &DAG,
     // simplify ops leading up to it. We only demand the MSB of each lane.
     SDValue Mask = Mst->getMask();
     if (Mask.getScalarValueSizeInBits() != 1) {
-      TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
-                                            !DCI.isBeforeLegalizeOps());
       const TargetLowering &TLI = DAG.getTargetLoweringInfo();
       APInt DemandedMask(APInt::getSignMask(VT.getScalarSizeInBits()));
-      KnownBits Known;
-      if (TLI.SimplifyDemandedBits(Mask, DemandedMask, Known, TLO)) {
-        DCI.AddToWorklist(Mask.getNode());
-        DCI.CommitTargetLoweringOpt(TLO);
+      if (TLI.SimplifyDemandedBits(Mask, DemandedMask, DCI))
         return SDValue(N, 0);
-      }
     }
 
     // TODO: AVX512 targets should also be able to simplify something like the
@@ -38962,16 +38956,10 @@ static SDValue combineGatherScatter(SDNode *N, SelectionDAG &DAG,
   // With AVX2 we only demand the upper bit of the mask.
   if (!Subtarget.hasAVX512()) {
     const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-    TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
-                                          !DCI.isBeforeLegalizeOps());
     SDValue Mask = N->getOperand(2);
-    KnownBits Known;
     APInt DemandedMask(APInt::getSignMask(Mask.getScalarValueSizeInBits()));
-    if (TLI.SimplifyDemandedBits(Mask, DemandedMask, Known, TLO)) {
-      DCI.AddToWorklist(Mask.getNode());
-      DCI.CommitTargetLoweringOpt(TLO);
+    if (TLI.SimplifyDemandedBits(Mask, DemandedMask, DCI))
       return SDValue(N, 0);
-    }
   }
 
   return SDValue();
