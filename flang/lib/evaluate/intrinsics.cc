@@ -458,7 +458,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
     // pmk WIP continue here with REDUCE
-    // TODO: repeat
+    {"repeat", {{"string", SameChar, Rank::scalar}, {"ncopies", AnyInt}},
+        SameChar, Rank::scalar},
     {"reshape",
         {{"source", SameType, Rank::array}, {"shape", AnyInt, Rank::shape},
             {"pad", SameType, Rank::array, Optionality::optional},
@@ -471,9 +472,13 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"back", AnyLogical, Rank::elemental, Optionality::optional},
             DefaultingKIND},
         KINDInt},
-    // TODO: selected_char/int/real_kind
+    {"selected_char_kind", {{"name", DftChar, Rank::scalar}}, DftInt,
+        Rank::scalar},
+    {"selected_int_kind", {{"r", AnyInt, Rank::scalar}}, DftInt, Rank::scalar},
+    // TODO: selected_real_kind
     {"set_exponent", {{"x", SameReal}, {"i", AnyInt}}, SameReal},
-    // TODO: shape
+    {"shape", {{"source", Anything, Rank::anyOrAssumedRank}, DefaultingKIND},
+        KINDInt, Rank::vector},
     {"shifta", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
     {"shiftl", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},
     {"shiftr", {{"i", SameInt}, {"shift", AnyInt}}, SameInt},

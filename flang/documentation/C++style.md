@@ -11,6 +11,7 @@ Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
 * Otherwise, where a good public C++ style guide is relevant and clear,
   follow it.  [Google's](https://google.github.io/styleguide/cppguide.html)
   is pretty good and comes with lots of justifications for its rules.
+* Reasonable exceptions to these guidelines can be made.
 ## In particular:
 ### Files
 1. File names should use dashes, not underscores.  C++ sources have the
@@ -163,3 +164,13 @@ build time; don't solve build time problems by writing programs that
 produce source code when macros and templates suffice; don't write macros
 when templates suffice.  Templates are statically typed, checked by the
 compiler, and are (or should be) visible to debuggers.
+### Exceptions to these guidelines
+Reasonable exceptions will be allowed; these guidelines cannot anticipate
+all situations.
+For example, names that come from other sources might be more clear if
+their original spellings are preserved rather than mangled to conform
+needlessly to the conventions here, as Google's C++ style guide does
+in a way that leads to weirdly capitalized abbreviations in names
+like `Http`.
+Consistency is one of many aspects in the pursuit of clarity,
+but not an end in itself.
