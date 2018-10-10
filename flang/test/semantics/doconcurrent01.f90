@@ -16,7 +16,7 @@
 ! CHECK: image control statement not allowed in DO CONCURRENT
 ! CHECK: RETURN not allowed in DO CONCURRENT
 ! CHECK: call to impure subroutine in DO CONCURRENT not allowed
-! XXXCHECK: IEEE_GET_FLAG not allowed in DO CONCURRENT
+! CHECK: IEEE_GET_FLAG not allowed in DO CONCURRENT
 ! CHECK: ADVANCE specifier not allowed in DO CONCURRENT
 ! CHECK: SYNC ALL
 ! CHECK: SYNC IMAGES
