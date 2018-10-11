@@ -9191,6 +9191,10 @@ public:
   OMPClause *ActOnOpenMPReverseOffloadClause(SourceLocation StartLoc,
                                              SourceLocation EndLoc);
 
+  /// Called on well-formed 'dynamic_allocators' clause.
+  OMPClause *ActOnOpenMPDynamicAllocatorsClause(SourceLocation StartLoc,
+                                                SourceLocation EndLoc);
+
   OMPClause *ActOnOpenMPVarListClause(
       OpenMPClauseKind Kind, ArrayRef<Expr *> Vars, Expr *TailExpr,
       SourceLocation StartLoc, SourceLocation LParenLoc,
