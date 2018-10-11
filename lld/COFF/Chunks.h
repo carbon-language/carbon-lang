@@ -369,7 +369,7 @@ public:
 class LocalImportChunk : public Chunk {
 public:
   explicit LocalImportChunk(Defined *S) : Sym(S) {
-    Alignment = Config->is64() ? 8 : 4;
+    Alignment = Config->Wordsize;
   }
   size_t getSize() const override;
   void getBaserels(std::vector<Baserel> *Res) override;
