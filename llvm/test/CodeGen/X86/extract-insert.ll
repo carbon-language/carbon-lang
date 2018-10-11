@@ -3,13 +3,9 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse2 | FileCheck %s --check-prefix=CHECK --check-prefix=X64
 
 define i32 @extractelt_undef_insertelt(i32 %x, i32 %y) {
-; X86-LABEL: extractelt_undef_insertelt:
-; X86:       # %bb.0:
-; X86-NEXT:    retl
-;
-; X64-LABEL: extractelt_undef_insertelt:
-; X64:       # %bb.0:
-; X64-NEXT:    retq
+; CHECK-LABEL: extractelt_undef_insertelt:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    ret{{[l|q]}}
   %b = insertelement <4 x i32> zeroinitializer, i32 %x, i64 3
   %c = icmp uge i32 %y, %y
   %d = extractelement <4 x i32> %b, i1 %c
