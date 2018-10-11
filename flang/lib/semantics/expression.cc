@@ -838,7 +838,9 @@ std::optional<ProcedureDesignator> ExprAnalyzer::Procedure(
                 common::visitors{
                     [&](const semantics::ProcEntityDetails &p)
                         -> std::optional<ProcedureDesignator> {
-                      if (!p.HasExplicitInterface()) {
+                      if (p.HasExplicitInterface()) {
+                        // TODO: check actual arguments vs. interface
+                      } else {
                         std::cerr
                             << "pmk: arg[0] cat "
                             << static_cast<int>(arg[0].GetType()->category)
@@ -850,13 +852,14 @@ std::optional<ProcedureDesignator> ExprAnalyzer::Procedure(
                           context.messages.Say(n.source,
                               "pmk debug: Probe succeeds: %s %s %d"_en_US,
                               si->name, si->type.Dump().data(), si->rank);
+                          return {ProcedureDesignator{std::move(*si)}};
                         } else {
                           context.messages.Say(
                               n.source, "pmk debug: Probe failed"_en_US);
+                          // TODO: if name is not INTRINSIC, call with implicit
+                          // interface
                         }
                       }
-                      // TODO: capture &/or check interface vs.
-                      // actual arguments
                       return {ProcedureDesignator{*n.symbol}};
                     },
                     [&](const auto &) -> std::optional<ProcedureDesignator> {
@@ -931,17 +934,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
   // TODO: distinguish applications of elemental functions
   std::cerr << "pmk: arguments size " << arguments.size() << ", arg[0] cat "
             << static_cast<int>(arguments[0].GetType()->category) << '\n';
-  std::optional<ProcedureDesignator> proc{
-      Procedure(std::get<parser::ProcedureDesignator>(funcRef.v.t), arguments)};
-  if (proc.has_value()) {
-    std::optional<DynamicType> dyType;
-    if (const Symbol * symbol{proc->GetSymbol()}) {
-      dyType = GetSymbolType(*symbol);
-    } else {
-      // TODO: intrinsic function result type - this is a placeholder
-      dyType = DynamicType{TypeCategory::Real, 4};
-    }
-    if (dyType.has_value()) {
+  if (std::optional<ProcedureDesignator> proc{Procedure(
+          std::get<parser::ProcedureDesignator>(funcRef.v.t), arguments)}) {
+    if (std::optional<DynamicType> dyType{proc->GetType()}) {
       return TypedWrapper<FunctionRef, UntypedFunctionRef>(std::move(*dyType),
           UntypedFunctionRef{std::move(*proc), std::move(arguments)});
     }

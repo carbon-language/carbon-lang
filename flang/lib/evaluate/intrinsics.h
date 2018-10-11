@@ -21,14 +21,16 @@
 #include "../parser/message.h"
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <vector>
 
 namespace Fortran::evaluate {
 
-class Argument;
+// Intrinsics are distinguished by their names and the characteristics
+// of their arguments, at least for now.
+using IntrinsicProcedure = const char *;  // not an owning pointer
 
-// Placeholder
-ENUM_CLASS(IntrinsicProcedure, IAND, IEOR, IOR, LEN, MAX, MIN)
+class Argument;
 
 struct CallCharacteristics {
   parser::CharBlock name;
@@ -37,12 +39,14 @@ struct CallCharacteristics {
 };
 
 struct SpecificIntrinsic {
-  explicit SpecificIntrinsic(const char *n) : name{n} {}
-  SpecificIntrinsic(const char *n, bool isElem, DynamicType dt, int r)
+  explicit SpecificIntrinsic(IntrinsicProcedure n) : name{n} {}
+  SpecificIntrinsic(IntrinsicProcedure n, bool isElem, DynamicType dt, int r)
     : name{n}, isElemental{isElem}, type{dt}, rank{r} {}
-  const char *name;  // not owner
-  bool isElemental{false};
+  std::ostream &Dump(std::ostream &) const;
+  IntrinsicProcedure name;
+  bool isElemental{false};  // TODO: consider using Attrs instead
   bool isPointer{false};  // NULL()
+  bool isRestrictedSpecific{false};  // can only call it if true
   DynamicType type;
   int rank{0};
 };

@@ -149,6 +149,7 @@ enum class Rank {
   known,  // rank is known and can be scalar
   anyOrAssumedRank,  // rank can be unknown
   conformable,  // scalar, or array of same rank & shape as "array" argument
+  reduceOperation,  // a pure function with constraints for REDUCE
   dimReduced,  // scalar if no DIM= argument, else rank(array)-1
   dimRemoved,  // scalar, or rank(array)-1
   rankPlus1,  // rank(known)+1
@@ -160,6 +161,7 @@ enum class Optionality {
   optional,
   defaultsToSameKind,  // for MatchingDefaultKIND
   defaultsToDefaultForResult,  // for DefaultingKIND
+  repeats,  // for MAX/MIN and their several variants
 };
 
 struct IntrinsicDummyArgument {
@@ -199,7 +201,7 @@ struct IntrinsicInterface {
 static const IntrinsicInterface genericIntrinsicFunction[]{
     {"abs", {{"a", SameIntOrReal}}, SameIntOrReal},
     {"abs", {{"a", SameComplex}}, SameReal},
-    {"achar", {{"i", SameInt}, DefaultingKIND}, KINDChar},
+    {"achar", {{"i", AnyInt}, DefaultingKIND}, KINDChar},
     {"acos", {{"x", SameFloating}}, SameFloating},
     {"acosh", {{"x", SameFloating}}, SameFloating},
     {"adjustl", {{"string", SameChar}}, SameChar},
@@ -307,8 +309,8 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"exp", {{"x", SameFloating}}, SameFloating},
     {"exponent", {{"x", AnyReal}}, DftInt},
     {"findloc",
-        {{"array", SameNumeric, Rank::array},
-            {"value", SameNumeric, Rank::scalar}, OptionalDIM, OptionalMASK,
+        {{"array", AnyNumeric, Rank::array},
+            {"value", AnyNumeric, Rank::scalar}, OptionalDIM, OptionalMASK,
             DefaultingKIND,
             {"back", AnyLogical, Rank::scalar, Optionality::optional}},
         KINDInt, Rank::dimReduced},
@@ -404,6 +406,10 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         ResultNumeric, Rank::matrix},
     {"maskl", {{"i", AnyInt}, DefaultingKIND}, KINDInt},
     {"maskr", {{"i", AnyInt}, DefaultingKIND}, KINDInt},
+    {"max",
+        {{"a1", SameRelatable}, {"a2", SameRelatable},
+            {"a3", SameRelatable, Rank::elemental, Optionality::repeats}},
+        SameRelatable},
     {"maxloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
             DefaultingKIND,
@@ -412,6 +418,9 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"maxval",
         {{"array", SameRelatable, Rank::array}, OptionalDIM, OptionalMASK},
         SameRelatable, Rank::dimReduced},
+    {"merge",
+        {{"tsource", SameType}, {"fsource", SameType}, {"mask", AnyLogical}},
+        SameType},
     {"merge_bits",
         {{"i", SameInt}, {"j", SameInt, Rank::elementalOrBOZ},
             {"mask", SameInt, Rank::elementalOrBOZ}},
@@ -419,6 +428,10 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"merge_bits",
         {{"i", BOZ}, {"j", SameInt}, {"mask", SameInt, Rank::elementalOrBOZ}},
         SameInt},
+    {"min",
+        {{"a1", SameRelatable}, {"a2", SameRelatable},
+            {"a3", SameRelatable, Rank::elemental, Optionality::repeats}},
+        SameRelatable},
     {"minloc",
         {{"array", AnyRelatable, Rank::array}, OptionalDIM, OptionalMASK,
             DefaultingKIND,
@@ -436,7 +449,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"not", {{"i", SameInt}}, SameInt},
     // NULL() is a special case handled in Probe() below
     {"out_of_range",
-        {{"x", SameIntOrReal}, {"mold", AnyIntOrReal, Rank::scalar}},
+        {{"x", AnyIntOrReal}, {"mold", AnyIntOrReal, Rank::scalar}},
         DftLogical},
     {"out_of_range",
         {{"x", AnyReal}, {"mold", AnyInt, Rank::scalar},
@@ -457,7 +470,12 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         SameNumeric, Rank::dimReduced},
     {"real", {{"a", AnyNumeric, Rank::elementalOrBOZ}, DefaultingKIND},
         KINDReal},
-    // pmk WIP continue here with REDUCE
+    {"reduce",
+        {{"array", SameType, Rank::array},
+            {"operation", SameType, Rank::reduceOperation}, OptionalDIM,
+            OptionalMASK, {"identity", SameType, Rank::scalar},
+            {"ordered", AnyLogical, Rank::scalar, Optionality::optional}},
+        SameType, Rank::dimReduced},
     {"repeat", {{"string", SameChar, Rank::scalar}, {"ncopies", AnyInt}},
         SameChar, Rank::scalar},
     {"reshape",
@@ -475,7 +493,21 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
     {"selected_char_kind", {{"name", DftChar, Rank::scalar}}, DftInt,
         Rank::scalar},
     {"selected_int_kind", {{"r", AnyInt, Rank::scalar}}, DftInt, Rank::scalar},
-    // TODO: selected_real_kind
+    {"selected_real_kind",
+        {{"p", AnyInt, Rank::scalar},
+            {"r", AnyInt, Rank::scalar, Optionality::optional},
+            {"radix", AnyInt, Rank::scalar, Optionality::optional}},
+        DftInt, Rank::scalar},
+    {"selected_real_kind",
+        {{"p", AnyInt, Rank::scalar, Optionality::optional},
+            {"r", AnyInt, Rank::scalar},
+            {"radix", AnyInt, Rank::scalar, Optionality::optional}},
+        DftInt, Rank::scalar},
+    {"selected_real_kind",
+        {{"p", AnyInt, Rank::scalar, Optionality::optional},
+            {"r", AnyInt, Rank::scalar, Optionality::optional},
+            {"radix", AnyInt, Rank::scalar}},
+        DftInt, Rank::scalar},
     {"set_exponent", {{"x", SameReal}, {"i", AnyInt}}, SameReal},
     {"shape", {{"source", Anything, Rank::anyOrAssumedRank}, DefaultingKIND},
         KINDInt, Rank::vector},
@@ -514,7 +546,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
             {"size", AnyInt, Rank::scalar}},
         SameType, Rank::vector},
     {"transpose", {{"matrix", SameType, Rank::matrix}}, SameType, Rank::matrix},
-    {"trim", {{"string", AnyChar, Rank::scalar}}, SameChar, Rank::scalar},
+    {"trim", {{"string", SameChar, Rank::scalar}}, SameChar, Rank::scalar},
     {"ubound", {{"array", Anything, Rank::anyOrAssumedRank}, DefaultingKIND},
         KINDInt, Rank::vector},
     {"ubound",
@@ -533,13 +565,30 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
 };
 
 // TODO: Coarray intrinsic functions
-// TODO: Inquiry intrinsic functions
+//   LCOBOUND, UCOBOUND, FAILED_IMAGES, GET_TEAM, IMAGE_INDEX,
+//   NUM_IMAGES, STOPPED_IMAGES, TEAM_NUMBER, THIS_IMAGE,
+//   COSHAPE
 // TODO: Object characteristic inquiry functions
-// Not covered by the table above:
-// MAX, MIN, MERGE
+//   ALLOCATED, ASSOCIATED, EXTENDS_TYPE_OF, IS_CONTIGUOUS,
+//   PRESENT, RANK, SAME_TYPE, STORAGE_SIZE
+// TODO: Type inquiry intrinsic functions - these return constants
+//  BIT_SIZE, DIGITS, EPSILON, HUGE, KIND, MAXEXPONENT, MINEXPONENT,
+//  NEW_LINE, PRECISION, RADIX, RANGE, TINY
+// TODO: Non-standard intrinsic functions
+//  AND, OR, XOR, LSHIFT, RSHIFT, SHIFT, ZEXT, IZEXT,
+//  COSD, SIND, TAND, ACOSD, ASIND, ATAND, ATAN2D, COMPL,
+//  DCMPLX, EQV, NEQV, INT8, JINT, JNINT, KNINT, LOC,
+//  QCMPLX, DREAL, DFLOAT, QEXT, QFLOAT, QREAL, DNUM,
+//  INUM, JNUM, KNUM, QNUM, RNUM, RAN, RANF, ILEN, SIZEOF,
+//  MCLOCK, SECNDS, COTAN, IBCHNG, ISHA, ISHC, ISHL, IXOR
+//  IARG, IARGC, NARGS, NUMARG, BADDRESS, IADDR, CACHESIZE,
+//  EOF, FP_CLASS, INT_PTR_KIND, ISNAN, MALLOC
+//  probably more (these are PGI + Intel, possibly incomplete)
 
 struct SpecificIntrinsicInterface : public IntrinsicInterface {
   const char *generic{nullptr};
+  bool isRestrictedSpecific{
+      false};  // when true, can only be called, not passed
 };
 
 static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
@@ -549,6 +598,26 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"aint", {{"a", DftReal}}, DftReal}},
     {{"alog", {{"x", DftReal}}, DftReal}, "log"},
     {{"alog10", {{"x", DftReal}}, DftReal}, "log10"},
+    {{"amax0",
+         {{"a1", DftInt}, {"a2", DftInt},
+             {"a3", DftInt, Rank::elemental, Optionality::repeats}},
+         DftReal},
+        "max", true},
+    {{"amax1",
+         {{"a1", DftReal}, {"a2", DftReal},
+             {"a3", DftReal, Rank::elemental, Optionality::repeats}},
+         DftReal},
+        "max", true},
+    {{"amin0",
+         {{"a1", DftInt}, {"a2", DftInt},
+             {"a3", DftInt, Rank::elemental, Optionality::repeats}},
+         DftReal},
+        "min", true},
+    {{"amin1",
+         {{"a1", DftReal}, {"a2", DftReal},
+             {"a3", DftReal, Rank::elemental, Optionality::repeats}},
+         DftReal},
+        "min", true},
     {{"amod", {{"a", DftReal}, {"p", DftReal}}, DftReal}, "mod"},
     {{"anint", {{"a", DftReal}}, DftReal}},
     {{"asin", {{"x", DftReal}}, DftReal}},
@@ -570,7 +639,7 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"datan2", {{"y", DoublePrecision}, {"x", DoublePrecision}},
          DoublePrecision},
         "atan2"},
-    {{"dble", {{"a", DftReal}, DefaultingKIND}, DoublePrecision}, "real"},
+    {{"dble", {{"a", DftReal}, DefaultingKIND}, DoublePrecision}, "real", true},
     {{"dcos", {{"x", DoublePrecision}}, DoublePrecision}, "cos"},
     {{"dcosh", {{"x", DoublePrecision}}, DoublePrecision}, "cosh"},
     {{"ddim", {{"x", DoublePrecision}, {"y", DoublePrecision}},
@@ -581,6 +650,16 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"dint", {{"a", DoublePrecision}}, DoublePrecision}, "aint"},
     {{"dlog", {{"x", DoublePrecision}}, DoublePrecision}, "log"},
     {{"dlog10", {{"x", DoublePrecision}}, DoublePrecision}, "log10"},
+    {{"dmax1",
+         {{"a1", DoublePrecision}, {"a2", DoublePrecision},
+             {"a3", DoublePrecision, Rank::elemental, Optionality::repeats}},
+         DoublePrecision},
+        "max", true},
+    {{"dmin1",
+         {{"a1", DoublePrecision}, {"a2", DoublePrecision},
+             {"a3", DoublePrecision, Rank::elemental, Optionality::repeats}},
+         DoublePrecision},
+        "min", true},
     {{"dmod", {{"a", DoublePrecision}, {"p", DoublePrecision}},
          DoublePrecision},
         "mod"},
@@ -595,32 +674,55 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"dtan", {{"x", DoublePrecision}}, DoublePrecision}, "tan"},
     {{"dtanh", {{"x", DoublePrecision}}, DoublePrecision}, "tanh"},
     {{"exp", {{"x", DftReal}}, DftReal}},
-    {{"float", {{"i", DftInt}}, DftReal}, "real"},
+    {{"float", {{"i", DftInt}}, DftReal}, "real", true},
     {{"iabs", {{"a", DftInt}}, DftInt}, "abs"},
     {{"idim", {{"x", DftInt}, {"y", DftInt}}, DftInt}, "dim"},
-    {{"idint", {{"a", DoublePrecision}}, DftInt}, "int"},
+    {{"idint", {{"a", DoublePrecision}}, DftInt}, "int", true},
     {{"idnint", {{"a", DoublePrecision}}, DftInt}, "nint"},
-    {{"ifix", {{"a", DftReal}}, DftInt}, "int"},
+    {{"ifix", {{"a", DftReal}}, DftInt}, "int", true},
     {{"index", {{"string", DftChar}, {"substring", DftChar}}, DftInt}},
     {{"isign", {{"a", DftInt}, {"b", DftInt}}, DftInt}, "sign"},
     {{"len", {{"string", DftChar}}, DftInt}},
     {{"log", {{"x", DftReal}}, DftReal}},
     {{"log10", {{"x", DftReal}}, DftReal}},
+    {{"max0",
+         {{"a1", DftInt}, {"a2", DftInt},
+             {"a3", DftInt, Rank::elemental, Optionality::repeats}},
+         DftInt},
+        "max", true},
+    {{"max1",
+         {{"a1", DftReal}, {"a2", DftReal},
+             {"a3", DftReal, Rank::elemental, Optionality::repeats}},
+         DftInt},
+        "max", true},
+    {{"min0",
+         {{"a1", DftInt}, {"a2", DftInt},
+             {"a3", DftInt, Rank::elemental, Optionality::repeats}},
+         DftInt},
+        "min", true},
+    {{"min1",
+         {{"a1", DftReal}, {"a2", DftReal},
+             {"a3", DftReal, Rank::elemental, Optionality::repeats}},
+         DftInt},
+        "min", true},
     {{"mod", {{"a", DftInt}, {"p", DftInt}}, DftInt}},
     {{"nint", {{"a", DftReal}}, DftInt}},
     {{"sign", {{"a", DftReal}, {"b", DftReal}}, DftReal}},
     {{"sin", {{"x", DftReal}}, DftReal}},
     {{"sinh", {{"x", DftReal}}, DftReal}},
-    {{"sngl", {{"a", DoublePrecision}}, DftReal}, "real"},
+    {{"sngl", {{"a", DoublePrecision}}, DftReal}, "real", true},
     {{"sqrt", {{"x", DftReal}}, DftReal}},
     {{"tan", {{"x", DftReal}}, DftReal}},
     {{"tanh", {{"x", DftReal}}, DftReal}},
 };
 
-// Some entries in the table above are "restricted" specifics:
-//   DBLE, FLOAT, IDINT, IFIX, SNGL
-// Additional "restricted" specifics not covered by the table above:
-//   AMAX0, AMAX1, AMIN0, AMIN1, DMAX1, DMIN1, MAX0, MAX1, MIN0, MIN1
+// TODO: Intrinsic subroutines
+//   MVBITS (elemental), CPU_TIME, DATE_AND_TIME, EVENT_QUERY,
+//   EXECUTE_COMMAND_LINE, GET_COMMAND, GET_COMMAND_ARGUMENT,
+//   GET_ENVIRONMENT_VARIABLE, MOVE_ALLOC, RANDOM_INIT, RANDOM_NUMBER,
+//   RANDOM_SEED, SYSTEM_CLOCK
+// TODO: Atomic intrinsic subroutines: ATOMIC_ADD &al.
+// TODO: Collective intrinsic subroutines: CO_BROADCAST &al.
 
 // Intrinsic interface matching against the arguments of a particular
 // procedure reference.
@@ -786,7 +888,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       case Rank::shape:
         CHECK(shapeArg == nullptr);
         shapeArg = arg;
-        argOk = rank == 1 && arg->vectorSize.has_value();
+        argOk = rank == 1 && arg->VectorSize().has_value();
         break;
       case Rank::matrix: argOk = rank == 2; break;
       case Rank::array:
@@ -814,6 +916,12 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
         } else {
           argOk = rank == 0;
         }
+        break;
+      case Rank::reduceOperation:
+        // TODO: Confirm that the argument is a pure function
+        // of two arguments with several constraints
+        CHECK(arrayArg != nullptr);
+        argOk = rank == 0;
         break;
       case Rank::dimReduced:
       case Rank::rankPlus1:
@@ -937,8 +1045,11 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     break;
   case Rank::shaped:
     CHECK(shapeArg != nullptr);
-    CHECK(shapeArg->vectorSize.has_value());
-    resultRank = *shapeArg->vectorSize;
+    {
+      std::optional<int> shapeLen{shapeArg->VectorSize()};
+      CHECK(shapeLen.has_value());
+      resultRank = *shapeLen;
+    }
     break;
   case Rank::elementalOrBOZ:
   case Rank::shape:
@@ -946,6 +1057,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   case Rank::known:
   case Rank::anyOrAssumedRank:
   case Rank::dimRemoved:
+  case Rank::reduceOperation:
     common::die("INTERNAL: bad Rank code on intrinsic '%s' result", name);
     break;
   default: CRASH_NO_CASE;
@@ -995,7 +1107,10 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
   auto specificRange{specificFuncs.equal_range(name)};
   for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
     if (auto specific{iter->second->Match(call, defaults, errors)}) {
-      specific->name = iter->second->generic;
+      if (const char *genericName{iter->second->generic}) {
+        specific->name = genericName;
+      }
+      specific->isRestrictedSpecific = iter->second->isRestrictedSpecific;
       return specific;
     }
   }
@@ -1005,7 +1120,7 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
       return specific;
     }
   }
-  // Special case intrinsic functions
+  // Special cases of intrinsic functions
   if (call.name.ToString() == "null") {
     if (call.argument.size() == 0) {
       // TODO: NULL() result type is determined by context
@@ -1049,5 +1164,9 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Probe(
     parser::ContextualMessages *messages) const {
   CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
   return impl_->Probe(call, messages);
+}
+
+std::ostream &SpecificIntrinsic::Dump(std::ostream &o) const {
+  return o << name;
 }
 }  // namespace Fortran::evaluate

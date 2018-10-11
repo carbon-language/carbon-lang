@@ -69,27 +69,6 @@ using common::RelationalOperator;
 // or SomeType.
 template<typename A> using ResultType = typename std::decay_t<A>::Result;
 
-// Wraps a constant value in a class with its resolved type.
-template<typename T> struct Constant {
-  using Result = T;
-  using Value = Scalar<Result>;
-  CLASS_BOILERPLATE(Constant)
-  template<typename A> Constant(const A &x) : value{x} {}
-  template<typename A>
-  Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : value(std::move(x)) {}
-  constexpr std::optional<DynamicType> GetType() const {
-    if constexpr (Result::isSpecificIntrinsicType) {
-      return Result::GetType();
-    } else {
-      return value.GetType();
-    }
-  }
-  int Rank() const { return 0; }
-  std::ostream &Dump(std::ostream &) const;
-  Value value;
-};
-
 // BOZ literal "typeless" constants must be wide enough to hold a numeric
 // value of any supported kind of INTEGER or REAL.  They must also be
 // distinguishable from other integer constants, since they are permitted

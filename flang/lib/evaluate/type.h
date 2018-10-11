@@ -409,5 +409,26 @@ struct SomeType {
   FOR_EACH_SPECIFIC_TYPE(PREFIX) \
   FOR_EACH_CATEGORY_TYPE(PREFIX)
 
+// Wraps a constant value in a class with its resolved type.
+template<typename T> struct Constant {
+  using Result = T;
+  using Value = Scalar<Result>;
+  CLASS_BOILERPLATE(Constant)
+  template<typename A> Constant(const A &x) : value{x} {}
+  template<typename A>
+  Constant(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
+    : value(std::move(x)) {}
+  constexpr std::optional<DynamicType> GetType() const {
+    if constexpr (Result::isSpecificIntrinsicType) {
+      return Result::GetType();
+    } else {
+      return value.GetType();
+    }
+  }
+  int Rank() const { return 0; }  // TODO: array constants
+  std::ostream &Dump(std::ostream &) const;
+  Value value;
+};
+
 }  // namespace Fortran::evaluate
 #endif  // FORTRAN_EVALUATE_TYPE_H_

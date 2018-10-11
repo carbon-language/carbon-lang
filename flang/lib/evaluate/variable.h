@@ -285,21 +285,21 @@ FOR_EACH_CHARACTER_KIND(extern template class Designator)
 
 struct ProcedureDesignator {
   EVALUATE_UNION_CLASS_BOILERPLATE(ProcedureDesignator)
-  explicit ProcedureDesignator(IntrinsicProcedure p) : u{p} {}
+  explicit ProcedureDesignator(SpecificIntrinsic &&i) : u{std::move(i)} {}
   explicit ProcedureDesignator(const Symbol &n) : u{&n} {}
-  Expr<SubscriptInteger> LEN() const;
+  std::optional<DynamicType> GetType() const;
   int Rank() const;
+  bool IsElemental() const;
+  Expr<SubscriptInteger> LEN() const;
   const Symbol *GetSymbol() const;
   std::ostream &Dump(std::ostream &) const;
 
-  std::variant<IntrinsicProcedure, const Symbol *, Component> u;
+  std::variant<SpecificIntrinsic, const Symbol *, Component> u;
 };
 
 class UntypedFunctionRef {
 public:
   CLASS_BOILERPLATE(UntypedFunctionRef)
-  UntypedFunctionRef(ProcedureDesignator &&p, Arguments &&a, int r)
-    : proc_{std::move(p)}, arguments_(std::move(a)), rank_{r} {}
   UntypedFunctionRef(ProcedureDesignator &&p, Arguments &&a)
     : proc_{std::move(p)}, arguments_(std::move(a)) {}
 
@@ -307,28 +307,23 @@ public:
   const Arguments &arguments() const { return arguments_; }
 
   Expr<SubscriptInteger> LEN() const;
-  int Rank() const { return rank_; }
+  int Rank() const { return proc_.Rank(); }
+  bool IsElemental() const { return proc_.IsElemental(); }
   std::ostream &Dump(std::ostream &) const;
 
 protected:
   ProcedureDesignator proc_;
   Arguments arguments_;
-  int rank_{proc_.Rank()};
 };
 
 template<typename A> struct FunctionRef : public UntypedFunctionRef {
   using Result = A;
   static_assert(Result::isSpecificIntrinsicType ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
-  // Subtlety: There is a distinction that must be maintained here between an
-  // actual argument expression that is a variable and one that is not,
-  // e.g. between X and (X).  The parser attempts to parse each argument
-  // first as a variable, then as an expression, and the distinction appears
-  // in the parse tree.
   CLASS_BOILERPLATE(FunctionRef)
   FunctionRef(UntypedFunctionRef &&ufr) : UntypedFunctionRef{std::move(ufr)} {}
-  FunctionRef(ProcedureDesignator &&p, Arguments &&a, int rank = 0)
-    : UntypedFunctionRef{std::move(p), std::move(a), rank} {}
+  FunctionRef(ProcedureDesignator &&p, Arguments &&a)
+    : UntypedFunctionRef{std::move(p), std::move(a)} {}
   std::optional<DynamicType> GetType() const {
     if constexpr (std::is_same_v<Result, SomeDerived>) {
       if (const Symbol * symbol{proc_.GetSymbol()}) {
@@ -339,6 +334,7 @@ template<typename A> struct FunctionRef : public UntypedFunctionRef {
     }
     return std::nullopt;
   }
+  std::optional<Constant<Result>> Fold(FoldingContext &);  // for intrinsics
 };
 
 FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef)

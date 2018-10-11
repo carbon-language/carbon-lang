@@ -33,6 +33,14 @@ std::ostream &ActualArgument::Dump(std::ostream &o) const {
   return value->Dump(o);
 }
 
+std::optional<int> ActualArgument::VectorSize() const {
+  if (Rank() != 1) {
+    return std::nullopt;
+  }
+  // TODO: get shape vector of value, return its length
+  return std::nullopt;
+}
+
 FOR_EACH_SPECIFIC_TYPE(template struct FunctionRef)
 
 }  // namespace Fortran::evaluate

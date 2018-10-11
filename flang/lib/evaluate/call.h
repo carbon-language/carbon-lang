@@ -31,11 +31,17 @@ struct ActualArgument {
   std::optional<DynamicType> GetType() const;
   int Rank() const;
   std::ostream &Dump(std::ostream &) const;
+  std::optional<int> VectorSize() const;
 
   std::optional<parser::CharBlock> keyword;
   bool isAssumedRank{false};
   bool isAlternateReturn{false};
-  std::optional<int> vectorSize;  // TODO
+
+  // Subtlety: There is a distinction that must be maintained here between an
+  // actual argument expression that is a variable and one that is not,
+  // e.g. between X and (X).  The parser attempts to parse each argument
+  // first as a variable, then as an expression, and the distinction appears
+  // in the parse tree.
   CopyableIndirection<Expr<SomeType>> value;
 };
 

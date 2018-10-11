@@ -530,7 +530,8 @@ and a vector whose length is the corank of `COARRAY` otherwise.
 These are neither elemental nor transformational; all are pure.
 
 ## Type inquiry intrinsic functions
-The value of the argument is not used, and may be undefined.
+All of these functions return constants.
+The value of the argument is not used, and may well be undefined.
 ```
 BIT_SIZE(INTEGER(k) I(..)) -> INTEGER(k)
 DIGITS(INTEGER or REAL X(..)) -> scalar default INTEGER
@@ -541,9 +542,9 @@ KIND(intrinsic X(..)) -> scalar default INTEGER
 MAXEXPONENT(REAL(k) X(..)) -> scalar default INTEGER
 MINEXPONENT(REAL(k) X(..)) -> scalar default INTEGER
 NEW_LINE(CHARACTER(k,n) A(..)) -> scalar CHARACTER(k,1) = CHAR(10)
-PRECISION(REAL(k) or COMPLEX(k) X) -> scalar default INTEGER
-RADIX(INTEGER(k) or REAL(k) X) -> scalar default INTEGER, always 2
-RANGE(INTEGER(k) or REAL(k) or COMPLEX(k) X) -> scalar default INTEGER
+PRECISION(REAL(k) or COMPLEX(k) X(..)) -> scalar default INTEGER
+RADIX(INTEGER(k) or REAL(k) X(..)) -> scalar default INTEGER, always 2
+RANGE(INTEGER(k) or REAL(k) or COMPLEX(k) X(..)) -> scalar default INTEGER
 TINY(REAL(k) X(..)) -> scalar REAL(k)
 ```
 
@@ -602,7 +603,7 @@ CALL CPU_TIME(REAL INTENT(OUT) TIME)
 The kind of `TIME` is not specified in the standard.
 
 ```
-CALL DATA_AND_TIME([DATE, TIME, ZONE, VALUES])
+CALL DATE_AND_TIME([DATE, TIME, ZONE, VALUES])
 ```
 * All arguments are `OPTIONAL` and `INTENT(OUT)`.
 * `DATE`, `TIME`, and `ZONE` are scalar default `CHARACTER`.

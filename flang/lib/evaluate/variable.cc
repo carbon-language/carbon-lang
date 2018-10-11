@@ -225,7 +225,7 @@ template<> std::ostream &Emit(std::ostream &o, const Symbol &symbol) {
 }
 
 template<> std::ostream &Emit(std::ostream &o, const IntrinsicProcedure &p) {
-  return o << EnumToString(p);
+  return o << p;
 }
 
 std::ostream &Component::Dump(std::ostream &o) const {
@@ -439,11 +439,25 @@ int Substring::Rank() const {
 }
 int ComplexPart::Rank() const { return complex_.Rank(); }
 int ProcedureDesignator::Rank() const {
-  return std::visit(
-      common::visitors{[](IntrinsicProcedure) { return 0 /*TODO!!*/; },
-          [](const Symbol *sym) { return sym->Rank(); },
-          [](const Component &c) { return c.symbol().Rank(); }},
-      u);
+  if (const Symbol * symbol{GetSymbol()}) {
+    return symbol->Rank();
+  }
+  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
+    return intrinsic->rank;
+  }
+  CHECK(!"ProcedureDesignator::Rank(): no case");
+  return 0;
+}
+
+bool ProcedureDesignator::IsElemental() const {
+  if (const Symbol * symbol{GetSymbol()}) {
+    return symbol->attrs().test(semantics::Attr::ELEMENTAL);
+  }
+  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
+    return intrinsic->isElemental;
+  }
+  CHECK(!"ProcedureDesignator::IsElemental(): no case");
+  return 0;
 }
 
 // GetSymbol
@@ -474,6 +488,16 @@ const Symbol *ProcedureDesignator::GetSymbol() const {
                         [](const Component &c) { return c.GetSymbol(false); },
                         [](const auto &) -> const Symbol * { return nullptr; }},
       u);
+}
+
+std::optional<DynamicType> ProcedureDesignator::GetType() const {
+  if (const Symbol * symbol{GetSymbol()}) {
+    return {GetSymbolType(*symbol)};
+  }
+  if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
+    return {intrinsic->type};
+  }
+  return std::nullopt;
 }
 
 FOR_EACH_CHARACTER_KIND(template class Designator)
