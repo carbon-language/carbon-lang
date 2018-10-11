@@ -190,9 +190,7 @@ define i32 @or_umin(i32 %A) {
 
 define i8 @or_min_31_30(i8 %A) {
 ; CHECK-LABEL: @or_min_31_30(
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ult i8 [[A:%.*]], -30
-; CHECK-NEXT:    [[MIN:%.*]] = select i1 [[CMP]], i8 [[A]], i8 -30
-; CHECK-NEXT:    [[R:%.*]] = or i8 [[MIN]], 31
+; CHECK-NEXT:    [[R:%.*]] = or i8 [[A:%.*]], 31
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %cmp = icmp ult i8 %A, -30
@@ -203,9 +201,7 @@ define i8 @or_min_31_30(i8 %A) {
 
 define i8 @and_min_7_7(i8 %A) {
 ; CHECK-LABEL: @and_min_7_7(
-; CHECK-NEXT:    [[L2:%.*]] = icmp ult i8 [[A:%.*]], -7
-; CHECK-NEXT:    [[MIN:%.*]] = select i1 [[L2]], i8 [[A]], i8 -7
-; CHECK-NEXT:    [[R:%.*]] = and i8 [[MIN]], -8
+; CHECK-NEXT:    [[R:%.*]] = and i8 [[A:%.*]], -8
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %l2 = icmp ult i8 %A, -7
@@ -216,9 +212,7 @@ define i8 @and_min_7_7(i8 %A) {
 
 define i8 @and_min_7_8(i8 %A) {
 ; CHECK-LABEL: @and_min_7_8(
-; CHECK-NEXT:    [[L2:%.*]] = icmp ult i8 [[A:%.*]], -8
-; CHECK-NEXT:    [[MIN:%.*]] = select i1 [[L2]], i8 [[A]], i8 -8
-; CHECK-NEXT:    [[R:%.*]] = and i8 [[MIN]], -8
+; CHECK-NEXT:    [[R:%.*]] = and i8 [[A:%.*]], -8
 ; CHECK-NEXT:    ret i8 [[R]]
 ;
   %l2 = icmp ult i8 %A, -8
