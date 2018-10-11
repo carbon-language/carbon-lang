@@ -73,6 +73,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
@@ -134,7 +135,9 @@ StringRef CodeViewDebug::getFullFilepath(const DIFile *File) {
 
   // If this is a Unix-style path, just use it as is. Don't try to canonicalize
   // it textually because one of the path components could be a symlink.
-  if (!Dir.empty() && Dir[0] == '/') {
+  if (Dir.startswith("/") || Filename.startswith("/")) {
+    if (llvm::sys::path::is_absolute(Filename, llvm::sys::path::Style::posix))
+      return Filename;
     Filepath = Dir;
     if (Dir.back() != '/')
       Filepath += '/';
