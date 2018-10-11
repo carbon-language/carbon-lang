@@ -314,11 +314,22 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     Known.One  = std::move(IKnownOne);
     break;
   }
-  case Instruction::Select:
-    // If this is a select as part of a min/max pattern, don't simplify any
-    // further in case we break the structure.
+  case Instruction::Select: {
     Value *LHS, *RHS;
-    if (matchSelectPattern(I, LHS, RHS).Flavor != SPF_UNKNOWN)
+    SelectPatternFlavor SPF = matchSelectPattern(I, LHS, RHS).Flavor;
+    if (SPF == SPF_UMAX) {
+      // UMax(A, C) == A if ...
+      // The lowest non-zero bit of DemandMask is higher than the highest
+      // non-zero bit of C.
+      const APInt *C;
+      unsigned CTZ = DemandedMask.countTrailingZeros();
+      if (match(RHS, m_APInt(C)) && CTZ >= C->getActiveBits())
+        return LHS;
+    }
+
+    // If this is a select as part of any other min/max pattern, don't simplify
+    // any further in case we break the structure.
+    if (SPF != SPF_UNKNOWN)
       return nullptr;
 
     if (SimplifyDemandedBits(I, 2, DemandedMask, RHSKnown, Depth + 1) ||
@@ -336,6 +347,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     Known.One = RHSKnown.One & LHSKnown.One;
     Known.Zero = RHSKnown.Zero & LHSKnown.Zero;
     break;
+  }
   case Instruction::ZExt:
   case Instruction::Trunc: {
     unsigned SrcBitWidth = I->getOperand(0)->getType()->getScalarSizeInBits();

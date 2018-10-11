@@ -4,9 +4,7 @@
 
 define i32 @and_umax_less(i32 %A) {
 ; CHECK-LABEL: @and_umax_less(
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[A:%.*]], 31
-; CHECK-NEXT:    [[L1:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 31
-; CHECK-NEXT:    [[X:%.*]] = and i32 [[L1]], -32
+; CHECK-NEXT:    [[X:%.*]] = and i32 [[A:%.*]], -32
 ; CHECK-NEXT:    ret i32 [[X]]
 ;
   %l0 = icmp ugt i32 31, %A
@@ -17,9 +15,7 @@ define i32 @and_umax_less(i32 %A) {
 
 define i32 @and_umax_muchless(i32 %A) {
 ; CHECK-LABEL: @and_umax_muchless(
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[A:%.*]], 12
-; CHECK-NEXT:    [[L1:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 12
-; CHECK-NEXT:    [[X:%.*]] = and i32 [[L1]], -32
+; CHECK-NEXT:    [[X:%.*]] = and i32 [[A:%.*]], -32
 ; CHECK-NEXT:    ret i32 [[X]]
 ;
   %l0 = icmp ugt i32 12, %A
@@ -43,9 +39,7 @@ define i32 @and_umax_more(i32 %A) {
 
 define i32 @shr_umax(i32 %A) {
 ; CHECK-LABEL: @shr_umax(
-; CHECK-NEXT:    [[TMP1:%.*]] = icmp ugt i32 [[A:%.*]], 15
-; CHECK-NEXT:    [[L1:%.*]] = select i1 [[TMP1]], i32 [[A]], i32 15
-; CHECK-NEXT:    [[X:%.*]] = lshr i32 [[L1]], 4
+; CHECK-NEXT:    [[X:%.*]] = lshr i32 [[A:%.*]], 4
 ; CHECK-NEXT:    ret i32 [[X]]
 ;
   %l0 = icmp ugt i32 15, %A
@@ -80,9 +74,7 @@ define i8 @t_0_10(i8 %A) {
 
 define i8 @t_1_10(i8 %A) {
 ; CHECK-LABEL: @t_1_10(
-; CHECK-NEXT:    [[L2:%.*]] = icmp ugt i8 [[A:%.*]], 1
-; CHECK-NEXT:    [[L1:%.*]] = select i1 [[L2]], i8 [[A]], i8 1
-; CHECK-NEXT:    [[X:%.*]] = and i8 [[L1]], 10
+; CHECK-NEXT:    [[X:%.*]] = and i8 [[A:%.*]], 10
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %l2 = icmp ugt i8 %A, 1
@@ -93,9 +85,7 @@ define i8 @t_1_10(i8 %A) {
 
 define i8 @t_2_4(i8 %A) {
 ; CHECK-LABEL: @t_2_4(
-; CHECK-NEXT:    [[L2:%.*]] = icmp ugt i8 [[A:%.*]], 2
-; CHECK-NEXT:    [[L1:%.*]] = select i1 [[L2]], i8 [[A]], i8 2
-; CHECK-NEXT:    [[X:%.*]] = and i8 [[L1]], 4
+; CHECK-NEXT:    [[X:%.*]] = and i8 [[A:%.*]], 4
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %l2 = icmp ugt i8 %A, 2
@@ -106,9 +96,7 @@ define i8 @t_2_4(i8 %A) {
 
 define i8 @t_2_192(i8 %A) {
 ; CHECK-LABEL: @t_2_192(
-; CHECK-NEXT:    [[L2:%.*]] = icmp ugt i8 [[A:%.*]], 2
-; CHECK-NEXT:    [[L1:%.*]] = select i1 [[L2]], i8 [[A]], i8 2
-; CHECK-NEXT:    [[X:%.*]] = and i8 [[L1]], -64
+; CHECK-NEXT:    [[X:%.*]] = and i8 [[A:%.*]], -64
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %l2 = icmp ugt i8 %A, 2
@@ -119,9 +107,7 @@ define i8 @t_2_192(i8 %A) {
 
 define i8 @t_2_63_or(i8 %A) {
 ; CHECK-LABEL: @t_2_63_or(
-; CHECK-NEXT:    [[L2:%.*]] = icmp ugt i8 [[A:%.*]], 2
-; CHECK-NEXT:    [[L1:%.*]] = select i1 [[L2]], i8 [[A]], i8 2
-; CHECK-NEXT:    [[X:%.*]] = or i8 [[L1]], 63
+; CHECK-NEXT:    [[X:%.*]] = or i8 [[A:%.*]], 63
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %l2 = icmp ugt i8 %A, 2
