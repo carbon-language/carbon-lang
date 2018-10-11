@@ -502,6 +502,7 @@ if( CLANG_INCLUDE_TESTS )
       )
   endif()
   add_subdirectory(utils/perf-training)
+  add_subdirectory(bindings/python/tests)
 endif()
 
 option(CLANG_INCLUDE_DOCS "Generate build targets for the Clang docs."
