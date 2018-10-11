@@ -1,8 +1,8 @@
-// RUN: %clang_cl /c /showFilenames -- %s 2>&1 | FileCheck -check-prefix=show %s
-// RUN: %clang_cl /c /showFilenames -- %s %S/Inputs/wildcard*.c 2>&1 | FileCheck -check-prefix=multiple %s
+// RUN: %clang_cl /c /o %t.obj /showFilenames -- %s 2>&1 | FileCheck -check-prefix=show %s
+// RUN: %clang_cl /c /o %t.obj /showFilenames -- %s %S/Inputs/wildcard*.c 2>&1 | FileCheck -check-prefix=multiple %s
 
-// RUN: %clang_cl /c -- %s 2>&1 | FileCheck -check-prefix=noshow %s
-// RUN: %clang_cl /c /showFilenames /showFilenames- -- %s 2>&1 | FileCheck -check-prefix=noshow %s
+// RUN: %clang_cl /c /o %t.obj -- %s 2>&1 | FileCheck -check-prefix=noshow %s
+// RUN: %clang_cl /c /o %t.obj /showFilenames /showFilenames- -- %s 2>&1 | FileCheck -check-prefix=noshow %s
 
 
 #pragma message "Hello"
