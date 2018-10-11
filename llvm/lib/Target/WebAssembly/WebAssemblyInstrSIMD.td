@@ -22,7 +22,8 @@ multiclass SIMD_I<dag oops_r, dag iops_r, dag oops_s, dag iops_s,
 }
 
 multiclass SIMD_ARGUMENT<ValueType vt> {
-  let hasSideEffects = 1, Uses = [ARGUMENTS], isCodeGenOnly = 1 in
+  let hasSideEffects = 1, isCodeGenOnly = 1,
+      Defs = []<Register>, Uses = [ARGUMENTS] in
   defm ARGUMENT_#vt : SIMD_I<(outs V128:$res), (ins i32imm:$argno),
                              (outs), (ins i32imm:$argno),
                              [(set (vt V128:$res),
@@ -55,7 +56,6 @@ multiclass ConstVec<ValueType vec_t, dag ops, dag pat, string args> {
                                   "v128.const\t"#args, 0>;
 }
 
-let Defs = [ARGUMENTS] in {
 defm "" : ConstVec<v16i8,
                    (ins vec_i8imm_op:$i0, vec_i8imm_op:$i1,
                         vec_i8imm_op:$i2, vec_i8imm_op:$i3,
@@ -100,7 +100,6 @@ defm "" : ConstVec<v2f64,
                   (ins f64imm_op:$i0, f64imm_op:$i1),
                   (build_vector (f64 fpimm:$i0), (f64 fpimm:$i1)),
                   "$i0, $i1">;
-} // Defs = [ARGUMENTS]
 
 // Create vector with identical lanes: splat
 def splat2 : PatFrag<(ops node:$x), (build_vector node:$x, node:$x)>;
