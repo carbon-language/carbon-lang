@@ -26428,8 +26428,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     // Use an f64 load and a scalar_to_vector for v2f32 loads. This avoids
     // scalarizing in 32-bit mode. In 64-bit mode this avoids a int->fp cast
     // since type legalization will try to use an i64 load.
-    EVT VT = N->getValueType(0);
-    assert(VT == MVT::v2f32 && "Unexpected VT");
+    assert(N->getValueType(0) == MVT::v2f32 && "Unexpected VT");
     if (!ISD::isNON_EXTLoad(N))
       return;
     auto *Ld = cast<LoadSDNode>(N);
