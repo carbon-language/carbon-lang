@@ -4655,7 +4655,7 @@ LoopVectorizationCostModel::getSmallestAndWidestTypes() {
   // For each block.
   for (BasicBlock *BB : TheLoop->blocks()) {
     // For each instruction in the loop.
-    for (Instruction &I : *BB) {
+    for (Instruction &I : BB->instructionsWithoutDebug()) {
       Type *T = I.getType();
 
       // Skip ignored values.
@@ -4893,7 +4893,7 @@ LoopVectorizationCostModel::calculateRegisterUsage(ArrayRef<unsigned> VFs) {
 
   unsigned Index = 0;
   for (BasicBlock *BB : make_range(DFS.beginRPO(), DFS.endRPO())) {
-    for (Instruction &I : *BB) {
+    for (Instruction &I : BB->instructionsWithoutDebug()) {
       IdxToInstr[Index++] = &I;
 
       // Save the end location of each USE.
