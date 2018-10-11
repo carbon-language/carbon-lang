@@ -217,13 +217,86 @@ private:
 
 using CS = std::vector<Symbol>;
 
-class GatherSymbols {
-public:
+struct GatherSymbols {
   CS symbols;
   template<typename T> constexpr bool Pre(const T &) { return true; }
   template<typename T> constexpr void Post(const T &) {}
   void Post(const parser::Name &name) { symbols.push_back(*name.symbol); }
 };
+
+static bool IntegerVariable(const Symbol &variable) {
+  return variable.GetType()->category() == semantics::DeclTypeSpec::Intrinsic &&
+      variable.GetType()->intrinsicTypeSpec().category() ==
+      common::TypeCategory::Integer;
+}
+static CS GatherAllVariableNames(
+    const std::list<parser::LocalitySpec> &localitySpecs) {
+  CS names;
+  for (auto &ls : localitySpecs) {
+    std::visit(common::visitors{[](auto &) {},
+                   [&](const parser::LocalitySpec::Local &local) {
+                     for (auto &v : local.v) {
+                       CHECK(v.symbol);
+                       names.emplace_back(*v.symbol);
+                     }
+                   },
+                   [&](const parser::LocalitySpec::LocalInit &localInit) {
+                     for (auto &v : localInit.v) {
+                       CHECK(v.symbol);
+                       names.emplace_back(*v.symbol);
+                     }
+                   },
+                   [&](const parser::LocalitySpec::Shared &shared) {
+                     for (auto &v : shared.v) {
+                       CHECK(v.symbol);
+                       names.emplace_back(*v.symbol);
+                     }
+                   }},
+        ls.u);
+  }
+  return names;
+}
+static CS GatherNotSharedVariableNames(
+    const std::list<parser::LocalitySpec> &localitySpecs) {
+  CS names;
+  for (auto &ls : localitySpecs) {
+    std::visit(common::visitors{[](auto &) {},
+                   [&](const parser::LocalitySpec::Local &local) {
+                     for (auto &v : local.v) {
+                       CHECK(v.symbol);
+                       names.emplace_back(*v.symbol);
+                     }
+                   },
+                   [&](const parser::LocalitySpec::LocalInit &localInit) {
+                     for (auto &v : localInit.v) {
+                       CHECK(v.symbol);
+                       names.emplace_back(*v.symbol);
+                     }
+                   }},
+        ls.u);
+  }
+  return names;
+}
+static CS GatherLocalVariableNames(
+    const std::list<parser::LocalitySpec> &localitySpecs) {
+  CS names;
+  for (auto &ls : localitySpecs) {
+    std::visit(common::visitors{[](auto &) {},
+                   [&](const parser::LocalitySpec::Local &local) {
+                     for (auto &v : local.v) {
+                       CHECK(v.symbol);
+                       names.emplace_back(*v.symbol);
+                     }
+                   }},
+        ls.u);
+  }
+  return names;
+}
+static CS GatherReferencesFromExpression(const parser::Expr &expression) {
+  GatherSymbols gatherSymbols;
+  parser::Walk(expression, gatherSymbols);
+  return gatherSymbols.symbols;
+}
 
 // Find a canonical DO CONCURRENT and enforce semantics checks on its body
 class FindDoConcurrentLoops {
@@ -251,7 +324,7 @@ public:
       } else if (auto *loopBounds{
                      std::get_if<parser::LoopBounds<parser::ScalarIntExpr>>(
                          &optionalLoopControl->u)}) {
-        // C1120
+        // C1120 - FIXME? may be checked before we get here
         auto *doVariable{loopBounds->name.thing.thing.symbol};
         CHECK(doVariable);
         currentStatementSourcePosition_ = loopBounds->name.thing.thing.source;
@@ -261,7 +334,7 @@ public:
               "do-variable must have INTEGER type"_en_US);
         }
       } else {
-        // C1006
+        // C1006 - FIXME? may be checked before we get here
         auto &logicalExpr{
             std::get<parser::ScalarLogicalExpr>(optionalLoopControl->u)
                 .thing.thing};
@@ -275,20 +348,14 @@ public:
   }
 
 private:
-  static bool ExpressionHasTypeCategory(
-      const evaluate::GenericExprWrapper &expr,
+  bool ExpressionHasTypeCategory(const evaluate::GenericExprWrapper &expr,
       const common::TypeCategory &type) {
-    return false;  // TODO - implement
-  }
-  static bool InnermostEnclosingScope(const semantics::Symbol &symbol) {
     // TODO - implement
     return false;
   }
-  static bool IntegerVariable(const Symbol &variable) {
-    return variable.GetType()->category() ==
-        semantics::DeclTypeSpec::Intrinsic &&
-        variable.GetType()->intrinsicTypeSpec().category() ==
-        common::TypeCategory::Integer;
+  bool InnermostEnclosingScope(const semantics::Symbol &symbol) const {
+    // TODO - implement
+    return false;
   }
   void CheckZeroOrOneDefaultNone(
       const std::list<parser::LocalitySpec> &localitySpecs) const {
@@ -300,73 +367,10 @@ private:
         if (count > 1) {
           messages_.Say(currentStatementSourcePosition_,
               "only one DEFAULT(NONE) may appear"_err_en_US);
-          break;
+          return;
         }
       }
     }
-  }
-  static CS GatherAllVariableNames(
-      const std::list<parser::LocalitySpec> &localitySpecs) {
-    CS names;
-    for (auto &ls : localitySpecs) {
-      std::visit(common::visitors{[](auto &) {},
-                     [&](const parser::LocalitySpec::Local &local) {
-                       for (auto &v : local.v) {
-                         CHECK(v.symbol);
-                         names.emplace_back(*v.symbol);
-                       }
-                     },
-                     [&](const parser::LocalitySpec::LocalInit &localInit) {
-                       for (auto &v : localInit.v) {
-                         CHECK(v.symbol);
-                         names.emplace_back(*v.symbol);
-                       }
-                     },
-                     [&](const parser::LocalitySpec::Shared &shared) {
-                       for (auto &v : shared.v) {
-                         CHECK(v.symbol);
-                         names.emplace_back(*v.symbol);
-                       }
-                     }},
-          ls.u);
-    }
-    return names;
-  }
-  static CS GatherNotSharedVariableNames(
-      const std::list<parser::LocalitySpec> &localitySpecs) {
-    CS names;
-    for (auto &ls : localitySpecs) {
-      std::visit(common::visitors{[](auto &) {},
-                     [&](const parser::LocalitySpec::Local &local) {
-                       for (auto &v : local.v) {
-                         CHECK(v.symbol);
-                         names.emplace_back(*v.symbol);
-                       }
-                     },
-                     [&](const parser::LocalitySpec::LocalInit &localInit) {
-                       for (auto &v : localInit.v) {
-                         CHECK(v.symbol);
-                         names.emplace_back(*v.symbol);
-                       }
-                     }},
-          ls.u);
-    }
-    return names;
-  }
-  static CS GatherLocalVariableNames(
-      const std::list<parser::LocalitySpec> &localitySpecs) {
-    CS names;
-    for (auto &ls : localitySpecs) {
-      std::visit(common::visitors{[](auto &) {},
-                     [&](const parser::LocalitySpec::Local &local) {
-                       for (auto &v : local.v) {
-                         CHECK(v.symbol);
-                         names.emplace_back(*v.symbol);
-                       }
-                     }},
-          ls.u);
-    }
-    return names;
   }
   void CheckScopingConstraints(const CS &symbols) const {
     // C1124
@@ -375,13 +379,9 @@ private:
         messages_.Say(currentStatementSourcePosition_,
             "variable in locality-spec must be in innermost"
             " scoping unit"_err_en_US);
+        return;
       }
     }
-  }
-  static CS GatherReferencesFromExpression(const parser::Expr &expression) {
-    GatherSymbols gatherSymbols;
-    parser::Walk(expression, gatherSymbols);
-    return gatherSymbols.symbols;
   }
   void CheckMaskIsPure(const parser::ScalarLogicalExpr &mask) const {
     // C1121 - procedures in mask must be pure
@@ -391,6 +391,7 @@ private:
         messages_.Say(currentStatementSourcePosition_,
             "concurrent-header mask expression cannot reference impure"
             " procedure"_err_en_US);
+        return;
       }
     }
   }
@@ -416,10 +417,6 @@ private:
     CheckNoCollisions(symbols, symbols,
         "name appears more than once in concurrent-locality"_err_en_US);
   }
-  void CheckLocalAndLocalInitAttributes(const CS &symbols) const {
-    // C1128
-    // TODO - implement
-  }
   void CheckMaskDoesNotReferenceLocal(
       const parser::ScalarLogicalExpr &mask, const CS &symbols) const {
     // C1129
@@ -428,11 +425,16 @@ private:
         "concurrent-header mask-expr references name"
         " in locality-spec"_err_en_US);
   }
+  void CheckLocalAndLocalInitAttributes(const CS &symbols) const {
+    // C1128
+    // TODO - implement
+  }
   void CheckDefaultNoneImpliesExplicitLocality(
       const std::list<parser::LocalitySpec> &localitySpecs) const {
     // C1130
     // TODO - implement
   }
+  // check constraints [C1121 .. C1130]
   void EnforceConcurrentLoopControl(
       const parser::LoopControl::Concurrent &concurrent) const {
     auto &header{std::get<parser::ConcurrentHeader>(concurrent.t)};
@@ -444,7 +446,7 @@ private:
     CS indexNames;
     for (auto &c : controls) {
       auto &indexName{std::get<parser::Name>(c.t)};
-      // C1122
+      // C1122 - FIXME? may be checked somewhere else before we get here
       if (!indexName.symbol) {
         continue;  // XXX - this shouldn't be needed
       }
@@ -453,6 +455,7 @@ private:
       if (!IntegerVariable(*indexName.symbol)) {
         messages_.Say(
             indexName.source, "index-name must have INTEGER type"_err_en_US);
+        return;
       }
     }
     if (!indexNames.empty()) {
