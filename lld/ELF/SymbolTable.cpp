@@ -241,12 +241,6 @@ std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name, uint8_t Type,
   return {S, WasInserted};
 }
 
-template <class ELFT> Symbol *SymbolTable::addUndefined(StringRef Name) {
-  return addUndefined<ELFT>(Name, STB_GLOBAL, STV_DEFAULT,
-                            /*Type*/ 0,
-                            /*CanOmitFromDynSym*/ false, /*File*/ nullptr);
-}
-
 static uint8_t getVisibility(uint8_t StOther) { return StOther & 3; }
 
 template <class ELFT>
@@ -778,11 +772,6 @@ template void SymbolTable::addFile<ELF32LE>(InputFile *);
 template void SymbolTable::addFile<ELF32BE>(InputFile *);
 template void SymbolTable::addFile<ELF64LE>(InputFile *);
 template void SymbolTable::addFile<ELF64BE>(InputFile *);
-
-template Symbol *SymbolTable::addUndefined<ELF32LE>(StringRef);
-template Symbol *SymbolTable::addUndefined<ELF32BE>(StringRef);
-template Symbol *SymbolTable::addUndefined<ELF64LE>(StringRef);
-template Symbol *SymbolTable::addUndefined<ELF64BE>(StringRef);
 
 template Symbol *SymbolTable::addUndefined<ELF32LE>(StringRef, uint8_t, uint8_t,
                                                     uint8_t, bool, InputFile *);
