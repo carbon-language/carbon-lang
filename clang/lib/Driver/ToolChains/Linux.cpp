@@ -229,12 +229,13 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
 
   Distro Distro(D.getVFS());
 
-  if (Distro.IsAlpineLinux()) {
+  if (Distro.IsAlpineLinux() || Triple.isAndroid()) {
     ExtraOpts.push_back("-z");
     ExtraOpts.push_back("now");
   }
 
-  if (Distro.IsOpenSUSE() || Distro.IsUbuntu() || Distro.IsAlpineLinux()) {
+  if (Distro.IsOpenSUSE() || Distro.IsUbuntu() || Distro.IsAlpineLinux() ||
+      Triple.isAndroid()) {
     ExtraOpts.push_back("-z");
     ExtraOpts.push_back("relro");
   }

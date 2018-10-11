@@ -1255,6 +1255,8 @@
 // RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID %s
 // CHECK-ANDROID: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ANDROID: "-z" "now"
+// CHECK-ANDROID: "-z" "relro"
 // CHECK-ANDROID: "--enable-new-dtags"
 // CHECK-ANDROID: "{{.*}}{{/|\\\\}}crtbegin_dynamic.o"
 // CHECK-ANDROID: "-L[[SYSROOT]]/usr/lib"
