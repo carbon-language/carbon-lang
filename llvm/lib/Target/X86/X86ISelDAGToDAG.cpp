@@ -451,6 +451,7 @@ namespace {
     }
 
     bool foldLoadStoreIntoMemOperand(SDNode *Node);
+    bool matchBEXTR(SDNode *Node);
     bool shrinkAndImmediate(SDNode *N);
     bool isMaskZeroExtended(SDNode *N) const;
     bool tryShiftAmountMod(SDNode *N);
@@ -2565,6 +2566,86 @@ bool X86DAGToDAGISel::foldLoadStoreIntoMemOperand(SDNode *Node) {
   return true;
 }
 
+// See if this is an  X & Mask  that we can match to BEXTR.
+// Where Mask is one of the following patterns:
+//   a) x &  (1 << nbits) - 1
+//   b) x & ~(-1 << nbits)
+//   c) x &  (-1 >> (32 - y))
+//   d) x << (32 - y) >> (32 - y)
+bool X86DAGToDAGISel::matchBEXTR(SDNode *Node) {
+  // BEXTR is BMI instruction. However, if we have BMI2, we prefer BZHI.
+  if (!Subtarget->hasBMI() || Subtarget->hasBMI2())
+    return false;
+
+  MVT NVT = Node->getSimpleValueType(0);
+
+  // Only supported for 32 and 64 bits.
+  if (NVT != MVT::i32 && NVT != MVT::i64)
+    return false;
+
+  SDValue NBits;
+
+  // b) x & ~(-1 << nbits)
+  auto matchPatternB = [&NBits](SDValue Mask) -> bool {
+    // Match `~()`. Must only have one use!
+    if (!isBitwiseNot(Mask) || !Mask->hasOneUse())
+      return false;
+    // Match `-1 << nbits`. Must only have one use!
+    SDValue M0 = Mask->getOperand(0);
+    if (M0->getOpcode() != ISD::SHL || !M0->hasOneUse())
+      return false;
+    if (!isAllOnesConstant(M0->getOperand(0)))
+      return false;
+    NBits = M0->getOperand(1);
+    return true;
+  };
+
+  auto matchLowBitMask = [&matchPatternB](SDValue Mask) -> bool {
+    // FIXME: patterns a, c, d.
+    return matchPatternB(Mask);
+  };
+
+  SDValue X = Node->getOperand(0);
+  SDValue Mask = Node->getOperand(1);
+
+  if (matchLowBitMask(Mask)) {
+    // Great.
+  } else {
+    std::swap(X, Mask);
+    if (!matchLowBitMask(Mask))
+      return false;
+  }
+
+  SDLoc DL(Node);
+
+  // Insert 8-bit NBits into lowest 8 bits of NVT-sized (32 or 64-bit) register.
+  // All the other bits are undefined, we do not care about them.
+  SDValue ImplDef =
+      SDValue(CurDAG->getMachineNode(TargetOpcode::IMPLICIT_DEF, DL, NVT), 0);
+  insertDAGNode(*CurDAG, NBits, ImplDef);
+  SDValue OrigNBits = NBits;
+  NBits = CurDAG->getTargetInsertSubreg(X86::sub_8bit, DL, NVT, ImplDef, NBits);
+  insertDAGNode(*CurDAG, OrigNBits, NBits);
+
+  // The 'control' of BEXTR has the pattern of:
+  // [15...8 bit][ 7...0 bit] location
+  // [ bit count][     shift] name
+  // I.e. 0b000000011'00000001 means  (x >> 0b1) & 0b11
+
+  // Shift NBits left by 8 bits, thus producing 'control'.
+  SDValue C8 = CurDAG->getConstant(8, DL, MVT::i8);
+  SDValue Control = CurDAG->getNode(ISD::SHL, DL, NVT, NBits, C8);
+  insertDAGNode(*CurDAG, OrigNBits, Control);
+  // NOTE: could also try to extract  start  from  (x >> start)
+
+  // And finally, form the BEXTR itself.
+  SDValue Extract = CurDAG->getNode(X86ISD::BEXTR, DL, NVT, X, Control);
+  ReplaceNode(Node, Extract.getNode());
+  SelectCode(Extract.getNode());
+
+  return true;
+}
+
 // Emit a PCMISTR(I/M) instruction.
 MachineSDNode *X86DAGToDAGISel::emitPCMPISTR(unsigned ROpc, unsigned MOpc,
                                              bool MayFoldLoad, const SDLoc &dl,
@@ -2872,6 +2953,8 @@ void X86DAGToDAGISel::Select(SDNode *Node) {
     break;
 
   case ISD::AND:
+    if (matchBEXTR(Node))
+      return;
     if (AndImmShrink && shrinkAndImmediate(Node))
       return;
 
