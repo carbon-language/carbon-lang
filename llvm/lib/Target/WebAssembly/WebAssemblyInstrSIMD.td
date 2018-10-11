@@ -382,7 +382,9 @@ multiclass SIMDBinary<ValueType vec_t, string vec, SDNode node, string name,
                       bits<32> simdop> {
   defm _#vec_t : SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs),
                         (outs), (ins),
-                        [(set (vec_t V128:$dst), (node V128:$lhs, V128:$rhs))],
+                        [(set (vec_t V128:$dst),
+                          (node (vec_t V128:$lhs), (vec_t V128:$rhs))
+                        )],
                         vec#"."#name#"\t$dst, $lhs, $rhs", vec#"."#name,
                         simdop>;
 }
@@ -434,23 +436,19 @@ multiclass SIMDBinarySat<SDNode node, string name, bits<32> baseInst> {
   defm "" : SIMDBinary<v8i16, "i16x8", node, name, !add(baseInst, 2)>;
 }
 
-def wasm_saturate_t : SDTypeProfile<1, 2,
-  [SDTCisVec<0>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>]
->;
-def wasm_add_sat_s : SDNode<"WebAssemblyISD::ADD_SAT_S", wasm_saturate_t>;
-def wasm_add_sat_u : SDNode<"WebAssemblyISD::ADD_SAT_U", wasm_saturate_t>;
-def wasm_sub_sat_s : SDNode<"WebAssemblyISD::SUB_SAT_S", wasm_saturate_t>;
-def wasm_sub_sat_u : SDNode<"WebAssemblyISD::SUB_SAT_U", wasm_saturate_t>;
-
 // Saturating integer addition: add_saturate_s / add_saturate_u
 let isCommutable = 1 in {
-defm ADD_SAT_S : SIMDBinarySat<wasm_add_sat_s, "add_saturate_s", 40>;
-defm ADD_SAT_U : SIMDBinarySat<wasm_add_sat_u, "add_saturate_u", 41>;
+defm ADD_SAT_S :
+  SIMDBinarySat<int_wasm_add_saturate_signed, "add_saturate_s", 40>;
+defm ADD_SAT_U :
+  SIMDBinarySat<int_wasm_add_saturate_unsigned, "add_saturate_u", 41>;
 } // isCommutable = 1
 
 // Saturating integer subtraction: sub_saturate_s / sub_saturate_u
-defm SUB_SAT_S : SIMDBinarySat<wasm_sub_sat_s, "sub_saturate_s", 44>;
-defm SUB_SAT_U : SIMDBinarySat<wasm_sub_sat_u, "sub_saturate_u", 45>;
+defm SUB_SAT_S :
+  SIMDBinarySat<int_wasm_sub_saturate_signed, "sub_saturate_s", 44>;
+defm SUB_SAT_U :
+  SIMDBinarySat<int_wasm_sub_saturate_unsigned, "sub_saturate_u", 45>;
 
 //===----------------------------------------------------------------------===//
 // Bit shifts
@@ -518,16 +516,11 @@ defm "" : SIMDNot<v4i32>;
 defm "" : SIMDNot<v2i64>;
 
 // Bitwise select: v128.bitselect
-def wasm_bitselect_t : SDTypeProfile<1, 3,
-  [SDTCisVec<0>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>]
->;
-def wasm_bitselect : SDNode<"WebAssemblyISD::BITSELECT", wasm_bitselect_t>;
-
 multiclass Bitselect<ValueType vec_t> {
   defm BITSELECT_#vec_t :
     SIMD_I<(outs V128:$dst), (ins V128:$v1, V128:$v2, V128:$c), (outs), (ins),
            [(set (vec_t V128:$dst),
-             (vec_t (wasm_bitselect
+             (vec_t (int_wasm_bitselect
                (vec_t V128:$c), (vec_t V128:$v1), (vec_t V128:$v2)
              ))
            )],
@@ -562,15 +555,11 @@ multiclass SIMDReduce<string name, SDNode op, bits<32> baseInst> {
   defm "" : SIMDReduceVec<v2i64, "i64x2", name, op, !add(baseInst, 3)>;
 }
 
-def wasm_reduce_t : SDTypeProfile<1, 1, [SDTCisVT<0, i32>, SDTCisVec<1>]>;
-
 // Any lane true: any_true
-def wasm_anytrue : SDNode<"WebAssemblyISD::ANYTRUE", wasm_reduce_t>;
-defm ANYTRUE : SIMDReduce<"any_true", wasm_anytrue, 65>;
+defm ANYTRUE : SIMDReduce<"any_true", int_wasm_anytrue, 65>;
 
 // All lanes true: all_true
-def wasm_alltrue : SDNode<"WebAssemblyISD::ALLTRUE", wasm_reduce_t>;
-defm ALLTRUE : SIMDReduce<"all_true", wasm_alltrue, 69>;
+defm ALLTRUE : SIMDReduce<"all_true", int_wasm_alltrue, 69>;
 
 //===----------------------------------------------------------------------===//
 // Comparisons
