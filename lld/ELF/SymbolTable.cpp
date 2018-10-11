@@ -142,7 +142,7 @@ template <class ELFT> void SymbolTable::addCombinedLTOObject() {
 Defined *SymbolTable::addAbsolute(StringRef Name, uint8_t Visibility,
                                   uint8_t Binding) {
   Symbol *Sym =
-      addRegular(Name, Visibility, STT_NOTYPE, 0, 0, Binding, nullptr, nullptr);
+      addDefined(Name, Visibility, STT_NOTYPE, 0, 0, Binding, nullptr, nullptr);
   return cast<Defined>(Sym);
 }
 
@@ -471,7 +471,7 @@ static void reportDuplicate(Symbol *Sym, InputFile *NewFile,
   error(Msg);
 }
 
-Symbol *SymbolTable::addRegular(StringRef Name, uint8_t StOther, uint8_t Type,
+Symbol *SymbolTable::addDefined(StringRef Name, uint8_t StOther, uint8_t Type,
                                 uint64_t Value, uint64_t Size, uint8_t Binding,
                                 SectionBase *Section, InputFile *File) {
   Symbol *S;
