@@ -23,6 +23,7 @@
 #include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
+#include "sanitizer_common/sanitizer_stacktrace_printer.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
 using namespace __sanitizer;
@@ -194,6 +195,7 @@ void PrintAddressDescription(
                      ? current_stack_allocations
                      : t->stack_allocations();
       uptr frames = Min((uptr)flags()->stack_history_size, sa->size());
+      InternalScopedString frame_desc(GetPageSizeCached() * 2);
       for (uptr i = 0; i < frames; i++) {
         uptr record = (*sa)[i];
         if (!record)
@@ -201,10 +203,15 @@ void PrintAddressDescription(
         uptr sp = (record >> 48) << 4;
         uptr pc_mask = (1ULL << 48) - 1;
         uptr pc = record & pc_mask;
-        uptr fixed_pc = StackTrace::GetNextInstructionPc(pc);
-        StackTrace stack(&fixed_pc, 1);
-        Printf("record: %p pc: %p sp: %p", record, pc, sp);
-        stack.Print();
+        if (SymbolizedStack *frame = Symbolizer::GetOrInit()->SymbolizePC(pc)) {
+          frame_desc.append("  sp: 0x%zx pc: %p ", sp, pc);
+          RenderFrame(&frame_desc, "in %f %s:%l\n", 0, frame->info,
+                      common_flags()->symbolize_vs_style,
+                      common_flags()->strip_path_prefix);
+          frame->ClearAll();
+        }
+        Printf("%s", frame_desc.data());
+        frame_desc.clear();
       }
 
       num_descriptions_printed++;
