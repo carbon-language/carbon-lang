@@ -12847,6 +12847,11 @@ SDValue DAGCombiner::ForwardStoreValueToDirectLoad(LoadSDNode *LD) {
   if (!STCoversLD)
     return SDValue();
 
+  // Normalize for Endianness.
+  if (DAG.getDataLayout().isBigEndian())
+    Offset =
+        (STMemType.getSizeInBits() - LDMemType.getSizeInBits()) / 8 - Offset;
+
   // Memory as copy space (potentially masked).
   if (Offset == 0 && LDType == STType && STMemType == LDMemType) {
     // Simple case: Direct non-truncating forwarding
