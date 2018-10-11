@@ -1295,6 +1295,7 @@ void SwingSchedulerDAG::changeDependences() {
     // Add a dependence between the new instruction and the instruction
     // that defines the new base.
     SDep Dep(&I, SDep::Anti, NewBase);
+    Topo.AddPred(LastSU, &I);
     LastSU->addPred(Dep);
 
     // Remember the base and offset information so that we can update the
