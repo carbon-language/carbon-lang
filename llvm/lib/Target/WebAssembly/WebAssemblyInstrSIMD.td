@@ -782,6 +782,16 @@ defm "" : SIMDConvert<v4i32, v4f32, fp_to_uint, "i32x4.trunc_sat_u/f32x4", 148>;
 defm "" : SIMDConvert<v2i64, v2f64, fp_to_sint, "i64x2.trunc_sat_s/f64x2", 149>;
 defm "" : SIMDConvert<v2i64, v2f64, fp_to_uint, "i64x2.trunc_sat_u/f64x2", 150>;
 
+// Lower llvm.wasm.trunc.saturate.* to saturating instructions
+def : Pat<(v4i32 (int_wasm_trunc_saturate_signed (v4f32 V128:$src))),
+          (fp_to_sint_v4i32_v4f32 (v4f32 V128:$src))>;
+def : Pat<(v4i32 (int_wasm_trunc_saturate_unsigned (v4f32 V128:$src))),
+          (fp_to_uint_v4i32_v4f32 (v4f32 V128:$src))>;
+def : Pat<(v2i64 (int_wasm_trunc_saturate_signed (v2f64 V128:$src))),
+          (fp_to_sint_v2i64_v2f64 (v2f64 V128:$src))>;
+def : Pat<(v2i64 (int_wasm_trunc_saturate_unsigned (v2f64 V128:$src))),
+          (fp_to_uint_v2i64_v2f64 (v2f64 V128:$src))>;
+
 // Bitcasts are nops
 // Matching bitcast t1 to t1 causes strange errors, so avoid repeating types
 foreach t1 = [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64] in
