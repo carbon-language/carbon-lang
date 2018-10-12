@@ -18,27 +18,20 @@
 #include <map>
 #include <vector>
 
-typedef __signed__ char __s8;
-typedef unsigned char __u8;
-typedef __signed__ short __s16;
-typedef unsigned short __u16;
-typedef __signed__ int __s32;
-typedef unsigned int __u32;
-
 #define BTF_MAGIC 0xeB9F
 #define BTF_VERSION 1
 
 struct btf_header {
-  __u16 magic;
-  __u8 version;
-  __u8 flags;
-  __u32 hdr_len;
+  uint16_t magic;
+  uint8_t version;
+  uint8_t flags;
+  uint32_t hdr_len;
 
   /* All offsets are in bytes relative to the end of this header */
-  __u32 type_off; /* offset of type section	*/
-  __u32 type_len; /* length of type section	*/
-  __u32 str_off;  /* offset of string section	*/
-  __u32 str_len;  /* length of string section	*/
+  uint32_t type_off; // offset of type section
+  uint32_t type_len; // length of type section
+  uint32_t str_off;  // offset of string section
+  uint32_t str_len;  // length of string section
 };
 
 /* Max # of type identifier */
@@ -49,14 +42,14 @@ struct btf_header {
 #define BTF_MAX_VLEN 0xffff
 
 struct btf_type {
-  __u32 name_off;
+  uint32_t name_off;
   /* "info" bits arrangement
    * bits  0-15: vlen (e.g. # of struct's members)
    * bits 16-23: unused
    * bits 24-27: kind (e.g. int, ptr, array...etc)
    * bits 28-31: unused
    */
-  __u32 info;
+  uint32_t info;
   /* "size" is used by INT, ENUM, STRUCT and UNION.
    * "size" tells the size of the type it is describing.
    *
@@ -65,8 +58,8 @@ struct btf_type {
    * "type" is a type_id referring to another type.
    */
   union {
-    __u32 size;
-    __u32 type;
+    uint32_t size;
+    uint32_t type;
   };
 };
 
@@ -111,15 +104,15 @@ struct btf_type {
  * info in "struct btf_type").
  */
 struct btf_enum {
-  __u32 name_off;
-  __s32 val;
+  uint32_t name_off;
+  int32_t val;
 };
 
 /* BTF_KIND_ARRAY is followed by one "struct btf_array" */
 struct btf_array {
-  __u32 type;
-  __u32 index_type;
-  __u32 nelems;
+  uint32_t type;
+  uint32_t index_type;
+  uint32_t nelems;
 };
 
 /* BTF_KIND_STRUCT and BTF_KIND_UNION are followed
@@ -128,45 +121,45 @@ struct btf_array {
  * "struct btf_type").
  */
 struct btf_member {
-  __u32 name_off;
-  __u32 type;
-  __u32 offset; /* offset in bits */
+  uint32_t name_off;
+  uint32_t type;
+  uint32_t offset; /* offset in bits */
 };
 
 /* .BTF.ext section contains func_info and line_info.
  */
 struct btf_ext_header {
-  __u16 magic;
-  __u8 version;
-  __u8 flags;
-  __u32 hdr_len;
+  uint16_t magic;
+  uint8_t version;
+  uint8_t flags;
+  uint32_t hdr_len;
 
-  __u32 func_info_off;
-  __u32 func_info_len;
-  __u32 line_info_off;
-  __u32 line_info_len;
+  uint32_t func_info_off;
+  uint32_t func_info_len;
+  uint32_t line_info_off;
+  uint32_t line_info_len;
 };
 
 struct bpf_func_info {
-  __u32 insn_offset;
-  __u32 type_id;
+  uint32_t insn_offset;
+  uint32_t type_id;
 };
 
 struct btf_sec_func_info {
-  __u32 sec_name_off;
-  __u32 num_func_info;
+  uint32_t sec_name_off;
+  uint32_t num_func_info;
 };
 
 struct bpf_line_info {
-  __u32 insn_offset;
-  __u32 file_name_off;
-  __u32 line_off;
-  __u32 line_col; /* line num: line_col >> 10, col num: line_col & 0x3ff */
+  uint32_t insn_offset;
+  uint32_t file_name_off;
+  uint32_t line_off;
+  uint32_t line_col; /* line num: line_col >> 10, col num: line_col & 0x3ff */
 };
 
 struct btf_sec_line_info {
-  __u32 sec_name_off;
-  __u32 num_line_info;
+  uint32_t sec_name_off;
+  uint32_t num_line_info;
 };
 
 namespace llvm {

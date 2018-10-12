@@ -54,7 +54,7 @@ public:
 
 // BTF_KIND_INT
 class Die2BTFEntryInt : public Die2BTFEntry {
-  __u32 IntVal; // encoding, offset, bits
+  uint32_t IntVal; // encoding, offset, bits
 
 public:
   Die2BTFEntryInt(const DIE &Die);
@@ -90,7 +90,7 @@ public:
 
 // BTF_KIND_FUNC and BTF_KIND_FUNC_PROTO
 class Die2BTFEntryFunc : public Die2BTFEntry {
-  std::vector<__u32> Parameters;
+  std::vector<uint32_t> Parameters;
 
 public:
   Die2BTFEntryFunc(const DIE &Die);
@@ -109,7 +109,7 @@ public:
   bool isLittleEndian() { return IsLE; }
   void addDwarfCU(DwarfUnit *TheU);
   void finish();
-  __u32 getTypeIndex(DIE &Die) {
+  uint32_t getTypeIndex(DIE &Die) {
     DIE *DiePtr = const_cast<DIE *>(&Die);
     assert((DieToIdMap.find(DiePtr) != DieToIdMap.end()) &&
            "Die not added to in the BTFContext");

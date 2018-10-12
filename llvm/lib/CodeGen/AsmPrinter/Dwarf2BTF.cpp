@@ -200,7 +200,7 @@ Die2BTFEntryInt::Die2BTFEntryInt(const DIE &Die) : Die2BTFEntry(Die) {
   auto Encoding = Die2BTFEntry::getBaseTypeEncoding(Die);
   assert((Encoding != BTF_INVALID_ENCODING) &&
          "Invalid Die passed to BTFTypeEntryInt()");
-  __u32 IntVal = (Encoding & 0xf) << 24;
+  uint32_t IntVal = (Encoding & 0xf) << 24;
 
   // handle BTF_INT_OFFSET in IntVal
   auto V = Die.findAttribute(dwarf::DW_AT_bit_offset);
@@ -209,7 +209,7 @@ Die2BTFEntryInt::Die2BTFEntryInt(const DIE &Die) : Die2BTFEntry(Die) {
 
   // get btf_type.size
   V = Die.findAttribute(dwarf::DW_AT_byte_size);
-  __u32 Size = V.getDIEInteger().getValue() & 0xffffffff;
+  uint32_t Size = V.getDIEInteger().getValue() & 0xffffffff;
 
   // handle BTF_INT_BITS in IntVal
   V = Die.findAttribute(dwarf::DW_AT_bit_size);
@@ -237,7 +237,7 @@ void Die2BTFEntryInt::completeData(class Dwarf2BTF &Dwarf2BTF) {
 Die2BTFEntryEnum::Die2BTFEntryEnum(const DIE &Die) : Die2BTFEntry(Die) {
   // get btf_type.size
   auto V = Die.findAttribute(dwarf::DW_AT_byte_size);
-  __u32 Size = V.getDIEInteger().getValue() & 0xffffffff;
+  uint32_t Size = V.getDIEInteger().getValue() & 0xffffffff;
 
   int Vlen = 0;
   for (auto &ChildDie : Die.children())
@@ -265,7 +265,7 @@ void Die2BTFEntryEnum::completeData(class Dwarf2BTF &Dwarf2BTF) {
 
     BTFEnum.name_off = Dwarf2BTF.addBTFString(Str);
     auto ChildValueV = ChildDie.findAttribute(dwarf::DW_AT_const_value);
-    BTFEnum.val = (__s32)(ChildValueV.getDIEInteger().getValue());
+    BTFEnum.val = (int32_t)(ChildValueV.getDIEInteger().getValue());
 
     EnumValues.push_back(BTFEnum);
   }
@@ -308,7 +308,7 @@ void Die2BTFEntryArray::completeData(class Dwarf2BTF &Dwarf2BTF) {
         Nelems = 0;
         break;
       }
-      Nelems *= (__u32)(CountV.getDIEInteger().getValue());
+      Nelems *= (uint32_t)(CountV.getDIEInteger().getValue());
     }
   }
   ArrayInfo.nelems = Nelems;
@@ -320,7 +320,7 @@ void Die2BTFEntryArray::completeData(class Dwarf2BTF &Dwarf2BTF) {
 Die2BTFEntryStruct::Die2BTFEntryStruct(const DIE &Die) : Die2BTFEntry(Die) {
   // get btf_type.size
   auto V = Die.findAttribute(dwarf::DW_AT_byte_size);
-  __u32 Size = V.getDIEInteger().getValue() & 0xffffffff;
+  uint32_t Size = V.getDIEInteger().getValue() & 0xffffffff;
   auto Kind = Die2BTFEntry::getDieKind(Die);
 
   int Vlen = 0;
