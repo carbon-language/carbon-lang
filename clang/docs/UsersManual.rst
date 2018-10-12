@@ -1825,7 +1825,7 @@ program.
 
 The profile remapping file is a text file containing lines of the form
 
-.. code-block::
+.. code-block:: text
 
   fragmentkind fragment1 fragment2
 
