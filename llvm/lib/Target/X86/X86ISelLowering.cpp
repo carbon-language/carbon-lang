@@ -26296,7 +26296,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       return;
     }
 
-    if (SrcVT != MVT::f64 ||
+    if ((SrcVT != MVT::f64 && SrcVT != MVT::v2f32) ||
         (DstVT != MVT::v2i32 && DstVT != MVT::v4i16 && DstVT != MVT::v8i8) ||
         getTypeAction(*DAG.getContext(), DstVT) == TypeWidenVector)
       return;
@@ -26304,12 +26304,18 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     unsigned NumElts = DstVT.getVectorNumElements();
     EVT SVT = DstVT.getVectorElementType();
     EVT WiderVT = EVT::getVectorVT(*DAG.getContext(), SVT, NumElts * 2);
-    SDValue Expanded = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
-                                   MVT::v2f64, N->getOperand(0));
-    SDValue ToVecInt = DAG.getBitcast(WiderVT, Expanded);
-    SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DstVT,
-                                  ToVecInt, DAG.getIntPtrConstant(0, dl));
-    Results.push_back(Extract);
+    SDValue Res;
+    if (SrcVT == MVT::f64)
+      Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
+                             MVT::v2f64, N->getOperand(0));
+    else
+      Res = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32, N->getOperand(0),
+                        DAG.getUNDEF(MVT::v2f32));
+
+    Res = DAG.getBitcast(WiderVT, Res);
+    Res = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DstVT, Res,
+                      DAG.getIntPtrConstant(0, dl));
+    Results.push_back(Res);
     return;
   }
   case ISD::MGATHER: {
