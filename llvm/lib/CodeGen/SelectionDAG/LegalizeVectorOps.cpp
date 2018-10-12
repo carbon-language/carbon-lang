@@ -1079,7 +1079,7 @@ SDValue VectorLegalizer::ExpandCTLZ(SDValue Op) {
   if (Op.getOpcode() == ISD::CTLZ_ZERO_UNDEF &&
       TLI.isOperationLegalOrCustom(ISD::CTLZ, VT)) {
     SDLoc DL(Op);
-    return DAG.getNode(ISD::CTLZ, DL, Op.getValueType(), Op.getOperand(0));
+    return DAG.getNode(ISD::CTLZ, DL, VT, Op.getOperand(0));
   }
 
   // If we have the appropriate vector bit operations, it is better to use them
@@ -1095,10 +1095,12 @@ SDValue VectorLegalizer::ExpandCTLZ(SDValue Op) {
 }
 
 SDValue VectorLegalizer::ExpandCTTZ_ZERO_UNDEF(SDValue Op) {
+  EVT VT = Op.getValueType();
+
   // If the non-ZERO_UNDEF version is supported we can use that instead.
-  if (TLI.isOperationLegalOrCustom(ISD::CTTZ, Op.getValueType())) {
+  if (TLI.isOperationLegalOrCustom(ISD::CTTZ, VT)) {
     SDLoc DL(Op);
-    return DAG.getNode(ISD::CTTZ, DL, Op.getValueType(), Op.getOperand(0));
+    return DAG.getNode(ISD::CTTZ, DL, VT, Op.getOperand(0));
   }
 
   // Otherwise go ahead and unroll.
