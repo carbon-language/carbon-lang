@@ -3749,8 +3749,9 @@ SDValue DAGTypeLegalizer::WidenVecOp_Convert(SDNode *N) {
                                 InVT.getVectorNumElements());
   if (TLI.isTypeLegal(WideVT)) {
     SDValue Res = DAG.getNode(Opcode, dl, WideVT, InOp);
-    return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Res,
-                       DAG.getIntPtrConstant(0, dl));
+    return DAG.getNode(
+        ISD::EXTRACT_SUBVECTOR, dl, VT, Res,
+        DAG.getConstant(0, dl, TLI.getVectorIdxTy(DAG.getDataLayout())));
   }
 
   EVT InEltVT = InVT.getVectorElementType();
