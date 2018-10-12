@@ -25024,6 +25024,7 @@ static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, const SDLoc &DL,
   MVT VT = Op.getSimpleValueType();
   MVT EltVT = VT.getVectorElementType();
   int NumElts = VT.getVectorNumElements();
+  (void)EltVT;
   assert(EltVT == MVT::i8 && "Only vXi8 vector CTPOP lowering supported.");
 
   // Implement a lookup table in register by using an algorithm based on:
