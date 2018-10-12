@@ -26297,7 +26297,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     }
 
     if (SrcVT != MVT::f64 ||
-        (DstVT != MVT::v2i32 && DstVT != MVT::v4i16 && DstVT != MVT::v8i8))
+        (DstVT != MVT::v2i32 && DstVT != MVT::v4i16 && DstVT != MVT::v8i8) ||
+        getTypeAction(*DAG.getContext(), DstVT) == TypeWidenVector)
       return;
 
     unsigned NumElts = DstVT.getVectorNumElements();
@@ -26306,13 +26307,6 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue Expanded = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
                                    MVT::v2f64, N->getOperand(0));
     SDValue ToVecInt = DAG.getBitcast(WiderVT, Expanded);
-
-    if (getTypeAction(*DAG.getContext(), DstVT) == TypeWidenVector) {
-      // If we are legalizing vectors by widening, we already have the desired
-      // legal vector type, just return it.
-      Results.push_back(ToVecInt);
-      return;
-    }
 
     SmallVector<SDValue, 8> Elts;
     for (unsigned i = 0, e = NumElts; i != e; ++i)
