@@ -13,22 +13,26 @@
 #ifndef LLVM_MC_MCBTFCONTEXT_H
 #define LLVM_MC_MCBTFCONTEXT_H
 
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/raw_ostream.h"
 #include <linux/types.h>
+#include <map>
+#include <vector>
 
-#define BTF_MAGIC	0xeB9F
-#define BTF_VERSION	1
+#define BTF_MAGIC 0xeB9F
+#define BTF_VERSION 1
 
 struct btf_header {
-	__u16	magic;
-	__u8	version;
-	__u8	flags;
-	__u32	hdr_len;
+  __u16 magic;
+  __u8 version;
+  __u8 flags;
+  __u32 hdr_len;
 
-	/* All offsets are in bytes relative to the end of this header */
-	__u32	type_off;	/* offset of type section	*/
-	__u32	type_len;	/* length of type section	*/
-	__u32	str_off;	/* offset of string section	*/
-	__u32	str_len;	/* length of string section	*/
+  /* All offsets are in bytes relative to the end of this header */
+  __u32 type_off; /* offset of type section	*/
+  __u32 type_len; /* length of type section	*/
+  __u32 str_off;  /* offset of string section	*/
+  __u32 str_len;  /* length of string section	*/
 };
 
 /* Max # of type identifier */
@@ -178,9 +182,6 @@ const char *const btf_kind_str[NR_BTF_KINDS] = {
 	[BTF_KIND_FUNC_PROTO]	= "FUNC_PROTO",
 };
 
-#include "llvm/ADT/SmallVector.h"
-#include <map>
-
 class MCBTFContext;
 class MCObjectStreamer;
 
@@ -196,6 +197,7 @@ protected:
 public:
   BTFTypeEntry(size_t id, struct btf_type &type) :
     Id(id), BTFType(type) {}
+  virtual ~BTFTypeEntry();
   unsigned char getKind() { return BTF_INFO_KIND(BTFType.info); }
   void setId(size_t Id) { this->Id = Id; }
   size_t getId() { return Id; }

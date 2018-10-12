@@ -30,6 +30,7 @@ protected:
   struct btf_type BTFType;
 
 public:
+  virtual ~Die2BTFEntry();
   // Return desired BTF_KIND for the Die, return BTF_KIND_UNKN for
   // invalid/unsupported Die
   static unsigned char getDieKind(const DIE &Die);

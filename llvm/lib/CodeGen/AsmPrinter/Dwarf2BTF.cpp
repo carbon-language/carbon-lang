@@ -15,6 +15,8 @@
 
 namespace llvm {
 
+Die2BTFEntry::~Die2BTFEntry() {}
+
 unsigned char Die2BTFEntry::getDieKind(const DIE & Die) {
   auto Tag = Die.getTag();
 

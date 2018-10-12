@@ -11,8 +11,6 @@
 #include "llvm/MC/MCBTFContext.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <tuple>
 #include <utility>
@@ -20,6 +18,8 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "btf"
+
+BTFTypeEntry::~BTFTypeEntry() {}
 
 void MCBTFContext::addTypeEntry(std::unique_ptr<BTFTypeEntry> Entry) {
    TypeEntries.push_back(std::move(Entry));
