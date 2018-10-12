@@ -657,11 +657,11 @@ public:
 
   /// Indices of known build info arguments.
   enum BuildInfoArg {
-    CurrentDirectory, //< Absolute CWD path
-    BuildTool,        //< Absolute compiler path
-    SourceFile,       //< Path to main source file, relative or absolute
-    TypeServerPDB,    //< Absoulte path of type server PDB (/Fd)
-    CommandLine,      //< Full canonical command line (maybe -cc1)
+    CurrentDirectory, ///< Absolute CWD path
+    BuildTool,        ///< Absolute compiler path
+    SourceFile,       ///< Path to main source file, relative or absolute
+    TypeServerPDB,    ///< Absolute path of type server PDB (/Fd)
+    CommandLine,      ///< Full canonical command line (maybe -cc1)
     MaxArgs
   };
 
