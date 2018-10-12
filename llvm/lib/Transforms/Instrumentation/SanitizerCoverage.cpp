@@ -29,6 +29,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/CommandLine.h"
@@ -297,6 +298,26 @@ Function *SanitizerCoverageModule::CreateInitCallsForSections(
     appendToGlobalCtors(M, CtorFunc, SanCtorAndDtorPriority, CtorFunc);
   } else {
     appendToGlobalCtors(M, CtorFunc, SanCtorAndDtorPriority);
+  }
+
+  if (TargetTriple.getObjectFormat() == Triple::COFF) {
+    // In COFF files, if the contructors are set as COMDAT (they are because
+    // COFF supports COMDAT) and the linker flag /OPT:REF (strip unreferenced
+    // functions and data) is used, the constructors get stripped. To prevent
+    // this, give the constructors weak ODR linkage and tell the linker to
+    // always include the sancov constructor. This way the linker can
+    // deduplicate the constructors but always leave one copy.
+    CtorFunc->setLinkage(GlobalValue::WeakODRLinkage);
+    SmallString<20> PartialIncDirective("/include:");
+    // Get constructor's mangled name in order to support i386.
+    SmallString<40> MangledName;
+    Mangler().getNameWithPrefix(MangledName, CtorFunc, true);
+    Twine IncDirective = PartialIncDirective + MangledName;
+    Metadata *Args[1] = {MDString::get(*C, IncDirective.str())};
+    MDNode *MetadataNode = MDNode::get(*C, Args);
+    NamedMDNode *NamedMetadata =
+        M.getOrInsertNamedMetadata("llvm.linker.options");
+    NamedMetadata->addOperand(MetadataNode);
   }
   return CtorFunc;
 }
