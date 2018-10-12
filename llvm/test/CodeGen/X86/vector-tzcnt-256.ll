@@ -1370,145 +1370,55 @@ define <4 x i64> @foldv4i64u() nounwind {
 }
 
 define <8 x i32> @foldv8i32() nounwind {
-; AVX-LABEL: foldv8i32:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; AVX-NEXT:    retq
-;
-; BITALG_NOVLX-LABEL: foldv8i32:
-; BITALG_NOVLX:       # %bb.0:
-; BITALG_NOVLX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; BITALG_NOVLX-NEXT:    retq
-;
-; BITALG-LABEL: foldv8i32:
-; BITALG:       # %bb.0:
-; BITALG-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; BITALG-NEXT:    retq
-;
-; X32-AVX-LABEL: foldv8i32:
-; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; X32-AVX-NEXT:    retl
+; ALL-LABEL: foldv8i32:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
+; ALL-NEXT:    ret{{[l|q]}}
   %out = call <8 x i32> @llvm.cttz.v8i32(<8 x i32> <i32 256, i32 -1, i32 0, i32 255, i32 -65536, i32 7, i32 24, i32 88>, i1 0)
   ret <8 x i32> %out
 }
 
 define <8 x i32> @foldv8i32u() nounwind {
-; AVX-LABEL: foldv8i32u:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; AVX-NEXT:    retq
-;
-; BITALG_NOVLX-LABEL: foldv8i32u:
-; BITALG_NOVLX:       # %bb.0:
-; BITALG_NOVLX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; BITALG_NOVLX-NEXT:    retq
-;
-; BITALG-LABEL: foldv8i32u:
-; BITALG:       # %bb.0:
-; BITALG-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; BITALG-NEXT:    retq
-;
-; X32-AVX-LABEL: foldv8i32u:
-; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
-; X32-AVX-NEXT:    retl
+; ALL-LABEL: foldv8i32u:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,32,0,16,0,3,3]
+; ALL-NEXT:    ret{{[l|q]}}
   %out = call <8 x i32> @llvm.cttz.v8i32(<8 x i32> <i32 256, i32 -1, i32 0, i32 255, i32 -65536, i32 7, i32 24, i32 88>, i1 -1)
   ret <8 x i32> %out
 }
 
 define <16 x i16> @foldv16i16() nounwind {
-; AVX-LABEL: foldv16i16:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; AVX-NEXT:    retq
-;
-; BITALG_NOVLX-LABEL: foldv16i16:
-; BITALG_NOVLX:       # %bb.0:
-; BITALG_NOVLX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; BITALG_NOVLX-NEXT:    retq
-;
-; BITALG-LABEL: foldv16i16:
-; BITALG:       # %bb.0:
-; BITALG-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; BITALG-NEXT:    retq
-;
-; X32-AVX-LABEL: foldv16i16:
-; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; X32-AVX-NEXT:    retl
+; ALL-LABEL: foldv16i16:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
+; ALL-NEXT:    ret{{[l|q]}}
   %out = call <16 x i16> @llvm.cttz.v16i16(<16 x i16> <i16 256, i16 -1, i16 0, i16 255, i16 -65536, i16 7, i16 24, i16 88, i16 -2, i16 254, i16 1, i16 2, i16 4, i16 8, i16 16, i16 32>, i1 0)
   ret <16 x i16> %out
 }
 
 define <16 x i16> @foldv16i16u() nounwind {
-; AVX-LABEL: foldv16i16u:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; AVX-NEXT:    retq
-;
-; BITALG_NOVLX-LABEL: foldv16i16u:
-; BITALG_NOVLX:       # %bb.0:
-; BITALG_NOVLX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; BITALG_NOVLX-NEXT:    retq
-;
-; BITALG-LABEL: foldv16i16u:
-; BITALG:       # %bb.0:
-; BITALG-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; BITALG-NEXT:    retq
-;
-; X32-AVX-LABEL: foldv16i16u:
-; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
-; X32-AVX-NEXT:    retl
+; ALL-LABEL: foldv16i16u:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,16,0,16,0,3,3,1,1,0,1,2,3,4,5]
+; ALL-NEXT:    ret{{[l|q]}}
   %out = call <16 x i16> @llvm.cttz.v16i16(<16 x i16> <i16 256, i16 -1, i16 0, i16 255, i16 -65536, i16 7, i16 24, i16 88, i16 -2, i16 254, i16 1, i16 2, i16 4, i16 8, i16 16, i16 32>, i1 -1)
   ret <16 x i16> %out
 }
 
 define <32 x i8> @foldv32i8() nounwind {
-; AVX-LABEL: foldv32i8:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; AVX-NEXT:    retq
-;
-; BITALG_NOVLX-LABEL: foldv32i8:
-; BITALG_NOVLX:       # %bb.0:
-; BITALG_NOVLX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; BITALG_NOVLX-NEXT:    retq
-;
-; BITALG-LABEL: foldv32i8:
-; BITALG:       # %bb.0:
-; BITALG-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; BITALG-NEXT:    retq
-;
-; X32-AVX-LABEL: foldv32i8:
-; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; X32-AVX-NEXT:    retl
+; ALL-LABEL: foldv32i8:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
+; ALL-NEXT:    ret{{[l|q]}}
   %out = call <32 x i8> @llvm.cttz.v32i8(<32 x i8> <i8 256, i8 -1, i8 0, i8 255, i8 -65536, i8 7, i8 24, i8 88, i8 -2, i8 254, i8 1, i8 2, i8 4, i8 8, i8 16, i8 32, i8 64, i8 128, i8 256, i8 -256, i8 -128, i8 -64, i8 -32, i8 -16, i8 -8, i8 -4, i8 -2, i8 -1, i8 3, i8 5, i8 7, i8 127>, i1 0)
   ret <32 x i8> %out
 }
 
 define <32 x i8> @foldv32i8u() nounwind {
-; AVX-LABEL: foldv32i8u:
-; AVX:       # %bb.0:
-; AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; AVX-NEXT:    retq
-;
-; BITALG_NOVLX-LABEL: foldv32i8u:
-; BITALG_NOVLX:       # %bb.0:
-; BITALG_NOVLX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; BITALG_NOVLX-NEXT:    retq
-;
-; BITALG-LABEL: foldv32i8u:
-; BITALG:       # %bb.0:
-; BITALG-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; BITALG-NEXT:    retq
-;
-; X32-AVX-LABEL: foldv32i8u:
-; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
-; X32-AVX-NEXT:    retl
+; ALL-LABEL: foldv32i8u:
+; ALL:       # %bb.0:
+; ALL-NEXT:    vmovaps {{.*#+}} ymm0 = [8,0,8,0,8,0,3,3,1,1,0,1,2,3,4,5,6,7,8,8,7,6,5,4,3,2,1,0,0,0,0,0]
+; ALL-NEXT:    ret{{[l|q]}}
   %out = call <32 x i8> @llvm.cttz.v32i8(<32 x i8> <i8 256, i8 -1, i8 0, i8 255, i8 -65536, i8 7, i8 24, i8 88, i8 -2, i8 254, i8 1, i8 2, i8 4, i8 8, i8 16, i8 32, i8 64, i8 128, i8 256, i8 -256, i8 -128, i8 -64, i8 -32, i8 -16, i8 -8, i8 -4, i8 -2, i8 -1, i8 3, i8 5, i8 7, i8 127>, i1 -1)
   ret <32 x i8> %out
 }
