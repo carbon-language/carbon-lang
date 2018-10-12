@@ -1942,9 +1942,15 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
   // creation of a GOT entry, do not link against the symbol but against
   // whatever address was extracted from the instruction itself. We are
   // not creating a GOT entry as this was already processed by the linker.
-  if (!SymbolAddress || Relocation::isGOT(Rel.getType())) {
+  // For GOT relocs, do not subtract addend as the addend does not refer
+  // to this instruction's target, but it refers to the target in the GOT
+  // entry.
+  if (Relocation::isGOT(Rel.getType())) {
+    Addend = 0;
+    SymbolAddress = ExtractedValue + PCRelOffset;
+  } else if (!SymbolAddress) {
     assert(!IsSectionRelocation);
-    if (ExtractedValue) {
+    if (ExtractedValue || Addend == 0 || IsPCRelative) {
       SymbolAddress = ExtractedValue - Addend + PCRelOffset;
     } else {
       // This is weird case.  The extracted value is zero but the addend is
@@ -1955,7 +1961,6 @@ bool RewriteInstance::analyzeRelocation(const RelocationRef &Rel,
                    << Twine::utohexstr(Rel.getOffset())
                    << " value does not match addend for "
                    << "relocation to undefined symbol.\n");
-      SymbolAddress += PCRelOffset;
       return true;
     }
   }
