@@ -165,13 +165,20 @@ struct btf_sec_line_info {
 namespace llvm {
 
 const char *const btf_kind_str[NR_BTF_KINDS] = {
-    [BTF_KIND_UNKN] = "UNKNOWN",    [BTF_KIND_INT] = "INT",
-    [BTF_KIND_PTR] = "PTR",         [BTF_KIND_ARRAY] = "ARRAY",
-    [BTF_KIND_STRUCT] = "STRUCT",   [BTF_KIND_UNION] = "UNION",
-    [BTF_KIND_ENUM] = "ENUM",       [BTF_KIND_FWD] = "FWD",
-    [BTF_KIND_TYPEDEF] = "TYPEDEF", [BTF_KIND_VOLATILE] = "VOLATILE",
-    [BTF_KIND_CONST] = "CONST",     [BTF_KIND_RESTRICT] = "RESTRICT",
-    [BTF_KIND_FUNC] = "FUNC",       [BTF_KIND_FUNC_PROTO] = "FUNC_PROTO",
+    "UNKNOWN",    /* BTF_KIND_UNKN */
+    "INT",        /* BTF_KIND_INT */
+    "PTR",        /* BTF_KIND_PTR */
+    "ARRAY",      /* BTF_KIND_ARRAY */
+    "STRUCT",     /* BTF_KIND_STRUCT */
+    "UNION",      /* BTF_KIND_UNION */
+    "ENUM",       /* BTF_KIND_ENUM */
+    "FWD",        /* BTF_KIND_FWD */
+    "TYPEDEF",    /* BTF_KIND_TYPEDEF */
+    "VOLATILE",   /* BTF_KIND_VOLATILE */
+    "CONST",      /* BTF_KIND_CONST */
+    "RESTRICT",   /* BTF_KIND_CONST */
+    "FUNC",       /* BTF_KIND_FUNC */
+    "FUNC_PROTO", /* BTF_KIND_FUNC_PROTO */
 };
 
 class MCBTFContext;
