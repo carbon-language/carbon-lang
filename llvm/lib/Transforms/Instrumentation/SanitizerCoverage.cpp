@@ -220,8 +220,6 @@ private:
                    MDNode::get(*C, None));
   }
 
-  Comdat *GetOrCreateFunctionComdat(Function &F);
-
   std::string getSectionName(const std::string &Section) const;
   std::string getSectionStart(const std::string &Section) const;
   std::string getSectionEnd(const std::string &Section) const;
@@ -590,28 +588,16 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
   return true;
 }
 
-Comdat *SanitizerCoverageModule::GetOrCreateFunctionComdat(Function &F) {
-  if (auto Comdat = F.getComdat()) return Comdat;
-  if (!TargetTriple.isOSBinFormatELF()) return nullptr;
-  assert(F.hasName());
-  std::string Name = F.getName();
-  if (F.hasLocalLinkage()) {
-    if (CurModuleUniqueId.empty()) return nullptr;
-    Name += CurModuleUniqueId;
-  }
-  auto Comdat = CurModule->getOrInsertComdat(Name);
-  F.setComdat(Comdat);
-  return Comdat;
-}
-
 GlobalVariable *SanitizerCoverageModule::CreateFunctionLocalArrayInSection(
     size_t NumElements, Function &F, Type *Ty, const char *Section) {
   ArrayType *ArrayTy = ArrayType::get(Ty, NumElements);
   auto Array = new GlobalVariable(
       *CurModule, ArrayTy, false, GlobalVariable::PrivateLinkage,
       Constant::getNullValue(ArrayTy), "__sancov_gen_");
-  if (auto Comdat = GetOrCreateFunctionComdat(F))
-    Array->setComdat(Comdat);
+
+  if (TargetTriple.isOSBinFormatELF())
+    if (auto Comdat = GetOrCreateFunctionComdat(F, CurModuleUniqueId))
+      Array->setComdat(Comdat);
   Array->setSection(getSectionName(Section));
   Array->setAlignment(Ty->isPointerTy() ? DL->getPointerSize()
                                         : Ty->getPrimitiveSizeInBits() / 8);
