@@ -114,9 +114,6 @@ public:
   void emitStrings(MCSection *StrSection, MCSection *OffsetSection = nullptr,
                    bool UseRelativeOffsets = false);
 
-  // Emit all data for the BTF section
-  void emitBTFSection(bool IsLittleEndian);
-
   /// Returns the string pool.
   DwarfStringPool &getStringPool() { return StrPool; }
 
@@ -137,7 +134,9 @@ public:
     return ScopeVariables;
   }
 
-  DenseMap<LexicalScope *, LabelList> &getScopeLabels() { return ScopeLabels; }
+  DenseMap<LexicalScope *, LabelList> &getScopeLabels() {
+    return ScopeLabels;
+  }
 
   DenseMap<const MDNode *, DIE *> &getAbstractSPDies() {
     return AbstractSPDies;
