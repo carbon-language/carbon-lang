@@ -68,24 +68,24 @@ std::unique_ptr<Die2BTFEntry> Die2BTFEntry::dieToBTFTypeEntry(const DIE &Die) {
 
   switch (Kind) {
   case BTF_KIND_INT:
-    return make_unique<Die2BTFEntryInt>(Die);
+    return llvm::make_unique<Die2BTFEntryInt>(Die);
   case BTF_KIND_PTR:
   case BTF_KIND_TYPEDEF:
   case BTF_KIND_VOLATILE:
   case BTF_KIND_CONST:
   case BTF_KIND_RESTRICT:
   case BTF_KIND_FWD:
-    return make_unique<Die2BTFEntry>(Die);
+    return llvm::make_unique<Die2BTFEntry>(Die);
   case BTF_KIND_ARRAY:
-    return make_unique<Die2BTFEntryArray>(Die);
+    return llvm::make_unique<Die2BTFEntryArray>(Die);
   case BTF_KIND_STRUCT:
   case BTF_KIND_UNION:
-    return make_unique<Die2BTFEntryStruct>(Die);
+    return llvm::make_unique<Die2BTFEntryStruct>(Die);
   case BTF_KIND_ENUM:
-    return make_unique<Die2BTFEntryEnum>(Die);
+    return llvm::make_unique<Die2BTFEntryEnum>(Die);
   case BTF_KIND_FUNC:
   case BTF_KIND_FUNC_PROTO:
-    return make_unique<Die2BTFEntryFunc>(Die);
+    return llvm::make_unique<Die2BTFEntryFunc>(Die);
   default:
     break;
   }
@@ -181,7 +181,7 @@ void Die2BTFEntry::completeData(class Dwarf2BTF &Dwarf2BTF) {
     BTFType.name_off = Dwarf2BTF.addBTFString(Str);
   }
 
-  auto typeEntry = make_unique<BTFTypeEntry>(Id, BTFType);
+  auto typeEntry = llvm::make_unique<BTFTypeEntry>(Id, BTFType);
   Dwarf2BTF.addBTFTypeEntry(std::move(typeEntry));
 }
 
@@ -230,7 +230,7 @@ void Die2BTFEntryInt::completeData(class Dwarf2BTF &Dwarf2BTF) {
 
   BTFType.name_off = Dwarf2BTF.addBTFString(Str);
 
-  auto typeEntry = make_unique<BTFTypeEntryInt>(Id, BTFType, IntVal);
+  auto typeEntry = llvm::make_unique<BTFTypeEntryInt>(Id, BTFType, IntVal);
   Dwarf2BTF.addBTFTypeEntry(std::move(typeEntry));
 }
 
@@ -270,7 +270,7 @@ void Die2BTFEntryEnum::completeData(class Dwarf2BTF &Dwarf2BTF) {
     EnumValues.push_back(BTFEnum);
   }
 
-  auto typeEntry = make_unique<BTFTypeEntryEnum>(Id, BTFType, EnumValues);
+  auto typeEntry = llvm::make_unique<BTFTypeEntryEnum>(Id, BTFType, EnumValues);
   Dwarf2BTF.addBTFTypeEntry(std::move(typeEntry));
 }
 
@@ -313,7 +313,7 @@ void Die2BTFEntryArray::completeData(class Dwarf2BTF &Dwarf2BTF) {
   }
   ArrayInfo.nelems = Nelems;
 
-  auto TypeEntry = make_unique<BTFTypeEntryArray>(Id, BTFType, ArrayInfo);
+  auto TypeEntry = llvm::make_unique<BTFTypeEntryArray>(Id, BTFType, ArrayInfo);
   Dwarf2BTF.addBTFTypeEntry(std::move(TypeEntry));
 }
 
@@ -378,7 +378,7 @@ void Die2BTFEntryStruct::completeData(class Dwarf2BTF &Dwarf2BTF) {
     Members.push_back(BTFMember);
   }
 
-  auto typeEntry = make_unique<BTFTypeEntryStruct>(Id, BTFType, Members);
+  auto typeEntry = llvm::make_unique<BTFTypeEntryStruct>(Id, BTFType, Members);
   Dwarf2BTF.addBTFTypeEntry(std::move(typeEntry));
 }
 
@@ -428,7 +428,7 @@ void Die2BTFEntryFunc::completeData(class Dwarf2BTF &Dwarf2BTF) {
     }
   }
 
-  auto typeEntry = make_unique<BTFTypeEntryFunc>(Id, BTFType, Parameters);
+  auto typeEntry = llvm::make_unique<BTFTypeEntryFunc>(Id, BTFType, Parameters);
   Dwarf2BTF.addBTFTypeEntry(std::move(typeEntry));
 
   if (BTF_INFO_KIND(BTFType.info) == BTF_KIND_FUNC) {
@@ -455,7 +455,7 @@ void Die2BTFEntryFunc::completeData(class Dwarf2BTF &Dwarf2BTF) {
 
 Dwarf2BTF::Dwarf2BTF(MCContext &Context, bool IsLittleEndian)
     : OuterCtx(Context), IsLE(IsLittleEndian) {
-  BTFContext = make_unique<MCBTFContext>();
+  BTFContext = llvm::make_unique<MCBTFContext>();
 }
 
 void Dwarf2BTF::addTypeEntry(const DIE &Die) {
