@@ -124,14 +124,7 @@ define <4 x i64> @testv4i64(<4 x i64> %in) nounwind {
 ; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG_NOVLX-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG_NOVLX-NEXT:    vpaddq %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG_NOVLX-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG_NOVLX-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG_NOVLX-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG_NOVLX-NEXT:    vpopcntb %zmm0, %zmm0
 ; BITALG_NOVLX-NEXT:    vpsadbw %ymm1, %ymm0, %ymm0
 ; BITALG_NOVLX-NEXT:    retq
 ;
@@ -142,14 +135,7 @@ define <4 x i64> @testv4i64(<4 x i64> %in) nounwind {
 ; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG-NEXT:    vpaddq %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG-NEXT:    vpopcntb %ymm0, %ymm0
 ; BITALG-NEXT:    vpsadbw %ymm1, %ymm0, %ymm0
 ; BITALG-NEXT:    retq
 ;
@@ -270,14 +256,7 @@ define <4 x i64> @testv4i64u(<4 x i64> %in) nounwind {
 ; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG_NOVLX-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG_NOVLX-NEXT:    vpaddq %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG_NOVLX-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG_NOVLX-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG_NOVLX-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG_NOVLX-NEXT:    vpopcntb %zmm0, %zmm0
 ; BITALG_NOVLX-NEXT:    vpsadbw %ymm1, %ymm0, %ymm0
 ; BITALG_NOVLX-NEXT:    retq
 ;
@@ -288,14 +267,7 @@ define <4 x i64> @testv4i64u(<4 x i64> %in) nounwind {
 ; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG-NEXT:    vpaddq %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG-NEXT:    vpopcntb %ymm0, %ymm0
 ; BITALG-NEXT:    vpsadbw %ymm1, %ymm0, %ymm0
 ; BITALG-NEXT:    retq
 ;
@@ -452,14 +424,7 @@ define <8 x i32> @testv8i32(<8 x i32> %in) nounwind {
 ; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG_NOVLX-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG_NOVLX-NEXT:    vpaddd %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG_NOVLX-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG_NOVLX-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG_NOVLX-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG_NOVLX-NEXT:    vpopcntb %zmm0, %zmm0
 ; BITALG_NOVLX-NEXT:    vpunpckhdq {{.*#+}} ymm2 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; BITALG_NOVLX-NEXT:    vpsadbw %ymm1, %ymm2, %ymm2
 ; BITALG_NOVLX-NEXT:    vpunpckldq {{.*#+}} ymm0 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
@@ -474,14 +439,7 @@ define <8 x i32> @testv8i32(<8 x i32> %in) nounwind {
 ; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG-NEXT:    vpaddd %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG-NEXT:    vpopcntb %ymm0, %ymm0
 ; BITALG-NEXT:    vpunpckhdq {{.*#+}} ymm2 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; BITALG-NEXT:    vpsadbw %ymm1, %ymm2, %ymm2
 ; BITALG-NEXT:    vpunpckldq {{.*#+}} ymm0 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
@@ -623,14 +581,7 @@ define <8 x i32> @testv8i32u(<8 x i32> %in) nounwind {
 ; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG_NOVLX-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG_NOVLX-NEXT:    vpaddd %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG_NOVLX-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG_NOVLX-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG_NOVLX-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG_NOVLX-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG_NOVLX-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG_NOVLX-NEXT:    vpopcntb %zmm0, %zmm0
 ; BITALG_NOVLX-NEXT:    vpunpckhdq {{.*#+}} ymm2 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; BITALG_NOVLX-NEXT:    vpsadbw %ymm1, %ymm2, %ymm2
 ; BITALG_NOVLX-NEXT:    vpunpckldq {{.*#+}} ymm0 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
@@ -645,14 +596,7 @@ define <8 x i32> @testv8i32u(<8 x i32> %in) nounwind {
 ; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
 ; BITALG-NEXT:    vpcmpeqd %ymm2, %ymm2, %ymm2
 ; BITALG-NEXT:    vpaddd %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; BITALG-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; BITALG-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; BITALG-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; BITALG-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; BITALG-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; BITALG-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
+; BITALG-NEXT:    vpopcntb %ymm0, %ymm0
 ; BITALG-NEXT:    vpunpckhdq {{.*#+}} ymm2 = ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[6],ymm1[6],ymm0[7],ymm1[7]
 ; BITALG-NEXT:    vpsadbw %ymm1, %ymm2, %ymm2
 ; BITALG-NEXT:    vpunpckldq {{.*#+}} ymm0 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[4],ymm1[4],ymm0[5],ymm1[5]
