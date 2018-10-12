@@ -154,31 +154,57 @@ void TestIntrinsics() {
   IntrinsicProcTable table{IntrinsicProcTable::Configure(defaults)};
   table.Dump(std::cout);
 
+  using Int1 = Type<TypeCategory::Integer, 1>;
   using Int4 = Type<TypeCategory::Integer, 4>;
+  using Int8 = Type<TypeCategory::Integer, 8>;
+  using Real4 = Type<TypeCategory::Real, 4>;
+  using Real8 = Type<TypeCategory::Real, 8>;
+  using Complex4 = Type<TypeCategory::Complex, 4>;
+  using Complex8 = Type<TypeCategory::Complex, 8>;
+  using Char = Type<TypeCategory::Character, 1>;
+  using Log4 = Type<TypeCategory::Logical, 4>;
 
   TestCall{table, "bad"}
-      .Push(Const(Scalar<Int4>{1}))
+      .Push(Const(Scalar<Int4>{}))
       .DoCall();  // bad intrinsic name
   TestCall{table, "abs"}
-      .Push(Named("a", Const(Scalar<Int4>{1})))
+      .Push(Named("a", Const(Scalar<Int4>{})))
       .DoCall(Int4::dynamicType);
-  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{1})).DoCall(Int4::dynamicType);
+  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::dynamicType);
   TestCall{table, "abs"}
-      .Push(Named("bad", Const(Scalar<Int4>{1})))
+      .Push(Named("bad", Const(Scalar<Int4>{})))
       .DoCall();  // bad keyword
   TestCall{table, "abs"}.DoCall();  // insufficient args
   TestCall{table, "abs"}
-      .Push(Const(Scalar<Int4>{1}))
-      .Push(Const(Scalar<Int4>{2}))
+      .Push(Const(Scalar<Int4>{}))
+      .Push(Const(Scalar<Int4>{}))
       .DoCall();  // too many args
   TestCall{table, "abs"}
-      .Push(Const(Scalar<Int4>{1}))
-      .Push(Named("a", Const(Scalar<Int4>{2})))
+      .Push(Const(Scalar<Int4>{}))
+      .Push(Named("a", Const(Scalar<Int4>{})))
       .DoCall();
   TestCall{table, "abs"}
-      .Push(Named("a", Const(Scalar<Int4>{1})))
-      .Push(Const(Scalar<Int4>{2}))
+      .Push(Named("a", Const(Scalar<Int4>{})))
+      .Push(Const(Scalar<Int4>{}))
       .DoCall();
+  TestCall{table, "abs"}.Push(Const(Scalar<Int1>{})).DoCall(Int1::dynamicType);
+  TestCall{table, "abs"}.Push(Const(Scalar<Int4>{})).DoCall(Int4::dynamicType);
+  TestCall{table, "abs"}.Push(Const(Scalar<Int8>{})).DoCall(Int8::dynamicType);
+  TestCall{table, "abs"}
+      .Push(Const(Scalar<Real4>{}))
+      .DoCall(Real4::dynamicType);
+  TestCall{table, "abs"}
+      .Push(Const(Scalar<Real8>{}))
+      .DoCall(Real8::dynamicType);
+  TestCall{table, "abs"}
+      .Push(Const(Scalar<Complex4>{}))
+      .DoCall(Real4::dynamicType);
+  TestCall{table, "abs"}
+      .Push(Const(Scalar<Complex8>{}))
+      .DoCall(Real8::dynamicType);
+  TestCall{table, "abs"}.Push(Const(Scalar<Char>{})).DoCall();
+  TestCall{table, "abs"}.Push(Const(Scalar<Log4>{})).DoCall();
+  // TODO: test other intrinsics
 }
 }  // namespace Fortran::evaluate
 

@@ -973,8 +973,13 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     break;
   case KindCode::same:
     CHECK(sameArg != nullptr);
-    resultType = *sameArg->GetType();
-    CHECK(result.categorySet.test(resultType.category));
+    if (std::optional<DynamicType> aType{sameArg->GetType()}) {
+      if (result.categorySet.test(aType->category)) {
+        resultType = *aType;
+      } else {
+        resultType.kind = aType->kind;
+      }
+    }
     break;
   case KindCode::effectiveKind:
     CHECK(kindDummyArg != nullptr);
