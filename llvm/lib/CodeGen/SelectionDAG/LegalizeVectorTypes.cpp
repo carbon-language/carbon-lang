@@ -2809,11 +2809,8 @@ SDValue DAGTypeLegalizer::WidenVecRes_Convert(SDNode *N) {
     if (WidenNumElts % InVTNumElts == 0) {
       // Widen the input and call convert on the widened input vector.
       unsigned NumConcat = WidenNumElts/InVTNumElts;
-      SmallVector<SDValue, 16> Ops(NumConcat);
+      SmallVector<SDValue, 16> Ops(NumConcat, DAG.getUNDEF(InVT));
       Ops[0] = InOp;
-      SDValue UndefVal = DAG.getUNDEF(InVT);
-      for (unsigned i = 1; i != NumConcat; ++i)
-        Ops[i] = UndefVal;
       SDValue InVec = DAG.getNode(ISD::CONCAT_VECTORS, DL, InWidenVT, Ops);
       if (N->getNumOperands() == 1)
         return DAG.getNode(Opcode, DL, WidenVT, InVec);
@@ -2832,11 +2829,12 @@ SDValue DAGTypeLegalizer::WidenVecRes_Convert(SDNode *N) {
   }
 
   // Otherwise unroll into some nasty scalar code and rebuild the vector.
-  SmallVector<SDValue, 16> Ops(WidenNumElts);
   EVT EltVT = WidenVT.getVectorElementType();
-  unsigned MinElts = std::min(InVTNumElts, WidenNumElts);
-  unsigned i;
-  for (i=0; i < MinElts; ++i) {
+  SmallVector<SDValue, 16> Ops(WidenNumElts, DAG.getUNDEF(EltVT));
+  // Use the original element count so we don't do more scalar opts than
+  // necessary.
+  unsigned MinElts = N->getValueType(0).getVectorNumElements();
+  for (unsigned i=0; i < MinElts; ++i) {
     SDValue Val = DAG.getNode(
         ISD::EXTRACT_VECTOR_ELT, DL, InEltVT, InOp,
         DAG.getConstant(i, DL, TLI.getVectorIdxTy(DAG.getDataLayout())));
@@ -2845,10 +2843,6 @@ SDValue DAGTypeLegalizer::WidenVecRes_Convert(SDNode *N) {
     else
       Ops[i] = DAG.getNode(Opcode, DL, EltVT, Val, N->getOperand(1), Flags);
   }
-
-  SDValue UndefVal = DAG.getUNDEF(EltVT);
-  for (; i < WidenNumElts; ++i)
-    Ops[i] = UndefVal;
 
   return DAG.getBuildVector(WidenVT, DL, Ops);
 }
