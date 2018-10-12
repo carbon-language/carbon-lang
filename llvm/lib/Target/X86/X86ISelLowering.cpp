@@ -40306,6 +40306,18 @@ static SDValue combineExtractSubvector(SDNode *N, SelectionDAG &DAG,
                                                  : ISD::SIGN_EXTEND_VECTOR_INREG;
       return DAG.getNode(ExtOp, SDLoc(N), OpVT, InVec.getOperand(0));
     }
+    if (InOpcode == ISD::BITCAST) {
+      // TODO - do this for target shuffles in general.
+      SDValue InVecBC = peekThroughOneUseBitcasts(InVec);
+      if (InVecBC.getOpcode() == X86ISD::PSHUFB && OpVT.is128BitVector()) {
+        SDLoc DL(N);
+        SDValue SubPSHUFB =
+            DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8,
+                        extract128BitVector(InVecBC.getOperand(0), 0, DAG, DL),
+                        extract128BitVector(InVecBC.getOperand(1), 0, DAG, DL));
+        return DAG.getBitcast(OpVT, SubPSHUFB);
+      }
+    }
   }
 
   return SDValue();
