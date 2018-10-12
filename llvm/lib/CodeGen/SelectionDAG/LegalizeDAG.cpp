@@ -2761,7 +2761,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     return DAG.getNode(ISD::CTLZ, dl, Op.getValueType(), Op);
   case ISD::CTLZ: {
     EVT VT = Op.getValueType();
-    unsigned Len = VT.getSizeInBits();
+    unsigned Len = VT.getScalarSizeInBits();
 
     if (TLI.isOperationLegalOrCustom(ISD::CTLZ_ZERO_UNDEF, VT)) {
       EVT SetCCVT = getSetCCResultType(VT);

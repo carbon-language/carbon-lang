@@ -1082,32 +1082,13 @@ SDValue VectorLegalizer::ExpandCTLZ(SDValue Op) {
     return DAG.getNode(ISD::CTLZ, DL, Op.getValueType(), Op.getOperand(0));
   }
 
-  // If CTPOP is available we can lower with a CTPOP based method:
-  // u16 ctlz(u16 x) {
-  //   x |= (x >> 1);
-  //   x |= (x >> 2);
-  //   x |= (x >> 4);
-  //   x |= (x >> 8);
-  //   return ctpop(~x);
-  // }
-  // Ref: "Hacker's Delight" by Henry Warren
+  // If we have the appropriate vector bit operations, it is better to use them
+  // than unrolling and expanding each component.
   if (isPowerOf2_32(NumBitsPerElt) &&
       TLI.isOperationLegalOrCustom(ISD::CTPOP, VT) &&
       TLI.isOperationLegalOrCustom(ISD::SRL, VT) &&
-      TLI.isOperationLegalOrCustomOrPromote(ISD::OR, VT) &&
-      TLI.isOperationLegalOrCustomOrPromote(ISD::XOR, VT)) {
-    SDLoc DL(Op);
-    SDValue Res = Op.getOperand(0);
-    EVT ShiftTy = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
-
-    for (unsigned i = 1; i != NumBitsPerElt; i *= 2)
-      Res = DAG.getNode(
-          ISD::OR, DL, VT, Res,
-          DAG.getNode(ISD::SRL, DL, VT, Res, DAG.getConstant(i, DL, ShiftTy)));
-
-    Res = DAG.getNOT(DL, Res, VT);
-    return DAG.getNode(ISD::CTPOP, DL, VT, Res);
-  }
+      TLI.isOperationLegalOrCustomOrPromote(ISD::OR, VT))
+    return Op;
 
   // Otherwise go ahead and unroll.
   return DAG.UnrollVectorOp(Op.getNode());
