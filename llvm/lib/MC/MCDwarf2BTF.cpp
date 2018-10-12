@@ -10,11 +10,11 @@
 #include "MCDwarf2BTF.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCBTFContext.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCBTFContext.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/EndianStream.h"
 #include <fstream>
@@ -22,7 +22,7 @@
 using namespace llvm;
 
 void MCDwarf2BTF::addFiles(MCObjectStreamer *MCOS, std::string &FileName,
-  std::vector<FileContent> &Files) {
+                           std::vector<FileContent> &Files) {
   std::vector<std::string> Content;
 
   std::ifstream Inputfile(FileName);
@@ -34,9 +34,10 @@ void MCDwarf2BTF::addFiles(MCObjectStreamer *MCOS, std::string &FileName,
   Files.push_back(FileContent(FileName, Content));
 }
 
-void MCDwarf2BTF::addLines(MCObjectStreamer *MCOS, StringRef &SectionName,
-  std::vector<FileContent> &Files,
-  const MCLineSection::MCDwarfLineEntryCollection &LineEntries) {
+void MCDwarf2BTF::addLines(
+    MCObjectStreamer *MCOS, StringRef &SectionName,
+    std::vector<FileContent> &Files,
+    const MCLineSection::MCDwarfLineEntryCollection &LineEntries) {
   MCContext &Context = MCOS->getContext();
   auto &BTFCxt = Context.getBTFContext();
 
@@ -84,9 +85,11 @@ void MCDwarf2BTF::addDwarfLineInfo(MCObjectStreamer *MCOS) {
         FileName = Dirs[File.DirIndex - 1] + "/" + File.Name;
       MCDwarf2BTF::addFiles(MCOS, FileName, Files);
     }
-    for (const auto &LineSec: CUIDTablePair.second.getMCLineSections().getMCLineEntries()) {
+    for (const auto &LineSec :
+         CUIDTablePair.second.getMCLineSections().getMCLineEntries()) {
       MCSection *Section = LineSec.first;
-      const MCLineSection::MCDwarfLineEntryCollection &LineEntries = LineSec.second;
+      const MCLineSection::MCDwarfLineEntryCollection &LineEntries =
+          LineSec.second;
 
       StringRef SectionName;
       if (MCSectionELF *SectionELF = dyn_cast<MCSectionELF>(Section))

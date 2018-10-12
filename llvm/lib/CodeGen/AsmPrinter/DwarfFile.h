@@ -137,9 +137,7 @@ public:
     return ScopeVariables;
   }
 
-  DenseMap<LexicalScope *, LabelList> &getScopeLabels() {
-    return ScopeLabels;
-  }
+  DenseMap<LexicalScope *, LabelList> &getScopeLabels() { return ScopeLabels; }
 
   DenseMap<const MDNode *, DIE *> &getAbstractSPDies() {
     return AbstractSPDies;

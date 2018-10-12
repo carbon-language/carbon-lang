@@ -18,12 +18,13 @@ using FileContent = std::pair<std::string, std::vector<std::string>>;
 class MCDwarf2BTF {
 public:
   static void addFiles(MCObjectStreamer *MCOS, std::string &FileName,
-    std::vector<FileContent> &Files);
-  static void addLines(MCObjectStreamer *MCOS, StringRef &SectionName,
-    std::vector<FileContent> &Files,
-    const MCLineSection::MCDwarfLineEntryCollection &LineEntries);
+                       std::vector<FileContent> &Files);
+  static void
+  addLines(MCObjectStreamer *MCOS, StringRef &SectionName,
+           std::vector<FileContent> &Files,
+           const MCLineSection::MCDwarfLineEntryCollection &LineEntries);
   static void addDwarfLineInfo(MCObjectStreamer *MCOS);
 };
 
-}
+} // namespace llvm
 #endif

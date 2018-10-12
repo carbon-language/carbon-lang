@@ -26,7 +26,7 @@ class MCBTFContext;
 class Die2BTFEntry {
 protected:
   const DIE &Die;
-  size_t Id;  /* type index in the BTF list, started from 1 */
+  size_t Id; /* type index in the BTF list, started from 1 */
   struct btf_type BTFType;
 
 public:
@@ -54,7 +54,7 @@ public:
 
 // BTF_KIND_INT
 class Die2BTFEntryInt : public Die2BTFEntry {
-  __u32 IntVal;  // encoding, offset, bits
+  __u32 IntVal; // encoding, offset, bits
 
 public:
   Die2BTFEntryInt(const DIE &Die);
@@ -99,7 +99,7 @@ public:
 
 class Dwarf2BTF {
   std::vector<std::unique_ptr<Die2BTFEntry>> TypeEntries;
-  std::map<DIE*, size_t> DieToIdMap;
+  std::map<DIE *, size_t> DieToIdMap;
   std::unique_ptr<MCBTFContext> BTFContext;
   MCContext &OuterCtx;
   bool IsLE;
@@ -110,14 +110,12 @@ public:
   void addDwarfCU(DwarfUnit *TheU);
   void finish();
   __u32 getTypeIndex(DIE &Die) {
-    DIE *DiePtr = const_cast<DIE*>(&Die);
+    DIE *DiePtr = const_cast<DIE *>(&Die);
     assert((DieToIdMap.find(DiePtr) != DieToIdMap.end()) &&
            "Die not added to in the BTFContext");
     return DieToIdMap[DiePtr];
   }
-  size_t addBTFString(std::string S) {
-    return BTFContext->addString(S);
-  }
+  size_t addBTFString(std::string S) { return BTFContext->addString(S); }
   void addBTFTypeEntry(std::unique_ptr<BTFTypeEntry> Entry);
   void addBTFFuncInfo(unsigned SecNameOff, BTFFuncInfo FuncInfo) {
     BTFContext->addFuncInfo(SecNameOff, FuncInfo);
@@ -126,10 +124,10 @@ public:
 private:
   void addTypeEntry(const DIE &Die);
   bool alreadyAdded(DIE &Die) {
-    return DieToIdMap.find(const_cast<DIE*>(&Die)) != DieToIdMap.end();
+    return DieToIdMap.find(const_cast<DIE *>(&Die)) != DieToIdMap.end();
   }
   void completeData();
 };
 
-}
+} // namespace llvm
 #endif

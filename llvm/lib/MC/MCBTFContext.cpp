@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCBTFContext.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include <cstdlib>
@@ -22,7 +22,7 @@ using namespace llvm;
 BTFTypeEntry::~BTFTypeEntry() {}
 
 void MCBTFContext::addTypeEntry(std::unique_ptr<BTFTypeEntry> Entry) {
-   TypeEntries.push_back(std::move(Entry));
+  TypeEntries.push_back(std::move(Entry));
 }
 
 void MCBTFContext::dump(raw_ostream &OS) {
@@ -39,8 +39,7 @@ void MCBTFContext::dump(raw_ostream &OS) {
   for (auto &FuncSec : FuncInfoTable) {
     OS << "sec_name_off=" << FuncSec.first << "\n";
     for (auto &FuncInfo : FuncSec.second) {
-      OS << "\tinsn_offset=<Omitted> type_id="
-         << FuncInfo.TypeId << "\n";
+      OS << "\tinsn_offset=<Omitted> type_id=" << FuncInfo.TypeId << "\n";
     }
   }
 
@@ -48,12 +47,9 @@ void MCBTFContext::dump(raw_ostream &OS) {
   for (auto &LineSec : LineInfoTable) {
     OS << "sec_name_off=" << LineSec.first << "\n";
     for (auto &LineInfo : LineSec.second) {
-      OS << "\tinsn_offset=<Omitted> file_name_off="
-         << LineInfo.FileNameOff
-         << " line_off=" << LineInfo.LineOff
-         << " line_num=" << LineInfo.LineNum
-         << " column_num=" << LineInfo.ColumnNum
-         << "\n";
+      OS << "\tinsn_offset=<Omitted> file_name_off=" << LineInfo.FileNameOff
+         << " line_off=" << LineInfo.LineOff << " line_num=" << LineInfo.LineNum
+         << " column_num=" << LineInfo.ColumnNum << "\n";
     }
   }
 }
@@ -83,7 +79,7 @@ void MCBTFContext::emitBTFSection(MCObjectStreamer *MCOS) {
   MCOS->EmitIntValue(str_len, 4);
 
   // emit type table
-  for (auto &TypeEntry: TypeEntries)
+  for (auto &TypeEntry : TypeEntries)
     TypeEntry->emitData(MCOS);
 
   // emit string table
@@ -146,9 +142,8 @@ void MCBTFContext::emitAll(MCObjectStreamer *MCOS) {
   emitBTFExtSection(MCOS);
 }
 
-void BTFTypeEntry::print(raw_ostream &OS, MCBTFContext& MCBTFContext) {
-  OS << "[" << Id << "] "
-     << btf_kind_str[BTF_INFO_KIND(BTFType.info)]
+void BTFTypeEntry::print(raw_ostream &OS, MCBTFContext &MCBTFContext) {
+  OS << "[" << Id << "] " << btf_kind_str[BTF_INFO_KIND(BTFType.info)]
      << " name_off=" << BTFType.name_off
      << " info=" << format("0x%08lx", BTFType.info)
      << " size/type=" << BTFType.size << "\n";
@@ -160,7 +155,7 @@ void BTFTypeEntry::emitData(MCObjectStreamer *MCOS) {
   MCOS->EmitIntValue(BTFType.size, 4);
 }
 
-void BTFTypeEntryInt::print(raw_ostream &OS, MCBTFContext& MCBTFContext) {
+void BTFTypeEntryInt::print(raw_ostream &OS, MCBTFContext &MCBTFContext) {
   BTFTypeEntry::print(OS, MCBTFContext);
   OS << "\tdesc=" << format("0x%08lx", IntVal) << "\n";
 }
@@ -170,12 +165,12 @@ void BTFTypeEntryInt::emitData(MCObjectStreamer *MCOS) {
   MCOS->EmitIntValue(IntVal, 4);
 }
 
-void BTFTypeEntryEnum::print(raw_ostream &OS, MCBTFContext& MCBTFContext) {
- BTFTypeEntry::print(OS, MCBTFContext);
+void BTFTypeEntryEnum::print(raw_ostream &OS, MCBTFContext &MCBTFContext) {
+  BTFTypeEntry::print(OS, MCBTFContext);
   for (size_t i = 0; i < BTF_INFO_VLEN(BTFType.info); i++) {
     auto &EnumValue = EnumValues[i];
-    OS << "\tname_off=" << EnumValue.name_off
-       << " value=" << EnumValue.val << "\n";
+    OS << "\tname_off=" << EnumValue.name_off << " value=" << EnumValue.val
+       << "\n";
   }
 }
 
@@ -187,7 +182,7 @@ void BTFTypeEntryEnum::emitData(MCObjectStreamer *MCOS) {
   }
 }
 
-void BTFTypeEntryArray::print(raw_ostream &OS, MCBTFContext& MCBTFContext) {
+void BTFTypeEntryArray::print(raw_ostream &OS, MCBTFContext &MCBTFContext) {
   BTFTypeEntry::print(OS, MCBTFContext);
   OS << "\telem_type=" << format("0x%08lx", ArrayInfo.type)
      << " index_type=" << format("0x%08lx", ArrayInfo.index_type)
@@ -201,12 +196,11 @@ void BTFTypeEntryArray::emitData(MCObjectStreamer *MCOS) {
   MCOS->EmitIntValue(ArrayInfo.nelems, 4);
 }
 
-void BTFTypeEntryStruct::print(raw_ostream &OS, MCBTFContext& MCBTFContext) {
+void BTFTypeEntryStruct::print(raw_ostream &OS, MCBTFContext &MCBTFContext) {
   BTFTypeEntry::print(OS, MCBTFContext);
-   for (size_t i = 0; i < BTF_INFO_VLEN(BTFType.info); i++) {
+  for (size_t i = 0; i < BTF_INFO_VLEN(BTFType.info); i++) {
     auto &Member = Members[i];
-    OS << "\tname_off=" << Member.name_off
-       << " type=" << Member.type
+    OS << "\tname_off=" << Member.name_off << " type=" << Member.type
        << " bit_offset=" << Member.offset << "\n";
   }
 }
@@ -220,9 +214,9 @@ void BTFTypeEntryStruct::emitData(MCObjectStreamer *MCOS) {
   }
 }
 
-void BTFTypeEntryFunc::print(raw_ostream &OS, MCBTFContext& MCBTFContext) {
+void BTFTypeEntryFunc::print(raw_ostream &OS, MCBTFContext &MCBTFContext) {
   BTFTypeEntry::print(OS, MCBTFContext);
-   for (size_t i = 0; i < BTF_INFO_VLEN(BTFType.info); i++) {
+  for (size_t i = 0; i < BTF_INFO_VLEN(BTFType.info); i++) {
     auto Parameter = Parameters[i];
     OS << "\tparam_type=" << Parameter << "\n";
   }
@@ -230,6 +224,6 @@ void BTFTypeEntryFunc::print(raw_ostream &OS, MCBTFContext& MCBTFContext) {
 
 void BTFTypeEntryFunc::emitData(MCObjectStreamer *MCOS) {
   BTFTypeEntry::emitData(MCOS);
-  for (auto &Parameter: Parameters)
+  for (auto &Parameter : Parameters)
     MCOS->EmitIntValue(Parameter, 4);
 }
