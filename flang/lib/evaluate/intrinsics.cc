@@ -19,6 +19,8 @@
 #include "../common/fortran.h"
 #include "../common/idioms.h"
 #include <map>
+#include <ostream>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -62,26 +64,23 @@ static constexpr CategorySet IntrinsicType{
 static constexpr CategorySet AnyType{
     IntrinsicType | CategorySet{TypeCategory::Derived}};
 
-enum class KindCode {
-  none,
-  defaultIntegerKind,
-  defaultRealKind,  // is also the default COMPLEX kind
-  doublePrecision,
-  defaultCharKind,
-  defaultLogicalKind,
-  any,  // matches any kind value; each instance is independent
-  typeless,  // BOZ literals are INTEGER with this kind
-  teamType,  // TEAM_TYPE from module ISO_FORTRAN_ENV (for coarrays)
-  kindArg,  // this argument is KIND=
-  effectiveKind,  // for function results: same "kindArg", possibly defaulted
-  dimArg,  // this argument is DIM=
-  same,  // match any kind; all "same" kinds must be equal
-  likeMultiply,  // for DOT_PRODUCT and MATMUL
-};
+ENUM_CLASS(KindCode, none, defaultIntegerKind,
+    defaultRealKind,  // is also the default COMPLEX kind
+    doublePrecision, defaultCharKind, defaultLogicalKind,
+    any,  // matches any kind value; each instance is independent
+    typeless,  // BOZ literals are INTEGER with this kind
+    teamType,  // TEAM_TYPE from module ISO_FORTRAN_ENV (for coarrays)
+    kindArg,  // this argument is KIND=
+    effectiveKind,  // for function results: same "kindArg", possibly defaulted
+    dimArg,  // this argument is DIM=
+    same,  // match any kind; all "same" kinds must be equal
+    likeMultiply,  // for DOT_PRODUCT and MATMUL
+)
 
 struct TypePattern {
   CategorySet categorySet;
   KindCode kindCode{KindCode::none};
+  std::ostream &Dump(std::ostream &) const;
 };
 
 // Abbreviations for argument and result patterns in the intrinsic prototypes:
@@ -138,37 +137,35 @@ static constexpr TypePattern KINDLogical{Logical, KindCode::effectiveKind};
 
 // The default rank pattern for dummy arguments and function results is
 // "elemental".
-enum class Rank {
-  elemental,  // scalar, or array that conforms with other array arguments
-  elementalOrBOZ,  // elemental, or typeless BOZ literal scalar
-  scalar,
-  vector,
-  shape,  // INTEGER vector of known length and no negative element
-  matrix,
-  array,  // not scalar, rank is known and greater than zero
-  known,  // rank is known and can be scalar
-  anyOrAssumedRank,  // rank can be unknown
-  conformable,  // scalar, or array of same rank & shape as "array" argument
-  reduceOperation,  // a pure function with constraints for REDUCE
-  dimReduced,  // scalar if no DIM= argument, else rank(array)-1
-  dimRemoved,  // scalar, or rank(array)-1
-  rankPlus1,  // rank(known)+1
-  shaped,  // rank is length of SHAPE vector
-};
+ENUM_CLASS(Rank,
+    elemental,  // scalar, or array that conforms with other array arguments
+    elementalOrBOZ,  // elemental, or typeless BOZ literal scalar
+    scalar, vector,
+    shape,  // INTEGER vector of known length and no negative element
+    matrix,
+    array,  // not scalar, rank is known and greater than zero
+    known,  // rank is known and can be scalar
+    anyOrAssumedRank,  // rank can be unknown
+    conformable,  // scalar, or array of same rank & shape as "array" argument
+    reduceOperation,  // a pure function with constraints for REDUCE
+    dimReduced,  // scalar if no DIM= argument, else rank(array)-1
+    dimRemoved,  // scalar, or rank(array)-1
+    rankPlus1,  // rank(known)+1
+    shaped,  // rank is length of SHAPE vector
+)
 
-enum class Optionality {
-  required,
-  optional,
-  defaultsToSameKind,  // for MatchingDefaultKIND
-  defaultsToDefaultForResult,  // for DefaultingKIND
-  repeats,  // for MAX/MIN and their several variants
-};
+ENUM_CLASS(Optionality, required, optional,
+    defaultsToSameKind,  // for MatchingDefaultKIND
+    defaultsToDefaultForResult,  // for DefaultingKIND
+    repeats,  // for MAX/MIN and their several variants
+)
 
 struct IntrinsicDummyArgument {
   const char *keyword{nullptr};
   TypePattern typePattern;
   Rank rank{Rank::elemental};
   Optionality optionality{Optionality::required};
+  std::ostream &Dump(std::ostream &) const;
 };
 
 // constexpr abbreviations for popular arguments:
@@ -196,6 +193,7 @@ struct IntrinsicInterface {
   std::optional<SpecificIntrinsic> Match(const CallCharacteristics &,
       const IntrinsicTypeDefaultKinds &,
       parser::ContextualMessages &messages) const;
+  std::ostream &Dump(std::ostream &) const;
 };
 
 static const IntrinsicInterface genericIntrinsicFunction[]{
@@ -742,7 +740,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     if (arg.isAlternateReturn) {
       messages.Say(
           "alternate return specifier not acceptable on call to intrinsic '%s'"_err_en_US,
-          call.name.ToString().data());
+          name);
       return std::nullopt;
     }
     bool found{false};
@@ -755,16 +753,16 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
           break;
         }
       }
-      if (!found) {
-        if (arg.keyword.has_value()) {
-          messages.Say(*arg.keyword,
-              "unknown keyword argument to intrinsic '%'"_err_en_US,
-              call.name.ToString().data());
-        } else {
-          messages.Say("too many actual arguments"_err_en_US);
-        }
-        return std::nullopt;
+    }
+    if (!found) {
+      if (arg.keyword.has_value()) {
+        messages.Say(*arg.keyword,
+            "unknown keyword argument to intrinsic '%s'"_err_en_US, name);
+      } else {
+        messages.Say(
+            "too many actual arguments for intrinsic '%s'"_err_en_US, name);
       }
+      return std::nullopt;
     }
   }
 
@@ -784,7 +782,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     const ActualArgument *arg{actualForDummy[dummyArgIndex]};
     if (!arg) {
       if (d.optionality == Optionality::required) {
-        messages.Say("missing '%s' argument"_err_en_US, d.keyword);
+        messages.Say("missing mandatory '%s=' argument"_err_en_US, d.keyword);
         return std::nullopt;  // missing non-OPTIONAL argument
       } else {
         continue;
@@ -797,10 +795,11 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
           d.rank == Rank::elementalOrBOZ) {
         continue;
       }
-      messages.Say("typeless (BOZ) not allowed for '%s'"_err_en_US, d.keyword);
+      messages.Say(
+          "typeless (BOZ) not allowed for '%s=' argument"_err_en_US, d.keyword);
       return std::nullopt;
     } else if (!d.typePattern.categorySet.test(type->category)) {
-      messages.Say("actual argument for '%s' has bad type '%s'"_err_en_US,
+      messages.Say("actual argument for '%s=' has bad type '%s'"_err_en_US,
           d.keyword, type->Dump().data());
       return std::nullopt;  // argument has invalid type category
     }
@@ -853,7 +852,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     }
     if (!argOk) {
       messages.Say(
-          "actual argument for '%s' has bad type or kind '%s'"_err_en_US,
+          "actual argument for '%s=' has bad type or kind '%s'"_err_en_US,
           d.keyword, type->Dump().data());
       return std::nullopt;
     }
@@ -869,7 +868,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     if (const ActualArgument * arg{actualForDummy[dummyArgIndex]}) {
       if (arg->isAssumedRank && d.rank != Rank::anyOrAssumedRank) {
         messages.Say(
-            "assumed-rank array cannot be used for '%s' argument"_err_en_US,
+            "assumed-rank array cannot be used for '%s=' argument"_err_en_US,
             d.keyword);
         return std::nullopt;
       }
@@ -932,7 +931,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       default: CRASH_NO_CASE;
       }
       if (!argOk) {
-        messages.Say("'%s' argument has unacceptable rank %d"_err_en_US,
+        messages.Say("'%s=' argument has unacceptable rank %d"_err_en_US,
             d.keyword, rank);
         return std::nullopt;
       }
@@ -992,7 +991,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
           }
         }
       }
-      messages.Say("'kind' argument must be a constant scalar integer "
+      messages.Say("'kind=' argument must be a constant scalar integer "
                    "whose value is a supported kind for the "
                    "intrinsic result type"_err_en_US);
       return std::nullopt;
@@ -1085,6 +1084,7 @@ struct IntrinsicProcTable::Implementation {
   IntrinsicTypeDefaultKinds defaults;
   std::multimap<std::string, const IntrinsicInterface *> genericFuncs;
   std::multimap<std::string, const SpecificIntrinsicInterface *> specificFuncs;
+  std::ostream &Dump(std::ostream &) const;
 };
 
 // Probe the configured intrinsic procedure pattern tables in search of a
@@ -1095,12 +1095,12 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
   if (call.isSubroutineCall) {
     return std::nullopt;  // TODO
   }
-  bool wantMessages{messages != nullptr && messages->messages() != nullptr};
+  parser::Messages *finalBuffer{messages ? messages->messages() : nullptr};
   // Probe the specific intrinsic function table first.
   parser::Messages specificBuffer;
   parser::ContextualMessages specificErrors{
       messages ? messages->at() : call.name,
-      wantMessages ? &specificBuffer : nullptr};
+      finalBuffer ? &specificBuffer : nullptr};
   std::string name{call.name.ToString()};
   auto specificRange{specificFuncs.equal_range(name)};
   for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
@@ -1116,7 +1116,7 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
   parser::Messages genericBuffer;
   parser::ContextualMessages genericErrors{
       messages ? messages->at() : call.name,
-      wantMessages ? &genericBuffer : nullptr};
+      finalBuffer ? &genericBuffer : nullptr};
   auto genericRange{genericFuncs.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
     if (auto specific{iter->second->Match(call, defaults, genericErrors)}) {
@@ -1142,12 +1142,11 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
     }
   }
   // No match
-  if (wantMessages) {
+  if (finalBuffer) {
     if (genericBuffer.empty()) {
-      CHECK(!specificBuffer.empty());
-      messages->messages()->Annex(std::move(specificBuffer));
+      finalBuffer->Annex(std::move(specificBuffer));
     } else {
-      messages->messages()->Annex(std::move(genericBuffer));
+      finalBuffer->Annex(std::move(genericBuffer));
     }
   }
   return std::nullopt;
@@ -1176,4 +1175,65 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Probe(
 std::ostream &SpecificIntrinsic::Dump(std::ostream &o) const {
   return o << name;
 }
+
+std::ostream &TypePattern::Dump(std::ostream &o) const {
+  if (categorySet == AnyType) {
+    o << "any type";
+  } else {
+    const char *sep = "";
+    auto set{categorySet};
+    while (auto least{set.LeastElement()}) {
+      o << sep << EnumToString(*least);
+      sep = " or ";
+      set.reset(*least);
+    }
+  }
+  o << '(' << EnumToString(kindCode) << ')';
+  return o;
+}
+
+std::ostream &IntrinsicDummyArgument::Dump(std::ostream &o) const {
+  if (keyword) {
+    o << keyword << '=';
+  }
+  return typePattern.Dump(o)
+      << ' ' << EnumToString(rank) << ' ' << EnumToString(optionality);
+}
+
+std::ostream &IntrinsicInterface::Dump(std::ostream &o) const {
+  o << name;
+  char sep{'('};
+  for (const auto &d : dummy) {
+    if (d.typePattern.kindCode == KindCode::none) {
+      break;
+    }
+    d.Dump(o << sep);
+    sep = ',';
+  }
+  if (sep == '(') {
+    o << "()";
+  }
+  return result.Dump(o << " -> ") << ' ' << EnumToString(rank);
+}
+
+std::ostream &IntrinsicProcTable::Implementation::Dump(std::ostream &o) const {
+  o << "generic intrinsic functions:\n";
+  for (const auto &iter : genericFuncs) {
+    iter.second->Dump(o << iter.first << ": ") << '\n';
+  }
+  o << "specific intrinsic functions:\n";
+  for (const auto &iter : specificFuncs) {
+    iter.second->Dump(o << iter.first << ": ");
+    if (const char *g{iter.second->generic}) {
+      o << " -> " << g;
+    }
+    o << '\n';
+  }
+  return o;
+}
+
+std::ostream &IntrinsicProcTable::Dump(std::ostream &o) const {
+  return impl_->Dump(o);
+}
+
 }  // namespace Fortran::evaluate

@@ -112,12 +112,12 @@ public:
     return *this;
   }
   constexpr BitSet set(std::size_t x, bool value = true) {
-    if (value) {
-      bits_ |= static_cast<Word>(1) << x;
+    if (!value) {
+      return reset(x);
     } else {
-      bits_ &= ~(static_cast<Word>(1) << x);
+      bits_ |= static_cast<Word>(1) << x;
+      return *this;
     }
-    return *this;
   }
   constexpr BitSet &reset() {
     bits_ = 0;

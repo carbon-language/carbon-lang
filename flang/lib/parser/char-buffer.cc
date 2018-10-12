@@ -41,7 +41,7 @@ void CharBuffer::Claim(std::size_t n) {
   }
 }
 
-void CharBuffer::Put(const char *data, std::size_t n) {
+std::size_t CharBuffer::Put(const char *data, std::size_t n) {
   std::size_t chunk;
   for (std::size_t at{0}; at < n; at += chunk) {
     char *to{FreeSpace(&chunk)};
@@ -49,9 +49,12 @@ void CharBuffer::Put(const char *data, std::size_t n) {
     Claim(chunk);
     std::memcpy(to, data + at, chunk);
   }
+  return bytes_ - n;
 }
 
-void CharBuffer::Put(const std::string &str) { Put(str.data(), str.size()); }
+std::size_t CharBuffer::Put(const std::string &str) {
+  return Put(str.data(), str.size());
+}
 
 std::string CharBuffer::Marshal() const {
   std::string result;

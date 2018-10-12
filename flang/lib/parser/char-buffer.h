@@ -55,9 +55,12 @@ public:
 
   char *FreeSpace(std::size_t *);
   void Claim(std::size_t);
-  void Put(const char *data, std::size_t n);
-  void Put(const std::string &);
-  void Put(char x) { Put(&x, 1); }
+
+  // The return value is the byte offset of the new data,
+  // i.e. the value of size() before the call.
+  std::size_t Put(const char *data, std::size_t n);
+  std::size_t Put(const std::string &);
+  std::size_t Put(char x) { return Put(&x, 1); }
 
   std::string Marshal() const;
 

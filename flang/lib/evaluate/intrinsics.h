@@ -43,6 +43,7 @@ struct SpecificIntrinsic {
   SpecificIntrinsic(IntrinsicProcedure n, bool isElem, DynamicType dt, int r)
     : name{n}, isElemental{isElem}, type{dt}, rank{r} {}
   std::ostream &Dump(std::ostream &) const;
+
   IntrinsicProcedure name;
   bool isElemental{false};  // TODO: consider using Attrs instead
   bool isPointer{false};  // NULL()
@@ -60,6 +61,7 @@ public:
   static IntrinsicProcTable Configure(const IntrinsicTypeDefaultKinds &);
   std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &,
       parser::ContextualMessages *messages = nullptr) const;
+  std::ostream &Dump(std::ostream &) const;
 
 private:
   Implementation *impl_{nullptr};  // owning pointer

@@ -204,17 +204,24 @@ public:
 
   std::optional<ProvenanceRange> GetProvenanceRange(CharBlock) const;
 
-  void Put(const char *data, std::size_t bytes) { buffer_.Put(data, bytes); }
-  void Put(char ch) { buffer_.Put(&ch, 1); }
-  void Put(char ch, Provenance p) {
-    buffer_.Put(&ch, 1);
-    provenanceMap_.Put(ProvenanceRange{p, 1});
+  // The result of a Put() is the offset that the new data
+  // will have in the eventually marshaled contiguous buffer.
+  std::size_t Put(const char *data, std::size_t bytes) {
+    return buffer_.Put(data, bytes);
   }
+  std::size_t Put(const std::string &s) { return buffer_.Put(s); }
+  std::size_t Put(char ch) { return buffer_.Put(&ch, 1); }
+  std::size_t Put(char ch, Provenance p) {
+    provenanceMap_.Put(ProvenanceRange{p, 1});
+    return buffer_.Put(&ch, 1);
+  }
+
   void PutProvenance(Provenance p) { provenanceMap_.Put(ProvenanceRange{p}); }
   void PutProvenance(ProvenanceRange pr) { provenanceMap_.Put(pr); }
   void PutProvenanceMappings(const OffsetToProvenanceMappings &pm) {
     provenanceMap_.Put(pm);
   }
+
   void Marshal();  // marshals text into one contiguous block
   std::string AcquireData() { return std::move(data_); }
   std::ostream &Dump(std::ostream &) const;
