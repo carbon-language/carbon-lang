@@ -155,7 +155,7 @@ Die2BTFEntry::Die2BTFEntry(const DIE &Die) : Die(Die) {
   case BTF_KIND_VOLATILE:
     break;
   default:
-    assert("Invalid Die passed into BTFTypeEntry()");
+    llvm_unreachable("Invalid Die passed into BTFTypeEntry()");
     break;
   }
 
