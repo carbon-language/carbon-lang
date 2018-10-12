@@ -144,6 +144,8 @@ public:
     }
   }
 
+  Word bits() const { return bits_; }
+
 private:
   Word bits_{0};
 };

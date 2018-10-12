@@ -919,8 +919,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
             }},
         std::get<parser::ActualArg>(arg.t).u);
     if (actualArgExpr.has_value()) {
-      CopyableIndirection<Expr<SomeType>> indExpr{std::move(*actualArgExpr)};
-      arguments.emplace_back(std::move(indExpr));
+      arguments.emplace_back(std::move(*actualArgExpr));
       if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
         arguments.back().keyword = argKW->v.source;
       }

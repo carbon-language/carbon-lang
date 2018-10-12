@@ -26,6 +26,7 @@
 namespace Fortran::evaluate {
 
 struct ActualArgument {
+  explicit ActualArgument(Expr<SomeType> &&x) : value{std::move(x)} {}
   explicit ActualArgument(CopyableIndirection<Expr<SomeType>> &&v)
     : value{std::move(v)} {}
   std::optional<DynamicType> GetType() const;

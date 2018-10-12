@@ -35,6 +35,16 @@ target_link_libraries(bit-population-count-test
   FortranEvaluateTesting
 )
 
+add_executable(expression-test
+  expression.cc
+)
+
+target_link_libraries(expression-test
+  FortranEvaluate
+  FortranEvaluateTesting
+  FortranParser
+)
+
 add_executable(integer-test
   integer.cc
 )
@@ -42,6 +52,16 @@ add_executable(integer-test
 target_link_libraries(integer-test
   FortranEvaluate
   FortranEvaluateTesting
+)
+
+add_executable(intrinsics-test
+  intrinsics.cc
+)
+
+target_link_libraries(intrinsics-test
+  FortranEvaluate
+  FortranEvaluateTesting
+  FortranParser
 )
 
 add_executable(logical-test
@@ -63,16 +83,6 @@ target_link_libraries(real-test
   m
 )
 
-add_executable(expression-test
-  expression.cc
-)
-
-target_link_libraries(expression-test
-  FortranEvaluate
-  FortranEvaluateTesting
-  FortranParser
-)
-
 add_executable(reshape-test
   reshape.cc
 )
@@ -87,6 +97,7 @@ add_test(NAME Expression COMMAND expression-test)
 add_test(NAME Leadz COMMAND leading-zero-bit-count-test)
 add_test(NAME PopPar COMMAND bit-population-count-test)
 add_test(NAME Integer COMMAND integer-test)
+add_test(NAME Intrinsics COMMAND intrinsics-test)
 add_test(NAME Logical COMMAND logical-test)
 add_test(NAME Real COMMAND real-test)
 add_test(NAME RESHAPE COMMAND reshape-test)
