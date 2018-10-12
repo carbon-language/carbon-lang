@@ -26307,13 +26307,9 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     SDValue Expanded = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl,
                                    MVT::v2f64, N->getOperand(0));
     SDValue ToVecInt = DAG.getBitcast(WiderVT, Expanded);
-
-    SmallVector<SDValue, 8> Elts;
-    for (unsigned i = 0, e = NumElts; i != e; ++i)
-      Elts.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SVT,
-                                   ToVecInt, DAG.getIntPtrConstant(i, dl)));
-
-    Results.push_back(DAG.getBuildVector(DstVT, dl, Elts));
+    SDValue Extract = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, DstVT,
+                                  ToVecInt, DAG.getIntPtrConstant(0, dl));
+    Results.push_back(Extract);
     return;
   }
   case ISD::MGATHER: {
