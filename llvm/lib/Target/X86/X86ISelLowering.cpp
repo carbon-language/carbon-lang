@@ -5830,6 +5830,30 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   return false;
 }
 
+static bool isConstantSplat(SDValue Op, APInt &SplatVal) {
+  APInt UndefElts;
+  SmallVector<APInt, 16> EltBits;
+  if (getTargetConstantBitsFromNode(Op, Op.getScalarValueSizeInBits(),
+                                    UndefElts, EltBits, true, false)) {
+    int SplatIndex = -1;
+    for (int i = 0, e = EltBits.size(); i != e; ++i) {
+      if (UndefElts[i])
+        continue;
+      if (0 <= SplatIndex && EltBits[i] != EltBits[SplatIndex]) {
+        SplatIndex = -1;
+        break;
+      }
+      SplatIndex = i;
+    }
+    if (0 <= SplatIndex) {
+      SplatVal = EltBits[SplatIndex];
+      return true;
+    }
+  }
+
+  return false;
+}
+
 static bool getTargetShuffleMaskIndices(SDValue MaskNode,
                                         unsigned MaskEltSizeInBits,
                                         SmallVectorImpl<uint64_t> &RawMask) {
@@ -23600,7 +23624,6 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
   SDLoc dl(Op);
   SDValue R = Op.getOperand(0);
   SDValue Amt = Op.getOperand(1);
-  unsigned EltSizeInBits = VT.getScalarSizeInBits();
   unsigned X86Opc = getTargetVShiftUniformOpcode(Op.getOpcode(), false);
 
   auto ArithmeticShiftRight64 = [&](uint64_t ShiftAmt) {
@@ -23644,24 +23667,11 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
   };
 
   // Optimize shl/srl/sra with constant shift amount.
-  APInt UndefElts;
-  SmallVector<APInt, 8> EltBits;
-  if (!getTargetConstantBitsFromNode(Amt, EltSizeInBits, UndefElts, EltBits,
-                                     true, false))
+  APInt APIntShiftAmt;
+  if (!isConstantSplat(Amt, APIntShiftAmt))
     return SDValue();
+  uint64_t ShiftAmt = APIntShiftAmt.getZExtValue();
 
-  int SplatIndex = -1;
-  for (int i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
-    if (UndefElts[i])
-      continue;
-    if (0 <= SplatIndex && EltBits[i] != EltBits[SplatIndex])
-      return SDValue();
-    SplatIndex = i;
-  }
-  if (SplatIndex < 0)
-    return SDValue();
-
-  uint64_t ShiftAmt = EltBits[SplatIndex].getZExtValue();
   if (SupportedVectorShiftWithImm(VT, Subtarget, Op.getOpcode()))
     return getTargetVShiftByConstNode(X86Opc, dl, VT, R, ShiftAmt, DAG);
 
