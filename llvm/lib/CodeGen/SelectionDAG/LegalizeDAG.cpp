@@ -2794,7 +2794,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     // This trivially expands to CTTZ.
     return DAG.getNode(ISD::CTTZ, dl, VT, Op);
   case ISD::CTTZ: {
-    unsigned Len = VT.getSizeInBits();
+    unsigned Len = VT.getScalarSizeInBits();
 
     if (TLI.isOperationLegalOrCustom(ISD::CTTZ_ZERO_UNDEF, VT)) {
       EVT SetCCVT = getSetCCResultType(VT);
