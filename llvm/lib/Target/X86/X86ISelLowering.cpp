@@ -22972,11 +22972,10 @@ static SDValue LowerCTTZ(SDValue Op, const X86Subtarget &Subtarget,
                          SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
   unsigned NumBits = VT.getScalarSizeInBits();
+  SDValue N0 = Op.getOperand(0);
   SDLoc dl(Op);
 
   if (VT.isVector()) {
-    SDValue N0 = Op.getOperand(0);
-
     // Decompose 256-bit ops into smaller 128-bit ops.
     if (VT.is256BitVector() && !Subtarget.hasInt256())
       return Lower256IntUnary(Op, DAG);
@@ -23004,7 +23003,7 @@ static SDValue LowerCTTZ(SDValue Op, const X86Subtarget &Subtarget,
 
   // Issue a bsf (scan bits forward) which also sets EFLAGS.
   SDVTList VTs = DAG.getVTList(VT, MVT::i32);
-  Op = DAG.getNode(X86ISD::BSF, dl, VTs, Op.getOperand(0));
+  Op = DAG.getNode(X86ISD::BSF, dl, VTs, N0);
 
   // If src is zero (i.e. bsf sets ZF), returns NumBits.
   SDValue Ops[] = {
