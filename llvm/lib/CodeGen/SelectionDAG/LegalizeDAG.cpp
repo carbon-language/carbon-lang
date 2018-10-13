@@ -2814,8 +2814,8 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
                                DAG.getNode(ISD::SUB, dl, VT, Op,
                                            DAG.getConstant(1, dl, VT)));
     // If ISD::CTLZ is legal and CTPOP isn't, then do that instead.
-    if (!TLI.isOperationLegalOrCustom(ISD::CTPOP, VT) &&
-        TLI.isOperationLegalOrCustom(ISD::CTLZ, VT))
+    if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
+        TLI.isOperationLegal(ISD::CTLZ, VT))
       return DAG.getNode(ISD::SUB, dl, VT,
                          DAG.getConstant(Len, dl, VT),
                          DAG.getNode(ISD::CTLZ, dl, VT, Tmp3));
