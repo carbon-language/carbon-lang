@@ -2709,13 +2709,12 @@ SDValue SelectionDAGLegalize::ExpandBSWAP(SDValue Op, const SDLoc &dl) {
 SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
                                              const SDLoc &dl) {
   EVT VT = Op.getValueType();
+  EVT ShVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
+  unsigned Len = VT.getScalarSizeInBits();
 
   switch (Opc) {
   default: llvm_unreachable("Cannot expand this yet!");
   case ISD::CTPOP: {
-    EVT ShVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
-    unsigned Len = VT.getSizeInBits();
-
     assert(VT.isInteger() && Len <= 128 && Len % 8 == 0 &&
            "CTPOP not implemented for this type.");
 
@@ -2761,8 +2760,6 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     // This trivially expands to CTLZ.
     return DAG.getNode(ISD::CTLZ, dl, VT, Op);
   case ISD::CTLZ: {
-    unsigned Len = VT.getScalarSizeInBits();
-
     if (TLI.isOperationLegalOrCustom(ISD::CTLZ_ZERO_UNDEF, VT)) {
       EVT SetCCVT = getSetCCResultType(VT);
       SDValue CTLZ = DAG.getNode(ISD::CTLZ_ZERO_UNDEF, dl, VT, Op);
@@ -2781,7 +2778,6 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     // return popcount(~x);
     //
     // Ref: "Hacker's Delight" by Henry Warren
-    EVT ShVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
     for (unsigned i = 0; (1U << i) <= (Len / 2); ++i) {
       SDValue Tmp3 = DAG.getConstant(1ULL << i, dl, ShVT);
       Op = DAG.getNode(ISD::OR, dl, VT, Op,
@@ -2794,8 +2790,6 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     // This trivially expands to CTTZ.
     return DAG.getNode(ISD::CTTZ, dl, VT, Op);
   case ISD::CTTZ: {
-    unsigned Len = VT.getScalarSizeInBits();
-
     if (TLI.isOperationLegalOrCustom(ISD::CTTZ_ZERO_UNDEF, VT)) {
       EVT SetCCVT = getSetCCResultType(VT);
       SDValue CTTZ = DAG.getNode(ISD::CTTZ_ZERO_UNDEF, dl, VT, Op);
