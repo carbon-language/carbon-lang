@@ -21,21 +21,12 @@ multiclass SIMD_I<dag oops_r, dag iops_r, dag oops_s, dag iops_s,
             Requires<[HasSIMD128]>;
 }
 
-multiclass SIMD_ARGUMENT<ValueType vt> {
-  let hasSideEffects = 1, isCodeGenOnly = 1,
-      Defs = []<Register>, Uses = [ARGUMENTS] in
-  defm ARGUMENT_#vt : SIMD_I<(outs V128:$res), (ins i32imm:$argno),
-                             (outs), (ins i32imm:$argno),
-                             [(set (vt V128:$res),
-                                  (WebAssemblyargument timm:$argno))]>;
-}
-
-defm "": SIMD_ARGUMENT<v16i8>;
-defm "": SIMD_ARGUMENT<v8i16>;
-defm "": SIMD_ARGUMENT<v4i32>;
-defm "": SIMD_ARGUMENT<v2i64>;
-defm "": SIMD_ARGUMENT<v4f32>;
-defm "": SIMD_ARGUMENT<v2f64>;
+defm "" : ARGUMENT<V128, v16i8>;
+defm "" : ARGUMENT<V128, v8i16>;
+defm "" : ARGUMENT<V128, v4i32>;
+defm "" : ARGUMENT<V128, v2i64>;
+defm "" : ARGUMENT<V128, v4f32>;
+defm "" : ARGUMENT<V128, v2f64>;
 
 // Constrained immediate argument types
 foreach SIZE = [8, 16] in
