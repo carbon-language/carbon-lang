@@ -22976,7 +22976,6 @@ static SDValue LowerCTTZ(SDValue Op, const X86Subtarget &Subtarget,
 
   if (VT.isVector()) {
     SDValue N0 = Op.getOperand(0);
-    SDValue Zero = DAG.getConstant(0, dl, VT);
 
     // Decompose 256-bit ops into smaller 128-bit ops.
     if (VT.is256BitVector() && !Subtarget.hasInt256())
