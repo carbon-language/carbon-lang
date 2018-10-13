@@ -22982,20 +22982,22 @@ static SDValue LowerCTTZ(SDValue Op, const X86Subtarget &Subtarget,
     if (VT.is256BitVector() && !Subtarget.hasInt256())
       return Lower256IntUnary(Op, DAG);
 
-    // cttz_undef(x) = (width - 1) - ctlz(x & -x)
-    if (Op.getOpcode() == ISD::CTTZ_ZERO_UNDEF) {
-      SDValue WidthMinusOne = DAG.getConstant(NumBits - 1, dl, VT);
-      SDValue LSB = DAG.getNode(ISD::AND, dl, VT, N0,
-                                DAG.getNode(ISD::SUB, dl, VT, Zero, N0));
-      return DAG.getNode(ISD::SUB, dl, VT, WidthMinusOne,
-                         DAG.getNode(ISD::CTLZ, dl, VT, LSB));
+    // Tmp = ~x & (x - 1)
+    SDValue One = DAG.getConstant(1, dl, VT);
+    SDValue Tmp = DAG.getNode(ISD::AND, dl, VT, DAG.getNOT(dl, N0, VT),
+                              DAG.getNode(ISD::SUB, dl, VT, N0, One));
+
+    // cttz(x) = width - ctlz(~x & (x - 1))
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    if (TLI.isOperationLegal(ISD::CTLZ, VT) &&
+        !TLI.isOperationLegal(ISD::CTPOP, VT)) {
+      SDValue Width = DAG.getConstant(NumBits, dl, VT);
+      return DAG.getNode(ISD::SUB, dl, VT, Width,
+                         DAG.getNode(ISD::CTLZ, dl, VT, Tmp));
     }
 
     // cttz(x) = ctpop(~x & (x - 1))
-    SDValue One = DAG.getConstant(1, dl, VT);
-    return DAG.getNode(ISD::CTPOP, dl, VT,
-                       DAG.getNode(ISD::AND, dl, VT, DAG.getNOT(dl, N0, VT),
-                                   DAG.getNode(ISD::SUB, dl, VT, N0, One)));
+    return DAG.getNode(ISD::CTPOP, dl, VT, Tmp);
   }
 
   assert(Op.getOpcode() == ISD::CTTZ &&
