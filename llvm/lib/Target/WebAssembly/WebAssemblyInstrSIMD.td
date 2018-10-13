@@ -699,20 +699,20 @@ defm "" : SIMDAbs<v2f64, "f64x2", 128>;
 // Floating-point min and max
 //===----------------------------------------------------------------------===//
 
-// NaN-propagating minimum: min
-// TODO
-
-// NaN-propagating maximum: max
-// TODO
-
-//===----------------------------------------------------------------------===//
-// Floating-point arithmetic
-//===----------------------------------------------------------------------===//
-
 multiclass SIMDBinaryFP<SDNode node, string name, bits<32> baseInst> {
   defm "" : SIMDBinary<v4f32, "f32x4", node, name, baseInst>;
   defm "" : SIMDBinary<v2f64, "f64x2", node, name, !add(baseInst, 1)>;
 }
+
+// NaN-propagating minimum: min
+defm MIN : SIMDBinaryFP<fminnan, "min", 129>;
+
+// NaN-propagating maximum: max
+defm MAX : SIMDBinaryFP<fmaxnan, "max", 131>;
+
+//===----------------------------------------------------------------------===//
+// Floating-point arithmetic
+//===----------------------------------------------------------------------===//
 
 // Addition: add
 let isCommutable = 1 in
