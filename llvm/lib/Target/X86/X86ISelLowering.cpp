@@ -39603,10 +39603,8 @@ static SDValue combineIncDecVector(SDNode *N, SelectionDAG &DAG) {
   if (!VT.is128BitVector() && !VT.is256BitVector() && !VT.is512BitVector())
     return SDValue();
 
-  SDNode *N1 = N->getOperand(1).getNode();
   APInt SplatVal;
-  if (!ISD::isConstantSplatVector(N1, SplatVal) ||
-      !SplatVal.isOneValue())
+  if (!isConstantSplat(N->getOperand(1), SplatVal) || !SplatVal.isOneValue())
     return SDValue();
 
   SDValue AllOnesVec = getOnesVector(VT, DAG, SDLoc(N));

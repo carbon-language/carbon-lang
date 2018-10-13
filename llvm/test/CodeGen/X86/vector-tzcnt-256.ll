@@ -116,7 +116,8 @@ define <4 x i64> @testv4i64(<4 x i64> %in) nounwind {
 ;
 ; X32-AVX-LABEL: testv4i64:
 ; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vpsubq {{\.LCPI.*}}, %ymm0, %ymm1
+; X32-AVX-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
+; X32-AVX-NEXT:    vpaddq %ymm1, %ymm0, %ymm1
 ; X32-AVX-NEXT:    vpandn %ymm1, %ymm0, %ymm0
 ; X32-AVX-NEXT:    vmovdqa {{.*#+}} ymm1 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
 ; X32-AVX-NEXT:    vpand %ymm1, %ymm0, %ymm2
@@ -238,7 +239,8 @@ define <4 x i64> @testv4i64u(<4 x i64> %in) nounwind {
 ;
 ; X32-AVX-LABEL: testv4i64u:
 ; X32-AVX:       # %bb.0:
-; X32-AVX-NEXT:    vpsubq {{\.LCPI.*}}, %ymm0, %ymm1
+; X32-AVX-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
+; X32-AVX-NEXT:    vpaddq %ymm1, %ymm0, %ymm1
 ; X32-AVX-NEXT:    vpandn %ymm1, %ymm0, %ymm0
 ; X32-AVX-NEXT:    vmovdqa {{.*#+}} ymm1 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
 ; X32-AVX-NEXT:    vpand %ymm1, %ymm0, %ymm2

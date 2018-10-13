@@ -198,8 +198,8 @@ define <2 x i64> @testv2i64(<2 x i64> %in) nounwind {
 ;
 ; X32-SSE-LABEL: testv2i64:
 ; X32-SSE:       # %bb.0:
-; X32-SSE-NEXT:    movdqa %xmm0, %xmm1
-; X32-SSE-NEXT:    psubq {{\.LCPI.*}}, %xmm1
+; X32-SSE-NEXT:    pcmpeqd %xmm1, %xmm1
+; X32-SSE-NEXT:    paddq %xmm0, %xmm1
 ; X32-SSE-NEXT:    pandn %xmm1, %xmm0
 ; X32-SSE-NEXT:    movdqa {{.*#+}} xmm1 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
 ; X32-SSE-NEXT:    movdqa %xmm0, %xmm2
@@ -401,8 +401,8 @@ define <2 x i64> @testv2i64u(<2 x i64> %in) nounwind {
 ;
 ; X32-SSE-LABEL: testv2i64u:
 ; X32-SSE:       # %bb.0:
-; X32-SSE-NEXT:    movdqa %xmm0, %xmm1
-; X32-SSE-NEXT:    psubq {{\.LCPI.*}}, %xmm1
+; X32-SSE-NEXT:    pcmpeqd %xmm1, %xmm1
+; X32-SSE-NEXT:    paddq %xmm0, %xmm1
 ; X32-SSE-NEXT:    pandn %xmm1, %xmm0
 ; X32-SSE-NEXT:    movdqa {{.*#+}} xmm1 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
 ; X32-SSE-NEXT:    movdqa %xmm0, %xmm2
