@@ -22968,7 +22968,8 @@ static SDValue LowerCTLZ(SDValue Op, const X86Subtarget &Subtarget,
   return Op;
 }
 
-static SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerCTTZ(SDValue Op, const X86Subtarget &Subtarget,
+                         SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
   unsigned NumBits = VT.getScalarSizeInBits();
   SDLoc dl(Op);
@@ -22977,21 +22978,24 @@ static SDValue LowerCTTZ(SDValue Op, SelectionDAG &DAG) {
     SDValue N0 = Op.getOperand(0);
     SDValue Zero = DAG.getConstant(0, dl, VT);
 
-    // lsb(x) = (x & -x)
-    SDValue LSB = DAG.getNode(ISD::AND, dl, VT, N0,
-                              DAG.getNode(ISD::SUB, dl, VT, Zero, N0));
+    // Decompose 256-bit ops into smaller 128-bit ops.
+    if (VT.is256BitVector() && !Subtarget.hasInt256())
+      return Lower256IntUnary(Op, DAG);
 
-    // cttz_undef(x) = (width - 1) - ctlz(lsb)
+    // cttz_undef(x) = (width - 1) - ctlz(x & -x)
     if (Op.getOpcode() == ISD::CTTZ_ZERO_UNDEF) {
       SDValue WidthMinusOne = DAG.getConstant(NumBits - 1, dl, VT);
+      SDValue LSB = DAG.getNode(ISD::AND, dl, VT, N0,
+                                DAG.getNode(ISD::SUB, dl, VT, Zero, N0));
       return DAG.getNode(ISD::SUB, dl, VT, WidthMinusOne,
                          DAG.getNode(ISD::CTLZ, dl, VT, LSB));
     }
 
-    // cttz(x) = ctpop(lsb - 1)
+    // cttz(x) = ctpop(~x & (x - 1))
     SDValue One = DAG.getConstant(1, dl, VT);
     return DAG.getNode(ISD::CTPOP, dl, VT,
-                       DAG.getNode(ISD::SUB, dl, VT, LSB, One));
+                       DAG.getNode(ISD::AND, dl, VT, DAG.getNOT(dl, N0, VT),
+                                   DAG.getNode(ISD::SUB, dl, VT, N0, One)));
   }
 
   assert(Op.getOpcode() == ISD::CTTZ &&
@@ -25918,7 +25922,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::CTLZ:
   case ISD::CTLZ_ZERO_UNDEF:    return LowerCTLZ(Op, Subtarget, DAG);
   case ISD::CTTZ:
-  case ISD::CTTZ_ZERO_UNDEF:    return LowerCTTZ(Op, DAG);
+  case ISD::CTTZ_ZERO_UNDEF:    return LowerCTTZ(Op, Subtarget, DAG);
   case ISD::MUL:                return LowerMUL(Op, Subtarget, DAG);
   case ISD::MULHS:
   case ISD::MULHU:              return LowerMULH(Op, Subtarget, DAG);
