@@ -33,7 +33,7 @@ define <2 x i8> @neg_vec_undef(<2 x i8> %x) {
 ; CHECK-LABEL: @neg_vec_undef(
 ; CHECK-NEXT:    [[BO:%.*]] = udiv <2 x i8> [[X:%.*]], <i8 42, i8 -42>
 ; CHECK-NEXT:    [[NEGX:%.*]] = sub <2 x i8> <i8 0, i8 undef>, [[X]]
-; CHECK-NEXT:    [[R:%.*]] = mul <2 x i8> [[NEGX]], [[BO]]
+; CHECK-NEXT:    [[R:%.*]] = mul <2 x i8> [[BO]], [[NEGX]]
 ; CHECK-NEXT:    ret <2 x i8> [[R]]
 ;
   %bo = udiv <2 x i8> %x, <i8 42, i8 -42>
@@ -74,7 +74,7 @@ define <2 x i8> @not_vec_undef(<2 x i8> %x) {
 ; CHECK-LABEL: @not_vec_undef(
 ; CHECK-NEXT:    [[BO:%.*]] = udiv <2 x i8> [[X:%.*]], <i8 42, i8 -42>
 ; CHECK-NEXT:    [[NOTX:%.*]] = xor <2 x i8> [[X]], <i8 -1, i8 undef>
-; CHECK-NEXT:    [[R:%.*]] = mul <2 x i8> [[NOTX]], [[BO]]
+; CHECK-NEXT:    [[R:%.*]] = mul <2 x i8> [[BO]], [[NOTX]]
 ; CHECK-NEXT:    ret <2 x i8> [[R]]
 ;
   %bo = udiv <2 x i8> %x, <i8 42, i8 -42>
@@ -123,7 +123,7 @@ define <2 x float> @fneg_vec_undef(<2 x float> %x) {
 ; CHECK-LABEL: @fneg_vec_undef(
 ; CHECK-NEXT:    [[BO:%.*]] = fdiv <2 x float> [[X:%.*]], <float 4.200000e+01, float -4.200000e+01>
 ; CHECK-NEXT:    [[FNEGX:%.*]] = fsub <2 x float> <float -0.000000e+00, float undef>, [[X]]
-; CHECK-NEXT:    [[R:%.*]] = fmul <2 x float> [[FNEGX]], [[BO]]
+; CHECK-NEXT:    [[R:%.*]] = fmul <2 x float> [[BO]], [[FNEGX]]
 ; CHECK-NEXT:    call void @use_vec(<2 x float> [[FNEGX]])
 ; CHECK-NEXT:    ret <2 x float> [[R]]
 ;
