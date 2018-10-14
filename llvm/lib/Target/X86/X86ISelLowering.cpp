@@ -902,8 +902,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setLoadExtAction(ISD::EXTLOAD, VT, MVT::v2f32, Legal);
 
     // We want to legalize this to an f64 load rather than an i64 load on
-    // 64-bit targets and two 32-bit loads on a 32-bit target.
+    // 64-bit targets and two 32-bit loads on a 32-bit target. Similar for
+    // store.
     setOperationAction(ISD::LOAD,               MVT::v2f32, Custom);
+    setOperationAction(ISD::STORE,              MVT::v2f32, Custom);
 
     setOperationAction(ISD::BITCAST,            MVT::v2i32, Custom);
     setOperationAction(ISD::BITCAST,            MVT::v4i16, Custom);
@@ -19943,18 +19945,36 @@ static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
   SDValue StoredVal = St->getValue();
 
   // Without AVX512DQ, we need to use a scalar type for v2i1/v4i1/v8i1 loads.
-  assert(StoredVal.getValueType().isVector() &&
-         StoredVal.getValueType().getVectorElementType() == MVT::i1 &&
-         StoredVal.getValueType().getVectorNumElements() <= 8 &&
-         "Unexpected VT");
-  assert(!St->isTruncatingStore() && "Expected non-truncating store");
-  assert(Subtarget.hasAVX512() && !Subtarget.hasDQI() &&
-         "Expected AVX512F without AVX512DQI");
+  if (StoredVal.getValueType().isVector() &&
+            StoredVal.getValueType().getVectorElementType() == MVT::i1) {
+    assert(StoredVal.getValueType().getVectorNumElements() <= 8 &&
+           "Unexpected VT");
+    assert(!St->isTruncatingStore() && "Expected non-truncating store");
+    assert(Subtarget.hasAVX512() && !Subtarget.hasDQI() &&
+           "Expected AVX512F without AVX512DQI");
 
-  StoredVal = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, MVT::v8i1,
-                          DAG.getUNDEF(MVT::v8i1), StoredVal,
+    StoredVal = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, MVT::v8i1,
+                            DAG.getUNDEF(MVT::v8i1), StoredVal,
+                            DAG.getIntPtrConstant(0, dl));
+    StoredVal = DAG.getBitcast(MVT::i8, StoredVal);
+
+    return DAG.getStore(St->getChain(), dl, StoredVal, St->getBasePtr(),
+                        St->getPointerInfo(), St->getAlignment(),
+                        St->getMemOperand()->getFlags());
+  }
+
+  if (St->isTruncatingStore())
+    return SDValue();
+
+  assert(StoredVal.getValueType() == MVT::v2f32 && "Unexpected VT");
+
+  // Widen the vector, cast to a v2x64 type, extract the single 64-bit
+  // element and store it.
+  StoredVal = DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4f32, StoredVal,
+                          DAG.getUNDEF(MVT::v2f32));
+  StoredVal = DAG.getBitcast(MVT::v2f64, StoredVal);
+  StoredVal = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::f64, StoredVal,
                           DAG.getIntPtrConstant(0, dl));
-  StoredVal = DAG.getBitcast(MVT::i8, StoredVal);
 
   return DAG.getStore(St->getChain(), dl, StoredVal, St->getBasePtr(),
                       St->getPointerInfo(), St->getAlignment(),
@@ -36912,7 +36932,8 @@ static SDValue combineStore(SDNode *N, SelectionDAG &DAG,
     // Otherwise, if it's legal to use f64 SSE instructions, use f64 load/store
     // pair instead.
     if (Subtarget.is64Bit() || F64IsLegal) {
-      MVT LdVT = Subtarget.is64Bit() ? MVT::i64 : MVT::f64;
+      MVT LdVT = (Subtarget.is64Bit() &&
+                  (!VT.isFloatingPoint() || !F64IsLegal)) ? MVT::i64 : MVT::f64;
       SDValue NewLd = DAG.getLoad(LdVT, LdDL, Ld->getChain(), Ld->getBasePtr(),
                                   Ld->getMemOperand());
 
