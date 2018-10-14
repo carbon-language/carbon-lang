@@ -101,16 +101,13 @@ public:
 
   int getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
                                  unsigned Factor, ArrayRef<unsigned> Indices,
-                                 unsigned Alignment, unsigned AddressSpace,
-                                 bool IsMasked = false);
+                                 unsigned Alignment, unsigned AddressSpace);
   int getInterleavedMemoryOpCostAVX512(unsigned Opcode, Type *VecTy,
                                  unsigned Factor, ArrayRef<unsigned> Indices,
-                                 unsigned Alignment, unsigned AddressSpace,
-                                 bool IsMasked = false);
+                                 unsigned Alignment, unsigned AddressSpace);
   int getInterleavedMemoryOpCostAVX2(unsigned Opcode, Type *VecTy,
                                  unsigned Factor, ArrayRef<unsigned> Indices,
-                                 unsigned Alignment, unsigned AddressSpace,
-                                 bool IsMasked = false);
+                                 unsigned Alignment, unsigned AddressSpace);
 
   int getIntImmCost(int64_t);
 

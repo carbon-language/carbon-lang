@@ -769,14 +769,10 @@ public:
 class VPInterleaveRecipe : public VPRecipeBase {
 private:
   const InterleaveGroup *IG;
-  std::unique_ptr<VPUser> User;
 
 public:
-  VPInterleaveRecipe(const InterleaveGroup *IG, VPValue *Mask)
-      : VPRecipeBase(VPInterleaveSC), IG(IG) {
-    if (Mask) // Create a VPInstruction to register as a user of the mask.
-      User.reset(new VPUser({Mask}));
-  }
+  VPInterleaveRecipe(const InterleaveGroup *IG)
+      : VPRecipeBase(VPInterleaveSC), IG(IG) {}
   ~VPInterleaveRecipe() override = default;
 
   /// Method to support type inquiry through isa, cast, and dyn_cast.

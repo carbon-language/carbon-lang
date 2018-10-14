@@ -502,16 +502,6 @@ Instruction *llvm::propagateMetadata(Instruction *Inst, ArrayRef<Value *> VL) {
   return Inst;
 }
 
-Constant *llvm::createReplicatedMask(IRBuilder<> &Builder, 
-                                     unsigned ReplicationFactor, unsigned VF) {
-  SmallVector<Constant *, 16> MaskVec;
-  for (unsigned i = 0; i < VF; i++)
-    for (unsigned j = 0; j < ReplicationFactor; j++)
-      MaskVec.push_back(Builder.getInt32(i));
-
-  return ConstantVector::get(MaskVec);
-}
-
 Constant *llvm::createInterleaveMask(IRBuilder<> &Builder, unsigned VF,
                                      unsigned NumVecs) {
   SmallVector<Constant *, 16> Mask;
@@ -682,8 +672,7 @@ void InterleavedAccessInfo::collectConstStrideAccesses(
 // this group because it and (2) are dependent. However, (1) can be grouped
 // with other accesses that may precede it in program order. Note that a
 // bottom-up order does not imply that WAW dependences should not be checked.
-void InterleavedAccessInfo::analyzeInterleaving(
-                                 bool EnablePredicatedInterleavedMemAccesses) {
+void InterleavedAccessInfo::analyzeInterleaving() {
   LLVM_DEBUG(dbgs() << "LV: Analyzing interleaved accesses...\n");
   const ValueToValueMap &Strides = LAI->getSymbolicStrides();
 
@@ -723,8 +712,9 @@ void InterleavedAccessInfo::analyzeInterleaving(
     // create a group for B, we continue with the bottom-up algorithm to ensure
     // we don't break any of B's dependences.
     InterleaveGroup *Group = nullptr;
-    if (isStrided(DesB.Stride) && 
-        (!isPredicated(B->getParent()) || EnablePredicatedInterleavedMemAccesses)) {
+    // TODO: Ignore B if it is in a predicated block. This restriction can be 
+    // relaxed in the future once we handle masked interleaved groups.
+    if (isStrided(DesB.Stride) && !isPredicated(B->getParent())) {
       Group = getInterleaveGroup(B);
       if (!Group) {
         LLVM_DEBUG(dbgs() << "LV: Creating an interleave group with:" << *B
@@ -818,12 +808,11 @@ void InterleavedAccessInfo::analyzeInterleaving(
       if (DistanceToB % static_cast<int64_t>(DesB.Size))
         continue;
 
-      // All members of a predicated interleave-group must have the same predicate,
-      // and currently must reside in the same BB.
-      BasicBlock *BlockA = A->getParent();  
-      BasicBlock *BlockB = B->getParent();  
-      if ((isPredicated(BlockA) || isPredicated(BlockB)) &&
-          (!EnablePredicatedInterleavedMemAccesses || BlockA != BlockB))
+      // Ignore A if either A or B is in a predicated block. Although we
+      // currently prevent group formation for predicated accesses, we may be
+      // able to relax this limitation in the future once we handle more
+      // complicated blocks.
+      if (isPredicated(A->getParent()) || isPredicated(B->getParent()))
         continue;
 
       // The index of A is the index of B plus A's distance to B in multiples

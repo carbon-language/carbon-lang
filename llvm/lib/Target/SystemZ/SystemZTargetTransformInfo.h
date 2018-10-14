@@ -92,7 +92,7 @@ public:
                                  unsigned Factor,
                                  ArrayRef<unsigned> Indices,
                                  unsigned Alignment,
-                                 unsigned AddressSpace, bool IsMasked = false);
+                                 unsigned AddressSpace);
   /// @}
 };
 
