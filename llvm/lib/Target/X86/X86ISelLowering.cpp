@@ -14692,6 +14692,11 @@ static SDValue lowerV16I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
           DL, MVT::v16i16, V1, V2, Mask, Subtarget, DAG))
     return Result;
 
+  // Try to permute the lanes and then use a per-lane permute.
+  if (SDValue V = lowerVectorShuffleAsLanePermuteAndPermute(
+          DL, MVT::v16i16, V1, V2, Mask, DAG, Subtarget))
+    return V;
+
   // Otherwise fall back on generic lowering.
   return lowerVectorShuffleAsSplitOrBlend(DL, MVT::v16i16, V1, V2, Mask, DAG);
 }
@@ -14771,6 +14776,11 @@ static SDValue lowerV32I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (SDValue Result = lowerVectorShuffleByMerging128BitLanes(
           DL, MVT::v32i8, V1, V2, Mask, Subtarget, DAG))
     return Result;
+
+  // Try to permute the lanes and then use a per-lane permute.
+  if (SDValue V = lowerVectorShuffleAsLanePermuteAndPermute(
+          DL, MVT::v32i8, V1, V2, Mask, DAG, Subtarget))
+    return V;
 
   // Otherwise fall back on generic lowering.
   return lowerVectorShuffleAsSplitOrBlend(DL, MVT::v32i8, V1, V2, Mask, DAG);
