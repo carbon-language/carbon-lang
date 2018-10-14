@@ -19946,7 +19946,7 @@ static SDValue LowerStore(SDValue Op, const X86Subtarget &Subtarget,
 
   // Without AVX512DQ, we need to use a scalar type for v2i1/v4i1/v8i1 loads.
   if (StoredVal.getValueType().isVector() &&
-            StoredVal.getValueType().getVectorElementType() == MVT::i1) {
+      StoredVal.getValueType().getVectorElementType() == MVT::i1) {
     assert(StoredVal.getValueType().getVectorNumElements() <= 8 &&
            "Unexpected VT");
     assert(!St->isTruncatingStore() && "Expected non-truncating store");
