@@ -167,13 +167,13 @@ int LocalCXXRuntimeOverridesBase::CXAAtExitOverride(DestructorPtr Destructor,
 
 Error LocalCXXRuntimeOverrides2::enable(JITDylib &JD,
                                         MangleAndInterner &Mangle) {
-  SymbolMap RuntimeInterposes(
-      {{Mangle("__dso_handle"),
-        JITEvaluatedSymbol(toTargetAddress(&DSOHandleOverride),
-                           JITSymbolFlags::Exported)},
-       {Mangle("__cxa_atexit"),
-        JITEvaluatedSymbol(toTargetAddress(&CXAAtExitOverride),
-                           JITSymbolFlags::Exported)}});
+  SymbolMap RuntimeInterposes;
+  RuntimeInterposes[Mangle("__dso_handle")] =
+    JITEvaluatedSymbol(toTargetAddress(&DSOHandleOverride),
+                       JITSymbolFlags::Exported);
+  RuntimeInterposes[Mangle("__cxa_atexit")] =
+    JITEvaluatedSymbol(toTargetAddress(&CXAAtExitOverride),
+                       JITSymbolFlags::Exported);
 
   return JD.define(absoluteSymbols(std::move(RuntimeInterposes)));
 }
