@@ -96,7 +96,7 @@ LLJIT::LLJIT(std::unique_ptr<ExecutionSession> ES, JITTargetMachineBuilder JTMB,
       ObjLinkingLayer(*this->ES,
                       [this](VModuleKey K) { return getMemoryManager(K); }),
       CompileLayer(*this->ES, ObjLinkingLayer,
-                   MultiThreadedSimpleCompiler(std::move(JTMB))),
+                   ConcurrentIRCompiler(std::move(JTMB))),
       CtorRunner(Main), DtorRunner(Main) {
   assert(NumCompileThreads != 0 &&
          "Multithreaded LLJIT instance can not be created with 0 threads");
