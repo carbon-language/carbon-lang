@@ -16,8 +16,7 @@
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: DO loop doesn't properly nest
-! CHECK: and conflicts with the loop
-! CHECK: which extends to here
+! CHECK: DO loop conflicts
 ! CHECK: label '30' cannot be found
 ! CHECK: label '40' cannot be found
 ! CHECK: label '50' doesn't lexically follow DO stmt
