@@ -24,12 +24,13 @@
 namespace Fortran::semantics {
 
 // Walk the parse tree and collection information about which statements
-// define and reference symbols. Then PrintSymbols outputs information
-// by statement.
+// reference symbols. Then PrintSymbols outputs information by statement.
+// The first reference to a symbol is treated as its definition and more
+// information is included.
 class SymbolDumpVisitor {
 public:
-  // Write out symbols defined or referenced at this statement.
-  void PrintSymbols(const parser::CharBlock &stmt, std::ostream &, int) const;
+  // Write out symbols referenced at this statement.
+  void PrintSymbols(const parser::CharBlock &, std::ostream &, int);
 
   template<typename T> bool Pre(const T &) { return true; }
   template<typename T> void Post(const T &) {}
@@ -40,130 +41,42 @@ public:
   template<typename T> void Post(const parser::Statement<T> &) {
     currStmt_ = nullptr;
   }
-  void Post(const parser::Name &name) { ProcessName(name, isRef()); }
-  void Post(const parser::EndFunctionStmt &) { EndScope(); }
-  void Post(const parser::EndModuleStmt &) { EndScope(); }
-  void Post(const parser::EndMpSubprogramStmt &) { EndScope(); }
-  void Post(const parser::EndProgramStmt &) { EndScope(); }
-  void Post(const parser::EndSubmoduleStmt &) { EndScope(); }
-  void Post(const parser::EndSubroutineStmt &) { EndScope(); }
-  bool Pre(const parser::DataRef &) { return PreReference(); }
-  void Post(const parser::DataRef &) { PostReference(); }
-  bool Pre(const parser::Designator &) { return PreReference(); }
-  void Post(const parser::Designator &) { PostReference(); }
-  bool Pre(const parser::StructureComponent &) { return PreReference(); }
-  void Post(const parser::StructureComponent &) { PostReference(); }
-  bool Pre(const parser::ProcedureDesignator &) { return PreReference(); }
-  void Post(const parser::ProcedureDesignator &) { PostReference(); }
-  bool Pre(const parser::DerivedTypeSpec &) { return PreReference(); }
-  void Post(const parser::DerivedTypeSpec &) { PostReference(); }
-  bool Pre(const parser::Rename::Names &);
-  bool Pre(const parser::UseStmt &);
-  bool Pre(const parser::DerivedTypeStmt &);
-
-  bool Pre(const parser::ImportStmt &) { return PreReference(); }
-  void Post(const parser::ImportStmt &) { PostReference(); }
+  void Post(const parser::Name &name);
 
 private:
-  using symbolMap = std::multimap<const char *, const Symbol *>;
-
   const SourceName *currStmt_{nullptr};  // current statement we are processing
-  int isRef_{0};  // > 0 means in the context of a reference
-  symbolMap defs_;  // statement location to symbol defined there
-  symbolMap refs_;  // statement location to symbol referenced there
-  std::map<const Symbol *, const char *> symbolToStmt_;  // symbol to def
-
-  void ProcessName(const parser::Name &, bool isRef);
-  void EndScope();
-  bool PreReference();
-  void PostReference();
-  bool isRef() const { return isRef_ > 0; }
-  void PrintSymbols(const parser::CharBlock &, std::ostream &, int,
-      const symbolMap &, bool) const;
+  std::multimap<const char *, const Symbol*> symbols_;  // location to symbol
+  std::set<const Symbol *> symbolsDefined_;  // symbols that have been processed
   void Indent(std::ostream &, int) const;
 };
 
 void SymbolDumpVisitor::PrintSymbols(
-    const parser::CharBlock &location, std::ostream &out, int indent) const {
-  PrintSymbols(location, out, indent, defs_, true);
-  PrintSymbols(location, out, indent, refs_, false);
-}
-void SymbolDumpVisitor::PrintSymbols(const parser::CharBlock &location,
-    std::ostream &out, int indent, const symbolMap &symbols, bool isDef) const {
-  std::set<const Symbol *> done;  // used to prevent duplicates
-  auto range{symbols.equal_range(location.begin())};
+    const parser::CharBlock &location, std::ostream &out, int indent) {
+  std::set<const Symbol *> done;  // prevent duplicates on this line
+  auto range{symbols_.equal_range(location.begin())};
   for (auto it{range.first}; it != range.second; ++it) {
-    auto *symbol{it->second};
+    const auto *symbol{it->second};
     if (done.insert(symbol).second) {
+      bool firstTime{symbolsDefined_.insert(symbol).second};
       Indent(out, indent);
-      out << '!' << (isDef ? "DEF"s : "REF"s) << ": ";
-      DumpForUnparse(out, *symbol, isDef);
+      out << '!' << (firstTime ? "DEF"s : "REF"s) << ": ";
+      DumpForUnparse(out, *symbol, firstTime);
       out << '\n';
     }
   }
 }
+
 void SymbolDumpVisitor::Indent(std::ostream &out, int indent) const {
   for (int i{0}; i < indent; ++i) {
     out << ' ';
   }
 }
 
-// Special handling for some nodes that both define and reference names.
-bool SymbolDumpVisitor::Pre(const parser::Rename::Names &x) {
-  ProcessName(std::get<0>(x.t), /*isRef*/ false);
-  ProcessName(std::get<1>(x.t), /*isRef*/ true);
-  return false;
-}
-bool SymbolDumpVisitor::Pre(const parser::UseStmt &x) {
-  ProcessName(x.moduleName, /*isRef*/ true);
-  parser::Walk(x.u, *this);
-  return false;
-}
-bool SymbolDumpVisitor::Pre(const parser::DerivedTypeStmt &x) {
-  PreReference();
-  parser::Walk(std::get<0>(x.t), *this);
-  ProcessName(std::get<1>(x.t), /*isRef*/ false);
-  parser::Walk(std::get<2>(x.t), *this);
-  PostReference();
-  return false;
-}
-
-// If there is a symbol set in this name, add it to refs_ or symbolToStmt_.
-void SymbolDumpVisitor::ProcessName(const parser::Name &name, bool isRef) {
+void SymbolDumpVisitor::Post(const parser::Name &name) {
   if (const auto *symbol{name.symbol}) {
     CHECK(currStmt_);
-    // If this is the first reference to an implicitly defined symbol,
-    // record it as a def.
-    bool isImplicit{symbol->test(Symbol::Flag::Implicit) &&
-        symbolToStmt_.find(symbol) == symbolToStmt_.end()};
-    if (isRef && !isImplicit) {
-      refs_.emplace(currStmt_->begin(), symbol);
-    } else {
-      symbolToStmt_.emplace(symbol, currStmt_->begin());
-    }
+    symbols_.emplace(currStmt_->begin(), symbol);
   }
-}
-
-// Defs are initially saved in symbolToStmt_ so that a symbol defined across
-// multiple statements is associated with only one (the first). Now that we
-// are at the end of a scope, move them into defs_.
-void SymbolDumpVisitor::EndScope() {
-  for (auto pair : symbolToStmt_) {
-    defs_.emplace(pair.second, pair.first);
-  }
-  symbolToStmt_.clear();
-}
-
-// {Pre,Post}Reference() are called around constructs that contains symbols
-// references. Sometimes those are nested (e.g. DataRef inside Designator)
-// so we need to maintain a count to know when we are back out.
-bool SymbolDumpVisitor::PreReference() {
-  ++isRef_;
-  return true;
-}
-void SymbolDumpVisitor::PostReference() {
-  CHECK(isRef_ > 0);
-  --isRef_;
 }
 
 void UnparseWithSymbols(std::ostream &out, const parser::Program &program,

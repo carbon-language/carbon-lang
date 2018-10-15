@@ -23,16 +23,19 @@ contains
  !DEF: /m/s/x INTENT(IN) (implicit) ObjectEntity REAL(4)
  !DEF: /m/s/y INTENT(INOUT) (implicit) ObjectEntity REAL(4)
  pure subroutine s (x, y) bind(c)
+  !REF: /m/s/x
   intent(in) :: x
+  !REF: /m/s/y
   intent(inout) :: y
  contains
   !DEF: /m/s/ss PURE Subprogram
   pure subroutine ss
   end subroutine
  end subroutine
- !DEF: /m/f PRIVATE, PURE, RECURSIVE Subprogram
+ !REF: /m/f
  !DEF: /m/f/x ALLOCATABLE ObjectEntity REAL(4)
  recursive pure function f() result(x)
+  !REF: /m/f/x
   real, allocatable :: x
   !REF: /m/f/x
   x = 1.0

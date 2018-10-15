@@ -19,20 +19,20 @@ program main
   !DEF: /main/t1/a1 ObjectEntity INTEGER(4)
   integer :: a1
  end type
- !DEF: /main/t2 DerivedType
  !REF: /main/t1
+ !DEF: /main/t2 DerivedType
  type, extends(t1) :: t2
   !DEF: /main/t2/a2 ObjectEntity INTEGER(4)
   integer :: a2
  end type
- !DEF: /main/t3 DerivedType
  !REF: /main/t2
+ !DEF: /main/t3 DerivedType
  type, extends(t2) :: t3
   !DEF: /main/t3/a3 ObjectEntity INTEGER(4)
   integer :: a3
  end type
- !DEF: /main/x3 ObjectEntity TYPE(t3)
  !REF: /main/t3
+ !DEF: /main/x3 ObjectEntity TYPE(t3)
  type(t3) :: x3
  !DEF: /main/i ObjectEntity INTEGER(4)
  integer i
@@ -46,7 +46,7 @@ program main
  i = x3%a1
  !REF: /main/i
  !REF: /main/x3
- !REF: /main/t3/t2
+ !DEF: /main/t3/t2 ObjectEntity TYPE(t2)
  !REF: /main/t2/a2
  i = x3%t2%a2
  !REF: /main/i
@@ -56,7 +56,7 @@ program main
  i = x3%t2%a1
  !REF: /main/i
  !REF: /main/x3
- !REF: /main/t2/t1
+ !DEF: /main/t2/t1 ObjectEntity TYPE(t1)
  !REF: /main/t1/a1
  i = x3%t1%a1
  !REF: /main/i
@@ -78,16 +78,16 @@ end module
 
 !DEF: /s1 Subprogram
 subroutine s1
- !DEF: /s1/t2 Use
  !REF: /m1
+ !DEF: /s1/t2 Use
  !REF: /m1/t1
  use :: m1, only: t2 => t1
- !DEF: /s1/t3 DerivedType
  !REF: /s1/t2
+ !DEF: /s1/t3 DerivedType
  type, extends(t2) :: t3
  end type
- !DEF: /s1/x ObjectEntity TYPE(t3)
  !REF: /s1/t3
+ !DEF: /s1/x ObjectEntity TYPE(t3)
  type(t3) :: x
  !DEF: /s1/i ObjectEntity INTEGER(4)
  integer i
@@ -97,7 +97,7 @@ subroutine s1
  i = x%t1
  !REF: /s1/i
  !REF: /s1/x
- !REF: /s1/t3/t2
+ !DEF: /s1/t3/t2 ObjectEntity TYPE(t2)
  !REF: /m1/t1/t1
  i = x%t2%t1
 end subroutine

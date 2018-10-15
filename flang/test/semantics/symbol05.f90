@@ -58,8 +58,8 @@ subroutine s3
  block
   !DEF: /s3/Block1/t DerivedType
   type :: t
-   !DEF: /s3/i (implicit) ObjectEntity INTEGER(4)
    !DEF: /s3/Block1/t/x ObjectEntity REAL(4)
+   !DEF: /s3/i (implicit) ObjectEntity INTEGER(4)
    real :: x(10) = [(i, i=1,10)]
   end type
  end block

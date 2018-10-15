@@ -24,8 +24,8 @@ program main
  end type
  !DEF: /main/z1 ObjectEntity COMPLEX(4)
  complex z1
- !DEF: /main/w ObjectEntity TYPE(t)
  !REF: /main/t
+ !DEF: /main/w ObjectEntity TYPE(t)
  type(t) :: w
  !DEF: /main/x ObjectEntity REAL(4)
  !DEF: /main/y ObjectEntity REAL(4)

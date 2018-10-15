@@ -19,19 +19,19 @@ module m
  !DEF: /m/t PUBLIC DerivedType
  type :: t
  end type
- !DEF: /m/x PUBLIC ObjectEntity TYPE(t)
  !REF: /m/t
+ !DEF: /m/x PUBLIC ObjectEntity TYPE(t)
  type(t) :: x
 contains
  !DEF: /m/s PUBLIC Subprogram
  subroutine s
-  !DEF: /m/s/y ObjectEntity TYPE(t)
   !REF: /m/t
+  !DEF: /m/s/y ObjectEntity TYPE(t)
   type(t) :: y
   !REF: /m/s/y
   !REF: /m/x
   y = x
-  !REF: /m/s/s
+  !DEF: /m/s/s Subprogram
   call s
  contains
   !DEF: /m/s/s2 Subprogram
@@ -41,8 +41,8 @@ contains
    !REF: /m/t
    !REF: /m/s/s
    import, only: x, y, t, s
-   !DEF: /m/s/s2/z ObjectEntity TYPE(t)
    !REF: /m/t
+   !DEF: /m/s/s2/z ObjectEntity TYPE(t)
    type(t) :: z
    !REF: /m/s/s2/z
    !REF: /m/x

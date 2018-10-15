@@ -16,9 +16,11 @@
 program main
  !DEF: /main/x POINTER ObjectEntity REAL(4)
  pointer :: x
+ !REF: /main/x
  real x
  !DEF: /main/y EXTERNAL, POINTER ProcEntity REAL(4)
  pointer :: y
+ !REF: /main/y
  procedure (real) :: y
  !DEF: /main/z (implicit) ObjectEntity REAL(4)
  !REF: /main/y
