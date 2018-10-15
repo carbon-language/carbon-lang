@@ -87,7 +87,7 @@ iterator_range<CtorDtorIterator> getDestructors(const Module &M) {
                     CtorDtorIterator(DtorsList, true));
 }
 
-void CtorDtorRunner2::add(iterator_range<CtorDtorIterator> CtorDtors) {
+void CtorDtorRunner::add(iterator_range<CtorDtorIterator> CtorDtors) {
   if (CtorDtors.begin() == CtorDtors.end())
     return;
 
@@ -115,7 +115,7 @@ void CtorDtorRunner2::add(iterator_range<CtorDtorIterator> CtorDtors) {
   }
 }
 
-Error CtorDtorRunner2::run() {
+Error CtorDtorRunner::run() {
   using CtorDtorTy = void (*)();
 
   SymbolNameSet Names;
@@ -165,7 +165,7 @@ int LocalCXXRuntimeOverridesBase::CXAAtExitOverride(DestructorPtr Destructor,
   return 0;
 }
 
-Error LocalCXXRuntimeOverrides2::enable(JITDylib &JD,
+Error LocalCXXRuntimeOverrides::enable(JITDylib &JD,
                                         MangleAndInterner &Mangle) {
   SymbolMap RuntimeInterposes;
   RuntimeInterposes[Mangle("__dso_handle")] =

@@ -21,7 +21,7 @@ namespace {
       : llvm::orc::SimpleCompiler(*TM), TM(std::move(TM)) {}
   private:
     // FIXME: shared because std::functions (and thus
-    // IRCompileLayer2::CompileFunction) are not moveable.
+    // IRCompileLayer::CompileFunction) are not moveable.
     std::shared_ptr<llvm::TargetMachine> TM;
   };
 
