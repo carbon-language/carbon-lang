@@ -636,6 +636,29 @@ define <4 x float> @test_v4f32_mul_y_add_x_one(<4 x float> %x, <4 x float> %y) {
   ret <4 x float> %m
 }
 
+define <4 x float> @test_v4f32_mul_y_add_x_one_undefs(<4 x float> %x, <4 x float> %y) {
+; FMA-LABEL: test_v4f32_mul_y_add_x_one_undefs:
+; FMA:       # %bb.0:
+; FMA-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
+; FMA-NEXT:    vmulps %xmm0, %xmm1, %xmm0
+; FMA-NEXT:    retq
+;
+; FMA4-LABEL: test_v4f32_mul_y_add_x_one_undefs:
+; FMA4:       # %bb.0:
+; FMA4-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
+; FMA4-NEXT:    vmulps %xmm0, %xmm1, %xmm0
+; FMA4-NEXT:    retq
+;
+; AVX512-LABEL: test_v4f32_mul_y_add_x_one_undefs:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vaddps {{.*}}(%rip){1to4}, %xmm0, %xmm0
+; AVX512-NEXT:    vmulps %xmm0, %xmm1, %xmm0
+; AVX512-NEXT:    retq
+  %a = fadd <4 x float> %x, <float 1.0, float undef, float 1.0, float undef>
+  %m = fmul <4 x float> %y, %a
+  ret <4 x float> %m
+}
+
 define <4 x float> @test_v4f32_mul_add_x_negone_y(<4 x float> %x, <4 x float> %y) {
 ; FMA-INFS-LABEL: test_v4f32_mul_add_x_negone_y:
 ; FMA-INFS:       # %bb.0:
@@ -708,6 +731,29 @@ define <4 x float> @test_v4f32_mul_y_add_x_negone(<4 x float> %x, <4 x float> %y
 ; AVX512-NOINFS-NEXT:    vfmsub213ps {{.*#+}} xmm0 = (xmm1 * xmm0) - xmm1
 ; AVX512-NOINFS-NEXT:    retq
   %a = fadd <4 x float> %x, <float -1.0, float -1.0, float -1.0, float -1.0>
+  %m = fmul <4 x float> %y, %a
+  ret <4 x float> %m
+}
+
+define <4 x float> @test_v4f32_mul_y_add_x_negone_undefs(<4 x float> %x, <4 x float> %y) {
+; FMA-LABEL: test_v4f32_mul_y_add_x_negone_undefs:
+; FMA:       # %bb.0:
+; FMA-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
+; FMA-NEXT:    vmulps %xmm0, %xmm1, %xmm0
+; FMA-NEXT:    retq
+;
+; FMA4-LABEL: test_v4f32_mul_y_add_x_negone_undefs:
+; FMA4:       # %bb.0:
+; FMA4-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
+; FMA4-NEXT:    vmulps %xmm0, %xmm1, %xmm0
+; FMA4-NEXT:    retq
+;
+; AVX512-LABEL: test_v4f32_mul_y_add_x_negone_undefs:
+; AVX512:       # %bb.0:
+; AVX512-NEXT:    vaddps {{.*}}(%rip){1to4}, %xmm0, %xmm0
+; AVX512-NEXT:    vmulps %xmm0, %xmm1, %xmm0
+; AVX512-NEXT:    retq
+  %a = fadd <4 x float> %x, <float undef, float -1.0, float undef, float -1.0>
   %m = fmul <4 x float> %y, %a
   ret <4 x float> %m
 }
