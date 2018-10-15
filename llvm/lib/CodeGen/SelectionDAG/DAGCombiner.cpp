@@ -10794,17 +10794,18 @@ SDValue DAGCombiner::visitFMULForFMADistributiveCombine(SDNode *N) {
   unsigned PreferredFusedOpcode = HasFMAD ? ISD::FMAD : ISD::FMA;
   bool Aggressive = TLI.enableAggressiveFMAFusion(VT);
 
-  // fold (fmul (fadd x, +1.0), y) -> (fma x, y, y)
-  // fold (fmul (fadd x, -1.0), y) -> (fma x, y, (fneg y))
+  // fold (fmul (fadd x0, +1.0), y) -> (fma x0, y, y)
+  // fold (fmul (fadd x0, -1.0), y) -> (fma x0, y, (fneg y))
   auto FuseFADD = [&](SDValue X, SDValue Y, const SDNodeFlags Flags) {
     if (X.getOpcode() == ISD::FADD && (Aggressive || X->hasOneUse())) {
-      auto XC1 = isConstOrConstSplatFP(X.getOperand(1));
-      if (XC1 && XC1->isExactlyValue(+1.0))
-        return DAG.getNode(PreferredFusedOpcode, SL, VT, X.getOperand(0), Y,
-                           Y, Flags);
-      if (XC1 && XC1->isExactlyValue(-1.0))
-        return DAG.getNode(PreferredFusedOpcode, SL, VT, X.getOperand(0), Y,
-                           DAG.getNode(ISD::FNEG, SL, VT, Y), Flags);
+      if (auto *C = isConstOrConstSplatFP(X.getOperand(1), true)) {
+        if (C->isExactlyValue(+1.0))
+          return DAG.getNode(PreferredFusedOpcode, SL, VT, X.getOperand(0), Y,
+                             Y, Flags);
+        if (C->isExactlyValue(-1.0))
+          return DAG.getNode(PreferredFusedOpcode, SL, VT, X.getOperand(0), Y,
+                             DAG.getNode(ISD::FNEG, SL, VT, Y), Flags);
+      }
     }
     return SDValue();
   };
