@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseMapInfo.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cstddef>
@@ -67,7 +68,7 @@ public:
   explicit DenseSetImpl(unsigned InitialReserve = 0) : TheMap(InitialReserve) {}
 
   DenseSetImpl(std::initializer_list<ValueT> Elems)
-      : DenseSetImpl(Elems.size()) {
+      : DenseSetImpl(PowerOf2Ceil(Elems.size())) {
     insert(Elems.begin(), Elems.end());
   }
 

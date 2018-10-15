@@ -80,6 +80,14 @@ TYPED_TEST(DenseSetTest, InitializerList) {
   EXPECT_EQ(0u, set.count(3));
 }
 
+TYPED_TEST(DenseSetTest, InitializerListWithNonPowerOfTwoLength) {
+  TypeParam set({1, 2, 3});
+  EXPECT_EQ(3u, set.size());
+  EXPECT_EQ(1u, set.count(1));
+  EXPECT_EQ(1u, set.count(2));
+  EXPECT_EQ(1u, set.count(3));
+}
+
 TYPED_TEST(DenseSetTest, ConstIteratorComparison) {
   TypeParam set({1});
   const TypeParam &cset = set;
