@@ -150,7 +150,7 @@ static bool unlikelyExecuted(const BasicBlock &BB) {
 }
 
 static bool returnsOrHasSideEffects(const BasicBlock &BB) {
-  const TerminatorInst *I = BB.getTerminator();
+  const Instruction *I = BB.getTerminator();
   if (isa<ReturnInst>(I) || isa<IndirectBrInst>(I) || isa<InvokeInst>(I))
     return true;
 
