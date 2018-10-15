@@ -10851,14 +10851,6 @@ SDValue DAGCombiner::visitFMULForFMADistributiveCombine(SDNode *N) {
   return SDValue();
 }
 
-static bool isFMulNegTwo(SDValue &N) {
-  if (N.getOpcode() != ISD::FMUL)
-    return false;
-  if (ConstantFPSDNode *CFP = isConstOrConstSplatFP(N.getOperand(1)))
-    return CFP->isExactlyValue(-2.0);
-  return false;
-}
-
 SDValue DAGCombiner::visitFADD(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -10903,14 +10895,24 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
     return DAG.getNode(ISD::FSUB, DL, VT, N1,
                        GetNegatedExpression(N0, DAG, LegalOperations), Flags);
 
-  // fold (fadd A, (fmul B, -2.0)) -> (fsub A, (fadd B, B))
-  // fold (fadd (fmul B, -2.0), A) -> (fsub A, (fadd B, B))
-  if ((isFMulNegTwo(N0) && N0.hasOneUse()) ||
-      (isFMulNegTwo(N1) && N1.hasOneUse())) {
-    bool N1IsFMul = isFMulNegTwo(N1);
-    SDValue AddOp = N1IsFMul ? N1.getOperand(0) : N0.getOperand(0);
-    SDValue Add = DAG.getNode(ISD::FADD, DL, VT, AddOp, AddOp, Flags);
-    return DAG.getNode(ISD::FSUB, DL, VT, N1IsFMul ? N0 : N1, Add, Flags);
+  auto isFMulNegTwo = [](SDValue FMul) {
+    if (!FMul.hasOneUse() || FMul.getOpcode() != ISD::FMUL)
+      return false;
+    auto *C = isConstOrConstSplatFP(FMul.getOperand(1));
+    return C && C->isExactlyValue(-2.0);
+  };
+
+  // fadd (fmul B, -2.0), A --> fsub A, (fadd B, B)
+  if (isFMulNegTwo(N0)) {
+    SDValue B = N0.getOperand(0);
+    SDValue Add = DAG.getNode(ISD::FADD, DL, VT, B, B, Flags);
+    return DAG.getNode(ISD::FSUB, DL, VT, N1, Add, Flags);
+  }
+  // fadd A, (fmul B, -2.0) --> fsub A, (fadd B, B)
+  if (isFMulNegTwo(N1)) {
+    SDValue B = N1.getOperand(0);
+    SDValue Add = DAG.getNode(ISD::FADD, DL, VT, B, B, Flags);
+    return DAG.getNode(ISD::FSUB, DL, VT, N0, Add, Flags);
   }
 
   // No FP constant should be created after legalization as Instruction
