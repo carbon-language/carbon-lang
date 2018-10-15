@@ -135,9 +135,10 @@ const Module *BasicBlock::getModule() const {
   return getParent()->getParent();
 }
 
-const TerminatorInst *BasicBlock::getTerminator() const {
-  if (InstList.empty()) return nullptr;
-  return dyn_cast<TerminatorInst>(&InstList.back());
+const Instruction *BasicBlock::getTerminator() const {
+  if (InstList.empty() || !InstList.back().isTerminator())
+    return nullptr;
+  return &InstList.back();
 }
 
 const CallInst *BasicBlock::getTerminatingMustTailCall() const {
