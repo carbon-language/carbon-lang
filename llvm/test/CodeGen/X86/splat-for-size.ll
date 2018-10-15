@@ -9,7 +9,8 @@
 define <2 x double> @splat_v2f64(<2 x double> %x) #0 {
 ; CHECK-LABEL: splat_v2f64:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    vmovddup {{.*#+}} xmm1 = mem[0,0]
+; CHECK-NEXT:    vmovddup {{.*#+}} xmm1 = [1,1]
+; CHECK-NEXT:    # xmm1 = mem[0,0]
 ; CHECK-NEXT:    vaddpd %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %add = fadd <2 x double> %x, <double 1.0, double 1.0>
@@ -51,7 +52,8 @@ define <8 x float> @splat_v8f32(<8 x float> %x) #1 {
 define <2 x i64> @splat_v2i64(<2 x i64> %x) #1 {
 ; AVX-LABEL: splat_v2i64:
 ; AVX:       # %bb.0:
-; AVX-NEXT:    vmovddup {{.*#+}} xmm1 = mem[0,0]
+; AVX-NEXT:    vmovddup {{.*#+}} xmm1 = [2,2]
+; AVX-NEXT:    # xmm1 = mem[0,0]
 ; AVX-NEXT:    vpaddq %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retq
 ;
@@ -70,7 +72,8 @@ define <4 x i64> @splat_v4i64(<4 x i64> %x) #0 {
 ; AVX-LABEL: splat_v4i64:
 ; AVX:       # %bb.0:
 ; AVX-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX-NEXT:    vmovddup {{.*#+}} xmm2 = mem[0,0]
+; AVX-NEXT:    vmovddup {{.*#+}} xmm2 = [2,2]
+; AVX-NEXT:    # xmm2 = mem[0,0]
 ; AVX-NEXT:    vpaddq %xmm2, %xmm1, %xmm1
 ; AVX-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
 ; AVX-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
