@@ -125,7 +125,7 @@ generateSelfAliasingCodeTemplates(const Instruction &Instr) {
     setRandomAliasing(SelfAliasing, IT, IT);
   }
   CT.Instructions.push_back(std::move(IT));
-  return Result;
+  return std::move(Result);
 }
 
 llvm::Expected<std::vector<CodeTemplate>>
@@ -136,7 +136,7 @@ generateUnconstrainedCodeTemplates(const Instruction &Instr,
   CodeTemplate &CT = Result.back();
   CT.Info = llvm::formatv("{0}, repeating an unconstrained assignment", Msg);
   CT.Instructions.emplace_back(Instr);
-  return Result;
+  return std::move(Result);
 }
 
 std::mt19937 &randomGenerator() {
