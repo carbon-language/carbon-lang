@@ -105,7 +105,8 @@ std::optional<DataRef> ExtractDataRef(std::optional<A> &&x) {
 // member function that converts parse trees into (usually) generic
 // expressions.
 struct ExprAnalyzer {
-  ExprAnalyzer(FoldingContext &ctx, const IntrinsicTypeDefaultKinds &dfts,
+  ExprAnalyzer(FoldingContext &ctx,
+      const semantics::IntrinsicTypeDefaultKinds &dfts,
       const IntrinsicProcTable &procs)
     : context{ctx}, defaults{dfts}, intrinsics{procs} {}
 
@@ -184,7 +185,7 @@ struct ExprAnalyzer {
       const parser::ProcedureDesignator &, const std::vector<ActualArgument> &);
 
   FoldingContext context;
-  const IntrinsicTypeDefaultKinds &defaults;
+  const semantics::IntrinsicTypeDefaultKinds &defaults;
   const IntrinsicProcTable &intrinsics;
 };
 
@@ -313,7 +314,7 @@ int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
 template<typename PARSED>
 MaybeExpr IntLiteralConstant(ExprAnalyzer &ea, const PARSED &x) {
   int kind{ea.Analyze(std::get<std::optional<parser::KindParam>>(x.t),
-      ea.defaults.defaultIntegerKind)};
+      ea.defaults.GetDefaultKind(TypeCategory::Integer))};
   auto value{std::get<0>(x.t)};  // std::(u)int64_t
   auto result{common::SearchDynamicTypes(
       TypeKindVisitor<TypeCategory::Integer, Constant, std::int64_t>{
@@ -375,15 +376,15 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   // letter used in an exponent part (e.g., the 'E' in "6.02214E+23")
   // should agree.  In the absence of an explicit kind parameter, any exponent
   // letter determines the kind.  Otherwise, defaults apply.
-  int defaultKind{defaults.defaultRealKind};
+  int defaultKind{defaults.GetDefaultKind(TypeCategory::Real)};
   const char *end{x.real.source.end()};
   std::optional<int> letterKind;
   for (const char *p{x.real.source.begin()}; p < end; ++p) {
     if (parser::IsLetter(*p)) {
       switch (*p) {
-      case 'e': letterKind = defaults.defaultRealKind; break;
-      case 'd': letterKind = defaults.defaultDoublePrecisionKind; break;
-      case 'q': letterKind = defaults.defaultQuadPrecisionKind; break;
+      case 'e': letterKind = defaults.GetDefaultKind(TypeCategory::Real); break;
+      case 'd': letterKind = defaults.doublePrecisionKind(); break;
+      case 'q': letterKind = defaults.quadPrecisionKind(); break;
       default: ctxMsgs.Say("unknown exponent letter '%c'"_err_en_US, *p);
       }
       break;
@@ -424,9 +425,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexPart &x) {
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::ComplexLiteralConstant &z) {
-  return AsMaybeExpr(
-      ConstructComplex(context.messages, Analyze(std::get<0>(z.t)),
-          Analyze(std::get<1>(z.t)), defaults.defaultRealKind));
+  return AsMaybeExpr(ConstructComplex(context.messages,
+      Analyze(std::get<0>(z.t)), Analyze(std::get<1>(z.t)),
+      defaults.GetDefaultKind(TypeCategory::Real)));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstant &x) {
@@ -443,7 +444,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::CharLiteralConstant &x) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
   auto kind{Analyze(std::get<std::optional<parser::KindParam>>(x.t),
-      defaults.defaultLogicalKind)};
+      defaults.GetDefaultKind(TypeCategory::Logical))};
   bool value{std::get<bool>(x.t)};
   auto result{common::SearchDynamicTypes(
       TypeKindVisitor<TypeCategory::Logical, Constant, bool>{
@@ -457,7 +458,7 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::LogicalLiteralConstant &x) {
 MaybeExpr ExprAnalyzer::Analyze(const parser::HollerithLiteralConstant &x) {
   return common::SearchDynamicTypes(
       TypeKindVisitor<TypeCategory::Character, Constant, std::string>{
-          defaults.defaultCharacterKind, x.v});
+          defaults.GetDefaultKind(TypeCategory::Character), x.v});
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::BOZLiteralConstant &x) {
@@ -1064,7 +1065,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Subtract &x) {
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::ComplexConstructor &x) {
   return AsMaybeExpr(ConstructComplex(context.messages,
       AnalyzeHelper(*this, *std::get<0>(x.t)),
-      AnalyzeHelper(*this, *std::get<1>(x.t)), defaults.defaultRealKind));
+      AnalyzeHelper(*this, *std::get<1>(x.t)),
+      defaults.GetDefaultKind(TypeCategory::Real)));
 }
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::Expr::Concat &x) {
@@ -1215,7 +1217,7 @@ void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
 namespace Fortran::semantics {
 
 evaluate::MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
-    const evaluate::IntrinsicTypeDefaultKinds &defaults,
+    const IntrinsicTypeDefaultKinds &defaults,
     const evaluate::IntrinsicProcTable &intrinsics, const parser::Expr &expr) {
   return evaluate::ExprAnalyzer{context, defaults, intrinsics}.Analyze(expr);
 }
@@ -1223,7 +1225,7 @@ evaluate::MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
 class Mutator {
 public:
   Mutator(evaluate::FoldingContext &context,
-      const evaluate::IntrinsicTypeDefaultKinds &defaults,
+      const IntrinsicTypeDefaultKinds &defaults,
       const evaluate::IntrinsicProcTable &intrinsics)
     : context_{context}, defaults_{defaults}, intrinsics_{intrinsics} {}
 
@@ -1247,13 +1249,13 @@ public:
 
 private:
   evaluate::FoldingContext &context_;
-  const evaluate::IntrinsicTypeDefaultKinds &defaults_;
+  const IntrinsicTypeDefaultKinds &defaults_;
   const evaluate::IntrinsicProcTable &intrinsics_;
 };
 
 void AnalyzeExpressions(parser::Program &program,
     evaluate::FoldingContext &context,
-    const evaluate::IntrinsicTypeDefaultKinds &defaults,
+    const IntrinsicTypeDefaultKinds &defaults,
     const evaluate::IntrinsicProcTable &intrinsics) {
   Mutator mutator{context, defaults, intrinsics};
   parser::Walk(program, mutator);

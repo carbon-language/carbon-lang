@@ -18,6 +18,7 @@
 #include "../common/enum-set.h"
 #include "../common/fortran.h"
 #include "../common/idioms.h"
+#include "../semantics/default-kinds.h"
 #include <map>
 #include <ostream>
 #include <sstream>
@@ -194,7 +195,7 @@ struct IntrinsicInterface {
   TypePattern result;
   Rank rank{Rank::elemental};
   std::optional<SpecificIntrinsic> Match(const CallCharacteristics &,
-      const IntrinsicTypeDefaultKinds &,
+      const semantics::IntrinsicTypeDefaultKinds &,
       parser::ContextualMessages &messages) const;
   std::ostream &Dump(std::ostream &) const;
 };
@@ -737,7 +738,8 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
 // Intrinsic interface matching against the arguments of a particular
 // procedure reference.
 std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
-    const CallCharacteristics &call, const IntrinsicTypeDefaultKinds &defaults,
+    const CallCharacteristics &call,
+    const semantics::IntrinsicTypeDefaultKinds &defaults,
     parser::ContextualMessages &messages) const {
   // Attempt to construct a 1-1 correspondence between the dummy arguments in
   // a particular intrinsic procedure's generic interface and the actual
@@ -823,19 +825,19 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
       argOk = false;
       break;
     case KindCode::defaultIntegerKind:
-      argOk = type->kind == defaults.defaultIntegerKind;
+      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Integer);
       break;
     case KindCode::defaultRealKind:
-      argOk = type->kind == defaults.defaultRealKind;
+      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Real);
       break;
     case KindCode::doublePrecision:
-      argOk = type->kind == defaults.defaultDoublePrecisionKind;
+      argOk = type->kind == defaults.doublePrecisionKind();
       break;
     case KindCode::defaultCharKind:
-      argOk = type->kind == defaults.defaultCharacterKind;
+      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Character);
       break;
     case KindCode::defaultLogicalKind:
-      argOk = type->kind == defaults.defaultLogicalKind;
+      argOk = type->kind == defaults.GetDefaultKind(TypeCategory::Logical);
       break;
     case KindCode::any: argOk = true; break;
     case KindCode::kindArg:
@@ -961,27 +963,27 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   case KindCode::defaultIntegerKind:
     CHECK(result.categorySet == IntType);
     CHECK(resultType.category == TypeCategory::Integer);
-    resultType.kind = defaults.defaultIntegerKind;
+    resultType.kind = defaults.GetDefaultKind(TypeCategory::Integer);
     break;
   case KindCode::defaultRealKind:
     CHECK(result.categorySet == CategorySet{resultType.category});
     CHECK(FloatingType.test(resultType.category));
-    resultType.kind = defaults.defaultRealKind;
+    resultType.kind = defaults.GetDefaultKind(TypeCategory::Real);
     break;
   case KindCode::doublePrecision:
     CHECK(result.categorySet == RealType);
     CHECK(resultType.category == TypeCategory::Real);
-    resultType.kind = defaults.defaultDoublePrecisionKind;
+    resultType.kind = defaults.doublePrecisionKind();
     break;
   case KindCode::defaultCharKind:
     CHECK(result.categorySet == CharType);
     CHECK(resultType.category == TypeCategory::Character);
-    resultType.kind = defaults.defaultCharacterKind;
+    resultType.kind = defaults.GetDefaultKind(TypeCategory::Character);
     break;
   case KindCode::defaultLogicalKind:
     CHECK(result.categorySet == LogicalType);
     CHECK(resultType.category == TypeCategory::Logical);
-    resultType.kind = defaults.defaultLogicalKind;
+    resultType.kind = defaults.GetDefaultKind(TypeCategory::Logical);
     break;
   case KindCode::same:
     CHECK(sameArg != nullptr);
@@ -1018,7 +1020,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     } else {
       CHECK(
           kindDummyArg->optionality == Optionality::defaultsToDefaultForResult);
-      resultType.kind = defaults.DefaultKind(resultType.category);
+      resultType.kind = defaults.GetDefaultKind(resultType.category);
     }
     break;
   case KindCode::likeMultiply:
@@ -1085,7 +1087,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
 }
 
 struct IntrinsicProcTable::Implementation {
-  explicit Implementation(const IntrinsicTypeDefaultKinds &dfts)
+  explicit Implementation(const semantics::IntrinsicTypeDefaultKinds &dfts)
     : defaults{dfts} {
     for (const IntrinsicInterface &f : genericIntrinsicFunction) {
       genericFuncs.insert(std::make_pair(std::string{f.name}, &f));
@@ -1098,7 +1100,7 @@ struct IntrinsicProcTable::Implementation {
   std::optional<SpecificIntrinsic> Probe(
       const CallCharacteristics &, parser::ContextualMessages *) const;
 
-  IntrinsicTypeDefaultKinds defaults;
+  semantics::IntrinsicTypeDefaultKinds defaults;
   std::multimap<std::string, const IntrinsicInterface *> genericFuncs;
   std::multimap<std::string, const SpecificIntrinsicInterface *> specificFuncs;
   std::ostream &Dump(std::ostream &) const;
@@ -1176,7 +1178,7 @@ IntrinsicProcTable::~IntrinsicProcTable() {
 }
 
 IntrinsicProcTable IntrinsicProcTable::Configure(
-    const IntrinsicTypeDefaultKinds &defaults) {
+    const semantics::IntrinsicTypeDefaultKinds &defaults) {
   IntrinsicProcTable result;
   result.impl_ = new IntrinsicProcTable::Implementation(defaults);
   return result;

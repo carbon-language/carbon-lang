@@ -88,17 +88,6 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
   return *this;
 }
 
-int IntrinsicTypeDefaultKinds::DefaultKind(TypeCategory category) const {
-  switch (category) {
-  case TypeCategory::Integer: return defaultIntegerKind;
-  case TypeCategory::Real:
-  case TypeCategory::Complex: return defaultRealKind;
-  case TypeCategory::Character: return defaultCharacterKind;
-  case TypeCategory::Logical: return defaultLogicalKind;
-  default: CRASH_NO_CASE; return 0;
-  }
-}
-
 std::string SomeDerived::Dump() const {
   return "TYPE("s + spec().name().ToString() + ')';
 }

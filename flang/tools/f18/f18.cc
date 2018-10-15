@@ -22,6 +22,7 @@
 #include "../../lib/parser/parsing.h"
 #include "../../lib/parser/provenance.h"
 #include "../../lib/parser/unparse.h"
+#include "../../lib/semantics/default-kinds.h"
 #include "../../lib/semantics/dump-parse-tree.h"
 #include "../../lib/semantics/expression.h"
 #include "../../lib/semantics/semantics.h"
@@ -219,7 +220,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       Fortran::parser::Messages messages;
       Fortran::parser::ContextualMessages contextualMessages{whole, &messages};
       Fortran::evaluate::FoldingContext context{contextualMessages};
-      Fortran::evaluate::IntrinsicTypeDefaultKinds defaults;
+      Fortran::semantics::IntrinsicTypeDefaultKinds defaults;
       auto intrinsics{
           Fortran::evaluate::IntrinsicProcTable::Configure(defaults)};
       Fortran::semantics::AnalyzeExpressions(

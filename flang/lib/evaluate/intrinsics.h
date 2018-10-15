@@ -19,6 +19,7 @@
 #include "type.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
+#include "../semantics/default-kinds.h"
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -58,7 +59,8 @@ private:
 
 public:
   ~IntrinsicProcTable();
-  static IntrinsicProcTable Configure(const IntrinsicTypeDefaultKinds &);
+  static IntrinsicProcTable Configure(
+      const semantics::IntrinsicTypeDefaultKinds &);
   std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &,
       parser::ContextualMessages *messages = nullptr) const;
   std::ostream &Dump(std::ostream &) const;

@@ -148,9 +148,9 @@ template<typename... As> Arguments Args(As &&... xs) {
 }
 
 void TestIntrinsics() {
-  IntrinsicTypeDefaultKinds defaults;
-  MATCH(4, defaults.defaultIntegerKind);
-  MATCH(4, defaults.defaultRealKind);
+  semantics::IntrinsicTypeDefaultKinds defaults;
+  MATCH(4, defaults.GetDefaultKind(TypeCategory::Integer));
+  MATCH(4, defaults.GetDefaultKind(TypeCategory::Real));
   IntrinsicProcTable table{IntrinsicProcTable::Configure(defaults)};
   table.Dump(std::cout);
 

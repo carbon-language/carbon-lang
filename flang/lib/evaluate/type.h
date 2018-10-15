@@ -180,16 +180,6 @@ using DefaultComplex = SameKind<TypeCategory::Complex, DefaultReal>;
 using DefaultLogical = Type<TypeCategory::Logical, DefaultInteger::kind>;
 using DefaultCharacter = Type<TypeCategory::Character, 1>;
 
-struct IntrinsicTypeDefaultKinds {
-  int defaultIntegerKind{evaluate::DefaultInteger::kind};
-  int defaultRealKind{evaluate::DefaultReal::kind};
-  int defaultDoublePrecisionKind{evaluate::DefaultDoublePrecision::kind};
-  int defaultQuadPrecisionKind{evaluate::DefaultDoublePrecision::kind};
-  int defaultCharacterKind{evaluate::DefaultCharacter::kind};
-  int defaultLogicalKind{evaluate::DefaultLogical::kind};
-  int DefaultKind(TypeCategory) const;
-};
-
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
