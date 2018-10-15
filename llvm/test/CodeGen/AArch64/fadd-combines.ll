@@ -76,9 +76,8 @@ define <4 x float> @fmulnegtwo_vec_commute(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @fmulnegtwo_vec_undefs(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: fmulnegtwo_vec_undefs:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    movi v2.4s, #192, lsl #24
-; CHECK-NEXT:    fmul v1.4s, v1.4s, v2.4s
-; CHECK-NEXT:    fadd v0.4s, v0.4s, v1.4s
+; CHECK-NEXT:    fadd v1.4s, v1.4s, v1.4s
+; CHECK-NEXT:    fsub v0.4s, v0.4s, v1.4s
 ; CHECK-NEXT:    ret
   %mul = fmul <4 x float> %b, <float undef, float -2.0, float undef, float -2.0>
   %add = fadd <4 x float> %a, %mul
@@ -88,9 +87,8 @@ define <4 x float> @fmulnegtwo_vec_undefs(<4 x float> %a, <4 x float> %b) {
 define <4 x float> @fmulnegtwo_vec_commute_undefs(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: fmulnegtwo_vec_commute_undefs:
 ; CHECK:       // %bb.0:
-; CHECK-NEXT:    movi v2.4s, #192, lsl #24
-; CHECK-NEXT:    fmul v1.4s, v1.4s, v2.4s
-; CHECK-NEXT:    fadd v0.4s, v1.4s, v0.4s
+; CHECK-NEXT:    fadd v1.4s, v1.4s, v1.4s
+; CHECK-NEXT:    fsub v0.4s, v0.4s, v1.4s
 ; CHECK-NEXT:    ret
   %mul = fmul <4 x float> %b, <float -2.0, float undef, float -2.0, float -2.0>
   %add = fadd <4 x float> %mul, %a

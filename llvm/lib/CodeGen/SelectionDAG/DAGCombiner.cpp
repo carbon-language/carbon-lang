@@ -10898,7 +10898,7 @@ SDValue DAGCombiner::visitFADD(SDNode *N) {
   auto isFMulNegTwo = [](SDValue FMul) {
     if (!FMul.hasOneUse() || FMul.getOpcode() != ISD::FMUL)
       return false;
-    auto *C = isConstOrConstSplatFP(FMul.getOperand(1));
+    auto *C = isConstOrConstSplatFP(FMul.getOperand(1), true);
     return C && C->isExactlyValue(-2.0);
   };
 
