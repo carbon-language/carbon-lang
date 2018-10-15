@@ -128,7 +128,7 @@ struct CriticalEdgeSplittingOptions {
 /// IndirectBrInst.  Splitting these edges will almost always create an invalid
 /// program because the address of the new block won't be the one that is jumped
 /// to.
-BasicBlock *SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
+BasicBlock *SplitCriticalEdge(Instruction *TI, unsigned SuccNum,
                               const CriticalEdgeSplittingOptions &Options =
                                   CriticalEdgeSplittingOptions());
 
