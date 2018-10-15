@@ -541,8 +541,7 @@ define <16 x i16> @test_x86_avx2_psrl_w_load(<16 x i16> %a0, <8 x i16>* %p) {
 ; X86-AVX512VL-LABEL: test_x86_avx2_psrl_w_load:
 ; X86-AVX512VL:       ## %bb.0:
 ; X86-AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; X86-AVX512VL-NEXT:    vmovdqa (%eax), %xmm1 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0x6f,0x08]
-; X86-AVX512VL-NEXT:    vpsrlw %xmm1, %ymm0, %ymm0 ## EVEX TO VEX Compression encoding: [0xc5,0xfd,0xd1,0xc1]
+; X86-AVX512VL-NEXT:    vpsrlw (%eax), %ymm0, %ymm0 ## EVEX TO VEX Compression encoding: [0xc5,0xfd,0xd1,0x00]
 ; X86-AVX512VL-NEXT:    retl ## encoding: [0xc3]
 ;
 ; X64-AVX-LABEL: test_x86_avx2_psrl_w_load:
@@ -552,8 +551,7 @@ define <16 x i16> @test_x86_avx2_psrl_w_load(<16 x i16> %a0, <8 x i16>* %p) {
 ;
 ; X64-AVX512VL-LABEL: test_x86_avx2_psrl_w_load:
 ; X64-AVX512VL:       ## %bb.0:
-; X64-AVX512VL-NEXT:    vmovdqa (%rdi), %xmm1 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0x6f,0x0f]
-; X64-AVX512VL-NEXT:    vpsrlw %xmm1, %ymm0, %ymm0 ## EVEX TO VEX Compression encoding: [0xc5,0xfd,0xd1,0xc1]
+; X64-AVX512VL-NEXT:    vpsrlw (%rdi), %ymm0, %ymm0 ## EVEX TO VEX Compression encoding: [0xc5,0xfd,0xd1,0x07]
 ; X64-AVX512VL-NEXT:    retq ## encoding: [0xc3]
   %a1 = load <8 x i16>, <8 x i16>* %p
   %res = call <16 x i16> @llvm.x86.avx2.psrl.w(<16 x i16> %a0, <8 x i16> %a1) ; <<16 x i16>> [#uses=1]

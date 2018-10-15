@@ -1952,14 +1952,12 @@ define <32 x i16> @test_x86_avx512_psrl_w_512_load(<32 x i16> %a0, <8 x i16>* %p
 ; X86-LABEL: test_x86_avx512_psrl_w_512_load:
 ; X86:       # %bb.0:
 ; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax # encoding: [0x8b,0x44,0x24,0x04]
-; X86-NEXT:    vmovdqa (%eax), %xmm1 # encoding: [0xc5,0xf9,0x6f,0x08]
-; X86-NEXT:    vpsrlw %xmm1, %zmm0, %zmm0 # encoding: [0x62,0xf1,0x7d,0x48,0xd1,0xc1]
+; X86-NEXT:    vpsrlw (%eax), %zmm0, %zmm0 # encoding: [0x62,0xf1,0x7d,0x48,0xd1,0x00]
 ; X86-NEXT:    retl # encoding: [0xc3]
 ;
 ; X64-LABEL: test_x86_avx512_psrl_w_512_load:
 ; X64:       # %bb.0:
-; X64-NEXT:    vmovdqa (%rdi), %xmm1 # encoding: [0xc5,0xf9,0x6f,0x0f]
-; X64-NEXT:    vpsrlw %xmm1, %zmm0, %zmm0 # encoding: [0x62,0xf1,0x7d,0x48,0xd1,0xc1]
+; X64-NEXT:    vpsrlw (%rdi), %zmm0, %zmm0 # encoding: [0x62,0xf1,0x7d,0x48,0xd1,0x07]
 ; X64-NEXT:    retq # encoding: [0xc3]
   %a1 = load <8 x i16>, <8 x i16>* %p
   %res = call <32 x i16> @llvm.x86.avx512.psrl.w.512(<32 x i16> %a0, <8 x i16> %a1) ; <<32 x i16>> [#uses=1]
