@@ -50,17 +50,17 @@ using common::TypeCategory;
 // that can also be be typeless values are encoded with an "elementalOrBOZ"
 // rank pattern.
 using CategorySet = common::EnumSet<TypeCategory, 8>;
-static constexpr CategorySet Int{TypeCategory::Integer};
-static constexpr CategorySet Real{TypeCategory::Real};
-static constexpr CategorySet Complex{TypeCategory::Complex};
-static constexpr CategorySet Char{TypeCategory::Character};
-static constexpr CategorySet Logical{TypeCategory::Logical};
-static constexpr CategorySet IntOrReal{Int | Real};
-static constexpr CategorySet Floating{Real | Complex};
-static constexpr CategorySet Numeric{Int | Real | Complex};
-static constexpr CategorySet Relatable{Int | Real | Char};
+static constexpr CategorySet IntType{TypeCategory::Integer};
+static constexpr CategorySet RealType{TypeCategory::Real};
+static constexpr CategorySet ComplexType{TypeCategory::Complex};
+static constexpr CategorySet CharType{TypeCategory::Character};
+static constexpr CategorySet LogicalType{TypeCategory::Logical};
+static constexpr CategorySet IntOrRealType{IntType | RealType};
+static constexpr CategorySet FloatingType{RealType | ComplexType};
+static constexpr CategorySet NumericType{IntType | RealType | ComplexType};
+static constexpr CategorySet RelatableType{IntType | RealType | CharType};
 static constexpr CategorySet IntrinsicType{
-    Int | Real | Complex | Char | Logical};
+    IntType | RealType | ComplexType | CharType | LogicalType};
 static constexpr CategorySet AnyType{
     IntrinsicType | CategorySet{TypeCategory::Derived}};
 
@@ -86,54 +86,56 @@ struct TypePattern {
 // Abbreviations for argument and result patterns in the intrinsic prototypes:
 
 // Match specific kinds of intrinsic types
-static constexpr TypePattern DftInt{Int, KindCode::defaultIntegerKind};
-static constexpr TypePattern DftReal{Real, KindCode::defaultRealKind};
-static constexpr TypePattern DftComplex{Complex, KindCode::defaultRealKind};
-static constexpr TypePattern DftChar{Char, KindCode::defaultCharKind};
-static constexpr TypePattern DftLogical{Logical, KindCode::defaultLogicalKind};
-static constexpr TypePattern BOZ{Int, KindCode::typeless};
-static constexpr TypePattern TEAM_TYPE{Int, KindCode::teamType};
-static constexpr TypePattern DoublePrecision{Real, KindCode::doublePrecision};
+static constexpr TypePattern DftInt{IntType, KindCode::defaultIntegerKind};
+static constexpr TypePattern DftReal{RealType, KindCode::defaultRealKind};
+static constexpr TypePattern DftComplex{ComplexType, KindCode::defaultRealKind};
+static constexpr TypePattern DftChar{CharType, KindCode::defaultCharKind};
+static constexpr TypePattern DftLogical{
+    LogicalType, KindCode::defaultLogicalKind};
+static constexpr TypePattern BOZ{IntType, KindCode::typeless};
+static constexpr TypePattern TEAM_TYPE{IntType, KindCode::teamType};
+static constexpr TypePattern DoublePrecision{
+    RealType, KindCode::doublePrecision};
 
 // Match any kind of some intrinsic or derived types
-static constexpr TypePattern AnyInt{Int, KindCode::any};
-static constexpr TypePattern AnyReal{Real, KindCode::any};
-static constexpr TypePattern AnyIntOrReal{IntOrReal, KindCode::any};
-static constexpr TypePattern AnyComplex{Complex, KindCode::any};
-static constexpr TypePattern AnyNumeric{Numeric, KindCode::any};
-static constexpr TypePattern AnyChar{Char, KindCode::any};
-static constexpr TypePattern AnyLogical{Logical, KindCode::any};
-static constexpr TypePattern AnyRelatable{Relatable, KindCode::any};
+static constexpr TypePattern AnyInt{IntType, KindCode::any};
+static constexpr TypePattern AnyReal{RealType, KindCode::any};
+static constexpr TypePattern AnyIntOrReal{IntOrRealType, KindCode::any};
+static constexpr TypePattern AnyComplex{ComplexType, KindCode::any};
+static constexpr TypePattern AnyNumeric{NumericType, KindCode::any};
+static constexpr TypePattern AnyChar{CharType, KindCode::any};
+static constexpr TypePattern AnyLogical{LogicalType, KindCode::any};
+static constexpr TypePattern AnyRelatable{RelatableType, KindCode::any};
 static constexpr TypePattern Anything{AnyType, KindCode::any};
 
 // Match some kind of some intrinsic type(s); all "Same" values must match,
 // even when not in the same category (e.g., SameComplex and SameReal).
 // Can be used to specify a result so long as at least one argument is
 // a "Same".
-static constexpr TypePattern SameInt{Int, KindCode::same};
-static constexpr TypePattern SameReal{Real, KindCode::same};
-static constexpr TypePattern SameIntOrReal{IntOrReal, KindCode::same};
-static constexpr TypePattern SameComplex{Complex, KindCode::same};
-static constexpr TypePattern SameFloating{Floating, KindCode::same};
-static constexpr TypePattern SameNumeric{Numeric, KindCode::same};
-static constexpr TypePattern SameChar{Char, KindCode::same};
-static constexpr TypePattern SameLogical{Logical, KindCode::same};
-static constexpr TypePattern SameRelatable{Relatable, KindCode::same};
+static constexpr TypePattern SameInt{IntType, KindCode::same};
+static constexpr TypePattern SameReal{RealType, KindCode::same};
+static constexpr TypePattern SameIntOrReal{IntOrRealType, KindCode::same};
+static constexpr TypePattern SameComplex{ComplexType, KindCode::same};
+static constexpr TypePattern SameFloating{FloatingType, KindCode::same};
+static constexpr TypePattern SameNumeric{NumericType, KindCode::same};
+static constexpr TypePattern SameChar{CharType, KindCode::same};
+static constexpr TypePattern SameLogical{LogicalType, KindCode::same};
+static constexpr TypePattern SameRelatable{RelatableType, KindCode::same};
 static constexpr TypePattern SameIntrinsic{IntrinsicType, KindCode::same};
 static constexpr TypePattern SameDerivedType{
     CategorySet{TypeCategory::Derived}, KindCode::same};
 static constexpr TypePattern SameType{AnyType, KindCode::same};
 
 // For DOT_PRODUCT and MATMUL, the result type depends on the arguments
-static constexpr TypePattern ResultLogical{Logical, KindCode::likeMultiply};
-static constexpr TypePattern ResultNumeric{Numeric, KindCode::likeMultiply};
+static constexpr TypePattern ResultLogical{LogicalType, KindCode::likeMultiply};
+static constexpr TypePattern ResultNumeric{NumericType, KindCode::likeMultiply};
 
 // Result types with known category and KIND=
-static constexpr TypePattern KINDInt{Int, KindCode::effectiveKind};
-static constexpr TypePattern KINDReal{Real, KindCode::effectiveKind};
-static constexpr TypePattern KINDComplex{Complex, KindCode::effectiveKind};
-static constexpr TypePattern KINDChar{Char, KindCode::effectiveKind};
-static constexpr TypePattern KINDLogical{Logical, KindCode::effectiveKind};
+static constexpr TypePattern KINDInt{IntType, KindCode::effectiveKind};
+static constexpr TypePattern KINDReal{RealType, KindCode::effectiveKind};
+static constexpr TypePattern KINDComplex{ComplexType, KindCode::effectiveKind};
+static constexpr TypePattern KINDChar{CharType, KindCode::effectiveKind};
+static constexpr TypePattern KINDLogical{LogicalType, KindCode::effectiveKind};
 
 // The default rank pattern for dummy arguments and function results is
 // "elemental".
@@ -172,15 +174,16 @@ struct IntrinsicDummyArgument {
 // DefaultingKIND is a KIND= argument whose default value is the appropriate
 // KIND(0), KIND(0.0), KIND(''), &c. value for the function result.
 static constexpr IntrinsicDummyArgument DefaultingKIND{"kind",
-    {Int, KindCode::kindArg}, Rank::scalar,
+    {IntType, KindCode::kindArg}, Rank::scalar,
     Optionality::defaultsToDefaultForResult};
 // MatchingDefaultKIND is a KIND= argument whose default value is the
 // kind of any "Same" function argument (viz., the one whose kind pattern is
 // "same").
 static constexpr IntrinsicDummyArgument MatchingDefaultKIND{"kind",
-    {Int, KindCode::kindArg}, Rank::scalar, Optionality::defaultsToSameKind};
+    {IntType, KindCode::kindArg}, Rank::scalar,
+    Optionality::defaultsToSameKind};
 static constexpr IntrinsicDummyArgument OptionalDIM{
-    "dim", {Int, KindCode::dimArg}, Rank::scalar, Optionality::optional};
+    "dim", {IntType, KindCode::dimArg}, Rank::scalar, Optionality::optional};
 static constexpr IntrinsicDummyArgument OptionalMASK{
     "mask", AnyLogical, Rank::conformable, Optionality::optional};
 
@@ -365,7 +368,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         KINDInt, Rank::vector},
     {"lbound",
         {{"array", Anything, Rank::anyOrAssumedRank},
-            {"dim", {Int, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
+            {"dim", {IntType, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
         KINDInt, Rank::scalar},
     {"leadz", {{"i", AnyInt}}, DftInt},
     {"len", {{"string", AnyChar}, DefaultingKIND}, KINDInt},
@@ -519,12 +522,12 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         KINDInt, Rank::vector},
     {"size",
         {{"array", Anything, Rank::anyOrAssumedRank},
-            {"dim", {Int, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
+            {"dim", {IntType, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
         KINDInt, Rank::scalar},
     {"spacing", {{"x", SameReal}}, SameReal},
     {"spread",
         {{"source", SameType, Rank::known},
-            {"dim", {Int, KindCode::dimArg}, Rank::scalar /*not optional*/},
+            {"dim", {IntType, KindCode::dimArg}, Rank::scalar /*not optional*/},
             {"ncopies", AnyInt, Rank::scalar}},
         SameType, Rank::rankPlus1},
     {"sqrt", {{"x", SameFloating}}, SameFloating},
@@ -549,7 +552,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         KINDInt, Rank::vector},
     {"ubound",
         {{"array", Anything, Rank::anyOrAssumedRank},
-            {"dim", {Int, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
+            {"dim", {IntType, KindCode::dimArg}, Rank::scalar}, DefaultingKIND},
         KINDInt, Rank::scalar},
     {"unpack",
         {{"vector", SameType, Rank::vector}, {"mask", AnyLogical, Rank::array},
@@ -947,27 +950,27 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   DynamicType resultType{*result.categorySet.LeastElement(), 0};
   switch (result.kindCode) {
   case KindCode::defaultIntegerKind:
-    CHECK(result.categorySet == Int);
+    CHECK(result.categorySet == IntType);
     CHECK(resultType.category == TypeCategory::Integer);
     resultType.kind = defaults.defaultIntegerKind;
     break;
   case KindCode::defaultRealKind:
     CHECK(result.categorySet == CategorySet{resultType.category});
-    CHECK(Floating.test(resultType.category));
+    CHECK(FloatingType.test(resultType.category));
     resultType.kind = defaults.defaultRealKind;
     break;
   case KindCode::doublePrecision:
-    CHECK(result.categorySet == Real);
+    CHECK(result.categorySet == RealType);
     CHECK(resultType.category == TypeCategory::Real);
     resultType.kind = defaults.defaultDoublePrecisionKind;
     break;
   case KindCode::defaultCharKind:
-    CHECK(result.categorySet == Char);
+    CHECK(result.categorySet == CharType);
     CHECK(resultType.category == TypeCategory::Character);
     resultType.kind = defaults.defaultCharacterKind;
     break;
   case KindCode::defaultLogicalKind:
-    CHECK(result.categorySet == Logical);
+    CHECK(result.categorySet == LogicalType);
     CHECK(resultType.category == TypeCategory::Logical);
     resultType.kind = defaults.defaultLogicalKind;
     break;
