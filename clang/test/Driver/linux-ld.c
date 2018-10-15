@@ -990,6 +990,20 @@
 // CHECK-ANDROID-HASH-STYLE-M: "{{.*}}ld{{(.exe)?}}"
 // CHECK-ANDROID-HASH-STYLE-M: "--hash-style=gnu"
 //
+// RUN: %clang %s -### -o %t.o 2>&1 --target=mips64-linux-gnuabin32 \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL-GNUABIN32 %s
+// CHECK-MIPS64EL-GNUABIN32: "{{.*}}ld{{(.exe)?}}"
+// CHECK-MIPS64EL-GNUABIN32: "-m" "elf32btsmipn32"
+// CHECK-MIPS64EL-GNUABIN32: "-dynamic-linker" "{{.*}}/lib{{(32)?}}/ld.so.1"
+// CHECK-MIPS64EL-GNUABIN32-NOT: "--hash-style={{gnu|both}}"
+//
+// RUN: %clang %s -### -o %t.o 2>&1 --target=mips64-linux-gnuabi64 \
+// RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL-GNUABI64 %s
+// CHECK-MIPS64EL-GNUABI64: "{{.*}}ld{{(.exe)?}}"
+// CHECK-MIPS64EL-GNUABI64: "-m" "elf64btsmip"
+// CHECK-MIPS64EL-GNUABI64: "-dynamic-linker" "{{.*}}/lib{{(64)?}}/ld.so.1"
+// CHECK-MIPS64EL-GNUABI64-NOT: "--hash-style={{gnu|both}}"
+//
 // RUN: %clang %s -### -o %t.o 2>&1 \
 // RUN:     --target=sparc-unknown-linux-gnu \
 // RUN:   | FileCheck --check-prefix=CHECK-SPARCV8 %s
