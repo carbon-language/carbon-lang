@@ -34,7 +34,7 @@ class Argument;
 
 struct CallCharacteristics {
   parser::CharBlock name;
-  const Arguments &argument;
+  const Arguments &arguments;
   bool isSubroutineCall{false};
 };
 

@@ -199,6 +199,15 @@ struct IntrinsicInterface {
   std::ostream &Dump(std::ostream &) const;
 };
 
+// GENERIC INTRINSIC FUNCTION INTERFACES
+// Each entry in this table defines a pattern.  Some intrinsic
+// functions have more than one such pattern.  Besides the name
+// of the intrinsic function, each pattern has specifications for
+// the dummy arguments and for the result of the function.
+// The dummy argument patterns each have a name (this are from the
+// standard, but rarely appear in actual code), a type and kind
+// pattern, allowable ranks, and optionality indicators.
+// Be advised, the default rank pattern is "elemental".
 static const IntrinsicInterface genericIntrinsicFunction[]{
     {"abs", {{"a", SameIntOrReal}}, SameIntOrReal},
     {"abs", {{"a", SameComplex}}, SameReal},
@@ -739,7 +748,7 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
        ++dummies) {
     actualForDummy[dummies] = nullptr;
   }
-  for (const ActualArgument &arg : call.argument) {
+  for (const ActualArgument &arg : call.arguments) {
     if (arg.isAlternateReturn) {
       messages.Say(
           "alternate return specifier not acceptable on call to intrinsic '%s'"_err_en_US,
@@ -1133,16 +1142,16 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
   }
   // Special cases of intrinsic functions
   if (call.name.ToString() == "null") {
-    if (call.argument.size() == 0) {
+    if (call.arguments.size() == 0) {
       // TODO: NULL() result type is determined by context
       // Can pass that context in, or return a token distinguishing
       // NULL, or represent NULL as a new kind of top-level expression
-    } else if (call.argument.size() > 1) {
+    } else if (call.arguments.size() > 1) {
       genericErrors.Say("too many arguments to NULL()"_err_en_US);
-    } else if (call.argument[0].keyword.has_value() &&
-        call.argument[0].keyword->ToString() != "mold") {
+    } else if (call.arguments[0].keyword.has_value() &&
+        call.arguments[0].keyword->ToString() != "mold") {
       genericErrors.Say("unknown argument '%s' to NULL()"_err_en_US,
-          call.argument[0].keyword->ToString().data());
+          call.arguments[0].keyword->ToString().data());
     } else {
       // TODO: Argument must be pointer, procedure pointer, or allocatable.
       // Characteristics, including dynamic length type parameter values,

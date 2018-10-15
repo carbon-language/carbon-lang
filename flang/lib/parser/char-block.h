@@ -81,6 +81,13 @@ public:
   bool operator>=(const char *that) const { return Compare(that) >= 0; }
   bool operator>(const char *that) const { return Compare(that) > 0; }
 
+  friend bool operator<(const char *, const CharBlock &);
+  friend bool operator<=(const char *, const CharBlock &);
+  friend bool operator==(const char *, const CharBlock &);
+  friend bool operator!=(const char *, const CharBlock &);
+  friend bool operator>=(const char *, const CharBlock &);
+  friend bool operator>(const char *, const CharBlock &);
+
 private:
   int Compare(const CharBlock &that) const {
     std::size_t bytes{std::min(size(), that.size())};
@@ -102,6 +109,25 @@ private:
 
   common::Interval<const char *> interval_{nullptr, 0};
 };
+
+inline bool operator<(const char *left, const CharBlock &right) {
+  return right > left;
+}
+inline bool operator<=(const char *left, const CharBlock &right) {
+  return right >= left;
+}
+inline bool operator==(const char *left, const CharBlock &right) {
+  return right == left;
+}
+inline bool operator!=(const char *left, const CharBlock &right) {
+  return right != left;
+}
+inline bool operator>=(const char *left, const CharBlock &right) {
+  return right <= left;
+}
+inline bool operator>(const char *left, const CharBlock &right) {
+  return right < left;
+}
 
 }  // namespace Fortran::parser
 
