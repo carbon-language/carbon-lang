@@ -121,6 +121,15 @@ TYPED_TEST(DenseSetTest, FindAsTest) {
   EXPECT_TRUE(set.find_as("d") == set.end());
 }
 
+TYPED_TEST(DenseSetTest, EqualityComparisonTest) {
+  TypeParam set1({1, 2, 3, 4});
+  TypeParam set2({4, 3, 2, 1});
+  TypeParam set3({2, 3, 4, 5});
+
+  EXPECT_EQ(set1, set2);
+  EXPECT_NE(set1, set3);
+}
+
 // Simple class that counts how many moves and copy happens when growing a map
 struct CountCopyAndMove {
   static int Move;

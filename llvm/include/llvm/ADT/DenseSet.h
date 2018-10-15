@@ -214,6 +214,34 @@ public:
   }
 };
 
+/// Equality comparison for DenseSet.
+///
+/// Iterates over elements of LHS confirming that each element is also a member
+/// of RHS, and that RHS contains no additional values.
+/// Equivalent to N calls to RHS.count. Amortized complexity is linear, worst
+/// case is O(N^2) (if every hash collides).
+template <typename ValueT, typename MapTy, typename ValueInfoT>
+bool operator==(const DenseSetImpl<ValueT, MapTy, ValueInfoT> &LHS,
+                const DenseSetImpl<ValueT, MapTy, ValueInfoT> &RHS) {
+  if (LHS.size() != RHS.size())
+    return false;
+
+  for (auto &E : LHS)
+    if (!RHS.count(E))
+      return false;
+
+  return true;
+}
+
+/// Inequality comparison for DenseSet.
+///
+/// Equivalent to !(LHS == RHS). See operator== for performance notes.
+template <typename ValueT, typename MapTy, typename ValueInfoT>
+bool operator!=(const DenseSetImpl<ValueT, MapTy, ValueInfoT> &LHS,
+                const DenseSetImpl<ValueT, MapTy, ValueInfoT> &RHS) {
+  return !(LHS == RHS);
+}
+
 } // end namespace detail
 
 /// Implements a dense probed hash-table based set.
