@@ -4421,8 +4421,6 @@ let Predicates = [HasAVX512] in {
             (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
   def : Pat<(v2f64 (X86vzmovl (loadv2f64 addr:$src))),
             (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
-  def : Pat<(v2f64 (X86vzmovl (bc_v2f64 (loadv4f32 addr:$src)))),
-            (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
   def : Pat<(v2f64 (X86vzload addr:$src)),
             (COPY_TO_REGCLASS (VMOVSDZrm addr:$src), VR128X)>;
 
