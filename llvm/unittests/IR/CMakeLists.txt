@@ -40,5 +40,3 @@ add_llvm_unittest(IRTests
   VerifierTest.cpp
   WaymarkTest.cpp
   )
-
-target_link_libraries(IRTests PRIVATE LLVMTestingSupport)

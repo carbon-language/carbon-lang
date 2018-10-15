@@ -144,10 +144,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   PB.registerLoopAnalyses(LAM);
   PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
 
-  auto Err = PB.parsePassPipeline(MPM, PassPipeline, false, false);
-  assert(!Err && "Should have been checked during fuzzer initialization");
-  // Only fail with assert above, otherwise ignore the parsing error.
-  consumeError(std::move(Err));
+  bool Ok = PB.parsePassPipeline(MPM, PassPipeline, false, false);
+  assert(Ok && "Should have been checked during fuzzer initialization");
+  (void)Ok; // silence unused variable warning on release builds
 
   // Run passes which we need to test
   //
@@ -236,8 +235,8 @@ extern "C" LLVM_ATTRIBUTE_USED int LLVMFuzzerInitialize(
 
   PassBuilder PB(TM.get());
   ModulePassManager MPM;
-  if (auto Err = PB.parsePassPipeline(MPM, PassPipeline, false, false)) {
-    errs() << *argv[0] << ": " << toString(std::move(Err)) << "\n";
+  if (!PB.parsePassPipeline(MPM, PassPipeline, false, false)) {
+    errs() << *argv[0] << ": can't parse pass pipeline\n";
     exit(1);
   }
 

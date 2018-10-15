@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Testing/Support/Error.h"
 #include <functional>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -461,7 +460,7 @@ TEST_F(ModuleCallbacksTest, Passes) {
       .WillOnce(Invoke(getAnalysisResult));
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
 
   PM.run(*M, AM);
@@ -495,7 +494,7 @@ TEST_F(ModuleCallbacksTest, InstrumentedPasses) {
       .InSequence(PISequence);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
 
   PM.run(*M, AM);
@@ -526,7 +525,7 @@ TEST_F(ModuleCallbacksTest, InstrumentedSkippedPasses) {
       .Times(0);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
 
   PM.run(*M, AM);
@@ -538,7 +537,7 @@ TEST_F(FunctionCallbacksTest, Passes) {
       .WillOnce(Invoke(getAnalysisResult));
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -572,7 +571,7 @@ TEST_F(FunctionCallbacksTest, InstrumentedPasses) {
       .InSequence(PISequence);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -605,7 +604,7 @@ TEST_F(FunctionCallbacksTest, InstrumentedSkippedPasses) {
       .Times(0);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -616,7 +615,7 @@ TEST_F(LoopCallbacksTest, Passes) {
       .WillOnce(WithArgs<0, 1, 2>(Invoke(getAnalysisResult)));
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -651,7 +650,7 @@ TEST_F(LoopCallbacksTest, InstrumentedPasses) {
       .InSequence(PISequence);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -683,7 +682,7 @@ TEST_F(LoopCallbacksTest, InstrumentedSkippedPasses) {
       .Times(0);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -694,7 +693,7 @@ TEST_F(CGSCCCallbacksTest, Passes) {
       .WillOnce(WithArgs<0, 1, 2>(Invoke(getAnalysisResult)));
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -728,7 +727,7 @@ TEST_F(CGSCCCallbacksTest, InstrumentedPasses) {
       .InSequence(PISequence);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -760,7 +759,7 @@ TEST_F(CGSCCCallbacksTest, InstrumentedSkippedPasses) {
       .Times(0);
 
   StringRef PipelineText = "test-transform";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -775,7 +774,7 @@ TEST_F(ModuleCallbacksTest, AnalysisUtilities) {
   EXPECT_CALL(AnalysisHandle, invalidate(HasName("<string>"), _, _));
 
   StringRef PipelineText = "require<test-analysis>,invalidate<test-analysis>";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -785,7 +784,7 @@ TEST_F(CGSCCCallbacksTest, PassUtilities) {
   EXPECT_CALL(AnalysisHandle, invalidate(HasName("(foo)"), _, _));
 
   StringRef PipelineText = "require<test-analysis>,invalidate<test-analysis>";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -795,7 +794,7 @@ TEST_F(FunctionCallbacksTest, AnalysisUtilities) {
   EXPECT_CALL(AnalysisHandle, invalidate(HasName("foo"), _, _));
 
   StringRef PipelineText = "require<test-analysis>,invalidate<test-analysis>";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -806,7 +805,7 @@ TEST_F(LoopCallbacksTest, PassUtilities) {
 
   StringRef PipelineText = "require<test-analysis>,invalidate<test-analysis>";
 
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 }
@@ -846,13 +845,13 @@ TEST_F(ModuleCallbacksTest, ParseTopLevelPipeline) {
 
   StringRef PipelineText =
       "another-pipeline(test-transform,invalidate<test-analysis>)";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Succeeded())
+  ASSERT_TRUE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
   PM.run(*M, AM);
 
   /// Test the negative case
   PipelineText = "another-pipeline(instcombine)";
-  ASSERT_THAT_ERROR(PB.parsePassPipeline(PM, PipelineText, true), Failed())
+  ASSERT_FALSE(PB.parsePassPipeline(PM, PipelineText, true))
       << "Pipeline was: " << PipelineText;
 }
 } // end anonymous namespace
