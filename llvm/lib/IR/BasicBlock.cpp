@@ -437,7 +437,7 @@ BasicBlock *BasicBlock::splitBasicBlock(iterator I, const Twine &BBName) {
 }
 
 void BasicBlock::replaceSuccessorsPhiUsesWith(BasicBlock *New) {
-  TerminatorInst *TI = getTerminator();
+  Instruction *TI = getTerminator();
   if (!TI)
     // Cope with being called on a BasicBlock that doesn't have a terminator
     // yet. Clang's CodeGenFunction::EmitReturnBlock() likes to do this.
@@ -468,7 +468,7 @@ const LandingPadInst *BasicBlock::getLandingPadInst() const {
 }
 
 Optional<uint64_t> BasicBlock::getIrrLoopHeaderWeight() const {
-  const TerminatorInst *TI = getTerminator();
+  const Instruction *TI = getTerminator();
   if (MDNode *MDIrrLoopHeader =
       TI->getMetadata(LLVMContext::MD_irr_loop)) {
     MDString *MDName = cast<MDString>(MDIrrLoopHeader->getOperand(0));

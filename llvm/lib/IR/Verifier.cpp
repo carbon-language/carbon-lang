@@ -3450,7 +3450,7 @@ void Verifier::visitEHPadPredecessors(Instruction &I) {
   Instruction *ToPad = &I;
   Value *ToPadParent = getParentPad(ToPad);
   for (BasicBlock *PredBB : predecessors(BB)) {
-    TerminatorInst *TI = PredBB->getTerminator();
+    Instruction *TI = PredBB->getTerminator();
     Value *FromPad;
     if (auto *II = dyn_cast<InvokeInst>(TI)) {
       Assert(II->getUnwindDest() == BB && II->getNormalDest() != BB,

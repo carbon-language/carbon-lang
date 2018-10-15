@@ -1614,7 +1614,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
     // Check to see if we have a branch or switch on an undefined value.  If so
     // we force the branch to go one way or the other to make the successor
     // values live.  It doesn't really matter which way we force it.
-    TerminatorInst *TI = BB.getTerminator();
+    Instruction *TI = BB.getTerminator();
     if (auto *BI = dyn_cast<BranchInst>(TI)) {
       if (!BI->isConditional()) continue;
       if (!getValueState(BI->getCondition()).isUnknown())
