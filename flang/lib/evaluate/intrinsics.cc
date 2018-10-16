@@ -1103,8 +1103,13 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   }
   CHECK(resultRank >= 0);
 
+  semantics::Attrs attrs;
+  if (elementalRank > 0) {
+    attrs.set(semantics::Attr::ELEMENTAL);
+  }
+
   return std::make_optional<SpecificIntrinsic>(
-      name, elementalRank > 0, resultType, resultRank);
+      name, resultType, resultRank, attrs);
 }
 
 struct IntrinsicProcTable::Implementation {
@@ -1179,6 +1184,7 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
       // TODO: Argument must be pointer, procedure pointer, or allocatable.
       // Characteristics, including dynamic length type parameter values,
       // must be taken from the MOLD argument.
+      // TODO: set Attr::POINTER on NULL result
     }
   }
   // No match

@@ -19,6 +19,7 @@
 #include "type.h"
 #include "../common/idioms.h"
 #include "../parser/message.h"
+#include "../semantics/attr.h"
 #include "../semantics/default-kinds.h"
 #include <memory>
 #include <optional>
@@ -41,16 +42,16 @@ struct CallCharacteristics {
 
 struct SpecificIntrinsic {
   explicit SpecificIntrinsic(IntrinsicProcedure n) : name{n} {}
-  SpecificIntrinsic(IntrinsicProcedure n, bool isElem, DynamicType dt, int r)
-    : name{n}, isElemental{isElem}, type{dt}, rank{r} {}
+  SpecificIntrinsic(
+      IntrinsicProcedure n, DynamicType dt, int r, semantics::Attrs a)
+    : name{n}, type{dt}, rank{r}, attrs{a} {}
   std::ostream &Dump(std::ostream &) const;
 
   IntrinsicProcedure name;
-  bool isElemental{false};  // TODO: consider using Attrs instead
-  bool isPointer{false};  // NULL()
-  bool isRestrictedSpecific{false};  // can only call it if true
+  bool isRestrictedSpecific{false};  // if true, can only call it
   DynamicType type;
   int rank{0};
+  semantics::Attrs attrs;
 };
 
 class IntrinsicProcTable {

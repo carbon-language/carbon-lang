@@ -455,7 +455,7 @@ bool ProcedureDesignator::IsElemental() const {
     return symbol->attrs().test(semantics::Attr::ELEMENTAL);
   }
   if (const auto *intrinsic{std::get_if<SpecificIntrinsic>(&u)}) {
-    return intrinsic->isElemental;
+    return intrinsic->attrs.test(semantics::Attr::ELEMENTAL);
   }
   CHECK(!"ProcedureDesignator::IsElemental(): no case");
   return 0;

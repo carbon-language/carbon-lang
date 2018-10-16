@@ -117,7 +117,7 @@ struct TestCall {
       TEST(buffer.empty());
       TEST(*resultType == si->type);
       MATCH(rank, si->rank);
-      MATCH(isElemental, si->isElemental);
+      MATCH(isElemental, si->attrs.test(semantics::Attr::ELEMENTAL));
     } else {
       TEST(!si.has_value());
       TEST(!buffer.empty() || name == "bad");
