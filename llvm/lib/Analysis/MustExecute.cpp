@@ -176,9 +176,9 @@ bool LoopSafetyInfo::allLoopPathsLeadToBlock(const Loop *CurLoop,
 
 /// Returns true if the instruction in a loop is guaranteed to execute at least
 /// once.
-bool llvm::isGuaranteedToExecute(const Instruction &Inst,
-                                 const DominatorTree *DT, const Loop *CurLoop,
-                                 const LoopSafetyInfo *SafetyInfo) {
+bool LoopSafetyInfo::isGuaranteedToExecute(const Instruction &Inst,
+                                           const DominatorTree *DT,
+                                           const Loop *CurLoop) const {
   // We have to check to make sure that the instruction dominates all
   // of the exit blocks.  If it doesn't, then there is a path out of the loop
   // which does not execute this instruction, so we can't hoist it.
@@ -191,17 +191,17 @@ bool llvm::isGuaranteedToExecute(const Instruction &Inst,
     // Inst unless we can prove that Inst comes before the potential implicit
     // exit.  At the moment, we use a (cheap) hack for the common case where
     // the instruction of interest is the first one in the block.
-    return !SafetyInfo->headerMayThrow() ||
-      Inst.getParent()->getFirstNonPHIOrDbg() == &Inst;
+    return !headerMayThrow() ||
+           Inst.getParent()->getFirstNonPHIOrDbg() == &Inst;
 
   // Somewhere in this loop there is an instruction which may throw and make us
   // exit the loop.
-  if (SafetyInfo->anyBlockMayThrow())
+  if (anyBlockMayThrow())
     return false;
 
   // If there is a path from header to exit or latch that doesn't lead to our
   // instruction's block, return false.
-  if (!SafetyInfo->allLoopPathsLeadToBlock(CurLoop, Inst.getParent(), DT))
+  if (!allLoopPathsLeadToBlock(CurLoop, Inst.getParent(), DT))
     return false;
 
   return true;
@@ -242,7 +242,7 @@ static bool isMustExecuteIn(const Instruction &I, Loop *L, DominatorTree *DT) {
   // caller actually gets the full power at the moment.
   LoopSafetyInfo LSI;
   LSI.computeLoopSafetyInfo(L);
-  return isGuaranteedToExecute(I, DT, L, &LSI) ||
+  return LSI.isGuaranteedToExecute(I, DT, L) ||
     isGuaranteedToExecuteForEveryIteration(&I, L);
 }
 

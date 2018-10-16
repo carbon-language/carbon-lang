@@ -82,14 +82,13 @@ public:
   /// LoopSafetyInfo.  Some callers rely on this fact.
   void computeLoopSafetyInfo(Loop *);
 
+  /// Returns true if the instruction in a loop is guaranteed to execute at
+  /// least once (under the assumption that the loop is entered).
+  bool isGuaranteedToExecute(const Instruction &Inst, const DominatorTree *DT,
+                             const Loop *CurLoop) const;
+
   LoopSafetyInfo() = default;
 };
-
-/// Returns true if the instruction in a loop is guaranteed to execute at least
-/// once (under the assumption that the loop is entered).
-bool isGuaranteedToExecute(const Instruction &Inst, const DominatorTree *DT,
-                           const Loop *CurLoop,
-                           const LoopSafetyInfo *SafetyInfo);
 
 }
 

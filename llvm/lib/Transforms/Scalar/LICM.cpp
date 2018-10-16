@@ -1116,7 +1116,7 @@ static void hoist(Instruction &I, const DominatorTree *DT, const Loop *CurLoop,
       // The check on hasMetadataOtherThanDebugLoc is to prevent us from burning
       // time in isGuaranteedToExecute if we don't actually have anything to
       // drop.  It is a compile time optimization, not required for correctness.
-      !isGuaranteedToExecute(I, DT, CurLoop, SafetyInfo))
+      !SafetyInfo->isGuaranteedToExecute(I, DT, CurLoop))
     I.dropUnknownNonDebugMetadata();
 
   // Move the new node to the Preheader, before its terminator.
@@ -1150,7 +1150,7 @@ static bool isSafeToExecuteUnconditionally(Instruction &Inst,
     return true;
 
   bool GuaranteedToExecute =
-      isGuaranteedToExecute(Inst, DT, CurLoop, SafetyInfo);
+      SafetyInfo->isGuaranteedToExecute(Inst, DT, CurLoop);
 
   if (!GuaranteedToExecute) {
     auto *LI = dyn_cast<LoadInst>(&Inst);
@@ -1408,7 +1408,7 @@ bool llvm::promoteLoopAccessesToScalars(
 
         if (!DereferenceableInPH || !SafeToInsertStore ||
             (InstAlignment > Alignment)) {
-          if (isGuaranteedToExecute(*UI, DT, CurLoop, SafetyInfo)) {
+          if (SafetyInfo->isGuaranteedToExecute(*UI, DT, CurLoop)) {
             DereferenceableInPH = true;
             SafeToInsertStore = true;
             Alignment = std::max(Alignment, InstAlignment);
