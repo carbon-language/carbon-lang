@@ -60,7 +60,7 @@ struct alignas(64) ThreadLocalData {
   void *ShadowStack = nullptr;
   size_t StackSize = 0;
   size_t StackEntries = 0;
-  LogWriter *LogWriter = nullptr;
+  __xray::LogWriter *LogWriter = nullptr;
 };
 
 struct BasicLoggingOptions {
