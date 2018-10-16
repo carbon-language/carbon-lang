@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "../../lib/evaluate/expression.h"
-#include "../../lib/evaluate/tools.h"
 #include "testing.h"
+#include "../../lib/evaluate/tools.h"
 #include "../../lib/parser/message.h"
 #include <cstdio>
 #include <cstdlib>
@@ -30,7 +30,7 @@ template<typename A> std::string Dump(const A &x) {
 }
 
 int main() {
-  using DefaultIntegerExpr = Expr<DefaultInteger>;
+  using DefaultIntegerExpr = Expr<Type<TypeCategory::Integer, 4>>;
   TEST(DefaultIntegerExpr::Result::Dump() == "Integer(4)");
   MATCH("666_4", Dump(DefaultIntegerExpr{666}));
   MATCH("(-1_4)", Dump(-DefaultIntegerExpr{1}));

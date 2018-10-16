@@ -70,14 +70,15 @@ CoarrayRef::CoarrayRef(std::vector<const Symbol *> &&c,
   CHECK(!base_.empty());
 }
 
-CoarrayRef &CoarrayRef::set_stat(Variable<DefaultInteger> &&v) {
-  stat_ = CopyableIndirection<Variable<DefaultInteger>>::Make(std::move(v));
+CoarrayRef &CoarrayRef::set_stat(Expr<SomeInteger> &&v) {
+  CHECK(IsVariable(v));
+  stat_ = CopyableIndirection<Expr<SomeInteger>>::Make(std::move(v));
   return *this;
 }
 
-CoarrayRef &CoarrayRef::set_team(
-    Variable<DefaultInteger> &&v, bool isTeamNumber) {
-  team_ = CopyableIndirection<Variable<DefaultInteger>>::Make(std::move(v));
+CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
+  CHECK(IsVariable(v));
+  team_ = CopyableIndirection<Expr<SomeInteger>>::Make(std::move(v));
   teamIsTeamNumber_ = isTeamNumber;
   return *this;
 }

@@ -669,6 +669,46 @@ struct GenericExprWrapper {
   Expr<SomeType> v;
 };
 
+// When an Expr holds something that is a Variable (i.e., a Designator
+// or pointer-valued FunctionRef), return a copy of its contents in
+// a Variable.
+template<typename A>
+std::optional<Variable<A>> AsVariable(const Expr<A> &expr) {
+  using Variant = decltype(Variable<A>::u);
+  return std::visit(
+      [](const auto &x) -> std::optional<Variable<A>> {
+        if constexpr (common::HasMember<std::decay_t<decltype(x)>, Variant>) {
+          return std::make_optional<Variable<A>>(x);
+        }
+        return std::nullopt;
+      },
+      expr.u);
+}
+
+// Predicate: true when an expression is a variable reference
+template<typename A> bool IsVariable(const Expr<A> &expr) {
+  return AsVariable(expr).has_value();
+}
+
+template<TypeCategory CATEGORY>
+bool IsVariable(const Expr<SomeKind<CATEGORY>> &expr) {
+  return std::visit([](const auto &x) { return IsVariable(x); }, expr.u);
+}
+
+template<> inline bool IsVariable(const Expr<SomeDerived> &) { return true; }
+
+template<> inline bool IsVariable(const Expr<SomeType> &expr) {
+  return std::visit(
+      [](const auto &x) {
+        if constexpr (!std::is_same_v<BOZLiteralConstant,
+                          std::decay_t<decltype(x)>>) {
+          return IsVariable(x);
+        }
+        return false;
+      },
+      expr.u);
+}
+
 FOR_EACH_CATEGORY_TYPE(extern template class Expr)
 FOR_EACH_TYPE_AND_KIND(extern template struct ExpressionBase)
 

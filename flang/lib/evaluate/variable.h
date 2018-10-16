@@ -132,9 +132,11 @@ public:
   CLASS_BOILERPLATE(CoarrayRef)
   CoarrayRef(std::vector<const Symbol *> &&,
       std::vector<Expr<SubscriptInteger>> &&,
-      std::vector<Expr<SubscriptInteger>> &&);  // TODO: stat & team?
-  CoarrayRef &set_stat(Variable<DefaultInteger> &&);
-  CoarrayRef &set_team(Variable<DefaultInteger> &&, bool isTeamNumber = false);
+      std::vector<Expr<SubscriptInteger>> &&);
+  // These integral expressions for STAT= and TEAM= must be variables
+  // (i.e., Designator or pointer-valued FunctionRef).
+  CoarrayRef &set_stat(Expr<SomeInteger> &&);
+  CoarrayRef &set_team(Expr<SomeInteger> &&, bool isTeamNumber = false);
 
   int Rank() const;
   const Symbol *GetSymbol(bool first) const {
@@ -150,7 +152,7 @@ public:
 private:
   std::vector<const Symbol *> base_;
   std::vector<Expr<SubscriptInteger>> subscript_, cosubscript_;
-  std::optional<CopyableIndirection<Variable<DefaultInteger>>> stat_, team_;
+  std::optional<CopyableIndirection<Expr<SomeInteger>>> stat_, team_;
   bool teamIsTeamNumber_{false};  // false: TEAM=, true: TEAM_NUMBER=
 };
 

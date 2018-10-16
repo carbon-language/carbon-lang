@@ -164,9 +164,6 @@ template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
 template<TypeCategory CATEGORY, typename T>
 using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
 
-// TODO: Eliminate this type!
-using DefaultInteger = Type<TypeCategory::Integer, 4>;
-
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
 using LargestReal = Type<TypeCategory::Real, 16>;
