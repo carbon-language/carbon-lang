@@ -264,19 +264,17 @@ SameKindExprs<CAT, 2> AsSameKindExprs(
 using ConvertRealOperandsResult =
     std::optional<SameKindExprs<TypeCategory::Real, 2>>;
 ConvertRealOperandsResult ConvertRealOperands(parser::ContextualMessages &,
-    Expr<SomeType> &&, Expr<SomeType> &&,
-    int defaultRealKind = DefaultReal::kind);
+    Expr<SomeType> &&, Expr<SomeType> &&, int defaultRealKind);
 
 // Per F'2018 R718, if both components are INTEGER, they are both converted
 // to default REAL and the result is default COMPLEX.  Otherwise, the
 // kind of the result is the kind of most precise REAL component, and the other
 // component is converted if necessary to its type.
 std::optional<Expr<SomeComplex>> ConstructComplex(parser::ContextualMessages &,
-    Expr<SomeType> &&, Expr<SomeType> &&,
-    int defaultRealKind = DefaultReal::kind);
+    Expr<SomeType> &&, Expr<SomeType> &&, int defaultRealKind);
 std::optional<Expr<SomeComplex>> ConstructComplex(parser::ContextualMessages &,
     std::optional<Expr<SomeType>> &&, std::optional<Expr<SomeType>> &&,
-    int defaultRealKind = DefaultReal::kind);
+    int defaultRealKind);
 
 template<typename A> Expr<TypeOf<A>> ScalarConstantToExpr(const A &x) {
   using Ty = TypeOf<A>;
@@ -292,8 +290,8 @@ template<template<typename> class OPR, typename SPECIFIC>
 Expr<SPECIFIC> Combine(Expr<SPECIFIC> &&x, Expr<SPECIFIC> &&y) {
   static_assert(SPECIFIC::isSpecificIntrinsicType);
   if constexpr (SPECIFIC::category == TypeCategory::Complex &&
-      (std::is_same_v<OPR<DefaultReal>, Add<DefaultReal>> ||
-          std::is_same_v<OPR<DefaultReal>, Subtract<DefaultReal>>)) {
+      (std::is_same_v<OPR<LargestReal>, Add<LargestReal>> ||
+          std::is_same_v<OPR<LargestReal>, Subtract<LargestReal>>)) {
     static constexpr int kind{SPECIFIC::kind};
     using Part = Type<TypeCategory::Real, kind>;
     return AsExpr(ComplexConstructor<kind>{
@@ -328,19 +326,24 @@ Expr<SomeKind<CAT>> PromoteAndCombine(
 // typeless literal operands and with REAL/COMPLEX exponentiation to INTEGER
 // powers.
 template<template<typename> class OPR>
-std::optional<Expr<SomeType>> NumericOperation(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+std::optional<Expr<SomeType>> NumericOperation(parser::ContextualMessages &,
+    Expr<SomeType> &&, Expr<SomeType> &&, int defaultRealKind);
 
 extern template std::optional<Expr<SomeType>> NumericOperation<Power>(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&,
+    int defaultRealKind);
 extern template std::optional<Expr<SomeType>> NumericOperation<Multiply>(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&,
+    int defaultRealKind);
 extern template std::optional<Expr<SomeType>> NumericOperation<Divide>(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&,
+    int defaultRealKind);
 extern template std::optional<Expr<SomeType>> NumericOperation<Add>(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&,
+    int defaultRealKind);
 extern template std::optional<Expr<SomeType>> NumericOperation<Subtract>(
-    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&);
+    parser::ContextualMessages &, Expr<SomeType> &&, Expr<SomeType> &&,
+    int defaultRealKind);
 
 std::optional<Expr<SomeType>> Negation(
     parser::ContextualMessages &, Expr<SomeType> &&);

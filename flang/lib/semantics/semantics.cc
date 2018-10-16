@@ -45,7 +45,7 @@ bool Semantics::Perform(parser::Program &program) {
   if (AnyFatalError()) {
     return false;
   }
-  ResolveNames(messages_, globalScope_, program, directories_);
+  ResolveNames(messages_, globalScope_, program, directories_, defaultKinds_);
   if (AnyFatalError()) {
     return false;
   }

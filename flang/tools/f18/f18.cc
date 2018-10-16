@@ -498,7 +498,9 @@ int main(int argc, char *const argv[]) {
     driver.pgf90Args.push_back("-Mbackslash");
   }
 
-  Fortran::semantics::Semantics semantics;
+  // TODO: Configure these kinds based on command line settings
+  Fortran::semantics::IntrinsicTypeDefaultKinds defaultKinds;
+  Fortran::semantics::Semantics semantics{defaultKinds};
   semantics.set_searchDirectories(options.searchDirectories);
   semantics.set_moduleDirectory(driver.moduleDirectory);
   if (!anyFiles) {

@@ -80,19 +80,9 @@ std::ostream &operator<<(std::ostream &o, const ShapeSpec &x) {
 }
 
 IntrinsicTypeSpec::IntrinsicTypeSpec(TypeCategory category, int kind)
-  : category_{category}, kind_{kind ? kind : GetDefaultKind(category)} {
+  : category_{category}, kind_{kind} {
   CHECK(category != TypeCategory::Derived);
-}
-
-int IntrinsicTypeSpec::GetDefaultKind(TypeCategory category) {
-  switch (category) {
-  case TypeCategory::Character: return evaluate::DefaultCharacter::kind;
-  case TypeCategory::Integer: return evaluate::DefaultInteger::kind;
-  case TypeCategory::Logical: return evaluate::DefaultLogical::kind;
-  case TypeCategory::Complex:
-  case TypeCategory::Real: return evaluate::DefaultReal::kind;
-  default: CRASH_NO_CASE;
-  }
+  CHECK(kind > 0);
 }
 
 std::ostream &operator<<(std::ostream &os, const IntrinsicTypeSpec &x) {

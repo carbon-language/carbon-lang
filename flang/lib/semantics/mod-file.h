@@ -16,6 +16,7 @@
 #define FORTRAN_SEMANTICS_MOD_FILE_H_
 
 #include "attr.h"
+#include "default-kinds.h"
 #include "resolve-names.h"
 #include "../parser/message.h"
 #include <set>
@@ -69,8 +70,9 @@ private:
 class ModFileReader {
 public:
   // directories specifies where to search for module files
-  ModFileReader(const std::vector<std::string> &directories)
-    : directories_{directories} {}
+  ModFileReader(const std::vector<std::string> &directories,
+      const IntrinsicTypeDefaultKinds &defaultKinds)
+    : directories_{directories}, defaultKinds_{defaultKinds} {}
   // Find and read the module file for a module or submodule.
   // If ancestor is specified, look for a submodule of that module.
   // Return the Scope for that module/submodule or nullptr on error.
@@ -81,6 +83,7 @@ public:
 private:
   std::vector<std::string> directories_;
   parser::Messages errors_;
+  const IntrinsicTypeDefaultKinds defaultKinds_;
 
   std::optional<std::string> FindModFile(
       const SourceName &, const std::string &);

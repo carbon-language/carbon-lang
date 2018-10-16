@@ -14,6 +14,7 @@
 
 #include "resolve-names.h"
 #include "attr.h"
+#include "default-kinds.h"
 #include "mod-file.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
@@ -43,10 +44,14 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &);
 // When inheritFromParent is set, defaults come from the parent rules.
 class ImplicitRules {
 public:
-  ImplicitRules(MessageHandler &messages)
-    : messages_{messages}, inheritFromParent_{false} {}
-  ImplicitRules(std::unique_ptr<ImplicitRules> &&parent)
-    : messages_{parent->messages_}, inheritFromParent_{true} {
+  ImplicitRules(
+      MessageHandler &messages, const IntrinsicTypeDefaultKinds &defaultKinds)
+    : messages_{messages}, inheritFromParent_{false}, defaultKinds_{
+                                                          defaultKinds} {}
+  ImplicitRules(std::unique_ptr<ImplicitRules> &&parent,
+      const IntrinsicTypeDefaultKinds &defaultKinds)
+    : messages_{parent->messages_}, inheritFromParent_{true},
+      defaultKinds_{defaultKinds} {
     parent_.swap(parent);
   }
   std::unique_ptr<ImplicitRules> &&parent() { return std::move(parent_); }
@@ -71,6 +76,7 @@ private:
   bool inheritFromParent_;  // look in parent if not specified here
   // map initial character of identifier to nullptr or its default type
   std::map<char, const DeclTypeSpec> map_;
+  const IntrinsicTypeDefaultKinds &defaultKinds_;
 
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
   friend void ShowImplicitRule(std::ostream &, const ImplicitRules &, char);
@@ -143,6 +149,8 @@ protected:
 // Find and create types from declaration-type-spec nodes.
 class DeclTypeSpecVisitor : public AttrsVisitor {
 public:
+  explicit DeclTypeSpecVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : defaultKinds_{defaultKinds} {}
   using AttrsVisitor::Post;
   using AttrsVisitor::Pre;
   bool Pre(const parser::IntegerTypeSpec &);
@@ -163,6 +171,10 @@ public:
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
 
+  const IntrinsicTypeDefaultKinds &defaultKinds() const {
+    return defaultKinds_;
+  }
+
 protected:
   std::unique_ptr<DeclTypeSpec> &GetDeclTypeSpec();
   void BeginDeclTypeSpec();
@@ -175,6 +187,7 @@ private:
   std::unique_ptr<DeclTypeSpec> declTypeSpec_;
   DerivedTypeSpec *derivedTypeSpec_{nullptr};
   std::unique_ptr<ParamValue> typeParamValue_;
+  const IntrinsicTypeDefaultKinds &defaultKinds_;
 
   void MakeIntrinsic(TypeCategory, int);
   void SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec);
@@ -229,6 +242,8 @@ private:
 // Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
 class ImplicitRulesVisitor : public DeclTypeSpecVisitor, public MessageHandler {
 public:
+  explicit ImplicitRulesVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : DeclTypeSpecVisitor{defaultKinds} {}
   using DeclTypeSpecVisitor::Post;
   using DeclTypeSpecVisitor::Pre;
   using MessageHandler::Post;
@@ -257,7 +272,7 @@ protected:
 private:
   // implicit rules in effect for current scope
   std::unique_ptr<ImplicitRules> implicitRules_{
-      std::make_unique<ImplicitRules>(*this)};
+      std::make_unique<ImplicitRules>(*this, defaultKinds())};
   const SourceName *prevImplicit_{nullptr};
   const SourceName *prevImplicitNone_{nullptr};
   const SourceName *prevImplicitNoneType_{nullptr};
@@ -305,6 +320,9 @@ private:
 // Manage a stack of Scopes
 class ScopeHandler : public ImplicitRulesVisitor {
 public:
+  explicit ScopeHandler(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : ImplicitRulesVisitor(defaultKinds) {}
+
   Scope &currScope() { return *currScope_; }
   // The enclosing scope, skipping blocks and derived types.
   Scope &InclusiveScope();
@@ -397,6 +415,9 @@ private:
 
 class ModuleVisitor : public virtual ScopeHandler {
 public:
+  explicit ModuleVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : ScopeHandler{defaultKinds} {}
+
   bool Pre(const parser::Module &);
   void Post(const parser::Module &);
   bool Pre(const parser::Submodule &);
@@ -436,6 +457,9 @@ private:
 
 class InterfaceVisitor : public virtual ScopeHandler {
 public:
+  explicit InterfaceVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : ScopeHandler{defaultKinds} {}
+
   bool Pre(const parser::InterfaceStmt &);
   void Post(const parser::InterfaceStmt &);
   void Post(const parser::EndInterfaceStmt &);
@@ -465,8 +489,11 @@ private:
   void ResolveSpecificsInGeneric(Symbol &generic);
 };
 
-class SubprogramVisitor : public InterfaceVisitor {
+class SubprogramVisitor : public virtual ScopeHandler, public InterfaceVisitor {
 public:
+  explicit SubprogramVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : ScopeHandler{defaultKinds}, InterfaceVisitor{defaultKinds} {}
+
   bool HandleStmtFunction(const parser::StmtFunctionStmt &);
   void Post(const parser::StmtFunctionStmt &);
   bool Pre(const parser::SubroutineStmt &);
@@ -502,6 +529,9 @@ private:
 class DeclarationVisitor : public ArraySpecVisitor,
                            public virtual ScopeHandler {
 public:
+  explicit DeclarationVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : ScopeHandler{defaultKinds} {}
+
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
 
@@ -635,6 +665,9 @@ private:
 // Check that construct names don't conflict with other names.
 class ConstructNamesVisitor : public virtual ScopeHandler {
 public:
+  explicit ConstructNamesVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
+    : ScopeHandler{defaultKinds} {}
+
   // Definitions of construct names
   bool Pre(const parser::WhereConstructStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::ForallConstructStmt &x) { return CheckDef(x.t); }
@@ -684,7 +717,8 @@ private:
 };
 
 // Walk the parse tree and resolve names to symbols.
-class ResolveNamesVisitor : public ModuleVisitor,
+class ResolveNamesVisitor : public virtual ScopeHandler,
+                            public ModuleVisitor,
                             public SubprogramVisitor,
                             public DeclarationVisitor,
                             public ConstructNamesVisitor {
@@ -704,7 +738,13 @@ public:
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
 
-  ResolveNamesVisitor(Scope &rootScope) { PushScope(rootScope); }
+  ResolveNamesVisitor(
+      Scope &rootScope, const IntrinsicTypeDefaultKinds &defaultKinds)
+    : ScopeHandler{defaultKinds}, ModuleVisitor{defaultKinds},
+      SubprogramVisitor{defaultKinds}, DeclarationVisitor{defaultKinds},
+      ConstructNamesVisitor{defaultKinds} {
+    PushScope(rootScope);
+  }
 
   // Default action for a parse tree node is to visit children.
   template<typename T> bool Pre(const T &) { return true; }
@@ -781,9 +821,11 @@ std::optional<const DeclTypeSpec> ImplicitRules::GetType(char ch) const {
   } else if (inheritFromParent_) {
     return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
-    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Integer}};
+    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Integer,
+        defaultKinds_.GetDefaultKind(TypeCategory::Integer)}};
   } else if (ch >= 'a' && ch <= 'z') {
-    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Real}};
+    return DeclTypeSpec{IntrinsicTypeSpec{
+        TypeCategory::Real, defaultKinds_.GetDefaultKind(TypeCategory::Real)}};
   } else {
     return std::nullopt;
   }
@@ -960,17 +1002,18 @@ bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Complex &x) {
 }
 bool DeclTypeSpecVisitor::Pre(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
-  MakeIntrinsic(TypeCategory::Real,
-      2 * IntrinsicTypeSpec::GetDefaultKind(TypeCategory::Real));
+  MakeIntrinsic(TypeCategory::Real, defaultKinds().doublePrecisionKind());
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(
     const parser::IntrinsicTypeSpec::DoubleComplex &) {
-  MakeIntrinsic(TypeCategory::Complex,
-      2 * IntrinsicTypeSpec::GetDefaultKind(TypeCategory::Complex));
+  MakeIntrinsic(TypeCategory::Complex, defaultKinds().doublePrecisionKind());
   return false;
 }
 void DeclTypeSpecVisitor::MakeIntrinsic(TypeCategory category, int kind) {
+  if (kind == 0) {
+    kind = defaultKinds_.GetDefaultKind(category);
+  }
   SetDeclTypeSpec(DeclTypeSpec{IntrinsicTypeSpec{category, kind}});
 }
 
@@ -1103,7 +1146,8 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
 }
 
 void ImplicitRulesVisitor::PushScope() {
-  implicitRules_ = std::make_unique<ImplicitRules>(std::move(implicitRules_));
+  implicitRules_ = std::make_unique<ImplicitRules>(
+      std::move(implicitRules_), defaultKinds());
   prevImplicit_ = nullptr;
   prevImplicitNone_ = nullptr;
   prevImplicitNoneType_ = nullptr;
@@ -1527,7 +1571,7 @@ Symbol &ModuleVisitor::BeginModule(const SourceName &name, bool isSubmodule,
 // May have to read a .mod file to find it.
 // If an error occurs, report it and return nullptr.
 Scope *ModuleVisitor::FindModule(const SourceName &name, Scope *ancestor) {
-  ModFileReader reader{searchDirectories_};
+  ModFileReader reader{searchDirectories_, defaultKinds()};
   auto *scope{reader.Read(GlobalScope(), name, ancestor)};
   if (!scope) {
     Annex(std::move(reader.errors()));
@@ -3053,8 +3097,9 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
 
 void ResolveNames(parser::Messages &messages, Scope &rootScope,
     const parser::Program &program,
-    const std::vector<std::string> &searchDirectories) {
-  ResolveNamesVisitor visitor{rootScope};
+    const std::vector<std::string> &searchDirectories,
+    const IntrinsicTypeDefaultKinds &defaultKinds) {
+  ResolveNamesVisitor visitor{rootScope, defaultKinds};
   for (auto &dir : searchDirectories) {
     visitor.add_searchDirectory(dir);
   }

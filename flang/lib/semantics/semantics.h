@@ -15,6 +15,7 @@
 #ifndef FORTRAN_SEMANTICS_SEMANTICS_H_
 #define FORTRAN_SEMANTICS_SEMANTICS_H_
 
+#include "default-kinds.h"
 #include "scope.h"
 #include "../parser/message.h"
 #include <iostream>
@@ -29,6 +30,8 @@ namespace Fortran::semantics {
 
 class Semantics {
 public:
+  explicit Semantics(const IntrinsicTypeDefaultKinds &dftKinds)
+    : defaultKinds_{dftKinds} {}
   const parser::Messages &messages() const { return messages_; }
   Semantics &set_searchDirectories(const std::vector<std::string> &);
   Semantics &set_moduleDirectory(const std::string &);
@@ -37,6 +40,7 @@ public:
   void DumpSymbols(std::ostream &);
 
 private:
+  const IntrinsicTypeDefaultKinds &defaultKinds_;
   Scope globalScope_;
   std::vector<std::string> directories_{"."s};
   std::string moduleDirectory_{"."s};

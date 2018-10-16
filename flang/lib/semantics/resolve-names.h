@@ -27,9 +27,10 @@ struct Program;
 namespace Fortran::semantics {
 
 class Scope;
+class IntrinsicTypeDefaultKinds;
 
 void ResolveNames(parser::Messages &, Scope &, const parser::Program &,
-    const std::vector<std::string> &);
+    const std::vector<std::string> &, const IntrinsicTypeDefaultKinds &);
 void DumpSymbols(std::ostream &);
 
 }  // namespace Fortran::semantics

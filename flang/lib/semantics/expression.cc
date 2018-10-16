@@ -1037,7 +1037,8 @@ MaybeExpr BinaryOperationHelper(ExprAnalyzer &ea, const PARSED &x) {
           leftRank, rightRank);
     }
     return NumericOperation<OPR>(ea.context.messages,
-        std::move(std::get<0>(*both)), std::move(std::get<1>(*both)));
+        std::move(std::get<0>(*both)), std::move(std::get<1>(*both)),
+        ea.defaults.GetDefaultKind(TypeCategory::Real));
   }
   return std::nullopt;
 }

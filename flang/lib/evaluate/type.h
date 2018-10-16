@@ -164,21 +164,8 @@ template<typename T> using Scalar = typename std::decay_t<T>::Scalar;
 template<TypeCategory CATEGORY, typename T>
 using SameKind = Type<CATEGORY, std::decay_t<T>::kind>;
 
-// Convenience type aliases:
-// Default REAL just simply has to be IEEE-754 single precision today.
-// It occupies one numeric storage unit by definition.  The default INTEGER
-// and default LOGICAL intrinsic types also have to occupy one numeric
-// storage unit, so their kinds are also forced.  Default COMPLEX must always
-// comprise two default REAL components.
-// TODO: Support compile-time options to default reals, ints, or both to KIND=8
-
-using DefaultReal = Type<TypeCategory::Real, 4>;
-using DefaultDoublePrecision = Type<TypeCategory::Real, 2 * DefaultReal::kind>;
-using DefaultInteger = Type<TypeCategory::Integer, DefaultReal::kind>;
-using IntrinsicTypeParameterType = DefaultInteger;
-using DefaultComplex = SameKind<TypeCategory::Complex, DefaultReal>;
-using DefaultLogical = Type<TypeCategory::Logical, DefaultInteger::kind>;
-using DefaultCharacter = Type<TypeCategory::Character, 1>;
+// TODO: Eliminate this type!
+using DefaultInteger = Type<TypeCategory::Integer, 4>;
 
 using SubscriptInteger = Type<TypeCategory::Integer, 8>;
 using LogicalResult = Type<TypeCategory::Logical, 1>;
