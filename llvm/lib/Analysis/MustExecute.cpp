@@ -22,6 +22,17 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+const DenseMap<BasicBlock *, ColorVector> &
+LoopSafetyInfo::getBlockColors() const {
+  return BlockColors;
+}
+
+void LoopSafetyInfo::copyColors(BasicBlock *New, BasicBlock *Old) {
+  ColorVector &ColorsForNewBlock = BlockColors[New];
+  ColorVector &ColorsForOldBlock = BlockColors[Old];
+  ColorsForNewBlock = ColorsForOldBlock;
+}
+
 bool LoopSafetyInfo::headerMayThrow() const {
   return HeaderMayThrow;
 }
@@ -35,7 +46,7 @@ bool LoopSafetyInfo::anyBlockMayThrow() const {
   return MayThrow;
 }
 
-void LoopSafetyInfo::computeLoopSafetyInfo(Loop *CurLoop) {
+void LoopSafetyInfo::computeLoopSafetyInfo(const Loop *CurLoop) {
   assert(CurLoop != nullptr && "CurLoop can't be null");
   BasicBlock *Header = CurLoop->getHeader();
   // Iterate over header and compute safety info.
@@ -51,6 +62,10 @@ void LoopSafetyInfo::computeLoopSafetyInfo(Loop *CurLoop) {
        (BB != BBE) && !MayThrow; ++BB)
     MayThrow |= !isGuaranteedToTransferExecutionToSuccessor(*BB);
 
+  computeBlockColors(CurLoop);
+}
+
+void LoopSafetyInfo::computeBlockColors(const Loop *CurLoop) {
   // Compute funclet colors if we might sink/hoist in a function with a funclet
   // personality routine.
   Function *Fn = CurLoop->getHeader()->getParent();

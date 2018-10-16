@@ -49,6 +49,9 @@ class LoopSafetyInfo {
                                // may throw.
   bool HeaderMayThrow = false; // Same as previous, but specific to loop header
 
+  // Used to update funclet bundle operands.
+  DenseMap<BasicBlock *, ColorVector> BlockColors;
+
   /// Collect all blocks from \p CurLoop which lie on all possible paths from
   /// the header of \p CurLoop (inclusive) to BB (exclusive) into the set
   /// \p Predecessors. If \p BB is the header, \p Predecessors will be empty.
@@ -56,9 +59,16 @@ class LoopSafetyInfo {
       const Loop *CurLoop, const BasicBlock *BB,
       SmallPtrSetImpl<const BasicBlock *> &Predecessors) const;
 
+protected:
+  /// Computes block colors.
+  void computeBlockColors(const Loop *CurLoop);
+
 public:
-  // Used to update funclet bundle operands.
-  DenseMap<BasicBlock *, ColorVector> BlockColors;
+  /// Returns block colors map that is used to update funclet operand bundles.
+  const DenseMap<BasicBlock *, ColorVector> &getBlockColors() const;
+
+  /// Copy colors of block \p Old into the block \p New.
+  void copyColors(BasicBlock *New, BasicBlock *Old);
 
   /// Returns true iff the header block of the loop for which this info is
   /// calculated contains an instruction that may throw or otherwise exit
@@ -83,7 +93,7 @@ public:
   /// as argument. Updates safety information in LoopSafetyInfo argument.
   /// Note: This is defined to clear and reinitialize an already initialized
   /// LoopSafetyInfo.  Some callers rely on this fact.
-  void computeLoopSafetyInfo(Loop *);
+  void computeLoopSafetyInfo(const Loop *CurLoop);
 
   /// Returns true if the instruction in a loop is guaranteed to execute at
   /// least once (under the assumption that the loop is entered).
