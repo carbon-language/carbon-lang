@@ -26,6 +26,11 @@ bool LoopSafetyInfo::headerMayThrow() const {
   return HeaderMayThrow;
 }
 
+bool LoopSafetyInfo::blockMayThrow(const BasicBlock *BB) const {
+  (void)BB;
+  return anyBlockMayThrow();
+}
+
 bool LoopSafetyInfo::anyBlockMayThrow() const {
   return MayThrow;
 }
@@ -148,7 +153,10 @@ bool LoopSafetyInfo::allLoopPathsLeadToBlock(const Loop *CurLoop,
   // 3) Exit blocks which are not taken on 1st iteration.
   // Memoize blocks we've already checked.
   SmallPtrSet<const BasicBlock *, 4> CheckedSuccessors;
-  for (auto *Pred : Predecessors)
+  for (auto *Pred : Predecessors) {
+    // Predecessor block may throw, so it has a side exit.
+    if (blockMayThrow(Pred))
+      return false;
     for (auto *Succ : successors(Pred))
       if (CheckedSuccessors.insert(Succ).second &&
           Succ != BB && !Predecessors.count(Succ))
@@ -169,6 +177,7 @@ bool LoopSafetyInfo::allLoopPathsLeadToBlock(const Loop *CurLoop,
         if (CurLoop->contains(Succ) ||
             !CanProveNotTakenFirstIteration(Succ, DT, CurLoop))
           return false;
+  }
 
   // All predecessors can only lead us to BB.
   return true;
@@ -193,11 +202,6 @@ bool LoopSafetyInfo::isGuaranteedToExecute(const Instruction &Inst,
     // the instruction of interest is the first one in the block.
     return !headerMayThrow() ||
            Inst.getParent()->getFirstNonPHIOrDbg() == &Inst;
-
-  // Somewhere in this loop there is an instruction which may throw and make us
-  // exit the loop.
-  if (anyBlockMayThrow())
-    return false;
 
   // If there is a path from header to exit or latch that doesn't lead to our
   // instruction's block, return false.

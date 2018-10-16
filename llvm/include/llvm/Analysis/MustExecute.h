@@ -65,13 +65,16 @@ public:
   /// abnormally.
   bool headerMayThrow() const;
 
+  /// Returns true iff the block \p BB potentially may throw exception. It can
+  /// be false-positive in cases when we want to avoid complex analysis.
+  bool blockMayThrow(const BasicBlock *BB) const;
+
   /// Returns true iff any block of the loop for which this info is contains an
   /// instruction that may throw or otherwise exit abnormally.
   bool anyBlockMayThrow() const;
 
   /// Return true if we must reach the block \p BB under assumption that the
-  /// loop \p CurLoop is entered and no instruction throws or otherwise exits
-  /// abnormally.
+  /// loop \p CurLoop is entered.
   bool allLoopPathsLeadToBlock(const Loop *CurLoop, const BasicBlock *BB,
                                const DominatorTree *DT) const;
 
