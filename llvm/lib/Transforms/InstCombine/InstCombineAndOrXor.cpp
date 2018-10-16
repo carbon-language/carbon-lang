@@ -1834,7 +1834,8 @@ static bool areInverseVectorBitmasks(Constant *C1, Constant *C2) {
 Value *InstCombiner::getSelectCondition(Value *A, Value *B) {
   // Step 1: We need 0 or all-1's bitmasks.
   Type *Ty = A->getType();
-  if (ComputeNumSignBits(A) != Ty->getScalarSizeInBits())
+  if (Ty->isIntOrIntVectorTy() &&
+      ComputeNumSignBits(A) != Ty->getScalarSizeInBits())
     return nullptr;
 
   // Step 2: If B is the 'not' value of A, we have our answer.
