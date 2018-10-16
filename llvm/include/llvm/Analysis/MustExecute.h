@@ -45,10 +45,6 @@ class Loop;
 /// loop were made and the info wasn't recomputed properly, the behavior of all
 /// methods except for computeLoopSafetyInfo is undefined.
 class LoopSafetyInfo {
-  bool MayThrow = false;       // The current loop contains an instruction which
-                               // may throw.
-  bool HeaderMayThrow = false; // Same as previous, but specific to loop header
-
   // Used to update funclet bundle operands.
   DenseMap<BasicBlock *, ColorVector> BlockColors;
 
@@ -73,15 +69,15 @@ public:
   /// Returns true iff the header block of the loop for which this info is
   /// calculated contains an instruction that may throw or otherwise exit
   /// abnormally.
-  bool headerMayThrow() const;
+  virtual bool headerMayThrow() const = 0;
 
   /// Returns true iff the block \p BB potentially may throw exception. It can
   /// be false-positive in cases when we want to avoid complex analysis.
-  bool blockMayThrow(const BasicBlock *BB) const;
+  virtual bool blockMayThrow(const BasicBlock *BB) const = 0;
 
   /// Returns true iff any block of the loop for which this info is contains an
   /// instruction that may throw or otherwise exit abnormally.
-  bool anyBlockMayThrow() const;
+  virtual bool anyBlockMayThrow() const = 0;
 
   /// Return true if we must reach the block \p BB under assumption that the
   /// loop \p CurLoop is entered.
@@ -93,14 +89,44 @@ public:
   /// as argument. Updates safety information in LoopSafetyInfo argument.
   /// Note: This is defined to clear and reinitialize an already initialized
   /// LoopSafetyInfo.  Some callers rely on this fact.
-  void computeLoopSafetyInfo(const Loop *CurLoop);
+  virtual void computeLoopSafetyInfo(const Loop *CurLoop) = 0;
 
   /// Returns true if the instruction in a loop is guaranteed to execute at
   /// least once (under the assumption that the loop is entered).
-  bool isGuaranteedToExecute(const Instruction &Inst, const DominatorTree *DT,
-                             const Loop *CurLoop) const;
+  virtual bool isGuaranteedToExecute(const Instruction &Inst,
+                                     const DominatorTree *DT,
+                                     const Loop *CurLoop) const = 0;
 
   LoopSafetyInfo() = default;
+
+  virtual ~LoopSafetyInfo() = default;
+};
+
+
+/// Simple and conservative implementation of LoopSafetyInfo that can give
+/// false-positive answers to its queries in order to avoid complicated
+/// analysis.
+class SimpleLoopSafetyInfo: public LoopSafetyInfo {
+  bool MayThrow = false;       // The current loop contains an instruction which
+                               // may throw.
+  bool HeaderMayThrow = false; // Same as previous, but specific to loop header
+
+public:
+  virtual bool headerMayThrow() const;
+
+  virtual bool blockMayThrow(const BasicBlock *BB) const;
+
+  virtual bool anyBlockMayThrow() const;
+
+  virtual void computeLoopSafetyInfo(const Loop *CurLoop);
+
+  virtual bool isGuaranteedToExecute(const Instruction &Inst,
+                                     const DominatorTree *DT,
+                                     const Loop *CurLoop) const;
+
+  SimpleLoopSafetyInfo() : LoopSafetyInfo() {};
+
+  virtual ~SimpleLoopSafetyInfo() {};
 };
 
 }

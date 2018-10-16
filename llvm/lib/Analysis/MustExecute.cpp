@@ -33,20 +33,20 @@ void LoopSafetyInfo::copyColors(BasicBlock *New, BasicBlock *Old) {
   ColorsForNewBlock = ColorsForOldBlock;
 }
 
-bool LoopSafetyInfo::headerMayThrow() const {
+bool SimpleLoopSafetyInfo::headerMayThrow() const {
   return HeaderMayThrow;
 }
 
-bool LoopSafetyInfo::blockMayThrow(const BasicBlock *BB) const {
+bool SimpleLoopSafetyInfo::blockMayThrow(const BasicBlock *BB) const {
   (void)BB;
   return anyBlockMayThrow();
 }
 
-bool LoopSafetyInfo::anyBlockMayThrow() const {
+bool SimpleLoopSafetyInfo::anyBlockMayThrow() const {
   return MayThrow;
 }
 
-void LoopSafetyInfo::computeLoopSafetyInfo(const Loop *CurLoop) {
+void SimpleLoopSafetyInfo::computeLoopSafetyInfo(const Loop *CurLoop) {
   assert(CurLoop != nullptr && "CurLoop can't be null");
   BasicBlock *Header = CurLoop->getHeader();
   // Iterate over header and compute safety info.
@@ -200,9 +200,9 @@ bool LoopSafetyInfo::allLoopPathsLeadToBlock(const Loop *CurLoop,
 
 /// Returns true if the instruction in a loop is guaranteed to execute at least
 /// once.
-bool LoopSafetyInfo::isGuaranteedToExecute(const Instruction &Inst,
-                                           const DominatorTree *DT,
-                                           const Loop *CurLoop) const {
+bool SimpleLoopSafetyInfo::isGuaranteedToExecute(const Instruction &Inst,
+                                                 const DominatorTree *DT,
+                                                 const Loop *CurLoop) const {
   // We have to check to make sure that the instruction dominates all
   // of the exit blocks.  If it doesn't, then there is a path out of the loop
   // which does not execute this instruction, so we can't hoist it.
@@ -259,7 +259,7 @@ static bool isMustExecuteIn(const Instruction &I, Loop *L, DominatorTree *DT) {
   // TODO: merge these two routines.  For the moment, we display the best
   // result obtained by *either* implementation.  This is a bit unfair since no
   // caller actually gets the full power at the moment.
-  LoopSafetyInfo LSI;
+  SimpleLoopSafetyInfo LSI;
   LSI.computeLoopSafetyInfo(L);
   return LSI.isGuaranteedToExecute(I, DT, L) ||
     isGuaranteedToExecuteForEveryIteration(&I, L);

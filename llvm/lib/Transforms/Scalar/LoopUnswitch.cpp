@@ -189,7 +189,7 @@ namespace {
     BasicBlock *loopPreheader = nullptr;
 
     bool SanitizeMemory;
-    LoopSafetyInfo SafetyInfo;
+    SimpleLoopSafetyInfo SafetyInfo;
 
     // LoopBlocks contains all of the basic blocks of the loop, including the
     // preheader of the loop, the body of the loop, and the exit blocks of the
