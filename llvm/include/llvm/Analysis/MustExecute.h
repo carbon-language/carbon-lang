@@ -66,11 +66,6 @@ public:
   /// Copy colors of block \p Old into the block \p New.
   void copyColors(BasicBlock *New, BasicBlock *Old);
 
-  /// Returns true iff the header block of the loop for which this info is
-  /// calculated contains an instruction that may throw or otherwise exit
-  /// abnormally.
-  virtual bool headerMayThrow() const = 0;
-
   /// Returns true iff the block \p BB potentially may throw exception. It can
   /// be false-positive in cases when we want to avoid complex analysis.
   virtual bool blockMayThrow(const BasicBlock *BB) const = 0;
@@ -112,8 +107,6 @@ class SimpleLoopSafetyInfo: public LoopSafetyInfo {
   bool HeaderMayThrow = false; // Same as previous, but specific to loop header
 
 public:
-  virtual bool headerMayThrow() const;
-
   virtual bool blockMayThrow(const BasicBlock *BB) const;
 
   virtual bool anyBlockMayThrow() const;

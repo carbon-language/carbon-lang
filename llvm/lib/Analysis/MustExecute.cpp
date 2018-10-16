@@ -33,10 +33,6 @@ void LoopSafetyInfo::copyColors(BasicBlock *New, BasicBlock *Old) {
   ColorsForNewBlock = ColorsForOldBlock;
 }
 
-bool SimpleLoopSafetyInfo::headerMayThrow() const {
-  return HeaderMayThrow;
-}
-
 bool SimpleLoopSafetyInfo::blockMayThrow(const BasicBlock *BB) const {
   (void)BB;
   return anyBlockMayThrow();
@@ -203,10 +199,6 @@ bool LoopSafetyInfo::allLoopPathsLeadToBlock(const Loop *CurLoop,
 bool SimpleLoopSafetyInfo::isGuaranteedToExecute(const Instruction &Inst,
                                                  const DominatorTree *DT,
                                                  const Loop *CurLoop) const {
-  // We have to check to make sure that the instruction dominates all
-  // of the exit blocks.  If it doesn't, then there is a path out of the loop
-  // which does not execute this instruction, so we can't hoist it.
-
   // If the instruction is in the header block for the loop (which is very
   // common), it is always guaranteed to dominate the exit blocks.  Since this
   // is a common case, and can save some work, check it now.
@@ -215,15 +207,12 @@ bool SimpleLoopSafetyInfo::isGuaranteedToExecute(const Instruction &Inst,
     // Inst unless we can prove that Inst comes before the potential implicit
     // exit.  At the moment, we use a (cheap) hack for the common case where
     // the instruction of interest is the first one in the block.
-    return !headerMayThrow() ||
+    return !HeaderMayThrow ||
            Inst.getParent()->getFirstNonPHIOrDbg() == &Inst;
 
   // If there is a path from header to exit or latch that doesn't lead to our
   // instruction's block, return false.
-  if (!allLoopPathsLeadToBlock(CurLoop, Inst.getParent(), DT))
-    return false;
-
-  return true;
+  return allLoopPathsLeadToBlock(CurLoop, Inst.getParent(), DT);
 }
 
 
