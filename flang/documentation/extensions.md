@@ -77,4 +77,5 @@ Extensions and legacy features deliberately not supported
 * Default exponent of zero, e.g. `3.14159E`
 * Characters in defined operators that are neither letters nor digits
 * `B` suffix on unquoted octal constants
-* `Z` prefix on unquoted hexadecimal constants
+* `Z` prefix on unquoted hexadecimal constants (dangerous)
+* `T` and `F` as abbreviations for `.TRUE.` and `.FALSE.` (dangerous)

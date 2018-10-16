@@ -17,7 +17,53 @@
 
 namespace Fortran::semantics {
 
-IntrinsicTypeDefaultKinds::IntrinsicTypeDefaultKinds() {}
+IntrinsicTypeDefaultKinds::IntrinsicTypeDefaultKinds() {
+#if __x86_64__
+  quadPrecisionKind_ = 10;
+#endif
+}
+
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_defaultIntegerKind(
+    int k) {
+  defaultIntegerKind_ = k;
+  return *this;
+}
+
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_subscriptIntegerKind(
+    int k) {
+  subscriptIntegerKind_ = k;
+  return *this;
+}
+
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_defaultRealKind(
+    int k) {
+  defaultRealKind_ = k;
+  return *this;
+}
+
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_doublePrecisionKind(
+    int k) {
+  doublePrecisionKind_ = k;
+  return *this;
+}
+
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_quadPrecisionKind(
+    int k) {
+  quadPrecisionKind_ = k;
+  return *this;
+}
+
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_defaultCharacterKind(
+    int k) {
+  defaultCharacterKind_ = k;
+  return *this;
+}
+
+IntrinsicTypeDefaultKinds &IntrinsicTypeDefaultKinds::set_defaultLogicalKind(
+    int k) {
+  defaultLogicalKind_ = k;
+  return *this;
+}
 
 int IntrinsicTypeDefaultKinds::GetDefaultKind(TypeCategory category) const {
   switch (category) {

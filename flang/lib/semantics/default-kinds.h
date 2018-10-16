@@ -26,12 +26,19 @@ using Fortran::common::TypeCategory;
 
 class IntrinsicTypeDefaultKinds {
 public:
-  // TODO: Support compile-time options to default reals, ints, or both to
-  // KIND=8
   IntrinsicTypeDefaultKinds();
   int subscriptIntegerKind() const { return subscriptIntegerKind_; }
   int doublePrecisionKind() const { return doublePrecisionKind_; }
   int quadPrecisionKind() const { return quadPrecisionKind_; }
+
+  IntrinsicTypeDefaultKinds &set_defaultIntegerKind(int);
+  IntrinsicTypeDefaultKinds &set_subscriptIntegerKind(int);
+  IntrinsicTypeDefaultKinds &set_defaultRealKind(int);
+  IntrinsicTypeDefaultKinds &set_doublePrecisionKind(int);
+  IntrinsicTypeDefaultKinds &set_quadPrecisionKind(int);
+  IntrinsicTypeDefaultKinds &set_defaultCharacterKind(int);
+  IntrinsicTypeDefaultKinds &set_defaultLogicalKind(int);
+
   int GetDefaultKind(TypeCategory) const;
 
 private:
@@ -44,7 +51,7 @@ private:
   int subscriptIntegerKind_{8};  // for large arrays
   int defaultRealKind_{defaultIntegerKind_};
   int doublePrecisionKind_{2 * defaultRealKind_};
-  int quadPrecisionKind_{2 * doublePrecisionKind_};  // TODO: x86-64: 10
+  int quadPrecisionKind_{2 * doublePrecisionKind_};
   int defaultCharacterKind_{1};
   int defaultLogicalKind_{defaultIntegerKind_};
 };

@@ -33,6 +33,9 @@ public:
   explicit Semantics(const IntrinsicTypeDefaultKinds &dftKinds)
     : defaultKinds_{dftKinds} {}
   const parser::Messages &messages() const { return messages_; }
+  const IntrinsicTypeDefaultKinds &defaultKinds() const {
+    return defaultKinds_;
+  }
   Semantics &set_searchDirectories(const std::vector<std::string> &);
   Semantics &set_moduleDirectory(const std::string &);
   bool AnyFatalError() const { return messages_.AnyFatalError(); }

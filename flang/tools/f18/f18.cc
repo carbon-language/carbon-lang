@@ -220,7 +220,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       Fortran::parser::Messages messages;
       Fortran::parser::ContextualMessages contextualMessages{whole, &messages};
       Fortran::evaluate::FoldingContext context{contextualMessages};
-      Fortran::semantics::IntrinsicTypeDefaultKinds defaults;
+      const auto &defaults{semantics.defaultKinds()};
       auto intrinsics{
           Fortran::evaluate::IntrinsicProcTable::Configure(defaults)};
       Fortran::semantics::AnalyzeExpressions(
@@ -335,6 +335,8 @@ int main(int argc, char *const argv[]) {
   options.predefinitions.emplace_back("__F18_MINOR__", "1");
   options.predefinitions.emplace_back("__F18_PATCHLEVEL__", "1");
 
+  Fortran::semantics::IntrinsicTypeDefaultKinds defaultKinds;
+
   std::vector<std::string> fortranSources, otherSources, relocatables;
   bool anyFiles{false};
 
@@ -439,6 +441,12 @@ int main(int argc, char *const argv[]) {
     } else if (arg.substr(0, 2) == "-U") {
       options.predefinitions.emplace_back(
           arg.substr(2), std::optional<std::string>{});
+    } else if (arg == "-r8" || arg == "-fdefault-real-8") {
+      defaultKinds.set_defaultRealKind(8);
+    } else if (arg == "-i8" || arg == "-fdefault-integer-8") {
+      defaultKinds.set_defaultIntegerKind(8);
+    } else if (arg == "-fno-large-arrays") {
+      defaultKinds.set_subscriptIntegerKind(4);
     } else if (arg == "-help" || arg == "--help" || arg == "-?") {
       std::cerr
           << "f18 options:\n"
@@ -448,6 +456,8 @@ int main(int argc, char *const argv[]) {
           << "  -M[no]backslash      disable[enable] \\escapes in literals\n"
           << "  -Mstandard           enable conformance warnings\n"
           << "  -Mx,125,4            set bit 2 in xflag[125] (all Kanji mode)\n"
+          << "  -r8 | -fdefault-real-8 | -i8 | -fdefault-integer-8  "
+             "change default kinds of intrinsic types\n"
           << "  -Werror              treat warnings as errors\n"
           << "  -ed                  enable fixed form D lines\n"
           << "  -E                   prescan & preprocess only\n"
@@ -498,8 +508,6 @@ int main(int argc, char *const argv[]) {
     driver.pgf90Args.push_back("-Mbackslash");
   }
 
-  // TODO: Configure these kinds based on command line settings
-  Fortran::semantics::IntrinsicTypeDefaultKinds defaultKinds;
   Fortran::semantics::Semantics semantics{defaultKinds};
   semantics.set_searchDirectories(options.searchDirectories);
   semantics.set_moduleDirectory(driver.moduleDirectory);
