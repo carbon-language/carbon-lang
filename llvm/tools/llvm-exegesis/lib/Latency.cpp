@@ -61,7 +61,7 @@ computeAliasingInstructions(const LLVMState &State, const Instruction &Instr,
 }
 
 static ExecutionMode getExecutionModes(const Instruction &Instr) {
-  ExecutionMode EM;
+  ExecutionMode EM = ExecutionMode::UNKNOWN;
   if (Instr.hasAliasingImplicitRegisters())
     EM |= ExecutionMode::ALWAYS_SERIAL_IMPLICIT_REGS_ALIAS;
   if (Instr.hasTiedRegisters())
