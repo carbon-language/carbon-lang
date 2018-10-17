@@ -75,10 +75,9 @@ will look like:
 
 .. code-block:: c++
 
-  std::unique_ptr<Module> M = buildModule();
   JIT J;
-  J.addModule(*M);
-  auto *Main = (int(*)(int, char*[]))J.lookup("main");.getAddress();
+  J.addModule(buildModule());
+  auto *Main = (int(*)(int, char*[]))J.lookup("main").getAddress();
   int Result = Main();
 
 The APIs that we build in these tutorials will all be variations on this simple
