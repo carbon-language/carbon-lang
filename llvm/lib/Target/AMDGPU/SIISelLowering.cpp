@@ -6292,6 +6292,17 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
 
     if (NumElements > 2)
       return SplitVectorLoad(Op, DAG);
+
+    // SI has a hardware bug in the LDS / GDS boounds checking: if the base
+    // address is negative, then the instruction is incorrectly treated as
+    // out-of-bounds even if base + offsets is in bounds. Split vectorized
+    // loads here to avoid emitting ds_read2_b32. We may re-combine the
+    // load later in the SILoadStoreOptimizer.
+    if (Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS &&
+        NumElements == 2 && MemVT.getStoreSize() == 8 &&
+        Load->getAlignment() < 8) {
+      return SplitVectorLoad(Op, DAG);
+    }
   }
   return SDValue();
 }
@@ -6694,6 +6705,18 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 
     if (NumElements > 2)
       return SplitVectorStore(Op, DAG);
+
+    // SI has a hardware bug in the LDS / GDS boounds checking: if the base
+    // address is negative, then the instruction is incorrectly treated as
+    // out-of-bounds even if base + offsets is in bounds. Split vectorized
+    // stores here to avoid emitting ds_write2_b32. We may re-combine the
+    // store later in the SILoadStoreOptimizer.
+    if (Subtarget->getGeneration() == AMDGPUSubtarget::SOUTHERN_ISLANDS &&
+        NumElements == 2 && VT.getStoreSize() == 8 &&
+        Store->getAlignment() < 8) {
+      return SplitVectorStore(Op, DAG);
+    }
+
     return SDValue();
   } else {
     llvm_unreachable("unhandled address space");
