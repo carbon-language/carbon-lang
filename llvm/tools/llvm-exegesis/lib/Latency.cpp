@@ -12,7 +12,6 @@
 #include "Assembler.h"
 #include "BenchmarkRunner.h"
 #include "MCInstrDescView.h"
-#include "PerfHelper.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstBuilder.h"
@@ -178,30 +177,26 @@ const char *LatencyBenchmarkRunner::getCounterName() const {
 
 LatencyBenchmarkRunner::~LatencyBenchmarkRunner() = default;
 
-std::vector<BenchmarkMeasure>
-LatencyBenchmarkRunner::runMeasurements(const ExecutableFunction &Function,
-                                        ScratchSpace &Scratch) const {
+llvm::Expected<std::vector<BenchmarkMeasure>>
+LatencyBenchmarkRunner::runMeasurements(
+    const FunctionExecutor &Executor) const {
   // Cycle measurements include some overhead from the kernel. Repeat the
   // measure several times and take the minimum value.
   constexpr const int NumMeasurements = 30;
-  int64_t MinLatency = std::numeric_limits<int64_t>::max();
+  int64_t MinValue = std::numeric_limits<int64_t>::max();
   const char *CounterName = getCounterName();
   if (!CounterName)
     llvm::report_fatal_error("could not determine cycle counter name");
-  const pfm::PerfEvent CyclesPerfEvent(CounterName);
-  if (!CyclesPerfEvent.valid())
-    llvm::report_fatal_error("invalid perf event");
   for (size_t I = 0; I < NumMeasurements; ++I) {
-    pfm::Counter Counter(CyclesPerfEvent);
-    Scratch.clear();
-    Counter.start();
-    Function(Scratch.ptr());
-    Counter.stop();
-    const int64_t Value = Counter.read();
-    if (Value < MinLatency)
-      MinLatency = Value;
+    auto ExpectedCounterValue = Executor.runAndMeasure(CounterName);
+    if (!ExpectedCounterValue)
+      return ExpectedCounterValue.takeError();
+    if (*ExpectedCounterValue < MinValue)
+      MinValue = *ExpectedCounterValue;
   }
-  return {BenchmarkMeasure::Create("latency", MinLatency)};
+  std::vector<BenchmarkMeasure> Result = {
+      BenchmarkMeasure::Create("latency", MinValue)};
+  return std::move(Result);
 }
 
 } // namespace exegesis
