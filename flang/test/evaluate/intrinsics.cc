@@ -89,7 +89,7 @@ struct TestCall {
     std::size_t j{0};
     for (auto &kw : keywords) {
       if (!kw.empty()) {
-        args[j].keyword = strings(kw);
+        args[j]->keyword = strings(kw);
       }
       ++j;
     }
@@ -103,21 +103,22 @@ struct TestCall {
     for (const auto &a : args) {
       std::cout << sep;
       sep = ',';
-      a.Dump(std::cout);
+      a->Dump(std::cout);
     }
     if (sep == '(') {
       std::cout << '(';
     }
     std::cout << ")\n";
-    CallCharacteristics call{fName, args};
+    CallCharacteristics call{fName};
     auto messages{strings.Messages(buffer)};
-    std::optional<SpecificIntrinsic> si{table.Probe(call, &messages)};
+    std::optional<SpecificCall> si{table.Probe(call, args, &messages)};
     if (resultType.has_value()) {
       TEST(si.has_value());
       TEST(buffer.empty());
-      TEST(*resultType == si->type);
-      MATCH(rank, si->rank);
-      MATCH(isElemental, si->attrs.test(semantics::Attr::ELEMENTAL));
+      TEST(*resultType == si->specificIntrinsic.type);
+      MATCH(rank, si->specificIntrinsic.rank);
+      MATCH(isElemental,
+          si->specificIntrinsic.attrs.test(semantics::Attr::ELEMENTAL));
     } else {
       TEST(!si.has_value());
       TEST(!buffer.empty() || name == "bad");
@@ -128,24 +129,10 @@ struct TestCall {
   const IntrinsicProcTable &table;
   CookedStrings strings;
   parser::Messages buffer;
-  Arguments args;
+  ActualArguments args;
   std::string name;
   std::vector<std::string> keywords;
 };
-
-template<typename A> void Push(Arguments &args, A &&x) {
-  args.emplace_back(AsGenericExpr(std::move(x)));
-}
-template<typename A, typename... As>
-void Push(Arguments &args, A &&x, As &&... xs) {
-  args.emplace_back(AsGenericExpr(std::move(x)));
-  Push(args, std::move(xs)...);
-}
-template<typename... As> Arguments Args(As &&... xs) {
-  Arguments args;
-  Push(args, std::move(xs)...);
-  return args;
-}
 
 void TestIntrinsics() {
   semantics::IntrinsicTypeDefaultKinds defaults;

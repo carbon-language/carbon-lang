@@ -46,6 +46,6 @@ struct ActualArgument {
   CopyableIndirection<Expr<SomeType>> value;
 };
 
-using Arguments = std::vector<ActualArgument>;
+using ActualArguments = std::vector<std::optional<ActualArgument>>;
 }
 #endif  // FORTRAN_EVALUATE_CALL_H_

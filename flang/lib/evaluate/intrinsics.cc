@@ -201,8 +201,8 @@ struct IntrinsicInterface {
   IntrinsicDummyArgument dummy[maxArguments];
   TypePattern result;
   Rank rank{Rank::elemental};
-  std::optional<SpecificIntrinsic> Match(const CallCharacteristics &,
-      const semantics::IntrinsicTypeDefaultKinds &,
+  std::optional<SpecificCall> Match(const CallCharacteristics &,
+      const semantics::IntrinsicTypeDefaultKinds &, ActualArguments &,
       parser::ContextualMessages &messages) const;
   std::ostream &Dump(std::ostream &) const;
 };
@@ -285,6 +285,7 @@ static const IntrinsicInterface genericIntrinsicFunction[]{
         {{"array", SameType, Rank::array}, {"shift", AnyInt, Rank::dimRemoved},
             OptionalDIM},
         SameType, Rank::array},
+    {"dble", {{"a", AnyNumeric, Rank::elementalOrBOZ}}, DoublePrecision},
     {"dim", {{"x", SameIntOrReal}, {"y", SameIntOrReal}}, SameIntOrReal},
     {"dot_product",
         {{"vector_a", AnyLogical, Rank::vector},
@@ -665,8 +666,6 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
     {{"datan2", {{"y", DoublePrecision}, {"x", DoublePrecision}},
          DoublePrecision},
         "atan2"},
-    {{"dble", {{"a", DefaultReal}, DefaultingKIND}, DoublePrecision}, "real",
-        true},
     {{"dcos", {{"x", DoublePrecision}}, DoublePrecision}, "cos"},
     {{"dcosh", {{"x", DoublePrecision}}, DoublePrecision}, "cosh"},
     {{"ddim", {{"x", DoublePrecision}, {"y", DoublePrecision}},
@@ -754,46 +753,48 @@ static const SpecificIntrinsicInterface specificIntrinsicFunction[]{
 
 // Intrinsic interface matching against the arguments of a particular
 // procedure reference.
-std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
+std::optional<SpecificCall> IntrinsicInterface::Match(
     const CallCharacteristics &call,
     const semantics::IntrinsicTypeDefaultKinds &defaults,
-    parser::ContextualMessages &messages) const {
+    ActualArguments &arguments, parser::ContextualMessages &messages) const {
   // Attempt to construct a 1-1 correspondence between the dummy arguments in
   // a particular intrinsic procedure's generic interface and the actual
   // arguments in a procedure reference.
-  const ActualArgument *actualForDummy[maxArguments];
+  ActualArgument *actualForDummy[maxArguments];
   int dummies{0};
   for (; dummies < maxArguments && dummy[dummies].keyword != nullptr;
        ++dummies) {
     actualForDummy[dummies] = nullptr;
   }
-  for (const ActualArgument &arg : call.arguments) {
-    if (arg.isAlternateReturn) {
-      messages.Say(
-          "alternate return specifier not acceptable on call to intrinsic '%s'"_err_en_US,
-          name);
-      return std::nullopt;
-    }
-    bool found{false};
-    for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
-      if (actualForDummy[dummyArgIndex] == nullptr) {
-        if (!arg.keyword.has_value() ||
-            *arg.keyword == dummy[dummyArgIndex].keyword) {
-          actualForDummy[dummyArgIndex] = &arg;
-          found = true;
-          break;
+  for (std::optional<ActualArgument> &arg : arguments) {
+    if (arg.has_value()) {
+      if (arg->isAlternateReturn) {
+        messages.Say(
+            "alternate return specifier not acceptable on call to intrinsic '%s'"_err_en_US,
+            name);
+        return std::nullopt;
+      }
+      bool found{false};
+      for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
+        if (actualForDummy[dummyArgIndex] == nullptr) {
+          if (!arg->keyword.has_value() ||
+              *arg->keyword == dummy[dummyArgIndex].keyword) {
+            actualForDummy[dummyArgIndex] = &*arg;
+            found = true;
+            break;
+          }
         }
       }
-    }
-    if (!found) {
-      if (arg.keyword.has_value()) {
-        messages.Say(*arg.keyword,
-            "unknown keyword argument to intrinsic '%s'"_err_en_US, name);
-      } else {
-        messages.Say(
-            "too many actual arguments for intrinsic '%s'"_err_en_US, name);
+      if (!found) {
+        if (arg->keyword.has_value()) {
+          messages.Say(*arg->keyword,
+              "unknown keyword argument to intrinsic '%s'"_err_en_US, name);
+        } else {
+          messages.Say(
+              "too many actual arguments for intrinsic '%s'"_err_en_US, name);
+        }
+        return std::nullopt;
       }
-      return std::nullopt;
     }
   }
 
@@ -970,96 +971,103 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
   }
 
   // Calculate the characteristics of the function result, if any
+  std::optional<DynamicType> resultType;
   if (result.categorySet.empty()) {
-    CHECK(result.kindCode == KindCode::none);
-    return std::make_optional<SpecificIntrinsic>(name);
-  }
-  // Determine the result type.
-  DynamicType resultType{*result.categorySet.LeastElement(), 0};
-  switch (result.kindCode) {
-  case KindCode::defaultIntegerKind:
-    CHECK(result.categorySet == IntType);
-    CHECK(resultType.category == TypeCategory::Integer);
-    resultType.kind = defaults.GetDefaultKind(TypeCategory::Integer);
-    break;
-  case KindCode::defaultRealKind:
-    CHECK(result.categorySet == CategorySet{resultType.category});
-    CHECK(FloatingType.test(resultType.category));
-    resultType.kind = defaults.GetDefaultKind(TypeCategory::Real);
-    break;
-  case KindCode::doublePrecision:
-    CHECK(result.categorySet == RealType);
-    CHECK(resultType.category == TypeCategory::Real);
-    resultType.kind = defaults.doublePrecisionKind();
-    break;
-  case KindCode::defaultCharKind:
-    CHECK(result.categorySet == CharType);
-    CHECK(resultType.category == TypeCategory::Character);
-    resultType.kind = defaults.GetDefaultKind(TypeCategory::Character);
-    break;
-  case KindCode::defaultLogicalKind:
-    CHECK(result.categorySet == LogicalType);
-    CHECK(resultType.category == TypeCategory::Logical);
-    resultType.kind = defaults.GetDefaultKind(TypeCategory::Logical);
-    break;
-  case KindCode::same:
-    CHECK(sameArg != nullptr);
-    if (std::optional<DynamicType> aType{sameArg->GetType()}) {
-      if (result.categorySet.test(aType->category)) {
-        resultType = *aType;
-      } else {
-        resultType.kind = aType->kind;
-      }
+    if (!call.isSubroutineCall) {
+      return std::nullopt;
     }
-    break;
-  case KindCode::effectiveKind:
-    CHECK(kindDummyArg != nullptr);
-    CHECK(result.categorySet == CategorySet{resultType.category});
-    if (kindArg != nullptr) {
-      if (auto *jExpr{std::get_if<Expr<SomeInteger>>(&kindArg->value->u)}) {
-        CHECK(jExpr->Rank() == 0);
-        if (auto value{jExpr->ScalarValue()}) {
-          if (auto code{value->ToInt64()}) {
-            if (IsValidKindOfIntrinsicType(resultType.category, *code)) {
-              resultType.kind = *code;
-              break;
+    CHECK(result.kindCode == KindCode::none);
+  } else {
+    // Determine the result type.
+    if (call.isSubroutineCall) {
+      return std::nullopt;
+    }
+    resultType = DynamicType{*result.categorySet.LeastElement(), 0};
+    switch (result.kindCode) {
+    case KindCode::defaultIntegerKind:
+      CHECK(result.categorySet == IntType);
+      CHECK(resultType->category == TypeCategory::Integer);
+      resultType->kind = defaults.GetDefaultKind(TypeCategory::Integer);
+      break;
+    case KindCode::defaultRealKind:
+      CHECK(result.categorySet == CategorySet{resultType->category});
+      CHECK(FloatingType.test(resultType->category));
+      resultType->kind = defaults.GetDefaultKind(TypeCategory::Real);
+      break;
+    case KindCode::doublePrecision:
+      CHECK(result.categorySet == RealType);
+      CHECK(resultType->category == TypeCategory::Real);
+      resultType->kind = defaults.doublePrecisionKind();
+      break;
+    case KindCode::defaultCharKind:
+      CHECK(result.categorySet == CharType);
+      CHECK(resultType->category == TypeCategory::Character);
+      resultType->kind = defaults.GetDefaultKind(TypeCategory::Character);
+      break;
+    case KindCode::defaultLogicalKind:
+      CHECK(result.categorySet == LogicalType);
+      CHECK(resultType->category == TypeCategory::Logical);
+      resultType->kind = defaults.GetDefaultKind(TypeCategory::Logical);
+      break;
+    case KindCode::same:
+      CHECK(sameArg != nullptr);
+      if (std::optional<DynamicType> aType{sameArg->GetType()}) {
+        if (result.categorySet.test(aType->category)) {
+          resultType = *aType;
+        } else {
+          resultType->kind = aType->kind;
+        }
+      }
+      break;
+    case KindCode::effectiveKind:
+      CHECK(kindDummyArg != nullptr);
+      CHECK(result.categorySet == CategorySet{resultType->category});
+      if (kindArg != nullptr) {
+        if (auto *jExpr{std::get_if<Expr<SomeInteger>>(&kindArg->value->u)}) {
+          CHECK(jExpr->Rank() == 0);
+          if (auto value{jExpr->ScalarValue()}) {
+            if (auto code{value->ToInt64()}) {
+              if (IsValidKindOfIntrinsicType(resultType->category, *code)) {
+                resultType->kind = *code;
+                break;
+              }
             }
           }
         }
+        messages.Say("'kind=' argument must be a constant scalar integer "
+                     "whose value is a supported kind for the "
+                     "intrinsic result type"_err_en_US);
+        return std::nullopt;
+      } else if (kindDummyArg->optionality == Optionality::defaultsToSameKind) {
+        CHECK(sameArg != nullptr);
+        resultType = *sameArg->GetType();
+      } else if (kindDummyArg->optionality ==
+          Optionality::defaultsToSubscriptKind) {
+        CHECK(resultType->category == TypeCategory::Integer);
+        resultType->kind = defaults.subscriptIntegerKind();
+      } else {
+        CHECK(kindDummyArg->optionality ==
+            Optionality::defaultsToDefaultForResult);
+        resultType->kind = defaults.GetDefaultKind(resultType->category);
       }
-      messages.Say("'kind=' argument must be a constant scalar integer "
-                   "whose value is a supported kind for the "
-                   "intrinsic result type"_err_en_US);
-      return std::nullopt;
-    } else if (kindDummyArg->optionality == Optionality::defaultsToSameKind) {
-      CHECK(sameArg != nullptr);
-      resultType = *sameArg->GetType();
-    } else if (kindDummyArg->optionality ==
-        Optionality::defaultsToSubscriptKind) {
-      CHECK(resultType.category == TypeCategory::Integer);
-      resultType.kind = defaults.subscriptIntegerKind();
-    } else {
-      CHECK(
-          kindDummyArg->optionality == Optionality::defaultsToDefaultForResult);
-      resultType.kind = defaults.GetDefaultKind(resultType.category);
+      break;
+    case KindCode::likeMultiply:
+      CHECK(dummies >= 2);
+      CHECK(actualForDummy[0] != nullptr);
+      CHECK(actualForDummy[1] != nullptr);
+      resultType = actualForDummy[0]->GetType()->ResultTypeForMultiply(
+          *actualForDummy[1]->GetType());
+      break;
+    case KindCode::typeless:
+    case KindCode::teamType:
+    case KindCode::any:
+    case KindCode::kindArg:
+    case KindCode::dimArg:
+      common::die(
+          "INTERNAL: bad KindCode appears on intrinsic '%s' result", name);
+      break;
+    default: CRASH_NO_CASE;
     }
-    break;
-  case KindCode::likeMultiply:
-    CHECK(dummies >= 2);
-    CHECK(actualForDummy[0] != nullptr);
-    CHECK(actualForDummy[1] != nullptr);
-    resultType = actualForDummy[0]->GetType()->ResultTypeForMultiply(
-        *actualForDummy[1]->GetType());
-    break;
-  case KindCode::typeless:
-  case KindCode::teamType:
-  case KindCode::any:
-  case KindCode::kindArg:
-  case KindCode::dimArg:
-    common::die(
-        "INTERNAL: bad KindCode appears on intrinsic '%s' result", name);
-    break;
-  default: CRASH_NO_CASE;
   }
 
   // At this point, the call is acceptable.
@@ -1108,8 +1116,17 @@ std::optional<SpecificIntrinsic> IntrinsicInterface::Match(
     attrs.set(semantics::Attr::ELEMENTAL);
   }
 
-  return std::make_optional<SpecificIntrinsic>(
-      name, resultType, resultRank, attrs);
+  // Rearrange the actual arguments into dummy argument order.
+  ActualArguments rearranged(dummies);
+  for (int j{0}; j < dummies; ++j) {
+    if (ActualArgument * arg{actualForDummy[j]}) {
+      rearranged[j] = std::make_optional(std::move(*arg));
+    }
+  }
+
+  return {SpecificCall{
+      SpecificIntrinsic{name, std::move(resultType), resultRank, attrs},
+      std::move(rearranged)}};
 }
 
 struct IntrinsicProcTable::Implementation {
@@ -1123,8 +1140,8 @@ struct IntrinsicProcTable::Implementation {
     }
   }
 
-  std::optional<SpecificIntrinsic> Probe(
-      const CallCharacteristics &, parser::ContextualMessages *) const;
+  std::optional<SpecificCall> Probe(const CallCharacteristics &,
+      ActualArguments &, parser::ContextualMessages *) const;
 
   semantics::IntrinsicTypeDefaultKinds defaults;
   std::multimap<std::string, const IntrinsicInterface *> genericFuncs;
@@ -1134,8 +1151,8 @@ struct IntrinsicProcTable::Implementation {
 
 // Probe the configured intrinsic procedure pattern tables in search of a
 // match for a given procedure reference.
-std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
-    const CallCharacteristics &call,
+std::optional<SpecificCall> IntrinsicProcTable::Implementation::Probe(
+    const CallCharacteristics &call, ActualArguments &arguments,
     parser::ContextualMessages *messages) const {
   if (call.isSubroutineCall) {
     return std::nullopt;  // TODO
@@ -1149,12 +1166,14 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
   std::string name{call.name.ToString()};
   auto specificRange{specificFuncs.equal_range(name)};
   for (auto iter{specificRange.first}; iter != specificRange.second; ++iter) {
-    if (auto specific{iter->second->Match(call, defaults, specificErrors)}) {
+    if (auto specificCall{
+            iter->second->Match(call, defaults, arguments, specificErrors)}) {
       if (const char *genericName{iter->second->generic}) {
-        specific->name = genericName;
+        specificCall->specificIntrinsic.name = genericName;
       }
-      specific->isRestrictedSpecific = iter->second->isRestrictedSpecific;
-      return specific;
+      specificCall->specificIntrinsic.isRestrictedSpecific =
+          iter->second->isRestrictedSpecific;
+      return specificCall;
     }
   }
   // Probe the generic intrinsic function table next.
@@ -1164,22 +1183,23 @@ std::optional<SpecificIntrinsic> IntrinsicProcTable::Implementation::Probe(
       finalBuffer ? &genericBuffer : nullptr};
   auto genericRange{genericFuncs.equal_range(name)};
   for (auto iter{genericRange.first}; iter != genericRange.second; ++iter) {
-    if (auto specific{iter->second->Match(call, defaults, genericErrors)}) {
-      return specific;
+    if (auto specificCall{
+            iter->second->Match(call, defaults, arguments, genericErrors)}) {
+      return specificCall;
     }
   }
   // Special cases of intrinsic functions
   if (call.name.ToString() == "null") {
-    if (call.arguments.size() == 0) {
+    if (arguments.size() == 0) {
       // TODO: NULL() result type is determined by context
       // Can pass that context in, or return a token distinguishing
       // NULL, or represent NULL as a new kind of top-level expression
-    } else if (call.arguments.size() > 1) {
+    } else if (arguments.size() > 1) {
       genericErrors.Say("too many arguments to NULL()"_err_en_US);
-    } else if (call.arguments[0].keyword.has_value() &&
-        call.arguments[0].keyword->ToString() != "mold") {
+    } else if (arguments[0].has_value() && arguments[0]->keyword.has_value() &&
+        arguments[0]->keyword->ToString() != "mold") {
       genericErrors.Say("unknown argument '%s' to NULL()"_err_en_US,
-          call.arguments[0].keyword->ToString().data());
+          arguments[0]->keyword->ToString().data());
     } else {
       // TODO: Argument must be pointer, procedure pointer, or allocatable.
       // Characteristics, including dynamic length type parameter values,
@@ -1211,11 +1231,11 @@ IntrinsicProcTable IntrinsicProcTable::Configure(
   return result;
 }
 
-std::optional<SpecificIntrinsic> IntrinsicProcTable::Probe(
-    const CallCharacteristics &call,
+std::optional<SpecificCall> IntrinsicProcTable::Probe(
+    const CallCharacteristics &call, ActualArguments &arguments,
     parser::ContextualMessages *messages) const {
   CHECK(impl_ != nullptr || !"IntrinsicProcTable: not configured");
-  return impl_->Probe(call, messages);
+  return impl_->Probe(call, arguments, messages);
 }
 
 std::ostream &SpecificIntrinsic::Dump(std::ostream &o) const {

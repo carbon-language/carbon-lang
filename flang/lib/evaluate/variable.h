@@ -302,11 +302,11 @@ struct ProcedureDesignator {
 class UntypedFunctionRef {
 public:
   CLASS_BOILERPLATE(UntypedFunctionRef)
-  UntypedFunctionRef(ProcedureDesignator &&p, Arguments &&a)
+  UntypedFunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
     : proc_{std::move(p)}, arguments_(std::move(a)) {}
 
   const ProcedureDesignator &proc() const { return proc_; }
-  const Arguments &arguments() const { return arguments_; }
+  const ActualArguments &arguments() const { return arguments_; }
 
   Expr<SubscriptInteger> LEN() const;
   int Rank() const { return proc_.Rank(); }
@@ -315,7 +315,7 @@ public:
 
 protected:
   ProcedureDesignator proc_;
-  Arguments arguments_;
+  ActualArguments arguments_;
 };
 
 template<typename A> struct FunctionRef : public UntypedFunctionRef {
@@ -324,7 +324,7 @@ template<typename A> struct FunctionRef : public UntypedFunctionRef {
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   CLASS_BOILERPLATE(FunctionRef)
   FunctionRef(UntypedFunctionRef &&ufr) : UntypedFunctionRef{std::move(ufr)} {}
-  FunctionRef(ProcedureDesignator &&p, Arguments &&a)
+  FunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
     : UntypedFunctionRef{std::move(p), std::move(a)} {}
   std::optional<DynamicType> GetType() const {
     if constexpr (std::is_same_v<Result, SomeDerived>) {
@@ -369,16 +369,16 @@ struct Label {  // TODO: this is a placeholder
 class SubroutineCall {
 public:
   CLASS_BOILERPLATE(SubroutineCall)
-  SubroutineCall(ProcedureDesignator &&p, Arguments &&a)
+  SubroutineCall(ProcedureDesignator &&p, ActualArguments &&a)
     : proc_{std::move(p)}, arguments_(std::move(a)) {}
   const ProcedureDesignator &proc() const { return proc_; }
-  const Arguments &arguments() const { return arguments_; }
+  const ActualArguments &arguments() const { return arguments_; }
   int Rank() const { return 0; }  // TODO: elemental subroutine representation
   std::ostream &Dump(std::ostream &) const;
 
 private:
   ProcedureDesignator proc_;
-  Arguments arguments_;
+  ActualArguments arguments_;
 };
 }
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_

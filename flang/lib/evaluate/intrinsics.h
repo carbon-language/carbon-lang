@@ -32,26 +32,30 @@ namespace Fortran::evaluate {
 // of their arguments, at least for now.
 using IntrinsicProcedure = const char *;  // not an owning pointer
 
-class Argument;
-
 struct CallCharacteristics {
   parser::CharBlock name;
-  const Arguments &arguments;
   bool isSubroutineCall{false};
 };
 
 struct SpecificIntrinsic {
   explicit SpecificIntrinsic(IntrinsicProcedure n) : name{n} {}
-  SpecificIntrinsic(
-      IntrinsicProcedure n, DynamicType dt, int r, semantics::Attrs a)
-    : name{n}, type{dt}, rank{r}, attrs{a} {}
+  SpecificIntrinsic(IntrinsicProcedure n, std::optional<DynamicType> &&dt,
+      int r, semantics::Attrs a)
+    : name{n}, type{std::move(dt)}, rank{r}, attrs{a} {}
   std::ostream &Dump(std::ostream &) const;
 
   IntrinsicProcedure name;
   bool isRestrictedSpecific{false};  // if true, can only call it
-  DynamicType type;
+  std::optional<DynamicType> type;  // absent if and only if subroutine call
   int rank{0};
-  semantics::Attrs attrs;
+  semantics::Attrs attrs;  // ELEMENTAL, POINTER
+};
+
+struct SpecificCall {
+  SpecificCall(SpecificIntrinsic &&si, ActualArguments &&as)
+    : specificIntrinsic{std::move(si)}, arguments{std::move(as)} {}
+  SpecificIntrinsic specificIntrinsic;
+  ActualArguments arguments;
 };
 
 class IntrinsicProcTable {
@@ -62,8 +66,12 @@ public:
   ~IntrinsicProcTable();
   static IntrinsicProcTable Configure(
       const semantics::IntrinsicTypeDefaultKinds &);
-  std::optional<SpecificIntrinsic> Probe(const CallCharacteristics &,
-      parser::ContextualMessages *messages = nullptr) const;
+
+  // Probe the intrinsics for a match against a specific call.
+  // On success, the actual arguments are transferred to the result
+  // in dummy argument order.
+  std::optional<SpecificCall> Probe(const CallCharacteristics &,
+      ActualArguments &, parser::ContextualMessages *messages = nullptr) const;
   std::ostream &Dump(std::ostream &) const;
 
 private:
