@@ -65,8 +65,8 @@ rather than compiling whole programs to disk ahead of time as a traditional
 compiler does. To support that aim our initial, bare-bones JIT API will have
 just two functions:
 
-1. Handle addModule(Module &M) -- Make the given IR module available for
-   execution.
+1. void addModule(std::unique_ptr<Module> M) -- Make the given IR module
+   available for execution.
 2. Expected<JITSymbol> lookup() -- Search for pointers to
    symbols (functions or variables) that have been added to the JIT.
 
