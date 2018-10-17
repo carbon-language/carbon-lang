@@ -592,11 +592,12 @@ exit:
 
 ; GCN-LABEL: {{^}}smrd_uniform_loop2:
 ; (this test differs from smrd_uniform_loop by the more complex structure of phis,
-; which currently confuses the DivergenceAnalysis after structurization)
+; which used to confuse the DivergenceAnalysis after structurization)
 ;
-; TODO: this should use an s_buffer_load
+; TODO: we should keep the loop counter in an SGPR
 ;
-; GCN: buffer_load_dword
+; GCN: v_readfirstlane_b32
+; GCN: s_buffer_load_dword
 define amdgpu_ps float @smrd_uniform_loop2(<4 x i32> inreg %desc, i32 %bound, i32 %bound.a) #0 {
 main_body:
   br label %loop
