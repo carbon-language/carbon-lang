@@ -3,6 +3,8 @@
 ; -stats requires asserts
 ; REQUIRES: asserts
 
+; REQUIRES: x86-registered-target
+
 ; RUN: opt -module-summary %s -o %t.bc
 ; RUN: opt -module-summary %p/Inputs/import_stats.ll -o %t2.bc
 
