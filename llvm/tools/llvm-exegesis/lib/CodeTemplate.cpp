@@ -92,18 +92,17 @@ llvm::StringRef getName(ExecutionMode Bit) {
   llvm_unreachable("Missing enum case");
 }
 
-static const ExecutionMode kAllExecutionModeBits[] = {
-    ExecutionMode::ALWAYS_SERIAL_IMPLICIT_REGS_ALIAS,
-    ExecutionMode::ALWAYS_SERIAL_TIED_REGS_ALIAS,
-    ExecutionMode::SERIAL_VIA_MEMORY_INSTR,
-    ExecutionMode::SERIAL_VIA_EXPLICIT_REGS,
-    ExecutionMode::SERIAL_VIA_NON_MEMORY_INSTR,
-    ExecutionMode::ALWAYS_PARALLEL_MISSING_USE_OR_DEF,
-    ExecutionMode::PARALLEL_VIA_EXPLICIT_REGS,
-};
-
 llvm::ArrayRef<ExecutionMode> getAllExecutionBits() {
-  return kAllExecutionModeBits;
+  static const ExecutionMode kAllExecutionModeBits[] = {
+      ExecutionMode::ALWAYS_SERIAL_IMPLICIT_REGS_ALIAS,
+      ExecutionMode::ALWAYS_SERIAL_TIED_REGS_ALIAS,
+      ExecutionMode::SERIAL_VIA_MEMORY_INSTR,
+      ExecutionMode::SERIAL_VIA_EXPLICIT_REGS,
+      ExecutionMode::SERIAL_VIA_NON_MEMORY_INSTR,
+      ExecutionMode::ALWAYS_PARALLEL_MISSING_USE_OR_DEF,
+      ExecutionMode::PARALLEL_VIA_EXPLICIT_REGS,
+  };
+  return llvm::makeArrayRef(kAllExecutionModeBits);
 }
 
 llvm::SmallVector<ExecutionMode, 4>
