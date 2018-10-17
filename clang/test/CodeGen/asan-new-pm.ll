@@ -1,4 +1,4 @@
-; RUN: %clang_cc1 -S -emit-llvm -o - -fexperimental-new-pass-manager -fsanitize=address -triple=x86_64-linux %s | FileCheck %s
+; RUN: %clang_cc1 -S -emit-llvm -o - -fexperimental-new-pass-manager -fsanitize=address %s | FileCheck %s
 
 ; CHECK: @llvm.global_ctors = {{.*}}@asan.module_ctor
 ; CHECK: declare void @__asan_loadN
