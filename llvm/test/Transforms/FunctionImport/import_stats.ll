@@ -1,5 +1,8 @@
 ; Test to check thin link importing stats
 
+; -stats requires asserts
+; REQUIRES: asserts
+
 ; RUN: opt -module-summary %s -o %t.bc
 ; RUN: opt -module-summary %p/Inputs/import_stats.ll -o %t2.bc
 
@@ -14,8 +17,10 @@
 ; RUN:          -r %t2.bc,hot,plx \
 ; RUN:          -r %t2.bc,critical,plx \
 ; RUN:          -r %t2.bc,none,plx \
+; RUN:          -r %t2.bc,globalvar,plx \
 ; RUN:          2>&1 | FileCheck %s --check-prefix=THINLINKSTATS
 
+; THINLINKSTATS-DAG: 1 function-import   - Number of global variables thin link decided to import
 ; THINLINKSTATS-DAG: 1 function-import  - Number of critical functions thin link decided to import
 ; THINLINKSTATS-DAG: 3 function-import  - Number of functions thin link decided to import
 ; THINLINKSTATS-DAG: 1 function-import  - Number of hot functions thin link decided to import
