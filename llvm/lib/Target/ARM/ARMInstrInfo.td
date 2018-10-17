@@ -359,7 +359,7 @@ let RecomputePerFunction = 1 in {
   def DontUseMovtInPic : Predicate<"!Subtarget->useMovt(*MF) || !Subtarget->allowPositionIndependentMovt()">;
 
   def UseFPVMLx: Predicate<"((Subtarget->useFPVMLx() &&"
-                           " !TM.Options.AllowFPOpFusion == FPOpFusion::Fast) ||"
+                           "  TM.Options.AllowFPOpFusion != FPOpFusion::Fast) ||"
                            "MF->getFunction().optForMinSize())">;
 }
 def UseMulOps        : Predicate<"Subtarget->useMulOps()">;
