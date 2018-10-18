@@ -50,7 +50,6 @@ public:
   bool Pre(parser::EquivalenceStmt &) { return false; }
   bool Pre(parser::BindEntity &) { return false; }
   bool Pre(parser::Keyword &) { return false; }
-  bool Pre(parser::DataStmtValue &) { return false; }
   bool Pre(parser::SavedEntity &) { return false; }
   bool Pre(parser::EntryStmt &) { return false; }
 

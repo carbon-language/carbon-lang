@@ -45,6 +45,7 @@ bool Semantics::Perform(parser::Program &program) {
   if (AnyFatalError()) {
     return false;
   }
+  parser::CanonicalizeDo(program);
   ResolveNames(messages_, globalScope_, program, directories_, defaultKinds_);
   if (AnyFatalError()) {
     return false;
@@ -53,7 +54,6 @@ bool Semantics::Perform(parser::Program &program) {
   if (AnyFatalError()) {
     return false;
   }
-  parser::CanonicalizeDo(program);
   ModFileWriter writer;
   writer.set_directory(moduleDirectory_);
   if (!writer.WriteAll(globalScope_)) {

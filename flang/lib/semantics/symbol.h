@@ -230,6 +230,16 @@ private:
   listType occurrences_;
 };
 
+// A symbol host-associated from an enclosing scope.
+class HostAssocDetails {
+public:
+  HostAssocDetails(const Symbol &symbol) : symbol_{&symbol} {}
+  const Symbol &symbol() const { return *symbol_; }
+
+private:
+  const Symbol *symbol_;
+};
+
 class GenericDetails {
 public:
   using listType = std::list<const Symbol *>;
@@ -276,8 +286,8 @@ class UnknownDetails {};
 using Details = std::variant<UnknownDetails, MainProgramDetails, ModuleDetails,
     SubprogramDetails, SubprogramNameDetails, EntityDetails,
     ObjectEntityDetails, ProcEntityDetails, DerivedTypeDetails, UseDetails,
-    UseErrorDetails, GenericDetails, ProcBindingDetails, GenericBindingDetails,
-    FinalProcDetails, TypeParamDetails, MiscDetails>;
+    UseErrorDetails, HostAssocDetails, GenericDetails, ProcBindingDetails,
+    GenericBindingDetails, FinalProcDetails, TypeParamDetails, MiscDetails>;
 std::ostream &operator<<(std::ostream &, const Details &);
 std::string DetailsToString(const Details &);
 
@@ -288,7 +298,10 @@ public:
       Subroutine,  // symbol is a subroutine
       Implicit,  // symbol is implicitly typed
       ModFile,  // symbol came from .mod file
-      ParentComp  // symbol is the "parent component" of an extended type
+      ParentComp,  // symbol is the "parent component" of an extended type
+      LocalityLocal,  // named in LOCAL locality-spec
+      LocalityLocalInit,  // named in LOCAL_INIT locality-spec
+      LocalityShared  // named in SHARED locality-spec
   );
   using Flags = common::EnumSet<Flag, Flag_enumSize>;
 

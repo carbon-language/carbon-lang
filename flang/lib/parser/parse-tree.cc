@@ -65,6 +65,12 @@ Expr::Expr(Designator &&x)
 Expr::Expr(FunctionReference &&x)
   : u{common::Indirection<FunctionReference>::Make(std::move(x))} {}
 
+bool DoConstruct::IsDoConcurrent() const {
+  auto &doStmt{std::get<Statement<NonLabelDoStmt>>(t).statement};
+  auto &control{std::get<std::optional<LoopControl>>(doStmt.t)};
+  return control && std::holds_alternative<LoopControl::Concurrent>(control->u);
+}
+
 static Designator MakeArrayElementRef(Name &name, std::list<Expr> &subscripts) {
   ArrayElement arrayElement{name, std::list<SectionSubscript>{}};
   for (Expr &expr : subscripts) {

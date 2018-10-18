@@ -126,6 +126,7 @@ std::string DetailsToString(const Details &details) {
           [](const DerivedTypeDetails &) { return "DerivedType"; },
           [](const UseDetails &) { return "Use"; },
           [](const UseErrorDetails &) { return "UseError"; },
+          [](const HostAssocDetails &) { return "HostAssoc"; },
           [](const GenericDetails &) { return "Generic"; },
           [](const ProcBindingDetails &) { return "ProcBinding"; },
           [](const GenericBindingDetails &) { return "GenericBinding"; },
@@ -184,6 +185,8 @@ Symbol &Symbol::GetUltimate() {
 const Symbol &Symbol::GetUltimate() const {
   if (const auto *details{detailsIf<UseDetails>()}) {
     return details->symbol().GetUltimate();
+  } else if (const auto *details{detailsIf<HostAssocDetails>()}) {
+    return details->symbol().GetUltimate();
   } else {
     return *this;
   }
@@ -202,9 +205,7 @@ const DeclTypeSpec *Symbol::GetType() const {
           [](const TypeParamDetails &x) {
             return x.type().has_value() ? &x.type().value() : nullptr;
           },
-          [](const auto &) {
-            return static_cast<const DeclTypeSpec *>(nullptr);
-          },
+          [](const auto &) -> const DeclTypeSpec * { return nullptr; },
       },
       details_);
 }
@@ -259,6 +260,7 @@ int Symbol::Rank() const {
             return 0; /*TODO*/
           },
           [](const UseDetails &x) { return x.symbol().Rank(); },
+          [](const HostAssocDetails &x) { return x.symbol().Rank(); },
           [](const ObjectEntityDetails &oed) {
             return static_cast<int>(oed.shape().size());
           },
@@ -374,6 +376,7 @@ std::ostream &operator<<(std::ostream &os, const Details &details) {
               os << " from " << pair.second->name() << " at " << *pair.first;
             }
           },
+          [](const HostAssocDetails &) {},
           [&](const GenericDetails &x) {
             for (const auto *proc : x.specificProcs()) {
               os << ' ' << proc->name();
@@ -465,6 +468,15 @@ std::ostream &DumpForUnparse(
     }
     if (symbol.test(Symbol::Flag::Implicit)) {
       os << " (implicit)";
+    }
+    if (symbol.test(Symbol::Flag::LocalityLocal)) {
+      os << " (local)";
+    }
+    if (symbol.test(Symbol::Flag::LocalityLocalInit)) {
+      os << " (local_init)";
+    }
+    if (symbol.test(Symbol::Flag::LocalityShared)) {
+      os << " (shared)";
     }
     os << ' ' << symbol.GetDetailsName();
     if (const auto *type{symbol.GetType()}) {

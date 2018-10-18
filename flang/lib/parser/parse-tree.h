@@ -2202,6 +2202,7 @@ WRAPPER_CLASS(EndDoStmt, std::optional<Name>);
 // CONTINUE; multiple "label DO" loops ending on the same label
 struct DoConstruct {
   TUPLE_CLASS_BOILERPLATE(DoConstruct);
+  bool IsDoConcurrent() const;
   std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
 };
 

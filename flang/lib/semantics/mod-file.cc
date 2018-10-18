@@ -155,6 +155,7 @@ void ModFileWriter::PutSymbol(const Symbol &symbol, bool &didContains) {
             }
             PutLower(decls_ << "final::", symbol) << '\n';
           },
+          [](const HostAssocDetails &) {},
           [&](const auto &) { PutEntity(decls_, symbol); }},
       symbol.details());
 }
