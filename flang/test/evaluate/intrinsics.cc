@@ -191,6 +191,23 @@ void TestIntrinsics() {
       .DoCall(Real8::dynamicType);
   TestCall{table, "abs"}.Push(Const(Scalar<Char>{})).DoCall();
   TestCall{table, "abs"}.Push(Const(Scalar<Log4>{})).DoCall();
+
+  TestCall maxCall{table, "max"}, max0Call{table, "max0"},
+      max1Call{table, "max1"};
+  TestCall amin0Call{table, "amin0"}, amin1Call{table, "amin1"};
+  for (int j{0}; j < 10; ++j) {
+    maxCall.Push(Const(Scalar<Real4>{}));
+    max0Call.Push(Const(Scalar<Real4>{}));
+    max1Call.Push(Const(Scalar<Real4>{}));
+    amin0Call.Push(Const(Scalar<Int4>{}));
+    amin1Call.Push(Const(Scalar<Int4>{}));
+  }
+  maxCall.DoCall(Real4::dynamicType);
+  max0Call.DoCall();
+  max1Call.DoCall(Int4::dynamicType);
+  amin0Call.DoCall(Real4::dynamicType);
+  amin1Call.DoCall();
+
   // TODO: test other intrinsics
 }
 }

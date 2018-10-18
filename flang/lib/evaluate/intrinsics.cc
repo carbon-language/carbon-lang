@@ -19,6 +19,7 @@
 #include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../semantics/default-kinds.h"
+#include <algorithm>
 #include <map>
 #include <ostream>
 #include <sstream>
@@ -196,7 +197,7 @@ static constexpr IntrinsicDummyArgument OptionalMASK{
     "mask", AnyLogical, Rank::conformable, Optionality::optional};
 
 struct IntrinsicInterface {
-  static constexpr int maxArguments{7};
+  static constexpr int maxArguments{7};  // if not a MAX/MIN(...)
   const char *name{nullptr};
   IntrinsicDummyArgument dummy[maxArguments];
   TypePattern result;
@@ -760,14 +761,24 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   // Attempt to construct a 1-1 correspondence between the dummy arguments in
   // a particular intrinsic procedure's generic interface and the actual
   // arguments in a procedure reference.
-  ActualArgument *actualForDummy[maxArguments];
-  int dummies{0};
-  for (; dummies < maxArguments && dummy[dummies].keyword != nullptr;
-       ++dummies) {
-    actualForDummy[dummies] = nullptr;
+  std::size_t dummyArgPatterns{0};
+  for (; dummyArgPatterns < maxArguments &&
+       dummy[dummyArgPatterns].keyword != nullptr;
+       ++dummyArgPatterns) {
   }
+  std::vector<ActualArgument *> actualForDummy(dummyArgPatterns, nullptr);
+  // MAX and MIN (and others that map to them) allow their last argument to
+  // be repeated indefinitely.  The actualForDummy vector is sized
+  // and null-initialized to the non-repeated dummy argument count,
+  // but additional actual argument pointers can be pushed on it
+  // when this flag is set.
+  bool repeatLastDummy{dummyArgPatterns > 0 &&
+      dummy[dummyArgPatterns - 1].optionality == Optionality::repeats};
+  int missingActualArguments{0};
   for (std::optional<ActualArgument> &arg : arguments) {
-    if (arg.has_value()) {
+    if (!arg.has_value()) {
+      ++missingActualArguments;
+    } else {
       if (arg->isAlternateReturn) {
         messages.Say(
             "alternate return specifier not acceptable on call to intrinsic '%s'"_err_en_US,
@@ -775,28 +786,51 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
         return std::nullopt;
       }
       bool found{false};
-      for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
-        if (actualForDummy[dummyArgIndex] == nullptr) {
-          if (!arg->keyword.has_value() ||
-              *arg->keyword == dummy[dummyArgIndex].keyword) {
-            actualForDummy[dummyArgIndex] = &*arg;
-            found = true;
-            break;
+      int slot{missingActualArguments};
+      for (std::size_t j{0}; j < dummyArgPatterns && !found; ++j) {
+        if (arg->keyword.has_value()) {
+          found = *arg->keyword == dummy[j].keyword;
+          if (found) {
+            if (const auto *previous{actualForDummy[j]}) {
+              if (previous->keyword.has_value()) {
+                messages.Say(*arg->keyword,
+                    "repeated keyword argument to intrinsic '%s'"_err_en_US,
+                    name);
+              } else {
+                messages.Say(*arg->keyword,
+                    "keyword argument to intrinsic '%s' was supplied "
+                    "positionally by an earlier actual argument"_err_en_US,
+                    name);
+              }
+              return std::nullopt;
+            }
           }
+        } else {
+          found = actualForDummy[j] == nullptr && slot-- == 0;
+        }
+        if (found) {
+          actualForDummy[j] = &*arg;
         }
       }
       if (!found) {
-        if (arg->keyword.has_value()) {
-          messages.Say(*arg->keyword,
-              "unknown keyword argument to intrinsic '%s'"_err_en_US, name);
+        if (repeatLastDummy && !arg->keyword.has_value()) {
+          // MAX/MIN argument after the 2nd
+          actualForDummy.push_back(&*arg);
         } else {
-          messages.Say(
-              "too many actual arguments for intrinsic '%s'"_err_en_US, name);
+          if (arg->keyword.has_value()) {
+            messages.Say(*arg->keyword,
+                "unknown keyword argument to intrinsic '%s'"_err_en_US, name);
+          } else {
+            messages.Say(
+                "too many actual arguments for intrinsic '%s'"_err_en_US, name);
+          }
+          return std::nullopt;
         }
-        return std::nullopt;
       }
     }
   }
+
+  std::size_t dummies{actualForDummy.size()};
 
   // Check types and kinds of the actual arguments against the intrinsic's
   // interface.  Ensure that two or more arguments that have to have the same
@@ -805,13 +839,13 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   const IntrinsicDummyArgument *kindDummyArg{nullptr};
   const ActualArgument *kindArg{nullptr};
   bool hasDimArg{false};
-  for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
-    const IntrinsicDummyArgument &d{dummy[dummyArgIndex]};
+  for (std::size_t j{0}; j < dummies; ++j) {
+    const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
     if (d.typePattern.kindCode == KindCode::kindArg) {
       CHECK(kindDummyArg == nullptr);
       kindDummyArg = &d;
     }
-    const ActualArgument *arg{actualForDummy[dummyArgIndex]};
+    const ActualArgument *arg{actualForDummy[j]};
     if (!arg) {
       if (d.optionality == Optionality::required) {
         messages.Say("missing mandatory '%s=' argument"_err_en_US, d.keyword);
@@ -895,9 +929,9 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
   const ActualArgument *knownArg{nullptr};
   const ActualArgument *shapeArg{nullptr};
   int elementalRank{0};
-  for (int dummyArgIndex{0}; dummyArgIndex < dummies; ++dummyArgIndex) {
-    const IntrinsicDummyArgument &d{dummy[dummyArgIndex]};
-    if (const ActualArgument * arg{actualForDummy[dummyArgIndex]}) {
+  for (std::size_t j{0}; j < dummies; ++j) {
+    const IntrinsicDummyArgument &d{dummy[std::min(j, dummyArgPatterns - 1)]};
+    if (const ActualArgument * arg{actualForDummy[j]}) {
       if (arg->isAssumedRank && d.rank != Rank::anyOrAssumedRank) {
         messages.Say(
             "assumed-rank array cannot be used for '%s=' argument"_err_en_US,
@@ -1118,9 +1152,9 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
 
   // Rearrange the actual arguments into dummy argument order.
   ActualArguments rearranged(dummies);
-  for (int j{0}; j < dummies; ++j) {
+  for (std::size_t j{0}; j < dummies; ++j) {
     if (ActualArgument * arg{actualForDummy[j]}) {
-      rearranged[j] = std::make_optional(std::move(*arg));
+      rearranged[j] = std::move(*arg);
     }
   }
 

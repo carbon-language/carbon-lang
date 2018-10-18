@@ -29,13 +29,14 @@ struct ActualArgument {
   explicit ActualArgument(Expr<SomeType> &&x) : value{std::move(x)} {}
   explicit ActualArgument(CopyableIndirection<Expr<SomeType>> &&v)
     : value{std::move(v)} {}
+
   std::optional<DynamicType> GetType() const;
   int Rank() const;
   std::ostream &Dump(std::ostream &) const;
   std::optional<int> VectorSize() const;
 
   std::optional<parser::CharBlock> keyword;
-  bool isAssumedRank{false};
+  bool isAssumedRank{false};  // TODO: make into a function of the value
   bool isAlternateReturn{false};
 
   // Subtlety: There is a distinction that must be maintained here between an
