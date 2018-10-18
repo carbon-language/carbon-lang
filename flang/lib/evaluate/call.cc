@@ -41,5 +41,24 @@ std::optional<int> ActualArgument::VectorSize() const {
   return std::nullopt;
 }
 
+std::ostream &ProcedureRef::Dump(std::ostream &o) const {
+  proc_.Dump(o);
+  char separator{'('};
+  for (const auto &arg : arguments_) {
+    arg->Dump(o << separator);
+    separator = ',';
+  }
+  if (separator == '(') {
+    o << '(';
+  }
+  return o << ')';
+}
+
+Expr<SubscriptInteger> ProcedureRef::LEN() const {
+  // TODO: the results of the intrinsic functions REPEAT and TRIM have
+  // unpredictable lengths; maybe the concept of LEN() has to become dynamic
+  return proc_.LEN();
+}
+
 FOR_EACH_SPECIFIC_TYPE(template struct FunctionRef)
 }

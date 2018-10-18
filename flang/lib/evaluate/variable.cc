@@ -298,36 +298,6 @@ std::ostream &ProcedureDesignator::Dump(std::ostream &o) const {
   return Emit(o, u);
 }
 
-std::ostream &UntypedFunctionRef::Dump(std::ostream &o) const {
-  Emit(o, proc_);
-  char separator{'('};
-  for (const auto &arg : arguments_) {
-    Emit(o << separator, arg);
-    separator = ',';
-  }
-  if (separator == '(') {
-    o << '(';
-  }
-  return o << ')';
-}
-
-std::ostream &SubroutineCall::Dump(std::ostream &o) const {
-  Emit(o, proc_);
-  char separator{'('};
-  for (const auto &arg : arguments_) {
-    Emit(o << separator, arg);
-    separator = ',';
-  }
-  if (separator == '(') {
-    o << '(';
-  }
-  return o << ')';
-}
-
-std::ostream &Label::Dump(std::ostream &o) const {
-  return o << '*' << std::dec << label;
-}
-
 // LEN()
 static Expr<SubscriptInteger> SymbolLEN(const Symbol &sym) {
   return AsExpr(Constant<SubscriptInteger>{0});  // TODO
@@ -369,11 +339,6 @@ Expr<SubscriptInteger> ProcedureDesignator::LEN() const {
             return AsExpr(Constant<SubscriptInteger>{0});
           }},
       u);
-}
-Expr<SubscriptInteger> UntypedFunctionRef::LEN() const {
-  // TODO: the results of the intrinsic functions REPEAT and TRIM have
-  // unpredictable lengths; maybe the concept of LEN() has to become dynamic
-  return proc_.LEN();
 }
 
 // Rank()

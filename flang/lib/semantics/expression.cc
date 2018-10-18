@@ -915,8 +915,8 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
           std::get<parser::ProcedureDesignator>(funcRef.v.t), arguments)}) {
     if (std::optional<DynamicType> dyType{
             proc->procedureDesignator.GetType()}) {
-      return TypedWrapper<FunctionRef, UntypedFunctionRef>(std::move(*dyType),
-          UntypedFunctionRef{std::move(proc->procedureDesignator),
+      return TypedWrapper<FunctionRef, ProcedureRef>(std::move(*dyType),
+          ProcedureRef{std::move(proc->procedureDesignator),
               std::move(proc->arguments)});
     }
   }

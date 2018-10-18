@@ -655,9 +655,6 @@ public:
 
 private:
   using Others = std::variant<BOZLiteralConstant>;
-  // TODO pmk: Consider creating the union over the specifically typed
-  // Expr<> instances rather than the category unions.  This would
-  // be a big refactor and slow down compiles but would simplify usage.
   using Categories = common::MapTemplate<Expr, SomeCategory>;
 
 public:

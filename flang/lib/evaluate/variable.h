@@ -23,7 +23,6 @@
 
 #include "call.h"
 #include "common.h"
-#include "intrinsics.h"
 #include "type.h"
 #include "../common/idioms.h"
 #include "../lib/common/template.h"
@@ -285,24 +284,10 @@ public:
 
 FOR_EACH_CHARACTER_KIND(extern template class Designator)
 
-struct ProcedureDesignator {
-  EVALUATE_UNION_CLASS_BOILERPLATE(ProcedureDesignator)
-  explicit ProcedureDesignator(SpecificIntrinsic &&i) : u{std::move(i)} {}
-  explicit ProcedureDesignator(const Symbol &n) : u{&n} {}
-  std::optional<DynamicType> GetType() const;
-  int Rank() const;
-  bool IsElemental() const;
-  Expr<SubscriptInteger> LEN() const;
-  const Symbol *GetSymbol() const;
-  std::ostream &Dump(std::ostream &) const;
-
-  std::variant<SpecificIntrinsic, const Symbol *, Component> u;
-};
-
-class UntypedFunctionRef {
+class ProcedureRef {
 public:
-  CLASS_BOILERPLATE(UntypedFunctionRef)
-  UntypedFunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
+  CLASS_BOILERPLATE(ProcedureRef)
+  ProcedureRef(ProcedureDesignator &&p, ActualArguments &&a)
     : proc_{std::move(p)}, arguments_(std::move(a)) {}
 
   const ProcedureDesignator &proc() const { return proc_; }
@@ -318,14 +303,15 @@ protected:
   ActualArguments arguments_;
 };
 
-template<typename A> struct FunctionRef : public UntypedFunctionRef {
+template<typename A> struct FunctionRef : public ProcedureRef {
   using Result = A;
   static_assert(Result::isSpecificIntrinsicType ||
       std::is_same_v<Result, SomeKind<TypeCategory::Derived>>);
   CLASS_BOILERPLATE(FunctionRef)
-  FunctionRef(UntypedFunctionRef &&ufr) : UntypedFunctionRef{std::move(ufr)} {}
+  FunctionRef(ProcedureRef &&pr) : ProcedureRef{std::move(pr)} {}
   FunctionRef(ProcedureDesignator &&p, ActualArguments &&a)
-    : UntypedFunctionRef{std::move(p), std::move(a)} {}
+    : ProcedureRef{std::move(p), std::move(a)} {}
+
   std::optional<DynamicType> GetType() const {
     if constexpr (std::is_same_v<Result, SomeDerived>) {
       if (const Symbol * symbol{proc_.GetSymbol()}) {
@@ -357,28 +343,6 @@ template<typename A> struct Variable {
     return o;
   }
   std::variant<Designator<Result>, FunctionRef<Result>> u;
-};
-
-struct Label {  // TODO: this is a placeholder
-  CLASS_BOILERPLATE(Label)
-  explicit Label(int lab) : label{lab} {}
-  int label;
-  std::ostream &Dump(std::ostream &) const;
-};
-
-class SubroutineCall {
-public:
-  CLASS_BOILERPLATE(SubroutineCall)
-  SubroutineCall(ProcedureDesignator &&p, ActualArguments &&a)
-    : proc_{std::move(p)}, arguments_(std::move(a)) {}
-  const ProcedureDesignator &proc() const { return proc_; }
-  const ActualArguments &arguments() const { return arguments_; }
-  int Rank() const { return 0; }  // TODO: elemental subroutine representation
-  std::ostream &Dump(std::ostream &) const;
-
-private:
-  ProcedureDesignator proc_;
-  ActualArguments arguments_;
 };
 }
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_

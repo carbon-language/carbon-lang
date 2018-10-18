@@ -17,6 +17,7 @@
 
 #include "default-kinds.h"
 #include "../evaluate/expression.h"
+#include "../evaluate/intrinsics.h"
 #include "../evaluate/type.h"
 #include "../parser/parse-tree.h"
 #include <optional>
