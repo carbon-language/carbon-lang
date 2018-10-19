@@ -181,6 +181,28 @@ def : Pat<(i32 (vector_extract (v16i8 V128:$vec), (i32 LaneIdx16:$idx))),
 def : Pat<(i32 (vector_extract (v8i16 V128:$vec), (i32 LaneIdx8:$idx))),
           (EXTRACT_LANE_v8i16_u V128:$vec, (i32 LaneIdx8:$idx))>;
 
+// Lower undef lane indices to zero
+def : Pat<(and (i32 (vector_extract (v16i8 V128:$vec), undef)), (i32 0xff)),
+          (EXTRACT_LANE_v16i8_u V128:$vec, 0)>;
+def : Pat<(and (i32 (vector_extract (v8i16 V128:$vec), undef)), (i32 0xffff)),
+          (EXTRACT_LANE_v8i16_u V128:$vec, 0)>;
+def : Pat<(i32 (vector_extract (v16i8 V128:$vec), undef)),
+          (EXTRACT_LANE_v16i8_u V128:$vec, 0)>;
+def : Pat<(i32 (vector_extract (v8i16 V128:$vec), undef)),
+          (EXTRACT_LANE_v8i16_u V128:$vec, 0)>;
+def : Pat<(sext_inreg (i32 (vector_extract (v16i8 V128:$vec), undef)), i8),
+          (EXTRACT_LANE_v16i8_s V128:$vec, 0)>;
+def : Pat<(sext_inreg (i32 (vector_extract (v8i16 V128:$vec), undef)), i16),
+          (EXTRACT_LANE_v8i16_s V128:$vec, 0)>;
+def : Pat<(vector_extract (v4i32 V128:$vec), undef),
+          (EXTRACT_LANE_v4i32 V128:$vec, 0)>;
+def : Pat<(vector_extract (v2i64 V128:$vec), undef),
+          (EXTRACT_LANE_v2i64 V128:$vec, 0)>;
+def : Pat<(vector_extract (v4f32 V128:$vec), undef),
+          (EXTRACT_LANE_v4f32 V128:$vec, 0)>;
+def : Pat<(vector_extract (v2f64 V128:$vec), undef),
+          (EXTRACT_LANE_v2f64 V128:$vec, 0)>;
+
 // Replace lane value: replace_lane
 multiclass ReplaceLane<ValueType vec_t, string vec, ImmLeaf imm_t,
                        WebAssemblyRegClass reg_t, ValueType lane_t,
@@ -200,6 +222,20 @@ defm "" : ReplaceLane<v4i32, "i32x4", LaneIdx4, I32, i32, 19>;
 defm "" : ReplaceLane<v2i64, "i64x2", LaneIdx2, I64, i64, 20>;
 defm "" : ReplaceLane<v4f32, "f32x4", LaneIdx4, F32, f32, 21>;
 defm "" : ReplaceLane<v2f64, "f64x2", LaneIdx2, F64, f64, 22>;
+
+// Lower undef lane indices to zero
+def : Pat<(vector_insert (v16i8 V128:$vec), I32:$x, undef),
+          (REPLACE_LANE_v16i8 V128:$vec, 0, I32:$x)>;
+def : Pat<(vector_insert (v8i16 V128:$vec), I32:$x, undef),
+          (REPLACE_LANE_v8i16 V128:$vec, 0, I32:$x)>;
+def : Pat<(vector_insert (v4i32 V128:$vec), I32:$x, undef),
+          (REPLACE_LANE_v4i32 V128:$vec, 0, I32:$x)>;
+def : Pat<(vector_insert (v2i64 V128:$vec), I64:$x, undef),
+          (REPLACE_LANE_v2i64 V128:$vec, 0, I64:$x)>;
+def : Pat<(vector_insert (v4f32 V128:$vec), F32:$x, undef),
+          (REPLACE_LANE_v4f32 V128:$vec, 0, F32:$x)>;
+def : Pat<(vector_insert (v2f64 V128:$vec), F64:$x, undef),
+          (REPLACE_LANE_v2f64 V128:$vec, 0, F64:$x)>;
 
 // Arbitrary other BUILD_VECTOR patterns
 def : Pat<(v16i8 (build_vector

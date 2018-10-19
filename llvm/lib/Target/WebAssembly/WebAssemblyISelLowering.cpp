@@ -990,8 +990,10 @@ WebAssemblyTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   // Expand mask indices to byte indices and materialize them as operands
   for (size_t I = 0, Lanes = Mask.size(); I < Lanes; ++I) {
     for (size_t J = 0; J < LaneBytes; ++J) {
-      Ops[OpIdx++] =
-          DAG.getConstant((uint64_t)Mask[I] * LaneBytes + J, DL, MVT::i32);
+      // Lower undefs (represented by -1 in mask) to zero
+      uint64_t ByteIndex =
+          Mask[I] == -1 ? 0 : (uint64_t)Mask[I] * LaneBytes + J;
+      Ops[OpIdx++] = DAG.getConstant(ByteIndex, DL, MVT::i32);
     }
   }
 
