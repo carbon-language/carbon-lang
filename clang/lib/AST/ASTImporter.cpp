@@ -89,9 +89,9 @@ namespace clang {
       return "UnsupportedConstruct";
     case Unknown:
       return "Unknown error";
-    default:
-      llvm_unreachable("Invalid error code.");
     }
+    llvm_unreachable("Invalid error code.");
+    return "Invalid error code.";
   }
 
   void ImportError::log(raw_ostream &OS) const {
