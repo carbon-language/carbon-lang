@@ -1,29 +1,29 @@
 ; RUN: llc -march=amdgcn -mcpu=gfx900 -verify-machineinstrs < %s | FileCheck -check-prefix=GCN %s
 
 
-; GCN-LABEL: {{^}}add_var_var_i1:
+; GCN-LABEL: {{^}}sub_var_var_i1:
 ; GCN: s_xor_b64
-define amdgpu_kernel void @add_var_var_i1(i1 addrspace(1)* %out, i1 addrspace(1)* %in0, i1 addrspace(1)* %in1) {
+define amdgpu_kernel void @sub_var_var_i1(i1 addrspace(1)* %out, i1 addrspace(1)* %in0, i1 addrspace(1)* %in1) {
   %a = load volatile i1, i1 addrspace(1)* %in0
   %b = load volatile i1, i1 addrspace(1)* %in1
-  %add = add i1 %a, %b
-  store i1 %add, i1 addrspace(1)* %out
+  %sub = sub i1 %a, %b
+  store i1 %sub, i1 addrspace(1)* %out
   ret void
 }
 
-; GCN-LABEL: {{^}}add_var_imm_i1:
+; GCN-LABEL: {{^}}sub_var_imm_i1:
 ; GCN: s_not_b64
-define amdgpu_kernel void @add_var_imm_i1(i1 addrspace(1)* %out, i1 addrspace(1)* %in) {
+define amdgpu_kernel void @sub_var_imm_i1(i1 addrspace(1)* %out, i1 addrspace(1)* %in) {
   %a = load volatile i1, i1 addrspace(1)* %in
-  %add = add i1 %a, 1
-  store i1 %add, i1 addrspace(1)* %out
+  %sub = sub i1 %a, 1
+  store i1 %sub, i1 addrspace(1)* %out
   ret void
 }
 
-; GCN-LABEL: {{^}}add_i1_cf:
+; GCN-LABEL: {{^}}sub_i1_cf:
 ; GCN: v_cmp_ne_u32_e32 vcc, 0, {{v[0-9]+}}
 ; GCN-NEXT: s_not_b64 s{{\[[0-9]+:[0-9]+\]}}, vcc
-define amdgpu_kernel void @add_i1_cf(i1 addrspace(1)* %out, i1 addrspace(1)* %a, i1 addrspace(1)* %b) {
+define amdgpu_kernel void @sub_i1_cf(i1 addrspace(1)* %out, i1 addrspace(1)* %a, i1 addrspace(1)* %b) {
 entry:
   %tid = call i32 @llvm.amdgcn.workitem.id.x()
   %d_cmp = icmp ult i32 %tid, 16
@@ -39,7 +39,7 @@ else:
 
 endif:
   %2 = phi i1 [%0, %if], [%1, %else]
-  %3 = add i1 %2, -1
+  %3 = sub i1 %2, -1
   store i1 %3, i1 addrspace(1)* %out
   ret void
 }
