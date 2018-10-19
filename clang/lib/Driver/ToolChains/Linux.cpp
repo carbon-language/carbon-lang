@@ -443,12 +443,6 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   addPathIfExists(D, SysRoot + "/usr/lib", Paths);
 }
 
-ToolChain::CXXStdlibType Linux::GetDefaultCXXStdlibType() const {
-  if (getTriple().isAndroid())
-    return ToolChain::CST_Libcxx;
-  return ToolChain::CST_Libstdcxx;
-}
-
 bool Linux::HasNativeLLVMSupport() const { return true; }
 
 Tool *Linux::buildLinker() const { return new tools::gnutools::Linker(*this); }
