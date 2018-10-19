@@ -26,7 +26,14 @@ static llvm::Error IsInvalidOpcode(const Instruction &Instr) {
   if (OpcodeName.startswith("POPF") || OpcodeName.startswith("PUSHF") ||
       OpcodeName.startswith("ADJCALLSTACK"))
     return llvm::make_error<BenchmarkFailure>(
-        "Unsupported opcode: Push/Pop/AdjCallStack");
+        "unsupported opcode: Push/Pop/AdjCallStack");
+  // We do not handle second-form X87 instructions. We only handle first-form
+  // ones (_Fp), see comment in X86InstrFPStack.td.
+  for (const Operand &Op : Instr.Operands)
+    if (Op.isReg() && Op.isExplicit() &&
+        Op.getExplicitOperandInfo().RegClass == llvm::X86::RSTRegClassID)
+      return llvm::make_error<BenchmarkFailure>(
+          "unsupported second-form X87 instruction");
   return llvm::Error::success();
 }
 
