@@ -182,12 +182,10 @@ struct ConstantInliner {
     return std::move(Instructions);
   }
 
-  std::vector<llvm::MCInst>
-  loadX87AndFinalize(unsigned Reg, unsigned RegBitWidth, unsigned Opcode) {
-    assert((RegBitWidth & 7) == 0 &&
-           "RegBitWidth must be a multiple of 8 bits");
-    initStack(RegBitWidth / 8);
-    add(llvm::MCInstBuilder(Opcode)
+  std::vector<llvm::MCInst> loadX87STAndFinalize(unsigned Reg) {
+    initStack(kF80Bytes);
+    add(llvm::MCInstBuilder(llvm::X86::LD_F80m)
+            // Address = ESP
             .addReg(llvm::X86::RSP) // BaseReg
             .addImm(1)              // ScaleAmt
             .addReg(0)              // IndexReg
@@ -195,7 +193,21 @@ struct ConstantInliner {
             .addReg(0));            // Segment
     if (Reg != llvm::X86::ST0)
       add(llvm::MCInstBuilder(llvm::X86::ST_Frr).addReg(Reg));
-    add(releaseStackSpace(RegBitWidth / 8));
+    add(releaseStackSpace(kF80Bytes));
+    return std::move(Instructions);
+  }
+
+  std::vector<llvm::MCInst> loadX87FPAndFinalize(unsigned Reg) {
+    initStack(kF80Bytes);
+    add(llvm::MCInstBuilder(llvm::X86::LD_Fp80m)
+            .addReg(Reg)
+            // Address = ESP
+            .addReg(llvm::X86::RSP) // BaseReg
+            .addImm(1)              // ScaleAmt
+            .addReg(0)              // IndexReg
+            .addImm(0)              // Disp
+            .addReg(0));            // Segment
+    add(releaseStackSpace(kF80Bytes));
     return std::move(Instructions);
   }
 
@@ -206,6 +218,8 @@ struct ConstantInliner {
   }
 
 private:
+  static constexpr const unsigned kF80Bytes = 10; // 80 bits.
+
   ConstantInliner &add(const llvm::MCInst &Inst) {
     Instructions.push_back(Inst);
     return *this;
@@ -318,12 +332,12 @@ class ExegesisX86Target : public ExegesisTarget {
       if (STI.getFeatureBits()[llvm::X86::FeatureAVX512])
         return CI.loadAndFinalize(Reg, 512, llvm::X86::VMOVDQU32Zrm);
     if (llvm::X86::RSTRegClass.contains(Reg)) {
-      if (Value.getBitWidth() == 32)
-        return CI.loadX87AndFinalize(Reg, 32, llvm::X86::LD_F32m);
-      if (Value.getBitWidth() == 64)
-        return CI.loadX87AndFinalize(Reg, 64, llvm::X86::LD_F64m);
-      if (Value.getBitWidth() == 80)
-        return CI.loadX87AndFinalize(Reg, 80, llvm::X86::LD_F80m);
+      return CI.loadX87STAndFinalize(Reg);
+    }
+    if (llvm::X86::RFP32RegClass.contains(Reg) ||
+        llvm::X86::RFP64RegClass.contains(Reg) ||
+        llvm::X86::RFP80RegClass.contains(Reg)) {
+      return CI.loadX87FPAndFinalize(Reg);
     }
     if (Reg == llvm::X86::EFLAGS)
       return CI.popFlagAndFinalize();
