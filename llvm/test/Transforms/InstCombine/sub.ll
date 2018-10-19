@@ -132,7 +132,7 @@ define <2 x i32> @neg_nsw_sub_nsw_vec(<2 x i32> %x, <2 x i32> %y) {
 
 define <2 x i32> @neg_sub_vec_undef(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @neg_sub_vec_undef(
-; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %neg = sub <2 x i32> <i32 0, i32 undef>, %x
@@ -142,7 +142,7 @@ define <2 x i32> @neg_sub_vec_undef(<2 x i32> %x, <2 x i32> %y) {
 
 define <2 x i32> @neg_nsw_sub_vec_undef(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @neg_nsw_sub_vec_undef(
-; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %neg = sub nsw <2 x i32> <i32 undef, i32 0>, %x
@@ -152,7 +152,7 @@ define <2 x i32> @neg_nsw_sub_vec_undef(<2 x i32> %x, <2 x i32> %y) {
 
 define <2 x i32> @neg_sub_nsw_vec_undef(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @neg_sub_nsw_vec_undef(
-; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %neg = sub <2 x i32> <i32 undef, i32 0>, %x
@@ -160,11 +160,11 @@ define <2 x i32> @neg_sub_nsw_vec_undef(<2 x i32> %x, <2 x i32> %y) {
   ret <2 x i32> %r
 }
 
-; TODO: This should not drop 'nsw'.
+; This should not drop 'nsw'.
 
 define <2 x i32> @neg_nsw_sub_nsw_vec_undef(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @neg_nsw_sub_nsw_vec_undef(
-; CHECK-NEXT:    [[R:%.*]] = add <2 x i32> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[R:%.*]] = add nsw <2 x i32> [[Y:%.*]], [[X:%.*]]
 ; CHECK-NEXT:    ret <2 x i32> [[R]]
 ;
   %neg = sub nsw <2 x i32> <i32 0, i32 undef>, %x
