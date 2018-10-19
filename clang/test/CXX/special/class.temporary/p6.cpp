@@ -1,4 +1,15 @@
-// RUN: %clang_cc1 -std=c++17 %s -emit-llvm -o - | FileCheck %s --implicit-check-not='call{{.*}}dtor'
+// RUN: %clang_cc1 -std=c++17 %s -triple x86_64-linux-gnu -emit-llvm -o - | FileCheck %s --implicit-check-not='call{{.*}}dtor'
+
+namespace std {
+  typedef decltype(sizeof(int)) size_t;
+
+  template <class E>
+  struct initializer_list {
+    const E *begin;
+    size_t   size;
+    initializer_list() : begin(nullptr), size(0) {}
+  };
+}
 
 void then();
 
@@ -7,6 +18,14 @@ struct dtor {
 };
 
 dtor ctor();
+
+auto &&lambda = [a = {ctor()}] {};
+// CHECK-LABEL: define
+// CHECK: call {{.*}}ctor
+// CHECK: call {{.*}}atexit{{.*}}global_array_dtor
+
+// CHECK-LABEL: define{{.*}}global_array_dtor
+// CHECK: call {{.*}}dtor
 
 // [lifetime extension occurs if the object was obtained by]
 //  -- a temporary materialization conversion
@@ -183,6 +202,37 @@ void conditional(bool b) {
 void comma() {
   // CHECK: call {{.*}}ctor
   auto &&x = (true, (dtor&&)ctor());
+  // CHECK: call {{.*}}then
+  then();
+  // CHECK: call {{.*}}dtor
+  // CHECK: }
+}
+
+
+// This applies recursively: if an object is lifetime-extended and contains a
+// reference, the referent is also extended.
+// CHECK-LABEL: init_capture_ref
+void init_capture_ref() {
+  // CHECK: call {{.*}}ctor
+  auto x = [&a = (const dtor&)ctor()] {};
+  // CHECK: call {{.*}}then
+  then();
+  // CHECK: call {{.*}}dtor
+  // CHECK: }
+}
+// CHECK-LABEL: init_capture_ref_indirect
+void init_capture_ref_indirect() {
+  // CHECK: call {{.*}}ctor
+  auto x = [&a = (const dtor&)ctor()] {};
+  // CHECK: call {{.*}}then
+  then();
+  // CHECK: call {{.*}}dtor
+  // CHECK: }
+}
+// CHECK-LABEL: init_capture_init_list
+void init_capture_init_list() {
+  // CHECK: call {{.*}}ctor
+  auto x = [a = {ctor()}] {};
   // CHECK: call {{.*}}then
   then();
   // CHECK: call {{.*}}dtor
