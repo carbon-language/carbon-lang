@@ -539,7 +539,7 @@ DWARFUnit::findRnglistFromOffset(uint32_t Offset) {
                                   isLittleEndian, RngListTable->getAddrSize());
     auto RangeListOrError = RngListTable->findList(RangesData, Offset);
     if (RangeListOrError)
-      return RangeListOrError.get().getAbsoluteRanges(getBaseAddress());
+      return RangeListOrError.get().getAbsoluteRanges(getBaseAddress(), *this);
     return RangeListOrError.takeError();
   }
 
