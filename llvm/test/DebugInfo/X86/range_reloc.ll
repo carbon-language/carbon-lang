@@ -16,8 +16,21 @@
 ; smaller (the growth of debug_ranges itself would be more significant).
 
 ; COMMON: {{^.Ldebug_ranges0}}
-; COMMON-NEXT:   .quad   .Lfunc_begin0
-; COMMON-NEXT:   .quad   .Lfunc_end0
+; NOBASE-NEXT:   .quad   .Lfunc_begin0
+; NOBASE-NEXT:   .quad   .Lfunc_end0
+; NOBASE-NEXT:   .quad   .Lfunc_begin1
+; NOBASE-NEXT:   .quad   .Lfunc_end1
+; NOBASE-NEXT:   .quad   .Lfunc_begin3
+; NOBASE-NEXT:   .quad   .Lfunc_end3
+; NOBASE-NEXT:   .quad   .Lfunc_begin4
+; NOBASE-NEXT:   .quad   .Lfunc_end4
+; NOBASE-NEXT:   .quad   .Lfunc_begin5
+; NOBASE-NEXT:   .quad   .Lfunc_end5
+
+; BASE-NEXT:   .quad   -1
+; BASE-NEXT:   .quad   .Lfunc_begin0
+; BASE-NEXT:   .quad   .Lfunc_begin0-.Lfunc_begin0
+; BASE-NEXT:   .quad   .Lfunc_end0-.Lfunc_begin0
 ; BASE-NEXT:   .quad   -1
 ; BASE-NEXT:   .quad   .Lfunc_begin1
 ; BASE-NEXT:   .quad   .Lfunc_begin1-.Lfunc_begin1
@@ -25,15 +38,13 @@
 ; BASE-NEXT:   .quad   .Lfunc_begin3-.Lfunc_begin1
 ; BASE-NEXT:   .quad   .Lfunc_end3-.Lfunc_begin1
 ; BASE-NEXT:   .quad   -1
-; BASE-NEXT:   .quad   0
-; NOBASE-NEXT:   .quad   .Lfunc_begin1
-; NOBASE-NEXT:   .quad   .Lfunc_end1
-; NOBASE-NEXT:   .quad   .Lfunc_begin3
-; NOBASE-NEXT:   .quad   .Lfunc_end3
-; COMMON-NEXT:   .quad   .Lfunc_begin4
-; COMMON-NEXT:   .quad   .Lfunc_end4
-; COMMON-NEXT:   .quad   .Lfunc_begin5
-; COMMON-NEXT:   .quad   .Lfunc_end5
+; BASE-NEXT:   .quad   .Lfunc_begin4
+; BASE-NEXT:   .quad   .Lfunc_begin4-.Lfunc_begin4
+; BASE-NEXT:   .quad   .Lfunc_end4-.Lfunc_begin4
+; BASE-NEXT:   .quad   -1
+; BASE-NEXT:   .quad   .Lfunc_begin5
+; BASE-NEXT:   .quad   .Lfunc_begin5-.Lfunc_begin5
+; BASE-NEXT:   .quad   .Lfunc_end5-.Lfunc_begin5
 ; COMMON-NEXT:   .quad   0
 ; COMMON-NEXT:   .quad   0
 

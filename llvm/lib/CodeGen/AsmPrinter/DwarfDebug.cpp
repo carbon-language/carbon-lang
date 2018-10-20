@@ -2163,7 +2163,7 @@ static void emitRangeList(DwarfDebug &DD, AsmPrinter *Asm,
     // or optnone where there may be holes in a single CU's section
     // contributions.
     auto *Base = CUBase;
-    if (!Base && P.second.size() > 1 &&
+    if (!Base && (P.second.size() > 1 || DwarfVersion < 5) &&
         (UseDwarfRangesBaseAddressSpecifier || DwarfVersion >= 5)) {
       BaseIsSet = true;
       // FIXME/use care: This may not be a useful base address if it's not
