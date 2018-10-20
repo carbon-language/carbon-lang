@@ -48,6 +48,8 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
 
   // Booleans always contain 0 or 1.
   setBooleanContents(ZeroOrOneBooleanContent);
+  // Except in SIMD vectors
+  setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
   // WebAssembly does not produce floating-point exceptions on normal floating
   // point operations.
   setHasFloatingPointExceptions(false);
@@ -149,6 +151,8 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     for (auto T : {MVT::i8, MVT::i16, MVT::i32})
       setOperationAction(ISD::SIGN_EXTEND_INREG, T, Expand);
   }
+  for (auto T : MVT::integer_vector_valuetypes())
+    setOperationAction(ISD::SIGN_EXTEND_INREG, T, Expand);
 
   // Dynamic stack allocation: use the default expansion.
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);

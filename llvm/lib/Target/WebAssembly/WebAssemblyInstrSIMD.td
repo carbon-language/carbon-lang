@@ -613,7 +613,8 @@ multiclass SIMDCondition<ValueType vec_t, ValueType out_t, string vec,
   defm _#vec_t :
     SIMD_I<(outs V128:$dst), (ins V128:$lhs, V128:$rhs), (outs), (ins),
            [(set (out_t V128:$dst),
-             (setcc (vec_t V128:$lhs), (vec_t V128:$rhs), cond))],
+             (setcc (vec_t V128:$lhs), (vec_t V128:$rhs), cond)
+           )],
            vec#"."#name#"\t$dst, $lhs, $rhs", vec#"."#name, simdop>;
 }
 
@@ -621,15 +622,15 @@ multiclass SIMDConditionInt<string name, CondCode cond, bits<32> baseInst,
                             int step = 1> {
   defm "" : SIMDCondition<v16i8, v16i8, "i8x16", name, cond, baseInst>;
   defm "" : SIMDCondition<v8i16, v8i16, "i16x8", name, cond,
-                              !add(baseInst, step)>;
+                          !add(baseInst, step)>;
   defm "" : SIMDCondition<v4i32, v4i32, "i32x4", name, cond,
-                              !add(!add(baseInst, step), step)>;
+                          !add(!add(baseInst, step), step)>;
 }
 
 multiclass SIMDConditionFP<string name, CondCode cond, bits<32> baseInst> {
   defm "" : SIMDCondition<v4f32, v4i32, "f32x4", name, cond, baseInst>;
   defm "" : SIMDCondition<v2f64, v2i64, "f64x2", name, cond,
-                              !add(baseInst, 1)>;
+                          !add(baseInst, 1)>;
 }
 
 // Equality: eq
