@@ -7052,10 +7052,10 @@ void test_mm256_mask_store_ps(void *__P, __mmask8 __U, __m256 __A) {
   return _mm256_mask_store_ps(__P, __U, __A); 
 }
 
-void test_mm_storeu_epi64(void *__P, __m128i __A) {
-  // CHECK-LABEL: @test_mm_storeu_epi64
-  // CHECK: store <2 x i64> %{{.*}}, <2 x i64>* %{{.*}}, align 1{{$}}
-  return _mm_storeu_epi64(__P, __A);
+void test_mm_storeu_epi64(void *__p, __m128i __a) {
+  // check-label: @test_mm_storeu_epi64
+  // check: store <2 x i64> %{{.*}}, <2 x i64>* %{{.*}}, align 1{{$}}
+  return _mm_storeu_epi64(__p, __a);
 }
 
 void test_mm_mask_storeu_epi64(void *__P, __mmask8 __U, __m128i __A) {
