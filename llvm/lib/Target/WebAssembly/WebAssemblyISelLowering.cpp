@@ -137,6 +137,11 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     }
   }
 
+  // Custom lowering to avoid having to emit a wrap for 2xi64 constant shifts
+  if (Subtarget->hasSIMD128() && EnableUnimplementedWasmSIMDInstrs)
+    for (auto Op : {ISD::SHL, ISD::SRA, ISD::SRL})
+      setOperationAction(Op, MVT::v2i64, Custom);
+
   // As a special case, these operators use the type to mean the type to
   // sign-extend from.
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
@@ -823,6 +828,10 @@ SDValue WebAssemblyTargetLowering::LowerOperation(SDValue Op,
     return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   case ISD::VECTOR_SHUFFLE:
     return LowerVECTOR_SHUFFLE(Op, DAG);
+  case ISD::SHL:
+  case ISD::SRA:
+  case ISD::SRL:
+    return LowerShift(Op, DAG);
   }
 }
 
@@ -998,6 +1007,35 @@ WebAssemblyTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   }
 
   return DAG.getNode(WebAssemblyISD::SHUFFLE, DL, MVT::v16i8, Ops);
+}
+
+SDValue WebAssemblyTargetLowering::LowerShift(SDValue Op,
+                                              SelectionDAG &DAG) const {
+  SDLoc DL(Op);
+  auto *ShiftVec = dyn_cast<BuildVectorSDNode>(Op.getOperand(1).getNode());
+  APInt SplatValue, SplatUndef;
+  unsigned SplatBitSize;
+  bool HasAnyUndefs;
+  if (!ShiftVec || !ShiftVec->isConstantSplat(SplatValue, SplatUndef,
+                                              SplatBitSize, HasAnyUndefs))
+    return Op;
+  unsigned Opcode;
+  switch (Op.getOpcode()) {
+  case ISD::SHL:
+    Opcode = WebAssemblyISD::VEC_SHL;
+    break;
+  case ISD::SRA:
+    Opcode = WebAssemblyISD::VEC_SHR_S;
+    break;
+  case ISD::SRL:
+    Opcode = WebAssemblyISD::VEC_SHR_U;
+    break;
+  default:
+    llvm_unreachable("unexpected opcode");
+    return Op;
+  }
+  return DAG.getNode(Opcode, DL, Op.getValueType(), Op.getOperand(0),
+                     DAG.getConstant(SplatValue.trunc(32), DL, MVT::i32));
 }
 
 //===----------------------------------------------------------------------===//
