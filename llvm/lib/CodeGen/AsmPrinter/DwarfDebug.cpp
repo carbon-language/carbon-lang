@@ -953,6 +953,7 @@ void DwarfDebug::endModule() {
     emitDebugInfoDWO();
     emitDebugAbbrevDWO();
     emitDebugLineDWO();
+    emitDebugRangesDWO();
   }
 
   emitDebugAddr();
@@ -2293,6 +2294,31 @@ void DwarfDebug::emitDebugRanges() {
   } else
     Asm->OutStreamer->SwitchSection(
         Asm->getObjFileLowering().getDwarfRangesSection());
+
+  emitDebugRangesImpl(*this, Asm, Holder, TableEnd);
+}
+
+void DwarfDebug::emitDebugRangesDWO() {
+  assert(useSplitDwarf());
+
+  if (CUMap.empty())
+    return;
+
+  const auto &Holder = InfoHolder;
+
+  if (Holder.getRangeLists().empty())
+    return;
+
+  assert(getDwarfVersion() >= 5);
+  assert(useRangesSection());
+  assert(llvm::none_of(CUMap, [](const decltype(CUMap)::value_type &Pair) {
+    return Pair.second->getCUNode()->isDebugDirectivesOnly();
+  }));
+
+  // Start the dwarf ranges section.
+  Asm->OutStreamer->SwitchSection(
+      Asm->getObjFileLowering().getDwarfRnglistsDWOSection());
+  MCSymbol *TableEnd = emitRnglistsTableHeader(Asm, Holder);
 
   emitDebugRangesImpl(*this, Asm, Holder, TableEnd);
 }

@@ -440,11 +440,11 @@ void DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
   // FIXME: For DWARF v5, do not generate the DW_AT_ranges attribute under
   // fission until we support the forms using the .debug_addr section
   // (DW_RLE_startx_endx etc.).
-  if (isDwoUnit())
+  if (DD->getDwarfVersion() >= 5)
+    addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_rnglistx, Index);
+  else if (isDwoUnit())
     addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, List.getSym(),
                     RangeSectionSym);
-  else if (DD->getDwarfVersion() >= 5)
-    addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_rnglistx, Index);
   else
     addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, List.getSym(),
                     RangeSectionSym);
