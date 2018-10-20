@@ -424,24 +424,30 @@ void DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
           ? TLOF.getDwarfRnglistsSection()->getBeginSymbol()
           : TLOF.getDwarfRangesSection()->getBeginSymbol();
 
-  RangeSpanList List(Asm->createTempSymbol("debug_ranges"), std::move(Range));
+  HasRangeLists = true;
+
+  // Add the range list to the set of ranges to be emitted.
+  auto IndexAndList =
+      (DD->getDwarfVersion() < 5 && Skeleton ? Skeleton->DU : DU)
+          ->addRange((Skeleton ? Skeleton->BaseAddress : BaseAddress),
+                     std::move(Range));
+
+  uint32_t Index = IndexAndList.first;
+  auto &List = *IndexAndList.second;
 
   // Under fission, ranges are specified by constant offsets relative to the
   // CU's DW_AT_GNU_ranges_base.
   // FIXME: For DWARF v5, do not generate the DW_AT_ranges attribute under
   // fission until we support the forms using the .debug_addr section
   // (DW_RLE_startx_endx etc.).
-  if (isDwoUnit()) {
-    if (DD->getDwarfVersion() < 5)
-      addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, List.getSym(),
-                      RangeSectionSym);
-  } else {
+  if (isDwoUnit())
+    addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, List.getSym(),
+                    RangeSectionSym);
+  else if (DD->getDwarfVersion() >= 5)
+    addUInt(ScopeDIE, dwarf::DW_AT_ranges, dwarf::DW_FORM_rnglistx, Index);
+  else
     addSectionLabel(ScopeDIE, dwarf::DW_AT_ranges, List.getSym(),
                     RangeSectionSym);
-  }
-
-  // Add the range list to the set of ranges to be emitted.
-  (Skeleton ? Skeleton : this)->CURangeLists.push_back(std::move(List));
 }
 
 void DwarfCompileUnit::attachRangesOrLowHighPC(

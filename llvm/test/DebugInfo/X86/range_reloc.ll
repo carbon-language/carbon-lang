@@ -38,22 +38,22 @@
 ; COMMON-NEXT:   .quad   0
 
 ; DWARF5: {{^.Ldebug_ranges0}}
-; DWARF5-NEXT:                                      # DW_RLE_start_length
-; DWARF5-NEXT: .quad    .Lfunc_begin0               #   start
+; DWARF5-NEXT:                                      # DW_RLE_startx_length
+; DWARF5-NEXT: .byte 0                              #   start index
 ; DWARF5-NEXT: .uleb128 .Lfunc_end0-.Lfunc_begin0   #   length
-; DWARF5-NEXT:                                      # DW_RLE_base_address
-; DWARF5-NEXT: .quad    .Lfunc_begin1               #   base address
+; DWARF5-NEXT:                                      # DW_RLE_base_addressx
+; DWARF5-NEXT: .byte 1                              #   base address index
 ; DWARF5-NEXT:                                      # DW_RLE_offset_pair
 ; DWARF5-NEXT: .uleb128 .Lfunc_begin1-.Lfunc_begin1 #   starting offset
 ; DWARF5-NEXT: .uleb128 .Lfunc_end1-.Lfunc_begin1   #   ending offset
 ; DWARF5-NEXT:                                      # DW_RLE_offset_pair
 ; DWARF5-NEXT: .uleb128 .Lfunc_begin3-.Lfunc_begin1 #   starting offset
 ; DWARF5-NEXT: .uleb128 .Lfunc_end3-.Lfunc_begin1   #   ending offset
-; DWARF5-NEXT:                                      # DW_RLE_start_length
-; DWARF5-NEXT: .quad	   .Lfunc_begin4               #   start
+; DWARF5-NEXT:                                      # DW_RLE_startx_length
+; DWARF5-NEXT: .byte 3                              #   start index
 ; DWARF5-NEXT: .uleb128 .Lfunc_end4-.Lfunc_begin4   #   length
-; DWARF5-NEXT:                                      # DW_RLE_start_length
-; DWARF5-NEXT: .quad	   .Lfunc_begin5               #   start
+; DWARF5-NEXT:                                      # DW_RLE_startx_length
+; DWARF5-NEXT: .byte 4                              #   start index
 ; DWARF5-NEXT: .uleb128 .Lfunc_end5-.Lfunc_begin5   #   length
 ; DWARF5-NEXT:                                      # DW_RLE_end_of_list
 

@@ -415,6 +415,7 @@ void DIEInteger::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref_udata:
   case dwarf::DW_FORM_strx:
   case dwarf::DW_FORM_addrx:
+  case dwarf::DW_FORM_rnglistx:
   case dwarf::DW_FORM_udata:
     Asm->EmitULEB128(Integer);
     return;
@@ -442,6 +443,7 @@ unsigned DIEInteger::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
   case dwarf::DW_FORM_ref_udata:
   case dwarf::DW_FORM_strx:
   case dwarf::DW_FORM_addrx:
+  case dwarf::DW_FORM_rnglistx:
   case dwarf::DW_FORM_udata:
     return getULEB128Size(Integer);
   case dwarf::DW_FORM_sdata:
