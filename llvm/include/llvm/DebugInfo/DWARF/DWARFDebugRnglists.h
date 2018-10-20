@@ -44,7 +44,7 @@ class DWARFDebugRnglist : public DWARFListType<RangeListEntry> {
 public:
   /// Build a DWARFAddressRangesVector from a rangelist.
   DWARFAddressRangesVector
-  getAbsoluteRanges(llvm::Optional<BaseAddress> BaseAddr) const;
+  getAbsoluteRanges(llvm::Optional<SectionedAddress> BaseAddr) const;
 };
 
 class DWARFDebugRnglistTable : public DWARFListTableBase<DWARFDebugRnglist> {

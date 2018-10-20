@@ -851,10 +851,6 @@ void DwarfDebug::finalizeModuleInfo() {
         SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
       }
-      // We don't keep track of which addresses are used in which CU so this
-      // is a bit pessimistic under LTO.
-      if (!AddrPool.isEmpty())
-        SkCU->addAddrTableBase();
 
       if (getDwarfVersion() < 5 && !SkCU->getRangeLists().empty()) {
         const MCSymbol *Sym = TLOF.getDwarfRangesSection()->getBeginSymbol();
@@ -870,6 +866,12 @@ void DwarfDebug::finalizeModuleInfo() {
     // .subsections_via_symbols in mach-o. This would mean turning on
     // ranges for all subprogram DIEs for mach-o.
     DwarfCompileUnit &U = SkCU ? *SkCU : TheCU;
+
+    // We don't keep track of which addresses are used in which CU so this
+    // is a bit pessimistic under LTO.
+    if (!AddrPool.isEmpty())
+      U.addAddrTableBase();
+
     if (unsigned NumRanges = TheCU.getRanges().size()) {
       if (NumRanges > 1 && useRangesSection())
         // A DW_AT_low_pc attribute may also be specified in combination with
@@ -948,8 +950,9 @@ void DwarfDebug::endModule() {
     emitDebugInfoDWO();
     emitDebugAbbrevDWO();
     emitDebugLineDWO();
-    emitDebugAddr();
   }
+
+  emitDebugAddr();
 
   // Emit info into the dwarf accelerator table sections.
   switch (getAccelTableKind()) {
@@ -2439,9 +2442,8 @@ void DwarfDebug::emitDebugStrDWO() {
                          OffSec, /* UseRelativeOffsets = */ false);
 }
 
-// Emit DWO addresses.
+// Emit address pool.
 void DwarfDebug::emitDebugAddr() {
-  assert(useSplitDwarf() && "No split dwarf?");
   AddrPool.emit(*Asm, Asm->getObjFileLowering().getDwarfAddrSection());
 }
 

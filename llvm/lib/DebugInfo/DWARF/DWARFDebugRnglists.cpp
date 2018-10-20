@@ -101,7 +101,7 @@ Error RangeListEntry::extract(DWARFDataExtractor Data, uint32_t End,
 }
 
 DWARFAddressRangesVector DWARFDebugRnglist::getAbsoluteRanges(
-    llvm::Optional<BaseAddress> BaseAddr) const {
+    llvm::Optional<SectionedAddress> BaseAddr) const {
   DWARFAddressRangesVector Res;
   for (const RangeListEntry &RLE : Entries) {
     if (RLE.EntryKind == dwarf::DW_RLE_end_of_list)

@@ -69,14 +69,16 @@ void DwarfCompileUnit::addLabelAddress(DIE &Die, dwarf::Attribute Attribute,
   // pool from the skeleton - maybe even in non-fission (possibly fewer
   // relocations by sharing them in the pool, but we have other ideas about how
   // to reduce the number of relocations as well/instead).
-  if (!DD->useSplitDwarf() || !Skeleton)
+  if ((!DD->useSplitDwarf() || !Skeleton) && DD->getDwarfVersion() < 5)
     return addLocalLabelAddress(Die, Attribute, Label);
 
   if (Label)
     DD->addArangeLabel(SymbolCU(this, Label));
 
   unsigned idx = DD->getAddressPool().getIndex(Label);
-  Die.addValue(DIEValueAllocator, Attribute, dwarf::DW_FORM_GNU_addr_index,
+  Die.addValue(DIEValueAllocator, Attribute,
+               DD->getDwarfVersion() >= 5 ? dwarf::DW_FORM_addrx
+                                          : dwarf::DW_FORM_GNU_addr_index,
                DIEInteger(idx));
 }
 

@@ -1652,6 +1652,8 @@ void DwarfUnit::addRnglistsBase() {
 void DwarfUnit::addAddrTableBase() {
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
   MCSymbol *Label = DD->getAddressPool().getLabel();
-  addSectionLabel(getUnitDie(), dwarf::DW_AT_GNU_addr_base, Label,
-                  TLOF.getDwarfAddrSection()->getBeginSymbol());
+  addSectionLabel(getUnitDie(),
+                  getDwarfVersion() >= 5 ? dwarf::DW_AT_addr_base
+                                         : dwarf::DW_AT_GNU_addr_base,
+                  Label, TLOF.getDwarfAddrSection()->getBeginSymbol());
 }
