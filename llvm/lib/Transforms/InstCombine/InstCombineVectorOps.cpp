@@ -898,9 +898,6 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
       if (EI->getOperand(0) == VecOp && ExtractedIdx == InsertedIdx)
         return replaceInstUsesWith(IE, VecOp);
 
-      // If this insertelement isn't used by some other insertelement, turn it
-      // (and any insertelements it points to), into one big shuffle.
-
       // TODO: Looking at the user(s) to determine if this insert is a
       // fold-to-shuffle opportunity does not match the usual instcombine
       // constraints. We should decide if the transform is worthy based only
@@ -915,8 +912,17 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
       // The rules for determining what is an acceptable target-independent
       // shuffle mask are fuzzy because they evolve based on the backend's
       // capabilities and real-world impact.
+      auto isShuffleRootCandidate = [](InsertElementInst &Insert) {
+        if (!Insert.hasOneUse())
+          return true;
+        auto *InsertUser = dyn_cast<InsertElementInst>(Insert.user_back());
+        if (!InsertUser)
+          return true;
+        return false;
+      };
 
-      if (!IE.hasOneUse() || !isa<InsertElementInst>(IE.user_back())) {
+      // Try to form a shuffle from a chain of extract-insert ops.
+      if (isShuffleRootCandidate(IE)) {
         SmallVector<Constant*, 16> Mask;
         ShuffleOps LR = collectShuffleElements(&IE, Mask, nullptr, *this);
 
