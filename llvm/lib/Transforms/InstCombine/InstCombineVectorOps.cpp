@@ -900,6 +900,22 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
 
       // If this insertelement isn't used by some other insertelement, turn it
       // (and any insertelements it points to), into one big shuffle.
+
+      // TODO: Looking at the user(s) to determine if this insert is a
+      // fold-to-shuffle opportunity does not match the usual instcombine
+      // constraints. We should decide if the transform is worthy based only
+      // on this instruction and its operands, but that may not work currently.
+      //
+      // Here, we are trying to avoid creating shuffles before reaching
+      // the end of a chain of extract-insert pairs. This is complicated because
+      // we do not generally form arbitrary shuffle masks in instcombine
+      // (because those may codegen poorly), but collectShuffleElements() does
+      // exactly that.
+      //
+      // The rules for determining what is an acceptable target-independent
+      // shuffle mask are fuzzy because they evolve based on the backend's
+      // capabilities and real-world impact.
+
       if (!IE.hasOneUse() || !isa<InsertElementInst>(IE.user_back())) {
         SmallVector<Constant*, 16> Mask;
         ShuffleOps LR = collectShuffleElements(&IE, Mask, nullptr, *this);
