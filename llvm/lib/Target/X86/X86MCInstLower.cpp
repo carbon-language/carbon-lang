@@ -1594,18 +1594,6 @@ void X86AsmPrinter::EmitSEHInstruction(const MachineInstr *MI) {
   }
 }
 
-static unsigned getRegisterWidth(const MCOperandInfo &Info) {
-  if (Info.RegClass == X86::VR128RegClassID ||
-      Info.RegClass == X86::VR128XRegClassID)
-    return 128;
-  if (Info.RegClass == X86::VR256RegClassID ||
-      Info.RegClass == X86::VR256XRegClassID)
-    return 256;
-  if (Info.RegClass == X86::VR512RegClassID)
-    return 512;
-  llvm_unreachable("Unknown register class!");
-}
-
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(*MF, *this);
   const X86RegisterInfo *RI =
@@ -1891,9 +1879,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     const MachineOperand &MaskOp = MI->getOperand(MaskIdx);
     if (auto *C = getConstantFromPool(*MI, MaskOp)) {
-      unsigned Width = getRegisterWidth(MI->getDesc().OpInfo[0]);
       SmallVector<int, 64> Mask;
-      DecodePSHUFBMask(C, Width, Mask);
+      DecodePSHUFBMask(C, Mask);
       if (!Mask.empty())
         OutStreamer->AddComment(getShuffleComment(MI, SrcIdx, SrcIdx, Mask),
                                 !EnablePrintSchedInfo);
@@ -1964,9 +1951,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     const MachineOperand &MaskOp = MI->getOperand(MaskIdx);
     if (auto *C = getConstantFromPool(*MI, MaskOp)) {
-      unsigned Width = getRegisterWidth(MI->getDesc().OpInfo[0]);
       SmallVector<int, 16> Mask;
-      DecodeVPERMILPMask(C, ElSize, Width, Mask);
+      DecodeVPERMILPMask(C, ElSize, Mask);
       if (!Mask.empty())
         OutStreamer->AddComment(getShuffleComment(MI, SrcIdx, SrcIdx, Mask),
                                 !EnablePrintSchedInfo);
@@ -1996,9 +1982,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     const MachineOperand &MaskOp = MI->getOperand(6);
     if (auto *C = getConstantFromPool(*MI, MaskOp)) {
-      unsigned Width = getRegisterWidth(MI->getDesc().OpInfo[0]);
       SmallVector<int, 16> Mask;
-      DecodeVPERMIL2PMask(C, (unsigned)CtrlOp.getImm(), ElSize, Width, Mask);
+      DecodeVPERMIL2PMask(C, (unsigned)CtrlOp.getImm(), ElSize, Mask);
       if (!Mask.empty())
         OutStreamer->AddComment(getShuffleComment(MI, 1, 2, Mask),
                                 !EnablePrintSchedInfo);
@@ -2014,9 +1999,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     const MachineOperand &MaskOp = MI->getOperand(6);
     if (auto *C = getConstantFromPool(*MI, MaskOp)) {
-      unsigned Width = getRegisterWidth(MI->getDesc().OpInfo[0]);
       SmallVector<int, 16> Mask;
-      DecodeVPPERMMask(C, Width, Mask);
+      DecodeVPPERMMask(C, Mask);
       if (!Mask.empty())
         OutStreamer->AddComment(getShuffleComment(MI, 1, 2, Mask),
                                 !EnablePrintSchedInfo);
