@@ -5536,7 +5536,7 @@ static const Constant *getTargetConstantFromNode(SDValue Op) {
     Ptr = Ptr->getOperand(0);
 
   auto *CNode = dyn_cast<ConstantPoolSDNode>(Ptr);
-  if (!CNode || CNode->isMachineConstantPoolEntry())
+  if (!CNode || CNode->isMachineConstantPoolEntry() || CNode->getOffset() != 0)
     return nullptr;
 
   return dyn_cast<Constant>(CNode->getConstVal());
