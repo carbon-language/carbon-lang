@@ -80,6 +80,7 @@ struct DriverOptions {
   bool verbose{false};  // -v
   bool compileOnly{false};  // -c
   std::string outputPath;  // -o path
+  std::vector<std::string> searchDirectories{"."s};  // -I dir
   std::string moduleDirectory{"."s};  // -module dir
   bool forcedForm{false};  // -Mfixed or -Mfree appeared
   bool warningsAreErrors{false};  // -Werror
@@ -159,7 +160,8 @@ std::string RelocatableName(const DriverOptions &driver, std::string path) {
 int exitStatus{EXIT_SUCCESS};
 
 std::string CompileFortran(std::string path, Fortran::parser::Options options,
-    DriverOptions &driver, Fortran::semantics::Semantics &semantics) {
+    DriverOptions &driver,
+    Fortran::semantics::SemanticsContext &semanticsContext) {
   if (!driver.forcedForm) {
     auto dot{path.rfind(".")};
     if (dot != std::string::npos) {
@@ -167,6 +169,7 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
       options.isFixedForm = suffix == "f" || suffix == "F" || suffix == "ff";
     }
   }
+  options.searchDirectories = driver.searchDirectories;
   Fortran::parser::Parsing parsing;
   parsing.Prescan(path, options);
   if (!parsing.messages().empty() &&
@@ -211,33 +214,14 @@ std::string CompileFortran(std::string path, Fortran::parser::Options options,
   // TODO: Change this predicate to just "if (!driver.debugNoSemantics)"
   if (driver.debugSemantics || driver.debugResolveNames || driver.dumpSymbols ||
       driver.dumpUnparseWithSymbols || driver.debugExpressions) {
-    semantics.Perform(parseTree);
-    auto &messages{semantics.messages()};
-    messages.Emit(std::cerr, parsing.cooked());
-    if (driver.debugExpressions) {
-      // TODO: Move into semantics.Perform()
-      Fortran::parser::CharBlock whole{parsing.cooked().data()};
-      Fortran::parser::Messages messages;
-      Fortran::parser::ContextualMessages contextualMessages{whole, &messages};
-      Fortran::evaluate::FoldingContext context{contextualMessages};
-      const auto &defaults{semantics.defaultKinds()};
-      auto intrinsics{
-          Fortran::evaluate::IntrinsicProcTable::Configure(defaults)};
-      Fortran::semantics::AnalyzeExpressions(
-          parseTree, context, defaults, intrinsics);
-      messages.Emit(std::cerr, parsing.cooked());
-      if (!messages.empty() &&
-          (driver.warningsAreErrors || messages.AnyFatalError())) {
-        std::cerr << driver.prefix << "semantic errors in " << path << '\n';
-        exitStatus = EXIT_FAILURE;
-        return {};
-      }
-    }
+    Fortran::semantics::Semantics semantics{
+        semanticsContext, parseTree, parsing.cooked()};
+    semantics.Perform();
+    semantics.EmitMessages(std::cerr);
     if (driver.dumpSymbols) {
       semantics.DumpSymbols(std::cout);
     }
-    if (!messages.empty() &&
-        (driver.warningsAreErrors || messages.AnyFatalError())) {
+    if (semantics.AnyFatalError()) {
       std::cerr << driver.prefix << "semantic errors in " << path << '\n';
       exitStatus = EXIT_FAILURE;
       return {};
@@ -485,10 +469,10 @@ int main(int argc, char *const argv[]) {
         driver.verbose = true;
       } else if (arg == "-I") {
         driver.pgf90Args.push_back(args.front());
-        options.searchDirectories.push_back(args.front());
+        driver.searchDirectories.push_back(args.front());
         args.pop_front();
       } else if (arg.substr(0, 2) == "-I") {
-        options.searchDirectories.push_back(arg.substr(2));
+        driver.searchDirectories.push_back(arg.substr(2));
       } else if (arg == "-module") {
         driver.moduleDirectory = args.front();
         driver.pgf90Args.push_back(driver.moduleDirectory);
@@ -508,17 +492,21 @@ int main(int argc, char *const argv[]) {
     driver.pgf90Args.push_back("-Mbackslash");
   }
 
-  Fortran::semantics::Semantics semantics{defaultKinds};
-  semantics.set_searchDirectories(options.searchDirectories);
-  semantics.set_moduleDirectory(driver.moduleDirectory);
+
+  Fortran::semantics::SemanticsContext semanticsContext{defaultKinds};
+  semanticsContext.set_moduleDirectory(driver.moduleDirectory)
+      .set_searchDirectories(driver.searchDirectories)
+      .set_warningsAreErrors(driver.warningsAreErrors)
+      .set_debugExpressions(driver.debugExpressions);
+
   if (!anyFiles) {
     driver.measureTree = true;
     driver.dumpUnparse = true;
-    CompileFortran("-", options, driver, semantics);
+    CompileFortran("-", options, driver, semanticsContext);
     return exitStatus;
   }
   for (const auto &path : fortranSources) {
-    std::string relo{CompileFortran(path, options, driver, semantics)};
+    std::string relo{CompileFortran(path, options, driver, semanticsContext)};
     if (!driver.compileOnly && !relo.empty()) {
       relocatables.push_back(relo);
     }

@@ -18,6 +18,7 @@
 #include "mod-file.h"
 #include "rewrite-parse-tree.h"
 #include "scope.h"
+#include "semantics.h"
 #include "symbol.h"
 #include "type.h"
 #include "../common/indirection.h"
@@ -44,16 +45,12 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &);
 // When inheritFromParent is set, defaults come from the parent rules.
 class ImplicitRules {
 public:
-  ImplicitRules(
-      MessageHandler &messages, const IntrinsicTypeDefaultKinds &defaultKinds)
-    : messages_{messages}, inheritFromParent_{false}, defaultKinds_{
-                                                          defaultKinds} {}
-  ImplicitRules(std::unique_ptr<ImplicitRules> &&parent,
-      const IntrinsicTypeDefaultKinds &defaultKinds)
-    : messages_{parent->messages_}, inheritFromParent_{true},
-      defaultKinds_{defaultKinds} {
+  ImplicitRules() : inheritFromParent_{false} {}
+  ImplicitRules(std::unique_ptr<ImplicitRules> &&parent)
+    : inheritFromParent_{parent.get() != nullptr} {
     parent_.swap(parent);
   }
+  void set_context(SemanticsContext &context) { context_ = &context; }
   std::unique_ptr<ImplicitRules> &&parent() { return std::move(parent_); }
   bool isImplicitNoneType() const;
   bool isImplicitNoneExternal() const;
@@ -70,13 +67,12 @@ private:
   static char Incr(char ch);
 
   std::unique_ptr<ImplicitRules> parent_;
-  MessageHandler &messages_;
   std::optional<bool> isImplicitNoneType_;
   std::optional<bool> isImplicitNoneExternal_;
   bool inheritFromParent_;  // look in parent if not specified here
+  SemanticsContext *context_{nullptr};
   // map initial character of identifier to nullptr or its default type
   std::map<char, const DeclTypeSpec> map_;
-  const IntrinsicTypeDefaultKinds &defaultKinds_;
 
   friend std::ostream &operator<<(std::ostream &, const ImplicitRules &);
   friend void ShowImplicitRule(std::ostream &, const ImplicitRules &, char);
@@ -149,8 +145,7 @@ protected:
 // Find and create types from declaration-type-spec nodes.
 class DeclTypeSpecVisitor : public AttrsVisitor {
 public:
-  explicit DeclTypeSpecVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : defaultKinds_{defaultKinds} {}
+  explicit DeclTypeSpecVisitor() {}
   using AttrsVisitor::Post;
   using AttrsVisitor::Pre;
   bool Pre(const parser::IntegerTypeSpec &);
@@ -168,9 +163,8 @@ public:
   bool Pre(const parser::TypeGuardStmt &);
   void Post(const parser::TypeGuardStmt &);
 
-  const IntrinsicTypeDefaultKinds &defaultKinds() const {
-    return defaultKinds_;
-  }
+  SemanticsContext &context() const { return *context_; }
+  void set_context(SemanticsContext &context) { context_ = &context; }
 
 protected:
   std::unique_ptr<DeclTypeSpec> &GetDeclTypeSpec();
@@ -185,7 +179,7 @@ private:
   std::unique_ptr<DeclTypeSpec> declTypeSpec_;
   DerivedTypeSpec *derivedTypeSpec_{nullptr};
   std::unique_ptr<ParamValue> typeParamValue_;
-  const IntrinsicTypeDefaultKinds &defaultKinds_;
+  SemanticsContext *context_{nullptr};
 
   void MakeIntrinsic(TypeCategory, int);
   void SetDeclTypeSpec(const DeclTypeSpec &declTypeSpec);
@@ -198,7 +192,7 @@ public:
   using Message = parser::Message;
   using MessageFixedText = parser::MessageFixedText;
 
-  parser::Messages &&messages() { return std::move(messages_); }
+  void set_messages(parser::Messages &messages) { messages_ = &messages; }
 
   template<typename T> bool Pre(const parser::Statement<T> &x) {
     currStmtSource_ = &x.source;
@@ -228,11 +222,10 @@ public:
   // As above, but first message has a second argument.
   void Say2(const SourceName &, MessageFixedText &&, const SourceName &,
       const SourceName &, MessageFixedText &&);
-  void Annex(parser::Messages &&);
 
 private:
   // Where messages are emitted:
-  parser::Messages messages_;
+  parser::Messages *messages_{nullptr};
   // Source location of current statement; null if not in a statement
   const SourceName *currStmtSource_{nullptr};
 };
@@ -240,8 +233,6 @@ private:
 // Visit ImplicitStmt and related parse tree nodes and updates implicit rules.
 class ImplicitRulesVisitor : public DeclTypeSpecVisitor, public MessageHandler {
 public:
-  explicit ImplicitRulesVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : DeclTypeSpecVisitor{defaultKinds} {}
   using DeclTypeSpecVisitor::Post;
   using DeclTypeSpecVisitor::Pre;
   using MessageHandler::Post;
@@ -253,6 +244,11 @@ public:
   bool Pre(const parser::LetterSpec &);
   bool Pre(const parser::ImplicitSpec &);
   void Post(const parser::ImplicitSpec &);
+
+  void set_context(SemanticsContext &context) {
+    DeclTypeSpecVisitor::set_context(context);
+    MessageHandler::set_messages(context.messages());
+  }
 
   ImplicitRules &implicitRules() { return *implicitRules_; }
   const ImplicitRules &implicitRules() const { return *implicitRules_; }
@@ -269,8 +265,7 @@ protected:
 
 private:
   // implicit rules in effect for current scope
-  std::unique_ptr<ImplicitRules> implicitRules_{
-      std::make_unique<ImplicitRules>(*this, defaultKinds())};
+  std::unique_ptr<ImplicitRules> implicitRules_;
   const SourceName *prevImplicit_{nullptr};
   const SourceName *prevImplicitNone_{nullptr};
   const SourceName *prevImplicitNoneType_{nullptr};
@@ -318,9 +313,6 @@ private:
 // Manage a stack of Scopes
 class ScopeHandler : public ImplicitRulesVisitor {
 public:
-  explicit ScopeHandler(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : ImplicitRulesVisitor(defaultKinds) {}
-
   Scope &currScope() { return *currScope_; }
   // The enclosing scope, skipping blocks and derived types.
   Scope &InclusiveScope();
@@ -413,9 +405,6 @@ private:
 
 class ModuleVisitor : public virtual ScopeHandler {
 public:
-  explicit ModuleVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : ScopeHandler{defaultKinds} {}
-
   bool Pre(const parser::Module &);
   void Post(const parser::Module &);
   bool Pre(const parser::Submodule &);
@@ -426,10 +415,6 @@ public:
   bool Pre(const parser::UseStmt &);
   void Post(const parser::UseStmt &);
 
-  void add_searchDirectory(const std::string &dir) {
-    searchDirectories_.push_back(dir);
-  }
-
 private:
   // The default access spec for this module.
   Attr defaultAccess_{Attr::PUBLIC};
@@ -437,8 +422,6 @@ private:
   const SourceName *prevAccessStmt_{nullptr};
   // The scope of the module during a UseStmt
   const Scope *useModuleScope_{nullptr};
-  // Directories to search for .mod files
-  std::vector<std::string> searchDirectories_;
 
   void SetAccess(const parser::Name &, Attr);
   void ApplyDefaultAccess();
@@ -455,9 +438,6 @@ private:
 
 class InterfaceVisitor : public virtual ScopeHandler {
 public:
-  explicit InterfaceVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : ScopeHandler{defaultKinds} {}
-
   bool Pre(const parser::InterfaceStmt &);
   void Post(const parser::InterfaceStmt &);
   void Post(const parser::EndInterfaceStmt &);
@@ -489,9 +469,6 @@ private:
 
 class SubprogramVisitor : public virtual ScopeHandler, public InterfaceVisitor {
 public:
-  explicit SubprogramVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : ScopeHandler{defaultKinds}, InterfaceVisitor{defaultKinds} {}
-
   bool HandleStmtFunction(const parser::StmtFunctionStmt &);
   void Post(const parser::StmtFunctionStmt &);
   bool Pre(const parser::SubroutineStmt &);
@@ -527,9 +504,6 @@ private:
 class DeclarationVisitor : public ArraySpecVisitor,
                            public virtual ScopeHandler {
 public:
-  explicit DeclarationVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : ScopeHandler{defaultKinds} {}
-
   using ArraySpecVisitor::Post;
   using ArraySpecVisitor::Pre;
 
@@ -672,9 +646,6 @@ private:
 // Check that construct names don't conflict with other names.
 class ConstructVisitor : public DeclarationVisitor {
 public:
-  explicit ConstructVisitor(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : ScopeHandler{defaultKinds}, DeclarationVisitor{defaultKinds} {}
-
   template<typename T> void Walk(const T &);
 
   bool Pre(const parser::ConcurrentHeader &);
@@ -763,11 +734,9 @@ public:
   using SubprogramVisitor::Post;
   using SubprogramVisitor::Pre;
 
-  ResolveNamesVisitor(
-      Scope &rootScope, const IntrinsicTypeDefaultKinds &defaultKinds)
-    : ScopeHandler{defaultKinds}, ModuleVisitor{defaultKinds},
-      SubprogramVisitor{defaultKinds}, ConstructVisitor{defaultKinds} {
-    PushScope(rootScope);
+  ResolveNamesVisitor(SemanticsContext &context) {
+    set_context(context);
+    PushScope(context.globalScope());
   }
 
   // Default action for a parse tree node is to visit children.
@@ -839,14 +808,14 @@ bool ImplicitRules::isImplicitNoneExternal() const {
 std::optional<const DeclTypeSpec> ImplicitRules::GetType(char ch) const {
   if (auto it{map_.find(ch)}; it != map_.end()) {
     return it->second;
-  } else if (inheritFromParent_) {
+  } else if (inheritFromParent_ && parent_->context_) {
     return parent_->GetType(ch);
   } else if (ch >= 'i' && ch <= 'n') {
     return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Integer,
-        defaultKinds_.GetDefaultKind(TypeCategory::Integer)}};
+        context_->defaultKinds().GetDefaultKind(TypeCategory::Integer)}};
   } else if (ch >= 'a' && ch <= 'z') {
-    return DeclTypeSpec{IntrinsicTypeSpec{
-        TypeCategory::Real, defaultKinds_.GetDefaultKind(TypeCategory::Real)}};
+    return DeclTypeSpec{IntrinsicTypeSpec{TypeCategory::Real,
+        context_->defaultKinds().GetDefaultKind(TypeCategory::Real)}};
   } else {
     return std::nullopt;
   }
@@ -859,9 +828,9 @@ void ImplicitRules::SetType(const DeclTypeSpec &type, parser::Location lo,
   for (char ch = *lo; ch; ch = ImplicitRules::Incr(ch)) {
     auto res{map_.emplace(ch, type)};
     if (!res.second && !isDefault) {
-      messages_.Say(lo,
+      context_->Say(lo,
           "More than one implicit type specified for '%s'"_err_en_US,
-          std::string(1, ch));
+          std::string(1, ch).c_str());
     }
     if (ch == *hi) {
       break;
@@ -1009,17 +978,19 @@ bool DeclTypeSpecVisitor::Pre(const parser::IntrinsicTypeSpec::Complex &x) {
 }
 bool DeclTypeSpecVisitor::Pre(
     const parser::IntrinsicTypeSpec::DoublePrecision &) {
-  MakeIntrinsic(TypeCategory::Real, defaultKinds().doublePrecisionKind());
+  MakeIntrinsic(
+      TypeCategory::Real, context().defaultKinds().doublePrecisionKind());
   return false;
 }
 bool DeclTypeSpecVisitor::Pre(
     const parser::IntrinsicTypeSpec::DoubleComplex &) {
-  MakeIntrinsic(TypeCategory::Complex, defaultKinds().doublePrecisionKind());
+  MakeIntrinsic(
+      TypeCategory::Complex, context().defaultKinds().doublePrecisionKind());
   return false;
 }
 void DeclTypeSpecVisitor::MakeIntrinsic(TypeCategory category, int kind) {
   if (kind == 0) {
-    kind = defaultKinds_.GetDefaultKind(category);
+    kind = context().defaultKinds().GetDefaultKind(category);
   }
   SetDeclTypeSpec(DeclTypeSpec{IntrinsicTypeSpec{category, kind}});
 }
@@ -1065,7 +1036,7 @@ int DeclTypeSpecVisitor::GetKindParamValue(
 
 MessageHandler::Message &MessageHandler::Say(MessageFixedText &&msg) {
   CHECK(currStmtSource_);
-  return messages_.Say(*currStmtSource_, std::move(msg));
+  return messages_->Say(*currStmtSource_, std::move(msg));
 }
 MessageHandler::Message &MessageHandler::Say(
     const SourceName &name, MessageFixedText &&msg) {
@@ -1073,15 +1044,15 @@ MessageHandler::Message &MessageHandler::Say(
 }
 MessageHandler::Message &MessageHandler::Say(
     const parser::Name &name, MessageFixedText &&msg) {
-  return messages_.Say(name.source, std::move(msg), name.ToString().c_str());
+  return messages_->Say(name.source, std::move(msg), name.ToString().c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const std::string &arg1) {
-  return messages_.Say(location, std::move(msg), arg1.c_str());
+  return messages_->Say(location, std::move(msg), arg1.c_str());
 }
 MessageHandler::Message &MessageHandler::Say(const SourceName &location,
     MessageFixedText &&msg, const SourceName &arg1, const SourceName &arg2) {
-  return messages_.Say(location, std::move(msg), arg1.ToString().c_str(),
+  return messages_->Say(location, std::move(msg), arg1.ToString().c_str(),
       arg2.ToString().c_str());
 }
 void MessageHandler::SayAlreadyDeclared(
@@ -1097,9 +1068,6 @@ void MessageHandler::Say2(const SourceName &name1, MessageFixedText &&msg1,
     const SourceName &arg2, const SourceName &name2, MessageFixedText &&msg2) {
   Say(name1, std::move(msg1), name1, arg2)
       .Attach(name2, msg2, name2.ToString().c_str());
-}
-void MessageHandler::Annex(parser::Messages &&msgs) {
-  messages_.Annex(std::move(msgs));
 }
 
 // ImplicitRulesVisitor implementation
@@ -1153,8 +1121,8 @@ void ImplicitRulesVisitor::Post(const parser::ImplicitSpec &) {
 }
 
 void ImplicitRulesVisitor::PushScope() {
-  implicitRules_ = std::make_unique<ImplicitRules>(
-      std::move(implicitRules_), defaultKinds());
+  implicitRules_ = std::make_unique<ImplicitRules>(std::move(implicitRules_));
+  implicitRules_->set_context(context());
   prevImplicit_ = nullptr;
   prevImplicitNone_ = nullptr;
   prevImplicitNoneType_ = nullptr;
@@ -1580,10 +1548,9 @@ Symbol &ModuleVisitor::BeginModule(const SourceName &name, bool isSubmodule,
 // May have to read a .mod file to find it.
 // If an error occurs, report it and return nullptr.
 Scope *ModuleVisitor::FindModule(const SourceName &name, Scope *ancestor) {
-  ModFileReader reader{searchDirectories_, defaultKinds()};
-  auto *scope{reader.Read(GlobalScope(), name, ancestor)};
+  ModFileReader reader{context()};
+  auto *scope{reader.Read(name, ancestor)};
   if (!scope) {
-    Annex(std::move(reader.errors()));
     return nullptr;
   }
   if (scope->kind() != Scope::Kind::Module) {
@@ -3255,16 +3222,8 @@ void ResolveNamesVisitor::Post(const parser::Program &) {
   CHECK(!GetDeclTypeSpec());
 }
 
-void ResolveNames(parser::Messages &messages, Scope &rootScope,
-    const parser::Program &program,
-    const std::vector<std::string> &searchDirectories,
-    const IntrinsicTypeDefaultKinds &defaultKinds) {
-  ResolveNamesVisitor visitor{rootScope, defaultKinds};
-  for (auto &dir : searchDirectories) {
-    visitor.add_searchDirectory(dir);
-  }
-  visitor.Walk(program);
-  messages.Annex(visitor.messages());
+void ResolveNames(SemanticsContext &context, const parser::Program &program) {
+  ResolveNamesVisitor{context}.Walk(program);
 }
 
 // Map the enum in the parser to the one in GenericSpec

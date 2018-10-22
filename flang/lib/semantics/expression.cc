@@ -14,6 +14,7 @@
 
 #include "expression.h"
 #include "dump-parse-tree.h"  // TODO temporary
+#include "semantics.h"
 #include "symbol.h"
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
@@ -1226,9 +1227,8 @@ evaluate::MaybeExpr AnalyzeExpr(evaluate::FoldingContext &context,
 class Mutator {
 public:
   Mutator(evaluate::FoldingContext &context,
-      const IntrinsicTypeDefaultKinds &defaults,
-      const evaluate::IntrinsicProcTable &intrinsics)
-    : context_{context}, defaults_{defaults}, intrinsics_{intrinsics} {}
+      const SemanticsContext &semanticsContext)
+    : context_{context}, semanticsContext_{semanticsContext} {}
 
   template<typename A> bool Pre(A &) { return true /* visit children */; }
   template<typename A> void Post(A &) {}
@@ -1236,7 +1236,8 @@ public:
   bool Pre(parser::Expr &expr) {
     if (expr.typedExpr.get() == nullptr) {
       if (MaybeExpr checked{
-              AnalyzeExpr(context_, defaults_, intrinsics_, expr)}) {
+              AnalyzeExpr(context_, semanticsContext_.defaultKinds(),
+                  semanticsContext_.intrinsics(), expr)}) {
         checked->Dump(std::cout << "checked expression: ") << '\n';
         expr.typedExpr.reset(
             new evaluate::GenericExprWrapper{std::move(*checked)});
@@ -1250,15 +1251,13 @@ public:
 
 private:
   evaluate::FoldingContext &context_;
-  const IntrinsicTypeDefaultKinds &defaults_;
-  const evaluate::IntrinsicProcTable &intrinsics_;
+  const SemanticsContext &semanticsContext_;
 };
 
 void AnalyzeExpressions(parser::Program &program,
     evaluate::FoldingContext &context,
-    const IntrinsicTypeDefaultKinds &defaults,
-    const evaluate::IntrinsicProcTable &intrinsics) {
-  Mutator mutator{context, defaults, intrinsics};
+    const SemanticsContext &semanticsContext) {
+  Mutator mutator{context, semanticsContext};
   parser::Walk(program, mutator);
 }
 }  // namespace Fortran::semantics

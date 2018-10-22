@@ -20,17 +20,14 @@
 #include <vector>
 
 namespace Fortran::parser {
-class Messages;
 struct Program;
 }  // namespace Fortran::parser
 
 namespace Fortran::semantics {
 
-class Scope;
-class IntrinsicTypeDefaultKinds;
+class SemanticsContext;
 
-void ResolveNames(parser::Messages &, Scope &, const parser::Program &,
-    const std::vector<std::string> &, const IntrinsicTypeDefaultKinds &);
+void ResolveNames(SemanticsContext &, const parser::Program &);
 void DumpSymbols(std::ostream &);
 
 }  // namespace Fortran::semantics

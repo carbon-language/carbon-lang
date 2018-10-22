@@ -33,28 +33,21 @@ namespace Fortran::semantics {
 using SourceName = parser::CharBlock;
 class Symbol;
 class Scope;
+class SemanticsContext;
 
 class ModFileWriter {
 public:
-  // The directory to write .mod files in.
-  void set_directory(const std::string &dir) { dir_ = dir; }
-
-  // Errors encountered during writing. Non-empty if WriteAll returns false.
-  parser::Messages &&errors() { return std::move(errors_); }
-
-  // Write out all .mod files; if error return false.
-  bool WriteAll(const Scope &);
+  ModFileWriter(SemanticsContext &context) : context_{context} {}
+  void WriteAll();
 
 private:
-  std::string dir_{"."};
-  // The mod file consists of uses, declarations, and contained subprograms:
+  SemanticsContext &context_;
   std::stringstream uses_;
   std::stringstream useExtraAttrs_;  // attrs added to used entity
   std::stringstream decls_;
   std::stringstream contains_;
-  // Any errors encountered during writing:
-  parser::Messages errors_;
 
+  void WriteAll(const Scope &);
   void WriteOne(const Scope &);
   void Write(const Symbol &);
   std::string GetAsString(const Symbol &);
@@ -70,20 +63,14 @@ private:
 class ModFileReader {
 public:
   // directories specifies where to search for module files
-  ModFileReader(const std::vector<std::string> &directories,
-      const IntrinsicTypeDefaultKinds &defaultKinds)
-    : directories_{directories}, defaultKinds_{defaultKinds} {}
+  ModFileReader(SemanticsContext &context) : context_{context} {}
   // Find and read the module file for a module or submodule.
   // If ancestor is specified, look for a submodule of that module.
   // Return the Scope for that module/submodule or nullptr on error.
-  Scope *Read(Scope &, const SourceName &, Scope *ancestor = nullptr);
-  // Errors that occurred when Read returns nullptr.
-  parser::Messages &errors() { return errors_; }
+  Scope *Read(const SourceName &, Scope *ancestor = nullptr);
 
 private:
-  std::vector<std::string> directories_;
-  parser::Messages errors_;
-  const IntrinsicTypeDefaultKinds defaultKinds_;
+  SemanticsContext &context_;
 
   std::optional<std::string> FindModFile(
       const SourceName &, const std::string &);
