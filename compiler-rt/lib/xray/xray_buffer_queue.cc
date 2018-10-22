@@ -124,13 +124,11 @@ BufferQueue::ErrorCode BufferQueue::releaseBuffer(Buffer &Buf) {
       return BufferQueue::ErrorCode::UnrecognizedBuffer;
     }
 
-    // This points to a semantic bug, we really ought to not be releasing more
-    // buffers than we actually get.
     if (LiveBuffers == 0) {
       Buf.Data = nullptr;
       Buf.Size = Buf.Size;
       Buf.Generation = 0;
-      return ErrorCode::NotEnoughMemory;
+      return ErrorCode::Ok;
     }
 
     --LiveBuffers;
