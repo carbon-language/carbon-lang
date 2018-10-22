@@ -5694,11 +5694,12 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   // Extract constant bits from constant pool vector.
   if (auto *Cst = getTargetConstantFromNode(Op)) {
     Type *CstTy = Cst->getType();
-    if (!CstTy->isVectorTy() || (SizeInBits != CstTy->getPrimitiveSizeInBits()))
+    unsigned CstSizeInBits = CstTy->getPrimitiveSizeInBits();
+    if (!CstTy->isVectorTy() || (CstSizeInBits % SizeInBits) != 0)
       return false;
 
     unsigned SrcEltSizeInBits = CstTy->getScalarSizeInBits();
-    unsigned NumSrcElts = CstTy->getVectorNumElements();
+    unsigned NumSrcElts = SizeInBits / SrcEltSizeInBits;
 
     APInt UndefSrcElts(NumSrcElts, 0);
     SmallVector<APInt, 64> SrcEltBits(NumSrcElts, APInt(SrcEltSizeInBits, 0));
