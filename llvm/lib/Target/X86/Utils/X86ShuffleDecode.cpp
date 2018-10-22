@@ -501,6 +501,10 @@ void DecodeVPERMILPMask(unsigned NumElts, unsigned ScalarBits,
 
   for (unsigned i = 0, e = RawMask.size(); i < e; ++i) {
     uint64_t M = RawMask[i];
+    if (M == (uint64_t)SM_SentinelUndef) {
+      ShuffleMask.push_back(M);
+      continue;
+    }
     M = (ScalarBits == 64 ? ((M >> 1) & 0x1) : (M & 0x3));
     unsigned LaneOffset = i & ~(NumEltsPerLane - 1);
     ShuffleMask.push_back((int)(LaneOffset + M));
