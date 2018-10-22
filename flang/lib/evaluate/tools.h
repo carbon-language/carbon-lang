@@ -24,6 +24,39 @@
 
 namespace Fortran::evaluate {
 
+// Some expression predicates and extractors.
+
+// When an Expr holds something that is a Variable (i.e., a Designator
+// or pointer-valued FunctionRef), return a copy of its contents in
+// a Variable.
+template<typename A>
+std::optional<Variable<A>> AsVariable(const Expr<A> &expr) {
+  using Variant = decltype(Variable<A>::u);
+  return std::visit(
+      [](const auto &x) -> std::optional<Variable<A>> {
+        if constexpr (common::HasMember<std::decay_t<decltype(x)>, Variant>) {
+          return std::make_optional<Variable<A>>(x);
+        }
+        return std::nullopt;
+      },
+      expr.u);
+}
+
+// Predicate: true when an expression is a variable reference
+template<typename A> bool IsVariable(const A &) { return false; }
+template<typename A> bool IsVariable(const Designator<A> &) { return true; }
+template<typename A> bool IsVariable(const FunctionRef<A> &) { return true; }
+template<typename A> bool IsVariable(const Expr<A> &expr) {
+  return std::visit([](const auto &x) { return IsVariable(x); }, expr.u);
+}
+
+// Predicate: true when an expression is a constant value
+template<typename A> bool IsConstant(const A &) { return false; }
+template<typename A> bool IsConstant(const Constant<A> &) { return true; }
+template<typename A> bool IsConstant(const Expr<A> &expr) {
+  return std::visit([](const auto &x) { return IsConstant(x); }, expr.u);
+}
+
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
 

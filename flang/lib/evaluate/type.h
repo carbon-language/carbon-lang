@@ -383,8 +383,13 @@ struct SomeType {
   FOR_EACH_SPECIFIC_TYPE(PREFIX) \
   FOR_EACH_CATEGORY_TYPE(PREFIX)
 
-// Wraps a constant value in a class with its resolved type.
+// Wraps a constant scalar value of a specific intrinsic type
+// in a class with its resolved type.
+// N.B. Array constants are represented as array constructors
+// and derived type constants are structure constructors; generic
+// constants are generic expressions wrapping these constants.
 template<typename T> struct Constant {
+  // TODO: static_assert(T::isSpecificIntrinsicType);
   using Result = T;
   using Value = Scalar<Result>;
   CLASS_BOILERPLATE(Constant)
@@ -399,7 +404,7 @@ template<typename T> struct Constant {
       return value.GetType();
     }
   }
-  int Rank() const { return 0; }  // TODO: array constants
+  int Rank() const { return 0; }
   std::ostream &Dump(std::ostream &) const;
   Value value;
 };
