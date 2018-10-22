@@ -2700,6 +2700,24 @@ bool X86DAGToDAGISel::matchBEXTR(SDNode *Node) {
 
   SDValue NBits;
 
+  // a) x & ((1 << nbits) + (-1))
+  auto matchPatternA = [&NBits](SDValue Mask) -> bool {
+    // Match `add`. Must only have one use!
+    if (Mask->getOpcode() != ISD::ADD || !Mask->hasOneUse())
+      return false;
+    // We should be adding all-ones constant (i.e. subtracting one.)
+    if (!isAllOnesConstant(Mask->getOperand(1)))
+      return false;
+    // Match `1 << nbits`. Must only have one use!
+    SDValue M0 = Mask->getOperand(0);
+    if (M0->getOpcode() != ISD::SHL || !M0->hasOneUse())
+      return false;
+    if (!isOneConstant(M0->getOperand(0)))
+      return false;
+    NBits = M0->getOperand(1);
+    return true;
+  };
+
   // b) x & ~(-1 << nbits)
   auto matchPatternB = [&NBits](SDValue Mask) -> bool {
     // Match `~()`. Must only have one use!
@@ -2715,9 +2733,10 @@ bool X86DAGToDAGISel::matchBEXTR(SDNode *Node) {
     return true;
   };
 
-  auto matchLowBitMask = [&matchPatternB](SDValue Mask) -> bool {
-    // FIXME: patterns a, c, d.
-    return matchPatternB(Mask);
+  auto matchLowBitMask = [&matchPatternA,
+                          &matchPatternB](SDValue Mask) -> bool {
+    // FIXME: patterns c, d.
+    return matchPatternA(Mask) || matchPatternB(Mask);
   };
 
   SDValue X = Node->getOperand(0);
