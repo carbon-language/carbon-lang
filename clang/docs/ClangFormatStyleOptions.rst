@@ -1406,12 +1406,14 @@ the configuration (without a prefix: ``Auto``).
   can be a subset of another - the longest prefix is always matched. Within
   a group, the imports are ordered lexicographically.
 
-  In the .clang-format configuration file, this can be configured like:
+  In the .clang-format configuration file, this can be configured like
+  in the following yaml example. This will result in imports being
+  formatted as in the Java example below.
 
   .. code-block:: yaml
 
     JavaImportGroups: ['com.example', 'com', 'org']
-  Which will result in imports being formatted as so:
+
 
   .. code-block:: java
 
