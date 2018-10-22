@@ -6043,8 +6043,12 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     IsUnary = true;
     SDValue MaskNode = N->getOperand(1);
     SmallVector<uint64_t, 32> RawMask;
-    if (getTargetShuffleMaskIndices(MaskNode, MaskEltSize, RawMask, true)) {
+    if (getTargetShuffleMaskIndices(MaskNode, MaskEltSize, RawMask)) {
       DecodeVPERMILPMask(NumElems, MaskEltSize, RawMask, Mask);
+      break;
+    }
+    if (auto *C = getTargetConstantFromNode(MaskNode)) {
+      DecodeVPERMILPMask(C, MaskEltSize, Mask);
       break;
     }
     return false;
