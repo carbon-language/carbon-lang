@@ -5,4 +5,4 @@
 // RUN:   --gcc-toolchain=%S/Inputs/basic_android_ndk_tree/ 2>&1 \
 // RUN: | FileCheck %s
 //
-// CHECK: Found candidate GCC installation: {{.*}}/Inputs/basic_android_ndk_tree/lib/gcc/aarch64-linux-android/4.9
+// CHECK: Selected GCC installation: {{.*}}/Inputs/basic_android_ndk_tree/lib/gcc/aarch64-linux-android/4.9
