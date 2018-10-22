@@ -52,15 +52,15 @@ void CodeRegions::endRegion(SMLoc Loc) {
   CurrentRegion.setEndLocation(Loc);
 }
 
-void CodeRegions::addInstruction(std::unique_ptr<const MCInst> Instruction) {
-  const SMLoc &Loc = Instruction->getLoc();
+void CodeRegions::addInstruction(const MCInst &Instruction) {
+  const SMLoc &Loc = Instruction.getLoc();
   const auto It =
       std::find_if(Regions.rbegin(), Regions.rend(),
                    [Loc](const std::unique_ptr<CodeRegion> &Region) {
                      return Region->isLocInRange(Loc);
                    });
   if (It != Regions.rend())
-    (*It)->addInstruction(std::move(Instruction));
+    (*It)->addInstruction(Instruction);
 }
 
 } // namespace mca
