@@ -110,6 +110,8 @@ static void fillMachineFunction(llvm::MachineFunction &MF,
         Builder.addReg(Op.getReg(), Flags);
       } else if (Op.isImm()) {
         Builder.addImm(Op.getImm());
+      } else if (!Op.isValid()) {
+        llvm_unreachable("Operand is not set");
       } else {
         llvm_unreachable("Not yet implemented");
       }
