@@ -23,6 +23,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/MemoryBuffer.h"
 
+namespace llvm {
 namespace exegesis {
 
 static constexpr const char ModuleID[] = "ExegesisInfoTest";
@@ -295,3 +296,4 @@ ExecutableFunction::ExecutableFunction(
 }
 
 } // namespace exegesis
+} // namespace llvm

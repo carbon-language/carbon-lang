@@ -17,6 +17,7 @@
 #include "X86Subtarget.h"
 #include "llvm/MC/MCInstBuilder.h"
 
+namespace llvm {
 namespace exegesis {
 
 namespace {
@@ -423,3 +424,4 @@ void InitializeX86ExegesisTarget() {
 }
 
 } // namespace exegesis
+} // namespace llvm
