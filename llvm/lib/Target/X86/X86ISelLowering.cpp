@@ -5839,23 +5839,20 @@ static bool isConstantSplat(SDValue Op, APInt &SplatVal) {
 
 static bool getTargetShuffleMaskIndices(SDValue MaskNode,
                                         unsigned MaskEltSizeInBits,
-                                        SmallVectorImpl<uint64_t> &RawMask,
-                                        bool AllowWholeUndefs = false) {
+                                        SmallVectorImpl<uint64_t> &RawMask) {
   APInt UndefElts;
   SmallVector<APInt, 64> EltBits;
 
   // Extract the raw target constant bits.
+  // FIXME: We currently don't support UNDEF bits or mask entries.
   if (!getTargetConstantBitsFromNode(MaskNode, MaskEltSizeInBits, UndefElts,
-                                     EltBits, AllowWholeUndefs,
+                                     EltBits, /* AllowWholeUndefs */ false,
                                      /* AllowPartialUndefs */ false))
     return false;
 
   // Insert the extracted elements into the mask.
-  for (int i = 0, e = EltBits.size(); i != e; ++i) {
-    uint64_t M = AllowWholeUndefs && UndefElts[i] ? SM_SentinelUndef
-                                                  : EltBits[i].getZExtValue();
-    RawMask.push_back(M);
-  }
+  for (APInt Elt : EltBits)
+    RawMask.push_back(Elt.getZExtValue());
 
   return true;
 }
@@ -6060,8 +6057,12 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
     IsUnary = true;
     SDValue MaskNode = N->getOperand(1);
     SmallVector<uint64_t, 32> RawMask;
-    if (getTargetShuffleMaskIndices(MaskNode, 8, RawMask, true)) {
+    if (getTargetShuffleMaskIndices(MaskNode, 8, RawMask)) {
       DecodePSHUFBMask(RawMask, Mask);
+      break;
+    }
+    if (auto *C = getTargetConstantFromNode(MaskNode)) {
+      DecodePSHUFBMask(C, Mask);
       break;
     }
     return false;
