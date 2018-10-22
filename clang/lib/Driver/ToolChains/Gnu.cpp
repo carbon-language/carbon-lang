@@ -1651,10 +1651,18 @@ Generic_GCC::GCCVersion Generic_GCC::GCCVersion::Parse(StringRef VersionText) {
   return GoodVersion;
 }
 
-static llvm::StringRef getGCCToolchainDir(const ArgList &Args) {
+static llvm::StringRef getGCCToolchainDir(const ArgList &Args,
+                                          llvm::StringRef SysRoot) {
   const Arg *A = Args.getLastArg(clang::driver::options::OPT_gcc_toolchain);
   if (A)
     return A->getValue();
+
+  // If we have a SysRoot, ignore GCC_INSTALL_PREFIX.
+  // GCC_INSTALL_PREFIX specifies the gcc installation for the default
+  // sysroot and is likely not valid with a different sysroot.
+  if (!SysRoot.empty())
+    return "";
+
   return GCC_INSTALL_PREFIX;
 }
 
@@ -1686,7 +1694,7 @@ void Generic_GCC::GCCInstallationDetector::init(
   SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
                                        D.PrefixDirs.end());
 
-  StringRef GCCToolchainDir = getGCCToolchainDir(Args);
+  StringRef GCCToolchainDir = getGCCToolchainDir(Args, D.SysRoot);
   if (GCCToolchainDir != "") {
     if (GCCToolchainDir.back() == '/')
       GCCToolchainDir = GCCToolchainDir.drop_back(); // remove the /
