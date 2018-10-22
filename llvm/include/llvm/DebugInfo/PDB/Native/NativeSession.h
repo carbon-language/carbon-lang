@@ -93,8 +93,6 @@ public:
 
   std::unique_ptr<IPDBEnumSectionContribs> getSectionContribs() const override;
 
-  std::unique_ptr<IPDBEnumFrameData> getFrameData() const override;
-
   PDBFile &getPDBFile() { return *Pdb; }
   const PDBFile &getPDBFile() const { return *Pdb; }
 

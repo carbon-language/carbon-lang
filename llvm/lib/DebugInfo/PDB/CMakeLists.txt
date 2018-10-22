@@ -14,7 +14,6 @@ if(LLVM_ENABLE_DIA_SDK)
   add_pdb_impl_folder(DIA
     DIA/DIADataStream.cpp
     DIA/DIAEnumDebugStreams.cpp
-    DIA/DIAEnumFrameData.cpp
     DIA/DIAEnumInjectedSources.cpp
     DIA/DIAEnumLineNumbers.cpp
     DIA/DIAEnumSectionContribs.cpp
@@ -22,7 +21,6 @@ if(LLVM_ENABLE_DIA_SDK)
     DIA/DIAEnumSymbols.cpp
     DIA/DIAEnumTables.cpp
     DIA/DIAError.cpp
-    DIA/DIAFrameData.cpp
     DIA/DIAInjectedSource.cpp
     DIA/DIALineNumber.cpp
     DIA/DIARawSymbol.cpp
