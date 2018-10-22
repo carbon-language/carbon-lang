@@ -89,6 +89,12 @@ static llvm::Error IsInvalidOpcode(const Instruction &Instr) {
         Op.getExplicitOperandInfo().OperandType == llvm::MCOI::OPERAND_PCREL)
       return llvm::make_error<BenchmarkFailure>(
           "unsupported opcode: PC relative operand");
+  for (const Operand &Op : Instr.Operands)
+    if (Op.isReg() && Op.isExplicit() &&
+        Op.getExplicitOperandInfo().RegClass ==
+            llvm::X86::SEGMENT_REGRegClassID)
+      return llvm::make_error<BenchmarkFailure>(
+          "unsupported opcode: access segment memory");
   // We do not handle second-form X87 instructions. We only handle first-form
   // ones (_Fp), see comment in X86InstrFPStack.td.
   for (const Operand &Op : Instr.Operands)
