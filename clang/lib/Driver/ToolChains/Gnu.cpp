@@ -239,6 +239,7 @@ static bool isArmBigEndian(const llvm::Triple &Triple,
   case llvm::Triple::armeb:
   case llvm::Triple::thumbeb:
     IsBigEndian = true;
+    LLVM_FALLTHROUGH;
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
     if (Arg *A = Args.getLastArg(options::OPT_mlittle_endian,
