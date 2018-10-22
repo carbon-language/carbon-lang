@@ -29,13 +29,11 @@ using MaybeExpr = std::optional<evaluate::Expr<evaluate::SomeType>>;
 
 // Semantic analysis of one expression.
 std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
-    evaluate::FoldingContext &, const IntrinsicTypeDefaultKinds &,
-    const parser::Expr &);
+    SemanticsContext &, const parser::Expr &);
 
 // Semantic analysis of all expressions in a parse tree, which is
 // decorated with typed representations for top-level expressions.
-void AnalyzeExpressions(parser::Program &, evaluate::FoldingContext &,
-    const SemanticsContext &);
+void AnalyzeExpressions(parser::Program &, SemanticsContext &);
 
 }  // namespace Fortran::semantics
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

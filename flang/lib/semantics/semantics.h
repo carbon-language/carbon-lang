@@ -15,8 +15,8 @@
 #ifndef FORTRAN_SEMANTICS_SEMANTICS_H_
 #define FORTRAN_SEMANTICS_SEMANTICS_H_
 
-#include "default-kinds.h"
 #include "expression.h"
+#include "../evaluate/common.h"
 #include "scope.h"
 #include "../evaluate/intrinsics.h"
 #include "../parser/message.h"
@@ -31,12 +31,11 @@ class CookedSource;
 
 namespace Fortran::semantics {
 
+class IntrinsicTypeDefaultKinds;
+
 class SemanticsContext {
 public:
-  SemanticsContext(const IntrinsicTypeDefaultKinds &defaultKinds)
-    : defaultKinds_{defaultKinds}, intrinsics_{
-                                       evaluate::IntrinsicProcTable::Configure(
-                                           defaultKinds)} {}
+  SemanticsContext(const IntrinsicTypeDefaultKinds &);
 
   const IntrinsicTypeDefaultKinds &defaultKinds() const {
     return defaultKinds_;
@@ -50,6 +49,7 @@ public:
   const evaluate::IntrinsicProcTable &intrinsics() const { return intrinsics_; }
   Scope &globalScope() { return globalScope_; }
   parser::Messages &messages() { return messages_; }
+  evaluate::FoldingContext& foldingContext() { return foldingContext_; }
 
   SemanticsContext &set_searchDirectories(const std::vector<std::string> &x) {
     searchDirectories_ = x;
@@ -82,6 +82,7 @@ private:
   const evaluate::IntrinsicProcTable intrinsics_;
   Scope globalScope_;
   parser::Messages messages_;
+  evaluate::FoldingContext foldingContext_;
 };
 
 class Semantics {

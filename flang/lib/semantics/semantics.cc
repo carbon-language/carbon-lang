@@ -14,6 +14,7 @@
 
 #include "semantics.h"
 #include "canonicalize-do.h"
+#include "default-kinds.h"
 #include "mod-file.h"
 #include "resolve-labels.h"
 #include "resolve-names.h"
@@ -26,6 +27,13 @@ namespace Fortran::semantics {
 
 static void DoDumpSymbols(std::ostream &, const Scope &, int indent = 0);
 static void PutIndent(std::ostream &, int indent);
+
+SemanticsContext::SemanticsContext(
+    const IntrinsicTypeDefaultKinds &defaultKinds)
+  : defaultKinds_{defaultKinds},
+    intrinsics_{evaluate::IntrinsicProcTable::Configure(defaultKinds)},
+    foldingContext_{evaluate::FoldingContext{
+        parser::ContextualMessages{parser::CharBlock{}, &messages_}}} {}
 
 bool SemanticsContext::AnyFatalError() const {
   return !messages_.empty() &&
@@ -52,10 +60,7 @@ bool Semantics::Perform() {
     return false;
   }
   if (context_.debugExpressions()) {
-    parser::CharBlock whole{cooked_.data()};
-    parser::ContextualMessages contextualMessages{whole, &context_.messages()};
-    evaluate::FoldingContext foldingContext{contextualMessages};
-    AnalyzeExpressions(program_, foldingContext, context_);
+    AnalyzeExpressions(program_, context_);
   }
   return !AnyFatalError();
 }

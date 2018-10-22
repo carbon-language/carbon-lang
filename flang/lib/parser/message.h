@@ -240,12 +240,23 @@ private:
 
 class ContextualMessages {
 public:
+  class SavedState {
+  public:
+    SavedState(ContextualMessages &, CharBlock);
+    ~SavedState();
+
+  private:
+    ContextualMessages &msgs_;
+    CharBlock at_;
+  };
+
   ContextualMessages(CharBlock at, Messages *m) : at_{at}, messages_{m} {}
-  ContextualMessages(CharBlock at, const ContextualMessages &context)
-    : at_{at}, messages_{context.messages_} {}
 
   CharBlock at() const { return at_; }
   Messages *messages() const { return messages_; }
+
+  // Set CharBlock for messages; restore when the returned value is deleted
+  SavedState PushLocation(const CharBlock &);
 
   template<typename... A> void Say(A &&... args) {
     if (messages_ != nullptr) {
