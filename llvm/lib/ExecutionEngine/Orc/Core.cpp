@@ -1381,6 +1381,10 @@ void JITDylib::dump(raw_ostream &OS) {
     OS << "JITDylib \"" << JITDylibName
        << "\" (ES: " << format("0x%016x", reinterpret_cast<uintptr_t>(&ES))
        << "):\n"
+       << "Search order: [";
+    for (auto *JD : SearchOrder)
+      OS << " \"" << JD->getName() << "\"";
+    OS << " ]\n"
        << "Symbol table:\n";
 
     for (auto &KV : Symbols) {
