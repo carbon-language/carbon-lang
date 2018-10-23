@@ -2759,36 +2759,6 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
 
     return Op;
   }
-  case ISD::CTLZ_ZERO_UNDEF:
-    // This trivially expands to CTLZ.
-    return DAG.getNode(ISD::CTLZ, dl, VT, Op);
-  case ISD::CTLZ: {
-    if (TLI.isOperationLegalOrCustom(ISD::CTLZ_ZERO_UNDEF, VT)) {
-      EVT SetCCVT = getSetCCResultType(VT);
-      SDValue CTLZ = DAG.getNode(ISD::CTLZ_ZERO_UNDEF, dl, VT, Op);
-      SDValue Zero = DAG.getConstant(0, dl, VT);
-      SDValue SrcIsZero = DAG.getSetCC(dl, SetCCVT, Op, Zero, ISD::SETEQ);
-      return DAG.getNode(ISD::SELECT, dl, VT, SrcIsZero,
-                         DAG.getConstant(Len, dl, VT), CTLZ);
-    }
-
-    // for now, we do this:
-    // x = x | (x >> 1);
-    // x = x | (x >> 2);
-    // ...
-    // x = x | (x >>16);
-    // x = x | (x >>32); // for 64-bit input
-    // return popcount(~x);
-    //
-    // Ref: "Hacker's Delight" by Henry Warren
-    for (unsigned i = 0; (1U << i) <= (Len / 2); ++i) {
-      SDValue Tmp3 = DAG.getConstant(1ULL << i, dl, ShVT);
-      Op = DAG.getNode(ISD::OR, dl, VT, Op,
-                       DAG.getNode(ISD::SRL, dl, VT, Op, Tmp3));
-    }
-    Op = DAG.getNOT(dl, Op, VT);
-    return DAG.getNode(ISD::CTPOP, dl, VT, Op);
-  }
   }
 }
 
@@ -2800,10 +2770,13 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   bool NeedInvert;
   switch (Node->getOpcode()) {
   case ISD::CTPOP:
-  case ISD::CTLZ:
-  case ISD::CTLZ_ZERO_UNDEF:
     Tmp1 = ExpandBitCount(Node->getOpcode(), Node->getOperand(0), dl);
     Results.push_back(Tmp1);
+    break;
+  case ISD::CTLZ:
+  case ISD::CTLZ_ZERO_UNDEF:
+    if (TLI.expandCTLZ(Node, Tmp1, DAG))
+      Results.push_back(Tmp1);
     break;
   case ISD::CTTZ:
   case ISD::CTTZ_ZERO_UNDEF:
