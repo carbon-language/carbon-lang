@@ -50,11 +50,10 @@ public:
       MR.addDependenciesForAll(Deps);
     };
 
-    JITDylibSearchList SearchOrder;
-    MR.getTargetJITDylib().withSearchOrderDo(
-        [&](const JITDylibSearchList &JDs) { SearchOrder = JDs; });
-    ES.lookup(SearchOrder, InternedSymbols, OnResolvedWithUnwrap, OnReady,
-              RegisterDependencies);
+    MR.getTargetJITDylib().withSearchOrderDo([&](const JITDylibList &JDs) {
+      ES.lookup(JDs, InternedSymbols, OnResolvedWithUnwrap, OnReady,
+                RegisterDependencies, &MR.getTargetJITDylib());
+    });
   }
 
   Expected<LookupSet> getResponsibilitySet(const LookupSet &Symbols) {

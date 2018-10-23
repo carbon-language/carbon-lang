@@ -129,8 +129,9 @@ Error CtorDtorRunner::run() {
   }
 
   auto &ES = JD.getExecutionSession();
-  if (auto CtorDtorMap = ES.lookup({{&JD, true}}, std::move(Names),
-                                   NoDependenciesToRegister, true)) {
+  if (auto CtorDtorMap =
+          ES.lookup({&JD}, std::move(Names), NoDependenciesToRegister, true,
+                    nullptr, true)) {
     for (auto &KV : CtorDtorsByPriority) {
       for (auto &Name : KV.second) {
         assert(CtorDtorMap->count(Name) && "No entry for Name");

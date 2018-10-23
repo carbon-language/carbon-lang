@@ -115,11 +115,6 @@ namespace {
                "rather than individual functions"),
       cl::init(false));
 
-  cl::list<std::string>
-      JITDylibs("jd",
-                cl::desc("Specifies the JITDylib to be used for any subsequent "
-                         "-extra-module arguments."));
-
   // The MCJIT supports building for a target address space separate from
   // the JIT compilation process. Use a forked process and a copying
   // memory manager with IPC to execute using this functionality.
@@ -754,8 +749,6 @@ static orc::IRTransformLayer::TransformFunction createDebugDumper() {
   llvm_unreachable("Unknown DumpKind");
 }
 
-static void exitOnLazyCallThroughFailure() { exit(1); }
-
 int runOrcLazyJIT(const char *ProgName) {
   // Start setting up the JIT environment.
 
@@ -785,11 +778,7 @@ int runOrcLazyJIT(const char *ProgName) {
                         : None);
 
   DataLayout DL = ExitOnErr(JTMB.getDefaultDataLayoutForTarget());
-
-  auto J = ExitOnErr(orc::LLLazyJIT::Create(
-      std::move(JTMB), DL,
-      pointerToJITTargetAddress(exitOnLazyCallThroughFailure),
-      LazyJITCompileThreads));
+  auto J = ExitOnErr(orc::LLLazyJIT::Create(std::move(JTMB), DL, LazyJITCompileThreads));
 
   if (PerModuleLazy)
     J->setPartitionFunction(orc::CompileOnDemandLayer::compileWholeModule);
@@ -814,32 +803,13 @@ int runOrcLazyJIT(const char *ProgName) {
   // Add the main module.
   ExitOnErr(J->addLazyIRModule(std::move(MainModule)));
 
-  // Create JITDylibs and add any extra modules.
-  {
-    // Create JITDylibs, keep a map from argument index to dylib. We will use
-    // -extra-module argument indexes to determine what dylib to use for each
-    // -extra-module.
-    std::map<unsigned, orc::JITDylib *> IdxToDylib;
-    IdxToDylib[0] = &J->getMainJITDylib();
-    for (auto JDItr = JITDylibs.begin(), JDEnd = JITDylibs.end();
-         JDItr != JDEnd; ++JDItr) {
-      IdxToDylib[JITDylibs.getPosition(JDItr - JITDylibs.begin())] =
-          &J->createJITDylib(*JDItr);
-    }
+  // Add any extra modules.
+  for (auto &ModulePath : ExtraModules) {
+    auto M = parseIRFile(ModulePath, Err, *TSCtx.getContext());
+    if (!M)
+      reportError(Err, ProgName);
 
-    for (auto EMItr = ExtraModules.begin(), EMEnd = ExtraModules.end();
-         EMItr != EMEnd; ++EMItr) {
-      auto M = parseIRFile(*EMItr, Err, *TSCtx.getContext());
-      if (!M)
-        reportError(Err, ProgName);
-
-      auto EMIdx = ExtraModules.getPosition(EMItr - ExtraModules.begin());
-      assert(EMIdx != 0 && "ExtraModule should have index > 0");
-      auto JDItr = std::prev(IdxToDylib.lower_bound(EMIdx));
-      auto &JD = *JDItr->second;
-      ExitOnErr(
-          J->addLazyIRModule(JD, orc::ThreadSafeModule(std::move(M), TSCtx)));
-    }
+    ExitOnErr(J->addLazyIRModule(orc::ThreadSafeModule(std::move(M), TSCtx)));
   }
 
   // Add the objects.
@@ -866,8 +836,6 @@ int runOrcLazyJIT(const char *ProgName) {
       reinterpret_cast<EntryPointPtr>(static_cast<uintptr_t>(EntryPointSym.getAddress()));
     AltEntryThreads.push_back(std::thread([EntryPoint]() { EntryPoint(); }));
   }
-
-  J->getExecutionSession().dump(llvm::dbgs());
 
   // Run main.
   auto MainSym = ExitOnErr(J->lookup("main"));

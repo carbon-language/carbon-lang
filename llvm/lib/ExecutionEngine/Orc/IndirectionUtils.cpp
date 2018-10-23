@@ -101,7 +101,7 @@ JITTargetAddress JITCompileCallbackManager::executeCompileCallback(
       Name = I->second;
   }
 
-  if (auto Sym = ES.lookup({{&CallbacksJD, true}}, Name))
+  if (auto Sym = ES.lookup({&CallbacksJD}, Name, true))
     return Sym->getAddress();
   else {
     llvm::dbgs() << "Didn't find callback.\n";
