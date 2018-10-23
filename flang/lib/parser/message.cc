@@ -296,7 +296,7 @@ ContextualMessages::SavedState::SavedState(
 }
 ContextualMessages::SavedState::~SavedState() { msgs_.at_ = at_; }
 
-ContextualMessages::SavedState ContextualMessages::PushLocation(
+ContextualMessages::SavedState ContextualMessages::SetLocation(
     const CharBlock &at) {
   return SavedState(*this, at);
 }

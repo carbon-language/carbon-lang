@@ -260,7 +260,7 @@ MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Designator &d) {
 // Analyze something with source provenance
 template<typename A> MaybeExpr AnalyzeSourced(ExprAnalyzer &ea, const A &x) {
   if (!x.source.empty()) {
-    auto save{ea.context.foldingContext().messages.PushLocation(x.source)};
+    auto save{ea.context.foldingContext().messages.SetLocation(x.source)};
     return AnalyzeHelper(ea, x);
   } else {
     return AnalyzeHelper(ea, x);
@@ -367,7 +367,7 @@ struct RealTypeVisitor {
 MaybeExpr ExprAnalyzer::Analyze(const parser::RealLiteralConstant &x) {
   // Use a local message context around the real literal for better
   // provenance on any messages.
-  auto save{context.foldingContext().messages.PushLocation(x.real.source)};
+  auto save{context.foldingContext().messages.SetLocation(x.real.source)};
   // If a kind parameter appears, it defines the kind of the literal and any
   // letter used in an exponent part (e.g., the 'E' in "6.02214E+23")
   // should agree.  In the absence of an explicit kind parameter, any exponent

@@ -256,7 +256,7 @@ public:
   Messages *messages() const { return messages_; }
 
   // Set CharBlock for messages; restore when the returned value is deleted
-  SavedState PushLocation(const CharBlock &);
+  SavedState SetLocation(const CharBlock &);
 
   template<typename... A> void Say(A &&... args) {
     if (messages_ != nullptr) {
