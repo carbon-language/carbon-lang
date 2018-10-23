@@ -1461,11 +1461,9 @@ template <class ELFT> void Writer<ELFT>::resolveShfLinkOrder() {
   }
 }
 
-static void applySynthetic(const std::vector<SyntheticSection *> &Sections,
-                           llvm::function_ref<void(SyntheticSection *)> Fn) {
-  for (SyntheticSection *SS : Sections)
-    if (SS && SS->getParent() && !SS->empty())
-      Fn(SS);
+static void finalizeSynthetic(SyntheticSection *Sec) {
+  if (Sec && !Sec->empty() && Sec->getParent())
+    Sec->finalizeContents();
 }
 
 // In order to allow users to manipulate linker-synthesized sections,
@@ -1567,8 +1565,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // This responsible for splitting up .eh_frame section into
   // pieces. The relocation scan uses those pieces, so this has to be
   // earlier.
-  applySynthetic({In.EhFrame},
-                 [](SyntheticSection *SS) { SS->finalizeContents(); });
+  finalizeSynthetic(In.EhFrame);
 
   for (Symbol *S : Symtab->getSymbols())
     S->IsPreemptible |= computeIsPreemptible(*S);
@@ -1664,31 +1661,30 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
-  applySynthetic({In.DynSymTab,
-                  In.Bss,
-                  In.BssRelRo,
-                  In.GnuHashTab,
-                  In.HashTab,
-                  In.SymTabShndx,
-                  In.ShStrTab,
-                  In.StrTab,
-                  In.VerDef,
-                  In.DynStrTab,
-                  In.Got,
-                  In.MipsGot,
-                  In.IgotPlt,
-                  In.GotPlt,
-                  In.RelaDyn,
-                  In.RelrDyn,
-                  In.RelaIplt,
-                  In.RelaPlt,
-                  In.Plt,
-                  In.Iplt,
-                  In.EhFrameHdr,
-                  InX<ELFT>::VerSym,
-                  InX<ELFT>::VerNeed,
-                  In.Dynamic},
-                 [](SyntheticSection *SS) { SS->finalizeContents(); });
+  finalizeSynthetic(In.DynSymTab);
+  finalizeSynthetic(In.Bss);
+  finalizeSynthetic(In.BssRelRo);
+  finalizeSynthetic(In.GnuHashTab);
+  finalizeSynthetic(In.HashTab);
+  finalizeSynthetic(In.SymTabShndx);
+  finalizeSynthetic(In.ShStrTab);
+  finalizeSynthetic(In.StrTab);
+  finalizeSynthetic(In.VerDef);
+  finalizeSynthetic(In.DynStrTab);
+  finalizeSynthetic(In.Got);
+  finalizeSynthetic(In.MipsGot);
+  finalizeSynthetic(In.IgotPlt);
+  finalizeSynthetic(In.GotPlt);
+  finalizeSynthetic(In.RelaDyn);
+  finalizeSynthetic(In.RelrDyn);
+  finalizeSynthetic(In.RelaIplt);
+  finalizeSynthetic(In.RelaPlt);
+  finalizeSynthetic(In.Plt);
+  finalizeSynthetic(In.Iplt);
+  finalizeSynthetic(In.EhFrameHdr);
+  finalizeSynthetic(InX<ELFT>::VerSym);
+  finalizeSynthetic(InX<ELFT>::VerNeed);
+  finalizeSynthetic(In.Dynamic);
 
   if (!Script->HasSectionsCommand && !Config->Relocatable)
     fixSectionAlignments();
@@ -1726,8 +1722,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   }
 
   // createThunks may have added local symbols to the static symbol table
-  applySynthetic({In.SymTab},
-                 [](SyntheticSection *SS) { SS->finalizeContents(); });
+  finalizeSynthetic(In.SymTab);
 
   // Fill other section headers. The dynamic table is finalized
   // at the end because some tags like RELSZ depend on result
