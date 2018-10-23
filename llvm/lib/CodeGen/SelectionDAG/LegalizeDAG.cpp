@@ -176,7 +176,6 @@ private:
 
   SDValue ExpandBITREVERSE(SDValue Op, const SDLoc &dl);
   SDValue ExpandBSWAP(SDValue Op, const SDLoc &dl);
-  SDValue ExpandBitCount(unsigned Opc, SDValue Op, const SDLoc &dl);
 
   SDValue ExpandExtractFromVectorThroughStack(SDValue Op);
   SDValue ExpandInsertToVectorThroughStack(SDValue Op);
@@ -2707,61 +2706,6 @@ SDValue SelectionDAGLegalize::ExpandBSWAP(SDValue Op, const SDLoc &dl) {
   }
 }
 
-/// Expand the specified bitcount instruction into operations.
-SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
-                                             const SDLoc &dl) {
-  EVT VT = Op.getValueType();
-  EVT ShVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
-  unsigned Len = VT.getScalarSizeInBits();
-
-  switch (Opc) {
-  default: llvm_unreachable("Cannot expand this yet!");
-  case ISD::CTPOP: {
-    assert(VT.isInteger() && Len <= 128 && Len % 8 == 0 &&
-           "CTPOP not implemented for this type.");
-
-    // This is the "best" algorithm from
-    // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
-
-    SDValue Mask55 = DAG.getConstant(APInt::getSplat(Len, APInt(8, 0x55)),
-                                     dl, VT);
-    SDValue Mask33 = DAG.getConstant(APInt::getSplat(Len, APInt(8, 0x33)),
-                                     dl, VT);
-    SDValue Mask0F = DAG.getConstant(APInt::getSplat(Len, APInt(8, 0x0F)),
-                                     dl, VT);
-    SDValue Mask01 = DAG.getConstant(APInt::getSplat(Len, APInt(8, 0x01)),
-                                     dl, VT);
-
-    // v = v - ((v >> 1) & 0x55555555...)
-    Op = DAG.getNode(ISD::SUB, dl, VT, Op,
-                     DAG.getNode(ISD::AND, dl, VT,
-                                 DAG.getNode(ISD::SRL, dl, VT, Op,
-                                             DAG.getConstant(1, dl, ShVT)),
-                                 Mask55));
-    // v = (v & 0x33333333...) + ((v >> 2) & 0x33333333...)
-    Op = DAG.getNode(ISD::ADD, dl, VT,
-                     DAG.getNode(ISD::AND, dl, VT, Op, Mask33),
-                     DAG.getNode(ISD::AND, dl, VT,
-                                 DAG.getNode(ISD::SRL, dl, VT, Op,
-                                             DAG.getConstant(2, dl, ShVT)),
-                                 Mask33));
-    // v = (v + (v >> 4)) & 0x0F0F0F0F...
-    Op = DAG.getNode(ISD::AND, dl, VT,
-                     DAG.getNode(ISD::ADD, dl, VT, Op,
-                                 DAG.getNode(ISD::SRL, dl, VT, Op,
-                                             DAG.getConstant(4, dl, ShVT))),
-                     Mask0F);
-    // v = (v * 0x01010101...) >> (Len - 8)
-    if (Len > 8)
-      Op = DAG.getNode(ISD::SRL, dl, VT,
-                       DAG.getNode(ISD::MUL, dl, VT, Op, Mask01),
-                       DAG.getConstant(Len - 8, dl, ShVT));
-
-    return Op;
-  }
-  }
-}
-
 bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   LLVM_DEBUG(dbgs() << "Trying to expand node\n");
   SmallVector<SDValue, 8> Results;
@@ -2770,8 +2714,8 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   bool NeedInvert;
   switch (Node->getOpcode()) {
   case ISD::CTPOP:
-    Tmp1 = ExpandBitCount(Node->getOpcode(), Node->getOperand(0), dl);
-    Results.push_back(Tmp1);
+    if (TLI.expandCTPOP(Node, Tmp1, DAG))
+      Results.push_back(Tmp1);
     break;
   case ISD::CTLZ:
   case ISD::CTLZ_ZERO_UNDEF:
