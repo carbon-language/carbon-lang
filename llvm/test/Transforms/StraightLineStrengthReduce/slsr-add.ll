@@ -99,6 +99,34 @@ define void @stride_is_minus_2s(i32 %b, i32 %s) {
   ret void
 }
 
+; TODO: This pass is targeted at simple address-calcs, so it is artificially limited to
+; match scalar values. The code could be modified to handle vector types too.
+
+define void @stride_is_minus_2s_vec(<2 x i32> %b, <2 x i32> %s) {
+; CHECK-LABEL: @stride_is_minus_2s_vec(
+; CHECK-NEXT:    [[S6:%.*]] = mul <2 x i32> [[S:%.*]], <i32 6, i32 6>
+; CHECK-NEXT:    [[T1:%.*]] = add <2 x i32> [[B:%.*]], [[S6]]
+; CHECK-NEXT:    call void @voo(<2 x i32> [[T1]])
+; CHECK-NEXT:    [[S4:%.*]] = shl <2 x i32> [[S]], <i32 2, i32 2>
+; CHECK-NEXT:    [[T2:%.*]] = add <2 x i32> [[B]], [[S4]]
+; CHECK-NEXT:    call void @voo(<2 x i32> [[T2]])
+; CHECK-NEXT:    [[S2:%.*]] = shl <2 x i32> [[S]], <i32 1, i32 1>
+; CHECK-NEXT:    [[T3:%.*]] = add <2 x i32> [[B]], [[S2]]
+; CHECK-NEXT:    call void @voo(<2 x i32> [[T3]])
+; CHECK-NEXT:    ret void
+;
+  %s6 = mul <2 x i32> %s, <i32 6, i32 6>
+  %t1 = add <2 x i32> %b, %s6
+  call void @voo(<2 x i32> %t1)
+  %s4 = shl <2 x i32> %s, <i32 2, i32 2>
+  %t2 = add <2 x i32> %b, %s4
+  call void @voo(<2 x i32> %t2)
+  %s2 = shl <2 x i32> %s, <i32 1, i32 1>
+  %t3 = add <2 x i32> %b, %s2
+  call void @voo(<2 x i32> %t3)
+  ret void
+}
+
 ; t = b + (s << 3);
 ; foo(t);
 ; foo(b + s);
@@ -140,4 +168,5 @@ define void @slsr_strided_add_128bit(i128 %b, i128 %s) {
 }
 
 declare void @foo(i32)
+declare void @voo(<2 x i32>)
 declare void @bar(i128)
