@@ -1993,6 +1993,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     SI.setOperand(0, BinaryOperator::getNotArgument(CondVal));
     SI.setOperand(1, FalseVal);
     SI.setOperand(2, TrueVal);
+    SI.swapProfMetadata();
     return &SI;
   }
 
