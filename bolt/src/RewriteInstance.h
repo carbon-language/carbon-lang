@@ -478,6 +478,9 @@ private:
 
   uint64_t NewTextSectionIndex{0};
 
+  /// Number of local symbols in newly written symbol table.
+  uint64_t NumLocalSymbols{0};
+
   /// Exception handling and stack unwinding information in this binary.
   ErrorOr<BinarySection &> LSDASection{std::errc::bad_address};
   const llvm::DWARFDebugFrame *EHFrame{nullptr};

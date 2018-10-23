@@ -3873,6 +3873,10 @@ std::vector<uint32_t> RewriteInstance::getOutputSections(
     NewSection.sh_size = BSec->getOutputSize();
     NewSection.sh_name = SHStrTab.getOffset(SectionName);
 
+    if (NewSection.sh_type == ELF::SHT_SYMTAB) {
+      NewSection.sh_info = NumLocalSymbols;
+    }
+
     OutputSections->emplace_back(NewSection);
 
     LastFileOffset = BSec->getFileOffset();
@@ -4005,8 +4009,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   auto updateSymbolTable =
     [&](bool PatchExisting,
         const Elf_Shdr *Section,
-        std::function<void(size_t, const char *, size_t)>
-        Write,
+        std::function<void(size_t, const Elf_Sym &)> Write,
         std::function<size_t(StringRef)> AddToStrTab) {
     auto StringSection = cantFail(Obj->getStringTableForSymtab(*Section));
     unsigned IsHotTextUpdated = 0;
@@ -4029,7 +4032,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       NewSymbol.st_size = Function->getOutputSize();
       NewSymbol.st_other = 0;
       NewSymbol.setBindingAndType(ELF::STB_LOCAL, ELF::STT_FUNC);
-      Write(0, reinterpret_cast<const char *>(&NewSymbol), sizeof(NewSymbol));
+      Write(0, NewSymbol);
 
       if (Function->isSplit()) {
         auto NewColdSym = NewSymbol;
@@ -4039,8 +4042,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
             Twine(Function->getPrintName()).concat(".cold.0").toStringRef(Buf));
         NewColdSym.st_value = Function->cold().getAddress();
         NewColdSym.st_size = Function->cold().getImageSize();
-        Write(0, reinterpret_cast<const char *>(&NewColdSym),
-              sizeof(NewColdSym));
+        Write(0, NewColdSym);
       }
     }
 
@@ -4067,8 +4069,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
                               .toStringRef(Buf));
           NewColdSym.st_value = Function->cold().getAddress();
           NewColdSym.st_size = Function->cold().getImageSize();
-          Write(0, reinterpret_cast<const char *>(&NewColdSym),
-                sizeof(NewColdSym));
+          Write(0, NewColdSym);
         }
         if (!PatchExisting && Function->hasConstantIsland()) {
           auto DataMark = Function->getOutputDataAddress();
@@ -4083,10 +4084,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           auto CodeMarkSym = DataMarkSym;
           CodeMarkSym.st_name = AddToStrTab("$x");
           CodeMarkSym.st_value = CodeMark;
-          Write(0, reinterpret_cast<const char *>(&DataMarkSym),
-                sizeof(DataMarkSym));
-          Write(0, reinterpret_cast<const char *>(&CodeMarkSym),
-                sizeof(CodeMarkSym));
+          Write(0, DataMarkSym);
+          Write(0, CodeMarkSym);
         }
         if (!PatchExisting && Function->hasConstantIsland() &&
             Function->isSplit()) {
@@ -4102,10 +4101,8 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           auto CodeMarkSym = DataMarkSym;
           CodeMarkSym.st_name = AddToStrTab("$x");
           CodeMarkSym.st_value = CodeMark;
-          Write(0, reinterpret_cast<const char *>(&DataMarkSym),
-                sizeof(DataMarkSym));
-          Write(0, reinterpret_cast<const char *>(&CodeMarkSym),
-                sizeof(CodeMarkSym));
+          Write(0, DataMarkSym);
+          Write(0, CodeMarkSym);
         }
       } else {
         uint32_t OldSectionIndex = NewSymbol.st_shndx;
@@ -4190,7 +4187,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
       Write((&Symbol - cantFail(Obj->symbols(Section)).begin()) *
                 sizeof(Elf_Sym),
-            reinterpret_cast<const char *>(&NewSymbol), sizeof(NewSymbol));
+            NewSymbol);
     }
 
     assert((!IsHotTextUpdated || IsHotTextUpdated == 2) &&
@@ -4210,7 +4207,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       outs() << "BOLT-INFO: setting " << Name << " to 0x"
              << Twine::utohexstr(Symbol.st_value) << '\n';
 
-      Write(0, reinterpret_cast<const char *>(&Symbol), sizeof(Symbol));
+      Write(0, Symbol);
     };
 
     if (opts::HotText && !IsHotTextUpdated && !PatchExisting) {
@@ -4226,7 +4223,7 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
 
   // Update dynamic symbol table.
   const Elf_Shdr *DynSymSection = nullptr;
-  for (const Elf_Shdr &Section : cantFail(Obj->sections())) {
+  for (const auto &Section : cantFail(Obj->sections())) {
     if (Section.sh_type == ELF::SHT_DYNSYM) {
       DynSymSection = &Section;
       break;
@@ -4235,8 +4232,9 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   assert(DynSymSection && "no dynamic symbol table found");
   updateSymbolTable(/*patch existing table?*/ true,
                     DynSymSection,
-                    [&](size_t Offset, const char *Buf, size_t Size) {
-                      Out->os().pwrite(Buf, Size,
+                    [&](size_t Offset, const Elf_Sym &Sym) {
+                      Out->os().pwrite(reinterpret_cast<const char *>(&Sym),
+                                       sizeof(Elf_Sym),
                                        DynSymSection->sh_offset + Offset);
                     },
                     [](StringRef) -> size_t { return 0; });
@@ -4262,10 +4260,14 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   auto SecName = cantFail(Obj->getSectionName(SymTabSection));
   auto StrSecName = cantFail(Obj->getSectionName(StrTabSection));
 
+  NumLocalSymbols = 0;
   updateSymbolTable(/*patch existing table?*/ false,
                     SymTabSection,
-                    [&](size_t Offset, const char *Buf, size_t Size) {
-                      NewContents.append(Buf, Size);
+                    [&](size_t Offset, const Elf_Sym &Sym) {
+                      if (Sym.getBinding() == ELF::STB_LOCAL)
+                        ++NumLocalSymbols;
+                      NewContents.append(reinterpret_cast<const char *>(&Sym),
+                                         sizeof(Elf_Sym));
                     },
                     [&](StringRef Str) {
                       size_t Idx = NewStrTab.size();
