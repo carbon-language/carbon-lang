@@ -22,6 +22,14 @@
 #endif //cl_khr_3d_image_writes
 #endif //__OPENCL_C_VERSION__ < CL_VERSION_2_0
 
+#if __OPENCL_C_VERSION__ >= CL_VERSION_1_2
+#ifndef cl_intel_planar_yuv
+#define cl_intel_planar_yuv
+#endif // cl_intel_planar_yuv
+#pragma OPENCL EXTENSION cl_intel_planar_yuv : begin
+#pragma OPENCL EXTENSION cl_intel_planar_yuv : end
+#endif // __OPENCL_C_VERSION__ >= CL_VERSION_1_2
+
 #define __ovld __attribute__((overloadable))
 #define __conv __attribute__((convergent))
 
