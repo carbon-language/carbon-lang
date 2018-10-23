@@ -186,13 +186,13 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
 
     // Null terminate the string for realpath. readlink never null
     // terminates its output.
-    len = std::min(len, long(sizeof(exe_path) - 1));
+    len = std::min(len, ssize_t(sizeof(exe_path) - 1));
     exe_path[len] = '\0';
 
-    // At least on GNU/Hurd, /proc/self/exe is a symlink to the path that
-    // was used to start the program, and not the eventual binary file.
-    // We thus needs to run realpath over it to get the actual place
-    // where llvm was installed.
+    // On Linux, /proc/self/exe always looks through symlinks. However, on
+    // GNU/Hurd, /proc/self/exe is a symlink to the path that was used to start
+    // the program, and not the eventual binary file. Therefore, call realpath
+    // so this behaves the same on all platforms.
 #if _POSIX_VERSION >= 200112 || defined(__GLIBC__)
     char *real_path = realpath(exe_path, NULL);
     std::string ret = std::string(real_path);
