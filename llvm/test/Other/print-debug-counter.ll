@@ -1,3 +1,5 @@
+; REQUIRES: debug
+
 ; RUN: opt -S -debug-counter=early-cse-skip=1,early-cse-count=1 -early-cse \
 ; RUN:        -debug-counter=newgvn-vn-skip=1,newgvn-vn-count=2 -newgvn \
 ; RUN:        -instcombine -print-debug-counter < %s 2>&1 | FileCheck %s
