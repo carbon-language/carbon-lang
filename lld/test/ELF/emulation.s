@@ -421,7 +421,7 @@
 # ARM:      ElfHeader {
 # ARM-NEXT:   Ident {
 # ARM-NEXT:     Magic: (7F 45 4C 46)
-# ARM-NEXT:     Class: 32 (0x1)
+# ARM-NEXT:     Class: 32-bit (0x1)
 # ARM-NEXT:     DataEncoding: LittleEndian (0x1)
 # ARM-NEXT:     FileVersion: 1
 # ARM-NEXT:     OS/ABI: SystemV (0x0)
