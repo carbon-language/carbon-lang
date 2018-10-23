@@ -1560,13 +1560,9 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   addRelIpltSymbols();
 
   // RISC-V's gp can address +/- 2 KiB, set it to .sdata + 0x800 if not defined.
-  if (Config->EMachine == EM_RISCV) {
-    ElfSym::RISCVGlobalPointer =
-        dyn_cast_or_null<Defined>(Symtab->find("__global_pointer$"));
-    if (!ElfSym::RISCVGlobalPointer)
-      ElfSym::RISCVGlobalPointer =
-          addOptionalRegular("__global_pointer$", findSection(".sdata"), 0x800);
-  }
+  if (Config->EMachine == EM_RISCV)
+    if (!dyn_cast_or_null<Defined>(Symtab->find("__global_pointer$")))
+      addOptionalRegular("__global_pointer$", findSection(".sdata"), 0x800);
 
   // This responsible for splitting up .eh_frame section into
   // pieces. The relocation scan uses those pieces, so this has to be
