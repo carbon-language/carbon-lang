@@ -429,13 +429,8 @@
 # ARM-NEXT:     Unused: (00 00 00 00 00 00 00)
 # ARM-NEXT:   }
 # ARM-NEXT:   Type: Executable (0x2)
-# ARM-NEXT:   Machine: EM_ARM (0xB7)
+# ARM-NEXT:   Machine: EM_ARM (0x28)
 # ARM-NEXT:   Version: 1
-# ARM-NEXT:   Entry:
-# ARM-NEXT:   ProgramHeaderOffset: 0x40
-# ARM-NEXT:   SectionHeaderOffset:
-# ARM-NEXT:   Flags [ (0x0)
-# ARM-NEXT:   ]
 
 .globl _start
 _start:
