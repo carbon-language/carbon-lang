@@ -1104,8 +1104,6 @@ SDValue VectorLegalizer::ExpandCTLZ(SDValue Op) {
 }
 
 SDValue VectorLegalizer::ExpandCTTZ(SDValue Op) {
-  EVT VT = Op.getValueType();
-
   // Attempt to expand using TargetLowering.
   SDValue Result;
   if (TLI.expandCTTZ(Op.getNode(), Result, DAG))
