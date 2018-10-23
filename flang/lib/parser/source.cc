@@ -40,21 +40,39 @@ SourceFile::~SourceFile() { Close(); }
 
 static std::vector<std::size_t> FindLineStarts(
     const char *source, std::size_t bytes) {
-  if (bytes == 0) {
-    return {};
-  }
-  CHECK(source[bytes - 1] == '\n' && "missing ultimate newline");
   std::vector<std::size_t> result;
-  std::size_t at{0};
-  do {
-    result.push_back(at);
-    const void *vp{static_cast<const void *>(&source[at])};
-    const void *vnl{std::memchr(vp, '\n', bytes - at)};
-    const char *nl{static_cast<const char *>(vnl)};
-    at = nl + 1 - source;
-  } while (at < bytes);
-  result.shrink_to_fit();
+  if (bytes > 0) {
+    CHECK(source[bytes - 1] == '\n' && "missing ultimate newline");
+    std::size_t at{0};
+    do {
+      result.push_back(at);
+      const void *vp{static_cast<const void *>(&source[at])};
+      const void *vnl{std::memchr(vp, '\n', bytes - at)};
+      const char *nl{static_cast<const char *>(vnl)};
+      at = nl + 1 - source;
+    } while (at < bytes);
+    result.shrink_to_fit();
+  }
   return result;
+}
+
+void SourceFile::RecordLineStarts() {
+  lineStart_ = FindLineStarts(content_, bytes_);
+}
+
+// Cut down the contiguous content of a source file to skip
+// things like byte order marks.
+void SourceFile::IdentifyPayload() {
+  content_ = address_;
+  bytes_ = size_;
+  if (content_ != nullptr) {
+    if (bytes_ >= 3 && content_[0] == 0xef && content_[1] == 0xbb &&
+        content_[2] == 0xbf) {
+      // UTF-8 encoding of Unicode byte order mark (BOM)
+      content_ += 3;
+      bytes_ -= 3;
+    }
+  }
 }
 
 std::string DirectoryName(std::string path) {
@@ -136,24 +154,28 @@ bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
   // Don't bother with small ones.  This also helps keep the number
   // of open file descriptors from getting out of hand.
   if (useMMap && S_ISREG(statbuf.st_mode)) {
-    bytes_ = static_cast<std::size_t>(statbuf.st_size);
-    if (bytes_ >= minMapFileBytes &&
+    size_ = static_cast<std::size_t>(statbuf.st_size);
+    if (size_ >= minMapFileBytes &&
         openFileDescriptors <= maxMapOpenFileDescriptors) {
-      void *vp = mmap(0, bytes_, PROT_READ, MAP_SHARED, fileDescriptor_, 0);
+      void *vp = mmap(0, size_, PROT_READ, MAP_SHARED, fileDescriptor_, 0);
       if (vp != MAP_FAILED) {
-        content_ = static_cast<const char *>(const_cast<const void *>(vp));
-        if (content_[bytes_ - 1] == '\n' &&
-            std::memchr(vp, '\r', bytes_) == nullptr) {
+        address_ = static_cast<const char *>(const_cast<const void *>(vp));
+        IdentifyPayload();
+        if (bytes_ > 0 && content_[bytes_ - 1] == '\n' &&
+            std::memchr(static_cast<const void *>(content_), '\r', bytes_) ==
+                nullptr) {
           isMemoryMapped_ = true;
-          lineStart_ = FindLineStarts(content_, bytes_);
+          RecordLineStarts();
           return true;
         }
         // The file needs to have its line endings normalized to simple
         // newlines.  Remap it for a private rewrite in place.
-        vp = mmap(vp, bytes_, PROT_READ | PROT_WRITE, MAP_PRIVATE,
-            fileDescriptor_, 0);
+        vp = mmap(
+            vp, size_, PROT_READ | PROT_WRITE, MAP_PRIVATE, fileDescriptor_, 0);
         if (vp != MAP_FAILED) {
-          auto mutableContent{static_cast<char *>(vp)};
+          address_ = static_cast<const char *>(const_cast<const void *>(vp));
+          IdentifyPayload();
+          auto mutableContent{const_cast<char *>(content_)};
           bytes_ = RemoveCarriageReturns(mutableContent, bytes_);
           if (bytes_ > 0) {
             if (mutableContent[bytes_ - 1] == '\n' ||
@@ -166,13 +188,14 @@ bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
               CHECK(isNowReadOnly);
               content_ = mutableContent;
               isMemoryMapped_ = true;
-              lineStart_ = FindLineStarts(content_, bytes_);
+              RecordLineStarts();
               return true;
             }
           }
         }
-        munmap(vp, bytes_);
-        content_ = nullptr;
+        munmap(vp, size_);
+        address_ = content_ = nullptr;
+        size_ = bytes_ = 0;
       }
     }
   }
@@ -199,30 +222,31 @@ bool SourceFile::ReadFile(std::string errorPath, std::stringstream *error) {
     --openFileDescriptors;
   }
   fileDescriptor_ = -1;
-  bytes_ = buffer.size();
-  if (bytes_ == 0) {
+  if (buffer.size() == 0) {
     // empty file
-    content_ = nullptr;
+    address_ = content_ = nullptr;
+    size_ = bytes_ = 0;
   } else {
     normalized_ = buffer.MarshalNormalized();
-    content_ = normalized_.data();
-    bytes_ = normalized_.size();
-    lineStart_ = FindLineStarts(content_, bytes_);
+    address_ = normalized_.data();
+    size_ = normalized_.size();
+    IdentifyPayload();
+    RecordLineStarts();
   }
   return true;
 }
 
 void SourceFile::Close() {
   if (useMMap && isMemoryMapped_) {
-    munmap(reinterpret_cast<void *>(const_cast<char *>(content_)), bytes_);
+    munmap(reinterpret_cast<void *>(const_cast<char *>(address_)), size_);
     isMemoryMapped_ = false;
   } else if (!normalized_.empty()) {
     normalized_.clear();
-  } else if (content_ != nullptr) {
-    delete[] content_;
+  } else if (address_ != nullptr) {
+    delete[] address_;
   }
-  content_ = nullptr;
-  bytes_ = 0;
+  address_ = content_ = nullptr;
+  size_ = bytes_ = 0;
   if (fileDescriptor_ > 0) {
     close(fileDescriptor_);
     --openFileDescriptors;

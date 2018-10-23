@@ -14,6 +14,7 @@
 
 #include "expression.h"
 #include "common.h"
+#include "fold.h"
 #include "int-power.h"
 #include "tools.h"
 #include "variable.h"

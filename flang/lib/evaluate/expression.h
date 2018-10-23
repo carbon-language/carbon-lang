@@ -29,6 +29,7 @@
 #include "../lib/common/template.h"
 #include "../lib/parser/char-block.h"
 #include "../lib/parser/message.h"
+#include <algorithm>
 #include <ostream>
 #include <tuple>
 #include <type_traits>
@@ -158,12 +159,10 @@ public:
   int Rank() const {
     int rank{left().Rank()};
     if constexpr (operands > 1) {
-      int rightRank{right().Rank()};
-      if (rightRank > rank) {
-        rank = rightRank;
-      }
+      return std::max(rank, right().Rank());
+    } else {
+      return rank;
     }
-    return rank;
   }
 
   std::ostream &Dump(std::ostream &) const;
@@ -570,6 +569,9 @@ FOR_EACH_REAL_KIND(extern template struct Relational)
 FOR_EACH_CHARACTER_KIND(extern template struct Relational)
 extern template struct Relational<SomeType>;
 
+// Logical expressions of a kind bigger than LogicalResult
+// do not include Relational<> operations as possibilities
+// since their results are always LogicalResult (kind=1).
 template<int KIND>
 class Expr<Type<TypeCategory::Logical, KIND>>
   : public ExpressionBase<Type<TypeCategory::Logical, KIND>> {
@@ -581,14 +583,15 @@ public:
   explicit Expr(bool x) : u{Constant<Result>{x}} {}
 
 private:
-  using Operations =
-      std::variant<Convert<Result, TypeCategory::Logical>, Parentheses<Result>,
-          Not<KIND>, LogicalOperation<KIND>, Relational<SomeType>>;
+  using Operations = std::variant<Convert<Result, TypeCategory::Logical>,
+      Parentheses<Result>, Not<KIND>, LogicalOperation<KIND>>;
+  using Relations = std::conditional_t<KIND == LogicalResult::kind,
+      std::variant<Relational<SomeType>>, std::variant<>>;
   using Others =
       std::variant<Constant<Result>, Designator<Result>, FunctionRef<Result>>;
 
 public:
-  common::CombineVariants<Operations, Others> u;
+  common::CombineVariants<Operations, Relations, Others> u;
 };
 
 FOR_EACH_LOGICAL_KIND(extern template class Expr)
@@ -607,7 +610,7 @@ public:
 
 // Note that Expr<SomeDerived> does not inherit from ExpressionBase
 // since Constant<SomeDerived> and Scalar<SomeDerived> are not defined
-// for derived types..
+// for derived types.
 template<> class Expr<SomeDerived> {
 public:
   using Result = SomeDerived;

@@ -144,7 +144,8 @@ template<typename A> class Expr;
 
 // Classes that support a Fold(FoldingContext &) member function have the
 // IsFoldableTrait.
-CLASS_TRAIT(IsFoldableTrait)
+CLASS_TRAIT(IsFoldableTrait)  // TODO pmk rm
+
 struct FoldingContext {
   explicit FoldingContext(const parser::ContextualMessages &m,
       Rounding round = defaultRounding, bool flush = false)
