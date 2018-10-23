@@ -1756,9 +1756,13 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
   // program to fail to link due to relocation overflow, if their
   // program text is above 2 GiB. We use the address of the .text
   // section instead to prevent that failure.
+  //
+  // In a rare sitaution, .text section may not exist. If that's the
+  // case, use the image base address as a last resort.
   OutputSection *Default = findSection(".text");
   if (!Default)
     Default = Out::ElfHeader;
+
   auto Define = [=](StringRef Start, StringRef End, OutputSection *OS) {
     if (OS) {
       addOptionalRegular(Start, OS, 0);
