@@ -378,7 +378,7 @@ std::string ToolChain::getCompilerRT(const ArgList &Args, StringRef Component,
     SmallString<128> P(LibPath);
     llvm::sys::path::append(P, Prefix + Twine("clang_rt.") + Component + Suffix);
     if (getVFS().exists(P))
-      return P.str();
+      return llvm::sys::path::convert_to_slash(P);
   }
 
   StringRef Arch = getArchNameForCompilerRTLib(*this, Args);
@@ -386,7 +386,7 @@ std::string ToolChain::getCompilerRT(const ArgList &Args, StringRef Component,
   SmallString<128> Path(getCompilerRTPath());
   llvm::sys::path::append(Path, Prefix + Twine("clang_rt.") + Component + "-" +
                                     Arch + Env + Suffix);
-  return Path.str();
+  return llvm::sys::path::convert_to_slash(Path);
 }
 
 const char *ToolChain::getCompilerRTArgString(const llvm::opt::ArgList &Args,
@@ -425,7 +425,7 @@ Tool *ToolChain::SelectTool(const JobAction &JA) const {
 }
 
 std::string ToolChain::GetFilePath(const char *Name) const {
-  return D.GetFilePath(Name, *this);
+  return llvm::sys::path::convert_to_slash(D.GetFilePath(Name, *this));
 }
 
 std::string ToolChain::GetProgramPath(const char *Name) const {
@@ -774,12 +774,14 @@ void ToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
 void ToolChain::AddFilePathLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const {
   for (const auto &LibPath : getLibraryPaths())
-    if(LibPath.length() > 0)
-      CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + LibPath));
+    if (LibPath.length() > 0)
+      CmdArgs.push_back(Args.MakeArgString(
+          StringRef("-L") + llvm::sys::path::convert_to_slash(LibPath)));
 
   for (const auto &LibPath : getFilePaths())
-    if(LibPath.length() > 0)
-      CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + LibPath));
+    if (LibPath.length() > 0)
+      CmdArgs.push_back(Args.MakeArgString(
+          StringRef("-L") + llvm::sys::path::convert_to_slash(LibPath)));
 }
 
 void ToolChain::AddCCKextLibArgs(const ArgList &Args,
