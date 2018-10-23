@@ -1533,7 +1533,6 @@ static bool computeIsPreemptible(const Symbol &B) {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::finalizeSections() {
-  Out::DebugInfo = findSection(".debug_info");
   Out::PreinitArray = findSection(".preinit_array");
   Out::InitArray = findSection(".init_array");
   Out::FiniArray = findSection(".fini_array");
