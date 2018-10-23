@@ -15715,7 +15715,6 @@ double __ovld __conv work_group_scan_inclusive_max(double x);
 
 // OpenCL v2.0 s6.13.16 - Pipe Functions
 #if __OPENCL_C_VERSION__ >= CL_VERSION_2_0
-#define PIPE_RESERVE_ID_VALID_BIT (1U << 30)
 #define CLK_NULL_RESERVE_ID (__builtin_astype(((void*)(__SIZE_MAX__)), reserve_id_t))
 bool __ovld is_valid_reserve_id(reserve_id_t reserve_id);
 #endif //__OPENCL_C_VERSION__ >= CL_VERSION_2_0
