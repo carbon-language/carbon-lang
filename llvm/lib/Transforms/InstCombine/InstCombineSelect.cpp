@@ -1989,8 +1989,9 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     }
   }
 
-  if (BinaryOperator::isNot(CondVal)) {
-    SI.setOperand(0, BinaryOperator::getNotArgument(CondVal));
+  Value *NotCond;
+  if (match(CondVal, m_Not(m_Value(NotCond)))) {
+    SI.setOperand(0, NotCond);
     SI.setOperand(1, FalseVal);
     SI.setOperand(2, TrueVal);
     SI.swapProfMetadata();
