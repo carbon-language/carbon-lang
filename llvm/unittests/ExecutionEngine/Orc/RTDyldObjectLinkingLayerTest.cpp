@@ -66,7 +66,7 @@ static bool testSetProcessAllSections(std::unique_ptr<MemoryBuffer> Obj,
 
   ObjLayer.setProcessAllSections(ProcessAllSections);
   cantFail(ObjLayer.add(JD, std::move(Obj), ES.allocateVModule()));
-  ES.lookup({&JD}, {Foo}, OnResolveDoNothing, OnReadyDoNothing,
+  ES.lookup({{&JD, false}}, {Foo}, OnResolveDoNothing, OnReadyDoNothing,
             NoDependenciesToRegister);
   return DebugSectionSeen;
 }
@@ -157,7 +157,8 @@ TEST(RTDyldObjectLinkingLayerTest, TestOverrideObjectFlags) {
   ObjLayer.setOverrideObjectFlagsWithResponsibilityFlags(true);
 
   cantFail(CompileLayer.add(JD, std::move(M), ES.allocateVModule()));
-  ES.lookup({&JD}, {Foo}, [](Expected<SymbolMap> R) { cantFail(std::move(R)); },
+  ES.lookup({{&JD, false}}, {Foo},
+            [](Expected<SymbolMap> R) { cantFail(std::move(R)); },
             [](Error Err) { cantFail(std::move(Err)); },
             NoDependenciesToRegister);
 }
@@ -219,7 +220,8 @@ TEST(RTDyldObjectLinkingLayerTest, TestAutoClaimResponsibilityForSymbols) {
   ObjLayer.setAutoClaimResponsibilityForObjectSymbols(true);
 
   cantFail(CompileLayer.add(JD, std::move(M), ES.allocateVModule()));
-  ES.lookup({&JD}, {Foo}, [](Expected<SymbolMap> R) { cantFail(std::move(R)); },
+  ES.lookup({{&JD, false}}, {Foo},
+            [](Expected<SymbolMap> R) { cantFail(std::move(R)); },
             [](Error Err) { cantFail(std::move(Err)); },
             NoDependenciesToRegister);
 }

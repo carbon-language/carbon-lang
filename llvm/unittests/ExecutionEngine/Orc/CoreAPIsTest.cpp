@@ -48,7 +48,8 @@ TEST_F(CoreAPIsStandardTest, BasicSuccessfulLookup) {
         FooMR = std::make_shared<MaterializationResponsibility>(std::move(R));
       })));
 
-  ES.lookup({&JD}, {Foo}, OnResolution, OnReady, NoDependenciesToRegister);
+  ES.lookup({{&JD, false}}, {Foo}, OnResolution, OnReady,
+            NoDependenciesToRegister);
 
   EXPECT_FALSE(OnResolutionRun) << "Should not have been resolved yet";
   EXPECT_FALSE(OnReadyRun) << "Should not have been marked ready yet";
@@ -101,7 +102,8 @@ TEST_F(CoreAPIsStandardTest, EmptyLookup) {
     OnReadyRun = true;
   };
 
-  ES.lookup({&JD}, {}, OnResolution, OnReady, NoDependenciesToRegister);
+  ES.lookup({{&JD, false}}, {}, OnResolution, OnReady,
+            NoDependenciesToRegister);
 
   EXPECT_TRUE(OnResolvedRun) << "OnResolved was not run for empty query";
   EXPECT_TRUE(OnReadyRun) << "OnReady was not run for empty query";
@@ -148,7 +150,7 @@ TEST_F(CoreAPIsStandardTest, RemoveSymbolsTest) {
 
   bool OnResolvedRun = false;
   bool OnReadyRun = false;
-  ES.lookup({&JD}, {Foo, Baz},
+  ES.lookup({{&JD, false}}, {Foo, Baz},
             [&](Expected<SymbolMap> Result) {
               EXPECT_TRUE(!!Result) << "OnResolved failed unexpectedly";
               consumeError(Result.takeError());
@@ -229,7 +231,8 @@ TEST_F(CoreAPIsStandardTest, LookupWithHiddenSymbols) {
   auto &JD2 = ES.createJITDylib("JD2");
   cantFail(JD2.define(absoluteSymbols({{Bar, QuxSym}})));
 
-  auto Result = cantFail(ES.lookup({&JD, &JD2}, {Foo, Bar}));
+  /// Try a blocking lookup.
+  auto Result = cantFail(ES.lookup({{&JD, false}, {&JD2, false}}, {Foo, Bar}));
 
   EXPECT_EQ(Result.size(), 2U) << "Unexpected number of results";
   EXPECT_EQ(Result.count(Foo), 1U) << "Missing result for \"Foo\"";
@@ -275,7 +278,7 @@ TEST_F(CoreAPIsStandardTest, TestBasicAliases) {
                                     {Qux, {Bar, JITSymbolFlags::Weak}}})));
   cantFail(JD.define(absoluteSymbols({{Qux, QuxSym}})));
 
-  auto Result = ES.lookup({&JD}, {Baz, Qux});
+  auto Result = ES.lookup({{&JD, false}}, {Baz, Qux});
   EXPECT_TRUE(!!Result) << "Unexpected lookup failure";
   EXPECT_EQ(Result->count(Baz), 1U) << "No result for \"baz\"";
   EXPECT_EQ(Result->count(Qux), 1U) << "No result for \"qux\"";
@@ -290,7 +293,7 @@ TEST_F(CoreAPIsStandardTest, TestChainedAliases) {
   cantFail(JD.define(symbolAliases(
       {{Baz, {Bar, BazSym.getFlags()}}, {Bar, {Foo, BarSym.getFlags()}}})));
 
-  auto Result = ES.lookup({&JD}, {Bar, Baz});
+  auto Result = ES.lookup({{&JD, false}}, {Bar, Baz});
   EXPECT_TRUE(!!Result) << "Unexpected lookup failure";
   EXPECT_EQ(Result->count(Bar), 1U) << "No result for \"bar\"";
   EXPECT_EQ(Result->count(Baz), 1U) << "No result for \"baz\"";
@@ -309,7 +312,7 @@ TEST_F(CoreAPIsStandardTest, TestBasicReExports) {
 
   cantFail(JD2.define(reexports(JD, {{Bar, {Foo, BarSym.getFlags()}}})));
 
-  auto Result = cantFail(ES.lookup({&JD2}, Bar));
+  auto Result = cantFail(ES.lookup({{&JD2, false}}, Bar));
   EXPECT_EQ(Result.getAddress(), FooSym.getAddress())
       << "Re-export Bar for symbol Foo should match FooSym's address";
 }
@@ -335,7 +338,7 @@ TEST_F(CoreAPIsStandardTest, TestThatReExportsDontUnnecessarilyMaterialize) {
   cantFail(JD2.define(reexports(
       JD, {{Baz, {Foo, BazSym.getFlags()}}, {Qux, {Bar, QuxSym.getFlags()}}})));
 
-  auto Result = cantFail(ES.lookup({&JD2}, Baz));
+  auto Result = cantFail(ES.lookup({{&JD2, false}}, Baz));
   EXPECT_EQ(Result.getAddress(), FooSym.getAddress())
       << "Re-export Baz for symbol Foo should match FooSym's address";
 
@@ -350,13 +353,13 @@ TEST_F(CoreAPIsStandardTest, TestReexportsGenerator) {
 
   auto Filter = [this](SymbolStringPtr Name) { return Name != Bar; };
 
-  JD.setGenerator(ReexportsGenerator(JD2, Filter));
+  JD.setGenerator(ReexportsGenerator(JD2, false, Filter));
 
   auto Flags = JD.lookupFlags({Foo, Bar, Baz});
   EXPECT_EQ(Flags.size(), 1U) << "Unexpected number of results";
   EXPECT_EQ(Flags[Foo], FooSym.getFlags()) << "Unexpected flags for Foo";
 
-  auto Result = cantFail(ES.lookup({&JD}, Foo));
+  auto Result = cantFail(ES.lookup({{&JD, false}}, Foo));
 
   EXPECT_EQ(Result.getAddress(), FooSym.getAddress())
       << "Incorrect reexported symbol address";
@@ -377,7 +380,7 @@ TEST_F(CoreAPIsStandardTest, TestTrivialCircularDependency) {
     FooReady = true;
   };
 
-  ES.lookup({&JD}, {Foo}, std::move(OnResolution), std::move(OnReady),
+  ES.lookup({{&JD, false}}, {Foo}, std::move(OnResolution), std::move(OnReady),
             NoDependenciesToRegister);
 
   FooR->resolve({{Foo, FooSym}});
@@ -434,8 +437,8 @@ TEST_F(CoreAPIsStandardTest, TestCircularDependenceInOneJITDylib) {
 
   // Issue a lookup for Foo. Use NoDependenciesToRegister: We're going to add
   // the dependencies manually below.
-  ES.lookup({&JD}, {Foo}, std::move(OnFooResolution), std::move(OnFooReady),
-            NoDependenciesToRegister);
+  ES.lookup({{&JD, false}}, {Foo}, std::move(OnFooResolution),
+            std::move(OnFooReady), NoDependenciesToRegister);
 
   bool BarResolved = false;
   bool BarReady = false;
@@ -449,8 +452,8 @@ TEST_F(CoreAPIsStandardTest, TestCircularDependenceInOneJITDylib) {
     BarReady = true;
   };
 
-  ES.lookup({&JD}, {Bar}, std::move(OnBarResolution), std::move(OnBarReady),
-            NoDependenciesToRegister);
+  ES.lookup({{&JD, false}}, {Bar}, std::move(OnBarResolution),
+            std::move(OnBarReady), NoDependenciesToRegister);
 
   bool BazResolved = false;
   bool BazReady = false;
@@ -465,8 +468,8 @@ TEST_F(CoreAPIsStandardTest, TestCircularDependenceInOneJITDylib) {
     BazReady = true;
   };
 
-  ES.lookup({&JD}, {Baz}, std::move(OnBazResolution), std::move(OnBazReady),
-            NoDependenciesToRegister);
+  ES.lookup({{&JD, false}}, {Baz}, std::move(OnBazResolution),
+            std::move(OnBazReady), NoDependenciesToRegister);
 
   // Add a circular dependency: Foo -> Bar, Bar -> Baz, Baz -> Foo.
   FooR->addDependenciesForAll({{&JD, SymbolNameSet({Bar})}});
@@ -588,7 +591,7 @@ TEST_F(CoreAPIsStandardTest, AddAndMaterializeLazySymbol) {
     OnReadyRun = true;
   };
 
-  ES.lookup({&JD}, Names, std::move(OnResolution), std::move(OnReady),
+  ES.lookup({{&JD, false}}, Names, std::move(OnResolution), std::move(OnReady),
             NoDependenciesToRegister);
 
   EXPECT_TRUE(FooMaterialized) << "Foo was not materialized";
@@ -637,7 +640,7 @@ TEST_F(CoreAPIsStandardTest, TestBasicWeakSymbolMaterialization) {
     OnReadyRun = true;
   };
 
-  ES.lookup({&JD}, {Bar}, std::move(OnResolution), std::move(OnReady),
+  ES.lookup({{&JD, false}}, {Bar}, std::move(OnResolution), std::move(OnReady),
             NoDependenciesToRegister);
 
   EXPECT_TRUE(OnResolvedRun) << "OnResolved not run";
@@ -666,13 +669,13 @@ TEST_F(CoreAPIsStandardTest, DefineMaterializingSymbol) {
       });
 
   cantFail(JD.define(MU));
-  cantFail(ES.lookup({&JD}, Foo));
+  cantFail(ES.lookup({{&JD, false}}, Foo));
 
   // Assert that materialization is complete by now.
   ExpectNoMoreMaterialization = true;
 
   // Look up bar to verify that no further materialization happens.
-  auto BarResult = cantFail(ES.lookup({&JD}, Bar));
+  auto BarResult = cantFail(ES.lookup({{&JD, false}}, Bar));
   EXPECT_EQ(BarResult.getAddress(), BarSym.getAddress())
       << "Expected Bar == BarSym";
 }
@@ -685,7 +688,7 @@ TEST_F(CoreAPIsStandardTest, GeneratorTest) {
     return SymbolNameSet({Bar});
   });
 
-  auto Result = cantFail(ES.lookup({&JD}, {Foo, Bar}));
+  auto Result = cantFail(ES.lookup({{&JD, false}}, {Foo, Bar}));
 
   EXPECT_EQ(Result.count(Bar), 1U) << "Expected to find fallback def for 'bar'";
   EXPECT_EQ(Result[Bar].getAddress(), BarSym.getAddress())
@@ -701,7 +704,7 @@ TEST_F(CoreAPIsStandardTest, FailResolution) {
   cantFail(JD.define(MU));
 
   SymbolNameSet Names({Foo, Bar});
-  auto Result = ES.lookup({&JD}, Names);
+  auto Result = ES.lookup({{&JD, false}}, Names);
 
   EXPECT_FALSE(!!Result) << "Expected failure";
   if (!Result) {
@@ -733,7 +736,7 @@ TEST_F(CoreAPIsStandardTest, TestLookupWithUnthreadedMaterialization) {
 
   cantFail(JD.define(MU));
 
-  auto FooLookupResult = cantFail(ES.lookup({&JD}, Foo));
+  auto FooLookupResult = cantFail(ES.lookup({{&JD, false}}, Foo));
 
   EXPECT_EQ(FooLookupResult.getAddress(), FooSym.getAddress())
       << "lookup returned an incorrect address";
@@ -754,7 +757,7 @@ TEST_F(CoreAPIsStandardTest, TestLookupWithThreadedMaterialization) {
 
   cantFail(JD.define(absoluteSymbols({{Foo, FooSym}})));
 
-  auto FooLookupResult = cantFail(ES.lookup({&JD}, Foo));
+  auto FooLookupResult = cantFail(ES.lookup({{&JD, false}}, Foo));
 
   EXPECT_EQ(FooLookupResult.getAddress(), FooSym.getAddress())
       << "lookup returned an incorrect address";
@@ -802,14 +805,14 @@ TEST_F(CoreAPIsStandardTest, TestGetRequestedSymbolsAndReplace) {
   EXPECT_FALSE(FooMaterialized) << "Foo should not be materialized yet";
   EXPECT_FALSE(BarMaterialized) << "Bar should not be materialized yet";
 
-  auto FooSymResult = cantFail(ES.lookup({&JD}, Foo));
+  auto FooSymResult = cantFail(ES.lookup({{&JD, false}}, Foo));
   EXPECT_EQ(FooSymResult.getAddress(), FooSym.getAddress())
       << "Address mismatch for Foo";
 
   EXPECT_TRUE(FooMaterialized) << "Foo should be materialized now";
   EXPECT_FALSE(BarMaterialized) << "Bar still should not be materialized";
 
-  auto BarSymResult = cantFail(ES.lookup({&JD}, Bar));
+  auto BarSymResult = cantFail(ES.lookup({{&JD, false}}, Bar));
   EXPECT_EQ(BarSymResult.getAddress(), BarSym.getAddress())
       << "Address mismatch for Bar";
   EXPECT_TRUE(BarMaterialized) << "Bar should be materialized now";
@@ -829,7 +832,7 @@ TEST_F(CoreAPIsStandardTest, TestMaterializationResponsibilityDelegation) {
 
   cantFail(JD.define(MU));
 
-  auto Result = ES.lookup({&JD}, {Foo, Bar});
+  auto Result = ES.lookup({{&JD, false}}, {Foo, Bar});
 
   EXPECT_TRUE(!!Result) << "Result should be a success value";
   EXPECT_EQ(Result->count(Foo), 1U) << "\"Foo\" entry missing";
@@ -861,7 +864,7 @@ TEST_F(CoreAPIsStandardTest, TestMaterializeWeakSymbol) {
 
   auto OnReady = [](Error Err) { cantFail(std::move(Err)); };
 
-  ES.lookup({&JD}, {Foo}, std::move(OnResolution), std::move(OnReady),
+  ES.lookup({{&JD, false}}, {Foo}, std::move(OnResolution), std::move(OnReady),
             NoDependenciesToRegister);
 
   auto MU2 = llvm::make_unique<SimpleMaterializationUnit>(
