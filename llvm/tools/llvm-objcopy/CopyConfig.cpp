@@ -61,7 +61,7 @@ static const opt::OptTable::Info ObjcopyInfoTable[] = {
 
 class ObjcopyOptTable : public opt::OptTable {
 public:
-  ObjcopyOptTable() : OptTable(ObjcopyInfoTable, true) {}
+  ObjcopyOptTable() : OptTable(ObjcopyInfoTable) {}
 };
 
 enum StripID {
@@ -90,7 +90,7 @@ static const opt::OptTable::Info StripInfoTable[] = {
 
 class StripOptTable : public opt::OptTable {
 public:
-  StripOptTable() : OptTable(StripInfoTable, true) {}
+  StripOptTable() : OptTable(StripInfoTable) {}
 };
 
 enum SectionFlag {
