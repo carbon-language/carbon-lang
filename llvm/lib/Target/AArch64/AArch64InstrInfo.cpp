@@ -696,7 +696,7 @@ bool AArch64InstrInfo::isAsCheapAsAMove(const MachineInstr &MI) const {
   // Secondly, check cases specific to sub-targets.
 
   if (Subtarget.hasExynosCheapAsMoveHandling()) {
-    if (isExynosResetFast(MI) || isExynosShiftLeftFast(MI))
+    if (isExynosResetFast(MI) || isExynosShiftExtFast(MI))
       return true;
     else
       return MI.isAsCheapAsAMove();
@@ -821,7 +821,7 @@ bool AArch64InstrInfo::isExynosResetFast(const MachineInstr &MI) const {
   }
 }
 
-bool AArch64InstrInfo::isExynosShiftLeftFast(const MachineInstr &MI) const {
+bool AArch64InstrInfo::isExynosShiftExtFast(const MachineInstr &MI) const {
   unsigned Imm, Shift;
   AArch64_AM::ShiftExtendType Ext;
 
