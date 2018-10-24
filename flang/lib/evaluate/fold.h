@@ -83,6 +83,7 @@ Expr<TO> Fold(FoldingContext &context, Convert<TO, FROMCAT> &&convert) {
       [&](auto &kindExpr) -> Expr<TO> {
         kindExpr = Fold(context, std::move(kindExpr));
         using Operand = ResultType<decltype(kindExpr)>;
+        char buffer[64];
         if (const auto *c{std::get_if<Constant<Operand>>(&kindExpr.u)}) {
           if constexpr (TO::category == TypeCategory::Integer) {
             if constexpr (Operand::category == TypeCategory::Integer) {
@@ -110,7 +111,6 @@ Expr<TO> Fold(FoldingContext &context, Convert<TO, FROMCAT> &&convert) {
             if constexpr (Operand::category == TypeCategory::Integer) {
               auto converted{Scalar<TO>::FromInteger(c->value)};
               if (!converted.flags.empty()) {
-                char buffer[64];
                 std::snprintf(buffer, sizeof buffer,
                     "INTEGER(%d) to REAL(%d) conversion", Operand::kind,
                     TO::kind);
@@ -120,7 +120,6 @@ Expr<TO> Fold(FoldingContext &context, Convert<TO, FROMCAT> &&convert) {
             } else if constexpr (Operand::category == TypeCategory::Real) {
               auto converted{Scalar<TO>::Convert(c->value)};
               if (!converted.flags.empty()) {
-                char buffer[64];
                 std::snprintf(buffer, sizeof buffer,
                     "REAL(%d) to REAL(%d) conversion", Operand::kind, TO::kind);
                 RealFlagWarnings(context, converted.flags, buffer);
