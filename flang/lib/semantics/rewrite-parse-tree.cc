@@ -83,7 +83,8 @@ private:
     }
     parser::Name *name{std::get_if<parser::Name>(
         &std::get<parser::ProcedureDesignator>((*funcRef)->v.t).u)};
-    if (!name || !name->symbol || !name->symbol->has<ObjectEntityDetails>()) {
+    if (!name || !name->symbol ||
+        !name->symbol->GetUltimate().has<ObjectEntityDetails>()) {
       return;
     }
     x.u = common::Indirection{(*funcRef)->ConvertToArrayElementRef()};
