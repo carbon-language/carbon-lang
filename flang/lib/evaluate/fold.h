@@ -36,43 +36,9 @@ using namespace Fortran::parser::literals;
 // a canonicalized expression.
 // When the operand is an Expr<A>, the result has the same type.
 
-// Base cases
+// Base no-op case
 template<typename A> Expr<ResultType<A>> Fold(FoldingContext &, A &&x) {
   return Expr<ResultType<A>>{std::move(x)};
-}
-
-template<typename A> Expr<A> Fold(FoldingContext &context, Expr<A> &&expr) {
-  static_assert(A::isSpecificIntrinsicType);
-  return std::visit(
-      [&](auto &&x) -> Expr<A> { return Fold(context, std::move(x)); },
-      std::move(expr.u));
-}
-
-template<TypeCategory CAT>
-Expr<SomeKind<CAT>> Fold(FoldingContext &context, Expr<SomeKind<CAT>> &&expr) {
-  return std::visit(
-      [&](auto &&x) -> Expr<SomeKind<CAT>> {
-        if constexpr (CAT == TypeCategory::Derived) {
-          return Fold(context, std::move(x));
-        } else {
-          return Expr<SomeKind<CAT>>{Fold(context, std::move(x))};
-        }
-      },
-      std::move(expr.u));
-}
-
-template<>
-inline Expr<SomeType> Fold(FoldingContext &context, Expr<SomeType> &&expr) {
-  return std::visit(
-      [&](auto &&x) -> Expr<SomeType> {
-        if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
-                          BOZLiteralConstant>) {
-          return std::move(expr);
-        } else {
-          return Expr<SomeType>{Fold(context, std::move(x))};
-        }
-      },
-      std::move(expr.u));
 }
 
 // Unary operations
@@ -327,6 +293,109 @@ template<typename T> Expr<T> Fold(FoldingContext &context, Extremum<T> &&x) {
     return Expr<T>{Constant<T>{folded->second}};
   }
   return Expr<T>{std::move(x)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Complex, KIND>> Fold(
+    FoldingContext &context, ComplexConstructor<KIND> &&x) {
+  using COMPLEX = Type<TypeCategory::Complex, KIND>;
+  if (auto folded{FoldOperands(context, x.left(), x.right())}) {
+    return Expr<COMPLEX>{
+        Constant<COMPLEX>{Scalar<COMPLEX>{folded->first, folded->second}}};
+  }
+  return Expr<COMPLEX>{std::move(x)};
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Character, KIND>> Fold(
+    FoldingContext &context, Concat<KIND> &&x) {
+  using CHAR = Type<TypeCategory::Character, KIND>;
+  if (auto folded{FoldOperands(context, x.left(), x.right())}) {
+    return Expr<CHAR>{Constant<CHAR>{folded->first + folded->second}};
+  }
+  return Expr<CHAR>{std::move(x)};
+}
+
+template<typename T>
+Expr<LogicalResult> FoldRelational(
+    FoldingContext &context, Relational<T> &&relation) {
+  if (auto folded{FoldOperands(context, relation.left(), relation.right())}) {
+    bool result{};
+    if constexpr (T::category == TypeCategory::Integer) {
+      result =
+          Satisfies(relation.opr, folded->first.CompareSigned(folded->second));
+    } else if constexpr (T::category == TypeCategory::Real) {
+      result = Satisfies(relation.opr, folded->first.Compare(folded->second));
+    } else if constexpr (T::category == TypeCategory::Character) {
+      result = Satisfies(relation.opr, Compare(folded->first, folded->second));
+    } else {
+      static_assert(T::category != TypeCategory::Complex &&
+          T::category != TypeCategory::Logical);
+    }
+    return Expr<LogicalResult>{Constant<LogicalResult>{result}};
+  }
+  return Expr<LogicalResult>{Relational<SomeType>{std::move(relation)}};
+}
+
+template<>
+inline Expr<LogicalResult> Fold(
+    FoldingContext &context, Relational<SomeType> &&relation) {
+  return std::visit(
+      [&](auto &&x) {
+        return Expr<LogicalResult>{FoldRelational(context, std::move(x))};
+      },
+      std::move(relation.u));
+}
+
+template<int KIND>
+Expr<Type<TypeCategory::Logical, KIND>> Fold(
+    FoldingContext &context, LogicalOperation<KIND> &&x) {
+  using LOGICAL = Type<TypeCategory::Logical, KIND>;
+  if (auto folded{FoldOperands(context, x.left(), x.right())}) {
+    bool xt{folded->first.IsTrue()}, yt{folded->second.IsTrue()}, result{};
+    switch (x.logicalOperator) {
+    case LogicalOperator::And: result = xt && yt; break;
+    case LogicalOperator::Or: result = xt || yt; break;
+    case LogicalOperator::Eqv: result = xt == yt; break;
+    case LogicalOperator::Neqv: result = xt != yt; break;
+    }
+    return Expr<LOGICAL>{Constant<LOGICAL>{result}};
+  }
+  return Expr<LOGICAL>{std::move(x)};
+}
+
+template<typename A> Expr<A> Fold(FoldingContext &context, Expr<A> &&expr) {
+  static_assert(A::isSpecificIntrinsicType);
+  return std::visit(
+      [&](auto &&x) -> Expr<A> { return Fold(context, std::move(x)); },
+      std::move(expr.u));
+}
+
+template<TypeCategory CAT>
+Expr<SomeKind<CAT>> Fold(FoldingContext &context, Expr<SomeKind<CAT>> &&expr) {
+  return std::visit(
+      [&](auto &&x) -> Expr<SomeKind<CAT>> {
+        if constexpr (CAT == TypeCategory::Derived) {
+          return Fold(context, std::move(x));
+        } else {
+          return Expr<SomeKind<CAT>>{Fold(context, std::move(x))};
+        }
+      },
+      std::move(expr.u));
+}
+
+template<>
+inline Expr<SomeType> Fold(FoldingContext &context, Expr<SomeType> &&expr) {
+  return std::visit(
+      [&](auto &&x) -> Expr<SomeType> {
+        if constexpr (std::is_same_v<std::decay_t<decltype(x)>,
+                          BOZLiteralConstant>) {
+          return std::move(expr);
+        } else {
+          return Expr<SomeType>{Fold(context, std::move(x))};
+        }
+      },
+      std::move(expr.u));
 }
 
 }  // namespace Fortran::evaluate

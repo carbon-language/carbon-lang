@@ -16,12 +16,15 @@
 #define FORTRAN_EVALUATE_COMMON_H_
 
 #include "../common/enum-set.h"
+#include "../common/fortran.h"
 #include "../common/idioms.h"
 #include "../common/indirection.h"
 #include "../parser/message.h"
 #include <cinttypes>
 
 namespace Fortran::evaluate {
+
+using common::RelationalOperator;
 
 // Integers are always ordered; reals may not be.
 ENUM_CLASS(Ordering, Less, Equal, Greater)
@@ -64,6 +67,35 @@ static constexpr Relation Reverse(Relation relation) {
     return Relation::Less;
   } else {
     return relation;
+  }
+}
+
+static constexpr bool Satisfies(RelationalOperator op, Ordering order) {
+  switch (order) {
+  case Ordering::Less:
+    return op == RelationalOperator::LT || op == RelationalOperator::LE ||
+        op == RelationalOperator::NE;
+  case Ordering::Equal:
+    return op == RelationalOperator::LE || op == RelationalOperator::EQ ||
+        op == RelationalOperator::GE;
+  case Ordering::Greater:
+    return op == RelationalOperator::NE || op == RelationalOperator::GE ||
+        op == RelationalOperator::GT;
+  }
+}
+
+static constexpr bool Satisfies(RelationalOperator op, Relation relation) {
+  switch (relation) {
+  case Relation::Less:
+    return op == RelationalOperator::LT || op == RelationalOperator::LE ||
+        op == RelationalOperator::NE;
+  case Relation::Equal:
+    return op == RelationalOperator::LE || op == RelationalOperator::EQ ||
+        op == RelationalOperator::GE;
+  case Relation::Greater:
+    return op == RelationalOperator::NE || op == RelationalOperator::GE ||
+        op == RelationalOperator::GT;
+  case Relation::Unordered: return false;
   }
 }
 

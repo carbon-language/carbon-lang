@@ -529,9 +529,12 @@ FOR_EACH_CHARACTER_KIND(extern template class Expr)
 
 template<typename A>
 struct Relational : public Operation<Relational<A>, LogicalResult, A, A> {
+  using Result = LogicalResult;
   using Base = Operation<Relational, LogicalResult, A, A>;
-  using typename Base::Result;
   using Operand = typename Base::template Operand<0>;
+  static_assert(Operand::category == TypeCategory::Integer ||
+      Operand::category == TypeCategory::Real ||
+      Operand::category == TypeCategory::Character);
   CLASS_BOILERPLATE(Relational)
   Relational(
       RelationalOperator r, const Expr<Operand> &a, const Expr<Operand> &b)
@@ -570,8 +573,9 @@ FOR_EACH_CHARACTER_KIND(extern template struct Relational)
 extern template struct Relational<SomeType>;
 
 // Logical expressions of a kind bigger than LogicalResult
-// do not include Relational<> operations as possibilities
-// since their results are always LogicalResult (kind=1).
+// do not include Relational<> operations as possibilities,
+// since the results of Relationals are always LogicalResult
+// (kind=1).
 template<int KIND>
 class Expr<Type<TypeCategory::Logical, KIND>>
   : public ExpressionBase<Type<TypeCategory::Logical, KIND>> {
