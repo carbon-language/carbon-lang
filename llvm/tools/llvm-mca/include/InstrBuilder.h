@@ -65,8 +65,7 @@ public:
   InstrBuilder(const llvm::MCSubtargetInfo &sti, const llvm::MCInstrInfo &mcii,
                const llvm::MCRegisterInfo &mri,
                const llvm::MCInstrAnalysis &mcia)
-      : STI(sti), MCII(mcii), MRI(mri), MCIA(mcia),
-        ProcResourceMasks(STI.getSchedModel().getNumProcResourceKinds()) {
+      : STI(sti), MCII(mcii), MRI(mri), MCIA(mcia) {
     computeProcResourceMasks(STI.getSchedModel(), ProcResourceMasks);
   }
 

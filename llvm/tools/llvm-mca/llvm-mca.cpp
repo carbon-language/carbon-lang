@@ -519,7 +519,7 @@ int main(int argc, char **argv) {
       //  Create a pipeline, stages, and a printer.
       auto P = llvm::make_unique<mca::Pipeline>();
       P->appendStage(llvm::make_unique<mca::FetchStage>(IB, S));
-      P->appendStage(llvm::make_unique<mca::InstructionTables>(SM, IB));
+      P->appendStage(llvm::make_unique<mca::InstructionTables>(SM));
       mca::PipelinePrinter Printer(*P);
 
       // Create the views for this pipeline, execute, and emit a report.
