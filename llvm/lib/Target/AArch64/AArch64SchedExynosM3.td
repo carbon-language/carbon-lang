@@ -26,9 +26,6 @@ def ExynosM3Model : SchedMachineModel {
   let CompleteModel         =   1; // Use the default model otherwise.
 
   list<Predicate> UnsupportedFeatures = [HasSVE];
-
-  // FIXME: Remove when all errors have been fixed.
-  let FullInstRWOverlapCheck = 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -588,7 +585,7 @@ def : InstRW<[M3WriteSA,
 // ASIMD instructions.
 def : InstRW<[M3WriteNMSC3], (instregex "^[SU]ABAL?v")>;
 def : InstRW<[M3WriteNMSC1], (instregex "^[SU]ABDL?v")>;
-def : InstRW<[M3WriteNMSC1], (instregex "^(SQ)?(ABS|NEG)v")>;
+def : InstRW<[M3WriteNMSC1], (instregex "^((SQ)?ABS|SQNEG)v")>;
 def : InstRW<[M3WriteNALU1], (instregex "^(ADD|NEG|SUB)v")>;
 def : InstRW<[M3WriteNMSC3], (instregex "^[SU]?ADDL?Pv")>;
 def : InstRW<[M3WriteNMSC3], (instregex "^[SU]H(ADD|SUB)v")>;
@@ -597,7 +594,6 @@ def : InstRW<[M3WriteNMSC3], (instregex "^R?(ADD|SUB)HN2?v")>;
 def : InstRW<[M3WriteNMSC3], (instregex "^[SU]Q(ADD|SUB)v")>;
 def : InstRW<[M3WriteNMSC3], (instregex "^(SU|US)QADDv")>;
 def : InstRW<[M3WriteNMSC3], (instregex "^[SU]RHADDv")>;
-def : InstRW<[M3WriteNMSC3], (instregex "^[SU]?ADDL?Vv")>;
 def : InstRW<[M3WriteNMSC1], (instregex "^CM(EQ|GE|GT|HI|HS|LE|LT)v")>;
 def : InstRW<[M3WriteNALU1], (instregex "^CMTSTv")>;
 def : InstRW<[M3WriteNALU1], (instregex "^(AND|BIC|EOR|MVNI|NOT|ORN|ORR)v")>;
