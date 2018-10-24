@@ -1818,7 +1818,7 @@ static bool needsPtLoad(OutputSection *Sec) {
   // Don't allocate VA space for TLS NOBITS sections. The PT_TLS PHDR is
   // responsible for allocating space for them, not the PT_LOAD that
   // contains the TLS initialization image.
-  if (Sec->Flags & SHF_TLS && Sec->Type == SHT_NOBITS)
+  if ((Sec->Flags & SHF_TLS) && Sec->Type == SHT_NOBITS)
     return false;
   return true;
 }
