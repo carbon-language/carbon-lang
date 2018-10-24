@@ -262,9 +262,7 @@ public:
 protected:
   void PushScope();
   void PopScope();
-  void ClearScopes() {
-    implicitRules_.reset(nullptr);
-  }
+  void ClearScopes() { implicitRules_.reset(nullptr); }
 
 private:
   // implicit rules in effect for current scope
@@ -327,7 +325,7 @@ public:
   void PushScope(Scope &scope);
   void PopScope();
   void ClearScopes() {
-    PopScope();
+    PopScope();  // trigger ConvertToObjectEntity calls
     currScope_ = &context().globalScope();
     ImplicitRulesVisitor::ClearScopes();
   }
@@ -1516,9 +1514,7 @@ bool ModuleVisitor::Pre(const parser::Submodule &x) {
   MakeSymbol(name, symbol.get<ModuleDetails>());
   return true;
 }
-void ModuleVisitor::Post(const parser::Submodule &) {
-  ClearScopes();
-}
+void ModuleVisitor::Post(const parser::Submodule &) { ClearScopes(); }
 
 bool ModuleVisitor::Pre(const parser::Module &x) {
   // Make a symbol and push a scope for this module
