@@ -262,6 +262,9 @@ public:
 protected:
   void PushScope();
   void PopScope();
+  void ClearScopes() {
+    implicitRules_.reset(nullptr);
+  }
 
 private:
   // implicit rules in effect for current scope
@@ -323,6 +326,11 @@ public:
   void PushScope(Scope::Kind kind, Symbol *symbol);
   void PushScope(Scope &scope);
   void PopScope();
+  void ClearScopes() {
+    PopScope();
+    currScope_ = &context().globalScope();
+    ImplicitRulesVisitor::ClearScopes();
+  }
 
   Symbol *FindSymbol(const SourceName &name);
   void EraseSymbol(const SourceName &name);
@@ -1509,8 +1517,7 @@ bool ModuleVisitor::Pre(const parser::Submodule &x) {
   return true;
 }
 void ModuleVisitor::Post(const parser::Submodule &) {
-  PopScope();  // submodule's scope
-  PopScope();  // parent's scope
+  ClearScopes();
 }
 
 bool ModuleVisitor::Pre(const parser::Module &x) {
