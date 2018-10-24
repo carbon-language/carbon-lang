@@ -66,6 +66,7 @@ def M1UnitNALU : ProcResGroup<[M1UnitNAL0,
 
 def M1BranchLinkPred : SchedPredicate<[{MI->getOpcode() == AArch64::BLR &&
                                         MI->getOperand(0).getReg() != AArch64::LR}]>;
+def M1LdStExtPred    : SchedPredicate<[{TII->isExynosLdStExtFast(*MI)}]>;
 def M1ShiftExtPred   : SchedPredicate<[{TII->isExynosShiftExtFast(*MI)}]>;
 
 //===----------------------------------------------------------------------===//
@@ -110,10 +111,10 @@ def M1WriteLD : SchedWriteRes<[M1UnitL,
                                            let ResourceCycles = [2, 1]; }
 def M1WriteLH : SchedWriteRes<[]>        { let Latency = 5;
                                            let NumMicroOps = 0; }
-def M1WriteLX : SchedWriteVariant<[SchedVar<M1ShiftExtPred, [M1WriteL5]>,
-                                   SchedVar<NoSchedPred,    [M1WriteLC]>]>;
-def M1WriteLY : SchedWriteVariant<[SchedVar<M1ShiftExtPred, [M1WriteL5]>,
-                                   SchedVar<NoSchedPred,    [M1WriteLD]>]>;
+def M1WriteLX : SchedWriteVariant<[SchedVar<M1LdStExtPred, [M1WriteL5]>,
+                                   SchedVar<NoSchedPred,   [M1WriteLC]>]>;
+def M1WriteLY : SchedWriteVariant<[SchedVar<M1LdStExtPred, [M1WriteL5]>,
+                                   SchedVar<NoSchedPred,   [M1WriteLD]>]>;
 
 def M1WriteS1 : SchedWriteRes<[M1UnitS]>   { let Latency = 1; }
 def M1WriteS3 : SchedWriteRes<[M1UnitS]>   { let Latency = 3; }
@@ -140,10 +141,10 @@ def M1WriteSD : SchedWriteRes<[M1UnitS,
 def M1WriteSE : SchedWriteRes<[M1UnitS,
                                M1UnitA]>   { let Latency = 2;
                                              let NumMicroOps = 2; }
-def M1WriteSX : SchedWriteVariant<[SchedVar<M1ShiftExtPred, [M1WriteS1]>,
-                                   SchedVar<NoSchedPred,    [M1WriteSE]>]>;
-def M1WriteSY : SchedWriteVariant<[SchedVar<M1ShiftExtPred, [M1WriteS1]>,
-                                   SchedVar<NoSchedPred,    [M1WriteSB]>]>;
+def M1WriteSX : SchedWriteVariant<[SchedVar<M1LdStExtPred, [M1WriteS1]>,
+                                   SchedVar<NoSchedPred,   [M1WriteSE]>]>;
+def M1WriteSY : SchedWriteVariant<[SchedVar<M1LdStExtPred, [M1WriteS1]>,
+                                   SchedVar<NoSchedPred,   [M1WriteSB]>]>;
 
 def M1ReadAdrBase : SchedReadVariant<[SchedVar<ScaledIdxPred, [ReadDefault]>,
                                       SchedVar<NoSchedPred,   [ReadDefault]>]>;

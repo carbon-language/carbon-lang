@@ -114,6 +114,7 @@ def M3RotatePred     : SchedPredicate<[{(MI->getOpcode() == AArch64::EXTRWrri ||
                                          MI->getOpcode() == AArch64::EXTRXrri) &&
                                         MI->getOperand(1).isReg() && MI->getOperand(2).isReg() &&
                                         MI->getOperand(1).getReg() == MI->getOperand(2).getReg()}]>;
+def M3LdStExtPred    : SchedPredicate<[{TII->isExynosLdStExtFast(*MI)}]>;
 def M3ShiftExtPred   : SchedPredicate<[{TII->isExynosShiftExtFast(*MI)}]>;
 
 //===----------------------------------------------------------------------===//
@@ -165,8 +166,8 @@ def M3WriteLD : SchedWriteRes<[M3UnitA,
 def M3WriteLH : SchedWriteRes<[]>        { let Latency = 5;
                                            let NumMicroOps = 0; }
 
-def M3WriteLX : SchedWriteVariant<[SchedVar<M3ShiftExtPred, [M3WriteL5]>,
-                                   SchedVar<NoSchedPred,    [M3WriteLB]>]>;
+def M3WriteLX : SchedWriteVariant<[SchedVar<M3LdStExtPred, [M3WriteL5]>,
+                                   SchedVar<NoSchedPred,   [M3WriteLB]>]>;
 
 def M3WriteS1 : SchedWriteRes<[M3UnitS]>   { let Latency = 1; }
 def M3WriteSA : SchedWriteRes<[M3UnitA,
@@ -180,10 +181,10 @@ def M3WriteSC : SchedWriteRes<[M3UnitA,
                                M3UnitS]>   { let Latency = 2;
                                              let NumMicroOps = 2; }
 
-def M3WriteSX : SchedWriteVariant<[SchedVar<M3ShiftExtPred, [M3WriteS1]>,
-                                   SchedVar<NoSchedPred,    [M3WriteSB]>]>;
-def M3WriteSY : SchedWriteVariant<[SchedVar<M3ShiftExtPred, [M3WriteS1]>,
-                                   SchedVar<NoSchedPred,    [M3WriteSC]>]>;
+def M3WriteSX : SchedWriteVariant<[SchedVar<M3LdStExtPred, [M3WriteS1]>,
+                                   SchedVar<NoSchedPred,   [M3WriteSB]>]>;
+def M3WriteSY : SchedWriteVariant<[SchedVar<M3LdStExtPred, [M3WriteS1]>,
+                                   SchedVar<NoSchedPred,   [M3WriteSC]>]>;
 
 def M3ReadAdrBase : SchedReadVariant<[SchedVar<ScaledIdxPred, [ReadDefault]>,
                                       SchedVar<NoSchedPred,   [ReadDefault]>]>;
