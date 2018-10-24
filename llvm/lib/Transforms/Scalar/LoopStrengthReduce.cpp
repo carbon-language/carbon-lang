@@ -3638,60 +3638,32 @@ void LSRInstance::GenerateReassociations(LSRUse &LU, unsigned LUIdx,
 void LSRInstance::GenerateCombinations(LSRUse &LU, unsigned LUIdx,
                                        Formula Base) {
   // This method is only interesting on a plurality of registers.
-  if (Base.BaseRegs.size() + (Base.Scale == 1) +
-      (Base.UnfoldedOffset != 0) <= 1)
+  if (Base.BaseRegs.size() + (Base.Scale == 1) <= 1)
     return;
 
   // Flatten the representation, i.e., reg1 + 1*reg2 => reg1 + reg2, before
   // processing the formula.
   Base.unscale();
+  Formula F = Base;
+  F.BaseRegs.clear();
   SmallVector<const SCEV *, 4> Ops;
-  Formula NewBase = Base;
-  NewBase.BaseRegs.clear();
-  Type *CombinedIntegerType = nullptr;
   for (const SCEV *BaseReg : Base.BaseRegs) {
     if (SE.properlyDominates(BaseReg, L->getHeader()) &&
-        !SE.hasComputableLoopEvolution(BaseReg, L)) {
-      if (!CombinedIntegerType)
-        CombinedIntegerType = SE.getEffectiveSCEVType(BaseReg->getType());
+        !SE.hasComputableLoopEvolution(BaseReg, L))
       Ops.push_back(BaseReg);
-    }
     else
-      NewBase.BaseRegs.push_back(BaseReg);
+      F.BaseRegs.push_back(BaseReg);
   }
-
-  // If no register is relevant, we're done.
-  if (Ops.size() == 0)
-    return;
-
-  // Utility function for generating the required variants of the combined
-  // registers.
-  auto GenerateFormula = [&](const SCEV *Sum) {
-    Formula F = NewBase;
-
+  if (Ops.size() > 1) {
+    const SCEV *Sum = SE.getAddExpr(Ops);
     // TODO: If Sum is zero, it probably means ScalarEvolution missed an
     // opportunity to fold something. For now, just ignore such cases
     // rather than proceed with zero in a register.
-    if (Sum->isZero())
-      return;
-
-    F.BaseRegs.push_back(Sum);
-    F.canonicalize(*L);
-    (void)InsertFormula(LU, LUIdx, F);
-  };
-
-  // If we collected at least two registers, generate a formula combining them.
-  if (Ops.size() > 1)
-    GenerateFormula(SE.getAddExpr(Ops));
-
-  // If we have an unfolded offset, generate a formula combining it with the
-  // registers collected.
-  if (NewBase.UnfoldedOffset) {
-    assert(CombinedIntegerType && "Missing a type for the unfolded offset");
-    Ops.push_back(SE.getConstant(CombinedIntegerType, NewBase.UnfoldedOffset,
-                                 true));
-    NewBase.UnfoldedOffset = 0;
-    GenerateFormula(SE.getAddExpr(Ops));
+    if (!Sum->isZero()) {
+      F.BaseRegs.push_back(Sum);
+      F.canonicalize(*L);
+      (void)InsertFormula(LU, LUIdx, F);
+    }
   }
 }
 
