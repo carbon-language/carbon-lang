@@ -465,6 +465,7 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   std::string ancestorName;  // empty for module
   if (ancestor) {
     if (auto *scope{ancestor->FindSubmodule(name)}) {
+      scope->symbol()->add_occurrence(name);
       return scope;
     }
     ancestorName = ancestor->name().ToString();
