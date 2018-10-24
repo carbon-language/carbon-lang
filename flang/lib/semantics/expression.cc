@@ -111,7 +111,7 @@ struct CallAndArguments {
 // member function that converts parse trees into (usually) generic
 // expressions.
 struct ExprAnalyzer {
-  ExprAnalyzer(semantics::SemanticsContext &context) : context{context} {}
+  explicit ExprAnalyzer(semantics::SemanticsContext &ctx) : context{ctx} {}
 
   MaybeExpr Analyze(const parser::Expr &);
   MaybeExpr Analyze(const parser::CharLiteralConstantSubstring &);
@@ -832,8 +832,8 @@ std::optional<CallAndArguments> ExprAnalyzer::Procedure(
                       } else {
                         CallCharacteristics cc{n.source};
                         if (std::optional<SpecificCall> specificCall{
-                                intrinsics.Probe(
-                                    cc, arguments, &context.messages)}) {
+                                context.intrinsics().Probe(cc, arguments,
+                                    &context.foldingContext().messages)}) {
                           return {CallAndArguments{
                               ProcedureDesignator{
                                   std::move(specificCall->specificIntrinsic)},
