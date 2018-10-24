@@ -371,8 +371,8 @@ namespace {
     SDValue visitFFLOOR(SDNode *N);
     SDValue visitFMINNUM(SDNode *N);
     SDValue visitFMAXNUM(SDNode *N);
-    SDValue visitFMINNAN(SDNode *N);
-    SDValue visitFMAXNAN(SDNode *N);
+    SDValue visitFMINIMUM(SDNode *N);
+    SDValue visitFMAXIMUM(SDNode *N);
     SDValue visitBRCOND(SDNode *N);
     SDValue visitBR_CC(SDNode *N);
     SDValue visitLOAD(SDNode *N);
@@ -1584,8 +1584,8 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::FFLOOR:             return visitFFLOOR(N);
   case ISD::FMINNUM:            return visitFMINNUM(N);
   case ISD::FMAXNUM:            return visitFMAXNUM(N);
-  case ISD::FMINNAN:            return visitFMINNAN(N);
-  case ISD::FMAXNAN:            return visitFMAXNAN(N);
+  case ISD::FMINIMUM:           return visitFMINIMUM(N);
+  case ISD::FMAXIMUM:           return visitFMAXIMUM(N);
   case ISD::FCEIL:              return visitFCEIL(N);
   case ISD::FTRUNC:             return visitFTRUNC(N);
   case ISD::BRCOND:             return visitBRCOND(N);
@@ -12158,11 +12158,11 @@ SDValue DAGCombiner::visitFMAXNUM(SDNode *N) {
   return visitFMinMax(DAG, N, maxnum);
 }
 
-SDValue DAGCombiner::visitFMINNAN(SDNode *N) {
+SDValue DAGCombiner::visitFMINIMUM(SDNode *N) {
   return visitFMinMax(DAG, N, minimum);
 }
 
-SDValue DAGCombiner::visitFMAXNAN(SDNode *N) {
+SDValue DAGCombiner::visitFMAXIMUM(SDNode *N) {
   return visitFMinMax(DAG, N, maximum);
 }
 

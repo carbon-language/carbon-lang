@@ -757,10 +757,10 @@ multiclass SIMDBinaryFP<SDNode node, string name, bits<32> baseInst> {
 }
 
 // NaN-propagating minimum: min
-defm MIN : SIMDBinaryFP<fminnan, "min", 129>;
+defm MIN : SIMDBinaryFP<fminimum, "min", 129>;
 
 // NaN-propagating maximum: max
-defm MAX : SIMDBinaryFP<fmaxnan, "max", 131>;
+defm MAX : SIMDBinaryFP<fmaximum, "max", 131>;
 
 //===----------------------------------------------------------------------===//
 // Floating-point arithmetic

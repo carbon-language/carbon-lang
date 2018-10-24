@@ -105,9 +105,9 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     for (auto Op :
          {ISD::FCEIL, ISD::FFLOOR, ISD::FTRUNC, ISD::FNEARBYINT, ISD::FRINT})
       setOperationAction(Op, T, Legal);
-    // Support minnan and maxnan, which otherwise default to expand.
-    setOperationAction(ISD::FMINNAN, T, Legal);
-    setOperationAction(ISD::FMAXNAN, T, Legal);
+    // Support minimum and maximum, which otherwise default to expand.
+    setOperationAction(ISD::FMINIMUM, T, Legal);
+    setOperationAction(ISD::FMAXIMUM, T, Legal);
     // WebAssembly currently has no builtin f16 support.
     setOperationAction(ISD::FP16_TO_FP, T, Expand);
     setOperationAction(ISD::FP_TO_FP16, T, Expand);
