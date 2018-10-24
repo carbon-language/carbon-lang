@@ -1675,9 +1675,9 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // particularly relevant.
   Out::ElfHeader->SectionIndex = 1;
 
-  unsigned I = 1;
-  for (OutputSection *Sec : OutputSections) {
-    Sec->SectionIndex = I++;
+  for (size_t I = 0, E = OutputSections.size(); I != E; ++I) {
+    OutputSection *Sec = OutputSections[I];
+    Sec->SectionIndex = I + 1;
     Sec->ShName = In.ShStrTab->addString(Sec->Name);
   }
 
