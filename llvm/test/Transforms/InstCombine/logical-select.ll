@@ -535,12 +535,9 @@ define <4 x i32> @vec_sel_xor_multi_use(<4 x i32> %a, <4 x i32> %b, <4 x i1> %c)
 
 define i32 @allSignBits(i32 %cond, i32 %tval, i32 %fval) {
 ; CHECK-LABEL: @allSignBits(
-; CHECK-NEXT:    [[BITMASK:%.*]] = ashr i32 [[COND:%.*]], 31
-; CHECK-NEXT:    [[NOT_BITMASK:%.*]] = xor i32 [[BITMASK]], -1
-; CHECK-NEXT:    [[A1:%.*]] = and i32 [[BITMASK]], [[TVAL:%.*]]
-; CHECK-NEXT:    [[A2:%.*]] = and i32 [[NOT_BITMASK]], [[FVAL:%.*]]
-; CHECK-NEXT:    [[SEL:%.*]] = or i32 [[A1]], [[A2]]
-; CHECK-NEXT:    ret i32 [[SEL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp slt i32 [[COND:%.*]], 0
+; CHECK-NEXT:    [[TMP2:%.*]] = select i1 [[TMP1]], i32 [[TVAL:%.*]], i32 [[FVAL:%.*]]
+; CHECK-NEXT:    ret i32 [[TMP2]]
 ;
   %bitmask = ashr i32 %cond, 31
   %not_bitmask = xor i32 %bitmask, -1
@@ -552,12 +549,9 @@ define i32 @allSignBits(i32 %cond, i32 %tval, i32 %fval) {
 
 define <4 x i8> @allSignBits_vec(<4 x i8> %cond, <4 x i8> %tval, <4 x i8> %fval) {
 ; CHECK-LABEL: @allSignBits_vec(
-; CHECK-NEXT:    [[BITMASK:%.*]] = ashr <4 x i8> [[COND:%.*]], <i8 7, i8 7, i8 7, i8 7>
-; CHECK-NEXT:    [[NOT_BITMASK:%.*]] = xor <4 x i8> [[BITMASK]], <i8 -1, i8 -1, i8 -1, i8 -1>
-; CHECK-NEXT:    [[A1:%.*]] = and <4 x i8> [[BITMASK]], [[TVAL:%.*]]
-; CHECK-NEXT:    [[A2:%.*]] = and <4 x i8> [[NOT_BITMASK]], [[FVAL:%.*]]
-; CHECK-NEXT:    [[SEL:%.*]] = or <4 x i8> [[A2]], [[A1]]
-; CHECK-NEXT:    ret <4 x i8> [[SEL]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt <4 x i8> [[COND:%.*]], <i8 -1, i8 -1, i8 -1, i8 -1>
+; CHECK-NEXT:    [[TMP2:%.*]] = select <4 x i1> [[TMP1]], <4 x i8> [[FVAL:%.*]], <4 x i8> [[TVAL:%.*]]
+; CHECK-NEXT:    ret <4 x i8> [[TMP2]]
 ;
   %bitmask = ashr <4 x i8> %cond, <i8 7, i8 7, i8 7, i8 7>
   %not_bitmask = xor <4 x i8> %bitmask, <i8 -1, i8 -1, i8 -1, i8 -1>
@@ -565,5 +559,28 @@ define <4 x i8> @allSignBits_vec(<4 x i8> %cond, <4 x i8> %tval, <4 x i8> %fval)
   %a2 = and <4 x i8> %fval, %not_bitmask
   %sel = or <4 x i8> %a2, %a1
   ret <4 x i8> %sel
+}
+
+; Negative test - make sure that bitcasts from FP do not cause a crash.
+
+define <2 x i64> @fp_bitcast(<4 x i1> %cmp, <2 x double> %a, <2 x double> %b) {
+; CHECK-LABEL: @fp_bitcast(
+; CHECK-NEXT:    [[SIA:%.*]] = fptosi <2 x double> [[A:%.*]] to <2 x i64>
+; CHECK-NEXT:    [[SIB:%.*]] = fptosi <2 x double> [[B:%.*]] to <2 x i64>
+; CHECK-NEXT:    [[BC1:%.*]] = bitcast <2 x double> [[A]] to <2 x i64>
+; CHECK-NEXT:    [[AND1:%.*]] = and <2 x i64> [[SIA]], [[BC1]]
+; CHECK-NEXT:    [[BC2:%.*]] = bitcast <2 x double> [[B]] to <2 x i64>
+; CHECK-NEXT:    [[AND2:%.*]] = and <2 x i64> [[SIB]], [[BC2]]
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i64> [[AND2]], [[AND1]]
+; CHECK-NEXT:    ret <2 x i64> [[OR]]
+;
+  %sia = fptosi <2 x double> %a to <2 x i64>
+  %sib = fptosi <2 x double> %b to <2 x i64>
+  %bc1 = bitcast <2 x double> %a to <2 x i64>
+  %and1 = and <2 x i64> %sia, %bc1
+  %bc2 = bitcast <2 x double> %b to <2 x i64>
+  %and2 = and <2 x i64> %sib, %bc2
+  %or = or <2 x i64> %and2, %and1
+  ret <2 x i64> %or
 }
 
