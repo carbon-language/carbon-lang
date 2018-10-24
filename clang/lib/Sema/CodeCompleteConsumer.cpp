@@ -548,13 +548,18 @@ PrintingCodeCompleteConsumer::ProcessCodeCompleteResults(Sema &SemaRef,
     switch (Results[I].Kind) {
     case CodeCompletionResult::RK_Declaration:
       OS << *Results[I].Declaration;
-      if (Results[I].Hidden)
-        OS << " (Hidden)";
-      if (CodeCompletionString *CCS
-            = Results[I].CreateCodeCompletionString(SemaRef, Context,
-                                                    getAllocator(),
-                                                    CCTUInfo,
-                                                    includeBriefComments())) {
+      {
+        std::vector<std::string> Tags;
+        if (Results[I].Hidden)
+          Tags.push_back("Hidden");
+        if (Results[I].InBaseClass)
+          Tags.push_back("InBase");
+        if (!Tags.empty())
+          OS << " (" << llvm::join(Tags, ",") << ")";
+      }
+      if (CodeCompletionString *CCS = Results[I].CreateCodeCompletionString(
+              SemaRef, Context, getAllocator(), CCTUInfo,
+              includeBriefComments())) {
         OS << " : " << CCS->getAsString();
         if (const char *BriefComment = CCS->getBriefComment())
           OS << " : " << BriefComment;

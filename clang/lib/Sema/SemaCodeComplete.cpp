@@ -970,6 +970,11 @@ void ResultBuilder::MaybeAddResult(Result R, DeclContext *CurContext) {
     MaybeAddConstructorResults(R);
 }
 
+static void setInBaseClass(ResultBuilder::Result &R) {
+  R.Priority += CCD_InBaseClass;
+  R.InBaseClass = true;
+}
+
 void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
                               NamedDecl *Hiding, bool InBaseClass = false) {
   if (R.Kind != Result::RK_Declaration) {
@@ -1030,7 +1035,7 @@ void ResultBuilder::AddResult(Result R, DeclContext *CurContext,
 
   // Adjust the priority if this result comes from a base class.
   if (InBaseClass)
-    R.Priority += CCD_InBaseClass;
+    setInBaseClass(R);
 
   AdjustResultPriorityForDecl(R);
 
@@ -5659,7 +5664,7 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
       R.StartParameter = SelIdents.size();
       R.AllParametersAreInformative = (WantKind != MK_Any);
       if (!InOriginalClass)
-        R.Priority += CCD_InBaseClass;
+        setInBaseClass(R);
       Results.MaybeAddResult(R, CurContext);
     }
   }
@@ -7763,10 +7768,10 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S, Optional<bool> IsInstanceMethod,
     }
 
     unsigned Priority = CCP_CodePattern;
+    auto R = Result(Builder.TakeString(), Method, Priority);
     if (!M->second.getInt())
-      Priority += CCD_InBaseClass;
-
-    Results.AddResult(Result(Builder.TakeString(), Method, Priority));
+      setInBaseClass(R);
+    Results.AddResult(std::move(R));
   }
 
   // Add Key-Value-Coding and Key-Value-Observing accessor methods for all of
