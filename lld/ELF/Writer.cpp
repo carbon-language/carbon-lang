@@ -673,6 +673,11 @@ static bool isRelroSection(const OutputSection *Sec) {
   if (In.Got && Sec == In.Got->getParent())
     return true;
 
+  // .toc is a GOT-ish section for PowerPC64. Their contents are accessed
+  // through r2 register, which is reserved for that purpose. Since r2 is used
+  // for accessing .got as well, .got and .toc need to be close enough in the
+  // virtual address space. Usually, .toc comes just after .got. Since we place
+  // .got into RELRO, .toc needs to be placed into RELRO too.
   if (Sec->Name.equals(".toc"))
     return true;
 
