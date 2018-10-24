@@ -584,3 +584,38 @@ define <2 x i64> @fp_bitcast(<4 x i1> %cmp, <2 x double> %a, <2 x double> %b) {
   ret <2 x i64> %or
 }
 
+define <4 x i32> @computesignbits_through_shuffles(<4 x float> %x, <4 x float> %y, <4 x float> %z) {
+; CHECK-LABEL: @computesignbits_through_shuffles(
+; CHECK-NEXT:    [[CMP:%.*]] = fcmp ole <4 x float> [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    [[SEXT:%.*]] = sext <4 x i1> [[CMP]] to <4 x i32>
+; CHECK-NEXT:    [[S1:%.*]] = shufflevector <4 x i32> [[SEXT]], <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+; CHECK-NEXT:    [[S2:%.*]] = shufflevector <4 x i32> [[SEXT]], <4 x i32> undef, <4 x i32> <i32 2, i32 2, i32 3, i32 3>
+; CHECK-NEXT:    [[SHUF_OR1:%.*]] = or <4 x i32> [[S1]], [[S2]]
+; CHECK-NEXT:    [[S3:%.*]] = shufflevector <4 x i32> [[SHUF_OR1]], <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+; CHECK-NEXT:    [[S4:%.*]] = shufflevector <4 x i32> [[SHUF_OR1]], <4 x i32> undef, <4 x i32> <i32 2, i32 2, i32 3, i32 3>
+; CHECK-NEXT:    [[SHUF_OR2:%.*]] = or <4 x i32> [[S3]], [[S4]]
+; CHECK-NEXT:    [[NOT_OR2:%.*]] = xor <4 x i32> [[SHUF_OR2]], <i32 -1, i32 -1, i32 -1, i32 -1>
+; CHECK-NEXT:    [[XBC:%.*]] = bitcast <4 x float> [[X]] to <4 x i32>
+; CHECK-NEXT:    [[ZBC:%.*]] = bitcast <4 x float> [[Z:%.*]] to <4 x i32>
+; CHECK-NEXT:    [[AND1:%.*]] = and <4 x i32> [[NOT_OR2]], [[XBC]]
+; CHECK-NEXT:    [[AND2:%.*]] = and <4 x i32> [[SHUF_OR2]], [[ZBC]]
+; CHECK-NEXT:    [[SEL:%.*]] = or <4 x i32> [[AND1]], [[AND2]]
+; CHECK-NEXT:    ret <4 x i32> [[SEL]]
+;
+  %cmp = fcmp ole <4 x float> %x, %y
+  %sext = sext <4 x i1> %cmp to <4 x i32>
+  %s1 = shufflevector <4 x i32> %sext, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+  %s2 = shufflevector <4 x i32> %sext, <4 x i32> undef, <4 x i32> <i32 2, i32 2, i32 3, i32 3>
+  %shuf_or1 = or <4 x i32> %s1, %s2
+  %s3 = shufflevector <4 x i32> %shuf_or1, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 1, i32 1>
+  %s4 = shufflevector <4 x i32> %shuf_or1, <4 x i32> undef, <4 x i32> <i32 2, i32 2, i32 3, i32 3>
+  %shuf_or2 = or <4 x i32> %s3, %s4
+  %not_or2 = xor <4 x i32> %shuf_or2, <i32 -1, i32 -1, i32 -1, i32 -1>
+  %xbc = bitcast <4 x float> %x to <4 x i32>
+  %zbc = bitcast <4 x float> %z to <4 x i32>
+  %and1 = and <4 x i32> %not_or2, %xbc
+  %and2 = and <4 x i32> %shuf_or2, %zbc
+  %sel = or <4 x i32> %and1, %and2
+  ret <4 x i32> %sel
+}
+
