@@ -3753,11 +3753,14 @@ void Sema::CodeCompleteDeclSpec(Scope *S, DeclSpec &DS,
                                 bool AllowNonIdentifiers,
                                 bool AllowNestedNameSpecifiers) {
   typedef CodeCompletionResult Result;
-  ResultBuilder Results(*this, CodeCompleter->getAllocator(),
-                        CodeCompleter->getCodeCompletionTUInfo(),
-                        AllowNestedNameSpecifiers
-                          ? CodeCompletionContext::CCC_PotentiallyQualifiedName
-                          : CodeCompletionContext::CCC_Name);
+  ResultBuilder Results(
+      *this, CodeCompleter->getAllocator(),
+      CodeCompleter->getCodeCompletionTUInfo(),
+      AllowNestedNameSpecifiers
+          // FIXME: Try to separate codepath leading here to deduce whether we
+          // need an existing symbol or a new one.
+          ? CodeCompletionContext::CCC_SymbolOrNewName
+          : CodeCompletionContext::CCC_NewName);
   Results.EnterNewScope();
 
   // Type qualifiers can come after names.
@@ -4841,7 +4844,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
   // it can be useful for global code completion which have information about
   // contexts/symbols that are not in the AST.
   if (SS.isInvalid()) {
-    CodeCompletionContext CC(CodeCompletionContext::CCC_Name);
+    CodeCompletionContext CC(CodeCompletionContext::CCC_Symbol);
     CC.setCXXScopeSpecifier(SS);
     HandleCodeCompleteResults(this, CodeCompleter, CC, nullptr, 0);
     return;
@@ -4859,7 +4862,7 @@ void Sema::CodeCompleteQualifiedId(Scope *S, CXXScopeSpec &SS,
 
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompleter->getCodeCompletionTUInfo(),
-                        CodeCompletionContext::CCC_Name);
+                        CodeCompletionContext::CCC_Symbol);
   Results.EnterNewScope();
 
   // The "template" keyword can follow "::" in the grammar, but only
@@ -4899,7 +4902,10 @@ void Sema::CodeCompleteUsing(Scope *S) {
 
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompleter->getCodeCompletionTUInfo(),
-                        CodeCompletionContext::CCC_PotentiallyQualifiedName,
+                        // This can be both a using alias or using
+                        // declaration, in the former we expect a new name and a
+                        // symbol in the latter case.
+                        CodeCompletionContext::CCC_SymbolOrNewName,
                         &ResultBuilder::IsNestedNameSpecifier);
   Results.EnterNewScope();
 
@@ -5051,7 +5057,7 @@ void Sema::CodeCompleteConstructorInitializer(
 
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompleter->getCodeCompletionTUInfo(),
-                        CodeCompletionContext::CCC_PotentiallyQualifiedName);
+                        CodeCompletionContext::CCC_Symbol);
   Results.EnterNewScope();
 
   // Fill in any already-initialized fields or base classes.

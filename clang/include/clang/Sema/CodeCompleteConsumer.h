@@ -272,11 +272,15 @@ public:
     CCC_Type,
 
     /// Code completion occurred where a new name is expected.
-    CCC_Name,
+    CCC_NewName,
 
-    /// Code completion occurred where a new name is expected and a
-    /// qualified name is permissible.
-    CCC_PotentiallyQualifiedName,
+    /// Code completion occurred where both a new name and an existing symbol is
+    /// permissible.
+    CCC_SymbolOrNewName,
+
+    /// Code completion occurred where an existing name(such as type, function
+    /// or variable) is expected.
+    CCC_Symbol,
 
     /// Code completion occurred where an macro is being defined.
     CCC_MacroName,
