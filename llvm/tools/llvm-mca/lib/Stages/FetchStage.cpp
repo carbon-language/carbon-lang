@@ -17,19 +17,16 @@
 
 namespace mca {
 
-bool FetchStage::hasWorkToComplete() const {
-  return CurrentInstruction.isValid();
-}
+bool FetchStage::hasWorkToComplete() const { return CurrentInstruction; }
 
 bool FetchStage::isAvailable(const InstRef & /* unused */) const {
-  if (CurrentInstruction.isValid())
+  if (CurrentInstruction)
     return checkNextStage(CurrentInstruction);
   return false;
 }
 
 llvm::Error FetchStage::getNextInstruction() {
-  assert(!CurrentInstruction.isValid() &&
-         "There is already an instruction to process!");
+  assert(!CurrentInstruction && "There is already an instruction to process!");
   if (!SM.hasNext())
     return llvm::ErrorSuccess();
   const SourceRef SR = SM.peekNext();
@@ -45,7 +42,7 @@ llvm::Error FetchStage::getNextInstruction() {
 }
 
 llvm::Error FetchStage::execute(InstRef & /*unused */) {
-  assert(CurrentInstruction.isValid() && "There is no instruction to process!");
+  assert(CurrentInstruction && "There is no instruction to process!");
   if (llvm::Error Val = moveToTheNextStage(CurrentInstruction))
     return Val;
 
@@ -55,7 +52,7 @@ llvm::Error FetchStage::execute(InstRef & /*unused */) {
 }
 
 llvm::Error FetchStage::cycleStart() {
-  if (!CurrentInstruction.isValid())
+  if (!CurrentInstruction)
     return getNextInstruction();
   return llvm::ErrorSuccess();
 }
