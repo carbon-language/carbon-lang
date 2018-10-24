@@ -55,7 +55,7 @@ bool Semantics::Perform() {
   if (AnyFatalError()) {
     return false;
   }
-  CheckDoConcurrentConstraints(messages_, program);
+  CheckDoConcurrentConstraints(context_.messages(), program_);
   if (AnyFatalError()) {
     return false;
   }

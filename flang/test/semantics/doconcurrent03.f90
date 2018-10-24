@@ -14,7 +14,8 @@
 
 ! RUN: ${F18} -funparse-with-symbols %s 2>&1 | ${FileCheck} %s
 ! CHECK: control flow escapes from DO CONCURRENT
-! CHECK: branch into .* from another scope
+! CHECK: branch into loop body from outside
+! CHECK: the loop branched into
 
 subroutine s(a)
   integer i

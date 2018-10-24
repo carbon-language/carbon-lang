@@ -100,7 +100,7 @@ public:
   void Post(const parser::ProcedureDesignator &procedureDesignator) {
     if (auto *name{std::get_if<parser::Name>(&procedureDesignator.u)}) {
       // C1137: call move_alloc with coarray arguments
-      if (name->ToString() == "move_alloc"s) {
+      if (name->source == "move_alloc") {
         if (anyObjectIsCoarray()) {
           messages_.Say(currentStatementSourcePosition_,
               "call to MOVE_ALLOC intrinsic in DO CONCURRENT with coarray"
@@ -113,13 +113,13 @@ public:
             "call to impure subroutine in DO CONCURRENT not allowed"_err_en_US);
       }
       if (name->symbol && fromScope(*name->symbol, "ieee_exceptions"s)) {
-        if (name->ToString() == "ieee_get_flag"s) {
+        if (name->source == "ieee_get_flag") {
           messages_.Say(currentStatementSourcePosition_,
               "IEEE_GET_FLAG not allowed in DO CONCURRENT"_err_en_US);
-        } else if (name->ToString() == "ieee_set_halting_mode"s) {
+        } else if (name->source == "ieee_set_halting_mode") {
           messages_.Say(currentStatementSourcePosition_,
               "IEEE_SET_HALTING_MODE not allowed in DO CONCURRENT"_err_en_US);
-        } else if (name->ToString() == "ieee_get_halting_mode"s) {
+        } else if (name->source == "ieee_get_halting_mode") {
           messages_.Say(currentStatementSourcePosition_,
               "IEEE_GET_HALTING_MODE not allowed in DO CONCURRENT"_err_en_US);
         }
@@ -355,7 +355,7 @@ private:
   }
   bool InnermostEnclosingScope(const semantics::Symbol &symbol) const {
     // TODO - implement
-    return false;
+    return true;
   }
   void CheckZeroOrOneDefaultNone(
       const std::list<parser::LocalitySpec> &localitySpecs) const {
@@ -414,8 +414,16 @@ private:
   }
   void CheckNoDuplicates(const CS &symbols) const {
     // C1126
-    CheckNoCollisions(symbols, symbols,
-        "name appears more than once in concurrent-locality"_err_en_US);
+    auto endIter{symbols.end()};
+    for (auto iter1{symbols.begin()}; iter1 != endIter; ++iter1) {
+      for (auto iter2{iter1}; iter2 != endIter;) {
+        ++iter2;
+        if (iter2 != endIter && *iter1 == *iter2) {
+          messages_.Say(currentStatementSourcePosition_,
+              "name appears more than once in concurrent-locality"_err_en_US);
+        }
+      }
+    }
   }
   void CheckMaskDoesNotReferenceLocal(
       const parser::ScalarLogicalExpr &mask, const CS &symbols) const {
