@@ -66,11 +66,11 @@ void SourceFile::IdentifyPayload() {
   content_ = address_;
   bytes_ = size_;
   if (content_ != nullptr) {
-    if (bytes_ >= 3 && content_[0] == 0xef && content_[1] == 0xbb &&
-        content_[2] == 0xbf) {
-      // UTF-8 encoding of Unicode byte order mark (BOM)
-      content_ += 3;
-      bytes_ -= 3;
+    static const char UTF8_BOM[]{"\xef\xbb\xbf"};
+    if (bytes_ >= sizeof UTF8_BOM &&
+        std::memcmp(content_, UTF8_BOM, sizeof UTF8_BOM) == 0) {
+      content_ += sizeof UTF8_BOM;
+      bytes_ -= sizeof UTF8_BOM;
     }
   }
 }

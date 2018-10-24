@@ -700,7 +700,10 @@ public:
   bool Pre(const parser::AssociateStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::ChangeTeamStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::CriticalStmt &x) { return CheckDef(x.t); }
-  bool Pre(const parser::LabelDoStmt &x) { CHECK(false); }
+  bool Pre(const parser::LabelDoStmt &x) {
+    CHECK(false);
+    return false;
+  }
   bool Pre(const parser::NonLabelDoStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::IfThenStmt &x) { return CheckDef(x.t); }
   bool Pre(const parser::SelectCaseStmt &x) { return CheckDef(x.t); }
