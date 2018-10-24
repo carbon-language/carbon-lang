@@ -1010,7 +1010,7 @@ WebAssemblyTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
     }
   }
 
-  return DAG.getNode(WebAssemblyISD::SHUFFLE, DL, MVT::v16i8, Ops);
+  return DAG.getNode(WebAssemblyISD::SHUFFLE, DL, Op.getValueType(), Ops);
 }
 
 SDValue WebAssemblyTargetLowering::LowerShift(SDValue Op,
