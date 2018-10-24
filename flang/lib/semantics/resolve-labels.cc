@@ -198,7 +198,9 @@ bool firstNameNoneOrBothEqual(
   }
 }
 
-unsigned sayLabel(parser::Label label) { return static_cast<unsigned>(label); }
+static unsigned SayLabel(parser::Label label) {
+  return static_cast<unsigned>(label);
+}
 
 struct UnitAnalysis {
   UnitAnalysis() { scopeModel.push_back(0); }
@@ -845,7 +847,7 @@ private:
     if (label < 1 || label > 99999) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
-              "label '%u' is out of range"_err_en_US, sayLabel(label)});
+              "label '%u' is out of range"_err_en_US, SayLabel(label)});
     }
   }
 
@@ -859,7 +861,7 @@ private:
     if (!pair.second) {
       errorHandler_.Say(currentPosition_,
           parser::MessageFormattedText{
-              "label '%u' is not distinct"_err_en_US, sayLabel(label)});
+              "label '%u' is not distinct"_err_en_US, SayLabel(label)});
     }
   }
 
@@ -993,30 +995,30 @@ void CheckLabelDoConstraints(const SourceStmtList &dos,
       // C1133
       errorHandler.Say(position,
           parser::MessageFormattedText{
-              "label '%u' cannot be found"_err_en_US, sayLabel(label)});
+              "label '%u' cannot be found"_err_en_US, SayLabel(label)});
     } else if (doTarget.parserCharBlock.begin() < position.begin()) {
       // R1119
       errorHandler.Say(position,
           parser::MessageFormattedText{
               "label '%u' doesn't lexically follow DO stmt"_err_en_US,
-              sayLabel(label)});
+              SayLabel(label)});
     } else if (!InInclusiveScope(scopes, scope, doTarget.proxyForScope)) {
       // C1133
       errorHandler.Say(position,
           parser::MessageFormattedText{
-              "label '%u' is not in scope"_en_US, sayLabel(label)});
+              "label '%u' is not in scope"_en_US, SayLabel(label)});
     } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do) &&
         !doTarget.labeledStmtClassificationSet.test(
             TargetStatementEnum::CompatibleDo)) {
       errorHandler.Say(doTarget.parserCharBlock,
           parser::MessageFormattedText{
-              "'%u' invalid DO terminal statement"_err_en_US, sayLabel(label)});
+              "'%u' invalid DO terminal statement"_err_en_US, SayLabel(label)});
     } else if (!doTarget.labeledStmtClassificationSet.test(
                    TargetStatementEnum::Do)) {
       errorHandler.Say(doTarget.parserCharBlock,
           parser::MessageFormattedText{
-              "'%u' invalid DO terminal statement"_en_US, sayLabel(label)});
+              "'%u' invalid DO terminal statement"_en_US, SayLabel(label)});
     } else {
       loopBodies.emplace_back(SkipLabel(position), doTarget.parserCharBlock);
     }
@@ -1038,11 +1040,11 @@ void CheckScopeConstraints(const SourceStmtList &stmts,
     if (!HasScope(target.proxyForScope)) {
       errorHandler.Say(position,
           parser::MessageFormattedText{
-              "label '%u' was not found"_err_en_US, sayLabel(label)});
+              "label '%u' was not found"_err_en_US, SayLabel(label)});
     } else if (!InInclusiveScope(scopes, scope, target.proxyForScope)) {
       errorHandler.Say(position,
           parser::MessageFormattedText{
-              "label '%u' is not in scope"_en_US, sayLabel(label)});
+              "label '%u' is not in scope"_en_US, SayLabel(label)});
     }
   }
 }
@@ -1060,19 +1062,19 @@ void CheckBranchTargetConstraints(const SourceStmtList &stmts,
         errorHandler
             .Say(branchTarget.parserCharBlock,
                 parser::MessageFormattedText{
-                    "'%u' not a branch target"_err_en_US, sayLabel(label)})
+                    "'%u' not a branch target"_err_en_US, SayLabel(label)})
             .Attach(stmt.parserCharBlock,
                 parser::MessageFormattedText{
-                    "control flow use of '%u'"_en_US, sayLabel(label)});
+                    "control flow use of '%u'"_en_US, SayLabel(label)});
       } else if (!branchTarget.labeledStmtClassificationSet.test(
                      TargetStatementEnum::Branch)) {
         errorHandler
             .Say(branchTarget.parserCharBlock,
                 parser::MessageFormattedText{
-                    "'%u' not a branch target"_en_US, sayLabel(label)})
+                    "'%u' not a branch target"_en_US, SayLabel(label)})
             .Attach(stmt.parserCharBlock,
                 parser::MessageFormattedText{
-                    "control flow use of '%u'"_en_US, sayLabel(label)});
+                    "control flow use of '%u'"_en_US, SayLabel(label)});
       }
     }
   }
@@ -1096,10 +1098,10 @@ void CheckDataXferTargetConstraints(const SourceStmtList &stmts,
         errorHandler
             .Say(ioTarget.parserCharBlock,
                 parser::MessageFormattedText{
-                    "'%u' not a FORMAT"_err_en_US, sayLabel(label)})
+                    "'%u' not a FORMAT"_err_en_US, SayLabel(label)})
             .Attach(stmt.parserCharBlock,
                 parser::MessageFormattedText{
-                    "data transfer use of '%u'"_en_US, sayLabel(label)});
+                    "data transfer use of '%u'"_en_US, SayLabel(label)});
       }
     }
   }
