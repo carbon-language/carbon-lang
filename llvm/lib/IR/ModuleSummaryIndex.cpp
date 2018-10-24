@@ -241,7 +241,7 @@ void ModuleSummaryIndex::exportToDot(raw_ostream& OS) const {
                                        "_" + std::to_string(Id);
   };
 
-  auto DrawEdge = [&](const char *Pfx, int SrcMod, GlobalValue::GUID SrcId,
+  auto DrawEdge = [&](const char *Pfx, uint64_t SrcMod, GlobalValue::GUID SrcId,
                       int DstMod, GlobalValue::GUID DstId, int TypeOrHotness) {
     // 0 corresponds to alias edge, 1 to ref edge, 2 to call with unknown
     // hotness, ...
