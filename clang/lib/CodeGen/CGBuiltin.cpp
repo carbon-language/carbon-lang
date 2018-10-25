@@ -12614,11 +12614,11 @@ Value *CodeGenFunction::EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
     switch (BuiltinID) {
     case WebAssembly::BI__builtin_wasm_add_saturate_s_i8x16:
     case WebAssembly::BI__builtin_wasm_add_saturate_s_i16x8:
-      IntNo = Intrinsic::wasm_add_saturate_signed;
+      IntNo = Intrinsic::sadd_sat;
       break;
     case WebAssembly::BI__builtin_wasm_add_saturate_u_i8x16:
     case WebAssembly::BI__builtin_wasm_add_saturate_u_i16x8:
-      IntNo = Intrinsic::wasm_add_saturate_unsigned;
+      IntNo = Intrinsic::uadd_sat;
       break;
     case WebAssembly::BI__builtin_wasm_sub_saturate_s_i8x16:
     case WebAssembly::BI__builtin_wasm_sub_saturate_s_i16x8:

@@ -223,28 +223,28 @@ f64x2 replace_lane_f64x2(f64x2 v, double x) {
 
 i8x16 add_saturate_s_i8x16(i8x16 x, i8x16 y) {
   return __builtin_wasm_add_saturate_s_i8x16(x, y);
-  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.add.saturate.signed.v16i8(
+  // WEBASSEMBLY: call <16 x i8> @llvm.sadd.sat.v16i8(
   // WEBASSEMBLY-SAME: <16 x i8> %x, <16 x i8> %y)
   // WEBASSEMBLY-NEXT: ret
 }
 
 i8x16 add_saturate_u_i8x16(i8x16 x, i8x16 y) {
   return __builtin_wasm_add_saturate_u_i8x16(x, y);
-  // WEBASSEMBLY: call <16 x i8> @llvm.wasm.add.saturate.unsigned.v16i8(
+  // WEBASSEMBLY: call <16 x i8> @llvm.uadd.sat.v16i8(
   // WEBASSEMBLY-SAME: <16 x i8> %x, <16 x i8> %y)
   // WEBASSEMBLY-NEXT: ret
 }
 
 i16x8 add_saturate_s_i16x8(i16x8 x, i16x8 y) {
   return __builtin_wasm_add_saturate_s_i16x8(x, y);
-  // WEBASSEMBLY: call <8 x i16> @llvm.wasm.add.saturate.signed.v8i16(
+  // WEBASSEMBLY: call <8 x i16> @llvm.sadd.sat.v8i16(
   // WEBASSEMBLY-SAME: <8 x i16> %x, <8 x i16> %y)
   // WEBASSEMBLY-NEXT: ret
 }
 
 i16x8 add_saturate_u_i16x8(i16x8 x, i16x8 y) {
   return __builtin_wasm_add_saturate_u_i16x8(x, y);
-  // WEBASSEMBLY: call <8 x i16> @llvm.wasm.add.saturate.unsigned.v8i16(
+  // WEBASSEMBLY: call <8 x i16> @llvm.uadd.sat.v8i16(
   // WEBASSEMBLY-SAME: <8 x i16> %x, <8 x i16> %y)
   // WEBASSEMBLY-NEXT: ret
 }
