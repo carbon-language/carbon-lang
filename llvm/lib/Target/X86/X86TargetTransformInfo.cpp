@@ -1264,8 +1264,6 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     { ISD::SINT_TO_FP,  MVT::v16f32, MVT::v16i16, 2 },
     { ISD::SINT_TO_FP,  MVT::v16f32, MVT::v16i32, 1 },
     { ISD::SINT_TO_FP,  MVT::v8f64,  MVT::v8i32,  1 },
-    { ISD::UINT_TO_FP,  MVT::v8f32,  MVT::v8i64, 26 },
-    { ISD::UINT_TO_FP,  MVT::v8f64,  MVT::v8i64, 26 },
 
     { ISD::UINT_TO_FP,  MVT::v8f64,  MVT::v8i1,   4 },
     { ISD::UINT_TO_FP,  MVT::v16f32, MVT::v16i1,  3 },
@@ -1287,9 +1285,10 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     { ISD::UINT_TO_FP,  MVT::v8f64,  MVT::v8i32,  1 },
     { ISD::UINT_TO_FP,  MVT::v16f32, MVT::v16i32, 1 },
     { ISD::UINT_TO_FP,  MVT::v2f32,  MVT::v2i64,  5 },
+    { ISD::UINT_TO_FP,  MVT::v8f32,  MVT::v8i64, 26 },
     { ISD::UINT_TO_FP,  MVT::v2f64,  MVT::v2i64,  5 },
-    { ISD::UINT_TO_FP,  MVT::v4f64,  MVT::v4i64, 12 },
-    { ISD::UINT_TO_FP,  MVT::v8f64,  MVT::v8i64, 26 },
+    { ISD::UINT_TO_FP,  MVT::v4f64,  MVT::v4i64,  5 },
+    { ISD::UINT_TO_FP,  MVT::v8f64,  MVT::v8i64,  5 },
 
     { ISD::UINT_TO_FP,  MVT::f64,    MVT::i64,    1 },
 
@@ -1387,13 +1386,13 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     { ISD::UINT_TO_FP,  MVT::v4f32, MVT::v4i32, 6 },
     { ISD::UINT_TO_FP,  MVT::v4f64, MVT::v4i32, 6 },
     { ISD::UINT_TO_FP,  MVT::v8f32, MVT::v8i32, 9 },
+    { ISD::UINT_TO_FP,  MVT::v2f64, MVT::v2i64, 5 },
+    { ISD::UINT_TO_FP,  MVT::v4f64, MVT::v4i64, 6 },
     // The generic code to compute the scalar overhead is currently broken.
     // Workaround this limitation by estimating the scalarization overhead
     // here. We have roughly 10 instructions per scalar element.
     // Multiply that by the vector width.
     // FIXME: remove that when PR19268 is fixed.
-    { ISD::UINT_TO_FP,  MVT::v2f64, MVT::v2i64, 10 },
-    { ISD::UINT_TO_FP,  MVT::v4f64, MVT::v4i64, 20 },
     { ISD::SINT_TO_FP,  MVT::v4f64, MVT::v4i64, 13 },
     { ISD::SINT_TO_FP,  MVT::v4f64, MVT::v4i64, 13 },
 
@@ -1468,7 +1467,7 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     { ISD::UINT_TO_FP, MVT::v2f64, MVT::v8i16, 8*10 },
     { ISD::UINT_TO_FP, MVT::v2f64, MVT::v4i32, 4*10 },
     { ISD::UINT_TO_FP, MVT::v4f32, MVT::v4i32, 8 },
-    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i64, 2*10 },
+    { ISD::UINT_TO_FP, MVT::v2f64, MVT::v2i64, 6 },
     { ISD::UINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
 
     { ISD::FP_TO_SINT,  MVT::v2i32,  MVT::v2f64,  3 },
