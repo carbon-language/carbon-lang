@@ -85,16 +85,16 @@ void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
       break;
     case WebAssembly::END_LOOP:
     case WebAssembly::END_LOOP_S:
-      // Have to guard against an empty stack, in case of mismatched pairs
-      // in assembly parsing.
-      if (!ControlFlowStack.empty())
-        ControlFlowStack.pop_back();
+      if (ControlFlowStack.empty())
+        report_fatal_error("End marker mismatch!");
+      ControlFlowStack.pop_back();
       break;
     case WebAssembly::END_BLOCK:
     case WebAssembly::END_BLOCK_S:
-      if (!ControlFlowStack.empty())
-        printAnnotation(
-            OS, "label" + utostr(ControlFlowStack.pop_back_val().first) + ':');
+      if (ControlFlowStack.empty())
+        report_fatal_error("END marker mismatch!");
+      printAnnotation(
+          OS, "label" + utostr(ControlFlowStack.pop_back_val().first) + ':');
       break;
     }
 
