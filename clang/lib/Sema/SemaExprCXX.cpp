@@ -1515,8 +1515,11 @@ namespace {
       if (FD->getNumParams() == NumBaseParams + 2)
         HasAlignValT = HasSizeT = true;
       else if (FD->getNumParams() == NumBaseParams + 1) {
-        HasSizeT = FD->getParamDecl(NumBaseParams)->getType()->isIntegerType();
-        HasAlignValT = !HasSizeT;
+        QualType ParamTy = FD->getParamDecl(NumBaseParams)->getType();
+        HasAlignValT = ParamTy->isAlignValT();
+        HasSizeT = !HasAlignValT;
+        assert((HasAlignValT || ParamTy->isIntegerType()) &&
+            "Candidate is not regular dealloc function");
       }
 
       // In CUDA, determine how much we'd like / dislike to call this.
