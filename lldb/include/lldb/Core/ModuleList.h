@@ -300,14 +300,16 @@ public:
   //------------------------------------------------------------------
   /// @see Module::FindFunctions ()
   //------------------------------------------------------------------
-  size_t FindFunctions(const ConstString &name, uint32_t name_type_mask,
+  size_t FindFunctions(const ConstString &name,
+                       lldb::FunctionNameType name_type_mask,
                        bool include_symbols, bool include_inlines, bool append,
                        SymbolContextList &sc_list) const;
 
   //------------------------------------------------------------------
   /// @see Module::FindFunctionSymbols ()
   //------------------------------------------------------------------
-  size_t FindFunctionSymbols(const ConstString &name, uint32_t name_type_mask,
+  size_t FindFunctionSymbols(const ConstString &name,
+                             lldb::FunctionNameType name_type_mask,
                              SymbolContextList &sc_list);
 
   //------------------------------------------------------------------

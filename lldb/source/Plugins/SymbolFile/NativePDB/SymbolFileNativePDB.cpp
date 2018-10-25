@@ -1148,7 +1148,7 @@ size_t SymbolFileNativePDB::ParseFunctionBlocks(const SymbolContext &sc) {
 
 uint32_t SymbolFileNativePDB::FindFunctions(
     const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
-    uint32_t name_type_mask, bool include_inlines, bool append,
+    FunctionNameType name_type_mask, bool include_inlines, bool append,
     SymbolContextList &sc_list) {
   // For now we only support lookup by method name.
   if (!(name_type_mask & eFunctionNameTypeMethod))
@@ -1307,7 +1307,7 @@ bool SymbolFileNativePDB::CompleteType(CompilerType &compiler_type) {
 }
 
 size_t SymbolFileNativePDB::GetTypes(lldb_private::SymbolContextScope *sc_scope,
-                                     uint32_t type_mask,
+                                     TypeClass type_mask,
                                      lldb_private::TypeList &type_list) {
   return 0;
 }

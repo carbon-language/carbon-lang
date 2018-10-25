@@ -735,6 +735,7 @@ FLAGS_ENUM(FunctionNameType){
     eFunctionNameTypeAny =
         eFunctionNameTypeAuto // DEPRECATED: use eFunctionNameTypeAuto
 };
+LLDB_MARK_AS_BITMASK_ENUM(FunctionNameType)
 
 //----------------------------------------------------------------------
 // Basic types enumeration for the public API SBType::GetBasicType()
@@ -809,6 +810,7 @@ FLAGS_ENUM(TypeClass){
     eTypeClassOther = (1u << 31),
     // Define a mask that can be used for any type when finding types
     eTypeClassAny = (0xffffffffu)};
+LLDB_MARK_AS_BITMASK_ENUM(TypeClass)
 
 enum TemplateArgumentKind {
   eTemplateArgumentKindNull = 0,

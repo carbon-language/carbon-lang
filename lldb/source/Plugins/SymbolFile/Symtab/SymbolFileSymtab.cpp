@@ -46,7 +46,7 @@ SymbolFile *SymbolFileSymtab::CreateInstance(ObjectFile *obj_file) {
 }
 
 size_t SymbolFileSymtab::GetTypes(SymbolContextScope *sc_scope,
-                                  uint32_t type_mask,
+                                  TypeClass type_mask,
                                   lldb_private::TypeList &type_list) {
   return 0;
 }

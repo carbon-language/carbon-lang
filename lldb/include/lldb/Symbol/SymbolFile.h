@@ -170,8 +170,9 @@ public:
                                        VariableList &variables);
   virtual uint32_t FindFunctions(const ConstString &name,
                                  const CompilerDeclContext *parent_decl_ctx,
-                                 uint32_t name_type_mask, bool include_inlines,
-                                 bool append, SymbolContextList &sc_list);
+                                 lldb::FunctionNameType name_type_mask,
+                                 bool include_inlines, bool append,
+                                 SymbolContextList &sc_list);
   virtual uint32_t FindFunctions(const RegularExpression &regex,
                                  bool include_inlines, bool append,
                                  SymbolContextList &sc_list);
@@ -192,7 +193,7 @@ public:
   //  types) = 0;
   virtual TypeList *GetTypeList();
   virtual size_t GetTypes(lldb_private::SymbolContextScope *sc_scope,
-                          uint32_t type_mask,
+                          lldb::TypeClass type_mask,
                           lldb_private::TypeList &type_list) = 0;
 
   virtual void PreloadSymbols();

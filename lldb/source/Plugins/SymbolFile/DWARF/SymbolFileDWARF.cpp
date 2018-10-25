@@ -341,7 +341,7 @@ void SymbolFileDWARF::GetTypes(const DWARFDIE &die, dw_offset_t min_die_offset,
 }
 
 size_t SymbolFileDWARF::GetTypes(SymbolContextScope *sc_scope,
-                                 uint32_t type_mask, TypeList &type_list)
+                                 TypeClass type_mask, TypeList &type_list)
 
 {
   ASSERT_MODULE_LOCK(this);
@@ -2288,11 +2288,10 @@ bool SymbolFileDWARF::DIEInDeclContext(const CompilerDeclContext *decl_ctx,
   return false;
 }
 
-uint32_t
-SymbolFileDWARF::FindFunctions(const ConstString &name,
-                               const CompilerDeclContext *parent_decl_ctx,
-                               uint32_t name_type_mask, bool include_inlines,
-                               bool append, SymbolContextList &sc_list) {
+uint32_t SymbolFileDWARF::FindFunctions(
+    const ConstString &name, const CompilerDeclContext *parent_decl_ctx,
+    FunctionNameType name_type_mask, bool include_inlines, bool append,
+    SymbolContextList &sc_list) {
   static Timer::Category func_cat(LLVM_PRETTY_FUNCTION);
   Timer scoped_timer(func_cat, "SymbolFileDWARF::FindFunctions (name = '%s')",
                      name.AsCString());

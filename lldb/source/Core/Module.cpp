@@ -635,9 +635,11 @@ size_t Module::FindCompileUnits(const FileSpec &path, bool append,
   return sc_list.GetSize() - start_size;
 }
 
-Module::LookupInfo::LookupInfo(const ConstString &name, uint32_t name_type_mask,
-                               lldb::LanguageType language)
-    : m_name(name), m_lookup_name(), m_language(language), m_name_type_mask(0),
+Module::LookupInfo::LookupInfo(const ConstString &name,
+                               FunctionNameType name_type_mask,
+                               LanguageType language)
+    : m_name(name), m_lookup_name(), m_language(language),
+      m_name_type_mask(eFunctionNameTypeNone),
       m_match_name_after_lookup(false) {
   const char *name_cstr = name.GetCString();
   llvm::StringRef basename;
@@ -795,9 +797,9 @@ void Module::LookupInfo::Prune(SymbolContextList &sc_list,
 
 size_t Module::FindFunctions(const ConstString &name,
                              const CompilerDeclContext *parent_decl_ctx,
-                             uint32_t name_type_mask, bool include_symbols,
-                             bool include_inlines, bool append,
-                             SymbolContextList &sc_list) {
+                             FunctionNameType name_type_mask,
+                             bool include_symbols, bool include_inlines,
+                             bool append, SymbolContextList &sc_list) {
   if (!append)
     sc_list.Clear();
 

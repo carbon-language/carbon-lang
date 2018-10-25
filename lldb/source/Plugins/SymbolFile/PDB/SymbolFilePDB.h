@@ -122,8 +122,8 @@ public:
   uint32_t
   FindFunctions(const lldb_private::ConstString &name,
                 const lldb_private::CompilerDeclContext *parent_decl_ctx,
-                uint32_t name_type_mask, bool include_inlines, bool append,
-                lldb_private::SymbolContextList &sc_list) override;
+                lldb::FunctionNameType name_type_mask, bool include_inlines,
+                bool append, lldb_private::SymbolContextList &sc_list) override;
 
   uint32_t FindFunctions(const lldb_private::RegularExpression &regex,
                          bool include_inlines, bool append,
@@ -150,7 +150,7 @@ public:
   lldb_private::TypeList *GetTypeList() override;
 
   size_t GetTypes(lldb_private::SymbolContextScope *sc_scope,
-                  uint32_t type_mask,
+                  lldb::TypeClass type_mask,
                   lldb_private::TypeList &type_list) override;
 
   lldb_private::TypeSystem *

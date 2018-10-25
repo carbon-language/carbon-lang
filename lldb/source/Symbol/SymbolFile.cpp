@@ -117,7 +117,7 @@ uint32_t SymbolFile::FindGlobalVariables(const RegularExpression &regex,
 
 uint32_t SymbolFile::FindFunctions(const ConstString &name,
                                    const CompilerDeclContext *parent_decl_ctx,
-                                   uint32_t name_type_mask,
+                                   lldb::FunctionNameType name_type_mask,
                                    bool include_inlines, bool append,
                                    SymbolContextList &sc_list) {
   if (!append)

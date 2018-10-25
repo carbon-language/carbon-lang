@@ -288,7 +288,7 @@ size_t SymbolVendor::FindGlobalVariables(const RegularExpression &regex,
 
 size_t SymbolVendor::FindFunctions(const ConstString &name,
                                    const CompilerDeclContext *parent_decl_ctx,
-                                   uint32_t name_type_mask,
+                                   FunctionNameType name_type_mask,
                                    bool include_inlines, bool append,
                                    SymbolContextList &sc_list) {
   ModuleSP module_sp(GetModule());
@@ -345,7 +345,7 @@ size_t SymbolVendor::FindTypes(const std::vector<CompilerContext> &context,
   return 0;
 }
 
-size_t SymbolVendor::GetTypes(SymbolContextScope *sc_scope, uint32_t type_mask,
+size_t SymbolVendor::GetTypes(SymbolContextScope *sc_scope, TypeClass type_mask,
                               lldb_private::TypeList &type_list) {
   ModuleSP module_sp(GetModule());
   if (module_sp) {

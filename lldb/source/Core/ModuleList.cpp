@@ -338,8 +338,9 @@ ModuleSP ModuleList::GetModuleAtIndexUnlocked(size_t idx) const {
 }
 
 size_t ModuleList::FindFunctions(const ConstString &name,
-                                 uint32_t name_type_mask, bool include_symbols,
-                                 bool include_inlines, bool append,
+                                 FunctionNameType name_type_mask,
+                                 bool include_symbols, bool include_inlines,
+                                 bool append,
                                  SymbolContextList &sc_list) const {
   if (!append)
     sc_list.Clear();
@@ -373,7 +374,7 @@ size_t ModuleList::FindFunctions(const ConstString &name,
 }
 
 size_t ModuleList::FindFunctionSymbols(const ConstString &name,
-                                       uint32_t name_type_mask,
+                                       lldb::FunctionNameType name_type_mask,
                                        SymbolContextList &sc_list) {
   const size_t old_size = sc_list.GetSize();
 
