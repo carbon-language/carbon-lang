@@ -4185,44 +4185,24 @@ def : Pat<(concat_vectors (v2i32 V64:$Rd),
 
 defm EXT : SIMDBitwiseExtract<"ext">;
 
-def : Pat<(v4i16 (AArch64ext V64:$Rn, V64:$Rm, (i32 imm:$imm))),
-          (EXTv8i8 V64:$Rn, V64:$Rm, imm:$imm)>;
-def : Pat<(v8i16 (AArch64ext V128:$Rn, V128:$Rm, (i32 imm:$imm))),
-          (EXTv16i8 V128:$Rn, V128:$Rm, imm:$imm)>;
-def : Pat<(v2i32 (AArch64ext V64:$Rn, V64:$Rm, (i32 imm:$imm))),
-          (EXTv8i8 V64:$Rn, V64:$Rm, imm:$imm)>;
-def : Pat<(v2f32 (AArch64ext V64:$Rn, V64:$Rm, (i32 imm:$imm))),
-          (EXTv8i8 V64:$Rn, V64:$Rm, imm:$imm)>;
-def : Pat<(v4i32 (AArch64ext V128:$Rn, V128:$Rm, (i32 imm:$imm))),
-          (EXTv16i8 V128:$Rn, V128:$Rm, imm:$imm)>;
-def : Pat<(v4f32 (AArch64ext V128:$Rn, V128:$Rm, (i32 imm:$imm))),
-          (EXTv16i8 V128:$Rn, V128:$Rm, imm:$imm)>;
-def : Pat<(v2i64 (AArch64ext V128:$Rn, V128:$Rm, (i32 imm:$imm))),
-          (EXTv16i8 V128:$Rn, V128:$Rm, imm:$imm)>;
-def : Pat<(v2f64 (AArch64ext V128:$Rn, V128:$Rm, (i32 imm:$imm))),
-          (EXTv16i8 V128:$Rn, V128:$Rm, imm:$imm)>;
-def : Pat<(v4f16 (AArch64ext V64:$Rn, V64:$Rm, (i32 imm:$imm))),
-          (EXTv8i8 V64:$Rn, V64:$Rm, imm:$imm)>;
-def : Pat<(v8f16 (AArch64ext V128:$Rn, V128:$Rm, (i32 imm:$imm))),
-          (EXTv16i8 V128:$Rn, V128:$Rm, imm:$imm)>;
+multiclass ExtPat<ValueType VT64, ValueType VT128, int N> {
+  def : Pat<(VT64 (AArch64ext V64:$Rn, V64:$Rm, (i32 imm:$imm))),
+            (EXTv8i8 V64:$Rn, V64:$Rm, imm:$imm)>;
+  def : Pat<(VT128 (AArch64ext V128:$Rn, V128:$Rm, (i32 imm:$imm))),
+            (EXTv16i8 V128:$Rn, V128:$Rm, imm:$imm)>;
+  // We use EXT to handle extract_subvector to copy the upper 64-bits of a
+  // 128-bit vector.
+  def : Pat<(VT64 (extract_subvector V128:$Rn, (i64 N))),
+            (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
+}
 
-// We use EXT to handle extract_subvector to copy the upper 64-bits of a
-// 128-bit vector.
-def : Pat<(v8i8  (extract_subvector V128:$Rn, (i64 8))),
-          (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
-def : Pat<(v4i16 (extract_subvector V128:$Rn, (i64 4))),
-          (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
-def : Pat<(v2i32 (extract_subvector V128:$Rn, (i64 2))),
-          (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
-def : Pat<(v1i64 (extract_subvector V128:$Rn, (i64 1))),
-          (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
-def : Pat<(v4f16 (extract_subvector V128:$Rn, (i64 4))),
-          (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
-def : Pat<(v2f32 (extract_subvector V128:$Rn, (i64 2))),
-          (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
-def : Pat<(v1f64 (extract_subvector V128:$Rn, (i64 1))),
-          (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
-
+defm : ExtPat<v8i8, v16i8, 8>;
+defm : ExtPat<v4i16, v8i16, 4>;
+defm : ExtPat<v4f16, v8f16, 4>;
+defm : ExtPat<v2i32, v4i32, 2>;
+defm : ExtPat<v2f32, v4f32, 2>;
+defm : ExtPat<v1i64, v2i64, 1>;
+defm : ExtPat<v1f64, v2f64, 1>;
 
 //----------------------------------------------------------------------------
 // AdvSIMD zip vector
