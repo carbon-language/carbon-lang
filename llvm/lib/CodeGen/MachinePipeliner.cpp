@@ -1530,9 +1530,9 @@ void SwingSchedulerDAG::Circuits::createAdjacencyStructure(
         }
         OutputDeps[N] = BackEdge;
       }
-      // Do not process a boundary node and a back-edge is processed only
-      // if it goes to a Phi.
-      if (SI.getSUnit()->isBoundaryNode() ||
+      // Do not process a boundary node, an artificial node.
+      // A back-edge is processed only if it goes to a Phi.
+      if (SI.getSUnit()->isBoundaryNode() || SI.isArtificial() ||
           (SI.getKind() == SDep::Anti && !SI.getSUnit()->getInstr()->isPHI()))
         continue;
       int N = SI.getSUnit()->NodeNum;
