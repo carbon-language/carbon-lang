@@ -115,6 +115,12 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     setTruncStoreAction(T, MVT::f16, Expand);
   }
 
+  // Support saturating add for i8x16 and i16x8
+  if (Subtarget->hasSIMD128())
+    for (auto T : {MVT::v16i8, MVT::v8i16})
+      for (auto Op : {ISD::SADDSAT, ISD::UADDSAT})
+        setOperationAction(Op, T, Legal);
+
   for (auto T : {MVT::i32, MVT::i64}) {
     // Expand unavailable integer operations.
     for (auto Op :
