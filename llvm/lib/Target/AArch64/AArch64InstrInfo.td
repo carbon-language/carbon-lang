@@ -4920,16 +4920,6 @@ def MOVID      : SIMDModifiedImmScalarNoShift<0, 1, 0b1110, "movi",
 def : Pat<(f64 (AArch64movi_edit imm0_255:$shift)),
           (MOVID imm0_255:$shift)>;
 
-def : Pat<(v1i64 immAllZerosV), (MOVID (i32 0))>;
-def : Pat<(v2i32 immAllZerosV), (MOVID (i32 0))>;
-def : Pat<(v4i16 immAllZerosV), (MOVID (i32 0))>;
-def : Pat<(v8i8  immAllZerosV), (MOVID (i32 0))>;
-
-def : Pat<(v1i64 immAllOnesV), (MOVID (i32 255))>;
-def : Pat<(v2i32 immAllOnesV), (MOVID (i32 255))>;
-def : Pat<(v4i16 immAllOnesV), (MOVID (i32 255))>;
-def : Pat<(v8i8  immAllOnesV), (MOVID (i32 255))>;
-
 // EDIT byte mask: 2d
 
 // The movi_edit node has the immediate value already encoded, so we use
@@ -4949,6 +4939,18 @@ def : Pat<(v2i64 immAllOnesV), (MOVIv2d_ns (i32 255))>;
 def : Pat<(v4i32 immAllOnesV), (MOVIv2d_ns (i32 255))>;
 def : Pat<(v8i16 immAllOnesV), (MOVIv2d_ns (i32 255))>;
 def : Pat<(v16i8 immAllOnesV), (MOVIv2d_ns (i32 255))>;
+
+// Set 64-bit vectors to all 0/1 by extracting from a 128-bit register as the
+// extract is free and this gives better MachineCSE results.
+def : Pat<(v1i64 immAllZerosV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 0)), dsub)>;
+def : Pat<(v2i32 immAllZerosV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 0)), dsub)>;
+def : Pat<(v4i16 immAllZerosV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 0)), dsub)>;
+def : Pat<(v8i8  immAllZerosV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 0)), dsub)>;
+
+def : Pat<(v1i64 immAllOnesV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 255)), dsub)>;
+def : Pat<(v2i32 immAllOnesV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 255)), dsub)>;
+def : Pat<(v4i16 immAllOnesV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 255)), dsub)>;
+def : Pat<(v8i8  immAllOnesV), (EXTRACT_SUBREG (MOVIv2d_ns (i32 255)), dsub)>;
 
 // EDIT per word & halfword: 2s, 4h, 4s, & 8h
 let isReMaterializable = 1, isAsCheapAsAMove = 1 in
