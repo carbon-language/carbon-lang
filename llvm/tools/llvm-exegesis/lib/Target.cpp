@@ -87,7 +87,7 @@ ExegesisTarget::createUopsBenchmarkRunner(const LLVMState &State) const {
 
 static_assert(std::is_pod<PfmCountersInfo>::value,
               "We shouldn't have dynamic initialization here");
-const PfmCountersInfo PfmCountersInfo::Default = {nullptr, nullptr, nullptr};
+const PfmCountersInfo PfmCountersInfo::Default = {nullptr, nullptr, nullptr, 0u};
 
 const PfmCountersInfo &
 ExegesisTarget::getPfmCounters(llvm::StringRef CpuName) const {

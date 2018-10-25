@@ -34,29 +34,29 @@ namespace exegesis {
 struct PfmCountersInfo {
   // An optional name of a performance counter that can be used to measure
   // cycles.
-  const char * CycleCounter;
+  const char *const CycleCounter;
 
   // An optional name of a performance counter that can be used to measure
   // uops.
-  const char * UopsCounter;
+  const char *const UopsCounter;
 
   // An IssueCounter specifies how to measure uops issued to specific proc
   // resources.
   struct IssueCounter {
-    const char * Counter;
+    const char *const Counter;
     // The name of the ProcResource that this counter measures.
-    const char * ProcResName;
+    const char *const ProcResName;
   };
   // An optional list of IssueCounters.
-  const IssueCounter * IssueCounters;
-  unsigned NumIssueCounters;
+  const IssueCounter *const IssueCounters;
+  const unsigned NumIssueCounters;
 
   static const PfmCountersInfo Default;
 };
 
 struct CpuAndPfmCounters {
-  const char * CpuName;
-  const PfmCountersInfo * PCI;
+  const char *const CpuName;
+  const PfmCountersInfo *const PCI;
   bool operator<(llvm::StringRef S) const {
     return llvm::StringRef(CpuName) < S;
   }
