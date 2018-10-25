@@ -393,7 +393,8 @@ int SystemZTTIImpl::getArithmeticInstrCost(
   }
 
   if (Ty->isVectorTy()) {
-    assert (ST->hasVector() && "getArithmeticInstrCost() called with vector type.");
+    assert(ST->hasVector() &&
+           "getArithmeticInstrCost() called with vector type.");
     unsigned VF = Ty->getVectorNumElements();
     unsigned NumVectors = getNumVectorRegs(Ty);
 
@@ -428,7 +429,8 @@ int SystemZTTIImpl::getArithmeticInstrCost(
           return NumVectors;
         // Return the cost of multiple scalar invocation plus the cost of
         // inserting and extracting the values.
-        unsigned ScalarCost = getArithmeticInstrCost(Opcode, Ty->getScalarType());
+        unsigned ScalarCost =
+            getArithmeticInstrCost(Opcode, Ty->getScalarType());
         unsigned Cost = (VF * ScalarCost) + getScalarizationOverhead(Ty, Args);
         // FIXME: VF 2 for these FP operations are currently just as
         // expensive as for VF 4.
@@ -759,8 +761,8 @@ int SystemZTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
   return BaseT::getCastInstrCost(Opcode, Dst, Src, I);
 }
 
-int SystemZTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy,
-                                       const Instruction *I) {
+int SystemZTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                       Type *CondTy, const Instruction *I) {
   if (ValTy->isVectorTy()) {
     assert (ST->hasVector() && "getCmpSelInstrCost() called with vector type.");
     unsigned VF = ValTy->getVectorNumElements();
@@ -821,7 +823,7 @@ int SystemZTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondT
     }
     case Instruction::Select:
       if (ValTy->isFloatingPointTy())
-        return 4; // No load on condition for FP, so this costs a conditional jump.
+        return 4; // No load on condition for FP - costs a conditional jump.
       return 1; // Load On Condition.
     }
   }
