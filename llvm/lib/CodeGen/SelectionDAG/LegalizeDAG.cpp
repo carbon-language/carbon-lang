@@ -2902,7 +2902,7 @@ bool SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       Results.push_back(Tmp1);
       break;
     }
-    LLVM_FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case ISD::SINT_TO_FP:
     Tmp1 = ExpandLegalINT_TO_FP(Node->getOpcode() == ISD::SINT_TO_FP,
                                 Node->getOperand(0), Node->getValueType(0), dl);
