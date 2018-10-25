@@ -662,9 +662,10 @@ bool ModuleList::ResolveFileAddress(lldb::addr_t vm_addr,
   return false;
 }
 
-uint32_t ModuleList::ResolveSymbolContextForAddress(const Address &so_addr,
-                                                    uint32_t resolve_scope,
-                                                    SymbolContext &sc) const {
+uint32_t
+ModuleList::ResolveSymbolContextForAddress(const Address &so_addr,
+                                           SymbolContextItem resolve_scope,
+                                           SymbolContext &sc) const {
   // The address is already section offset so it has a module
   uint32_t resolved_flags = 0;
   ModuleSP module_sp(so_addr.GetModule());
@@ -687,7 +688,7 @@ uint32_t ModuleList::ResolveSymbolContextForAddress(const Address &so_addr,
 
 uint32_t ModuleList::ResolveSymbolContextForFilePath(
     const char *file_path, uint32_t line, bool check_inlines,
-    uint32_t resolve_scope, SymbolContextList &sc_list) const {
+    SymbolContextItem resolve_scope, SymbolContextList &sc_list) const {
   FileSpec file_spec(file_path, false);
   return ResolveSymbolContextsForFileSpec(file_spec, line, check_inlines,
                                           resolve_scope, sc_list);
@@ -695,7 +696,7 @@ uint32_t ModuleList::ResolveSymbolContextForFilePath(
 
 uint32_t ModuleList::ResolveSymbolContextsForFileSpec(
     const FileSpec &file_spec, uint32_t line, bool check_inlines,
-    uint32_t resolve_scope, SymbolContextList &sc_list) const {
+    SymbolContextItem resolve_scope, SymbolContextList &sc_list) const {
   std::lock_guard<std::recursive_mutex> guard(m_modules_mutex);
   collection::const_iterator pos, end = m_modules.end();
   for (pos = m_modules.begin(); pos != end; ++pos) {

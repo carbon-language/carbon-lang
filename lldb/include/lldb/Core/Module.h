@@ -816,10 +816,9 @@ public:
   ///
   /// @see SymbolContext::Scope
   //------------------------------------------------------------------
-  uint32_t
-  ResolveSymbolContextForAddress(const Address &so_addr, uint32_t resolve_scope,
-                                 SymbolContext &sc,
-                                 bool resolve_tail_call_address = false);
+  uint32_t ResolveSymbolContextForAddress(
+      const Address &so_addr, lldb::SymbolContextItem resolve_scope,
+      SymbolContext &sc, bool resolve_tail_call_address = false);
 
   //------------------------------------------------------------------
   /// Resolve items in the symbol context for a given file and line.
@@ -862,10 +861,9 @@ public:
   ///
   /// @see SymbolContext::Scope
   //------------------------------------------------------------------
-  uint32_t ResolveSymbolContextForFilePath(const char *file_path, uint32_t line,
-                                           bool check_inlines,
-                                           uint32_t resolve_scope,
-                                           SymbolContextList &sc_list);
+  uint32_t ResolveSymbolContextForFilePath(
+      const char *file_path, uint32_t line, bool check_inlines,
+      lldb::SymbolContextItem resolve_scope, SymbolContextList &sc_list);
 
   //------------------------------------------------------------------
   /// Resolve items in the symbol context for a given file and line.
@@ -909,10 +907,9 @@ public:
   ///
   /// @see SymbolContext::Scope
   //------------------------------------------------------------------
-  uint32_t ResolveSymbolContextsForFileSpec(const FileSpec &file_spec,
-                                            uint32_t line, bool check_inlines,
-                                            uint32_t resolve_scope,
-                                            SymbolContextList &sc_list);
+  uint32_t ResolveSymbolContextsForFileSpec(
+      const FileSpec &file_spec, uint32_t line, bool check_inlines,
+      lldb::SymbolContextItem resolve_scope, SymbolContextList &sc_list);
 
   void SetFileSpecAndObjectName(const FileSpec &file,
                                 const ConstString &object_name);
@@ -1155,7 +1152,7 @@ protected:
   //------------------------------------------------------------------
   uint32_t ResolveSymbolContextForAddress(lldb::addr_t vm_addr,
                                           bool vm_addr_is_file_addr,
-                                          uint32_t resolve_scope,
+                                          lldb::SymbolContextItem resolve_scope,
                                           Address &so_addr, SymbolContext &sc);
 
   void SymbolIndicesToSymbolContextList(Symtab *symtab,

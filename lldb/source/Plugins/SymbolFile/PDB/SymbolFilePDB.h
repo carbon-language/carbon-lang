@@ -100,12 +100,13 @@ public:
   ParseDeclsForContext(lldb_private::CompilerDeclContext decl_ctx) override;
 
   uint32_t ResolveSymbolContext(const lldb_private::Address &so_addr,
-                                uint32_t resolve_scope,
+                                lldb::SymbolContextItem resolve_scope,
                                 lldb_private::SymbolContext &sc) override;
 
   uint32_t
   ResolveSymbolContext(const lldb_private::FileSpec &file_spec, uint32_t line,
-                       bool check_inlines, uint32_t resolve_scope,
+                       bool check_inlines,
+                       lldb::SymbolContextItem resolve_scope,
                        lldb_private::SymbolContextList &sc_list) override;
 
   uint32_t

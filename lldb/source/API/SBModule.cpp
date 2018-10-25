@@ -217,9 +217,9 @@ SBModule::ResolveSymbolContextForAddress(const SBAddress &addr,
                                          uint32_t resolve_scope) {
   SBSymbolContext sb_sc;
   ModuleSP module_sp(GetSP());
+  SymbolContextItem scope = static_cast<SymbolContextItem>(resolve_scope);
   if (module_sp && addr.IsValid())
-    module_sp->ResolveSymbolContextForAddress(addr.ref(), resolve_scope,
-                                              *sb_sc);
+    module_sp->ResolveSymbolContextForAddress(addr.ref(), scope, *sb_sc);
   return sb_sc;
 }
 

@@ -109,7 +109,8 @@ public:
   }
   Type *ResolveTypeUID(lldb::user_id_t type_uid) override;
   bool CompleteType(CompilerType &compiler_type) override;
-  uint32_t ResolveSymbolContext(const Address &so_addr, uint32_t resolve_scope,
+  uint32_t ResolveSymbolContext(const Address &so_addr,
+                                lldb::SymbolContextItem resolve_scope,
                                 SymbolContext &sc) override;
 
   size_t GetTypes(SymbolContextScope *sc_scope, uint32_t type_mask,

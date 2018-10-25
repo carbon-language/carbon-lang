@@ -97,7 +97,7 @@ TypeSystem *SymbolFile::GetTypeSystemForLanguage(lldb::LanguageType language) {
 
 uint32_t SymbolFile::ResolveSymbolContext(const FileSpec &file_spec,
                                           uint32_t line, bool check_inlines,
-                                          uint32_t resolve_scope,
+                                          lldb::SymbolContextItem resolve_scope,
                                           SymbolContextList &sc_list) {
   return 0;
 }

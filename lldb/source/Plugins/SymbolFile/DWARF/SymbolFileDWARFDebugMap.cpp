@@ -717,8 +717,10 @@ bool SymbolFileDWARFDebugMap::CompleteType(CompilerType &compiler_type) {
   return success;
 }
 
-uint32_t SymbolFileDWARFDebugMap::ResolveSymbolContext(
-    const Address &exe_so_addr, uint32_t resolve_scope, SymbolContext &sc) {
+uint32_t
+SymbolFileDWARFDebugMap::ResolveSymbolContext(const Address &exe_so_addr,
+                                              SymbolContextItem resolve_scope,
+                                              SymbolContext &sc) {
   uint32_t resolved_flags = 0;
   Symtab *symtab = m_obj_file->GetSymtab();
   if (symtab) {
@@ -760,7 +762,7 @@ uint32_t SymbolFileDWARFDebugMap::ResolveSymbolContext(
 
 uint32_t SymbolFileDWARFDebugMap::ResolveSymbolContext(
     const FileSpec &file_spec, uint32_t line, bool check_inlines,
-    uint32_t resolve_scope, SymbolContextList &sc_list) {
+    SymbolContextItem resolve_scope, SymbolContextList &sc_list) {
   const uint32_t initial = sc_list.GetSize();
   const uint32_t cu_count = GetNumCompileUnits();
 

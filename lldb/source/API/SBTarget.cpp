@@ -660,11 +660,12 @@ SBSymbolContext
 SBTarget::ResolveSymbolContextForAddress(const SBAddress &addr,
                                          uint32_t resolve_scope) {
   SBSymbolContext sc;
+  SymbolContextItem scope = static_cast<SymbolContextItem>(resolve_scope);
   if (addr.IsValid()) {
     TargetSP target_sp(GetSP());
     if (target_sp)
-      target_sp->GetImages().ResolveSymbolContextForAddress(
-          addr.ref(), resolve_scope, sc.ref());
+      target_sp->GetImages().ResolveSymbolContextForAddress(addr.ref(), scope,
+                                                            sc.ref());
   }
   return sc;
 }

@@ -684,7 +684,7 @@ void SymbolFilePDB::ParseDeclsForContext(
 
 uint32_t
 SymbolFilePDB::ResolveSymbolContext(const lldb_private::Address &so_addr,
-                                    uint32_t resolve_scope,
+                                    SymbolContextItem resolve_scope,
                                     lldb_private::SymbolContext &sc) {
   uint32_t resolved_flags = 0;
   if (resolve_scope & eSymbolContextCompUnit ||
@@ -744,7 +744,7 @@ SymbolFilePDB::ResolveSymbolContext(const lldb_private::Address &so_addr,
 
 uint32_t SymbolFilePDB::ResolveSymbolContext(
     const lldb_private::FileSpec &file_spec, uint32_t line, bool check_inlines,
-    uint32_t resolve_scope, lldb_private::SymbolContextList &sc_list) {
+    SymbolContextItem resolve_scope, lldb_private::SymbolContextList &sc_list) {
   const size_t old_size = sc_list.GetSize();
   if (resolve_scope & lldb::eSymbolContextCompUnit) {
     // Locate all compilation units with line numbers referencing the specified

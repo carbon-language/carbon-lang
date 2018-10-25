@@ -1777,7 +1777,7 @@ SymbolFileDWARF::GlobalVariableMap &SymbolFileDWARF::GetGlobalAranges() {
 }
 
 uint32_t SymbolFileDWARF::ResolveSymbolContext(const Address &so_addr,
-                                               uint32_t resolve_scope,
+                                               SymbolContextItem resolve_scope,
                                                SymbolContext &sc) {
   static Timer::Category func_cat(LLVM_PRETTY_FUNCTION);
   Timer scoped_timer(func_cat,
@@ -1911,7 +1911,7 @@ uint32_t SymbolFileDWARF::ResolveSymbolContext(const Address &so_addr,
 uint32_t SymbolFileDWARF::ResolveSymbolContext(const FileSpec &file_spec,
                                                uint32_t line,
                                                bool check_inlines,
-                                               uint32_t resolve_scope,
+                                               SymbolContextItem resolve_scope,
                                                SymbolContextList &sc_list) {
   const uint32_t prev_size = sc_list.GetSize();
   if (resolve_scope & eSymbolContextCompUnit) {

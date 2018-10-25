@@ -433,8 +433,8 @@ bool Module::ResolveFileAddress(lldb::addr_t vm_addr, Address &so_addr) {
 }
 
 uint32_t Module::ResolveSymbolContextForAddress(
-    const Address &so_addr, uint32_t resolve_scope, SymbolContext &sc,
-    bool resolve_tail_call_address) {
+    const Address &so_addr, lldb::SymbolContextItem resolve_scope,
+    SymbolContext &sc, bool resolve_tail_call_address) {
   std::lock_guard<std::recursive_mutex> guard(m_mutex);
   uint32_t resolved_flags = 0;
 
@@ -566,21 +566,17 @@ uint32_t Module::ResolveSymbolContextForAddress(
   return resolved_flags;
 }
 
-uint32_t Module::ResolveSymbolContextForFilePath(const char *file_path,
-                                                 uint32_t line,
-                                                 bool check_inlines,
-                                                 uint32_t resolve_scope,
-                                                 SymbolContextList &sc_list) {
+uint32_t Module::ResolveSymbolContextForFilePath(
+    const char *file_path, uint32_t line, bool check_inlines,
+    lldb::SymbolContextItem resolve_scope, SymbolContextList &sc_list) {
   FileSpec file_spec(file_path, false);
   return ResolveSymbolContextsForFileSpec(file_spec, line, check_inlines,
                                           resolve_scope, sc_list);
 }
 
-uint32_t Module::ResolveSymbolContextsForFileSpec(const FileSpec &file_spec,
-                                                  uint32_t line,
-                                                  bool check_inlines,
-                                                  uint32_t resolve_scope,
-                                                  SymbolContextList &sc_list) {
+uint32_t Module::ResolveSymbolContextsForFileSpec(
+    const FileSpec &file_spec, uint32_t line, bool check_inlines,
+    lldb::SymbolContextItem resolve_scope, SymbolContextList &sc_list) {
   std::lock_guard<std::recursive_mutex> guard(m_mutex);
   static Timer::Category func_cat(LLVM_PRETTY_FUNCTION);
   Timer scoped_timer(func_cat,

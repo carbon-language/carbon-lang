@@ -960,9 +960,8 @@ static bool NeedsResolvedCompileUnit(uint32_t resolve_scope) {
   return (resolve_scope & flags) != 0;
 }
 
-uint32_t SymbolFileNativePDB::ResolveSymbolContext(const Address &addr,
-                                                   uint32_t resolve_scope,
-                                                   SymbolContext &sc) {
+uint32_t SymbolFileNativePDB::ResolveSymbolContext(
+    const Address &addr, SymbolContextItem resolve_scope, SymbolContext &sc) {
   uint32_t resolved_flags = 0;
   lldb::addr_t file_addr = addr.GetFileAddress();
 

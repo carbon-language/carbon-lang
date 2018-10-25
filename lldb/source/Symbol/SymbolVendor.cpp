@@ -235,7 +235,7 @@ Type *SymbolVendor::ResolveTypeUID(lldb::user_id_t type_uid) {
 }
 
 uint32_t SymbolVendor::ResolveSymbolContext(const Address &so_addr,
-                                            uint32_t resolve_scope,
+                                            SymbolContextItem resolve_scope,
                                             SymbolContext &sc) {
   ModuleSP module_sp(GetModule());
   if (module_sp) {
@@ -248,7 +248,7 @@ uint32_t SymbolVendor::ResolveSymbolContext(const Address &so_addr,
 
 uint32_t SymbolVendor::ResolveSymbolContext(const FileSpec &file_spec,
                                             uint32_t line, bool check_inlines,
-                                            uint32_t resolve_scope,
+                                            SymbolContextItem resolve_scope,
                                             SymbolContextList &sc_list) {
   ModuleSP module_sp(GetModule());
   if (module_sp) {

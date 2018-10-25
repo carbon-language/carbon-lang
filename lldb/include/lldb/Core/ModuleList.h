@@ -495,26 +495,24 @@ public:
   /// &,uint32_t,SymbolContext&)
   //------------------------------------------------------------------
   uint32_t ResolveSymbolContextForAddress(const Address &so_addr,
-                                          uint32_t resolve_scope,
+                                          lldb::SymbolContextItem resolve_scope,
                                           SymbolContext &sc) const;
 
   //------------------------------------------------------------------
   /// @copydoc Module::ResolveSymbolContextForFilePath (const char
   /// *,uint32_t,bool,uint32_t,SymbolContextList&)
   //------------------------------------------------------------------
-  uint32_t ResolveSymbolContextForFilePath(const char *file_path, uint32_t line,
-                                           bool check_inlines,
-                                           uint32_t resolve_scope,
-                                           SymbolContextList &sc_list) const;
+  uint32_t ResolveSymbolContextForFilePath(
+      const char *file_path, uint32_t line, bool check_inlines,
+      lldb::SymbolContextItem resolve_scope, SymbolContextList &sc_list) const;
 
   //------------------------------------------------------------------
   /// @copydoc Module::ResolveSymbolContextsForFileSpec (const FileSpec
   /// &,uint32_t,bool,uint32_t,SymbolContextList&)
   //------------------------------------------------------------------
-  uint32_t ResolveSymbolContextsForFileSpec(const FileSpec &file_spec,
-                                            uint32_t line, bool check_inlines,
-                                            uint32_t resolve_scope,
-                                            SymbolContextList &sc_list) const;
+  uint32_t ResolveSymbolContextsForFileSpec(
+      const FileSpec &file_spec, uint32_t line, bool check_inlines,
+      lldb::SymbolContextItem resolve_scope, SymbolContextList &sc_list) const;
 
   //------------------------------------------------------------------
   /// Gets the size of the module list.
