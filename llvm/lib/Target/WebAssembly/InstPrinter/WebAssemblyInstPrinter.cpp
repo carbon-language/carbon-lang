@@ -85,14 +85,12 @@ void WebAssemblyInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
       break;
     case WebAssembly::END_LOOP:
     case WebAssembly::END_LOOP_S:
-      if (ControlFlowStack.empty())
-        report_fatal_error("End marker mismatch!");
+      assert(!ControlFlowStack.empty() && "End marker mismatch!");
       ControlFlowStack.pop_back();
       break;
     case WebAssembly::END_BLOCK:
     case WebAssembly::END_BLOCK_S:
-      if (ControlFlowStack.empty())
-        report_fatal_error("END marker mismatch!");
+      assert(!ControlFlowStack.empty() && "End marker mismatch!");
       printAnnotation(
           OS, "label" + utostr(ControlFlowStack.pop_back_val().first) + ':');
       break;
