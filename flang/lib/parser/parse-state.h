@@ -239,6 +239,5 @@ private:
   // reflected in the copy and move constructors defined at the top of this
   // class definition!
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_PARSE_STATE_H_

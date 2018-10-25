@@ -211,6 +211,5 @@ private:
   std::bitset<prime2> compilerDirectiveBloomFilter_;  // 128 bytes
   std::unordered_set<std::string> compilerDirectiveSentinels_;
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_PRESCAN_H_

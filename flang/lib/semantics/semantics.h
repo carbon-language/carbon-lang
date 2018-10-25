@@ -16,8 +16,8 @@
 #define FORTRAN_SEMANTICS_SEMANTICS_H_
 
 #include "expression.h"
-#include "../evaluate/common.h"
 #include "scope.h"
+#include "../evaluate/common.h"
 #include "../evaluate/intrinsics.h"
 #include "../parser/message.h"
 #include <iosfwd>
@@ -27,7 +27,7 @@
 namespace Fortran::parser {
 struct Program;
 class CookedSource;
-}  // namespace Fortran::parser
+}
 
 namespace Fortran::semantics {
 
@@ -49,7 +49,7 @@ public:
   const evaluate::IntrinsicProcTable &intrinsics() const { return intrinsics_; }
   Scope &globalScope() { return globalScope_; }
   parser::Messages &messages() { return messages_; }
-  evaluate::FoldingContext& foldingContext() { return foldingContext_; }
+  evaluate::FoldingContext &foldingContext() { return foldingContext_; }
 
   SemanticsContext &set_searchDirectories(const std::vector<std::string> &x) {
     searchDirectories_ = x;
@@ -102,7 +102,6 @@ private:
   parser::Program &program_;
   const parser::CookedSource &cooked_;
 };
-
-}  // namespace Fortran::semantics
+}
 
 #endif

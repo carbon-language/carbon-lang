@@ -68,5 +68,5 @@ public:
 private:
   Implementation *impl_{nullptr};  // owning pointer
 };
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_INTRINSICS_H_

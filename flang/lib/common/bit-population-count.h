@@ -85,5 +85,5 @@ template<typename UINT> inline constexpr bool Parity(UINT x) {
 template<typename UINT> inline constexpr int TrailingZeroCount(UINT x) {
   return BitPopulationCount(x ^ (x - 1)) - !!x;
 }
-}  // namespace Fortran::common
+}
 #endif  // FORTRAN_COMMON_BIT_POPULATION_COUNT_H_

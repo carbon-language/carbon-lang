@@ -75,7 +75,6 @@ private:
   std::optional<std::string> FindModFile(
       const SourceName &, const std::string &);
 };
-
-}  // namespace Fortran::semantics
+}
 
 #endif

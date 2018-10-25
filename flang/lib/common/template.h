@@ -268,6 +268,5 @@ template<typename VISITOR>
 typename VISITOR::Result SearchDynamicTypes(VISITOR &&visitor) {
   return SearchDynamicTypesHelper<0, VISITOR>(std::move(visitor));
 }
-
-}  // namespace Fortran::common
+}
 #endif  // FORTRAN_COMMON_TEMPLATE_H_

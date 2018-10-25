@@ -18,13 +18,13 @@
 namespace Fortran::parser {
 class Messages;
 struct Program;
-}  // namespace Fortran::parser
+}
 namespace Fortran::semantics {
 class SemanticsContext;
-}  // namespace Fortran::semantics
+}
 
 namespace Fortran::semantics {
 void RewriteParseTree(SemanticsContext &, parser::Program &);
-}  // namespace Fortran::semantics
+}
 
 #endif  // FORTRAN_SEMANTICS_REWRITE_PARSE_TREE_H_

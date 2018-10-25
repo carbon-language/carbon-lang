@@ -21,7 +21,7 @@
 
 namespace Fortran::parser {
 struct Program;
-}  // namespace Fortran::parser
+}
 
 namespace Fortran::semantics {
 
@@ -29,7 +29,6 @@ class SemanticsContext;
 
 void ResolveNames(SemanticsContext &, const parser::Program &);
 void DumpSymbols(std::ostream &);
-
-}  // namespace Fortran::semantics
+}
 
 #endif  // FORTRAN_SEMANTICS_RESOLVE_NAMES_H_

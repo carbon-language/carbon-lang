@@ -83,6 +83,5 @@ inline constexpr auto instrumented(
     const MessageFixedText &tag, const PA &parser) {
   return InstrumentedParser{tag, parser};
 }
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_INSTRUMENTED_PARSER_H_

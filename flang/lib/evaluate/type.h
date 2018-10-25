@@ -38,7 +38,7 @@
 namespace Fortran::semantics {
 class DerivedTypeSpec;
 class Symbol;
-}  // namespace Fortran::semantics
+}
 
 namespace Fortran::evaluate {
 
@@ -403,6 +403,5 @@ template<typename T> struct Constant {
   std::ostream &Dump(std::ostream &) const;
   Value value;
 };
-
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_TYPE_H_

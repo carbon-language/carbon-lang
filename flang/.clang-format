@@ -12,6 +12,7 @@ AlignTrailingComments: false
 ConstructorInitializerIndentWidth: 2
 SpaceAfterTemplateKeyword: false
 SpacesBeforeTrailingComments: 2
+FixNamespaceComments: false
 IncludeCategories:
   - Regex:           '^<'
     Priority:        4

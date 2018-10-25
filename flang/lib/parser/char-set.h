@@ -82,6 +82,5 @@ private:
   constexpr SetOfChars(std::uint64_t b) : bits_{b} {}
   std::uint64_t bits_{0};
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_CHAR_SET_H_

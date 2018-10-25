@@ -44,7 +44,7 @@ template<typename A>
 struct is_trivially_copy_constructible<list<A>> : false_type {};
 template<typename A>
 struct is_trivially_copy_constructible<optional<list<A>>> : false_type {};
-}  // namespace std
+}
 #endif
 
 // enable "this is a std::string"s with the 's' suffix
@@ -133,6 +133,5 @@ template<typename A> struct ListItemCount {
     return Fortran::common::EnumIndexToString( \
         static_cast<int>(e), #__VA_ARGS__); \
   }
-
-}  // namespace Fortran::common
+}
 #endif  // FORTRAN_COMMON_IDIOMS_H_

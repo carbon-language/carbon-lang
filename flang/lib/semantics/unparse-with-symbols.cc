@@ -45,7 +45,7 @@ public:
 
 private:
   const SourceName *currStmt_{nullptr};  // current statement we are processing
-  std::multimap<const char *, const Symbol*> symbols_;  // location to symbol
+  std::multimap<const char *, const Symbol *> symbols_;  // location to symbol
   std::set<const Symbol *> symbolsDefined_;  // symbols that have been processed
   void Indent(std::ostream &, int) const;
 };
@@ -89,5 +89,4 @@ void UnparseWithSymbols(std::ostream &out, const parser::Program &program,
       }};
   parser::Unparse(out, program, encoding, false, true, &preStatement);
 }
-
-}  // namespace Fortran::semantics
+}

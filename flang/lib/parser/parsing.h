@@ -82,6 +82,5 @@ private:
   std::optional<Program> parseTree_;
   ParsingLog log_;
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_PARSING_H_

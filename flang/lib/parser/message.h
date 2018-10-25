@@ -63,7 +63,7 @@ constexpr MessageFixedText operator""_err_en_US(
     const char str[], std::size_t n) {
   return MessageFixedText{str, n, true /* fatal */};
 }
-}  // namespace literals
+}
 
 class MessageFormattedText {
 public:
@@ -274,5 +274,5 @@ private:
   CharBlock at_;
   Messages *messages_{nullptr};
 };
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_MESSAGE_H_

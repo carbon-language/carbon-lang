@@ -18,7 +18,7 @@
 namespace Fortran::parser {
 class Messages;
 struct Program;
-}  // namespace Fortran::parser
+}
 
 namespace Fortran::semantics {
 
@@ -27,6 +27,5 @@ namespace Fortran::semantics {
 /// \param program    the parse tree of the program
 /// \return true, iff the program's labels pass semantics checks
 bool ValidateLabels(parser::Messages &messages, const parser::Program &program);
-
-}  // namespace Fortran::semantics
+}
 #endif  // FORTRAN_SEMANTICS_RESOLVE_LABELS_H_

@@ -23,6 +23,5 @@ namespace Fortran::runtime {
 std::unique_ptr<Descriptor> RESHAPE(const Descriptor &source,
     const Descriptor &shape, const Descriptor *pad = nullptr,
     const Descriptor *order = nullptr);
-
-}  // namespace Fortran::runtime
+}
 #endif  // FORTRAN_RUNTIME_TRANSFORMATIONAL_H_

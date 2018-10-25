@@ -380,6 +380,5 @@ private:
   ProcedureDesignator proc_;
   Arguments arguments_;
 };
-
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_VARIABLE_H_

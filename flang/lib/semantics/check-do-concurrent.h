@@ -18,11 +18,11 @@
 namespace Fortran::parser {
 class Messages;
 struct Program;
-}  // namespace Fortran::parser
+}
 
 namespace Fortran::semantics {
 
-void CheckDoConcurrentConstraints(parser::Messages &messages, const parser::Program &program);
-
-}  // namespace Fortran::semantics
+void CheckDoConcurrentConstraints(
+    parser::Messages &messages, const parser::Program &program);
+}
 #endif  // FORTRAN_SEMANTICS_CHECK_DO_CONCURRENT_H_

@@ -146,5 +146,4 @@ std::ostream &operator<<(std::ostream &os, const Scope &scope) {
   }
   return os;
 }
-
-}  // namespace Fortran::semantics
+}

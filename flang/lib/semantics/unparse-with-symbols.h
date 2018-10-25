@@ -20,11 +20,11 @@
 
 namespace Fortran::parser {
 struct Program;
-}  // namespace Fortran::parser
+}
 
 namespace Fortran::semantics {
 void UnparseWithSymbols(std::ostream &, const parser::Program &,
     parser::Encoding encoding = parser::Encoding::UTF8);
-}  // namespace Fortran::semantics
+}
 
 #endif  // FORTRAN_SEMANTICS_UNPARSE_WITH_SYMBOLS_H_

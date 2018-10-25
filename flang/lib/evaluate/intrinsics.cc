@@ -1275,5 +1275,4 @@ std::ostream &IntrinsicProcTable::Implementation::Dump(std::ostream &o) const {
 std::ostream &IntrinsicProcTable::Dump(std::ostream &o) const {
   return impl_->Dump(o);
 }
-
-}  // namespace Fortran::evaluate
+}

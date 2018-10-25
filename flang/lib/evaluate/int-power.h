@@ -55,6 +55,5 @@ ValueWithRealFlags<REAL> IntPower(
   }
   return result;
 }
-
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_INT_POWER_H_

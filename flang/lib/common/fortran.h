@@ -33,6 +33,5 @@ ENUM_CLASS(ImportKind, Default, Only, None, All)
 ENUM_CLASS(TypeParamAttr, Kind, Len)
 
 ENUM_CLASS(RelationalOperator, LT, LE, EQ, NE, GE, GT)
-
-}  // namespace Fortran::common
+}
 #endif  // FORTRAN_COMMON_FORTRAN_H_

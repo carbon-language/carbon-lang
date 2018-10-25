@@ -47,6 +47,5 @@ struct ActualArgument {
 };
 
 using Arguments = std::vector<ActualArgument>;
-
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_CALL_H_

@@ -207,4 +207,4 @@ int CFI_setpointer(CFI_cdesc_t *result, const CFI_cdesc_t *source,
   return CFI_INVALID_DESCRIPTOR;  // TODO
 }
 }  // extern "C"
-}  // namespace Fortran::ISO
+}

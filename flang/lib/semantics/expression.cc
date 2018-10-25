@@ -1186,8 +1186,7 @@ void ExprAnalyzer::CheckUnsubscriptedComponent(const Component &component) {
     }
   }
 }
-
-}  // namespace Fortran::evaluate
+}
 
 namespace Fortran::semantics {
 
@@ -1225,4 +1224,4 @@ void AnalyzeExpressions(parser::Program &program, SemanticsContext &context) {
   Mutator mutator{context};
   parser::Walk(program, mutator);
 }
-}  // namespace Fortran::semantics
+}

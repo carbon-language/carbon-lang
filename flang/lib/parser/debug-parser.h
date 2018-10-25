@@ -42,6 +42,5 @@ private:
 constexpr DebugParser operator""_debug(const char str[], std::size_t n) {
   return DebugParser{str, n};
 }
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_DEBUG_PARSER_H_

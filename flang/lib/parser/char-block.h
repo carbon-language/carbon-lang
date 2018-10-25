@@ -128,8 +128,7 @@ inline bool operator>=(const char *left, const CharBlock &right) {
 inline bool operator>(const char *left, const CharBlock &right) {
   return right < left;
 }
-
-}  // namespace Fortran::parser
+}
 
 // Specializations to enable std::unordered_map<CharBlock, ...> &c.
 template<> struct std::hash<Fortran::parser::CharBlock> {

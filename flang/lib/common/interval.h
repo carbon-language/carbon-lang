@@ -107,6 +107,5 @@ private:
   A start_;
   std::size_t size_{0};
 };
-
-}  // namespace Fortran::common
+}
 #endif  // FORTRAN_COMMON_INTERVAL_H_

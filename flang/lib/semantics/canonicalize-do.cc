@@ -90,5 +90,4 @@ void CanonicalizeDo(Program &program) {
   CanonicalizationOfDoLoops canonicalizationOfDoLoops;
   Walk(program, canonicalizationOfDoLoops);
 }
-
-}  // namespace Fortran::parser
+}

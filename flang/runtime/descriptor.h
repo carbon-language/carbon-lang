@@ -329,5 +329,5 @@ public:
 private:
   char storage_[byteSize];
 };
-}  // namespace Fortran::runtime
+}
 #endif  // FORTRAN_RUNTIME_DESCRIPTOR_H_

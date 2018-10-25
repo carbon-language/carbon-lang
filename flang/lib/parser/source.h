@@ -59,6 +59,5 @@ private:
   std::vector<std::size_t> lineStart_;
   std::string normalized_;
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_SOURCE_H_

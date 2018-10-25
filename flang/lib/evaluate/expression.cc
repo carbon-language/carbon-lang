@@ -588,8 +588,7 @@ FOR_EACH_CHARACTER_KIND(template struct Relational)
 template struct Relational<SomeType>;
 FOR_EACH_INTRINSIC_KIND(template struct ExpressionBase)
 FOR_EACH_CATEGORY_TYPE(template struct ExpressionBase)
-
-}  // namespace Fortran::evaluate
+}
 
 // For reclamation of analyzed expressions to which owning pointers have
 // been embedded in the parse tree.  This destructor appears here, where
@@ -601,4 +600,4 @@ template<> OwningPointer<evaluate::GenericExprWrapper>::~OwningPointer() {
   p_ = nullptr;
 }
 template class OwningPointer<evaluate::GenericExprWrapper>;
-}  // namespace Fortran::common
+}

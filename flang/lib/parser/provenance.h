@@ -232,6 +232,5 @@ private:
   std::string data_;  // all of it, prescanned and preprocessed
   OffsetToProvenanceMappings provenanceMap_;
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_PROVENANCE_H_

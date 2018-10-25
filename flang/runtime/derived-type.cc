@@ -80,4 +80,4 @@ void DerivedType::Destroy(char *instance, bool finalize) const {
     }
   }
 }
-}  // namespace Fortran::runtime
+}

@@ -301,5 +301,4 @@ ContextualMessages::SavedState ContextualMessages::SetLocation(
     const CharBlock &at) {
   return SavedState(*this, at);
 }
-
-}  // namespace Fortran::parser
+}

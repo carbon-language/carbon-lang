@@ -34,6 +34,5 @@ std::optional<evaluate::Expr<evaluate::SomeType>> AnalyzeExpr(
 // Semantic analysis of all expressions in a parse tree, which is
 // decorated with typed representations for top-level expressions.
 void AnalyzeExpressions(parser::Program &, SemanticsContext &);
-
-}  // namespace Fortran::semantics
+}
 #endif  // FORTRAN_SEMANTICS_EXPRESSION_H_

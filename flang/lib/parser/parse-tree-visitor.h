@@ -757,6 +757,5 @@ void Walk(OpenMPDeclareTargetConstruct::WithExtendedList &x, M &mutator) {
     mutator.Post(x);
   }
 }
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_PARSE_TREE_VISITOR_H_

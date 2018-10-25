@@ -121,6 +121,5 @@ private:
   std::vector<char> char_;
   OffsetToProvenanceMappings provenances_;
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_TOKEN_SEQUENCE_H_

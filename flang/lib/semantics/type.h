@@ -269,7 +269,6 @@ private:
   const Symbol *symbol_{nullptr};
   std::optional<DeclTypeSpec> type_;
 };
-
-}  // namespace Fortran::semantics
+}
 
 #endif  // FORTRAN_SEMANTICS_TYPE_H_

@@ -180,4 +180,4 @@ std::ostream &DescriptorAddendum::Dump(std::ostream &o) const {
   // TODO: LEN parameter values
   return o;
 }
-}  // namespace Fortran::runtime
+}

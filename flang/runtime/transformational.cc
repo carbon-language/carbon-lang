@@ -148,5 +148,4 @@ std::unique_ptr<Descriptor> RESHAPE(const Descriptor &source,
 
   return result;
 }
-
-}  // namespace Fortran::runtime
+}

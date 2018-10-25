@@ -54,5 +54,4 @@ std::ostream &operator<<(std::ostream &o, const Attrs &attrs) {
   }
   return o;
 }
-
-}  // namespace Fortran::semantics
+}

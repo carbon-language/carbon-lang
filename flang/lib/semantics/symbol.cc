@@ -485,5 +485,4 @@ std::ostream &DumpForUnparse(
   }
   return os;
 }
-
-}  // namespace Fortran::semantics
+}

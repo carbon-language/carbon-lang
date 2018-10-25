@@ -198,7 +198,7 @@ public:
 private:
   bitsetType bitset_;
 };
-}  // namespace Fortran::common
+}
 
 template<typename ENUM, std::size_t values>
 struct std::hash<Fortran::common::EnumSet<ENUM, values>> {

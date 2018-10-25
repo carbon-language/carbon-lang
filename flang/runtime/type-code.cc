@@ -59,4 +59,4 @@ TypeCode::TypeCode(TypeCategory f, int kind) {
   case TypeCategory::Derived: raw_ = CFI_type_struct; break;
   }
 }
-}  // namespace Fortran::runtime
+}

@@ -50,6 +50,5 @@ std::string AttrToString(Attr attr);
 
 std::ostream &operator<<(std::ostream &o, Attr attr);
 std::ostream &operator<<(std::ostream &o, const Attrs &attrs);
-
-}  // namespace Fortran::semantics
+}
 #endif  // FORTRAN_SEMANTICS_ATTR_H_

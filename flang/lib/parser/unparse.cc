@@ -2519,5 +2519,4 @@ void Unparse(std::ostream &out, const Program &program, Encoding encoding,
   Walk(program, visitor);
   visitor.Done();
 }
-
-}  // namespace Fortran::parser
+}

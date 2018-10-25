@@ -192,5 +192,5 @@ private:
   std::uint64_t flags_{0};
   std::size_t bytes_{0};
 };
-}  // namespace Fortran::runtime
+}
 #endif  // FORTRAN_RUNTIME_DERIVED_TYPE_H_

@@ -206,7 +206,7 @@ void TestIntrinsics() {
   TestCall{table, "abs"}.Push(Const(Scalar<Log4>{})).DoCall();
   // TODO: test other intrinsics
 }
-}  // namespace Fortran::evaluate
+}
 
 int main() {
   Fortran::evaluate::TestIntrinsics();

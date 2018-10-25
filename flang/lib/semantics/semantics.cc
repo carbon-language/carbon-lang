@@ -108,5 +108,4 @@ static void PutIndent(std::ostream &os, int indent) {
     os << "  ";
   }
 }
-
-}  // namespace Fortran::semantics
+}

@@ -42,5 +42,4 @@ std::optional<int> ActualArgument::VectorSize() const {
 }
 
 FOR_EACH_SPECIFIC_TYPE(template struct FunctionRef)
-
-}  // namespace Fortran::evaluate
+}

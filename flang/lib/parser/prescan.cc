@@ -973,5 +973,4 @@ void Prescanner::SourceFormChange(std::string &&dir) {
     inFixedForm_ = true;
   }
 }
-
-}  // namespace Fortran::parser
+}

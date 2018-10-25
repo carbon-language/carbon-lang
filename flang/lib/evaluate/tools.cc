@@ -492,5 +492,4 @@ Expr<SomeLogical> BinaryLogicalOperation(
       },
       AsSameKindExprs(std::move(x), std::move(y)));
 }
-
-}  // namespace Fortran::evaluate
+}

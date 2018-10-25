@@ -1356,6 +1356,5 @@ private:
 template<typename PA> inline constexpr auto sourced(const PA &parser) {
   return SourcedParser<PA>{parser};
 }
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_BASIC_PARSERS_H_

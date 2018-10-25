@@ -249,5 +249,4 @@ std::pair<int, int> SourceFile::FindOffsetLineAndColumn(std::size_t at) const {
   return {
       static_cast<int>(low + 1), static_cast<int>(at - lineStart_[low] + 1)};
 }
-
-}  // namespace Fortran::parser
+}

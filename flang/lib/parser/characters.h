@@ -168,6 +168,5 @@ std::optional<int> UTF8CharacterBytes(const char *);
 std::optional<int> EUC_JPCharacterBytes(const char *);
 std::optional<std::size_t> CountCharacters(
     const char *, std::size_t bytes, std::optional<int> (*)(const char *));
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_CHARACTERS_H_

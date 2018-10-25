@@ -3482,5 +3482,5 @@ TYPE_CONTEXT_PARSER("PAUSE statement"_en_US,
 //     is not used because parsing is not sensitive to rank
 //   R1030 default-char-constant-expr -> default-char-expr
 //     is only used via scalar-default-char-constant-expr
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_GRAMMAR_H_

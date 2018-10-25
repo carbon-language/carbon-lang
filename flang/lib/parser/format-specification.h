@@ -143,6 +143,5 @@ struct FormatSpecification {
     : items(std::move(is)), unlimitedItems(std::move(us)) {}
   std::list<FormatItem> items, unlimitedItems;
 };
-
-}  // namespace Fortran::format
+}
 #endif  // FORTRAN_PARSER_FORMAT_SPECIFICATION_H_

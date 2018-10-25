@@ -388,5 +388,4 @@ std::ostream &CookedSource::Dump(std::ostream &o) const {
   provenanceMap_.Dump(o);
   return o;
 }
-
-}  // namespace Fortran::parser
+}

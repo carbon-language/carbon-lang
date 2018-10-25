@@ -421,6 +421,5 @@ private:
     return result;
   }
 };
-
-}  // namespace Fortran::semantics
+}
 #endif  // FORTRAN_SEMANTICS_SYMBOL_H_

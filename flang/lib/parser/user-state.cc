@@ -96,5 +96,4 @@ std::optional<DataComponentDefStmt> StructureComponents::Parse(
   }
   return defs;
 }
-
-}  // namespace Fortran::parser
+}

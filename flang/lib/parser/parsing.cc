@@ -136,5 +136,4 @@ bool Parsing::ForTesting(std::string path, std::ostream &err) {
   }
   return true;
 }
-
-}  // namespace Fortran::parser
+}

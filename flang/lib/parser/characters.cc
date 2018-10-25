@@ -92,4 +92,4 @@ std::string QuoteCharacterLiteral(
   result += '"';
   return result;
 }
-}  // namespace Fortran::parser
+}

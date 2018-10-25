@@ -78,6 +78,5 @@ private:
 
   type *p_{nullptr};
 };
-
-}  // namespace Fortran::common
+}
 #endif  // FORTRAN_COMMON_REFERENCE_COUNTED_H_

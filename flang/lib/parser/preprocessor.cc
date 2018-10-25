@@ -986,5 +986,4 @@ bool Preprocessor::IsIfPredicateTrue(const TokenSequence &expr,
   }
   return result;
 }
-
-}  // namespace Fortran::parser
+}

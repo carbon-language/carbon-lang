@@ -131,5 +131,4 @@ std::ostream &operator<<(std::ostream &os, const Name &x) {
 std::ostream &operator<<(std::ostream &os, const CharBlock &x) {
   return os << x.ToString();
 }
-
-}  // namespace Fortran::parser
+}

@@ -339,6 +339,5 @@ extern template class Real<Integer<64>, 53>;
 extern template class Real<Integer<80>, 64, false>;  // 80387 extended precision
 extern template class Real<Integer<128>, 112>;
 // N.B. No "double-double" support.
-
-}  // namespace Fortran::evaluate::value
+}
 #endif  // FORTRAN_EVALUATE_REAL_H_

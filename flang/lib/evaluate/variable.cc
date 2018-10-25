@@ -502,5 +502,4 @@ std::optional<DynamicType> ProcedureDesignator::GetType() const {
 }
 
 FOR_EACH_CHARACTER_KIND(template class Designator)
-
-}  // namespace Fortran::evaluate
+}

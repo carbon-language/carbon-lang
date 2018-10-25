@@ -100,5 +100,5 @@ private:
   bool round_{false};  // 0.25 * ulp
   bool sticky_{false};  // true if any lesser-valued bit would be set
 };
-}  // namespace Fortran::evaluate::value
+}
 #endif  // FORTRAN_EVALUATE_ROUNDING_BITS_H_

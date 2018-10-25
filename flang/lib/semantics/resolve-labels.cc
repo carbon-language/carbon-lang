@@ -1129,5 +1129,4 @@ bool ValidateLabels(
     parser::Messages &errorHandler, const parser::Program &program) {
   return CheckConstraints(LabelAnalysis(errorHandler, program));
 }
-
-}  // namespace Fortran::semantics
+}

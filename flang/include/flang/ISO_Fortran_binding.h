@@ -99,7 +99,7 @@ typedef signed char CFI_type_t;
 #define CFI_type_other (-1)  // must be negative
 
 /* Error code macros */
-#define CFI_SUCCESS 0  /* must be zero */
+#define CFI_SUCCESS 0 /* must be zero */
 #define CFI_ERROR_BASE_ADDR_NULL 1
 #define CFI_ERROR_BASE_ADDR_NOT_NULL 2
 #define CFI_INVALID_ELEM_LEN 3
@@ -152,8 +152,8 @@ int CFI_setpointer(
 #ifdef __cplusplus
 }  // extern "C"
 }  // inline namespace Fortran_2018
-}  // namespace ISO
-}  // namespace Fortran
+}
+}
 #endif
 
 #undef CFI_ISO_FORTRAN_BINDING_FLEXIBLE_ARRAY

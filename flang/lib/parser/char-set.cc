@@ -27,5 +27,4 @@ std::string SetOfChars::ToString() const {
   }
   return result;
 }
-
-}  // namespace Fortran::parser
+}

@@ -711,6 +711,5 @@ template<> inline bool IsVariable(const Expr<SomeType> &expr) {
 
 FOR_EACH_CATEGORY_TYPE(extern template class Expr)
 FOR_EACH_TYPE_AND_KIND(extern template struct ExpressionBase)
-
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_

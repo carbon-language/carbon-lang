@@ -55,6 +55,5 @@ private:
   int defaultCharacterKind_{1};
   int defaultLogicalKind_{defaultIntegerKind_};
 };
-
-}  // namespace Fortran::semantics
+}
 #endif  // FORTRAN_DEFAULT_KINDS_H_

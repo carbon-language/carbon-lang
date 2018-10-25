@@ -486,4 +486,4 @@ template class Real<Integer<32>, 24>;
 template class Real<Integer<64>, 53>;
 template class Real<Integer<80>, 64, false>;
 template class Real<Integer<128>, 112>;
-}  // namespace Fortran::evaluate::value
+}

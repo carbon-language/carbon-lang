@@ -54,9 +54,7 @@ static bool FileContentsMatch(
 static std::string GetHeader(const std::string &);
 static std::size_t GetFileSize(const std::string &);
 
-void ModFileWriter::WriteAll() {
-  WriteAll(context_.globalScope());
-}
+void ModFileWriter::WriteAll() { WriteAll(context_.globalScope()); }
 
 void ModFileWriter::WriteAll(const Scope &scope) {
   for (const auto &child : scope.children()) {
@@ -78,11 +76,12 @@ void ModFileWriter::WriteOne(const Scope &scope) {
 void ModFileWriter::Write(const Symbol &symbol) {
   auto *ancestor{symbol.get<ModuleDetails>().ancestor()};
   auto ancestorName{ancestor ? ancestor->name().ToString() : ""s};
-  auto path{ModFilePath(context_.moduleDirectory(), symbol.name(), ancestorName)};
+  auto path{
+      ModFilePath(context_.moduleDirectory(), symbol.name(), ancestorName)};
   PutSymbols(*symbol.scope());
   if (!WriteFile(path, GetAsString(symbol))) {
-    context_.Say(symbol.name(), "Error writing %s: %s"_err_en_US,
-        path.c_str(), std::strerror(errno));
+    context_.Say(symbol.name(), "Error writing %s: %s"_err_en_US, path.c_str(),
+        std::strerror(errno));
   }
 }
 
@@ -496,9 +495,8 @@ Scope *ModFileReader::Read(const SourceName &name, Scope *ancestor) {
   auto &parseTree{parsing.parseTree()};
   if (!parsing.messages().empty() || !parsing.consumedWholeFile() ||
       !parseTree.has_value()) {
-    context_.Say(name,
-        "Module file for '%s' is corrupt: %s"_err_en_US, name.ToString().data(),
-        path->data());
+    context_.Say(name, "Module file for '%s' is corrupt: %s"_err_en_US,
+        name.ToString().data(), path->data());
     return nullptr;
   }
   Scope *parentScope;  // the scope this module/submodule goes into
@@ -577,5 +575,4 @@ static std::string ModFilePath(const std::string &dir, const SourceName &name,
   PutLower(path, name.ToString()) << extension;
   return path.str();
 }
-
-}  // namespace Fortran::semantics
+}

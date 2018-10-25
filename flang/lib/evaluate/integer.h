@@ -1003,5 +1003,5 @@ extern template class Integer<32>;
 extern template class Integer<64>;
 extern template class Integer<80>;
 extern template class Integer<128>;
-}  // namespace Fortran::evaluate::value
+}
 #endif  // FORTRAN_EVALUATE_INTEGER_H_

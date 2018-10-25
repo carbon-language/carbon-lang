@@ -75,4 +75,4 @@ int IntrinsicTypeDefaultKinds::GetDefaultKind(TypeCategory category) const {
   default: CRASH_NO_CASE; return 0;
   }
 }
-}  // namespace Fortran::semantics
+}

@@ -164,6 +164,5 @@ struct FoldingContext {
 };
 
 void RealFlagWarnings(FoldingContext &, const RealFlags &, const char *op);
-
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_COMMON_H_

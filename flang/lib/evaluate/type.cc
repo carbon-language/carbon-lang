@@ -91,4 +91,4 @@ DynamicType DynamicType::ResultTypeForMultiply(const DynamicType &that) const {
 std::string SomeDerived::Dump() const {
   return "TYPE("s + spec().name().ToString() + ')';
 }
-}  // namespace Fortran::evaluate
+}

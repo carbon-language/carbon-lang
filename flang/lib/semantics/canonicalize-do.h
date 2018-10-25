@@ -20,6 +20,6 @@
 namespace Fortran::parser {
 struct Program;
 void CanonicalizeDo(Program &program);
-}  // namespace Fortran::parser
+}
 
 #endif  // FORTRAN_SEMANTICS_CANONICALIZE_DO_H_

@@ -152,6 +152,5 @@ public:
 private:
   A *p_{nullptr};
 };
-
-}  // namespace Fortran::common
+}
 #endif  // FORTRAN_COMMON_INDIRECTION_H_

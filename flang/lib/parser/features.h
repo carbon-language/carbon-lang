@@ -60,6 +60,5 @@ private:
   LanguageFeatures warn_;
   bool warnAll_{false};
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_FEATURES_H_

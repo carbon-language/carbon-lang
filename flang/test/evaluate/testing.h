@@ -44,5 +44,5 @@ FailureDetailPrinter Match(const char *file, int line, const char *want,
 FailureDetailPrinter Compare(const char *file, int line, const char *xs,
     const char *rel, const char *ys, unsigned long long x,
     unsigned long long y);
-}  // namespace testing
+}
 #endif  // FORTRAN_EVALUATE_TESTING_H_

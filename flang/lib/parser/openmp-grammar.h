@@ -585,6 +585,5 @@ TYPE_PARSER(skipStuffBeforeStatement >> "!$OMP "_sptok >> "END"_tok >>
 
 TYPE_PARSER(construct<OpenMPLoopConstruct>(
     Parser<OmpLoopDirective>{}, Parser<OmpClauseList>{} / endOmpLine))
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_OPENMP_GRAMMAR_H_

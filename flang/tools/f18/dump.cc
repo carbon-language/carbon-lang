@@ -43,6 +43,6 @@ DEFINE_DUMP(semantics, Scope)
 DEFINE_DUMP(semantics, IntrinsicTypeSpec)
 DEFINE_DUMP(semantics, DerivedTypeSpec)
 DEFINE_DUMP(semantics, DeclTypeSpec)
-}  // namespace Fortran
+}
 
 #endif

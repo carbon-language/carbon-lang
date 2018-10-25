@@ -508,5 +508,4 @@ void CheckDoConcurrentConstraints(
   FindDoConcurrentLoops findDoConcurrentLoops{messages};
   Walk(program, findDoConcurrentLoops);
 }
-
-}  // namespace Fortran::semantics
+}

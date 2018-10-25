@@ -80,5 +80,4 @@ void ParsingLog::Dump(std::ostream &o, const CookedSource &cooked) const {
     }
   }
 }
-
-}  // namespace Fortran::parser
+}

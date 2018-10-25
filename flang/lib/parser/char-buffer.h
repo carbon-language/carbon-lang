@@ -79,6 +79,5 @@ private:
   std::size_t bytes_{0};
   bool lastBlockEmpty_{false};
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_CHAR_BUFFER_H_

@@ -157,6 +157,5 @@ private:
 
   friend std::ostream &operator<<(std::ostream &, const Scope &);
 };
-
-}  // namespace Fortran::semantics
+}
 #endif  // FORTRAN_SEMANTICS_SCOPE_H_

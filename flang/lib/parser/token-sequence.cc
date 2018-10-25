@@ -258,4 +258,4 @@ ProvenanceRange TokenSequence::GetIntervalProvenanceRange(
 ProvenanceRange TokenSequence::GetProvenanceRange() const {
   return GetIntervalProvenanceRange(0, start_.size());
 }
-}  // namespace Fortran::parser
+}

@@ -179,5 +179,4 @@ std::ostream &operator<<(std::ostream &o, const GenericSpec &x) {
   default: CRASH_NO_CASE;
   }
 }
-
-}  // namespace Fortran::semantics
+}

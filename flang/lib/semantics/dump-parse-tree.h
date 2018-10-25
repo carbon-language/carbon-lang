@@ -828,5 +828,5 @@ template<typename T> void DumpTree(std::ostream &out, const T &x) {
   ParseTreeDumper dumper{out};
   parser::Walk(x, dumper);
 }
-}  // namespace Fortran::semantics
+}
 #endif  // FORTRAN_SEMANTICS_DUMP_PARSE_TREE_H_

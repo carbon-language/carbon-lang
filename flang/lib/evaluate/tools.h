@@ -447,6 +447,5 @@ struct TypeKindVisitor {
   int kind;
   VALUE value;
 };
-
-}  // namespace Fortran::evaluate
+}
 #endif  // FORTRAN_EVALUATE_TOOLS_H_

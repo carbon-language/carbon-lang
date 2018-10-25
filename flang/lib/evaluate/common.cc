@@ -33,5 +33,4 @@ void RealFlagWarnings(
     context.messages.Say("underflow on %s"_en_US, operation);
   }
 }
-
-}  // namespace Fortran::evaluate
+}

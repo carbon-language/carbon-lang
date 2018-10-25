@@ -3307,5 +3307,4 @@ static GenericSpec MapGenericSpec(const parser::GenericSpec &genericSpec) {
       },
       genericSpec.u);
 }
-
-}  // namespace Fortran::semantics
+}

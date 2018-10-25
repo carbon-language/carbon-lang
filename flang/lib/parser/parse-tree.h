@@ -60,7 +60,7 @@ CLASS_TRAIT(TupleTrait)
 // here.
 namespace Fortran::semantics {
 class Symbol;
-}  // namespace Fortran::semantics
+}
 
 // Expressions in the parse tree have owning pointers that can be set to
 // type-checked generic expression representations by semantic analysis.
@@ -68,10 +68,10 @@ class Symbol;
 // the bulk of lib/evaluate/*.h headers into the parser proper.
 namespace Fortran::evaluate {
 struct GenericExprWrapper;  // forward definition, wraps Expr<SomeType>
-}  // namespace Fortran::evaluate
+}
 namespace Fortran::common {
 extern template class OwningPointer<evaluate::GenericExprWrapper>;
-}  // namespace Fortran::common
+}
 
 // Most non-template classes in this file use these default definitions
 // for their move constructor and move assignment operator=, and disable
@@ -3699,6 +3699,5 @@ struct OpenMPConstruct {
       common::Indirection<OpenMPCriticalConstruct>, OmpSection>
       u;
 };
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_PARSE_TREE_H_

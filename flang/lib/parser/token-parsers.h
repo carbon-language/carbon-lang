@@ -719,6 +719,5 @@ TYPE_PARSER(space >> "."_ch >>
     construct<DefinedOpName>(
         sourced(some(definedOpNameChar) >> construct<Name>())) /
         "."_ch)
-
-}  // namespace Fortran::parser
+}
 #endif  // FORTRAN_PARSER_TOKEN_PARSERS_H_
