@@ -4185,6 +4185,9 @@ def : Pat<(concat_vectors (v2i32 V64:$Rd),
 
 defm EXT : SIMDBitwiseExtract<"ext">;
 
+def AdjustExtImm : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(8 + N->getZExtValue(), SDLoc(N), MVT::i32);
+}]>;
 multiclass ExtPat<ValueType VT64, ValueType VT128, int N> {
   def : Pat<(VT64 (AArch64ext V64:$Rn, V64:$Rm, (i32 imm:$imm))),
             (EXTv8i8 V64:$Rn, V64:$Rm, imm:$imm)>;
@@ -4194,6 +4197,22 @@ multiclass ExtPat<ValueType VT64, ValueType VT128, int N> {
   // 128-bit vector.
   def : Pat<(VT64 (extract_subvector V128:$Rn, (i64 N))),
             (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, 8), dsub)>;
+  // A 64-bit EXT of two halves of the same 128-bit register can be done as a
+  // single 128-bit EXT.
+  def : Pat<(VT64 (AArch64ext (extract_subvector V128:$Rn, (i64 0)),
+                              (extract_subvector V128:$Rn, (i64 N)),
+                              (i32 imm:$imm))),
+            (EXTRACT_SUBREG (EXTv16i8 V128:$Rn, V128:$Rn, imm:$imm), dsub)>;
+  // A 64-bit EXT of the high half of a 128-bit register can be done using a
+  // 128-bit EXT of the whole register with an adjustment to the immediate. The
+  // top half of the other operand will be unset, but that doesn't matter as it
+  // will not be used.
+  def : Pat<(VT64 (AArch64ext (extract_subvector V128:$Rn, (i64 N)),
+                              V64:$Rm,
+                              (i32 imm:$imm))),
+            (EXTRACT_SUBREG (EXTv16i8 V128:$Rn,
+                                      (SUBREG_TO_REG (i32 0), V64:$Rm, dsub),
+                                      (AdjustExtImm imm:$imm)), dsub)>;
 }
 
 defm : ExtPat<v8i8, v16i8, 8>;
