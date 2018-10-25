@@ -1291,6 +1291,8 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     { ISD::UINT_TO_FP,  MVT::v4f64,  MVT::v4i64, 12 },
     { ISD::UINT_TO_FP,  MVT::v8f64,  MVT::v8i64, 26 },
 
+    { ISD::UINT_TO_FP,  MVT::f64,    MVT::i64,    1 },
+
     { ISD::FP_TO_UINT,  MVT::v2i32,  MVT::v2f32,  1 },
     { ISD::FP_TO_UINT,  MVT::v4i32,  MVT::v4f32,  1 },
     { ISD::FP_TO_UINT,  MVT::v4i32,  MVT::v4f64,  1 },
@@ -1444,6 +1446,7 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     { ISD::TRUNCATE,    MVT::v8i16,  MVT::v8i32,  3 },
     { ISD::TRUNCATE,    MVT::v16i16, MVT::v16i32, 6 },
 
+    { ISD::UINT_TO_FP,  MVT::f64,    MVT::i64,    4 },
   };
 
   static const TypeConversionCostTblEntry SSE2ConversionTbl[] = {
@@ -1469,6 +1472,8 @@ int X86TTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
     { ISD::UINT_TO_FP, MVT::v4f32, MVT::v2i64, 15 },
 
     { ISD::FP_TO_SINT,  MVT::v2i32,  MVT::v2f64,  3 },
+
+    { ISD::UINT_TO_FP,  MVT::f64,    MVT::i64,    6 },
 
     { ISD::ZERO_EXTEND, MVT::v4i16,  MVT::v4i8,   1 },
     { ISD::SIGN_EXTEND, MVT::v4i16,  MVT::v4i8,   6 },
