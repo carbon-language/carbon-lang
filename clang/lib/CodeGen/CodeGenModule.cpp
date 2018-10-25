@@ -892,10 +892,11 @@ static std::string getCPUSpecificMangling(const CodeGenModule &CGM,
 static void AppendCPUSpecificCPUDispatchMangling(const CodeGenModule &CGM,
                                                  const CPUSpecificAttr *Attr,
                                                  raw_ostream &Out) {
-  // cpu_specific gets the current name, dispatch gets the resolver.
+  // cpu_specific gets the current name, dispatch gets the resolver if IFunc is
+  // supported.
   if (Attr)
     Out << getCPUSpecificMangling(CGM, Attr->getCurCPUName()->getName());
-  else
+  else if (CGM.getTarget().supportsIFunc())
     Out << ".resolver";
 }
 
@@ -2507,13 +2508,19 @@ void CodeGenModule::emitMultiVersionFunctions() {
                                TA->getArchitecture(), Feats);
         });
 
-    llvm::Function *ResolverFunc = cast<llvm::Function>(
-        GetGlobalValue((getMangledName(GD) + ".resolver").str()));
+    llvm::Function *ResolverFunc;
+    const TargetInfo &TI = getTarget();
+
+    if (TI.supportsIFunc() || FD->isTargetMultiVersion())
+      ResolverFunc = cast<llvm::Function>(
+          GetGlobalValue((getMangledName(GD) + ".resolver").str()));
+    else
+      ResolverFunc = cast<llvm::Function>(GetGlobalValue(getMangledName(GD)));
+
     if (supportsCOMDAT())
       ResolverFunc->setComdat(
           getModule().getOrInsertComdat(ResolverFunc->getName()));
 
-    const TargetInfo &TI = getTarget();
     std::stable_sort(
         Options.begin(), Options.end(),
         [&TI](const CodeGenFunction::MultiVersionResolverOption &LHS,
@@ -2533,13 +2540,21 @@ void CodeGenModule::emitCPUDispatchDefinition(GlobalDecl GD) {
   llvm::Type *DeclTy = getTypes().ConvertTypeForMem(FD->getType());
 
   StringRef ResolverName = getMangledName(GD);
-  llvm::Type *ResolverType = llvm::FunctionType::get(
-      llvm::PointerType::get(DeclTy,
-                             Context.getTargetAddressSpace(FD->getType())),
-      false);
-  auto *ResolverFunc = cast<llvm::Function>(
-      GetOrCreateLLVMFunction(ResolverName, ResolverType, GlobalDecl{},
-                              /*ForVTable=*/false));
+
+  llvm::Type *ResolverType;
+  GlobalDecl ResolverGD;
+  if (getTarget().supportsIFunc())
+    ResolverType = llvm::FunctionType::get(
+        llvm::PointerType::get(DeclTy,
+                               Context.getTargetAddressSpace(FD->getType())),
+        false);
+  else {
+    ResolverType = DeclTy;
+    ResolverGD = GD;
+  }
+
+  auto *ResolverFunc = cast<llvm::Function>(GetOrCreateLLVMFunction(
+      ResolverName, ResolverType, ResolverGD, /*ForVTable=*/false));
 
   SmallVector<CodeGenFunction::MultiVersionResolverOption, 10> Options;
   const TargetInfo &Target = getTarget();
@@ -2571,16 +2586,24 @@ void CodeGenModule::emitCPUDispatchDefinition(GlobalDecl GD) {
   CGF.EmitMultiVersionResolver(ResolverFunc, Options);
 }
 
-/// If an ifunc for the specified mangled name is not in the module, create and
-/// return an llvm IFunc Function with the specified type.
-llvm::Constant *
-CodeGenModule::GetOrCreateMultiVersionIFunc(GlobalDecl GD, llvm::Type *DeclTy,
-                                            const FunctionDecl *FD) {
+/// If a dispatcher for the specified mangled name is not in the module, create
+/// and return an llvm Function with the specified type.
+llvm::Constant *CodeGenModule::GetOrCreateMultiVersionResolver(
+    GlobalDecl GD, llvm::Type *DeclTy, const FunctionDecl *FD) {
   std::string MangledName =
       getMangledNameImpl(*this, GD, FD, /*OmitMultiVersionMangling=*/true);
-  std::string IFuncName = MangledName + ".ifunc";
-  if (llvm::GlobalValue *IFuncGV = GetGlobalValue(IFuncName))
-    return IFuncGV;
+
+  // Holds the name of the resolver, in ifunc mode this is the ifunc (which has
+  // a separate resolver).
+  std::string ResolverName = MangledName;
+  if (getTarget().supportsIFunc())
+    ResolverName += ".ifunc";
+  else if (FD->isTargetMultiVersion())
+    ResolverName += ".resolver";
+
+  // If this already exists, just return that one.
+  if (llvm::GlobalValue *ResolverGV = GetGlobalValue(ResolverName))
+    return ResolverGV;
 
   // Since this is the first time we've created this IFunc, make sure
   // that we put this multiversioned function into the list to be
@@ -2588,20 +2611,28 @@ CodeGenModule::GetOrCreateMultiVersionIFunc(GlobalDecl GD, llvm::Type *DeclTy,
   if (!FD->isCPUDispatchMultiVersion() && !FD->isCPUSpecificMultiVersion())
     MultiVersionFuncs.push_back(GD);
 
-  std::string ResolverName = MangledName + ".resolver";
-  llvm::Type *ResolverType = llvm::FunctionType::get(
-      llvm::PointerType::get(DeclTy,
-                             Context.getTargetAddressSpace(FD->getType())),
-      false);
-  llvm::Constant *Resolver =
-      GetOrCreateLLVMFunction(ResolverName, ResolverType, GlobalDecl{},
-                              /*ForVTable=*/false);
-  llvm::GlobalIFunc *GIF = llvm::GlobalIFunc::create(
-      DeclTy, 0, llvm::Function::ExternalLinkage, "", Resolver, &getModule());
-  GIF->setName(IFuncName);
-  SetCommonAttributes(FD, GIF);
+  if (getTarget().supportsIFunc()) {
+    llvm::Type *ResolverType = llvm::FunctionType::get(
+        llvm::PointerType::get(
+            DeclTy, getContext().getTargetAddressSpace(FD->getType())),
+        false);
+    llvm::Constant *Resolver = GetOrCreateLLVMFunction(
+        MangledName + ".resolver", ResolverType, GlobalDecl{},
+        /*ForVTable=*/false);
+    llvm::GlobalIFunc *GIF = llvm::GlobalIFunc::create(
+        DeclTy, 0, llvm::Function::ExternalLinkage, "", Resolver, &getModule());
+    GIF->setName(ResolverName);
+    SetCommonAttributes(FD, GIF);
 
-  return GIF;
+    return GIF;
+  }
+
+  llvm::Constant *Resolver = GetOrCreateLLVMFunction(
+      ResolverName, DeclTy, GlobalDecl{}, /*ForVTable=*/false);
+  assert(isa<llvm::GlobalValue>(Resolver) &&
+         "Resolver should be created for the first time");
+  SetCommonAttributes(FD, cast<llvm::GlobalValue>(Resolver));
+  return Resolver;
 }
 
 /// GetOrCreateLLVMFunction - If the specified mangled name is not in the
@@ -2641,7 +2672,7 @@ llvm::Constant *CodeGenModule::GetOrCreateLLVMFunction(
       if (TA && TA->isDefaultVersion())
         UpdateMultiVersionNames(GD, FD);
       if (!IsForDefinition)
-        return GetOrCreateMultiVersionIFunc(GD, Ty, FD);
+        return GetOrCreateMultiVersionResolver(GD, Ty, FD);
     }
   }
 
