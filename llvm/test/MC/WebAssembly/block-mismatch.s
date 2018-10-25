@@ -9,5 +9,3 @@ test0:
   # CHECK: End marker mismatch!
   end_block
   end_function
-.Lfunc_end1:
-  .size  test1, .Lfunc_end1-test1
