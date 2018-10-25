@@ -362,27 +362,33 @@ int SystemZTTIImpl::getArithmeticInstrCost(
 
   unsigned ScalarBits = Ty->getScalarSizeInBits();
 
-  // Div with a constant which is a power of 2 will be converted by
-  // DAGCombiner to use shifts. With vector shift-element instructions, a
-  // vector sdiv costs about as much as a scalar one.
-  const unsigned SDivCostEstimate = 4;
-  bool SDivPow2 = false;
-  bool UDivPow2 = false;
-  if ((Opcode == Instruction::SDiv || Opcode == Instruction::UDiv) &&
-      Args.size() == 2) {
-    const ConstantInt *CI = nullptr;
+  // There are thre cases of division and remainder: Dividing with a register
+  // needs a divide instruction. A divisor which is a power of two constant
+  // can be implemented with a sequence of shifts. Any other constant needs a
+  // multiply and shifts.
+  const unsigned DivInstrCost = 20;
+  const unsigned DivMulSeqCost = 10;
+  const unsigned SDivPow2Cost = 4;
+
+  bool SignedDivRem =
+      Opcode == Instruction::SDiv || Opcode == Instruction::SRem;
+  bool UnsignedDivRem =
+      Opcode == Instruction::UDiv || Opcode == Instruction::URem;
+
+  // Check for a constant divisor.
+  bool DivRemConst = false;
+  bool DivRemConstPow2 = false;
+  if ((SignedDivRem || UnsignedDivRem) && Args.size() == 2) {
     if (const Constant *C = dyn_cast<Constant>(Args[1])) {
-      if (C->getType()->isVectorTy())
-        CI = dyn_cast_or_null<const ConstantInt>(C->getSplatValue());
+      const ConstantInt *CVal =
+          (C->getType()->isVectorTy()
+               ? dyn_cast_or_null<const ConstantInt>(C->getSplatValue())
+               : dyn_cast<const ConstantInt>(C));
+      if (CVal != nullptr &&
+          (CVal->getValue().isPowerOf2() || (-CVal->getValue()).isPowerOf2()))
+        DivRemConstPow2 = true;
       else
-        CI = dyn_cast<const ConstantInt>(C);
-    }
-    if (CI != nullptr &&
-        (CI->getValue().isPowerOf2() || (-CI->getValue()).isPowerOf2())) {
-      if (Opcode == Instruction::SDiv)
-        SDivPow2 = true;
-      else
-        UDivPow2 = true;
+        DivRemConst = true;
     }
   }
 
@@ -394,18 +400,19 @@ int SystemZTTIImpl::getArithmeticInstrCost(
     // These vector operations are custom handled, but are still supported
     // with one instruction per vector, regardless of element size.
     if (Opcode == Instruction::Shl || Opcode == Instruction::LShr ||
-        Opcode == Instruction::AShr || UDivPow2) {
+        Opcode == Instruction::AShr) {
       return NumVectors;
     }
 
-    if (SDivPow2)
-      return (NumVectors * SDivCostEstimate);
-
-    // Temporary hack: disable high vectorization factors with integer
-    // division/remainder, which will get scalarized and handled with GR128
-    // registers. The mischeduler is not clever enough to avoid spilling yet.
-    if ((Opcode == Instruction::UDiv || Opcode == Instruction::SDiv ||
-         Opcode == Instruction::URem || Opcode == Instruction::SRem) && VF > 4)
+    if (DivRemConstPow2)
+      return (NumVectors * (SignedDivRem ? SDivPow2Cost : 1));
+    if (DivRemConst)
+      return VF * DivMulSeqCost + getScalarizationOverhead(Ty, Args);
+    if ((SignedDivRem || UnsignedDivRem) && VF > 4)
+      // Temporary hack: disable high vectorization factors with integer
+      // division/remainder, which will get scalarized and handled with
+      // GR128 registers. The mischeduler is not clever enough to avoid
+      // spilling yet.
       return 1000;
 
     // These FP operations are supported with a single vector instruction for
@@ -471,19 +478,16 @@ int SystemZTTIImpl::getArithmeticInstrCost(
       return 7; // 2 * ipm sequences ; xor ; shift ; compare
     }
 
-    if (UDivPow2)
-      return 1;
-    if (SDivPow2)
-      return SDivCostEstimate;
-
-    // An extra extension for narrow types is needed.
-    if ((Opcode == Instruction::SDiv || Opcode == Instruction::SRem))
+    if (DivRemConstPow2)
+      return (SignedDivRem ? SDivPow2Cost : 1);
+    if (DivRemConst)
+      return DivMulSeqCost;
+    if (SignedDivRem)
       // sext of op(s) for narrow types
-      return (ScalarBits < 32 ? 4 : (ScalarBits == 32 ? 2 : 1));
-
-    if (Opcode == Instruction::UDiv || Opcode == Instruction::URem)
+      return DivInstrCost + (ScalarBits < 32 ? 3 : (ScalarBits == 32 ? 1 : 0));
+    if (UnsignedDivRem)
       // Clearing of low 64 bit reg + sext of op(s) for narrow types + dl[g]r
-      return (ScalarBits < 32 ? 4 : 2);
+      return DivInstrCost + (ScalarBits < 32 ? 3 : 1);
   }
 
   // Fallback to the default implementation.

@@ -90,16 +90,16 @@ define void @mul() {
 ; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %4 = mul i64 %li64_0, %li64_1
 }
 
-define void @sdiv() {
+define void @sdiv(i32 %arg32, i64 %arg64) {
   %li32 = load i32, i32* undef
-  sdiv i32 %li32, undef
+  sdiv i32 %li32, %arg32
 
   %li32_0 = load i32, i32* undef
   %li32_1 = load i32, i32* undef
   sdiv i32 %li32_0, %li32_1
 
   %li64 = load i64, i64* undef
-  sdiv i64 %li64, undef
+  sdiv i64 %li64, %arg64
 
   %li64_0 = load i64, i64* undef
   %li64_1 = load i64, i64* undef
@@ -107,27 +107,27 @@ define void @sdiv() {
 
   ret void;
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li32 = load i32, i32* undef
-; CHECK: Cost Model: Found an estimated cost of 2 for instruction:   %1 = sdiv i32 %li32, undef
+; CHECK: Cost Model: Found an estimated cost of 21 for instruction:  %1 = sdiv i32 %li32, %arg32
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li32_0 = load i32, i32* undef
 ; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %li32_1 = load i32, i32* undef
-; CHECK: Cost Model: Found an estimated cost of 2 for instruction:   %2 = sdiv i32 %li32_0, %li32_1
+; CHECK: Cost Model: Found an estimated cost of 21 for instruction:  %2 = sdiv i32 %li32_0, %li32_1
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li64 = load i64, i64* undef
-; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %3 = sdiv i64 %li64, undef
+; CHECK: Cost Model: Found an estimated cost of 20 for instruction:  %3 = sdiv i64 %li64, %arg64
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li64_0 = load i64, i64* undef
 ; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %li64_1 = load i64, i64* undef
-; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %4 = sdiv i64 %li64_0, %li64_1
+; CHECK: Cost Model: Found an estimated cost of 20 for instruction:  %4 = sdiv i64 %li64_0, %li64_1
 }
 
-define void @udiv() {
+define void @udiv(i32 %arg32, i64 %arg64) {
   %li32 = load i32, i32* undef
-  udiv i32 %li32, undef
+  udiv i32 %li32, %arg32
 
   %li32_0 = load i32, i32* undef
   %li32_1 = load i32, i32* undef
   udiv i32 %li32_0, %li32_1
 
   %li64 = load i64, i64* undef
-  udiv i64 %li64, undef
+  udiv i64 %li64, %arg64
 
   %li64_0 = load i64, i64* undef
   %li64_1 = load i64, i64* undef
@@ -135,15 +135,15 @@ define void @udiv() {
 
   ret void;
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li32 = load i32, i32* undef
-; CHECK: Cost Model: Found an estimated cost of 2 for instruction:   %1 = udiv i32 %li32, undef
+; CHECK: Cost Model: Found an estimated cost of 21 for instruction:  %1 = udiv i32 %li32, %arg32
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li32_0 = load i32, i32* undef
 ; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %li32_1 = load i32, i32* undef
-; CHECK: Cost Model: Found an estimated cost of 2 for instruction:   %2 = udiv i32 %li32_0, %li32_1
+; CHECK: Cost Model: Found an estimated cost of 21 for instruction:  %2 = udiv i32 %li32_0, %li32_1
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li64 = load i64, i64* undef
-; CHECK: Cost Model: Found an estimated cost of 2 for instruction:   %3 = udiv i64 %li64, undef
+; CHECK: Cost Model: Found an estimated cost of 21 for instruction:  %3 = udiv i64 %li64, %arg64
 ; CHECK: Cost Model: Found an estimated cost of 0 for instruction:   %li64_0 = load i64, i64* undef
 ; CHECK: Cost Model: Found an estimated cost of 1 for instruction:   %li64_1 = load i64, i64* undef
-; CHECK: Cost Model: Found an estimated cost of 2 for instruction:   %4 = udiv i64 %li64_0, %li64_1
+; CHECK: Cost Model: Found an estimated cost of 21 for instruction:  %4 = udiv i64 %li64_0, %li64_1
 }
 
 define void @and() {
