@@ -30,7 +30,7 @@ namespace llvm {
 namespace exegesis {
 
 class ExegesisTarget;
-class PfmCountersInfo;
+struct PfmCountersInfo;
 
 // An object to initialize LLVM and prepare objects needed to run the
 // measurements.
