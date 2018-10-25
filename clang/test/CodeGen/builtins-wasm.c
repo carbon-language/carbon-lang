@@ -131,6 +131,31 @@ long long trunc_saturate_u_i64_f64(double f) {
   // WEBASSEMBLY-NEXT: ret
 }
 
+float min_f32(float x, float y) {
+  return __builtin_wasm_min_f32(x, y);
+  // WEBASSEMBLY: call float @llvm.minimum.f32(float %x, float %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+float max_f32(float x, float y) {
+  return __builtin_wasm_max_f32(x, y);
+  // WEBASSEMBLY: call float @llvm.maximum.f32(float %x, float %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+double min_f64(double x, double y) {
+  return __builtin_wasm_min_f64(x, y);
+  // WEBASSEMBLY: call double @llvm.minimum.f64(double %x, double %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+double max_f64(double x, double y) {
+  return __builtin_wasm_max_f64(x, y);
+  // WEBASSEMBLY: call double @llvm.maximum.f64(double %x, double %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+
 int extract_lane_s_i8x16(i8x16 v) {
   return __builtin_wasm_extract_lane_s_i8x16(v, 13);
   // WEBASSEMBLY: extractelement <16 x i8> %v, i32 13
@@ -277,6 +302,13 @@ i16x8 sub_saturate_u_i16x8(i16x8 x, i16x8 y) {
   // WEBASSEMBLY-NEXT: ret
 }
 
+i32x4 bitselect(i32x4 x, i32x4 y, i32x4 c) {
+  return __builtin_wasm_bitselect(x, y, c);
+  // WEBASSEMBLY: call <4 x i32> @llvm.wasm.bitselect.v4i32(
+  // WEBASSEMBLY-SAME: <4 x i32> %x, <4 x i32> %y, <4 x i32> %c)
+  // WEBASSEMBLY-NEXT: ret
+}
+
 int any_true_i8x16(i8x16 x) {
   return __builtin_wasm_any_true_i8x16(x);
   // WEBASSEMBLY: call i32 @llvm.wasm.anytrue.v16i8(<16 x i8> %x)
@@ -335,6 +367,34 @@ f64x2 abs_f64x2(f64x2 x) {
   return __builtin_wasm_abs_f64x2(x);
   // WEBASSEMBLY: call <2 x double> @llvm.fabs.v2f64(<2 x double> %x)
   // WEBASSEMBLY: ret
+}
+
+f32x4 min_f32x4(f32x4 x, f32x4 y) {
+  return __builtin_wasm_min_f32x4(x, y);
+  // WEBASSEMBLY: call <4 x float> @llvm.minimum.v4f32(
+  // WEBASSEMBLY-SAME: <4 x float> %x, <4 x float> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f32x4 max_f32x4(f32x4 x, f32x4 y) {
+  return __builtin_wasm_max_f32x4(x, y);
+  // WEBASSEMBLY: call <4 x float> @llvm.maximum.v4f32(
+  // WEBASSEMBLY-SAME: <4 x float> %x, <4 x float> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f64x2 min_f64x2(f64x2 x, f64x2 y) {
+  return __builtin_wasm_min_f64x2(x, y);
+  // WEBASSEMBLY: call <2 x double> @llvm.minimum.v2f64(
+  // WEBASSEMBLY-SAME: <2 x double> %x, <2 x double> %y)
+  // WEBASSEMBLY-NEXT: ret
+}
+
+f64x2 max_f64x2(f64x2 x, f64x2 y) {
+  return __builtin_wasm_max_f64x2(x, y);
+  // WEBASSEMBLY: call <2 x double> @llvm.maximum.v2f64(
+  // WEBASSEMBLY-SAME: <2 x double> %x, <2 x double> %y)
+  // WEBASSEMBLY-NEXT: ret
 }
 
 f32x4 sqrt_f32x4(f32x4 x) {
