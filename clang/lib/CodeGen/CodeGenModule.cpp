@@ -1386,7 +1386,8 @@ void CodeGenModule::SetCommonAttributes(GlobalDecl GD, llvm::GlobalValue *GV) {
 
   if (CodeGenOpts.KeepStaticConsts && D && isa<VarDecl>(D)) {
     const auto *VD = cast<VarDecl>(D);
-    if (VD->getType().isConstQualified() && VD->getStorageClass() == SC_Static)
+    if (VD->getType().isConstQualified() &&
+        VD->getStorageDuration() == SD_Static)
       addUsedGlobal(GV);
   }
 }
@@ -2024,7 +2025,7 @@ bool CodeGenModule::MustBeEmitted(const ValueDecl *Global) {
   if (CodeGenOpts.KeepStaticConsts) {
     const auto *VD = dyn_cast<VarDecl>(Global);
     if (VD && VD->getType().isConstQualified() &&
-        VD->getStorageClass() == SC_Static)
+        VD->getStorageDuration() == SD_Static)
       return true;
   }
 
