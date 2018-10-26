@@ -14,6 +14,7 @@
 
 #include "intrinsics.h"
 #include "expression.h"
+#include "tools.h"
 #include "type.h"
 #include "../common/enum-set.h"
 #include "../common/fortran.h"
@@ -1057,15 +1058,12 @@ std::optional<SpecificCall> IntrinsicInterface::Match(
       CHECK(kindDummyArg != nullptr);
       CHECK(result.categorySet == CategorySet{resultType->category});
       if (kindArg != nullptr) {
-        if (auto *jExpr{std::get_if<Expr<SomeInteger>>(&kindArg->value->u)}) {
-          CHECK(jExpr->Rank() == 0);
-          if (auto value{jExpr->ScalarValue()}) {
-            if (auto code{value->ToInt64()}) {
-              if (IsValidKindOfIntrinsicType(resultType->category, *code)) {
-                resultType->kind = *code;
-                break;
-              }
-            }
+        auto &expr{*kindArg->value};
+        CHECK(expr.Rank() == 0);
+        if (auto code{ToInt64(expr)}) {
+          if (IsValidKindOfIntrinsicType(resultType->category, *code)) {
+            resultType->kind = *code;
+            break;
           }
         }
         messages.Say("'kind=' argument must be a constant scalar integer "

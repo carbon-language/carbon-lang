@@ -17,6 +17,7 @@ add_library(FortranEvaluate
   common.cc
   complex.cc
   expression.cc
+  fold.cc
   integer.cc
   intrinsics.cc
   logical.cc

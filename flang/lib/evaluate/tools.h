@@ -17,7 +17,9 @@
 
 #include "expression.h"
 #include "../common/idioms.h"
+#include "../common/template.h"
 #include "../parser/message.h"
+#include "../semantics/symbol.h"
 #include <array>
 #include <optional>
 #include <utility>
@@ -42,10 +44,32 @@ std::optional<Variable<A>> AsVariable(const Expr<A> &expr) {
       expr.u);
 }
 
+template<typename A>
+std::optional<Variable<A>> AsVariable(const std::optional<Expr<A>> &expr) {
+  if (expr.has_value()) {
+    return AsVariable(*expr);
+  } else {
+    return std::nullopt;
+  }
+}
+
 // Predicate: true when an expression is a variable reference
 template<typename A> bool IsVariable(const A &) { return false; }
-template<typename A> bool IsVariable(const Designator<A> &) { return true; }
-template<typename A> bool IsVariable(const FunctionRef<A> &) { return true; }
+template<typename A> bool IsVariable(const Designator<A> &designator) {
+  if constexpr (common::HasMember<Substring, decltype(Designator<A>::u)>) {
+    if (const auto *substring{std::get_if<Substring>(&designator.u)}) {
+      return substring->GetSymbol(false) != nullptr;
+    }
+  }
+  return true;
+}
+template<typename A> bool IsVariable(const FunctionRef<A> &funcRef) {
+  if (const semantics::Symbol * symbol{funcRef.proc().GetSymbol()}) {
+    return symbol->attrs().test(semantics::Attr::POINTER);
+  } else {
+    return false;
+  }
+}
 template<typename A> bool IsVariable(const Expr<A> &expr) {
   return std::visit([](const auto &x) { return IsVariable(x); }, expr.u);
 }
@@ -53,9 +77,40 @@ template<typename A> bool IsVariable(const Expr<A> &expr) {
 // Predicate: true when an expression is a constant value
 template<typename A> bool IsConstant(const A &) { return false; }
 template<typename A> bool IsConstant(const Constant<A> &) { return true; }
+template<typename A> bool IsConstant(const Parentheses<A> &p) {
+  return IsConstant(p.left());
+}
 template<typename A> bool IsConstant(const Expr<A> &expr) {
   return std::visit([](const auto &x) { return IsConstant(x); }, expr.u);
 }
+
+// When an expression is a constant integer, extract its value.
+template<typename A> std::optional<std::int64_t> ToInt64(const A &) {
+  return std::nullopt;
+}
+template<int KIND>
+std::optional<std::int64_t> ToInt64(
+    const Constant<Type<TypeCategory::Integer, KIND>> &c) {
+  return {c.value.ToInt64()};
+}
+template<int KIND>
+std::optional<std::int64_t> ToInt64(
+    const Parentheses<Type<TypeCategory::Integer, KIND>> &p) {
+  return ToInt64(p.left());
+}
+template<typename A> std::optional<std::int64_t> ToInt64(const Expr<A> &expr) {
+  return std::visit([](const auto &x) { return ToInt64(x); }, expr.u);
+}
+template<typename A>
+std::optional<std::int64_t> ToInt64(const std::optional<A> &x) {
+  if (x.has_value()) {
+    return ToInt64(*x);
+  } else {
+    return std::nullopt;
+  }
+}
+
+// TODO pmk: GetSymbol and Rank and GetType here, too
 
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
@@ -74,16 +129,6 @@ Expr<SomeKind<ResultType<A>::category>> AsCategoryExpr(A &&x) {
   return Expr<SomeKind<ResultType<A>::category>>{AsExpr(std::move(x))};
 }
 
-template<TypeCategory CAT>
-Expr<SomeKind<CAT>> AsCategoryExpr(SomeKindScalar<CAT> &&x) {
-  return std::visit(
-      [](auto &&scalar) {
-        using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
-        return AsCategoryExpr(Constant<Ty>{std::move(scalar)});
-      },
-      x.u);
-}
-
 template<typename A> Expr<SomeType> AsGenericExpr(A &&x) {
   return Expr<SomeType>{AsCategoryExpr(std::move(x))};
 }
@@ -94,24 +139,6 @@ template<> inline Expr<SomeType> AsGenericExpr(Expr<SomeType> &&x) {
 
 template<> inline Expr<SomeType> AsGenericExpr(BOZLiteralConstant &&x) {
   return Expr<SomeType>{std::move(x)};
-}
-
-template<> inline Expr<SomeType> AsGenericExpr(Constant<SomeType> &&x) {
-  return std::visit(
-      [](auto &&scalar) {
-        using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
-        return AsGenericExpr(Constant<Ty>{std::move(scalar)});
-      },
-      x.value.u);
-}
-
-template<> inline Expr<SomeType> AsGenericExpr(GenericScalar &&x) {
-  return std::visit(
-      [](auto &&scalar) {
-        using Ty = TypeOf<std::decay_t<decltype(scalar)>>;
-        return AsGenericExpr(Constant<Ty>{std::move(scalar)});
-      },
-      x.u);
 }
 
 Expr<SomeReal> GetComplexPart(

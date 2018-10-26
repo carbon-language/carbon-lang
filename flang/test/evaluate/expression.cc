@@ -14,6 +14,7 @@
 
 #include "../../lib/evaluate/expression.h"
 #include "testing.h"
+#include "../../lib/evaluate/fold.h"
 #include "../../lib/evaluate/tools.h"
 #include "../../lib/parser/message.h"
 #include <cstdio>
@@ -40,7 +41,7 @@ int main() {
   Fortran::parser::CharBlock src;
   Fortran::parser::ContextualMessages messages{src, nullptr};
   FoldingContext context{messages};
-  ex1.Fold(context);
+  ex1 = Fold(context, std::move(ex1));
   MATCH("-10_4", Dump(ex1));
   MATCH("(1_4/2_4)", Dump(DefaultIntegerExpr{1} / DefaultIntegerExpr{2}));
   DefaultIntegerExpr a{1};

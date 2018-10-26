@@ -18,6 +18,7 @@
 #include "symbol.h"
 #include "../common/idioms.h"
 #include "../evaluate/common.h"
+#include "../evaluate/fold.h"
 #include "../evaluate/tools.h"
 #include "../parser/parse-tree-visitor.h"
 #include "../parser/parse-tree.h"
@@ -230,9 +231,10 @@ MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Integer<A> &x) {
 template<typename A>
 MaybeExpr AnalyzeHelper(ExprAnalyzer &ea, const parser::Constant<A> &x) {
   if (MaybeExpr result{AnalyzeHelper(ea, x.thing)}) {
-    if (std::optional<Constant<SomeType>> folded{
-            result->Fold(ea.context.foldingContext())}) {
-      return {AsGenericExpr(std::move(*folded))};
+    Expr<SomeType> folded{
+        Fold(ea.context.foldingContext(), std::move(*result))};
+    if (IsConstant(folded)) {
+      return {folded};
     }
     ea.Say("expression must be constant"_err_en_US);
   }
@@ -289,13 +291,10 @@ int ExprAnalyzer::Analyze(const std::optional<parser::KindParam> &kindParam,
           [&](const parser::Scalar<
               parser::Integer<parser::Constant<parser::Name>>> &n) {
             if (MaybeExpr ie{AnalyzeHelper(*this, n)}) {
-              if (std::optional<GenericScalar> sv{ie->ScalarValue()}) {
-                if (std::optional<std::int64_t> i64{sv->ToInt64()}) {
-                  std::int64_t i64v{*i64};
-                  int iv = i64v;
-                  if (iv == i64v) {
-                    return iv;
-                  }
+              if (std::optional<std::int64_t> i64{ToInt64(*ie)}) {
+                int iv = *i64;
+                if (iv == *i64) {
+                  return iv;
                 }
               }
             }
@@ -549,9 +548,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::Name &n) {
 
 MaybeExpr ExprAnalyzer::Analyze(const parser::NamedConstant &n) {
   if (MaybeExpr value{Analyze(n.v)}) {
-    if (std::optional<Constant<SomeType>> folded{
-            value->Fold(context.foldingContext())}) {
-      return {AsGenericExpr(std::move(*folded))};
+    Expr<SomeType> folded{Fold(context.foldingContext(), std::move(*value))};
+    if (IsConstant(folded)) {
+      return {folded};
     }
     Say(n.v.source, "must be a constant"_err_en_US);
   }
@@ -900,7 +899,9 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
             }},
         std::get<parser::ActualArg>(arg.t).u);
     if (actualArgExpr.has_value()) {
-      arguments.emplace_back(std::move(actualArgExpr));
+      // TODO pmk: strip and record outermost parentheses here
+      arguments.emplace_back(std::make_optional(
+          Fold(context.foldingContext(), std::move(*actualArgExpr))));
       if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
         arguments.back()->keyword = argKW->v.source;
       }

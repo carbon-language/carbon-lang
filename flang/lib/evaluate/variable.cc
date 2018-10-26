@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "variable.h"
+#include "fold.h"
 #include "tools.h"
 #include "../common/idioms.h"
 #include "../parser/char-block.h"
@@ -20,6 +21,7 @@
 #include "../parser/message.h"
 #include "../semantics/symbol.h"
 #include <ostream>
+#include <type_traits>
 
 using namespace Fortran::parser::literals;
 
@@ -83,91 +85,87 @@ CoarrayRef &CoarrayRef::set_team(Expr<SomeInteger> &&v, bool isTeamNumber) {
   return *this;
 }
 
-Substring::Substring(DataRef &&d, std::optional<Expr<SubscriptInteger>> &&f,
-    std::optional<Expr<SubscriptInteger>> &&l)
-  : u_{std::move(d)} {
-  if (f.has_value()) {
-    first_ = IndirectSubscriptIntegerExpr::Make(std::move(*f));
+void Substring::SetBounds(std::optional<Expr<SubscriptInteger>> &first,
+    std::optional<Expr<SubscriptInteger>> &last) {
+  if (first.has_value()) {
+    first_ = IndirectSubscriptIntegerExpr::Make(std::move(*first));
   }
-  if (l.has_value()) {
-    last_ = IndirectSubscriptIntegerExpr::Make(std::move(*l));
-  }
-}
-
-Substring::Substring(std::string &&s, std::optional<Expr<SubscriptInteger>> &&f,
-    std::optional<Expr<SubscriptInteger>> &&l)
-  : u_{std::move(s)} {
-  if (f.has_value()) {
-    first_ = IndirectSubscriptIntegerExpr::Make(std::move(*f));
-  }
-  if (l.has_value()) {
-    last_ = IndirectSubscriptIntegerExpr::Make(std::move(*l));
+  if (last.has_value()) {
+    last_ = IndirectSubscriptIntegerExpr::Make(std::move(*last));
   }
 }
 
 Expr<SubscriptInteger> Substring::first() const {
   if (first_.has_value()) {
     return **first_;
+  } else {
+    return AsExpr(Constant<SubscriptInteger>{1});
   }
-  return AsExpr(Constant<SubscriptInteger>{1});
 }
 
 Expr<SubscriptInteger> Substring::last() const {
   if (last_.has_value()) {
     return **last_;
+  } else {
+    return std::visit([](const auto &x) {
+      if constexpr (std::is_same_v<DataRef, std::decay_t<decltype(x)>>) {
+        return x.LEN();
+      } else {
+        return AsExpr(Constant<SubscriptInteger>{x.size()});
+      }}, u_);
   }
-  return std::visit(
-      common::visitors{[](const std::string &s) {
-                         return AsExpr(Constant<SubscriptInteger>{s.size()});
-                       },
-          [](const DataRef &x) { return x.LEN(); }},
-      u_);
 }
 
-std::optional<std::string> Substring::Fold(FoldingContext &context) {
-  std::optional<Constant<SubscriptInteger>> lbConst{first().Fold(context)};
-  if (lbConst.has_value()) {
-    first_ = AsExpr(*lbConst);
+auto Substring::Fold(FoldingContext &context) -> std::optional<Strings> {
+  std::optional<std::int64_t> lbi, ubi;
+  if (first_.has_value()) {
+    *first_ = evaluate::Fold(context, std::move(**first_));
+    lbi = ToInt64(**first_);
   }
-  std::optional<Constant<SubscriptInteger>> ubConst{last().Fold(context)};
-  if (ubConst.has_value()) {
-    last_ = AsExpr(*ubConst);
+  if (last_.has_value()) {
+    *last_ = evaluate::Fold(context, std::move(**last_));
+    ubi = ToInt64(**last_);
   }
-  if (auto both{common::AllPresent(std::move(lbConst), std::move(ubConst))}) {
-    std::int64_t lbi{std::get<0>(*both).value.ToInt64()};
-    std::int64_t ubi{std::get<1>(*both).value.ToInt64()};
-    if (ubi < lbi) {
+  if (lbi.has_value() && ubi.has_value()) {
+    if (*ubi < *lbi) {
       // These cases are well defined, and they produce zero-length results.
       u_ = ""s;
       first_ = AsExpr(Constant<SubscriptInteger>{1});
       last_ = AsExpr(Constant<SubscriptInteger>{0});
-      return {""s};
+      return {Strings{""s}};
     }
-    if (lbi <= 0) {
+    if (*lbi <= 0) {
       context.messages.Say(
           "lower bound on substring (%jd) is less than one"_en_US,
-          static_cast<std::intmax_t>(lbi));
-      lbi = 1;
-      first_ = AsExpr(Constant<SubscriptInteger>{lbi});
+          static_cast<std::intmax_t>(*lbi));
+      *lbi = 1;
+      first_ = AsExpr(Constant<SubscriptInteger>{1});
     }
-    if (ubi <= 0) {
+    if (*ubi <= 0) {
       u_ = ""s;
       last_ = AsExpr(Constant<SubscriptInteger>{0});
-      return {""s};
+      return {Strings{""s}};
     }
-    if (std::string * str{std::get_if<std::string>(&u_)}) {
-      std::int64_t len = str->size();
-      if (ubi > len) {
-        context.messages.Say(
-            "upper bound on substring (%jd) is greater than character length (%jd)"_en_US,
-            static_cast<std::intmax_t>(ubi), static_cast<std::intmax_t>(len));
-        ubi = len;
-        last_ = AsExpr(Constant<SubscriptInteger>{ubi});
-      }
-      std::string result{str->substr(lbi - 1, ubi - lbi + 1)};
-      u_ = result;
-      return {result};
-    }
+    return std::visit(
+        [&](const auto &x) -> std::optional<Strings> {
+          if constexpr (std::is_same_v<DataRef, std::decay_t<decltype(x)>>) {
+            return std::nullopt;
+          } else {
+            std::int64_t len = x.size();
+            if (*ubi > len) {
+              context.messages.Say(
+                  "upper bound on substring (%jd) is greater than character length (%jd)"_en_US,
+                  static_cast<std::intmax_t>(*ubi),
+                  static_cast<std::intmax_t>(len));
+              *ubi = len;
+              last_ = AsExpr(Constant<SubscriptInteger>{len});
+            }
+            auto substring{x.substr(*lbi - 1, *ubi - *lbi + 1)};
+            u_ = substring;
+            return std::make_optional(Strings{substring});
+          }
+        },
+        u_);
   }
   return std::nullopt;
 }
@@ -180,6 +178,14 @@ template<typename A> std::ostream &Emit(std::ostream &o, const A &x) {
 
 template<> std::ostream &Emit(std::ostream &o, const std::string &lit) {
   return o << parser::QuoteCharacterLiteral(lit);
+}
+
+template<> std::ostream &Emit(std::ostream &o, const std::u16string &lit) {
+  return o << "TODO: dumping CHARACTER*2";
+}
+
+template<> std::ostream &Emit(std::ostream &o, const std::u32string &lit) {
+  return o << "TODO: dumping CHARACTER*4";
 }
 
 template<typename A>
@@ -395,10 +401,10 @@ int DataRef::Rank() const {
 int Substring::Rank() const {
   return std::visit(
       [](const auto &x) {
-        if constexpr (std::is_same_v<std::decay_t<decltype(x)>, std::string>) {
-          return 0;
-        } else {
+        if constexpr (std::is_same_v<std::decay_t<decltype(x)>, DataRef>) {
           return x.Rank();
+        } else {
+          return 0;  // parent string is a literal scalar
         }
       },
       u_);
@@ -466,5 +472,5 @@ std::optional<DynamicType> ProcedureDesignator::GetType() const {
   return std::nullopt;
 }
 
-FOR_EACH_CHARACTER_KIND(template class Designator)
+FOR_EACH_CHARACTER_KIND(template class Designator, ;)
 }

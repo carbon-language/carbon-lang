@@ -25,7 +25,7 @@
 #include "common.h"
 #include "type.h"
 #include "../common/idioms.h"
-#include "../lib/common/template.h"
+#include "../common/template.h"
 #include "../semantics/symbol.h"
 #include <optional>
 #include <ostream>
@@ -178,24 +178,28 @@ struct DataRef {
 // variants of sections instead.
 class Substring {
 public:
-  using IsFoldableTrait = std::true_type;
+  using Strings = std::variant<std::string, std::u16string, std::u32string>;
   CLASS_BOILERPLATE(Substring)
-  Substring(DataRef &&, std::optional<Expr<SubscriptInteger>> &&,
-      std::optional<Expr<SubscriptInteger>> &&);
-  Substring(std::string &&, std::optional<Expr<SubscriptInteger>> &&,
-      std::optional<Expr<SubscriptInteger>> &&);
+  template<typename A>
+  Substring(A &&parent, std::optional<Expr<SubscriptInteger>> &&first,
+      std::optional<Expr<SubscriptInteger>> &&last)
+    : u_{std::move(parent)} {
+    SetBounds(first, last);
+  }
 
   Expr<SubscriptInteger> first() const;
   Expr<SubscriptInteger> last() const;
   int Rank() const;
   const Symbol *GetSymbol(bool first) const;
   Expr<SubscriptInteger> LEN() const;
-  std::optional<std::string> Fold(FoldingContext &);
+  std::optional<Strings> Fold(FoldingContext &);
   std::ostream &Dump(std::ostream &) const;
 
 private:
-  // TODO: character kinds > 1
-  std::variant<DataRef, std::string> u_;
+  using Variant = common::CombineVariants<std::variant<DataRef>, Strings>;
+  void SetBounds(std::optional<Expr<SubscriptInteger>> &,
+      std::optional<Expr<SubscriptInteger>> &);
+  Variant u_;
   std::optional<IndirectSubscriptIntegerExpr> first_, last_;
 };
 
@@ -282,7 +286,7 @@ public:
   Variant u;
 };
 
-FOR_EACH_CHARACTER_KIND(extern template class Designator)
+FOR_EACH_CHARACTER_KIND(extern template class Designator, ;)
 
 class ProcedureRef {
 public:
@@ -325,7 +329,7 @@ template<typename A> struct FunctionRef : public ProcedureRef {
   std::optional<Constant<Result>> Fold(FoldingContext &);  // for intrinsics
 };
 
-FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef)
+FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef, ;)
 
 template<typename A> struct Variable {
   using Result = A;

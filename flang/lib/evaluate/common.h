@@ -82,6 +82,7 @@ static constexpr bool Satisfies(RelationalOperator op, Ordering order) {
     return op == RelationalOperator::NE || op == RelationalOperator::GE ||
         op == RelationalOperator::GT;
   }
+  return false;  // silence g++ warning
 }
 
 static constexpr bool Satisfies(RelationalOperator op, Relation relation) {
@@ -97,6 +98,7 @@ static constexpr bool Satisfies(RelationalOperator op, Relation relation) {
         op == RelationalOperator::GT;
   case Relation::Unordered: return false;
   }
+  return false;  // silence g++ warning
 }
 
 ENUM_CLASS(
@@ -173,10 +175,6 @@ template<typename A> using CopyableIndirection = common::Indirection<A, true>;
 // Forward definition of Expr<> so that it can be indirectly used in its own
 // definition
 template<typename A> class Expr;
-
-// Classes that support a Fold(FoldingContext &) member function have the
-// IsFoldableTrait.
-CLASS_TRAIT(IsFoldableTrait)  // TODO pmk rm
 
 struct FoldingContext {
   explicit FoldingContext(const parser::ContextualMessages &m,

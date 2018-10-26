@@ -231,81 +231,16 @@ template<typename CONST> struct TypeOfHelper {
 
 template<typename CONST> using TypeOf = typename TypeOfHelper<CONST>::type;
 
-// A variant union that can hold a scalar constant of any type chosen from
-// a set of types, which is passed in as a tuple of Type<> specializations.
-template<typename TYPES> struct SomeScalar {
-  using Types = TYPES;
-  CLASS_BOILERPLATE(SomeScalar)
-
-  template<typename A> SomeScalar(const A &x) : u{x} {}
-  template<typename A>
-  SomeScalar(std::enable_if_t<!std::is_reference_v<A>, A> &&x)
-    : u{std::move(x)} {}
-
-  std::optional<std::int64_t> ToInt64() const {
-    return std::visit(
-        [](const auto &x) -> std::optional<std::int64_t> {
-          if constexpr (TypeOf<decltype(x)>::category ==
-              TypeCategory::Integer) {
-            return {x.ToInt64()};
-          }
-          return std::nullopt;
-        },
-        u);
-  }
-
-  std::optional<std::string> ToString() const {
-    return std::visit(
-        [](const auto &x) -> std::optional<std::string> {
-          if constexpr (std::is_same_v<std::string,
-                            std::decay_t<decltype(x)>>) {
-            return {x};
-          }
-          return std::nullopt;
-        },
-        u);
-  }
-
-  std::optional<bool> IsTrue() const {
-    return std::visit(
-        [](const auto &x) -> std::optional<bool> {
-          if constexpr (TypeOf<decltype(x)>::category ==
-              TypeCategory::Logical) {
-            return {x.IsTrue()};
-          }
-          return std::nullopt;
-        },
-        u);
-  }
-
-  std::optional<DynamicType> GetType() const {
-    return std::visit(
-        [](const auto &x) {
-          using Ty = std::decay_t<decltype(x)>;
-          return TypeOf<Ty>::GetType();
-        },
-        u);
-  }
-
-  common::MapTemplate<Scalar, Types> u;
-};
-
-template<TypeCategory CATEGORY>
-using SomeKindScalar = SomeScalar<CategoryTypes<CATEGORY>>;
-using GenericScalar = SomeScalar<AllIntrinsicTypes>;
-
 // Represents a type of any supported kind within a particular category.
 template<TypeCategory CATEGORY> struct SomeKind {
   static constexpr bool isSpecificIntrinsicType{false};
   static constexpr TypeCategory category{CATEGORY};
-  using Scalar = SomeKindScalar<category>;
 };
 
 template<> class SomeKind<TypeCategory::Derived> {
 public:
   static constexpr bool isSpecificIntrinsicType{true};
   static constexpr TypeCategory category{TypeCategory::Derived};
-  using Scalar = void;
 
   CLASS_BOILERPLATE(SomeKind)
   explicit SomeKind(const semantics::DerivedTypeSpec &s) : spec_{&s} {}
@@ -332,56 +267,52 @@ using SomeCategory = std::tuple<SomeInteger, SomeReal, SomeComplex,
     SomeCharacter, SomeLogical, SomeDerived>;
 struct SomeType {
   static constexpr bool isSpecificIntrinsicType{false};
-  using Scalar = GenericScalar;
 };
 
 // For "[extern] template class", &c. boilerplate
-#define FOR_EACH_INTEGER_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Integer, 1>>; \
-  PREFIX<Type<TypeCategory::Integer, 2>>; \
-  PREFIX<Type<TypeCategory::Integer, 4>>; \
-  PREFIX<Type<TypeCategory::Integer, 8>>; \
-  PREFIX<Type<TypeCategory::Integer, 16>>;
-#define FOR_EACH_REAL_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Real, 2>>; \
-  PREFIX<Type<TypeCategory::Real, 4>>; \
-  PREFIX<Type<TypeCategory::Real, 8>>; \
-  PREFIX<Type<TypeCategory::Real, 10>>; \
-  PREFIX<Type<TypeCategory::Real, 16>>;
-#define FOR_EACH_COMPLEX_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Complex, 2>>; \
-  PREFIX<Type<TypeCategory::Complex, 4>>; \
-  PREFIX<Type<TypeCategory::Complex, 8>>; \
-  PREFIX<Type<TypeCategory::Complex, 10>>; \
-  PREFIX<Type<TypeCategory::Complex, 16>>;
-#define FOR_EACH_CHARACTER_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Character, 1>>; \
-  PREFIX<Type<TypeCategory::Character, 2>>; \
-  PREFIX<Type<TypeCategory::Character, 4>>;
-#define FOR_EACH_LOGICAL_KIND(PREFIX) \
-  PREFIX<Type<TypeCategory::Logical, 1>>; \
-  PREFIX<Type<TypeCategory::Logical, 2>>; \
-  PREFIX<Type<TypeCategory::Logical, 4>>; \
-  PREFIX<Type<TypeCategory::Logical, 8>>;
-#define FOR_EACH_INTRINSIC_KIND(PREFIX) \
-  FOR_EACH_INTEGER_KIND(PREFIX) \
-  FOR_EACH_REAL_KIND(PREFIX) \
-  FOR_EACH_COMPLEX_KIND(PREFIX) \
-  FOR_EACH_CHARACTER_KIND(PREFIX) \
-  FOR_EACH_LOGICAL_KIND(PREFIX)
-#define FOR_EACH_SPECIFIC_TYPE(PREFIX) \
-  FOR_EACH_INTRINSIC_KIND(PREFIX) \
-  PREFIX<SomeDerived>;
-#define FOR_EACH_CATEGORY_TYPE(PREFIX) \
-  PREFIX<SomeInteger>; \
-  PREFIX<SomeReal>; \
-  PREFIX<SomeComplex>; \
-  PREFIX<SomeCharacter>; \
-  PREFIX<SomeLogical>; \
-  PREFIX<SomeType>;
-#define FOR_EACH_TYPE_AND_KIND(PREFIX) \
-  FOR_EACH_SPECIFIC_TYPE(PREFIX) \
-  FOR_EACH_CATEGORY_TYPE(PREFIX)
+#define FOR_EACH_INTEGER_KIND(PREFIX, SUFFIX) \
+  PREFIX<Type<TypeCategory::Integer, 1>> SUFFIX \
+      PREFIX<Type<TypeCategory::Integer, 2>> \
+          SUFFIX PREFIX<Type<TypeCategory::Integer, 4>> SUFFIX \
+              PREFIX<Type<TypeCategory::Integer, 8>> \
+                  SUFFIX PREFIX<Type<TypeCategory::Integer, 16>> SUFFIX
+#define FOR_EACH_REAL_KIND(PREFIX, SUFFIX) \
+  PREFIX<Type<TypeCategory::Real, 2>> SUFFIX \
+      PREFIX<Type<TypeCategory::Real, 4>> \
+          SUFFIX PREFIX<Type<TypeCategory::Real, 8>> SUFFIX \
+              PREFIX<Type<TypeCategory::Real, 10>> \
+                  SUFFIX PREFIX<Type<TypeCategory::Real, 16>> SUFFIX
+#define FOR_EACH_COMPLEX_KIND(PREFIX, SUFFIX) \
+  PREFIX<Type<TypeCategory::Complex, 2>> SUFFIX \
+      PREFIX<Type<TypeCategory::Complex, 4>> \
+          SUFFIX PREFIX<Type<TypeCategory::Complex, 8>> SUFFIX \
+              PREFIX<Type<TypeCategory::Complex, 10>> \
+                  SUFFIX PREFIX<Type<TypeCategory::Complex, 16>> SUFFIX
+#define FOR_EACH_CHARACTER_KIND(PREFIX, SUFFIX) \
+  PREFIX<Type<TypeCategory::Character, 1>> SUFFIX \
+      PREFIX<Type<TypeCategory::Character, 2>> \
+          SUFFIX PREFIX<Type<TypeCategory::Character, 4>> SUFFIX
+#define FOR_EACH_LOGICAL_KIND(PREFIX, SUFFIX) \
+  PREFIX<Type<TypeCategory::Logical, 1>> \
+      SUFFIX PREFIX<Type<TypeCategory::Logical, 2>> SUFFIX \
+          PREFIX<Type<TypeCategory::Logical, 4>> \
+              SUFFIX PREFIX<Type<TypeCategory::Logical, 8>> SUFFIX
+#define FOR_EACH_INTRINSIC_KIND(PREFIX, SUFFIX) \
+  FOR_EACH_INTEGER_KIND(PREFIX, SUFFIX) \
+  FOR_EACH_REAL_KIND(PREFIX, SUFFIX) \
+  FOR_EACH_COMPLEX_KIND(PREFIX, SUFFIX) \
+  FOR_EACH_CHARACTER_KIND(PREFIX, SUFFIX) \
+  FOR_EACH_LOGICAL_KIND(PREFIX, SUFFIX)
+#define FOR_EACH_SPECIFIC_TYPE(PREFIX, SUFFIX) \
+  FOR_EACH_INTRINSIC_KIND(PREFIX, SUFFIX) \
+  PREFIX<SomeDerived> SUFFIX
+#define FOR_EACH_CATEGORY_TYPE(PREFIX, SUFFIX) \
+  PREFIX<SomeInteger> SUFFIX PREFIX<SomeReal> SUFFIX PREFIX<SomeComplex> \
+      SUFFIX PREFIX<SomeCharacter> SUFFIX PREFIX<SomeLogical> \
+          SUFFIX PREFIX<SomeType> SUFFIX
+#define FOR_EACH_TYPE_AND_KIND(PREFIX, SUFFIX) \
+  FOR_EACH_SPECIFIC_TYPE(PREFIX, SUFFIX) \
+  FOR_EACH_CATEGORY_TYPE(PREFIX, SUFFIX)
 
 // Wraps a constant scalar value of a specific intrinsic type
 // in a class with its resolved type.
