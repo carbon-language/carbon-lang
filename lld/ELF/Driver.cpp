@@ -662,8 +662,8 @@ static void readCallGraph(MemoryBufferRef MB) {
         warn(MB.getBufferIdentifier() + ": no such symbol: " + Name);
       return nullptr;
     }
+    maybeWarnUnorderableSymbol(Sym);
 
-    warnUnorderableSymbol(Sym);
     if (Defined *DR = dyn_cast_or_null<Defined>(Sym))
       return dyn_cast_or_null<InputSectionBase>(DR->Section);
     return nullptr;
