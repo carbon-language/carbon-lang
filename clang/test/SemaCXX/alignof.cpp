@@ -4,9 +4,9 @@
 
 struct S0 {
   int x;
-  static const int test0 = __alignof__(x); // expected-error {{invalid application of '__alignof' to a field of a class still being defined}}
-  static const int test1 = __alignof__(S0::x); // expected-error {{invalid application of '__alignof' to a field of a class still being defined}}
-  auto test2() -> char(&)[__alignof__(x)]; // expected-error {{invalid application of '__alignof' to a field of a class still being defined}}
+  static const int test0 = __alignof__(x); // expected-error {{invalid application of 'alignof' to a field of a class still being defined}}
+  static const int test1 = __alignof__(S0::x); // expected-error {{invalid application of 'alignof' to a field of a class still being defined}}
+  auto test2() -> char(&)[__alignof__(x)]; // expected-error {{invalid application of 'alignof' to a field of a class still being defined}}
 };
 
 struct S1; // expected-note 6 {{forward declaration}}
