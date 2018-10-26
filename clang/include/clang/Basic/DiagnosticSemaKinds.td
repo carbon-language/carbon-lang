@@ -5476,7 +5476,7 @@ def err_atomic_specifier_bad_type : Error<
 // Expressions.
 def select_unary_expr_or_type_trait_kind : TextSubstitution<
   "%select{sizeof|alignof|vec_step|__builtin_omp_required_simd_align|"
-  "__alignof}0">
+  "__alignof}0">;
 def ext_sizeof_alignof_function_type : Extension<
   "invalid application of '%sub{select_unary_expr_or_type_trait_kind}0' "
   "to a function type">, InGroup<PointerArith>;
