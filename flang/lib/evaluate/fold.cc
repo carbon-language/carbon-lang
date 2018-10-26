@@ -21,7 +21,6 @@
 #include "../common/indirection.h"
 #include "../parser/message.h"
 #include <cstdio>
-#include <iostream>  // TODO pmk rm
 #include <optional>
 #include <type_traits>
 #include <variant>
@@ -130,11 +129,9 @@ Expr<TO> FoldOperation(
 template<typename T>
 Expr<T> FoldOperation(FoldingContext &context, Parentheses<T> &&x) {
   auto &operand{x.left()};
-  operand.Dump(std::cout << "pmk: Parentheses Fold operand: ") << '\n';
   operand = Fold(context, std::move(operand));
   if (auto c{GetScalarConstantValue(operand)}) {
     // Preserve parentheses, even around constants.
-    // TODO pmk: Once parentheses around arguments are recorded, don't do this
     return Expr<T>{Parentheses<T>{Expr<T>{Constant<T>{std::move(c->value)}}}};
   }
   return Expr<T>{std::move(x)};
@@ -192,16 +189,13 @@ Expr<Type<TypeCategory::Logical, KIND>> FoldOperation(
 template<typename T1, typename T2>
 std::optional<std::pair<Scalar<T1>, Scalar<T2>>> FoldOperands(
     FoldingContext &context, Expr<T1> &x, Expr<T2> &y) {
-  std::cout << "pmk: FoldOperands begin\n";
   x = Fold(context, std::move(x));
   y = Fold(context, std::move(y));
   if (auto xc{GetScalarConstantValue(x)}) {
     if (auto yc{GetScalarConstantValue(y)}) {
-      std::cout << "pmk: FoldOperands success\n";
       return {std::make_pair(xc->value, yc->value)};
     }
   }
-  std::cout << "pmk: FoldOperands failure\n";
   return std::nullopt;
 }
 

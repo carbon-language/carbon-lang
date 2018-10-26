@@ -899,7 +899,6 @@ MaybeExpr ExprAnalyzer::Analyze(const parser::FunctionReference &funcRef) {
             }},
         std::get<parser::ActualArg>(arg.t).u);
     if (actualArgExpr.has_value()) {
-      // TODO pmk: strip and record outermost parentheses here
       arguments.emplace_back(std::make_optional(
           Fold(context.foldingContext(), std::move(*actualArgExpr))));
       if (const auto &argKW{std::get<std::optional<parser::Keyword>>(arg.t)}) {
