@@ -1011,12 +1011,6 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
                     .Default(SaveTempsCwd);
   }
 
-  llvm::Triple EffectiveTriple = computeTargetTriple(*this, TargetTriple, Args);
-  if (!EffectiveTriple.isOSWindows() || EffectiveTriple.isOSCygMing()) {
-    for (auto *Str : {&Dir, &InstalledDir, &SysRoot, &ResourceDir})
-      *Str = llvm::sys::path::convert_to_slash(*Str);
-  }
-
   setLTOMode(Args);
 
   // Process -fembed-bitcode= flags.

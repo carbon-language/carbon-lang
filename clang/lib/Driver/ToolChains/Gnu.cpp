@@ -1699,7 +1699,7 @@ void Generic_GCC::GCCInstallationDetector::init(
     if (GCCToolchainDir.back() == '/')
       GCCToolchainDir = GCCToolchainDir.drop_back(); // remove the /
 
-    Prefixes.push_back(llvm::sys::path::convert_to_slash(GCCToolchainDir));
+    Prefixes.push_back(GCCToolchainDir);
   } else {
     // If we have a SysRoot, try that first.
     if (!D.SysRoot.empty()) {

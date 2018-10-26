@@ -21,7 +21,6 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/VersionTuple.h"
 #include "llvm/Target/TargetOptions.h"
 #include <cassert>
@@ -370,12 +369,6 @@ public:
   const char *getCompilerRTArgString(const llvm::opt::ArgList &Args,
                                      StringRef Component,
                                      bool Shared = false) const;
-
-  std::string normalizePath(StringRef Path) const {
-    if (!Triple.isOSWindows() || Triple.isOSCygMing())
-      return llvm::sys::path::convert_to_slash(Path);
-    return Path;
-  }
 
   // Returns <ResourceDir>/lib/<OSName>/<arch>.  This is used by runtimes (such
   // as OpenMP) to find arch-specific libraries.

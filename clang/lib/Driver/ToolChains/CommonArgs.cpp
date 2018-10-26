@@ -163,7 +163,7 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
 
     // Add filenames immediately.
     if (II.isFilename()) {
-      CmdArgs.push_back(Args.MakeArgString(TC.normalizePath(II.getFilename())));
+      CmdArgs.push_back(II.getFilename());
       continue;
     }
 

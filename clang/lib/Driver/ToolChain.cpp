@@ -376,10 +376,9 @@ std::string ToolChain::getCompilerRT(const ArgList &Args, StringRef Component,
 
   for (const auto &LibPath : getLibraryPaths()) {
     SmallString<128> P(LibPath);
-    llvm::sys::path::append(P,
-                            Prefix + Twine("clang_rt.") + Component + Suffix);
+    llvm::sys::path::append(P, Prefix + Twine("clang_rt.") + Component + Suffix);
     if (getVFS().exists(P))
-      return normalizePath(P);
+      return P.str();
   }
 
   StringRef Arch = getArchNameForCompilerRTLib(*this, Args);
@@ -387,7 +386,7 @@ std::string ToolChain::getCompilerRT(const ArgList &Args, StringRef Component,
   SmallString<128> Path(getCompilerRTPath());
   llvm::sys::path::append(Path, Prefix + Twine("clang_rt.") + Component + "-" +
                                     Arch + Env + Suffix);
-  return normalizePath(Path);
+  return Path.str();
 }
 
 const char *ToolChain::getCompilerRTArgString(const llvm::opt::ArgList &Args,
@@ -426,7 +425,7 @@ Tool *ToolChain::SelectTool(const JobAction &JA) const {
 }
 
 std::string ToolChain::GetFilePath(const char *Name) const {
-  return normalizePath(D.GetFilePath(Name, *this));
+  return D.GetFilePath(Name, *this);
 }
 
 std::string ToolChain::GetProgramPath(const char *Name) const {
@@ -775,14 +774,12 @@ void ToolChain::AddCXXStdlibLibArgs(const ArgList &Args,
 void ToolChain::AddFilePathLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const {
   for (const auto &LibPath : getLibraryPaths())
-    if (LibPath.length() > 0)
-      CmdArgs.push_back(
-          Args.MakeArgString(StringRef("-L") + normalizePath(LibPath)));
+    if(LibPath.length() > 0)
+      CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + LibPath));
 
   for (const auto &LibPath : getFilePaths())
-    if (LibPath.length() > 0)
-      CmdArgs.push_back(
-          Args.MakeArgString(StringRef("-L") + normalizePath(LibPath)));
+    if(LibPath.length() > 0)
+      CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + LibPath));
 }
 
 void ToolChain::AddCCKextLibArgs(const ArgList &Args,
