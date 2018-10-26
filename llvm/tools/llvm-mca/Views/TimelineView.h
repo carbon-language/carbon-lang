@@ -153,8 +153,6 @@ class TimelineView : public View {
                           const WaitTimeEntry &E, unsigned Index,
                           unsigned Executions) const;
 
-  const unsigned DEFAULT_ITERATIONS = 10;
-
   // Display characters for the TimelineView report output.
   struct DisplayChar {
     static const char Dispatched = 'D';
