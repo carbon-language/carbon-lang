@@ -6530,8 +6530,8 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     MVT SrcVT = Src.getSimpleValueType();
     if (NumSizeInBits != SrcVT.getSizeInBits())
       break;
-    DecodeZeroExtendMask(SrcVT.getScalarSizeInBits(), VT.getScalarSizeInBits(),
-                         VT.getVectorNumElements(), Mask);
+    DecodeZeroExtendMask(SrcVT.getScalarSizeInBits(), NumBitsPerElt, NumElts,
+                         Mask);
     Ops.push_back(Src);
     return true;
   }
