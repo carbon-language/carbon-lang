@@ -3570,7 +3570,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     for (const auto &II : Inputs) {
       addDashXForInput(Args, II, CmdArgs);
       if (II.isFilename())
-        CmdArgs.push_back(II.getFilename());
+        CmdArgs.push_back(
+            Args.MakeArgString(TC.normalizePath(II.getFilename())));
       else
         II.getInputArg().renderAsInput(Args, CmdArgs);
     }
@@ -4963,7 +4964,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Handled with other dependency code.
   } else if (Output.isFilename()) {
     CmdArgs.push_back("-o");
-    CmdArgs.push_back(Output.getFilename());
+    CmdArgs.push_back(
+        Args.MakeArgString(TC.normalizePath(Output.getFilename())));
   } else {
     assert(Output.isNothing() && "Invalid output.");
   }
@@ -4978,7 +4980,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   for (const InputInfo &Input : FrontendInputs) {
     if (Input.isFilename())
-      CmdArgs.push_back(Input.getFilename());
+      CmdArgs.push_back(
+          Args.MakeArgString(TC.normalizePath(Input.getFilename())));
     else
       Input.getInputArg().renderAsInput(Args, CmdArgs);
   }
@@ -5671,9 +5674,10 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   assert(Inputs.size() == 1 && "Unexpected number of inputs.");
   const InputInfo &Input = Inputs[0];
 
-  const llvm::Triple &Triple = getToolChain().getEffectiveTriple();
+  const ToolChain &TC = getToolChain();
+  const llvm::Triple &Triple = TC.getEffectiveTriple();
   const std::string &TripleStr = Triple.getTriple();
-  const auto &D = getToolChain().getDriver();
+  const auto &D = TC.getDriver();
 
   // Don't warn about "clang -w -c foo.s"
   Args.ClaimAllArgs(options::OPT_w);
@@ -5847,7 +5851,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   assert(Output.isFilename() && "Unexpected lipo output.");
   CmdArgs.push_back("-o");
-  CmdArgs.push_back(Output.getFilename());
+  CmdArgs.push_back(Args.MakeArgString(TC.normalizePath(Output.getFilename())));
 
   const llvm::Triple &T = getToolChain().getTriple();
   if (Args.hasArg(options::OPT_gsplit_dwarf) &&
@@ -5857,7 +5861,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   assert(Input.isFilename() && "Invalid input.");
-  CmdArgs.push_back(Input.getFilename());
+  CmdArgs.push_back(Args.MakeArgString(TC.normalizePath(Input.getFilename())));
 
   const char *Exec = getToolChain().getDriver().getClangProgramPath();
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
