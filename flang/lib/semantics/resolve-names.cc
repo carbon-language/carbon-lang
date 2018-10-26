@@ -263,7 +263,7 @@ public:
 protected:
   void PushScope();
   void PopScope();
-  void ClearScopes() { implicitRules_.reset(nullptr); }
+  void ClearScopes() { implicitRules_.reset(); }
 
 private:
   // implicit rules in effect for current scope
@@ -1636,7 +1636,7 @@ bool InterfaceVisitor::Pre(const parser::GenericSpec &x) {
       EraseSymbol(*genericName);
       genericSymbol_ = &MakeSymbol(*genericName);
       genericSymbol_->set_details(details);
-    } else if (!genericSymbol_->isSubprogram()) {
+    } else if (!genericSymbol_->IsSubprogram()) {
       SayAlreadyDeclared(*genericName, *genericSymbol_);
       EraseSymbol(*genericName);
       genericSymbol_ = nullptr;
@@ -1862,7 +1862,7 @@ bool SubprogramVisitor::Pre(const parser::Suffix &suffix) {
 }
 
 bool HasModulePrefix(const std::list<parser::PrefixSpec> &prefixes) {
-  for (auto &prefix : prefixes) {
+  for (const auto &prefix : prefixes) {
     if (std::holds_alternative<parser::PrefixSpec::Module>(prefix.u)) {
       return true;
     }
@@ -1902,7 +1902,8 @@ void SubprogramVisitor::Post(const parser::FunctionSubprogram &) {
 bool SubprogramVisitor::Pre(const parser::InterfaceBody::Subroutine &x) {
   const auto &name{std::get<parser::Name>(
       std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement.t)};
-  return BeginSubprogram(name, Symbol::Flag::Subroutine, false, std::nullopt);
+  return BeginSubprogram(
+      name, Symbol::Flag::Subroutine, /*hasModulePrefix*/ false, std::nullopt);
 }
 void SubprogramVisitor::Post(const parser::InterfaceBody::Subroutine &) {
   EndSubprogram();
@@ -1910,7 +1911,8 @@ void SubprogramVisitor::Post(const parser::InterfaceBody::Subroutine &) {
 bool SubprogramVisitor::Pre(const parser::InterfaceBody::Function &x) {
   const auto &name{std::get<parser::Name>(
       std::get<parser::Statement<parser::FunctionStmt>>(x.t).statement.t)};
-  return BeginSubprogram(name, Symbol::Flag::Function, false, std::nullopt);
+  return BeginSubprogram(
+      name, Symbol::Flag::Function, /*hasModulePrefix*/ false, std::nullopt);
 }
 void SubprogramVisitor::Post(const parser::InterfaceBody::Function &) {
   EndSubprogram();
@@ -1984,7 +1986,7 @@ bool SubprogramVisitor::BeginSubprogram(const parser::Name &name,
   }
   if (hasModulePrefix && !inInterfaceBlock()) {
     auto *symbol{FindSymbol(name.source)};
-    if (!symbol || !symbol->IsSeparateMp()) {
+    if (!symbol || !symbol->IsSeparateModuleProc()) {
       Say(name.source,
           "'%s' was not declared a separate module procedure"_err_en_US);
       return false;
@@ -2016,7 +2018,8 @@ bool SubprogramVisitor::Pre(const parser::SeparateModuleSubprogram &x) {
       std::get<parser::Statement<parser::MpSubprogramStmt>>(x.t).statement.v};
   const auto &subpPart{
       std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
-  return BeginSubprogram(name, Symbol::Flag::Subroutine, true, subpPart);
+  return BeginSubprogram(
+      name, Symbol::Flag::Subroutine, /*hasModulePrefix*/ true, subpPart);
 }
 
 void SubprogramVisitor::Post(const parser::SeparateModuleSubprogram &) {

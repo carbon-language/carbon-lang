@@ -362,9 +362,9 @@ public:
   const DeclTypeSpec *GetType() const;
   void SetType(const DeclTypeSpec &);
 
-  bool isSubprogram() const;
+  bool IsSubprogram() const;
   bool HasExplicitInterface() const;
-  bool IsSeparateMp() const;
+  bool IsSeparateModuleProc() const;
 
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }

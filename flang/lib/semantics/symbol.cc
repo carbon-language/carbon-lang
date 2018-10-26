@@ -222,13 +222,13 @@ void Symbol::SetType(const DeclTypeSpec &type) {
       details_);
 }
 
-bool Symbol::isSubprogram() const {
+bool Symbol::IsSubprogram() const {
   return std::visit(
       common::visitors{
           [](const SubprogramDetails &) { return true; },
           [](const SubprogramNameDetails &) { return true; },
           [](const GenericDetails &) { return true; },
-          [](const UseDetails &x) { return x.symbol().isSubprogram(); },
+          [](const UseDetails &x) { return x.symbol().IsSubprogram(); },
           [](const auto &) { return false; },
       },
       details_);
@@ -246,7 +246,7 @@ bool Symbol::HasExplicitInterface() const {
       details_);
 }
 
-bool Symbol::IsSeparateMp() const {
+bool Symbol::IsSeparateModuleProc() const {
   if (attrs().test(Attr::MODULE)) {
     if (auto *details{detailsIf<SubprogramDetails>()}) {
       return details->isInterface();
