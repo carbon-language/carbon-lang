@@ -10068,6 +10068,15 @@ static SDValue lowerVectorShuffleAsBlend(const SDLoc &DL, MVT VT, SDValue V1,
     // type.
     MVT BlendVT = MVT::getVectorVT(MVT::i8, VT.getSizeInBits() / 8);
 
+    // x86 allows load folding with blendvb from the 2nd source operand. But
+    // we are still using LLVM select here (see comment below), so that's V1.
+    // If V2 can be load-folded and V1 cannot be load-folded, then commute to
+    // allow that load-folding possibility.
+    if (!ISD::isNormalLoad(V1.getNode()) && ISD::isNormalLoad(V2.getNode())) {
+      ShuffleVectorSDNode::commuteMask(Mask);
+      std::swap(V1, V2);
+    }
+
     // Compute the VSELECT mask. Note that VSELECT is really confusing in the
     // mix of LLVM's code generator and the x86 backend. We tell the code
     // generator that boolean values in the elements of an x86 vector register
