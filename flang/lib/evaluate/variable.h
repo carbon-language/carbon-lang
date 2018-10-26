@@ -286,7 +286,7 @@ public:
   Variant u;
 };
 
-FOR_EACH_CHARACTER_KIND(extern template class Designator, ;)
+FOR_EACH_CHARACTER_KIND(extern template class Designator)
 
 class ProcedureRef {
 public:
@@ -329,7 +329,7 @@ template<typename A> struct FunctionRef : public ProcedureRef {
   std::optional<Constant<Result>> Fold(FoldingContext &);  // for intrinsics
 };
 
-FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef, ;)
+FOR_EACH_SPECIFIC_TYPE(extern template struct FunctionRef)
 
 template<typename A> struct Variable {
   using Result = A;

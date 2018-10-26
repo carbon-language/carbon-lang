@@ -107,12 +107,15 @@ Expr<SubscriptInteger> Substring::last() const {
   if (last_.has_value()) {
     return **last_;
   } else {
-    return std::visit([](const auto &x) {
-      if constexpr (std::is_same_v<DataRef, std::decay_t<decltype(x)>>) {
-        return x.LEN();
-      } else {
-        return AsExpr(Constant<SubscriptInteger>{x.size()});
-      }}, u_);
+    return std::visit(
+        [](const auto &x) {
+          if constexpr (std::is_same_v<DataRef, std::decay_t<decltype(x)>>) {
+            return x.LEN();
+          } else {
+            return AsExpr(Constant<SubscriptInteger>{x.size()});
+          }
+        },
+        u_);
   }
 }
 
@@ -472,5 +475,5 @@ std::optional<DynamicType> ProcedureDesignator::GetType() const {
   return std::nullopt;
 }
 
-FOR_EACH_CHARACTER_KIND(template class Designator, ;)
+FOR_EACH_CHARACTER_KIND(template class Designator)
 }

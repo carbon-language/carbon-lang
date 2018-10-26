@@ -439,7 +439,7 @@ Expr<T> FoldHelper<T>::FoldExpr(FoldingContext &context, Expr<T> &&expr) {
       std::move(expr.u));
 }
 
-FOR_EACH_TYPE_AND_KIND(template struct FoldHelper, ;)
+FOR_EACH_TYPE_AND_KIND(template struct FoldHelper)
 
 template<typename T>
 std::optional<Constant<T>>
@@ -453,5 +453,5 @@ GetScalarConstantValueHelper<T>::GetScalarConstantValue(const Expr<T> &expr) {
   }
 }
 
-FOR_EACH_INTRINSIC_KIND(template struct GetScalarConstantValueHelper, ;)
-}  // namespace Fortran::evaluate
+FOR_EACH_INTRINSIC_KIND(template struct GetScalarConstantValueHelper)
+}

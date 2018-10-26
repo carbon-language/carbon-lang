@@ -49,7 +49,7 @@ std::optional<Expr<T>> Fold(
   }
 }
 
-FOR_EACH_TYPE_AND_KIND(extern template struct FoldHelper, ;)
+FOR_EACH_TYPE_AND_KIND(extern template struct FoldHelper)
 
 // GetScalarConstantValue() extracts the constant value of an expression,
 // when it has one, even if it is parenthesized or optional.
@@ -71,7 +71,6 @@ std::optional<Constant<T>> GetScalarConstantValue(
   }
 }
 
-FOR_EACH_INTRINSIC_KIND(extern template struct GetScalarConstantValueHelper, ;)
-
-}  // namespace Fortran::evaluate
+FOR_EACH_INTRINSIC_KIND(extern template struct GetScalarConstantValueHelper)
+}
 #endif  // FORTRAN_EVALUATE_FOLD_H_

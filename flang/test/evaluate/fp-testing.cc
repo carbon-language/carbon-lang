@@ -42,7 +42,7 @@ ScopedHostFloatingPointEnvironment::ScopedHostFloatingPointEnvironment(
     currentFenv_.__mxcsr &= ~0x8000;
   }
 #else
-    // TODO others
+  // TODO others
 #endif
   errno = 0;
   if (fesetenv(&currentFenv_) != 0) {

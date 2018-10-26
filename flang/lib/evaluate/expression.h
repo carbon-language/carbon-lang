@@ -453,9 +453,9 @@ public:
   common::CombineVariants<Operations, Others> u;
 };
 
-FOR_EACH_INTEGER_KIND(extern template class Expr, ;)
-FOR_EACH_REAL_KIND(extern template class Expr, ;)
-FOR_EACH_COMPLEX_KIND(extern template class Expr, ;)
+FOR_EACH_INTEGER_KIND(extern template class Expr)
+FOR_EACH_REAL_KIND(extern template class Expr)
+FOR_EACH_COMPLEX_KIND(extern template class Expr)
 
 template<int KIND>
 class Expr<Type<TypeCategory::Character, KIND>>
@@ -473,7 +473,7 @@ public:
       u;
 };
 
-FOR_EACH_CHARACTER_KIND(extern template class Expr, ;)
+FOR_EACH_CHARACTER_KIND(extern template class Expr)
 
 // The Relational class template is a helper for constructing logical
 // expressions with polymorphism over the cross product of the possible
@@ -521,9 +521,9 @@ public:
   common::MapTemplate<Relational, DirectlyComparableTypes> u;
 };
 
-FOR_EACH_INTEGER_KIND(extern template struct Relational, ;)
-FOR_EACH_REAL_KIND(extern template struct Relational, ;)
-FOR_EACH_CHARACTER_KIND(extern template struct Relational, ;)
+FOR_EACH_INTEGER_KIND(extern template struct Relational)
+FOR_EACH_REAL_KIND(extern template struct Relational)
+FOR_EACH_CHARACTER_KIND(extern template struct Relational)
 extern template struct Relational<SomeType>;
 
 // Logical expressions of a kind bigger than LogicalResult
@@ -551,7 +551,7 @@ public:
   common::CombineVariants<Operations, Relations, Others> u;
 };
 
-FOR_EACH_LOGICAL_KIND(extern template class Expr, ;)
+FOR_EACH_LOGICAL_KIND(extern template class Expr)
 
 // A polymorphic expression of known intrinsic type category, but dynamic
 // kind, represented as a discriminated union over Expr<Type<CAT, K>>
@@ -626,7 +626,7 @@ struct GenericExprWrapper {
   Expr<SomeType> v;
 };
 
-FOR_EACH_CATEGORY_TYPE(extern template class Expr, ;)
-FOR_EACH_TYPE_AND_KIND(extern template struct ExpressionBase, ;)
+FOR_EACH_CATEGORY_TYPE(extern template class Expr)
+FOR_EACH_TYPE_AND_KIND(extern template struct ExpressionBase)
 }
 #endif  // FORTRAN_EVALUATE_EXPRESSION_H_

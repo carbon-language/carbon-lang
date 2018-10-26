@@ -178,14 +178,14 @@ int Expr<SomeDerived>::Rank() const {
 // Template instantiations to resolve the "extern template" declarations
 // that appear in expression.h.
 
-FOR_EACH_INTRINSIC_KIND(template class Expr, ;)
-FOR_EACH_CATEGORY_TYPE(template class Expr, ;)
-FOR_EACH_INTEGER_KIND(template struct Relational, ;)
-FOR_EACH_REAL_KIND(template struct Relational, ;)
-FOR_EACH_CHARACTER_KIND(template struct Relational, ;)
+FOR_EACH_INTRINSIC_KIND(template class Expr)
+FOR_EACH_CATEGORY_TYPE(template class Expr)
+FOR_EACH_INTEGER_KIND(template struct Relational)
+FOR_EACH_REAL_KIND(template struct Relational)
+FOR_EACH_CHARACTER_KIND(template struct Relational)
 template struct Relational<SomeType>;
-FOR_EACH_INTRINSIC_KIND(template struct ExpressionBase, ;)
-FOR_EACH_CATEGORY_TYPE(template struct ExpressionBase, ;)
+FOR_EACH_INTRINSIC_KIND(template struct ExpressionBase)
+FOR_EACH_CATEGORY_TYPE(template struct ExpressionBase)
 }
 
 // For reclamation of analyzed expressions to which owning pointers have
