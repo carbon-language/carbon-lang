@@ -36,6 +36,7 @@ namespace Fortran::semantics {
 using namespace parser::literals;
 
 class MessageHandler;
+class ResolveNamesVisitor;
 
 static GenericSpec MapGenericSpec(const parser::GenericSpec &);
 
@@ -314,6 +315,9 @@ private:
 // Manage a stack of Scopes
 class ScopeHandler : public ImplicitRulesVisitor {
 public:
+  template<typename T> void Walk(const T &);
+  void set_this(ResolveNamesVisitor *x) { this_ = x; }
+
   Scope &currScope() { return *currScope_; }
   // The enclosing scope, skipping blocks and derived types.
   Scope &InclusiveScope();
@@ -405,7 +409,24 @@ protected:
   bool ConvertToObjectEntity(Symbol &);
   bool ConvertToProcEntity(Symbol &);
 
+  // Walk the ModuleSubprogramPart or InternalSubprogramPart collecting names.
+  template<typename T>
+  void WalkSubprogramPart(const std::optional<T> &subpPart) {
+    if (subpPart) {
+      if (std::is_same_v<T, parser::ModuleSubprogramPart>) {
+        subpNamesOnly_ = SubprogramKind::Module;
+      } else if (std::is_same_v<T, parser::InternalSubprogramPart>) {
+        subpNamesOnly_ = SubprogramKind::Internal;
+      } else {
+        static_assert("unexpected type");
+      }
+      Walk(*subpPart);
+      subpNamesOnly_ = std::nullopt;
+    }
+  }
+
 private:
+  ResolveNamesVisitor *this_{nullptr};
   Scope *currScope_{nullptr};
 };
 
@@ -489,6 +510,8 @@ public:
   void Post(const parser::InterfaceBody::Subroutine &);
   bool Pre(const parser::InterfaceBody::Function &);
   void Post(const parser::InterfaceBody::Function &);
+  bool Pre(const parser::SeparateModuleSubprogram &);
+  void Post(const parser::SeparateModuleSubprogram &);
   bool Pre(const parser::Suffix &);
 
 protected:
@@ -499,12 +522,13 @@ private:
   // Function result name from parser::Suffix, if any.
   const parser::Name *funcResultName_{nullptr};
 
-  bool BeginSubprogram(const parser::Name &, Symbol::Flag,
+  bool BeginSubprogram(const parser::Name &, Symbol::Flag, bool hasModulePrefix,
       const std::optional<parser::InternalSubprogramPart> &);
   void EndSubprogram();
   // Create a subprogram symbol in the current scope and push a new scope.
   Symbol &PushSubprogramScope(const parser::Name &, Symbol::Flag);
   Symbol *GetSpecificFromGeneric(const SourceName &);
+  SubprogramDetails &PostSubprogramStmt(const parser::Name &);
 };
 
 class DeclarationVisitor : public ArraySpecVisitor,
@@ -652,8 +676,6 @@ private:
 // Check that construct names don't conflict with other names.
 class ConstructVisitor : public DeclarationVisitor {
 public:
-  template<typename T> void Walk(const T &);
-
   bool Pre(const parser::ConcurrentHeader &);
   void Post(const parser::ConcurrentHeader &);
   bool Pre(const parser::LocalitySpec::Local &);
@@ -742,6 +764,7 @@ public:
 
   ResolveNamesVisitor(SemanticsContext &context) {
     set_context(context);
+    set_this(this);
     PushScope(context.globalScope());
   }
 
@@ -1538,11 +1561,7 @@ Symbol &ModuleVisitor::BeginModule(const SourceName &name, bool isSubmodule,
   auto &details{symbol.get<ModuleDetails>()};
   PushScope(Scope::Kind::Module, &symbol);
   details.set_scope(&currScope());
-  if (subpPart) {
-    subpNamesOnly_ = SubprogramKind::Module;
-    parser::Walk(*subpPart, *static_cast<ResolveNamesVisitor *>(this));
-    subpNamesOnly_ = std::nullopt;
-  }
+  WalkSubprogramPart(subpPart);
   return symbol;
 }
 
@@ -1842,23 +1861,39 @@ bool SubprogramVisitor::Pre(const parser::Suffix &suffix) {
   return true;
 }
 
+bool HasModulePrefix(const std::list<parser::PrefixSpec> &prefixes) {
+  for (auto &prefix : prefixes) {
+    if (std::holds_alternative<parser::PrefixSpec::Module>(prefix.u)) {
+      return true;
+    }
+  }
+  return false;
+}
 bool SubprogramVisitor::Pre(const parser::SubroutineSubprogram &x) {
-  const auto &name{std::get<parser::Name>(
-      std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement.t)};
+  const auto &stmt{
+      std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement};
+  bool hasModulePrefix{
+      HasModulePrefix(std::get<std::list<parser::PrefixSpec>>(stmt.t))};
+  const auto &name{std::get<parser::Name>(stmt.t)};
   const auto &subpPart{
       std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
-  return BeginSubprogram(name, Symbol::Flag::Subroutine, subpPart);
+  return BeginSubprogram(
+      name, Symbol::Flag::Subroutine, hasModulePrefix, subpPart);
 }
 void SubprogramVisitor::Post(const parser::SubroutineSubprogram &) {
   EndSubprogram();
 }
 
 bool SubprogramVisitor::Pre(const parser::FunctionSubprogram &x) {
-  const auto &name{std::get<parser::Name>(
-      std::get<parser::Statement<parser::FunctionStmt>>(x.t).statement.t)};
+  const auto &stmt{
+      std::get<parser::Statement<parser::FunctionStmt>>(x.t).statement};
+  bool hasModulePrefix{
+      HasModulePrefix(std::get<std::list<parser::PrefixSpec>>(stmt.t))};
+  const auto &name{std::get<parser::Name>(stmt.t)};
   const auto &subpPart{
       std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
-  return BeginSubprogram(name, Symbol::Flag::Function, subpPart);
+  return BeginSubprogram(
+      name, Symbol::Flag::Function, hasModulePrefix, subpPart);
 }
 void SubprogramVisitor::Post(const parser::FunctionSubprogram &) {
   EndSubprogram();
@@ -1867,7 +1902,7 @@ void SubprogramVisitor::Post(const parser::FunctionSubprogram &) {
 bool SubprogramVisitor::Pre(const parser::InterfaceBody::Subroutine &x) {
   const auto &name{std::get<parser::Name>(
       std::get<parser::Statement<parser::SubroutineStmt>>(x.t).statement.t)};
-  return BeginSubprogram(name, Symbol::Flag::Subroutine, std::nullopt);
+  return BeginSubprogram(name, Symbol::Flag::Subroutine, false, std::nullopt);
 }
 void SubprogramVisitor::Post(const parser::InterfaceBody::Subroutine &) {
   EndSubprogram();
@@ -1875,7 +1910,7 @@ void SubprogramVisitor::Post(const parser::InterfaceBody::Subroutine &) {
 bool SubprogramVisitor::Pre(const parser::InterfaceBody::Function &x) {
   const auto &name{std::get<parser::Name>(
       std::get<parser::Statement<parser::FunctionStmt>>(x.t).statement.t)};
-  return BeginSubprogram(name, Symbol::Flag::Function, std::nullopt);
+  return BeginSubprogram(name, Symbol::Flag::Function, false, std::nullopt);
 }
 void SubprogramVisitor::Post(const parser::InterfaceBody::Function &) {
   EndSubprogram();
@@ -1894,10 +1929,7 @@ bool SubprogramVisitor::Pre(const parser::FunctionStmt &stmt) {
 
 void SubprogramVisitor::Post(const parser::SubroutineStmt &stmt) {
   const auto &name{std::get<parser::Name>(stmt.t)};
-  Symbol &symbol{*currScope().symbol()};
-  CHECK(name.source == symbol.name());
-  symbol.attrs() |= EndAttrs();
-  auto &details{symbol.get<SubprogramDetails>()};
+  auto &details{PostSubprogramStmt(name)};
   for (const auto &dummyArg : std::get<std::list<parser::DummyArg>>(stmt.t)) {
     const parser::Name *dummyName = std::get_if<parser::Name>(&dummyArg.u);
     CHECK(dummyName != nullptr && "TODO: alternate return indicator");
@@ -1908,10 +1940,7 @@ void SubprogramVisitor::Post(const parser::SubroutineStmt &stmt) {
 
 void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   const auto &name{std::get<parser::Name>(stmt.t)};
-  Symbol &symbol{*currScope().symbol()};
-  CHECK(name.source == symbol.name());
-  symbol.attrs() |= EndAttrs();
-  auto &details{symbol.get<SubprogramDetails>()};
+  auto &details{PostSubprogramStmt(name)};
   for (const auto &dummyName : std::get<std::list<parser::Name>>(stmt.t)) {
     Symbol &dummy{MakeSymbol(dummyName, EntityDetails(true))};
     details.add_dummyArg(dummy);
@@ -1934,20 +1963,43 @@ void SubprogramVisitor::Post(const parser::FunctionStmt &stmt) {
   funcResultName_ = nullptr;
 }
 
+SubprogramDetails &SubprogramVisitor::PostSubprogramStmt(
+    const parser::Name &name) {
+  Symbol &symbol{*currScope().symbol()};
+  CHECK(name.source == symbol.name());
+  symbol.attrs() |= EndAttrs();
+  if (symbol.attrs().test(Attr::MODULE)) {
+    symbol.attrs().set(Attr::EXTERNAL, false);
+  }
+  return symbol.get<SubprogramDetails>();
+}
+
 bool SubprogramVisitor::BeginSubprogram(const parser::Name &name,
-    Symbol::Flag subpFlag,
+    Symbol::Flag subpFlag, bool hasModulePrefix,
     const std::optional<parser::InternalSubprogramPart> &subpPart) {
   if (subpNamesOnly_) {
     auto &symbol{MakeSymbol(name, SubprogramNameDetails{*subpNamesOnly_})};
     symbol.set(subpFlag);
     return false;
   }
-  PushSubprogramScope(name, subpFlag);
-  if (subpPart) {
-    subpNamesOnly_ = SubprogramKind::Internal;
-    parser::Walk(*subpPart, *static_cast<ResolveNamesVisitor *>(this));
-    subpNamesOnly_ = std::nullopt;
+  if (hasModulePrefix && !inInterfaceBlock()) {
+    auto *symbol{FindSymbol(name.source)};
+    if (!symbol || !symbol->IsSeparateMp()) {
+      Say(name.source,
+          "'%s' was not declared a separate module procedure"_err_en_US);
+      return false;
+    }
+    if (symbol->owner() == currScope()) {
+      auto *scope{symbol->scope()};
+      CHECK(scope);
+      PushScope(*scope);
+    } else {
+      PushSubprogramScope(name, subpFlag);
+    }
+  } else {
+    PushSubprogramScope(name, subpFlag);
   }
+  WalkSubprogramPart(subpPart);
   return true;
 }
 void SubprogramVisitor::EndSubprogram() {
@@ -1956,9 +2008,24 @@ void SubprogramVisitor::EndSubprogram() {
   }
 }
 
+bool SubprogramVisitor::Pre(const parser::SeparateModuleSubprogram &x) {
+  if (subpNamesOnly_) {
+    return false;
+  }
+  const auto &name{
+      std::get<parser::Statement<parser::MpSubprogramStmt>>(x.t).statement.v};
+  const auto &subpPart{
+      std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
+  return BeginSubprogram(name, Symbol::Flag::Subroutine, true, subpPart);
+}
+
+void SubprogramVisitor::Post(const parser::SeparateModuleSubprogram &) {
+  EndSubprogram();
+}
+
 Symbol &SubprogramVisitor::PushSubprogramScope(
     const parser::Name &name, Symbol::Flag subpFlag) {
-  Symbol *symbol = GetSpecificFromGeneric(name.source);
+  auto *symbol{GetSpecificFromGeneric(name.source)};
   if (!symbol) {
     symbol = &MakeSymbol(name, SubprogramDetails{});
     symbol->set(subpFlag);
@@ -2606,8 +2673,8 @@ bool DeclarationVisitor::OkToAddComponent(
 
 // ConstructVisitor implementation
 
-template<typename T> void ConstructVisitor::Walk(const T &x) {
-  parser::Walk(x, *static_cast<ResolveNamesVisitor *>(this));
+template<typename T> void ScopeHandler::Walk(const T &x) {
+  parser::Walk(x, *this_);
 }
 
 bool ConstructVisitor::Pre(const parser::ConcurrentHeader &) {
@@ -3144,12 +3211,8 @@ bool ResolveNamesVisitor::Pre(const parser::MainProgram &x) {
   } else {
     PushScope(Scope::Kind::MainProgram, nullptr);
   }
-  if (auto &subpPart{
-          std::get<std::optional<parser::InternalSubprogramPart>>(x.t)}) {
-    subpNamesOnly_ = SubprogramKind::Internal;
-    Walk(*subpPart);
-    subpNamesOnly_ = std::nullopt;
-  }
+  auto &subpPart{std::get<std::optional<parser::InternalSubprogramPart>>(x.t)};
+  WalkSubprogramPart(subpPart);
   return true;
 }
 

@@ -246,6 +246,15 @@ bool Symbol::HasExplicitInterface() const {
       details_);
 }
 
+bool Symbol::IsSeparateMp() const {
+  if (attrs().test(Attr::MODULE)) {
+    if (auto *details{detailsIf<SubprogramDetails>()}) {
+      return details->isInterface();
+    }
+  }
+  return false;
+}
+
 int Symbol::Rank() const {
   return std::visit(
       common::visitors{

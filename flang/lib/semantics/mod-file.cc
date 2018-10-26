@@ -192,19 +192,19 @@ void ModFileWriter::PutDerivedType(const Symbol &typeSymbol) {
 
 void ModFileWriter::PutSubprogram(const Symbol &symbol) {
   auto attrs{symbol.attrs()};
+  auto &details{symbol.get<SubprogramDetails>()};
   Attrs bindAttrs{};
   if (attrs.test(Attr::BIND_C)) {
     // bind(c) is a suffix, not prefix
     bindAttrs.set(Attr::BIND_C, true);
     attrs.set(Attr::BIND_C, false);
   }
-  bool isExternal{attrs.test(Attr::EXTERNAL)};
-  std::ostream &os{isExternal ? decls_ : contains_};
-  if (isExternal) {
+  bool isInterface{details.isInterface()};
+  std::ostream &os{isInterface ? decls_ : contains_};
+  if (isInterface) {
     os << "interface\n";
   }
   PutAttrs(os, attrs, ""s, " "s);
-  auto &details{symbol.get<SubprogramDetails>()};
   os << (details.isFunction() ? "function " : "subroutine ");
   PutLower(os, symbol) << '(';
   int n = 0;
@@ -228,7 +228,7 @@ void ModFileWriter::PutSubprogram(const Symbol &symbol) {
     PutEntity(os, *dummy);
   }
   os << "end\n";
-  if (isExternal) {
+  if (isInterface) {
     os << "end interface\n";
   }
 }

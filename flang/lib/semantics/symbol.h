@@ -364,6 +364,7 @@ public:
 
   bool isSubprogram() const;
   bool HasExplicitInterface() const;
+  bool IsSeparateMp() const;
 
   bool operator==(const Symbol &that) const { return this == &that; }
   bool operator!=(const Symbol &that) const { return this != &that; }
