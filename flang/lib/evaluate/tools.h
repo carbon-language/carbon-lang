@@ -110,7 +110,7 @@ std::optional<std::int64_t> ToInt64(const std::optional<A> &x) {
   }
 }
 
-// TODO pmk: GetSymbol and Rank and GetType here, too
+// TODO: GetSymbol and Rank and GetType here, too
 
 // Generalizing packagers: these take operations and expressions of more
 // specific types and wrap them in Expr<> containers of more abstract types.
