@@ -84,6 +84,8 @@
 // Check linking against correct startup code when (not) using PIE
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd %s -### 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-PIE %s
+// RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -pg %s -### 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK-NOPIE %s
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -pie %s -### 2>&1 \
 // RUN:   | FileCheck -check-prefix=CHECK-PIE-FLAG %s
 // RUN: %clang -no-canonical-prefixes -target i686-pc-openbsd -fno-pie %s -### 2>&1 \
