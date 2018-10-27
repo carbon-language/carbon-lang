@@ -128,14 +128,29 @@ void ASTStmtWriter::VisitAttributedStmt(AttributedStmt *S) {
 
 void ASTStmtWriter::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
+
+  bool HasElse = S->getElse() != nullptr;
+  bool HasVar = S->getConditionVariableDeclStmt() != nullptr;
+  bool HasInit = S->getInit() != nullptr;
+
   Record.push_back(S->isConstexpr());
-  Record.AddStmt(S->getInit());
-  Record.AddDeclRef(S->getConditionVariable());
+  Record.push_back(HasElse);
+  Record.push_back(HasVar);
+  Record.push_back(HasInit);
+
   Record.AddStmt(S->getCond());
   Record.AddStmt(S->getThen());
-  Record.AddStmt(S->getElse());
+  if (HasElse)
+    Record.AddStmt(S->getElse());
+  if (HasVar)
+    Record.AddDeclRef(S->getConditionVariable());
+  if (HasInit)
+    Record.AddStmt(S->getInit());
+
   Record.AddSourceLocation(S->getIfLoc());
-  Record.AddSourceLocation(S->getElseLoc());
+  if (HasElse)
+    Record.AddSourceLocation(S->getElseLoc());
+
   Code = serialization::STMT_IF;
 }
 

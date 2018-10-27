@@ -799,39 +799,86 @@ void MSAsmStmt::initialize(const ASTContext &C, StringRef asmstr,
                  });
 }
 
-IfStmt::IfStmt(const ASTContext &C, SourceLocation IL, bool IsConstexpr,
-               Stmt *init, VarDecl *var, Expr *cond, Stmt *then,
-               SourceLocation EL, Stmt *elsev)
-    : Stmt(IfStmtClass), IfLoc(IL), ElseLoc(EL) {
+IfStmt::IfStmt(const ASTContext &Ctx, SourceLocation IL, bool IsConstexpr,
+               Stmt *Init, VarDecl *Var, Expr *Cond, Stmt *Then,
+               SourceLocation EL, Stmt *Else)
+    : Stmt(IfStmtClass) {
+  bool HasElse = Else != nullptr;
+  bool HasVar = Var != nullptr;
+  bool HasInit = Init != nullptr;
+  IfStmtBits.HasElse = HasElse;
+  IfStmtBits.HasVar = HasVar;
+  IfStmtBits.HasInit = HasInit;
+
   setConstexpr(IsConstexpr);
-  setConditionVariable(C, var);
-  SubExprs[INIT] = init;
-  SubExprs[COND] = cond;
-  SubExprs[THEN] = then;
-  SubExprs[ELSE] = elsev;
+
+  setCond(Cond);
+  setThen(Then);
+  if (HasElse)
+    setElse(Else);
+  if (HasVar)
+    setConditionVariable(Ctx, Var);
+  if (HasInit)
+    setInit(Init);
+
+  setIfLoc(IL);
+  if (HasElse)
+    setElseLoc(EL);
 }
 
-VarDecl *IfStmt::getConditionVariable() const {
-  if (!SubExprs[VAR])
-    return nullptr;
+IfStmt::IfStmt(EmptyShell Empty, bool HasElse, bool HasVar, bool HasInit)
+    : Stmt(IfStmtClass, Empty) {
+  IfStmtBits.HasElse = HasElse;
+  IfStmtBits.HasVar = HasVar;
+  IfStmtBits.HasInit = HasInit;
+}
 
-  auto *DS = cast<DeclStmt>(SubExprs[VAR]);
+IfStmt *IfStmt::Create(const ASTContext &Ctx, SourceLocation IL,
+                       bool IsConstexpr, Stmt *Init, VarDecl *Var, Expr *Cond,
+                       Stmt *Then, SourceLocation EL, Stmt *Else) {
+  bool HasElse = Else != nullptr;
+  bool HasVar = Var != nullptr;
+  bool HasInit = Init != nullptr;
+  void *Mem = Ctx.Allocate(
+      totalSizeToAlloc<Stmt *, SourceLocation>(
+          NumMandatoryStmtPtr + HasElse + HasVar + HasInit, HasElse),
+      alignof(IfStmt));
+  return new (Mem)
+      IfStmt(Ctx, IL, IsConstexpr, Init, Var, Cond, Then, EL, Else);
+}
+
+IfStmt *IfStmt::CreateEmpty(const ASTContext &Ctx, bool HasElse, bool HasVar,
+                            bool HasInit) {
+  void *Mem = Ctx.Allocate(
+      totalSizeToAlloc<Stmt *, SourceLocation>(
+          NumMandatoryStmtPtr + HasElse + HasVar + HasInit, HasElse),
+      alignof(IfStmt));
+  return new (Mem) IfStmt(EmptyShell(), HasElse, HasVar, HasInit);
+}
+
+VarDecl *IfStmt::getConditionVariable() {
+  auto *DS = getConditionVariableDeclStmt();
+  if (!DS)
+    return nullptr;
   return cast<VarDecl>(DS->getSingleDecl());
 }
 
-void IfStmt::setConditionVariable(const ASTContext &C, VarDecl *V) {
+void IfStmt::setConditionVariable(const ASTContext &Ctx, VarDecl *V) {
+  assert(hasVarStorage() &&
+         "This if statement has no storage for a condition variable!");
+
   if (!V) {
-    SubExprs[VAR] = nullptr;
+    getTrailingObjects<Stmt *>()[varOffset()] = nullptr;
     return;
   }
 
   SourceRange VarRange = V->getSourceRange();
-  SubExprs[VAR] = new (C) DeclStmt(DeclGroupRef(V), VarRange.getBegin(),
-                                   VarRange.getEnd());
+  getTrailingObjects<Stmt *>()[varOffset()] = new (Ctx)
+      DeclStmt(DeclGroupRef(V), VarRange.getBegin(), VarRange.getEnd());
 }
 
 bool IfStmt::isObjCAvailabilityCheck() const {
-  return isa<ObjCAvailabilityCheckExpr>(SubExprs[COND]);
+  return isa<ObjCAvailabilityCheckExpr>(getCond());
 }
 
 ForStmt::ForStmt(const ASTContext &C, Stmt *Init, Expr *Cond, VarDecl *condVar,

@@ -151,11 +151,25 @@ protected:
   };
 
   class IfStmtBitfields {
+    friend class ASTStmtReader;
     friend class IfStmt;
 
     unsigned : NumStmtBits;
 
+    /// True if this if statement is a constexpr if.
     unsigned IsConstexpr : 1;
+
+    /// True if this if statement has storage for an else statement.
+    unsigned HasElse : 1;
+
+    /// True if this if statement has storage for a variable declaration.
+    unsigned HasVar : 1;
+
+    /// True if this if statement has storage for an init statement.
+    unsigned HasInit : 1;
+
+    /// The location of the "if".
+    SourceLocation IfLoc;
   };
 
   class SwitchStmtBitfields {
@@ -1100,21 +1114,117 @@ public:
 };
 
 /// IfStmt - This represents an if/then/else.
-class IfStmt : public Stmt {
-  enum { INIT, VAR, COND, THEN, ELSE, END_EXPR };
-  Stmt* SubExprs[END_EXPR];
+class IfStmt final
+    : public Stmt,
+      private llvm::TrailingObjects<IfStmt, Stmt *, SourceLocation> {
+  friend TrailingObjects;
 
-  SourceLocation IfLoc;
-  SourceLocation ElseLoc;
+  // IfStmt is followed by several trailing objects, some of which optional.
+  // Note that it would be more convenient to put the optional trailing
+  // objects at then end but this would change the order of the children.
+  // The trailing objects are in order:
+  //
+  // * A "Stmt *" for the init statement.
+  //    Present if and only if hasInitStorage().
+  //
+  // * A "Stmt *" for the condition variable.
+  //    Present if and only if hasVarStorage(). This is in fact a "DeclStmt *".
+  //
+  // * A "Stmt *" for the condition.
+  //    Always present. This is in fact a "Expr *".
+  //
+  // * A "Stmt *" for the then statement.
+  //    Always present.
+  //
+  // * A "Stmt *" for the else statement.
+  //    Present if and only if hasElseStorage().
+  //
+  // * A "SourceLocation" for the location of the "else".
+  //    Present if and only if hasElseStorage().
+  enum { InitOffset = 0, ThenOffsetFromCond = 1, ElseOffsetFromCond = 2 };
+  enum { NumMandatoryStmtPtr = 2 };
+
+  unsigned numTrailingObjects(OverloadToken<Stmt *>) const {
+    return NumMandatoryStmtPtr + hasElseStorage() + hasVarStorage() +
+           hasInitStorage();
+  }
+
+  unsigned numTrailingObjects(OverloadToken<SourceLocation>) const {
+    return hasElseStorage();
+  }
+
+  unsigned initOffset() const { return InitOffset; }
+  unsigned varOffset() const { return InitOffset + hasInitStorage(); }
+  unsigned condOffset() const {
+    return InitOffset + hasInitStorage() + hasVarStorage();
+  }
+  unsigned thenOffset() const { return condOffset() + ThenOffsetFromCond; }
+  unsigned elseOffset() const { return condOffset() + ElseOffsetFromCond; }
+
+  /// Build an if/then/else statement.
+  IfStmt(const ASTContext &Ctx, SourceLocation IL, bool IsConstexpr, Stmt *Init,
+         VarDecl *Var, Expr *Cond, Stmt *Then, SourceLocation EL, Stmt *Else);
+
+  /// Build an empty if/then/else statement.
+  explicit IfStmt(EmptyShell Empty, bool HasElse, bool HasVar, bool HasInit);
 
 public:
-  IfStmt(const ASTContext &C, SourceLocation IL,
-         bool IsConstexpr, Stmt *init, VarDecl *var, Expr *cond,
-         Stmt *then, SourceLocation EL = SourceLocation(),
-         Stmt *elsev = nullptr);
+  /// Create an IfStmt.
+  static IfStmt *Create(const ASTContext &Ctx, SourceLocation IL,
+                        bool IsConstexpr, Stmt *Init, VarDecl *Var, Expr *Cond,
+                        Stmt *Then, SourceLocation EL = SourceLocation(),
+                        Stmt *Else = nullptr);
 
-  /// Build an empty if/then/else statement
-  explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) {}
+  /// Create an empty IfStmt optionally with storage for an else statement,
+  /// condition variable and init expression.
+  static IfStmt *CreateEmpty(const ASTContext &Ctx, bool HasElse, bool HasVar,
+                             bool HasInit);
+
+  /// True if this IfStmt has the storage for an init statement.
+  bool hasInitStorage() const { return IfStmtBits.HasInit; }
+
+  /// True if this IfStmt has storage for a variable declaration.
+  bool hasVarStorage() const { return IfStmtBits.HasVar; }
+
+  /// True if this IfStmt has storage for an else statement.
+  bool hasElseStorage() const { return IfStmtBits.HasElse; }
+
+  Expr *getCond() {
+    return reinterpret_cast<Expr *>(getTrailingObjects<Stmt *>()[condOffset()]);
+  }
+
+  const Expr *getCond() const {
+    return reinterpret_cast<Expr *>(getTrailingObjects<Stmt *>()[condOffset()]);
+  }
+
+  void setCond(Expr *Cond) {
+    getTrailingObjects<Stmt *>()[condOffset()] = reinterpret_cast<Stmt *>(Cond);
+  }
+
+  Stmt *getThen() { return getTrailingObjects<Stmt *>()[thenOffset()]; }
+  const Stmt *getThen() const {
+    return getTrailingObjects<Stmt *>()[thenOffset()];
+  }
+
+  void setThen(Stmt *Then) {
+    getTrailingObjects<Stmt *>()[thenOffset()] = Then;
+  }
+
+  Stmt *getElse() {
+    return hasElseStorage() ? getTrailingObjects<Stmt *>()[elseOffset()]
+                            : nullptr;
+  }
+
+  const Stmt *getElse() const {
+    return hasElseStorage() ? getTrailingObjects<Stmt *>()[elseOffset()]
+                            : nullptr;
+  }
+
+  void setElse(Stmt *Else) {
+    assert(hasElseStorage() &&
+           "This if statement has no storage for an else statement!");
+    getTrailingObjects<Stmt *>()[elseOffset()] = Else;
+  }
 
   /// Retrieve the variable declared in this "if" statement, if any.
   ///
@@ -1124,52 +1234,77 @@ public:
   ///   printf("x is %d", x);
   /// }
   /// \endcode
-  VarDecl *getConditionVariable() const;
-  void setConditionVariable(const ASTContext &C, VarDecl *V);
+  VarDecl *getConditionVariable();
+  const VarDecl *getConditionVariable() const {
+    return const_cast<IfStmt *>(this)->getConditionVariable();
+  }
+
+  /// Set the condition variable for this if statement.
+  /// The if statement must have storage for the condition variable.
+  void setConditionVariable(const ASTContext &Ctx, VarDecl *V);
 
   /// If this IfStmt has a condition variable, return the faux DeclStmt
   /// associated with the creation of that condition variable.
-  const DeclStmt *getConditionVariableDeclStmt() const {
-    return reinterpret_cast<DeclStmt*>(SubExprs[VAR]);
+  DeclStmt *getConditionVariableDeclStmt() {
+    return hasVarStorage() ? static_cast<DeclStmt *>(
+                                 getTrailingObjects<Stmt *>()[varOffset()])
+                           : nullptr;
   }
 
-  Stmt *getInit() { return SubExprs[INIT]; }
-  const Stmt *getInit() const { return SubExprs[INIT]; }
-  void setInit(Stmt *S) { SubExprs[INIT] = S; }
-  const Expr *getCond() const { return reinterpret_cast<Expr*>(SubExprs[COND]);}
-  void setCond(Expr *E) { SubExprs[COND] = reinterpret_cast<Stmt *>(E); }
-  const Stmt *getThen() const { return SubExprs[THEN]; }
-  void setThen(Stmt *S) { SubExprs[THEN] = S; }
-  const Stmt *getElse() const { return SubExprs[ELSE]; }
-  void setElse(Stmt *S) { SubExprs[ELSE] = S; }
+  const DeclStmt *getConditionVariableDeclStmt() const {
+    return hasVarStorage() ? static_cast<DeclStmt *>(
+                                 getTrailingObjects<Stmt *>()[varOffset()])
+                           : nullptr;
+  }
 
-  Expr *getCond() { return reinterpret_cast<Expr*>(SubExprs[COND]); }
-  Stmt *getThen() { return SubExprs[THEN]; }
-  Stmt *getElse() { return SubExprs[ELSE]; }
+  Stmt *getInit() {
+    return hasInitStorage() ? getTrailingObjects<Stmt *>()[initOffset()]
+                            : nullptr;
+  }
 
-  SourceLocation getIfLoc() const { return IfLoc; }
-  void setIfLoc(SourceLocation L) { IfLoc = L; }
-  SourceLocation getElseLoc() const { return ElseLoc; }
-  void setElseLoc(SourceLocation L) { ElseLoc = L; }
+  const Stmt *getInit() const {
+    return hasInitStorage() ? getTrailingObjects<Stmt *>()[initOffset()]
+                            : nullptr;
+  }
+
+  void setInit(Stmt *Init) {
+    assert(hasInitStorage() &&
+           "This if statement has no storage for an init statement!");
+    getTrailingObjects<Stmt *>()[initOffset()] = Init;
+  }
+
+  SourceLocation getIfLoc() const { return IfStmtBits.IfLoc; }
+  void setIfLoc(SourceLocation IfLoc) { IfStmtBits.IfLoc = IfLoc; }
+
+  SourceLocation getElseLoc() const {
+    return hasElseStorage() ? *getTrailingObjects<SourceLocation>()
+                            : SourceLocation();
+  }
+
+  void setElseLoc(SourceLocation ElseLoc) {
+    assert(hasElseStorage() &&
+           "This if statement has no storage for an else statement!");
+    *getTrailingObjects<SourceLocation>() = ElseLoc;
+  }
 
   bool isConstexpr() const { return IfStmtBits.IsConstexpr; }
   void setConstexpr(bool C) { IfStmtBits.IsConstexpr = C; }
 
   bool isObjCAvailabilityCheck() const;
 
-  SourceLocation getBeginLoc() const LLVM_READONLY { return IfLoc; }
-
+  SourceLocation getBeginLoc() const { return getIfLoc(); }
   SourceLocation getEndLoc() const LLVM_READONLY {
-    if (SubExprs[ELSE])
-      return SubExprs[ELSE]->getEndLoc();
-    else
-      return SubExprs[THEN]->getEndLoc();
+    if (getElse())
+      return getElse()->getEndLoc();
+    return getThen()->getEndLoc();
   }
 
   // Iterators over subexpressions.  The iterators will include iterating
   // over the initialization expression referenced by the condition variable.
   child_range children() {
-    return child_range(&SubExprs[0], &SubExprs[0]+END_EXPR);
+    return child_range(getTrailingObjects<Stmt *>(),
+                       getTrailingObjects<Stmt *>() +
+                           numTrailingObjects(OverloadToken<Stmt *>()));
   }
 
   static bool classof(const Stmt *T) {

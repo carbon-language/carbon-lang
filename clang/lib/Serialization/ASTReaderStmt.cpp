@@ -215,14 +215,24 @@ void ASTStmtReader::VisitAttributedStmt(AttributedStmt *S) {
 
 void ASTStmtReader::VisitIfStmt(IfStmt *S) {
   VisitStmt(S);
+
   S->setConstexpr(Record.readInt());
-  S->setInit(Record.readSubStmt());
-  S->setConditionVariable(Record.getContext(), ReadDeclAs<VarDecl>());
+  bool HasElse = Record.readInt();
+  bool HasVar = Record.readInt();
+  bool HasInit = Record.readInt();
+
   S->setCond(Record.readSubExpr());
   S->setThen(Record.readSubStmt());
-  S->setElse(Record.readSubStmt());
+  if (HasElse)
+    S->setElse(Record.readSubStmt());
+  if (HasVar)
+    S->setConditionVariable(Record.getContext(), ReadDeclAs<VarDecl>());
+  if (HasInit)
+    S->setInit(Record.readSubStmt());
+
   S->setIfLoc(ReadSourceLocation());
-  S->setElseLoc(ReadSourceLocation());
+  if (HasElse)
+    S->setElseLoc(ReadSourceLocation());
 }
 
 void ASTStmtReader::VisitSwitchStmt(SwitchStmt *S) {
@@ -2285,7 +2295,11 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
 
     case STMT_IF:
-      S = new (Context) IfStmt(Empty);
+      S = IfStmt::CreateEmpty(
+          Context,
+          /* HasElse=*/Record[ASTStmtReader::NumStmtFields + 1],
+          /* HasVar=*/Record[ASTStmtReader::NumStmtFields + 2],
+          /* HasInit=*/Record[ASTStmtReader::NumStmtFields + 3]);
       break;
 
     case STMT_SWITCH:
